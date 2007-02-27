@@ -1,0 +1,16 @@
+// multi channel acquistion
+mmc.removeImageSynchroAll();
+mmc.assignImageSynchro("Shutter");
+mmc.assignImageSynchro("FilterCube");
+mmc.setAutoShutter(true);
+
+mmc.setStateLabel("FilterCube", "24 FITC/TR");
+mmc.setExposure(600);
+console.snapSingleImage();
+
+mmc.setStateLabel("FilterCube", "DAPI");
+mmc.setExposure(100);
+mmc.snapImage();
+console.setPixels(mmc.getImage());
+console.refreshImage();
+

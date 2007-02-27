@@ -1,0 +1,27 @@
+console.clearOutput();
+mmc.unloadAllDevices();
+
+// load devices
+mmc.loadDevice("FilterCube", "ZeissMTB", "Reflector");
+mmc.loadDevice("Z", "ZeissMTB", "Focus");
+mmc.loadDevice("DemoCam", "DemoCamera", "DCam");
+mmc.loadDevice("CAM", "Hamamatsu", "Hamamatsu_DCAM");
+mmc.loadDevice("Shutter", "ZeissMTB", "Shutter");
+mmc.loadDevice("Objective", "ZeissMTB", "Objective");
+mmc.loadDevice("Sideport", "ZeissMTB", "Sideport");
+mmc.loadDevice("Baseport", "ZeissMTB", "Baseport");
+
+mmc.defineConfig("Channel", "DAPI", "FilterCube", "State", "0");
+mmc.defineConfig("Channel", "TxR", "FilterCube", "State", "2");
+mmc.defineConfig("Channel", "FITC", "FilterCube", "State", "1");
+
+mmc.defineConfig("Lightpath", "Eyepiece", "Sideport", "State", "0");
+mmc.defineConfig("Lightpath", "Eyepiece", "Baseport", "State", "1");
+mmc.defineConfig("Lightpath", "Camera", "Sideport", "State", "1");
+//mmc.defineConfig("Lightpath", "Camera", "Baseport", "State", "0");
+
+// initialize the entire system
+console.message("\nINITIALIZING...");
+mmc.initializeAllDevices();
+console.message("\nDONE.");
+gui.initializeGUI();

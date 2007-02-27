@@ -1,0 +1,13 @@
+AM_CXXFLAGS = -fpermissive
+lib_LTLIBRARIES = Hamamatsu.la
+Hamamatsu_la_SOURCES = Hamamatsu.cpp Hamamatsu.h 
+## adding the libtool library gives problems on Intel OS X 10.4, adding the static lib works
+Hamamatsu_la_LIBADD = ../../MMDevice/.libs/libMMDevice.a
+##Hamamatsu_la_LDFLAGS = -module -framework dcamapi
+Hamamatsu_la_LDFLAGS = -module $(DCAMFRAMEWORKS)
+
+install:
+	cp .libs/Hamamatsu.so $(IJPATH)/$(MMPREFIX)Hamamatsu
+
+EXTRA_DIST = Hamamatsu_vc8.vcproj Hamamatsu.vcproj license.txt
+

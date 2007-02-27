@@ -1,0 +1,51 @@
+## Process this file with automake to produce Makefile.in
+SWIGLIB_SOURCES = MMCoreJ.i \
+	../MMCore/MMCore.h  \
+	../MMCore/Configuration.h \
+	../MMCore/Error.h \
+	../MMDevice/MMDeviceConstants.h
+
+MMCoreJ_wrap.cxx: $(SWIGLIB_SOURCES)
+	test -d mmcorej || mkdir mmcorej
+	touch $(srcdir)/MMCoreJ_wrap.cxx || (chmod +wrx $(srcdir) && touch $(srcdir)/MMCoreJ_wrap.cxx)
+	$(SWIG) -c++ -java -package mmcorej -outdir mmcorej -module MMCoreJ -o $(srcdir)/MMCoreJ_wrap.cxx $(srcdir)/MMCoreJ.i 
+	cp $(srcdir)/MMCoreJ_wrap.cxx MMCoreJ_wrap.cxx || echo "No problem"
+	
+INCLUDES = $(JAVAINC)
+lib_LTLIBRARIES = libMMCoreJ_wrap.la
+nodist_libMMCoreJ_wrap_la_SOURCES = MMCoreJ_wrap.cxx
+libMMCoreJ_wrap_la_SOURCES = $(SWIGLIB_SOURCES) \
+	$(top_srcdir)/MMDevice/DeviceUtils.cpp \
+	$(top_srcdir)/MMDevice/ImgBuffer.cpp \
+	$(top_srcdir)/MMDevice/ModuleInterface.cpp \
+	$(top_srcdir)/MMDevice/Property.cpp \
+	$(top_srcdir)/MMCore/Configuration.cpp \
+	$(top_srcdir)/MMCore/CoreProperty.cpp \
+	$(top_srcdir)/MMCore/MMCore.cpp \
+	$(top_srcdir)/MMCore/PluginManager.cpp 
+libMMCoreJ_wrap_la_LIBADD = $(LIBACE) 
+libMMCoreJ_wrap_la_LDFLAGS = -Wl, -module -ldl 
+
+$(srcdir)/MMCoreJ.jar:  MMCoreJ_wrap.cxx \
+	libMMCoreJ_wrap.la
+	$(JAVAC) -source 1.4 -target 1.4 mmcorej/*.java
+	$(JAR) cvf MMCoreJ.jar mmcorej/*.class
+
+all:
+	make $(srcdir)/MMCoreJ_wrap.cxx
+	make $(srcdir)/MMCoreJ.jar
+	cp MMCoreJ.jar ../bin
+
+macinstall:
+	cp .libs/libMMCoreJ_wrap.so $(top_srcdir)/MacInstaller/Package_contents/libMMCoreJ_wrap$(JAVASO)
+
+install:
+	cp .libs/libMMCoreJ_wrap.so $(IJPATH)/libMMCoreJ_wrap$(JAVASO) 
+	test -d $(IJPATH)/plugins/Micro-Manager || mkdir $(IJPATH)/plugins/Micro-Manager
+	cp MMCoreJ.jar $(IJPATH)/plugins/Micro-Manager/MMCoreJ.jar
+
+EXTRA_DIST = license.txt MMCoreJ_wrap_vc8.vcproj MMCoreJ_wrap.sln MMCoreJ_wrap.vcproj
+
+dist-hook:
+	test -d $(distdir)/mmcorej || mkdir $(distdir)/mmcorej
+	touch $(distdir)/mmcorej/empty.txt

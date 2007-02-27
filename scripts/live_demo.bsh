@@ -1,0 +1,44 @@
+// ---------------------------------------------------
+// Live processing demo
+// ---------------------------------------------------
+
+import ij.process.*; 
+console.message("Live processing demo");
+
+// set exposure
+// ------------
+mmc.SetExposure(50.0);
+console.updateGUI();
+
+// acquire image from the camera
+// -----------------------------
+console.snapSingleImage();
+
+// get info on the acquired image
+// ------------------------------
+x = console.getImageWidth();
+y = console.getImageHeight();
+d = console.getImageDepth();
+console.message("Image dimensions: " + x + " X " + y + " X " + d);
+
+// create stand-alone image processor
+// ----------------------------------
+if (d == 8)
+   ip = new ByteProcessor(x, y);
+else if (d==16)
+   ip = new ShortProcessor(x, y);
+else {
+   console.Message("Don't know how to handle " + d + " bit images");
+}
+
+// add some noise
+// --------------
+noiseLevel = 50;
+if (d>8)
+   noiseLevel = 3000;
+ip.setPixels(console.getPixels());
+ip.noise(noiseLevel);
+
+// display processed image
+// -----------------------
+console.setPixels(ip.getPixels());

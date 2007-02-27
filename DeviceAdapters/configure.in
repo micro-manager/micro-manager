@@ -1,0 +1,124 @@
+#                                               -*- Autoconf -*-
+# Process this file with autoconf to produce a configure script.
+
+AC_PREREQ(2.57)
+AC_INIT(FULL-PACKAGE-NAME, VERSION, BUG-REPORT-ADDRESS)
+AC_CONFIG_SRCDIR([DemoCamera/DemoCamera.cpp])
+#AC_CONFIG_HEADER([config.h])
+AC_CANONICAL_HOST
+AM_INIT_AUTOMAKE
+
+
+# Checks for programs.
+AC_PROG_CXX
+AC_PROG_CC
+AC_PROG_LIBTOOL
+
+# Checks for libraries.
+
+# Checks for header files.
+# Only build Hamamatsu driver when header files are present
+AM_CONDITIONAL([BUILD_HAMAMATSU],[test -f "/Library/Frameworks/dcamapi.framework/Headers/dcamapi.h"])
+# Same for PVCAM
+AM_CONDITIONAL([BUILD_PVCAM],[test -f "/Library/Frameworks/PVCAM.framework/Headers/pvcam.h"])
+# and for Firewire cameras (libdc1394) 
+# TODO: Need better test here
+AM_CONDITIONAL([BUILD_DC1394],[test -f "/usr/local/include/iidc1394/control.h"])
+# Only build the Nikon TE2000 when the code is there
+AM_CONDITIONAL([BUILD_TE2000],[test -f "NikonTE2000/NikonTE2000.h"])
+if test -f $(srcdir)"NikonTE2000/NikonTE2000.h"; then
+   TE2000=NikonTE2000
+else
+   TE2000=
+fi
+AC_SUBST(TE2000)
+
+# Checks for typedefs, structures, and compiler characteristics.
+AC_HEADER_STDBOOL
+AC_C_CONST
+AC_C_INLINE
+
+#----------------------------------------------------------------
+# LINKFORSHARED are the flags passed to the $(CC) command that links
+# -- this is only needed for a few systems
+#----------------------------------------------------------------
+AC_MSG_CHECKING(LINKFORSHARED)
+if test -z "$LINKFORSHARED"
+then    
+case $host in   
+   *-*-aix*)   LINKFORSHARED='-Wl,-bE:$(srcdir)/python.exp -lld';;
+   *-*-hp*) LINKFORSHARED="-Wl,-E -Wl,+s -Wl,+b\$(BINLIBDEST)/lib-dynload";;
+   *-*-linux*) LINKFORSHARED="-Xlinker -export-dynamic";;
+   *-*-next*) LINKFORSHARED="-u libsys_s";;
+   *-sco-sysv*) LINKFORSHARED="-Bdynamic -dy -Wl,-Bexport";;                  
+   *-*-irix6*) LINKFORSHARED="-all";;   esac
+fi
+AC_MSG_RESULT($LINKFORSHARED)
+AC_SUBST(LINKFORSHARED)
+
+# On the Mac we need some frameworks that can be in the way on Linux
+case $host in 
+   *apple-darwin*)
+      AC_MSG_CHECKING(dcam linker flags)
+      DCAMFRAMEWORKS="-framework dcamapi"
+      AC_MSG_RESULT($DCAMFRAMEWORKS)
+      AC_MSG_CHECKING(pvcam linker flags)
+      PVCAMFRAMEWORKS="-framework PVCAM"
+      AC_MSG_RESULT($PVCAMFRAMEWORKS)
+      AC_MSG_CHECKING(Serial adapter linker flags)
+      SERIALFRAMEWORKS="-framework CoreFoundation -framework IOKit"
+      AC_MSG_RESULT($SERIALFRAMEWORKS)
+esac
+AC_SUBST(DCAMFRAMEWORKS)
+AC_SUBST(PVCAMFRAMEWORKS)
+AC_SUBST(SERIALFRAMEWORKS)
+
+# Micro-Manager libraries have a prefix to make them unique.  This prefix is defined here:
+AC_MSG_CHECKING(library prefix)
+MMPREFIX="mmgr_dal_"
+AC_MSG_RESULT($MMPREFIX)
+AC_SUBST(MMPREFIX)
+
+# Determine if we need to look for ImageJ
+AC_MSG_CHECKING(whether to build for imagej)
+AC_ARG_WITH(imagej, [  --without-imagej        Build without the ImageJ-based GUI], [IMAGEJ="$withval"], [IMAGEJ="yes"])
+AC_MSG_RESULT($IMAGEJ)
+
+if test "$IMAGEJ" = "yes" ; then
+   #----------------------------------------------------------------
+   # Find ImageJ directory
+   #----------------------------------------------------------------
+   AC_MSG_CHECKING(for ImageJ directory)
+   AC_ARG_WITH(ImageJdir, [  --with-imagej=path      Set location of ImageJ directory], [IMAGEJDIR="$withval"], [IMAGEJDIR=])
+
+   if test -z "$IMAGEJDIR"; then  
+      IMAGEJDIR="/Applications/ImageJ_dev /Applications/ImageJ /usr/local/ImageJ /usr/local/imagej "
+   fi  
+
+   IJPATH=""                                                                   
+   for d in $IMAGEJDIR ; do                                                    
+     if test -d "$d" ; then 
+       AC_MSG_RESULT($d)
+       IJPATH=$d
+       break
+     fi
+   done
+
+   if test "$IJPATH" = "" ; then
+     AC_MSG_ERROR([not found, Use the without-imagej directive to build without ImageJ or install ImageJ (http://rsb.info.nih.gov/ij/ and rerun configure, possibly using the --with-imagej=path directive])
+   fi
+fi
+
+AC_SUBST(IJPATH)
+
+# Checks for library functions.
+AC_HEADER_STDC
+AC_CHECK_FUNCS([memset])
+
+
+# AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES(Makefile AOTF/Makefile Andor/Makefile DTOpenLayer/Makefile DemoCamera/Makefile SerialManagerUNIX/Makefile Ludl/Makefile ZeissCAN/Makefile Vincent/Makefile Conix/Makefile Hamamatsu/Makefile PVCAM/Makefile Nikon/Makefile NikonTE2000/Makefile ParallelPort/Makefile Sensicam/Makefile SerialManager/Makefile StanfordPhotonics/Makefile SutterLambda/Makefile Prior/Makefile dc1394/Makefile Yokogawa/Makefile)
+AC_OUTPUT
+##if $BUILD_TE2000_TRUE; then
+##   AC_OUTPUT (NikonTE2000/Makefile)
+##fi

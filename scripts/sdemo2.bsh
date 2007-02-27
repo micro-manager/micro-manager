@@ -1,0 +1,13 @@
+import ij.*;
+import ij.gui.*;
+import ij.process.*;
+
+ImageProcessor ip;
+
+ip = new ByteProcessor(512, 512);
+ip.setMinAndMax(0, 255);
+ip.setColor(Color.black);
+ip.fill();
+imp = new ImagePlus("MMAcq", ip);
+imc = new ImageCanvas(imp);
+imw = new ImageWindow(imp, imc);

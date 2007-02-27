@@ -1,0 +1,233 @@
+///////////////////////////////////////////////////////////////////////////////
+// FILE:          NikonTE2000.h
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     DeviceAdapters
+//-----------------------------------------------------------------------------
+// DESCRIPTION:   Nikon TE2000 adapter.
+//
+// AUTHOR:        Nenad Amodaj, nenad@amodaj.com, 05/03/2006
+// COPYRIGHT:     University of California San Francisco
+// LICENSE:       This file is distributed under the BSD license.
+//                License text is included with the source distribution.
+//
+//                This file is distributed in the hope that it will be useful,
+//                but WITHOUT ANY WARRANTY; without even the implied warranty
+//                of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+// CVS:           $Id$
+//
+
+#ifndef _NIKON_TE2000_H_
+#define _NIKON_TE2000_H_
+
+#include "../../MMDevice/MMDevice.h"
+#include "../../MMDevice/DeviceBase.h"
+#include <string>
+#include <map>
+
+//////////////////////////////////////////////////////////////////////////////
+// Error codes
+//
+#define ERR_NOT_CONNECTED         10002
+#define ERR_UNKNOWN_POSITION      10003
+#define ERR_TYPE_NOT_DETECTED     10004
+#define ERR_EMPTY_ANSWER_RECEIVED 10005
+
+class Hub : public CGenericBase<Hub>
+{
+public:
+   Hub();
+   ~Hub();
+  
+   // MMDevice API
+   // ------------
+   int Initialize();
+   int Shutdown();
+  
+   void GetName(char* pszName) const;
+   bool Busy();
+
+   // action interface
+   // ----------------
+   int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+private:
+   bool initialized_;
+   std::string name_;
+   std::string port_;
+};
+
+class Nosepiece : public CStateDeviceBase<Nosepiece>
+{
+public:
+   Nosepiece();
+   ~Nosepiece();
+  
+   // MMDevice API
+   // ------------
+   int Initialize();
+   int Shutdown();
+  
+   void GetName(char* pszName) const;
+   bool Busy();
+   unsigned long GetNumberOfPositions()const {return numPos_;}
+
+   // action interface
+   // ----------------
+   int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+private:
+   bool initialized_;
+   unsigned numPos_;
+   std::string name_;
+};
+
+class OpticalPath : public CStateDeviceBase<OpticalPath>
+{
+public:
+   OpticalPath();
+   ~OpticalPath();
+  
+   // MMDevice API
+   // ------------
+   int Initialize();
+   int Shutdown();
+  
+   void GetName(char* pszName) const;
+   bool Busy();
+   unsigned long GetNumberOfPositions()const {return numPos_;}
+
+   // action interface
+   // ----------------
+   int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+private:
+   bool initialized_;
+   unsigned numPos_;
+   std::string name_;
+};
+
+class FilterBlock : public CStateDeviceBase<FilterBlock>
+{
+public:
+   FilterBlock();
+   ~FilterBlock();
+  
+   // MMDevice API
+   // ------------
+   int Initialize();
+   int Shutdown();
+  
+   void GetName(char* pszName) const;
+   bool Busy();
+   unsigned long GetNumberOfPositions()const {return numPos_;}
+
+   // action interface
+   // ----------------
+   int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+private:
+   bool initialized_;
+   unsigned numPos_;
+   std::string name_;
+};
+
+class FocusStage : public CStageBase<FocusStage>
+{
+public:
+   FocusStage();
+   ~FocusStage();
+
+   bool Busy();
+   void GetName(char* pszName) const;
+
+   int Initialize();
+   int Shutdown();
+     
+   // Stage API
+   virtual int SetPositionUm(double pos);
+   virtual int GetPositionUm(double& pos);
+   virtual double GetStepSize() const {return stepSize_um_;}
+   virtual int SetPositionSteps(long steps) ;
+   virtual int GetPositionSteps(long& steps);
+   virtual int SetOrigin();
+   virtual int GetLimits(double& lower, double& upper)
+   {
+      lower = lowerLimit_;
+      upper = upperLimit_;
+      return DEVICE_OK;
+   }
+
+   // action interface
+   // ----------------
+   int OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+private:
+   double stepSize_um_;
+   bool busy_;
+   bool initialized_;
+   double lowerLimit_;
+   double upperLimit_;
+};
+
+//class Shutter : public CShutterBase<Shutter>
+//{
+//public:
+//   Shutter();
+//   ~Shutter();
+//
+//   bool Busy();
+//   void GetName(char* pszName) const;
+//   int Initialize();
+//   int Shutdown();
+//      
+//   // Shutter API
+//   int SetOpen(bool open = true);
+//   int GetOpen(bool& open);
+//   int Fire(double deltaT);
+//
+//   // action interface
+//   // ----------------
+//   int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+//private:
+//   bool initialized_;
+//};
+//
+
+class Lamp : public CShutterBase<Lamp>
+{
+public:
+   Lamp();
+   ~Lamp();
+  
+   // MMDevice API
+   // ------------
+   int Initialize();
+   int Shutdown();
+  
+   void GetName(char* pszName) const;
+   bool Busy();
+
+   // Shutter API
+   int SetOpen(bool open = true);
+   int GetOpen(bool& open);
+   int Fire(double deltaT);
+
+   // action interface
+   // ----------------
+   int OnOnOff(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnVoltage(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+   // additional (local) API
+   // ----------------------
+   void SetName(const char* name) {name_ = name;}
+
+private:
+   bool initialized_;
+   std::string name_;
+   long openTimeUs_;
+};
+#endif //_NIKON_TE2000_H_

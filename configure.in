@@ -1,0 +1,254 @@
+#                                               -*- Autoconf -*-
+# Process this file with autoconf to produce a configure script.
+
+AC_PREREQ(2.57)
+AC_INIT([Micro-Manager], 1.0.63, info@micro-manager.org)
+#AC_CONFIG_HEADERS([config.h])
+AC_CONFIG_SRCDIR([MMCore/MMCore.cpp])
+AC_CANONICAL_HOST
+AM_INIT_AUTOMAKE
+
+AC_PROG_CXX
+AC_PROG_CC
+AC_LIBTOOL_DLOPEN
+AC_PROG_LIBTOOL
+
+#----------------------------------------------------------------
+# LINKFORSHARED are the flags passed to the $(CC) command that links
+# -- this is only needed for a few systems
+#----------------------------------------------------------------
+
+AC_MSG_CHECKING(LINKFORSHARED)
+if test -z "$LINKFORSHARED" 
+then    
+   case $host in
+   *-*-aix*)   LINKFORSHARED='-Wl,-bE:$(srcdir)/python.exp -lld';;
+   *-*-hp*)
+   LINKFORSHARED="-Wl,-E -Wl,+s -Wl,+b\$(BINLIBDEST)/lib-dynload";;
+   *-*-linux*) LINKFORSHARED="-Xlinker -export-dynamic";;
+   *-*-next*) LINKFORSHARED="-u libsys_s";;
+   *-sco-sysv*) LINKFORSHARED="-Bdynamic -dy -Wl,-Bexport";;                 
+   *-*-irix6*) LINKFORSHARED="-all";;
+   esac
+fi
+AC_MSG_RESULT($LINKFORSHARED)
+AC_SUBST(LINKFORSHARED)
+
+
+#----------------------------------------------------------------
+# Look for java binaries and headers
+#----------------------------------------------------------------
+
+AC_CHECK_PROGS(JAVA, java kaffe guavac)
+AC_CHECK_PROGS(JAVAC, javac)
+AC_CHECK_PROGS(JAR, jar)
+
+# Find Java header files:
+AC_MSG_CHECKING(for java include file jni.h)
+AC_ARG_WITH(javaincl, [  --with-javaincl=path    Set location of Java include directory], [JAVAINCDIR="$withval"], [JAVAINCDIR=])
+
+if test -z "$JAVAINCDIR"; then  
+   JAVAINCDIR="/usr/j2sdk*/include /usr/local/j2sdk*/include /usr/jdk*/include /usr/local/jdk*/include /opt/j2sdk*/include /opt/jdk*/include /usr/java/include /usr/java/j2sdk*/include /usr/java/jdk*/include /usr/local/java/include /opt/java/include /usr/include/java /usr/local/include/java /usr/lib/java/include /usr/include/kaffe /usr/local/include/kaffe /usr/include"                                                                             
+  # Add in default installation directory on Windows for Cygwin              
+  case $host in                                                              
+  *-*-cygwin* | *-*-mingw*) JAVAINCDIR="c:/Program*Files/Java/jdk*/include d:/Program*Files/Java/jdk*/include c:/j2sdk*/include d:/j2sdk*/include c:/jdk*/include d:/jdk*/include $JAVAINCDIR";;
+  *-*-darwin*) JAVAINCDIR="/System/Library/Frameworks/JavaVM.framework/Headers $JAVAINCDIR";;
+  *);;                                                                       
+  esac                                                                       
+fi  
+
+JAVAINC=""                                                                   
+for d in $JAVAINCDIR ; do                                                    
+  if test -r "$d/jni.h" ; then 
+    AC_MSG_RESULT($d)
+    JAVAINCDIR=$d
+    JAVAINC=-I\"$d\"
+    break
+  fi
+done
+
+if test "$JAVAINC" = "" ; then
+  AC_MSG_RESULT(not found)
+else
+  # now look for <arch>/jni_md.h
+  AC_MSG_CHECKING(for java include file jni_md.h)
+  JAVAMDDIR=`find "$JAVAINCDIR" -follow -name jni_md.h -print`
+  if test "$JAVAMDDIR" = "" ; then
+    AC_MSG_RESULT(not found)
+  else
+    JAVAMDDIR=`dirname "$JAVAMDDIR" | tail -n 1`
+    JAVAINC="${JAVAINC} -I\"$JAVAMDDIR\""
+    AC_MSG_RESULT($JAVAMDDIR)
+  fi
+fi
+
+# Java on Windows platforms including Cygwin doesn't use libname.dll, rather name.dll when loading dlls
+case $host in
+*-*-cygwin* | *-*-mingw*) JAVALIBRARYPREFIX="";;
+*)JAVALIBRARYPREFIX="lib";;
+esac
+
+# Java on Mac OS X tweaks
+case $host in
+*-*-darwin*) 
+    JAVASO=".jnilib"
+    JAVALDSHARED='$(CC)'
+    JAVACXXSHARED='$(CXX)'
+    ;;
+*)
+    # JAVASO='$(SO)'
+    JAVASO='.so'
+    JAVALDSHARED='$(LDSHARED)'
+    JAVACXXSHARED='$(CXXSHARED)'
+    ;;
+esac
+
+# Determine if we need to look for ImageJ
+AC_MSG_CHECKING(whether to build for imagej)
+AC_ARG_WITH(imagej, [  --without-imagej        Build without the ImageJ-based GUI], [IMAGEJ="$withval"], [IMAGEJ="yes"])
+AC_MSG_RESULT($IMAGEJ)
+
+if test "$IMAGEJ" = "yes" ; then
+   #----------------------------------------------------------------
+   # Find ImageJ directory
+   #----------------------------------------------------------------
+   AC_MSG_CHECKING(for ImageJ directory)
+   AC_ARG_WITH(ImageJdir, [  --with-imagej=path      Set location of ImageJ directory], [IMAGEJDIR="$withval"], [IMAGEJDIR=])
+
+   if test -z "$IMAGEJDIR"; then  
+      IMAGEJDIR="/Applications/ImageJ_dev /Applications/ImageJ /usr/local/ImageJ /usr/local/imagej "
+   fi  
+
+   IJPATH=""                                                                   
+   for d in $IMAGEJDIR ; do                                                    
+     if test -d "$d" ; then 
+       AC_MSG_RESULT($d)
+       IJPATH=$d
+       break
+     fi
+   done
+
+   if test "$IJPATH" = "" ; then
+     AC_MSG_ERROR([not found, Use the without-imagej directive to build without ImageJ or install ImageJ (http://rsb.info.nih.gov/ij/ and rerun configure, possibly using the --with-imagej=path directive])
+   fi
+
+   #----------------------------------------------------------------
+   # Test for MicroManage plugin folder and create when needed
+   #----------------------------------------------------------------
+   AC_MSG_CHECKING([for MicroManage folder in plugins folder])
+   if test -d "$IJPATH/plugins/MicroManage" ; then
+      AC_MSG_RESULT([found])
+   else
+      mkdir "$IJPATH/plugins/MicroManage"
+      AC_MSG_RESULT([created])
+   fi
+
+
+   #----------------------------------------------------------------
+   # Find ij.jar in directory
+   #----------------------------------------------------------------
+   AC_MSG_CHECKING(for ij.jar in ImageJ directory)
+   IJJARDIR="ij.jar ImageJ.app/Contents/Resources/Java/ij.jar"
+   for d in $IJJARDIR ; do
+      if test -r "$IJPATH/$d" ; then
+         IJJARPATH="$IJPATH/$d"
+         AC_MSG_RESULT($IJJARPATH)
+         break
+      fi
+   done
+   if test "$IJJARPATH" = "" ; then
+     AC_MSG_ERROR([not found, Use the without-imagej directive to build without ImageJ or install ImageJ (http://rsb.info.nih.gov/ij/ and rerun configure, possibly using the --with-imagej=path directive])
+   fi
+
+   #----------------------------------------------------------------
+   # Find beanshell.jar and Image_5D in ImageJ plugins directory
+   #----------------------------------------------------------------
+   AC_MSG_CHECKING(for beanshell jar file in ImageJ plugins directory)
+   if test -r "$IJPATH/plugins/bsh-2.0b4.jar" ; then
+      BSHJARPATH="$IJPATH/plugins/bsh-2.0b4.jar"
+      AC_MSG_RESULT($BSHJARPATH)
+   fi
+   if test "$BSHJARPATH" = "" ; then
+      AC_MSG_ERROR([not found, Use the without-imagej directove to build without ImageJ GUI, or download Beanshell (http://www.beanshell.org/download.html) and copy bsh-2.0b4.jar to $IJPATH/plugins])
+   fi
+
+   #AC_MSG_CHECKING(for Image_5D jar file in ImageJ plugins directory)
+   #if test -r "$IJPATH/plugins/Image_5D.jar" ; then
+   #   I5DJARPATH="$IJPATH/plugins/Image_5D.jar"
+   #   AC_MSG_RESULT($I5DJARPATH)
+   #fi
+   #if test "$I5DJARPATH" = "" ; then
+   #   AC_MSG_ERROR([not found, Use the without-imagej directove to build without ImageJ GUI or download Image_5D.jar (http://rsb.info.nih.gov/ij/plugins/image5d.html) and copy to $IJPATH/plugins])
+   #fi
+fi 
+#---------------------------------------------------
+# End of ImageJ part
+#---------------------------------------------------
+
+
+#---------------------------------------------------
+# Check for ACE, static on Mac and libtool lib on Linux
+#---------------------------------------------------
+
+AC_MSG_CHECKING(for libACE)
+if test -z "$LIBACE" 
+then    
+   case $host in
+   *-*-linux*) 
+   if test -r /usr/local/lib/libACE.la ; then
+      LIBACE="/usr/local/lib/libACE.la"
+   else
+      AC_MSG_ERROR([not found, download from http://deuce.doc.wustl.edu/Download.html, build and install (cd ACE_wrappers \ mkdir build \ cd build \ ../configure \ make \ make install ) and rerun configure])
+   fi
+   ;;
+  *-*-darwin*) 
+  if test -r /usr/local/lib/libACE.a; then
+      LIBACE="/usr/local/lib/libACE.a"
+   else
+      AC_MSG_ERROR([not found, download from http://deuce.doc.wustl.edu/Download.html, build and install (cd ACE_wrappers \ mkdir build \ cd build \ ../configure --enable-static\ make \ make install ) and rerun configure])
+   fi
+   ;;
+   esac
+fi
+AC_MSG_RESULT($LIBACE)
+
+# Export variables to Makefile
+AC_SUBST(JAVAINC)
+AC_SUBST(JAVADYNAMICLINKING)
+AC_SUBST(JAVALIBRARYPREFIX)
+AC_SUBST(JAVASO)
+AC_SUBST(JAVALDSHARED)
+AC_SUBST(JAVACXXSHARED)
+AC_SUBST(JAVACFLAGS)
+AC_SUBST(IJPATH)
+AC_SUBST(IJJARPATH)
+AC_SUBST(BSHJARPATH)
+AC_SUBST(I5DJARPATH)
+AC_SUBST(LIBACE)
+
+
+# Checks for programs.
+AC_CHECK_PROGS(SWIG, swig)
+if test "$SWIG" = "" ; then
+   AC_MSG_ERROR([not found, swig is needed to build this application.  Please download (http://www.swig.org/download.html) and install])
+fi
+
+# Checks for libraries.
+AC_CHECK_LIB(dl, dlopen)   # Dynamic linking for SunOS/Solaris and SYSV
+
+# Checks for header files.
+AC_HEADER_STDC
+
+# Checks for typedefs, structures, and compiler characteristics.
+AC_HEADER_STDBOOL
+AC_C_CONST
+AC_C_INLINE
+
+# Checks for library functions.
+AC_HEADER_STDC
+AC_CHECK_FUNCS([memset])
+
+
+# AC_CONFIG_FILES([Makefile])
+AC_CONFIG_SUBDIRS(DeviceAdapters)
+AC_OUTPUT(Makefile ModuleTest/Makefile MMCore/Makefile MMCoreJ_wrap/Makefile Test_MMCore/Makefile Test_Serial/Makefile mmstudio/Makefile MMDevice/Makefile bin/Makefile)

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?fileVersion 2.1.0?>
+
+<ManagedProjectBuildInfo>
+<project id="MMCore.cdt.managedbuild.target.gnu.cygwin.so.343000256" name="Shared Library (Gnu on Windows)" projectType="cdt.managedbuild.target.gnu.cygwin.so">
+<configuration artifactExtension="dll" artifactName="MMCore" cleanCommand="rm -rf" errorParsers="org.eclipse.cdt.core.MakeErrorParser;org.eclipse.cdt.core.GCCErrorParser;org.eclipse.cdt.core.GLDErrorParser;org.eclipse.cdt.core.GASErrorParser" id="cdt.managedbuild.config.gnu.cygwin.so.debug.448393421" name="Debug" parent="cdt.managedbuild.config.gnu.cygwin.so.debug">
+<toolChain id="cdt.managedbuild.toolchain.gnu.cygwin.so.debug.1891900166" name="GCC Tool Chain" superClass="cdt.managedbuild.toolchain.gnu.cygwin.so.debug">
+<tool id="cdt.managedbuild.tool.gnu.c.compiler.cygwin.so.debug.1185247480" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.cygwin.so.debug"/>
+<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.cygwin.so.debug.958239990" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.cygwin.so.debug"/>
+<tool id="cdt.managedbuild.tool.gnu.c.linker.cygwin.so.debug.1728410946" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.cygwin.so.debug"/>
+<tool id="cdt.managedbuild.tool.gnu.cpp.linker.cygwin.so.debug.1140712030" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.cygwin.so.debug">
+<option id="gnu.cpp.link.option.libs.163566697" superClass="gnu.cpp.link.option.libs" valueType="libs">
+<listOptionValue builtIn="false" value="MMDevice"/>
+</option>
+<option id="gnu.cpp.link.option.paths.413821426" superClass="gnu.cpp.link.option.paths" valueType="stringList">
+<listOptionValue builtIn="false" value="&quot;C:\projects\MicroManage\MMDevice\Debug&quot;"/>
+</option>
+<option id="gnu.cpp.link.option.flags.178548843" superClass="gnu.cpp.link.option.flags" value="-Wl,--add-stdcall-alias" valueType="string"/>
+</tool>
+<tool id="cdt.managedbuild.tool.gnu.assembler.cygwin.so.debug.1820630808" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.cygwin.so.debug"/>
+</toolChain>
+</configuration>
+<configuration artifactExtension="dll" artifactName="MMCore" cleanCommand="rm -rf" errorParsers="org.eclipse.cdt.core.MakeErrorParser;org.eclipse.cdt.core.GCCErrorParser;org.eclipse.cdt.core.GLDErrorParser;org.eclipse.cdt.core.GASErrorParser" id="cdt.managedbuild.config.gnu.cygwin.so.release.929520891" name="Release" parent="cdt.managedbuild.config.gnu.cygwin.so.release">
+<toolChain id="cdt.managedbuild.toolchain.gnu.cygwin.so.release.1595640136" name="GCC Tool Chain" superClass="cdt.managedbuild.toolchain.gnu.cygwin.so.release">
+<tool id="cdt.managedbuild.tool.gnu.c.compiler.cygwin.so.release.115573458" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.cygwin.so.release"/>
+<tool id="cdt.managedbuild.tool.gnu.cpp.compiler.cygwin.so.release.858636441" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.cygwin.so.release"/>
+<tool id="cdt.managedbuild.tool.gnu.c.linker.cygwin.so.release.1871823565" name="GCC C Linker" superClass="cdt.managedbuild.tool.gnu.c.linker.cygwin.so.release"/>
+<tool id="cdt.managedbuild.tool.gnu.cpp.linker.cygwin.so.release.1041730293" name="GCC C++ Linker" superClass="cdt.managedbuild.tool.gnu.cpp.linker.cygwin.so.release"/>
+<tool id="cdt.managedbuild.tool.gnu.assembler.cygwin.so.release.1294809173" name="GCC Assembler" superClass="cdt.managedbuild.tool.gnu.assembler.cygwin.so.release"/>
+</toolChain>
+</configuration>
+</project>
+</ManagedProjectBuildInfo>
