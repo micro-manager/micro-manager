@@ -111,10 +111,10 @@ import com.swtdesigner.SwingResourceManager;
  * Main panel and application class for the MMStudio.
  */
 public class MMStudioMainFrame extends JFrame implements DeviceControlGUI {
-   
    public static String LIVE_WINDOW_TITLE = "AcqWindow";
    
-   private static final String VERSION = "1.0.65";
+   private static final String MICRO_MANAGER_TITLE = "Micro-Manager 2.0";
+   private static final String VERSION = "2.0.0";
    private static final long serialVersionUID = 3556500289598574541L;
    
    private static final String MAIN_FRAME_X = "x";
@@ -261,7 +261,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI {
       setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
       springLayout_ = new SpringLayout();
       getContentPane().setLayout(springLayout_);
-      setTitle("Micro-Manager 1.0");
+      setTitle(MICRO_MANAGER_TITLE);
       
       options_ = new MMOptions();
       options_.loadSettings();
