@@ -167,6 +167,12 @@ int CSensicam::OnCameraType(MM::PropertyBase* pProp, MM::ActionType eAct)
             pProp->Set("Long exposure OEM");
          break;
       
+/* Liisa */ 
+case 8:
+pProp->Set("Long exposure OEM");
+break;
+/* end Liisa */ 
+		
          default:
             return ERR_UNKNOWN_CAMERA_TYPE;
          break;
@@ -383,6 +389,16 @@ int CSensicam::Initialize()
          //10ms exposure time
          snprintf(m_pszTimes, m_nTimesLen, "0,%.0f,-1,-1", m_dExposure);
       break;
+
+/* Liisa */
+case 8:
+m_nMode = M_LONG;
+m_nSubMode = NORMALLONG;
+m_nTrig = 0;
+//10ms exposure time
+snprintf(m_pszTimes, m_nTimesLen, "0,%.0f,-1,-1", m_dExposure);
+break;
+/* end Liisa */
       
       default:
          // invalid type
