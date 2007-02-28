@@ -98,7 +98,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy $(TargetPath) ..\bin&#x0D;&#x0A;del mmcorej\*.class&#x0D;&#x0A;%JAVA_HOME%\bin\javac mmcorej\*.java&#x0D;&#x0A;%JAVA_HOME%\bin\jar cvf MMCoreJ.jar mmcorej\*.class&#x0D;&#x0A;copy *.jar ..\bin&#x0D;&#x0A;copy *.jar \&quot;Program Files&quot;\ImageJ\plugins\MicroManage&#x0D;&#x0A;copy ..\bin\*.dll  \&quot;Program Files&quot;\ImageJ&#x0D;&#x0A;"
+				CommandLine="copy $(TargetPath) ..\bin&#x0D;&#x0A;del mmcorej\*.class&#x0D;&#x0A;%JAVA_HOME%\bin\javac mmcorej\*.java&#x0D;&#x0A;%JAVA_HOME%\bin\jar cvf MMCoreJ.jar mmcorej\*.class&#x0D;&#x0A;copy *.jar ..\bin&#x0D;&#x0A;copy *.jar \&quot;Program Files&quot;\ImageJ\plugins\Micro-Manager&#x0D;&#x0A;copy ..\bin\*.dll  \&quot;Program Files&quot;\ImageJ&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -180,7 +180,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy $(TargetPath) ..\bin&#x0D;&#x0A;del mmcorej\*.class&#x0D;&#x0A;%JAVA_HOME%\bin\javac mmcorej\*.java&#x0D;&#x0A;%JAVA_HOME%\bin\jar cvf MMCoreJ.jar mmcorej\*.class&#x0D;&#x0A;copy *.jar ..\bin&#x0D;&#x0A;copy *.jar \&quot;Program Files&quot;\ImageJ\plugins\MicroManage&#x0D;&#x0A;copy ..\bin\*.dll  \&quot;Program Files&quot;\ImageJ&#x0D;&#x0A;"
+				CommandLine="copy $(TargetPath) ..\bin&#x0D;&#x0A;del mmcorej\*.class&#x0D;&#x0A;%JAVA_HOME%\bin\javac mmcorej\*.java&#x0D;&#x0A;%JAVA_HOME%\bin\jar cvf MMCoreJ.jar mmcorej\*.class&#x0D;&#x0A;copy *.jar ..\bin&#x0D;&#x0A;copy *.jar \&quot;Program Files&quot;\ImageJ\plugins\Micro-Manager&#x0D;&#x0A;copy ..\bin\*.dll  \&quot;Program Files&quot;\ImageJ&#x0D;&#x0A;"
 			/>
 		</Configuration>
 	</Configurations>
