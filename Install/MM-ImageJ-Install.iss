@@ -3,17 +3,17 @@
 
 [Setup]
 AppName=Micro-Manager
-AppVerName=Micro-Manager 1.0 (beta)
+AppVerName=Micro-Manager 2.0
 AppPublisher=Vale Lab, UCSF
 AppPublisherURL=http://www.micro-manager.org
 AppSupportURL=http://www.micro-manager.org
 AppUpdatesURL=http://www.micro-manager.org
 DefaultDirName=C:/Program Files/Micro-Manager
 DefaultGroupName=Micro-Manager
-OutputBaseFilename=MMSetup_1_0_xx
+OutputBaseFilename=MMSetup_2_0_xx
 Compression=lzma
 SolidCompression=true
-VersionInfoVersion=1.0
+VersionInfoVersion=2.0
 VersionInfoCompany=micro-manager.org
 VersionInfoCopyright=University of California San Francisco
 
