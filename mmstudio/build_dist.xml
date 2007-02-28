@@ -4,13 +4,13 @@
 <project name="MMJ" default="buildMMStudio">
 
 	<!-- Specify version in the installer name -->
-	<property name="InstallerName" value="MMSetup_1_0_61"/>
+	<property name="InstallerName" value="MMSetup_2_0_1"/>
 
 	<!-- Specify the system path to the ImageJ root directory -->
 	<property name="ImageJPath" value="C:/Program Files/ImageJ"/>
-	<property name="InstallRoot" value="C:/projects/MicroManage/Install/micro-manager-1.0"/>
-	<property name="InstallScripts" value="C:/projects/MicroManage/Install"/>
-	<property name="NativeRoot" value="C:\projects\MicroManage\MMCoreJ_wrap"/>
+	<property name="InstallRoot" value="C:/projects/micromanager2/Install/micro-manager-2.0"/>
+	<property name="InstallScripts" value="C:/projects/mciromanager2/Install"/>
+	<property name="NativeRoot" value="C:\projects\micromanager2\MMCoreJ_wrap"/>
 
 	<!-- Do not modify from this point on -->
 	<property name="MMPluginDir" value="${ImageJPath}/plugins/Micro-Manager"/>
