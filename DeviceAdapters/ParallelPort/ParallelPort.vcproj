@@ -144,7 +144,7 @@
 				AdditionalDependencies="inpout32.lib"
 				OutputFile="$(OutDir)/mmgr_dal_ParallelPort.dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\3rdparty\inpout32\lib"
+				AdditionalLibraryDirectories="..\..\..\3rdparty\inpout32\lib"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
