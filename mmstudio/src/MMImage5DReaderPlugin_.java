@@ -30,8 +30,6 @@ import java.io.File;
 
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
-import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
 
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.image5d.ChannelCalibration;
