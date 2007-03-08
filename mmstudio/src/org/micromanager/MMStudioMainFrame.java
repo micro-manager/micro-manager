@@ -106,7 +106,6 @@ import org.micromanager.utils.WaitDialog;
 
 import com.swtdesigner.SwingResourceManager;
 
-
 /*
  * Main panel and application class for the MMStudio.
  */
@@ -1049,6 +1048,22 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI {
       springLayout_.putConstraint(SpringLayout.NORTH, saveConfigButton_, 2, SpringLayout.NORTH, getContentPane());
       springLayout_.putConstraint(SpringLayout.EAST, saveConfigButton_, 500, SpringLayout.WEST, getContentPane());
       springLayout_.putConstraint(SpringLayout.WEST, saveConfigButton_, 435, SpringLayout.WEST, getContentPane());
+
+      final JButton refreshButton_1 = new JButton();
+      refreshButton_1.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent arg0) {
+            XYPositionListDlg dlg = new XYPositionListDlg();
+            dlg.setVisible(true);
+         }
+      });
+      refreshButton_1.setToolTipText("Refresh all GUI controls directly from the hardware");
+      refreshButton_1.setFont(new Font("Arial", Font.PLAIN, 10));
+      refreshButton_1.setText("XY List");
+      getContentPane().add(refreshButton_1);
+      springLayout_.putConstraint(SpringLayout.EAST, refreshButton_1, 95, SpringLayout.WEST, getContentPane());
+      springLayout_.putConstraint(SpringLayout.WEST, refreshButton_1, 7, SpringLayout.WEST, getContentPane());
+      springLayout_.putConstraint(SpringLayout.SOUTH, refreshButton_1, 136, SpringLayout.NORTH, getContentPane());
+      springLayout_.putConstraint(SpringLayout.NORTH, refreshButton_1, 115, SpringLayout.NORTH, getContentPane());
 
    }
    
