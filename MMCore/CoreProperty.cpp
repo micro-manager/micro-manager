@@ -166,6 +166,8 @@ void CorePropertyCollection::Refresh()
    // Focus
    Set(MM::g_Keyword_CoreFocus, core_->getFocusDevice().c_str());
 
+   // XYStage
+   Set(MM::g_Keyword_CoreXYStage, core_->getXYStageDevice().c_str());
 }
 
 bool CorePropertyCollection::IsReadOnly(const char* propName) const

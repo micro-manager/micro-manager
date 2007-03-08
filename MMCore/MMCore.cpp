@@ -86,7 +86,7 @@ const int MMCore_versionBuild = 25;
  * devices at this point.
  */
 CMMCore::CMMCore() :
-   camera_(0), shutter_(0), focusStage_(0), pollingIntervalMs_(10), timeoutMs_(5000),
+   camera_(0), shutter_(0), focusStage_(0), xyStage_(0), pollingIntervalMs_(10), timeoutMs_(5000),
    logStream_(0), autoShutter_(true), callback_(0), configGroups_(0), properties_(0)
 {
    configGroups_ = new ConfigGroupCollection();
@@ -166,9 +166,13 @@ CMMCore::CMMCore() :
       CoreProperty propShutter;
       properties_->Add(MM::g_Keyword_CoreShutter, propShutter);
       
-      // Camera device
+      // Focus device
       CoreProperty propFocus;
       properties_->Add(MM::g_Keyword_CoreFocus, propFocus);
+
+      // Focus device
+      CoreProperty propXYStage;
+      properties_->Add(MM::g_Keyword_CoreXYStage, propXYStage);
 
       properties_->Refresh();
    }
@@ -1124,6 +1128,25 @@ string CMMCore::getFocusDevice()
 }
 
 /**
+ * Returns the label of the currently selected XYStage device.
+ */
+string CMMCore::getXYStageDevice()
+{
+   string deviceName;
+   if (xyStage_)
+      try {
+         deviceName = pluginManager_.GetDeviceLabel(*xyStage_);
+      }
+      catch (CMMError& err)
+      {
+         // trap the error and ignore it in this case.
+         // This happens only if the system is in the inconistent internal state
+         CORE_DEBUG1("Internal error: plugin manager does not recognize device reference. %s\n", err.getMsg().c_str());
+      }
+   return deviceName;
+}
+
+/**
  * Sets the current shutter device.
  * @param shutter label
  */
@@ -1164,6 +1187,23 @@ void CMMCore::setFocusDevice(const char* focusLabel) throw (CMMError)
       CORE_LOG("Focus device removed.\n");
    }
    properties_->Refresh(); // TODO: more efficient
+}
+
+/**
+ * Sets the current XY device.
+ */
+void CMMCore::setXYStageDevice(const char* xyDeviceLabel) throw (CMMError)
+{
+   if (xyDeviceLabel && strlen(xyDeviceLabel)>0)
+   {
+      xyStage_ = getSpecificDevice<MM::XYStage>(xyDeviceLabel);
+      CORE_LOG1("XYStage device set to %s\n", xyDeviceLabel);
+   }
+   else
+   {
+      xyStage_ = 0;
+      CORE_LOG("XYDevice device removed.\n");
+   }
 }
 
 /**
