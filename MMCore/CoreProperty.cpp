@@ -122,6 +122,11 @@ void CorePropertyCollection::Execute(const char* propName, const char* value)
    {
       core_->setFocusDevice(value);
    }
+   // xy stage
+   else if (strcmp(propName, MM::g_Keyword_CoreXYStage) == 0)
+   {
+      core_->setXYStageDevice(value);
+   }
    // unknown property
    else
    {

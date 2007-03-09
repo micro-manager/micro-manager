@@ -595,6 +595,13 @@ void CMMCore::initializeAllDevices() throw (CMMError)
    for (size_t i=0; i<stages.size(); i++)
       properties_->AddAllowedValue(MM::g_Keyword_CoreFocus, stages[i].c_str());
 
+   // XY device
+   vector<string> xystages = getLoadedDevicesOfType(MM::XYStageDevice);
+   xystages.push_back(""); // add empty value
+   properties_->ClearAllowedValues(MM::g_Keyword_CoreXYStage);
+   for (size_t i=0; i<xystages.size(); i++)
+      properties_->AddAllowedValue(MM::g_Keyword_CoreXYStage, xystages[i].c_str());
+
    properties_->Refresh();
 }
 
@@ -1374,38 +1381,6 @@ void CMMCore::setProperty(const char* label, const char* propName,
    if (strcmp(label, MM::g_Keyword_CoreDevice) == 0)
    {
       properties_->Execute(propName, propValue);
-
-      /*
-      // initialization
-      if (strcmp(propName, "Initialize") == 0)
-      {
-         if (strcmp(propValue, "0") == 0)
-            unloadAllDevices();
-         else if (strcmp(propValue, "1") == 0)
-            initializeAllDevices();
-         else
-            throw CMMError(label, getCoreErrorText(MMERR_SetPropertyFailed).c_str(), MMERR_SetPropertyFailed);
-      }
-      // shutter
-      else if (strcmp(propName, MM::g_CFGRole_ShutterDevice) == 0)
-      {
-         setShutterDevice(propValue);
-      }
-      // camera
-      else if (strcmp(propName, MM::g_CFGRole_CameraDevice) == 0)
-      {
-         setCameraDevice(propValue);
-      }
-      // camera
-      else if (strcmp(propName, MM::g_CFGRole_FocusDevice) == 0)
-      {
-         setFocusDevice(propValue);
-      }
-      // unknown property
-      else
-         throw CMMError(label, getCoreErrorText(MMERR_SetPropertyFailed).c_str(), MMERR_SetPropertyFailed);
-      */
-
    }
    else
    {

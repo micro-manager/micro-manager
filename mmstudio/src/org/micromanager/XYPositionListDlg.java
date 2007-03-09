@@ -7,39 +7,27 @@ import java.awt.event.WindowEvent;
 import javax.swing.JButton;
 
 import javax.swing.JDialog;
+import javax.swing.JLabel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.SpringLayout;
+
+import mmcorej.CMMCore;
+
 import com.swtdesigner.SwingResourceManager;
 
 public class XYPositionListDlg extends JDialog {
 
    private JTable table;
    private SpringLayout springLayout;
-   /**
-    * Launch the application
-    * @param args
-    */
-   public static void main(String args[]) {
-      try {
-         XYPositionListDlg dialog = new XYPositionListDlg();
-         dialog.addWindowListener(new WindowAdapter() {
-            public void windowClosing(WindowEvent e) {
-               System.exit(0);
-            }
-         });
-         dialog.setVisible(true);
-      } catch (Exception e) {
-         e.printStackTrace();
-      }
-   }
+   private CMMCore core_;
 
    /**
     * Create the dialog
     */
-   public XYPositionListDlg() {
+   public XYPositionListDlg(CMMCore core) {
       super();
-      setIconImage(SwingResourceManager.getImage(XYPositionListDlg.class, "icons/microscope.gif"));
+      core_ = core;
       setTitle("XY-position List");
       springLayout = new SpringLayout();
       getContentPane().setLayout(springLayout);
@@ -90,20 +78,53 @@ public class XYPositionListDlg extends JDialog {
       gotoButton.setIcon(SwingResourceManager.getIcon(XYPositionListDlg.class, "icons/resultset_next.png"));
       gotoButton.setText("Go to");
       getContentPane().add(gotoButton);
-      springLayout.putConstraint(SpringLayout.EAST, gotoButton, 0, SpringLayout.EAST, removeButton);
-      springLayout.putConstraint(SpringLayout.WEST, gotoButton, -100, SpringLayout.EAST, removeButton);
-      springLayout.putConstraint(SpringLayout.SOUTH, gotoButton, 105, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, gotoButton, 82, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.SOUTH, gotoButton, 140, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, gotoButton, 117, SpringLayout.NORTH, getContentPane());
 
       final JButton refreshButton = new JButton();
+      refreshButton.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent arg0) {
+            refreshCurrentPosition();
+         }
+      });
       refreshButton.setIcon(SwingResourceManager.getIcon(XYPositionListDlg.class, "icons/arrow_refresh.png"));
       refreshButton.setText("Refresh");
       getContentPane().add(refreshButton);
-      springLayout.putConstraint(SpringLayout.EAST, refreshButton, 0, SpringLayout.EAST, gotoButton);
-      springLayout.putConstraint(SpringLayout.WEST, refreshButton, -100, SpringLayout.EAST, gotoButton);
-      springLayout.putConstraint(SpringLayout.SOUTH, refreshButton, 130, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, refreshButton, 107, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.SOUTH, refreshButton, 165, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, refreshButton, 142, SpringLayout.NORTH, getContentPane());
+
+      final JButton removeAllButton = new JButton();
+      removeAllButton.setText("Remove all");
+      getContentPane().add(removeAllButton);
+      springLayout.putConstraint(SpringLayout.SOUTH, removeAllButton, 90, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, removeAllButton, 0, SpringLayout.SOUTH, removeButton);
+      springLayout.putConstraint(SpringLayout.EAST, removeAllButton, 100, SpringLayout.WEST, removeButton);
+      springLayout.putConstraint(SpringLayout.WEST, removeAllButton, 0, SpringLayout.WEST, removeButton);
+      springLayout.putConstraint(SpringLayout.EAST, refreshButton, 0, SpringLayout.EAST, removeAllButton);
+      springLayout.putConstraint(SpringLayout.WEST, refreshButton, -100, SpringLayout.EAST, removeAllButton);
+      springLayout.putConstraint(SpringLayout.EAST, gotoButton, 0, SpringLayout.EAST, removeAllButton);
+      springLayout.putConstraint(SpringLayout.WEST, gotoButton, -100, SpringLayout.EAST, removeAllButton);
+
+      final JLabel xLabel_ = new JLabel();
+      xLabel_.setText("X=");
+      getContentPane().add(xLabel_);
+      springLayout.putConstraint(SpringLayout.EAST, xLabel_, 0, SpringLayout.EAST, refreshButton);
+      springLayout.putConstraint(SpringLayout.WEST, xLabel_, 0, SpringLayout.WEST, refreshButton);
+      springLayout.putConstraint(SpringLayout.SOUTH, xLabel_, 195, SpringLayout.NORTH, getContentPane());
+
+      final JLabel xLabel__1 = new JLabel();
+      xLabel__1.setText("Y=");
+      getContentPane().add(xLabel__1);
+      springLayout.putConstraint(SpringLayout.SOUTH, xLabel__1, 219, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, xLabel__1, 205, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.EAST, xLabel__1, 100, SpringLayout.WEST, xLabel_);
+      springLayout.putConstraint(SpringLayout.WEST, xLabel__1, 0, SpringLayout.WEST, xLabel_);
       //
+   }
+
+   protected void refreshCurrentPosition() {
+      // TODO Auto-generated method stub
+      
    }
 
 }
