@@ -31,7 +31,7 @@
 
 	<target name="compileMMStudio" description="Compile MM Studio.">
 		<mkdir dir="build" />
-		<javac srcdir="./src" destdir="./build" optimize="on" source="1.4" debug="off">
+		<javac srcdir="./src" destdir="./build" optimize="on" source="5.0" debug="off">
 			<classpath refid="project.class.path" />
 		</javac>
 		<copy file="./src/org/micromanager/icons/splash.gif" todir="./build/org/micromanager/icons" />
