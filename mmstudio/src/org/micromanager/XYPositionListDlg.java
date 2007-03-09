@@ -1,38 +1,80 @@
+///////////////////////////////////////////////////////////////////////////////
+//FILE:          XYPositionListDlg.java
+//PROJECT:       Micro-Manager
+//SUBSYSTEM:     mmstudio
+//-----------------------------------------------------------------------------
+//
+// AUTHOR:       Nenad Amodaj, nenad@amodaj.com, March 8, 2007
+//
+// COPYRIGHT:    University of California, San Francisco, 2007
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+//
+// CVS:          $Id$
+//
 package org.micromanager;
 
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.prefs.Preferences;
+
 import javax.swing.JButton;
 
-import javax.swing.JDialog;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
 import javax.swing.SpringLayout;
+
+import org.micromanager.utils.MMDialog;
 
 import mmcorej.CMMCore;
 
 import com.swtdesigner.SwingResourceManager;
 
-public class XYPositionListDlg extends JDialog {
+public class XYPositionListDlg extends MMDialog {
 
    private JTable table;
    private SpringLayout springLayout;
    private CMMCore core_;
+   private JLabel yLabel_;
+   private JLabel xLabel_;
 
    /**
     * Create the dialog
     */
    public XYPositionListDlg(CMMCore core) {
       super();
+      addWindowListener(new WindowAdapter() {
+         public void windowClosing(WindowEvent arg0) {
+            savePosition();
+         }
+      });
       core_ = core;
       setTitle("XY-position List");
       springLayout = new SpringLayout();
       getContentPane().setLayout(springLayout);
       setBounds(100, 100, 397, 455);
 
+      Preferences root = Preferences.userNodeForPackage(this.getClass());
+      setPrefsNode(root.node(root.absolutePath() + "/XYPositionListDlg"));
+      
+      Rectangle r = getBounds();
+      loadPosition(r.x, r.y, r.width, r.height);
+      
       final JScrollPane scrollPane = new JScrollPane();
       getContentPane().add(scrollPane);
       springLayout.putConstraint(SpringLayout.SOUTH, scrollPane, -16, SpringLayout.SOUTH, getContentPane());
@@ -41,9 +83,15 @@ public class XYPositionListDlg extends JDialog {
       springLayout.putConstraint(SpringLayout.WEST, scrollPane, 10, SpringLayout.WEST, getContentPane());
 
       table = new JTable();
+      table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       scrollPane.setViewportView(table);
 
       final JButton markButton = new JButton();
+      markButton.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent arg0) {
+            markPosition();
+         }
+      });
       markButton.setIcon(SwingResourceManager.getIcon(XYPositionListDlg.class, "icons/flag_green.png"));
       markButton.setText("Mark");
       getContentPane().add(markButton);
@@ -64,6 +112,7 @@ public class XYPositionListDlg extends JDialog {
       final JButton closeButton = new JButton();
       closeButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
+            savePosition();
             dispose();
          }
       });
@@ -105,26 +154,70 @@ public class XYPositionListDlg extends JDialog {
       springLayout.putConstraint(SpringLayout.EAST, gotoButton, 0, SpringLayout.EAST, removeAllButton);
       springLayout.putConstraint(SpringLayout.WEST, gotoButton, -100, SpringLayout.EAST, removeAllButton);
 
-      final JLabel xLabel_ = new JLabel();
+      xLabel_ = new JLabel();
       xLabel_.setText("X=");
       getContentPane().add(xLabel_);
       springLayout.putConstraint(SpringLayout.EAST, xLabel_, 0, SpringLayout.EAST, refreshButton);
       springLayout.putConstraint(SpringLayout.WEST, xLabel_, 0, SpringLayout.WEST, refreshButton);
       springLayout.putConstraint(SpringLayout.SOUTH, xLabel_, 195, SpringLayout.NORTH, getContentPane());
 
-      final JLabel xLabel__1 = new JLabel();
-      xLabel__1.setText("Y=");
-      getContentPane().add(xLabel__1);
-      springLayout.putConstraint(SpringLayout.SOUTH, xLabel__1, 219, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, xLabel__1, 205, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.EAST, xLabel__1, 100, SpringLayout.WEST, xLabel_);
-      springLayout.putConstraint(SpringLayout.WEST, xLabel__1, 0, SpringLayout.WEST, xLabel_);
+      yLabel_ = new JLabel();
+      yLabel_.setText("Y=");
+      getContentPane().add(yLabel_);
+      springLayout.putConstraint(SpringLayout.SOUTH, yLabel_, 219, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, yLabel_, 205, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.EAST, yLabel_, 100, SpringLayout.WEST, xLabel_);
+      springLayout.putConstraint(SpringLayout.WEST, yLabel_, 0, SpringLayout.WEST, xLabel_);
       //
+      
+      refreshCurrentPosition();
    }
 
-   protected void refreshCurrentPosition() {
-      // TODO Auto-generated method stub
+   /**
+    * Store current xyPosition.
+    */
+   private void markPosition() {
+      String stage = core_.getXYStageDevice();
+      if (stage.length() == 0) {
+         handleError("Default XYStage device not defined.");
+         return;
+      }
+      refreshCurrentPosition();
       
+      double x[] = new double[1];
+      double y[] = new double[1];
+      try {
+         core_.getXYPosition(stage, x, y);
+      } catch (Exception e) {
+         handleError(e.getMessage());
+      }
+      
+      
+   }
+
+   /**
+    * Update display of the current xy position.
+    */
+   private void refreshCurrentPosition() {
+      String stage = core_.getXYStageDevice();
+      if (stage.length() == 0) {
+         xLabel_.setText("X=");
+         yLabel_.setText("Y=");
+         return;
+      }
+      double x[] = new double[1];
+      double y[] = new double[1];
+      try {
+         core_.getXYPosition(stage, x, y);
+      } catch (Exception e) {
+         handleError(e.getMessage());
+      }
+      xLabel_.setText("X=" + Double.toString(x[0]) + "um");
+      yLabel_.setText("Y=" + Double.toString(y[0]) + "um");
+   }
+
+   private void handleError(String txt) {
+      JOptionPane.showMessageDialog(this, txt);      
    }
 
 }
