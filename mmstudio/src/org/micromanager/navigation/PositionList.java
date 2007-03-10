@@ -34,21 +34,24 @@ import org.micromanager.utils.MMSerializationException;
  * Used for multi-site acquistion support.
  */
 public class PositionList {
-   private ArrayList<StagePosition> positions_;
+   private ArrayList<MultiStagePosition> positions_;
    private final static String ID = "Micro-Manager XY-position list";
    private final static String ID_KEY = "ID";
    private final static int VERSION = 1;
    private final static String VERSION_KEY = "VERSION";
    private final static String LABEL_KEY = "LABEL";
+   private final static String DEVICE_KEY = "DEVICE";
    private final static String X_KEY = "X";
    private final static String Y_KEY = "Y";
+   private final static String Z_KEY = "Z";
    private final static String POSARRAY_KEY = "POSITIONS";
+   private final static String DEVARRAY_KEY = "DEVICES";
       
    public PositionList() {
-      positions_ = new ArrayList<StagePosition>();
+      positions_ = new ArrayList<MultiStagePosition>();
    }
 
-   public StagePosition getPosition(int idx) {
+   public MultiStagePosition getPosition(int idx) {
       if (idx < 0 || idx >= positions_.size())
          return null;
       
@@ -57,13 +60,13 @@ public class PositionList {
    
    public int getPositionIndex(String posLabel) {
       for (int i=0; i<positions_.size(); i++) {
-         if (positions_.get(i).label.compareTo(posLabel) == 0)
+         if (positions_.get(i).getLabel().compareTo(posLabel) == 0)
             return i;
       }
       return -1;
    }
    
-   public void addPosition(StagePosition pos) {
+   public void addPosition(MultiStagePosition pos) {
       positions_.add(pos);
    }
    
@@ -71,15 +74,15 @@ public class PositionList {
       return positions_.size();
    }
    
-   public void setPositions(StagePosition[] posArray) {
+   public void setPositions(MultiStagePosition[] posArray) {
       positions_.clear();
       for (int i=0; i<posArray.length; i++) {
          positions_.add(posArray[i]);
       }
    }
 
-   public StagePosition[] getPositions() {
-      StagePosition[] list = new StagePosition[positions_.size()];
+   public MultiStagePosition[] getPositions() {
+      MultiStagePosition[] list = new MultiStagePosition[positions_.size()];
       for (int i=0; i<positions_.size(); i++) {
          list[i] = positions_.get(i);
       }
@@ -91,7 +94,7 @@ public class PositionList {
       if (idx < 0 || idx >= positions_.size())
          return;
       
-      positions_.get(idx).label = label;
+      positions_.get(idx).setLabel(label);
    }
    
    /**
@@ -104,11 +107,25 @@ public class PositionList {
          meta.put(ID_KEY, ID);
          meta.put(VERSION_KEY, VERSION);
          JSONArray list = new JSONArray();
+         // iterate on positions
          for (int i=0; i<positions_.size(); i++) {
             JSONObject pos = new JSONObject();
-            pos.put(LABEL_KEY, positions_.get(i).label);
-            pos.put(X_KEY, positions_.get(i).x);
-            pos.put(Y_KEY, positions_.get(i).y);
+            pos.put(LABEL_KEY, positions_.get(i).getLabel());
+            MultiStagePosition msp = positions_.get(i);
+            
+            JSONArray devs = new JSONArray();
+            // iterate on devices
+            for (int j=0; j<msp.size(); j++) {
+               StagePosition sp = msp.get(j);
+               JSONObject stage = new JSONObject();
+               stage.put(X_KEY, sp.x);
+               stage.put(Y_KEY, sp.y);
+               stage.put(Z_KEY, sp.z);
+               stage.put(DEVICE_KEY, stage);
+               
+               devs.put(j, stage);
+            }
+            pos.put(DEVARRAY_KEY, devs);
 
             list.put(i, pos);
          }
@@ -130,12 +147,13 @@ public class PositionList {
          JSONArray posArray = meta.getJSONArray(POSARRAY_KEY);
          positions_.clear();
          for (int i=0; i<posArray.length(); i++) {
+            // TODO: this is broken -- see above
             JSONObject posSer = posArray.getJSONObject(i);
             StagePosition pos = new StagePosition();
             pos.label = posSer.getString(LABEL_KEY);
             pos.x = posSer.getDouble(X_KEY);
             pos.y = posSer.getDouble(Y_KEY);
-            positions_.add(pos);
+//            positions_.add(pos);
          }
       } catch (JSONException e) {
          throw new MMSerializationException("Invalid or corrupted serialization data.");
