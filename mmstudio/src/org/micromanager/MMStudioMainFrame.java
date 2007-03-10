@@ -93,6 +93,7 @@ import org.micromanager.image5d.Z_Project;
 import org.micromanager.metadata.AcquisitionData;
 import org.micromanager.metadata.DisplaySettings;
 import org.micromanager.metadata.MMAcqDataException;
+import org.micromanager.navigation.PositionList;
 import org.micromanager.script.MMScriptFrame;
 import org.micromanager.utils.CfgFileFilter;
 import org.micromanager.utils.ContrastSettings;
@@ -184,6 +185,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI {
    // MMcore
    CMMCore core_;
    MMAcquisitionEngine engine_;
+   PositionList posList_;
    private String openAcqDirectory_ = "";
    private boolean running_;
    private boolean configChanged_ = false;
@@ -804,6 +806,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI {
             if (parent != null)
                engine_.setParentGUI(parent);
             
+            posList_ = new PositionList();
+            
             // load configuration from the file
             sysConfigFile_ = mainPrefs_.get(SYSTEM_CONFIG_FILE, sysConfigFile_);
             //startupScriptFile_ = mainPrefs_.get(STARTUP_SCRIPT_FILE, startupScriptFile_);
@@ -1052,7 +1056,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI {
       final JButton refreshButton_1 = new JButton();
       refreshButton_1.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
-            XYPositionListDlg dlg = new XYPositionListDlg(core_);
+            XYPositionListDlg dlg = new XYPositionListDlg(core_, posList_);
             dlg.setVisible(true);
          }
       });

@@ -38,7 +38,10 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.SpringLayout;
+import javax.swing.table.AbstractTableModel;
 
+import org.micromanager.navigation.MMStagePosition;
+import org.micromanager.navigation.PositionList;
 import org.micromanager.utils.MMDialog;
 
 import mmcorej.CMMCore;
@@ -47,7 +50,38 @@ import com.swtdesigner.SwingResourceManager;
 
 public class XYPositionListDlg extends MMDialog {
 
-   private JTable table;
+   class PosTableModel extends AbstractTableModel {
+      public final String[] COLUMN_NAMES = new String[] {
+            "Label",
+            "Position [um]"
+      };
+      private PositionList posList_;
+      
+      public void setData(PositionList pl) {
+         posList_ = pl;
+      }
+      
+      public int getRowCount() {
+         return posList_.getNumberOfPositions();
+      }
+      public int getColumnCount() {
+         return COLUMN_NAMES.length;
+      }
+      public String getColumnName(int columnIndex) {
+         return COLUMN_NAMES[columnIndex];
+      }
+      public Object getValueAt(int rowIndex, int columnIndex) {
+         if (rowIndex == 0) {
+            return posList_.getPosition(rowIndex).label;
+         } else if (rowIndex == 1) {
+            MMStagePosition pos = posList_.getPosition(rowIndex);
+            return new String(pos.x + "," + pos.y);
+         } else
+            return null;
+      }
+   }
+
+   private JTable posTable_;
    private SpringLayout springLayout;
    private CMMCore core_;
    private JLabel yLabel_;
@@ -56,7 +90,7 @@ public class XYPositionListDlg extends MMDialog {
    /**
     * Create the dialog
     */
-   public XYPositionListDlg(CMMCore core) {
+   public XYPositionListDlg(CMMCore core, PositionList posList) {
       super();
       addWindowListener(new WindowAdapter() {
          public void windowClosing(WindowEvent arg0) {
@@ -82,9 +116,12 @@ public class XYPositionListDlg extends MMDialog {
       springLayout.putConstraint(SpringLayout.EAST, scrollPane, -124, SpringLayout.EAST, getContentPane());
       springLayout.putConstraint(SpringLayout.WEST, scrollPane, 10, SpringLayout.WEST, getContentPane());
 
-      table = new JTable();
-      table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-      scrollPane.setViewportView(table);
+      posTable_ = new JTable();
+      PosTableModel model = new PosTableModel();
+      model.setData(posList);
+      posTable_.setModel(model);
+      posTable_.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+      scrollPane.setViewportView(posTable_);
 
       final JButton markButton = new JButton();
       markButton.addActionListener(new ActionListener() {

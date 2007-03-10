@@ -25,7 +25,7 @@ public class SwingResourceManager {
 	/**
 	 * Maps image names to images
 	 */
-	private static HashMap m_ClassImageMap = new HashMap();
+	private static HashMap<String, Image> m_ClassImageMap = new HashMap<String, Image>();
 	
     /**
      * Returns an image encoded by the specified input stream
@@ -57,7 +57,7 @@ public class SwingResourceManager {
      */
 	public static Image getImage(Class clazz, String path) {
 		String key = clazz.getName() + '|' + path;
-		Image image = (Image) m_ClassImageMap.get(key);
+		Image image = m_ClassImageMap.get(key);
 		if (image == null) {
 			if ((path.length() > 0) && (path.charAt(0) == '/')) {
 				String newPath = path.substring(1, path.length());
@@ -87,7 +87,7 @@ public class SwingResourceManager {
      */
 	public static Image getImage(String section, String path) {
 		String key = section + '|' + SwingResourceManager.class.getName() + '|' + path;
-		Image image = (Image) m_ClassImageMap.get(key);
+		Image image = m_ClassImageMap.get(key);
 		if (image == null) {
 			try {
 				FileInputStream fis = new FileInputStream(path);
@@ -110,7 +110,7 @@ public class SwingResourceManager {
 			String key = (String) I.next();
 			if (!key.startsWith(section + '|'))
 				continue;
-			Image image = (Image) m_ClassImageMap.get(key);
+			Image image = m_ClassImageMap.get(key);
 			image.flush();
 			I.remove();
 		}
