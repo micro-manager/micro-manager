@@ -40,7 +40,7 @@ import javax.swing.ListSelectionModel;
 import javax.swing.SpringLayout;
 import javax.swing.table.AbstractTableModel;
 
-import org.micromanager.navigation.MMStagePosition;
+import org.micromanager.navigation.StagePosition;
 import org.micromanager.navigation.PositionList;
 import org.micromanager.utils.MMDialog;
 
@@ -74,7 +74,7 @@ public class XYPositionListDlg extends MMDialog {
          if (rowIndex == 0) {
             return posList_.getPosition(rowIndex).label;
          } else if (rowIndex == 1) {
-            MMStagePosition pos = posList_.getPosition(rowIndex);
+            StagePosition pos = posList_.getPosition(rowIndex);
             return new String(pos.x + "," + pos.y);
          } else
             return null;

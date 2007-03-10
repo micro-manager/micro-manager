@@ -34,7 +34,7 @@ import org.micromanager.utils.MMSerializationException;
  * Used for multi-site acquistion support.
  */
 public class PositionList {
-   private ArrayList<MMStagePosition> positions_;
+   private ArrayList<StagePosition> positions_;
    private final static String ID = "Micro-Manager XY-position list";
    private final static String ID_KEY = "ID";
    private final static int VERSION = 1;
@@ -45,10 +45,10 @@ public class PositionList {
    private final static String POSARRAY_KEY = "POSITIONS";
       
    public PositionList() {
-      positions_ = new ArrayList<MMStagePosition>();
+      positions_ = new ArrayList<StagePosition>();
    }
 
-   public MMStagePosition getPosition(int idx) {
+   public StagePosition getPosition(int idx) {
       if (idx < 0 || idx >= positions_.size())
          return null;
       
@@ -63,7 +63,7 @@ public class PositionList {
       return -1;
    }
    
-   public void addPosition(MMStagePosition pos) {
+   public void addPosition(StagePosition pos) {
       positions_.add(pos);
    }
    
@@ -71,15 +71,15 @@ public class PositionList {
       return positions_.size();
    }
    
-   public void setPositions(MMStagePosition[] posArray) {
+   public void setPositions(StagePosition[] posArray) {
       positions_.clear();
       for (int i=0; i<posArray.length; i++) {
          positions_.add(posArray[i]);
       }
    }
 
-   public MMStagePosition[] getPositions() {
-      MMStagePosition[] list = new MMStagePosition[positions_.size()];
+   public StagePosition[] getPositions() {
+      StagePosition[] list = new StagePosition[positions_.size()];
       for (int i=0; i<positions_.size(); i++) {
          list[i] = positions_.get(i);
       }
@@ -131,7 +131,7 @@ public class PositionList {
          positions_.clear();
          for (int i=0; i<posArray.length(); i++) {
             JSONObject posSer = posArray.getJSONObject(i);
-            MMStagePosition pos = new MMStagePosition();
+            StagePosition pos = new StagePosition();
             pos.label = posSer.getString(LABEL_KEY);
             pos.x = posSer.getDouble(X_KEY);
             pos.y = posSer.getDouble(Y_KEY);
