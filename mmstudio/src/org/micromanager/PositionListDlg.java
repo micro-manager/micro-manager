@@ -49,7 +49,7 @@ import mmcorej.CMMCore;
 
 import com.swtdesigner.SwingResourceManager;
 
-public class XYPositionListDlg extends MMDialog {
+public class PositionListDlg extends MMDialog {
 
    class PosTableModel extends AbstractTableModel {
       public final String[] COLUMN_NAMES = new String[] {
@@ -92,7 +92,7 @@ public class XYPositionListDlg extends MMDialog {
    /**
     * Create the dialog
     */
-   public XYPositionListDlg(CMMCore core, PositionList posList) {
+   public PositionListDlg(CMMCore core, PositionList posList) {
       super();
       addWindowListener(new WindowAdapter() {
          public void windowClosing(WindowEvent arg0) {
@@ -131,14 +131,14 @@ public class XYPositionListDlg extends MMDialog {
             markPosition();
          }
       });
-      markButton.setIcon(SwingResourceManager.getIcon(XYPositionListDlg.class, "icons/flag_green.png"));
+      markButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/flag_green.png"));
       markButton.setText("Mark");
       getContentPane().add(markButton);
       springLayout.putConstraint(SpringLayout.SOUTH, markButton, 40, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.NORTH, markButton, 17, SpringLayout.NORTH, getContentPane());
 
       final JButton removeButton = new JButton();
-      removeButton.setIcon(SwingResourceManager.getIcon(XYPositionListDlg.class, "icons/cross.png"));
+      removeButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/cross.png"));
       removeButton.setText("Remove");
       getContentPane().add(removeButton);
       springLayout.putConstraint(SpringLayout.EAST, markButton, -9, SpringLayout.EAST, getContentPane());
@@ -163,7 +163,7 @@ public class XYPositionListDlg extends MMDialog {
       springLayout.putConstraint(SpringLayout.NORTH, closeButton, 372, SpringLayout.NORTH, getContentPane());
 
       final JButton gotoButton = new JButton();
-      gotoButton.setIcon(SwingResourceManager.getIcon(XYPositionListDlg.class, "icons/resultset_next.png"));
+      gotoButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/resultset_next.png"));
       gotoButton.setText("Go to");
       getContentPane().add(gotoButton);
       springLayout.putConstraint(SpringLayout.SOUTH, gotoButton, 140, SpringLayout.NORTH, getContentPane());
@@ -175,7 +175,7 @@ public class XYPositionListDlg extends MMDialog {
             refreshCurrentPosition();
          }
       });
-      refreshButton.setIcon(SwingResourceManager.getIcon(XYPositionListDlg.class, "icons/arrow_refresh.png"));
+      refreshButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/arrow_refresh.png"));
       refreshButton.setText("Refresh");
       getContentPane().add(refreshButton);
       springLayout.putConstraint(SpringLayout.SOUTH, refreshButton, 165, SpringLayout.NORTH, getContentPane());

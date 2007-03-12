@@ -1056,7 +1056,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI {
       final JButton refreshButton_1 = new JButton();
       refreshButton_1.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
-            XYPositionListDlg dlg = new XYPositionListDlg(core_, posList_);
+            PositionListDlg dlg = new PositionListDlg(core_, posList_);
             dlg.setVisible(true);
          }
       });
