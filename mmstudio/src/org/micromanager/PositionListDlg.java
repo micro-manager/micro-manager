@@ -41,6 +41,7 @@ import javax.swing.table.AbstractTableModel;
 
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
+import mmcorej.StrVector;
 
 import org.micromanager.navigation.MultiStagePosition;
 import org.micromanager.navigation.PositionList;
@@ -48,6 +49,7 @@ import org.micromanager.navigation.StagePosition;
 import org.micromanager.utils.MMDialog;
 
 import com.swtdesigner.SwingResourceManager;
+import mmcorej.MMCoreJ;
 
 public class PositionListDlg extends MMDialog {
 
@@ -62,6 +64,10 @@ public class PositionListDlg extends MMDialog {
          posList_ = pl;
       }
       
+      public PositionList getPositionList() {
+         return posList_;
+      }
+      
       public int getRowCount() {
          return posList_.getNumberOfPositions();
       }
@@ -72,11 +78,10 @@ public class PositionListDlg extends MMDialog {
          return COLUMN_NAMES[columnIndex];
       }
       public Object getValueAt(int rowIndex, int columnIndex) {
-         // TODO: broken!!!
-         if (rowIndex == 0) {
+         if (columnIndex == 0) {
             MultiStagePosition msp = posList_.getPosition(rowIndex);
             return msp.getLabel();
-         } else if (rowIndex == 1) {
+         } else if (columnIndex == 1) {
             MultiStagePosition msp = posList_.getPosition(rowIndex);
             StringBuffer sb = new StringBuffer();
             for (int i=0; i<msp.size(); i++) {
@@ -85,7 +90,7 @@ public class PositionListDlg extends MMDialog {
                   sb.append(";");
                sb.append(sp.getVerbose());
             }
-            return null; //new String(pos.x + "," + pos.y);
+            return sb.toString();
          } else
             return null;
       }
@@ -224,25 +229,45 @@ public class PositionListDlg extends MMDialog {
     * Store current xyPosition.
     */
    private void markPosition() {
-      String stage = core_.getXYStageDevice();
-      if (stage.length() == 0) {
-         handleError("Default XYStage device not defined.");
-         return;
-      }
+//      String stage = core_.getXYStageDevice();
+//      if (stage.length() == 0) {
+//         handleError("Default XYStage device not defined.");
+//         return;
+//      }
       refreshCurrentPosition();
+     
+      MultiStagePosition msp = new MultiStagePosition();
       
-      // TODO: read all stage positions 
       
-      double x[] = new double[1];
-      double y[] = new double[1];
+      // read 1-axis stages
       try {
-         core_.getXYPosition(stage, x, y);
-         DeviceType type = core_.getDeviceType(stage);
+         StrVector stages = core_.getLoadedDevicesOfType(DeviceType.StageDevice);
+         for (int i=0; i<stages.size(); i++) {
+            StagePosition sp = new StagePosition();
+            sp.stageName = stages.get(i);
+            sp.numAxis = 1;
+            sp.x = core_.getPosition(stages.get(i));
+            msp.add(sp);
+         }
+
+         // read 2-axis stages
+         StrVector stages2D = core_.getLoadedDevicesOfType(DeviceType.XYStageDevice);
+         for (int i=0; i<stages2D.size(); i++) {
+            StagePosition sp = new StagePosition();
+            sp.stageName = stages2D.get(i);
+            sp.numAxis = 2;
+            sp.x = core_.getXPosition(stages2D.get(i));
+            sp.y = core_.getYPosition(stages2D.get(i));
+            msp.add(sp);
+         }
       } catch (Exception e) {
          handleError(e.getMessage());
       }
-      
-      
+
+      PosTableModel ptm = (PosTableModel)posTable_.getModel();
+      msp.setLabel(ptm.getPositionList().generateLabel());
+      ptm.getPositionList().addPosition(msp);
+      ptm.fireTableDataChanged();
    }
 
    /**

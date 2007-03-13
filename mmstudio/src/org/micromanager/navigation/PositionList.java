@@ -23,7 +23,6 @@
 //
 package org.micromanager.navigation;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -140,7 +139,7 @@ public class PositionList {
    }
    
    /**
-    * Restore obejct data from the JSON encoded stream.
+    * Restore object data from the JSON encoded stream.
     * @param stream
     * @throws MMSerializationException
     */
@@ -169,6 +168,26 @@ public class PositionList {
       } catch (JSONException e) {
          throw new MMSerializationException("Invalid or corrupted serialization data.");
       }
+   }
+   
+   public String generateLabel() {
+      String label = new String("Pos" + positions_.size());
+      
+      // verify the uniqueness
+      int i = 1;
+      while (!isLabelUnique(label)) {
+         label = new String("Pos" + (positions_.size() + i++));
+      }
+      
+      return label;
+   }
+   
+   public boolean isLabelUnique(String label) {
+      for (int i=0; i<positions_.size(); i++) {
+         if (positions_.get(i).getLabel().compareTo(label) == 0)
+            return false;
+      }
+      return true;
    }
 
 }
