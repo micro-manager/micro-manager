@@ -151,6 +151,11 @@ public class PositionListDlg extends MMDialog {
       springLayout.putConstraint(SpringLayout.NORTH, markButton, 17, SpringLayout.NORTH, getContentPane());
 
       final JButton removeButton = new JButton();
+      removeButton.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent arg0) {
+            removeCurentPosition();
+         }
+      });
       removeButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/cross.png"));
       removeButton.setText("Remove");
       getContentPane().add(removeButton);
@@ -176,6 +181,11 @@ public class PositionListDlg extends MMDialog {
       springLayout.putConstraint(SpringLayout.NORTH, closeButton, 372, SpringLayout.NORTH, getContentPane());
 
       final JButton gotoButton = new JButton();
+      gotoButton.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent arg0) {
+            goToCurrentPosition();
+         }
+      });
       gotoButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/resultset_next.png"));
       gotoButton.setText("Go to");
       getContentPane().add(gotoButton);
@@ -195,6 +205,11 @@ public class PositionListDlg extends MMDialog {
       springLayout.putConstraint(SpringLayout.NORTH, refreshButton, 142, SpringLayout.NORTH, getContentPane());
 
       final JButton removeAllButton = new JButton();
+      removeAllButton.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent arg0) {
+            clearAllPositions();
+         }
+      });
       removeAllButton.setText("Remove all");
       getContentPane().add(removeAllButton);
       springLayout.putConstraint(SpringLayout.SOUTH, removeAllButton, 90, SpringLayout.NORTH, getContentPane());
@@ -223,6 +238,25 @@ public class PositionListDlg extends MMDialog {
       //
       
       refreshCurrentPosition();
+   }
+
+   protected void goToCurrentPosition() {
+      PosTableModel ptm = (PosTableModel)posTable_.getModel();
+      MultiStagePosition msp = ptm.getPositionList().getPosition(posTable_.getSelectedRow());
+      
+      msp.goToPosition(core_);
+   }
+
+   protected void clearAllPositions() {
+      PosTableModel ptm = (PosTableModel)posTable_.getModel();
+      ptm.getPositionList().clearAllPositions();
+      ptm.fireTableDataChanged();
+   }
+
+   protected void removeCurentPosition() {
+      PosTableModel ptm = (PosTableModel)posTable_.getModel();
+      ptm.getPositionList().removePosition(posTable_.getSelectedRow());
+      ptm.fireTableDataChanged();
    }
 
    /**

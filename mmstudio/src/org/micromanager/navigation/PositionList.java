@@ -74,6 +74,15 @@ public class PositionList {
       return positions_.size();
    }
    
+   public void clearAllPositions() {
+      positions_.clear();
+   }
+   
+   public void removePosition(int idx) {
+      if (idx >= 0 && idx < positions_.size())
+         positions_.remove(idx);
+   }
+   
    public void setPositions(MultiStagePosition[] posArray) {
       positions_.clear();
       for (int i=0; i<posArray.length; i++) {

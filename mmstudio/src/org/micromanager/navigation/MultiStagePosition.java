@@ -2,6 +2,8 @@ package org.micromanager.navigation;
 
 import java.util.ArrayList;
 
+import mmcorej.CMMCore;
+
 public class MultiStagePosition {
    private ArrayList<StagePosition> stagePosList_;
    private String label_;
@@ -29,6 +31,23 @@ public class MultiStagePosition {
    
    public void setLabel(String lab) {
       label_ = lab;
+   }
+
+   /**
+    * Moves all stages to the specified positions.
+    * @param core_ - microscope API
+    * @throws Exception
+    */
+   public static void goToPosition(MultiStagePosition msp, CMMCore core_) throws Exception {
+      for (int i=0; i<msp.size(); i++) {
+         StagePosition sp = msp.get(i);
+         if (sp.numAxis == 1) {
+            core_.setPosition(sp.stageName, sp.x);
+         } else if (sp.numAxis == 2) {
+            core_.setXYPosition(sp.stageName, sp.x, sp.y);
+         }
+      }
+      
    }
 
 }
