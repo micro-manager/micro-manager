@@ -31,7 +31,6 @@ import java.awt.event.WindowEvent;
 import java.util.prefs.Preferences;
 
 import javax.swing.JButton;
-
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
@@ -40,12 +39,13 @@ import javax.swing.ListSelectionModel;
 import javax.swing.SpringLayout;
 import javax.swing.table.AbstractTableModel;
 
-import org.micromanager.navigation.MultiStagePosition;
-import org.micromanager.navigation.StagePosition;
-import org.micromanager.navigation.PositionList;
-import org.micromanager.utils.MMDialog;
-
 import mmcorej.CMMCore;
+import mmcorej.DeviceType;
+
+import org.micromanager.navigation.MultiStagePosition;
+import org.micromanager.navigation.PositionList;
+import org.micromanager.navigation.StagePosition;
+import org.micromanager.utils.MMDialog;
 
 import com.swtdesigner.SwingResourceManager;
 
@@ -74,9 +74,17 @@ public class PositionListDlg extends MMDialog {
       public Object getValueAt(int rowIndex, int columnIndex) {
          // TODO: broken!!!
          if (rowIndex == 0) {
-            return null; //posList_.getPosition(rowIndex).label;
+            MultiStagePosition msp = posList_.getPosition(rowIndex);
+            return msp.getLabel();
          } else if (rowIndex == 1) {
-            MultiStagePosition pos = posList_.getPosition(rowIndex);
+            MultiStagePosition msp = posList_.getPosition(rowIndex);
+            StringBuffer sb = new StringBuffer();
+            for (int i=0; i<msp.size(); i++) {
+               StagePosition sp = msp.get(i);
+               if (i!=0)
+                  sb.append(";");
+               sb.append(sp.getVerbose());
+            }
             return null; //new String(pos.x + "," + pos.y);
          } else
             return null;
@@ -223,10 +231,13 @@ public class PositionListDlg extends MMDialog {
       }
       refreshCurrentPosition();
       
+      // TODO: read all stage positions 
+      
       double x[] = new double[1];
       double y[] = new double[1];
       try {
          core_.getXYPosition(stage, x, y);
+         DeviceType type = core_.getDeviceType(stage);
       } catch (Exception e) {
          handleError(e.getMessage());
       }
