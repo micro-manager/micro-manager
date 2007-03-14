@@ -1055,10 +1055,14 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI {
 
       final JButton refreshButton_1 = new JButton();
       refreshButton_1.addActionListener(new ActionListener() {
+         private PositionListDlg posListDlg_;
+
          public void actionPerformed(ActionEvent arg0) {
-            PositionListDlg dlg = new PositionListDlg(core_, posList_);
-            dlg.setVisible(true);
-         }
+            if (posListDlg_ == null) {
+               posListDlg_ = new PositionListDlg(core_, posList_);
+            }
+            posListDlg_.setVisible(true);
+          }
       });
       refreshButton_1.setToolTipText("Refresh all GUI controls directly from the hardware");
       refreshButton_1.setFont(new Font("Arial", Font.PLAIN, 10));

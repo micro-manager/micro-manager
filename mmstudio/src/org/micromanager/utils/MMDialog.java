@@ -76,5 +76,8 @@ public class MMDialog extends JDialog {
    public void setPrefsNode(Preferences p) {
       prefs_ = p;
    }
+   
+   protected void setTopPosition() {
+   }
 
 }

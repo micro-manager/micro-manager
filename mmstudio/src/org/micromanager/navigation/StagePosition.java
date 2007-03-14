@@ -9,7 +9,7 @@ public class StagePosition {
    public double y;
    public double z;
    public String stageName;
-   public int numAxis;
+   public int numAxes;
    private static DecimalFormat fmt = new DecimalFormat("#0.00");
    
    public StagePosition() {
@@ -17,13 +17,13 @@ public class StagePosition {
       x = 0.0;
       y = 0.0;
       z = 0.0;
-      numAxis=1;
+      numAxes=1;
    }
    
    public String getVerbose() {
-      if (numAxis == 1)
+      if (numAxes == 1)
          return new String(stageName + "(" + fmt.format(x) + ")");
-      else if (numAxis == 2)
+      else if (numAxes == 2)
          return new String(stageName + "(" + fmt.format(x) + "," + fmt.format(y) + ")");
       else
          return new String(stageName + "(" + fmt.format(x) + "," + fmt.format(y) + "," + fmt.format(z) + ")");

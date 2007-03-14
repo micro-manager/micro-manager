@@ -23,20 +23,36 @@
 //
 package org.micromanager;
 
+import java.awt.Color;
+import java.awt.Font;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
 import javax.swing.JButton;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JTextArea;
 import javax.swing.ListSelectionModel;
 import javax.swing.SpringLayout;
+import javax.swing.border.LineBorder;
+import javax.swing.filechooser.FileFilter;
 import javax.swing.table.AbstractTableModel;
 
 import mmcorej.CMMCore;
@@ -47,13 +63,24 @@ import org.micromanager.navigation.MultiStagePosition;
 import org.micromanager.navigation.PositionList;
 import org.micromanager.navigation.StagePosition;
 import org.micromanager.utils.MMDialog;
+import org.micromanager.utils.MMSerializationException;
 
 import com.swtdesigner.SwingResourceManager;
-import mmcorej.MMCoreJ;
 
 public class PositionListDlg extends MMDialog {
 
-   class PosTableModel extends AbstractTableModel {
+   private static String POSITION_LIST_FILE_NAME = "MMPositionList.pos";
+   private String POSITION_LIST_DIR = "PosListDIR";
+   private String posListDir_;
+   private File curFile_;
+
+   private JTable posTable_;
+   private SpringLayout springLayout;
+   private CMMCore core_;
+   
+   private JTextArea curPostextArea_;
+
+   private class PosTableModel extends AbstractTableModel {
       public final String[] COLUMN_NAMES = new String[] {
             "Label",
             "Position [um]"
@@ -96,12 +123,44 @@ public class PositionListDlg extends MMDialog {
       }
    }
 
-   private JTable posTable_;
-   private SpringLayout springLayout;
-   private CMMCore core_;
-   private JLabel yLabel_;
-   private JLabel xLabel_;
+   /**
+    * File filter class for Open/Save file choosers 
+    */
+   private class PosFileFilter extends FileFilter {
+      final private String EXT_POS;
+      final private String DESCRIPTION;
 
+      public PosFileFilter() {
+         super();
+         EXT_POS = new String("pos");
+         DESCRIPTION = new String("MM position files (*.pos)");
+      }
+
+      public boolean accept(File f){
+         if (f.isDirectory())
+            return true;
+
+         if (EXT_POS.equals(getExtension(f)))
+            return true;
+         return false;
+      }
+
+      public String getDescription(){
+         return DESCRIPTION;
+      }
+
+      private String getExtension(File f) {
+         String ext = null;
+         String s = f.getName();
+         int i = s.lastIndexOf('.');
+
+         if (i > 0 &&  i < s.length() - 1) {
+            ext = s.substring(i+1).toLowerCase();
+         }
+         return ext;
+      }
+   }
+   
    /**
     * Create the dialog
     */
@@ -113,10 +172,10 @@ public class PositionListDlg extends MMDialog {
          }
       });
       core_ = core;
-      setTitle("XY-position List");
+      setTitle("Stage-position List");
       springLayout = new SpringLayout();
       getContentPane().setLayout(springLayout);
-      setBounds(100, 100, 397, 455);
+      setBounds(100, 100, 362, 495);
 
       Preferences root = Preferences.userNodeForPackage(this.getClass());
       setPrefsNode(root.node(root.absolutePath() + "/XYPositionListDlg"));
@@ -128,8 +187,6 @@ public class PositionListDlg extends MMDialog {
       getContentPane().add(scrollPane);
       springLayout.putConstraint(SpringLayout.SOUTH, scrollPane, -16, SpringLayout.SOUTH, getContentPane());
       springLayout.putConstraint(SpringLayout.NORTH, scrollPane, 15, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.EAST, scrollPane, -124, SpringLayout.EAST, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, scrollPane, 10, SpringLayout.WEST, getContentPane());
 
       posTable_ = new JTable();
       PosTableModel model = new PosTableModel();
@@ -159,10 +216,10 @@ public class PositionListDlg extends MMDialog {
       removeButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/cross.png"));
       removeButton.setText("Remove");
       getContentPane().add(removeButton);
-      springLayout.putConstraint(SpringLayout.EAST, markButton, -9, SpringLayout.EAST, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, markButton, 0, SpringLayout.WEST, removeButton);
       springLayout.putConstraint(SpringLayout.SOUTH, removeButton, 65, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.NORTH, removeButton, 42, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.EAST, markButton, -9, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, markButton, 0, SpringLayout.WEST, removeButton);
       springLayout.putConstraint(SpringLayout.EAST, removeButton, -9, SpringLayout.EAST, getContentPane());
       springLayout.putConstraint(SpringLayout.WEST, removeButton, -109, SpringLayout.EAST, getContentPane());
 
@@ -175,10 +232,12 @@ public class PositionListDlg extends MMDialog {
       });
       closeButton.setText("Close");
       getContentPane().add(closeButton);
+      springLayout.putConstraint(SpringLayout.SOUTH, closeButton, 0, SpringLayout.SOUTH, scrollPane);
+      springLayout.putConstraint(SpringLayout.NORTH, closeButton, -23, SpringLayout.SOUTH, scrollPane);
+      springLayout.putConstraint(SpringLayout.EAST, scrollPane, -5, SpringLayout.WEST, closeButton);
+      springLayout.putConstraint(SpringLayout.WEST, scrollPane, 10, SpringLayout.WEST, getContentPane());
       springLayout.putConstraint(SpringLayout.EAST, closeButton, -5, SpringLayout.EAST, getContentPane());
       springLayout.putConstraint(SpringLayout.WEST, closeButton, 0, SpringLayout.WEST, removeButton);
-      springLayout.putConstraint(SpringLayout.SOUTH, closeButton, 395, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, closeButton, 372, SpringLayout.NORTH, getContentPane());
 
       final JButton gotoButton = new JButton();
       gotoButton.addActionListener(new ActionListener() {
@@ -210,41 +269,152 @@ public class PositionListDlg extends MMDialog {
             clearAllPositions();
          }
       });
-      removeAllButton.setText("Remove all");
+      removeAllButton.setText("Remove All");
       getContentPane().add(removeAllButton);
-      springLayout.putConstraint(SpringLayout.SOUTH, removeAllButton, 90, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, removeAllButton, 0, SpringLayout.SOUTH, removeButton);
+      springLayout.putConstraint(SpringLayout.SOUTH, removeAllButton, 88, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, removeAllButton, 65, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.EAST, removeAllButton, 100, SpringLayout.WEST, removeButton);
       springLayout.putConstraint(SpringLayout.WEST, removeAllButton, 0, SpringLayout.WEST, removeButton);
       springLayout.putConstraint(SpringLayout.EAST, refreshButton, 0, SpringLayout.EAST, removeAllButton);
       springLayout.putConstraint(SpringLayout.WEST, refreshButton, -100, SpringLayout.EAST, removeAllButton);
       springLayout.putConstraint(SpringLayout.EAST, gotoButton, 0, SpringLayout.EAST, removeAllButton);
       springLayout.putConstraint(SpringLayout.WEST, gotoButton, -100, SpringLayout.EAST, removeAllButton);
-
-      xLabel_ = new JLabel();
-      xLabel_.setText("X=");
-      getContentPane().add(xLabel_);
-      springLayout.putConstraint(SpringLayout.EAST, xLabel_, 0, SpringLayout.EAST, refreshButton);
-      springLayout.putConstraint(SpringLayout.WEST, xLabel_, 0, SpringLayout.WEST, refreshButton);
-      springLayout.putConstraint(SpringLayout.SOUTH, xLabel_, 195, SpringLayout.NORTH, getContentPane());
-
-      yLabel_ = new JLabel();
-      yLabel_.setText("Y=");
-      getContentPane().add(yLabel_);
-      springLayout.putConstraint(SpringLayout.SOUTH, yLabel_, 219, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, yLabel_, 205, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.EAST, yLabel_, 100, SpringLayout.WEST, xLabel_);
-      springLayout.putConstraint(SpringLayout.WEST, yLabel_, 0, SpringLayout.WEST, xLabel_);
       //
       
+      curPostextArea_ = new JTextArea();
+      curPostextArea_.setFont(new Font("Arial", Font.PLAIN, 10));
+      curPostextArea_.setBorder(new LineBorder(Color.black, 1, false));
+      getContentPane().add(curPostextArea_);
+      
+      
       refreshCurrentPosition();
+
+      final JLabel currentPositionLabel = new JLabel();
+      currentPositionLabel.setText("Current position:");
+      getContentPane().add(currentPositionLabel);
+      springLayout.putConstraint(SpringLayout.SOUTH, curPostextArea_, 120, SpringLayout.SOUTH, currentPositionLabel);
+      springLayout.putConstraint(SpringLayout.NORTH, curPostextArea_, 5, SpringLayout.SOUTH, currentPositionLabel);
+      springLayout.putConstraint(SpringLayout.EAST, curPostextArea_, 104, SpringLayout.WEST, currentPositionLabel);
+      springLayout.putConstraint(SpringLayout.WEST, curPostextArea_, 0, SpringLayout.WEST, currentPositionLabel);
+      springLayout.putConstraint(SpringLayout.SOUTH, currentPositionLabel, 185, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.EAST, currentPositionLabel, 99, SpringLayout.WEST, refreshButton);
+      springLayout.putConstraint(SpringLayout.WEST, currentPositionLabel, 0, SpringLayout.WEST, refreshButton);
+
+      final JButton loadButton = new JButton();
+      loadButton.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent arg0) {
+            loadPositionList();
+         }
+      });
+      loadButton.setText("Load...");
+      getContentPane().add(loadButton);
+      springLayout.putConstraint(SpringLayout.SOUTH, loadButton, 343, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, loadButton, 320, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.EAST, loadButton, 0, SpringLayout.EAST, curPostextArea_);
+      springLayout.putConstraint(SpringLayout.WEST, loadButton, 0, SpringLayout.WEST, curPostextArea_);
+
+      final JButton saveAsButton = new JButton();
+      saveAsButton.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent arg0) {
+            savePositionListAs();
+         }
+      });
+      saveAsButton.setText("Save As...");
+      getContentPane().add(saveAsButton);
+      springLayout.putConstraint(SpringLayout.EAST, saveAsButton, -4, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, saveAsButton, -109, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.SOUTH, saveAsButton, 370, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, saveAsButton, 347, SpringLayout.NORTH, getContentPane());
+
+   }
+
+   protected boolean savePositionListAs() {
+      JFileChooser fc = new JFileChooser();
+      boolean saveFile = true;
+      
+      do {
+         if (curFile_ == null)
+            curFile_ = new File(POSITION_LIST_FILE_NAME);
+
+         fc.setSelectedFile(curFile_);
+         int retVal = fc.showSaveDialog(this);
+         if (retVal == JFileChooser.APPROVE_OPTION) {
+            curFile_ = fc.getSelectedFile();
+
+            // check if file already exists
+            if( curFile_.exists() ) { 
+               int sel = JOptionPane.showConfirmDialog( this,
+                     "Overwrite " + curFile_.getName(),
+                     "File Save",
+                     JOptionPane.YES_NO_OPTION);
+
+               if(sel == JOptionPane.YES_OPTION)
+                  saveFile = true;
+               else
+                  saveFile = false;
+            }
+         } else {
+            return false; 
+         }
+      } while (saveFile == false);
+
+      try {
+         String serList = getPositionList().serialize();
+         FileWriter fw = new FileWriter(curFile_);
+         fw.write(serList);
+         fw.close();
+         posListDir_ = curFile_.getParent();
+      } catch (FileNotFoundException e) {
+         handleError(e.getMessage());
+         return false;
+      } catch (IOException e) {
+         handleError(e.getMessage());
+         return false;
+      } catch (MMSerializationException e) {
+         handleError(e.getMessage());
+      }
+      return true;
+   }
+
+   protected void loadPositionList() {
+      JFileChooser fc = new JFileChooser();
+      fc.addChoosableFileFilter(new PosFileFilter());
+
+      if (posListDir_ != null)
+         fc.setCurrentDirectory(new File(posListDir_));
+      int retVal = fc.showOpenDialog(this);
+      if (retVal == JFileChooser.APPROVE_OPTION) {
+         curFile_ = fc.getSelectedFile();
+         try {
+            StringBuffer contents = new StringBuffer();
+            BufferedReader input = new BufferedReader(new FileReader(curFile_));
+            String line = null;
+            while (( line = input.readLine()) != null){
+               contents.append(line);
+               contents.append(System.getProperty("line.separator"));
+            }
+            getPositionList().restore(contents.toString());
+            posListDir_ = curFile_.getParent();
+         } catch (Exception e) {
+            handleError(e.getMessage());
+         } finally {
+            PosTableModel ptm = (PosTableModel)posTable_.getModel();
+            ptm.fireTableDataChanged();            
+         }
+      }
    }
 
    protected void goToCurrentPosition() {
       PosTableModel ptm = (PosTableModel)posTable_.getModel();
       MultiStagePosition msp = ptm.getPositionList().getPosition(posTable_.getSelectedRow());
-      
-      msp.goToPosition(core_);
+      if (msp == null)
+         return;
+
+      try {
+         MultiStagePosition.goToPosition(msp, core_);
+      } catch (Exception e) {
+         handleError(e.getMessage());
+      }
    }
 
    protected void clearAllPositions() {
@@ -279,7 +449,7 @@ public class PositionListDlg extends MMDialog {
          for (int i=0; i<stages.size(); i++) {
             StagePosition sp = new StagePosition();
             sp.stageName = stages.get(i);
-            sp.numAxis = 1;
+            sp.numAxes = 1;
             sp.x = core_.getPosition(stages.get(i));
             msp.add(sp);
          }
@@ -289,7 +459,7 @@ public class PositionListDlg extends MMDialog {
          for (int i=0; i<stages2D.size(); i++) {
             StagePosition sp = new StagePosition();
             sp.stageName = stages2D.get(i);
-            sp.numAxis = 2;
+            sp.numAxes = 2;
             sp.x = core_.getXPosition(stages2D.get(i));
             sp.y = core_.getYPosition(stages2D.get(i));
             msp.add(sp);
@@ -308,21 +478,41 @@ public class PositionListDlg extends MMDialog {
     * Update display of the current xy position.
     */
    private void refreshCurrentPosition() {
-      String stage = core_.getXYStageDevice();
-      if (stage.length() == 0) {
-         xLabel_.setText("X=");
-         yLabel_.setText("Y=");
-         return;
-      }
-      double x[] = new double[1];
-      double y[] = new double[1];
+      StringBuffer sb = new StringBuffer();
+      
+      // read 1-axis stages
       try {
-         core_.getXYPosition(stage, x, y);
+         StrVector stages = core_.getLoadedDevicesOfType(DeviceType.StageDevice);
+         for (int i=0; i<stages.size(); i++) {
+            StagePosition sp = new StagePosition();
+            sp.stageName = stages.get(i);
+            sp.numAxes = 1;
+            sp.x = core_.getPosition(stages.get(i));
+            sb.append(sp.getVerbose() + "\n");
+         }
+
+         // read 2-axis stages
+         StrVector stages2D = core_.getLoadedDevicesOfType(DeviceType.XYStageDevice);
+         for (int i=0; i<stages2D.size(); i++) {
+            StagePosition sp = new StagePosition();
+            sp.stageName = stages2D.get(i);
+            sp.numAxes = 2;
+            sp.x = core_.getXPosition(stages2D.get(i));
+            sp.y = core_.getYPosition(stages2D.get(i));
+            sb.append(sp.getVerbose() + "\n");
+         }
       } catch (Exception e) {
          handleError(e.getMessage());
       }
-      xLabel_.setText("X=" + Double.toString(x[0]) + "um");
-      yLabel_.setText("Y=" + Double.toString(y[0]) + "um");
+      
+      curPostextArea_.setText(sb.toString());
+   }
+      
+   
+   private PositionList getPositionList() {
+      PosTableModel ptm = (PosTableModel)posTable_.getModel();
+      return ptm.getPositionList();
+
    }
 
    private void handleError(String txt) {

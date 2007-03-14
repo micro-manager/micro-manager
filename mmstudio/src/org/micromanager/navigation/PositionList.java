@@ -44,6 +44,7 @@ public class PositionList {
    private final static String X_KEY = "X";
    private final static String Y_KEY = "Y";
    private final static String Z_KEY = "Z";
+   private final static String NUMAXES_KEY = "AXES";
    private final static String POSARRAY_KEY = "POSITIONS";
    private final static String DEVARRAY_KEY = "DEVICES";
       
@@ -132,6 +133,7 @@ public class PositionList {
                stage.put(X_KEY, sp.x);
                stage.put(Y_KEY, sp.y);
                stage.put(Z_KEY, sp.z);
+               stage.put(NUMAXES_KEY, sp.numAxes);
                stage.put(DEVICE_KEY, sp.stageName);
                
                devicePosData.put(j, stage);
@@ -170,6 +172,7 @@ public class PositionList {
                pos.y = stage.getDouble(Y_KEY);
                pos.z = stage.getDouble(Z_KEY);
                pos.stageName = stage.getString(DEVICE_KEY);
+               pos.numAxes = stage.getInt(NUMAXES_KEY);
                msp.add(pos);
             }
             positions_.add(msp);

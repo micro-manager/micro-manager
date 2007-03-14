@@ -41,9 +41,9 @@ public class MultiStagePosition {
    public static void goToPosition(MultiStagePosition msp, CMMCore core_) throws Exception {
       for (int i=0; i<msp.size(); i++) {
          StagePosition sp = msp.get(i);
-         if (sp.numAxis == 1) {
+         if (sp.numAxes == 1) {
             core_.setPosition(sp.stageName, sp.x);
-         } else if (sp.numAxis == 2) {
+         } else if (sp.numAxes == 2) {
             core_.setXYPosition(sp.stageName, sp.x, sp.y);
          }
       }
