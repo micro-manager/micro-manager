@@ -8,4 +8,4 @@ SutterLambda_la_LDFLAGS = -module
 install:
 	cp .libs/SutterLambda.so $(IJPATH)/$(MMPREFIX)SutterLambda
 
-EXTRA_DIST = SutterLambda_vc8.vcproj SutterLambda.vcproj license.txt
+EXTRA_DIST = SutterLambda.vcproj license.txt

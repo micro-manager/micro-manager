@@ -8,4 +8,4 @@ Prior_la_LDFLAGS = -module
 install:
 	cp .libs/Prior.so $(IJPATH)/$(MMPREFIX)Prior
 
-EXTRA_DIST = Prior_vc8.vcproj Prior.vcproj license.txt
+EXTRA_DIST = Prior.vcproj license.txt

@@ -1,1 +1,1 @@
-EXTRA_DIST = DTOpenLayer.vcproj DTOpenLayer_vc8.vcproj license.txt DTOpenLayer.cpp DTOpenLayer.h
+EXTRA_DIST = DTOpenLayer.vcproj  license.txt DTOpenLayer.cpp DTOpenLayer.h

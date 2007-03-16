@@ -8,4 +8,4 @@ Vincent_la_LDFLAGS = -module
 install:
 	cp .libs/Vincent.so $(IJPATH)/$(MMPREFIX)Vincent
 
-EXTRA_DIST = Vincent_vc8.vcproj Vincent.vcproj license.txt
+EXTRA_DIST =  Vincent.vcproj license.txt

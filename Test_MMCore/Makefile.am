@@ -11,7 +11,7 @@ testCore_SOURCES = Test_MMCore_Mac.cpp \
    $(top_srcdir)/MMCore/MMCore.cpp \
    $(top_srcdir)/MMCore/PluginManager.cpp
 
-EXTRA_DIST = Test_MMCore.vcproj Test_MMCore_vc8.vcproj Test_MMCore.sln Test_MMCore_vc8.sln  Test_MMCore.cpp
+EXTRA_DIST = Test_MMCore.vcproj Test_MMCore.sln Test_MMCore.cpp
 
 install:
 	cp testCore $(IJPATH)/testCore

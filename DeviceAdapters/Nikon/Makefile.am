@@ -8,5 +8,5 @@ Nikon_la_LDFLAGS = -module
 install:
 	cp .libs/Nikon.so $(IJPATH)/$(MMPREFIX)Nikon
 
-EXTRA_DIST = Nikon.vcproj Nikon_vc8.vcproj license.txt
+EXTRA_DIST = Nikon.vcproj license.txt
 

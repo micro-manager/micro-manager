@@ -9,5 +9,5 @@ Hamamatsu_la_LDFLAGS = -module $(DCAMFRAMEWORKS)
 install:
 	cp .libs/Hamamatsu.so $(IJPATH)/$(MMPREFIX)Hamamatsu
 
-EXTRA_DIST = Hamamatsu_vc8.vcproj Hamamatsu.vcproj license.txt
+EXTRA_DIST = Hamamatsu.vcproj license.txt
 

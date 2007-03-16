@@ -7,4 +7,4 @@ DemoCamera_la_LIBADD = ../../MMDevice/.libs/libMMDevice.a
 install:
 	cp .libs/DemoCamera.so $(IJPATH)/$(MMPREFIX)DemoCamera
 
-EXTRA_DIST = DemoCamera_vc8.vcproj DemoCamera.vcproj license.txt
+EXTRA_DIST = DemoCamera.vcproj license.txt

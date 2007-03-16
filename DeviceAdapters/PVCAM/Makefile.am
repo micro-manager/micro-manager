@@ -8,4 +8,4 @@ PVCAM_la_LDFLAGS = -module $(PVCAMFRAMEWORKS)
 install:
 	cp .libs/PVCAM.so $(IJPATH)/$(MMPREFIX)PVCAM
 
-EXTRA_DIST = PVCAM_vc8.vcproj PVCAM.vcproj license.txt
+EXTRA_DIST = PVCAM.vcproj license.txt
