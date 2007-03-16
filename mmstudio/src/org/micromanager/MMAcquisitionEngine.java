@@ -39,11 +39,16 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.GregorianCalendar;
+import java.util.prefs.BackingStoreException;
+import java.util.prefs.InvalidPreferencesFormatException;
+import java.util.prefs.Preferences;
 
 import javax.swing.JOptionPane;
 import javax.swing.Timer;
@@ -79,6 +84,7 @@ import com.quirkware.guid.PlatformIndependentGuidGen;
  * metadata in JSON format.
  */
 public class MMAcquisitionEngine implements AcquisitionEngine {
+   // presistent properties (app settings)
    
    private String channelGroup_;
    
@@ -112,13 +118,12 @@ public class MMAcquisitionEngine implements AcquisitionEngine {
    DeviceControlGUI parentGUI_;
    String zStage_;
    
-   ArrayList channels_;
+   ArrayList<ChannelSpec> channels_;
    double[] sliceDeltaZ_;
    double bottomZPos_;
    double topZPos_;
    double deltaZ_;
    
-   private boolean updateLiveWindow_ = true;
    private double startPos_;
    private Timer acqTimer_;
    private FileWriter metaWriter_;
@@ -133,9 +138,12 @@ public class MMAcquisitionEngine implements AcquisitionEngine {
    private long imgDepth_ = 0;
 
    private PlatformIndependentGuidGen guidgen_;
+
+   private boolean updateLiveWindow_ = false;
          
    public MMAcquisitionEngine() {
-      channels_ = new ArrayList();
+            
+      channels_ = new ArrayList<ChannelSpec>();
       //channels_.add(new ChannelSpec());
       sliceDeltaZ_ = new double[1];
       sliceDeltaZ_[0] = 0.0; // um
@@ -155,11 +163,11 @@ public class MMAcquisitionEngine implements AcquisitionEngine {
       core_ = c;
    }
    
-   public ArrayList getChannels() {
+   public ArrayList<ChannelSpec> getChannels() {
       return channels_;
    }
    
-   public void setChannels(ArrayList ch) {
+   public void setChannels(ArrayList<ChannelSpec> ch) {
       channels_ = ch;
    }
    
@@ -191,6 +199,9 @@ public class MMAcquisitionEngine implements AcquisitionEngine {
     * @throws Exception
     */
    public void acquire() throws Exception{
+      if (isAcquisitionRunning()) {
+         throw new Exception("Busy with the current acquisition.");
+      }
 
       // check if the parent GUI is in the adequate state
       if (parentGUI_ != null)
@@ -297,14 +308,6 @@ public class MMAcquisitionEngine implements AcquisitionEngine {
       comment_ = txt;
    }
    
-   public String getComment() {
-      return comment_;
-   }
-   
-   public Image5D getImage5D() {
-      return img5d_;
-   }
-   
    /**
     * Find out which channels are currently available for the selected channel group.
     * @return - list of channel (preset) names
@@ -367,7 +370,7 @@ public class MMAcquisitionEngine implements AcquisitionEngine {
    }
 
    public void setUpdateLiveWindow(boolean update) {
-      this.updateLiveWindow_ = update;
+      this.updateLiveWindow_  = update;
    }
    
    public boolean isAcquisitionLagging() {
@@ -434,7 +437,7 @@ public class MMAcquisitionEngine implements AcquisitionEngine {
                zCur = z;
             }
             for (int k=0; k<channels_.size(); k++) {
-               ChannelSpec cs = (ChannelSpec)channels_.get(k);
+               ChannelSpec cs = channels_.get(k);
                
                // apply z-offsets
                if (isFocusStageAvailable() && cs.zOffset_ != 0.0) {
@@ -513,13 +516,13 @@ public class MMAcquisitionEngine implements AcquisitionEngine {
                i5dWin_.getCanvas().paint(i5dWin_.getCanvas().getGraphics());
                
                // save file
-               String fname = ImageKey.generateFileName(frameCount_, ((ChannelSpec)channels_.get(k)).config_, j);
+               String fname = ImageKey.generateFileName(frameCount_, (channels_.get(k)).config_, j);
                
                // generate metadata
                JSONObject jsonData = new JSONObject();
                jsonData.put(ImagePropertyKeys.FILE, fname);
                jsonData.put(ImagePropertyKeys.FRAME, frameCount_);
-               jsonData.put(ImagePropertyKeys.CHANNEL, ((ChannelSpec)channels_.get(k)).config_);
+               jsonData.put(ImagePropertyKeys.CHANNEL, (channels_.get(k)).config_);
                jsonData.put(ImagePropertyKeys.SLICE, j);
                jsonData.put(ImagePropertyKeys.TIME, cld.getTime());
                jsonData.put(ImagePropertyKeys.ELAPSED_TIME_MS, cld.getTimeInMillis() - startTimeMs_ );
@@ -534,13 +537,13 @@ public class MMAcquisitionEngine implements AcquisitionEngine {
                }              
             }
          } catch(MMException e) {
-            stopAcquisition();
+            stop();
             restoreSystem();
             if (e.getMessage().length() > 0)
                JOptionPane.showMessageDialog(i5dWin_, e.getMessage());     
           return;
          } catch (Exception e) {
-            stopAcquisition();
+            stop();
             restoreSystem();
             if (e.getMessage().length() > 0)
                JOptionPane.showMessageDialog(i5dWin_, e.getMessage());     
@@ -548,7 +551,7 @@ public class MMAcquisitionEngine implements AcquisitionEngine {
          } catch (OutOfMemoryError e) {
             JOptionPane.showMessageDialog(i5dWin_, e.getMessage() + "\nOut of memory - acquistion stopped.\n" +
             "In the future you can try to increase the amount of memory available to the Java VM (ImageJ).");     
-            stopAcquisition();
+            stop();
             restoreSystem();
             return;       
          }
@@ -588,7 +591,7 @@ public class MMAcquisitionEngine implements AcquisitionEngine {
       }
       
       if(frameCount_ >= numFrames_) {
-         stopAcquisition();
+         stop();
          i5dWin_.setTitle("Acquisition (completed) " + cld.getTime()); 
          restoreSystem();
          return;
@@ -658,7 +661,7 @@ public class MMAcquisitionEngine implements AcquisitionEngine {
       return txt;
    }
    
-   public void stopAcquisition() {
+   public void stop() {
       String metaStream = new String();
       try {
          metaStream = metadata_.toString(3);
@@ -718,7 +721,7 @@ public class MMAcquisitionEngine implements AcquisitionEngine {
     */
    public void shutdown() {
       if (isAcquisitionRunning())
-         stopAcquisition();
+         stop();
 //      if (i5dWin_ != null) {
 //         i5dWin_.dispose();
 //      }
@@ -771,16 +774,12 @@ public class MMAcquisitionEngine implements AcquisitionEngine {
       this.saveFiles_ = saveFiles_;
    }
 
-   public boolean isSaveFiles() {
-      return saveFiles_;
-   }
-   
    /**
     * Acquisition directory set-up.
     * @throws IOException 
     * @throws JSONException 
     */
-   public void acquisitionSetup() throws IOException, JSONException {
+   private void acquisitionSetup() throws IOException, JSONException {
       metaWriter_ = null;
       
       if (saveFiles_) {
@@ -821,9 +820,9 @@ public class MMAcquisitionEngine implements AcquisitionEngine {
       JSONArray colors = new JSONArray();
       JSONArray names = new JSONArray();
       for (int i=0; i < channels_.size(); i++) {
-         Color c = ((ChannelSpec)channels_.get(i)).color_;
+         Color c = (channels_.get(i)).color_;
          colors.put(i, c.getRGB());
-         names.put(i, ((ChannelSpec)channels_.get(i)).config_);
+         names.put(i, (channels_.get(i)).config_);
       }
       i5dData.put(SummaryKeys.CHANNEL_COLORS, colors);
       i5dData.put(SummaryKeys.CHANNEL_NAMES, names);
@@ -903,7 +902,7 @@ public class MMAcquisitionEngine implements AcquisitionEngine {
             numSlices, numFrames_, false);
       for (int i=0; i<channels_.size(); i++) {
          ChannelCalibration chcal = new ChannelCalibration();
-         chcal.setLabel(((ChannelSpec)channels_.get(i)).config_);
+         chcal.setLabel((channels_.get(i)).config_);
          img5d_.setChannelCalibration(i+1, chcal);
                   
          // set color
@@ -923,7 +922,7 @@ public class MMAcquisitionEngine implements AcquisitionEngine {
       //WindowManager.addWindow(i5dWin_);
       ChannelSpec[] cs = new ChannelSpec[channels_.size()];
       for (int i=0; i<channels_.size(); i++) {
-         cs[i] = (ChannelSpec) channels_.get(i);
+         cs[i] = channels_.get(i);
       }
       i5dWin_.setMMChannelData(cs);
       i5dWin_.setLocation(xWindowPos, yWindowPos);

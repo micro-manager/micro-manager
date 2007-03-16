@@ -74,7 +74,7 @@ const char* g_logFileName = "CoreLog.txt";
 // version info
 const int MMCore_versionMajor = 1;
 const int MMCore_versionMinor = 0;
-const int MMCore_versionBuild = 25;
+const int MMCore_versionBuild = 26;
 
 ///////////////////////////////////////////////////////////////////////////////
 // CMMcore class

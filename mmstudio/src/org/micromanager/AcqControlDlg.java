@@ -72,6 +72,7 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 
+import org.micromanager.utils.AcquisitionEngine;
 import org.micromanager.utils.ChannelSpec;
 import org.micromanager.utils.ColorEditor;
 import org.micromanager.utils.ColorRenderer;
@@ -99,7 +100,7 @@ public class AcqControlDlg extends JDialog {
    private JTextField zStep_;
    private JTextField zTop_;
    private JTextField zBottom_;
-   private MMAcquisitionEngine acqEng_;
+   private AcquisitionEngine acqEng_;
    private JScrollPane tablePane_;
    private JTable table_;
    private JSpinner numFrames_;
@@ -191,7 +192,7 @@ public class AcqControlDlg extends JDialog {
    public class ChannelTableModel extends AbstractTableModel {
 
       private ArrayList channels_;
-      private MMAcquisitionEngine acqEng_;
+      private AcquisitionEngine acqEng_;
 
       public final String[] COLUMN_NAMES = new String[] {
             "Configuration",
@@ -200,7 +201,7 @@ public class AcqControlDlg extends JDialog {
             "Color"
       };
 
-      public ChannelTableModel(MMAcquisitionEngine eng) {
+      public ChannelTableModel(AcquisitionEngine eng) {
          acqEng_ = eng;
       }
 
@@ -451,7 +452,7 @@ public class AcqControlDlg extends JDialog {
     * @param acqEng - acquistion engine
     * @param prefs - application preferences node
     */
-   public AcqControlDlg(MMAcquisitionEngine acqEng, Preferences prefs) {
+   public AcqControlDlg(AcquisitionEngine acqEng, Preferences prefs) {
       super();
 
       prefs_ = prefs;

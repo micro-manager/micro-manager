@@ -299,7 +299,7 @@ public class Image5DWindow extends StackWindow {
                JOptionPane.INFORMATION_MESSAGE);
          
          if (result == JOptionPane.YES_OPTION) {
-            acqEng_.stopAcquisition();
+            acqEng_.stop();
          } else
             return false; // abort cancelled
       }

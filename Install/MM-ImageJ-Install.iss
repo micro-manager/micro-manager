@@ -2,14 +2,14 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 [Setup]
-AppName=Micro-Manager
+AppName=Micro-Manager 2.0
 AppVerName=Micro-Manager 2.0
 AppPublisher=Vale Lab, UCSF
 AppPublisherURL=http://www.micro-manager.org
 AppSupportURL=http://www.micro-manager.org
 AppUpdatesURL=http://www.micro-manager.org
 DefaultDirName=C:/Program Files/Micro-Manager2
-DefaultGroupName=Micro-Manager2
+DefaultGroupName=Micro-Manager 2.0
 OutputBaseFilename=MMSetup_2_0_xx
 Compression=lzma
 SolidCompression=true

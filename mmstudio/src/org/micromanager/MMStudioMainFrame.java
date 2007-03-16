@@ -95,6 +95,7 @@ import org.micromanager.metadata.DisplaySettings;
 import org.micromanager.metadata.MMAcqDataException;
 import org.micromanager.navigation.PositionList;
 import org.micromanager.script.MMScriptFrame;
+import org.micromanager.utils.AcquisitionEngine;
 import org.micromanager.utils.CfgFileFilter;
 import org.micromanager.utils.ContrastSettings;
 import org.micromanager.utils.DeviceControlGUI;
@@ -114,7 +115,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI {
    public static String LIVE_WINDOW_TITLE = "AcqWindow";
    
    private static final String MICRO_MANAGER_TITLE = "Micro-Manager 2.0";
-   private static final String VERSION = "2.0.0";
+   private static final String VERSION = "2.0.1";
    private static final long serialVersionUID = 3556500289598574541L;
    
    private static final String MAIN_FRAME_X = "x";
@@ -134,6 +135,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI {
    private static final String OPEN_ACQ_DIR = "openDataDir";
    
    private static final String SCRIPT_CORE_OBJECT = "mmc";
+   private static final String SCRIPT_ACQENG_OBJECT = "acq";
    
    // GUI components
    private JTextField textFieldGain_;
@@ -163,6 +165,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI {
    private AcqControlDlg acqControlWin_;
    private final static String DEFAULT_CONFIG_FILE_NAME = "MMConfig_demo.cfg";
    private final static String DEFAULT_SCRIPT_FILE_NAME = "MMStartup.bsh";
+
    private String sysConfigFile_; 
    private String startupScriptFile_; 
    private String sysStateFile_ = "MMSystemState.cfg";
@@ -184,7 +187,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI {
    
    // MMcore
    CMMCore core_;
-   MMAcquisitionEngine engine_;
+   AcquisitionEngine engine_;
    PositionList posList_;
    private String openAcqDirectory_ = "";
    private boolean running_;
@@ -1471,6 +1474,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI {
          scriptFrame_.setVisible(true);
          scriptFrame_.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
          scriptFrame_.insertScriptingObject(SCRIPT_CORE_OBJECT, core_);
+         scriptFrame_.insertScriptingObject(SCRIPT_ACQENG_OBJECT, engine_);
          scriptFrame_.setParentGUI(this);
       }
    }
