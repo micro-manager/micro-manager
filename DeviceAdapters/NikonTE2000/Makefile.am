@@ -8,4 +8,4 @@ NikonTE2000_la_LDFLAGS = -module
 install:
 	cp .libs/NikonTE2000.so $(IJPATH)/$(MMPREFIX)NikonTE2000
 
-EXTRA_DIST = NikonTE2000.vcproj license.txt
+EXTRA_DIST = NikonTE2000.vcproj NikonTE2000_vc8.sln license.txt

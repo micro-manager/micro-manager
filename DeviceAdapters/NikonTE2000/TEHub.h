@@ -46,6 +46,8 @@ public:
 
    int SetFocusPosition(MM::Device& device, MM::Core& core, int pos);
    int GetFocusPosition(MM::Device& device, MM::Core& core, int& pos);
+   int SetFocusStepSize(MM::Device& device, MM::Core& core, int stepSize);
+   int GetFocusStepSize(MM::Device& device, MM::Core& core, int& stepSize);
    bool IsFocusBusy(MM::Device& device, MM::Core& core);
 
    int SetFilterBlockPosition(MM::Device& device, MM::Core& core, int pos);

@@ -512,7 +512,7 @@ int FilterBlock::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 // ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 FocusStage::FocusStage() : 
-   stepSize_um_(0.01),
+   stepSize_nm_(100),
    busy_(false),
    initialized_(false),
    lowerLimit_(0.0),
@@ -558,6 +558,29 @@ int FocusStage::Initialize()
    if (ret != DEVICE_OK)
       return ret;
 
+   // StepSize
+   // --------
+   const char* stepSizeName = "FocusStepSize_(nm)";
+   ret = g_hub.GetFocusStepSize(*this, *GetCoreCallback(), stepSize_nm_);
+   if (ret != DEVICE_OK)
+      return ret;
+   char buffer[4];
+   sprintf(buffer, "%d", stepSize_nm_);
+   pAct = new CPropertyAction (this, &FocusStage::OnStepSize);
+   ret = CreateProperty(stepSizeName, buffer, MM::String, false, pAct, true);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   AddAllowedValue(stepSizeName, "25");
+   AddAllowedValue(stepSizeName, "50");
+   AddAllowedValue(stepSizeName, "100");
+
+   ret = UpdateStatus();
+   if (ret != DEVICE_OK)
+      return ret;
+
+
+
    initialized_ = true;
 
    return DEVICE_OK;
@@ -594,21 +617,21 @@ int FocusStage::GetPositionUm(double& pos)
 
 int FocusStage::SetPositionSteps(long steps)
 {
-   if (stepSize_um_ == 0.0)
+   if (stepSize_nm_ == 0.0)
       return DEVICE_UNSUPPORTED_COMMAND;
-   return SetPositionUm(steps * stepSize_um_); 
+   return SetPositionUm(steps * stepSize_nm_ / 1000); 
 }
 
 int FocusStage::GetPositionSteps(long& steps)
 {
-   if (stepSize_um_ == 0.0)
+   if (stepSize_nm_ == 0.0)
       return DEVICE_UNSUPPORTED_COMMAND;
    double posUm;
    int ret = GetPositionUm(posUm);
    if (ret != DEVICE_OK)
       return ret;
 
-   steps = (long)(posUm / stepSize_um_ + 0.5);
+   steps = (long)(posUm / ((double)stepSize_nm_ / 1000) + 0.5);
    return DEVICE_OK;
 }
 
@@ -629,13 +652,15 @@ int FocusStage::OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
       int ret = g_hub.GetFocusPosition(*this, *GetCoreCallback(), pos);
       if (ret != 0)
          return ret;
-      pProp->Set(pos * stepSize_um_);
+      pProp->Set((double) (pos * ((double)stepSize_nm_ / 1000)) );
    }
    else if (eAct == MM::AfterSet)
    {
       double pos;
       pProp->Get(pos);
-      int ret = g_hub.SetFocusPosition(*this, *GetCoreCallback(), (int)(pos/stepSize_um_ + 0.5));
+      int focusPos = (pos/((double)stepSize_nm_ / 1000)) + 0.5;
+      printf ("pos: %f, focusPos: %d\n", pos, focusPos);
+      int ret = g_hub.SetFocusPosition(*this, *GetCoreCallback(), focusPos);
       if (ret != 0)
          return ret;
    }
@@ -643,6 +668,37 @@ int FocusStage::OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+
+/*
+ * 
+ */
+int FocusStage::OnStepSize(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   printf ("In OnStepSize\n");
+   if (eAct == MM::BeforeGet)
+   {
+      int ret = g_hub.GetFocusStepSize(*this, *GetCoreCallback(), stepSize_nm_);
+      if (ret != 0)
+         return ret;
+      if (stepSize_nm_ == 100)
+         pProp->Set("100");
+      else if (stepSize_nm_ == 50)
+         pProp->Set("50");
+      else if (stepSize_nm_ == 25)
+         pProp->Set("25");
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      string stepSize;
+      pProp->Get(stepSize);
+      stepSize_nm_ = atoi(stepSize.c_str());
+      int ret = g_hub.SetFocusStepSize(*this, *GetCoreCallback(), stepSize_nm_);
+      if (ret != DEVICE_OK)
+         return ret;
+   }
+
+   return DEVICE_OK;
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // OpticalPath

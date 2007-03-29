@@ -150,7 +150,7 @@ public:
    // Stage API
    virtual int SetPositionUm(double pos);
    virtual int GetPositionUm(double& pos);
-   virtual double GetStepSize() const {return stepSize_um_;}
+   virtual double GetStepSize() const {return (double)stepSize_nm_/1000;}
    virtual int SetPositionSteps(long steps) ;
    virtual int GetPositionSteps(long& steps);
    virtual int SetOrigin();
@@ -164,9 +164,10 @@ public:
    // action interface
    // ----------------
    int OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnStepSize(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
-   double stepSize_um_;
+   int stepSize_nm_;
    bool busy_;
    bool initialized_;
    double lowerLimit_;

@@ -208,6 +208,70 @@ int TEHub::GetFocusPosition(MM::Device& device, MM::Core& core, int& pos)
    return DEVICE_OK;
 }
 
+int TEHub::SetFocusStepSize(MM::Device& device, MM::Core& core, int stepsize)
+{
+   int resolution;
+   const char* command = "SJS";
+   ostringstream os;
+   // translate stepsize into resolution (coarse, medium, fine
+   switch (stepsize) {
+      case 100: resolution = 0; break;
+      case 50: resolution = 1; break;
+      case 25: resolution = 2; break;
+      // TODO: return appropriate error code
+      default: return 1; break;
+   }
+   os << command << resolution;
+
+   // send command
+   int ret = ExecuteCommand(device, core, commandMode_.c_str(), os.str().c_str());
+   if (ret != DEVICE_OK)
+      return ret;
+
+   // parse the response
+   string value;
+   ret = ParseResponse(command, value);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if (GetCommandMode() == Async)
+      waitingCommands_.insert(make_pair(command, core.GetClockTicksUs(&device)));
+   return DEVICE_OK;
+}
+
+
+int TEHub::GetFocusStepSize(MM::Device& device, MM::Core& core, int& stepSize)
+{
+   const char* command="SJR";
+   int ret = ExecuteCommand(device, core, "r", command);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   // parse the response
+   string value;
+   ret = ParseResponse(command, value);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   int resolution = atoi(value.c_str());
+   switch (resolution) {
+      case 0:
+         stepSize = 100;
+         break;
+      case 1:
+         stepSize = 50;
+         break;
+      case 2:
+         stepSize = 25;
+         break;
+      default:
+         // TODO: find the right error code:
+         return 1;
+   }
+
+   return DEVICE_OK;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // OpticalPath commands
 ///////////////////////////////////////////////////////////////////////////////
