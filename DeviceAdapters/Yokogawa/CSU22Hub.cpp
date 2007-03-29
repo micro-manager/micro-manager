@@ -37,9 +37,14 @@
 #include <sstream>
 #include <iostream>
 
+#ifdef WIN32
+   #include <windows.h>
+   #define usleep(us) Sleep(us/1000) 
+#endif
+
 using namespace std;
 
-CSU22Hub::CSU22Hub()
+CSU22Hub::CSU22Hub ()
 {
    expireTimeUs_ = 5000000; // each command will finish within 5sec
 
@@ -56,37 +61,94 @@ CSU22Hub::~CSU22Hub()
 ///////////////////////////////////////////////////////////////////////////////
 
 /*
- * Set ND Filter (0=10%, 1=100% Transmission
+ * Set ND Filter (0=10%, 1=100% Transmission)
  * Close shutter while doing this
  * TODO: Make sure that CSU22 can handle commands send in sequence without delay
  */
 int CSU22Hub::SetNDFilterPosition(MM::Device& device, MM::Core& core, int pos)
 {
-   // Close shutter
-   const char* command = "sh1";
-   int ret = ExecuteCommand(device, core, command);
-   if (ret != DEVICE_OK)
-      return ret;
+   // Close the shutter (only if it is open)
+   int shutterState; //= shutterState_;
+   int ret =  this->GetShutterPosition(device, core, shutterState);
+   if (shutterState == 0) {
+      const char* command = "sh1";
+      ret = ExecuteCommand(device, core, command);
+      if (ret != DEVICE_OK)
+          return ret;
+      ret = GetAcknowledgment(device,core);
+      if (ret != DEVICE_OK)
+          return ret;
+      usleep(50000);
+   }
 
    // Set ND filter
    ostringstream os;
    os << "nd" << pos;
-   ret = ExecuteCommand(device, core, os.str().c_str());
-   if (ret != DEVICE_OK)
+   bool succeeded = false;
+   int counter = 0;
+   // try up to 10 times, wait 50 ms in between tries
+   while (!succeeded && counter < 10)
+   {
+      ret = ExecuteCommand(device, core, os.str().c_str());
+      if (ret != DEVICE_OK)
+         return ret;
+      ret = GetAcknowledgment(device,core);
+      if (ret != DEVICE_OK)  {
+         usleep(50000);
+         counter++;
+      } else
+         succeeded = true;
+   }
+   if (!succeeded)
       return ret;
 
-   // Open shutter
-   command = "sh0";
-   ret = ExecuteCommand(device, core, command);
-   if (ret != DEVICE_OK)
-      return ret;
+   // Open shutter (only if it was open to begin with)
+   if (shutterState == 0) {
+      const char* command = "sh0";
+      succeeded = false;
+      counter = 0;
+      // try up to 10 times, wait 50 ms in between tries
+      while (!succeeded && counter < 10)
+      {
+         ret = ExecuteCommand(device, core, command);
+         if (ret != DEVICE_OK)
+            return ret;
+         ret = GetAcknowledgment(device,core);
+         if (ret != DEVICE_OK) {
+            usleep(50000);
+            counter++;
+         } else
+            succeeded = true;
+      }
+      if (!succeeded)
+         return ret;
+   }
 
    return DEVICE_OK;
 }
 
 /*
- * The CSU22 does not have a method to query the current filter position or to 
- * signal that the filters have moved
+ *
+ */
+int CSU22Hub::GetNDFilterPosition(MM::Device& device, MM::Core& core, int& pos)
+{
+   ClearAllRcvBuf(device, core);
+   int ret = ExecuteCommand(device, core, "rsn");
+   ret = core.GetSerialAnswer(&device, port_.c_str(), RCV_BUF_LENGTH, rcvBuf_, "\r");
+   if (ret != DEVICE_OK)
+      return ret;
+   int x = rcvBuf_[2];
+   // ND status info is in bit 3
+   x = x -'0';
+   x = x & 4;
+   (x==4) ? (pos = 1) : (pos = 0);
+
+   return DEVICE_OK;
+}
+   
+
+/*
+ * 
  */
 int CSU22Hub::SetFilterSetPosition(MM::Device& device, MM::Core& core, int filter, int dichroic)
 {
@@ -98,6 +160,28 @@ int CSU22Hub::SetFilterSetPosition(MM::Device& device, MM::Core& core, int filte
    return ExecuteCommand(device, core, os.str().c_str());
 }
 
+//TODO: Implement
+int CSU22Hub::GetFilterSetPosition(MM::Device& device, MM::Core& core, int &filter, int &dichroic)
+{
+   ClearAllRcvBuf(device, core);
+   int ret = ExecuteCommand(device, core, "rsf");
+   ret = core.GetSerialAnswer(&device, port_.c_str(), RCV_BUF_LENGTH, rcvBuf_, "\r");
+   if (ret != DEVICE_OK)
+      return ret;
+   // Filter status info is in bits 1 and 2
+   int x = rcvBuf_[2];
+   x = x -'0';
+   filter = x & 4;
+   // Dichroic status info is in bits 3 and 4
+   int y = rcvBuf_[2];
+   y = y -'0';
+   y = y >> 2;
+   dichroic = y & 4;
+
+   return DEVICE_OK;
+}
+
+
 int CSU22Hub::SetShutterPosition(MM::Device& device, MM::Core& core, int pos)
 {
    ostringstream os;
@@ -106,8 +190,27 @@ int CSU22Hub::SetShutterPosition(MM::Device& device, MM::Core& core, int pos)
 }
 
 /*
- * This is the only CSU22 command that acknowledges when desired state is a achieved
- * We set a busy flag and read the return in the busy function
+ * 1 = closed
+ * 0 = open
+ */
+int CSU22Hub::GetShutterPosition(MM::Device& device, MM::Core& core, int& pos)
+{
+   ClearAllRcvBuf(device, core);
+   int ret = ExecuteCommand(device, core, "rsn");
+   // analyze what comes back:
+   ret = core.GetSerialAnswer(&device, port_.c_str(), RCV_BUF_LENGTH, rcvBuf_, "\r");
+   if (ret != DEVICE_OK)
+      return ret;
+   int x = rcvBuf_[2];
+   x = x -'0';
+   x = x & 2;
+   (x == 2) ? (pos = 1) : (pos = 0);
+   return DEVICE_OK;
+}
+
+/*
+ * Block till the CSU22 acknowledges receipt of command (at which point it should be up 
+ * to speed)
  */
 int CSU22Hub::SetDriveSpeedPosition(MM::Device& device, MM::Core& core, int pos)
 {
@@ -118,27 +221,32 @@ int CSU22Hub::SetDriveSpeedPosition(MM::Device& device, MM::Core& core, int pos)
    if (ret != DEVICE_OK)
       return ret;
 
-   driveSpeedBusy_ = true;
+   // wait till the drive reaches speed, try 10 times before giving up
+   ret = GetAcknowledgment(device, core);
+
+   return ret;
+}
+
+/*
+ * TODO: improve error reporting
+ */
+int CSU22Hub::GetDriveSpeedPosition(MM::Device& device, MM::Core& core, int& pos)
+{
+   ClearAllRcvBuf(device, core);
+   int ret = ExecuteCommand(device, core, "rsm");
+   // analyze what comes back:
+   ret = core.GetSerialAnswer(&device, port_.c_str(), RCV_BUF_LENGTH, rcvBuf_, "\r");
+   if (ret != DEVICE_OK)
+      return ret;
+   int speed = atoi(rcvBuf_);
+   pos = speed;
    return DEVICE_OK;
 }
 
+   
 bool CSU22Hub::IsDriveSpeedBusy(MM::Device& device, MM::Core& core)
 {
-   if (driveSpeedBusy_)
-   {
-      // if there is an "A" in the receive buffer we are done:
-      unsigned long read;
-      int ret = core.ReadFromSerial(&device, port_.c_str(), rcvBuf_, RCV_BUF_LENGTH,  read);
-      if (ret != DEVICE_OK)
-         return true;
-      if ((read > 0) && *rcvBuf_ == 'A')
-      {
-         driveSpeedBusy_ = false;
-         return false;
-      } else
-      return true;
-   } else
-      return false;
+   return false;
 }
       
 ///////////////////////////////////////////////////////////////////////////////
@@ -148,11 +256,19 @@ bool CSU22Hub::IsDriveSpeedBusy(MM::Device& device, MM::Core& core)
 /**
  * Clears the serial receive buffer.
  */
+void CSU22Hub::ClearAllRcvBuf(MM::Device& device, MM::Core& core)
+{
+   // Read whatever has been received so far:
+   unsigned long read;
+   int ret = core.ReadFromSerial(&device, port_.c_str(), rcvBuf_, RCV_BUF_LENGTH,  read);
+   // Delete it all:
+   memset(rcvBuf_, 0, RCV_BUF_LENGTH);
+}
+
 void CSU22Hub::ClearRcvBuf()
 {
    memset(rcvBuf_, 0, RCV_BUF_LENGTH);
 }
-
 
 /**
  * Buys flag. True if the command processing is in progress.
@@ -169,7 +285,7 @@ int CSU22Hub::ExecuteCommand(MM::Device& device, MM::Core& core,  const char* co
    // empty the Rx serial buffer before sending command
    //FetchSerialData(device, core);
 
-   ClearRcvBuf();
+   ClearAllRcvBuf(device, core);
 
    // send command
    return core.SetSerialCommand(&device, port_.c_str(), command, "\r");
@@ -178,13 +294,24 @@ int CSU22Hub::ExecuteCommand(MM::Device& device, MM::Core& core,  const char* co
 
 
 /*
-int CSU22Hub::GetAnswer(MM::Device& device, MM::Core& core)
+ * An 'A' acknowledges receipt of a command, ('N' means it is not understood)
+ * Function is not really appropriately named
+ */
+int CSU22Hub::GetAcknowledgment(MM::Device& device, MM::Core& core)
 {
-   // get response
-   return core.ReadFromSerial(&device, port_.c_str(), RCV_BUF_LENGTH, rcvBuf_, "\r");
-   // ReadFromSerial()
+   // block until we get a response
+   int ret = core.GetSerialAnswer(&device, port_.c_str(), RCV_BUF_LENGTH, rcvBuf_, "\r");
+   if (ret != DEVICE_OK)
+       return ret;
+   if (rcvBuf_[1]=='N')
+      return 1;
+   if (rcvBuf_[1]!='A')
+      return DEVICE_SERIAL_INVALID_RESPONSE;
+
+   return DEVICE_OK;
 }
-*/
+
+
 
 
 /**

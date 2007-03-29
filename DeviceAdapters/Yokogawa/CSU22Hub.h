@@ -39,6 +39,12 @@
 #include <map>
 #include "../../MMDevice/MMDevice.h"
 
+/////////////////////////////////////////////////////////////////////////
+// Error codes
+//
+#define ERR_NOT_CONNECTED           10002
+#define ERR_COMMAND_CANNOT_EXECUTE  10003
+
 enum CommandMode
 {
    Sync = 0,
@@ -55,19 +61,23 @@ public:
    bool IsBusy();
 
    int SetNDFilterPosition(MM::Device& device, MM::Core& core, int pos);
+   int GetNDFilterPosition(MM::Device& device, MM::Core& core, int& pos);
 
    int SetFilterSetPosition(MM::Device& device, MM::Core& core, int filter, int dichroic);
+   int GetFilterSetPosition(MM::Device& device, MM::Core& core, int &filter, int &dichroic);
 
    int SetShutterPosition(MM::Device& device, MM::Core& core, int pos);
+   int GetShutterPosition(MM::Device& device, MM::Core& core, int& pos);
 
    int SetDriveSpeedPosition(MM::Device& device, MM::Core& core, int pos);
+   int GetDriveSpeedPosition(MM::Device& device, MM::Core& core, int& pos);
 
    bool IsDriveSpeedBusy(MM::Device& device, MM::Core& core);
 
 
 private:
    int ExecuteCommand(MM::Device& device, MM::Core& core, const char* command);
-   //int GetAnswer(MM::Device& device, MM::Core& core);
+   int GetAcknowledgment(MM::Device& device, MM::Core& core);
    int ParseResponse(const char* cmdId, std::string& value);
    void FetchSerialData(MM::Device& device, MM::Core& core);
 
@@ -75,6 +85,7 @@ private:
    char rcvBuf_[RCV_BUF_LENGTH];
    char asynchRcvBuf_[RCV_BUF_LENGTH];
    void ClearRcvBuf();
+   void ClearAllRcvBuf(MM::Device& device, MM::Core& core);
    std::string port_;
    std::vector<char> answerBuf_;
    std::multimap<std::string, long> waitingCommands_;

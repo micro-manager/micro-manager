@@ -110,6 +110,9 @@ Hub::Hub() :
 {
    InitializeDefaultErrorMessages();
 
+   // custom error messages
+   SetErrorText(ERR_COMMAND_CANNOT_EXECUTE, "Command cannot be executed");
+
    // create pre-initialization properties
    // ------------------------------------
 
@@ -191,6 +194,7 @@ int Hub::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
       }
 
       pProp->Get(port_);
+      g_hub.SetPort(port_.c_str());
    }
    return DEVICE_OK;
 }
@@ -317,7 +321,7 @@ FilterSet::FilterSet () :
    initialized_ (false),
    name_ (g_CSU22FilterSet),
    pos_ (1),
-   numPos_ (3)
+   numPos_ (5)
 {
    InitializeDefaultErrorMessages();
 
@@ -359,6 +363,8 @@ int FilterSet::Initialize()
    AddAllowedValue(MM::g_Keyword_State, "1");
    AddAllowedValue(MM::g_Keyword_State, "2");
    AddAllowedValue(MM::g_Keyword_State, "3");
+   AddAllowedValue(MM::g_Keyword_State, "4");
+   AddAllowedValue(MM::g_Keyword_State, "5");
 
    printf("Filter State Labels\n");
    // Label                                                                  
@@ -371,8 +377,8 @@ int FilterSet::Initialize()
    SetPositionLabel(1, "State-1");                               
    SetPositionLabel(2, "State-2");                               
    SetPositionLabel(3, "State-3");                               
-
-   printf("Updating Status\n");
+   SetPositionLabel(4, "State-4");                               
+   SetPositionLabel(5, "State-5");                               
 
    ret = UpdateStatus();
    if (ret != DEVICE_OK) 
@@ -382,6 +388,7 @@ int FilterSet::Initialize()
 
    return DEVICE_OK;
 }
+
 
 bool FilterSet::Busy()
 {
@@ -411,15 +418,26 @@ int FilterSet::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet)
    {
-      long pos;
+      long pos, dichroic, filter;
       pProp->Get(pos);
       if (pos == pos_)
          return DEVICE_OK;
       if (pos < 1)
          pos = 1;
-      else if (pos > 3)
+      else if (pos > 5)
          pos = 3;
-      int ret = g_hub.SetFilterSetPosition(*this, *GetCoreCallback(), pos, pos);
+      if (pos <= 3) {
+         dichroic = pos;
+         filter = pos;
+      } else if (pos == 4) {
+         dichroic = 3;
+         filter = 2;
+      } else if (pos == 5) {
+         dichroic = 3;
+         filter = 1;
+      }
+
+      int ret = g_hub.SetFilterSetPosition(*this, *GetCoreCallback(), filter, dichroic);
       if (ret == DEVICE_OK) {
          pos_ = pos;
          return DEVICE_OK;
@@ -467,9 +485,16 @@ int Shutter::Initialize()
    if (DEVICE_OK != ret)
       return ret;
 
+   // Check current state of shutter:
+   ret = g_hub.GetShutterPosition(*this, *GetCoreCallback(), state_);
+   if (DEVICE_OK != ret)
+      return ret;
    // State
    CPropertyAction* pAct = new CPropertyAction (this, &Shutter::OnState);
-   ret = CreateProperty(MM::g_Keyword_State, "Closed", MM::String, false, pAct); 
+   if (state_ == 1)
+      ret = CreateProperty(MM::g_Keyword_State, "Closed", MM::String, false, pAct); 
+   else
+      ret = CreateProperty(MM::g_Keyword_State, "Open", MM::String, false, pAct); 
    if (ret != DEVICE_OK) 
       return ret; 
 
@@ -504,14 +529,12 @@ int Shutter::SetOpen(bool open)
 {
    if (open)
    {
-      printf("Opening Shutter\n");
       int ret = g_hub.SetShutterPosition(*this, *GetCoreCallback(), 0);
       if (ret != DEVICE_OK)
          return ret;
       state_ =  0;
    } else
    {
-      printf("Closing Shutter\n");
       int ret = g_hub.SetShutterPosition(*this, *GetCoreCallback(), 1);
       if (ret != DEVICE_OK)
          return ret;
@@ -522,6 +545,11 @@ int Shutter::SetOpen(bool open)
 
 int Shutter::GetOpen(bool &open)
 {
+
+   // Check current state of shutter: (this might not be necessary, since we cash ourselves)
+   int ret = g_hub.GetShutterPosition(*this, *GetCoreCallback(), state_);
+   if (DEVICE_OK != ret)
+      return ret;
    if (state_ == 0)
       open = true;
    else 
@@ -607,9 +635,19 @@ int DriveSpeed::Initialize()
    if (DEVICE_OK != ret)
       return ret;
 
+   // Check current speed of the disk
+   ret = g_hub.GetDriveSpeedPosition(*this, *GetCoreCallback(), current_);
+   if (DEVICE_OK != ret)
+      return ret;
+   if (current_ < min_)
+      current_ = min_;
+   if (current_ > max_)
+      current_ = max_;
+   char speed[5];
+   sprintf(speed,"%d", current_);
    // State
    CPropertyAction* pAct = new CPropertyAction (this, &DriveSpeed::OnState);
-   ret = CreateProperty(MM::g_Keyword_State, "1500", MM::Integer, false, pAct); 
+   ret = CreateProperty(MM::g_Keyword_State, speed, MM::Integer, false, pAct); 
    if (ret != DEVICE_OK) 
       return ret; 
 
@@ -640,11 +678,18 @@ int DriveSpeed::Shutdown()
 // Action handlers                                                           
 ///////////////////////////////////////////////////////////////////////////////
 
+/*
+ * Speed is read back from the device
+ */
 int DriveSpeed::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
-      // return pos as we know it
+      // Check current speed of the disk
+      int ret = g_hub.GetDriveSpeedPosition(*this, *GetCoreCallback(), current_);
+      if (DEVICE_OK != ret)
+         return ret;
+      // return speed as we know it
       pProp->Set((long)current_);
    }
    else if (eAct == MM::AfterSet)

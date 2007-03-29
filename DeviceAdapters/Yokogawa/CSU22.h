@@ -180,7 +180,7 @@ private:
    bool driveSpeedBusy_;
    unsigned numPos_; 
    std::string name_;
-   long min_, max_, current_, requested_;
+   int min_, max_, current_, requested_;
 };
 
 
