@@ -34,6 +34,7 @@ import mmcorej.CMMCore;
  * Acquisition engine interface.
  */
 public interface AcquisitionEngine {
+   
    // initialization
    public void setCore(CMMCore core_);
    public void setPositionList(PositionList posList);

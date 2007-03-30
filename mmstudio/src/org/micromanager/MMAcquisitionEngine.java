@@ -134,8 +134,6 @@ public class MMAcquisitionEngine implements AcquisitionEngine {
 
    private PlatformIndependentGuidGen guidgen_;
 
-   private boolean updateLiveWindow_ = false;
-
    private boolean useMultiplePositions_;
          
    public MMAcquisitionEngine() {
@@ -372,7 +370,6 @@ public class MMAcquisitionEngine implements AcquisitionEngine {
    }
 
    public void setUpdateLiveWindow(boolean update) {
-      this.updateLiveWindow_  = update;
    }
    
    public boolean isAcquisitionLagging() {
