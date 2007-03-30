@@ -33,6 +33,7 @@ public class SummaryKeys {
    public static final String NUM_CHANNELS="Channels";
    public static final String NUM_SLICES="Slices";
    public static final String TIME="Time";
+   public static final String POSITION="Position";
    public static final String IMAGE_WIDTH="Width";
    public static final String IMAGE_HEIGHT="Height";
    public static final String IMAGE_DEPTH="Depth";
@@ -43,7 +44,7 @@ public class SummaryKeys {
    public static final String CHANNEL_NAMES="ChNames";
    public static final String METADATA_VERSION="MetadataVersion";
    public static final String METADATA_SOURCE="Source";
-   public static final int VERSION = 3;
+   public static final int VERSION = 4;
    public static final String SOURCE = "Micro-Manager";
    public static final String COMMENT = "Comment";
 }

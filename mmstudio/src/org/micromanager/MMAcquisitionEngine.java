@@ -39,16 +39,11 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.GregorianCalendar;
-import java.util.prefs.BackingStoreException;
-import java.util.prefs.InvalidPreferencesFormatException;
-import java.util.prefs.Preferences;
 
 import javax.swing.JOptionPane;
 import javax.swing.Timer;
@@ -57,6 +52,9 @@ import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.StrVector;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.micromanager.image5d.ChannelCalibration;
 import org.micromanager.image5d.ChannelControl;
 import org.micromanager.image5d.ChannelDisplayProperties;
@@ -65,11 +63,7 @@ import org.micromanager.image5d.Image5DWindow;
 import org.micromanager.metadata.ImageKey;
 import org.micromanager.metadata.ImagePropertyKeys;
 import org.micromanager.metadata.SummaryKeys;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
+import org.micromanager.navigation.PositionList;
 import org.micromanager.utils.AcquisitionEngine;
 import org.micromanager.utils.ChannelSpec;
 import org.micromanager.utils.ContrastSettings;
@@ -115,6 +109,7 @@ public class MMAcquisitionEngine implements AcquisitionEngine {
    private File outputDir_;
    
    CMMCore core_;
+   PositionList posList_;
    DeviceControlGUI parentGUI_;
    String zStage_;
    
@@ -140,6 +135,8 @@ public class MMAcquisitionEngine implements AcquisitionEngine {
    private PlatformIndependentGuidGen guidgen_;
 
    private boolean updateLiveWindow_ = false;
+
+   private boolean useMultiplePositions_;
          
    public MMAcquisitionEngine() {
             
@@ -157,10 +154,15 @@ public class MMAcquisitionEngine implements AcquisitionEngine {
       rootName_ = new String(DEFAULT_ROOT_NAME);
       guidgen_ = PlatformIndependentGuidGen.getInstance();
       channelGroup_ = new String(ChannelSpec.DEFAULT_CHANNEL_GROUP);
+      posList_ = new PositionList();
    }
       
    public void setCore(CMMCore c) {
       core_ = c;
+   }
+   
+   public void setPositionList(PositionList posList) {
+      posList_ = posList;
    }
    
    public ArrayList<ChannelSpec> getChannels() {
@@ -647,9 +649,6 @@ public class MMAcquisitionEngine implements AcquisitionEngine {
       
       Runtime rt = Runtime.getRuntime();
       rt.gc();
-      long maxMem = rt.maxMemory();
-      long freeMem = rt.freeMemory();
-      long totalMem = rt.totalMemory();
       
       String txt;
       txt = "Number of channels: " + channels_.size() + 
@@ -657,7 +656,6 @@ public class MMAcquisitionEngine implements AcquisitionEngine {
             "\nNumber of frames: " + numFrames_ +
             "\nTotal images: " + totalImages +
             "\nDuration: " + hrs + "h " + mins + "m " + remainSec + "s";
-            //"\nAvailable memory: " + FMT2.format((double)freeMem / 1048576L) + "MB, " + FMT2.format((double)freeMem / totalMem * 100) + "%";
       return txt;
    }
    
@@ -835,9 +833,19 @@ public class MMAcquisitionEngine implements AcquisitionEngine {
    public void enableZSliceSetting(boolean b) {
       useSliceSetting_  = b;
    }
+   
    public boolean isZSliceSettingEnabled() {
       return useSliceSetting_;
    }
+   
+   public void enableMultiPosition(boolean b) {
+      useMultiplePositions_ = b;
+   }
+   
+   public boolean isMultiPositionEnabled() {
+      return useMultiplePositions_;
+   }
+   
    
    /**
     * Returns the currently allocated memory.

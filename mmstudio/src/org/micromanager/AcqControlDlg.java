@@ -127,6 +127,7 @@ public class AcqControlDlg extends JDialog {
    private static final String ACQ_ZTOP = "acqZtop";
    private static final String ACQ_ZSTEP = "acqZstep";
    private static final String ACQ_ENABLE_SLICE_SETTINGS = "enableSliceSettings";
+   private static final String ACQ_ENABLE_MULTI_POSITION = "enableMultiPosition";
    private static final String ACQ_NUMFRAMES = "acqNumframes";
    private static final String ACQ_CHANNEL_GROUP = "acqChannelGroup";
    private static final String ACQ_NUM_CHANNELS = "acqNumchannels";
@@ -146,6 +147,7 @@ public class AcqControlDlg extends JDialog {
    private static final String ACQ_DIR_NAME = "acqDirName";
    private static final String ACQ_ROOT_NAME = "acqRootName";
    private static final String ACQ_SAVE_FILES = "acqSaveFiles";
+   private JCheckBox multiPosCheckBox_;
 
 
    /**
@@ -191,7 +193,7 @@ public class AcqControlDlg extends JDialog {
     */
    public class ChannelTableModel extends AbstractTableModel {
 
-      private ArrayList channels_;
+      private ArrayList<ChannelSpec> channels_;
       private AcquisitionEngine acqEng_;
 
       public final String[] COLUMN_NAMES = new String[] {
@@ -220,13 +222,13 @@ public class AcqControlDlg extends JDialog {
       public Object getValueAt(int rowIndex, int columnIndex) {
          if (channels_ != null && rowIndex < channels_.size()) {
             if (columnIndex == 0)
-               return ((ChannelSpec)channels_.get(rowIndex)).config_;
+               return (channels_.get(rowIndex)).config_;
             else if (columnIndex == 1)
-               return new Double(((ChannelSpec)channels_.get(rowIndex)).exposure_);
+               return new Double((channels_.get(rowIndex)).exposure_);
             else if (columnIndex == 2)
-               return new Double(((ChannelSpec)channels_.get(rowIndex)).zOffset_);
+               return new Double((channels_.get(rowIndex)).zOffset_);
             else if (columnIndex == 3)
-               return ((ChannelSpec)channels_.get(rowIndex)).color_;
+               return (channels_.get(rowIndex)).color_;
          }
          return null;
       }
@@ -235,7 +237,7 @@ public class AcqControlDlg extends JDialog {
          if (row >= channels_.size())
             return;
 
-         ChannelSpec channel = (ChannelSpec) channels_.get(row);
+         ChannelSpec channel = channels_.get(row);
 
          if (col == 0)
             channel.config_ = value.toString();
@@ -255,11 +257,11 @@ public class AcqControlDlg extends JDialog {
       }
 
 
-      public void setChannels(ArrayList ch) {
+      public void setChannels(ArrayList<ChannelSpec> ch) {
          channels_ = ch;
       }
 
-      public ArrayList getChannels() {
+      public ArrayList<ChannelSpec> getChannels() {
          return channels_;
       }
 
@@ -278,7 +280,7 @@ public class AcqControlDlg extends JDialog {
 
       public int rowUp(int rowIdx) {
          if (rowIdx >= 0 && rowIdx < channels_.size() - 1) {
-            ChannelSpec channel = (ChannelSpec) channels_.get(rowIdx);
+            ChannelSpec channel = channels_.get(rowIdx);
             channels_.add(rowIdx+2, channel);
             channels_.remove(rowIdx);
             return rowIdx+1;
@@ -288,7 +290,7 @@ public class AcqControlDlg extends JDialog {
 
       public int rowDown(int rowIdx) {
          if (rowIdx >= 1 && rowIdx < channels_.size()) {
-            ChannelSpec channel = (ChannelSpec) channels_.get(rowIdx);
+            ChannelSpec channel = channels_.get(rowIdx);
             channels_.add(rowIdx-1, channel);
             channels_.remove(rowIdx+1);
             return rowIdx-1;
@@ -305,7 +307,7 @@ public class AcqControlDlg extends JDialog {
        * the current acquistion settings
        */
       public void cleanUpConfigurationList() {
-         for (Iterator it = channels_.iterator(); it.hasNext(); ) {
+         for (Iterator<ChannelSpec> it = channels_.iterator(); it.hasNext(); ) {
             if (!acqEng_.isConfigAvailable(((ChannelSpec)it.next()).config_))
                it.remove();
          }
@@ -332,8 +334,8 @@ public class AcqControlDlg extends JDialog {
          }
 
          ChannelTableModel model = (ChannelTableModel)table.getModel();
-         ArrayList channels = model.getChannels();
-         ChannelSpec channel = (ChannelSpec)channels.get(rowIndex);
+         ArrayList<ChannelSpec> channels = model.getChannels();
+         ChannelSpec channel = channels.get(rowIndex);
          // Configure the component with the specified value
 
          editCol_ = colIndex;
@@ -410,8 +412,8 @@ public class AcqControlDlg extends JDialog {
             boolean isSelected, boolean hasFocus, int rowIndex, int colIndex) {
 
          ChannelTableModel model = (ChannelTableModel)table.getModel();
-         ArrayList channels = model.getChannels();
-         ChannelSpec channel = (ChannelSpec)channels.get(rowIndex);
+         ArrayList<ChannelSpec> channels = model.getChannels();
+         ChannelSpec channel = channels.get(rowIndex);
 
          if (isSelected) {
             // cell (and perhaps other cells) are selected
@@ -470,7 +472,7 @@ public class AcqControlDlg extends JDialog {
       getContentPane().setLayout(null);
       //getContentPane().setFocusTraversalPolicyProvider(true);
       setResizable(false);
-      setTitle("Multi-dimensional Acquistion");
+      setTitle("Multi-dimensional Acquisition");
 
       final JLabel framesLabel = new JLabel();
       framesLabel.setBounds(6, 1, 121, 19);
@@ -480,7 +482,7 @@ public class AcqControlDlg extends JDialog {
 
       final JLabel channelsLabel = new JLabel();
       channelsLabel.setFont(new Font("Arial", Font.BOLD, 11));
-      channelsLabel.setBounds(9, 210, 104, 24);
+      channelsLabel.setBounds(10, 252, 104, 24);
       channelsLabel.setText("Channel group:");
       getContentPane().add(channelsLabel);
 
@@ -552,7 +554,7 @@ public class AcqControlDlg extends JDialog {
          }
       });
       addButton.setText("New");
-      addButton.setBounds(379, 233, 93, 22);
+      addButton.setBounds(379, 279, 93, 22);
       getContentPane().add(addButton);
 
       final JButton removeButton = new JButton();
@@ -567,7 +569,7 @@ public class AcqControlDlg extends JDialog {
          }
       });
       removeButton.setText("Remove");
-      removeButton.setBounds(379, 256, 93, 22);
+      removeButton.setBounds(379, 302, 93, 22);
       getContentPane().add(removeButton);
 
       final JButton upButton = new JButton();
@@ -580,7 +582,7 @@ public class AcqControlDlg extends JDialog {
          }
       });
       upButton.setText("Up");
-      upButton.setBounds(379, 279, 93, 22);
+      upButton.setBounds(379, 325, 93, 22);
       getContentPane().add(upButton);
 
       final JButton downButton = new JButton();
@@ -594,7 +596,7 @@ public class AcqControlDlg extends JDialog {
          }
       });
       downButton.setText("Dn");
-      downButton.setBounds(379, 302, 93, 22);
+      downButton.setBounds(379, 349, 93, 22);
       getContentPane().add(downButton);
 
       zBottom_ = new JTextField();
@@ -675,7 +677,7 @@ public class AcqControlDlg extends JDialog {
 
       final JSeparator separator = new JSeparator();
       separator.setFont(new Font("Arial", Font.PLAIN, 10));
-      separator.setBounds(8, 203, 464, 5);
+      separator.setBounds(6, 241, 464, 5);
       getContentPane().add(separator);
 
       final JLabel cameraSettingsLabel = new JLabel();
@@ -718,7 +720,7 @@ public class AcqControlDlg extends JDialog {
 
       tablePane_ = new JScrollPane();
       tablePane_.setFont(new Font("Arial", Font.PLAIN, 10));
-      tablePane_.setBounds(8, 235, 364, 112);
+      tablePane_.setBounds(9, 282, 364, 112);
       getContentPane().add(tablePane_);
 
       timeUnitCombo_ = new JComboBox();
@@ -737,6 +739,7 @@ public class AcqControlDlg extends JDialog {
       // load window settings
       int x = 100;
       int y = 100;
+      setBounds(x, y, 485, 599);
       if (prefs_ != null) {
          x = prefs_.getInt(ACQ_CONTROL_X, x);
          y = prefs_.getInt(ACQ_CONTROL_Y, y);
@@ -753,7 +756,6 @@ public class AcqControlDlg extends JDialog {
             comboCameraConfig_.setEnabled(false);               
          }
       }
-      setBounds(x, y, 485, 541);
 
       JSeparator separator_1 = new JSeparator();
       separator_1.setOrientation(SwingConstants.VERTICAL);
@@ -788,17 +790,17 @@ public class AcqControlDlg extends JDialog {
       summaryTextArea_.setFont(new Font("Arial", Font.PLAIN, 10));
       summaryTextArea_.setEditable(false);
       summaryTextArea_.setBorder(new LineBorder(Color.black, 1, false));
-      summaryTextArea_.setBounds(222, 112, 250, 85);
+      summaryTextArea_.setBounds(221, 153, 250, 85);
       getContentPane().add(summaryTextArea_);
 
       rootField_ = new JTextField();
       rootField_.setFont(new Font("Arial", Font.PLAIN, 10));
-      rootField_.setBounds(88, 380, 334, 22);
+      rootField_.setBounds(88, 440, 334, 22);
       getContentPane().add(rootField_);
 
       nameField_ = new JTextField();
       nameField_.setFont(new Font("Arial", Font.PLAIN, 10));
-      nameField_.setBounds(88, 406, 334, 22);
+      nameField_.setBounds(88, 468, 334, 22);
       getContentPane().add(nameField_);
 
       final JButton browseRootButton = new JButton();
@@ -810,7 +812,7 @@ public class AcqControlDlg extends JDialog {
       browseRootButton.setMargin(new Insets(2, 5, 2, 5));
       browseRootButton.setFont(new Font("Dialog", Font.PLAIN, 10));
       browseRootButton.setText("...");
-      browseRootButton.setBounds(425, 379, 47, 24);
+      browseRootButton.setBounds(425, 438, 47, 24);
       getContentPane().add(browseRootButton);
 
       saveFilesCheckBox_ = new JCheckBox();
@@ -820,25 +822,25 @@ public class AcqControlDlg extends JDialog {
       });
       saveFilesCheckBox_.setFont(new Font("Arial", Font.PLAIN, 10));
       saveFilesCheckBox_.setText("Save files to acquisition directory");
-      saveFilesCheckBox_.setBounds(7, 357, 399, 21);
+      saveFilesCheckBox_.setBounds(6, 413, 399, 21);
       getContentPane().add(saveFilesCheckBox_);
 
       final JLabel directoryPrefixLabel = new JLabel();
       directoryPrefixLabel.setFont(new Font("Arial", Font.PLAIN, 10));
       directoryPrefixLabel.setText("Name prefix");
-      directoryPrefixLabel.setBounds(11, 406, 76, 22);
+      directoryPrefixLabel.setBounds(11, 467, 76, 22);
       getContentPane().add(directoryPrefixLabel);
 
       final JLabel directoryPrefixLabel_1 = new JLabel();
       directoryPrefixLabel_1.setFont(new Font("Arial", Font.PLAIN, 10));
       directoryPrefixLabel_1.setText("Directory root");
-      directoryPrefixLabel_1.setBounds(11, 379, 72, 22);
+      directoryPrefixLabel_1.setBounds(9, 439, 72, 22);
       getContentPane().add(directoryPrefixLabel_1);
 
       final JLabel summaryLabel = new JLabel();
       summaryLabel.setFont(new Font("Arial", Font.BOLD, 11));
       summaryLabel.setText("Summary");
-      summaryLabel.setBounds(223, 88, 120, 21);
+      summaryLabel.setBounds(221, 128, 120, 21);
       getContentPane().add(summaryLabel);
 
       zValCombo_ = new JComboBox();
@@ -857,13 +859,13 @@ public class AcqControlDlg extends JDialog {
       commentTextArea_.setToolTipText("Comment for the current acquistion");
       commentTextArea_.setWrapStyleWord(true);
       commentTextArea_.setBorder(new EtchedBorder(EtchedBorder.LOWERED));
-      commentTextArea_.setBounds(88, 433, 336, 62);
+      commentTextArea_.setBounds(88, 495, 334, 62);
       getContentPane().add(commentTextArea_);
 
       JLabel directoryPrefixLabel_2 = new JLabel();
       directoryPrefixLabel_2.setFont(new Font("Arial", Font.PLAIN, 10));
       directoryPrefixLabel_2.setText("Comment");
-      directoryPrefixLabel_2.setBounds(11, 430, 76, 22);
+      directoryPrefixLabel_2.setBounds(11, 495, 76, 22);
       getContentPane().add(directoryPrefixLabel_2);
 
       useSliceSettingsCheckBox_ = new JCheckBox();
@@ -885,7 +887,7 @@ public class AcqControlDlg extends JDialog {
 
       JSeparator separator_2 = new JSeparator();
       separator_2.setFont(new Font("Arial", Font.PLAIN, 10));
-      separator_2.setBounds(4, 353, 447, 5);
+      separator_2.setBounds(5, 405, 468, 5);
       getContentPane().add(separator_2);
 
       JSeparator separator_3 = new JSeparator();
@@ -904,15 +906,29 @@ public class AcqControlDlg extends JDialog {
             model_.cleanUpConfigurationList();
          }
       });
-      channelGroupCombo_.setBounds(120, 210, 179, 22);
+      channelGroupCombo_.setBounds(120, 253, 179, 22);
       getContentPane().add(channelGroupCombo_);
+      
+      final JLabel summaryLabel_1 = new JLabel();
+      summaryLabel_1.setFont(new Font("Arial", Font.BOLD, 11));
+      summaryLabel_1.setText("Multi-position list");
+      summaryLabel_1.setBounds(220, 75, 120, 21);
+      getContentPane().add(summaryLabel_1);
+
+      multiPosCheckBox_ = new JCheckBox();
+      multiPosCheckBox_.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent arg0) {
+         }
+      });
+      multiPosCheckBox_.setText("Use current");
+      multiPosCheckBox_.setBounds(215, 95, 101, 23);
+      getContentPane().add(multiPosCheckBox_);
 
       // load acquistion settings
       loadAcqSettings();
 
       // update summary
       updateGUIContents();
-
    }
 
    public void updateGroupsCombo() {
@@ -937,6 +953,7 @@ public class AcqControlDlg extends JDialog {
       zVals_ = acqPrefs_.getInt(ACQ_Z_VALUES, 0);
       acqEng_.setSlices(bottom, top, step, zVals_ == 0 ? false : true);
       acqEng_.enableZSliceSetting(acqPrefs_.getBoolean(ACQ_ENABLE_SLICE_SETTINGS, acqEng_.isZSliceSettingEnabled()));
+      acqEng_.enableMultiPosition(acqPrefs_.getBoolean(ACQ_ENABLE_MULTI_POSITION, acqEng_.isMultiPositionEnabled()));
       saveFilesCheckBox_.setSelected(acqPrefs_.getBoolean(ACQ_SAVE_FILES, false));
       nameField_.setText(acqPrefs_.get(ACQ_DIR_NAME, "Untitled"));
       rootField_.setText(acqPrefs_.get(ACQ_ROOT_NAME, "C:/AcquisitionData"));
@@ -976,6 +993,7 @@ public class AcqControlDlg extends JDialog {
       acqPrefs_.putDouble(ACQ_ZTOP, acqEng_.getZTopUm());
       acqPrefs_.putDouble(ACQ_ZSTEP, acqEng_.getSliceZStepUm());
       acqPrefs_.putBoolean(ACQ_ENABLE_SLICE_SETTINGS, acqEng_.isZSliceSettingEnabled());
+      acqPrefs_.putBoolean(ACQ_ENABLE_MULTI_POSITION, acqEng_.isMultiPositionEnabled());
       acqPrefs_.putInt(ACQ_NUMFRAMES, acqEng_.getNumFrames());
       acqPrefs_.putInt(ACQ_Z_VALUES, zVals_);
       acqPrefs_.putBoolean(ACQ_SAVE_FILES, saveFilesCheckBox_.isSelected());
@@ -983,10 +1001,10 @@ public class AcqControlDlg extends JDialog {
       acqPrefs_.put(ACQ_ROOT_NAME, rootField_.getText());
 
       acqPrefs_.put(ACQ_CHANNEL_GROUP, acqEng_.getChannelGroup());
-      ArrayList channels = acqEng_.getChannels();
+      ArrayList<ChannelSpec> channels = acqEng_.getChannels();
       acqPrefs_.putInt(ACQ_NUM_CHANNELS, channels.size());
       for (int i=0; i<channels.size(); i++) {
-         ChannelSpec channel = (ChannelSpec) channels.get(i);
+         ChannelSpec channel = channels.get(i);
          acqPrefs_.put(CHANNEL_NAME_PREFIX + i, channel.config_);
          acqPrefs_.putDouble(CHANNEL_EXPOSURE_PREFIX + i, channel.exposure_);
          acqPrefs_.putDouble(CHANNEL_ZOFFSET_PREFIX + i, channel.zOffset_);
@@ -1176,6 +1194,7 @@ public class AcqControlDlg extends JDialog {
       zTop_.setText(Double.toString(acqEng_.getZTopUm()));
       zStep_.setText(Double.toString(acqEng_.getSliceZStepUm()));
       useSliceSettingsCheckBox_.setSelected(acqEng_.isZSliceSettingEnabled());
+      multiPosCheckBox_.setSelected(acqEng_.isMultiPositionEnabled());
       enableZSliceControls(acqEng_.isZSliceSettingEnabled());
       model_.fireTableStructureChanged();
       channelGroupCombo_.setSelectedItem(acqEng_.getChannelGroup());
@@ -1199,6 +1218,7 @@ public class AcqControlDlg extends JDialog {
       }
       acqEng_.setSlices(Double.parseDouble(zBottom_.getText()), Double.parseDouble(zTop_.getText()), zStep, zVals_ == 0 ? false : true);
       acqEng_.enableZSliceSetting(useSliceSettingsCheckBox_.isSelected());
+      acqEng_.enableMultiPosition(multiPosCheckBox_.isSelected());
       acqEng_.setChannels(((ChannelTableModel)table_.getModel()).getChannels());
       acqEng_.setFrames(((Integer)numFrames_.getValue()).intValue(),
             convertTimeToMs(Double.parseDouble(interval_.getText()), timeUnitCombo_.getSelectedIndex()));

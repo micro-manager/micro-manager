@@ -805,6 +805,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI {
             
             engine_ = new MMAcquisitionEngine();
             engine_.setCore(core_);
+            engine_.setPositionList(posList_);
             MMStudioMainFrame parent = (MMStudioMainFrame) e.getWindow();
             if (parent != null)
                engine_.setParentGUI(parent);
