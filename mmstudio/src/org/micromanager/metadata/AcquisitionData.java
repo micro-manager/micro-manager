@@ -45,7 +45,6 @@ import org.json.JSONObject;
 public class AcquisitionData {
    public static final String METADATA_FILE_NAME = "metadata.txt";
    
-   
    JSONObject metadata_;
    JSONObject summary_;
    int frames_=0;
