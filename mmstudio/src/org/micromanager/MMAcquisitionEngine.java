@@ -69,6 +69,8 @@ import org.micromanager.utils.ChannelSpec;
 import org.micromanager.utils.ContrastSettings;
 import org.micromanager.utils.DeviceControlGUI;
 import org.micromanager.utils.MMException;
+import org.micromanager.utils.PositionMode;
+import org.micromanager.utils.SliceMode;
 
 import com.quirkware.guid.PlatformIndependentGuidGen;
 
@@ -135,6 +137,9 @@ public class MMAcquisitionEngine implements AcquisitionEngine {
    private PlatformIndependentGuidGen guidgen_;
 
    private boolean useMultiplePositions_;
+
+   private int posMode_ = PositionMode.MULTI_FIELD;
+   private int sliceMode_ = SliceMode.CHANNELS_FIRST;
          
    public MMAcquisitionEngine() {
             
@@ -953,6 +958,22 @@ public class MMAcquisitionEngine implements AcquisitionEngine {
       i5dWin_.setTitle("Acquisition (started)" + cld.getTime());
       i5dWin_.setActive(true);
 
+   }
+
+   public int getPositionMode() {
+      return posMode_;
+   }
+
+   public int getSliceMode() {
+      return sliceMode_;
+   }
+
+   public void setPositionMode(int mode) {
+      posMode_ = mode;
+   }
+
+   public void setSliceMode(int mode) {
+      sliceMode_ = mode;
    }
 
 }

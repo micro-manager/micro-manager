@@ -77,6 +77,8 @@ import org.micromanager.utils.ChannelSpec;
 import org.micromanager.utils.ColorEditor;
 import org.micromanager.utils.ColorRenderer;
 import org.micromanager.utils.ContrastSettings;
+import org.micromanager.utils.PositionMode;
+import org.micromanager.utils.SliceMode;
 
 /**
  * Time-lapse, channel and z-stack acquistion setup dialog.
@@ -85,6 +87,8 @@ import org.micromanager.utils.ContrastSettings;
  */
 public class AcqControlDlg extends JDialog {
 
+   private JComboBox sliceModeCombo_;
+   private JComboBox posModeCombo_;
    public static final String NEW_ACQFILE_NAME = "MMAcquistion.xml";
    public static final String ACQ_SETTINGS_NODE = "AcquistionSettings";
 
@@ -128,6 +132,8 @@ public class AcqControlDlg extends JDialog {
    private static final String ACQ_ZSTEP = "acqZstep";
    private static final String ACQ_ENABLE_SLICE_SETTINGS = "enableSliceSettings";
    private static final String ACQ_ENABLE_MULTI_POSITION = "enableMultiPosition";
+   private static final String ACQ_SLICE_MODE = "sliceMode";
+   private static final String ACQ_POSITION_MODE = "positionMode";
    private static final String ACQ_NUMFRAMES = "acqNumframes";
    private static final String ACQ_CHANNEL_GROUP = "acqChannelGroup";
    private static final String ACQ_NUM_CHANNELS = "acqNumchannels";
@@ -699,12 +705,12 @@ public class AcqControlDlg extends JDialog {
          }
       });
       overrideCheckBox_.setText("Override current settings");
-      overrideCheckBox_.setBounds(218, 22, 157, 20);
+      overrideCheckBox_.setBounds(215, 15, 157, 20);
       getContentPane().add(overrideCheckBox_);
 
       comboCameraConfig_ = new JComboBox();
       comboCameraConfig_.setFont(new Font("Arial", Font.PLAIN, 10));
-      comboCameraConfig_.setBounds(222, 45, 152, 21);
+      comboCameraConfig_.setBounds(220, 35, 152, 21);
       getContentPane().add(comboCameraConfig_);
 
       // camera config combo
@@ -759,7 +765,7 @@ public class AcqControlDlg extends JDialog {
 
       JSeparator separator_1 = new JSeparator();
       separator_1.setOrientation(SwingConstants.VERTICAL);
-      separator_1.setBounds(208, 15, 5, 188);
+      separator_1.setBounds(208, 15, 5, 224);
       getContentPane().add(separator_1);
 
       setBottomButton_ = new JButton();
@@ -840,7 +846,7 @@ public class AcqControlDlg extends JDialog {
       final JLabel summaryLabel = new JLabel();
       summaryLabel.setFont(new Font("Arial", Font.BOLD, 11));
       summaryLabel.setText("Summary");
-      summaryLabel.setBounds(221, 128, 120, 21);
+      summaryLabel.setBounds(220, 130, 120, 21);
       getContentPane().add(summaryLabel);
 
       zValCombo_ = new JComboBox();
@@ -912,7 +918,7 @@ public class AcqControlDlg extends JDialog {
       final JLabel summaryLabel_1 = new JLabel();
       summaryLabel_1.setFont(new Font("Arial", Font.BOLD, 11));
       summaryLabel_1.setText("Multi-position list");
-      summaryLabel_1.setBounds(220, 75, 120, 21);
+      summaryLabel_1.setBounds(220, 65, 120, 21);
       getContentPane().add(summaryLabel_1);
 
       multiPosCheckBox_ = new JCheckBox();
@@ -921,9 +927,21 @@ public class AcqControlDlg extends JDialog {
          }
       });
       multiPosCheckBox_.setText("Use current");
-      multiPosCheckBox_.setBounds(215, 95, 101, 23);
+      multiPosCheckBox_.setBounds(220, 80, 101, 23);
       getContentPane().add(multiPosCheckBox_);
 
+      posModeCombo_ = new JComboBox();
+      posModeCombo_.setBounds(221, 104, 151, 20);
+      getContentPane().add(posModeCombo_);
+      posModeCombo_.addItem(new PositionMode(PositionMode.MULTI_FIELD));
+      posModeCombo_.addItem(new PositionMode(PositionMode.TIME_LAPSE));
+
+      sliceModeCombo_ = new JComboBox();
+      sliceModeCombo_.setBounds(6, 209, 188, 20);
+      getContentPane().add(sliceModeCombo_);
+      sliceModeCombo_.addItem(new SliceMode(SliceMode.CHANNELS_FIRST));
+      sliceModeCombo_.addItem(new SliceMode(SliceMode.SLICES_FIRST));
+      
       // load acquistion settings
       loadAcqSettings();
 
@@ -957,6 +975,9 @@ public class AcqControlDlg extends JDialog {
       saveFilesCheckBox_.setSelected(acqPrefs_.getBoolean(ACQ_SAVE_FILES, false));
       nameField_.setText(acqPrefs_.get(ACQ_DIR_NAME, "Untitled"));
       rootField_.setText(acqPrefs_.get(ACQ_ROOT_NAME, "C:/AcquisitionData"));
+      
+      acqEng_.setSliceMode(acqPrefs_.getInt(ACQ_SLICE_MODE, acqEng_.getSliceMode()));
+      acqEng_.setPositionMode(acqPrefs_.getInt(ACQ_POSITION_MODE, acqEng_.getPositionMode()));
 
       acqEng_.setChannelGroup(acqPrefs_.get(ACQ_CHANNEL_GROUP, ChannelSpec.DEFAULT_CHANNEL_GROUP));
       int numChannels = acqPrefs_.getInt(ACQ_NUM_CHANNELS, 0);
@@ -999,6 +1020,7 @@ public class AcqControlDlg extends JDialog {
       acqPrefs_.putBoolean(ACQ_SAVE_FILES, saveFilesCheckBox_.isSelected());
       acqPrefs_.put(ACQ_DIR_NAME, nameField_.getText());
       acqPrefs_.put(ACQ_ROOT_NAME, rootField_.getText());
+      
 
       acqPrefs_.put(ACQ_CHANNEL_GROUP, acqEng_.getChannelGroup());
       ArrayList<ChannelSpec> channels = acqEng_.getChannels();
@@ -1198,6 +1220,10 @@ public class AcqControlDlg extends JDialog {
       enableZSliceControls(acqEng_.isZSliceSettingEnabled());
       model_.fireTableStructureChanged();
       channelGroupCombo_.setSelectedItem(acqEng_.getChannelGroup());
+      sliceModeCombo_.setSelectedIndex(acqEng_.getSliceMode());
+      posModeCombo_.setSelectedIndex(acqEng_.getPositionMode());
+      
+      // TODO: add more code below!!!
 
       numFrames_.setValue(new Integer(acqEng_.getNumFrames()));
       zValCombo_.setSelectedIndex(zVals_);

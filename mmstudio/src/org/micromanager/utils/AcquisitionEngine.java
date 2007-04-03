@@ -77,6 +77,10 @@ public interface AcquisitionEngine {
    public void setComment(String text);
    public boolean addChannel(String name, double exp, double offset, ContrastSettings s8, ContrastSettings s16, Color c);
    public void setSaveFiles(boolean selected);
+   public int getSliceMode();
+   public void setSliceMode(int mode);
+   public int getPositionMode();
+   public void setPositionMode(int mode);
    
    // utility
    public String getVerboseSummary();

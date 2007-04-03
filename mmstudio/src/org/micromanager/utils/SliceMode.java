@@ -26,4 +26,23 @@ package org.micromanager.utils;
 public class SliceMode {
    public static final int CHANNELS_FIRST = 0;
    public static final int SLICES_FIRST = 1;
+   
+   int id_;
+   
+   public SliceMode(int id) {
+      id_ = id;
+   }
+   
+   public String toString() {
+      if (id_ == CHANNELS_FIRST)
+         return new String("Channels first");
+      else if (id_ == SLICES_FIRST)
+         return new String("Slices first");
+      else
+         return new String("Undefined");
+   }  
+
+   public int getID() {
+      return id_;
+   }
 }

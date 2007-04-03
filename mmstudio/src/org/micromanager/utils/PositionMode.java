@@ -26,4 +26,23 @@ package org.micromanager.utils;
 public class PositionMode {
    public static final int MULTI_FIELD = 0;
    public static final int TIME_LAPSE = 1;
+   
+   private int id_;
+   
+   public PositionMode(int id) {
+      id_ = id;
+   }
+   
+   public String toString() {
+      if (id_ == MULTI_FIELD)
+         return new String("Multi field");
+      else if (id_ == TIME_LAPSE)
+         return new String("Time lapse");
+      else
+         return new String("Undefined");
+   }
+   
+   public int getID() {
+      return id_;
+   }
 }
