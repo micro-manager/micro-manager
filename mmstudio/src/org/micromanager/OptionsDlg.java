@@ -146,6 +146,19 @@ public class OptionsDlg extends MMDialog {
       springLayout.putConstraint(SpringLayout.NORTH, okButton, 12, SpringLayout.NORTH, getContentPane());
       
       debugLogEnabledCheckBox.setSelected(opts_.debugLogEnabled);
+
+      final JCheckBox multithreadedAcquisitionCheckBox = new JCheckBox();
+      multithreadedAcquisitionCheckBox.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent arg0) {
+            opts_.multiThreadedAcqEnabled = multithreadedAcquisitionCheckBox.isSelected();
+         }
+      });
+      multithreadedAcquisitionCheckBox.setText("Multi-threaded Acquisition");
+      getContentPane().add(multithreadedAcquisitionCheckBox);
+      springLayout.putConstraint(SpringLayout.EAST, multithreadedAcquisitionCheckBox, 180, SpringLayout.WEST, getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, multithreadedAcquisitionCheckBox, 0, SpringLayout.WEST, debugLogEnabledCheckBox);
+      springLayout.putConstraint(SpringLayout.SOUTH, multithreadedAcquisitionCheckBox, 60, SpringLayout.NORTH, getContentPane());
+      multithreadedAcquisitionCheckBox.setSelected(opts_.multiThreadedAcqEnabled);
    }
 
 }

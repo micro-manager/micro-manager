@@ -60,7 +60,6 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
-import javax.swing.JSeparator;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.SpringLayout;
@@ -211,6 +210,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI {
    
    public MMStudioMainFrame(boolean pluginStatus) {
       super();
+      
+      options_ = new MMOptions();
+      options_.loadSettings();
+      
       runsAsPlugin_ = pluginStatus;
       setIconImage(SwingResourceManager.getImage(MMStudioMainFrame.class, "icons/microscope.gif"));
       running_ = true;
@@ -266,10 +269,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI {
       springLayout_ = new SpringLayout();
       getContentPane().setLayout(springLayout_);
       setTitle(MICRO_MANAGER_TITLE);
-      
-      options_ = new MMOptions();
-      options_.loadSettings();
-      
+            
       // Snap button
       // -----------
       final JButton buttonSnap = new JButton();
@@ -726,7 +726,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI {
             try {
                boolean needsGroupUpdate = true;
                if (acqControlWin_ == null) {
-                  acqControlWin_ = new AcqControlDlg(engine_, mainPrefs_);
+                  acqControlWin_ = new AcqControlDlg(engine_, mainPrefs_, options_);
                   needsGroupUpdate = false;
                }
                if (acqControlWin_.isActive())
@@ -814,7 +814,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI {
             shutterLabel_ = new String("");
             zStageLabel_ = new String("");
             
-            engine_ = new MMAcquisitionEngine();
+            engine_ = new MMAcquisitionEngineMT();
+            
             engine_.setCore(core_);
             engine_.setPositionList(posList_);
             MMStudioMainFrame parent = (MMStudioMainFrame) e.getWindow();

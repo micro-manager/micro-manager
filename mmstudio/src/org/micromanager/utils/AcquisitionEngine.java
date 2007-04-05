@@ -23,7 +23,14 @@
 //
 package org.micromanager.utils;
 
+import ij.ImagePlus;
+import ij.io.FileSaver;
+import ij.process.ByteProcessor;
+import ij.process.ImageProcessor;
+import ij.process.ShortProcessor;
+
 import java.awt.Color;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 
 import org.micromanager.navigation.PositionList;
@@ -35,6 +42,10 @@ import mmcorej.CMMCore;
  */
 public interface AcquisitionEngine {
    
+   public static final String cameraGroup_ = "Camera";
+   public static final DecimalFormat FMT2 = new DecimalFormat("#0.00");
+   public static final String DEFAULT_ROOT_NAME = "C:/AcquisitionData";
+   
    // initialization
    public void setCore(CMMCore core_);
    public void setPositionList(PositionList posList);
@@ -44,6 +55,7 @@ public interface AcquisitionEngine {
    
    // run-time control
    public void acquire() throws Exception;
+   public void acquireMT();
    public void stop();
    public boolean isAcquisitionRunning();
    public int getCurrentFrameCount();
@@ -88,4 +100,5 @@ public interface AcquisitionEngine {
    public String[] getCameraConfigs();
    public String[] getAvailableGroups();
    public double getCurrentZPos();
+   public boolean saveImageFile(String fname, Object img, int width, int height);
 }

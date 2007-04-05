@@ -112,6 +112,7 @@ public class AcqControlDlg extends JDialog {
    private ChannelTableModel model_;
    private Preferences prefs_;
    private Preferences acqPrefs_;
+   private MMOptions opts_;
    private File acqFile_;
    private String acqDir_;
    private int zVals_=0;
@@ -460,10 +461,11 @@ public class AcqControlDlg extends JDialog {
     * @param acqEng - acquistion engine
     * @param prefs - application preferences node
     */
-   public AcqControlDlg(AcquisitionEngine acqEng, Preferences prefs) {
+   public AcqControlDlg(AcquisitionEngine acqEng, Preferences prefs, MMOptions opts) {
       super();
 
       prefs_ = prefs;
+      opts_ = opts;
       Preferences root = Preferences.userNodeForPackage(this.getClass());
       acqPrefs_ = root.node(root.absolutePath() + "/" + ACQ_SETTINGS_NODE);
       addWindowListener(new WindowAdapter() {
@@ -1168,7 +1170,7 @@ public class AcqControlDlg extends JDialog {
       try {
          applySettings();
          applyOverride();
-         acqEng_.acquire();
+         acqEng_.acquireMT();
       } catch(Exception e) {
          handleException(e);
          return;

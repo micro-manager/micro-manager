@@ -414,7 +414,7 @@ public class Image5DWindow extends StackWindow {
             for (int j=0; j<i5d.getNSlices(); j++) {
                for (int k=0; k<i5d.getNChannels(); k++) {
                   Object img = i5d.getPixels(k+1, j+1, i+1);
-                  MMAcquisitionEngine.saveImageFile(acqSavePath + "/" + ImageKey.generateFileName(i, ImageKey.getChannelName(metadata_, k), j),
+                  acqEng_.saveImageFile(acqSavePath + "/" + ImageKey.generateFileName(i, ImageKey.getChannelName(metadata_, k), j),
                                                     img, i5d.getWidth(), i5d.getHeight());
                }
             }

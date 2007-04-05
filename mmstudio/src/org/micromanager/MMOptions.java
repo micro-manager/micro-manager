@@ -31,14 +31,17 @@ import java.util.prefs.Preferences;
 public class MMOptions {
    private static final String DEBUG_LOG = "DebugLog";
    private static final String PREF_DIR = "MMOptions";
+   private static final String MT_ACQ = "MultiThread";
    
    public boolean debugLogEnabled = false;
+   public boolean multiThreadedAcqEnabled = false;
    
    public void saveSettings() {
       Preferences root = Preferences.userNodeForPackage(this.getClass());
       Preferences prefs = root.node(root.absolutePath() + "/" + PREF_DIR);
       
       prefs.putBoolean(DEBUG_LOG, debugLogEnabled);
+      prefs.putBoolean(MT_ACQ, multiThreadedAcqEnabled);
    }
    
    public void loadSettings() {
@@ -46,5 +49,6 @@ public class MMOptions {
       Preferences prefs = root.node(root.absolutePath() + "/" + PREF_DIR);
       
       debugLogEnabled = prefs.getBoolean(DEBUG_LOG, debugLogEnabled);
+      multiThreadedAcqEnabled = prefs.getBoolean(MT_ACQ, multiThreadedAcqEnabled);
    }
 }

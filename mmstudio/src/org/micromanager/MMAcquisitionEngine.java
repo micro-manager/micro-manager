@@ -41,7 +41,6 @@ import java.awt.event.WindowListener;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.GregorianCalendar;
 
@@ -84,12 +83,7 @@ public class MMAcquisitionEngine implements AcquisitionEngine {
    
    private String channelGroup_;
    
-   private static final String cameraGroup_ = "Camera";
-   private static final DecimalFormat FMT2 = new DecimalFormat("#0.00");
-   private static final String DEFAULT_ROOT_NAME = "C:/AcquisitionData";
-   
-   // metadata keys
-   
+   // metadata keys   
    private String cameraConfig_ = "";
    private Configuration oldCameraState_;
    private Configuration oldChannelState_;
@@ -602,7 +596,7 @@ public class MMAcquisitionEngine implements AcquisitionEngine {
       }
    }
    
-   public static boolean saveImageFile(String fname, Object img, int width, int height) {
+   public boolean saveImageFile(String fname, Object img, int width, int height) {
       ImageProcessor ip;
       if (img instanceof byte[]) {
          ip = new ByteProcessor(width, height);
@@ -974,6 +968,16 @@ public class MMAcquisitionEngine implements AcquisitionEngine {
 
    public void setSliceMode(int mode) {
       sliceMode_ = mode;
+   }
+
+   public void acquireMT() {
+      try {
+         acquire();
+      } catch (Exception e) {
+         // TODO Auto-generated catch block
+         e.printStackTrace();
+      }
+      
    }
 
 }
