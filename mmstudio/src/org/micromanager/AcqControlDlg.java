@@ -1170,7 +1170,10 @@ public class AcqControlDlg extends JDialog {
       try {
          applySettings();
          applyOverride();
-         acqEng_.acquireMT();
+         if (opts_.multiThreadedAcqEnabled)
+            acqEng_.acquireMT();
+         else
+            acqEng_.acquire();
       } catch(Exception e) {
          handleException(e);
          return;
