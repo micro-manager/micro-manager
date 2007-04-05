@@ -264,7 +264,8 @@ public:
       y = (long)(posY_um_ / stepSize_um_);
       return DEVICE_OK;
    }
-   virtual int SetOrigin() {return DEVICE_OK;}
+   virtual int Home() {return DEVICE_OK;}
+   virtual int Stop() {return DEVICE_OK;}
    virtual int GetLimits(double& lower, double& upper)
    {
       lower = lowerLimit_;

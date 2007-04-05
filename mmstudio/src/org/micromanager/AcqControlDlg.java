@@ -1021,6 +1021,8 @@ public class AcqControlDlg extends JDialog {
       acqPrefs_.put(ACQ_DIR_NAME, nameField_.getText());
       acqPrefs_.put(ACQ_ROOT_NAME, rootField_.getText());
       
+      acqPrefs_.putInt(ACQ_SLICE_MODE, acqEng_.getSliceMode());
+      acqPrefs_.putInt(ACQ_POSITION_MODE, acqEng_.getPositionMode());
 
       acqPrefs_.put(ACQ_CHANNEL_GROUP, acqEng_.getChannelGroup());
       ArrayList<ChannelSpec> channels = acqEng_.getChannels();
@@ -1223,8 +1225,6 @@ public class AcqControlDlg extends JDialog {
       sliceModeCombo_.setSelectedIndex(acqEng_.getSliceMode());
       posModeCombo_.setSelectedIndex(acqEng_.getPositionMode());
       
-      // TODO: add more code below!!!
-
       numFrames_.setValue(new Integer(acqEng_.getNumFrames()));
       zValCombo_.setSelectedIndex(zVals_);
 
@@ -1245,6 +1245,8 @@ public class AcqControlDlg extends JDialog {
       acqEng_.setSlices(Double.parseDouble(zBottom_.getText()), Double.parseDouble(zTop_.getText()), zStep, zVals_ == 0 ? false : true);
       acqEng_.enableZSliceSetting(useSliceSettingsCheckBox_.isSelected());
       acqEng_.enableMultiPosition(multiPosCheckBox_.isSelected());
+      acqEng_.setSliceMode(((SliceMode)sliceModeCombo_.getSelectedItem()).getID());
+      acqEng_.setPositionMode(((PositionMode)posModeCombo_.getSelectedItem()).getID());
       acqEng_.setChannels(((ChannelTableModel)table_.getModel()).getChannels());
       acqEng_.setFrames(((Integer)numFrames_.getValue()).intValue(),
             convertTimeToMs(Double.parseDouble(interval_.getText()), timeUnitCombo_.getSelectedIndex()));

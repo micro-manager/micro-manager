@@ -33,7 +33,7 @@
 // Header version
 // If any of the class declarations changes, the interface version
 // must be incremented
-#define DEVICE_INTERFACE_VERSION 14
+#define DEVICE_INTERFACE_VERSION 15
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifndef _MMDEVICE_H_
@@ -174,7 +174,8 @@ namespace MM {
       virtual int GetPositionUm(double& x, double& y) = 0;
       virtual int SetPositionSteps(long x, long y) = 0;
       virtual int GetPositionSteps(long& x, long& y) = 0;
-      virtual int SetOrigin() = 0;
+      virtual int Home() = 0;
+      virtual int Stop() = 0;
       virtual int GetLimits(double& xMin, double& xMax, double& yMin, double& yMax) = 0;
    };
 

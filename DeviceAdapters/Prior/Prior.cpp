@@ -768,31 +768,43 @@ int XYStage::GetPositionSteps(long& x, long& y)
    return GetPositionStepsSingle('Y', y);
 }
 
-int XYStage::SetOrigin()
+int XYStage::Home()
 {
-   // send command
-   int ret = SendSerialCommand(port_.c_str(), "PS,0,0", "\r");
-   if (ret != DEVICE_OK)
-      return ret;
-
-   // block/wait for acknowledge, or until we time out;
-   string answer;
-   ret = GetSerialAnswer(port_.c_str(), "\r", answer);
-   if (ret != DEVICE_OK)
-      return ret;
-
-   if (answer.substr(0,1).compare("0") == 0)
-   {
-      return DEVICE_OK;
-   }
-   else if (answer.substr(0, 1).compare("E") == 0 && answer.length() > 2)
-   {
-      int errNo = atoi(answer.substr(2).c_str());
-      return ERR_OFFSET + errNo;
-   }
-
-   return ERR_UNRECOGNIZED_ANSWER;   
+   return DEVICE_UNSUPPORTED_COMMAND;
 }
+
+int XYStage::Stop()
+{
+   return DEVICE_UNSUPPORTED_COMMAND;
+}
+
+
+// NOTE: SetOrigin was removed from the MMDevice interface but still may be used later
+//int XYStage::SetOrigin()
+//{
+//   // send command
+//   int ret = SendSerialCommand(port_.c_str(), "PS,0,0", "\r");
+//   if (ret != DEVICE_OK)
+//      return ret;
+//
+//   // block/wait for acknowledge, or until we time out;
+//   string answer;
+//   ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+//   if (ret != DEVICE_OK)
+//      return ret;
+//
+//   if (answer.substr(0,1).compare("0") == 0)
+//   {
+//      return DEVICE_OK;
+//   }
+//   else if (answer.substr(0, 1).compare("E") == 0 && answer.length() > 2)
+//   {
+//      int errNo = atoi(answer.substr(2).c_str());
+//      return ERR_OFFSET + errNo;
+//   }
+//
+//   return ERR_UNRECOGNIZED_ANSWER;   
+//}
  
 int XYStage::GetLimits(double& xMin, double& xMax, double& yMin, double& yMax)
 {

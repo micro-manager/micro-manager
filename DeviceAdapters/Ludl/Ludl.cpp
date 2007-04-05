@@ -513,7 +513,15 @@ int XYStage::GetPositionSteps(long& x, long& y)
  * Defines current position as origin (0,0) coordinate.
  * TODO: implement!!!
  */
-int XYStage::SetOrigin()
+int XYStage::Home()
+{
+   return DEVICE_UNSUPPORTED_COMMAND;
+}
+
+/**
+ * Aborts the current action immediately.
+ */
+int XYStage::Stop()
 {
    return DEVICE_UNSUPPORTED_COMMAND;
 }

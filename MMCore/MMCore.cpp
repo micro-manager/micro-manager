@@ -910,6 +910,30 @@ double CMMCore::getYPosition(const char* deviceName) throw (CMMError)
 }
 
 /**
+ * Aborts current action.
+ */
+void CMMCore::stop(const char* deviceName) throw (CMMError)
+{
+   MM::XYStage* pXYStage = getSpecificDevice<MM::XYStage>(deviceName);
+   int ret = pXYStage->Stop();
+   if (ret != DEVICE_OK)
+      throw CMMError(getDeviceErrorText(ret, pXYStage).c_str(), MMERR_DEVICE_GENERIC);
+   CORE_LOG1("Device %s stopped!\n", deviceName);
+}
+
+/**
+ * Calibrates and homes the XY stage.
+ */
+void CMMCore::home(const char* deviceName) throw (CMMError)
+{
+   MM::XYStage* pXYStage = getSpecificDevice<MM::XYStage>(deviceName);
+   int ret = pXYStage->Home();
+   if (ret != DEVICE_OK)
+      throw CMMError(getDeviceErrorText(ret, pXYStage).c_str(), MMERR_DEVICE_GENERIC);
+   CORE_LOG1("Stage %s moved to the HOME position.\n", deviceName);
+}
+
+/**
  * Acquires a single image. 
  */
 void CMMCore::snapImage() throw (CMMError)

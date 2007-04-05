@@ -132,7 +132,8 @@ public:
   int GetPositionUm(double& x, double& y);
   int SetPositionSteps(long x, long y);
   int GetPositionSteps(long& x, long& y);
-  int SetOrigin();
+  int Home();
+  int Stop();
   int GetLimits(double& xMin, double& xMax, double& yMin, double& yMax);
 
    // action interface

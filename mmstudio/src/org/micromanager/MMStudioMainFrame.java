@@ -48,7 +48,6 @@ import java.awt.event.WindowListener;
 
 import java.io.File;
 import java.io.IOException;
-//import java.lang.Thread;
 import java.util.prefs.Preferences;
 
 import javax.swing.JButton;
@@ -61,6 +60,7 @@ import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JSeparator;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.SpringLayout;
@@ -526,6 +526,17 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI {
       });
       rebuildGuiMenuItem.setText("Rebuild GUI");
       toolsMenu.add(rebuildGuiMenuItem);
+
+      toolsMenu.addSeparator();
+
+      final JMenuItem homeXyStageMenuItem = new JMenuItem();
+      homeXyStageMenuItem.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent arg0) {
+            homeXYStage();
+         }
+      });
+      homeXyStageMenuItem.setText("Home XY Stage");
+      toolsMenu.add(homeXyStageMenuItem);
       
       toolsMenu.addSeparator();
       
@@ -603,7 +614,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI {
       });
       optionsMenuItem.setText("Options...");
       toolsMenu.add(optionsMenuItem);
-      
+
       final JMenu helpMenu = new JMenu();
       helpMenu.setText("Help");
       menuBar.add(helpMenu);
@@ -1058,6 +1069,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI {
       springLayout_.putConstraint(SpringLayout.WEST, saveConfigButton_, 435, SpringLayout.WEST, getContentPane());
 
       final JButton refreshButton_1 = new JButton();
+      refreshButton_1.setIcon(SwingResourceManager.getIcon(MMStudioMainFrame.class, "icons/application_view_list.png"));
       refreshButton_1.addActionListener(new ActionListener() {
          private PositionListDlg posListDlg_;
 
@@ -1211,6 +1223,28 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI {
       } catch (Exception e) {
          handleException(e);
       }      
+   }
+   
+   /**
+    * Moves XY stage to its home position and calibrates.
+    */
+   private void homeXYStage() {
+      String xyStage = core_.getXYStageDevice();
+      if (xyStage.isEmpty()) {
+         handleError("Default XYStage is not defined.\n" + "Use Configuration Wizard to define default XY Stage device.");
+         return;
+      }
+
+      int option = JOptionPane.showConfirmDialog(this, "Home and calibrate the default XY device: " + xyStage + "?\n" +
+            "Warning: if you choose YES the stage will move to its home position.",
+            "XY Stage homing action", JOptionPane.YES_NO_OPTION);
+      if (option == JOptionPane.YES_OPTION) {
+         try {
+            core_.home(xyStage);
+         } catch(Exception e) {
+            handleException(e);
+         }
+      }
    }
   
    private boolean openImageWindow(){

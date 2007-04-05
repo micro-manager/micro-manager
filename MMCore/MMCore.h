@@ -230,6 +230,8 @@ public:
    void getXYPosition(const char* deviceName, double &x, double &y) throw (CMMError);
    double getXPosition(const char* deviceName) throw (CMMError);
    double getYPosition(const char* deviceName) throw (CMMError);
+   void stop(const char* deviceName) throw (CMMError);
+   void home(const char* deviceName) throw (CMMError);
    //@ }
 
    /** @name Serial port control

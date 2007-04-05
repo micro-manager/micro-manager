@@ -658,8 +658,7 @@ int FocusStage::OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       double pos;
       pProp->Get(pos);
-      int focusPos = (pos/((double)stepSize_nm_ / 1000)) + 0.5;
-      printf ("pos: %f, focusPos: %d\n", pos, focusPos);
+      int focusPos = (int)(pos/((double)stepSize_nm_ / 1000.0) + 0.5);
       int ret = g_hub.SetFocusPosition(*this, *GetCoreCallback(), focusPos);
       if (ret != 0)
          return ret;
