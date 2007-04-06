@@ -46,6 +46,8 @@
 
 #include <ace/OS.h>
 #include <ace/High_Res_Timer.h>
+#include <ace/Mutex.h>
+#include <ace/Guard_T.h>
 #include <ace/Log_Msg.h>
 
 #include "CoreUtils.h"
@@ -75,6 +77,9 @@ const char* g_logFileName = "CoreLog.txt";
 const int MMCore_versionMajor = 1;
 const int MMCore_versionMinor = 0;
 const int MMCore_versionBuild = 27;
+
+// mutex
+static ACE_Mutex g_lock;
 
 ///////////////////////////////////////////////////////////////////////////////
 // CMMcore class
@@ -938,6 +943,8 @@ void CMMCore::home(const char* deviceName) throw (CMMError)
  */
 void CMMCore::snapImage() throw (CMMError)
 {
+   ACE_Guard<ACE_Mutex> guard(g_lock);
+
    if (camera_)
    {
       int ret = DEVICE_OK;
