@@ -970,14 +970,4 @@ public class MMAcquisitionEngine implements AcquisitionEngine {
       sliceMode_ = mode;
    }
 
-   public void acquireMT() {
-      try {
-         acquire();
-      } catch (Exception e) {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
-      }
-      
-   }
-
 }

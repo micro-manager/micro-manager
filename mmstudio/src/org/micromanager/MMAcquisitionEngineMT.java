@@ -43,9 +43,11 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.GregorianCalendar;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javax.swing.JOptionPane;
-import javax.swing.Timer;
+
 
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
@@ -135,15 +137,10 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
 
    private int posMode_ = PositionMode.MULTI_FIELD;
    private int sliceMode_ = SliceMode.CHANNELS_FIRST;
-   
-   private class AcqRunnable implements Runnable {
+      
+   private class AcqFrame extends TimerTask {
       public void run() {
-         try {
-            acquire();
-         } catch (Exception e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-         }
+         acquireOneFrame();         
       }
    }
          
@@ -413,10 +410,13 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
             acquireOneFrame();
          }
       };
-      acqTimer_ = new Timer((int)frameIntervalMs_, timerHandler);
-      acqTimer_.setInitialDelay(0);
+      //acqTimer_ = new Timer((int)frameIntervalMs_, timerHandler);
+      acqTimer_ = new Timer();
+      acqTimer_.schedule(new AcqFrame(), (long)frameIntervalMs_);
+      //acqTimer_.setInitialDelay(0);
       if (numFrames_ > 0)
-         acqTimer_.start();
+         //acqTimer_.start();
+         acqTimer_.schedule(new AcqFrame(), 0, (long)frameIntervalMs_);
    }
 
    /**
@@ -678,7 +678,9 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
       saveMetadata(metaStream);
          
       if (acqTimer_ != null) {
-         acqTimer_.stop();
+         //acqTimer_.stop();
+         acqTimer_.cancel();
+         acqTimer_ = null;
          System.out.println("Acquisition stopped!!!");
       }
       
@@ -708,8 +710,10 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
    }
    
    public boolean isAcquisitionRunning() {
+//      if (acqTimer_ != null)
+//         return acqTimer_.isRunning();
       if (acqTimer_ != null)
-         return acqTimer_.isRunning();
+         return true;
       else
          return false;
    }
@@ -980,10 +984,6 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
 
    public void setSliceMode(int mode) {
       sliceMode_ = mode;
-   }
-
-   public void acquireMT() {
-      new Thread(new AcqRunnable()).start();
    }
 
 }

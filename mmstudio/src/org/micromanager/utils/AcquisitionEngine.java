@@ -23,19 +23,13 @@
 //
 package org.micromanager.utils;
 
-import ij.ImagePlus;
-import ij.io.FileSaver;
-import ij.process.ByteProcessor;
-import ij.process.ImageProcessor;
-import ij.process.ShortProcessor;
-
 import java.awt.Color;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 
-import org.micromanager.navigation.PositionList;
-
 import mmcorej.CMMCore;
+
+import org.micromanager.navigation.PositionList;
 
 /**
  * Acquisition engine interface.
@@ -55,7 +49,6 @@ public interface AcquisitionEngine {
    
    // run-time control
    public void acquire() throws Exception;
-   public void acquireMT();
    public void stop();
    public boolean isAcquisitionRunning();
    public int getCurrentFrameCount();

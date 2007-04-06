@@ -726,7 +726,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI {
             try {
                boolean needsGroupUpdate = true;
                if (acqControlWin_ == null) {
-                  acqControlWin_ = new AcqControlDlg(engine_, mainPrefs_, options_);
+                  acqControlWin_ = new AcqControlDlg(engine_, mainPrefs_);
                   needsGroupUpdate = false;
                }
                if (acqControlWin_.isActive())
@@ -814,7 +814,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI {
             shutterLabel_ = new String("");
             zStageLabel_ = new String("");
             
-            engine_ = new MMAcquisitionEngineMT();
+            if (options_.multiThreadedAcqEnabled)
+               engine_ = new MMAcquisitionEngineMT();
+            else
+               engine_ = new MMAcquisitionEngine();
             
             engine_.setCore(core_);
             engine_.setPositionList(posList_);
