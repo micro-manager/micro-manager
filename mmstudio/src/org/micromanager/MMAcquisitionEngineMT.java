@@ -47,6 +47,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 
 
 import mmcorej.CMMCore;
@@ -522,8 +523,13 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
                   img5d_.setChannelMinMax(k+1, min, max);                  
                }
                      
-               i5dWin_.getImagePlus().updateAndDraw();
-               i5dWin_.getCanvas().paint(i5dWin_.getCanvas().getGraphics());
+               Runnable refresh = new Runnable() {
+                  public void run() {
+                     i5dWin_.getImagePlus().updateAndDraw();
+                     i5dWin_.getCanvas().paint(i5dWin_.getCanvas().getGraphics());                     
+                  }
+               };
+               SwingUtilities.invokeAndWait(refresh);
                
                // save file
                String fname = ImageKey.generateFileName(frameCount_, (channels_.get(k)).config_, j);

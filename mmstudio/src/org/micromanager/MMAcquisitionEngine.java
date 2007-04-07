@@ -511,15 +511,8 @@ public class MMAcquisitionEngine implements AcquisitionEngine {
                   img5d_.setChannelMinMax(k+1, min, max);                  
                }
                
-               Runnable refresh = new Runnable() {
-                  public void run() {
-                     i5dWin_.getImagePlus().updateAndDraw();
-                     i5dWin_.getCanvas().paint(i5dWin_.getCanvas().getGraphics());                     
-                  }
-               };
-               SwingUtilities.invokeAndWait(refresh);
-//               i5dWin_.getImagePlus().updateAndDraw();
-//               i5dWin_.getCanvas().paint(i5dWin_.getCanvas().getGraphics());
+               i5dWin_.getImagePlus().updateAndDraw();
+               i5dWin_.getCanvas().paint(i5dWin_.getCanvas().getGraphics());
                
                // save file
                String fname = ImageKey.generateFileName(frameCount_, (channels_.get(k)).config_, j);
