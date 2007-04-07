@@ -1074,6 +1074,8 @@ bool CMMCore::getShutterOpen() throw (CMMError)
  */
 void* CMMCore::getImage() const throw (CMMError)
 {
+   ACE_Guard<ACE_Mutex> guard(g_lock);
+
    if (!camera_)
       throw CMMError(getCoreErrorText(MMERR_CameraNotAvailable).c_str(), MMERR_CameraNotAvailable);
    else
