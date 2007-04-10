@@ -231,6 +231,12 @@ public class MMAcquisitionEngine implements AcquisitionEngine {
       
       acquisitionLagging_ = false;
       
+      // generate appropriate number of acquistion objects
+      if (useMultiplePositions_) {
+         
+      } else {
+         
+      }
       startAcquisition();
    }
    

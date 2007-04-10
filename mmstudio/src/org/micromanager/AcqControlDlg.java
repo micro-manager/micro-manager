@@ -705,12 +705,12 @@ public class AcqControlDlg extends JDialog {
          }
       });
       overrideCheckBox_.setText("Override current settings");
-      overrideCheckBox_.setBounds(215, 15, 157, 20);
+      overrideCheckBox_.setBounds(221, 20, 157, 20);
       getContentPane().add(overrideCheckBox_);
 
       comboCameraConfig_ = new JComboBox();
       comboCameraConfig_.setFont(new Font("Arial", Font.PLAIN, 10));
-      comboCameraConfig_.setBounds(220, 35, 152, 21);
+      comboCameraConfig_.setBounds(221, 40, 152, 21);
       getContentPane().add(comboCameraConfig_);
 
       // camera config combo
@@ -846,7 +846,7 @@ public class AcqControlDlg extends JDialog {
       final JLabel summaryLabel = new JLabel();
       summaryLabel.setFont(new Font("Arial", Font.BOLD, 11));
       summaryLabel.setText("Summary");
-      summaryLabel.setBounds(220, 130, 120, 21);
+      summaryLabel.setBounds(221, 130, 120, 21);
       getContentPane().add(summaryLabel);
 
       zValCombo_ = new JComboBox();
@@ -918,7 +918,7 @@ public class AcqControlDlg extends JDialog {
       final JLabel summaryLabel_1 = new JLabel();
       summaryLabel_1.setFont(new Font("Arial", Font.BOLD, 11));
       summaryLabel_1.setText("Multi-position list");
-      summaryLabel_1.setBounds(220, 65, 120, 21);
+      summaryLabel_1.setBounds(221, 65, 120, 21);
       getContentPane().add(summaryLabel_1);
 
       multiPosCheckBox_ = new JCheckBox();
@@ -927,7 +927,7 @@ public class AcqControlDlg extends JDialog {
          }
       });
       multiPosCheckBox_.setText("Use current");
-      multiPosCheckBox_.setBounds(220, 80, 101, 23);
+      multiPosCheckBox_.setBounds(221, 80, 101, 23);
       getContentPane().add(multiPosCheckBox_);
 
       posModeCombo_ = new JComboBox();

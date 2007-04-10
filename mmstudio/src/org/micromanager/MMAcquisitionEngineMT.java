@@ -96,8 +96,8 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
    private int numFrames_;
    private long startTimeMs_=0;
    private double frameIntervalMs_;
-   private Image5D img5d_;
-   Image5DWindow i5dWin_;
+   private Image5D img5d_[];
+   private Image5DWindow i5dWin_[];
    private int frameCount_;
    private int xWindowPos = 100;
    private int yWindowPos = 100;
@@ -121,8 +121,8 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
    
    private double startPos_;
    private Timer acqTimer_;
-   private FileWriter metaWriter_;
-   private JSONObject metadata_;
+   private FileWriter metaWriter_[];
+   private JSONObject metadata_[];
    private boolean absoluteZ_ = false;
    private String comment_ = "";
    private boolean useSliceSetting_ = true;
@@ -136,15 +136,40 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
 
    private boolean useMultiplePositions_;
 
-   private int posMode_ = PositionMode.MULTI_FIELD;
+   private int posMode_ = PositionMode.TIME_LAPSE;
    private int sliceMode_ = SliceMode.CHANNELS_FIRST;
-      
+   
+   /**
+    * Timer task routine triggered at each frame. 
+    */
    private class AcqFrame extends TimerTask {
       public void run() {
-         acquireOneFrame();         
+         if (useMultiplePositions_) {
+            for (int i=0; i<posList_.getNumberOfPositions(); i++)
+               acquireOneFrame(i);
+         } else
+            acquireOneFrame(0);
       }
    }
-         
+   
+   /**
+    * Threadsafe image5d window update.
+    */
+   private class RefreshI5d implements Runnable {
+      private Image5DWindow i5dWin_;
+      
+      public RefreshI5d(Image5DWindow i5dw) {
+         i5dWin_ = i5dw;
+      }
+      public void run() {
+         i5dWin_.getImagePlus().updateAndDraw();
+         i5dWin_.getCanvas().paint(i5dWin_.getCanvas().getGraphics());                              
+      }
+   }
+
+   /**
+    * Multi-threaded acquition engine.
+    */
    public MMAcquisitionEngineMT() {
             
       channels_ = new ArrayList<ChannelSpec>();
@@ -157,7 +182,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
       numFrames_ = 1;
       frameIntervalMs_ = 0.0; // ms
       frameCount_ = 0;
-      metadata_ = new JSONObject();
+      //metadata_ = new JSONObject();
       rootName_ = new String(DEFAULT_ROOT_NAME);
       guidgen_ = PlatformIndependentGuidGen.getInstance();
       channelGroup_ = new String(ChannelSpec.DEFAULT_CHANNEL_GROUP);
@@ -408,7 +433,12 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
       
       ActionListener timerHandler = new ActionListener() {
          public void actionPerformed(ActionEvent evt) {
-            acquireOneFrame();
+            if (useMultiplePositions_) {
+               for (int i=0; i<posList_.getNumberOfPositions(); i++)
+                  acquireOneFrame(i);
+            } else {
+               acquireOneFrame(0);
+            }
          }
       };
       //acqTimer_ = new Timer((int)frameIntervalMs_, timerHandler);
@@ -424,7 +454,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
     * Acquires a single frame in the acquistion sequence.
     *
     */
-   public void acquireOneFrame() {
+   public void acquireOneFrame(int posIdx) {
             
       GregorianCalendar cld = null;
       GregorianCalendar cldStart = new GregorianCalendar();
@@ -511,24 +541,19 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
                
                                             
                // set Image5D
-               img5d_.setPixels(img, k+1, j+1, frameCount_+1);
-               if (!i5dWin_.isPlaybackRunning())
-                  img5d_.setCurrentPosition(0, 0, k, j, frameCount_);
+               img5d_[posIdx].setPixels(img, k+1, j+1, frameCount_+1);
+               if (!i5dWin_[posIdx].isPlaybackRunning())
+                  img5d_[posIdx].setCurrentPosition(0, 0, k, j, frameCount_);
                
                // autoscale channels based on the first slice of the first frame
                if (j==0 && frameCount_==0) {
-                  ImageStatistics stats = img5d_.getStatistics(); // get uncalibrated stats
+                  ImageStatistics stats = img5d_[posIdx].getStatistics(); // get uncalibrated stats
                   double min = stats.min;
                   double max = stats.max;
-                  img5d_.setChannelMinMax(k+1, min, max);                  
+                  img5d_[posIdx].setChannelMinMax(k+1, min, max);                  
                }
                      
-               Runnable refresh = new Runnable() {
-                  public void run() {
-                     i5dWin_.getImagePlus().updateAndDraw();
-                     i5dWin_.getCanvas().paint(i5dWin_.getCanvas().getGraphics());                     
-                  }
-               };
+               RefreshI5d refresh = new RefreshI5d(i5dWin_[posIdx]);                            
                //SwingUtilities.invokeAndWait(refresh);
                SwingUtilities.invokeLater(refresh);
                
@@ -547,7 +572,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
                jsonData.put(ImagePropertyKeys.EXPOSURE_MS, exposureMs);
                               
                // insert the metadata for the current image
-               metadata_.put(ImageKey.generateFrameKey(frameCount_, k, j), jsonData);
+               metadata_[posIdx].put(ImageKey.generateFrameKey(frameCount_, k, j), jsonData);
                
                if (saveFiles_) {
                   saveImageFile(outputDir_ + "/" + fname, img, (int)imgWidth_, (int)imgHeight_);
@@ -557,16 +582,16 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
             stop();
             restoreSystem();
             if (e.getMessage().length() > 0)
-               JOptionPane.showMessageDialog(i5dWin_, e.getMessage());     
+               JOptionPane.showMessageDialog(i5dWin_[posIdx], e.getMessage());     
           return;
          } catch (Exception e) {
             stop();
             restoreSystem();
             if (e.getMessage().length() > 0)
-               JOptionPane.showMessageDialog(i5dWin_, e.getMessage());     
+               JOptionPane.showMessageDialog(i5dWin_[posIdx], e.getMessage());     
             return;
          } catch (OutOfMemoryError e) {
-            JOptionPane.showMessageDialog(i5dWin_, e.getMessage() + "\nOut of memory - acquistion stopped.\n" +
+            JOptionPane.showMessageDialog(i5dWin_[posIdx], e.getMessage() + "\nOut of memory - acquistion stopped.\n" +
             "In the future you can try to increase the amount of memory available to the Java VM (ImageJ).");     
             stop();
             restoreSystem();
@@ -578,13 +603,13 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
       if (frameCount_ == 0) {
          // insert contrast settings metadata
          try {
-            JSONObject summary = metadata_.getJSONObject(SummaryKeys.SUMMARY);
+            JSONObject summary = metadata_[posIdx].getJSONObject(SummaryKeys.SUMMARY);
             JSONArray minArray = new JSONArray();
             JSONArray maxArray = new JSONArray();
             
             // contrast settings
             for (int i=0; i<channels_.size(); i++) {
-               ChannelDisplayProperties cdp = img5d_.getChannelDisplayProperties(i+1);
+               ChannelDisplayProperties cdp = img5d_[posIdx].getChannelDisplayProperties(i+1);
                minArray.put(i, cdp.getMinValue());
                maxArray.put(i, cdp.getMaxValue());
             }
@@ -597,10 +622,15 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
       }
       
       // update number of frames in the summary
-      frameCount_++;
-      i5dWin_.startCountdown((long)frameIntervalMs_ - (cld.getTimeInMillis() - cldStart.getTimeInMillis()), numFrames_ - frameCount_);
+      if (useMultiplePositions_)
+         if (posIdx == posList_.getNumberOfPositions() - 1)
+            frameCount_++;
+      else
+         frameCount_++;
+      
+      i5dWin_[posIdx].startCountdown((long)frameIntervalMs_ - (cld.getTimeInMillis() - cldStart.getTimeInMillis()), numFrames_ - frameCount_);
       try {
-         JSONObject summary = metadata_.getJSONObject(SummaryKeys.SUMMARY);
+         JSONObject summary = metadata_[posIdx].getJSONObject(SummaryKeys.SUMMARY);
          summary.put(SummaryKeys.NUM_FRAMES, frameCount_);
       } catch (JSONException e) {
          // TODO Auto-generated catch block
@@ -609,7 +639,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
       
       if(frameCount_ >= numFrames_) {
          stop();
-         i5dWin_.setTitle("Acquisition (completed) " + cld.getTime()); 
+         i5dWin_[posIdx].setTitle("Acquisition (completed) " + cld.getTime()); 
          restoreSystem();
          return;
       }
@@ -675,14 +705,6 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
    }
    
    public void stop() {
-      String metaStream = new String();
-      try {
-         metaStream = metadata_.toString(3);
-      } catch (JSONException e1) {
-         // TODO Auto-generated catch block
-         e1.printStackTrace();
-      }
-      saveMetadata(metaStream);
          
       if (acqTimer_ != null) {
          //acqTimer_.stop();
@@ -691,25 +713,36 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
          System.out.println("Acquisition stopped!!!");
       }
       
-      if (i5dWin_ != null) {
-         i5dWin_.stopCountdown();
-         i5dWin_.setTitle("Acquisition (aborted) ");
-         i5dWin_.setMetadata(metaStream);
-         i5dWin_.setActive(false);
-         i5dWin_.setAcquitionEngine(null); // disengage from the acquistion
-         i5dWin_.setPlaybackFrames(frameCount_);
-      }
+      if (i5dWin_ == null)
+         return;
       
-      // img5d_.setDimensions(img5d_.getNChannels(), img5d_.getNSlices(), this.frameCount_);
-      System.out.println("Number of frames: " + (img5d_ != null ? img5d_.getNFrames() : 0));
+      for (int i=0; i<i5dWin_.length; i++) {
+         String metaStream = new String();
+         try {
+            metaStream = metadata_[i].toString(3);
+         } catch (JSONException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+         }
+         saveMetadata(metaStream, i);
+         
+         if (i5dWin_[i] != null) {
+            i5dWin_[i].stopCountdown();
+            i5dWin_[i].setTitle("Acquisition (aborted) ");
+            i5dWin_[i].setMetadata(metaStream);
+            i5dWin_[i].setActive(false);
+            i5dWin_[i].setAcquitionEngine(null); // disengage from the acquistion
+            i5dWin_[i].setPlaybackFrames(frameCount_);
+         }
+      }
    }
 
-   private void saveMetadata(String meta) {     
+   private void saveMetadata(String meta, int idx) {     
       if (metaWriter_ != null && saveFiles_)
          try {
-            metaWriter_.write(meta);
-            metaWriter_.close();
-            metaWriter_ = null;
+            metaWriter_[idx].write(meta);
+            metaWriter_[idx].close();
+            metaWriter_[idx] = null;
          } catch (IOException e) {
             // do not complain here
             e.printStackTrace();
@@ -799,54 +832,67 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
    private void acquisitionSetup() throws IOException, JSONException {
       metaWriter_ = null;
       
+      if (useMultiplePositions_)
+         metadata_ = new JSONObject[posList_.getNumberOfPositions()];
+      else
+         metadata_ = new JSONObject[1];
+      
       if (saveFiles_) {
-         // create new acq directory
-         int suffixCounter = 0;
-         String outDirName; 
-         do {
-            outDirName = rootName_ + "/" + dirName_ + "_" + suffixCounter;
-            outputDir_ = new File(outDirName);
-            suffixCounter++;
-         } while (outputDir_.exists());
-         if (!outputDir_.mkdirs())
-            throw new IOException("Invalid root directory name");
-         
-         File metaFile = new File(outDirName + "/" + ImageKey.METADATA_FILE_NAME);
-         metaWriter_ = new FileWriter(metaFile);
+         metaWriter_ = new FileWriter[metadata_.length];
+
+         for (int i=0; i<metadata_.length; i++) {
+            // create new acq directory
+            int suffixCounter = 0;
+            String outDirName; 
+            do {
+               outDirName = rootName_ + "/" + dirName_ + "_" + posList_.getPosition(i).getLabel() + "_" + suffixCounter;
+               outputDir_ = new File(outDirName);
+               suffixCounter++;
+            } while (outputDir_.exists());
+            if (!outputDir_.mkdirs())
+               throw new IOException("Invalid root directory name");
+
+            File metaFile = new File(outDirName + "/" + ImageKey.METADATA_FILE_NAME);
+            metaWriter_[i] = new FileWriter(metaFile);
+         }
       }
-      metadata_ = new JSONObject();      
-      JSONObject i5dData = new JSONObject();
-      i5dData.put(SummaryKeys.GUID, guidgen_.genNewGuid());
-      i5dData.put(SummaryKeys.METADATA_VERSION, SummaryKeys.VERSION);
-      i5dData.put(SummaryKeys.METADATA_SOURCE, SummaryKeys.SOURCE);
-      i5dData.put(SummaryKeys.NUM_FRAMES, 0);
-      i5dData.put(SummaryKeys.NUM_CHANNELS, channels_.size());
-      i5dData.put(SummaryKeys.NUM_SLICES, useSliceSetting_ ? sliceDeltaZ_.length : 1);
-      GregorianCalendar cld = new GregorianCalendar();
-      i5dData.put(SummaryKeys.TIME, cld.getTime());
-      i5dData.put(SummaryKeys.COMMENT, comment_);
-      
-      ImageProcessor ip = i5dWin_.getImagePlus().getProcessor();
-      i5dData.put(SummaryKeys.IMAGE_WIDTH, ip.getWidth());
-      i5dData.put(SummaryKeys.IMAGE_HEIGHT, ip.getHeight());
-      if (ip instanceof ByteProcessor)
-         i5dData.put(SummaryKeys.IMAGE_DEPTH, 1);
-      else if (ip instanceof ShortProcessor)
-         i5dData.put(SummaryKeys.IMAGE_DEPTH, 2);
-      
-      JSONArray colors = new JSONArray();
-      JSONArray names = new JSONArray();
-      for (int i=0; i < channels_.size(); i++) {
-         Color c = (channels_.get(i)).color_;
-         colors.put(i, c.getRGB());
-         names.put(i, (channels_.get(i)).config_);
-      }
-      i5dData.put(SummaryKeys.CHANNEL_COLORS, colors);
-      i5dData.put(SummaryKeys.CHANNEL_NAMES, names);
+          
+      for (int i=0; i<metadata_.length; i++) {
+         metadata_[i] = new JSONObject();
+         JSONObject i5dData = new JSONObject();
+         i5dData.put(SummaryKeys.GUID, guidgen_.genNewGuid());
+         i5dData.put(SummaryKeys.METADATA_VERSION, SummaryKeys.VERSION);
+         i5dData.put(SummaryKeys.METADATA_SOURCE, SummaryKeys.SOURCE);
+         i5dData.put(SummaryKeys.NUM_FRAMES, 0);
+         i5dData.put(SummaryKeys.NUM_CHANNELS, channels_.size());
+         i5dData.put(SummaryKeys.NUM_SLICES, useSliceSetting_ ? sliceDeltaZ_.length : 1);
+         GregorianCalendar cld = new GregorianCalendar();
+         i5dData.put(SummaryKeys.TIME, cld.getTime());
+         i5dData.put(SummaryKeys.COMMENT, comment_);
          
-      i5dData.put(SummaryKeys.IJ_IMAGE_TYPE, i5dWin_.getImagePlus().getType());
-      
-      metadata_.put(SummaryKeys.SUMMARY, i5dData);
+         ImageProcessor ip = i5dWin_[i].getImagePlus().getProcessor();
+         
+         i5dData.put(SummaryKeys.IMAGE_WIDTH, ip.getWidth());
+         i5dData.put(SummaryKeys.IMAGE_HEIGHT, ip.getHeight());
+         if (ip instanceof ByteProcessor)
+            i5dData.put(SummaryKeys.IMAGE_DEPTH, 1);
+         else if (ip instanceof ShortProcessor)
+            i5dData.put(SummaryKeys.IMAGE_DEPTH, 2);
+         
+         JSONArray colors = new JSONArray();
+         JSONArray names = new JSONArray();
+         for (int j=0; j < channels_.size(); j++) {
+            Color c = (channels_.get(i)).color_;
+            colors.put(j, c.getRGB());
+            names.put(j, (channels_.get(j)).config_);
+         }
+         i5dData.put(SummaryKeys.CHANNEL_COLORS, colors);
+         i5dData.put(SummaryKeys.CHANNEL_NAMES, names);
+            
+         i5dData.put(SummaryKeys.IJ_IMAGE_TYPE, i5dWin_[i].getImagePlus().getType());
+         
+         metadata_[i].put(SummaryKeys.SUMMARY, i5dData);
+      }
    }
 
    public void enableZSliceSetting(boolean b) {
@@ -924,57 +970,66 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
       
       // create a new Image5D object
       int numSlices = useSliceSetting_ ? sliceDeltaZ_.length : 1;
-      img5d_ = new Image5D(dirName_, type,
-            (int)imgWidth_, (int)imgHeight_, channels_.size(),
-            numSlices, numFrames_, false);
-      for (int i=0; i<channels_.size(); i++) {
-         ChannelCalibration chcal = new ChannelCalibration();
-         chcal.setLabel((channels_.get(i)).config_);
-         img5d_.setChannelCalibration(i+1, chcal);
-                  
-         // set color
-         img5d_.setChannelColorModel(i+1, ChannelDisplayProperties.createModelFromColor(((ChannelSpec)channels_.get(i)).color_));            
-      }
       
-      // pop-up 5d image window
-      i5dWin_ = new Image5DWindow(img5d_);
-
-      // set the desired display mode.  This needs to be called after opening the Window
-      // Note that OVERLAY mode is much slower than others, so show a single channel in a fast mode
-      if (channels_.size()==1)
-         img5d_.setDisplayMode(ChannelControl.ONE_CHANNEL_COLOR);
-      else
-         img5d_.setDisplayMode(ChannelControl.OVERLAY);
-
-      //WindowManager.addWindow(i5dWin_);
-      ChannelSpec[] cs = new ChannelSpec[channels_.size()];
-      for (int i=0; i<channels_.size(); i++) {
-         cs[i] = channels_.get(i);
+      if (useMultiplePositions_) {
+         img5d_ = new Image5D[posList_.getNumberOfPositions()]; 
+         i5dWin_ = new Image5DWindow[posList_.getNumberOfPositions()];
+      } else {
+         img5d_ = new Image5D[1];
+         i5dWin_ = new Image5DWindow[1];
       }
-      i5dWin_.setMMChannelData(cs);
-      i5dWin_.setLocation(xWindowPos, yWindowPos);
-      
-      // add listener to the IJ window to detect when it closes
-      WindowListener wndCloser = new WindowAdapter() {
-         public void windowClosing(WindowEvent e) {
-            Rectangle r = i5dWin_.getBounds();
-            // record the position of the IJ window
-            xWindowPos = r.x;
-            yWindowPos = r.y;
+         
+      for (int i=0; i < img5d_.length; i++) {
+         img5d_[i] = new Image5D(dirName_, type, (int)imgWidth_, (int)imgHeight_, channels_.size(), numSlices, numFrames_, false);
+         
+         for (int j=0; j<channels_.size(); j++) {
+            ChannelCalibration chcal = new ChannelCalibration();
+            chcal.setLabel((channels_.get(j)).config_);
+            img5d_[i].setChannelCalibration(j+1, chcal);
+                     
+            // set color
+            img5d_[i].setChannelColorModel(j+1, ChannelDisplayProperties.createModelFromColor(((ChannelSpec)channels_.get(j)).color_));            
          }
-      };      
+         
+         // pop-up 5d image window
+         i5dWin_[i] = new Image5DWindow(img5d_[i]);
 
-      i5dWin_.addWindowListener(wndCloser);
-                
-      // acquire the sequence
-      i5dWin_.setAcquitionEngine(this);
-      GregorianCalendar cld = new GregorianCalendar();
-      i5dWin_.setTitle("Acquisition (Started) " + cld.getTime());
-      startTimeMs_ = cld.getTimeInMillis();
-      
-      i5dWin_.setTitle("Acquisition (started)" + cld.getTime());
-      i5dWin_.setActive(true);
+         // set the desired display mode.  This needs to be called after opening the Window
+         // Note that OVERLAY mode is much slower than others, so show a single channel in a fast mode
+         if (channels_.size()==1)
+            img5d_[i].setDisplayMode(ChannelControl.ONE_CHANNEL_COLOR);
+         else
+            img5d_[i].setDisplayMode(ChannelControl.OVERLAY);
 
+         //WindowManager.addWindow(i5dWin_);
+         ChannelSpec[] cs = new ChannelSpec[channels_.size()];
+         for (int j=0; j<channels_.size(); j++) {
+            cs[j] = channels_.get(j);
+         }
+         i5dWin_[i].setMMChannelData(cs);
+         i5dWin_[i].setLocation(xWindowPos + i*30, yWindowPos + i*30);
+         
+         // add listener to the IJ window to detect when it closes
+         WindowListener wndCloser = new WindowAdapter() {
+            public void windowClosing(WindowEvent e) {
+               Rectangle r = i5dWin_[0].getBounds();
+               // record the position of the IJ window
+               xWindowPos = r.x;
+               yWindowPos = r.y;
+            }
+         };      
+
+         i5dWin_[i].addWindowListener(wndCloser);
+                   
+         // acquire the sequence
+         i5dWin_[i].setAcquitionEngine(this);
+         GregorianCalendar cld = new GregorianCalendar();
+         i5dWin_[i].setTitle("Acquisition (Started) " + cld.getTime());
+         startTimeMs_ = cld.getTimeInMillis();
+         
+         i5dWin_[i].setTitle("Acquisition (started)" + cld.getTime());
+         i5dWin_[i].setActive(true);
+      }
    }
 
    public int getPositionMode() {
