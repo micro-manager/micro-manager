@@ -820,12 +820,11 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI {
                engine_ = new MMAcquisitionEngine();
             
             engine_.setCore(core_);
+            posList_ = new PositionList();
             engine_.setPositionList(posList_);
             MMStudioMainFrame parent = (MMStudioMainFrame) e.getWindow();
             if (parent != null)
                engine_.setParentGUI(parent);
-            
-            posList_ = new PositionList();
             
             // load configuration from the file
             sysConfigFile_ = mainPrefs_.get(SYSTEM_CONFIG_FILE, sysConfigFile_);

@@ -500,14 +500,14 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
                long depth = core_.getBytesPerPixel();
                
                // processing for the first image in the entire sequence
-               if (j==0 && k==0 && frameCount_ == 0) {
+               if (j==0 && k==0 && frameCount_ == 0 && posIdx == 0) {
                   setupImage5d();
                   acquisitionSetup();
                   System.out.println("Sequence size: " + imgWidth_ + "," + imgHeight_);
                }
                
                // processing for the first image in a frame
-               if (j==0 && k==0) {                 
+               if (j==0 && k==0 && posIdx == 0) {                 
                   // check if we have enough memory to acquire the entire frame
                   long freeBytes = freeMemory();
                   long requiredBytes = ((long)numSlices * channels_.size() + 10) * (width * height * depth);
@@ -620,14 +620,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
             e.printStackTrace();
          }
       }
-      
-      // update number of frames in the summary
-      if (useMultiplePositions_)
-         if (posIdx == posList_.getNumberOfPositions() - 1)
-            frameCount_++;
-      else
-         frameCount_++;
-      
+            
       i5dWin_[posIdx].startCountdown((long)frameIntervalMs_ - (cld.getTimeInMillis() - cldStart.getTimeInMillis()), numFrames_ - frameCount_);
       try {
          JSONObject summary = metadata_[posIdx].getJSONObject(SummaryKeys.SUMMARY);
@@ -635,6 +628,14 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
       } catch (JSONException e) {
          // TODO Auto-generated catch block
          e.printStackTrace();
+      }
+
+      // update frame counter
+      if (useMultiplePositions_) {
+         if (posIdx == posList_.getNumberOfPositions() - 1)
+            frameCount_++;
+      } else {
+         frameCount_++;      
       }
       
       if(frameCount_ >= numFrames_) {
@@ -882,7 +883,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
          JSONArray colors = new JSONArray();
          JSONArray names = new JSONArray();
          for (int j=0; j < channels_.size(); j++) {
-            Color c = (channels_.get(i)).color_;
+            Color c = (channels_.get(j)).color_;
             colors.put(j, c.getRGB());
             names.put(j, (channels_.get(j)).config_);
          }
