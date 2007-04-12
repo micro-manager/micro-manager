@@ -526,6 +526,13 @@ int XYStage::Stop()
    return DEVICE_UNSUPPORTED_COMMAND;
 }
 
+//jizhen 4/12/2007
+int XYStage::SetOrigin()
+{
+   return DEVICE_UNSUPPORTED_COMMAND;
+}
+//eof jizhen
+
 /**
  * Returns the stage position limits in um.
  * TODO: implement!!!

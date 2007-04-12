@@ -695,15 +695,21 @@ bool XYStage::Busy()
       return false;
 
    // block/wait for acknowledge, or until we time out;
-   string answer;
+   string answer="";//jizhen 4/12/2007 == 1)
    ret = GetSerialAnswer(port_.c_str(), "\r", answer);
    if (ret != DEVICE_OK)
       return false;
-
-   if (answer.length() == 1)
+   
+   //jizhen 4/12/2007
+   if (answer.length() >=1) //jizhen 4/12/2007 == 1)
    {
-      int status = atoi(answer.c_str());
-      return status == 1 ? true : false;
+      int status = atoi(answer.substr(0,1).c_str());
+	  int statusX = status&1;
+	  int statusY = status&2;
+	  if (statusX || statusY) return true;
+	  else return false;
+	  //return status == 1 ? true : false;
+	  //eof jizhen
    }
 
    return false;
@@ -770,14 +776,94 @@ int XYStage::GetPositionSteps(long& x, long& y)
 
 int XYStage::Home()
 {
-   return DEVICE_UNSUPPORTED_COMMAND;
+	//jizhen 4/12/2007
+	// do home command
+   int ret = SendSerialCommand(port_.c_str(), "SIS", "\r"); // command HOME
+    if (ret != DEVICE_OK)
+      return ret;
+
+   ret = SendSerialCommand(port_.c_str(), "SIS", "\r"); // command HOME
+    if (ret != DEVICE_OK)
+      return ret;
+
+   // block/wait for acknowledge, or until we time out;
+   string answer;
+   ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if (answer.substr(0,1).compare("R") == 0)
+   {
+      return DEVICE_OK;
+   }
+   else if (answer.substr(0, 1).compare("E") == 0 && answer.length() > 2)
+   {
+      int errNo = atoi(answer.substr(2).c_str());
+      return ERR_OFFSET + errNo;
+   }
+
+   return ERR_UNRECOGNIZED_ANSWER;  //DEVICE_OK; 
+   // eof jizhen
+
+   //return DEVICE_UNSUPPORTED_COMMAND;
 }
 
 int XYStage::Stop()
 {
-   return DEVICE_UNSUPPORTED_COMMAND;
+	//jizhen 4/12/2007
+   int ret = SendSerialCommand(port_.c_str(), "K", "\r"); // command HALT the movement
+   if (ret != DEVICE_OK)
+      return ret;
+
+   // block/wait for acknowledge, or until we time out;
+   string answer;
+   ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if (answer.substr(0,1).compare("R") == 0)
+   {
+      return DEVICE_OK;
+   }
+   else if (answer.substr(0, 1).compare("E") == 0 && answer.length() > 2)
+   {
+      int errNo = atoi(answer.substr(2).c_str());
+      return ERR_OFFSET + errNo;
+   }
+
+   return ERR_UNRECOGNIZED_ANSWER; //DEVICE_OK; 
+   //eof jizhen
+
+   //return DEVICE_UNSUPPORTED_COMMAND;
 }
 
+//jizhen 4/12/2007
+int XYStage::SetOrigin()
+{
+   // send command
+   int ret = SendSerialCommand(port_.c_str(), "PS,0,0", "\r");
+   if (ret != DEVICE_OK)
+      return ret;
+
+   // block/wait for acknowledge, or until we time out;
+   string answer;
+   ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if (answer.substr(0,1).compare("0") == 0)
+   {
+      return DEVICE_OK;
+   }
+   else if (answer.substr(0, 1).compare("E") == 0 && answer.length() > 2)
+   {
+      int errNo = atoi(answer.substr(2).c_str());
+      return ERR_OFFSET + errNo;
+   }
+
+   return ERR_UNRECOGNIZED_ANSWER; 
+}
+//eof jizhen
 
 // NOTE: SetOrigin was removed from the MMDevice interface but still may be used later
 //int XYStage::SetOrigin()
@@ -1355,4 +1441,5 @@ int BasicController::OnResponse(MM::PropertyBase* pProp, MM::ActionType eAct)
 
    return DEVICE_OK;
 }
+
 

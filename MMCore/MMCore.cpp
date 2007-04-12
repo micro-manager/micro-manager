@@ -74,9 +74,9 @@ using namespace std;
 const char* g_logFileName = "CoreLog.txt";
 
 // version info
-const int MMCore_versionMajor = 1;
+const int MMCore_versionMajor = 2;
 const int MMCore_versionMinor = 0;
-const int MMCore_versionBuild = 27;
+const int MMCore_versionBuild = 0;
 
 // mutex
 static ACE_Mutex g_lock;
@@ -915,8 +915,13 @@ double CMMCore::getYPosition(const char* deviceName) throw (CMMError)
 }
 
 /**
- * Aborts current action.
+ * stop the XY stage motors.
+ * @return void 
+ * @param const char* label
  */
+///**
+// * Aborts current action.
+// */
 void CMMCore::stop(const char* deviceName) throw (CMMError)
 {
    MM::XYStage* pXYStage = getSpecificDevice<MM::XYStage>(deviceName);
@@ -937,6 +942,22 @@ void CMMCore::home(const char* deviceName) throw (CMMError)
       throw CMMError(getDeviceErrorText(ret, pXYStage).c_str(), MMERR_DEVICE_GENERIC);
    CORE_LOG1("Stage %s moved to the HOME position.\n", deviceName);
 }
+
+//jizhen, 4/12/2007
+/**
+ * zero the current XY position.
+ * @return void 
+ * @param const char* label
+ */
+void CMMCore::setOriginXY(const char* deviceName) throw (CMMError)
+{
+   MM::XYStage* pXYStage = getSpecificDevice<MM::XYStage>(deviceName);
+   int ret = pXYStage->SetOrigin();
+   if (ret != DEVICE_OK)
+      throw CMMError(getDeviceErrorText(ret, pXYStage).c_str(), MMERR_DEVICE_GENERIC);
+   CORE_LOG1("Stage %s's current position was zeroed.\n", deviceName);
+}
+//eof jizhen
 
 /**
  * Acquires a single image. 

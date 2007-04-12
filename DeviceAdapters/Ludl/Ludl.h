@@ -65,6 +65,7 @@ public:
   int GetPositionSteps(long& x, long& y);
   int Home();
   int Stop();
+  int SetOrigin();//jizhen 4/12/2007
   int GetLimits(double& xMin, double& xMax, double& yMin, double& yMax);
 
    // action interface

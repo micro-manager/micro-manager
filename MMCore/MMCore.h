@@ -232,6 +232,7 @@ public:
    double getYPosition(const char* deviceName) throw (CMMError);
    void stop(const char* deviceName) throw (CMMError);
    void home(const char* deviceName) throw (CMMError);
+   void setOriginXY(const char* deviceName) throw (CMMError);//jizhen 4/12/2007
    //@ }
 
    /** @name Serial port control

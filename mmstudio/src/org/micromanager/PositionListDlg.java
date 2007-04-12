@@ -325,6 +325,21 @@ public class PositionListDlg extends MMDialog {
       springLayout.putConstraint(SpringLayout.WEST, saveAsButton, -109, SpringLayout.EAST, getContentPane());
       springLayout.putConstraint(SpringLayout.SOUTH, saveAsButton, 370, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.NORTH, saveAsButton, 347, SpringLayout.NORTH, getContentPane());
+      
+      final JButton setOriginButton = new JButton();
+      setOriginButton.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent arg0) {
+            calibrate(); //setOrigin();
+         }
+      });
+      //setOriginButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/resultset_next.png"));
+      setOriginButton.setText("Calibrate");
+      getContentPane().add(setOriginButton);
+      springLayout.putConstraint(SpringLayout.SOUTH, setOriginButton, 113, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, setOriginButton, 90, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.EAST, setOriginButton, 100, SpringLayout.WEST, removeButton);
+      springLayout.putConstraint(SpringLayout.WEST, setOriginButton, 0, SpringLayout.WEST, removeButton);      
+           
 
    }
 
@@ -518,5 +533,262 @@ public class PositionListDlg extends MMDialog {
    private void handleError(String txt) {
       JOptionPane.showMessageDialog(this, txt);      
    }
+   
+   /**
+    * Calibrate the XY stage.
+    */
+   private void calibrate() {
+
+	  JOptionPane.showMessageDialog(this, "ALERT! Please REMOVE objectives! It may damage lens!", 
+			  "Calibrate the XY stage", JOptionPane.WARNING_MESSAGE);
+	   
+      // calibrate xy-axis stages
+      try {
+
+         // read 2-axis stages
+         StrVector stages2D = core_.getLoadedDevicesOfType(DeviceType.XYStageDevice);
+         for (int i=0; i<stages2D.size(); i++) {
+        	 
+        	String deviceName = stages2D.get(i);
+        	
+        	double [] x1 = new double[1];
+        	double [] y1 = new double[1];
+        	
+        	core_.getXYPosition(deviceName,x1,y1);
+
+        	StopCalThread stopThread = new StopCalThread(); 
+        	CalThread calThread = new CalThread();
+        	
+        	stopThread.setPara(calThread, this, deviceName, x1, y1);
+        	calThread.setPara(stopThread, this, deviceName, x1, y1);
+        	
+        	stopThread.start();
+        	calThread.start();
+         }
+      } catch (Exception e) {
+         handleError(e.getMessage());
+      }
+
+   }   
+   
+   class StopCalThread extends Thread{
+	   double [] x1;
+	   double [] y1;
+	   String deviceName;
+	   MMDialog d;
+	   Thread otherThread;
+
+	   public void setPara(Thread calThread, MMDialog d, String deviceName, double [] x1, double [] y1) {
+		   if ( calThread==null || d ==null || deviceName==null || x1==null || y1==null){
+			   JOptionPane.showMessageDialog(d, "parent dialog or x1 or y1 is null!"); 
+		   }
+		   this.otherThread = calThread;
+		   this.d = d;
+		   this.deviceName = deviceName;
+		   this.x1 = x1;
+		   this.y1 = y1;
+	   }
+       public void run() {
+    	   
+    	   try {
+    		   
+           // popup a dialog that says stop the calibration
+    	   Object[] options = { "Stop" };
+           int option = JOptionPane.showOptionDialog(d, "Stop calibration?", "Calibration", 
+           JOptionPane.CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE,
+           null, options, options[0]);
+           
+           if (option==0) {//stop the calibration 
+
+        	   otherThread.interrupt();
+        	   otherThread = null;
+
+        	       if (isInterrupted())return;
+        	       Thread.sleep(50);
+        		   core_.stop(deviceName);
+        		   if (isInterrupted())return;
+        		   boolean busy = core_.deviceBusy(deviceName);
+            	   while (busy){
+            		   if (isInterrupted())return;
+            		   core_.stop(deviceName);
+            		   if (isInterrupted())return;
+            		   busy = core_.deviceBusy(deviceName);
+            	   }
+        	   
+        	   Object[] options2 = { "Yes", "No" };
+               option = JOptionPane.showOptionDialog(d, "RESUME calibration?", "Calibration", 
+               JOptionPane.OK_OPTION, JOptionPane.QUESTION_MESSAGE,
+               null, options2, options2[0]);
+               
+               if (option==1) return; // not to resume, just stop
+
+        		   core_.home(deviceName);
+             
+                              
+               StopCalThread sct = new StopCalThread();
+               sct.setPara(this, d, deviceName, x1, y1);
+               
+               busy = core_.deviceBusy(deviceName);
+               if ( busy ) sct.start();
+
+                   if (isInterrupted())return;
+            	   busy = core_.deviceBusy(deviceName);
+            	   while (busy){
+            		   if (isInterrupted())return;
+            		   Thread.sleep(100);
+            		   if (isInterrupted())return;
+            		   busy = core_.deviceBusy(deviceName);
+            	   }
+
+               sct.interrupt();
+               sct=null;
+               
+               //calibrate_(deviceName, x1, y1);
+               
+	           	double [] x2 = new double[1];
+	        	double [] y2 = new double[1];
+	            
+	            // check if the device busy?
+	            busy = core_.deviceBusy(deviceName);
+	            int delay=500; //500 ms 
+	            int period=60000;//60 sec
+	            int elapse = 0;
+	            while (busy && elapse<period){
+	            	Thread.sleep(delay);
+	            	busy = core_.deviceBusy(deviceName);
+	            	elapse+=delay;
+	            }
+	            
+	            // now the device is not busy
+	
+	            core_.getXYPosition(deviceName,x2,y2);
+	        	
+	            // zero the coordinates
+	            core_.setOriginXY(deviceName);
+
+	               BackThread bt = new BackThread();
+	               bt.setPara(d);
+	               bt.start();
+	               
+	        	core_.setXYPosition(deviceName, x1[0]-x2[0], y1[0]-y2[0]);               
+               
+               busy = core_.deviceBusy(deviceName);
+
+                   if (isInterrupted())return;
+            	   busy = core_.deviceBusy(deviceName);
+            	   while (busy){
+            		   if (isInterrupted())return;
+            		   Thread.sleep(100);
+            		   if (isInterrupted())return;
+            		   busy = core_.deviceBusy(deviceName);
+            	   }
+
+               bt.interrupt();
+               bt=null;
+               
+           }           
+       }catch (InterruptedException e) {}
+	   catch (Exception e) {
+	         handleError(e.getMessage());
+	      }
+       }
+   }
+   
+   class CalThread extends Thread{
+
+	   double [] x1;
+	   double [] y1;
+	   String deviceName;
+	   MMDialog d;
+	   Thread stopThread;
+	   
+	   public void setPara(Thread stopThread, MMDialog d, String deviceName, double [] x1, double [] y1) {
+		   if ( stopThread==null || d ==null || deviceName==null || x1==null || y1==null){
+			   JOptionPane.showMessageDialog(d, "parent dialog or x1 or y1 is null!"); 
+		   }
+		   this.stopThread = stopThread;
+		   this.d = d;
+		   this.deviceName = deviceName;
+		   this.x1 = x1;
+		   this.y1 = y1;
+	   }
+	   
+	   public void run() {
+		   
+		   try {
+			    core_.home(deviceName);
+	            
+	            // check if the device busy?
+	            boolean busy = core_.deviceBusy(deviceName);
+	            int delay=500; //500 ms 
+	            int period=60000;//60 sec
+	            int elapse = 0;
+	            while (busy && elapse<period){
+	            	Thread.sleep(delay);
+	            	busy = core_.deviceBusy(deviceName);
+	            	elapse+=delay;
+	            }
+	            
+	            stopThread.interrupt();
+	            stopThread = null;
+	            
+	            //JOptionPane.showMessageDialog(d, "ok 0!"); 
+	            
+	            // now the device is not busy
+	            
+	            double [] x2 = new double[1]; 
+	            double [] y2 = new double[1];
+	
+	            core_.getXYPosition(deviceName,x2,y2);
+	            
+	            //JOptionPane.showMessageDialog(d, "ok 1!"); 
+	        		        	
+	            // zero the coordinates
+	            core_.setOriginXY(deviceName);
+	            
+	            //JOptionPane.showMessageDialog(d, "ok 2!"); 
+
+	               BackThread bt = new BackThread();
+	               bt.setPara(d);
+	               bt.start();
+	               
+	        	core_.setXYPosition(deviceName, x1[0]-x2[0], y1[0]-y2[0]);
+
+	        	//JOptionPane.showMessageDialog(d, "ok 3!"); 
+	        	
+	               busy = core_.deviceBusy(deviceName);
+
+	                   if (isInterrupted())return;
+	            	   busy = core_.deviceBusy(deviceName);
+	            	   while (busy){
+	            		   if (isInterrupted())return;
+	            		   Thread.sleep(100);
+	            		   if (isInterrupted())return;
+	            		   busy = core_.deviceBusy(deviceName);
+	            	   }
+
+	               bt.interrupt();
+	               bt=null;	        	
+	        	
+		   } catch (InterruptedException e) {}
+		   catch (Exception e) {
+		         handleError(e.getMessage());
+		      }
+	   }
+   }
+   
+   class BackThread extends Thread{
+
+	   MMDialog d;
+	   
+	   public void setPara(MMDialog d) {
+		   if ( d ==null ){
+			   JOptionPane.showMessageDialog(d, "parent dialog is null!"); 
+		   }
+	   }	   
+	   public void run() {
+			   JOptionPane.showMessageDialog(d, "Going back to the original position!");		        	
+	   }
+   }      
 
 }
