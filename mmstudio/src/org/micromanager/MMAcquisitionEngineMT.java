@@ -106,7 +106,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
    private boolean acquisitionLagging_ = false;
    private String dirName_;
    private String rootName_;
-   private File outputDir_;
+   private File outputDir_[];
    
    CMMCore core_;
    PositionList posList_;
@@ -232,39 +232,47 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
     * Starts acquisition, based on the current protocol.
     * @throws Exception
     */
-   public void acquire() throws Exception{
+   public void acquire() throws MMException{
+
+      // check conditions for starting acq.
       if (isAcquisitionRunning()) {
-         throw new Exception("Busy with the current acquisition.");
+         throw new MMException("Busy with the current acquisition.");
       }
+      if (useMultiplePositions_ && (posList_ == null || posList_.getNumberOfPositions() == 0))
+         throw new MMException("Multiple position mode is selected but position list is not defined");
 
       // check if the parent GUI is in the adequate state
       if (parentGUI_ != null)
       {
          parentGUI_.stopAllActivity();
          if (!parentGUI_.okToAcquire())
-            throw new Exception( "Unable to start acquisition.\n" +
-                   "Cancel 'Live' mode or other currently executing process in the main control panel.");
+            throw new MMException( "Unable to start acquisition.\n" +
+            "Cancel 'Live' mode or other currently executing process in the main control panel.");
       }
 
       oldCameraState_ = null;
       oldChannelState_ = null;
-      oldExposure_ = core_.getExposure();
-      String channelConfig = core_.getCurrentConfig(channelGroup_);
-      if (channelConfig.length() > 0){
-         oldChannelState_ = core_.getConfigState(channelGroup_, core_.getCurrentConfig(channelGroup_));
-      }
-      
-      if (cameraConfig_.length() > 0) {
-         // store current camera configuration
-         oldCameraState_ = core_.getConfigState(cameraGroup_, cameraConfig_);
-         core_.setConfig(cameraGroup_, cameraConfig_);
+      try {
+         oldExposure_ = core_.getExposure();
+         String channelConfig = core_.getCurrentConfig(channelGroup_);
+         if (channelConfig.length() > 0){
+            oldChannelState_ = core_.getConfigState(channelGroup_, core_.getCurrentConfig(channelGroup_));
+         }
+
+         if (cameraConfig_.length() > 0) {
+            // store current camera configuration
+            oldCameraState_ = core_.getConfigState(cameraGroup_, cameraConfig_);
+            core_.setConfig(cameraGroup_, cameraConfig_);
+         }
+
+         // wait until all devices are ready
+         core_.waitForSystem();
+      } catch (Exception e) {
+         throw new MMException(e.getMessage());
       }
 
-      // wait until all devices are ready
-      core_.waitForSystem();
-      
       acquisitionLagging_ = false;
-      
+
       startAcquisition();
    }
    
@@ -575,7 +583,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
                metadata_[posIdx].put(ImageKey.generateFrameKey(frameCount_, k, j), jsonData);
                
                if (saveFiles_) {
-                  saveImageFile(outputDir_ + "/" + fname, img, (int)imgWidth_, (int)imgHeight_);
+                  saveImageFile(outputDir_[posIdx] + "/" + fname, img, (int)imgWidth_, (int)imgHeight_);
                }              
             }
          } catch(MMException e) {
@@ -640,7 +648,12 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
       
       if(frameCount_ >= numFrames_) {
          stop();
-         i5dWin_[posIdx].setTitle("Acquisition (completed) " + cld.getTime()); 
+         if (useMultiplePositions_) {
+            for (int pp=0; pp<i5dWin_.length; pp++)
+               i5dWin_[pp].setTitle("Acquisition "  + posList_.getPosition(pp).getLabel() + "(completed)" + cld.getTime());
+         } else {
+            i5dWin_[0].setTitle("Acquisition (completed) " + cld.getTime());
+         }
          restoreSystem();
          return;
       }
@@ -729,7 +742,10 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
          
          if (i5dWin_[i] != null) {
             i5dWin_[i].stopCountdown();
-            i5dWin_[i].setTitle("Acquisition (aborted) ");
+            if (useMultiplePositions_)
+               i5dWin_[i].setTitle("Acquisition "  + posList_.getPosition(i).getLabel() + "(aborted)");
+            else
+               i5dWin_[i].setTitle("Acquisition aborted)");
             i5dWin_[i].setMetadata(metaStream);
             i5dWin_[i].setActive(false);
             i5dWin_[i].setAcquitionEngine(null); // disengage from the acquistion
@@ -832,6 +848,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
     */
    private void acquisitionSetup() throws IOException, JSONException {
       metaWriter_ = null;
+      outputDir_ = null;
       
       if (useMultiplePositions_)
          metadata_ = new JSONObject[posList_.getNumberOfPositions()];
@@ -840,17 +857,28 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
       
       if (saveFiles_) {
          metaWriter_ = new FileWriter[metadata_.length];
+         outputDir_ = new File[metadata_.length];
 
          for (int i=0; i<metadata_.length; i++) {
             // create new acq directory
             int suffixCounter = 0;
-            String outDirName; 
+            String outDirName;
+            String outDirNameMulti;
+            File testDir;
             do {
-               outDirName = rootName_ + "/" + dirName_ + "_" + posList_.getPosition(i).getLabel() + "_" + suffixCounter;
-               outputDir_ = new File(outDirName);
+               outDirName = new String(rootName_ + "/" + dirName_ + "_" + suffixCounter);
+               outDirNameMulti = new String(outDirName);
+               if (useMultiplePositions_) {
+                  String posName = posList_.getPosition(i).getLabel() + "_";
+                  outDirNameMulti = rootName_ + "/" + dirName_ + "/" + posName + "_" + suffixCounter; 
+               }
                suffixCounter++;
-            } while (outputDir_.exists());
-            if (!outputDir_.mkdirs())
+               testDir = new File(outDirName);
+            } while (testDir.exists() && i==0);
+            
+            outputDir_[i] = new File(outDirNameMulti);
+            
+            if (!outputDir_[i].mkdirs())
                throw new IOException("Invalid root directory name");
 
             File metaFile = new File(outDirName + "/" + ImageKey.METADATA_FILE_NAME);
@@ -1010,25 +1038,30 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
          i5dWin_[i].setMMChannelData(cs);
          i5dWin_[i].setLocation(xWindowPos + i*30, yWindowPos + i*30);
          
-         // add listener to the IJ window to detect when it closes
-         WindowListener wndCloser = new WindowAdapter() {
-            public void windowClosing(WindowEvent e) {
-               Rectangle r = i5dWin_[0].getBounds();
-               // record the position of the IJ window
-               xWindowPos = r.x;
-               yWindowPos = r.y;
-            }
-         };      
+         if (i==0) {
+            // add listener to the IJ window to detect when it closes
+            // (use only the first window in the multi-pos case)
+            WindowListener wndCloser = new WindowAdapter() {
+               public void windowClosing(WindowEvent e) {
+                  Rectangle r = i5dWin_[0].getBounds();
+                  // record the position of the IJ window
+                  xWindowPos = r.x;
+                  yWindowPos = r.y;
+               }
+            };      
 
-         i5dWin_[i].addWindowListener(wndCloser);
-                   
+            i5dWin_[0].addWindowListener(wndCloser);
+         }
+         
          // acquire the sequence
          i5dWin_[i].setAcquitionEngine(this);
          GregorianCalendar cld = new GregorianCalendar();
-         i5dWin_[i].setTitle("Acquisition (Started) " + cld.getTime());
          startTimeMs_ = cld.getTimeInMillis();
+         if (useMultiplePositions_)
+            i5dWin_[i].setTitle("Acquisition " + posList_.getPosition(i).getLabel() + " (started)" + cld.getTime());
+         else
+            i5dWin_[i].setTitle("Acquisition (started)" + cld.getTime());
          
-         i5dWin_[i].setTitle("Acquisition (started)" + cld.getTime());
          i5dWin_[i].setActive(true);
       }
    }

@@ -48,7 +48,7 @@ public interface AcquisitionEngine {
    public void setUpdateLiveWindow(boolean b);
    
    // run-time control
-   public void acquire() throws Exception;
+   public void acquire() throws MMException;
    public void stop();
    public boolean isAcquisitionRunning();
    public int getCurrentFrameCount();

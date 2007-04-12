@@ -198,9 +198,9 @@ public class MMAcquisitionEngine implements AcquisitionEngine {
     * Starts acquisition, based on the current protocol.
     * @throws Exception
     */
-   public void acquire() throws Exception{
+   public void acquire() throws MMException{
       if (isAcquisitionRunning()) {
-         throw new Exception("Busy with the current acquisition.");
+         throw new MMException("Busy with the current acquisition.");
       }
 
       // check if the parent GUI is in the adequate state
@@ -208,26 +208,30 @@ public class MMAcquisitionEngine implements AcquisitionEngine {
       {
          parentGUI_.stopAllActivity();
          if (!parentGUI_.okToAcquire())
-            throw new Exception( "Unable to start acquisition.\n" +
+            throw new MMException( "Unable to start acquisition.\n" +
                    "Cancel 'Live' mode or other currently executing process in the main control panel.");
       }
 
       oldCameraState_ = null;
       oldChannelState_ = null;
-      oldExposure_ = core_.getExposure();
-      String channelConfig = core_.getCurrentConfig(channelGroup_);
-      if (channelConfig.length() > 0){
-         oldChannelState_ = core_.getConfigState(channelGroup_, core_.getCurrentConfig(channelGroup_));
-      }
-      
-      if (cameraConfig_.length() > 0) {
-         // store current camera configuration
-         oldCameraState_ = core_.getConfigState(cameraGroup_, cameraConfig_);
-         core_.setConfig(cameraGroup_, cameraConfig_);
-      }
+      try {
+         oldExposure_ = core_.getExposure();
+         String channelConfig = core_.getCurrentConfig(channelGroup_);
+         if (channelConfig.length() > 0){
+            oldChannelState_ = core_.getConfigState(channelGroup_, core_.getCurrentConfig(channelGroup_));
+         }
 
-      // wait until all devices are ready
-      core_.waitForSystem();
+         if (cameraConfig_.length() > 0) {
+            // store current camera configuration
+            oldCameraState_ = core_.getConfigState(cameraGroup_, cameraConfig_);
+            core_.setConfig(cameraGroup_, cameraConfig_);
+         }
+
+         // wait until all devices are ready
+         core_.waitForSystem();
+      } catch (Exception e) {
+         throw new MMException(e.getMessage());
+      }
       
       acquisitionLagging_ = false;
       

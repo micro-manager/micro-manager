@@ -77,6 +77,7 @@ import org.micromanager.utils.ChannelSpec;
 import org.micromanager.utils.ColorEditor;
 import org.micromanager.utils.ColorRenderer;
 import org.micromanager.utils.ContrastSettings;
+import org.micromanager.utils.MMException;
 import org.micromanager.utils.PositionMode;
 import org.micromanager.utils.SliceMode;
 
@@ -1169,13 +1170,13 @@ public class AcqControlDlg extends JDialog {
          applySettings();
          applyOverride();
          acqEng_.acquire();
-      } catch(Exception e) {
+      } catch(MMException e) {
          handleException(e);
          return;
       }
    }
 
-   private void applyOverride() throws Exception{
+   private void applyOverride(){
 
       // if the "override" is checked
       String config = (String)comboCameraConfig_.getSelectedItem();
