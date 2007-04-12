@@ -105,6 +105,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
    private boolean saveFiles_ = false;
    private boolean acquisitionLagging_ = false;
    private String dirName_;
+   private String outDirName_;
    private String rootName_;
    private File outputDir_[];
    
@@ -593,6 +594,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
                JOptionPane.showMessageDialog(i5dWin_[posIdx], e.getMessage());     
           return;
          } catch (Exception e) {
+            System.out.println(e.getMessage());
             stop();
             restoreSystem();
             if (e.getMessage().length() > 0)
@@ -730,6 +732,9 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
       if (i5dWin_ == null)
          return;
       
+      if (metadata_ == null)
+         return;
+      
       for (int i=0; i<i5dWin_.length; i++) {
          String metaStream = new String();
          try {
@@ -858,31 +863,39 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
       if (saveFiles_) {
          metaWriter_ = new FileWriter[metadata_.length];
          outputDir_ = new File[metadata_.length];
+         
+         System.out.println("Begin setting up meta writers");
 
+         // What follows is some complicated logic to create unique directory names
+         // but maintain same sub-directry paths for multiple positions
+         File testDir;
          for (int i=0; i<metadata_.length; i++) {
             // create new acq directory
             int suffixCounter = 0;
-            String outDirName;
-            String outDirNameMulti;
-            File testDir;
+            String testName;
             do {
-               outDirName = new String(rootName_ + "/" + dirName_ + "_" + suffixCounter);
-               outDirNameMulti = new String(outDirName);
-               if (useMultiplePositions_) {
-                  String posName = posList_.getPosition(i).getLabel() + "_";
-                  outDirNameMulti = rootName_ + "/" + dirName_ + "/" + posName + "_" + suffixCounter; 
-               }
+               testName = new String(rootName_ + "/" + dirName_ + "_" + suffixCounter);
                suffixCounter++;
-               testDir = new File(outDirName);
+               testDir = new File(testName);
+
             } while (testDir.exists() && i==0);
             
-            outputDir_[i] = new File(outDirNameMulti);
+            if (i==0)
+               outDirName_ = testName;
             
+            if (useMultiplePositions_) {
+               outputDir_[i] = new File(outDirName_ + "/" + posList_.getPosition(i).getLabel());
+            } else {
+               outputDir_[i] = new File(outDirName_);
+            }
+            
+            // finally we attempt to create directory based on the name created above
+            System.out.println("Making directory: " + outputDir_[i]);
             if (!outputDir_[i].mkdirs())
-               throw new IOException("Invalid root directory name");
-
-            File metaFile = new File(outDirName + "/" + ImageKey.METADATA_FILE_NAME);
-            metaWriter_[i] = new FileWriter(metaFile);
+               throw new IOException("Invalid root directory name: " + outputDir_[i]);
+            
+            // create a file for metadata
+            metaWriter_[i] = new FileWriter(new File(outputDir_[i].getAbsolutePath() + "/" + ImageKey.METADATA_FILE_NAME));
          }
       }
           
@@ -921,6 +934,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
          i5dData.put(SummaryKeys.IJ_IMAGE_TYPE, i5dWin_[i].getImagePlus().getType());
          
          metadata_[i].put(SummaryKeys.SUMMARY, i5dData);
+         System.out.println("Inserted metadata for acq: " + i);
       }
    }
 
@@ -1007,7 +1021,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
          img5d_ = new Image5D[1];
          i5dWin_ = new Image5DWindow[1];
       }
-         
+               
       for (int i=0; i < img5d_.length; i++) {
          img5d_[i] = new Image5D(dirName_, type, (int)imgWidth_, (int)imgHeight_, channels_.size(), numSlices, numFrames_, false);
          
@@ -1022,6 +1036,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
          
          // pop-up 5d image window
          i5dWin_[i] = new Image5DWindow(img5d_[i]);
+         System.out.println("Created 5D window: " + i);
 
          // set the desired display mode.  This needs to be called after opening the Window
          // Note that OVERLAY mode is much slower than others, so show a single channel in a fast mode
@@ -1053,7 +1068,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
             i5dWin_[0].addWindowListener(wndCloser);
          }
          
-         // acquire the sequence
+         // hook up with the acquistion engine
          i5dWin_[i].setAcquitionEngine(this);
          GregorianCalendar cld = new GregorianCalendar();
          startTimeMs_ = cld.getTimeInMillis();
@@ -1064,6 +1079,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
          
          i5dWin_[i].setActive(true);
       }
+      System.out.println("Finished setting up 5D windows");
    }
 
    public int getPositionMode() {
