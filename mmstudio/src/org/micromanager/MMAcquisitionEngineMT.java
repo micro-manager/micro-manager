@@ -65,6 +65,7 @@ import org.micromanager.image5d.Image5DWindow;
 import org.micromanager.metadata.ImageKey;
 import org.micromanager.metadata.ImagePropertyKeys;
 import org.micromanager.metadata.SummaryKeys;
+import org.micromanager.navigation.MultiStagePosition;
 import org.micromanager.navigation.PositionList;
 import org.micromanager.utils.AcquisitionEngine;
 import org.micromanager.utils.ChannelSpec;
@@ -139,6 +140,8 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
 
    private int posMode_ = PositionMode.TIME_LAPSE;
    private int sliceMode_ = SliceMode.CHANNELS_FIRST;
+
+   private int previousPosIdx_;
    
    /**
     * Timer task routine triggered at each frame. 
@@ -427,6 +430,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
     * Starts the acquisition.
     */
    public void startAcquisition(){
+      previousPosIdx_ = -1; // initialize
       frameCount_ = 0;
       Runtime.getRuntime().gc();
             
@@ -440,16 +444,6 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
          JOptionPane.showMessageDialog(null, e.getMessage());     
       }
       
-      ActionListener timerHandler = new ActionListener() {
-         public void actionPerformed(ActionEvent evt) {
-            if (useMultiplePositions_) {
-               for (int i=0; i<posList_.getNumberOfPositions(); i++)
-                  acquireOneFrame(i);
-            } else {
-               acquireOneFrame(0);
-            }
-         }
-      };
       //acqTimer_ = new Timer((int)frameIntervalMs_, timerHandler);
       acqTimer_ = new Timer();
       acqTimer_.schedule(new AcqFrame(), (long)frameIntervalMs_);
@@ -464,18 +458,29 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
     *
     */
    public void acquireOneFrame(int posIdx) {
-            
+
       GregorianCalendar cld = null;
       GregorianCalendar cldStart = new GregorianCalendar();
       int numSlices = useSliceSetting_ ? sliceDeltaZ_.length : 1;
-      
-      System.out.println("Frame " + frameCount_ + " at " + GregorianCalendar.getInstance().getTime());
-      for (int j=0; j<numSlices; j++) {         
-         try {
+
+      // move to the required position
+      try {
+         if (useMultiplePositions_) {
+            if (posIdx != previousPosIdx_) {
+               MultiStagePosition pos = posList_.getPosition(posIdx);
+               MultiStagePosition.goToPosition(pos, core_);
+               core_.waitForSystem();
+            }
+
+            previousPosIdx_ = posIdx;
+         }
+
+         System.out.println("Frame " + frameCount_ + " at " + GregorianCalendar.getInstance().getTime());
+         for (int j=0; j<numSlices; j++) {         
             double z = 0.0;
             double zOffset = 0.0;
             double zCur = 0.0;
-            
+
             if (absoluteZ_) {
                z = sliceDeltaZ_[j];
             } else {
@@ -488,7 +493,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
             }
             for (int k=0; k<channels_.size(); k++) {
                ChannelSpec cs = channels_.get(k);
-               
+
                // apply z-offsets
                if (isFocusStageAvailable() && cs.zOffset_ != 0.0) {
                   core_.waitForDevice(zStage_);
@@ -496,10 +501,10 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
                   core_.setPosition(zStage_, zOffset);
                   zCur = zOffset;
                }
-               
+
                core_.setConfig(channelGroup_, cs.config_);
                System.out.println("Binning set to " + core_.getProperty(core_.getCameraDevice(), "Binning"));
-               
+
                double exposureMs = cs.exposure_;
                core_.setExposure(cs.exposure_);
                cld = new GregorianCalendar();
@@ -507,14 +512,14 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
                long width = core_.getImageWidth();
                long height = core_.getImageHeight();
                long depth = core_.getBytesPerPixel();
-               
+
                // processing for the first image in the entire sequence
                if (j==0 && k==0 && frameCount_ == 0 && posIdx == 0) {
                   setupImage5d();
                   acquisitionSetup();
                   System.out.println("Sequence size: " + imgWidth_ + "," + imgHeight_);
                }
-               
+
                // processing for the first image in a frame
                if (j==0 && k==0 && posIdx == 0) {                 
                   // check if we have enough memory to acquire the entire frame
@@ -523,18 +528,18 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
                   //System.out.println("Remaining memory " + freeBytes + " bytes. Required: " + requiredBytes);
                   if (freeBytes <  requiredBytes) {
                      throw new OutOfMemoryError("Remaining memory " + FMT2.format(freeBytes/1048576.0) +
-                                                " MB. Required for the next step: " + FMT2.format(requiredBytes/1048576.0) + " MB");
+                           " MB. Required for the next step: " + FMT2.format(requiredBytes/1048576.0) + " MB");
                   }
                }
-               
+
                // get pixels
                Object img = core_.getImage();
-               
+
                // we won't try to adjust type mismatch
                if (imgDepth_ != depth) {
                   throw new MMException("The byte depth does not match between channels or slices");
                }
-                              
+
                // rescale image if necessary to conform to the entire sequence
                if (imgWidth_!=width || imgHeight_!=height) {
                   System.out.println("Scaling from: " + width + "," + height);
@@ -547,13 +552,13 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
                   ImageProcessor ip2 = imp.resize((int)imgWidth_, (int)imgHeight_);
                   img = ip2.getPixels();
                }
-               
-                                            
+
+
                // set Image5D
                img5d_[posIdx].setPixels(img, k+1, j+1, frameCount_+1);
                if (!i5dWin_[posIdx].isPlaybackRunning())
                   img5d_[posIdx].setCurrentPosition(0, 0, k, j, frameCount_);
-               
+
                // autoscale channels based on the first slice of the first frame
                if (j==0 && frameCount_==0) {
                   ImageStatistics stats = img5d_[posIdx].getStatistics(); // get uncalibrated stats
@@ -561,14 +566,14 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
                   double max = stats.max;
                   img5d_[posIdx].setChannelMinMax(k+1, min, max);                  
                }
-                     
+
                RefreshI5d refresh = new RefreshI5d(i5dWin_[posIdx]);                            
                //SwingUtilities.invokeAndWait(refresh);
                SwingUtilities.invokeLater(refresh);
-               
+
                // save file
                String fname = ImageKey.generateFileName(frameCount_, (channels_.get(k)).config_, j);
-               
+
                // generate metadata
                JSONObject jsonData = new JSONObject();
                jsonData.put(ImagePropertyKeys.FILE, fname);
@@ -577,37 +582,42 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
                jsonData.put(ImagePropertyKeys.SLICE, j);
                jsonData.put(ImagePropertyKeys.TIME, cld.getTime());
                jsonData.put(ImagePropertyKeys.ELAPSED_TIME_MS, cld.getTimeInMillis() - startTimeMs_ );
-               jsonData.put(ImagePropertyKeys.Z_UM, zCur);
                jsonData.put(ImagePropertyKeys.EXPOSURE_MS, exposureMs);
-                              
+
+               // TODO: consider more flexible positional information and add x and y coordinates
+               jsonData.put(ImagePropertyKeys.Z_UM, zCur);
+               if (useMultiplePositions_) {
+                  jsonData.put(ImagePropertyKeys.X_UM, posList_.getPosition(posIdx).getX());
+                  jsonData.put(ImagePropertyKeys.Z_UM, posList_.getPosition(posIdx).getY());
+               }
                // insert the metadata for the current image
                metadata_[posIdx].put(ImageKey.generateFrameKey(frameCount_, k, j), jsonData);
-               
+
                if (saveFiles_) {
                   saveImageFile(outputDir_[posIdx] + "/" + fname, img, (int)imgWidth_, (int)imgHeight_);
                }              
             }
-         } catch(MMException e) {
-            stop();
-            restoreSystem();
-            if (e.getMessage().length() > 0)
-               JOptionPane.showMessageDialog(i5dWin_[posIdx], e.getMessage());     
-          return;
-         } catch (Exception e) {
-            System.out.println(e.getMessage());
-            stop();
-            restoreSystem();
-            if (e.getMessage().length() > 0)
-               JOptionPane.showMessageDialog(i5dWin_[posIdx], e.getMessage());     
-            return;
-         } catch (OutOfMemoryError e) {
-            JOptionPane.showMessageDialog(i5dWin_[posIdx], e.getMessage() + "\nOut of memory - acquistion stopped.\n" +
-            "In the future you can try to increase the amount of memory available to the Java VM (ImageJ).");     
-            stop();
-            restoreSystem();
-            return;       
-         }
-      }   
+         }   
+      } catch(MMException e) {
+         stop();
+         restoreSystem();
+         if (e.getMessage().length() > 0)
+            JOptionPane.showMessageDialog(i5dWin_[posIdx], e.getMessage());     
+         return;
+      } catch (Exception e) {
+         System.out.println(e.getMessage());
+         stop();
+         restoreSystem();
+         if (e.getMessage().length() > 0)
+            JOptionPane.showMessageDialog(i5dWin_[posIdx], e.getMessage());     
+         return;
+      } catch (OutOfMemoryError e) {
+         JOptionPane.showMessageDialog(i5dWin_[posIdx], e.getMessage() + "\nOut of memory - acquistion stopped.\n" +
+         "In the future you can try to increase the amount of memory available to the Java VM (ImageJ).");     
+         stop();
+         restoreSystem();
+         return;       
+      }
          
       // Processing for the first frame in the sequence
       if (frameCount_ == 0) {
@@ -932,6 +942,12 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
          i5dData.put(SummaryKeys.CHANNEL_NAMES, names);
             
          i5dData.put(SummaryKeys.IJ_IMAGE_TYPE, i5dWin_[i].getImagePlus().getType());
+         
+         if (useMultiplePositions_) {
+            // insert position label
+            i5dData.put(SummaryKeys.POSITION, posList_.getPosition(i).getLabel());
+         }
+            
          
          metadata_[i].put(SummaryKeys.SUMMARY, i5dData);
          System.out.println("Inserted metadata for acq: " + i);

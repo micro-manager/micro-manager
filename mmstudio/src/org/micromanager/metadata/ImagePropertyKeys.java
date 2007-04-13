@@ -39,5 +39,7 @@ public class ImagePropertyKeys {
    public static final String ELAPSED_TIME="ElapsedTime";
    public static final String OBJECTIVE="Objective";
    public static final String Z_UM="Z-um";
+   public static final String X_UM="X-um";
+   public static final String Y_UM="Y-um";
    public static final String EXPOSURE_MS = "Exposure-ms";
 }
