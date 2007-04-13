@@ -526,17 +526,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI {
       });
       rebuildGuiMenuItem.setText("Rebuild GUI");
       toolsMenu.add(rebuildGuiMenuItem);
-
-      toolsMenu.addSeparator();
-
-      final JMenuItem homeXyStageMenuItem = new JMenuItem();
-      homeXyStageMenuItem.addActionListener(new ActionListener() {
-         public void actionPerformed(ActionEvent arg0) {
-            homeXYStage();
-         }
-      });
-      homeXyStageMenuItem.setText("Home XY Stage");
-      toolsMenu.add(homeXyStageMenuItem);
       
       toolsMenu.addSeparator();
       
@@ -1227,29 +1216,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI {
          handleException(e);
       }      
    }
-   
-   /**
-    * Moves XY stage to its home position and calibrates.
-    */
-   private void homeXYStage() {
-      String xyStage = core_.getXYStageDevice();
-      if (xyStage.isEmpty()) {
-         handleError("Default XYStage is not defined.\n" + "Use Configuration Wizard to define default XY Stage device.");
-         return;
-      }
-
-      int option = JOptionPane.showConfirmDialog(this, "Home and calibrate the default XY device: " + xyStage + "?\n" +
-            "Warning: if you choose YES the stage will move to its home position.",
-            "XY Stage homing action", JOptionPane.YES_NO_OPTION);
-      if (option == JOptionPane.YES_OPTION) {
-         try {
-            core_.home(xyStage);
-         } catch(Exception e) {
-            handleException(e);
-         }
-      }
-   }
-  
+     
    private boolean openImageWindow(){
       try {
          ImageProcessor ip;
@@ -2057,5 +2024,29 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI {
       }
       waitDlg.closeDialog();      
    }
+
+   /**
+    * Moves XY stage to its home position and calibrates.
+    */
+   // TODO: remove this method - obsolete
+//   private void homeXYStage() {
+//      String xyStage = core_.getXYStageDevice();
+//      if (xyStage.isEmpty()) {
+//         handleError("Default XYStage is not defined.\n" + "Use Configuration Wizard to define default XY Stage device.");
+//         return;
+//      }
+//
+//      int option = JOptionPane.showConfirmDialog(this, "Home and calibrate the default XY device: " + xyStage + "?\n" +
+//            "Warning: if you choose YES the stage will move to its home position.",
+//            "XY Stage homing action", JOptionPane.YES_NO_OPTION);
+//      if (option == JOptionPane.YES_OPTION) {
+//         try {
+//            core_.home(xyStage);
+//         } catch(Exception e) {
+//            handleException(e);
+//         }
+//      }
+//   }
+
 }
 
