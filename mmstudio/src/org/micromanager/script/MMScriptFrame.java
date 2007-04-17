@@ -55,7 +55,7 @@ public class MMScriptFrame extends MMFrame {
    private SpringLayout springLayout_;
    private DeviceControlGUI parentGUI_;
    private static final String SCRIPT_DIR = "script_dir";
-     
+
    /**
     * Constructor. Initalizes the GUI. 
     */
@@ -255,6 +255,7 @@ public class MMScriptFrame extends MMFrame {
    }
 
 }
+
 
 
 
