@@ -41,8 +41,9 @@
 /////////////////////////////////////////////////////////////////////////
 // Error codes
 //
-#define ERR_NOT_CONNECTED           10002
-#define ERR_COMMAND_CANNOT_EXECUTE  10003
+#define ERR_NOT_CONNECTED           11002
+#define ERR_COMMAND_CANNOT_EXECUTE  11003
+#define ERR_NO_ANSWER               11004
 
 
 enum CommandMode
@@ -68,7 +69,7 @@ public:
    int SetFilterWheelPosition(MM::Device& device, MM::Core& core, int wheelNr, int pos);
    int GetFilterWheelPosition(MM::Device& device, MM::Core& core, int wheelNr, int& pos);
    int SetCurrentWheel(MM::Device& device, MM::Core& core, int wheelNr);
-   int GetNumberOfPositions(MM::Device& device, MM::Core& core, unsigned int wheelNr, unsigned int& nrPos);
+   int GetNumberOfPositions(MM::Device& device, MM::Core& core, int wheelNr, int& nrPos);
    int FilterWheelBusy(MM::Device& device, MM::Core& core, bool& busy);
 
 private:

@@ -36,23 +36,14 @@
 #include <iostream>
 using namespace std;
 
-//from prior
 const char* g_XYStageDeviceName = "XYStage";
 const char* g_ZStageDeviceName = "ZStage";
-//const char* g_BasicControllerName = "BasicController";
-//const char* g_Shutter1Name="Shutter-1";
-//const char* g_Shutter2Name="Shutter-2";
-//const char* g_Shutter3Name="Shutter-3";
-//const char* g_Wheel1Name = "Wheel-1";
-//const char* g_Wheel2Name = "Wheel-2";
-//const char* g_Wheel3Name = "Wheel-3";
-// eof from prior
 
 const char* g_ASIFW1000Hub = "Controller";
-const char* g_ASIFW1000FilterWheel = "Filter Wheel";
-const char* g_ASIFW1000FilterWheelNr = "Filter Wheel Nr";
+const char* g_ASIFW1000FilterWheel = "FilterWheel";
+const char* g_ASIFW1000FilterWheelNr = "FilterWheelNumber";
 const char* g_ASIFW1000Shutter = "Shutter";
-const char* g_ASIFW1000ShutterNr = "Shutter Nr";
+const char* g_ASIFW1000ShutterNr = "ShutterNumber";
 
 using namespace std;
 
@@ -63,19 +54,11 @@ ASIFW1000Hub g_hub;
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   // from prior
-   //AddAvailableDeviceName(g_Shutter1Name, "Pro Scan shutter 1");
-   //AddAvailableDeviceName(g_Shutter2Name, "Pro Scan shutter 2");
-   //AddAvailableDeviceName(g_Shutter3Name, "Pro Scan shutter 3");
-   //AddAvailableDeviceName(g_Wheel1Name, "Pro Scan filter wheel 1");
-   //AddAvailableDeviceName(g_Wheel2Name, "Pro Scan filter wheel 2");
-   //AddAvailableDeviceName(g_Wheel3Name, "Pro Scan filter wheel 3");
    AddAvailableDeviceName(g_ZStageDeviceName, "Add-on Z-stage");
    AddAvailableDeviceName(g_XYStageDeviceName, "XY Stage");
-   // eof from prior
 
    AddAvailableDeviceName(g_ASIFW1000Hub,"ASIFW1000 Controller");
-   AddAvailableDeviceName(g_ASIFW1000FilterWheel,"FilterWheel)");   
+   AddAvailableDeviceName(g_ASIFW1000FilterWheel,"FilterWheel");   
    AddAvailableDeviceName(g_ASIFW1000Shutter,"Shutter"); 
 }
 
@@ -127,6 +110,7 @@ Hub::Hub() :
 
    // custom error messages
    SetErrorText(ERR_COMMAND_CANNOT_EXECUTE, "Command cannot be executed");
+   SetErrorText(ERR_NO_ANSWER, "No answer received.  Is the FW1000 controller connected?  If so, try increasing the AnswerTimeout of the serial port.");
 
    // create pre-initialization properties
    // ------------------------------------
@@ -346,10 +330,11 @@ int FilterWheel::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(pos);
       if (pos == pos_)
          return DEVICE_OK;
+      // sanity check
       if (pos < 0)
          pos = 0;
-      else if (pos > 1)
-         pos = 1;
+      if (pos >= numPos_)
+         pos = numPos_ - 1;
       int ret = g_hub.SetFilterWheelPosition(*this, *GetCoreCallback(), wheelNr_, pos);
       if (ret == DEVICE_OK) {
          pos_ = pos;
@@ -457,8 +442,9 @@ int Shutter::Initialize()
 
 bool Shutter::Busy()
 {
-   // Who knows?
-   return false;
+   bool busy;
+   g_hub.FilterWheelBusy(*this, *GetCoreCallback(), busy);
+   return busy;
 }
 
 int Shutter::Shutdown()
@@ -474,12 +460,14 @@ int Shutter::SetOpen(bool open)
 {
    if (open)
    {
+      printf("Opening shutter\n");
       int ret = g_hub.OpenShutter(*this, *GetCoreCallback(), shutterNr_);
       if (ret != DEVICE_OK)
          return ret;
       state_ =  true;
    } else
    {
+      printf("Closing shutter\n");
       int ret = g_hub.CloseShutter(*this, *GetCoreCallback(), shutterNr_);
       if (ret != DEVICE_OK)
          return ret;
@@ -516,22 +504,20 @@ int Shutter::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
       // return pos as we know it
       GetOpen(state_);
       if (state_)
-         pProp->Set("Open");
+         pProp->Set(1L);
       else
-         pProp->Set("Closed");
+         pProp->Set(0L);
    }
    else if (eAct == MM::AfterSet)
    {
-      std::string state;
-      pProp->Get(state);
-      if (state == "Open")
+      long pos;
+      pProp->Get(pos);
+      if (pos==1)
       {
-         pProp->Set("Open");
          return this->SetOpen(true);
       }
       else
       {
-         pProp->Set("Closed");
          return this->SetOpen(false);
       }
    }

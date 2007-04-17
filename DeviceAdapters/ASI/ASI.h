@@ -138,8 +138,8 @@ public:
                                                                              
 private:                                                                     
    bool initialized_;                                                        
-   unsigned numPos_;                                                         
-   unsigned wheelNr_;
+   int numPos_;
+   int wheelNr_;
    long  pos_;
    std::string name_;  
 };

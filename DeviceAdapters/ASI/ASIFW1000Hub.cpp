@@ -67,11 +67,11 @@ int ASIFW1000Hub::GetVersion(MM::Device& device, MM::Core& core, char* version)
       return ret;
 
    // get substring containing version number TODO: check offset
-   int i=4;
+   int i=3;
    do
    {
       i++;
-      version[i-5]=rcvBuf_[i];
+      version[i-4]=rcvBuf_[i];
    }
    while (rcvBuf_[i]);
 
@@ -138,19 +138,24 @@ int ASIFW1000Hub::SetCurrentWheel(MM::Device& device, MM::Core& core, int wheelN
 
 //
 //TODO: Error checking
-int ASIFW1000Hub::GetNumberOfPositions(MM::Device& device, MM::Core& core,unsigned int wheelNr, unsigned int& nrPos)
+int ASIFW1000Hub::GetNumberOfPositions(MM::Device& device, MM::Core& core, int wheelNr, int& nrPos)
 {
    if (wheelNr != activeWheel_)
       SetCurrentWheel(device, core, wheelNr);
 
-   ClearAllRcvBuf(device, core);
    int ret = ExecuteCommand(device, core, "NF");
+   ClearAllRcvBuf(device, core);
    ret = core.GetSerialAnswer(&device, port_.c_str(), RCV_BUF_LENGTH, rcvBuf_, "\r");
    if (ret != DEVICE_OK)
       return ret;
 
+   if (strlen (rcvBuf_) < 3)
+      return ERR_NO_ANSWER;
+
    // TODO: error checking
-   nrPos = rcvBuf_[strlen(rcvBuf_)-1] - '0';
+   nrPos = rcvBuf_[strlen(rcvBuf_)-3] - '0';
+   if (! (nrPos==6 || nrPos==8))
+         nrPos = 6;
 
    return DEVICE_OK;
 }
@@ -158,15 +163,19 @@ int ASIFW1000Hub::GetNumberOfPositions(MM::Device& device, MM::Core& core,unsign
 
 
 int ASIFW1000Hub::FilterWheelBusy(MM::Device& device, MM::Core& core, bool& busy)
-{
-   int ret = ExecuteCommand(device, core, "?");
+{ 
+   ClearAllRcvBuf(device, core);
+   int ret = core.SetSerialCommand(&device, port_.c_str(), "?", "");
    if (ret != DEVICE_OK)                                                     
       return ret;                                                           
 
-   ret = core.GetSerialAnswer(&device, port_.c_str(), RCV_BUF_LENGTH, rcvBuf_, "\r");  
+   unsigned long read;
+   ret = core.ReadFromSerial(&device, port_.c_str(), rcvBuf_, 1, read);  
    if (ret != DEVICE_OK)                                                     
       return ret;                                                           
 
+   if (read != 1)
+      return ERR_NO_ANSWER;
    int x = rcvBuf_[strlen(rcvBuf_)-1] - '0';
    if (x < 4)
       busy = false;
@@ -207,7 +216,7 @@ int ASIFW1000Hub::GetShutterPosition(MM::Device& device, MM::Core& core, int shu
    ret = core.GetSerialAnswer(&device, port_.c_str(), RCV_BUF_LENGTH, rcvBuf_, "\r");
    if (ret != DEVICE_OK)
       return ret;
-   int x = rcvBuf_[strlen(rcvBuf_)-1];
+   int x = rcvBuf_[strlen(rcvBuf_)-3] - '0';
    if (shutterNr==1)
       x = x << 1;
    pos = x & 1;
