@@ -734,8 +734,10 @@ void SerialPortLister::ListSerialPorts(std::vector<std::string> &availablePorts)
 
           CFRelease(bsdPathAsCFString);                                    
 
-	       // add the name to our vector<string>
-          if (result) {
+	       // add the name to our vector<string> only when this is not a dialup port
+          string rresult (bsdPath);
+          string::size_type loc = rresult.find("DialupNetwork", 0);
+          if (result && (loc == string::npos)) {
                availablePorts.push_back(bsdPath);
                modemFound = true;                                           
                kernResult = KERN_SUCCESS;
