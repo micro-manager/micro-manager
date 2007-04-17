@@ -36,7 +36,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-subdir = ASI
+subdir = ASIFW1000
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.in
@@ -53,9 +53,9 @@ am__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
 am__installdirs = "$(DESTDIR)$(libdir)"
 libLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(lib_LTLIBRARIES)
-ASI_la_DEPENDENCIES = ../../MMDevice/.libs/libMMDevice.a
-am_ASI_la_OBJECTS = ASI.lo ASIFW1000Hub.lo
-ASI_la_OBJECTS = $(am_ASI_la_OBJECTS)
+ASIFW1000_la_DEPENDENCIES = ../../MMDevice/.libs/libMMDevice.a
+am_ASIFW1000_la_OBJECTS = ASIFW1000.lo ASIFW1000Hub.lo
+ASIFW1000_la_OBJECTS = $(am_ASIFW1000_la_OBJECTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir)
 depcomp = $(SHELL) $(top_srcdir)/../depcomp
 am__depfiles_maybe = depfiles
@@ -75,8 +75,8 @@ LTCOMPILE = $(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) \
 CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = $(ASI_la_SOURCES)
-DIST_SOURCES = $(ASI_la_SOURCES)
+SOURCES = $(ASIFW1000_la_SOURCES)
+DIST_SOURCES = $(ASIFW1000_la_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -197,11 +197,11 @@ sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 AM_CXXFLAGS = -fpermissive
-lib_LTLIBRARIES = ASI.la
-ASI_la_SOURCES = ASI.cpp ASI.h ASIFW1000Hub.cpp ASIFW1000Hub.h
-ASI_la_LIBADD = ../../MMDevice/.libs/libMMDevice.a 
-ASI_la_LDFLAGS = -module
-EXTRA_DIST = ASI.vcproj license.txt
+lib_LTLIBRARIES = ASIFW1000.la
+ASIFW1000_la_SOURCES = ASIFW1000.cpp ASIFW1000.h ASIFW1000Hub.cpp ASIFW1000Hub.h
+ASIFW1000_la_LIBADD = ../../MMDevice/.libs/libMMDevice.a 
+ASIFW1000_la_LDFLAGS = -module
+EXTRA_DIST = ASIFW1000.vcproj license.txt
 all: all-am
 
 .SUFFIXES:
@@ -215,9 +215,9 @@ $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign  ASI/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign  ASIFW1000/Makefile'; \
 	cd $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign  ASI/Makefile
+	  $(AUTOMAKE) --foreign  ASIFW1000/Makefile
 .PRECIOUS: Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
@@ -262,8 +262,8 @@ clean-libLTLIBRARIES:
 	  echo "rm -f \"$${dir}/so_locations\""; \
 	  rm -f "$${dir}/so_locations"; \
 	done
-ASI.la: $(ASI_la_OBJECTS) $(ASI_la_DEPENDENCIES) 
-	$(CXXLINK) -rpath $(libdir) $(ASI_la_LDFLAGS) $(ASI_la_OBJECTS) $(ASI_la_LIBADD) $(LIBS)
+ASIFW1000.la: $(ASIFW1000_la_OBJECTS) $(ASIFW1000_la_DEPENDENCIES) 
+	$(CXXLINK) -rpath $(libdir) $(ASIFW1000_la_LDFLAGS) $(ASIFW1000_la_OBJECTS) $(ASIFW1000_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -271,7 +271,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ASI.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ASIFW1000.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ASIFW1000Hub.Plo@am__quote@
 
 .cpp.o:
@@ -476,7 +476,7 @@ uninstall-am: uninstall-info-am uninstall-libLTLIBRARIES
 
 
 install:
-	cp .libs/ASI.so $(IJPATH)/$(MMPREFIX)ASI
+	cp .libs/ASIFW1000.so $(IJPATH)/$(MMPREFIX)ASIFW1000
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

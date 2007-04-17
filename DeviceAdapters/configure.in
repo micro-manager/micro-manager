@@ -117,7 +117,7 @@ AC_CHECK_FUNCS([memset])
 
 
 # AC_CONFIG_FILES([Makefile])
-AC_CONFIG_FILES(Makefile AOTF/Makefile Andor/Makefile ASI/Makefile DTOpenLayer/Makefile DemoCamera/Makefile SerialManagerUNIX/Makefile Ludl/Makefile ZeissCAN/Makefile Vincent/Makefile Conix/Makefile Hamamatsu/Makefile PVCAM/Makefile Nikon/Makefile NikonTE2000/Makefile ParallelPort/Makefile Sensicam/Makefile SerialManager/Makefile StanfordPhotonics/Makefile SutterLambda/Makefile Prior/Makefile dc1394/Makefile Yokogawa/Makefile)
+AC_CONFIG_FILES(Makefile AOTF/Makefile Andor/Makefile ASIFW1000/Makefile DTOpenLayer/Makefile DemoCamera/Makefile SerialManagerUNIX/Makefile Ludl/Makefile ZeissCAN/Makefile Vincent/Makefile Conix/Makefile Hamamatsu/Makefile PVCAM/Makefile Nikon/Makefile NikonTE2000/Makefile ParallelPort/Makefile Sensicam/Makefile SerialManager/Makefile StanfordPhotonics/Makefile SutterLambda/Makefile Prior/Makefile dc1394/Makefile Yokogawa/Makefile)
 AC_OUTPUT
 ##if $BUILD_TE2000_TRUE; then
 ##   AC_OUTPUT (NikonTE2000/Makefile)
