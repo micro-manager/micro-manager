@@ -454,7 +454,9 @@ void CMMCore::loadDevice(const char* label, const char* library, const char* dev
       CORE_LOG3("Device %s loaded from %s and labeled as %s\n", device, library, label);
       pDevice->SetCallback(callback_);
       
-      // special roles for particular devices
+      // default special roles for particular devices
+      // The roles which are assigned at the load time will make sense for a simple
+      // configuration. More complicated configurations will typically override default settings.
       switch(pDevice->GetType())
       {
          case MM::CameraDevice:
@@ -474,6 +476,11 @@ void CMMCore::loadDevice(const char* label, const char* library, const char* dev
             shutter_ = static_cast<MM::Shutter*>(pDevice);
             //assignImageSynchro(label);
             CORE_LOG1("Device %s set as shutter.\n", label);
+         break;
+
+         case MM::XYStageDevice:
+            xyStage_ = static_cast<MM::XYStage*>(pDevice);
+            CORE_LOG1("Device %s set as xyStage.\n", label);
          break;
 
          default:
@@ -501,6 +508,7 @@ void CMMCore::unloadAllDevices() throw (CMMError)
       camera_ = 0;
       shutter_ = 0;
       focusStage_ = 0;
+      xyStage_ = 0;
       
       // clear configurations
       CConfigMap::const_iterator it;

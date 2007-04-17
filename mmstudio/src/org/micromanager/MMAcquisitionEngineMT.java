@@ -584,11 +584,11 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
                jsonData.put(ImagePropertyKeys.ELAPSED_TIME_MS, cld.getTimeInMillis() - startTimeMs_ );
                jsonData.put(ImagePropertyKeys.EXPOSURE_MS, exposureMs);
 
-               // TODO: consider more flexible positional information and add x and y coordinates
+               // TODO: consider more flexible positional information
                jsonData.put(ImagePropertyKeys.Z_UM, zCur);
                if (useMultiplePositions_) {
                   jsonData.put(ImagePropertyKeys.X_UM, posList_.getPosition(posIdx).getX());
-                  jsonData.put(ImagePropertyKeys.Z_UM, posList_.getPosition(posIdx).getY());
+                  jsonData.put(ImagePropertyKeys.Y_UM, posList_.getPosition(posIdx).getY());
                }
                // insert the metadata for the current image
                metadata_[posIdx].put(ImageKey.generateFrameKey(frameCount_, k, j), jsonData);

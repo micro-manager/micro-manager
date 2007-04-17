@@ -7,10 +7,14 @@ import mmcorej.CMMCore;
 public class MultiStagePosition {
    private ArrayList<StagePosition> stagePosList_;
    private String label_;
+   private String defaultZStage_;
+   private String defaultXYStage_;
    
    public MultiStagePosition() {
       stagePosList_ = new ArrayList<StagePosition>();
       label_ = new String("Undefined");
+      defaultZStage_ = new String("");
+      defaultXYStage_ = new String("");
    }
    
    public void add(StagePosition sp) {
@@ -32,6 +36,22 @@ public class MultiStagePosition {
    public void setLabel(String lab) {
       label_ = lab;
    }
+   
+   public void setDefaultZStage(String stage) {
+      defaultZStage_ = stage;
+   }
+   
+   public String getDefaultZStage() {
+      return defaultZStage_;
+   }
+   
+   public String getDefaultXYStage() {
+      return defaultXYStage_;
+   }
+   
+   public void setDefaultXYStage(String stage) {
+      defaultXYStage_ = stage;
+   }
 
    /**
     * Moves all stages to the specified positions.
@@ -49,16 +69,31 @@ public class MultiStagePosition {
       }
       
    }
-   // TODO: implement automatic X,Y,Z coordinate calculation
+   // TODO: implement more efficient position calculation
    public double getX() {
+      for (StagePosition stage : stagePosList_) {
+         if (stage.numAxes == 2 && stage.stageName.compareTo(defaultXYStage_) == 0) {
+            return stage.x;
+         }
+      }
       return 0.0;
    }
    
    public double getY() {
+      for (StagePosition stage : stagePosList_) {
+         if (stage.numAxes == 2 && stage.stageName.compareTo(defaultXYStage_) == 0) {
+            return stage.y;
+         }
+      }
       return 0.0;
    }
    
    public double getZ() {
+      for (StagePosition stage : stagePosList_) {
+         if (stage.numAxes == 1 && stage.stageName.compareTo(defaultZStage_) == 0) {
+            return stage.x;
+         }
+      }
       return 0.0;
    }
 

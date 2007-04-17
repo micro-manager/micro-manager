@@ -70,7 +70,6 @@ import com.swtdesigner.SwingResourceManager;
 public class PositionListDlg extends MMDialog {
 
    private static String POSITION_LIST_FILE_NAME = "MMPositionList.pos";
-   private String POSITION_LIST_DIR = "PosListDIR";
    private String posListDir_;
    private File curFile_;
 
@@ -448,15 +447,10 @@ public class PositionListDlg extends MMDialog {
     * Store current xyPosition.
     */
    private void markPosition() {
-//    String stage = core_.getXYStageDevice();
-//    if (stage.length() == 0) {
-//    handleError("Default XYStage device not defined.");
-//    return;
-//    }
       refreshCurrentPosition();
-
       MultiStagePosition msp = new MultiStagePosition();
-
+      msp.setDefaultXYStage(core_.getXYStageDevice());
+      msp.setDefaultZStage(core_.getFocusDevice());
 
       // read 1-axis stages
       try {
