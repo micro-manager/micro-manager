@@ -2,8 +2,8 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8.00"
-	Name="ASI"
-	ProjectGUID="{E69C9F0E-2608-4EAD-9AB1-75E8DEF7E053}"
+	Name="ASIFW1000"
+	ProjectGUID="{FA9C2919-C708-4C30-B72D-AD5A2DD2BC5B}"
 	Keyword="Win32Proj"
 	>
 	<Platforms>
@@ -62,12 +62,12 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="$(OutDir)/mmgr_dal_ASI.dll"
+				OutputFile="$(OutDir)/mmgr_dal_ASIFW1000.dll"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile="$(OutDir)/ASI.pdb"
+				ProgramDatabaseFile="$(OutDir)/ASIFW1000.pdb"
 				SubSystem="2"
-				ImportLibrary="$(OutDir)/ASI.lib"
+				ImportLibrary="$(OutDir)/ASIFW1000.lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -140,13 +140,13 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="$(OutDir)/mmgr_dal_ASI.dll"
+				OutputFile="$(OutDir)/mmgr_dal_ASIFW1000.dll"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
-				ImportLibrary="$(OutDir)/ASI.lib"
+				ImportLibrary="$(OutDir)/ASIFW1000.lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -211,7 +211,7 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\ASI.h"
+				RelativePath=".\ASIFW1000.h"
 				>
 			</File>
 			<File
