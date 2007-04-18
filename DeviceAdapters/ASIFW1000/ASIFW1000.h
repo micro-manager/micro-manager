@@ -1,24 +1,26 @@
 ///////////////////////////////////////////////////////////////////////////////
-// FILE:          ASI.h
+// FILE:          ASIFW1000.h
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   ASI ProScan controller adapter
+// DESCRIPTION:   ASIFW1000  controller adapter
 // COPYRIGHT:     University of California, San Francisco, 2006
-// LICENSE:       This file is distributed under the BSD license.
-//                License text is included with the source distribution.
+//                All rights reserved
+//
+// LICENSE:       This library is free software; you can redistribute it and/or
+//                modify it under the terms of the GNU Lesser General Public
+//                License as published by the Free Software Foundation.
+//                
+//                You should have received a copy of the GNU Lesser General Public
+//                License along with the source distribution; if not, write to
+//                the Free Software Foundation, Inc., 59 Temple Place, Suite 330,
+//                Boston, MA  02111-1307  USA
 //
 //                This file is distributed in the hope that it will be useful,
 //                but WITHOUT ANY WARRANTY; without even the implied warranty
 //                of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 //
-//                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
-//                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-//                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-//
-// AUTHOR:        Nenad Amodaj, nenad@amodaj.com, 06/01/2006
-//
-// CVS:           $Id: ASI.h,v 1.1 2007/02/27 23:33:14 nenad Exp $
+// AUTHOR:        Nico Stuurman (nico@cmp.ucsf.edu) based on code by Nenad Amodaj, April 2007
 //
 
 #ifndef _ASIFW1000_H_
