@@ -3,7 +3,7 @@
 	ProjectType="Visual C++"
 	Version="8.00"
 	Name="ASIFW1000"
-	ProjectGUID="{FA9C2919-C708-4C30-B72D-AD5A2DD2BC5B}"
+	ProjectGUID="{E69C9F0E-2608-4EAD-9AB1-75E8DEF7E053}"
 	Keyword="Win32Proj"
 	>
 	<Platforms>

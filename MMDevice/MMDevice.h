@@ -176,7 +176,7 @@ namespace MM {
       virtual int GetPositionSteps(long& x, long& y) = 0;
       virtual int Home() = 0;
       virtual int Stop() = 0;
-	  virtual int SetOrigin() = 0;//jizhen, 4/12/2007
+	   virtual int SetOrigin() = 0;//jizhen, 4/12/2007
       virtual int GetLimits(double& xMin, double& xMax, double& yMin, double& yMax) = 0;
    };
 
