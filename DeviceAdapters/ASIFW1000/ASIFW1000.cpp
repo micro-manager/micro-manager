@@ -26,7 +26,7 @@
    #define snprintf _snprintf 
 #endif
 
-#include "ASI.h"
+#include "ASIFW1000.h"
 #include "ASIFW1000Hub.h"
 #include <string>
 #include <math.h>
