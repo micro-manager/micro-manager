@@ -46,6 +46,8 @@ const char* g_LightPathDeviceName = "DLightPath";
 const char* g_ObjectiveDeviceName = "DObjective";
 const char* g_StageDeviceName = "DStage";
 const char* g_XYStageDeviceName = "DXYStage";
+const char* g_AutoFocusDeviceName = "DAutoFocus";
+const char* g_ShutterDeviceName = "DShutter";
 
 // constants for naming pixel types (allowed values of the "PixelType" property)
 const char* g_PixelType_8bit = "8bit";
@@ -84,6 +86,8 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_StageDeviceName, "Demo stage");
    AddAvailableDeviceName(g_XYStageDeviceName, "Demo XY stage");
    AddAvailableDeviceName(g_LightPathDeviceName, "Demo light path");
+   AddAvailableDeviceName(g_AutoFocusDeviceName, "Demo auto focus");
+   AddAvailableDeviceName(g_ShutterDeviceName, "Demo shutter");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
@@ -119,8 +123,18 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
    }
    else if (strcmp(deviceName, g_LightPathDeviceName) == 0)
    {
-      // create create light path
+      // create light path
       return new CDemoLightPath();
+   }
+   else if (strcmp(deviceName, g_ShutterDeviceName) == 0)
+   {
+      // create shutter
+      return new DemoShutter();
+   }
+   else if (strcmp(deviceName, g_AutoFocusDeviceName) == 0)
+   {
+      // create autoFocus
+      return new DemoAutoFocus();
    }
 
    // ...supplied name not recognized
@@ -1096,3 +1110,21 @@ int CDemoXYStage::Shutdown()
 ///////////////////////////////////////////////////////////////////////////////
 
 // none implemented
+
+
+///////////////////////////////////////////////////////////////////////////////
+// CDemoShutter implementation
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void DemoShutter::GetName(char* name) const
+{
+   CDeviceUtils::CopyLimitedString(name, g_ShutterDeviceName);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// CDemoAutoFocus implementation
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+void DemoAutoFocus::GetName(char* name) const
+{
+   CDeviceUtils::CopyLimitedString(name, g_AutoFocusDeviceName);
+}

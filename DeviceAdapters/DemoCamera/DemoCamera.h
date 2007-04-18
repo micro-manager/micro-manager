@@ -294,4 +294,63 @@ private:
    double upperLimit_;
 };
 
+//////////////////////////////////////////////////////////////////////////////
+// DemoAutoFocus class
+// Simulation of the auto-focusing module
+//////////////////////////////////////////////////////////////////////////////
+class DemoAutoFocus : public CAutoFocusBase<DemoAutoFocus>
+{
+public:
+   DemoAutoFocus() : running_(false), busy_(false), initialized_(false)  {}
+   ~DemoAutoFocus() {}
+      
+   // MMDevice API
+   bool Busy() {return busy_;}
+   void GetName(char* pszName) const;
+
+   int Initialize(){running_ = false; initialized_ = true; return DEVICE_OK;}
+   int Shutdown(){initialized_ = false; return DEVICE_OK;}
+
+   // AutoFocus API
+   virtual int SetContinuousFocusing(bool state) {running_ = state; return DEVICE_OK;}
+   virtual int GetContinuousFocusing(bool& state) {state = running_; return DEVICE_OK;}
+   virtual int Focus() {return DEVICE_UNSUPPORTED_COMMAND;}
+   virtual int GetFocusScore(double& /*score*/) {return DEVICE_UNSUPPORTED_COMMAND;}
+
+private:
+   bool busy_;
+   bool running_;
+   bool initialized_;
+};
+
+//////////////////////////////////////////////////////////////////////////////
+// DemoShutter class
+// Simulation of shutter device
+//////////////////////////////////////////////////////////////////////////////
+class DemoShutter : public CShutterBase<DemoShutter>
+{
+public:
+   DemoShutter() : state_(false), initialized_(false) {}
+   ~DemoShutter() {}
+
+   int Initialize() {state_ = false; initialized_ = true; return DEVICE_OK;}
+   int Shutdown() {initialized_ = false; return DEVICE_OK;}
+
+   void GetName (char* pszName) const;
+   bool Busy() {return false;}
+
+   // Shutter API
+   int SetOpen (bool open = true) {state_ = open; return DEVICE_OK;}
+   int GetOpen(bool& open) {open = state_; return DEVICE_OK;}
+   int Fire(double /*deltaT*/) {return DEVICE_UNSUPPORTED_COMMAND;}
+
+   // action interface
+   int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnShutterNr(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+private:
+   bool state_;
+   bool initialized_;
+};
+
 #endif //_DEMOCAMERA_H_

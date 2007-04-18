@@ -601,6 +601,14 @@ class CSerialBase : public CDeviceBase<MM::Serial, U>
 };
 
 /**
+ * Base class for creating auto-focusing modules.
+ */
+template <class U>
+class CAutoFocusBase : public CDeviceBase<MM::AutoFocus, U>
+{
+};
+
+/**
  * Base class for creating state device adapters such as
  * filter wheels, objective, turrets, etc.
  */
