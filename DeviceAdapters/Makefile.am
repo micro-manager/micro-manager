@@ -13,7 +13,7 @@ if BUILD_DC1394
    DC1394 = dc1394
 endif
 
-SUBDIRS =  AOTF Andor ASIFW1000 DTOpenLayer DemoCamera SerialManagerUNIX Ludl Prior ParallelPort Sensicam SerialManager ZeissCAN Vincent Conix $(HAMAMATSU) $(PVCAM) $(TE2000) Nikon StanfordPhotonics SutterLambda $(DC1394) Yokogawa
+SUBDIRS =  AOTF Andor ASIFW1000 ASIStage DTOpenLayer DemoCamera SerialManagerUNIX Ludl Prior ParallelPort Sensicam SerialManager ZeissCAN Vincent Conix $(HAMAMATSU) $(PVCAM) $(TE2000) Nikon StanfordPhotonics SutterLambda $(DC1394) Yokogawa
 
 dist-hook:
 	rm  $(distdir)/NikonTE2000/NikonTE2000.cpp
