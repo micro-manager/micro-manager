@@ -1,4 +1,32 @@
 
+///////////////////////////////////////////////////////////////////////////////
+// FILE:          ASIStage.cpp
+// PROJECT:       Micro-Manager
+// SUBSYSTEM:     DeviceAdapters
+//-----------------------------------------------------------------------------
+// DESCRIPTION:   ASIStage adapter
+// COPYRIGHT:     University of California, San Francisco, 2006
+//                All rights reserved
+//
+// LICENSE:       This library is free software; you can redistribute it and/or
+//                modify it under the terms of the GNU Lesser General Public
+//                License as published by the Free Software Foundation.
+//                
+//                You should have received a copy of the GNU Lesser General Public
+//                License along with the source distribution; if not, write to
+//                the Free Software Foundation, Inc., 59 Temple Place, Suite 330,
+//                Boston, MA  02111-1307  USA
+//
+//                This file is distributed in the hope that it will be useful,
+//                but WITHOUT ANY WARRANTY; without even the implied warranty
+//                of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,                   
+//
+// AUTHOR:        Jizhen Zhao (j.zhao@andor.com) based on code by Nenad Amodaj, April 2007
+//
+
 #ifdef WIN32
    //#include <windows.h>
    #define snprintf _snprintf 
@@ -288,7 +316,7 @@ int XYStage::SetOrigin()
    if (ret != DEVICE_OK)
       return ret;
 
-   if (answer.substr(0,2).compare(":A") == 0)
+   if (answer.substr(0,2).compare(":A") == 0 || answer.substr(1,2).compare(":A") == 0)
    {
       return DEVICE_OK;
    }
@@ -390,7 +418,7 @@ int XYStage::Home(){
    if (ret != DEVICE_OK)
       return ret;
 
-   if (answer.substr(0,2).compare(":A") == 0)
+   if (answer.substr(0,2).compare(":A") == 0 || answer.substr(1,2).compare(":A") == 0)
    {
       //do nothing;
    }
@@ -432,7 +460,7 @@ int XYStage::Calibrate(){
    if (ret != DEVICE_OK)
       return ret;
 
-   if (answer.substr(0,2).compare(":A") == 0)
+   if (answer.substr(0,2).compare(":A") == 0  || answer.substr(1,2).compare(":A") == 0)
    {
       //do nothing;
    }
@@ -503,7 +531,7 @@ int XYStage::Stop() {
    if (ret != DEVICE_OK)
       return ret;
 
-   if (answer.substr(0,2).compare(":A") == 0)
+   if (answer.substr(0,2).compare(":A") == 0 || answer.substr(1,2).compare(":A") == 0)
    {
       return DEVICE_OK;
    }
@@ -716,7 +744,7 @@ bool ZStage::Busy()
 {
    const char* command = "/";
    // send command
-   int ret = SendSerialCommand(port_.c_str(), command, "\r\n");
+   int ret = SendSerialCommand(port_.c_str(), command, "\r");
    if (ret != DEVICE_OK)
       return false;
 
@@ -750,11 +778,11 @@ int ZStage::SetPositionUm(double pos)
 
    // block/wait for acknowledge, or until we time out;
    string answer;
-   ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
    if (ret != DEVICE_OK)
       return ret;
 
-   if (answer.substr(0,2).compare(":A") == 0)
+   if (answer.substr(0,2).compare(":A") == 0 || answer.substr(1,2).compare(":A") == 0)
    {
       return DEVICE_OK;
    }
@@ -775,7 +803,7 @@ int ZStage::GetPositionUm(double& pos)
    command << "W Z";
 
    // send command
-   int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r\n");
+   int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
    if (ret != DEVICE_OK)
       return ret;
 
@@ -822,11 +850,11 @@ int ZStage::SetPositionSteps(long pos)
 
    // block/wait for acknowledge, or until we time out;
    string answer;
-   ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
    if (ret != DEVICE_OK)
       return ret;
 
-   if (answer.substr(0,2).compare(":A") == 0)
+   if (answer.substr(0,2).compare(":A") == 0 || answer.substr(1,2).compare(":A") == 0)
    {
       return DEVICE_OK;
    }
@@ -847,7 +875,7 @@ int ZStage::GetPositionSteps(long& steps)
    command << "W Z";
 
    // send command
-   int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r\n");
+   int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
    if (ret != DEVICE_OK)
       return ret;
 
@@ -917,11 +945,11 @@ int ZStage::SetOrigin()
 
    // block/wait for acknowledge, or until we time out;
    string answer;
-   ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
    if (ret != DEVICE_OK)
       return ret;
 
-   if (answer.substr(0,2).compare(":A") == 0)
+   if (answer.substr(0,2).compare(":A") == 0 || answer.substr(1,2).compare(":A") == 0)
    {
       return DEVICE_OK;
    }
