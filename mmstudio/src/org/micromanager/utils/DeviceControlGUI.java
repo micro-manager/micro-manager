@@ -29,6 +29,7 @@ public interface DeviceControlGUI {
    public void updateGUI();
    public void initializeGUI();
    public void updateImageGUI();
+   public boolean updateImage();
    public boolean okToAcquire();
    public void stopAllActivity();
    public void applyContrastSettings(ContrastSettings contrast8_, ContrastSettings contrast16_);
