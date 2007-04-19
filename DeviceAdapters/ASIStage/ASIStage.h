@@ -16,9 +16,7 @@
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-// AUTHOR:        Nenad Amodaj, nenad@amodaj.com, 06/01/2006
-//
-// CVS:           $Id: ASI.h,v 1.1 2007/02/27 23:33:14 nenad Exp $
+// AUTHOR:        Jizhen Zhao (j.zhao@andor.com) based on code by Nenad Amodaj, April 2007
 //
 
 #ifndef _ASIStage_H_
