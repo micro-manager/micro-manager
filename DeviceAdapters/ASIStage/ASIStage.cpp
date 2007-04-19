@@ -90,7 +90,7 @@ int XYStage::Initialize()
    // check status first
    const char* command = "/"; // check STATUS
    // send command
-   int ret = SendSerialCommand(port_.c_str(), command, "\r\n");
+   int ret = SendSerialCommand(port_.c_str(), command, "\r");
    if (ret != DEVICE_OK)
       return ret;
 
@@ -136,7 +136,7 @@ bool XYStage::Busy()
 {
    const char* command = "/";
    // send command
-   int ret = SendSerialCommand(port_.c_str(), command, "\r\n");
+   int ret = SendSerialCommand(port_.c_str(), command, "\r");
    if (ret != DEVICE_OK)
       return false;
 
@@ -161,6 +161,7 @@ bool XYStage::Busy()
 int XYStage::SetPositionUm(double x, double y)
 {
 
+   // First empty whatever is in the serial port
    // for ASI
 
    ostringstream command;
@@ -174,11 +175,11 @@ int XYStage::SetPositionUm(double x, double y)
 
    // block/wait for acknowledge, or until we time out;
    string answer;
-   ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
    if (ret != DEVICE_OK)
       return ret;
 
-   if (answer.substr(0,2).compare(":A") == 0)
+   if ( (answer.substr(0,2).compare(":A") == 0) || (answer.substr(1,2).compare(":A") == 0) )
    {
       return DEVICE_OK;
    }
@@ -198,7 +199,7 @@ int XYStage::GetPositionUm(double& x, double& y)
    command << "W X Y";
 
    // send command
-   int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r\n");
+   int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
    if (ret != DEVICE_OK)
       return ret;
 
@@ -283,7 +284,7 @@ int XYStage::SetOrigin()
 
    // block/wait for acknowledge, or until we time out;
    string answer;
-   ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -332,7 +333,7 @@ void XYStage::Wait()
    bool busy=true;
    const char* command = "/";
    // send command
-   int ret = SendSerialCommand(port_.c_str(), command, "\r\n");
+   int ret = SendSerialCommand(port_.c_str(), command, "\r");
    //if (ret != DEVICE_OK)
    //   return ret;
    // get answer
@@ -357,7 +358,7 @@ void XYStage::Wait()
 		//Sleep(intervalMs);
 		totaltime += intervalMs;
 
-		ret = SendSerialCommand(port_.c_str(), command, "\r\n");
+		ret = SendSerialCommand(port_.c_str(), command, "\r");
 		//if (ret != DEVICE_OK)
 		//  return ret;
 		ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
@@ -385,7 +386,7 @@ int XYStage::Home(){
 
    // block/wait for acknowledge, or until we time out;
    string answer;
-   ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -427,7 +428,7 @@ int XYStage::Calibrate(){
 
    // block/wait for acknowledge, or until we time out;
    string answer;
-   ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -498,7 +499,7 @@ int XYStage::Stop() {
 
    // block/wait for acknowledge, or until we time out;
    string answer;
-   ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
    if (ret != DEVICE_OK)
       return ret;
 
