@@ -231,4 +231,32 @@ private:
    std::string name_;
    long openTimeUs_;
 };
+
+
+//////////////////////////////////////////////////////////////////////////////
+// AutoFocus class
+// Nikon Perfect Focus control
+//////////////////////////////////////////////////////////////////////////////
+class PerfectFocus : public CAutoFocusBase<PerfectFocus>
+{
+public:
+   PerfectFocus();
+   ~PerfectFocus();
+      
+   // MMDevice API
+   bool Busy();
+   void GetName(char* pszName) const;
+
+   int Initialize();
+   int Shutdown();
+
+   // AutoFocus API
+   virtual int SetContinuousFocusing(bool state);
+   virtual int GetContinuousFocusing(bool& state);
+   virtual int Focus();
+   virtual int GetFocusScore(double& /*score*/) {return DEVICE_UNSUPPORTED_COMMAND;}
+
+private:
+   bool initialized_;
+};
 #endif //_NIKON_TE2000_H_

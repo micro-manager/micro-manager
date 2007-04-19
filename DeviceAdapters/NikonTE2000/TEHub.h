@@ -20,6 +20,16 @@
 #include <map>
 #include "../../MMDevice/MMDevice.h"
 
+// PFS status constants
+const int PFS_WAIT = 1;
+const int PFS_LED_OVER = 2;
+const int PFS_LED_UNDER = 3;
+const int PFS_RUNNING = 4;
+const int PFS_SEARCHING = 5;
+const int PFS_SEARCHING_2 = 10;
+const int PFS_JUST_PINT = 50;
+const int PFS_DISABLED = 90;
+
 enum CommandMode
 {
    Sync = 0,

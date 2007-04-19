@@ -38,6 +38,7 @@ const char* g_OpticalPathName = "OpticalPath";
 const char* g_FilterBlockName = "FilterBlock";
 const char* g_LampName = "Lamp";
 const char* g_FocusName = "Focus";
+const char* g_AutoFocusName = "PerfectFocus";
 const char* g_HubName = "TE2000";
 
 using namespace std;
@@ -997,4 +998,97 @@ int Lamp::OnVoltage(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
 
    return DEVICE_OK;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// PerfectFocus
+// ~~~~~~~~~~~~
+
+PerfectFocus::PerfectFocus() :
+   initialized_(false)
+{
+}
+
+PerfectFocus::~PerfectFocus()
+{
+}
+      
+void PerfectFocus::GetName(char* pszName) const
+{
+}
+
+bool PerfectFocus::Busy()
+{
+   int status = 0;
+   g_hub.GetPFocusStatus(*this, *GetCoreCallback(), status);
+
+   if (status == PFS_WAIT || status == PFS_SEARCHING || status == PFS_SEARCHING_2)
+      return true;
+   else
+      return false;
+}
+
+int PerfectFocus::Initialize()
+{
+   if (initialized_)
+      return DEVICE_OK;
+
+   // set property list
+   // -----------------
+   
+   // Name
+   int ret = CreateProperty(MM::g_Keyword_Name, g_AutoFocusName, MM::String, true);
+   if (DEVICE_OK != ret)
+      return ret;
+
+   // Description
+   ret = CreateProperty(MM::g_Keyword_Description, "Nikon Perfect Focus (PFS) adapter", MM::String, true);
+   if (DEVICE_OK != ret)
+      return ret;
+   
+   ret = UpdateStatus();
+   if (ret != DEVICE_OK)
+      return ret;
+
+   initialized_ = true;
+   return DEVICE_OK;
+}
+
+int PerfectFocus::Shutdown()
+{
+   initialized_ = false;
+   return DEVICE_OK;
+}
+
+int PerfectFocus::SetContinuousFocusing(bool state)
+{
+   if (state)
+      return g_hub.SetPFocusOn(*this, *GetCoreCallback());
+   else
+      return g_hub.SetPFocusOff(*this, *GetCoreCallback());
+}
+
+int PerfectFocus::GetContinuousFocusing(bool& state)
+{
+   int status;
+   int ret = g_hub.GetPFocusStatus(*this, *GetCoreCallback(), status);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if (status == PFS_RUNNING)
+      state = true;
+   else
+      state = false;
+
+   return DEVICE_OK;
+}
+
+int PerfectFocus::Focus()
+{
+   return g_hub.SetPFocusOn(*this, *GetCoreCallback());
+}
+
+int GetFocusScore(double& /*score*/)
+{
+   return DEVICE_UNSUPPORTED_COMMAND;
 }
