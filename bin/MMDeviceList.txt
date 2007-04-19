@@ -2,12 +2,24 @@ Andor,Ixon,Andor iXon camera adapter,2
 Andor,Ixon-Shutter,Andor iXon shutter adapter,3
 AOTF,AOTF-Switch,TLL digital out AOTF wavelength selector,4
 AOTF,AOTF-Shutter,TTL digital out AOTF shutter,3
+ASI,ZStage,Add-on Z-stage,5
+ASI,XYStage,XY Stage,6
+ASI,Controller,ASIFW1000 Controller,8
+ASI,FilterWheel,FilterWheel,4
+ASI,Shutter,Shutter,3
+ASIFW1000,Controller,ASIFW1000 Controller,8
+ASIFW1000,FilterWheel,FilterWheel,4
+ASIFW1000,Shutter,Shutter,3
+ASIStage,ZStage,Add-on Z-stage,5
+ASIStage,XYStage,XY Stage,6
 DemoCamera,DCam,Demo camera,2
 DemoCamera,DWheel,Demo filter wheel,4
 DemoCamera,DObjective,Demo objective turret,4
 DemoCamera,DStage,Demo stage,5
 DemoCamera,DXYStage,Demo XY stage,6
 DemoCamera,DLightPath,Demo light path,4
+DemoCamera,DAutoFocus,Demo auto focus,9
+DemoCamera,DShutter,Demo shutter,3
 DTOpenLayer,DTOL-Switch,Description N/A,4
 DTOpenLayer,DTOL-Shutter,Description N/A,3
 DTOpenLayer,DTOL-DAC-0,Description N/A,8
@@ -37,7 +49,6 @@ PVCAM,Micromax,Princeton Intruments Micromax,2
 PVCAM,Camera-1,Universal PVCAM interface - camera slot 1,2
 PVCAM,Camera-2,Universal PVCAM interface - camera slot 2,2
 Sensicam,Sensicam,PCO Sensicam camera adapter,2
-StanfordPhotonics,MegaZ,Description N/A,2
 SutterLambda,Wheel-A,Lambda 10 filter wheel A,4
 SutterLambda,Wheel-B,Lambda 10 filter wheel B,4
 SutterLambda,Wheel-C,Lambda 10 wheel C (10-3 only),4

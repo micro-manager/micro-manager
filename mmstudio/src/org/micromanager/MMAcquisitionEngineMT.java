@@ -33,8 +33,6 @@ import ij.process.ShortProcessor;
 
 import java.awt.Color;
 import java.awt.Rectangle;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
@@ -48,7 +46,6 @@ import java.util.TimerTask;
 
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
-
 
 import mmcorej.CMMCore;
 import mmcorej.Configuration;

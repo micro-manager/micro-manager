@@ -1108,7 +1108,6 @@ int CDemoXYStage::Shutdown()
 ///////////////////////////////////////////////////////////////////////////////
 // Action handlers
 ///////////////////////////////////////////////////////////////////////////////
-
 // none implemented
 
 
@@ -1120,6 +1119,68 @@ void DemoShutter::GetName(char* name) const
    CDeviceUtils::CopyLimitedString(name, g_ShutterDeviceName);
 }
 
+int DemoShutter::Initialize()
+{
+   if (initialized_)
+      return DEVICE_OK;
+
+   // set property list
+   // -----------------
+   
+   // Name
+   int ret = CreateProperty(MM::g_Keyword_Name, g_ShutterDeviceName, MM::String, true);
+   if (DEVICE_OK != ret)
+      return ret;
+
+   // Description
+   ret = CreateProperty(MM::g_Keyword_Description, "Demo shutter driver", MM::String, true);
+   if (DEVICE_OK != ret)
+      return ret;
+
+   // state
+   CPropertyAction* pAct = new CPropertyAction (this, &DemoShutter::OnState);
+   ret = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct); 
+   if (ret != DEVICE_OK) 
+      return ret; 
+
+   AddAllowedValue(MM::g_Keyword_State, "0"); // Closed
+   AddAllowedValue(MM::g_Keyword_State, "1"); // Open
+
+   state_ = false;
+   
+   ret = UpdateStatus();
+   if (ret != DEVICE_OK)
+      return ret;
+
+   initialized_ = true;
+
+   return DEVICE_OK;
+}
+///////////////////////////////////////////////////////////////////////////////
+// Action handlers
+///////////////////////////////////////////////////////////////////////////////
+
+int DemoShutter::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      if (state_)
+         pProp->Set(1L);
+      else
+         pProp->Set(0L);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      long pos;
+      pProp->Get(pos);
+
+      // apply the value
+      state_ = pos == 0 ? false : true;
+   }
+
+   return DEVICE_OK;
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // CDemoAutoFocus implementation
@@ -1127,4 +1188,33 @@ void DemoShutter::GetName(char* name) const
 void DemoAutoFocus::GetName(char* name) const
 {
    CDeviceUtils::CopyLimitedString(name, g_AutoFocusDeviceName);
+}
+
+int DemoAutoFocus::Initialize()
+{
+   if (initialized_)
+      return DEVICE_OK;
+
+   // set property list
+   // -----------------
+   
+   // Name
+   int ret = CreateProperty(MM::g_Keyword_Name, g_AutoFocusDeviceName, MM::String, true);
+   if (DEVICE_OK != ret)
+      return ret;
+
+   // Description
+   ret = CreateProperty(MM::g_Keyword_Description, "Demo auto-focus adapter", MM::String, true);
+   if (DEVICE_OK != ret)
+      return ret;
+   
+   running_ = false;   
+   
+   ret = UpdateStatus();
+   if (ret != DEVICE_OK)
+      return ret;
+
+   initialized_ = true;
+
+   return DEVICE_OK;
 }

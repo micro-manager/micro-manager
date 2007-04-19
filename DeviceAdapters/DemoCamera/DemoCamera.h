@@ -308,7 +308,7 @@ public:
    bool Busy() {return busy_;}
    void GetName(char* pszName) const;
 
-   int Initialize(){running_ = false; initialized_ = true; return DEVICE_OK;}
+   int Initialize();
    int Shutdown(){initialized_ = false; return DEVICE_OK;}
 
    // AutoFocus API
@@ -333,7 +333,7 @@ public:
    DemoShutter() : state_(false), initialized_(false) {}
    ~DemoShutter() {}
 
-   int Initialize() {state_ = false; initialized_ = true; return DEVICE_OK;}
+   int Initialize();
    int Shutdown() {initialized_ = false; return DEVICE_OK;}
 
    void GetName (char* pszName) const;
@@ -346,7 +346,6 @@ public:
 
    // action interface
    int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnShutterNr(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    bool state_;

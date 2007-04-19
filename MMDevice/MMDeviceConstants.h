@@ -95,6 +95,7 @@ namespace MM {
    const char* const g_Keyword_CoreShutter      = "Shutter";
    const char* const g_Keyword_CoreXYStage      = "XYStage";
    const char* const g_Keyword_CoreFocus        = "Focus";
+   const char* const g_Keyword_CoreAutoFocus    = "AutoFocus";
    const char* const g_Keyword_CoreAutoShutter  = "AutoShutter";
    const char* const g_Keyword_Channel          = "Channel";
    const char* const g_Keyword_Version          = "Version";

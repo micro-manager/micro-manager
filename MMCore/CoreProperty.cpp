@@ -127,6 +127,10 @@ void CorePropertyCollection::Execute(const char* propName, const char* value)
    {
       core_->setXYStageDevice(value);
    }
+   else if (strcmp(propName, MM::g_Keyword_CoreAutoFocus) == 0)
+   {
+      core_->setAutoFocusDevice(value);
+   }
    // unknown property
    else
    {
@@ -173,6 +177,9 @@ void CorePropertyCollection::Refresh()
 
    // XYStage
    Set(MM::g_Keyword_CoreXYStage, core_->getXYStageDevice().c_str());
+
+   // Auto-Focus
+   Set(MM::g_Keyword_CoreAutoFocus, core_->getAutoFocusDevice().c_str());
 }
 
 bool CorePropertyCollection::IsReadOnly(const char* propName) const

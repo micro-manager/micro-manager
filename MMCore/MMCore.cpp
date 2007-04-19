@@ -76,7 +76,7 @@ const char* g_logFileName = "CoreLog.txt";
 // version info
 const int MMCore_versionMajor = 2;
 const int MMCore_versionMinor = 0;
-const int MMCore_versionBuild = 0;
+const int MMCore_versionBuild = 1;
 
 // mutex
 static ACE_Mutex g_lock;
@@ -91,7 +91,7 @@ static ACE_Mutex g_lock;
  * devices at this point.
  */
 CMMCore::CMMCore() :
-   camera_(0), shutter_(0), focusStage_(0), xyStage_(0), pollingIntervalMs_(10), timeoutMs_(5000),
+   camera_(0), shutter_(0), focusStage_(0), xyStage_(0), autoFocus_(0), pollingIntervalMs_(10), timeoutMs_(5000),
    logStream_(0), autoShutter_(true), callback_(0), configGroups_(0), properties_(0)
 {
    configGroups_ = new ConfigGroupCollection();
@@ -175,9 +175,13 @@ CMMCore::CMMCore() :
       CoreProperty propFocus;
       properties_->Add(MM::g_Keyword_CoreFocus, propFocus);
 
-      // Focus device
+      // XYStage device
       CoreProperty propXYStage;
       properties_->Add(MM::g_Keyword_CoreXYStage, propXYStage);
+
+      // Auto-focus device
+      CoreProperty propAutoFocus;
+      properties_->Add(MM::g_Keyword_CoreAutoFocus, propAutoFocus);
 
       properties_->Refresh();
    }
@@ -483,6 +487,11 @@ void CMMCore::loadDevice(const char* label, const char* library, const char* dev
             CORE_LOG1("Device %s set as xyStage.\n", label);
          break;
 
+         case MM::AutoFocusDevice:
+            autoFocus_ = static_cast<MM::AutoFocus*>(pDevice);
+            CORE_LOG1("Device %s set as auto-focus.\n", label);
+         break;
+
          default:
             // no action on unrecognized device
          break;
@@ -509,6 +518,7 @@ void CMMCore::unloadAllDevices() throw (CMMError)
       shutter_ = 0;
       focusStage_ = 0;
       xyStage_ = 0;
+      autoFocus_ = 0;
       
       // clear configurations
       CConfigMap::const_iterator it;
@@ -565,6 +575,8 @@ void CMMCore::reset() throw (CMMError)
 
 /**
  * Calls Initialize() method for each loaded device.
+ * This method also initialized allowed values for core properties, based
+ * on the collection of loaded devices.
  */
 void CMMCore::initializeAllDevices() throw (CMMError)
 {
@@ -615,7 +627,14 @@ void CMMCore::initializeAllDevices() throw (CMMError)
    for (size_t i=0; i<xystages.size(); i++)
       properties_->AddAllowedValue(MM::g_Keyword_CoreXYStage, xystages[i].c_str());
 
-   properties_->Refresh();
+    // auto-focus device
+   vector<string> afmodules = getLoadedDevicesOfType(MM::AutoFocusDevice);
+   afmodules.push_back(""); // add empty value
+   properties_->ClearAllowedValues(MM::g_Keyword_CoreAutoFocus);
+   for (size_t i=0; i<afmodules.size(); i++)
+      properties_->AddAllowedValue(MM::g_Keyword_CoreAutoFocus, afmodules[i].c_str());
+
+  properties_->Refresh();
 }
 
 /**
@@ -1214,6 +1233,44 @@ string CMMCore::getXYStageDevice()
       }
    return deviceName;
 }
+
+/**
+ * Returns the label of the currently selected auto-focus device.
+ */
+string CMMCore::getAutoFocusDevice()
+{
+   string deviceName;
+   if (autoFocus_)
+      try {
+         deviceName = pluginManager_.GetDeviceLabel(*autoFocus_);
+      }
+      catch (CMMError& err)
+      {
+         // trap the error and ignore it in this case.
+         // This happens only if the system is in the inconistent internal state
+         CORE_DEBUG1("Internal error: plugin manager does not recognize device reference. %s\n", err.getMsg().c_str());
+      }
+   return deviceName;
+}
+
+/**
+ * Sets the current auto-focus device.
+ */
+void CMMCore::setAutoFocusDevice(const char* autofocusLabel) throw (CMMError)
+{
+   if (autofocusLabel && strlen(autofocusLabel)>0)
+   {
+      autoFocus_ = getSpecificDevice<MM::AutoFocus>(autofocusLabel);
+      CORE_LOG1("Auto-focus device set to %s\n", autofocusLabel);
+   }
+   else
+   {
+      autoFocus_ = 0;
+      CORE_LOG("Auto-focus device removed.\n");
+   }
+   properties_->Refresh(); // TODO: more efficient
+}
+
 
 /**
  * Sets the current shutter device.

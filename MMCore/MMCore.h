@@ -189,10 +189,12 @@ public:
    std::string getShutterDevice();
    std::string getFocusDevice();
    std::string getXYStageDevice();
+   std::string getAutoFocusDevice();
    void setCameraDevice(const char* cameraLabel) throw (CMMError);
    void setShutterDevice(const char* shutterLabel) throw (CMMError);
    void setFocusDevice(const char* focusLabel) throw (CMMError);
    void setXYStageDevice(const char* xyStageLabel) throw (CMMError);
+   void setAutoFocusDevice(const char* focusLabel) throw (CMMError);
    //@ }
 
    /** @name State device support
@@ -261,6 +263,8 @@ private:
    MM::Shutter* shutter_;
    MM::Stage* focusStage_;
    MM::XYStage* xyStage_;
+   MM::AutoFocus* autoFocus_;
+
    std::vector<MM::Device*> imageSynchro_;
 
    CPluginManager pluginManager_;

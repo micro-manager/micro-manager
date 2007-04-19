@@ -45,7 +45,6 @@ import java.util.ArrayList;
 import java.util.GregorianCalendar;
 
 import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
 import mmcorej.CMMCore;
