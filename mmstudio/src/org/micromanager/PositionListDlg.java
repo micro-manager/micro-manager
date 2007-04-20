@@ -188,6 +188,7 @@ public class PositionListDlg extends MMDialog {
       springLayout.putConstraint(SpringLayout.NORTH, scrollPane, 15, SpringLayout.NORTH, getContentPane());
 
       posTable_ = new JTable();
+      posTable_.setFont(new Font("", Font.PLAIN, 10));
       PosTableModel model = new PosTableModel();
       model.setData(posList);
       posTable_.setModel(model);
@@ -195,6 +196,7 @@ public class PositionListDlg extends MMDialog {
       scrollPane.setViewportView(posTable_);
 
       final JButton markButton = new JButton();
+      markButton.setFont(new Font("", Font.PLAIN, 10));
       markButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
             markPosition();
@@ -207,6 +209,7 @@ public class PositionListDlg extends MMDialog {
       springLayout.putConstraint(SpringLayout.NORTH, markButton, 17, SpringLayout.NORTH, getContentPane());
 
       final JButton removeButton = new JButton();
+      removeButton.setFont(new Font("", Font.PLAIN, 10));
       removeButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
             removeCurentPosition();
@@ -223,6 +226,7 @@ public class PositionListDlg extends MMDialog {
       springLayout.putConstraint(SpringLayout.WEST, removeButton, -109, SpringLayout.EAST, getContentPane());
 
       final JButton closeButton = new JButton();
+      closeButton.setFont(new Font("", Font.PLAIN, 10));
       closeButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
             savePosition();
@@ -239,6 +243,7 @@ public class PositionListDlg extends MMDialog {
       springLayout.putConstraint(SpringLayout.WEST, closeButton, 0, SpringLayout.WEST, removeButton);
 
       final JButton gotoButton = new JButton();
+      gotoButton.setFont(new Font("", Font.PLAIN, 10));
       gotoButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
             goToCurrentPosition();
@@ -251,6 +256,7 @@ public class PositionListDlg extends MMDialog {
       springLayout.putConstraint(SpringLayout.NORTH, gotoButton, 117, SpringLayout.NORTH, getContentPane());
 
       final JButton refreshButton = new JButton();
+      refreshButton.setFont(new Font("", Font.PLAIN, 10));
       refreshButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
             refreshCurrentPosition();
@@ -263,6 +269,7 @@ public class PositionListDlg extends MMDialog {
       springLayout.putConstraint(SpringLayout.NORTH, refreshButton, 142, SpringLayout.NORTH, getContentPane());
 
       final JButton removeAllButton = new JButton();
+      removeAllButton.setFont(new Font("", Font.PLAIN, 10));
       removeAllButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
             clearAllPositions();
@@ -300,6 +307,7 @@ public class PositionListDlg extends MMDialog {
       springLayout.putConstraint(SpringLayout.WEST, currentPositionLabel, 0, SpringLayout.WEST, refreshButton);
 
       final JButton loadButton = new JButton();
+      loadButton.setFont(new Font("", Font.PLAIN, 10));
       loadButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
             loadPositionList();
@@ -313,6 +321,7 @@ public class PositionListDlg extends MMDialog {
       springLayout.putConstraint(SpringLayout.WEST, loadButton, 0, SpringLayout.WEST, curPostextArea_);
 
       final JButton saveAsButton = new JButton();
+      saveAsButton.setFont(new Font("", Font.PLAIN, 10));
       saveAsButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
             savePositionListAs();
@@ -326,6 +335,7 @@ public class PositionListDlg extends MMDialog {
       springLayout.putConstraint(SpringLayout.NORTH, saveAsButton, 347, SpringLayout.NORTH, getContentPane());
       
       final JButton setOriginButton = new JButton();
+      setOriginButton.setFont(new Font("", Font.PLAIN, 10));
       setOriginButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
             calibrate(); //setOrigin();

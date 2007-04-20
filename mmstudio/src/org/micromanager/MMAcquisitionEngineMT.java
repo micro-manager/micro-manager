@@ -139,6 +139,8 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
    private int sliceMode_ = SliceMode.CHANNELS_FIRST;
 
    private int previousPosIdx_;
+
+   private boolean oldFocusEnabled_;
    
    /**
     * Timer task routine triggered at each frame. 
@@ -459,7 +461,6 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
       GregorianCalendar cld = null;
       GregorianCalendar cldStart = new GregorianCalendar();
       int numSlices = useSliceSetting_ ? sliceDeltaZ_.length : 1;
-      boolean contFocusEnabled = false;
 
       // move to the required position
       try {
@@ -474,12 +475,10 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
          }
 
          System.out.println("Frame " + frameCount_ + " at " + GregorianCalendar.getInstance().getTime());
-         
-         String afDevice = core_.getAutoFocusDevice();
-         if (afDevice.length() > 0) {
-            
-            // turn continouous AF off
-         }
+
+         oldFocusEnabled_ = core_.isContinuousFocusEnabled();
+         if (oldFocusEnabled_)
+            core_.enableContinuousFocus(false);
          
          for (int j=0; j<numSlices; j++) {         
             double z = 0.0;
@@ -602,7 +601,12 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
                   saveImageFile(outputDir_[posIdx] + "/" + fname, img, (int)imgWidth_, (int)imgHeight_);
                }              
             }
-         }   
+         }
+         
+         // turn the contionuous focus back again
+         if (oldFocusEnabled_)
+            core_.enableContinuousFocus(oldFocusEnabled_);
+
       } catch(MMException e) {
          stop();
          restoreSystem();
@@ -662,7 +666,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
       } else {
          frameCount_++;      
       }
-      
+            
       if(frameCount_ >= numFrames_) {
          stop();
          if (useMultiplePositions_) {
@@ -671,6 +675,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
          } else {
             i5dWin_[0].setTitle("Acquisition (completed) " + cld.getTime());
          }
+         
          restoreSystem();
          return;
       }
@@ -704,6 +709,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
             core_.setSystemState(oldCameraState_); // restore original settings
          if (oldChannelState_ != null)
             core_.setSystemState(oldChannelState_);
+         core_.enableContinuousFocus(oldFocusEnabled_); // restore cont focus
          core_.waitForSystem();
          
          // >>> update GUI disabled
