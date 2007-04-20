@@ -459,6 +459,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
       GregorianCalendar cld = null;
       GregorianCalendar cldStart = new GregorianCalendar();
       int numSlices = useSliceSetting_ ? sliceDeltaZ_.length : 1;
+      boolean contFocusEnabled = false;
 
       // move to the required position
       try {
@@ -476,6 +477,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
          
          String afDevice = core_.getAutoFocusDevice();
          if (afDevice.length() > 0) {
+            
             // turn continouous AF off
          }
          
