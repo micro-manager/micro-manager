@@ -475,7 +475,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
          System.out.println("Frame " + frameCount_ + " at " + GregorianCalendar.getInstance().getTime());
          
          String afDevice = core_.getAutoFocusDevice();
-         if (!afDevice.isEmpty()) {
+         if (afDevice.length() > 0) {
             // turn continouous AF off
          }
          
