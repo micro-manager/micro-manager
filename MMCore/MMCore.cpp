@@ -76,7 +76,7 @@ const char* g_logFileName = "CoreLog.txt";
 // version info
 const int MMCore_versionMajor = 2;
 const int MMCore_versionMinor = 0;
-const int MMCore_versionBuild = 1;
+const int MMCore_versionBuild = 2;
 
 // mutex
 static ACE_Mutex g_lock;
@@ -2748,6 +2748,27 @@ void CMMCore::loadSystemConfiguration(const char* fileName) throw (CMMError)
 
 }
 
+
+double CMMCore::getFocusScore()
+{
+   return 0.0;
+}
+
+void CMMCore::enableContinuousFocus(bool /*enable*/) throw (CMMError)
+{
+}
+
+bool CMMCore::isContinuousFocusEnabled()
+{
+   return false;
+}
+void CMMCore::fullFocus() throw (CMMError)
+{
+}
+
+void CMMCore::incrementalFocus() throw (CMMError)
+{
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // Private methods

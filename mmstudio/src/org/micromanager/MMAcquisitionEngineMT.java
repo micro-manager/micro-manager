@@ -473,6 +473,12 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
          }
 
          System.out.println("Frame " + frameCount_ + " at " + GregorianCalendar.getInstance().getTime());
+         
+         String afDevice = core_.getAutoFocusDevice();
+         if (!afDevice.isEmpty()) {
+            // turn continouous AF off
+         }
+         
          for (int j=0; j<numSlices; j++) {         
             double z = 0.0;
             double zOffset = 0.0;
@@ -667,7 +673,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
          return;
       }
    }
-   
+ 
    public boolean saveImageFile(String fname, Object img, int width, int height) {
       ImageProcessor ip;
       if (img instanceof byte[]) {

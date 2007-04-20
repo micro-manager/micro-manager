@@ -197,6 +197,17 @@ public:
    void setAutoFocusDevice(const char* focusLabel) throw (CMMError);
    //@ }
 
+   /** @name Auto-focusing
+    * API for controlling auto-focusing devices or software modules.
+    */
+   //@ {
+   double getFocusScore();
+   void enableContinuousFocus(bool enable) throw (CMMError);
+   bool isContinuousFocusEnabled();
+   void fullFocus() throw (CMMError);
+   void incrementalFocus() throw (CMMError);
+   //@}
+
    /** @name State device support
     * API for controlling state devices (filters, turrets, etc.)
     */
@@ -234,7 +245,7 @@ public:
    double getYPosition(const char* deviceName) throw (CMMError);
    void stop(const char* deviceName) throw (CMMError);
    void home(const char* deviceName) throw (CMMError);
-   void setOriginXY(const char* deviceName) throw (CMMError);//jizhen 4/12/2007
+   void setOriginXY(const char* deviceName) throw (CMMError);
    //@ }
 
    /** @name Serial port control
