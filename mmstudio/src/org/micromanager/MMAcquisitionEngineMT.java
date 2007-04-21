@@ -97,6 +97,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
    private Image5D img5d_[];
    private Image5DWindow i5dWin_[];
    private int frameCount_;
+   private int posCount_;
    private int xWindowPos = 100;
    private int yWindowPos = 100;
    
@@ -139,7 +140,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
    private int sliceMode_ = SliceMode.CHANNELS_FIRST;
 
    private int previousPosIdx_;
-
+   private boolean acqInterrupted_;
    private boolean oldFocusEnabled_;
    
    /**
@@ -147,13 +148,42 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
     */
    private class AcqFrame extends TimerTask {
       public void run() {
-         if (useMultiplePositions_) {
+         if (useMultiplePositions_ && posMode_ == PositionMode.TIME_LAPSE) {
             for (int i=0; i<posList_.getNumberOfPositions(); i++)
                acquireOneFrame(i);
          } else
-            acquireOneFrame(0);
+            acquireOneFrame(posCount_);
       }
    }
+
+   /**
+    * Multi-field thread. 
+    */
+   private class MultiFieldThread implements Runnable {
+      public void run() {
+         posCount_=0;
+         System.out.println("Multi-field started");
+         while (posCount_ < posList_.getNumberOfPositions()) {
+            System.out.println("Acq " + posCount_ + " started");
+            startAcquisition();
+            
+            while (isAcquisitionRunning()) {
+               try {
+                  Thread.sleep(500);
+               } catch (InterruptedException e) {
+                  return;
+               }
+            }
+            if (acqInterrupted_ == true) {
+               System.out.println("Acq " + posCount_ + "interrupted");
+               break;
+            }
+            System.out.println("Acq " + posCount_ + "completed");
+            posCount_++;
+         }
+      }
+   }
+   
    
    /**
     * Threadsafe image5d window update.
@@ -185,6 +215,8 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
       numFrames_ = 1;
       frameIntervalMs_ = 0.0; // ms
       frameCount_ = 0;
+      acqInterrupted_ = false;
+      posCount_ = 0;
       //metadata_ = new JSONObject();
       rootName_ = new String(DEFAULT_ROOT_NAME);
       guidgen_ = PlatformIndependentGuidGen.getInstance();
@@ -241,7 +273,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
       if (isAcquisitionRunning()) {
          throw new MMException("Busy with the current acquisition.");
       }
-      if (useMultiplePositions_ && (posList_ == null || posList_.getNumberOfPositions() == 0))
+      if (useMultiplePositions_ && (posList_ == null || posList_.getNumberOfPositions() < 1))
          throw new MMException("Multiple position mode is selected but position list is not defined");
 
       // check if the parent GUI is in the adequate state
@@ -275,8 +307,18 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
       }
 
       acquisitionLagging_ = false;
-
-      startAcquisition();
+      posCount_ = 0;
+      
+      if (useMultiplePositions_) {
+         if (posMode_ == PositionMode.TIME_LAPSE) {
+            startAcquisition();
+         } else {
+           MultiFieldThread mft = new MultiFieldThread();
+           mft.run();
+         }
+      } else {
+         startAcquisition();
+      }
    }
    
    /**
@@ -285,6 +327,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
    public void clear() {
       channels_.clear();
       frameCount_ = 0;
+      posCount_= 0;
    }
    
    /**
@@ -430,6 +473,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
     */
    public void startAcquisition(){
       previousPosIdx_ = -1; // initialize
+      acqInterrupted_ = true;
       frameCount_ = 0;
       Runtime.getRuntime().gc();
             
@@ -465,13 +509,21 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
       // move to the required position
       try {
          if (useMultiplePositions_) {
-            if (posIdx != previousPosIdx_) {
-               MultiStagePosition pos = posList_.getPosition(posIdx);
-               MultiStagePosition.goToPosition(pos, core_);
-               core_.waitForSystem();
-            }
+            if (posMode_ == PositionMode.TIME_LAPSE) {
 
-            previousPosIdx_ = posIdx;
+               // time lapse logic
+               if (posIdx != previousPosIdx_) {
+                  MultiStagePosition pos = posList_.getPosition(posIdx);
+                  MultiStagePosition.goToPosition(pos, core_);
+                  core_.waitForSystem();
+               }
+
+               previousPosIdx_ = posIdx;
+            } else if (posMode_ == PositionMode.MULTI_FIELD) {
+               // TODO: multi-field logic
+            } else {
+               throw new MMException("Unsupported position mode: " + posMode_);
+            }
          }
 
          System.out.println("Frame " + frameCount_ + " at " + GregorianCalendar.getInstance().getTime());
@@ -660,15 +712,19 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
       }
 
       // update frame counter
-      if (useMultiplePositions_) {
+      if (useMultiplePositions_ && posMode_ == PositionMode.TIME_LAPSE) {
          if (posIdx == posList_.getNumberOfPositions() - 1)
             frameCount_++;
       } else {
          frameCount_++;      
       }
-            
+      
+      // check the termination criterion
       if(frameCount_ >= numFrames_) {
+         // acquisition finished
          stop();
+         
+         // adjust the title
          if (useMultiplePositions_) {
             for (int pp=0; pp<i5dWin_.length; pp++)
                i5dWin_[pp].setTitle("Acquisition "  + posList_.getPosition(pp).getLabel() + "(completed)" + cld.getTime());
@@ -676,7 +732,11 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
             i5dWin_[0].setTitle("Acquisition (completed) " + cld.getTime());
          }
          
+         // return to initial state
          restoreSystem();
+         
+         // no errors or interruptions
+         acqInterrupted_ = false;
          return;
       }
    }
