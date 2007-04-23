@@ -242,6 +242,7 @@ int Wheel::Initialize()
    if (ret != DEVICE_OK)
       return ret;
 
+   // Transfer to On Line
    char setSerial = (char)238;
    ret = WriteToComPort(port_.c_str(), &setSerial, 1);
    if (DEVICE_OK != ret)
@@ -460,16 +461,6 @@ Shutter::Shutter(const char* name, int id) :
    CPropertyAction* pAct = new CPropertyAction (this, &Shutter::OnPort);
    CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
 
-   // Shutter mode
-   // ------------
-   pAct = new CPropertyAction (this, &Shutter::OnMode);
-   vector<string> modes;
-   modes.push_back(g_FastMode);
-   modes.push_back(g_SoftMode);
-
-   CreateProperty(g_ShutterModeProperty, g_FastMode, MM::String, false, pAct, true);
-   SetAllowedValues(g_ShutterModeProperty, modes);
-
    UpdateStatus();
 }
 
@@ -510,6 +501,22 @@ int Shutter::Initialize()
 
    ret = UpdateStatus();
    if (ret != DEVICE_OK)
+      return ret;
+
+   // Shutter mode
+   // ------------
+   pAct = new CPropertyAction (this, &Shutter::OnMode);
+   vector<string> modes;
+   modes.push_back(g_FastMode);
+   modes.push_back(g_SoftMode);
+
+   CreateProperty(g_ShutterModeProperty, g_FastMode, MM::String, false, pAct, true);
+   SetAllowedValues(g_ShutterModeProperty, modes);
+
+   // Transfer to On Line
+   char setSerial = (char)238;
+   ret = WriteToComPort(port_.c_str(), &setSerial, 1);
+   if (DEVICE_OK != ret)
       return ret;
 
    // set initial values
@@ -629,9 +636,7 @@ bool Shutter::ControllerBusy()
 bool Shutter::SetShutterMode(const char* mode)
 {
    unsigned char msg[3];
-   msg[0] = 0;
-   msg[1] = id_ + 1;
-   msg[2] = 13; // CR
+   //msg[0] = 0;
 
    if (strcmp(mode, g_FastMode) == 0)
       msg[0] = 220;
@@ -639,6 +644,9 @@ bool Shutter::SetShutterMode(const char* mode)
       msg[0] = 221;
    else
       return false;
+
+   msg[1] = id_ + 1;
+   msg[2] = 13; // CR
 
    // send command
    if (DEVICE_OK != WriteToComPort(port_.c_str(), reinterpret_cast<char*>(msg), 3))
