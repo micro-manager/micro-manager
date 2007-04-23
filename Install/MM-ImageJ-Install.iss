@@ -4,7 +4,7 @@
 [Setup]
 AppName=Micro-Manager 2.0
 AppVerName=Micro-Manager 2.0
-AppPublisher=Vale Lab, UCSF
+AppPublisher=UCSF
 AppPublisherURL=http://www.micro-manager.org
 AppSupportURL=http://www.micro-manager.org
 AppUpdatesURL=http://www.micro-manager.org
@@ -15,7 +15,11 @@ Compression=lzma
 SolidCompression=true
 VersionInfoVersion=2.0
 VersionInfoCompany=micro-manager.org
-VersionInfoCopyright=University of California San Francisco
+VersionInfoCopyright=(c)University of California San Francisco
+AppCopyright=© University of California San Francisco
+ShowLanguageDialog=yes
+AppVersion=2.0
+AppID={{6808D382-1DFE-42B1-BA40-5E0A021438C4}
 
 [Languages]
 Name: eng; MessagesFile: compiler:Default.isl
