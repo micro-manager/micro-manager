@@ -313,6 +313,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
          if (posMode_ == PositionMode.TIME_LAPSE) {
             startAcquisition();
          } else {
+            // start a multi-field thread
            MultiFieldThread mft = new MultiFieldThread();
            mft.run();
          }
@@ -509,21 +510,14 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
       // move to the required position
       try {
          if (useMultiplePositions_) {
-            if (posMode_ == PositionMode.TIME_LAPSE) {
-
-               // time lapse logic
-               if (posIdx != previousPosIdx_) {
-                  MultiStagePosition pos = posList_.getPosition(posIdx);
-                  MultiStagePosition.goToPosition(pos, core_);
-                  core_.waitForSystem();
-               }
-
-               previousPosIdx_ = posIdx;
-            } else if (posMode_ == PositionMode.MULTI_FIELD) {
-               // TODO: multi-field logic
-            } else {
-               throw new MMException("Unsupported position mode: " + posMode_);
+            // time lapse logic
+            if (posIdx != previousPosIdx_) {
+               MultiStagePosition pos = posList_.getPosition(posIdx);
+               MultiStagePosition.goToPosition(pos, core_);
+               core_.waitForSystem();
             }
+
+            previousPosIdx_ = posIdx;
          }
 
          System.out.println("Frame " + frameCount_ + " at " + GregorianCalendar.getInstance().getTime());
@@ -571,7 +565,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
 
                // processing for the first image in the entire sequence
                if (j==0 && k==0 && frameCount_ == 0 && posIdx == 0) {
-                  setupImage5d();
+                  setupImage5d(posIdx);
                   acquisitionSetup();
                   System.out.println("Sequence size: " + imgWidth_ + "," + imgHeight_);
                }
@@ -611,19 +605,25 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
 
 
                // set Image5D
-               img5d_[posIdx].setPixels(img, k+1, j+1, frameCount_+1);
-               if (!i5dWin_[posIdx].isPlaybackRunning())
-                  img5d_[posIdx].setCurrentPosition(0, 0, k, j, frameCount_);
+               int posIndexNormalized;
+               if (!useMultiplePositions_ || posMode_ == PositionMode.TIME_LAPSE)
+                  posIndexNormalized = posIdx;
+               else
+                  posIndexNormalized = 0;
+                  
+               img5d_[posIndexNormalized].setPixels(img, k+1, j+1, frameCount_+1);
+               if (!i5dWin_[posIndexNormalized].isPlaybackRunning())
+                  img5d_[posIndexNormalized].setCurrentPosition(0, 0, k, j, frameCount_);
 
                // autoscale channels based on the first slice of the first frame
                if (j==0 && frameCount_==0) {
-                  ImageStatistics stats = img5d_[posIdx].getStatistics(); // get uncalibrated stats
+                  ImageStatistics stats = img5d_[posIndexNormalized].getStatistics(); // get uncalibrated stats
                   double min = stats.min;
                   double max = stats.max;
-                  img5d_[posIdx].setChannelMinMax(k+1, min, max);                  
+                  img5d_[posIndexNormalized].setChannelMinMax(k+1, min, max);                  
                }
 
-               RefreshI5d refresh = new RefreshI5d(i5dWin_[posIdx]);                            
+               RefreshI5d refresh = new RefreshI5d(i5dWin_[posIndexNormalized]);                            
                //SwingUtilities.invokeAndWait(refresh);
                SwingUtilities.invokeLater(refresh);
 
@@ -932,11 +932,11 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
     * @throws IOException 
     * @throws JSONException 
     */
-   private void acquisitionSetup() throws IOException, JSONException {
+   private void acquisitionSetup(int posIdx) throws IOException, JSONException {
       metaWriter_ = null;
       outputDir_ = null;
       
-      if (useMultiplePositions_)
+      if (useMultiplePositions_ || posMode_ == PositionMode.TIME_LAPSE)
          metadata_ = new JSONObject[posList_.getNumberOfPositions()];
       else
          metadata_ = new JSONObject[1];
@@ -1085,7 +1085,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
     *  
     * @throws Exception
     */
-   private void setupImage5d() throws Exception {
+   private void setupImage5d(int posIndex) throws Exception {
       imgWidth_ = core_.getImageWidth();
       imgHeight_ = core_.getImageHeight();
       imgDepth_ = core_.getBytesPerPixel();
@@ -1101,7 +1101,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
       // create a new Image5D object
       int numSlices = useSliceSetting_ ? sliceDeltaZ_.length : 1;
       
-      if (useMultiplePositions_) {
+      if (useMultiplePositions_ && posMode_ == PositionMode.TIME_LAPSE) {
          img5d_ = new Image5D[posList_.getNumberOfPositions()]; 
          i5dWin_ = new Image5DWindow[posList_.getNumberOfPositions()];
       } else {
@@ -1159,9 +1159,15 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
          i5dWin_[i].setAcquitionEngine(this);
          GregorianCalendar cld = new GregorianCalendar();
          startTimeMs_ = cld.getTimeInMillis();
-         if (useMultiplePositions_)
-            i5dWin_[i].setTitle("Acquisition " + posList_.getPosition(i).getLabel() + " (started)" + cld.getTime());
-         else
+         if (useMultiplePositions_) {
+            if (posMode_ == PositionMode.TIME_LAPSE)
+               // time-lapse
+               i5dWin_[i].setTitle("Acquisition " + posList_.getPosition(i).getLabel() + " (started)" + cld.getTime());
+            else
+               // multi-field
+               i5dWin_[i].setTitle("Acquisition " + posList_.getPosition(posIndex).getLabel() + " (started)" + cld.getTime());
+         } else
+            // single position
             i5dWin_[i].setTitle("Acquisition (started)" + cld.getTime());
          
          i5dWin_[i].setActive(true);
