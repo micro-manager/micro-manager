@@ -564,14 +564,22 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
                long depth = core_.getBytesPerPixel();
 
                // processing for the first image in the entire sequence
-               if (j==0 && k==0 && frameCount_ == 0 && posIdx == 0) {
-                  setupImage5d(posIdx);
-                  acquisitionSetup();
-                  System.out.println("Sequence size: " + imgWidth_ + "," + imgHeight_);
+               if (j==0 && k==0 && frameCount_ == 0) {
+                  if (!useMultiplePositions_ || posMode_ == PositionMode.TIME_LAPSE) {
+                     if (posIdx == 0) {
+                        setupImage5d(posIdx);
+                        acquisitionSetup(posIdx);
+                        System.out.println("Sequence size: " + imgWidth_ + "," + imgHeight_);
+                     }
+                  } else {
+                     setupImage5d(posIdx);
+                     acquisitionSetup(posIdx);
+                     System.out.println("Sequence size: " + imgWidth_ + "," + imgHeight_);
+                  }
                }
 
                // processing for the first image in a frame
-               if (j==0 && k==0 && posIdx == 0) {                 
+               if (j==0 && k==0) {                 
                   // check if we have enough memory to acquire the entire frame
                   long freeBytes = freeMemory();
                   long requiredBytes = ((long)numSlices * channels_.size() + 10) * (width * height * depth);
@@ -950,7 +958,40 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
          // What follows is some complicated logic to create unique directory names
          // but maintain same sub-directry paths for multiple positions
          File testDir;
-         for (int i=0; i<metadata_.length; i++) {
+         if (!useMultiplePositions_ || posMode_ == PositionMode.TIME_LAPSE) {
+            for (int i=0; i<metadata_.length; i++) {
+               // create new acq directory
+               int suffixCounter = 0;
+               String testName;
+               do {
+                  testName = new String(rootName_ + "/" + dirName_ + "_" + suffixCounter);
+                  suffixCounter++;
+                  testDir = new File(testName);
+
+               } while (testDir.exists() && i==0);
+
+               if (i==0)
+                  outDirName_ = testName;
+
+               if (useMultiplePositions_) {
+                  outputDir_[i] = new File(outDirName_ + "/" + posList_.getPosition(i).getLabel());
+               } else {
+                  outputDir_[i] = new File(outDirName_);
+               }
+
+               // finally we attempt to create directory based on the name created above
+               System.out.println("Making directory: " + outputDir_[i]);
+               if (!outputDir_[i].mkdirs())
+                  throw new IOException("Invalid root directory name: " + outputDir_[i]);
+
+               // create a file for metadata
+               metaWriter_[i] = new FileWriter(new File(outputDir_[i].getAbsolutePath() + "/" + ImageKey.METADATA_FILE_NAME));
+            }
+         }
+      } else {
+         // multi-field
+         File testDir;
+         if (posIdx == 0) {
             // create new acq directory
             int suffixCounter = 0;
             String testName;
@@ -959,25 +1000,19 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
                suffixCounter++;
                testDir = new File(testName);
 
-            } while (testDir.exists() && i==0);
-            
-            if (i==0)
-               outDirName_ = testName;
-            
-            if (useMultiplePositions_) {
-               outputDir_[i] = new File(outDirName_ + "/" + posList_.getPosition(i).getLabel());
-            } else {
-               outputDir_[i] = new File(outDirName_);
-            }
-            
-            // finally we attempt to create directory based on the name created above
-            System.out.println("Making directory: " + outputDir_[i]);
-            if (!outputDir_[i].mkdirs())
-               throw new IOException("Invalid root directory name: " + outputDir_[i]);
-            
-            // create a file for metadata
-            metaWriter_[i] = new FileWriter(new File(outputDir_[i].getAbsolutePath() + "/" + ImageKey.METADATA_FILE_NAME));
+            } while (testDir.exists());
+            outDirName_ = testName;
          }
+
+         outputDir_[0] = new File(outDirName_ + "/" + posList_.getPosition(posIdx).getLabel());
+
+         // finally we attempt to create directory based on the name created above
+         System.out.println("Making directory: " + outputDir_[0]);
+         if (!outputDir_[0].mkdirs())
+            throw new IOException("Invalid root directory name: " + outputDir_[0]);
+
+         // create a file for metadata
+         metaWriter_[0] = new FileWriter(new File(outputDir_[0].getAbsolutePath() + "/" + ImageKey.METADATA_FILE_NAME));
       }
           
       for (int i=0; i<metadata_.length; i++) {
