@@ -948,7 +948,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
          metadata_ = new JSONObject[posList_.getNumberOfPositions()];
       else
          metadata_ = new JSONObject[1];
-      
+
       if (saveFiles_) {
          metaWriter_ = new FileWriter[metadata_.length];
          outputDir_ = new File[metadata_.length];
@@ -1013,7 +1013,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
             metaWriter_[0] = new FileWriter(new File(outputDir_[0].getAbsolutePath() + "/" + ImageKey.METADATA_FILE_NAME));
          }
       }
-          
+
       for (int i=0; i<metadata_.length; i++) {
          metadata_[i] = new JSONObject();
          JSONObject i5dData = new JSONObject();
@@ -1026,16 +1026,16 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
          GregorianCalendar cld = new GregorianCalendar();
          i5dData.put(SummaryKeys.TIME, cld.getTime());
          i5dData.put(SummaryKeys.COMMENT, comment_);
-         
+
          ImageProcessor ip = i5dWin_[i].getImagePlus().getProcessor();
-         
+
          i5dData.put(SummaryKeys.IMAGE_WIDTH, ip.getWidth());
          i5dData.put(SummaryKeys.IMAGE_HEIGHT, ip.getHeight());
          if (ip instanceof ByteProcessor)
             i5dData.put(SummaryKeys.IMAGE_DEPTH, 1);
          else if (ip instanceof ShortProcessor)
             i5dData.put(SummaryKeys.IMAGE_DEPTH, 2);
-         
+
          JSONArray colors = new JSONArray();
          JSONArray names = new JSONArray();
          for (int j=0; j < channels_.size(); j++) {
@@ -1045,15 +1045,15 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
          }
          i5dData.put(SummaryKeys.CHANNEL_COLORS, colors);
          i5dData.put(SummaryKeys.CHANNEL_NAMES, names);
-            
+
          i5dData.put(SummaryKeys.IJ_IMAGE_TYPE, i5dWin_[i].getImagePlus().getType());
-         
+
          if (useMultiplePositions_) {
             // insert position label
             i5dData.put(SummaryKeys.POSITION, posList_.getPosition(i).getLabel());
          }
-            
-         
+
+
          metadata_[i].put(SummaryKeys.SUMMARY, i5dData);
          System.out.println("Inserted metadata for acq: " + i);
       }
