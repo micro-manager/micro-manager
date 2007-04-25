@@ -5,7 +5,7 @@
 //-----------------------------------------------------------------------------
 // DESCRIPTION:   ASI ProScan controller adapter
 //
-// COPYRIGHT:     Andor Technology,
+// COPYRIGHT:     Andor Technology PLC,
 //                University of California, San Francisco
 //
 // LICENSE:       This file is distributed under the BSD license.
