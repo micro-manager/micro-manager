@@ -4,7 +4,10 @@
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
 // DESCRIPTION:   ASI ProScan controller adapter
-// COPYRIGHT:     University of California, San Francisco, 2006
+//
+// COPYRIGHT:     Andor Technology,
+//                University of California, San Francisco
+//
 // LICENSE:       This file is distributed under the BSD license.
 //                License text is included with the source distribution.
 //
@@ -12,7 +15,7 @@
 //                but WITHOUT ANY WARRANTY; without even the implied warranty
 //                of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 //
-//                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//                IN NO EVENT SHALL THE COPYRIGHT OWNER(S) OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
