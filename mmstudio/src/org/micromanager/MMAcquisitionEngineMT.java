@@ -944,7 +944,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
       metaWriter_ = null;
       outputDir_ = null;
       
-      if (useMultiplePositions_ || posMode_ == PositionMode.TIME_LAPSE)
+      if (!useMultiplePositions_ || posMode_ == PositionMode.TIME_LAPSE)
          metadata_ = new JSONObject[posList_.getNumberOfPositions()];
       else
          metadata_ = new JSONObject[1];
@@ -952,7 +952,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
       if (saveFiles_) {
          metaWriter_ = new FileWriter[metadata_.length];
          outputDir_ = new File[metadata_.length];
-         
+
          System.out.println("Begin setting up meta writers");
 
          // What follows is some complicated logic to create unique directory names
@@ -987,32 +987,31 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
                // create a file for metadata
                metaWriter_[i] = new FileWriter(new File(outputDir_[i].getAbsolutePath() + "/" + ImageKey.METADATA_FILE_NAME));
             }
+         } else {
+            // multi-field
+            if (posIdx == 0) {
+               // create new acq directory
+               int suffixCounter = 0;
+               String testName;
+               do {
+                  testName = new String(rootName_ + "/" + dirName_ + "_" + suffixCounter);
+                  suffixCounter++;
+                  testDir = new File(testName);
+
+               } while (testDir.exists());
+               outDirName_ = testName;
+            }
+
+            outputDir_[0] = new File(outDirName_ + "/" + posList_.getPosition(posIdx).getLabel());
+
+            // finally we attempt to create directory based on the name created above
+            System.out.println("Making directory: " + outputDir_[0]);
+            if (!outputDir_[0].mkdirs())
+               throw new IOException("Invalid root directory name: " + outputDir_[0]);
+
+            // create a file for metadata
+            metaWriter_[0] = new FileWriter(new File(outputDir_[0].getAbsolutePath() + "/" + ImageKey.METADATA_FILE_NAME));
          }
-      } else {
-         // multi-field
-         File testDir;
-         if (posIdx == 0) {
-            // create new acq directory
-            int suffixCounter = 0;
-            String testName;
-            do {
-               testName = new String(rootName_ + "/" + dirName_ + "_" + suffixCounter);
-               suffixCounter++;
-               testDir = new File(testName);
-
-            } while (testDir.exists());
-            outDirName_ = testName;
-         }
-
-         outputDir_[0] = new File(outDirName_ + "/" + posList_.getPosition(posIdx).getLabel());
-
-         // finally we attempt to create directory based on the name created above
-         System.out.println("Making directory: " + outputDir_[0]);
-         if (!outputDir_[0].mkdirs())
-            throw new IOException("Invalid root directory name: " + outputDir_[0]);
-
-         // create a file for metadata
-         metaWriter_[0] = new FileWriter(new File(outputDir_[0].getAbsolutePath() + "/" + ImageKey.METADATA_FILE_NAME));
       }
           
       for (int i=0; i<metadata_.length; i++) {
