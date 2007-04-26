@@ -142,17 +142,40 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
    private int previousPosIdx_;
    private boolean acqInterrupted_;
    private boolean oldFocusEnabled_;
+
+   private AcqFrameTask acqTask_;
    
    /**
     * Timer task routine triggered at each frame. 
     */
-   private class AcqFrame extends TimerTask {
+   private class AcqFrameTask extends TimerTask {
+      private boolean running_ = false;
+      private boolean active_ = false;
+      
       public void run() {
+         active_ = true;
+         running_ = true;
          if (useMultiplePositions_ && posMode_ == PositionMode.TIME_LAPSE) {
             for (int i=0; i<posList_.getNumberOfPositions(); i++)
                acquireOneFrame(i);
          } else
             acquireOneFrame(posCount_);
+         
+         running_ = false;
+      }
+      
+      public boolean cancel() {
+         boolean ret = super.cancel();
+         active_ = false;
+         running_ = false;
+         return ret;
+      }
+      
+      public synchronized boolean isRunning() {
+         return running_;
+      }
+      public synchronized boolean isActive() {
+         return active_;
       }
    }
 
@@ -167,19 +190,26 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
             System.out.println("Acq " + posCount_ + " started");
             startAcquisition();
             
+            // wait until acq done
             while (isAcquisitionRunning()) {
                try {
+                  System.out.println("loop");
                   Thread.sleep(500);
                } catch (InterruptedException e) {
                   return;
                }
             }
+            
             if (acqInterrupted_ == true) {
-               System.out.println("Acq " + posCount_ + "interrupted");
+               System.out.println("Acq " + posCount_ + " interrupted");
                break;
             }
-            System.out.println("Acq " + posCount_ + "completed");
+            System.out.println("Acq " + posCount_ + " completed");
             posCount_++;
+            
+            // shut down window if more data is coming       
+//            if (posCount_ < posList_.getNumberOfPositions())
+//               i5dWin_[0].dispose();
          }
       }
    }
@@ -490,11 +520,10 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
       
       //acqTimer_ = new Timer((int)frameIntervalMs_, timerHandler);
       acqTimer_ = new Timer();
-      acqTimer_.schedule(new AcqFrame(), (long)frameIntervalMs_);
-      //acqTimer_.setInitialDelay(0);
+      acqTask_ = new AcqFrameTask();
       if (numFrames_ > 0)
-         //acqTimer_.start();
-         acqTimer_.schedule(new AcqFrame(), 0, (long)frameIntervalMs_);
+         acqTimer_.schedule(acqTask_, 0, (long)frameIntervalMs_);
+
    }
 
    /**
@@ -509,7 +538,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
 
       // move to the required position
       try {
-         if (useMultiplePositions_) {
+         if (useMultiplePositions_ && posMode_ == PositionMode.TIME_LAPSE) {
             // time lapse logic
             if (posIdx != previousPosIdx_) {
                MultiStagePosition pos = posList_.getPosition(posIdx);
@@ -677,8 +706,12 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
          System.out.println(e.getMessage());
          stop();
          restoreSystem();
-         if (e.getMessage().length() > 0)
-            JOptionPane.showMessageDialog(i5dWin_[posIdx], e.getMessage());     
+         if (e.getMessage().length() > 0) {
+            if (useMultiplePositions_ && posMode_ == PositionMode.TIME_LAPSE)
+               JOptionPane.showMessageDialog(i5dWin_[posIdx], e.getMessage()); 
+            else
+               JOptionPane.showMessageDialog(i5dWin_[0], e.getMessage()); 
+         }
          return;
       } catch (OutOfMemoryError e) {
          JOptionPane.showMessageDialog(i5dWin_[posIdx], e.getMessage() + "\nOut of memory - acquistion stopped.\n" +
@@ -811,10 +844,18 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
    
    public void stop() {
          
-      if (acqTimer_ != null) {
+      if (acqTask_ != null) {
          //acqTimer_.stop();
-         acqTimer_.cancel();
-         acqTimer_ = null;
+         acqTask_.cancel();
+         // wait until task finishes
+         while (isAcquisitionRunning()) {
+            try {
+               Thread.sleep(50);
+            } catch (InterruptedException e) {
+               // TODO Auto-generated catch block
+               e.printStackTrace();
+            }
+         }
          System.out.println("Acquisition stopped!!!");
       }
       
@@ -861,12 +902,10 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
    }
    
    public boolean isAcquisitionRunning() {
-//      if (acqTimer_ != null)
-//         return acqTimer_.isRunning();
-      if (acqTimer_ != null)
-         return true;
-      else
+      if (acqTask_ == null)
          return false;
+     
+      return acqTask_.isActive() || acqTask_.isRunning();
    }
    
    private boolean isFocusStageAvailable() {
