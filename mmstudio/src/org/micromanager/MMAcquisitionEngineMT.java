@@ -39,6 +39,7 @@ import java.awt.event.WindowListener;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.GregorianCalendar;
 import java.util.Timer;
@@ -150,16 +151,18 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
     */
    private class AcqFrameTask extends TimerTask {
       private boolean running_ = false;
-      private boolean active_ = false;
+      private boolean active_ = true;
       
       public void run() {
-         active_ = true;
          running_ = true;
          if (useMultiplePositions_ && posMode_ == PositionMode.TIME_LAPSE) {
             for (int i=0; i<posList_.getNumberOfPositions(); i++)
                acquireOneFrame(i);
-         } else
+         } else {
+            System.out.println("Processing position: " + posCount_ + "...");
             acquireOneFrame(posCount_);
+            System.out.println("Done.");
+         }
          
          running_ = false;
       }
@@ -206,10 +209,20 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
             }
             System.out.println("Acq " + posCount_ + " completed");
             posCount_++;
+            System.out.println("Position incremented to: " + posCount_);
             
             // shut down window if more data is coming       
-//            if (posCount_ < posList_.getNumberOfPositions())
-//               i5dWin_[0].dispose();
+//            if (posCount_ < posList_.getNumberOfPositions() && saveFiles_)
+//               try {
+//                  SwingUtilities.invokeAndWait((new DisposeI5d(i5dWin_[0])));
+//               } catch (InterruptedException e) {
+//                  // TODO Auto-generated catch block
+//                  e.printStackTrace();
+//               } catch (InvocationTargetException e) {
+//                  // TODO Auto-generated catch block
+//                  e.printStackTrace();
+//               }
+//            }
          }
       }
    }
@@ -227,6 +240,20 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
       public void run() {
          i5dWin_.getImagePlus().updateAndDraw();
          i5dWin_.getCanvas().paint(i5dWin_.getCanvas().getGraphics());                              
+      }
+   }
+   
+   /**
+    * Threadsafe image5d window shutdown.
+    */
+   private class DisposeI5d implements Runnable {
+      private Image5DWindow i5dWin_;
+      
+      public DisposeI5d(Image5DWindow i5dw) {
+         i5dWin_ = i5dw;
+      }
+      public void run() {
+         i5dWin_.dispose();
       }
    }
 
@@ -504,7 +531,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
     */
    public void startAcquisition(){
       previousPosIdx_ = -1; // initialize
-      acqInterrupted_ = true;
+      acqInterrupted_ = false;
       frameCount_ = 0;
       Runtime.getRuntime().gc();
             
@@ -535,6 +562,12 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
       GregorianCalendar cld = null;
       GregorianCalendar cldStart = new GregorianCalendar();
       int numSlices = useSliceSetting_ ? sliceDeltaZ_.length : 1;
+      
+      int posIndexNormalized;
+      if (!useMultiplePositions_ || posMode_ == PositionMode.TIME_LAPSE)
+         posIndexNormalized = posIdx;
+      else
+         posIndexNormalized = 0;
 
       // move to the required position
       try {
@@ -642,11 +675,6 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
 
 
                // set Image5D
-               int posIndexNormalized;
-               if (!useMultiplePositions_ || posMode_ == PositionMode.TIME_LAPSE)
-                  posIndexNormalized = posIdx;
-               else
-                  posIndexNormalized = 0;
                   
                img5d_[posIndexNormalized].setPixels(img, k+1, j+1, frameCount_+1);
                if (!i5dWin_[posIndexNormalized].isPlaybackRunning())
@@ -684,10 +712,10 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
                   jsonData.put(ImagePropertyKeys.Y_UM, posList_.getPosition(posIdx).getY());
                }
                // insert the metadata for the current image
-               metadata_[posIdx].put(ImageKey.generateFrameKey(frameCount_, k, j), jsonData);
+               metadata_[posIndexNormalized].put(ImageKey.generateFrameKey(frameCount_, k, j), jsonData);
 
                if (saveFiles_) {
-                  saveImageFile(outputDir_[posIdx] + "/" + fname, img, (int)imgWidth_, (int)imgHeight_);
+                  saveImageFile(outputDir_[posIndexNormalized] + "/" + fname, img, (int)imgWidth_, (int)imgHeight_);
                }              
             }
          }
@@ -697,12 +725,14 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
             core_.enableContinuousFocus(oldFocusEnabled_);
 
       } catch(MMException e) {
+         acqInterrupted_ = true;
          stop();
          restoreSystem();
          if (e.getMessage().length() > 0)
             JOptionPane.showMessageDialog(i5dWin_[posIdx], e.getMessage());     
          return;
       } catch (Exception e) {
+         acqInterrupted_ = true;
          System.out.println(e.getMessage());
          stop();
          restoreSystem();
@@ -716,6 +746,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
       } catch (OutOfMemoryError e) {
          JOptionPane.showMessageDialog(i5dWin_[posIdx], e.getMessage() + "\nOut of memory - acquistion stopped.\n" +
          "In the future you can try to increase the amount of memory available to the Java VM (ImageJ).");     
+         acqInterrupted_ = true;
          stop();
          restoreSystem();
          return;       
@@ -725,13 +756,13 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
       if (frameCount_ == 0) {
          // insert contrast settings metadata
          try {
-            JSONObject summary = metadata_[posIdx].getJSONObject(SummaryKeys.SUMMARY);
+            JSONObject summary = metadata_[posIndexNormalized].getJSONObject(SummaryKeys.SUMMARY);
             JSONArray minArray = new JSONArray();
             JSONArray maxArray = new JSONArray();
             
             // contrast settings
             for (int i=0; i<channels_.size(); i++) {
-               ChannelDisplayProperties cdp = img5d_[posIdx].getChannelDisplayProperties(i+1);
+               ChannelDisplayProperties cdp = img5d_[posIndexNormalized].getChannelDisplayProperties(i+1);
                minArray.put(i, cdp.getMinValue());
                maxArray.put(i, cdp.getMaxValue());
             }
@@ -743,9 +774,9 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
          }
       }
             
-      i5dWin_[posIdx].startCountdown((long)frameIntervalMs_ - (cld.getTimeInMillis() - cldStart.getTimeInMillis()), numFrames_ - frameCount_);
+      i5dWin_[posIndexNormalized].startCountdown((long)frameIntervalMs_ - (cld.getTimeInMillis() - cldStart.getTimeInMillis()), numFrames_ - frameCount_);
       try {
-         JSONObject summary = metadata_[posIdx].getJSONObject(SummaryKeys.SUMMARY);
+         JSONObject summary = metadata_[posIndexNormalized].getJSONObject(SummaryKeys.SUMMARY);
          summary.put(SummaryKeys.NUM_FRAMES, frameCount_);
       } catch (JSONException e) {
          // TODO Auto-generated catch block
@@ -767,17 +798,18 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
          
          // adjust the title
          if (useMultiplePositions_) {
-            for (int pp=0; pp<i5dWin_.length; pp++)
-               i5dWin_[pp].setTitle("Acquisition "  + posList_.getPosition(pp).getLabel() + "(completed)" + cld.getTime());
+            if (posMode_ == PositionMode.TIME_LAPSE) {
+               for (int pp=0; pp<i5dWin_.length; pp++)
+                  i5dWin_[pp].setTitle("Acquisition "  + posList_.getPosition(pp).getLabel() + "(completed)" + cld.getTime());
+            } else {
+               i5dWin_[0].setTitle("Acquisition (completed) " + posList_.getPosition(posIdx).getLabel() + cld.getTime());
+            }
          } else {
             i5dWin_[0].setTitle("Acquisition (completed) " + cld.getTime());
          }
          
          // return to initial state
-         restoreSystem();
-         
-         // no errors or interruptions
-         acqInterrupted_ = false;
+         restoreSystem();         
          return;
       }
    }
