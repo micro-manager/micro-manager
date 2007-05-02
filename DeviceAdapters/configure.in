@@ -23,7 +23,7 @@ AM_CONDITIONAL([BUILD_HAMAMATSU],[test -f "/Library/Frameworks/dcamapi.framework
 AM_CONDITIONAL([BUILD_PVCAM],[test -f "/Library/Frameworks/PVCAM.framework/Headers/pvcam.h"])
 # and for Firewire cameras (libdc1394) 
 # TODO: Need better test here
-AM_CONDITIONAL([BUILD_DC1394],[test -f "/usr/local/include/iidc1394/control.h"])
+AM_CONDITIONAL([BUILD_DC1394],[test -f "/usr/local/include/dc1394/control.h"])
 # Only build the Nikon TE2000 when the code is there
 AM_CONDITIONAL([BUILD_TE2000],[test -f "NikonTE2000/NikonTE2000.h"])
 if test -f $(srcdir)"NikonTE2000/NikonTE2000.h"; then
