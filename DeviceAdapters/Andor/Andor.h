@@ -3,8 +3,8 @@
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   Andor camera module 
-//                
+// DESCRIPTION:   Andor camera module
+//
 // AUTHOR:        Nenad Amodaj, nenad@amodaj.com, 06/30/2006
 // COPYRIGHT:     University of California, San Francisco, 2006
 // LICENSE:       This file is distributed under the BSD license.
@@ -42,26 +42,27 @@ class Ixon : public CCameraBase<Ixon>
 {
 public:
    static Ixon* GetInstance();
+   unsigned DeReference(); // jizhen 05.16.2007
    ~Ixon();
-   
+
    // MMDevice API
    int Initialize();
    int Shutdown();
-   
+
    void GetName(char* pszName) const;
    bool Busy() {return busy_;}
-   
+
    // MMCamera API
    int SnapImage();
    const unsigned char* GetImageBuffer();
    unsigned GetImageWidth() const {return img_.Width();}
    unsigned GetImageHeight() const {return img_.Height();}
-   unsigned GetImageBytesPerPixel() const {return img_.Depth();} 
+   unsigned GetImageBytesPerPixel() const {return img_.Depth();}
    long GetImageBufferSize() const {return img_.Width() * img_.Height() * GetImageBytesPerPixel();}
    unsigned GetBitDepth() const;
    double GetExposure() const;
    void SetExposure(double dExp);
-   int SetROI(unsigned uX, unsigned uY, unsigned uXSize, unsigned uYSize); 
+   int SetROI(unsigned uX, unsigned uY, unsigned uXSize, unsigned uYSize);
    int GetROI(unsigned& uX, unsigned& uY, unsigned& uXSize, unsigned& uYSize);
    int ClearROI();
 
@@ -77,6 +78,8 @@ public:
    int OnTemperature(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnDriverDir(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnShutterMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnCooler(MM::PropertyBase* pProp, MM::ActionType eAct);// jizhen 05.11.2007
+   int OnFanMode(MM::PropertyBase* pProp, MM::ActionType eAct);// jizhen 05.16.2007
 
 private:
    Ixon();
@@ -109,6 +112,9 @@ private:
    int fullFrameY_;
    short* fullFrameBuffer_;
    std::vector<std::string> readoutModes_;
+
+   int EmCCDGainLow_, EmCCDGainHigh_;
+   int minTemp_, maxTemp_;
 };
 
 class Shutter : public CShutterBase<Shutter>
@@ -121,7 +127,7 @@ public:
    void GetName(char* pszName) const;
    int Initialize();
    int Shutdown();
-      
+
    // Shutter API
    int SetOpen(bool open = true);
    int GetOpen(bool& open);

@@ -3,8 +3,8 @@
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   Andor camera module 
-//                
+// DESCRIPTION:   Andor camera module
+//
 // AUTHOR:        Nenad Amodaj, nenad@amodaj.com, 06/30/2006
 // COPYRIGHT:     University of California, San Francisco, 2006
 // LICENSE:       This file is distributed under the BSD license.
@@ -22,13 +22,18 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include "../../MMDevice/ModuleInterface.h"
-#include "../../../3rdparty/Andor/SDK 2.75/iXon/include/atmcd32d.h"
+#include "atmcd32d.h"
 #include "Andor.h"
 #include <string>
 #include <sstream>
 #include <iomanip>
 
-#pragma warning(disable : 4996) // disable warning for deperecated CRT functions on Windows 
+// jizhen 05.11.2007
+#include <iostream>
+using namespace std;
+// eof jizhen
+
+#pragma warning(disable : 4996) // disable warning for deperecated CRT functions on Windows
 
 using namespace std;
 
@@ -49,8 +54,8 @@ Ixon* Ixon::instance_ = 0;
 unsigned Ixon::refCount_ = 0;
 
 // Windows dll entry routine
-BOOL APIENTRY DllMain( HANDLE /*hModule*/, 
-                       DWORD  ul_reason_for_call, 
+BOOL APIENTRY DllMain( HANDLE /*hModule*/,
+                       DWORD  ul_reason_for_call,
                        LPVOID /*lpReserved*/
 					 )
 {
@@ -86,14 +91,15 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
       return 0;
 
    string strName(deviceName);
-   
+
    if (strcmp(deviceName, g_IxonName) == 0)
       return Ixon::GetInstance();
+
    else if (strcmp(deviceName, g_IxonShutterName) == 0)
    {
       return new Shutter();
    }
-   
+
    return 0;
 }
 
@@ -109,7 +115,11 @@ Ixon::Ixon() :
    driverDir_(""),
    fullFrameBuffer_(0),
    fullFrameX_(0),
-   fullFrameY_(0)
+   fullFrameY_(0),
+   EmCCDGainLow_(0),
+   EmCCDGainHigh_(0),
+   minTemp_(0),
+   maxTemp_(0)
 {
    InitializeDefaultErrorMessages();
 
@@ -144,6 +154,14 @@ Ixon* Ixon::GetInstance()
    refCount_++;
    return instance_;
 }
+
+// jizhen 05.16.2007
+unsigned Ixon::DeReference()
+{
+   refCount_--;
+   return refCount_;
+}
+// eof jizhen
 
 ///////////////////////////////////////////////////////////////////////////////
 // API methods
@@ -255,6 +273,21 @@ int Ixon::Initialize()
    assert(nRet == DEVICE_OK);
 
    // EM gain
+   // jizhen 05.08.2007
+   // EMCCDGain range
+   int EmCCDGainLow, EmCCDGainHigh;
+   ret = GetEMGainRange(&EmCCDGainLow, &EmCCDGainHigh);
+   if (ret != DRV_SUCCESS)
+      return ret;
+   EmCCDGainLow_ = EmCCDGainLow;
+   EmCCDGainHigh_ = EmCCDGainHigh;
+   ostringstream emgLow;
+   ostringstream emgHigh;
+   emgLow << EmCCDGainLow;
+   emgHigh << EmCCDGainHigh;
+   CreateProperty("EmCCDGainLow", emgLow.str().c_str(), MM::Integer, true);
+   CreateProperty("EmCCDGainHigh", emgHigh.str().c_str(), MM::Integer, true);
+   // eof jizhen
    pAct = new CPropertyAction (this, &Ixon::OnEMGain);
    nRet = CreateProperty(MM::g_Keyword_EMGain, "0", MM::Integer, false, pAct);
    assert(nRet == DEVICE_OK);
@@ -270,7 +303,7 @@ int Ixon::Initialize()
    for (int i=0; i<numSpeeds; i++)
    {
       float sp;
-      ret = GetHSSpeed(0, 0, i, &sp); 
+      ret = GetHSSpeed(0, 0, i, &sp);
       if (ret != DRV_SUCCESS)
          return ret;
       sprintf(speedBuf, "%.1f MHz", sp);
@@ -285,9 +318,44 @@ int Ixon::Initialize()
    nRet = SetAllowedValues(MM::g_Keyword_ReadoutMode, readoutModes_);
 
    // camera temperature
+   // jizhen 05.08.2007
+   // temperature range
+   int minTemp, maxTemp;
+   ret = GetTemperatureRange(&minTemp, &maxTemp);
+   if (ret != DRV_SUCCESS)
+      return ret;
+   minTemp_ = minTemp;
+   maxTemp_ = maxTemp;
+   ostringstream tMin;
+   ostringstream tMax;
+   tMin << minTemp;
+   tMax << maxTemp;
+   CreateProperty("MinTemp", tMin.str().c_str(), MM::Integer, true);
+   CreateProperty("MaxTemp", tMax.str().c_str(), MM::Integer, true);
+   // eof jizhen
    pAct = new CPropertyAction (this, &Ixon::OnTemperature);
-   nRet = CreateProperty(MM::g_Keyword_CCDTemperature, "1", MM::Integer, true, pAct);
+   nRet = CreateProperty(MM::g_Keyword_CCDTemperature, "1", MM::Integer, false, pAct); //true, pAct); // jizhen 05.08.2007
    assert(nRet == DEVICE_OK);
+
+   //jizhen 05.11.2007
+   // Cooler
+   pAct = new CPropertyAction (this, &Ixon::OnCooler);
+   nRet = CreateProperty("Cooler", "0", MM::Integer, false, pAct);
+   assert(nRet == DEVICE_OK);
+   AddAllowedValue("Cooler", "0");
+   AddAllowedValue("Cooler", "1");
+   // eof jizhen
+
+   //jizhen 05.16.2007
+   // Fan
+   pAct = new CPropertyAction (this, &Ixon::OnFanMode);
+   nRet = CreateProperty("FanMode", "0", MM::Integer, false, pAct);
+   assert(nRet == DEVICE_OK);
+   AddAllowedValue("FanMode", "0"); // high
+   AddAllowedValue("FanMode", "1"); // low
+   AddAllowedValue("FanMode", "2"); // off
+
+   // eof jizhen
 
    // synchronize all properties
    // --------------------------
@@ -325,7 +393,7 @@ int Ixon::Initialize()
    return DEVICE_OK;
 }
 
-void Ixon::GetName(char* name) const 
+void Ixon::GetName(char* name) const
 {
    CDeviceUtils::CopyLimitedString(name, g_IxonName);
 }
@@ -379,7 +447,7 @@ void Ixon::SetExposure(double dExp)
 
 /**
  * Returns the raw image buffer.
- */ 
+ */
 const unsigned char* Ixon::GetImageBuffer()
 {
    // wait until the frame becomes available
@@ -581,7 +649,7 @@ int Ixon::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
 }
 
 /**
- * Set camera pixel type. 
+ * Set camera pixel type.
  * We support only 16-bit mode here.
  */
 int Ixon::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -635,6 +703,11 @@ int Ixon::OnEMGain(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       long gain;
       pProp->Get(gain);
+	  //jizhen 05.10.2007
+	  if (gain < (long) EmCCDGainLow_ ) gain = (long)EmCCDGainLow_;
+      if (gain > (long) EmCCDGainHigh_ ) gain = (long)EmCCDGainHigh_;
+	  pProp->Set(gain);
+	  // eof jizhen
       unsigned ret = SetEMCCDGain((int)gain);
       if (DRV_SUCCESS != ret)
          return (int)ret;
@@ -671,15 +744,89 @@ int Ixon::OnTemperature(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::AfterSet)
    {
+      //jizhen 05.10.2007
+      long temp;
+      pProp->Get(temp);
+	  if (temp < (long) minTemp_ ) temp = (long)minTemp_;
+      if (temp > (long) maxTemp_ ) temp = (long)maxTemp_;
+      unsigned ret = SetTemperature((int)temp);
+      if (DRV_SUCCESS != ret)
+         return (int)ret;
+      ret = CoolerON();
+      if (DRV_SUCCESS != ret)
+         return (int)ret;
+	  // eof jizhen
    }
    else if (eAct == MM::BeforeGet)
    {
       int temp;
-      GetTemperature(&temp);
+	  //jizhen 05.11.2007
+	  //ret = GetTemperature(&temp);
+      int ret = GetTemperature(&temp);
+#define iDebug
+#ifdef iDebug
+	  if ( ret == DRV_NOT_INITIALIZED) cout << ret << ": DRV_NOT_INITIALIZED" << endl;
+	  else if ( ret == DRV_ACQUIRING) cout << ret << ": DRV_ACQUIRING" << endl;
+	  else if ( ret == DRV_ERROR_ACK) cout << ret << ": DRV_ERROR_ACK" << endl;
+	  else if ( ret == DRV_TEMP_OFF) cout << ret << ": DRV_TEMP_OFF" << endl;
+	  else if ( ret == DRV_TEMP_STABILIZED) cout << ret << ": DRV_TEMP_STABILIZED" << endl;
+	  else if ( ret == DRV_TEMP_NOT_REACHED) cout << ret << ": DRV_TEMP_NOT_REACHED" << endl;
+	  else cout << ret << ": ???" << endl;
+#endif
+	  // eof jizhen
       pProp->Set((long)temp);
    }
    return DEVICE_OK;
 }
+
+//jizhen 05.11.2007
+/**
+ * Set cooler on/off.
+ */
+int Ixon::OnCooler(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::AfterSet)
+   {
+      long OnOff;
+      pProp->Get(OnOff);
+	  unsigned ret;
+	  if ( OnOff == 1 ) ret = CoolerON();
+	  else ret = CoolerOFF();
+      if (DRV_SUCCESS != ret)
+         return (int)ret;
+   }
+   else if (eAct == MM::BeforeGet)
+   {
+      int temp;
+      unsigned int ret = GetTemperature(&temp);
+	  if ( ret == DRV_TEMP_OFF) pProp->Set( (long)0);
+	  else pProp->Set( (long)1);
+   }
+   return DEVICE_OK;
+}
+// eof jizhen
+
+//jizhen 05.16.2007
+/**
+ * Set fan mode.
+ */
+int Ixon::OnFanMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::AfterSet)
+   {
+      long mode;
+      pProp->Get(mode);
+	  unsigned int ret;
+	  ret = SetFanMode((int)mode);
+      if (DRV_SUCCESS != ret)
+         return (int)ret;
+   }
+   else if (eAct == MM::BeforeGet)
+   {
+   }
+   return DEVICE_OK;
+}
+// eof jizhen
 
 int Ixon::OnShutterMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
@@ -729,7 +876,7 @@ int Ixon::ResizeImageBuffer()
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// Shutter 
+// Shutter
 // ~~~~~~~
 // iXon built-in shutter.
 
@@ -741,8 +888,18 @@ Shutter::Shutter() : initialized_(false), camera_(0)
 
 Shutter::~Shutter()
 {
-   Shutdown();
+   this->Shutdown();
    //delete camera_;
+
+   // jizhen 05.16.2007
+   if ( camera_) {
+	   unsigned refCount = camera_->DeReference();
+	   if ( refCount <= 0) {
+		   //delete camera_;
+	   }// delete the camera_ here?
+	   camera_=0;
+   }
+   // eof jizhen
 }
 
 void Shutter::GetName(char* name) const
@@ -768,7 +925,7 @@ int Shutter::Initialize()
 
    // Description
    CreateProperty(MM::g_Keyword_Description, "Andor iXon built-in shutter adapter", MM::String, true);
-   
+
    // State
    // -----
    CPropertyAction* pAct = new CPropertyAction (this, &Shutter::OnState);
