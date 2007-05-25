@@ -36,12 +36,9 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.io.BufferedReader; // jizhen 4.17.2007
-import java.io.EOFException; // jizhen 4.17.2007
-import java.io.IOException; // jizhen 4.17.2007
 import java.util.GregorianCalendar;
 
-//import javax.swing.JEditorPane; // remove jizhen 4.17.2007
+import javax.swing.JEditorPane;
 import javax.swing.JFileChooser;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -64,9 +61,6 @@ import bsh.EvalError;
 import bsh.Interpreter;
 import bsh.ParseException;
 import bsh.TargetError;
-import bsh.util.JConsole;//jizhen 4.17.2007
-
-import com.Ostermiller.Syntax.*;//jizhen 4.17.2007
 
 /**
  * Encapsulated text editor and scripting engine
@@ -84,16 +78,15 @@ public class MMScriptView extends JTabbedPane {
    private String scriptDir_;
    private boolean scriptChanged_ = false;
    private JPopupMenu popupMenu_; 
-//   private final JTextArea historyPane_; // jizhen 4.17.2007
+   private final JTextArea historyPane_;
    private JTextField commandLine_;
    private SpringLayout springLayout_;
-   private HighlightedDocument document_;//jizhen 4.17.2007
       
    /**
     * Utility class with sole purpose of providing popup menu action
     * to JEditorPane
     */
-   private class JEditorPaneWithPopup extends JTextPane { //JEditorPane { //jizhen 4.17.2007
+   private class JEditorPaneWithPopup extends JEditorPane {
       public void processMouseEvent( MouseEvent event )
       {
          if( event.isPopupTrigger() )
@@ -106,10 +99,7 @@ public class MMScriptView extends JTabbedPane {
       }
       public JEditorPaneWithPopup() {
          super();
-      }
-      public JEditorPaneWithPopup(HighlightedDocument doc) {
-          super(doc);
-      }       
+      }   
    }
    
    /**
@@ -134,13 +124,7 @@ public class MMScriptView extends JTabbedPane {
    public MMScriptView(){
       
       super();
-      
-      //jizhen 4.17.2007
-      document_ = new HighlightedDocument();
-      document_.setHighlightStyle(HighlightedDocument.JAVA_STYLE);  
-      scriptPane_ = new JEditorPaneWithPopup(document_);
-//      scriptPane_ = new JEditorPaneWithPopup();
-      // eof jizhen
+      scriptPane_ = new JEditorPaneWithPopup();
       scriptPane_.setFont(new Font("Courier New", Font.PLAIN, 14));
       scriptPane_.setBackground(Color.WHITE);
       JScrollPane psScript = new JScrollPane(scriptPane_);
@@ -159,50 +143,37 @@ public class MMScriptView extends JTabbedPane {
       addTab("Output", null, outputView_, null);
       
       // initalize the interpreter
-//      interp_ = new Interpreter(); // jizhen 4.17.2007
+      interp_ = new Interpreter();      
       CreateNewScript();
 
       final JPanel panel = new JPanel();
       springLayout_ = new SpringLayout();
       panel.setLayout(springLayout_);
       addTab("Immediate", null, panel, null);
-      
-      // jizhen 4.17.2007
-      JConsole console = new JConsole();
-      panel.add(console);
-      springLayout_.putConstraint(SpringLayout.SOUTH, console, -5, SpringLayout.SOUTH, panel);
-      springLayout_.putConstraint(SpringLayout.EAST, console, -5, SpringLayout.EAST, panel);
-      springLayout_.putConstraint(SpringLayout.NORTH, console, 5, SpringLayout.NORTH, panel);
-      springLayout_.putConstraint(SpringLayout.WEST, console, 5, SpringLayout.WEST, panel);      
-      
-	  interp_ = new Interpreter(console);   
-	  new Thread( interp_ ).start();
-      
-//	  commandLine_ = new JTextField();
-//      commandLine_.addKeyListener(new KeyAdapter() {
-//         public void keyPressed(KeyEvent e) {
-//            if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-//               runCommandLine();
-//            }
-//         }
-//      });
-//      commandLine_.setBorder(new LineBorder(Color.black, 1, false));
-//      panel.add(commandLine_);
-//      springLayout_.putConstraint(SpringLayout.SOUTH, commandLine_, -5, SpringLayout.SOUTH, panel);
-//      springLayout_.putConstraint(SpringLayout.EAST, commandLine_, -5, SpringLayout.EAST, panel);
-//      springLayout_.putConstraint(SpringLayout.NORTH, commandLine_, -35, SpringLayout.SOUTH, panel);
-//      springLayout_.putConstraint(SpringLayout.WEST, commandLine_, 5, SpringLayout.WEST, panel);
-//
-//      historyPane_ = new JTextArea();
-//      historyPane_.setBorder(new LineBorder(Color.black, 1, false));
-//      historyPane_.setEditable(false);
-//      panel.add(historyPane_);
-//      springLayout_.putConstraint(SpringLayout.SOUTH, historyPane_, -5, SpringLayout.NORTH, commandLine_);
-//      springLayout_.putConstraint(SpringLayout.EAST, historyPane_, 0, SpringLayout.EAST, commandLine_);
-//      springLayout_.putConstraint(SpringLayout.NORTH, historyPane_, 5, SpringLayout.NORTH, panel);
-//      springLayout_.putConstraint(SpringLayout.WEST, historyPane_, 0, SpringLayout.WEST, commandLine_);
-	  
-	  //eof jizhen
+
+      commandLine_ = new JTextField();
+      commandLine_.addKeyListener(new KeyAdapter() {
+         public void keyPressed(KeyEvent e) {
+            if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+               runCommandLine();
+            }
+         }
+      });
+      commandLine_.setBorder(new LineBorder(Color.black, 1, false));
+      panel.add(commandLine_);
+      springLayout_.putConstraint(SpringLayout.SOUTH, commandLine_, -5, SpringLayout.SOUTH, panel);
+      springLayout_.putConstraint(SpringLayout.EAST, commandLine_, -5, SpringLayout.EAST, panel);
+      springLayout_.putConstraint(SpringLayout.NORTH, commandLine_, -35, SpringLayout.SOUTH, panel);
+      springLayout_.putConstraint(SpringLayout.WEST, commandLine_, 5, SpringLayout.WEST, panel);
+
+      historyPane_ = new JTextArea();
+      historyPane_.setBorder(new LineBorder(Color.black, 1, false));
+      historyPane_.setEditable(false);
+      panel.add(historyPane_);
+      springLayout_.putConstraint(SpringLayout.SOUTH, historyPane_, -5, SpringLayout.NORTH, commandLine_);
+      springLayout_.putConstraint(SpringLayout.EAST, historyPane_, 0, SpringLayout.EAST, commandLine_);
+      springLayout_.putConstraint(SpringLayout.NORTH, historyPane_, 5, SpringLayout.NORTH, panel);
+      springLayout_.putConstraint(SpringLayout.WEST, historyPane_, 0, SpringLayout.WEST, commandLine_);
    }
    
    
@@ -296,7 +267,7 @@ public class MMScriptView extends JTabbedPane {
    private void runCommandLine(){
       try {
          interp_.eval(commandLine_.getText());
-//         historyPane_.append(commandLine_.getText() + "\n"); // jizhen 4.17.2007
+         historyPane_.append(commandLine_.getText() + "\n");
          commandLine_.setText("");
       } catch (TargetError e) {
          // The script threw an exception
@@ -327,29 +298,9 @@ public class MMScriptView extends JTabbedPane {
       if (retVal == JFileChooser.APPROVE_OPTION) {
          scriptFile_ = fc.getSelectedFile();
          try {
-        	 
-        	 //jizhen
-        	 
-//            FileReader in = new FileReader(scriptFile_);
-//            scriptPane_.read(in, null); // jizhen 4.17.2007 can not read into styled doc: it use default styled doc
-//        	  in.close();
-            
-            BufferedReader in = new BufferedReader(new FileReader(scriptFile_));
-            String content="";
-            String line="";
-            try {
-            	while (line!=null){
-            		line = in.readLine();
-            		if (line!=null) content+=line+"\n";
-            	}
-            } catch (EOFException e){            	
-            }catch (IOException e){            	
-            }            
+            FileReader in = new FileReader(scriptFile_);
+            scriptPane_.read(in, null);
             in.close();
-            scriptPane_.setText(content);
-            
-            // jizhen 4.17.2007
-            
             scriptDir_ = scriptFile_.getParent();
          } catch (Exception e) {
             handleException(e);
