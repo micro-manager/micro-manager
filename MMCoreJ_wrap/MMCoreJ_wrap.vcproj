@@ -42,13 +42,14 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MMCOREJ_WRAP_EXPORTS;ACE_AS_STATIC_LIBS"
+				AdditionalIncludeDirectories="&quot;C:\Program Files\Java\jdk1.6.0_05\include\win32&quot;;&quot;C:\Program Files\Java\jdk1.6.0_05\include&quot;"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MMCOREJ_WRAP_EXPORTS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="0"
-				WarningLevel="3"
+				WarningLevel="4"
 				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="4"
 			/>
@@ -63,11 +64,11 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="acesd.lib"
+				AdditionalDependencies="mmcored.lib aced.lib"
 				ShowProgress="0"
 				OutputFile="$(OutDir)/MMCoreJ_wrap.dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="..\..\3rdparty\ACE_wrappers\lib"
+				AdditionalLibraryDirectories="..\lib;..\..\3rdparty\ACE_wrappers_5.5\lib"
 				IgnoreAllDefaultLibraries="false"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/MMCoreJ_wrap.pdb"
@@ -98,7 +99,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\bin&#x0D;&#x0A;del mmcorej\*.class&#x0D;&#x0A;%JAVA_HOME%\bin\javac mmcorej\*.java&#x0D;&#x0A;%JAVA_HOME%\bin\jar cvf MMCoreJ.jar mmcorej\*.class&#x0D;&#x0A;copy *.jar ..\bin&#x0D;&#x0A;copy *.jar \&quot;Program Files&quot;\ImageJ\plugins\MicroManage&#x0D;&#x0A;copy ..\bin\*.dll  \&quot;Program Files&quot;\ImageJ&#x0D;&#x0A;"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\bin&#x0D;&#x0A;del mmcorej\*.class&#x0D;&#x0A;%JAVA_HOME%\bin\javac -source 1.4 mmcorej\*.java&#x0D;&#x0A;%JAVA_HOME%\bin\jar cvf MMCoreJ.jar mmcorej\*.class&#x0D;&#x0A;copy *.jar ..\bin&#x0D;&#x0A;copy *.jar \&quot;Program Files&quot;\ImageJ\plugins\Micro-Manager&#x0D;&#x0A;copy ..\bin\*.dll  \&quot;Program Files&quot;\ImageJ&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -127,11 +128,12 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalIncludeDirectories="&quot;C:\Program Files\Java\jdk1.6.0_05\include&quot;;&quot;C:\Program Files\Java\jdk1.6.0_05\include\win32&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MMCOREJ_WRAP_EXPORTS"
 				RuntimeLibrary="0"
 				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="0"
-				WarningLevel="3"
+				WarningLevel="4"
 				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="3"
 			/>
@@ -146,10 +148,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="aces.lib"
+				AdditionalDependencies="mmcorer.lib ace.lib"
 				OutputFile="$(OutDir)/MMCoreJ_wrap.dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\3rdparty\ACE_wrappers\lib"
+				AdditionalLibraryDirectories="..\lib;..\..\3rdparty\ACE_wrappers_5.5\lib"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -180,7 +182,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\bin&#x0D;&#x0A;del mmcorej\*.class&#x0D;&#x0A;%JAVA_HOME%\bin\javac mmcorej\*.java&#x0D;&#x0A;%JAVA_HOME%\bin\jar cvf MMCoreJ.jar mmcorej\*.class&#x0D;&#x0A;copy *.jar ..\bin&#x0D;&#x0A;copy *.jar \&quot;Program Files&quot;\ImageJ\plugins\MicroManage&#x0D;&#x0A;copy ..\bin\*.dll  \&quot;Program Files&quot;\ImageJ&#x0D;&#x0A;"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\bin&#x0D;&#x0A;del mmcorej\*.class&#x0D;&#x0A;%JAVA_HOME%\bin\javac -source 1.4 mmcorej\*.java&#x0D;&#x0A;%JAVA_HOME%\bin\jar cvf MMCoreJ.jar mmcorej\*.class&#x0D;&#x0A;copy *.jar ..\bin&#x0D;&#x0A;copy *.jar \&quot;Program Files&quot;\ImageJ\plugins\Micro-Manager&#x0D;&#x0A;copy ..\bin\*.dll  \&quot;Program Files&quot;\ImageJ&#x0D;&#x0A;"
 			/>
 		</Configuration>
 	</Configurations>
@@ -213,10 +215,6 @@
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
 			>
 		</Filter>
-		<File
-			RelativePath="..\lib\MMCore.lib"
-			>
-		</File>
 	</Files>
 	<Globals>
 	</Globals>

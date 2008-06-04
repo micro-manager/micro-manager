@@ -1,8 +1,14 @@
 ## Process this file with automake to produce Makefile.in
 SWIGLIB_SOURCES = MMCoreJ.i \
-	../MMCore/MMCore.h  \
+	../MMCore/CircularBuffer.h  \
+	../MMCore/ConfigGroup.h  \
 	../MMCore/Configuration.h \
+	../MMCore/CoreCallback.h \
+	../MMCore/CoreProperty.h \
+	../MMCore/CoreUtils.h \
 	../MMCore/Error.h \
+	../MMCore/ErrorCodes.h \
+	../MMCore/MMCore.h  \
 	../MMDevice/MMDeviceConstants.h
 
 MMCoreJ_wrap.cxx: $(SWIGLIB_SOURCES)
@@ -19,7 +25,9 @@ libMMCoreJ_wrap_la_SOURCES = $(SWIGLIB_SOURCES) \
 	$(top_srcdir)/MMDevice/ImgBuffer.cpp \
 	$(top_srcdir)/MMDevice/ModuleInterface.cpp \
 	$(top_srcdir)/MMDevice/Property.cpp \
+	$(top_srcdir)/MMCore/CircularBuffer.cpp \
 	$(top_srcdir)/MMCore/Configuration.cpp \
+	$(top_srcdir)/MMCore/CoreCallback.cpp \
 	$(top_srcdir)/MMCore/CoreProperty.cpp \
 	$(top_srcdir)/MMCore/MMCore.cpp \
 	$(top_srcdir)/MMCore/PluginManager.cpp 
@@ -28,7 +36,7 @@ libMMCoreJ_wrap_la_LDFLAGS = -Wl, -module -ldl
 
 $(srcdir)/MMCoreJ.jar:  MMCoreJ_wrap.cxx \
 	libMMCoreJ_wrap.la
-	$(JAVAC) -source 1.4 -target 1.4 mmcorej/*.java
+	$(JAVAC) -source 1.5 -target 1.5 mmcorej/*.java
 	$(JAR) cvf MMCoreJ.jar mmcorej/*.class
 
 all:
@@ -44,7 +52,7 @@ install:
 	test -d $(IJPATH)/plugins/Micro-Manager || mkdir $(IJPATH)/plugins/Micro-Manager
 	cp MMCoreJ.jar $(IJPATH)/plugins/Micro-Manager/MMCoreJ.jar
 
-EXTRA_DIST = license.txt MMCoreJ_wrap_vc8.vcproj MMCoreJ_wrap.sln MMCoreJ_wrap.vcproj
+EXTRA_DIST = license.txt MMCoreJ_wrap.vcproj
 
 dist-hook:
 	test -d $(distdir)/mmcorej || mkdir $(distdir)/mmcorej

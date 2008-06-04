@@ -21,7 +21,7 @@
 			IntermediateDirectory="Debug"
 			ConfigurationType="4"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
-			CharacterSet="2"
+			CharacterSet="0"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -41,8 +41,8 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\3rdparty\ACE_wrappers"
-				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;ACE_AS_STATIC_LIBS"
+				AdditionalIncludeDirectories="..\..\3rdparty\ACE_wrappers_5.5"
+				PreprocessorDefinitions="WIN32;_DEBUG;_LIB"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -107,8 +107,8 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\..\3rdparty\ACE_wrappers"
-				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;ACE_AS_STATIC_LIBS"
+				AdditionalIncludeDirectories="..\..\3rdparty\ACE_wrappers_5.5"
+				PreprocessorDefinitions="WIN32;NDEBUG;_LIB"
 				RuntimeLibrary="0"
 				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="0"
@@ -156,7 +156,15 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath=".\CircularBuffer.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Configuration.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\CoreCallback.cpp"
 				>
 			</File>
 			<File
@@ -165,6 +173,10 @@
 			</File>
 			<File
 				RelativePath="..\MMDevice\DeviceUtils.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\MMDevice\ImgBuffer.cpp"
 				>
 			</File>
 			<File
@@ -181,6 +193,10 @@
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
+			<File
+				RelativePath=".\CircularBuffer.h"
+				>
+			</File>
 			<File
 				RelativePath=".\ConfigGroup.h"
 				>
@@ -210,11 +226,23 @@
 				>
 			</File>
 			<File
+				RelativePath="..\MMDevice\ImageMetadata.h"
+				>
+			</File>
+			<File
+				RelativePath="..\MMDevice\ImgBuffer.h"
+				>
+			</File>
+			<File
 				RelativePath=".\MMCore.h"
 				>
 			</File>
 			<File
 				RelativePath="..\MMDevice\MMDevice.h"
+				>
+			</File>
+			<File
+				RelativePath=".\MMEventCallback.h"
 				>
 			</File>
 			<File

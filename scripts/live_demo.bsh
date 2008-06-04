@@ -3,23 +3,24 @@
 // ---------------------------------------------------
 
 import ij.process.*; 
-console.message("Live processing demo");
+gui.clearMessageWindow();
+gui.message("Live processing demo");
 
 // set exposure
 // ------------
-mmc.SetExposure(50.0);
-console.updateGUI();
+mmc.setExposure(50.0);
+gui.refreshGUI();
 
 // acquire image from the camera
 // -----------------------------
-console.snapSingleImage();
+gui.snapSingleImage();
 
 // get info on the acquired image
 // ------------------------------
-x = console.getImageWidth();
-y = console.getImageHeight();
-d = console.getImageDepth();
-console.message("Image dimensions: " + x + " X " + y + " X " + d);
+x = gui.getImageWidth();
+y = gui.getImageHeight();
+d = gui.getImageDepth();
+gui.message("Image dimensions: " + x + " X " + y + " X " + d);
 
 // create stand-alone image processor
 // ----------------------------------
@@ -28,7 +29,7 @@ if (d == 8)
 else if (d==16)
    ip = new ShortProcessor(x, y);
 else {
-   console.Message("Don't know how to handle " + d + " bit images");
+   gui.message("Don't know how to handle " + d + " bit images");
 }
 
 // add some noise
@@ -36,9 +37,9 @@ else {
 noiseLevel = 50;
 if (d>8)
    noiseLevel = 3000;
-ip.setPixels(console.getPixels());
+ip.setPixels(gui.getPixels());
 ip.noise(noiseLevel);
 
 // display processed image
 // -----------------------
-console.setPixels(ip.getPixels());
+//gui.setPixels(ip.getPixels());

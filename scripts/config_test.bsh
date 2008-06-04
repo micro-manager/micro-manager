@@ -25,6 +25,6 @@ mmc.setConfig("Channel", "DAPI");
 mmc.setConfig("Camera", "MedRes");
 
 
-console.message(mmc.getCurrentConfig("Channel"));
-console.message(mmc.getCurrentConfig("Camera"));
+gui.message(mmc.getCurrentConfig("Channel"));
+gui.message(mmc.getCurrentConfig("Camera"));
 gui.initializeGUI();

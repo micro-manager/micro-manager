@@ -5,9 +5,9 @@ mmc.definePropertyBlock("Zeiss 4X Plan Apo", "Magnification", "4");
 blks = mmc.getAvailablePropertyBlocks();
 for (i=0; i<blks.size(); i++) {
    blk = mmc.getPropertyBlockData(blks.get(i));
-   console.message(blks.get(i));
+   gui.message(blks.get(i));
    for (j=0; j < blk.size(); j++) {
       p = blk.getPair(j);
-      console.message("   " + p.getPropertyName() + " = " + p.getPropertyValue());
+      gui.message("   " + p.getPropertyName() + " = " + p.getPropertyValue());
    }
 }

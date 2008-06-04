@@ -36,7 +36,7 @@ class CMMCore;
 class CoreProperty
 {
 public:
-   CoreProperty() : readOnly_(false), value_("Undefined"){}
+   CoreProperty() : value_("Undefined"), readOnly_(false) {}
    CoreProperty(const char* v, bool ro) : value_(v), readOnly_(ro) {} 
    ~CoreProperty(){}
 
@@ -65,6 +65,7 @@ public:
    ~CorePropertyCollection() {}
 
    std::string Get(const char* PropName) const;
+   bool Has(const char* name) const;
    std::vector<std::string> GetAllowedValues(const char* propName) const;
    void ClearAllowedValues(const char* propName);
    void AddAllowedValue(const char* propName, const char* value);
@@ -77,8 +78,8 @@ public:
    void Clear() {properties_.clear();}
 
 private:
-   std::map<std::string, CoreProperty> properties_;
    CMMCore* core_;
+   std::map<std::string, CoreProperty> properties_;
 };
 
 #endif

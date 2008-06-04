@@ -1,36 +1,36 @@
 // ---------------------------------------------------
 // Live processing demo 2
 // ---------------------------------------------------
-console.message("Live processing demo");
+gui.message("Live processing demo");
 
 // set exposure
 // ------------
 mmc.setExposure(50);
-console.updateGUI();
+//gui.updateGUI();
 
 // acquire image from the camera
 // -----------------------------
-console.snapSingleImage();
+gui.snapSingleImage();
 
 // get info on the acquired image
 // ------------------------------
-x = console.getImageWidth();
-y = console.getImageHeight();
-d = console.getImageDepth();
-console.message("Image dimensions: " + x + " X " + y + " X " + d);
+x = gui.getImageWidth();
+y = gui.getImageHeight();
+d = gui.getImageDepth();
+gui.message("Image dimensions: " + x + " X " + y + " X " + d);
 
 // use current ImageProcessor
 // --------------------------
-ip = console.getImageProcessor();
+ip = gui.getImageProcessor();
 
 // add some noise
 // --------------
 noiseLevel = 50;
 if (d>8)
    noiseLevel = 3000;
-ip.setPixels(console.getPixels());
+ip.setPixels(gui.getPixels());
 ip.noise(noiseLevel);
 
 // display processed image
 // -----------------------
-console.refreshImage();
+//console.refreshImage();

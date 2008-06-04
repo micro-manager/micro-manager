@@ -1,5 +1,5 @@
 console.clearOutput();
-library="/Applications/ImageJ/DemoCamera.so";
+library="mmgr_dal_DemoCamera.so";
 //library="DemoCamera";
 
 // load equipment data

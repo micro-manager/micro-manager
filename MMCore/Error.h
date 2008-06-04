@@ -31,6 +31,7 @@
 #include <sstream>
 #include "ErrorCodes.h"
 
+
 ///////////////////////////////////////////////////////////////////////////////
 // CMMError
 // --------
@@ -40,13 +41,15 @@ class CMMError
 {
 public:
    CMMError(const char* msg, int code) :
-      specificMsg_(msg),
-      errCode_(code) {}
+      errCode_(code),
+      specificMsg_(msg)
+      {}
 
    CMMError(const char* specificMsg, const char* coreMsg, int code) :
+      errCode_(code),
       specificMsg_(specificMsg),
-      coreMsg_(coreMsg),
-      errCode_(code) {}
+      coreMsg_(coreMsg)
+      {}
 
    CMMError(int code) :
       errCode_(code) {}
@@ -66,9 +69,9 @@ public:
    void setCoreMsg(const char* msg) {coreMsg_ = msg;}
 
 private:
-   std::string coreMsg_;
-   std::string specificMsg_;
    long errCode_;
+   std::string specificMsg_;
+   std::string coreMsg_;
 };
 
 #endif //_ERROR_H_

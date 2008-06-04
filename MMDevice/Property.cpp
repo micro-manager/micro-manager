@@ -21,7 +21,7 @@
 //
 
 const int BUFSIZE = 60;
-
+#include <assert.h>
 #include "Property.h"
 using namespace std;
 
@@ -41,12 +41,14 @@ vector<string> MM::Property::GetAllowedValues() const
 void MM::Property::AddAllowedValue(const char* value)
 {
    values_.insert(make_pair<string, long>(value, 0L));
+   limits_ = false;
 }
 
 void MM::Property::AddAllowedValue(const char* value, long data)
 {
    values_.insert(make_pair<string, long>(value, data));
    hasData_ = true;
+   limits_ = false;
 }
 
 
@@ -158,22 +160,35 @@ MM::Property* MM::StringProperty::Clone() const
 // ~~~~~~~~~~~~~~~~
 //
 
+double MM::FloatProperty::Truncate(double dVal)
+{
+   char fmtStr[20];
+   char buf[BUFSIZE];
+   sprintf(fmtStr, "%%.%df", decimalPlaces_);
+   sprintf(buf, fmtStr, dVal);
+   return atof(buf);
+}
+
 bool MM::FloatProperty::Set(double dVal)
 {
-   value_ = dVal;
+   double val = Truncate(dVal);
+   if (limits_)
+   {
+      if (val < lowerLimit_ || val > upperLimit_)
+         return false;
+   }
+   value_ = val;
    return true;
 }
 
 bool MM::FloatProperty::Set(long lVal)
 {
-   value_ = (double)lVal;
-   return true;
+   return Set((double)lVal);
 }
 
 bool MM::FloatProperty::Set(const char* pszVal)
 {
-   value_ = atof(pszVal);
-   return true;
+   return Set(atof(pszVal));
 }
 
 bool MM::FloatProperty::Get(double& dVal) const
@@ -190,9 +205,11 @@ bool MM::FloatProperty::Get(long& lVal) const
 
 bool MM::FloatProperty::Get(std::string& strVal) const
 {
-   char pszBuf[BUFSIZE];
-   snprintf(pszBuf, BUFSIZE, "%.2f", value_); 
-   strVal = pszBuf;
+   char fmtStr[20];
+   char buf[BUFSIZE];
+   sprintf(fmtStr, "%%.%df", decimalPlaces_);
+   sprintf(buf, fmtStr, value_);
+   strVal = buf;
    return true;
 }
 
@@ -220,20 +237,23 @@ MM::Property* MM::FloatProperty::Clone() const
 
 bool MM::IntegerProperty::Set(double dVal)
 {
-   value_ = (long)dVal;
-   return true;
+   return Set((long)dVal);
 }
 
 bool MM::IntegerProperty::Set(long lVal)
 {
+   if (limits_)
+   {
+      if (lVal < lowerLimit_ || lVal > upperLimit_)
+         return false;
+   }
    value_ = lVal;
    return true;
 }
 
 bool MM::IntegerProperty::Set(const char* pszVal)
 {
-   value_ = atol(pszVal);
-   return true;
+   return Set(atol(pszVal));
 }
 
 bool MM::IntegerProperty::Get(double& dVal) const
@@ -301,7 +321,10 @@ int MM::PropertyCollection::Set(const char* pszPropName, const char* pszValue)
 
    if (pProp->IsAllowed(pszValue))
    {
-      pProp->Set(pszValue);
+      // check property limits
+      if (!pProp->Set(pszValue))
+         return DEVICE_INVALID_PROPERTY_VALUE;
+
       return pProp->Apply();
    }
    else

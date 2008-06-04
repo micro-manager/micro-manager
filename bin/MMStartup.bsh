@@ -1,0 +1,7 @@
+mmc.logMessage("Processing startup script...");
+
+// load focusing module
+response = acq.installAutofocusPlugin("Autofocus_");
+mmc.logMessage(response);
+
+mmc.logMessage("Startup script finished.");

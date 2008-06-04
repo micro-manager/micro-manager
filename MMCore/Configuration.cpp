@@ -28,6 +28,14 @@
 
 using namespace std;
 
+string PropertySetting::generateKey(const char* device, const char* prop)
+{
+   string key(device);
+   key += "-";
+   key += prop;
+   return key;
+}
+
 /**
  * Returns verbose description of the object's contents.
  */
@@ -76,6 +84,7 @@ bool PropertySetting::isEqualTo(const PropertySetting& ps)
       return false;
 }
 
+
 /**
   * Returns verbose description of the object's contents.
   */
@@ -115,6 +124,10 @@ void Configuration::Restore(const string& data)
    char line[3 * MM::MaxStrLength];
    while(is.getline(line, 3 * MM::MaxStrLength, '\n'))
    {
+      // strip potential windowsdos CR
+      istringstream il(line);
+      il.getline(line, 3 * MM::MaxStrLength, '\r');
+
       if (strlen(line) > 1)
       {
          PropertySetting s;
@@ -142,15 +155,13 @@ PropertySetting Configuration::getSetting(size_t index) const throw (CMMError)
   * Checks whether the property is included in the  configuration.
   */
 
-bool Configuration::isPropertyIncluded(const char* device, const char* property)
+bool Configuration::isPropertyIncluded(const char* device, const char* prop)
 {
-   vector<PropertySetting>::const_iterator it;
-   for (it=settings_.begin(); it!=settings_.end(); ++it)
-      if (it->getDeviceLabel().compare(device) == 0)
-         if (it->getPropertyName().compare(property) == 0)
-            return true;
-   
-   return false;
+   map<string, int>::iterator it = index_.find(PropertySetting::generateKey(device, prop));
+   if (it != index_.end())
+      return true;
+   else
+      return false;
 }
 
 /**
@@ -159,15 +170,48 @@ bool Configuration::isPropertyIncluded(const char* device, const char* property)
 
 bool Configuration::isSettingIncluded(const PropertySetting& ps)
 {
-   vector<PropertySetting>::const_iterator it;
-   for (it=settings_.begin(); it!=settings_.end(); ++it)
-      if (it->getDeviceLabel().compare(ps.getDeviceLabel()) == 0)
-         if (it->getPropertyName().compare(ps.getPropertyName()) == 0)
-            if (it->getPropertyValue().compare(ps.getPropertyValue()) == 0)
-               return true;
-   
-   return false;
+   map<string, int>::iterator it = index_.find(ps.getKey());
+   if (it != index_.end() && settings_[it->second].getPropertyValue().compare(ps.getPropertyValue()) == 0)
+      return true;
+   else
+      return false;
 }
+
+/**
+  * Checks whether a configuration is included.
+  * Included means that all devices from the operand configuration are
+  * included and that settings match
+  */
+
+bool Configuration::isConfigurationIncluded(const Configuration& cfg)
+{
+   vector<PropertySetting>::const_iterator it;
+   for (it=cfg.settings_.begin(); it!=cfg.settings_.end(); ++it)
+      if (!isSettingIncluded(*it))
+         return false;
+   
+   return true;
+}
+
+/**
+ * Adds new property setting to the existing contents.
+ */
+void Configuration::addSetting(const PropertySetting& setting)
+{
+   map<string, int>::iterator it = index_.find(setting.getKey());
+   if (it != index_.end())
+   {
+      // replace
+      settings_[it->second] = setting;
+   }
+   else
+   {
+      // add new
+      index_[setting.getKey()] = (int)settings_.size();
+      settings_.push_back(setting);
+   }
+}
+
 
 /**
  * Returns the property pair with specified index.

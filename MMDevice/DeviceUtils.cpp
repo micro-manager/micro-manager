@@ -23,10 +23,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#pragma warning(disable : 4996)
 
 #ifdef WIN32
+   #define WIN32_LEAN_AND_MEAN
+   #include <windows.h>
    #define snprintf _snprintf 
+#pragma warning(disable : 4996)
 #endif
 
 char CDeviceUtils::m_pszBuffer[MM::MaxStrLength]={""};
@@ -65,12 +67,29 @@ const char* CDeviceUtils::ConvertToString(long lnVal)
 }
 
 /**
+ * Convert int value to string.
+ */
+const char* CDeviceUtils::ConvertToString(int intVal)
+{
+   return ConvertToString((long)intVal);
+}
+
+/**
  * Convert double value to string.
  */
 const char* CDeviceUtils::ConvertToString(double dVal)
 {
    //return _gcvt(dVal, 12, m_pszBuffer);
    snprintf(m_pszBuffer, MM::MaxStrLength-1, "%.2f", dVal); 
+   return m_pszBuffer;
+}
+
+/**
+ * Convert boolean value to string.
+ */
+const char* CDeviceUtils::ConvertToString(bool val)
+{
+   snprintf(m_pszBuffer, MM::MaxStrLength-1, "%s", val ? "1" : "0"); 
    return m_pszBuffer;
 }
 
@@ -98,3 +117,14 @@ void CDeviceUtils::Tokenize(const std::string& str, std::vector<std::string>& to
     }
 }
 
+/**
+ * Block the current thread for the specified interval in milliseconds.
+ */
+void CDeviceUtils::SleepMs(long periodMs)
+{
+#ifdef WIN32
+   Sleep(periodMs);
+#else
+   usleep(periodMs * 1000);
+#endif
+}

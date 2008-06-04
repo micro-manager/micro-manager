@@ -28,7 +28,9 @@
 #include <vector>
 #include <map>
 
+#ifdef WIN32
 #pragma warning(disable : 4996) // disable warning for deperecated CRT functions on Windows 
+#endif
 
 namespace MM {
 
@@ -39,6 +41,8 @@ namespace MM {
 class PropertyBase
 {
 public:
+   virtual ~PropertyBase() {}
+
    // property type
    virtual PropertyType GetType() = 0;
    
@@ -50,6 +54,11 @@ public:
    virtual bool Get(double& dVal) const = 0;
    virtual bool Get(long& lVal) const = 0;
    virtual bool Get(std::string& strVal) const = 0;
+
+   virtual bool HasLimits() const = 0;
+   virtual double GetLowerLimit() const = 0;
+   virtual double GetUpperLimit() const = 0;
+   virtual bool SetLimits(double lowerLimit, double upperLimit) = 0;
 };
 
 /**
@@ -58,7 +67,8 @@ public:
 class ActionFunctor
 {
 public:
-   virtual int Execute(PropertyBase* pProp, ActionType eAct)=0;        // call using function
+   virtual ~ActionFunctor() {}
+   virtual int Execute(PropertyBase* pProp, ActionType eAct) = 0;
 };
 
 /**
@@ -68,15 +78,38 @@ template <class T>
 class Action : public ActionFunctor
 {
 private:
-   int (T::*fpt_)(PropertyBase* pProp, ActionType eAct);
    T* pObj_;
+   int (T::*fpt_)(PropertyBase* pProp, ActionType eAct);
 
 public:
    Action(T* pObj, int(T::*fpt)(PropertyBase* pProp, ActionType eAct) ) :
       pObj_(pObj), fpt_(fpt) {}
+      ~Action() {}
 
-      int Execute(PropertyBase* pProp, ActionType eAct)
+   int Execute(PropertyBase* pProp, ActionType eAct)
       {return (*pObj_.*fpt_)(pProp, eAct);};
+};
+
+/** 
+ * Extended device action implementation.
+ * It takes one additional long parameter whic can be used as
+ * a command identifier inside the command handler
+ */
+template <class T>
+class ActionEx : public ActionFunctor
+{
+	//typedef int (T::*PVCAMActionFP)(MM::PropertyBase*, MM::ActionType, uns32);
+private:
+	T* pObj_;
+   int (T::*fpt_)(PropertyBase* pProp, ActionType eAct, long param);
+   long param_;
+
+public:
+	ActionEx(T* pObj, int(T::*fpt)(PropertyBase* pProp, ActionType eAct, long data), long data) :
+      pObj_(pObj), fpt_(fpt), param_(data) {}; 
+   ~ActionEx() {}
+	int Execute(MM::PropertyBase* pProp, MM::ActionType eAct)
+      {return (*pObj_.*fpt_)(pProp, eAct, param_);};
 };
 
 /**
@@ -85,7 +118,16 @@ public:
 class Property : public PropertyBase
 {
 public:
-   Property() : readOnly_(false), fpAction_(0), cached_(false), hasData_(false), initStatus_(true) {}      
+   Property() :
+      readOnly_(false),
+      fpAction_(0),
+      cached_(false),
+      hasData_(false),
+      initStatus_(true),
+      limits_(false),
+      lowerLimit_(0.0),
+      upperLimit_(0.0)
+      {}      
    virtual ~Property(){delete fpAction_;}
             
    bool GetCached()const {return cached_;}
@@ -121,6 +163,25 @@ public:
    bool IsAllowed(const char* value) const;
    bool GetData(const char* value, long& data) const;
 
+   bool HasLimits() const {return limits_;}
+   double GetLowerLimit() const {return limits_ ? lowerLimit_ : 0.0;}
+   double GetUpperLimit() const {return limits_ ? upperLimit_ : 0.0;}
+   bool SetLimits(double lowerLimit, double upperLimit)
+   {
+      // do not allow limits for properties with discrete values defined
+      if (values_.size() > 0)
+         limits_ = false;
+
+      if (lowerLimit >= upperLimit)
+         limits_ = false;
+
+      limits_ = true;
+      lowerLimit_ = lowerLimit;
+      upperLimit_ = upperLimit;
+
+      return limits_;
+   }
+
    // virtual API
    // ~~~~~~~~~~~
    virtual Property* Clone() const = 0;
@@ -131,11 +192,14 @@ public:
 
 protected:
    bool readOnly_;
-   std::map<std::string, long> values_; // allowed values
-   bool hasData_;
    ActionFunctor* fpAction_;
    bool cached_;
+   bool hasData_;
    bool initStatus_;
+   bool limits_;
+   double lowerLimit_;
+   double upperLimit_;
+   std::map<std::string, long> values_; // allowed values
 };
 
 /**
@@ -158,6 +222,8 @@ public:
    bool Get(long& val) const ;
    bool Get(std::string& val) const;
 
+   bool SetLimits(double /*lowerLimit*/, double /*upperLimit*/) {return false;}
+
    Property* Clone() const;
 
    // operators
@@ -173,7 +239,7 @@ private:
 class FloatProperty : public Property
 {
 public:
-   FloatProperty(): Property(), value_(0.0) {}      
+   FloatProperty(): Property(), value_(0.0), decimalPlaces_(2) {}      
    virtual ~FloatProperty() {};
             
    PropertyType GetType() {return Float;}
@@ -193,7 +259,9 @@ public:
    FloatProperty& operator=(const FloatProperty& rhs);
 
 private:
+   double Truncate(double dVal);
    double value_;
+   int decimalPlaces_;
 };
 
 /**

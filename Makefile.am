@@ -1,8 +1,6 @@
 AUTOMAKE_OPTIONS = foreign
 
-SUBDIRS =  MMCore MMDevice MMCoreJ_wrap mmstudio ModuleTest Test_MMCore Test_Serial DeviceAdapters bin
+SUBDIRS =  MMCore MMDevice MMCoreJ_wrap bin mmstudio DeviceAdapters Bleach autofocus ModuleTest Test_MMCore Test_Serial DeviceAdapters 
 
-EXTRA_DIST = bin mmbuild.bat lib/empty.txt build_instructions_win.html build_instructions_unix.txt
+EXTRA_DIST = mmbuild.bat lib/empty.txt build_instructions_win.html build_instructions_unix.txt
 
-dist-hook:
-	rm -rf `find $(distdir)/bin -name CVS`

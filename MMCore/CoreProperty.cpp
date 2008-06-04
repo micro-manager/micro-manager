@@ -27,7 +27,9 @@
 #include "CoreProperty.h"
 #include "MMCore.h"
 #include "Error.h"
+#include "../MMDevice/DeviceUtils.h"
 #include <assert.h>
+#include <stdlib.h>
 using namespace std;
 
 vector<string> CoreProperty::GetAllowedValues() const
@@ -131,6 +133,14 @@ void CorePropertyCollection::Execute(const char* propName, const char* value)
    {
       core_->setAutoFocusDevice(value);
    }
+   else if (strcmp(propName, MM::g_Keyword_CoreImageProcessor) == 0)
+   {
+      core_->setImageProcessorDevice(value);
+   }
+   else if (strcmp(propName, MM::g_Keyword_CoreTimeoutMs) == 0)
+   {
+      core_->setTimeoutMs(atol(value));
+   }
    // unknown property
    else
    {
@@ -146,6 +156,15 @@ string CorePropertyCollection::Get(const char* propName) const
       throw CMMError(propName, core_->getCoreErrorText(MMERR_InvalidCoreProperty).c_str(), MMERR_InvalidCoreProperty);
 
    return it->second.Get();
+}
+
+bool CorePropertyCollection::Has(const char* propName) const
+{
+   map<string, CoreProperty>::const_iterator it = properties_.find(propName);
+   if (it == properties_.end())
+      return false; // not defined
+
+   return true;
 }
 
 vector<string> CorePropertyCollection::GetNames() const
@@ -180,6 +199,12 @@ void CorePropertyCollection::Refresh()
 
    // Auto-Focus
    Set(MM::g_Keyword_CoreAutoFocus, core_->getAutoFocusDevice().c_str());
+
+   // Image processor
+   Set(MM::g_Keyword_CoreImageProcessor, core_->getImageProcessorDevice().c_str());
+
+   // Timeout for Device Busy checking
+   Set(MM::g_Keyword_CoreTimeoutMs, CDeviceUtils::ConvertToString(core_->getTimeoutMs()));
 }
 
 bool CorePropertyCollection::IsReadOnly(const char* propName) const

@@ -1,16 +1,19 @@
-// multi channel acquistion
+/*
+ * This script was build with the MMConfig_demo.cfg configuration.
+ * It demonstrates acquiring multiple images with different hardware settings
+ */
 mmc.removeImageSynchroAll();
 mmc.assignImageSynchro("Shutter");
-mmc.assignImageSynchro("FilterCube");
+mmc.assignImageSynchro("Dichroic");
 mmc.setAutoShutter(true);
 
-mmc.setStateLabel("FilterCube", "24 FITC/TR");
+mmc.setStateLabel("Dichroic", "400DCLP");
 mmc.setExposure(600);
-console.snapSingleImage();
+gui.snapSingleImage();
 
-mmc.setStateLabel("FilterCube", "DAPI");
+mmc.setStateLabel("Dichroic", "Q505LP");
 mmc.setExposure(100);
 mmc.snapImage();
-console.setPixels(mmc.getImage());
-console.refreshImage();
+gui.setPixels(mmc.getImage());
+gui.refreshImage();
 

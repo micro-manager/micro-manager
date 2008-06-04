@@ -1,0 +1,35 @@
+/*
+ * This script takes burst sequences at a set number of sites
+ * Written by Nico Stuurman for Andrew Carter, January 2008
+ */
+
+nrLocations = 4;
+
+XYStage = mmc.getXYStageDevice();
+startXloc = mmc.getXPosition(XYStage);
+startYloc = mmc.getYPosition(XYStage);
+imageWidth = mmc.getImageWidth();
+umPerPixel = mmc.getPixelSizeUm();
+
+console.message (XYStage + " " + startXloc + " " + startYloc + " " + imageWidth + " " + umPerPixel);
+
+for (i=0; i < nrLocations; i++) {
+   mmc.setXYPosition(XYStage, startXloc + (i * imageWidth), startYloc);
+   mmc.waitForSystem();
+   // wait an extra 0.5 second for system to settle
+   mmc.sleep(500);
+   // start burst
+   gui.fastAcqWin_.start();
+   console.message("Burst acquisition " + i + " started!");
+   //mmc.sleep(2000);
+   Thread.currentThread().sleep(2000);
+   // poll for burst to end
+   test = gui.isBurstAcquisitionRunning();
+   if (!test)
+      console.message("No Burst running");
+   while (test) {
+     console.message("Still Running");
+      test = gui.isBurstAcquisitionRunning();
+      mmc.sleep(250);
+   }
+}

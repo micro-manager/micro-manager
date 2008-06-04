@@ -30,12 +30,18 @@
 #ifndef _PLUGIN_MANAGER_H_
 #define _PLUGIN_MANAGER_H_
 
+#ifdef WIN32
+// disable exception scpecification warnings in MSVC
+#pragma warning( disable : 4290 )
+#endif
+
 #include <string>
 #include <vector>
 #include <map>
 #include "../MMDevice/MMDeviceConstants.h"
 #include "../MMDevice/MMDevice.h"
 #include "ErrorCodes.h"
+#include "Error.h"
 
 /**
  * Manages the device collection. Responsible for handling plugin libraries
@@ -57,9 +63,9 @@ public:
 
    // device browsing support
    static std::vector<std::string> GetModules(const char* searchPath);
-   static std::vector<std::string> GetAvailableDevices(const char* moduleName);
-   static std::vector<std::string> GetAvailableDeviceDescriptions(const char* moduleName);
-   static std::vector<int> GetAvailableDeviceTypes(const char* moduleName);
+   static std::vector<std::string> GetAvailableDevices(const char* moduleName) throw (CMMError);
+   static std::vector<std::string> GetAvailableDeviceDescriptions(const char* moduleName) throw (CMMError);
+   static std::vector<int> GetAvailableDeviceTypes(const char* moduleName) throw (CMMError);
 
    // persistence
    std::string Serialize();

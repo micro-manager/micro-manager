@@ -1,0 +1,50 @@
+/*
+ * This script takes a 'pre-Burst' image using the specified preChannel and preExposure
+ * It then starts a burst imaging with the specified channel and exposure
+ * All other paramters can be set in the GUI.
+ * Written by Nenad Amodaj for Julia Kardon, November 2007
+ */
+
+import ij.process.*;
+import ij.ImagePlus;
+import ij.io.FileSaver;
+
+//set-up parameterers
+preExposure = 40.0;
+burstExposure = 30.0;
+preChannel = "DAPI";
+burstChannel = "FITC";
+prePath = "image-1.tif";
+
+// acquire pre-frame
+mmc.setExposure(preExposure);
+mmc.setConfig("Channel", preChannel);
+mmc.waitForSystem();
+mmc.snapImage();
+img = mmc.getImage();
+
+// save pre-frame to TIF
+width = mmc.getImageWidth();
+height = mmc.getImageHeight();
+byteDepth = mmc.getBytesPerPixel();
+if (byteDepth == 1) {
+   ip = new ByteProcessor((int)width, (int)height);
+   ip.setPixels(img);
+} else if (byteDepth==16) {
+   ip = new ShortProcessor((int)width, (int)height);
+   ip.setPixels(img);
+} else {
+   console.message("Unknown byte depth.");
+   return;
+}
+ImagePlus imp = new ImagePlus(prePath, ip);
+FileSaver fs = new FileSaver(imp);
+fs.saveAsTiff(prePath);
+gui.message("Pre-acquisition image saved!");
+
+//start burst
+mmc.setExposure(burstExposure);
+mmc.setConfig("Channel", burstChannel);
+mmc.waitForSystem();
+gui.startBurstAcquisition();
+gui.message("Burst acquisition started!");

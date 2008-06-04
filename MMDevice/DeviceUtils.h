@@ -34,7 +34,10 @@ public:
    static unsigned GetMaxStringLength();
    static const char* ConvertToString(long lnVal);
    static const char* ConvertToString(double dVal);
+   static const char* ConvertToString(int val);
+   static const char* ConvertToString(bool val);
    static void Tokenize(const std::string& str, std::vector<std::string>& tokens, const std::string& delimiters = ",");
+   static void SleepMs(long ms);
 private:
    static char m_pszBuffer[MM::MaxStrLength];
 };

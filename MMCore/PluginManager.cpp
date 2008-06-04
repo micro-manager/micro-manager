@@ -55,6 +55,11 @@ CPluginManager::~CPluginManager()
    UnloadAllDevices();
 }
 
+// disable MSVC warning about unreferenced variable "ret"
+#ifdef WIN32
+#pragma warning(disable : 4189)
+#endif
+
 /** Unloads the plugin library */
 void CPluginManager::ReleasePluginLibrary(HDEVMODULE hLib)
 {
@@ -66,6 +71,9 @@ void CPluginManager::ReleasePluginLibrary(HDEVMODULE hLib)
       assert(nRet == 0);
    #endif
 }
+#ifdef WIN32
+#pragma warning(default : 4189)
+#endif
 
 /** 
  * Loads the plugin library. Platform dependent.
@@ -212,9 +220,18 @@ void CPluginManager::UnloadDevice(MM::Device* pDevice)
  */
 void CPluginManager::UnloadAllDevices()
 {
+   // do a two pass unloading so that USB ports and com ports unload last
    CDeviceMap::const_iterator it;
+
+   // first unload all devices but serial ports
    for (it=devices_.begin(); it != devices_.end(); it++)
-      UnloadDevice(it->second);
+      if (it->second != 0 && it->second->GetType() != MM::SerialDevice)
+         UnloadDevice(it->second);
+
+   // now unload remaining ports
+   for (it=devices_.begin(); it != devices_.end(); it++)
+      if (it->second != 0)
+         UnloadDevice(it->second);
 
    devices_.clear();
 }
@@ -382,7 +399,7 @@ vector<string> CPluginManager::GetModules(const char* searchPath)
 /**
  * List all available devices in the specified module.
  */
-vector<string> CPluginManager::GetAvailableDevices(const char* moduleName)
+vector<string> CPluginManager::GetAvailableDevices(const char* moduleName) throw (CMMError)
 {
    vector<string> devices;
    HDEVMODULE hLib = LoadPluginLibrary(moduleName);
@@ -411,10 +428,10 @@ vector<string> CPluginManager::GetAvailableDevices(const char* moduleName)
             devices.push_back(deviceName);
       }
    }
-   catch (CMMError& err)
+   catch (CMMError&)
    {
       ReleasePluginLibrary(hLib);
-      throw err;
+      throw;
    }
    
    ReleasePluginLibrary(hLib);
@@ -424,7 +441,7 @@ vector<string> CPluginManager::GetAvailableDevices(const char* moduleName)
 /**
  * List all available devices in the specified module.
  */
-vector<string> CPluginManager::GetAvailableDeviceDescriptions(const char* moduleName)
+vector<string> CPluginManager::GetAvailableDeviceDescriptions(const char* moduleName) throw (CMMError)
 {
    vector<string> descriptions;
    HDEVMODULE hLib = LoadPluginLibrary(moduleName);
@@ -452,10 +469,10 @@ vector<string> CPluginManager::GetAvailableDeviceDescriptions(const char* module
             descriptions.push_back(deviceDescr);
       }
    }
-   catch (CMMError& err)
+   catch (CMMError&)
    {
       ReleasePluginLibrary(hLib);
-      throw err;
+      throw;
    }
    
    ReleasePluginLibrary(hLib);
@@ -465,7 +482,7 @@ vector<string> CPluginManager::GetAvailableDeviceDescriptions(const char* module
 /**
  * List all device types in the specified module.
  */
-vector<int> CPluginManager::GetAvailableDeviceTypes(const char* moduleName)
+vector<int> CPluginManager::GetAvailableDeviceTypes(const char* moduleName) throw (CMMError)
 {
    vector<int> types;
    HDEVMODULE hLib = LoadPluginLibrary(moduleName);
@@ -516,10 +533,10 @@ vector<int> CPluginManager::GetAvailableDeviceTypes(const char* moduleName)
          }
       }
    }
-   catch (CMMError& err)
+   catch (CMMError&)
    {
       ReleasePluginLibrary(hLib);
-      throw err;
+      throw;
    }
    
    ReleasePluginLibrary(hLib);

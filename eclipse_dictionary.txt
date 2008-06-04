@@ -1,0 +1,15 @@
+metadata
+Micro-Manager
+micro-manager
+micro
+Nenad
+Amodaj
+nenad@amodaj.com
+San
+Francisco
+mmstudio
+Nico
+Stuurman
+microns
+uncalibrated
+classpath

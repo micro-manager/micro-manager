@@ -22,8 +22,10 @@
 #ifndef _CONFIGURATION_H_
 #define _CONFIGURATION_H_
 
+#ifdef WIN32
 // disable exception scpecification warnings in MSVC
 #pragma warning( disable : 4290 )
+#endif
 
 #include <string>
 #include <vector>
@@ -43,11 +45,14 @@ struct PropertySetting
     * @param prop
     * @param value 
     */
-   PropertySetting(const char* deviceLabel, const char* prop, const char* value, bool readOnly = false) :
-      deviceLabel_(deviceLabel), propertyName_(prop), value_(value), readOnly_(readOnly) {}
+    PropertySetting(const char* deviceLabel, const char* prop, const char* value, bool readOnly = false) :
+      deviceLabel_(deviceLabel), propertyName_(prop), value_(value), readOnly_(readOnly)
+      {
+        key_ = generateKey(deviceLabel, prop);
+      }
 
-      PropertySetting() : readOnly_(false) {}
-   ~PropertySetting() {}
+    PropertySetting() : readOnly_(false) {}
+    ~PropertySetting() {}
 
    /**
     * Returns the device label.
@@ -65,6 +70,11 @@ struct PropertySetting
     * Returns the property value.
     */
    std::string getPropertyValue() const {return value_;}
+
+   std::string getKey() const {return key_;}
+
+   static std::string generateKey(const char* device, const char* prop);
+
    std::string Serialize() const;
    void Restore(const std::string& data);
    std::string getVerbose() const;
@@ -74,6 +84,7 @@ private:
    std::string deviceLabel_;
    std::string propertyName_;
    std::string value_;
+   std::string key_;
    bool readOnly_;
 };
 
@@ -121,10 +132,11 @@ public:
    /**
     * Adds new property setting to the existing contents.
     */
-   void addSetting(const PropertySetting& setting) {settings_.push_back(setting);}
+   void addSetting(const PropertySetting& setting);
 
    bool isPropertyIncluded(const char* device, const char* property);
    bool isSettingIncluded(const PropertySetting& ps);
+   bool isConfigurationIncluded(const Configuration& cfg);
 
    PropertySetting getSetting(size_t index) const throw (CMMError);
    /**
@@ -137,6 +149,7 @@ public:
  
 private:
    std::vector<PropertySetting> settings_;
+   std::map<std::string, int> index_;
 };
 
 /**

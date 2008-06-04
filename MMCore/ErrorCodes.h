@@ -65,5 +65,7 @@
 #define MMERR_CameraBufferReadFailed   37
 #define MMERR_DuplicateConfigGroup     38
 #define MMERR_InvalidConfigurationFile 39
-
+#define MMERR_CircularBufferFailedToInitialize 40
+#define MMERR_CircularBufferEmpty      41
+#define MMERR_ContFocusNotAvailable    42
 #endif //_ERRORCODES_H_

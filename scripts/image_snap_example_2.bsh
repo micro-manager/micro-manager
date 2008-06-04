@@ -1,4 +1,4 @@
-console.message("Displaying image");
+gui.message("Displaying image");
 
 // adjust the binning first (optional)
 cameraName = mmc.getCameraDevice();

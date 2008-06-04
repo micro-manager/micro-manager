@@ -24,16 +24,25 @@
 //
 // CVS:           $Id$
 //
+#ifdef WIN32
+#pragma warning (disable : 4312 4244)
+#endif
 
 #include <ace/OS.h>
 #include <ace/High_Res_Timer.h>
 #include <ace/Log_Msg.h>
+
+#ifdef WIN32
+#pragma warning (default : 4312 4244)
+#endif
+
 #ifdef __APPLE__
 #include <sys/time.h>
 #endif
 
 #include "CoreUtils.h"
 #include "MMCore.h"
+#include "MMEventCallback.h"
 
 using namespace std;
 
@@ -89,161 +98,107 @@ public:
       return pDev;
    }
    
-   /**
-    * Sends an array of bytes to the port.
-    */
-   int WriteToSerial(const MM::Device* caller, const char* portName, const char* buf, unsigned long length)
+   MM::PortType GetSerialPortType(const char* portName) const
    {
       MM::Serial* pSerial = 0;
       try
       {
          pSerial = core_->getSpecificDevice<MM::Serial>(portName);
       }
-      catch (CMMError& err)
-      {
-         return err.getCode();    
-      }
       catch (...)
       {
-         return DEVICE_SERIAL_COMMAND_FAILED;
+         return MM::InvalidPort;
       }
 
-      // don't allow self reference
-      if (dynamic_cast<MM::Device*>(pSerial) == caller)
-         return DEVICE_SELF_REFERENCE;
-
-      return pSerial->Write(buf, length);
+      return pSerial->GetPortType();
    }
-   
-   /**
-    * Reads bytes form the port, up to the buffer length.
-    */
-   int ReadFromSerial(const MM::Device* caller, const char* portName, char* buf, unsigned long bufLength, unsigned long &bytesRead)
-   {
-      MM::Serial* pSerial = 0;
-      try
-      {
-         pSerial = core_->getSpecificDevice<MM::Serial>(portName);
-      }
-      catch (CMMError& err)
-      {
-         return err.getCode();    
-      }
-      catch (...)
-      {
-         return DEVICE_SERIAL_COMMAND_FAILED;
-      }
-
-      // don't allow self reference
-      if (dynamic_cast<MM::Device*>(pSerial) == caller)
-         return DEVICE_SELF_REFERENCE;
-
-      return pSerial->Read(buf, bufLength, bytesRead);
-   }
+ 
+   int WriteToSerial(const MM::Device* caller, const char* portName, const unsigned char* buf, unsigned long length);
+   int ReadFromSerial(const MM::Device* caller, const char* portName, unsigned char* buf, unsigned long bufLength, unsigned long &bytesRead);
+   int PurgeSerial(const MM::Device* caller, const char* portName);
+   int SetSerialCommand(const MM::Device*, const char* portName, const char* command, const char* term);
+   int GetSerialAnswer(const MM::Device*, const char* portName, unsigned long ansLength, char* answerTxt, const char* term);
 
    /**
-    * Clears port buffers.
+    * Returns the number of microseconds since the system starting time.
+    * NOTE: This method is obsolete.
     */
-   int PurgeSerial(const MM::Device* caller, const char* portName)
-   {
-      MM::Serial* pSerial = 0;
-      try
-      {
-         pSerial = core_->getSpecificDevice<MM::Serial>(portName);
-      }
-      catch (CMMError& err)
-      {
-         return err.getCode();    
-      }
-      catch (...)
-      {
-         return DEVICE_SERIAL_COMMAND_FAILED;
-      }
-
-      // don't allow self reference
-      if (dynamic_cast<MM::Device*>(pSerial) == caller)
-         return DEVICE_SELF_REFERENCE;
-
-      return pSerial->Purge();
-   }
-
-   /**
-    * Sends an ASCII command terminated by the specified character sequence.
-    */
-   int SetSerialCommand(const MM::Device*, const char* portName, const char* command, const char* term)
-   {
-      assert(core_);
-      try {
-         core_->setSerialPortCommand(portName, command, term);
-      }
-      catch (...)
-      {
-         // trap all exceptions and return generic serial error
-         return DEVICE_SERIAL_COMMAND_FAILED;
-      }
-      return DEVICE_OK;
-   }
-   
-   /**
-    * Receives an ASCII string terminated by the specified character sequence.
-    * The terminator string is stripped of the answer. If the termination code is not
-    * received within the com port timeout and error will be flagged.
-    */
-   int GetSerialAnswer(const MM::Device*, const char* portName, unsigned long ansLength, char* answerTxt, const char* term)
-   {
-      assert(core_);
-      string answer;
-      try {
-         answer = core_->getSerialPortAnswer(portName, term);
-         if (answer.length() >= ansLength)
-            return DEVICE_SERIAL_BUFFER_OVERRUN;
-      }
-      catch (...)
-      {
-         // trap all exceptions and return generic serial error
-         return DEVICE_SERIAL_COMMAND_FAILED;
-      }
-      strcpy(answerTxt, answer.c_str());
-      return DEVICE_OK;
-   }
-
-   /**
-    * Handler for the status change event from the device.
-    */
-   int OnStatusChanged(const MM::Device* /* caller */)
-   {
-      return DEVICE_OK;
-   }
-   
-   /**
-    * Handler for the operation finished event from the device.
-    */
-   int OnFinished(const MM::Device* /* caller */)
-   {
-      return DEVICE_OK;
-   }
-
-   // to work around a bug in ACE implementation on Mac:
-#ifdef __APPLE__
    long GetClockTicksUs(const MM::Device* /*caller*/)
    {
+      #ifdef __APPLE__
       struct timeval t;
       gettimeofday(&t,NULL);
       return t.tv_sec * 1000000L + t.tv_usec;
-   }
-#else
-   long GetClockTicksUs(const MM::Device* /*caller*/)
-   {
+      #else
       ACE_High_Res_Timer timer;
       ACE_Time_Value t = timer.gettimeofday();
-      return t.sec() * 1000000L + t.usec();
+      return (long)(t.sec() * 1000000L + t.usec());
+     #endif
    }
-#endif
+
+   MM::MMTime GetCurrentMMTime()
+   {
+      #ifdef __APPLE__
+         struct timeval t;
+         gettimeofday(&t,NULL);
+         return MM::MMTime(t.tv_sec, t.tv_usec);
+      #else
+         ACE_High_Res_Timer timer;
+         ACE_Time_Value t = timer.gettimeofday();
+         return MM::MMTime((long)t.sec(), (long)t.usec());
+      #endif
+  }
 
    void Sleep (const MM::Device* /*caller*/, double intervalMs)
    {
       ACE_Time_Value tv(0, (long)intervalMs * 1000);
       ACE_OS::sleep(tv);
+   }
+
+   // continous acquisition support
+   int InsertImage(const MM::Device* caller, const unsigned char* buf, unsigned width, unsigned height, unsigned byteDepth, MM::ImageMetadata* pMd = 0);
+   int InsertMultiChannel(const MM::Device* caller, const unsigned char* buf, unsigned numChannels, unsigned width, unsigned height, unsigned byteDepth, MM::ImageMetadata* pMd = 0);
+   void SetAcqStatus(const MM::Device* caller, int statusCode);
+
+   int OpenFrame(const MM::Device* caller);
+   int CloseFrame(const MM::Device* caller);
+   int AcqFinished(const MM::Device* caller, int statusCode);
+   int PrepareForAcq(const MM::Device* caller);
+
+   // notification handlers
+   int OnStatusChanged(const MM::Device* /* caller */);
+   int OnPropertiesChanged(const MM::Device* /* caller */);
+   int OnFinished(const MM::Device* /* caller */);
+
+   // device management
+   MM::ImageProcessor* GetImageProcessor(const MM::Device* /* caller */)
+   {
+      return core_->imageProcessor_;
+   }
+
+   MM::State* GetStateDevice(const MM::Device* /* caller */, const char* deviceName)
+   {
+      try {
+         return core_->getSpecificDevice<MM::State>(deviceName);
+      } catch(...) {
+         //trap all exceptions
+         return 0;
+      }
+   }
+
+   MM::SignalIO* GetSignalIODevice(const MM::Device* /* caller */, const char* deviceName)
+   {
+      try {
+         return core_->getSpecificDevice<MM::SignalIO>(deviceName);
+      } catch(...) {
+         //trap all exceptions
+         return 0;
+      }
+   }
+
+   std::vector<std::string> GetLoadedDevicesOfType(const MM::Device* /* caller */, MM::DeviceType devType)
+   {
+      return core_->getLoadedDevicesOfType(devType);
    }
 
 

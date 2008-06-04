@@ -54,6 +54,9 @@ const char* const g_Msg_UNKNOWN_POSITION = "Invalid state (position) requested";
 const char* const g_Msg_DEVICE_DUPLICATE_LABEL = "Position label already in use";
 const char* const g_Msg_SERIAL_COMMAND_FAILED = "Serial command failed.  Is the device connected to the serial port?";
 const char* const g_Msg_SERIAL_INVALID_RESPONSE = "Unexpected response from serial port. Is the device connected to the correct serial port?";
+const char* const g_Msg_DEVICE_NONEXISTENT_CHANNEL = "Requested channel is not defined.";
+const char* const g_Msg_DEVICE_INVALID_PROPERTY_LIMTS = "Specified property limits are not valid."
+                                                        " Either the property already has a set of dicrete values, or the range is invalid";
 
 
 /**
@@ -69,6 +72,7 @@ class CDeviceBase : public T
 public:
 
    typedef MM::Action<U> CPropertyAction;
+   typedef MM::ActionEx<U> CPropertyActionEx;
 
    /**
     * Returns the library handle (for use only by the calling code).
@@ -136,6 +140,12 @@ public:
    void SetCallback(MM::Core* cbk) {callback_ = cbk;}
 
    /**
+    * Signals if the device responds to different delay settings.
+    * Deault device behavior is to ignore delays and use busy signals instead.
+    */
+   bool UsesDelay() {return usesDelay_;}
+
+   /**
     * Returns the number of properties.
     */
    unsigned GetNumberOfProperties() const {return (unsigned)properties_.GetSize();}
@@ -188,6 +198,39 @@ public:
       return DEVICE_OK;
    }
 
+   int HasPropertyLimits(const char* name, bool& hasLimits) const
+   {
+      MM::Property* pProp = properties_.Find(name);
+      if (!pProp)
+      {
+         return DEVICE_INVALID_PROPERTY;
+      }
+      hasLimits = pProp->HasLimits();
+      return DEVICE_OK;
+   }
+
+   int GetPropertyLowerLimit(const char* name, double& lowLimit) const
+   {
+      MM::Property* pProp = properties_.Find(name);
+      if (!pProp)
+      {
+         return DEVICE_INVALID_PROPERTY;
+      }
+      lowLimit = pProp->GetLowerLimit();
+      return DEVICE_OK;
+   }
+
+   int GetPropertyUpperLimit(const char* name, double& hiLimit) const
+   {
+      MM::Property* pProp = properties_.Find(name);
+      if (!pProp)
+      {
+         return DEVICE_INVALID_PROPERTY;
+      }
+      hiLimit = pProp->GetUpperLimit();
+      return DEVICE_OK;
+   }
+
    /**
     * Obtains the property name given the index.
     * Can be used for enumerating properties.
@@ -205,6 +248,19 @@ public:
    }
 
    /**
+    * Obtain property type (string, float or integer)
+    */
+   int GetPropertyType(const char* name, MM::PropertyType& pt) const
+   {
+      MM::Property* pProp = properties_.Find(name);
+      if (!pProp)
+         return DEVICE_INVALID_PROPERTY;
+
+      pt = pProp->GetType();
+      return DEVICE_OK;
+   }
+
+   /**
     * Sets the property value.
     * @param name - property name
     * @param value - propery value
@@ -212,6 +268,18 @@ public:
    int SetProperty(const char* name, const char* value)
    {
       return properties_.Set(name, value);
+   }
+
+   /**
+    * Checks if device supports a given property.
+    */
+   bool HasProperty(const char* name) const
+   {
+      MM::Property* pProp = properties_.Find(name);
+      if (pProp)
+         return true;
+      else
+         return false;
    }
 
    /**
@@ -263,7 +331,21 @@ public:
    {
       return properties_.CreateProperty(name, value, eType, readOnly, pAct, initStatus);
    }
-   
+ 
+   /**
+    * Define limits for properties with continous range of values
+    */
+   int SetPropertyLimits(const char* name, double low, double high)
+   {
+      MM::Property* pProp = properties_.Find(name);
+      if (!pProp)
+         return DEVICE_INVALID_PROPERTY;
+      if (pProp->SetLimits(low, high))
+         return DEVICE_OK;
+      else
+         return DEVICE_INVALID_PROPERTY_LIMTS;
+   }
+
    /**
     * Sets an entire array of allowed values.
     */
@@ -358,7 +440,7 @@ public:
 
 protected:
 
-   CDeviceBase() : module_(0), delayMs_(0), callback_(0)
+   CDeviceBase() : module_(0), delayMs_(0), usesDelay_(false), callback_(0)
    {
       InitializeDefaultErrorMessages();
    }
@@ -405,6 +487,8 @@ protected:
       SetErrorText(DEVICE_DUPLICATE_LABEL, g_Msg_DEVICE_DUPLICATE_LABEL);
       SetErrorText(DEVICE_SERIAL_COMMAND_FAILED, g_Msg_SERIAL_COMMAND_FAILED);
       SetErrorText(DEVICE_SERIAL_INVALID_RESPONSE, g_Msg_SERIAL_INVALID_RESPONSE);
+      SetErrorText(DEVICE_NONEXISTENT_CHANNEL, g_Msg_DEVICE_NONEXISTENT_CHANNEL);
+      SetErrorText(DEVICE_INVALID_PROPERTY_LIMTS, g_Msg_DEVICE_INVALID_PROPERTY_LIMTS);
    }
 
    /**
@@ -420,9 +504,20 @@ protected:
    }
    
    /**
+    * Returns a vector with strings listing the devices of the requested types
+    */
+   std::vector<std::string> GetLoadedDevicesOfType(MM::DeviceType devType)
+   {
+      if (callback_)
+         return callback_->GetLoadedDevicesOfType(this, devType);
+      std::vector<std::string> tmp;
+      return tmp;
+   }
+
+   /**
     * Sends an aray of bytes to the com port.
     */
-   int WriteToComPort(const char* portLabel, const char* buf, unsigned bufLength)
+   int WriteToComPort(const char* portLabel, const unsigned char* buf, unsigned bufLength)
    {
        if (callback_)
           return callback_->WriteToSerial(this, portLabel, buf, bufLength); 
@@ -470,7 +565,7 @@ protected:
    /**
     * Reads the current contents of Rx serial buffer.
     */
-   int ReadFromComPort(const char* portLabel, char* buf, unsigned bufLength, unsigned long& read)
+   int ReadFromComPort(const char* portLabel, unsigned char* buf, unsigned bufLength, unsigned long& read)
    {
        if (callback_)
           return callback_->ReadFromSerial(this, portLabel, buf, bufLength, read);
@@ -486,14 +581,35 @@ protected:
           return callback_->PurgeSerial(this, portLabel);
       return DEVICE_NO_CALLBACK_REGISTERED;
    }
+
+   /**
+    * Reads the current contents of Rx serial buffer.
+    */
+   MM::PortType GetPortType(const char* portLabel)
+   {
+       if (callback_)
+          return callback_->GetSerialPortType(portLabel);
+       return MM::InvalidPort;
+   }
  
    /**
-    * 
+    * Device changed status
     */
    int OnStatusChanged()
    {
       if (callback_)
          return callback_->OnStatusChanged(this);
+      return DEVICE_NO_CALLBACK_REGISTERED;
+   }
+
+   /**
+    * Something changed in the property structure.
+    * Signals the need for GUI update.
+    */
+   int OnPropertiesChanged()
+   {
+      if (callback_)
+         return callback_->OnPropertiesChanged(this);
       return DEVICE_NO_CALLBACK_REGISTERED;
    }
    
@@ -505,9 +621,10 @@ protected:
    }
 
    /**
-    * Gets the system tecks in microseconds.
+    * Gets the system ticcks in microseconds.
+    * OBSOLETE, use GetCurrentTime()
     */
-   long GetClockTicksUs()
+   unsigned long GetClockTicksUs()
    {
       if (callback_)
          return callback_->GetClockTicksUs(this);
@@ -515,11 +632,16 @@ protected:
       return 0;
    }
 
-   //void Sleep(double intervalMs)
-   //{
-   //   if (callback_)
-   //      return callback_->Sleep(this, intervalMs);
-   //}
+   /**
+    * Gets current time.
+    */
+   MM::MMTime GetCurrentMMTime()
+   {
+      if (callback_)
+         return callback_->GetCurrentMMTime();
+
+      return MM::MMTime(0.0);
+   }
 
    /**
     * Check if we have callback mecahnism set up.
@@ -530,11 +652,19 @@ protected:
    }
 
    /**
-    * Get the callback obect.
+    * Get the callback object.
     */
    MM::Core* GetCoreCallback()
    {
       return callback_;
+   }
+
+   /**
+    * If this flag is set the device signals to the rest of the system that it will respond to delay settings.
+    */
+   void EnableDelay(bool state = true)
+   {
+      usesDelay_ = state;
    }
    
 private:
@@ -547,6 +677,7 @@ private:
    std::string moduleName_;
    std::map<int, std::string> messages_;
    double delayMs_;
+   bool usesDelay_;
    MM::Core* callback_;
 };
 
@@ -566,6 +697,71 @@ class CGenericBase : public CDeviceBase<MM::Device, U>
 template <class U>
 class CCameraBase : public CDeviceBase<MM::Camera, U>
 {
+public:
+   using CDeviceBase<MM::Camera, U>::CreateProperty;
+   using CDeviceBase<MM::Camera, U>::SetAllowedValues;
+   using CDeviceBase<MM::Camera, U>::GetBinning;
+
+   CCameraBase() 
+   {
+      // create and intialize common transpose properties
+      std::vector<std::string> allowedValues;
+      allowedValues.push_back("0");
+      allowedValues.push_back("1");
+      CreateProperty(MM::g_Keyword_Transpose_SwapXY, "0", MM::Integer, false);
+      SetAllowedValues(MM::g_Keyword_Transpose_SwapXY, allowedValues);
+      CreateProperty(MM::g_Keyword_Transpose_MirrorX, "0", MM::Integer, false);
+      SetAllowedValues(MM::g_Keyword_Transpose_MirrorX, allowedValues);
+      CreateProperty(MM::g_Keyword_Transpose_MirrorY, "0", MM::Integer, false);
+      SetAllowedValues(MM::g_Keyword_Transpose_MirrorY, allowedValues);
+      CreateProperty(MM::g_Keyword_Transpose_Correction, "0", MM::Integer, false);
+      SetAllowedValues(MM::g_Keyword_Transpose_Correction, allowedValues);
+   }
+
+   ~CCameraBase() {}
+
+   /**
+    * Default implementation is to not support streaming mode.
+    */
+   int StartSequenceAcquisition(long /*numImages*/, double /*interval_ms*/)
+   {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+
+   /**
+    * Since we don't support streaming mode this command has no effect.
+    */
+   int StopSequenceAcquisition()
+   {
+      return DEVICE_OK;
+   }
+
+   /**
+    * Default implementation of the pixel size cscaling.
+    */
+   double GetPixelSizeUm() const {return GetBinning();}
+
+   /**
+    * The following methods are only temporary solutions to avoid breaking older drivers
+    * TODO: they should be removed to force correct implementation for each camera
+    * N.A. 7-25-07
+    */
+   // Now make these two mandatory (NS, 5/24/08)
+   // int GetBinning() const {return 1;}
+   // int SetBinning(int /* binSize */) {return DEVICE_OK;}
+   unsigned GetNumberOfChannels() const {return 1;}
+   int GetChannelName(unsigned channel, char* name)
+   {
+      if (channel > 0)
+         return DEVICE_NONEXISTENT_CHANNEL;
+
+      CDeviceUtils::CopyLimitedString(name, "Grayscale");
+      return DEVICE_OK;
+   }
+   const unsigned int* GetImageBufferAsRGB32()
+   {
+      return 0;
+   }
 };
 
 /**
@@ -574,6 +770,19 @@ class CCameraBase : public CDeviceBase<MM::Camera, U>
 template <class U>
 class CStageBase : public CDeviceBase<MM::Stage, U>
 {
+   /**
+    * Default implementation for the realative motion
+    */
+   using CDeviceBase<MM::Stage, U>::GetPositionUm;
+   using CDeviceBase<MM::Stage, U>::SetPositionUm;
+   int SetRelativePositionUm(double d)
+   {
+      double pos;
+      int ret = GetPositionUm(pos);
+      if (ret != DEVICE_OK)
+         return ret;
+      return SetPositionUm(pos + d);
+   }
 };
 
 /**
@@ -582,6 +791,19 @@ class CStageBase : public CDeviceBase<MM::Stage, U>
 template <class U>
 class CXYStageBase : public CDeviceBase<MM::XYStage, U>
 {
+   using CDeviceBase<MM::XYStage, U>::GetPositionUm;
+   using CDeviceBase<MM::XYStage, U>::SetPositionUm;
+   /**
+    * Default implementation for the realative motion
+    */
+   int SetRelativePositionUm(double dx, double dy)
+   {
+      double x, y;
+      int ret = GetPositionUm(x, y);
+      if (ret != DEVICE_OK)
+         return ret;
+      return SetPositionUm(x + dx, y + dy);
+   }
 };
 
 /**
@@ -605,6 +827,30 @@ class CSerialBase : public CDeviceBase<MM::Serial, U>
  */
 template <class U>
 class CAutoFocusBase : public CDeviceBase<MM::AutoFocus, U>
+{
+};
+
+/**
+ * Base class for creating image processing modules.
+ */
+template <class U>
+class CImageProcessorBase : public CDeviceBase<MM::ImageProcessor, U>
+{
+};
+
+/**
+ * Base class for creating ADC/DAC modules.
+ */
+template <class U>
+class CSignalIOBase : public CDeviceBase<MM::SignalIO, U>
+{
+};
+
+/**
+ * Base class for creating devices that can change magnification (NS).
+ */
+template <class U>
+class CMagnifierBase : public CDeviceBase<MM::Magnifier, U>
 {
 };
 
@@ -649,8 +895,7 @@ public:
    int GetPosition(long& pos) const
    {
       char buf[MM::MaxStrLength];
-      // !!! we expect that State property is defined for this device, but
-      // what if it isn't?
+      assert(this->HasProperty(MM::g_Keyword_State));
       int ret = this->GetProperty(MM::g_Keyword_State, buf);
       if (ret == DEVICE_OK)
       {

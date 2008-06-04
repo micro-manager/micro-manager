@@ -1,0 +1,56 @@
+<!-- Ant makefile for the Micro-Manager Bleach plugin  -->
+<!-- This file assumes Micro-Manager project tree structure -->
+
+<project name="MMBleach" default="buildMMBleach">
+
+	<!-- Specify the system path to the ImageJ root directory -->
+	<property name="ImageJPath" value="C:/Program Files/ImageJ"/>
+	<property name="InstallRoot" value="C:/projects/MicroManage/Install/micro-manager-1.1"/>
+
+	<!-- Do not modify from this point on -->
+	<property name="MMPluginDir" value="${ImageJPath}/plugins/Micro-Manager"/>
+	<property name="IJ" value="../classext/ij.jar"/>
+	<property name="beanshell" value="../classext/bsh-2.0b4.jar"/>
+	<property name="MMCoreJ" value="../bin/MMCoreJ.jar"/>
+	<property name="MMPluginDir-inst" value="${InstallRoot}/plugins/Micro-Manager"/>
+	<property name="BinRoot" value="../bin"/>
+
+	<path id="project.MMPlugins.path">
+		<pathelement location="${MMPluginDir}"/>
+	</path>
+
+	<path id="project.run.path">
+		<pathelement location="${MMPluginDir}/MMJ_.jar"/>
+		<pathelement location="${MMPluginDir}/MMCoreJ.jar"/>
+		<pathelement location="${MMPluginDir}/bsh-2.0b4.jar"/>
+		<pathelement location="${IJ}"/>
+	</path>
+
+	<path id="project.class.path">
+		<pathelement location="${IJ}" />
+		<pathelement location="${beanshell}" />
+		<pathelement location="${MMCoreJ}" />
+	   <pathelement location="${MMPluginDir}/MMJ_.jar"/>
+	</path>
+
+	<target name="compileMMBleach" description="Compile MM Bleach plugin.">
+		<mkdir dir="build" />
+		<javac srcdir="./src" destdir="./build" optimize="on" source="1.4" debug="off">
+			<classpath refid="project.class.path" />
+		</javac>
+	</target>
+
+	<target name="buildMMBleach" description="Build MMBleach_.jar">
+
+		<jar jarfile="MMBleach_.jar" basedir="build" />
+		
+		<mkdir dir="${MMPluginDir}" />
+		<copy file="MMBleach_.jar" todir="${MMPluginDir}" />
+	</target>
+	
+	<target name="cleanMMBleach" description="Delete the MMBleach build files.">
+		<delete dir="bin" />
+		<delete file="MMBleach_.jar" />
+	</target>
+	
+</project>

@@ -24,7 +24,9 @@
 // CVS:           $Id$
 //
 
-%module MMCoreJ
+%module (directors="1") MMCoreJ
+%feature("director") MMEventCallback;
+
 %include std_string.i
 %include std_vector.i
 %include std_map.i
@@ -34,6 +36,10 @@
 // output arguments
 %apply double &OUTPUT { double &x };
 %apply double &OUTPUT { double &y };
+%apply int &OUTPUT { int &x };
+%apply int &OUTPUT { int &y };
+%apply int &OUTPUT { int &xSize };
+%apply int &OUTPUT { int &ySize };
 
 // Java typemap
 // change deafult SWIG mapping of unsigned char* return values
@@ -73,7 +79,9 @@
 // unsigned GetImageWidth()
 // unsigned GetImageHeight()
 // unsigned GetImageDepth()
-//
+// unsigned GetNumberOfChannels
+
+
 %typemap(jni) void*        "jobject"
 %typemap(jtype) void*      "Object"
 %typemap(jstype) void*     "Object"
@@ -83,11 +91,12 @@
 %typemap(out) void*
 {
    long lSize = (arg1)->getImageWidth() * (arg1)->getImageHeight();
+   unsigned numChannels = (arg1)->getNumberOfChannels();
    
    if ((arg1)->getBytesPerPixel() == 1)
    {
       // create a new byte[] object in Java
-      jbyteArray data = JCALL1(NewByteArray, jenv, lSize);
+      jbyteArray data = JCALL1(NewByteArray, jenv, lSize * numChannels);
       if (data == 0)
       {
          jclass excep = jenv->FindClass("java/lang/Exception");
@@ -103,10 +112,10 @@
 
       $result = data;
    }
-   else if ((arg1)->getBytesPerPixel() == 2)
+   else if ((arg1)->getBytesPerPixel() == 2 && numChannels == 1)
    {
       // create a new short[] object in Java
-      jshortArray data = JCALL1(NewShortArray, jenv, lSize);
+      jshortArray data = JCALL1(NewShortArray, jenv, lSize * numChannels);
       if (data == 0)
       {
          jclass excep = jenv->FindClass("java/lang/Exception");
@@ -129,6 +138,54 @@
    }
 }
 
+// Java typemap
+// change deafult SWIG mapping of void* return values
+// to return CObject containing array of pixel values
+//
+// Assumes that class has the following methods defined:
+// unsigned GetImageWidth()
+// unsigned GetImageHeight()
+// unsigned GetImageDepth()
+// unsigned GetNumberOfChannels
+
+
+%typemap(jni) unsigned int* "jobject"
+%typemap(jtype) unsigned int*      "Object"
+%typemap(jstype) unsigned int*     "Object"
+%typemap(javaout) unsigned int* {
+	return $jnicall;
+}
+%typemap(out) unsigned int*
+{
+   long lSize = (arg1)->getImageWidth() * (arg1)->getImageHeight();
+   unsigned numChannels = (arg1)->getNumberOfChannels();
+   
+   if ((arg1)->getBytesPerPixel() == 1 && numChannels == 4)
+   {
+	  // assuming RGB32 format
+      // create a new int[] object in Java
+      jintArray data = JCALL1(NewIntArray, jenv, lSize);
+      if (data == 0)
+      {
+         jclass excep = jenv->FindClass("java/lang/Exception");
+		 if (excep)
+			jenv->ThrowNew(excep, "The system ran out of memory!");
+		$result = 0;
+		return $result;
+	  }
+  
+      // copy pixels from the image buffer
+      JCALL4(SetIntArrayRegion, jenv, data, 0, lSize, (jint*)result);
+
+      $result = data;
+   }
+   else
+   {
+      // don't know how to map
+      // TODO: thow exception?
+      $result = 0;
+   }
+}
 
 //
 // CMMError exception objects
@@ -166,6 +223,8 @@
 #include "../MMDevice/MMDeviceConstants.h"
 #include "../MMCore/Error.h"
 #include "../MMCore/Configuration.h"
+#include "../MMDevice/ImageMetadata.h"
+#include "../MMCore/MMEventCallback.h"
 #include "../MMCore/MMCore.h"
 %}
 
@@ -184,3 +243,5 @@ namespace std {
 %include "../MMCore/Error.h"
 %include "../MMCore/Configuration.h"
 %include "../MMCore/MMCore.h"
+%include "../MMDevice/ImageMetadata.h"
+%include "../MMCore/MMEventCallback.h"

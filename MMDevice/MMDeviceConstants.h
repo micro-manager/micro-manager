@@ -58,6 +58,9 @@
 #define DEVICE_NO_PROPERTY_DATA        19
 #define DEVICE_DUPLICATE_LABEL         20
 #define DEVICE_INVALID_INPUT_PARAM     21
+#define DEVICE_BUFFER_OVERFLOW         22
+#define DEVICE_NONEXISTENT_CHANNEL     23
+#define DEVICE_INVALID_PROPERTY_LIMTS  24
 
 namespace MM {
    const int MaxStrLength = 1024;
@@ -69,6 +72,10 @@ namespace MM {
    const char* const g_Keyword_CameraID         = "CameraID";
    const char* const g_Keyword_Binning          = "Binning";
    const char* const g_Keyword_Exposure         = "Exposure";
+   const char* const g_Keyword_ActualExposure   = "ActualExposure";
+   const char* const g_Keyword_Interval_ms      = "Interval_ms";
+   const char* const g_Keyword_ActualInterval_ms = "ActualInterval_ms";
+   const char* const g_Keyword_Elapsed_Time_ms  = "ElapsedTime_ms";
    const char* const g_Keyword_PixelType        = "PixelType";
    const char* const g_Keyword_ReadoutTime      = "ReadoutTime";
    const char* const g_Keyword_ReadoutMode      = "ReadoutMode";
@@ -97,8 +104,15 @@ namespace MM {
    const char* const g_Keyword_CoreFocus        = "Focus";
    const char* const g_Keyword_CoreAutoFocus    = "AutoFocus";
    const char* const g_Keyword_CoreAutoShutter  = "AutoShutter";
+   const char* const g_Keyword_CoreImageProcessor = "ImageProcessor";
+   const char* const g_Keyword_CoreTimeoutMs    = "TimeoutMs";
    const char* const g_Keyword_Channel          = "Channel";
    const char* const g_Keyword_Version          = "Version";
+   const char* const g_Keyword_ColorMode        = "ColorMode";
+   const char* const g_Keyword_Transpose_SwapXY = "TransposeXY";
+   const char* const g_Keyword_Transpose_MirrorX = "TransposeMirrorX";
+   const char* const g_Keyword_Transpose_MirrorY = "TransposeMirrorY";
+   const char* const g_Keyword_Transpose_Correction = "TransposeCorrection";
 
    // configuration file format constants
    const char* const g_FieldDelimiters = ",";
@@ -110,11 +124,14 @@ namespace MM {
    const char* const g_CFGCommand_Equipment = "Equipment";
    const char* const g_CFGCommand_Delay = "Delay";
    const char* const g_CFGCommand_ImageSynchro = "ImageSynchro";
+   const char* const g_CFGCommand_ConfigPixelSize = "ConfigPixelSize";
+   const char* const g_CFGCommand_PixelSize_um = "PixelSize_um";
 
    // configuration groups
    const char* const g_CFGGroup_System = "System";
    const char* const g_CFGGroup_System_Startup = "Startup";
    const char* const g_CFGGroup_System_Shutdown = "Shutdown";
+   const char* const g_CFGGroup_PixelSizeUm = "PixelSize_um";
 
    // serial port constants
    const int _DATABITS_5 = 5;
@@ -153,7 +170,11 @@ namespace MM {
       SerialDevice,
       GenericDevice,
       AutoFocusDevice,
-      CoreDevice
+      CoreDevice,
+      ImageProcessorDevice,
+      ImageStreamerDevice,
+      SignalIODevice,
+      MagnifierDevice
    };
 
    enum PropertyType {
@@ -167,6 +188,12 @@ namespace MM {
       NoAction,
       BeforeGet,
       AfterSet
+   };
+
+   enum PortType {
+      InvalidPort,
+      SerialPort,
+      USBPort
    };
 
    //////////////////////////////////////////////////////////////////////////////

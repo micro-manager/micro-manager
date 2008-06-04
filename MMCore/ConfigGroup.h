@@ -31,11 +31,10 @@
 /**
  * Encapsulates a collection (map) of user-defined presets.
  */
-class ConfigGroup {
+template <class T>
+class ConfigGroupBase {
 
 public:
-   ConfigGroup() {}
-   ~ConfigGroup() {}
 
    /**
     * Defines a new preset.
@@ -49,9 +48,9 @@ public:
    /**
     * Finds preset by name.
     */
-   Configuration* Find(const char* configName)
+   T* Find(const char* configName)
    {
-      std::map<std::string, Configuration>::iterator it = configs_.find(configName);
+      typename std::map<std::string,T>::iterator it = configs_.find(configName);
       if (it == configs_.end())
          return 0;
       else
@@ -64,7 +63,7 @@ public:
       if (strlen(configName) == 0)
          return true;
 
-      std::map<std::string, Configuration>::const_iterator it = configs_.find(configName);
+      typename std::map<std::string, T>::const_iterator it = configs_.find(configName);
       if (it == configs_.end())
          return false;
       configs_.erase(configName);
@@ -77,7 +76,7 @@ public:
    std::vector<std::string> GetAvailable() const
    {
       std::vector<std::string> configList;
-      std::map<std::string, Configuration>::const_iterator it = configs_.begin();
+      typename std::map<std::string, T>::const_iterator it = configs_.begin();
       while(it != configs_.end())
          configList.push_back(it++->first);
 
@@ -89,8 +88,19 @@ public:
       return configs_.size() == 0;
    }
 
-private:
-   std::map<std::string, Configuration> configs_;
+protected:
+   ConfigGroupBase() {}
+   virtual ~ConfigGroupBase() {}
+
+   std::map<std::string, T> configs_;
+};
+
+
+/**
+ * Encapsulates a collection (map) of user-defined presets.
+ */
+class ConfigGroup : public ConfigGroupBase<Configuration>
+{
 };
 
 /**
@@ -222,6 +232,51 @@ public:
 
 private:
    std::map<std::string, ConfigGroup> groups_;
+};
+
+/**
+ * Specialized form of configuration designed to detect pixel size
+ * from current settings.
+ */
+class PixelSizeConfiguration : public Configuration
+{
+public:
+   PixelSizeConfiguration() : pixelSizeUm_(0.0) {}
+   ~PixelSizeConfiguration() {}
+
+   void setPixelSizeUm(double pixSize) {pixelSizeUm_ = pixSize;}
+   double getPixelSizeUm() const {return pixelSizeUm_;}
+
+private:
+   double pixelSizeUm_;
+};
+
+/**
+ * Encapsulates a collection (map) of user-defined pixel size presets.
+ */
+class PixelSizeConfigGroup : public ConfigGroupBase<PixelSizeConfiguration>
+{
+public:
+   /**
+    * Defines a new preset with pixel size.
+    */
+   bool DefinePixelSize(const char* resolutionID, const char* deviceLabel, const char* propName, const char* value, double pixSizeUm)
+   {
+      PropertySetting setting(deviceLabel, propName, value);
+      configs_[resolutionID].addSetting(setting);
+      if (configs_[resolutionID].getPixelSizeUm() == 0.0)
+      {
+         // this is the first setting, so it is OK to set pixel size
+         configs_[resolutionID].setPixelSizeUm(pixSizeUm);
+         return true;
+      }
+      else
+      {
+         // pixel size already set and we won't allow the change
+         // - this signifies a conflict in the configuration
+         return false;
+      }
+   }
 };
 
 #endif

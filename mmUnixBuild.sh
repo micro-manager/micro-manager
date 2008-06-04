@@ -1,10 +1,10 @@
 aclocal
-libtoolize
+libtoolize --force
 automake --foreign --add-missing
 autoconf
 cd DeviceAdapters
 aclocal
-libtoolize
+libtoolize --force
 automake --foreign --add-missing
 autoconf
 cd ..
