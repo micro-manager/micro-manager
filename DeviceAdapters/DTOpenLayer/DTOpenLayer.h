@@ -99,7 +99,7 @@ private:
    long numPos_;
 };
 
-class CDTOLDA : public CGenericBase<CDTOLDA>  
+class CDTOLDA : public CSignalIOBase<CDTOLDA>  
 {
 public:
    CDTOLDA(unsigned channel, const char* name);
@@ -112,13 +112,18 @@ public:
   
    void GetName(char* pszName) const;
    bool Busy() {return busy_;}
-   
+
+   int SetSignal(double volts);
+   int GetSignal(double& /*volts*/) {return DEVICE_UNSUPPORTED_COMMAND;}
+   int GetLimits(double& minVolts, double& maxVolts) {minVolts = minV_; maxVolts = maxV_; return DEVICE_OK;}
+
    // action interface
    // ----------------
    int OnVolts(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    int WriteToPort(long lnValue);
+   int SetVolts(double v);
 
    bool initialized_;
    bool busy_;

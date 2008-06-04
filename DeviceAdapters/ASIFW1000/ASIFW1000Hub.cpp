@@ -38,6 +38,10 @@
 #include <string>
 #include "ASIFW1000Hub.h"
 
+#ifdef WIN32
+#include <windows.h>
+#endif
+
 using namespace std;
 
 ASIFW1000Hub::ASIFW1000Hub ()
@@ -62,11 +66,11 @@ int ASIFW1000Hub::GetVersion(MM::Device& device, MM::Core& core, char* version)
    if (ret != DEVICE_OK)
       return ret;
 
-   ret = core.GetSerialAnswer(&device, port_.c_str(), RCV_BUF_LENGTH, rcvBuf_, "\r");
+   ret = core.GetSerialAnswer(&device, port_.c_str(), RCV_BUF_LENGTH, rcvBuf_, "\n\r");
    if (ret != DEVICE_OK)
       return ret;
 
-   // get substring containing version number TODO: check offset
+   // get substring containing version number.  Offset is caused by echoing of the command given
    int i=3;
    do
    {
@@ -74,9 +78,42 @@ int ASIFW1000Hub::GetVersion(MM::Device& device, MM::Core& core, char* version)
       version[i-4]=rcvBuf_[i];
    }
    while (rcvBuf_[i]);
+   version[i-3] = '\0'; // terminate the string
+
+   // Don't know why, but we need a little break after asking for version number:
+   #ifdef WIN32
+   Sleep(100);
+   #else
+   usleep(100000);
+   #endif
+
+   if (strlen(rcvBuf_) < 3)
+   {
+      return ERR_NOT_CONNECTED;
+   }
 
    return DEVICE_OK;
 }
+
+int ASIFW1000Hub::SetVerboseMode(MM::Device& device, MM::Core& core, int level)
+{
+   ostringstream os;
+   os << "VB " <<  level;
+   int ret = ExecuteCommand(device, core, os.str().c_str());
+   if (ret != DEVICE_OK)
+      return ret;
+                          
+   ret = core.GetSerialAnswer(&device, port_.c_str(), RCV_BUF_LENGTH, rcvBuf_, "\n\r");
+   if (ret != DEVICE_OK)
+      return ret;
+
+   int levelRead = rcvBuf_[strlen(rcvBuf_)-1] - '0';
+   if ( level != levelRead)
+      return ERR_SETTING_VERBOSE_LEVEL;
+
+   return DEVICE_OK;
+}
+
 
 /*
  * 
@@ -92,7 +129,20 @@ int ASIFW1000Hub::SetFilterWheelPosition(MM::Device& device, MM::Core& core, int
    os << command <<  pos;
 
    // send command
-   return ExecuteCommand(device, core, os.str().c_str());
+   int ret = ExecuteCommand(device, core, os.str().c_str());
+   if (ret != DEVICE_OK)
+      return ret;
+
+   // devices echos command and returns position
+   ret = core.GetSerialAnswer(&device, port_.c_str(), RCV_BUF_LENGTH, rcvBuf_, "\n\r");
+   if (ret != DEVICE_OK)
+      return ret;
+
+   int posread = rcvBuf_[strlen(rcvBuf_)-1] - '0';
+   if ( pos != posread)
+      return ERR_SETTING_WHEEL;
+
+   return DEVICE_OK;
 }
 
 int ASIFW1000Hub::GetFilterWheelPosition(MM::Device& device, MM::Core& core, int wheelNr, int& pos)
@@ -100,9 +150,9 @@ int ASIFW1000Hub::GetFilterWheelPosition(MM::Device& device, MM::Core& core, int
    if (wheelNr != activeWheel_)
       SetCurrentWheel(device, core, wheelNr);
 
-   ClearAllRcvBuf(device, core);
-   int ret = ExecuteCommand(device, core, "MP ");
-   ret = core.GetSerialAnswer(&device, port_.c_str(), RCV_BUF_LENGTH, rcvBuf_, "\r");
+   //ClearAllRcvBuf(device, core);
+   int ret = ExecuteCommand(device, core, "MP");
+   ret = core.GetSerialAnswer(&device, port_.c_str(), RCV_BUF_LENGTH, rcvBuf_, "\n\r");
    if (ret != DEVICE_OK)
       return ret;
    // TODO: error checking
@@ -111,6 +161,35 @@ int ASIFW1000Hub::GetFilterWheelPosition(MM::Device& device, MM::Core& core, int
    return DEVICE_OK;
 }
 
+
+// Gets the current wheels from the controller
+// Also sets private variable activeWheel_
+int ASIFW1000Hub::GetCurrentWheel(MM::Device& device, MM::Core& core, int& wheelNr)
+{
+   const char* command = "FW";
+
+   // send command
+   int ret = ExecuteCommand(device, core, command);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   // make sure there were no errors:
+   ret = core.GetSerialAnswer(&device, port_.c_str(), RCV_BUF_LENGTH, rcvBuf_, "\n\r");  
+   if (ret != DEVICE_OK)                                                     
+      return ret;                                                           
+
+   wheelNr = rcvBuf_[strlen(rcvBuf_)-1] - '0';
+
+   if ( (wheelNr == 0) || (wheelNr == 1) )
+   {
+      activeWheel_ = wheelNr;
+      return DEVICE_OK;
+   }
+   else
+   {
+      return ERR_UNEXPECTED_ANSWER;
+   }
+}
 
 
 int ASIFW1000Hub::SetCurrentWheel(MM::Device& device, MM::Core& core, int wheelNr)
@@ -125,15 +204,19 @@ int ASIFW1000Hub::SetCurrentWheel(MM::Device& device, MM::Core& core, int wheelN
       return ret;
 
    // make sure there were no errors:
-   ret = core.GetSerialAnswer(&device, port_.c_str(), RCV_BUF_LENGTH, rcvBuf_, "\r");  
+   ret = core.GetSerialAnswer(&device, port_.c_str(), RCV_BUF_LENGTH, rcvBuf_, "\n\r");  
    if (ret != DEVICE_OK)                                                     
       return ret;                                                           
    int x = rcvBuf_[strlen(rcvBuf_)-1] - '0';
    if (x == wheelNr)
+   {
+      activeWheel_ = wheelNr;
       return DEVICE_OK;
+   }
    else
-      // TODO: return correct error code
-      return 1;
+   {
+      return ERR_SETTING_WHEEL;
+   }
 }
 
 //
@@ -143,17 +226,17 @@ int ASIFW1000Hub::GetNumberOfPositions(MM::Device& device, MM::Core& core, int w
    if (wheelNr != activeWheel_)
       SetCurrentWheel(device, core, wheelNr);
 
-   int ret = ExecuteCommand(device, core, "NF");
    ClearAllRcvBuf(device, core);
-   ret = core.GetSerialAnswer(&device, port_.c_str(), RCV_BUF_LENGTH, rcvBuf_, "\r");
+   int ret = ExecuteCommand(device, core, "NF");
+   ret = core.GetSerialAnswer(&device, port_.c_str(), RCV_BUF_LENGTH, rcvBuf_, "\n\r");
    if (ret != DEVICE_OK)
       return ret;
 
-   if (strlen (rcvBuf_) < 3)
+   if (strlen (rcvBuf_) < 2)
       return ERR_NO_ANSWER;
 
    // TODO: error checking
-   nrPos = rcvBuf_[strlen(rcvBuf_)-3] - '0';
+   nrPos = rcvBuf_[strlen(rcvBuf_)-1] - '0';
    if (! (nrPos==6 || nrPos==8))
          nrPos = 6;
 
@@ -169,17 +252,22 @@ int ASIFW1000Hub::FilterWheelBusy(MM::Device& device, MM::Core& core, bool& busy
    if (ret != DEVICE_OK)                                                     
       return ret;                                                           
 
-   unsigned long read;
-   ret = core.ReadFromSerial(&device, port_.c_str(), rcvBuf_, 1, read);  
+   unsigned long read = 0;
+   MM::MMTime startTime = core.GetCurrentMMTime();
+   while (read == 0 && ( (core.GetCurrentMMTime() - startTime) < 10000))
+      ret = core.ReadFromSerial(&device, port_.c_str(), (unsigned char*)rcvBuf_, 1, read);  
    if (ret != DEVICE_OK)                                                     
       return ret;                                                           
 
-   if (read != 1)
+   if (read != 1) {
+      printf (" FilterWheel received no answer!\n");
       return ERR_NO_ANSWER;
-   int x = rcvBuf_[strlen(rcvBuf_)-1] - '0';
-   if (x < 4)
+   }
+
+   if (rcvBuf_[0] == '0' || rcvBuf_[0] == '1' || rcvBuf_[0] =='2')
       busy = false;
    else
+   if (rcvBuf_[0] == '3')
       busy = true;
 
    return DEVICE_OK;
@@ -192,14 +280,29 @@ int ASIFW1000Hub::OpenShutter(MM::Device& device, MM::Core& core, int shutterNr)
 {
    ostringstream os;
    os << "SO " << shutterNr;
-   return ExecuteCommand(device, core, os.str().c_str());
+   int ret =  ExecuteCommand(device, core, os.str().c_str());
+   if (ret != DEVICE_OK)
+      return ret;
+   // Shutter will answer '1', we need to read this out or there will be trouble down the line:
+   ret = core.GetSerialAnswer(&device, port_.c_str(), RCV_BUF_LENGTH, rcvBuf_, "\n\r");
+   if (ret != DEVICE_OK)
+      return ret;
+
+   return DEVICE_OK;
 }
 
 int ASIFW1000Hub::CloseShutter(MM::Device& device, MM::Core& core, int shutterNr)
 {
    ostringstream os;
    os << "SC " << shutterNr;
-   return ExecuteCommand(device, core, os.str().c_str());
+   int ret =  ExecuteCommand(device, core, os.str().c_str());
+   if (ret != DEVICE_OK)
+      return ret;
+   // Shutter will answer '0', we need to read this out or there will be trouble down the line:
+   ret = core.GetSerialAnswer(&device, port_.c_str(), RCV_BUF_LENGTH, rcvBuf_, "\n\r");
+   if (ret != DEVICE_OK)
+      return ret;
+   return DEVICE_OK;
 }
 
 /*
@@ -208,23 +311,40 @@ int ASIFW1000Hub::CloseShutter(MM::Device& device, MM::Core& core, int shutterNr
  */
 int ASIFW1000Hub::GetShutterPosition(MM::Device& device, MM::Core& core, int shutterNr, bool& pos)
 {
-   ClearAllRcvBuf(device, core);
+   //ClearAllRcvBuf(device, core);
    ostringstream os;
    os << "SQ " << shutterNr;
    int ret = ExecuteCommand(device, core, os.str().c_str());
    // analyze answer
-   ret = core.GetSerialAnswer(&device, port_.c_str(), RCV_BUF_LENGTH, rcvBuf_, "\r");
+   ret = core.GetSerialAnswer(&device, port_.c_str(), RCV_BUF_LENGTH, rcvBuf_, "\n\r");
    if (ret != DEVICE_OK)
       return ret;
-   int x = rcvBuf_[strlen(rcvBuf_)-3] - '0';
+   string response = rcvBuf_;
+
+   // If the answer is too short, there is likely no shutter card (we could do a better check)
+   if (response.length() < 2)
+   {
+      return ERR_SHUTTER_NOT_FOUND;
+   }
+
+   int x = atoi(response.substr(response.length() - 2).c_str());
+   // sometimes, the controller does not answer, but sends 0. ask once more
+   if (x < 16)
+   {
+      ret = ExecuteCommand(device, core, os.str().c_str());
+      ret = core.GetSerialAnswer(&device, port_.c_str(), RCV_BUF_LENGTH, rcvBuf_, "\n\r");
+      response = rcvBuf_;
+      x = atoi(response.substr(response.length() - 2).c_str());
+   }
    if (shutterNr==1)
-      x = x << 1;
+      x = x >> 1;
+
    pos = x & 1;
 
    return DEVICE_OK;
 }
 
-      
+
 ///////////////////////////////////////////////////////////////////////////////
 // HUB generic methods
 ///////////////////////////////////////////////////////////////////////////////
@@ -235,8 +355,11 @@ int ASIFW1000Hub::GetShutterPosition(MM::Device& device, MM::Core& core, int shu
 void ASIFW1000Hub::ClearAllRcvBuf(MM::Device& device, MM::Core& core)
 {
    // Read whatever has been received so far:
-   unsigned long read;
-   int ret = core.ReadFromSerial(&device, port_.c_str(), rcvBuf_, RCV_BUF_LENGTH,  read);
+   unsigned long read = RCV_BUF_LENGTH;
+   while (read == (unsigned long) RCV_BUF_LENGTH)
+   {
+      core.ReadFromSerial(&device, port_.c_str(), (unsigned char*)rcvBuf_, RCV_BUF_LENGTH,  read);
+   }
    // Delete it all:
    memset(rcvBuf_, 0, RCV_BUF_LENGTH);
 }
@@ -246,149 +369,15 @@ void ASIFW1000Hub::ClearRcvBuf()
    memset(rcvBuf_, 0, RCV_BUF_LENGTH);
 }
 
-/**
- * Buys flag. True if the command processing is in progress.
- */
-bool ASIFW1000Hub::IsBusy()
-{
-   return waitingCommands_.size() != 0;
-}
+
 /**
  * Sends serial command to the MMCore virtual serial port.
  */
 int ASIFW1000Hub::ExecuteCommand(MM::Device& device, MM::Core& core,  const char* command)
 {
-   // empty the Rx serial buffer before sending command
-   //FetchSerialData(device, core);
-
    ClearAllRcvBuf(device, core);
-
    // send command
    return core.SetSerialCommand(&device, port_.c_str(), command, "\r");
   
 }
-
-
-/*
- * An 'A' acknowledges receipt of a command, ('N' means it is not understood)
- * Function is not really appropriately named
- */
-int ASIFW1000Hub::GetAcknowledgment(MM::Device& device, MM::Core& core)
-{
-   // block until we get a response
-   int ret = core.GetSerialAnswer(&device, port_.c_str(), RCV_BUF_LENGTH, rcvBuf_, "\r");
-   if (ret != DEVICE_OK)
-       return ret;
-   if (rcvBuf_[1]=='N')
-      return 1;
-   if (rcvBuf_[1]!='A')
-      return DEVICE_SERIAL_INVALID_RESPONSE;
-
-   return DEVICE_OK;
-}
-
-
-
-
-/**
- * Interprets the string returned from the microscope.
- */
-/*
-int ASIFW1000Hub::ParseResponse(const char* cmd, string& value)
-{
-   if (strlen(rcvBuf_) < 4)
-      return DEVICE_SERIAL_INVALID_RESPONSE;
-
-   char cmdIdBuf[4];
-   memcpy(cmdIdBuf, rcvBuf_+1, 3);
-   cmdIdBuf[3] = 0;
-
-   if (strcmp(cmdIdBuf, cmd) != 0)
-      return DEVICE_SERIAL_INVALID_RESPONSE;
-
-   value = rcvBuf_ + 4;
-   if (rcvBuf_[0] == 'n' && strlen(rcvBuf_) > 4)
-   {
-      return atoi(value.c_str()); // error occured
-   }
-   else if (rcvBuf_[0] == 'o' || rcvBuf_[0] == 'a' || rcvBuf_[0] == 'q')
-   {
-      // special processing for TRN1 commands
-      if (value.substr(0,3).compare("TRN") == 0)
-      {
-         if (strlen(rcvBuf_) > 8)
-         {
-            value = rcvBuf_ + 9;
-            if (rcvBuf_[5] == 'n')
-               return atoi(value.c_str()); // error occured
-            else if (rcvBuf_[5] == 'o' || rcvBuf_[5] == 'a' || rcvBuf_[5] == 'q')
-               return DEVICE_OK;
-            else
-               return DEVICE_SERIAL_INVALID_RESPONSE;
-         }
-         else
-         {
-            return DEVICE_SERIAL_INVALID_RESPONSE;
-         }
-      }
-      else
-         return DEVICE_OK;
-   }
-   else
-      return DEVICE_SERIAL_INVALID_RESPONSE;
-}
-*/
-
-/**
- * Gets characters from the virtual serial port and stores them in the receive buffer.
- */
-/*
-void Hub::FetchSerialData(MM::Device& device, MM::Core& core)
-{
-   unsigned long read = 0;
-   do {
-      read = 0;
-      core.ReadFromSerial(&device, port_.c_str(), asynchRcvBuf_, RCV_BUF_LENGTH, read);
-   
-      // enter serial data into the buffer
-      for (unsigned long i=0; i<read; i++)
-      {
-         answerBuf_.push_back(asynchRcvBuf_[i]);
-         size_t size = answerBuf_.size();
-         if (size >= 2 && answerBuf_[size-2] == '\r' && answerBuf_[size-1] == '\n')
-         {
-            if (size-2 >= 4 && (answerBuf_[0] == 'o' || answerBuf_[0] == 'n'))
-            {
-               // proper command
-               answerBuf_[4] = '\0';
-               string cmdresp = (char*)(&answerBuf_[1]);
-               // >>
-               //if (read > 0)
-               //   core.LogMessage(&device, cmdresp.c_str(), true);
-
-               // remove command from the wait list
-               multimap<string, long>::iterator it;
-               it = waitingCommands_.find(cmdresp);
-               if (it != waitingCommands_.end())
-               {
-                  // command found -> remove it from the queue
-                  cout << "Response received " << it->first << ", " << it->second << endl;
-                  waitingCommands_.erase(it);
-               }
-               else
-                  // shouldn't happen
-                  core.LogMessage(&device, "Received confirmation for command that wasn't sent", true);
-            }
-            else
-            {
-               // shouldn't happen
-               core.LogMessage(&device, "Unrecognized response received in async mode", true);
-            }
-            answerBuf_.clear();
-         }
-      }
-   } while (read > 0);
-}
-*/
-
 

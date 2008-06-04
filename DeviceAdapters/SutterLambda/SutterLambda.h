@@ -73,6 +73,7 @@ private:
    unsigned speed_;
    bool busy_;
    double answerTimeoutMs_;
+   Wheel& operator=(Wheel& /*rhs*/) {assert(false); return *this;}
 };
 
 class Shutter : public CShutterBase<Shutter>
@@ -108,6 +109,7 @@ private:
    std:: string port_;
    double answerTimeoutMs_;
    std::string curMode_;
+   Shutter& operator=(Shutter& /*rhs*/) {assert(false); return *this;}
 };
 
 class DG4Wheel : public CStateDeviceBase<DG4Wheel>

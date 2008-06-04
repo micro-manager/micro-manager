@@ -36,16 +36,15 @@
 #include <string>
 #include <math.h>
 #include "../../MMDevice/ModuleInterface.h"
-#include <sstream>
 
-#include <iostream>
 using namespace std;
 
-const char* g_ASIFW1000Hub = "Controller";
-const char* g_ASIFW1000FilterWheel = "FilterWheel";
-const char* g_ASIFW1000FilterWheelNr = "FilterWheelNumber";
-const char* g_ASIFW1000Shutter = "Shutter";
-const char* g_ASIFW1000ShutterNr = "ShutterNumber";
+const char* g_ASIFW1000Hub = "ASIFWController";
+const char* g_ASIFW1000FilterWheel = "ASIFilterWheel";
+const char* g_ASIFW1000FilterWheelNr = "ASIFilterWheelNumber";
+const char* g_ASIFW1000Shutter = "ASIShutter";
+const char* g_ASIFW1000ShutterNr = "ASIShutterNumber";
+const char* g_ASIFW1000ShutterType = "ASIShutterType";
 
 using namespace std;
 
@@ -57,8 +56,8 @@ ASIFW1000Hub g_hub;
 MODULE_API void InitializeModuleData()
 {
    AddAvailableDeviceName(g_ASIFW1000Hub,"ASIFW1000 Controller");
-   AddAvailableDeviceName(g_ASIFW1000FilterWheel,"FilterWheel");   
-   AddAvailableDeviceName(g_ASIFW1000Shutter,"Shutter"); 
+   AddAvailableDeviceName(g_ASIFW1000FilterWheel,"ASI FilterWheel");   
+   AddAvailableDeviceName(g_ASIFW1000Shutter,"ASI Shutter"); 
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
@@ -100,6 +99,7 @@ Hub::Hub() :
    // custom error messages
    SetErrorText(ERR_COMMAND_CANNOT_EXECUTE, "Command cannot be executed");
    SetErrorText(ERR_NO_ANSWER, "No answer received.  Is the FW1000 controller connected?  If so, try increasing the AnswerTimeout of the serial port.");
+   SetErrorText(ERR_NOT_CONNECTED, "No answer received.  Is the FW1000 controller connected?  If so, try increasing the AnswerTimeout of the serial port.");
 
    // create pre-initialization properties
    // ------------------------------------
@@ -147,6 +147,17 @@ int Hub::Initialize()
    if (DEVICE_OK != ret)
       return ret;
    ret = CreateProperty("Firmware version", version, MM::String, true);
+   if (DEVICE_OK != ret)
+      return ret;
+
+   // Set verbose level to 6 to speed stuff up
+   ret = g_hub.SetVerboseMode(*this, *GetCoreCallback(), 6);
+   if (DEVICE_OK != ret)
+      return ret;
+
+   // Enquire about the current wheel, this is mainly to set the variable activeWheel_, private to g_hub.
+   int wheelNr;
+   ret = g_hub.GetCurrentWheel(*this, *GetCoreCallback(), wheelNr);
    if (DEVICE_OK != ret)
       return ret;
 
@@ -203,7 +214,7 @@ int Hub::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
 FilterWheel::FilterWheel () :
    initialized_ (false),
    name_ (g_ASIFW1000FilterWheel),
-   pos_ (1),
+   pos_ (0),
    wheelNr_ (0),
    numPos_ (6)
 {
@@ -242,7 +253,7 @@ int FilterWheel::Initialize()
       return ret;
 
    // Description
-   ret = CreateProperty(MM::g_Keyword_Description, "ASIFW1000 ND Filter", MM::String, true);
+   ret = CreateProperty(MM::g_Keyword_Description, "ASIFW1000 FilterWheel", MM::String, true);
    if (DEVICE_OK != ret)
       return ret;
 
@@ -251,7 +262,11 @@ int FilterWheel::Initialize()
    ret = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct); 
    if (ret != DEVICE_OK) 
       return ret; 
+
    // Get the number of filters in this wheel and add these as allowed values
+   ret = g_hub.SetCurrentWheel(*this, *GetCoreCallback(), wheelNr_);
+   if (ret != DEVICE_OK)
+      return ret;
    ret = g_hub.GetNumberOfPositions(*this, *GetCoreCallback(), wheelNr_, numPos_);
    if (ret != DEVICE_OK) 
       return ret; 
@@ -261,6 +276,13 @@ int FilterWheel::Initialize()
       sprintf(pos, "%d", i);
       AddAllowedValue(MM::g_Keyword_State, pos);
    }
+
+   // Get current position
+   int tmp;
+   ret = g_hub.GetFilterWheelPosition(*this, *GetCoreCallback(), wheelNr_, tmp);
+   if (ret != DEVICE_OK)
+      return ret;
+   pos_ = tmp;
 
    // Label
    pAct = new CPropertyAction (this, &CStateBase::OnLabel);
@@ -362,10 +384,12 @@ int FilterWheel::OnWheelNr(MM::PropertyBase* pProp, MM::ActionType eAct)
 Shutter::Shutter () :
    initialized_ (false),
    name_ (g_ASIFW1000Shutter),
-   shutterNr_ (0),
-   state_ (1)
+   shutterType_("Normally Open"),
+   changedTime_(0.0),
+   shutterNr_ (0)
 {
    InitializeDefaultErrorMessages();
+   SetErrorText(ERR_SHUTTER_NOT_FOUND, "Shutter was not found.  Is the ASI shutter controller attached?");
 
    // Todo: Add custom messages
    //
@@ -373,8 +397,18 @@ Shutter::Shutter () :
    CPropertyAction* pAct = new CPropertyAction (this, &Shutter::OnShutterNr);
    CreateProperty(g_ASIFW1000ShutterNr, "0", MM::Integer, false, pAct, true);
 
+   // Note: there can be more shutters in a controller, if there are multiple cards.  This adapter does not have the logic to deal with more than one card (which will not be hard to add)
    AddAllowedValue(g_ASIFW1000ShutterNr, "0"); 
    AddAllowedValue(g_ASIFW1000ShutterNr, "1");
+
+   // Is this a normally open or normally closed shutter?
+   pAct = new CPropertyAction (this, &Shutter::OnType);
+   CreateProperty(g_ASIFW1000ShutterType, shutterType_.c_str(), MM::String, false, pAct, true);
+
+   AddAllowedValue(g_ASIFW1000ShutterType, shutterType_.c_str()); 
+   AddAllowedValue(g_ASIFW1000ShutterType, "Normally Closed"); 
+
+   EnableDelay();
 }
 
 Shutter::~Shutter ()
@@ -390,7 +424,7 @@ void Shutter::GetName(char* name) const
 
 int Shutter::Initialize()
 {
-   // Name
+  // Name
    int ret = CreateProperty(MM::g_Keyword_Name, name_.c_str(), MM::String, true);
    if (DEVICE_OK != ret)
       return ret;
@@ -400,14 +434,18 @@ int Shutter::Initialize()
    if (DEVICE_OK != ret)
       return ret;
 
+  // Set timer for the Busy signal, or we'll get a time-out the first time we check the state of the shutter, for good measure, go back 'delay' time into the past
+   changedTime_ = GetCurrentMMTime();   
+   
+   bool open;
    // Check current state of shutter:
-   ret = g_hub.GetShutterPosition(*this, *GetCoreCallback(), shutterNr_, state_);
+   ret = g_hub.GetShutterPosition(*this, *GetCoreCallback(), shutterNr_, open);
    if (DEVICE_OK != ret)
       return ret;
 
    // State
    CPropertyAction* pAct = new CPropertyAction (this, &Shutter::OnState);
-   if (state_)
+   if (open)
       ret = CreateProperty(MM::g_Keyword_State, "1", MM::Integer, false, pAct); 
    else
       ret = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct); 
@@ -431,9 +469,12 @@ int Shutter::Initialize()
 
 bool Shutter::Busy()
 {
-   bool busy;
-   g_hub.FilterWheelBusy(*this, *GetCoreCallback(), busy);
-   return busy;
+   //TODO: using the SQ command and shutters with sensors, we can check wether the shutter is open or closed.  This need checking for sensors on initialization, and will also need caching of the last requested position
+   MM::MMTime interval = GetCurrentMMTime() - changedTime_;
+   if (interval < (1000.0 * GetDelayMs() ))
+      return true;
+   else
+      return false;
 }
 
 int Shutter::Shutdown()
@@ -447,20 +488,17 @@ int Shutter::Shutdown()
 
 int Shutter::SetOpen(bool open)
 {
+   changedTime_ = GetCurrentMMTime();
    if (open)
    {
-      printf("Opening shutter\n");
       int ret = g_hub.OpenShutter(*this, *GetCoreCallback(), shutterNr_);
       if (ret != DEVICE_OK)
          return ret;
-      state_ =  true;
    } else
    {
-      printf("Closing shutter\n");
       int ret = g_hub.CloseShutter(*this, *GetCoreCallback(), shutterNr_);
       if (ret != DEVICE_OK)
          return ret;
-      state_ =  false;
    }
    return DEVICE_OK;
 }
@@ -468,16 +506,18 @@ int Shutter::SetOpen(bool open)
 int Shutter::GetOpen(bool &open)
 {
 
-   // Check current state of shutter: (this might not be necessary, since we cash ourselves)
-   int ret = g_hub.GetShutterPosition(*this, *GetCoreCallback(), shutterNr_, state_);
+   // Check current state of shutter: 
+   int ret = g_hub.GetShutterPosition(*this, *GetCoreCallback(), shutterNr_, open);
    if (DEVICE_OK != ret)
       return ret;
-   open = state_;
+
+   if (shutterType_ == "Normally Closed")
+      open = !open;
 
    return DEVICE_OK;
 }
 
-int Shutter::Fire(double deltaT)
+int Shutter::Fire(double /*deltaT*/)
 {
    return DEVICE_UNSUPPORTED_COMMAND;  
 }
@@ -491,24 +531,47 @@ int Shutter::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    if (eAct == MM::BeforeGet)
    {
       // return pos as we know it
-      GetOpen(state_);
-      if (state_)
+      bool open;
+      GetOpen(open);
+      if (open)
+      {
          pProp->Set(1L);
+      }
       else
+      {
          pProp->Set(0L);
+      }
    }
    else if (eAct == MM::AfterSet)
    {
+      int ret;
       long pos;
       pProp->Get(pos);
       if (pos==1)
       {
-         return this->SetOpen(true);
+         ret = this->SetOpen(true);
       }
       else
       {
-         return this->SetOpen(false);
+         ret = this->SetOpen(false);
       }
+      if (ret != DEVICE_OK)
+         return ret;
+      pProp->Set(pos);
+   }
+   return DEVICE_OK;
+}
+
+int Shutter::OnType(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(shutterType_.c_str());
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      string type;
+      pProp->Get(shutterType_);
    }
    return DEVICE_OK;
 }
@@ -531,4 +594,3 @@ int Shutter::OnShutterNr(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    return DEVICE_OK;
 }
-

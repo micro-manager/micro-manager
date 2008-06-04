@@ -5,5 +5,5 @@ ZeissCAN_la_SOURCES = ZeissCAN.cpp ZeissCAN.h
 ZeissCAN_la_LIBADD = ../../MMDevice/.libs/libMMDevice.a 
 ZeissCAN_la_LDFLAGS = -module
 
-##install:
-##	cp .libs/ZeissCAN.so $(IJPATH)/$(MMPREFIX)ZeissCAN
+install:
+	cp .libs/ZeissCAN.so $(IJPATH)/$(MMPREFIX)ZeissCAN

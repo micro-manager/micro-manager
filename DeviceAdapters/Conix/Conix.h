@@ -24,6 +24,8 @@
 #define ERR_UNKNOWN_COMMAND          10002
 #define ERR_UNKNOWN_POSITION         10003
 #define ERR_HALT_COMMAND             10004
+#define ERR_UNRECOGNIZED_ANSWER      10005
+#define ERR_OFFSET                   11000
 
 class QuadFluor : public CStateDeviceBase<QuadFluor>
 {
@@ -49,6 +51,8 @@ public:
    int OnCommand(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
+   int GetPosition(int& position);
+   int SetPosition(int position);
    int ExecuteCommand(const std::string& cmd);
 
    bool initialized_;

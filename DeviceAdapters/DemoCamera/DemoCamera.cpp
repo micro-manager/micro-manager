@@ -37,6 +37,7 @@
 #include <sstream>
 using namespace std;
 const int CDemoCamera::imageSize_;
+const double CDemoCamera::nominalPixelSizeUm_ = 1.0;
 
 // External names used used by the rest of the system
 // to load particular device from the "DemoCamera.dll" library
@@ -48,6 +49,7 @@ const char* g_StageDeviceName = "DStage";
 const char* g_XYStageDeviceName = "DXYStage";
 const char* g_AutoFocusDeviceName = "DAutoFocus";
 const char* g_ShutterDeviceName = "DShutter";
+const char* g_DADeviceName = "D-DA";
 
 // constants for naming pixel types (allowed values of the "PixelType" property)
 const char* g_PixelType_8bit = "8bit";
@@ -88,6 +90,7 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_LightPathDeviceName, "Demo light path");
    AddAvailableDeviceName(g_AutoFocusDeviceName, "Demo auto focus");
    AddAvailableDeviceName(g_ShutterDeviceName, "Demo shutter");
+   AddAvailableDeviceName(g_DADeviceName, "Demo DA");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
@@ -136,6 +139,11 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
       // create autoFocus
       return new DemoAutoFocus();
    }
+   else if (strcmp(deviceName, g_DADeviceName) == 0)
+   {
+      // create DA
+      return new DemoDA();
+   }
 
    // ...supplied name not recognized
    return 0;
@@ -163,11 +171,12 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 CDemoCamera::CDemoCamera() : 
    initialized_(false),
    busy_(false),
-   readoutUs_(0)
+   readoutUs_(0.0),
+   scanMode_(1)
 {
    // call the base class method to set-up default error codes/messages
    InitializeDefaultErrorMessages();
-   readoutStartUs_ = GetClockTicksUs();
+   readoutStartTime_ = GetCurrentMMTime();
 }
 
 /**
@@ -242,12 +251,7 @@ int CDemoCamera::Initialize()
    nRet = CreateProperty(MM::g_Keyword_Binning, "1", MM::Integer, false, pAct);
    assert(nRet == DEVICE_OK);
 
-   vector<string> binValues;
-   binValues.push_back("1");
-   binValues.push_back("2");
-   binValues.push_back("4");
-   binValues.push_back("8");
-   nRet = SetAllowedValues(MM::g_Keyword_Binning, binValues);
+   nRet = SetAllowedBinning();
    if (nRet != DEVICE_OK)
       return nRet;
 
@@ -266,14 +270,20 @@ int CDemoCamera::Initialize()
    // exposure
    nRet = CreateProperty(MM::g_Keyword_Exposure, "100.0", MM::Float, false);
    assert(nRet == DEVICE_OK);
+   SetPropertyLimits(MM::g_Keyword_Exposure, 0, 10000);
 
    // scan mode
-   nRet = CreateProperty("ScanMode", "1", MM::Integer, false);
+   pAct = new CPropertyAction (this, &CDemoCamera::OnScanMode);
+   nRet = CreateProperty("ScanMode", "1", MM::Integer, false, pAct);
    assert(nRet == DEVICE_OK);
+   AddAllowedValue("ScanMode","1");
+   AddAllowedValue("ScanMode","2");
+   AddAllowedValue("ScanMode","3");
 
    // camera gain
    nRet = CreateProperty(MM::g_Keyword_Gain, "0", MM::Integer, false);
    assert(nRet == DEVICE_OK);
+   SetPropertyLimits(MM::g_Keyword_Gain, -5, 8);
 
    // camera offset
    nRet = CreateProperty(MM::g_Keyword_Offset, "0", MM::Integer, false);
@@ -282,6 +292,7 @@ int CDemoCamera::Initialize()
    // camera temperature
    nRet = CreateProperty(MM::g_Keyword_CCDTemperature, "0", MM::Float, false);
    assert(nRet == DEVICE_OK);
+   SetPropertyLimits(MM::g_Keyword_CCDTemperature, -100, 10);
 
    // readout time
    pAct = new CPropertyAction (this, &CDemoCamera::OnReadoutTime);
@@ -326,13 +337,13 @@ int CDemoCamera::Shutdown()
  */
 int CDemoCamera::SnapImage()
 {
-   double startUs_ = GetClockTicksUs();
+   MM::MMTime startTime = GetCurrentMMTime();
    double exp = GetExposure();
    double expUs = exp * 1000.0;
    GenerateSyntheticImage(img_, exp);
 
-   while (GetClockTicksUs() - startUs_ < expUs) {}
-   readoutStartUs_ = GetClockTicksUs();
+   while (GetCurrentMMTime() - startTime < MM::MMTime(expUs)) {}
+   readoutStartTime_ = GetCurrentMMTime();
 
    return DEVICE_OK;
 }
@@ -349,7 +360,9 @@ int CDemoCamera::SnapImage()
  */
 const unsigned char* CDemoCamera::GetImageBuffer()
 {
-   while (GetClockTicksUs() - readoutStartUs_ < readoutUs_) {}
+   MM::MMTime curTime = GetCurrentMMTime();
+   MM::MMTime readoutTime(readoutUs_);
+   while (readoutTime > (curTime - readoutStartTime_)) {}
    return img_.GetPixels();
 }
 
@@ -473,6 +486,41 @@ void CDemoCamera::SetExposure(double exp)
    SetProperty(MM::g_Keyword_Exposure, CDeviceUtils::ConvertToString(exp));
 }
 
+/**
+ * Returns the current binning factor.
+ * Required by the MM::Camera API.
+ */
+int CDemoCamera::GetBinning() const
+{
+   char buf[MM::MaxStrLength];
+   int ret = GetProperty(MM::g_Keyword_Binning, buf);
+   if (ret != DEVICE_OK)
+      return 1;
+   return atoi(buf);
+}
+
+/**
+ * Sets binning factor.
+ * Required by the MM::Camera API.
+ */
+int CDemoCamera::SetBinning(int binFactor)
+{
+   return SetProperty(MM::g_Keyword_Binning, CDeviceUtils::ConvertToString(binFactor));
+}
+
+int CDemoCamera::SetAllowedBinning() 
+{
+   vector<string> binValues;
+   binValues.push_back("1");
+   binValues.push_back("2");
+   if (scanMode_ < 3)
+      binValues.push_back("4");
+   if (scanMode_ < 2)
+      binValues.push_back("8");
+   LogMessage("Setting Allowed Binning settings", true);
+   return SetAllowedValues(MM::g_Keyword_Binning, binValues);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // CDemoCamera Action handlers
 ///////////////////////////////////////////////////////////////////////////////
@@ -552,7 +600,7 @@ int CDemoCamera::OnReadoutTime(MM::PropertyBase* pProp, MM::ActionType eAct)
       double readoutMs;
       pProp->Get(readoutMs);
 
-      readoutUs_ = (long)(readoutMs * 1000.0);
+      readoutUs_ = readoutMs * 1000.0;
    }
    else if (eAct == MM::BeforeGet)
    {
@@ -561,6 +609,26 @@ int CDemoCamera::OnReadoutTime(MM::PropertyBase* pProp, MM::ActionType eAct)
 
    return DEVICE_OK;
 }
+
+/*
+ * Handles "ScanMode" property.
+ * Changes allowed Binning values to test whether the UI updates properly
+ */
+int CDemoCamera::OnScanMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{ 
+   if (eAct == MM::AfterSet) {
+      pProp->Get(scanMode_);
+      SetAllowedBinning();
+      int ret = OnPropertiesChanged();
+      if (ret != DEVICE_OK)
+         return ret;
+   } else if (eAct == MM::BeforeGet) {
+      pProp->Set(scanMode_);
+   }
+   return DEVICE_OK;
+}
+    
+
 ///////////////////////////////////////////////////////////////////////////////
 // Private CDemoCamera methods
 ///////////////////////////////////////////////////////////////////////////////
@@ -642,9 +710,15 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
 // CDemoFilterWheel implementation
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-CDemoFilterWheel::CDemoFilterWheel() : numPos_(10), busy_(false), initialized_(false)
+CDemoFilterWheel::CDemoFilterWheel() : 
+   numPos_(10), 
+   busy_(false), 
+   initialized_(false), 
+   changedTime_(0.0),
+   position_(0)
 {
    InitializeDefaultErrorMessages();
+   EnableDelay(); // signals that the dealy setting will be used
 }
 
 CDemoFilterWheel::~CDemoFilterWheel()
@@ -675,6 +749,9 @@ int CDemoFilterWheel::Initialize()
    ret = CreateProperty(MM::g_Keyword_Description, "Demo filter wheel driver", MM::String, true);
    if (DEVICE_OK != ret)
       return ret;
+
+   // Set timer for the Busy signal, or we'll get a time-out the first time we check the state of the shutter, for good measure, go back 'delay' time into the past
+   changedTime_ = GetCurrentMMTime();   
 
    // create default positions and labels
    const int bufSize = 1024;
@@ -708,6 +785,17 @@ int CDemoFilterWheel::Initialize()
    return DEVICE_OK;
 }
 
+bool CDemoFilterWheel::Busy()
+{
+   MM::MMTime interval = GetCurrentMMTime() - changedTime_;
+   MM::MMTime delay(GetDelayMs()*1000.0);
+   if (interval < delay)
+      return true;
+   else
+      return false;
+}
+
+
 int CDemoFilterWheel::Shutdown()
 {
    if (initialized_)
@@ -725,12 +813,19 @@ int CDemoFilterWheel::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
+      pProp->Set(position_);
       // nothing to do, let the caller to use cached property
    }
    else if (eAct == MM::AfterSet)
    {
+      // Set timer for the Busy signal
+      changedTime_ = GetCurrentMMTime();
+
       long pos;
       pProp->Get(pos);
+      //char* deviceName;
+      //GetName(deviceName);
+      printf("Moving to position %ld\n", position_);
       if (pos >= numPos_ || pos < 0)
       {
          pProp->Set(position_); // revert
@@ -746,7 +841,10 @@ int CDemoFilterWheel::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 // CDemoLightPath implementation
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-CDemoLightPath::CDemoLightPath() : numPos_(3), busy_(false), initialized_(false)
+CDemoLightPath::CDemoLightPath() : 
+   numPos_(3), 
+   busy_(false), 
+   initialized_(false)
 {
    InitializeDefaultErrorMessages();
 }
@@ -850,7 +948,10 @@ int CDemoLightPath::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 // CDemoObjectiveTurret implementation
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-CDemoObjectiveTurret::CDemoObjectiveTurret() : numPos_(6), busy_(false), initialized_(false)
+CDemoObjectiveTurret::CDemoObjectiveTurret() : 
+   numPos_(6), 
+   busy_(false), 
+   initialized_(false)
 {
    InitializeDefaultErrorMessages();
 }
@@ -1137,6 +1238,8 @@ int DemoShutter::Initialize()
    if (DEVICE_OK != ret)
       return ret;
 
+   changedTime_ = GetCurrentMMTime();
+
    // state
    CPropertyAction* pAct = new CPropertyAction (this, &DemoShutter::OnState);
    ret = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct); 
@@ -1156,6 +1259,18 @@ int DemoShutter::Initialize()
 
    return DEVICE_OK;
 }
+
+
+bool DemoShutter::Busy()
+{
+   MM::MMTime interval = GetCurrentMMTime() - changedTime_;
+
+   if ( interval < MM::MMTime(1000.0 * GetDelayMs()))
+      return true;
+   else
+      return false;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Action handlers
 ///////////////////////////////////////////////////////////////////////////////
@@ -1171,6 +1286,9 @@ int DemoShutter::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet)
    {
+      // Set timer for the Busy signal
+      changedTime_ = GetCurrentMMTime();
+
       long pos;
       pProp->Get(pos);
 

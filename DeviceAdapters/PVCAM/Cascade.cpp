@@ -24,6 +24,7 @@
 // CVS:           $Id$
 
 #ifdef WIN32
+#pragma warning(disable : 4996) // disable warning for deperecated CRT functions on Windows 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #endif
@@ -44,7 +45,6 @@
 #include <sstream>
 #include <iomanip>
 
-#pragma warning(disable : 4996) // disable warning for deperecated CRT functions on Windows 
 
 using namespace std;
 
@@ -144,10 +144,9 @@ int Cascade::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-int Cascade::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
+int Cascade::OnPixelType(MM::PropertyBase* pProp, MM::ActionType /*eAct*/)
 {  
    pProp->Set(g_PixelType_16bit);
-   return DEVICE_OK;
    /*
    ccDatatype ccDataType;
    if (eAct == MM::BeforeGet)
@@ -302,7 +301,7 @@ int Cascade::OnMultiplierGain(MM::PropertyBase* pProp, MM::ActionType eAct)
 }
 
 // Offset
-int Cascade::OnOffset(MM::PropertyBase* pProp, MM::ActionType eAct)
+int Cascade::OnOffset(MM::PropertyBase* /*pProp*/, MM::ActionType /*eAct*/)
 {
    /*
 	DCAM_PARAM_FEATURE FeatureValue;
@@ -330,7 +329,7 @@ int Cascade::OnOffset(MM::PropertyBase* pProp, MM::ActionType eAct)
 }
 
 // Temperature
-int Cascade::OnTemperature(MM::PropertyBase* pProp, MM::ActionType eAct)
+int Cascade::OnTemperature(MM::PropertyBase* /*pProp*/, MM::ActionType /*eAct*/)
 {
    /*
 	DCAM_PARAM_FEATURE FeatureValue;
@@ -604,14 +603,26 @@ unsigned Cascade::GetBitDepth() const
    }
 }
 
+int Cascade::GetBinning () const 
+{
+   return binSize_;
+}
+
+int Cascade::SetBinning (int binSize) 
+{
+   ostringstream os;
+   os << binSize;
+   return SetProperty(MM::g_Keyword_Binning, os.str().c_str());
+}
+
 int Cascade::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 {
    // ROI internal dimensions are in no-binning mode, so we need to convert
 
-   roi_.x = x * binSize_;
-   roi_.y = y * binSize_;
-   roi_.xSize = xSize * binSize_;
-   roi_.ySize = ySize * binSize_;
+   roi_.x = (uns16)(x * binSize_);
+   roi_.y = (uns16)(y * binSize_);
+   roi_.xSize = (uns16)(xSize * binSize_);
+   roi_.ySize = (uns16)(ySize * binSize_);
 
    return ResizeImageBuffer();
 }
@@ -644,7 +655,7 @@ bool Cascade::GetErrorText(int errorCode, char* text) const
       return true; // base message
 
    char buf[ERROR_MSG_LEN];
-   if (pl_error_message (errorCode, buf))
+   if (pl_error_message ((int16)errorCode, buf))
    {
       CDeviceUtils::CopyLimitedString(text, buf);
       return true;
@@ -680,24 +691,24 @@ int Cascade::ResizeImageBuffer()
    // >>> assuming 16-bit pixels!!!
    //unsigned short newXSize = (unsigned short) ((double)roi_.xSize/binSize_ + 0.5);
    //unsigned short newYSize = (unsigned short) ((double)roi_.ySize/binSize_ + 0.5);
-   unsigned short newXSize = (unsigned short) roi_.xSize/binSize_;
-   unsigned short newYSize = (unsigned short) roi_.ySize/binSize_;
+   unsigned short newXSize = (unsigned short) (roi_.xSize/binSize_);
+   unsigned short newYSize = (unsigned short) (roi_.ySize/binSize_);
 
    // make an attempt to adjust the image dimensions
    while ((newXSize * newYSize * 2) % 4 != 0 && newXSize > 4 && newYSize > 4)
    {
       roi_.xSize--;
-      newXSize = (unsigned short) roi_.xSize/binSize_;
+      newXSize = (unsigned short) (roi_.xSize/binSize_);
       if ((newXSize * newYSize * 2) % 4 != 0)
       {
          roi_.ySize--;
-         newYSize = (unsigned short) roi_.ySize/binSize_;
+         newYSize = (unsigned short) (roi_.ySize/binSize_);
       }
    }
 
    img_.Resize(newXSize, newYSize, 2);
 
-   rgn_type region = { 0, roi_.xSize-1, binSize_, 0, roi_.ySize-1, binSize_};
+   rgn_type region = { 0, --roi_.xSize, (uns16)binSize_, 0, --roi_.ySize, (uns16)binSize_};
    uns32 size;
 
    if (!pl_exp_setup_seq(hPVCAM_, 1, 1, &region, TIMED_MODE, (uns32)exposure_, &size ))

@@ -54,8 +54,10 @@ using namespace std;
 SerialManager g_serialManager;
 
 const char* g_StopBits_1 = "1";
-const char* g_StopBits_1_5 = "1.5";
+//const char* g_StopBits_1_5 = "1.5";
 const char* g_StopBits_2 = "2";
+static const char* FLOW_CONTROL_NONE = "Off";
+static const char* FLOW_CONTROL_HARD = "Hardware";
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -126,13 +128,13 @@ MM::Device* SerialManager::CreatePort(const char* portName)
    // no such port found, so try to create a new one
    MDSerialPort* pPort = new MDSerialPort(portName);
    // try opening, do not check whether this succeeded
-   printf("Opening port %s\n",portName);
+   // printf("Opening port %s\n",portName);
    pPort->Open(portName);
-   printf("Port opened\n");
+   // printf("Port opened\n");
    ports_.push_back(pPort);
-   printf("Added to the list\n");
+   // printf("Added to the list\n");
    pPort->AddReference();
-   printf("Reference added\n");
+   // printf("Reference added\n");
    return pPort;
       /*
    if (pPort->Open(portName) == DEVICE_OK)
@@ -177,10 +179,11 @@ MDSerialPort::MDSerialPort(std::string portName) :
    initialized_(false),
    portTimeoutMs_(2000.0),
    answerTimeoutMs_(500),
-   transmitCharWaitMs_(10),
+   transmitCharWaitMs_(0.0),
    stopBits_(1),
    dataBits_(8),
-   baudRate_(9600)
+   baudRate_(9600),
+   flowControl_(FLOW_CONTROL_NONE)
 {
    portLister = new SerialPortLister();
    portLister->ListPorts(availablePorts_);
@@ -192,7 +195,7 @@ MDSerialPort::MDSerialPort(std::string portName) :
       logMsg << *iter << endl;
       ++iter;
    }
-   this->LogMessage(logMsg.str().c_str(), true);
+   this->LogMessage(logMsg.str().c_str());
   
    // Name of the port
    CPropertyAction* pAct = new CPropertyAction (this, &MDSerialPort::OnPort);
@@ -239,7 +242,7 @@ MDSerialPort::MDSerialPort(std::string portName) :
 
    // data bits
    pAct = new CPropertyAction (this, &MDSerialPort::OnDataBits);
-   ret = CreateProperty(MM::g_Keyword_DataBits, "8", MM::String, false);
+   ret = CreateProperty(MM::g_Keyword_DataBits, "8", MM::String, false, pAct, true);
    assert(ret == DEVICE_OK);
    vector<string> dataBitValues;
    dataBitValues.push_back("8");
@@ -250,11 +253,11 @@ MDSerialPort::MDSerialPort(std::string portName) :
 
    // stop bits
    pAct = new CPropertyAction (this, &MDSerialPort::OnStopBits);
-   ret = CreateProperty(MM::g_Keyword_StopBits, "1", MM::String, false, pAct);
+   ret = CreateProperty(MM::g_Keyword_StopBits, "1", MM::String, false, pAct, true);
    assert(ret == DEVICE_OK);
    vector<string> stopBitValues;
    stopBitValues.push_back(g_StopBits_1);
-   stopBitValues.push_back(g_StopBits_1_5);
+   //stopBitValues.push_back(g_StopBits_1_5);
    stopBitValues.push_back(g_StopBits_2);
    ret = SetAllowedValues(MM::g_Keyword_StopBits,stopBitValues);
 
@@ -263,12 +266,20 @@ MDSerialPort::MDSerialPort(std::string portName) :
    assert(ret == DEVICE_OK);
 
    // handshaking
-   ret = CreateProperty(MM::g_Keyword_Handshaking, "Off", MM::String, true);
+   pAct = new CPropertyAction (this, &MDSerialPort::OnFlowControl);
+   ret = CreateProperty(MM::g_Keyword_Handshaking, FLOW_CONTROL_NONE, MM::String, false, pAct, true);
    assert(ret == DEVICE_OK);
+   AddAllowedValue(MM::g_Keyword_Handshaking, FLOW_CONTROL_NONE);
+   AddAllowedValue(MM::g_Keyword_Handshaking, FLOW_CONTROL_HARD);
 
    // answer timeout                                                         
-   CPropertyAction* pActTimeout = new CPropertyAction (this, &MDSerialPort::OnTimeout);      
-   ret = CreateProperty("AnswerTimeout", "500", MM::Float, false, pActTimeout);
+   pAct = new CPropertyAction (this, &MDSerialPort::OnTimeout);      
+   ret = CreateProperty("AnswerTimeout", "500", MM::Float, false, pAct, true);
+   assert(ret == DEVICE_OK);                                                 
+
+   // transmission Delay                                                     
+   pAct = new CPropertyAction (this, &MDSerialPort::OnTransmissionDelay);
+   ret = CreateProperty("DelayBetweenCharsMs", "0", MM::Float, false, pAct, true);
    assert(ret == DEVICE_OK);                                                 
 
    ret = UpdateStatus();
@@ -283,7 +294,6 @@ MDSerialPort::~MDSerialPort()
 
 int MDSerialPort::Open(const char* portName)
 {
-   printf("In MDSerialPort\n");
    std::string ErrorMsg; 
    assert(port_);
 
@@ -298,36 +308,32 @@ int MDSerialPort::Open(const char* portName)
       return ERR_PORT_ALREADY_OPEN;
    } 
 
-   printf("In MDSerialPort, opened the port\n");
    ostringstream logMsg;
    logMsg << "Serial port " << portName_ << " opened." << endl; 
    this->LogMessage(logMsg.str().c_str());
-
-   printf("In MDSerialPort, Added the log\n");
 
    return DEVICE_OK;
 }
 
 int MDSerialPort::Initialize()
 {
-   cerr << "Initializing Port" << endl;
+   cerr << "Initializing Port: " << baudRate_ << ", " << transmitCharWaitMs_ << endl;
    assert(port_);
 
    // verify callbacks are supported and refuse to continue if not
    if (!IsCallbackRegistered())
       return DEVICE_NO_CALLBACK_REGISTERED;
 
-   long sb;
+   // long sb;
    int ret;
    //int ret = GetPropertyData(MM::g_Keyword_StopBits, stopBits_.c_str(), sb);
    //assert(ret == DEVICE_OK);
 
-   cerr << "Setting Baud Rate" << endl;
    try {
-      port_->SetBaudRate(port_->BAUD_9600);
-      port_->SetCharSize(port_->CHAR_SIZE_8);
+      port_->SetBaudRate(baudRate_);
+      port_->SetCharSize(dataBits_);
       port_->SetParity(port_->PARITY_NONE);
-      port_->SetNumOfStopBits(port_->STOP_BITS_1);
+      port_->SetNumOfStopBits(stopBits_);
       //long lastError = port_->Setup(CSerial::EBaud9600, CSerial::EData8, CSerial::EParNone, (CSerial::EStopBits)sb);
    } catch ( ... ) {
 		return HandleError(ERR_SETUP_FAILED);
@@ -335,7 +341,10 @@ int MDSerialPort::Initialize()
 
    // set-up handshaking
    try {
-      port_->SetFlowControl(port_->FLOW_CONTROL_NONE);
+      if (flowControl_ == FLOW_CONTROL_HARD)
+         port_->SetFlowControl(port_->FLOW_CONTROL_HARD);
+      else
+         port_->SetFlowControl(port_->FLOW_CONTROL_NONE);
    } catch ( ... ) {
 		return ERR_HANDSHAKE_SETUP_FAILED;
    }
@@ -380,25 +389,26 @@ int MDSerialPort::SetCommand(const char* command, const char* term)
    unsigned long written = 0;
    for (unsigned i=0; i<sendText.length(); i++)
    {
-      unsigned long one = 0;
+      // unsigned long one = 0;
       try {
          port_->WriteByte(sendText[written]);
       } catch ( ... ) {
          return ERR_TRANSMIT_FAILED;
       }
-      usleep((int)transmitCharWaitMs_*1000);
+      int sleepMs = (int) transmitCharWaitMs_ * 1000;
+      usleep(sleepMs);
       //assert (one == 1);
       written++;
    }
    assert(written == sendText.length());
    ostringstream logMsg;
    logMsg << "Serial port " << portName_ << " wrote: " << sendText;
-   this->LogMessage(logMsg.str().c_str());
+   this->LogMessage(logMsg.str().c_str(), true);
    return DEVICE_OK;
 }
 
 /**
- *  Reads from port into buffer answer of length bufLen untill full, or the terminating
+ o  Reads from port into buffer answer of length bufLen untill full, or the terminating
  *  character term was found or a timeout (local variable maxWait) was reached
  */
 int MDSerialPort::GetAnswer(char* answer, unsigned bufLen, const char* term)
@@ -411,43 +421,50 @@ int MDSerialPort::GetAnswer(char* answer, unsigned bufLen, const char* term)
    //memset(answer, 0, bufLen);
    std::string result;
    try {
-      result = port_->ReadLine((int)answerTimeoutMs_,*term);
+      result = port_->ReadLine((int)answerTimeoutMs_, term);
    }
    catch ( SerialPort::ReadTimeout ) {
       logMsg << "Timeout on read from Serial port " << portName_ << "..."; 
       this->LogMessage(logMsg.str().c_str(), true);
+      return DEVICE_SERIAL_TIMEOUT;
    }
    logMsg << " From port: " << portName_ << "." << "Read: " << result;
    this->LogMessage(logMsg.str().c_str(), true);
+   //result[result.length()-strlen(term)] = '\0';
    strcpy(answer,result.c_str());
    return DEVICE_OK;
 }
 
-int MDSerialPort::Write(const char* buf, unsigned long bufLen)
+int MDSerialPort::Write(const unsigned char* buf, unsigned long bufLen)
 {
    // send characters one by one to accomodate for slow devices
-   string sendText(buf);
+   //string sendText(buf);
    ostringstream logMsg;
-   logMsg << "Serial TX: ";
+   logMsg << "Serial Out: ";
    for (unsigned i=0; i<bufLen; i++)
    {
       //unsigned long written = 0;
       try {
-         port_->WriteByte(sendText[i]);
+         port_->WriteByte((unsigned char)buf[i]);
       } catch ( ... ) {
 		   return ERR_TRANSMIT_FAILED;      
       }
-      usleep((int)transmitCharWaitMs_);
-      logMsg << (int) *(buf + i) << " ";
+      usleep((int)transmitCharWaitMs_*1000);
+      logMsg << hex << (unsigned int) *(buf + i) << " ";
    }
    
-   logMsg << endl;
+   /*
+   printf("Serial TX(hex): ");
+   for (unsigned i=0; i<bufLen; i++)
+      printf("%#.2X ", (unsigned char)(buf[i]) );
+   printf("\n");
+   */
    LogMessage(logMsg.str().c_str(), true);
 
    return DEVICE_OK;
 }
  
-int MDSerialPort::Read(char* buf, unsigned long bufLen, unsigned long& charsRead)
+int MDSerialPort::Read(unsigned char* buf, unsigned long bufLen, unsigned long& charsRead)
 {
    // fill the buffer with zeros
    memset(buf, 0, bufLen);
@@ -467,11 +484,11 @@ int MDSerialPort::Read(char* buf, unsigned long bufLen, unsigned long& charsRead
 		   return ERR_RECEIVE_FAILED;
       }
       buf[charsRead] = readChar;
+      //logMsg << readChar << " ";
+      logMsg << (unsigned int) readChar << " ";
       charsRead++;
    } while (charsRead < bufLen);
 
-   for (unsigned long i=0; i<charsRead; i++)
-      logMsg << (int) *(buf + i) << " ";
    logMsg << endl;
    if (charsRead > 0)
       LogMessage(logMsg.str().c_str(), true);
@@ -520,7 +537,7 @@ int MDSerialPort::HandleError(int errorCode)
             return (ERR_PORT_DISAPPEARED);
          } else {
             // in list, but does not open
-            return (ERR_OPEN_FAILED);
+            return (errorCode);
          }
       }
    }
@@ -593,12 +610,37 @@ int MDSerialPort::OnStopBits(MM::PropertyBase* pProp, MM::ActionType eAct)
          try {
             port_->SetNumOfStopBits(stopBits_);
          } catch ( ... ) {
-            pProp->Set(oldStopBits);
+            stopBits_ = oldStopBits;
+            pProp->Set(stopBits_);
             return ERR_SETUP_FAILED;
          }
       }
    }
 
+   return DEVICE_OK;
+}
+
+int MDSerialPort::OnFlowControl(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet) {
+      pProp->Set(flowControl_.c_str());
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      std::string oldFlowControl;
+      pProp->Get(flowControl_);
+      try {
+         if (flowControl_ == FLOW_CONTROL_NONE) {
+            port_->SetFlowControl(port_->FLOW_CONTROL_NONE);
+         } else if (flowControl_ == FLOW_CONTROL_HARD) {
+            port_->SetFlowControl(port_->FLOW_CONTROL_HARD);
+         }
+      } catch (...) {
+         flowControl_ = oldFlowControl;
+         pProp->Set(flowControl_.c_str());
+         return  ERR_SETUP_FAILED;
+      }
+   }
    return DEVICE_OK;
 }
 
@@ -641,6 +683,23 @@ int MDSerialPort::OnTimeout(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 } 
 
+int MDSerialPort::OnTransmissionDelay(MM::PropertyBase* pProp, MM::ActionType eAct)
+{  
+   if (eAct == MM::BeforeGet)
+   {  
+      pProp->Set(transmitCharWaitMs_);
+   }
+   else if (eAct == MM::AfterSet)
+   {  
+      double transmitCharWaitMs;
+      pProp->Get(transmitCharWaitMs);
+      printf ("Settings transmit delay to: %f\n", transmitCharWaitMs);
+      if (transmitCharWaitMs >= 0 && transmitCharWaitMs < 250)
+         transmitCharWaitMs_ = transmitCharWaitMs;
+   }     
+
+   return DEVICE_OK;
+}
 
 /*
  * Class whose sole function is to list serial ports available on the user's system
@@ -701,7 +760,7 @@ void SerialPortLister::ListSerialPorts(std::vector<std::string> &availablePorts)
    } else {
        CFDictionarySetValue(classesToMatch,                                 
                            CFSTR(kIOSerialBSDTypeKey),                     
-                           CFSTR(kIOSerialBSDRS232Type));    
+                           CFSTR(kIOSerialBSDAllTypes));    
    }
    kernResult = IOServiceGetMatchingServices(kIOMasterPortDefault, classesToMatch, &serialPortIterator);
    if (KERN_SUCCESS != kernResult) {
@@ -716,7 +775,7 @@ void SerialPortLister::ListSerialPorts(std::vector<std::string> &availablePorts)
     // Initialize the returned path    
     *bsdPath = '\0';    
     // Iterate across all modems found. 
-    while (modemService = IOIteratorNext(serialPortIterator)) {
+    while ( (modemService = IOIteratorNext(serialPortIterator)) ) {
        CFTypeRef bsdPathAsCFString;      
        // Get the device's path (/dev/tty.xxxxx).
        bsdPathAsCFString = IORegistryEntryCreateCFProperty(modemService,
@@ -727,7 +786,7 @@ void SerialPortLister::ListSerialPorts(std::vector<std::string> &availablePorts)
           Boolean result;                                                  
           // Convert the path from a CFString to a C (NUL-terminated) string for use     
           // with the POSIX open() call.                                      
-          result = CFStringGetCString(bsdPathAsCFString,                      
+          result = CFStringGetCString( (const __CFString*) bsdPathAsCFString, 
                                       bsdPath,                             
                                       sizeof(bsdPath),                         
                                       kCFStringEncodingUTF8);              

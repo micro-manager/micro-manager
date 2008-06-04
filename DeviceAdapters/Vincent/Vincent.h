@@ -72,20 +72,20 @@ private:
    bool initialized_;
    // MMCore name of serial port
    std::string port_;
-   // Time it takes after issuing Close command to close the shutter
-   double closingTimeMs_;
-   // Time it takes after issuing Open command to open the shutter
-   double openingTimeMs_;
    // Command exchange with MMCore
    std::string command_;
    // Last command sent to the controller
    std::string lastCommand_;
-   // Time that last command was sent to shutter
-   unsigned long lastCommandTime_;
    // address of controller on serial chain (x, 0-7)
    std::string address_;
+   // Time it takes after issuing Close command to close the shutter
+   double closingTimeMs_;
+   // Time it takes after issuing Open command to open the shutter
+   double openingTimeMs_;
    // Are we operating shutter A or shutter B?
    std::string shutterName_;
+   // Time that last command was sent to shutter
+   MM::MMTime changedTime_;
 };
 
 
@@ -124,19 +124,19 @@ private:
    bool initialized_;
    // MMCore name of serial port
    std::string port_;
-   // Time it takes after issuing Close command to close the shutter
-   double closingTimeMs_;
-   // Time it takes after issuing Open command to open the shutter
-   double openingTimeMs_;
    // Command exchange with MMCore
    std::string command_;
    // Last command sent to the controller
    std::string lastCommand_;
-   // Time that last command was sent to shutter
-   unsigned long lastCommandTime_;
    // address of controller on serial chain (x, 0-7)
    std::string address_;
+   // Time it takes after issuing Close command to close the shutter
+   double closingTimeMs_;
+   // Time it takes after issuing Open command to open the shutter
+   double openingTimeMs_;
    // Ch1-3
    std::string shutterName_;
+   // Time that last command was sent to shutter
+   MM::MMTime changedTime_;
 };
 #endif //_VINCENT_H_

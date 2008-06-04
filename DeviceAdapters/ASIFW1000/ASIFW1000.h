@@ -50,6 +50,15 @@
 
 #define ERR_OFFSET 10100
 
+// From ASIFW1000HUb
+#define ERR_NOT_CONNECTED           11002
+#define ERR_COMMAND_CANNOT_EXECUTE  11003
+#define ERR_NO_ANSWER               11004
+#define ERR_SETTING_WHEEL           11005
+#define ERR_SETTING_VERBOSE_LEVEL   11006
+#define ERR_SHUTTER_NOT_FOUND       11007
+#define ERR_UNEXPECTED_ANSWER       11008
+
 
 class Hub : public CGenericBase<Hub>
 {
@@ -73,10 +82,6 @@ private:
    bool initialized_;
    // MMCore name of serial port
    std::string port_;
-   // Command exchange with MMCore
-   std::string command_;
-   // Has a command been sent to which no answer has been received yet?
-   bool pendingCommand_;
 };
 
 class Shutter : public CShutterBase<Shutter>
@@ -99,13 +104,15 @@ public:
 
    // action interface
    int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnType(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnShutterNr(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    bool initialized_;
-   unsigned shutterNr_;
    std::string name_;
-   bool state_;
+   std::string shutterType_;
+   MM::MMTime changedTime_;
+   unsigned shutterNr_;
 };
 
 class FilterWheel : public CStateDeviceBase<FilterWheel>
@@ -131,10 +138,10 @@ public:
                                                                              
 private:                                                                     
    bool initialized_;                                                        
-   int numPos_;
-   int wheelNr_;
-   long  pos_;
    std::string name_;  
+   long  pos_;
+   int wheelNr_;
+   int numPos_;
 };
 
 

@@ -34,6 +34,8 @@ const char* g_DeviceNameDTOLShutter = "DTOL-Shutter";
 const char* g_DeviceNameDTOLDA0 = "DTOL-DAC-0";
 const char* g_DeviceNameDTOLDA1 = "DTOL-DAC-1";
 
+const char* g_volts = "Volts";
+
 // Global state of the DTOL switch to enable simulation of the shutter device.
 // The virtual shutter device uses this global variable to restore state of the switch
 unsigned g_switchState = 0;
@@ -389,7 +391,7 @@ int CDTOLDA::Initialize()
    // State
    // -----
    CPropertyAction* pAct = new CPropertyAction (this, &CDTOLDA::OnVolts);
-   nRet = CreateProperty("Volts", "0.0", MM::Float, false, pAct);
+   nRet = CreateProperty(g_volts, "0.0", MM::Float, false, pAct);
    if (nRet != DEVICE_OK)
       return nRet;
 
@@ -412,6 +414,11 @@ int CDTOLDA::Shutdown()
    return DEVICE_OK;
 }
 
+int CDTOLDA::SetSignal(double volts)
+{
+   return SetProperty(g_volts, CDeviceUtils::ConvertToString(volts));
+}
+
 int CDTOLDA::WriteToPort(long value)
 {
    int ret = olDaPutSingleValue(board.hdass_da, value, channel_, 1.0 /*gain*/);
@@ -419,6 +426,21 @@ int CDTOLDA::WriteToPort(long value)
       return ret;
 
    return DEVICE_OK;
+}
+
+int CDTOLDA::SetVolts(double volts)
+{
+   long value = (long) ((1L<<resolution_)/((float)maxV_ - (float)minV_) * (volts - (float)minV_));
+   value = min((1L<<resolution_)-1,value);
+
+   if (encoding_ != OL_ENC_BINARY) {
+      // convert to 2's comp by inverting the sign bit
+      long sign = 1L << (resolution_ - 1);
+      value ^= sign;
+      if (value & sign)           //sign extend
+         value |= 0xffffffffL << resolution_;
+   }
+   return WriteToPort(value);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -435,18 +457,7 @@ int CDTOLDA::OnVolts(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       double volts;
       pProp->Get(volts);
-      
-      long value = (long) ((1L<<resolution_)/((float)maxV_ - (float)minV_) * (volts - (float)minV_));
-      value = min((1L<<resolution_)-1,value);
-
-      if (encoding_ != OL_ENC_BINARY) {
-         // convert to 2's comp by inverting the sign bit
-         long sign = 1L << (resolution_ - 1);
-         value ^= sign;
-         if (value & sign)           //sign extend
-            value |= 0xffffffffL << resolution_;
-      }
-      return WriteToPort(value);
+      return SetVolts(volts);
    }
 
    return DEVICE_OK;
@@ -460,6 +471,7 @@ int CDTOLDA::OnVolts(MM::PropertyBase* pProp, MM::ActionType eAct)
 CDTOLShutter::CDTOLShutter() : initialized_(false), name_(g_DeviceNameDTOLShutter), openTimeUs_(0)
 {
    InitializeDefaultErrorMessages();
+   EnableDelay();
 }
 
 CDTOLShutter::~CDTOLShutter()

@@ -19,6 +19,7 @@
 #include <deque>
 #include <map>
 #include "../../MMDevice/MMDevice.h"
+#include "../../MMDevice/DeviceBase.h"
 
 // PFS status constants
 const int PFS_WAIT = 1;
@@ -29,6 +30,10 @@ const int PFS_SEARCHING = 5;
 const int PFS_SEARCHING_2 = 10;
 const int PFS_JUST_PINT = 50;
 const int PFS_DISABLED = 90;
+
+//lamp control target constants
+const int LAMP_TARGET_MICROSCOPE = 0;
+const int LAMP_TARGET_PAD = 1;
 
 enum CommandMode
 {
@@ -43,6 +48,7 @@ public:
    ~TEHub();
 
    void SetPort(const char* port) {port_ = port;}
+   std::string GetPort() {return port_;}
    int GetVersion(MM::Device& device, MM::Core& core, std::string& ver);
    int GetModelType(MM::Device& device, MM::Core& core, int& type);
    bool IsBusy();
@@ -68,23 +74,34 @@ public:
    int GetOpticalPathPosition(MM::Device& device, MM::Core& core, int& pos);
    bool IsOpticalPathBusy(MM::Device& device, MM::Core& core);
 
+   int SetAnalyzerPosition(MM::Device& device, MM::Core& core, int pos);
+   int GetAnalyzerPosition(MM::Device& device, MM::Core& core, int& pos);
+   bool IsAnalyzerBusy(MM::Device& device, MM::Core& core);
+
    int SetLampOnOff(MM::Device& device, MM::Core& core, int status);
    int GetLampOnOff(MM::Device& device, MM::Core& core, int& status);
    int SetLampVoltage(MM::Device& device, MM::Core& core, double voltage);
    int GetLampVoltage(MM::Device& device, MM::Core& core, double& voltage);
    bool IsLampBusy(MM::Device& device, MM::Core& core);
+   int SetLampControlTarget(MM::Device& device, MM::Core& core, int target);
+   int GetLampControlTarget(MM::Device& device, MM::Core& core, int& target);
+
+   int SetEpiShutterStatus(MM::Device& device, MM::Core& core, int status);
+   int GetEpiShutterStatus(MM::Device& device, MM::Core& core, int& pos);
 
    int SetUniblitzStatus(MM::Device& device, MM::Core& core, int shutterNumber, int status);
 
    int SetPFocusOn(MM::Device& device, MM::Core& core);
    int SetPFocusOff(MM::Device& device, MM::Core& core);
    int GetPFocusStatus(MM::Device& device, MM::Core& core, int& status);
+   int GetPFocusVersion(MM::Device& device, MM::Core& core, std::string& version);
 
 private:
    int ExecuteCommand(MM::Device& device, MM::Core& core, const char* type, const char* command);
-   int ParseResponse(const char* cmdId, std::string& value);
+   int ParseResponse(MM::Device& device, MM::Core& core, const char* cmdId, std::string& value);
    void FetchSerialData(MM::Device& device, MM::Core& core);
    bool IsCommandWaiting(const char* command, MM::Device& device, MM::Core& core);
+   void LogError(int id, MM::Device& device, MM::Core& core, const char* functionName);
 
    static const int RCV_BUF_LENGTH = 1024;
    char rcvBuf_[RCV_BUF_LENGTH];

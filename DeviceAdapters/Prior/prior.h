@@ -42,6 +42,7 @@
 
 #define ERR_OFFSET 10100
 
+int ClearPort(MM::Device& device, MM::Core& core);
 
 class Shutter : public CShutterBase<Shutter>
 {
@@ -72,7 +73,9 @@ private:
    const int id_;
    std::string name_;
    std:: string port_;
-   long openTimeUs_;
+   MM::MMTime changedTime_;
+
+   Shutter& operator=(Shutter& /*rhs*/) {assert(false); return *this;}
 };
 
 class Wheel : public CStateDeviceBase<Wheel>
@@ -108,7 +111,9 @@ private:
    std::string port_;
    unsigned curPos_;
    bool busy_;
-   long openTimeUs_;
+   MM::MMTime changedTime_;
+
+   Wheel& operator=(Wheel& /*rhs*/) {assert(false); return *this;}
 };
 
 
@@ -129,8 +134,10 @@ public:
    // XYStage API
    // -----------
   int SetPositionUm(double x, double y);
+  int SetRelativePositionUm(double x, double y);
   int GetPositionUm(double& x, double& y);
   int SetPositionSteps(long x, long y);
+  int SetRelativePositionSteps(long x, long y);
   int GetPositionSteps(long& x, long& y);
   int Home();
   int Stop();
@@ -148,10 +155,10 @@ private:
    int GetDblParameter(const char* command, double& param);
    int GetPositionStepsSingle(char axis, long& steps);
   
+   bool initialized_;
    std::string port_;
    double stepSizeXUm_;
    double stepSizeYUm_;
-   bool initialized_;
    double answerTimeoutMs_;
 };
 
@@ -187,9 +194,9 @@ private:
    int Autofocus(long param);
    int GetResolution(double& res);
 
+   bool initialized_;
    std::string port_;
    double stepSizeUm_;
-   bool initialized_;
    long curSteps_;
    double answerTimeoutMs_;
 };
@@ -218,11 +225,77 @@ public:
 private:
    int ExecuteCommand(const std::string& cmd, std::string& response);
 
-   std::string port_;
    bool initialized_;
+   std::string port_;
    double answerTimeoutMs_;
    std::string command_;
    std::string response_;
 };
 
-#endif //_LUDL_H_
+class Lumen : public CShutterBase<Lumen>
+{
+public:
+   Lumen();
+   ~Lumen();
+
+   bool Busy();
+   void GetName(char* pszName) const;
+   int Initialize();
+   int Shutdown();
+      
+   // Shutter API
+   int SetOpen(bool open = true);
+   int GetOpen(bool& open);
+   int Fire(double deltaT);
+
+   // action interface
+   // ----------------
+   int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnDelay(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnIntensity(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+private:
+   int SetShutterPosition(bool state);
+   bool initialized_;
+   std:: string port_;
+   MM::MMTime changedTime_;
+   long intensity_;
+   bool curState_;
+};
+
+class TTLShutter : public CShutterBase<TTLShutter>
+{
+public:
+   TTLShutter(const char* name, int id);
+   ~TTLShutter();
+
+   bool Busy();
+   void GetName(char* pszName) const;
+   int Initialize();
+   int Shutdown();
+      
+   // Shutter API
+   int SetOpen(bool open = true);
+   int GetOpen(bool& open);
+   int Fire(double deltaT);
+
+   // action interface
+   // ----------------
+   int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnDelay(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+private:
+   int SetShutterPosition(bool state);
+   int GetShutterPosition(bool& state);
+   std::string name_;
+   bool initialized_;
+   const int id_;
+   std:: string port_;
+   MM::MMTime changedTime_;
+
+   TTLShutter& operator=(TTLShutter& /*rhs*/) {assert(false); return *this;}
+};
+
+#endif //_PRIOR_H_

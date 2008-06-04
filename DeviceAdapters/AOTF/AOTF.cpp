@@ -220,6 +220,7 @@ int CAOTFSwitch::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 CAOTFShutter::CAOTFShutter() : initialized_(false), name_(g_DeviceNameAOTFShutter), openTimeUs_(0)
 {
    InitializeDefaultErrorMessages();
+   EnableDelay();
 }
 
 CAOTFShutter::~CAOTFShutter()

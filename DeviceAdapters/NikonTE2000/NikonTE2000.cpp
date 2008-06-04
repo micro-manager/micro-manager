@@ -18,7 +18,7 @@
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 // CVS:           $Id$
-//
+// 
 
 #ifdef WIN32
    #define snprintf _snprintf 
@@ -35,11 +35,17 @@
 const char* g_NosepieceName = "Nosepiece";
 const char* g_ShutterName = "Shutter";
 const char* g_OpticalPathName = "OpticalPath";
+const char* g_AnalyzerName = "Analyzer";
 const char* g_FilterBlockName = "FilterBlock";
 const char* g_LampName = "Lamp";
+const char* g_EpiShutterName = "Epi-Shutter";
+const char* g_UniblitzShutterName = "Uniblitz-Shutter";
 const char* g_FocusName = "Focus";
 const char* g_AutoFocusName = "PerfectFocus";
 const char* g_HubName = "TE2000";
+const char* g_Control = "Control";
+const char* g_ControlMicroscope = "Microscope";
+const char* g_ControlPad = "Control Pad";
 
 using namespace std;
 
@@ -48,7 +54,7 @@ const char* g_VersionName = "Version";
 const char* g_ModelName = "Version";
 
 TEHub g_hub;
-
+bool g_PFSinstalled = false;
 
 //#ifdef WIN32
 //   BOOL APIENTRY DllMain( HANDLE /*hModule*/, 
@@ -84,8 +90,12 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_NosepieceName, "Nosepiece (objective turret)");
    AddAvailableDeviceName(g_FocusName, "Z-stage");
    AddAvailableDeviceName(g_OpticalPathName, "Optical path switch - camera, eyepiece, etc.");
+   AddAvailableDeviceName(g_AnalyzerName, "Analyzer control");
    AddAvailableDeviceName(g_FilterBlockName, "Filter changer");
    AddAvailableDeviceName(g_LampName, "Halogen lamp");
+   AddAvailableDeviceName(g_EpiShutterName, "Epi-fluorescence shutter");
+   AddAvailableDeviceName(g_UniblitzShutterName, "Uniblitz shutter");
+   AddAvailableDeviceName(g_AutoFocusName,  "PFS autofocus device");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
@@ -109,17 +119,14 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
       return new Hub;
    }
 
-   // TODO: implement Nikon shutter support 
-   //else if (strcmp(deviceName, g_ShutterName) == 0)
-   //{
-   //   // create shutter
-   //   return new Shutter;
-   //}
-
    else if (strcmp(deviceName, g_OpticalPathName) == 0)
    {
       // create path
       return new OpticalPath;
+   }
+   else if (strcmp(deviceName, g_AnalyzerName) == 0)
+   {
+      return new Analyzer;
    }
    else if (strcmp(deviceName, g_FilterBlockName) == 0)
    {
@@ -128,6 +135,18 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
    else if (strcmp(deviceName, g_LampName) == 0)
    {
       return new Lamp;
+   }
+   else if (strcmp(deviceName, g_EpiShutterName) == 0)
+   {
+      return new EpiShutter;
+   }
+   else if (strcmp(deviceName, g_UniblitzShutterName) == 0)
+   {
+      return new UniblitzShutter;
+   }
+   else if (strcmp(deviceName, g_AutoFocusName) == 0)
+   {
+      return new PerfectFocus;
    }
 
    return 0;
@@ -140,17 +159,18 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// Nosepeiece
+// Nosepiece
 // ~~~~~~~~~~
 
 Hub::Hub() : initialized_(false), name_(g_HubName)
 {
    InitializeDefaultErrorMessages();
 
-   // add custom MTB messages
+   // add custom messages
    SetErrorText(ERR_NOT_CONNECTED, "Not connected with the hardware");
    SetErrorText(ERR_UNKNOWN_POSITION, "Position out of range");
    SetErrorText(ERR_TYPE_NOT_DETECTED, "Device not detected");
+   SetErrorText(DEVICE_SERIAL_INVALID_RESPONSE, "The response was not recognized");
 
    // Port
    CPropertyAction* pAct = new CPropertyAction (this, &Hub::OnPort);
@@ -313,11 +333,10 @@ int Nosepiece::Initialize()
       return ret;
 
    // create default positions and labels
-   // <<< TODO: clear the confusion about the index
    for (unsigned i=0; i<numPos_; i++)
    {
       ostringstream os;
-      os << "State-" << i;
+      os << "Position-" << i+1;
       SetPositionLabel(i, os.str().c_str());
    }
 
@@ -351,12 +370,14 @@ int Nosepiece::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
       int ret = g_hub.GetNosepiecePosition(*this, *GetCoreCallback(), pos);
       if (ret != DEVICE_OK)
          return ret;
+      pos -= 1;
       pProp->Set((long)pos);
    }
    else if (eAct == MM::AfterSet)
    {
       long pos;
       pProp->Get(pos);
+      pos += 1;
       if (pos > (long)numPos_ || pos < 1)
       {
          // restore current position
@@ -364,7 +385,7 @@ int Nosepiece::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
          int ret = g_hub.GetNosepiecePosition(*this, *GetCoreCallback(), oldPos);
          if (ret != 0)
             return ret;
-         pProp->Set((long)oldPos); // revert
+         pProp->Set((long)oldPos-1); // revert
          return ERR_UNKNOWN_POSITION;
       }
       // apply the value
@@ -433,7 +454,7 @@ int FilterBlock::Initialize()
    for (unsigned i=0; i<numPos_; i++)
    {
       ostringstream os;
-      os << i+1;
+      os << i;
       AddAllowedValue(MM::g_Keyword_State, os.str().c_str());
    }
 
@@ -448,8 +469,8 @@ int FilterBlock::Initialize()
    for (unsigned i=0; i<numPos_; i++)
    {
       ostringstream os;
-      os << "State-" << i+1;
-      SetPositionLabel(i+1, os.str().c_str());
+      os << "Position-" << i+1;
+      SetPositionLabel(i, os.str().c_str());
    }
 
    ret = UpdateStatus();
@@ -482,12 +503,14 @@ int FilterBlock::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
       int ret = g_hub.GetFilterBlockPosition(*this, *GetCoreCallback(), pos);
       if (ret != DEVICE_OK)
          return ret;
+      pos -= 1;
       pProp->Set((long)pos);
    }
    else if (eAct == MM::AfterSet)
    {
       long pos;
       pProp->Get(pos);
+      pos += 1;
       if (pos > (long)numPos_ || pos < 1)
       {
          // restore current position
@@ -495,7 +518,7 @@ int FilterBlock::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
          int ret = g_hub.GetFilterBlockPosition(*this, *GetCoreCallback(), oldPos);
          if (ret != 0)
             return ret;
-         pProp->Set((long)oldPos); // revert
+         pProp->Set((long)oldPos-1); // revert
          return ERR_UNKNOWN_POSITION;
       }
       // apply the value
@@ -555,10 +578,6 @@ int FocusStage::Initialize()
    if (ret != DEVICE_OK)
       return ret;
 
-   ret = UpdateStatus();
-   if (ret != DEVICE_OK)
-      return ret;
-
    // StepSize
    // --------
    const char* stepSizeName = "FocusStepSize_(nm)";
@@ -579,8 +598,6 @@ int FocusStage::Initialize()
    ret = UpdateStatus();
    if (ret != DEVICE_OK)
       return ret;
-
-
 
    initialized_ = true;
 
@@ -657,6 +674,16 @@ int FocusStage::OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet)
    {
+      if (g_PFSinstalled)
+      {
+         // check if the perfect focus is active
+         // and ignore this command if it is
+         int status = PFS_DISABLED;
+         g_hub.GetPFocusStatus(*this, *GetCoreCallback(), status);
+         if (status == PFS_RUNNING || status == PFS_JUST_PINT)
+            return DEVICE_OK;
+      }
+
       double pos;
       pProp->Get(pos);
       int focusPos = (int)(pos/((double)stepSize_nm_ / 1000.0) + 0.5);
@@ -829,12 +856,11 @@ int OpticalPath::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-
 ///////////////////////////////////////////////////////////////////////////////
-// Lamp
-// ~~~~
+// AnalyzerPath
+// ~~~~~~~~~~~~
 
-Lamp::Lamp() : initialized_(false), name_(g_LampName), openTimeUs_(0)
+Analyzer::Analyzer() : initialized_(false), numPos_(3), name_(g_AnalyzerName)
 {
    InitializeDefaultErrorMessages();
 
@@ -842,6 +868,127 @@ Lamp::Lamp() : initialized_(false), name_(g_LampName), openTimeUs_(0)
    SetErrorText(ERR_NOT_CONNECTED, "Not connected with the hardware");
    SetErrorText(ERR_UNKNOWN_POSITION, "Position out of range");
    SetErrorText(ERR_TYPE_NOT_DETECTED, "Device not detected");
+}
+
+Analyzer::~Analyzer()
+{
+   Shutdown();
+}
+
+void Analyzer::GetName(char* name) const
+{
+   assert(name_.length() < CDeviceUtils::GetMaxStringLength());
+   CDeviceUtils::CopyLimitedString(name, name_.c_str());
+}
+
+bool Analyzer::Busy()
+{
+   return g_hub.IsAnalyzerBusy(*this, *GetCoreCallback());
+}
+
+int Analyzer::Initialize()
+{
+   // set property list
+   // -----------------
+   
+   // Name
+   int ret = CreateProperty(MM::g_Keyword_Name, name_.c_str(), MM::String, true);
+   if (DEVICE_OK != ret)
+      return ret;
+
+   // Description
+   ret = CreateProperty(MM::g_Keyword_Description, "Nikon TE2000 analyzer", MM::String, true);
+   if (DEVICE_OK != ret)
+      return ret;
+
+   // State
+   // -----
+   CPropertyAction* pAct = new CPropertyAction (this, &Analyzer::OnState);
+   ret = CreateProperty(MM::g_Keyword_State, "1", MM::Integer, false, pAct);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   // Label
+   // -----
+   pAct = new CPropertyAction (this, &CStateBase::OnLabel);
+   ret = CreateProperty(MM::g_Keyword_Label, "Undefined", MM::String, false, pAct);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   // create default positions and labels
+   SetPositionLabel(0, "Undefined");
+   SetPositionLabel(1, "Inserted");
+   SetPositionLabel(2, "Extracted");
+  
+   ret = UpdateStatus();
+   if (ret != DEVICE_OK)
+      return ret;
+
+   initialized_ = true;
+
+   return DEVICE_OK;
+}
+
+int Analyzer::Shutdown()
+{
+   if (initialized_)
+   {
+      initialized_ = false;
+   }
+   return DEVICE_OK;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Action handlers
+///////////////////////////////////////////////////////////////////////////////
+
+int Analyzer::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      int pos;
+      int ret = g_hub.GetAnalyzerPosition(*this, *GetCoreCallback(), pos);
+      if (ret != DEVICE_OK)
+         return ret;
+      pProp->Set((long)pos);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      long pos;
+      pProp->Get(pos);
+      if (pos > (long)numPos_ || pos < 1)
+      {
+         // restore current position
+         int oldPos;
+         int ret = g_hub.GetAnalyzerPosition(*this, *GetCoreCallback(), oldPos);
+         if (ret != DEVICE_OK)
+            return ret;
+         pProp->Set((long)oldPos); // revert
+         return ERR_UNKNOWN_POSITION;
+      }
+      // apply the value
+      int ret = g_hub.SetAnalyzerPosition(*this, *GetCoreCallback(), (int)pos);
+      if (ret != DEVICE_OK)
+         return ret;
+   }
+
+   return DEVICE_OK;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Lamp
+// ~~~~
+
+Lamp::Lamp() : initialized_(false), name_(g_LampName), changedTime_(0.0)
+{
+   InitializeDefaultErrorMessages();
+
+   // add custom MTB messages
+   SetErrorText(ERR_NOT_CONNECTED, "Not connected with the hardware");
+   SetErrorText(ERR_UNKNOWN_POSITION, "Position out of range");
+   SetErrorText(ERR_TYPE_NOT_DETECTED, "Device not detected");
+   
+   EnableDelay();
 }
 
 Lamp::~Lamp()
@@ -857,17 +1004,11 @@ void Lamp::GetName(char* name) const
 
 bool Lamp::Busy()
 {
-   long interval = GetClockTicksUs() - openTimeUs_;
-   //if (stat <= 0 || interval < GetDelayMs())
-   // >> NOTE: if the stat is in the error state the device ramains forever busy!
-   if(interval/1000.0 < GetDelayMs())
-   {
+   MM::MMTime interval = GetCurrentMMTime() - changedTime_;
+   if(interval < MM::MMTime(1000.0 * GetDelayMs()))
       return true;
-   }
    else
-   {
       return g_hub.IsLampBusy(*this, *GetCoreCallback());
-   }
 }
 
 int Lamp::Initialize()
@@ -902,12 +1043,21 @@ int Lamp::Initialize()
    if (ret != DEVICE_OK)
       return ret;
 
+   // Control (Remote Pad or Microscope)
+   // -------
+   pAct = new CPropertyAction (this, &Lamp::OnControl);
+   ret = CreateProperty(g_Control, g_ControlMicroscope, MM::String, false, pAct);
+   if (ret != DEVICE_OK)
+      return ret;
+   AddAllowedValue(g_Control, g_ControlMicroscope);
+   AddAllowedValue(g_Control, g_ControlPad);
+
    ret = UpdateStatus();
    if (ret != DEVICE_OK)
       return ret;
 
    initialized_ = true;
-   openTimeUs_ = GetClockTicksUs();
+   changedTime_ = GetCurrentMMTime();
 
    return DEVICE_OK;
 }
@@ -953,7 +1103,12 @@ int Lamp::Fire(double /*deltaT*/)
 
 int Lamp::OnOnOff(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   if (eAct == MM::BeforeGet)
+    // make sure that we have control
+   int ret = g_hub.SetLampControlTarget(*this, *GetCoreCallback(), LAMP_TARGET_PAD);   
+   if (ret != DEVICE_OK)
+      return ret;
+
+  if (eAct == MM::BeforeGet)
    {
       int state;
       int ret = g_hub.GetLampOnOff(*this, *GetCoreCallback(), state);
@@ -969,7 +1124,7 @@ int Lamp::OnOnOff(MM::PropertyBase* pProp, MM::ActionType eAct)
       int ret = g_hub.SetLampOnOff(*this, *GetCoreCallback(), (int)state);
       if (ret != DEVICE_OK)
          return ret;
-      openTimeUs_ = GetClockTicksUs();
+     changedTime_ = GetCurrentMMTime();
    }
 
    return DEVICE_OK;
@@ -978,6 +1133,11 @@ int Lamp::OnOnOff(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int Lamp::OnVoltage(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
+   // make sure that we have control
+   int ret = g_hub.SetLampControlTarget(*this, *GetCoreCallback(), LAMP_TARGET_PAD);   
+   if (ret != DEVICE_OK)
+      return ret;
+
    if (eAct == MM::BeforeGet)
    {
       double voltage;
@@ -1000,20 +1160,357 @@ int Lamp::OnVoltage(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+int Lamp::OnControl(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+
+   int ret, target;
+   if (eAct == MM::BeforeGet)
+   {
+      ret = g_hub.GetLampControlTarget(*this, *GetCoreCallback(), target);
+      if (ret != DEVICE_OK)
+         return ret;
+      if (target == LAMP_TARGET_PAD)
+         pProp->Set(g_ControlPad);
+      else
+         pProp->Set(g_ControlMicroscope);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      std::string controlTarget;
+      pProp->Get(controlTarget);
+      if (controlTarget == g_ControlPad)
+         target = LAMP_TARGET_PAD;
+      else
+         target = LAMP_TARGET_MICROSCOPE;
+      ret = g_hub.SetLampControlTarget(*this, *GetCoreCallback(), target);
+      if (ret != DEVICE_OK)
+         return ret;
+   }
+
+   return DEVICE_OK;
+}
+///////////////////////////////////////////////////////////////////////////////
+// EpiShutter
+// ~~~~
+
+EpiShutter::EpiShutter() : initialized_(false), name_(g_EpiShutterName), changedTime_(0)
+{
+   InitializeDefaultErrorMessages();
+
+   // add custom MTB messages
+   SetErrorText(ERR_NOT_CONNECTED, "Not connected with the hardware");
+   SetErrorText(ERR_UNKNOWN_POSITION, "Position out of range");
+   SetErrorText(ERR_TYPE_NOT_DETECTED, "Device not detected");
+   
+   EnableDelay();
+}
+
+EpiShutter::~EpiShutter()
+{
+   Shutdown();
+}
+
+void EpiShutter::GetName(char* name) const
+{
+   assert(name_.length() < CDeviceUtils::GetMaxStringLength());
+   CDeviceUtils::CopyLimitedString(name, name_.c_str());
+}
+
+bool EpiShutter::Busy()
+{
+   MM::MMTime interval = GetCurrentMMTime() - changedTime_;
+   if(interval < MM::MMTime(1000.0 * GetDelayMs()))
+      return true;
+   else
+      return false;
+      //return g_hub.IsLampBusy(*this, *GetCoreCallback());
+}
+
+int EpiShutter::Initialize()
+{
+   // set property list
+   // -----------------
+   
+   // Name
+   int ret = CreateProperty(MM::g_Keyword_Name, name_.c_str(), MM::String, true);
+   if (DEVICE_OK != ret)
+      return ret;
+
+   // Description
+   ret = CreateProperty(MM::g_Keyword_Description, "Nikon TE2000 Epi-Illumination Shutter", MM::String, true);
+   if (DEVICE_OK != ret)
+      return ret;
+
+   // State
+   // ------
+   CPropertyAction* pAct = new CPropertyAction (this, &EpiShutter::OnState);
+   ret = CreateProperty(MM::g_Keyword_State, "1", MM::Integer, false, pAct);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   AddAllowedValue(MM::g_Keyword_State, "0");
+   AddAllowedValue(MM::g_Keyword_State, "1");
+
+   ret = UpdateStatus();
+   if (ret != DEVICE_OK)
+      return ret;
+
+   initialized_ = true;
+   changedTime_ = GetCurrentMMTime();
+
+   return DEVICE_OK;
+}
+
+int EpiShutter::Shutdown()
+{
+   if (initialized_)
+   {
+      initialized_ = false;
+   }
+   return DEVICE_OK;
+}
+
+int EpiShutter::SetOpen(bool open)
+{
+   if (open)
+      return SetProperty(MM::g_Keyword_State, "1");
+   else
+      return SetProperty(MM::g_Keyword_State, "0");
+}
+
+int EpiShutter::GetOpen(bool& open)
+{
+   char buf[MM::MaxStrLength];
+   int ret = GetProperty(MM::g_Keyword_State, buf);
+   if (ret != DEVICE_OK)
+      return ret;
+   long pos = atol(buf);
+   pos > 0 ? open = true : open = false;
+
+   return DEVICE_OK;
+}
+
+int EpiShutter::Fire(double /*deltaT*/)
+{
+   return DEVICE_UNSUPPORTED_COMMAND;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// EpiShutter Action handlers
+///////////////////////////////////////////////////////////////////////////////
+
+int EpiShutter::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   // Our definition: 0=Closed, 1 = Open, Nikon definition: 0=undefined, 1=Open, 2=Closed
+  if (eAct == MM::BeforeGet)
+   {
+      int state;
+      int ret = g_hub.GetEpiShutterStatus(*this, *GetCoreCallback(), state);
+      if (ret != DEVICE_OK)
+         return ret;
+      // translate between MicroManager and Nikon definitions of state:
+      if (state == 2)
+         state = 0;
+      // TODO: when state==0 return error 
+      pProp->Set((long)state);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      long state;
+      pProp->Get(state);
+      // translate between MicroManager and Nikon definitions of state:
+      if (state == 0)
+         state = 2;
+      // apply the value
+      int ret = g_hub.SetEpiShutterStatus(*this, *GetCoreCallback(), (int)state);
+      if (ret != DEVICE_OK)
+         return ret;
+     changedTime_ = GetCurrentMMTime();
+   }
+
+   return DEVICE_OK;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// UnliBlitzShutters
+// ~~~~
+
+UniblitzShutter::UniblitzShutter() : 
+   initialized_(false), 
+   name_(g_EpiShutterName), 
+   shutterNr_(1), 
+   state_(0),
+   changedTime_(0)
+{
+   InitializeDefaultErrorMessages();
+
+   // add custom MTB messages
+   SetErrorText(ERR_NOT_CONNECTED, "Not connected with the hardware");
+   SetErrorText(ERR_UNKNOWN_POSITION, "Position out of range");
+   SetErrorText(ERR_TYPE_NOT_DETECTED, "Device not detected");
+   
+   EnableDelay();
+   CPropertyAction* pAct = new CPropertyAction (this, &UniblitzShutter::OnShutterNumber);
+   CreateProperty("Shutter Number", "1", MM::Integer, false, pAct, true);
+
+   AddAllowedValue("Shutter Number", "1");
+   AddAllowedValue("Shutter Number", "2");
+   AddAllowedValue("Shutter Number", "3");
+   // 7 is used to open/close all Uniblitz shutters simulanuously
+   AddAllowedValue("Shutter Number", "7");
+}
+
+UniblitzShutter::~UniblitzShutter()
+{
+   Shutdown();
+}
+
+void UniblitzShutter::GetName(char* name) const
+{
+   assert(name_.length() < CDeviceUtils::GetMaxStringLength());
+   CDeviceUtils::CopyLimitedString(name, name_.c_str());
+}
+
+bool UniblitzShutter::Busy()
+{
+   MM::MMTime interval = GetCurrentMMTime() - changedTime_;
+   if(interval < MM::MMTime(1000.0 * GetDelayMs()))
+      return true;
+   else
+      return false;
+}
+
+int UniblitzShutter::Initialize()
+{
+   // set property list
+   // -----------------
+   
+   // Name
+   int ret = CreateProperty(MM::g_Keyword_Name, name_.c_str(), MM::String, true);
+   if (DEVICE_OK != ret)
+      return ret;
+
+   // Description
+   ret = CreateProperty(MM::g_Keyword_Description, "Nikon TE2000 Uniblitz Shutter", MM::String, true);
+   if (DEVICE_OK != ret)
+      return ret;
+
+   // State
+   // ------
+   CPropertyAction* pAct = new CPropertyAction (this, &UniblitzShutter::OnState);
+   ret = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   AddAllowedValue(MM::g_Keyword_State, "0");
+   AddAllowedValue(MM::g_Keyword_State, "1");
+
+   // Since we can not query for the state of the shutter, close it to get it into a known state
+   ret = SetOpen(false);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   ret = UpdateStatus();
+   if (ret != DEVICE_OK)
+      return ret;
+
+   initialized_ = true;
+   changedTime_ = GetCurrentMMTime();
+
+   return DEVICE_OK;
+}
+
+int UniblitzShutter::Shutdown()
+{
+   if (initialized_)
+   {
+      initialized_ = false;
+   }
+   return DEVICE_OK;
+}
+
+int UniblitzShutter::SetOpen(bool open)
+{
+   if (open)
+      return SetProperty(MM::g_Keyword_State, "1");
+   else
+      return SetProperty(MM::g_Keyword_State, "0");
+}
+
+int UniblitzShutter::GetOpen(bool& open)
+{
+   char buf[MM::MaxStrLength];
+   int ret = GetProperty(MM::g_Keyword_State, buf);
+   if (ret != DEVICE_OK)
+      return ret;
+   long pos = atol(buf);
+   pos > 0 ? open = true : open = false;
+
+   return DEVICE_OK;
+}
+
+int UniblitzShutter::Fire(double /*deltaT*/)
+{
+   return DEVICE_UNSUPPORTED_COMMAND;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Action handlers
+///////////////////////////////////////////////////////////////////////////////
+
+int UniblitzShutter::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   // Our definition: 0=Closed, 1 = Open, Nikon definition: 0=undefined, 1=Closed, 2=Open
+  if (eAct == MM::BeforeGet)
+   {
+      pProp->Set((long)state_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(state_);
+      // apply the value (convert from MM to Nikon state value)
+      int ret = g_hub.SetUniblitzStatus(*this, *GetCoreCallback(), shutterNr_, (int)state_ + 1);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      changedTime_ = GetCurrentMMTime();
+   }
+   return DEVICE_OK;
+}
+
+int UniblitzShutter::OnShutterNumber(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+  if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(shutterNr_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      // Let MMCore take care of value checking
+      pProp->Get(shutterNr_);
+   }
+   return DEVICE_OK;
+}
+
+///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 // PerfectFocus
 // ~~~~~~~~~~~~
 
 PerfectFocus::PerfectFocus() :
    initialized_(false)
+
 {
+   // Custom error messages
+   SetErrorText(ERR_PFS_NOT_CONNECTED,"Perfect Focus device not found.  Is it switched on and connected?");
 }
 
 PerfectFocus::~PerfectFocus()
 {
 }
       
-void PerfectFocus::GetName(char* pszName) const
+void PerfectFocus::GetName(char* /*pszName*/) const
 {
 }
 
@@ -1022,7 +1519,7 @@ bool PerfectFocus::Busy()
    int status = 0;
    g_hub.GetPFocusStatus(*this, *GetCoreCallback(), status);
 
-   if (status == PFS_WAIT || status == PFS_SEARCHING || status == PFS_SEARCHING_2)
+   if (/* status == PFS_WAIT || */ status == PFS_SEARCHING || status == PFS_SEARCHING_2)
       return true;
    else
       return false;
@@ -1046,17 +1543,29 @@ int PerfectFocus::Initialize()
    if (DEVICE_OK != ret)
       return ret;
    
+   // Version (this also functions as a check that the PF is attached ann switched ON
+   string version;
+   ret = g_hub.GetPFocusVersion(*this, *GetCoreCallback(), version);
+   if (ret != DEVICE_OK)
+      return ERR_PFS_NOT_CONNECTED;
+   ret = CreateProperty("Version", version.c_str(), MM::String, true);
+   if (ret != DEVICE_OK)
+      return ret;
+
    ret = UpdateStatus();
    if (ret != DEVICE_OK)
       return ret;
 
    initialized_ = true;
+   g_PFSinstalled = true;
    return DEVICE_OK;
 }
+
 
 int PerfectFocus::Shutdown()
 {
    initialized_ = false;
+   g_PFSinstalled = false;
    return DEVICE_OK;
 }
 
@@ -1075,12 +1584,25 @@ int PerfectFocus::GetContinuousFocusing(bool& state)
    if (ret != DEVICE_OK)
       return ret;
 
-   if (status == PFS_RUNNING)
+   if (status == PFS_RUNNING || status == PFS_JUST_PINT)
       state = true;
    else
       state = false;
 
    return DEVICE_OK;
+}
+
+bool PerfectFocus::IsContinuousFocusLocked()
+{
+   int status;
+   int ret = g_hub.GetPFocusStatus(*this, *GetCoreCallback(), status);
+   if (ret != DEVICE_OK)
+      return false;
+
+   if (status == PFS_JUST_PINT)
+      return true;
+   else
+      return false;
 }
 
 int PerfectFocus::Focus()

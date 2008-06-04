@@ -1007,7 +1007,7 @@ LONG CSerial::Write (const void* pData, size_t iLen, DWORD* pdwWritten, LPOVERLA
 	_ASSERTE(!m_hevtOverlapped || HasOverlappedIoCompleted(lpOverlapped));
 
 	// Write the data
-	if (!::WriteFile(m_hFile,pData,iLen,pdwWritten,lpOverlapped))
+	if (!::WriteFile(m_hFile, pData, (DWORD)iLen, pdwWritten, lpOverlapped))
 	{
 		// Set the internal error code
 		long lLastError = ::GetLastError();
@@ -1162,7 +1162,7 @@ LONG CSerial::Read (void* pData, size_t iLen, DWORD* pdwRead, LPOVERLAPPED lpOve
 	_ASSERTE(!m_hevtOverlapped || HasOverlappedIoCompleted(lpOverlapped));
 	
 	// Read the data
-	if (!::ReadFile(m_hFile,pData,iLen,pdwRead,lpOverlapped))
+	if (!::ReadFile(m_hFile,pData, (DWORD)iLen,pdwRead,lpOverlapped))
 	{
 		// Set the internal error code
 		long lLastError = ::GetLastError();

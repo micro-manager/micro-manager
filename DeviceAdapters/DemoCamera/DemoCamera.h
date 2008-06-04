@@ -74,21 +74,29 @@ public:
    int SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize); 
    int GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize); 
    int ClearROI();
+   double GetNominalPixelSizeUm() const {return nominalPixelSizeUm_;}
+   double GetPixelSizeUm() const {return nominalPixelSizeUm_ * GetBinning();}
+   int GetBinning() const;
+   int SetBinning(int binSize);
 
    // action interface
    // ----------------
    int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnReadoutTime(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnScanMode(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
+   int SetAllowedBinning();
    static const int imageSize_=512;
+   static const double nominalPixelSizeUm_;
 
    ImgBuffer img_;
    bool initialized_;
    bool busy_;
-   long readoutUs_;
-   long readoutStartUs_;
+   double readoutUs_;
+   MM::MMTime readoutStartTime_;
+   long scanMode_;
 
    void GenerateSyntheticImage(ImgBuffer& img, double exp);
    int ResizeImageBuffer();
@@ -112,7 +120,7 @@ public:
    int Shutdown();
   
    void GetName(char* pszName) const;
-   bool Busy() {return busy_;}
+   bool Busy();
    unsigned long GetNumberOfPositions()const {return numPos_;}
 
    // action interface
@@ -120,9 +128,10 @@ public:
    int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
-   bool initialized_;
-   bool busy_;
    long numPos_;
+   bool busy_;
+   bool initialized_;
+   MM::MMTime changedTime_;
    long position_;
 };
 
@@ -150,9 +159,9 @@ public:
    int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
-   bool initialized_;
-   bool busy_;
    long numPos_;
+   bool busy_;
+   bool initialized_;
    long position_;
 };
 
@@ -181,9 +190,9 @@ public:
    int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
-   bool initialized_;
-   bool busy_;
    long numPos_;
+   bool busy_;
+   bool initialized_;
    long position_;
 };
 
@@ -223,8 +232,8 @@ public:
    int OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
-   double pos_um_;
    double stepSize_um_;
+   double pos_um_;
    bool busy_;
    bool initialized_;
    double lowerLimit_;
@@ -285,9 +294,9 @@ public:
    int OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
+   double stepSize_um_;
    double posX_um_;
    double posY_um_;
-   double stepSize_um_;
    bool busy_;
    bool initialized_;
    double lowerLimit_;
@@ -301,7 +310,12 @@ private:
 class DemoAutoFocus : public CAutoFocusBase<DemoAutoFocus>
 {
 public:
-   DemoAutoFocus() : running_(false), busy_(false), initialized_(false)  {}
+   DemoAutoFocus() : 
+      running_(false), 
+      busy_(false), 
+      initialized_(false)  
+   {}
+
    ~DemoAutoFocus() {}
       
    // MMDevice API
@@ -314,12 +328,13 @@ public:
    // AutoFocus API
    virtual int SetContinuousFocusing(bool state) {running_ = state; return DEVICE_OK;}
    virtual int GetContinuousFocusing(bool& state) {state = running_; return DEVICE_OK;}
+   virtual bool IsContinuousFocusLocked() {return running_;}
    virtual int Focus() {return DEVICE_UNSUPPORTED_COMMAND;}
    virtual int GetFocusScore(double& /*score*/) {return DEVICE_UNSUPPORTED_COMMAND;}
 
 private:
-   bool busy_;
    bool running_;
+   bool busy_;
    bool initialized_;
 };
 
@@ -330,17 +345,19 @@ private:
 class DemoShutter : public CShutterBase<DemoShutter>
 {
 public:
-   DemoShutter() : state_(false), initialized_(false) {}
+   DemoShutter() : state_(false), initialized_(false), changedTime_(0.0) {
+      EnableDelay(); // signals that the dealy setting will be used
+   }
    ~DemoShutter() {}
 
    int Initialize();
    int Shutdown() {initialized_ = false; return DEVICE_OK;}
 
    void GetName (char* pszName) const;
-   bool Busy() {return false;}
+   bool Busy();
 
    // Shutter API
-   int SetOpen (bool open = true) {state_ = open; return DEVICE_OK;}
+   int SetOpen (bool open = true) {state_ = open; changedTime_ = GetCurrentMMTime(); return DEVICE_OK;}
    int GetOpen(bool& open) {open = state_; return DEVICE_OK;}
    int Fire(double /*deltaT*/) {return DEVICE_UNSUPPORTED_COMMAND;}
 
@@ -350,6 +367,31 @@ public:
 private:
    bool state_;
    bool initialized_;
+   MM::MMTime changedTime_;
 };
+
+//////////////////////////////////////////////////////////////////////////////
+// DemoShutter class
+// Simulation of shutter device
+//////////////////////////////////////////////////////////////////////////////
+class DemoDA : public CSignalIOBase<DemoDA>
+{
+public:
+   DemoDA () : volt_(0) {}
+   ~DemoDA () {}
+
+   int Shutdown() {return DEVICE_OK;}
+   void GetName(char* name) const {name = "Demo DA";}
+   int SetSignal(double volts) {volt_ = volts; return DEVICE_OK;}
+   int GetSignal(double& volts) {volts = volt_; return DEVICE_OK;}
+   int GetLimits(double& minVolts, double& maxVolts) {minVolts=0.0; maxVolts= 0.0; return DEVICE_OK;}
+   bool Busy() {return false;}
+   int Initialize() {return DEVICE_OK;}
+
+
+private:
+   double volt_;
+};
+
 
 #endif //_DEMOCAMERA_H_

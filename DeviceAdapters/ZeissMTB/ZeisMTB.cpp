@@ -829,6 +829,8 @@ Lamp::Lamp(unsigned typeID) : initialized_(false), name_("Lamp"), type_(typeID),
    SetErrorText(ERR_NOT_CONNECTED, "MTB not connected with the hardware");
    SetErrorText(ERR_UNKNOWN_POSITION, "Position out of range");
    SetErrorText(ERR_TYPE_NOT_DETECTED, "Device not detected by MTB");
+
+   EnableDelay(); // signal that we are going to use delay settings
 }
 
 Lamp::~Lamp()

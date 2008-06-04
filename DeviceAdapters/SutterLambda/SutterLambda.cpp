@@ -123,11 +123,17 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 // ~~~~~~~~~~~~~~~~~~~~
 
 Wheel::Wheel(const char* name, unsigned id) :
-      initialized_(false), numPos_(10), name_(name), id_(id), curPos_(0), speed_(3), busy_(false),
-      answerTimeoutMs_(200)
+   initialized_(false), 
+   numPos_(10), 
+   id_(id), 
+   name_(name), 
+   curPos_(0), 
+   speed_(3), 
+   busy_(false),
+   answerTimeoutMs_(200)
 {
    assert(id==0 || id==1 || id==2);
-   assert(strlen(name) < MM::MaxStrLength);
+   assert(strlen(name) < (unsigned int) MM::MaxStrLength);
 
    InitializeDefaultErrorMessages();
 
@@ -175,7 +181,7 @@ bool Wheel::Busy()
 
    char answer = 0;
    unsigned long read;
-   if (DEVICE_OK != ReadFromComPort(port_.c_str(), &answer, 1, read))
+   if (DEVICE_OK != ReadFromComPort(port_.c_str(), (unsigned char*)&answer, 1, read))
       g_Busy = false; // can't read from the port
    else
    {
@@ -243,7 +249,7 @@ int Wheel::Initialize()
       return ret;
 
    // Transfer to On Line
-   char setSerial = (char)238;
+   unsigned char setSerial = (unsigned char)238;
    ret = WriteToComPort(port_.c_str(), &setSerial, 1);
    if (DEVICE_OK != ret)
       return ret;
@@ -289,7 +295,7 @@ bool Wheel::SetWheelPosition(unsigned pos)
       command = (unsigned char)(128 + speed_ * 16 + pos);
 
    unsigned char msg[3];
-   msg[0] = (char)252; // used for filter C
+   msg[0] = (unsigned char)252; // used for filter C
    msg[1] = command;
    msg[2] = 13; // CR
 
@@ -297,18 +303,18 @@ bool Wheel::SetWheelPosition(unsigned pos)
    if (id_==0 || id_==1)
    {
       // filters A and B
-      if (DEVICE_OK != WriteToComPort(port_.c_str(), reinterpret_cast<char*>(msg+1), 2))
+      if (DEVICE_OK != WriteToComPort(port_.c_str(), msg+1, 2))
          return false;
    }
    else if (id_==2)
    {
       // filter C
-      if (DEVICE_OK != WriteToComPort(port_.c_str(), reinterpret_cast<char*>(msg), 3))
+      if (DEVICE_OK != WriteToComPort(port_.c_str(), msg, 3))
          return false;
    }
 
    // block/wait for acknowledge, or until we time out;
-   char answer = 0;
+   unsigned char answer = 0;
    unsigned long read;
    startTime = GetClockTicksUs();
 
@@ -316,7 +322,7 @@ bool Wheel::SetWheelPosition(unsigned pos)
    do {
       if (DEVICE_OK != ReadFromComPort(port_.c_str(), &answer, 1, read))
          return false;
-      if ((unsigned char)answer == (unsigned char)command)
+      if (answer == command)
          ret = true;
    }
    while(!ret && (GetClockTicksUs() - startTime) / 1000.0 < answerTimeoutMs_);
@@ -344,7 +350,7 @@ int Wheel::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(pos);
 
       //check if we are already in that state
-      if (pos == curPos_)
+      if ((unsigned)pos == curPos_)
          return DEVICE_OK;
 
       if (pos >= (long)numPos_ || pos < 0)
@@ -444,7 +450,11 @@ int Wheel::OnBusy(MM::PropertyBase* pProp, MM::ActionType eAct)
 // ~~~~~~~~~~~~~~~~~~~~~~~
 
 Shutter::Shutter(const char* name, int id) :
-   name_(name), initialized_(false), id_(id), answerTimeoutMs_(200), curMode_(g_FastMode)
+   initialized_(false), 
+   id_(id), 
+   name_(name), 
+   answerTimeoutMs_(200), 
+   curMode_(g_FastMode)
 {
    InitializeDefaultErrorMessages();
 
@@ -514,7 +524,7 @@ int Shutter::Initialize()
    SetAllowedValues(g_ShutterModeProperty, modes);
 
    // Transfer to On Line
-   char setSerial = (char)238;
+   unsigned char setSerial = (unsigned char)238;
    ret = WriteToComPort(port_.c_str(), &setSerial, 1);
    if (DEVICE_OK != ret)
       return ret;
@@ -590,7 +600,7 @@ bool Shutter::SetShutterPosition(bool state)
 #endif
    }
 
-   char msg[2];
+   unsigned char msg[2];
    msg[0] = command;
    msg[1] = 13; // CR
 
@@ -599,7 +609,7 @@ bool Shutter::SetShutterPosition(bool state)
       return false;
 
    // block/wait for acknowledge, or until we time out;
-   char answer = 0;
+   unsigned char answer = 0;
    unsigned long read;
    startTime = GetClockTicksUs();
 
@@ -620,7 +630,7 @@ bool Shutter::ControllerBusy()
    if (!g_Busy)
       return false;
 
-   char answer = 0;
+   unsigned char answer = 0;
    unsigned long read;
    if (DEVICE_OK != ReadFromComPort(port_.c_str(), &answer, 1, read))
       g_Busy = false; // can't read from the port
@@ -645,11 +655,11 @@ bool Shutter::SetShutterMode(const char* mode)
    else
       return false;
 
-   msg[1] = id_ + 1;
+   msg[1] = (unsigned char)id_ + 1;
    msg[2] = 13; // CR
 
    // send command
-   if (DEVICE_OK != WriteToComPort(port_.c_str(), reinterpret_cast<char*>(msg), 3))
+   if (DEVICE_OK != WriteToComPort(port_.c_str(), msg, 3))
       return false;
 
    return true;
@@ -742,7 +752,10 @@ int Shutter::OnMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 // DG4Shutter implementation
 // ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-DG4Shutter::DG4Shutter() : name_(g_DG4ShutterName), initialized_(false), answerTimeoutMs_(200)
+DG4Shutter::DG4Shutter() : 
+   initialized_(false), 
+   name_(g_DG4ShutterName), 
+   answerTimeoutMs_(200)
 {
    InitializeDefaultErrorMessages();
 
@@ -853,27 +866,33 @@ bool DG4Shutter::SetShutterPosition(bool state)
    }
    else
    {
-      command = g_DG4Position; // open
+      command = (unsigned char)g_DG4Position; // open
    }
-   if (DEVICE_OK != WriteToComPort(port_.c_str(), reinterpret_cast<char*>(&command), 1))
+   if (DEVICE_OK != WriteToComPort(port_.c_str(), &command, 1))
 	   return false;
 
-   // block/wait for acknowledge, or until we time out;
-   char answer = 0;
+      unsigned char answer = 0;
    unsigned long read;
-   long startTime = GetClockTicksUs();
-
+   MM::MMTime startTime = GetCurrentMMTime();
+   MM::MMTime now = startTime;
+   MM::MMTime timeout (answerTimeoutMs_ * 1000);
+   bool eol = false;
    bool ret = false;
    do {
       if (DEVICE_OK != ReadFromComPort(port_.c_str(), &answer, 1, read))
          return false;
-      if (answer == command)
-      {
+      if (answer == command)      {
          ret = true;
          g_DG4State = state;
       }
+      if (answer == 13)
+         eol = true;
+      now = GetCurrentMMTime();
    }
-   while(!ret && (GetClockTicksUs() - startTime) / 1000.0 < answerTimeoutMs_);
+   while(!(eol && ret) && ( (now - startTime)  < timeout) );
+
+   if (!ret)
+      LogMessage("Shutter read timed out", true);
 
    return ret;
 }
@@ -942,7 +961,7 @@ int DG4Shutter::OnDelay(MM::PropertyBase* pProp, MM::ActionType eAct)
 // ~~~~~~~~~~~~~~~~~~~~~~~
 
 DG4Wheel::DG4Wheel() :
-      initialized_(false), numPos_(10), name_(g_DG4WheelName), curPos_(0), busy_(false),
+      initialized_(false), numPos_(13), name_(g_DG4WheelName), curPos_(0), busy_(false),
       answerTimeoutMs_(200)
 {
    InitializeDefaultErrorMessages();
@@ -1034,7 +1053,7 @@ int DG4Wheel::Initialize()
    if (ret != DEVICE_OK)
       return ret;
 
-   char setSerial = (char)238;
+   unsigned char setSerial = (unsigned char)238;
    ret = WriteToComPort(port_.c_str(), &setSerial, 1);
    if (DEVICE_OK != ret)
       return ret;
@@ -1066,22 +1085,29 @@ bool DG4Wheel::SetWheelPosition(unsigned pos)
       return true; // assume that position has been set (shutter is closed)
    
    // send command
-   if (DEVICE_OK != WriteToComPort(port_.c_str(), reinterpret_cast<char*>(&command), 1))
+   if (DEVICE_OK != WriteToComPort(port_.c_str(), &command, 1))
       return false;
 
    // block/wait for acknowledge, or until we time out;
-   char answer = 0;
+   unsigned char answer = 0;
    unsigned long read;
-   long startTime = GetClockTicksUs();
-
+   MM::MMTime startTime = GetCurrentMMTime();
+   MM::MMTime now = startTime;
+   MM::MMTime timeout (answerTimeoutMs_ * 1000);
+   bool eol = false;
    bool ret = false;
    do {
       if (DEVICE_OK != ReadFromComPort(port_.c_str(), &answer, 1, read))
          return false;
-      if ((unsigned char)answer == (unsigned char)command)
+      if (answer == command)
          ret = true;
-   }
-   while(!ret && (GetClockTicksUs() - startTime) / 1000.0 < answerTimeoutMs_);
+      if (answer == 13)
+         eol = true;
+      now = GetCurrentMMTime();
+   } while(!(eol && ret) && ( (now - startTime)  < timeout) );
+
+   if (!ret)
+      LogMessage("Wheel read timed out", true);
 
    return ret;
 }
@@ -1102,7 +1128,7 @@ int DG4Wheel::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(pos);
 
       //check if we are already in that state
-      if (pos == curPos_)
+      if ((unsigned)pos == curPos_)
          return DEVICE_OK;
 
       if (pos >= (long)numPos_ || pos < 0)

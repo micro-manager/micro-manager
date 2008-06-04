@@ -52,6 +52,14 @@ const char* g_Baud_2400 = "2400";
 const char* g_Baud_4800 = "4800";
 const char* g_Baud_9600 = "9600";
 const char* g_Baud_14400 = "14400";
+const char* g_Baud_19200 = "19200";
+const char* g_Baud_57600 = "57600";
+const char* g_Baud_115200 = "115200";
+
+const char* g_Handshaking_Off = "Off";
+const char* g_Handshaking_Hardware = "Hardware";
+const char* g_Handshaking_Software = "Software";
+
 
 #ifdef WIN32
    BOOL APIENTRY DllMain( HANDLE /*hModule*/, 
@@ -166,7 +174,7 @@ SerialPort::SerialPort() :
    initialized_(false),
    portTimeoutMs_(2000.0),
    answerTimeoutMs_(500),
-   transmitCharWaitMs_(10),
+   transmitCharWaitMs_(0.0),
    stopBits_(g_StopBits_1)
 {
    port_ = new CSerial();
@@ -195,6 +203,9 @@ SerialPort::SerialPort() :
    AddAllowedValue(MM::g_Keyword_BaudRate, g_Baud_4800, (long)CSerial::EBaud4800);
    AddAllowedValue(MM::g_Keyword_BaudRate, g_Baud_9600, (long)CSerial::EBaud9600);
    AddAllowedValue(MM::g_Keyword_BaudRate, g_Baud_14400, (long)CSerial::EBaud14400);
+   AddAllowedValue(MM::g_Keyword_BaudRate, g_Baud_19200, (long)CSerial::EBaud19200);
+   AddAllowedValue(MM::g_Keyword_BaudRate, g_Baud_57600, (long)CSerial::EBaud57600);
+   AddAllowedValue(MM::g_Keyword_BaudRate, g_Baud_115200, (long)CSerial::EBaud115200);
 
    // data bits
    ret = CreateProperty(MM::g_Keyword_DataBits, "8", MM::String, true);
@@ -214,14 +225,22 @@ SerialPort::SerialPort() :
    assert(ret == DEVICE_OK);
 
    // handshaking
-   ret = CreateProperty(MM::g_Keyword_Handshaking, "Off", MM::String, true);
+   CPropertyAction* pActHandshaking = new CPropertyAction (this, &SerialPort::OnHandshaking);
+   ret = CreateProperty(MM::g_Keyword_Handshaking, "Off", MM::String, false, pActHandshaking, true);
    assert(ret == DEVICE_OK);
+   AddAllowedValue(MM::g_Keyword_Handshaking, g_Handshaking_Off, (long)CSerial::EHandshakeOff);
+   AddAllowedValue(MM::g_Keyword_Handshaking, g_Handshaking_Hardware, (long)CSerial::EHandshakeHardware);
+   AddAllowedValue(MM::g_Keyword_Handshaking, g_Handshaking_Software, (long)CSerial::EHandshakeSoftware);
 
    // answer timeout
    CPropertyAction* pActTimeout = new CPropertyAction (this, &SerialPort::OnTimeout);
-   ret = CreateProperty("AnswerTimeout", "500", MM::Float, false, pActTimeout);
+   ret = CreateProperty("AnswerTimeout", "500", MM::Float, false, pActTimeout, true);
    assert(ret == DEVICE_OK);
 
+   // transmission Delay                                                     
+   CPropertyAction* pActTD = new CPropertyAction (this, &SerialPort::OnDelayBetweenCharsMs);
+   ret = CreateProperty("DelayBetweenCharsMs", "0", MM::Float, false, pActTD, true);
+   assert(ret == DEVICE_OK);                                                 
 
    ret = UpdateStatus();
    assert(ret == DEVICE_OK);
@@ -271,11 +290,13 @@ int SerialPort::Initialize()
 		return ERR_SETUP_FAILED;
 
    // set-up handshaking
-   /*
-   lastError = port_->SetupHandshaking(CSerial::EHandshakeOff);
+   long handshake;
+   ret = GetCurrentPropertyData(MM::g_Keyword_Handshaking, handshake);
+   assert(ret == DEVICE_OK);
+
+   lastError = port_->SetupHandshaking((CSerial::EHandshake)handshake);
 	if (lastError != ERROR_SUCCESS)
 		return ERR_HANDSHAKE_SETUP_FAILED;
-   */
 
    ret = UpdateStatus();
    if (ret != DEVICE_OK)
@@ -312,35 +333,73 @@ int SerialPort::SetCommand(const char* command, const char* term)
       sendText += term;
 
    // send characters one by one to accomodate for slow devices
-
    unsigned long written = 0;
    for (unsigned i=0; i<sendText.length(); i++)
    {
       unsigned long one = 0;
-      long lastError = port_->Write(sendText.c_str() + written, 1, &one);
-      Sleep((DWORD)transmitCharWaitMs_);
+
+      long lastError;
+      const MM::MMTime maxTime (5, 0);
+      MM::MMTime startTime (GetCurrentMMTime());
+      int retryCounter = 0;
+      do
+      {
+         lastError = port_->Write(sendText.c_str() + written, 1, &one);
+         Sleep((DWORD)transmitCharWaitMs_);
+         if (retryCounter > 0)
+            LogMessage("Retrying serial Write command!");
+         retryCounter++;
+      }
+      while (lastError != ERROR_SUCCESS && ((GetCurrentMMTime() - startTime) < maxTime));
+
 	   if (lastError != ERROR_SUCCESS)
-		   return ERR_TRANSMIT_FAILED;      
+      {
+         LogMessage("TRANSMIT_FAILED error occured!");
+		   return ERR_TRANSMIT_FAILED;
+      }
+
       assert (one == 1);
       written++;
    }
+
    assert(written == sendText.length());
+   ostringstream logMsg;                                                     
+   logMsg << "Serial port " << portName_ << " wrote: " << sendText;
+   this->LogMessage(logMsg.str().c_str(), true);
    return DEVICE_OK;
 }
 
 int SerialPort::GetAnswer(char* answer, unsigned bufLen, const char* term)
 {
    if (bufLen < 1)
+   {
+      LogMessage("BUFFER_OVERRUN error occured!");
       return ERR_BUFFER_OVERRUN;
+   }
 
+   ostringstream logMsg;
    unsigned long read(0);
    unsigned long totalRead(0);
    char* bufPtr = answer;
    //long lastError = port_->Read(bufPtr, bufLen, &read, 0, (DWORD)portTimeoutMs_);
-   long lastError = port_->Read(bufPtr, bufLen, &read);
+
+   long lastError;
+   const MM::MMTime maxTime (5, 0);
+   MM::MMTime retryStart (GetCurrentMMTime());
+   int retryCounter = 0;
+   do
+   {
+      lastError = port_->Read(bufPtr, 1 /*bufLen*/, &read);
+      if (retryCounter > 0)
+         LogMessage("Retrying serial Read command!\n");
+      retryCounter++;
+   }
+   while (lastError != ERROR_SUCCESS && ((GetCurrentMMTime() - retryStart) < maxTime));
+
 	if (lastError != ERROR_SUCCESS)
    {
       answer[0] = '\0';
+      LogMessage("RECEIVE_FAILED error occured!");
 		return ERR_RECEIVE_FAILED;
    }
 
@@ -357,25 +416,42 @@ int SerialPort::GetAnswer(char* answer, unsigned bufLen, const char* term)
    char* termPos = strstr(answer, term);
    if (termPos != 0)
    {
-      termPos = '\0';
+      *termPos = '\0';
+      logMsg << " Port: " << portName_ << "." << "Read: " << answer;       
+      LogMessage(logMsg.str().c_str(), true);
       return DEVICE_OK;
    }
 
    // wait a little more for the proper termination sequence
-   unsigned long startTime = GetClockTicksUs();
-   while ((GetClockTicksUs() - startTime) / 1000.0 < answerTimeoutMs_)
+   //unsigned long startTime = GetClockTicksUs();
+   //unsigned long newTime = startTime;
+   MM::MMTime startTime = GetCurrentMMTime();
+   MM::MMTime answerTimeout(answerTimeoutMs_ * 1000.0);
+   while ((GetCurrentMMTime() - startTime)  < answerTimeout)
    {
       if (bufLen <= totalRead)
       {
          answer[bufLen-1] = '\0';
+         LogMessage("BUFFER_OVERRUN error occured!");
          return ERR_BUFFER_OVERRUN;
       }
 
       read = 0;
-      lastError = port_->Read(bufPtr , bufLen-totalRead, &read);
-	   if (lastError != ERROR_SUCCESS)
+      retryCounter = 0;
+      retryStart = GetCurrentMMTime();
+      do
+      {
+         lastError = port_->Read(bufPtr , /*bufLen-totalRead*/1, &read);
+         if (retryCounter > 0)
+            LogMessage("Retrying serial Read command!\n");
+         retryCounter++;
+      }
+      while (lastError != ERROR_SUCCESS && (GetCurrentMMTime() - retryStart) < maxTime);
+
+      if (lastError != ERROR_SUCCESS)
       {
          answer[totalRead] = '\0';
+         LogMessage("RECEIVE_FAILED error occured!");
 		   return ERR_RECEIVE_FAILED;
       }
 
@@ -385,15 +461,18 @@ int SerialPort::GetAnswer(char* answer, unsigned bufLen, const char* term)
       termPos = strstr(answer, term);
       if (termPos != 0)
       {
-         termPos = '\0';
+         *termPos = '\0';
+         logMsg << " Port: " << portName_ << "." << "Read: " << answer;       
+         this->LogMessage(logMsg.str().c_str(), true);
          return DEVICE_OK;
       }
    }
 
+   LogMessage("TERM_TIMEOUT error occured!");
    return ERR_TERM_TIMEOUT;
 }
 
-int SerialPort::Write(const char* buf, unsigned long bufLen)
+int SerialPort::Write(const unsigned char* buf, unsigned long bufLen)
 {
    // send characters one by one to accomodate for slow devices
    ostringstream logMsg;
@@ -404,7 +483,10 @@ int SerialPort::Write(const char* buf, unsigned long bufLen)
       long lastError = port_->Write(buf + i, 1, &written);
       Sleep((DWORD)transmitCharWaitMs_);
 	   if (lastError != ERROR_SUCCESS || written != 1)
+      {
+         LogMessage("TRANSMIT_FAILED error occured!");
 		   return ERR_TRANSMIT_FAILED;      
+      }
       logMsg << (int) *(buf + i) << " ";
    }
    
@@ -414,7 +496,7 @@ int SerialPort::Write(const char* buf, unsigned long bufLen)
    return DEVICE_OK;
 }
  
-int SerialPort::Read(char* buf, unsigned long bufLen, unsigned long& charsRead)
+int SerialPort::Read(unsigned char* buf, unsigned long bufLen, unsigned long& charsRead)
 {
    // fill the buffer with zeros
    memset(buf, 0, bufLen);
@@ -424,7 +506,10 @@ int SerialPort::Read(char* buf, unsigned long bufLen, unsigned long& charsRead)
    charsRead = 0;
    long lastError = port_->Read(buf, bufLen, &charsRead);
 	if (lastError != ERROR_SUCCESS)
+   {
+      LogMessage("RECEIVE_FAILED error occured!");
 		return ERR_RECEIVE_FAILED;
+   }
 
    for (unsigned long i=0; i<charsRead; i++)
       logMsg << (int) *(buf + i) << " ";
@@ -466,7 +551,7 @@ int SerialPort::OnStopBits(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-int SerialPort::OnBaud(MM::PropertyBase* pProp, MM::ActionType eAct)
+int SerialPort::OnBaud(MM::PropertyBase* /*pProp*/, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
@@ -483,6 +568,21 @@ int SerialPort::OnBaud(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+int SerialPort::OnHandshaking(MM::PropertyBase* /*pProp*/, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      // nothing to do
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      if (initialized_)
+         return ERR_PORT_CHANGE_FORBIDDEN;
+   }
+
+   return DEVICE_OK;
+}
+
 int SerialPort::OnTimeout(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
@@ -493,6 +593,23 @@ int SerialPort::OnTimeout(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       pProp->Get(answerTimeoutMs_);
    }
+
+   return DEVICE_OK;
+}
+
+int SerialPort::OnDelayBetweenCharsMs(MM::PropertyBase* pProp, MM::ActionType eAct)
+{  
+   if (eAct == MM::BeforeGet)
+   {  
+      pProp->Set(transmitCharWaitMs_);
+   }
+   else if (eAct == MM::AfterSet)
+   {  
+      double transmitCharWaitMs;
+      pProp->Get(transmitCharWaitMs);
+      if (transmitCharWaitMs >= 0.0 && transmitCharWaitMs < 250.0)
+         transmitCharWaitMs_ = transmitCharWaitMs;
+   }     
 
    return DEVICE_OK;
 }

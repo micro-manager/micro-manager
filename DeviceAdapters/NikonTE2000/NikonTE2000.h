@@ -35,6 +35,7 @@
 #define ERR_UNKNOWN_POSITION      10003
 #define ERR_TYPE_NOT_DETECTED     10004
 #define ERR_EMPTY_ANSWER_RECEIVED 10005
+#define ERR_PFS_NOT_CONNECTED     10006
 
 class Hub : public CGenericBase<Hub>
 {
@@ -90,6 +91,31 @@ class OpticalPath : public CStateDeviceBase<OpticalPath>
 public:
    OpticalPath();
    ~OpticalPath();
+  
+   // MMDevice API
+   // ------------
+   int Initialize();
+   int Shutdown();
+  
+   void GetName(char* pszName) const;
+   bool Busy();
+   unsigned long GetNumberOfPositions()const {return numPos_;}
+
+   // action interface
+   // ----------------
+   int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+private:
+   bool initialized_;
+   unsigned numPos_;
+   std::string name_;
+};
+
+class Analyzer : public CStateDeviceBase<Analyzer>
+{
+public:
+   Analyzer();
+   ~Analyzer();
   
    // MMDevice API
    // ------------
@@ -221,6 +247,7 @@ public:
    // ----------------
    int OnOnOff(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnVoltage(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnControl(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    // additional (local) API
    // ----------------------
@@ -229,9 +256,77 @@ public:
 private:
    bool initialized_;
    std::string name_;
-   long openTimeUs_;
+   MM::MMTime changedTime_;
 };
 
+class EpiShutter : public CShutterBase<EpiShutter>
+{
+public:
+   EpiShutter();
+   ~EpiShutter();
+  
+   // MMDevice API
+   // ------------
+   int Initialize();
+   int Shutdown();
+  
+   void GetName(char* pszName) const;
+   bool Busy();
+
+   // Shutter API
+   int SetOpen(bool open = true);
+   int GetOpen(bool& open);
+   int Fire(double deltaT);
+
+   // action interface
+   // ----------------
+   int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+   // additional (local) API
+   // ----------------------
+   void SetName(const char* name) {name_ = name;}
+
+private:
+   bool initialized_;
+   std::string name_;
+   MM::MMTime changedTime_;
+};
+
+class UniblitzShutter : public CShutterBase<UniblitzShutter>
+{
+public:
+   UniblitzShutter();
+   ~UniblitzShutter();
+  
+   // MMDevice API
+   // ------------
+   int Initialize();
+   int Shutdown();
+  
+   void GetName(char* pszName) const;
+   bool Busy();
+
+   // Shutter API
+   int SetOpen(bool open = true);
+   int GetOpen(bool& open);
+   int Fire(double deltaT);
+
+   // action interface
+   // ----------------
+   int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnShutterNumber(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+   // additional (local) API
+   // ----------------------
+   void SetName(const char* name) {name_ = name;}
+
+private:
+   bool initialized_;
+   std::string name_;
+   long shutterNr_;
+   long state_;
+   MM::MMTime changedTime_;
+};
 
 //////////////////////////////////////////////////////////////////////////////
 // AutoFocus class
@@ -255,6 +350,7 @@ public:
    virtual int GetContinuousFocusing(bool& state);
    virtual int Focus();
    virtual int GetFocusScore(double& /*score*/) {return DEVICE_UNSUPPORTED_COMMAND;}
+   virtual bool IsContinuousFocusLocked();
 
 private:
    bool initialized_;

@@ -16,11 +16,12 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="Debug"
-			IntermediateDirectory="Debug"
+			OutputDirectory=".\Debug"
+			IntermediateDirectory=".\Debug"
 			ConfigurationType="2"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			CharacterSet="2"
+			ManagedExtensions="0"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -40,14 +41,14 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\..\3rdparty\Andor\SDK 2.75\iXon\include"
+				AdditionalIncludeDirectories="..\..\..\3rdparty\Andor\06-12-2007"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="0"
-				WarningLevel="3"
+				WarningLevel="4"
 				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="4"
 			/>
@@ -65,7 +66,7 @@
 				AdditionalDependencies="ATMCD32M.LIB"
 				OutputFile="$(OutDir)/mmgr_dal_Andor.dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;C:\projects\3rdparty\Andor\SDK 2.75\iXon\lib&quot;"
+				AdditionalLibraryDirectories="..\..\..\3rdparty\Andor\06-12-2007"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/Andor.pdb"
 				SubSystem="2"
@@ -123,12 +124,12 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\..\..\3rdparty\Andor\SDK 2.75\iXon\include"
+				AdditionalIncludeDirectories="..\..\..\3rdparty\Andor\06-12-2007"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				RuntimeLibrary="0"
 				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="0"
-				WarningLevel="3"
+				WarningLevel="4"
 				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="3"
 			/>
@@ -146,7 +147,7 @@
 				AdditionalDependencies="ATMCD32M.LIB"
 				OutputFile="$(OutDir)/mmgr_dal_Andor.dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;C:\projects\3rdparty\Andor\SDK 2.75\iXon\lib&quot;"
+				AdditionalLibraryDirectories="..\..\..\3rdparty\Andor\06-12-2007"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"

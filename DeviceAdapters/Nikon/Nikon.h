@@ -48,6 +48,7 @@
 
 #define ERR_OFFSET 10100
 #define ERR_TIRFSHUTTER_OFFSET 10200
+#define ERR_INTENSILIGHTSHUTTER_OFFSET 10300
 
 class ZStage : public CStageBase<ZStage>
 {
@@ -81,8 +82,8 @@ private:
    int ExecuteCommand(const std::string& cmd, std::string& response);
 
    std::string port_;
-   double stepSizeUm_;
    bool initialized_;
+   double stepSizeUm_;
    long curSteps_;
    double answerTimeoutMs_;
 };
@@ -106,7 +107,7 @@ public:
    // ---------
    int SetOpen(bool open = true);
    int GetOpen(bool& open);
-   int Fire(double interval) {return DEVICE_UNSUPPORTED_COMMAND; }
+   int Fire(double /*interval*/) {return DEVICE_UNSUPPORTED_COMMAND; }
 
    // action interface
    // ----------------
@@ -127,13 +128,61 @@ private:
    double openingTimeMs_;                                                    
    // Command exchange with MMCore                                           
    std::string command_;           
+   // close (0) or open (1)
+   int state_;
+   bool initialized_;
    // channel that we are currently working on 
    std::string activeChannel_;
+   // version string returned by device
+   std::string version_;
+   double answerTimeoutMs_;
+   
+};
+
+
+class IntensiLightShutter : public CShutterBase<IntensiLightShutter>
+{
+public:
+   IntensiLightShutter();
+   ~IntensiLightShutter();
+  
+   // Device API
+   // ----------
+   int Initialize();
+   int Shutdown();
+  
+   void GetName(char* pszName) const;
+   bool Busy();
+
+   // Shutter API
+   // ---------
+   int SetOpen(bool open = true);
+   int GetOpen(bool& open);
+   int Fire(double /*interval*/) {return DEVICE_UNSUPPORTED_COMMAND; }
+
+   // action interface
+   // ----------------
+   int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnVersion(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+private:
+   int SetShutterPosition(bool state);
+   int GetVersion();
+
+   // Time it takes after issuing Close command to close the shutter         
+   double closingTimeMs_;                                                    
+   // Time it takes after issuing Open command to open the shutter           
+   double openingTimeMs_;                                                    
+   // Command exchange with MMCore                                           
+   std::string command_;           
+   bool initialized_;
+   // MMCore name of serial port
+   std::string port_;
    // close (0) or open (1)
    int state_;
    // version string returned by device
    std::string version_;
-   bool initialized_;
    double answerTimeoutMs_;
    
 };

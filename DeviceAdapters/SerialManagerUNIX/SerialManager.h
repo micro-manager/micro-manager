@@ -82,10 +82,11 @@ public:
    void GetName(char* pszName) const;
    bool Busy() {return busy_;}
 
+   MM::PortType GetPortType () const {return MM::SerialPort;}
    int SetCommand(const char* command, const char* term);
    int GetAnswer(char* answer, unsigned bufLength, const char* term);
-   int Write(const char* buf, unsigned long bufLen);
-   int Read(char* buf, unsigned long bufLen, unsigned long& charsRead);
+   int Write(unsigned const char* buf, unsigned long bufLen);
+   int Read(unsigned char* buf, unsigned long bufLen, unsigned long& charsRead);
    int Purge();
    
    // action interface
@@ -94,7 +95,9 @@ public:
    int OnDataBits(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnStopBits(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBaudRate(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnFlowControl(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTimeout(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnTransmissionDelay(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    int Open(const char* portName);
    void Close();
@@ -104,17 +107,18 @@ public:
 
 private:
    std::string portName_;
-   bool initialized_;
+   int refCount_;
    bool busy_;
+   bool initialized_;
    SerialPort* port_;
    double portTimeoutMs_;
    double answerTimeoutMs_;
-   int refCount_;
    double transmitCharWaitMs_;
 
    long int stopBits_;
    long int dataBits_;
    long int baudRate_;
+   std::string flowControl_;
 
    std::vector<std::string> availablePorts_;
    SerialPortLister* portLister;

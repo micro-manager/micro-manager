@@ -180,7 +180,7 @@ int CParallelPort::Shutdown()
    return DEVICE_OK;
 }
 
-int CParallelPort::OpenPort(const char* Name, long lnValue)
+int CParallelPort::OpenPort(const char* /*Name*/, long /*lnValue*/)
 {
    return DEVICE_OK;
 }

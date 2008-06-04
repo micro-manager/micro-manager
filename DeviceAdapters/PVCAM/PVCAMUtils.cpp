@@ -22,7 +22,9 @@
 //
 // CVS:           $Id$
 
+
 #ifdef WIN32
+#pragma warning (disable : 4800)
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #endif
@@ -251,3 +253,5 @@ bool GetLongParam_PvCam
 
     return(status);
 }   /* end GetLongParam_PvCam */
+
+

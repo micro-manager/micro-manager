@@ -62,6 +62,8 @@ public:
    unsigned GetImageHeight() const {return img_.Height();}
    unsigned GetImageBytesPerPixel() const {return img_.Depth();} 
    unsigned GetBitDepth() const;
+   int GetBinning() const;
+   int SetBinning(int binSize);
    long GetImageBufferSize() const {return img_.Width() * img_.Height() * GetImageBytesPerPixel();}
    double GetExposure() const {return m_dExposure;}
    void SetExposure(double dExp);

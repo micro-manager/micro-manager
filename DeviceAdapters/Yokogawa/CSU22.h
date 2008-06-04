@@ -123,9 +123,9 @@ public:
 
 private:
    bool initialized_;
-   unsigned numPos_; 
    long pos_;
    std::string name_;
+   unsigned numPos_; 
 };
 
 

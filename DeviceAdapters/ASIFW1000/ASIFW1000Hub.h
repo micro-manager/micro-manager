@@ -44,6 +44,10 @@
 #define ERR_NOT_CONNECTED           11002
 #define ERR_COMMAND_CANNOT_EXECUTE  11003
 #define ERR_NO_ANSWER               11004
+#define ERR_SETTING_WHEEL           11005
+#define ERR_SETTING_VERBOSE_LEVEL   11006
+#define ERR_SHUTTER_NOT_FOUND       11007
+#define ERR_UNEXPECTED_ANSWER       11008
 
 
 enum CommandMode
@@ -60,7 +64,7 @@ public:
 
    void SetPort(const char* port) {port_ = port;}
    int GetVersion(MM::Device& device, MM::Core& core, char* version);
-   bool IsBusy();
+   int SetVerboseMode(MM::Device& device, MM::Core& core, int level);
 
    int OpenShutter(MM::Device& device, MM::Core& core, int shutterNr);
    int CloseShutter(MM::Device& device, MM::Core& core, int shutterNr);
@@ -69,23 +73,19 @@ public:
    int SetFilterWheelPosition(MM::Device& device, MM::Core& core, int wheelNr, int pos);
    int GetFilterWheelPosition(MM::Device& device, MM::Core& core, int wheelNr, int& pos);
    int SetCurrentWheel(MM::Device& device, MM::Core& core, int wheelNr);
+   int GetCurrentWheel(MM::Device& device, MM::Core& core, int& wheelNr);
    int GetNumberOfPositions(MM::Device& device, MM::Core& core, int wheelNr, int& nrPos);
    int FilterWheelBusy(MM::Device& device, MM::Core& core, bool& busy);
 
 private:
    int ExecuteCommand(MM::Device& device, MM::Core& core, const char* command);
-   int GetAcknowledgment(MM::Device& device, MM::Core& core);
-   int ParseResponse(const char* cmdId, std::string& value);
-   void FetchSerialData(MM::Device& device, MM::Core& core);
 
    static const int RCV_BUF_LENGTH = 1024;
    char rcvBuf_[RCV_BUF_LENGTH];
-   char asynchRcvBuf_[RCV_BUF_LENGTH];
    void ClearRcvBuf();
    void ClearAllRcvBuf(MM::Device& device, MM::Core& core);
    std::string port_;
    std::vector<char> answerBuf_;
-   std::multimap<std::string, long> waitingCommands_;
    long expireTimeUs_;
    std::string commandMode_;
    long activeWheel_;

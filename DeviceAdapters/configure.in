@@ -14,24 +14,169 @@ AC_PROG_CXX
 AC_PROG_CC
 AC_PROG_LIBTOOL
 
-# Checks for libraries.
+
+# GCC version
+if test "x$GXX" = "xyes"; then
+  AC_MSG_CHECKING([GNU compiler version])
+
+  # Don't pass CXXFLAGS to the following CXX command as some
+  # of them can't be specified along with '-v'.
+  cc_version=["`$CXX -v 2>&1 </dev/null |grep 'gcc version' |\
+          sed 's/.*gcc version \([-a-z0-9\.]*\).*/\1/'`"]
+  AC_MSG_RESULT([$cc_version])
+
+  # Some version numbers
+  cc_vers_major=`echo $cc_version | cut -f1 -d.`
+  cc_vers_minor=`echo $cc_version | cut -f2 -d.`
+  cc_vers_patch=`echo $cc_version | cut -f3 -d.`
+  test -n "$cc_vers_major" || cc_vers_major=0
+  test -n "$cc_vers_minor" || cc_vers_minor=0
+  test -n "$cc_vers_patch" || cc_vers_patch=0
+  cc_vers_all=`expr $cc_vers_major '*' 1000000 + $cc_vers_minor '*' 1000 + $cc_vers_patch`
+
+  if test $cc_vers_major -lt 3; then
+    AC_MSG_ERROR([gcc >= 3.0 is needed to compile MicroManager])
+  fi
+fi 
+
+# On linux, some gcc versions build shared libraries unusable in java when using
+# the -O2 optimization.  Switch it off here:
+
+if test $cc_vers_major -gt 3; then
+   case $host in
+      *-*-linux*) CXXFLAGS="-g -O";;
+   esac
+fi
+
+#---------------------------------------------------
+# Check for ACE, static on Mac and libtool lib on Linux
+#---------------------------------------------------
+AC_MSG_CHECKING(for libACE)
+if test -z "$LIBACE" 
+then    
+   case $host in
+   *-*-linux*) 
+   if test -r /usr/local/lib/libACE.la ; then
+      LIBACE="/usr/local/lib/libACE.la"
+   else
+      AC_MSG_ERROR([not found, download from http://deuce.doc.wustl.edu/Download.html, build and install (cd ACE_wrappers \ mkdir build \ cd build \ ../configure \ make \ make install ) and rerun configure])
+   fi
+   ;;
+  *-*-darwin*) 
+  if test -r /usr/local/lib/libACE.a; then
+      LIBACE="/usr/local/lib/libACE.a"
+   else
+      AC_MSG_ERROR([not found, download from http://deuce.doc.wustl.edu/Download.html, build and install (cd ACE_wrappers \ mkdir build \ cd build \ ../configure --enable-static\ make \ make install ) and rerun configure])
+   fi
+   ;;
+   esac
+fi
+AC_MSG_RESULT($LIBACE)
+AC_SUBST(LIBACE)
 
 # Checks for header files.
 # Only build Hamamatsu driver when header files are present
+AC_MSG_CHECKING(for Hamamatsu Dcam)
 AM_CONDITIONAL([BUILD_HAMAMATSU],[test -f "/Library/Frameworks/dcamapi.framework/Headers/dcamapi.h"])
+if test -z "${BUILD_HAMAMATSU}" ; then
+   AC_MSG_RESULT([found])
+else
+   AC_MSG_RESULT([not found])
+fi
+
 # Same for PVCAM
+AC_MSG_CHECKING(for Pvcam)
 AM_CONDITIONAL([BUILD_PVCAM],[test -f "/Library/Frameworks/PVCAM.framework/Headers/pvcam.h"])
+if test -z "${BUILD_PVCAM}" ; then
+   AC_MSG_RESULT([found])
+else
+   AC_MSG_RESULT([not found])
+fi
+
+# Same for QCam
+AC_MSG_CHECKING(for QCam)
+AM_CONDITIONAL([BUILD_QCAM],[test -f "/Library/Frameworks/QCam.framework/Headers/QCamApi.h"])
+if test -z "${BUILD_QCAM}" ; then
+   AC_MSG_RESULT([found])
+else
+   AC_MSG_RESULT([not found])
+fi
+
 # and for Firewire cameras (libdc1394) 
 # TODO: Need better test here
+AC_MSG_CHECKING(for libdc1394)
 AM_CONDITIONAL([BUILD_DC1394],[test -f "/usr/local/include/dc1394/control.h"])
+if test -z "${BUILD_DC1394}" ; then
+   AC_MSG_RESULT([found])
+else
+   AC_MSG_RESULT([not found])
+fi
+
+# and for Velleman K8055 
+# TODO: Need better test here
+AC_MSG_CHECKING(for libk8055)
+AM_CONDITIONAL(BUILD_K8055, test -f "/usr/local/include/usb.h")
+if test -z "${BUILD_K8055}" ; then
+   AC_MSG_RESULT([found])
+else
+   AC_MSG_RESULT([not found])
+fi
+
+# and for Velleman K8061 
+# TODO: Need better test here
+AC_MSG_CHECKING(for libk8061)
+AM_CONDITIONAL(BUILD_K8061, test -f "/usr/local/include/usb.h")
+if test -z "${BUILD_K8061}" ; then
+   AC_MSG_RESULT([found])
+else
+   AC_MSG_RESULT([not found])
+fi
+# and for libUSB 
+# TODO: Need better test here
+AC_MSG_CHECKING(for libusb)
+AM_CONDITIONAL(BUILD_USBMANAGER, test -f "/usr/local/include/usb.h")
+if test -z "$LIBUSB" ; then
+   if test -r /usr/local/lib/libUSB.a ; then
+      LIBUSB="/usr/local/lib/libUSB.a"
+      AC_MSG_RESULT([found])
+   else
+      AC_MSG_RESULT([not found])
+   fi
+fi
+AC_SUBST(LIBUSB)
+
 # Only build the Nikon TE2000 when the code is there
 AM_CONDITIONAL([BUILD_TE2000],[test -f "NikonTE2000/NikonTE2000.h"])
-if test -f $(srcdir)"NikonTE2000/NikonTE2000.h"; then
+if test -f "NikonTE2000/NikonTE2000.h"; then
    TE2000=NikonTE2000
+   TE2000MAKEFILE="NikonTE2000/Makefile"
 else
    TE2000=
+   TE2000MAKEFILE=
 fi
 AC_SUBST(TE2000)
+
+# Only build the Nikon AZ100 when the code is there
+AM_CONDITIONAL([BUILD_AZ100],[test -f "NikonAZ100/NikonAZ100.h"])
+if test -f "NikonAZ100/NikonAZ100.h"; then
+   AZ100=NikonAZ100
+   AZ100MAKEFILE="NikonAZ100/Makefile"
+else
+   AZ100=
+   AZ100MAKEFILE=
+fi
+AC_SUBST(AZ100)
+
+# Only build ... when the code is there
+AM_CONDITIONAL([BUILD_TEST],[test -f "Test/Test.h"])
+if test -f "Test/Test.h"; then
+   TEST=Test
+   TESTMAKEFILE="Test/Makefile"
+else
+   TEST=
+   TESTMAKEFILE=
+fi
+AC_SUBST(TEST)
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL
@@ -81,18 +226,17 @@ AC_SUBST(MMPREFIX)
 
 # Determine if we need to look for ImageJ
 AC_MSG_CHECKING(whether to build for imagej)
-AC_ARG_WITH(imagej, [  --without-imagej        Build without the ImageJ-based GUI], [IMAGEJ="$withval"], [IMAGEJ="yes"])
-AC_MSG_RESULT($IMAGEJ)
+AC_ARG_WITH(imagej, [  --with-imagej=path        Path to ImageJ-based GUI], [IMAGEJDIR="$withval"], [IMAGEJDIR="yes"])
+AC_MSG_RESULT($IMAGEJDIR)
 
-if test "$IMAGEJ" = "yes" ; then
+if test "$IMAGEJDIR" != "no" ; then
    #----------------------------------------------------------------
    # Find ImageJ directory
    #----------------------------------------------------------------
    AC_MSG_CHECKING(for ImageJ directory)
-   AC_ARG_WITH(ImageJdir, [  --with-imagej=path      Set location of ImageJ directory], [IMAGEJDIR="$withval"], [IMAGEJDIR=])
 
    if test -z "$IMAGEJDIR"; then  
-      IMAGEJDIR="/Applications/ImageJ_dev2 /Applications/ImageJ_dev /Applications/ImageJ /usr/local/ImageJ /usr/local/imagej "
+      IMAGEJDIR="/Applications/ImageJ /usr/local/ImageJ /usr/local/imagej "
    fi  
 
    IJPATH=""                                                                   
@@ -117,8 +261,5 @@ AC_CHECK_FUNCS([memset])
 
 
 # AC_CONFIG_FILES([Makefile])
-AC_CONFIG_FILES(Makefile AOTF/Makefile Andor/Makefile ASIFW1000/Makefile ASIStage/Makefile DTOpenLayer/Makefile DemoCamera/Makefile SerialManagerUNIX/Makefile Ludl/Makefile ZeissCAN/Makefile Vincent/Makefile Conix/Makefile Hamamatsu/Makefile PVCAM/Makefile Nikon/Makefile NikonTE2000/Makefile ParallelPort/Makefile Sensicam/Makefile SerialManager/Makefile StanfordPhotonics/Makefile SutterLambda/Makefile Prior/Makefile dc1394/Makefile Yokogawa/Makefile)
+AC_CONFIG_FILES(Makefile AOTF/Makefile Andor/Makefile ASIFW1000/Makefile ASIStage/Makefile DAZStage/Makefile DTOpenLayer/Makefile DemoCamera/Makefile DemoStreamingCamera/Makefile SerialManagerUNIX/Makefile USBManager/Makefile Ludl/Makefile LudlLow/Makefile ZeissCAN/Makefile ZeissCAN29/Makefile Vincent/Makefile Conix/Makefile K8055/Makefile K8061/Makefile Hamamatsu/Makefile PVCAM/Makefile Nikon/Makefile $TE2000MAKEFILE $AZ100MAKEFILE ParallelPort/Makefile Pecon/Makefile Sensicam/Makefile StanfordPhotonics/Makefile SpectralLMM5/Makefile SutterLambda/Makefile Prior/Makefile PI/Makefile PI_GCS/Makefile dc1394/Makefile QCam/Makefile Yokogawa/Makefile $TESTMAKEFILE)
 AC_OUTPUT
-##if $BUILD_TE2000_TRUE; then
-##   AC_OUTPUT (NikonTE2000/Makefile)
-##fi

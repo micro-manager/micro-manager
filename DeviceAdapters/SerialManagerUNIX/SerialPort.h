@@ -78,8 +78,8 @@ public:
     } ;
 
     enum StopBits {
-        STOP_BITS_1,   //! 1 stop bit.
-        STOP_BITS_2,   //! 2 stop bits.
+        STOP_BITS_1 = 1,   //! 1 stop bit.
+        STOP_BITS_2 = 2,   //! 2 stop bits.
         STOP_BITS_DEFAULT = STOP_BITS_1
     } ;
 
@@ -395,8 +395,8 @@ public:
      * Read a line of characters from the serial port.
      */
     const std::string
-    ReadLine( const unsigned int msTimeout = 0,
-              const char         lineTerminator = '\n' )
+    ReadLine( const unsigned int msTimeout,
+              const char*        lineTerminator)
         throw( NotOpen,
                ReadTimeout,
                std::runtime_error ) ;

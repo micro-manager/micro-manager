@@ -205,9 +205,9 @@ int Hub::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
 ///////////////////////////////////////////////////////////////////////////////
 NDFilter::NDFilter () :
    initialized_ (false),
-   name_ (g_CSU22NDFilter),
+   numPos_ (2),
    pos_ (1),
-   numPos_ (2)
+   name_ (g_CSU22NDFilter)
 {
    InitializeDefaultErrorMessages();
 
@@ -319,8 +319,8 @@ int NDFilter::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 ///////////////////////////////////////////////////////////////////////////////
 FilterSet::FilterSet () :
    initialized_ (false),
-   name_ (g_CSU22FilterSet),
    pos_ (1),
+   name_ (g_CSU22FilterSet),
    numPos_ (5)
 {
    InitializeDefaultErrorMessages();
@@ -418,7 +418,9 @@ int FilterSet::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet)
    {
-      long pos, dichroic, filter;
+      long pos; 
+      long dichroic = 1;
+      long filter = 1;
       pProp->Get(pos);
       if (pos == pos_)
          return DEVICE_OK;
@@ -557,7 +559,7 @@ int Shutter::GetOpen(bool &open)
    return DEVICE_OK;
 }
 
-int Shutter::Fire(double deltaT)
+int Shutter::Fire(double /*deltaT*/)
 {
    return DEVICE_UNSUPPORTED_COMMAND;  
 }
@@ -601,8 +603,8 @@ int Shutter::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 ///////////////////////////////////////////////////////////////////////////////
 DriveSpeed::DriveSpeed () :
    initialized_ (false),
-   name_ (g_CSU22DriveSpeed),
    driveSpeedBusy_ (false),
+   name_ (g_CSU22DriveSpeed),
    min_ (1500),
    max_ (5000),
    current_ (1500)

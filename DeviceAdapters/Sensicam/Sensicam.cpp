@@ -20,6 +20,9 @@
 //
 // CVS:           $Id$
 //
+// Modified May 14th 2007 by Liisa Hirvonen, King's College London
+
+
 #ifdef WIN32
    #define WIN32_LEAN_AND_MEAN
    #include <windows.h>
@@ -34,6 +37,8 @@
 
 #include <string>
 #include <sstream>
+#include <cmath>	// Liisa: for ceil
+
 using namespace std;
 
 CSensicam* CSensicam::m_pInstance = 0;
@@ -167,11 +172,11 @@ int CSensicam::OnCameraType(MM::PropertyBase* pProp, MM::ActionType eAct)
             pProp->Set("Long exposure OEM");
          break;
       
-/* Liisa */ 
-case 8:
-pProp->Set("Long exposure OEM");
-break;
-/* end Liisa */ 
+		/* Liisa */ 
+		 case 8:
+            pProp->Set("Long exposure");
+         break;
+		/* end Liisa */ 
 		
          default:
             return ERR_UNKNOWN_CAMERA_TYPE;
@@ -243,6 +248,14 @@ int CSensicam::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
                      m_nHBin, m_nVBin, m_pszTimes);
       if (nErr != 0)
          return nErr;
+	    
+	  // Liisa: m_nTimesLen needs to be updated otherwise if the string is now longer that
+	  // previously, GET_COC_SETTING will not be able to read the string
+	  nErr = TESTCOC(&m_nMode, &m_nTrig, &m_nRoiXMin, &m_nRoiXMax, &m_nRoiYMin, &m_nRoiYMax,
+                  &m_nHBin, &m_nVBin, m_pszTimes, &m_nTimesLen);
+	  if (nErr != 0)
+		return nErr;
+	  // end Liisa
    }
    return DEVICE_OK;
 }
@@ -390,15 +403,15 @@ int CSensicam::Initialize()
          snprintf(m_pszTimes, m_nTimesLen, "0,%.0f,-1,-1", m_dExposure);
       break;
 
-/* Liisa */
-case 8:
-m_nMode = M_LONG;
-m_nSubMode = NORMALLONG;
-m_nTrig = 0;
-//10ms exposure time
-snprintf(m_pszTimes, m_nTimesLen, "0,%.0f,-1,-1", m_dExposure);
-break;
-/* end Liisa */
+	  /* Liisa */
+      case 8:
+         m_nMode = M_LONG;
+         m_nSubMode = NORMALLONG;
+         m_nTrig = 0;
+         //10ms exposure time
+         snprintf(m_pszTimes, m_nTimesLen, "0,%.0f,-1,-1", m_dExposure);
+      break;
+	  /* end Liisa */
       
       default:
          // invalid type
@@ -562,11 +575,16 @@ int CSensicam::Shutdown()
 
 int CSensicam::SnapImage()
 {
-   // >>> set COC, change later to more efficient exposure settings
+	// >>> set COC, change later to more efficient exposure settings
    pictime_ = GET_COCTIME()+ GET_BELTIME();
 
+   // Liisa: this needs to be here for correct ROI after ClearROI()
+	int nErr = SET_COC(m_nMode, m_nTrig, m_nRoiXMin, m_nRoiXMax, m_nRoiYMin, m_nRoiYMax,
+                        m_nHBin, m_nVBin, m_pszTimes);
+	// end Liisa
+
    // start camera single picture
-   int nErr = RUN_COC(4);
+   nErr = RUN_COC(4);
    if (nErr != 0)
       return nErr;
 
@@ -607,6 +625,18 @@ unsigned CSensicam::GetBitDepth() const
    }
 }
 
+int CSensicam::GetBinning () const
+{
+   return m_nHBin;
+}
+
+int CSensicam::SetBinning (int binSize) 
+{
+   ostringstream os;                                                         
+   os << binSize;
+   return SetProperty(MM::g_Keyword_Binning, os.str().c_str());                                                                                     
+} 
+
 ///////////////////////////////////////////////////////////////////////////////
 // Function name   : char* CSensicam::GetImageBuffer
 // Description     : Returns the raw image buffer
@@ -614,15 +644,18 @@ unsigned CSensicam::GetBitDepth() const
 
 const unsigned char* CSensicam::GetImageBuffer()
 {
-   int nErr = 0;
-   if (img_.Depth() == 2)
-      nErr = READ_IMAGE_12BIT (0, img_.Width(), img_.Height(), 
+	int nErr = 0;
+	if (img_.Depth() == 2) {
+		nErr = READ_IMAGE_12BIT (0, img_.Width(), img_.Height(), 
                               (unsigned short*) const_cast<unsigned char*>(img_.GetPixels()));
-   else if (img_.Depth() == 1)
+	}
+	else if (img_.Depth() == 1) {
       nErr = READ_IMAGE_8BIT (0, img_.Width(), img_.Height(), 
                               const_cast<unsigned char*>(img_.GetPixels()));
-   else
+	}
+	else {
       assert(!"Unsupported pixel depth.");
+	}
 
    if (nErr != 0)
       return 0;
@@ -640,10 +673,12 @@ int CSensicam::SetROI(unsigned uX, unsigned uY, unsigned uXSize, unsigned uYSize
    if (nErr != 0)
       return nErr;
 
-   m_nRoiXMin = uX / 32;
-   m_nRoiYMin = uY / 32;
-   m_nRoiXMax = (uX + uXSize) / 32;
-   m_nRoiYMax = (uY + uYSize) / 32;
+   // Liisa: changed these to round up, else uX or uY < 32 rounds to zero, Sensicam needs min 1.
+   m_nRoiXMin = (int) ceil( ( (double) uX / 32) );
+   m_nRoiYMin = (int) ceil( ( (double) uY / 32) );
+   m_nRoiXMax = (int) ceil( ( ( (double) uX + uXSize) / 32) -1 );
+   m_nRoiYMax = (int) ceil( ( ( (double) uY + uYSize) / 32) -1 );
+
    nErr = SET_COC(m_nMode, m_nTrig, m_nRoiXMin, m_nRoiXMax, m_nRoiYMin, m_nRoiYMax,
                         m_nHBin, m_nVBin, m_pszTimes);
    if(nErr != 0)
@@ -684,14 +719,26 @@ int CSensicam::ClearROI()
    int roiYMin = 1;
    int nErr = SET_COC(m_nMode, m_nTrig, roiXMin, roiXMaxFull_, roiYMin, roiYMaxFull_,
                       m_nHBin, m_nVBin, m_pszTimes);
-   if (nErr != 0)
-      return nErr;
 
-   nErr = ResizeImageBuffer();
-   if (nErr != 0)
+   if(nErr != 0)
+	   return nErr;
+   
+   // Liisa: read the current ROI to the variables to be used in SnapImage
+   // Although the values set by SET_COC are correct here, it goes wrong somewhere later
+   // and in SnapImage the old ROI is used
+   nErr = GET_COC_SETTING(&m_nMode, &m_nTrig, &m_nRoiXMin, &m_nRoiXMax, &m_nRoiYMin, &m_nRoiYMax,
+		&m_nHBin, &m_nVBin, m_pszTimes, m_nTimesLen);
+   // end Liisa
+
+   if(nErr != 0)
 	   return nErr;
 
-   return DEVICE_OK;
+   nErr = ResizeImageBuffer();
+   
+	if (nErr != 0)
+		return nErr;
+
+	return DEVICE_OK;
 }
 
 void CSensicam::SetExposure(double dExp)
@@ -701,15 +748,15 @@ void CSensicam::SetExposure(double dExp)
 
 int CSensicam::ResizeImageBuffer()
 {
-   // get image size
-   int nWidth, nHeight;
-   int nErr = GET_IMAGE_SIZE(&nWidth, &nHeight);
-   if (nErr != 0)
-   {
-      SET_INIT(0);
-      return nErr;
-   }
-   assert(pixelDepth_ == 1 || pixelDepth_ == 2);
-   img_.Resize(nWidth, nHeight, pixelDepth_);
-   return DEVICE_OK;
+	// get image size
+	int nWidth = 1, nHeight = 1;
+	int nErr = GET_IMAGE_SIZE(&nWidth, &nHeight);
+	if (nErr != 0)
+	{
+		SET_INIT(0);
+		return nErr;
+	}
+	assert(pixelDepth_ == 1 || pixelDepth_ == 2);
+	img_.Resize(nWidth, nHeight, pixelDepth_);
+	return DEVICE_OK;
 }

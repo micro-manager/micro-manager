@@ -138,6 +138,9 @@ int QuadFluor::Shutdown()
  */
 bool QuadFluor::Busy()
 {
+   // the commands are blocking, so we cannot be busy
+   return false;
+   /*
    const unsigned long answerLength = 40;
    // If there was no command pending we are not busy
    if (!pendingCommand_)
@@ -145,10 +148,10 @@ bool QuadFluor::Busy()
 
    // Read a line from the port, if first char is 'A' we are OK
    // if first char is 'N' read the error code
-   char answer[answerLength];
+   unsigned char answer[answerLength];
    unsigned long charsRead;
    ReadFromComPort(port_.c_str(), answer, answerLength, charsRead);
-   if (&answer[0] == "A") {
+   if (answer[0] == "A") {
       // this command was finished and is not pending anymore
       pendingCommand_ = false;
       return true;
@@ -158,6 +161,7 @@ bool QuadFluor::Busy()
    
    // we should never be here, better not to block
    return false;
+   */
 }
 
 
@@ -197,15 +201,90 @@ int QuadFluor::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+int QuadFluor::GetPosition(int& position) 
+{
+   const char* command="Quad ";
+
+   // send command
+   int ret = SendSerialCommand(port_.c_str(), command, "\r");
+   if (ret != DEVICE_OK)
+      return ret;
+
+   // block/wait for acknowledge, or until we time out;
+   string answer;
+   ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if (answer.length() > 2 && answer.substr(0, 2).compare(":N") == 0)
+   {
+      int errNo = atoi(answer.substr(2).c_str());
+      return ERR_OFFSET + errNo;
+   }
+   else if (answer.length() > 2 && answer.substr(0, 2).compare(":A") == 0)
+   {
+      position = atoi(answer.substr(2).c_str());
+      if (position == 0)
+         return ERR_UNRECOGNIZED_ANSWER;
+
+      return DEVICE_OK;
+   }
+
+   return ERR_UNRECOGNIZED_ANSWER;
+}
+
+
+int QuadFluor::SetPosition(int position)
+{
+   ostringstream command;
+   command << "Quad " << position;
+
+   // send command
+   int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+   if (ret != DEVICE_OK)
+      return ret;
+
+   // block/wait for acknowledge, or until we time out;
+   string answer;
+   ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if (answer.substr(0, 2).compare(":A") == 0)
+   {
+      return DEVICE_OK;
+   }
+   else if (answer.length() > 2 && answer.substr(0, 2).compare(":N") == 0)
+   {
+      int errNo = atoi(answer.substr(2).c_str());
+      return ERR_OFFSET + errNo;
+   }
+
+   return ERR_UNRECOGNIZED_ANSWER;
+}
+
+
+
 
 // Needs to be worked on (a lot)
 int QuadFluor::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet) {
+      int position, ret;
+      ret = GetPosition(position);
+      if (ret != DEVICE_OK)
+         return ret;
+      pProp->Set((long) position);
    }
    else if (eAct == MM::AfterSet) {
-      return DEVICE_OK;
+      long position;
+      int ret;
+      pProp->Get(position);
+      ret = SetPosition((int) position);
+      if (ret != DEVICE_OK)
+         return ret;
    }
+   return DEVICE_OK;
 }
 
 

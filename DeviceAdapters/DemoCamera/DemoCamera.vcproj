@@ -274,6 +274,10 @@
 				RelativePath="..\..\MMDevice\ModuleInterface.h"
 				>
 			</File>
+			<File
+				RelativePath="..\..\MMDevice\Property.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"

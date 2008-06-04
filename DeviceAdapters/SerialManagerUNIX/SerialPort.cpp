@@ -193,8 +193,8 @@ public:
                std::runtime_error  ) ;
 
     const std::string
-    ReadLine( const unsigned int msTimeout = 0,
-              const char         lineTerminator = '\n' )
+    ReadLine( const unsigned int msTimeout,
+              const char*        lineTerminator )
         throw( SerialPort::NotOpen,
                SerialPort::ReadTimeout,
                std::runtime_error ) ;
@@ -516,7 +516,7 @@ SerialPort::Read( SerialPort::DataBuffer& dataBuffer,
 
 const std::string
 SerialPort::ReadLine( const unsigned int msTimeout,
-                      const char         lineTerminator )
+                      const char*        lineTerminator )
     throw( NotOpen,
            ReadTimeout,
            std::runtime_error )
@@ -942,7 +942,7 @@ SerialPort::SerialPortImpl::SetCharSize( long int charSize )
       case 8: 
          SetCharSize (CHAR_SIZE_8);
          break;
-      deafult:
+      default:
          throw std::invalid_argument( strerror(errno) ) ;
     }
 }
@@ -1140,6 +1140,7 @@ SerialPort::SerialPortImpl::SetNumOfStopBits( const int numOfStopBits )
         SetNumOfStopBits(STOP_BITS_2);
         break ;
     default:
+        printf ("Found %d stopbits\n", numOfStopBits);
         throw std::invalid_argument( ERR_MSG_INVALID_STOP_BITS ) ;
         break ;
     }
@@ -1325,13 +1326,14 @@ SerialPort::SerialPortImpl::ReadByte(const unsigned int msTimeout)
         // If more than msTimeout milliseconds have elapsed while
         // waiting for data, then we throw a ReadTimeout exception.
         if ( ( msTimeout > 0 ) &&
-             ( elapsed_ms > msTimeout ) )
+             ( (unsigned int) elapsed_ms > msTimeout ) )
         {
             throw SerialPort::ReadTimeout() ;
         }
         // Wait for 1ms (1000us) for data to arrive.
         usleep( MICROSECONDS_PER_MS ) ;
-    }
+    } 
+//printf ("%#.2X ", buf_char[0]);
     // Return the byte read.
     return buf_char[0];
 }
@@ -1375,7 +1377,7 @@ SerialPort::SerialPortImpl::Read( SerialPort::DataBuffer& dataBuffer,
         //
         dataBuffer.reserve( numOfBytes ) ;
         //
-        for(int i=0; i<numOfBytes; ++i)
+        for(unsigned int i=0; i<numOfBytes; ++i)
         {
             dataBuffer.push_back( ReadByte(msTimeout) ) ;
         }
@@ -1386,19 +1388,26 @@ SerialPort::SerialPortImpl::Read( SerialPort::DataBuffer& dataBuffer,
 inline
 const std::string
 SerialPort::SerialPortImpl::ReadLine( const unsigned int msTimeout,
-                                      const char         lineTerminator )
+                                      const char*        lineTerminator )
     throw( SerialPort::NotOpen,
            SerialPort::ReadTimeout,
            std::runtime_error )
 {
     std::string result ;
+    char* termpos = 0;
     char next_char = 0 ;
     do
     {
         next_char = this->ReadByte( msTimeout ) ;
+  //printf ("%#.2x ", next_char);
         result += next_char ;
+        termpos = strstr(result.c_str(), lineTerminator);
     }
-    while( next_char != lineTerminator ) ;
+    while(termpos == 0);
+    // Strip the terminating character
+    if (termpos != 0)
+       *termpos = '\0';
+
     return result ;
 }
 
@@ -1513,6 +1522,7 @@ SerialPort::SerialPortImpl::Write( const unsigned char* dataBuffer,
     }
     while ( ( num_of_bytes_written < 0 ) &&
             ( EAGAIN == errno ) ) ;
+
     //
     if ( num_of_bytes_written < 0 )
     {

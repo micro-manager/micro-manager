@@ -92,7 +92,7 @@ VincentD1::VincentD1() :
    closingTimeMs_(35.0),
    openingTimeMs_(35.0),
    shutterName_("A"),
-   lastCommandTime_(0)
+   changedTime_(0.0)
 {
    InitializeDefaultErrorMessages();
 
@@ -177,10 +177,9 @@ int VincentD1::Initialize()
    // Options are: Open, Close, Trigger, Reset, Open B, Close B
    //               0     1       2       3      4         5
    
-   
-   // This device does not give an answer!
+   // Set timer for the Busy signal
+    changedTime_ = GetCurrentMMTime();
 
-   // ?? What is this for ? - NS
    int ret = UpdateStatus();
    if (ret != DEVICE_OK)
       return ret;
@@ -206,21 +205,16 @@ int VincentD1::Shutdown()
  */
 bool VincentD1::Busy()
 {
-   // get current time in microseconds
-   unsigned long now = GetClockTicksUs();
-
-   // time elapsed in ms
-   double durMs = (now - lastCommandTime_) / 1000;
-   //std::cout << "Checking device, time: " << now << " elapsed: " << durMs  << endl;
+    MM::MMTime interval = GetCurrentMMTime() - changedTime_;
 
    // check whether the shutter had enough time to open or close after the command was issued
    if (lastCommand_ == g_VMMOpen) {
-      if (durMs > openingTimeMs_ ) 
+      if (interval > (MM::MMTime)(openingTimeMs_*1000) ) 
          return false;
       else
          return true;
    } else if (lastCommand_ == g_VMMClose) {
-      if (durMs > closingTimeMs_ ) 
+      if (interval > (MM::MMTime)(closingTimeMs_) ) 
          return false;
       else
          return true;
@@ -263,11 +257,11 @@ int VincentD1::ExecuteCommand(const string& cmd)
 
    // send command
    PurgeComPort(port_.c_str());
-   if (DEVICE_OK != WriteToComPort(port_.c_str(), charCmd, 1))
+   if (DEVICE_OK != WriteToComPort(port_.c_str(), (unsigned char*)charCmd, 1))
       return DEVICE_SERIAL_COMMAND_FAILED;
 
    // Remember when this command was issued, and what it was:
-   lastCommandTime_ = GetClockTicksUs();
+   changedTime_ = GetCurrentMMTime();
    lastCommand_ = cmd;
 
    // This device does not answer, so at this point we are done
@@ -434,7 +428,7 @@ VincentD3::VincentD3() :
    closingTimeMs_(35.0),
    openingTimeMs_(35.0),
    shutterName_(g_Ch1),
-   lastCommandTime_(0)
+   changedTime_(0.0)
 {
    InitializeDefaultErrorMessages();
 
@@ -522,6 +516,9 @@ int VincentD3::Initialize()
    if (ret != DEVICE_OK)
       return ret;
 
+   // Set timer for the Busy signal
+   changedTime_ = GetCurrentMMTime();
+
    initialized_ = true;
    return DEVICE_OK;
 }
@@ -541,21 +538,16 @@ int VincentD3::Shutdown()
  */
 bool VincentD3::Busy()
 {
-   // get current time in microseconds
-   unsigned long now = GetClockTicksUs();
-
-   // time elapsed in ms
-   double durMs = (now - lastCommandTime_) / 1000;
-   //std::cout << "Checking device, time: " << now << " elapsed: " << durMs  << endl;
+   MM::MMTime interval = GetCurrentMMTime() - changedTime_;
 
    // check whether the shutter had enough time to open or close after the command was issued
    if (lastCommand_ == g_VMMOpen) {
-      if (durMs > openingTimeMs_ ) 
+      if (interval > (MM::MMTime)(openingTimeMs_*1000) ) 
          return false;
       else
          return true;
    } else if (lastCommand_ == g_VMMClose) {
-      if (durMs > closingTimeMs_ ) 
+      if (interval > (MM::MMTime)(closingTimeMs_) ) 
          return false;
       else
          return true;
@@ -602,11 +594,11 @@ int VincentD3::ExecuteCommand(const string& cmd)
 
    // send command
    PurgeComPort(port_.c_str());
-   if (DEVICE_OK != WriteToComPort(port_.c_str(), charCmd, 1))
+   if (DEVICE_OK != WriteToComPort(port_.c_str(), (unsigned char*)charCmd, 1))
       return DEVICE_SERIAL_COMMAND_FAILED;
 
    // Remember when this command was issued, and what it was:
-   lastCommandTime_ = GetClockTicksUs();
+   changedTime_ = GetCurrentMMTime();
    lastCommand_ = cmd;
 
    // This device does not answer, so at this point we are done

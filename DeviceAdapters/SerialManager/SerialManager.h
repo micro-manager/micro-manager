@@ -65,15 +65,18 @@ public:
 
    int SetCommand(const char* command, const char* term);
    int GetAnswer(char* answer, unsigned bufLength, const char* term);
-   int Write(const char* buf, unsigned long bufLen);
-   int Read(char* buf, unsigned long bufLen, unsigned long& charsRead);
+   int Write(const unsigned char* buf, unsigned long bufLen);
+   int Read(unsigned char* buf, unsigned long bufLen, unsigned long& charsRead);
+   MM::PortType GetPortType() const {return MM::SerialPort;}    
    int Purge();
    
    // action interface
    // ----------------
    int OnStopBits(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnHandshaking(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBaud(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTimeout(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnDelayBetweenCharsMs(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    int Open(const char* portName);
    void Close();

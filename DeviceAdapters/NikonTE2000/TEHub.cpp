@@ -12,6 +12,7 @@
 //                License text is included with the source distribution.
 // CVS:           $Id$
 //
+
 #define _CRT_SECURE_NO_DEPRECATE
 
 #include "TEHub.h"
@@ -19,8 +20,9 @@
 #include <memory.h>
 #include <sstream>
 #include <iostream>
+#include "../../MMDevice/ModuleInterface.h"
 
-using namespace std;
+using namespace std; 
 
 TEHub::TEHub()
 {
@@ -39,6 +41,16 @@ TEHub::~TEHub()
 {
 }
 
+void TEHub::LogError(int id, MM::Device& device, MM::Core& core, const char* functionName)
+{
+   ostringstream os;
+   char deviceName[MM::MaxStrLength];
+   device.GetName(deviceName);
+   os << "Error " << id << ", " << deviceName << ", " << functionName << endl;
+   core.LogMessage(&device, os.str().c_str(), false);
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////
 // Nosepiece commands
 ///////////////////////////////////////////////////////////////////////////////
@@ -52,12 +64,16 @@ int TEHub::SetNosepiecePosition(MM::Device& device, MM::Core& core, int pos)
    // send command
    int ret = ExecuteCommand(device, core, commandMode_.c_str(), os.str().c_str());
    if (ret != DEVICE_OK)
+   {
       return ret;
+   }
 
    string value;
-   ret = ParseResponse(command, value);
+   ret = ParseResponse(device, core, command, value);
    if (ret != DEVICE_OK)
+   {
       return ret;
+   }
 
    if (GetCommandMode() == Async)
       waitingCommands_.insert(pair<string,long>(command, core.GetClockTicksUs(&device)));
@@ -74,7 +90,7 @@ int TEHub::GetNosepiecePosition(MM::Device& device, MM::Core& core, int& pos)
 
    // parse the response
    string value;
-   ret = ParseResponse(command, value);
+   ret = ParseResponse(device, core, command, value);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -91,7 +107,7 @@ int TEHub::GetNosepieceMountingStatus(MM::Device& device, MM::Core& core, int& s
 
    // parse the response
    string value;
-   ret = ParseResponse(command, value);
+   ret = ParseResponse(device, core, command, value);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -123,7 +139,7 @@ int TEHub::SetFilterBlockPosition(MM::Device& device, MM::Core& core, int pos)
 
    // parse response
    string value;
-   ret = ParseResponse(command, value);
+   ret = ParseResponse(device, core, command, value);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -144,7 +160,7 @@ int TEHub::GetFilterBlockPosition(MM::Device& device, MM::Core& core, int& pos)
 
    // parse the response
    string value;
-   ret = ParseResponse(command, value);
+   ret = ParseResponse(device, core, command, value);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -155,8 +171,13 @@ int TEHub::GetFilterBlockPosition(MM::Device& device, MM::Core& core, int& pos)
 
 bool TEHub::IsFilterBlockBusy(MM::Device& device, MM::Core& core)
 {
-   FetchSerialData(device, core);
-   return IsCommandWaiting("HDM", device, core);
+   if (this->GetCommandMode() == Async)
+   {
+      FetchSerialData(device, core);
+      return IsCommandWaiting("HDM", device, core);
+   }
+   return
+      false;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -176,7 +197,7 @@ int TEHub::SetFocusPosition(MM::Device& device, MM::Core& core, int pos)
 
    // parse the response
    string value;
-   ret = ParseResponse(command, value);
+   ret = ParseResponse(device, core, command, value);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -187,8 +208,13 @@ int TEHub::SetFocusPosition(MM::Device& device, MM::Core& core, int pos)
 
 bool TEHub::IsFocusBusy(MM::Device& device, MM::Core& core)
 {
-   FetchSerialData(device, core);
-   return IsCommandWaiting("SMV", device, core);
+   if (this->GetCommandMode() == Async)
+   {
+      FetchSerialData(device, core);
+      return IsCommandWaiting("SMV", device, core);
+   }
+   else
+      return false;
 }
 
 int TEHub::GetFocusPosition(MM::Device& device, MM::Core& core, int& pos)
@@ -200,7 +226,7 @@ int TEHub::GetFocusPosition(MM::Device& device, MM::Core& core, int& pos)
 
    // parse the response
    string value;
-   ret = ParseResponse(command, value);
+   ret = ParseResponse(device, core, command, value);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -230,7 +256,7 @@ int TEHub::SetFocusStepSize(MM::Device& device, MM::Core& core, int stepsize)
 
    // parse the response
    string value;
-   ret = ParseResponse(command, value);
+   ret = ParseResponse(device, core, command, value);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -249,7 +275,7 @@ int TEHub::GetFocusStepSize(MM::Device& device, MM::Core& core, int& stepSize)
 
    // parse the response
    string value;
-   ret = ParseResponse(command, value);
+   ret = ParseResponse(device, core, command, value);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -288,7 +314,7 @@ int TEHub::SetOpticalPathPosition(MM::Device& device, MM::Core& core, int pos)
       return ret;
 
    string value;
-   ret = ParseResponse(command, value);
+   ret = ParseResponse(device, core, command, value);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -304,7 +330,7 @@ int TEHub::GetOpticalPathPosition(MM::Device& device, MM::Core& core, int& pos)
 
    // parse the response
    string value;
-   ret = ParseResponse(command, value);
+   ret = ParseResponse(device, core, command, value);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -316,6 +342,52 @@ bool TEHub::IsOpticalPathBusy(MM::Device& device, MM::Core& core)
 {
    FetchSerialData(device, core);
    return IsCommandWaiting("PDM", device, core);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Analyzer commands
+///////////////////////////////////////////////////////////////////////////////
+
+int TEHub::SetAnalyzerPosition(MM::Device& device, MM::Core& core, int pos)
+{
+   const char* command = "ALC";
+   ostringstream os;
+   os << command << pos;
+
+   // send command
+   int ret = ExecuteCommand(device, core, "c", os.str().c_str());
+   if (ret != DEVICE_OK)
+      return ret;
+
+   string value;
+   ret = ParseResponse(device, core, command, value);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   return DEVICE_OK;
+}
+
+int TEHub::GetAnalyzerPosition(MM::Device& device, MM::Core& core, int& pos)
+{
+   const char* command = "ALR";
+   int ret = ExecuteCommand(device, core, "r", command);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   // parse the response
+   string value;
+   ret = ParseResponse(device, core, command, value);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   pos = atoi(value.c_str());
+   return DEVICE_OK;
+}
+
+bool TEHub::IsAnalyzerBusy(MM::Device& device, MM::Core& core)
+{
+   FetchSerialData(device, core);
+   return IsCommandWaiting("ALC", device, core);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -334,10 +406,47 @@ int TEHub::SetLampOnOff(MM::Device& device, MM::Core& core, int state)
       return ret;
 
    string value;
-   ret = ParseResponse(command, value);
+   ret = ParseResponse(device, core, command, value);
    if (ret != DEVICE_OK)
       return ret;
 
+   return DEVICE_OK;
+}
+
+int TEHub::SetLampControlTarget(MM::Device& device, MM::Core& core, int target)
+{
+   const char* command = "LCS";
+   ostringstream os;
+   os << command << target;
+
+   // send command
+   int ret = ExecuteCommand(device, core, "c", os.str().c_str());
+   if (ret != DEVICE_OK)
+      return ret;
+
+   string value;
+   ret = ParseResponse(device, core, command, value);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   return DEVICE_OK;
+}
+
+int TEHub::GetLampControlTarget(MM::Device& device, MM::Core& core, int& target)
+{
+   const char* command = "LCR";
+
+   // send command
+   int ret = ExecuteCommand(device, core, "r", command);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   string value;
+   ret = ParseResponse(device, core, command, value);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   target = atoi(value.c_str());
    return DEVICE_OK;
 }
 
@@ -350,7 +459,7 @@ int TEHub::GetLampOnOff(MM::Device& device, MM::Core& core, int& state)
 
    // parse the response
    string value;
-   ret = ParseResponse(command, value);
+   ret = ParseResponse(device, core, command, value);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -370,7 +479,7 @@ int TEHub::SetLampVoltage(MM::Device& device, MM::Core& core, double voltage)
       return ret;
 
    string value;
-   ret = ParseResponse(command, value);
+   ret = ParseResponse(device, core, command, value);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -386,14 +495,14 @@ int TEHub::GetLampVoltage(MM::Device& device, MM::Core& core, double& voltage)
 
    // parse the response
    string value;
-   ret = ParseResponse(command, value);
+   ret = ParseResponse(device, core, command, value);
    if (ret != DEVICE_OK)
       return ret;
 
    voltage = atof(value.c_str());
    return DEVICE_OK;
 }
-bool TEHub::IsLampBusy(MM::Device& device, MM::Core& core)
+bool TEHub::IsLampBusy(MM::Device& /*device*/, MM::Core& /*core*/)
 {
    return false;
 }
@@ -413,7 +522,7 @@ int TEHub::SetPFocusOn(MM::Device& device, MM::Core& core)
       return ret;
 
    string value;
-   ret = ParseResponse(command, value);
+   ret = ParseResponse(device, core, "TRN", value);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -430,7 +539,7 @@ int TEHub::SetPFocusOff(MM::Device& device, MM::Core& core)
       return ret;
 
    string value;
-   ret = ParseResponse(command, value);
+   ret = ParseResponse(device, core, "TRN", value);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -447,11 +556,67 @@ int TEHub::GetPFocusStatus(MM::Device& device, MM::Core& core, int& status)
       return ret;
 
    string value;
-   ret = ParseResponse(command, value);
+   ret = ParseResponse(device, core, "TRN", value);
    if (ret != DEVICE_OK)
       return ret;
 
    status = atoi(value.c_str());
+   return DEVICE_OK;
+}
+
+int TEHub::GetPFocusVersion(MM::Device& device, MM::Core& core, std::string& version)
+{
+   const char* command = "TRN1rVEN";
+
+   // send command
+   int ret = ExecuteCommand(device, core, "c", command);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   ret = ParseResponse(device, core, "TRN", version);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   return DEVICE_OK;
+}
+
+/*
+ * Epi-illumination Shutter
+ */
+
+int TEHub::SetEpiShutterStatus(MM::Device& device, MM::Core& core, int status)
+{
+   const char* command = "SHC";
+   ostringstream os;
+   os << command <<  status;
+
+   // send command
+   int ret = ExecuteCommand(device, core, "c", os.str().c_str());
+   if (ret != DEVICE_OK)
+      return ret;
+
+   string value;
+   ret = ParseResponse(device, core, command, value);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   return DEVICE_OK;
+}
+
+int TEHub::GetEpiShutterStatus(MM::Device& device, MM::Core& core, int& pos)
+{
+   const char* command = "SSR";
+   int ret = ExecuteCommand(device, core, "r", command);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   // parse the response
+   string value;
+   ret = ParseResponse(device, core, command, value);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   pos = atoi(value.c_str());
    return DEVICE_OK;
 }
 
@@ -472,12 +637,13 @@ int TEHub::SetUniblitzStatus(MM::Device& device, MM::Core& core, int shutterNumb
       return ret;
 
    string value;
-   ret = ParseResponse(command, value);
+   ret = ParseResponse(device, core, command, value);
    if (ret != DEVICE_OK)
       return ret;
 
    return DEVICE_OK;
 }
+
 ///////////////////////////////////////////////////////////////////////////////
 // HUB generic methods
 ///////////////////////////////////////////////////////////////////////////////
@@ -502,7 +668,7 @@ int TEHub::GetVersion(MM::Device& device, MM::Core& core, std::string& ver)
 
    // parse the response
    string value;
-   ret = ParseResponse(command, value);
+   ret = ParseResponse(device, core, command, value);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -522,7 +688,7 @@ int TEHub::GetModelType(MM::Device& device, MM::Core& core, int& type)
 
    // parse the response
    string value;
-   ret = ParseResponse(command, value);
+   ret = ParseResponse(device, core, command, value);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -552,18 +718,53 @@ int TEHub::ExecuteCommand(MM::Device& device, MM::Core& core, const char* type, 
    // send command
    int ret = core.SetSerialCommand(&device, port_.c_str(), strCommand.c_str(), "\r");
    if (ret != DEVICE_OK)
+   {
+      LogError(ret, device, core, "ExecuteCommand-SetSerialCommand");
       return ret;
+   }
   
    // >>
-   //core.LogMessage(&device, strCommand.c_str(), true);
+   core.LogMessage(&device, strCommand.c_str(), true);
 
    // get response
    ret = core.GetSerialAnswer(&device, port_.c_str(), RCV_BUF_LENGTH, rcvBuf_, "\r\n");
    
    // >>
-   //core.LogMessage(&device, rcvBuf_, true);
+   core.LogMessage(&device, rcvBuf_, true);
    if (ret != DEVICE_OK)
+   {
+      LogError(ret, device, core, "ExecuteCommand-GetSerialAnswer");
+      // Keep on trying until we have an aneser or 5 seconds passed
+      MM::MMTime maxTimeMs (5000);
+      // Wait 10 ms in between each try
+      int delayMs = 10;
+      // keep track of how often we tried
+      int counter = 0;
+      bool done = false;
+      MM::MMTime startTime (core.GetCurrentMMTime());
+      while (!done) 
+      {
+         counter++;
+         ret = core.GetSerialAnswer(&device, port_.c_str(), RCV_BUF_LENGTH, rcvBuf_, "\r\n");
+         if (ret == DEVICE_OK)
+            done = true;
+         else
+         {
+            CDeviceUtils::SleepMs(delayMs);
+            if ( (core.GetCurrentMMTime() - startTime) > maxTimeMs)
+               done = true;
+         }
+      }
+      ostringstream os;
+      if (ret == DEVICE_OK)
+         os << "ExecuteCommand-GetSerialAnswer: Succeeded reading from serial port after trying " << counter << "times.";
+      else
+         os << "ExecuteCommand-GetSreialAnswer: Failed reading from serial port after trying " << counter << "times.";
+
+      core.LogMessage(&device, os.str().c_str(), true);
+      core.LogMessage(&device, rcvBuf_, true);
       return ret;
+   }
 
    return DEVICE_OK;
 }
@@ -571,10 +772,13 @@ int TEHub::ExecuteCommand(MM::Device& device, MM::Core& core, const char* type, 
 /**
  * Interprets the string returned from the microscope.
  */
-int TEHub::ParseResponse(const char* cmd, string& value)
+int TEHub::ParseResponse(MM::Device& device, MM::Core& core, const char* cmd, string& value)
 {
    if (strlen(rcvBuf_) < 4)
+   {
+      LogError(DEVICE_SERIAL_INVALID_RESPONSE, device, core, "ParseResponse-invalid response");
       return DEVICE_SERIAL_INVALID_RESPONSE;
+   }
 
    char cmdIdBuf[4];
    memcpy(cmdIdBuf, rcvBuf_+1, 3);
@@ -586,33 +790,48 @@ int TEHub::ParseResponse(const char* cmd, string& value)
    value = rcvBuf_ + 4;
    if (rcvBuf_[0] == 'n' && strlen(rcvBuf_) > 4)
    {
-      return atoi(value.c_str()); // error occured
+      int err = atoi(value.c_str()); // error occured
+      LogError(err, device, core, "ParseResponse-device reported an error");
+      return err;
    }
    else if (rcvBuf_[0] == 'o' || rcvBuf_[0] == 'a' || rcvBuf_[0] == 'q')
    {
+      string trncommand(rcvBuf_ + 1);
       // special processing for TRN1 commands
-      if (value.substr(0,3).compare("TRN") == 0)
+      if (trncommand.length() >= 4 && trncommand.substr(0,4).compare("TRN1") == 0)
       {
          if (strlen(rcvBuf_) > 8)
          {
             value = rcvBuf_ + 9;
             if (rcvBuf_[5] == 'n')
-               return atoi(value.c_str()); // error occured
+            {
+               int err = atoi(value.c_str()); // error occured
+               LogError(err, device, core, "ParseResponse-device reported an error");
+               return err;
+            }
             else if (rcvBuf_[5] == 'o' || rcvBuf_[5] == 'a' || rcvBuf_[5] == 'q')
                return DEVICE_OK;
             else
-               return DEVICE_SERIAL_INVALID_RESPONSE;
+            {
+              LogError(DEVICE_SERIAL_INVALID_RESPONSE, device, core, "ParseResponse-invalid response");
+              return DEVICE_SERIAL_INVALID_RESPONSE;
+            }
          }
          else
          {
+            LogError(DEVICE_SERIAL_INVALID_RESPONSE, device, core, "ParseResponse-invalid response");
             return DEVICE_SERIAL_INVALID_RESPONSE;
          }
       }
       else
+         // normal commands
          return DEVICE_OK;
    }
    else
+   {
+      LogError(DEVICE_SERIAL_INVALID_RESPONSE, device, core, "ParseResponse-invalid response");
       return DEVICE_SERIAL_INVALID_RESPONSE;
+   }
 }
 
 /**
@@ -623,7 +842,7 @@ void TEHub::FetchSerialData(MM::Device& device, MM::Core& core)
    unsigned long read = 0;
    do {
       read = 0;
-      core.ReadFromSerial(&device, port_.c_str(), asynchRcvBuf_, RCV_BUF_LENGTH, read);
+      core.ReadFromSerial(&device, port_.c_str(), (unsigned char*)asynchRcvBuf_, RCV_BUF_LENGTH, read);
    
       // enter serial data into the buffer
       for (unsigned long i=0; i<read; i++)

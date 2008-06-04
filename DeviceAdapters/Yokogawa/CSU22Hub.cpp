@@ -244,7 +244,7 @@ int CSU22Hub::GetDriveSpeedPosition(MM::Device& device, MM::Core& core, int& pos
 }
 
    
-bool CSU22Hub::IsDriveSpeedBusy(MM::Device& device, MM::Core& core)
+bool CSU22Hub::IsDriveSpeedBusy(MM::Device& /*device*/, MM::Core& /*core*/)
 {
    return false;
 }
@@ -260,7 +260,7 @@ void CSU22Hub::ClearAllRcvBuf(MM::Device& device, MM::Core& core)
 {
    // Read whatever has been received so far:
    unsigned long read;
-   int ret = core.ReadFromSerial(&device, port_.c_str(), rcvBuf_, RCV_BUF_LENGTH,  read);
+   core.ReadFromSerial(&device, port_.c_str(), (unsigned char*)rcvBuf_, RCV_BUF_LENGTH,  read);
    // Delete it all:
    memset(rcvBuf_, 0, RCV_BUF_LENGTH);
 }
