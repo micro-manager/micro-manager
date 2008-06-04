@@ -5,7 +5,6 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
-import ij.gui.ImageWindow;
 import ij.plugin.PlugIn;
 
 public class Set_Channel_Display implements PlugIn {

@@ -11,6 +11,8 @@ import ij.io.*;
 import ij.macro.Interpreter;
 import ij.measure.*;
 import ij.process.*;
+import ij.plugin.filter.*;
+
 /*
  * Created on 26.03.2005
  *
@@ -56,12 +58,12 @@ public class Image5D extends ImagePlus {
     // Initially there was the thought of extending this to more dimensions 
     // E.g. fluorescence lifetime as extra dimension?
     
-    public static final String VERSION = "1.1.4";
+   public static final String VERSION = "1.1.4";
     
-	static final int nDefaultDimensions = 5;
+   static final int nDefaultDimensions = 5;
 	protected int nDimensions = nDefaultDimensions;
     
-    private String[] dimensionLabels = {"x", "y", "ch", "z", "t"};
+   private String[] dimensionLabels = {"x", "y", "ch", "z", "t"};
 	
 	protected boolean isInitialized;
 	
@@ -74,17 +76,20 @@ public class Image5D extends ImagePlus {
 	// current position in dimension from 0 to dimensionSize-1
 	// (e.g. currentSlice = currentPosition[2]+1)
 	protected int[] currentPosition = new int[nDimensions];
-	
+
+   // Image5D version of ImagePLus
+   protected ChannelImagePlus[] channelImps = new ChannelImagePlus[1];
+
 	// Array of ImageProcessors. One for each channel. 
 	// The one of the current channel is always the current ip from getProcessor().
 	protected ImageProcessor[] channelIPs = new ImageProcessor[1];
 	
 	// To handle different color models, contrast settings, ... for different channels
 	protected int colorDimension = 2;
-    private ChannelCalibration[] chCalibration;
+   private ChannelCalibration[] chCalibration;
 	private ChannelDisplayProperties[] chDisplayProps;
     
-    private ImageJ ij = IJ.getInstance();
+   private ImageJ ij = IJ.getInstance();
 	
 	// For dealing with display AWT image img. (method getImage())
 	int[] awtImagePixels;
@@ -144,8 +149,11 @@ public class Image5D extends ImagePlus {
 	 * @param stack: stack containing the image data
 	 */
 	public Image5D(String title, ImageStack stack) {	
-		super(title, stack);
+      this (title, stack, 1, 1, stack.getSize());
+   }
 		
+      /*
+		super(title, stack);
 		if(IJ.versionLessThan("1.34p")) throw new IllegalArgumentException("too old ImageJ version");
 		
 		// Initialize Image5D:currentPosition, imageData reference.
@@ -183,8 +191,78 @@ public class Image5D extends ImagePlus {
 		
 		isInitialized = true;
 	}
+   */
 
-	
+    /**
+     * Makes an Image5D from an ImageStack and dimension sizes.
+     * All other constructors of Image5D eventually call this one. So changes that apply to all 
+     * constructors should go here.
+     * @param title: title of the image
+     * @param stack: stack containing the image data. Changes first by channel, then by slice then by frame.
+     * @param nChannels
+     * @param nSlices
+     * @param nFrames
+     */
+    public Image5D(String title, ImageStack stack, int nChannels, int nSlices, int nFrames) {    
+        super(title, createZStackFromImageStack(stack, nChannels, nSlices, nFrames));
+        
+        if(IJ.versionLessThan("1.34p")) throw new IllegalArgumentException("ImageJ version too old");        
+    
+        // Set imageStack and its size for use by super.setDimensions().
+        imageStack = stack;
+        imageStackSize = stack.getSize();
+        super.setDimensions(nChannels, nSlices, nFrames);
+        
+        // Initialize Image5D:currentPosition, imageData reference.
+        for (int i=0; i<nDimensions; i++) {
+            currentPosition[i] = 0;
+        }
+
+        // Create all necessary arrays for channel display handling.
+        chCalibration = new ChannelCalibration[nChannels];
+        for (int i=0; i<nChannels; i++) {
+            chCalibration[i] = new ChannelCalibration();
+        }
+        
+        chDisplayProps = new ChannelDisplayProperties[nChannels];
+        for (int i=0; i<nChannels; i++) {
+            chDisplayProps[i] = new ChannelDisplayProperties();
+            chDisplayProps[i].setColorModel(ip.getColorModel());
+            chDisplayProps[i].setMinValue(ip.getMin());
+            chDisplayProps[i].setMaxValue(ip.getMax());
+            chDisplayProps[i].setMinThreshold(ip.getMinThreshold());
+            chDisplayProps[i].setMaxThreshold(ip.getMaxThreshold());
+            chDisplayProps[i].setLutUpdateMode(ip.getLutUpdateMode());
+            chDisplayProps[i].setDisplayedGray(false);
+        }
+        
+        // Create channel ImageProcessor and ImagePlus Arrays
+        ImageProcessor[] newChannelIPs = new ImageProcessor[nChannels];
+        channelImps = new ChannelImagePlus[nChannels];
+        for (int i=0; i<nChannels; ++i){             
+            newChannelIPs[i] = createProcessorFromDims(getType(), new int[] {width, height, 1, 1, 1});
+            newChannelIPs[i].setPixels(imageStack.getPixels(getCurrentSliceOffset()+i));
+            newChannelIPs[i].setColorModel(chDisplayProps[i].getColorModel());
+            newChannelIPs[i].setThreshold(chDisplayProps[i].getMinThreshold(), 
+                    chDisplayProps[i].getMaxThreshold(), ImageProcessor.NO_LUT_UPDATE);
+            newChannelIPs[i].setMinAndMax(chDisplayProps[i].getMinValue(), 
+                    chDisplayProps[i].getMaxValue());
+            channelImps[i] = new ChannelImagePlus("", newChannelIPs[i]);
+        }
+        channelIPs = newChannelIPs;
+                              
+        displayMode = ChannelControl.ONE_CHANNEL_COLOR;
+        displayAllGray = false;
+        //displayGrayInTiles = false;
+        
+        grayColorModel = ChannelDisplayProperties.createModelFromColor(Color.white);
+        
+        imageStack.setColorModel(grayColorModel);
+        
+        setCalibration(super.getCalibration());
+        
+        isInitialized = true;
+    }
 
 	/* Following: Constructors from super, which are not supported for Image5Ds.
 	 */
@@ -1195,6 +1273,122 @@ public class Image5D extends ImagePlus {
         return channelIPs[channel-1];
     }
 	
+   public Image5D duplicate() {
+       String newTitle = WindowManager.makeUniqueName(getTitle());
+       ImagePlus impOrig = new ImagePlus(newTitle, imageStack);
+       ImagePlus impCopy = (new ij.plugin.filter.Duplicater()).duplicateStack(impOrig, newTitle);
+       ImageStack stackCopy = impCopy.getStack();
+       
+       Image5D i5d = new Image5D(newTitle, stackCopy, getNChannels(), getNSlices(), getNFrames());
+       
+       // Copy the calibration data.
+       i5d.setCalibration(getCalibration().copy());
+       
+       // Copy the arrays for channel display handling.
+       for (int i=0; i<getNChannels(); i++) {
+           i5d.setCurrentPosition(0, 0, i, 0, 0);
+           i5d.chCalibration[i] = chCalibration[i].copy();
+           i5d.chDisplayProps[i] = chDisplayProps[i].copy();
+           
+           i5d.restoreCurrentChannelProperties();
+       }
+                    
+       // Move to current positions.
+       i5d.setCurrentPosition(currentPosition);
+
+       return i5d;
+   }
+
+   /*
+    * This functions splits the two halfs of an Image5D into two channels in a new Image5D
+    */
+    public Image5D split() {
+       String newTitle = WindowManager.makeUniqueName(getTitle());
+       ImagePlus impOrig = new ImagePlus(newTitle, imageStack);
+       // get new stack widths
+       ImageStack stack = impOrig.getStack();
+       int newwidth=getWidth()/2;
+       int height=getHeight();
+       ColorModel cm=createLut().getColorModel();
+
+       // copy the left and right to  new stacks
+       ImageStack newStack=new ImageStack(newwidth, height, cm);
+       String slicename="slice_";
+       for (int n=1; n<=stack.getSize();n++) {
+           ImageProcessor theslice=stack.getProcessor(n);
+           theslice.setRoi(0,0,newwidth,height);
+           newStack.addSlice(slicename+n,theslice.crop());
+           theslice.setRoi(newwidth,0,newwidth,height);
+           newStack.addSlice(slicename+n,theslice.crop());
+        }
+       /*
+        slicename="slice_";
+        for (int n=1; n<=stack.getSize();n++) {
+           ImageProcessor theslice=stack.getProcessor(n);
+           theslice.setRoi(newwidth,0,newwidth,height);
+           newStack.addSlice(slicename+n,theslice.crop());
+        }
+        */
+        System.out.println(getNSlices() + ", " + getNFrames() + ", " + newStack.getSize() + ", " + stack.getSize()); 
+        Image5D i5d = new Image5D(newTitle, newStack, 2, getNSlices(), getNFrames());
+       
+        // Copy the calibration data.
+        i5d.setCalibration(getCalibration().copy());
+       
+        // Copy the arrays for channel display handling.
+        i5d.setCurrentPosition(0, 0, 0, 0, 0);
+        i5d.chCalibration[0] = chCalibration[0].copy();
+        i5d.chDisplayProps[0] = chDisplayProps[0].copy();
+        i5d.chCalibration[0].setLabel(chCalibration[0].getLabel() + "-Left");
+        i5d.setCurrentPosition(0, 0, 1, 0, 0);
+        i5d.chCalibration[1] = chCalibration[0].copy();
+        i5d.chDisplayProps[1] = chDisplayProps[0].copy();
+        i5d.chCalibration[1].setLabel(chCalibration[0].getLabel() + "-Right");
+        i5d.restoreCurrentChannelProperties();
+                    
+         // Move to current positions.
+         i5d.setCurrentPosition(currentPosition);
+
+         return i5d;
+   }
+
+   public Image5D crop() {
+       // we can not crop the original, since this will crash Image5D
+       // Make a copy, crop, show in Image5D and delete original
+       String newTitle = WindowManager.makeUniqueName(getTitle());
+       ImagePlus impOrig = new ImagePlus(newTitle, imageStack);
+       Roi roi = this.getRoi();
+       if (roi == null)
+          throw new IllegalArgumentException("No ROI selected");
+       ImagePlus impCrop = (new ij.plugin.filter.Duplicater()).duplicateStack(impOrig, newTitle);
+       impCrop.setRoi(roi);
+       PlugInFilter crop = new ij.plugin.filter.Resizer();
+       crop.setup("crop", impCrop);
+       crop.run(impCrop.getProcessor());
+       ImageStack stackCopy = impCrop.getStack();
+       
+       Image5D i5d = new Image5D(newTitle, stackCopy, getNChannels(), getNSlices(), getNFrames());
+       
+       // Copy the calibration data.
+       i5d.setCalibration(getCalibration().copy());
+       
+       // Copy the arrays for channel display handling.
+       for (int i=0; i<getNChannels(); i++) {
+           i5d.setCurrentPosition(0, 0, i, 0, 0);
+           i5d.chCalibration[i] = chCalibration[i].copy();
+           i5d.chDisplayProps[i] = chDisplayProps[i].copy();
+           i5d.restoreCurrentChannelProperties();
+       }
+                    
+       // i5d.setDisplayGrayInTiles(displayGrayInTiles);
+       // i5d.setDisplayMode(displayMode);
+
+       // Move to current position.
+       i5d.setCurrentPosition(currentPosition);
+
+       return i5d;
+   }
+
 // static utility methods.
 	/** Called from constructor Image5D(String title, ImageProcessor ip) in call to this().
 	 * 	Checks if ip is null and creates a stack from it.
@@ -1230,5 +1424,21 @@ public class Image5D extends ImagePlus {
 		}
 		return ip;
 	}
+
+    /** Called from constructor Image5D(String title, ImageStack stack, int nChannels, int nSlices, int nFrames)
+     *  in call to super(). Checks the dimensions and creates the z-stack at first channel/frame.    
+     */     
+    static protected ImageStack createZStackFromImageStack(ImageStack imageStack, int nChannels, int nSlices, int nFrames) {
+        if(imageStack==null) throw new IllegalArgumentException("ImageStack is null");
+        if (nChannels<1 | nSlices<1 | nFrames<1) throw new IllegalArgumentException("Stack dimensions must be >=1.");
+        if(nChannels*nSlices*nFrames!=imageStack.getSize()) throw new IllegalArgumentException("Dimensions don't match ImageStack size.");
+         
+        ImageStack stack = new ImageStack(imageStack.getWidth(), imageStack.getHeight());
+        for(int i=0; i<nSlices; i++) {
+            stack.addSlice(imageStack.getSliceLabel(nChannels*i+1), imageStack.getPixels(nChannels*i+1));  
+        }
+        return stack;
+    }
+
 }
 	

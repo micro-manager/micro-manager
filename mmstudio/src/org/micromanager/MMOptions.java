@@ -32,9 +32,15 @@ public class MMOptions {
    private static final String DEBUG_LOG = "DebugLog";
    private static final String PREF_DIR = "MMOptions";
    private static final String MT_ACQ = "MultiThread";
+   private static final String SKIP_CONFIG = "SkipSplashScreen";
+   private static final String BUFFSIZE_MB = "bufsize_mb";
+   private static final String DISPLAY_BACKGROUND = "displayBackground";
    
    public boolean debugLogEnabled = false;
-   public boolean multiThreadedAcqEnabled = false;
+   public boolean multiThreadedAcqEnabled = true;
+   public boolean doNotAskForConfigFile = false;
+   public int circularBufferSizeMB = 25;
+   public String displayBackground = "Day";
    
    public void saveSettings() {
       Preferences root = Preferences.userNodeForPackage(this.getClass());
@@ -42,6 +48,9 @@ public class MMOptions {
       
       prefs.putBoolean(DEBUG_LOG, debugLogEnabled);
       prefs.putBoolean(MT_ACQ, multiThreadedAcqEnabled);
+      prefs.putBoolean(SKIP_CONFIG, doNotAskForConfigFile);
+      prefs.putInt(BUFFSIZE_MB, circularBufferSizeMB);
+      prefs.put(DISPLAY_BACKGROUND, displayBackground);
    }
    
    public void loadSettings() {
@@ -50,5 +59,8 @@ public class MMOptions {
       
       debugLogEnabled = prefs.getBoolean(DEBUG_LOG, debugLogEnabled);
       multiThreadedAcqEnabled = prefs.getBoolean(MT_ACQ, multiThreadedAcqEnabled);
+      doNotAskForConfigFile = prefs.getBoolean(SKIP_CONFIG, doNotAskForConfigFile);
+      circularBufferSizeMB = prefs.getInt(BUFFSIZE_MB, circularBufferSizeMB);
+      displayBackground = prefs.get(DISPLAY_BACKGROUND, displayBackground);
    }
 }

@@ -31,17 +31,21 @@ import java.util.ArrayList;
  *
  */
 public class ConfigPreset {
-   String name_;
-   ArrayList settings_;
+   private String name_;
+   private ArrayList<Setting> settings_;
+   
+   // this field is used onluy in case the configuration preset
+   // belongs to the pixelSize group
+   private double pixelSizeUm_ = 0.0;
    
    public ConfigPreset() {
       name_ = new String("Undefined");
-      settings_ = new ArrayList();
+      settings_ = new ArrayList<Setting>();
    }
    
    public ConfigPreset(String name) {
       name_ = name;
-      settings_ = new ArrayList();
+      settings_ = new ArrayList<Setting>();
    }
    
    public String getName() {
@@ -87,7 +91,7 @@ public class ConfigPreset {
    }
    
    public Setting getSetting(int i) {
-      return (Setting)settings_.get(i);
+      return settings_.get(i);
    }
    
    public String toString() {
@@ -96,5 +100,13 @@ public class ConfigPreset {
 
    public void setName(String name) {
       name_ = name;
+   }
+
+   public void setPixelSizeUm(double ps) {
+      pixelSizeUm_ = ps;
+   }
+   
+   public double getPixelSize() {
+      return pixelSizeUm_;
    }
 }

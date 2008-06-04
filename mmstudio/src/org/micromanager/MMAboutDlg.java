@@ -45,14 +45,14 @@ import com.swtdesigner.SwingResourceManager;
  * Displays version, license, info, etc.
  */
 public class MMAboutDlg extends JDialog {
-
+   private static final long serialVersionUID = 1L;
    private JTextArea welcomeTextArea_;
    private JTextArea textArea_;
    private JTextArea versionInfo_;
    
    public static String COPYRIGHT_TEXT = 
       
-      "Copyright University of California San Francisco, 2007. All rights reserved.\n\n" +
+      "Copyright University of California San Francisco, 2008. All rights reserved.\n\n" +
       "Additional copyright on portions of this software by the following institutions, projects or individuals:" +
       " Wayne Rasband, NIH, Joachim Walter, ACE, BeanShell, JSON, logix4u, libserial, Todd Klark and Ramon de Klein";
    
@@ -74,7 +74,7 @@ public class MMAboutDlg extends JDialog {
 
       final JLabel micromanageLabel = new JLabel();
       micromanageLabel.setFont(new Font("", Font.BOLD, 16));
-      micromanageLabel.setText("Micro-Manager 2.0");
+      micromanageLabel.setText("Micro-Manager 1.2");
       micromanageLabel.setBounds(44, 11, 176, 23);
       getContentPane().add(micromanageLabel);
 

@@ -1,14 +1,10 @@
 package org.micromanager.image5d;
 
-import java.awt.*;
-
-
-import ij.*;
-import ij.gui.*;
-import ij.plugin.*;
-/*
- * Created on 07.04.2005
- */
+import ij.IJ;
+import ij.ImagePlus;
+import ij.WindowManager;
+import ij.gui.GenericDialog;
+import ij.plugin.PlugIn;
 
 /** Converts an ImageStack to an Image5D. NChannels, nSlices and nFrames are taken
  * as default values.

@@ -31,9 +31,12 @@ package org.micromanager;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
@@ -58,9 +61,10 @@ import javax.swing.table.TableColumn;
 
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
+import mmcorej.PropertyType;
 import mmcorej.StrVector;
 
-import org.micromanager.utils.DeviceControlGUI;
+import org.micromanager.api.DeviceControlGUI;
 import org.micromanager.utils.MMFrame;
 import org.micromanager.utils.ShowFlags;
 
@@ -82,12 +86,12 @@ public class PropertyEditor extends MMFrame {
    private ShowFlags flags_;
    
    private static final String PREF_SHOW_READONLY = "show_readonly";
-   private static final String PREF_GROUP = "group";
    private JCheckBox showCamerasCheckBox_;
    private JCheckBox showShuttersCheckBox_;
    private JCheckBox showStagesCheckBox_;
    private JCheckBox showStateDevicesCheckBox_;
    private JCheckBox showOtherCheckBox_;
+   private JScrollPane scrollPane_;
     
    public PropertyEditor() {
       super();
@@ -121,16 +125,15 @@ public class PropertyEditor extends MMFrame {
       loadPosition(100, 100, 400, 300);
       setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-      final JScrollPane scrollPane = new JScrollPane();
-      scrollPane.setFont(new Font("Arial", Font.PLAIN, 10));
-      scrollPane.setBorder(new BevelBorder(BevelBorder.LOWERED));
-      getContentPane().add(scrollPane);
-      springLayout.putConstraint(SpringLayout.EAST, scrollPane, -5, SpringLayout.EAST, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, scrollPane, 5, SpringLayout.WEST, getContentPane());
-
+      scrollPane_ = new JScrollPane();
+      scrollPane_.setFont(new Font("Arial", Font.PLAIN, 10));
+      scrollPane_.setBorder(new BevelBorder(BevelBorder.LOWERED));
+      getContentPane().add(scrollPane_);
+      springLayout.putConstraint(SpringLayout.EAST, scrollPane_, -5, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, scrollPane_, 5, SpringLayout.WEST, getContentPane());
+      
       table_ = new JTable();
       table_.setAutoCreateColumnsFromModel(false);
-      scrollPane.setViewportView(table_);
       
       final JButton refreshButton = new JButton();
       refreshButton.setIcon(SwingResourceManager.getIcon(PropertyEditor.class, "/org/micromanager/icons/arrow_refresh.png"));
@@ -166,7 +169,6 @@ public class PropertyEditor extends MMFrame {
       
       // restore values from the previous session
       Preferences prefs = getPrefsNode();
-      String group = prefs.get(PREF_GROUP, "");
       showReadonlyCheckBox_.setSelected(prefs.getBoolean(PREF_SHOW_READONLY, true));
 
       showCamerasCheckBox_ = new JCheckBox();
@@ -239,19 +241,26 @@ public class PropertyEditor extends MMFrame {
       springLayout.putConstraint(SpringLayout.EAST, showOtherCheckBox_, 155, SpringLayout.WEST, getContentPane());
       springLayout.putConstraint(SpringLayout.WEST, showOtherCheckBox_, 10, SpringLayout.WEST, getContentPane());
       springLayout.putConstraint(SpringLayout.NORTH, showOtherCheckBox_, 95, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.SOUTH, scrollPane, -5, SpringLayout.SOUTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, scrollPane, 5, SpringLayout.SOUTH, showOtherCheckBox_);
+      springLayout.putConstraint(SpringLayout.SOUTH, scrollPane_, -5, SpringLayout.SOUTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, scrollPane_, 5, SpringLayout.SOUTH, showOtherCheckBox_);
    }
    
    protected void refresh() {
       data_.refresh();
    }
 
+   public void updateStatus() {
+      if (data_ != null)
+         data_.updateStatus();
+   }
+
    public void setCore(CMMCore core){
       data_ = new PropertyTableData(core, flags_);
-      table_.removeAll();
+      table_ = new JTable();
+      table_.setAutoCreateColumnsFromModel(false);
       table_.setModel(data_);
-      
+      scrollPane_.setViewportView(table_);
+     
       PropertyCellEditor cellEditor = new PropertyCellEditor();
       PropertyCellRenderer renderer = new PropertyCellRenderer();
      
@@ -289,6 +298,10 @@ public class PropertyEditor extends MMFrame {
       public boolean readOnly = false;    // is it read-only ?
       public String allowed[];            // the list of allowed values
       public boolean show = true; // is it included in the current configuration ?
+      public boolean hasRange = false; // is there a range for values
+      public double lowerLimit = 0.0;
+      public double upperLimit = 0.0;
+      public boolean isInt = false; // is this an integer property
    }
    
 
@@ -296,12 +309,14 @@ public class PropertyEditor extends MMFrame {
     * Property table data model, representing MMCore data
     */
    class PropertyTableData extends AbstractTableModel {
+      private static final long serialVersionUID = 1L;
+
       final public String columnNames_[] = {
             "Property",
             "Value",
       };
       
-      ArrayList propList_ = new ArrayList();
+      ArrayList<PropertyItem> propList_ = new ArrayList<PropertyItem>();
       private CMMCore core_ = null;
       private boolean showReadOnly_ = true;
       
@@ -338,12 +353,12 @@ public class PropertyEditor extends MMFrame {
       }
       
       public PropertyItem getPropertyItem(int row) {
-         return (PropertyItem) propList_.get(row);
+         return propList_.get(row);
       }
       
       public Object getValueAt(int row, int col) {
          
-         PropertyItem item = (PropertyItem) propList_.get(row);
+         PropertyItem item = propList_.get(row);
          if (col == 0)
             return item.device + "-" + item.name;
          else if (col == 1)
@@ -353,7 +368,7 @@ public class PropertyEditor extends MMFrame {
       }
       
       public void setValueAt(Object value, int row, int col) {
-         PropertyItem item = (PropertyItem) propList_.get(row);
+         PropertyItem item = propList_.get(row);
          if (col == 1) {
             try {
                core_.setProperty(item.device, item.name, value.toString());
@@ -362,7 +377,7 @@ public class PropertyEditor extends MMFrame {
                refresh();
                //item.m_value = value.toString();
                if (parentGUI_ != null)
-                  parentGUI_.updateGUI();              
+                  parentGUI_.updateGUI(true);              
                fireTableCellUpdated(row, col);
             } catch (Exception e) {
                handleException(e);
@@ -376,13 +391,19 @@ public class PropertyEditor extends MMFrame {
       
       public boolean isCellEditable(int nRow, int nCol) {
          if(nCol == 1)
-            return !((PropertyItem)propList_.get(nRow)).readOnly;
+            return !propList_.get(nRow).readOnly;
          else
             return false;
       }
       
       String getConfig(String group) {
-         return core_.getCurrentConfig(group);
+         String config = "";
+         try {
+            config = core_.getCurrentConfig(group);
+         } catch (Exception e) {
+            handleException(e);
+         }
+         return config;
       }
       
       StrVector getAvailableConfigs(String group) {
@@ -392,7 +413,7 @@ public class PropertyEditor extends MMFrame {
       public void refresh(){
          try {            
             for (int i=0; i<propList_.size(); i++){
-               PropertyItem item = (PropertyItem) propList_.get(i);
+               PropertyItem item = propList_.get(i);
                item.value = core_.getProperty(item.device, item.name);
             }
             this.fireTableDataChanged();
@@ -436,6 +457,10 @@ public class PropertyEditor extends MMFrame {
                      for (int k=0; k<values.size(); k++){
                         item.allowed[k] = values.get(k);
                      }
+                     item.hasRange = core_.hasPropertyLimits(devices.get(i), properties.get(j));
+                     item.lowerLimit = core_.getPropertyLowerLimit(devices.get(i), properties.get(j));
+                     item.upperLimit = core_.getPropertyUpperLimit(devices.get(i), properties.get(j));
+                     item.isInt = PropertyType.Integer == core_.getPropertyType(item.device, item.name);
                      
                      if ((showReadOnly_ && item.readOnly) || !item.readOnly)
                         propList_.add(item);
@@ -461,10 +486,12 @@ public class PropertyEditor extends MMFrame {
     * property enforces a set of allowed values.
     */
    public class PropertyCellEditor extends AbstractCellEditor implements TableCellEditor {
+      private static final long serialVersionUID = 1L;
       // This is the component that will handle the editing of the cell value
       JTextField text_ = new JTextField();
       JComboBox combo_ = new JComboBox();
       JCheckBox check_ = new JCheckBox();
+      SliderPanel slider_ = new SliderPanel();
       int editingCol_;
       PropertyItem item_;
       
@@ -472,6 +499,18 @@ public class PropertyEditor extends MMFrame {
          super();
          check_.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
+               fireEditingStopped();
+            }
+         });
+         
+         slider_.addEditActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+               fireEditingStopped();
+            }            
+         });
+         
+         slider_.addSliderMouseListener(new MouseAdapter() {
+            public void mouseReleased(MouseEvent e) {
                fireEditingStopped();
             }
          });
@@ -493,8 +532,19 @@ public class PropertyEditor extends MMFrame {
          
          if (colIndex == 1) {
             if (item_.allowed.length == 0) {
-               text_.setText((String)value);
-               return text_;
+               if (item_.hasRange) {
+                  Dimension d = slider_.getPreferredSize();
+                  table_.setRowHeight(rowIndex, d.height);
+                  if (item_.isInt)
+                     slider_.setLimits((int)item_.lowerLimit, (int)item_.upperLimit);
+                  else
+                     slider_.setLimits(item_.lowerLimit, item_.upperLimit);
+                  slider_.setText((String)value);
+                  return slider_;
+               } else {
+                  text_.setText((String)value);
+                  return text_;
+               }
             }
          
             ActionListener[] l = combo_.getActionListeners();
@@ -524,10 +574,14 @@ public class PropertyEditor extends MMFrame {
       // It must return the new value to be stored in the cell.
       public Object getCellEditorValue() {
          if (editingCol_ == 1) {
-            if (item_.allowed.length == 0)
-               return text_.getText();
-            else
+            if (item_.allowed.length == 0) {
+               if (item_.hasRange)
+                  return slider_.getText();
+               else
+                  return text_.getText();
+            } else {
                return combo_.getSelectedItem();
+            }
          } else if (editingCol_ == 2)
             return check_;
          
@@ -541,13 +595,13 @@ public class PropertyEditor extends MMFrame {
    public class PropertyCellRenderer implements TableCellRenderer {
       // This method is called each time a cell in a column
       // using this renderer needs to be rendered.
-      PropertyItem m_item;
+      PropertyItem item_;
       
       public Component getTableCellRendererComponent(JTable table, Object value,
             boolean isSelected, boolean hasFocus, int rowIndex, int colIndex) {
          
          PropertyTableData data = (PropertyTableData)table.getModel();
-         m_item = data.getPropertyItem(rowIndex);
+         item_ = data.getPropertyItem(rowIndex);
          
          if (isSelected) {
             // cell (and perhaps other cells) are selected
@@ -566,25 +620,29 @@ public class PropertyEditor extends MMFrame {
             lab.setHorizontalAlignment(JLabel.LEFT);
             comp = lab;
          } else if (colIndex == 1) {
-            JLabel lab = new JLabel();
-            lab.setOpaque(true);
-            lab.setText(m_item.value.toString());
-            lab.setHorizontalAlignment(JLabel.LEFT);
-            comp = lab;
-
+            if (item_.hasRange) {
+               SliderPanel slider = new SliderPanel();
+               slider.setLimits(item_.lowerLimit, item_.upperLimit);
+               slider.setText((String)value);
+               slider.setToolTipText((String)value);
+               comp = slider;
+            } else {
+               JLabel lab = new JLabel();
+               lab.setOpaque(true);
+               lab.setText(item_.value.toString());
+               lab.setHorizontalAlignment(JLabel.LEFT);
+               comp = lab;
+            }
          } else {
             comp = new JLabel("Undefinded");
          }
          
-         Font font = getFont();
-         if (m_item.readOnly) {
-            //comp.setFont(new java.awt.Font( font.getName(), Font.PLAIN, font.getSize()));
+         if (item_.readOnly) {
             comp.setBackground(Color.LIGHT_GRAY);
          } else {
-            //comp.setFont(new java.awt.Font( font.getName(), Font.BOLD, font.getSize()));
             comp.setBackground(Color.white);
          }         
-          return comp;
+         return comp;
       }
       
       // The following methods override the defaults for performance reasons

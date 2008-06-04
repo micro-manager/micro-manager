@@ -24,20 +24,25 @@
 
 package org.micromanager.conf;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.Vector;
 import java.util.prefs.Preferences;
+import java.awt.event.KeyEvent;
 
+import javax.swing.InputMap;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.KeyStroke;
 import javax.swing.ListCellRenderer;
 import javax.swing.ListSelectionModel;
+import javax.swing.border.LineBorder;
 import javax.swing.table.TableColumn;
 
 /**
@@ -45,15 +50,13 @@ import javax.swing.table.TableColumn;
  * Select and configure COM ports.
  */
 public class ComPortsPage extends PagePanel {
-
+   private static final long serialVersionUID = 1L;
    private JTable portTable_;
    private JList portList_;
    private static final String HELP_FILE_NAME = "conf_comport_page.html";
 
    class CBListCellRenderer extends JCheckBox implements ListCellRenderer {
-
-      // This is the only method defined by ListCellRenderer.
-      // We just reconfigure the JLabel each time we're called.
+     private static final long serialVersionUID = 1L;
 
       public Component getListCellRendererComponent(
             JList list,
@@ -85,7 +88,9 @@ public class ComPortsPage extends PagePanel {
       setHelpFileName(HELP_FILE_NAME);
 
       portList_ = new JList();
-      portList_.setBounds(10, 44, 157, 90);
+      portList_.setBorder(new LineBorder(Color.black, 1, false));
+      portList_.setBackground(Color.LIGHT_GRAY);
+      portList_.setBounds(10, 44, 157, 194);
       add(portList_);
       portList_.setCellRenderer(new CBListCellRenderer());
       
@@ -96,7 +101,6 @@ public class ComPortsPage extends PagePanel {
                  JCheckBox box = (JCheckBox)(portList_.getModel().getElementAt(index));
                  box.setSelected(!box.isSelected());
                  model_.useSerialPort(index, box.isSelected());
-                 System.out.println("Item " + index + " clicked");
                  portList_.repaint();
               }
              
@@ -112,6 +116,9 @@ public class ComPortsPage extends PagePanel {
       portTable_ = new JTable();
       portTable_.setAutoCreateColumnsFromModel(false);
       portTable_.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+      InputMap im = portTable_.getInputMap(JTable.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+      im.put( KeyStroke.getKeyStroke( KeyEvent.VK_ENTER, 0 ), "none" );
+
       scrollPane.setViewportView(portTable_);
 
       final JLabel usePortsLabel = new JLabel();
@@ -125,7 +132,7 @@ public class ComPortsPage extends PagePanel {
       model_.removeDuplicateComPorts();
       Device ports[] = model_.getAvailableSerialPorts();
       
-      Vector portsVect = new Vector();
+      Vector<JCheckBox> portsVect = new Vector<JCheckBox>();
       for (int i=0; i<ports.length; i++) {
          JCheckBox box = new JCheckBox(ports[i].getAdapterName());
          box.setSelected(model_.isPortInUse(i));

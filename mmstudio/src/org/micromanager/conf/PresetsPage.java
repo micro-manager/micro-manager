@@ -46,7 +46,7 @@ import javax.swing.tree.TreePath;
  *
  */
 public class PresetsPage extends PagePanel {
-
+   private static final long serialVersionUID = 1L;
    private JTable propTable_;
    private JTree groupTree_;
    /**
@@ -364,7 +364,6 @@ public class PresetsPage extends PagePanel {
    protected void editNode() {
       TreePath path = groupTree_.getSelectionPath();
       DefaultTreeModel treeModel = (DefaultTreeModel)groupTree_.getModel();
-      PropertyTableModel tableModel = (PropertyTableModel)propTable_.getModel();
       Object nodes[] = path.getPath();
       if (nodes.length == 2) {
          // edit group
@@ -420,8 +419,6 @@ public class PresetsPage extends PagePanel {
          }
          treeModel.nodeStructureChanged((DefaultMutableTreeNode)nodes[1]);         
       } else if (nodes.length == 4) {
-         // edit setting
-         ConfigPreset prs = (ConfigPreset)((DefaultMutableTreeNode)nodes[2]).getUserObject();
          Setting s = (Setting)((DefaultMutableTreeNode)nodes[3]).getUserObject();
          
          // obtain available values for the property
@@ -452,7 +449,7 @@ public class PresetsPage extends PagePanel {
                      value);
             } else {
                // allowed values not defined
-               newValue = (String)JOptionPane.showInputDialog(this,
+               newValue = JOptionPane.showInputDialog(this,
                      "Device=" + s.deviceName_ + ", Property=" + s.propertyName_ + ", type in the new value:",
                      value);              
             }

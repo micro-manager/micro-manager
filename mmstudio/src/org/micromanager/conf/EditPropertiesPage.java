@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.prefs.Preferences;
 
 import javax.swing.JScrollPane;
+import javax.swing.JOptionPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.TableColumn;
@@ -88,7 +89,7 @@ public class EditPropertiesPage extends PagePanel {
       rebuildTable();
       
       // create an array of allowed ports
-      ArrayList ports = new ArrayList();
+      ArrayList<Device> ports = new ArrayList<Device>();
       Device avPorts[] = model_.getAvailableSerialPorts();
       for(int i=0; i<avPorts.length; i++)
          if (model_.isPortInUse(avPorts[i]))
@@ -100,9 +101,14 @@ public class EditPropertiesPage extends PagePanel {
          for (int j=0; j<devices[i].getNumberOfProperties(); j++) {
             Property p = devices[i].getProperty(j);
             if (p.name_.compareTo(MMCoreJ.getG_Keyword_Port()) == 0) {
+            	if (ports.size() == 0) {
+            		// no ports available, tell user and return
+            		JOptionPane.showMessageDialog(null, "First select a serial port in step 2 of the wizard");
+            		return false;
+            	}
                String allowed[] = new String[ports.size()];
                for (int k=0; k<ports.size(); k++)
-                  allowed[k] = ((Device)ports.get(k)).getName();
+                  allowed[k] = ports.get(k).getName();
                p.allowedValues_ = allowed;
             }
          }
@@ -113,13 +119,28 @@ public class EditPropertiesPage extends PagePanel {
    public boolean exitPage(boolean toNextPage) {
       try {
          if (toNextPage) {
+             // create an array of allowed port names
+             ArrayList<String> ports = new ArrayList<String>();
+             Device avPorts[] = model_.getAvailableSerialPorts();
+             for(int i=0; i<avPorts.length; i++)
+                if (model_.isPortInUse(avPorts[i]))
+                   ports.add(avPorts[i].getAdapterName());
+             
             // apply the properties
             PropertyTableModel ptm = (PropertyTableModel)propTable_.getModel();
             for (int i=0; i<ptm.getRowCount(); i++) {
                Setting s = ptm.getSetting(i);
+               if (s.propertyName_.compareTo(MMCoreJ.getG_Keyword_Port()) == 0) {
+            	   // check that this is a valid port
+            	   if (!ports.contains(s.propertyValue_)) {
+            		  JOptionPane.showMessageDialog(null, "Please select a valid serial port for " + s.deviceName_);
+            		  return false;
+            	   }
+               }
                core_.setProperty(s.deviceName_, s.propertyName_, s.propertyValue_);
                Device dev = model_.findDevice(s.deviceName_);
                Property prop = dev.findSetupProperty(s.propertyName_);
+            	   
                if (prop == null)
                   model_.addSetupProperty(s.deviceName_, new Property(s.propertyName_, s.propertyValue_, true));
                model_.setDeviceSetupProperty(s.deviceName_, s.propertyName_, s.propertyValue_);

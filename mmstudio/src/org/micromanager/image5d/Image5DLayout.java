@@ -59,12 +59,14 @@ public class Image5DLayout extends ImageLayout implements LayoutManager2 {
     public void layoutContainer(Container target) {
     	// Call super to call ImageCanvas.resizeCanvas().
 //    	super.layoutContainer(target);
-    	
     	// Do layout completely anew.
     	// Remember: getInsets() is overridden in Image5DWindow.
     	Dimension d = target.getSize();
     	Insets insets = target.getInsets();
 		Dimension psize = preferredLayoutSize(target);
+
+      // Set the background color to dark gray to make it easier to work with fluorescence images
+      target.setBackground(java.awt.Color.gray);
 		
 		int offsX = insets.left + hgap + (d.width - psize.width)/2;
 		int offsY = insets.top + vgap + (d.height - psize.height)/2;

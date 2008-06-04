@@ -23,6 +23,7 @@
 //
 package org.micromanager.conf;
 
+import java.util.ArrayList;
 import java.util.prefs.Preferences;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -36,8 +37,11 @@ import org.micromanager.conf.DevicesPage.DeviceTable_TableModel;
  *
  */
 public class DelayPage extends PagePanel {
+   private static final long serialVersionUID = 1L;
 
    class DelayTableModel extends AbstractTableModel {
+      private static final long serialVersionUID = 1L;
+
       public final String[] COLUMN_NAMES = new String[] {
             "Name",
             "Adapter",
@@ -45,20 +49,29 @@ public class DelayPage extends PagePanel {
       };
       
       MicroscopeModel model_;
-      Device devices_[];
+      ArrayList<Device> devices_;
       
       public DelayTableModel(MicroscopeModel model) {
-         devices_ = model.getDevices();
+         devices_ = new ArrayList<Device>();
+         Device allDevices[] = model.getDevices();
+         for (int i=0; i<allDevices.length; i++) {
+            if (allDevices[i].usesDelay())
+               devices_.add(allDevices[i]);
+         }
          model_ = model;
       }
       
       public void setMicroscopeModel(MicroscopeModel mod) {
-         devices_ = mod.getDevices();
+         Device allDevices[] = mod.getDevices();
+         for (int i=0; i<allDevices.length; i++) {
+            if (allDevices[i].usesDelay())
+            devices_.add(allDevices[i]);
+         }
          model_ = mod;
       }
       
       public int getRowCount() {
-         return devices_.length;
+         return devices_.size();
       }
       public int getColumnCount() {
          return COLUMN_NAMES.length;
@@ -70,16 +83,16 @@ public class DelayPage extends PagePanel {
       public Object getValueAt(int rowIndex, int columnIndex) {
          
          if (columnIndex == 0)
-            return devices_[rowIndex].getName();
+            return devices_.get(rowIndex).getName();
          else if (columnIndex == 1)
-            return devices_[rowIndex].getAdapterName();
+            return devices_.get(rowIndex).getAdapterName();
          else
-            return new Double(devices_[rowIndex].getDelay());
+            return new Double(devices_.get(rowIndex).getDelay());
       }
       public void setValueAt(Object value, int row, int col) {
          if (col == 2) {
             try {
-               devices_[row].setDelay(Double.parseDouble((String)value));
+               devices_.get(row).setDelay(Double.parseDouble((String)value));
                fireTableCellUpdated(row, col);
             } catch (Exception e) {
                handleError(e.getMessage());
@@ -95,7 +108,11 @@ public class DelayPage extends PagePanel {
       }
       
       public void refresh() {
-         devices_ = model_.getDevices();
+         Device allDevices[] = model_.getDevices();
+         for (int i=0; i<allDevices.length; i++) {
+            if (allDevices[i].usesDelay())
+            devices_.add(allDevices[i]);
+         }
          this.fireTableDataChanged();
       }
    }

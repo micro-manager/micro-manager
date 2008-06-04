@@ -38,6 +38,7 @@ import javax.swing.table.TableCellEditor;
  *
  */
 public class PropertyCellEditor extends AbstractCellEditor implements TableCellEditor {
+   private static final long serialVersionUID = 1L;
    // This is the component that will handle the editing of the cell value
    JTextField text_ = new JTextField();
    JComboBox combo_ = new JComboBox();
@@ -62,6 +63,11 @@ public class PropertyCellEditor extends AbstractCellEditor implements TableCellE
       if (colIndex == 2) {
          if (item_.allowedValues_.length == 0) {
             text_.setText((String)value);
+            text_.addActionListener(new ActionListener() {
+               public void actionPerformed(ActionEvent e) {
+                  fireEditingStopped();
+               }
+            });
             return text_;
          }
       

@@ -47,7 +47,7 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 
 public class RegistrationDlg extends JDialog {
-   
+   private static final long serialVersionUID = 1L;
    public static final String REGISTRATION = "registered";
    public static final String REGISTRATION_NAME = "reg_name";
    public static final String REGISTRATION_INST = "reg_institution";

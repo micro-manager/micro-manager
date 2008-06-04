@@ -33,7 +33,7 @@ import javax.swing.JFrame;
  * Saves and restores window size and position. 
  */
 public class MMFrame extends JFrame {
-   
+   private static final long serialVersionUID = 1L;
    private Preferences prefs_;
    private static final String WINDOW_X = "frame_y";
    private static final String WINDOW_Y = "frame_x";

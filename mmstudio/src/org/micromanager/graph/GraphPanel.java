@@ -31,6 +31,7 @@ import java.text.*;
  * XY graph view. 
  */
 public class GraphPanel extends JPanel {
+   private static final long serialVersionUID = -1280955888510181945L;
    private GraphData data_;
    private GraphData.Bounds bounds_;
    
@@ -113,7 +114,6 @@ public class GraphPanel extends JPanel {
       float yUnit = 1.0f;
       
       if (bounds_.getRangeX() <= 0.0 || bounds_.getRangeY() <= 0.0) {
-         System.out.println("Out of range " + bounds_.getRangeX() + ", " + bounds_.getRangeY());
          return; // invalid range data
       }
       

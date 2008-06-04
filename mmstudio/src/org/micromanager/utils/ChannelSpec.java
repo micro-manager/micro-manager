@@ -36,12 +36,13 @@ public class ChannelSpec {
    public Color color_ = Color.gray;
    public ContrastSettings contrast8_;
    public ContrastSettings contrast16_;
-   public String name_ = new String("Undef");
+   public String name_ = "";
+   public int skipFactorFrame_ = 0;
    
    public ChannelSpec(){
       contrast8_ = new ContrastSettings(0, 255);
       contrast16_ = new ContrastSettings(0, 65535);
-      color_ = Color.RED;
+      color_ = Color.WHITE;
    }
 }
 

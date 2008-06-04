@@ -27,6 +27,8 @@ import java.awt.Component;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
@@ -55,9 +57,10 @@ import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.DeviceType;
 import mmcorej.PropertySetting;
+import mmcorej.PropertyType;
 import mmcorej.StrVector;
 
-import org.micromanager.utils.DeviceControlGUI;
+import org.micromanager.api.DeviceControlGUI;
 import org.micromanager.utils.MMDialog;
 import org.micromanager.utils.ShowFlags;
 
@@ -69,6 +72,7 @@ import org.micromanager.utils.ShowFlags;
  * Specifically targeted for editing configuration presets.
  */
 public class PresetEditor extends MMDialog {
+   private static final long serialVersionUID = 1L;
    private JTextArea textArea_;
    private JTextField presetNameField_;
    private String presetName_;
@@ -87,6 +91,7 @@ public class PresetEditor extends MMDialog {
    private JCheckBox showStateDevicesCheckBox_;
    private JCheckBox showOtherCheckBox_;
    private Configuration initialCfg_;
+   private JScrollPane scrollPane_;
     
    public PresetEditor(String presetName, String group) {
       super();
@@ -125,19 +130,19 @@ public class PresetEditor extends MMDialog {
       loadPosition(100, 100, 400, 300);
       setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
-      final JScrollPane scrollPane = new JScrollPane();
-      scrollPane.setFont(new Font("Arial", Font.PLAIN, 10));
-      scrollPane.setBorder(new BevelBorder(BevelBorder.LOWERED));
-      getContentPane().add(scrollPane);
-      springLayout.putConstraint(SpringLayout.SOUTH, scrollPane, -5, SpringLayout.SOUTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, scrollPane, 160, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.EAST, scrollPane, -5, SpringLayout.EAST, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, scrollPane, 5, SpringLayout.WEST, getContentPane());
+      scrollPane_ = new JScrollPane();
+      scrollPane_.setFont(new Font("Arial", Font.PLAIN, 10));
+      scrollPane_.setBorder(new BevelBorder(BevelBorder.LOWERED));
+      getContentPane().add(scrollPane_);
+      springLayout.putConstraint(SpringLayout.SOUTH, scrollPane_, -5, SpringLayout.SOUTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, scrollPane_, 160, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.EAST, scrollPane_, -5, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, scrollPane_, 5, SpringLayout.WEST, getContentPane());
 
       table_ = new JTable();
       table_.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
       table_.setAutoCreateColumnsFromModel(false);
-      scrollPane.setViewportView(table_);
+      scrollPane_.setViewportView(table_);
       
       showCamerasCheckBox_ = new JCheckBox();
       showCamerasCheckBox_.setFont(new Font("", Font.PLAIN, 10));
@@ -307,7 +312,10 @@ public class PresetEditor extends MMDialog {
    
    public void setCore(CMMCore core){
       data_ = new PropertyTableData(core, flags_);
-      table_.removeAll();
+      table_ = new JTable();
+      table_.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+      table_.setAutoCreateColumnsFromModel(false);
+      scrollPane_.setViewportView(table_);
       table_.setModel(data_);
       
       PropertyCellEditor cellEditor = new PropertyCellEditor();
@@ -361,6 +369,10 @@ public class PresetEditor extends MMDialog {
       public boolean show = true; // is it included in the current configuration ?
       public boolean orgSel = false;
       public boolean confInclude = false; // is it included in the current configuration ?
+      public boolean hasRange = false; // is there a range for values
+      public double lowerLimit = 0.0;
+      public double upperLimit = 0.0;
+      public boolean isInt = false; // is this an integer property
    }
    
 
@@ -376,7 +388,7 @@ public class PresetEditor extends MMDialog {
             "Use"
       };
       
-      ArrayList propList_ = new ArrayList();
+      ArrayList<PropertyItem> propList_ = new ArrayList<PropertyItem>();
       private CMMCore core_ = null;
       Configuration groupData_[];
       PropertySetting groupSignature_[];
@@ -391,9 +403,9 @@ public class PresetEditor extends MMDialog {
       
       public String findMatchingPreset() {
          // find selected rows
-         ArrayList selected = new ArrayList();
+         ArrayList<PropertyItem> selected = new ArrayList<PropertyItem>();
          for (int i=0; i<propList_.size(); i++) {
-            PropertyItem item = (PropertyItem)propList_.get(i);
+            PropertyItem item = propList_.get(i);
             if (item.confInclude)
                selected.add(item);
          }
@@ -401,7 +413,7 @@ public class PresetEditor extends MMDialog {
          for (int i=0; i<groupData_.length; i++) {
             int matchCount = 0;
             for (int j=0; j<selected.size(); j++) {
-               PropertyItem pi = (PropertyItem)selected.get(j);
+               PropertyItem pi = selected.get(j);
                PropertySetting ps = new PropertySetting(pi.device, pi.name, pi.value);
                if (groupData_[i].isSettingIncluded(ps)) {
                   matchCount++;
@@ -416,21 +428,21 @@ public class PresetEditor extends MMDialog {
       
       public boolean applySettings(String presetName, String newPresetName, String group) {
          // find selected rows
-         ArrayList selected = new ArrayList();
+         ArrayList<PropertyItem> selected = new ArrayList<PropertyItem>();
          for (int i=0; i<propList_.size(); i++) {
-            PropertyItem item = (PropertyItem)propList_.get(i);
+            PropertyItem item = propList_.get(i);
             if (item.confInclude)
                selected.add(item);
          }
                   
-         ArrayList mismatched = new ArrayList();
-         ArrayList missing = new ArrayList();
+         ArrayList<PropertyItem> mismatched = new ArrayList<PropertyItem>();
+         ArrayList<PropertySetting> missing = new ArrayList<PropertySetting>();
          
          // check signature for mismatched or missing items
          if (!isEditingGroup()) {
             // mismatched
             for (int i=0; i<selected.size(); i++) {
-               PropertyItem item = (PropertyItem)selected.get(i);
+               PropertyItem item = selected.get(i);
                int j;
                for (j=0; j<groupSignature_.length; j++) {
                   if (item.device.compareTo(groupSignature_[j].getDeviceLabel()) == 0 &&
@@ -447,7 +459,7 @@ public class PresetEditor extends MMDialog {
             for (int i=0; i<groupSignature_.length; i++) {
                int j;
                for (j=0; j<selected.size(); j++) {
-                  PropertyItem item = (PropertyItem)selected.get(j);
+                  PropertyItem item = selected.get(j);
                   if (item.device.compareTo(groupSignature_[i].getDeviceLabel()) == 0 &&
                       item.name.compareTo(groupSignature_[i].getPropertyName()) == 0 ) {
                      break;
@@ -462,10 +474,10 @@ public class PresetEditor extends MMDialog {
          if (mismatched.size() > 0 || missing.size() > 0) {
             String mismatchedList = new String("");
             for (int i=0; i<mismatched.size(); i++)
-               mismatchedList += ((PropertyItem)mismatched.get(i)).device + "-" + ((PropertyItem)mismatched.get(i)).name + "\n";
+               mismatchedList += mismatched.get(i).device + "-" + mismatched.get(i).name + "\n";
             String missingList = new String("");
             for (int i=0; i<missing.size(); i++)
-               missingList += ((PropertySetting)missing.get(i)).getDeviceLabel() + "-" + ((PropertySetting)missing.get(i)).getPropertyName() + "\n";
+               missingList += missing.get(i).getDeviceLabel() + "-" + missing.get(i).getPropertyName() + "\n";
             
             String msgText = "All presets within a group should operate on the same set of device properties.\n" +
                              "Based on the previously defined presets in this group, the following inconsistencises were detected:\n\n" +
@@ -483,9 +495,21 @@ public class PresetEditor extends MMDialog {
                core_.deleteConfig(group, presetName);
             
             // define a new preset
-            for (int i=0; i<selected.size(); i++) {
-               PropertyItem item = (PropertyItem)selected.get(i);
-               core_.defineConfig(group, newPresetName, item.device, item.name, item.value);
+            // If only one Property was selected and this is a new group, define all items from this Property as a preset
+            StrVector thisGroup = core_.getAvailableConfigs(group);
+            if ( (selected.size() == 1) && (thisGroup.size() == 0) && (selected.get(0).allowed.length > 0) && selected.get(0).allowed.length < 25)
+            {
+               PropertyItem item = selected.get(0);
+               for (int i=0; i<item.allowed.length; i++) 
+               {
+                  core_.defineConfig(group, item.allowed[i], item.device, item.name, item.allowed[i]);
+               }
+            } else 
+            {
+               for (int i=0; i<selected.size(); i++) {
+                  PropertyItem item = selected.get(i);
+                  core_.defineConfig(group, newPresetName, item.device, item.name, item.value);
+               }
             }
             
          } catch (Exception e) {
@@ -535,12 +559,12 @@ public class PresetEditor extends MMDialog {
       }
       
       public PropertyItem getPropertyItem(int row) {
-         return (PropertyItem) propList_.get(row);
+         return propList_.get(row);
       }
       
       public Object getValueAt(int row, int col) {
          
-         PropertyItem item = (PropertyItem) propList_.get(row);
+         PropertyItem item = propList_.get(row);
          if (col == 0)
             return item.device + "-" + item.name;
          else if (col == 1)
@@ -555,7 +579,7 @@ public class PresetEditor extends MMDialog {
       }
       
       public void setValueAt(Object value, int row, int col) {
-         PropertyItem item = (PropertyItem) propList_.get(row);
+         PropertyItem item = propList_.get(row);
          if (col == 1) {
             try {
                core_.setProperty(item.device, item.name, value.toString());
@@ -564,7 +588,7 @@ public class PresetEditor extends MMDialog {
                refresh();
                //item.m_value = value.toString();
                if (parentGUI_ != null)
-                  parentGUI_.updateGUI();              
+                  parentGUI_.updateGUI(true);              
                fireTableCellUpdated(row, col);
             } catch (Exception e) {
                handleException(e);
@@ -581,7 +605,7 @@ public class PresetEditor extends MMDialog {
       
       public boolean isCellEditable(int nRow, int nCol) {
          if (nCol == 1)
-            return !((PropertyItem)propList_.get(nRow)).readOnly;
+            return !propList_.get(nRow).readOnly;
          else if (nCol == 2) {
             if (!isEditingGroup())
                return false;
@@ -591,7 +615,13 @@ public class PresetEditor extends MMDialog {
       }
       
       String getConfig(String group) {
-         return core_.getCurrentConfig(group);
+         String config = "";
+         try {
+            config = core_.getCurrentConfig(group);
+         } catch (Exception e) {
+            handleException(e);
+         }
+         return config;
       }
       
       StrVector getAvailableConfigs(String group) {
@@ -601,7 +631,7 @@ public class PresetEditor extends MMDialog {
       public void refresh(){
          try {            
             for (int i=0; i<propList_.size(); i++){
-               PropertyItem item = (PropertyItem) propList_.get(i);
+               PropertyItem item = propList_.get(i);
                item.value = core_.getProperty(item.device, item.name);
             }
             this.fireTableDataChanged();
@@ -674,6 +704,10 @@ public class PresetEditor extends MMDialog {
                      item.value = core_.getProperty(devices.get(i), properties.get(j));
                      item.readOnly = core_.isPropertyReadOnly(devices.get(i), properties.get(j));
                      item.preInit = core_.isPropertyPreInit(devices.get(i), properties.get(j));
+                     item.hasRange = core_.hasPropertyLimits(devices.get(i), properties.get(j));
+                     item.lowerLimit = core_.getPropertyLowerLimit(devices.get(i), properties.get(j));
+                     item.upperLimit = core_.getPropertyUpperLimit(devices.get(i), properties.get(j));
+                     item.isInt = PropertyType.Integer == core_.getPropertyType(item.device, item.name);
                      StrVector values = core_.getAllowedPropertyValues(devices.get(i), properties.get(j));
                      item.allowed = new String[(int)values.size()];
                      for (int k=0; k<values.size(); k++){
@@ -694,9 +728,6 @@ public class PresetEditor extends MMDialog {
                            if (!isEditingGroup())
                               item.confInclude = true;
                         }
-                        
-                        System.out.println(item.device + "," + item.name + " included: " + item.confInclude);
-                        
                      }
                   }
                }
@@ -768,7 +799,7 @@ public class PresetEditor extends MMDialog {
       public void showOriginalSelection() {
          // set appropriate selection
          for (int i=0; i<propList_.size(); i++) {
-            PropertyItem item = (PropertyItem) propList_.get(i);
+            PropertyItem item = propList_.get(i);
             if (initialCfg_.size() == 0)
                item.confInclude = false;
             else {
@@ -787,12 +818,14 @@ public class PresetEditor extends MMDialog {
     * property enforces a set of allowed values.
     */
    public class PropertyCellEditor extends AbstractCellEditor implements TableCellEditor {
+      private static final long serialVersionUID = 1L;
       // This is the component that will handle the editing of the cell value
       JTextField text_ = new JTextField();
       JComboBox combo_ = new JComboBox();
       JCheckBox check_ = new JCheckBox();
       int editingCol_;
       PropertyItem item_;
+      SliderPanel slider_ = new SliderPanel();
       
       public PropertyCellEditor() {
          super();
@@ -808,12 +841,23 @@ public class PresetEditor extends MMDialog {
                fireEditingStopped();
             }
          });
+         
+         slider_.addEditActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+               fireEditingStopped();
+            }            
+         });
+         slider_.addSliderMouseListener(new MouseAdapter() {
+            public void mouseReleased(MouseEvent e) {
+               fireEditingStopped();
+            }
+         });
       }
-      
+
       // This method is called when a cell value is edited by the user.
       public Component getTableCellEditorComponent(JTable table, Object value,
             boolean isSelected, int rowIndex, int colIndex) {
-         
+                 
          if (isSelected) {
             // cell (and perhaps other cells) are selected
          }
@@ -826,8 +870,17 @@ public class PresetEditor extends MMDialog {
          
          if (colIndex == 1) {
             if (item_.allowed.length == 0) {
-               text_.setText((String)value);
-               return text_;
+               if (item_.hasRange) {
+                  if (item_.isInt)
+                     slider_.setLimits((int)item_.lowerLimit, (int)item_.upperLimit);
+                  else
+                     slider_.setLimits(item_.lowerLimit, item_.upperLimit);
+                  slider_.setText((String)value);
+                  return slider_;
+               } else {
+                  text_.setText((String)value);
+                  return text_;
+               }
             }
          
             ActionListener[] l = combo_.getActionListeners();
@@ -851,10 +904,14 @@ public class PresetEditor extends MMDialog {
       // It must return the new value to be stored in the cell.
       public Object getCellEditorValue() {
          if (editingCol_ == 1) {
-            if (item_.allowed.length == 0)
-               return text_.getText();
-            else
+            if (item_.allowed.length == 0) {
+               if (item_.hasRange)
+                  return slider_.getText();
+               else
+                  return text_.getText();
+            } else {
                return combo_.getSelectedItem();
+            }
          } else if (editingCol_ == 2)
             return new Boolean(check_.isSelected());
          
@@ -865,13 +922,14 @@ public class PresetEditor extends MMDialog {
    public class PropertyCellRenderer implements TableCellRenderer {
       // This method is called each time a cell in a column
       // using this renderer needs to be rendered.
-      PropertyItem m_item;
+      PropertyItem item_;
       
+     
       public Component getTableCellRendererComponent(JTable table, Object value,
             boolean isSelected, boolean hasFocus, int rowIndex, int colIndex) {
          
          PropertyTableData data = (PropertyTableData)table.getModel();
-         m_item = data.getPropertyItem(rowIndex);
+         item_ = data.getPropertyItem(rowIndex);
          
          JLabel lab = new JLabel();
          //lab.setOpaque(true);
@@ -889,15 +947,23 @@ public class PresetEditor extends MMDialog {
          Component comp;
          
          if (colIndex == 0) {
-            lab.setText((String)value + (m_item.orgSel ? "*" : ""));
+            lab.setText((String)value + (item_.orgSel ? "*" : ""));
             comp = lab;
          } else if (colIndex == 1) {
-            lab.setText(m_item.value.toString());
-            comp = lab;
+            if (item_.hasRange) {
+               SliderPanel slider = new SliderPanel();
+               slider.setLimits(item_.lowerLimit, item_.upperLimit);
+               slider.setText((String)value);
+               slider.setToolTipText((String)value);
+               comp = slider;
+            } else {
+               lab.setText(item_.value.toString());
+               comp = lab;
+            }
          } else if (colIndex == 2) {
             JCheckBox cb = new JCheckBox();
-            cb.setSelected(m_item.confInclude);
-            if (m_item.readOnly)
+            cb.setSelected(item_.confInclude);
+            if (item_.readOnly)
                cb.setEnabled(false);
             comp = cb;
          } else {

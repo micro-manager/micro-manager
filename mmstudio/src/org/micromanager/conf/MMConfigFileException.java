@@ -28,13 +28,14 @@ package org.micromanager.conf;
  *
  */
 public class MMConfigFileException extends Exception {
+   private static final long serialVersionUID = 1L;
    private Throwable cause;
    
-   public MMConfigFileException(String message) {
+   public MMConfigFileException(final String message) {
       super(message);
   }
 
-  public MMConfigFileException(Throwable t) {
+  public MMConfigFileException(final Throwable t) {
       super(t.getMessage());
       this.cause = t;
   }

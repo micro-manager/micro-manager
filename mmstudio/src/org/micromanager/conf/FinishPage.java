@@ -42,7 +42,7 @@ import javax.swing.border.LineBorder;
  *
  */
 public class FinishPage extends PagePanel {
-
+   private static final long serialVersionUID = 1L;
    private JTextArea logArea_;
    private JButton browseButton_;
    private JTextField fileNameField_;

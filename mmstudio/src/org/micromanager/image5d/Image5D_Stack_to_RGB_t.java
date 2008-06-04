@@ -1,9 +1,11 @@
 package org.micromanager.image5d;
 
 
-import ij.*;
-import ij.gui.*;
-import ij.plugin.*;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.WindowManager;
+import ij.plugin.PlugIn;
 import ij.process.ImageConverter;
 /** Converts the current timeframe of an Image5D to an RGB stack using the current 
  * view settings.
@@ -28,14 +30,13 @@ public class Image5D_Stack_to_RGB_t implements PlugIn {
         String title = currentImage.getTitle();
         int width = currentImage.getWidth();
         int height = currentImage.getHeight();
-        int depth = currentImage.getNSlices();
         int frames = currentImage.getNFrames();
-        int currentSlice = currentImage.getCurrentSlice();
         int currentFrame = currentImage.getCurrentFrame();
         
          currentImage.killRoi();
         
         ImagePlus rgbImage = IJ.createImage(title+"-RGB", "RGB black", width, height, 1);
+        rgbImage.copyScale(currentImage);
         ImageStack rgbStack = rgbImage.getStack();
         
         for (int i=1; i<=frames; i++) {

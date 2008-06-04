@@ -39,7 +39,7 @@ import javax.swing.border.LineBorder;
  *
  */
 public class SynchroPage extends PagePanel {
-   
+   private static final long serialVersionUID = 1L;
    private JList deviceList_;
    private JList synchroList_;
    private Device[] availableDevices_;
@@ -110,14 +110,14 @@ public class SynchroPage extends PagePanel {
    
    public boolean enterPage(boolean next) {
       String synchro[] = model_.getSynchroList(); 
-      Vector synchroData = new Vector();
+      Vector<String> synchroData = new Vector<String>();
       for (int i=0; i<synchro.length; i++)
          synchroData.add(synchro[i]);
       
       synchroList_.setListData(synchroData);
       
       availableDevices_ = model_.getDevices();
-      Vector listData = new Vector();
+      Vector<String> listData = new Vector<String>();
       for (int i=0; i<availableDevices_.length; i++)
          if (!isInSynchroList(availableDevices_[i].getName()) && !availableDevices_[i].isCore() && !availableDevices_[i].isCamera())
             listData.add(availableDevices_[i].getName());
@@ -157,14 +157,14 @@ public class SynchroPage extends PagePanel {
    
    private void addSynchro(String name) {
       // add to synchro list
-      Vector data = new Vector();
+      Vector<Object> data = new Vector<Object>();
       for (int i=0; i<synchroList_.getModel().getSize(); i++)
          data.add(synchroList_.getModel().getElementAt(i));
       data.add(name);
       synchroList_.setListData(data);     
       
       // remove from device list
-      Vector devData = new Vector();
+      Vector<Object> devData = new Vector<Object>();
       for (int i=0; i<deviceList_.getModel().getSize(); i++)
          if (name.compareTo((String)deviceList_.getModel().getElementAt(i)) != 0)
             devData.add(deviceList_.getModel().getElementAt(i));
@@ -173,14 +173,14 @@ public class SynchroPage extends PagePanel {
    
    private void removeSynchro(String name) {
       // add to synchro list
-      Vector data = new Vector();
+      Vector<Object> data = new Vector<Object>();
       for (int i=0; i<deviceList_.getModel().getSize(); i++)
          data.add(deviceList_.getModel().getElementAt(i));
       data.add(name);
       deviceList_.setListData(data);     
       
       // remove from device list
-      Vector syncData = new Vector();
+      Vector<Object> syncData = new Vector<Object>();
       for (int i=0; i<synchroList_.getModel().getSize(); i++)
          if (name.compareTo((String)synchroList_.getModel().getElementAt(i)) != 0)
             syncData.add(synchroList_.getModel().getElementAt(i));

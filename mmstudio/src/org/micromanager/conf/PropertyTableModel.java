@@ -61,8 +61,8 @@ class PropertyTableModel extends AbstractTableModel {
       
       model_.dumpComPortsSetupProps(); // >>>>>>>
       
-      ArrayList props = new ArrayList();
-      ArrayList dn = new ArrayList();
+      ArrayList<Property> props = new ArrayList<Property>();
+      ArrayList<String> dn = new ArrayList<String>();
       for (int i=0; i<devices_.length; i++) {
          for (int j=0; j<devices_[i].getNumberOfProperties(); j++) {
             Property p = devices_[i].getProperty(j);
@@ -97,8 +97,8 @@ class PropertyTableModel extends AbstractTableModel {
       props_ = new Property[props.size()];
       devNames_ = new String[dn.size()];
       for (int i=0; i<props.size(); i++) {
-         props_[i] = (Property)props.get(i);
-         devNames_[i] = (String)dn.get(i);
+         props_[i] = props.get(i);
+         devNames_[i] = dn.get(i);
       }
    }
    

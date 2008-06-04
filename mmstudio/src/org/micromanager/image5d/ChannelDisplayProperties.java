@@ -127,7 +127,7 @@ public class ChannelDisplayProperties {
 		
 		return new IndexColorModel(8, 256, rLut, gLut, bLut);
 	}
- 
+
 //// Functions to handle density calibration follow.
 //    public void setFunction(int function, double[] coefficients, String unit, boolean zeroClip) {
 //        if (function==Calibration.NONE)

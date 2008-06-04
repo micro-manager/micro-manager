@@ -41,8 +41,6 @@ import javax.swing.JTextField;
 import javax.swing.border.LineBorder;
 
 import org.micromanager.utils.CfgFileFilter;
-import org.micromanager.utils.ScriptFileFilter;
-
 import com.swtdesigner.SwingResourceManager;
 
 /**
@@ -50,7 +48,7 @@ import com.swtdesigner.SwingResourceManager;
  * Opens up at startup and allows selection of the configuration file.
  */
 public class MMIntroDlg extends JDialog {
-
+   private static final long serialVersionUID = 1L;
    private JTextArea welcomeTextArea_;
    private JTextField textFieldFile_;
    
@@ -95,6 +93,7 @@ public class MMIntroDlg extends JDialog {
       okButton.setText("OK");
       okButton.setBounds(150, 390, 81, 24);
       getContentPane().add(okButton);
+      getRootPane().setDefaultButton(okButton);
 
       final JLabel microscopeManagerLabel = new JLabel();
       microscopeManagerLabel.setFont(new Font("", Font.BOLD, 12));

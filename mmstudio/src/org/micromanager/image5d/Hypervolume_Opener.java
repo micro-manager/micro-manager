@@ -221,7 +221,8 @@ public class Hypervolume_Opener implements PlugIn {
 }
 
 class HypervolumeOpenerDialog extends GenericDialog {
-	ImagePlus imp;
+   private static final long serialVersionUID = -6457730808918434870L;
+   ImagePlus imp;
 	int fileCount;
  	boolean eightBits;
  	String saveFilter = "";

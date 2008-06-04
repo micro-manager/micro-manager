@@ -49,7 +49,7 @@ import javax.swing.event.ChangeListener;
  *
  */
 public class LUTDialog extends MMDialog {
-
+   private static final long serialVersionUID = -2130943996011385864L;
    private JSlider brightSlider_;
    private JTextField maxLevel_;
    private JTextField minLevel_;

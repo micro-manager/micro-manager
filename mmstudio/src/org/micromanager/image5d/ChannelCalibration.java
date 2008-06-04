@@ -1,10 +1,6 @@
 package org.micromanager.image5d;
 
-import java.awt.*;
-import java.awt.image.*;
-
-import ij.process.*;
-import ij.measure.*;
+import ij.measure.Calibration;
 
 /*
  * Created on 15.10.2005

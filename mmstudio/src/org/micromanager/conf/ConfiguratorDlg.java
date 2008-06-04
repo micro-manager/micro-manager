@@ -53,7 +53,7 @@ import mmcorej.CMMCore;
  * MMStudio
  */
 public class ConfiguratorDlg extends JDialog {
-
+   private static final long serialVersionUID = 1L;
    private JLabel pagesLabel_;
    private JButton backButton_;
    private JButton nextButton_;
@@ -94,7 +94,7 @@ public class ConfiguratorDlg extends JDialog {
       setResizable(false);
       getContentPane().setLayout(null);
       setTitle("Hardware Configuration Wizard");
-      setBounds(100, 100, 602, 529);
+      setBounds(50, 100, 602, 529);
       
       final JScrollPane scrollPane = new JScrollPane();
       scrollPane.setBounds(9, 320, 578, 136);
@@ -117,6 +117,7 @@ public class ConfiguratorDlg extends JDialog {
       nextButton_.setText("Next >");
       nextButton_.setBounds(494, 462, 93, 23);
       getContentPane().add(nextButton_);
+      getRootPane().setDefaultButton(nextButton_);
 
       backButton_ = new JButton();
       backButton_.addActionListener(new ActionListener() {

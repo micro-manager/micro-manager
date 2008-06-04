@@ -9,8 +9,8 @@ import java.awt.*;
  * @author Joachim Walter
  */
 public class ScrollbarWithLabel extends Panel {
-
-	/**
+   private static final long serialVersionUID = -2305926709210039775L;
+   /**
 	 * @param orientation
 	 * @param value
 	 * @param visible

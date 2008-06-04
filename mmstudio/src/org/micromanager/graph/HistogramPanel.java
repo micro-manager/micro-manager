@@ -27,7 +27,7 @@ package org.micromanager.graph;
  * Histogram view. 
  */
 public class HistogramPanel extends GraphPanel {
-  
+   private static final long serialVersionUID = -1789623844214721902L;
    // default histogram bins
    private int xMin_ = 0;
    private int xMax_ = 255;
@@ -37,7 +37,7 @@ public class HistogramPanel extends GraphPanel {
    }
    
    private void updateBounds(){
-      GraphData.Bounds bounds = getGraphBounds();
+//      GraphData.Bounds bounds = getGraphBounds();
 //      DecimalFormat fmtDec = new DecimalFormat("#0.00");
 //      DecimalFormat fmtInt = new DecimalFormat("#0");
 //      fldXMin.setText(fmtInt.format(bounds.xMin));

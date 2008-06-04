@@ -45,11 +45,11 @@ import javax.swing.event.ChangeListener;
 import org.micromanager.utils.ContrastSettings;
 
 /**
- * Slider and histogrampanel for adjusting contrast and brightness.
+ * Slider and histogram panel for adjusting contrast and brightness.
  *
  */
 public class ContrastPanel extends JPanel {
-
+   private static final long serialVersionUID = 1L;
    private JComboBox modeComboBox_;
    private HistogramPanel histogramPanel_;
    private JLabel maxField_;
@@ -193,6 +193,7 @@ public class ContrastPanel extends JPanel {
       springLayout.putConstraint(SpringLayout.NORTH, stretchCheckBox_, 120, SpringLayout.NORTH, this);
 
       modeComboBox_ = new JComboBox();
+      modeComboBox_.setFont(new Font("", Font.PLAIN, 10));
       modeComboBox_.addActionListener(new ActionListener() {
          public void actionPerformed(final ActionEvent e) {
             if (modeComboBox_.getSelectedIndex() > 0)
@@ -205,7 +206,7 @@ public class ContrastPanel extends JPanel {
       add(modeComboBox_);
       springLayout.putConstraint(SpringLayout.EAST, modeComboBox_, 0, SpringLayout.EAST, maxField_);
       springLayout.putConstraint(SpringLayout.WEST, modeComboBox_, 0, SpringLayout.WEST, minLabel_);
-      springLayout.putConstraint(SpringLayout.SOUTH, modeComboBox_, 25, SpringLayout.SOUTH, maxLabel_);
+      springLayout.putConstraint(SpringLayout.SOUTH, modeComboBox_, 27, SpringLayout.SOUTH, maxLabel_);
       springLayout.putConstraint(SpringLayout.NORTH, modeComboBox_, 5, SpringLayout.SOUTH, maxLabel_);
 
       logHistCheckBox_ = new JCheckBox();
@@ -351,13 +352,13 @@ public class ContrastPanel extends JPanel {
       maxField_.setText(Integer.toString((int)max));
       
       // set sliders
-      sliderLow_.setMinimum((int)0);
-      sliderHigh_.setMinimum((int)0);
-      sliderLow_.setMaximum((int)maxIntensity_);
-      sliderHigh_.setMaximum((int)maxIntensity_);
+      sliderLow_.setMinimum(0);
+      sliderHigh_.setMinimum(0);
+      sliderLow_.setMaximum(maxIntensity_);
+      sliderHigh_.setMaximum(maxIntensity_);
       
       sliderLow_.setValue(Math.max((int)min, 0));
-      sliderHigh_.setValue(Math.min((int)max, (int)maxIntensity_));
+      sliderHigh_.setValue(Math.min((int)max, maxIntensity_));
    }
    
    public void setImagePlus(ImagePlus ip) {

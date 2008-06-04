@@ -43,7 +43,7 @@ import ij.io.FileSaver;
  * Derived from the original ImageJ class.
  */
 public class MMImageWindow extends ImageWindow {
-   
+   private static final long serialVersionUID = 1L;
    Panel buttonPanel_;
    ContrastSettings contrastSettings8_;
    ContrastSettings contrastSettings16_;

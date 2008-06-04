@@ -35,7 +35,8 @@ import java.awt.Component;
  * Color chooser cell renderer. 
  */
 public class ColorRenderer extends JLabel implements TableCellRenderer {
-    Border unselectedBorder = null;
+   private static final long serialVersionUID = -2539377758420096159L;
+   Border unselectedBorder = null;
     Border selectedBorder = null;
     boolean isBordered = true;
 

@@ -40,7 +40,7 @@ import org.micromanager.utils.CfgFileFilter;
  * The first page of the Configuration Wizard.
  */
 public class IntroPage extends PagePanel {
-
+   private static final long serialVersionUID = 1L;
    private ButtonGroup buttonGroup = new ButtonGroup();
    private JTextField filePathField_;
    private boolean initialized_ = false;

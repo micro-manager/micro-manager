@@ -36,42 +36,43 @@ import java.util.Hashtable;
 
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
-import mmcorej.PropertySetting;
 import mmcorej.MMCoreJ;
+import mmcorej.PropertySetting;
 import mmcorej.StrVector;
+
+import org.micromanager.utils.MMLogger;
 
 /**
  * Configuration data and functionality for the entire automated microscope,
  * from the hardware setup standpoint.
  */
 public class MicroscopeModel {
-   ArrayList devices_;
+   ArrayList<Device> devices_;
    Device availableDevices_[];
    Device availableComPorts_[];
    boolean comPortInUse_[];
    boolean modified_ = false;
    String fileName_;
-   Hashtable configGroups_;
-   ArrayList synchroDevices_;
+   Hashtable<String, ConfigGroup> configGroups_;
+   ConfigGroup pixelSizeGroup_;
+   ArrayList<String> synchroDevices_;
    
    public static final String DEVLIST_FILE_NAME = "MMDeviceList.txt";
+   public static final String PIXEL_SIZE_GROUP = "PixelSizeGroup";
    
    public static boolean generateDeviceListFile() {
       CMMCore core = new CMMCore();
       StrVector libs = core.getDeviceLibraries("");
-      ArrayList devs = new ArrayList();
+      ArrayList<Device> devs = new ArrayList<Device>();
             
-      System.out.println("Available libraries:");
       for (int i=0; i<libs.size(); i++) {
-         System.out.println(libs.get(i));         
          try {
             Device devList[] = Device.getLibraryContents(libs.get(i), core);
             for (int j=0; j<devList.length; j++) {
-               System.out.println("   " + devList[j].getAdapterName());
                devs.add(devList[j]);
             }
          } catch (Exception e) {
-            System.out.println("Unable to load " + libs.get(i) + " library.");
+            MMLogger.getLogger().severe("Unable to load " + libs.get(i) + " library.");
             System.out.println(e.getMessage());
             return false;
          }
@@ -81,7 +82,7 @@ public class MicroscopeModel {
       try {
          BufferedWriter out = new BufferedWriter(new FileWriter(f.getAbsolutePath()));
          for (int i=0; i<devs.size(); i++) {
-            Device dev = (Device) devs.get(i);
+            Device dev = devs.get(i);
             if (!dev.isSerialPort()) {
                // do not output serial devices
                String descr = dev.getDescription().replaceAll(",", ";");
@@ -100,12 +101,13 @@ public class MicroscopeModel {
    }
    
    public MicroscopeModel() {
-      devices_ = new ArrayList();
+      devices_ = new ArrayList<Device>();
       fileName_ = new String("");
       availableDevices_ = new Device[0];
-      configGroups_ = new Hashtable();
-      synchroDevices_ = new ArrayList();
+      configGroups_ = new Hashtable<String, ConfigGroup>();
+      synchroDevices_ = new ArrayList<String>();
       availableComPorts_ = new Device[0];
+      pixelSizeGroup_ = new ConfigGroup(PIXEL_SIZE_GROUP);
       
       Device coreDev = new Device(MMCoreJ.getG_Keyword_CoreDevice(), "Default", "MMCore", "Core controller");
       devices_.add(coreDev);
@@ -127,7 +129,7 @@ public class MicroscopeModel {
    
    public void loadDeviceDataFromHardware(CMMCore core) throws Exception {
       for (int i=0; i<devices_.size(); i++) {
-         Device dev = (Device)devices_.get(i);
+         Device dev = devices_.get(i);
          dev.loadDataFromHardware(core);
       }
       
@@ -138,8 +140,18 @@ public class MicroscopeModel {
       
    }
    
+   public void loadStateLabelsFromHardware(CMMCore core) throws Exception {
+      System.out.println("In Load State Labels From Hardware");
+      for (int i=0; i<devices_.size(); i++) {
+         Device dev = devices_.get(i);
+         // do not override existing device labels:
+         if (dev.getNumberOfSetupLabels() == 0)
+            dev.getSetupLabelsFromHardware(core);
+      }
+   }
+      
    public void scanComPorts(CMMCore core) {
-      ArrayList ports = new ArrayList();
+      ArrayList<Device> ports = new ArrayList<Device>();
       StrVector libs = core.getDeviceLibraries("");
       
       System.out.println("Libraries :");
@@ -166,7 +178,7 @@ public class MicroscopeModel {
       availableComPorts_ = new Device[ports.size()];
       comPortInUse_ = new boolean[ports.size()];
       for (int i=0; i<ports.size(); i++) {
-         availableComPorts_[i] = (Device)ports.get(i);
+         availableComPorts_[i] = ports.get(i);
          comPortInUse_[i] = false;
       }
    }
@@ -174,7 +186,7 @@ public class MicroscopeModel {
     * Inspects the Micro-manager software and gathers information about all available devices.
     */
    public void loadAvailableDeviceList(CMMCore core) {
-      ArrayList devsTotal = new ArrayList();
+      ArrayList<Device> devsTotal = new ArrayList<Device>();
       
       // attempt to load device info from file
       File f = new File(DEVLIST_FILE_NAME);
@@ -185,7 +197,7 @@ public class MicroscopeModel {
       // assign available devices
       availableDevices_ = new Device[devsTotal.size()];
       for (int i=0; i<devsTotal.size(); i++) {
-         availableDevices_[i] = (Device) devsTotal.get(i);
+         availableDevices_[i] = devsTotal.get(i);
       }  
       
       // match the file list against currently available DLLs and add ones that are missing         
@@ -214,12 +226,12 @@ public class MicroscopeModel {
       // re-assign remaining available devices
       availableDevices_ = new Device[devsTotal.size()];
       for (int i=0; i<devsTotal.size(); i++) {
-         availableDevices_[i] = (Device) devsTotal.get(i);
+         availableDevices_[i] = devsTotal.get(i);
       }
       
    }
    
-   private void loadDevicesFromListFile(ArrayList devsTotal) {
+   private void loadDevicesFromListFile(ArrayList<Device> devsTotal) {
       File f = new File(DEVLIST_FILE_NAME);
       BufferedReader input = null;
       try {
@@ -301,7 +313,7 @@ public class MicroscopeModel {
     */
    public void applySetupLabelsToHardware(CMMCore core) throws Exception {
       for (int i=0; i<devices_.size(); i++) {
-         Device dev = (Device)devices_.get(i);
+         Device dev = devices_.get(i);
          for (int j=0; j<dev.getNumberOfSetupLabels(); j++) {
             Label l = dev.getSetupLabel(j);
             core.defineStateLabel(dev.getName(), l.state_, l.label_);
@@ -371,10 +383,42 @@ public class MicroscopeModel {
          throw new MMConfigFileException(e);
       }
    }
+
+   /**
+    * Copy the configuration presets from the hardware and override the
+    * current setup data. 
+    * @throws MMConfigFileException 
+    * @throws Exception 
+    */
+   public void createResolutionsFromHardware(CMMCore core) throws MMConfigFileException{
+      // first clear all setup data
+      pixelSizeGroup_ = new ConfigGroup(PIXEL_SIZE_GROUP);
+      
+      // get current preset info
+//      try {
+//            StrVector presets = core.getAvailableConfigs(curGroups.get(i));
+//            for (int j=0; j<presets.size(); j++) {
+//               Configuration cfg;
+//               cfg = core.getConfigData(curGroups.get(i), presets.get(j));
+//               ConfigPreset p = new ConfigPreset(presets.get(j));
+//               for (int k=0; k<cfg.size(); k++) {
+//                  PropertySetting ps = cfg.getSetting(k);
+//                  Setting s = new Setting(ps.getDeviceLabel(), ps.getPropertyName(), ps.getPropertyValue());
+//                  p.addSetting(s);
+//               }
+//               grp.addConfigPreset(p);
+//            }
+//            configGroups_.put(curGroups.get(i), grp);
+//            modified_ = true;
+//      } catch (Exception e) {
+//         throw new MMConfigFileException(e);
+//      }
+   }
+   
    
    public void applyDelaysToHardware(CMMCore core) throws Exception {
       for (int i=0; i<devices_.size(); i++) {
-         Device dev = (Device) devices_.get(i);
+         Device dev = devices_.get(i);
          core.setDeviceDelayMs(dev.getName(), dev.getDelay());
       }
    }
@@ -428,8 +472,17 @@ public class MicroscopeModel {
                // -------------------------------------------------------------
                // "Property" command
                // -------------------------------------------------------------
-               if (tokens.length != 4)
+               if (!(tokens.length == 4 || tokens.length == 3))
                   throw new MMConfigFileException("Invalid number of parameters (4 required):\n" + line);
+               
+               if (tokens.length == 3) {
+                  // resize tokens array to 4 elements
+                  String extTokens[] = new String[4];
+                  for (int i=0; i<3; i++)
+                     extTokens[i] = tokens[i];
+                  extTokens[3] = new String("");
+                  tokens = extTokens;
+               }
                
                if (tokens[1].contentEquals(new StringBuffer().append(MMCoreJ.getG_Keyword_CoreDevice()))) {
                   
@@ -477,11 +530,34 @@ public class MicroscopeModel {
                // -------------------------------------------------------------
                // "ConfigGroup" commands
                // -------------------------------------------------------------
-               if (tokens.length != 6)
+               if (!(tokens.length == 6 || tokens.length == 5))
                   throw new MMConfigFileException("Invalid number of parameters (6 required):\n" + line);
                addConfigGroup(tokens[1]);
                ConfigGroup cg = findConfigGroup(tokens[1]);
-               cg.addConfigSetting(tokens[2], tokens[3], tokens[4], tokens[5]);
+               if (tokens.length == 6)
+                  cg.addConfigSetting(tokens[2], tokens[3], tokens[4], tokens[5]);
+               else
+                  cg.addConfigSetting(tokens[2], tokens[3], tokens[4], new String(""));
+               
+            } else if (tokens[0].contentEquals(new StringBuffer().append(MMCoreJ.getG_CFGCommand_ConfigPixelSize()))) {
+               // -------------------------------------------------------------
+               // "ConfigPixelSize" commands
+               // -------------------------------------------------------------
+               if (!(tokens.length == 5))
+                  throw new MMConfigFileException("Invalid number of parameters (5 required):\n" + line);
+               
+               pixelSizeGroup_.addConfigSetting(tokens[1], tokens[2], tokens[3], tokens[4]);
+               
+            } else if (tokens[0].contentEquals(new StringBuffer().append(MMCoreJ.getG_CFGCommand_PixelSize_um()))) {
+               // -------------------------------------------------------------
+               // "PixelSize" commands
+               // -------------------------------------------------------------
+               if (tokens.length != 3)
+                  throw new MMConfigFileException("Invalid number of parameters (3 required):\n" + line);
+               
+               ConfigPreset cp = pixelSizeGroup_.findConfigPreset(tokens[1]);
+               if (cp != null)
+                  cp.setPixelSizeUm(Double.parseDouble(tokens[2]));
             } else if (tokens[0].contentEquals(new StringBuffer().append(MMCoreJ.getG_CFGCommand_Delay()))) {
                // -------------------------------------------------------------
                // "Delay" commands
@@ -599,7 +675,7 @@ public class MicroscopeModel {
             }
          }
          for (int i=0; i<devices_.size(); i++) {
-            Device dev = (Device)devices_.get(i);
+            Device dev = devices_.get(i);
             if (!dev.isCore()) {
                out.write(MMCoreJ.getG_CFGCommand_Device()+","+ dev.getName() + "," + dev.getLibrary() + "," + dev.getAdapterName());
                out.newLine();
@@ -611,7 +687,7 @@ public class MicroscopeModel {
          out.write("# Pre-init settings for devices");
          out.newLine();
          for (int i=0; i<devices_.size(); i++) {
-            Device dev = (Device)devices_.get(i);
+            Device dev = devices_.get(i);
             for (int j=0; j<dev.getNumberOfSetupProperties(); j++) {
                Property prop = dev.getSetupProperty(j);
                if (prop.preInit_) {
@@ -648,7 +724,7 @@ public class MicroscopeModel {
          out.write("# Delays");
          out.newLine();
          for (int i=0; i<devices_.size(); i++) {
-            Device dev = (Device)devices_.get(i);
+            Device dev = devices_.get(i);
             if (dev.getDelay() > 0.0) {
                out.write(MMCoreJ.getG_CFGCommand_Delay() + ","+ dev.getName() + "," + dev.getDelay());
                out.newLine();
@@ -695,7 +771,7 @@ public class MicroscopeModel {
          out.write("# Labels");
          out.newLine();
          for (int i=0; i<devices_.size(); i++) {
-            Device dev = (Device)devices_.get(i);
+            Device dev = devices_.get(i);
             if (dev.getNumberOfSetupLabels() > 0) {
                out.write("# " + dev.getName());
                out.newLine();
@@ -732,6 +808,25 @@ public class MicroscopeModel {
          }
          out.newLine();
          
+         // pixel size
+         out.write("# PixelSize settings");
+         out.newLine();
+         ConfigPreset[] presets = pixelSizeGroup_.getConfigPresets();
+         for (int j=0; j<presets.length; j++) {
+            out.write("# Resolution preset: " + presets[j].getName());
+            out.newLine();
+            for (int k=0; k<presets[j].getNumberOfSettings(); k++) {
+               Setting s = presets[j].getSetting(k);
+               // write setting
+               out.write(MMCoreJ.getG_CFGCommand_ConfigPixelSize()+","+presets[j].getName()+","+s.deviceName_+","+s.propertyName_+","+s.propertyValue_);
+               out.newLine();
+               out.write(MMCoreJ.getG_CFGGroup_PixelSizeUm()+","+presets[j].getName()+","+Double.toString(presets[j].getPixelSize()));
+               out.newLine();
+            }
+            out.newLine();
+         }
+         out.newLine();
+         
          out.close();
      } catch (IOException e) {
         throw new MMConfigFileException(e);
@@ -747,13 +842,13 @@ public class MicroscopeModel {
    public void dumpSetupConf() {
       System.out.println("\nStep 1: load devices");
       for (int i=0; i<devices_.size(); i++) {
-         Device dev = (Device)devices_.get(i);
+         Device dev = devices_.get(i);
          System.out.println(dev.getName() + " from library " + dev.getLibrary() + ", using adapter " + dev.getAdapterName());
       }
       
       System.out.println("\nStep 2: set pre-initialization properties");
       for (int i=0; i<devices_.size(); i++) {
-         Device dev = (Device)devices_.get(i);
+         Device dev = devices_.get(i);
          for (int j=0; j<dev.getNumberOfSetupProperties(); j++) {
             Property prop = dev.getSetupProperty(j);
             if (prop.preInit_)
@@ -765,7 +860,7 @@ public class MicroscopeModel {
       
       System.out.println("\nStep 4: define device labels");
       for (int i=0; i<devices_.size(); i++) {
-         Device dev = (Device)devices_.get(i);
+         Device dev = devices_.get(i);
          System.out.println(dev.getName() + " labels:");
          for (int j=0; j<dev.getNumberOfSetupLabels(); j++) {
             Label lab = dev.getSetupLabel(j);
@@ -775,7 +870,7 @@ public class MicroscopeModel {
       
       System.out.println("\nStep 5: set initial properties");
       for (int i=0; i<devices_.size(); i++) {
-         Device dev = (Device)devices_.get(i);
+         Device dev = devices_.get(i);
          for (int j=0; j<dev.getNumberOfSetupProperties(); j++) {
             Property prop = dev.getSetupProperty(j);
             if (!prop.preInit_)
@@ -789,18 +884,17 @@ public class MicroscopeModel {
       Device d = findDevice(device);
       if (d == null)
          return;
-      
       for (int i=0; i<d.getNumberOfSetupProperties(); i++) {
          Property prop = d.getSetupProperty(i);
          System.out.println(d.getName() + ", property " + prop.name_ + "=" + prop.value_);
          for (int j=0; j<prop.allowedValues_.length; j++)
             System.out.println("   " + prop.allowedValues_[j]);      }
    }
+
    public void dumpComPortProperties(String device) {
       Device d = findSerialPort(device);
       if (d == null)
          return;
-      
       for (int i=0; i<d.getNumberOfSetupProperties(); i++) {
          Property prop = d.getSetupProperty(i);
          System.out.println(d.getName() + ", property " + prop.name_ + "=" + prop.value_);
@@ -819,6 +913,7 @@ public class MicroscopeModel {
       devices_.clear();
       configGroups_.clear();
       synchroDevices_.clear();
+      pixelSizeGroup_.clear();
       Device coreDev = new Device(MMCoreJ.getG_Keyword_CoreDevice(), "Default", "MMCore", "Core controller");
       devices_.add(coreDev);
       addMissingProperties();
@@ -829,7 +924,7 @@ public class MicroscopeModel {
     public Device[] getDevices() {
       Device[] devs = new Device[devices_.size()];
       for (int i=0; i<devs.length; i++)
-         devs[i] = ((Device)devices_.get(i));
+         devs[i] = devices_.get(i);
       
       return devs;
    }
@@ -844,7 +939,7 @@ public class MicroscopeModel {
 
    Device findDevice(String devName) {
       for (int i=0; i<devices_.size(); i++) {
-         Device dev = (Device)devices_.get(i);
+         Device dev = devices_.get(i);
          if (dev.getName().contentEquals(new StringBuffer().append(devName)))
             return dev;
       }
@@ -860,7 +955,7 @@ public class MicroscopeModel {
    }
    
    ConfigGroup findConfigGroup(String name) {
-      return (ConfigGroup) configGroups_.get(name);
+      return configGroups_.get(name);
    }
    
    String[] getConfigGroupList() {
@@ -875,7 +970,7 @@ public class MicroscopeModel {
    String[] getSynchroList() {
       String synchro[] = new String[synchroDevices_.size()];
       for (int i=0; i<synchroDevices_.size(); i++)
-         synchro[i] = new String((String)synchroDevices_.get(i));
+         synchro[i] = new String(synchroDevices_.get(i));
       return synchro;
    }
    
@@ -949,7 +1044,7 @@ public class MicroscopeModel {
       
       // remove differently named com ports from device lists
       for (int i=0; i<devices_.size(); i++) {
-         Device dev = (Device)devices_.get(i);
+         Device dev = devices_.get(i);
          if (dev.isSerialPort())
             removeDevice(dev.getName());
       } 

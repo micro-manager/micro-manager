@@ -34,9 +34,7 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
-
 import org.micromanager.image5d.Image5DWindow;
-
 import com.swtdesigner.SwingResourceManager;
 
 /**
@@ -44,7 +42,7 @@ import com.swtdesigner.SwingResourceManager;
  * Displays basic palyback, contrast and file I/O controls at the bottom of the frame.
  */
 public class PlaybackPanel extends Panel {
-
+   private static final long serialVersionUID = 1L;
    private JTextField framesField_;
    private Image5DWindow wnd_;
    private JLabel elapsedLabel_;
@@ -66,7 +64,7 @@ public class PlaybackPanel extends Panel {
       });
       saveAsButton_.setToolTipText("Save 5D image");
       saveAsButton_.setIcon(SwingResourceManager.getIcon(PlaybackPanel.class, "/org/micromanager/icons/disk.png"));
-      saveAsButton_.setBounds(6, 7, 37, 24);
+      saveAsButton_.setBounds(6, 5, 37, 24);
       add(saveAsButton_);
 
       final JButton abortButton_ = new JButton();
@@ -77,19 +75,19 @@ public class PlaybackPanel extends Panel {
       });
       abortButton_.setToolTipText("Abort current acquistion");
       abortButton_.setIcon(SwingResourceManager.getIcon(PlaybackPanel.class, "/org/micromanager/icons/cancel.png"));
-      abortButton_.setBounds(44, 7, 37, 24);
+      abortButton_.setBounds(44, 5, 37, 24);
       add(abortButton_);
 
       final JLabel framessecLabel = new JLabel();
       framessecLabel.setFont(new Font("Arial", Font.PLAIN, 10));
       framessecLabel.setText("Frames/sec");
-      framessecLabel.setBounds(226, 4, 60, 30);
+      framessecLabel.setBounds(245, 0, 56, 30);
       add(framessecLabel);
 
       framesField_ = new JTextField();
       framesField_.setFont(new Font("Arial", Font.PLAIN, 10));
       framesField_.setToolTipText("Playback speed in frames per second");
-      framesField_.setBounds(288, 8, 46, 22);
+      framesField_.setBounds(305, 6, 46, 22);
       add(framesField_);
 
       final JToggleButton togglePlayButton_ = new JToggleButton();
@@ -108,12 +106,12 @@ public class PlaybackPanel extends Panel {
             }
          }
       });
-      togglePlayButton_.setBounds(178, 7, 42, 24);
+      togglePlayButton_.setBounds(202, 5, 42, 24);
       add(togglePlayButton_);
 
       elapsedLabel_ = new JLabel();
       elapsedLabel_.setFont(new Font("Arial", Font.PLAIN, 10));
-      elapsedLabel_.setBounds(344, 9, 229, 21);
+      elapsedLabel_.setBounds(361, 7, 229, 21);
       add(elapsedLabel_);
 
       final JButton metaButton_ = new JButton();
@@ -124,7 +122,7 @@ public class PlaybackPanel extends Panel {
       });
       metaButton_.setIcon(SwingResourceManager.getIcon(PlaybackPanel.class, "/org/micromanager/icons/application_view_list.png"));
       metaButton_.setToolTipText("Display metadata");
-      metaButton_.setBounds(82, 7, 37, 24);
+      metaButton_.setBounds(126, 5, 37, 24);
       add(metaButton_);
 
       JButton contrastButton_ = new JButton();
@@ -136,8 +134,27 @@ public class PlaybackPanel extends Panel {
           }
       });
       contrastButton_.setToolTipText("Contrast settings dialog");
-      contrastButton_.setBounds(120, 7, 37, 24);
+      contrastButton_.setBounds(164, 5, 37, 24);
       add(contrastButton_);
+
+      final JToggleButton togglePauseButton_ = new JToggleButton();
+      togglePauseButton_.setIcon(SwingResourceManager.getIcon(PlaybackPanel.class, "/org/micromanager/icons/control_pause.png"));
+      togglePauseButton_.setToolTipText("Pause acquisition");
+      togglePauseButton_.addActionListener(new ActionListener() {
+         public void actionPerformed(final ActionEvent e) {
+            if (togglePauseButton_.isSelected()){
+               wnd_.pause();
+               togglePauseButton_.setIcon(SwingResourceManager.getIcon(PlaybackPanel.class, "/org/micromanager/icons/film_go.png"));
+               togglePauseButton_.setToolTipText("Resume");
+            } else {
+               wnd_.resume();
+               togglePauseButton_.setIcon(SwingResourceManager.getIcon(PlaybackPanel.class, "/org/micromanager/icons/control_pause.png"));
+               togglePauseButton_.setToolTipText("Pause");
+            }
+         }
+      });
+      togglePauseButton_.setBounds(83, 5, 37, 24);
+      add(togglePauseButton_);
 
       //
    }

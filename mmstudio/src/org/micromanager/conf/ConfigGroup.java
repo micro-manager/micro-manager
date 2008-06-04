@@ -31,11 +31,11 @@ import java.util.Hashtable;
  */
 public class ConfigGroup {
    String name_;
-   Hashtable configs_;
+   Hashtable<String, ConfigPreset> configs_;
    
    public ConfigGroup(String name) {
       name_ = new String(name);
-      configs_ = new Hashtable();
+      configs_ = new Hashtable<String, ConfigPreset>();
    }
    
    public void addConfigPreset(ConfigPreset p) {
@@ -47,7 +47,7 @@ public class ConfigGroup {
    }
    
    public void addConfigSetting(String presetName, String device, String property, String value) {
-      ConfigPreset cp = (ConfigPreset)configs_.get(presetName);
+      ConfigPreset cp = configs_.get(presetName);
       if (cp == null) {
          cp = new ConfigPreset(presetName);
          configs_.put(presetName, cp);
@@ -73,7 +73,7 @@ public class ConfigGroup {
    }
 
    public ConfigPreset findConfigPreset(String name) {
-      return (ConfigPreset)configs_.get(name);
+      return configs_.get(name);
    }
 
    public void setName(String name) {
@@ -84,6 +84,10 @@ public class ConfigGroup {
       configs_.remove(prs.getName());
       prs.setName(name);
       configs_.put(name, prs);
+   }
+   
+   public void clear() {
+      configs_.clear();
    }
    
 }

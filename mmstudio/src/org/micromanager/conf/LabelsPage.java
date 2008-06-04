@@ -23,11 +23,15 @@
 //
 package org.micromanager.conf;
 
+import java.awt.event.ActionEvent; 
+import java.awt.event.ActionListener; 
+
 import java.util.ArrayList;
 import java.util.prefs.Preferences;
 
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JButton;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -39,8 +43,11 @@ import mmcorej.MMCoreJ;
  *
  */
 public class LabelsPage extends PagePanel {
-   
+   private static final long serialVersionUID = 1L;
+   private boolean initialized_ = false;
    private String labels_[] = new String[0];
+   private String deviceLabels_[][] = new String[0][0];
+   ArrayList<Device> devices_ = new ArrayList<Device>();
    
    public class SelectionListener implements ListSelectionListener {
       JTable table;
@@ -68,12 +75,17 @@ public class LabelsPage extends PagePanel {
    }
    
    class LabelTableModel extends AbstractTableModel {
+      private static final long serialVersionUID = 1L;
       public final String[] COLUMN_NAMES = new String[] {
-            "Position",
+            "State",
             "Label"
       };
       private Device curDevice_;
-      
+
+      public Device getCurrentDevice() {
+         return curDevice_;
+      }
+
       public void setData(MicroscopeModel model, String selDevice) {
          curDevice_ = model.findDevice(selDevice);
          labels_ = new String[0];
@@ -122,7 +134,6 @@ public class LabelsPage extends PagePanel {
             try {
                labels_[row] = (String) value;
                curDevice_.setSetupLabel(row, (String) value);
-               System.out.println("Label set:" + curDevice_.getName() + ", " + row + ", " + labels_[row]);
                fireTableCellUpdated(row, col);
             } catch (Exception e) {
                handleError(e.getMessage());
@@ -132,12 +143,16 @@ public class LabelsPage extends PagePanel {
    }
 
    class DevTableModel extends AbstractTableModel {
-      ArrayList devices_ = new ArrayList();
+      private static final long serialVersionUID = 1L;
       public final String[] COLUMN_NAMES = new String[] {
             "State devices"
       };
       
       public void setData(MicroscopeModel model) {
+         if (!initialized_) {
+            storeLabels();
+            initialized_ = true;
+         }
          Device devs[] = model.getDevices();
          devices_.clear();
          for (int i=0; i<devs.length; i++) {
@@ -157,7 +172,7 @@ public class LabelsPage extends PagePanel {
          return COLUMN_NAMES[columnIndex];
       }
       public Object getValueAt(int rowIndex, int columnIndex) {
-         return ((Device)devices_.get(rowIndex)).getName();
+         return devices_.get(rowIndex).getName();
       }
    }
 
@@ -170,35 +185,120 @@ public class LabelsPage extends PagePanel {
       super();
       title_ = "Define position labels for state devices";
       helpText_ = "State devices with discrete positions, such as filter changers or objective turrets, etc. can have mnemonic labels assigned for each position.\n\n" +
-      "Select the device in the left-hand list and edit corresponding position labels in the right-hand list.";
+      "Select the device in the left-hand list and edit corresponding position labels in the right-hand list.\n\n" +
+      "Use the 'Read' button to read label info from the hardware. This will override your changes!\n\n";
       setHelpFileName("conf_labels_page.html");
       prefs_ = prefs;
       setLayout(null);
 
-      final JScrollPane scrollPane_1 = new JScrollPane();
-      scrollPane_1.setBounds(186, 10, 304, 254);
-      add(scrollPane_1);
+      final JScrollPane labelsScrollPane = new JScrollPane();
+      labelsScrollPane.setBounds(186, 10, 269, 254);
+      add(labelsScrollPane);
 
       labelTable_ = new JTable();
       labelTable_.setModel(new LabelTableModel());
-      scrollPane_1.setViewportView(labelTable_);
+      labelsScrollPane.setViewportView(labelTable_);
 
-      final JScrollPane scrollPane = new JScrollPane();
-      scrollPane.setBounds(10, 10, 162, 255);
-      add(scrollPane);
+      final JScrollPane devScrollPane = new JScrollPane();
+      devScrollPane.setBounds(10, 10, 162, 255);
+      add(devScrollPane);
 
       devTable_ = new JTable();
       DevTableModel m = new DevTableModel();
       devTable_.setModel(m);
       devTable_.getSelectionModel().addListSelectionListener(new SelectionListener(devTable_));
       devTable_.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-      scrollPane.setViewportView(devTable_);
-      //
+      devScrollPane.setViewportView(devTable_);
+
+      final JButton readButton = new JButton();
+      readButton.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent arg0) {
+            // read labels from hardware
+            readFromHardware();
+         }
+      });
+      readButton.setText("Read");
+      readButton.setBounds(469,10,93,23);
+      add(readButton);
+
+      final JButton resetButton = new JButton();
+      resetButton.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent arg0) {
+            // read labels from hardware
+            resetLabels();
+         }
+      });
+      resetButton.setText("Reset");
+      resetButton.setBounds(469,43,93,23);
+      add(resetButton);
+
+   }
+
+   public void readFromHardware() {
+      LabelTableModel labelTableModel = (LabelTableModel) labelTable_.getModel();
+      Device selectedDevice = labelTableModel.getCurrentDevice();
+      if (selectedDevice != null) {
+         try {
+            selectedDevice.getSetupLabelsFromHardware(core_);
+            labelTableModel.setData(model_, selectedDevice.getName());
+            labelTableModel.fireTableStructureChanged();
+         } catch (Exception e) {
+            handleError(e.getMessage());
+         }
+      }
+   }
+
+   public void resetLabels() {
+      LabelTableModel labelTableModel = (LabelTableModel) labelTable_.getModel();
+      Device selectedDevice = labelTableModel.getCurrentDevice();
+      if (selectedDevice != null) {
+         for (int j=0; j<devices_.size(); j++) {
+            if (selectedDevice == devices_.get(j)) {
+               labels_ = deviceLabels_[j];
+               for (int k=0; k<labels_.length; k++)
+                  selectedDevice.setSetupLabel(k, labels_[k]);
+               labelTableModel.fireTableStructureChanged();
+            }
+         }
+      }
+   }
+
+   public void storeLabels() {
+      // Store the initial list of labels for the reset button
+      String labels[] = new String[0];
+      Device devs[] = model_.getDevices();
+      devices_.clear();
+      for (int i=0; i<devs.length; i++) {
+         if (devs[i].isStateDevice()) {
+            devices_.add(devs[i]);
+         }
+      }
+      deviceLabels_ = new String[devices_.size()][0];
+      for (int j=0; j<devices_.size(); j++) {
+         labels = new String[devices_.get(j).getNumberOfStates()];
+         for (int i= 0; i<labels.length; i++)
+            labels[i] = new String("State-" + i);
+         
+         for (int i=0; i<devices_.get(j).getNumberOfSetupLabels(); i++) {
+            Label lab = devices_.get(j).getSetupLabel(i);
+            labels[lab.state_] = lab.label_;
+         }
+         deviceLabels_[j] = new String[labels.length];
+         for (int k=0; k<labels.length; k++)
+            deviceLabels_[j][k]=labels[k];
+      }
    }
 
    public boolean enterPage(boolean next) {
       DevTableModel tm = (DevTableModel)devTable_.getModel();
       tm.setData(model_);
+      try {
+         model_.loadStateLabelsFromHardware(core_);
+      } catch (Exception e) {
+         handleError(e.getMessage());
+         return false;
+      }
+
       return true;
   }
 

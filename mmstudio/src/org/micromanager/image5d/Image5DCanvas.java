@@ -9,8 +9,9 @@ import ij.gui.*;
  * @author Joachim Walter
  */
 public class Image5DCanvas extends ImageCanvas {
+   private static final long serialVersionUID = 9003195219805747820L;
 
-    /**
+   /**
      * @param imp
      */
     public Image5DCanvas(Image5D imp) {

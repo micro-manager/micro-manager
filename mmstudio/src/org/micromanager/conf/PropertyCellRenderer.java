@@ -35,6 +35,7 @@ import javax.swing.table.DefaultTableCellRenderer;
  *
  */
 public class PropertyCellRenderer extends DefaultTableCellRenderer {
+   private static final long serialVersionUID = 1L;
    // This method is called each time a cell in a column
    // using this renderer needs to be rendered.
    Property item_;

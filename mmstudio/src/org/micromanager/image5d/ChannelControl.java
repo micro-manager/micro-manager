@@ -23,8 +23,8 @@ import java.awt.image.*;
  */
 public class ChannelControl extends Panel implements ItemListener,
 		AdjustmentListener, ActionListener {
-
-	Image5DWindow win;
+   private static final long serialVersionUID = 852398209561061019L;
+   Image5DWindow win;
 	Image5D i5d;
 	ImageJ ij;
 	
@@ -323,8 +323,9 @@ public class ChannelControl extends Panel implements ItemListener,
 	 * @author Joachim Walter 
 	 */
 	protected class ChannelSelectorOverlay extends Panel implements ActionListener, ItemListener {
+      private static final long serialVersionUID = 1539845011848213L;
 
-		ChannelControl cControl;
+      ChannelControl cControl;
 		
 		Panel allNonePanel;
 		Button allButton;
@@ -519,8 +520,8 @@ public class ChannelControl extends Panel implements ItemListener,
 	 * @author Joachim Walter
 	 */
 	protected class ChannelColorChooser extends Panel implements ActionListener, ItemListener {
-	    
-		ChannelControl cControl;
+      private static final long serialVersionUID = 7876644511007053476L;
+      ChannelControl cControl;
 		Checkbox displayGrayBox;
 		Button editLUTButton;
 		ChannelColorCanvas cColorCanvas;		
@@ -642,8 +643,9 @@ public class ChannelControl extends Panel implements ItemListener,
  * @author Joachim Walter
  */
 	protected class ChannelColorCanvas extends Canvas implements MouseListener{
+   private static final long serialVersionUID = -401646017822187364L;
 
-	    ChannelColorChooser cColorChooser;
+      ChannelColorChooser cColorChooser;
 	    
 	    BufferedImage lutImage;
 	    BufferedImage colorPickerImage;

@@ -51,26 +51,25 @@ import javax.swing.JTextField;
 import javax.swing.JTextPane;
 import javax.swing.KeyStroke;
 import javax.swing.SpringLayout;
+import javax.swing.SwingUtilities;
 import javax.swing.border.LineBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+import org.micromanager.api.ScriptingEngine;
+import org.micromanager.api.ScriptingGUI;
+import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ScriptFileFilter;
-
-import bsh.EvalError;
-import bsh.Interpreter;
-import bsh.ParseException;
-import bsh.TargetError;
 
 /**
  * Encapsulated text editor and scripting engine
  */
-public class MMScriptView extends JTabbedPane {
+public class MMScriptView extends JTabbedPane implements ScriptingGUI{
    private static final long serialVersionUID = -4762444284878352488L;
    
    private static final String NEW_FILE_NAME = "Unitled.bsh";
    private static final String APP_NAME = "MMScriptView";
-   private Interpreter interp_;
+   private ScriptingEngine interp_;
    private final JEditorPaneWithPopup scriptPane_;
    private final JTextPane outputPane_;
    private final JScrollPane outputView_;
@@ -87,6 +86,7 @@ public class MMScriptView extends JTabbedPane {
     * to JEditorPane
     */
    private class JEditorPaneWithPopup extends JEditorPane {
+      private static final long serialVersionUID = -2326664791800820729L;
       public void processMouseEvent( MouseEvent event )
       {
          if( event.isPopupTrigger() )
@@ -143,7 +143,7 @@ public class MMScriptView extends JTabbedPane {
       addTab("Output", null, outputView_, null);
       
       // initalize the interpreter
-      interp_ = new Interpreter();      
+      interp_ = new BeanshellEngine(this);      
       CreateNewScript();
 
       final JPanel panel = new JPanel();
@@ -184,7 +184,7 @@ public class MMScriptView extends JTabbedPane {
     */
    public void injectScriptingObject(String varName, Object obj){
       try {
-         interp_.set(varName, obj);
+         interp_.insertGlobalObject(varName, obj);
       } catch (Exception e) {
          handleException(e);
       }
@@ -249,36 +249,22 @@ public class MMScriptView extends JTabbedPane {
          String script = scriptPane_.getText();
          GregorianCalendar today = new GregorianCalendar();
          message("Started " + today.getTime());
-         interp_.eval(script);
+         interp_.evaluate(script);
          message("Ended " + today.getTime() + "\n");
-      } catch (TargetError e) {
-         // The script threw an exception
-         Throwable t = e.getTarget();
-         message("Script error: " + t.getMessage() + "\n");
-      } catch (ParseException e) {
-         // Parsing error
-         message("Parsing error: " + e.getMessage() + "\n");
-      } catch (EvalError e) {
+      } catch (MMScriptException e) {
          // General Error evaluating script
-         message("Evaluation error: " + e.getMessage() + "\n");
+         message(e.getMessage());
       }   
    }
    
    private void runCommandLine(){
       try {
-         interp_.eval(commandLine_.getText());
+         interp_.evaluate(commandLine_.getText());
          historyPane_.append(commandLine_.getText() + "\n");
          commandLine_.setText("");
-      } catch (TargetError e) {
-         // The script threw an exception
-         Throwable t = e.getTarget();
-         message("Script error: " + t.getMessage() + "\n");
-      } catch (ParseException e) {
-         // Parsing error
-         message("Parsing error: " + e.getMessage() + "\n");
-      } catch (EvalError e) {
+      } catch (MMScriptException e) {
          // General Error evaluating script
-         message("Evaluation error: " + e.getMessage() + "\n");
+         message(e.getMessage());
       }   
    }
    
@@ -475,5 +461,70 @@ public class MMScriptView extends JTabbedPane {
    public void setScriptDir(String dir) {
       scriptDir_ = dir;
    }
+   
+   public boolean stopRequestPending() {
+      return interp_.stopRequestPending();
+   }
+
+
+   public void sleep(long ms) throws MMScriptException {
+      interp_.sleep(ms);
+   }
+
+
+   public void stopRequest() {
+      interp_.stopRequest();
+      
+   }
+
+   public void runScriptAsync() {
+      try {
+         String script = scriptPane_.getText();
+         interp_.evaluateAsync(script);
+      } catch (MMScriptException e) {
+         // General Error evaluating script
+         message(e.getMessage());
+      }   
+   }
+
+   /**
+    * Displays a message coming from a separate thread.
+    */
+   private class ExecuteDisplayMessage implements Runnable {
+
+      String msg_;
+      boolean error_ = false;
+      
+      public ExecuteDisplayMessage(String txt, boolean error) {
+         msg_ = txt;
+         error_ = error;
+      }
+      
+      public ExecuteDisplayMessage(String txt) {
+         msg_ = txt;
+      }
+      
+      public void run() {
+         if (error_)
+            message("Error " + msg_);
+         else
+            message(msg_);
+      }
+   }
+   
+   public void displayMessage(String message) {
+      SwingUtilities.invokeLater(new ExecuteDisplayMessage(message));        
+   }
+
+   public void displayError(String text) {
+      SwingUtilities.invokeLater(new ExecuteDisplayMessage(text, true));        
+   }
+
+
+   public void displayError(String text, int lineNumber) {
+      // TODO Auto-generated method stub
+      
+   }
+
 }
 

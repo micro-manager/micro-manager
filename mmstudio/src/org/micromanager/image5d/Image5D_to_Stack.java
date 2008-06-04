@@ -25,6 +25,7 @@ public class Image5D_to_Stack implements PlugIn {
         // Copy references to pixel arrays to new image. Don't just copy the reference to the stack,
         // because the stack is disassembled when the currentImage is flushed.
         ImagePlus newImage = new ImagePlus(currentImage.getTitle(), currentImageStack.getProcessor(1));
+        newImage.copyScale(currentImage);
         ImageStack newStack = newImage.getStack();
         newStack.setSliceLabel(currentImageStack.getSliceLabel(1), 1);       
         for (int i=2; i<=currentImage.getImageStackSize(); i++) {
@@ -38,7 +39,10 @@ public class Image5D_to_Stack implements PlugIn {
         newImage.getProcessor().resetMinAndMax();
         newImage.show(); 
         
-        currentImage.getWindow().close();
+        // currentImage.getWindow().close();
+
+        if(newImage.getWindow() != null)
+           WindowManager.setCurrentWindow(newImage.getWindow());
     }
 
 }

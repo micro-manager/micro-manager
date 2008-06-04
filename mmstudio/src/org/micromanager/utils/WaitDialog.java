@@ -11,7 +11,6 @@ import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Toolkit;
-
 import javax.swing.BorderFactory;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -24,8 +23,8 @@ import javax.swing.JWindow;
  * backend operations, like search or similar. 
  */
 public class WaitDialog  extends JWindow  {
-	   
-	  // single instance of this class, used through out the scope of the application
+   private static final long serialVersionUID = 5356404305699524826L;
+   // single instance of this class, used through out the scope of the application
 	  private final static Cursor defaultCursor=Cursor.getPredefinedCursor(Cursor.DEFAULT_CURSOR);
 	  private final static Cursor waitCursor=Cursor.getPredefinedCursor( Cursor.WAIT_CURSOR );
 

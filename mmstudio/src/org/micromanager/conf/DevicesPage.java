@@ -41,8 +41,11 @@ import mmcorej.StrVector;
  * Wizard page to add or remove devices.
  */
 public class DevicesPage extends PagePanel {
+   private static final long serialVersionUID = 1L;
 
    class DeviceTable_TableModel extends AbstractTableModel {
+      private static final long serialVersionUID = 1L;
+
       public final String[] COLUMN_NAMES = new String[] {
             "Name",
             "Adapter/Library",
@@ -171,12 +174,12 @@ public class DevicesPage extends PagePanel {
    }
    
    protected void addDevice() {
-      AddDeviceDlg dlg = new AddDeviceDlg(model_);
+      AddDeviceDlg dlg = new AddDeviceDlg(model_, this);
       dlg.setVisible(true);
       rebuildTable();
    }
    
-   private void rebuildTable() {
+   public void rebuildTable() {
       TableModel tm = deviceTable_.getModel();
       DeviceTable_TableModel tmd;
       if (tm instanceof DeviceTable_TableModel) {
@@ -221,6 +224,11 @@ public class DevicesPage extends PagePanel {
             for (int i=0; i<ports.length; i++) {
                if (model_.isPortInUse(ports[i])) {
                    core_.loadDevice(ports[i].getName(), ports[i].getLibrary(), ports[i].getAdapterName());
+                   Device d = model_.findSerialPort(ports[i].getName());
+                   for (int j=0; j<d.getNumberOfSetupProperties(); j++) {
+                       Property prop = d.getSetupProperty(j);
+                       core_.setProperty(d.getName(), prop.name_, prop.value_);
+                    }
                }
             }
                
@@ -228,7 +236,6 @@ public class DevicesPage extends PagePanel {
             Device devs[] = model_.getDevices();
             for (int i=0; i<devs.length; i++) {
                if (!devs[i].isCore()) {
-                  //System.out.println("Loading: " + devs[i].getName() + ", " + devs[i].getLibrary() + ", " + devs[i].getAdapterName());
                   core_.loadDevice(devs[i].getName(), devs[i].getLibrary(), devs[i].getAdapterName());
                }
             }

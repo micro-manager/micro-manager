@@ -60,7 +60,6 @@ public class Configurator {
    private MicroscopeModel microModel_;
    private CMMCore core_;
    private Preferences prefs_;
-   private static final String APP_NAME = "Configurator";
    private JLabel titleLabel_;
    private JTextPane helpTextPane_;
 

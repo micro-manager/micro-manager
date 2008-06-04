@@ -347,8 +347,8 @@ public class Make_Montage implements PlugIn {
         int montageHeight = height*rows;
         ImageProcessor ip = imp.getProcessor();
         ImageProcessor montage = ip.createProcessor(montageWidth+borderWidth/2, montageHeight+borderWidth/2);
-        ImageStatistics is = imp.getStatistics();
-        boolean blackBackground = is.mode<200;
+        boolean blackBackground = true;
+       // is.mode<200;
         if (imp.isInvertedLut())
             blackBackground = !blackBackground;
         if ((ip instanceof ShortProcessor) || (ip instanceof FloatProcessor))
@@ -359,13 +359,13 @@ public class Make_Montage implements PlugIn {
             if (signed16Bit)
                 montage.setValue(32768);
             else
-                montage.setColor(Color.black);
-            montage.fill();
-            montage.setColor(Color.white);
-        } else {
-            montage.setColor(Color.white);
+                montage.setColor(Color.white);
             montage.fill();
             montage.setColor(Color.black);
+        } else {
+            montage.setColor(Color.black);
+            montage.fill();
+            montage.setColor(Color.white);
         }
         ImageStack stack = imp.getStack();
         int x = 0;

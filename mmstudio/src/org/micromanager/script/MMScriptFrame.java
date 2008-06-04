@@ -31,16 +31,20 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.util.prefs.Preferences;
+import javax.swing.JEditorPane;
 
 import javax.swing.JFrame;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JSeparator;
+import javax.swing.JToolBar;
 import javax.swing.KeyStroke;
 import javax.swing.SpringLayout;
 
-import org.micromanager.utils.DeviceControlGUI;
+import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.MMFrame;
+import org.micromanager.utils.MMScriptException;
 
 import com.swtdesigner.SwingResourceManager;
 
@@ -53,7 +57,6 @@ public class MMScriptFrame extends MMFrame {
    
    private MMScriptView scriptView_;
    private SpringLayout springLayout_;
-   private DeviceControlGUI parentGUI_;
    private static final String SCRIPT_DIR = "script_dir";
      
    /**
@@ -61,6 +64,9 @@ public class MMScriptFrame extends MMFrame {
     */
    public MMScriptFrame() {
       super();
+
+      new JEditorPane(); // @wb:location=596,495
+      JMenuItem clearItem;
       Preferences root = Preferences.userNodeForPackage(this.getClass());
       setPrefsNode(root.node(root.absolutePath() + "/ScriptFrame"));
       setIconImage(SwingResourceManager.getImage(MMScriptFrame.class, "/icons/script.png"));
@@ -180,31 +186,46 @@ public class MMScriptFrame extends MMFrame {
       toolsMenu.setText("Tools");
       menuBar.add(toolsMenu);
       
-      JMenuItem menuItem_7 = new JMenuItem();
-      menuItem_7.addActionListener(new ActionListener() {
+      final JMenuItem runMenuItem = new JMenuItem();
+      runMenuItem.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent e) {
+            //scriptView_.runScript();
+            scriptView_.runScriptAsync();
+         }
+      });
+      runMenuItem.setText("Run Script Async.");
+      toolsMenu.add(runMenuItem);
+
+      final JMenuItem stopScriptMenuItem = new JMenuItem();
+      toolsMenu.add(stopScriptMenuItem);
+      stopScriptMenuItem.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent arg0) {
+            scriptView_.stopRequest();
+         }
+      });
+      stopScriptMenuItem.setText("Stop Script");
+
+      toolsMenu.addSeparator();
+
+      final JMenuItem runScriptMenuItem = new JMenuItem();
+      runScriptMenuItem.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent e) {
             scriptView_.runScript();
          }
       });
-      menuItem_7.setText("Run Script");
-      toolsMenu.add(menuItem_7);
+      runScriptMenuItem.setText("Run Script");
+      toolsMenu.add(runScriptMenuItem);
+
+      toolsMenu.addSeparator();
       
-      menuItem_7 = new JMenuItem();
-      menuItem_7.addActionListener(new ActionListener() {
+      clearItem = new JMenuItem();
+      clearItem.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent e) {
             scriptView_.clearOutput();
          }
       });
-      menuItem_7.setText("Clear Output");
-      toolsMenu.add(menuItem_7);
-      
-      final JMenu helpMenu = new JMenu();
-      helpMenu.setText("Help");
-      menuBar.add(helpMenu);
-      
-      final JMenuItem menuItem = new JMenuItem();
-      menuItem.setText("About...");
-      helpMenu.add(menuItem);
+      clearItem.setText("Clear Output");
+      toolsMenu.add(clearItem);
       
       // Set-up the tabbed view
       // ----------------------
@@ -212,9 +233,9 @@ public class MMScriptFrame extends MMFrame {
       scriptView_ = new MMScriptView();
       scriptView_.setScriptDir(getPrefsNode().get(SCRIPT_DIR, null));
       getContentPane().add(scriptView_);
-      springLayout_.putConstraint(SpringLayout.EAST, scriptView_, -5, SpringLayout.EAST, getContentPane());
       springLayout_.putConstraint(SpringLayout.SOUTH, scriptView_, -5, SpringLayout.SOUTH, getContentPane());
       springLayout_.putConstraint(SpringLayout.NORTH, scriptView_, 5, SpringLayout.NORTH, getContentPane());
+      springLayout_.putConstraint(SpringLayout.EAST, scriptView_, -5, SpringLayout.EAST, getContentPane());
       springLayout_.putConstraint(SpringLayout.WEST, scriptView_, 5, SpringLayout.WEST, getContentPane());
             
       // prompt to save on closing the window
@@ -237,12 +258,15 @@ public class MMScriptFrame extends MMFrame {
       this.setTitle("MMScript Console - " + scriptView_.getFileName());
    }
    
+   public boolean stopRequestPending() {
+      return scriptView_.stopRequestPending();
+   }
+   
    public void insertScriptingObject(String name, Object obj) {
       scriptView_.injectScriptingObject(name, obj);
    }
    
-   public void setParentGUI(DeviceControlGUI parent) {
-      parentGUI_ = parent;
+   public void setParentGUI(ScriptInterface parent) {
       scriptView_.injectScriptingObject("gui", parent);
    }
 
@@ -252,6 +276,10 @@ public class MMScriptFrame extends MMFrame {
 
    public void message(String text){
       scriptView_.message(text);
+   }
+
+   public void sleep(long ms) throws MMScriptException {
+      scriptView_.sleep(ms);
    }
 
 }

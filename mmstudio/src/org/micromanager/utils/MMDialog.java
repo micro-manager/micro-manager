@@ -34,7 +34,7 @@ import javax.swing.JDialog;
  * Saves and restores window size and position.
  */
 public class MMDialog extends JDialog {
-   
+   private static final long serialVersionUID = -3144618980027203294L;
    private Preferences prefs_;
    private static final String WINDOW_X = "mmdlg_y";
    private static final String WINDOW_Y = "mmdlg_x";
@@ -59,6 +59,11 @@ public class MMDialog extends JDialog {
                 prefs_.getInt(WINDOW_HEIGHT, height));      
    }
    
+   protected void loadPosition(int x, int y) {
+      setLocation(prefs_.getInt(WINDOW_X, x),
+                prefs_.getInt(WINDOW_Y, y));
+   }
+
    protected void savePosition() {
       Rectangle r = getBounds();
       

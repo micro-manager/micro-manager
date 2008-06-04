@@ -42,13 +42,13 @@ import mmcorej.DeviceType;
    private String adapterName_;
    private String library_;
    private Property properties_[];
-   private ArrayList setupProperties_;
+   private ArrayList<Property> setupProperties_;
    private String description_;
    private DeviceType type_;
-   private Hashtable setupLabels_;
+   private Hashtable<Integer, Label> setupLabels_;
    private double delayMs_;
+   private boolean usesDelay_;
    private int numPos_ = 0;
-   //private String labels_[];
    
    public Device(String name, String lib, String adapterName, String descr) {
       name_ = name;
@@ -56,10 +56,11 @@ import mmcorej.DeviceType;
       adapterName_ = adapterName;
       description_ = descr;
       type_ = DeviceType.AnyType;
-      setupLabels_ = new Hashtable();
+      setupLabels_ = new Hashtable<Integer, Label>();
       properties_ = new Property[0];
-      setupProperties_ = new ArrayList();
-      //labels_ = new String[0];
+      setupProperties_ = new ArrayList<Property>();
+      usesDelay_ = false;
+      delayMs_ = 0.0;
    }
    public Device(String name, String lib, String adapterName) {
       this(name, lib, adapterName, "");
@@ -86,6 +87,7 @@ import mmcorej.DeviceType;
       // NOTE: do not load the delay value from the hardware
       // we will always use settings defined in the config file
       type_ = core.getDeviceType(name_);
+      usesDelay_ = core.usesDeviceDelay(name_);
       
       for (int j=0; j<propNames.size(); j++){
          properties_[j] = new Property();
@@ -145,6 +147,18 @@ import mmcorej.DeviceType;
       setupLabels_.put(new Integer(lab.state_), lab);
    }
 
+   public void getSetupLabelsFromHardware(CMMCore core) throws Exception {
+      // we can only add the state labels after initialization of the device!!
+      if (type_ == DeviceType.StateDevice)  {
+         int numPos = 0;
+         numPos = core.getNumberOfStates(name_);
+         StrVector stateLabels = core.getStateLabels(name_);
+         for (int state = 0; state < numPos_; state++) {
+            setSetupLabel(state, stateLabels.get(state));
+         }
+      }
+   }
+
    public String getLibrary() {
       return library_;
    }
@@ -154,7 +168,7 @@ import mmcorej.DeviceType;
    }
    
    public Property getProperty(int idx) {
-      return (Property) properties_[idx];
+      return properties_[idx];
    }
    
    public String getPropertyValue(String propName) throws MMConfigFileException {
@@ -177,7 +191,7 @@ import mmcorej.DeviceType;
    }
    
    public Property getSetupProperty(int idx) {
-      return (Property) setupProperties_.get(idx);
+      return setupProperties_.get(idx);
    }
    
    public String getSetupPropertyValue(String propName) throws MMConfigFileException {
@@ -221,7 +235,7 @@ import mmcorej.DeviceType;
    }
    
    public void setSetupLabel(int pos, String label) {
-      Label l = (Label) setupLabels_.get(new Integer(pos));
+      Label l = setupLabels_.get(new Integer(pos));
       if (l == null) {
          // label does not exist so we must create one
          setupLabels_.put(new Integer(pos), new Label(label, pos));
@@ -247,7 +261,7 @@ import mmcorej.DeviceType;
    
    public Property findSetupProperty(String name) {
       for (int i=0; i<setupProperties_.size(); i++) {
-         Property p = (Property)setupProperties_.get(i);
+         Property p = setupProperties_.get(i);
          if (p.name_.contentEquals(new StringBuffer().append(name)))
             return p;
       }
@@ -259,6 +273,10 @@ import mmcorej.DeviceType;
    
    public void setDelay(double delayMs) {
       delayMs_ = delayMs;
+   }
+   
+   public boolean usesDelay() {
+      return usesDelay_;
    }
    
    public int getNumberOfStates() {

@@ -18,6 +18,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.Color;
+import java.awt.image.ColorModel;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -30,12 +32,18 @@ import javax.swing.Timer;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.MMAcquisitionEngine;
+import org.micromanager.MMAcquisitionEngineMT;
 import org.micromanager.PlaybackPanel;
+import org.micromanager.metadata.AcquisitionData;
+import org.micromanager.metadata.DisplaySettings;
 import org.micromanager.metadata.ImageKey;
+import org.micromanager.metadata.ImagePropertyKeys;
 import org.micromanager.metadata.MetadataDlg;
+import org.micromanager.metadata.MMAcqDataException;
+import org.micromanager.metadata.SaveProgressCallback;
+
 import org.micromanager.metadata.SummaryKeys;
-import org.micromanager.utils.AcquisitionEngine;
+import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.utils.ChannelSpec;
 import org.micromanager.utils.ProgressBar;
 
@@ -52,7 +60,7 @@ import org.micromanager.utils.ProgressBar;
  *       Nenad Amodaj, Feb 2006
  */
 public class Image5DWindow extends StackWindow {
-   
+   private static final long serialVersionUID = -5031307205188924732L;
    protected ChannelControl channelControl;
    protected Scrollbar[] Scrollbars;
    protected Image5D i5d;
@@ -60,15 +68,18 @@ public class Image5DWindow extends StackWindow {
    // >>>>>>> Micro-Manager >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
    ChannelSpec channelsMM_[]; // Micro-Manager channel info
    private MetadataDlg metaDlg_;
-   private JSONObject metadata_;
+   //private JSONObject metadata_;
+   private AcquisitionData acqData_;
    private AcquisitionEngine acqEng_;
    private boolean acqActive_ = false;
+   private boolean autoSave_ = false;
    private Timer playTimer_;
    private Timer countdownTimer_;
    long timeToGoMs_ = 0;
    long playInterval_ = 100;
    private Preferences prefs_;
    private static final String PLAY_INTERVAL = "PlayInterval";
+   private String rootDir_ = "";
    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
    
    // Array for storing change of position in each dimension. 
@@ -81,6 +92,8 @@ public class Image5DWindow extends StackWindow {
    private PlaybackPanel pb_;
    private int framesToGo_=0;
    private int playbackFrames_ = 0;
+
+   private String acqSavePath_ = "";
    
    /**
     * @param imp
@@ -88,6 +101,7 @@ public class Image5DWindow extends StackWindow {
    public Image5DWindow(Image5D imp) {
       this(imp, new Image5DCanvas(imp));
    }
+
    
    /**
     * @param imp
@@ -96,12 +110,12 @@ public class Image5DWindow extends StackWindow {
    public Image5DWindow(Image5D imp, Image5DCanvas ic) {
       super(imp, ic);
       
-      i5d = (Image5D)imp;
+      i5d = imp;
       
       if (imp.getNDimensions() != nDimensions) {
          throw new IllegalArgumentException("Wrong number of dimensions.");
       }
-      
+
       Scrollbars = new Scrollbar[nDimensions];
       positions = new int[nDimensions];
       
@@ -110,7 +124,7 @@ public class Image5DWindow extends StackWindow {
       remove(ic);
       
       setLayout(new Image5DLayout(ic));
-      
+
       // Add ImageCanvas
       add(ic, Image5DLayout.MAIN_CANVAS);
       
@@ -238,15 +252,40 @@ public class Image5DWindow extends StackWindow {
       channelsMM_ = channelInfo;
    }
    
-   public void setMetadata(String metaStream) {
-      try {
-         metadata_ = new JSONObject(metaStream);
-         i5d.changes = true;
-      } catch (JSONException e) {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
-      }
-
+   public ChannelSpec[] getMMChannelData() {
+      return channelsMM_;
+   }
+   
+//   /**
+//    * Gets the metadata from the external source and creates
+//    * an internal acquisition data object.
+//    * IMPORTANT NOTE: this metadata is always instantiated as in-memory,
+//    * regardless of whether the original source actually saved it.
+//    * TODO: Do we need to clear the potential references to files ???
+//    * @param metaStream - serialized metadata
+//    */
+//   public void setMetadata(String metaStream) {
+//      try {
+//         acqData_ = new AcquisitionData();
+//         acqData_.createNew();
+//         acqData_.load(metaStream);
+//         i5d.changes = true;
+//      } catch (MMAcqDataException e) {
+//         // TODO Auto-generated catch block
+//         e.printStackTrace();
+//      }
+//   }
+   
+   /**
+    * 
+    * @param acqData
+    */
+   public void setAcquisitionData(AcquisitionData acqData) {
+      acqData_ = acqData;
+   }
+   
+   public AcquisitionData getAcquisitionData() {
+      return acqData_;
    }
    
    public void startCountdown(long timeToGoMs, int framesToGo) {
@@ -263,7 +302,7 @@ public class Image5DWindow extends StackWindow {
    }
        
    public void displayMetadata() {
-      if (metadata_ == null)
+      if (acqData_ == null)
          return;
       
       if (metaDlg_ != null) {
@@ -271,26 +310,41 @@ public class Image5DWindow extends StackWindow {
          metaDlg_.dispose();
       }
       
-      metaDlg_ = new MetadataDlg(this);
-      metaDlg_.setMetadata(metadata_);
+      metaDlg_ = new MetadataDlg(this, this);
+      metaDlg_.setMetadata(acqData_);
       metaDlg_.displaySummary();
       metaDlg_.displayImageData(i5d.getCurrentFrame()-1, i5d.getCurrentChannel()-1, i5d.getCurrentSlice()-1);
+      metaDlg_.displayComment();
       metaDlg_.setVisible(true);      
    }
       
    public void setAcquitionEngine(AcquisitionEngine eng) {
       playbackFrames_ = 0;
       acqEng_ = eng;
+      // if the 'save files to acquisition directory' was checked, assume the data have been saved
+      if (acqEng_ != null && acqEng_.getSaveFiles())
+         autoSave_ = true;
+      
+      // save reference to the acqEngine to be able to save file after
    }
    
    public void setActive(boolean state) {
       acqActive_ = state;
       i5d.changes = true;
-   }
+      if (acqEng_ != null)
+         rootDir_ = acqEng_.getRootName();
+  }
    
    public boolean abortAcquisition() {
       if (acqEng_ == null)
          return true;
+      
+      if (acqEng_.isPaused()) {
+         JOptionPane.showMessageDialog(this,
+               "Acquisition is currently paused.\n" +
+               "You must resume acquisition before pressing the Abort button.");
+         return false;
+      }
       
       if (acqEng_.isAcquisitionRunning() && acqActive_) {
          int result = JOptionPane.showConfirmDialog(this,
@@ -299,7 +353,8 @@ public class Image5DWindow extends StackWindow {
                JOptionPane.INFORMATION_MESSAGE);
          
          if (result == JOptionPane.YES_OPTION) {
-            acqEng_.stop();
+            acqEng_.shutdown();
+            // TODO: needs to clean-up properly
          } else
             return false; // abort cancelled
       }
@@ -327,54 +382,59 @@ public class Image5DWindow extends StackWindow {
       playTimer_.stop();
    }
    
+   public void pause() {
+      if (acqEng_ == null)
+         return;
+      acqEng_.setPause(true);
+   }
+   
+   public void resume() {
+      if (acqEng_ == null)
+         return;   
+      acqEng_.setPause(false);
+   }
+   
    public boolean isPlaybackRunning() {
       return playTimer_.isRunning();
    }
-      
+     
+   /**
+    * Saves the data set in the micro-manager format.
+    */
    public void saveAs() {
       // NOTE: >> save as directory instead of image 5D
 //      Save_Image5D save = new Save_Image5D();
 //      save.run("");
 //      acqNeedsSave_ = false;
       
-      if (metadata_ == null) {
+      if (acqData_ == null) {
          JOptionPane.showMessageDialog(this,
                "This 5D-image was not generated by Micro-Manager acquisition process or data is corruped.\n" +
-               "Unable to save.");
+         "Unable to save.");
          return;
+      }
+
+      try {
+
+         for (int i=0; i<acqData_.getNumberOfChannels(); i++) {
+            ChannelDisplayProperties cdp = i5d.getChannelDisplayProperties(i+1);
+            DisplaySettings ds = new DisplaySettings();
+            ds.min = cdp.getMinValue();
+            ds.max = cdp.getMaxValue();
+            acqData_.setChannelDisplaySetting(i, ds);
+         }
+      } catch (MMAcqDataException e1) {
+         JOptionPane.showMessageDialog(this, e1.getMessage());
       }
             
-      // save constrast settings in the metatadata
-      JSONObject summary;
-      int actualNumberOfFrames = 0;
-      try {
-         summary = metadata_.getJSONObject(SummaryKeys.SUMMARY);
-         actualNumberOfFrames = summary.getInt(SummaryKeys.NUM_FRAMES);
-         
-         JSONArray minArray = new JSONArray();
-         JSONArray maxArray = new JSONArray();
-         
-         for (int i=0; i<i5d.getNChannels(); i++) {
-            ChannelDisplayProperties cdp = i5d.getChannelDisplayProperties(i+1);
-            minArray.put(i, cdp.getMinValue());
-            maxArray.put(i, cdp.getMaxValue());
-         }
-         summary.put(SummaryKeys.CHANNEL_CONTRAST_MIN, minArray);
-         summary.put(SummaryKeys.CHANNEL_CONTRAST_MAX, maxArray);
-      } catch (JSONException e1) {
-         JOptionPane.showMessageDialog(this, "Internal error: invalid metadata.");
-         return;
-      }
-      
-      System.out.println("Image5D saving " + actualNumberOfFrames + " frames");
-      if (actualNumberOfFrames > i5d.getNFrames()) {
-         JOptionPane.showMessageDialog(this, "Internal error: detected number of frames invalid " + actualNumberOfFrames);
+      if (acqData_.getNumberOfFrames() > i5d.getNFrames()) {
+         JOptionPane.showMessageDialog(this, "Internal error: detected number of frames invalid " + acqData_.getNumberOfFrames());
          return;
       }
       
       // choose output directory
       JFileChooser fc = new JFileChooser();
-      fc.setSelectedFile(new File(i5d.getTitle()));
+      fc.setSelectedFile(new File(rootDir_ + "/" + i5d.getTitle()));
       boolean saveFile = true;
       File f;
       
@@ -394,41 +454,25 @@ public class Image5DWindow extends StackWindow {
             return;
       } while (saveFile == false);
       
-      String acqSavePath = "";
-      ProgressBar progressBar = null;
+      //String acqSavePath = "";
+      final ProgressBar progressBar = new ProgressBar ("Saving File...", 0, acqData_.getNumberOfFrames());
       try {
-         acqSavePath = f.getAbsolutePath();
-         if (!f.mkdirs())
-            throw new IOException("Invalid root directory name");
-         
-         File metaFile = new File(acqSavePath + "/" + ImageKey.METADATA_FILE_NAME);
-         
-         // save metadata
-         FileWriter metaWriter = new FileWriter(metaFile);
-         metaWriter.write(metadata_.toString(3));
-         metaWriter.close();
-         
-         // save images
-         progressBar = new ProgressBar ("Saving File...", 0, actualNumberOfFrames);
-         for (int i=0; i<actualNumberOfFrames; i++) {
+         acqSavePath_ = f.getAbsolutePath();       
+         acqData_.save(f.getName(), f.getParent(), false, null);
+         for (int i=0; i<acqData_.getNumberOfFrames(); i++) {
             for (int j=0; j<i5d.getNSlices(); j++) {
                for (int k=0; k<i5d.getNChannels(); k++) {
-                  Object img = i5d.getPixels(k+1, j+1, i+1);
-                  acqEng_.saveImageFile(acqSavePath + "/" + ImageKey.generateFileName(i, ImageKey.getChannelName(metadata_, k), j),
-                                                    img, i5d.getWidth(), i5d.getHeight());
+                  // save only images that were actually acquired, i.e. the ones recorded in the metadata
+                  if (acqData_.hasImageMetadata(i, k, j)) {
+                     Object img = i5d.getPixels(k+1, j+1, i+1);
+                     acqData_.attachImage(img, i, k, j);
+                  }
                }
             }
             progressBar.setProgress(i);
          }
-      } catch (IOException e) {
-         JOptionPane.showMessageDialog(this, "File I/O error. Unable to save metadata or image files in " +
-                                             acqSavePath);
-         return;
-      } catch (JSONException e) {
-         JOptionPane.showMessageDialog(this,
-               "5D-image contains invalid Micro-Manager metadata and cannot be saved.\n" +
-               "This error is probably caused by using version mismatch between the data and the current application.");
-         return;
+      } catch (MMAcqDataException e) {
+         JOptionPane.showMessageDialog(this, e.getMessage());
       } finally {
          if (progressBar != null)
             progressBar.setVisible(false);
@@ -451,14 +495,14 @@ public class Image5DWindow extends StackWindow {
          imp.changes = false;
       
       if (acqEng_ != null && acqEng_.isAcquisitionRunning()) {
-         JOptionPane.showMessageDialog(Image5DWindow.this, "Unable to close the window: acquisition still in progress.\n" +
+         JOptionPane.showMessageDialog(Image5DWindow.this, "Unable to close window: acquisition still in progress.\n" +
          "Stop the acquistion first.");
          return false;
       }
 
-      if (imp.changes) {
+      if (imp.changes && (!autoSave_)) {
          GenericDialog dlg = new GenericDialog("Micro-Manage-Image5D", null);
-         dlg.addMessage("Proceed with close and discard data in this window?");
+         dlg.addMessage("Close window and discard unsaved data?");
          dlg.showDialog();
          if (dlg.wasCanceled())
             return false;
@@ -596,13 +640,13 @@ public class Image5DWindow extends StackWindow {
          s += "; " + size + "K";
       g.drawString(s, 5, insets.top+TEXT_GAP);
       
-      // micromanager - metadata display
+      // micro-manager - metadata display
       if (metaDlg_ != null) {
          metaDlg_.displayImageData(i5d.getCurrentFrame()-1, i5d.getCurrentChannel()-1, i5d.getCurrentSlice()-1);
       }
       
-      if (pb_ != null && metadata_ != null)
-         pb_.setImageInfo(ImageKey.getImageInfo(metadata_, i5d.getCurrentFrame()-1, i5d.getCurrentChannel()-1, i5d.getCurrentSlice()-1));
+      if (pb_ != null && acqData_ != null)
+         pb_.setImageInfo(ImageKey.getImageInfo(acqData_, i5d.getCurrentFrame()-1, i5d.getCurrentChannel()-1, i5d.getCurrentSlice()-1));
    }
    
    public void run() {
@@ -632,5 +676,25 @@ public class Image5DWindow extends StackWindow {
       return channelControl;
    }
 
+   public String getAcqSavePath() {
+      return acqSavePath_;
+   }
    
+   public void setAcqSavePath(String acqSavePath) {
+      acqSavePath_ = acqSavePath;
+   }
+
+   public Image5D getImage5D(){
+      return i5d;
+   }
+   
+   public Color getColor(int channel) {
+      ColorModel model = i5d.getProcessor(channel).getColorModel();
+      int red = model.getRed(255);
+      int green = model.getGreen(255);
+      int blue = model.getBlue(255);
+
+      Color c = new Color(red, green, blue);
+      return c;   
+   }
 }

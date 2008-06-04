@@ -42,7 +42,7 @@ import org.micromanager.utils.MMFrame;
  * Histogram window. 
  */
 public class HistogramFrame extends MMFrame {
-
+   private static final long serialVersionUID = 8576500518906629812L;
    private JTextField fldYMax;
    private JTextField fldYMin;
    private JTextField fldXMax;

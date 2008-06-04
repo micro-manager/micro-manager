@@ -66,7 +66,7 @@ import mmcorej.DeviceType;
 import mmcorej.PropertySetting;
 import mmcorej.StrVector;
 
-import org.micromanager.utils.DeviceControlGUI;
+import org.micromanager.api.DeviceControlGUI;
 import org.micromanager.utils.MMDialog;
 import org.micromanager.utils.ShowFlags;
 
@@ -76,6 +76,7 @@ import org.micromanager.utils.ShowFlags;
  * device - property - value
  */
 public class GroupEditor extends MMDialog {
+   private static final long serialVersionUID = -2194251203338277211L;
    private JTextArea textArea;
    private JTextField groupNameField_;
    private String groupName_;
@@ -345,11 +346,13 @@ public class GroupEditor extends MMDialog {
     * Property table data model, representing MMCore data
     */
    class PropertyTableData extends AbstractTableModel {
+      private static final long serialVersionUID = 1028139082784306040L;
+
       final public String columnNames_[] = {
             "Property"
       };
       
-      ArrayList propList_ = new ArrayList();
+      ArrayList<PropertyItem> propList_ = new ArrayList<PropertyItem>();
       private CMMCore core_ = null;
       
       public PropertyTableData(CMMCore core, ShowFlags flags) {
@@ -382,7 +385,7 @@ public class GroupEditor extends MMDialog {
                   for (int j=0; j<cfgs[i].size(); j++) {
                      PropertySetting ps = cfgs[i].getSetting(j);
                      for (int k=0; k<selection.length; k++) {
-                        PropertyItem item = (PropertyItem)propList_.get(selection[k]);
+                        PropertyItem item = propList_.get(selection[k]);
                         if (item.device.compareTo(ps.getDeviceLabel()) == 0 && item.name.compareTo(ps.getPropertyName()) == 0)
                            core_.defineConfig(newGroupName, cfgNames.get(i), ps.getDeviceLabel(), ps.getPropertyName(), ps.getPropertyValue());
                      }
@@ -391,7 +394,7 @@ public class GroupEditor extends MMDialog {
             } else {
                core_.defineConfigGroup(newGroupName);
                for (int k=0; k<selection.length; k++) {
-                  PropertyItem item = (PropertyItem)propList_.get(selection[k]);
+                  PropertyItem item = propList_.get(selection[k]);
                   core_.defineConfig(newGroupName, "EditThisPreset", item.device, item.name, item.value);
                }
             }
@@ -429,12 +432,12 @@ public class GroupEditor extends MMDialog {
       }
       
       public PropertyItem getPropertyItem(int row) {
-         return (PropertyItem) propList_.get(row);
+         return propList_.get(row);
       }
       
       public Object getValueAt(int row, int col) {
          
-         PropertyItem item = (PropertyItem) propList_.get(row);
+         PropertyItem item = propList_.get(row);
          if (col == 0)
             return item.device + "-" + item.name;
          else if (col == 1)
@@ -444,7 +447,7 @@ public class GroupEditor extends MMDialog {
       }
       
       public void setValueAt(Object value, int row, int col) {
-         PropertyItem item = (PropertyItem) propList_.get(row);
+         PropertyItem item = propList_.get(row);
          if (col == 1) {
             try {
                core_.setProperty(item.device, item.name, value.toString());
@@ -453,7 +456,7 @@ public class GroupEditor extends MMDialog {
                refresh();
                //item.m_value = value.toString();
                if (parentGUI_ != null)
-                  parentGUI_.updateGUI();              
+                  parentGUI_.updateGUI(true);              
                fireTableCellUpdated(row, col);
             } catch (Exception e) {
                handleException(e);
@@ -470,7 +473,13 @@ public class GroupEditor extends MMDialog {
       }
       
       String getConfig(String group) {
-         return core_.getCurrentConfig(group);
+         String config = "";
+         try {
+            config = core_.getCurrentConfig(group);
+         } catch (Exception e) {
+            handleException(e);
+         }
+         return config;
       }
       
       StrVector getAvailableConfigs(String group) {
@@ -480,7 +489,7 @@ public class GroupEditor extends MMDialog {
       public void refresh(){
          try {            
             for (int i=0; i<propList_.size(); i++){
-               PropertyItem item = (PropertyItem) propList_.get(i);
+               PropertyItem item = propList_.get(i);
                item.value = core_.getProperty(item.device, item.name);
             }
             this.fireTableDataChanged();
@@ -586,7 +595,7 @@ public class GroupEditor extends MMDialog {
          // set appropriate selection
          table_.clearSelection();
          for (int i=0; i<propList_.size(); i++) {
-            PropertyItem item = (PropertyItem) propList_.get(i);
+            PropertyItem item = propList_.get(i);
             if(initialCfg_.isPropertyIncluded(item.device, item.name)) {
                if (table_.getRowCount() > i) {
                   table_.addRowSelectionInterval(i, i);
@@ -602,6 +611,7 @@ public class GroupEditor extends MMDialog {
     * property enforces a set of allowed values.
     */
    public class PropertyCellEditor extends AbstractCellEditor implements TableCellEditor {
+      private static final long serialVersionUID = -6783405605353002954L;
       // This is the component that will handle the editing of the cell value
       JTextField text_ = new JTextField();
       JComboBox combo_ = new JComboBox();
