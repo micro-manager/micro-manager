@@ -1,6 +1,7 @@
 package org.micromanager.metadata;
 
 public class MMAcqDataException extends Exception {
+   private static final long serialVersionUID = 4402851760504166064L;
    private Throwable cause;
 
    /**
