@@ -2,24 +2,24 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 [Setup]
-AppName=Micro-Manager 1.2
-AppVerName=Micro-Manager 1.2
+AppName=Micro-Manager-S 1.2
+AppVerName=Micro-Manager-S 1.2
 AppPublisher=UCSF
-AppPublisherURL=http://www.micro-manager.org
-AppSupportURL=http://www.micro-manager.org
-AppUpdatesURL=http://www.micro-manager.org
-DefaultDirName=C:/Program Files/Micro-Manager1.2
-DefaultGroupName=Micro-Manager 1.2
-OutputBaseFilename=MMSetup_1_2_xx
+AppPublisherURL=http://www.100ximaging.com
+AppSupportURL=http://www.100ximaging.com
+AppUpdatesURL=http://www.100ximaging.com.org
+DefaultDirName=C:/Program Files/Micro-Manager-S1.2
+DefaultGroupName=Micro-Manager-S 1.2
+OutputBaseFilename=MMSetup-S_1_2_xx
 Compression=lzma
 SolidCompression=true
 VersionInfoVersion=1.2
-VersionInfoCompany=micro-manager.org
-VersionInfoCopyright=(c)University of California San Francisco
-AppCopyright=© University of California San Francisco
+VersionInfoCompany=100X Imaging Inc
+VersionInfoCopyright=(c)University of California San Francisco, (c)100XImaging Inc
+AppCopyright=©University of California San Francisco, ©100XImaging Inc
 ShowLanguageDialog=yes
 AppVersion=1.2
-AppID={{B624DD17-CB0F-4134-ADC9-D2A20424DD4D}
+AppID=13E8147B-6B81-4b5c-9005-C9F148651FFD
 
 [Languages]
 Name: eng; MessagesFile: compiler:Default.isl
@@ -103,9 +103,9 @@ Source: micro-manager-1.2\plugins\*; DestDir: {app}\plugins; Flags: ignoreversio
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
-Name: {group}\Micro-Manager 1.2; Filename: {app}\ImageJ.exe; WorkingDir: {app}
-Name: {group}\{cm:UninstallProgram,Micro-Manager1.2}; Filename: {uninstallexe}
-Name: {commondesktop}\Micro-Manager 1.2; Filename: {app}\ImageJ.exe; Tasks: desktopicon; WorkingDir: {app}; IconIndex: 0
+Name: {group}\Micro-Manager-S 1.2; Filename: {app}\ImageJ.exe; WorkingDir: {app}
+Name: {group}\{cm:UninstallProgram,Micro-Manager-S1.2}; Filename: {uninstallexe}
+Name: {commondesktop}\Micro-Manager-S 1.2; Filename: {app}\ImageJ.exe; Tasks: desktopicon; WorkingDir: {app}; IconIndex: 0
 
 [Run]
-Filename: {app}\ImageJ.exe; Description: {cm:LaunchProgram,Micro-Manager1.2}; Flags: nowait postinstall skipifsilent
+Filename: {app}\ImageJ.exe; Description: {cm:LaunchProgram,Micro-Manager-S1.2}; Flags: nowait postinstall skipifsilent
