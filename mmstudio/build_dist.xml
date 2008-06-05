@@ -1,16 +1,16 @@
-<!-- Ant makefile for the Micro-Manager 1.2 for Windows distribution -->
-<!-- This file assumes Micro-Manager 1.2 project tree structure      -->
+<!-- Ant makefile for the Micro-Manager-S 1.2 for Windows distribution -->
+<!-- This file assumes Micro-Manager-S 1.2 project tree structure      -->
 
 <project name="MMJ" default="buildMMStudio">
 
 	<!-- Specify version in the installer name -->
-	<property name="InstallerName" value="MMSetup_1_2_xx"/>
+	<property name="InstallerName" value="MMSetup-S_1_2_xx"/>
 
 	<!-- Specify the system path to the ImageJ root directory -->
 	<property name="ImageJPath" value="C:/Program Files/ImageJ"/>
-	<property name="InstallRoot" value="C:/projects/micromanager1.2/Install/micro-manager-1.2"/>
-	<property name="InstallScripts" value="C:/projects/micromanager1.2/Install"/>
-	<property name="NativeRoot" value="C:\projects\micromanager1.2\MMCoreJ_wrap"/>
+	<property name="InstallRoot" value="C:/projects/micromanager2/Install/micro-manager-S-1.2"/>
+	<property name="InstallScripts" value="C:/projects/micromanager2/Install"/>
+	<property name="NativeRoot" value="C:\projects\micromanager2\MMCoreJ_wrap"/>
 
 	<!-- Do not modify from this point on -->
 	<property name="MMPluginDir" value="${ImageJPath}/plugins/Micro-Manager"/>
