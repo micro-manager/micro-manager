@@ -40,7 +40,7 @@ public class SBSPlate {
    
    public static String SBS_96_WELL= "96WELL";
    public static String SBS_384_WELL= "384WELL";
-   public static String CUSTOM = "CUSTOM";
+   //public static String CUSTOM = "CUSTOM";
       
    public SBSPlate() {
       // initialize as 96-well plate
@@ -55,7 +55,7 @@ public class SBSPlate {
       firstWellY_ = 85480.0;
    }
    
-   public void initialize(String standard) {
+   public void initializeStandard(String id) {
       
    }
    
@@ -111,7 +111,11 @@ public class SBSPlate {
       public double y;
       
       public Well() {
-         
+         row = 0;
+         col = 0;
+         x = 0.0;
+         y = 0.0;
+         label = new String("Undefined");
       }
    }
 
