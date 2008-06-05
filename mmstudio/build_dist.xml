@@ -94,7 +94,6 @@
 
 		<copy file="${BinRoot}/mmgr_dal_Hamamatsu.dll" todir="${InstallRoot}" />
 
-		<copy file="${BinRoot}/inpout32.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_SerialManager.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_ParallelPort.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_Pecon.dll" todir="${InstallRoot}" />
