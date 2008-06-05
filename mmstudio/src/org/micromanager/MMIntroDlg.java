@@ -7,6 +7,7 @@
 // AUTHOR:       Nenad Amodaj, nenad@amodaj.com, Dec 1, 2005
 //
 // COPYRIGHT:    University of California, San Francisco, 2006
+// COPYRIGHT:    University of California, San Francisco, 2006
 //
 // LICENSE:      This file is distributed under the BSD license.
 //               License text is included with the source distribution.

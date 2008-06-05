@@ -7,6 +7,7 @@
 // AUTHOR:       Nenad Amodaj, nenad@amodaj.com, Dec 1, 2005
 //
 // COPYRIGHT:    University of California, San Francisco, 2006
+//               100X Imaging Inc, www.100ximaging.com, 2008
 //
 // LICENSE:      This file is distributed under the BSD license.
 //               License text is included with the source distribution.
@@ -47,7 +48,7 @@ import com.swtdesigner.SwingResourceManager;
 public class MMAboutDlg extends JDialog {
    private static final long serialVersionUID = 1L;
    private JTextArea welcomeTextArea_;
-   private JTextArea textArea_;
+   private JTextArea homeHttphcs100ximagingcomBugTextArea;
    private JTextArea versionInfo_;
    
    public static String COPYRIGHT_TEXT = 
@@ -58,7 +59,7 @@ public class MMAboutDlg extends JDialog {
    
    public MMAboutDlg() {
       super();
-      Dimension winSize = new Dimension(384, 322);
+      Dimension winSize = new Dimension(384, 342);
       setSize(winSize);
       setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
       setName("aboutDlg");
@@ -67,21 +68,21 @@ public class MMAboutDlg extends JDialog {
       setResizable(false);
       setModal(true);
       getContentPane().setLayout(null);
-      setTitle("About Micro-Manager");
+      setTitle("About Micro-Manager-S");
       
       Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
       setLocation(screenSize.width/2 - (winSize.width/2), screenSize.height/2 - (winSize.height/2));
 
       final JLabel micromanageLabel = new JLabel();
       micromanageLabel.setFont(new Font("", Font.BOLD, 16));
-      micromanageLabel.setText("Micro-Manager 1.2");
+      micromanageLabel.setText("Micro-Manager-S 1.2");
       micromanageLabel.setBounds(44, 11, 176, 23);
       getContentPane().add(micromanageLabel);
 
       final JLabel openSourceAutomatedLabel = new JLabel();
       openSourceAutomatedLabel.setFont(new Font("Arial", Font.PLAIN, 10));
-      openSourceAutomatedLabel.setText("The Open Source Microscope Software");
-      openSourceAutomatedLabel.setBounds(44, 30, 200, 18);
+      openSourceAutomatedLabel.setText("The Open Source High Content Screening (HCS) Software");
+      openSourceAutomatedLabel.setBounds(44, 30, 329, 18);
       getContentPane().add(openSourceAutomatedLabel);
 
       final JButton okButton = new JButton();
@@ -92,7 +93,7 @@ public class MMAboutDlg extends JDialog {
          }
       });
       okButton.setText("OK");
-      okButton.setBounds(145, 260, 91, 28);
+      okButton.setBounds(145, 272, 91, 28);
       getContentPane().add(okButton);
 
       versionInfo_ = new JTextArea();
@@ -102,16 +103,14 @@ public class MMAboutDlg extends JDialog {
       versionInfo_.setBounds(5, 49, 368, 66);
       getContentPane().add(versionInfo_);
 
-      textArea_ = new JTextArea();
-      textArea_.setEditable(false);
-      textArea_.setBorder(new LineBorder(Color.black, 1, false));
-      textArea_.setBackground(new Color(192, 192, 192));
-      textArea_.setFont(new Font("Courier New", Font.PLAIN, 12));
-      textArea_.setText(" home:               http://www.micro-manager.org\n" +
-                                             " bug reports:        bugs@micro-manager.org\n" +
-                                             " feature requests:   features@micro-manager.org\n");
-      textArea_.setBounds(5, 205, 368, 47);
-      getContentPane().add(textArea_);
+      homeHttphcs100ximagingcomBugTextArea = new JTextArea();
+      homeHttphcs100ximagingcomBugTextArea.setEditable(false);
+      homeHttphcs100ximagingcomBugTextArea.setBorder(new LineBorder(Color.black, 1, false));
+      homeHttphcs100ximagingcomBugTextArea.setBackground(new Color(192, 192, 192));
+      homeHttphcs100ximagingcomBugTextArea.setFont(new Font("Courier New", Font.PLAIN, 12));
+      homeHttphcs100ximagingcomBugTextArea.setText(" home:               http://hcs.100ximaging.com\r\n bug reports:        bugs@100ximaging.com\r\n feature requests:   features@100ximaging.com\r\n");
+      homeHttphcs100ximagingcomBugTextArea.setBounds(5, 219, 368, 47);
+      getContentPane().add(homeHttphcs100ximagingcomBugTextArea);
 
       final JLabel label = new JLabel();
       label.setIcon(SwingResourceManager.getIcon(MMAboutDlg.class, "/org/micromanager/icons/microscope.gif"));
@@ -121,14 +120,14 @@ public class MMAboutDlg extends JDialog {
       welcomeTextArea_ = new JTextArea();
       welcomeTextArea_.setBorder(new LineBorder(Color.black, 1, false));
       welcomeTextArea_.setWrapStyleWord(true);
-      welcomeTextArea_.setText(COPYRIGHT_TEXT);
+      welcomeTextArea_.setText("Copyright University of California San Francisco, 2008. All rights reserved.\r\nCopyright 100X Imaging Inc, 2008. All rights reserved\r\n\r\nAdditional copyright on portions of this software by the following institutions, projects or individuals: Wayne Rasband, NIH, Joachim Walter, ACE, BeanShell, JSON, logix4u, libserial, Todd Klark and Ramon de Klein");
       welcomeTextArea_.setMargin(new Insets(10, 10, 10, 10));
       welcomeTextArea_.setLineWrap(true);
       welcomeTextArea_.setFont(new Font("Arial", Font.PLAIN, 10));
       welcomeTextArea_.setFocusable(false);
       welcomeTextArea_.setEditable(false);
       welcomeTextArea_.setBackground(new Color(192, 192, 192));
-      welcomeTextArea_.setBounds(5, 126, 368, 73);
+      welcomeTextArea_.setBounds(5, 126, 368, 87);
       getContentPane().add(welcomeTextArea_);
    }
    
