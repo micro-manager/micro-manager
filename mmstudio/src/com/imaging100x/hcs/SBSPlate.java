@@ -1,14 +1,14 @@
 ///////////////////////////////////////////////////////////////////////////////
 //FILE:           MetadataDlg.java
-//PROJECT:        Micro-Manager
-//SUBSYSTEM:      navigation
+//PROJECT:        Micro-Manager-S
+//SUBSYSTEM:      high content screening
 //-----------------------------------------------------------------------------
 //
 //AUTHOR:         Nenad Amodaj, nenad@amodaj.com, June 3, 2008
 //
 //COPYRIGHT:      100X Imaging Inc, www.100ximaging.com, 2008
 //                
-//LICENSE:        This file is distributed under the BSD license.
+//LICENSE:        This file is distributed under the GPL license.
 //                License text is included with the source distribution.
 //
 //                This file is distributed in the hope that it will be useful,
@@ -21,7 +21,7 @@
 //
 //CVS:            $Id: MetadataDlg.java 1275 2008-06-03 21:31:24Z nenad $
 
-package org.micromanager.navigation;
+package com.imaging100x.hcs;
 
 import java.util.Hashtable;
 
