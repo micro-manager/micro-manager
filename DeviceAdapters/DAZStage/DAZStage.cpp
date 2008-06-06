@@ -55,7 +55,7 @@ DAZStage::DAZStage() :
    DADeviceName_ (""),
    initialized_ (false),
    minDAVolt_ (0.0),
-   maxDAVolt_ (5.0),
+   maxDAVolt_ (10.0),
    minStageVolt_ (0.0),
    maxStageVolt_ (5.0),
    minStagePos_ (0.0),

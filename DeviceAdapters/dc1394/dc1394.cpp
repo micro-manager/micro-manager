@@ -117,7 +117,8 @@ Cdc1394::Cdc1394() :
    triedCaptureCount(0),
    integrateFrameNumber(1),
    maxNrIntegration(1),
-   lnBin_(1)
+   lnBin_(1),
+   acquiring_(false)
 {
    SetErrorText(ERR_CAMERA_NOT_FOUND, "Did not find a IIDC firewire camera");
    SetErrorText(ERR_SET_CAPTURE_FAILED, "Failed to set capture");
@@ -899,7 +900,7 @@ int Cdc1394::SnapImage()
       {
          endFound=true;
       }                                                                      
-   }      
+   }
    // printf("%d Frames discarded\n", nrFrames);
    // If we went through the whole buffer, toss the image and ask for a fresh one
    // I don't know why it is 2, but that is what it is with the iSight and Sony I have here
@@ -1441,15 +1442,11 @@ int Cdc1394::StartSequenceAcquisition(long numImages, double interval_ms)
 {
    
    // If we're using the camera in some other way, stop that
-   Cdc1394::StopTransmission();
+   //Cdc1394::StopTransmission();
    
    printf("Started camera streaming.\n");
    if (acquiring_)
       return ERR_BUSY_ACQUIRING;
-
-   int ret = GetCoreCallback()->PrepareForAcq(this);
-   if (ret != DEVICE_OK)
-      return ret;
 
    logMsg_.clear();
    logMsg_ << "Started sequence acquisition: " << numImages << " at " << interval_ms << " ms" << endl;
@@ -1457,9 +1454,6 @@ int Cdc1394::StartSequenceAcquisition(long numImages, double interval_ms)
 
    imageCounter_ = 0;
    sequenceLength_ = numImages;
-   //const ACE_Time_Value curr_tv = ACE_OS::gettimeofday ();
-   //ACE_Time_Value interval = ACE_Time_Value (0, (long)(interval_ms * 1000.0));
-   //acqTimer_->schedule (tcb_, &timerArg_, curr_tv + ACE_Time_Value (0, 1000), interval);
 
    double actualIntervalMs = max(GetExposure(), interval_ms);
    acqThread_->SetInterval(actualIntervalMs);
@@ -1470,8 +1464,14 @@ int Cdc1394::StartSequenceAcquisition(long numImages, double interval_ms)
       logMsg_.clear();
       logMsg_ << "Unable to start multi-shot" << endl;
       LogMessage(logMsg_.str().c_str());
-      return err;
+      //return err;
    }
+
+   //ResizeImageBuffer();
+
+   int ret = GetCoreCallback()->PrepareForAcq(this);
+   if (ret != DEVICE_OK)
+      return ret;
 
    GetBytesPerPixel();
 
@@ -1479,9 +1479,24 @@ int Cdc1394::StartSequenceAcquisition(long numImages, double interval_ms)
 
    // TODO: check trigger mode, etc..
 
+   // emtpy the buffer to ensure we'll get freh images
+   ResizeImageBuffer();
+   dc1394video_frame_t *frame2;
+   bool endFound = false;
+   while (!endFound) {
+      err = dc1394_capture_dequeue(camera,DC1394_CAPTURE_POLICY_POLL, &frame2);
+      if (frame2 && err==DC1394_SUCCESS)
+      {
+         dc1394_capture_enqueue(camera, frame2);
+      } else
+         endFound=true;
+   }
+
+
+   // printf("%d Frames discarded\n", nrFrames);
+   acquiring_ = true;
    acqThread_->Start();
 
-   acquiring_ = true;
 
    LogMessage("Acquisition thread started");
 
@@ -1501,20 +1516,21 @@ int Cdc1394::StopSequenceAcquisition()
       logMsg_.clear();
       logMsg_ << "Unable to stop multi-shot" << endl;
       LogMessage(logMsg_.str().c_str());
-      return err;
+      // return err;
    }
    // TODO: the correct termination code needs to be passed here instead of "0"
    MM::Core* cb = GetCoreCallback();
    if (cb)
       cb->AcqFinished(this, 0);
+   LogMessage("Stopped streaming");
    return DEVICE_OK;
 }
 
 int Cdc1394::PushImage(dc1394video_frame_t *myframe)
 {
-   logMsg_.clear();
-   logMsg_ << "Pushing image " <<imageCounter_<< endl;
-   LogMessage(logMsg_.str().c_str());
+   std::ostringstream logMsg;
+   logMsg << "Pushing image " <<imageCounter_<< endl;
+   LogMessage(logMsg.str().c_str());
 
    imageCounter_++;
    // TODO: call core to finish image snap
@@ -1555,34 +1571,37 @@ int AcqSequenceThread::svc(void)
       err=dc1394_capture_dequeue(camera_->camera, DC1394_CAPTURE_POLICY_WAIT, &myframe);/* Capture */
       if(err!=DC1394_SUCCESS)
       {
-         logMsg_.clear();
-         logMsg_ << "Dequeue failed with code: " <<err ;
-         camera_->LogMessage(logMsg_.str().c_str());
+         std::ostringstream logMsg;
+         logMsg << "Dequeue failed with code: " <<err ;
+         //camera_->LogMessage(logMsg_.str().c_str());
+         printf(logMsg.str().c_str());
          camera_->StopSequenceAcquisition();
          return err; 
       } else {
-         logMsg_.clear();
-         logMsg_ << "Dequeued image: " << imageCounter <<
+         std::ostringstream logMsg;
+         logMsg << "Dequeued image: " << imageCounter <<
          " with timestamp: " <<myframe->timestamp << 
          " ring buffer pos: "<<myframe->id <<
          " frames_behind: "<<myframe->frames_behind<<endl ;
-         camera_->LogMessage(logMsg_.str().c_str());
+         //camera_->LogMessage(logMsg_.str().c_str());
+         printf(logMsg.str().c_str());
       }
       int ret = camera_->PushImage(myframe);
       if (ret != DEVICE_OK)
       {
-         logMsg_.clear();
-         logMsg_ << "PushImage() failed with errorcode: " << ret;
-         camera_->LogMessage(logMsg_.str().c_str());
+         std::ostringstream logMsg;
+         logMsg << "PushImage() failed with errorcode: " << ret;
+         camera_->LogMessage(logMsg.str().c_str());
          camera_->StopSequenceAcquisition();
          return 2;
       }
       err=dc1394_capture_enqueue(camera_->camera,myframe);/* Capture */
       if(err!=DC1394_SUCCESS)
       {
-         logMsg_.clear();
-         logMsg_<< "Failed to enqueue image" <<imageCounter<< endl;
-         camera_->LogMessage(logMsg_.str().c_str());
+         std::ostringstream logMsg;
+         logMsg.clear();
+         logMsg<< "Failed to enqueue image" <<imageCounter<< endl;
+         camera_->LogMessage(logMsg.str().c_str());
 
          camera_->StopSequenceAcquisition();
          return err; 
@@ -1601,3 +1620,8 @@ int AcqSequenceThread::svc(void)
    printf("Acquisition completed.\n");
    return 0;
 }
+
+void AcqSequenceThread::Start() {
+   stop_ = false;
+   activate(); 
+} 

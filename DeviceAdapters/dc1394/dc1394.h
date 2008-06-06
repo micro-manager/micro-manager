@@ -75,7 +75,7 @@ public:
    int Initialize();
    int Shutdown();
    void GetName(char* pszName) const;
-   bool Busy() {return m_bBusy;}
+   bool Busy() {return m_bBusy || acquiring_;}
    
    // MMCamera API
    int SnapImage();
@@ -204,7 +204,8 @@ public:
    void SetInterval(double intervalMs) {intervalMs_ = intervalMs;}
    void SetLength(long images) {numImages_ = images;}
    void Stop() {stop_ = true;}
-   void Start() {stop_ = false; activate();}
+   //void Start() {stop_ = false; activate();}
+   void Start();
 
 private:
    Cdc1394* camera_;
