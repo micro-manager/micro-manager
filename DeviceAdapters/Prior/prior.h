@@ -142,6 +142,8 @@ public:
   int Home();
   int Stop();
   int SetOrigin();//jizhen 4/12/2007
+  int SetAdapterOrigin();
+  int SetAdapterOrigin(double x, double y);
   int GetLimits(double& xMin, double& xMax, double& yMin, double& yMax);
 
    // action interface
@@ -149,6 +151,8 @@ public:
    int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnStepSizeX(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnStepSizeY(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnMirrorX(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnMirrorY(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    int GetResolution(double& resX, double& resY);
@@ -160,6 +164,10 @@ private:
    double stepSizeXUm_;
    double stepSizeYUm_;
    double answerTimeoutMs_;
+   double originX_;
+   double originY_;
+   bool mirrorX_;
+   bool mirrorY_;
 };
 
 class ZStage : public CStageBase<ZStage>
