@@ -911,36 +911,47 @@ int Cdc1394::SnapImage()
    }
    
    // Now process the frame according to the video mode used
-   int numPixels = width * height;
+   ProcessImage(frame, img_.GetPixels());
+   // we copied the mage, so release the frame:
+   dc1394_capture_enqueue(camera, frame);
+   return DEVICE_OK;
+}
    
+/*
+* Process the frame and return it as a usable image in the buffer 'deistination'
+* It is the callers reponsibility to engueue the frame when done
+* It  is also the callers responsibility to provide enough memory in destination
+*/
+int Cdc1394::ProcessImage(dc1394video_frame_t *frame, const unsigned char* destination) 
+{
+   dc1394video_frame_t *internalFrame;
+   int numPixels = width * height;
    if (colorCoding==DC1394_COLOR_CODING_YUV411 || colorCoding==DC1394_COLOR_CODING_YUV422 || colorCoding==DC1394_COLOR_CODING_YUV444) 
    {
       uint8_t *rgb_image = (uint8_t *)malloc(3 * numPixels);
       dc1394_convert_to_RGB8((uint8_t *)frame->image,      
              rgb_image, width, height, DC1394_BYTE_ORDER_UYVY, colorCoding, 16);
-      // we copied to rgb_image, so release the frame:
-      dc1394_capture_enqueue(camera, frame);
       // no integration, straight forward stuff
       if (integrateFrameNumber == 1)
       {
-         uint8_t* pixBuffer = const_cast<unsigned uint8_t*> (img_.GetPixels());
+         uint8_t* pixBuffer = const_cast<unsigned uint8_t*> (destination);
          rgb8ToMono8(pixBuffer, rgb_image, width, height);
       }
       // when integrating we are dealing with 16 bit images
       if (integrateFrameNumber > 1)
       {
-         void* pixBuffer = const_cast<unsigned char*> (img_.GetPixels());
+         void* pixBuffer = const_cast<unsigned char*> (destination);
          // funny, we need to clear the memory since we'll add to it, not overwrite it
          memset(pixBuffer, 0, GetImageBufferSize());
          rgb8AddToMono16((uint16_t*) pixBuffer, rgb_image, width, height);
          // now repeat for the other frames:
          for (int frameNr=1; frameNr<integrateFrameNumber; frameNr++)
          {
-            if (dc1394_capture_dequeue(camera,DC1394_CAPTURE_POLICY_WAIT, &frame)!=DC1394_SUCCESS)
+            if (dc1394_capture_dequeue(camera,DC1394_CAPTURE_POLICY_WAIT, &internalFrame)!=DC1394_SUCCESS)
                   return ERR_CAPTURE_FAILED;
-            dc1394_convert_to_RGB8((uint8_t *)frame->image,      
+            dc1394_convert_to_RGB8((uint8_t *)internalFrame->image,
                       rgb_image, width, height, DC1394_BYTE_ORDER_UYVY, colorCoding, 16);
-            dc1394_capture_enqueue(camera, frame);
+            dc1394_capture_enqueue(camera, internalFrame);
             rgb8AddToMono16((uint16_t*) pixBuffer, rgb_image, width, height);
          }
       }
@@ -952,26 +963,26 @@ int Cdc1394::SnapImage()
       if (integrateFrameNumber==1) 
       {
          void* src = (void *) frame->image;
-         uint8_t* pixBuffer = const_cast<unsigned char*> (img_.GetPixels());
+         uint8_t* pixBuffer = const_cast<unsigned char*> (destination);
 		 // GJ: Deinterlace image if required
-         if (avtInterlaced) avtDeinterlaceMono8 (pixBuffer, (uint8_t*) src, width, height);			 
-		 else memcpy (pixBuffer, src, GetImageBufferSize());
-         dc1394_capture_enqueue(camera, frame);
+         if (avtInterlaced) 
+            avtDeinterlaceMono8 (pixBuffer, (uint8_t*) src, width, height);
+		   else 
+            memcpy (pixBuffer, src, GetImageBufferSize());
       }
       else if (integrateFrameNumber > 1)
       {
          void* src = (void *) frame->image;
-         uint8_t* pixBuffer = const_cast<unsigned char*> (img_.GetPixels());
+         uint8_t* pixBuffer = const_cast<unsigned char*> (destination);
          memset(pixBuffer, 0, GetImageBufferSize());
          mono8AddToMono16((uint16_t*) pixBuffer, (uint8_t*) src, width, height);
-         dc1394_capture_enqueue(camera, frame);
          // now repeat for the other frames:
          for (int frameNr=1; frameNr<integrateFrameNumber; frameNr++)
          {
-            if (dc1394_capture_dequeue(camera,DC1394_CAPTURE_POLICY_WAIT, &frame)!=DC1394_SUCCESS)
+            if (dc1394_capture_dequeue(camera,DC1394_CAPTURE_POLICY_WAIT, &internalFrame)!=DC1394_SUCCESS)
                   return ERR_CAPTURE_FAILED;
             mono8AddToMono16((uint16_t*) pixBuffer, (uint8_t*) frame->image, width, height);
-            dc1394_capture_enqueue(camera, frame);
+            dc1394_capture_enqueue(camera, internalFrame);
          }
 		 // GJ:  Finished integrating, so we can deinterlace the 16 bit result
 		 // That does mean doing a pixel buffer shuffle unfortunately
@@ -989,13 +1000,13 @@ int Cdc1394::SnapImage()
    {
       uint8_t* src;
       src = (uint8_t *) frame->image;
-      uint8_t* pixBuffer = const_cast<unsigned uint8_t*> (img_.GetPixels());
+      uint8_t* pixBuffer = const_cast<unsigned uint8_t*> (destination);
       rgb8ToMono8 (pixBuffer, src, width, height);
-      dc1394_capture_enqueue(camera, frame);
    }
    
    return DEVICE_OK;
 }
+
 
 double Cdc1394::GetExposure() const
 {
@@ -1467,7 +1478,7 @@ int Cdc1394::StartSequenceAcquisition(long numImages, double interval_ms)
       //return err;
    }
 
-   //ResizeImageBuffer();
+   ResizeImageBuffer();
 
    int ret = GetCoreCallback()->PrepareForAcq(this);
    if (ret != DEVICE_OK)
@@ -1480,10 +1491,11 @@ int Cdc1394::StartSequenceAcquisition(long numImages, double interval_ms)
    // TODO: check trigger mode, etc..
 
    // emtpy the buffer to ensure we'll get freh images
-   ResizeImageBuffer();
    dc1394video_frame_t *frame2;
    bool endFound = false;
+   long nrFrames = 0;
    while (!endFound) {
+      nrFrames++;
       err = dc1394_capture_dequeue(camera,DC1394_CAPTURE_POLICY_POLL, &frame2);
       if (frame2 && err==DC1394_SUCCESS)
       {
@@ -1493,7 +1505,7 @@ int Cdc1394::StartSequenceAcquisition(long numImages, double interval_ms)
    }
 
 
-   // printf("%d Frames discarded\n", nrFrames);
+   printf("%ld Frames discarded\n", nrFrames);
    acquiring_ = true;
    acqThread_->Start();
 
@@ -1546,16 +1558,25 @@ int Cdc1394::PushImage(dc1394video_frame_t *myframe)
    // Copy to img_ ?
    
    // process image
+
+   int numChars = GetImageWidth() * GetImageHeight() * GetImageBytesPerPixel() ;
+   unsigned char* buf = (unsigned char *)malloc(numChars);
+   ProcessImage(myframe, buf);
+
+   /*
    MM::ImageProcessor* ip = GetCoreCallback()->GetImageProcessor(this);
    if (ip)
    {
-      int ret = ip->Process(myframe->image, width, height,bytesPerPixel);
+      int ret = ip->Process(img_.GetPixels(), width, height,bytesPerPixel);
       if (ret != DEVICE_OK) return ret;
    }
+   */
 
    // insert image into the circular MMCore buffer
-   return GetCoreCallback()->InsertImage(this, myframe->image,
+   int ret =  GetCoreCallback()->InsertImage(this, buf,
                                            width, height, bytesPerPixel);
+   free(buf);
+   return ret;
 }
 
 int AcqSequenceThread::svc(void)
@@ -1595,7 +1616,7 @@ int AcqSequenceThread::svc(void)
          camera_->StopSequenceAcquisition();
          return 2;
       }
-      err=dc1394_capture_enqueue(camera_->camera,myframe);/* Capture */
+      err=dc1394_capture_enqueue(camera_->camera, myframe);/* Capture */
       if(err!=DC1394_SUCCESS)
       {
          std::ostringstream logMsg;
@@ -1607,7 +1628,7 @@ int AcqSequenceThread::svc(void)
          return err; 
       } 
       imageCounter++;
-      //printf("Acquired frame %ld.\n", imageCounter);                           
+      printf("Acquired frame %ld.\n", imageCounter);                           
    } while (!stop_ && imageCounter < numImages_);
 
    if (stop_)

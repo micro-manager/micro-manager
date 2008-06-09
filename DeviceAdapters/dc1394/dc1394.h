@@ -79,6 +79,7 @@ public:
    
    // MMCamera API
    int SnapImage();
+   int ProcessImage(dc1394video_frame_t *frame, const unsigned char* destination); 
    const unsigned char* GetImageBuffer();
    unsigned GetImageWidth() const {return img_.Width();}
    unsigned GetImageHeight() const {return img_.Height();}
