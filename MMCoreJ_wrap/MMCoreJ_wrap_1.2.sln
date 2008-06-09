@@ -106,6 +106,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CSUX", "..\DeviceAdapters\Y
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Pecon", "..\DeviceAdapters\Pecon\Pecon.vcproj", "{24FF0DE6-E201-46C1-ACFB-E4B6B4527C84}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NikonTI", "..\DeviceAdapters\NikonTI\NikonTI.vcproj", "{A9146B8A-A700-40BB-B018-4FAD6F8E79EC}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NikonAZ100", "..\DeviceAdapters\NikonAZ100\NikonAZ100.vcproj", "{B6FEC6DD-A94F-435C-B8BD-BEE8931F0E57}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -252,6 +256,14 @@ Global
 		{24FF0DE6-E201-46C1-ACFB-E4B6B4527C84}.Debug|Win32.Build.0 = Debug|Win32
 		{24FF0DE6-E201-46C1-ACFB-E4B6B4527C84}.Release|Win32.ActiveCfg = Release|Win32
 		{24FF0DE6-E201-46C1-ACFB-E4B6B4527C84}.Release|Win32.Build.0 = Release|Win32
+		{A9146B8A-A700-40BB-B018-4FAD6F8E79EC}.Debug|Win32.ActiveCfg = Debug|Win32
+		{A9146B8A-A700-40BB-B018-4FAD6F8E79EC}.Debug|Win32.Build.0 = Debug|Win32
+		{A9146B8A-A700-40BB-B018-4FAD6F8E79EC}.Release|Win32.ActiveCfg = Release|Win32
+		{A9146B8A-A700-40BB-B018-4FAD6F8E79EC}.Release|Win32.Build.0 = Release|Win32
+		{B6FEC6DD-A94F-435C-B8BD-BEE8931F0E57}.Debug|Win32.ActiveCfg = Debug|Win32
+		{B6FEC6DD-A94F-435C-B8BD-BEE8931F0E57}.Debug|Win32.Build.0 = Debug|Win32
+		{B6FEC6DD-A94F-435C-B8BD-BEE8931F0E57}.Release|Win32.ActiveCfg = Release|Win32
+		{B6FEC6DD-A94F-435C-B8BD-BEE8931F0E57}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
