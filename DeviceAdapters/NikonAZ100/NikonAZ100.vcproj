@@ -2,8 +2,8 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="CSUX"
-	ProjectGUID="{0E350120-8D1B-4E44-8B21-DADAEBC02217}"
+	Name="NikonAZ100"
+	ProjectGUID="{B6FEC6DD-A94F-435C-B8BD-BEE8931F0E57}"
 	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
@@ -16,8 +16,8 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory=".\Debug"
-			IntermediateDirectory=".\Debug"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
 			CharacterSet="2"
 			>
@@ -39,11 +39,13 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;MODULE_EXPORTS"
+				MinimalRebuild="true"
+				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				WarningLevel="4"
-				Detect64BitPortabilityProblems="false"
-				DebugInformationFormat="3"
+				Detect64BitPortabilityProblems="true"
+				DebugInformationFormat="4"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -56,14 +58,12 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="$(OutDir)\mmgr_dal_$(ProjectName).dll"
-				LinkIncremental="1"
+				OutputFile="$(OutDir)/mmgr_dal_NikonAZ100.dll"
+				LinkIncremental="2"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile="$(OutDir)/CSUX.pdb"
 				SubSystem="2"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				TargetMachine="1"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -85,15 +85,14 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\bin"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\bin"
 			/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory=".\Release"
-			IntermediateDirectory=".\Release"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
-			CharacterSet="2"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -112,10 +111,10 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
+				PreprocessorDefinitions="WIN32;_NDEBUG;_WINDOWS;MODULE_EXPORTS"
+				MinimalRebuild="false"
 				WarningLevel="4"
-				Detect64BitPortabilityProblems="false"
-				DebugInformationFormat="3"
+				Detect64BitPortabilityProblems="true"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -128,12 +127,13 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="$(OutDir)\mmgr_dal_$(ProjectName).dll"
+				OutputFile="$(OutDir)/mmgr_dal_NikonAZ100.dll"
 				LinkIncremental="1"
 				SubSystem="2"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				TargetMachine="1"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -155,7 +155,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\..\bin"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\bin"
 			/>
 		</Configuration>
 	</Configurations>
@@ -168,23 +168,27 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\CSUX.cpp"
+				RelativePath=".\AZHub.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\CSUXHub.cpp"
+				RelativePath="..\..\MMDevice\DeviceUtils.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\MMDevice\DeviceUtils.cpp"
+				RelativePath="..\..\MMDevice\ImgBuffer.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\MMDevice\ModuleInterface.cpp"
+				RelativePath="..\..\MMDevice\ModuleInterface.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\MMDevice\Property.cpp"
+				RelativePath=".\NikonAZ100.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\MMDevice\Property.cpp"
 				>
 			</File>
 		</Filter>
@@ -194,23 +198,35 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath="..\CSU22Hub.h"
+				RelativePath=".\AZHub.h"
 				>
 			</File>
 			<File
-				RelativePath="..\CSUXHub.h"
+				RelativePath="..\..\MMDevice\DeviceBase.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\MMDevice\DeviceBase.h"
+				RelativePath="..\..\MMDevice\DeviceUtils.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\MMDevice\MMDevice.h"
+				RelativePath="..\..\MMDevice\MMDevice.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\MMDevice\ModuleInterface.h"
+				RelativePath="..\..\MMDevice\MMDeviceConstants.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\MMDevice\ModuleInterface.h"
+				>
+			</File>
+			<File
+				RelativePath=".\NikonAZ100.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\MMDevice\Property.h"
 				>
 			</File>
 		</Filter>

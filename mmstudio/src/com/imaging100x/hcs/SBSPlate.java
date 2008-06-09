@@ -44,19 +44,31 @@ public class SBSPlate {
       
    public SBSPlate() {
       // initialize as 96-well plate
-      id_ = SBS_96_WELL;
-      numColumns_ = 12;
-      numRows_ = 8;
-      sizeXUm_ = 127760.0;
-      sizeYUm_ = 85480.0;
-      wellPitchX_ = 9000.0;
-      wellPitchY_ = 9000.0;
-      firstWellX_ = 14380.0;
-      firstWellY_ = 85480.0;
+      initialize(SBS_96_WELL);
    }
    
-   public void initializeStandard(String id) {
-      
+   public void initialize(String id) {
+      if (id.equals(SBS_96_WELL)){
+         id_ = SBS_96_WELL;
+         numColumns_ = 12;
+         numRows_ = 8;
+         sizeXUm_ = 127760.0;
+         sizeYUm_ = 85480.0;
+         wellPitchX_ = 9000.0;
+         wellPitchY_ = 9000.0;
+         firstWellX_ = 14380.0;
+         firstWellY_ = 11240.0;
+      } else {
+         id_ = SBS_384_WELL;
+         numColumns_ = 24;
+         numRows_ = 16;
+         sizeXUm_ = 127760.0;
+         sizeYUm_ = 85480.0;
+         wellPitchX_ = 4500.0;
+         wellPitchY_ = 4500.0;
+         firstWellX_ = 12130.0;
+         firstWellY_ = 8990.0;        
+      }
    }
    
    public void load(String path) {
@@ -68,6 +80,7 @@ public class SBSPlate {
    }
    
    public String serialize() {
+      JSONObject plate = new JSONObject();
       return null;
    }
    
