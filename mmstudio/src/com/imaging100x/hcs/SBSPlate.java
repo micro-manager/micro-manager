@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:           MetadataDlg.java
+//FILE:           SBSPlate.java
 //PROJECT:        Micro-Manager-S
 //SUBSYSTEM:      high content screening
 //-----------------------------------------------------------------------------
@@ -24,7 +24,6 @@
 package com.imaging100x.hcs;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -32,8 +31,9 @@ import java.util.Hashtable;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.metadata.ImageKey;
-import org.micromanager.metadata.MMAcqDataException;
+import org.micromanager.navigation.MultiStagePosition;
+import org.micromanager.navigation.PositionList;
+import org.micromanager.navigation.StagePosition;
 
 public class SBSPlate {
    private int numColumns_;
@@ -62,13 +62,22 @@ public class SBSPlate {
    public static String SBS_96_WELL= "96WELL";
    public static String SBS_384_WELL= "384WELL";
    //public static String CUSTOM = "CUSTOM";
+   
+   private static String DEFAULT_XYSTAGE_NAME = "XYStage"; 
+   
+   private static char rowAlphabet[] = { 'A','B','C','D','E',
+         'F','G','H','I','J',
+         'K','L','M','N','O',
+         'P','Q','R','S','T',
+         'U','V','W','X','Y','Z' };
       
    public SBSPlate() {
       // initialize as 96-well plate
+      wellMap_ = new Hashtable<String, Well>();
       initialize(SBS_96_WELL);
    }
    
-   public void initialize(String id) {
+   public boolean initialize(String id) {
       if (id.equals(SBS_96_WELL)){
          id_ = SBS_96_WELL;
          numColumns_ = 12;
@@ -90,6 +99,15 @@ public class SBSPlate {
          firstWellX_ = 12130.0;
          firstWellY_ = 8990.0;        
       }
+      
+      try {
+         generateWells();
+      } catch (HCSException e) {
+         e.printStackTrace();
+         return false;
+      }
+      
+      return true;
    }
    
    public void load(String path) throws HCSException {
@@ -160,6 +178,49 @@ public class SBSPlate {
       }
    }
    
+   /**
+    * Generate a list of well positions using 'snake' pattern.
+    * @return
+    */
+   public PositionList generateWellPositions() {
+      PositionList posList = new PositionList();
+      boolean direction = true;
+      for (int i=0; i<numRows_; i++) {
+         for (int j=0; j<numColumns_; j++) {
+            MultiStagePosition mps = new MultiStagePosition();
+            StagePosition sp = new StagePosition();
+            sp.numAxes = 2;
+            sp.stageName = DEFAULT_XYSTAGE_NAME;
+            String wellLabel;
+            try {
+               int colIndex;
+               if (direction)
+                  colIndex = j+1; // forward
+               else
+                  colIndex = numColumns_ - j; // reverse
+               wellLabel = getWellLabel(i+1, colIndex);
+            } catch (HCSException e) {
+               // TODO Auto-generated catch block
+               e.printStackTrace();
+               return posList;
+            }
+            try {
+               sp.x = getWellXUm(wellLabel);
+               sp.y = getWellYUm(wellLabel);
+               mps.add(sp);
+               mps.setLabel(wellLabel);
+               mps.setDefaultXYStage(DEFAULT_XYSTAGE_NAME);
+               posList.addPosition(mps);
+            } catch (HCSException e) {
+               // TODO Auto-generated catch block
+               e.printStackTrace();
+            }
+         }
+         direction = !direction; // reverse direction
+      }
+      return posList;
+   }
+   
    public String getID() {
       return new String(id_);
    }
@@ -168,24 +229,61 @@ public class SBSPlate {
       return new String(description_);
    }
    
-   public double getWellXUm(String wellLabel) {
-      return 0.0;
+   public double getWellXUm(String wellLabel) throws HCSException {
+      if (wellMap_.containsKey(wellLabel))
+         return wellMap_.get(wellLabel).x;
+      
+     throw new HCSException("Invalid well label: " + wellLabel);
    }
    
-   public double getWellYUm(String wellLabel) {
-      return 0.0;
+   public double getWellYUm(String wellLabel) throws HCSException {
+      if (wellMap_.containsKey(wellLabel))
+         return wellMap_.get(wellLabel).y;
+      
+     throw new HCSException("Invalid well label: " + wellLabel);
    }
    
-   public String getColumnLabel(int col) {
-      return new String();
+   public String getColumnLabel(int col) throws HCSException {
+      
+      if(col < 1 || col > numColumns_)
+         throw new HCSException("Invalid column number: " + col);
+
+      return Integer.toString(col);
    }
    
-   public String getRowLabel(int col) {
-      return new String();
+   public String getRowLabel(int row) throws HCSException {
+      // limit row index to valid range
+      if (row < 1 || row > numRows_)
+         throw new HCSException("Invalid row number: " + row);
+      
+      // build the row label
+      int tempRow = row;
+      String label = new String();
+      while( tempRow > 0 )
+      {
+         int letterIndex = (tempRow - 1) % rowAlphabet.length;
+         label += rowAlphabet[letterIndex];
+         tempRow = ( tempRow - 1 ) / rowAlphabet.length;
+      }
+      return label;
    }
    
-   public String getWellLabel(int row, int col) {
-      return new String();
+   public String getWellLabel(int row, int col) throws HCSException {
+      return getRowLabel(row) + getColumnLabel(col);
+   }
+   
+   private void generateWells() throws HCSException {
+      wellMap_.clear();
+      for (int i=0; i<numRows_; i++)
+         for (int j=0; j<numColumns_; j++) {
+            Well w = new Well();
+            w.x = firstWellX_ + wellSpacingX_ * j;
+            w.y = firstWellY_ + wellSpacingY_ * i;
+            w.row = i+1;
+            w.col = j+1;
+            w.label = getWellLabel(w.row, w.col);
+            wellMap_.put(w.label, w);
+         }
    }
 
    private class Well {
@@ -203,7 +301,6 @@ public class SBSPlate {
          label = new String("Undefined");
       }
    }
-
 }
    
 
