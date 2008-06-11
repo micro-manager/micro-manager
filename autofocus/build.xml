@@ -5,7 +5,7 @@
 
 	<!-- Specify the system path to the ImageJ root directory -->
 	<property name="ImageJPath" value="C:/Program Files/ImageJ"/>
-	<property name="InstallRoot" value="C:/projects/micromanager1.2/Install/micro-manager-1.2"/>
+	<property name="InstallRoot" value="C:/projects/micromanager2/Install/micro-manager-S-1.2"/>
 
 	<!-- Do not modify from this point on -->
 	<property name="MMPluginDir" value="${ImageJPath}/plugins/Micro-Manager"/>
