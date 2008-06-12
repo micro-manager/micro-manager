@@ -1,0 +1,13 @@
+
+addClassPath("c:/projects/micromanager2/bin/hcs100x_.jar");
+import com.imaging100x.hcs.SBSPlate;
+
+      SBSPlate plate = new SBSPlate();
+      plate.initialize(SBSPlate.SBS_96_WELL);
+      PositionList posList = plate.generateWellPositions();
+      System.out.println("Created plate with " + posList.getNumberOfPositions() + " wells.");
+      for (int i=0; i<posList.getNumberOfPositions(); i++) {
+         MultiStagePosition mps = posList.getPosition(i);
+         System.out.println("Well " + mps.getLabel() + " : X=" + mps.getX() + ", Y=" + mps.getY());
+      }
+

@@ -59,11 +59,11 @@ public class SBSPlate {
    private static String FIRST_WELL_X = "first_well_x";
    private static String FIRST_WELL_Y = "first_well_y";
    
-   public static String SBS_96_WELL= "96WELL";
-   public static String SBS_384_WELL= "384WELL";
+   public static final String SBS_96_WELL= "96WELL";
+   public static final String SBS_384_WELL= "384WELL";
+   public static final String DEFAULT_XYSTAGE_NAME = "XYStage"; 
    //public static String CUSTOM = "CUSTOM";
    
-   private static String DEFAULT_XYSTAGE_NAME = "XYStage"; 
    
    private static char rowAlphabet[] = { 'A','B','C','D','E',
          'F','G','H','I','J',
@@ -182,7 +182,7 @@ public class SBSPlate {
     * Generate a list of well positions using 'snake' pattern.
     * @return
     */
-   public PositionList generateWellPositions() {
+   public PositionList generateWellPositions(String xyStageName) {
       PositionList posList = new PositionList();
       boolean direction = true;
       for (int i=0; i<numRows_; i++) {
@@ -190,7 +190,7 @@ public class SBSPlate {
             MultiStagePosition mps = new MultiStagePosition();
             StagePosition sp = new StagePosition();
             sp.numAxes = 2;
-            sp.stageName = DEFAULT_XYSTAGE_NAME;
+            sp.stageName = xyStageName;
             String wellLabel;
             try {
                int colIndex;
@@ -209,7 +209,7 @@ public class SBSPlate {
                sp.y = getWellYUm(wellLabel);
                mps.add(sp);
                mps.setLabel(wellLabel);
-               mps.setDefaultXYStage(DEFAULT_XYSTAGE_NAME);
+               mps.setDefaultXYStage(xyStageName);
                posList.addPosition(mps);
             } catch (HCSException e) {
                // TODO Auto-generated catch block

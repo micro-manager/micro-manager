@@ -65,7 +65,7 @@ public interface ScriptInterface {
 
    /**
     * Opens a new acquisition context with explicit image physical parameters.
-    * This command will determine the recorded date and time of the acquistion.
+    * This command will determine the recorded date and time of the acquisition.
     * All relative (elapsed) time stamps will be determined with respect to this time.
     * @throws MMScriptException 
     */
