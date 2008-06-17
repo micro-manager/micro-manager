@@ -26,20 +26,18 @@ package org.micromanager;
 
 import ij.ImagePlus;
 import ij.io.FileSaver;
+import ij.measure.Calibration;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 import ij.process.ShortProcessor;
-import ij.measure.Calibration;
 
 import java.awt.Color;
 import java.awt.Rectangle;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
-import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -56,9 +54,11 @@ import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.StrVector;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.micromanager.api.AcquisitionEngine;
+import org.micromanager.api.Autofocus;
+import org.micromanager.api.DeviceControlGUI;
 import org.micromanager.image5d.ChannelCalibration;
 import org.micromanager.image5d.ChannelControl;
 import org.micromanager.image5d.ChannelDisplayProperties;
@@ -82,10 +82,6 @@ import org.micromanager.utils.MMLogger;
 import org.micromanager.utils.MemoryUtils;
 import org.micromanager.utils.PositionMode;
 import org.micromanager.utils.SliceMode;
-
-import org.micromanager.api.AcquisitionEngine;
-import org.micromanager.api.Autofocus;
-import org.micromanager.api.DeviceControlGUI;
 
 import com.quirkware.guid.PlatformIndependentGuidGen;
 

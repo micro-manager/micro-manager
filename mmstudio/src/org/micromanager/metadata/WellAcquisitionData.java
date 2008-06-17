@@ -70,6 +70,10 @@ public class WellAcquisitionData {
       return sites_.get(name);
    }
    
+   public String getLabel() {
+      return label_;
+   }
+   
    AcquisitionData[] getImagingSItes() {
       AcquisitionData adArray[] = new AcquisitionData[sites_.size()];
       return adArray;

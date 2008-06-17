@@ -8,8 +8,8 @@ gui.clearMessageWindow();
 
 // scanning parameters
 acqFileName = "plate_scan.xml";
-acqRoot = "c:/AcquisitionData/plates";
-acqName = "96test";
+acqRoot = "c:/AcquisitionData/plates/96scan_test";
+acqName = "well";
 numFrames = 1;
 
 String[] channels = {"DAPI", "FITC", "Rhodamine"};
@@ -26,6 +26,7 @@ System.out.println("Scanning plate with " + posList.getNumberOfPositions() + " w
 gui.loadAcquisition(acqFileName);
 
 for (int k=0; k<posList.getNumberOfPositions(); k++) {
+   acqName = posList.getPosition(k).getLabel();
    MultiStagePosition.goToPosition(posList.getPosition(k), mmc);
 	mmc.waitForDevice(mmc.getXYStageDevice());
 	gui.openAcquisition(acqName, acqRoot, numFrames, channels.length, numSlices);
@@ -45,7 +46,8 @@ for (int k=0; k<posList.getNumberOfPositions(); k++) {
          mmc.waitForConfig(channelGroup, channels[j]);
          gui.snapAndAddImage(acqName, i, j, 0);
       }
-
+      
+      gui.sleep(300);
       // set channel contrast based on the first frame
       if (i==0) {
          gui.setContrastBasedOnFrame(acqName, i, 0);
@@ -55,6 +57,7 @@ for (int k=0; k<posList.getNumberOfPositions(); k++) {
       if (idle > 0)
          gui.sleep(intervalMs - itTook);
    }
+	gui.closeImage5D(acqName);
    gui.closeAcquisition(acqName);
 }
 
