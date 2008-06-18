@@ -30,6 +30,7 @@ import java.util.prefs.Preferences;
 
 import mmcorej.CMMCore;
 
+import org.micromanager.metadata.MMAcqDataException;
 import org.micromanager.navigation.PositionList;
 import org.micromanager.utils.ChannelSpec;
 import org.micromanager.utils.ContrastSettings;
@@ -53,8 +54,8 @@ public interface AcquisitionEngine {
    public String installAutofocusPlugin(String className);
    
    // run-time control
-   public void acquire() throws MMException;
-   public void stop();
+   public void acquire() throws MMException, MMAcqDataException;
+   public void stop(boolean interrupted);
    public void setFinished();
    public boolean isAcquisitionRunning();
    public int getCurrentFrameCount();

@@ -80,6 +80,7 @@ import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.Autofocus;
 import org.micromanager.api.DeviceControlGUI;
 
+import org.micromanager.metadata.MMAcqDataException;
 import org.micromanager.utils.ChannelSpec;
 import org.micromanager.utils.ColorEditor;
 import org.micromanager.utils.ColorRenderer;
@@ -713,7 +714,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
          }
       });
       loadButton.setText("Load...");
-      loadButton.setBounds(405, 68, 93, 22);
+      loadButton.setBounds(405, 105, 93, 22);
       getContentPane().add(loadButton);
 
       final JButton saveAsButton = new JButton();
@@ -724,7 +725,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
          }
       });
       saveAsButton.setText("Save As...");
-      saveAsButton.setBounds(405, 92, 93, 22);
+      saveAsButton.setBounds(405, 129, 93, 22);
       getContentPane().add(saveAsButton);
 
       final JSeparator separator = new JSeparator();
@@ -797,7 +798,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       summaryTextArea_.setFont(new Font("Arial", Font.PLAIN, 10));
       summaryTextArea_.setEditable(false);
       summaryTextArea_.setBorder(new LineBorder(Color.black, 1, false));
-      summaryTextArea_.setBounds(248, 120, 250, 130);
+      summaryTextArea_.setBounds(248, 155, 250, 95);
       getContentPane().add(summaryTextArea_);
 
       rootField_ = new JTextField();
@@ -927,7 +928,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       multiPosCheckBox_ = new JCheckBox();
       multiPosCheckBox_.setFont(new Font("", Font.PLAIN, 10));
       multiPosCheckBox_.setText("Use XY list");
-      multiPosCheckBox_.setBounds(81, 77, 94, 19);
+      multiPosCheckBox_.setBounds(81, 77, 86, 19);
       multiPosCheckBox_.addActionListener(new ActionListener() {
          public void actionPerformed(final ActionEvent e) {
             if (multiPosCheckBox_.isSelected())
@@ -991,7 +992,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       });
       afCheckBox_.setFont(new Font("Dialog", Font.PLAIN, 10));
       afCheckBox_.setText("Autofocus");
-      afCheckBox_.setBounds(82, 101, 93, 19);
+      afCheckBox_.setBounds(82, 101, 86, 19);
       afCheckBox_.setEnabled(false);
       getContentPane().add(afCheckBox_);
 
@@ -1043,6 +1044,16 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       listButton.setFont(new Font("Dialog", Font.PLAIN, 10));
       listButton.setBounds(174, 76, 43, 24);
       getContentPane().add(listButton);
+
+      final JButton stopButton = new JButton();
+      stopButton.addActionListener(new ActionListener() {
+         public void actionPerformed(final ActionEvent e) {
+            acqEng_.stop(true);
+         }
+      });
+      stopButton.setText("Stop");
+      stopButton.setBounds(405, 69, 93, 22);
+      getContentPane().add(stopButton);
    }
 
    /** Called when a field's "value" property changes. Causes the Summary to be updated*/
@@ -1322,6 +1333,9 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
          applySettings();
          acqEng_.acquire();
       } catch(MMException e) {
+         handleException(e);
+         return;
+      } catch (MMAcqDataException e) {
          handleException(e);
          return;
       }

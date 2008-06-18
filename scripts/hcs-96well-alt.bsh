@@ -1,0 +1,20 @@
+
+addClassPath("c:/projects/micromanager2/bin/hcs100x_.jar");
+import com.imaging100x.hcs.*;
+import org.micromanager.navigation.*;
+
+gui.clearMessageWindow();
+
+// scanning parameters
+acqFileName = "plate_scan.xml";
+
+// create
+SBSPlate plate = new SBSPlate();
+plate.initialize(SBSPlate.SBS_96_WELL);
+PositionList posList = plate.generateWellPositions(mmc.getXYStageDevice());
+gui.message("Scanning plate with " + posList.getNumberOfPositions() + " wells.");
+gui.setPositionList(posList);
+gui.loadAcquisition(acqFileName);
+//gui.startAcquisition();
+
+
