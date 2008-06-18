@@ -232,7 +232,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
             }
             startAcquisition();
 
-            // wait until acq done
+            // wait until acquisition is done
             while (isAcquisitionRunning() || !acqFinished_) {
                try {
                   Thread.sleep(1000);
@@ -1080,7 +1080,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
    private void acquisitionSetup(int posIdx) throws IOException, MMAcqDataException {
       well_ = null;
 
-      if (useMultiplePositions_) {
+      if (useMultiplePositions_ && posMode_ == PositionMode.TIME_LAPSE) {
          well_ = new WellAcquisitionData();
          if (saveFiles_)
             well_.createNew(acqName_, rootName_, true); // disk mapped

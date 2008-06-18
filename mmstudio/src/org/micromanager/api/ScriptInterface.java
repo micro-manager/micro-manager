@@ -172,6 +172,13 @@ public interface ScriptInterface {
    /**
     * Closes Image5D window. 
     */
-   public void closeImage5D(String title) throws MMScriptException;
+   public void closeAcquisitionImage5D(String title) throws MMScriptException;
+   
+   /**
+    * Open empty image acquisition window
+    * @throws MMScriptException
+    */
+   //public void openCompatibleImage5D(String title, int frames, int channels, int slices) throws MMScriptException;
+   
  
 }

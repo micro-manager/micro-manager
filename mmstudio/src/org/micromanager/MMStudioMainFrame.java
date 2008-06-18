@@ -2774,7 +2774,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       
    }
 
-   public void closeImage5D(String title) throws MMScriptException {
+   public void closeAcquisitionImage5D(String title) throws MMScriptException {
       acqMgr_.closeImage5D(title);
    }
 
