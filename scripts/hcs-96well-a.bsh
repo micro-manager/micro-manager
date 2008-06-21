@@ -1,0 +1,63 @@
+
+addClassPath("c:/projects/micromanager2/bin/hcs100x_.jar");
+import com.imaging100x.hcs.*;
+import org.micromanager.navigation.*;
+
+gui.closeAllAcquisitions();
+gui.clearMessageWindow();
+
+// scanning parameters
+acqFileName = "plate_scan.xml";
+acqRoot = "c:/AcquisitionData/plates/96scan_test";
+acqName = "well";
+numFrames = 1;
+
+String[] channels = {"DAPI", "FITC", "Rhodamine"};
+Color[] colors = {Color.BLUE, Color.GREEN, Color.RED};
+int[] exposures = {100, 30, 110};
+numSlices = 1;
+intervalMs = 100;
+channelGroup = "Channel";
+
+SBSPlate plate = new SBSPlate();
+plate.initialize(SBSPlate.SBS_96_WELL);
+PositionList posList = plate.generateWellPositions(mmc.getXYStageDevice());
+System.out.println("Scanning plate with " + posList.getNumberOfPositions() + " wells.");
+gui.loadAcquisition(acqFileName);
+
+for (int k=0; k<posList.getNumberOfPositions(); k++) {
+   acqName = posList.getPosition(k).getLabel();
+   MultiStagePosition.goToPosition(posList.getPosition(k), mmc);
+   mmc.waitForDevice(mmc.getXYStageDevice());
+   gui.openAcquisition(acqName, acqRoot, numFrames, channels.length, numSlices);
+   for (int i=0; i<colors.length; i++)
+      gui.setChannelColor(acqName, i, colors[i]);
+   for (int i=0; i<channels.length; i++)
+      gui.setChannelName(acqName, i, channels[i]);
+
+   gui.message("Acquiring well: " + posList.getPosition(k).getLabel());
+
+   for (int i=0; i<numFrames; i++) {
+      for (int j=0; j<channels.length; j++) {
+         now = System.currentTimeMillis();
+         gui.message("Acquiring channel " + channels[j] + ".");
+         mmc.setExposure(exposures[j]);
+         mmc.setConfig(channelGroup, channels[j]);
+         mmc.waitForConfig(channelGroup, channels[j]);
+         gui.snapAndAddImage(acqName, i, j, 0);
+      }
+      
+      gui.sleep(300);
+      // set channel contrast based on the first frame
+      if (i==0) {
+         gui.setContrastBasedOnFrame(acqName, i, 0);
+      }
+      itTook = System.currentTimeMillis() - now;
+      idle = intervalMs - itTook;
+      if (idle > 0)
+         gui.sleep(intervalMs - itTook);
+   }
+   gui.closeImage5D(acqName);
+   gui.closeAcquisition(acqName);
+}
+
