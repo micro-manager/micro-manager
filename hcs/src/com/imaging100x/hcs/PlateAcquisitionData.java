@@ -24,9 +24,12 @@
 package com.imaging100x.hcs;
 
 import java.io.File;
+import java.util.Enumeration;
 import java.util.Hashtable;
 
+import org.micromanager.metadata.AcquisitionData;
 import org.micromanager.metadata.MMAcqDataException;
+import org.micromanager.metadata.SummaryKeys;
 import org.micromanager.metadata.WellAcquisitionData;
 
 public class PlateAcquisitionData {
@@ -66,7 +69,7 @@ public class PlateAcquisitionData {
          throw new MMAcqDataException("Well already exists: " + label);
       
       WellAcquisitionData wad = new WellAcquisitionData();
-      wad.createNew(label, basePath_ + "/" + label, false);      
+      wad.createNew(label, basePath_, false);      
       wells_.put(wad.getLabel(), wad);
          
       return wad;
@@ -78,9 +81,48 @@ public class PlateAcquisitionData {
    
    WellAcquisitionData[] getWells() {
       WellAcquisitionData wadArray[] = new WellAcquisitionData[wells_.size()];
+      Enumeration<WellAcquisitionData> w = wells_.elements();
+      int count = 0;
+      while (w.hasMoreElements())
+         wadArray[count] = w.nextElement();
       return wadArray;
    }
    
+   /**
+    * Load the plate data from a path.
+    * TODO: this method is not fully implemented
+    * @param basePath
+    * @throws MMAcqDataException
+    */
+   public void load(String basePath) throws MMAcqDataException {
+      wells_.clear();
+      name_ = "noname";
+      basePath_ = null;
+      
+      File baseDir = new File(basePath);
+      if (!baseDir.isDirectory())
+         throw new MMAcqDataException("Base path for the plate data must be a directory.");
+      
+      // list all files
+      File[] files = baseDir.listFiles();
+      for (File f : files) {
+         if (WellAcquisitionData.isWellPath(f.getAbsolutePath())) {
+            WellAcquisitionData wad = new WellAcquisitionData();
+            wad.load(f.getAbsolutePath());
+            wells_.put(wad.getLabel(), wad);
+         } else {
+            throw new MMAcqDataException("Not a valid well path: " + f.getAbsolutePath());
+         }
+      }
+      
+      name_ = baseDir.getName();
+   }
+
+   public String getName() {
+      return name_;
+      
+   }
+  
    ////////////////////////////////////////////////////////////////////////////
    // Private methods
    ////////////////////////////////////////////////////////////////////////////
@@ -111,4 +153,5 @@ public class PlateAcquisitionData {
          wellAcq_ = wad;
       }
    }
+
 }

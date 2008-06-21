@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:           TestSBSPlate.java
+//FILE:           TestPlateAcquisitionData.java
 //PROJECT:        Micro-Manager-S
 //SUBSYSTEM:      high content screening
 //-----------------------------------------------------------------------------
@@ -23,20 +23,30 @@
 
 package com.imaging100x.hcs;
 
-import org.micromanager.navigation.MultiStagePosition;
-import org.micromanager.navigation.PositionList;
+import org.micromanager.metadata.AcquisitionData;
+import org.micromanager.metadata.MMAcqDataException;
+import org.micromanager.metadata.WellAcquisitionData;
 
-public class TestSBSPlate {
 
+public class TestPlateAcquisitionData {
    public static void main(String[] args) {
-
-      SBSPlate plate = new SBSPlate();
-      plate.initialize(SBSPlate.SBS_96_WELL);
-      PositionList posList = plate.generateWellPositions(plate.DEFAULT_XYSTAGE_NAME);
-      System.out.println("Created plate with " + posList.getNumberOfPositions() + " wells.");
-      for (int i=0; i<posList.getNumberOfPositions(); i++) {
-         MultiStagePosition mps = posList.getPosition(i);
-         System.out.println("Well " + mps.getLabel() + " : X=" + mps.getX() + ", Y=" + mps.getY());
+      String platePath = "c:/acquisitiondata/plate_test/96well_scan_1";
+      
+      PlateAcquisitionData pad = new PlateAcquisitionData();
+      try {
+         pad.load(platePath);
+         System.out.println("Plate " + pad.getName() + " loaded.");
+         WellAcquisitionData[] wells = pad.getWells();
+         System.out.println("Plate contains " + wells.length + " wells.");
+         // dump one well
+         WellAcquisitionData well = wells[0];
+         AcquisitionData ad[] = well.getImagingSites();
+         for (int j=0; j<ad.length; j++) {
+            System.out.println("Well: " + wells[0].getLabel() + ", site " + ad[j].getName() + ": channels " + ad[j].getNumberOfChannels());
+         }
+      } catch (MMAcqDataException e) {
+         // TODO Auto-generated catch block
+         e.printStackTrace();
       }
    }
 
