@@ -2734,6 +2734,23 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       }
    }
    
+   public void runAcqusition(String name, String root) throws MMScriptException {
+      testForAbortRequests();
+      if (acqControlWin_ != null) {
+         acqControlWin_.runAcquisition(name, root);
+         try {
+            while (acqControlWin_.isAcquisitionRunning()) {
+               Thread.sleep(100);
+            }
+         } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+         }
+      } else {
+         throw new MMScriptException("Acquisition window must be open for this command to work.");
+      }
+   }
+   
    public void loadAcquisition(String path) throws MMScriptException {
       testForAbortRequests();
       SwingUtilities.invokeLater(new LoadAcq(path));
@@ -2883,6 +2900,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       MMAcquisition acq = acqMgr_.getAcquisition(title);
       acq.setContrastBasedOnFrame(frame, slice);
     }
+
 
 }
 

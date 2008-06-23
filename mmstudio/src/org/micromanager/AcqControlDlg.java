@@ -1341,6 +1341,27 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       }
    }
    
+   public void runAcquisition(String acqName, String acqRoot) {
+      if (acqEng_.isAcquisitionRunning()) {
+         JOptionPane.showMessageDialog(this, "Unable to start the new acquisition task: previous acquisition still in progress.");
+         return;
+      }
+
+      try {
+         applySettings();
+         acqEng_.setDirName(acqName);
+         acqEng_.setRootName(acqRoot);
+         acqEng_.setSaveFiles(true);
+         acqEng_.acquire();
+      } catch(MMException e) {
+         handleException(e);
+         return;
+      } catch (MMAcqDataException e) {
+         handleException(e);
+         return;
+      }
+   }
+   
    public boolean isAcquisitionRunning() {
       return acqEng_.isAcquisitionRunning();
    }

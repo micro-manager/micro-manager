@@ -56,55 +56,60 @@ public class TestPlateScan {
 
          SBSPlate plate = new SBSPlate();
          plate.initialize(SBSPlate.SBS_96_WELL);
-         PositionList posList = plate.generateWellPositions(mmc.getXYStageDevice());
-         System.out.println("Scanning plate with " + posList.getNumberOfPositions() + " wells.");
+         WellPositionList posList[] = plate.generatePositions(mmc.getXYStageDevice());
+         System.out.println("Scanning plate with " + posList.length + " wells.");
 
          // create plate data
          PlateAcquisitionData pad = new PlateAcquisitionData();
          pad.createNew(plateName, platePath, true);
 
-         for (int k=0; k<posList.getNumberOfPositions(); k++) {
-            String wellLabel = posList.getPosition(k).getLabel();
-            MultiStagePosition.goToPosition(posList.getPosition(k), mmc);
-            mmc.waitForDevice(mmc.getXYStageDevice());
+         for (int k=0; k<posList.length; k++) {
+            String wellLabel = posList[k].getLabel();
+            PositionList siteList = posList[k].getSitePositions();
             
             // create well data
             WellAcquisitionData wad = pad.createNewWell(wellLabel);
             
-            // create site data
-            AcquisitionData ad = wad.createNewImagingSite();
-            ad.setDimensions(numFrames, channels.length, numSlices);
+            // acquire sites
+            for (int m=0; m<siteList.getNumberOfPositions(); m++) {
+               MultiStagePosition.goToPosition(siteList.getPosition(m), mmc);
+               mmc.waitForDevice(mmc.getXYStageDevice());
             
-            // set parameters
-            for (int i=0; i<colors.length; i++)
-               ad.setChannelColor(i, colors[i].getRGB());
-            for (int i=0; i<channels.length; i++)
-               ad.setChannelName(i, channels[i]);
+               // create site data
+               AcquisitionData ad = wad.createNewImagingSite(siteList.getPosition(m).getLabel(), false);
+               ad.setDimensions(numFrames, channels.length, numSlices);
+            
+               // set parameters
+               for (int i=0; i<colors.length; i++)
+                  ad.setChannelColor(i, colors[i].getRGB());
+               for (int i=0; i<channels.length; i++)
+                  ad.setChannelName(i, channels[i]);
 
-            System.out.println("Acquiring well: " + posList.getPosition(k).getLabel());
+               System.out.println("Acquiring well: " + wellLabel + ", site: " + siteList.getPosition(m).getLabel());
 
-            for (int i=0; i<numFrames; i++) {
-               long startMs = System.currentTimeMillis();
-               for (int j=0; j<channels.length; j++) {
-                  System.out.println("Acquiring channel " + channels[j] + ".");
-                  mmc.setExposure(exposures[j]);
-                  mmc.setConfig(channelGroup, channels[j]);
-                  mmc.waitForConfig(channelGroup, channels[j]);
-                  mmc.snapImage();
-                  Object img = mmc.getImage();
-                  if (i==0 && j==0) {
-                     ad.setImagePhysicalDimensions((int)mmc.getImageWidth(), (int)mmc.getImageHeight(), (int)mmc.getBytesPerPixel());
+               for (int i=0; i<numFrames; i++) {
+                  long startMs = System.currentTimeMillis();
+                  for (int j=0; j<channels.length; j++) {
+                     System.out.println("Acquiring channel " + channels[j] + ".");
+                     mmc.setExposure(exposures[j]);
+                     mmc.setConfig(channelGroup, channels[j]);
+                     mmc.waitForConfig(channelGroup, channels[j]);
+                     mmc.snapImage();
+                     Object img = mmc.getImage();
+                     if (i==0 && j==0) {
+                        ad.setImagePhysicalDimensions((int)mmc.getImageWidth(), (int)mmc.getImageHeight(), (int)mmc.getBytesPerPixel());
+                     }
+                     ad.insertImage(img, i, j, 0);
+
                   }
-                  ad.insertImage(img, i, j, 0);
+                  if (i == 0)
+                     ad.setChannelContrastBasedOnFrameAndSlice(i, 0);
 
+                  long itTook = System.currentTimeMillis() - startMs;
+                  long idle = intervalMs - itTook;
+                  if (idle > 0)
+                     Thread.sleep(intervalMs - itTook);
                }
-               if (i == 0)
-                  ad.setChannelContrastBasedOnFrameAndSlice(i, 0);
-
-               long itTook = System.currentTimeMillis() - startMs;
-               long idle = intervalMs - itTook;
-               if (idle > 0)
-                  Thread.sleep(intervalMs - itTook);
             }
          }
       } catch (MMAcqDataException e) {

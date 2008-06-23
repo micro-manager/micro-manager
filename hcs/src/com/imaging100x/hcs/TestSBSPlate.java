@@ -24,7 +24,6 @@
 package com.imaging100x.hcs;
 
 import org.micromanager.navigation.MultiStagePosition;
-import org.micromanager.navigation.PositionList;
 
 public class TestSBSPlate {
 
@@ -32,11 +31,13 @@ public class TestSBSPlate {
 
       SBSPlate plate = new SBSPlate();
       plate.initialize(SBSPlate.SBS_96_WELL);
-      PositionList posList = plate.generateWellPositions(plate.DEFAULT_XYSTAGE_NAME);
-      System.out.println("Created plate with " + posList.getNumberOfPositions() + " wells.");
-      for (int i=0; i<posList.getNumberOfPositions(); i++) {
-         MultiStagePosition mps = posList.getPosition(i);
-         System.out.println("Well " + mps.getLabel() + " : X=" + mps.getX() + ", Y=" + mps.getY());
+      WellPositionList wpl[] = plate.generatePositions(plate.DEFAULT_XYSTAGE_NAME);
+      System.out.println("Created plate with " + wpl.length + " wells.");
+      for (int i=0; i<wpl.length; i++) {
+         for (int j=0; j<wpl[i].getSitePositions().getNumberOfPositions(); j++) {
+            MultiStagePosition mps = wpl[i].getSitePositions().getPosition(j);
+            System.out.println("Well " + mps.getLabel() + " : X=" + mps.getX() + ", Y=" + mps.getY());
+         }
       }
    }
 

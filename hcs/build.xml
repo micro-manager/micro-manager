@@ -1,4 +1,4 @@
-<!-- Ant makefile for the Micro-Manager Autofocus plugin  -->
+<!-- Ant makefile for the HCT plugin  -->
 <!-- This file assumes Micro-Manager project tree structure -->
 
 <project name="hcs" default="buildHCS">
@@ -34,7 +34,7 @@
 	   <pathelement location="${MMPluginDir}/MMJ_.jar"/>
 	</path>
 
-	<target name="compileAutofocus" description="Compile MM Autofocus plugins.">
+	<target name="compileAutofocus" description="Compile HCT plugins.">
 		<mkdir dir="build" />
 		<javac srcdir="." destdir="./build" optimize="on" source="1.5" debug="off">
 			<classpath refid="project.class.path" />

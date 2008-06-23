@@ -31,6 +31,7 @@ import java.util.Hashtable;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.micromanager.metadata.AcquisitionData;
 import org.micromanager.navigation.MultiStagePosition;
 import org.micromanager.navigation.PositionList;
 import org.micromanager.navigation.StagePosition;
@@ -180,13 +181,18 @@ public class SBSPlate {
    
    /**
     * Generate a list of well positions using 'snake' pattern.
+    * This method assumes a single site at the center of the well.
     * @return
     */
-   public PositionList generateWellPositions(String xyStageName) {
-      PositionList posList = new PositionList();
+   public WellPositionList[] generatePositions(String xyStageName) {
+      WellPositionList posListArray[] = new WellPositionList[numRows_ * numColumns_];
       boolean direction = true;
+      int wellCount = 0;
       for (int i=0; i<numRows_; i++) {
          for (int j=0; j<numColumns_; j++) {
+            WellPositionList wpl = new WellPositionList();
+            PositionList posList = new PositionList();
+            
             MultiStagePosition mps = new MultiStagePosition();
             StagePosition sp = new StagePosition();
             sp.numAxes = 2;
@@ -202,15 +208,20 @@ public class SBSPlate {
             } catch (HCSException e) {
                // TODO Auto-generated catch block
                e.printStackTrace();
-               return posList;
+               return null;
             }
+            
             try {
                sp.x = getWellXUm(wellLabel);
                sp.y = getWellYUm(wellLabel);
                mps.add(sp);
-               mps.setLabel(wellLabel);
+               // TODO: remove a single-site hack below
+               mps.setLabel(AcquisitionData.METADATA_SITE_PREFIX + "_0");
                mps.setDefaultXYStage(xyStageName);
                posList.addPosition(mps);
+               wpl.setSitePositions(posList);
+               wpl.setLabel(wellLabel);
+               posListArray[wellCount++] = wpl;
             } catch (HCSException e) {
                // TODO Auto-generated catch block
                e.printStackTrace();
@@ -218,7 +229,7 @@ public class SBSPlate {
          }
          direction = !direction; // reverse direction
       }
-      return posList;
+      return posListArray;
    }
    
    public String getID() {

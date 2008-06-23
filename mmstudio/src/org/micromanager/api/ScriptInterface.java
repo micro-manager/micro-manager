@@ -123,6 +123,13 @@ public interface ScriptInterface {
     * Returns after Acquisition finishes
     */
    public void runAcquisition() throws MMScriptException;
+   
+   /**
+    * Executes Acquisition with current settings but allows for changing the data path
+    * Will open the Acquisition Dialog when it is not open yet.
+    * Returns after Acquisition finishes
+    */
+   public void runAcqusition(String name, String root) throws MMScriptException;
 
    /**
     * Loads setting for Acquisition Dialog from file
