@@ -41,8 +41,8 @@ public class SBSPlate {
    private int numRows_;
    private double wellSpacingX_;
    private double wellSpacingY_;
-   private double sizeXUm;
-   private double sizeYUm;
+   private double sizeXUm_;
+   private double sizeYUm_;
    private String id_;
    private String description_;
    private double firstWellX_;
@@ -83,8 +83,8 @@ public class SBSPlate {
          id_ = SBS_96_WELL;
          numColumns_ = 12;
          numRows_ = 8;
-         sizeXUm = 127760.0;
-         sizeYUm = 85480.0;
+         sizeXUm_ = 127760.0;
+         sizeYUm_ = 85480.0;
          wellSpacingX_ = 9000.0;
          wellSpacingY_ = 9000.0;
          firstWellX_ = 14380.0;
@@ -93,8 +93,8 @@ public class SBSPlate {
          id_ = SBS_384_WELL;
          numColumns_ = 24;
          numRows_ = 16;
-         sizeXUm = 127760.0;
-         sizeYUm = 85480.0;
+         sizeXUm_ = 127760.0;
+         sizeYUm_ = 85480.0;
          wellSpacingX_ = 4500.0;
          wellSpacingY_ = 4500.0;
          firstWellX_ = 12130.0;
@@ -147,8 +147,8 @@ public class SBSPlate {
          plate.put(COLS, numColumns_);
          plate.put(WELL_SPACING_X, wellSpacingX_);
          plate.put(WELL_SPACING_Y, wellSpacingY_);
-         plate.put(PLATE_SIZE_X, sizeXUm);
-         plate.put(PLATE_SIZE_Y, sizeYUm);
+         plate.put(PLATE_SIZE_X, sizeXUm_);
+         plate.put(PLATE_SIZE_Y, sizeYUm_);
          plate.put(ID, id_);
          plate.put(DESCRIPTION, description_);
          plate.put(FIRST_WELL_X, firstWellX_);
@@ -168,8 +168,8 @@ public class SBSPlate {
          numColumns_ = plate.getInt(COLS);
          wellSpacingX_ = plate.getInt(WELL_SPACING_X);
          wellSpacingY_ = plate.getInt(WELL_SPACING_Y);
-         sizeXUm = plate.getInt(PLATE_SIZE_X);
-         sizeYUm = plate.getInt(PLATE_SIZE_Y);
+         sizeXUm_ = plate.getInt(PLATE_SIZE_X);
+         sizeYUm_ = plate.getInt(PLATE_SIZE_Y);
          id_ = plate.getString(ID);
          description_ = plate.getString(DESCRIPTION);
          firstWellX_ = plate.getDouble(FIRST_WELL_X);
@@ -312,6 +312,31 @@ public class SBSPlate {
          label = new String("Undefined");
       }
    }
+   
+   public int getNumberOfRows() {
+      return numRows_;
+   }
+
+   public int getNumberOfColumns() {
+      return numColumns_;
+   }
+   
+   public double getXSize() {
+      return sizeXUm_;
+   }
+   
+   public double getYSize() {
+      return sizeYUm_;
+   }
+   
+   public double getTopLeftX() {
+      return firstWellX_ - wellSpacingX_ / 2.0;
+   }
+   
+   public double getTopLeftY() {
+      return firstWellY_ - wellSpacingY_ / 2.0;
+   }
+
 }
    
 
