@@ -37,6 +37,10 @@ public class PlatePanel extends JPanel {
       plate_ = plate;
       wells_ = plate_.generatePositions(SBSPlate.DEFAULT_XYSTAGE_NAME);
    }
+   public PlatePanel(SBSPlate plate, PositionList pl) {
+      plate_ = plate;
+      wells_ = plate_.generatePositions(SBSPlate.DEFAULT_XYSTAGE_NAME, pl);
+   }
 
    public void paintComponent(Graphics g) {
       
@@ -83,9 +87,18 @@ public class PlatePanel extends JPanel {
             
       for (int i=0; i<wells_.length; i++) {
          PositionList pl = wells_[i].getSitePositions();
+         try {
+            double x = plate_.getWellXUm(wells_[i].getLabel());
+            double y = plate_.getWellYUm(wells_[i].getLabel());
+            //System.out.println("well " + wells_[i].getLabel() + " : " + x + "," + y);
+         } catch (HCSException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+         }
          for (int j=0; j<pl.getNumberOfPositions(); j++) {
             siteRect_.x = (int)(pl.getPosition(j).getX() * xFactor + box.x - siteOffsetX + 0.5);
             siteRect_.y = (int)(pl.getPosition(j).getY() * yFactor + box.y - siteOffsetY + 0.5);
+            //System.out.println(pl.getPosition(j).getX() + "," + pl.getPosition(j).getX());
             g.draw(siteRect_);
          }
       }
@@ -172,7 +185,10 @@ public class PlatePanel extends JPanel {
       return new Point(labelBox.x + xoffset, labelBox.y - yoffset);
    }
    
-   public void refreshImagingSites() {
-      wells_ = plate_.generatePositions(SBSPlate.DEFAULT_XYSTAGE_NAME);
+   public void refreshImagingSites(PositionList sites) {
+      if (sites == null)
+         wells_ = plate_.generatePositions(SBSPlate.DEFAULT_XYSTAGE_NAME);
+      else
+         wells_ = plate_.generatePositions(SBSPlate.DEFAULT_XYSTAGE_NAME, sites);
    }
 }

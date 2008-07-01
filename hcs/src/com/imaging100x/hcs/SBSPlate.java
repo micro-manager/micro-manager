@@ -231,6 +231,65 @@ public class SBSPlate {
       }
       return posListArray;
    }
+   /**
+    * Generate a list of well positions using 'snake' pattern.
+    * Takes a list of sites and merges them into the well list.
+    * Site XY coordinates are assumed to be relative to the well center.
+    * @return - an array of well positions
+    */
+   public WellPositionList[] generatePositions(String xyStageName, PositionList sites) {
+      WellPositionList posListArray[] = new WellPositionList[numRows_ * numColumns_];
+      boolean direction = true;
+      int wellCount = 0;
+      
+      for (int i=0; i<numRows_; i++) {
+         for (int j=0; j<numColumns_; j++) {
+            WellPositionList wpl = new WellPositionList();
+            String wellLabel;
+            try {
+               int colIndex;
+               if (direction)
+                  colIndex = j+1; // forward
+               else
+                  colIndex = numColumns_ - j; // reverse
+               wellLabel = getWellLabel(i+1, colIndex);
+            } catch (HCSException e) {
+               // TODO Auto-generated catch block
+               e.printStackTrace();
+               return null;
+            }
+            
+            try {
+               double wellX = getWellXUm(wellLabel);
+               double wellY = getWellYUm(wellLabel);
+               PositionList absSites = new PositionList();
+               for (int k=0; k<sites.getNumberOfPositions(); k++) {
+                  MultiStagePosition mps = sites.getPosition(k);
+                  MultiStagePosition absMps = new MultiStagePosition();
+                  absMps.setLabel(AcquisitionData.METADATA_SITE_PREFIX + "_" + k);
+                  absMps.setDefaultXYStage(xyStageName);
+                  // TODO: make sure we get the right XY stage not just the first one
+                  StagePosition sp = mps.get(0);
+                  StagePosition absSp = new StagePosition();
+                  absSp.x = wellX + sp.x;
+                  absSp.y = wellY + sp.y;
+                  absSp.stageName = xyStageName;
+                  absSp.numAxes = 2;
+                  absMps.add(absSp);
+                  absSites.addPosition(absMps);
+               }
+               wpl.setSitePositions(absSites);
+               wpl.setLabel(wellLabel);
+               posListArray[wellCount++] = wpl;
+            } catch (HCSException e) {
+               // TODO Auto-generated catch block
+               e.printStackTrace();
+            }
+         }
+         direction = !direction; // reverse direction
+      }
+      return posListArray;
+   }
    
    public String getID() {
       return new String(id_);

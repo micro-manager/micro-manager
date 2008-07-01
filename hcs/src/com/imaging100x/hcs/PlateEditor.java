@@ -9,6 +9,10 @@ import javax.swing.JLabel;
 import javax.swing.JTextField;
 import javax.swing.SpringLayout;
 
+import org.micromanager.navigation.MultiStagePosition;
+import org.micromanager.navigation.PositionList;
+import org.micromanager.navigation.StagePosition;
+
 public class PlateEditor extends JFrame {
    private JTextField spacingField_;
    private JTextField columnsField_;
@@ -57,13 +61,6 @@ public class PlateEditor extends JFrame {
       springLayout.putConstraint(SpringLayout.NORTH, customButton, 60, SpringLayout.NORTH, getContentPane());
 
       comboBox = new JComboBox();
-      comboBox.addActionListener(new ActionListener() {
-         public void actionPerformed(final ActionEvent e) {
-            plate_.initialize((String)comboBox.getSelectedItem());
-            platePanel_.refreshImagingSites();
-            platePanel_.repaint();
-         }
-      });
       getContentPane().add(comboBox);
       comboBox.addItem(SBSPlate.SBS_96_WELL);
       comboBox.addItem(SBSPlate.SBS_384_WELL);
@@ -71,6 +68,15 @@ public class PlateEditor extends JFrame {
       springLayout.putConstraint(SpringLayout.WEST, comboBox, -116, SpringLayout.EAST, getContentPane());
       springLayout.putConstraint(SpringLayout.SOUTH, comboBox, 55, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.NORTH, comboBox, 30, SpringLayout.NORTH, getContentPane());
+      comboBox.addActionListener(new ActionListener() {
+         public void actionPerformed(final ActionEvent e) {
+            plate_.initialize((String)comboBox.getSelectedItem());
+            PositionList sites = generateSites(Integer.parseInt(rowsField_.getText()), Integer.parseInt(columnsField_.getText()), 
+                                               Double.parseDouble(spacingField_.getText()));
+            platePanel_.refreshImagingSites(sites);
+            platePanel_.repaint();
+         }
+      });
 
       final JLabel plateFormatLabel = new JLabel();
       plateFormatLabel.setText("Plate format");
@@ -125,7 +131,53 @@ public class PlateEditor extends JFrame {
       springLayout.putConstraint(SpringLayout.NORTH, spacingLabel, 180, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.EAST, spacingLabel, -31, SpringLayout.EAST, getContentPane());
       springLayout.putConstraint(SpringLayout.WEST, spacingLabel, -116, SpringLayout.EAST, getContentPane());
+
+      final JButton refreshButton = new JButton();
+      refreshButton.addActionListener(new ActionListener() {
+         public void actionPerformed(final ActionEvent e) {
+            PositionList sites = generateSites(Integer.parseInt(rowsField_.getText()), Integer.parseInt(columnsField_.getText()), 
+                  Double.parseDouble(spacingField_.getText()));
+            plate_.initialize((String)comboBox.getSelectedItem());
+            platePanel_.refreshImagingSites(sites);
+            platePanel_.repaint();
+         }
+      });
+      refreshButton.setText("Refresh");
+      getContentPane().add(refreshButton);
+      springLayout.putConstraint(SpringLayout.SOUTH, refreshButton, 250, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.EAST, refreshButton, 106, SpringLayout.WEST, spacingField_);
+      springLayout.putConstraint(SpringLayout.WEST, refreshButton, 0, SpringLayout.WEST, spacingField_);
       //
+   }
+   
+   private PositionList generateSites(int rows, int cols, double spacing) {
+      PositionList sites = new PositionList();
+      for (int i=0; i<rows; i++)
+         for (int j=0; j<cols; j++) {
+            double x;
+            double y;
+            if (cols > 1)
+               x = - cols * spacing /2.0 + spacing*j;
+            else
+               x = 0.0;
+            
+            if (rows > 1)
+               y = - rows * spacing/2.0 + spacing*i;
+            else
+               y = 0.0;
+            
+            MultiStagePosition mps = new MultiStagePosition();
+            StagePosition sp = new StagePosition();
+            sp.numAxes = 2;
+            sp.x = x;
+            sp.y = y;
+            System.out.println("("+i+","+j+") = " + x + "," + y);
+            
+            mps.add(sp);
+            sites.addPosition(mps);            
+         }
+            
+      return sites;
    }
 
 }
