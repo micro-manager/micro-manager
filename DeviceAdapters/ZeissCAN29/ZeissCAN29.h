@@ -7,7 +7,14 @@
 // Zeiss CAN bus adapater
 //   
 // COPYRIGHT:     University of California, San Francisco, 2007
-// LICENSE:       Please note: This code could only be developed thanks to information provided by Zeiss under a non-disclosure agreement.  Subsequently, this code has been reviewed by Zeiss and we were permitted to release this under the LGPL on 1/16/2008.  If you modify this code using information you obtained under a NDA with Zeiss, you will need to ask Zeiss whether you can release your modifications.  
+// LICENSE:       Please note: This code could only be developed thanks to information 
+//                provided by Zeiss under a non-disclosure agreement.  Subsequently, 
+//                this code has been reviewed by Zeiss and we were permitted to release 
+//                this under the LGPL on 1/16/2008 (and again on 7/3/2208 after changes 
+//                to the code).  If you modify this code using information you obtained 
+//                under a NDA with Zeiss, you will need to ask Zeiss whether you can release 
+//                your modifications.  
+//                
 //                This library is free software; you can redistribute it and/or
 //                modify it under the terms of the GNU Lesser General Public
 //                License as published by the Free Software Foundation.
@@ -63,7 +70,10 @@ typedef double ZeissDouble;
 #define ZeissDoubleSize 8
  
 // The highest device number in the Zeiss Scope
-#define MAXNUMBERDEVICES 0x49
+#define MAXNUMBERDEVICES 0x80
+
+// Target addresses for various Zeiss CAN controllers:
+#define AXIOOBSERVER 0x19
 
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
@@ -83,6 +93,10 @@ typedef double ZeissDouble;
 #define ERR_ANSWER_TIMEOUT           10015
 #define ERR_PORT_NOT_OPEN            10016
 
+enum HardwareStops {
+   UPPER,
+   LOWER
+};
 
 class ZeissMonitoringThread;
 
@@ -93,6 +107,8 @@ struct ZeissDeviceInfo {
       currentPos = 0;
       targetPos = 0;
       maxPos = 0;
+      upperHardwareStop = 0;
+      lowerHardwareStop = 0;
       status = 0;
       measuringOrigin = 0;
       busy = false;
@@ -106,29 +122,35 @@ struct ZeissDeviceInfo {
    ZeissLong currentPos;
    ZeissLong targetPos;
    ZeissLong maxPos;
+   ZeissLong upperHardwareStop;
+   ZeissLong lowerHardwareStop;
    ZeissLong typeDeviation;
    ZeissLong maxDeviation;
    ZeissLong measuringOrigin;
    ZeissULong status;
    std::vector<std::string> deviceScalings;
-   std::vector<ZeissLong> nativeScale;
-   std::vector<ZeissFloat> scaledScale;
+   std::map<std::string, std::vector<ZeissLong> > nativeScale;
+   std::map<std::string, std::vector<ZeissFloat> > scaledScale;
    bool busy;
    bool present;
    void print (MM::Device& device, MM::Core& core) {
       std::ostringstream os;
-      for (size_t i = 0; i< deviceScalings.size(); i++) 
+      printf ("Found %d scalings\n", (int) deviceScalings.size());
+      for (size_t i = 0; i< deviceScalings.size(); i++) {
          os << "\nScale: " << deviceScalings[i].c_str() ;
          //printf("Scale: %s\n", deviceScalings[i].c_str());
-      for (size_t i = 0; i< nativeScale.size(); i++) 
-         os << "\nNative: " << nativeScale[i] << " non-Native: " << scaledScale[i]; 
-         //printf("Native: %d, non-native: %f\n", nativeScale[i], scaledScale[i]);
+         //printf ("Found %d nativeScales\n", (int) nativeScale[deviceScalings[i]].size());
+         for (size_t j = 0; j< nativeScale[deviceScalings[i]].size(); j++) {
+            os << "\nNative: " << nativeScale[deviceScalings[i]][j] << " non-Native: " << scaledScale[deviceScalings[i]][j]; 
+            //printf("Native: %d, non-native: %f\n", nativeScale[deviceScalings[i]][j], scaledScale[deviceScalings[i]][j]);
+         }
+
          core.LogMessage(&device, os.str().c_str(), false);
+      }
    }
 };
 
    
-
 class ZeissHub
 {
    friend class ZeissScope;
@@ -138,7 +160,7 @@ class ZeissHub
       ZeissHub();
       ~ZeissHub();
 
-      int ExecuteCommand(MM::Device& device, MM::Core& core, const unsigned char* command, int commandLength);
+      int ExecuteCommand(MM::Device& device, MM::Core& core, const unsigned char* command, int commandLength, unsigned char targetDevice = AXIOOBSERVER);
       int GetAnswer(MM::Device& device, MM::Core& core, unsigned char* answer, unsigned long &answerLength); 
       int GetAnswer(MM::Device& device, MM::Core& core, unsigned char* answer, unsigned long &answerLength, unsigned char* signature, unsigned long signatureStart, unsigned long signatureLength); 
       MM::MMTime GetTimeOutTime(){ return timeOutTime_;}
@@ -156,7 +178,7 @@ class ZeissHub
 
       static std::string reflectorList_[10];
       static std::string objectiveList_[7];
-      static std::string tubeLensList_[3];
+      static std::string tubeLensList_[5];
       static std::string sidePortList_[3];
       static std::string condenserList_[7];
       std::string port_;
@@ -174,6 +196,8 @@ class ZeissHub
 
       // These are used by MonitoringThread to set values in our microscope model
       int SetModelPosition(ZeissUByte devId, ZeissLong position);
+      int SetUpperHardwareStop(ZeissUByte devId, ZeissLong position);
+      int SetLowerHardwareStop(ZeissUByte devId, ZeissLong position);
       int SetModelStatus(ZeissUByte devId, ZeissULong status);
 
       // Helper function for GetAnswer
@@ -206,7 +230,7 @@ class ZeissMessageParser{
       ZeissMessageParser(unsigned char* inputStream, long inputStreamLength);
       ~ZeissMessageParser(){};
       int GetNextMessage(unsigned char* nextMessage, int& nextMessageLength);
-      static const int messageMaxLength = 64;
+      static const int messageMaxLength_ = 64;
 
    private:
       unsigned char* inputStream_;
@@ -245,10 +269,11 @@ class ZeissDevice
       virtual ~ZeissDevice();
 
       int GetPosition(MM::Device& device, MM::Core& core, ZeissUByte devId, ZeissLong& position);
-      int SetPosition(MM::Device& device, MM::Core& core, ZeissUByte commandGroup, ZeissUByte devId, int position);
+      int SetPosition(MM::Device& device, MM::Core& core, ZeissUByte commandGroup, ZeissUByte devId, int position, unsigned char targetDevice = AXIOOBSERVER);
       int GetTargetPosition(MM::Device& device, MM::Core& core, ZeissUByte devId, ZeissLong& position);
       int GetMaxPosition(MM::Device& device, MM::Core& core, ZeissUByte devId, ZeissLong& position);
       int GetStatus(MM::Device& device, MM::Core& core, ZeissUByte devId, ZeissULong& status);
+      int SetLock(MM::Device& device, MM::Core& core, ZeissUByte devId, bool on, unsigned char targetDevice = AXIOOBSERVER);
       int GetBusy(MM::Device& device, MM::Core& core, ZeissUByte devId, bool& busy);
       int GetPresent(MM::Device& device, MM::Core& core, ZeissUByte devId, bool& present);
 
@@ -289,12 +314,14 @@ class ZeissAxis : public ZeissDevice
       ZeissAxis();
       ~ZeissAxis();
 
-      int SetPosition(MM::Device& device, MM::Core& core, ZeissUByte devId, int position, ZeissByte moveMode);
+      int SetPosition(MM::Device& device, MM::Core& core, ZeissUByte devId, long position, ZeissByte moveMode, unsigned char targetDevice = AXIOOBSERVER);
+      int SetRelativePosition(MM::Device& device, MM::Core& core, ZeissUByte devId, long increment, ZeissByte moveMode, unsigned char targetDevice = AXIOOBSERVER);
+      int FindHardwareStop(MM::Device& device, MM::Core& core, ZeissUByte devId, HardwareStops stop, unsigned char targetDevice = AXIOOBSERVER);
+      int StopMove(MM::Device& device, MM::Core& core, ZeissUByte devId, ZeissByte moveMode, unsigned char targetDevice = AXIOOBSERVER);
       ZeissUByte devId_;
 
    private:
       const static ZeissUByte commandGroup_ = 0xA3;
- 
 };
 
 class ZeissScope : public CGenericBase<ZeissScope>
@@ -351,39 +378,6 @@ private:
    std::string description_;
    bool state_;
 };
-
-/*
-class HalogenLamp : public CShutterBase<HalogenLamp>
-{
-public:
-   HalogenLamp();
-   ~HalogenLamp();
-
-   int Initialize();
-   int Shutdown();
-
-   void GetName (char* pszName) const;
-   bool Busy();
-
-   // Shutter API
-   int SetOpen(bool open = true);
-   int GetOpen(bool& open);
-   int Fire(double deltaT);
-
-   // action interface
-   int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnLightManager(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnIntensity(MM::PropertyBase* pProp, MM::ActionType eAct);
-
-private:
-   int SetLM(bool on = true);
-   int GetLM(bool& on);
-   bool initialized_;
-   std::string name_;
-   bool state_;
-   long changedTimeUs_;
-};
-*/
 
 class Turret : public CStateDeviceBase<Turret>,  public ZeissChanger
 {
@@ -464,7 +458,7 @@ public:
    int Initialize();
 };
 
-class Servo : public CStateDeviceBase<Servo>,  public ZeissServo
+class Servo : public CGenericBase<Servo>,  public ZeissServo
 {
 public:
    Servo(ZeissUByte devId, std::string name, std::string description);
@@ -477,18 +471,21 @@ public:
     
    void GetName(char* pszName) const;
    bool Busy();
-   unsigned long GetNumberOfPositions()const {return numPos_;};
 
    // action interface
    // ---------------
-   int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+   unsigned long GetNumberOfPositions()const {return numPos_;};
+   int OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
+
 
 private:
+   double minPosScaled_, maxPosScaled_;
+   ZeissLong minPosNative_, maxPosNative_;
    bool initialized_;
    unsigned int numPos_;
-   long pos_;
    std::string name_;
    std::string description_;
+   std::string unit_;
 };
 
 
@@ -537,7 +534,57 @@ private:
    std::string name_;
    std::string description_;
    std::string direct_, uni_, biSup_, biAlways_, fast_, smooth_;
+   long busyCounter_;
 
+};
+
+class XYStage : public CXYStageBase<XYStage>, public ZeissAxis
+{
+public:
+   XYStage();
+   ~XYStage();
+
+   // Device API
+   // ---------
+   int Initialize();
+   int Shutdown();
+
+   void GetName(char* pszName) const;
+   bool Busy();
+
+   // XYStage API                                                            
+   // -----------
+  int SetPositionUm(double x, double y);
+  int SetRelativePositionUm(double x, double y);
+  int GetPositionUm(double& x, double& y);
+  int SetPositionSteps(long x, long y);
+  int SetRelativePositionSteps(long x, long y);
+  int GetPositionSteps(long& x, long& y);
+  int Home();
+  int Stop();
+  int SetOrigin();
+  int GetLimits(double& xMin, double& xMax, double& yMin, double& yMax);
+
+   // action interface
+   // ----------------
+   int OnMoveMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnVelocity(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+private:
+   ZeissAxis xAxis_;
+   ZeissAxis yAxis_;
+   double stepSize_um_;
+   bool busy_;
+   bool initialized_;
+   double lowerLimitX_;
+   double upperLimitX_;
+   double lowerLimitY_;
+   double upperLimitY_;
+   long moveMode_;
+   long velocity_;
+   std::string name_;
+   std::string description_;
+   std::string direct_, uni_, biSup_, biAlways_, fast_, smooth_;
 };
 
 #endif // _ZeissCAN29_H_

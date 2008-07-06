@@ -1222,15 +1222,15 @@ public class AcquisitionData {
       if (frame <0 || channel < 0 || channel >= channels_ || slice < 0 || slice >= slices_)
          throw new MMAcqDataException("Invalid image coordinates (frame,channel,slice): " + frame + "," + channel + "," + slice);
       
-      // increase frame count if necessary
-      if (frame >= frames_) {
-         frames_ = frame + 1;
-      }
-
       String fname = ImageKey.generateFileName(frame, channelNames_[channel], slice);
       String frameKey = ImageKey.generateFrameKey(frame, channel, slice);
 
       try {
+         // increase frame count if necessary
+         if (frame >= frames_) {
+            frames_ = frame + 1;
+            summary_.put(SummaryKeys.NUM_FRAMES, frames_);
+         }
          JSONObject frameData = new JSONObject();
          frameData.put(ImagePropertyKeys.FILE, fname);
          frameData.put(ImagePropertyKeys.FRAME, frame);

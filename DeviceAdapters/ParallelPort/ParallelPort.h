@@ -73,4 +73,41 @@ private:
    long numPos_;
 };
 
+class CParallelPortShutter : public CShutterBase<CParallelPortShutter>  
+{
+public:
+   CParallelPortShutter();
+   ~CParallelPortShutter();
+  
+   // MMDevice API
+   // ------------
+   int Initialize();
+   int Shutdown();
+  
+   void GetName(char* pszName) const;
+   bool Busy() {return busy_;}
+   
+   unsigned long GetNumberOfPositions()const {return numPos_;}
+
+   // Shutter API
+   int SetOpen(bool open = true);
+   int GetOpen(bool& open);
+   int Fire(double deltaT);
+
+   // action interface
+   // ----------------
+   int OnSwitchState(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+private:
+   int OpenPort(const char* pszName, long lnValue);
+   int WriteToPort(long lnValue);
+   int ClosePort();
+
+   bool initialized_;
+   bool busy_;
+   long numPos_;
+   long switch_;
+   bool open_;
+};
+
 #endif //_PARALLELPORT_H_

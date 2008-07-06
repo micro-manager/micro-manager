@@ -189,6 +189,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private GraphFrame profileWin_;
    //private MMScriptFrame scriptFrame_;
    private PropertyEditor propertyBrowser_;
+   private CalibrationListDlg calibrationListDlg_;
    private AcqControlDlg acqControlWin_;
    private final static String DEFAULT_CONFIG_FILE_NAME = "MMConfig_demo.cfg";
    private final static String DEFAULT_SCRIPT_FILE_NAME = "MMStartup.bsh";
@@ -843,6 +844,16 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       });
       configuratorMenuItem.setText("Hardware Configuration Wizard...");
       toolsMenu.add(configuratorMenuItem);
+
+      final JMenuItem calibrationMenuItem = new JMenuItem();
+      toolsMenu.add(calibrationMenuItem);
+      calibrationMenuItem.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent e) {
+            createCalibrationListDlg();
+         }
+      });
+      calibrationMenuItem.setText("Pixel Size Calibration...");
+      toolsMenu.add(calibrationMenuItem);
 
       final JMenuItem loadSystemConfigMenuItem = new JMenuItem();
       toolsMenu.add(loadSystemConfigMenuItem);
@@ -1589,6 +1600,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       try {
          model.loadFromFile(sysConfigFile_);
          model.createSetupConfigsFromHardware(core_);
+         model.createResolutionsFromHardware(core_);
          JFileChooser fc = new JFileChooser();
          boolean saveFile = true;
          File f; 
@@ -1784,17 +1796,16 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       propertyBrowser_.setParentGUI(this);
    }
 
-//   private void createScriptingConsole() {
-//      if (scriptFrame_ == null || !scriptFrame_.isActive()) {
-//         scriptFrame_ = new MMScriptFrame();
-//         scriptFrame_.setVisible(true);
-//         scriptFrame_.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-//         scriptFrame_.insertScriptingObject(SCRIPT_CORE_OBJECT, core_);
-//         scriptFrame_.insertScriptingObject(SCRIPT_ACQENG_OBJECT, engine_);
-//         scriptFrame_.setParentGUI(this);
-//         scriptFrame_.setBackground(guiColors_.background.get((options_.displayBackground)));
-//      }
-//   }
+   private void createCalibrationListDlg() {
+      if (calibrationListDlg_ != null)
+         calibrationListDlg_.dispose();
+
+      calibrationListDlg_ = new CalibrationListDlg(core_, options_);
+      calibrationListDlg_.setVisible(true);
+      calibrationListDlg_.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+      //calibrationListDlg_.setCore(core_);
+      calibrationListDlg_.setParentGUI(this);
+   }
 
    private void createScriptPanel() {
       if (scriptPanel_ == null) {
@@ -1813,7 +1824,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          ", Intensity range: " + core_.getImageBitDepth() + " bits";
          double pixSizeUm = core_.getPixelSizeUm();
          if (pixSizeUm > 0.0)
-            dimText += ", " + TextUtils.FMT2.format(pixSizeUm) + "um/pix";
+            dimText += ", " + TextUtils.FMT0.format(pixSizeUm*1000) + "nm/pix";
+            //dimText += ", " + TextUtils.FMT3.format(pixSizeUm) + "um/pix";
          else
             dimText += ", uncalibrated";
          if (zStageLabel_.length() > 0) {
@@ -1945,11 +1957,14 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             imageWin_.toFront();
 
             // turn off auto shutter and open the shutter
-            //autoShutterCheckBox_.setEnabled(false);
             autoShutterOrg_ = core_.getAutoShutter();
             if (shutterLabel_.length() > 0)
                shutterOrg_ = core_.getShutterOpen();
             core_.setAutoShutter(false);
+
+            // Hide the autoShutter Checkbox
+            autoShutterCheckBox_.setEnabled(false);
+
             shutterLabel_ = core_.getShutterDevice();
             // only open the shutter when we have one and the Auto shutter checkbox was checked
             if ((shutterLabel_.length() > 0) && autoShutterOrg_)
@@ -1960,7 +1975,9 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             zWheelListener_.start();
             timer_.start();
             toggleButtonLive_.setText("Stop");
-            toggleButtonShutter_.setEnabled(false);
+            // Only hide the shutter checkbox if we are in autoshuttermode
+            if (autoShutterOrg_)
+               toggleButtonShutter_.setEnabled(false);
             liveRunning_ = true;
          } else {
             if (!timer_.isRunning())
@@ -1979,7 +1996,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             else
                toggleButtonShutter_.setEnabled(true);
             liveRunning_ = false;
-            //autoShutterCheckBox_.setEnabled(autoShutterOrg_);
+            autoShutterCheckBox_.setEnabled(true);
          }
       } catch (Exception err) {
          JOptionPane.showMessageDialog(this, err.getMessage());     
@@ -2580,6 +2597,11 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          this.acqControlWin_.updateChannelAndGroupCombo();
    }
 
+   public void setConfigChanged(boolean status) {
+      configChanged_ = status;
+      setConfigSaveButtonStatus(configChanged_);
+   }
+
    /*
     * Changes background color of this window
     */
@@ -2597,8 +2619,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          imageWin_.setBackground(guiColors_.background.get((options_.displayBackground)));
       if (fastAcqWin_ != null)
          fastAcqWin_.setBackground(guiColors_.background.get((options_.displayBackground)));
-//      if (scriptFrame_ != null)
-//         scriptFrame_.setBackground(guiColors_.background.get((options_.displayBackground)));
       if (scriptPanel_ != null)
          scriptPanel_.setBackground(guiColors_.background.get((options_.displayBackground)));
       if (splitView_ != null)

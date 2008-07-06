@@ -28,6 +28,7 @@
 #include <string>
 #include <math.h>
 #include "../../MMDevice/ModuleInterface.h"
+#include "../../MMDevice/DeviceUtils.h"
 #include <sstream>
 
 // Wheels
@@ -471,7 +472,8 @@ Shutter::Shutter(const char* name, int id) :
    CPropertyAction* pAct = new CPropertyAction (this, &Shutter::OnPort);
    CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
 
-   UpdateStatus();
+   EnableDelay();
+   //UpdateStatus();
 }
 
 Shutter::~Shutter()
@@ -502,13 +504,6 @@ int Shutter::Initialize()
    AddAllowedValue(MM::g_Keyword_State, "0");
    AddAllowedValue(MM::g_Keyword_State, "1");
 
-   // Delay
-   // -----
-   pAct = new CPropertyAction (this, &Shutter::OnDelay);
-   ret = CreateProperty(MM::g_Keyword_Delay, "0.0", MM::Float, false, pAct);
-   if (ret != DEVICE_OK)
-      return ret;
-
    ret = UpdateStatus();
    if (ret != DEVICE_OK)
       return ret;
@@ -531,6 +526,9 @@ int Shutter::Initialize()
 
    // set initial values
    SetProperty(g_ShutterModeProperty, curMode_.c_str());
+
+   // Needed for Busy flag
+   changedTime_ = GetCurrentMMTime();
 
    initialized_ = true;
 
@@ -590,14 +588,10 @@ bool Shutter::SetShutterPosition(bool state)
    }
 
    // wait if the device is busy
-   unsigned long startTime = GetClockTicksUs();
-   while (ControllerBusy() && (GetClockTicksUs() - startTime)/1000.0 < g_busyTimeoutMs)
+   MM::MMTime startTime = GetCurrentMMTime();
+   while (ControllerBusy() && (GetCurrentMMTime() - startTime) < (g_busyTimeoutMs * 1000.0) )
    {
-#ifdef WIN32
-      Sleep(10);
-#else
-      usleep(10000);
-#endif
+      CDeviceUtils::SleepMs(10);
    }
 
    unsigned char msg[2];
@@ -608,10 +602,13 @@ bool Shutter::SetShutterPosition(bool state)
    if (DEVICE_OK != WriteToComPort(port_.c_str(), msg, 2))
       return false;
 
+   // Start timer for Busy flag
+   changedTime_ = GetCurrentMMTime();
+
    // block/wait for acknowledge, or until we time out;
    unsigned char answer = 0;
    unsigned long read;
-   startTime = GetClockTicksUs();
+   startTime = GetCurrentMMTime();
 
    bool ret = false;
    do {
@@ -620,9 +617,19 @@ bool Shutter::SetShutterPosition(bool state)
       if (answer == command)
          ret = true;
    }
-   while(!ret && (GetClockTicksUs() - startTime) / 1000.0 < answerTimeoutMs_);
+   while(!ret && (GetCurrentMMTime() - startTime) < (answerTimeoutMs_ * 1000.0) );
 
    return ret;
+}
+
+bool Shutter::Busy()
+{
+   MM::MMTime interval = GetCurrentMMTime() - changedTime_;
+   MM::MMTime delay(GetDelayMs()*1000.0);
+   if (interval < delay )
+      return true;
+   else
+      return false;
 }
 
 bool Shutter::ControllerBusy()
@@ -707,6 +714,7 @@ int Shutter::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+/*
 int Shutter::OnDelay(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
@@ -722,6 +730,7 @@ int Shutter::OnDelay(MM::PropertyBase* pProp, MM::ActionType eAct)
 
    return DEVICE_OK;
 }
+*/
 
 int Shutter::OnMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 {

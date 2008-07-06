@@ -41,6 +41,8 @@ public interface DeviceControlGUI {
    public void enableLiveMode(boolean enable);
    public void setBackgroundStyle(String backgroundType); 
    public String getBackgroundStyle();
+   public void setConfigChanged(boolean status);
+   public void refreshGUI();
    public void applyContrastSettings(ContrastSettings contrast8_, ContrastSettings contrast16_);
    public ContrastSettings getContrastSettings();
    public boolean is16bit();

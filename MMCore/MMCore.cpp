@@ -2780,6 +2780,16 @@ void CMMCore::definePixelSizeConfig(const char* resolutionID, const char* device
 }
 
 /**
+ * Checks if the Pixel Size Resolution already exists
+ *
+ * @return true if the configuration is already defined
+ */
+bool CMMCore::isPixelSizeConfigDefined(const char* resolutionID) const
+{
+   return  pixelSizeGroup_->Find(resolutionID) != 0;
+}
+
+/**
  * Sets pixel size in microns for the specified resolution sensing configuration preset.
  */ 
 void CMMCore::setPixelSizeUm(const char* resolutionID, double pixSize)  throw (CMMError)
@@ -2789,6 +2799,34 @@ void CMMCore::setPixelSizeUm(const char* resolutionID, double pixSize)  throw (C
       throw CMMError(resolutionID, getCoreErrorText(MMERR_NoConfigGroup).c_str(), MMERR_NoConfigGroup);
    psc->setPixelSizeUm(pixSize);
    CORE_LOG2("Pixel size %f um set for resolution ID: %s\n", pixSize, resolutionID);
+}
+
+/**
+ * Applies a Pixel Size Configurdation. The command will fail if the
+ * configuration was not previously defined.
+ * 
+ * @param groupName
+ * @param configName
+ */
+void CMMCore::setPixelSizeConfig(const char* resolutionID) throw (CMMError)
+{
+   PixelSizeConfiguration* psc = pixelSizeGroup_->Find(resolutionID);
+   ostringstream os;
+   os << resolutionID;
+   if (!psc)
+   {
+      throw CMMError(os.str().c_str(), getCoreErrorText(MMERR_NoConfiguration).c_str(), MMERR_NoConfiguration);
+   }
+   
+   try {
+      applyConfiguration(*psc);
+   } catch (CMMError& err) {
+      err.setCoreMsg(getCoreErrorText(err.getCode()).c_str());
+      logError("setPixelSizeConfig", getCoreErrorText(err.getCode()).c_str());
+      throw;
+   }
+
+   CORE_DEBUG1("Pixel Size Configuration %s applied.\n", os.str().c_str());
 }
 
 /**
@@ -2923,6 +2961,23 @@ Configuration CMMCore::getPixelSizeConfigData(const char* configName) const thro
    }
    return *pCfg;
 }
+
+/**
+ * Deletes a pixel size configuration. The command will fail if the
+ * configuration was not previously defined.
+ *
+ */
+void CMMCore::deletePixelSizeConfig(const char* configName) const throw (CMMError)
+{
+   ostringstream os;
+   os << "Pixel size" << "/" << configName;
+   if (!pixelSizeGroup_->Delete(configName)) {
+      logError("deletePixelSizeConfig", getCoreErrorText(MMERR_NoConfiguration).c_str());
+      throw CMMError(os.str().c_str(), getCoreErrorText(MMERR_NoConfiguration).c_str(), MMERR_NoConfiguration);
+   }
+   CORE_LOG1("Pixel Size Configuration %s deleted.\n", os.str().c_str());
+}
+
 /**
  * Returns the curent pixel size in microns.
  * This method is based on sensing the current pixel size configuration and adjusting
@@ -2978,6 +3033,18 @@ double CMMCore::getPixelSizeUm() const
 
    return 0.0;
 }
+
+/**
+ * Returns the pixel size in um for the requested pixel size group
+ */
+double CMMCore::getPixelSizeUm(const char* resolutionID) throw (CMMError)
+{
+   PixelSizeConfiguration* psc = pixelSizeGroup_->Find(resolutionID);
+   if (psc == 0)
+      throw CMMError(resolutionID, getCoreErrorText(MMERR_NoConfigGroup).c_str(), MMERR_NoConfigGroup);
+   return psc->getPixelSizeUm();
+}
+
 
 /**
  * Returns the product of all Magnifiers in the system or 1.0 when none is found

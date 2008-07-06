@@ -93,7 +93,7 @@ public class WellAcquisitionData {
       Enumeration<AcquisitionData> a = sites_.elements();
       int count = 0;
       while (a.hasMoreElements())
-         adArray[count] = a.nextElement();
+         adArray[count++] = a.nextElement();
       return adArray;
    }
    
@@ -114,7 +114,8 @@ public class WellAcquisitionData {
             ad.load(f.getAbsolutePath());
             sites_.put(ad.getName(), ad);
          } else {
-            throw new MMAcqDataException("Not a valid well path: " + f.getAbsolutePath());
+            //throw new MMAcqDataException("Not a valid well path: " + f.getAbsolutePath());
+            System.out.println("Skipped :" + f.getAbsolutePath());
          }
       }
       

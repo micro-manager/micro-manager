@@ -548,6 +548,21 @@ int Wheel::Initialize()
    if (ret != DEVICE_OK)
       return ret;
 
+   // Set timer for Busy signal
+   changedTime_ = GetCurrentMMTime();
+
+   // block/wait for acknowledge, or until we time out;
+   string answer;
+   ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if (answer.substr(0, 1).compare("E") == 0 && answer.length() > 2)
+   {
+      int errNo = atoi(answer.substr(2).c_str());
+      return ERR_OFFSET + errNo;
+   }
+
    ret = UpdateStatus();
    if (ret != DEVICE_OK)
       return ret;

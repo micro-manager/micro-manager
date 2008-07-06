@@ -43,6 +43,7 @@ const double CDemoCamera::nominalPixelSizeUm_ = 1.0;
 // to load particular device from the "DemoCamera.dll" library
 const char* g_CameraDeviceName = "DCam";
 const char* g_WheelDeviceName = "DWheel";
+const char* g_StateDeviceName = "DStateDevice";
 const char* g_LightPathDeviceName = "DLightPath";
 const char* g_ObjectiveDeviceName = "DObjective";
 const char* g_StageDeviceName = "DStage";
@@ -84,6 +85,7 @@ MODULE_API void InitializeModuleData()
 {
    AddAvailableDeviceName(g_CameraDeviceName, "Demo camera");
    AddAvailableDeviceName(g_WheelDeviceName, "Demo filter wheel");
+   AddAvailableDeviceName(g_StateDeviceName, "Demo State Device");
    AddAvailableDeviceName(g_ObjectiveDeviceName, "Demo objective turret");
    AddAvailableDeviceName(g_StageDeviceName, "Demo stage");
    AddAvailableDeviceName(g_XYStageDeviceName, "Demo XY stage");
@@ -113,6 +115,11 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
    {
       // create objective turret
       return new CDemoObjectiveTurret();
+   }
+   else if (strcmp(deviceName, g_StateDeviceName) == 0)
+   {
+      // create state device
+      return new CDemoStateDevice();
    }
    else if (strcmp(deviceName, g_StageDeviceName) == 0)
    {
@@ -832,6 +839,154 @@ int CDemoFilterWheel::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
          return ERR_UNKNOWN_POSITION;
       }
       position_ = pos;
+   }
+
+   return DEVICE_OK;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// CDemoStateDevice implementation
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+CDemoStateDevice::CDemoStateDevice() : 
+   numPos_(10), 
+   busy_(false), 
+   initialized_(false), 
+   changedTime_(0.0),
+   position_(0)
+{
+   InitializeDefaultErrorMessages();
+   EnableDelay(); // signals that the dealy setting will be used
+
+   // Number of positions
+   // -----
+   CPropertyAction* pAct = new CPropertyAction (this, &CDemoStateDevice::OnNumberOfStates);
+   CreateProperty("Number of positions", "0", MM::Integer, false, pAct, true);
+}
+
+CDemoStateDevice::~CDemoStateDevice()
+{
+   Shutdown();
+}
+
+void CDemoStateDevice::GetName(char* Name) const
+{
+   CDeviceUtils::CopyLimitedString(Name, g_StateDeviceName);
+}
+
+
+int CDemoStateDevice::Initialize()
+{
+   if (initialized_)
+      return DEVICE_OK;
+
+   // set property list
+   // -----------------
+   
+   // Name
+   int ret = CreateProperty(MM::g_Keyword_Name, g_StateDeviceName, MM::String, true);
+   if (DEVICE_OK != ret)
+      return ret;
+
+   // Description
+   ret = CreateProperty(MM::g_Keyword_Description, "Demo state device driver", MM::String, true);
+   if (DEVICE_OK != ret)
+      return ret;
+
+   // Set timer for the Busy signal, or we'll get a time-out the first time we check the state of the shutter, for good measure, go back 'delay' time into the past
+   changedTime_ = GetCurrentMMTime();   
+
+   // create default positions and labels
+   const int bufSize = 1024;
+   char buf[bufSize];
+   for (long i=0; i<numPos_; i++)
+   {
+      snprintf(buf, bufSize, "State-%ld", i);
+      SetPositionLabel(i, buf);
+   }
+
+   // State
+   // -----
+   CPropertyAction* pAct = new CPropertyAction (this, &CDemoStateDevice::OnState);
+   ret = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   // Label
+   // -----
+   pAct = new CPropertyAction (this, &CStateBase::OnLabel);
+   ret = CreateProperty(MM::g_Keyword_Label, "", MM::String, false, pAct);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   ret = UpdateStatus();
+   if (ret != DEVICE_OK)
+      return ret;
+
+   initialized_ = true;
+
+   return DEVICE_OK;
+}
+
+bool CDemoStateDevice::Busy()
+{
+   MM::MMTime interval = GetCurrentMMTime() - changedTime_;
+   MM::MMTime delay(GetDelayMs()*1000.0);
+   if (interval < delay)
+      return true;
+   else
+      return false;
+}
+
+
+int CDemoStateDevice::Shutdown()
+{
+   if (initialized_)
+   {
+      initialized_ = false;
+   }
+   return DEVICE_OK;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Action handlers
+///////////////////////////////////////////////////////////////////////////////
+
+int CDemoStateDevice::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(position_);
+      // nothing to do, let the caller to use cached property
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      // Set timer for the Busy signal
+      changedTime_ = GetCurrentMMTime();
+
+      long pos;
+      pProp->Get(pos);
+      if (pos >= numPos_ || pos < 0)
+      {
+         pProp->Set(position_); // revert
+         return ERR_UNKNOWN_POSITION;
+      }
+      position_ = pos;
+   }
+
+   return DEVICE_OK;
+}
+
+int CDemoStateDevice::OnNumberOfStates(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(numPos_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      if (!initialized_)
+         pProp->Get(numPos_);
    }
 
    return DEVICE_OK;

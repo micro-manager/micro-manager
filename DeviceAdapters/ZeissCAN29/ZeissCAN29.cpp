@@ -9,7 +9,14 @@
 // AUTHOR: Nico Stuurman, 6/18/2007 - 
 //
 // COPYRIGHT:     University of California, San Francisco, 2007
-// LICENSE:       Please note: This code could only be developed thanks to information provided by Zeiss under a non-disclosure agreement.  Subsequently, this code has been reviewed by Zeiss and we were permitted to release this under the LGPL on 1/16/2008.  If you modify this code using information you obtained under a NDA with Zeiss, you will need to ask Zeiss whether you can release your modifications.  
+// LICENSE:       Please note: This code could only be developed thanks to information 
+//                provided by Zeiss under a non-disclosure agreement.  Subsequently, 
+//                this code has been reviewed by Zeiss and we were permitted to release 
+//                this under the LGPL on 1/16/2008 (and again on 7/3/2208 after changes 
+//                to the code).  If you modify this code using information you obtained 
+//                under a NDA with Zeiss, you will need to ask Zeiss whether you can release 
+//                your modifications.  
+//                
 //                This library is free software; you can redistribute it and/or
 //                modify it under the terms of the GNU Lesser General Public
 //                License as published by the Free Software Foundation.
@@ -82,7 +89,7 @@ MM_THREAD_GUARD mutex;
 static ZeissDeviceInfo g_deviceInfo[MAXNUMBERDEVICES];
 std::string ZeissHub::reflectorList_[10];
 std::string ZeissHub::objectiveList_[7];
-std::string ZeissHub::tubeLensList_[3];
+std::string ZeissHub::tubeLensList_[5];
 std::string ZeissHub::sidePortList_[3];
 std::string ZeissHub::condenserList_[7];
 //static std::vector<ZeissUByte > g_commandGroup; // relates device to commandgroup, initialized in constructor
@@ -110,10 +117,10 @@ const char* g_ZeissHalogenLightSwitch = "ZeissHalogenLightSwitch";
 const char* g_ZeissRLFLAttenuator = "ZeissRL-FLAttenuator";
 const char* g_ZeissCondenserContrast = "ZeissCondenserContrast";
 const char* g_ZeissCondenserAperture = "ZeissCondenserAperture";
+const char* g_ZeissXYStage = "ZeissXYStage";
 const char* g_ZeissHBOLamp = "ZeissHBOLamp";
 const char* g_ZeissHalogenLamp = "ZeissHalogenLamp";
 const char* g_ZeissLSMPort = "ZeissLSMPort";
-const char* g_ZeissLSMSafety = "ZeissLSMSafety";
 const char* g_ZeissBasePort = "ZeissBasePort";
 const char* g_ZeissUniblitz = "ZeissUniblitz";
 const char* g_ZeissFilterWheel = "ZeissFilterWheel";
@@ -133,10 +140,11 @@ ZeissUByte g_HalogenLampSwitch = 0x1F; // Read only
 ZeissUByte g_RLFLAttenuatorChanger = 0x21; // reflected light
 ZeissUByte g_CondenserContrastChanger = 0x22;
 ZeissUByte g_CondenserApertureServo = 0x23;
+ZeissUByte g_StageXAxis = 0x26;
+ZeissUByte g_StageYAxis = 0x27;
 ZeissUByte g_HBOLampServo = 0x28;
 ZeissUByte g_HalogenLampServo = 0x29; 
 ZeissUByte g_LSMPortChanger = 0x2B;  // RearPort, reflected light
-ZeissUByte g_LSMSafetyServo = 0x2D; 
 ZeissUByte g_BasePortChanger = 0x40;
 ZeissUByte g_UniblitzShutter = 0x41;
 ZeissUByte g_FilterWheelChanger = 0x42;
@@ -151,6 +159,7 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_ZeissFieldDiaphragm,"Field Diaphragm (fluorescence)");
    AddAvailableDeviceName(g_ZeissApertureDiaphragm,"Aperture Diaphragm (fluorescence)");
    AddAvailableDeviceName(g_ZeissFocusAxis,"Z-drive");
+   AddAvailableDeviceName(g_ZeissXYStage,"XYStage");
    AddAvailableDeviceName(g_ZeissTubeLens,"Tube Lens (optovar)");
    AddAvailableDeviceName(g_ZeissTubeLensShutter,"Tube Lens Shutter");
    AddAvailableDeviceName(g_ZeissSidePort,"Side Port");
@@ -162,7 +171,6 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_ZeissHBOLamp,"HBO Lamp");
    AddAvailableDeviceName(g_ZeissHalogenLamp,"Halogen Lamp"); 
    AddAvailableDeviceName(g_ZeissLSMPort,"LSM Port (rearPort)"); 
-   AddAvailableDeviceName(g_ZeissLSMSafety,"LSM Safety Controller"); 
    AddAvailableDeviceName(g_ZeissBasePort,"Base Port switcher"); 
    AddAvailableDeviceName(g_ZeissUniblitz,"Uniblitz Shutter"); 
    AddAvailableDeviceName(g_ZeissFilterWheel,"Filter Wheel"); 
@@ -190,6 +198,8 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
         return new Servo(g_ApertureDiaphragmServo, g_ZeissApertureDiaphragm, "Aperture Diaphragm");
    else if (strcmp(deviceName, g_ZeissFocusAxis) == 0)
         return new Axis(g_FocusAxis, g_ZeissFocusAxis, "Z-drive");
+   else if (strcmp(deviceName, g_ZeissXYStage) == 0)
+	   return new XYStage();
    else if (strcmp(deviceName, g_ZeissTubeLens) == 0)
         return new TubeLensTurret(g_TubeLensChanger, g_ZeissTubeLens, "Tube Lens (optoavar)");
    else if (strcmp(deviceName, g_ZeissTubeLensShutter) == 0)
@@ -212,8 +222,6 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
         return new Servo(g_HalogenLampServo, g_ZeissHalogenLamp, "Halogen Lamp intensity");
    else if (strcmp(deviceName, g_ZeissLSMPort) == 0)
         return new Turret(g_LSMPortChanger, g_ZeissLSMPort, "LSM Port (rear port)");
-   else if (strcmp(deviceName, g_ZeissLSMSafety) == 0)
-        return new Servo(g_LSMSafetyServo, g_ZeissLSMSafety, "LSM Safety");
    else if (strcmp(deviceName, g_ZeissBasePort) == 0)
         return new Turret(g_BasePortChanger, g_ZeissBasePort, "Base Port");
    else if (strcmp(deviceName, g_ZeissUniblitz) == 0)
@@ -289,10 +297,13 @@ int ZeissHub::Initialize(MM::Device& device, MM::Core& core)
 
    int ret = GetVersion(device, core);
    if (ret != DEVICE_OK) {
-      // Sometimes we time out on the first try....  Try once more...
+      // Sometimes we time out on the first try....  Try twice more...
       ret = GetVersion(device, core);
-      if (ret != DEVICE_OK)
-         return ret;
+      if (ret != DEVICE_OK) {
+         ret = GetVersion(device, core);
+         if (ret != DEVICE_OK)
+            return ret;
+      }
    }
 
    availableDevices_.clear();
@@ -360,7 +371,7 @@ int ZeissHub::Initialize(MM::Device& device, MM::Core& core)
    GetTubeLensLabels(device, core);
    os.str("");
    os <<"TubeLens: ";
-   for (int i=0; i< g_deviceInfo[0x12].maxPos && i < 3;i++) {
+   for (int i=0; i< g_deviceInfo[g_TubeLensChanger].maxPos && i < 5;i++) {
       os << "\n" << tubeLensList_[i].c_str();
    }
    core.LogMessage(&device, os.str().c_str(), false);
@@ -604,7 +615,7 @@ int ZeissHub::GetScalingTable(MM::Device& device, MM::Core& core, ZeissUByte gro
    for (unsigned int i=0; i<unit.length(); i++)
       command[6+i] = (unsigned char) unit[i];
 
-int ret = ExecuteCommand(device, core,  &(command[0]), (int) command.size());
+   int ret = ExecuteCommand(device, core,  &(command[0]), (int) command.size());
    if (ret != DEVICE_OK)
       return ret;
 
@@ -621,24 +632,24 @@ int ret = ExecuteCommand(device, core,  &(command[0]), (int) command.size());
       if (groupName == 0xA3) {
          ZeissLong tmp;
          memcpy (&tmp, response + 6, ZeissLongSize);
-         deviceInfo.nativeScale.push_back(ntohl(tmp));
+         deviceInfo.nativeScale[unit].push_back(ntohl(tmp));
          ZeissLong tmpl;
          ZeissFloat tmpf;
          memcpy(&tmpl, response + 6 + ZeissShortSize, ZeissLongSize);
          tmpl = ntohl(tmpl);
          memcpy(&tmpf, &tmpl, ZeissFloatSize);
-         deviceInfo.scaledScale.push_back(tmpf);
+         deviceInfo.scaledScale[unit].push_back(tmpf);
       }
       else { // groupName == 0xA2
          ZeissShort tmp;
          memcpy (&tmp, response + 6, ZeissShortSize);
-         deviceInfo.nativeScale.push_back(ntohs(tmp));
+         deviceInfo.nativeScale[unit].push_back(ntohs(tmp));
          ZeissLong tmpl;
          ZeissFloat tmpf;
          memcpy(&tmpl, response + 6 + ZeissShortSize, ZeissLongSize);
          tmpl = ntohl(tmpl);
          memcpy(&tmpf, &tmpl, ZeissFloatSize);
-         deviceInfo.scaledScale.push_back(tmpf);
+         deviceInfo.scaledScale[unit].push_back(tmpf);
       }
    } while (response[1] == 0x05); // last response starts with 0x09
   
@@ -805,10 +816,10 @@ int ZeissHub::GetTubeLensLabels(MM::Device& device, MM::Core& core)
    std::string label;
    if (!g_deviceInfo[0x12].present)
       return DEVICE_OK; // no TubeLens, lets not make a fuss
-   for (ZeissLong i=0; (i<= g_deviceInfo[0x12].maxPos) && (i < 3); i++) {
+   for (ZeissLong i=0; (i<= g_deviceInfo[0x12].maxPos) && (i < 5); i++) {
       memset(data, 0, g_hub.RCV_BUF_LENGTH);
       dataLength =0;
-      GetPermanentParameter(device, core, (ZeissUShort) 0x1430, (ZeissByte) (0x12 + ((i)*0x10)), dataType, data, dataLength);
+      GetPermanentParameter(device, core, (ZeissUShort) 0x1430, (ZeissByte) (0x10 + ((i)*0x10)), dataType, data, dataLength);
       std::ostringstream os;
       os << (i+1) << "-";
       label = os.str() + std::string(reinterpret_cast<char*> (data));
@@ -930,13 +941,13 @@ int ZeissHub::GetVersion(MM::Device& device, MM::Core& core, std::string& ver)
  * Sends command to serial port
  * The first (10 02 19 11) and last part of the command (10 03) are added here
  */
-int ZeissHub::ExecuteCommand(MM::Device& device, MM::Core& core, const unsigned char* command, int commandLength) 
-{     
+int ZeissHub::ExecuteCommand(MM::Device& device, MM::Core& core, const unsigned char* command, int commandLength, unsigned char targetDevice) 
+{
    // Prepare command according to CAN29 Protocol
    vector<unsigned char> preparedCommand(commandLength + 20); // make provision for doubling tens
    preparedCommand[0] = 0x10;
    preparedCommand[1] = 0x02;
-   preparedCommand[2] = 0x19;
+   preparedCommand[2] = targetDevice;
    preparedCommand[3] = 0x11;
    // copy command into preparedCommand, but double 0x10
    int tenCounter = 0;
@@ -952,7 +963,8 @@ int ZeissHub::ExecuteCommand(MM::Device& device, MM::Core& core, const unsigned 
 
    // int preparedCommandLength = commandLength + 6 + tenCounter;
    // send command
-   int ret = core.WriteToSerial(&device, port_.c_str(), &(preparedCommand[0]), (unsigned long) preparedCommand.size());
+   //int ret = core.WriteToSerial(&device, port_.c_str(), &(preparedCommand[0]), (unsigned long) preparedCommand.size());
+   int ret = core.WriteToSerial(&device, port_.c_str(), &(preparedCommand[0]), (unsigned long) commandLength + tenCounter + 6);
    if (ret != DEVICE_OK)                                                     
       return ret;                                                            
                                                                              
@@ -988,7 +1000,7 @@ int ZeissHub::GetAnswer(MM::Device& device, MM::Core& core, unsigned char* answe
         if (tenFound) {
            if (rcvBuf_[0] == 3)
               terminatorFound = true;
-           // There is some weir stuff going on here.  This works most of the time
+           // There is some weird stuff going on here.  This works most of the time
            else if (rcvBuf_[0] == 0x10) {
               tenFound = false;
               dataReadLength -= 1;
@@ -1091,6 +1103,26 @@ bool ZeissHub::signatureFound(unsigned char* answer, unsigned char* signature, u
 int ZeissHub::SetModelPosition(ZeissUByte devId, ZeissLong position) {
    MM_THREAD_GUARD_LOCK(&mutex);
    g_deviceInfo[devId].currentPos = position;
+   MM_THREAD_GUARD_UNLOCK(&mutex);
+   return DEVICE_OK;
+}
+
+/*
+ * Sets Upper Hardware Stop in scope model 
+ */
+int ZeissHub::SetUpperHardwareStop(ZeissUByte devId, ZeissLong position) {
+   MM_THREAD_GUARD_LOCK(&mutex);
+   g_deviceInfo[devId].upperHardwareStop = position;
+   MM_THREAD_GUARD_UNLOCK(&mutex);
+   return DEVICE_OK;
+}
+
+/*
+ * Sets Lower Hardware Stop in scope model 
+ */
+int ZeissHub::SetLowerHardwareStop(ZeissUByte devId, ZeissLong position) {
+   MM_THREAD_GUARD_LOCK(&mutex);
+   g_deviceInfo[devId].lowerHardwareStop = position;
    MM_THREAD_GUARD_UNLOCK(&mutex);
    return DEVICE_OK;
 }
@@ -1209,7 +1241,7 @@ int ZeissMessageParser::GetNextMessage(unsigned char* nextMessage, int& nextMess
    bool tenFound = false;
    nextMessageLength = 0;
    long remainder = index_;
-   while (endFound == false && index_ < inputStreamLength_ && nextMessageLength < messageMaxLength) {
+   while ( (endFound == false) && (index_ < inputStreamLength_) && (nextMessageLength < messageMaxLength_) ) {
       if (tenFound && inputStream_[index_] == 0x02) {
          startFound = true;
          tenFound = false;
@@ -1297,6 +1329,22 @@ void ZeissMonitoringThread::interpretMessage(unsigned char* message)
          g_hub.SetModelStatus(message[7], status);
          g_hub.SetModelBusy(message[7], !(status & 32)); // 'is settled' bit 
       }
+   } else if (message[3] == 0x08) { // Some direct answers that we want to interpret
+      if (message[6] == 0x20) { // Axis: Upper hardware stop reached
+         g_hub.SetModelBusy(message[5], false);
+         ZeissLong position;
+         memcpy(&position, message + 8, 4);
+         position = ntohl(position);
+         g_hub.SetUpperHardwareStop(message[5], position);
+         // TODO: How to unlock the stage from here?
+      } else if (message[6] == 0x21) { // Axis:: Lower hardware stop reached
+         g_hub.SetModelBusy(message[5], false);
+         ZeissLong position;
+         memcpy(&position, message + 8, 4);
+         position = ntohl(position);
+         g_hub.SetLowerHardwareStop(message[5], position);
+         // TODO: How to unlock the stage from here?
+       }
    }
 }
 
@@ -1316,35 +1364,39 @@ MM_THREAD_FUNC_DECL ZeissMonitoringThread::svc(void *arg) {
       do { 
          dataLength = ZeissHub::RCV_BUF_LENGTH - charsRemaining;
          // Do the scope monitoring stuff here
-         int ret = thd->core_.ReadFromSerial(&(thd->device_), g_hub.port_.c_str(), rcvBuf + charsRemaining, dataLength - charsRemaining, charsRead); 
-         // TODO: what to do with ret != DEVICE_OK?
-         ZeissMessageParser* parser = new ZeissMessageParser(rcvBuf, charsRead + charsRemaining);
-         do {
-            unsigned char message[ZeissMessageParser::messageMaxLength];
-            int messageLength;
-            ret = parser->GetNextMessage(message, messageLength);
-            if (ret == 0) {
-               // Report 
-               ostringstream os;
-               os << "Monitoring Thread incoming message: ";
-               for (int i=0; i< messageLength; i++)
-                  os << hex << (unsigned int)message[i] << " ";
-               thd->core_.LogMessage(&(thd->device_), os.str().c_str(), true);
-               // and do the real stuff
-               thd->interpretMessage(message);
-             }
-            else {
-               // no more messages, copy remaining (if any) back to beginning of buffer
-               memset(rcvBuf, 0, ZeissHub::RCV_BUF_LENGTH);
-               for (int i = 0; i < messageLength; i++)
-                  rcvBuf[i] = message[i];
-               charsRemaining = messageLength;
-            }
-         } while (ret == 0);
-
+         int ret = thd->core_.ReadFromSerial(&(thd->device_), g_hub.port_.c_str(), rcvBuf + charsRemaining, dataLength, charsRead); 
+         if (ret != DEVICE_OK) {
+            ostringstream oss;
+            oss << "Monitoring Thread: ERROR while reading from serial port, error code: " << ret;
+            thd->core_.LogMessage(&(thd->device_), oss.str().c_str(), false);
+         } else if (charsRead > 0) {
+            ZeissMessageParser* parser = new ZeissMessageParser(rcvBuf, charsRead + charsRemaining);
+            do {
+               unsigned char message[ZeissMessageParser::messageMaxLength_];
+               int messageLength;
+               ret = parser->GetNextMessage(message, messageLength);
+               if (ret == 0) {
+                  // Report 
+                  ostringstream os;
+                  os << "Monitoring Thread incoming message: ";
+                  for (int i=0; i< messageLength; i++)
+                     os << hex << (unsigned int)message[i] << " ";
+                  thd->core_.LogMessage(&(thd->device_), os.str().c_str(), true);
+                  // and do the real stuff
+                  thd->interpretMessage(message);
+                }
+               else {
+                  // no more messages, copy remaining (if any) back to beginning of buffer
+                  memset(rcvBuf, 0, ZeissHub::RCV_BUF_LENGTH);
+                  for (int i = 0; i < messageLength; i++)
+                     rcvBuf[i] = message[i];
+                  charsRemaining = messageLength;
+               }
+            } while (ret == 0);
+         }
       } while ((charsRead != 0) && (!thd->stop_)); 
 
-      CDeviceUtils::SleepMs(thd->intervalUs_/1000);
+       CDeviceUtils::SleepMs(thd->intervalUs_/1000);
    }
    printf("Monitoring thread finished\n");
    return 0;
@@ -1383,7 +1435,7 @@ int ZeissDevice::GetPosition(MM::Device& device, MM::Core& core, ZeissUByte devI
  * Send command to microscope to set position of Servo and Changer. 
  * Do not use this for Axis (override in Axis device)
  */
-int ZeissDevice::SetPosition(MM::Device& device, MM::Core& core, ZeissUByte commandGroup, ZeissUByte devId, int position)
+int ZeissDevice::SetPosition(MM::Device& device, MM::Core& core, ZeissUByte commandGroup, ZeissUByte devId, int position, unsigned char targetDevice)
 {
    int ret;
    const int commandLength = 8;
@@ -1405,7 +1457,7 @@ int ZeissDevice::SetPosition(MM::Device& device, MM::Core& core, ZeissUByte comm
    ostringstream os;
    os << "Setting device "<< hex << (unsigned int) devId << " to position " << dec << position;
    core.LogMessage(&device, os.str().c_str(), false);
-   ret = g_hub.ExecuteCommand(device, core,  command, commandLength);
+   ret = g_hub.ExecuteCommand(device, core,  command, commandLength, targetDevice);
    if (ret != DEVICE_OK)
       return ret;
    g_hub.SetModelBusy(devId, true);
@@ -1413,6 +1465,53 @@ int ZeissDevice::SetPosition(MM::Device& device, MM::Core& core, ZeissUByte comm
    return DEVICE_OK;
 }
 
+/*
+ * Requests Lock from Microscope 
+ */
+int ZeissDevice::SetLock(MM::Device& device, MM::Core& core, ZeissUByte devId, bool on, unsigned char targetDevice)
+{
+   int ret;
+   const int commandLength = 14;
+   unsigned char command[commandLength];
+
+   command[0] = 11;
+   command[1] = 0x19;
+   command[2] = 0xA0; 
+   // ProcessID
+   command[3] = 0x11;
+   // SubID
+   if (on)
+      command[4] = 0x42;
+   else
+      command[4] = 0x43;
+   // Device ID, here page:
+   if (devId < 64)
+      command[5] = 0;
+   else
+      command[5] = 1;
+   if (devId > 63)
+      devId -= 64;
+   ZeissULong hiMask = 0;
+   ZeissULong loMask = 0;
+   if (devId < 33)
+      loMask |= 1 << devId;
+   else
+      hiMask |= 1 << (devId - 32);
+   memcpy(command+6, &hiMask, ZeissLongSize); 
+   memcpy(command+10, &loMask, ZeissLongSize); 
+
+   ostringstream os;
+   if (on)
+      os << "Requesting locking for device "<< hex << (unsigned int) devId ;
+   else
+      os << "Requesting unlocking for device "<< hex << (unsigned int) devId ;
+   core.LogMessage(&device, os.str().c_str(), false);
+   ret = g_hub.ExecuteCommand(device, core,  command, commandLength, targetDevice);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   return DEVICE_OK;
+}
 /*
 int ZeissDevice::GetTargetPosition(MM::Device& device, MM::Core& core, ZeissUByte commandGroup, ZeissUByte devId, int& position)
 {
@@ -1524,10 +1623,9 @@ ZeissAxis::~ZeissAxis()
 }
 
 /*
- * Send command to microscope to set position of Servo and Changer. 
- * Do not use this for Axis (override in Axis device)
+ * Send command to microscope to set position of Axis. 
  */
-int ZeissAxis::SetPosition(MM::Device& device, MM::Core& core, ZeissUByte devId, int position, ZeissByte moveMode)
+int ZeissAxis::SetPosition(MM::Device& device, MM::Core& core, ZeissUByte devId, long position, ZeissByte moveMode, unsigned char targetDevice)
 {
    int ret;
    const int commandLength = 11;
@@ -1548,7 +1646,7 @@ int ZeissAxis::SetPosition(MM::Device& device, MM::Core& core, ZeissUByte devId,
    // position is a ZeissLong (4-byte) in big endian format...
    ZeissLong tmp = htonl((ZeissLong) position);
    memcpy(command+7, &tmp, ZeissLongSize); 
-   ret = g_hub.ExecuteCommand(device, core,  command, commandLength);
+   ret = g_hub.ExecuteCommand(device, core,  command, commandLength, targetDevice);
    if (ret != DEVICE_OK)
       return ret;
    g_hub.SetModelBusy(devId, true);
@@ -1556,6 +1654,105 @@ int ZeissAxis::SetPosition(MM::Device& device, MM::Core& core, ZeissUByte devId,
    return DEVICE_OK;
 }
 
+/*
+ * Send command to microscope to move relative to current position of Axis
+ */
+int ZeissAxis::SetRelativePosition(MM::Device& device, MM::Core& core, ZeissUByte devId, long increment, ZeissByte moveMode, unsigned char targetDevice)
+{
+   int ret;
+   const int commandLength = 11;
+   unsigned char command[commandLength];
+   // Size of data block
+   command[0] = 0x08;
+   // Write command, do not expect answer:
+   command[1] = 0x1B;
+   command[2] = 0xA3; 
+   // ProcessID
+   command[3] = 0x11;
+   // SubID
+   command[4] = 0x02;
+   // Device ID
+   command[5] = devId;
+   // movemode
+   command[6] = moveMode;
+   // position is a ZeissLong (4-byte) in big endian format...
+   ZeissLong tmp = htonl((ZeissLong) increment);
+   memcpy(command+7, &tmp, ZeissLongSize); 
+
+   ret = g_hub.ExecuteCommand(device, core,  command, commandLength, targetDevice);
+   if (ret != DEVICE_OK)
+      return ret;
+   g_hub.SetModelBusy(devId, true);
+
+   return DEVICE_OK;
+}
+
+/*
+ * Moves the Stage to the specified (upper or lower) hardware stop
+ */
+int ZeissAxis::FindHardwareStop(MM::Device& device, MM::Core& core, ZeissUByte devId, HardwareStops stop, unsigned char targetDevice)
+{
+   // Lock the stage
+   int ret = SetLock(device, core, devId, true);
+   if (ret != DEVICE_OK)
+      return ret;
+  
+   const int commandLength = 6;
+   unsigned char command[commandLength];
+   // Size of data block
+   command[0] = 0x03;
+   // Write command, do not expect answer:
+   command[1] = 0x1B;
+   command[2] = 0xA3; 
+   // ProcessID
+   command[3] = 0x11;
+   // SubID
+   if (stop == UPPER)
+      command[4] = 0x20;
+   else
+      command[4] = 0x21;
+   // Device ID
+   command[5] = devId;
+
+   ret = g_hub.ExecuteCommand(device, core,  command, commandLength, targetDevice);
+   if (ret != DEVICE_OK)
+      return ret;
+   g_hub.SetModelBusy(devId, true);
+   // TODO: have monitoring thread look for completion message and unlock the stage!!!
+
+   return DEVICE_OK;
+} 
+
+/*
+ * Stops movement for this Axis immediately
+ */
+int ZeissAxis::StopMove(MM::Device& device, MM::Core& core, ZeissUByte devId, ZeissByte moveMode, unsigned char targetDevice)
+{
+   int ret;
+   const int commandLength = 11;
+   unsigned char command[commandLength];
+   // Size of data block
+   command[0] = 0x04;
+   // Write command, do not expect answer:
+   command[1] = 0x1B;
+   command[2] = 0xA3; 
+   // ProcessID
+   command[3] = 0x11;
+   // SubID
+   command[4] = 0x00;
+   // Device ID
+   command[5] = devId;
+   // movemode
+   command[6] = moveMode;
+
+   ret = g_hub.ExecuteCommand(device, core,  command, commandLength, targetDevice);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   return DEVICE_OK;
+}
+
+///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 // ZeissScope
 //
@@ -1840,281 +2037,6 @@ int Shutter::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-
-///////////////////////////////////////////////////////////////////////////////
-// Zeiss HalogenLamp
-///////////////////////////////////////////////////////////////////////////////
-
-/*
-HalogenLamp::HalogenLamp () :
-   initialized_ (false),
-   name_ (g_ZeissHalogenLamp),
-   changedTimeUs_(0),
-   state_ (1)
-{
-   InitializeDefaultErrorMessages();
-
-   // Todo: Add custom messages
-   SetErrorText(ERR_SCOPE_NOT_ACTIVE, "Zeiss Scope is not initialized.  It is needed for the Zeiss Halogen to work");
-   
-}
-
-HalogenLamp::~HalogenLamp ()
-{
-   Shutdown();
-}
-
-void HalogenLamp::GetName(char* name) const
-{
-   assert(name_.length() < CDeviceUtils::GetMaxStringLength());
-   CDeviceUtils::CopyLimitedString(name, name_.c_str());
-}
-
-int HalogenLamp::Initialize()
-{
-   if (!g_hub.initialized_)
-      return ERR_SCOPE_NOT_ACTIVE;
-
-   // Name
-   int ret = CreateProperty(MM::g_Keyword_Name, name_.c_str(), MM::String, true);
-   if (DEVICE_OK != ret)
-      return ret;
-
-   // Description
-   ret = CreateProperty(MM::g_Keyword_Description, "HalogenLamp", MM::String, true);
-   if (DEVICE_OK != ret)
-      return ret;
-
-   // Set timer for the Busy signal, or we'll get a time-out the first time we check the state of the shutter, for good measure, go back 'delay' time into the past
-   changedTimeUs_ = GetClockTicksUs() - (1000 * GetDelayMs());
-
-   // Check current state of shutter:
-   ret = GetOpen(state_);
-   if (DEVICE_OK != ret)
-      return ret;
-
-   // State
-   CPropertyAction* pAct = new CPropertyAction (this, &HalogenLamp::OnState);
-   if (state_)
-      ret = CreateProperty(MM::g_Keyword_State, "1", MM::Integer, false, pAct); 
-   else
-      ret = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct); 
-
-   if (ret != DEVICE_OK) 
-      return ret; 
-
-   AddAllowedValue(MM::g_Keyword_State, "0"); // Closed
-   AddAllowedValue(MM::g_Keyword_State, "1"); // Open
-
-   // switch off the light manager
-   ret = SetLM(false);
-   pAct = new CPropertyAction(this, &HalogenLamp::OnLightManager);
-   ret = CreateProperty("LightManager", "0", MM::Integer, false, pAct);
-
-   if (ret != DEVICE_OK) 
-      return ret; 
-
-   AddAllowedValue("LightManager", "0"); // Closed
-   AddAllowedValue("LightManager",  "1"); // Open
-
-   ret = UpdateStatus();
-   if (ret != DEVICE_OK) 
-      return ret; 
-
-   initialized_ = true;
-
-   return DEVICE_OK;
-}
-
-bool HalogenLamp::Busy()
-{
-   long interval = GetClockTicksUs() - changedTimeUs_;
-   if ((interval/1000.0) < GetDelayMs() )
-      return true;
-   else
-      return false;
-}
-
-int HalogenLamp::Shutdown()
-{
-   if (initialized_)
-   {
-      initialized_ = false;
-   }
-   return DEVICE_OK;
-}
-
-int HalogenLamp::SetOpen(bool open)
-{
-   int ret;
-   // Set timer for the Busy signal
-   changedTimeUs_ = GetClockTicksUs();
-   if (open)
-   {
-      const char* command = "HPCT8,0";
-      ret = g_hub.ExecuteCommand(*this, *GetCoreCallback(),  command);
-      if (ret != DEVICE_OK)
-         return ret;
-   } else 
-   {
-      const char* command = "HPCT8,1";
-      ret = g_hub.ExecuteCommand(*this, *GetCoreCallback(),  command);
-      if (ret != DEVICE_OK)
-         return ret;
-   }
-   return DEVICE_OK;
-}
-
-int HalogenLamp::GetOpen(bool &open)
-{
-   // Check current state of shutter
-   const char * command = "HPCt8";
-   int ret = g_hub.ExecuteCommand(*this, *GetCoreCallback(),  command);
-   if (ret != DEVICE_OK)
-      return ret;
-
-   string response;
-   ret = g_hub.GetAnswer(*this, *GetCoreCallback(), response);
-   if (ret != DEVICE_OK)
-      return ret;
-
-   if (response.substr(0,2) == "PH") 
-   {
-      if (response.substr(2,1)=="0")
-         open = true;
-      else if (response.substr(2,1)=="1")
-         open = false;
-      else
-         return ERR_UNEXPECTED_ANSWER;
-   }
-   else
-      return ERR_UNEXPECTED_ANSWER;
-
-   return DEVICE_OK;
-}
-
-int HalogenLamp::Fire(double deltaT)
-{
-   return DEVICE_UNSUPPORTED_COMMAND;  
-}
-
-int HalogenLamp::SetLM(bool on)
-{
-   int ret;
-   if (on)
-   {
-      const char* command = "HPCT12,2";
-      ret = g_hub.ExecuteCommand(*this, *GetCoreCallback(),  command);
-      if (ret != DEVICE_OK)
-         return ret;
-   } else 
-   {
-      const char* command = "HPCT12,1";
-      ret = g_hub.ExecuteCommand(*this, *GetCoreCallback(),  command);
-      if (ret != DEVICE_OK)
-         return ret;
-   }
-   return DEVICE_OK;
-}
-
-int HalogenLamp::GetLM(bool &on)
-{
-   // Check current state of LightManager
-   const char * command = "HPCt12";
-   int ret = g_hub.ExecuteCommand(*this, *GetCoreCallback(),  command);
-   if (ret != DEVICE_OK)
-      return ret;
-
-   string response;
-   ret = g_hub.GetAnswer(*this, *GetCoreCallback(), response);
-   if (ret != DEVICE_OK)
-      return ret;
-
-   if (response.substr(0,2) == "PH") 
-   {
-      if (response.substr(2,1)=="1")
-         on = false;
-      else if (response.substr(2,1)=="2")
-         on = true;
-      else
-         return ERR_UNEXPECTED_ANSWER;
-   }
-   else
-      return ERR_UNEXPECTED_ANSWER;
-
-   return DEVICE_OK;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// Action handlers                                                           
-///////////////////////////////////////////////////////////////////////////////
-
-int HalogenLamp::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-   if (eAct == MM::BeforeGet)
-   {
-      // return pos as we know it
-      GetOpen(state_);
-      if (state_)
-         pProp->Set(1L);
-      else
-         pProp->Set(0L);
-   }
-   else if (eAct == MM::AfterSet)
-   {
-      long pos;
-      int ret;
-      pProp->Get(pos);
-      if (pos==1)
-      {
-         ret = SetOpen(true);
-      }
-      else
-      {
-         ret = SetOpen(false);
-      }
-      if (ret != DEVICE_OK)
-         return ret;
-      pProp->Set(pos);
-   }
-   return DEVICE_OK;
-}
-
-
-int HalogenLamp::OnLightManager(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-   if (eAct == MM::BeforeGet)
-   {
-      bool LMOn;
-      GetLM(LMOn);
-      if (LMOn)
-         pProp->Set(1L);
-      else
-         pProp->Set(0L);
-   }
-   else if (eAct == MM::AfterSet)
-   {
-      long pos;
-      pProp->Get(pos);
-      if (pos==1)
-      {
-         return this->SetLM(true);
-      }
-      else
-      {
-         return this->SetLM(false);
-      }
-   }
-   return DEVICE_OK;
-}
-
-
-int HalogenLamp::OnIntensity(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-   // TODO: Implement
-   return DEVICE_OK;
-}
-*/
 
 ///////////////////////////////////////////////////////////////////////////////
 // General Turret Object, implement all Changers. Inherit and override for
@@ -2424,8 +2346,7 @@ int CondenserTurret::Initialize()
 ///////////////////////////////////////////////////////////////////////////////
 Servo::Servo(ZeissUByte devId, std::string name, std::string description):
    initialized_ (false),
-   numPos_(5),
-   pos_(1)
+   numPos_(5)
 {
    devId_ = devId;
    name_ = name;
@@ -2475,18 +2396,34 @@ int Servo::Initialize()
    // set property list
    // ----------------
 
-   // State
+   // Position
    // -----
-   CPropertyAction* pAct = new CPropertyAction(this, &Servo::OnState);
-   ret = CreateProperty(MM::g_Keyword_State, "1", MM::Integer, false, pAct);
+   CPropertyAction* pAct = new CPropertyAction(this, &Servo::OnPosition);
+   // if there are multiple units, which one will we take?  For simplicity, use the last one for now
+   unit_ = g_deviceInfo[devId_].deviceScalings[g_deviceInfo[devId_].deviceScalings.size()-1];
+
+   ret = CreateProperty(unit_.c_str(), "1", MM::Float, false, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
-   int maxPos;
-   ret = GetMaxPosition(*this, *GetCoreCallback(), devId_, maxPos);
-   if (ret != DEVICE_OK)
-      return ret;
-   numPos_ = maxPos;
+   minPosScaled_ = g_deviceInfo[devId_].scaledScale[unit_][0];
+   maxPosScaled_ = g_deviceInfo[devId_].scaledScale[unit_][0];
+   minPosNative_ = g_deviceInfo[devId_].nativeScale[unit_][0];
+   maxPosNative_ = g_deviceInfo[devId_].nativeScale[unit_][0];
+   for (size_t i=0; i < g_deviceInfo[devId_].scaledScale[unit_].size(); i++) {
+      if (minPosScaled_ > g_deviceInfo[devId_].scaledScale[unit_][i])
+      {
+         minPosScaled_ = g_deviceInfo[devId_].scaledScale[unit_][i];
+         minPosNative_ = g_deviceInfo[devId_].nativeScale[unit_][i];
+      }
+      if (maxPosScaled_ < g_deviceInfo[devId_].scaledScale[unit_][i])
+      {
+         maxPosScaled_ = g_deviceInfo[devId_].scaledScale[unit_][i];
+         maxPosNative_ = g_deviceInfo[devId_].nativeScale[unit_][i];
+      }
+   }
+
+   SetPropertyLimits(unit_.c_str(), minPosScaled_, maxPosScaled_);
 
    ret = UpdateStatus();
    if (ret!= DEVICE_OK)
@@ -2517,24 +2454,24 @@ bool Servo::Busy()
 // Action handlers                                                           
 ///////////////////////////////////////////////////////////////////////////////
 
-int Servo::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
+int Servo::OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct) {
    if (eAct == MM::BeforeGet)
    {
       int pos;
       int ret = ZeissServo::GetPosition(*this, *GetCoreCallback(), devId_, pos);
       if (ret != DEVICE_OK)
          return ret;
-      pos_ = pos -1;
-      pProp->Set(pos_);
+      // We have the native position here, translate to the 'scaled' position'
+      // For simplicities sake we just do linear interpolation
+      double posScaled = ((double)pos/(maxPosNative_-minPosNative_) * (maxPosScaled_ - minPosScaled_)) + minPosScaled_; 
+      pProp->Set(posScaled);
    }
    else if (eAct == MM::AfterSet)
    {
-      pProp->Get(pos_);
-      int pos = pos_ + 1;
-      if (pos < 1) pos = 1;
-      if (pos > (int) numPos_) pos = (int) numPos_;
-      return ZeissServo::SetPosition(*this, *GetCoreCallback(), devId_, pos);
+      double posScaled;
+      pProp->Get(posScaled);
+      int posNative = (int) (posScaled/(maxPosScaled_-minPosScaled_) * (maxPosNative_ - minPosNative_)) + minPosNative_;
+      return ZeissServo::SetPosition(*this, *GetCoreCallback(), devId_, posNative);
    }
    return DEVICE_OK;
 }
@@ -2552,7 +2489,8 @@ Axis::Axis (ZeissUByte devId, std::string name, std::string description):
    biSup_ ("Bidirectional Precision suppress small upwards"),
    biAlways_ ("Bidirectional Precision Always"),
    fast_ ("Fast"),
-   smooth_ ("Smooth")
+   smooth_ ("Smooth"),
+   busyCounter_(0)
 {
    devId_ = devId;
    name_ = name;
@@ -2574,6 +2512,15 @@ bool Axis::Busy()
    int ret = GetBusy(*this, *GetCoreCallback(), devId_, busy);
    if (ret != DEVICE_OK)  // This is bad and should not happen
       return false;
+   if (busy) {
+	   busyCounter_++;
+	   if (busyCounter_ > 30) {
+		   // TODO: send another status request, hack: set Busy to false now
+		   busyCounter_ = 0;
+		   g_hub.SetModelBusy(devId_, false);
+	   }
+   } else
+	   busyCounter_ = 0;
 
    return busy;
 }
@@ -2738,6 +2685,278 @@ int Axis::OnMoveMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 }
 
 int Axis::OnVelocity(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)   {
+      switch (velocity_) {
+         case 0: pProp->Set(fast_.c_str()); break;
+         case 4: pProp->Set(smooth_.c_str()); break;
+         default: pProp->Set(fast_.c_str());
+      }
+   }
+   else if (eAct == MM::AfterSet)                             
+   {  
+      string result;                                             
+      pProp->Get(result);                                        
+      if (result == fast_)
+         velocity_ = 0;
+      else if (result == smooth_)
+         velocity_ = 4;
+   }                                                          
+                                                              
+   return DEVICE_OK;                                          
+}
+
+/*
+ * ZeissXYStage: Micro-Manager implementation of X and Y Stage
+ */
+XYStage::XYStage (): 
+   stepSize_um_(0.001),
+   initialized_ (false),
+   moveMode_ (0),
+   velocity_ (0),
+   direct_ ("Direct move to target"),
+   uni_ ("Unidirectional backlash compensation"),
+   biSup_ ("Bidirectional Precision suppress small upwards"),
+   biAlways_ ("Bidirectional Precision Always"),
+   fast_ ("Fast"),
+   smooth_ ("Smooth")
+{
+   name_ = g_ZeissXYStage;
+   InitializeDefaultErrorMessages();
+
+   SetErrorText(ERR_SCOPE_NOT_ACTIVE, "Zeiss Scope is not initialized.  It is needed for the Zeiss Shutter to work");
+   SetErrorText(ERR_MODULE_NOT_FOUND, "No XYStage installed on this Zeiss microscope");
+}
+
+XYStage::~XYStage()
+{
+   Shutdown();
+}
+
+bool XYStage::Busy()
+{
+   bool xBusy = false;
+   bool yBusy = false;
+   int ret = GetBusy(*this, *GetCoreCallback(), g_StageXAxis, xBusy);
+   if (ret != DEVICE_OK)  // This is bad and should not happen
+      return false;
+   ret = GetBusy(*this, *GetCoreCallback(), g_StageYAxis, yBusy);
+   if (ret != DEVICE_OK)  // This is bad and should not happen
+      return false;
+
+   return xBusy && yBusy;
+}
+
+void XYStage::GetName (char* Name) const
+{
+   CDeviceUtils::CopyLimitedString(Name, g_ZeissXYStage);
+}
+
+
+int XYStage::Initialize()
+{
+   if (!g_hub.portInitialized_)
+      return ERR_SCOPE_NOT_ACTIVE;
+
+   // check if this Axis exists:
+   bool presentX, presentY;
+   // TODO: check both stages
+   int ret = GetPresent(*this, *GetCoreCallback(), g_StageYAxis, presentY);
+   if (ret != DEVICE_OK)
+      return ret;
+   ret = GetPresent(*this, *GetCoreCallback(), g_StageXAxis, presentX);
+   if (ret != DEVICE_OK)
+      return ret;
+   if (!(presentX && presentY))
+      return ERR_MODULE_NOT_FOUND;
+
+   // set property list
+   // ----------------
+   // MoveMode
+   CPropertyAction* pAct = new CPropertyAction(this, &XYStage::OnMoveMode);
+   ret = CreateProperty("Move Mode", direct_.c_str(), MM::String, false, pAct);
+   if (ret != DEVICE_OK)
+      return ret;
+   AddAllowedValue("Move Mode", direct_.c_str()); 
+   AddAllowedValue("Move Mode", uni_.c_str()); 
+   AddAllowedValue("Move Mode", biSup_.c_str()); 
+   AddAllowedValue("Move Mode", biAlways_.c_str()); 
+
+   // velocity
+   pAct = new CPropertyAction(this, &XYStage::OnVelocity);
+   ret = CreateProperty("Velocity-Acceleration", fast_.c_str(), MM::String, false, pAct);
+   if (ret != DEVICE_OK)
+      return ret;
+   AddAllowedValue("Velocity-Acceleration", fast_.c_str());
+   AddAllowedValue("Velocity-Acceleration", smooth_.c_str());
+   
+
+   // Update lower and upper limits.  These values are cached, so if they change during a session, the adapter will need to be re-initialized
+/*
+   ret = GetUpperLimit();
+   if (ret != DEVICE_OK)
+      return ret;
+   ret = GetLowerLimit();
+   if (ret != DEVICE_OK)
+      return ret;
+*/
+
+
+
+   ret = UpdateStatus();
+   if (ret!= DEVICE_OK)
+      return ret;
+
+   initialized_ = true;
+
+   return DEVICE_OK;
+}
+
+int XYStage::Shutdown()
+{
+   if (initialized_) initialized_ = false;
+   return DEVICE_OK;
+}
+
+int XYStage::GetLimits(double& xMin, double& xMax, double& yMin, double& yMax) 
+{
+   // TODO: rework to our own coordinate system
+   xMin = 0;
+   yMin = 0;
+   xMax = g_deviceInfo[g_StageXAxis].maxPos;
+   yMax = g_deviceInfo[g_StageYAxis].maxPos;
+   return DEVICE_OK;
+}
+
+int XYStage::SetPositionUm(double x, double y)
+{
+   long xSteps = (long)(x / stepSize_um_);
+   long ySteps = (long)(y / stepSize_um_);
+   int ret = SetPositionSteps(xSteps, ySteps);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   return DEVICE_OK;
+}
+
+int XYStage::SetRelativePositionUm(double x, double y)
+{
+   long xSteps = (long)(x / stepSize_um_);
+   long ySteps = (long)(y / stepSize_um_);
+   int ret = SetRelativePositionSteps(xSteps, ySteps);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   return DEVICE_OK;
+}
+
+int XYStage::GetPositionUm(double& x, double& y)
+{
+   long xSteps, ySteps;
+   int ret = GetPositionSteps(xSteps, ySteps);                         
+   if (ret != DEVICE_OK)                                      
+      return ret;                                             
+   x = xSteps * stepSize_um_;
+   y = ySteps * stepSize_um_;
+
+   return DEVICE_OK;
+}
+
+int XYStage::SetPositionSteps(long xSteps, long ySteps)
+{
+   int ret = ZeissAxis::SetPosition(*this, *GetCoreCallback(), g_StageXAxis, xSteps, (ZeissByte) (moveMode_ & velocity_));
+   if (ret != DEVICE_OK)
+      return ret;
+   ret = ZeissAxis::SetPosition(*this, *GetCoreCallback(), g_StageYAxis, ySteps, (ZeissByte) (moveMode_ & velocity_));
+   if (ret != DEVICE_OK)
+      return ret;
+
+   return DEVICE_OK;
+}
+
+int XYStage::SetRelativePositionSteps(long xSteps, long ySteps)
+{
+   int ret = ZeissAxis::SetRelativePosition(*this, *GetCoreCallback(), g_StageXAxis, xSteps, (ZeissByte) (moveMode_ & velocity_));
+   if (ret != DEVICE_OK)
+      return ret;
+   ret = ZeissAxis::SetRelativePosition(*this, *GetCoreCallback(), g_StageYAxis, ySteps, (ZeissByte) (moveMode_ & velocity_));
+   if (ret != DEVICE_OK)
+      return ret;
+
+   return DEVICE_OK;
+}
+
+int XYStage::GetPositionSteps(long& xSteps, long& ySteps)
+{
+   int ret = ZeissDevice::GetPosition(*this, *GetCoreCallback(), g_StageXAxis, (ZeissLong&) xSteps);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   ret = ZeissDevice::GetPosition(*this, *GetCoreCallback(), g_StageYAxis, (ZeissLong&) ySteps);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   return DEVICE_OK;
+}
+
+int XYStage::Home()
+{
+   int ret = FindHardwareStop(*this, *GetCoreCallback(), g_StageXAxis, LOWER);
+   if (ret != DEVICE_OK)
+      return ret;
+   ret = FindHardwareStop(*this, *GetCoreCallback(), g_StageYAxis, LOWER);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   return DEVICE_OK;
+}
+
+int XYStage::Stop()
+{
+   int ret = ZeissAxis::StopMove(*this, *GetCoreCallback(), g_StageXAxis, (ZeissByte) (moveMode_ & velocity_));
+   if (ret != DEVICE_OK)
+      return ret;
+   ret = ZeissAxis::StopMove(*this, *GetCoreCallback(), g_StageYAxis, (ZeissByte) (moveMode_ & velocity_));
+   if (ret != DEVICE_OK)
+      return ret;
+
+   return DEVICE_OK;
+}
+
+int XYStage::SetOrigin()
+{
+   return DEVICE_OK;
+}
+
+int XYStage::OnMoveMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)   {
+      switch (moveMode_) {
+         case 0: pProp->Set(direct_.c_str()); break;
+         case 1: pProp->Set(uni_.c_str()); break;
+         case 2: pProp->Set(biSup_.c_str()); break;
+         case 3: pProp->Set(biAlways_.c_str()); break;
+         default: pProp->Set(direct_.c_str());
+      }
+   }
+   else if (eAct == MM::AfterSet)                             
+   {  
+      string result;                                             
+      pProp->Get(result);                                        
+      if (result == direct_)
+         moveMode_ = 0;
+      else if (result == uni_)
+         moveMode_ = 1;
+      else if (result == biSup_)
+         moveMode_ = 2;
+      else if (result == biAlways_)
+         moveMode_ = 3;
+   }                                                          
+                                                              
+   return DEVICE_OK;                                          
+}
+
+int XYStage::OnVelocity(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)   {
       switch (velocity_) {

@@ -22,13 +22,9 @@
 package org.micromanager.navigation;
 
 import ij.*;
-import ij.plugin.filter.PlugInFilter;
-import ij.process.*;
 import ij.gui.*;
-import java.awt.*;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
-import java.util.*;
 
 import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
@@ -39,11 +35,6 @@ public class ZWheelListener implements MouseWheelListener {
    private CMMCore core_;
    private ImageCanvas canvas_;
    private static boolean isRunning_ = false;
-   private boolean mirrorX_;
-   private boolean mirrorY_;
-   private boolean transposeXY_;
-   private boolean correction_;
-   private int lastX_, lastY_;
    private static final double moveIncrement_ = 0.10;
 
    public ZWheelListener(CMMCore core) {

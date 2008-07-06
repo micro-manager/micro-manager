@@ -22,12 +22,9 @@
 package org.micromanager.navigation;
 
 import ij.*;
-import ij.plugin.filter.PlugInFilter;
-import ij.process.*;
 import ij.gui.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
 
 import javax.swing.JOptionPane;
 import mmcorej.CMMCore;

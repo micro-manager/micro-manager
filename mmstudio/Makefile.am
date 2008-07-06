@@ -23,6 +23,8 @@ MMJ_.jar:  \
 	$(srcdir)/src/org/micromanager/SliderPanel.java \
 	$(srcdir)/src/org/micromanager/SplitView.java \
 	$(srcdir)/src/org/micromanager/TileCreatorDlg.java \
+	$(srcdir)/src/org/micromanager/CalibrationListDlg.java \
+	$(srcdir)/src/org/micromanager/CalibrationEditor.java \
 	$(srcdir)/src/org/micromanager/license.txt \
 	$(srcdir)/src/org/micromanager/api/Autofocus.java \
 	$(srcdir)/src/org/micromanager/api/AcquisitionEngine.java \
@@ -127,6 +129,8 @@ MMJ_.jar:  \
 	$(srcdir)/src/org/micromanager/utils/MMScriptException.java \
 	$(srcdir)/src/org/micromanager/utils/ShowFlags.java \
 	$(srcdir)/src/org/micromanager/utils/WaitDialog.java \
+	$(srcdir)/src/org/micromanager/utils/CalibrationList.java \
+	$(srcdir)/src/org/micromanager/utils/Calibration.java \
 	$(srcdir)/bin/plugins_mmstudio.config 
 	test -d build || mkdir build
 	rm -rf build/*

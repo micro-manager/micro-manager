@@ -1332,6 +1332,9 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       try {
          applySettings();
          acqEng_.acquire();
+      }  catch (MMAcqDataException e) {
+         handleException(e);
+         return;
       } catch(MMException e) {
          handleException(e);
          return;

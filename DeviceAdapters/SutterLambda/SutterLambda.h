@@ -82,7 +82,7 @@ public:
    Shutter(const char* name, int id);
    ~Shutter();
 
-   bool Busy() {return false;}
+   bool Busy();
    void GetName(char* pszName) const;
    int Initialize();
    int Shutdown();
@@ -96,7 +96,7 @@ public:
    // ----------------
    int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnDelay(MM::PropertyBase* pProp, MM::ActionType eAct);
+   //int OnDelay(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnMode(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
@@ -108,6 +108,7 @@ private:
    std::string name_;
    std:: string port_;
    double answerTimeoutMs_;
+   MM::MMTime changedTime_;
    std::string curMode_;
    Shutter& operator=(Shutter& /*rhs*/) {assert(false); return *this;}
 };

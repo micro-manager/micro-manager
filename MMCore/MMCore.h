@@ -204,10 +204,14 @@ public:
    std::string getCurrentConfig(const char* groupName) const throw (CMMError);
    Configuration getConfigData(const char* configGroup, const char* configName) const throw (CMMError);
    double getPixelSizeUm() const;
+   double getPixelSizeUm(const char* resolutionID) throw (CMMError);
    double getMagnificationFactor() const;
-   void setPixelSizeUm(const char* resoultionID, double pixSize)  throw (CMMError);
+   void setPixelSizeUm(const char* resolutionID, double pixSize)  throw (CMMError);
    void definePixelSizeConfig(const char* resolutionID, const char* deviceName, const char* propName, const char* value);
    std::vector<std::string> getAvailablePixelSizeConfigs() const;
+   bool isPixelSizeConfigDefined(const char* resolutionID) const;
+   void setPixelSizeConfig(const char* resolutionID) throw (CMMError);
+   void deletePixelSizeConfig(const char* configName) const throw (CMMError);
    Configuration getPixelSizeConfigData(const char* configName) const throw (CMMError);
 
    //@ }

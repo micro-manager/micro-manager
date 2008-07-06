@@ -44,6 +44,9 @@ public class TextUtils {
       return sb.toString();
    }
    
+   public static final DecimalFormat FMT0 = new DecimalFormat("#0");
+   public static final DecimalFormat FMT1 = new DecimalFormat("#0.0");
    public static final DecimalFormat FMT2 = new DecimalFormat("#0.00");
+   public static final DecimalFormat FMT3 = new DecimalFormat("#0.000");
 
 }

@@ -15,14 +15,14 @@
 
 
 <span style="font-family: Helvetica,Arial,sans-serif;">Some devices
-can't signal when they are done with a command, so that we have to
-guess by manually setting this delay. &nbsp;This means that the device
-will signal to be busy for the specified delay time after executing
-each command.<br>
+   do not signal when they are done with a command. You therefore have to 'guess' how long 
+   execution of this command will take (often, the documentation to the device will help establish this information).  
+Setting this value too low might - for instance - result in images taken before a shutter is fully open.  Setting this value too high might result in unneccessary delays.
 <br>
-Devices that may require setting the delay manually are mostly shutters
+<br>
+Devices that may require setting delays are mostly shutters
 or filter wheels. If the device has normal synchronization capabilities, or
-if you are unsure, leave this parameter at 0.<br>
+if you are unsure, leave this parameter at 0 ms.<br>
 </span><span style="font-family: Helvetica,Arial,sans-serif;">
 
 </span>
