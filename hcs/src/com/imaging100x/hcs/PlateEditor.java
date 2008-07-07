@@ -2,18 +2,25 @@ package com.imaging100x.hcs;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 import javax.swing.SpringLayout;
 
+import mmcorej.CMMCore;
+
+import org.micromanager.api.ScriptInterface;
 import org.micromanager.navigation.MultiStagePosition;
 import org.micromanager.navigation.PositionList;
 import org.micromanager.navigation.StagePosition;
+import org.micromanager.utils.MMScriptException;
 
-public class PlateEditor extends JFrame {
+public class PlateEditor extends JDialog {
    private JTextField spacingField_;
    private JTextField columnsField_;
    private JTextField rowsField_;
@@ -22,11 +29,13 @@ public class PlateEditor extends JFrame {
    private SpringLayout springLayout;
    private SBSPlate plate_;
    private PlatePanel platePanel_;
+   private ScriptInterface app_;
    
   public static void main(String args[]) {
       try {
-         PlateEditor frame = new PlateEditor();
-         frame.setVisible(true);
+         PlateEditor dlg = new PlateEditor(null);
+         dlg.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+         dlg.setVisible(true);
       } catch (Exception e) {
          e.printStackTrace();
       }
@@ -35,15 +44,15 @@ public class PlateEditor extends JFrame {
    /**
     * Create the frame
     */
-   public PlateEditor() {
+   public PlateEditor(ScriptInterface app) {
       super();
+      app_ = app;
       springLayout = new SpringLayout();
       getContentPane().setLayout(springLayout);
       plate_ = new SBSPlate();
       
       setTitle("HCS plate editor");
       setBounds(100, 100, 654, 448);
-      setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
       platePanel_ = new PlatePanel(plate_);
       getContentPane().add(platePanel_);
@@ -147,8 +156,44 @@ public class PlateEditor extends JFrame {
       springLayout.putConstraint(SpringLayout.SOUTH, refreshButton, 250, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.EAST, refreshButton, 106, SpringLayout.WEST, spacingField_);
       springLayout.putConstraint(SpringLayout.WEST, refreshButton, 0, SpringLayout.WEST, spacingField_);
+
+      final JButton setPositionListButton = new JButton();
+      setPositionListButton.addActionListener(new ActionListener() {
+         public void actionPerformed(final ActionEvent e) {
+            setPositionList();
+         }
+      });
+      setPositionListButton.setText("Set List");
+      getContentPane().add(setPositionListButton);
+      springLayout.putConstraint(SpringLayout.SOUTH, setPositionListButton, 280, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, setPositionListButton, 5, SpringLayout.SOUTH, refreshButton);
+      springLayout.putConstraint(SpringLayout.EAST, setPositionListButton, 106, SpringLayout.WEST, refreshButton);
+      springLayout.putConstraint(SpringLayout.WEST, setPositionListButton, 0, SpringLayout.WEST, refreshButton);
       //
    }
+   
+   private void setPositionList() {
+      WellPositionList[] wpl = platePanel_.getWellPositions();
+      PositionList platePl = new PositionList();
+      for (int i=0; i<wpl.length; i++) {
+         PositionList pl = wpl[i].getSitePositions();
+         for (int j=0; j<pl.getNumberOfPositions(); j++) {
+            MultiStagePosition mpl = pl.getPosition(j);
+            mpl.setLabel(wpl[i].getLabel() + "-" + mpl.getLabel());
+            platePl.addPosition(pl.getPosition(j));
+         }
+      }
+      
+      try {
+         if (app_ != null)
+            app_.setPositionList(platePl);
+      } catch (MMScriptException e) {
+         // TODO Auto-generated catch block
+         e.printStackTrace();
+      }
+         
+   }
+
    
    private PositionList generateSites(int rows, int cols, double spacing) {
       PositionList sites = new PositionList();

@@ -35,7 +35,8 @@
 		<pathelement location="${IJ}" />
 		<pathelement location="${beanshell}" />
 		<pathelement location="${MMCoreJ}" />
-	   <pathelement location="${MMPluginDir}/MMJ_.jar"/>
+		<pathelement location="${MMPluginDir}/MMJ_.jar"/>
+      <pathelement location="${BinRoot}/hcs100x_.jar"/>
 	</path>
 
 	<target name="compileMMStudio" description="Compile MM Studio.">
@@ -57,18 +58,18 @@
 
 		<copy file="./bin/plugins_mmstudio.config" tofile="./build/plugins.config"  overwrite="true" verbose="true" />
 		<jar jarfile="MMJ_.jar" basedir="build" manifest="./src/MANIFEST.MF" />
-		
+
 		<mkdir dir="${MMPluginDir}" />
 		<copy file="MMJ_.jar" todir="${MMPluginDir}" />
 		<copy file="${beanshell}" todir="${MMPluginDir}" />
 		<copy file="${MMCoreJ}" todir="${MMPluginDir}" />
 	</target>
-	
+
 	<target name="buildMMReader" description="Build MMReader_.jar">
-		
+
 		<copy file="./bin/plugins_reader.config" tofile="./build/plugins.config" overwrite="true" verbose="true"/>
 		<jar jarfile="MMReader_.jar" basedir="build" manifest="./src/MANIFEST.MF" />
-				
+
 	</target>
 
 	<target name="cleanMMStudio" description="Delete the MMStudio build files.">
@@ -76,9 +77,10 @@
 		<delete file="MMJ_.jar" />
 		<delete file="MMReader_.jar" />
 	</target>
-	
+
 	<target name="install" description="Create installation image">
 		<copy file="MMJ_.jar" todir="${MMPluginDir-inst}" />
+      <copy file="${BinRoot}/hcs100x_.jar" todir="${MMPluginDir-inst}" />
 		<copy file="${beanshell}" todir="${MMPluginDir-inst}" />
 		<copy file="${MMCoreJ}" todir="${MMPluginDir-inst}" />
 		<copy file="${BinRoot}/MMCoreJ_wrap.dll" todir="${InstallRoot}" />
@@ -89,7 +91,7 @@
 
 		<copy file="${BinRoot}/mmgr_dal_ZeissCAN.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_ZeissCAN29.dll" todir="${InstallRoot}" />
-		
+
 		<copy file="${BinRoot}/mmgr_dal_AOTF.dll" todir="${InstallRoot}" />
 
 		<copy file="${BinRoot}/mmgr_dal_Hamamatsu.dll" todir="${InstallRoot}" />
@@ -117,31 +119,31 @@
 		<copy file="${BinRoot}/mmgr_dal_DTOpenLayer.dll" todir="${InstallRoot}" />
 
 		<copy file="${BinRoot}/mmgr_dal_SpectralLMM5.dll" todir="${InstallRoot}" />
-		
+
 		<copy file="${BinRoot}/mmgr_dal_Andor.dll" todir="${InstallRoot}" />
 
 		<copy file="${BinRoot}/mmgr_dal_QCam.dll" todir="${InstallRoot}" />
-		
+
 		<copy file="${BinRoot}/mmgr_dal_ASIStage.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_ASIFW1000.dll" todir="${InstallRoot}" />
-		
+
 		<copy file="${BinRoot}/mmgr_dal_Yokogawa.dll" todir="${InstallRoot}" />
-		
+
 		<copy file="${BinRoot}/mmgr_dal_USBManager.dll" todir="${InstallRoot}" />
 
 		<copy file="${BinRoot}/mmgr_dal_K8055.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_K8061.dll" todir="${InstallRoot}" />
-		
-		<copy file="${BinRoot}/mmgr_dal_Conix.dll" todir="${InstallRoot}" />
-    		<copy file="${BinRoot}/mmgr_dal_CSUX.dll" todir="${InstallRoot}" />
-		<copy file="${BinRoot}/mmgr_dal_PI_GCS.dll" todir="${InstallRoot}" />
-    		<copy file="${BinRoot}/mmgr_dal_PI.dll" todir="${InstallRoot}" />
-    		<copy file="${BinRoot}/mmgr_dal_DAZStage.dll" todir="${InstallRoot}" />
 
-    		<copy file="${BinRoot}/MMDeviceList.txt" todir="${InstallRoot}" />
+		<copy file="${BinRoot}/mmgr_dal_Conix.dll" todir="${InstallRoot}" />
+		<copy file="${BinRoot}/mmgr_dal_CSUX.dll" todir="${InstallRoot}" />
+		<copy file="${BinRoot}/mmgr_dal_PI_GCS.dll" todir="${InstallRoot}" />
+		<copy file="${BinRoot}/mmgr_dal_PI.dll" todir="${InstallRoot}" />
+		<copy file="${BinRoot}/mmgr_dal_DAZStage.dll" todir="${InstallRoot}" />
+
+		<copy file="${BinRoot}/MMDeviceList.txt" todir="${InstallRoot}" />
 
 		<copy file="${BinRoot}/MMStartup.bsh" todir="${InstallRoot}" />
-		
+
 		<copy file="${BinRoot}/conf_intro_page.html" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/conf_comport_page.html" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/conf_devices_page.html" todir="${InstallRoot}" />
@@ -152,7 +154,7 @@
 		<copy file="${BinRoot}/conf_roles_page.html" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/conf_synchro_page.html" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/conf_preinit_page.html" todir="${InstallRoot}" />
-		
+
 	</target>
 
 	<target name="packInstaller" description="Create installation package">

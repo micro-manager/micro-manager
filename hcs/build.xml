@@ -34,7 +34,7 @@
 	   <pathelement location="${MMPluginDir}/MMJ_.jar"/>
 	</path>
 
-	<target name="compileAutofocus" description="Compile HCT plugins.">
+	<target name="compileHCS" description="Compile HCT plugins.">
 		<mkdir dir="build" />
 		<javac srcdir="." destdir="./build" optimize="on" source="1.5" debug="off">
 			<classpath refid="project.class.path" />

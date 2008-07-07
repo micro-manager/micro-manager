@@ -55,13 +55,13 @@ import java.util.prefs.Preferences;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
-import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
@@ -82,7 +82,6 @@ import mmcorej.StrVector;
 import org.micromanager.acquisition.AcquisitionManager;
 import org.micromanager.acquisition.MMAcquisition;
 import org.micromanager.api.AcquisitionEngine;
-import org.micromanager.api.AcquisitionOptions;
 import org.micromanager.api.DeviceControlGUI;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.conf.ConfiguratorDlg;
@@ -109,9 +108,9 @@ import org.micromanager.image5d.Z_Project;
 import org.micromanager.metadata.AcquisitionData;
 import org.micromanager.metadata.DisplaySettings;
 import org.micromanager.metadata.MMAcqDataException;
-import org.micromanager.navigation.PositionList;
 import org.micromanager.navigation.CenterListener;
 import org.micromanager.navigation.DragListener;
+import org.micromanager.navigation.PositionList;
 import org.micromanager.navigation.ZWheelListener;
 import org.micromanager.utils.CfgFileFilter;
 import org.micromanager.utils.ContrastSettings;
@@ -129,6 +128,7 @@ import org.micromanager.utils.WaitDialog;
 import bsh.EvalError;
 import bsh.Interpreter;
 
+import com.imaging100x.hcs.PlateEditor;
 import com.swtdesigner.SwingResourceManager;
 
 /*
@@ -138,7 +138,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    public static String LIVE_WINDOW_TITLE = "AcqWindow";
 
    private static final String MICRO_MANAGER_TITLE = "Micro-Manager-S 1.2";
-   private static final String VERSION = "1.2.0S (beta)";
+   private static final String VERSION = "1.2.1S (alpha)";
    private static final long serialVersionUID = 3556500289598574541L;
 
    private static final String MAIN_FRAME_X = "x";
@@ -302,7 +302,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          }
       }
 
-      // intialize timer
+      // initialize timer
       interval_ = 30;
       ActionListener timerHandler = new ActionListener() {
          public void actionPerformed(ActionEvent evt) {
@@ -894,6 +894,20 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       });
       optionsMenuItem.setText("Options...");
       toolsMenu.add(optionsMenuItem);
+
+      final JMenu hcsMenu = new JMenu();
+      hcsMenu.setText("High-Content");
+      menuBar.add(hcsMenu);
+
+      final JMenuItem plateMenuItem = new JMenuItem();
+      plateMenuItem.addActionListener(new ActionListener() {
+         public void actionPerformed(final ActionEvent e) {
+            PlateEditor pe = new PlateEditor(thisInstance);
+            pe.setVisible(true);
+         }
+      });
+      plateMenuItem.setText("Plate...");
+      hcsMenu.add(plateMenuItem);
 
       final JMenu helpMenu = new JMenu();
       helpMenu.setText("Help");

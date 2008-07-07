@@ -191,4 +191,8 @@ public class PlatePanel extends JPanel {
       else
          wells_ = plate_.generatePositions(SBSPlate.DEFAULT_XYSTAGE_NAME, sites);
    }
+   
+   WellPositionList[] getWellPositions() {
+      return wells_;
+   }
 }
