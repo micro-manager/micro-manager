@@ -62,6 +62,14 @@ public class PositionList {
    public PositionList() {
       positions_ = new ArrayList<MultiStagePosition>();
    }
+   
+   public static PositionList newInstance(PositionList aPl) {
+      PositionList pl = new PositionList();
+      Iterator<MultiStagePosition> it = aPl.positions_.iterator();
+      while (it.hasNext())
+         pl.addPosition(MultiStagePosition.newInstance(it.next()));
+      return pl;
+   }
 
    /**
     * Returns multi-stage position associated with the position index.
@@ -73,6 +81,18 @@ public class PositionList {
          return null;
       
       return positions_.get(idx);
+   }
+   
+   /**
+    * Returns a copy of the multi-stage position associated with the position index.
+    * @param idx - position index
+    * @return multi-stage position
+    */
+   public MultiStagePosition getPositionCopy(int idx) {
+      if (idx < 0 || idx >= positions_.size())
+         return null;
+      
+      return MultiStagePosition.newInstance(positions_.get(idx));
    }
    
    /**

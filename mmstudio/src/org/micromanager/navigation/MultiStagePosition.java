@@ -29,6 +29,7 @@ package org.micromanager.navigation;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
+import java.util.Iterator;
 
 import mmcorej.CMMCore;
 
@@ -76,6 +77,24 @@ public class MultiStagePosition {
       zPos.x = z;
       defaultZStage_ = zStage;
       add(zPos);
+   }
+   
+   public static MultiStagePosition newInstance(MultiStagePosition aMps) {
+      MultiStagePosition mps = new MultiStagePosition();
+      mps.label_ = new String(aMps.label_);
+      mps.defaultXYStage_ = new String(aMps.defaultXYStage_);
+      mps.defaultZStage_ = new String(aMps.defaultZStage_);
+      for (Enumeration<String> e = aMps.properties_.keys(); e.hasMoreElements();) {
+         String key = e.nextElement();
+         String val = new String(aMps.properties_.get(key));
+         mps.properties_.put(key, val);
+      }
+      
+      Iterator<StagePosition> it = aMps.stagePosList_.iterator();
+      while(it.hasNext()) {
+         mps.add(StagePosition.newInstance(it.next()));
+      }  
+      return mps;
    }
    
    /**

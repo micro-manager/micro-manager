@@ -10,6 +10,7 @@
 // AUTHOR:       Nenad Amodaj, nenad@amodaj.com, March 8, 2007
 //
 // COPYRIGHT:    University of California, San Francisco, 2007
+//               100X Imaging Inc, 2008
 //
 // LICENSE:      This file is distributed under the BSD license.
 //               License text is included with the source distribution.
@@ -42,6 +43,16 @@ public class StagePosition {
       y = 0.0;
       z = 0.0;
       numAxes=1;
+   }
+   
+   public static StagePosition newInstance(StagePosition aPos) {
+      StagePosition sp = new StagePosition();
+      sp.x = aPos.x;
+      sp.y = aPos.y;
+      sp.z = aPos.z;
+      sp.numAxes = aPos.numAxes;
+      sp.stageName = new String(aPos.stageName);
+      return sp;
    }
    
    public String getVerbose() {

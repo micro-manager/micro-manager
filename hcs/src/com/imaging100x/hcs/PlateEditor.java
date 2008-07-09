@@ -2,17 +2,13 @@ package com.imaging100x.hcs;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 import javax.swing.SpringLayout;
-
-import mmcorej.CMMCore;
 
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.navigation.MultiStagePosition;
@@ -176,7 +172,7 @@ public class PlateEditor extends JDialog {
       WellPositionList[] wpl = platePanel_.getWellPositions();
       PositionList platePl = new PositionList();
       for (int i=0; i<wpl.length; i++) {
-         PositionList pl = wpl[i].getSitePositions();
+         PositionList pl = PositionList.newInstance(wpl[i].getSitePositions());
          for (int j=0; j<pl.getNumberOfPositions(); j++) {
             MultiStagePosition mpl = pl.getPosition(j);
             mpl.setLabel(wpl[i].getLabel() + "-" + mpl.getLabel());
