@@ -314,6 +314,7 @@ public:
    void stop(const char* deviceName) throw (CMMError);
    void home(const char* deviceName) throw (CMMError);
    void setOriginXY(const char* deviceName) throw (CMMError);
+   void setAdapterOriginXY(const char* deviceName, double x, double y) throw (CMMError);
    //@ }
 
    /** @name Serial port control

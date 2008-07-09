@@ -14,6 +14,7 @@
 // AUTHOR:        Nenad Amodaj, nenad@amodaj.com, 06/08/2005
 //
 // COPYRIGHT:     University of California, San Francisco, 2006
+//                100X Imaging Inc, 2008
 //
 // LICENSE:       This file is distributed under the BSD license.
 //                License text is included with the source distribution.
@@ -274,6 +275,7 @@ namespace MM {
       // Stage API
       virtual int SetPositionUm(double pos) = 0;
       virtual int SetRelativePositionUm(double d) = 0;
+      virtual int SetAdapterOriginUm(double d) = 0;
       virtual int GetPositionUm(double& pos) = 0;
       virtual int SetPositionSteps(long steps) = 0;
       virtual int GetPositionSteps(long& steps) = 0;
@@ -303,6 +305,7 @@ namespace MM {
       virtual int Home() = 0;
       virtual int Stop() = 0;
 	   virtual int SetOrigin() = 0;//jizhen, 4/12/2007
+      virtual int SetAdapterOriginUm(double x, double y) = 0;
       virtual int GetLimits(double& xMin, double& xMax, double& yMin, double& yMax) = 0;
    };
 

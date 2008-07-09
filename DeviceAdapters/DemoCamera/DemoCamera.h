@@ -309,6 +309,7 @@ public:
    virtual int Home() {return DEVICE_OK;}
    virtual int Stop() {return DEVICE_OK;}
    virtual int SetOrigin() {return DEVICE_OK;}//jizhen 4/12/2007
+   virtual int SetAdapterOriginUm(double x, double y) {posX_um_ = x; posY_um_ = y; return DEVICE_OK;}
    virtual int GetLimits(double& lower, double& upper)
    {
       lower = lowerLimit_;

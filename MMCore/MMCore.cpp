@@ -86,8 +86,8 @@ const char* g_logFileName = "CoreLog.txt";
 
 // version info
 const int MMCore_versionMajor = 2;
-const int MMCore_versionMinor = 2;
-const int MMCore_versionBuild = 3;
+const int MMCore_versionMinor = 3;
+const int MMCore_versionBuild = 1;
 
 // mutex
 //static ACE_Mutex g_lock;
@@ -1197,7 +1197,7 @@ void CMMCore::home(const char* deviceName) throw (CMMError)
 /**
  * zero the current XY position.
  * @return void 
- * @param const char* label
+ * @param const char* deviceName
  */
 void CMMCore::setOriginXY(const char* deviceName) throw (CMMError)
 {
@@ -1211,6 +1211,21 @@ void CMMCore::setOriginXY(const char* deviceName) throw (CMMError)
    CORE_LOG1("Stage %s's current position was zeroed.\n", deviceName);
 }
 //eof jizhen
+
+/**
+ * Define x,y coordinates in um for the current position.
+ */
+void CMMCore::setAdapterOriginXY(const char* deviceName, double x, double y) throw (CMMError)
+{
+   MM::XYStage* pXYStage = getSpecificDevice<MM::XYStage>(deviceName);
+   int ret = pXYStage->SetAdapterOriginUm(x, y);
+   if (ret != DEVICE_OK)
+   {
+      logError(deviceName, getDeviceErrorText(ret, pXYStage).c_str());
+      throw CMMError(getDeviceErrorText(ret, pXYStage).c_str(), MMERR_DEVICE_GENERIC);
+   }
+   CORE_LOG3("Stage %s's current position was set as %.2f,%.2f um.\n", deviceName, x, y);
+}
 
 /**
  * Acquires a single image. 

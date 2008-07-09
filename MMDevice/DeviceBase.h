@@ -783,6 +783,11 @@ class CStageBase : public CDeviceBase<MM::Stage, U>
          return ret;
       return SetPositionUm(pos + d);
    }
+
+   int SetAdapterOriginUm(double /*d*/)
+   {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
 };
 
 /**
@@ -803,6 +808,11 @@ class CXYStageBase : public CDeviceBase<MM::XYStage, U>
       if (ret != DEVICE_OK)
          return ret;
       return SetPositionUm(x + dx, y + dy);
+   }
+
+   int SetAdapterOriginUm(double /*x*/, double /*y*/)
+   {
+      return DEVICE_UNSUPPORTED_COMMAND;
    }
 };
 

@@ -982,20 +982,10 @@ int XYStage::GetPositionSteps(long& x, long& y)
 }
 
 /**
- * Defines current position as origin (0,0) coordinate of our coordinate system
- * Get the current (stage-native) XY position
- * This is going to be the origin in our coordinate system
- */
-int XYStage::SetAdapterOrigin()
-{
-   return SetAdapterOrigin(0.0, 0.0);
-}
-
-/**
  * Defines position x,y (relative to current position) as the origin of our coordinate system
  * Get the current (stage-native) XY position
  */
-int XYStage::SetAdapterOrigin(double x, double y)
+int XYStage::SetAdapterOriginUm(double x, double y)
 {
    long xStep, yStep;
    int ret = GetPositionSteps(xStep, yStep);

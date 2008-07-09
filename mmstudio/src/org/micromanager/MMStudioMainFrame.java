@@ -138,7 +138,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    public static String LIVE_WINDOW_TITLE = "AcqWindow";
 
    private static final String MICRO_MANAGER_TITLE = "Micro-Manager-S 1.2";
-   private static final String VERSION = "1.2.1S (alpha)";
+   private static final String VERSION = "1.2.2S (alpha)";
    private static final long serialVersionUID = 3556500289598574541L;
 
    private static final String MAIN_FRAME_X = "x";
