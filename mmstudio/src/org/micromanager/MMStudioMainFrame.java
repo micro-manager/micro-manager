@@ -108,6 +108,7 @@ import org.micromanager.image5d.Z_Project;
 import org.micromanager.metadata.AcquisitionData;
 import org.micromanager.metadata.DisplaySettings;
 import org.micromanager.metadata.MMAcqDataException;
+import org.micromanager.metadata.WellAcquisitionData;
 import org.micromanager.navigation.CenterListener;
 import org.micromanager.navigation.DragListener;
 import org.micromanager.navigation.PositionList;
@@ -2935,6 +2936,22 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       acq.setContrastBasedOnFrame(frame, slice);
     }
 
+   public void runWellScan(WellAcquisitionData wad) throws MMScriptException {
+      testForAbortRequests();
+      if (acqControlWin_ != null) {
+         acqControlWin_.runWellScan(wad);
+         try {
+            while (acqControlWin_.isAcquisitionRunning()) {
+               Thread.sleep(100);
+            }
+         } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+         }
+      } else {
+         throw new MMScriptException("Acquisition window must be open for this command to work.");
+      }
+   }
 
 }
 

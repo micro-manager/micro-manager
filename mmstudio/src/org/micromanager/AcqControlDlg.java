@@ -81,6 +81,7 @@ import org.micromanager.api.Autofocus;
 import org.micromanager.api.DeviceControlGUI;
 
 import org.micromanager.metadata.MMAcqDataException;
+import org.micromanager.metadata.WellAcquisitionData;
 import org.micromanager.utils.ChannelSpec;
 import org.micromanager.utils.ColorEditor;
 import org.micromanager.utils.ColorRenderer;
@@ -1361,6 +1362,26 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
          return;
       }
    }
+   
+   public void runWellScan(WellAcquisitionData wad) {
+      if (acqEng_.isAcquisitionRunning()) {
+         JOptionPane.showMessageDialog(this, "Unable to start the new acquisition task: previous acquisition still in progress.");
+         return;
+      }
+
+      try {
+         applySettings();
+         acqEng_.setSaveFiles(true);
+         acqEng_.acquireWellScan(wad);
+      } catch(MMException e) {
+         handleException(e);
+         return;
+      } catch (MMAcqDataException e) {
+         handleException(e);
+         return;
+      }
+   }
+   
    
    public boolean isAcquisitionRunning() {
       return acqEng_.isAcquisitionRunning();

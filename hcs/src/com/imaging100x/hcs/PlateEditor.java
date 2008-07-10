@@ -11,6 +11,8 @@ import javax.swing.JTextField;
 import javax.swing.SpringLayout;
 
 import org.micromanager.api.ScriptInterface;
+import org.micromanager.metadata.MMAcqDataException;
+import org.micromanager.metadata.WellAcquisitionData;
 import org.micromanager.navigation.MultiStagePosition;
 import org.micromanager.navigation.PositionList;
 import org.micromanager.navigation.StagePosition;
@@ -159,12 +161,32 @@ public class PlateEditor extends JDialog {
             setPositionList();
          }
       });
-      setPositionListButton.setText("Set List");
+      setPositionListButton.setText("Set MM List");
       getContentPane().add(setPositionListButton);
       springLayout.putConstraint(SpringLayout.SOUTH, setPositionListButton, 280, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.NORTH, setPositionListButton, 5, SpringLayout.SOUTH, refreshButton);
       springLayout.putConstraint(SpringLayout.EAST, setPositionListButton, 106, SpringLayout.WEST, refreshButton);
       springLayout.putConstraint(SpringLayout.WEST, setPositionListButton, 0, SpringLayout.WEST, refreshButton);
+
+      final JButton scanButton = new JButton();
+      scanButton.addActionListener(new ActionListener() {
+         public void actionPerformed(final ActionEvent e) {
+            scan();
+         }
+      });
+      scanButton.setText("Scan!");
+      getContentPane().add(scanButton);
+      springLayout.putConstraint(SpringLayout.SOUTH, scanButton, 360, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.EAST, scanButton, 0, SpringLayout.EAST, setPositionListButton);
+      springLayout.putConstraint(SpringLayout.WEST, scanButton, -106, SpringLayout.EAST, setPositionListButton);
+
+      final JButton stopButton = new JButton();
+      stopButton.setText("Stop");
+      getContentPane().add(stopButton);
+      springLayout.putConstraint(SpringLayout.SOUTH, stopButton, 31, SpringLayout.SOUTH, scanButton);
+      springLayout.putConstraint(SpringLayout.NORTH, stopButton, 5, SpringLayout.SOUTH, scanButton);
+      springLayout.putConstraint(SpringLayout.EAST, stopButton, 106, SpringLayout.WEST, scanButton);
+      springLayout.putConstraint(SpringLayout.WEST, stopButton, 0, SpringLayout.WEST, scanButton);
       //
    }
    
@@ -219,6 +241,34 @@ public class PlateEditor extends JDialog {
          }
             
       return sites;
+   }
+   
+   
+   protected void scan() {
+      if (app_ == null)
+         return;
+
+      String plateRoot = "c:/acquisitiondata/100XHCS";
+      String plateName = "plate";
+      PlateAcquisitionData pad = new PlateAcquisitionData();
+      
+      try {
+         pad.createNew(plateName, plateRoot, true);
+         WellPositionList[] wpl = platePanel_.getWellPositions();
+         for (int i=0; i<wpl.length; i++) {
+            PositionList pl = wpl[i].getSitePositions();
+            app_.setPositionList(pl);
+            WellAcquisitionData wad = pad.createNewWell(wpl[i].label_);
+            app_.runWellScan(wad);
+         }
+      } catch (MMScriptException e) {
+         // TODO Auto-generated catch block
+         e.printStackTrace();
+      } catch (MMAcqDataException e) {
+         // TODO Auto-generated catch block
+         e.printStackTrace();
+      }
+
    }
 
 }

@@ -31,6 +31,7 @@ import java.util.prefs.Preferences;
 import mmcorej.CMMCore;
 
 import org.micromanager.metadata.MMAcqDataException;
+import org.micromanager.metadata.WellAcquisitionData;
 import org.micromanager.navigation.PositionList;
 import org.micromanager.utils.ChannelSpec;
 import org.micromanager.utils.ContrastSettings;
@@ -55,6 +56,7 @@ public interface AcquisitionEngine {
    
    // run-time control
    public void acquire() throws MMException, MMAcqDataException;
+   public void acquireWellScan(WellAcquisitionData wad) throws MMException, MMAcqDataException;
    public void stop(boolean interrupted);
    public void setFinished();
    public boolean isAcquisitionRunning();

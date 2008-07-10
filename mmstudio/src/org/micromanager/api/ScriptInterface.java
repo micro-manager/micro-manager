@@ -25,6 +25,7 @@ package org.micromanager.api;
 
 import java.awt.Color;
 
+import org.micromanager.metadata.WellAcquisitionData;
 import org.micromanager.navigation.PositionList;
 import org.micromanager.utils.MMScriptException;
 
@@ -132,9 +133,15 @@ public interface ScriptInterface {
    public void runAcqusition(String name, String root) throws MMScriptException;
 
    /**
+    * Executes Acquisition for a single well, using the plate scanning convention and data structure.
+    * Returns after Acquisition finishes
+    */
+   public void runWellScan(WellAcquisitionData wad) throws MMScriptException;
+
+   /**
     * Loads setting for Acquisition Dialog from file
     * Will open Acquisition Dialog when it is not open yet
-    */
+    */  
    public void loadAcquisition(String path) throws MMScriptException;
    
    /**

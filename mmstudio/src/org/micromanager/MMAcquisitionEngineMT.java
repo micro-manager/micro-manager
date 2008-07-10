@@ -459,6 +459,75 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
          startAcquisition();
       }      
    }
+   
+   /**
+    * Starts acquisition of the single well, based on the current protocol, using the supplied
+    * acquisition data structure.
+    * This command is specially designed for plate scanning and will automatically re-set
+    * all appropriate parameters.
+    * @throws MMAcqDataException 
+    * @throws Exception
+    */
+   public void acquireWellScan(WellAcquisitionData wad) throws MMException, MMAcqDataException{
+
+      zStage_ = core_.getFocusDevice();
+      pause_ = false; // clear pause flag
+      
+      // force settings adequate for the well scanning
+      useMultiplePositions_ = true;
+      posMode_ = PositionMode.MULTI_FIELD;
+      saveFiles_ = true;
+
+      // check conditions for starting acq.
+      if (isAcquisitionRunning()) {
+         throw new MMException("Busy with the current acquisition.");
+      }
+
+      if (posList_ == null || posList_.getNumberOfPositions() < 1)
+         throw new MMException("Multiple position mode is selected but position list is not defined");
+
+      // check if the parent GUI is in the adequate state
+      if (parentGUI_ != null)
+      {
+         oldLiveRunning_ = parentGUI_.getLiveMode();
+         parentGUI_.stopAllActivity();
+         if (!parentGUI_.okToAcquire())
+            throw new MMException( "Unable to start acquisition.\n" +
+            "Cancel 'Live' mode or other currently executing process in the main control panel.");
+      }
+
+      oldChannelState_ = null;
+      try {
+         oldExposure_ = core_.getExposure();
+         String channelConfig = core_.getCurrentConfig(channelGroup_);
+         if (channelConfig.length() > 0){
+            oldChannelState_ = core_.getConfigGroupState(channelGroup_);
+         }
+
+         if (cameraConfig_.length() > 0) {
+            core_.getConfigState(cameraGroup_, cameraConfig_);
+            core_.setConfig(cameraGroup_, cameraConfig_);
+         }
+
+         // wait until all devices are ready
+         core_.waitForSystem();
+      } catch (Exception e) {
+         throw new MMException(e.getMessage());
+      }
+
+      if (autofocusEnabled_ && autofocusPlugin_ == null) {
+         throw new MMException( "Auto-focus plugin module (MMAutofocus_.jar) was not found.\n" +
+         "Auto-focus option can not be used in this context.");                     
+      }
+
+      acquisitionLagging_ = false;
+      posCount_ = 0;
+
+      well_ = wad;
+      multiFieldThread_ = new MultiFieldThread();
+      multiFieldThread_.start();
+   }
+
 
    /**
     * Resets the engine.
