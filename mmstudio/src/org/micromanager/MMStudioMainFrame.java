@@ -140,13 +140,8 @@ import com.swtdesigner.SwingResourceManager;
 public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, ScriptInterface {
    public static String LIVE_WINDOW_TITLE = "AcqWindow";
 
-<<<<<<< .working
    private static final String MICRO_MANAGER_TITLE = "Micro-Manager-S 1.2";
-   private static final String VERSION = "1.2.2S (alpha)";
-=======
-   private static final String MICRO_MANAGER_TITLE = "Micro-Manager 1.2 (beta)";
-   private static final String VERSION = "1.2.31 (beta)";
->>>>>>> .merge-right.r1390
+   private static final String VERSION = "1.2.3S (alpha)";
    private static final long serialVersionUID = 3556500289598574541L;
 
    private static final String MAIN_FRAME_X = "x";
