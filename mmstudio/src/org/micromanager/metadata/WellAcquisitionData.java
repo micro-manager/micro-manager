@@ -74,7 +74,7 @@ public class WellAcquisitionData {
    
    public AcquisitionData createNewImagingSite() throws MMAcqDataException {
       AcquisitionData ad = new AcquisitionData();
-      ad.createNew(AcquisitionData.METADATA_SITE_PREFIX, basePath_, true);      
+      ad.createNew();      
       sites_.put(ad.getName(), ad);
          
       return ad;

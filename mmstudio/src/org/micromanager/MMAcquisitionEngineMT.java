@@ -439,16 +439,14 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
       acquisitionLagging_ = false;
       posCount_ = 0;
 
+      well_ = null;
       if (useMultiplePositions_) {
          // create metadata structures
-         well_ = null;
-         if (useMultiplePositions_) {
-            well_ = new WellAcquisitionData();
-            if (saveFiles_)
-               well_.createNew(acqName_, rootName_, true); // disk mapped
-            else
-               well_.createNew(rootName_, true); // memory mapped
-         }
+         well_ = new WellAcquisitionData();
+         if (saveFiles_)
+            well_.createNew(acqName_, rootName_, true); // disk mapped
+         else
+            well_.createNew(rootName_, true); // memory mapped
          if (posMode_ == PositionMode.TIME_LAPSE) {
             startAcquisition();
          } else {
@@ -1153,7 +1151,6 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
     */
    private void acquisitionSetup(int posIdx) throws IOException, MMAcqDataException {
       if (useMultiplePositions_) {
-
          if (posMode_ == PositionMode.TIME_LAPSE) {
             acqData_ = new AcquisitionData[posList_.getNumberOfPositions()];
             for (int i=0; i<acqData_.length; i++)

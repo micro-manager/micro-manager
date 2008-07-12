@@ -25,6 +25,8 @@
 package org.micromanager;
 
 import ij.ImagePlus;
+import ij.ImageJ;
+import ij.IJ;
 import ij.WindowManager;
 import ij.gui.Line;
 import ij.gui.Roi;
@@ -138,8 +140,13 @@ import com.swtdesigner.SwingResourceManager;
 public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, ScriptInterface {
    public static String LIVE_WINDOW_TITLE = "AcqWindow";
 
+<<<<<<< .working
    private static final String MICRO_MANAGER_TITLE = "Micro-Manager-S 1.2";
    private static final String VERSION = "1.2.2S (alpha)";
+=======
+   private static final String MICRO_MANAGER_TITLE = "Micro-Manager 1.2 (beta)";
+   private static final String VERSION = "1.2.31 (beta)";
+>>>>>>> .merge-right.r1390
    private static final long serialVersionUID = 3556500289598574541L;
 
    private static final String MAIN_FRAME_X = "x";
@@ -1382,7 +1389,14 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
 
    private void handleException (Exception e) {
-      String errText = "Exception occurred: " + e.getMessage();
+      String errText = "";
+      if (options_.debugLogEnabled)
+         errText = "Exception occurred: " + e.getMessage();
+      else {
+         errText = "Exception occrred: " + e.toString() + "\n";
+         e.printStackTrace();
+      }
+
       handleError(errText);
    }
 
@@ -2277,7 +2291,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          }
 
          // state devices
-         if (updateConfigPadStructure)
+         if (updateConfigPadStructure && (configPad_ != null))
             configPad_.refreshStructure();
 
          // update Channel menus in Multi-dimensional acquisition dialog
@@ -2466,6 +2480,12 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       dispose();
       if (!runsAsPlugin_)
          System.exit(0);
+      else {
+         ImageJ ij = IJ.getInstance();
+         if (ij != null)
+            ij.quit();
+      }
+
    }
 
    public void applyContrastSettings(ContrastSettings contrast8, ContrastSettings contrast16) {
@@ -2794,17 +2814,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
     public void setPositionList(PositionList pl) throws MMScriptException {
        testForAbortRequests();
        // use serialization to clone the PositionList object
-       posList_ = new PositionList();
-       try {
-         posList_.restore(pl.serialize());
-      } catch (MMSerializationException e) {
-         // internal error - should never happen
-         // since restore and serialize should be matched
-         e.printStackTrace();
-         handleError(e.getMessage());
-         return;
-      }
-      SwingUtilities.invokeLater(new RefreshPositionList());
+       posList_ = PositionList.newInstance(pl);
+       SwingUtilities.invokeLater(new RefreshPositionList());
     }
     
     public void sleep (long ms) throws MMScriptException {
@@ -2939,7 +2950,9 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    public void runWellScan(WellAcquisitionData wad) throws MMScriptException {
       testForAbortRequests();
       if (acqControlWin_ != null) {
-         acqControlWin_.runWellScan(wad);
+         engine_.setPositionList(posList_);
+         if (acqControlWin_.runWellScan(wad) == false)
+            throw new MMScriptException("Scanning error.");
          try {
             while (acqControlWin_.isAcquisitionRunning()) {
                Thread.sleep(100);

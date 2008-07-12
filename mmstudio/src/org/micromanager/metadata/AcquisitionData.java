@@ -1129,6 +1129,7 @@ public class AcquisitionData {
       }
 
       basePath_ = null;
+      name_ = "in-memory";
       images_ = new Hashtable<String, ImageProcessor>();
    }
 

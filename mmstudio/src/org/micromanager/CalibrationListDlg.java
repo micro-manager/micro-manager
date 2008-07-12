@@ -27,8 +27,11 @@ import java.awt.Font;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.Point;
+
 import java.util.prefs.Preferences;
 
 import javax.swing.JButton;
@@ -40,6 +43,8 @@ import javax.swing.SpringLayout;
 import javax.swing.table.AbstractTableModel;
 
 import mmcorej.CMMCore;
+import mmcorej.Configuration;
+import mmcorej.PropertySetting;
 
 import org.micromanager.api.DeviceControlGUI;
 import org.micromanager.utils.GUIColors;
@@ -159,7 +164,28 @@ public class CalibrationListDlg extends MMDialog {
       calibrationList_ = new CalibrationList(core_);
       calibrationList_.getCalibrationsFromCore();
 
-      calTable_ = new JTable();
+      // Create table with tooltip to show what is in the pixel size configurtaion
+      calTable_ = new JTable() {
+         public String getToolTipText(MouseEvent e) {
+            String tip = "";
+            java.awt.Point p = e.getPoint();
+            int rowIndex = rowAtPoint(p);
+            if (rowIndex < 0)
+               return "";
+            CalTableModel ptm = (CalTableModel)calTable_.getModel();
+            String label = (String)ptm.getValueAt(rowIndex, 0);
+            if (core_.isPixelSizeConfigDefined(label)) {
+               try {
+                  Configuration cfg = core_.getPixelSizeConfigData(label);
+                  tip = cfg.getVerbose();
+               } catch (Exception ex) {
+                  handleException(ex);
+               }
+            }
+            return tip;
+         }
+      };
+      
       calTable_.setFont(new Font("", Font.PLAIN, 10));
       CalTableModel model = new CalTableModel();
       model.setData(calibrationList_);

@@ -81,9 +81,9 @@ public class OptionsDlg extends MMDialog {
       setTitle("Micro-Manager Options");
       springLayout = new SpringLayout();
       getContentPane().setLayout(springLayout);
-      setBounds(100, 100, 362, 246);
+      setBounds(100, 100, 362, 221);
       guiColors_ = new GUIColors();
-      Dimension buttonSize = new Dimension(100, 20);
+      Dimension buttonSize = new Dimension(120, 20);
 
       if (opts_.displayBackground.equals("Day"))
          setBackground(java.awt.SystemColor.control);
@@ -122,7 +122,8 @@ public class OptionsDlg extends MMDialog {
       clearLogFileButton.setPreferredSize(buttonSize);
       getContentPane().add(clearLogFileButton);
       //springLayout.putConstraint(SpringLayout.SOUTH, clearLogFileButton, 166, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, clearLogFileButton, 140, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, clearLogFileButton, 115, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, clearLogFileButton, 10, SpringLayout.WEST, getContentPane());
 
       final JButton clearRegistryButton = new JButton();
       clearRegistryButton.setToolTipText("Clears all persistent settings and returns to defaults");
@@ -146,8 +147,9 @@ public class OptionsDlg extends MMDialog {
       clearRegistryButton.setFont(new Font("", Font.PLAIN, 10));
       clearRegistryButton.setPreferredSize(buttonSize);
       getContentPane().add(clearRegistryButton);
-      //springLayout.putConstraint(SpringLayout.SOUTH, clearRegistryButton, 199, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, clearRegistryButton, 173, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, clearRegistryButton, 148, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, clearRegistryButton, 10, SpringLayout.WEST, getContentPane());
+      //springLayout.putConstraint(SpringLayout.EAST, clearRegistryButton, 80, SpringLayout.WEST, getContentPane());
 
       final JButton okButton = new JButton();
       okButton.addActionListener(new ActionListener() {
@@ -168,23 +170,6 @@ public class OptionsDlg extends MMDialog {
       
       debugLogEnabledCheckBox.setSelected(opts_.debugLogEnabled);
 
-      final JCheckBox multithreadedAcquisitionCheckBox = new JCheckBox();
-      multithreadedAcquisitionCheckBox.addActionListener(new ActionListener() {
-         public void actionPerformed(ActionEvent arg0) {
-            opts_.multiThreadedAcqEnabled = multithreadedAcquisitionCheckBox.isSelected();
-         }
-      });
-      multithreadedAcquisitionCheckBox.setText("Multi-threaded Acquisition");
-      getContentPane().add(multithreadedAcquisitionCheckBox);
-      springLayout.putConstraint(SpringLayout.EAST, multithreadedAcquisitionCheckBox, 200, SpringLayout.WEST, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, multithreadedAcquisitionCheckBox, 0, SpringLayout.WEST, debugLogEnabledCheckBox);
-      springLayout.putConstraint(SpringLayout.EAST, clearRegistryButton, 110, SpringLayout.WEST, multithreadedAcquisitionCheckBox);
-      springLayout.putConstraint(SpringLayout.WEST, clearRegistryButton, 0, SpringLayout.WEST, multithreadedAcquisitionCheckBox);
-      springLayout.putConstraint(SpringLayout.EAST, clearLogFileButton, 110, SpringLayout.WEST, multithreadedAcquisitionCheckBox);
-      springLayout.putConstraint(SpringLayout.WEST, clearLogFileButton, 0, SpringLayout.WEST, multithreadedAcquisitionCheckBox);
-      springLayout.putConstraint(SpringLayout.SOUTH, multithreadedAcquisitionCheckBox, 60, SpringLayout.NORTH, getContentPane());
-      multithreadedAcquisitionCheckBox.setSelected(opts_.multiThreadedAcqEnabled);
-
       final JCheckBox doNotAskForConfigFileCheckBox = new JCheckBox();
       doNotAskForConfigFileCheckBox.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
@@ -195,7 +180,7 @@ public class OptionsDlg extends MMDialog {
       getContentPane().add(doNotAskForConfigFileCheckBox);
       springLayout.putConstraint(SpringLayout.EAST, doNotAskForConfigFileCheckBox, 200, SpringLayout.WEST, getContentPane());
       springLayout.putConstraint(SpringLayout.WEST, doNotAskForConfigFileCheckBox, 0, SpringLayout.WEST, debugLogEnabledCheckBox);
-      springLayout.putConstraint(SpringLayout.SOUTH, doNotAskForConfigFileCheckBox, 85, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.SOUTH, doNotAskForConfigFileCheckBox, 60, SpringLayout.NORTH, getContentPane());
       doNotAskForConfigFileCheckBox.setSelected(opts_.doNotAskForConfigFile);
 
       final JLabel sequenceBufferSizeLabel = new JLabel();
@@ -203,13 +188,13 @@ public class OptionsDlg extends MMDialog {
       getContentPane().add(sequenceBufferSizeLabel);
       springLayout.putConstraint(SpringLayout.EAST, sequenceBufferSizeLabel, 210, SpringLayout.WEST, getContentPane());
       springLayout.putConstraint(SpringLayout.WEST, sequenceBufferSizeLabel, 15, SpringLayout.WEST, getContentPane());
-      springLayout.putConstraint(SpringLayout.SOUTH, sequenceBufferSizeLabel, 109, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, sequenceBufferSizeLabel, 95, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.SOUTH, sequenceBufferSizeLabel, 84, SpringLayout.NORTH, getContentPane());
+      //springLayout.putConstraint(SpringLayout.NORTH, sequenceBufferSizeLabel, 95, SpringLayout.NORTH, getContentPane());
 
       bufSizeField_ = new JTextField(Integer.toString(opts_.circularBufferSizeMB));
       getContentPane().add(bufSizeField_);
-      springLayout.putConstraint(SpringLayout.SOUTH, bufSizeField_, 110, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, bufSizeField_, 90, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.SOUTH, bufSizeField_, 85, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, bufSizeField_, 65, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.EAST, bufSizeField_, 300, SpringLayout.WEST, getContentPane());
       springLayout.putConstraint(SpringLayout.WEST, bufSizeField_, 220, SpringLayout.WEST, getContentPane());
 
@@ -219,8 +204,8 @@ public class OptionsDlg extends MMDialog {
       getContentPane().add(displayLabel); 
       springLayout.putConstraint(SpringLayout.EAST, displayLabel, 170, SpringLayout.WEST, getContentPane());
       springLayout.putConstraint(SpringLayout.WEST, displayLabel, 15, SpringLayout.WEST, getContentPane());
-      springLayout.putConstraint(SpringLayout.SOUTH, displayLabel, 133, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, displayLabel, 117, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.SOUTH, displayLabel, 108, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, displayLabel, 92, SpringLayout.NORTH, getContentPane());
 
       comboDisplayBackground_ = new JComboBox(guiColors_.styleOptions);
       comboDisplayBackground_.setFont(new Font("Arial", Font.PLAIN, 10));              
@@ -234,8 +219,8 @@ public class OptionsDlg extends MMDialog {
       getContentPane().add(comboDisplayBackground_);
       springLayout.putConstraint(SpringLayout.EAST, comboDisplayBackground_, 331, SpringLayout.WEST, getContentPane());
       springLayout.putConstraint(SpringLayout.WEST, comboDisplayBackground_, 220, SpringLayout.WEST, getContentPane());
-      springLayout.putConstraint(SpringLayout.SOUTH, comboDisplayBackground_, 139, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, comboDisplayBackground_, 116, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.SOUTH, comboDisplayBackground_, 114, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, comboDisplayBackground_, 91, SpringLayout.NORTH, getContentPane());
    }
 
    private void changeBackground() {

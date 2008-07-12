@@ -28,6 +28,8 @@ import java.awt.Font;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
@@ -58,7 +60,7 @@ import org.micromanager.utils.MMDialog;
 
 import com.swtdesigner.SwingResourceManager;
 
-public class PositionListDlg extends MMDialog {
+public class PositionListDlg extends MMDialog implements MouseListener {
    private static final long serialVersionUID = 1L;
    private static String POSITION_LIST_FILE_NAME = "MMPositionList.pos";
    private String posListDir_;
@@ -116,6 +118,8 @@ public class PositionListDlg extends MMDialog {
          } else
             return null;
       }
+
+
    }
 
    /**
@@ -193,6 +197,7 @@ public class PositionListDlg extends MMDialog {
       posTable_.setModel(model);
       posTable_.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       scrollPane.setViewportView(posTable_);
+      posTable_.addMouseListener(this);
 
       final JButton markButton = new JButton();
       markButton.setFont(new Font("", Font.PLAIN, 10));
@@ -512,14 +517,19 @@ public class PositionListDlg extends MMDialog {
 
       PosTableModel ptm = (PosTableModel)posTable_.getModel();
       MultiStagePosition selMsp = ptm.getPositionList().getPosition(posTable_.getSelectedRow());
+      int selectedRow = 0;
       if (selMsp == null) {
          msp.setLabel(ptm.getPositionList().generateLabel());
          ptm.getPositionList().addPosition(msp);
-      } else { // replace instead of add {
+      } else { // replace instead of add 
          msp.setLabel(ptm.getPositionList().getPosition(posTable_.getSelectedRow()).getLabel());
+         selectedRow = posTable_.getSelectedRow();
          ptm.getPositionList().replacePosition(posTable_.getSelectedRow(), msp);
       }
       ptm.fireTableDataChanged();
+      // this unselected the currently selected row.  Re-select it:
+      if (selMsp != null)
+         posTable_.setRowSelectionInterval(selectedRow, selectedRow);
    }
 
    /**
@@ -612,7 +622,7 @@ public class PositionListDlg extends MMDialog {
          handleError(e.getMessage());
       }
 
-   }   
+   }
 
    class StopCalThread extends Thread{
       double [] x1;
@@ -825,5 +835,30 @@ public class PositionListDlg extends MMDialog {
          JOptionPane.showMessageDialog(d, "Going back to the original position!");		        	
       }
    }      
+
+   /*
+    * Implementation of MouseListener
+    * Sole purpose is to be able to unselect rows in the positionlist table
+    */
+   public void mousePressed (MouseEvent e) {}
+   public void mouseReleased (MouseEvent e) {}
+   public void mouseEntered (MouseEvent e) {}
+   public void mouseExited (MouseEvent e) {}
+   /*
+    * This event is fired after the table sets its selection
+    * Remember where was clicked previously so as to allow for toggling the selected row
+    */
+   private static int lastRowClicked_;
+   public void mouseClicked (MouseEvent e) {
+      java.awt.Point p = e.getPoint();
+      int rowIndex = posTable_.rowAtPoint(p);
+      if (rowIndex < 0)
+         return;
+      if (rowIndex == posTable_.getSelectedRow() && rowIndex == lastRowClicked_) {
+            posTable_.clearSelection();
+            lastRowClicked_ = -1;
+      } else
+         lastRowClicked_ = rowIndex;
+   }
 
 }

@@ -352,10 +352,10 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
       runButton.setFont(new Font("", Font.PLAIN, 10));
       runButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
-             runScript();
+             runFile();
          }
       });
-      runButton.setText("Run");
+      runButton.setText("Run File");
       runButton.setPreferredSize(buttonSize);
       spLeft.putConstraint(SpringLayout.NORTH, runButton, gap, SpringLayout.NORTH, leftPanel);
       spLeft.putConstraint(SpringLayout.WEST, runButton, gap, SpringLayout.EAST, addButton);
@@ -629,7 +629,7 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
       JFileChooser fc = new JFileChooser();
       fc.addChoosableFileFilter(new ScriptFileFilter());
 
-      String scriptListDir = prefs_.get(SCRIPT_DIRECTORY, null);
+      String scriptListDir = prefs_.get(SCRIPT_FILE, null);
       if (scriptListDir != null) {
          fc.setSelectedFile(new File(scriptListDir));
       }
@@ -641,6 +641,7 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
          try {
             scriptListDir = curFile.getParent();
             prefs_.put(SCRIPT_DIRECTORY, scriptListDir);
+            prefs_.put(SCRIPT_FILE, curFile.getAbsolutePath());
             // only creates a new file when a file with this name does not exist
             curFile.createNewFile();
          } catch (Exception e) {
@@ -685,6 +686,7 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
          fw.write(scriptPane_.getText());
          fw.close();
          scriptPaneSaved_ = true;
+         JOptionPane.showMessageDialog(this, "File saved");
       } catch (IOException ioe){
          message("IO exception" + ioe.getMessage());
       }
@@ -701,9 +703,9 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
       if (scriptFile_ != null) {
          fc.setSelectedFile(new File(scriptFile_.getAbsolutePath()));
       } else {
-         String scriptListDir = prefs_.get(SCRIPT_DIRECTORY, null);
-         if (scriptListDir != null) {
-            fc.setSelectedFile(new File(scriptListDir));
+         String scriptListFile = prefs_.get(SCRIPT_FILE, null);
+         if (scriptListFile != null) {
+            fc.setSelectedFile(new File(scriptListFile));
          }
       }
 
@@ -721,6 +723,7 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
             fw.write(scriptPane_.getText());
             fw.close();
             scriptFile_ = saveFile;
+            prefs_.put(SCRIPT_FILE, saveFile.getAbsolutePath());
             scriptPaneSaved_ = true;
             this.setTitle(saveFile.getName());
          } catch (IOException ioe){
@@ -768,6 +771,32 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
       }
    }
 
+   private void runFile()
+   {
+	   JFileChooser fc = new JFileChooser();
+	   fc.addChoosableFileFilter(new ScriptFileFilter());
+
+	   String scriptListFile = prefs_.get(SCRIPT_FILE, null);
+       if (scriptListFile != null) {
+	      fc.setSelectedFile(new File(scriptListFile));
+	   }
+
+	   int retval = fc.showOpenDialog(this);
+	   File curFile;
+       if (retval == JFileChooser.APPROVE_OPTION) {
+   	      curFile = fc.getSelectedFile();
+   	      prefs_.put(SCRIPT_FILE, curFile.getAbsolutePath());
+   	      try {
+             interp_.evaluateAsync(TextUtils.readTextFile(curFile.getAbsolutePath()));
+          } catch (MMScriptException e) {
+               messageException(e.getMessage(), -1);
+          } catch (IOException f) {
+        	  messageException(f.getMessage(), -1);
+          }
+          
+      }
+   }
+   
    /*
     * Empties the editor Pane and deselects the shortcuts, in effect creating a 'blank' editor pane
     */
@@ -797,9 +826,9 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
       JFileChooser fc = new JFileChooser();
       fc.addChoosableFileFilter(new ScriptFileFilter());
 
-      String scriptListDir = prefs_.get(SCRIPT_DIRECTORY, null);
-      if (scriptListDir != null) {
-         fc.setSelectedFile(new File(scriptListDir));
+      String scriptListFile = prefs_.get(SCRIPT_FILE, null);
+      if (scriptListFile != null) {
+         fc.setSelectedFile(new File(scriptListFile));
       }
 
       // int retval = fc.showOpenDialog(this);
@@ -808,8 +837,8 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
       if (retval == JFileChooser.APPROVE_OPTION) {
          curFile = fc.getSelectedFile();
          try {
-            scriptListDir = curFile.getParent();
-            prefs_.put(SCRIPT_DIRECTORY, scriptListDir);
+            scriptListFile = curFile.getParent();
+            prefs_.put(SCRIPT_FILE, curFile.getAbsolutePath());
             int row = scriptTable_.getSelectedRow();
             int column =  scriptTable_.getSelectedColumn();
             scriptTable_.changeSelection(row, column, true, false);
@@ -938,7 +967,7 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
 
    public void getScriptsFromPrefs ()
    { 
-      // restore previosuly listed scripts from prefs
+      // restore previously listed scripts from prefs
       int j = 0;
       String script;
       boolean isFile = false;
@@ -991,7 +1020,7 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
     */
    public void mouseClicked(MouseEvent e) {
       if (e.getClickCount() >= 2)
-         runScript();
+         runPane();
    }  
             
    public void mousePressed(MouseEvent e) { 

@@ -298,8 +298,8 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       public void addNewChannel() {
          ChannelSpec channel = new ChannelSpec();
          if (acqEng_.getChannelConfigs().length > 0) {
-            channel.config_ = acqEng_.getChannelConfigs()[0];
-            channels_.add(channel);
+             channel.config_ = acqEng_.getChannelConfigs()[0];
+             channels_.add(channel);
          }
       }
 
@@ -587,15 +587,10 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       addButton.setFont(new Font("Arial", Font.PLAIN, 10));
       addButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent e) {
-            //AddChannelDlg dlg = new AddChannelDlg();
-            //dlg.setData(acqEng_.getConfigurations(), 10.0, 0.0);
-            //dlg.setVisible(true);
-            //if (dlg.isOK()) {
             model_.addNewChannel();
             model_.fireTableStructureChanged();
             // update summary
             summaryTextArea_.setText(acqEng_.getVerboseSummary());
-            //}
          }
       });
       addButton.setText("New");
@@ -1074,9 +1069,18 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       af.showOptionsDialog();
    }
 
+   public boolean inArray(String member, String[] group) {
+	   for (int i=0; i<group.length; i++)
+		   if (member.equals(group[i]))
+			   return true;
+	   return false;
+   }
+   
    public void updateGroupsCombo() {
       String groups[] = acqEng_.getAvailableGroups();
       channelGroupCombo_.setModel(new DefaultComboBoxModel(groups));
+      if (!inArray(acqEng_.getChannelGroup(), groups))
+    	  acqEng_.setChannelGroup(groups[0]);
       channelGroupCombo_.setSelectedItem(acqEng_.getChannelGroup());
    }
 
@@ -1084,7 +1088,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       updateGroupsCombo();
       model_.cleanUpConfigurationList();
    }
-
+   
    public void loadAcqSettings() {
       // load acquisition engine preferences
       acqEng_.clear();
@@ -1363,10 +1367,10 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       }
    }
    
-   public void runWellScan(WellAcquisitionData wad) {
+   public boolean runWellScan(WellAcquisitionData wad) {
       if (acqEng_.isAcquisitionRunning()) {
          JOptionPane.showMessageDialog(this, "Unable to start the new acquisition task: previous acquisition still in progress.");
-         return;
+         return false;
       }
 
       try {
@@ -1375,11 +1379,13 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
          acqEng_.acquireWellScan(wad);
       } catch(MMException e) {
          handleException(e);
-         return;
+         return false;
       } catch (MMAcqDataException e) {
          handleException(e);
-         return;
+         return false;
       }
+      
+      return true;
    }
    
    

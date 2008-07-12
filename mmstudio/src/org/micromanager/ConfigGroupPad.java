@@ -137,9 +137,11 @@ public class ConfigGroupPad extends JScrollPane{
    }
 
    public void refreshStructure() {
-      data_.updateStatus();
-      data_.fireTableStructureChanged();
-      table_.repaint();
+	  if (data_ != null) { 
+         data_.updateStatus();
+         data_.fireTableStructureChanged();
+         table_.repaint();
+	  }
    }
 
    public boolean addGroup() {
