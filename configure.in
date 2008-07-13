@@ -282,4 +282,4 @@ AC_CHECK_FUNCS([memset])
 
 # AC_CONFIG_FILES([Makefile])
 AC_CONFIG_SUBDIRS(DeviceAdapters)
-AC_OUTPUT(Makefile ModuleTest/Makefile MMCore/Makefile MMCoreJ_wrap/Makefile Test_MMCore/Makefile Test_Serial/Makefile mmstudio/Makefile Bleach/Makefile autofocus/Makefile MMDevice/Makefile bin/Makefile)
+AC_OUTPUT(Makefile ModuleTest/Makefile MMCore/Makefile MMCoreJ_wrap/Makefile Test_MMCore/Makefile Test_Serial/Makefile hcs/Makefile mmstudio/Makefile Bleach/Makefile autofocus/Makefile MMDevice/Makefile bin/Makefile)
