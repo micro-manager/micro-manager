@@ -865,13 +865,19 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       zValCombo_.setBounds(85, 228, 110, 22);
       getContentPane().add(zValCombo_);
 
+      JScrollPane commentScrollPane = new JScrollPane();
+      commentScrollPane.setBounds(91, 505, 354, 62);
+      getContentPane().add(commentScrollPane);
+
       commentTextArea_ = new JTextArea();
       commentTextArea_.setFont(new Font("", Font.PLAIN, 10));
       commentTextArea_.setToolTipText("Comment for the current acquistion");
       commentTextArea_.setWrapStyleWord(true);
       commentTextArea_.setBorder(new EtchedBorder(EtchedBorder.LOWERED));
-      commentTextArea_.setBounds(91, 505, 354, 62);
-      getContentPane().add(commentTextArea_);
+      //commentTextArea_.setBounds(91, 505, 354, 62);
+      //getContentPane().add(commentTextArea_);
+      commentScrollPane.setViewportView(commentTextArea_);
+
 
       JLabel directoryPrefixLabel_2 = new JLabel();
       directoryPrefixLabel_2.setFont(new Font("Arial", Font.PLAIN, 10));
