@@ -36,6 +36,8 @@ for (int i=0; i<numFrames; i++) {
       mmc.setConfig(channelGroup, channels[j]);
       mmc.waitForConfig(channelGroup, channels[j]);
       gui.snapAndAddImage(acqName, i, j, 0);
+		gain = mmc.getProperty("Camera", "Gain");
+		gui.setImageProperty(acqName, i, j, 0, "Gain", "" + gain);
    }
    
    // set channel contrast based on the first frame

@@ -123,7 +123,6 @@ import org.micromanager.utils.LargeMessageDlg;
 import org.micromanager.utils.MMImageWindow;
 import org.micromanager.utils.MMLogger;
 import org.micromanager.utils.MMScriptException;
-import org.micromanager.utils.MMSerializationException;
 import org.micromanager.utils.ProgressBar;
 import org.micromanager.utils.TextUtils;
 import org.micromanager.utils.WaitDialog;
@@ -2950,7 +2949,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             throw new MMScriptException("Scanning error.");
          try {
             while (acqControlWin_.isAcquisitionRunning()) {
-               Thread.sleep(100);
+               Thread.sleep(500);
             }
          } catch (InterruptedException e) {
             // TODO Auto-generated catch block

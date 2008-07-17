@@ -1,2 +1,2 @@
-cons.ClearOutput();
-cons.Message("Hello");
+gui.clearMessageWindow();
+gui.message("Hello");

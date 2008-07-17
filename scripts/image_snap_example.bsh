@@ -4,5 +4,5 @@ img = mmc.getImage();
 width = mmc.getImageWidth();
 height = mmc.getImageHeight();
 byteDepth = mmc.getBytesPerPixel();
-console.message("Image snapped: w=" + width + ", h=" + height + ", " + byteDepth + " byte(s) per pixel");
-console.message("Image size: " + img.length + " pixels");
+gui.message("Image snapped: w=" + width + ", h=" + height + ", " + byteDepth + " byte(s) per pixel");
+gui.message("Image size: " + img.length + " pixels");

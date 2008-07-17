@@ -36,7 +36,7 @@
 
 	<target name="compileHCS" description="Compile HCT plugins.">
 		<mkdir dir="build" />
-		<javac srcdir="." destdir="./build" optimize="on" source="1.5" debug="off">
+		<javac srcdir="." destdir="./build" optimize="on" source="1.5" debug="on">
 			<classpath refid="project.class.path" />
 		</javac>
 	</target>
