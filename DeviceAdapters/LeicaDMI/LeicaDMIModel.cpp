@@ -47,6 +47,19 @@ LeicaDeviceModel::~LeicaDeviceModel()
 {
 }
 
+int LeicaDeviceModel::SetPosition(int position)
+{
+   // TODO: Lock
+   position_ = position;
+   return DEVICE_OK;
+}
+
+int LeicaDeviceModel::GetPosition(int& position)
+{
+   // TODO: Lock
+   position = position_;
+   return DEVICE_OK;
+}
 
 LeicaDMIModel::LeicaDMIModel() :
    availableDevices_(100, false),
@@ -92,8 +105,8 @@ bool LeicaDMIModel::IsDeviceAvailable(int devId)
 
 void LeicaDMIModel::SetMethodAvailable(int methodId)
 {
-   if (methodId > 0 && methodId < maxNrDevices_)
-      availableMethods_[methodId] = true;;
+   if (methodId > 0 && methodId < maxNrMethods_)
+      availableMethods_[methodId] = true;
 }
 
 bool LeicaDMIModel::IsMethodAvailable(int methodId)
@@ -110,3 +123,16 @@ bool LeicaDMIModel::IsMethodAvailable(std::string methodLabel)
    return false;
 }
          
+std::string LeicaDMIModel::GetMethod(int methodId)
+{
+   return methodNames_.at(methodId);
+}
+
+int LeicaDMIModel::GetMethodID(std::string method)
+{
+   for (int i=0; i<16; i++) {
+      if (method.compare(methodNames_.at(i)) == 0)
+         return i;
+   }
+   return -1;
+}

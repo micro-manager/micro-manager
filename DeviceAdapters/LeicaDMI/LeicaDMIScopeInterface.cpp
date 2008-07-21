@@ -134,9 +134,9 @@ int LeicaScopeInterface::GetStandInfo(MM::Device& device, MM::Core& core)
       return ret;
 
    // returns the stand's firmware version
-   os.flush();
-   os << g_Master << "002";
-   ret = core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+   std::ostringstream os2;
+   os2 << g_Master << "002";
+   ret = core.SetSerialCommand(&device, port_.c_str(), os2.str().c_str(), "\r");
    if (ret != DEVICE_OK)
       return ret;
 
@@ -145,17 +145,17 @@ int LeicaScopeInterface::GetStandInfo(MM::Device& device, MM::Core& core)
       return ret;
    std::stringstream st(response);
    std::string version;
-   ss >> answer;
-   if (answer.compare(os.str()) != 0)
+   st >> answer;
+   if (answer.compare(os2.str()) != 0)
       return ERR_SCOPE_NOT_ACTIVE;
    
-   ss >> version;
+   st >> version;
    scopeModel_->SetStandVersion(version);
 
    // Get a list with all methods available on this stand
-   os.flush();
-   os << g_Master << "026";
-   ret = core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+   std::ostringstream os3;
+   os3 << g_Master << "026";
+   ret = core.SetSerialCommand(&device, port_.c_str(), os3.str().c_str(), "\r");
    if (ret != DEVICE_OK)
       return ret;
 
@@ -164,12 +164,12 @@ int LeicaScopeInterface::GetStandInfo(MM::Device& device, MM::Core& core)
       return ret;
    std::stringstream sm(response);
    std::string methods;
-   ss >> answer;
-   if (answer.compare(os.str()) != 0)
+   sm >> answer;
+   if (answer.compare(os3.str()) != 0)
       return ERR_SCOPE_NOT_ACTIVE;
-   ss >> methods;
+   sm >> methods;
    for (int i=0; i< 16; i++) {
-      if (methods.at(i) == '1')
+      if (methods[i] == '1')
          scopeModel_->SetMethodAvailable(15 - i);
    }
    
@@ -177,6 +177,17 @@ int LeicaScopeInterface::GetStandInfo(MM::Device& device, MM::Core& core)
    return DEVICE_OK;
 }
 
+
+/**
+ * Sends command to the microscope to set requested method
+ * Does not listen for answers (should be causght in the monitoringthread
+ */
+int LeicaScopeInterface::SetMethod(MM::Device& device, MM::Core& core, int position)
+{
+   std::ostringstream os;
+   os << g_Master << "029" << " " << position << " " << 1;
+   return core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+}
 
 int LeicaScopeInterface::ClearPort(MM::Device& device, MM::Core& core)
 {

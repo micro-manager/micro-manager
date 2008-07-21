@@ -83,6 +83,8 @@ public:
    bool IsDeviceAvailable(int deviceID);
    void SetDeviceAvailable(int devId);
    bool IsMethodAvailable(int methodId);
+   std::string GetMethod(int methodId);
+   int GetMethodID(std::string method);
    bool IsMethodAvailable(std::string methodLabel);
    void SetMethodAvailable(int devId);
 
@@ -104,6 +106,7 @@ private:
    std::vector<std::string> methodNames_;
 
    static const int maxNrDevices_ = 100;
+   static const int maxNrMethods_ = 16;
 
    std::string standType_;
    std::string standVersion_;

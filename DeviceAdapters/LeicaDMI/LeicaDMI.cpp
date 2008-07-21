@@ -150,13 +150,13 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
 
    if (strcmp(deviceName, g_LeicaDeviceName) == 0)
         return new LeicaScope();
+   /*
    else if (strcmp(deviceName, g_LeicaReflector) == 0)
         return new ReflectorTurret();
    else if (strcmp(deviceName, g_LeicaNosePiece) == 0)
         return new ObjectiveTurret();
    else if (strcmp(deviceName, g_LeicaTransmittedLightShutter) == 0)
         return new  TLShutter();
-   /*
    else if (strcmp(deviceName, g_LeicaFieldDiaphragm) == 0)
         return new Servo(g_FieldDiaphragmServo, g_LeicaFieldDiaphragm, "Field Diaphragm");
    else if (strcmp(deviceName, g_LeicaApertureDiaphragm) == 0)
@@ -249,6 +249,64 @@ LeicaScope::~LeicaScope()
    Shutdown();
 }
 
+int LeicaScope::Initialize() 
+{
+   int ret = DEVICE_OK;
+   if (!g_ScopeInterface.IsInitialized())
+      ret = g_ScopeInterface.Initialize(*this, *GetCoreCallback());
+   if (ret != DEVICE_OK)
+      return ret;
+   
+   // Version
+   string model;
+   ret = g_ScopeModel.GetStandType(model);
+   if (DEVICE_OK != ret)
+      return ret;
+   ret = CreateProperty("Microscope Stand", model.c_str(), MM::String, true);
+   if (DEVICE_OK != ret)
+      return ret;
+  
+   // Firmware
+   string version;
+   ret = g_ScopeModel.GetStandVersion(version);
+   if (DEVICE_OK != ret)
+      return ret;
+   ret = CreateProperty("Microscope Firmware", version.c_str(), MM::String, true);
+   if (DEVICE_OK != ret)
+      return ret;
+  
+   // Method
+   CPropertyAction* pAct = new CPropertyAction(this, &LeicaScope::OnMethod);
+   CreateProperty("Method", "", MM::String, false, pAct);
+   for (int i=0; i<16; i++) {
+      if (g_ScopeModel.IsMethodAvailable(i)) {
+         AddAllowedValue("Method", g_ScopeModel.GetMethod(i).c_str());
+      }
+   }
+
+   ret = UpdateStatus();
+   if (DEVICE_OK != ret)
+      return ret;
+
+   initialized_ = true;
+   return 0;
+}
+
+int LeicaScope::Shutdown() 
+{
+   return 0;
+}
+
+void LeicaScope::GetName (char* Name) const
+{
+   CDeviceUtils::CopyLimitedString(Name, g_LeicaDeviceName);
+}
+
+bool LeicaScope::Busy() 
+{
+   return false;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Action handlers
 ///////////////////////////////////////////////////////////////////////////////
@@ -275,6 +333,27 @@ int LeicaScope::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+int LeicaScope::OnMethod(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet) {
+      int position;
+      int ret = g_ScopeModel.method_.GetPosition(position);
+      if (ret != DEVICE_OK)
+         return ret;
+      std::string method = g_ScopeModel.GetMethod(position);
+      pProp->Set(method.c_str());
+   } else if (eAct == MM::AfterSet) {
+      std::string method;
+      pProp->Get(method);
+      int position = g_ScopeModel.GetMethodID(method);
+      if (position > 0) {
+         g_ScopeInterface.SetMethod(*this, *GetCoreCallback(), position);
+      }
+   }
+
+   return DEVICE_OK;
+}
+
 int LeicaScope::OnAnswerTimeOut(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet) {
@@ -286,46 +365,6 @@ int LeicaScope::OnAnswerTimeOut(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
 
    return DEVICE_OK;
-}
-
-int LeicaScope::Initialize() 
-{
-   int ret = DEVICE_OK;
-   if (!g_ScopeInterface.IsInitialized())
-      ret = g_ScopeInterface.Initialize(*this, *GetCoreCallback());
-   if (ret != DEVICE_OK)
-      return ret;
-   
-   // Version
-   string model;
-   ret = g_ScopeModel.GetStandType(model);
-   if (DEVICE_OK != ret)
-      return ret;
-   ret = CreateProperty("Microscope Stand", model.c_str(), MM::String, true);
-   if (DEVICE_OK != ret)
-      return ret;
-    
-   ret = UpdateStatus();
-   if (DEVICE_OK != ret)
-      return ret;
-
-   initialized_ = true;
-   return 0;
-}
-
-int LeicaScope::Shutdown() 
-{
-   return 0;
-}
-
-void LeicaScope::GetName (char* Name) const
-{
-   CDeviceUtils::CopyLimitedString(Name, g_LeicaDeviceName);
-}
-
-bool LeicaScope::Busy() 
-{
-   return false;
 }
 
 

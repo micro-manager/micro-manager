@@ -54,6 +54,7 @@ class LeicaScope : public CGenericBase<LeicaScope>
       // action interface                                                       
       // ----------------                                                       
       int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct); 
+      int OnMethod(MM::PropertyBase* pProp, MM::ActionType eAct); 
       int OnAnswerTimeOut(MM::PropertyBase* pProp, MM::ActionType eAct); 
 
    private:
