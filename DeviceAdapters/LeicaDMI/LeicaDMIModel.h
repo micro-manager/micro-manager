@@ -81,8 +81,10 @@ public:
    ~LeicaDMIModel();
 
    bool IsDeviceAvailable(int deviceID);
+   void SetDeviceAvailable(int devId);
    bool IsMethodAvailable(int methodId);
    bool IsMethodAvailable(std::string methodLabel);
+   void SetMethodAvailable(int devId);
 
    // Not thread safe
    int GetStandType(std::string& standType) {standType = standType_; return DEVICE_OK;};
@@ -98,7 +100,10 @@ public:
 
 private:
    std::vector<bool> availableDevices_;
-   std::vector<bool> availableMethods;
+   std::vector<bool> availableMethods_;
+   std::vector<std::string> methodNames_;
+
+   static const int maxNrDevices_ = 100;
 
    std::string standType_;
    std::string standVersion_;

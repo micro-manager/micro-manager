@@ -49,6 +49,7 @@ class LeicaScopeInterface
       ~LeicaScopeInterface();
 
       int Initialize(MM::Device& device, MM::Core& core);
+      bool IsInitialized() {return initialized_;};
 
       MM::MMTime GetTimeOutTime(){ return timeOutTime_;}
       void SetTimeOutTime(MM::MMTime timeOutTime) { timeOutTime_ = timeOutTime;}
@@ -59,17 +60,8 @@ class LeicaScopeInterface
       int SetReflectorTurretPosition(MM::Device& device, MM::Core& core, int position);
 
       LeicaMonitoringThread* monitoringThread_;
+      LeicaDMIModel* scopeModel_;
 
-      // access functions for device info from microscope model (use lock)
-      /*
-      int GetModelPosition(MM::Device& device, MM::Core& core, LeicaUByte devId, LeicaLong& position);
-      int GetModelMaxPosition(MM::Device& device, MM::Core& core, LeicaUByte devId, LeicaLong& maxPosition);
-      int GetModelStatus(MM::Device& device, MM::Core& core, LeicaUByte devId, LeicaULong& status);
-      int GetModelPresent(MM::Device& device, MM::Core& core, LeicaUByte devId, bool &present);
-      int GetModelBusy(MM::Device& device, MM::Core& core, LeicaUByte devId, bool &busy);
-      */
-      // a few classes can set devices in the microscope model to be busy
-      //int SetModelBusy( LeicaUByte devId, bool busy);
 
       std::string port_;
       bool portInitialized_;
@@ -79,38 +71,8 @@ class LeicaScopeInterface
    private:
       void ClearRcvBuf();
       int ClearPort(MM::Device& device, MM::Core& core);
-      //void SetPort(const char* port) {port_ = port; portInitialized_ = true;}
-      //int GetVersion(MM::Device& device, MM::Core& core);
-      //int FindDevices(MM::Device& device, MM::Core& core);
-
-      // These are used by MonitoringThread to set values in our microscope model
-      /*
-      int SetModelPosition(LeicaUByte devId, LeicaLong position);
-      int SetUpperHardwareStop(LeicaUByte devId, LeicaLong position);
-      int SetLowerHardwareStop(LeicaUByte devId, LeicaLong position);
-      int SetModelStatus(LeicaUByte devId, LeicaULong status);
-      */
-
-      // Helper function for GetAnswer
-      bool signatureFound(unsigned char* answer, unsigned char* signature, unsigned long signatureStart, unsigned long signatureLength);
-
-      // functions used only from initialize, they set values in our abstract microscope 'deviceInfo_', based on information obtained from the microscope
-      //int GetPosition(MM::Device& device, MM::Core& core, LeicaUByte commandGroup, LeicaUByte devId, LeicaLong& position);
-      // int GetMaxPosition(MM::Device& device, MM::Core& core, LeicaUByte commandGroup, LeicaUByte devId, LeicaLong& position);
-      // int GetDeviceScalings(MM::Device& device, MM::Core& core, LeicaUByte commandGroup, LeicaUByte devId, LeicaDeviceInfo& deviceInfo);
-      // int GetScalingTable(MM::Device& device, MM::Core& core, LeicaUByte commandGroup, LeicaUByte devId, LeicaDeviceInfo& deviceInfo, std::string unit);
-      // int GetMeasuringOrigin(MM::Device& device, MM::Core& core, LeicaUByte commandGroup, LeicaUByte devId, LeicaDeviceInfo& deviceInfo);
-      // int GetPermanentParameter(MM::Device& device, MM::Core& core, LeicaUShort descriptor, LeicaByte entry, LeicaUByte& dataType, unsigned char* data, unsigned char& dataLength);
-      // int GetReflectorLabels(MM::Device& device, MM::Core& core);
-      // int GetObjectiveLabels(MM::Device& device, MM::Core& core);
-      // int GetTubeLensLabels(MM::Device& device, MM::Core& core);
-      // int GetSidePortLabels(MM::Device& device, MM::Core& core);
-      // int GetCondenserLabels(MM::Device& device, MM::Core& core);
 
       MM::MMTime timeOutTime_;
-      //static LeicaDeviceInfo deviceInfo_[MAXNUMBERDEVICES];
-      // std::vector<LeicaUByte > availableDevices_;
-      //static std::vector<LeicaUByte > commandGroup_; // relates device to commandgroup, initialized in constructor
       std::string version_;
       bool initialized_;
 };

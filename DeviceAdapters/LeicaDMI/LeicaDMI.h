@@ -28,33 +28,14 @@
 #ifndef _LEICA_H_
 #define _LEICA_H_
 
+#include "LeicaDMIScopeInterface.h"
+#include "LeicaDMIModel.h"
 #include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/DeviceBase.h"
 #include "../../MMDevice/DeviceThreads.h"
 #include <string>
 #include <vector>
 #include <map>
-
-//////////////////////////////////////////////////////////////////////////////
-// Error codes
-//
-#define COM_ERR         999
-#define ID_ERR          998
-#define FUI_ERR         997
-#define ERR_UNKNOWN_POSITION         10002
-#define ERR_INVALID_SPEED            10003
-#define ERR_PORT_CHANGE_FORBIDDEN    10004                                   
-#define ERR_SET_POSITION_FAILED      10005                                   
-#define ERR_INVALID_STEP_SIZE        10006                                   
-#define ERR_INVALID_MODE             10008 
-#define ERR_CANNOT_CHANGE_PROPERTY   10009 
-#define ERR_UNEXPECTED_ANSWER        10010 
-#define ERR_INVALID_TURRET           10011 
-#define ERR_SCOPE_NOT_ACTIVE         10012 
-#define ERR_INVALID_TURRET_POSITION  10013
-#define ERR_MODULE_NOT_FOUND         10014
-#define ERR_ANSWER_TIMEOUT           10015
-#define ERR_PORT_NOT_OPEN            10016
 
 
 class LeicaScope : public CGenericBase<LeicaScope>

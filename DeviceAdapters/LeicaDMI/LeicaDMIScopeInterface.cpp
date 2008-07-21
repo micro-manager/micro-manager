@@ -76,7 +76,7 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
       return ERR_PORT_NOT_OPEN;
    
    std::ostringstream os;
-   os << "Initializing Hub";
+   os << "Initializing Leica Microscope";
    core.LogMessage (&device, os.str().c_str(), false);
    os.str("");
    // empty the Rx serial buffer before sending commands
@@ -90,6 +90,8 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
       return ret;
 
    // TODO: get all necessary information from the stand and store in the model
+   //
+   // TODO: start all events at this point
 
    monitoringThread_ = new LeicaMonitoringThread(device, core, port_);
    monitoringThread_->Start();
@@ -103,24 +105,74 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
  */
 int LeicaScopeInterface::GetStandInfo(MM::Device& device, MM::Core& core)
 {
+   // returns the stand designation and list of IDs of all addressabel IDs
    std::ostringstream os;
-   // returns the stand deisgnation and list of IDs of all addressabel IDs
    os << g_Master << "001";
    int ret = core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
    if (ret != DEVICE_OK)
       return ret;
 
-   // Version string starts in 6th character, length is in first char
    long unsigned int responseLength = RCV_BUF_LENGTH;
    char response[RCV_BUF_LENGTH] = "";
-   unsigned long signatureLength = 4;
    ret = core.GetSerialAnswer(&device, port_.c_str(), responseLength, response, "\r");
    if (ret != DEVICE_OK)
       return ret;
-   // TODO: parse repsonse and set device type and available devices in model
+   std::stringstream ss(response);
+   std::string answer, stand;
+   ss >> answer;
+   if (answer.compare(os.str()) != 0)
+      return ERR_SCOPE_NOT_ACTIVE;
+   
+   ss >> stand;
+   scopeModel_->SetStandType(stand);
+   int devId;
+   while (ss >> devId) {
+      scopeModel_->SetDeviceAvailable(devId);
+   }
   
    if (ret != DEVICE_OK)
       return ret;
+
+   // returns the stand's firmware version
+   os.flush();
+   os << g_Master << "002";
+   ret = core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+   if (ret != DEVICE_OK)
+      return ret;
+
+   ret = core.GetSerialAnswer(&device, port_.c_str(), responseLength, response, "\r");
+   if (ret != DEVICE_OK)
+      return ret;
+   std::stringstream st(response);
+   std::string version;
+   ss >> answer;
+   if (answer.compare(os.str()) != 0)
+      return ERR_SCOPE_NOT_ACTIVE;
+   
+   ss >> version;
+   scopeModel_->SetStandVersion(version);
+
+   // Get a list with all methods available on this stand
+   os.flush();
+   os << g_Master << "026";
+   ret = core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+   if (ret != DEVICE_OK)
+      return ret;
+
+   ret = core.GetSerialAnswer(&device, port_.c_str(), responseLength, response, "\r");
+   if (ret != DEVICE_OK)
+      return ret;
+   std::stringstream sm(response);
+   std::string methods;
+   ss >> answer;
+   if (answer.compare(os.str()) != 0)
+      return ERR_SCOPE_NOT_ACTIVE;
+   ss >> methods;
+   for (int i=0; i< 16; i++) {
+      if (methods.at(i) == '1')
+         scopeModel_->SetMethodAvailable(15 - i);
+   }
+   
 
    return DEVICE_OK;
 }

@@ -245,6 +245,7 @@ LeicaScope::~LeicaScope()
       g_ScopeInterface.monitoringThread_ = 0;
    }
    g_ScopeInterface.initialized_ = false;
+
    Shutdown();
 }
 
@@ -264,6 +265,8 @@ int LeicaScope::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
       }
       // take this port.  TODO: should we check if this is a valid port?
       pProp->Get(g_ScopeInterface.port_);
+      // Provide a pointer to the scope model
+      g_ScopeInterface.scopeModel_ = &g_ScopeModel;
       // set flags indicating we have a port
       g_ScopeInterface.portInitialized_ = true;
       initialized_ = true;
@@ -287,8 +290,8 @@ int LeicaScope::OnAnswerTimeOut(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int LeicaScope::Initialize() 
 {
-   int ret = DEVICE_OK;;
-   if (!g_ScopeInterface.initialized_)
+   int ret = DEVICE_OK;
+   if (!g_ScopeInterface.IsInitialized())
       ret = g_ScopeInterface.Initialize(*this, *GetCoreCallback());
    if (ret != DEVICE_OK)
       return ret;
@@ -355,13 +358,19 @@ int TLShutter::Initialize()
    if (!g_ScopeInterface.portInitialized_)
       return ERR_SCOPE_NOT_ACTIVE;
 
+   int ret = DEVICE_OK;
+   if (!g_ScopeInterface.IsInitialized())
+      ret = g_ScopeInterface.Initialize(*this, *GetCoreCallback());
+   if (ret != DEVICE_OK)
+      return ret;
+   
    // check if this shutter exists:
    bool present;
    if (!g_ScopeModel.IsDeviceAvailable(g_Dark_Flap_Tl))
       return ERR_MODULE_NOT_FOUND;
 
    // Name
-   int ret = CreateProperty(MM::g_Keyword_Name, name_.c_str(), MM::String, true);
+   ret = CreateProperty(MM::g_Keyword_Name, name_.c_str(), MM::String, true);
    if (DEVICE_OK != ret)
       return ret;
 
@@ -534,6 +543,12 @@ int ReflectorTurret::Initialize()
    if (!g_ScopeInterface.portInitialized_)
       return ERR_SCOPE_NOT_ACTIVE;
 
+   int ret = DEVICE_OK;
+   if (!g_ScopeInterface.IsInitialized())
+      ret = g_ScopeInterface.Initialize(*this, *GetCoreCallback());
+   if (ret != DEVICE_OK)
+      return ret;
+   
    // check if this turret exists:
    bool present;
    if (! g_ScopeModel.IsDeviceAvailable(g_IL_Turret))
@@ -545,7 +560,7 @@ int ReflectorTurret::Initialize()
    // State
    // -----
    CPropertyAction* pAct = new CPropertyAction(this, &ReflectorTurret::OnState);
-   int ret = CreateProperty(MM::g_Keyword_State, "1", MM::Integer, false, pAct);
+   ret = CreateProperty(MM::g_Keyword_State, "1", MM::Integer, false, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -586,7 +601,8 @@ int ReflectorTurret::Initialize()
 
 int ReflectorTurret::Shutdown()
 {
-   if (initialized_) initialized_ = false;
+   if (initialized_) 
+      initialized_ = false;
    return DEVICE_OK;
 }
 
