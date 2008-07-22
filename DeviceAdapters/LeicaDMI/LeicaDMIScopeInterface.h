@@ -59,6 +59,7 @@ class LeicaScopeInterface
       // commands to set individual components
       int SetMethod(MM::Device& device, MM::Core& core, int position);
       int SetTLShutterPosition(MM::Device& device, MM::Core& core, int position);
+      int SetILShutterPosition(MM::Device& device, MM::Core& core, int position);
       int SetReflectorTurretPosition(MM::Device& device, MM::Core& core, int position);
 
       LeicaMonitoringThread* monitoringThread_;

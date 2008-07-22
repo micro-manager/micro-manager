@@ -65,7 +65,37 @@ class LeicaScope : public CGenericBase<LeicaScope>
 
 
 /*
- * Leica device with ID 63
+ * Leica Incident light shutter
+ */
+class ILShutter : public CShutterBase<ILShutter>
+{
+public:
+   ILShutter();
+   ~ILShutter();
+
+   int Initialize();
+   int Shutdown();
+
+   void GetName (char* pszName) const;
+   bool Busy();
+
+   // Shutter API
+   int SetOpen (bool open = true);
+   int GetOpen(bool& open);
+   int Fire(double deltaT);
+
+   // action interface
+   int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+private:
+   bool initialized_;
+   std::string name_;
+   std::string description_;
+   bool state_;
+};
+
+/*
+ * Leica Transmitted light shutter
  */
 class TLShutter : public CShutterBase<TLShutter>
 {

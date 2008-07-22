@@ -57,6 +57,16 @@ LeicaScopeInterface::LeicaScopeInterface() :
 
 LeicaScopeInterface::~LeicaScopeInterface()
 {
+   if (monitoringThread_ != 0) {
+   printf ("Stopping Thread\n");
+      monitoringThread_->Stop();
+   printf ("Waiting Thread\n");
+      monitoringThread_->wait();
+   printf ("Deleting Thread\n");
+      delete (monitoringThread_);
+      monitoringThread_ = 0;
+   }
+   initialized_ = false;
 }
 
 /**
@@ -101,15 +111,15 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
 
    // Start event reporting for method changes
    command << g_Master << "003" << " 1 0 0";
-   ret = core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+   ret = core.SetSerialCommand(&device, port_.c_str(), command.str().c_str(), "\r");
    if (ret != DEVICE_OK)
       return ret;
    command.str("");
 
    // Start event reporting for TL Shutter:
-   if (scopeModel_->IsDeviceAvailable(g_Dark_Flap_Tl)) {
-      command << g_Dark_Flap_Tl << "003" << " 1";
-      ret = core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+   if (scopeModel_->IsDeviceAvailable(g_Lamp)) {
+      command << g_Lamp << "003" << " 1 1 1 0 1 1";
+      ret = core.SetSerialCommand(&device, port_.c_str(), command.str().c_str(), "\r");
       if (ret != DEVICE_OK)
          return ret;
       command.str("");
@@ -123,14 +133,14 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
 
    // Get current positions of all devices.  Let MonitoringThread digest the incoming info
    command << g_Master << "028";
-   ret = core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+   ret = core.SetSerialCommand(&device, port_.c_str(), command.str().c_str(), "\r");
    if (ret != DEVICE_OK)
       return ret;
    command.str("");
 
-   if (scopeModel_->IsDeviceAvailable(g_Dark_Flap_Tl)) {
-      command << g_Dark_Flap_Tl << "023";
-      ret = core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+   if (scopeModel_->IsDeviceAvailable(g_Lamp)) {
+      command << g_Lamp << "033";
+      ret = core.SetSerialCommand(&device, port_.c_str(), command.str().c_str(), "\r");
       if (ret != DEVICE_OK)
          return ret;
       command.str("");
@@ -226,8 +236,31 @@ int LeicaScopeInterface::GetStandInfo(MM::Device& device, MM::Core& core)
  */
 int LeicaScopeInterface::SetMethod(MM::Device& device, MM::Core& core, int position)
 {
+   scopeModel_->method_.SetBusy(true);
    std::ostringstream os;
    os << g_Master << "029" << " " << position << " " << 1;
+   return core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+}
+
+/*
+ * Sets state of transmited light shutter
+ */
+int LeicaScopeInterface::SetTLShutterPosition(MM::Device& device, MM::Core& core, int position)
+{
+   scopeModel_->TLShutter_.SetBusy(true);
+   std::ostringstream os;
+   os << g_Lamp << "032" << " 0" << " " << position;
+   return core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+}
+
+/*
+ * Sets state of incident light shutter
+ */
+int LeicaScopeInterface::SetILShutterPosition(MM::Device& device, MM::Core& core, int position)
+{
+   scopeModel_->ILShutter_.SetBusy(true);
+   std::ostringstream os;
+   os << g_Lamp << "032" << " 1" << " " << position;
    return core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
 }
 
@@ -285,11 +318,11 @@ int LeicaMonitoringThread::svc() {
       do { 
          rcvBuf[0] = 0;
          int ret = core_.GetSerialAnswer(&(device_), port_.c_str(), LeicaScopeInterface::RCV_BUF_LENGTH, rcvBuf, "\r"); 
-         if (ret != DEVICE_OK && ret != ret != DEVICE_SERIAL_TIMEOUT) {
+         if (ret != DEVICE_OK && ret != ret != DEVICE_SERIAL_TIMEOUT && !stop_) {
             std::ostringstream oss;
             oss << "Monitoring Thread: ERROR while reading from serial port, error code: " << ret;
             core_.LogMessage(&(device_), oss.str().c_str(), false);
-         } else if (strlen(rcvBuf) >= 5) {
+         } else if (strlen(rcvBuf) >= 5 && !stop_) {
             // Analyze incoming messages.  Tokenize and take action based on first toke
             std::stringstream os(rcvBuf);
             std::string command;
@@ -303,10 +336,11 @@ int LeicaMonitoringThread::svc() {
             switch (deviceId) {
                case (g_Master) :
                    switch (commandId) {
-                      // Set Method command, set stand to busy
+                      // Set Method command, signals completion of command sends
                       case (29) : 
-                         scopeModel_->method_.SetBusy(true);
+                         scopeModel_->method_.SetBusy(false);
                          break;
+                      // I am unsure if this already signals the end of the command
                       case (28):
                          int pos;
                          os >> pos;
@@ -315,16 +349,19 @@ int LeicaMonitoringThread::svc() {
                          break;
                    }
                    break;
-                case (g_Dark_Flap_Tl) :
+                case (g_Lamp) :
                    switch (commandId) {
-                      case (22) :
-                         scopeModel_->TLShutter_.SetBusy(true);
-                         break;
-                      case (23) :
-                         int pos;
-                         os >> pos;
-                         scopeModel_->TLShutter_.SetPosition(pos);
+                      case (32) :
                          scopeModel_->TLShutter_.SetBusy(false);
+                         scopeModel_->ILShutter_.SetBusy(false);
+                         break;
+                      case (33) :
+                         int posTL, posIL;
+                         os >> posTL >> posIL;
+                         scopeModel_->TLShutter_.SetPosition(posTL);
+                         scopeModel_->ILShutter_.SetPosition(posIL);
+                         scopeModel_->TLShutter_.SetBusy(false);
+                         scopeModel_->ILShutter_.SetBusy(false);
                          break;
                    }
                    break;

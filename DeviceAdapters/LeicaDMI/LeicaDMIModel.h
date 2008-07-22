@@ -99,6 +99,7 @@ public:
 
    LeicaDeviceModel method_;   
    LeicaDeviceModel TLShutter_;
+   LeicaDeviceModel ILShutter_;
    LeicaDeviceModel ReflectorTurret_;
 
 private:

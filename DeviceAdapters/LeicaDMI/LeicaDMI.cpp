@@ -95,8 +95,8 @@ const char* g_LeicaFocusAxis = "LeicaFocusAxis";
 const char* g_LeicaTubeLens = "LeicaTubeLens";
 const char* g_LeicaTubeLensShutter = "LeicaTubeLensShutter";
 const char* g_LeicaSidePort = "LeicaSidePort";
-const char* g_LeicaReflectedLightShutter = "LeicaReflectedLightShutter";
-const char* g_LeicaTransmittedLightShutter = "LeicaTransmittedLightShutter";
+const char* g_LeicaIncidentLightShutter = "IL-Shutter";
+const char* g_LeicaTransmittedLightShutter = "TL-Shutter";
 const char* g_LeicaHalogenLightSwitch = "LeicaHalogenLightSwitch";
 const char* g_LeicaRLFLAttenuator = "LeicaRL-FLAttenuator";
 const char* g_LeicaCondenserContrast = "LeicaCondenserContrast";
@@ -116,6 +116,7 @@ MODULE_API void InitializeModuleData()
 {
    AddAvailableDeviceName(g_LeicaDeviceName,"Leica DMI microscope controlled through serial interface");
    AddAvailableDeviceName(g_LeicaTransmittedLightShutter,"Transmitted Light Shutter"); 
+   AddAvailableDeviceName(g_LeicaIncidentLightShutter,"Incident Light Shutter"); 
    /*
    AddAvailableDeviceName(g_LeicaReflector,"Reflector Turret (dichroics)"); 
    AddAvailableDeviceName(g_LeicaNosePiece,"Objective Turret");
@@ -153,6 +154,8 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
         return new LeicaScope();
    else if (strcmp(deviceName, g_LeicaTransmittedLightShutter) == 0)
         return new  TLShutter();
+   else if (strcmp(deviceName, g_LeicaIncidentLightShutter) == 0)
+        return new  ILShutter();
    /*
    else if (strcmp(deviceName, g_LeicaReflector) == 0)
         return new ReflectorTurret();
@@ -305,7 +308,9 @@ void LeicaScope::GetName (char* Name) const
 
 bool LeicaScope::Busy() 
 {
-   return false;
+   bool busy;
+   g_ScopeModel.method_.GetBusy(busy);
+   return busy;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -370,6 +375,175 @@ int LeicaScope::OnAnswerTimeOut(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 
 ///////////////////////////////////////////////////////////////////////////////
+// Leica Incident light Shutter
+///////////////////////////////////////////////////////////////////////////////
+ILShutter::ILShutter (): 
+   initialized_ (false),
+   state_(0)
+{
+   InitializeDefaultErrorMessages();
+
+   SetErrorText(ERR_SCOPE_NOT_ACTIVE, "Leica Scope is not initialized.  It is needed for the Leica Shutter to work");
+   SetErrorText(ERR_MODULE_NOT_FOUND, "This shutter is not installed in this Leica microscope");
+}
+
+ILShutter::~ILShutter ()
+{
+   Shutdown();
+}
+
+void ILShutter::GetName(char* name) const
+{
+   assert(name_.length() < CDeviceUtils::GetMaxStringLength());
+   CDeviceUtils::CopyLimitedString(name, name_.c_str());
+}
+
+int ILShutter::Initialize()
+{
+   if (!g_ScopeInterface.portInitialized_)
+      return ERR_SCOPE_NOT_ACTIVE;
+
+   int ret = DEVICE_OK;
+   if (!g_ScopeInterface.IsInitialized())
+      ret = g_ScopeInterface.Initialize(*this, *GetCoreCallback());
+   if (ret != DEVICE_OK)
+      return ret;
+   
+   // check if this shutter exists:
+   bool present;
+   if (!g_ScopeModel.IsDeviceAvailable(g_Lamp))
+      return ERR_MODULE_NOT_FOUND;
+
+   // Name
+   ret = CreateProperty(MM::g_Keyword_Name, name_.c_str(), MM::String, true);
+   if (DEVICE_OK != ret)
+      return ret;
+
+   // Description
+   ret = CreateProperty(MM::g_Keyword_Description, description_.c_str(), MM::String, true);
+   if (DEVICE_OK != ret)
+      return ret;
+
+   // Check current state of shutter:
+   ret = GetOpen(state_);
+   if (DEVICE_OK != ret)
+      return ret;
+
+   // State
+   CPropertyAction* pAct = new CPropertyAction (this, &ILShutter::OnState);
+   if (state_)
+      ret = CreateProperty(MM::g_Keyword_State, "1", MM::Integer, false, pAct); 
+   else
+      ret = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct); 
+
+   if (ret != DEVICE_OK) 
+      return ret; 
+
+   AddAllowedValue(MM::g_Keyword_State, "0"); // Closed
+   AddAllowedValue(MM::g_Keyword_State, "1"); // Open
+
+   //Label
+
+   ret = UpdateStatus();
+   if (ret != DEVICE_OK) 
+      return ret; 
+
+   initialized_ = true;
+
+   return DEVICE_OK;
+}
+
+bool ILShutter::Busy()
+{
+   bool busy;
+   int ret = g_ScopeModel.ILShutter_.GetBusy(busy);
+   if (ret != DEVICE_OK)  // This is bad and should not happen
+      return false;
+
+   return busy;
+}
+
+int ILShutter::Shutdown()
+{
+   if (initialized_)
+   {
+      initialized_ = false;
+   }
+   return DEVICE_OK;
+}
+
+int ILShutter::SetOpen(bool open)
+{
+   int position;
+   if (open)
+      position = 1;
+   else
+      position = 0;
+
+   int ret = g_ScopeInterface.SetILShutterPosition(*this, *GetCoreCallback(), position);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   return DEVICE_OK;
+}
+
+int ILShutter::GetOpen(bool &open)
+{
+
+   int position;
+   int ret = g_ScopeModel.ILShutter_.GetPosition(position);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if (position == 0)
+      open = false;
+   else if (position == 1)
+      open = true;
+   else
+      return ERR_UNEXPECTED_ANSWER;
+
+   return DEVICE_OK;
+}
+
+int ILShutter::Fire(double)
+{
+   return DEVICE_UNSUPPORTED_COMMAND;  
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Action handlers                                                           
+///////////////////////////////////////////////////////////////////////////////
+
+int ILShutter::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      // return pos as we know it
+      GetOpen(state_);
+      if (state_)
+         pProp->Set(1L);
+      else
+         pProp->Set(0L);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      long pos;
+      pProp->Get(pos);
+      if (pos==1)
+      {
+         return this->SetOpen(true);
+      }
+      else
+      {
+         return this->SetOpen(false);
+      }
+   }
+   return DEVICE_OK;
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
 // Leica Transmitted light Shutter
 ///////////////////////////////////////////////////////////////////////////////
 TLShutter::TLShutter (): 
@@ -406,7 +580,7 @@ int TLShutter::Initialize()
    
    // check if this shutter exists:
    bool present;
-   if (!g_ScopeModel.IsDeviceAvailable(g_Dark_Flap_Tl))
+   if (!g_ScopeModel.IsDeviceAvailable(g_Lamp))
       return ERR_MODULE_NOT_FOUND;
 
    // Name
