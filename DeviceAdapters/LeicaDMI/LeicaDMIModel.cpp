@@ -36,31 +36,56 @@
 #include "LeicaDMIModel.h"
 #include "../../MMDevice/ModuleInterface.h"
 
+MM_THREAD_GUARD mutex;
+
 LeicaDeviceModel::LeicaDeviceModel() :
    position_(0),
    minPosition_(0),
    maxPosition_(0)
 {
+   MM_THREAD_INITIALIZE_GUARD(&mutex);
 }
 
 LeicaDeviceModel::~LeicaDeviceModel()
 {
+   MM_THREAD_DELETE_GUARD(&mutex);
 }
 
 int LeicaDeviceModel::SetPosition(int position)
 {
-   // TODO: Lock
+   MM_THREAD_GUARD_LOCK(&mutex);
    position_ = position;
+   MM_THREAD_GUARD_UNLOCK(&mutex);
    return DEVICE_OK;
 }
 
 int LeicaDeviceModel::GetPosition(int& position)
 {
-   // TODO: Lock
+   MM_THREAD_GUARD_LOCK(&mutex);
    position = position_;
+   MM_THREAD_GUARD_UNLOCK(&mutex);
    return DEVICE_OK;
 }
 
+int LeicaDeviceModel::SetBusy(bool busy)
+{
+   MM_THREAD_GUARD_LOCK(&mutex);
+   busy_ = busy;
+   MM_THREAD_GUARD_UNLOCK(&mutex);
+   return DEVICE_OK;
+}
+
+int LeicaDeviceModel::GetBusy(bool& busy)
+{
+   MM_THREAD_GUARD_LOCK(&mutex);
+   busy = busy_;
+   MM_THREAD_GUARD_UNLOCK(&mutex);
+   return DEVICE_OK;
+}
+
+/*
+ * Class that keeps a model of the state of the Leica DMI microscope
+ */
 LeicaDMIModel::LeicaDMIModel() :
    availableDevices_(100, false),
    availableMethods_(16, false),

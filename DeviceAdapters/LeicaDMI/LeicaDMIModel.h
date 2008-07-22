@@ -62,6 +62,7 @@ public:
 
 private:
    int position_;
+   bool busy_;
    int maxPosition_;
    int minPosition_;
 };

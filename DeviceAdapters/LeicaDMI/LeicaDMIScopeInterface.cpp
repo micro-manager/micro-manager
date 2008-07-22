@@ -89,12 +89,54 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
    if (ret != DEVICE_OK) 
       return ret;
 
-   // TODO: get all necessary information from the stand and store in the model
-   //
-   // TODO: start all events at this point
+   if (scopeModel_->IsDeviceAvailable(g_Dark_Flap_Tl)) {
+      scopeModel_->TLShutter_.SetMaxPosition(1);
+      scopeModel_->TLShutter_.SetMinPosition(0);
+   }
 
-   monitoringThread_ = new LeicaMonitoringThread(device, core, port_);
+   // TODO: get info about all devices that we are interested in (make sure they are available)
+
+   // Start all events at this point
+   std::ostringstream command;
+
+   // Start event reporting for method changes
+   command << g_Master << "003" << " 1 0 0";
+   ret = core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+   if (ret != DEVICE_OK)
+      return ret;
+   command.str("");
+
+   // Start event reporting for TL Shutter:
+   if (scopeModel_->IsDeviceAvailable(g_Dark_Flap_Tl)) {
+      command << g_Dark_Flap_Tl << "003" << " 1";
+      ret = core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+      if (ret != DEVICE_OK)
+         return ret;
+      command.str("");
+   }
+
+
+   // Start monitoring of all messages coming from the microscope
+   monitoringThread_ = new LeicaMonitoringThread(device, core, port_, scopeModel_);
    monitoringThread_->Start();
+
+
+   // Get current positions of all devices.  Let MonitoringThread digest the incoming info
+   command << g_Master << "028";
+   ret = core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+   if (ret != DEVICE_OK)
+      return ret;
+   command.str("");
+
+   if (scopeModel_->IsDeviceAvailable(g_Dark_Flap_Tl)) {
+      command << g_Dark_Flap_Tl << "023";
+      ret = core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+      if (ret != DEVICE_OK)
+         return ret;
+      command.str("");
+   }
+
+
    initialized_ = true;
    return DEVICE_OK;
 }
@@ -207,63 +249,15 @@ int LeicaScopeInterface::ClearPort(MM::Device& device, MM::Core& core)
 
 
 /*
- * Utility class for LeicaMonitoringThread
- */
-LeicaMessageParser::LeicaMessageParser(unsigned char* inputStream, long inputStreamLength) :
-   index_(0)
-{
-   inputStream_ = inputStream;
-   inputStreamLength_ = inputStreamLength;
-}
-
-int LeicaMessageParser::GetNextMessage(unsigned char* nextMessage, int& nextMessageLength) {
-   bool startFound = false;
-   bool endFound = false;
-   bool tenFound = false;
-   nextMessageLength = 0;
-   long remainder = index_;
-   while ( (endFound == false) && (index_ < inputStreamLength_) && (nextMessageLength < messageMaxLength_) ) {
-      if (tenFound && inputStream_[index_] == 0x02) {
-         startFound = true;
-         tenFound = false;
-      }
-      else if (tenFound && inputStream_[index_] == 0x03) {
-         endFound = true;
-         tenFound = false;
-      }
-      else if (tenFound && inputStream_[index_] == 0x10) {
-         nextMessage[nextMessageLength] = inputStream_[index_];
-         nextMessageLength++;
-         tenFound = false;
-      }
-      else if (inputStream_[index_] == 0x10)
-         tenFound = true;
-      else if (startFound) {
-         nextMessage[nextMessageLength] = inputStream_[index_];
-         nextMessageLength++;
-      }
-      index_++;
-   }
-   if (endFound)
-      return 0;
-   else {
-      // no more complete message found, return the whole stretch we were considering:
-      for (long i= remainder; i < inputStreamLength_; i++)
-         nextMessage[i-remainder] = inputStream_[i];
-      nextMessageLength = inputStreamLength_ - remainder;
-      return -1;
-   }
-}
-
-/*
  * Thread that continuously monitors messages from the Leica scope and inserts them into a model of the microscope
  */
-LeicaMonitoringThread::LeicaMonitoringThread(MM::Device& device, MM::Core& core, std::string port) :
+LeicaMonitoringThread::LeicaMonitoringThread(MM::Device& device, MM::Core& core, std::string port, LeicaDMIModel* scopeModel) :
    port_(port),
    device_ (device),
    core_ (core),
    stop_ (true),
-   intervalUs_(5000) // check every 5 ms for new messages, 
+   intervalUs_(5000), // check every 5 ms for new messages, 
+   scopeModel_(scopeModel)
 {
 }
 
@@ -283,48 +277,60 @@ int LeicaMonitoringThread::svc() {
 
    printf ("Starting MonitoringThread\n");
 
-   unsigned long dataLength;
-   unsigned long charsRead = 0;
-   unsigned long charsRemaining = 0;
-   unsigned char rcvBuf[LeicaScopeInterface::RCV_BUF_LENGTH];
+   char rcvBuf[LeicaScopeInterface::RCV_BUF_LENGTH];
    memset(rcvBuf, 0, LeicaScopeInterface::RCV_BUF_LENGTH);
 
    while (!stop_) 
    {
       do { 
-         dataLength = LeicaScopeInterface::RCV_BUF_LENGTH - charsRemaining;
-         // Do the scope monitoring stuff here
-         int ret = core_.ReadFromSerial(&(device_), port_.c_str(), rcvBuf + charsRemaining, dataLength, charsRead); 
-         if (ret != DEVICE_OK) {
+         rcvBuf[0] = 0;
+         int ret = core_.GetSerialAnswer(&(device_), port_.c_str(), LeicaScopeInterface::RCV_BUF_LENGTH, rcvBuf, "\r"); 
+         if (ret != DEVICE_OK && ret != ret != DEVICE_SERIAL_TIMEOUT) {
             std::ostringstream oss;
             oss << "Monitoring Thread: ERROR while reading from serial port, error code: " << ret;
             core_.LogMessage(&(device_), oss.str().c_str(), false);
-         } else if (charsRead > 0) {
-            LeicaMessageParser* parser = new LeicaMessageParser(rcvBuf, charsRead + charsRemaining);
-            do {
-               unsigned char message[LeicaMessageParser::messageMaxLength_];
-               int messageLength;
-               ret = parser->GetNextMessage(message, messageLength);
-               if (ret == 0) {
-                  // Report 
-                  std::ostringstream os;
-                  os << "Monitoring Thread incoming message: ";
-                  for (int i=0; i< messageLength; i++)
-                     os << std::hex << (unsigned int)message[i] << " ";
-                  core_.LogMessage(&(device_), os.str().c_str(), true);
-                  // and do the real stuff
-                  interpretMessage(message);
-                }
-               else {
-                  // no more messages, copy remaining (if any) back to beginning of buffer
-                  memset(rcvBuf, 0, LeicaScopeInterface::RCV_BUF_LENGTH);
-                  for (int i = 0; i < messageLength; i++)
-                     rcvBuf[i] = message[i];
-                  charsRemaining = messageLength;
-               }
-            } while (ret == 0);
+         } else if (strlen(rcvBuf) >= 5) {
+            // Analyze incoming messages.  Tokenize and take action based on first toke
+            std::stringstream os(rcvBuf);
+            std::string command;
+            os >> command;
+            // If first char is '$', then this is an event.  Treat as all other incoming messages:
+            if (command[0] == '$')
+               command = command.substr(1, command.length() - 1);
+
+            int deviceId = atoi(command.substr(0,2).c_str());
+            int commandId = atoi(command.substr(2,3).c_str());
+            switch (deviceId) {
+               case (g_Master) :
+                   switch (commandId) {
+                      // Set Method command, set stand to busy
+                      case (29) : 
+                         scopeModel_->method_.SetBusy(true);
+                         break;
+                      case (28):
+                         int pos;
+                         os >> pos;
+                         scopeModel_->method_.SetPosition(pos);
+                         scopeModel_->method_.SetBusy(false);
+                         break;
+                   }
+                   break;
+                case (g_Dark_Flap_Tl) :
+                   switch (commandId) {
+                      case (22) :
+                         scopeModel_->TLShutter_.SetBusy(true);
+                         break;
+                      case (23) :
+                         int pos;
+                         os >> pos;
+                         scopeModel_->TLShutter_.SetPosition(pos);
+                         scopeModel_->TLShutter_.SetBusy(false);
+                         break;
+                   }
+                   break;
+            }
          }
-      } while ((charsRead != 0) && (!stop_)); 
+      } while ((strlen(rcvBuf) > 0) && (!stop_)); 
 
        CDeviceUtils::SleepMs(intervalUs_/1000);
    }

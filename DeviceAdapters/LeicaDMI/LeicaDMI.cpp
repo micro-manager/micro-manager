@@ -77,7 +77,6 @@ void __attribute__ ((destructor)) my_fini(void)
 #endif
 
 using namespace std;
-MM_THREAD_GUARD mutex;
 
 LeicaScopeInterface g_ScopeInterface;
 LeicaDMIModel g_ScopeModel;
@@ -115,7 +114,9 @@ const char* g_LeicaFilterWheel = "LeicaFilterWheel";
 
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_LeicaDeviceName,"Leica AxioObserver controlled through serial interface");
+   AddAvailableDeviceName(g_LeicaDeviceName,"Leica DMI microscope controlled through serial interface");
+   AddAvailableDeviceName(g_LeicaTransmittedLightShutter,"Transmitted Light Shutter"); 
+   /*
    AddAvailableDeviceName(g_LeicaReflector,"Reflector Turret (dichroics)"); 
    AddAvailableDeviceName(g_LeicaNosePiece,"Objective Turret");
    AddAvailableDeviceName(g_LeicaFieldDiaphragm,"Field Diaphragm (fluorescence)");
@@ -126,7 +127,6 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_LeicaTubeLensShutter,"Tube Lens Shutter");
    AddAvailableDeviceName(g_LeicaSidePort,"Side Port");
    AddAvailableDeviceName(g_LeicaReflectedLightShutter,"Reflected Light Shutter"); 
-   AddAvailableDeviceName(g_LeicaTransmittedLightShutter,"Transmitted Light Shutter"); 
    AddAvailableDeviceName(g_LeicaRLFLAttenuator,"Reflected (fluorescence) light attenuator");
    AddAvailableDeviceName(g_LeicaCondenserContrast,"Condenser Contrast");
    AddAvailableDeviceName(g_LeicaCondenserAperture,"Condenser Aperture");
@@ -136,6 +136,7 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_LeicaBasePort,"Base Port switcher"); 
    AddAvailableDeviceName(g_LeicaUniblitz,"Uniblitz Shutter"); 
    AddAvailableDeviceName(g_LeicaFilterWheel,"Filter Wheel"); 
+   */
 }
 using namespace std;
 
@@ -150,13 +151,13 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
 
    if (strcmp(deviceName, g_LeicaDeviceName) == 0)
         return new LeicaScope();
+   else if (strcmp(deviceName, g_LeicaTransmittedLightShutter) == 0)
+        return new  TLShutter();
    /*
    else if (strcmp(deviceName, g_LeicaReflector) == 0)
         return new ReflectorTurret();
    else if (strcmp(deviceName, g_LeicaNosePiece) == 0)
         return new ObjectiveTurret();
-   else if (strcmp(deviceName, g_LeicaTransmittedLightShutter) == 0)
-        return new  TLShutter();
    else if (strcmp(deviceName, g_LeicaFieldDiaphragm) == 0)
         return new Servo(g_FieldDiaphragmServo, g_LeicaFieldDiaphragm, "Field Diaphragm");
    else if (strcmp(deviceName, g_LeicaApertureDiaphragm) == 0)
@@ -369,7 +370,7 @@ int LeicaScope::OnAnswerTimeOut(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// Leica Shutter, This implements a specialized LeicaChanger 
+// Leica Transmitted light Shutter
 ///////////////////////////////////////////////////////////////////////////////
 TLShutter::TLShutter (): 
    initialized_ (false),
@@ -470,9 +471,9 @@ int TLShutter::SetOpen(bool open)
 {
    int position;
    if (open)
-      position = 2;
-   else
       position = 1;
+   else
+      position = 0;
 
    int ret = g_ScopeInterface.SetTLShutterPosition(*this, *GetCoreCallback(), position);
    if (ret != DEVICE_OK)
@@ -489,10 +490,9 @@ int TLShutter::GetOpen(bool &open)
    if (ret != DEVICE_OK)
       return ret;
 
-   // Assume that closed == 1, open == 2 ?
-   if (position == 1)
+   if (position == 0)
       open = false;
-   else if (position == 2)
+   else if (position == 1)
       open = true;
    else
       return ERR_UNEXPECTED_ANSWER;

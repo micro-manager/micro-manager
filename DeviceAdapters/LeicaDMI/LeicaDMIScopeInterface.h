@@ -79,23 +79,10 @@ class LeicaScopeInterface
       bool initialized_;
 };
 
-class LeicaMessageParser{
-   public:
-      LeicaMessageParser(unsigned char* inputStream, long inputStreamLength);
-      ~LeicaMessageParser(){};
-      int GetNextMessage(unsigned char* nextMessage, int& nextMessageLength);
-      static const int messageMaxLength_ = 64;
-
-   private:
-      unsigned char* inputStream_;
-      long inputStreamLength_;
-      long index_;
-};
-
 class LeicaMonitoringThread : public MMDeviceThreadBase
 {
    public:
-      LeicaMonitoringThread(MM::Device& device, MM::Core& core, std::string port); 
+      LeicaMonitoringThread(MM::Device& device, MM::Core& core, std::string port, LeicaDMIModel* scopeModel); 
       ~LeicaMonitoringThread(); 
       //MM_THREAD_FUNC_DECL svc(void *arg);
       int svc();
@@ -113,6 +100,7 @@ class LeicaMonitoringThread : public MMDeviceThreadBase
       MM::Core& core_;
       bool stop_;
       long intervalUs_;
+      LeicaDMIModel* scopeModel_;
       LeicaMonitoringThread& operator=(LeicaMonitoringThread& ) {assert(false); return *this;}
 };
 
