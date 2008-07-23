@@ -125,11 +125,11 @@ private:
 };
 
 
-class ReflectorTurret : public CStateDeviceBase<ReflectorTurret>
+class ILTurret : public CStateDeviceBase<ILTurret>
 {
 public:
-   ReflectorTurret();
-   ~ReflectorTurret();
+   ILTurret();
+   ~ILTurret();
 
    // MMDevice API
    int Initialize();

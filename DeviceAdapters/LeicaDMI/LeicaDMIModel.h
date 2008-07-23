@@ -100,7 +100,7 @@ public:
    LeicaDeviceModel method_;   
    LeicaDeviceModel TLShutter_;
    LeicaDeviceModel ILShutter_;
-   LeicaDeviceModel ReflectorTurret_;
+   LeicaDeviceModel ILTurret_;
 
 private:
    std::vector<bool> availableDevices_;

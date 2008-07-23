@@ -54,12 +54,16 @@ class LeicaScopeInterface
       MM::MMTime GetTimeOutTime(){ return timeOutTime_;}
       void SetTimeOutTime(MM::MMTime timeOutTime) { timeOutTime_ = timeOutTime;}
 
+      // Utility function
+      int GetAnswer(MM::Device& device, MM::Core& core, const char* command, std::string& answer);
       int GetStandInfo(MM::Device& device, MM::Core& core);
+      int GetILTurretInfo(MM::Device& device, MM::Core& core);
      
       // commands to set individual components
       int SetMethod(MM::Device& device, MM::Core& core, int position);
       int SetTLShutterPosition(MM::Device& device, MM::Core& core, int position);
       int SetILShutterPosition(MM::Device& device, MM::Core& core, int position);
+      int SetILTurretPosition(MM::Device& device, MM::Core& core, int position);
       int SetReflectorTurretPosition(MM::Device& device, MM::Core& core, int position);
 
       LeicaMonitoringThread* monitoringThread_;

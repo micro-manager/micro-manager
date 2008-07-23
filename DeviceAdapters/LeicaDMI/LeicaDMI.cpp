@@ -87,7 +87,7 @@ LeicaDMIModel g_ScopeModel;
 
 // Leica Devices
 const char* g_LeicaDeviceName = "LeicaScope";
-const char* g_LeicaReflector = "LeicaReflectorTurret";
+const char* g_LeicaReflector = "LeicaILTurret";
 const char* g_LeicaNosePiece = "LeicaObjectiveTurret";
 const char* g_LeicaFieldDiaphragm = "LeicaFieldDiaphragm";
 const char* g_LeicaApertureDiaphragm = "LeicaApertureDiaphragm";
@@ -158,7 +158,7 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
         return new  ILShutter();
    /*
    else if (strcmp(deviceName, g_LeicaReflector) == 0)
-        return new ReflectorTurret();
+        return new ILTurret();
    else if (strcmp(deviceName, g_LeicaNosePiece) == 0)
         return new ObjectiveTurret();
    else if (strcmp(deviceName, g_LeicaFieldDiaphragm) == 0)
@@ -715,7 +715,7 @@ int TLShutter::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 // General Turret Object, implement all Changers. Inherit and override for
 // more specialized requirements (like specific labels)
 ///////////////////////////////////////////////////////////////////////////////
-ReflectorTurret::ReflectorTurret():
+ILTurret::ILTurret():
    numPos_(5),
    initialized_ (false),
    name_("Dichroics turret"),
@@ -741,17 +741,17 @@ ReflectorTurret::ReflectorTurret():
    UpdateStatus();
 }
 
-ReflectorTurret::~ReflectorTurret()
+ILTurret::~ILTurret()
 {
    Shutdown();
 }
 
-void ReflectorTurret::GetName(char* name) const
+void ILTurret::GetName(char* name) const
 {
    CDeviceUtils::CopyLimitedString(name, name_.c_str());
 }
 
-int ReflectorTurret::Initialize()
+int ILTurret::Initialize()
 {
    if (!g_ScopeInterface.portInitialized_)
       return ERR_SCOPE_NOT_ACTIVE;
@@ -772,7 +772,7 @@ int ReflectorTurret::Initialize()
 
    // State
    // -----
-   CPropertyAction* pAct = new CPropertyAction(this, &ReflectorTurret::OnState);
+   CPropertyAction* pAct = new CPropertyAction(this, &ILTurret::OnState);
    ret = CreateProperty(MM::g_Keyword_State, "1", MM::Integer, false, pAct);
    if (ret != DEVICE_OK)
       return ret;
@@ -786,7 +786,7 @@ int ReflectorTurret::Initialize()
 
    // create default positions and labels
    int maxPos;
-   ret = g_ScopeModel.ReflectorTurret_.GetMaxPosition(maxPos);
+   ret = g_ScopeModel.ILTurret_.GetMaxPosition(maxPos);
    if (ret != DEVICE_OK)
       return ret;
    numPos_ = maxPos;
@@ -812,17 +812,17 @@ int ReflectorTurret::Initialize()
    return DEVICE_OK;
 }
 
-int ReflectorTurret::Shutdown()
+int ILTurret::Shutdown()
 {
    if (initialized_) 
       initialized_ = false;
    return DEVICE_OK;
 }
 
-bool ReflectorTurret::Busy()
+bool ILTurret::Busy()
 {
    bool busy;
-   int ret = g_ScopeModel.ReflectorTurret_.GetBusy(busy);
+   int ret = g_ScopeModel.ILTurret_.GetBusy(busy);
    if (ret != DEVICE_OK)  // This is bad and should not happen
       return false;
 
@@ -833,12 +833,12 @@ bool ReflectorTurret::Busy()
 // Action handlers                                                           
 ///////////////////////////////////////////////////////////////////////////////
 
-int ReflectorTurret::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
+int ILTurret::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
       int pos;
-      int ret = g_ScopeModel.ReflectorTurret_.GetPosition(pos);
+      int ret = g_ScopeModel.ILTurret_.GetPosition(pos);
       if (ret != DEVICE_OK)
          return ret;
       pos_ = pos -1;
@@ -849,7 +849,7 @@ int ReflectorTurret::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(pos_);
       int pos = pos_ + 1;
       if ((pos > 0) && (pos <= (int) numPos_))
-         return g_ScopeInterface.SetReflectorTurretPosition(*this, *GetCoreCallback(), pos);
+         return g_ScopeInterface.SetILTurretPosition(*this, *GetCoreCallback(), pos);
       else
          return ERR_INVALID_TURRET_POSITION;
    }
