@@ -60,6 +60,7 @@ public interface AcquisitionEngine {
    public void stop(boolean interrupted);
    public void setFinished();
    public boolean isAcquisitionRunning();
+   public boolean isMultiFieldRunning();
    public int getCurrentFrameCount();
    public void shutdown();
    public void setPause(boolean state);

@@ -9,7 +9,6 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 import javax.swing.SpringLayout;
-
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.metadata.MMAcqDataException;
 import org.micromanager.metadata.WellAcquisitionData;
@@ -28,14 +27,46 @@ public class PlateEditor extends JDialog {
    private SBSPlate plate_;
    private PlatePanel platePanel_;
    private ScriptInterface app_;
-   
-  public static void main(String args[]) {
+   private ScanThread scanThread_ = null;
+
+   public static void main(String args[]) {
       try {
          PlateEditor dlg = new PlateEditor(null);
          dlg.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
          dlg.setVisible(true);
       } catch (Exception e) {
          e.printStackTrace();
+      }
+   }
+
+   /**
+    * Plate scanning thread
+    *
+    */
+   private class ScanThread extends Thread {
+      public void run() {
+         String plateRoot = "c:/acquisitiondata/100XHCS";
+         String plateName = "plate";
+         PlateAcquisitionData pad = new PlateAcquisitionData();
+
+         try {
+            pad.createNew(plateName, plateRoot, true);
+            WellPositionList[] wpl = platePanel_.getWellPositions();
+            for (int i=0; i<wpl.length; i++) {
+               PositionList pl = wpl[i].getSitePositions();
+               app_.setPositionList(pl);
+               WellAcquisitionData wad = pad.createNewWell(wpl[i].label_);
+               app_.runWellScan(wad);
+               Thread.sleep(50);
+            }
+         } catch (MMScriptException e) {
+            e.printStackTrace();
+         } catch (MMAcqDataException e) {
+            e.printStackTrace();
+         } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+         }
       }
    }
 
@@ -48,7 +79,7 @@ public class PlateEditor extends JDialog {
       springLayout = new SpringLayout();
       getContentPane().setLayout(springLayout);
       plate_ = new SBSPlate();
-      
+
       setTitle("HCS plate editor");
       setBounds(100, 100, 654, 448);
 
@@ -79,7 +110,7 @@ public class PlateEditor extends JDialog {
          public void actionPerformed(final ActionEvent e) {
             plate_.initialize((String)comboBox.getSelectedItem());
             PositionList sites = generateSites(Integer.parseInt(rowsField_.getText()), Integer.parseInt(columnsField_.getText()), 
-                                               Double.parseDouble(spacingField_.getText()));
+                  Double.parseDouble(spacingField_.getText()));
             platePanel_.refreshImagingSites(sites);
             platePanel_.repaint();
          }
@@ -181,6 +212,12 @@ public class PlateEditor extends JDialog {
       springLayout.putConstraint(SpringLayout.WEST, scanButton, -106, SpringLayout.EAST, setPositionListButton);
 
       final JButton stopButton = new JButton();
+      stopButton.addActionListener(new ActionListener() {
+         public void actionPerformed(final ActionEvent e) {
+            if (scanThread_ != null && scanThread_.isAlive())
+               scanThread_.interrupt();
+         }
+      });
       stopButton.setText("Stop");
       getContentPane().add(stopButton);
       springLayout.putConstraint(SpringLayout.SOUTH, stopButton, 31, SpringLayout.SOUTH, scanButton);
@@ -189,7 +226,7 @@ public class PlateEditor extends JDialog {
       springLayout.putConstraint(SpringLayout.WEST, stopButton, 0, SpringLayout.WEST, scanButton);
       //
    }
-   
+
    private void setPositionList() {
       WellPositionList[] wpl = platePanel_.getWellPositions();
       PositionList platePl = new PositionList();
@@ -201,7 +238,7 @@ public class PlateEditor extends JDialog {
             platePl.addPosition(pl.getPosition(j));
          }
       }
-      
+
       try {
          if (app_ != null)
             app_.setPositionList(platePl);
@@ -209,10 +246,10 @@ public class PlateEditor extends JDialog {
          // TODO Auto-generated catch block
          e.printStackTrace();
       }
-         
+
    }
 
-   
+
    private PositionList generateSites(int rows, int cols, double spacing) {
       PositionList sites = new PositionList();
       for (int i=0; i<rows; i++)
@@ -223,52 +260,33 @@ public class PlateEditor extends JDialog {
                x = - cols * spacing /2.0 + spacing*j;
             else
                x = 0.0;
-            
+
             if (rows > 1)
                y = - rows * spacing/2.0 + spacing*i;
             else
                y = 0.0;
-            
+
             MultiStagePosition mps = new MultiStagePosition();
             StagePosition sp = new StagePosition();
             sp.numAxes = 2;
             sp.x = x;
             sp.y = y;
             System.out.println("("+i+","+j+") = " + x + "," + y);
-            
+
             mps.add(sp);
             sites.addPosition(mps);            
          }
-            
+
       return sites;
    }
-   
-   
+
+
    protected void scan() {
       if (app_ == null)
          return;
-
-      String plateRoot = "c:/acquisitiondata/100XHCS";
-      String plateName = "plate";
-      PlateAcquisitionData pad = new PlateAcquisitionData();
       
-      try {
-         pad.createNew(plateName, plateRoot, true);
-         WellPositionList[] wpl = platePanel_.getWellPositions();
-         for (int i=0; i<wpl.length; i++) {
-            PositionList pl = wpl[i].getSitePositions();
-            app_.setPositionList(pl);
-            WellAcquisitionData wad = pad.createNewWell(wpl[i].label_);
-            app_.runWellScan(wad);
-         }
-      } catch (MMScriptException e) {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
-      } catch (MMAcqDataException e) {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
-      }
-
+      scanThread_ = new ScanThread();
+      scanThread_.start();
    }
 
 }

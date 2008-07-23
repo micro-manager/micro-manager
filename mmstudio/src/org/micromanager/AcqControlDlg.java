@@ -1383,6 +1383,16 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
          applySettings();
          acqEng_.setSaveFiles(true);
          acqEng_.acquireWellScan(wad);
+         // wait until acquisition is done
+         while (acqEng_.isMultiFieldRunning()) {
+            try {
+               System.out.println("DBG: Waiting in AcqWindow");
+               Thread.sleep(1000);
+            } catch (InterruptedException e) {
+               return false;
+            }
+         }
+         
       } catch(MMException e) {
          handleException(e);
          return false;

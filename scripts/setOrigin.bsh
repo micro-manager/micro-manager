@@ -1,0 +1,1 @@
+mmc.setAdapterOriginXY(mmc.getXYStageDevice(), 14380.0, 11240.0);

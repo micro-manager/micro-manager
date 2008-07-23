@@ -141,8 +141,6 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
    private long imgHeight_ = 0;
    private long imgDepth_ = 0;
 
-   private PlatformIndependentGuidGen guidgen_;
-
    private boolean useMultiplePositions_;
 
    private int posMode_ = PositionMode.TIME_LAPSE;
@@ -231,10 +229,12 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
                e1.printStackTrace();
             }
             startAcquisition();
+            System.out.println("DBG: MFT started");
 
             // wait until acquisition is done
             while (isAcquisitionRunning() || !acqFinished_) {
                try {
+                  System.out.println("DBG: Waiting");
                   Thread.sleep(1000);
                } catch (InterruptedException e) {
                   return;
@@ -247,7 +247,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
             posCount_++;
 
             // shut down window if more data is coming       
-            if (posCount_ < posList_.getNumberOfPositions() && saveFiles_) {
+            if (/*posCount_ < posList_.getNumberOfPositions() && */  saveFiles_) {
                SwingUtilities.invokeLater((new DisposeI5d(i5dWin_[0])));
                i5dWin_[0] = null;
                img5d_[0] = null;
@@ -307,7 +307,6 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
       posCount_ = 0;
       //metadata_ = new JSONObject();
       rootName_ = new String(DEFAULT_ROOT_NAME);
-      guidgen_ = PlatformIndependentGuidGen.getInstance();
       channelGroup_ = new String(ChannelSpec.DEFAULT_CHANNEL_GROUP);
       posList_ = new PositionList();
    }
@@ -728,6 +727,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
             MultiStagePosition pos = null;
             if (posIdx != previousPosIdx_) {
                pos = posList_.getPosition(posIdx);
+               // TODO: in the case of multi-field mode the command below is redundant
                MultiStagePosition.goToPosition(pos, core_);
                core_.waitForSystem();
             } else
@@ -1065,6 +1065,10 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
          return false;
 
       return acqTask_.isActive() || acqTask_.isRunning();
+   }
+   
+   public boolean isMultiFieldRunning() {
+      return multiFieldThread_.isAlive();
    }
 
    private boolean isFocusStageAvailable() {
