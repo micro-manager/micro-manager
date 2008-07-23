@@ -33,6 +33,17 @@ public class PlatePanel extends JPanel {
    WellPositionList[] wells_;
    Rectangle siteRect_ = new Rectangle(3, 3);
    
+   private class WellBox {
+      String label_;
+      Color color_;
+      Rectangle rect_;
+      
+      public WellBox() {
+         label_ = new String();
+         //color_ = new Color();
+      }
+   }
+   
    public PlatePanel(SBSPlate plate) {
       plate_ = plate;
       wells_ = plate_.generatePositions(SBSPlate.DEFAULT_XYSTAGE_NAME);
@@ -139,8 +150,13 @@ public class PlatePanel extends JPanel {
    }
 
    private void drawLabels(Graphics2D g, Rectangle box) {
-      double wellX = box.getWidth() / plate_.getNumberOfColumns();
-      double wellY = box.getHeight() / plate_.getNumberOfRows();
+      double xFact = box.getWidth()/plate_.getXSize();
+      double yFact = box.getHeight()/plate_.getYSize();
+      double xOffset = plate_.getTopLeftX() * xFact;
+      double yOffset = plate_.getTopLeftY() * yFact;
+      
+      double wellX = (box.getWidth() - 2.0*xOffset) / plate_.getNumberOfColumns();
+      double wellY = (box.getHeight() - 2.0*yOffset) / plate_.getNumberOfRows();
       
       FontRenderContext frc = g.getFontRenderContext();
       Font f = new Font("Helvetica",Font.BOLD, fontSizePt_);
@@ -158,7 +174,7 @@ public class PlatePanel extends JPanel {
       
       try {
          for (int i=0; i<plate_.getNumberOfColumns(); i++) {
-            labelBoxX.x = (int)(i*wellX + 0.5 + xMargin_);
+            labelBoxX.x = (int)(i*wellX + 0.5 + xMargin_ + xOffset);
             TextLayout tl = new TextLayout(plate_.getColumnLabel(i+1), f, frc);
             Rectangle2D b = tl.getBounds();
             Point loc = getLocation(labelBoxX, b.getBounds());
@@ -166,7 +182,7 @@ public class PlatePanel extends JPanel {
          }
          
          for (int i=0; i<plate_.getNumberOfRows(); i++) {
-            labelBoxY.y = (int)(i*wellY + 0.5 + yMargin_ + wellY);
+            labelBoxY.y = (int)(i*wellY + 0.5 + yMargin_ + wellY + yOffset);
             TextLayout tl = new TextLayout(plate_.getRowLabel(i+1), f, frc);
             Rectangle2D b = tl.getBounds();
             Point loc = getLocation(labelBoxY, b.getBounds());

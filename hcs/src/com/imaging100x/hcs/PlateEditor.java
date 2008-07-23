@@ -9,6 +9,8 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 import javax.swing.SpringLayout;
+import javax.swing.UIManager;
+
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.metadata.MMAcqDataException;
 import org.micromanager.metadata.WellAcquisitionData;
@@ -30,7 +32,8 @@ public class PlateEditor extends JDialog {
    private ScanThread scanThread_ = null;
 
    public static void main(String args[]) {
-      try {
+     try {
+         UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
          PlateEditor dlg = new PlateEditor(null);
          dlg.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
          dlg.setVisible(true);
