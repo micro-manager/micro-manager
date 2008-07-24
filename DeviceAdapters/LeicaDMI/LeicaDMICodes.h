@@ -50,3 +50,4 @@ const int g_TL_Polarizer = 98; // motorizedin the condenser
 #define ERR_MODULE_NOT_FOUND         10014
 #define ERR_ANSWER_TIMEOUT           10015
 #define ERR_PORT_NOT_OPEN            10016
+#define ERR_TURRET_NOT_ENGAGED       10017

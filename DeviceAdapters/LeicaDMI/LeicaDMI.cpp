@@ -728,6 +728,7 @@ ILTurret::ILTurret():
    SetErrorText(ERR_SCOPE_NOT_ACTIVE, "Leica Scope is not initialized.  It is needed for this Turret to work");
    SetErrorText(ERR_INVALID_TURRET_POSITION, "The requested position is not available on this turret");
    SetErrorText(ERR_MODULE_NOT_FOUND, "This turret is not installed in this Leica microscope");
+   SetErrorText(ERR_TURRET_NOT_ENGAGED, "Incident Light Turret is not engaged");
 
    // Create pre-initialization properties
    // ------------------------------------
@@ -780,7 +781,7 @@ int ILTurret::Initialize()
    // Label
    // -----
    pAct = new CPropertyAction(this, &CStateBase::OnLabel);
-   ret = CreateProperty(MM::g_Keyword_Label, "Position-1", MM::String, false, pAct);
+   ret = CreateProperty(MM::g_Keyword_Label, "1-", MM::String, false, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -791,16 +792,11 @@ int ILTurret::Initialize()
       return ret;
    numPos_ = maxPos;
 
-   const int bufSize = 32;
-   char buf[bufSize];
    for (unsigned i=0; i < numPos_; i++)
    {
-      #ifdef WIN32
-      sprintf(buf, "Position-%d", i+1);
-      #else
-      snprintf(buf, bufSize, "Position-%d", i+1);
-      #endif
-      SetPositionLabel(i, buf);
+      ostringstream os;
+      os << i+1 << "-" << g_ScopeModel.ILTurret_.cube_[i+1].name;
+      SetPositionLabel(i, os.str().c_str());
    }
 
    ret = UpdateStatus();
@@ -841,6 +837,8 @@ int ILTurret::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
       int ret = g_ScopeModel.ILTurret_.GetPosition(pos);
       if (ret != DEVICE_OK)
          return ret;
+      if (pos == 0)
+         return ERR_TURRET_NOT_ENGAGED;
       pos_ = pos -1;
       pProp->Set(pos_);
    }
@@ -848,9 +846,29 @@ int ILTurret::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       pProp->Get(pos_);
       int pos = pos_ + 1;
-      if ((pos > 0) && (pos <= (int) numPos_))
+      if ((pos > 0) && (pos <= (int) numPos_)) {
+         // check if the new position is allowed with this method
+         int method;
+         int ret = g_ScopeModel.method_.GetPosition(method);
+         if (!g_ScopeModel.ILTurret_.cube_[pos].IsMethodAvailable(method)) {
+            // the new cube does not support the current method.  Look for a method:
+            // Look first in the FLUO methods, than in all available methods
+            int i = 10;
+            while (!g_ScopeModel.ILTurret_.cube_[pos].IsMethodAvailable(i) && i < 13) {
+               i++;
+            }
+            if (!g_ScopeModel.ILTurret_.cube_[pos].IsMethodAvailable(i)) {
+               int i = 0;
+               while (!g_ScopeModel.ILTurret_.cube_[pos].IsMethodAvailable(i) && i < 16) {
+                  i++;
+               }
+            }
+            if (g_ScopeModel.ILTurret_.cube_[pos].IsMethodAvailable(i))
+               g_ScopeInterface.SetMethod(*this, *GetCoreCallback(), i);
+         }
+
          return g_ScopeInterface.SetILTurretPosition(*this, *GetCoreCallback(), pos);
-      else
+      } else
          return ERR_INVALID_TURRET_POSITION;
    }
    return DEVICE_OK;

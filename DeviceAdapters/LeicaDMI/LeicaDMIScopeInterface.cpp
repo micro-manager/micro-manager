@@ -95,8 +95,8 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
    ClearRcvBuf();
    ClearPort(device, core);
 
-   std::string version, answer;
    // Get info about stand, firmware and available devices and store in the model
+   std::string version, answer;
    int ret = GetStandInfo(device, core);
    if (ret != DEVICE_OK) 
       return ret;
@@ -107,13 +107,14 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
       scopeModel_->ILShutter_.SetMaxPosition(1);
       scopeModel_->ILShutter_.SetMinPosition(0);
    }
+
    if (scopeModel_->IsDeviceAvailable(g_IL_Turret)) {
       ret = GetILTurretInfo(device, core);
       if (ret != DEVICE_OK)
          return ret;
    }
 
-   // TODO: get info about all devices that we are interested in (make sure they are available)
+   // TODO: get info about all other devices that we are interested in (make sure they are available)
 
    // Start all events at this point
 
@@ -132,6 +133,7 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
          return ret;
       command.str("");
    }
+
    // Start event reporting for IL Turret
    if (scopeModel_->IsDeviceAvailable(g_IL_Turret)) {
       command << g_IL_Turret << "003 1";
@@ -162,6 +164,13 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
       command.str("");
    }
 
+   if (scopeModel_->IsDeviceAvailable(g_IL_Turret)) {
+      command << g_IL_Turret << "023";
+      ret = core.SetSerialCommand(&device, port_.c_str(), command.str().c_str(), "\r");
+      if (ret != DEVICE_OK)
+         return ret;
+      command.str("");
+   }
 
    initialized_ = true;
    return DEVICE_OK;
@@ -266,7 +275,7 @@ int LeicaScopeInterface::GetStandInfo(MM::Device& device, MM::Core& core)
 int LeicaScopeInterface::GetILTurretInfo(MM::Device& device, MM::Core& core)
 {
    std::ostringstream command;
-   std::string answer;
+   std::string answer, token;
 
    // Get minimum position
    command << g_IL_Turret << "031";
@@ -292,18 +301,67 @@ int LeicaScopeInterface::GetILTurretInfo(MM::Device& device, MM::Core& core)
    command.str("");
 
    int maxPos;
+   ts << answer;
    ts >> maxPos;
    ts >> maxPos;
    if ( 0 < maxPos && maxPos < 10)
-   scopeModel_->ILTurret_.SetMinPosition(minPos);
+      scopeModel_->ILTurret_.SetMinPosition(minPos);
+   ts.str("");
 
+   // Get name of cube and aperture protection type
+   for (int i=minPos; i<=maxPos; i++) {
+      command << g_IL_Turret << "027 " << i;
+      ret = GetAnswer(device, core, command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+      ts << answer;
+      ts >> token;
+      if (token == (g_IL_Turret + "027")) {
+         int j;
+         ts >> j;
+         if (i==j) {
+            ts >> token;
+            scopeModel_->ILTurret_.cube_[i].name = token.substr(0,token.size()-1);
+            if (token.substr(token.size()-1,1) == "1")
+               scopeModel_->ILTurret_.cube_[i].apProtection = true;
+            else
+               scopeModel_->ILTurret_.cube_[i].apProtection = false;
+         }
+      }
+      command.str("");
+      ts.str("");
+   }
+
+   // Get methods allowed with each cube
+   for (int i=minPos; i<=maxPos; i++) {
+      command << g_IL_Turret << "030 " << i;
+      ret = GetAnswer(device, core, command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+      ts << answer;
+      ts >> token;
+      if (token == (g_IL_Turret + "030")) {
+         int j;
+         ts >> j;
+         if (i==j) {
+            ts >> token;
+            for (int k=0; k< 16; k++) {
+               if (token[k] == '1') {
+                  scopeModel_->ILTurret_.cube_[i].cubeMethods_[k] = true;
+               }
+            }
+         }
+      }
+      command.str("");
+      ts.str("");
+   }
 
    return DEVICE_OK;
 }
 
 /**
  * Sends command to the microscope to set requested method
- * Does not listen for answers (should be causght in the monitoringthread
+ * Does not listen for answers (should be caught in the monitoringthread)
  */
 int LeicaScopeInterface::SetMethod(MM::Device& device, MM::Core& core, int position)
 {
@@ -313,7 +371,7 @@ int LeicaScopeInterface::SetMethod(MM::Device& device, MM::Core& core, int posit
    return core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
 }
 
-/*
+/**
  * Sets state of transmited light shutter
  */
 int LeicaScopeInterface::SetTLShutterPosition(MM::Device& device, MM::Core& core, int position)
@@ -324,7 +382,7 @@ int LeicaScopeInterface::SetTLShutterPosition(MM::Device& device, MM::Core& core
    return core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
 }
 
-/*
+/**
  * Sets state of incident light shutter
  */
 int LeicaScopeInterface::SetILShutterPosition(MM::Device& device, MM::Core& core, int position)
@@ -335,7 +393,7 @@ int LeicaScopeInterface::SetILShutterPosition(MM::Device& device, MM::Core& core
    return core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
 }
 
-/*
+/**
  * Sets state of reflector Turret
  */
 int LeicaScopeInterface::SetILTurretPosition(MM::Device& device, MM::Core& core, int position)
@@ -346,9 +404,11 @@ int LeicaScopeInterface::SetILTurretPosition(MM::Device& device, MM::Core& core,
    return core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
 }
 
+/**
+ * Clear contents of serial port 
+ */
 int LeicaScopeInterface::ClearPort(MM::Device& device, MM::Core& core)
 {
-   // Clear contents of serial port 
    const unsigned int bufSize = 255;
    unsigned char clear[bufSize];
    unsigned long read = bufSize;
@@ -399,6 +459,7 @@ int LeicaMonitoringThread::svc() {
    {
       do { 
          rcvBuf[0] = 0;
+         // TODO: listen to incoming characters directly and break when it is "\r"
          int ret = core_.GetSerialAnswer(&(device_), port_.c_str(), LeicaScopeInterface::RCV_BUF_LENGTH, rcvBuf, "\r"); 
          if (ret != DEVICE_OK && ret != ret != DEVICE_SERIAL_TIMEOUT && !stop_) {
             std::ostringstream oss;

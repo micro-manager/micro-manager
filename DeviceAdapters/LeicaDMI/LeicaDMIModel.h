@@ -67,6 +67,26 @@ private:
    int minPosition_;
 };
 
+class LeicaCubeModel
+{
+public:
+   LeicaCubeModel();
+
+   bool IsMethodAvailable(int methodId);
+
+   bool apProtection;
+   std::string name;
+   std::vector<bool> cubeMethods_;
+};
+
+class LeicaILTurretModel : public LeicaDeviceModel
+{
+public:
+   LeicaILTurretModel();
+   std::vector<LeicaCubeModel> cube_;
+
+   static const int maxNrCubes_ = 8;
+};
 
 /*
  * Abstract model ofthe Lecia DMI microscope
@@ -77,6 +97,8 @@ private:
 
 class LeicaDMIModel
 {
+   friend class LeicaCubeModel;
+
 public:
    LeicaDMIModel();
    ~LeicaDMIModel();
@@ -100,7 +122,7 @@ public:
    LeicaDeviceModel method_;   
    LeicaDeviceModel TLShutter_;
    LeicaDeviceModel ILShutter_;
-   LeicaDeviceModel ILTurret_;
+   LeicaILTurretModel ILTurret_;
 
 private:
    std::vector<bool> availableDevices_;

@@ -83,13 +83,30 @@ int LeicaDeviceModel::GetBusy(bool& busy)
    return DEVICE_OK;
 }
 
+LeicaCubeModel::LeicaCubeModel() :
+   cubeMethods_(LeicaDMIModel::maxNrMethods_, false)
+{
+}
+
+bool LeicaCubeModel::IsMethodAvailable(int methodId)
+{
+   return cubeMethods_[methodId];
+}
+
+LeicaILTurretModel::LeicaILTurretModel() :
+   cube_(maxNrCubes_)
+{
+   LeicaDeviceModel::LeicaDeviceModel();
+}
+
+
 /*
  * Class that keeps a model of the state of the Leica DMI microscope
  */
 LeicaDMIModel::LeicaDMIModel() :
-   availableDevices_(100, false),
-   availableMethods_(16, false),
-   methodNames_(16)
+   availableDevices_(maxNrDevices_, false),
+   availableMethods_(maxNrMethods_, false),
+   methodNames_(maxNrMethods_)
 {
    methodNames_[0] = "TL BF";
    methodNames_[1] = "TL PH";
