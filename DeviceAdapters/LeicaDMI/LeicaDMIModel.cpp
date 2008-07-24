@@ -83,6 +83,9 @@ int LeicaDeviceModel::GetBusy(bool& busy)
    return DEVICE_OK;
 }
 
+/*
+ * Holds information about individual reflector cubes
+ */
 LeicaCubeModel::LeicaCubeModel() :
    cubeMethods_(LeicaDMIModel::maxNrMethods_, false)
 {
@@ -93,8 +96,34 @@ bool LeicaCubeModel::IsMethodAvailable(int methodId)
    return cubeMethods_[methodId];
 }
 
+/*
+ * IL model. Inherits from LeicaDeviceModel
+ */
 LeicaILTurretModel::LeicaILTurretModel() :
    cube_(maxNrCubes_)
+{
+   LeicaDeviceModel::LeicaDeviceModel();
+   position_ = 1;
+}
+
+/*
+ * Holds info about individual objectives
+ */
+LeicaObjectiveModel::LeicaObjectiveModel() :
+   methods_(LeicaDMIModel::maxNrMethods_, false)
+{
+}
+
+bool LeicaObjectiveModel::IsMethodAvailable(int methodId)
+{
+   return methods_[methodId];
+}
+
+/*
+ * ObjectiveTurret model. Inherits from LeicaDeviceModel
+ */
+LeicaObjectiveTurretModel::LeicaObjectiveTurretModel() :
+   objective_(maxNrObjectives_)
 {
    LeicaDeviceModel::LeicaDeviceModel();
 }

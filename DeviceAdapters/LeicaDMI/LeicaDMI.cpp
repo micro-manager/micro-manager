@@ -86,28 +86,28 @@ LeicaDMIModel g_ScopeModel;
 // The device name needs to be a class name in this file
 
 // Leica Devices
-const char* g_LeicaDeviceName = "LeicaScope";
-const char* g_LeicaReflector = "LeicaILTurret";
-const char* g_LeicaNosePiece = "LeicaObjectiveTurret";
-const char* g_LeicaFieldDiaphragm = "LeicaFieldDiaphragm";
-const char* g_LeicaApertureDiaphragm = "LeicaApertureDiaphragm";
-const char* g_LeicaFocusAxis = "LeicaFocusAxis";
-const char* g_LeicaTubeLens = "LeicaTubeLens";
-const char* g_LeicaTubeLensShutter = "LeicaTubeLensShutter";
-const char* g_LeicaSidePort = "LeicaSidePort";
+const char* g_LeicaDeviceName = "Scope";
+const char* g_LeicaReflector = "IL-Turret";
+const char* g_LeicaNosePiece = "ObjectiveTurret";
+const char* g_LeicaFieldDiaphragm = "FieldDiaphragm";
+const char* g_LeicaApertureDiaphragm = "ApertureDiaphragm";
+const char* g_LeicaFocusAxis = "FocusAxis";
+const char* g_LeicaTubeLens = "TubeLens";
+const char* g_LeicaTubeLensShutter = "TubeLensShutter";
+const char* g_LeicaSidePort = "SidePort";
 const char* g_LeicaIncidentLightShutter = "IL-Shutter";
 const char* g_LeicaTransmittedLightShutter = "TL-Shutter";
-const char* g_LeicaHalogenLightSwitch = "LeicaHalogenLightSwitch";
-const char* g_LeicaRLFLAttenuator = "LeicaRL-FLAttenuator";
-const char* g_LeicaCondenserContrast = "LeicaCondenserContrast";
-const char* g_LeicaCondenserAperture = "LeicaCondenserAperture";
-const char* g_LeicaXYStage = "LeicaXYStage";
-const char* g_LeicaHBOLamp = "LeicaHBOLamp";
-const char* g_LeicaHalogenLamp = "LeicaHalogenLamp";
-const char* g_LeicaLSMPort = "LeicaLSMPort";
-const char* g_LeicaBasePort = "LeicaBasePort";
-const char* g_LeicaUniblitz = "LeicaUniblitz";
-const char* g_LeicaFilterWheel = "LeicaFilterWheel";
+const char* g_LeicaHalogenLightSwitch = "HalogenLightSwitch";
+const char* g_LeicaRLFLAttenuator = "RL-FLAttenuator";
+const char* g_LeicaCondenserContrast = "CondenserContrast";
+const char* g_LeicaCondenserAperture = "CondenserAperture";
+const char* g_LeicaXYStage = "XYStage";
+const char* g_LeicaHBOLamp = "HBOLamp";
+const char* g_LeicaHalogenLamp = "HalogenLamp";
+const char* g_LeicaLSMPort = "LSMPort";
+const char* g_LeicaBasePort = "BasePort";
+const char* g_LeicaUniblitz = "Uniblitz";
+const char* g_LeicaFilterWheel = "FilterWheel";
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -117,8 +117,8 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_LeicaDeviceName,"Leica DMI microscope controlled through serial interface");
    AddAvailableDeviceName(g_LeicaTransmittedLightShutter,"Transmitted Light Shutter"); 
    AddAvailableDeviceName(g_LeicaIncidentLightShutter,"Incident Light Shutter"); 
-   /*
    AddAvailableDeviceName(g_LeicaReflector,"Reflector Turret (dichroics)"); 
+   /*
    AddAvailableDeviceName(g_LeicaNosePiece,"Objective Turret");
    AddAvailableDeviceName(g_LeicaFieldDiaphragm,"Field Diaphragm (fluorescence)");
    AddAvailableDeviceName(g_LeicaApertureDiaphragm,"Aperture Diaphragm (fluorescence)");
@@ -156,9 +156,9 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
         return new  TLShutter();
    else if (strcmp(deviceName, g_LeicaIncidentLightShutter) == 0)
         return new  ILShutter();
-   /*
    else if (strcmp(deviceName, g_LeicaReflector) == 0)
         return new ILTurret();
+   /*
    else if (strcmp(deviceName, g_LeicaNosePiece) == 0)
         return new ObjectiveTurret();
    else if (strcmp(deviceName, g_LeicaFieldDiaphragm) == 0)
@@ -796,6 +796,10 @@ int ILTurret::Initialize()
    {
       ostringstream os;
       os << i+1 << "-" << g_ScopeModel.ILTurret_.cube_[i+1].name;
+
+      printf ("CubeName: %s\n", g_ScopeModel.ILTurret_.cube_[i+1].name.c_str());
+      printf ("Label: %s\n", os.str().c_str());
+
       SetPositionLabel(i, os.str().c_str());
    }
 

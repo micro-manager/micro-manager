@@ -60,7 +60,7 @@ public:
    int GetMinPosition(int& minPosition) {minPosition = minPosition_; return DEVICE_OK;};
    int SetMinPosition(int minPosition) {minPosition_ = minPosition; return DEVICE_OK;};
 
-private:
+protected:
    int position_;
    bool busy_;
    int maxPosition_;
@@ -88,6 +88,33 @@ public:
    static const int maxNrCubes_ = 8;
 };
 
+class LeicaObjectiveModel
+{
+public:
+   LeicaObjectiveModel();
+
+   bool IsMethodAvailable(int methodId);
+
+   int magnification_;
+   int NA_;
+   int articleNumber_;
+   std::vector<bool> methods_;
+   std::string immersionType_;
+   int parfocalityLeveling_;
+   int lowerZ_;
+   int immerseZ_;
+   int zStepSize_;
+};
+
+class LeicaObjectiveTurretModel : public LeicaDeviceModel
+{
+   LeicaObjectiveTurretModel();
+
+   std::vector<LeicaCubeModel> objective_;
+
+   static const int maxNrObjectives_ = 7;
+};
+
 /*
  * Abstract model ofthe Lecia DMI microscope
  * All get and set methods refer to the model, not to the actual microscope
@@ -98,6 +125,7 @@ public:
 class LeicaDMIModel
 {
    friend class LeicaCubeModel;
+   friend class LeicaObjectiveModel;
 
 public:
    LeicaDMIModel();

@@ -87,6 +87,7 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
    
    std::ostringstream os;
    std::ostringstream command;
+   std::string version, answer;
 
    os << "Initializing Leica Microscope";
    core.LogMessage (&device, os.str().c_str(), false);
@@ -96,7 +97,6 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
    ClearPort(device, core);
 
    // Get info about stand, firmware and available devices and store in the model
-   std::string version, answer;
    int ret = GetStandInfo(device, core);
    if (ret != DEVICE_OK) 
       return ret;
@@ -120,7 +120,7 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
 
    // Start event reporting for method changes
    command << g_Master << "003" << " 1 0 0";
-   ret = core.SetSerialCommand(&device, port_.c_str(), command.str().c_str(), "\r");
+   ret = GetAnswer(device, core, command.str().c_str(), answer);
    if (ret != DEVICE_OK)
       return ret;
    command.str("");
@@ -128,7 +128,7 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
    // Start event reporting for TL Shutter:
    if (scopeModel_->IsDeviceAvailable(g_Lamp)) {
       command << g_Lamp << "003" << " 1 1 1 0 1 1";
-      ret = core.SetSerialCommand(&device, port_.c_str(), command.str().c_str(), "\r");
+      ret = GetAnswer(device, core, command.str().c_str(), answer);
       if (ret != DEVICE_OK)
          return ret;
       command.str("");
@@ -137,7 +137,7 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
    // Start event reporting for IL Turret
    if (scopeModel_->IsDeviceAvailable(g_IL_Turret)) {
       command << g_IL_Turret << "003 1";
-      ret = core.SetSerialCommand(&device, port_.c_str(), command.str().c_str(), "\r");
+      ret = GetAnswer(device, core, command.str().c_str(), answer);
       if (ret != DEVICE_OK)
          return ret;
       command.str("");
@@ -239,12 +239,12 @@ int LeicaScopeInterface::GetStandInfo(MM::Device& device, MM::Core& core)
    if (ret != DEVICE_OK)
       return ret;
    std::stringstream st(response);
-   std::string version;
+   std::string version(response);
    st >> answer;
    if (answer.compare(os2.str()) != 0)
       return ERR_SCOPE_NOT_ACTIVE;
    
-   st >> version;
+   version = version.substr(6);
    scopeModel_->SetStandVersion(version);
 
    // Get a list with all methods available on this stand
@@ -301,12 +301,12 @@ int LeicaScopeInterface::GetILTurretInfo(MM::Device& device, MM::Core& core)
    command.str("");
 
    int maxPos;
-   ts << answer;
-   ts >> maxPos;
-   ts >> maxPos;
+   std::stringstream tt(answer);
+   tt >> maxPos;
+   tt >> maxPos;
    if ( 0 < maxPos && maxPos < 10)
-      scopeModel_->ILTurret_.SetMinPosition(minPos);
-   ts.str("");
+      scopeModel_->ILTurret_.SetMaxPosition(maxPos);
+   tt.str("");
 
    // Get name of cube and aperture protection type
    for (int i=minPos; i<=maxPos; i++) {
@@ -314,14 +314,21 @@ int LeicaScopeInterface::GetILTurretInfo(MM::Device& device, MM::Core& core)
       ret = GetAnswer(device, core, command.str().c_str(), answer);
       if (ret != DEVICE_OK)
          return ret;
-      ts << answer;
-      ts >> token;
-      if (token == (g_IL_Turret + "027")) {
+      std::stringstream tu(answer);
+      tu << answer;
+      tu >> token;
+      if (token == "78027") {
          int j;
-         ts >> j;
+         tu >> j;
          if (i==j) {
-            ts >> token;
+            tu >> token;
+            printf ("Token2: %s %s\n", token.c_str(), token.substr(0,token.size()-1).c_str());
+            std::stringstream name;
+            name << j << "-" << token.substr(0,token.size()-1);
             scopeModel_->ILTurret_.cube_[i].name = token.substr(0,token.size()-1);
+
+            printf ("CubeName: %s\n", scopeModel_->ILTurret_.cube_[i].name.c_str());
+
             if (token.substr(token.size()-1,1) == "1")
                scopeModel_->ILTurret_.cube_[i].apProtection = true;
             else
@@ -517,6 +524,10 @@ int LeicaMonitoringThread::svc() {
                          int pos;
                          os >> pos;
                          scopeModel_->ILTurret_.SetPosition(pos);
+                         scopeModel_->ILTurret_.SetBusy(false);
+                         break;
+                      case (122) :  // No cube in this position, or not allowed with this method
+                         // TODO: Set an error?
                          scopeModel_->ILTurret_.SetBusy(false);
                          break;
                       case (322) :  // dark flap was not automatically opened
