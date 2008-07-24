@@ -221,6 +221,7 @@ public class SBSPlate {
                posList.addPosition(mps);
                wpl.setSitePositions(posList);
                wpl.setLabel(wellLabel);
+               wpl.setGridCoordinates(i, j);
                posListArray[wellCount++] = wpl;
             } catch (HCSException e) {
                // TODO Auto-generated catch block

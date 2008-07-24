@@ -9,7 +9,6 @@ import java.awt.Paint;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Stroke;
-
 import javax.swing.JPanel;
 
 import org.micromanager.navigation.PositionList;
@@ -31,26 +30,52 @@ public class PlatePanel extends JPanel {
    
    private SBSPlate plate_;
    WellPositionList[] wells_;
+   WellBox[] wellBoxes_;
    Rectangle siteRect_ = new Rectangle(3, 3);
    
+   public static Color LIGHT_YELLOW = new Color(255,255,145);
+   
    private class WellBox {
-      String label_;
-      Color color_;
-      Rectangle rect_;
+      public String label;
+      public Color color;
+      public Rectangle rect;
+      public boolean selected;
       
       public WellBox() {
-         label_ = new String();
-         //color_ = new Color();
+         label = new String("undef");
+         color = LIGHT_YELLOW;
+         rect = new Rectangle(0, 0, 100, 100);
+         selected = false;
+      }
+      
+      public void draw(Graphics2D g) {
+         Paint oldPaint = g.getPaint();
+         
+         if (selected)
+            g.setPaint(Color.BLUE);
+         else
+            g.setPaint(color);
+         
+         g.setStroke(new BasicStroke((float)0));
+         g.fill(rect);
+         
+         g.setPaint(oldPaint);
       }
    }
    
    public PlatePanel(SBSPlate plate) {
       plate_ = plate;
       wells_ = plate_.generatePositions(SBSPlate.DEFAULT_XYSTAGE_NAME);
+      wellBoxes_ = new WellBox[plate_.getNumberOfRows() * plate_.getNumberOfColumns()];
+      for (int i=0; i<wellBoxes_.length; i++)
+         wellBoxes_[i] = new WellBox();
    }
    public PlatePanel(SBSPlate plate, PositionList pl) {
       plate_ = plate;
       wells_ = plate_.generatePositions(SBSPlate.DEFAULT_XYSTAGE_NAME, pl);
+      wellBoxes_ = new WellBox[plate_.getNumberOfRows() * plate_.getNumberOfColumns()];
+      for (int i=0; i<wellBoxes_.length; i++)
+         wellBoxes_[i] = new WellBox();      
    }
 
    public void paintComponent(Graphics g) {
@@ -80,6 +105,7 @@ public class PlatePanel extends JPanel {
       
       // draw content
       drawLabels(g2d, box);
+      drawWells(g2d, box);
       drawGrid(g2d, box);
       drawImagingSites(g2d, box);
            
@@ -112,6 +138,33 @@ public class PlatePanel extends JPanel {
             //System.out.println(pl.getPosition(j).getX() + "," + pl.getPosition(j).getX());
             g.draw(siteRect_);
          }
+      }
+      
+   }
+   
+   private void drawWells(Graphics2D g, Rectangle box) {
+      // calculate plate active area
+      double xFact = box.getWidth()/plate_.getXSize();
+      double yFact = box.getHeight()/plate_.getYSize();
+      double xOffset = plate_.getTopLeftX() * xFact;
+      double yOffset = plate_.getTopLeftY() * yFact;
+      
+      double wellX = (box.getWidth() - 2.0*xOffset) / plate_.getNumberOfColumns();
+      double wellY = (box.getHeight() - 2.0*yOffset) / plate_.getNumberOfRows();
+                  
+      try {
+         for (int i=0; i<plate_.getNumberOfRows(); i++) {
+            for (int j=0; j<plate_.getNumberOfColumns(); j++) {
+               WellBox wb = wellBoxes_[i*plate_.getNumberOfColumns() + j];
+               wb.label = plate_.getWellLabel(i+1, j+1);
+               wb.rect.setBounds((int)(box.getX() + j*wellX + xOffset + 0.5), (int)(box.getY() + i*wellY + yOffset + 0.5),
+                                 (int)wellX, (int)wellY);
+               wb.draw(g);
+            }
+         }
+      } catch (HCSException e) {
+         // TODO Auto-generated catch block
+         e.printStackTrace();
       }
       
    }
@@ -210,5 +263,18 @@ public class PlatePanel extends JPanel {
    
    WellPositionList[] getWellPositions() {
       return wells_;
+   }
+   
+   void selectWell(int row, int col, boolean sel) {
+      int index = row*plate_.getNumberOfColumns() + col;
+      wellBoxes_[index].selected = true;
+      Graphics2D g = (Graphics2D) getGraphics();
+      wellBoxes_[index].draw(g);
+   }
+   
+   void clearSelection() {
+      for (int i=0; i<wellBoxes_.length; i++)
+         wellBoxes_[i].selected = false;
+      repaint();
    }
 }

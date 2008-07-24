@@ -3,8 +3,10 @@ package com.imaging100x.hcs;
 import org.micromanager.navigation.PositionList;
 
 public class WellPositionList {
-   String label_;
-   PositionList sites_;
+   private String label_;
+   private PositionList sites_;
+   private int row_ = 0;
+   private int col_ = 0;
    
    public WellPositionList() {
       sites_ = new PositionList();
@@ -24,5 +26,18 @@ public class WellPositionList {
 
    public void setSitePositions(PositionList pl) {
       sites_ = pl;
+   }
+   
+   public int getRow() {
+      return row_;
+   }
+   
+   public int getColumn() {
+      return col_;
+   }
+
+   public void setGridCoordinates(int r, int c) {
+      row_ = r;
+      col_ = c;
    }
 }

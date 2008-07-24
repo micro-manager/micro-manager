@@ -58,7 +58,8 @@ public class PlateEditor extends JDialog {
             for (int i=0; i<wpl.length; i++) {
                PositionList pl = wpl[i].getSitePositions();
                app_.setPositionList(pl);
-               WellAcquisitionData wad = pad.createNewWell(wpl[i].label_);
+               WellAcquisitionData wad = pad.createNewWell(wpl[i].getLabel());
+               platePanel_.selectWell(wpl[i].getRow(), wpl[i].getColumn(), true);
                app_.runWellScan(wad);
                Thread.sleep(50);
             }
@@ -217,8 +218,7 @@ public class PlateEditor extends JDialog {
       final JButton stopButton = new JButton();
       stopButton.addActionListener(new ActionListener() {
          public void actionPerformed(final ActionEvent e) {
-            if (scanThread_ != null && scanThread_.isAlive())
-               scanThread_.interrupt();
+            stop();
          }
       });
       stopButton.setText("Stop");
@@ -288,8 +288,14 @@ public class PlateEditor extends JDialog {
       if (app_ == null)
          return;
       
+      platePanel_.clearSelection();
       scanThread_ = new ScanThread();
       scanThread_.start();
+   }
+
+   private void stop() {
+      if (scanThread_ != null && scanThread_.isAlive())
+         scanThread_.interrupt();
    }
 
 }
