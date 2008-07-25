@@ -34,30 +34,40 @@ public class PlatePanel extends JPanel {
    Rectangle siteRect_ = new Rectangle(3, 3);
    
    public static Color LIGHT_YELLOW = new Color(255,255,145);
+   public static Color LIGHT_ORANGE = new Color(255,176,138);
    
    private class WellBox {
       public String label;
       public Color color;
+      public Color activeColor;
       public Rectangle rect;
       public boolean selected;
+      public boolean active;
       
       public WellBox() {
          label = new String("undef");
          color = LIGHT_YELLOW;
+         activeColor = LIGHT_ORANGE;
          rect = new Rectangle(0, 0, 100, 100);
          selected = false;
+         active = false;
       }
       
       public void draw(Graphics2D g) {
          Paint oldPaint = g.getPaint();
+         Color c = color;
+         if (active)
+            c = activeColor;
          
          if (selected)
-            g.setPaint(Color.BLUE);
+            g.setPaint(c.darker());
          else
-            g.setPaint(color);
+            g.setPaint(c);
          
          g.setStroke(new BasicStroke((float)0));
-         g.fill(rect);
+         Rectangle r = new Rectangle(rect);
+         r.grow(-1, -1);
+         g.fill(r);
          
          g.setPaint(oldPaint);
       }
@@ -267,7 +277,7 @@ public class PlatePanel extends JPanel {
    
    void selectWell(int row, int col, boolean sel) {
       int index = row*plate_.getNumberOfColumns() + col;
-      wellBoxes_[index].selected = true;
+      wellBoxes_[index].selected = sel;
       Graphics2D g = (Graphics2D) getGraphics();
       wellBoxes_[index].draw(g);
    }
@@ -277,4 +287,18 @@ public class PlatePanel extends JPanel {
          wellBoxes_[i].selected = false;
       repaint();
    }
+   
+   void activateWell(int row, int col, boolean act) {
+      int index = row*plate_.getNumberOfColumns() + col;
+      wellBoxes_[index].active = act;
+      Graphics2D g = (Graphics2D) getGraphics();
+      wellBoxes_[index].draw(g);
+   }
+   
+   void clearActivation() {
+      for (int i=0; i<wellBoxes_.length; i++)
+         wellBoxes_[i].active = false;
+      repaint();
+   }
+
 }
