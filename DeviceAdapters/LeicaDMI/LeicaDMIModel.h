@@ -108,9 +108,10 @@ public:
 
 class LeicaObjectiveTurretModel : public LeicaDeviceModel
 {
+public:
    LeicaObjectiveTurretModel();
 
-   std::vector<LeicaCubeModel> objective_;
+   std::vector<LeicaObjectiveModel> objective_;
 
    static const int maxNrObjectives_ = 7;
 };
@@ -151,6 +152,7 @@ public:
    LeicaDeviceModel TLShutter_;
    LeicaDeviceModel ILShutter_;
    LeicaILTurretModel ILTurret_;
+   LeicaObjectiveTurretModel ObjectiveTurret_;
 
 private:
    std::vector<bool> availableDevices_;

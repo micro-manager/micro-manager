@@ -114,6 +114,12 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
          return ret;
    }
 
+   if (scopeModel_->IsDeviceAvailable(g_Revolver)) {
+      ret = GetRevolverInfo(device, core);
+      if (ret != DEVICE_OK)
+         return ret;
+   }
+
    // TODO: get info about all other devices that we are interested in (make sure they are available)
 
    // Start all events at this point
@@ -143,6 +149,15 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
       command.str("");
    }
 
+   // Start event reporting for Objective Turret
+   if (scopeModel_->IsDeviceAvailable(g_Revolver)) {
+      command << g_Revolver << "003 1 0 1 0 0 0 0 0 1";
+      ret = GetAnswer(device, core, command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+      command.str("");
+   }
+
 
    // Start monitoring of all messages coming from the microscope
    monitoringThread_ = new LeicaMonitoringThread(device, core, port_, scopeModel_);
@@ -165,6 +180,14 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
    }
 
    if (scopeModel_->IsDeviceAvailable(g_IL_Turret)) {
+      command << g_IL_Turret << "023";
+      ret = core.SetSerialCommand(&device, port_.c_str(), command.str().c_str(), "\r");
+      if (ret != DEVICE_OK)
+         return ret;
+      command.str("");
+   }
+
+   if (scopeModel_->IsDeviceAvailable(g_Revolver)) {
       command << g_IL_Turret << "023";
       ret = core.SetSerialCommand(&device, port_.c_str(), command.str().c_str(), "\r");
       if (ret != DEVICE_OK)
@@ -290,7 +313,8 @@ int LeicaScopeInterface::GetILTurretInfo(MM::Device& device, MM::Core& core)
    ts >> minPos;
    if ( 0 < minPos && minPos < 10)
    scopeModel_->ILTurret_.SetMinPosition(minPos);
-   ts.str("");
+   ts.clear();
+   ts.seekg(0,std::ios::beg);
    command.str("");
 
    // Get maximum position
@@ -322,12 +346,9 @@ int LeicaScopeInterface::GetILTurretInfo(MM::Device& device, MM::Core& core)
          tu >> j;
          if (i==j) {
             tu >> token;
-            printf ("Token2: %s %s\n", token.c_str(), token.substr(0,token.size()-1).c_str());
             std::stringstream name;
             name << j << "-" << token.substr(0,token.size()-1);
             scopeModel_->ILTurret_.cube_[i].name = token.substr(0,token.size()-1);
-
-            printf ("CubeName: %s\n", scopeModel_->ILTurret_.cube_[i].name.c_str());
 
             if (token.substr(token.size()-1,1) == "1")
                scopeModel_->ILTurret_.cube_[i].apProtection = true;
@@ -336,7 +357,6 @@ int LeicaScopeInterface::GetILTurretInfo(MM::Device& device, MM::Core& core)
          }
       }
       command.str("");
-      ts.str("");
    }
 
    // Get methods allowed with each cube
@@ -345,27 +365,113 @@ int LeicaScopeInterface::GetILTurretInfo(MM::Device& device, MM::Core& core)
       ret = GetAnswer(device, core, command.str().c_str(), answer);
       if (ret != DEVICE_OK)
          return ret;
-      ts << answer;
-      ts >> token;
-      if (token == (g_IL_Turret + "030")) {
+      std::stringstream tw(answer);
+      tw >> token;
+      if (token == ("78030")) {
          int j;
-         ts >> j;
+         tw >> j;
          if (i==j) {
-            ts >> token;
+            tw >> token;
             for (int k=0; k< 16; k++) {
                if (token[k] == '1') {
-                  scopeModel_->ILTurret_.cube_[i].cubeMethods_[k] = true;
+                  scopeModel_->ILTurret_.cube_[i].cubeMethods_[15 - k] = true;
                }
             }
          }
       }
       command.str("");
-      ts.str("");
    }
 
    return DEVICE_OK;
 }
 
+int LeicaScopeInterface::GetRevolverInfo(MM::Device& device, MM::Core& core)
+{
+   std::ostringstream command;
+   std::string answer, token;
+
+   // Get minimum position
+   command << g_Revolver << "038";
+   int ret = GetAnswer(device, core, command.str().c_str(), answer);
+   if (ret != DEVICE_OK)
+      return ret;
+   command.str("");
+
+   std::stringstream ts(answer);
+   int minPos;
+   ts >> minPos;
+   ts >> minPos;
+   if ( 0 < minPos && minPos < 10)
+   scopeModel_->ObjectiveTurret_.SetMinPosition(minPos);
+   ts.clear();
+   ts.seekg(0,std::ios::beg);
+
+   // Get maximum position
+   command << g_Revolver << "039";
+   ret = GetAnswer(device, core, command.str().c_str(), answer);
+   if (ret != DEVICE_OK)
+      return ret;
+   command.str("");
+
+   int maxPos;
+   std::stringstream tt (answer);
+   tt >> maxPos;
+   tt >> maxPos;
+   if ( 0 < maxPos && maxPos < 10)
+      scopeModel_->ObjectiveTurret_.SetMaxPosition(maxPos);
+
+   // Get Objective info - magnification
+   for (int i=minPos; i<=maxPos; i++) {
+      command << g_Revolver << "033 " << i << " 1";
+      ret = GetAnswer(device, core, command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+      std::stringstream tu(answer);
+      tu >> token;
+      if (token == "78027") {
+         int j;
+         tu >> j;
+         if (i==j) {
+            int par;
+            tu >> par;
+            if (par==1) {
+               int mag;
+               tu >> mag;
+               printf ("Mag: %d\n", mag);
+               scopeModel_->ObjectiveTurret_.objective_[i].magnification_ = mag;
+            }
+         }
+      }
+      command.str("");
+   }
+
+   // TODO: NA and article no.
+
+   // Get methods allowed with each objective
+   for (int i=minPos; i<=maxPos; i++) {
+      command << g_Revolver << "033 " << i << " 4";
+      ret = GetAnswer(device, core, command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+      std::stringstream tv(answer);
+      tv >> token;
+      if (token == (g_Revolver + "033")) {
+         int j;
+         tv >> j;
+         if (i==j) {
+            tv >> token;
+            for (int k=0; k< 16; k++) {
+               if (token[k] == '1') {
+                  scopeModel_->ObjectiveTurret_.objective_[i].methods_[k] = true;
+               }
+            }
+         }
+      }
+      command.str("");
+   }
+
+   return DEVICE_OK;
+}
 /**
  * Sends command to the microscope to set requested method
  * Does not listen for answers (should be caught in the monitoringthread)
@@ -412,6 +518,17 @@ int LeicaScopeInterface::SetILTurretPosition(MM::Device& device, MM::Core& core,
 }
 
 /**
+ * Sets state of objective Turret
+ */
+int LeicaScopeInterface::SetRevolverPosition(MM::Device& device, MM::Core& core, int position)
+{
+   scopeModel_->ObjectiveTurret_.SetBusy(true);
+   std::ostringstream os;
+   os << g_Revolver << "022" << " " << position;
+   return core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+}
+
+/**
  * Clear contents of serial port 
  */
 int LeicaScopeInterface::ClearPort(MM::Device& device, MM::Core& core)
@@ -438,7 +555,7 @@ LeicaMonitoringThread::LeicaMonitoringThread(MM::Device& device, MM::Core& core,
    device_ (device),
    core_ (core),
    stop_ (true),
-   intervalUs_(5000), // check every 5 ms for new messages, 
+   intervalUs_(10000), // check every 10 ms for new messages, 
    scopeModel_(scopeModel)
 {
 }
@@ -459,22 +576,38 @@ int LeicaMonitoringThread::svc() {
 
    printf ("Starting MonitoringThread\n");
 
+   unsigned long dataLength = 0;
+   unsigned long charsRead = 0;
+   unsigned long charsRemaining = 0;
    char rcvBuf[LeicaScopeInterface::RCV_BUF_LENGTH];
+   char buffer[LeicaScopeInterface::RCV_BUF_LENGTH];
+   char message[LeicaScopeInterface::RCV_BUF_LENGTH];
    memset(rcvBuf, 0, LeicaScopeInterface::RCV_BUF_LENGTH);
+   memset(message, 0, LeicaScopeInterface::RCV_BUF_LENGTH);
 
    while (!stop_) 
    {
       do { 
-         rcvBuf[0] = 0;
+         dataLength = LeicaScopeInterface::RCV_BUF_LENGTH - charsRemaining;
+         // rcvBuf[0] = 0;
          // TODO: listen to incoming characters directly and break when it is "\r"
-         int ret = core_.GetSerialAnswer(&(device_), port_.c_str(), LeicaScopeInterface::RCV_BUF_LENGTH, rcvBuf, "\r"); 
-         if (ret != DEVICE_OK && ret != ret != DEVICE_SERIAL_TIMEOUT && !stop_) {
-            std::ostringstream oss;
-            oss << "Monitoring Thread: ERROR while reading from serial port, error code: " << ret;
-            core_.LogMessage(&(device_), oss.str().c_str(), false);
-         } else if (strlen(rcvBuf) >= 5 && !stop_) {
+         // int ret = core_.GetSerialAnswer(&(device_), port_.c_str(), LeicaScopeInterface::RCV_BUF_LENGTH, rcvBuf, "\r"); 
+         int ret = core_.ReadFromSerial(&device_, port_.c_str(), (unsigned char*) (rcvBuf + strlen(rcvBuf)), dataLength, charsRead);
+         memset(message, 0, strlen(message));
+         if (ret == DEVICE_OK && (strlen(rcvBuf) > 4) && !stop_) {
+            const char* eoln = strstr(rcvBuf, "\r");
+            if (eoln != 0) {
+               strncpy (message, rcvBuf, eoln - rcvBuf);
+               printf ("Message: %s\n", message);
+               printf ("Buflen: %d, eol: %d\n", strlen(rcvBuf), eoln - rcvBuf);
+               memmove(rcvBuf, eoln + 1, LeicaScopeInterface::RCV_BUF_LENGTH - (eoln - rcvBuf) -1);
+            }
+         } else {
+            CDeviceUtils::SleepMs(intervalUs_/1000);
+         }
+         if (strlen(message) >= 5 && !stop_) {
             // Analyze incoming messages.  Tokenize and take action based on first toke
-            std::stringstream os(rcvBuf);
+            std::stringstream os(message);
             std::string command;
             os >> command;
             // If first char is '$', then this is an event.  Treat as all other incoming messages:
@@ -537,11 +670,42 @@ int LeicaMonitoringThread::svc() {
                          break;
                    }
                    break;
+               case (g_Revolver) :
+                   switch (commandId) {
+                      case (4) : // Status
+                         {
+                            std::string status[4];
+                            for (int i=0; i < 4; i++) 
+                               os >> status[i];
+                            if (status[1]=="1")
+                               scopeModel_->ObjectiveTurret_.SetBusy(true);
+                            else
+                               scopeModel_->ObjectiveTurret_.SetBusy(false);
+                         }
+                         break;
+                      case (23) : // Position
+                         {
+                            int pos;
+                            os >> pos;
+                            scopeModel_->ObjectiveTurret_.SetPosition(pos);
+                            scopeModel_->ObjectiveTurret_.SetBusy(false);
+                            break;
+                         }
+                      case (33) : // Use new parameter reporting to get the new position
+                         {
+                            int pos;
+                            os >> pos;
+                            scopeModel_->ObjectiveTurret_.SetPosition(pos);
+                            scopeModel_->ObjectiveTurret_.SetBusy(false);
+                         }
+                         break;
+                   }
+                   break;
+
             }
          }
       } while ((strlen(rcvBuf) > 0) && (!stop_)); 
 
-       CDeviceUtils::SleepMs(intervalUs_/1000);
    }
    printf("Monitoring thread finished\n");
    return 0;

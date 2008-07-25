@@ -126,6 +126,7 @@ LeicaObjectiveTurretModel::LeicaObjectiveTurretModel() :
    objective_(maxNrObjectives_)
 {
    LeicaDeviceModel::LeicaDeviceModel();
+   position_ = 1;
 }
 
 

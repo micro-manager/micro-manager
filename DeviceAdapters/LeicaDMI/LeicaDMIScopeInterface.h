@@ -58,13 +58,14 @@ class LeicaScopeInterface
       int GetAnswer(MM::Device& device, MM::Core& core, const char* command, std::string& answer);
       int GetStandInfo(MM::Device& device, MM::Core& core);
       int GetILTurretInfo(MM::Device& device, MM::Core& core);
+      int GetRevolverInfo(MM::Device& device, MM::Core& core);
      
       // commands to set individual components
       int SetMethod(MM::Device& device, MM::Core& core, int position);
       int SetTLShutterPosition(MM::Device& device, MM::Core& core, int position);
       int SetILShutterPosition(MM::Device& device, MM::Core& core, int position);
       int SetILTurretPosition(MM::Device& device, MM::Core& core, int position);
-      int SetReflectorTurretPosition(MM::Device& device, MM::Core& core, int position);
+      int SetRevolverPosition(MM::Device& device, MM::Core& core, int position);
 
       LeicaMonitoringThread* monitoringThread_;
       LeicaDMIModel* scopeModel_;

@@ -118,12 +118,12 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_LeicaTransmittedLightShutter,"Transmitted Light Shutter"); 
    AddAvailableDeviceName(g_LeicaIncidentLightShutter,"Incident Light Shutter"); 
    AddAvailableDeviceName(g_LeicaReflector,"Reflector Turret (dichroics)"); 
-   /*
    AddAvailableDeviceName(g_LeicaNosePiece,"Objective Turret");
-   AddAvailableDeviceName(g_LeicaFieldDiaphragm,"Field Diaphragm (fluorescence)");
-   AddAvailableDeviceName(g_LeicaApertureDiaphragm,"Aperture Diaphragm (fluorescence)");
+   /*
    AddAvailableDeviceName(g_LeicaFocusAxis,"Z-drive");
    AddAvailableDeviceName(g_LeicaXYStage,"XYStage");
+   AddAvailableDeviceName(g_LeicaFieldDiaphragm,"Field Diaphragm (fluorescence)");
+   AddAvailableDeviceName(g_LeicaApertureDiaphragm,"Aperture Diaphragm (fluorescence)");
    AddAvailableDeviceName(g_LeicaTubeLens,"Tube Lens (optovar)");
    AddAvailableDeviceName(g_LeicaTubeLensShutter,"Tube Lens Shutter");
    AddAvailableDeviceName(g_LeicaSidePort,"Side Port");
@@ -158,9 +158,9 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
         return new  ILShutter();
    else if (strcmp(deviceName, g_LeicaReflector) == 0)
         return new ILTurret();
-   /*
    else if (strcmp(deviceName, g_LeicaNosePiece) == 0)
         return new ObjectiveTurret();
+   /*
    else if (strcmp(deviceName, g_LeicaFieldDiaphragm) == 0)
         return new Servo(g_FieldDiaphragmServo, g_LeicaFieldDiaphragm, "Field Diaphragm");
    else if (strcmp(deviceName, g_LeicaApertureDiaphragm) == 0)
@@ -739,7 +739,7 @@ ILTurret::ILTurret():
    // Description
    CreateProperty(MM::g_Keyword_Description, description_.c_str(), MM::String, true);
 
-   UpdateStatus();
+   //UpdateStatus();
 }
 
 ILTurret::~ILTurret()
@@ -796,10 +796,6 @@ int ILTurret::Initialize()
    {
       ostringstream os;
       os << i+1 << "-" << g_ScopeModel.ILTurret_.cube_[i+1].name;
-
-      printf ("CubeName: %s\n", g_ScopeModel.ILTurret_.cube_[i+1].name.c_str());
-      printf ("Label: %s\n", os.str().c_str());
-
       SetPositionLabel(i, os.str().c_str());
    }
 
@@ -854,19 +850,23 @@ int ILTurret::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
          // check if the new position is allowed with this method
          int method;
          int ret = g_ScopeModel.method_.GetPosition(method);
+         printf ("Method: %d\n", method);
          if (!g_ScopeModel.ILTurret_.cube_[pos].IsMethodAvailable(method)) {
+            printf ("Not available\n");
             // the new cube does not support the current method.  Look for a method:
             // Look first in the FLUO methods, than in all available methods
             int i = 10;
-            while (!g_ScopeModel.ILTurret_.cube_[pos].IsMethodAvailable(i) && i < 13) {
+            while (!g_ScopeModel.ILTurret_.cube_[pos].IsMethodAvailable(i) && (i < 13)) {
                i++;
             }
+            printf ("Propose method %d\n", i);
             if (!g_ScopeModel.ILTurret_.cube_[pos].IsMethodAvailable(i)) {
-               int i = 0;
-               while (!g_ScopeModel.ILTurret_.cube_[pos].IsMethodAvailable(i) && i < 16) {
+               i = 0;
+               while (!g_ScopeModel.ILTurret_.cube_[pos].IsMethodAvailable(i) && (i < 16)) {
                   i++;
                }
             }
+            printf ("Propose method %d\n", i);
             if (g_ScopeModel.ILTurret_.cube_[pos].IsMethodAvailable(i))
                g_ScopeInterface.SetMethod(*this, *GetCoreCallback(), i);
          }
@@ -878,14 +878,33 @@ int ILTurret::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-/*
 ///////////////////////////////////////////////////////////////////////////////
-// ObjectiveTurret.  Inherits from Turret.  Only change is that it reads the 
-// labels from the Leica microscope
+// ObjectiveTurret.  
 ///////////////////////////////////////////////////////////////////////////////
-ObjectiveTurret::ObjectiveTurret(int devId, std::string name, std::string description) :
-   Turret(devId, name, description)
+ObjectiveTurret::ObjectiveTurret() :
+   numPos_(7),
+   initialized_ (false),
+   name_("Objective turret"),
+   description_("Objective Turret"),
+   pos_(1)
 {
+   InitializeDefaultErrorMessages();
+
+   // TODO provide error messages
+   SetErrorText(ERR_SCOPE_NOT_ACTIVE, "Leica Scope is not initialized.  The Objective Turret cannot work without it");
+   SetErrorText(ERR_INVALID_TURRET_POSITION, "The requested position is not available");
+   SetErrorText(ERR_MODULE_NOT_FOUND, "No Objective turret installed in this Leica microscope");
+   SetErrorText(ERR_TURRET_NOT_ENGAGED, "Objective Light Turret is not engaged");
+
+   // Create pre-initialization properties
+   // ------------------------------------
+
+   // Name
+   CreateProperty(MM::g_Keyword_Name, name_.c_str(), MM::String, true);
+
+   // Description
+   CreateProperty(MM::g_Keyword_Description, description_.c_str(), MM::String, true);
+
 }
 
 ObjectiveTurret::~ObjectiveTurret()
@@ -893,25 +912,132 @@ ObjectiveTurret::~ObjectiveTurret()
    Shutdown();
 }
 
+void ObjectiveTurret::GetName(char* name) const
+{
+   CDeviceUtils::CopyLimitedString(name, name_.c_str());
+}
+
 int ObjectiveTurret::Initialize()
 {
-   int ret = Turret::Initialize();
+   if (!g_ScopeInterface.portInitialized_)
+      return ERR_SCOPE_NOT_ACTIVE;
+
+   int ret = DEVICE_OK;
+   if (!g_ScopeInterface.IsInitialized())
+      ret = g_ScopeInterface.Initialize(*this, *GetCoreCallback());
+   if (ret != DEVICE_OK)
+      return ret;
+   
+   // check if this turret exists:
+   bool present;
+   if (! g_ScopeModel.IsDeviceAvailable(g_Revolver))
+      return ERR_MODULE_NOT_FOUND;
+
+   // State
+   // -----
+   CPropertyAction* pAct = new CPropertyAction(this, &ObjectiveTurret::OnState);
+   ret = CreateProperty(MM::g_Keyword_State, "1", MM::Integer, false, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
+   // Label
+   // -----
+   pAct = new CPropertyAction(this, &CStateBase::OnLabel);
+   ret = CreateProperty(MM::g_Keyword_Label, "1-", MM::String, false, pAct);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   // create default positions and labels
+   int maxPos;
+   ret = g_ScopeModel.ObjectiveTurret_.GetMaxPosition(maxPos);
+   if (ret != DEVICE_OK)
+      return ret;
+   numPos_ = maxPos;
+
    for (unsigned i=0; i < numPos_; i++)
    {
-      SetPositionLabel(i, g_ScopeInterface.objectiveList_[i].c_str());
+      ostringstream os;
+      os << i+1 << "-" << g_ScopeModel.ObjectiveTurret_.objective_[i+1].magnification_ << "x ";
+      SetPositionLabel(i, os.str().c_str());
    }
 
    ret = UpdateStatus();
    if (ret!= DEVICE_OK)
       return ret;
 
+   initialized_ = true;
+
+   return DEVICE_OK;
+   if (ret != DEVICE_OK)
+      return ret;
+
+   return DEVICE_OK;
+}
+
+int ObjectiveTurret::Shutdown()
+{
+   if (initialized_) 
+      initialized_ = false;
+   return DEVICE_OK;
+}
+
+bool ObjectiveTurret::Busy()
+{
+   bool busy;
+   int ret = g_ScopeModel.ObjectiveTurret_.GetBusy(busy);
+   if (ret != DEVICE_OK)  // This is bad and should not happen
+      return false;
+
+   return busy;
+}
+
+int ObjectiveTurret::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      int pos;
+      int ret = g_ScopeModel.ObjectiveTurret_.GetPosition(pos);
+      if (ret != DEVICE_OK)
+         return ret;
+      if (pos == 0)
+         return ERR_TURRET_NOT_ENGAGED;
+      pos_ = pos -1;
+      pProp->Set(pos_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(pos_);
+      int pos = pos_ + 1;
+      if ((pos > 0) && (pos <= (int) numPos_)) {
+         // check if the new position is allowed with this method
+         int method;
+         int ret = g_ScopeModel.method_.GetPosition(method);
+         if (!g_ScopeModel.ObjectiveTurret_.objective_[pos].IsMethodAvailable(method)) {
+            // the new cube does not support the current method.  Look for a method:
+            // Look first in the FLUO methods, than in all available methods
+            int i = 10;
+            while (!g_ScopeModel.ObjectiveTurret_.objective_[pos].IsMethodAvailable(i) && i < 13) {
+               i++;
+            }
+            if (!g_ScopeModel.ObjectiveTurret_.objective_[pos].IsMethodAvailable(i)) {
+               int i = 0;
+               while (!g_ScopeModel.ObjectiveTurret_.objective_[pos].IsMethodAvailable(i) && i < 16) {
+                  i++;
+               }
+            }
+            if (g_ScopeModel.ObjectiveTurret_.objective_[pos].IsMethodAvailable(i))
+               g_ScopeInterface.SetMethod(*this, *GetCoreCallback(), i);
+         }
+
+         return g_ScopeInterface.SetRevolverPosition(*this, *GetCoreCallback(), pos);
+      } else
+         return ERR_INVALID_TURRET_POSITION;
+   }
    return DEVICE_OK;
 }
 
 
+/*
 // TubeLensTurret.  Inherits from Turret.  Only change is that it reads the 
 // labels from the Leica microscope
 ///////////////////////////////////////////////////////////////////////////////
