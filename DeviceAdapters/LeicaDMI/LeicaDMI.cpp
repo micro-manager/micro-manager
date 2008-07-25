@@ -958,6 +958,7 @@ int ObjectiveTurret::Initialize()
    {
       ostringstream os;
       os << i+1 << "-" << g_ScopeModel.ObjectiveTurret_.objective_[i+1].magnification_ << "x ";
+      os << g_ScopeModel.ObjectiveTurret_.objective_[i+1].NA_ << "na";
       SetPositionLabel(i, os.str().c_str());
    }
 

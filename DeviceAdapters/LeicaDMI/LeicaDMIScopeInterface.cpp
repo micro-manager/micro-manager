@@ -428,16 +428,15 @@ int LeicaScopeInterface::GetRevolverInfo(MM::Device& device, MM::Core& core)
          return ret;
       std::stringstream tu(answer);
       tu >> token;
-      if (token == "78027") {
+      if (token == "76033") {
          int j;
          tu >> j;
          if (i==j) {
             int par;
             tu >> par;
             if (par==1) {
-               int mag;
+               int mag = 0;
                tu >> mag;
-               printf ("Mag: %d\n", mag);
                scopeModel_->ObjectiveTurret_.objective_[i].magnification_ = mag;
             }
          }
@@ -445,7 +444,53 @@ int LeicaScopeInterface::GetRevolverInfo(MM::Device& device, MM::Core& core)
       command.str("");
    }
 
-   // TODO: NA and article no.
+   // Get Objective info - numerical aperture
+   for (int i=minPos; i<=maxPos; i++) {
+      command << g_Revolver << "033 " << i << " 2";
+      ret = GetAnswer(device, core, command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+      std::stringstream tv(answer);
+      tv >> token;
+      if (token == "76033") {
+         int j;
+         tv >> j;
+         if (i==j) {
+            int par;
+            tv >> par;
+            if (par==2) {
+               double na = 0;
+               tv >> na;
+               scopeModel_->ObjectiveTurret_.objective_[i].NA_ = na;
+            }
+         }
+      }
+      command.str("");
+   }
+
+   // Get Objective info - article number
+   for (int i=minPos; i<=maxPos; i++) {
+      command << g_Revolver << "033 " << i << " 3";
+      ret = GetAnswer(device, core, command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+      std::stringstream tw(answer);
+      tw >> token;
+      if (token == "76033") {
+         int j;
+         tw >> j;
+         if (i==j) {
+            int par;
+            tw >> par;
+            if (par==3) {
+               int articleNumber = 0;
+               tw >> articleNumber;
+               scopeModel_->ObjectiveTurret_.objective_[i].articleNumber_ = articleNumber;
+            }
+         }
+      }
+      command.str("");
+   }
 
    // Get methods allowed with each objective
    for (int i=minPos; i<=maxPos; i++) {
@@ -455,14 +500,15 @@ int LeicaScopeInterface::GetRevolverInfo(MM::Device& device, MM::Core& core)
          return ret;
       std::stringstream tv(answer);
       tv >> token;
-      if (token == (g_Revolver + "033")) {
+      if (token == "76033") {
          int j;
          tv >> j;
          if (i==j) {
             tv >> token;
+            tv >> token;
             for (int k=0; k< 16; k++) {
                if (token[k] == '1') {
-                  scopeModel_->ObjectiveTurret_.objective_[i].methods_[k] = true;
+                  scopeModel_->ObjectiveTurret_.objective_[i].methods_[15 - k] = true;
                }
             }
          }
@@ -599,7 +645,7 @@ int LeicaMonitoringThread::svc() {
             if (eoln != 0) {
                strncpy (message, rcvBuf, eoln - rcvBuf);
                printf ("Message: %s\n", message);
-               printf ("Buflen: %d, eol: %d\n", strlen(rcvBuf), eoln - rcvBuf);
+               core_.LogMessage (&device_, message, true);
                memmove(rcvBuf, eoln + 1, LeicaScopeInterface::RCV_BUF_LENGTH - (eoln - rcvBuf) -1);
             }
          } else {

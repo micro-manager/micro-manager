@@ -96,7 +96,7 @@ public:
    bool IsMethodAvailable(int methodId);
 
    int magnification_;
-   int NA_;
+   double NA_;
    int articleNumber_;
    std::vector<bool> methods_;
    std::string immersionType_;
