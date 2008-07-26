@@ -42,6 +42,9 @@
  * a place where the program can internally keep track of the state of the microscoe
  */
 
+/*
+ * Base class for all Leica Devices
+ */
 class LeicaDeviceModel
 {
 public:
@@ -61,12 +64,16 @@ public:
    int SetMinPosition(int minPosition) {minPosition_ = minPosition; return DEVICE_OK;};
 
 protected:
+   MM_THREAD_GUARD mutex_;
    int position_;
    bool busy_;
    int maxPosition_;
    int minPosition_;
 };
 
+/*
+ * Model for cubes in Leica Reflector Turret
+ */
 class LeicaCubeModel
 {
 public:
@@ -79,6 +86,9 @@ public:
    std::vector<bool> cubeMethods_;
 };
 
+/*
+ * Model for Leica Reflector Turret
+ */
 class LeicaILTurretModel : public LeicaDeviceModel
 {
 public:
@@ -88,6 +98,9 @@ public:
    static const int maxNrCubes_ = 8;
 };
 
+/*
+ * Model for Leica Objectives
+ */
 class LeicaObjectiveModel
 {
 public:
@@ -106,6 +119,9 @@ public:
    int zStepSize_;
 };
 
+/*
+ * Model for Leica Objective Turret
+ */
 class LeicaObjectiveTurretModel : public LeicaDeviceModel
 {
 public:
@@ -117,7 +133,34 @@ public:
 };
 
 /*
- * Abstract model ofthe Lecia DMI microscope
+ * Model for Leica Z drive
+ */
+class LeicaZDriveModel : public LeicaDeviceModel
+{
+public:
+   LeicaZDriveModel();
+
+   // Not Thread safe
+   double GetStepSize() {return stepSize_;};
+   void SetStepSize(double stepSize) {stepSize_ = stepSize;};
+ 
+   // Thread safe
+   int GetRamp(int& ramp);
+   int SetRamp(int ramp);
+   int GetSpeed(int& speed);
+   int SetSpeed(int speed);
+   int GetPosFocus(int& posFocus);
+   int SetPosFocus(int posFocus);
+
+private:
+   double stepSize_; // size in micrometer of each step
+   int ramp_;
+   int speed_;
+   int posFocus_;
+};
+
+/*
+ * Abstract model of the Lecia DMI microscope
  * All get and set methods refer to the model, not to the actual microscope
  * No communication with the microscope takes place in the model, this is merely
  * a place where the program can internally keep track of the state of the microscoe
@@ -153,6 +196,7 @@ public:
    LeicaDeviceModel ILShutter_;
    LeicaILTurretModel ILTurret_;
    LeicaObjectiveTurretModel ObjectiveTurret_;
+   LeicaZDriveModel ZDrive_;
 
 private:
    std::vector<bool> availableDevices_;

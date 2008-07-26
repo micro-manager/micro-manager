@@ -119,8 +119,8 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_LeicaIncidentLightShutter,"Incident Light Shutter"); 
    AddAvailableDeviceName(g_LeicaReflector,"Reflector Turret (dichroics)"); 
    AddAvailableDeviceName(g_LeicaNosePiece,"Objective Turret");
-   /*
    AddAvailableDeviceName(g_LeicaFocusAxis,"Z-drive");
+   /*
    AddAvailableDeviceName(g_LeicaXYStage,"XYStage");
    AddAvailableDeviceName(g_LeicaFieldDiaphragm,"Field Diaphragm (fluorescence)");
    AddAvailableDeviceName(g_LeicaApertureDiaphragm,"Aperture Diaphragm (fluorescence)");
@@ -160,13 +160,13 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
         return new ILTurret();
    else if (strcmp(deviceName, g_LeicaNosePiece) == 0)
         return new ObjectiveTurret();
+   else if (strcmp(deviceName, g_LeicaFocusAxis) == 0)
+        return new ZDrive();
    /*
    else if (strcmp(deviceName, g_LeicaFieldDiaphragm) == 0)
         return new Servo(g_FieldDiaphragmServo, g_LeicaFieldDiaphragm, "Field Diaphragm");
    else if (strcmp(deviceName, g_LeicaApertureDiaphragm) == 0)
         return new Servo(g_ApertureDiaphragmServo, g_LeicaApertureDiaphragm, "Aperture Diaphragm");
-   else if (strcmp(deviceName, g_LeicaFocusAxis) == 0)
-        return new Axis(g_FocusAxis, g_LeicaFocusAxis, "Z-drive");
    else if (strcmp(deviceName, g_LeicaXYStage) == 0)
 	   return new XYStage();
    else if (strcmp(deviceName, g_LeicaTubeLens) == 0)
@@ -962,6 +962,13 @@ int ObjectiveTurret::Initialize()
       SetPositionLabel(i, os.str().c_str());
    }
 
+   // Article Number
+   // -----
+   pAct = new CPropertyAction(this, &ObjectiveTurret::OnArticleNumber);
+   ret = CreateProperty("Article Number", "", MM::String, true, pAct);
+   if (ret != DEVICE_OK)
+      return ret;
+
    ret = UpdateStatus();
    if (ret!= DEVICE_OK)
       return ret;
@@ -1037,8 +1044,183 @@ int ObjectiveTurret::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+int ObjectiveTurret::OnArticleNumber(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      int pos;
+      int ret = g_ScopeModel.ObjectiveTurret_.GetPosition(pos);
+      if (ret != DEVICE_OK)
+         return ret;
+      if (pos == 0)
+         return ERR_TURRET_NOT_ENGAGED;
+      ostringstream os;
+      os << g_ScopeModel.ObjectiveTurret_.objective_[pos].articleNumber_;
+      pProp->Set(os.str().c_str());
+   }
+   return DEVICE_OK;
+}
 
 /*
+ * LeicaFocusStage: Micro-Manager implementation of focus drive
+ */
+ZDrive::ZDrive (): 
+   initialized_(false),
+   name_("ZDrive"),
+   description_("Focus Drive")
+{
+   InitializeDefaultErrorMessages();
+
+   SetErrorText(ERR_SCOPE_NOT_ACTIVE, "Leica Scope is not initialized.  It is needed for the Leica Shutter to work");
+   SetErrorText(ERR_MODULE_NOT_FOUND, "No ZDrive found in this Leica microscope");
+}
+
+ZDrive::~ZDrive()
+{
+   Shutdown();
+}
+
+bool ZDrive::Busy()
+{
+   bool busy;
+   int ret = g_ScopeModel.ZDrive_.GetBusy(busy);
+   if (ret != DEVICE_OK)  // This is bad and should not happen
+      return false;
+   return busy;
+}
+
+void ZDrive::GetName (char* Name) const
+{
+   CDeviceUtils::CopyLimitedString(Name, g_LeicaFocusAxis);
+}
+
+
+int ZDrive::Initialize()
+{
+   if (!g_ScopeInterface.portInitialized_)
+      return ERR_SCOPE_NOT_ACTIVE;
+
+   int ret = DEVICE_OK;
+   if (!g_ScopeInterface.IsInitialized())
+      ret = g_ScopeInterface.Initialize(*this, *GetCoreCallback());
+   if (ret != DEVICE_OK)
+      return ret;
+   
+   // check if this turret exists:
+   bool present;
+   if (! g_ScopeModel.IsDeviceAvailable(g_ZDrive))
+      return ERR_MODULE_NOT_FOUND;
+
+   // Acceleration 
+   CPropertyAction* pAct = new CPropertyAction(this, &ZDrive::OnAcceleration);
+   ret = CreateProperty("Acceleration", "1", MM::Float, false, pAct);
+   if (ret != DEVICE_OK)
+      return ret;
+   SetPropertyLimits("Acceleration", 1, 65535);
+
+   // Speed 
+   pAct = new CPropertyAction(this, &ZDrive::OnSpeed);
+   ret = CreateProperty("Speed", "1", MM::Float, false, pAct);
+   if (ret != DEVICE_OK)
+      return ret;
+   SetPropertyLimits("Speed", 1, 16777216);
+
+   ret = UpdateStatus();
+   if (ret!= DEVICE_OK)
+      return ret;
+
+   initialized_ = true;
+
+   return DEVICE_OK;
+}
+
+int ZDrive::Shutdown()
+{
+   if (initialized_) 
+      initialized_ = false;
+   return DEVICE_OK;
+}
+
+int ZDrive::SetPositionUm(double pos)
+{
+   long steps = (long)(pos / g_ScopeModel.ZDrive_.GetStepSize());
+   int ret = SetPositionSteps(steps);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   return DEVICE_OK;
+}
+
+int ZDrive::GetPositionUm(double& pos)
+{
+   long steps;                                                
+   int ret = GetPositionSteps(steps);                         
+   if (ret != DEVICE_OK)                                      
+      return ret;                                             
+   pos = steps * g_ScopeModel.ZDrive_.GetStepSize();
+
+   return DEVICE_OK;
+}
+
+int ZDrive::SetPositionSteps(long steps)
+{
+   return g_ScopeInterface.SetZDrivePosition(*this, *GetCoreCallback(), (int) steps);
+}
+
+int ZDrive::GetPositionSteps(long& steps)
+{
+   return g_ScopeModel.ZDrive_.GetPosition((int&) steps);
+}
+
+int ZDrive::SetOrigin()
+{
+   return DEVICE_OK;
+}
+
+int ZDrive::OnAcceleration(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)   {
+      int acc;
+      int ret = g_ScopeModel.ZDrive_.GetRamp(acc);
+      if (ret != DEVICE_OK)
+         return ret;
+      pProp->Set((long)acc);
+   }
+   else if (eAct == MM::AfterSet)                             
+   {  
+      long acc;
+      pProp->Get(acc);
+      int ret = g_ScopeInterface.SetZDriveAcceleration(*this, *GetCoreCallback(), (int) acc);
+      if (ret != DEVICE_OK)
+         return ret;
+   }
+                                                              
+   return DEVICE_OK;                                          
+}
+
+int ZDrive::OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)   {
+      int speed;
+      int ret = g_ScopeModel.ZDrive_.GetSpeed(speed);
+      if (ret != DEVICE_OK)
+         return ret;
+      pProp->Set((long)speed);
+   }
+   else if (eAct == MM::AfterSet)                             
+   {  
+      long speed;
+      pProp->Get(speed);
+      int ret = g_ScopeInterface.SetZDriveAcceleration(*this, *GetCoreCallback(), (int) speed);
+      if (ret != DEVICE_OK)
+         return ret;
+   }
+                                                              
+   return DEVICE_OK;                                          
+}
+
+/*
+
 // TubeLensTurret.  Inherits from Turret.  Only change is that it reads the 
 // labels from the Leica microscope
 ///////////////////////////////////////////////////////////////////////////////
@@ -1267,228 +1449,6 @@ int Servo::OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct) {
       return LeicaServo::SetPosition(*this, *GetCoreCallback(), devId_, posNative);
    }
    return DEVICE_OK;
-}
-
-//
-// LeicaFocusStage: Micro-Manager implementation of focus drive
-//
-Axis::Axis (int devId, std::string name, std::string description): 
-   stepSize_um_(0.001),
-   initialized_ (false),
-   moveMode_ (0),
-   velocity_ (0),
-   direct_ ("Direct move to target"),
-   uni_ ("Unidirectional backlash compensation"),
-   biSup_ ("Bidirectional Precision suppress small upwards"),
-   biAlways_ ("Bidirectional Precision Always"),
-   fast_ ("Fast"),
-   smooth_ ("Smooth"),
-   busyCounter_(0)
-{
-   devId_ = devId;
-   name_ = name;
-   description_ = description;
-   InitializeDefaultErrorMessages();
-
-   SetErrorText(ERR_SCOPE_NOT_ACTIVE, "Leica Scope is not initialized.  It is needed for the Leica Shutter to work");
-   SetErrorText(ERR_MODULE_NOT_FOUND, "This Axis is not installed in this Leica microscope");
-}
-
-Axis::~Axis()
-{
-   Shutdown();
-}
-
-bool Axis::Busy()
-{
-   bool busy;
-   int ret = GetBusy(*this, *GetCoreCallback(), devId_, busy);
-   if (ret != DEVICE_OK)  // This is bad and should not happen
-      return false;
-   if (busy) {
-	   busyCounter_++;
-	   if (busyCounter_ > 30) {
-		   // TODO: send another status request, hack: set Busy to false now
-		   busyCounter_ = 0;
-		   g_ScopeInterface.SetModelBusy(devId_, false);
-	   }
-   } else
-	   busyCounter_ = 0;
-
-   return busy;
-}
-
-void Axis::GetName (char* Name) const
-{
-   CDeviceUtils::CopyLimitedString(Name, g_LeicaFocusAxis);
-}
-
-
-int Axis::Initialize()
-{
-   if (!g_ScopeInterface.portInitialized_)
-      return ERR_SCOPE_NOT_ACTIVE;
-
-   // check if this Axis exists:
-   bool present;
-   int ret = GetPresent(*this, *GetCoreCallback(), devId_, present);
-   if (ret != DEVICE_OK)
-      return ret;
-   if (!present)
-      return ERR_MODULE_NOT_FOUND;
-
-   // set property list
-   // ----------------
-   // Position
-   CPropertyAction* pAct = new CPropertyAction(this, &Axis::OnPosition);
-   ret = CreateProperty(MM::g_Keyword_Position, "0", MM::Float, false, pAct);
-   if (ret != DEVICE_OK)
-      return ret;
-
-   // MoveMode
-   pAct = new CPropertyAction(this, &Axis::OnMoveMode);
-   ret = CreateProperty("Move Mode", direct_.c_str(), MM::String, false, pAct);
-   if (ret != DEVICE_OK)
-      return ret;
-   AddAllowedValue("Move Mode", direct_.c_str()); 
-   AddAllowedValue("Move Mode", uni_.c_str()); 
-   AddAllowedValue("Move Mode", biSup_.c_str()); 
-   AddAllowedValue("Move Mode", biAlways_.c_str()); 
-
-   // velocity
-   pAct = new CPropertyAction(this, &Axis::OnVelocity);
-   ret = CreateProperty("Velocity-Acceleration", fast_.c_str(), MM::String, false, pAct);
-   if (ret != DEVICE_OK)
-      return ret;
-   AddAllowedValue("Velocity-Acceleration", fast_.c_str());
-   AddAllowedValue("Velocity-Acceleration", smooth_.c_str());
-   
-
-   // Update lower and upper limits.  These values are cached, so if they change during a session, the adapter will need to be re-initialized
-
-
-
-   ret = UpdateStatus();
-   if (ret!= DEVICE_OK)
-      return ret;
-
-   initialized_ = true;
-
-   return DEVICE_OK;
-}
-
-int Axis::Shutdown()
-{
-   if (initialized_) initialized_ = false;
-   return DEVICE_OK;
-}
-
-int Axis::SetPositionUm(double pos)
-{
-   long steps = (long)(pos / stepSize_um_);
-   int ret = SetPositionSteps(steps);
-   if (ret != DEVICE_OK)
-      return ret;
-
-   return DEVICE_OK;
-}
-
-int Axis::GetPositionUm(double& pos)
-{
-   long steps;                                                
-   int ret = GetPositionSteps(steps);                         
-   if (ret != DEVICE_OK)                                      
-      return ret;                                             
-   pos = steps * stepSize_um_;
-
-   return DEVICE_OK;
-}
-
-int Axis::SetPositionSteps(long steps)
-{
-   return LeicaAxis::SetPosition(*this, *GetCoreCallback(), devId_, steps, (LeicaByte) (moveMode_ & velocity_));
-}
-
-int Axis::GetPositionSteps(long& steps)
-{
-   return LeicaDevice::GetPosition(*this, *GetCoreCallback(), devId_, (LeicaLong&) steps);
-}
-
-int Axis::SetOrigin()
-{
-   return DEVICE_OK;
-}
-
-int Axis::OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-   if (eAct == MM::BeforeGet)   {
-      double pos;
-      int ret = GetPositionUm(pos);
-      if (ret != DEVICE_OK)
-         return ret;
-      pProp->Set(pos);
-   }
-   else if (eAct == MM::AfterSet)                             
-   {  
-      double pos;                                             
-      pProp->Get(pos);                                        
-      int ret = SetPositionUm(pos);                           
-      if (ret != DEVICE_OK)                                   
-         return ret;                                          
-   }                                                          
-                                                              
-   return DEVICE_OK;                                          
-}
-
-
-int Axis::OnMoveMode(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-   if (eAct == MM::BeforeGet)   {
-      switch (moveMode_) {
-         case 0: pProp->Set(direct_.c_str()); break;
-         case 1: pProp->Set(uni_.c_str()); break;
-         case 2: pProp->Set(biSup_.c_str()); break;
-         case 3: pProp->Set(biAlways_.c_str()); break;
-         default: pProp->Set(direct_.c_str());
-      }
-   }
-   else if (eAct == MM::AfterSet)                             
-   {  
-      string result;                                             
-      pProp->Get(result);                                        
-      if (result == direct_)
-         moveMode_ = 0;
-      else if (result == uni_)
-         moveMode_ = 1;
-      else if (result == biSup_)
-         moveMode_ = 2;
-      else if (result == biAlways_)
-         moveMode_ = 3;
-   }                                                          
-                                                              
-   return DEVICE_OK;                                          
-}
-
-int Axis::OnVelocity(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-   if (eAct == MM::BeforeGet)   {
-      switch (velocity_) {
-         case 0: pProp->Set(fast_.c_str()); break;
-         case 4: pProp->Set(smooth_.c_str()); break;
-         default: pProp->Set(fast_.c_str());
-      }
-   }
-   else if (eAct == MM::AfterSet)                             
-   {  
-      string result;                                             
-      pProp->Get(result);                                        
-      if (result == fast_)
-         velocity_ = 0;
-      else if (result == smooth_)
-         velocity_ = 4;
-   }                                                          
-                                                              
-   return DEVICE_OK;                                          
 }
 
 //

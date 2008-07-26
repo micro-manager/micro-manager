@@ -92,6 +92,7 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
    os << "Initializing Leica Microscope";
    core.LogMessage (&device, os.str().c_str(), false);
    os.str("");
+
    // empty the Rx serial buffer before sending commands
    ClearRcvBuf();
    ClearPort(device, core);
@@ -120,7 +121,12 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
          return ret;
    }
 
-   // TODO: get info about all other devices that we are interested in (make sure they are available)
+   if (scopeModel_->IsDeviceAvailable(g_ZDrive)) {
+      ret = GetZDriveInfo(device, core);
+      if (ret != DEVICE_OK)
+         return ret;
+   }
+
 
    // Start all events at this point
 
@@ -158,6 +164,15 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
       command.str("");
    }
 
+   // Start event reporting for Z Drive
+   if (scopeModel_->IsDeviceAvailable(g_ZDrive)) {
+      command << g_ZDrive << "003 1 0 0 0 0 1 0 0 0";
+      ret = GetAnswer(device, core, command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+      command.str("");
+   }
+
 
    // Start monitoring of all messages coming from the microscope
    monitoringThread_ = new LeicaMonitoringThread(device, core, port_, scopeModel_);
@@ -189,6 +204,26 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
 
    if (scopeModel_->IsDeviceAvailable(g_Revolver)) {
       command << g_IL_Turret << "023";
+      ret = core.SetSerialCommand(&device, port_.c_str(), command.str().c_str(), "\r");
+      if (ret != DEVICE_OK)
+         return ret;
+      command.str("");
+   }
+
+   if (scopeModel_->IsDeviceAvailable(g_ZDrive)) {
+      command << g_IL_Turret << "023";
+      ret = core.SetSerialCommand(&device, port_.c_str(), command.str().c_str(), "\r");
+      if (ret != DEVICE_OK)
+         return ret;
+      command.str("");
+      // Get current speed of the stage
+      command << g_IL_Turret << "033";
+      ret = core.SetSerialCommand(&device, port_.c_str(), command.str().c_str(), "\r");
+      if (ret != DEVICE_OK)
+         return ret;
+      command.str("");
+      // Get current acceleration
+      command << g_IL_Turret << "031";
       ret = core.SetSerialCommand(&device, port_.c_str(), command.str().c_str(), "\r");
       if (ret != DEVICE_OK)
          return ret;
@@ -518,6 +553,46 @@ int LeicaScopeInterface::GetRevolverInfo(MM::Device& device, MM::Core& core)
 
    return DEVICE_OK;
 }
+
+int LeicaScopeInterface::GetZDriveInfo(MM::Device& device, MM::Core& core)
+{
+   std::ostringstream command;
+   std::string answer, token;
+
+   // Get minimum position
+   command << g_ZDrive << "028";
+   int ret = GetAnswer(device, core, command.str().c_str(), answer);
+   if (ret != DEVICE_OK)
+      return ret;
+   command.str("");
+
+   std::stringstream ts(answer);
+   int minPos;
+   ts >> minPos;
+   ts >> minPos;
+   if ( 0 <= minPos)
+   scopeModel_->ZDrive_.SetMinPosition(minPos);
+
+   // Get Conversion factor
+   command << g_ZDrive << "042";
+   ret = GetAnswer(device, core, command.str().c_str(), answer);
+   if (ret != DEVICE_OK)
+      return ret;
+   command.str("");
+
+   std::stringstream tt(answer);
+   double factor;
+   tt >> factor;
+   tt >> factor;
+   if ( 0 <= factor)
+   scopeModel_->ZDrive_.SetStepSize(factor);
+
+   // Scope does not know about a maximum position
+   scopeModel_->ZDrive_.SetMaxPosition(9999999);
+
+   return DEVICE_OK;
+}
+
 /**
  * Sends command to the microscope to set requested method
  * Does not listen for answers (should be caught in the monitoringthread)
@@ -571,6 +646,39 @@ int LeicaScopeInterface::SetRevolverPosition(MM::Device& device, MM::Core& core,
    scopeModel_->ObjectiveTurret_.SetBusy(true);
    std::ostringstream os;
    os << g_Revolver << "022" << " " << position;
+   return core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+}
+
+/**
+ * Sets ZDrive position
+ */
+int LeicaScopeInterface::SetZDrivePosition(MM::Device& device, MM::Core& core, int position)
+{
+   scopeModel_->ZDrive_.SetBusy(true);
+   std::ostringstream os;
+   os << g_ZDrive << "022" << " " << position;
+   return core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+}
+
+/**
+ * Sets ZDrive Speed
+ */
+int LeicaScopeInterface::SetZDriveSpeed(MM::Device& device, MM::Core& core, int speed)
+{
+   scopeModel_->ZDrive_.SetBusy(true);
+   std::ostringstream os;
+   os << g_ZDrive << "032" << " " << speed;
+   return core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+}
+
+/**
+ * Sets ZDrive acceleration
+ */
+int LeicaScopeInterface::SetZDriveAcceleration(MM::Device& device, MM::Core& core, int acc)
+{
+   scopeModel_->ZDrive_.SetBusy(true);
+   std::ostringstream os;
+   os << g_ZDrive << "030" << " " << acc;
    return core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
 }
 
@@ -711,6 +819,7 @@ int LeicaMonitoringThread::svc() {
                          break;
                       case (322) :  // dark flap was not automatically opened
                          // TODO: open the dark flap
+                         scopeModel_->ILTurret_.SetBusy(false);
                          break;
                        default : // TODO: error handling
                          break;
@@ -747,14 +856,50 @@ int LeicaMonitoringThread::svc() {
                          break;
                    }
                    break;
+               case (g_ZDrive) :
+                   switch (commandId) {
+                      case (4) : // Status
+                         {
+                            std::string status[5];
+                            for (int i=0; i < 5; i++) 
+                               os >> status[i];
+                            if (status[0]=="1")
+                               scopeModel_->ObjectiveTurret_.SetBusy(true);
+                            else
+                               scopeModel_->ObjectiveTurret_.SetBusy(false);
+                         }
+                         break;
+                      case (23) : // Position
+                         {
+                            int pos;
+                            os >> pos;
+                            scopeModel_->ZDrive_.SetPosition(pos);
+                            scopeModel_->ZDrive_.SetBusy(false);
+                            break;
+                         }
+                      case (31) : // acceleration
+                         {
+                            int acc;
+                            os >> acc;
+                            scopeModel_->ZDrive_.SetRamp(acc);
+                            break;
+                         }
+                      case (33) : // speed
+                         {
+                            int speed;
+                            os >> speed;
+                            scopeModel_->ZDrive_.SetSpeed(speed);
+                            break;
+                         }
+                   }
 
             }
          }
       } while ((strlen(rcvBuf) > 0) && (!stop_)); 
 
    }
-   printf("Monitoring thread finished\n");
-   return 0;
+
+   return DEVICE_OK;
 }
 
 void LeicaMonitoringThread::Start()

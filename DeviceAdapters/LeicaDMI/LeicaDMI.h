@@ -168,6 +168,7 @@ public:
 
    // action interface
    int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnArticleNumber(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 protected:
    unsigned int numPos_;
@@ -179,6 +180,35 @@ private:
    std::string description_;
 };
 
+class ZDrive : public CStageBase<ZDrive>
+{
+public:
+   ZDrive();
+   ~ZDrive();
+
+   // Device API
+   bool Busy();
+   int Initialize();
+   int Shutdown ();
+   void GetName(char* name) const;
+   int SetPositionUm(double position);
+   int GetPositionUm(double& position);
+   int SetPositionSteps(long steps);
+   int GetPositionSteps(long& steps);
+   int SetOrigin();
+   int GetLimits(double& lower, double& upper);
+   int Home();
+   int Stop();
+
+   int OnAcceleration(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+private:
+   double stepSizeUm_;
+   bool initialized_;
+   std::string name_;
+   std::string description_;
+};
 
 class XYStage : public CXYStageBase<XYStage>
 {
@@ -226,4 +256,4 @@ private:
    std::string description_;
    std::string direct_, uni_, biSup_, biAlways_, fast_, smooth_;
 };
-#endif // _LeicaCAN29_H_
+#endif // _LeicaDMI_H_

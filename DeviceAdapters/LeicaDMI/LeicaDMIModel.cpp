@@ -36,50 +36,50 @@
 #include "LeicaDMIModel.h"
 #include "../../MMDevice/ModuleInterface.h"
 
-MM_THREAD_GUARD mutex;
+//MM_THREAD_GUARD mutex;
 
 LeicaDeviceModel::LeicaDeviceModel() :
-   position_(0),
+   position_(1),
    minPosition_(0),
-   maxPosition_(0)
+   maxPosition_(1)
 {
-   MM_THREAD_INITIALIZE_GUARD(&mutex);
+   MM_THREAD_INITIALIZE_GUARD(&mutex_);
 }
 
 LeicaDeviceModel::~LeicaDeviceModel()
 {
-   MM_THREAD_DELETE_GUARD(&mutex);
+   MM_THREAD_DELETE_GUARD(&mutex_);
 }
 
 int LeicaDeviceModel::SetPosition(int position)
 {
-   MM_THREAD_GUARD_LOCK(&mutex);
+   MM_THREAD_GUARD_LOCK(&mutex_);
    position_ = position;
-   MM_THREAD_GUARD_UNLOCK(&mutex);
+   MM_THREAD_GUARD_UNLOCK(&mutex_);
    return DEVICE_OK;
 }
 
 int LeicaDeviceModel::GetPosition(int& position)
 {
-   MM_THREAD_GUARD_LOCK(&mutex);
+   MM_THREAD_GUARD_LOCK(&mutex_);
    position = position_;
-   MM_THREAD_GUARD_UNLOCK(&mutex);
+   MM_THREAD_GUARD_UNLOCK(&mutex_);
    return DEVICE_OK;
 }
 
 int LeicaDeviceModel::SetBusy(bool busy)
 {
-   MM_THREAD_GUARD_LOCK(&mutex);
+   MM_THREAD_GUARD_LOCK(&mutex_);
    busy_ = busy;
-   MM_THREAD_GUARD_UNLOCK(&mutex);
+   MM_THREAD_GUARD_UNLOCK(&mutex_);
    return DEVICE_OK;
 }
 
 int LeicaDeviceModel::GetBusy(bool& busy)
 {
-   MM_THREAD_GUARD_LOCK(&mutex);
+   MM_THREAD_GUARD_LOCK(&mutex_);
    busy = busy_;
-   MM_THREAD_GUARD_UNLOCK(&mutex);
+   MM_THREAD_GUARD_UNLOCK(&mutex_);
    return DEVICE_OK;
 }
 
@@ -127,6 +127,61 @@ LeicaObjectiveTurretModel::LeicaObjectiveTurretModel() :
 {
    LeicaDeviceModel::LeicaDeviceModel();
    position_ = 1;
+}
+
+/*
+ * ZDrive Model
+ */
+LeicaZDriveModel::LeicaZDriveModel() 
+{
+}
+
+int LeicaZDriveModel::GetRamp(int& ramp)
+{
+   MM_THREAD_GUARD_LOCK(&mutex_);
+   ramp = ramp_;
+   MM_THREAD_GUARD_UNLOCK(&mutex_);
+   return DEVICE_OK;
+}
+
+int LeicaZDriveModel::SetRamp(int ramp)
+{
+   MM_THREAD_GUARD_LOCK(&mutex_);
+   ramp_ = ramp;
+   MM_THREAD_GUARD_UNLOCK(&mutex_);
+   return DEVICE_OK;
+}
+
+int LeicaZDriveModel::GetSpeed(int& speed)
+{
+   MM_THREAD_GUARD_LOCK(&mutex_);
+   speed = speed_;
+   MM_THREAD_GUARD_UNLOCK(&mutex_);
+   return DEVICE_OK;
+}
+
+int LeicaZDriveModel::SetSpeed(int speed)
+{
+   MM_THREAD_GUARD_LOCK(&mutex_);
+   speed_ = speed;
+   MM_THREAD_GUARD_UNLOCK(&mutex_);
+   return DEVICE_OK;
+}
+
+int LeicaZDriveModel::GetPosFocus(int& posFocus)
+{
+   MM_THREAD_GUARD_LOCK(&mutex_);
+   posFocus = posFocus_;
+   MM_THREAD_GUARD_UNLOCK(&mutex_);
+   return DEVICE_OK;
+}
+
+int LeicaZDriveModel::SetPosFocus(int posFocus)
+{
+   MM_THREAD_GUARD_LOCK(&mutex_);
+   posFocus_ = posFocus;
+   MM_THREAD_GUARD_UNLOCK(&mutex_);
+   return DEVICE_OK;
 }
 
 

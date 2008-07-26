@@ -59,6 +59,7 @@ class LeicaScopeInterface
       int GetStandInfo(MM::Device& device, MM::Core& core);
       int GetILTurretInfo(MM::Device& device, MM::Core& core);
       int GetRevolverInfo(MM::Device& device, MM::Core& core);
+      int GetZDriveInfo(MM::Device& device, MM::Core& core);
      
       // commands to set individual components
       int SetMethod(MM::Device& device, MM::Core& core, int position);
@@ -66,6 +67,9 @@ class LeicaScopeInterface
       int SetILShutterPosition(MM::Device& device, MM::Core& core, int position);
       int SetILTurretPosition(MM::Device& device, MM::Core& core, int position);
       int SetRevolverPosition(MM::Device& device, MM::Core& core, int position);
+      int SetZDrivePosition(MM::Device& device, MM::Core& core, int position);
+      int SetZDriveAcceleration(MM::Device& device, MM::Core& core, int position);
+      int SetZDriveSpeed(MM::Device& device, MM::Core& core, int speed);
 
       LeicaMonitoringThread* monitoringThread_;
       LeicaDMIModel* scopeModel_;
