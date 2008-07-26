@@ -135,10 +135,10 @@ public:
 /*
  * Model for Leica Z drive
  */
-class LeicaZDriveModel : public LeicaDeviceModel
+class LeicaDriveModel : public LeicaDeviceModel
 {
 public:
-   LeicaZDriveModel();
+   LeicaDriveModel();
 
    // Not Thread safe
    double GetStepSize() {return stepSize_;};
@@ -196,7 +196,9 @@ public:
    LeicaDeviceModel ILShutter_;
    LeicaILTurretModel ILTurret_;
    LeicaObjectiveTurretModel ObjectiveTurret_;
-   LeicaZDriveModel ZDrive_;
+   LeicaDriveModel ZDrive_;
+   LeicaDriveModel XDrive_;
+   LeicaDriveModel YDrive_;
 
 private:
    std::vector<bool> availableDevices_;

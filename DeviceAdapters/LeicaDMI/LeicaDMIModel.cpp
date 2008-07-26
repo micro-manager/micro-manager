@@ -130,13 +130,13 @@ LeicaObjectiveTurretModel::LeicaObjectiveTurretModel() :
 }
 
 /*
- * ZDrive Model
+ * Drive Model
  */
-LeicaZDriveModel::LeicaZDriveModel() 
+LeicaDriveModel::LeicaDriveModel() 
 {
 }
 
-int LeicaZDriveModel::GetRamp(int& ramp)
+int LeicaDriveModel::GetRamp(int& ramp)
 {
    MM_THREAD_GUARD_LOCK(&mutex_);
    ramp = ramp_;
@@ -144,7 +144,7 @@ int LeicaZDriveModel::GetRamp(int& ramp)
    return DEVICE_OK;
 }
 
-int LeicaZDriveModel::SetRamp(int ramp)
+int LeicaDriveModel::SetRamp(int ramp)
 {
    MM_THREAD_GUARD_LOCK(&mutex_);
    ramp_ = ramp;
@@ -152,7 +152,7 @@ int LeicaZDriveModel::SetRamp(int ramp)
    return DEVICE_OK;
 }
 
-int LeicaZDriveModel::GetSpeed(int& speed)
+int LeicaDriveModel::GetSpeed(int& speed)
 {
    MM_THREAD_GUARD_LOCK(&mutex_);
    speed = speed_;
@@ -160,7 +160,7 @@ int LeicaZDriveModel::GetSpeed(int& speed)
    return DEVICE_OK;
 }
 
-int LeicaZDriveModel::SetSpeed(int speed)
+int LeicaDriveModel::SetSpeed(int speed)
 {
    MM_THREAD_GUARD_LOCK(&mutex_);
    speed_ = speed;
@@ -168,7 +168,7 @@ int LeicaZDriveModel::SetSpeed(int speed)
    return DEVICE_OK;
 }
 
-int LeicaZDriveModel::GetPosFocus(int& posFocus)
+int LeicaDriveModel::GetPosFocus(int& posFocus)
 {
    MM_THREAD_GUARD_LOCK(&mutex_);
    posFocus = posFocus_;
@@ -176,7 +176,7 @@ int LeicaZDriveModel::GetPosFocus(int& posFocus)
    return DEVICE_OK;
 }
 
-int LeicaZDriveModel::SetPosFocus(int posFocus)
+int LeicaDriveModel::SetPosFocus(int posFocus)
 {
    MM_THREAD_GUARD_LOCK(&mutex_);
    posFocus_ = posFocus;

@@ -1164,7 +1164,7 @@ int ZDrive::GetPositionUm(double& pos)
 
 int ZDrive::SetPositionSteps(long steps)
 {
-   return g_ScopeInterface.SetZDrivePosition(*this, *GetCoreCallback(), (int) steps);
+   return g_ScopeInterface.SetDrivePosition(*this, *GetCoreCallback(), g_ScopeModel.ZDrive_, g_ZDrive, (int) steps);
 }
 
 int ZDrive::GetPositionSteps(long& steps)
@@ -1190,7 +1190,7 @@ int ZDrive::OnAcceleration(MM::PropertyBase* pProp, MM::ActionType eAct)
    {  
       long acc;
       pProp->Get(acc);
-      int ret = g_ScopeInterface.SetZDriveAcceleration(*this, *GetCoreCallback(), (int) acc);
+      int ret = g_ScopeInterface.SetDriveAcceleration(*this, *GetCoreCallback(), g_ScopeModel.ZDrive_, g_ZDrive, (int) acc);
       if (ret != DEVICE_OK)
          return ret;
    }
@@ -1211,11 +1211,262 @@ int ZDrive::OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
    {  
       long speed;
       pProp->Get(speed);
-      int ret = g_ScopeInterface.SetZDriveAcceleration(*this, *GetCoreCallback(), (int) speed);
+      int ret = g_ScopeInterface.SetDriveAcceleration(*this, *GetCoreCallback(), g_ScopeModel.ZDrive_, g_ZDrive, (int) speed);
       if (ret != DEVICE_OK)
          return ret;
    }
                                                               
+   return DEVICE_OK;                                          
+}
+
+/*
+ * LeicaXYStage: Micro-Manager implementation of X and Y Stage
+*/
+XYStage::XYStage (): 
+   stepSize_um_(0.001),
+   initialized_ (false),
+   velocity_ (0)
+{
+   name_ = g_LeicaXYStage;
+   InitializeDefaultErrorMessages();
+
+   SetErrorText(ERR_SCOPE_NOT_ACTIVE, "Leica Scope is not initialized.  It is needed for the Leica XYStage to work");
+   SetErrorText(ERR_MODULE_NOT_FOUND, "No XYStage installed on this Leica microscope");
+}
+
+XYStage::~XYStage()
+{
+   Shutdown();
+}
+
+bool XYStage::Busy()
+{
+   bool xBusy = false;
+   bool yBusy = false;
+   int ret = g_ScopeModel.XDrive_.GetBusy(xBusy);
+   if (ret != DEVICE_OK)  
+      return false;
+   ret = g_ScopeModel.YDrive_.GetBusy(yBusy);
+   if (ret != DEVICE_OK)  // This is bad and should not happen
+      return false;
+
+   return xBusy && yBusy;
+}
+
+void XYStage::GetName (char* Name) const
+{
+   CDeviceUtils::CopyLimitedString(Name, g_LeicaXYStage);
+}
+
+
+int XYStage::Initialize()
+{
+   if (!g_ScopeInterface.portInitialized_)
+      return ERR_SCOPE_NOT_ACTIVE;
+
+   int ret = DEVICE_OK;
+   if (!g_ScopeInterface.IsInitialized())
+      ret = g_ScopeInterface.Initialize(*this, *GetCoreCallback());
+   if (ret != DEVICE_OK)
+      return ret;
+   
+   // check if the XY stage exists
+   bool present;
+   if (! (g_ScopeModel.IsDeviceAvailable(g_XDrive) && g_ScopeModel.IsDeviceAvailable(g_YDrive)))
+      return ERR_MODULE_NOT_FOUND;
+
+   // Acceleration 
+   CPropertyAction* pAct = new CPropertyAction(this, &XYStage::OnAcceleration);
+   ret = CreateProperty("Acceleration", "1", MM::Float, false, pAct);
+   if (ret != DEVICE_OK)
+      return ret;
+   SetPropertyLimits("Acceleration", 1, 65535);
+
+   // Speed 
+   pAct = new CPropertyAction(this, &XYStage::OnSpeed);
+   ret = CreateProperty("Speed", "1", MM::Float, false, pAct);
+   if (ret != DEVICE_OK)
+      return ret;
+   SetPropertyLimits("Speed", 1, 16777216);
+
+   ret = UpdateStatus();
+   if (ret!= DEVICE_OK)
+      return ret;
+
+   initialized_ = true;
+
+   return DEVICE_OK;
+}
+
+int XYStage::Shutdown()
+{
+   if (initialized_) initialized_ = false;
+   return DEVICE_OK;
+}
+
+int XYStage::GetLimits(double& xMin, double& xMax, double& yMin, double& yMax) 
+{
+   int xMinStep, yMinStep, xMaxStep, yMaxStep;
+   g_ScopeModel.XDrive_.GetMinPosition(xMinStep);
+   xMin = xMinStep * g_ScopeModel.XDrive_.GetStepSize();
+   g_ScopeModel.YDrive_.GetMinPosition(yMinStep);
+   yMin = yMinStep * g_ScopeModel.YDrive_.GetStepSize();
+   g_ScopeModel.XDrive_.GetMaxPosition(xMaxStep);
+   xMax = xMaxStep * g_ScopeModel.XDrive_.GetStepSize();
+   g_ScopeModel.YDrive_.GetMaxPosition(yMaxStep);
+   yMax = yMaxStep * g_ScopeModel.YDrive_.GetStepSize();
+   return DEVICE_OK;
+}
+
+int XYStage::SetPositionUm(double x, double y)
+{
+   long xSteps = (long)(x / stepSize_um_);
+   long ySteps = (long)(y / stepSize_um_);
+   int ret = SetPositionSteps(xSteps, ySteps);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   return DEVICE_OK;
+}
+
+int XYStage::SetRelativePositionUm(double x, double y)
+{
+   long xSteps = (long)(x / stepSize_um_);
+   long ySteps = (long)(y / stepSize_um_);
+   int ret = SetRelativePositionSteps(xSteps, ySteps);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   return DEVICE_OK;
+}
+
+int XYStage::GetPositionUm(double& x, double& y)
+{
+   long xSteps, ySteps;
+   int ret = GetPositionSteps(xSteps, ySteps);                         
+   if (ret != DEVICE_OK)                                      
+      return ret;                                             
+   x = xSteps * stepSize_um_;
+   y = ySteps * stepSize_um_;
+
+   return DEVICE_OK;
+}
+
+int XYStage::SetPositionSteps(long xSteps, long ySteps)
+{
+   int ret = g_ScopeInterface.SetDrivePosition(*this, *GetCoreCallback(), g_ScopeModel.XDrive_, g_XDrive, xSteps);
+   if (ret != DEVICE_OK)
+      return ret;
+   ret = g_ScopeInterface.SetDrivePosition(*this, *GetCoreCallback(), g_ScopeModel.YDrive_, g_YDrive, ySteps);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   return DEVICE_OK;
+}
+
+int XYStage::SetRelativePositionSteps(long xSteps, long ySteps)
+{
+   int ret = g_ScopeInterface.SetDrivePositionRelative(*this, *GetCoreCallback(), g_ScopeModel.XDrive_, g_XDrive, xSteps);
+   if (ret != DEVICE_OK)
+      return ret;
+   ret = g_ScopeInterface.SetDrivePositionRelative(*this, *GetCoreCallback(), g_ScopeModel.YDrive_, g_YDrive, ySteps);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   return DEVICE_OK;
+}
+
+int XYStage::GetPositionSteps(long& xSteps, long& ySteps)
+{
+   int ret = g_ScopeModel.XDrive_.GetPosition((int&) xSteps);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   ret = g_ScopeModel.YDrive_.GetPosition((int&) ySteps);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   return DEVICE_OK;
+}
+
+int XYStage::Home()
+{
+   int ret = g_ScopeInterface.HomeDrive(*this, *GetCoreCallback(), g_ScopeModel.XDrive_, g_XDrive);
+   if (ret != DEVICE_OK)
+      return ret;
+   ret = g_ScopeInterface.HomeDrive(*this, *GetCoreCallback(), g_ScopeModel.YDrive_, g_YDrive);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   return DEVICE_OK;
+}
+
+int XYStage::Stop()
+{
+   int ret = g_ScopeInterface.StopDrive(*this, *GetCoreCallback(), g_ScopeModel.XDrive_, g_XDrive);
+   if (ret != DEVICE_OK)
+      return ret;
+   ret = g_ScopeInterface.StopDrive(*this, *GetCoreCallback(), g_ScopeModel.YDrive_, g_YDrive);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   return DEVICE_OK;
+}
+
+int XYStage::SetOrigin()
+{
+   // TODO: 
+   return DEVICE_OK;
+}
+
+int XYStage::OnAcceleration(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)   {
+      int acc;
+      int ret = g_ScopeModel.XDrive_.GetRamp(acc);
+      if (ret != DEVICE_OK)
+         return ret;
+      // assume that YDrive ramp is the same
+      pProp->Set((long)acc);
+   }
+   else if (eAct == MM::AfterSet)                             
+   {  
+      long acc;
+      pProp->Get(acc);
+      int ret = g_ScopeInterface.SetDriveAcceleration(*this, *GetCoreCallback(), g_ScopeModel.XDrive_, g_XDrive, (int) acc);
+      if (ret != DEVICE_OK)
+         return ret;
+      ret = g_ScopeInterface.SetDriveAcceleration(*this, *GetCoreCallback(), g_ScopeModel.YDrive_, g_YDrive, (int) acc);
+      if (ret != DEVICE_OK)
+         return ret;
+   }
+                                                              
+   return DEVICE_OK;                                          
+}
+
+
+int XYStage::OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)   {
+      int speed;
+      int ret = g_ScopeModel.XDrive_.GetSpeed(speed);
+      if (ret != DEVICE_OK)
+         return ret;
+      // Assume Y-drive has the same setting
+      pProp->Set((long)speed);
+   }
+   else if (eAct == MM::AfterSet)                             
+   {  
+      long speed;
+      pProp->Get(speed);
+      int ret = g_ScopeInterface.SetDriveAcceleration(*this, *GetCoreCallback(), g_ScopeModel.XDrive_, g_XDrive, (int) speed);
+      if (ret != DEVICE_OK)
+         return ret;
+      ret = g_ScopeInterface.SetDriveAcceleration(*this, *GetCoreCallback(), g_ScopeModel.YDrive_, g_YDrive, (int) speed);
+      if (ret != DEVICE_OK)
+         return ret;
+   }
+
    return DEVICE_OK;                                          
 }
 
@@ -1451,266 +1702,4 @@ int Servo::OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct) {
    return DEVICE_OK;
 }
 
-//
-// LeicaXYStage: Micro-Manager implementation of X and Y Stage
-//
-XYStage::XYStage (): 
-   stepSize_um_(0.001),
-   initialized_ (false),
-   moveMode_ (0),
-   velocity_ (0),
-   direct_ ("Direct move to target"),
-   uni_ ("Unidirectional backlash compensation"),
-   biSup_ ("Bidirectional Precision suppress small upwards"),
-   biAlways_ ("Bidirectional Precision Always"),
-   fast_ ("Fast"),
-   smooth_ ("Smooth")
-{
-   name_ = g_LeicaXYStage;
-   InitializeDefaultErrorMessages();
-
-   SetErrorText(ERR_SCOPE_NOT_ACTIVE, "Leica Scope is not initialized.  It is needed for the Leica Shutter to work");
-   SetErrorText(ERR_MODULE_NOT_FOUND, "No XYStage installed on this Leica microscope");
-}
-
-XYStage::~XYStage()
-{
-   Shutdown();
-}
-
-bool XYStage::Busy()
-{
-   bool xBusy = false;
-   bool yBusy = false;
-   int ret = GetBusy(*this, *GetCoreCallback(), g_StageXAxis, xBusy);
-   if (ret != DEVICE_OK)  // This is bad and should not happen
-      return false;
-   ret = GetBusy(*this, *GetCoreCallback(), g_StageYAxis, yBusy);
-   if (ret != DEVICE_OK)  // This is bad and should not happen
-      return false;
-
-   return xBusy && yBusy;
-}
-
-void XYStage::GetName (char* Name) const
-{
-   CDeviceUtils::CopyLimitedString(Name, g_LeicaXYStage);
-}
-
-
-int XYStage::Initialize()
-{
-   if (!g_ScopeInterface.portInitialized_)
-      return ERR_SCOPE_NOT_ACTIVE;
-
-   // check if this Axis exists:
-   bool presentX, presentY;
-   // TODO: check both stages
-   int ret = GetPresent(*this, *GetCoreCallback(), g_StageYAxis, presentY);
-   if (ret != DEVICE_OK)
-      return ret;
-   ret = GetPresent(*this, *GetCoreCallback(), g_StageXAxis, presentX);
-   if (ret != DEVICE_OK)
-      return ret;
-   if (!(presentX && presentY))
-      return ERR_MODULE_NOT_FOUND;
-
-   // set property list
-   // ----------------
-   // MoveMode
-   CPropertyAction* pAct = new CPropertyAction(this, &XYStage::OnMoveMode);
-   ret = CreateProperty("Move Mode", direct_.c_str(), MM::String, false, pAct);
-   if (ret != DEVICE_OK)
-      return ret;
-   AddAllowedValue("Move Mode", direct_.c_str()); 
-   AddAllowedValue("Move Mode", uni_.c_str()); 
-   AddAllowedValue("Move Mode", biSup_.c_str()); 
-   AddAllowedValue("Move Mode", biAlways_.c_str()); 
-
-   // velocity
-   pAct = new CPropertyAction(this, &XYStage::OnVelocity);
-   ret = CreateProperty("Velocity-Acceleration", fast_.c_str(), MM::String, false, pAct);
-   if (ret != DEVICE_OK)
-      return ret;
-   AddAllowedValue("Velocity-Acceleration", fast_.c_str());
-   AddAllowedValue("Velocity-Acceleration", smooth_.c_str());
-   
-
-   // Update lower and upper limits.  These values are cached, so if they change during a session, the adapter will need to be re-initialized
-
-
-   ret = UpdateStatus();
-   if (ret!= DEVICE_OK)
-      return ret;
-
-   initialized_ = true;
-
-   return DEVICE_OK;
-}
-
-int XYStage::Shutdown()
-{
-   if (initialized_) initialized_ = false;
-   return DEVICE_OK;
-}
-
-int XYStage::GetLimits(double& xMin, double& xMax, double& yMin, double& yMax) 
-{
-   // TODO: rework to our own coordinate system
-   xMin = 0;
-   yMin = 0;
-   xMax = g_deviceInfo[g_StageXAxis].maxPos;
-   yMax = g_deviceInfo[g_StageYAxis].maxPos;
-   return DEVICE_OK;
-}
-
-int XYStage::SetPositionUm(double x, double y)
-{
-   long xSteps = (long)(x / stepSize_um_);
-   long ySteps = (long)(y / stepSize_um_);
-   int ret = SetPositionSteps(xSteps, ySteps);
-   if (ret != DEVICE_OK)
-      return ret;
-
-   return DEVICE_OK;
-}
-
-int XYStage::SetRelativePositionUm(double x, double y)
-{
-   long xSteps = (long)(x / stepSize_um_);
-   long ySteps = (long)(y / stepSize_um_);
-   int ret = SetRelativePositionSteps(xSteps, ySteps);
-   if (ret != DEVICE_OK)
-      return ret;
-
-   return DEVICE_OK;
-}
-
-int XYStage::GetPositionUm(double& x, double& y)
-{
-   long xSteps, ySteps;
-   int ret = GetPositionSteps(xSteps, ySteps);                         
-   if (ret != DEVICE_OK)                                      
-      return ret;                                             
-   x = xSteps * stepSize_um_;
-   y = ySteps * stepSize_um_;
-
-   return DEVICE_OK;
-}
-
-int XYStage::SetPositionSteps(long xSteps, long ySteps)
-{
-   int ret = LeicaAxis::SetPosition(*this, *GetCoreCallback(), g_StageXAxis, xSteps, (LeicaByte) (moveMode_ & velocity_));
-   if (ret != DEVICE_OK)
-      return ret;
-   ret = LeicaAxis::SetPosition(*this, *GetCoreCallback(), g_StageYAxis, ySteps, (LeicaByte) (moveMode_ & velocity_));
-   if (ret != DEVICE_OK)
-      return ret;
-
-   return DEVICE_OK;
-}
-
-int XYStage::SetRelativePositionSteps(long xSteps, long ySteps)
-{
-   int ret = LeicaAxis::SetRelativePosition(*this, *GetCoreCallback(), g_StageXAxis, xSteps, (LeicaByte) (moveMode_ & velocity_));
-   if (ret != DEVICE_OK)
-      return ret;
-   ret = LeicaAxis::SetRelativePosition(*this, *GetCoreCallback(), g_StageYAxis, ySteps, (LeicaByte) (moveMode_ & velocity_));
-   if (ret != DEVICE_OK)
-      return ret;
-
-   return DEVICE_OK;
-}
-
-int XYStage::GetPositionSteps(long& xSteps, long& ySteps)
-{
-   int ret = LeicaDevice::GetPosition(*this, *GetCoreCallback(), g_StageXAxis, (LeicaLong&) xSteps);
-   if (ret != DEVICE_OK)
-      return ret;
-
-   ret = LeicaDevice::GetPosition(*this, *GetCoreCallback(), g_StageYAxis, (LeicaLong&) ySteps);
-   if (ret != DEVICE_OK)
-      return ret;
-
-   return DEVICE_OK;
-}
-
-int XYStage::Home()
-{
-   int ret = FindHardwareStop(*this, *GetCoreCallback(), g_StageXAxis, LOWER);
-   if (ret != DEVICE_OK)
-      return ret;
-   ret = FindHardwareStop(*this, *GetCoreCallback(), g_StageYAxis, LOWER);
-   if (ret != DEVICE_OK)
-      return ret;
-
-   return DEVICE_OK;
-}
-
-int XYStage::Stop()
-{
-   int ret = LeicaAxis::StopMove(*this, *GetCoreCallback(), g_StageXAxis, (LeicaByte) (moveMode_ & velocity_));
-   if (ret != DEVICE_OK)
-      return ret;
-   ret = LeicaAxis::StopMove(*this, *GetCoreCallback(), g_StageYAxis, (LeicaByte) (moveMode_ & velocity_));
-   if (ret != DEVICE_OK)
-      return ret;
-
-   return DEVICE_OK;
-}
-
-int XYStage::SetOrigin()
-{
-   return DEVICE_OK;
-}
-
-int XYStage::OnMoveMode(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-   if (eAct == MM::BeforeGet)   {
-      switch (moveMode_) {
-         case 0: pProp->Set(direct_.c_str()); break;
-         case 1: pProp->Set(uni_.c_str()); break;
-         case 2: pProp->Set(biSup_.c_str()); break;
-         case 3: pProp->Set(biAlways_.c_str()); break;
-         default: pProp->Set(direct_.c_str());
-      }
-   }
-   else if (eAct == MM::AfterSet)                             
-   {  
-      string result;                                             
-      pProp->Get(result);                                        
-      if (result == direct_)
-         moveMode_ = 0;
-      else if (result == uni_)
-         moveMode_ = 1;
-      else if (result == biSup_)
-         moveMode_ = 2;
-      else if (result == biAlways_)
-         moveMode_ = 3;
-   }                                                          
-                                                              
-   return DEVICE_OK;                                          
-}
-
-int XYStage::OnVelocity(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-   if (eAct == MM::BeforeGet)   {
-      switch (velocity_) {
-         case 0: pProp->Set(fast_.c_str()); break;
-         case 4: pProp->Set(smooth_.c_str()); break;
-         default: pProp->Set(fast_.c_str());
-      }
-   }
-   else if (eAct == MM::AfterSet)                             
-   {  
-      string result;                                             
-      pProp->Get(result);                                        
-      if (result == fast_)
-         velocity_ = 0;
-      else if (result == smooth_)
-         velocity_ = 4;
-   }                                                          
-                                                              
-   return DEVICE_OK;                                          
-}
 */

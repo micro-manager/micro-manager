@@ -204,7 +204,6 @@ public:
    int OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
-   double stepSizeUm_;
    bool initialized_;
    std::string name_;
    std::string description_;
@@ -239,8 +238,8 @@ public:
 
    // action interface
    // ----------------
-   int OnMoveMode(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnVelocity(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnAcceleration(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    double stepSize_um_;
@@ -250,10 +249,8 @@ private:
    double upperLimitX_;
    double lowerLimitY_;
    double upperLimitY_;
-   long moveMode_;
    long velocity_;
    std::string name_;
    std::string description_;
-   std::string direct_, uni_, biSup_, biAlways_, fast_, smooth_;
 };
 #endif // _LeicaDMI_H_

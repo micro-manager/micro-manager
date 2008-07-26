@@ -127,6 +127,18 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
          return ret;
    }
 
+   if (scopeModel_->IsDeviceAvailable(g_XDrive)) {
+      ret = GetDriveInfo(device, core, scopeModel_->XDrive_, g_XDrive);
+      if (ret != DEVICE_OK)
+         return ret;
+   }
+
+   if (scopeModel_->IsDeviceAvailable(g_YDrive)) {
+      ret = GetDriveInfo(device, core, scopeModel_->YDrive_, g_YDrive);
+      if (ret != DEVICE_OK)
+         return ret;
+   }
+
 
    // Start all events at this point
 
@@ -173,6 +185,24 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
       command.str("");
    }
 
+   // Start event reporting for X Drive
+   if (scopeModel_->IsDeviceAvailable(g_XDrive)) {
+      command << g_XDrive << "003 1 1 1 0 0 1 0 0 0";
+      ret = GetAnswer(device, core, command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+      command.str("");
+   }
+
+   // Start event reporting for Y Drive
+   if (scopeModel_->IsDeviceAvailable(g_YDrive)) {
+      command << g_XDrive << "003 1 1 1 0 0 1 0 0 0";
+      ret = GetAnswer(device, core, command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+      command.str("");
+   }
+
 
    // Start monitoring of all messages coming from the microscope
    monitoringThread_ = new LeicaMonitoringThread(device, core, port_, scopeModel_);
@@ -211,23 +241,21 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
    }
 
    if (scopeModel_->IsDeviceAvailable(g_ZDrive)) {
-      command << g_IL_Turret << "023";
-      ret = core.SetSerialCommand(&device, port_.c_str(), command.str().c_str(), "\r");
+      ret = GetDriveParameters(device, core, g_ZDrive);
       if (ret != DEVICE_OK)
          return ret;
-      command.str("");
-      // Get current speed of the stage
-      command << g_IL_Turret << "033";
-      ret = core.SetSerialCommand(&device, port_.c_str(), command.str().c_str(), "\r");
+   }
+
+   if (scopeModel_->IsDeviceAvailable(g_XDrive)) {
+      ret = GetDriveParameters(device, core, g_XDrive);
       if (ret != DEVICE_OK)
          return ret;
-      command.str("");
-      // Get current acceleration
-      command << g_IL_Turret << "031";
-      ret = core.SetSerialCommand(&device, port_.c_str(), command.str().c_str(), "\r");
+   }
+
+   if (scopeModel_->IsDeviceAvailable(g_YDrive)) {
+      ret = GetDriveParameters(device, core, g_YDrive);
       if (ret != DEVICE_OK)
          return ret;
-      command.str("");
    }
 
    initialized_ = true;
@@ -587,8 +615,87 @@ int LeicaScopeInterface::GetZDriveInfo(MM::Device& device, MM::Core& core)
    if ( 0 <= factor)
    scopeModel_->ZDrive_.SetStepSize(factor);
 
-   // Scope does not know about a maximum position
+   // Scope does not know about a maximum position of the ZDrive
    scopeModel_->ZDrive_.SetMaxPosition(9999999);
+
+   return DEVICE_OK;
+}
+
+int LeicaScopeInterface::GetDriveInfo(MM::Device& device, MM::Core& core, LeicaDriveModel drive, int deviceID)
+{
+   std::ostringstream command;
+   std::string answer, token;
+
+   // Get minimum position
+   command << deviceID << "028";
+   int ret = GetAnswer(device, core, command.str().c_str(), answer);
+   if (ret != DEVICE_OK)
+      return ret;
+   command.str("");
+
+   std::stringstream ts(answer);
+   int minPos;
+   ts >> minPos;
+   ts >> minPos;
+   if ( 0 <= minPos)
+   drive.SetMinPosition(minPos);
+
+   // Get maximum position
+   command << deviceID << "029";
+   ret = GetAnswer(device, core, command.str().c_str(), answer);
+   if (ret != DEVICE_OK)
+      return ret;
+   command.str("");
+
+   std::stringstream tt(answer);
+   int maxPos;
+   tt >> maxPos;
+   tt >> maxPos;
+   if ( 0 <= maxPos)
+   drive.SetMaxPosition(maxPos);
+
+   // Get Conversion factor
+   command << deviceID << "034";
+   ret = GetAnswer(device, core, command.str().c_str(), answer);
+   if (ret != DEVICE_OK)
+      return ret;
+   command.str("");
+
+   std::stringstream tu(answer);
+   double factor;
+   tu >> factor;
+   tu >> factor;
+   if ( 0 <= factor)
+   drive.SetStepSize(factor);
+
+   return DEVICE_OK;
+}
+
+/*
+ * Sends commands to the scope enquiring about current position, speed and acceleartion settings
+ *  of the specified drive.
+ * Does not deal with microscope answers (will be taked care of by the monitoringthread
+ */
+int LeicaScopeInterface::GetDriveParameters(MM::Device& device, MM::Core& core, int deviceID)
+{
+   std::ostringstream command;
+   
+   command << deviceID << "023";
+   int ret = core.SetSerialCommand(&device, port_.c_str(), command.str().c_str(), "\r");
+   if (ret != DEVICE_OK)
+      return ret;
+   command.str("");
+   // Get current speed of the stage
+   command << deviceID << "033";
+   ret = core.SetSerialCommand(&device, port_.c_str(), command.str().c_str(), "\r");
+   if (ret != DEVICE_OK)
+      return ret;
+   command.str("");
+   // Get current acceleration
+   command << deviceID << "031";
+   ret = core.SetSerialCommand(&device, port_.c_str(), command.str().c_str(), "\r");
+   if (ret != DEVICE_OK)
+      return ret;
 
    return DEVICE_OK;
 }
@@ -650,35 +757,68 @@ int LeicaScopeInterface::SetRevolverPosition(MM::Device& device, MM::Core& core,
 }
 
 /**
- * Sets ZDrive position
+ * Sets Drive position
  */
-int LeicaScopeInterface::SetZDrivePosition(MM::Device& device, MM::Core& core, int position)
+int LeicaScopeInterface::SetDrivePosition(MM::Device& device, MM::Core& core, LeicaDriveModel drive, int deviceID, int position)
 {
-   scopeModel_->ZDrive_.SetBusy(true);
+   drive.SetBusy(true);
    std::ostringstream os;
-   os << g_ZDrive << "022" << " " << position;
+   os << deviceID << "022" << " " << position;
    return core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
 }
 
 /**
- * Sets ZDrive Speed
+ * Sets relative Drive position
  */
-int LeicaScopeInterface::SetZDriveSpeed(MM::Device& device, MM::Core& core, int speed)
+int LeicaScopeInterface::SetDrivePositionRelative(MM::Device& device, MM::Core& core, LeicaDriveModel drive, int deviceID, int position)
 {
-   scopeModel_->ZDrive_.SetBusy(true);
+   drive.SetBusy(true);
    std::ostringstream os;
-   os << g_ZDrive << "032" << " " << speed;
+   os << deviceID << "024" << " " << position;
    return core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
 }
 
 /**
- * Sets ZDrive acceleration
+ * Moves drive to the INIT-endswitch and reset zero point
  */
-int LeicaScopeInterface::SetZDriveAcceleration(MM::Device& device, MM::Core& core, int acc)
+int LeicaScopeInterface::HomeDrive(MM::Device& device, MM::Core& core, LeicaDriveModel drive, int deviceID)
 {
-   scopeModel_->ZDrive_.SetBusy(true);
+   drive.SetBusy(true);
    std::ostringstream os;
-   os << g_ZDrive << "030" << " " << acc;
+   os << deviceID << "020";
+   return core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+}
+
+/**
+ * Moves drive to the INIT-endswitch and reset zero point
+ */
+int LeicaScopeInterface::StopDrive(MM::Device& device, MM::Core& core, LeicaDriveModel drive, int deviceID)
+{
+   drive.SetBusy(true);
+   std::ostringstream os;
+   os << deviceID << "021";
+   return core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+}
+
+/**
+ * Sets Drive Speed
+ */
+int LeicaScopeInterface::SetDriveSpeed(MM::Device& device, MM::Core& core, LeicaDriveModel drive, int deviceID, int speed)
+{
+   drive.SetBusy(true);
+   std::ostringstream os;
+   os << deviceID << "032" << " " << speed;
+   return core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+}
+
+/**
+ * Sets Drive acceleration
+ */
+int LeicaScopeInterface::SetDriveAcceleration(MM::Device& device, MM::Core& core, LeicaDriveModel drive, int deviceID, int acc)
+{
+   drive.SetBusy(true);
+   std::ostringstream os;
+   os << deviceID << "030" << " " << acc;
    return core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
 }
 
@@ -724,17 +864,13 @@ void LeicaMonitoringThread::interpretMessage(unsigned char* message)
 
 }
 
-//MM_THREAD_FUNC_DECL LeicaMonitoringThread::svc(void *arg) {
-int LeicaMonitoringThread::svc() {
-   //LeicaMonitoringThread* thd = (LeicaMonitoringThread*) arg;
-
+int LeicaMonitoringThread::svc() 
+{
    printf ("Starting MonitoringThread\n");
 
    unsigned long dataLength = 0;
    unsigned long charsRead = 0;
-   unsigned long charsRemaining = 0;
    char rcvBuf[LeicaScopeInterface::RCV_BUF_LENGTH];
-   char buffer[LeicaScopeInterface::RCV_BUF_LENGTH];
    char message[LeicaScopeInterface::RCV_BUF_LENGTH];
    memset(rcvBuf, 0, LeicaScopeInterface::RCV_BUF_LENGTH);
    memset(message, 0, LeicaScopeInterface::RCV_BUF_LENGTH);
@@ -742,10 +878,7 @@ int LeicaMonitoringThread::svc() {
    while (!stop_) 
    {
       do { 
-         dataLength = LeicaScopeInterface::RCV_BUF_LENGTH - charsRemaining;
-         // rcvBuf[0] = 0;
-         // TODO: listen to incoming characters directly and break when it is "\r"
-         // int ret = core_.GetSerialAnswer(&(device_), port_.c_str(), LeicaScopeInterface::RCV_BUF_LENGTH, rcvBuf, "\r"); 
+         dataLength = LeicaScopeInterface::RCV_BUF_LENGTH - strlen(rcvBuf);
          int ret = core_.ReadFromSerial(&device_, port_.c_str(), (unsigned char*) (rcvBuf + strlen(rcvBuf)), dataLength, charsRead);
          memset(message, 0, strlen(message));
          if (ret == DEVICE_OK && (strlen(rcvBuf) > 4) && !stop_) {
@@ -864,9 +997,9 @@ int LeicaMonitoringThread::svc() {
                             for (int i=0; i < 5; i++) 
                                os >> status[i];
                             if (status[0]=="1")
-                               scopeModel_->ObjectiveTurret_.SetBusy(true);
+                               scopeModel_->ZDrive_.SetBusy(true);
                             else
-                               scopeModel_->ObjectiveTurret_.SetBusy(false);
+                               scopeModel_->ZDrive_.SetBusy(false);
                          }
                          break;
                       case (23) : // Position
@@ -892,6 +1025,93 @@ int LeicaMonitoringThread::svc() {
                             break;
                          }
                    }
+                   break;
+               case (g_XDrive) :
+                   switch (commandId) {
+                      case (4) : // Status
+                         {
+                            std::string status[5];
+                            for (int i=0; i < 5; i++) 
+                               os >> status[i];
+                            if (status[0]=="1")
+                               scopeModel_->XDrive_.SetBusy(true);
+                            else
+                               scopeModel_->XDrive_.SetBusy(false);
+                         }
+                         break;
+                      case (20) : // Completion of INIT_X
+                         scopeModel_->XDrive_.SetBusy(false);
+                         break;
+                      case (21) : // Completion of BREAK_X
+                         scopeModel_->XDrive_.SetBusy(false);
+                         break;
+                      case (23) : // Position
+                         {
+                            int pos;
+                            os >> pos;
+                            scopeModel_->XDrive_.SetPosition(pos);
+                            scopeModel_->XDrive_.SetBusy(false);
+                            break;
+                         }
+                      case (31) : // acceleration
+                         {
+                            int acc;
+                            os >> acc;
+                            scopeModel_->XDrive_.SetRamp(acc);
+                            break;
+                         }
+                      case (33) : // speed
+                         {
+                            int speed;
+                            os >> speed;
+                            scopeModel_->XDrive_.SetSpeed(speed);
+                            break;
+                         }
+                   }
+                   break;
+               case (g_YDrive) :
+                   switch (commandId) {
+                      case (4) : // Status
+                         {
+                            std::string status[5];
+                            for (int i=0; i < 5; i++) 
+                               os >> status[i];
+                            if (status[0]=="1")
+                               scopeModel_->YDrive_.SetBusy(true);
+                            else
+                               scopeModel_->YDrive_.SetBusy(false);
+                         }
+                         break;
+                      case (20) : // Completion of INIT_Y
+                         scopeModel_->YDrive_.SetBusy(false);
+                         break;
+                      case (21) : // Completion of BREAK_Y
+                         scopeModel_->YDrive_.SetBusy(false);
+                         break;
+                      case (23) : // Position
+                         {
+                            int pos;
+                            os >> pos;
+                            scopeModel_->YDrive_.SetPosition(pos);
+                            scopeModel_->YDrive_.SetBusy(false);
+                            break;
+                         }
+                      case (31) : // acceleration
+                         {
+                            int acc;
+                            os >> acc;
+                            scopeModel_->YDrive_.SetRamp(acc);
+                            break;
+                         }
+                      case (33) : // speed
+                         {
+                            int speed;
+                            os >> speed;
+                            scopeModel_->YDrive_.SetSpeed(speed);
+                            break;
+                         }
+                   }
+                   break;
 
             }
          }
