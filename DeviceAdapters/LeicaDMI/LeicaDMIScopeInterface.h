@@ -78,6 +78,7 @@ class LeicaScopeInterface
       int HomeDrive(MM::Device& device, MM::Core& core, LeicaDriveModel& drive, int deviceID);
       int StopDrive(MM::Device& device, MM::Core& core, LeicaDriveModel& drive, int deviceID);
       int SetDiaphragmPosition(MM::Device& device, MM::Core& core, LeicaDeviceModel* diaphragm, int deviceID, int position);
+      int SetMagChangerPosition(MM::Device& device, MM::Core& core, int position);
 
       LeicaMonitoringThread* monitoringThread_;
       LeicaDMIModel* scopeModel_;

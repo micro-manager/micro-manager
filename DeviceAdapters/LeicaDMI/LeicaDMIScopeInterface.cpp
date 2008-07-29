@@ -274,7 +274,7 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
 
    // Start event reporting for Z Drive
    if (scopeModel_->IsDeviceAvailable(g_ZDrive)) {
-      command << g_ZDrive << "003 1 0 0 0 0 1 0 0 0";
+      command << g_ZDrive << "003 1 0 0 0 0 1 0 1 0";
       ret = GetAnswer(device, core, command.str().c_str(), answer);
       if (ret != DEVICE_OK)
          return ret;
@@ -359,6 +359,12 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
       ret = GetDriveParameters(device, core, g_ZDrive);
       if (ret != DEVICE_OK)
          return ret;
+      // Also get the focus position
+      command << g_ZDrive << "029";
+      ret = core.SetSerialCommand(&device, port_.c_str(), command.str().c_str(), "\r");
+      if (ret != DEVICE_OK)
+         return ret;
+      command.str("");
    }
 
    if (scopeModel_->IsDeviceAvailable(g_XDrive)) {
@@ -987,11 +993,11 @@ int LeicaScopeInterface::GetMagChangerInfo(MM::Device& device, MM::Core& core)
       ts.str("");
    }
 
-
    return DEVICE_OK;
 }
+
 /*
- * Sends commands to the scope enquiring about current position, speed and acceleartion settings
+ * Sends commands to the scope enquiring about current position, speed and acceleration settings
  *  of the specified drive.
  * Does not deal with microscope answers (will be taked care of by the monitoringthread
  */
@@ -1133,7 +1139,16 @@ int LeicaScopeInterface::SetDiaphragmPosition(MM::Device& device, MM::Core& core
    return core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
 }
 
-
+/**
+ * Sets Position of Mag Changer
+ */
+int LeicaScopeInterface::SetMagChangerPosition(MM::Device& device, MM::Core& core, int position)
+{
+   scopeModel_->magChanger_.SetBusy(true);
+   std::ostringstream os;
+   os << g_Mag_Changer_Mot << "022" << " " << position;
+   return core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+}
 
 /**
  * Sets Drive Speed
@@ -1366,6 +1381,13 @@ int LeicaMonitoringThread::svc()
                       case (22) : // Completion of Position Absolute
                          scopeModel_->ZDrive_.SetBusy(false);
                          break;
+                      case (29) : // Focus position
+                         {
+                            int focusPos;
+                            os >> focusPos;
+                            scopeModel_->ZDrive_.SetPosFocus(focusPos);
+                         }
+                         break;
                       case (31) : // acceleration
                          {
                             int acc;
@@ -1575,24 +1597,36 @@ int LeicaMonitoringThread::svc()
                      }
                   break;
                case (g_Mag_Changer_Mot) :
-                  case (4) :
-                  {
-                     int status;
-                     os << status;
-                     if (status == 1) {
+                  switch (commandId) {
+                     case (4) :
+                     {
+                        int status;
+                        os << status;
+                        if (status == 1) {
+                           scopeModel_->magChanger_.SetBusy(false);
+                        }
+                        break;
+                     }
+                     case (23) : // Absolute position
+                     {
+                        int pos;
+                        os >> pos;
+                        scopeModel_->magChanger_.SetPosition(pos);
                         scopeModel_->magChanger_.SetBusy(false);
+                        break;
+                     }
+                     case (28) : // Absolute position
+                     {
+                        int pos;
+                        os >> pos;
+                        scopeModel_->magChanger_.SetPosition(pos);
+                        scopeModel_->magChanger_.SetBusy(false);
+                        printf("Set Mag Changer Busy to false\n");
+
+                        break;
                      }
                      break;
                   }
-                  case (23) : // Absolute position
-                  {
-                     int pos;
-                     os >> pos;
-                     scopeModel_->magChanger_.SetPosition(pos);
-                     scopeModel_->magChanger_.SetBusy(false);
-                     break;
-                  }
-                  break;
               }
           }
       } while ((strlen(rcvBuf) > 0) && (!stop_)); 

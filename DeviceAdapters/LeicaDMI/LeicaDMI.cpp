@@ -94,7 +94,7 @@ const char* g_LeicaApertureDiaphragmTL = "TL-ApertureDiaphragm";
 const char* g_LeicaFieldDiaphragmIL = "IL-FieldDiaphragm";
 const char* g_LeicaApertureDiaphragmIL = "IL-ApertureDiaphragm";
 const char* g_LeicaFocusAxis = "FocusDrive";
-const char* g_LeicaTubeLens = "TubeLens";
+const char* g_LeicaMagChanger = "MagnificationChanger";
 const char* g_LeicaTubeLensShutter = "TubeLensShutter";
 const char* g_LeicaSidePort = "SidePort";
 const char* g_LeicaIncidentLightShutter = "IL-Shutter";
@@ -122,8 +122,8 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_LeicaApertureDiaphragmTL,"Aperture Diaphragm (Condensor)");
    AddAvailableDeviceName(g_LeicaFieldDiaphragmIL,"Field Diaphragm (Fluorescence)");
    AddAvailableDeviceName(g_LeicaApertureDiaphragmIL,"Aperture Diaphragm (Fluorescence)");
+   AddAvailableDeviceName(g_LeicaMagChanger,"Tube Lens (magnification changer)");
    /*
-   AddAvailableDeviceName(g_LeicaTubeLens,"Tube Lens (optovar)");
    AddAvailableDeviceName(g_LeicaTubeLensShutter,"Tube Lens Shutter");
    AddAvailableDeviceName(g_LeicaSidePort,"Side Port");
    AddAvailableDeviceName(g_LeicaReflectedLightShutter,"Reflected Light Shutter"); 
@@ -166,9 +166,9 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
         return new Diaphragm(&g_ScopeModel.apertureDiaphragmIL_, g_Aperture_Diaphragm_IL, g_LeicaApertureDiaphragmIL);
    else if (strcmp(deviceName, g_LeicaXYStage) == 0)
 	   return new XYStage();
+   else if (strcmp(deviceName, g_LeicaMagChanger) == 0)
+	   return new MagChanger();
    /*
-   else if (strcmp(deviceName, g_LeicaTubeLens) == 0)
-        return new TubeLensTurret(g_TubeLensChanger, g_LeicaTubeLens, "Tube Lens (optoavar)");
    else if (strcmp(deviceName, g_LeicaTubeLensShutter) == 0)
         return new Shutter(g_TubeShutter, g_LeicaTubeLensShutter, "Tube Lens Shutter");
    else if (strcmp(deviceName, g_LeicaSidePort) == 0)
@@ -1236,7 +1236,12 @@ int ZDrive::OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
 */
 XYStage::XYStage (): 
    busy_ (false),
-   initialized_ (false)
+   initialized_ (false),
+   originX_(0),
+   originY_(0),
+   mirrorX_(false),
+   mirrorY_(false)
+
 {
    name_ = g_LeicaXYStage;
    InitializeDefaultErrorMessages();
@@ -1312,6 +1317,16 @@ int XYStage::Initialize()
       maxSpeed = g_ScopeModel.YDrive_.GetMaxSpeed();
    SetPropertyLimits("Speed", minSpeed, maxSpeed);
 
+   // Directionality
+   pAct = new CPropertyAction (this, &XYStage::OnMirrorX);
+   CreateProperty("MirrorX", "0", MM::Integer, false, pAct);
+   AddAllowedValue("MirrorX", "0");
+   AddAllowedValue("MirrorX", "1");
+   pAct = new CPropertyAction (this, &XYStage::OnMirrorY);
+   CreateProperty("MirrorY", "0", MM::Integer, false, pAct);
+   AddAllowedValue("MirrorY", "0");
+   AddAllowedValue("MirrorY", "1");
+
    ret = UpdateStatus();
    if (ret!= DEVICE_OK)
       return ret;
@@ -1343,24 +1358,41 @@ int XYStage::GetLimits(double& xMin, double& xMax, double& yMin, double& yMax)
 
 int XYStage::SetPositionUm(double x, double y)
 {
+   long xSteps = 0;
+   long ySteps = 0;
+
+   /*
    long xSteps = (long)(x / g_ScopeModel.XDrive_.GetStepSize());
    long ySteps = (long)(y / g_ScopeModel.XDrive_.GetStepSize());
-   int ret = SetPositionSteps(xSteps, ySteps);
-   if (ret != DEVICE_OK)
-      return ret;
+   */
 
-   return DEVICE_OK;
+   if (mirrorX_)
+      xSteps = (long) ((originX_ - x) / g_ScopeModel.XDrive_.GetStepSize() + 0.5);
+   else
+      xSteps = (long) ((originX_ + x) / g_ScopeModel.XDrive_.GetStepSize() + 0.5);
+
+   if (mirrorY_)
+      ySteps = (long) ((originY_ - y) / g_ScopeModel.XDrive_.GetStepSize() + 0.5);
+   else
+      ySteps = (long) ((originY_ + y) / g_ScopeModel.XDrive_.GetStepSize() + 0.5);
+
+   return SetPositionSteps(xSteps, ySteps);
 }
 
 int XYStage::SetRelativePositionUm(double x, double y)
 {
+/*
    long xSteps = (long)(x / g_ScopeModel.XDrive_.GetStepSize());
    long ySteps = (long)(y / g_ScopeModel.XDrive_.GetStepSize());
-   int ret = SetRelativePositionSteps(xSteps, ySteps);
-   if (ret != DEVICE_OK)
-      return ret;
+*/
+   long xSteps = (long) (x / g_ScopeModel.XDrive_.GetStepSize() + 0.5);                            
+   if (mirrorX_)                                                             
+      xSteps = -xSteps;                                                      
+   long ySteps = (long) (y / g_ScopeModel.XDrive_.GetStepSize() + 0.5);                            
+   if (mirrorY_)                                                             
+      ySteps = -ySteps;                                                      
 
-   return DEVICE_OK;
+   return  SetRelativePositionSteps(xSteps, ySteps);
 }
 
 int XYStage::GetPositionUm(double& x, double& y)
@@ -1369,8 +1401,19 @@ int XYStage::GetPositionUm(double& x, double& y)
    int ret = GetPositionSteps(xSteps, ySteps);                         
    if (ret != DEVICE_OK)                                      
       return ret;                                             
+/*
    x = xSteps * g_ScopeModel.XDrive_.GetStepSize();
    y = ySteps * g_ScopeModel.XDrive_.GetStepSize();
+*/
+   if (mirrorX_)                                                             
+      x = originX_ - (xSteps * g_ScopeModel.XDrive_.GetStepSize());                                
+   else                                                                      
+      x = originX_ + (xSteps * g_ScopeModel.XDrive_.GetStepSize());                                
+                                                                             
+   if (mirrorY_)                                                             
+      y = originY_ - (ySteps * g_ScopeModel.XDrive_.GetStepSize());                                
+   else                                                                      
+      y = originY_ + (ySteps * g_ScopeModel.XDrive_.GetStepSize());                                
 
    return DEVICE_OK;
 }
@@ -1412,6 +1455,23 @@ int XYStage::GetPositionSteps(long& xSteps, long& ySteps)
    return DEVICE_OK;
 }
 
+/**
+ * Defines position x,y (relative to current position) as the origin of our coordinate system
+ * Get the current (stage-native) XY position
+ */
+int XYStage::SetAdapterOriginUm(double x, double y)
+{
+   long xStep, yStep;
+
+   int ret = GetPositionSteps(xStep, yStep);
+   if (ret != DEVICE_OK)
+      return ret;
+   originX_ = (xStep * g_ScopeModel.XDrive_.GetStepSize()) + x;
+   originY_ = (yStep * g_ScopeModel.XDrive_.GetStepSize()) + y;
+
+   return DEVICE_OK;
+}
+
 int XYStage::Home()
 {
    int ret = g_ScopeInterface.HomeDrive(*this, *GetCoreCallback(), g_ScopeModel.XDrive_, g_XDrive);
@@ -1438,8 +1498,7 @@ int XYStage::Stop()
 
 int XYStage::SetOrigin()
 {
-   // TODO: 
-   return DEVICE_OK;
+   return SetAdapterOriginUm(0,0);
 }
 
 int XYStage::OnAcceleration(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -1493,6 +1552,45 @@ int XYStage::OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;                                          
 }
 
+int XYStage::OnMirrorX(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      if (mirrorX_)
+         pProp->Set("1");
+      else
+         pProp->Set("0");
+   } else if (eAct == MM::AfterSet) {
+      long mirrorX;
+      pProp->Get(mirrorX);
+
+      if (mirrorX == 1)
+         mirrorX_ = true;
+      else                                                                   
+         mirrorX_ = false;                                                   
+   }                                                                         
+   return DEVICE_OK;                                                         
+}
+
+int XYStage::OnMirrorY(MM::PropertyBase* pProp, MM::ActionType eAct)         
+{                                                                            
+   if (eAct == MM::BeforeGet)                                                
+   {                                                                         
+      if (mirrorY_)                                                          
+         pProp->Set("1");                                                    
+      else                                                                   
+         pProp->Set("0");                                                    
+   } else if (eAct == MM::AfterSet) {                                        
+      long mirrorY;                                                          
+      pProp->Get(mirrorY);                                                   
+                                                                             
+      if (mirrorY == 1)                                                      
+         mirrorY_ = true;                                                    
+      else                                                                   
+         mirrorY_ = false;                                                   
+   }                                                                         
+   return DEVICE_OK;                                                         
+}
 ///////////////////////////////////////////////////////////////////////////////
 // General Diaphragm Object, implements all Diaphragms. 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1729,8 +1827,11 @@ bool MagChanger::Busy()
 
 double MagChanger::GetMagnification()
 {
-   // TODO: return the right thing
-   return 1.0;
+   int pos;
+   g_ScopeModel.magChanger_.GetPosition(pos);
+   double mag;
+   g_ScopeModel.magChanger_.GetMagnification(pos, mag);
+   return mag;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1747,274 +1848,23 @@ int MagChanger::OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
          return ret;
       if (pos == 0)
          return ERR_TURRET_NOT_ENGAGED;
-      pos_ = pos -1;
-      pProp->Set(pos_);
+      ostringstream os;
+      double mag;
+      g_ScopeModel.magChanger_.GetMagnification(pos, mag);
+      os << pos << "-" << mag << "x";
+      pProp->Set(os.str().c_str());
    }
    else if (eAct == MM::AfterSet)
    {
-      pProp->Get(pos_);
-      int pos = pos_ + 1;
+      std::string label;
+      pProp->Get(label);
+      std::stringstream st(label);
+      int pos;
+      st >> pos;
       if ((pos > 0) && (pos <= (int) numPos_)) {
-         // check if the new position is allowed with this method
-         int method;
-         int ret = g_ScopeModel.method_.GetPosition(method);
-         printf ("Method: %d\n", method);
-         if (!g_ScopeModel.ILTurret_.cube_[pos].IsMethodAvailable(method)) {
-            printf ("Not available\n");
-            // the new cube does not support the current method.  Look for a method:
-            // Look first in the FLUO methods, than in all available methods
-            int i = 10;
-            while (!g_ScopeModel.ILTurret_.cube_[pos].IsMethodAvailable(i) && (i < 13)) {
-               i++;
-            }
-            printf ("Propose method %d\n", i);
-            if (!g_ScopeModel.ILTurret_.cube_[pos].IsMethodAvailable(i)) {
-               i = 0;
-               while (!g_ScopeModel.ILTurret_.cube_[pos].IsMethodAvailable(i) && (i < 16)) {
-                  i++;
-               }
-            }
-            printf ("Propose method %d\n", i);
-            if (g_ScopeModel.ILTurret_.cube_[pos].IsMethodAvailable(i))
-               g_ScopeInterface.SetMethod(*this, *GetCoreCallback(), i);
-         }
-
-         return g_ScopeInterface.SetILTurretPosition(*this, *GetCoreCallback(), pos);
+         return g_ScopeInterface.SetMagChangerPosition(*this, *GetCoreCallback(), pos);
       } else
          return ERR_INVALID_TURRET_POSITION;
    }
    return DEVICE_OK;
 }
-/*
-
-// TubeLensTurret.  Inherits from Turret.  Only change is that it reads the 
-// labels from the Leica microscope
-///////////////////////////////////////////////////////////////////////////////
-TubeLensTurret::TubeLensTurret(int devId, std::string name, std::string description) :
-   Turret(devId, name, description)
-{
-}
-
-TubeLensTurret::~TubeLensTurret()
-{
-   Shutdown();
-}
-
-int TubeLensTurret::Initialize()
-{
-   int ret = Turret::Initialize();
-   if (ret != DEVICE_OK)
-      return ret;
-
-   for (unsigned i=0; i < numPos_; i++)
-   {
-      SetPositionLabel(i, g_ScopeInterface.tubeLensList_[i].c_str());
-   }
-
-   ret = UpdateStatus();
-   if (ret!= DEVICE_OK)
-      return ret;
-
-   return DEVICE_OK;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// SidePortTurret.  Inherits from Turret.  Only change is that it reads the 
-// labels from the Leica microscope
-///////////////////////////////////////////////////////////////////////////////
-SidePortTurret::SidePortTurret(int devId, std::string name, std::string description) :
-   Turret(devId, name, description)
-{
-}
-
-SidePortTurret::~SidePortTurret()
-{
-   Shutdown();
-}
-
-int SidePortTurret::Initialize()
-{
-   int ret = Turret::Initialize();
-   if (ret != DEVICE_OK)
-      return ret;
-
-   for (unsigned i=0; i < numPos_; i++)
-   {
-      SetPositionLabel(i, g_ScopeInterface.sidePortList_[i].c_str());
-   }
-
-   ret = UpdateStatus();
-   if (ret!= DEVICE_OK)
-      return ret;
-
-   return DEVICE_OK;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// CondenserTurret.  Inherits from Turret.  Only change is that it reads the 
-// labels from the Leica microscope
-///////////////////////////////////////////////////////////////////////////////
-CondenserTurret::CondenserTurret(int devId, std::string name, std::string description) :
-   Turret(devId, name, description)
-{
-}
-
-CondenserTurret::~CondenserTurret()
-{
-   Shutdown();
-}
-
-int CondenserTurret::Initialize()
-{
-   int ret = Turret::Initialize();
-   if (ret != DEVICE_OK)
-      return ret;
-
-   for (unsigned i=0; i < numPos_; i++)
-   {
-      SetPositionLabel(i, g_ScopeInterface.condenserList_[i].c_str());
-   }
-
-   ret = UpdateStatus();
-   if (ret!= DEVICE_OK)
-      return ret;
-
-   return DEVICE_OK;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// General Servo Object, implements all Servos
-///////////////////////////////////////////////////////////////////////////////
-Servo::Servo(int devId, std::string name, std::string description):
-   initialized_ (false),
-   numPos_(5)
-{
-   devId_ = devId;
-   name_ = name;
-   description_ = description;
-   InitializeDefaultErrorMessages();
-
-   // TODO provide error messages
-   SetErrorText(ERR_SCOPE_NOT_ACTIVE, "Leica Scope is not initialized.  It is needed for this Turret to work");
-   SetErrorText(ERR_INVALID_TURRET_POSITION, "The requested position is not available on this turret");
-   SetErrorText(ERR_MODULE_NOT_FOUND, "This device is not installed in this Leica microscope");
-
-   // Create pre-initialization properties
-   // ------------------------------------
-
-   // Name
-   CreateProperty(MM::g_Keyword_Name, name_.c_str(), MM::String, true);
-
-   // Description
-   CreateProperty(MM::g_Keyword_Description, description_.c_str(), MM::String, true);
-
-   UpdateStatus();
-}
-
-Servo::~Servo()
-{
-   Shutdown();
-}
-
-void Servo::GetName(char* name) const
-{
-   CDeviceUtils::CopyLimitedString(name, name_.c_str());
-}
-
-int Servo::Initialize()
-{
-   if (!g_ScopeInterface.portInitialized_)
-      return ERR_SCOPE_NOT_ACTIVE;
-
-   // check if this turret exists:
-   bool present;
-   int ret = GetPresent(*this, *GetCoreCallback(), devId_, present);
-   if (ret != DEVICE_OK)
-      return ret;
-   if (!present)
-      return ERR_MODULE_NOT_FOUND;
-
-   // set property list
-   // ----------------
-
-   // Position
-   // -----
-   CPropertyAction* pAct = new CPropertyAction(this, &Servo::OnPosition);
-   // if there are multiple units, which one will we take?  For simplicity, use the last one for now
-   unit_ = g_deviceInfo[devId_].deviceScalings[g_deviceInfo[devId_].deviceScalings.size()-1];
-
-   ret = CreateProperty(unit_.c_str(), "1", MM::Float, false, pAct);
-   if (ret != DEVICE_OK)
-      return ret;
-
-   minPosScaled_ = g_deviceInfo[devId_].scaledScale[unit_][0];
-   maxPosScaled_ = g_deviceInfo[devId_].scaledScale[unit_][0];
-   minPosNative_ = g_deviceInfo[devId_].nativeScale[unit_][0];
-   maxPosNative_ = g_deviceInfo[devId_].nativeScale[unit_][0];
-   for (size_t i=0; i < g_deviceInfo[devId_].scaledScale[unit_].size(); i++) {
-      if (minPosScaled_ > g_deviceInfo[devId_].scaledScale[unit_][i])
-      {
-         minPosScaled_ = g_deviceInfo[devId_].scaledScale[unit_][i];
-         minPosNative_ = g_deviceInfo[devId_].nativeScale[unit_][i];
-      }
-      if (maxPosScaled_ < g_deviceInfo[devId_].scaledScale[unit_][i])
-      {
-         maxPosScaled_ = g_deviceInfo[devId_].scaledScale[unit_][i];
-         maxPosNative_ = g_deviceInfo[devId_].nativeScale[unit_][i];
-      }
-   }
-
-   SetPropertyLimits(unit_.c_str(), minPosScaled_, maxPosScaled_);
-
-   ret = UpdateStatus();
-   if (ret!= DEVICE_OK)
-      return ret;
-
-   initialized_ = true;
-
-   return DEVICE_OK;
-}
-
-int Servo::Shutdown()
-{
-   if (initialized_) initialized_ = false;
-   return DEVICE_OK;
-}
-
-bool Servo::Busy()
-{
-   bool busy;
-   int ret = GetBusy(*this, *GetCoreCallback(), devId_, busy);
-   if (ret != DEVICE_OK)  // This is bad and should not happen
-      return false;
-
-   return busy;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// Action handlers                                                           
-///////////////////////////////////////////////////////////////////////////////
-
-int Servo::OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct) {
-   if (eAct == MM::BeforeGet)
-   {
-      int pos;
-      int ret = LeicaServo::GetPosition(*this, *GetCoreCallback(), devId_, pos);
-      if (ret != DEVICE_OK)
-         return ret;
-      // We have the native position here, translate to the 'scaled' position'
-      // For simplicities sake we just do linear interpolation
-      double posScaled = ((double)pos/(maxPosNative_-minPosNative_) * (maxPosScaled_ - minPosScaled_)) + minPosScaled_; 
-      pProp->Set(posScaled);
-   }
-   else if (eAct == MM::AfterSet)
-   {
-      double posScaled;
-      pProp->Get(posScaled);
-      int posNative = (int) (posScaled/(maxPosScaled_-minPosScaled_) * (maxPosNative_ - minPosNative_)) + minPosNative_;
-      return LeicaServo::SetPosition(*this, *GetCoreCallback(), devId_, posNative);
-   }
-   return DEVICE_OK;
-}
-
-*/
