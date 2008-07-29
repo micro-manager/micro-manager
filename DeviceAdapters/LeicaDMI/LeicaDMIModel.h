@@ -138,6 +138,8 @@ public:
 class LeicaDriveModel : public LeicaDeviceModel
 {
 public:
+   friend class LeicaScopeInterface;
+
    LeicaDriveModel();
 
    // Not Thread safe
@@ -152,11 +154,36 @@ public:
    int GetPosFocus(int& posFocus);
    int SetPosFocus(int posFocus);
 
+   // Not Threads safe:
+   int GetMinRamp() {return minRamp_;};
+   int GetMaxRamp() {return maxRamp_;};
+   int GetMinSpeed() {return minSpeed_;};
+   int GetMaxSpeed() {return maxSpeed_;};
+
 private:
    double stepSize_; // size in micrometer of each step
    int ramp_;
+   int minRamp_;
+   int maxRamp_;
    int speed_;
+   int minSpeed_;
+   int maxSpeed_;
    int posFocus_;
+};
+
+/*
+ * Model for Leica Motorized Magnification Changer
+ */
+class LeicaMagChangerModel : public LeicaDeviceModel
+{
+public:
+   LeicaMagChangerModel();
+
+   int GetMagnification(int pos, double& mag);
+   int SetMagnification(int pos, double mag);
+private:
+   std::vector<double> magnification_;
+   const static int maxMags_ = 4;
 };
 
 /*
@@ -199,6 +226,11 @@ public:
    LeicaDriveModel ZDrive_;
    LeicaDriveModel XDrive_;
    LeicaDriveModel YDrive_;
+   LeicaDeviceModel fieldDiaphragmTL_;
+   LeicaDeviceModel apertureDiaphragmTL_;
+   LeicaDeviceModel fieldDiaphragmIL_;
+   LeicaDeviceModel apertureDiaphragmIL_;
+   LeicaMagChangerModel magChanger_;
 
 private:
    std::vector<bool> availableDevices_;

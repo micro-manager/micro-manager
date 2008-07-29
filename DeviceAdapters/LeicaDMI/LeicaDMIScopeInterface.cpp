@@ -93,12 +93,79 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
    core.LogMessage (&device, os.str().c_str(), false);
    os.str("");
 
+   //  suppress all events untill we are done configuring the system
+   command << g_Master << "003" << " 0 0 0";
+   int ret = GetAnswer(device, core, command.str().c_str(), answer);
+   if (ret != DEVICE_OK)
+      return ret;
+   command.str("");
+
+   command << g_Lamp << "003" << " 0 0 0 0 0 0";
+   ret = GetAnswer(device, core, command.str().c_str(), answer);
+   if (ret != DEVICE_OK)
+      return ret;
+   command.str("");
+
+   // Suppress event reporting for IL Turret
+   command << g_IL_Turret << "003 0";
+   ret = GetAnswer(device, core, command.str().c_str(), answer);
+   if (ret != DEVICE_OK)
+      return ret;
+   command.str("");
+
+   // Suppress event reporting for Objective Turret
+   command << g_Revolver << "003 0 0 0 0 0 0 0 0 0";
+   ret = GetAnswer(device, core, command.str().c_str(), answer);
+   if (ret != DEVICE_OK)
+      return ret;
+   command.str("");
+
+   // Suppress event reporting for Z Drive
+   command << g_ZDrive << "003 0 0 0 0 0 0 0 0 0";
+   ret = GetAnswer(device, core, command.str().c_str(), answer);
+   if (ret != DEVICE_OK)
+      return ret;
+   command.str("");
+
+   // Suppress event reporting for X Drive
+   command << g_XDrive << "003 0 0 0 0 0 0 0";
+   ret = GetAnswer(device, core, command.str().c_str(), answer);
+   if (ret != DEVICE_OK)
+      return ret;
+   command.str("");
+
+   // Suppress event reporting for Y Drive
+   command << g_YDrive << "003 0 0 0 0 0 0";
+   ret = GetAnswer(device, core, command.str().c_str(), answer);
+   if (ret != DEVICE_OK)
+      return ret;
+   command.str("");
+
+   // Suppress event reporting for Diaphragms
+   int diaphragm[4] = {g_Field_Diaphragm_TL, g_Aperture_Diaphragm_TL, g_Field_Diaphragm_IL, g_Aperture_Diaphragm_IL};
+   for (int i=0; i<4; i++) {
+      command << diaphragm[i] << "003 0 0";
+      ret = GetAnswer(device, core, command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+      command.str("");
+   }
+
+   // Suppress event reporting for Mag Changer
+   command << g_Mag_Changer_Mot << "003 0";
+   ret = GetAnswer(device, core, command.str().c_str(), answer);
+   if (ret != DEVICE_OK)
+      return ret;
+   command.str("");
+
+   CDeviceUtils::SleepMs(100);
+
    // empty the Rx serial buffer before sending commands
    ClearRcvBuf();
    ClearPort(device, core);
 
    // Get info about stand, firmware and available devices and store in the model
-   int ret = GetStandInfo(device, core);
+   ret = GetStandInfo(device, core);
    if (ret != DEVICE_OK) 
       return ret;
 
@@ -139,6 +206,35 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
          return ret;
    }
 
+   if (scopeModel_->IsDeviceAvailable(g_Field_Diaphragm_TL)) {
+      ret = GetDiaphragmInfo(device, core, scopeModel_->fieldDiaphragmTL_, g_Field_Diaphragm_TL);
+      if (ret != DEVICE_OK)
+         return ret;
+   }
+
+   if (scopeModel_->IsDeviceAvailable(g_Aperture_Diaphragm_TL)) {
+      ret = GetDiaphragmInfo(device, core, scopeModel_->apertureDiaphragmTL_, g_Aperture_Diaphragm_TL);
+      if (ret != DEVICE_OK)
+         return ret;
+   }
+
+   if (scopeModel_->IsDeviceAvailable(g_Field_Diaphragm_IL)) {
+      ret = GetDiaphragmInfo(device, core, scopeModel_->fieldDiaphragmIL_, g_Field_Diaphragm_IL);
+      if (ret != DEVICE_OK)
+         return ret;
+   }
+
+   if (scopeModel_->IsDeviceAvailable(g_Aperture_Diaphragm_IL)) {
+      ret = GetDiaphragmInfo(device, core, scopeModel_->apertureDiaphragmIL_, g_Aperture_Diaphragm_IL);
+      if (ret != DEVICE_OK)
+         return ret;
+   }
+
+   if (scopeModel_->IsDeviceAvailable(g_Mag_Changer_Mot)) {
+      ret = GetMagChangerInfo(device, core);
+      if (ret != DEVICE_OK)
+         return ret;
+   }
 
    // Start all events at this point
 
@@ -187,7 +283,7 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
 
    // Start event reporting for X Drive
    if (scopeModel_->IsDeviceAvailable(g_XDrive)) {
-      command << g_XDrive << "003 1 1 1 0 0 1 0 0 0";
+      command << g_XDrive << "003 1 1 1 0 0 1 0";
       ret = GetAnswer(device, core, command.str().c_str(), answer);
       if (ret != DEVICE_OK)
          return ret;
@@ -196,13 +292,32 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
 
    // Start event reporting for Y Drive
    if (scopeModel_->IsDeviceAvailable(g_YDrive)) {
-      command << g_XDrive << "003 1 1 1 0 0 1 0 0 0";
+      command << g_YDrive << "003 1 1 1 0 0 1";
       ret = GetAnswer(device, core, command.str().c_str(), answer);
       if (ret != DEVICE_OK)
          return ret;
       command.str("");
    }
 
+   // Start event reporting for Diaphragms
+   for (int i=0; i<4; i++) {
+      if (scopeModel_->IsDeviceAvailable(diaphragm[i])) {
+         command << diaphragm[i] << "003 0 1";
+         ret = GetAnswer(device, core, command.str().c_str(), answer);
+         if (ret != DEVICE_OK)
+            return ret;
+         command.str("");
+      }
+   }
+
+   // Start event reporting for Mag Changer
+   if (scopeModel_->IsDeviceAvailable(g_Mag_Changer_Mot)) {
+      command << g_Mag_Changer_Mot << "003 1";
+      ret = GetAnswer(device, core, command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+      command.str("");
+   }
 
    // Start monitoring of all messages coming from the microscope
    monitoringThread_ = new LeicaMonitoringThread(device, core, port_, scopeModel_);
@@ -258,6 +373,24 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
          return ret;
    }
 
+   for (int i=0; i<4; i++) {
+      if (scopeModel_->IsDeviceAvailable(diaphragm[i])) {
+         command << diaphragm[i] << "023";
+         ret = core.SetSerialCommand(&device, port_.c_str(), command.str().c_str(), "\r");
+         if (ret != DEVICE_OK)
+            return ret;
+         command.str("");
+      }
+   }
+
+   if (scopeModel_->IsDeviceAvailable(g_Mag_Changer_Mot)) {
+      command << g_Mag_Changer_Mot << "023";
+      ret = core.SetSerialCommand(&device, port_.c_str(), command.str().c_str(), "\r");
+      if (ret != DEVICE_OK)
+         return ret;
+      command.str("");
+   }
+
    initialized_ = true;
    return DEVICE_OK;
 }
@@ -272,9 +405,11 @@ int LeicaScopeInterface::GetAnswer(MM::Device& device, MM::Core& core, const cha
    if (ret != DEVICE_OK)
       return ret;
    char response[RCV_BUF_LENGTH] = "";
-   ret = core.GetSerialAnswer(&device, port_.c_str(), RCV_BUF_LENGTH, response, "\r");
-   if (ret != DEVICE_OK)
-      return ret;
+   do {
+      ret = core.GetSerialAnswer(&device, port_.c_str(), RCV_BUF_LENGTH, response, "\r");
+      if (ret != DEVICE_OK)
+         return ret;
+   } while (response[0]=='$');
 
    answer = response;
    return DEVICE_OK;
@@ -601,6 +736,62 @@ int LeicaScopeInterface::GetZDriveInfo(MM::Device& device, MM::Core& core)
    if ( 0 <= minPos)
    scopeModel_->ZDrive_.SetMinPosition(minPos);
 
+   // Get minimum speed
+   command << g_ZDrive << "058";
+   ret = GetAnswer(device, core, command.str().c_str(), answer);
+   if (ret != DEVICE_OK)
+      return ret;
+   command.str("");
+
+   std::stringstream tv(answer);
+   int minSpeed;
+   tv >> minSpeed;
+   tv >> minSpeed;
+   if ( 0 <= minSpeed)
+      scopeModel_->ZDrive_.minSpeed_ = minSpeed;
+
+   // Get maximum speed
+   command << g_ZDrive << "059";
+   ret = GetAnswer(device, core, command.str().c_str(), answer);
+   if (ret != DEVICE_OK)
+      return ret;
+   command.str("");
+
+   std::stringstream tw(answer);
+   int maxSpeed;
+   tw >> maxSpeed;
+   tw >> maxSpeed;
+   if ( 0 <= maxSpeed)
+      scopeModel_->ZDrive_.maxSpeed_ = maxSpeed;
+
+   // Get minimum ramp
+   command << g_ZDrive << "048";
+   ret = GetAnswer(device, core, command.str().c_str(), answer);
+   if (ret != DEVICE_OK)
+      return ret;
+   command.str("");
+
+   std::stringstream tx(answer);
+   int minRamp;
+   tx >> minRamp;
+   tx >> minRamp;
+   if ( 0 <= minRamp)
+      scopeModel_->ZDrive_.minRamp_ = minRamp;
+
+   // Get maximum speed
+   command << g_ZDrive << "049";
+   ret = GetAnswer(device, core, command.str().c_str(), answer);
+   if (ret != DEVICE_OK)
+      return ret;
+   command.str("");
+
+   std::stringstream ty(answer);
+   int maxRamp;
+   ty >> maxRamp;
+   ty >> maxRamp;
+   if ( 0 <= maxRamp)
+      scopeModel_->ZDrive_.maxRamp_ = maxRamp;
+
    // Get Conversion factor
    command << g_ZDrive << "042";
    ret = GetAnswer(device, core, command.str().c_str(), answer);
@@ -621,7 +812,7 @@ int LeicaScopeInterface::GetZDriveInfo(MM::Device& device, MM::Core& core)
    return DEVICE_OK;
 }
 
-int LeicaScopeInterface::GetDriveInfo(MM::Device& device, MM::Core& core, LeicaDriveModel drive, int deviceID)
+int LeicaScopeInterface::GetDriveInfo(MM::Device& device, MM::Core& core, LeicaDriveModel& drive, int deviceID)
 {
    std::ostringstream command;
    std::string answer, token;
@@ -654,6 +845,34 @@ int LeicaScopeInterface::GetDriveInfo(MM::Device& device, MM::Core& core, LeicaD
    if ( 0 <= maxPos)
    drive.SetMaxPosition(maxPos);
 
+   // Get minimum speed
+   command << deviceID << "035";
+   ret = GetAnswer(device, core, command.str().c_str(), answer);
+   if (ret != DEVICE_OK)
+      return ret;
+   command.str("");
+
+   std::stringstream tv(answer);
+   int minSpeed;
+   tv >> minSpeed;
+   tv >> minSpeed;
+   if ( 0 <= minSpeed)
+      drive.minSpeed_ = minSpeed;
+
+   // Get maximum speed
+   command << deviceID << "036";
+   ret = GetAnswer(device, core, command.str().c_str(), answer);
+   if (ret != DEVICE_OK)
+      return ret;
+   command.str("");
+
+   std::stringstream tw(answer);
+   int maxSpeed;
+   tw >> maxSpeed;
+   tw >> maxSpeed;
+   if ( 0 <= maxSpeed)
+      drive.maxSpeed_ = maxSpeed;
+
    // Get Conversion factor
    command << deviceID << "034";
    ret = GetAnswer(device, core, command.str().c_str(), answer);
@@ -666,11 +885,111 @@ int LeicaScopeInterface::GetDriveInfo(MM::Device& device, MM::Core& core, LeicaD
    tu >> factor;
    tu >> factor;
    if ( 0 <= factor)
-   drive.SetStepSize(factor);
+      drive.SetStepSize(factor);
 
    return DEVICE_OK;
 }
 
+int LeicaScopeInterface::GetDiaphragmInfo(MM::Device& device, MM::Core& core, LeicaDeviceModel& diaphragm, int deviceID)
+{
+   std::ostringstream command;
+   std::string answer, token;
+
+   // Get minimum position
+   command << deviceID << "028";
+   int ret = GetAnswer(device, core, command.str().c_str(), answer);
+   if (ret != DEVICE_OK)
+      return ret;
+   command.str("");
+
+   std::stringstream ts(answer);
+   int minPos;
+   ts >> minPos;
+   ts >> minPos;
+   if ( 0 <= minPos)
+      diaphragm.SetMinPosition(minPos);
+   ts.clear();
+   ts.str("");
+
+   // Get maximum position
+   command << deviceID << "027";
+   ret = GetAnswer(device, core, command.str().c_str(), answer);
+   if (ret != DEVICE_OK)
+      return ret;
+   command.str("");
+
+   ts << answer;
+   int maxPos;
+   ts >> maxPos;
+   ts >> maxPos;
+   if (0 <= maxPos)
+      diaphragm.SetMaxPosition(maxPos);
+
+   return DEVICE_OK;
+}
+
+int LeicaScopeInterface::GetMagChangerInfo(MM::Device& device, MM::Core& core)
+{
+   std::ostringstream command;
+   std::string answer, token;
+
+   // Get minimum position
+   command << g_Mag_Changer_Mot << "025";
+   int ret = GetAnswer(device, core, command.str().c_str(), answer);
+   if (ret != DEVICE_OK)
+      return ret;
+   command.str("");
+
+   std::stringstream ts(answer);
+   int minPos;
+   ts >> minPos;
+   ts >> minPos;
+   if ( 0 <= minPos)
+   scopeModel_->magChanger_.SetMinPosition(minPos);
+   ts.clear();
+   ts.str("");
+
+   // Get maximum position
+   command << g_Mag_Changer_Mot << "026";
+   ret = GetAnswer(device, core, command.str().c_str(), answer);
+   if (ret != DEVICE_OK)
+      return ret;
+   command.str("");
+
+   ts << answer;
+   int maxPos;
+   ts >> maxPos;
+   ts >> maxPos;
+   if (maxPos < 1 || maxPos >4)
+      maxPos = 4;
+   scopeModel_->magChanger_.SetMaxPosition(maxPos);
+   ts.clear();
+   ts.str("");
+
+   // magnification at each position
+   for (int i=minPos; i<= maxPos; i++) {
+      command << g_Mag_Changer_Mot << "028 "<< i;
+      ret = GetAnswer(device, core, command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+      command.str("");
+
+      ts << answer;
+      double mag;
+      int pos;
+      ts >> pos;
+      ts >> pos;
+      if (i == pos) {
+         ts >> mag;
+         scopeModel_->magChanger_.SetMagnification(i, mag);
+      }
+      ts.clear();
+      ts.str("");
+   }
+
+
+   return DEVICE_OK;
+}
 /*
  * Sends commands to the scope enquiring about current position, speed and acceleartion settings
  *  of the specified drive.
@@ -680,17 +999,20 @@ int LeicaScopeInterface::GetDriveParameters(MM::Device& device, MM::Core& core, 
 {
    std::ostringstream command;
    
+   // Position
    command << deviceID << "023";
    int ret = core.SetSerialCommand(&device, port_.c_str(), command.str().c_str(), "\r");
    if (ret != DEVICE_OK)
       return ret;
    command.str("");
+
    // Get current speed of the stage
    command << deviceID << "033";
    ret = core.SetSerialCommand(&device, port_.c_str(), command.str().c_str(), "\r");
    if (ret != DEVICE_OK)
       return ret;
    command.str("");
+
    // Get current acceleration
    command << deviceID << "031";
    ret = core.SetSerialCommand(&device, port_.c_str(), command.str().c_str(), "\r");
@@ -759,7 +1081,7 @@ int LeicaScopeInterface::SetRevolverPosition(MM::Device& device, MM::Core& core,
 /**
  * Sets Drive position
  */
-int LeicaScopeInterface::SetDrivePosition(MM::Device& device, MM::Core& core, LeicaDriveModel drive, int deviceID, int position)
+int LeicaScopeInterface::SetDrivePosition(MM::Device& device, MM::Core& core, LeicaDriveModel& drive, int deviceID, int position)
 {
    drive.SetBusy(true);
    std::ostringstream os;
@@ -770,7 +1092,7 @@ int LeicaScopeInterface::SetDrivePosition(MM::Device& device, MM::Core& core, Le
 /**
  * Sets relative Drive position
  */
-int LeicaScopeInterface::SetDrivePositionRelative(MM::Device& device, MM::Core& core, LeicaDriveModel drive, int deviceID, int position)
+int LeicaScopeInterface::SetDrivePositionRelative(MM::Device& device, MM::Core& core, LeicaDriveModel& drive, int deviceID, int position)
 {
    drive.SetBusy(true);
    std::ostringstream os;
@@ -781,7 +1103,7 @@ int LeicaScopeInterface::SetDrivePositionRelative(MM::Device& device, MM::Core& 
 /**
  * Moves drive to the INIT-endswitch and reset zero point
  */
-int LeicaScopeInterface::HomeDrive(MM::Device& device, MM::Core& core, LeicaDriveModel drive, int deviceID)
+int LeicaScopeInterface::HomeDrive(MM::Device& device, MM::Core& core, LeicaDriveModel& drive, int deviceID)
 {
    drive.SetBusy(true);
    std::ostringstream os;
@@ -792,7 +1114,7 @@ int LeicaScopeInterface::HomeDrive(MM::Device& device, MM::Core& core, LeicaDriv
 /**
  * Moves drive to the INIT-endswitch and reset zero point
  */
-int LeicaScopeInterface::StopDrive(MM::Device& device, MM::Core& core, LeicaDriveModel drive, int deviceID)
+int LeicaScopeInterface::StopDrive(MM::Device& device, MM::Core& core, LeicaDriveModel& drive, int deviceID)
 {
    drive.SetBusy(true);
    std::ostringstream os;
@@ -801,25 +1123,52 @@ int LeicaScopeInterface::StopDrive(MM::Device& device, MM::Core& core, LeicaDriv
 }
 
 /**
+ * Sets position of the specified diaphragm
+ */
+int LeicaScopeInterface::SetDiaphragmPosition(MM::Device& device, MM::Core& core, LeicaDeviceModel* diaphragm, int deviceID, int position)
+{
+   diaphragm->SetBusy(true);
+   std::ostringstream os;
+   os << deviceID << "022 " << position;
+   return core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+}
+
+
+
+/**
  * Sets Drive Speed
  */
-int LeicaScopeInterface::SetDriveSpeed(MM::Device& device, MM::Core& core, LeicaDriveModel drive, int deviceID, int speed)
+int LeicaScopeInterface::SetDriveSpeed(MM::Device& device, MM::Core& core, LeicaDriveModel& drive, int deviceID, int speed)
 {
    drive.SetBusy(true);
    std::ostringstream os;
    os << deviceID << "032" << " " << speed;
-   return core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+   int ret = core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+   if (ret != DEVICE_OK)
+      return ret;
+
+   // Request the current speed (answer is read by the monitoringthread
+   std::ostringstream ot;
+   ot << deviceID << "033";
+   return core.SetSerialCommand(&device, port_.c_str(), ot.str().c_str(), "\r");
 }
 
 /**
  * Sets Drive acceleration
  */
-int LeicaScopeInterface::SetDriveAcceleration(MM::Device& device, MM::Core& core, LeicaDriveModel drive, int deviceID, int acc)
+int LeicaScopeInterface::SetDriveAcceleration(MM::Device& device, MM::Core& core, LeicaDriveModel& drive, int deviceID, int acc)
 {
    drive.SetBusy(true);
    std::ostringstream os;
    os << deviceID << "030" << " " << acc;
-   return core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+   int ret = core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+   if (ret != DEVICE_OK)
+      return ret;
+
+   // Request the current acceleration (answer is read by the monitoringthread
+   std::ostringstream ot;
+   ot << deviceID << "031";
+   return core.SetSerialCommand(&device, port_.c_str(), ot.str().c_str(), "\r");
 }
 
 /**
@@ -901,8 +1250,12 @@ int LeicaMonitoringThread::svc()
             if (command[0] == '$')
                command = command.substr(1, command.length() - 1);
 
-            int deviceId = atoi(command.substr(0,2).c_str());
-            int commandId = atoi(command.substr(2,3).c_str());
+            int deviceId = 0;
+            int commandId = 0;
+            if (command.length() >= 5) {
+               commandId = atoi(command.substr(2,3).c_str());
+               deviceId = atoi(command.substr(0,2).c_str());
+            }
             switch (deviceId) {
                case (g_Master) :
                    switch (commandId) {
@@ -1010,11 +1363,15 @@ int LeicaMonitoringThread::svc()
                             scopeModel_->ZDrive_.SetBusy(false);
                             break;
                          }
+                      case (22) : // Completion of Position Absolute
+                         scopeModel_->ZDrive_.SetBusy(false);
+                         break;
                       case (31) : // acceleration
                          {
                             int acc;
                             os >> acc;
                             scopeModel_->ZDrive_.SetRamp(acc);
+                            scopeModel_->ZDrive_.SetBusy(false);
                             break;
                          }
                       case (33) : // speed
@@ -1022,6 +1379,7 @@ int LeicaMonitoringThread::svc()
                             int speed;
                             os >> speed;
                             scopeModel_->ZDrive_.SetSpeed(speed);
+                            scopeModel_->ZDrive_.SetBusy(false);
                             break;
                          }
                    }
@@ -1045,6 +1403,9 @@ int LeicaMonitoringThread::svc()
                       case (21) : // Completion of BREAK_X
                          scopeModel_->XDrive_.SetBusy(false);
                          break;
+                      case (22) : // Completion of Position Absolute
+                         scopeModel_->XDrive_.SetBusy(false);
+                         break;
                       case (23) : // Position
                          {
                             int pos;
@@ -1058,6 +1419,7 @@ int LeicaMonitoringThread::svc()
                             int acc;
                             os >> acc;
                             scopeModel_->XDrive_.SetRamp(acc);
+                            scopeModel_->XDrive_.SetBusy(false);
                             break;
                          }
                       case (33) : // speed
@@ -1065,6 +1427,7 @@ int LeicaMonitoringThread::svc()
                             int speed;
                             os >> speed;
                             scopeModel_->XDrive_.SetSpeed(speed);
+                            scopeModel_->XDrive_.SetBusy(false);
                             break;
                          }
                    }
@@ -1088,6 +1451,9 @@ int LeicaMonitoringThread::svc()
                       case (21) : // Completion of BREAK_Y
                          scopeModel_->YDrive_.SetBusy(false);
                          break;
+                      case (22) : // Completion of Position Absolute
+                         scopeModel_->YDrive_.SetBusy(false);
+                         break;
                       case (23) : // Position
                          {
                             int pos;
@@ -1101,6 +1467,7 @@ int LeicaMonitoringThread::svc()
                             int acc;
                             os >> acc;
                             scopeModel_->YDrive_.SetRamp(acc);
+                            scopeModel_->YDrive_.SetBusy(false);
                             break;
                          }
                       case (33) : // speed
@@ -1108,13 +1475,126 @@ int LeicaMonitoringThread::svc()
                             int speed;
                             os >> speed;
                             scopeModel_->YDrive_.SetSpeed(speed);
+                            scopeModel_->YDrive_.SetBusy(false);
                             break;
                          }
                    }
                    break;
-
-            }
-         }
+               case (g_Field_Diaphragm_TL) :
+                   switch (commandId) {
+                      case (4) : // Status
+                         {
+                            int status;
+                            os >> status;
+                            if (status==1)
+                               scopeModel_->fieldDiaphragmTL_.SetBusy(true);
+                            else
+                               scopeModel_->fieldDiaphragmTL_.SetBusy(false);
+                         }
+                         break;
+                      case (22) : // Acknowledge of set position
+                         scopeModel_->fieldDiaphragmTL_.SetBusy(false);
+                         break;
+                      case (23) : // Absolute position
+                         {
+                            int pos;
+                            os >> pos;
+                            scopeModel_->fieldDiaphragmTL_.SetPosition(pos);
+                            scopeModel_->fieldDiaphragmTL_.SetBusy(false);
+                            break;
+                         }
+                         break;
+                     }
+                  break;
+               case (g_Aperture_Diaphragm_TL) :
+                   switch (commandId) {
+                      case (4) : // Status
+                         {
+                            int status;
+                            os >> status;
+                            if (status==1)
+                               scopeModel_->apertureDiaphragmTL_.SetBusy(true);
+                            else
+                               scopeModel_->apertureDiaphragmTL_.SetBusy(false);
+                         }
+                         break;
+                      case (23) : // Absolute position
+                         {
+                            int pos;
+                            os >> pos;
+                            scopeModel_->apertureDiaphragmTL_.SetPosition(pos);
+                            scopeModel_->apertureDiaphragmTL_.SetBusy(false);
+                            break;
+                         }
+                         break;
+                     }
+                  break;
+               case (g_Field_Diaphragm_IL) :
+                   switch (commandId) {
+                      case (4) : // Status
+                         {
+                            int status;
+                            os >> status;
+                            if (status==1)
+                               scopeModel_->fieldDiaphragmIL_.SetBusy(true);
+                            else
+                               scopeModel_->fieldDiaphragmIL_.SetBusy(false);
+                         }
+                         break;
+                      case (23) : // Absolute position
+                         {
+                            int pos;
+                            os >> pos;
+                            scopeModel_->fieldDiaphragmIL_.SetPosition(pos);
+                            scopeModel_->fieldDiaphragmIL_.SetBusy(false);
+                            break;
+                         }
+                         break;
+                     }
+                  break;
+               case (g_Aperture_Diaphragm_IL) :
+                   switch (commandId) {
+                      case (4) : // Status
+                         {
+                            int status;
+                            os >> status;
+                            if (status==1)
+                               scopeModel_->apertureDiaphragmIL_.SetBusy(true);
+                            else
+                               scopeModel_->apertureDiaphragmIL_.SetBusy(false);
+                         }
+                         break;
+                      case (23) : // Absolute position
+                         {
+                            int pos;
+                            os >> pos;
+                            scopeModel_->apertureDiaphragmIL_.SetPosition(pos);
+                            scopeModel_->apertureDiaphragmIL_.SetBusy(false);
+                            break;
+                         }
+                     }
+                  break;
+               case (g_Mag_Changer_Mot) :
+                  case (4) :
+                  {
+                     int status;
+                     os << status;
+                     if (status == 1) {
+                        scopeModel_->magChanger_.SetBusy(false);
+                     }
+                     break;
+                  }
+                  case (23) : // Absolute position
+                  {
+                     int pos;
+                     os >> pos;
+                     scopeModel_->magChanger_.SetPosition(pos);
+                     scopeModel_->magChanger_.SetBusy(false);
+                     break;
+                  }
+                  break;
+              }
+          }
       } while ((strlen(rcvBuf) > 0) && (!stop_)); 
 
    }

@@ -89,22 +89,19 @@ LeicaDMIModel g_ScopeModel;
 const char* g_LeicaDeviceName = "Scope";
 const char* g_LeicaReflector = "IL-Turret";
 const char* g_LeicaNosePiece = "ObjectiveTurret";
-const char* g_LeicaFieldDiaphragm = "FieldDiaphragm";
-const char* g_LeicaApertureDiaphragm = "ApertureDiaphragm";
-const char* g_LeicaFocusAxis = "FocusAxis";
+const char* g_LeicaFieldDiaphragmTL = "TL-FieldDiaphragm";
+const char* g_LeicaApertureDiaphragmTL = "TL-ApertureDiaphragm";
+const char* g_LeicaFieldDiaphragmIL = "IL-FieldDiaphragm";
+const char* g_LeicaApertureDiaphragmIL = "IL-ApertureDiaphragm";
+const char* g_LeicaFocusAxis = "FocusDrive";
 const char* g_LeicaTubeLens = "TubeLens";
 const char* g_LeicaTubeLensShutter = "TubeLensShutter";
 const char* g_LeicaSidePort = "SidePort";
 const char* g_LeicaIncidentLightShutter = "IL-Shutter";
 const char* g_LeicaTransmittedLightShutter = "TL-Shutter";
 const char* g_LeicaHalogenLightSwitch = "HalogenLightSwitch";
-const char* g_LeicaRLFLAttenuator = "RL-FLAttenuator";
-const char* g_LeicaCondenserContrast = "CondenserContrast";
-const char* g_LeicaCondenserAperture = "CondenserAperture";
+const char* g_LeicaRLFLAttenuator = "IL-FLAttenuator";
 const char* g_LeicaXYStage = "XYStage";
-const char* g_LeicaHBOLamp = "HBOLamp";
-const char* g_LeicaHalogenLamp = "HalogenLamp";
-const char* g_LeicaLSMPort = "LSMPort";
 const char* g_LeicaBasePort = "BasePort";
 const char* g_LeicaUniblitz = "Uniblitz";
 const char* g_LeicaFilterWheel = "FilterWheel";
@@ -120,20 +117,17 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_LeicaReflector,"Reflector Turret (dichroics)"); 
    AddAvailableDeviceName(g_LeicaNosePiece,"Objective Turret");
    AddAvailableDeviceName(g_LeicaFocusAxis,"Z-drive");
-   /*
    AddAvailableDeviceName(g_LeicaXYStage,"XYStage");
-   AddAvailableDeviceName(g_LeicaFieldDiaphragm,"Field Diaphragm (fluorescence)");
-   AddAvailableDeviceName(g_LeicaApertureDiaphragm,"Aperture Diaphragm (fluorescence)");
+   AddAvailableDeviceName(g_LeicaFieldDiaphragmTL,"Field Diaphragm (Trans)");
+   AddAvailableDeviceName(g_LeicaApertureDiaphragmTL,"Aperture Diaphragm (Condensor)");
+   AddAvailableDeviceName(g_LeicaFieldDiaphragmIL,"Field Diaphragm (Fluorescence)");
+   AddAvailableDeviceName(g_LeicaApertureDiaphragmIL,"Aperture Diaphragm (Fluorescence)");
+   /*
    AddAvailableDeviceName(g_LeicaTubeLens,"Tube Lens (optovar)");
    AddAvailableDeviceName(g_LeicaTubeLensShutter,"Tube Lens Shutter");
    AddAvailableDeviceName(g_LeicaSidePort,"Side Port");
    AddAvailableDeviceName(g_LeicaReflectedLightShutter,"Reflected Light Shutter"); 
    AddAvailableDeviceName(g_LeicaRLFLAttenuator,"Reflected (fluorescence) light attenuator");
-   AddAvailableDeviceName(g_LeicaCondenserContrast,"Condenser Contrast");
-   AddAvailableDeviceName(g_LeicaCondenserAperture,"Condenser Aperture");
-   AddAvailableDeviceName(g_LeicaHBOLamp,"HBO Lamp");
-   AddAvailableDeviceName(g_LeicaHalogenLamp,"Halogen Lamp"); 
-   AddAvailableDeviceName(g_LeicaLSMPort,"LSM Port (rearPort)"); 
    AddAvailableDeviceName(g_LeicaBasePort,"Base Port switcher"); 
    AddAvailableDeviceName(g_LeicaUniblitz,"Uniblitz Shutter"); 
    AddAvailableDeviceName(g_LeicaFilterWheel,"Filter Wheel"); 
@@ -162,13 +156,17 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
         return new ObjectiveTurret();
    else if (strcmp(deviceName, g_LeicaFocusAxis) == 0)
         return new ZDrive();
-   /*
-   else if (strcmp(deviceName, g_LeicaFieldDiaphragm) == 0)
-        return new Servo(g_FieldDiaphragmServo, g_LeicaFieldDiaphragm, "Field Diaphragm");
-   else if (strcmp(deviceName, g_LeicaApertureDiaphragm) == 0)
-        return new Servo(g_ApertureDiaphragmServo, g_LeicaApertureDiaphragm, "Aperture Diaphragm");
+   else if (strcmp(deviceName, g_LeicaFieldDiaphragmTL) == 0)
+        return new Diaphragm(&g_ScopeModel.fieldDiaphragmTL_, g_Field_Diaphragm_TL, g_LeicaFieldDiaphragmTL);
+   else if (strcmp(deviceName, g_LeicaApertureDiaphragmTL) == 0)
+        return new Diaphragm(&g_ScopeModel.apertureDiaphragmTL_, g_Aperture_Diaphragm_TL, g_LeicaApertureDiaphragmTL);
+   else if (strcmp(deviceName, g_LeicaFieldDiaphragmIL) == 0)
+        return new Diaphragm(&g_ScopeModel.fieldDiaphragmIL_, g_Field_Diaphragm_IL, g_LeicaFieldDiaphragmIL);
+   else if (strcmp(deviceName, g_LeicaApertureDiaphragmIL) == 0)
+        return new Diaphragm(&g_ScopeModel.apertureDiaphragmIL_, g_Aperture_Diaphragm_IL, g_LeicaApertureDiaphragmIL);
    else if (strcmp(deviceName, g_LeicaXYStage) == 0)
 	   return new XYStage();
+   /*
    else if (strcmp(deviceName, g_LeicaTubeLens) == 0)
         return new TubeLensTurret(g_TubeLensChanger, g_LeicaTubeLens, "Tube Lens (optoavar)");
    else if (strcmp(deviceName, g_LeicaTubeLensShutter) == 0)
@@ -179,10 +177,6 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
         return new  Shutter(g_ReflectedLightShutter, g_LeicaReflectedLightShutter, "Leica Reflected Light Shutter");
    else if (strcmp(deviceName, g_LeicaRLFLAttenuator) == 0)
         return new Turret(g_RLFLAttenuatorChanger, g_LeicaRLFLAttenuator, "Attenuator (reflected light)");
-   else if (strcmp(deviceName, g_LeicaCondenserContrast) == 0)
-        return new CondenserTurret(g_CondenserContrastChanger, g_LeicaCondenserContrast, "Condenser Contrast");
-   else if (strcmp(deviceName, g_LeicaCondenserAperture) == 0)
-        return new Servo(g_CondenserApertureServo, g_LeicaCondenserAperture, "Condenser Aperture");
    else if (strcmp(deviceName, g_LeicaHBOLamp) == 0)
         return new Servo(g_HBOLampServo, g_LeicaHBOLamp, "HBO Lamp intensity");
    else if (strcmp(deviceName, g_LeicaHalogenLamp) == 0)
@@ -712,8 +706,7 @@ int TLShutter::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// General Turret Object, implement all Changers. Inherit and override for
-// more specialized requirements (like specific labels)
+// ReFlected Light Turret
 ///////////////////////////////////////////////////////////////////////////////
 ILTurret::ILTurret():
    numPos_(5),
@@ -850,23 +843,19 @@ int ILTurret::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
          // check if the new position is allowed with this method
          int method;
          int ret = g_ScopeModel.method_.GetPosition(method);
-         printf ("Method: %d\n", method);
          if (!g_ScopeModel.ILTurret_.cube_[pos].IsMethodAvailable(method)) {
-            printf ("Not available\n");
             // the new cube does not support the current method.  Look for a method:
             // Look first in the FLUO methods, than in all available methods
             int i = 10;
             while (!g_ScopeModel.ILTurret_.cube_[pos].IsMethodAvailable(i) && (i < 13)) {
                i++;
             }
-            printf ("Propose method %d\n", i);
             if (!g_ScopeModel.ILTurret_.cube_[pos].IsMethodAvailable(i)) {
                i = 0;
                while (!g_ScopeModel.ILTurret_.cube_[pos].IsMethodAvailable(i) && (i < 16)) {
                   i++;
                }
             }
-            printf ("Propose method %d\n", i);
             if (g_ScopeModel.ILTurret_.cube_[pos].IsMethodAvailable(i))
                g_ScopeInterface.SetMethod(*this, *GetCoreCallback(), i);
          }
@@ -1113,17 +1102,17 @@ int ZDrive::Initialize()
 
    // Acceleration 
    CPropertyAction* pAct = new CPropertyAction(this, &ZDrive::OnAcceleration);
-   ret = CreateProperty("Acceleration", "1", MM::Float, false, pAct);
+   ret = CreateProperty("Acceleration", "1", MM::Integer, false, pAct);
    if (ret != DEVICE_OK)
       return ret;
-   SetPropertyLimits("Acceleration", 1, 65535);
+   SetPropertyLimits("Acceleration", g_ScopeModel.ZDrive_.GetMinRamp(), g_ScopeModel.ZDrive_.GetMaxRamp());
 
    // Speed 
    pAct = new CPropertyAction(this, &ZDrive::OnSpeed);
-   ret = CreateProperty("Speed", "1", MM::Float, false, pAct);
+   ret = CreateProperty("Speed", "1", MM::Integer, false, pAct);
    if (ret != DEVICE_OK)
       return ret;
-   SetPropertyLimits("Speed", 1, 16777216);
+   SetPropertyLimits("Speed", g_ScopeModel.ZDrive_.GetMinSpeed(), g_ScopeModel.ZDrive_.GetMaxSpeed());
 
    ret = UpdateStatus();
    if (ret!= DEVICE_OK)
@@ -1177,6 +1166,29 @@ int ZDrive::SetOrigin()
    return DEVICE_OK;
 }
 
+int ZDrive::GetLimits(double& lower, double& upper)
+{
+   int min, max;
+   g_ScopeModel.ZDrive_.GetMinPosition(min);
+   g_ScopeModel.ZDrive_.GetMaxPosition(max);
+   lower = min * g_ScopeModel.ZDrive_.GetStepSize();
+   upper = max * g_ScopeModel.ZDrive_.GetStepSize();
+
+   return DEVICE_OK;
+}
+
+int ZDrive::Home()
+{
+   // TODO: Implement!
+   return DEVICE_OK;
+}
+
+int ZDrive::Stop()
+{
+   // TODO: Implement!
+   return DEVICE_OK;
+}
+
 int ZDrive::OnAcceleration(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)   {
@@ -1211,7 +1223,7 @@ int ZDrive::OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
    {  
       long speed;
       pProp->Get(speed);
-      int ret = g_ScopeInterface.SetDriveAcceleration(*this, *GetCoreCallback(), g_ScopeModel.ZDrive_, g_ZDrive, (int) speed);
+      int ret = g_ScopeInterface.SetDriveSpeed(*this, *GetCoreCallback(), g_ScopeModel.ZDrive_, g_ZDrive, (int) speed);
       if (ret != DEVICE_OK)
          return ret;
    }
@@ -1223,9 +1235,8 @@ int ZDrive::OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
  * LeicaXYStage: Micro-Manager implementation of X and Y Stage
 */
 XYStage::XYStage (): 
-   stepSize_um_(0.001),
-   initialized_ (false),
-   velocity_ (0)
+   busy_ (false),
+   initialized_ (false)
 {
    name_ = g_LeicaXYStage;
    InitializeDefaultErrorMessages();
@@ -1250,7 +1261,7 @@ bool XYStage::Busy()
    if (ret != DEVICE_OK)  // This is bad and should not happen
       return false;
 
-   return xBusy && yBusy;
+   return (xBusy || yBusy);
 }
 
 void XYStage::GetName (char* Name) const
@@ -1277,17 +1288,29 @@ int XYStage::Initialize()
 
    // Acceleration 
    CPropertyAction* pAct = new CPropertyAction(this, &XYStage::OnAcceleration);
-   ret = CreateProperty("Acceleration", "1", MM::Float, false, pAct);
+   ret = CreateProperty("Acceleration", "1", MM::Integer, false, pAct);
    if (ret != DEVICE_OK)
       return ret;
-   SetPropertyLimits("Acceleration", 1, 65535);
+   int minRamp = g_ScopeModel.XDrive_.GetMinRamp();
+   if (g_ScopeModel.YDrive_.GetMinRamp() > minRamp)
+      minRamp = g_ScopeModel.YDrive_.GetMinRamp();
+   int maxRamp = g_ScopeModel.XDrive_.GetMaxRamp();
+   if (g_ScopeModel.YDrive_.GetMaxRamp() < maxRamp)
+      maxRamp = g_ScopeModel.YDrive_.GetMaxRamp();
+   SetPropertyLimits("Acceleration", minRamp, maxRamp);
 
    // Speed 
    pAct = new CPropertyAction(this, &XYStage::OnSpeed);
-   ret = CreateProperty("Speed", "1", MM::Float, false, pAct);
+   ret = CreateProperty("Speed", "1", MM::Integer, false, pAct);
    if (ret != DEVICE_OK)
       return ret;
-   SetPropertyLimits("Speed", 1, 16777216);
+   int minSpeed = g_ScopeModel.XDrive_.GetMinSpeed();
+   if (g_ScopeModel.YDrive_.GetMinSpeed() > minSpeed)
+      minSpeed = g_ScopeModel.YDrive_.GetMinSpeed();
+   int maxSpeed = g_ScopeModel.XDrive_.GetMaxSpeed();
+   if (g_ScopeModel.YDrive_.GetMaxSpeed() < maxSpeed)
+      maxSpeed = g_ScopeModel.YDrive_.GetMaxSpeed();
+   SetPropertyLimits("Speed", minSpeed, maxSpeed);
 
    ret = UpdateStatus();
    if (ret!= DEVICE_OK)
@@ -1320,8 +1343,8 @@ int XYStage::GetLimits(double& xMin, double& xMax, double& yMin, double& yMax)
 
 int XYStage::SetPositionUm(double x, double y)
 {
-   long xSteps = (long)(x / stepSize_um_);
-   long ySteps = (long)(y / stepSize_um_);
+   long xSteps = (long)(x / g_ScopeModel.XDrive_.GetStepSize());
+   long ySteps = (long)(y / g_ScopeModel.XDrive_.GetStepSize());
    int ret = SetPositionSteps(xSteps, ySteps);
    if (ret != DEVICE_OK)
       return ret;
@@ -1331,8 +1354,8 @@ int XYStage::SetPositionUm(double x, double y)
 
 int XYStage::SetRelativePositionUm(double x, double y)
 {
-   long xSteps = (long)(x / stepSize_um_);
-   long ySteps = (long)(y / stepSize_um_);
+   long xSteps = (long)(x / g_ScopeModel.XDrive_.GetStepSize());
+   long ySteps = (long)(y / g_ScopeModel.XDrive_.GetStepSize());
    int ret = SetRelativePositionSteps(xSteps, ySteps);
    if (ret != DEVICE_OK)
       return ret;
@@ -1346,8 +1369,8 @@ int XYStage::GetPositionUm(double& x, double& y)
    int ret = GetPositionSteps(xSteps, ySteps);                         
    if (ret != DEVICE_OK)                                      
       return ret;                                             
-   x = xSteps * stepSize_um_;
-   y = ySteps * stepSize_um_;
+   x = xSteps * g_ScopeModel.XDrive_.GetStepSize();
+   y = ySteps * g_ScopeModel.XDrive_.GetStepSize();
 
    return DEVICE_OK;
 }
@@ -1459,10 +1482,10 @@ int XYStage::OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
    {  
       long speed;
       pProp->Get(speed);
-      int ret = g_ScopeInterface.SetDriveAcceleration(*this, *GetCoreCallback(), g_ScopeModel.XDrive_, g_XDrive, (int) speed);
+      int ret = g_ScopeInterface.SetDriveSpeed(*this, *GetCoreCallback(), g_ScopeModel.XDrive_, g_XDrive, (int) speed);
       if (ret != DEVICE_OK)
          return ret;
-      ret = g_ScopeInterface.SetDriveAcceleration(*this, *GetCoreCallback(), g_ScopeModel.YDrive_, g_YDrive, (int) speed);
+      ret = g_ScopeInterface.SetDriveSpeed(*this, *GetCoreCallback(), g_ScopeModel.YDrive_, g_YDrive, (int) speed);
       if (ret != DEVICE_OK)
          return ret;
    }
@@ -1470,6 +1493,298 @@ int XYStage::OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;                                          
 }
 
+///////////////////////////////////////////////////////////////////////////////
+// General Diaphragm Object, implements all Diaphragms. 
+///////////////////////////////////////////////////////////////////////////////
+Diaphragm::Diaphragm(LeicaDeviceModel* diaphragm, int deviceID, std::string name):
+   numPos_(5),
+   initialized_ (false)
+{
+   diaphragm_ = diaphragm;
+   deviceID_ = deviceID;
+   name_ = name;
+
+   InitializeDefaultErrorMessages();
+
+   // TODO provide error messages
+   SetErrorText(ERR_SCOPE_NOT_ACTIVE, "Leica Scope is not initialized.  It is needed for this Diaphrgam to work");
+   SetErrorText(ERR_INVALID_TURRET_POSITION, "The requested position is not available on this Diaphragm");
+   SetErrorText(ERR_MODULE_NOT_FOUND, "This Diaphragm is not installed in this Leica microscope");
+
+   // Create pre-initialization properties
+   // ------------------------------------
+
+   // Name
+   CreateProperty(MM::g_Keyword_Name, name_.c_str(), MM::String, true);
+}
+
+Diaphragm::~Diaphragm()
+{
+   Shutdown();
+}
+
+void Diaphragm::GetName(char* name) const
+{
+   assert(name_.length() < CDeviceUtils::GetMaxStringLength());
+   CDeviceUtils::CopyLimitedString(name, name_.c_str());
+}
+
+int Diaphragm::Initialize()
+{
+   if (!g_ScopeInterface.portInitialized_)
+      return ERR_SCOPE_NOT_ACTIVE;
+
+   int ret = DEVICE_OK;
+   if (!g_ScopeInterface.IsInitialized())
+      ret = g_ScopeInterface.Initialize(*this, *GetCoreCallback());
+   if (ret != DEVICE_OK)
+      return ret;
+   
+   // check if this turret exists:
+   bool present;
+   if (! g_ScopeModel.IsDeviceAvailable(deviceID_))
+      return ERR_MODULE_NOT_FOUND;
+
+   // Position
+   // -----
+   CPropertyAction* pAct = new CPropertyAction(this, &Diaphragm::OnPosition);
+   ret = CreateProperty("Position", "1", MM::Integer, false, pAct);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   int max, min;
+   diaphragm_->GetMaxPosition(max);
+   diaphragm_->GetMinPosition(min);
+   ret = SetPropertyLimits("Position", min, max);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   numPos_ = max;
+
+   ret = UpdateStatus();
+   if (ret!= DEVICE_OK)
+      return ret;
+
+   initialized_ = true;
+
+   return DEVICE_OK;
+}
+
+int Diaphragm::Shutdown()
+{
+   if (initialized_) 
+      initialized_ = false;
+   return DEVICE_OK;
+}
+
+bool Diaphragm::Busy()
+{
+   bool busy;
+   int ret = diaphragm_->GetBusy(busy);
+   if (ret != DEVICE_OK)  // This is bad and should not happen
+      return false;
+
+   return busy;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Action handlers                                                           
+///////////////////////////////////////////////////////////////////////////////
+
+int Diaphragm::OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      int pos;
+      int ret = diaphragm_->GetPosition(pos);
+      if (ret != DEVICE_OK)
+         return ret;
+      if (pos == 0)
+         return ERR_TURRET_NOT_ENGAGED;
+      pProp->Set((long) pos);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      long pos;
+      pProp->Get(pos);
+      if ((pos > 0) && (pos <= (int) numPos_)) {
+         return g_ScopeInterface.SetDiaphragmPosition(*this, *GetCoreCallback(), diaphragm_, deviceID_, (int) pos);
+      } else
+         return ERR_INVALID_TURRET_POSITION;
+   }
+
+   return DEVICE_OK;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Motorized Tube lens switcher (magnifier)
+///////////////////////////////////////////////////////////////////////////////
+MagChanger::MagChanger() :
+   numPos_(4),
+   initialized_ (false),
+   name_("Magnifier"),
+   description_("Motorized Magnifier"),
+   pos_(1)
+{
+   InitializeDefaultErrorMessages();
+
+   // TODO provide error messages
+   SetErrorText(ERR_SCOPE_NOT_ACTIVE, "Leica Scope is not initialized. ");
+   SetErrorText(ERR_INVALID_TURRET_POSITION, "The requested position is not available on this motorized magnifier");
+   SetErrorText(ERR_MODULE_NOT_FOUND, "No motorized magnifier installed in this Leica microscope");
+   SetErrorText(ERR_MAGNIFIER_NOT_ENGAGED, "Magnifier is not engaged");
+
+   // Create pre-initialization properties
+   // ------------------------------------
+
+   // Name
+   CreateProperty(MM::g_Keyword_Name, name_.c_str(), MM::String, true);
+
+   // Description
+   CreateProperty(MM::g_Keyword_Description, description_.c_str(), MM::String, true);
+
+}
+
+MagChanger::~MagChanger()
+{
+   Shutdown();
+}
+
+void MagChanger::GetName(char* name) const
+{
+   CDeviceUtils::CopyLimitedString(name, name_.c_str());
+}
+
+int MagChanger::Initialize()
+{
+   if (!g_ScopeInterface.portInitialized_)
+      return ERR_SCOPE_NOT_ACTIVE;
+
+   int ret = DEVICE_OK;
+   if (!g_ScopeInterface.IsInitialized())
+      ret = g_ScopeInterface.Initialize(*this, *GetCoreCallback());
+   if (ret != DEVICE_OK)
+      return ret;
+   
+   // check if this turret exists:
+   bool present;
+   if (! g_ScopeModel.IsDeviceAvailable(g_Mag_Changer_Mot))
+      return ERR_MODULE_NOT_FOUND;
+
+   // set property list
+   // ----------------
+
+   // Position 
+   // -----
+   CPropertyAction* pAct = new CPropertyAction(this, &MagChanger::OnPosition);
+   ret = CreateProperty("Position", "1", MM::String, false, pAct);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   int minPos, maxPos;
+   ret = g_ScopeModel.magChanger_.GetMaxPosition(maxPos);
+   if (ret != DEVICE_OK)
+      return ret;
+   numPos_ = maxPos;
+   ret = g_ScopeModel.magChanger_.GetMinPosition(minPos);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   // create default positions and labels
+   for (unsigned i=minPos; i <= numPos_; i++)
+   {
+      ostringstream os;
+      double mag;
+      g_ScopeModel.magChanger_.GetMagnification(i, mag);
+      os << i << "-" << mag << "x";
+      AddAllowedValue("Position", os.str().c_str());
+   }
+
+   ret = UpdateStatus();
+   if (ret!= DEVICE_OK)
+      return ret;
+
+   initialized_ = true;
+
+   return DEVICE_OK;
+}
+
+int MagChanger::Shutdown()
+{
+   if (initialized_) 
+      initialized_ = false;
+   return DEVICE_OK;
+}
+
+bool MagChanger::Busy()
+{
+   bool busy;
+   int ret = g_ScopeModel.magChanger_.GetBusy(busy);
+   if (ret != DEVICE_OK)  // This is bad and should not happen
+      return false;
+
+   return busy;
+}
+
+double MagChanger::GetMagnification()
+{
+   // TODO: return the right thing
+   return 1.0;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Action handlers                                                           
+///////////////////////////////////////////////////////////////////////////////
+
+int MagChanger::OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      int pos;
+      int ret = g_ScopeModel.magChanger_.GetPosition(pos);
+      if (ret != DEVICE_OK)
+         return ret;
+      if (pos == 0)
+         return ERR_TURRET_NOT_ENGAGED;
+      pos_ = pos -1;
+      pProp->Set(pos_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(pos_);
+      int pos = pos_ + 1;
+      if ((pos > 0) && (pos <= (int) numPos_)) {
+         // check if the new position is allowed with this method
+         int method;
+         int ret = g_ScopeModel.method_.GetPosition(method);
+         printf ("Method: %d\n", method);
+         if (!g_ScopeModel.ILTurret_.cube_[pos].IsMethodAvailable(method)) {
+            printf ("Not available\n");
+            // the new cube does not support the current method.  Look for a method:
+            // Look first in the FLUO methods, than in all available methods
+            int i = 10;
+            while (!g_ScopeModel.ILTurret_.cube_[pos].IsMethodAvailable(i) && (i < 13)) {
+               i++;
+            }
+            printf ("Propose method %d\n", i);
+            if (!g_ScopeModel.ILTurret_.cube_[pos].IsMethodAvailable(i)) {
+               i = 0;
+               while (!g_ScopeModel.ILTurret_.cube_[pos].IsMethodAvailable(i) && (i < 16)) {
+                  i++;
+               }
+            }
+            printf ("Propose method %d\n", i);
+            if (g_ScopeModel.ILTurret_.cube_[pos].IsMethodAvailable(i))
+               g_ScopeInterface.SetMethod(*this, *GetCoreCallback(), i);
+         }
+
+         return g_ScopeInterface.SetILTurretPosition(*this, *GetCoreCallback(), pos);
+      } else
+         return ERR_INVALID_TURRET_POSITION;
+   }
+   return DEVICE_OK;
+}
 /*
 
 // TubeLensTurret.  Inherits from Turret.  Only change is that it reads the 

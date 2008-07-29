@@ -242,15 +242,64 @@ public:
    int OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
-   double stepSize_um_;
    bool busy_;
    bool initialized_;
-   double lowerLimitX_;
-   double upperLimitX_;
-   double lowerLimitY_;
-   double upperLimitY_;
-   long velocity_;
    std::string name_;
    std::string description_;
 };
+
+class Diaphragm : public CGenericBase<Diaphragm>
+{
+public:
+   Diaphragm(LeicaDeviceModel* diaphragm, int deviceID, std::string name);
+   ~Diaphragm();
+
+   // MMDevice API
+   int Initialize();
+   int Shutdown();
+    
+   void GetName(char* pszName) const;
+   bool Busy();
+   unsigned long GetNumberOfPositions()const {return numPos_;};
+
+   // action interface
+   int OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+private:
+   bool initialized_;
+   std::string name_;
+   std::string description_;
+   unsigned int numPos_;
+   LeicaDeviceModel* diaphragm_;
+   int deviceID_;
+};
+
+class MagChanger : public CMagnifierBase<MagChanger>
+{
+public:
+   MagChanger();
+   ~MagChanger();
+
+   // MMDevice API
+   int Initialize();
+   int Shutdown();
+    
+   void GetName(char* pszName) const;
+   bool Busy();
+   unsigned long GetNumberOfPositions()const {return numPos_;};
+   double GetMagnification();
+
+   // action interface
+   int OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+protected:
+   unsigned int numPos_;
+
+private:
+   bool initialized_;
+   long pos_;
+   std::string name_;
+   std::string description_;
+};
+
 #endif // _LeicaDMI_H_

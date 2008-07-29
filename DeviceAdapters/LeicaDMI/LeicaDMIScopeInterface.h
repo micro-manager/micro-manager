@@ -60,7 +60,9 @@ class LeicaScopeInterface
       int GetILTurretInfo(MM::Device& device, MM::Core& core);
       int GetRevolverInfo(MM::Device& device, MM::Core& core);
       int GetZDriveInfo(MM::Device& device, MM::Core& core);
-      int GetDriveInfo(MM::Device& device, MM::Core& core, LeicaDriveModel drive, int deviceID);
+      int GetDriveInfo(MM::Device& device, MM::Core& core, LeicaDriveModel& drive, int deviceID);
+      int GetDiaphragmInfo(MM::Device& device, MM::Core& core, LeicaDeviceModel& diaphrahm, int deviceID);
+      int GetMagChangerInfo(MM::Device& device, MM::Core& core);
       int GetDriveParameters(MM::Device& device, MM::Core& core, int deviceID);
      
       // commands to set individual components
@@ -69,12 +71,13 @@ class LeicaScopeInterface
       int SetILShutterPosition(MM::Device& device, MM::Core& core, int position);
       int SetILTurretPosition(MM::Device& device, MM::Core& core, int position);
       int SetRevolverPosition(MM::Device& device, MM::Core& core, int position);
-      int SetDrivePosition(MM::Device& device, MM::Core& core, LeicaDriveModel drive, int deviceID, int position);
-      int SetDrivePositionRelative(MM::Device& device, MM::Core& core, LeicaDriveModel drive, int deviceID, int position);
-      int SetDriveAcceleration(MM::Device& device, MM::Core& core, LeicaDriveModel drive, int deviceID, int position);
-      int SetDriveSpeed(MM::Device& device, MM::Core& core, LeicaDriveModel drive, int deviceID, int speed);
-      int HomeDrive(MM::Device& device, MM::Core& core, LeicaDriveModel drive, int deviceID);
-      int StopDrive(MM::Device& device, MM::Core& core, LeicaDriveModel drive, int deviceID);
+      int SetDrivePosition(MM::Device& device, MM::Core& core, LeicaDriveModel& drive, int deviceID, int position);
+      int SetDrivePositionRelative(MM::Device& device, MM::Core& core, LeicaDriveModel& drive, int deviceID, int position);
+      int SetDriveAcceleration(MM::Device& device, MM::Core& core, LeicaDriveModel& drive, int deviceID, int position);
+      int SetDriveSpeed(MM::Device& device, MM::Core& core, LeicaDriveModel& drive, int deviceID, int speed);
+      int HomeDrive(MM::Device& device, MM::Core& core, LeicaDriveModel& drive, int deviceID);
+      int StopDrive(MM::Device& device, MM::Core& core, LeicaDriveModel& drive, int deviceID);
+      int SetDiaphragmPosition(MM::Device& device, MM::Core& core, LeicaDeviceModel* diaphragm, int deviceID, int position);
 
       LeicaMonitoringThread* monitoringThread_;
       LeicaDMIModel* scopeModel_;

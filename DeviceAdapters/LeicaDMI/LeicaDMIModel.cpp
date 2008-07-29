@@ -132,7 +132,11 @@ LeicaObjectiveTurretModel::LeicaObjectiveTurretModel() :
 /*
  * Drive Model
  */
-LeicaDriveModel::LeicaDriveModel() 
+LeicaDriveModel::LeicaDriveModel()  :
+   minRamp_ (1),
+   maxRamp_ (800),
+   minSpeed_ (1),
+   maxSpeed_ (16777216)
 {
 }
 
@@ -181,6 +185,26 @@ int LeicaDriveModel::SetPosFocus(int posFocus)
    MM_THREAD_GUARD_LOCK(&mutex_);
    posFocus_ = posFocus;
    MM_THREAD_GUARD_UNLOCK(&mutex_);
+   return DEVICE_OK;
+}
+
+/**
+ * Leica Motorized Magnification changer.
+ */
+LeicaMagChangerModel::LeicaMagChangerModel() :
+   magnification_(maxMags_, 0)
+{
+}
+
+int LeicaMagChangerModel::GetMagnification(int pos, double& mag)
+{
+   mag = magnification_.at(pos);
+   return DEVICE_OK;
+}
+
+int LeicaMagChangerModel::SetMagnification(int pos, double mag)
+{
+   magnification_[pos] = mag;
    return DEVICE_OK;
 }
 
