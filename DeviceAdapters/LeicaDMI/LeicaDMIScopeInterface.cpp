@@ -1601,7 +1601,7 @@ int LeicaMonitoringThread::svc()
                      case (4) :
                      {
                         int status;
-                        os << status;
+                        os >> status;
                         if (status == 1) {
                            scopeModel_->magChanger_.SetBusy(false);
                         }
