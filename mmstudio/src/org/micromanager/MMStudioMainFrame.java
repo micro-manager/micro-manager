@@ -904,7 +904,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       final JMenuItem plateMenuItem = new JMenuItem();
       plateMenuItem.addActionListener(new ActionListener() {
          public void actionPerformed(final ActionEvent e) {
-            PlateEditor pe = new PlateEditor(thisInstance);
+            PlateEditor pe = new PlateEditor(MMStudioMainFrame.this);
             pe.setVisible(true);
          }
       });
