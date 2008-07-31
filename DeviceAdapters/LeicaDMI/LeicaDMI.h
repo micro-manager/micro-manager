@@ -250,8 +250,8 @@ private:
    bool initialized_;
    std::string name_;
    std::string description_;
-   double originX_;
-   double originY_;
+   long originXSteps_;
+   long originYSteps_;
    bool mirrorX_;
    bool mirrorY_;
 };
