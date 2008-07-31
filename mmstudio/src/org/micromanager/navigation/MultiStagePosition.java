@@ -42,6 +42,9 @@ public class MultiStagePosition {
    private int gridCol_ = 0;
    private Hashtable<String, String> properties_;
    
+   /**
+    * Default constructor.
+    */
    public MultiStagePosition() {
       stagePosList_ = new ArrayList<StagePosition>();
       label_ = new String("Undefined");
@@ -79,6 +82,11 @@ public class MultiStagePosition {
       add(zPos);
    }
    
+   /**
+    * Copy constructor.
+    * @param aMps - another instance of the MultiStagePoswition class
+    * @return
+    */
    public static MultiStagePosition newInstance(MultiStagePosition aMps) {
       MultiStagePosition mps = new MultiStagePosition();
       mps.label_ = new String(aMps.label_);
@@ -274,10 +282,18 @@ public class MultiStagePosition {
       gridCol_ = col;
    }
    
+   /**
+    * Returns rectangular grid row.
+    * @return row
+    */
    public int getGridRow() {
       return gridRow_;
    }
    
+   /**
+    * Returns rectangular grid column.
+    * @return column
+    */
    public int getGridColumn() {
       return gridCol_;
    }

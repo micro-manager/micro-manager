@@ -83,8 +83,6 @@ import org.micromanager.utils.MemoryUtils;
 import org.micromanager.utils.PositionMode;
 import org.micromanager.utils.SliceMode;
 
-import com.quirkware.guid.PlatformIndependentGuidGen;
-
 /**
  * Multi-threaded acquisition engine.
  * Runs Image5d acquisition based on the protocol and generates
@@ -93,34 +91,38 @@ import com.quirkware.guid.PlatformIndependentGuidGen;
 public class MMAcquisitionEngineMT implements AcquisitionEngine {
    // persistent properties (app settings)
 
-   private String channelGroup_;
    private Preferences prefs_;
-
-   // metadata keys
-
-   private String cameraConfig_ = "";
-   private Configuration oldChannelState_;
-   private double oldExposure_ = 10.0;
-
-   private int numFrames_;
-   private double frameIntervalMs_;
    private Image5D img5d_[];
    private Image5DWindow i5dWin_[];
-   private int frameCount_;
-   private int posCount_;
-   private int xWindowPos = 100;
-   private int yWindowPos = 100;
-
-   private boolean saveFiles_ = false;
-   private boolean singleFrame_ = false;
-   private boolean acquisitionLagging_ = false;
    private String acqName_;
    private String rootName_;
+   private int xWindowPos = 100;
+   private int yWindowPos = 100;
+   private boolean singleFrame_ = false;
+   private Timer acqTimer_;
+   private AcqFrameTask acqTask_;
+   private AcquisitionData acqData_[];
+   private MultiFieldThread multiFieldThread_;
+   private double pixelSize_um_;
+   private double pixelAspect_;
 
-   CMMCore core_;
-   PositionList posList_;
-   DeviceControlGUI parentGUI_;
-   String zStage_;
+   protected String channelGroup_;
+   protected String cameraConfig_ = "";
+   protected Configuration oldChannelState_;
+   protected double oldExposure_ = 10.0;
+
+   protected int numFrames_;
+   protected double frameIntervalMs_;
+   protected int frameCount_;
+   protected int posCount_;
+
+   protected boolean saveFiles_ = false;
+   protected boolean acquisitionLagging_ = false;
+
+   protected CMMCore core_;
+   protected PositionList posList_;
+   protected DeviceControlGUI parentGUI_;
+   protected String zStage_;
 
    ArrayList<ChannelSpec> channels_;
    double[] sliceDeltaZ_;
@@ -128,42 +130,34 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
    double topZPos_;
    double deltaZ_;
 
-   private double startZPosUm_;
-   private Timer acqTimer_;
-   private AcquisitionData acqData_[];
-   private WellAcquisitionData well_;
-   private boolean absoluteZ_ = false;
+   protected double startZPosUm_;
+   protected WellAcquisitionData well_;
+   boolean absoluteZ_ = false;
    private String comment_ = "";
-   private boolean useSliceSetting_ = true;
+   protected boolean useSliceSetting_ = true;
 
-   // physical dimensions which should be uniform for the entire acquistion
+   // physical dimensions which should be uniform for the entire acquisition
    private long imgWidth_ = 0;
    private long imgHeight_ = 0;
    private long imgDepth_ = 0;
 
-   private boolean useMultiplePositions_;
+   protected boolean useMultiplePositions_;
 
-   private int posMode_ = PositionMode.TIME_LAPSE;
-   private int sliceMode_ = SliceMode.CHANNELS_FIRST;
-   private boolean pause_ = false;
+   protected int posMode_ = PositionMode.TIME_LAPSE;
+   int sliceMode_ = SliceMode.CHANNELS_FIRST;
+   protected boolean pause_ = false;
 
-   private int previousPosIdx_;
-   private boolean acqInterrupted_;
-   private boolean oldFocusEnabled_;
-   private boolean oldLiveRunning_;
-   private boolean acqFinished_;
+   protected int previousPosIdx_;
+   protected boolean acqInterrupted_;
+   boolean oldFocusEnabled_;
+   protected boolean oldLiveRunning_;
+   protected boolean acqFinished_;
 
-   private AcqFrameTask acqTask_;
 
    // auto-focus module
    Autofocus autofocusPlugin_ = null;
    boolean autofocusEnabled_ = false;
 
-   private MultiFieldThread multiFieldThread_;
-
-   private double pixelSize_um_;
-
-   private double pixelAspect_;
 
    /**
     * Timer task routine triggered at each frame. 
@@ -1071,7 +1065,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
       return multiFieldThread_.isAlive();
    }
 
-   private boolean isFocusStageAvailable() {
+   protected boolean isFocusStageAvailable() {
       if (zStage_ != null && zStage_.length() > 0)
          return true;
       else
