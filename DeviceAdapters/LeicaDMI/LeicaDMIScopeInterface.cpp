@@ -1243,7 +1243,9 @@ int LeicaMonitoringThread::svc()
    {
       do { 
          dataLength = LeicaScopeInterface::RCV_BUF_LENGTH - strlen(rcvBuf);
-         int ret = core_.ReadFromSerial(&device_, port_.c_str(), (unsigned char*) (rcvBuf + strlen(rcvBuf)), dataLength, charsRead);
+		 int bufLen = strlen(rcvBuf);
+         int ret = core_.ReadFromSerial(&device_, port_.c_str(), (unsigned char*) (rcvBuf + bufLen), dataLength, charsRead);
+		 rcvBuf[charsRead + bufLen] = 0;
          memset(message, 0, strlen(message));
          if (ret == DEVICE_OK && (strlen(rcvBuf) > 4) && !stop_) {
             const char* eoln = strstr(rcvBuf, "\r");
@@ -1433,7 +1435,7 @@ int LeicaMonitoringThread::svc()
                             int pos;
                             os >> pos;
                             scopeModel_->XDrive_.SetPosition(pos);
-                            scopeModel_->XDrive_.SetBusy(false);
+                            //scopeModel_->XDrive_.SetBusy(false);
                             break;
                          }
                       case (31) : // acceleration
@@ -1481,7 +1483,7 @@ int LeicaMonitoringThread::svc()
                             int pos;
                             os >> pos;
                             scopeModel_->YDrive_.SetPosition(pos);
-                            scopeModel_->YDrive_.SetBusy(false);
+                            //scopeModel_->YDrive_.SetBusy(false);
                             break;
                          }
                       case (31) : // acceleration
