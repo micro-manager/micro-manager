@@ -59,6 +59,7 @@ public class PlateEditor extends JDialog {
                PositionList pl = wpl[i].getSitePositions();
                app_.setPositionList(pl);
                WellAcquisitionData wad = pad.createNewWell(wpl[i].getLabel());
+               System.out.println("well: " + wpl[i].getLabel() + " - " + wpl[i].getRow() + "," + wpl[i].getColumn());
                platePanel_.activateWell(wpl[i].getRow(), wpl[i].getColumn(), true);
                app_.runWellScan(wad);
                Thread.sleep(50);
@@ -288,7 +289,11 @@ public class PlateEditor extends JDialog {
       if (app_ == null)
          return;
       
-      platePanel_.clearActivation();
+      // ignore command if the scan is already running
+      if (scanThread_ != null && scanThread_.isAlive())
+         return;
+      
+      platePanel_.clearActive();
       scanThread_ = new ScanThread();
       scanThread_.start();
    }

@@ -26,12 +26,10 @@ public class PlatePanel extends JPanel {
    private final int xMargin_ = 30;
    private final int yMargin_ = 30;
    private final int fontSizePt_ = 12;
-   private final int lineThick_ = 1;
    
    private SBSPlate plate_;
    WellPositionList[] wells_;
    WellBox[] wellBoxes_;
-   Rectangle siteRect_ = new Rectangle(3, 3);
    
    public static Color LIGHT_YELLOW = new Color(255,255,145);
    public static Color LIGHT_ORANGE = new Color(255,176,138);
@@ -40,21 +38,35 @@ public class PlatePanel extends JPanel {
       public String label;
       public Color color;
       public Color activeColor;
-      public Rectangle rect;
+      public Rectangle wellRect;
+      public Rectangle siteRect;
       public boolean selected;
       public boolean active;
       
-      public WellBox() {
+      private DrawingParams params_;
+      private PositionList sites_;
+      
+      public WellBox(PositionList pl) {
          label = new String("undef");
          color = LIGHT_YELLOW;
          activeColor = LIGHT_ORANGE;
-         rect = new Rectangle(0, 0, 100, 100);
+         wellRect = new Rectangle(0, 0, 100, 100);
+         siteRect = new Rectangle(3, 3);
          selected = false;
          active = false;
+         params_ = new DrawingParams();
+         sites_ = pl;
+      }
+      
+      public void draw(Graphics2D g, DrawingParams dp) {
+         params_ = dp;
+         draw(g);
       }
       
       public void draw(Graphics2D g) {
          Paint oldPaint = g.getPaint();
+         Stroke oldStroke = g.getStroke();
+         
          Color c = color;
          if (active)
             c = activeColor;
@@ -65,12 +77,36 @@ public class PlatePanel extends JPanel {
             g.setPaint(c);
          
          g.setStroke(new BasicStroke((float)0));
-         Rectangle r = new Rectangle(rect);
+         Rectangle r = new Rectangle(wellRect);
          r.grow(-1, -1);
          g.fill(r);
          
+         // draw sites
+         int siteOffsetX = siteRect.width / 2;
+         int siteOffsetY = siteRect.height / 2;
+         
+         g.setPaint(Color.black);
+         g.setStroke(new BasicStroke((float)1));
+         
+         for (int j=0; j<sites_.getNumberOfPositions(); j++) {
+            siteRect.x = (int)(sites_.getPosition(j).getX() * params_.xFactor + params_.xTopLeft - siteOffsetX + 0.5);
+            siteRect.y = (int)(sites_.getPosition(j).getY() * params_.yFactor + params_.yTopLeft - siteOffsetY + 0.5);
+            g.draw(siteRect);
+         }
+         
          g.setPaint(oldPaint);
+         g.setStroke(oldStroke);
       }
+   }
+   
+   private class DrawingParams {
+      public double xFactor = 1.0;
+      public double yFactor = 1.0;
+      public double xOffset = 0.0;
+      public double yOffset = 0.0;
+      public int xTopLeft = 0;
+      public int yTopLeft = 0;
+      
    }
    
    public PlatePanel(SBSPlate plate) {
@@ -78,14 +114,14 @@ public class PlatePanel extends JPanel {
       wells_ = plate_.generatePositions(SBSPlate.DEFAULT_XYSTAGE_NAME);
       wellBoxes_ = new WellBox[plate_.getNumberOfRows() * plate_.getNumberOfColumns()];
       for (int i=0; i<wellBoxes_.length; i++)
-         wellBoxes_[i] = new WellBox();
+         wellBoxes_[i] = new WellBox(wells_[i].getSitePositions());
    }
    public PlatePanel(SBSPlate plate, PositionList pl) {
       plate_ = plate;
       wells_ = plate_.generatePositions(SBSPlate.DEFAULT_XYSTAGE_NAME, pl);
       wellBoxes_ = new WellBox[plate_.getNumberOfRows() * plate_.getNumberOfColumns()];
       for (int i=0; i<wellBoxes_.length; i++)
-         wellBoxes_[i] = new WellBox();      
+         wellBoxes_[i] = new WellBox(wells_[i].getSitePositions());      
    }
 
    public void paintComponent(Graphics g) {
@@ -116,60 +152,37 @@ public class PlatePanel extends JPanel {
       // draw content
       drawLabels(g2d, box);
       drawWells(g2d, box);
+      //drawImagingSites(g2d, box);
       drawGrid(g2d, box);
-      drawImagingSites(g2d, box);
            
       // restore settings
       g2d.setPaint(oldPaint);
       g2d.setStroke(oldStroke);
       g2d.setColor(oldColor);
    }
-
-   private void drawImagingSites(Graphics2D g, Rectangle box) {
-      double xFactor = box.width / plate_.getXSize();
-      double yFactor = box.height / plate_.getYSize();
-      
-      int siteOffsetX = siteRect_.width / 2;
-      int siteOffsetY = siteRect_.height / 2;
-            
-      for (int i=0; i<wells_.length; i++) {
-         PositionList pl = wells_[i].getSitePositions();
-         try {
-            double x = plate_.getWellXUm(wells_[i].getLabel());
-            double y = plate_.getWellYUm(wells_[i].getLabel());
-            //System.out.println("well " + wells_[i].getLabel() + " : " + x + "," + y);
-         } catch (HCSException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-         }
-         for (int j=0; j<pl.getNumberOfPositions(); j++) {
-            siteRect_.x = (int)(pl.getPosition(j).getX() * xFactor + box.x - siteOffsetX + 0.5);
-            siteRect_.y = (int)(pl.getPosition(j).getY() * yFactor + box.y - siteOffsetY + 0.5);
-            //System.out.println(pl.getPosition(j).getX() + "," + pl.getPosition(j).getX());
-            g.draw(siteRect_);
-         }
-      }
-      
-   }
    
    private void drawWells(Graphics2D g, Rectangle box) {
-      // calculate plate active area
-      double xFact = box.getWidth()/plate_.getXSize();
-      double yFact = box.getHeight()/plate_.getYSize();
-      double xOffset = plate_.getTopLeftX() * xFact;
-      double yOffset = plate_.getTopLeftY() * yFact;
       
-      double wellX = (box.getWidth() - 2.0*xOffset) / plate_.getNumberOfColumns();
-      double wellY = (box.getHeight() - 2.0*yOffset) / plate_.getNumberOfRows();
+      // calculate drawing parameters based on the active area
+      DrawingParams dp = new DrawingParams();
+      dp.xFactor = box.getWidth()/plate_.getXSize();
+      dp.yFactor = box.getHeight()/plate_.getYSize();
+      dp.xOffset = plate_.getTopLeftX() * dp.xFactor;
+      dp.yOffset = plate_.getTopLeftY() * dp.yFactor;
+      dp.xTopLeft = box.x;
+      dp.yTopLeft = box.y;
+      
+      double wellX = (box.getWidth() - 2.0*dp.xOffset) / plate_.getNumberOfColumns();
+      double wellY = (box.getHeight() - 2.0*dp.yOffset) / plate_.getNumberOfRows();
                   
       try {
          for (int i=0; i<plate_.getNumberOfRows(); i++) {
             for (int j=0; j<plate_.getNumberOfColumns(); j++) {
                WellBox wb = wellBoxes_[i*plate_.getNumberOfColumns() + j];
                wb.label = plate_.getWellLabel(i+1, j+1);
-               wb.rect.setBounds((int)(box.getX() + j*wellX + xOffset + 0.5), (int)(box.getY() + i*wellY + yOffset + 0.5),
+               wb.wellRect.setBounds((int)(box.getX() + j*wellX + dp.xOffset + 0.5), (int)(box.getY() + i*wellY + dp.yOffset + 0.5),
                                  (int)wellX, (int)wellY);
-               wb.draw(g);
+               wb.draw(g, dp);
             }
          }
       } catch (HCSException e) {
@@ -295,7 +308,7 @@ public class PlatePanel extends JPanel {
       wellBoxes_[index].draw(g);
    }
    
-   void clearActivation() {
+   void clearActive() {
       for (int i=0; i<wellBoxes_.length; i++)
          wellBoxes_[i].active = false;
       repaint();
