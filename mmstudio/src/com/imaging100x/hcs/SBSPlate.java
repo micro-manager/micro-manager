@@ -198,8 +198,8 @@ public class SBSPlate {
             sp.numAxes = 2;
             sp.stageName = xyStageName;
             String wellLabel;
+            int colIndex;
             try {
-               int colIndex;
                if (direction)
                   colIndex = j+1; // forward
                else
@@ -221,7 +221,7 @@ public class SBSPlate {
                posList.addPosition(mps);
                wpl.setSitePositions(posList);
                wpl.setLabel(wellLabel);
-               wpl.setGridCoordinates(i, j);
+               wpl.setGridCoordinates(i, colIndex-1);
                posListArray[wellCount++] = wpl;
             } catch (HCSException e) {
                // TODO Auto-generated catch block
@@ -247,8 +247,8 @@ public class SBSPlate {
          for (int j=0; j<numColumns_; j++) {
             WellPositionList wpl = new WellPositionList();
             String wellLabel;
+            int colIndex;
             try {
-               int colIndex;
                if (direction)
                   colIndex = j+1; // forward
                else
@@ -268,6 +268,7 @@ public class SBSPlate {
                   MultiStagePosition mps = sites.getPosition(k);
                   MultiStagePosition absMps = new MultiStagePosition();
                   absMps.setLabel(AcquisitionData.METADATA_SITE_PREFIX + "_" + k);
+                  wpl.setGridCoordinates(i, colIndex-1);
                   absMps.setDefaultXYStage(xyStageName);
                   // TODO: make sure we get the right XY stage not just the first one
                   StagePosition sp = mps.get(0);
