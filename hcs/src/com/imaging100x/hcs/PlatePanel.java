@@ -89,13 +89,18 @@ public class PlatePanel extends JPanel {
          g.setStroke(new BasicStroke((float)1));
          
          for (int j=0; j<sites_.getNumberOfPositions(); j++) {
-            siteRect.x = (int)(sites_.getPosition(j).getX() * params_.xFactor + params_.xTopLeft - siteOffsetX + 0.5);
-            siteRect.y = (int)(sites_.getPosition(j).getY() * params_.yFactor + params_.yTopLeft - siteOffsetY + 0.5);
+            siteRect.x = (int)(sites_.getPosition(j).getX() * params_.xFactor + params_.xTopLeft + siteOffsetX + 0.5);
+            siteRect.y = (int)(sites_.getPosition(j).getY() * params_.yFactor + params_.yTopLeft + siteOffsetY + 0.5);
+            System.out.println("Well: " + label + " Site: " + sites_.getPosition(j).getLabel() + " - " + siteRect.x + "," + siteRect.y);
             g.draw(siteRect);
          }
          
          g.setPaint(oldPaint);
          g.setStroke(oldStroke);
+      }
+      
+      void setSites(PositionList sites) {
+         sites_ = sites;
       }
    }
    
@@ -282,6 +287,13 @@ public class PlatePanel extends JPanel {
          wells_ = plate_.generatePositions(SBSPlate.DEFAULT_XYSTAGE_NAME);
       else
          wells_ = plate_.generatePositions(SBSPlate.DEFAULT_XYSTAGE_NAME, sites);
+      
+      wellBoxes_ = new WellBox[plate_.getNumberOfRows() * plate_.getNumberOfColumns()];
+      for (int i=0; i<wellBoxes_.length; i++) {
+         wellBoxes_[i] = new WellBox(wells_[i].getSitePositions());
+      }
+      
+      repaint();
    }
    
    WellPositionList[] getWellPositions() {

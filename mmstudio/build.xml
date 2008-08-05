@@ -36,7 +36,6 @@
 		<pathelement location="${beanshell}" />
 		<pathelement location="${MMCoreJ}" />
 		<pathelement location="${MMPluginDir}/MMJ_.jar"/>
-      <pathelement location="${BinRoot}/hcs100x_.jar"/>
 	</path>
 
 	<target name="compileMMStudio" description="Compile MM Studio.">
@@ -80,7 +79,6 @@
 
 	<target name="install" description="Create installation image">
 		<copy file="MMJ_.jar" todir="${MMPluginDir-inst}" />
-      <copy file="${BinRoot}/hcs100x_.jar" todir="${MMPluginDir-inst}" />
 		<copy file="${beanshell}" todir="${MMPluginDir-inst}" />
 		<copy file="${MMCoreJ}" todir="${MMPluginDir-inst}" />
 		<copy file="${BinRoot}/MMCoreJ_wrap.dll" todir="${InstallRoot}" />
