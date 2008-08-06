@@ -10,6 +10,7 @@ import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
+import javax.swing.JToggleButton;
 import javax.swing.SpringLayout;
 import javax.swing.UIManager;
 
@@ -26,13 +27,21 @@ public class PlateEditor extends MMDialog {
    private JTextField spacingField_;
    private JTextField columnsField_;
    private JTextField rowsField_;
-   private JComboBox comboBox;
+   private JComboBox plateIDCombo_;
    private static final long serialVersionUID = 1L;
    private SpringLayout springLayout;
    private SBSPlate plate_;
    private PlatePanel platePanel_;
    private ScriptInterface app_;
    private ScanThread scanThread_ = null;
+   
+   private final String PLATE_FORMAT_ID = "plate_format_id";
+   private final String SITE_SPACING = "site_spacing_x";
+   private final String SITE_ROWS = "site_rows";
+   private final String SITE_COLS = "site_cols";
+   private final String POINTER_MOVE = "Move";
+   private final String POINTER_SELECT = "Select";
+   private JToggleButton moveToggleButton_;
 
    public static void main(String args[]) {
      try {
@@ -86,6 +95,7 @@ public class PlateEditor extends MMDialog {
       addWindowListener(new WindowAdapter() {
          public void windowClosing(final WindowEvent e) {
             savePosition();
+            saveSettings();
          }
       });
       Preferences root = Preferences.userNodeForPackage(this.getClass());
@@ -106,31 +116,18 @@ public class PlateEditor extends MMDialog {
       springLayout.putConstraint(SpringLayout.SOUTH, platePanel_, -5, SpringLayout.SOUTH, getContentPane());
       springLayout.putConstraint(SpringLayout.NORTH, platePanel_, 5, SpringLayout.NORTH, getContentPane());
 
-      final JButton customButton = new JButton();
-      customButton.addActionListener(new ActionListener() {
+      plateIDCombo_ = new JComboBox();
+      getContentPane().add(plateIDCombo_);
+      springLayout.putConstraint(SpringLayout.EAST, plateIDCombo_, -10, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, plateIDCombo_, -116, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.SOUTH, plateIDCombo_, 100, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, plateIDCombo_, 75, SpringLayout.NORTH, getContentPane());
+      plateIDCombo_.addItem(SBSPlate.SBS_96_WELL);
+      plateIDCombo_.addItem(SBSPlate.SBS_384_WELL);
+      //comboBox.addItem(SBSPlate.CUSTOM);
+      plateIDCombo_.addActionListener(new ActionListener() {
          public void actionPerformed(final ActionEvent e) {
-         }
-      });
-      customButton.setText("Custom...");
-      getContentPane().add(customButton);
-      springLayout.putConstraint(SpringLayout.SOUTH, customButton, 75, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, customButton, 49, SpringLayout.NORTH, getContentPane());
-
-      comboBox = new JComboBox();
-      getContentPane().add(comboBox);
-      springLayout.putConstraint(SpringLayout.EAST, comboBox, 106, SpringLayout.WEST, customButton);
-      springLayout.putConstraint(SpringLayout.WEST, comboBox, 0, SpringLayout.WEST, customButton);
-      comboBox.addItem(SBSPlate.SBS_96_WELL);
-      comboBox.addItem(SBSPlate.SBS_384_WELL);
-      comboBox.addItem(SBSPlate.CUSTOM);
-      comboBox.addActionListener(new ActionListener() {
-         public void actionPerformed(final ActionEvent e) {
-            String format = (String)comboBox.getSelectedItem();
-            if (format.equals(SBSPlate.CUSTOM)) {
-               // TODO: fill the values
-               plate_.initialize(SBSPlate.CUSTOM);
-            } else
-               plate_.initialize((String)comboBox.getSelectedItem());
+            plate_.initialize((String)plateIDCombo_.getSelectedItem());
             PositionList sites = generateSites(Integer.parseInt(rowsField_.getText()), Integer.parseInt(columnsField_.getText()), 
                   Double.parseDouble(spacingField_.getText()));
             platePanel_.refreshImagingSites(sites);
@@ -141,11 +138,10 @@ public class PlateEditor extends MMDialog {
       final JLabel plateFormatLabel = new JLabel();
       plateFormatLabel.setText("Plate format");
       getContentPane().add(plateFormatLabel);
-      springLayout.putConstraint(SpringLayout.SOUTH, comboBox, 25, SpringLayout.SOUTH, plateFormatLabel);
-      springLayout.putConstraint(SpringLayout.NORTH, comboBox, 0, SpringLayout.SOUTH, plateFormatLabel);
-      springLayout.putConstraint(SpringLayout.EAST, plateFormatLabel, 0, SpringLayout.EAST, comboBox);
-      springLayout.putConstraint(SpringLayout.WEST, plateFormatLabel, 5, SpringLayout.WEST, comboBox);
-      springLayout.putConstraint(SpringLayout.NORTH, plateFormatLabel, 5, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.EAST, plateFormatLabel, -15, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, plateFormatLabel, -116, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.SOUTH, plateFormatLabel, 69, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, plateFormatLabel, 55, SpringLayout.NORTH, getContentPane());
 
       rowsField_ = new JTextField();
       rowsField_.setText("1");
@@ -158,7 +154,7 @@ public class PlateEditor extends MMDialog {
       final JLabel imagingSitesLabel = new JLabel();
       imagingSitesLabel.setText("Imaging Sites");
       getContentPane().add(imagingSitesLabel);
-      springLayout.putConstraint(SpringLayout.EAST, imagingSitesLabel, 0, SpringLayout.EAST, customButton);
+      springLayout.putConstraint(SpringLayout.EAST, imagingSitesLabel, 530, SpringLayout.WEST, getContentPane());
       springLayout.putConstraint(SpringLayout.WEST, imagingSitesLabel, 0, SpringLayout.WEST, rowsField_);
       springLayout.putConstraint(SpringLayout.NORTH, imagingSitesLabel, 115, SpringLayout.NORTH, getContentPane());
 
@@ -171,7 +167,7 @@ public class PlateEditor extends MMDialog {
       springLayout.putConstraint(SpringLayout.WEST, columnsField_, -71, SpringLayout.EAST, getContentPane());
 
       spacingField_ = new JTextField();
-      spacingField_.setText("20");
+      spacingField_.setText("200");
       getContentPane().add(spacingField_);
       springLayout.putConstraint(SpringLayout.EAST, spacingField_, -76, SpringLayout.EAST, getContentPane());
       springLayout.putConstraint(SpringLayout.WEST, spacingField_, -116, SpringLayout.EAST, getContentPane());
@@ -199,15 +195,13 @@ public class PlateEditor extends MMDialog {
          public void actionPerformed(final ActionEvent e) {
             PositionList sites = generateSites(Integer.parseInt(rowsField_.getText()), Integer.parseInt(columnsField_.getText()), 
                   Double.parseDouble(spacingField_.getText()));
-            plate_.initialize((String)comboBox.getSelectedItem());
+            plate_.initialize((String)plateIDCombo_.getSelectedItem());
             platePanel_.refreshImagingSites(sites);
             platePanel_.repaint();
          }
       });
       refreshButton.setText("Refresh");
       getContentPane().add(refreshButton);
-      springLayout.putConstraint(SpringLayout.EAST, customButton, 0, SpringLayout.EAST, refreshButton);
-      springLayout.putConstraint(SpringLayout.WEST, customButton, -105, SpringLayout.EAST, refreshButton);
       springLayout.putConstraint(SpringLayout.SOUTH, refreshButton, 250, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.EAST, refreshButton, 106, SpringLayout.WEST, spacingField_);
       springLayout.putConstraint(SpringLayout.WEST, refreshButton, 0, SpringLayout.WEST, spacingField_);
@@ -249,7 +243,45 @@ public class PlateEditor extends MMDialog {
       springLayout.putConstraint(SpringLayout.NORTH, stopButton, 5, SpringLayout.SOUTH, scanButton);
       springLayout.putConstraint(SpringLayout.EAST, stopButton, 106, SpringLayout.WEST, scanButton);
       springLayout.putConstraint(SpringLayout.WEST, stopButton, 0, SpringLayout.WEST, scanButton);
+      
+      moveToggleButton_ = new JToggleButton();
+      moveToggleButton_.addActionListener(new ActionListener() {
+         public void actionPerformed(final ActionEvent e) {
+            if (moveToggleButton_.isSelected())
+               moveToggleButton_.setText(POINTER_MOVE);
+            else
+               moveToggleButton_.setText(POINTER_SELECT);               
+         }
+      });
+      
+      // initialize in SELECT mode
+      moveToggleButton_.setSelected(false);
+      moveToggleButton_.setText(POINTER_SELECT);
+      
+      getContentPane().add(moveToggleButton_);
+      springLayout.putConstraint(SpringLayout.EAST, moveToggleButton_, -19, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, moveToggleButton_, -115, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.SOUTH, moveToggleButton_, 45, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, moveToggleButton_, 20, SpringLayout.NORTH, getContentPane());
       //
+
+      loadSettings();
+   }
+
+   protected void saveSettings() {
+      Preferences prefs = getPrefsNode();
+      prefs.put(PLATE_FORMAT_ID, (String)plateIDCombo_.getSelectedItem());
+      prefs.put(SITE_SPACING, spacingField_.getText());
+      prefs.put(SITE_ROWS, rowsField_.getText());
+      prefs.put(SITE_COLS, columnsField_.getText());
+   }
+   
+   protected void loadSettings() {
+      Preferences prefs = getPrefsNode();
+      plateIDCombo_.setSelectedItem(prefs.get(PLATE_FORMAT_ID, SBSPlate.SBS_96_WELL));
+      spacingField_.setText(prefs.get(SITE_SPACING, "200"));
+      rowsField_.setText(prefs.get(SITE_ROWS, "1"));
+      columnsField_.setText(prefs.get(SITE_COLS, "1"));
    }
 
    private void setPositionList() {
