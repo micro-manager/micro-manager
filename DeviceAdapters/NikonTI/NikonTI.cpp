@@ -677,7 +677,7 @@ int XYDrive::Initialize()
       return ret;
 
    double minx, maxx,miny, maxy;
-   ret = GetLimits(minx, maxx,miny, maxy);
+   ret = GetLimitsUm(minx, maxx,miny, maxy);
    if (ret != DEVICE_OK)
       return ret;
    SetPropertyLimits("XPosition", minx, maxx);
@@ -866,7 +866,7 @@ int XYDrive::Stop()
 }
 
 
-int XYDrive::GetLimits(double& lowerx, double& upperx,double& lowery, double& uppery)
+int XYDrive::GetLimitsUm(double& lowerx, double& upperx,double& lowery, double& uppery)
 {
 
    lowerx = TIScope->xDrive_->GetLowerLimit() / factor_;
@@ -875,6 +875,27 @@ int XYDrive::GetLimits(double& lowerx, double& upperx,double& lowery, double& up
    uppery = TIScope->yDrive_->GetUpperLimit() / factor_;
 
    return DEVICE_OK;
+}
+
+int XYDrive::GetStepLimits(long& lowerx, long& upperx, long& lowery, long& uppery)
+{
+
+   lowerx = TIScope->xDrive_->GetLowerLimit();
+   upperx = TIScope->xDrive_->GetUpperLimit();
+   lowery = TIScope->yDrive_->GetLowerLimit();
+   uppery = TIScope->yDrive_->GetUpperLimit();
+
+   return DEVICE_OK;
+}
+
+double XYDrive::GetStepSizeXUm()
+{
+   return 1.0/factor_;
+}
+
+double XYDrive::GetStepSizeYUm()
+{
+   return 1.0/factor_;
 }
 
 int XYDrive::OnPositionX(MM::PropertyBase* pProp, MM::ActionType eAct)

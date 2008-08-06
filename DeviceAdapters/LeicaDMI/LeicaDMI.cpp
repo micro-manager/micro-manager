@@ -1342,7 +1342,7 @@ int XYStage::Shutdown()
    return DEVICE_OK;
 }
 
-int XYStage::GetLimits(double& xMin, double& xMax, double& yMin, double& yMax) 
+int XYStage::GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax) 
 {
    int xMinStep, yMinStep, xMaxStep, yMaxStep;
    g_ScopeModel.XDrive_.GetMinPosition(xMinStep);
@@ -1354,6 +1354,31 @@ int XYStage::GetLimits(double& xMin, double& xMax, double& yMin, double& yMax)
    g_ScopeModel.YDrive_.GetMaxPosition(yMaxStep);
    yMax = yMaxStep * g_ScopeModel.YDrive_.GetStepSize();
    return DEVICE_OK;
+}
+
+int XYStage::GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax) 
+{
+   int xMinStep, yMinStep, xMaxStep, yMaxStep;
+   g_ScopeModel.XDrive_.GetMinPosition(xMinStep);
+   g_ScopeModel.YDrive_.GetMinPosition(yMinStep);
+   g_ScopeModel.XDrive_.GetMaxPosition(xMaxStep);
+   g_ScopeModel.YDrive_.GetMaxPosition(yMaxStep);
+   xMin = xMinStep;
+   yMin = yMinStep;
+   xMax = xMaxStep;
+   yMax = yMaxStep;
+
+   return DEVICE_OK;
+}
+
+double XYStage::GetStepSizeXUm()
+{
+   return g_ScopeModel.XDrive_.GetStepSize();
+}
+
+double XYStage::GetStepSizeYUm()
+{
+   return g_ScopeModel.YDrive_.GetStepSize();
 }
 
 int XYStage::SetPositionUm(double x, double y)

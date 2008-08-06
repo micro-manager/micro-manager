@@ -235,7 +235,10 @@ public:
   int Stop();
   int SetOrigin();
   int SetAdapterOriginUm(double x, double y);
-  int GetLimits(double& xMin, double& xMax, double& yMin, double& yMax);
+  int GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax);
+  double GetStepSizeXUm();
+  double GetStepSizeYUm();
+  int GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax);
 
    // action interface
    // ----------------

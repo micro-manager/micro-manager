@@ -107,6 +107,10 @@ public class PlateEditor extends MMDialog {
       springLayout.putConstraint(SpringLayout.NORTH, platePanel_, 5, SpringLayout.NORTH, getContentPane());
 
       final JButton customButton = new JButton();
+      customButton.addActionListener(new ActionListener() {
+         public void actionPerformed(final ActionEvent e) {
+         }
+      });
       customButton.setText("Custom...");
       getContentPane().add(customButton);
       springLayout.putConstraint(SpringLayout.SOUTH, customButton, 75, SpringLayout.NORTH, getContentPane());

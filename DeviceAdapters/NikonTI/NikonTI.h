@@ -218,7 +218,10 @@ public:
    int SetPositionSteps(long xsteps,long ysteps);
    int GetPositionSteps(long& xsteps,long& ysteps);
    int SetOrigin();
-   int GetLimits(double& lowerx, double& upperx,double& lowery, double& uppery);
+   int GetLimitsUm(double& lowerx, double& upperx, double& lowery, double& uppery);
+   int GetStepLimits(long& lowerx, long& upperx, long& lowery, long& uppery);
+   double GetStepSizeXUm();
+   double GetStepSizeYUm();
    int Stop();
    int Home();
 

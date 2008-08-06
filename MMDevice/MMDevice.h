@@ -34,7 +34,7 @@
 // Header version
 // If any of the class declarations changes, the interface version
 // must be incremented
-#define DEVICE_INTERFACE_VERSION 26
+#define DEVICE_INTERFACE_VERSION 27
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifndef _MMDEVICE_H_
@@ -299,14 +299,18 @@ namespace MM {
       // XYStage API
       virtual int SetPositionUm(double x, double y) = 0;
       virtual int SetRelativePositionUm(double dx, double dy) = 0;
+      virtual int SetAdapterOriginUm(double x, double y) = 0;
       virtual int GetPositionUm(double& x, double& y) = 0;
+      virtual int GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax) = 0;
+
       virtual int SetPositionSteps(long x, long y) = 0;
       virtual int GetPositionSteps(long& x, long& y) = 0;
       virtual int Home() = 0;
       virtual int Stop() = 0;
 	   virtual int SetOrigin() = 0;//jizhen, 4/12/2007
-      virtual int SetAdapterOriginUm(double x, double y) = 0;
-      virtual int GetLimits(double& xMin, double& xMax, double& yMin, double& yMax) = 0;
+      virtual int GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax) = 0;
+      virtual double GetStepSizeXUm() = 0;
+      virtual double GetStepSizeYUm() = 0;
    };
 
    /**

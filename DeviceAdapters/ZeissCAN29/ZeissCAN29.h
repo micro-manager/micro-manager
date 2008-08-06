@@ -563,7 +563,10 @@ public:
   int Home();
   int Stop();
   int SetOrigin();
-  int GetLimits(double& xMin, double& xMax, double& yMin, double& yMax);
+  int GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax);
+  int GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax);
+  double GetStepSizeXUm() {return stepSize_um_;}
+  double GetStepSizeYUm() {return stepSize_um_;}
 
    // action interface
    // ----------------

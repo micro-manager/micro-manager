@@ -699,7 +699,12 @@ int XYStage::Stop()
    return DEVICE_OK;
 }
  
-int XYStage::GetLimits(double& /*xMin*/, double& /*xMax*/, double& /*yMin*/, double& /*yMax*/)
+int XYStage::GetLimitsUm(double& /*xMin*/, double& /*xMax*/, double& /*yMin*/, double& /*yMax*/)
+{
+   return DEVICE_UNSUPPORTED_COMMAND;
+}
+
+int XYStage::GetStepLimits(long& /*xMin*/, long& /*xMax*/, long& /*yMin*/, long& /*yMax*/)
 {
    return DEVICE_UNSUPPORTED_COMMAND;
 }

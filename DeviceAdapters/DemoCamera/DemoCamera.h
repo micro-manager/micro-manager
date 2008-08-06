@@ -316,12 +316,19 @@ public:
       upper = upperLimit_;
       return DEVICE_OK;
    }
-   virtual int GetLimits(double& xMin, double& xMax, double& yMin, double& yMax)
+   virtual int GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax)
    {
       xMin = lowerLimit_; xMax = upperLimit_;
       yMin = lowerLimit_; yMax = upperLimit_;
       return DEVICE_OK;
    }
+
+   virtual int GetStepLimits(long& /*xMin*/, long& /*xMax*/, long& /*yMin*/, long& /*yMax*/)
+   {
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
+   double GetStepSizeXUm() {return stepSize_um_;}
+   double GetStepSizeYUm() {return stepSize_um_;}
 
    // action interface
    // ----------------

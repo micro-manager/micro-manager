@@ -83,7 +83,10 @@ public:
   int SetOrigin();
   int Calibrate();
   int Calibrate1();
-  int GetLimits(double& xMin, double& xMax, double& yMin, double& yMax);
+  int GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax);
+  int GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax);
+  double GetStepSizeXUm() {return stepSizeXUm_;}
+  double GetStepSizeYUm() {return stepSizeYUm_;}
 
    // action interface
    // ----------------

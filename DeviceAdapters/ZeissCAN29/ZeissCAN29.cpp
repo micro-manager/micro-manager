@@ -2818,15 +2818,23 @@ int XYStage::Shutdown()
    return DEVICE_OK;
 }
 
-int XYStage::GetLimits(double& xMin, double& xMax, double& yMin, double& yMax) 
+int XYStage::GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax) 
 {
    // TODO: rework to our own coordinate system
    xMin = 0;
    yMin = 0;
    xMax = g_deviceInfo[g_StageXAxis].maxPos;
    yMax = g_deviceInfo[g_StageYAxis].maxPos;
+
    return DEVICE_OK;
 }
+
+int XYStage::GetStepLimits(long& /*xMin*/, long& /*xMax*/, long& /*yMin*/, long& /*yMax*/) 
+{
+   // TODO: decide how to deal with this command with respect to above
+   return DEVICE_UNSUPPORTED_COMMAND;
+}
+
 
 int XYStage::SetPositionUm(double x, double y)
 {
