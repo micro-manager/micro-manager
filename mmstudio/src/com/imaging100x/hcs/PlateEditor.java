@@ -2,10 +2,12 @@ package com.imaging100x.hcs;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.util.prefs.Preferences;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 import javax.swing.SpringLayout;
@@ -17,9 +19,10 @@ import org.micromanager.metadata.WellAcquisitionData;
 import org.micromanager.navigation.MultiStagePosition;
 import org.micromanager.navigation.PositionList;
 import org.micromanager.navigation.StagePosition;
+import org.micromanager.utils.MMDialog;
 import org.micromanager.utils.MMScriptException;
 
-public class PlateEditor extends JDialog {
+public class PlateEditor extends MMDialog {
    private JTextField spacingField_;
    private JTextField columnsField_;
    private JTextField rowsField_;
@@ -80,13 +83,21 @@ public class PlateEditor extends JDialog {
     */
    public PlateEditor(ScriptInterface app) {
       super();
+      addWindowListener(new WindowAdapter() {
+         public void windowClosing(final WindowEvent e) {
+            savePosition();
+         }
+      });
+      Preferences root = Preferences.userNodeForPackage(this.getClass());
+      setPrefsNode(root.node(root.absolutePath() + "/PlateEditor"));
+      
       app_ = app;
       springLayout = new SpringLayout();
       getContentPane().setLayout(springLayout);
       plate_ = new SBSPlate();
 
       setTitle("HCS plate editor");
-      setBounds(100, 100, 654, 448);
+      loadPosition(100, 100, 654, 448);
 
       platePanel_ = new PlatePanel(plate_);
       getContentPane().add(platePanel_);
@@ -98,22 +109,24 @@ public class PlateEditor extends JDialog {
       final JButton customButton = new JButton();
       customButton.setText("Custom...");
       getContentPane().add(customButton);
-      springLayout.putConstraint(SpringLayout.EAST, customButton, -11, SpringLayout.EAST, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, customButton, -116, SpringLayout.EAST, getContentPane());
-      springLayout.putConstraint(SpringLayout.SOUTH, customButton, 86, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, customButton, 60, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.SOUTH, customButton, 75, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, customButton, 49, SpringLayout.NORTH, getContentPane());
 
       comboBox = new JComboBox();
       getContentPane().add(comboBox);
+      springLayout.putConstraint(SpringLayout.EAST, comboBox, 106, SpringLayout.WEST, customButton);
+      springLayout.putConstraint(SpringLayout.WEST, comboBox, 0, SpringLayout.WEST, customButton);
       comboBox.addItem(SBSPlate.SBS_96_WELL);
       comboBox.addItem(SBSPlate.SBS_384_WELL);
-      springLayout.putConstraint(SpringLayout.EAST, comboBox, -10, SpringLayout.EAST, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, comboBox, -116, SpringLayout.EAST, getContentPane());
-      springLayout.putConstraint(SpringLayout.SOUTH, comboBox, 55, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, comboBox, 30, SpringLayout.NORTH, getContentPane());
+      comboBox.addItem(SBSPlate.CUSTOM);
       comboBox.addActionListener(new ActionListener() {
          public void actionPerformed(final ActionEvent e) {
-            plate_.initialize((String)comboBox.getSelectedItem());
+            String format = (String)comboBox.getSelectedItem();
+            if (format.equals(SBSPlate.CUSTOM)) {
+               // TODO: fill the values
+               plate_.initialize(SBSPlate.CUSTOM);
+            } else
+               plate_.initialize((String)comboBox.getSelectedItem());
             PositionList sites = generateSites(Integer.parseInt(rowsField_.getText()), Integer.parseInt(columnsField_.getText()), 
                   Double.parseDouble(spacingField_.getText()));
             platePanel_.refreshImagingSites(sites);
@@ -124,6 +137,8 @@ public class PlateEditor extends JDialog {
       final JLabel plateFormatLabel = new JLabel();
       plateFormatLabel.setText("Plate format");
       getContentPane().add(plateFormatLabel);
+      springLayout.putConstraint(SpringLayout.SOUTH, comboBox, 25, SpringLayout.SOUTH, plateFormatLabel);
+      springLayout.putConstraint(SpringLayout.NORTH, comboBox, 0, SpringLayout.SOUTH, plateFormatLabel);
       springLayout.putConstraint(SpringLayout.EAST, plateFormatLabel, 0, SpringLayout.EAST, comboBox);
       springLayout.putConstraint(SpringLayout.WEST, plateFormatLabel, 5, SpringLayout.WEST, comboBox);
       springLayout.putConstraint(SpringLayout.NORTH, plateFormatLabel, 5, SpringLayout.NORTH, getContentPane());
@@ -187,6 +202,8 @@ public class PlateEditor extends JDialog {
       });
       refreshButton.setText("Refresh");
       getContentPane().add(refreshButton);
+      springLayout.putConstraint(SpringLayout.EAST, customButton, 0, SpringLayout.EAST, refreshButton);
+      springLayout.putConstraint(SpringLayout.WEST, customButton, -105, SpringLayout.EAST, refreshButton);
       springLayout.putConstraint(SpringLayout.SOUTH, refreshButton, 250, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.EAST, refreshButton, 106, SpringLayout.WEST, spacingField_);
       springLayout.putConstraint(SpringLayout.WEST, refreshButton, 0, SpringLayout.WEST, spacingField_);
@@ -250,9 +267,7 @@ public class PlateEditor extends JDialog {
          // TODO Auto-generated catch block
          e.printStackTrace();
       }
-
    }
-
 
    private PositionList generateSites(int rows, int cols, double spacing) {
       PositionList sites = new PositionList();

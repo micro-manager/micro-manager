@@ -117,14 +117,14 @@ public class PlatePanel extends JPanel {
    public PlatePanel(SBSPlate plate) {
       plate_ = plate;
       wells_ = plate_.generatePositions(SBSPlate.DEFAULT_XYSTAGE_NAME);
-      wellBoxes_ = new WellBox[plate_.getNumberOfRows() * plate_.getNumberOfColumns()];
+      wellBoxes_ = new WellBox[plate_.getNumRows() * plate_.getNumColumns()];
       for (int i=0; i<wellBoxes_.length; i++)
          wellBoxes_[i] = new WellBox(wells_[i].getSitePositions());
    }
    public PlatePanel(SBSPlate plate, PositionList pl) {
       plate_ = plate;
       wells_ = plate_.generatePositions(SBSPlate.DEFAULT_XYSTAGE_NAME, pl);
-      wellBoxes_ = new WellBox[plate_.getNumberOfRows() * plate_.getNumberOfColumns()];
+      wellBoxes_ = new WellBox[plate_.getNumRows() * plate_.getNumColumns()];
       for (int i=0; i<wellBoxes_.length; i++)
          wellBoxes_[i] = new WellBox(wells_[i].getSitePositions());      
    }
@@ -179,8 +179,8 @@ public class PlatePanel extends JPanel {
       dp.xTopLeft = box.x;
       dp.yTopLeft = box.y;
       
-      double wellX = (box.getWidth() - 2.0*dp.xOffset) / plate_.getNumberOfColumns();
-      double wellY = (box.getHeight() - 2.0*dp.yOffset) / plate_.getNumberOfRows();
+      double wellX = (box.getWidth() - 2.0*dp.xOffset) / plate_.getNumColumns();
+      double wellY = (box.getHeight() - 2.0*dp.yOffset) / plate_.getNumRows();
                   
       for (int i=0; i<wells_.length; i++) {
          WellBox wb = wellBoxes_[i];
@@ -199,12 +199,12 @@ public class PlatePanel extends JPanel {
       double xOffset = plate_.getTopLeftX() * xFact;
       double yOffset = plate_.getTopLeftY() * yFact;
       
-      double wellX = (box.getWidth() - 2.0*xOffset) / plate_.getNumberOfColumns();
-      double wellY = (box.getHeight() - 2.0*yOffset) / plate_.getNumberOfRows();
+      double wellX = (box.getWidth() - 2.0*xOffset) / plate_.getNumColumns();
+      double wellY = (box.getHeight() - 2.0*yOffset) / plate_.getNumRows();
       
       double xStartHor = box.getX() + xOffset;
       double xEndHor = xStartHor + box.getWidth() - 2*xOffset;
-      for (int i=0; i<= plate_.getNumberOfRows(); i++) {
+      for (int i=0; i<= plate_.getNumRows(); i++) {
          double yStart = box.getY() + i*wellY + yOffset;
          double yEnd = yStart;
          Point2D.Double ptStart = new Point2D.Double(xStartHor, yStart);
@@ -215,7 +215,7 @@ public class PlatePanel extends JPanel {
       
       double yStartV = box.getY() + yOffset;
       double yEndV = yStartV + box.getHeight() - 2*yOffset;
-      for (int i=0; i<= plate_.getNumberOfColumns(); i++) {
+      for (int i=0; i<= plate_.getNumColumns(); i++) {
          double xStart = box.getX() + i*wellX + xOffset;
          double xEnd = xStart;
          Point2D.Double ptStart = new Point2D.Double(xStart, yStartV);
@@ -231,8 +231,8 @@ public class PlatePanel extends JPanel {
       double xOffset = plate_.getTopLeftX() * xFact;
       double yOffset = plate_.getTopLeftY() * yFact;
       
-      double wellX = (box.getWidth() - 2.0*xOffset) / plate_.getNumberOfColumns();
-      double wellY = (box.getHeight() - 2.0*yOffset) / plate_.getNumberOfRows();
+      double wellX = (box.getWidth() - 2.0*xOffset) / plate_.getNumColumns();
+      double wellY = (box.getHeight() - 2.0*yOffset) / plate_.getNumRows();
       
       FontRenderContext frc = g.getFontRenderContext();
       Font f = new Font("Helvetica",Font.BOLD, fontSizePt_);
@@ -249,7 +249,7 @@ public class PlatePanel extends JPanel {
       labelBoxY.x = 0;
       
       try {
-         for (int i=0; i<plate_.getNumberOfColumns(); i++) {
+         for (int i=0; i<plate_.getNumColumns(); i++) {
             labelBoxX.x = (int)(i*wellX + 0.5 + xMargin_ + xOffset);
             TextLayout tl = new TextLayout(plate_.getColumnLabel(i+1), f, frc);
             Rectangle2D b = tl.getBounds();
@@ -257,7 +257,7 @@ public class PlatePanel extends JPanel {
             tl.draw(g, loc.x, loc.y);
          }
          
-         for (int i=0; i<plate_.getNumberOfRows(); i++) {
+         for (int i=0; i<plate_.getNumRows(); i++) {
             labelBoxY.y = (int)(i*wellY + 0.5 + yMargin_ + wellY + yOffset);
             TextLayout tl = new TextLayout(plate_.getRowLabel(i+1), f, frc);
             Rectangle2D b = tl.getBounds();
@@ -305,8 +305,8 @@ public class PlatePanel extends JPanel {
       dp.xTopLeft = activeRect_.x;
       dp.yTopLeft = activeRect_.y;
       
-      double wellX = (activeRect_.getWidth() - 2.0*dp.xOffset) / plate_.getNumberOfColumns();
-      double wellY = (activeRect_.getHeight() - 2.0*dp.yOffset) / plate_.getNumberOfRows();
+      double wellX = (activeRect_.getWidth() - 2.0*dp.xOffset) / plate_.getNumColumns();
+      double wellY = (activeRect_.getHeight() - 2.0*dp.yOffset) / plate_.getNumRows();
                   
       for (int i=0; i<wells_.length; i++) {
          WellBox wb = wellBoxes_[i];
@@ -322,7 +322,7 @@ public class PlatePanel extends JPanel {
    }
    
    void selectWell(int row, int col, boolean sel) {
-      int index = row*plate_.getNumberOfColumns() + col;
+      int index = row*plate_.getNumColumns() + col;
       wellBoxes_[index].selected = sel;
       Graphics2D g = (Graphics2D) getGraphics();
       wellBoxes_[index].draw(g);
@@ -335,7 +335,7 @@ public class PlatePanel extends JPanel {
    }
    
    void activateWell(int row, int col, boolean act) {
-      int index = row*plate_.getNumberOfColumns() + col;
+      int index = row*plate_.getNumColumns() + col;
       wellBoxes_[index].active = act;
       Graphics2D g = (Graphics2D) getGraphics();
       wellBoxes_[index].draw(g);

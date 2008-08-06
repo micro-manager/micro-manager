@@ -37,16 +37,18 @@ import org.micromanager.navigation.PositionList;
 import org.micromanager.navigation.StagePosition;
 
 public class SBSPlate {
+   
    private int numColumns_;
    private int numRows_;
    private double wellSpacingX_;
    private double wellSpacingY_;
    private double sizeXUm_;
    private double sizeYUm_;
-   private String id_;
-   private String description_;
    private double firstWellX_;
    private double firstWellY_;
+   
+   private String id_;
+   private String description_;
    private Hashtable<String, Well> wellMap_;
    
    private static String ROWS = "rows";
@@ -63,7 +65,7 @@ public class SBSPlate {
    public static final String SBS_96_WELL= "96WELL";
    public static final String SBS_384_WELL= "384WELL";
    public static final String DEFAULT_XYSTAGE_NAME = "XYStage"; 
-   //public static String CUSTOM = "CUSTOM";
+   public static final String CUSTOM = "CUSTOM";
    
    
    private static char rowAlphabet[] = { 'A','B','C','D','E',
@@ -374,11 +376,11 @@ public class SBSPlate {
       }
    }
    
-   public int getNumberOfRows() {
+   public int getNumRows() {
       return numRows_;
    }
 
-   public int getNumberOfColumns() {
+   public int getNumColumns() {
       return numColumns_;
    }
    
@@ -396,6 +398,62 @@ public class SBSPlate {
    
    public double getTopLeftY() {
       return firstWellY_ - wellSpacingY_ / 2.0;
+   }
+
+   public void setNumColumns_(int numColumns_) {
+      id_ = CUSTOM;
+      this.numColumns_ = numColumns_;
+   }
+
+   public void setNumRows(int numRows) {
+      id_ = CUSTOM;
+      this.numRows_ = numRows;
+   }
+
+   public double getWellSpacingX() {
+      return wellSpacingX_;
+   }
+
+   public void setWellSpacingX(double wellSpacingX) {
+      id_ = CUSTOM;
+      this.wellSpacingX_ = wellSpacingX;
+   }
+
+   public double getWellSpacingY() {
+      return wellSpacingY_;
+   }
+
+   public void setWellSpacingY(double wellSpacingY) {
+      id_ = CUSTOM;
+      this.wellSpacingY_ = wellSpacingY;
+   }
+
+   public void setSizeX(double sizeXUm) {
+      id_ = CUSTOM;
+      this.sizeXUm_ = sizeXUm;
+   }
+
+   public void setSizeY(double sizeYUm) {
+      id_ = CUSTOM;
+      this.sizeYUm_ = sizeYUm;
+   }
+
+   public double getFirstWellX() {
+      return firstWellX_;
+   }
+
+   public void setFirstWellX(double firstWellX) {
+      id_ = CUSTOM;
+      this.firstWellX_ = firstWellX;
+   }
+
+   public double getFirstWellY() {
+      return firstWellY_;
+   }
+
+   public void setFirstWellY(double firstWellY) {
+      id_ = CUSTOM;
+      this.firstWellY_ = firstWellY;
    }
 
 }
