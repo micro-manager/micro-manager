@@ -9,8 +9,11 @@ import java.awt.Paint;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Stroke;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import javax.swing.JPanel;
 
+import org.micromanager.api.ScriptInterface;
 import org.micromanager.navigation.PositionList;
 
 import java.awt.font.FontRenderContext;
@@ -31,6 +34,9 @@ public class PlatePanel extends JPanel {
    WellPositionList[] wells_;
    WellBox[] wellBoxes_;
    private Rectangle activeRect_;
+   public enum Tool {SELECT, MOVE}
+   private Tool mode_;
+   private ScriptInterface app_;
    
    public static Color LIGHT_YELLOW = new Color(255,255,145);
    public static Color LIGHT_ORANGE = new Color(255,176,138);
@@ -113,20 +119,41 @@ public class PlatePanel extends JPanel {
       public int yTopLeft = 0;
       
    }
-   
-   public PlatePanel(SBSPlate plate) {
+       
+   public PlatePanel(SBSPlate plate, PositionList pl) {
       plate_ = plate;
-      wells_ = plate_.generatePositions(SBSPlate.DEFAULT_XYSTAGE_NAME);
+      mode_ = Tool.SELECT;
+      if (pl == null)
+         wells_ = plate_.generatePositions(SBSPlate.DEFAULT_XYSTAGE_NAME);
+      else
+         wells_ = plate_.generatePositions(SBSPlate.DEFAULT_XYSTAGE_NAME, pl);
       wellBoxes_ = new WellBox[plate_.getNumRows() * plate_.getNumColumns()];
       for (int i=0; i<wellBoxes_.length; i++)
          wellBoxes_[i] = new WellBox(wells_[i].getSitePositions());
+      
+      addMouseListener(new MouseAdapter() {
+         public void mouseClicked(final MouseEvent e) {
+            onMouseClicked(e);
+         }
+      });
    }
-   public PlatePanel(SBSPlate plate, PositionList pl) {
-      plate_ = plate;
-      wells_ = plate_.generatePositions(SBSPlate.DEFAULT_XYSTAGE_NAME, pl);
-      wellBoxes_ = new WellBox[plate_.getNumRows() * plate_.getNumColumns()];
-      for (int i=0; i<wellBoxes_.length; i++)
-         wellBoxes_[i] = new WellBox(wells_[i].getSitePositions());      
+   
+   protected void onMouseClicked(MouseEvent e) {
+      if (mode_ == Tool.MOVE) {
+         if (app_ == null)
+            return;
+         
+         System.out.println("Mouse clicked: " + e.getX() + "," + e.getY());
+         //app_.moveXYStage(d, y);
+      }      
+   }
+
+   public void setTool(Tool t) {
+      mode_ = t;
+   }
+   
+   Tool getTool() {
+      return mode_;
    }
 
    public void paintComponent(Graphics g) {
@@ -345,6 +372,10 @@ public class PlatePanel extends JPanel {
       for (int i=0; i<wellBoxes_.length; i++)
          wellBoxes_[i].active = false;
       repaint();
+   }
+
+   public void setApp(ScriptInterface app) {
+      app_ = app;
    }
 
 }

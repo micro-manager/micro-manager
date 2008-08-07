@@ -109,7 +109,8 @@ public class PlateEditor extends MMDialog {
       setTitle("HCS plate editor");
       loadPosition(100, 100, 654, 448);
 
-      platePanel_ = new PlatePanel(plate_);
+      platePanel_ = new PlatePanel(plate_, null);
+      platePanel_.setApp(app_);
       getContentPane().add(platePanel_);
       springLayout.putConstraint(SpringLayout.EAST, platePanel_, -136, SpringLayout.EAST, getContentPane());
       springLayout.putConstraint(SpringLayout.WEST, platePanel_, 5, SpringLayout.WEST, getContentPane());
@@ -247,16 +248,20 @@ public class PlateEditor extends MMDialog {
       moveToggleButton_ = new JToggleButton();
       moveToggleButton_.addActionListener(new ActionListener() {
          public void actionPerformed(final ActionEvent e) {
-            if (moveToggleButton_.isSelected())
+            if (moveToggleButton_.isSelected()) {
                moveToggleButton_.setText(POINTER_MOVE);
-            else
-               moveToggleButton_.setText(POINTER_SELECT);               
+               platePanel_.setTool(PlatePanel.Tool.MOVE);
+            } else {
+               moveToggleButton_.setText(POINTER_SELECT);
+               platePanel_.setTool(PlatePanel.Tool.SELECT);
+            }
          }
       });
       
       // initialize in SELECT mode
       moveToggleButton_.setSelected(false);
       moveToggleButton_.setText(POINTER_SELECT);
+      platePanel_.setTool(PlatePanel.Tool.SELECT);
       
       getContentPane().add(moveToggleButton_);
       springLayout.putConstraint(SpringLayout.EAST, moveToggleButton_, -19, SpringLayout.EAST, getContentPane());
