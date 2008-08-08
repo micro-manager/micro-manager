@@ -2960,5 +2960,15 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       }
    }
 
+   public void moveXYStage(double x, double y) throws MMScriptException {
+      try {
+         core_.setXYPosition(core_.getXYStageDevice(), x, y);
+         core_.waitForDevice(core_.getXYStageDevice());
+      } catch (Exception e) {
+         throw new MMScriptException(e.getMessage());
+      }
+      
+   }
+
 }
 

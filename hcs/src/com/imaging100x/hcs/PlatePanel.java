@@ -50,7 +50,7 @@ public class PlatePanel extends JPanel {
          label = new String("undef");
          color = LIGHT_YELLOW;
          activeColor = LIGHT_ORANGE;
-         wellRect = new Rectangle(0, 0, 100, 100);
+         wellBoundingRect = new Rectangle(0, 0, 100, 100);
          siteRect = new Rectangle(3, 3);
          selected = false;
          active = false;
@@ -77,7 +77,7 @@ public class PlatePanel extends JPanel {
             g.setPaint(c);
          
          g.setStroke(new BasicStroke((float)0));
-         Rectangle r = new Rectangle(wellRect);
+         Rectangle r = new Rectangle(wellBoundingRect);
          r.grow(-1, -1);
          g.fill(r);
          
@@ -185,7 +185,7 @@ public class PlatePanel extends JPanel {
             for (int j=0; j<plate_.getNumberOfColumns(); j++) {
                WellBox wb = wellBoxes_[i*plate_.getNumberOfColumns() + j];
                wb.label = plate_.getWellLabel(i+1, j+1);
-               wb.wellRect.setBounds((int)(box.getX() + j*wellX + dp.xOffset + 0.5), (int)(box.getY() + i*wellY + dp.yOffset + 0.5),
+               wb.wellBoundingRect.setBounds((int)(box.getX() + j*wellX + dp.xOffset + 0.5), (int)(box.getY() + i*wellY + dp.yOffset + 0.5),
                                  (int)wellX, (int)wellY);
                wb.draw(g, dp);
             }

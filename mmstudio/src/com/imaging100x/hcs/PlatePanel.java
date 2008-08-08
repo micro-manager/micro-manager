@@ -11,10 +11,12 @@ import java.awt.Rectangle;
 import java.awt.Stroke;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 import javax.swing.JPanel;
 
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.navigation.PositionList;
+import org.micromanager.utils.MMScriptException;
 
 import java.awt.font.FontRenderContext;
 import java.awt.font.TextLayout;
@@ -31,12 +33,14 @@ public class PlatePanel extends JPanel {
    private final int fontSizePt_ = 12;
    
    private SBSPlate plate_;
-   WellPositionList[] wells_;
-   WellBox[] wellBoxes_;
+   private WellPositionList[] wells_;
+   private WellBox[] wellBoxes_;
    private Rectangle activeRect_;
    public enum Tool {SELECT, MOVE}
    private Tool mode_;
    private ScriptInterface app_;
+   private boolean lockAspect_;
+   private ParentPlateGUI gui_;
    
    public static Color LIGHT_YELLOW = new Color(255,255,145);
    public static Color LIGHT_ORANGE = new Color(255,176,138);
@@ -45,8 +49,10 @@ public class PlatePanel extends JPanel {
       public String label;
       public Color color;
       public Color activeColor;
+      public Rectangle wellBoundingRect;
       public Rectangle wellRect;
       public Rectangle siteRect;
+      public boolean circular;
       public boolean selected;
       public boolean active;
       
@@ -57,13 +63,16 @@ public class PlatePanel extends JPanel {
          label = new String("undef");
          color = LIGHT_YELLOW;
          activeColor = LIGHT_ORANGE;
-         wellRect = new Rectangle(0, 0, 100, 100);
+         wellBoundingRect = new Rectangle(0, 0, 100, 100);
+         wellRect = new Rectangle(10, 10, 80, 80);
          siteRect = new Rectangle(4, 4);
          selected = false;
          active = false;
          params_ = new DrawingParams();
          sites_ = pl;
-      }
+         circular = false;
+         lockAspect_ = true;
+       }
       
       public void draw(Graphics2D g, DrawingParams dp) {
          params_ = dp;
@@ -71,7 +80,7 @@ public class PlatePanel extends JPanel {
       }
       
       public void dump() {
-         System.out.println(label + ":" + wellRect.x + "," + wellRect.y);
+         System.out.println(label + ":" + wellBoundingRect.x + "," + wellBoundingRect.y);
       }
       
       public void draw(Graphics2D g) {
@@ -88,17 +97,21 @@ public class PlatePanel extends JPanel {
             g.setPaint(c);
          
          g.setStroke(new BasicStroke((float)0));
-         Rectangle r = new Rectangle(wellRect);
+         Rectangle r = new Rectangle(wellBoundingRect);
          r.grow(-1, -1);
          g.fill(r);
+         
+         g.setPaint(Color.black);
+         g.setStroke(new BasicStroke((float)1));
+         if (circular)
+            g.drawOval(wellRect.x, wellRect.y, wellRect.width, wellRect.height);
+         else
+            g.draw(wellRect);            
          
          // draw sites
          int siteOffsetX = siteRect.width / 2;
          int siteOffsetY = siteRect.height / 2;
-         
-         g.setPaint(Color.black);
-         g.setStroke(new BasicStroke((float)1));
-         
+                  
          for (int j=0; j<sites_.getNumberOfPositions(); j++) {
             siteRect.x = (int)(sites_.getPosition(j).getX() * params_.xFactor + params_.xTopLeft - siteOffsetX + 0.5);
             siteRect.y = (int)(sites_.getPosition(j).getY() * params_.yFactor + params_.yTopLeft - siteOffsetY + 0.5);
@@ -120,7 +133,8 @@ public class PlatePanel extends JPanel {
       
    }
        
-   public PlatePanel(SBSPlate plate, PositionList pl) {
+   public PlatePanel(SBSPlate plate, PositionList pl, ParentPlateGUI gui) {
+      gui_ = gui;
       plate_ = plate;
       mode_ = Tool.SELECT;
       if (pl == null)
@@ -136,6 +150,12 @@ public class PlatePanel extends JPanel {
             onMouseClicked(e);
          }
       });
+      
+      addMouseMotionListener(new MouseMotionAdapter() {
+         public void mouseMoved(final MouseEvent e) {
+            onMouseMove(e);
+         }
+      });
    }
    
    protected void onMouseClicked(MouseEvent e) {
@@ -144,8 +164,48 @@ public class PlatePanel extends JPanel {
             return;
          
          System.out.println("Mouse clicked: " + e.getX() + "," + e.getY());
-         //app_.moveXYStage(d, y);
+         double x = scalePixelToDeviceX(e.getX());
+         double y = scalePixelToDeviceY(e.getY());
+         
+         try {
+            app_.moveXYStage(x, y);
+         } catch (MMScriptException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace();
+         }
       }      
+   }
+   
+   private void onMouseMove(MouseEvent e) {
+      if (gui_ == null)
+         return;
+      
+      double x = scalePixelToDeviceX(e.getX());
+      double y = scalePixelToDeviceY(e.getY());
+      String well = getCurrentWell(x, y);
+      String site = getCurrentSite(x, y, well);
+      gui_.updatePointerXYPosition(x, y, well, site);
+      
+   }
+   
+   private String getCurrentSite(double x, double y, String well) {
+      // TODO Auto-generated method stub
+      return null;
+   }
+
+   private String getCurrentWell(double x, double y) {
+      // TODO Auto-generated method stub
+      return null;
+   }
+
+   private double scalePixelToDeviceY(int y) {
+      // TODO Auto-generated method stub
+      return 0;
+   }
+
+   private double scalePixelToDeviceX(int x) {
+      // TODO Auto-generated method stub
+      return 0;
    }
 
    public void setTool(Tool t) {
@@ -201,19 +261,34 @@ public class PlatePanel extends JPanel {
       DrawingParams dp = new DrawingParams();
       dp.xFactor = box.getWidth()/plate_.getXSize();
       dp.yFactor = box.getHeight()/plate_.getYSize();
+      if (lockAspect_) {
+         if (dp.xFactor < dp.yFactor)
+            dp.yFactor = dp.xFactor;
+         else
+            dp.xFactor = dp.yFactor;
+      }
+      
       dp.xOffset = plate_.getTopLeftX() * dp.xFactor;
       dp.yOffset = plate_.getTopLeftY() * dp.yFactor;
       dp.xTopLeft = box.x;
       dp.yTopLeft = box.y;
       
-      double wellX = (box.getWidth() - 2.0*dp.xOffset) / plate_.getNumColumns();
-      double wellY = (box.getHeight() - 2.0*dp.yOffset) / plate_.getNumRows();
+      
+      double wellX = plate_.getWellSpacingX() * dp.xFactor;
+      double wellY = plate_.getWellSpacingY() * dp.yFactor;
+      double wellInsideX = plate_.getWellSizeX() * dp.xFactor;
+      double wellInsideY = plate_.getWellSizeY() * dp.yFactor;
+      double wellOffsetX = (plate_.getWellSpacingX() - plate_.getWellSizeX()) / 2.0 * dp.xFactor;
+      double wellOffsetY = (plate_.getWellSpacingY() - plate_.getWellSizeY()) / 2.0 * dp.yFactor;
                   
       for (int i=0; i<wells_.length; i++) {
          WellBox wb = wellBoxes_[i];
          wb.label = wells_[i].getLabel();
-         wb.wellRect.setBounds((int)(box.getX() + wells_[i].getColumn()*wellX + dp.xOffset + 0.5), (int)(box.getY() + wells_[i].getRow()*wellY + dp.yOffset + 0.5),
+         wb.circular = plate_.isWellCircular();
+         wb.wellBoundingRect.setBounds((int)(box.getX() + wells_[i].getColumn()*wellX + dp.xOffset + 0.5), (int)(box.getY() + wells_[i].getRow()*wellY + dp.yOffset + 0.5),
                (int)wellX, (int)wellY);
+         wb.wellRect.setBounds((int)(activeRect_.getX() + wells_[i].getColumn()*wellX + dp.xOffset + wellOffsetX + 0.5),
+               (int)(activeRect_.getY() + wells_[i].getRow()*wellY + dp.yOffset + wellOffsetY + 0.5), (int)wellInsideX, (int)wellInsideY);
          wb.draw(g, dp);
          wb.dump();
       }      
@@ -223,14 +298,21 @@ public class PlatePanel extends JPanel {
       // calculate plate active area
       double xFact = box.getWidth()/plate_.getXSize();
       double yFact = box.getHeight()/plate_.getYSize();
+      if (lockAspect_) {
+         if (xFact < yFact)
+            yFact = xFact;
+         else
+            xFact = yFact;
+      }
+      
       double xOffset = plate_.getTopLeftX() * xFact;
       double yOffset = plate_.getTopLeftY() * yFact;
       
-      double wellX = (box.getWidth() - 2.0*xOffset) / plate_.getNumColumns();
-      double wellY = (box.getHeight() - 2.0*yOffset) / plate_.getNumRows();
+      double wellX = plate_.getWellSpacingX() * xFact;
+      double wellY = plate_.getWellSpacingY() * yFact;
       
       double xStartHor = box.getX() + xOffset;
-      double xEndHor = xStartHor + box.getWidth() - 2*xOffset;
+      double xEndHor = box.getX() + plate_.getBottomRightX() * xFact;
       for (int i=0; i<= plate_.getNumRows(); i++) {
          double yStart = box.getY() + i*wellY + yOffset;
          double yEnd = yStart;
@@ -241,7 +323,7 @@ public class PlatePanel extends JPanel {
       }
       
       double yStartV = box.getY() + yOffset;
-      double yEndV = yStartV + box.getHeight() - 2*yOffset;
+      double yEndV = box.getY() + plate_.getBottomRightY() * yFact;
       for (int i=0; i<= plate_.getNumColumns(); i++) {
          double xStart = box.getX() + i*wellX + xOffset;
          double xEnd = xStart;
@@ -255,11 +337,18 @@ public class PlatePanel extends JPanel {
    private void drawLabels(Graphics2D g, Rectangle box) {
       double xFact = box.getWidth()/plate_.getXSize();
       double yFact = box.getHeight()/plate_.getYSize();
+      if (lockAspect_) {
+         if (xFact < yFact)
+            yFact = xFact;
+         else
+            xFact = yFact;
+      }
+      
       double xOffset = plate_.getTopLeftX() * xFact;
       double yOffset = plate_.getTopLeftY() * yFact;
       
-      double wellX = (box.getWidth() - 2.0*xOffset) / plate_.getNumColumns();
-      double wellY = (box.getHeight() - 2.0*yOffset) / plate_.getNumRows();
+      double wellX = plate_.getWellSpacingX() * xFact;
+      double wellY = plate_.getWellSpacingY() * yFact;
       
       FontRenderContext frc = g.getFontRenderContext();
       Font f = new Font("Helvetica",Font.BOLD, fontSizePt_);
@@ -327,19 +416,33 @@ public class PlatePanel extends JPanel {
       DrawingParams dp = new DrawingParams();
       dp.xFactor = activeRect_.getWidth()/plate_.getXSize();
       dp.yFactor = activeRect_.getHeight()/plate_.getYSize();
+      if (lockAspect_) {
+         if (dp.xFactor < dp.yFactor)
+            dp.yFactor = dp.xFactor;
+         else
+            dp.xFactor = dp.yFactor;
+      }
+      
       dp.xOffset = plate_.getTopLeftX() * dp.xFactor;
       dp.yOffset = plate_.getTopLeftY() * dp.yFactor;
       dp.xTopLeft = activeRect_.x;
       dp.yTopLeft = activeRect_.y;
       
-      double wellX = (activeRect_.getWidth() - 2.0*dp.xOffset) / plate_.getNumColumns();
-      double wellY = (activeRect_.getHeight() - 2.0*dp.yOffset) / plate_.getNumRows();
+      double wellX = plate_.getWellSpacingX() * dp.xFactor;
+      double wellY = plate_.getWellSpacingY() * dp.yFactor;
+      double wellInsideX = plate_.getWellSizeX() * dp.xFactor;
+      double wellInsideY = plate_.getWellSizeY() * dp.yFactor;
+      double wellOffsetX = (plate_.getWellSpacingX() - plate_.getWellSizeX()) / 2.0 * dp.xFactor;
+      double wellOffsetY = (plate_.getWellSpacingY() - plate_.getWellSizeY()) / 2.0 * dp.yFactor;
                   
       for (int i=0; i<wells_.length; i++) {
          WellBox wb = wellBoxes_[i];
          wb.label = wells_[i].getLabel();
-         wb.wellRect.setBounds((int)(activeRect_.getX() + wells_[i].getColumn()*wellX + dp.xOffset + 0.5),
+         wb.circular = plate_.isWellCircular();
+         wb.wellBoundingRect.setBounds((int)(activeRect_.getX() + wells_[i].getColumn()*wellX + dp.xOffset + 0.5),
                                (int)(activeRect_.getY() + wells_[i].getRow()*wellY + dp.yOffset + 0.5), (int)wellX, (int)wellY);
+         wb.wellRect.setBounds((int)(activeRect_.getX() + wells_[i].getColumn()*wellX + dp.xOffset + wellOffsetX + 0.5),
+                               (int)(activeRect_.getY() + wells_[i].getRow()*wellY + dp.yOffset + wellOffsetY + 0.5), (int)wellInsideX, (int)wellInsideY);
          wb.dump();
       }
    }
@@ -377,5 +480,8 @@ public class PlatePanel extends JPanel {
    public void setApp(ScriptInterface app) {
       app_ = app;
    }
-
+   
+   public void setLockAspect(boolean state) {
+      lockAspect_ = state;
+   }
 }

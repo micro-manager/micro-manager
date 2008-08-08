@@ -46,6 +46,9 @@ public class SBSPlate {
    private double sizeYUm_;
    private double firstWellX_;
    private double firstWellY_;
+   private double wellSizeX_;
+   private double wellSizeY_;
+   private boolean circular_ = true;
    
    private String id_;
    private String description_;
@@ -64,6 +67,7 @@ public class SBSPlate {
    
    public static final String SBS_96_WELL= "96WELL";
    public static final String SBS_384_WELL= "384WELL";
+   public static final String EVR_300_WELL= "EVR300WELL";
    public static final String DEFAULT_XYSTAGE_NAME = "XYStage"; 
    public static final String CUSTOM = "CUSTOM";
    
@@ -91,7 +95,10 @@ public class SBSPlate {
          wellSpacingY_ = 9000.0;
          firstWellX_ = 14380.0;
          firstWellY_ = 11240.0;
-      } else {
+         wellSizeX_ = 8000.0;
+         wellSizeY_ = 8000.0;
+         circular_ = true;
+      } else if (id.equals(SBS_384_WELL)){
          id_ = SBS_384_WELL;
          numColumns_ = 24;
          numRows_ = 16;
@@ -101,6 +108,22 @@ public class SBSPlate {
          wellSpacingY_ = 4500.0;
          firstWellX_ = 12130.0;
          firstWellY_ = 8990.0;        
+         wellSizeX_ = 4000.0;
+         wellSizeY_ = 4000.0;
+         circular_ = false;
+      } else if (id.equals(EVR_300_WELL)){
+         id_ = EVR_300_WELL;
+         numColumns_ = 30;
+         numRows_ = 10;
+         sizeXUm_ = 73840.0;
+         sizeYUm_ = 23570.0;
+         wellSpacingX_ = 2000.0;
+         wellSpacingY_ = 2000.0;
+         firstWellX_ = 10840.0;
+         firstWellY_ = 2790.0;        
+         wellSizeX_ = 1000.0;
+         wellSizeY_ = 1000.0;
+         circular_ = true;
       }
       
       try {
@@ -399,6 +422,14 @@ public class SBSPlate {
    public double getTopLeftY() {
       return firstWellY_ - wellSpacingY_ / 2.0;
    }
+   
+   public double getBottomRightX() {
+      return firstWellX_ + wellSpacingX_ * (numColumns_ - 1) + wellSpacingX_ / 2.0;
+   }
+   
+   public double getBottomRightY() {
+      return firstWellY_ + wellSpacingY_ * (numRows_ - 1) + wellSpacingY_ / 2.0;
+   }
 
    public void setNumColumns_(int numColumns_) {
       id_ = CUSTOM;
@@ -427,6 +458,14 @@ public class SBSPlate {
       id_ = CUSTOM;
       this.wellSpacingY_ = wellSpacingY;
    }
+   
+   public double getWellSizeX() {
+      return wellSizeX_;
+   }
+   
+   public double getWellSizeY() {
+      return wellSizeY_;
+   }
 
    public void setSizeX(double sizeXUm) {
       id_ = CUSTOM;
@@ -454,6 +493,10 @@ public class SBSPlate {
    public void setFirstWellY(double firstWellY) {
       id_ = CUSTOM;
       this.firstWellY_ = firstWellY;
+   }
+   
+   public boolean isWellCircular() {
+      return circular_;
    }
 
 }

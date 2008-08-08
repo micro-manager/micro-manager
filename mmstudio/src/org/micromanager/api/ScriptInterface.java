@@ -187,6 +187,13 @@ public interface ScriptInterface {
     * Closes Image5D window. 
     */
    public void closeAcquisitionImage5D(String title) throws MMScriptException;
+
+   /**
+    * Move default XY stage and block until done.
+    * @param x - coordinate in um
+    * @param y - coordinate in um
+    */
+   public void moveXYStage(double x, double y)  throws MMScriptException ;
    
    /**
     * Open empty image acquisition window
