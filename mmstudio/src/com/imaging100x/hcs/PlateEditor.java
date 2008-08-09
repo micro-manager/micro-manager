@@ -23,6 +23,7 @@ import org.micromanager.navigation.PositionList;
 import org.micromanager.navigation.StagePosition;
 import org.micromanager.utils.MMDialog;
 import org.micromanager.utils.MMScriptException;
+import org.micromanager.utils.TextUtils;
 
 public class PlateEditor extends MMDialog implements ParentPlateGUI {
    private JTextField spacingField_;
@@ -394,7 +395,7 @@ public class PlateEditor extends MMDialog implements ParentPlateGUI {
    }
 
    public void updatePointerXYPosition(double x, double y, String wellLabel, String siteLabel) {
-      String statusTxt = "X=" + x + "um, Y=" + y + "um, " + wellLabel + " : " + siteLabel;
+      String statusTxt = "X=" + TextUtils.FMT2.format(x) + "um, Y=" + TextUtils.FMT2.format(y) + "um, " + wellLabel + " : " + siteLabel;
       statusLabel_.setText(statusTxt);
    }
 

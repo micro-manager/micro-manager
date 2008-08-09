@@ -3,22 +3,22 @@
 //PROJECT:        Micro-Manager-S
 //SUBSYSTEM:      high content screening
 //-----------------------------------------------------------------------------
-//
+
 //AUTHOR:         Nenad Amodaj, nenad@amodaj.com, June 3, 2008
-//
+
 //COPYRIGHT:      100X Imaging Inc, www.100ximaging.com, 2008
-//                
+
 //LICENSE:        This file is distributed under the GPL license.
-//                License text is included with the source distribution.
-//
-//                This file is distributed in the hope that it will be useful,
-//                but WITHOUT ANY WARRANTY; without even the implied warranty
-//                of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-//
-//                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
-//                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-//                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-//
+//License text is included with the source distribution.
+
+//This file is distributed in the hope that it will be useful,
+//but WITHOUT ANY WARRANTY; without even the implied warranty
+//of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+//IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+
 //CVS:            $Id: MetadataDlg.java 1275 2008-06-03 21:31:24Z nenad $
 
 package com.imaging100x.hcs;
@@ -37,7 +37,7 @@ import org.micromanager.navigation.PositionList;
 import org.micromanager.navigation.StagePosition;
 
 public class SBSPlate {
-   
+
    private int numColumns_;
    private int numRows_;
    private double wellSpacingX_;
@@ -49,11 +49,11 @@ public class SBSPlate {
    private double wellSizeX_;
    private double wellSizeY_;
    private boolean circular_ = true;
-   
+
    private String id_;
    private String description_;
    private Hashtable<String, Well> wellMap_;
-   
+
    private static String ROWS = "rows";
    private static String COLS = "cols";
    private static String WELL_SPACING_X = "well_spacing_X";
@@ -64,26 +64,26 @@ public class SBSPlate {
    private static String DESCRIPTION = "description";
    private static String FIRST_WELL_X = "first_well_x";
    private static String FIRST_WELL_Y = "first_well_y";
-   
+
    public static final String SBS_96_WELL= "96WELL";
    public static final String SBS_384_WELL= "384WELL";
    public static final String EVR_300_WELL= "EVR300WELL";
    public static final String DEFAULT_XYSTAGE_NAME = "XYStage"; 
    public static final String CUSTOM = "CUSTOM";
-   
-   
+
+
    private static char rowAlphabet[] = { 'A','B','C','D','E',
-         'F','G','H','I','J',
-         'K','L','M','N','O',
-         'P','Q','R','S','T',
-         'U','V','W','X','Y','Z' };
-      
+      'F','G','H','I','J',
+      'K','L','M','N','O',
+      'P','Q','R','S','T',
+      'U','V','W','X','Y','Z' };
+
    public SBSPlate() {
       // initialize as 96-well plate
       wellMap_ = new Hashtable<String, Well>();
       initialize(SBS_96_WELL);
    }
-   
+
    public boolean initialize(String id) {
       if (id.equals(SBS_96_WELL)){
          id_ = SBS_96_WELL;
@@ -125,17 +125,17 @@ public class SBSPlate {
          wellSizeY_ = 1000.0;
          circular_ = true;
       }
-      
+
       try {
          generateWells();
       } catch (HCSException e) {
          e.printStackTrace();
          return false;
       }
-      
+
       return true;
    }
-   
+
    public void load(String path) throws HCSException {
       StringBuffer contents = new StringBuffer();
       try {
@@ -152,9 +152,9 @@ public class SBSPlate {
       } catch (IOException e) {
          throw new HCSException(e);
       }
-      
+
    }
-   
+
    public void save(String path) throws HCSException {     
       try {
          FileWriter fw = new FileWriter(path);
@@ -164,7 +164,7 @@ public class SBSPlate {
          throw new HCSException("Unable to create plate definition file: " + e.getMessage());
       }      
    }
-   
+
    public String serialize() throws HCSException {
       JSONObject plate = new JSONObject();
       try {
@@ -183,9 +183,9 @@ public class SBSPlate {
          throw new HCSException(e);
       }
    }
-   
+
    public void restore(String ser) throws HCSException {
-      
+
       JSONObject plate;
       try {
          plate = new JSONObject(ser);
@@ -203,7 +203,7 @@ public class SBSPlate {
          throw new HCSException(e);
       }
    }
-   
+
    /**
     * Generate a list of well positions using 'snake' pattern.
     * This method assumes a single site at the center of the well.
@@ -217,25 +217,19 @@ public class SBSPlate {
          for (int j=0; j<numColumns_; j++) {
             WellPositionList wpl = new WellPositionList();
             PositionList posList = new PositionList();
-            
+
             MultiStagePosition mps = new MultiStagePosition();
             StagePosition sp = new StagePosition();
             sp.numAxes = 2;
             sp.stageName = xyStageName;
             String wellLabel;
             int colIndex;
-            try {
-               if (direction)
-                  colIndex = j+1; // forward
-               else
-                  colIndex = numColumns_ - j; // reverse
-               wellLabel = getWellLabel(i+1, colIndex);
-            } catch (HCSException e) {
-               // TODO Auto-generated catch block
-               e.printStackTrace();
-               return null;
-            }
-            
+            if (direction)
+               colIndex = j+1; // forward
+            else
+               colIndex = numColumns_ - j; // reverse
+            wellLabel = getWellLabel(i+1, colIndex);
+
             try {
                sp.x = getWellXUm(wellLabel);
                sp.y = getWellYUm(wellLabel);
@@ -267,24 +261,18 @@ public class SBSPlate {
       WellPositionList posListArray[] = new WellPositionList[numRows_ * numColumns_];
       boolean direction = true;
       int wellCount = 0;
-      
+
       for (int i=0; i<numRows_; i++) {
          for (int j=0; j<numColumns_; j++) {
             WellPositionList wpl = new WellPositionList();
             String wellLabel;
             int colIndex;
-            try {
-               if (direction)
-                  colIndex = j+1; // forward
-               else
-                  colIndex = numColumns_ - j; // reverse
-               wellLabel = getWellLabel(i+1, colIndex);
-            } catch (HCSException e) {
-               // TODO Auto-generated catch block
-               e.printStackTrace();
-               return null;
-            }
-            
+            if (direction)
+               colIndex = j+1; // forward
+            else
+               colIndex = numColumns_ - j; // reverse
+            wellLabel = getWellLabel(i+1, colIndex);
+
             try {
                double wellX = getWellXUm(wellLabel);
                double wellY = getWellYUm(wellLabel);
@@ -317,42 +305,44 @@ public class SBSPlate {
       }
       return posListArray;
    }
-   
+
    public String getID() {
       return new String(id_);
    }
-   
+
    public String getDescription() {
       return new String(description_);
    }
-   
+
    public double getWellXUm(String wellLabel) throws HCSException {
       if (wellMap_.containsKey(wellLabel))
          return wellMap_.get(wellLabel).x;
-      
-     throw new HCSException("Invalid well label: " + wellLabel);
+
+      throw new HCSException("Invalid well label: " + wellLabel);
    }
-   
+
    public double getWellYUm(String wellLabel) throws HCSException {
       if (wellMap_.containsKey(wellLabel))
          return wellMap_.get(wellLabel).y;
-      
-     throw new HCSException("Invalid well label: " + wellLabel);
+
+      throw new HCSException("Invalid well label: " + wellLabel);
    }
-   
-   public String getColumnLabel(int col) throws HCSException {
-      
+
+   public String getColumnLabel(int col) {
+
       if(col < 1 || col > numColumns_)
-         throw new HCSException("Invalid column number: " + col);
+         //throw new HCSException("Invalid column number: " + col);
+         return "";
 
       return Integer.toString(col);
    }
-   
-   public String getRowLabel(int row) throws HCSException {
+
+   public String getRowLabel(int row) {
       // limit row index to valid range
       if (row < 1 || row > numRows_)
-         throw new HCSException("Invalid row number: " + row);
-      
+         //throw new HCSException("Invalid row number: " + row);
+         return "";
+
       // build the row label
       int tempRow = row;
       String label = new String();
@@ -364,11 +354,11 @@ public class SBSPlate {
       }
       return label;
    }
-   
-   public String getWellLabel(int row, int col) throws HCSException {
+
+   public String getWellLabel(int row, int col){
       return getRowLabel(row) + getColumnLabel(col);
    }
-   
+
    private void generateWells() throws HCSException {
       wellMap_.clear();
       for (int i=0; i<numRows_; i++)
@@ -389,7 +379,7 @@ public class SBSPlate {
       public int col;
       public double x;
       public double y;
-      
+
       public Well() {
          row = 0;
          col = 0;
@@ -398,7 +388,7 @@ public class SBSPlate {
          label = new String("Undefined");
       }
    }
-   
+
    public int getNumRows() {
       return numRows_;
    }
@@ -406,27 +396,27 @@ public class SBSPlate {
    public int getNumColumns() {
       return numColumns_;
    }
-   
+
    public double getXSize() {
       return sizeXUm_;
    }
-   
+
    public double getYSize() {
       return sizeYUm_;
    }
-   
+
    public double getTopLeftX() {
       return firstWellX_ - wellSpacingX_ / 2.0;
    }
-   
+
    public double getTopLeftY() {
       return firstWellY_ - wellSpacingY_ / 2.0;
    }
-   
+
    public double getBottomRightX() {
       return firstWellX_ + wellSpacingX_ * (numColumns_ - 1) + wellSpacingX_ / 2.0;
    }
-   
+
    public double getBottomRightY() {
       return firstWellY_ + wellSpacingY_ * (numRows_ - 1) + wellSpacingY_ / 2.0;
    }
@@ -458,11 +448,11 @@ public class SBSPlate {
       id_ = CUSTOM;
       this.wellSpacingY_ = wellSpacingY;
    }
-   
+
    public double getWellSizeX() {
       return wellSizeX_;
    }
-   
+
    public double getWellSizeY() {
       return wellSizeY_;
    }
@@ -494,11 +484,17 @@ public class SBSPlate {
       id_ = CUSTOM;
       this.firstWellY_ = firstWellY;
    }
-   
+
    public boolean isWellCircular() {
       return circular_;
    }
 
+   public String getWellLabel(double x, double y) {
+      int col = (int)((x - getTopLeftX())/wellSpacingX_);
+      int row = (int)((y - getTopLeftY())/wellSpacingY_);
+      return getWellLabel(row+1, col+1);
+   }
+
 }
-   
+
 
