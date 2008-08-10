@@ -206,53 +206,6 @@ public class SBSPlate {
 
    /**
     * Generate a list of well positions using 'snake' pattern.
-    * This method assumes a single site at the center of the well.
-    * @return
-    */
-   public WellPositionList[] generatePositions(String xyStageName) {
-      WellPositionList posListArray[] = new WellPositionList[numRows_ * numColumns_];
-      boolean direction = true;
-      int wellCount = 0;
-      for (int i=0; i<numRows_; i++) {
-         for (int j=0; j<numColumns_; j++) {
-            WellPositionList wpl = new WellPositionList();
-            PositionList posList = new PositionList();
-
-            MultiStagePosition mps = new MultiStagePosition();
-            StagePosition sp = new StagePosition();
-            sp.numAxes = 2;
-            sp.stageName = xyStageName;
-            String wellLabel;
-            int colIndex;
-            if (direction)
-               colIndex = j+1; // forward
-            else
-               colIndex = numColumns_ - j; // reverse
-            wellLabel = getWellLabel(i+1, colIndex);
-
-            try {
-               sp.x = getWellXUm(wellLabel);
-               sp.y = getWellYUm(wellLabel);
-               mps.add(sp);
-               // TODO: remove a single-site hack below
-               mps.setLabel(AcquisitionData.METADATA_SITE_PREFIX + "_0");
-               mps.setDefaultXYStage(xyStageName);
-               posList.addPosition(mps);
-               wpl.setSitePositions(posList);
-               wpl.setLabel(wellLabel);
-               wpl.setGridCoordinates(i, colIndex-1);
-               posListArray[wellCount++] = wpl;
-            } catch (HCSException e) {
-               // TODO Auto-generated catch block
-               e.printStackTrace();
-            }
-         }
-         direction = !direction; // reverse direction
-      }
-      return posListArray;
-   }
-   /**
-    * Generate a list of well positions using 'snake' pattern.
     * Takes a list of sites and merges them into the well list.
     * Site XY coordinates are assumed to be relative to the well center.
     * @return - an array of well positions
@@ -306,6 +259,21 @@ public class SBSPlate {
       return posListArray;
    }
 
+   public WellPositionList[] generatePositions(String xyStageName) {
+      
+      // generate default site in the center of the well
+      PositionList sites = new PositionList();
+      MultiStagePosition mps = new MultiStagePosition();
+      StagePosition sp = new StagePosition();
+      sp.numAxes = 2;
+      sp.x = 0.0;
+      sp.y = 0.0;
+      mps.add(sp);
+      sites.addPosition(mps);
+      
+      return generatePositions(xyStageName, sites);
+   }
+   
    public String getID() {
       return new String(id_);
    }

@@ -36,6 +36,7 @@ public class PlatePanel extends JPanel {
    private WellPositionList[] wells_;
    private WellBox[] wellBoxes_;
    private Rectangle activeRect_;
+   private Rectangle stagePointer_;
    public enum Tool {SELECT, MOVE}
    private Tool mode_;
    private ScriptInterface app_;
@@ -138,11 +139,13 @@ public class PlatePanel extends JPanel {
       plate_ = plate;
       mode_ = Tool.SELECT;
       lockAspect_ = true;
+      stagePointer_ = new Rectangle(3, 3);
       
       if (pl == null)
          wells_ = plate_.generatePositions(SBSPlate.DEFAULT_XYSTAGE_NAME);
       else
          wells_ = plate_.generatePositions(SBSPlate.DEFAULT_XYSTAGE_NAME, pl);
+      
       wellBoxes_ = new WellBox[plate_.getNumRows() * plate_.getNumColumns()];
       for (int i=0; i<wellBoxes_.length; i++)
          wellBoxes_[i] = new WellBox(wells_[i].getSitePositions());
@@ -166,11 +169,10 @@ public class PlatePanel extends JPanel {
             return;
 
          System.out.println("Mouse clicked: " + e.getX() + "," + e.getY());
-         double x = scalePixelToDeviceX(e.getX());
-         double y = scalePixelToDeviceY(e.getY());
+         Point2D.Double pt = scalePixelToDevice(e.getX(), e.getY());
 
          try {
-            app_.moveXYStage(x, y);
+            app_.moveXYStage(pt.x, pt.y);
          } catch (MMScriptException e1) {
             // TODO Auto-generated catch block
             e1.printStackTrace();
@@ -182,21 +184,16 @@ public class PlatePanel extends JPanel {
       if (gui_ == null)
          return;
 
-      double x = scalePixelToDeviceX(e.getX());
-      double y = scalePixelToDeviceY(e.getY());
-      String well = plate_.getWellLabel(x, y);
-      gui_.updatePointerXYPosition(x, y, well, "");
+      Point2D.Double pt = scalePixelToDevice(e.getX(), e.getY());
+      String well = plate_.getWellLabel(pt.x, pt.y);
+      gui_.updatePointerXYPosition(pt.x, pt.y, well, "");
 
    }
 
-   private double scalePixelToDeviceY(int y) {
-      int pixelPos = y - activeRect_.y;
-      return pixelPos/drawingParams_.yFactor;
-   }
-
-   private double scalePixelToDeviceX(int x) {
-      int pixelPos = x - activeRect_.x;
-      return pixelPos/drawingParams_.xFactor;
+   private Point2D.Double scalePixelToDevice(int x, int y) {
+      int pixelPosX = y - activeRect_.y;
+      int pixelPosY = x - activeRect_.x;
+      return new Point2D.Double(pixelPosX/drawingParams_.xFactor, pixelPosY/drawingParams_.yFactor);
    }
 
    public void setTool(Tool t) {
@@ -214,13 +211,13 @@ public class PlatePanel extends JPanel {
 
       // get drawing rectangle
       Rectangle box = getBounds();
-      activeRect_ = box;
 
       // shrink drawing area by the margin amount
       box.x = (int)xMargin_;
       box.y = (int)yMargin_;
       box.height -= 2*yMargin_;
       box.width -= 2*xMargin_;
+      activeRect_ = box;
 
       // save current settings
       Color oldColor = g2d.getColor();      
@@ -236,7 +233,6 @@ public class PlatePanel extends JPanel {
       // draw content
       drawLabels(g2d, box);
       drawWells(g2d, box);
-      //drawImagingSites(g2d, box);
       drawGrid(g2d, box);
 
       // restore settings
@@ -264,7 +260,6 @@ public class PlatePanel extends JPanel {
       dp.xTopLeft = box.x;
       dp.yTopLeft = box.y;
 
-
       double wellX = plate_.getWellSpacingX() * dp.xFactor;
       double wellY = plate_.getWellSpacingY() * dp.yFactor;
       double wellInsideX = plate_.getWellSizeX() * dp.xFactor;
@@ -278,8 +273,8 @@ public class PlatePanel extends JPanel {
          wb.circular = plate_.isWellCircular();
          wb.wellBoundingRect.setBounds((int)(box.getX() + wells_[i].getColumn()*wellX + dp.xOffset + 0.5), (int)(box.getY() + wells_[i].getRow()*wellY + dp.yOffset + 0.5),
                (int)wellX, (int)wellY);
-         wb.wellRect.setBounds((int)(activeRect_.getX() + wells_[i].getColumn()*wellX + dp.xOffset + wellOffsetX + 0.5),
-               (int)(activeRect_.getY() + wells_[i].getRow()*wellY + dp.yOffset + wellOffsetY + 0.5), (int)wellInsideX, (int)wellInsideY);
+         wb.wellRect.setBounds((int)(box.getX() + wells_[i].getColumn()*wellX + dp.xOffset + wellOffsetX + 0.5),
+               (int)(box.getY() + wells_[i].getRow()*wellY + dp.yOffset + wellOffsetY + 0.5), (int)wellInsideX, (int)wellInsideY);
          wb.draw(g, dp);
          wb.dump();
       }      
@@ -387,10 +382,7 @@ public class PlatePanel extends JPanel {
       activeRect_.height -= 2*yMargin_;
       activeRect_.width -= 2*xMargin_;
 
-      if (sites == null)
-         wells_ = plate_.generatePositions(SBSPlate.DEFAULT_XYSTAGE_NAME);
-      else
-         wells_ = plate_.generatePositions(SBSPlate.DEFAULT_XYSTAGE_NAME, sites);
+      wells_ = plate_.generatePositions(SBSPlate.DEFAULT_XYSTAGE_NAME, sites);
 
       wellBoxes_ = new WellBox[wells_.length];
       for (int i=0; i<wellBoxes_.length; i++)

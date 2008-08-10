@@ -303,6 +303,11 @@ public class PlateEditor extends MMDialog implements ParentPlateGUI {
 
       loadSettings();
 
+      PositionList sites = generateSites(Integer.parseInt(rowsField_.getText()), Integer.parseInt(columnsField_.getText()), 
+            Double.parseDouble(spacingField_.getText()));
+      plate_.initialize((String)plateIDCombo_.getSelectedItem());
+      platePanel_.refreshImagingSites(sites);
+//      platePanel_.repaint();
    }
 
    protected void saveSettings() {
