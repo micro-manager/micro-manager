@@ -134,9 +134,9 @@ public class AFOptionsDlg extends JDialog {
 
    protected void applySettings() {
       af_.SIZE_FIRST = Double.parseDouble(sizeFirstField_.getText());
-      af_.NUM_FIRST = Double.parseDouble(numFirstField_.getText());
+      af_.NUM_FIRST = Integer.parseInt(numFirstField_.getText());
       af_.SIZE_SECOND = Double.parseDouble(sizeSecondField_.getText());
-      af_.NUM_SECOND = Double.parseDouble(numSecondField_.getText());
+      af_.NUM_SECOND = Integer.parseInt(numSecondField_.getText());
       af_.CROP_SIZE = Double.parseDouble(cropSizeField_.getText());
       af_.THRES = Double.parseDouble(thresField_.getText());
       af_.CHANNEL = channelField_.getText();

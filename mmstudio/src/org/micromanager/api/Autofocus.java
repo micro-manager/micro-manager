@@ -8,4 +8,5 @@ public interface Autofocus {
    public double fullFocus();
    public double incrementalFocus();
    public String getVerboseStatus();
+   public void focus(double coarseStep, int numCoarse, double fineStep, int numFine);
 }

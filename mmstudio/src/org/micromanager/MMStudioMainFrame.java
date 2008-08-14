@@ -84,6 +84,7 @@ import mmcorej.StrVector;
 import org.micromanager.acquisition.AcquisitionManager;
 import org.micromanager.acquisition.MMAcquisition;
 import org.micromanager.api.AcquisitionEngine;
+import org.micromanager.api.Autofocus;
 import org.micromanager.api.DeviceControlGUI;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.conf.ConfiguratorDlg;
@@ -900,6 +901,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       final JMenu hcsMenu = new JMenu();
       hcsMenu.setText("High-Content");
       menuBar.add(hcsMenu);
+
+      final JMenuItem autofocusOptionsMenuItem = new JMenuItem();
+      autofocusOptionsMenuItem.setText("Autofocus Options...");
+      hcsMenu.add(autofocusOptionsMenuItem);
 
       final JMenuItem plateMenuItem = new JMenuItem();
       plateMenuItem.addActionListener(new ActionListener() {
@@ -2968,6 +2973,27 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          throw new MMScriptException(e.getMessage());
       }
       
+   }
+
+   @Override
+   public void autofocus() throws MMScriptException {
+      Autofocus af = engine_.getAutofocus();
+      if (af == null)
+         throw new MMScriptException("Autofocus plugin not installed!");
+      
+      af.setMMCore(core_);
+      af.fullFocus();
+   }
+
+   @Override
+   public void autofocus(double coarseStep, int numCoarse, double fineStep,
+         int numFine) throws MMScriptException {
+      Autofocus af = engine_.getAutofocus();
+      if (af == null)
+         throw new MMScriptException("Autofocus plugin not installed!");
+      
+      af.setMMCore(core_);
+      af.focus(coarseStep, numCoarse, fineStep, numFine);
    }
 
 }

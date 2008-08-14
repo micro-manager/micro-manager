@@ -8,5 +8,6 @@ PositionList pl = new PositionList();
 gui.message(xyStage);
 gui.message(zStage);
 MultiStagePosition msp = new MultiStagePosition(xyStage, 1.0, 1.0, zStage, 100.0);
+msp.setLabel("Lab");
 pl.addPosition(msp);
 gui.setPositionList(pl);
