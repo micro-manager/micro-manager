@@ -3,22 +3,22 @@
 //PROJECT:       Micro-Manager
 //SUBSYSTEM:     mmstudio
 //-----------------------------------------------------------------------------
-//
+
 //AUTHOR:       Nenad Amodaj, nenad@amodaj.com, Jul 18, 2005
-//
+
 //COPYRIGHT:    University of California, San Francisco, 2006
-//              100X Imaging Inc, www.100ximaging.com, 2008
-//
+//100X Imaging Inc, www.100ximaging.com, 2008
+
 //LICENSE:      This file is distributed under the BSD license.
-//              License text is included with the source distribution.
-//
-//              This file is distributed in the hope that it will be useful,
-//              but WITHOUT ANY WARRANTY; without even the implied warranty
-//              of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-//
-//              IN NO EVENT SHALL THE COPYRIGHT OWNER OR
-//              CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-//              INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+//License text is included with the source distribution.
+
+//This file is distributed in the hope that it will be useful,
+//but WITHOUT ANY WARRANTY; without even the implied warranty
+//of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+//IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
 //CVS:          $Id$
 
@@ -50,6 +50,7 @@ import java.awt.event.FocusEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.awt.geom.Point2D;
 import java.awt.image.ColorModel;
 import java.io.File;
 import java.io.IOException;
@@ -235,16 +236,16 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private DragListener dragListener_;
    private ZWheelListener zWheelListener_;
    private AcquisitionManager acqMgr_;
-   
+
    /**
     * Callback to update GUI when a change happens in the MMCore.
     */
    public class CoreEventCallback extends MMEventCallback {
-      
+
       public CoreEventCallback() {
          super();
       }
-      
+
       public void onPropertiesChanged() {
          updateGUI(true);
          if (propertyBrowser_ != null)
@@ -271,7 +272,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    public MMStudioMainFrame(boolean pluginStatus) {
       super();
-     
+
       options_ = new MMOptions();
       options_.loadSettings();
 
@@ -282,7 +283,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       running_ = true;
       contrastSettings8_ = new ContrastSettings();
       contrastSettings16_ = new ContrastSettings();
-      
+
       acqMgr_ = new AcquisitionManager();
 
       sysConfigFile_ = new String(System.getProperty("user.dir") + "/" + DEFAULT_CONFIG_FILE_NAME);
@@ -320,7 +321,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       };
       timer_ = new Timer((int)interval_, timerHandler);
       timer_.stop();
-      
+
       // load application preferences
       // NOTE: only window size and position preferencesa are loaded,
       // not the settings for the camera and live imaging -
@@ -700,14 +701,14 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
       toolsMenu.addSeparator();
 
-//      final JMenuItem scriptingConsoleMenuItem = new JMenuItem();
-//      toolsMenu.add(scriptingConsoleMenuItem);
-//      scriptingConsoleMenuItem.addActionListener(new ActionListener() {
-//         public void actionPerformed(ActionEvent e) {
-//            createScriptingConsole();
-//         }
-//      });
-//      scriptingConsoleMenuItem.setText("Scripting Console...");
+//    final JMenuItem scriptingConsoleMenuItem = new JMenuItem();
+//    toolsMenu.add(scriptingConsoleMenuItem);
+//    scriptingConsoleMenuItem.addActionListener(new ActionListener() {
+//    public void actionPerformed(ActionEvent e) {
+//    createScriptingConsole();
+//    }
+//    });
+//    scriptingConsoleMenuItem.setText("Scripting Console...");
 
       final JMenuItem scriptPanelMenuItem = new JMenuItem();
       toolsMenu.add(scriptPanelMenuItem);
@@ -818,15 +819,15 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          public void actionPerformed(ActionEvent arg0) {
             try {
                // unload all devices before starting configurator
-            	
+
                // NS: Save config presets if they were changed.
                if (configChanged_)
                {
-                   Object[] options = {"Yes","No"};
-                   int n = JOptionPane.showOptionDialog(null,"Save Changed Configuration?","Micro-Manager",JOptionPane.YES_NO_OPTION,JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
-                   if (n == JOptionPane.YES_OPTION)
-                      saveConfigPresets();
-                   configChanged_ = false;
+                  Object[] options = {"Yes","No"};
+                  int n = JOptionPane.showOptionDialog(null,"Save Changed Configuration?","Micro-Manager",JOptionPane.YES_NO_OPTION,JOptionPane.QUESTION_MESSAGE, null, options, options[0]);
+                  if (n == JOptionPane.YES_OPTION)
+                     saveConfigPresets();
+                  configChanged_ = false;
                }
                core_.reset();
 
@@ -1093,7 +1094,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             zStageLabel_ = new String("");
             xyStageLabel_ = new String("");
             engine_ = new MMAcquisitionEngineMT();
-            
+
             // register callback for MMCore notifications
             CoreEventCallback cb = new CoreEventCallback();
             core_.registerCallback(cb);
@@ -1114,7 +1115,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             // load configuration from the file
             sysConfigFile_ = mainPrefs_.get(SYSTEM_CONFIG_FILE, sysConfigFile_);
             //startupScriptFile_ = mainPrefs_.get(STARTUP_SCRIPT_FILE, startupScriptFile_);
-            
+
             if (!options_.doNotAskForConfigFile) {
                MMIntroDlg introDlg = new MMIntroDlg(VERSION);
                introDlg.setConfigFile(sysConfigFile_);
@@ -1849,7 +1850,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          double pixSizeUm = core_.getPixelSizeUm();
          if (pixSizeUm > 0.0)
             dimText += ", " + TextUtils.FMT0.format(pixSizeUm*1000) + "nm/pix";
-            //dimText += ", " + TextUtils.FMT3.format(pixSizeUm) + "um/pix";
+         //dimText += ", " + TextUtils.FMT3.format(pixSizeUm) + "um/pix";
          else
             dimText += ", uncalibrated";
          if (zStageLabel_.length() > 0) {
@@ -2334,8 +2335,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       if (profileWin_ != null)
          profileWin_.dispose();
 
-//      if (scriptFrame_ != null)
-//         scriptFrame_.dispose();
+//    if (scriptFrame_ != null)
+//    scriptFrame_.dispose();
 
       if (scriptPanel_ != null)
          scriptPanel_.closePanel();
@@ -2456,7 +2457,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          return;
       }
    }   
-   
+
    public void closeSequence() {
       if (engine_ != null && engine_.isAcquisitionRunning()) {
          int result = JOptionPane.showConfirmDialog(this,
@@ -2564,6 +2565,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          }
          if (acqControlWin_.isActive())
             acqControlWin_.setTopPosition();
+         
          acqControlWin_.setVisible(true);
 
          // TODO: this call causes a strange exception the first time the dialog is created
@@ -2590,7 +2592,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       } catch(Exception exc) {
          exc.printStackTrace();
          handleError(exc.getMessage() +
-               "\nSequence window failed to open due to internal error.");
+         "\nSequence window failed to open due to internal error.");
       }
    }
 
@@ -2606,7 +2608,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       } catch(Exception exc) {
          exc.printStackTrace();
          handleError(exc.getMessage() +
-               "\nSplit View Window failed to open due to internal error.");
+         "\nSplit View Window failed to open due to internal error.");
       }
    }
 
@@ -2677,34 +2679,34 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          }
       }
    }
-   
-   
+
+
    ////////////////////////////////////////////////////////////////////////////
    // Scripting interface
    ////////////////////////////////////////////////////////////////////////////
-   
+
    private class ExecuteAcq implements Runnable {
 
       public ExecuteAcq() {
       }
-      
+
       public void run() {         
          if (acqControlWin_ != null)
             acqControlWin_.runAcquisition();
       }
    }
-   
+
    private class LoadAcq implements Runnable {
       private String filePath_;
 
       public LoadAcq(String path) {
          filePath_ = path;
       }
-      
+
       public void run() {
          // stop current acquisition if any
          engine_.shutdown();
-         
+
          // load protocol
          if (acqControlWin_ != null)
             acqControlWin_.loadAcqSettingsFromFile(filePath_);
@@ -2715,7 +2717,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
       public RefreshPositionList() {
       }
-      
+
       public void run() {         
          if (posListDlg_ != null) {
             posListDlg_.setPositionList(posList_);
@@ -2723,13 +2725,13 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          }
       }
    }
-   
+
    private void testForAbortRequests() throws MMScriptException {
       if (scriptPanel_ != null) {
          if (scriptPanel_.stopRequestPending())
             throw new MMScriptException("Script interrupted by the user!");
       }
-      
+
    }
 
    public void startBurstAcquisition() throws MMScriptException {
@@ -2738,7 +2740,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          fastAcqWin_.start();
       }
    }
-      
+
    public void runBurstAcquisition() throws MMScriptException {
       testForAbortRequests();
       if (fastAcqWin_ == null)
@@ -2761,7 +2763,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       else
          return false;
    }
-   
+
    public void startAcquisition() throws MMScriptException {
       testForAbortRequests();
       SwingUtilities.invokeLater(new ExecuteAcq());
@@ -2783,7 +2785,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          throw new MMScriptException("Acquisition window must be open for this command to work.");
       }
    }
-   
+
    public void runAcqusition(String name, String root) throws MMScriptException {
       testForAbortRequests();
       if (acqControlWin_ != null) {
@@ -2800,36 +2802,36 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          throw new MMScriptException("Acquisition window must be open for this command to work.");
       }
    }
-   
+
    public void loadAcquisition(String path) throws MMScriptException {
       testForAbortRequests();
       SwingUtilities.invokeLater(new LoadAcq(path));
    }
 
-    public void setPositionList(PositionList pl) throws MMScriptException {
-       testForAbortRequests();
-       // use serialization to clone the PositionList object
-       posList_ = PositionList.newInstance(pl);
-       SwingUtilities.invokeLater(new RefreshPositionList());
-    }
-    
-    public void sleep (long ms) throws MMScriptException {
-       if (scriptPanel_ != null) {
-          if (scriptPanel_.stopRequestPending())
-             throw new MMScriptException("Script interrupted by the user!");
-          scriptPanel_.sleep(ms);
-       }       
-    }
+   public void setPositionList(PositionList pl) throws MMScriptException {
+      testForAbortRequests();
+      // use serialization to clone the PositionList object
+      posList_ = PositionList.newInstance(pl);
+      SwingUtilities.invokeLater(new RefreshPositionList());
+   }
 
-    public void openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices) throws MMScriptException {
-       acqMgr_.openAcquisition(name, rootDir);
-       MMAcquisition acq = acqMgr_.getAcquisition(name);
-       acq.setDimensions(nrFrames, nrChannels, nrSlices);
-    }
+   public void sleep (long ms) throws MMScriptException {
+      if (scriptPanel_ != null) {
+         if (scriptPanel_.stopRequestPending())
+            throw new MMScriptException("Script interrupted by the user!");
+         scriptPanel_.sleep(ms);
+      }       
+   }
+
+   public void openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices) throws MMScriptException {
+      acqMgr_.openAcquisition(name, rootDir);
+      MMAcquisition acq = acqMgr_.getAcquisition(name);
+      acq.setDimensions(nrFrames, nrChannels, nrSlices);
+   }
 
    public void closeAcquisition(String name) throws MMScriptException {
       acqMgr_.closeAcquisition(name);
-      
+
    }
 
    public void closeAcquisitionImage5D(String title) throws MMScriptException {
@@ -2838,7 +2840,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    public void loadBurstAcquisition(String path) {
       // TODO Auto-generated method stub
-      
+
    }
 
    public void refreshGUI() {
@@ -2847,13 +2849,13 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    public void setAcquisitionProperty(String acqName, String propertyName, String value) {
       // TODO Auto-generated method stub
-      
+
    }
 
    public void setImageProperty(String acqName, int frame, int channel,
          int slice, String propName, String value) {
       // TODO Auto-generated method stub
-      
+
    }
 
    public void snapAndAddImage(String name, int frame, int channel, int slice) throws MMScriptException {
@@ -2865,7 +2867,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       } catch (Exception e) {
          throw new MMScriptException(e);
       }
-      
+
       if (!acq.isInitialized()) {
          long width = core_.getImageWidth();
          long height = core_.getImageHeight();
@@ -2873,7 +2875,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          acq.setImagePhysicalDimensions((int)width, (int)height, (int)depth);
          acq.initialize();
       }
-      
+
       acq.insertImage(img, frame, channel, slice);
    }
 
@@ -2881,27 +2883,27 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       acqMgr_.closeAll();
    }
 
-   
+
    private class ScriptConsoleMessage implements Runnable {
       String msg_;
 
       public ScriptConsoleMessage(String text) {
          msg_ = text;
       }
-      
+
       public void run() {         
          scriptPanel_.message(msg_);
       }
    }
-   
+
    public void message(String text) throws MMScriptException {
       if (scriptPanel_ != null) {
          if (scriptPanel_.stopRequestPending())
             throw new MMScriptException("Script interrupted by the user!");
-         
+
          SwingUtilities.invokeLater(new ScriptConsoleMessage(text));
       }       
-  }
+   }
 
    public void clearMessageWindow() throws MMScriptException {
       if (scriptPanel_ != null) {
@@ -2920,16 +2922,16 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
 
    public void setChannelContrast(String title, int channel, int min, int max)
-         throws MMScriptException {
+   throws MMScriptException {
       MMAcquisition acq = acqMgr_.getAcquisition(title);
       acq.setChannelContrast(channel, min, max);      
    }
 
    public void setChannelName(String title, int channel, String name)
-         throws MMScriptException {
+   throws MMScriptException {
       MMAcquisition acq = acqMgr_.getAcquisition(title);
       acq.setChannelName(channel, name);
-      
+
    }
 
    public void setChannelColor(String title, int channel, Color color) throws MMScriptException {
@@ -2940,52 +2942,66 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    public void setContrastBasedOnFrame(String title, int frame, int slice) throws MMScriptException {
       MMAcquisition acq = acqMgr_.getAcquisition(title);
       acq.setContrastBasedOnFrame(frame, slice);
-    }
+   }
 
    public void runWellScan(WellAcquisitionData wad) throws MMScriptException {
       testForAbortRequests();
-      if (acqControlWin_ != null) {
-         engine_.setPositionList(posList_);
-         if (acqControlWin_.runWellScan(wad) == false)
-            throw new MMScriptException("Scanning error.");
-         try {
-            while (acqControlWin_.isAcquisitionRunning()) {
-               Thread.sleep(500);
-            }
-         } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+      if (acqControlWin_ == null)
+         openAcqControlDialog();
+
+      engine_.setPositionList(posList_);
+      if (acqControlWin_.runWellScan(wad) == false)
+         throw new MMScriptException("Scanning error.");
+      try {
+         while (acqControlWin_.isAcquisitionRunning()) {
+            Thread.sleep(500);
          }
-      } else {
-         throw new MMScriptException("Acquisition window must be open for this command to work.");
+      } catch (InterruptedException e) {
+         // TODO Auto-generated catch block
+         e.printStackTrace();
       }
    }
 
-   public void moveXYStage(double x, double y) throws MMScriptException {
+   public void setXYStagePosition(double x, double y) throws MMScriptException {
       try {
          core_.setXYPosition(core_.getXYStageDevice(), x, y);
          core_.waitForDevice(core_.getXYStageDevice());
       } catch (Exception e) {
          throw new MMScriptException(e.getMessage());
       }
+
+   }
+
+   public Point2D.Double getXYStagePosition() throws MMScriptException {
+      String stage = core_.getXYStageDevice();
+      if (stage.isEmpty())
+         return null;
       
+      double x[] = new double[1];
+      double y[] = new double[1];
+      try {
+         core_.getXYPosition(stage, x, y);
+         Point2D.Double pt = new Point2D.Double(x[0], y[0]);
+         return pt;
+      } catch (Exception e) {
+         throw new MMScriptException(e.getMessage());
+      }
    }
 
    public void autofocus() throws MMScriptException {
       Autofocus af = engine_.getAutofocus();
       if (af == null)
          throw new MMScriptException("Autofocus plugin not installed!");
-      
+
       af.setMMCore(core_);
       af.fullFocus();
    }
 
-   public void autofocus(double coarseStep, int numCoarse, double fineStep,
-         int numFine) throws MMScriptException {
+   public void autofocus(double coarseStep, int numCoarse, double fineStep, int numFine) throws MMScriptException {
       Autofocus af = engine_.getAutofocus();
       if (af == null)
          throw new MMScriptException("Autofocus plugin not installed!");
-      
+
       af.setMMCore(core_);
       af.focus(coarseStep, numCoarse, fineStep, numFine);
    }

@@ -24,6 +24,7 @@
 package org.micromanager.api;
 
 import java.awt.Color;
+import java.awt.geom.Point2D;
 
 import org.micromanager.metadata.WellAcquisitionData;
 import org.micromanager.navigation.PositionList;
@@ -34,7 +35,7 @@ import org.micromanager.utils.MMScriptException;
  * All functions throw MMScriptException (TBD)
  */
 public interface ScriptInterface {
-   
+      
    /**
     * Blocks the script execution for the specified number of milliseconds.
     * Script can be aborted during sleep.
@@ -189,11 +190,17 @@ public interface ScriptInterface {
    public void closeAcquisitionImage5D(String title) throws MMScriptException;
 
    /**
+    * Obtain the current XY stage position.
+    * Returns a point in device coordinates in microns.
+    */
+   public Point2D.Double getXYStagePosition()  throws MMScriptException;
+   
+   /**
     * Move default XY stage and block until done.
     * @param x - coordinate in um
     * @param y - coordinate in um
     */
-   public void moveXYStage(double x, double y)  throws MMScriptException ;
+   public void setXYStagePosition(double x, double y)  throws MMScriptException ;
    
    /**
     * Open empty image acquisition window

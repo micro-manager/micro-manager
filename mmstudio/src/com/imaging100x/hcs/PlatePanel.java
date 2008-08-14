@@ -37,6 +37,7 @@ public class PlatePanel extends JPanel {
    private WellBox[] wellBoxes_;
    private Rectangle activeRect_;
    private Rectangle stagePointer_;
+   private Point2D.Double stagePos_;
    public enum Tool {SELECT, MOVE}
    private Tool mode_;
    private ScriptInterface app_;
@@ -68,11 +69,13 @@ public class PlatePanel extends JPanel {
          wellBoundingRect = new Rectangle(0, 0, 100, 100);
          wellRect = new Rectangle(10, 10, 80, 80);
          siteRect = new Rectangle(4, 4);
+         stagePointer_ = new Rectangle(3, 3);
          selected = false;
          active = false;
          params_ = new DrawingParams();
          sites_ = pl;
          circular = false;
+         stagePos_ = null;
       }
 
       public void draw(Graphics2D g, DrawingParams dp) {
@@ -172,7 +175,8 @@ public class PlatePanel extends JPanel {
          Point2D.Double pt = scalePixelToDevice(e.getX(), e.getY());
 
          try {
-            app_.moveXYStage(pt.x, pt.y);
+            app_.setXYStagePosition(pt.x, pt.y);
+            stagePos_ = app_.getXYStagePosition();
          } catch (MMScriptException e1) {
             // TODO Auto-generated catch block
             e1.printStackTrace();
@@ -187,13 +191,19 @@ public class PlatePanel extends JPanel {
       Point2D.Double pt = scalePixelToDevice(e.getX(), e.getY());
       String well = plate_.getWellLabel(pt.x, pt.y);
       gui_.updatePointerXYPosition(pt.x, pt.y, well, "");
-
    }
 
    private Point2D.Double scalePixelToDevice(int x, int y) {
       int pixelPosX = y - activeRect_.y;
       int pixelPosY = x - activeRect_.x;
       return new Point2D.Double(pixelPosX/drawingParams_.xFactor, pixelPosY/drawingParams_.yFactor);
+   }
+   
+   private Point scaleDeviceToPixel(double x, double y) {
+      int pixX = (int)(x * drawingParams_.xFactor + activeRect_.x + 0.5);
+      int pixY = (int)(y * drawingParams_.yFactor + activeRect_.y + 0.5);
+      
+      return new Point(pixX, pixY);
    }
 
    public void setTool(Tool t) {
@@ -234,7 +244,10 @@ public class PlatePanel extends JPanel {
       drawLabels(g2d, box);
       drawWells(g2d, box);
       drawGrid(g2d, box);
-
+      
+      // draw stage pointer
+      drawStagePointer(g2d);
+      
       // restore settings
       g2d.setPaint(oldPaint);
       g2d.setStroke(oldStroke);
@@ -373,6 +386,27 @@ public class PlatePanel extends JPanel {
       return new Point(labelBox.x + xoffset, labelBox.y - yoffset);
    }
 
+   private void drawStagePointer(Graphics2D g) {
+      if (stagePos_ == null || app_ == null)
+         return;
+      
+      Point pt = scaleDeviceToPixel(stagePos_.x, stagePos_.y);
+      stagePointer_.setLocation(pt);
+      
+      Paint oldPaint = g.getPaint();
+      Stroke oldStroke = g.getStroke();
+
+      g.setStroke(new BasicStroke((float)1));
+      g.setPaint(Color.RED);
+      g.fill(stagePointer_);
+      g.setPaint(Color.BLACK);
+      g.draw(stagePointer_);
+
+      g.setPaint(oldPaint);
+      g.setStroke(oldStroke);
+      
+   }
+   
    public void refreshImagingSites(PositionList sites) {
       System.out.println("refreshSites()");
       activeRect_ = getBounds();
@@ -456,6 +490,15 @@ public class PlatePanel extends JPanel {
 
    public void setApp(ScriptInterface app) {
       app_ = app;
+      stagePos_ = null;
+      if (app_ == null)
+         return;
+      try {
+         stagePos_ = app_.getXYStagePosition();
+      } catch (MMScriptException e) {
+         // TODO Auto-generated catch block
+         e.printStackTrace();
+      }
    }
 
    public void setLockAspect(boolean state) {
