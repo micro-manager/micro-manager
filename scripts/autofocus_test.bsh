@@ -1,0 +1,10 @@
+// run auto-focus with current options
+//gui.autofocus();
+
+// run auto-focus with paramters
+coarseStep = 2.0;
+numCoarseSteps = 2;
+fineStep = 0.2;
+numFineSteps = 6;
+
+gui.autofocus(coarseSteps, numCoarseSteps, fineStep, numFineSteps);
