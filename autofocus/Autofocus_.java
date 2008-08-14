@@ -1,3 +1,29 @@
+///////////////////////////////////////////////////////////////////////////////
+//FILE:           Autofocus_.java
+//PROJECT:        Micro-Manager
+//SUBSYSTEM:      Autofocusing plug-in for mciro-manager and ImageJ
+//-----------------------------------------------------------------------------
+//
+//AUTHOR:         Pakpoom Subsoontorn & Hernan Garcia, June, 2007
+//                Nenad Amodaj, nenad@amodaj.com
+//
+//COPYRIGHT:      California Institute of Technology
+//                University of California San Francisco
+//                100X Imaging Inc, www.100ximaging.com
+//                
+//LICENSE:        This file is distributed under the BSD license.
+//                License text is included with the source distribution.
+//
+//                This file is distributed in the hope that it will be useful,
+//                but WITHOUT ANY WARRANTY; without even the implied warranty
+//                of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+//
+//CVS:            $Id: MetadataDlg.java 1275 2008-06-03 21:31:24Z nenad $
+
 import ij.IJ;
 import ij.ImagePlus;
 import ij.gui.ImageWindow;
