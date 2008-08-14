@@ -902,10 +902,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       hcsMenu.setText("High-Content");
       menuBar.add(hcsMenu);
 
-      final JMenuItem autofocusOptionsMenuItem = new JMenuItem();
-      autofocusOptionsMenuItem.setText("Autofocus Options...");
-      hcsMenu.add(autofocusOptionsMenuItem);
-
       final JMenuItem plateMenuItem = new JMenuItem();
       plateMenuItem.addActionListener(new ActionListener() {
          public void actionPerformed(final ActionEvent e) {
@@ -2975,7 +2971,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       
    }
 
-   @Override
    public void autofocus() throws MMScriptException {
       Autofocus af = engine_.getAutofocus();
       if (af == null)
@@ -2985,7 +2980,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       af.fullFocus();
    }
 
-   @Override
    public void autofocus(double coarseStep, int numCoarse, double fineStep,
          int numFine) throws MMScriptException {
       Autofocus af = engine_.getAutofocus();
