@@ -1305,6 +1305,7 @@ int CDemoStage::OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
 // ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 CDemoXYStage::CDemoXYStage() : 
+   CXYStageBase<CDemoXYStage>(),
    stepSize_um_(0.015),
    posX_um_(0.0),
    posY_um_(0.0),

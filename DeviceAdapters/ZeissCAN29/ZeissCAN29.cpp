@@ -2710,6 +2710,7 @@ int Axis::OnVelocity(MM::PropertyBase* pProp, MM::ActionType eAct)
  * ZeissXYStage: Micro-Manager implementation of X and Y Stage
  */
 XYStage::XYStage (): 
+   CXYStageBase<XYStage>(),
    stepSize_um_(0.001),
    initialized_ (false),
    moveMode_ (0),

@@ -639,6 +639,7 @@ int ZDrive::OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 XYDrive::XYDrive() : 
 //TODO: get the step size (e.g. factor) from Nikon Scope object and not use magic number 40. 
+   CXYStageBase<XYDrive>(),
 	factor_ (40.0),
 	name_ (g_TIXYDrive)
 {
