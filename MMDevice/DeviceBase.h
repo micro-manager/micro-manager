@@ -807,24 +807,24 @@ public:
    CXYStageBase() : originXUm_(0.0), originYUm_(0.0)
    {
       // set-up directionality properties
-      CreateProperty(MM::g_Keyword_Transpose_MirrorX, "0", MM::Integer, false);
-      AddAllowedValue(MM::g_Keyword_Transpose_MirrorX, "0");
-      AddAllowedValue(MM::g_Keyword_Transpose_MirrorX, "1");
+      this->CreateProperty(MM::g_Keyword_Transpose_MirrorX, "0", MM::Integer, false);
+      this->AddAllowedValue(MM::g_Keyword_Transpose_MirrorX, "0");
+      this->AddAllowedValue(MM::g_Keyword_Transpose_MirrorX, "1");
 
-      CreateProperty(MM::g_Keyword_Transpose_MirrorY, "0", MM::Integer, false);
-      AddAllowedValue(MM::g_Keyword_Transpose_MirrorY, "0");
-      AddAllowedValue(MM::g_Keyword_Transpose_MirrorY, "1");
+      this->CreateProperty(MM::g_Keyword_Transpose_MirrorY, "0", MM::Integer, false);
+      this->AddAllowedValue(MM::g_Keyword_Transpose_MirrorY, "0");
+      this->AddAllowedValue(MM::g_Keyword_Transpose_MirrorY, "1");
    }
    
 
    int SetPositionUm(double x, double y)
    {
       char val[MM::MaxStrLength];
-      int ret = GetProperty(MM::g_Keyword_Transpose_MirrorX, val);
+      int ret = this->GetProperty(MM::g_Keyword_Transpose_MirrorX, val);
       assert(ret == DEVICE_OK);
       bool mirrorX = strcmp(val, "1") == 0 ? true : false;
 
-      ret = GetProperty(MM::g_Keyword_Transpose_MirrorY, val);
+      ret = this->GetProperty(MM::g_Keyword_Transpose_MirrorY, val);
       assert(ret == DEVICE_OK);
       bool mirrorY = strcmp(val, "1") == 0 ? true : false;
 
@@ -833,16 +833,16 @@ public:
       long ySteps = 0;
 
       if (mirrorX)
-         xSteps = (long) ((originXUm_ - x) / GetStepSizeXUm() + 0.5);
+         xSteps = (long) ((originXUm_ - x) / this->GetStepSizeXUm() + 0.5);
       else
-         xSteps = (long) ((originXUm_ + x) / GetStepSizeXUm() + 0.5);
+         xSteps = (long) ((originXUm_ + x) / this->GetStepSizeXUm() + 0.5);
 
       if (mirrorY)
-         ySteps = (long) ((originYUm_ - y) / GetStepSizeYUm() + 0.5);
+         ySteps = (long) ((originYUm_ - y) / this->GetStepSizeYUm() + 0.5);
       else
-         ySteps = (long) ((originYUm_ + y) / GetStepSizeYUm() + 0.5);
+         ySteps = (long) ((originYUm_ + y) / this->GetStepSizeYUm() + 0.5);
    
-      return SetPositionSteps(xSteps, ySteps);
+      return this->SetPositionSteps(xSteps, ySteps);
    }
 
    /**
@@ -864,11 +864,11 @@ public:
    int SetAdapterOriginUm(double x, double y)
    {
       long xStep, yStep;
-      int ret = GetPositionSteps(xStep, yStep);
+      int ret = this->GetPositionSteps(xStep, yStep);
       if (ret != DEVICE_OK)                                                     
          return ret;                                                            
-      originXUm_ = (xStep * GetStepSizeXUm()) + x;                                           
-      originYUm_ = (yStep * GetStepSizeYUm()) + y;                                           
+      originXUm_ = (xStep * this->GetStepSizeXUm()) + x;
+      originYUm_ = (yStep * this->GetStepSizeYUm()) + y;
                                                                              
       return DEVICE_OK;                                                         
    }                                                                            
@@ -876,28 +876,28 @@ public:
    int GetPositionUm(double& x, double& y)
    {
       char val[MM::MaxStrLength];
-      int ret = GetProperty(MM::g_Keyword_Transpose_MirrorX, val);
+      int ret = this->GetProperty(MM::g_Keyword_Transpose_MirrorX, val);
       assert(ret == DEVICE_OK);
       bool mirrorX = strcmp(val, "1") == 0 ? true : false;
 
-      ret = GetProperty(MM::g_Keyword_Transpose_MirrorY, val);
+      ret = this->GetProperty(MM::g_Keyword_Transpose_MirrorY, val);
       assert(ret == DEVICE_OK);
       bool mirrorY = strcmp(val, "1") == 0 ? true : false;
 
       long xSteps, ySteps;
-      ret = GetPositionSteps(xSteps, ySteps);
+      ret = this->GetPositionSteps(xSteps, ySteps);
       if (ret != DEVICE_OK)
          return ret;
 
       if (mirrorX)
-         x = originXUm_ - (xSteps * GetStepSizeXUm());
+         x = originXUm_ - (xSteps * this->GetStepSizeXUm());
       else 
-         x = originXUm_ + (xSteps * GetStepSizeXUm());
+         x = originXUm_ + (xSteps * this->GetStepSizeXUm());
 
       if (mirrorY)
-         y = originYUm_ - (ySteps * GetStepSizeYUm());
+         y = originYUm_ - (ySteps * this->GetStepSizeYUm());
       else 
-         y = originYUm_ + (ySteps * GetStepSizeYUm());
+         y = originYUm_ + (ySteps * this->GetStepSizeYUm());
 
       return DEVICE_OK;
    }
@@ -910,11 +910,11 @@ public:
    int SetRelativePositionSteps(long x, long y)
    {
       long xSteps, ySteps;
-      int ret = GetPositionSteps(xSteps, ySteps);
+      int ret = this->GetPositionSteps(xSteps, ySteps);
       if (ret != DEVICE_OK)
          return ret;
 
-      return SetPositionSteps(xSteps+x, ySteps+y);
+      return this->SetPositionSteps(xSteps+x, ySteps+y);
    }
 
 
