@@ -4,6 +4,7 @@ import java.awt.event.ActionListener;
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 
 
@@ -100,8 +101,8 @@ public class AFOptionsDlg extends JDialog {
       final JButton okButton = new JButton();
       okButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
-            applySettings();
-            dispose();
+            if (applySettings())
+               dispose();
          }
       });
       okButton.setText("OK");
@@ -124,22 +125,28 @@ public class AFOptionsDlg extends JDialog {
 
    private void setupDisplay() {
       sizeFirstField_.setText(Double.toString(af_.SIZE_FIRST));
-      numFirstField_.setText(Double.toString(af_.NUM_FIRST));
+      numFirstField_.setText(Integer.toString(af_.NUM_FIRST));
       sizeSecondField_.setText(Double.toString(af_.SIZE_SECOND));
-      numSecondField_.setText(Double.toString(af_.NUM_SECOND));
+      numSecondField_.setText(Integer.toString(af_.NUM_SECOND));
       cropSizeField_.setText(Double.toString(af_.CROP_SIZE));
       thresField_.setText(Double.toString(af_.THRES));
       channelField_.setText(af_.CHANNEL);
    }
 
-   protected void applySettings() {
-      af_.SIZE_FIRST = Double.parseDouble(sizeFirstField_.getText());
-      af_.NUM_FIRST = Integer.parseInt(numFirstField_.getText());
-      af_.SIZE_SECOND = Double.parseDouble(sizeSecondField_.getText());
-      af_.NUM_SECOND = Integer.parseInt(numSecondField_.getText());
-      af_.CROP_SIZE = Double.parseDouble(cropSizeField_.getText());
-      af_.THRES = Double.parseDouble(thresField_.getText());
-      af_.CHANNEL = channelField_.getText();
+   protected boolean  applySettings() {
+      try {
+         af_.SIZE_FIRST = Double.parseDouble(sizeFirstField_.getText());
+         af_.NUM_FIRST = Integer.parseInt(numFirstField_.getText());
+         af_.SIZE_SECOND = Double.parseDouble(sizeSecondField_.getText());
+         af_.NUM_SECOND = Integer.parseInt(numSecondField_.getText());
+         af_.CROP_SIZE = Double.parseDouble(cropSizeField_.getText());
+         af_.THRES = Double.parseDouble(thresField_.getText());
+         af_.CHANNEL = channelField_.getText();
+         return true;
+      } catch (NumberFormatException e) {
+         JOptionPane.showMessageDialog(this, "Invalid data format: " + e.getMessage());
+         return false;
+      }
    }
 
 }
