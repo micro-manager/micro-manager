@@ -2974,7 +2974,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    public Point2D.Double getXYStagePosition() throws MMScriptException {
       String stage = core_.getXYStageDevice();
-      if (stage.isEmpty())
+      if (stage.length() == 0)
          return null;
       
       double x[] = new double[1];
