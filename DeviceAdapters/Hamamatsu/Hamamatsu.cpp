@@ -132,6 +132,7 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
 // CHamamatsu constructor/destructor
 
 CHamamatsu::CHamamatsu() :
+   CCameraBase<CHamamatsu> (),
    m_bInitialized(false),
    m_bBusy(false),
    acquiring_(false),

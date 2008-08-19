@@ -175,7 +175,8 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
  * the constructor. We should do as little as possible in the constructor and
  * perform most of the initialization in the Initialize() method.
  */
-CDemoCamera::CDemoCamera() : 
+CDemoCamera::CDemoCamera() :
+   CCameraBase<CDemoCamera> (),
    initialized_(false),
    busy_(false),
    readoutUs_(0.0),

@@ -67,6 +67,7 @@ unsigned Cascade::refCount_ = 0;
 // &Cascade constructor/destructor
 
 Cascade::Cascade() :
+   CCameraBase<Cascade> (),
    initialized_(false),
    busy_(false),
    hPVCAM_(0),

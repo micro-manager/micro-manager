@@ -305,6 +305,7 @@ namespace MM {
 
       virtual int SetPositionSteps(long x, long y) = 0;
       virtual int GetPositionSteps(long& x, long& y) = 0;
+      virtual int SetRelativePositionSteps(long x, long y) = 0;
       virtual int Home() = 0;
       virtual int Stop() = 0;
 	   virtual int SetOrigin() = 0;//jizhen, 4/12/2007

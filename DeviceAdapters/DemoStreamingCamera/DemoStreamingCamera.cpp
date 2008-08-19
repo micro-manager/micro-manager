@@ -132,6 +132,7 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
  * perform most of the initialization in the Initialize() method.
  */
 DemoStreamingCamera::DemoStreamingCamera() : 
+   CCameraBase<DemoStreamingCamera> (),
    initialized_(false),
    busy_(false),
    readoutUs_(0),

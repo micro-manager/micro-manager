@@ -28,6 +28,7 @@ import java.awt.event.*;
 
 import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
+import mmcorej.MMCoreJ;
 
 /**
 */
@@ -96,17 +97,17 @@ public class CenterListener implements MouseListener {
             correction_ = false;
          else 
             correction_ = true;
-         tmp = core_.getProperty(camera, "TransposeMirrorX");
+         tmp = core_.getProperty(camera, MMCoreJ.getG_Keyword_Transpose_MirrorX());
          if (tmp.equals("0")) 
             mirrorX_ = false;
          else 
             mirrorX_ = true;
-         tmp = core_.getProperty(camera, "TransposeMirrorY");
+         tmp = core_.getProperty(camera, MMCoreJ.getG_Keyword_Transpose_MirrorY());
          if (tmp.equals("0")) 
             mirrorY_ = false;
          else 
             mirrorY_ = true;
-         tmp = core_.getProperty(camera, "TransposeXY");
+         tmp = core_.getProperty(camera, MMCoreJ.getG_Keyword_Transpose_SwapXY());
          if (tmp.equals("0")) 
             transposeXY_ = false;
          else 

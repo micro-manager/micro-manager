@@ -189,7 +189,8 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
  * the constructor. We should do as little as possible in the constructor and
  * perform most of the initialization in the Initialize() method.
  */
-QICamera::QICamera()
+QICamera::QICamera() :
+   CCameraBase<QICamera> ()
 {
 	#ifdef PRINT_FUNCTION_NAMES
 		printf("QICamera::QICamera\n");

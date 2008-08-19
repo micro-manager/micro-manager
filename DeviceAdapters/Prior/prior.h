@@ -133,16 +133,12 @@ public:
 
    // XYStage API
    // -----------
-  int SetPositionUm(double x, double y);
-  int SetRelativePositionUm(double x, double y);
-  int GetPositionUm(double& x, double& y);
   int SetPositionSteps(long x, long y);
   int SetRelativePositionSteps(long x, long y);
   int GetPositionSteps(long& x, long& y);
   int Home();
   int Stop();
   int SetOrigin();//jizhen 4/12/2007
-  int SetAdapterOriginUm(double x, double y);
   int GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax);
   int GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax);
   double GetStepSizeXUm() {return stepSizeXUm_;}
@@ -153,8 +149,6 @@ public:
    int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnStepSizeX(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnStepSizeY(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnMirrorX(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnMirrorY(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    int GetResolution(double& resX, double& resY);
