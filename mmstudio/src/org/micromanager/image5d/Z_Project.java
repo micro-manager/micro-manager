@@ -82,7 +82,7 @@ public class Z_Project implements PlugIn {
 
       // Do Projection
       if(bOutputImage5D) {
-         //Image5D resultI5D = doI5DProjection();
+         Image5D resultI5D = doI5DProjection();
       } else {
          ImagePlus resultImage = doProjection();
          if(resultImage != null)

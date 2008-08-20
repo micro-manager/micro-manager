@@ -471,6 +471,7 @@ public class Image5DWindow extends StackWindow {
             }
             progressBar.setProgress(i);
          }
+         acqData_.saveMetadata();
       } catch (MMAcqDataException e) {
          JOptionPane.showMessageDialog(this, e.getMessage());
       } finally {

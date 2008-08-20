@@ -1202,8 +1202,8 @@ public class AcquisitionData {
          e.printStackTrace();
       }
 
-      if (!inmemory_)
-         writeMetadata();
+      //if (!inmemory_)
+         //writeMetadata();
    }
 
    /**
@@ -1299,7 +1299,7 @@ public class AcquisitionData {
       } else {
          // save pixels to disk
          saveImageFile(basePath_ + "/" + fname, img, (int)imgWidth_, (int)imgHeight_);
-         writeMetadata();
+         // writeMetadata();
       }
 
       return fname; 
@@ -1346,7 +1346,7 @@ public class AcquisitionData {
       }
 
       if (!inmemory_) {
-         writeMetadata();
+         //writeMetadata();
       }
    }
 
