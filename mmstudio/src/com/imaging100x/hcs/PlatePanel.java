@@ -9,6 +9,8 @@ import java.awt.Paint;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Stroke;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
@@ -149,9 +151,6 @@ public class PlatePanel extends JPanel {
       else
          wells_ = plate_.generatePositions(SBSPlate.DEFAULT_XYSTAGE_NAME, pl);
       
-      wellBoxes_ = new WellBox[plate_.getNumRows() * plate_.getNumColumns()];
-      for (int i=0; i<wellBoxes_.length; i++)
-         wellBoxes_[i] = new WellBox(wells_[i].getSitePositions());
 
       addMouseListener(new MouseAdapter() {
          public void mouseClicked(final MouseEvent e) {
@@ -164,15 +163,28 @@ public class PlatePanel extends JPanel {
             onMouseMove(e);
          }
       });
+      
+      addComponentListener(new ComponentAdapter() {
+         public void componentResized(final ComponentEvent e) {
+            rescale();
+         }
+      });
+      
+      rescale();
+      wellBoxes_ = new WellBox[plate_.getNumRows() * plate_.getNumColumns()];
+      for (int i=0; i<wellBoxes_.length; i++)
+         wellBoxes_[i] = new WellBox(wells_[i].getSitePositions());
    }
 
    protected void onMouseClicked(MouseEvent e) {
+      System.out.println("Mouse clicked: " + e.getX() + "," + e.getY());
+      Point2D.Double pt = scalePixelToDevice(e.getX(), e.getY());
+      String well = plate_.getWellLabel(pt.x, pt.y);
+      System.out.println("Device coordinates: " + pt.x + "," + pt.y + " : " + well);
+      
       if (mode_ == Tool.MOVE) {
          if (app_ == null)
             return;
-
-         System.out.println("Mouse clicked: " + e.getX() + "," + e.getY());
-         Point2D.Double pt = scalePixelToDevice(e.getX(), e.getY());
 
          try {
             app_.setXYStagePosition(pt.x, pt.y);
@@ -194,8 +206,8 @@ public class PlatePanel extends JPanel {
    }
 
    private Point2D.Double scalePixelToDevice(int x, int y) {
-      int pixelPosX = y - activeRect_.y;
-      int pixelPosY = x - activeRect_.x;
+      int pixelPosY = y - activeRect_.y;
+      int pixelPosX = x - activeRect_.x;
       return new Point2D.Double(pixelPosX/drawingParams_.xFactor, pixelPosY/drawingParams_.yFactor);
    }
    
@@ -252,6 +264,32 @@ public class PlatePanel extends JPanel {
       g2d.setPaint(oldPaint);
       g2d.setStroke(oldStroke);
       g2d.setColor(oldColor);
+   }
+
+   private void rescale() {
+      activeRect_ = getBounds();
+
+      // shrink drawing area by the margin amount
+      activeRect_.x = (int)xMargin_;
+      activeRect_.y = (int)yMargin_;
+      activeRect_.height -= 2*yMargin_;
+      activeRect_.width -= 2*xMargin_;
+      
+      // calculate drawing parameters based on the active area
+      drawingParams_ = new DrawingParams();
+      drawingParams_.xFactor = activeRect_.getWidth()/plate_.getXSize();
+      drawingParams_.yFactor = activeRect_.getHeight()/plate_.getYSize();
+      if (lockAspect_) {
+         if (drawingParams_.xFactor < drawingParams_.yFactor)
+            drawingParams_.yFactor = drawingParams_.xFactor;
+         else
+            drawingParams_.xFactor = drawingParams_.yFactor;
+      }
+
+      drawingParams_.xOffset = plate_.getTopLeftX() * drawingParams_.xFactor;
+      drawingParams_.yOffset = plate_.getTopLeftY() * drawingParams_.yFactor;
+      drawingParams_.xTopLeft = activeRect_.x;
+      drawingParams_.yTopLeft = activeRect_.y;
    }
 
    private void drawWells(Graphics2D g, Rectangle box) {
@@ -409,35 +447,13 @@ public class PlatePanel extends JPanel {
    
    public void refreshImagingSites(PositionList sites) {
       System.out.println("refreshSites()");
-      activeRect_ = getBounds();
-      // shrink drawing area by the margin amount
-      activeRect_.x = (int)xMargin_;
-      activeRect_.y = (int)yMargin_;
-      activeRect_.height -= 2*yMargin_;
-      activeRect_.width -= 2*xMargin_;
-
+      rescale();
+      
       wells_ = plate_.generatePositions(SBSPlate.DEFAULT_XYSTAGE_NAME, sites);
 
       wellBoxes_ = new WellBox[wells_.length];
       for (int i=0; i<wellBoxes_.length; i++)
          wellBoxes_[i] = new WellBox(wells_[i].getSitePositions());  
-
-      // calculate drawing parameters based on the active area
-
-      drawingParams_ = new DrawingParams();
-      drawingParams_.xFactor = activeRect_.getWidth()/plate_.getXSize();
-      drawingParams_.yFactor = activeRect_.getHeight()/plate_.getYSize();
-      if (lockAspect_) {
-         if (drawingParams_.xFactor < drawingParams_.yFactor)
-            drawingParams_.yFactor = drawingParams_.xFactor;
-         else
-            drawingParams_.xFactor = drawingParams_.yFactor;
-      }
-
-      drawingParams_.xOffset = plate_.getTopLeftX() * drawingParams_.xFactor;
-      drawingParams_.yOffset = plate_.getTopLeftY() * drawingParams_.yFactor;
-      drawingParams_.xTopLeft = activeRect_.x;
-      drawingParams_.yTopLeft = activeRect_.y;
 
       double wellX = plate_.getWellSpacingX() * drawingParams_.xFactor;
       double wellY = plate_.getWellSpacingY() * drawingParams_.yFactor;
@@ -503,5 +519,6 @@ public class PlatePanel extends JPanel {
 
    public void setLockAspect(boolean state) {
       lockAspect_ = state;
+      rescale();
    }
 }
