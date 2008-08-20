@@ -124,6 +124,9 @@ public class DiskStreamingThread extends Thread {
       boolean error = false;
       try {
          expMs = core_.getExposure();
+         
+         // the speed is important here so we will not save the entire state
+         // TODO: resolve
          Configuration state = core_.getSystemStateCache();
          while ((core_.getRemainingImageCount() > 0 || core_.deviceBusy(camera)) && !error && !stop_)
          {
@@ -141,8 +144,10 @@ public class DiskStreamingThread extends Thread {
                }
                acqData_.setImageValue(count, 0, 0, ImagePropertyKeys.EXPOSURE_MS, expMs);
                
-               // insert the entire system state
-               Annotator.setStateMetadata(acqData_, count, 0, 0, state);
+               // insert state only for the first frame
+               // (performance reasons)
+               if (count == 0)
+                  Annotator.setStateMetadata(acqData_, count, 0, 0, state);
                count++;
                String msg = "Saved image: " + count + ", in " + (GregorianCalendar.getInstance().getTimeInMillis() - start) + " ms";
                gui_.displayStreamingMessage(msg);                                             
@@ -177,7 +182,8 @@ public class DiskStreamingThread extends Thread {
          acqData_.setComment("Burst acquistion");
          pixelSize_um_ = core_.getPixelSizeUm();
          acqData_.setPixelSizeUm(pixelSize_um_);      
-         acqData_.setImageIntervalMs(intervalMs_); 
+         acqData_.setImageIntervalMs(intervalMs_);
+         acqData_.saveMetadata();
          
       } catch (MMAcqDataException e) {
          // TODO Auto-generated catch block

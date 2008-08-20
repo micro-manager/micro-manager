@@ -1254,7 +1254,7 @@ public class AcquisitionData {
       } else {
          // save pixels to disk
          saveImageFile(basePath_ + "/" + fname, img, (int)imgWidth_, (int)imgHeight_);
-         writeMetadata();
+         //writeMetadata();
       }
 
       return fname; 

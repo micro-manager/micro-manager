@@ -139,6 +139,12 @@ public class MMAcquisition {
    public void close() {
       imgWin_ = null;
       initialized_ = false;
+      try {
+         acqData_.saveMetadata();
+      } catch (MMAcqDataException e) {
+         // TODO Auto-generated catch block
+         e.printStackTrace();
+      }
    }
 
    public boolean isInitialized() {
