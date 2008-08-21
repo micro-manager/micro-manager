@@ -25,6 +25,7 @@ import java.awt.font.TextLayout;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.util.Hashtable;
 
 
 public class PlatePanel extends JPanel {
@@ -36,6 +37,7 @@ public class PlatePanel extends JPanel {
 
    private SBSPlate plate_;
    private WellPositionList[] wells_;
+   private Hashtable<String, Integer> wellMap_;
    private WellBox[] wellBoxes_;
    private Rectangle activeRect_;
    private Rectangle stagePointer_;
@@ -145,6 +147,7 @@ public class PlatePanel extends JPanel {
       mode_ = Tool.SELECT;
       lockAspect_ = true;
       stagePointer_ = new Rectangle(3, 3);
+      wellMap_ = new Hashtable<String, Integer>();
       
       if (pl == null)
          wells_ = plate_.generatePositions(SBSPlate.DEFAULT_XYSTAGE_NAME);
@@ -172,8 +175,15 @@ public class PlatePanel extends JPanel {
       
       rescale();
       wellBoxes_ = new WellBox[plate_.getNumRows() * plate_.getNumColumns()];
-      for (int i=0; i<wellBoxes_.length; i++)
-         wellBoxes_[i] = new WellBox(wells_[i].getSitePositions());
+      wellMap_ = new Hashtable<String, Integer>();
+      for (int i=0; i<wellBoxes_.length; i++) {
+         wellBoxes_[i] = new WellBox(wells_[i].getSitePositions());         
+         wellMap_.put(getWellKey(wells_[i].getRow(), wells_[i].getColumn()), new Integer(i));
+      }
+   }
+
+   private String getWellKey(int row, int column) {
+      return new String(row + "-" + column);
    }
 
    protected void onMouseClicked(MouseEvent e) {
@@ -189,6 +199,8 @@ public class PlatePanel extends JPanel {
          try {
             app_.setXYStagePosition(pt.x, pt.y);
             stagePos_ = app_.getXYStagePosition();
+            Graphics2D g = (Graphics2D) getGraphics();
+            drawStagePointer(g);
          } catch (MMScriptException e1) {
             // TODO Auto-generated catch block
             e1.printStackTrace();
@@ -327,7 +339,7 @@ public class PlatePanel extends JPanel {
          wb.wellRect.setBounds((int)(box.getX() + wells_[i].getColumn()*wellX + dp.xOffset + wellOffsetX + 0.5),
                (int)(box.getY() + wells_[i].getRow()*wellY + dp.yOffset + wellOffsetY + 0.5), (int)wellInsideX, (int)wellInsideY);
          wb.draw(g, dp);
-         wb.dump();
+         //wb.dump();
       }      
    }
 
@@ -429,6 +441,11 @@ public class PlatePanel extends JPanel {
          return;
       
       Point pt = scaleDeviceToPixel(stagePos_.x, stagePos_.y);
+      System.out.println("Stage pointer in pixels: " + pt);
+
+      // erase the previous location
+      //g.setXORMode();
+      
       stagePointer_.setLocation(pt);
       
       Paint oldPaint = g.getPaint();
@@ -441,8 +458,7 @@ public class PlatePanel extends JPanel {
       g.draw(stagePointer_);
 
       g.setPaint(oldPaint);
-      g.setStroke(oldStroke);
-      
+      g.setStroke(oldStroke);    
    }
    
    public void refreshImagingSites(PositionList sites) {
@@ -452,8 +468,11 @@ public class PlatePanel extends JPanel {
       wells_ = plate_.generatePositions(SBSPlate.DEFAULT_XYSTAGE_NAME, sites);
 
       wellBoxes_ = new WellBox[wells_.length];
-      for (int i=0; i<wellBoxes_.length; i++)
-         wellBoxes_[i] = new WellBox(wells_[i].getSitePositions());  
+      wellMap_.clear();
+      for (int i=0; i<wellBoxes_.length; i++) {
+         wellBoxes_[i] = new WellBox(wells_[i].getSitePositions());
+         wellMap_.put(getWellKey(wells_[i].getRow(), wells_[i].getColumn()), new Integer(i));
+      }
 
       double wellX = plate_.getWellSpacingX() * drawingParams_.xFactor;
       double wellY = plate_.getWellSpacingY() * drawingParams_.yFactor;
@@ -470,7 +489,7 @@ public class PlatePanel extends JPanel {
                (int)(activeRect_.getY() + wells_[i].getRow()*wellY + drawingParams_.yOffset + 0.5), (int)wellX, (int)wellY);
          wb.wellRect.setBounds((int)(activeRect_.getX() + wells_[i].getColumn()*wellX + drawingParams_.xOffset + wellOffsetX + 0.5),
                (int)(activeRect_.getY() + wells_[i].getRow()*wellY + drawingParams_.yOffset + wellOffsetY + 0.5), (int)wellInsideX, (int)wellInsideY);
-         wb.dump();
+         //wb.dump();
       }
    }
 
@@ -479,7 +498,7 @@ public class PlatePanel extends JPanel {
    }
 
    void selectWell(int row, int col, boolean sel) {
-      int index = row*plate_.getNumColumns() + col;
+      int index = wellMap_.get(getWellKey(row, col));
       wellBoxes_[index].selected = sel;
       Graphics2D g = (Graphics2D) getGraphics();
       wellBoxes_[index].draw(g);
@@ -492,7 +511,7 @@ public class PlatePanel extends JPanel {
    }
 
    void activateWell(int row, int col, boolean act) {
-      int index = row*plate_.getNumColumns() + col;
+      int index = wellMap_.get(getWellKey(row, col));
       wellBoxes_[index].active = act;
       Graphics2D g = (Graphics2D) getGraphics();
       wellBoxes_[index].draw(g);
