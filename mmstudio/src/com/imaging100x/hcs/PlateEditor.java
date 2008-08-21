@@ -14,6 +14,7 @@ import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.SpringLayout;
 import javax.swing.UIManager;
+import java.awt.geom.Point2D;
 
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.metadata.MMAcqDataException;
@@ -36,6 +37,12 @@ public class PlateEditor extends MMDialog implements ParentPlateGUI {
    private PlatePanel platePanel_;
    private ScriptInterface app_;
    private ScanThread scanThread_ = null;
+   private Point2D.Double stagePos_;
+   private Point2D.Double cursorPos_;
+   private String stageWell_;
+   private String stageSite_;
+   private String cursorWell_;
+   private String cursorSite_;
    
    private final String PLATE_FORMAT_ID = "plate_format_id";
    private final String SITE_SPACING = "site_spacing_x";
@@ -110,12 +117,21 @@ public class PlateEditor extends MMDialog implements ParentPlateGUI {
       springLayout = new SpringLayout();
       getContentPane().setLayout(springLayout);
       plate_ = new SBSPlate();
+      
+      stagePos_ = new Point2D.Double(0.0, 0.0);
+      cursorPos_ = new Point2D.Double(0.0, 0.0);
+      
+      stageWell_ = new String("undef");
+      cursorWell_ = new String("undef");
+      stageSite_ = new String("undef");
+      cursorSite_ = new String("undef");
 
       setTitle("HCS plate editor");
       loadPosition(100, 100, 654, 448);
 
       platePanel_ = new PlatePanel(plate_, null, this);
       platePanel_.setApp(app_);
+      
       getContentPane().add(platePanel_);
       springLayout.putConstraint(SpringLayout.SOUTH, platePanel_, -34, SpringLayout.SOUTH, getContentPane());
       springLayout.putConstraint(SpringLayout.NORTH, platePanel_, 5, SpringLayout.NORTH, getContentPane());
@@ -124,6 +140,8 @@ public class PlateEditor extends MMDialog implements ParentPlateGUI {
 
       plateIDCombo_ = new JComboBox();
       getContentPane().add(plateIDCombo_);
+      springLayout.putConstraint(SpringLayout.EAST, plateIDCombo_, -4, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, plateIDCombo_, -110, SpringLayout.EAST, getContentPane());
       springLayout.putConstraint(SpringLayout.SOUTH, plateIDCombo_, 140, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.NORTH, plateIDCombo_, 115, SpringLayout.NORTH, getContentPane());
       plateIDCombo_.addItem(SBSPlate.SBS_96_WELL);
@@ -271,8 +289,6 @@ public class PlateEditor extends MMDialog implements ParentPlateGUI {
       getContentPane().add(moveToggleButton_);
       springLayout.putConstraint(SpringLayout.EAST, rowsColumnsLabel, 95, SpringLayout.WEST, moveToggleButton_);
       springLayout.putConstraint(SpringLayout.WEST, rowsColumnsLabel, 5, SpringLayout.WEST, moveToggleButton_);
-      springLayout.putConstraint(SpringLayout.EAST, plateIDCombo_, 111, SpringLayout.WEST, moveToggleButton_);
-      springLayout.putConstraint(SpringLayout.WEST, plateIDCombo_, 5, SpringLayout.WEST, moveToggleButton_);
       springLayout.putConstraint(SpringLayout.EAST, moveToggleButton_, -19, SpringLayout.EAST, getContentPane());
       springLayout.putConstraint(SpringLayout.WEST, moveToggleButton_, -115, SpringLayout.EAST, getContentPane());
       springLayout.putConstraint(SpringLayout.SOUTH, moveToggleButton_, 45, SpringLayout.NORTH, getContentPane());
@@ -400,8 +416,29 @@ public class PlateEditor extends MMDialog implements ParentPlateGUI {
    }
 
    public void updatePointerXYPosition(double x, double y, String wellLabel, String siteLabel) {
-      String statusTxt = "X=" + TextUtils.FMT2.format(x) + "um, Y=" + TextUtils.FMT2.format(y) + "um, " + wellLabel + " : " + siteLabel;
-      statusLabel_.setText(statusTxt);
+      cursorPos_.x = x;
+      cursorPos_.y = y;
+      cursorWell_ = wellLabel;
+      cursorSite_ = siteLabel;
+      
+      displayStatus();
    }
 
+   private void displayStatus() {
+      if (statusLabel_ == null)
+         return;
+      
+      String statusTxt = "Cursor: X=" + TextUtils.FMT2.format(cursorPos_.x) + "um, Y=" + TextUtils.FMT2.format(cursorPos_.y) + "um, " + cursorWell_ +
+                         " -- Stage: X=" + TextUtils.FMT2.format(stagePos_.x) + "um, Y=" + TextUtils.FMT2.format(stagePos_.y) + "um, " + stageWell_;
+      statusLabel_.setText(statusTxt);
+   }
+   
+   public void updateStageXYPosition(double x, double y, String wellLabel, String siteLabel) {
+      stagePos_.x = x;
+      stagePos_.y = y;
+      stageWell_ = wellLabel;
+      stageSite_ = siteLabel;
+      
+      displayStatus();
+   }
 }

@@ -3,5 +3,6 @@ mmc.logMessage("Processing startup script...");
 // load focusing module
 response = acq.installAutofocusPlugin("Autofocus_");
 mmc.logMessage(response);
+mmc.setXYPosition(mmc.getXYStageDevice(), 10000.0, 10000);
 
 mmc.logMessage("Startup script finished.");

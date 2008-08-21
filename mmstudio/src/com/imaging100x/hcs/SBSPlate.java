@@ -83,6 +83,10 @@ public class SBSPlate {
       wellMap_ = new Hashtable<String, Well>();
       initialize(SBS_96_WELL);
    }
+   
+   public String toString() {
+      return id_;
+   }
 
    public boolean initialize(String id) {
       if (id.equals(SBS_96_WELL)){

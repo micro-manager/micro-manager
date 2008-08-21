@@ -140,7 +140,7 @@
 
 		<copy file="${BinRoot}/MMDeviceList.txt" todir="${InstallRoot}" />
 
-		<copy file="${BinRoot}/MMStartup.bsh" todir="${InstallRoot}" />
+		<!-- <copy file="${BinRoot}/MMStartup.bsh" todir="${InstallRoot}" /> -->
 
 		<copy file="${BinRoot}/conf_intro_page.html" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/conf_comport_page.html" todir="${InstallRoot}" />
