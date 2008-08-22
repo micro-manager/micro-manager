@@ -1514,6 +1514,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
 
       acqData_[posIndexNormalized].insertImageMetadata(frameCount_, channelIdx, sliceIdx);
       acqData_[posIndexNormalized].setImageValue(frameCount_, channelIdx, sliceIdx, ImagePropertyKeys.EXPOSURE_MS, exposureMs);
+      System.out.println("Exposure = " + exposureMs);
       acqData_[posIndexNormalized].setImageValue(frameCount_, channelIdx, sliceIdx, ImagePropertyKeys.Z_UM, zCur);
       if (useMultiplePositions_) {
          acqData_[posIndexNormalized].setImageValue(frameCount_, channelIdx, sliceIdx, ImagePropertyKeys.X_UM, posList_.getPosition(posIdx).getX());
