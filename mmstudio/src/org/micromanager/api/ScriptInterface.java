@@ -211,5 +211,7 @@ public interface ScriptInterface {
    public void autofocus() throws MMScriptException;
    
    public void autofocus(double coarseStep, int numCoarse, double fineStep, int numFine) throws MMScriptException;
+
+   public String getXYStageName();
    
 }

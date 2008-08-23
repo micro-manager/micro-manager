@@ -3006,5 +3006,9 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       af.focus(coarseStep, numCoarse, fineStep, numFine);
    }
 
+   public String getXYStageName() {
+      return core_.getXYStageDevice();
+   }
+
 }
 

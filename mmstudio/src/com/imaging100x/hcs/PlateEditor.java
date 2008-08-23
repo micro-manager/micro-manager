@@ -14,6 +14,7 @@ import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.SpringLayout;
 import javax.swing.UIManager;
+import javax.swing.border.BevelBorder;
 import java.awt.geom.Point2D;
 
 import org.micromanager.api.ScriptInterface;
@@ -27,6 +28,8 @@ import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.TextUtils;
 
 public class PlateEditor extends MMDialog implements ParentPlateGUI {
+   private JTextField plateNameField_;
+   private JTextField rootDirField_;
    private JTextField spacingField_;
    private JTextField columnsField_;
    private JTextField rowsField_;
@@ -133,7 +136,7 @@ public class PlateEditor extends MMDialog implements ParentPlateGUI {
       platePanel_.setApp(app_);
       
       getContentPane().add(platePanel_);
-      springLayout.putConstraint(SpringLayout.SOUTH, platePanel_, -34, SpringLayout.SOUTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.SOUTH, platePanel_, -71, SpringLayout.SOUTH, getContentPane());
       springLayout.putConstraint(SpringLayout.NORTH, platePanel_, 5, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.EAST, platePanel_, -136, SpringLayout.EAST, getContentPane());
       springLayout.putConstraint(SpringLayout.WEST, platePanel_, 5, SpringLayout.WEST, getContentPane());
@@ -296,10 +299,10 @@ public class PlateEditor extends MMDialog implements ParentPlateGUI {
       
       statusLabel_ = new JLabel();
       getContentPane().add(statusLabel_);
-      springLayout.putConstraint(SpringLayout.SOUTH, statusLabel_, -5, SpringLayout.SOUTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, statusLabel_, 5, SpringLayout.SOUTH, platePanel_);
-      springLayout.putConstraint(SpringLayout.EAST, statusLabel_, -136, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.EAST, statusLabel_, -4, SpringLayout.EAST, getContentPane());
       springLayout.putConstraint(SpringLayout.WEST, statusLabel_, 5, SpringLayout.WEST, getContentPane());
+      springLayout.putConstraint(SpringLayout.SOUTH, statusLabel_, -5, SpringLayout.SOUTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, statusLabel_, -29, SpringLayout.SOUTH, getContentPane());
 
       lockAspectCheckBox_ = new JCheckBox();
       lockAspectCheckBox_.addActionListener(new ActionListener() {
@@ -323,7 +326,36 @@ public class PlateEditor extends MMDialog implements ParentPlateGUI {
             Double.parseDouble(spacingField_.getText()));
       plate_.initialize((String)plateIDCombo_.getSelectedItem());
       platePanel_.refreshImagingSites(sites);
-//      platePanel_.repaint();
+
+      rootDirField_ = new JTextField();
+      getContentPane().add(rootDirField_);
+      springLayout.putConstraint(SpringLayout.EAST, rootDirField_, 0, SpringLayout.EAST, platePanel_);
+      springLayout.putConstraint(SpringLayout.WEST, rootDirField_, 5, SpringLayout.WEST, getContentPane());
+      springLayout.putConstraint(SpringLayout.SOUTH, rootDirField_, -29, SpringLayout.SOUTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, rootDirField_, -49, SpringLayout.SOUTH, getContentPane());
+
+      plateNameField_ = new JTextField();
+      getContentPane().add(plateNameField_);
+      springLayout.putConstraint(SpringLayout.EAST, plateNameField_, -4, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, plateNameField_, -131, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.SOUTH, plateNameField_, -29, SpringLayout.SOUTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, plateNameField_, -49, SpringLayout.SOUTH, getContentPane());
+
+      final JLabel rootDirectoryLabel = new JLabel();
+      rootDirectoryLabel.setText("Root directory");
+      getContentPane().add(rootDirectoryLabel);
+      springLayout.putConstraint(SpringLayout.EAST, rootDirectoryLabel, 110, SpringLayout.WEST, getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, rootDirectoryLabel, 10, SpringLayout.WEST, getContentPane());
+      springLayout.putConstraint(SpringLayout.SOUTH, rootDirectoryLabel, -52, SpringLayout.SOUTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, rootDirectoryLabel, -66, SpringLayout.SOUTH, getContentPane());
+
+      final JLabel plateNameLabel = new JLabel();
+      plateNameLabel.setText("Plate name");
+      getContentPane().add(plateNameLabel);
+      springLayout.putConstraint(SpringLayout.EAST, plateNameLabel, -4, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, plateNameLabel, -131, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.SOUTH, plateNameLabel, -52, SpringLayout.SOUTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, plateNameLabel, -66, SpringLayout.SOUTH, getContentPane());
    }
 
    protected void saveSettings() {
@@ -440,5 +472,12 @@ public class PlateEditor extends MMDialog implements ParentPlateGUI {
       stageSite_ = siteLabel;
       
       displayStatus();
+   }
+
+   public String getXYStageName() {
+      if (app_ != null)
+         return app_.getXYStageName();
+      else
+         return SBSPlate.DEFAULT_XYSTAGE_NAME;
    }
 }

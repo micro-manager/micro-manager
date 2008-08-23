@@ -153,9 +153,9 @@ public class PlatePanel extends JPanel {
       wellMap_ = new Hashtable<String, Integer>();
       
       if (pl == null)
-         wells_ = plate_.generatePositions(SBSPlate.DEFAULT_XYSTAGE_NAME);
+         wells_ = plate_.generatePositions(gui_.getXYStageName());
       else
-         wells_ = plate_.generatePositions(SBSPlate.DEFAULT_XYSTAGE_NAME, pl);
+         wells_ = plate_.generatePositions(gui_.getXYStageName(), pl);
       
 
       addMouseListener(new MouseAdapter() {
