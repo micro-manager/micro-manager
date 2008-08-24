@@ -54,6 +54,9 @@ public class PlateEditor extends MMDialog implements ParentPlateGUI {
    private final String LOCK_ASPECT = "lock_aspect";
    private final String POINTER_MOVE = "Move";
    private final String POINTER_SELECT = "Select";
+   private final String ROOT_DIR = "root";
+   private final String PLATE_DIR = "plate";
+   
    private JToggleButton moveToggleButton_;
    private JCheckBox lockAspectCheckBox_;
    private JLabel statusLabel_;
@@ -75,8 +78,8 @@ public class PlateEditor extends MMDialog implements ParentPlateGUI {
     */
    private class ScanThread extends Thread {
       public void run() {
-         String plateRoot = "c:/acquisitiondata/100XHCS";
-         String plateName = "plate";
+         String plateRoot = rootDirField_.getText();
+         String plateName = plateNameField_.getText();
          PlateAcquisitionData pad = new PlateAcquisitionData();
 
          try {
@@ -88,6 +91,8 @@ public class PlateEditor extends MMDialog implements ParentPlateGUI {
                WellAcquisitionData wad = pad.createNewWell(wpl[i].getLabel());
                System.out.println("well: " + wpl[i].getLabel() + " - " + wpl[i].getRow() + "," + wpl[i].getColumn());
                platePanel_.activateWell(wpl[i].getRow(), wpl[i].getColumn(), true);
+               platePanel_.refreshStagePosition();
+               platePanel_.repaint();
                app_.runWellScan(wad);
                Thread.sleep(50);
             }
@@ -98,6 +103,9 @@ public class PlateEditor extends MMDialog implements ParentPlateGUI {
          } catch (InterruptedException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
+         } finally {
+            platePanel_.refreshStagePosition();
+            platePanel_.repaint();            
          }
       }
    }
@@ -318,15 +326,7 @@ public class PlateEditor extends MMDialog implements ParentPlateGUI {
       springLayout.putConstraint(SpringLayout.NORTH, lockAspectCheckBox_, 50, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.EAST, lockAspectCheckBox_, -14, SpringLayout.EAST, getContentPane());
       springLayout.putConstraint(SpringLayout.WEST, lockAspectCheckBox_, -115, SpringLayout.EAST, getContentPane());
-      //
-
-      loadSettings();
-
-      PositionList sites = generateSites(Integer.parseInt(rowsField_.getText()), Integer.parseInt(columnsField_.getText()), 
-            Double.parseDouble(spacingField_.getText()));
-      plate_.initialize((String)plateIDCombo_.getSelectedItem());
-      platePanel_.refreshImagingSites(sites);
-
+      
       rootDirField_ = new JTextField();
       getContentPane().add(rootDirField_);
       springLayout.putConstraint(SpringLayout.EAST, rootDirField_, 0, SpringLayout.EAST, platePanel_);
@@ -340,7 +340,7 @@ public class PlateEditor extends MMDialog implements ParentPlateGUI {
       springLayout.putConstraint(SpringLayout.WEST, plateNameField_, -131, SpringLayout.EAST, getContentPane());
       springLayout.putConstraint(SpringLayout.SOUTH, plateNameField_, -29, SpringLayout.SOUTH, getContentPane());
       springLayout.putConstraint(SpringLayout.NORTH, plateNameField_, -49, SpringLayout.SOUTH, getContentPane());
-
+      
       final JLabel rootDirectoryLabel = new JLabel();
       rootDirectoryLabel.setText("Root directory");
       getContentPane().add(rootDirectoryLabel);
@@ -356,6 +356,15 @@ public class PlateEditor extends MMDialog implements ParentPlateGUI {
       springLayout.putConstraint(SpringLayout.WEST, plateNameLabel, -131, SpringLayout.EAST, getContentPane());
       springLayout.putConstraint(SpringLayout.SOUTH, plateNameLabel, -52, SpringLayout.SOUTH, getContentPane());
       springLayout.putConstraint(SpringLayout.NORTH, plateNameLabel, -66, SpringLayout.SOUTH, getContentPane());
+      //
+
+      loadSettings();
+
+      PositionList sites = generateSites(Integer.parseInt(rowsField_.getText()), Integer.parseInt(columnsField_.getText()), 
+            Double.parseDouble(spacingField_.getText()));
+      plate_.initialize((String)plateIDCombo_.getSelectedItem());
+      platePanel_.refreshImagingSites(sites);
+
    }
 
    protected void saveSettings() {
@@ -365,6 +374,8 @@ public class PlateEditor extends MMDialog implements ParentPlateGUI {
       prefs.put(SITE_ROWS, rowsField_.getText());
       prefs.put(SITE_COLS, columnsField_.getText());
       prefs.putBoolean(LOCK_ASPECT, lockAspectCheckBox_.isSelected());
+      prefs.put(PLATE_DIR, plateNameField_.getText());
+      prefs.put(ROOT_DIR, rootDirField_.getText());
    }
    
    protected void loadSettings() {
@@ -375,6 +386,8 @@ public class PlateEditor extends MMDialog implements ParentPlateGUI {
       columnsField_.setText(prefs.get(SITE_COLS, "1"));
       lockAspectCheckBox_.setSelected(prefs.getBoolean(LOCK_ASPECT, true));
       platePanel_.setLockAspect(lockAspectCheckBox_.isSelected());
+      plateNameField_.setText(prefs.get(PLATE_DIR, "plate"));
+      rootDirField_.setText(prefs.get(ROOT_DIR, "ScreeningData"));
    }
 
    private void setPositionList() {

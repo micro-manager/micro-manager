@@ -48,6 +48,7 @@ public class PlatePanel extends JPanel {
    private ScriptInterface app_;
    private boolean lockAspect_;
    private ParentPlateGUI gui_;
+   private int selWells_[];
 
    public static Color LIGHT_YELLOW = new Color(255,255,145);
    public static Color LIGHT_ORANGE = new Color(255,176,138);
@@ -80,6 +81,7 @@ public class PlatePanel extends JPanel {
          params_ = new DrawingParams();
          sites_ = pl;
          circular = false;
+         selWells_ = new int[0];
       }
 
       public void draw(Graphics2D g, DrawingParams dp) {
@@ -208,7 +210,28 @@ public class PlatePanel extends JPanel {
             // TODO Auto-generated catch block
             e1.printStackTrace();
          }
-      }      
+      } else {
+         int row = plate_.getWellRow(pt.y);
+         int col = plate_.getWellColumn(pt.x);
+         
+         if (row < 0 || col < 0 || row >= plate_.getNumRows() || col >= plate_.getNumColumns()) {
+            // clicked outside of the active area
+            if (!e.isControlDown()) {
+               clearSelection();
+            }
+            return;
+         }
+         
+         // clicked on one of the wells
+         if (e.isControlDown()) {
+            // add to the selection
+            toggleWell(row, col);
+         } else {
+            // new selection
+            clearSelection();
+            selectWell(row, col, true);                 
+         }
+      }
    }
 
    private void onMouseMove(MouseEvent e) {
@@ -488,6 +511,13 @@ public class PlatePanel extends JPanel {
       Graphics2D g = (Graphics2D) getGraphics();
       wellBoxes_[index].draw(g);
    }
+   
+   void toggleWell(int row, int col) {
+      int index = wellMap_.get(getWellKey(row, col));
+      wellBoxes_[index].selected = !wellBoxes_[index].selected;
+      Graphics2D g = (Graphics2D) getGraphics();
+      wellBoxes_[index].draw(g);
+   }
 
    void clearSelection() {
       for (int i=0; i<wellBoxes_.length; i++)
@@ -525,7 +555,11 @@ public class PlatePanel extends JPanel {
    
    public void refreshStagePosition() {
       try {
-         stagePos_ = app_.getXYStagePosition();
+         if (app_ != null)
+            stagePos_ = app_.getXYStagePosition();
+         else
+            stagePos_ = new Point2D.Double(0.0, 0.0);
+        
          String well = plate_.getWellLabel(stagePos_.x, stagePos_.y);
          gui_.updateStageXYPosition(stagePos_.x, stagePos_.y, well, "undefined");
       } catch (MMScriptException e) {

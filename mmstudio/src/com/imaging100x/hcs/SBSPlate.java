@@ -462,9 +462,16 @@ public class SBSPlate {
    }
 
    public String getWellLabel(double x, double y) {
-      int col = (int)((x - getTopLeftX())/wellSpacingX_);
-      int row = (int)((y - getTopLeftY())/wellSpacingY_);
+      int col = getWellColumn(x);
+      int row = getWellRow(y);
       return getWellLabel(row+1, col+1);
+   }
+   
+   int getWellRow(double y) {
+      return (int)((y - getTopLeftY())/wellSpacingY_);
+   }
+   int getWellColumn(double x) {
+      return (int)((x - getTopLeftX())/wellSpacingX_);
    }
 
 }
