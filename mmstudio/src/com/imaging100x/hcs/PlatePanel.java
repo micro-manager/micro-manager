@@ -26,7 +26,9 @@ import java.awt.font.TextLayout;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.Iterator;
 
 
 public class PlatePanel extends JPanel {
@@ -503,6 +505,19 @@ public class PlatePanel extends JPanel {
 
    WellPositionList[] getWellPositions() {
       return wells_;
+   }
+   
+   public WellPositionList[] getSelectedWellPositions() {
+      ArrayList<WellPositionList> wal = new ArrayList<WellPositionList>();
+      for (int i=0; i<wells_.length; i++) {
+         if (wellBoxes_[i].selected)
+            wal.add(wells_[i]);
+      }
+      
+      // convert to array
+      WellPositionList selWells[] = new WellPositionList[wal.size()];
+      selWells = wal.toArray(selWells);
+      return selWells;
    }
 
    void selectWell(int row, int col, boolean sel) {

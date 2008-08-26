@@ -84,7 +84,8 @@ public class PlateEditor extends MMDialog implements ParentPlateGUI {
 
          try {
             pad.createNew(plateName, plateRoot, true);
-            WellPositionList[] wpl = platePanel_.getWellPositions();
+            //WellPositionList[] wpl = platePanel_.getWellPositions();
+            WellPositionList[] wpl = platePanel_.getSelectedWellPositions();
             for (int i=0; i<wpl.length; i++) {
                PositionList pl = wpl[i].getSitePositions();
                app_.setPositionList(pl);
