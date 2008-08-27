@@ -247,25 +247,41 @@ public class PlatePanel extends JPanel {
             selectWell(row, col, true);                 
          }
       }
-      
-      anchor_ = e.getPoint();
-      previous_ = e.getPoint();
          
    }
    
    protected void onMouseDragged(MouseEvent e) {
-      // TODO Auto-generated method stub
-      
-   }
+      System.out.println("Mouse dragged: " + e.getX() + "," + e.getY());
+      drawSelRect(previous_);
+      previous_ = e.getPoint();
+      drawSelRect(e.getPoint());   }
 
    protected void onMouseReleased(MouseEvent e) {
-      // TODO Auto-generated method stub
-      
+      System.out.println("Mouse released: " + e.getX() + "," + e.getY());
+      drawSelRect(previous_);
+      Rectangle selRect = new Rectangle(anchor_.x, anchor_.y, e.getX()- anchor_.x, e.getY() - anchor_.y);
+      for (int i=0; i<wellBoxes_.length; i++) {
+         if (wellBoxes_[i].wellRect.intersects(selRect))
+            wellBoxes_[i].selected = true;
+      }
+      repaint();
+      drag_ = false;
    }
 
    protected void onMousePressed(MouseEvent e) {
-      // TODO Auto-generated method stub
-      
+      System.out.println("Mouse pressed: " + e.getX() + "," + e.getY());
+      if (!e.isControlDown())
+         clearSelection();
+      anchor_ = e.getPoint();
+      previous_ = e.getPoint();
+      drag_ = true;
+   }
+   
+   private void drawSelRect(Point pt) {
+      Graphics2D g = (Graphics2D) getGraphics();
+      g.setXORMode(getBackground());
+      g.drawRect(anchor_.x, anchor_.y, pt.x - anchor_.x, pt.y - anchor_.y);
+      g.setPaintMode();
    }
 
    private void onMouseMove(MouseEvent e) {
