@@ -15,12 +15,6 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
-import javax.swing.JPanel;
-
-import org.micromanager.api.ScriptInterface;
-import org.micromanager.navigation.PositionList;
-import org.micromanager.utils.MMScriptException;
-
 import java.awt.font.FontRenderContext;
 import java.awt.font.TextLayout;
 import java.awt.geom.Line2D;
@@ -28,7 +22,12 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.util.Hashtable;
-import java.util.Iterator;
+
+import javax.swing.JPanel;
+
+import org.micromanager.api.ScriptInterface;
+import org.micromanager.navigation.PositionList;
+import org.micromanager.utils.MMScriptException;
 
 
 public class PlatePanel extends JPanel {
@@ -50,7 +49,9 @@ public class PlatePanel extends JPanel {
    private ScriptInterface app_;
    private boolean lockAspect_;
    private ParentPlateGUI gui_;
-   private int selWells_[];
+   private boolean drag_;
+   private Point anchor_;
+   private Point previous_;
 
    public static Color LIGHT_YELLOW = new Color(255,255,145);
    public static Color LIGHT_ORANGE = new Color(255,176,138);
@@ -83,7 +84,10 @@ public class PlatePanel extends JPanel {
          params_ = new DrawingParams();
          sites_ = pl;
          circular = false;
-         selWells_ = new int[0];
+         anchor_ = new Point(0, 0);
+         previous_ = new Point(0, 0);
+         drag_ = false;
+         
       }
 
       public void draw(Graphics2D g, DrawingParams dp) {
@@ -166,11 +170,20 @@ public class PlatePanel extends JPanel {
          public void mouseClicked(final MouseEvent e) {
             onMouseClicked(e);
          }
+         public void mousePressed(final MouseEvent e) {
+            onMousePressed(e);
+         }
+         public void mouseReleased(final MouseEvent e) {
+            onMouseReleased(e);
+         }
       });
 
       addMouseMotionListener(new MouseMotionAdapter() {
          public void mouseMoved(final MouseEvent e) {
             onMouseMove(e);
+         }
+         public void mouseDragged(final MouseEvent e) {
+            onMouseDragged(e);
          }
       });
       
@@ -234,6 +247,25 @@ public class PlatePanel extends JPanel {
             selectWell(row, col, true);                 
          }
       }
+      
+      anchor_ = e.getPoint();
+      previous_ = e.getPoint();
+         
+   }
+   
+   protected void onMouseDragged(MouseEvent e) {
+      // TODO Auto-generated method stub
+      
+   }
+
+   protected void onMouseReleased(MouseEvent e) {
+      // TODO Auto-generated method stub
+      
+   }
+
+   protected void onMousePressed(MouseEvent e) {
+      // TODO Auto-generated method stub
+      
    }
 
    private void onMouseMove(MouseEvent e) {
