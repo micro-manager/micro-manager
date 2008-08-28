@@ -1523,9 +1523,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
       acqData_[posIndexNormalized].setSystemState(frameCount_, channelIdx, sliceIdx, state);
 
       if (saveFiles_)
-         acqData_[posIndexNormalized].insertImage(img, frameCount_, channelIdx, sliceIdx);
-      else
-         acqData_[posIndexNormalized].insertImageMetadata(frameCount_, channelIdx, sliceIdx);
+         acqData_[posIndexNormalized].attachImage(img, frameCount_, channelIdx, sliceIdx);
    }
 
    public void setPause(boolean state) {
