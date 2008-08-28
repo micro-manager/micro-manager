@@ -529,7 +529,6 @@ public class AcquisitionData {
       try {
          JSONObject frameData = metadata_.getJSONObject(frameKey);
          frameData.put(key, value);
-         metadata_.put(frameKey, frameData);
       } catch (JSONException e) {
          throw new MMAcqDataException(e);
       }
