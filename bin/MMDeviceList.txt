@@ -1,3 +1,4 @@
+AF100X,DAutoFocus100X,Demo auto focus,9
 Andor,Ixon,Andor iXon camera adapter,2
 AOTF,AOTF-Switch,TLL digital out AOTF wavelength selector,4
 AOTF,AOTF-Shutter,TTL digital out AOTF shutter,3
