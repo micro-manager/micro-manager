@@ -181,7 +181,8 @@ public:
    virtual int SetContinuousFocusing(bool state);
    virtual int GetContinuousFocusing(bool& state);
    virtual bool IsContinuousFocusLocked();
-   virtual int Focus();
+   virtual int FullFocus();
+   virtual int IncrementalFocus();
    virtual int GetFocusScore(double& score);
 
    // action interface

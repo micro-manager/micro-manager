@@ -68,4 +68,5 @@
 #define MMERR_CircularBufferFailedToInitialize 40
 #define MMERR_CircularBufferEmpty      41
 #define MMERR_ContFocusNotAvailable    42
+#define MMERR_AutoFocusNotAvailable    43
 #endif //_ERRORCODES_H_

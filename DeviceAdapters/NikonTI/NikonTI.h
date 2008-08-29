@@ -158,7 +158,8 @@ public:
    // AutoFocus API
    virtual int SetContinuousFocusing(bool state);
    virtual int GetContinuousFocusing(bool& state);
-   virtual int Focus();
+   virtual int FullFocus();
+   virtual int IncrementalFocus();
    virtual int GetFocusScore(double& /*score*/) {return DEVICE_UNSUPPORTED_COMMAND;}
    virtual bool IsContinuousFocusLocked();
 

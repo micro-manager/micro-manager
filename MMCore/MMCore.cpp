@@ -3813,7 +3813,6 @@ void CMMCore::enableContinuousFocus(bool enable) throw (CMMError)
          logError(getDeviceName(autoFocus_).c_str(), getCoreErrorText(MMERR_ContFocusNotAvailable).c_str());
          throw CMMError(getCoreErrorText(MMERR_ContFocusNotAvailable).c_str(), MMERR_ContFocusNotAvailable);
       }
-
    }
 }
 
@@ -3854,9 +3853,18 @@ bool CMMCore::isContinuousFocusLocked() throw (CMMError)
 void CMMCore::fullFocus() throw (CMMError)
 {
    if (autoFocus_)
-      autoFocus_->FullFocus();
+   {
+      int ret = autoFocus_->FullFocus();
+      if (ret != DEVICE_OK)
+      {
+         logError(getDeviceName(autoFocus_).c_str(), getDeviceErrorText(ret, autoFocus_).c_str());
+         throw CMMError(getDeviceErrorText(ret, autoFocus_).c_str(), MMERR_DEVICE_GENERIC);
+      }
+   }
    else
-
+   {
+      throw CMMError(getCoreErrorText(MMERR_AutoFocusNotAvailable).c_str(), MMERR_AutoFocusNotAvailable);
+   }
 }
 
 /**

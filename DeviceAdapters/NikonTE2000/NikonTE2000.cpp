@@ -1605,10 +1605,16 @@ bool PerfectFocus::IsContinuousFocusLocked()
       return false;
 }
 
-int PerfectFocus::Focus()
+int PerfectFocus::FullFocus()
 {
    return g_hub.SetPFocusOn(*this, *GetCoreCallback());
 }
+
+int PerfectFocus::IncrementalFocus()
+{
+   return g_hub.SetPFocusOn(*this, *GetCoreCallback());
+}
+
 
 int GetFocusScore(double& /*score*/)
 {

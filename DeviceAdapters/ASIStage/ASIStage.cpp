@@ -2004,7 +2004,12 @@ int CRIF::GetContinuousFocusing(bool& state)
    return DEVICE_OK;
 }
 
-int CRIF::Focus()
+int CRIF::FullFocus()
+{
+   return SetContinuousFocusing(true);
+}
+
+int CRIF::IncrementalFocus()
 {
    return SetContinuousFocusing(true);
 }

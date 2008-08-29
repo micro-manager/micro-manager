@@ -1114,7 +1114,13 @@ int PFSStatus::Initialize()
 
 }
 
-int PFSStatus::Focus()
+int PFSStatus::FullFocus()
+{
+	// Not sure what's the meaning of Focus in a continous device. 
+	return DEVICE_OK;
+}
+
+int PFSStatus::IncrementalFocus()
 {
 	// Not sure what's the meaning of Focus in a continous device. 
 	return DEVICE_OK;
