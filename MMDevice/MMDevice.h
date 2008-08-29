@@ -377,7 +377,8 @@ namespace MM {
       virtual int SetContinuousFocusing(bool state) = 0;
       virtual int GetContinuousFocusing(bool& state) = 0;
       virtual bool IsContinuousFocusLocked() = 0;
-      virtual int Focus() = 0;
+      virtual int FullFocus() = 0;
+      virtual int IncrementalFocus() = 0;
       virtual int GetFocusScore(double& score) = 0;
    };
 

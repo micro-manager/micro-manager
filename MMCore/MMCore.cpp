@@ -3853,6 +3853,10 @@ bool CMMCore::isContinuousFocusLocked() throw (CMMError)
  */
 void CMMCore::fullFocus() throw (CMMError)
 {
+   if (autoFocus_)
+      autoFocus_->FullFocus();
+   else
+
 }
 
 /**
@@ -3860,6 +3864,8 @@ void CMMCore::fullFocus() throw (CMMError)
  */
 void CMMCore::incrementalFocus() throw (CMMError)
 {
+   if (autoFocus_)
+      autoFocus_->FullFocus();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
