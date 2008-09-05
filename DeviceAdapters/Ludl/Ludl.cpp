@@ -1392,45 +1392,6 @@ bool XYStage::AxisBusy(const char* axis)
       return false;
 }
 
-/**
- * Sets position in um.
- */
-int XYStage::SetPositionUm(double x, double y)
-{
-   long xSteps = (long) ((originX_ + x) / stepSizeUm_ + 0.5);
-   // note: reverse orientation of the y-axis here
-   long ySteps = (long) ((originY_ - y) / stepSizeUm_ + 0.5);
-   
-   return SetPositionSteps(xSteps, ySteps);
-}
-
-/**
- * Sets relative position in um.
- */
-int XYStage::SetRelativePositionUm(double x, double y)
-{
-   long xSteps = (long) (x / stepSizeUm_ + 0.5);
-   // reverse orientation of the y-axis
-   long ySteps = (long) (-y / stepSizeUm_ + 0.5);
-   
-   return SetRelativePositionSteps(xSteps, ySteps);
-}
-
-/**
- * Gets current position in um.
- */
-int XYStage::GetPositionUm(double& x, double& y)
-{
-   long xSteps, ySteps;
-   int ret = GetPositionSteps(xSteps, ySteps);
-   if (ret != DEVICE_OK)
-      return ret;
-
-   x = (xSteps * stepSizeUm_) + originX_;
-   y = originY_ - (ySteps * stepSizeUm_);
-
-   return DEVICE_OK;
-}
 
 /**
  * Sets position in steps.

@@ -804,7 +804,7 @@ class CXYStageBase : public CDeviceBase<MM::XYStage, U>
    using CDeviceBase<MM::XYStage, U>::SetPositionUm;
 
 public:
-   CXYStageBase() : originXUm_(0.0), originYUm_(0.0)
+   CXYStageBase() : originXSteps_(0), originYSteps_(0)
    {
       // set-up directionality properties
       this->CreateProperty(MM::g_Keyword_Transpose_MirrorX, "0", MM::Integer, false);
@@ -833,14 +833,13 @@ public:
       long ySteps = 0;
 
       if (mirrorX)
-         xSteps = (long) ((originXUm_ - x) / this->GetStepSizeXUm() + 0.5);
+         xSteps = originXSteps_ - (long) (x / this->GetStepSizeXUm() + 0.5);
       else
-         xSteps = (long) ((originXUm_ + x) / this->GetStepSizeXUm() + 0.5);
-
+         xSteps = originXSteps_ + (long) (x / this->GetStepSizeXUm() + 0.5);
       if (mirrorY)
-         ySteps = (long) ((originYUm_ - y) / this->GetStepSizeYUm() + 0.5);
+         ySteps = originYSteps_ - (long) (y / this->GetStepSizeYUm() + 0.5);
       else
-         ySteps = (long) ((originYUm_ + y) / this->GetStepSizeYUm() + 0.5);
+         ySteps = originYSteps_ + (long) (y / this->GetStepSizeYUm() + 0.5);
    
       return this->SetPositionSteps(xSteps, ySteps);
    }
@@ -866,9 +865,10 @@ public:
       long xStep, yStep;
       int ret = this->GetPositionSteps(xStep, yStep);
       if (ret != DEVICE_OK)                                                     
-         return ret;                                                            
-      originXUm_ = (xStep * this->GetStepSizeXUm()) + x;
-      originYUm_ = (yStep * this->GetStepSizeYUm()) + y;
+         return ret;                                 
+      // TODO: add code dealing with mirroring
+      originXSteps_ = xStep + (long)(x / this->GetStepSizeXUm() + 0.5);
+      originYSteps_ = yStep + (long)(y / this->GetStepSizeYUm() + 0.5);
                                                                              
       return DEVICE_OK;                                                         
    }                                                                            
@@ -890,14 +890,14 @@ public:
          return ret;
 
       if (mirrorX)
-         x = originXUm_ - (xSteps * this->GetStepSizeXUm());
+         x = (originXSteps_ - xSteps) * this->GetStepSizeXUm();
       else 
-         x = originXUm_ + (xSteps * this->GetStepSizeXUm());
+         x = (originXSteps_ + xSteps) * this->GetStepSizeXUm();
 
       if (mirrorY)
-         y = originYUm_ - (ySteps * this->GetStepSizeYUm());
+         y = (originYSteps_ - ySteps) * this->GetStepSizeYUm();
       else 
-         y = originYUm_ + (ySteps * this->GetStepSizeYUm());
+         y = (originYSteps_ + ySteps) * this->GetStepSizeYUm();
 
       return DEVICE_OK;
    }
@@ -921,8 +921,8 @@ public:
 private:
 
    // absolute coordinate translation data
-   double originXUm_;
-   double originYUm_;
+   long originXSteps_;
+   long originYSteps_;
 };
 
 /**
