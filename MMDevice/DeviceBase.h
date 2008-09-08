@@ -819,41 +819,38 @@ public:
 
    int SetPositionUm(double x, double y)
    {
-      char val[MM::MaxStrLength];
-      int ret = this->GetProperty(MM::g_Keyword_Transpose_MirrorX, val);
-      assert(ret == DEVICE_OK);
-      bool mirrorX = strcmp(val, "1") == 0 ? true : false;
-
-      ret = this->GetProperty(MM::g_Keyword_Transpose_MirrorY, val);
-      assert(ret == DEVICE_OK);
-      bool mirrorY = strcmp(val, "1") == 0 ? true : false;
-
+      bool mirrorX, mirrorY;
+      GetOrientation(mirrorX, mirrorY);
 
       long xSteps = 0;
       long ySteps = 0;
 
       if (mirrorX)
+         xSteps = - (originXSteps_ - (long) (x / this->GetStepSizeXUm() + 0.5));
+      else
          xSteps = originXSteps_ - (long) (x / this->GetStepSizeXUm() + 0.5);
-      else
-         xSteps = originXSteps_ + (long) (x / this->GetStepSizeXUm() + 0.5);
       if (mirrorY)
-         ySteps = originYSteps_ - (long) (y / this->GetStepSizeYUm() + 0.5);
+         ySteps = - (originYSteps_ - (long) (y / this->GetStepSizeYUm() + 0.5));
       else
-         ySteps = originYSteps_ + (long) (y / this->GetStepSizeYUm() + 0.5);
+         ySteps = originYSteps_ - (long) (y / this->GetStepSizeYUm() + 0.5);
    
       return this->SetPositionSteps(xSteps, ySteps);
    }
 
    /**
-    * Default implementation for the realative motion
+    * Default implementation for relative motion
     */
    int SetRelativePositionUm(double dx, double dy)
    {
-      double x, y;
-      int ret = GetPositionUm(x, y);
-      if (ret != DEVICE_OK)
-         return ret;
-      return SetPositionUm(x + dx, y + dy);
+      bool mirrorX, mirrorY;
+      GetOrientation(mirrorX, mirrorY);
+
+      if (mirrorX)
+         dx = -dx;
+      if (mirrorY)
+         dy = -dy;
+
+      return SetRelativePositionSteps(dx / this->GetStepSizeXUm(), dy / this->GetStepSizeYUm());
    }
 
    /**
@@ -862,42 +859,45 @@ public:
     */
    int SetAdapterOriginUm(double x, double y)
    {
+      bool mirrorX, mirrorY;
+      GetOrientation(mirrorX, mirrorY);
+
       long xStep, yStep;
       int ret = this->GetPositionSteps(xStep, yStep);
       if (ret != DEVICE_OK)                                                     
          return ret;                                 
-      // TODO: add code dealing with mirroring
-      originXSteps_ = xStep + (long)(x / this->GetStepSizeXUm() + 0.5);
-      originYSteps_ = yStep + (long)(y / this->GetStepSizeYUm() + 0.5);
+
+      if (mirrorX)
+         originXSteps_ = xStep - (long)(x / this->GetStepSizeXUm() + 0.5);
+      else
+         originXSteps_ = xStep + (long)(x / this->GetStepSizeXUm() + 0.5);
+      if (mirrorY)
+         originYSteps_ = yStep - (long)(y / this->GetStepSizeYUm() + 0.5);
+      else
+         originYSteps_ = yStep + (long)(y / this->GetStepSizeYUm() + 0.5);
                                                                              
       return DEVICE_OK;                                                         
    }                                                                            
 
    int GetPositionUm(double& x, double& y)
    {
-      char val[MM::MaxStrLength];
-      int ret = this->GetProperty(MM::g_Keyword_Transpose_MirrorX, val);
-      assert(ret == DEVICE_OK);
-      bool mirrorX = strcmp(val, "1") == 0 ? true : false;
-
-      ret = this->GetProperty(MM::g_Keyword_Transpose_MirrorY, val);
-      assert(ret == DEVICE_OK);
-      bool mirrorY = strcmp(val, "1") == 0 ? true : false;
+      bool mirrorX, mirrorY;
+      GetOrientation(mirrorX, mirrorY);
 
       long xSteps, ySteps;
-      ret = this->GetPositionSteps(xSteps, ySteps);
+      int ret = this->GetPositionSteps(xSteps, ySteps);
       if (ret != DEVICE_OK)
          return ret;
-
+ 
       if (mirrorX)
          x = (originXSteps_ - xSteps) * this->GetStepSizeXUm();
       else 
-         x = (originXSteps_ + xSteps) * this->GetStepSizeXUm();
+         x =  - ((originXSteps_ - xSteps) * this->GetStepSizeXUm());
 
       if (mirrorY)
          y = (originYSteps_ - ySteps) * this->GetStepSizeYUm();
       else 
-         y = (originYSteps_ + ySteps) * this->GetStepSizeYUm();
+         y = - ((originYSteps_ - ySteps) * this->GetStepSizeYUm());
 
       return DEVICE_OK;
    }
@@ -919,6 +919,19 @@ public:
 
 
 private:
+
+   void GetOrientation(bool& mirrorX, bool& mirrorY) 
+   {
+      char val[MM::MaxStrLength];
+      int ret = this->GetProperty(MM::g_Keyword_Transpose_MirrorX, val);
+      assert(ret == DEVICE_OK);
+      mirrorX = strcmp(val, "1") == 0 ? true : false;
+
+      ret = this->GetProperty(MM::g_Keyword_Transpose_MirrorY, val);
+      assert(ret == DEVICE_OK);
+      mirrorY = strcmp(val, "1") == 0 ? true : false;
+   }
+
 
    // absolute coordinate translation data
    long originXSteps_;
