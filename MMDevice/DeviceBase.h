@@ -826,13 +826,13 @@ public:
       long ySteps = 0;
 
       if (mirrorX)
-         xSteps = - (originXSteps_ - (long) (x / this->GetStepSizeXUm() + 0.5));
-      else
          xSteps = originXSteps_ - (long) (x / this->GetStepSizeXUm() + 0.5);
-      if (mirrorY)
-         ySteps = - (originYSteps_ - (long) (y / this->GetStepSizeYUm() + 0.5));
       else
+         xSteps = originXSteps_ + (long) (x / this->GetStepSizeXUm() + 0.5);
+      if (mirrorY)
          ySteps = originYSteps_ - (long) (y / this->GetStepSizeYUm() + 0.5);
+      else
+         ySteps = originYSteps_ + (long) (y / this->GetStepSizeYUm() + 0.5);
    
       return this->SetPositionSteps(xSteps, ySteps);
    }
