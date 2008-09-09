@@ -868,13 +868,13 @@ public:
          return ret;                                 
 
       if (mirrorX)
-         originXSteps_ = xStep - (long)(x / this->GetStepSizeXUm() + 0.5);
-      else
          originXSteps_ = xStep + (long)(x / this->GetStepSizeXUm() + 0.5);
-      if (mirrorY)
-         originYSteps_ = yStep - (long)(y / this->GetStepSizeYUm() + 0.5);
       else
+         originXSteps_ = xStep - (long)(x / this->GetStepSizeXUm() + 0.5);
+      if (mirrorY)
          originYSteps_ = yStep + (long)(y / this->GetStepSizeYUm() + 0.5);
+      else
+         originYSteps_ = yStep - (long)(y / this->GetStepSizeYUm() + 0.5);
                                                                              
       return DEVICE_OK;                                                         
    }                                                                            
