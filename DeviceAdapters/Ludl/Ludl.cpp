@@ -248,6 +248,8 @@ int Hub::Initialize()
       ret = changeCommandLevel(*this,  *GetCoreCallback(), g_CommandLevelHigh);
       if (ret != DEVICE_OK)
          return ret;
+   }
+   if (result.length() < 2 || result[1] == 'N') {
       // try getting version again (TODO: refactor this!)
       // Version of the controller:
       const char* cm = "VER";
@@ -271,8 +273,9 @@ int Hub::Initialize()
 
    // there is still a :A in the buffer that we should read away:
    ret = GetSerialAnswer(port_.c_str(), "\n", result);
-   if (ret != DEVICE_OK) 
-      return ret;
+   // When the controller answers with :N -1, ignore
+   //if (ret != DEVICE_OK) 
+   //   return ret;
 
    // Interface to a hard reset of the controller
    CPropertyAction* pAct = new CPropertyAction(this, &Hub::OnReset);
@@ -418,6 +421,15 @@ int Hub::OnTransmissionDelay(MM::PropertyBase* pProp, MM::ActionType pAct)
       ret = GetSerialAnswer(port_.c_str(), "\n", result);
       if (ret != DEVICE_OK) 
          return ret;
+      if (result[1] == 'N')  { // error, try once more
+         ret = SendSerialCommand(port_.c_str(), cmd.c_str(), "\r");
+         if (ret !=DEVICE_OK)
+            return ret;
+         ret = GetSerialAnswer(port_.c_str(), "\n", result);
+         if (ret != DEVICE_OK)
+            return ret;
+      }
+
       if (result[1] != 'A') 
          return ERR_UNRECOGNIZED_ANSWER;
 
@@ -1318,9 +1330,11 @@ int XYStage::Initialize()
    if (ret != DEVICE_OK)
       return ret;
 
+   /*  Probably not a good idea to reset the origin every time - Bruno Alfonso did not like it.
    ret = SetAdapterOrigin();
    if (ret != DEVICE_OK)
       return ret;
+*/
 
    initialized_ = true;
    return DEVICE_OK;
@@ -1343,7 +1357,7 @@ bool XYStage::Busy()
 }
 
 /**
- * Returns true if either of the axis (X or Y) are still moving.
+ * Returns true if any axis (X or Y) is still moving.
  */
 bool XYStage::AxisBusy(const char* axis)
 {
