@@ -200,7 +200,6 @@ int CoreCallback::PurgeSerial(const MM::Device* caller, const char* portName)
  */
 int CoreCallback::SetSerialCommand(const MM::Device*, const char* portName, const char* command, const char* term)
 {
-   assert(core_);
    try {
       core_->setSerialPortCommand(portName, command, term);
    }
@@ -219,7 +218,6 @@ int CoreCallback::SetSerialCommand(const MM::Device*, const char* portName, cons
  */
 int CoreCallback::GetSerialAnswer(const MM::Device*, const char* portName, unsigned long ansLength, char* answerTxt, const char* term)
 {
-   assert(core_);
    string answer;
    try {
       answer = core_->getSerialPortAnswer(portName, term);
@@ -232,6 +230,34 @@ int CoreCallback::GetSerialAnswer(const MM::Device*, const char* portName, unsig
       return DEVICE_SERIAL_COMMAND_FAILED;
    }
    strcpy(answerTxt, answer.c_str());
+   return DEVICE_OK;
+}
+
+const char* CoreCallback::GetImage()
+{
+   try
+   {
+      core_->snapImage();
+      return (const char*) core_->getImage();
+   }
+   catch (...)
+   {
+      return 0;
+   }
+}
+
+int CoreCallback::GetImageDimensions(int& width, int& height, int& depth)
+{
+   return DEVICE_OK;
+}
+
+int CoreCallback::GetFocusPosition(double& pos)
+{
+   return DEVICE_OK;
+}
+
+int CoreCallback::SetFocusPosition(double pos)
+{
    return DEVICE_OK;
 }
 

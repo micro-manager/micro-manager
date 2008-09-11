@@ -850,7 +850,7 @@ public:
       if (mirrorY)
          dy = -dy;
 
-      return SetRelativePositionSteps(dx / this->GetStepSizeXUm(), dy / this->GetStepSizeYUm());
+      return SetRelativePositionSteps((long)(dx / this->GetStepSizeXUm() + 0.5), (long)(dy / this->GetStepSizeYUm()));
    }
 
    /**

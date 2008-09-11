@@ -34,7 +34,7 @@
 // Header version
 // If any of the class declarations changes, the interface version
 // must be incremented
-#define DEVICE_INTERFACE_VERSION 27
+#define DEVICE_INTERFACE_VERSION 28
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifndef _MMDEVICE_H_
@@ -487,6 +487,12 @@ namespace MM {
       virtual int InsertImage(const Device* caller, const unsigned char* buf, unsigned width, unsigned height, unsigned byteDepth, ImageMetadata* md = 0) = 0;
       virtual int InsertMultiChannel(const Device* caller, const unsigned char* buf, unsigned numChannels, unsigned width, unsigned height, unsigned byteDepth, ImageMetadata* md = 0) = 0;
       virtual void SetAcqStatus(const Device* caller, int statusCode) = 0;
+
+      // autofocus
+      virtual const char* GetImage() = 0;
+      virtual int GetImageDimensions(int& width, int& height, int& depth) = 0;
+      virtual int GetFocusPosition(double& pos) = 0;
+      virtual int SetFocusPosition(double pos) = 0;
 
       // device management
       virtual MM::ImageProcessor* GetImageProcessor(const MM::Device* caller) = 0;

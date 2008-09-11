@@ -24,6 +24,7 @@
 #include "../../MMDevice/ModuleInterface.h"
 #include <sstream>
 using namespace std;
+
 const char* g_AutoFocusDeviceName = "DAutoFocus100X";
 
 // windows DLL entry code

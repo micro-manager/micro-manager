@@ -61,6 +61,8 @@
 #define DEVICE_BUFFER_OVERFLOW         22
 #define DEVICE_NONEXISTENT_CHANNEL     23
 #define DEVICE_INVALID_PROPERTY_LIMTS  24
+#define DEVICE_SNAP_IMAGE_FAILED       25
+#define DEVICE_IMAGE_PARAMS_FAILED     26
 
 namespace MM {
    const int MaxStrLength = 1024;

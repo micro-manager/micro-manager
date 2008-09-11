@@ -49,9 +49,9 @@ public:
    int Shutdown(){initialized_ = false; return DEVICE_OK;}
 
    // AutoFocus API
-   virtual int SetContinuousFocusing(bool state) {running_ = state; return DEVICE_OK;}
-   virtual int GetContinuousFocusing(bool& state) {state = running_; return DEVICE_OK;}
-   virtual bool IsContinuousFocusLocked() {return running_;}
+   virtual int SetContinuousFocusing(bool state) {return DEVICE_UNSUPPORTED_COMMAND;}
+   virtual int GetContinuousFocusing(bool& state) {state = false; return DEVICE_OK;}
+   virtual bool IsContinuousFocusLocked() {return false;}
    virtual int FullFocus() {return DEVICE_UNSUPPORTED_COMMAND;}
    virtual int IncrementalFocus() {return DEVICE_UNSUPPORTED_COMMAND;}
    virtual int GetFocusScore(double& /*score*/) {return DEVICE_UNSUPPORTED_COMMAND;}

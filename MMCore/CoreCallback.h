@@ -53,7 +53,7 @@ using namespace std;
 class CoreCallback : public MM::Core
 {
 public:
-   CoreCallback(CMMCore* c) : core_(c) {}
+   CoreCallback(CMMCore* c) : core_(c) {assert(core_);}
    ~CoreCallback() {}
 
    /**
@@ -165,6 +165,12 @@ public:
    int AcqFinished(const MM::Device* caller, int statusCode);
    int PrepareForAcq(const MM::Device* caller);
 
+   // autofocus support
+   const char* GetImage();
+   int GetImageDimensions(int& width, int& height, int& depth);
+   int GetFocusPosition(double& pos);
+   int SetFocusPosition(double pos);
+
    // notification handlers
    int OnStatusChanged(const MM::Device* /* caller */);
    int OnPropertiesChanged(const MM::Device* /* caller */);
@@ -200,7 +206,6 @@ public:
    {
       return core_->getLoadedDevicesOfType(devType);
    }
-
 
 private:
    CMMCore* core_;

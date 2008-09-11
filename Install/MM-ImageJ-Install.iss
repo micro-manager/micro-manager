@@ -94,7 +94,7 @@ Source: micro-manager-S-1.2\conf_preinit_page.html; DestDir: {app}; Flags: onlyi
 
 ; ImageJ files
 Source: micro-manager-S-1.2\ImageJ.exe; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager-S-1.2\ImageJ.cfg; DestDir: {app}; Flags: onlyifdoesntexist
+;Source: micro-manager-S-1.2\ImageJ.cfg; DestDir: {app}; Flags: onlyifdoesntexist
 Source: micro-manager-S-1.2\ij.jar; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager-S-1.2\IJ_Prefs.txt; DestDir: {app}; Flags: onlyifdoesntexist
 Source: micro-manager-S-1.2\macros\*; DestDir: {app}\macros; Flags: ignoreversion recursesubdirs createallsubdirs
