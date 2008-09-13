@@ -101,6 +101,9 @@ public interface AcquisitionEngine {
    public void enableAutoFocus(boolean enabled);
    public boolean isAutoFocusEnabled();
    public void setParameterPreferences(Preferences prefs);
+   public void setContinuousFocusOffForXYMove(boolean state);
+   public void setContinuousFocusOffForZMove(boolean state);
+
    
    // utility
    public String getVerboseSummary();

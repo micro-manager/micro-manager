@@ -154,6 +154,10 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
    protected boolean acqFinished_;
 
 
+   // continuous focus behavior
+   boolean continuousFocusOffForZMove_ = true;
+   boolean continuousFocusOffForXYMove_ = true;
+
    // auto-focus module
    Autofocus autofocusPlugin_ = null;
    boolean autofocusEnabled_ = false;
@@ -716,14 +720,22 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
 
       // move to the required position
       try {
+         oldFocusEnabled_ = core_.isContinuousFocusEnabled();
          if (useMultiplePositions_ /* && posMode_ == PositionMode.TIME_LAPSE */) {
             // time lapse logic
             MultiStagePosition pos = null;
             if (posIdx != previousPosIdx_) {
+               if (continuousFocusOffForXYMove_ && oldFocusEnabled_) {
+                  core_.enableContinuousFocus(false);
+               }
                pos = posList_.getPosition(posIdx);
                // TODO: in the case of multi-field mode the command below is redundant
                MultiStagePosition.goToPosition(pos, core_);
                core_.waitForSystem();
+               if (continuousFocusOffForXYMove_ && oldFocusEnabled_) {
+                  core_.enableContinuousFocus(true);
+                  waitForFocusLock();
+               }
             } else
                pos = posList_.getPosition(previousPosIdx_);
 
@@ -754,18 +766,13 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
             }
          }
 
-         oldFocusEnabled_ = core_.isContinuousFocusEnabled();
          if (oldFocusEnabled_) {
-            // wait up to 3 second for focus to lock:
-            int waitMs= 0;
-            int interval = 100;
-            while (!core_.isContinuousFocusLocked() && waitMs < 3000) {
-               Thread.currentThread().sleep(interval);
-               waitMs += interval;
-            }
-            core_.enableContinuousFocus(false);
+            waitForFocusLock();
          }
 
+         if (numSlices > 1 && oldFocusEnabled_ && continuousFocusOffForZMove_) {
+            core_.enableContinuousFocus(false);
+         }
          if (sliceMode_ == SliceMode.CHANNELS_FIRST) {
             for (int j=0; j<numSlices; j++) {         
                double z = 0.0;
@@ -809,6 +816,9 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
          } else {
             throw new MMException("Unrecognized slice mode: " + sliceMode_);
          }
+         if (numSlices > 1 && oldFocusEnabled_ && continuousFocusOffForZMove_) {
+            core_.enableContinuousFocus(true);
+         }
 
          // return to the starting position
          if (isFocusStageAvailable() && numSlices > 1) {
@@ -817,8 +827,12 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
          }
 
          // turn the continuous focus back again
-         if (oldFocusEnabled_)
+         /*
+         if (oldFocusEnabled_) {
             core_.enableContinuousFocus(oldFocusEnabled_);
+            waitForFocusLock();
+         }
+         */
 
       } catch(MMException e) {
          stop(true);
@@ -1070,6 +1084,16 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
          return true;
       else
          return false;
+   }
+
+   private void waitForFocusLock()  throws Exception{
+      // wait up to 3 second for focus to lock:
+      int waitMs= 0;
+      int interval = 100;
+      while (!core_.isContinuousFocusLocked() && waitMs < 3000) {
+         Thread.currentThread().sleep(interval);
+         waitMs += interval;
+      }
    }
 
    /**
@@ -1403,6 +1427,14 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
       return autofocusEnabled_;
    }
 
+   public void setContinuousFocusOffForXYMove(boolean state) {
+      continuousFocusOffForXYMove_ = state;
+   }
+
+   public void setContinuousFocusOffForZMove(boolean state) {
+      continuousFocusOffForZMove_ = state;
+   }
+
    private void executeProtocolBody(ChannelSpec cs, double z, double zCur, int sliceIdx,
          int channelIdx, int posIdx, int numSlices, int posIndexNormalized) throws MMException, IOException, JSONException, MMAcqDataException{
 
@@ -1426,9 +1458,14 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
       GregorianCalendar cldAcq = new GregorianCalendar();
       double exposureMs = cs.exposure_;
       Object img;
+      boolean focusSwitchedOff = false;
       try {
          if (isFocusStageAvailable() && cs.zOffset_ != 0.0 && cs.config_.length() > 0) {
             core_.waitForDevice(zStage_);
+            if (continuousFocusOffForZMove_ && oldFocusEnabled_ && core_.isContinuousFocusEnabled()) {
+               core_.enableContinuousFocus(false);
+               focusSwitchedOff = true;
+            }
             double zOffset = z + cs.zOffset_;
             core_.setPosition(zStage_, zOffset);
             zCur = zOffset;
@@ -1438,9 +1475,16 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
             core_.setConfig(channelGroup_, cs.config_);
             core_.setExposure(cs.exposure_);
          }
+  
          // snap and retrieve pixels
          core_.snapImage();
          img = core_.getImage();
+ 
+         // Restore autofocus lock if we had switched it off 
+         if (focusSwitchedOff) {
+            core_.enableContinuousFocus(true);
+            waitForFocusLock();
+         }
       } catch (Exception e) {
          throw new MMException(e.getMessage());
       }

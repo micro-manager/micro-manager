@@ -514,6 +514,8 @@ public class GroupEditor extends MMDialog {
                   showDevice = flags_.shutters_;
                else if (dtype == DeviceType.StageDevice)
                   showDevice = flags_.stages_;
+               else if (dtype == DeviceType.XYStageDevice)
+                  showDevice = flags_.stages_;
                else if (dtype == DeviceType.StateDevice)
                   showDevice = flags_.state_;
                else
@@ -572,6 +574,9 @@ public class GroupEditor extends MMDialog {
                   flags_.shutters_ = true;
                   showShuttersCheckBox_.setSelected(true);
                } else if (dtype == DeviceType.StageDevice) {
+                  flags_.stages_ = true;
+                  showStagesCheckBox_.setSelected(true);
+               } else if (dtype == DeviceType.XYStageDevice) {
                   flags_.stages_ = true;
                   showStagesCheckBox_.setSelected(true);
                } else if (dtype == DeviceType.StateDevice) {

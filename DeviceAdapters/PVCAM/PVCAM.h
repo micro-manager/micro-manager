@@ -81,13 +81,15 @@ struct ROI {
     bool isEmpty() {return x==0 && y==0 && xSize==0 && ySize == 0;}
 };
 
-typedef std::map<std::string, uns32> SMap;
+typedef std::map<uns32, uns32> SMap;
+typedef std::map<std::string, uns32> TMap;
 
 // helper structure for PVCAM parameters
 typedef struct 
 {	char * name;
 	uns32 id;
-   SMap extMap;
+   SMap indexMap;
+   TMap enumMap;
 } SParam;
 
 // forward declarations

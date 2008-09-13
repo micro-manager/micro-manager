@@ -436,4 +436,30 @@ private:
 };
 
 
+//////////////////////////////////////////////////////////////////////////////
+// DemoMagnifier class
+// Simulation of magnifier Device
+//////////////////////////////////////////////////////////////////////////////
+class DemoMagnifier : public CMagnifierBase<DemoMagnifier>
+{
+public:
+   DemoMagnifier () : position (0) {}
+   ~DemoMagnifier () {}
+
+   int Shutdown() {return DEVICE_OK;}
+   void GetName(char* name) const {name = "Demo Optovar";}
+
+   bool Busy() {return false;}
+   int Initialize();
+
+   double GetMagnification();
+
+   // action interface
+   // ----------------
+   int OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+private:
+   int position;
+};
+
 #endif //_DEMOCAMERA_H_

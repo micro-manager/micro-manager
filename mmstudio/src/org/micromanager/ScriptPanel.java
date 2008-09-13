@@ -692,6 +692,9 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
          fw.write(scriptPane_.getText());
          fw.close();
          scriptPaneSaved_ = true;
+         int[] cellAddress = new int[2];
+         model_.GetCell(scriptFile_, cellAddress);
+         model_.setLastMod(cellAddress[0], 0, scriptFile_.lastModified());
          JOptionPane.showMessageDialog(this, "File saved");
       } catch (IOException ioe){
          message("IO exception" + ioe.getMessage());

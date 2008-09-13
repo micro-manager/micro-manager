@@ -434,7 +434,7 @@ int Universal::OnUniversalProperty(MM::PropertyBase* pProp, MM::ActionType eAct,
       } else {
          std::string mnemonic;
          pProp->Get(mnemonic);
-         uns32 ldata = param_set[index].extMap[mnemonic];
+         uns32 ldata = param_set[index].enumMap[mnemonic];
          if (!SetLongParam_PvCam(hPVCAM_, (long)param_set[index].id, (uns32) ldata))
 		   	return pl_error_code();
       }
@@ -450,9 +450,11 @@ int Universal::OnUniversalProperty(MM::PropertyBase* pProp, MM::ActionType eAct,
       } else {
          char enumStr[100];
          int32 enumValue;
-         if (pl_get_enum_param(hPVCAM_, param_set[index].id, ldata, &enumValue, enumStr, 100)) {
+         // It is absurd, but we seem to need this param_set[index].indexMap[ldata] instead of straight ldata??!!!
+         if (pl_get_enum_param(hPVCAM_, param_set[index].id, param_set[index].indexMap[ldata], &enumValue, enumStr, 100)) {
             pProp->Set(enumStr);
          } else {
+            LogMessage ("Error in pl_get_enum_param\n");
             return pl_error_code();
          }
       }
@@ -611,7 +613,8 @@ int Universal::Initialize()
    if (!pl_get_param(hPVCAM_, PARAM_CHIP_NAME, ATTR_CURRENT, chipName))
       return pl_error_code();
    pl_get_param( hPVCAM_, PARAM_GAIN_MULT_FACTOR, ATTR_AVAIL, &emGainAvailable);
-   if (emGainAvailable && (strstr(chipName, "ICX-285") == 0)) {
+   LogMessage(chipName);
+   if (emGainAvailable && (strstr(chipName, "ICX-285") == 0) && (strstr(chipName, "ICX285") == 0) ) {
       LogMessage("This Camera has Em Gain");
       pAct = new CPropertyAction (this, &Universal::OnMultiplierGain);
       nRet = CreateProperty("MultiplierGain", "1", MM::Integer, false, pAct);
@@ -698,10 +701,11 @@ int Universal::Initialize()
                   if (pl_get_enum_param(hPVCAM_, param_set[i].id, index, &enumValue, enumStr, 100)) {
                      AddAllowedValue(param_set[i].name, enumStr);
                      std::string tmp = enumStr;
-                     param_set[i].extMap[tmp] = index;
+                     param_set[i].indexMap[enumValue] = index;
+                     param_set[i].enumMap[tmp] = enumValue;
                   }
                   else
-                     printf ("Error");
+                     LogMessage ("Error in pl_get_enum_param");
                }
             }
          }

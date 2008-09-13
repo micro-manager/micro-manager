@@ -433,6 +433,15 @@ public class Autofocus_ implements PlugIn, Autofocus {
       return 0;
    }
 
+   public void focus(double coarseStep, int numCoarse, double fineStep, int numFine) {
+      SIZE_FIRST = coarseStep;
+      NUM_FIRST = numCoarse;
+      SIZE_SECOND = fineStep;
+      NUM_SECOND = numFine;
+
+      run("silent");
+   }
+
    public void setMMCore(CMMCore core) {
       core_ = core;
    }

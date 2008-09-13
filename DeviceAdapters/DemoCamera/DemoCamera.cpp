@@ -51,6 +51,7 @@ const char* g_XYStageDeviceName = "DXYStage";
 const char* g_AutoFocusDeviceName = "DAutoFocus";
 const char* g_ShutterDeviceName = "DShutter";
 const char* g_DADeviceName = "D-DA";
+const char* g_MagnifierDeviceName = "DOptovar";
 
 // constants for naming pixel types (allowed values of the "PixelType" property)
 const char* g_PixelType_8bit = "8bit";
@@ -93,6 +94,7 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_AutoFocusDeviceName, "Demo auto focus");
    AddAvailableDeviceName(g_ShutterDeviceName, "Demo shutter");
    AddAvailableDeviceName(g_DADeviceName, "Demo DA");
+   AddAvailableDeviceName(g_MagnifierDeviceName, "Demo Optovar");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
@@ -150,6 +152,11 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
    {
       // create DA
       return new DemoDA();
+   }
+   else if (strcmp(deviceName, g_MagnifierDeviceName) == 0)
+   {
+      // create Optovar 
+      return new DemoMagnifier();
    }
 
    // ...supplied name not recognized
@@ -831,9 +838,6 @@ int CDemoFilterWheel::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 
       long pos;
       pProp->Get(pos);
-      //char* deviceName;
-      //GetName(deviceName);
-      printf("Moving to position %ld\n", position_);
       if (pos >= numPos_ || pos < 0)
       {
          pProp->Set(position_); // revert
@@ -1493,3 +1497,52 @@ int DemoAutoFocus::Initialize()
 
    return DEVICE_OK;
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
+// CDemoMagnifier implementation
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+int DemoMagnifier::Initialize()
+{
+   CPropertyAction* pAct = new CPropertyAction (this, &DemoMagnifier::OnPosition);
+   int ret = CreateProperty("Position", "1x", MM::String, false, pAct); 
+   if (ret != DEVICE_OK) 
+      return ret; 
+
+   position = 0;
+
+   AddAllowedValue("Position", "1x"); 
+   AddAllowedValue("Position", "1.6x"); 
+   
+   ret = UpdateStatus();
+   if (ret != DEVICE_OK)
+      return ret;
+
+   return DEVICE_OK;
+}
+
+double DemoMagnifier::GetMagnification() {
+   if (position == 0)
+      return 1.0;
+   return 1.6;
+}
+
+int DemoMagnifier::OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct) 
+{
+   if (eAct == MM::BeforeGet)
+   {
+      // nothing to do, let the caller use cached property
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      std::string pos;
+      pProp->Get(pos);
+      if (pos == "1x")
+            position = 0;
+      else
+         position = 1;
+   }
+
+   return DEVICE_OK;
+}
+

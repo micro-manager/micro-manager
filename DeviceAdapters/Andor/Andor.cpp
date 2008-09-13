@@ -38,7 +38,7 @@
 // FUTURE DEVELOPMENT: From September 1 2007, the development of this adaptor is taken over by Andor Technology plc. Daigang Wen (d.wen@andor.com) is the main contact. Changes made by him will not be labeled.
 //
 // CVS:           $Id$
-//
+
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include "../../MMDevice/ModuleInterface.h"
@@ -926,8 +926,12 @@ int Ixon::Initialize()
    // Vertical Clock Voltage 
    int numVCVoltages;
    ret = GetNumberVSAmplitudes(&numVCVoltages);
-   if (ret != DRV_SUCCESS)
-      return ret;
+   if (ret != DRV_SUCCESS) {
+      numVCVoltages = 0;
+      ostringstream eMsg;
+      eMsg << "Andor driver returned error code: " << ret << " to GetNumberVSAmplitudes";
+      LogMessage(eMsg.str().c_str(), true);
+   }
    VCVoltages_.clear();
    if(numVCVoltages>5)
 	   numVCVoltages = 5;

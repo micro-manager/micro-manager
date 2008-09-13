@@ -691,7 +691,9 @@ public class CalibrationEditor extends MMDialog {
                // select which devices to display
                DeviceType dtype = core_.getDeviceType(devices.get(i));
                boolean showDevice = false;
-               if (dtype == DeviceType.CameraDevice)
+               if (dtype == DeviceType.MagnifierDevice)
+                  showDevice = false;
+               else if (dtype == DeviceType.CameraDevice)
                   showDevice = flags_.cameras_;
                else if (dtype == DeviceType.ShutterDevice)
                   showDevice = flags_.shutters_;
@@ -705,12 +707,17 @@ public class CalibrationEditor extends MMDialog {
                if (showDevice) {
                   StrVector properties = core_.getDevicePropertyNames(devices.get(i));
                   
-                  for (int j=0; j<properties.size(); j++){
+                  for (int j=0; j<properties.size(); j++) {
                      PropertyItem item = new PropertyItem();
                      item.device = devices.get(i);
                      item.name = properties.get(j);
                      item.value = core_.getProperty(devices.get(i), properties.get(j));
                      item.readOnly = core_.isPropertyReadOnly(devices.get(i), properties.get(j));
+                     // Hack to make Camera Binning invisible:
+                     if ((dtype == DeviceType.CameraDevice) && (item.name.equals("Binning"))) {
+                        item.readOnly = true;
+                     }
+
                      item.preInit = core_.isPropertyPreInit(devices.get(i), properties.get(j));
                      item.hasRange = core_.hasPropertyLimits(devices.get(i), properties.get(j));
                      item.lowerLimit = core_.getPropertyLowerLimit(devices.get(i), properties.get(j));

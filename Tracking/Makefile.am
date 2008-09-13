@@ -3,8 +3,7 @@ Tracker_.jar:  \
 	$(srcdir)/src/MMLiveTrackerPlugin_.java \
 	$(srcdir)/src/MMTrackerPlugin_.java  \
 	$(srcdir)/src/TrackerControlDlg.java \
-	$(srcdir)/src/MMStackReaderPlugin_.java \
-	$(srcdir)/src/Tracker.jar
+	$(srcdir)/src/MMStackReaderPlugin_.java 
 	test -d build || mkdir build
 	rm -rf build/*
 	$(JAVAC) -source 1.5 -target 1.5 -sourcepath ../MMCoreJ_wrap:$(srcdir)/src:. -classpath $(IJJARPATH):$(BSHJARPATH):$(topsrcdir)/bin/MMCoreJ.jar:../mmstudio/MMJ_.jar:. $(srcdir)/src/*.java -d build

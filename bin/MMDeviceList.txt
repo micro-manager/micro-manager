@@ -26,6 +26,7 @@ DemoCamera,DLightPath,Demo light path,4
 DemoCamera,DAutoFocus,Demo auto focus,9
 DemoCamera,DShutter,Demo shutter,3
 DemoCamera,D-DA,Demo DA,13
+DemoCamera,DOptovar,Demo Optovar,14
 DemoStreamingCamera,DStreamCam,Demo streaming camera,2
 DemoStreamingCamera,DNoiseProcessor,Demo processor: adds noise to images in real time,11
 DemoStreamingCamera,DSignalGenerator,Demo signal generator: real-time signal output,11
@@ -50,6 +51,12 @@ Ludl,LudlShutter,Ludl Shutter,3
 Ludl,LudlWheel,Ludl Filter Wheel,4
 Ludl,XYStage,XY Stage,6
 Ludl,Stage,Single Axis Stage,5
+LudlLow,LudlController,Ludl Controller,8
+LudlLow,LudlShutter,Ludl Shutter,3
+LudlLow,LudlWheel,Ludl Filter Wheel,4
+MCL_MicroDrive,MicroDrive XY Stage,XY positioning,6
+MCL_NanoDrive,MCL NanoDrive Z Stage,Z positioning,5
+MCL_NanoDrive,MCL NanoDrive XY Stage,XY positioning,6
 Nikon,ZStage,Remote accessory Z-stage,5
 Nikon,TIRFShutter,TIRF Laser Shutter controller T-LUSU(2),3
 Nikon,IntensiLightShutter,IntensiLight Shutter,3
@@ -151,7 +158,6 @@ ZeissCAN29,ZeissCondenserAperture,Condenser Aperture,8
 ZeissCAN29,ZeissHBOLamp,HBO Lamp,8
 ZeissCAN29,ZeissHalogenLamp,Halogen Lamp,8
 ZeissCAN29,ZeissLSMPort,LSM Port (rearPort),4
-ZeissCAN29,ZeissLSMSafety,LSM Safety Controller,8
 ZeissCAN29,ZeissBasePort,Base Port switcher,4
 ZeissCAN29,ZeissUniblitz,Uniblitz Shutter,3
 ZeissCAN29,ZeissFilterWheel,Filter Wheel,4
