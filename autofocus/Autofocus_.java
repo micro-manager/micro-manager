@@ -483,13 +483,4 @@ public class Autofocus_ implements PlugIn, Autofocus {
    void setChannel(String channel) {
       CHANNEL = channel;
    }
-   
-   public void focus(double coarseStep, int numCoarse, double fineStep, int numFine) {
-      SIZE_FIRST = coarseStep;
-      NUM_FIRST = numCoarse;
-      SIZE_SECOND = fineStep;
-      NUM_SECOND = numFine;
-      
-      run("");
-   }   
 }   

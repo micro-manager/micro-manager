@@ -743,12 +743,13 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
             if (autofocusPlugin_ != null && autofocusEnabled_) {
                autofocusPlugin_.fullFocus();
 
-               // update the Z-position
+               // update the Z-position based on the autofocus
                if (pos != null)
                {
                   double zFocus = core_.getPosition(zStage_);
                   StagePosition sp = pos.get(zStage_);
-                  sp.x = zFocus; // assuming this is a single-axis stage set the first axis to the z value
+                  if (sp != null)
+                     sp.x = zFocus; // assuming this is a single-axis stage set the first axis to the z value
                }
             }
 
