@@ -142,7 +142,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    public static String LIVE_WINDOW_TITLE = "AcqWindow";
 
    private static final String MICRO_MANAGER_TITLE = "Micro-Manager-S 1.2";
-   private static final String VERSION = "1.2.8S (alpha)";
+   private static final String VERSION = "1.2.9S (alpha)";
    private static final long serialVersionUID = 3556500289598574541L;
 
    private static final String MAIN_FRAME_X = "x";
@@ -186,15 +186,15 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private ContrastSettings contrastSettings16_;
 
    private GUIColors guiColors_;
-
+   private ColorModel currentColorModel_;
+   
    private MMImageWindow imageWin_;
-   private ColorModel currentColorModel;
-   //private HistogramFrame histWin_;
    private GraphFrame profileWin_;
-   //private MMScriptFrame scriptFrame_;
    private PropertyEditor propertyBrowser_;
+   private PlateEditor hcsPlateEditor_;
    private CalibrationListDlg calibrationListDlg_;
    private AcqControlDlg acqControlWin_;
+   
    private final static String DEFAULT_CONFIG_FILE_NAME = "MMConfig_demo.cfg";
    private final static String DEFAULT_SCRIPT_FILE_NAME = "MMStartup.bsh";
 
@@ -906,8 +906,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       final JMenuItem plateMenuItem = new JMenuItem();
       plateMenuItem.addActionListener(new ActionListener() {
          public void actionPerformed(final ActionEvent e) {
-            PlateEditor pe = new PlateEditor(MMStudioMainFrame.this);
-            pe.setVisible(true);
+            openHCSDialog();
          }
       });
       plateMenuItem.setText("Plate...");
@@ -1558,8 +1557,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             return false;
          }
          ip.setColor(Color.black);
-         if (currentColorModel != null)
-            ip.setColorModel(currentColorModel);
+         if (currentColorModel_ != null)
+            ip.setColorModel(currentColorModel_);
          ip.fill();
          ImagePlus imp = new ImagePlus(LIVE_WINDOW_TITLE, ip);
 
@@ -1584,7 +1583,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             public void windowClosing(WindowEvent e) {
                // remember LUT so that a new window can be opened with the same LUT
                if (imageWin_.getImagePlus().getProcessor().isPseudoColorLut())
-                  currentColorModel = imageWin_.getImagePlus().getProcessor().getColorModel();
+                  currentColorModel_ = imageWin_.getImagePlus().getProcessor().getColorModel();
                imageWin_ = null;
                contrastPanel_.setImagePlus(null);
             }
@@ -2054,7 +2053,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             {
                // open a new window, remember old colormodel
                if (imageWin_.getImagePlus().getProcessor().isPseudoColorLut())
-                  currentColorModel = imageWin_.getImagePlus().getProcessor().getColorModel();
+                  currentColorModel_ = imageWin_.getImagePlus().getProcessor().getColorModel();
                imageWin_.close();
                openImageWindow();
             }
@@ -2346,6 +2345,9 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
       if (acqControlWin_ != null)
          acqControlWin_.dispose();
+      
+      if (hcsPlateEditor_ != null)
+         hcsPlateEditor_.dispose();
 
       if (engine_ != null)
          engine_.shutdown();
@@ -2680,6 +2682,23 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       }
    }
 
+   /**
+    * Opens Acquisition dialog.
+    */
+   private void openHCSDialog() {
+      try {
+         if (hcsPlateEditor_ == null) {
+            hcsPlateEditor_ = new PlateEditor(MMStudioMainFrame.this);
+         }
+         hcsPlateEditor_.setVisible(true);
+
+      } catch(Exception exc) {
+         exc.printStackTrace();
+         handleError(exc.getMessage() +
+               "\nFailed to open due to invalid or corrupted settings.\n" +
+               "Try resetting registry settings to factory defaults (Menu Tools|Options).");
+      }
+   }
 
    ////////////////////////////////////////////////////////////////////////////
    // Scripting interface

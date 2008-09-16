@@ -470,8 +470,17 @@ public class SBSPlate {
    int getWellRow(double y) {
       return (int)((y - getTopLeftY())/wellSpacingY_);
    }
+   
    int getWellColumn(double x) {
       return (int)((x - getTopLeftX())/wellSpacingX_);
+   }
+   
+   boolean isPointWithin(double x, double y) {
+      if (x >= 0.0 && x < sizeXUm_ && y >= 0.0 && y < sizeYUm_)
+         return true;
+      else
+         return false;
+            
    }
 
 }

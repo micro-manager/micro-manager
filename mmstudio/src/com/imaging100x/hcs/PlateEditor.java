@@ -4,18 +4,20 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.geom.Point2D;
+import java.io.File;
 import java.util.prefs.Preferences;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.SpringLayout;
 import javax.swing.UIManager;
-import javax.swing.border.BevelBorder;
-import java.awt.geom.Point2D;
 
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.metadata.MMAcqDataException;
@@ -23,11 +25,11 @@ import org.micromanager.metadata.WellAcquisitionData;
 import org.micromanager.navigation.MultiStagePosition;
 import org.micromanager.navigation.PositionList;
 import org.micromanager.navigation.StagePosition;
-import org.micromanager.utils.MMDialog;
+import org.micromanager.utils.MMFrame;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.TextUtils;
 
-public class PlateEditor extends MMDialog implements ParentPlateGUI {
+public class PlateEditor extends MMFrame implements ParentPlateGUI {
    private JTextField plateNameField_;
    private JTextField rootDirField_;
    private JTextField spacingField_;
@@ -330,7 +332,7 @@ public class PlateEditor extends MMDialog implements ParentPlateGUI {
       
       rootDirField_ = new JTextField();
       getContentPane().add(rootDirField_);
-      springLayout.putConstraint(SpringLayout.EAST, rootDirField_, 0, SpringLayout.EAST, platePanel_);
+      springLayout.putConstraint(SpringLayout.EAST, rootDirField_, -189, SpringLayout.EAST, getContentPane());
       springLayout.putConstraint(SpringLayout.WEST, rootDirField_, 5, SpringLayout.WEST, getContentPane());
       springLayout.putConstraint(SpringLayout.SOUTH, rootDirField_, -29, SpringLayout.SOUTH, getContentPane());
       springLayout.putConstraint(SpringLayout.NORTH, rootDirField_, -49, SpringLayout.SOUTH, getContentPane());
@@ -357,14 +359,29 @@ public class PlateEditor extends MMDialog implements ParentPlateGUI {
       springLayout.putConstraint(SpringLayout.WEST, plateNameLabel, -131, SpringLayout.EAST, getContentPane());
       springLayout.putConstraint(SpringLayout.SOUTH, plateNameLabel, -52, SpringLayout.SOUTH, getContentPane());
       springLayout.putConstraint(SpringLayout.NORTH, plateNameLabel, -66, SpringLayout.SOUTH, getContentPane());
-      //
 
+      final JButton button = new JButton();
+      button.addActionListener(new ActionListener() {
+         public void actionPerformed(final ActionEvent e) {
+            setRootDirectory();
+         }
+      });
+      button.setToolTipText("browse root directory");
+      button.setText("...");
+      getContentPane().add(button);
+      springLayout.putConstraint(SpringLayout.SOUTH, button, -27, SpringLayout.SOUTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, button, -50, SpringLayout.SOUTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.EAST, button, -136, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, button, -184, SpringLayout.EAST, getContentPane());
+      //
+      
       loadSettings();
 
       PositionList sites = generateSites(Integer.parseInt(rowsField_.getText()), Integer.parseInt(columnsField_.getText()), 
             Double.parseDouble(spacingField_.getText()));
       plate_.initialize((String)plateIDCombo_.getSelectedItem());
       platePanel_.refreshImagingSites(sites);
+
 
    }
 
@@ -388,7 +405,7 @@ public class PlateEditor extends MMDialog implements ParentPlateGUI {
       lockAspectCheckBox_.setSelected(prefs.getBoolean(LOCK_ASPECT, true));
       platePanel_.setLockAspect(lockAspectCheckBox_.isSelected());
       plateNameField_.setText(prefs.get(PLATE_DIR, "plate"));
-      rootDirField_.setText(prefs.get(ROOT_DIR, "ScreeningData"));
+      rootDirField_.setText(prefs.get(ROOT_DIR, "C:/ScreeningData"));
    }
 
    private void setPositionList() {
@@ -451,7 +468,33 @@ public class PlateEditor extends MMDialog implements ParentPlateGUI {
       if (scanThread_ != null && scanThread_.isAlive())
          return;
       
+      // clear display
       platePanel_.clearActive();
+      
+      // check if there is any selection available
+      WellPositionList[] wpl = platePanel_.getSelectedWellPositions();
+      if (wpl.length == 0) {
+         displayError("There are no wells selected. Please select one or more wells for scanning.");
+         return;
+      }
+      
+      // check if root directory exists
+      String rootDir = rootDirField_.getText();
+      File f = new File(rootDir);
+      
+      if (!f.exists()) {
+         int ret = JOptionPane.showConfirmDialog(this, "The root directory does not exist. Create?", "Root directory", JOptionPane.YES_NO_OPTION);
+         if (ret != JOptionPane.YES_OPTION) {
+            displayError("The root directory does not exist.");
+            return;
+         }
+         if (!f.mkdirs()) {
+            displayError("Unable to create root directory.");
+            return;
+         }
+      }
+      
+      // start scanning
       scanThread_ = new ScanThread();
       scanThread_.start();
    }
@@ -494,4 +537,19 @@ public class PlateEditor extends MMDialog implements ParentPlateGUI {
       else
          return SBSPlate.DEFAULT_XYSTAGE_NAME;
    }
+   
+   private void setRootDirectory() {
+      JFileChooser fc = new JFileChooser();
+      fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+      fc.setCurrentDirectory(new File(rootDirField_.getText()));
+      int retVal = fc.showOpenDialog(this);
+      if (retVal == JFileChooser.APPROVE_OPTION) {
+         rootDirField_.setText(fc.getSelectedFile().getAbsolutePath());
+      }
+   }
+   
+   private void displayError (String txt) {
+      JOptionPane.showMessageDialog(this, txt);     
+   }
+
 }

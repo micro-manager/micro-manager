@@ -49,7 +49,6 @@ public class PlatePanel extends JPanel {
    private ScriptInterface app_;
    private boolean lockAspect_;
    private ParentPlateGUI gui_;
-   private boolean drag_;
    private Point anchor_;
    private Point previous_;
 
@@ -86,7 +85,6 @@ public class PlatePanel extends JPanel {
          circular = false;
          anchor_ = new Point(0, 0);
          previous_ = new Point(0, 0);
-         drag_ = false;
          
       }
 
@@ -215,6 +213,9 @@ public class PlatePanel extends JPanel {
       if (mode_ == Tool.MOVE) {
          if (app_ == null)
             return;
+         
+         if (!plate_.isPointWithin(pt.x, pt.y))
+            return;
 
          try {
             app_.setXYStagePosition(pt.x, pt.y);
@@ -265,7 +266,6 @@ public class PlatePanel extends JPanel {
             wellBoxes_[i].selected = true;
       }
       repaint();
-      drag_ = false;
    }
 
    protected void onMousePressed(MouseEvent e) {
@@ -274,7 +274,6 @@ public class PlatePanel extends JPanel {
          clearSelection();
       anchor_ = e.getPoint();
       previous_ = e.getPoint();
-      drag_ = true;
    }
    
    private void drawSelRect(Point pt) {
