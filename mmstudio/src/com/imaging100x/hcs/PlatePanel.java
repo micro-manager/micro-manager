@@ -221,6 +221,7 @@ public class PlatePanel extends JPanel {
             app_.setXYStagePosition(pt.x, pt.y);
             stagePos_ = app_.getXYStagePosition();
             gui_.updateStageXYPosition(stagePos_.x, stagePos_.y, well, "undefined");
+            refreshStagePosition();
             repaint();
          } catch (MMScriptException e1) {
             // TODO Auto-generated catch block
@@ -496,8 +497,9 @@ public class PlatePanel extends JPanel {
    }
 
    private void drawStagePointer(Graphics2D g) {
-      //if (stagePos_ == null || app_ == null)
-         //return;
+      
+      if (g == null)
+         return;
       
       System.out.println("Stage pointer in um: " + stagePos_);
       Point pt = scaleDeviceToPixel(stagePos_.x, stagePos_.y);
@@ -622,6 +624,8 @@ public class PlatePanel extends JPanel {
          else
             stagePos_ = new Point2D.Double(0.0, 0.0);
         
+         Graphics2D g = (Graphics2D) getGraphics();
+         drawStagePointer(g);
          String well = plate_.getWellLabel(stagePos_.x, stagePos_.y);
          gui_.updateStageXYPosition(stagePos_.x, stagePos_.y, well, "undefined");
       } catch (MMScriptException e) {
