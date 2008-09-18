@@ -142,7 +142,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    public static String LIVE_WINDOW_TITLE = "AcqWindow";
 
    private static final String MICRO_MANAGER_TITLE = "Micro-Manager-S 1.2";
-   private static final String VERSION = "1.2.9S (alpha)";
+   private static final String VERSION = "1.2.10S (alpha)";
    private static final long serialVersionUID = 3556500289598574541L;
 
    private static final String MAIN_FRAME_X = "x";
@@ -3027,6 +3027,15 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    public String getXYStageName() {
       return core_.getXYStageDevice();
+   }
+
+   public void setXYOrigin(double x, double y) throws MMScriptException {
+      String xyStage = core_.getXYStageDevice();
+      try {
+         core_.setAdapterOriginXY(xyStage, x, y);
+      } catch (Exception e) {
+         throw new MMScriptException(e);
+      }
    }
 
 }

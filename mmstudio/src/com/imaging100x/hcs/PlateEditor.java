@@ -28,6 +28,7 @@ import org.micromanager.navigation.StagePosition;
 import org.micromanager.utils.MMFrame;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.TextUtils;
+import com.swtdesigner.SwingResourceManager;
 
 public class PlateEditor extends MMFrame implements ParentPlateGUI {
    private JTextField plateNameField_;
@@ -227,13 +228,10 @@ public class PlateEditor extends MMFrame implements ParentPlateGUI {
       springLayout.putConstraint(SpringLayout.NORTH, spacingLabel, 220, SpringLayout.NORTH, getContentPane());
 
       final JButton refreshButton = new JButton();
+      refreshButton.setIcon(SwingResourceManager.getIcon(PlateEditor.class, "/org/micromanager/icons/arrow_refresh.png"));
       refreshButton.addActionListener(new ActionListener() {
          public void actionPerformed(final ActionEvent e) {
-            PositionList sites = generateSites(Integer.parseInt(rowsField_.getText()), Integer.parseInt(columnsField_.getText()), 
-                  Double.parseDouble(spacingField_.getText()));
-            plate_.initialize((String)plateIDCombo_.getSelectedItem());
-            platePanel_.refreshImagingSites(sites);
-            platePanel_.repaint();
+            regenerate();
          }
       });
       refreshButton.setText("Refresh");
@@ -244,6 +242,7 @@ public class PlateEditor extends MMFrame implements ParentPlateGUI {
       springLayout.putConstraint(SpringLayout.WEST, refreshButton, -110, SpringLayout.EAST, getContentPane());
 
       final JButton setPositionListButton = new JButton();
+      setPositionListButton.setIcon(SwingResourceManager.getIcon(PlateEditor.class, "/org/micromanager/icons/table.png"));
       setPositionListButton.addActionListener(new ActionListener() {
          public void actionPerformed(final ActionEvent e) {
             setPositionList();
@@ -257,6 +256,7 @@ public class PlateEditor extends MMFrame implements ParentPlateGUI {
       springLayout.putConstraint(SpringLayout.NORTH, setPositionListButton, 295, SpringLayout.NORTH, getContentPane());
 
       final JButton scanButton = new JButton();
+      scanButton.setIcon(SwingResourceManager.getIcon(PlateEditor.class, "/org/micromanager/icons/resultset_next.png"));
       scanButton.addActionListener(new ActionListener() {
          public void actionPerformed(final ActionEvent e) {
             scan();
@@ -270,6 +270,7 @@ public class PlateEditor extends MMFrame implements ParentPlateGUI {
       springLayout.putConstraint(SpringLayout.WEST, scanButton, -110, SpringLayout.EAST, getContentPane());
 
       final JButton stopButton = new JButton();
+      stopButton.setIcon(SwingResourceManager.getIcon(PlateEditor.class, "/org/micromanager/icons/cancel.png"));
       stopButton.addActionListener(new ActionListener() {
          public void actionPerformed(final ActionEvent e) {
             stop();
@@ -373,6 +374,20 @@ public class PlateEditor extends MMFrame implements ParentPlateGUI {
       springLayout.putConstraint(SpringLayout.NORTH, button, -50, SpringLayout.SOUTH, getContentPane());
       springLayout.putConstraint(SpringLayout.EAST, button, -136, SpringLayout.EAST, getContentPane());
       springLayout.putConstraint(SpringLayout.WEST, button, -184, SpringLayout.EAST, getContentPane());
+
+      final JButton calibrateXyButton = new JButton();
+      calibrateXyButton.addActionListener(new ActionListener() {
+         public void actionPerformed(final ActionEvent e) {
+            calibrateXY();
+         }
+      });
+      calibrateXyButton.setText("Calibrate XY...");
+      getContentPane().add(calibrateXyButton);
+      springLayout.putConstraint(SpringLayout.EAST, calibrateXyButton, -4, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, calibrateXyButton, -110, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.SOUTH, calibrateXyButton, 435, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, calibrateXyButton, 412, SpringLayout.NORTH, getContentPane());
+
       //
       
       loadSettings();
@@ -382,8 +397,8 @@ public class PlateEditor extends MMFrame implements ParentPlateGUI {
       plate_.initialize((String)plateIDCombo_.getSelectedItem());
       platePanel_.refreshImagingSites(sites);
 
-
    }
+
 
    protected void saveSettings() {
       Preferences prefs = getPrefsNode();
@@ -409,7 +424,7 @@ public class PlateEditor extends MMFrame implements ParentPlateGUI {
    }
 
    private void setPositionList() {
-      WellPositionList[] wpl = platePanel_.getWellPositions();
+      WellPositionList[] wpl = platePanel_.getSelectedWellPositions();
       PositionList platePl = new PositionList();
       for (int i=0; i<wpl.length; i++) {
          PositionList pl = PositionList.newInstance(wpl[i].getSitePositions());
@@ -427,6 +442,7 @@ public class PlateEditor extends MMFrame implements ParentPlateGUI {
          // TODO Auto-generated catch block
          e.printStackTrace();
       }
+      
    }
 
    private PositionList generateSites(int rows, int cols, double spacing) {
@@ -483,7 +499,8 @@ public class PlateEditor extends MMFrame implements ParentPlateGUI {
       File f = new File(rootDir);
       
       if (!f.exists()) {
-         int ret = JOptionPane.showConfirmDialog(this, "The root directory does not exist. Create?", "Root directory", JOptionPane.YES_NO_OPTION);
+         int ret = JOptionPane.showConfirmDialog(this, "The root directory does not exist. Create?", "Root directory",
+                                                       JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
          if (ret != JOptionPane.YES_OPTION) {
             displayError("The root directory does not exist.");
             return;
@@ -551,5 +568,34 @@ public class PlateEditor extends MMFrame implements ParentPlateGUI {
    private void displayError (String txt) {
       JOptionPane.showMessageDialog(this, txt);     
    }
+   
+   protected void calibrateXY() {
+      if (app_ == null)
+         return;
+      int ret = JOptionPane.showConfirmDialog(this, "Manually position the XY stage over the center of the well A01 and press OK",
+                                                    "XYStage origin setup", JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
+      if (ret == JOptionPane.OK_OPTION) {
+         try {
+            
+            app_.setXYOrigin(plate_.getFirstWellX(), plate_.getFirstWellY());
+            regenerate();
+            Point2D.Double pt = app_.getXYStagePosition();
+            JOptionPane.showMessageDialog(this, "XY Stage set at position: " + pt.x + "," + pt.y);
+         } catch (MMScriptException e) {
+            displayError(e.getMessage());
+            return;
+         }       
+      }
+   }
+
+
+   private void regenerate() {
+      PositionList sites = generateSites(Integer.parseInt(rowsField_.getText()), Integer.parseInt(columnsField_.getText()), 
+            Double.parseDouble(spacingField_.getText()));
+      plate_.initialize((String)plateIDCombo_.getSelectedItem());
+      platePanel_.refreshImagingSites(sites);
+      platePanel_.repaint();
+   }
+
 
 }

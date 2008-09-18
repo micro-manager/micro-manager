@@ -214,4 +214,6 @@ public interface ScriptInterface {
 
    public String getXYStageName();
    
+   public void setXYOrigin(double x, double y) throws MMScriptException;
+   
 }
