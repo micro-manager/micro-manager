@@ -1736,6 +1736,8 @@ int PFSOffset::SetPositionSteps(long steps)
    int ret = g_hub.SetPFocusPosition(*this, *GetCoreCallback(), steps);
    if (ret != 0)
       return ret;
+
+   return DEVICE_OK;
 }
 
 int PFSOffset::GetPositionSteps(long& steps)

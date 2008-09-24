@@ -524,34 +524,6 @@ int CHamamatsu::OnPhotonImagingMode(MM::PropertyBase* pProp, MM::ActionType eAct
    return DEVICE_OK;
 }
 
-// Output Trigger Polarity
-int CHamamatsu::OnOutputTriggerPolarity(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-   if (eAct == MM::AfterSet)
-   {
-      double mode;
-      pProp->Get(mode);
-      // Not sure if we need to shut down the image buffer
-      int ret = ShutdownImageBuffer();
-      if (ret != DEVICE_OK)
-         return ret;
-      if (!dcam_setpropertyvalue(m_hDCAM, DCAM_IDPROP_OUTPUTTRIGGER_POLARITY, mode))
-         return ReportError("Error in dcam_setpropertyvalue (outputtriggerpolarity): ");
-
-      ret = ResizeImageBuffer();
-      if (ret != DEVICE_OK)
-         return ret;
-   }
-   else if (eAct == MM::BeforeGet)
-   {
-      double polarity;
-      if (!dcam_getpropertyvalue(m_hDCAM, DCAM_IDPROP_OUTPUTTRIGGER_POLARITY, &polarity))
-         return ReportError("Error in dcam_getpropertyvalue (outputtriggerpolarity): ");
-      pProp->Set(polarity);
-   }
-   return DEVICE_OK;
-}
-
 // ReadoutTime
 int CHamamatsu::OnReadoutTime(MM::PropertyBase* pProp, MM::ActionType eAct)
 {

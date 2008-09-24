@@ -246,17 +246,17 @@ const char* CoreCallback::GetImage()
    }
 }
 
-int CoreCallback::GetImageDimensions(int& width, int& height, int& depth)
+int CoreCallback::GetImageDimensions(int& /*width*/, int& /*height*/, int& /*depth*/)
 {
    return DEVICE_OK;
 }
 
-int CoreCallback::GetFocusPosition(double& pos)
+int CoreCallback::GetFocusPosition(double& /*pos*/)
 {
    return DEVICE_OK;
 }
 
-int CoreCallback::SetFocusPosition(double pos)
+int CoreCallback::SetFocusPosition(double /*pos*/)
 {
    return DEVICE_OK;
 }
