@@ -24,6 +24,7 @@
 #include <assert.h>
 #include <sstream>
 #include <string>
+#include <cstring>
 #include <fstream>
 
 using namespace std;

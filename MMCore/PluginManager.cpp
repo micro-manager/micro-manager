@@ -482,9 +482,9 @@ vector<string> CPluginManager::GetAvailableDeviceDescriptions(const char* module
 /**
  * List all device types in the specified module.
  */
-vector<int> CPluginManager::GetAvailableDeviceTypes(const char* moduleName) throw (CMMError)
+vector<long> CPluginManager::GetAvailableDeviceTypes(const char* moduleName) throw (CMMError)
 {
-   vector<int> types;
+   vector<long> types;
    HDEVMODULE hLib = LoadPluginLibrary(moduleName);
    CheckVersion(hLib); // verify that versions match
 
@@ -512,17 +512,17 @@ vector<int> CPluginManager::GetAvailableDeviceTypes(const char* moduleName) thro
          char deviceName[MM::MaxStrLength];
          if (!hGetDeviceName(i, deviceName, MM::MaxStrLength))
          {
-            types.push_back((int)MM::AnyType);
+            types.push_back((long)MM::AnyType);
             continue;
          }
 
          // instantiate the device
          MM::Device* pDevice = hCreateDeviceFunc(deviceName);
          if (pDevice == 0)
-            types.push_back((int)MM::AnyType);
+            types.push_back((long)MM::AnyType);
          else
          {
-            types.push_back((int)pDevice->GetType());
+            types.push_back((long)pDevice->GetType());
 
 
             // release device resources

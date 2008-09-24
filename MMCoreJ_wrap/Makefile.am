@@ -54,6 +54,15 @@ install:
 
 EXTRA_DIST = license.txt MMCoreJ_wrap.vcproj
 
+clean:
+	test -z "libMMCoreJ_wrap.la" || rm -f libMMCoreJ_wrap.la
+	rm -rf mmcorej/*.java mmcorej/*.class
+	rm -f MMCorej_wrap.cxx
+	rm -f "./so_locations"
+	rm -rf .libs _libs
+	rm -f *.o
+	rm -f *.lo
+
 dist-hook:
 	test -d $(distdir)/mmcorej || mkdir $(distdir)/mmcorej
 	touch $(distdir)/mmcorej/empty.txt

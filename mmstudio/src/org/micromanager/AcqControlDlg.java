@@ -41,6 +41,7 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Enumeration;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 import java.beans.PropertyChangeListener;
@@ -71,11 +72,14 @@ import javax.swing.border.EtchedBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.TableModelListener;
+import javax.swing.event.TableModelEvent;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
+import javax.swing.table.TableModel;
 
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.Autofocus;
@@ -107,6 +111,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
    private JComboBox posModeCombo_;
    public static final String NEW_ACQFILE_NAME = "MMAcquistion.xml";
    public static final String ACQ_SETTINGS_NODE = "AcquistionSettings";
+   public static final String COLOR_SETTINGS_NODE = "ColorSettings";
 
    private JComboBox channelGroupCombo_;
    private JTextArea commentTextArea_;
@@ -127,6 +132,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
    private ChannelTableModel model_;
    private Preferences prefs_;
    private Preferences acqPrefs_;
+   private Preferences colorPrefs_;
    private File acqFile_;
    private String acqDir_;
    private int zVals_=0;
@@ -176,8 +182,13 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
    private static final String ACQ_SAVE_FILES = "acqSaveFiles";
    private static final String ACQ_SINGLE_FRAME = "singleFrame";
    private static final String ACQ_AF_ENABLE = "autofocus_enabled";
+   private static final String ACQ_COLUMN_WIDTH = "column_width";
+   private static final String ACQ_COLUMN_ORDER = "column_order";
+   private static final int ACQ_DEFAULT_COLUMN_WIDTH = 77;
    private JCheckBox multiPosCheckBox_;
    private JCheckBox singleFrameCheckBox_;
+   private int columnWidth_[];
+   private int columnOrder_[];
 
 
    /**
@@ -221,7 +232,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
    /**
     * Data representation class for the channels list
     */
-   public class ChannelTableModel extends AbstractTableModel {
+   public class ChannelTableModel extends AbstractTableModel implements TableModelListener{
       private static final long serialVersionUID = 3290621191844925827L;
       private ArrayList<ChannelSpec> channels_;
       private AcquisitionEngine acqEng_;
@@ -236,6 +247,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
 
       public ChannelTableModel(AcquisitionEngine eng) {
          acqEng_ = eng;
+         addTableModelListener(this);
       }
 
       public int getRowCount() {
@@ -291,6 +303,25 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
          return true;
       }
 
+      /*
+       * Catched events thrown by the ColorEditor
+       * Will write the new color into the Color Prefs
+       */
+      public void tableChanged(TableModelEvent e) {
+         int row = e.getFirstRow();
+         if (row < 0)
+            return;
+         int col = e.getColumn();
+         if (col < 0)
+            return;
+         ChannelSpec channel = channels_.get(row);
+         TableModel model = (TableModel)e.getSource();
+         if (col == 4) {
+            Color color = (Color) model.getValueAt(row, col);
+            colorPrefs_.putInt("Color_" + acqEng_.getChannelGroup() + "_" + channel.config_, color.getRGB()); 
+         }
+      }
+
 
       public void setChannels(ArrayList<ChannelSpec> ch) {
          channels_ = ch;
@@ -304,6 +335,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
          ChannelSpec channel = new ChannelSpec();
          if (acqEng_.getChannelConfigs().length > 0) {
              channel.config_ = acqEng_.getChannelConfigs()[0];
+             channel.color_ = new Color (colorPrefs_.getInt("Color_" + acqEng_.getChannelGroup() + "_" + channel.config_, Color.white.getRGB())); 
              channels_.add(channel);
          }
       }
@@ -313,7 +345,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
             channels_.remove(chIndex);
       }
 
-      public int rowUp(int rowIdx) {
+      public int rowDown(int rowIdx) {
          if (rowIdx >= 0 && rowIdx < channels_.size() - 1) {
             ChannelSpec channel = channels_.get(rowIdx);
             channels_.add(rowIdx+2, channel);
@@ -323,7 +355,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
          return rowIdx;
       }
 
-      public int rowDown(int rowIdx) {
+      public int rowUp(int rowIdx) {
          if (rowIdx >= 1 && rowIdx < channels_.size()) {
             ChannelSpec channel = channels_.get(rowIdx);
             channels_.add(rowIdx-1, channel);
@@ -360,6 +392,8 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       JComboBox combo_ = new JComboBox();
       JLabel colorLabel_ = new JLabel();
       int editCol_ = -1;
+      int editRow_ = -1;
+      ChannelSpec channel_ = null;
 
       // This method is called when a cell value is edited by the user.
       public Component getTableCellEditorComponent(JTable table, Object value,
@@ -371,9 +405,13 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
 
          ChannelTableModel model = (ChannelTableModel)table.getModel();
          ArrayList<ChannelSpec> channels = model.getChannels();
-         ChannelSpec channel = channels.get(rowIndex);
-         // Configure the component with the specified value
+         final ChannelSpec channel = channels.get(rowIndex);
+         channel_ = channel;
+         
+         colIndex = table.convertColumnIndexToModel(colIndex);
 
+         // Configure the component with the specified value
+         editRow_ = rowIndex;
          editCol_ = colIndex;
          if (colIndex==1 || colIndex==2)
          {
@@ -400,10 +438,12 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
                combo_.addItem(configs[i]);
             }
             combo_.setSelectedItem(channel.config_);
+            channel.color_ = new Color (colorPrefs_.getInt("Color_" + acqEng_.getChannelGroup() + "_" + channel.config_, Color.white.getRGB())); 
 
             // end editing on selection change
             combo_.addActionListener(new ActionListener() {
                public void actionPerformed(ActionEvent e) {
+                  channel.color_ = new Color (colorPrefs_.getInt("Color_" + acqEng_.getChannelGroup() + "_" + channel.config_, Color.white.getRGB())); 
                   fireEditingStopped();
                }
             });
@@ -411,12 +451,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
             // Return the configured component
             return combo_;
          } else {
-            // color
-            // TODO: this is never called ????
-            Color selColor = JColorChooser.showDialog(null, "Channel color", (Color)value);
-            colorLabel_.setOpaque(true);
-            colorLabel_.setBackground(selColor);
-            channel.color_ = selColor;
+            // ColorEditor takes care of this
             return colorLabel_;
          }
       }
@@ -424,9 +459,12 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       // This method is called when editing is completed.
       // It must return the new value to be stored in the cell.
       public Object getCellEditorValue() {
-         if (editCol_ == 0)
+         // TODO: if content of column does not match type we get an exception
+         if (editCol_ == 0) {
+            // As a side effect, change to the color of the new channel
+            channel_.color_ = new Color (colorPrefs_.getInt("Color_" + acqEng_.getChannelGroup() + "_" + combo_.getSelectedItem(), Color.white.getRGB())); 
             return combo_.getSelectedItem();
-         else if (editCol_ == 1 || editCol_ == 2)
+         } else if (editCol_ == 1 || editCol_ == 2)
             return new Double(text_.getText());
          else if (editCol_ == 3) {
             return new Integer(text_.getText());
@@ -443,7 +481,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
    }
 
    /**
-    * Renederer class for the channel table.
+    * Renderer class for the channel table.
     */
    public class ChannelCellRenderer extends JLabel implements TableCellRenderer {
       private static final long serialVersionUID = -4328340719459382679L;
@@ -459,13 +497,11 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
          ArrayList<ChannelSpec> channels = model.getChannels();
          ChannelSpec channel = channels.get(rowIndex);
 
-         if (isSelected) {
-            // cell (and perhaps other cells) are selected
-         }
-
          if (hasFocus) {
             // this cell is the anchor and the table has the focus
          }
+
+         colIndex = table.convertColumnIndexToModel(colIndex);
 
          setOpaque(false);
          if (colIndex == 0)
@@ -480,6 +516,14 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
             setText("");
             setBackground(channel.color_);
             setOpaque(true);
+         }
+
+         if (isSelected) {
+            setBackground(table.getSelectionBackground());
+            setOpaque(true); 
+         } else {
+            setOpaque(false);
+            setBackground(table.getBackground());
          }
 
          // Since the renderer is a component, return itself
@@ -509,6 +553,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       
       Preferences root = Preferences.userNodeForPackage(this.getClass());
       acqPrefs_ = root.node(root.absolutePath() + "/" + ACQ_SETTINGS_NODE);
+      colorPrefs_ = root.node(root.absolutePath() + "/" + COLOR_SETTINGS_NODE);
 
       setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
@@ -622,9 +667,12 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       upButton.setFont(new Font("Arial", Font.PLAIN, 10));
       upButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent e) {
-            int newSel = model_.rowUp(table_.getSelectedRow());
-            model_.fireTableStructureChanged();
-            table_.setRowSelectionInterval(newSel, newSel);
+            int sel = table_.getSelectedRow();
+            if (sel > -1) {
+               int newSel = model_.rowUp(sel);
+               model_.fireTableStructureChanged();
+               table_.setRowSelectionInterval(newSel, newSel);
+            }
          }
       });
       upButton.setText("Up");
@@ -636,9 +684,11 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       downButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent e) {
             int sel = table_.getSelectedRow();
-            int newSel = model_.rowDown(sel);
-            model_.fireTableStructureChanged();
-            table_.setRowSelectionInterval(newSel, newSel);
+            if (sel > -1) {
+               int newSel = model_.rowDown(sel);
+               model_.fireTableStructureChanged();
+               table_.setRowSelectionInterval(newSel, newSel);
+            }
          }
       });
       downButton.setText("Dn");
@@ -756,7 +806,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       // load window settings
       int x = 100;
       int y = 100;
-      setBounds(x, y, 514, 643);
+      setBounds(x, y, 514, 587);
       if (prefs_ != null) {
          x = prefs_.getInt(ACQ_CONTROL_X, x);
          y = prefs_.getInt(ACQ_CONTROL_Y, y);
@@ -804,12 +854,12 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
 
       rootField_ = new JTextField();
       rootField_.setFont(new Font("Arial", Font.PLAIN, 10));
-      rootField_.setBounds(91, 483, 354, 22);
+      rootField_.setBounds(81, 429, 354, 22);
       getContentPane().add(rootField_);
 
       nameField_ = new JTextField();
       nameField_.setFont(new Font("Arial", Font.PLAIN, 10));
-      nameField_.setBounds(91, 511, 354, 22);
+      nameField_.setBounds(81, 457, 354, 22);
       getContentPane().add(nameField_);
 
       final JButton browseRootButton = new JButton();
@@ -821,25 +871,25 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       browseRootButton.setMargin(new Insets(2, 5, 2, 5));
       browseRootButton.setFont(new Font("Dialog", Font.PLAIN, 10));
       browseRootButton.setText("...");
-      browseRootButton.setBounds(451, 481, 47, 24);
+      browseRootButton.setBounds(441, 427, 47, 24);
       getContentPane().add(browseRootButton);
 
       final JLabel hardwareAutofocus = new JLabel();
       hardwareAutofocus.setFont(new Font("Arial", Font.BOLD, 11));
       hardwareAutofocus.setText("Hardware Autofocus");
-      hardwareAutofocus.setBounds(10, 395, 140, 14);
+      hardwareAutofocus.setBounds(248, 216, 140, 14);
       getContentPane().add(hardwareAutofocus);
 
       continuousFocusOffForXYMoveCheckBox_ = new JCheckBox();
       continuousFocusOffForXYMoveCheckBox_.setFont(new Font("Arial", Font.PLAIN, 10));
       continuousFocusOffForXYMoveCheckBox_.setText("Switch off for XY move");
-      continuousFocusOffForXYMoveCheckBox_.setBounds(10, 413, 140, 21);
+      continuousFocusOffForXYMoveCheckBox_.setBounds(240, 231, 139, 21);
       getContentPane().add(continuousFocusOffForXYMoveCheckBox_);
 
       continuousFocusOffForZMoveCheckBox_ = new JCheckBox();
       continuousFocusOffForZMoveCheckBox_.setFont(new Font("Arial", Font.PLAIN, 10));
       continuousFocusOffForZMoveCheckBox_.setText("Switch off for Z move");
-      continuousFocusOffForZMoveCheckBox_.setBounds(238, 412, 183, 23);
+      continuousFocusOffForZMoveCheckBox_.setBounds(380, 230, 130, 23);
       getContentPane().add(continuousFocusOffForZMoveCheckBox_);
 
       saveFilesCheckBox_ = new JCheckBox();
@@ -856,19 +906,19 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       });
       saveFilesCheckBox_.setFont(new Font("Arial", Font.PLAIN, 10));
       saveFilesCheckBox_.setText("Save files to acquisition directory");
-      saveFilesCheckBox_.setBounds(10, 455, 207, 21);
+      saveFilesCheckBox_.setBounds(6, 402, 207, 21);
       getContentPane().add(saveFilesCheckBox_);
 
       final JLabel directoryPrefixLabel = new JLabel();
       directoryPrefixLabel.setFont(new Font("Arial", Font.PLAIN, 10));
       directoryPrefixLabel.setText("Name prefix");
-      directoryPrefixLabel.setBounds(11, 511, 76, 22);
+      directoryPrefixLabel.setBounds(2, 457, 76, 22);
       getContentPane().add(directoryPrefixLabel);
 
       final JLabel directoryPrefixLabel_1 = new JLabel();
       directoryPrefixLabel_1.setFont(new Font("Arial", Font.PLAIN, 10));
       directoryPrefixLabel_1.setText("Directory root");
-      directoryPrefixLabel_1.setBounds(11, 482, 72, 22);
+      directoryPrefixLabel_1.setBounds(6, 429, 72, 22);
       getContentPane().add(directoryPrefixLabel_1);
 
       final JLabel summaryLabel = new JLabel();
@@ -889,23 +939,23 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       getContentPane().add(zValCombo_);
 
       JScrollPane commentScrollPane = new JScrollPane();
-      commentScrollPane.setBounds(91, 539, 354, 62);
+      commentScrollPane.setBounds(81, 485, 354, 62);
       getContentPane().add(commentScrollPane);
 
       commentTextArea_ = new JTextArea();
+      commentScrollPane.setViewportView(commentTextArea_);
       commentTextArea_.setFont(new Font("", Font.PLAIN, 10));
       commentTextArea_.setToolTipText("Comment for the current acquistion");
       commentTextArea_.setWrapStyleWord(true);
       commentTextArea_.setBorder(new EtchedBorder(EtchedBorder.LOWERED));
       //commentTextArea_.setBounds(91, 505, 354, 62);
       //getContentPane().add(commentTextArea_);
-      commentScrollPane.setViewportView(commentTextArea_);
 
 
       JLabel directoryPrefixLabel_2 = new JLabel();
       directoryPrefixLabel_2.setFont(new Font("Arial", Font.PLAIN, 10));
       directoryPrefixLabel_2.setText("Comment");
-      directoryPrefixLabel_2.setBounds(14, 538, 76, 22);
+      directoryPrefixLabel_2.setBounds(12, 485, 76, 22);
       getContentPane().add(directoryPrefixLabel_2);
 
       useSliceSettingsCheckBox_ = new JCheckBox();
@@ -927,7 +977,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
 
       JSeparator separator_2 = new JSeparator();
       separator_2.setFont(new Font("Arial", Font.PLAIN, 10));
-      separator_2.setBounds(5, 445, 493, 5);
+      separator_2.setBounds(5, 391, 493, 5);
       getContentPane().add(separator_2);
 
       JSeparator separator_3 = new JSeparator();
@@ -1006,7 +1056,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       singleFrameCheckBox_.setFont(new Font("", Font.PLAIN, 10));
       singleFrameCheckBox_.setText("Display only last frame");
       singleFrameCheckBox_.setEnabled(false);
-      singleFrameCheckBox_.setBounds(238, 451, 183, 23);
+      singleFrameCheckBox_.setBounds(223, 401, 183, 23);
       getContentPane().add(singleFrameCheckBox_);
 
       afCheckBox_ = new JCheckBox();
@@ -1153,7 +1203,11 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
          singleFrameCheckBox_.setSelected(false);
       }
       nameField_.setText(acqPrefs_.get(ACQ_DIR_NAME, "Untitled"));
-      rootField_.setText(acqPrefs_.get(ACQ_ROOT_NAME, "C:/AcquisitionData"));
+      String os_name = System.getProperty("os.name","");
+      if (os_name.startsWith("Window"))
+         rootField_.setText(acqPrefs_.get(ACQ_ROOT_NAME, "C:/AcquisitionData"));
+      else
+         rootField_.setText(acqPrefs_.get(ACQ_ROOT_NAME, "AcquisitionData"));
       
       acqEng_.setSliceMode(acqPrefs_.getInt(ACQ_SLICE_MODE, acqEng_.getSliceMode()));
       acqEng_.setPositionMode(acqPrefs_.getInt(ACQ_POSITION_MODE, acqEng_.getPositionMode()));
@@ -1188,6 +1242,16 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
          Color c = new Color(r, g, b);
          acqEng_.addChannel(name, exp, zOffset, s8, s16, skip, c);
       }
+
+      // Restore Column Width and Column order
+      int columnCount = 5;
+      columnWidth_ = new int[columnCount];
+      columnOrder_ = new int[columnCount];
+      for (int k=0; k<columnCount; k++) {
+         columnWidth_[k] = acqPrefs_.getInt(ACQ_COLUMN_WIDTH + k, ACQ_DEFAULT_COLUMN_WIDTH);
+         columnOrder_[k] = acqPrefs_.getInt(ACQ_COLUMN_ORDER + k, k);
+      }
+
    }
 
    public void saveAcqSettings() {
@@ -1237,8 +1301,27 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
          acqPrefs_.putInt(CHANNEL_COLOR_B_PREFIX + i, channel.color_.getBlue());
          acqPrefs_.putInt(CHANNEL_SKIP_PREFIX + i, channel.skipFactorFrame_);
       }    
+
+      // Save model column widths and order
+      for (int k=0; k < model_.getColumnCount(); k++) {
+         acqPrefs_.putInt(ACQ_COLUMN_WIDTH + k, findTableColumn(table_, k).getWidth());
+         acqPrefs_.putInt(ACQ_COLUMN_ORDER + k, table_.convertColumnIndexToView(k));
+      }
    }
    
+   // Returns the TableColumn associated with the specified column
+   // index in the model
+   public TableColumn findTableColumn(JTable table, int columnModelIndex) {
+       Enumeration e = table.getColumnModel().getColumns();
+       for (; e.hasMoreElements(); ) {
+           TableColumn col = (TableColumn)e.nextElement();
+           if (col.getModelIndex() == columnModelIndex) {
+               return col;
+           }
+       }
+       return null;
+   }
+
    protected void enableZSliceControls(boolean state) {
       zBottom_.setEnabled(state);
       zTop_.setEnabled(state);
@@ -1443,6 +1526,14 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       return acqEng_.isAcquisitionRunning();
    }
 
+   public static int search(int [ ] numbers, int key) {
+      for (int index = 0; index < numbers.length; index++) {
+        if (numbers[index] == key)
+            return index; 
+      }
+       return -1;
+   }
+
    private void updateGUIContents() {
 
       table_ = new JTable();
@@ -1457,14 +1548,25 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       ChannelCellEditor cellEditor = new ChannelCellEditor();
       ChannelCellRenderer cellRenderer = new ChannelCellRenderer();
 
-      for (int k=0; k < model_.getColumnCount()-1; k++) {
-         TableColumn column = new TableColumn(k, 200, cellRenderer, cellEditor);
-         table_.addColumn(column);
+      table_.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+
+
+      for (int k=0; k < model_.getColumnCount(); k++) {
+         int colIndex = search(columnOrder_, k);
+         if (colIndex < 0)
+            colIndex = k;
+         if (colIndex == model_.getColumnCount() - 1) {
+            ColorRenderer cr = new ColorRenderer(true);
+            ColorEditor ce = new ColorEditor(model_, model_.getColumnCount() - 1);
+            TableColumn column = new TableColumn(model_.getColumnCount()-1, 200, cr, ce);
+            column.setPreferredWidth(columnWidth_[model_.getColumnCount()-1]);
+            table_.addColumn(column);
+         } else {
+            TableColumn column = new TableColumn(colIndex, 200, cellRenderer, cellEditor);
+            column.setPreferredWidth(columnWidth_[colIndex]);
+            table_.addColumn(column);
+         }
       }
-      ColorRenderer cr = new ColorRenderer(true);
-      ColorEditor ce = new ColorEditor();
-      TableColumn column = new TableColumn(model_.getColumnCount()-1, 200, cr, ce);
-      table_.addColumn(column);
 
       tablePane_.setViewportView(table_);
       double intervalMs = acqEng_.getFrameIntervalMs();
@@ -1483,6 +1585,8 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       numFrames_.setValue(new Integer(acqEng_.getNumFrames()));
       zValCombo_.setSelectedIndex(zVals_);
 
+      table_.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+ 
       // update summary
       summaryTextArea_.setText(acqEng_.getVerboseSummary());      
    }

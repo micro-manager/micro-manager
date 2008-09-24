@@ -232,7 +232,6 @@
 // intantiate STL mappings
 namespace std {
     %template(CharVector)   vector<char>;
-    %template(IntVector)    vector<int>;
     %template(LongVector)   vector<long>;
     %template(StrVector)    vector<string>;
     %template(pair_ss)      pair<string, string>;

@@ -60,6 +60,11 @@ const char* g_Handshaking_Off = "Off";
 const char* g_Handshaking_Hardware = "Hardware";
 const char* g_Handshaking_Software = "Software";
 
+const char* g_Parity_None = "None";
+const char* g_Parity_Odd = "Odd";
+const char* g_Parity_Even = "Even";
+const char* g_Parity_Mark = "Mark";
+const char* g_Parity_Space = "Space";
 
 #ifdef WIN32
    BOOL APIENTRY DllMain( HANDLE /*hModule*/, 
@@ -175,7 +180,8 @@ SerialPort::SerialPort() :
    portTimeoutMs_(2000.0),
    answerTimeoutMs_(500),
    transmitCharWaitMs_(0.0),
-   stopBits_(g_StopBits_1)
+   stopBits_(g_StopBits_1),
+   parity_(g_Parity_None)
 {
    port_ = new CSerial();
 
@@ -221,8 +227,15 @@ SerialPort::SerialPort() :
    AddAllowedValue(MM::g_Keyword_StopBits, g_StopBits_2, (long)CSerial::EStop2);
 
    // parity
-   ret = CreateProperty(MM::g_Keyword_Parity, "None", MM::String, true);
+   CPropertyAction* pActParity = new CPropertyAction (this, &SerialPort::OnParity);
+   ret = CreateProperty(MM::g_Keyword_Parity, g_Parity_None, MM::String, false, pActParity, true);
    assert(ret == DEVICE_OK);
+
+   AddAllowedValue(MM::g_Keyword_Parity, g_Parity_None, (long)CSerial::EParNone);
+   AddAllowedValue(MM::g_Keyword_Parity, g_Parity_Odd, (long)CSerial::EParOdd);
+   AddAllowedValue(MM::g_Keyword_Parity, g_Parity_Even, (long)CSerial::EParEven);
+   AddAllowedValue(MM::g_Keyword_Parity, g_Parity_Mark, (long)CSerial::EParMark);
+   AddAllowedValue(MM::g_Keyword_Parity, g_Parity_Space, (long)CSerial::EParSpace);
 
    // handshaking
    CPropertyAction* pActHandshaking = new CPropertyAction (this, &SerialPort::OnHandshaking);
@@ -281,11 +294,14 @@ int SerialPort::Initialize()
    int ret = GetPropertyData(MM::g_Keyword_StopBits, stopBits_.c_str(), sb);
    assert(ret == DEVICE_OK);
 
+   long parity;
+   ret = GetPropertyData(MM::g_Keyword_Parity, parity_.c_str(), parity);
+
    long baud;
    ret = GetCurrentPropertyData(MM::g_Keyword_BaudRate, baud);
    assert(ret == DEVICE_OK);
 
-   long lastError = port_->Setup((CSerial::EBaudrate)baud, CSerial::EData8, CSerial::EParNone, (CSerial::EStopBits)sb);
+   long lastError = port_->Setup((CSerial::EBaudrate)baud, CSerial::EData8, (CSerial::EParity)parity, (CSerial::EStopBits)sb);
 	if (lastError != ERROR_SUCCESS)
 		return ERR_SETUP_FAILED;
 
@@ -546,6 +562,25 @@ int SerialPort::OnStopBits(MM::PropertyBase* pProp, MM::ActionType eAct)
          return ERR_PORT_CHANGE_FORBIDDEN;
       }
       pProp->Get(stopBits_);
+   }
+
+   return DEVICE_OK;
+}
+
+int SerialPort::OnParity(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(parity_.c_str());
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      if (initialized_)
+      {
+         pProp->Set(parity_.c_str());
+         return ERR_PORT_CHANGE_FORBIDDEN;
+      }
+      pProp->Get(parity_);
    }
 
    return DEVICE_OK;

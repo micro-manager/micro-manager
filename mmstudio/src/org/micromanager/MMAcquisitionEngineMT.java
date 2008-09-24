@@ -786,6 +786,8 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
                }
                if (isFocusStageAvailable() && numSlices > 1) {
                   core_.setPosition(zStage_, z);
+                  if (oldFocusEnabled_ && !continuousFocusOffForZMove_) 
+                     waitForFocusLock();
                   zCur = z;
                }
                for (int k=0; k<channels_.size(); k++) {

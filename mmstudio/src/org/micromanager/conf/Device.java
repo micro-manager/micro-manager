@@ -28,7 +28,7 @@ import java.util.ArrayList;
 import java.util.Hashtable;
 
 import mmcorej.CMMCore;
-import mmcorej.IntVector;
+import mmcorej.LongVector;
 import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
 import mmcorej.DeviceType;
@@ -111,7 +111,7 @@ import mmcorej.DeviceType;
    public static Device[] getLibraryContents(String libName, CMMCore core) throws Exception {
       StrVector adapterNames = core.getAvailableDevices(libName);
       StrVector devDescrs = core.getAvailableDeviceDescriptions(libName);
-      IntVector devTypes = core.getAvailableDeviceTypes(libName);
+      LongVector devTypes = core.getAvailableDeviceTypes(libName);
       
       Device[] devList = new Device[(int)adapterNames.size()];
       for (int i=0; i<adapterNames.size(); i++) {

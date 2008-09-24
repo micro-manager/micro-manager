@@ -38,7 +38,7 @@ void TestPCO(CMMCore& core);
 /**
  * Creates MMCore objects loads demo device and displays the status.
  */
-int main(int /* argc */, char* /*argv[]*/)
+int main(int /* argc */, char** /*argv[]*/)
 {
    try {
 

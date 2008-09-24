@@ -364,7 +364,7 @@ vector<string> CMMCore::getAvailableDeviceDescriptions(const char* library) thro
 /**
  * Get type information for available devices from the specified library.
  */
-vector<int> CMMCore::getAvailableDeviceTypes(const char* library) throw (CMMError)
+vector<long> CMMCore::getAvailableDeviceTypes(const char* library) throw (CMMError)
 {
    try
    {
@@ -782,7 +782,7 @@ void CMMCore::initializeDevice(const char* label) throw (CMMError)
 void CMMCore::updateSystemStateCache()
 {
    stateCache_ = getSystemState();
-   CORE_LOG("Syestem state cache updated.\n");
+   CORE_LOG("System state cache updated.\n");
 }
 
 /**

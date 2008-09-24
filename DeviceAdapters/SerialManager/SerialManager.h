@@ -73,6 +73,7 @@ public:
    // action interface
    // ----------------
    int OnStopBits(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnParity(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnHandshaking(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBaud(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTimeout(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -96,6 +97,7 @@ private:
    std::map<std::string, int> baudList_;
 
    std::string stopBits_;
+   std::string parity_;
 };
 
 class SerialManager

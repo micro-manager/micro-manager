@@ -50,6 +50,7 @@
 #endif
 #include <set>
 #include <string>
+#include <cstring>
 #include <sstream>
 #include <iomanip>
 
@@ -154,6 +155,7 @@ CHamamatsu::CHamamatsu() :
    SetErrorText(ERR_BUSY_ACQUIRING, "Busy acquiring an image");
    SetErrorText(ERR_BUFFER_ALLOCATION_FAILED, "Buffer allocation failed");
    SetErrorText(ERR_INCOMPLETE_SNAP_IMAGE_CYCLE, "Incomplete snap image cycle");
+   SetErrorText(ERR_NO_CAMERA_FOUND, "No camera found");
 }
 
 CHamamatsu::~CHamamatsu()
@@ -190,7 +192,7 @@ int CHamamatsu::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
       if (nRet != DEVICE_OK)
          return nRet;
       if (!dcam_setbinning(m_hDCAM, lnBin_))
-         return dcam_getlasterror(m_hDCAM, NULL, 0);
+         return ReportError("Error in dcam_setbinning: ");
       nRet = ResizeImageBuffer();
       if (nRet != DEVICE_OK)
          return nRet;
@@ -198,7 +200,7 @@ int CHamamatsu::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
    else if (eAct == MM::BeforeGet)
    {
       if (!dcam_getbinning(m_hDCAM, &lnBin_))
-         return dcam_getlasterror(m_hDCAM, NULL, 0);
+         return ReportError("Error in dcam_getbinning: ");
       pProp->Set(lnBin_);
    }
    return DEVICE_OK;
@@ -218,7 +220,7 @@ int CHamamatsu::OnTrigPolarity(MM::PropertyBase* pProp, MM::ActionType eAct)
       if (triggerPolarity == g_TrigPolarity_Negative)
          pol = DCAM_TRIGPOL_NEGATIVE;
       if (!dcam_settriggerpolarity(m_hDCAM, pol))
-         return dcam_getlasterror(m_hDCAM, NULL, 0);
+         return ReportError("Error in dcam_settriggerpolarity: ");
       nRet = ResizeImageBuffer();
       if (nRet != DEVICE_OK)
          return nRet;
@@ -227,7 +229,7 @@ int CHamamatsu::OnTrigPolarity(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       long pol;
       if (!dcam_gettriggerpolarity(m_hDCAM, &pol))
-         return dcam_getlasterror(m_hDCAM, NULL, 0);
+         return ReportError("Error in dcam_gettriggerpolarity: ");
       if (pol == DCAM_TRIGPOL_NEGATIVE)
          pProp->Set(g_TrigPolarity_Negative);
       else
@@ -273,7 +275,7 @@ int CHamamatsu::OnTrigMode(MM::PropertyBase* pProp, MM::ActionType eAct)
       LogMessage(os.str().c_str(), true); 
 
       if (!dcam_settriggermode(m_hDCAM, mode))
-         return dcam_getlasterror(m_hDCAM, NULL, 0);
+         return ReportError("Error in dcam_settriggermode: ");
       triggerMode_ = triggerMode;
 
       nRet = ResizeImageBuffer();
@@ -284,7 +286,7 @@ int CHamamatsu::OnTrigMode(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       long mode;
       if (!dcam_gettriggermode(m_hDCAM, &mode))
-         return dcam_getlasterror(m_hDCAM, NULL, 0);
+         return ReportError("Error in dcam_gettriggermode: ");
       ostringstream os;
       os << "Triggermode found: " << mode;
       LogMessage(os.str().c_str(), true); 
@@ -313,7 +315,7 @@ int CHamamatsu::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       double dExp;
       if (!dcam_getexposuretime(m_hDCAM, &dExp))
-         return dcam_getlasterror(m_hDCAM, NULL, 0);
+         return ReportError("Error in dcam_getexposuretime: ");
       pProp->Set(dExp * 1000.0);
    }
    else if (eAct == MM::AfterSet)
@@ -321,7 +323,7 @@ int CHamamatsu::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
       double dExp;
       pProp->Get(dExp);
       if (!dcam_setexposuretime(m_hDCAM, dExp / 1000.0))
-         return dcam_getlasterror(m_hDCAM, NULL, 0);
+         return ReportError("Error in dcam_setexposuretime: ");
    }
    return DEVICE_OK;
 }
@@ -333,7 +335,7 @@ int CHamamatsu::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
    if (eAct == MM::BeforeGet)
    {
       if (!dcam_getdatatype(m_hDCAM, &ccDataType))
-         return dcam_getlasterror(m_hDCAM, NULL, 0);
+         return ReportError("Error in dcam_getdatatype: ");
 
       if (ccDataType == ccDatatype_uint8 || ccDataType == ccDatatype_int8)
       {
@@ -367,7 +369,7 @@ int CHamamatsu::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
          return nRet;
 
       if (!dcam_setdatatype(m_hDCAM, ccDataType))
-         return dcam_getlasterror(m_hDCAM, NULL, 0);
+         return ReportError("Error in dcam_setdatatype: ");
 
       nRet = ResizeImageBuffer();
       if (nRet != DEVICE_OK)
@@ -393,7 +395,7 @@ int CHamamatsu::OnScanMode(MM::PropertyBase* pProp, MM::ActionType eAct)
       if (ret != DEVICE_OK)
          return ret;
       if (!dcam_extended(m_hDCAM, DCAM_IDMSG_SETPARAM, (LPVOID)&ScanMode, sizeof(DCAM_PARAM_SCANMODE)))
-         return dcam_getlasterror(m_hDCAM, NULL, 0);
+         return ReportError("Error in dcam_extended (scanmode): ");
 
       ret = ResizeImageBuffer();
       if (ret != DEVICE_OK)
@@ -402,7 +404,7 @@ int CHamamatsu::OnScanMode(MM::PropertyBase* pProp, MM::ActionType eAct)
       // Reset allowedValues for binning and gain
       DWORD	cap;
       if(!dcam_getcapability(m_hDCAM, &cap, DCAM_QUERYCAPABILITY_FUNCTIONS))
-          return dcam_getlasterror(m_hDCAM, NULL, 0);
+         return ReportError("Error in dcam_getcapability: ");
       ret = SetAllowedBinValues(cap);
       if (ret != DEVICE_OK)
          return ret;
@@ -421,7 +423,7 @@ int CHamamatsu::OnScanMode(MM::PropertyBase* pProp, MM::ActionType eAct)
    else if (eAct == MM::BeforeGet)
    {
       if (!dcam_extended(m_hDCAM,DCAM_IDMSG_GETPARAM, (LPVOID)&ScanMode, sizeof(DCAM_PARAM_SCANMODE)))
-         return dcam_getlasterror(m_hDCAM, NULL, 0);
+         return ReportError("Error in dcam_extended (ScanMode): ");
       pProp->Set(ScanMode.speed);
    }
    return DEVICE_OK;
@@ -438,7 +440,7 @@ int CHamamatsu::OnCCDMode(MM::PropertyBase* pProp, MM::ActionType eAct)
       if (ret != DEVICE_OK)
          return ret;
       if (!dcam_setpropertyvalue(m_hDCAM, DCAM_IDPROP_CCDMODE, ccdMode))
-         return dcam_getlasterror(m_hDCAM, NULL, 0);
+         return ReportError("Error in dcam_Setpropertyvalue (ccdMode): ");
 
       ret = ResizeImageBuffer();
       if (ret != DEVICE_OK)
@@ -447,7 +449,7 @@ int CHamamatsu::OnCCDMode(MM::PropertyBase* pProp, MM::ActionType eAct)
       // Reset allowedValues for binning and gain
       DWORD	cap;
       if(!dcam_getcapability(m_hDCAM, &cap, DCAM_QUERYCAPABILITY_FUNCTIONS))
-          return dcam_getlasterror(m_hDCAM, NULL, 0);
+         return ReportError("Error in dcam_getcapability: ");
       ret = SetAllowedBinValues(cap);
       if (ret != DEVICE_OK)
          return ret;
@@ -467,7 +469,7 @@ int CHamamatsu::OnCCDMode(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       double ccdMode;
       if (!dcam_getpropertyvalue(m_hDCAM, DCAM_IDPROP_CCDMODE, &ccdMode))
-         return dcam_getlasterror(m_hDCAM, NULL, 0);
+         return ReportError("Error in dcam_getpropertyvalue (ccdMode): ");
       //if (!dcam_querypropertyvalue(m_hDCAM, DCAM_IDPROP_CCDMODE, &ccdMode, DCAMPROP_OPTION_NONE))
         // return dcam_getlasterror(m_hDCAM, NULL, 0);
 
@@ -487,7 +489,7 @@ int CHamamatsu::OnPhotonImagingMode(MM::PropertyBase* pProp, MM::ActionType eAct
       if (ret != DEVICE_OK)
          return ret;
       if (!dcam_setpropertyvalue(m_hDCAM, DCAM_IDPROP_PHOTONIMAGINGMODE, mode))
-         return dcam_getlasterror(m_hDCAM, NULL, 0);
+         return ReportError("Error in dcam_setpropertyvalue (photonimagingMode): ");
 
       ret = ResizeImageBuffer();
       if (ret != DEVICE_OK)
@@ -496,7 +498,7 @@ int CHamamatsu::OnPhotonImagingMode(MM::PropertyBase* pProp, MM::ActionType eAct
       // Reset allowedValues for binning and gain
       DWORD	cap;
       if(!dcam_getcapability(m_hDCAM, &cap, DCAM_QUERYCAPABILITY_FUNCTIONS))
-          return dcam_getlasterror(m_hDCAM, NULL, 0);
+         return ReportError("Error in dcam_getcapability: ");
       ret = SetAllowedBinValues(cap);
       if (ret != DEVICE_OK)
          return ret;
@@ -516,8 +518,36 @@ int CHamamatsu::OnPhotonImagingMode(MM::PropertyBase* pProp, MM::ActionType eAct
    {
       double photonMode;
       if (!dcam_getpropertyvalue(m_hDCAM, DCAM_IDPROP_PHOTONIMAGINGMODE, &photonMode))
-         return dcam_getlasterror(m_hDCAM, NULL, 0);
+         return ReportError("Error in dcam_getpropertyvalue (photonimagingmode): ");
       pProp->Set(photonMode);
+   }
+   return DEVICE_OK;
+}
+
+// Output Trigger Polarity
+int CHamamatsu::OnOutputTriggerPolarity(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::AfterSet)
+   {
+      double mode;
+      pProp->Get(mode);
+      // Not sure if we need to shut down the image buffer
+      int ret = ShutdownImageBuffer();
+      if (ret != DEVICE_OK)
+         return ret;
+      if (!dcam_setpropertyvalue(m_hDCAM, DCAM_IDPROP_OUTPUTTRIGGER_POLARITY, mode))
+         return ReportError("Error in dcam_setpropertyvalue (outputtriggerpolarity): ");
+
+      ret = ResizeImageBuffer();
+      if (ret != DEVICE_OK)
+         return ret;
+   }
+   else if (eAct == MM::BeforeGet)
+   {
+      double polarity;
+      if (!dcam_getpropertyvalue(m_hDCAM, DCAM_IDPROP_OUTPUTTRIGGER_POLARITY, &polarity))
+         return ReportError("Error in dcam_getpropertyvalue (outputtriggerpolarity): ");
+      pProp->Set(polarity);
    }
    return DEVICE_OK;
 }
@@ -533,7 +563,7 @@ int CHamamatsu::OnReadoutTime(MM::PropertyBase* pProp, MM::ActionType eAct)
    if (eAct == MM::BeforeGet)
    {
       if (!dcam_extended(m_hDCAM,DCAM_IDMSG_GETPARAM, (LPVOID)&readoutTime, sizeof(DCAM_PARAM_FRAME_READOUT_TIME_INQ)))
-         return dcam_getlasterror(m_hDCAM, NULL, 0);
+         return ReportError("Error in dcam_extended (frame_readout_time_inq): ");
       pProp->Set(readoutTime.framereadouttime * 1000.0);
    }
 
@@ -553,7 +583,7 @@ int CHamamatsu::OnActualIntervalMs(MM::PropertyBase* pProp, MM::ActionType eAct)
        readoutTime = atof(rT);
        double dExp;
        if (!dcam_getexposuretime(m_hDCAM, &dExp))
-          return dcam_getlasterror(m_hDCAM, NULL, 0);
+          return ReportError("Error in dcam_exposuretime: ");
        double interval = max(readoutTime, dExp * 1000);
 	   pProp->Set(interval);
 	}
@@ -576,12 +606,12 @@ int CHamamatsu::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(lnGain);
       FeatureValue.featurevalue = (float)lnGain;
       if (!dcam_extended(m_hDCAM, DCAM_IDMSG_SETPARAM, (LPVOID)&FeatureValue, sizeof(DCAM_PARAM_FEATURE)))
-         return dcam_getlasterror(m_hDCAM, NULL, 0);
+         return ReportError("Error in dcam_extended (set gain): ");
    }
    else if (eAct == MM::BeforeGet)
    {
       if (!dcam_extended(m_hDCAM, DCAM_IDMSG_GETPARAM, (LPVOID)&FeatureValue, sizeof(DCAM_PARAM_FEATURE)))
-         return dcam_getlasterror(m_hDCAM, NULL, 0);
+         return ReportError("Error in dcam_extended (get gain): ");
       pProp->Set(FeatureValue.featurevalue);
    }
    return DEVICE_OK;
@@ -602,12 +632,12 @@ int CHamamatsu::OnGamma(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(gamma);
       FeatureValue.featurevalue = (float)gamma;
       if (!dcam_extended(m_hDCAM, DCAM_IDMSG_SETPARAM, (LPVOID)&FeatureValue, sizeof(DCAM_PARAM_FEATURE)))
-         return dcam_getlasterror(m_hDCAM, NULL, 0);
+         return ReportError("Error in dcam_extended (set gamma): ");
    }
    else if (eAct == MM::BeforeGet)
    {
       if (!dcam_extended(m_hDCAM, DCAM_IDMSG_GETPARAM, (LPVOID)&FeatureValue, sizeof(DCAM_PARAM_FEATURE)))
-         return dcam_getlasterror(m_hDCAM, NULL, 0);
+         return ReportError("Error in dcam_extended (get gamma): ");
       pProp->Set((long)FeatureValue.featurevalue);
    }
    return DEVICE_OK;
@@ -629,12 +659,12 @@ int CHamamatsu::OnOffset(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(lnOffset);
       FeatureValue.featurevalue = (float)lnOffset;
       if (!dcam_extended(m_hDCAM, DCAM_IDMSG_SETPARAM, (LPVOID)&FeatureValue, sizeof(DCAM_PARAM_FEATURE)))
-         return dcam_getlasterror(m_hDCAM, NULL, 0);
+         return ReportError("Error in dcam_extended (set offset): ");
    }
    else if (eAct == MM::BeforeGet)
    {
       if (!dcam_extended(m_hDCAM, DCAM_IDMSG_GETPARAM, (LPVOID)&FeatureValue, sizeof(DCAM_PARAM_FEATURE)))
-         return dcam_getlasterror(m_hDCAM, NULL, 0);
+         return ReportError("Error in dcam_extended (get offset): ");
       pProp->Set(FeatureValue.featurevalue);
    }
    return DEVICE_OK;
@@ -655,12 +685,12 @@ int CHamamatsu::OnExtended(MM::PropertyBase* pProp, MM::ActionType eAct, long fe
       pProp->Get(value);
       FeatureValue.featurevalue = (float)value;
       if (!dcam_extended(m_hDCAM, DCAM_IDMSG_SETPARAM, (LPVOID)&FeatureValue, sizeof(DCAM_PARAM_FEATURE)))
-         return dcam_getlasterror(m_hDCAM, NULL, 0);
+         return ReportError("Error in dcam_extended (set value): ");
    }
    else if (eAct == MM::BeforeGet)
    {
       if (!dcam_extended(m_hDCAM, DCAM_IDMSG_GETPARAM, (LPVOID)&FeatureValue, sizeof(DCAM_PARAM_FEATURE)))
-         return dcam_getlasterror(m_hDCAM, NULL, 0);
+         return ReportError("Error in dcam_extended (get value): ");
       pProp->Set(FeatureValue.featurevalue);
    }
    return DEVICE_OK;
@@ -681,7 +711,7 @@ int CHamamatsu::OnTemperature(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(dT);
       FeatureValue.featurevalue = (float)dT;
       if (!dcam_extended(m_hDCAM, DCAM_IDMSG_SETPARAM, (LPVOID)&FeatureValue, sizeof(DCAM_PARAM_FEATURE)))
-         return dcam_getlasterror(m_hDCAM, NULL, 0);
+         return ReportError("Error in dcam_extended (set dT): ");
    }
    else if (eAct == MM::BeforeGet)
    {
@@ -690,9 +720,12 @@ int CHamamatsu::OnTemperature(MM::PropertyBase* pProp, MM::ActionType eAct)
          unsigned int errCode = dcam_getlasterror(m_hDCAM, NULL, 0);
 
          // this function may not be supported in older cameras
-         if (errCode != DCAMERR_NOTSUPPORT)
+         if (errCode != DCAMERR_NOTSUPPORT) {
+            ostringstream os;
+            os << "Error in dcam_extended (get dT): " << errCode;
+            LogMessage(os.str().c_str());
             return errCode;
-         else
+         } else
             FeatureValue.featurevalue = 0.0; // default to zero if function not supported
       }
       pProp->Set(FeatureValue.featurevalue);
@@ -719,6 +752,14 @@ int CHamamatsu::OnSlot(MM::PropertyBase* pProp, MM::ActionType eAct)
 void CHamamatsu::GetName(char* name) const 
 {
    CDeviceUtils::CopyLimitedString(name, g_DeviceName);
+}
+
+long CHamamatsu::ReportError(std::string message) {
+    long err = dcam_getlasterror(m_hDCAM, NULL, 0);
+    ostringstream os;
+    os << message << err;
+    LogMessage(os.str().c_str());
+    return err;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -752,11 +793,33 @@ int CHamamatsu::Initialize()
 
       if (refCount_ == 0)
       {
-	      if (!dcam_init(m_hDCAMModule, &lnCameras, NULL) || lnCameras < 1)
-            return DEVICE_NATIVE_MODULE_FAILED;
+	      if (!dcam_init(m_hDCAMModule, &lnCameras, NULL) )
+            return ERR_NO_CAMERA_FOUND;
       }
       refCount_++;
 
+   if (lnCameras < 1) {
+      LogMessage("No DCAM camera found");
+      return ERR_NO_CAMERA_FOUND;
+   }
+
+   // DCAM INFO
+   char moduleVersion [64] = "Unrecognized";
+   if (!dcam_getmodelinfo(slot_, DCAM_IDSTR_MODULEVERSION, moduleVersion, sizeof(moduleVersion)))
+      LogMessage ("Error obtaining moduleVersion");
+   else { 
+      char msg[128] = "DCAM Module Version: ";
+      LogMessage (strcat(msg, moduleVersion));
+   }
+
+   // DCAM API INFO
+   char dcamAPIVersion [64] = "Unrecognized";
+   if (!dcam_getmodelinfo(slot_, DCAM_IDSTR_MODULEVERSION, dcamAPIVersion, sizeof(dcamAPIVersion)))
+      LogMessage ("Error obtaining DCAMP API Version");
+   else  {
+      char msg[128] = "DCAM API Version: ";
+      LogMessage (strcat(msg, dcamAPIVersion));
+   }
 
    // gather information about the equipment
    // ------------------------------------------
@@ -767,7 +830,7 @@ int CHamamatsu::Initialize()
    // verify buffer mode
 	DWORD	cap;
 	if(!dcam_getcapability(m_hDCAM, &cap, DCAM_QUERYCAPABILITY_FUNCTIONS))
-       return dcam_getlasterror(m_hDCAM, NULL, 0);
+       return ReportError("Error in getcapability: ");
 
    // We are currently not using user memory.  Log it anyways
 	if(!(cap & DCAM_CAPABILITY_USERMEMORY))
@@ -793,9 +856,13 @@ int CHamamatsu::Initialize()
       unsigned int errCode = dcam_getlasterror(m_hDCAM, NULL, 0);
 
       // this function may not be supported in older cameras
-      if (errCode != DCAMERR_NOTSUPPORT)
+      if (errCode != DCAMERR_NOTSUPPORT) {
+         LogMessage ("Error getting the Name of the camera");
          return errCode;
+      }
    }
+   char msg[128] =  "Camera Model: ";
+   LogMessage (strcat(msg, CameraName)); 
    nRet = CreateProperty(MM::g_Keyword_CameraName, CameraName, MM::String, true);
    assert(nRet == DEVICE_OK);
 		      
@@ -803,6 +870,8 @@ int CHamamatsu::Initialize()
    char	CameraID[64];
    if (!dcam_getstring(m_hDCAM, DCAM_IDSTR_CAMERAID, CameraID, sizeof(CameraID)))
       strcpy(CameraID, "Not available");
+   strcpy (msg, "CameraID: ");
+   LogMessage (strcat(msg, CameraID)); 
    nRet = CreateProperty(MM::g_Keyword_CameraID, CameraID, MM::String, true);
    assert(nRet == DEVICE_OK);
 
@@ -810,6 +879,8 @@ int CHamamatsu::Initialize()
    char	CameraVersion[64];
    if (!dcam_getstring(m_hDCAM, DCAM_IDSTR_CAMERAVERSION, CameraVersion, sizeof(CameraVersion)))
       strcpy(CameraVersion, "Not available");
+   strcpy (msg, "Camera Version: ");
+   LogMessage (strcat(msg, CameraVersion)); 
    nRet = CreateProperty("Camera Version", CameraVersion, MM::String, true);
    assert(nRet == DEVICE_OK);
 
@@ -817,6 +888,8 @@ int CHamamatsu::Initialize()
    char	DriverVersion[64];
    if (!dcam_getstring(m_hDCAM, DCAM_IDSTR_DRIVERVERSION, DriverVersion, sizeof(DriverVersion)))
       strcpy(DriverVersion, "Not available");
+   strcpy (msg, "Driver version: ");
+   LogMessage (strcat(msg, DriverVersion)); 
    nRet = CreateProperty("Driver Version", DriverVersion, MM::String, true);
    assert(nRet == DEVICE_OK);
 
@@ -855,7 +928,7 @@ int CHamamatsu::Initialize()
 
 	DWORD	typeCap;
    if(!dcam_getcapability(m_hDCAM, &typeCap, DCAM_QUERYCAPABILITY_DATATYPE))
-       return dcam_getlasterror(m_hDCAM, NULL, 0);
+       ReportError("Error in getcapability QueryCapability_DataType");
 
    vector<string> pixelTypeValues;
 	if(typeCap & ccDatatype_uint8)
@@ -873,7 +946,7 @@ int CHamamatsu::Initialize()
 
    // scan mode
    int32_t maxSpeed;
-   if (IsScanModeSupported(maxSpeed)) 
+   if (IsScanModeSupported(maxSpeed) && (maxSpeed > 1)) 
    {
       pAct = new CPropertyAction (this, &CHamamatsu::OnScanMode);
       nRet = CreateProperty("ScanMode", "1", MM::Integer, false, pAct);
@@ -884,8 +957,9 @@ int CHamamatsu::Initialize()
             os << (i+1);
             AddAllowedValue("ScanMode", os.str().c_str());
          }
-      } else
+      } else {
            SetPropertyLimits("ScanMode", 1, maxSpeed);
+      }
 
       assert(nRet == DEVICE_OK);
    }
@@ -1007,7 +1081,7 @@ int CHamamatsu::Initialize()
    if (nRet != DEVICE_OK)
       return nRet;
 
-   // We seen to need this on the Mac...
+   // We seem to need this on the Mac...
    SetProperty(MM::g_Keyword_Binning,"1");
 
    m_bInitialized = true;
@@ -1024,13 +1098,13 @@ int CHamamatsu::Shutdown()
    if (m_bInitialized)
    {
       if(!dcam_idle(m_hDCAM))
-         return dcam_getlasterror(m_hDCAM, NULL, 0);
+         return ReportError("Error in dcam_idle: ");
 
       if (!dcam_freeframe(m_hDCAM))
-         return dcam_getlasterror(m_hDCAM, NULL, 0);
+         return ReportError("Error in dcam_freeframe: ");
 
       if (!dcam_close(m_hDCAM))
-         return dcam_getlasterror(m_hDCAM, NULL, 0);
+         return ReportError("Error in dcam_close: ");
    
       if (refCount_ > 0)
       {
@@ -1038,7 +1112,7 @@ int CHamamatsu::Shutdown()
          if (refCount_== 0)
          {
             if (!dcam_uninit(m_hDCAMModule))
-               return dcam_getlasterror(m_hDCAM, NULL, 0);
+               return ReportError("Error in dcam_uninit: ");
          }
       }
       else
@@ -1160,7 +1234,7 @@ int CHamamatsu::SetROI(unsigned uX, unsigned uY, unsigned uXSize, unsigned uYSiz
    SubArrayInquiry.binning=lnBin_;
 						
 	if (!dcam_extended(m_hDCAM,DCAM_IDMSG_GETPARAM,(LPVOID)&SubArrayInquiry,sizeof(DCAM_PARAM_SUBARRAY_INQ)))
-      return dcam_getlasterror(m_hDCAM, NULL, 0);
+      return ReportError("Error in dcam_extended (subarry_inq): ");
 
 	DCAM_PARAM_SUBARRAY SubArrayValue;
 	ZeroMemory((LPVOID)&SubArrayValue, sizeof(DCAM_PARAM_SUBARRAY));
@@ -1179,7 +1253,7 @@ int CHamamatsu::SetROI(unsigned uX, unsigned uY, unsigned uXSize, unsigned uYSiz
 	SubArrayValue.vsize = newYSize;
 
    if (!dcam_extended(m_hDCAM, DCAM_IDMSG_SETPARAM, (LPVOID)&SubArrayValue, sizeof(DCAM_PARAM_SUBARRAY)))
-      return dcam_getlasterror(m_hDCAM, NULL, 0);
+      return ReportError("Error in dcam_extended (subarry): ");
 
    ret = ResizeImageBuffer();
    if (ret != DEVICE_OK)
@@ -1224,7 +1298,7 @@ int CHamamatsu::GetROI(unsigned& uX, unsigned& uY, unsigned& uXSize, unsigned& u
 	SubArrayValue.hdr.id = (DWORD)DCAM_IDPARAM_SUBARRAY;
 						
    if (!dcam_extended(m_hDCAM, DCAM_IDMSG_GETPARAM,(LPVOID)&SubArrayValue, sizeof(DCAM_PARAM_SUBARRAY)))
-      return dcam_getlasterror(m_hDCAM, NULL, 0);
+      return ReportError("Error in dcam_extended (subarry): ");
 
    uX = SubArrayValue.hpos;
    uY = SubArrayValue.vpos;
@@ -1244,7 +1318,7 @@ int CHamamatsu::ClearROI()
    SubArrayInquiry.binning=lnBin_;
 						
 	if (!dcam_extended(m_hDCAM,DCAM_IDMSG_GETPARAM,(LPVOID)&SubArrayInquiry,sizeof(DCAM_PARAM_SUBARRAY_INQ)))
-      return dcam_getlasterror(m_hDCAM, NULL, 0);
+      return ReportError("Error in dcam_extended (subarry_inq): ");
 
    // reset the frame
    int ret = SetROI(0, 0, SubArrayInquiry.hmax, SubArrayInquiry.vmax);
@@ -1289,14 +1363,11 @@ int CHamamatsu::ResizeImageBuffer(long frameBufSize)
    // resize internal buffers
    SIZE imgSize;
    if (!dcam_getdatasize(m_hDCAM,&imgSize))
-      return dcam_getlasterror(m_hDCAM, NULL, 0);
+      return ReportError("Error in dcam_getdatasize: ");
 
    ccDatatype ccDataType;
    if (!dcam_getdatatype(m_hDCAM,&ccDataType))
-   {
-      LogMessage("cam_getdatatype");
-      return dcam_getlasterror(m_hDCAM, NULL, 0);
-   }
+      return ReportError("Error in dcam_getdatatype: ");
 
 #ifdef WIN32
    // format the image buffer
@@ -1332,48 +1403,33 @@ int CHamamatsu::ResizeImageBuffer(long frameBufSize)
 
    // setup the sequence capture mode
    if (!dcam_precapture(m_hDCAM, ccCapture_Sequence))
-      return dcam_getlasterror(m_hDCAM, NULL, 0);
+      return ReportError("Error in dcam_precapture: ");
 
    // set a 3 frame sequence buffercapt
    //const long frameBufSize = 3;
    if (!dcam_freeframe(m_hDCAM))
-   {
-      LogMessage("dcam_freeframe");
-      return dcam_getlasterror(m_hDCAM, NULL, 0);
-   }
+      return ReportError("Error in dcam_freeframe: ");
 
    if (!dcam_allocframe(m_hDCAM, frameBufSize))
-   {
-      LogMessage("dcam_allocframe");
-      return dcam_getlasterror(m_hDCAM, NULL, 0);
-   }
+      return ReportError("Error in dcam_allocframe: ");
 
    long numFrames;
    if (!dcam_getframecount(m_hDCAM, &numFrames))
-   {
-      LogMessage("dcam_getframecount");
-      return dcam_getlasterror(m_hDCAM, NULL, 0);
-   }
+      return ReportError("Error in dcam_getframecount: ");
 
    if (numFrames != frameBufSize)
       return ERR_BUFFER_ALLOCATION_FAILED;
 
    DWORD dwDataBufferSize;
    if (!dcam_getdataframebytes(m_hDCAM, &dwDataBufferSize))
-   {
-      LogMessage("dcam_getdataframebytes");
-      return dcam_getlasterror(m_hDCAM, NULL, 0);
-   }
+      return ReportError("Error in dcam_getdataframebytes: ");
 
    if (img_.Height() * img_.Width() * img_.Depth() != dwDataBufferSize)
       return DEVICE_INTERNAL_INCONSISTENCY; // buffer sizes don't match ???
 
    // start capture
    if (!dcam_capture(m_hDCAM))
-   {
-      LogMessage("dcam_capture");
-      return dcam_getlasterror(m_hDCAM, NULL, 0);
-   }
+      return ReportError("Error in dcam_capture: ");
 
    return DEVICE_OK;
 }
@@ -1387,10 +1443,10 @@ int CHamamatsu::ShutdownImageBuffer()
 {
    // interrupt whatever the camera is currently doing
    if (!dcam_idle(m_hDCAM))
-      return dcam_getlasterror(m_hDCAM, NULL, 0);
+      return ReportError("Error in dcam_idle: ");
 
    if (!dcam_freeframe(m_hDCAM))
-      return dcam_getlasterror(m_hDCAM, NULL, 0);
+      return ReportError("Error in dcam_freeframe: ");
 
    return DEVICE_OK;
 }
@@ -1418,7 +1474,13 @@ bool CHamamatsu::IsScanModeSupported(int32_t& maxSpeed)
 	featureInquiry.hdr.iFlag = dcamparam_scanmodeinq_speedmax;
 	featureInquiry.hdr.oFlag = 0;
 						
-   if (dcam_extended(m_hDCAM, DCAM_IDMSG_GETPARAM,(LPVOID)&featureInquiry, sizeof(DCAM_PARAM_SCANMODE_INQ)) == TRUE) {
+   // Kay Schink reported that dcam_extended failed with ScanMode whereas it worked with featureInquiry.  Add the second test here to catch those issue (might hide the real problem though)..
+   DCAM_PARAM_SCANMODE ScanMode;
+   ZeroMemory((LPVOID)&ScanMode, sizeof(DCAM_PARAM_SCANMODE));
+   ScanMode.hdr.cbSize = sizeof(DCAM_PARAM_SCANMODE);
+   ScanMode.hdr.id = (DWORD) DCAM_IDPARAM_SCANMODE;
+
+   if (dcam_extended(m_hDCAM, DCAM_IDMSG_GETPARAM,(LPVOID)&featureInquiry, sizeof(DCAM_PARAM_SCANMODE_INQ)) == TRUE && dcam_extended(m_hDCAM,DCAM_IDMSG_GETPARAM, (LPVOID)&ScanMode, sizeof(DCAM_PARAM_SCANMODE)) == TRUE) {
       maxSpeed = featureInquiry.speedmax;
       return true;
    }
@@ -1554,7 +1616,7 @@ int AcqSequenceThread::svc(void)
 
    double dExp;                                                                       
    if (!dcam_getexposuretime(camera_->m_hDCAM, &dExp))                                         
-       return dcam_getlasterror(camera_->m_hDCAM, NULL, 0);                                  
+      return  dcam_getlasterror(camera_->m_hDCAM, NULL, 0);
 
    do
    {
@@ -1642,8 +1704,8 @@ int CHamamatsu::StartSequenceAcquisition(long numImages, double interval_ms)
    ret = GetProperty(MM::g_Keyword_ReadoutTime, rT);
    readoutTime = atof(rT);
    double dExp;
-      if (!dcam_getexposuretime(m_hDCAM, &dExp))
-         return dcam_getlasterror(m_hDCAM, NULL, 0);
+   if (!dcam_getexposuretime(m_hDCAM, &dExp))
+      return ReportError("Error in dcam_getexposuretime: ");
    os.clear();
    double interval = max(readoutTime, dExp * 1000);
    os << interval;
@@ -1681,10 +1743,10 @@ int CHamamatsu::StopSequenceAcquisition()
 {
    LogMessage("Stopped sequence acquisition");
    if (!dcam_idle(m_hDCAM))
-      return dcam_getlasterror(m_hDCAM, NULL, 0);
+      return ReportError("Error in dcam_idle: ");
 
    if (!dcam_freeframe(m_hDCAM))
-      return dcam_getlasterror(m_hDCAM, NULL, 0);
+      return ReportError("Error in dcam_freeframe ");
 
    seqThread_->Stop();
    acquiring_ = false;
@@ -1720,12 +1782,12 @@ int CHamamatsu::PushImage()
    long lastImage;
    long frameCount;
    if (!dcam_gettransferinfo(m_hDCAM, &lastImage, &frameCount)) 
-      return dcam_getlasterror(m_hDCAM, NULL, 0);
+      return ReportError("Error in dcam_gettransferinfo: ");
    if (frameCount <= frameCount_) {
       // there is no new frame, wait for a new one
       double dExp;
       if (!dcam_getexposuretime(m_hDCAM, &dExp))
-         return dcam_getlasterror(m_hDCAM, NULL, 0);
+         return ReportError("Error in dcam_getexposuretime: ");
       long lnTimeOut = (long) ((dExp + 5.0) * 1000.0);
       DWORD dwEvent = DCAM_EVENT_FRAMEEND;
       if (!dcam_wait(m_hDCAM, &dwEvent, lnTimeOut, NULL))
@@ -1736,7 +1798,7 @@ int CHamamatsu::PushImage()
             //return lnLastErr;
       }
       if (!dcam_gettransferinfo(m_hDCAM, &lastImage, &frameCount)) 
-         return dcam_getlasterror(m_hDCAM, NULL, 0);
+         return ReportError("Error in dcam_gettransferinfo: ");
    }
 
    if ( (frameCount - frameCount_) >= frameBufSize_)
@@ -1759,7 +1821,7 @@ int CHamamatsu::PushImage()
    long sRow;
    //dcam_lockdata(m_hDCAM, &imgPtr, &sRow, frameCount_);
    if (!dcam_lockdata(m_hDCAM, &imgPtr, &sRow, lastImage))
-      return dcam_getlasterror(m_hDCAM, NULL, 0);
+      return ReportError("Error in dcam_loackdata: ");
 
    // process image
    MM::ImageProcessor* ip = GetCoreCallback()->GetImageProcessor(this);      
@@ -1779,7 +1841,7 @@ int CHamamatsu::PushImage()
       return ret;
 
    if (!dcam_unlockdata(m_hDCAM))
-      return dcam_getlasterror(m_hDCAM, NULL, 0);
+      return ReportError("Error in dcam_unlockdata: ");
 
    return DEVICE_OK;
 }

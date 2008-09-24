@@ -63,6 +63,7 @@ public class MMStudioPlugin implements PlugIn, CommandListener {
                  "ch.randelshofer.quaqua.QuaquaLookAndFeel");
                  // set UI manager properties here that affect Quaqua
                  //          ...
+                System.setProperty("apple.laf.useScreenMenuBar", "true");
             } catch (ClassNotFoundException e) {
                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             } catch (Exception e) {

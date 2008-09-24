@@ -22,6 +22,8 @@
 
 
 #include <string>
+#include <cstdlib>
+#include <cstring>
 #include <vector>
 #include <stdexcept>
 #include <termios.h>
@@ -92,7 +94,7 @@ public:
 
     enum FlowControl {
         FLOW_CONTROL_HARD,
-        // FLOW_CONTROL_SOFT,
+        FLOW_CONTROL_SOFT,
         FLOW_CONTROL_NONE,
         FLOW_CONTROL_DEFAULT = FLOW_CONTROL_NONE
     } ;

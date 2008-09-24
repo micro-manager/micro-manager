@@ -123,7 +123,7 @@ private:
    std::vector<std::string> availablePorts_;
    SerialPortLister* portLister;
 
-   int MDSerialPort::HandleError(int errorCode);
+   int HandleError(int errorCode);
 
 };
 

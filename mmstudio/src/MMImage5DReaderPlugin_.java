@@ -79,6 +79,8 @@ public class MMImage5DReaderPlugin_ implements PlugIn {
       // choose the directory
       // --------------------
 
+      System.setProperty("apple.laf.useScreenMenuBar", "true");
+
       JFileChooser fc = new JFileChooser();
       fc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
       String openAcqDirectory = new String(Prefs.get(MMImage5DReaderDirKey, ""));

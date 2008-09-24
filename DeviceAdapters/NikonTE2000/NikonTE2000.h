@@ -356,4 +356,45 @@ public:
 private:
    bool initialized_;
 };
+
+class PFSOffset : public CStageBase<PFSOffset>
+{
+public:
+   PFSOffset();
+   ~PFSOffset();
+
+   bool Busy();
+   void GetName(char* pszName) const;
+
+   int Initialize();
+   int Shutdown();
+     
+   // Stage API
+   virtual int SetPositionUm(double pos);
+   virtual int GetPositionUm(double& pos);
+   virtual double GetStepSize() const {return (double)stepSize_nm_/1000;}
+   virtual int SetPositionSteps(long steps) ;
+   // virtual int SetRelativePositionUm(double pos) ;
+   virtual int GetPositionSteps(long& steps);
+   virtual int SetOrigin();
+   virtual int GetLimits(double& lower, double& upper)
+   {
+      lower = lowerLimit_;
+      upper = upperLimit_;
+      return DEVICE_OK;
+   }
+
+   // action interface
+   // ----------------
+   int OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnStepSize(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+private:
+   double stepSize_nm_;
+   bool busy_;
+   bool initialized_;
+   double lowerLimit_;
+   double upperLimit_;
+};
+
 #endif //_NIKON_TE2000_H_

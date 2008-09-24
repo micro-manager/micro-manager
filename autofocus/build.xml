@@ -35,9 +35,18 @@
 
 	<target name="compileAutofocus" description="Compile MM Autofocus plugins.">
 		<mkdir dir="build" />
-		<javac srcdir="." destdir="./build" optimize="on" source="1.4" debug="off">
+		<mkdir dir="buildTB" />
+		<javac srcdir="."  destdir="./build" optimize="on" source="1.4" debug="off">
+			<include name="*.java"/>
+			<exclude name="*TB*.java"/>
 			<classpath refid="project.class.path" />
 		</javac>
+		<javac srcdir="."  destdir="./buildTB" optimize="on" source="1.4" debug="off">
+			<include name="*TB*.java"/>
+			<exclude name="Autofocus_.java"/>
+			<classpath refid="project.class.path" />
+		</javac>
+
 	</target>
 
 	<target name="buildAutofocus" description="Build MMAutofocus_.jar">
@@ -48,12 +57,22 @@
 		<copy file="MMAutofocus_.jar" todir="${MMPluginDir}" />
 		<copy file="MMAutofocus_.jar" todir="${Runtime}" />
 		<copy file="MMAutofocus_.jar" todir="${MMPluginDir-inst}/" />
+
+		<jar jarfile="MMAutofocusTB_.jar" basedir="buildTB" />
+		
+		<mkdir dir="${MMPluginDir}" />
+		<copy file="MMAutofocusTB_.jar" todir="${MMPluginDir}" />
+		<copy file="MMAutofocusTB_.jar" todir="${Runtime}" />
+		<copy file="MMAutofocusTB_.jar" todir="${MMPluginDir-inst}/" />
 	
 	</target>
 	
 	<target name="cleanAutofocus" description="Delete the MMAutofocus build files.">
 		<delete dir="build" />
 		<delete file="MMAutofocus_.jar" />
+		<delete dir="buildTB" />
+		<delete file="MMAutofocusTB_.jar" />
+
 	</target>
 	
 </project>

@@ -56,6 +56,7 @@
 #endif
 
 #include <string>
+#include <cstring>
 #include <vector>
 #include <map>
 #include <fstream>
@@ -131,7 +132,7 @@ public:
     */
    std::vector<std::string> getAvailableDevices(const char* library) throw (CMMError);
    std::vector<std::string> getAvailableDeviceDescriptions(const char* library) throw (CMMError);
-   std::vector<int> getAvailableDeviceTypes(const char* library) throw (CMMError);
+   std::vector<long> getAvailableDeviceTypes(const char* library) throw (CMMError);
  
    /** @name Generic device interface
     * API guaranteed to work for all devices.
@@ -303,17 +304,17 @@ public:
     * API for controlling X, Y and Z stages
     */
    //@ {
-   void setPosition(const char* deviceName, double position) throw (CMMError);
-   double getPosition(const char* deviceName) const throw (CMMError);
-   void setRelativePosition(const char* deviceName, double d) throw (CMMError);
-   void setXYPosition(const char* deviceName, double x, double y) throw (CMMError);
-   void setRelativeXYPosition(const char* deviceName, double dx, double dy) throw (CMMError);
-   void getXYPosition(const char* deviceName, double &x, double &y) throw (CMMError);
-   double getXPosition(const char* deviceName) throw (CMMError);
-   double getYPosition(const char* deviceName) throw (CMMError);
-   void stop(const char* deviceName) throw (CMMError);
-   void home(const char* deviceName) throw (CMMError);
-   void setOriginXY(const char* deviceName) throw (CMMError);
+   void setPosition(const char* deviceLabel, double position) throw (CMMError);
+   double getPosition(const char* deviceLabel) const throw (CMMError);
+   void setRelativePosition(const char* deviceLabel, double d) throw (CMMError);
+   void setXYPosition(const char* deviceLabel, double x, double y) throw (CMMError);
+   void setRelativeXYPosition(const char* deviceLabel, double dx, double dy) throw (CMMError);
+   void getXYPosition(const char* deviceLabel, double &x, double &y) throw (CMMError);
+   double getXPosition(const char* deviceLabel) throw (CMMError);
+   double getYPosition(const char* deviceLabel) throw (CMMError);
+   void stop(const char* deviceLabel) throw (CMMError);
+   void home(const char* deviceLabel) throw (CMMError);
+   void setOriginXY(const char* deviceLabel) throw (CMMError);
    void setAdapterOriginXY(const char* deviceName, double x, double y) throw (CMMError);
    //@ }
 
@@ -321,10 +322,10 @@ public:
     * API for serial ports
     */
    //@ {
-   void setSerialPortCommand(const char* name, const char* command, const char* term) throw (CMMError);
-   std::string getSerialPortAnswer(const char* name, const char* term) throw (CMMError);
-   void writeToSerialPort(const char* name, const std::vector<char> &data) throw (CMMError);
-   std::vector<char> readFromSerialPort(const char* name) throw (CMMError);
+   void setSerialPortCommand(const char* deviceLabel, const char* command, const char* term) throw (CMMError);
+   std::string getSerialPortAnswer(const char* deviceLabel, const char* term) throw (CMMError);
+   void writeToSerialPort(const char* deviceLabel, const std::vector<char> &data) throw (CMMError);
+   std::vector<char> readFromSerialPort(const char* deviceLabel) throw (CMMError);
    //@ }
 
    /** @name "  "

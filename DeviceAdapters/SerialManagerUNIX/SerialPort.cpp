@@ -661,8 +661,11 @@ SerialPort::SerialPortImpl::Open()
     // Start assembling the new port settings.
     //
     termios port_settings ;
+    /*
     bzero( &port_settings,
            sizeof( port_settings ) ) ;
+           */
+    memset(&port_settings, 0, sizeof(port_settings));
 
     //
     // Enable the receiver (CREAD) and ignore modem control lines

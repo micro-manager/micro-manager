@@ -67,6 +67,15 @@ fi
 AC_MSG_RESULT($LINKFORSHARED)
 AC_SUBST(LINKFORSHARED)
 
+#---------------------------------------------------
+# Platform dependent flags
+#---------------------------------------------------
+case $host in
+   *-*-linux*)
+   LPTHREAD="-lpthread";;
+esac
+AC_MSG_RESULT($LPTHREAD)
+
 
 #----------------------------------------------------------------
 # Look for java binaries and headers
@@ -228,8 +237,12 @@ then
    *-*-linux*) 
    if test -r /usr/local/lib/libACE.la ; then
       LIBACE="/usr/local/lib/libACE.la"
-   else
-      AC_MSG_ERROR([not found, download from http://deuce.doc.wustl.edu/Download.html, build and install (cd ACE_wrappers \ mkdir build \ cd build \ ../configure \ make \ make install ) and rerun configure])
+  else
+     if test -r /usr/lib/libACE.a ; then
+        LIBACE="/usr/lib/libACE.a"
+      else
+         AC_MSG_ERROR([not found, download from http://deuce.doc.wustl.edu/Download.html, build and install (cd ACE_wrappers \ mkdir build \ cd build \ ../configure \ make \ make install ) and rerun configure])
+      fi
    fi
    ;;
   *-*-darwin*) 
@@ -256,6 +269,7 @@ AC_SUBST(IJJARPATH)
 AC_SUBST(BSHJARPATH)
 AC_SUBST(I5DJARPATH)
 AC_SUBST(LIBACE)
+AC_SUBST(LPTHREAD)
 
 
 # Checks for programs.

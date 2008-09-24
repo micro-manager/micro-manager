@@ -33,6 +33,7 @@
 
 #include "assert.h"
 #include <memory.h>
+#include <cstdlib>
 #include <sstream>
 #include <iostream>
 #include <string>

@@ -59,6 +59,7 @@ typedef void* LPVOID;
 #define ERR_INCOMPLETE_SNAP_IMAGE_CYCLE  1002
 #define ERR_BUSY_ACQUIRING               1003
 #define ERR_INTERNAL_BUFFER_FULL         1004
+#define ERR_NO_CAMERA_FOUND              1005
 
 // forward declaration
 class AcqSequenceThread;
@@ -107,6 +108,7 @@ public:
    int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTrigPolarity(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTrigMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnOutTrigPolarity(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnExtended(MM::PropertyBase* pProp, MM::ActionType eAct, long featureId);
    int OnGain(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -132,6 +134,7 @@ private:
    bool IsFeatureSupported(int featureId);
    bool IsScanModeSupported(int32_t& maxSpeed);
    bool IsPropertySupported(DCAM_PROPERTYATTR& propAttr, long property);
+   long ReportError(std::string message);
    int SetAvailableTriggerModes(DWORD cap);
    int SetAllowedBinValues(DWORD cap);
    int SetAllowedTrigModeValues(DWORD cap);

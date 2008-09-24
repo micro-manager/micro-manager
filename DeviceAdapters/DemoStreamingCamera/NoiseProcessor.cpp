@@ -58,7 +58,7 @@ DemoNoiseProcessor::DemoNoiseProcessor() :
    InitializeDefaultErrorMessages();
    
    /* Generate a new random seed from system time - do this once in your constructor */
-   std::srand((unsigned int)GetClockTicksUs());
+   srand((unsigned int)GetClockTicksUs());
 }
 
 DemoNoiseProcessor::~DemoNoiseProcessor()

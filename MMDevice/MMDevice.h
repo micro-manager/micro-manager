@@ -42,6 +42,9 @@
 
 #include "MMDeviceConstants.h"
 #include <string>
+#include <cstring>
+#include <climits>
+#include <cstdlib>
 #include <vector>
 
 

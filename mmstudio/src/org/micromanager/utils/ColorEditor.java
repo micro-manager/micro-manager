@@ -24,6 +24,7 @@
 package org.micromanager.utils;
 
 import javax.swing.AbstractCellEditor;
+import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellEditor;
 import javax.swing.JButton;
 import javax.swing.JColorChooser;
@@ -46,8 +47,10 @@ ActionListener {
    JColorChooser colorChooser;
    JDialog dialog;
    protected static final String EDIT = "edit";
+   int column_;
+   AbstractTableModel model_;
 
-   public ColorEditor() {
+   public ColorEditor(AbstractTableModel model, int column) {
       //Set up the editor (from the table's point of view),
       //which is a button.
       //This button brings up the color chooser dialog,
@@ -56,6 +59,8 @@ ActionListener {
       button.setActionCommand(EDIT);
       button.addActionListener(this);
       button.setBorderPainted(false);
+      column_ = column;
+      model_ = model;
 
       //Set up the dialog that the button brings up.
       colorChooser = new JColorChooser();
@@ -79,8 +84,13 @@ ActionListener {
          colorChooser.setColor(currentColor);
          dialog.setVisible(true);
 
-         //Make the renderer reappear.
+         // Make the renderer reappear.
          fireEditingStopped();
+         // Fire an event to enable saving the new color in the colorprefs
+         // Don't know how to fire just for this row:
+         for (int row=0; row < model_.getRowCount(); row++) {
+            model_.fireTableCellUpdated(row, column_);
+         }
 
       } else { //User pressed dialog's "OK" button.
          currentColor = colorChooser.getColor();

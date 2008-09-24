@@ -581,6 +581,72 @@ int TEHub::GetPFocusVersion(MM::Device& device, MM::Core& core, std::string& ver
 }
 
 /*
+ * Sets Absolute PFS Ofsset lens focus position in Steps
+ */
+int TEHub::SetPFocusPosition(MM::Device& device, MM::Core& core, int pos)
+{
+   ostringstream os;
+   os <<  "TRN1cOLA" << pos;
+
+   // send command
+   int ret = ExecuteCommand(device, core, "c", os.str().c_str());
+   if (ret != DEVICE_OK)
+      return ret;
+
+   string value;
+   ret = ParseResponse(device, core, "TRN", value);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   return DEVICE_OK;
+}
+
+/*
+ * Sets Relative PFS Ofsset lens focus position in Steps
+ */
+int TEHub::SetRelativePFocusPosition(MM::Device& device, MM::Core& core, int pos)
+{
+   ostringstream os;
+   os <<  "TRN1cOLB" << pos;
+
+   // send command
+   int ret = ExecuteCommand(device, core, "c", os.str().c_str());
+   if (ret != DEVICE_OK)
+      return ret;
+
+   string value;
+   ret = ParseResponse(device, core, "TRN", value);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   return DEVICE_OK;
+}
+
+/*
+ * Returns PFS Ofsset lens focus position in Steps
+ */
+int TEHub::GetPFocusPosition(MM::Device& device, MM::Core& core, int& pos)
+{
+   ostringstream os;
+   os <<  "TRN1rOLR";
+
+   // send command
+   int ret = ExecuteCommand(device, core, "c", os.str().c_str());
+   if (ret != DEVICE_OK)
+      return ret;
+
+   string value;
+   ret = ParseResponse(device, core, "TRN", value);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   pos = atoi(value.c_str());
+
+   return DEVICE_OK;
+}
+
+
+/*
  * Epi-illumination Shutter
  */
 

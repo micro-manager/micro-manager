@@ -36,6 +36,7 @@
 #endif
 
 #include <string>
+#include <cstring>
 #include <vector>
 #include <map>
 #include "../MMDevice/MMDeviceConstants.h"
@@ -65,7 +66,7 @@ public:
    static std::vector<std::string> GetModules(const char* searchPath);
    static std::vector<std::string> GetAvailableDevices(const char* moduleName) throw (CMMError);
    static std::vector<std::string> GetAvailableDeviceDescriptions(const char* moduleName) throw (CMMError);
-   static std::vector<int> GetAvailableDeviceTypes(const char* moduleName) throw (CMMError);
+   static std::vector<long> GetAvailableDeviceTypes(const char* moduleName) throw (CMMError);
 
    // persistence
    std::string Serialize();

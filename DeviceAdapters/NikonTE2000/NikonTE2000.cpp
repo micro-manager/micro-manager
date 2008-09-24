@@ -42,6 +42,7 @@ const char* g_EpiShutterName = "Epi-Shutter";
 const char* g_UniblitzShutterName = "Uniblitz-Shutter";
 const char* g_FocusName = "Focus";
 const char* g_AutoFocusName = "PerfectFocus";
+const char* g_PFSOffsetName = "PFS-Offset";
 const char* g_HubName = "TE2000";
 const char* g_Control = "Control";
 const char* g_ControlMicroscope = "Microscope";
@@ -96,6 +97,7 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_EpiShutterName, "Epi-fluorescence shutter");
    AddAvailableDeviceName(g_UniblitzShutterName, "Uniblitz shutter");
    AddAvailableDeviceName(g_AutoFocusName,  "PFS autofocus device");
+   AddAvailableDeviceName(g_PFSOffsetName,  "PFS Offset Lens");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
@@ -147,6 +149,10 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
    else if (strcmp(deviceName, g_AutoFocusName) == 0)
    {
       return new PerfectFocus;
+   }
+   else if (strcmp(deviceName, g_PFSOffsetName) == 0)
+   {
+      return new PFSOffset;
    }
 
    return 0;
@@ -780,11 +786,11 @@ int OpticalPath::Initialize()
       return ret;
 
    // set allowed states
+   AddAllowedValue(MM::g_Keyword_State, "0");
    AddAllowedValue(MM::g_Keyword_State, "1");
    AddAllowedValue(MM::g_Keyword_State, "2");
    AddAllowedValue(MM::g_Keyword_State, "3");
    AddAllowedValue(MM::g_Keyword_State, "4");
-   AddAllowedValue(MM::g_Keyword_State, "5");
 
 
    // Label
@@ -795,11 +801,11 @@ int OpticalPath::Initialize()
       return ret;
 
    // create default positions and labels
-   SetPositionLabel(1, "Monitor(100)");
-   SetPositionLabel(2, "Monitor(20)-Right(80)");
-   SetPositionLabel(3, "Bottom(100)");
-   SetPositionLabel(4, "Monitor(20)-Front(80)");
-   SetPositionLabel(5, "Left(100)");
+   SetPositionLabel(0, "Monitor(100)");
+   SetPositionLabel(1, "Monitor(20)-Right(80)");
+   SetPositionLabel(2, "Bottom(100)");
+   SetPositionLabel(3, "Monitor(20)-Front(80)");
+   SetPositionLabel(4, "Left(100)");
   
    ret = UpdateStatus();
    if (ret != DEVICE_OK)
@@ -831,12 +837,13 @@ int OpticalPath::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
       int ret = g_hub.GetOpticalPathPosition(*this, *GetCoreCallback(), pos);
       if (ret != DEVICE_OK)
          return ret;
-      pProp->Set((long)pos);
+      pProp->Set((long)pos - 1);
    }
    else if (eAct == MM::AfterSet)
    {
       long pos;
       pProp->Get(pos);
+      pos += 1;
       if (pos > (long)numPos_ || pos < 1)
       {
          // restore current position
@@ -844,7 +851,7 @@ int OpticalPath::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
          int ret = g_hub.GetOpticalPathPosition(*this, *GetCoreCallback(), oldPos);
          if (ret != DEVICE_OK)
             return ret;
-         pProp->Set((long)oldPos); // revert
+         pProp->Set((long)oldPos - 1); // revert
          return ERR_UNKNOWN_POSITION;
       }
       // apply the value
@@ -1619,4 +1626,187 @@ int PerfectFocus::IncrementalFocus()
 int GetFocusScore(double& /*score*/)
 {
    return DEVICE_UNSUPPORTED_COMMAND;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// PFSOffset implementation
+// ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+PFSOffset::PFSOffset() : 
+   stepSize_nm_(0.5),
+   busy_(false),
+   initialized_(false),
+   lowerLimit_(-20000.0),
+   upperLimit_(20000.0)
+{
+   InitializeDefaultErrorMessages();
+   SetErrorText(ERR_NOT_CONNECTED, "Not connected with the hardware");
+   SetErrorText(ERR_PFS_NOT_CONNECTED, "No Perfect Focus found");
+}
+
+PFSOffset::~PFSOffset()
+{
+   Shutdown();
+}
+
+void PFSOffset::GetName(char* Name) const
+{
+   CDeviceUtils::CopyLimitedString(Name, g_PFSOffsetName);
+}
+
+int PFSOffset::Initialize()
+{
+   // PFS Version (this also functions as a check that the PF is attached and switched ON
+   string version;
+   int ret = g_hub.GetPFocusVersion(*this, *GetCoreCallback(), version);
+   if (ret != DEVICE_OK)
+      return ERR_PFS_NOT_CONNECTED;
+
+   // set property list
+   // -----------------
+   
+   // Name
+   ret = CreateProperty(MM::g_Keyword_Name, g_PFSOffsetName, MM::String, true);
+   if (DEVICE_OK != ret)
+      return ret;
+
+   // Description
+   ret = CreateProperty(MM::g_Keyword_Description, "Nikon TE2000 PFS Offset lens", MM::String, true);
+   if (DEVICE_OK != ret)
+      return ret;
+
+   // Position
+   // --------
+   CPropertyAction* pAct = new CPropertyAction (this, &PFSOffset::OnPosition);
+   ret = CreateProperty(MM::g_Keyword_Position, "0.0", MM::Float, false, pAct);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   // StepSize
+   // --------
+   const char* stepSizeName = "PFSFocusStepSize_(nm)";
+   pAct = new CPropertyAction (this, &PFSOffset::OnStepSize);
+   ret = CreateProperty(stepSizeName, "0.5", MM::Float, false, pAct, true);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   ret = SetPropertyLimits(stepSizeName, 0, 10);
+
+   ret = UpdateStatus();
+   if (ret != DEVICE_OK)
+      return ret;
+
+   initialized_ = true;
+
+   return DEVICE_OK;
+}
+
+int PFSOffset::Shutdown()
+{
+   if (initialized_)
+   {
+      initialized_ = false;
+   }
+   return DEVICE_OK;
+}
+
+bool PFSOffset::Busy()
+{
+   // All calls in TEHub for PFSOffset are blocking...
+   return false;
+}
+
+int PFSOffset::SetPositionUm(double pos)
+{
+   return SetProperty(MM::g_Keyword_Position, CDeviceUtils::ConvertToString(pos));
+}
+
+int PFSOffset::GetPositionUm(double& pos)
+{
+   char buf[MM::MaxStrLength];
+   int ret = GetProperty(MM::g_Keyword_Position, buf);
+   if (ret != DEVICE_OK)
+      return ret;
+   pos = atof(buf);
+   return DEVICE_OK;
+}
+
+int PFSOffset::SetPositionSteps(long steps)
+{
+   int ret = g_hub.SetPFocusPosition(*this, *GetCoreCallback(), steps);
+   if (ret != 0)
+      return ret;
+}
+
+int PFSOffset::GetPositionSteps(long& steps)
+{
+   return g_hub.GetPFocusPosition(*this, *GetCoreCallback(), (int&) steps);
+}
+/*
+      if (ret != 0)
+         return ret;
+      pProp->Set((double) (pos * ((double)stepSize_nm_ / 1000)) );
+   if (stepSize_nm_ == 0.0)
+      return DEVICE_UNSUPPORTED_COMMAND;
+   double posUm;
+   int ret = GetPositionUm(posUm);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   steps = (long)(posUm / ((double)stepSize_nm_ / 1000) + 0.5);
+   return DEVICE_OK;
+}
+*/
+
+int PFSOffset::SetOrigin()
+{
+   return DEVICE_UNSUPPORTED_COMMAND;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Action handlers
+///////////////////////////////////////////////////////////////////////////////
+
+int PFSOffset::OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      long pos;
+      int ret = GetPositionSteps(pos);
+      if (ret != DEVICE_OK)
+         return ret;
+      pProp->Set((double) (pos * ((double)stepSize_nm_ / 1000)) );
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      double pos;
+      pProp->Get(pos);
+      long focusPos = (long)(pos/((double)stepSize_nm_ / 1000.0) + 0.5);
+      return SetPositionSteps(focusPos);
+   }
+
+   return DEVICE_OK;
+}
+
+
+/*
+ * 
+ */
+int PFSOffset::OnStepSize(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      // There is no way to get a stepsize from the controller. 
+      ostringstream os;
+      os << stepSize_nm_;
+      pProp->Set(os.str().c_str());
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      string stepSize;
+      pProp->Get(stepSize);
+      stepSize_nm_ = atof(stepSize.c_str());
+   }
+
+   return DEVICE_OK;
 }

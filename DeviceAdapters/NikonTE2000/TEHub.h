@@ -96,6 +96,10 @@ public:
    int GetPFocusStatus(MM::Device& device, MM::Core& core, int& status);
    int GetPFocusVersion(MM::Device& device, MM::Core& core, std::string& version);
 
+   int SetPFocusPosition(MM::Device& device, MM::Core& core, int pos);
+   int SetRelativePFocusPosition(MM::Device& device, MM::Core& core, int pos);
+   int GetPFocusPosition(MM::Device& device, MM::Core& core, int& pos);
+
 private:
    int ExecuteCommand(MM::Device& device, MM::Core& core, const char* type, const char* command);
    int ParseResponse(MM::Device& device, MM::Core& core, const char* cmdId, std::string& value);

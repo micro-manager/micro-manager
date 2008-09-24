@@ -1,0 +1,36 @@
+ (special build instructions
+for linux users)
+1. install packages:
+sun-java6-sdk or equivalent
+autoconf
+automake
+swig
+libace-dev
+g++
+libtool
+
+2. ImageJ.  Download and install from
+http://rsb.info.nih.gov/ij/download.html.
+
+3. run ./mmUnixBuild.sh
+
+4. run ./configure --with-imagej=/home/mahogny/umanager/ImageJ
+  with whatever path to imagej fits in your case
+
+5. (will not be needed later) change /usr/include/ace/config-lite.h
+
+error _REENTRANT has to be defined!
+into
+define _REENTRANT
+
+6. make
+
+7. when it fails, edit MMCoreJ_wrap/MMCoreJ_wrap.cxx
+remove
+{
+   jint jvalue = (jint)temp2;
+   jenv->SetIntArrayRegion(jarg2, 0, 1, &jvalue);
+ }
+
+8. make
+9. make install
