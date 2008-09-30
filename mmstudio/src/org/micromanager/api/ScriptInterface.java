@@ -216,4 +216,6 @@ public interface ScriptInterface {
    
    public void setXYOrigin(double x, double y) throws MMScriptException;
    
+   public String installPlugin(String className, String menuName);
+   
 }

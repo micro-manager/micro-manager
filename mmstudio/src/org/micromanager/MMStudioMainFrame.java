@@ -54,6 +54,7 @@ import java.awt.geom.Point2D;
 import java.awt.image.ColorModel;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.prefs.Preferences;
 
 import javax.swing.JButton;
@@ -86,6 +87,7 @@ import org.micromanager.acquisition.AcquisitionManager;
 import org.micromanager.acquisition.MMAcquisition;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.Autofocus;
+import org.micromanager.api.MMPlugin;
 import org.micromanager.api.DeviceControlGUI;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.conf.ConfiguratorDlg;
@@ -194,6 +196,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private PlateEditor hcsPlateEditor_;
    private CalibrationListDlg calibrationListDlg_;
    private AcqControlDlg acqControlWin_;
+   private ArrayList<PluginItem> plugins_;
    
    private final static String DEFAULT_CONFIG_FILE_NAME = "MMConfig_demo.cfg";
    private final static String DEFAULT_SCRIPT_FILE_NAME = "MMStartup.bsh";
@@ -237,6 +240,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private ZWheelListener zWheelListener_;
    private AcquisitionManager acqMgr_;
 
+   private JMenuBar menuBar_;
+
    /**
     * Callback to update GUI when a change happens in the MMCore.
     */
@@ -252,6 +257,11 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             propertyBrowser_.updateStatus();
          MMLogger.getLogger().info("Notification from MMCore!");
       }
+   }
+   
+   private class PluginItem {
+      public String menuItem = "undefined";
+      public MMPlugin plugin = null;
    }
 
 
@@ -277,6 +287,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       options_.loadSettings();
 
       guiColors_ = new GUIColors();
+      
+      plugins_ = new ArrayList<PluginItem> ();
 
       runsAsPlugin_ = pluginStatus;
       setIconImage(SwingResourceManager.getImage(MMStudioMainFrame.class, "icons/microscope.gif"));
@@ -311,7 +323,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       ActionListener timerHandler = new ActionListener() {
          public void actionPerformed(ActionEvent evt) {
             if (!isImageWindowOpen()) {
-               // stop live acquistion if user closed the window
+               // stop live acquisition if user closed the window
                enableLiveMode(false);
                toggleButtonLive_.doClick();
                return; 
@@ -363,8 +375,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       springLayout_.putConstraint(SpringLayout.EAST, buttonSnap, 95, SpringLayout.WEST, getContentPane());
       springLayout_.putConstraint(SpringLayout.WEST, buttonSnap, 7, SpringLayout.WEST, getContentPane());
 
-      // Initalize
-      // ---------
+      // Initialize
+      // ----------
 
       // Exposure field
       // ---------------
@@ -510,12 +522,12 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       springLayout_.putConstraint(SpringLayout.EAST, buttonProf, 95, SpringLayout.WEST, getContentPane());
       springLayout_.putConstraint(SpringLayout.WEST, buttonProf, 7, SpringLayout.WEST, getContentPane());
 
-      final JMenuBar menuBar = new JMenuBar();
-      setJMenuBar(menuBar);
+      menuBar_ = new JMenuBar();
+      setJMenuBar(menuBar_);
 
       final JMenu fileMenu = new JMenu();
       fileMenu.setText("File");
-      menuBar.add(fileMenu);
+      menuBar_.add(fileMenu);
 
       final JMenuItem openMenuItem = new JMenuItem();
       openMenuItem.addActionListener(new ActionListener() {
@@ -559,7 +571,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
       final JMenu image5dMenu = new JMenu();
       image5dMenu.setText("Image5D");
-      menuBar.add(image5dMenu);
+      menuBar_.add(image5dMenu);
 
       final JMenuItem closeAllMenuItem = new JMenuItem();
       closeAllMenuItem.addActionListener(new ActionListener() {
@@ -678,7 +690,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
       final JMenu toolsMenu = new JMenu();
       toolsMenu.setText("Tools");
-      menuBar.add(toolsMenu);
+      menuBar_.add(toolsMenu);
 
       final JMenuItem refreshMenuItem = new JMenuItem();
       refreshMenuItem.setIcon(SwingResourceManager.getIcon(MMStudioMainFrame.class, "icons/arrow_refresh.png"));
@@ -901,7 +913,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
       final JMenu hcsMenu = new JMenu();
       hcsMenu.setText("High-Content");
-      menuBar.add(hcsMenu);
+      menuBar_.add(hcsMenu);
 
       final JMenuItem plateMenuItem = new JMenuItem();
       plateMenuItem.addActionListener(new ActionListener() {
@@ -914,7 +926,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
       final JMenu helpMenu = new JMenu();
       helpMenu.setText("Help");
-      menuBar.add(helpMenu);
+      menuBar_.add(helpMenu);
 
       final JMenuItem aboutMenuItem = new JMenuItem();
       aboutMenuItem.addActionListener(new ActionListener() {
@@ -1131,7 +1143,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             // TODO: If there is an error loading the config file, make sure we prompt next time at startup
             loadSystemConfiguration();
             executeStartupScript();
-
+            
             configPad_.setCore(core_);
             if (parent != null)
                configPad_.setParentGUI(parent);
@@ -2246,6 +2258,28 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             else
                shutterComboBox_.setSelectedItem("");
          }
+         
+         // add plugin menu items
+         if (plugins_.size() > 0) {
+            final JMenu pluginMenu = new JMenu();
+            pluginMenu.setText("Plugins");
+            menuBar_.add(pluginMenu);
+
+            for (int i=0; i<plugins_.size(); i++) {
+               final JMenuItem newMenuItem = new JMenuItem();
+               newMenuItem.addActionListener(new ActionListener() {
+                  public void actionPerformed(final ActionEvent e) {
+//                     if (plugins_.get(i).plugin == null) {
+//                        hcsPlateEditor_ = new PlateEditor(MMStudioMainFrame.this);
+//                     }
+//                     hcsPlateEditor_.setVisible(true);
+                  }
+               });
+               newMenuItem.setText(plugins_.get(i).menuItem);
+               pluginMenu.add(newMenuItem);
+            }
+         }
+         
          updateGUI(true);
       } catch (Exception e){
          handleException(e);
@@ -3048,6 +3082,29 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       } catch (Exception e) {
          throw new MMScriptException(e);
       }
+   }
+
+   public String installPlugin(String className, String menuName) {
+      // instantiate auto-focusing module
+      String msg = new String(className + " module loaded.");
+      try {
+         Class cl = Class.forName(className);
+         PluginItem pi = new PluginItem();
+         pi.menuItem = menuName;
+         pi.plugin = (MMPlugin) cl.newInstance();
+         plugins_.add(pi);
+      } catch (ClassNotFoundException e) {
+         msg = className + " plugin not found.";
+      } catch (InstantiationException e) {
+         msg = className + " instantiation to MMPlugin interface failed.";
+      } catch (IllegalAccessException e) {
+         msg = "Illegal access exception!";
+      } catch (NoClassDefFoundError e) {
+         msg = className + " class definition nor found.";
+      }
+      System.out.println(msg);
+
+      return msg;
    }
 
 }
