@@ -32,7 +32,7 @@ libMMCoreJ_wrap_la_SOURCES = $(SWIGLIB_SOURCES) \
 	$(top_srcdir)/MMCore/MMCore.cpp \
 	$(top_srcdir)/MMCore/PluginManager.cpp 
 libMMCoreJ_wrap_la_LIBADD = $(LIBACE) 
-libMMCoreJ_wrap_la_LDFLAGS = -Wl, -module -ldl 
+libMMCoreJ_wrap_la_LDFLAGS = -Wl, -module -ldl $(LIBACE) #this only works with java when libace is static
 
 $(srcdir)/MMCoreJ.jar:  MMCoreJ_wrap.cxx \
 	libMMCoreJ_wrap.la
@@ -48,9 +48,11 @@ macinstall:
 	cp .libs/libMMCoreJ_wrap.so $(top_srcdir)/MacInstaller/Package_contents/libMMCoreJ_wrap$(JAVASO)
 
 install:
-	cp .libs/libMMCoreJ_wrap.so $(IJPATH)/libMMCoreJ_wrap$(JAVASO) 
-	test -d $(IJPATH)/plugins/Micro-Manager || mkdir $(IJPATH)/plugins/Micro-Manager
-	cp MMCoreJ.jar $(IJPATH)/plugins/Micro-Manager/MMCoreJ.jar
+	cp .libs/libMMCoreJ_wrap.so $(DEVICEADAPTERPATH)/libMMCoreJ_wrap$(JAVASO) 
+	test -d $(JARPATH) || mkdir $(JARPATH)
+	cp MMCoreJ.jar $(JARPATH)/MMCoreJ.jar 
+
+###IJ-dependent! #todo: split IJ and pure-java code
 
 EXTRA_DIST = license.txt MMCoreJ_wrap.vcproj
 

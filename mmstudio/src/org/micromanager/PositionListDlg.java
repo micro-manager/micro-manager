@@ -251,6 +251,7 @@ public class PositionListDlg extends MMDialog implements MouseListener {
       gotoButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
             goToCurrentPosition();
+            posTable_.clearSelection();
          }
       });
       gotoButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/resultset_next.png"));
@@ -593,6 +594,10 @@ public class PositionListDlg extends MMDialog implements MouseListener {
 
       JOptionPane.showMessageDialog(this, "ALERT! Please REMOVE objectives! It may damage lens!", 
             "Calibrate the XY stage", JOptionPane.WARNING_MESSAGE);
+
+      Object[] options = { "Yes", "No"};
+      if (JOptionPane.YES_OPTION != JOptionPane.showOptionDialog(this, "Really calibrate your XY stage?", "Are you sure?", JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null, options, options[1]))
+         return ;
 
       // calibrate xy-axis stages
       try {

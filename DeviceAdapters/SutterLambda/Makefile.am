@@ -6,6 +6,6 @@ SutterLambda_la_LIBADD = ../../MMDevice/.libs/libMMDevice.a
 SutterLambda_la_LDFLAGS = -module
 
 install:
-	cp .libs/SutterLambda.so $(IJPATH)/$(MMPREFIX)SutterLambda
+	cp .libs/SutterLambda.so $(DEVICEADAPTERPATH)/$(MMPREFIX)SutterLambda$(MMSUFFIX)
 
 EXTRA_DIST = SutterLambda.vcproj license.txt

@@ -6,6 +6,6 @@ PVCAM_la_LIBADD = ../../MMDevice/.libs/libMMDevice.a $(LIBACE)
 PVCAM_la_LDFLAGS = -module $(PVCAMFRAMEWORKS)
 
 install:
-	cp .libs/PVCAM.so $(IJPATH)/$(MMPREFIX)PVCAM
+	cp .libs/PVCAM.so $(DEVICEADAPTERPATH)/$(MMPREFIX)PVCAM$(MMSUFFIX)
 
 EXTRA_DIST = PVCAM.vcproj license.txt

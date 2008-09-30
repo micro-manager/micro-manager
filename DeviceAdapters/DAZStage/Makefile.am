@@ -6,7 +6,7 @@ DAZStage_la_LIBADD = ../../MMDevice/.libs/libMMDevice.a
 DAZStage_la_LDFLAGS = -module
 
 install:
-	cp .libs/DAZStage.so $(IJPATH)/$(MMPREFIX)DAZStage
+	cp .libs/DAZStage.so $(DEVICEADAPTERPATH)/$(MMPREFIX)DAZStage$(MMSUFFIX)
 
 EXTRA_DIST = DAZStage.vcproj license.txt
 

@@ -7,11 +7,11 @@ Hamamatsu_la_LIBADD = ../../MMDevice/.libs/libMMDevice.a
 Hamamatsu_la_LDFLAGS = -module $(DCAMFRAMEWORKS)
 
 install:
-	cp .libs/Hamamatsu.so $(IJPATH)/$(MMPREFIX)Hamamatsu
+	cp .libs/Hamamatsu.so $(DEVICEADAPTERPATH)/$(MMPREFIX)Hamamatsu$(MMSUFFIX)
 
 install-strip:
-	cp .libs/Hamamatsu.so $(IJPATH)/$(MMPREFIX)Hamamatsu
-	strip -x $(IJPATH)/$(MMPREFIX)Hamamatsu
+	cp .libs/Hamamatsu.so $(DEVICEADAPTERPATHPATH)/$(MMPREFIX)Hamamatsu$(MMSUFFIX)
+	strip -x $(DEVICEADAPTERPATHPATH)/$(MMPREFIX)Hamamatsu$(MMSUFFIX)
 
 EXTRA_DIST = Hamamatsu.vcproj license.txt
 

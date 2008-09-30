@@ -6,4 +6,4 @@ Conix_la_LIBADD = ../../MMDevice/.libs/libMMDevice.a
 Conix_la_LDFLAGS = -module
 
 install:
-	cp .libs/Conix.so $(IJPATH)/$(MMPREFIX)Conix
+	cp .libs/Conix.so $(DEVICEADAPTERPATH)/$(MMPREFIX)Conix$(MMSUFFIX)

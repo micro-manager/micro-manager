@@ -93,15 +93,22 @@ HDEVMODULE CPluginManager::LoadPluginLibrary(const char* shortName)
    HMODULE hMod = LoadLibrary(name.c_str());
       if (hMod)
          return (HDEVMODULE) hMod;
-      else
-         GetSystemError(errorText);
    #else
       HDEVMODULE hMod = dlopen(name.c_str(), RTLD_LAZY);
       if (hMod)
          return (HDEVMODULE) hMod;
-      else
-	   GetSystemError (errorText);     
-   #endif
+      #ifdef linux
+      // Linux-specific code block by Johan Henriksson
+      else {
+         string name2(shortName);
+         name2 += ".so.0";
+         hMod = dlopen(name2.c_str(), RTLD_LAZY);
+         if (hMod)
+            return (HDEVMODULE) hMod;
+      }
+      #endif // linux
+   #endif // WIN32
+   GetSystemError (errorText);
    errorText += " ";
    errorText += shortName;
    throw CMMError(errorText.c_str(), MMERR_LoadLibraryFailed); // dll load failed

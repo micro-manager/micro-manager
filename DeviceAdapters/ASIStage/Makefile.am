@@ -6,6 +6,6 @@ ASIStage_la_LIBADD = ../../MMDevice/.libs/libMMDevice.a
 ASIStage_la_LDFLAGS = -module
 
 install:
-	cp .libs/ASIStage.so $(IJPATH)/$(MMPREFIX)ASIStage
+	cp .libs/ASIStage.so $(DEVICEADAPTERPATH)/$(MMPREFIX)ASIStage$(MMSUFFIX)
 
 EXTRA_DIST = ASIStage.vcproj license.txt

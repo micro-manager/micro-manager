@@ -6,4 +6,4 @@ PI_la_LIBADD = ../../MMDevice/.libs/libMMDevice.a
 PI_la_LDFLAGS = -module
 
 install:
-	cp .libs/PI.so $(IJPATH)/$(MMPREFIX)PI
+	cp .libs/PI.so $(DEVICEADAPTERPATH)/$(MMPREFIX)PI$(MMSUFFIX)

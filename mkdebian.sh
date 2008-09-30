@@ -10,24 +10,22 @@ echo "#!/bin/sh" > $ROOT/DEBIAN/postinst
 chmod 0555 $ROOT/DEBIAN/postinst
 
 ##### Programs
-mkdir $ROOT/usr/
-mkdir $ROOT/usr/bin/
-cp Test_Serial/testserial $ROOT/usr/bin/mm_testserial
-cp ModuleTest/moduletest $ROOT/usr/bin/mm_moduletest
-cp Test_MMCore/testCore $ROOT/usr/bin/mm_testcore
+mkdir -p $ROOT/usr/bin/
+cp Test_Serial/mm_testserial ModuleTest/mm_moduletest Test_MMCore/mm_testCore $ROOT/usr/bin/
 strip $ROOT/usr/bin/*
+cp runMMstudioDebian.sh $ROOT/usr/bin/mmstudio
 
 ##### JAR-files
-mkdir $ROOT/usr/share/
-mkdir $ROOT/usr/share/java/
-mkdir $ROOT/usr/share/java/micro-manager/
+mkdir -p $ROOT/usr/share/imagej/plugins/Micro-Manager/
 cp Bleach/MMBleach_.jar autofocus/MMAutofocus_.jar autofocus/MMAutofocusTB_.jar MMCoreJ_wrap/MMCoreJ.jar Tracking/Tracker_.jar \
-mmstudio/MMJ_.jar mmstudio/MMReader_.jar $ROOT/usr/share/java/micro-manager/
-#classext/bsh-2.0b4.jar classext/syntax.jar classext/ij.jar 
+mmstudio/MMJ_.jar mmstudio/MMReader_.jar $ROOT/usr/share/imagej/plugins/Micro-Manager/
+
+mkdir -p $ROOT/usr/share/java/
+cp MMCoreJ_wrap/MMCoreJ.jar $ROOT/usr/share/java/
+	#####classext/bsh-2.0b4.jar classext/syntax.jar classext/ij.jar #assume these are available
 
 ##### Core
-mkdir $ROOT/usr/lib/
-mkdir $ROOT/usr/lib/micro-manager/
+mkdir -p $ROOT/usr/lib/micro-manager/
 
 cp MMCoreJ_wrap/.libs/libMMCoreJ_wrap.so $ROOT/usr/lib/micro-manager/
 
@@ -42,8 +40,7 @@ for from in `ls DeviceAdapters/*/.libs/*.so`
 strip $ROOT/usr/lib/micro-manager/*
 
 ##### Make shared objects visible without hardcoding the path
-mkdir $ROOT/etc/
-mkdir $ROOT/etc/ld.so.conf.d/
+mkdir -p $ROOT/etc/ld.so.conf.d/
 echo "/usr/lib/micro-manager" > $ROOT/etc/ld.so.conf.d/micro-manager.conf
 echo "/sbin/ldconfig" >> $ROOT/DEBIAN/postinst
 

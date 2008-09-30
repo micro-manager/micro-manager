@@ -1,7 +1,5 @@
-bin_PROGRAMS = moduletest
-moduletest_SOURCES = ModuleTest.cpp 
-moduletest_LDADD = ../MMCore/libMMCore.a $(LIBACE)
-##moduletest_SOURCES = ModuleTest.cpp ../MMCore/PluginManager.cpp
-##moduletest_LDADD = /usr/local/lib/libACE.la
+bin_PROGRAMS = mm_moduletest
+mm_moduletest_SOURCES = ModuleTest.cpp ../MMCore/PluginManager.cpp
+mm_moduletest_LDADD = ../MMCore/libMMCore.a $(LIBACE)
 
 EXTRA_DIST = ModuleTest.vcproj ModuleTest.sln

@@ -9,5 +9,5 @@ CSUX_la_LIBADD = ../../MMDevice/.libs/libMMDevice.a
 CSUX_la_LDFLAGS = -module
 
 install:
-	cp .libs/CSU22.so $(IJPATH)/$(MMPREFIX)CSU22
-	cp .libs/CSUX.so $(IJPATH)/$(MMPREFIX)CSUX
+	cp .libs/CSU22.so $(DEVICEADAPTERPATH)/$(MMPREFIX)CSU22$(MMSUFFIX)
+	cp .libs/CSUX.so $(DEVICEADAPTERPATH)/$(MMPREFIX)CSUX$(MMSUFFIX)

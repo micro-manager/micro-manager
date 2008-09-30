@@ -1,7 +1,7 @@
- (special build instructions
-for linux users)
+This is tested on Ubuntu 8.04 but debian should be fine too I think
+
 1. install packages:
-sun-java6-sdk or equivalent
+sun-java6-sdk or better/equivalent
 autoconf
 automake
 swig
@@ -9,28 +9,28 @@ libace-dev
 g++
 libtool
 
-2. ImageJ.  Download and install from
+imagej package, if not in your repository then here:
+https://launchpad.net/ubuntu/intrepid/i386/imagej/1.40a-1ubuntu1
+http://launchpadlibrarian.net/16007457/imagej_1.40a-1ubuntu1_all.deb
+
+If you cannot use the package, get ImageJ source code. Download and install from
 http://rsb.info.nih.gov/ij/download.html.
 
-3. run ./mmUnixBuild.sh
+2. ./mmUnixBuild.sh
 
-4. run ./configure --with-imagej=/home/mahogny/umanager/ImageJ
-  with whatever path to imagej fits in your case
+3. ./configure
+   if you had to download the IJ source code, then replace this by 
+   run ./configure --with-imagej=/home/mahogny/umanager/ImageJ
+   with whatever path to imagej fits in your case
 
-5. (will not be needed later) change /usr/include/ace/config-lite.h
+4. (will not be needed later when bug has been fixed) change /usr/include/ace/config-lite.h
 
 error _REENTRANT has to be defined!
 into
 define _REENTRANT
 
-6. make
+5. make
 
-7. when it fails, edit MMCoreJ_wrap/MMCoreJ_wrap.cxx
-remove
-{
-   jint jvalue = (jint)temp2;
-   jenv->SetIntArrayRegion(jarg2, 0, 1, &jvalue);
- }
+6. make install
 
-8. make
-9. make install
+7. ldconfig

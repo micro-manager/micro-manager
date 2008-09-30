@@ -8,73 +8,14 @@ AC_CONFIG_SRCDIR([MMCore/MMCore.cpp])
 AC_CANONICAL_HOST
 AM_INIT_AUTOMAKE
 
-AC_PROG_CXX
-AC_PROG_CC
 AC_LIBTOOL_DLOPEN
-AC_PROG_LIBTOOL
 
-# Verify our GCC version
-if test "x$GXX" = "xyes"; then
-  AC_MSG_CHECKING([GNU compiler version])
+#AC_PROG_CXX
+#AC_PROG_CC
+#AC_PROG_LIBTOOL
 
-  # Don't pass CXXFLAGS to the following CXX command as some
-  # of them can't be specified along with '-v'.
-  cc_version=["`$CXX -v 2>&1 </dev/null |grep 'gcc version' |\
-          sed 's/.*gcc version \([-a-z0-9\.]*\).*/\1/'`"]
-  AC_MSG_RESULT([$cc_version])
+m4_include([configure.common])
 
-  # Some version numbers
-  cc_vers_major=`echo $cc_version | cut -f1 -d.`
-  cc_vers_minor=`echo $cc_version | cut -f2 -d.`
-  cc_vers_patch=`echo $cc_version | cut -f3 -d.`
-  test -n "$cc_vers_major" || cc_vers_major=0
-  test -n "$cc_vers_minor" || cc_vers_minor=0
-  test -n "$cc_vers_patch" || cc_vers_patch=0
-  cc_vers_all=`expr $cc_vers_major '*' 1000000 + $cc_vers_minor '*' 1000 + $cc_vers_patch`
-
-  if test $cc_vers_major -lt 3; then
-    AC_MSG_ERROR([gcc >= 3.0 is needed to compile MicroManager])
-  fi
-fi 
-
-# On linux, some gcc versions build shared libraries unusable in java when using
-# the -O2 optimization.  Switch it off here:
-
-if test $cc_vers_major -gt 3; then
-   case $host in
-      *-*-linux*) CXXFLAGS="-g -O";;
-   esac
-fi
-
-#----------------------------------------------------------------
-# LINKFORSHARED are the flags passed to the $(CC) command that links
-# -- this is only needed for a few systems
-#----------------------------------------------------------------
-
-AC_MSG_CHECKING(LINKFORSHARED)
-if test -z "$LINKFORSHARED" 
-then    
-   case $host in
-   *-*-aix*)   LINKFORSHARED='-Wl,-bE:$(srcdir)/python.exp -lld';;
-   *-*-hp*)
-   LINKFORSHARED="-Wl,-E -Wl,+s -Wl,+b\$(BINLIBDEST)/lib-dynload";;
-   *-*-linux*) LINKFORSHARED="-Xlinker -export-dynamic";;
-   *-*-next*) LINKFORSHARED="-u libsys_s";;
-   *-sco-sysv*) LINKFORSHARED="-Bdynamic -dy -Wl,-Bexport";;                 
-   *-*-irix6*) LINKFORSHARED="-all";;
-   esac
-fi
-AC_MSG_RESULT($LINKFORSHARED)
-AC_SUBST(LINKFORSHARED)
-
-#---------------------------------------------------
-# Platform dependent flags
-#---------------------------------------------------
-case $host in
-   *-*-linux*)
-   LPTHREAD="-lpthread";;
-esac
-AC_MSG_RESULT($LPTHREAD)
 
 
 #----------------------------------------------------------------
@@ -145,116 +86,6 @@ case $host in
     ;;
 esac
 
-# Determine if we need to look for ImageJ
-AC_MSG_CHECKING(whether to build for imagej)
-AC_ARG_WITH(imagej, [  --with-imagej=path        Path to ImageJ-based GUI], [IMAGEJDIR="$withval"], [IMAGEJDIR="yes"])
-AC_MSG_RESULT($IMAGEJDIR)
-
-if test "$IMAGEJDIR" != "no" ; then
-   #----------------------------------------------------------------
-   # Find ImageJ directory
-   #----------------------------------------------------------------
-   AC_MSG_CHECKING(for ImageJ directory)
-
-   if test -z "$IMAGEJDIR"; then  
-      IMAGEJDIR="/Applications/ImageJ /usr/local/ImageJ /usr/local/imagej "
-   fi  
-
-   IJPATH=""                                                                   
-   for d in $IMAGEJDIR ; do                                                    
-     if test -d "$d" ; then 
-       AC_MSG_RESULT($d)
-       IJPATH=$d
-       break
-     fi
-   done
-   if test -z "$IJPATH"; then
-     AC_MSG_ERROR([not found, Use the without-imagej directive to build without ImageJ or install ImageJ (http://rsb.info.nih.gov/ij/ and rerun configure, possibly using the --with-imagej=path directive])
-   fi
-
-   #----------------------------------------------------------------
-   # Test for MicroManage plugin folder and create when needed
-   #----------------------------------------------------------------
-   AC_MSG_CHECKING([for MicroManage folder in plugins folder])
-   if test -d "$IJPATH/plugins/MicroManage" ; then
-      AC_MSG_RESULT([found])
-   else
-      mkdir "$IJPATH/plugins/MicroManage"
-      AC_MSG_RESULT([created])
-   fi
-
-
-   #----------------------------------------------------------------
-   # Find ij.jar in directory
-   #----------------------------------------------------------------
-   AC_MSG_CHECKING(for ij.jar in ImageJ directory)
-   IJJARDIR="ij.jar ImageJ.app/Contents/Resources/Java/ij.jar"
-   for d in $IJJARDIR ; do
-      if test -r "$IJPATH/$d" ; then
-         IJJARPATH="$IJPATH/$d"
-         AC_MSG_RESULT($IJJARPATH)
-         break
-      fi
-   done
-   if test -z "$IJJARPATH"; then
-     AC_MSG_ERROR([not found, Use the without-imagej directive to build without ImageJ or install ImageJ (http://rsb.info.nih.gov/ij/ and rerun configure, possibly using the --with-imagej=path directive])
-   fi
-
-   #----------------------------------------------------------------
-   # Find beanshell.jar and Image_5D in ImageJ plugins directory
-   #----------------------------------------------------------------
-   AC_MSG_CHECKING(for beanshell jar file in ImageJ plugins directory)
-   if test -r "$IJPATH/plugins/bsh-2.0b4.jar" ; then
-      BSHJARPATH="$IJPATH/plugins/bsh-2.0b4.jar"
-      AC_MSG_RESULT($BSHJARPATH)
-   fi
-   if test "$BSHJARPATH" = "" ; then
-      AC_MSG_ERROR([not found, Use the without-imagej directove to build without ImageJ GUI, or download Beanshell (http://www.beanshell.org/download.html) and copy bsh-2.0b4.jar to $IJPATH/plugins])
-   fi
-
-   #AC_MSG_CHECKING(for Image_5D jar file in ImageJ plugins directory)
-   #if test -r "$IJPATH/plugins/Image_5D.jar" ; then
-   #   I5DJARPATH="$IJPATH/plugins/Image_5D.jar"
-   #   AC_MSG_RESULT($I5DJARPATH)
-   #fi
-   #if test "$I5DJARPATH" = "" ; then
-   #   AC_MSG_ERROR([not found, Use the without-imagej directove to build without ImageJ GUI or download Image_5D.jar (http://rsb.info.nih.gov/ij/plugins/image5d.html) and copy to $IJPATH/plugins])
-   #fi
-fi 
-#---------------------------------------------------
-# End of ImageJ part
-#---------------------------------------------------
-
-
-#---------------------------------------------------
-# Check for ACE, static on Mac and libtool lib on Linux
-#---------------------------------------------------
-
-AC_MSG_CHECKING(for libACE)
-if test -z "$LIBACE" 
-then    
-   case $host in
-   *-*-linux*) 
-   if test -r /usr/local/lib/libACE.la ; then
-      LIBACE="/usr/local/lib/libACE.la"
-  else
-     if test -r /usr/lib/libACE.a ; then
-        LIBACE="/usr/lib/libACE.a"
-      else
-         AC_MSG_ERROR([not found, download from http://deuce.doc.wustl.edu/Download.html, build and install (cd ACE_wrappers \ mkdir build \ cd build \ ../configure \ make \ make install ) and rerun configure])
-      fi
-   fi
-   ;;
-  *-*-darwin*) 
-  if test -r /usr/local/lib/libACE.a; then
-      LIBACE="/usr/local/lib/libACE.a"
-   else
-      AC_MSG_ERROR([not found, download from http://deuce.doc.wustl.edu/Download.html, build and install (cd ACE_wrappers \ mkdir build \ cd build \ ../configure --enable-static\ make \ make install ) and rerun configure])
-   fi
-   ;;
-   esac
-fi
-AC_MSG_RESULT($LIBACE)
 
 # Export variables to Makefile
 AC_SUBST(JAVAINC)
@@ -264,12 +95,11 @@ AC_SUBST(JAVASO)
 AC_SUBST(JAVALDSHARED)
 AC_SUBST(JAVACXXSHARED)
 AC_SUBST(JAVACFLAGS)
-AC_SUBST(IJPATH)
-AC_SUBST(IJJARPATH)
-AC_SUBST(BSHJARPATH)
 AC_SUBST(I5DJARPATH)
-AC_SUBST(LIBACE)
-AC_SUBST(LPTHREAD)
+
+
+
+
 
 
 # Checks for programs.

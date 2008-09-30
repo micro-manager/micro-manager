@@ -5,6 +5,6 @@ DemoCamera_la_LDFLAGS = -module
 DemoCamera_la_LIBADD = ../../MMDevice/.libs/libMMDevice.a
 
 install:
-	cp .libs/DemoCamera.so $(IJPATH)/$(MMPREFIX)DemoCamera
+	cp .libs/DemoCamera.so $(DEVICEADAPTERPATH)/$(MMPREFIX)DemoCamera$(MMSUFFIX)
 
 EXTRA_DIST = DemoCamera.vcproj license.txt

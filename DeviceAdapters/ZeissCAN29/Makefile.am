@@ -6,4 +6,4 @@ ZeissCAN29_la_LDFLAGS = -module
 ZeissCAN29_la_LIBADD = ../../MMDevice/.libs/libMMDevice.a 
 
 install:
-	cp .libs/ZeissCAN29.so $(IJPATH)/$(MMPREFIX)ZeissCAN29
+	cp .libs/ZeissCAN29.so $(DEVICEADAPTERPATH)/$(MMPREFIX)ZeissCAN29$(MMSUFFIX)

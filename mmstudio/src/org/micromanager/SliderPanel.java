@@ -158,6 +158,12 @@ public class SliderPanel extends JPanel {
 		}	
 	}
 	
+   public void setPosition(int xPosition) {
+      double val = lowerLimit_+ ( (upperLimit_ - lowerLimit_) * xPosition ) / slider_.getWidth()  ;
+      slider_.setValue((int) ((val - lowerLimit_) / factor_ + 0.5));
+      onSliderMove();
+   }
+
 	private double enforceLimits(double value) {
 	   double val = value;
       if (val < lowerLimit_)

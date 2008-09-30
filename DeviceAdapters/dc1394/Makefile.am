@@ -7,6 +7,6 @@ dc1394_la_LIBADD = ../../MMDevice/.libs/libMMDevice.a /usr/local/lib/libdc1394.a
 dc1394_la_LDFLAGS = -module
 
 install:
-	cp .libs/dc1394.so $(IJPATH)/$(MMPREFIX)dc1394
+	cp .libs/dc1394.so $(DEVICEADAPTERPATH)/$(MMPREFIX)dc1394$(MMSUFFIX)
 
 EXTRA_DIST = license.txt

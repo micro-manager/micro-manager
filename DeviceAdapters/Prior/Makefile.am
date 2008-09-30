@@ -6,6 +6,6 @@ Prior_la_LIBADD = ../../MMDevice/.libs/libMMDevice.a
 Prior_la_LDFLAGS = -module
 
 install:
-	cp .libs/Prior.so $(IJPATH)/$(MMPREFIX)Prior
+	cp .libs/Prior.so $(DEVICEADAPTERPATH)/$(MMPREFIX)Prior$(MMSUFFIX)
 
 EXTRA_DIST = Prior.vcproj license.txt

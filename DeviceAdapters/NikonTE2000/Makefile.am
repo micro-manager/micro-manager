@@ -6,6 +6,6 @@ NikonTE2000_la_LIBADD = ../../MMDevice/.libs/libMMDevice.a
 NikonTE2000_la_LDFLAGS = -module
 
 install:
-	cp .libs/NikonTE2000.so $(IJPATH)/$(MMPREFIX)NikonTE2000
+	cp .libs/NikonTE2000.so $(DEVICEADAPTERPATH)/$(MMPREFIX)NikonTE2000$(MMSUFFIX)
 
 EXTRA_DIST = NikonTE2000.vcproj NikonTE2000_vc8.sln license.txt

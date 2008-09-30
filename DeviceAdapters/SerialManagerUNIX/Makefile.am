@@ -7,6 +7,7 @@ SerialManager_la_LIBADD = ../../MMDevice/.libs/libMMDevice.a
 SerialManager_la_LDFLAGS = -module $(SERIALFRAMEWORKS)
 
 install:
-	cp .libs/SerialManager.so $(IJPATH)/$(MMPREFIX)SerialManager
+	cp .libs/SerialManager.so $(DEVICEADAPTERPATH)/$(MMPREFIX)SerialManager$(MMSUFFIX)
+
 
 EXTRA_DIST = license.txt

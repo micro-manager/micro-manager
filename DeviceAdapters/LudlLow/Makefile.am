@@ -6,7 +6,7 @@ LudlLow_la_LIBADD = ../../MMDevice/.libs/libMMDevice.a
 LudlLow_la_LDFLAGS = -module
 
 install:
-	cp .libs/LudlLow.so $(IJPATH)/$(MMPREFIX)LudlLow
+	cp .libs/LudlLow.so $(DEVICEADAPTERPATH)/$(MMPREFIX)LudlLow$(MMSUFFIX)
 
 ##EXTRA_DIST = Ludl_vc8.vcproj Ludl.vcproj license.txt
 EXTRA_DIST = license.txt

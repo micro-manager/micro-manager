@@ -6,4 +6,4 @@ PIGCS_la_LIBADD = ../../MMDevice/.libs/libMMDevice.a
 PIGCS_la_LDFLAGS = -module
 
 install:
-	cp .libs/PIGCS.so $(IJPATH)/$(MMPREFIX)PIGCS
+	cp .libs/PIGCS.so $(DEVICEADAPTERPATH)/$(MMPREFIX)PIGCS$(MMSUFFIX)

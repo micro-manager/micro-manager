@@ -6,6 +6,6 @@ Pecon_la_LIBADD = ../../MMDevice/.libs/libMMDevice.a
 Pecon_la_LDFLAGS = -module
 
 install:
-	cp .libs/Pecon.so $(IJPATH)/$(MMPREFIX)Pecon
+	cp .libs/Pecon.so $(DEVICEADAPTERPATH)/$(MMPREFIX)Pecon$(MMSUFFIX)
 
 EXTRA_DIST = Pecon.vcproj license.txt

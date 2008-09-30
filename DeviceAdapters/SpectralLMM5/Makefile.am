@@ -6,6 +6,7 @@ SpectralLMM5_la_LIBADD = ../../MMDevice/.libs/libMMDevice.a
 SpectralLMM5_la_LDFLAGS = -module
 
 install:
-	cp .libs/SpectralLMM5.so $(IJPATH)/$(MMPREFIX)SpectralLMM5
+	cp .libs/SpectralLMM5.so $(DEVICEADAPTERPATH)/$(MMPREFIX)SpectralLMM5$(MMSUFFIX)
+
 
 EXTRA_DIST =  license.txt

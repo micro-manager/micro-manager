@@ -6,4 +6,4 @@ K8055_la_LIBADD = ../../MMDevice/.libs/libMMDevice.a
 K8055_la_LDFLAGS = -module
 
 install:
-	cp .libs/K8055.so $(IJPATH)/$(MMPREFIX)K8055
+	cp .libs/K8055.so $(DEVICEADAPTERPATHPATH)/$(MMPREFIX)K8055$(MMSUFFIX)

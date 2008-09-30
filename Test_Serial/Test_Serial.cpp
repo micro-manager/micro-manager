@@ -45,10 +45,10 @@ int main(int argc, char* argv[])
    {
       core.unloadAllDevices();
       
-      core.loadDevice("P", "/Users/nico/cvs/MicroManage/DeviceAdapters/SerialManagerUNIX/.libs/SerialManager.so", port);
+      core.loadDevice("P", "SerialManager", port);
       core.setProperty("P", "BaudRate", "300");
       core.setProperty("P", "StopBits", "1");
-      core.loadDevice("Uniblitz", "/Users/nico/cvs/MicroManage/DeviceAdapters/Vincent/.libs/Vincent.so", "VMMController");
+      core.loadDevice("Uniblitz", "Vincent", "VMMController");
       core.setProperty("Uniblitz", "Port", "P");
       core.initializeAllDevices();
       //core.setProperty("Uniblitz", "Command", "Open"); 

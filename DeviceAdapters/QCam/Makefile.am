@@ -6,6 +6,6 @@ QCam_la_LIBADD = ../../MMDevice/.libs/libMMDevice.a
 QCam_la_LDFLAGS = -module -framework QCam
 
 install:
-	cp .libs/QCam.so $(IJPATH)/$(MMPREFIX)QCam
+	cp .libs/QCam.so $(DEVICEADAPTERPATH)/$(MMPREFIX)QCam$(MMSUFFIX)
 
 EXTRA_DIST = QCam.vcproj

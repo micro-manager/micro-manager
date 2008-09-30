@@ -6,6 +6,6 @@ ASIFW1000_la_LIBADD = ../../MMDevice/.libs/libMMDevice.a
 ASIFW1000_la_LDFLAGS = -module
 
 install:
-	cp .libs/ASIFW1000.so $(IJPATH)/$(MMPREFIX)ASIFW1000
+	cp .libs/ASIFW1000.so $(DEVICEADAPTERPATH)/$(MMPREFIX)ASIFW1000$(MMSUFFIX)
 
 EXTRA_DIST = ASIFW1000.vcproj license.txt

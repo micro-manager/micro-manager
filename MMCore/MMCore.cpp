@@ -82,7 +82,11 @@
 using namespace std;
 
 // constants
+#ifdef linux
+const char* g_logFileName = "/tmp/CoreLog.txt";
+#else
 const char* g_logFileName = "CoreLog.txt";
+#endif
 
 // version info
 const int MMCore_versionMajor = 2;

@@ -6,7 +6,7 @@ Nikon_la_LIBADD = ../../MMDevice/.libs/libMMDevice.a
 Nikon_la_LDFLAGS = -module
 
 install:
-	cp .libs/Nikon.so $(IJPATH)/$(MMPREFIX)Nikon
+	cp .libs/Nikon.so $(DEVICEADAPTERPATH)/$(MMPREFIX)Nikon$(MMSUFFIX)
 
 EXTRA_DIST = Nikon.vcproj license.txt
 

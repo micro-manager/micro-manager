@@ -6,6 +6,6 @@ USBManager_la_LIBADD = ../../MMDevice/.libs/libMMDevice.a  $(LIBUSB)
 USBManager_la_LDFLAGS = -module
 
 install:
-	cp .libs/USBManager.so $(IJPATH)/$(MMPREFIX)USBManager
+	cp .libs/USBManager.so $(DEVICEADAPTERPATH)/$(MMPREFIX)USBManager$(MMSUFFIX)
 
 EXTRA_DIST = license.txt

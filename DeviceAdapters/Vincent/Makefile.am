@@ -6,6 +6,6 @@ Vincent_la_LIBADD = ../../MMDevice/.libs/libMMDevice.a
 Vincent_la_LDFLAGS = -module
 
 install:
-	cp .libs/Vincent.so $(IJPATH)/$(MMPREFIX)Vincent
+	cp .libs/Vincent.so $(DEVICEADAPTERPATH)/$(MMPREFIX)Vincent$(MMSUFFIX)
 
 EXTRA_DIST =  Vincent.vcproj license.txt

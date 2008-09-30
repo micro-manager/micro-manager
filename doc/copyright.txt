@@ -1,0 +1,9 @@
+Micro-Manager is an Open Source software package for controlling automated
+microscopes on multiple platforms (Windows, Mac and Linux). The software
+is being developed in the Vale Lab at the Unversity of California San Francisco 
+and funding was provided by the Sandler Foundation. The software is designed and
+developed by Nenad Amodaj with help from Nico Stuurman. The Micro-Manager source
+code is distributed under the BSD license for the user interface and the LGPL
+license for the MMCore (control module). Supplied device drivers ('adapters')
+for cameras and other devices are covered by the BSD license or LGPL. Copyright for some
+of the adapters is owned by other parties.
