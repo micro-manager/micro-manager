@@ -118,6 +118,287 @@ public class PlateEditor extends MMFrame implements ParentPlateGUI, MMPlugin {
    /**
     * Create the frame
     */
+   public PlateEditor() {
+      super();
+      addWindowListener(new WindowAdapter() {
+         public void windowClosing(final WindowEvent e) {
+            savePosition();
+            saveSettings();
+         }
+      });
+      Preferences root = Preferences.userNodeForPackage(this.getClass());
+      setPrefsNode(root.node(root.absolutePath() + "/PlateEditor"));
+      
+      springLayout = new SpringLayout();
+      getContentPane().setLayout(springLayout);
+      plate_ = new SBSPlate();
+      
+      stagePos_ = new Point2D.Double(0.0, 0.0);
+      cursorPos_ = new Point2D.Double(0.0, 0.0);
+      
+      stageWell_ = new String("undef");
+      cursorWell_ = new String("undef");
+      stageSite_ = new String("undef");
+      cursorSite_ = new String("undef");
+
+      setTitle("HCS plate editor");
+      loadPosition(100, 100, 654, 448);
+
+      platePanel_ = new PlatePanel(plate_, null, this);
+      platePanel_.setApp(app_);
+      
+      getContentPane().add(platePanel_);
+      springLayout.putConstraint(SpringLayout.SOUTH, platePanel_, -71, SpringLayout.SOUTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, platePanel_, 5, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.EAST, platePanel_, -136, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, platePanel_, 5, SpringLayout.WEST, getContentPane());
+
+      plateIDCombo_ = new JComboBox();
+      getContentPane().add(plateIDCombo_);
+      springLayout.putConstraint(SpringLayout.EAST, plateIDCombo_, -4, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, plateIDCombo_, -110, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.SOUTH, plateIDCombo_, 140, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, plateIDCombo_, 115, SpringLayout.NORTH, getContentPane());
+      plateIDCombo_.addItem(SBSPlate.SBS_96_WELL);
+      plateIDCombo_.addItem(SBSPlate.SBS_384_WELL);
+      plateIDCombo_.addItem(SBSPlate.EVR_300_WELL);
+      //comboBox.addItem(SBSPlate.CUSTOM);
+      plateIDCombo_.addActionListener(new ActionListener() {
+         public void actionPerformed(final ActionEvent e) {
+            plate_.initialize((String)plateIDCombo_.getSelectedItem());
+            PositionList sites = generateSites(Integer.parseInt(rowsField_.getText()), Integer.parseInt(columnsField_.getText()), 
+                  Double.parseDouble(spacingField_.getText()));
+            platePanel_.refreshImagingSites(sites);
+            platePanel_.repaint();
+         }
+      });
+
+      final JLabel plateFormatLabel = new JLabel();
+      plateFormatLabel.setText("Plate format");
+      getContentPane().add(plateFormatLabel);
+      springLayout.putConstraint(SpringLayout.EAST, plateFormatLabel, -9, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, plateFormatLabel, -110, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.SOUTH, plateFormatLabel, 109, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, plateFormatLabel, 95, SpringLayout.NORTH, getContentPane());
+
+      rowsField_ = new JTextField();
+      rowsField_.setText("1");
+      getContentPane().add(rowsField_);
+      springLayout.putConstraint(SpringLayout.EAST, rowsField_, -65, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, rowsField_, -105, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.SOUTH, rowsField_, 215, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, rowsField_, 195, SpringLayout.NORTH, getContentPane());
+
+      final JLabel imagingSitesLabel = new JLabel();
+      imagingSitesLabel.setText("Imaging Sites");
+      getContentPane().add(imagingSitesLabel);
+      springLayout.putConstraint(SpringLayout.EAST, imagingSitesLabel, -4, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, imagingSitesLabel, -110, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.SOUTH, imagingSitesLabel, 169, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, imagingSitesLabel, 155, SpringLayout.NORTH, getContentPane());
+
+      columnsField_ = new JTextField();
+      columnsField_.setText("1");
+      getContentPane().add(columnsField_);
+      springLayout.putConstraint(SpringLayout.SOUTH, columnsField_, 215, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, columnsField_, 195, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.EAST, columnsField_, -20, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, columnsField_, -60, SpringLayout.EAST, getContentPane());
+
+      spacingField_ = new JTextField();
+      spacingField_.setText("200");
+      getContentPane().add(spacingField_);
+      springLayout.putConstraint(SpringLayout.EAST, spacingField_, -65, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, spacingField_, -105, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.SOUTH, spacingField_, 260, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, spacingField_, 240, SpringLayout.NORTH, getContentPane());
+
+      final JLabel rowsColumnsLabel = new JLabel();
+      rowsColumnsLabel.setText("Rows, Columns");
+      getContentPane().add(rowsColumnsLabel);
+      springLayout.putConstraint(SpringLayout.SOUTH, rowsColumnsLabel, 191, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, rowsColumnsLabel, 175, SpringLayout.NORTH, getContentPane());
+
+      final JLabel spacingLabel = new JLabel();
+      spacingLabel.setText("Spacing [um]");
+      getContentPane().add(spacingLabel);
+      springLayout.putConstraint(SpringLayout.EAST, spacingLabel, -20, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, spacingLabel, -105, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.SOUTH, spacingLabel, 236, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, spacingLabel, 220, SpringLayout.NORTH, getContentPane());
+
+      final JButton refreshButton = new JButton();
+      refreshButton.setIcon(SwingResourceManager.getIcon(PlateEditor.class, "/org/micromanager/icons/arrow_refresh.png"));
+      refreshButton.addActionListener(new ActionListener() {
+         public void actionPerformed(final ActionEvent e) {
+            regenerate();
+         }
+      });
+      refreshButton.setText("Refresh");
+      getContentPane().add(refreshButton);
+      springLayout.putConstraint(SpringLayout.SOUTH, refreshButton, 290, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, refreshButton, 267, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.EAST, refreshButton, -4, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, refreshButton, -110, SpringLayout.EAST, getContentPane());
+
+      final JButton setPositionListButton = new JButton();
+      setPositionListButton.setIcon(SwingResourceManager.getIcon(PlateEditor.class, "/org/micromanager/icons/table.png"));
+      setPositionListButton.addActionListener(new ActionListener() {
+         public void actionPerformed(final ActionEvent e) {
+            setPositionList();
+         }
+      });
+      setPositionListButton.setText("Set MM List");
+      getContentPane().add(setPositionListButton);
+      springLayout.putConstraint(SpringLayout.EAST, setPositionListButton, -4, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, setPositionListButton, -110, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.SOUTH, setPositionListButton, 320, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, setPositionListButton, 295, SpringLayout.NORTH, getContentPane());
+
+      final JButton scanButton = new JButton();
+      scanButton.setIcon(SwingResourceManager.getIcon(PlateEditor.class, "/org/micromanager/icons/resultset_next.png"));
+      scanButton.addActionListener(new ActionListener() {
+         public void actionPerformed(final ActionEvent e) {
+            scan();
+         }
+      });
+      scanButton.setText("Scan!");
+      getContentPane().add(scanButton);
+      springLayout.putConstraint(SpringLayout.SOUTH, scanButton, 360, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, scanButton, 337, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.EAST, scanButton, -4, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, scanButton, -110, SpringLayout.EAST, getContentPane());
+
+      final JButton stopButton = new JButton();
+      stopButton.setIcon(SwingResourceManager.getIcon(PlateEditor.class, "/org/micromanager/icons/cancel.png"));
+      stopButton.addActionListener(new ActionListener() {
+         public void actionPerformed(final ActionEvent e) {
+            stop();
+         }
+      });
+      stopButton.setText("Stop");
+      getContentPane().add(stopButton);
+      springLayout.putConstraint(SpringLayout.EAST, stopButton, -4, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, stopButton, -110, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.SOUTH, stopButton, 391, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, stopButton, 365, SpringLayout.NORTH, getContentPane());
+      
+      moveToggleButton_ = new JToggleButton();
+      moveToggleButton_.addActionListener(new ActionListener() {
+         public void actionPerformed(final ActionEvent e) {
+            if (moveToggleButton_.isSelected()) {
+               moveToggleButton_.setText(POINTER_MOVE);
+               platePanel_.setTool(PlatePanel.Tool.MOVE);
+            } else {
+               moveToggleButton_.setText(POINTER_SELECT);
+               platePanel_.setTool(PlatePanel.Tool.SELECT);
+            }
+         }
+      });
+      
+      // initialize in SELECT mode
+      moveToggleButton_.setSelected(false);
+      moveToggleButton_.setText(POINTER_SELECT);
+      platePanel_.setTool(PlatePanel.Tool.SELECT);
+      
+      getContentPane().add(moveToggleButton_);
+      springLayout.putConstraint(SpringLayout.EAST, rowsColumnsLabel, 95, SpringLayout.WEST, moveToggleButton_);
+      springLayout.putConstraint(SpringLayout.WEST, rowsColumnsLabel, 5, SpringLayout.WEST, moveToggleButton_);
+      springLayout.putConstraint(SpringLayout.EAST, moveToggleButton_, -19, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, moveToggleButton_, -115, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.SOUTH, moveToggleButton_, 45, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, moveToggleButton_, 20, SpringLayout.NORTH, getContentPane());
+      
+      statusLabel_ = new JLabel();
+      getContentPane().add(statusLabel_);
+      springLayout.putConstraint(SpringLayout.EAST, statusLabel_, -4, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, statusLabel_, 5, SpringLayout.WEST, getContentPane());
+      springLayout.putConstraint(SpringLayout.SOUTH, statusLabel_, -5, SpringLayout.SOUTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, statusLabel_, -29, SpringLayout.SOUTH, getContentPane());
+
+      lockAspectCheckBox_ = new JCheckBox();
+      lockAspectCheckBox_.addActionListener(new ActionListener() {
+         public void actionPerformed(final ActionEvent e) {
+            platePanel_.setLockAspect(lockAspectCheckBox_.isSelected());
+            platePanel_.repaint();
+         }
+      });
+      lockAspectCheckBox_.setText("Lock aspect");
+      getContentPane().add(lockAspectCheckBox_);
+      lockAspectCheckBox_.setSelected(true);
+      springLayout.putConstraint(SpringLayout.SOUTH, lockAspectCheckBox_, 73, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, lockAspectCheckBox_, 50, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.EAST, lockAspectCheckBox_, -14, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, lockAspectCheckBox_, -115, SpringLayout.EAST, getContentPane());
+      
+      rootDirField_ = new JTextField();
+      getContentPane().add(rootDirField_);
+      springLayout.putConstraint(SpringLayout.EAST, rootDirField_, -189, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, rootDirField_, 5, SpringLayout.WEST, getContentPane());
+      springLayout.putConstraint(SpringLayout.SOUTH, rootDirField_, -29, SpringLayout.SOUTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, rootDirField_, -49, SpringLayout.SOUTH, getContentPane());
+
+      plateNameField_ = new JTextField();
+      getContentPane().add(plateNameField_);
+      springLayout.putConstraint(SpringLayout.EAST, plateNameField_, -4, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, plateNameField_, -131, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.SOUTH, plateNameField_, -29, SpringLayout.SOUTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, plateNameField_, -49, SpringLayout.SOUTH, getContentPane());
+      
+      final JLabel rootDirectoryLabel = new JLabel();
+      rootDirectoryLabel.setText("Root directory");
+      getContentPane().add(rootDirectoryLabel);
+      springLayout.putConstraint(SpringLayout.EAST, rootDirectoryLabel, 110, SpringLayout.WEST, getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, rootDirectoryLabel, 10, SpringLayout.WEST, getContentPane());
+      springLayout.putConstraint(SpringLayout.SOUTH, rootDirectoryLabel, -52, SpringLayout.SOUTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, rootDirectoryLabel, -66, SpringLayout.SOUTH, getContentPane());
+
+      final JLabel plateNameLabel = new JLabel();
+      plateNameLabel.setText("Plate name");
+      getContentPane().add(plateNameLabel);
+      springLayout.putConstraint(SpringLayout.EAST, plateNameLabel, -4, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, plateNameLabel, -131, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.SOUTH, plateNameLabel, -52, SpringLayout.SOUTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, plateNameLabel, -66, SpringLayout.SOUTH, getContentPane());
+
+      final JButton button = new JButton();
+      button.addActionListener(new ActionListener() {
+         public void actionPerformed(final ActionEvent e) {
+            setRootDirectory();
+         }
+      });
+      button.setToolTipText("browse root directory");
+      button.setText("...");
+      getContentPane().add(button);
+      springLayout.putConstraint(SpringLayout.SOUTH, button, -27, SpringLayout.SOUTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, button, -50, SpringLayout.SOUTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.EAST, button, -136, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, button, -184, SpringLayout.EAST, getContentPane());
+
+      final JButton calibrateXyButton = new JButton();
+      calibrateXyButton.addActionListener(new ActionListener() {
+         public void actionPerformed(final ActionEvent e) {
+            calibrateXY();
+         }
+      });
+      calibrateXyButton.setText("Calibrate XY...");
+      getContentPane().add(calibrateXyButton);
+      springLayout.putConstraint(SpringLayout.EAST, calibrateXyButton, -4, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, calibrateXyButton, -110, SpringLayout.EAST, getContentPane());
+      springLayout.putConstraint(SpringLayout.SOUTH, calibrateXyButton, 435, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, calibrateXyButton, 412, SpringLayout.NORTH, getContentPane());
+
+      //
+      
+      loadSettings();
+
+      PositionList sites = generateSites(Integer.parseInt(rowsField_.getText()), Integer.parseInt(columnsField_.getText()), 
+            Double.parseDouble(spacingField_.getText()));
+      plate_.initialize((String)plateIDCombo_.getSelectedItem());
+      platePanel_.refreshImagingSites(sites);
+
+   }
+   
    public PlateEditor(ScriptInterface app) {
       super();
       addWindowListener(new WindowAdapter() {
@@ -598,8 +879,6 @@ public class PlateEditor extends MMFrame implements ParentPlateGUI, MMPlugin {
       platePanel_.repaint();
    }
 
-
-   @Override
    public void setApp(ScriptInterface app) {
       app_ = app;
       platePanel_.setApp(app);

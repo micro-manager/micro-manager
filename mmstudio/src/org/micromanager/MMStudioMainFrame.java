@@ -134,7 +134,6 @@ import org.micromanager.utils.WaitDialog;
 import bsh.EvalError;
 import bsh.Interpreter;
 
-import com.imaging100x.hcs.PlateEditor;
 import com.swtdesigner.SwingResourceManager;
 
 /*
@@ -144,7 +143,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    public static String LIVE_WINDOW_TITLE = "AcqWindow";
 
    private static final String MICRO_MANAGER_TITLE = "Micro-Manager-S 1.2";
-   private static final String VERSION = "1.2.10S (alpha)";
+   private static final String VERSION = "1.2.11S (alpha)";
    private static final long serialVersionUID = 3556500289598574541L;
 
    private static final String MAIN_FRAME_X = "x";
@@ -194,7 +193,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private MMImageWindow imageWin_;
    private GraphFrame profileWin_;
    private PropertyEditor propertyBrowser_;
-   private PlateEditor hcsPlateEditor_;
    private CalibrationListDlg calibrationListDlg_;
    private AcqControlDlg acqControlWin_;
    private ArrayList<PluginItem> plugins_;
@@ -336,7 +334,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       timer_.stop();
 
       // load application preferences
-      // NOTE: only window size and position preferencesa are loaded,
+      // NOTE: only window size and position preferences are loaded,
       // not the settings for the camera and live imaging -
       // attempting to set those automatically on startup may cause problems with the hardware
       int x = mainPrefs_.getInt(MAIN_FRAME_X, 100);
@@ -911,41 +909,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       });
       optionsMenuItem.setText("Options...");
       toolsMenu.add(optionsMenuItem);
-
-      final JMenu hcsMenu = new JMenu();
-      hcsMenu.setText("High-Content");
-      menuBar_.add(hcsMenu);
-
-      final JMenuItem plateMenuItem = new JMenuItem();
-      plateMenuItem.addActionListener(new ActionListener() {
-         public void actionPerformed(final ActionEvent e) {
-            openHCSDialog();
-         }
-      });
-      plateMenuItem.setText("Plate...");
-      hcsMenu.add(plateMenuItem);
-
-      final JMenu helpMenu = new JMenu();
-      helpMenu.setText("Help");
-      menuBar_.add(helpMenu);
-
-      final JMenuItem aboutMenuItem = new JMenuItem();
-      aboutMenuItem.addActionListener(new ActionListener() {
-         public void actionPerformed(ActionEvent e) {
-            MMAboutDlg dlg = new MMAboutDlg();
-            String versionInfo = "MM Studio version: " + VERSION;
-            versionInfo += "\n" + core_.getVersionInfo();
-            versionInfo += "\n" + core_.getAPIVersionInfo();
-            versionInfo += "\nUser: " + core_.getUserId();
-            versionInfo += "\nHost: " + core_.getHostName();
-
-            dlg.setVersionInfo(versionInfo);
-            dlg.setVisible(true);
-         }
-      });
-      aboutMenuItem.setText("About...");
-      helpMenu.add(aboutMenuItem);
-
 
       final JLabel binningLabel = new JLabel();
       binningLabel.setFont(new Font("Arial", Font.PLAIN, 10));
@@ -2271,6 +2234,12 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                newMenuItem.addActionListener(new ActionListener() {
                   public void actionPerformed(final ActionEvent e) {
                        System.out.println("Plugin command: " + e.getActionCommand());
+                       // find the coresponding plugin
+                       for (int i=0; i<plugins_.size(); i++)
+                          if (plugins_.get(i).menuItem.equals(e.getActionCommand())) {
+                             plugins_.get(i).plugin.show();
+                             break;
+                          }
 //                     if (plugins_.get(i).plugin == null) {
 //                        hcsPlateEditor_ = new PlateEditor(MMStudioMainFrame.this);
 //                     }
@@ -2281,6 +2250,28 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                pluginMenu.add(newMenuItem);
             }
          }
+         
+         // add help menu item
+         final JMenu helpMenu = new JMenu();
+         helpMenu.setText("Help");
+         menuBar_.add(helpMenu);
+
+         final JMenuItem aboutMenuItem = new JMenuItem();
+         aboutMenuItem.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+               MMAboutDlg dlg = new MMAboutDlg();
+               String versionInfo = "MM Studio version: " + VERSION;
+               versionInfo += "\n" + core_.getVersionInfo();
+               versionInfo += "\n" + core_.getAPIVersionInfo();
+               versionInfo += "\nUser: " + core_.getUserId();
+               versionInfo += "\nHost: " + core_.getHostName();
+
+               dlg.setVersionInfo(versionInfo);
+               dlg.setVisible(true);
+            }
+         });
+         aboutMenuItem.setText("About...");
+         helpMenu.add(aboutMenuItem);
          
          updateGUI(true);
       } catch (Exception e){
@@ -2394,11 +2385,12 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       if (acqControlWin_ != null)
          acqControlWin_.dispose();
       
-      if (hcsPlateEditor_ != null)
-         hcsPlateEditor_.dispose();
-
       if (engine_ != null)
          engine_.shutdown();
+      
+      // dispose plugins
+      for (int i=0; i<plugins_.size(); i++)
+         plugins_.get(i).plugin.dispose();
 
       try {
          core_.reset();
@@ -2728,24 +2720,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             }
             imp.setCalibration(cal);
          }
-      }
-   }
-
-   /**
-    * Opens Acquisition dialog.
-    */
-   private void openHCSDialog() {
-      try {
-         if (hcsPlateEditor_ == null) {
-            hcsPlateEditor_ = new PlateEditor(MMStudioMainFrame.this);
-         }
-         hcsPlateEditor_.setVisible(true);
-
-      } catch(Exception exc) {
-         exc.printStackTrace();
-         handleError(exc.getMessage() +
-               "\nFailed to open due to invalid or corrupted settings.\n" +
-               "Try resetting registry settings to factory defaults (Menu Tools|Options).");
       }
    }
 
@@ -3095,6 +3069,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          PluginItem pi = new PluginItem();
          pi.menuItem = menuName;
          pi.plugin = (MMPlugin) cl.newInstance();
+         pi.plugin.setApp(this);
          plugins_.add(pi);
       } catch (ClassNotFoundException e) {
          msg = className + " plugin not found.";
