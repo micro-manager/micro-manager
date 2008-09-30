@@ -20,6 +20,7 @@ import javax.swing.SpringLayout;
 import javax.swing.UIManager;
 
 import org.micromanager.api.ScriptInterface;
+import org.micromanager.api.MMPlugin;
 import org.micromanager.metadata.MMAcqDataException;
 import org.micromanager.metadata.WellAcquisitionData;
 import org.micromanager.navigation.MultiStagePosition;
@@ -30,7 +31,7 @@ import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.TextUtils;
 import com.swtdesigner.SwingResourceManager;
 
-public class PlateEditor extends MMFrame implements ParentPlateGUI {
+public class PlateEditor extends MMFrame implements ParentPlateGUI, MMPlugin {
    private JTextField plateNameField_;
    private JTextField rootDirField_;
    private JTextField spacingField_;
@@ -598,4 +599,9 @@ public class PlateEditor extends MMFrame implements ParentPlateGUI {
    }
 
 
+   @Override
+   public void setApp(ScriptInterface app) {
+      app_ = app;
+      platePanel_.setApp(app);
+   }
 }

@@ -165,6 +165,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    private static final String SCRIPT_CORE_OBJECT = "mmc";
    private static final String SCRIPT_ACQENG_OBJECT = "acq";
+   private static final String SCRIPT_GUI_OBJECT = "gui";
 
    // GUI components
    // private JTextField textFieldGain_;
@@ -2269,6 +2270,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                final JMenuItem newMenuItem = new JMenuItem();
                newMenuItem.addActionListener(new ActionListener() {
                   public void actionPerformed(final ActionEvent e) {
+                       System.out.println("Plugin command: " + e.getActionCommand());
 //                     if (plugins_.get(i).plugin == null) {
 //                        hcsPlateEditor_ = new PlateEditor(MMStudioMainFrame.this);
 //                     }
@@ -2567,6 +2569,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             // insert core object only
             interp.set(SCRIPT_CORE_OBJECT, core_);
             interp.set(SCRIPT_ACQENG_OBJECT, engine_);
+            interp.set(SCRIPT_GUI_OBJECT, this);
 
             // read text file and evaluate            
             interp.eval(TextUtils.readTextFile(startupScriptFile_));
