@@ -3,8 +3,9 @@ mmc.logMessage("Processing startup script...");
 // load focusing module
 response = acq.installAutofocusPlugin("Autofocus_");
 mmc.logMessage(response);
-mmc.setXYPosition(mmc.getXYStageDevice(), 10000.0, 10000);
 
-gui.installPlugin("com.imaging100x.hcs.PlateEditor", "Plate");
+// load plugins
+response = gui.installPlugin("com.imaging100x.hcs.PlateEditor", "HCS Plate...");
+mmc.logMessage(response);
 
 mmc.logMessage("Startup script finished.");
