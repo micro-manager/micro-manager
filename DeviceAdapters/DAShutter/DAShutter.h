@@ -52,7 +52,7 @@ public:
 
    // Shutter API
    int SetOpen(bool open = true);
-   int GetOpen(bool& open) {open = open_; return DEVICE_OK;}
+   int GetOpen(bool& open);
    int Fire (double /* deltaT */) { return DEVICE_UNSUPPORTED_COMMAND;}
    // ---------
 
@@ -64,11 +64,7 @@ private:
    std::vector<std::string> availableDAs_;
    std::string DADeviceName_;
    MM::SignalIO* DADevice_;
-   //MM::MMTime changedTime_;  
-   bool open_;
    bool initialized_;
-   double originalVolt_;
-   double minDAVolt_, maxDAVolt_;
 };
 
 #endif //_DASHUTTER_H_

@@ -126,7 +126,7 @@ public:
    bool Busy() {return busy_;}
    
    int SetGateOpen(bool open);
-   int GetGateOpen(bool& open);
+   int GetGateOpen(bool& open) {open = gateOpen_; return DEVICE_OK;}
    int SetSignal(double volts);
    int GetSignal(double& /*volts*/) {return DEVICE_UNSUPPORTED_COMMAND;}
    int GetLimits(double& minVolts, double& maxVolts) {minVolts =minV_; maxVolts = maxV_; return DEVICE_OK;}

@@ -332,7 +332,7 @@ int CDTOLSwitch::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 // ~~~~~~~~~~~~~~~~~~~~~~
 
 CDTOLDA::CDTOLDA(unsigned channel, const char* name) :
-      busy_(false), minV_(0.0), maxV_(0.0), encoding_(0), resolution_(0), channel_(channel), name_(name)
+      busy_(false), minV_(0.0), maxV_(0.0), volts_(0.0), gatedVolts_(0.0), encoding_(0), resolution_(0), channel_(channel), name_(name), gateOpen_(true)
 {
    InitializeDefaultErrorMessages();
 

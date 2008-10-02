@@ -113,6 +113,8 @@ public:
    void GetName(char* pszName) const;
    bool Busy() {return busy_;}
 
+   int SetGateOpen(bool open);
+   int GetGateOpen(bool& open) {open = gateOpen_; return DEVICE_OK;}
    int SetSignal(double volts);
    int GetSignal(double& /*volts*/) {return DEVICE_UNSUPPORTED_COMMAND;}
    int GetLimits(double& minVolts, double& maxVolts) {minVolts = minV_; maxVolts = maxV_; return DEVICE_OK;}
@@ -129,10 +131,13 @@ private:
    bool busy_;
    double minV_;
    double maxV_;
+   double volts_;
+   double gatedVolts_;
    unsigned int encoding_;
    unsigned int resolution_;
    unsigned channel_;
    std::string name_;
+   bool gateOpen_;
 };
 
 #endif //_DTOPENLAYER_H_

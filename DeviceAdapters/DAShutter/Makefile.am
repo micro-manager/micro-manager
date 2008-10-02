@@ -6,7 +6,7 @@ DAShutter_la_LIBADD = ../../MMDevice/.libs/libMMDevice.a
 DAShutter_la_LDFLAGS = -module
 
 install:
-	cp .libs/DAShutter.so $(DEVICEADAPTERPATH)/$(MMPREFIX)DAShutter$(MMSUFFIX)
+	cp .libs/DAShutter.so $(IJPATH)/$(MMPREFIX)DAShutter
 
 EXTRA_DIST = DAShutter.vcproj license.txt
 

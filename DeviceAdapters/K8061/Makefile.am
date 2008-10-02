@@ -7,4 +7,4 @@ K8061_la_LIBADD = ../../MMDevice/.libs/libMMDevice.a
 K8061_la_LDFLAGS = -module
 
 install:
-	cp .libs/K8061.so $(DEVICEADAPTERPATH)/$(MMPREFIX)K8061$(MMSUFFIX)
+	cp .libs/K8061.so $(IJPATH)/$(MMPREFIX)K8061

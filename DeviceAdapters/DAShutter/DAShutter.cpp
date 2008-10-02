@@ -53,8 +53,7 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 ///////////////////////////////////////////////////////////////////////////////
 DAShutter::DAShutter() :
    DADeviceName_ (""),
-   initialized_ (false),
-   originalVolt_ (0.0)
+   initialized_ (false)
 {
    InitializeDefaultErrorMessages();
 
@@ -103,17 +102,6 @@ int DAShutter::Initialize()
    if (ret != DEVICE_OK)
       return ret;
 
-   std::ostringstream tmp;
-   tmp << DADevice_;
-   LogMessage(tmp.str().c_str());
-
-   if (DADevice_ != 0)
-      DADevice_->GetLimits(minDAVolt_, maxDAVolt_);
-
-   ret = DADevice_->GetSignal(originalVolt_);
-   if (ret != DEVICE_OK)
-      return ret;
-
    initialized_ = true;
 
    return DEVICE_OK;
@@ -136,26 +124,15 @@ int DAShutter::SetOpen(bool open)
    if (DADevice_ == 0)
       return ERR_NO_DA_DEVICE;
 
-   if (open) {
-      open_ = true;
-      double volt;
-      int ret = DADevice_->GetSignal(volt);
-      if (ret != DEVICE_OK)
-         return ret;
-      if (volt > 0) {
-         originalVolt_ = volt;
-         return DEVICE_OK;
-      }
-      return DADevice_->SetSignal(originalVolt_);
-   } else {
-      int ret = DADevice_->GetSignal(originalVolt_);
-      if (ret != DEVICE_OK)
-         return ret;
-      open_ = false;
-      return DADevice_->SetSignal(0.0);
-   }
+   return DADevice_->SetGateOpen(open);
+}
 
-   return DEVICE_OK;
+int DAShutter::GetOpen(bool& open)
+{
+   if (DADevice_ == 0)
+      return ERR_NO_DA_DEVICE;
+
+   return DADevice_->GetGateOpen(open);
 }
 
 ///////////////////////////////////////
@@ -177,8 +154,6 @@ int DAShutter::OnDADevice(MM::PropertyBase* pProp, MM::ActionType eAct)
          DADeviceName_ = DADeviceName;
       } else
          return ERR_INVALID_DEVICE_NAME;
-      if (initialized_)
-         DADevice_->GetLimits(minDAVolt_, maxDAVolt_);
    }
    return DEVICE_OK;
 }
