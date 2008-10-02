@@ -435,6 +435,8 @@ namespace MM {
       static const DeviceType Type = SignalIODevice;
 
       // signal io API
+      virtual int SetGateOpen(bool open = true) = 0;
+      virtual int GetGateOpen(bool& open) = 0;
       virtual int SetSignal(double volts) = 0;
       virtual int GetSignal(double& volts) = 0;
       virtual int GetLimits(double& minVolts, double& maxVolts) = 0;
