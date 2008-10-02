@@ -124,8 +124,12 @@ public:
   
    void GetName(char* pszName) const;
    bool Busy() {return busy_;}
+
+   // DA API
+   int SetGateOpen(bool open);
+   int GetGateOpen(bool& open) {open = gateOpen_; return DEVICE_OK;};
    int SetSignal(double volts);
-   int GetSignal(double& /*volts*/) {return DEVICE_UNSUPPORTED_COMMAND;}     
+   int GetSignal(double& volts) {volts_ = volts; return DEVICE_UNSUPPORTED_COMMAND;}     
    int GetLimits(double& minVolts, double& maxVolts) {minVolts = minV_; maxVolts = maxV_; return DEVICE_OK;}
    
    // action interface
@@ -136,15 +140,19 @@ public:
 
 private:
    int WriteToPort(long lnValue);
+   int WriteSignal(double volts);
 
    bool initialized_;
    bool busy_;
    double minV_;
    double maxV_;
+   double volts_;
+   double gatedVolts_;
    unsigned int encoding_;
    unsigned int resolution_;
    unsigned channel_;
    std::string name_;
+   bool gateOpen_;
 };
 
 class CK8061Input : public CGenericBase<CK8061Input>  

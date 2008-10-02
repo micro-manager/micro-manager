@@ -125,6 +125,8 @@ public:
    void GetName(char* pszName) const;
    bool Busy() {return busy_;}
    
+   int SetGateOpen(bool open);
+   int GetGateOpen(bool& open);
    int SetSignal(double volts);
    int GetSignal(double& /*volts*/) {return DEVICE_UNSUPPORTED_COMMAND;}
    int GetLimits(double& minVolts, double& maxVolts) {minVolts =minV_; maxVolts = maxV_; return DEVICE_OK;}
@@ -134,16 +136,20 @@ public:
    int OnVolts(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
+   int WriteSignal(double volts);
    int WriteToPort(long lnValue);
 
    bool initialized_;
    bool busy_;
    double minV_;
    double maxV_;
+   double volts_;
+   double gatedVolts_;
    unsigned int encoding_;
    unsigned int resolution_;
    unsigned channel_;
    std::string name_;
+   bool gateOpen_;
 };
 
 class CK8055Input : public CGenericBase<CK8055Input>  

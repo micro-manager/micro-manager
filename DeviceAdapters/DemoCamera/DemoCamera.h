@@ -419,20 +419,24 @@ private:
 class DemoDA : public CSignalIOBase<DemoDA>
 {
 public:
-   DemoDA () : volt_(0) {}
-   ~DemoDA () {}
+   DemoDA ();
+   ~DemoDA ();
 
    int Shutdown() {return DEVICE_OK;}
    void GetName(char* name) const {name = "Demo DA";}
-   int SetSignal(double volts) {volt_ = volts; return DEVICE_OK;}
-   int GetSignal(double& volts) {volts = volt_; return DEVICE_OK;}
-   int GetLimits(double& minVolts, double& maxVolts) {minVolts=0.0; maxVolts= 0.0; return DEVICE_OK;}
+   int SetGateOpen(bool open); 
+   int GetGateOpen(bool& open);
+   int SetSignal(double volts);
+   int GetSignal(double& volts);
+   int GetLimits(double& minVolts, double& maxVolts) {minVolts=0.0; maxVolts= 10.0; return DEVICE_OK;}
    bool Busy() {return false;}
    int Initialize() {return DEVICE_OK;}
 
 
 private:
    double volt_;
+   double gatedVolts_;
+   bool open_;
 };
 
 

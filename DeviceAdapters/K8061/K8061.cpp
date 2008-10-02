@@ -314,10 +314,13 @@ CK8061DA::CK8061DA() :
       busy_(false), 
       minV_(0.0), 
       maxV_(0.0), 
+      volts_(0.0),
+      gatedVolts_(0.0),
       encoding_(0), 
       resolution_(8), 
       channel_(1), 
-      name_("")
+      name_(""),
+      gateOpen_(true)
 {
    InitializeDefaultErrorMessages();
 
@@ -407,7 +410,7 @@ int CK8061DA::WriteToPort(long value)
    return DEVICE_OK;
 }
 
-int CK8061DA::SetSignal(double volts)
+int CK8061DA::WriteSignal(double volts)
 {
    long value = (long) ((1L<<resolution_)/((float)maxV_ - (float)minV_) * (volts - (float)minV_));
    value = min((1L<<resolution_)-1,value);
@@ -420,6 +423,34 @@ int CK8061DA::SetSignal(double volts)
          value |= 0xffffffffL << resolution_;
    }
    return WriteToPort(value);
+}
+
+int CK8061DA::SetSignal(double volts)
+{
+   volts_ = volts;
+   if (gateOpen_) {
+      gatedVolts_ = volts_;
+      return WriteSignal(volts_);
+   } else {
+      gatedVolts_ = 0;
+   }
+
+   return DEVICE_OK;
+}
+
+int CK8061DA::SetGateOpen(bool open)
+{
+   if (open) {
+      gateOpen_ = true;
+      gatedVolts_ = volts_;
+      return WriteSignal(volts_);
+   } else {
+      gateOpen_ = false;
+      gatedVolts_ = 0;
+      return WriteSignal(0.0);
+   }
+
+   return DEVICE_OK;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

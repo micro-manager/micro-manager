@@ -341,10 +341,13 @@ CK8055DA::CK8055DA(unsigned channel, const char* name) :
       busy_(false), 
       minV_(0.0), 
       maxV_(5.0), 
+      volts_(0.0),
+      gatedVolts_(0.0),
       encoding_(0), 
       resolution_(8), 
       channel_(channel), 
-      name_(name)
+      name_(name),
+      gateOpen_(true)
 {
    InitializeDefaultErrorMessages();
 
@@ -368,14 +371,6 @@ void CK8055DA::GetName(char* name) const
 
 int CK8055DA::Initialize()
 {
-   /*
-   if (!g_boardInitialized_) {
-      int ret = InitializeTheBoard();
-      if (ret != DEVICE_OK)
-         return ret;
-   }
-   */
-
    // set property list
    // -----------------
    
@@ -408,11 +403,6 @@ int CK8055DA::Initialize()
 
 int CK8055DA::Shutdown()
 {
-   /*
-   if (g_boardInitialized_)
-      CloseDevice();
-   g_boardInitialized_ = false;
-   */
    initialized_ = false;
    return DEVICE_OK;
 }
@@ -429,7 +419,7 @@ int CK8055DA::WriteToPort(long value)
    return DEVICE_OK;
 }
 
-int CK8055DA::SetSignal(double volts)
+int CK8055DA::WriteSignal(double volts)
 {
    long value = (long) ((1L<<resolution_)/((float)maxV_ - (float)minV_) * (volts - (float)minV_));
    value = min((1L<<resolution_)-1,value);
@@ -442,6 +432,34 @@ int CK8055DA::SetSignal(double volts)
          value |= 0xffffffffL << resolution_;
    }
    return WriteToPort(value);
+}
+
+int CK8055DA::SetSignal(double volts)
+{
+   volts_ = volts;
+   if (gateOpen_) {
+      gatedVolts_ = volts_;
+      return WriteSignal(volts_);
+   } else {
+      gatedVolts_ = 0;
+   }
+
+   return DEVICE_OK;
+}
+
+int CK8055DA::SetGateOpen(bool open)
+{
+   if (open) {
+      gateOpen_ = true;
+      gatedVolts_ = volts_;
+      return WriteSignal(volts_);
+   } else {
+      gateOpen_ = false;
+      gatedVolts_ = 0;
+      return WriteSignal(0.0);
+   }
+
+   return DEVICE_OK;
 }
 
 

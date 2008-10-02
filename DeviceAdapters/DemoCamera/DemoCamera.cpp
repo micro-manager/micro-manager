@@ -1546,3 +1546,49 @@ int DemoMagnifier::OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+
+/****
+ * Demo DA device
+ */
+
+DemoDA::DemoDA () : 
+   volt_(0), 
+   gatedVolts_(0), 
+   open_(true) 
+{
+}
+
+DemoDA::~DemoDA() {
+}
+
+int DemoDA::SetGateOpen(bool open) 
+{
+   open_ = open; 
+   if (open_) 
+      gatedVolts_ = volt_; 
+   else 
+      gatedVolts_ = 0;
+   
+   return DEVICE_OK;
+}
+
+int DemoDA::GetGateOpen(bool& open) 
+{
+   open = open_; 
+   return DEVICE_OK;
+}
+
+int DemoDA::SetSignal(double volts) {
+   volt_ = volts; 
+   if (open_)
+      gatedVolts_ = volts;
+
+   return DEVICE_OK;
+}
+
+int DemoDA::GetSignal(double& volts) 
+{
+   volts = volt_; 
+   return DEVICE_OK;
+}
+
