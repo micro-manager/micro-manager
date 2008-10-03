@@ -1113,7 +1113,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                configPad_.setParentGUI(parent);
 
             // initialize controls
-            initializeGUI();      
+            initializeGUI();
+            initializePluginMenu();
          }
       });
 
@@ -2222,61 +2223,63 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             else
                shutterComboBox_.setSelectedItem("");
          }
-         
-         // add plugin menu items
-         if (plugins_.size() > 0) {
-            final JMenu pluginMenu = new JMenu();
-            pluginMenu.setText("Plugins");
-            menuBar_.add(pluginMenu);
-
-            for (int i=0; i<plugins_.size(); i++) {
-               final JMenuItem newMenuItem = new JMenuItem();
-               newMenuItem.addActionListener(new ActionListener() {
-                  public void actionPerformed(final ActionEvent e) {
-                       System.out.println("Plugin command: " + e.getActionCommand());
-                       // find the coresponding plugin
-                       for (int i=0; i<plugins_.size(); i++)
-                          if (plugins_.get(i).menuItem.equals(e.getActionCommand())) {
-                             plugins_.get(i).plugin.show();
-                             break;
-                          }
-//                     if (plugins_.get(i).plugin == null) {
-//                        hcsPlateEditor_ = new PlateEditor(MMStudioMainFrame.this);
-//                     }
-//                     hcsPlateEditor_.setVisible(true);
-                  }
-               });
-               newMenuItem.setText(plugins_.get(i).menuItem);
-               pluginMenu.add(newMenuItem);
-            }
-         }
-         
-         // add help menu item
-         final JMenu helpMenu = new JMenu();
-         helpMenu.setText("Help");
-         menuBar_.add(helpMenu);
-
-         final JMenuItem aboutMenuItem = new JMenuItem();
-         aboutMenuItem.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-               MMAboutDlg dlg = new MMAboutDlg();
-               String versionInfo = "MM Studio version: " + VERSION;
-               versionInfo += "\n" + core_.getVersionInfo();
-               versionInfo += "\n" + core_.getAPIVersionInfo();
-               versionInfo += "\nUser: " + core_.getUserId();
-               versionInfo += "\nHost: " + core_.getHostName();
-
-               dlg.setVersionInfo(versionInfo);
-               dlg.setVisible(true);
-            }
-         });
-         aboutMenuItem.setText("About...");
-         helpMenu.add(aboutMenuItem);
-         
+                  
          updateGUI(true);
       } catch (Exception e){
          handleException(e);
       }
+   }
+
+   private void initializePluginMenu() {
+      // add plugin menu items
+      if (plugins_.size() > 0) {
+         final JMenu pluginMenu = new JMenu();
+         pluginMenu.setText("Plugins");
+         menuBar_.add(pluginMenu);
+
+         for (int i=0; i<plugins_.size(); i++) {
+            final JMenuItem newMenuItem = new JMenuItem();
+            newMenuItem.addActionListener(new ActionListener() {
+               public void actionPerformed(final ActionEvent e) {
+                    System.out.println("Plugin command: " + e.getActionCommand());
+                    // find the coresponding plugin
+                    for (int i=0; i<plugins_.size(); i++)
+                       if (plugins_.get(i).menuItem.equals(e.getActionCommand())) {
+                          plugins_.get(i).plugin.show();
+                          break;
+                       }
+//                     if (plugins_.get(i).plugin == null) {
+//                        hcsPlateEditor_ = new PlateEditor(MMStudioMainFrame.this);
+//                     }
+//                     hcsPlateEditor_.setVisible(true);
+               }
+            });
+            newMenuItem.setText(plugins_.get(i).menuItem);
+            pluginMenu.add(newMenuItem);
+         }
+      }
+      
+      // add help menu item
+      final JMenu helpMenu = new JMenu();
+      helpMenu.setText("Help");
+      menuBar_.add(helpMenu);
+
+      final JMenuItem aboutMenuItem = new JMenuItem();
+      aboutMenuItem.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent e) {
+            MMAboutDlg dlg = new MMAboutDlg();
+            String versionInfo = "MM Studio version: " + VERSION;
+            versionInfo += "\n" + core_.getVersionInfo();
+            versionInfo += "\n" + core_.getAPIVersionInfo();
+            versionInfo += "\nUser: " + core_.getUserId();
+            versionInfo += "\nHost: " + core_.getHostName();
+
+            dlg.setVersionInfo(versionInfo);
+            dlg.setVisible(true);
+         }
+      });
+      aboutMenuItem.setText("About...");
+      helpMenu.add(aboutMenuItem);
    }
 
    public void updateGUI(boolean updateConfigPadStructure){
