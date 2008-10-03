@@ -9,73 +9,12 @@ AC_CANONICAL_HOST
 AM_INIT_AUTOMAKE
 
 
-# Checks for programs.
-AC_PROG_CXX
-AC_PROG_CC
-AC_PROG_LIBTOOL
+m4_include([../configure.common])
 
 
-# GCC version
-if test "x$GXX" = "xyes"; then
-  AC_MSG_CHECKING([GNU compiler version])
 
-  # Don't pass CXXFLAGS to the following CXX command as some
-  # of them can't be specified along with '-v'.
-  cc_version=["`$CXX -v 2>&1 </dev/null |grep 'gcc version' |\
-          sed 's/.*gcc version \([-a-z0-9\.]*\).*/\1/'`"]
-  AC_MSG_RESULT([$cc_version])
 
-  # Some version numbers
-  cc_vers_major=`echo $cc_version | cut -f1 -d.`
-  cc_vers_minor=`echo $cc_version | cut -f2 -d.`
-  cc_vers_patch=`echo $cc_version | cut -f3 -d.`
-  test -n "$cc_vers_major" || cc_vers_major=0
-  test -n "$cc_vers_minor" || cc_vers_minor=0
-  test -n "$cc_vers_patch" || cc_vers_patch=0
-  cc_vers_all=`expr $cc_vers_major '*' 1000000 + $cc_vers_minor '*' 1000 + $cc_vers_patch`
 
-  if test $cc_vers_major -lt 3; then
-    AC_MSG_ERROR([gcc >= 3.0 is needed to compile MicroManager])
-  fi
-fi 
-
-# On linux, some gcc versions build shared libraries unusable in java when using
-# the -O2 optimization.  Switch it off here:
-
-if test $cc_vers_major -gt 3; then
-   case $host in
-      *-*-linux*) CXXFLAGS="-g -O";;
-   esac
-fi
-
-#---------------------------------------------------
-# Check for ACE, static on Mac and libtool lib on Linux
-#---------------------------------------------------
-AC_MSG_CHECKING(for libACE)
-if test -z "$LIBACE" 
-then    
-   case $host in
-   *-*-linux*) 
-   if test -r /usr/local/lib/libACE.la ; then
-      LIBACE="/usr/local/lib/libACE.la"
-     if test -r /usr/lib/libACE.a ; then
-        LIBACE="/usr/lib/libACE.a"
-      else
-         AC_MSG_ERROR([not found, download from http://deuce.doc.wustl.edu/Download.html, build and install (cd ACE_wrappers \ mkdir build \ cd build \ ../configure \ make \ make install ) and rerun configure])
-      fi
-   fi
-   ;;
-  *-*-darwin*) 
-  if test -r /usr/local/lib/libACE.a; then
-      LIBACE="/usr/local/lib/libACE.a"
-   else
-      AC_MSG_ERROR([not found, download from http://deuce.doc.wustl.edu/Download.html, build and install (cd ACE_wrappers \ mkdir build \ cd build \ ../configure --enable-static\ make \ make install ) and rerun configure])
-   fi
-   ;;
-   esac
-fi
-AC_MSG_RESULT($LIBACE)
-AC_SUBST(LIBACE)
 
 # Checks for header files.
 # Only build Hamamatsu driver when header files are present
@@ -186,23 +125,6 @@ AC_HEADER_STDBOOL
 AC_C_CONST
 AC_C_INLINE
 
-#----------------------------------------------------------------
-# LINKFORSHARED are the flags passed to the $(CC) command that links
-# -- this is only needed for a few systems
-#----------------------------------------------------------------
-AC_MSG_CHECKING(LINKFORSHARED)
-if test -z "$LINKFORSHARED"
-then    
-case $host in   
-   *-*-aix*)   LINKFORSHARED='-Wl,-bE:$(srcdir)/python.exp -lld';;
-   *-*-hp*) LINKFORSHARED="-Wl,-E -Wl,+s -Wl,+b\$(BINLIBDEST)/lib-dynload";;
-   *-*-linux*) LINKFORSHARED="-Xlinker -export-dynamic";;
-   *-*-next*) LINKFORSHARED="-u libsys_s";;
-   *-sco-sysv*) LINKFORSHARED="-Bdynamic -dy -Wl,-Bexport";;                  
-   *-*-irix6*) LINKFORSHARED="-all";;   esac
-fi
-AC_MSG_RESULT($LINKFORSHARED)
-AC_SUBST(LINKFORSHARED)
 
 # On the Mac we need some frameworks that can be in the way on Linux
 case $host in 
@@ -221,46 +143,31 @@ AC_SUBST(DCAMFRAMEWORKS)
 AC_SUBST(PVCAMFRAMEWORKS)
 AC_SUBST(SERIALFRAMEWORKS)
 
-# Micro-Manager libraries have a prefix to make them unique.  This prefix is defined here:
+# Micro-Manager libraries have a prefix & suffix to make them unique.  These are defined here:
+case $host in
+   *-*-linux*)
+   MMSUFFIX=".so.0"
+   MMPREFIX="libmmgr_dal_"
+   ;;
+esac
+if test -z "$MMSUFFIX"; then
+  MMSUFFIX=""
+fi
+if test -z "$MMPREFIX"; then
+  MMPREFIX="mmgr_dal_"
+fi
+
+AC_MSG_CHECKING(library suffix)
+AC_MSG_RESULT($MMSUFFIX)
+AC_SUBST(MMSUFFIX)
 AC_MSG_CHECKING(library prefix)
-MMPREFIX="mmgr_dal_"
 AC_MSG_RESULT($MMPREFIX)
 AC_SUBST(MMPREFIX)
 
-# Determine if we need to look for ImageJ
-AC_MSG_CHECKING(whether to build for imagej)
-AC_ARG_WITH(imagej, [  --with-imagej=path        Path to ImageJ-based GUI], [IMAGEJDIR="$withval"], [IMAGEJDIR="yes"])
-AC_MSG_RESULT($IMAGEJDIR)
-
-if test "$IMAGEJDIR" != "no" ; then
-   #----------------------------------------------------------------
-   # Find ImageJ directory
-   #----------------------------------------------------------------
-   AC_MSG_CHECKING(for ImageJ directory)
-
-   if test -z "$IMAGEJDIR"; then  
-      IMAGEJDIR="/Applications/ImageJ /usr/local/ImageJ /usr/local/imagej "
-   fi  
-
-   IJPATH=""                                                                   
-   for d in $IMAGEJDIR ; do                                                    
-     if test -d "$d" ; then 
-       AC_MSG_RESULT($d)
-       IJPATH=$d
-       break
-     fi
-   done
-
-   if test "$IJPATH" = "" ; then
-     AC_MSG_ERROR([not found, Use the without-imagej directive to build without ImageJ or install ImageJ (http://rsb.info.nih.gov/ij/ and rerun configure, possibly using the --with-imagej=path directive])
-   fi
-fi
-
-AC_SUBST(IJPATH)
 
 # Checks for library functions.
 AC_HEADER_STDC
 AC_CHECK_FUNCS([memset])
 
-AC_CONFIG_FILES(Makefile DAShutter/Makefile AOTF/Makefile Andor/Makefile ASIFW1000/Makefile ASIStage/Makefile DAZStage/Makefile DTOpenLayer/Makefile DemoCamera/Makefile DemoStreamingCamera/Makefile SerialManager/Makefile SerialManagerUNIX/Makefile USBManager/Makefile Ludl/Makefile LudlLow/Makefile ZeissCAN/Makefile ZeissCAN29/Makefile Vincent/Makefile Conix/Makefile K8055/Makefile K8061/Makefile Hamamatsu/Makefile PVCAM/Makefile Nikon/Makefile NikonTE2000/Makefile $AZ100MAKEFILE ParallelPort/Makefile Pecon/Makefile Sensicam/Makefile StanfordPhotonics/Makefile SpectralLMM5/Makefile SutterLambda/Makefile Prior/Makefile PI/Makefile PI_GCS/Makefile dc1394/Makefile QCam/Makefile Yokogawa/Makefile $TESTMAKEFILE)
+AC_CONFIG_FILES(Makefile AOTF/Makefile Andor/Makefile ASIFW1000/Makefile ASIStage/Makefile DAZStage/Makefile DAShutter/Makefile DTOpenLayer/Makefile DemoCamera/Makefile DemoStreamingCamera/Makefile SerialManager/Makefile SerialManagerUNIX/Makefile USBManager/Makefile Ludl/Makefile LudlLow/Makefile ZeissCAN/Makefile ZeissCAN29/Makefile Vincent/Makefile Conix/Makefile K8055/Makefile K8061/Makefile Hamamatsu/Makefile PVCAM/Makefile MultiShutter/Makefile Nikon/Makefile NikonTE2000/Makefile $AZ100MAKEFILE ParallelPort/Makefile Pecon/Makefile Sensicam/Makefile StanfordPhotonics/Makefile SpectralLMM5/Makefile SutterLambda/Makefile Prior/Makefile PI/Makefile PI_GCS/Makefile dc1394/Makefile QCam/Makefile Yokogawa/Makefile $TESTMAKEFILE)
 AC_OUTPUT

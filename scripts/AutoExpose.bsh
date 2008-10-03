@@ -19,6 +19,8 @@ import ij.ImagePlus;
 import ij.process.ImageStatistics;
 import ij.measure.Measurements;
 import java.lang.Math;
+import javax.swing.JOptionPane;
+
 
 
 // Percentage of pixels that will be ignored in analysis of bright pixels
@@ -27,6 +29,8 @@ double cutoff_ = 0.002;
 double tooBright_ = 5;
 // When brighest pixel is lower than this fraction it is too low 
 double lowFraction_ = 0.4;
+// Highest allowed exposure: to avoid extreme exposures, do not go higher than this:
+double maxExposure_ = 60000;
 
 
 
@@ -71,7 +75,7 @@ boolean testExposure () {
       }
       maxValue = j;
    } else {
-		int maxValue = stats.max;
+		maxValue = stats.max;
 	}
 	double maxValueD = (double) maxValue;
 	double nrBits = mmc.getImageBitDepth();
@@ -86,6 +90,11 @@ boolean testExposure () {
 
 	double nextExposure = 0.85 * maxPossible / maxValueD * exposure;
 	gui.message("Max pixel Value: " + maxValue + " Max Possible: " + maxPossible + " Best Exposure: " + nextExposure);
+
+	if (nextExposure > maxExposure_) {
+		JOptionPane.showMessageDialog(null, "Sample too dim, exposure higher than " + maxExposure_/1000 + " sec. needed");
+		return true;
+	}
 
    mmc.setExposure(nextExposure);
 

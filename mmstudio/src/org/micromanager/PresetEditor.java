@@ -155,7 +155,8 @@ public class PresetEditor extends MMDialog {
       showCamerasCheckBox_.setText("Show cameras");
       getContentPane().add(showCamerasCheckBox_);
       springLayout.putConstraint(SpringLayout.SOUTH, showCamerasCheckBox_, 28, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.EAST, showCamerasCheckBox_, 105, SpringLayout.WEST, getContentPane());
+      springLayout.putConstraint(SpringLayout.EAST, showCamerasCheckBox_, 111, SpringLayout.WEST, getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, showCamerasCheckBox_, 10, SpringLayout.WEST, getContentPane());
 
       showShuttersCheckBox_ = new JCheckBox();
       showShuttersCheckBox_.setFont(new Font("", Font.PLAIN, 10));
@@ -688,6 +689,8 @@ public class PresetEditor extends MMDialog {
                else if (dtype == DeviceType.ShutterDevice)
                   showDevice = flags_.shutters_;
                else if (dtype == DeviceType.StageDevice)
+                  showDevice = flags_.stages_;
+               else if (dtype == DeviceType.XYStageDevice)
                   showDevice = flags_.stages_;
                else if (dtype == DeviceType.StateDevice)
                   showDevice = flags_.state_;

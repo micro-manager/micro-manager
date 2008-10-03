@@ -1248,7 +1248,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       if (System.getProperty("os.name").indexOf("Mac OS X") != -1)
          addGroupButton_.setIcon(SwingResourceManager.getIcon(MMStudioMainFrame.class, "/org/micromanager/icons/plus.png"));
       else
-         addGroupButton_.setText("A");
+         addGroupButton_.setText("+");
       getContentPane().add(addGroupButton_);
       springLayout_.putConstraint(SpringLayout.EAST, addGroupButton_, 337, SpringLayout.WEST, getContentPane());
       springLayout_.putConstraint(SpringLayout.WEST, addGroupButton_, 295, SpringLayout.WEST, getContentPane());

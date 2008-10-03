@@ -113,7 +113,7 @@ public:
    void GetName(char* pszName) const;
    bool Busy() {return busy_;}
 
-   int SetGateOpen(bool open);
+   int SetGateOpen(bool open) {gateOpen_ = open; return DEVICE_OK;}
    int GetGateOpen(bool& open) {open = gateOpen_; return DEVICE_OK;}
    int SetSignal(double volts);
    int GetSignal(double& /*volts*/) {return DEVICE_UNSUPPORTED_COMMAND;}

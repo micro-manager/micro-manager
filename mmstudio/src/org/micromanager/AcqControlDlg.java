@@ -39,6 +39,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Enumeration;
@@ -459,24 +460,31 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       // This method is called when editing is completed.
       // It must return the new value to be stored in the cell.
       public Object getCellEditorValue() {
+         NumberFormat form  = NumberFormat.getInstance();
          // TODO: if content of column does not match type we get an exception
-         if (editCol_ == 0) {
-            // As a side effect, change to the color of the new channel
-            channel_.color_ = new Color (colorPrefs_.getInt("Color_" + acqEng_.getChannelGroup() + "_" + combo_.getSelectedItem(), Color.white.getRGB())); 
-            return combo_.getSelectedItem();
-         } else if (editCol_ == 1 || editCol_ == 2)
-            return new Double(text_.getText());
-         else if (editCol_ == 3) {
-            return new Integer(text_.getText());
-         } else if (editCol_ == 4) {
-            Color c = colorLabel_.getBackground();
-            return c;
+         try {
+            if (editCol_ == 0) {
+               // As a side effect, change to the color of the new channel
+               channel_.color_ = new Color (colorPrefs_.getInt("Color_" + acqEng_.getChannelGroup() + "_" + combo_.getSelectedItem(), Color.white.getRGB())); 
+               return combo_.getSelectedItem();
+            } else if (editCol_ == 1 || editCol_ == 2)
+               return new Double(form.parse(text_.getText()).doubleValue());
+            else if (editCol_ == 3) {
+               return new Integer(form.parse(text_.getText()).intValue());
+            } else if (editCol_ == 4) {
+               Color c = colorLabel_.getBackground();
+               return c;
+            }
+            else
+            {
+               String err = new String("Internal error: unknown column");
+               return err;
+            }
+         } catch (ParseException p) {
+            handleException(p);
          }
-         else
-         {
-            String err = new String("Internal error: unknown column");
-            return err;
-         }
+         String err = new String("Internal error: unknown column");
+         return err;
       }
    }
 
@@ -797,7 +805,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       });
       timeUnitCombo_.setModel(new DefaultComboBoxModel(new String[] {"ms", "s", "min"}));
       timeUnitCombo_.setFont(new Font("Arial", Font.PLAIN, 10));
-      timeUnitCombo_.setBounds(136, 46, 57, 22);
+      timeUnitCombo_.setBounds(136, 46, 67, 22);
       getContentPane().add(timeUnitCombo_);
 
       // update GUI contents
@@ -830,7 +838,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       setBottomButton_.setMargin(new Insets(2, 5, 2, 5));
       setBottomButton_.setFont(new Font("", Font.PLAIN, 10));
       setBottomButton_.setText("Set");
-      setBottomButton_.setBounds(170, 158, 47, 24);
+      setBottomButton_.setBounds(170, 158, 67, 22);
       getContentPane().add(setBottomButton_);
 
       setTopButton_ = new JButton();
@@ -842,7 +850,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       setTopButton_.setMargin(new Insets(2, 5, 2, 5));
       setTopButton_.setFont(new Font("Dialog", Font.PLAIN, 10));
       setTopButton_.setText("Set");
-      setTopButton_.setBounds(170, 182, 47, 24);
+      setTopButton_.setBounds(170, 182, 67, 22);
       getContentPane().add(setTopButton_);
 
       summaryTextArea_ = new JTextArea();
@@ -1596,19 +1604,26 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
       if (ae != null)
          ae.stopCellEditing();
 
-      double zStep = Double.parseDouble(zStep_.getText());
-      if (Math.abs(zStep) < acqEng_.getMinZStepUm()) {
-         zStep = acqEng_.getMinZStepUm();
-         zStep_.setText(Double.toString(zStep));
+      NumberFormat form  = NumberFormat.getInstance();
+      //double zStep = Double.parseDouble(zStep_.getText());
+      try {
+         double zStep = form.parse(zStep_.getText()).doubleValue();
+         if (Math.abs(zStep) < acqEng_.getMinZStepUm()) {
+            zStep = acqEng_.getMinZStepUm();
+            zStep_.setText(Double.toString(zStep));
+         }
+         acqEng_.setSlices(form.parse(zBottom_.getText()).doubleValue(), form.parse(zTop_.getText()).doubleValue(), zStep, zVals_ == 0 ? false : true);
+         acqEng_.enableZSliceSetting(useSliceSettingsCheckBox_.isSelected());
+         acqEng_.enableMultiPosition(multiPosCheckBox_.isSelected());
+         acqEng_.setSliceMode(((SliceMode)sliceModeCombo_.getSelectedItem()).getID());
+         acqEng_.setPositionMode(((PositionMode)posModeCombo_.getSelectedItem()).getID());
+         acqEng_.setChannels(((ChannelTableModel)table_.getModel()).getChannels());
+         acqEng_.setFrames(form.parse(numFrames_.getValue().toString()).intValue(),
+            convertTimeToMs(form.parse(interval_.getText()).doubleValue(), timeUnitCombo_.getSelectedIndex()));
+      } catch (ParseException p) {
+         handleException (p);
+         // TODO: throw error
       }
-      acqEng_.setSlices(Double.parseDouble(zBottom_.getText()), Double.parseDouble(zTop_.getText()), zStep, zVals_ == 0 ? false : true);
-      acqEng_.enableZSliceSetting(useSliceSettingsCheckBox_.isSelected());
-      acqEng_.enableMultiPosition(multiPosCheckBox_.isSelected());
-      acqEng_.setSliceMode(((SliceMode)sliceModeCombo_.getSelectedItem()).getID());
-      acqEng_.setPositionMode(((PositionMode)posModeCombo_.getSelectedItem()).getID());
-      acqEng_.setChannels(((ChannelTableModel)table_.getModel()).getChannels());
-      acqEng_.setFrames(((Integer)numFrames_.getValue()).intValue(),
-            convertTimeToMs(Double.parseDouble(interval_.getText()), timeUnitCombo_.getSelectedIndex()));
 
       acqEng_.setContinuousFocusOffForXYMove(continuousFocusOffForXYMoveCheckBox_.isSelected());
       acqEng_.setContinuousFocusOffForZMove(continuousFocusOffForZMoveCheckBox_.isSelected());

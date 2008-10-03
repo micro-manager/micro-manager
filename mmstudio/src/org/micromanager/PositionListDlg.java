@@ -204,6 +204,7 @@ public class PositionListDlg extends MMDialog implements MouseListener {
       markButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
             markPosition();
+            posTable_.clearSelection();
          }
       });
       markButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/flag_green.png"));
@@ -251,7 +252,6 @@ public class PositionListDlg extends MMDialog implements MouseListener {
       gotoButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
             goToCurrentPosition();
-            posTable_.clearSelection();
          }
       });
       gotoButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/resultset_next.png"));
