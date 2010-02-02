@@ -2,23 +2,23 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 [Setup]
-AppName=Micro-Manager-1.3
-AppVerName=Micro-Manager-1.3
+AppName=Micro-Manager-1.4
+AppVerName=Micro-Manager-1.4
 AppPublisher=UCSF
 AppPublisherURL=http://www.micro-manager.org
 AppSupportURL=http://www.micro-manager.org
 AppUpdatesURL=http://www.micro-manager.org
-DefaultDirName=C:/Program Files/Micro-Manager-1.3
-DefaultGroupName=Micro-Manager-1.3
+DefaultDirName=C:/Program Files/Micro-Manager-1.4
+DefaultGroupName=Micro-Manager-1.4
 OutputBaseFilename=MMSetup_
 Compression=lzma
 SolidCompression=true
-VersionInfoVersion=1.3
+VersionInfoVersion=1.4
 VersionInfoCompany=(c)University of California San Francisco
 VersionInfoCopyright=(c)University of California San Francisco, (c)100XImaging Inc
 AppCopyright=University of California San Francisco, 100XImaging Inc
 ShowLanguageDialog=yes
-AppVersion=1.3
+AppVersion=1.4
 AppID=31830087-F23D-4198-B67D-AD4A2A69147F
 
 [Languages]
@@ -141,9 +141,9 @@ Source: micro-manager\mmautofocus\*; DestDir: {app}\mmautofocus; Flags: ignoreve
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
-Name: {group}\Micro-Manager-1.3; Filename: {app}\ImageJ.exe; WorkingDir: {app}
-Name: {group}\{cm:UninstallProgram,Micro-Manager-1.3}; Filename: {uninstallexe}
-Name: {commondesktop}\Micro-Manager 1.3; Filename: {app}\ImageJ.exe; Tasks: desktopicon; WorkingDir: {app}; IconIndex: 0
+Name: {group}\Micro-Manager-1.4; Filename: {app}\ImageJ.exe; WorkingDir: {app}
+Name: {group}\{cm:UninstallProgram,Micro-Manager-1.4}; Filename: {uninstallexe}
+Name: {commondesktop}\Micro-Manager 1.4; Filename: {app}\ImageJ.exe; Tasks: desktopicon; WorkingDir: {app}; IconIndex: 0
 
 [Run]
-Filename: {app}\ImageJ.exe; Description: {cm:LaunchProgram,Micro-Manager-1.3}; Flags: nowait postinstall
+Filename: {app}\ImageJ.exe; Description: {cm:LaunchProgram,Micro-Manager-1.4}; Flags: nowait postinstall

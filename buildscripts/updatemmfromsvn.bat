@@ -1,4 +1,4 @@
-cd \projects\micromanager1.3
+cd \projects\micromanager
 pushd ..\3rdparty
 rem skip the 3rdparty since it is time consuming
 rem svn update

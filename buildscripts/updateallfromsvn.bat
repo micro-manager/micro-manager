@@ -1,4 +1,4 @@
-cd \projects\micromanager1.3
+cd \projects\micromanager
 pushd ..\3rdparty
 svn cleanup --non-interactive
 svn update --non-interactive

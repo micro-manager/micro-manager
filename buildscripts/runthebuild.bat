@@ -1,4 +1,4 @@
-pushd \projects\micromanager1.3\bin
+pushd \projects\micromanager\bin
 start ImageJ
 popd
 exit/b

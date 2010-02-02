@@ -1,5 +1,6 @@
 ABSCamera,ABSCam,No ABS camera device connected!,2
 Andor,Andor,Generic Andor Camera Adapter,2
+AndorLaserCombiner,AndorLaserCombiner,AndorLaserCombiner Laser,3
 AOTF,AOTF-Switch,TLL digital out AOTF wavelength selector,4
 AOTF,AOTF-Shutter,TTL digital out AOTF shutter,3
 Apogee,ApogeeCamera,Apogee Alta camera adapter,2
@@ -126,6 +127,7 @@ NikonTI,TIAuxShutter,Aux Shutter,3
 NikonTI,TIDiaLamp,Dia Lamp,3
 NikonTI,TIExcitationFilterWheel,Excitation Filter Wheel,4
 NikonTI,TIBarrierFilterWheel,Barrier Filter Wheel,4
+NikonTI,TIAnalyzer,Analyzer,8
 Olympus,OlympusHub,Olympus Hub - required for all other devices,8
 Olympus,Objective,Objective turret,4
 Olympus,LightPath,Light path prism (eye/camera),4
@@ -159,6 +161,7 @@ Prior,Wheel-1,Pro Scan filter wheel 1,4
 Prior,Wheel-2,Pro Scan filter wheel 2,4
 Prior,Wheel-3,Pro Scan filter wheel 3,4
 Prior,ZStage,Add-on Z-stage,5
+Prior,NanoScanZ,NanoScanZ,5
 Prior,XYStage,XY Stage,6
 Prior,TTL-0,Pro Scan TTL 0,3
 Prior,TTL-1,Pro Scan TTL 1,3

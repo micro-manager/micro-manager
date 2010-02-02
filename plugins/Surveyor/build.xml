@@ -5,7 +5,7 @@
 
 	<!-- Specify the system path to the ImageJ root directory -->
 	<property name="ImageJPath" value="C:/Program Files/ImageJ"/>
-	<property name="InstallRoot" value="C:/projects/micromanager1.3/Install/micro-manager"/>
+	<property name="InstallRoot" value="C:/projects/micromanager/Install/micro-manager"/>
 
 	<!-- Do not modify from this point on -->
 	<property name="MMPluginDir" value="${ImageJPath}/plugins/Micro-Manager"/>
@@ -34,7 +34,7 @@
 
 	<target name="compileMMSurveyor" description="Compile Surveyor plugin.">
 		<mkdir dir="build" />
-		<javac srcdir="./src" destdir="./build" optimize="on" source="1.4" debug="off">
+		<javac srcdir="./src" destdir="./build" optimize="on" source="5" debug="off">
 			<classpath refid="project.class.path" />
 		</javac>
 	</target>
