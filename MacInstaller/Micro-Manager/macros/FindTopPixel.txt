@@ -1,0 +1,15 @@
+// Finds the x and y coordinates of the pixel inside the 
+// selection with the smallest y coordinate.
+ macro "FindTopPixel" {
+       getSelectionCoordinates(x, y);
+       minx=getWidth(); miny=getHeight();
+       for (i=0; i<x.length; i++) {
+           if (y[i]<miny) {
+              minx = x[i];
+              miny = y[i];
+           }
+       }
+       print(minx+" "+miny);
+       //drawLine(minx-3, miny-3, minx+3, miny+3);
+       //drawLine(minx-3, miny+3, minx+3, miny-3);
+  }

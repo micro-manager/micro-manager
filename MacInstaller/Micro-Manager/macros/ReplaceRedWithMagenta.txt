@@ -1,0 +1,39 @@
+// ReplaceRedWithMagenta
+// This macro converts an rgb image to one in which
+// the red channel is replaced by magenta to allow
+// easier viewing of images with multiple fluorescence
+// by color blind viewers.
+//
+// Author: Joel Sheffield, Biology Department, Temple University
+// 2/22/05 - now works with both stacks and single images.
+
+   requires("1.33o");
+   setBatchMode(true);
+   orig = getTitle();
+   run("Duplicate...", "title=Copy duplicate");
+   run("RGB Split");
+   selectImage("Copy (blue)");
+   run("Blue");
+   run("RGB Color");
+   run("Rename...", "title=blue");
+   selectImage("Copy (green)");
+   run("Green");
+   run("RGB Color");
+   run("Rename...", "title=green");
+   selectImage("Copy (red)");
+   run("Magenta");
+   run("RGB Color");
+   run("Rename...", "title=red");
+   run("Image Calculator...", "image1=red operation=Add image2=blue create stack");
+   run("Rename...", "title=Result");
+   run("Image Calculator...", "image1='Result' operation=Add image2=green stack");
+   newtitle= "Recolor-" +orig;
+   run("Rename...", "title=[" +newtitle+"]");
+   selectImage("red");
+   close();
+   selectImage("blue");
+   close();
+   selectImage("green");
+   close();
+   selectImage(newtitle);
+   setBatchMode(false);

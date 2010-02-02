@@ -1,0 +1,37 @@
+//Displays a dialog that demonstrates font size
+showMessage("Size (1/5)", "<html>"+
+                                                "<font size=+3>Big Font"+
+                                                "<br>"+
+                                                "<font size=-3>Small Font");
+
+//Displays a dialog that demonstrates color
+showMessage("Color (2/5)", "<html>"+
+                                                   "<font size=+2>"+
+                                                   "<font color=red>C"+
+                                                   "<font color=black>o"+
+                                                   "<font color=green>l"+
+                                                   "<font color=blue>o"+
+                                                   "<font color=purple>r");
+
+//Displays a dialog that demonstrates ordered lists and headers
+showMessage("Ordered List (3/5)", "<html>"+
+                                                               "<h3>ACGT Bases</h3>"+
+                                                               "<ol>"+
+                                                               "<li>Adenine"+
+                                                               "<li>Cytosine"+
+                                                               "<li>Guanine"+
+                                                               "<li>Thymidine"+
+                                                               "</ol>");
+
+//Displays a dialog that demonstrates unordered lists, headers, and text modifiers
+showMessage("Unordered List (4/5)", "<html>"+
+                                                                                           "<h1>ImageJ</h1>"+
+                                                                                           "<ul>"+
+                                                                                           "<li>Runs <u>everywhere</u>"+
+                                                                                           "<li>Fastest pure <b>Java</b> image processing program"+
+                                                                                           "<li>Extensive plugin and macro creating abilities"+
+                                                                                           "</ul>");
+
+//Displays a dialog that demonstrates headers, font color, and italics
+showMessage("End (5/5)", "<html>"+
+                                                                           "<h2><font color=red><i>Fin</i></h2>");

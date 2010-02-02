@@ -1,0 +1,15 @@
+// This macro measures the pixels along 
+// the edge of an area selection.
+
+  title = getTitle();
+  title = "'" + title + "'"; // add single quotes
+  run("Create Mask");
+  selectWindow("Mask");
+  run("Outline");
+  run("Image Calculator...", 
+      "image1=Mask operation=AND image2="+title);
+  setThreshold(1, 255);
+  run("Set Measurements...", 
+      "area mean limit redirect=None decimal=2");
+  run("Measure");
+  run("Close");

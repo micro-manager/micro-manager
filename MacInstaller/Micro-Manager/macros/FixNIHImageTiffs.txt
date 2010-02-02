@@ -1,0 +1,22 @@
+// Removes color artifacts from 8-bit color images created by NIH Image
+
+macro "Fix NIH Image Color TIFF" {
+      fixLut();
+  }
+
+  macro "Open NIH Image Color TIFF" {
+      requires("1.30j");
+      run("Open...");
+      fixLut();
+  }
+
+  function fixLut() {
+      getLut(reds, greens, blues);
+      reds[0] = 255;
+      greens[0] = 255;
+      blues[0] = 255;
+      reds[255] = 0;
+      greens[255] = 0;
+      blues[255] = 0;
+      setLut(reds, greens, blues);
+  }

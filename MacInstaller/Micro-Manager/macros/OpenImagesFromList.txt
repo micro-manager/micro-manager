@@ -1,0 +1,12 @@
+  // This macro opens images from a text file list
+
+  macro "OpenImagesFromList" {
+      open();
+      contents = getInfo();
+      run("Close");
+      if (indexOf(contents, "Title: ")>=0)
+          exit("Text file containing list of files expected");
+      list = split(contents, "\n");
+      for (i=0; i<list.length; i++)
+          open(list[i]);
+  }

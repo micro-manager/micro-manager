@@ -1,0 +1,36 @@
+// This macro set lets you edit the Tiff comments field of the active image.
+// The first macro gets the current comments and displays them in an editor
+// window. Edit the comments, then activate the destination image and run
+// the second macro. Run File>Save As>Tiff to keep the modifications.
+// original idea : Jean-Luc Rodeau
+
+  var info="";
+  var tmpname ="tmptifcomment.txt";
+
+  macro "Edit Tiff Comments [N1]" {
+      macrodir = getDirectory("macros");
+      info = getMetadata();
+      closewindow("Log");
+      print (info);
+      run("Text...", "save="+macrodir+tmpname);
+      closewindow("Log");
+      run("Edit...", "open="+macrodir+tmpname);
+  }
+
+  macro "Write Tiff Comments  [N2]" {
+      id=getImageID();
+      selectWindow(tmpname);
+      info = getInfo();
+      selectImage(id);
+      setMetadata(info); 
+      closewindow(tmpname);
+      showMessage('Warning','Run File>Save As>Tiff\n'
+          +'to keep the edited comments.');
+  }
+
+  function closewindow(s){
+      if (isOpen(s)) {
+          selectWindow(s);
+          run("Close");
+      }
+  }

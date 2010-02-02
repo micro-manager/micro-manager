@@ -28,21 +28,25 @@
 #pragma warning (disable : 4312 4244)
 #endif
 
-#include <ace/OS.h>
-#include <ace/High_Res_Timer.h>
-#include <ace/Log_Msg.h>
+//#include <ace/OS.h>
+//#include <ace/High_Res_Timer.h>
+//#include <ace/Log_Msg.h>
+
 
 #ifdef WIN32
 #pragma warning (default : 4312 4244)
 #endif
 
-#ifdef __APPLE__
-#include <sys/time.h>
-#endif
+//#ifdef __APPLE__
+//#include <sys/time.h>
+//#endif
 
+#include "IMMLogger.h"
 #include "CoreUtils.h"
 #include "MMCore.h"
 #include "MMEventCallback.h"
+#include "../MMDevice/DeviceUtils.h"
+
 
 using namespace std;
 
@@ -56,10 +60,13 @@ public:
    CoreCallback(CMMCore* c) : core_(c) {assert(core_);}
    ~CoreCallback() {}
 
+   int GetDeviceProperty(const char* deviceName, const char* propName, char* value);
+   int SetDeviceProperty(const char* deviceName, const char* propName, const char* value);
+
    /**
     * Writes a message to the Micro-Manager log file.
     */
-   int LogMessage(const MM::Device* caller, const char* msg, bool debugOnly)
+   int LogMessage(const MM::Device* caller, const char* msg, bool debugOnly) const
    {
       char label[MM::MaxStrLength];
       caller->GetLabel(label);
@@ -119,46 +126,23 @@ public:
    int SetSerialCommand(const MM::Device*, const char* portName, const char* command, const char* term);
    int GetSerialAnswer(const MM::Device*, const char* portName, unsigned long ansLength, char* answerTxt, const char* term);
 
-   /**
-    * Returns the number of microseconds since the system starting time.
-    * NOTE: This method is obsolete.
-    */
-   long GetClockTicksUs(const MM::Device* /*caller*/)
-   {
-      #ifdef __APPLE__
-      struct timeval t;
-      gettimeofday(&t,NULL);
-      return t.tv_sec * 1000000L + t.tv_usec;
-      #else
-      ACE_High_Res_Timer timer;
-      ACE_Time_Value t = timer.gettimeofday();
-      return (long)(t.sec() * 1000000L + t.usec());
-     #endif
-   }
+	unsigned long GetClockTicksUs(const MM::Device* /*caller*/);
 
-   MM::MMTime GetCurrentMMTime()
-   {
-      #ifdef __APPLE__
-         struct timeval t;
-         gettimeofday(&t,NULL);
-         return MM::MMTime(t.tv_sec, t.tv_usec);
-      #else
-         ACE_High_Res_Timer timer;
-         ACE_Time_Value t = timer.gettimeofday();
-         return MM::MMTime((long)t.sec(), (long)t.usec());
-      #endif
-  }
+	// MMTime, in epoch beginning at 2000 01 01
+   MM::MMTime GetCurrentMMTime();
 
    void Sleep (const MM::Device* /*caller*/, double intervalMs)
    {
-      ACE_Time_Value tv(0, (long)intervalMs * 1000);
-      ACE_OS::sleep(tv);
+		CDeviceUtils::SleepMs((long)(0.5+ intervalMs));
    }
 
    // continous acquisition support
-   int InsertImage(const MM::Device* caller, const unsigned char* buf, unsigned width, unsigned height, unsigned byteDepth, MM::ImageMetadata* pMd = 0);
-   int InsertMultiChannel(const MM::Device* caller, const unsigned char* buf, unsigned numChannels, unsigned width, unsigned height, unsigned byteDepth, MM::ImageMetadata* pMd = 0);
+   int InsertImage(const MM::Device* caller, const ImgBuffer& imgBuf);
+   int InsertImage(const MM::Device* caller, const unsigned char* buf, unsigned width, unsigned height, unsigned byteDepth, const Metadata* pMd = 0);
+   int InsertMultiChannel(const MM::Device* caller, const unsigned char* buf, unsigned numChannels, unsigned width, unsigned height, unsigned byteDepth, Metadata* pMd = 0);
    void SetAcqStatus(const MM::Device* caller, int statusCode);
+   void ClearImageBuffer(const MM::Device* caller);
+   bool InitializeImageBuffer(unsigned channels, unsigned slices, unsigned int w, unsigned int h, unsigned int pixDepth);
 
    int OpenFrame(const MM::Device* caller);
    int CloseFrame(const MM::Device* caller);
@@ -170,11 +154,27 @@ public:
    int GetImageDimensions(int& width, int& height, int& depth);
    int GetFocusPosition(double& pos);
    int SetFocusPosition(double pos);
+   int MoveFocus(double v);
+   int SetXYPosition(double x, double y);
+   int GetXYPosition(double& x, double& y);
+   int MoveXYStage(double vX, double vY);
+   int SetExposure(double expMs);
+   int GetExposure(double& expMs);
+   int SetConfig(const char* group, const char* name);
+   int GetCurrentConfig(const char* group, int bufLen, char* name);
+   int GetChannelConfigs(std::vector<std::string>& groups);
 
    // notification handlers
    int OnStatusChanged(const MM::Device* /* caller */);
    int OnPropertiesChanged(const MM::Device* /* caller */);
    int OnFinished(const MM::Device* /* caller */);
+
+   int OnCoordinateUpdate(const MM::Device* /* caller */);
+
+   std::vector<std::pair< int, std::string> > PostedErrors(void);
+   void PostError(const std::pair< int, std::string>& );
+   void ClearPostedErrors( void);
+
 
    // device management
    MM::ImageProcessor* GetImageProcessor(const MM::Device* /* caller */)

@@ -13,6 +13,7 @@ import javax.swing.SpringLayout;
 
 import org.micromanager.utils.GUIColors;
 import org.micromanager.utils.MMDialog;
+import org.micromanager.utils.ReportingUtils;
 
 public class ScriptPanelMessageWindow extends MMDialog {
    private static final long serialVersionUID = 6525868523113162761L;
@@ -54,7 +55,7 @@ public class ScriptPanelMessageWindow extends MMDialog {
       springLayout.putConstraint(SpringLayout.EAST, scrollPane_, 0, SpringLayout.EAST, getContentPane());
       springLayout.putConstraint(SpringLayout.WEST, scrollPane_, 0, SpringLayout.WEST, getContentPane());
 
-      System.out.println("Created new Message Window");
+      ReportingUtils.logMessage("Created new Message Window");
 
    }
 

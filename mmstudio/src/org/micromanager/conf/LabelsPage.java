@@ -23,20 +23,37 @@
 //
 package org.micromanager.conf;
 
-import java.awt.event.ActionEvent; 
-import java.awt.event.ActionListener; 
-
+import java.awt.Component;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
+import java.util.EventObject;
 import java.util.prefs.Preferences;
 
+import javax.swing.AbstractCellEditor;
+import javax.swing.CellEditor;
+import javax.swing.DefaultCellEditor;
+import javax.swing.InputMap;
+import javax.swing.JButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-import javax.swing.JButton;
+import javax.swing.JTextField;
+import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
+import javax.swing.event.CellEditorListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
+
+import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableModel;
 import mmcorej.MMCoreJ;
+import org.micromanager.utils.GUIUtils;
+import org.micromanager.utils.PropertyItem;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  * Wizard page to define labels for state devices.
@@ -93,7 +110,7 @@ public class LabelsPage extends PagePanel {
             return;
          }
          
-         Property p = curDevice_.findProperty(MMCoreJ.getG_Keyword_Label());
+         PropertyItem p = curDevice_.findProperty(MMCoreJ.getG_Keyword_Label());
          if (p == null)
             return;
          
@@ -136,7 +153,7 @@ public class LabelsPage extends PagePanel {
                curDevice_.setSetupLabel(row, (String) value);
                fireTableCellUpdated(row, col);
             } catch (Exception e) {
-               handleError(e.getMessage());
+               ReportingUtils.showError(e);
             }
          }
       }
@@ -197,7 +214,13 @@ public class LabelsPage extends PagePanel {
 
       labelTable_ = new JTable();
       labelTable_.setModel(new LabelTableModel());
+      labelTable_.setAutoCreateColumnsFromModel(false);
+      labelTable_.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+      InputMap im = labelTable_.getInputMap(JTable.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+      im.put( KeyStroke.getKeyStroke( KeyEvent.VK_ENTER, 0 ), "none" );
       labelsScrollPane.setViewportView(labelTable_);
+      GUIUtils.setClickCountToStartEditing(labelTable_,1);
+      GUIUtils.stopEditingOnLosingFocus(labelTable_);
 
       final JScrollPane devScrollPane = new JScrollPane();
       devScrollPane.setBounds(10, 10, 162, 255);
@@ -243,7 +266,7 @@ public class LabelsPage extends PagePanel {
             labelTableModel.setData(model_, selectedDevice.getName());
             labelTableModel.fireTableStructureChanged();
          } catch (Exception e) {
-            handleError(e.getMessage());
+            ReportingUtils.logError(e);
          }
       }
    }
@@ -295,7 +318,7 @@ public class LabelsPage extends PagePanel {
       try {
          model_.loadStateLabelsFromHardware(core_);
       } catch (Exception e) {
-         handleError(e.getMessage());
+         ReportingUtils.showError(e);
          return false;
       }
 
@@ -322,4 +345,5 @@ public class LabelsPage extends PagePanel {
 
    public void saveSettings() {
    }
+
 }

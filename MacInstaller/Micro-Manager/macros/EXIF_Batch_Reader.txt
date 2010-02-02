@@ -1,0 +1,20 @@
+// This macro batch processes a folder of images,
+// reading the EXIF data and storing them as text
+// files in the same folder.
+// Requires ImageJ 1.33s or later and
+// Exif Reader plugin 2004/12/06 or later.
+
+   requires("1.33s"); 
+   dir = getDirectory("Choose a Directory ");
+   list = getFileList(dir);
+   for (i=0; i<list.length; i++) {
+        path = dir+list[i];
+        if (indexOf(path, '.jpg')<0 && indexOf(path, '.JPG')<0)
+            print("Not JPEG: "+path);
+        else {
+            run("Exif Data...", "open=["+path+"]");
+            selectWindow("EXIF Metadata for "+list[i]);
+            saveAs("Text", path);
+            run("Close");
+        }
+  }

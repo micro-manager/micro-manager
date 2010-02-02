@@ -1,0 +1,30 @@
+// This macro changes an image's display gamma
+//     c'(i) = 255 * (c(i)/255)^gamma)
+// It does this by remapping the LUT, which
+// preserves the pixel values, unlike the
+// built-in Process>Math>Gamma function, which 
+// remaps the pixel values. Use Image>Color>Show LUT
+// to view the resulting Gamma function.
+
+  var gamma = 1;
+
+  macro "Gamma [F1]" {
+      getLut(r, g, b);
+      gamma = getNumber("Gamma (0.1-5.0):", gamma);
+      for (i=0; i<256; i++) {
+          r[i] = pow(r[i]/255, gamma)*255;
+      }
+      setLut(r, r, r);
+  }
+
+  macro "Reset Gamma [F2]" {
+      getLut(r, g, b);
+      for (i=0; i<256; i++) {
+          r[i]=i;
+      }
+      setLut(r, r, r);
+  }
+
+  macro "Show LUT" {
+      run("Show LUT");
+  }

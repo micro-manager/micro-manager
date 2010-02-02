@@ -1,0 +1,140 @@
+import org.micromanager.MMAcquisitionEngineMT;
+import org.micromanager.utils.MMException;
+import org.micromanager.metadata.MMAcqDataException;
+import org.micromanager.AcqControlDlg;
+import org.micromanager.image5d.Image5DWindow;
+import java.util.ArrayList;
+
+
+public class MMAcquisitionEngineMTMosaic extends MMAcquisitionEngineMT {
+	
+	ArrayList contigSetup = new ArrayList();
+	ArrayList img5dList = new ArrayList();
+	AffineTransform offScreenToStageTransformOld_;
+	double magOld_;
+	Point2D.Double originOld_;
+
+	private int getContigIndex(positionIndex) {
+		contig = getContig(posList_.getPosition(positionIndex));
+		return conIdx = contigs.indexOf(contig);
+	}
+
+	protected void setupImage5DArray() {
+	   img5d_ = new Image5D[contigs.size()]; 
+	   i5dWin_ = new Image5DWindow[contigs.size()];
+   }
+
+	protected void fullSetup(int posIdx) throws MMException, IOException, MMAcqDataException {
+		contigCount = contigs.size();
+		conIdx = getContigIndex(posIdx);
+		setupImage5d(conIdx);
+		contigSetup.add(conIdx);
+	   acquisitionDirectorySetup(posIdx);
+	}
+
+   protected void insertPixelsIntoImage5D(int sliceIdx, int channelIdx, int actualFrameCount,
+		   int posIndexNormalized, Object img) {
+		conIdx = getContigIndex(posIndexNormalized);
+		pos = posList_.getPosition(posIndexNormalized);
+		rect = getContigBoundsOffScreen(getContig(pos));
+		moveOriginTo(new Point((int)rect.x, (int)rect.y));
+		stagePos = new Point2D.Double(pos.getX(),pos.getY());
+		pixel = stageToOffScreen(gui.getXYStagePosition());
+		placePatchInImage5D(img5d_[conIdx], channelIdx+1, sliceIdx+1, actualFrameCount+1, (int) pixel.x, (int) pixel.y, img, 512, 512);
+		img5d_[conIdx].updateAndDraw();
+		//gui.displayImage(img);
+		if (!i5dWin_[conIdx].isPlaybackRunning())
+		{
+		   img5d_[conIdx].setCurrentPosition(0, 0, channelIdx, sliceIdx, actualFrameCount);
+		}
+
+		/*print("conIdex:  "+conIdx);
+		print("posIndex: "+posIndexNormalized);
+		print("frame:    "+actualFrameCount);
+	   print("slice:    "+sliceIdx);
+		print("channel:  "+channelIdx);
+		print("pixel:    "+pixel.x+","+pixel.y);
+		print("");
+		*/
+   }
+
+	protected int getAvailablePosIndex(int posIndexNormalized) {
+		conIdx = getContigIndex(posIndexNormalized);
+		int index=(null!=img5d_[conIdx])
+			?conIdx
+			:0;
+		return index;
+	}
+
+	protected void setupImage5DWindowCountdown(GregorianCalendar cldStart,
+			int posIndexNormalized) {
+		conIdx = getContigIndex(posIndexNormalized);
+		if (i5dWin_ != null)
+			if (i5dWin_[conIdx] != null) {
+	    	   i5dWin_[conIdx].startCountdown((long)frameIntervalMs_ - (GregorianCalendar.getInstance().getTimeInMillis() - cldStart.getTimeInMillis()), numFrames_ - frameCount_);
+	      }
+	}
+
+   protected Image5D createImage5D(int posIdx, int type, int numSlices, int actualFrames) {
+		print("createImage5D");
+		rect = getContigBoundsOffScreen(contigs.get(posIdx));
+		return new Image5D(acqName_, type, (int) rect.getWidth(), (int) rect.getHeight(), channels_.size(), numSlices, actualFrames, true);
+   }
+
+	protected void generateMetaData(double zCur, int sliceIdx, int channelIdx, int posIdx, int posIndexNormalized, double exposureMs, Object img) {
+	// Do nothing for now.
+		;
+	}
+
+	protected void cleanup() {
+		offScreenToStageTranform = offScreenToStageTransformOld_;
+		setMag(magOld_);
+		setOrigin(originOld_);
+		super.cleanup();
+		contigSetup.clear();
+		img5dList.clear();
+	}
+
+	public void acquire() {
+		posList_ = convertRoiManagerToPositionList(rm);
+		offScreenToStageTransformOld_ = offScreenToStageTransform;
+		magOld_ = surveyorMagnification;
+		originOld_ = getOrigin();
+		setupContigs(posList_);
+		setMag(1.0);
+		super.acquire();
+	}
+}
+
+MMAcquisitionEngineMTMosaic newMosaicEngine() {
+	eng = new MMAcquisitionEngineMTMosaic();
+	eng.setCore(mmc, gui.afMgr_);
+	eng.enableMultiPosition(true);
+	return eng;
+}
+
+void createMosaicAcqDialog(MMAcquisitionEngineMTMosaic eng) {
+	acq = new AcqControlDlg(eng, gui.mainPrefs_, gui);
+	acq.multiPosCheckBox_.setVisible(false);
+	acq.multiPosCheckBox_.setSelected(true);
+	acq.listButton.setVisible(false);
+	surveyorRoiLabel = new JLabel("(Each Surveyor ROI makes one mosaic.)");
+	surveyorRoiLabel.setFont(new Font("Arial", Font.PLAIN, 10));
+	surveyorRoiLabel.setBounds(15, 18, 200, 19);
+	acq.positionsPanel_.add(surveyorRoiLabel);
+	acq.Title = acq.Title + " (Surveyor Mosaics)";
+	acq.posModeCombo_.SelectedIndex = 1;
+	acq.show();
+}
+
+
+void setupContigs(PositionList posList) {
+	frameWidth = getROI()[2];
+	frameHeight = getROI()[3];
+	pixelSize = mmc.getPixelSizeUm();
+	findContigs(posList);
+}
+
+
+
+

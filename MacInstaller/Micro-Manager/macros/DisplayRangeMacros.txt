@@ -1,0 +1,78 @@
+// This is a set of macros that manipulate 
+// image display ranges (window/level).
+// They demonstrate how to use the
+// getMinAndMax(), setMinAndMax() and
+// resetMinAndMax() functions.
+
+var min, max; // global variables
+
+// Saves the display range so it can be
+// restored using "Restore Display Range".
+macro "Save Display Range" {
+    requires("1.33k");
+    getMinAndMax(min, max);
+}
+
+// Restores the display range saved using
+// "Save Display Range" or "Set Display Range...".
+macro "Restore Display Range" {
+    if (min==0 && max==0)
+        exit("Display range has not been set");
+    setMinAndMax(min, max);
+}
+
+// Sets the display range of the active image.
+macro "Set Display Range..." {
+    min = getNumber("Min:", min);
+    max = getNumber("Max:", max);
+    setMinAndMax(min, max);
+}
+
+// Resets the display range of the current
+// image so it is the same is the pixel
+// value range.
+macro "Reset Display Range" {
+    resetMinAndMax();
+}
+
+// Displays the display range of the
+// current image in the status bar.
+macro "Show Display Range" {
+    requires("1.33k");
+    getMinAndMax(min, max);
+    showStatus(getTitle+": "+min+"-"+max);
+}
+
+// Displays the window/level of the
+// current image in the status bar.
+macro "Show Window/Level" {
+    requires("1.33k");
+    getMinAndMax(min, max);
+    showStatus("Window= "+(max-min)+", Level="+min+(max-min)/2);
+}
+
+// Displays the display ranges of all open
+// images in the "Log" window.
+macro "Show All Display Ranges" {
+    requires("1.33k");
+    print("");
+    for (i=1; i<=nImages; i++) {
+        selectImage(i);
+        getMinAndMax(min, max);
+        print(getTitle+": "+min+"-"+max);
+    }
+}
+
+// Copies the display range of the active 
+// image to all open images.
+macro "Propagate Display Range..." {
+    requires("1.33k");
+    getMinAndMax(min2, max2);
+    ok = getBoolean("The display range ("+min2+"-"+max2+") of the current\n"
+        +"image will be propagated to all open images.");
+    if (!ok) exit();
+    for (i=1; i<=nImages; i++) {
+        selectImage(i);
+        setMinAndMax(min2, max2);
+    }
+}

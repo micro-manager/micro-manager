@@ -1,0 +1,23 @@
+Notes on building Universal Binaries:
+
+- Compile supporting libraries libdc1394 and libUSB individually for each platform.  Put resulting libraries into platform specific directories.  The following config commands can be used:
+
+libdc1394 (checked out from libdc1394 v2 branch, Dec. 2009):
+
+./configure CC="gcc -V 4.2.1" CFLAGS="-g -O2 -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk -arch x86_64" LDFLAGS="-arch x86_64" --disable-dependency-tracking --prefix=/usr/local/x86_64
+
+./configure CC="gcc -V 4.0.1" CFLAGS="-g -O2 -mmacosx-version-min=10.4 -isysroot /Developer/SDKs/MacOSX10.4u.sdk -arch i386" LDFLAGS="-arch i386" --disable-dependency-tracking --prefix=/usr/local/i386
+
+./configure CC="gcc -V 4.0.1" CFLAGS="-g -O2 -mmacosx-version-min=10.4 -isysroot /Developer/SDKs/MacOSX10.4u.sdk -arch ppc" LDFLAGS="-arch ppc" --disable-dependency-tracking --prefix=/usr/local/ppc --host=powerpc-apple-darwin9
+
+
+libusb:
+
+Same configure flags as for libdc1394 can be used.  make install fails for ppc build, but libudb.a is installed.  Build fails for x86_64.  Download libusb source from http://www.ellert.se/twain-sane/ and apply 64 bit patch to the source:
+patch -p0 < libusb-64bit.patch
+can't find file to patch at input line 3
+File to patch: libusb-2009-09-10-svn/darwin.c
+
+Probably also best to use the Endian patch as well
+
+

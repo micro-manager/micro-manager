@@ -9,24 +9,31 @@ endif
 if BUILD_QCAM
    QCAM = QCam
 endif
-if BUILD_TE2000
-   TE2000 = NikonTE2000
+if BUILD_SPOT
+   SPOT = Spot
 endif
-##if BUILD_AZ100
-##   AZ100 = NikonAZ100
-##endif
 if BUILD_DC1394
    DC1394 = dc1394
 endif
-if BUILD_K8055
-   K8055 = K8055
+if BUILD_NIDAQ
+   NIDAQ = NIDAQ
 endif
-if BUILD_K8061
-   K8061 = K8061
+if BUILD_ANDOR
+   ANDOR = Andor
+endif
+if BUILD_SENSICAM
+   SENSICAM = Sensicam
 endif
 if BUILD_USBMANAGER
    USBMANAGER = USBManager 
 endif
+if BUILD_ITC
+   ITC = ITC18
+endif
+if BUILD_SCION
+   SCION = ScionCam
+endif
 
-SUBDIRS =  AOTF Andor ASIFW1000 ASIStage DAZStage DAShutter DTOpenLayer DemoCamera DemoStreamingCamera SerialManager SerialManagerUNIX Ludl LudlLow PI PI_GCS Prior ParallelPort Pecon Sensicam ZeissCAN ZeissCAN29 Vincent Conix $(HAMAMATSU) $(PVCAM) $(QCAM) MultiShutter NikonTE2000 $(TE2000) $(AZ100) $(K8055) $(K8061) NIDAQ $(USBMANAGER) Nikon StanfordPhotonics SpectralLMM5 SutterLambda $(DC1394) Yokogawa
 
+SUBDIRS =  AOTF $(ANDOR) Arduino ASIFW1000 ASIStage ASIWPTR Cobolt CoherentCube Conix $(DC1394) DTOpenLayer DemoCamera DemoRGBCamera DemoStreamingCamera $(HAMAMATSU) $(ITC) K8055 K8061 LeicaDMI LeicaDMR Ludl LudlLow Neos $(NIDAQ) Nikon NikonTE2000 PI PI_GCS Prior ParallelPort Pecon PrecisExcite $(PVCAM) $(QCAM) $(SCION) $(SENSICAM) SerialManager SerialManagerUNIX SimpleAF SpectralLMM5 SutterLambda ThorlabsDCxxxx ThorlabsFilterWheel ThorlabsSC10 $(USBMANAGER) Utilities Vincent Yokogawa ZeissCAN ZeissCAN29
+ 

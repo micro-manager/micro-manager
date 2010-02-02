@@ -1,0 +1,112 @@
+// Micro-Manager, UCSF, 2009
+// Arthur Edelstein, arthuredelstein@gmail.com
+// Main unit test adapter program
+
+// Utility functions:
+  
+
+_cons = bsh.console;
+
+long _last_time=System.currentTimeMillis();
+tic() {
+	this_time = System.currentTimeMillis();
+	delta = this_time-_last_time;
+	_last_time = this_time;
+	return delta;
+}
+
+testCmd(cmd) {
+	this.caller.namespace.setVariable("_cmd",cmd,false);
+	setNameSpace(this.caller.namespace);
+	_ret = null;
+	tic();
+	_cons.print("  "  + _cmd);
+	try {
+		_ret = eval(_cmd);
+	} catch (Exception e) {
+		print(e.getMessage());
+	}
+	_t = tic();
+	_output = "";
+	if (_ret!=null)
+		_output = " => " + _ret;
+	_output += "  (" + _t + " ms)";
+	_cons.println(_output);
+	return _ret;
+}
+
+getROI() {
+	// ROI values are give as x,y,w,h in individual one-member arrays (pointers in C++):
+	a = new int[4][1];
+	mmc.getROI(a[0],a[1],a[2],a[3]);
+	// Return as a single array with x,y,w,h:
+	int[] roiRect = {a[0][0],a[1][0],a[2][0],a[3][0]};
+	return roiRect;
+}
+
+checkSafe() {
+	history = bsh.console.history;
+	lastLine = history.lastElement();
+	while(history.lastElement() == lastLine) {
+		mmc.sleep(10);
+	}
+	return history.lastElement().contentEquals("safe;");
+}
+
+
+test(testNames) {
+
+	gui.clearMessageWindow();	
+
+	print("\nMICRO-MANAGER BEANSHELL AUTOMATED TESTS");
+	
+	print("  " + System.getProperty("os.name") + " | v. " +
+		System.getProperty("os.version") + " | arch. " +
+		System.getProperty("os.arch"));
+	
+	print("  Java v. " + System.getProperty("java.version"));
+	print("  Classpath: " + System.getProperty("java.class.path"));
+	print("");
+	
+	mmc.sleep(200); // Prevent overlap
+	
+	testCmd("mmc.getVersionInfo();");
+	testCmd("mmc.getUserId();");
+	testCmd("mmc.getHostName();");
+	testCmd("mmc.getAPIVersionInfo();");
+	testCmd("mmc.getSystemState();");
+	print("\n\nMicro-Manager Version " + gui.VERSION);
+
+	// Run desired tests:
+
+	nameList = testNames.split(",");
+	for (name:nameList) {
+		filename = "scripts/mm_test_" + name + ".bsh";
+		print("\n\nRunning " + filename);
+		source(filename);
+	}
+
+	print("\n\n\nDone with all tests!");
+
+	JFileChooser fc = new JFileChooser();
+	fc.setSelectedFile(new File("mm_bsh_test_results.txt"));
+	result = fc.showSaveDialog(bsh.console);
+	
+	if (0==result) {
+		txt = bsh.console.text.getText();
+		print("\nSaving to " + fc.selectedFile);
+		fc.selectedFile.createNewFile();
+		bw = new BufferedWriter(new FileWriter(fc.selectedFile));
+		bw.write(txt);
+		bw.close();
+		fc = null;
+	} else {
+		print ("File not saved.");
+	}
+}
+
+
+update();
+
+print("\nEnter desired tests. Be careful about moving parts that might collide!");
+print("e.g.: test(\"properties,camera,shutter,xystage,zstage\");");

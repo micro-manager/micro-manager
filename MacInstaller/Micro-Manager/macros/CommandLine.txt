@@ -1,0 +1,21 @@
+// This is an example of a command line macro. Run it
+// from the command line using:
+//
+//   java -jar ij.jar CommandLine.txt
+//
+// On Windows 2000/XP, you can run this macro by dragging 
+// and dropping it on the ImageJ icon. ImageJ 1.30p or 
+// later is required.
+
+  run("Clown (14K)");
+  run("Run Benchmark");
+  makeOval(144, 54, 83, 57);
+  run("Copy");
+  run("Blobs (25K)");
+  selectWindow("blobs.gif");
+  run("RGB Color");
+  makeOval(77, 80, 83, 57);
+  run("Paste");
+  run("Select None");
+  wait(1000);
+  run("Quit");

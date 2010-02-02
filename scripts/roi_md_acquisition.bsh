@@ -1,0 +1,105 @@
+// Arthur Edelstein
+// Micro-Manager 
+// UCSF, 2009
+// (Under development)
+
+import org.micromanager.navigation.PositionList;
+import org.micromanager.navigation.MultiStagePosition;
+import ij.gui.ShapeRoi;
+import ij.plugin.frame.RoiManager;
+
+int frameWidth, frameHeight;
+
+Vector generateRoiTrajectory(acqRoi) {
+	print ("hi");
+	acqRect = acqRoi.getBoundingRect();
+	acqCenterX = acqRect.x + acqRect.width/(float) 2;
+	acqCenterY = acqRect.y + acqRect.height/(float) 2;
+	nx = (int) ((acqRect.width-overlap-1)/(float)(roiWidth-overlap) + 0.999);
+	ny = (int) ((acqRect.height-overlap-1)/(float)(roiHeight-overlap) + 0.999);
+	//print(nx + "x" + ny);
+	if (nx<=0)
+		nx=1;
+	if (ny<=0)
+		ny=1;
+
+	nxh = (nx-1)/(float) 2;
+	nyh = (ny-1)/(float) 2;
+	double i,j;
+
+	acqTraj = new Vector();
+	for (i=-nxh;i<=nxh;i=i+1.0)
+		for (j=-nyh;j<=nyh;j=j+1.0) {
+			//print(i +","+j);
+			tileX = (int) (i*(roiWidth-overlap) + acqCenterX - roiWidth/2);
+			tileY = (int) (j*(roiHeight-overlap) + acqCenterY - roiHeight/2);
+			
+			acqTraj.add(new Point(tileX,tileY));
+		}
+
+	if (acqRoi.type == Roi.POINT)
+		return acqTraj;
+
+	Vector minAcqTraj = new Vector();
+	for(pt:acqTraj) {
+		tileRoi = new Roi(pt.x, pt.y, roiWidth, roiHeight);
+		br = (new ShapeRoi(acqRoi)).and(new ShapeRoi(tileRoi)).getBoundingRect();
+		if (br.width>0 || br.height>0)
+			minAcqTraj.add(pt);
+		}
+
+	return minAcqTraj;
+}
+
+addRoiTrajectoryToPositionList(Vector acqTraj, int roiNumber, PositionList posList) {
+	xystage = mmc.getXYStageDevice();
+	zstage = mmc.getFocusDevice();
+
+	tileCount = 0;
+	for (acqPt:acqTraj) {
+		tileCount++;
+		stagePos = offScreenToStage(acqPt);
+		msp = new MultiStagePosition(xystage, stagePos.x, stagePos.y, zstage, 0);
+		msp.setLabel("roi"+roiNumber+"."+tileCount);
+		posList.addPosition(msp);
+ 	}
+	gui.setPositionList(posList);
+}
+
+scanRoiTrajectory(Vector acqTraj) {
+	for (acqPt:acqTraj) {
+		stagePos = offScreenToStage(acqPt);
+		print(stagePos);
+		stageGo(stagePos.x,stagePos.y);
+		xystage = mmc.getXYStageDevice();
+		while(mmc.deviceBusy(xystage));
+		updateMap(true);
+	}
+}
+
+PositionList convertRoiManagerToPositionList(RoiManager rm) {
+	roiCount=0;
+	posList = new PositionList();
+	acqRois = rm.getRoisAsArray();
+	setOrigin(surveyorOrigin);
+
+	for (acqRoi:acqRois) {
+		roiCount++;
+		traj = generateRoiTrajectory(acqRoi);
+		addRoiTrajectoryToPositionList(traj,roiCount,posList);
+		//scanRoiTrajectory(traj);
+	}
+	return posList;
+}
+
+
+displayPosList(PositionList posList) {
+	for (int i=0;i<posList.getNumberOfPositions();++i) {
+		pos = posList.getPosition(i);
+		print(pos.getX() +","+ pos.getY());
+	}
+}
+
+update();
+
+

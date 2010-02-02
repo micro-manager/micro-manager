@@ -1,0 +1,18 @@
+   macro "Find Peak [f9]" {
+       getBoundingRect(x1, y1, width, height);
+       x2 = x1 + width;
+       y2 = y1 + height;
+       maxv=0; maxx=0; maxy=0;
+       for (x=x1; x<x2; x++) {
+           for (y=y1; y<y2; y++) {
+               v = getPixel(x, y);
+               if (v>maxv) {
+                   maxv = v;
+                   maxx = x;
+                   maxy = y;
+              }
+          }
+      }
+      print(maxx+" "+maxy);
+      setPixel(maxx, maxy, 0);
+  }

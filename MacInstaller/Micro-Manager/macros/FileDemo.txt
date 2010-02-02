@@ -1,0 +1,48 @@
+// This macro demonstrate how to use the File.* functions.
+// It creates a temporary directory, saves three images in it, 
+// display information about the files, then deletes the
+// files and the directory.
+
+  requires("1.35g");
+
+  // Get path to temp directory
+  tmp = getDirectory("temp");
+  if (tmp=="")
+      exit("No temp directory available");
+ 
+  // Create a directory in temp
+  myDir = tmp+"my-test-dir"+File.separator;
+  File.makeDirectory(myDir);
+  if (!File.exists(myDir))
+      exit("Unable to create directory");
+  print("");
+  print(myDir);
+
+  // Create some images and save them in the directory
+  setBatchMode(true);
+  newImage("image1", "8-bit Ramp", 400, 400, 3);
+  saveAs("tiff", myDir+getTitle);
+  close();
+  newImage("image2", "16-bit Black", 512, 512, 1);
+  saveAs("tiff", myDir+getTitle);
+  close();
+  newImage("image3", "RGB Black", 512, 512, 1);
+  wait(2000);
+  saveAs("tiff", myDir+getTitle);
+  close();
+
+  // Display info about the files
+  list = getFileList(myDir);
+  for (i=0; i<list.length; i++)
+      print(list[i]+": "+File.length(myDir+list[i])+"  "+File. dateLastModified(myDir+list[i]));
+
+  // Delete the files and the directory
+  for (i=0; i<list.length; i++)
+      File.delete(myDir+list[i]);
+  File.delete(myDir);
+  if (File.exists(myDir))
+      exit("Unable to delete directory");
+  else
+      print("Directory and files successfully deleted"
+
+ 

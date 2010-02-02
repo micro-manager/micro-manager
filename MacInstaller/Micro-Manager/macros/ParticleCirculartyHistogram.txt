@@ -1,0 +1,18 @@
+// This macro generates a histogram of particle circularity.
+// It does this by running the particle analyzer, extracting the
+// circularity values from the "Results" table, stuffing them in
+// a float image, and then generating a histogram of that image.
+
+  bins = 20;
+  run("Set Measurements...", "area mean circularity redirect=None");
+  run("Analyze Particles...",
+    "minimum=1 maximum=999999 bins=20 show=Nothing display clear");
+  if (nResults==0) exit;
+  run("New...", "name=temp type=32-bit fill=Black height=1 slices=1 width="+nResults);
+  for (i=0; i<nResults; i++) 
+      setPixel(i, 0, getResult("Circ.", i));
+  run("Histogram", "histogram_min=0 histogram_max=1 number="+bins);
+  selectWindow("temp");
+  run("Close");
+  selectWindow("Histogram of temp");
+  run("Rename...", "title='Circularity Histogram'");

@@ -1,0 +1,12 @@
+  macro "Display Area Summary" {
+      if (nResults==0)
+        exit("Results table is empty");
+      totalArea = 0;
+      for (i=0; i<nResults; i++) {
+          totalArea += getResult("Area", i);
+      }
+      print("");
+      print("Count: "+nResults);
+      print("Average: "+totalArea/nResults);
+      print("Total: "+totalArea);
+ }

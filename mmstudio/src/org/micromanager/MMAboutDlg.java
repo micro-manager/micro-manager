@@ -39,6 +39,7 @@ import javax.swing.JTextArea;
 import javax.swing.WindowConstants;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.LineBorder;
+
 import com.swtdesigner.SwingResourceManager;
 
 /**
@@ -53,9 +54,9 @@ public class MMAboutDlg extends JDialog {
    
    public static String COPYRIGHT_TEXT = 
       
-      "Copyright University of California San Francisco, 2008. All rights reserved.\n\n" +
+      "Copyright University of California San Francisco, 2010. All rights reserved.\n\n" +
       "Additional copyright on portions of this software by the following institutions, projects or individuals:" +
-      " Wayne Rasband, NIH, Joachim Walter, ACE, BeanShell, JSON, logix4u, libserial, Todd Klark and Ramon de Klein";
+      " Wayne Rasband, NIH, Joachim Walter, BeanShell, JSON, logix4u, libserial, boost.org, Todd Klark and Ramon de Klein";
    
    public MMAboutDlg() {
       super();
@@ -68,20 +69,20 @@ public class MMAboutDlg extends JDialog {
       setResizable(false);
       setModal(true);
       getContentPane().setLayout(null);
-      setTitle("About Micro-Manager-S");
+      setTitle("About Micro-Manager 1.3");
       
       Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
       setLocation(screenSize.width/2 - (winSize.width/2), screenSize.height/2 - (winSize.height/2));
 
       final JLabel micromanageLabel = new JLabel();
       micromanageLabel.setFont(new Font("", Font.BOLD, 16));
-      micromanageLabel.setText("Micro-Manager-S 1.2");
+      micromanageLabel.setText("Micro-Manager 1.3");
       micromanageLabel.setBounds(44, 11, 176, 23);
       getContentPane().add(micromanageLabel);
 
       final JLabel openSourceAutomatedLabel = new JLabel();
       openSourceAutomatedLabel.setFont(new Font("Arial", Font.PLAIN, 10));
-      openSourceAutomatedLabel.setText("The Open Source High Content Screening (HCS) Software");
+      openSourceAutomatedLabel.setText("The Open Source Microscopy Software");
       openSourceAutomatedLabel.setBounds(44, 30, 329, 18);
       getContentPane().add(openSourceAutomatedLabel);
 
@@ -108,7 +109,7 @@ public class MMAboutDlg extends JDialog {
       homeHttphcs100ximagingcomBugTextArea.setBorder(new LineBorder(Color.black, 1, false));
       homeHttphcs100ximagingcomBugTextArea.setBackground(new Color(192, 192, 192));
       homeHttphcs100ximagingcomBugTextArea.setFont(new Font("Courier New", Font.PLAIN, 12));
-      homeHttphcs100ximagingcomBugTextArea.setText(" home:               http://hcs.100ximaging.com\r\n bug reports:        bugs@100ximaging.com\r\n feature requests:   features@100ximaging.com\r\n");
+      homeHttphcs100ximagingcomBugTextArea.setText(" home:               http://www.micro-manager.org\r\n bug reports:        bugs@micro-manager.org\r\n feature requests:   features@micro-manager.org\r\n");
       homeHttphcs100ximagingcomBugTextArea.setBounds(5, 219, 368, 47);
       getContentPane().add(homeHttphcs100ximagingcomBugTextArea);
 
@@ -120,7 +121,7 @@ public class MMAboutDlg extends JDialog {
       welcomeTextArea_ = new JTextArea();
       welcomeTextArea_.setBorder(new LineBorder(Color.black, 1, false));
       welcomeTextArea_.setWrapStyleWord(true);
-      welcomeTextArea_.setText("Copyright University of California San Francisco, 2008. All rights reserved.\r\nCopyright 100X Imaging Inc, 2008. All rights reserved\r\n\r\nAdditional copyright on portions of this software by the following institutions, projects or individuals: Wayne Rasband, NIH, Joachim Walter, ACE, BeanShell, JSON, logix4u, libserial, Todd Klark and Ramon de Klein");
+      welcomeTextArea_.setText("Copyright University of California San Francisco, 2010. All rights reserved.\r\nCopyright 100X Imaging Inc, 2010. All rights reserved\r\n\r\nAdditional copyright on portions of this software by the following institutions, projects or individuals: Wayne Rasband, NIH, Joachim Walter, boost.org, BeanShell, JSON, logix4u, libserial, Todd Klark and Ramon de Klein");
       welcomeTextArea_.setMargin(new Insets(10, 10, 10, 10));
       welcomeTextArea_.setLineWrap(true);
       welcomeTextArea_.setFont(new Font("Arial", Font.PLAIN, 10));

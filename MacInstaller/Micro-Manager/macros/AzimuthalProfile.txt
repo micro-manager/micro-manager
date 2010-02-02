@@ -1,0 +1,68 @@
+// This macro is based on the ImageJ ExampleGetProfile macro
+// I use it for processing 2D Xray data, such as is obtained from image plates.
+//
+// A line is drawn from the image centre to the edge, and pixel
+// values extracted along the radius for later processing to determine
+// lattice strain from diameters of the Debye-Scherrer rings.
+// (See, for example, Korsunsky et al, "Mapping two-dimensional state of strain using 
+// synchrotron x-ray diffraction," Scripta Materialia, vol 39, no. 12, 1705-1712)
+
+  // Close "Log" window
+  if (isOpen("Log")) {
+      selectWindow("Log");
+      run("Close");
+  }
+
+  // Default values for the parameters
+  width = getWidth;
+  height = getHeight;
+  directory="Test"; 
+  filename="log";
+  CentreX = width/2;
+  CentreY = height/2;
+  Radius = minOf(CentreX, CentreY);
+  AngleInc = 5; //degrees
+
+  // Enter the centre of the image and the radius 
+  Dialog.create("Image Coordinates");
+  //Dialog.addString("Directory name", directory); //directory should exist
+  Dialog.addString("File Prefix", filename);
+  Dialog.addNumber("Centre X", CentreX);
+  Dialog.addNumber("Centre Y", CentreY);
+  Dialog.addNumber("Radius", Radius);
+  Dialog.addNumber("Step angle (degrees)", 5);
+
+  Dialog.show();
+  //directory = Dialog.getString();
+  directory = getDirectory("Select a Directory");
+  filename = Dialog.getString();
+  CentreX = Dialog.getNumber;
+  CentreY = Dialog.getNumber;
+  Radius = Dialog.getNumber;
+  AngleInc = Dialog.getNumber;
+
+  angles = 360/AngleInc;
+
+  for (i=0; i<angles; i++) {
+      angle = i*AngleInc;
+ 
+     // Define the line along which to get the profile.
+      EdgeX = Radius*cos(angle*PI/180) + CentreX;
+      EdgeY = Radius*sin(angle*PI/180) + CentreY;
+      makeLine(CentreX, CentreY, EdgeX, EdgeY);
+ 
+      // Get profile and display values in "Log" window
+      profile = getProfile();
+      for (j=0; j<profile.length; j++)
+          print(j+"  "+profile[j]);
+
+      // Save as Excel compatible text file
+      // and add an index to the file name for multiple files.
+      selectWindow("Log");
+      run("Text...", "save=["+directory+filename+i+".txt]");
+
+      // Close log window
+      selectWindow("Log");
+      run("Close");
+  }
+ 

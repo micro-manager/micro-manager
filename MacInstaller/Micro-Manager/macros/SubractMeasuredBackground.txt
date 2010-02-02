@@ -1,0 +1,35 @@
+// "SubtractMeasuredBackground"
+
+  // For each image in a stack, this macro subtracts the 
+  // background level calculated from the current selection. 
+  // Note that the selection may be a composite (discontinuous) 
+  // selection that was created by holding down the shift key.
+  macro "Subtract Measured Background 1" {
+      if (selectionType==-1)
+         exit("This macro requires an area selection");
+      for (i=1; i<=nSlices; i++) {
+          setSlice(i);
+          getStatistics(area, mean);
+          run("Select None");
+          run("Subtract...", "value="+mean);
+          run("Restore Selection");
+      }
+  }
+
+  // This macro subtracts the mean gray level calculated 
+  // from user-defined selections that have been added to the
+  //  ROI Manager. It works with both single images and a stacks.
+  macro "Subtract Measured Background 2" {
+      n = roiManager("count");
+      if (n==0)
+          exit("This macro requires at least one ROI Manager entry");
+      sum = 0;
+      for (i=0; i<n; i++) {
+          roiManager("select", i);
+          getStatistics(area, mean);
+          sum += mean;
+      }
+      average = sum/n;
+      run("Select None");
+      run("Subtract...", "stack value="+average);
+  }

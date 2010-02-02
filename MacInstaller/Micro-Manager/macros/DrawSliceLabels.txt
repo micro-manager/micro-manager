@@ -1,0 +1,28 @@
+// Draws slice labels on the images of a stack in white
+
+  requires("1.33a");
+  id = getImageID();
+  for (i=1; i<=nSlices; i++) {
+     run("Set Slice...", "slice="+i); 
+     label = getLabel(id);
+     if (label!="") {
+          setColor(255, 255, 255); // white
+          drawString(label, 5, 15);
+      }
+ }
+
+  function getLabel(id) {
+       selectImage(id);
+       info = getInfo();
+       index = indexOf(info, "Slice: ");
+       if (index==-1)
+           index = indexOf(info, "Frame: ");
+       if (index==-1) return "";
+       index = indexOf(info, "(", index);
+       if (index==-1) return "";
+       index2 = indexOf(info, "\n", index);
+       if (index2==-1)
+           return "";
+       else
+            return substring(info, index+1, index2-1);
+  }

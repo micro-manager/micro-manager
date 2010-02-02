@@ -27,6 +27,7 @@
 #endif
 
 #include "prior.h"
+#include <cstdio>
 #include <string>
 #include <math.h>
 #include "../../MMDevice/ModuleInterface.h"
@@ -34,6 +35,7 @@
 
 const char* g_XYStageDeviceName = "XYStage";
 const char* g_ZStageDeviceName = "ZStage";
+const char* g_NanoStageDeviceName = "NanoScanZ";
 const char* g_BasicControllerName = "BasicController";
 const char* g_Shutter1Name="Shutter-1";
 const char* g_Shutter2Name="Shutter-2";
@@ -47,7 +49,7 @@ const char* g_TTL1Name="TTL-1";
 const char* g_TTL2Name="TTL-2";
 const char* g_TTL3Name="TTL-3";
 
-using namespace std;
+//using namespace std;
 
 ///////////////////////////////////////////////////////////////////////////////
 // Exported MMDevice API
@@ -62,6 +64,7 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_Wheel2Name, "Pro Scan filter wheel 2");
    AddAvailableDeviceName(g_Wheel3Name, "Pro Scan filter wheel 3");
    AddAvailableDeviceName(g_ZStageDeviceName, "Add-on Z-stage");
+   AddAvailableDeviceName(g_NanoStageDeviceName, "NanoScanZ");
    AddAvailableDeviceName(g_XYStageDeviceName, "XY Stage");
    AddAvailableDeviceName(g_TTL0Name, "Pro Scan TTL 0");
    AddAvailableDeviceName(g_TTL1Name, "Pro Scan TTL 1");
@@ -109,6 +112,11 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
       ZStage* s = new ZStage();
       return s;
    }
+   else if (strcmp(deviceName, g_NanoStageDeviceName) == 0)
+   {
+      NanoZStage* s = new NanoZStage();
+      return s;
+   }
    else if (strcmp(deviceName, g_XYStageDeviceName) == 0)
    {
       XYStage* s = new XYStage();
@@ -149,7 +157,7 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
    delete pDevice;
 }
 
-int ClearPort(MM::Device& device, MM::Core& core, string port)
+int ClearPort(MM::Device& device, MM::Core& core, std::string port)
 {
    // Clear contents of serial port 
    const int bufSize = 255;
@@ -296,7 +304,7 @@ int Shutter::SetShutterPosition(bool state)
    if (ret != DEVICE_OK)
       return ret;
 
-   ostringstream command;
+   std::ostringstream command;
    command << "8," << id_ << "," << (state ? "0" : "1");
 
    // send command
@@ -305,7 +313,7 @@ int Shutter::SetShutterPosition(bool state)
       return ret;
 
    // block/wait for acknowledge, or until we time out;
-   string answer;
+   std::string answer;
    ret = GetSerialAnswer(port_.c_str(), "\r", answer);
    if (ret != DEVICE_OK)
       return ret;
@@ -336,7 +344,7 @@ int Shutter::GetShutterPosition(bool& state)
    if (ret != DEVICE_OK)
       return ret;
 
-   ostringstream command;
+   std::ostringstream command;
    command << "8," << id_;
 
    // send command
@@ -345,7 +353,7 @@ int Shutter::GetShutterPosition(bool& state)
       return ret;
 
    // block/wait for acknowledge, or until we time out;
-   string answer;
+   std::string answer;
    ret = GetSerialAnswer(port_.c_str(), "\r", answer);
    if (ret != DEVICE_OK)
       return ret;
@@ -540,7 +548,7 @@ int Wheel::Initialize()
 
 
    // For good measure, home the wheel
-   ostringstream command;
+   std::ostringstream command;
    command << "7," << id_ << ",h";
 
    // send command
@@ -552,7 +560,7 @@ int Wheel::Initialize()
    changedTime_ = GetCurrentMMTime();
 
    // block/wait for acknowledge, or until we time out;
-   string answer;
+   std::string answer;
    ret = GetSerialAnswer(port_.c_str(), "\r", answer);
    if (ret != DEVICE_OK)
       return ret;
@@ -597,7 +605,7 @@ int Wheel::SetWheelPosition(unsigned pos)
    if (ret != DEVICE_OK)
       return ret;
 
-   ostringstream command;
+   std::ostringstream command;
    command << "7," << id_ << "," << pos +1;
 
    // send command
@@ -606,7 +614,7 @@ int Wheel::SetWheelPosition(unsigned pos)
       return ret;
 
    // block/wait for acknowledge, or until we time out;
-   string answer;
+   std::string answer;
    ret = GetSerialAnswer(port_.c_str(), "\r", answer);
    if (ret != DEVICE_OK)
       return ret;
@@ -754,7 +762,7 @@ void XYStage::GetName(char* name) const
 int XYStage::Initialize()
 {
    // make sure that we are in compatiblity mode
-   ostringstream command;
+   std::ostringstream command;
    command << "comp,0";
 
    // send command
@@ -762,7 +770,7 @@ int XYStage::Initialize()
    if (ret != DEVICE_OK)
       return ret;
 
-   string answer;
+   std::string answer;
    ret = GetSerialAnswer(port_.c_str(), "\r", answer);
    if (ret != DEVICE_OK)
       return false;
@@ -792,6 +800,23 @@ int XYStage::Initialize()
    CreateProperty("StepSizeX_um", "0.0", MM::Float, true, pAct);
    pAct = new CPropertyAction (this, &XYStage::OnStepSizeY);
    CreateProperty("StepSizeY_um", "0.0", MM::Float, true, pAct);
+
+   // Max Speed
+   pAct = new CPropertyAction (this, &XYStage::OnMaxSpeed);
+   CreateProperty("MaxSpeed", "20", MM::Integer, false, pAct);
+   SetPropertyLimits("MaxSpeed", 1, 250);
+
+   // Acceleration
+   pAct = new CPropertyAction (this, &XYStage::OnAcceleration);
+   CreateProperty("Acceleration", "20", MM::Integer, false, pAct);
+   SetPropertyLimits("Acceleration", 1, 150);
+
+   // SCurve
+   if (HasCommand("SCS")) { // OptoScan II does not have the SCS command
+      pAct = new CPropertyAction (this, &XYStage::OnSCurve);
+      CreateProperty("SCurve", "20", MM::Integer, false, pAct);
+      SetPropertyLimits("SCurve", 1, 400);
+   }
 
    ret = UpdateStatus();
    if (ret != DEVICE_OK)
@@ -825,21 +850,20 @@ bool XYStage::Busy()
       return false;
 
    // block/wait for acknowledge, or until we time out;
-   string answer="";//jizhen 4/12/2007 == 1)
+   std::string answer="";
    ret = GetSerialAnswer(port_.c_str(), "\r", answer);
    if (ret != DEVICE_OK)
       return false;
    
-   //jizhen 4/12/2007
-   if (answer.length() >=1) //jizhen 4/12/2007 == 1)
+   if (answer.length() >=1)
    {
       int status = atoi(answer.substr(0,1).c_str());
-	  int statusX = status&1;
-	  int statusY = status&2;
-	  if (statusX || statusY) return true;
-	  else return false;
-	  //return status == 1 ? true : false;
-	  //eof jizhen
+      int statusX = status&1;
+      int statusY = status&2;
+      if (statusX || statusY) 
+         return true;
+      else 
+         return false;
    }
 
    return false;
@@ -852,7 +876,7 @@ int XYStage::SetPositionSteps(long x, long y)
    if (ret != DEVICE_OK)
       return ret;
 
-   ostringstream command;
+   std::ostringstream command;
    command << "G," << x << "," << y;
 
    // send command
@@ -861,7 +885,7 @@ int XYStage::SetPositionSteps(long x, long y)
       return ret;
 
    // block/wait for acknowledge, or until we time out;
-   string answer;
+   std::string answer;
    ret = GetSerialAnswer(port_.c_str(), "\r", answer);
    if (ret != DEVICE_OK)
       return ret;
@@ -886,7 +910,7 @@ int XYStage::SetRelativePositionSteps(long x, long y)
    if (ret != DEVICE_OK)
       return ret;
 
-   ostringstream command;
+   std::ostringstream command;
    command << "GR," << x << "," << y;
 
    // send command
@@ -895,7 +919,7 @@ int XYStage::SetRelativePositionSteps(long x, long y)
       return ret;
 
    // block/wait for acknowledge, or until we time out;
-   string answer;
+   std::string answer;
    ret = GetSerialAnswer(port_.c_str(), "\r", answer);
    if (ret != DEVICE_OK)
       return ret;
@@ -940,7 +964,7 @@ int XYStage::Home()
       return ret;
 
    // block/wait for acknowledge, or until we time out;
-   string answer;
+   std::string answer;
    ret = GetSerialAnswer(port_.c_str(), "\r", answer);
    if (ret != DEVICE_OK)
       return ret;
@@ -955,21 +979,17 @@ int XYStage::Home()
       return ERR_OFFSET + errNo;
    }
 
-   return ERR_UNRECOGNIZED_ANSWER;  //DEVICE_OK; 
-   // eof jizhen
-
-   //return DEVICE_UNSUPPORTED_COMMAND;
+   return ERR_UNRECOGNIZED_ANSWER;
 }
 
 int XYStage::Stop()
 {
-	//jizhen 4/12/2007
    int ret = SendSerialCommand(port_.c_str(), "K", "\r"); // command HALT the movement
    if (ret != DEVICE_OK)
       return ret;
 
    // block/wait for acknowledge, or until we time out;
-   string answer;
+   std::string answer;
    ret = GetSerialAnswer(port_.c_str(), "\r", answer);
    if (ret != DEVICE_OK)
       return ret;
@@ -984,13 +1004,9 @@ int XYStage::Stop()
       return ERR_OFFSET + errNo;
    }
 
-   return ERR_UNRECOGNIZED_ANSWER; //DEVICE_OK; 
-   //eof jizhen
-
-   //return DEVICE_UNSUPPORTED_COMMAND;
+   return ERR_UNRECOGNIZED_ANSWER;
 }
 
-//jizhen 4/12/2007
 int XYStage::SetOrigin()
 {
    // First Clear serial port from previous stuff
@@ -1004,7 +1020,7 @@ int XYStage::SetOrigin()
       return ret;
 
    // block/wait for acknowledge, or until we time out;
-   string answer;
+   std::string answer;
    ret = GetSerialAnswer(port_.c_str(), "\r", answer);
    if (ret != DEVICE_OK)
       return ret;
@@ -1021,34 +1037,6 @@ int XYStage::SetOrigin()
 
    return ERR_UNRECOGNIZED_ANSWER; 
 }
-//eof jizhen
-
-// NOTE: SetOrigin was removed from the MMDevice interface but still may be used later
-//int XYStage::SetOrigin()
-//{
-//   // send command
-//   int ret = SendSerialCommand(port_.c_str(), "PS,0,0", "\r");
-//   if (ret != DEVICE_OK)
-//      return ret;
-//
-//   // block/wait for acknowledge, or until we time out;
-//   string answer;
-//   ret = GetSerialAnswer(port_.c_str(), "\r", answer);
-//   if (ret != DEVICE_OK)
-//      return ret;
-//
-//   if (answer.substr(0,1).compare("0") == 0)
-//   {
-//      return DEVICE_OK;
-//   }
-//   else if (answer.substr(0, 1).compare("E") == 0 && answer.length() > 2)
-//   {
-//      int errNo = atoi(answer.substr(2).c_str());
-//      return ERR_OFFSET + errNo;
-//   }
-//
-//   return ERR_UNRECOGNIZED_ANSWER;   
-//}
  
 int XYStage::GetLimitsUm(double& /*xMin*/, double& /*xMax*/, double& /*yMin*/, double& /*yMax*/)
 {
@@ -1105,10 +1093,205 @@ int XYStage::OnStepSizeY(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+/**
+ * Gets and sets the maximum speed with which the Prior stage travels
+ */
+int XYStage::OnMaxSpeed(MM::PropertyBase* pProp, MM::ActionType eAct) 
+{
+   int ret = ClearPort(*this, *GetCoreCallback(), port_);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if (eAct == MM::BeforeGet) 
+   {
+      // send command
+      ret = SendSerialCommand(port_.c_str(), "SMS", "\r");
+      if (ret != DEVICE_OK)
+         return ret;
+
+      // block/wait for acknowledge, or until we time out;
+      std::string answer;
+      ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      int maxSpeed = atoi(answer.c_str());
+      if (maxSpeed < 1 || maxSpeed > 250)
+         return  ERR_UNRECOGNIZED_ANSWER;
+
+      pProp->Set((long)maxSpeed);
+
+   } 
+   else if (eAct == MM::AfterSet) 
+   {
+      long maxSpeed;
+      pProp->Get(maxSpeed);
+
+      std::ostringstream os;
+      os << "SMS," <<  maxSpeed;
+
+      // send command
+      ret = SendSerialCommand(port_.c_str(), os.str().c_str(), "\r");
+      if (ret != DEVICE_OK)
+         return ret;
+
+      // block/wait for acknowledge, or until we time out;
+      std::string answer;
+      ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      if (answer.substr(0,1).compare("0") == 0)
+      {
+         return DEVICE_OK;
+      }
+      else if (answer.substr(0, 1).compare("E") == 0 && answer.length() > 2)
+      {
+         int errNo = atoi(answer.substr(2).c_str());
+         return ERR_OFFSET + errNo;
+      }
+      return ERR_UNRECOGNIZED_ANSWER;
+
+   }
+
+   return DEVICE_OK;
+}
+
+
+/**
+ * Gets and sets the Acceleration of the Prior stage travels
+ */
+int XYStage::OnAcceleration(MM::PropertyBase* pProp, MM::ActionType eAct) 
+{
+   int ret = ClearPort(*this, *GetCoreCallback(), port_);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if (eAct == MM::BeforeGet) 
+   {
+      // send command
+      ret = SendSerialCommand(port_.c_str(), "SAS", "\r");
+      if (ret != DEVICE_OK)
+         return ret;
+
+      // block/wait for acknowledge, or until we time out;
+      std::string answer;
+      ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      int acceleration = atoi(answer.c_str());
+      if (acceleration < 1 || acceleration > 150)
+         return  ERR_UNRECOGNIZED_ANSWER;
+
+      pProp->Set((long)acceleration);
+
+   } 
+   else if (eAct == MM::AfterSet) 
+   {
+      long acceleration;
+      pProp->Get(acceleration);
+
+      std::ostringstream os;
+      os << "SAS," <<  acceleration;
+
+      // send command
+      ret = SendSerialCommand(port_.c_str(), os.str().c_str(), "\r");
+      if (ret != DEVICE_OK)
+         return ret;
+
+      // block/wait for acknowledge, or until we time out;
+      std::string answer;
+      ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      if (answer.substr(0,1).compare("0") == 0)
+      {
+         return DEVICE_OK;
+      }
+      else if (answer.substr(0, 1).compare("E") == 0 && answer.length() > 2)
+      {
+         int errNo = atoi(answer.substr(2).c_str());
+         return ERR_OFFSET + errNo;
+      }
+      return ERR_UNRECOGNIZED_ANSWER;
+
+   }
+
+   return DEVICE_OK;
+}
+
+
+/**
+ * Gets and sets the SCurve of the Prior stage
+ */
+int XYStage::OnSCurve(MM::PropertyBase* pProp, MM::ActionType eAct) 
+{
+   int ret = ClearPort(*this, *GetCoreCallback(), port_);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if (eAct == MM::BeforeGet) 
+   {
+      // send command
+      ret = SendSerialCommand(port_.c_str(), "SCS", "\r");
+      if (ret != DEVICE_OK)
+         return ret;
+
+      // block/wait for acknowledge, or until we time out;
+      std::string answer;
+      ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      int sCurve = atoi(answer.c_str());
+      if (sCurve < 1 || sCurve > 400)
+         return  ERR_UNRECOGNIZED_ANSWER;
+
+      pProp->Set((long)sCurve);
+
+   } 
+   else if (eAct == MM::AfterSet) 
+   {
+      long sCurve;
+      pProp->Get(sCurve);
+
+      std::ostringstream os;
+      os << "SCS," <<  sCurve;
+
+      // send command
+      ret = SendSerialCommand(port_.c_str(), os.str().c_str(), "\r");
+      if (ret != DEVICE_OK)
+         return ret;
+
+      // block/wait for acknowledge, or until we time out;
+      std::string answer;
+      ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      if (answer.substr(0,1).compare("0") == 0)
+      {
+         return DEVICE_OK;
+      }
+      else if (answer.substr(0, 1).compare("E") == 0 && answer.length() > 2)
+      {
+         int errNo = atoi(answer.substr(2).c_str());
+         return ERR_OFFSET + errNo;
+      }
+      return ERR_UNRECOGNIZED_ANSWER;
+
+   }
+
+   return DEVICE_OK;
+}
+
+
 // XYStage utility functions
 int XYStage::GetResolution(double& resX, double& resY)
 {
-   // This is a little unclear in the manual, it is possible that this works on sopme controllers, not others
+   // This is a little unclear in the manual, it is possible that this works on some controllers, not others
    const char* commandX="RES,s";
    //const char* commandY="RES,Y";
 
@@ -1139,7 +1322,7 @@ int XYStage::GetDblParameter(const char* command, double& param)
       return ret;
 
    // block/wait for acknowledge, or until we time out;
-   string answer;
+   std::string answer;
    ret = GetSerialAnswer(port_.c_str(), "\r", answer);
    if (ret != DEVICE_OK)
       return ret;
@@ -1165,7 +1348,7 @@ int XYStage::GetPositionStepsSingle(char axis, long& steps)
    if (ret != DEVICE_OK)
       return ret;
 
-   ostringstream command;
+   std::stringstream command;
    command << "P" << axis;
 
    // send command
@@ -1174,7 +1357,7 @@ int XYStage::GetPositionStepsSingle(char axis, long& steps)
       return ret;
 
    // block/wait for acknowledge, or until we time out;
-   string answer;
+   std::string answer;
    ret = GetSerialAnswer(port_.c_str(), "\r", answer);
    if (ret != DEVICE_OK)
    {
@@ -1195,6 +1378,28 @@ int XYStage::GetPositionStepsSingle(char axis, long& steps)
    return ERR_UNRECOGNIZED_ANSWER;
 }
 
+
+bool XYStage::HasCommand(std::string command)
+{
+   int ret = SendSerialCommand(port_.c_str(), command.c_str(), "\r");
+   if (ret != DEVICE_OK)
+      return false;
+
+   // block/wait for acknowledge, or until we time out;
+   std::string answer;
+   ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+   if (ret != DEVICE_OK)
+      return false;
+
+   if (answer.substr(0, 1).compare("E") == 0 && answer.length() > 2)
+   {
+      return false;
+   }
+   return true;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 // ZStage
 
@@ -1279,7 +1484,7 @@ bool ZStage::Busy()
       return false;
 
    // block/wait for acknowledge, or until we time out;
-   string answer;
+   std::string answer;
    ret = GetSerialAnswer(port_.c_str(), "\r", answer);
    if (ret != DEVICE_OK)
       return false;
@@ -1318,7 +1523,7 @@ int ZStage::SetPositionSteps(long pos)
       return ret;
 
    long delta = pos - curSteps_;
-   ostringstream command;
+   std::ostringstream command;
    if (delta >= 0)
       command << "U," << delta;
    else
@@ -1330,7 +1535,7 @@ int ZStage::SetPositionSteps(long pos)
       return ret;
 
    // block/wait for acknowledge, or until we time out;
-   string answer;
+   std::string answer;
    ret = GetSerialAnswer(port_.c_str(), "\r", answer);
    if (ret != DEVICE_OK)
       return ret;
@@ -1364,7 +1569,7 @@ int ZStage::GetPositionSteps(long& steps)
       return ret;
 
    // block/wait for acknowledge, or until we time out;
-   string answer;
+   std::string answer;
    ret = GetSerialAnswer(port_.c_str(), "\r", answer);
    if (ret != DEVICE_OK)
    {
@@ -1402,7 +1607,7 @@ int ZStage::GetResolution(double& res)
       return ret;
 
    // block/wait for acknowledge, or until we time out;
-   string answer;
+   std::string answer;
    ret = GetSerialAnswer(port_.c_str(), "\r", answer);
    if (ret != DEVICE_OK)
       return ret;
@@ -1452,6 +1657,320 @@ int ZStage::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
 
       pProp->Get(port_);
    }
+
+   return DEVICE_OK;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// NanoZStage
+
+NanoZStage::NanoZStage() :
+   initialized_(false),
+   port_("Undefined"),
+   stepSizeUm_(0.00001),
+   answerTimeoutMs_(1000)
+{
+   InitializeDefaultErrorMessages();
+   SetErrorText(10108, "Value out of range");
+
+   // create pre-initialization properties
+   // ------------------------------------
+
+   // Name
+   CreateProperty(MM::g_Keyword_Name, g_ZStageDeviceName, MM::String, true);
+
+   // Description
+   CreateProperty(MM::g_Keyword_Description, "Prior NanoScanZ adapter", MM::String, true);
+
+   // Port
+   CPropertyAction* pAct = new CPropertyAction (this, &NanoZStage::OnPort);
+   CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
+}
+
+NanoZStage::~NanoZStage()
+{
+   Shutdown();
+}
+
+void NanoZStage::GetName(char* Name) const
+{
+   CDeviceUtils::CopyLimitedString(Name, g_NanoStageDeviceName);
+}
+
+int NanoZStage::Initialize()
+{
+   // set stage step size and resolution
+   int ret = GetPositionSteps(curSteps_);
+   if (ret != DEVICE_OK)
+      ret = GetPositionSteps(curSteps_);
+      if (ret != DEVICE_OK)
+         return ret;
+
+   std::string version, model;
+   ret = GetModelAndVersion(model, version);
+   if (ret != DEVICE_OK)
+      return ret;
+   LogMessage(model.c_str());
+   LogMessage(version.c_str());
+
+   ret = UpdateStatus();
+   if (ret != DEVICE_OK)
+      return ret;
+
+   initialized_ = true;
+   return DEVICE_OK;
+}
+
+int NanoZStage::Shutdown()
+{
+   if (initialized_)
+   {
+      initialized_ = false;
+   }
+   return DEVICE_OK;
+}
+
+bool NanoZStage::Busy()
+{
+   // First Clear serial port from previous stuff
+   int ret = ClearPort(*this, *GetCoreCallback(), port_);
+   if (ret != DEVICE_OK)
+      return false;
+
+   const char* command = "$";
+
+   // send command
+   ret = SendSerialCommand(port_.c_str(), command, "\r");
+   if (ret != DEVICE_OK)
+      return false;
+
+   // block/wait for acknowledge, or until we time out;
+   std::string answer;
+   ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+   if (ret != DEVICE_OK)
+      return false;
+
+   if (answer.length() == 1)
+   {
+      // Z axis status is in bit 3:
+      int status = atoi(answer.c_str()) & 4;
+      return status > 0 ? true : false;
+   }
+
+   return false;
+}
+
+int NanoZStage::SetPositionUm(double pos)
+{
+   long steps = (long) (pos / stepSizeUm_ + 0.5);
+   return SetPositionSteps(steps);
+}
+
+int NanoZStage::GetPositionUm(double& pos)
+{
+   long steps;
+   int ret = GetPositionSteps(steps);
+   if (ret != DEVICE_OK)
+      return ret;
+   pos = steps * stepSizeUm_;
+   return DEVICE_OK;
+}
+  
+int NanoZStage::SetPositionSteps(long pos)
+{
+   // First Clear serial port from previous stuff
+   int ret = ClearPort(*this, *GetCoreCallback(), port_);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   std::ostringstream command;
+   double dPos = pos * stepSizeUm_;
+   command << "V " << dPos;
+   // send command
+   ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+   if (ret != DEVICE_OK)
+      return ret;
+
+   // block/wait for acknowledge, or until we time out;
+   std::string answer;
+   ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if (answer.substr(0,1).compare("R") == 0)
+   {
+      curSteps_ = pos;
+      return DEVICE_OK;
+   }
+   else if (answer.substr(0, 1).compare("E") == 0 && answer.length() > 2)
+   {
+      int errNo = atoi(answer.substr(2).c_str());
+      return ERR_OFFSET + errNo;
+   }
+
+   // Note: there seem to be issues with controller moving into Relative mode
+   // If this is the case, try sending PV,dPos position here
+ 
+   return ERR_UNRECOGNIZED_ANSWER;   
+}
+  
+int NanoZStage::SetRelativePositionUm(double pos)
+{
+   int ret = ClearPort(*this, *GetCoreCallback(), port_);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   std::ostringstream command;
+   if (pos > 0)
+      command << "U ";
+   else if ( pos < 0) {
+      command << "D ";
+      pos = -pos;
+   } else 
+      return DEVICE_OK;
+
+   command << pos;
+
+   // send command
+   ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+   if (ret != DEVICE_OK)
+      return ret;
+
+   // block/wait for acknowledge, or until we time out;
+   std::string answer;
+   ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if (answer.substr(0,1).compare("R") == 0)
+   {
+      return DEVICE_OK;
+   }
+   else if (answer.substr(0, 1).compare("E") == 0 && answer.length() > 2)
+   {
+      int errNo = atoi(answer.substr(2).c_str());
+      return ERR_OFFSET + errNo;
+   }
+
+   return ERR_UNRECOGNIZED_ANSWER;   
+}
+
+int NanoZStage::GetPositionSteps(long& steps)
+{
+   // First Clear serial port from previous stuff
+   int ret = ClearPort(*this, *GetCoreCallback(), port_);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   const char* command="PZ";
+
+   // send command
+   ret = SendSerialCommand(port_.c_str(), command, "\r");
+   if (ret != DEVICE_OK)
+      return ret;
+
+   // block/wait for acknowledge, or until we time out;
+   std::string answer;
+   ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+   if (ret != DEVICE_OK)
+   {
+      // failed reading the port
+      return ret;
+   }
+
+   if (answer.length() > 2 && answer.substr(0, 1).compare("E") == 0)
+   {
+      int errNo = atoi(answer.substr(2).c_str());
+      return ERR_OFFSET + errNo;
+   }
+   else if (answer.length() > 0)
+   {
+      std::stringstream is(answer);
+      double tmpSteps;
+      is >> tmpSteps;
+      //steps = atol(answer.c_str());
+      steps = (long) (tmpSteps / stepSizeUm_);
+      curSteps_ = steps;
+      return DEVICE_OK;
+   }
+
+   return ERR_UNRECOGNIZED_ANSWER;
+}
+
+int NanoZStage::SetOrigin()
+{
+   return DEVICE_UNSUPPORTED_COMMAND;
+}
+
+int NanoZStage::GetLimits(double& /*min*/, double& /*max*/)
+{
+   return DEVICE_UNSUPPORTED_COMMAND;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Action handlers
+///////////////////////////////////////////////////////////////////////////////
+
+int NanoZStage::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(port_.c_str());
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      if (initialized_)
+      {
+         // revert
+         pProp->Set(port_.c_str());
+         return ERR_PORT_CHANGE_FORBIDDEN;
+      }
+
+      pProp->Get(port_);
+   }
+
+   return DEVICE_OK;
+}
+
+// NanoZStage private functions
+bool NanoZStage::HasCommand(std::string command)
+{
+   int ret = SendSerialCommand(port_.c_str(), command.c_str(), "\r");
+   if (ret != DEVICE_OK)
+      return false;
+
+   // block/wait for acknowledge, or until we time out;
+   std::string answer;
+   ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+   if (ret != DEVICE_OK)
+      return false;
+
+   if (answer.substr(0, 1).compare("E") == 0 && answer.length() > 2)
+   {
+      return false;
+   }
+   return true;
+}
+
+int NanoZStage::GetModelAndVersion(std::string& model, std::string& version)
+{
+   int ret = SendSerialCommand(port_.c_str(), "DATE", "\r");
+   if (ret != DEVICE_OK)
+      return false;
+
+   // block/wait for acknowledge, or until we time out;
+   ret = GetSerialAnswer(port_.c_str(), "\r", model);
+   if (ret != DEVICE_OK)
+      return false;
+
+   if (model.substr(0, 1).compare("E") == 0 && model.length() > 2)
+   {
+      return ERR_OFFSET;
+   }
+
+   ret = GetSerialAnswer(port_.c_str(), "\r", version);
+   if (ret != DEVICE_OK)
+      return false;
 
    return DEVICE_OK;
 }
@@ -1556,7 +2075,7 @@ bool BasicController::Busy()
       return false;
 }
     
-int BasicController::ExecuteCommand(const string& cmd, string& response)
+int BasicController::ExecuteCommand(const std::string& cmd, std::string& response)
 {
    // send command
    PurgeComPort(port_.c_str());
@@ -1785,7 +2304,7 @@ int Lumen::SetShutterPosition(bool state)
    if (ret != DEVICE_OK)
       return ret;
 
-   ostringstream command;
+   std::ostringstream command;
    command << "Light," << (state ? intensity_ : 0);
 
    // send command
@@ -1794,7 +2313,7 @@ int Lumen::SetShutterPosition(bool state)
       return ret;
 
    // block/wait for acknowledge, or until we time out;
-   string answer;
+   std::string answer;
    ret = GetSerialAnswer(port_.c_str(), "\r", answer);
    if (ret != DEVICE_OK)
       return ret;
@@ -2021,7 +2540,7 @@ int TTLShutter::SetShutterPosition(bool state)
    if (ret != DEVICE_OK)
       return ret;
 
-   ostringstream command;
+   std::ostringstream command;
    command << "TTL," << id_ << "," << (state ? "1" : "0");
 
    // send command
@@ -2030,7 +2549,7 @@ int TTLShutter::SetShutterPosition(bool state)
       return ret;
 
    // block/wait for acknowledge, or until we time out;
-   string answer;
+   std::string answer;
    ret = GetSerialAnswer(port_.c_str(), "\r", answer);
    if (ret != DEVICE_OK)
       return ret;
@@ -2062,7 +2581,7 @@ int TTLShutter::GetShutterPosition(bool& state)
    if (ret != DEVICE_OK)
       return ret;
 
-   ostringstream command;
+   std::ostringstream command;
    command << "TTL," << id_ << ",?";
 
    // send command
@@ -2071,7 +2590,7 @@ int TTLShutter::GetShutterPosition(bool& state)
       return ret;
 
    // block/wait for acknowledge, or until we time out;
-   string answer;
+   std::string answer;
    ret = GetSerialAnswer(port_.c_str(), "\r", answer);
    if (ret != DEVICE_OK)
       return ret;

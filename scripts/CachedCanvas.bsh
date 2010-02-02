@@ -1,0 +1,800 @@
+import ij.gui.ImageCanvas;
+import ij.gui.ImageWindow;
+import ij.gui.Toolbar;
+import ij.ImagePlus;
+import ij.process.ByteProcessor;
+import ij.process.ShortProcessor;
+import ij.process.ColorProcessor;
+import ij.process.ImageProcessor;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentListener;
+import java.awt.event.ComponentEvent;
+import java.awt.event.ActionListener;
+import java.awt.Point;
+import java.awt.Frame;
+import java.util.Collections;
+import java.awt.Component;
+import ij.IJ;
+
+import org.micromanager.utils.NumberUtils;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+import ij.gui.Roi;
+import ij.io.FileSaver;
+
+source("/projects/micromanager1.3/scripts/roi_md_acquisition_browser.bsh");
+source("/projects/micromanager1.3/scripts/find_contiguous_regions.bsh");
+source("/projects/micromanager1.3/scripts/place_patch_in_image5d.bsh");
+source("/projects/micromanager1.3/scripts/MMAcquisitionMTMosaic.bsh");
+
+
+// Camera utilities -----------------------------
+
+getROI() {
+	// ROI values are give as x,y,w,h in individual one-member arrays (pointers in C++):
+	a = new int[4][1];
+	mmc.getROI(a[0],a[1],a[2],a[3]);
+	// Return as a single array with x,y,w,h:
+	int[] roiRect = {a[0][0],a[1][0],a[2][0],a[3][0]};
+	return roiRect;
+}
+
+acquire() {
+	mmc.snapImage();
+	img0 = mmc.getImage();
+	proc = makeProcessor(img0);
+	return proc.getPixels();
+}
+
+
+// Coordinate transformations
+
+// Coordinates (transforming between stage and "offscreen" pixels) -----
+
+AffineTransform offScreenToStageTransform;
+double surveyorMagnification;
+
+
+void setupCoordinateTransform(Point2D.Double origin, double angle, boolean flip, double pixelSize, double magnification) {
+	offScreenToStageTransform = new AffineTransform();
+	offScreenToStageTransform.translate(origin.x, origin.y);
+	offScreenToStageTransform.rotate(angle);
+	if (flip)
+		offScreenToStageTransform.scale(-1,1); // Mirror the x-axis.
+	double scaleFactor = pixelSize/magnification;
+	surveyorMagnification = magnification;
+	offScreenToStageTransform.scale(scaleFactor, scaleFactor);
+	//print(transform);
+}
+
+Point stageToOffScreen(Point2D.Double stagePos) {
+	offScreenValue = new Point2D.Double();
+	offScreenToStageTransform.inverseTransform(stagePos, offScreenValue);
+	return new Point((int)(offScreenValue.x + 0.5), (int)(offScreenValue.y + 0.5));
+}
+
+
+Point2D.Double offScreenToStage(Point offScreen) {
+	offScreenDouble = new Point2D.Double(offScreen.x, offScreen.y);
+	stageValue = new Point2D.Double();
+	offScreenToStageTransform.transform(offScreenDouble, stageValue);
+	return stageValue;
+}
+
+void setOrigin(Point2D.Double stagePos) {
+	setupCoordinateTransform(stagePos, angle, flip, pixelSize, surveyorMagnification);
+	surveyorOrigin = stagePos;
+}
+
+Point2D.Double getOrigin() {
+	return surveyorOrigin;
+}
+
+Point2D.Double moveOriginTo(Point offScreenPos) {
+	newOrigin = offScreenToStage(offScreenPos);
+	setOrigin(newOrigin);
+	return newOrigin;
+}
+
+void setMag(double mag) {
+	double factor = mag/surveyorMagnification;
+	offScreenToStageTransform.scale(1/factor, 1/factor); // When factor < 1, we need to image a larger range of the stage.
+	surveyorMagnification = mag;
+
+	tileWidth = (int) ((roiWidth-overlap) * surveyorMagnification + 0.5);
+	tileHeight = (int) ((roiHeight-overlap) * surveyorMagnification + 0.5);
+	//updateRoiRect(tileWidth, tileHeight, overlap);
+}
+
+double getMag() {
+	return surveyorMagnification;
+}
+
+// Stage commands -------------------------------------------
+
+Point2D.Double getXYStagePosition() {
+	return gui.getXYStagePosition();
+}
+
+void setXYStagePosition(x, y) {
+	gui.setXYStagePosition(x, y);
+
+}
+
+void setXYStagePosition(pos) {
+	setXYStagePosition(pos.x, pos.y);
+}
+
+stageGo(Point2D.Double stagePos) {
+	xystage = mmc.getXYStageDevice();
+	oldPos = getXYStagePosition();
+
+	if ((oldPos.x != stagePos.x) || (oldPos.y != stagePos.y)) {
+		while(mmc.deviceBusy(xystage));
+		setXYStagePosition(stagePos.x,stagePos.y);
+		while(mmc.deviceBusy(xystage)) {
+			//updateStagePositionRect();
+			mmc.sleep(100);
+		}
+		//updateStagePositionRect();
+	}
+}
+
+
+updateStagePositionRect() {
+	pixel = stageToOffScreen(getXYStagePosition());
+	roiRect.setLocation((int) pixel.x-1,(int) pixel.y-1);
+	imgp.setRoi(roiRect);
+}
+	
+// Canvas caching
+
+public class CachedWindow extends ImageWindow {
+	CachedWindow(ImagePlus imgp, ImageCanvas cvs) {
+		super(imgp, cvs);
+		addComponentListener(new ComponentAdapter() {
+			public void componentResized(ComponentEvent e) {
+			cc = (CachedCanvas) cvs;
+			cc.fitToWindow();
+		   cc.updateAfterPan();
+				//updateImage(imgp);
+			}
+		});
+	}
+
+	public void updateImage(ImagePlus imp) {
+      if (imp!=this.imp)
+          throw new IllegalArgumentException("imp!=this.imp");
+      this.imp = imp;
+		ic.fitToWindow();
+     // ic.updateImage(imp);
+ //     setLocationAndSize(true);
+ //    pack();
+      repaint();
+      maxBounds = getMaximumBounds();
+      //if (!IJ.isLinux()) {
+         // setMaximizedBounds(maxBounds);
+          setMaxBoundsTime = System.currentTimeMillis();
+      //}
+    }
+
+
+
+
+
+
+   public void maximize() {
+		setBounds(getMaximumBounds());
+	}
+/*
+	// Remove the maximizedBounds setting from this call.
+	public Rectangle getMaximumBounds() {
+		return this.getMaximizedBounds();
+	}
+*/
+
+
+}
+
+
+// ImageJ/dislay stuff -----------------------------
+
+ImageProcessor makeProcessor(short [] imgArray) {
+	w = (short) mmc.getImageWidth();
+	h = (short) mmc.getImageHeight();
+	return new ShortProcessor(w,h,imgArray,null);
+}
+
+ImageProcessor makeProcessor(byte [] imgArray) {
+	w = (short) mmc.getImageWidth();
+	h = (short) mmc.getImageHeight();
+	return new ByteProcessor(w,h,imgArray,null);
+}
+
+ImageProcessor makeProcessor(int [] imgArray) {
+	w = (short) mmc.getImageWidth();
+	h = (short) mmc.getImageHeight();
+	return new ColorProcessor(w,h,imgArray);
+}
+
+ImageProcessor makeProcessor(int type, int w, int h) {
+	if (type == ImagePlus.GRAY8)
+		return new ByteProcessor(w,h);
+	if (type == ImagePlus.GRAY16)
+		return new ShortProcessor(w,h);
+	if (type == ImagePlus.COLOR_RGB)
+		return new ColorProcessor(w,h);
+}
+
+
+placeSubImage(img,imgp,int x,int y) {
+	saveDisplayRange();
+	ipsmall = makeProcessor(img);
+	proc = imgp.getProcessor();
+
+	proc.insert(ipsmall, x, y);
+	reapplyDisplayRange();
+	imgp.updateImage();
+}
+
+
+placeSubImage(img,imgp,int x,int y, double scale) {
+	saveDisplayRange();
+	ipsmall = makeProcessor(img);
+	ipsmall = ipsmall.resize((int) (scale*ipsmall.getWidth()+0.5));
+	proc = imgp.getProcessor();
+	proc.insert(ipsmall, x, y);
+	reapplyDisplayRange();
+	imgp.updateImage();
+}
+
+
+void saveDisplayRange() {
+	displayRangeMin = imgp.getDisplayRangeMin();
+	displayRangeMax = imgp.getDisplayRangeMax();
+}
+
+void reapplyDisplayRange() {
+	imgp.setDisplayRange(displayRangeMin, displayRangeMax);
+}
+
+updateRoiRect(int tw, int th, double ol) {
+	roiRect = new Roi(-1,-1,(int) (tw+ol*surveyorMagnification+2),(int) (th+ol*surveyorMagnification+2));
+}
+
+class CachedCanvas extends ImageCanvas {
+
+	CachedCanvas(ImagePlus imgp) {
+		super(imgp);
+	}
+
+   protected void scroll(int sx, int sy) {
+   	int ox = xSrcStart + (int)(sx/magnification);  //convert to offscreen coordinates
+      int oy = ySrcStart + (int)(sy/magnification);
+      //IJ.log("scroll: "+ox+" "+oy+" "+xMouseStart+" "+yMouseStart);
+      int newx = xSrcStart + (xMouseStart-ox);
+      int newy = ySrcStart + (yMouseStart-oy);
+      srcRect.x = newx;
+      srcRect.y = newy;
+		//IJ.log(sx+"  "+sy+"  "+newx+"  "+newy+"  "+srcRect);
+		imp.draw();
+		Thread.yield();
+   }     
+    
+	void drawZoomIndicator(Graphics g) {
+	}
+
+	public void paint(Graphics g) {
+		g.setColor(Color.black);
+		g.fillRect(0,0,(int)(srcRect.width*magnification), (int)(srcRect.height*magnification));
+		super.paint(g);
+	}
+
+	public void mouseReleased(MouseEvent e) {
+		super.mouseReleased(e);
+		int clicks = e.getClickCount();
+		e1 = e;
+		print(clicks);
+		if (toolbar.getToolId() == 12) {
+			if (clicks==0 || clicks==1) { // End of a drag.
+				imgp.killRoi();
+				modeMgr.setMode(ModeManager.SURVEY);
+				updateAfterPan();
+			} else if (clicks==2) { // A double click.
+				offScreenPos = onScreenToOffScreen(e.getPoint());
+				offScreenPos.x -= (int) (0.5 + tileWidth/2);
+				offScreenPos.y -= (int) (0.5 + tileHeight/2);
+				modeMgr.setPosition(offScreenToStage(offScreenPos));
+				print(e.getPoint());
+				roiRect = new Roi(0,0,tileWidth,tileHeight);
+				modeMgr.setMode(ModeManager.NAVIGATE);
+			} else if (clicks==1 && modeMgr.getMode() == ModeManager.IDLE) {
+				imgp.killRoi();
+				modeMgr.setMode(ModeManager.SURVEY);
+			}
+			updateAfterPan();
+		}
+	}
+
+	public void updateAfterPan() {
+		updateAfterPan(imp, new Rectangle(srcRect.x-srcRect.width-tileWidth, srcRect.y-srcRect.height-tileHeight, 3*srcRect.width + 2*tileWidth, 3*srcRect.height + 2*tileHeight));
+	}
+
+    public void fitToWindow() {
+        ImageWindow win = imp.getWindow();
+        if (win==null) return;
+        Rectangle bounds = win.getBounds();
+        Insets insets = win.getInsets();
+
+        int width=bounds.width-10;
+        int height=bounds.height - insets.top - 10;
+		  float widthM = width/magnification;
+		  float heightM = height/magnification;
+		  
+        srcRect=new Rectangle(srcRect.x + (int) (srcRect.width - widthM)/2, srcRect.y + (int) (srcRect.height - heightM)/2, (int) widthM, (int) heightM);
+        setDrawingSize(width, height);
+        getParent().doLayout();
+    }
+
+    public void zoomOut(int x, int y) {
+        double factor = 1./Math.sqrt(4);
+			doZoom(x,y,factor);
+	}
+
+   public void zoomIn(int x, int y) {
+        double factor = Math.sqrt(4);
+		  doZoom(x,y,factor);
+	}
+
+	public void doZoom(int x, int y, double factor) {
+		  newMagnification = getMag()*factor;
+		  beforeCenter = getCenter();
+		  setMag(newMagnification);
+	     afterCenter = getCenter();
+        deltaCenter = subtract(beforeCenter, afterCenter);
+		  origin = add(surveyorOrigin, deltaCenter);
+        setOrigin(origin);
+		  saveDisplayRange();
+		  proc = makeProcessor(imgp.getType(), imgp.getWidth(), imgp.getHeight());
+        imgp.setProcessor("",proc);
+		  reapplyDisplayRange();
+		  bufferTiles.clear();
+			print("bufferTiles.clear()");
+		  updateAfterPan();
+	}
+
+	public Point onScreenToOffScreen(Point onScreen) {
+		return new Point( offScreenX(onScreen.x), offScreenY(onScreen.y) );
+	}
+
+}
+
+
+add(Point2D.Double a, Point2D.Double b) {
+	return new Point2D.Double(a.x + b.x, a.y + b.y);
+} 
+
+subtract(Point2D.Double a, Point2D.Double b) {
+	return new Point2D.Double(a.x - b.x, a.y - b.y);
+} 
+
+
+pan(int dx, int dy, ImagePlus imgp) {
+	oldProc = imgp.getProcessor();
+	w = oldProc.getWidth();
+	h = oldProc.getHeight();
+	newProc = makeProcessor(imgp.getType(), w, h);
+	newProc.insert(oldProc, -dx, -dy);
+	imgp.setProcessor(imgp.getTitle(), newProc);
+}
+
+/* Resize processor, and move srcRect to the original position..
+*/
+updateAfterPan(ImagePlus imgp, Rectangle newRect) {
+	if (newRect.x !=0 || newRect.y !=0) {
+		saveDisplayRange();
+		oldProc = imgp.getProcessor();
+		cvs = imgp.getCanvas();
+		newProc = makeProcessor(imgp.getType(), newRect.width, newRect.height);
+		newProc.insert(oldProc, -newRect.x, -newRect.y);
+		imgp.setProcessor(imgp.getTitle(), newProc);
+		cvs.srcRect.x -= newRect.x;
+		cvs.srcRect.y -= newRect.y;
+		moveOriginTo(new Point(newRect.x, newRect.y));
+		//print(cvs.srcRect);
+		reapplyDisplayRange();
+		updateTiles(newRect, cvs);
+	}
+}
+
+
+void updateTiles(Rectangle newRect, ImageCanvas cvs) {
+	print("updateTiles");
+	print("bufferTiles size:" + bufferTiles.size());
+	t1 = System.currentTimeMillis();
+	ArrayList tilesBig = getTilesInside(new Rectangle(newRect.width,newRect.height));
+	print(System.currentTimeMillis()-t1+"a");
+	ArrayList tilesSmall = getTiles(cvs.srcRect);
+	print(System.currentTimeMillis()-t1+"b");
+
+	ArrayList tilesBigUnbuffered = getTileBufferSet(tilesBig, false);
+	ArrayList tilesSmallUnbuffered = getTileBufferSet(tilesSmall, false);
+	print(System.currentTimeMillis()-t1+"c");
+
+	ArrayList tilesBigUnbufferedCached = getTileCacheSet(tilesBigUnbuffered,true);
+	ArrayList tilesSmallUnbufferedUncached = getTileCacheSet(tilesSmallUnbuffered,false);
+	print(System.currentTimeMillis()-t1+"d");
+
+	neededTiles.clear();
+	neededTiles.addAll(tilesBigUnbufferedCached);
+	neededTiles.addAll(tilesSmallUnbufferedUncached);
+	print(System.currentTimeMillis()-t1+"e");
+
+	bufferTiles = getTileBufferSet(tilesBig, true);
+	print(System.currentTimeMillis()-t1+"f");
+	print("bufferTiles size:" + bufferTiles.size());
+}
+
+class Tile {
+	Point2D.Double desiredPosition = null;
+	Point2D.Double measuredPosition = null;
+	Point index;
+	Object pixels = null;
+	boolean cached = false;
+
+	public Tile(int i, int j) {
+		Tile(new Point(i,j));
+	}
+
+	public Tile(Point idx) {
+		//print("new tile: "+idx);
+		index = idx;
+	}
+
+	public synchronized void acquire() {
+		stageGo(tileToStage(index));
+		mmc.snapImage();
+		pixels = mmc.getImage();
+		measuredPosition = getXYStagePosition();
+		cached = true;
+	}
+
+	public synchronized boolean isCached() {
+		return cached;
+	}
+
+	public synchronized boolean pixelsReady() {
+		return pixels != null;
+	}
+
+	public synchronized void getImageReady() {
+		if (this.pixels == null) {
+			acquire();
+		}
+	}
+
+	public synchronized Object getPixels() {
+		temp = this.pixels;
+		//pixels = null;
+		return temp;
+	}
+
+	public synchronized void save() {
+		
+	}
+
+	public synchronized Point getIndex() {
+		return index;
+	}
+
+	public synchronized String toString() {
+		rep = "<Tile("+index.x+","+index.y+"), cached: "+cached+".>";
+		return rep;
+	}
+}
+
+void placeTile(Tile theTile) {
+	//if (theTile.index.x == 2 && theTile.index.y == 2) {
+		pos = tileToOffScreen(theTile.index);
+		placeSubImage(theTile.getPixels(),imgp,pos.x,pos.y,surveyorMagnification);
+		bufferTiles.add(theTile);
+		imgp.getCanvas().repaint();
+	//}
+}
+
+Point2D.Double tileToStage(Point index) {
+	origin = stageToOffScreen(tileOrigin);
+	return offScreenToStage(new Point(tileWidth*index.x+origin.x, tileHeight*index.y+origin.y));
+}
+
+Point tileToOffScreen(Point index) {
+	return stageToOffScreen(tileToStage(index));
+}
+
+Point tileToOffScreen(Tile theTile) {
+	return tileToOffScreen(theTile.getIndex());
+}
+
+Point offScreenToTile(Point pos) {
+	origin = stageToOffScreen(tileOrigin);
+    return new Point ( (int) Math.floor(((float) pos.x - origin.x)/tileWidth),
+                       (int) Math.floor(((float) pos.y - origin.y)/tileHeight) );
+}
+
+Point stageToTile(Point2D.Double pos) {
+	return offScreenToTile(stageToOffScreen(pos));
+}
+
+boolean rectanglesOverlap(Rectangle rect1, Rectangle rect2) {
+	return
+			(rect1.x < rect2.x + rect2.width )
+		&& (rect2.x < rect1.y + rect1.width )
+		&& (rect1.y < rect2.y + rect2.height)
+		&& (rect2.y < rect1.y + rect1.height)  ;
+}
+
+ArrayList getTilesInside(Rectangle rect) {
+	return getTiles(
+		new Rectangle(	rect.x + tileWidth - 1,
+							rect.y + tileHeight - 1,
+							rect.width  - 2 * tileWidth,
+							rect.height - 2 * tileHeight) );
+}
+
+Rectangle getTileOffScreenRect(Tile theTile) {
+	pos = tileToOffScreen(theTile.getIndex());
+	return new Rectangle(pos.x, pos.y, tileWidth, tileHeight);
+}
+
+ArrayList getTiles(Rectangle rect) {
+
+	tileIndices = new ArrayList();
+	tiles = new ArrayList();
+	minIndex = offScreenToTile(new Point(rect.x, rect.y));
+	maxIndex = offScreenToTile(new Point(rect.x + rect.width - 1, rect.y + rect.height - 1));
+	for (i=minIndex.x; i<=maxIndex.x; ++i)
+		for (j=minIndex.y; j<=maxIndex.y; ++j)
+			tileIndices.add(new Point(i,j));
+
+	t1 = System.currentTimeMillis();
+	// The following loop is extremely slow. How can I fix it?
+	for (index:tileIndices) {
+		if (! masterTileList.containsKey(index)) {
+			masterTileList.put(index,new Tile(index));
+		}
+		tiles.add(masterTileList.get(index));
+	}
+	print(System.currentTimeMillis()-t1+" B");
+	return tiles;
+}
+
+ArrayList getTileBufferSet(ArrayList tilesIn, buffered) {
+	tilesOut = new ArrayList();
+	for (Tile theTile:tilesIn)
+		if (bufferTiles.contains(theTile) == buffered)
+			tilesOut.add(theTile);
+
+	return tilesOut;
+}
+
+ArrayList getTileCacheSet(ArrayList tilesIn, boolean cached) {
+	tilesOut = new ArrayList();
+	for (Tile theTile:tilesIn)
+		if (theTile.cached == cached)
+			tilesOut.add(theTile);
+
+	return tilesOut;
+}
+
+Rectangle getOffScreenRect(imgp) {
+	return new Rectangle(imgp.getWidth(), imgp.getHeight());
+}
+
+float tileDistance(Tile tile1, Tile tile2) {
+	Point index1 = tile1.getIndex();
+	Point index2 = tile1.getIndex();
+	int dx = index1.x - index2.x;
+	int dy = index1.y - index2.y;
+	return (float) Math.sqrt(dx*dx+dy*dy);
+}
+
+
+class TileGrabberThread extends Thread {
+
+	Collections.SynchronizedRandomAccessList neededTiles_;
+
+	public TileGrabberThread(neededTiles) {
+		neededTiles_ = neededTiles;
+	}
+
+	public void run() {
+		while(stopTileGrabberThread == false) {
+			sleep(10);
+			if (modeMgr.getMode() == ModeManager.SURVEY || modeMgr.getMode() == ModeManager.IDLE)
+				if (neededTiles_.size()==0)
+					sleep(50);
+				else
+					prepareNextTile();
+			else if (modeMgr.getMode() == ModeManager.NAVIGATE)
+				navigate();
+		}
+	}
+
+	public void navigate() {
+		stageGo(modeMgr.getPosition());
+		modeMgr.setMode(ModeManager.IDLE);
+		SwingUtilities.invokeLater(new RoiDisplayer());
+	}
+
+	public void prepareNextTile() {
+		Tile theTile = null;
+		// Select the first available cached tile.
+		neededTilesSnapshot = new ArrayList();
+		neededTilesSnapshot.addAll(neededTiles_); // Avoid ConcurrentModificationException
+		for(neededTile:neededTilesSnapshot)
+			if (neededTile.isCached()) {
+				theTile = neededTile;
+				break;
+			}
+
+		// If no cached tiles are available, select the first uncached needed tile.	
+		// TODO:: Make it select the nearest tile.
+		if (theTile == null && modeMgr.getMode() == ModeManager.SURVEY) {
+			theTile = neededTiles_.get(0);
+		}
+
+		if (theTile != null) {
+			print(theTile);
+			theTile.getImageReady();
+			SwingUtilities.invokeLater(new TilePlacer(theTile));
+			neededTiles_.remove(theTile);		
+		}
+	}
+}
+
+
+
+class TilePlacer implements Runnable {
+	Tile tile_;
+	public TilePlacer(Tile theTile) {
+		tile_ = theTile;
+	}
+
+	public void run() {
+		placeTile(tile_);
+	}
+}
+
+
+class RoiDisplayer implements Runnable {
+	public RoiDisplayer() {
+	}
+
+	public void run() { // Executed in the Java Event Dispatcher Thread
+		Point pixel = stageToOffScreen(modeMgr.getPosition());
+		roiRect.setLocation((int) pixel.x-1,(int) pixel.y-1);
+		imgp.setRoi(roiRect);
+	}	
+}
+
+class ModeManager {
+	public ModeManager () {
+	}
+
+	public static final int IDLE = 0;
+	public static final int SURVEY = 1;
+	public static final int NAVIGATE = 2;
+	public static final int MOSAIC5D = 3;
+
+
+	protected int mode_ = SURVEY;
+	protected Point2D.Double position_;
+
+	public synchronized void setMode(int mode) {
+		mode_ = mode;
+	}
+
+	public synchronized int getMode() {
+		return mode_;
+	}
+
+	public synchronized void setPosition(Point2D.Double position) {
+		position_ = position;
+	}
+
+	public synchronized Point2D.Double getPosition() {
+		return position_;
+	}
+
+}
+
+
+public Point2D.Double getCenter() {
+	return offScreenToStage(new Point(imgp.getWidth()/2 , imgp.getHeight()/2));
+}
+
+
+
+update();
+
+neededTiles = Collections.synchronizedList(new ArrayList());
+preparedTiles = Collections.synchronizedList(new ArrayList());
+bufferTiles = Collections.synchronizedList(new ArrayList());
+masterTileList = new Hashtable(); // Synchronized.
+
+//stopTileGrabberThread = true;
+stopTileGrabberThread = false;
+double surveyorMagnification;
+
+boolean flip = false;
+int rotate = 3;
+int overlap = 5; // in pixels
+int tileWidth, tileHeight;
+
+double displayRangeMin;
+double displayRangeMax;
+
+roiRect = new Roi(-1,-1,tileWidth+1,tileHeight+1);
+modeMgr = new ModeManager();
+
+roi = getROI(); // in pixels
+roiWidth = roi[2]; 
+roiHeight = roi[3];
+pixelSize = mmc.getPixelSizeUm();
+
+double [] angles = {0.,Math.PI/2., Math.PI, Math.PI*3./2.};
+//angle = angles[rotate];
+angle = 4.75;
+//angle = 0;
+//gui.setXYStagePosition(0,0);
+
+surveyorOrigin = getXYStagePosition();
+tileOrigin = getXYStagePosition();
+setupCoordinateTransform(surveyorOrigin, angle, flip, pixelSize, 1.0);
+setMag(1.0);
+toolbar = ij.gui.Toolbar.getInstance();
+
+
+pixelSize = mmc.getPixelSizeUm();
+roi = getROI();
+overlap = 5;
+if (pixelSize == 0) {
+	print ("No!!!! Pixel size is zero.");
+	return;
+}
+
+
+mmc.snapImage();
+pix = mmc.getImage();
+proc = makeProcessor(pix);
+imgp = new ImagePlus("",proc);
+cvs = new CachedCanvas(imgp);
+win = new CachedWindow(imgp, (ImageCanvas) cvs);
+Roi roiRect;
+updateRoiRect(tileWidth, tileHeight, surveyorMagnification);
+
+tileTable = new Hashtable();
+tile = new Point(0,0);
+
+if (tgt instanceof TileGrabberThread && tgt != null)
+	tgt.stop();
+tgt = new TileGrabberThread(neededTiles);
+tgt.start();
+
+MouseEvent e1;
+
+rm = new RoiManager();
+RoiManager.instance=rm;
+acquireButton = new Button("Acquire...");
+rm.add(acquireButton);
+rm.pack();
+cvs.setShowAllROIs(true);
+cvs.requestFocus();
+
+acquireButton.addActionListener(new ActionListener() {
+	public void actionPerformed(ActionEvent e) {
+		eng = newMosaicEngine();
+		createMosaicAcqDialog(eng);
+	}
+});

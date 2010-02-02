@@ -1,9 +1,12 @@
 package org.micromanager.image5d;
 
 
-import ij.*;
-import ij.gui.*;
-import ij.plugin.*;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.Prefs;
+import ij.gui.GenericDialog;
+import ij.gui.NewImage;
+import ij.plugin.PlugIn;
 
 /** Creates and displays a new Image5D. As always, code extensively copied from ImageJ code.
  * This time: ij.gui.NewImage.

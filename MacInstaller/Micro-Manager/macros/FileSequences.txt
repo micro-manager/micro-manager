@@ -1,0 +1,42 @@
+//var path="C:\\WINDOWS\\Desktop\\"; // PC Users 
+var path = "/Users/wayne/Desktop/"; // Mac OS X users
+
+macro 'Test Open' {
+    run("New...", "name=Untitled type='8-bit Unsigned' fill=White width=400 height=400 slices=1");
+    n=getNumber("Number of Images",3);
+    for(i=1; i<=n; i++)
+        run("Jpeg...", "path="+path+"test"+i+".jpg");
+    run("Close");
+    for(i=1; i<=n; i++) {
+        run("Open...", "path="+path+"test"+i+".jpg");
+        wait(2000);
+        run("Close");
+    }
+}
+
+macro 'Test Open Using leftPad()' {
+    requires("1.29o");
+    run("New...", "name=Untitled type='8-bit Unsigned' fill=White width=400 height=400 slices=1");
+    n=getNumber("Number of Images",3);
+    for(i=1; i<=n; i++)
+        run("Jpeg...", "path="+path+"test"+leftPad(i,4)+".jpg");
+    run("Close");
+    for(i=1; i<=n; i++) {
+        run("Open...", "path="+path+"test"+leftPad(i,4)+".jpg");
+        wait(2000);
+        run("Close");
+    }
+}
+
+function leftPad(n, width) {
+    s =""+n;
+    while (lengthOf(s)<width)
+        s = "0"+s;
+    return s;
+}
+
+macro 'Test leftPad()' {
+    for(i=0; i<=1200; i+=100)
+        print("file"+leftPad(i, 5)+".tif");
+}
+

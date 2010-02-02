@@ -37,6 +37,7 @@
    #else
       #define MODULE_API __declspec(dllimport)
    #endif
+
 #else
    #define MODULE_API
 #endif
@@ -51,14 +52,17 @@
 // must be incremented
 #define MODULE_INTERFACE_VERSION 4
 
+#ifdef WIN32
 const char* const LIB_NAME_PREFIX = "mmgr_dal_";
+#else
+const char* const LIB_NAME_PREFIX = "libmmgr_dal_";
+#endif
 
 #include "MMDevice.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 // Exported module interface
 ///////////////////////////////////////////////////////////////////////////////
-
 extern "C" {
    MODULE_API MM::Device* CreateDevice(const char* name);
    MODULE_API void DeleteDevice(MM::Device* pDevice);
@@ -84,7 +88,7 @@ typedef bool (*fnGetDeviceName)(unsigned, char*, unsigned);
 typedef bool (*fnGetDeviceDescription)(unsigned, char*, unsigned);
 typedef void (*fnInitializeModuleData)();
 
-// functions fore internal use
+// functions for internal use
 void AddAvailableDeviceName(const char* deviceName, const char* description = "Description N/A");
 
 

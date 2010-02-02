@@ -23,16 +23,15 @@ nodist_libMMCoreJ_wrap_la_SOURCES = MMCoreJ_wrap.cxx
 libMMCoreJ_wrap_la_SOURCES = $(SWIGLIB_SOURCES) \
 	$(top_srcdir)/MMDevice/DeviceUtils.cpp \
 	$(top_srcdir)/MMDevice/ImgBuffer.cpp \
-	$(top_srcdir)/MMDevice/ModuleInterface.cpp \
 	$(top_srcdir)/MMDevice/Property.cpp \
 	$(top_srcdir)/MMCore/CircularBuffer.cpp \
 	$(top_srcdir)/MMCore/Configuration.cpp \
 	$(top_srcdir)/MMCore/CoreCallback.cpp \
 	$(top_srcdir)/MMCore/CoreProperty.cpp \
+	$(top_srcdir)/MMCore/FastLogger.cpp \
 	$(top_srcdir)/MMCore/MMCore.cpp \
 	$(top_srcdir)/MMCore/PluginManager.cpp 
-libMMCoreJ_wrap_la_LIBADD = $(LIBACE) 
-libMMCoreJ_wrap_la_LDFLAGS = -Wl, -module -ldl $(LIBACE) #this only works with java when libace is static
+libMMCoreJ_wrap_la_LDFLAGS = -Wl, -module -ldl $(BOOST_LDFLAGS) #not sure if Boost linking is needed
 
 $(srcdir)/MMCoreJ.jar:  MMCoreJ_wrap.cxx \
 	libMMCoreJ_wrap.la
@@ -48,9 +47,10 @@ macinstall:
 	cp .libs/libMMCoreJ_wrap.so $(top_srcdir)/MacInstaller/Package_contents/libMMCoreJ_wrap$(JAVASO)
 
 install:
-	cp .libs/libMMCoreJ_wrap.so $(DEVICEADAPTERPATH)/libMMCoreJ_wrap$(JAVASO) 
-	test -d $(JARPATH) || mkdir $(JARPATH)
-	cp MMCoreJ.jar $(JARPATH)/MMCoreJ.jar 
+	install -d $(DESTDIR)$(DEVICEADAPTERPATH)
+	install .libs/libMMCoreJ_wrap.so $(DESTDIR)$(DEVICEADAPTERPATH)/libMMCoreJ_wrap$(JAVASO) 
+	install -d $(DESTDIR)$(JARPATH)
+	install MMCoreJ.jar $(DESTDIR)$(JARPATH)/MMCoreJ.jar 
 
 ###IJ-dependent! #todo: split IJ and pure-java code
 

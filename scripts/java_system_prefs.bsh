@@ -1,0 +1,22 @@
+// This code resets all saved registration preferences in MM.
+
+import java.util.prefs.Preferences;
+import org.micromanager.*;
+Preferences systemPrefs = Preferences.systemNodeForPackage(gui.getClass());
+
+print(systemPrefs);
+
+print("\nBefore:");
+print(systemPrefs.getBoolean(RegistrationDlg.REGISTRATION,false));
+print(systemPrefs.getBoolean(RegistrationDlg.REGISTRATION_NEVER,false));
+print(systemPrefs.getInt(RegistrationDlg.REGISTRATION_ATTEMPTS,0));
+
+systemPrefs.putBoolean(RegistrationDlg.REGISTRATION,false);
+systemPrefs.putBoolean(RegistrationDlg.REGISTRATION_NEVER,false);
+systemPrefs.putInt(RegistrationDlg.REGISTRATION_ATTEMPTS,0);
+
+print("\nAfter:");
+print(systemPrefs.getBoolean(RegistrationDlg.REGISTRATION,false));
+print(systemPrefs.getBoolean(RegistrationDlg.REGISTRATION_NEVER,false));
+print(systemPrefs.getInt(RegistrationDlg.REGISTRATION_ATTEMPTS,0));
+

@@ -64,9 +64,10 @@
 #define ERR_DEVICE_CHANGE_NOT_ALLOWED 10024
 #define ERR_SHUTTER_USED             10025
 #define ERR_WHEEL_USED               10026
+#define ERR_NO_CONTROLLER            10027
 
 // MMCore name of serial port
-std::string port_;
+std::string port_ = "";
 
 int clearPort(MM::Device& device, MM::Core& core, const char* port);
 int getResult(MM::Device& device, MM::Core& core, const char* port);
@@ -126,6 +127,7 @@ public:
    int OnID(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnDeviceNumber(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnWheelNumber(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnWheelNrPos(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnWheelHomeTimeout(MM::PropertyBase* pProp, MM::ActionType eAct);
                  
 private:         

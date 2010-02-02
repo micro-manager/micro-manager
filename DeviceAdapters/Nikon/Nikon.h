@@ -39,12 +39,13 @@
 #define ERR_INVALID_MODE             10008
 #define ERR_UNRECOGNIZED_ANSWER      10009
 #define ERR_UNSPECIFIED_ERROR        10010
-#define ERR_COMMAND_ERROR            10201
-#define ERR_PARAMETER_ERROR          10202
-#define ERR_RECEIVE_BUFFER_OVERFLOW  10204
-#define ERR_COMMAND_OVERFLOW         10206
-#define ERR_PROCESSING_INHIBIT       10207
-#define ERR_PROCESSING_STOP_ERROR    10208
+#define ERR_COMMAND_ERROR            10011
+#define ERR_PARAMETER_ERROR          10012
+#define ERR_RECEIVE_BUFFER_OVERFLOW  10013
+#define ERR_COMMAND_OVERFLOW         10014
+#define ERR_PROCESSING_INHIBIT       10015
+#define ERR_PROCESSING_STOP_ERROR    10016
+#define ERR_ND_OUTOFBOUNDS           10017
 
 #define ERR_OFFSET 10100
 #define ERR_TIRFSHUTTER_OFFSET 10200
@@ -165,9 +166,13 @@ public:
    int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnVersion(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnND(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    int SetShutterPosition(bool state);
+   int GetShutterPosition(bool& state);
+   int SetND(int nd);
+   int GetND(int& nd);
    int GetVersion();
 
    // Time it takes after issuing Close command to close the shutter         

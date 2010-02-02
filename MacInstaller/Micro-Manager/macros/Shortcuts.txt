@@ -1,0 +1,26 @@
+// These macro are automatically installed in the editor's "Macros" menu
+// The keyboard shortcuts only work when an image window or the ImageJ
+// window has focus. They continue to work when this window is closed.
+
+  print("\nRun these macros using the commands in the 'Macros' "
+    +"\nmenu or by pressing F9, F10, F11, 'y' or 'Y'.");
+
+  macro 'Invert [f9]' {
+      run("Invert");
+  }
+
+  macro 'Find Edges [f10]' {
+      run("Find Edges");
+  }
+
+  macro 'Smooth [f11]' {
+       run("Smooth");
+  }
+
+  macro 'Threshold [y]' {
+       run("Threshold");
+  }
+
+  macro 'Add noise [Y]' {
+      run("Add Noise");
+  }

@@ -1,0 +1,922 @@
+// This is a collection of macros to import and process image series in the generic (raw) file format of the 
+// Perkin Elmer Ultraview RS Software.
+// The files are RAW files with a 6 byte offset and little-endian byte order.
+// Timo Zimmermann, Advanced Light Microscopy Facility, EMBL Heidelberg, Germany, tzimmerm@embl.de
+// 12.07.04
+// Make Timelapse 1 channel:
+// This Makro loads the raw data files of a 1 channel 2D time-lapse into one stack.
+//
+// Make Timelapse 2 channel:
+// This Makro loads the raw data files of a 2 channel 2D time-lapse into one stack for each channel
+//
+// Make projections 1 channel:
+// This Makro loads the raw data files of a 1 channel 3D time-lapse and z-projects it into one stack.
+// The 3D stacks are loaded sequentially which enables the processing of large series even with small RAM.
+//
+// Make projections 2 channel:
+// This Makro loads the raw data files of a 2 channel 3D time-lapse and z-projects it into one stack for each channel.
+// The 3D stacks are loaded sequentially which enables the processing of large series even with small RAM.
+//
+//19.10.04 Kota: 
+//	batch 4D sequence converter to Tiff macro.
+//	new functions: 
+//	resolve time points and slice from the file name
+//	open specific time points and slice.
+//24 & 25.10.04 Kota: 
+//	Window supressing mode, half size and 8bit options
+//26.10.04 Kota:
+//	A new "file dimension analyzer" for 2D and 3D: 
+//	'Make timeplase 1 channels" and 'Make timelapse 2 channels' modified.
+//	'Make Projections 1 channels" and 'Make Projections 2 channels' modified.
+// 04.11.04 Stefan Terjung
+// Depth Color Coded Projections added by Stefan Terjung, Advanced Light Microscopy Facility, EMBL Heidelberg, 
+// Germany, stefan.terjung@embl.de
+//
+// Make color coded projections 1 channel:
+// This Makro loads the raw data files of a 1 channel 3D time-lapse and z-projects it depth color coded into one RGBstack.
+// The 3D stacks are loaded sequentially which enables the processing of large series even with small RAM.
+//
+// Make color coded projections 2 channel:
+// This Makro loads the raw data files of a 2 channel 3D time-lapse and z-projects it depth color coded into one RGBstack 
+// for each channel.
+// The 3D stacks are loaded sequentially which enables the processing of large series even with small RAM.
+//
+// 4.11.04 Stefan:
+// corrected some typing errors and minor bugs (e.g. in make timelapse 1/2 channel)
+
+
+//******* Global Variables********
+
+var RawFileNamePrefix="";		//Kota
+var NonImageNumber=0;		//Kota
+var timepoint_max=0;		//kota
+var timepoint_min=1000;		//kota
+var zslice_max=0;		//kota
+var zslice_min=100;		//kota
+
+//**********************************
+
+//041027 kota modified 
+macro 'Make timelapse 1 channel' {
+
+	requires("1.33n");
+	//2DtimelapseCore(1);
+	timelapse2DCore(1); //Stefan 041104
+
+}
+
+//041027 kota modified 
+macro 'Make timelapse 2 channel' {
+
+	requires("1.33n");
+	//2DtimelapseCore(1);
+	timelapse2DCore(2); //Stefan 041104
+}
+function timelapse2DCore(channels) { //Stefan 041104
+	dir = getDirectory("Choose a Directory ");
+	list = getFileList(dir);  
+	startpoint=3;
+	timepoints=count_timepoints(list,startpoint); 
+	print(timepoints);
+
+	load_image_dimensions_xyt(list,startpoint);
+	x_size=getPixel(1,0);
+	y_size=getPixel(2,0);
+	print(x_size);	print(y_size);
+	close();
+	imp_para=" type=16-bit fill=Black width="+x_size+" height="+y_size+" slices=1"; //Stefan 041104
+
+	imageIDarray=newArray(2);	//for storing projection stack imageID
+	stacknamearray=newArray(2);	//for storing projection stack name
+	for (i=0;i<channels;i++) {
+		chs=i+1;
+		stacknamearray[i]="time_lapse_"+chs;
+		parameter_string="name="+stacknamearray[i]+imp_para;
+		run("New...",parameter_string);
+		imageIDarray[i]=getImageID();
+	}
+
+	setBatchMode(true);	
+	for (i=3; i<timepoints+3; i+=channels) {
+		for (j=0;j<channels;j++) { //Stefan 041104
+			Projection2D_core(dir,list,i+j,x_size,y_size,imageIDarray[j]);
+
+		}		
+	}
+	setBatchMode(false);	
+
+	for (i=0;i<channels;i++) {
+		selectImage(imageIDarray[i]);
+		run("Delete Slice");
+	}
+}
+
+//041027 Kota
+function Projection2D_core(dir,list,timepoint,x_size,y_size,imageID) {
+		load_image(dir,list,timepoint,x_size,y_size); 
+		run("Select All");
+		run("Copy");
+		close();
+		selectImage(imageID);
+		run("Paste");
+		run("Add Slice");
+}
+
+//Kota Modified 041027
+//Stefan modified 041102
+macro 'Make Projections 1 channel' {
+	requires("1.33n");
+	Project3DPE(1,0);
+}
+
+//Kota Modified 041027
+//Stefan modified 041102
+macro 'Make Projections 2 channels' {
+
+	requires("1.33n");
+	Project3DPE(2,0);
+}
+
+//Stefan modified 041102
+macro 'Make color coded Projections 1 channel' {
+
+	requires("1.33n");
+	Project3DPE(1,1);
+}
+//Stefan modified 041102
+macro 'Make color coded Projections 2 channels' {
+
+	requires("1.33n");
+	Project3DPE(2,1);
+}
+
+
+//Kota 041027
+//Stefan modified 041102
+function Project3DPE(channels,depth_pro) {
+	dir = getDirectory("Choose a Directory ");
+	list = getFileList(dir);  
+
+	missingfileflag=timepoint3D_analyzer(list); 
+	timepoints=timepoint_max-timepoint_min+1;
+	countSlices=zslice_max-zslice_min+1;
+	logmessage="TimePoints "+timepoints;	print(logmessage);
+	logmessage="Slices "+countSlices; print(logmessage);
+
+
+	if (missingfileflag==0) {
+
+		load_image_xyzt(dir,timepoint_min,zslice_min);
+		x_size=getPixel(1,0); y_size=getPixel(2,0);
+		logmessage="width "+x_size+" height "+y_size; print(logmessage);
+		close();
+
+		imp_para=" type=16-bit fill=Black width="+x_size+" height="+y_size+" slices=1";
+		proj_para= "start=1 stop="+countSlices+" projection='Max Intensity'";
+
+//Stefan 041102
+		if (depth_pro==1) {
+			slices=countSlices;
+			subslices=floor(slices/3);
+			if ((3*subslices)<(slices-1)) {
+				s2=subslices-1;
+				s3=(2*subslices)-1;
+				print("subslices: "+subslices+" s2: "+s2+" s3: "+s3);
+			}
+			else if((3*subslices)<slices) {
+				s2=subslices-1;
+				s3=(2*subslices);
+				print("subslices: "+subslices+" s2: "+s2+" s3: "+s3);	
+			}
+			else {
+				subslices--;
+				s2=subslices;
+				s3=(2*subslices);
+				print("subslices: "+subslices+" s2: "+s2+" s3: "+s3);		
+			}
+			proj_para1= "start=0 stop="+subslices+" projection='Max Intensity'";
+			proj_para2= "start="+s2+" stop="+(s2+subslices)+" projection='Max Intensity'";
+			proj_para3=  "start="+s3+" stop="+(s3+subslices)+" projection='Max Intensity'"; 
+			imageIDarray=newArray(6);	//for storing imageID
+			stacknamearray=newArray(6);	//for storing stackname
+			
+			for (i=0;i<channels;i++) {
+				chs=i+1;
+				k=(i*3);
+				stacknamearray[k]="Projections_r_channel"+chs;
+				r_proj=stacknamearray[k];
+				stacknamearray[k+1]="Projections_g_channel"+chs;
+				g_proj=stacknamearray[k+1];				
+				stacknamearray[k+2]="Projections_b_channel"+chs;		
+				b_proj=stacknamearray[k+2];				
+				parameter_string="name="+stacknamearray[k]+imp_para;
+				run("New...",parameter_string);
+				imageIDarray[k]=getImageID();
+				parameter_string="name="+stacknamearray[k+1]+imp_para;
+				run("New...",parameter_string);
+				imageIDarray[k+1]=getImageID();
+				parameter_string="name="+stacknamearray[k+2]+imp_para;
+				run("New...",parameter_string);
+				imageIDarray[k+2]=getImageID();
+			}
+			setBatchMode(true);	//041024
+			for (i=timepoint_min; i<timepoint_max+1; i+=channels) {
+				for (j=0;j<channels;j++) {
+					k=(j*3);
+					loadstackNEW(dir,i+j,x_size,y_size);
+					tempstackID=getImageID();
+					run("Duplicate...", "title=tempstack duplicate");
+					Projection3D_Core(proj_para1,"tempstack",imageIDarray[k]);
+					selectImage("tempstack");
+					close();
+					selectImage(tempstackID);
+					run("Duplicate...", "title=tempstack duplicate");
+					Projection3D_Core(proj_para2,"tempstack",imageIDarray[k+1]);
+					selectImage("tempstack");
+					close();
+					selectImage(tempstackID);
+					run("Duplicate...", "title=tempstack duplicate");
+					Projection3D_Core(proj_para3,"tempstack",imageIDarray[k+2]);
+					selectImage(tempstackID);
+					close();
+					selectImage("tempstack");
+					close();
+				}	
+			  }
+			setBatchMode(false); 
+			for (i=0;i<channels;i++) {
+				k=(i*3);
+				selectImage(imageIDarray[k]);
+				run("Delete Slice");
+				run("8-bit");
+				imageIDarray[k]=getImageID();
+				selectImage(imageIDarray[k+1]);
+				run("Delete Slice");
+				run("8-bit");
+				imageIDarray[k+1]=getImageID();
+				selectImage(imageIDarray[k+2]);
+				run("Delete Slice");
+				run("8-bit");
+				imageIDarray[k+2]=getImageID();
+
+			}
+				run("RGB Merge...", "red=Projections_r_channel1 green=Projections_g_channel1 blue=Projections_b_channel1 keep"); 
+				run("Rename...","title=chn1_depth-projection");
+				if(channels==2){
+					run("RGB Merge...", "red=Projections_r_channel2 green=Projections_g_channel2 blue=Projections_b_channel2 keep"); 
+					run("Rename...","title=chn2_depth-projection");
+				}
+			print("Processing finished.");
+		}
+		else {
+			imageIDarray=newArray(2);	//for storing imageID
+			stacknamearray=newArray(2);	//for storing stackname
+		
+
+			for (i=0;i<channels;i++) {
+				chs=i+1;
+				stacknamearray[i]="Projections_channel"+chs;
+				parameter_string="name="+stacknamearray[i]+imp_para;
+				run("New...",parameter_string);
+				imageIDarray[i]=getImageID();
+			}
+
+		setBatchMode(true);	//041024
+		for (i=timepoint_min; i<timepoint_max+1; i+=channels) {
+			for (j=0;j<channels;j++) {
+				loadstackNEW(dir,i+j,x_size,y_size);
+				tempstackID=getImageID();
+				Projection3D_Core(proj_para,tempstackID,imageIDarray[j]);
+				selectImage(tempstackID);
+				close();
+
+			}	
+		  }
+		for (i=0;i<channels;i++) {
+			selectImage(imageIDarray[i]);
+			run("Delete Slice");
+		}
+		setBatchMode(false); 
+		print("Processing finished.");
+		}
+	} else {
+		print("Processing aborted: missing files");
+	}
+}
+
+//041027 Kota Stefan 041102 modified
+//function Projection3D_Core(dir,timepoint,x_size,y_size,proj_para,mainstackID) {
+function Projection3D_Core(proj_para,tempstackID,mainstackID) {
+
+//		loadstackNEW(dir,timepoint,x_size,y_size); //
+//		tempstackID=getImageID(); //
+		run("Z Project...",proj_para);
+		run("Select All");
+		run("Copy");
+		close();
+		selectImage(mainstackID);
+		run("Paste");
+		run("Add Slice");
+		run("Paste");	//dummy
+//		selectImage(tempstackID); //
+//		close(); //
+}
+
+
+
+
+ function count_timepoints(list,startpoint) {
+      count = 1;
+      //list = getFileList(dir);
+      for (t=startpoint; t<list.length; t++) {
+        str = toHex(t);
+        str = "."+str;
+        print(str);
+        count_old = count;
+        for (i=0; i<list.length; i++) {
+
+           if (endsWith(list[i], str)){
+              i=list.length;
+              count++;
+              print(count);
+            }          
+        }
+      if (count != count_old+1)
+        t=list.length;
+      }
+        count2=count-1;
+        return count2;
+  }
+
+  function count_slices(list) {
+     //list = getFileList(dir);
+      nr=list.length;
+      for (i=0; i<list.length; i++) {
+
+           if (endsWith(list[i],  ".csv")){
+              nr = nr-1;
+              print(list[i]);
+            }           
+            if (endsWith(list[i],  ".tim")){
+              nr = nr-1;
+              print(list[i]);
+            }           
+             if (endsWith(list[i],  ".nam")){
+              nr = nr-1;
+              print(list[i]);
+            }           
+             if (endsWith(list[i],  ".zpo")){
+              nr = nr-1;
+              print(list[i]);
+            }           
+             if (endsWith(list[i],  ".HTM")){
+              nr = nr-1;
+              print(list[i]);
+            }           
+        }
+      slcs = nr/timepoints; 
+      return slcs;
+  }
+  
+  function stringbuilder(num) {
+  str="0123456789";
+  n1=floor(num/100);
+  n2=floor((num-(n1*100))/10);
+  n3=num-(n1*100)-(n2*10);
+  str1=substring(str,n1,n1+1);
+  str2=substring(str,n2,n2+1);
+  str3=substring(str,n3,n3+1);
+  n_str=str1+str2+str3;
+  return n_str;
+  }
+
+  function loadstack(dir,list,num,x_size,y_size) {
+      //list = getFileList(dir);
+     time_string=toHex(num);
+     time_string= "."+time_string;
+     stackname=stringbuilder(num);
+     x_string=stringbuilder(x_size);
+     y_string=stringbuilder(y_size);
+     parameter_string="name="+stackname+" type=16-bit fill=Black width="+x_string+" height="+y_string+" slices=1";
+     run("New...",parameter_string);
+
+     for (j=0; j<slices; j++) {
+
+         slice_string=stringbuilder(j);
+         for (i=0; i<list.length; i++) {
+
+             if (endsWith(list[i],  slice_string+time_string)){
+                 parameter_string=" image='16-bit Signed' width="+x_string+" height="+y_string+" offset=6 number=1 gap=0  little-endian ";
+                 parameter_string='open='+dir+list[i]+parameter_string;
+                 //print(parameter_string);
+                 run("Raw...", parameter_string);
+             } 
+          }          
+          run("Select All");
+          run("Copy");
+          close();
+          selectWindow(stackname);
+          run("Paste");
+          run("Add Slice");
+     }
+    run("Delete Slice");
+    //run("Convert Images to Stack");
+  }
+
+//Kota 041027
+function loadstackNEW(dir,timepoint,x_size,y_size) {
+	stackname="s"+timepoint;
+	imp_para=" image='16-bit Signed' width="+x_size+" height="+y_size+" offset=6 number=1 gap=0  little-endian ";
+	parameter_string="name="+stackname+" type=16-bit fill=Black width="+x_size+" height="+y_size+" slices=1";
+	run("New...",parameter_string);
+	projID=getImageID();
+	
+	for (i=zslice_min; i<zslice_max+1; i++) {
+		filename=RAWfilenamegenerator(timepoint,i);
+		parameter_string='open='+dir+filename+imp_para;
+		run("Raw...", parameter_string);
+		run("Select All");
+		run("Copy");
+		close();
+		selectImage(projID);
+		run("Paste");
+		run("Add Slice");
+	}
+	run("Delete Slice");
+	//run("Convert Images to Stack");
+}
+
+function loadstack_rgb(dir,list,num,x_size,y_size) {
+      //list = getFileList(dir);
+     time_string=toHex(num);
+     time_string= "."+time_string;
+     stackname_r=stringbuilder(num)+"r";
+     stackname_g=stringbuilder(num)+"g";
+     stackname_b=stringbuilder(num)+"b";
+     x_string=stringbuilder(x_size);
+     y_string=stringbuilder(y_size);
+
+    
+
+     parameter_string="name="+stackname_r+" type=16-bit fill=Black width="+x_string+" height="+y_string+" slices=1";
+     run("New...",parameter_string);
+
+     parameter_string="name="+stackname_g+" type=16-bit fill=Black width="+x_string+" height="+y_string+" slices=1";
+     run("New...",parameter_string);
+
+     parameter_string="name="+stackname_b+" type=16-bit fill=Black width="+x_string+" height="+y_string+" slices=1";
+     run("New...",parameter_string);
+
+     for (j=0; j<slices; j++) {
+
+         slice_string=stringbuilder(j);
+         for (i=0; i<list.length; i++) {
+
+             if (endsWith(list[i],  slice_string+time_string)){
+                 parameter_string=" image='16-bit Signed' width="+x_string+" height="+y_string+" offset=6 number=1 gap=0  little-endian ";
+                 parameter_string='open='+dir+list[i]+parameter_string;
+                 print(parameter_string);
+                 run("Raw...", parameter_string);
+             } 
+          }          
+          run("Select All");
+          run("Copy");
+          run("Close");
+          if(j<s2) {
+	selectWindow(stackname_r);
+          	run("Paste");
+          	run("Add Slice");
+	}
+          else if(j<s3) {
+	selectWindow(stackname_g);
+          	run("Paste");
+          	run("Add Slice");
+	}
+          else {
+	selectWindow(stackname_b);
+          	run("Paste");
+          	run("Add Slice");
+	}
+
+     }
+    run("Delete Slice");
+    //run("Convert Images to Stack");
+  }
+
+
+  function load_image_dimensions_xyzt(list, num) {
+     time_string=toHex(num);
+     time_string= "."+time_string; 
+     slice_string=stringbuilder(0);
+     for (i=0; i<list.length; i++) {
+
+         if (endsWith(list[i], slice_string+ time_string)){
+              parameter_string=" image='16-bit Unsigned' width=6 height=1 offset=0 number=1 gap=0  little-endian ";
+              parameter_string='open='+dir+list[i]+parameter_string;
+              print(parameter_string);
+              run("Raw...", parameter_string);
+         } 
+     }         
+  }
+
+  function load_image_dimensions_xyt(list, num) {
+     time_string=toHex(num);
+     time_string= "."+time_string; 
+     
+     for (i=0; i<list.length; i++) {
+
+         if (endsWith(list[i],  time_string)){
+              parameter_string=" image='16-bit Unsigned' width=6 height=1 offset=0 number=1 gap=0  little-endian ";
+              parameter_string='open='+dir+list[i]+parameter_string;
+              print(parameter_string);
+              run("Raw...", parameter_string);
+         } 
+     }         
+  }
+
+ function load_image(dir,list,num,x_size,y_size) {
+     time_string=toHex(num);
+     time_string= "."+time_string; 
+     
+     for (i=0; i<list.length; i++) {
+
+         if (endsWith(list[i],  time_string)){
+              parameter_string=" image='16-bit Signed' width="+x_size+" height="+y_size+" offset=0 number=1 gap=0  little-endian ";
+              parameter_string='open='+dir+list[i]+parameter_string;
+              print(parameter_string);
+              run("Raw...", parameter_string);
+         } 
+     }         
+  }
+
+//********************* Kota ************
+macro "-"{}
+//convert PerkinElmer 4D files to tiff series 
+//Kota 041018-19
+
+macro 'Batch Convert 3D 1 channel (among 2 channels) to Tiff' {
+	BatchConv_3D_toTIFF(1,0,0);
+}
+
+macro 'Batch Convert 3D 2 channels to Tiff' {
+	BatchConv_3D_toTIFF(2,0,0);
+}
+
+macro 'Batch Convert 3D 2 channels to 8bit Tiff' {
+	BatchConv_3D_toTIFF(2,1,0);
+}
+
+macro 'Batch Convert 3D 2 channels to half resized Tiff' {
+	BatchConv_3D_toTIFF(2,0,1);
+}
+
+macro 'Batch Convert 3D 2 channels to half resized 8bit Tiff' {
+	BatchConv_3D_toTIFF(2,1,1);
+}
+
+
+//must test a possible problem when there is only one channel
+function BatchConv_3D_toTIFF(channels,eightbit,half) {
+
+	requires("1.33n");
+	dir = getDirectory("Choose a Directory ");
+	newfolderCH1=getDirectory("select a folder to save CH1");
+	if (channels==2) {
+		newfolderCH2=getDirectory("select a folder to save CH2");
+	}
+	print("getting the file list. Wait....");
+	list = getFileList(dir);  
+	missingfileflag=timepoint3D_analyzer(list); 
+	timepoints=timepoint_max-timepoint_min+1;
+	countSlices=zslice_max-zslice_min+1;
+	logmessage="TimePoints "+timepoints;	print(logmessage);
+	logmessage="Slices "+countSlices; print(logmessage);
+
+	if (eightbit) {
+		gray_min=getNumber("minimum gray value",0);
+		gray_max=getNumber("maximum gray value",500);
+	}
+	//load_image_xyzt(dir,timepoints,0);
+	load_image_xyzt(dir,timepoint_min,0); //Stefan 041104
+	x_size=getPixel(1,0); y_size=getPixel(2,0);
+	logmessage="width "+x_size+" height "+y_size;
+	print(logmessage);
+	close();
+
+	setBatchMode(true);
+
+	imp_parameter=" image='16-bit Signed' width="+x_size+" height="+y_size+" offset=6 number=1 gap=0  little-endian ";
+	resize_parameter="width="+(x_size/2)+" height="+(y_size/2)+" constrain interpolate";
+
+  	for (i=timepoint_min; i<timepoint_max+1; i+=channels) {
+		for (j=0; j<countSlices; j++) {
+			for (k=0;k<channels;k+=1) {
+				target_filename=RAWfilenamegenerator(i+k,j);
+				channelNum=k+1;
+				channelName="ch"+channelNum;
+				parameter_string='open='+dir+target_filename+imp_parameter;
+				run("Raw...", parameter_string);
+				newfilename=Filenamegenerator(floor(i/channels),j+1,"s",channelName);
+				if (eightbit) {
+					setMinAndMax(gray_min, gray_max);					
+					run("8-bit");
+					newfilename="8b"+newfilename;
+				}
+				if (half) {
+					run("Size...", resize_parameter);
+					newfilename="h"+newfilename;
+				}
+				if (k==0) {
+					op="save="+newfolderCH1+newfilename;
+				} else {
+					op="save="+newfolderCH2+newfilename;
+				}
+				
+				run("Tiff...", op);
+				close();
+			}
+		} 
+         
+		showProgress(i/timepoint_max);
+	} 
+	setBatchMode(false); 
+	print("Processing finished.");
+}
+
+
+//041019 Kota: for generating file name of tiff sequence, according to the Perkin Elmer convention. 
+function Filenamegenerator(timepoint,zslice,prefix01,prefix02) {
+	filestring=prefix01+"_T"+leftPad(timepoint,4)+"_"+prefix02+"_Z"+leftPad(zslice,4)+".tif";
+	return filestring;
+}
+
+function RAWfilenamegenerator(timepoint,slices) {
+	filestring=RawFileNamePrefix+"_"+leftPad(slices,3)+"."+toHex(timepoint);
+	return filestring;
+}
+
+//041026 Kota direct file name method
+function load_image_xyzt(dir,timepoint,zslice) {
+	time_hex=toHex(timepoint);
+	imp_param=" image='16-bit Unsigned' width=6 height=1 offset=0 number=1 gap=0  little-endian ";
+              	parameter_string="open="+dir+RAWfilenamegenerator(timepoint,zslice)+imp_param;
+	run("Raw...", parameter_string);
+         } 
+     }         
+  }
+
+//digits padding
+function leftPad(n, width) {
+    s =""+n;
+    while (lengthOf(s)<width)
+        s = "0"+s;
+    return s;
+}
+
+//041025 Kota hexadecimal string to decimal number
+function hexs2dec(hexs) {
+	dec=0;
+	for(i=0;i<lengthOf(hexs);i++)	{
+		s_unic=charCodeAt(hexs, i);
+		if (s_unic<58) {
+			digit=s_unic-48;//0=unicode 48
+		} else	{
+			digit=s_unic-96+9;//a=unicode 97
+		}
+		dec+=pow(2,4*(lengthOf(hexs)-i-1))*digit;
+	}
+	return dec;
+}
+
+//041019 Kota: modified "count_slices". "timepoints" stated.
+function count_slices_kota(list,timepoints) {
+	slcs=count_etcfiles_kota(list)/timepoints; 
+      	return slcs;
+  } 
+
+//041026
+function timepoint3D_analyzer(list)	{
+
+	timepoint_max=0;
+	timepoint_min=1000;
+	zslice_max=0;
+	zslice_min=100;
+
+  	for (i=0; i<list.length; i++) {
+		filename=list[i];
+		if (determine_etcfiles_kota(filename)==0) {
+			RawFileNamePrefix=returnPerkEl_Prefix1(filename);	//Global var
+			i=list.length;
+		}
+	}
+	print("File Prefix "+RawFileNamePrefix);
+
+	countNonImage=0;
+  	for (i=0; i<list.length; i++) {
+		filename=list[i];
+		if (determine_etcfiles_kota(filename)==0) {
+			timepointHEX=returnPerkEl_Thex(filename);
+			currentTimePoint=hexs2dec(timepointHEX);
+			currentSliceNum=returnPerkEl_SliceNum(filename);
+
+			timepoint_max=maxOf(timepoint_max,currentTimePoint);
+			timepoint_min=minOf(timepoint_min,currentTimePoint);
+			zslice_max=maxOf(zslice_max,currentSliceNum);
+			zslice_min=minOf(zslice_min,currentSliceNum);			
+
+		}
+		else	{
+			countNonImage++;
+		}
+	}
+
+	print("Time Point Min " +timepoint_min);
+	print("Time Point Max " +timepoint_max);
+	print("Z min "+zslice_min);
+	print("Z max " +zslice_max);
+	print("Non Image Files "+countNonImage);
+	NonImageNumber=countNonImage;
+
+	missingflag=0; 
+	missing=list.length-countNonImage-(zslice_max-zslice_min+1)*(timepoint_max-timepoint_min+1);
+	if (missing==0)	{
+		print ((zslice_max-zslice_min+1)*(timepoint_max-timepoint_min+1)+" files.\r No file is missing.");
+	} else	{
+		print (missing+" file(s) might be missing.\rCheck the sequence.");
+	}
+
+	return missingflag;
+}
+
+//041026 still not tested returnPerkEl_Prefix1(filename) might not worlk
+function timepoint2D_analyzer(list)	{
+
+	timepoint_max=0;
+	timepoint_min=1000;
+  	for (i=0; i<list.length; i++) {
+		filename=list[i];
+		if (determine_etcfiles_kota(filename)==0) {
+			RawFileNamePrefix=returnPerkEl_Prefix1(filename);	//Global var
+			i=list.length;
+		}
+	}
+	print("File Prefix "+RawFileNamePrefix);
+
+	countNonImage=0;
+  	for (i=0; i<list.length; i++) {
+		filename=list[i];
+		if (determine_etcfiles_kota(filename)==0) {
+			timepointHEX=returnPerkEl_Thex(filename);
+			currentTimePoint=hexs2dec(timepointHEX);
+			timepoint_max=maxOf(timepoint_max,currentTimePoint);
+			timepoint_min=minOf(timepoint_min,currentTimePoint);
+		}
+		else	{
+			countNonImage++;
+		}
+	}
+
+	print("Time Point Min " +timepoint_min);
+	print("Time Point Max " +timepoint_max);
+	print("Non Image Files "+countNonImage);
+	NonImageNumber=countNonImage;
+
+	missingflag=0; 
+	missing=list.length-countNonImage-(timepoint_max-timepoint_min+1);
+	if (missing==0)	{
+		print ((timepoint_max-timepoint_min+1)+"image files.\r No file is missing.");
+	} else	{
+		print (missing+" file(s) might be missing.\rCheck the sequence.");
+	}
+
+	return missingflag;
+}
+
+//041025  Kota: count the number of non-image file
+function count_etcfiles_kota(list) {
+	//list = getFileList(dir);
+	//nr=list.length;
+	count=0;
+	for (i=0; i<list.length; i++) {
+		filename=list[i];
+		count=count+determine_etcfiles_kota(filename);
+	}
+ 	return count;
+ }
+
+//041025  Kota: to check if the current file name is non-image file
+function determine_etcfiles_kota(filename) {
+	count=0;
+	count+=endsWith(filename,  ".csv");
+	count+=endsWith(filename,  ".tim");
+	count+=endsWith(filename,  ".nam");
+	count+=endsWith(filename,  ".zpo");
+	count+=endsWith(filename,  ".HTM");
+ 	return count;
+ }
+
+//041019 Kota: recover the prefix from file name
+function returnPerkEl_Prefix1(fullfilename) {
+	substr1="_";	
+	substr2=".";
+	print(fullfilename);
+	UndScoreindex=indexOf(fullfilename,substr1);
+	Dotindex=indexOf(fullfilename,substr2);	
+	pref1start=0;
+	pref1end=UndScoreindex;
+	//print(UndScoreindex);
+	//print(Dotindex);
+	pref1=substring(fullfilename,pref1start,pref1end);
+	return pref1;
+}
+
+//041019 Kota: recover the slice number from RAW file name
+function returnPerkEl_SliceNum(fullfilename) {
+	substr1="_";	
+	substr2=".";
+	UndScoreindex=indexOf(fullfilename,substr1);
+	Dotindex=indexOf(fullfilename,substr2);	
+	pref1start=UndScoreindex+1;
+	pref1end=Dotindex;
+//	print(Zindex);
+//	print(Tindex);
+	pref1=substring(fullfilename,pref1start,pref1end);
+	return pref1;
+}
+
+//041019 Kota: recover frame number from RAW file name 
+function returnPerkEl_Thex(fullfilename) {
+	substr1="_";	
+	substr2=".";
+	UndScoreindex=indexOf(fullfilename,substr1);
+	Dotindex=indexOf(fullfilename,substr2);
+	pref1start=Dotindex+1;
+	pref1end=lengthOf(fullfilename);
+//	print(Zindex);
+//	print(Tindex);
+	pref1=substring(fullfilename,pref1start,pref1end);
+	return pref1;
+}
+
+macro '-' {}
+
+macro 'Resume Windows' {
+	setBatchMode(false); 
+}
+
+macro '-' {}
+
+//*********tests
+
+macro 'test check file list dimensions' {
+	requires("1.33n");
+	dir = getDirectory("Choose a Directory ");
+	list = getFileList(dir);
+	timepoint3D_analyzer(list);
+}
+
+macro 'test load stack' {
+	requires("1.33n");
+	dir = getDirectory("Choose a Directory ");
+	list = getFileList(dir);
+	timepoint3D_analyzer(list);
+
+	load_image_xyzt(dir,timepoint_min,zslice_min);
+	x_size=getPixel(1,0); y_size=getPixel(2,0);
+	logmessage="width "+x_size+" height "+y_size; print(logmessage);
+	close();
+
+	loadstackNEW(dir,timepoint_min,x_size,y_size);
+}
+
+// not working still
+macro 'test get channel info1' {
+	requires("1.33n");
+	channels=2;
+	dir = getDirectory("Choose a Directory ");
+	list = getFileList(dir);
+	for (i=0;i<list.length;i++) {
+		filename=list[i];
+		if (endsWith(filename,"tim")) {
+			op="open="+dir+filename;
+			run("Text File... ", op);
+			seqinfo=getInfo();
+			indA=indexOf(seqinfo,"A");
+			indB=indexOf(seqinfo,"B");
+			//indC=indexOf(seqinfo,"C");
+			if (indB==-1) chaannels=1;
+			close();
+			i=list.length;
+		}
+	}
+	print("channel(s):"+channels)
+}
+
+macro 'test etc file check' {
+	requires("1.33n");
+	dir = getDirectory("Choose a Directory ");
+	list = getFileList(dir);
+	n=count_etcfiles_kota(list);
+	print(n);
+}
+

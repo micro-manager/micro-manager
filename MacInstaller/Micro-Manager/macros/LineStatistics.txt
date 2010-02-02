@@ -1,0 +1,14 @@
+   macro "Analyze Line" {
+      profile = getProfile();
+      n = profile.length;
+      sum=0; sum2=0;
+      for (i=0; i<n; i++) {
+          value = profile[i];
+          sum += value;
+          sum2 += value*value;
+     }
+      mean = sum/n;
+      stdDev = (n*sum2-sum*sum)/n;
+      stdDev = sqrt(stdDev/(n-1.0));
+      print("mean="+mean + ", stddev=" + stdDev);
+  }

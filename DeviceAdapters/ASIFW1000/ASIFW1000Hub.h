@@ -76,6 +76,7 @@ public:
    int GetCurrentWheel(MM::Device& device, MM::Core& core, int& wheelNr);
    int GetNumberOfPositions(MM::Device& device, MM::Core& core, int wheelNr, int& nrPos);
    int FilterWheelBusy(MM::Device& device, MM::Core& core, bool& busy);
+   bool IsConnected();
 
 private:
    int ExecuteCommand(MM::Device& device, MM::Core& core, const char* command);

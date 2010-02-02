@@ -1,0 +1,100 @@
+requires("1.34m");
+
+isRow=true;
+
+concArray = newArray(" M", " mM", " 然");
+volArray = newArray (" l", " ml", " 痞");
+Dialog.create("Conculator");
+Dialog.addString("Solution:", "name");
+Dialog.addNumber("Stock concentration:",20);
+Dialog.addChoice("", concArray," mM");
+Dialog.addMessage("");
+Dialog.addNumber("Final concentration :", 2);
+Dialog.addChoice("", concArray," 然");
+Dialog.addMessage("");
+Dialog.addNumber("Volume required :", 25);
+Dialog.addChoice("", volArray," ml");
+Dialog.addMessage("");
+Dialog.addNumber("Stock volume:", 0);
+Dialog.addChoice("", volArray," 痞");
+Dialog.addCheckbox("Results as row", isRow);
+
+Dialog.show();
+name = Dialog.getString();
+
+stockConc=Dialog.getNumber();
+stockConcUnits = Dialog.getChoice();
+
+finalConc= Dialog.getNumber();
+finalConcUnits = Dialog.getChoice();
+
+finalVol= Dialog.getNumber();
+finalVolUnits = Dialog.getChoice();
+
+stockVol= Dialog.getNumber();
+stockVolUnits = Dialog.getChoice();
+isRow = Dialog.getCheckbox();
+
+stockVolPref = "";
+finalVolPref = "";
+
+stockConcScale=1;
+stockVolScale=1;
+finalConcScale = 1;
+finalVolScale=1;
+
+if (stockVolUnits==" ml")
+	stockVolScale= 1000;
+if (stockVolUnits==" 痞")
+	stockVolScale= 1000000;
+
+if (stockConcUnits==" mM")
+	stockConcScale= 1000;
+if (stockConcUnits==" 然")
+	stockConcScale= 1000000;
+
+if (finalVolUnits==" ml")
+	finalVolScale= 1000;
+if (finalVolUnits==" 痞")
+	finalVolScale= 1000000;
+
+if (finalConcUnits==" mM")
+	finalConcScale= 1000;
+if (finalConcUnits==" 然")
+	finalConcScale= 1000000;
+
+if (stockVol==0)
+	{
+	stockVol=((finalVol/finalVolScale)*(finalConc/finalConcScale))/(stockConc/stockConcScale);
+	stockVol=stockVol*stockVolScale;	
+	stockVolPref = "** ";
+	}	
+
+if (finalVol==0)
+	{
+	finalVol=((stockVol/stockVolScale)*(stockConc/stockConcScale))/(finalConc/finalConcScale);
+	finalVol=finalVol*finalVolScale;	
+	finalVolPref = "** ";
+	}
+
+stockVolString = stockVolPref +"StockVol: "+d2s(stockVol,2)+stockVolUnits+stockVolPref ;
+stockConcString = "StockConc: "+d2s(stockConc,2)+ stockConcUnits;
+finalVolString = finalVolPref +"FinalVol: "+d2s(finalVol,2)+finalVolUnits+finalVolPref ;
+finalConcString = "FinalConc: "+d2s(finalConc,2)+ finalConcUnits;
+
+
+if (isRow)
+	{
+	print(name+"\t" + stockVolString+"\t   "+ stockConcString+"\t   "+finalVolString+"\t   "+finalConcString);
+	}
+else
+	{
+	print(name);print(stockVolString);print(stockConcString);print(finalVolString);print(finalConcString);print( "---");	
+	}
+
+Dialog.create("Dilutions - Results");
+Dialog.addMessage(stockVolString );
+Dialog.addMessage(stockConcString );
+Dialog.addMessage(finalVolString );
+Dialog.addMessage(finalConcString );
+Dialog.show();

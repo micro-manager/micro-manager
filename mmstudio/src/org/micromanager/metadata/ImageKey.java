@@ -24,8 +24,10 @@
 package org.micromanager.metadata;
 
 import java.text.DecimalFormat;
+
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  * Generates filenames and image keys for JSON metadata indexing.
@@ -80,6 +82,7 @@ public class ImageKey {
                fmt2dec.format(z) + "um";
          return txt;
       } catch (JSONException e) {
+          ReportingUtils.logError(e);
          return "Internal error: " + e.getMessage();
       } catch (MMAcqDataException e) {
          return "Metadata not available";
@@ -92,6 +95,7 @@ public class ImageKey {
          JSONObject imgData = metadata.getJSONObject(key);
          return imgData.getString(ImagePropertyKeys.CHANNEL);
       } catch (JSONException e) {
+          ReportingUtils.logError(e);
          return Integer.toString(channel);
       }            
    }

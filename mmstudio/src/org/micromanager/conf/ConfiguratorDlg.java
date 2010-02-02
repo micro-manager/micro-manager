@@ -46,6 +46,7 @@ import javax.swing.WindowConstants;
 import javax.swing.border.LineBorder;
 
 import mmcorej.CMMCore;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  * Configuration Wizard main panel.
@@ -170,8 +171,9 @@ public class ConfiguratorDlg extends JDialog {
    private void setPage(int i) {
       // try to exit the current page
       
-      if (!pages_[curPage_].exitPage(curPage_ < i ? true : false))
-         return;
+      if (i > 0)
+         if (!pages_[curPage_].exitPage(curPage_ < i ? true : false))
+            return;
       
       int newPage = 0;
       if (i < 0)
@@ -220,10 +222,9 @@ public class ConfiguratorDlg extends JDialog {
             helpTextPane_.setPage(helpURL);
          
       } catch (MalformedURLException e1) {
-         // TODO Auto-generated catch block
-         e1.printStackTrace();
+          ReportingUtils.showError(e1);
       } catch (IOException e) {
-         //helpTextPane_.setText("Attempted to read a bad URL");
+          ReportingUtils.showError(e);
       }
    }
    

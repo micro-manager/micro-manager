@@ -1,0 +1,60 @@
+// Title: PointsToStack
+// Author: Gali Baler
+//
+// These macros convert an image into a stack based on a 
+// set of user-defined points.
+// First install the macros and then run the "Create Points" 
+// macro. This macro will create 96 points for you to move 
+// around. Then, run the "Create Stack" macro. It will draw 
+// bounding rectangles (ImageWidth/12 by ImageHeight/8) 
+// around each of the points. The points define the center 
+// of the rectangles. A stack will be created with all the 
+// rectangles. This stack can be separated into individual
+// images using the ImageJ>Image>Stacks>Convert Stack 
+// to Images command. The number of points can be 
+// changed in the first two global variables.
+
+var columns=12, rows=8;
+var size = columns*rows;
+var w, h, i;
+var x=newArray(size), y=newArray(size);
+
+macro "Create Points" {
+   w = getWidth();
+   h = getHeight();
+   i = 0;
+   for (r = 0; r<=rows-1; r++) {
+      for (c = 0; c<=columns-1; c++) {
+         y[i]=(h/rows)*r + (h/(rows*2));
+         x[i]=(w/columns)*c + (w/(columns*2));
+         i++;
+      }
+   }
+   makeSelection("point", x, y);
+}
+
+macro "Create Stack" {
+   if (w == 0 || h == 0)
+       exit("Run the 'Create Points' macro first");
+   getSelectionCoordinates(x, y);
+   setBatchMode(true);
+   sw = w/columns;
+   sh = h/rows;
+   imageID = getImageID;
+   for (i = 0; i<size; i++) {
+      selectImage(imageID);
+      makeRectangle(x[i]-w/(columns*2), y[i]-h/(rows*2), sw, sh);
+      if (i==0) {
+          run("Duplicate...", "title=Stack");
+          stackID = getImageID;
+      } else {
+           run("Copy");
+           selectImage(stackID);
+           run("Add Slice");
+           run("Paste");
+      }
+   }
+   setSlice(1);
+   resetMinAndMax();
+   setBatchMode(false);
+}

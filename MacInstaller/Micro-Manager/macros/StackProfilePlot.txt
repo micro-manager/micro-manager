@@ -1,0 +1,37 @@
+// StackProfilePlot.txt
+// This macro generates profile plots of all the images
+// in a stack and stores then in another stack.
+
+macro "Stack profile Plot" {
+    requires("1.33r");
+    saveSettings();
+    if (nSlices==1)
+      exit("Stack required");
+    run("Profile Plot Options...", 
+      "width=400 height=200 minimum=0 maximum=255 fixed");
+    setBatchMode(true);
+    stack1 = getImageID;
+    stack2 = 0;
+    n = nSlices;
+    for (i=1; i<n; i++) {
+        showProgress(i, n);
+        selectImage(stack1);
+        setSlice(i);
+        run("Plot Profile");
+        run("Copy");
+        w = getWidth; h = getHeight;
+        close();
+        if (stack2==0) {
+            run("New...", 
+             "name=Plots type=8-bit width="+w+" height="+h+" slices=1");
+            stack2 = getImageID;
+        } else {
+            selectImage(stack2);
+            run("Add Slice");
+        }
+        run("Paste");
+    }
+    setSlice(1);
+    setBatchMode(false);
+    restoreSettings();
+}

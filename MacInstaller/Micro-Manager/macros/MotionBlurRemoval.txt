@@ -1,0 +1,22 @@
+  // Demonstrates motion blur removal using deconvolution.
+  // For more information, do a Google search for "FFT motion blur".
+
+  // v1.31h has macro image refresh bug
+  requires("1.31i"); 
+
+  // open the "bridge" sample image
+  run("Bridge (174K)");
+
+  // Create a line-shaped point source function
+  run("New...", "name='PSF' type=8-bit fill=Black width=512 height=512");
+  setForegroundColor(255, 255, 255);
+  makeLine(251, 251, 261, 261);
+  run("Draw");
+  run("Select None");
+
+  // Convolve Bridge with PSF to generate motion blurred image
+  run("FD Math...", "image1=bridge.gif operation=Convolve image2=PSF result='Motion Blurred' do");
+
+  // Deconvolve motion blurred image with PSF to generate deblurred image
+  run("FD Math...", "image1='Motion Blurred' operation=Deconvolve image2=PSF result=Deblurred do");
+

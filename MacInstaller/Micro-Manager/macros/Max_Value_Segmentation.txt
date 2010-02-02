@@ -1,0 +1,37 @@
+// Max Value Segmentation
+//
+// This macro creates a color image based on the max of 
+// three grayscale images. A pixel in the color image is set to 
+// green if the corresponding pixel in the first image is max,
+// to blue if the corresponding pixel in the second image is
+// max and to red if the corresponding pixel in the third
+// image is max.
+
+// Author: Ronald DeSpain (ron_despain at hotmail.com)
+
+  macro "Max Value Segmentation" {
+      requires("1.34f");
+      if (nImages!=3 || bitDepth==24)
+          exit("This macro requires exactly three grayscale images");
+      width = getWidth(); height = getHeight();
+      newImage("Max Pixel", "RGB", width, height, 1);
+      starttime = getTime();
+      autoUpdate(false);
+      setBatchMode(true);
+      for (y=0; y<height; y++) {
+          if (y%10==0) showProgress(y,height);
+          for (x=0; x<width; x++) {
+              selectImage(1); p1=getPixel(x,y);
+              selectImage(2); p2=getPixel(x,y);
+              selectImage(3); p3=getPixel(x,y);
+              max = (maxOf(maxOf(p1, p2), p3));
+              selectImage(4);
+              if (max==p1) setPixel(x,y, 0x00ff00);
+              else if (max==p2) setPixel(x,y, 0x0000ff);
+              else setPixel(x,y, 0xff0000);
+          }
+      }
+      setBatchMode(false);
+      seconds = (getTime-starttime)/1000;
+      showMessage("Max Value", seconds+" seconds ("+round(width*height/seconds)+" pixels/sec)");
+  }

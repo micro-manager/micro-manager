@@ -1,0 +1,82 @@
+    var rings = 10;
+    var spacing = 5; // in units such as um
+    var pixelsPerUnit = 1;
+    var unit = "pixel";
+    var xcenter, ycenter;
+    var markSize = 5;
+
+    // Draws concentric circles centered at (xcenter, ycenter)
+    macro "Concentric Rings Tool -C00b-O00ff-O4477" {
+        requires("1.30m");
+        getCalibration();
+        getCursorLoc(xcenter, ycenter, z, flags);
+        makeOval(xcenter-2, ycenter-2, 4, 4);
+        run("Draw");
+        spacingInPixels = spacing*pixelsPerUnit;
+        radius = spacingInPixels;
+        for (i=0; i<rings; i++) {
+            drawRing(xcenter, ycenter, radius, i+1);
+            radius += spacingInPixels;
+        }
+        run("Select None");
+        //print(pixelsPerUnit+" pixels per " + unit);
+    }
+
+    // Records the coordinates and distance from (xcenter, ycenter)
+    // in the "Log" window and draws a dot.
+    macro "End Tool -C00b-T2e16E" {
+        if (xcenter==0 && ycenter==0)
+            exit("Rings must be drawn first");
+        getCursorLoc(x, y, z, flags);
+        setLineWidth(markSize);
+        drawLine( x, y, x, y);
+        xx = (x-xcenter)/pixelsPerUnit;
+        yy = (ycenter-y)/pixelsPerUnit;
+        distance = sqrt(xx*xx+yy*yy);
+        print("end \t" + xx + " \t" + yy + " \t" + distance);
+    }
+
+    // Records the coordinates and distance from (xcenter, ycenter)
+    // in the "Log" window and draws an X.
+    macro "Branch Tool -C00b--T2e16B" {
+        if (xcenter==0 && ycenter==0)
+            exit("Rings must be drawn first");
+        getCursorLoc(x, y, z, flags);
+        setLineWidth(2);
+        size = markSize/2;
+        drawLine( x-size, y-size, x+size, y+size);
+        drawLine( x+size, y-size, x-size, y+size);
+        xx = (x-xcenter)/pixelsPerUnit;
+        yy = (ycenter-y)/pixelsPerUnit;
+        distance = sqrt(xx*xx+yy*yy);
+        print("branch \t" + xx + " \t" + yy + " \t" + distance);
+    }
+
+    function drawRing(x, y, radius, n) {
+        makeOval(x-radius, y-radius, radius*2, radius*2);
+        run("Draw");
+        drawString(n, x+radius+2, y+4);
+    }
+
+    function getCalibration() {
+        info = getInfo();
+        if (indexOf(info, "Resolution:")==-1) {
+            pixelsPerUnit = 1;
+            unit = "pixel";
+            return;
+        }
+        lines = split(info, "\n");
+        resLine = 0;
+        for (i=0; i<lines.length; i++) {
+           if (indexOf(lines[i], "Resolution:")==0)
+               resLine = i;
+        }
+        calibration = split(lines[resLine], "");
+        pixelsPerUnit = calibration[1];
+        unit = calibration[4];
+  }
+
+    macro 'Concentric Rings Options' {
+        rings = getNumber("Number of Rings:", rings);
+        spacing = getNumber("Ring Spacing", spacing);
+    }

@@ -33,6 +33,7 @@
 #endif
 
 #include "ZeissCAN.h"
+#include <cstdio>
 #include <string>
 #include <math.h>
 #include "../../MMDevice/ModuleInterface.h"
@@ -105,6 +106,7 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_ZeissFilterWheel1,"FilterWheel 1"); 
    AddAvailableDeviceName(g_ZeissFilterWheel2,"FilterWheel 2"); 
 }
+
 using namespace std;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -186,7 +188,7 @@ void ZeissHub::ClearRcvBuf()
 int ZeissHub::GetVersion(MM::Device& device, MM::Core& core, std::string& ver)
 {
    // get the stand firmware
-   char* command = "HPTv0";
+   const char* command = "HPTv0";
    int ret = ExecuteCommand(device, core,  command);
    if (ret != DEVICE_OK)
       return ret;
@@ -319,7 +321,7 @@ int ZeissTurret::GetPosition(MM::Device& device, MM::Core& core, int turretNr, i
       return ret;
 
    if (response.substr(0,2) == "PH") 
-      position = atoi(response.substr(2,1).c_str());
+      position = atoi(response.substr(2).c_str());
    else
       return ERR_UNEXPECTED_ANSWER;
 
@@ -420,7 +422,7 @@ int ZeissTurret::GetPresence(MM::Device& device, MM::Core& core,  int turretNr, 
 
    int answer;
    if (response.substr(0,2) == "PH") 
-      answer = atoi(response.substr(2,1).c_str());
+      answer = atoi(response.substr(2).c_str());
    else
       return ERR_UNEXPECTED_ANSWER;
 
@@ -473,15 +475,16 @@ int ZeissScope::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Set(g_hub.port_.c_str());
    } else if (eAct == MM::AfterSet) {
       if (initialized_) {
-         // revert
+         // TODO: allow port changes
          pProp->Set(g_hub.port_.c_str());
-         return ERR_PORT_CHANGE_FORBIDDEN;
-      }
-      // take this port.  TODO: should we check if this is a valid port?
-      pProp->Get(g_hub.port_);
+         //return ERR_PORT_CHANGE_FORBIDDEN;
+      } else {
+       // take this port.  TODO: should we check if this is a valid port?
+         pProp->Get(g_hub.port_);
 
-      g_hub.initialized_ = true;
-      initialized_ = true;
+         g_hub.initialized_ = true;
+         initialized_ = true;
+      }
    }
 
    return DEVICE_OK;
@@ -528,7 +531,7 @@ bool ZeissScope::Busy()
 ZeissShutter::ZeissShutter () :
    initialized_ (false),
    name_ (g_ZeissShutter),
-   shutterNr_ (0),
+   shutterNr_ (1),
    external_ (false),
    state_ (1)
 {
@@ -607,16 +610,13 @@ int ZeissShutter::Initialize()
 bool ZeissShutter::Busy()
 {
    bool busy;
-   /*
-      int ret = g_turret.GetBusy(*this, *GetCoreCallback(), g_Shutter, busy);
-      if (ret != DEVICE_OK)  // This is bad and should not happen
-         return false;
-  */ 
    ostringstream cmd;
+
    if (external_)
       cmd << "SPSb2";
    else
       cmd << "HPSb2";
+
    int ret = g_hub.ExecuteCommand(*this, *GetCoreCallback(),  cmd.str().c_str());
    if (ret != DEVICE_OK)  // This is bad and should not happen
    {
@@ -635,7 +635,7 @@ bool ZeissShutter::Busy()
 
    int statusByte;
    if (response.substr(0,2) == "PH" || response.substr(0,2) == "PS")
-      statusByte = atoi(response.substr(2,1).c_str());
+      statusByte = atoi(response.substr(2).c_str());
    else
    {
       this->LogMessage("Incomprehensible answer from microscope in ZeisShutter::Busy");
@@ -796,7 +796,7 @@ int ZeissShutter::OnExternal(MM::PropertyBase* pProp, MM::ActionType eAct)
 ZeissShutterMF::ZeissShutterMF () :
    initialized_ (false),
    name_ (g_ZeissShutter),
-   shutterNr_ (0),
+   shutterNr_ (1),
    state_ (1)
 {
    InitializeDefaultErrorMessages();
@@ -873,7 +873,7 @@ bool ZeissShutterMF::Busy()
    int ret = g_hub.ExecuteCommand(*this, *GetCoreCallback(),  cmd.str().c_str());
    if (ret != DEVICE_OK)  // This is bad and should not happen
    {
-      this->LogMessage("ExecuteCommand failed in ZeisShutter::Busy");
+      this->LogMessage("ExecuteCommand failed in ZeisShutterMF::Busy");
       return false; // can't write so say we're not busy
    }
 
@@ -881,18 +881,22 @@ bool ZeissShutterMF::Busy()
    ret = g_hub.GetAnswer(*this, *GetCoreCallback(), response);
    if (ret != DEVICE_OK)
    {
-      this->LogMessage("GetAnswer failed in ZeisShutter::Busy");
+      this->LogMessage("GetAnswer failed in ZeisShutterMF::Busy");
       return false;
    }
 
    int statusByte;
    if (response.substr(0,2) == "PH" || response.substr(0,2) == "PS")
-      statusByte = atoi(response.substr(2,1).c_str());
+      statusByte = atoi(response.substr(2).c_str());
    else
    {
       this->LogMessage("Incomprehensible answer from microscope in ZeisShutter::Busy");
       return false;
    }
+   // Remove after debugging with Kate Phelps
+   std::ostringstream os;
+   os << "Shutter status byte: " << statusByte;
+   this->LogMessage(os.str().c_str(), true);
 
    // interpret the status byte returned by the micrsocope
    busy = (1 & (statusByte >> (3 + shutterNr_)));
@@ -945,9 +949,10 @@ int ZeissShutterMF::GetOpen(bool &open)
    // PH is internal shutter, PS is external shutter
    else if ((response.substr(0,2) == "PH") ) 
    {
-      if (response.substr(2,1)=="1")
+      int position = atoi(response.substr(2).c_str());
+      if (position == 1)
          open = false;
-      else if (response.substr(2,1)=="2")
+      else if (position == 2)
          open = true;
       else
          return ERR_UNEXPECTED_ANSWER;

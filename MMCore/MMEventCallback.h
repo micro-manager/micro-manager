@@ -35,4 +35,10 @@ public:
       std::cout << "onPropertiesChanged()" << std:: endl; 
    }
 
+   // allow quick update of X,Y,Z etc.
+   virtual void onCoordinateUpdate()
+   {
+      std::cout << "onCoordinateUpdate()\n"; 
+   }
+
 };

@@ -1,0 +1,62 @@
+// This macro determine the values of the endpoints of the
+// current straight line selection and draws a gradient-
+// intensity line (at the current line width) between those
+// two points spanning their values. 
+
+  getLine(x1, y1, x2, y2, lineWdith);
+  if (x1==-1)
+      exit("Line selection required");
+  v1 = getPixel(x1, y1);
+  v2 = getPixel(x2, y2);
+  if (bitDepth==24) {
+      r1 = (v1&0xff0000)>>16;
+      r2 = (v2&0xff0000)>>16;
+      g1 = (v1&0xff00)>>8;
+      g2 = (v2&0xff00)>>8;
+      b1 = v1&0xff;
+      b2 = v2&0xff;
+      drawRGBGradientLine(x1, y1, x2, y2, r1, g1, b1, r2, g2, b2);
+  } else
+      drawGradientLine(x1, y1, x2, y2, v1, v2);
+
+  function drawGradientLine(x1, y1, x2, y2, v1, v2) {
+      autoUpdate(false);
+      dx = x2-x1;
+      dy = y2-y1;
+      if (abs(dy)>abs(dx))
+          n = abs(dy); else n = abs(dx);
+      n++;
+      xinc = dx/n;
+      yinc = dy/n;
+      v = v1;
+      inc = (v2-v1)/n;
+      do {
+          setColor(v);
+          v += inc;
+          drawLine(x1, y1, x1, y1);
+          x1 += xinc;
+          y1 += yinc;
+          n--;
+      } while (n>0);
+  }
+
+ function drawRGBGradientLine(x1, y1, x2, y2, r1, g1, b1, r2, g2, b2) {
+      autoUpdate(false);
+      dx = x2-x1;
+      dy = y2-y1;
+      if (abs(dy)>abs(dx))
+          n = abs(dy); else n = abs(dx);
+      n++;
+      xinc = dx/n;
+      yinc = dy/n;
+      r=r1; g=g1; b=b1;
+      rinc = (r2-r1)/n; ginc = (g2-g1)/n; binc = (b2-b1)/n;
+      do {
+          setColor(r, g, b);
+          r+=rinc; g+=ginc; b+=binc;
+          drawLine(x1, y1, x1, y1);
+          x1 += xinc;
+          y1 += yinc;
+          n--;
+      } while (n>0);
+  }

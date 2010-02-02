@@ -30,13 +30,44 @@
 
 #include "CoreCallback.h"
 #include "CircularBuffer.h"
+#include "../MMDevice/DeviceUtils.h"
+//#include <ace/Mutex.h>
+//#include <ace/Guard_T.h>
 
-int CoreCallback::InsertImage(const MM::Device* /*caller*/, const unsigned char* buf, unsigned width, unsigned height, unsigned byteDepth, MM::ImageMetadata* pMd)
+#include "../MMDevice/DeviceThreads.h"
+#include "boost/date_time/posix_time/posix_time.hpp"
+
+
+int CoreCallback::InsertImage(const MM::Device* /*caller*/, const unsigned char* buf, unsigned width, unsigned height, unsigned byteDepth, const Metadata* pMd)
 {
-   if (core_->cbuf_->InsertImage(buf, width, height, byteDepth, pMd))
-      return DEVICE_OK;
-   else
-      return DEVICE_BUFFER_OVERFLOW;
+   try 
+   {
+      if (core_->cbuf_->InsertImage(buf, width, height, byteDepth, pMd))
+         return DEVICE_OK;
+      else
+         return DEVICE_BUFFER_OVERFLOW;
+   }
+   catch (CMMError& /*e*/)
+   {
+      return DEVICE_INCOMPATIBLE_IMAGE;
+   }
+
+}
+int CoreCallback::InsertImage(const MM::Device* caller, const ImgBuffer & imgBuf)
+{
+   Metadata md = imgBuf.GetMetadata();
+   return InsertImage(caller, imgBuf.GetPixels(), imgBuf.Width(), 
+      imgBuf.Height(), imgBuf.Depth(), &md);
+}
+
+void CoreCallback::ClearImageBuffer(const MM::Device* /*caller*/)
+{
+   core_->cbuf_->Clear();
+}
+
+bool CoreCallback::InitializeImageBuffer(unsigned channels, unsigned slices, unsigned int w, unsigned int h, unsigned int pixDepth)
+{
+   return core_->cbuf_->Initialize(channels, slices, w, h, pixDepth);
 }
 
 int CoreCallback::InsertMultiChannel(const MM::Device* /*caller*/,
@@ -45,12 +76,20 @@ int CoreCallback::InsertMultiChannel(const MM::Device* /*caller*/,
                               unsigned width,
                               unsigned height,
                               unsigned byteDepth,
-                              MM::ImageMetadata* pMd)
+                              Metadata* pMd)
 {
-   if (core_->cbuf_->InsertMultiChannel(buf, numChannels, width, height, byteDepth, pMd))
-      return DEVICE_OK;
-   else
-      return DEVICE_BUFFER_OVERFLOW;
+   try
+   {
+      if (core_->cbuf_->InsertMultiChannel(buf, numChannels, width, height, byteDepth, pMd))
+         return DEVICE_OK;
+      else
+         return DEVICE_BUFFER_OVERFLOW;
+   }
+   catch (CMMError& /*e*/)
+   {
+      return DEVICE_INCOMPATIBLE_IMAGE;
+   }
+
 }
 
 void CoreCallback::SetAcqStatus(const MM::Device* /*caller*/, int /*statusCode*/)
@@ -105,6 +144,18 @@ int CoreCallback::OnPropertiesChanged(const MM::Device* /* caller */)
 {
    if (core_->externalCallback_)
       core_->externalCallback_->onPropertiesChanged();
+
+   return DEVICE_OK;
+}
+
+
+/**
+ * Handler for the coordinate update event from the device.
+ */
+int CoreCallback::OnCoordinateUpdate(const MM::Device* /* caller */)
+{
+   if (core_->externalCallback_)
+      core_->externalCallback_->onCoordinateUpdate();
 
    return DEVICE_OK;
 }
@@ -246,18 +297,251 @@ const char* CoreCallback::GetImage()
    }
 }
 
-int CoreCallback::GetImageDimensions(int& /*width*/, int& /*height*/, int& /*depth*/)
+int CoreCallback::GetImageDimensions(int& width, int& height, int& depth)
 {
+   width = core_->getImageWidth();
+   height = core_->getImageHeight();
+   depth = core_->getBytesPerPixel();
    return DEVICE_OK;
 }
 
-int CoreCallback::GetFocusPosition(double& /*pos*/)
+int CoreCallback::GetFocusPosition(double& pos)
 {
+   if (core_->focusStage_)
+   {
+      return core_->focusStage_->GetPositionUm(pos);
+   }
+   pos = 0.0;
+   return DEVICE_CORE_FOCUS_STAGE_UNDEF;
+}
+
+int CoreCallback::SetFocusPosition(double pos)
+{
+   if (core_->focusStage_)
+   {
+      int ret = core_->focusStage_->SetPositionUm(pos);
+      if (ret != DEVICE_OK)
+         return ret;
+      core_->waitForDevice(core_->focusStage_);
+      return DEVICE_OK;
+   }
+   return DEVICE_CORE_FOCUS_STAGE_UNDEF;
+}
+
+int CoreCallback::MoveFocus(double velocity)
+{
+    /*ACE_Guard<ACE_Mutex>*/  MMThreadGuard guard(CMMCore::deviceLock_);
+
+   if (core_->focusStage_)
+   {
+      int ret = core_->focusStage_->Move(velocity);
+      if (ret != DEVICE_OK)
+         return ret;
+      return DEVICE_OK;
+   }
+   return DEVICE_CORE_FOCUS_STAGE_UNDEF;
+}
+
+
+int CoreCallback::GetXYPosition(double& x, double& y)
+{
+   if (core_->xyStage_)
+   {
+      return core_->xyStage_->GetPositionUm(x, y);
+   }
+   x = 0.0;
+   y = 0.0;
+   return DEVICE_CORE_FOCUS_STAGE_UNDEF;
+}
+
+int CoreCallback::SetXYPosition(double x, double y)
+{
+   if (core_->xyStage_)
+   {
+      int ret = core_->xyStage_->SetPositionUm(x, y);
+      if (ret != DEVICE_OK)
+         return ret;
+      core_->waitForDevice(core_->xyStage_);
+      return DEVICE_OK;
+   }
+   return DEVICE_CORE_FOCUS_STAGE_UNDEF;
+}
+
+int CoreCallback::MoveXYStage(double vx, double vy)
+{
+   /*ACE_Guard<ACE_Mutex>*/  MMThreadGuard guard(CMMCore::deviceLock_);
+
+   if (core_->xyStage_)
+   {
+      int ret = core_->xyStage_->Move(vx, vy);
+      if (ret != DEVICE_OK)
+         return ret;
+      return DEVICE_OK;
+   }
+   return DEVICE_CORE_FOCUS_STAGE_UNDEF;
+}
+
+int CoreCallback::SetExposure(double expMs)
+{
+   try 
+   {
+      core_->setExposure(expMs);
+   }
+   catch (...)
+   {
+      // TODO: log
+      return DEVICE_CORE_EXPOSURE_FAILED;
+   }
+
    return DEVICE_OK;
 }
 
-int CoreCallback::SetFocusPosition(double /*pos*/)
+int CoreCallback::GetExposure(double& expMs) 
 {
+   try 
+   {
+      expMs = core_->getExposure();
+   }
+   catch (...)
+   {
+      // TODO: log
+      return DEVICE_CORE_EXPOSURE_FAILED;
+   }
+
    return DEVICE_OK;
+}
+
+int CoreCallback::SetConfig(const char* group, const char* name)
+{
+   try 
+   {
+      core_->setConfig(group, name);
+      core_->waitForConfig(group, name);
+   }
+   catch (...)
+   {
+      // TODO: log
+      return DEVICE_CORE_CONFIG_FAILED;
+   }
+
+   return DEVICE_OK;
+}
+
+int CoreCallback::GetCurrentConfig(const char* group, int bufLen, char* name)
+{
+   try 
+   {
+      string cfgName = core_->getCurrentConfig(group);
+      strncpy(name, cfgName.c_str(), bufLen);
+   }
+   catch (...)
+   {
+      // TODO: log
+      return DEVICE_CORE_CONFIG_FAILED;
+   }
+
+   return DEVICE_OK;
+}
+
+int CoreCallback::GetChannelConfigs(std::vector<std::string>& configs)
+{
+   try 
+   {
+      vector<string> cfgs = core_->getAvailableConfigs(core_->getChannelGroup().c_str());
+      configs.clear();
+      for(unsigned i=0; i<cfgs.size(); i++)
+         configs.push_back(cfgs[i].c_str());
+   }
+   catch (...)
+   {
+      // TODO: log
+      return DEVICE_CORE_CHANNEL_PRESETS_FAILED;
+   }
+
+   return DEVICE_OK;
+}
+
+int CoreCallback::GetDeviceProperty(const char* deviceName, const char* propName, char* value)
+{
+   try
+   {
+      string propVal = core_->getProperty(deviceName, propName);
+      CDeviceUtils::CopyLimitedString(value, propVal.c_str());
+   }
+   catch(CMMError& e)
+   {
+      return e.getCode();
+   }
+
+   return DEVICE_OK;
+}
+
+int CoreCallback::SetDeviceProperty(const char* deviceName, const char* propName, const char* value)
+{
+   try
+   {
+      string propVal(value);
+      core_->setProperty(deviceName, propName, propVal.c_str());
+   }
+   catch(CMMError& e)
+   {
+      return e.getCode();
+   }
+
+   return DEVICE_OK;
+}
+
+std::vector<std::pair< int, std::string> > CoreCallback::PostedErrors(void)
+{
+   MMThreadGuard g(*(core_->pPostedErrorsLock_));
+	return core_->postedErrors_;
+}
+void CoreCallback::PostError( const std::pair< int, std::string>& theError)
+{
+   MMThreadGuard g(*(core_->pPostedErrorsLock_));
+   core_->postedErrors_.push_back(theError);
+}
+
+void CoreCallback::ClearPostedErrors( void)
+{
+   MMThreadGuard g(*(core_->pPostedErrorsLock_));
+	core_->postedErrors_.clear();
+}
+
+
+
+
+
+
+/**
+ * Returns the number of microsecond tick
+ N.B. an unsigned long microsecond count rolls over in just over an hour!!!!
+ * NOTE: This method is 'obsolete.'
+ */
+unsigned long CoreCallback::GetClockTicksUs(const MM::Device* /*caller*/)
+{
+	using namespace boost::posix_time;
+	using namespace boost::gregorian;
+	boost::posix_time::ptime t = boost::posix_time::microsec_clock::local_time();
+	boost::gregorian::date today( day_clock::local_day());
+	boost::posix_time::ptime timet_start(today); 
+	time_duration diff = t - timet_start; 
+	return (unsigned long) diff.total_microseconds();
+}
+
+//MM::MMTime CoreCallback::GetCurrentMMTime()
+//{		
+//	using namespace boost::posix_time;
+//	using namespace boost::gregorian;
+//	boost::posix_time::ptime t0 = boost::posix_time::microsec_clock::local_time();
+//	ptime timet_start(date(2000,1,1)); 
+//	time_duration diff = t0 - timet_start; 
+//	return MM::MMTime( (double) diff.total_microseconds());
+//}
+//
+
+MM::MMTime CoreCallback::GetCurrentMMTime()
+{		
+	return GetMMTimeNow();
 }
 

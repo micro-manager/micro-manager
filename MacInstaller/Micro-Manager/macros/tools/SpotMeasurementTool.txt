@@ -1,0 +1,16 @@
+// This tool creates a circular selection centered
+// where you click and measures and labels it.
+// Double click on the tool icon to change the radius.
+
+    var radius = 10;
+
+    macro "Measure And Label Tool-C00bO11cc" {
+        getCursorLoc(x, y, z, flags);
+        makeOval(x-radius, y-radius, radius*2, radius*2);
+        run("Measure");
+        run("Label");
+   }
+
+  macro "Measure And Label Tool Options" {
+      radius = getNumber("Radius (pixels):", radius);
+  }

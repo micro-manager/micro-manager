@@ -35,6 +35,7 @@
 
 const char* g_PI_ZStageDeviceName = "PIZStage";
 const char* g_PI_ZStageAxisName = "Axis";
+const char* g_PI_ZStageAxisLimitUm = "Limit_um";
 
 using namespace std;
 
@@ -90,7 +91,8 @@ PIZStage::PIZStage() :
    port_("Undefined"),
    stepSizeUm_(0.1),
    initialized_(false),
-   answerTimeoutMs_(1000)
+   answerTimeoutMs_(1000),
+   axisLimitUm_(500.0)
 {
    InitializeDefaultErrorMessages();
 
@@ -110,6 +112,11 @@ PIZStage::PIZStage() :
    // Axis name
    pAct = new CPropertyAction (this, &PIZStage::OnAxisName);
    CreateProperty(g_PI_ZStageAxisName, "A", MM::String, false, pAct, true);
+
+   // axis limit in um
+   pAct = new CPropertyAction (this, &PIZStage::OnAxisLimit);
+   CreateProperty(g_PI_ZStageAxisLimitUm, "500.0", MM::Float, false, pAct, true);
+
 }
 
 PIZStage::~PIZStage()
@@ -143,6 +150,11 @@ int PIZStage::Initialize()
    CPropertyAction* pAct = new CPropertyAction (this, &PIZStage::OnStepSizeUm);
    CreateProperty("StepSizeUm", "0.01", MM::Float, false, pAct);
    stepSizeUm_ = 0.01;
+
+   // axis limits (assumed symmetrical)
+   pAct = new CPropertyAction (this, &PIZStage::OnPosition);
+   CreateProperty(MM::g_Keyword_Position, "0.0", MM::Float, false, pAct);
+   SetPropertyLimits(MM::g_Keyword_Position, -axisLimitUm_, axisLimitUm_);
 
    ret = UpdateStatus();
    if (ret != DEVICE_OK)
@@ -324,6 +336,45 @@ int PIZStage::OnStepSizeUm(MM::PropertyBase* pProp, MM::ActionType eAct)
 
    return DEVICE_OK;
 }
+
+int PIZStage::OnAxisLimit(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(axisLimitUm_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(axisLimitUm_);
+   }
+
+   return DEVICE_OK;
+}
+
+int PIZStage::OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      double pos;
+      int ret = GetPositionUm(pos);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      pProp->Set(pos);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      double pos;
+      pProp->Get(pos);
+      int ret = SetPositionUm(pos);
+      if (ret != DEVICE_OK)
+         return ret;
+
+   }
+
+   return DEVICE_OK;
+}
+
 
 bool PIZStage::GetValue(string& sMessage, double& dval)
 {

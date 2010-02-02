@@ -1,0 +1,25 @@
+ // This macro demonstrates how to get the active image's path
+
+  macro "Show Path" {
+       requires('1.30p');
+       print(getPath());
+  }
+
+  print(getPath()); // in case user selects "Run Macro" 
+
+  // Returns the active image's path. Returns a
+  // string staring with "Error:" if there is an error.
+  function getPath() {
+      if (nImages==0) return "Error: no images open";
+      selectImage(getImageID);
+      run("Select None");  // bug workaround
+      info = getInfo();
+      index1 = indexOf(info, "Path: ");
+      if (index1==-1) 
+          return "Error: path not available for \"" + getTitle() + "\"";
+      index2 = indexOf(info, "\n", index1);
+      path = substring(info, index1+6, index2);
+      return path;
+  }
+
+

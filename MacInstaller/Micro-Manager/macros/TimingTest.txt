@@ -1,0 +1,21 @@
+// Tests wait() and getTime() functions
+
+requires("1.30c");
+max = 100;
+diff = newArray(max+1);
+maxDiff = 0;
+for (i=0; i<=max; i++) {
+    start = getTime();
+    wait(i);
+    time = getTime()-start;
+    difference = abs(i-time);
+    diff[i] = difference;
+    if (difference>maxDiff) maxDiff = difference;
+    print(i + "  " + time + "  " + difference);
+}
+sum = 0;
+for (i=0; i<=max; i++)
+    sum += diff[i];
+print("");
+print("Average Difference: "+sum/max+"ms");
+print("Maximum Difference: "+maxDiff+"ms");

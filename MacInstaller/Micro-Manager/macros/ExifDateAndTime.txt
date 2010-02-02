@@ -1,0 +1,27 @@
+// This macro demonstrates how to get the date
+// and time from EXIF information extracted by
+// the Exif_Reader plugin.
+
+  macro "Exif Date/Time" {
+       //requires('Exif Reader.jar');
+       print(exifDT());
+  }
+
+  print(exifDT()); // in case user selects "Run Macro" 
+
+  function exifDT() {
+      if (nImages==0) return "Error: no images open";
+      selectImage(getImageID);
+      title = getTitle();
+      if (indexOf(title, '.jpg')<0 && indexOf(title, '.JPG')<0)
+          exit("The active image is not a JPEG");
+      run("Exif Data...");
+      selectWindow("EXIF Metadata for "+getTitle());
+      info = getInfo();
+      index = indexOf(info, "Date/Time Original");      
+      if (index==-1) 
+          return "Error: Date/Time not available for \"" + getTitle() + "\"";
+      path = substring(info, index+19, index+38);
+      return path;
+  }
+

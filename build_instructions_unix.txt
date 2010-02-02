@@ -3,16 +3,12 @@ Micro-Manager builds have been tested on Mac OS X and linux.
 Requirements:
 1. Build environment including gcc (on Mac OS X download developer tools from http://developer.apple.com/, on linux install from your distribution).
 2. ImageJ.  Download and install from http://rsb.info.nih.gov/ij/download.html.  Install in either /Applications/ImageJ_dev /Applications/ImageJ /usr/local/ImageJ or /usr/local/imagej. 
-3. Beanshell.  Download bsh-2.0b4.jar from http://www.beanshell.org/download.html and copy to the plugins folder of the ImageJ folder installed in step 2.
-4. ACE.  Download from http://download.dre.vanderbilt.edu/, build and install (including a static version of the library):
-   cd ACE_wrappers
-   mkdir build 
-   cd build 
-   ../configure --enable-static
-   make  
-   make install 
-The last step will need to be executed as root (use sudo when possible).  Building ACE can take a long time.  
-5. SWIG.  Download from http://www.swig.org/download.html and install
+3. Beanshell.  Copy bsh-2.0b4.jar from classext/ to the plugins folder of the ImageJ folder installed in step 2.
+4. ij.jar version 1.42o or later.  If needed, copy ij.jar from classext/ to the ImageJ folder installed in step 2.
+5. swingx.  Copy swingx-0.9.5.jar from classext/ to the plugins folder of the ImageJ folder installed in step 2.
+5. ACE.  see https://valelab.ucsf.edu/~nico/MMwiki/index.php/Building_ACE_on_the_Mac
+
+6. SWIG.  Download from http://www.swig.org/download.html and install
 
 Building Micro-Manager:
 1. Unpack the downloaded micro-manager tarball:

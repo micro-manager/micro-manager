@@ -37,15 +37,17 @@ public:
 	int Shutdown();
 
 	// XY Stage API
-	virtual int SetPositionUm(double x, double y);
-    virtual int GetPositionUm(double& x, double& y);
     virtual double GetStepSize();
     virtual int SetPositionSteps(long x, long y);
     virtual int GetPositionSteps(long &x, long &y);
     virtual int Home();
     virtual int Stop();
     virtual int SetOrigin();
-    virtual int GetLimits(double& xMin, double& xMax, double& yMin, double& yMax);
+    virtual int GetLimits(double& lower, double& upper);
+    virtual int GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax);
+	virtual int GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax);
+	virtual double GetStepSizeXUm();
+	virtual double GetStepSizeYUm();
 	int getHandle(){  return MCLhandle_;}
 
 	// Action interface
@@ -60,15 +62,23 @@ private:
 	int SetPositionXUm(double x);
 	int SetPositionYUm(double y);
 	void PauseDevice(int axis);
+	int SetPositionUm(double x, double y);
+    int GetPositionUm(double& x, double& y);
 
 	bool busy_;
 	bool initialized_;
+	bool is20Bit_;
+
 	int MCLhandle_;
-	double stepSize_um_;
+
+	double stepSizeX_um_;
+	double stepSizeY_um_;
+
 	double xMin_;
 	double xMax_;
 	double yMin_;
 	double yMax_;
+	
 	int serialNumber_;
 	int settlingTimeX_ms_;
 	int settlingTimeY_ms_;
@@ -78,7 +88,6 @@ private:
 
 	bool firstWriteX_;
 	bool firstWriteY_;
-
 };
 
 #endif // _MCL_NANODRIVE_XYSTAGE_H_

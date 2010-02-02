@@ -1,0 +1,32 @@
+//  "Search Macros"
+// This macro searches for text in all the files in the macros folder.
+// Note that the search is case sensitive.
+
+  requires("1.35r");
+  dir = getDirectory("macros");
+  str = getString("Search macros for:", "");
+  find(dir); 
+
+  function find(dir) {
+      list = getFileList(dir);
+      for (i=0; i<list.length; i++) {
+          showProgress(i, list.length);
+          if (endsWith(list[i], "/"))
+              find(""+dir+list[i]);
+          else if (endsWith(list[i], ".txt") || endsWith(list[i], ".ijm")) {
+              s = File.openAsString(dir+list[i]);
+              if (indexOf(s,str)!=-1 || indexOf(list[i],str)!=-1) {
+                   print("");
+                  print(dir+list[i]);
+                  lines = split(s, "\n");
+                  n = 0;
+                  for (j=0; j<lines.length; j++) {
+                      if (indexOf(lines[j],str)!=-1 && n<8) {
+                          print((j+1)+": "+lines[j]);
+                          n++;
+                      }
+                 }
+              }
+          }
+      }
+  }

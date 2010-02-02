@@ -1,3 +1,7 @@
+// Leica Scope Families
+// These need slightly different commands here and there
+const int g_DMI456 = 0;
+const int g_CTRMIC = 1;
 
 // List of Device numbers (from Leica documentation)
 const int g_Mirror_House = 55; // motorized with 2 positions
@@ -21,6 +25,7 @@ const int g_IL_Turret = 78; // motorized, 6 positions
 const int g_Mag_Changer_Mot = 79; // motorized magnifictaion changer with 4 positions
 const int g_Tube = 80; // fixed or non-coded switching tube
 const int g_Flapping_Condenser = 81; // motorized with 7 positions
+const int g_Condensor = 82; // motorized with 7 positions
 const int g_Field_Diaphragm_TL = 83; // motorized iris diaphragm
 const int g_Aperture_Diaphragm_TL = 84; // mptorized iris diaphragm in the condenser
 const int g_DIC_Turret = 85; // motorized DIC disk with 4 positions
@@ -29,6 +34,7 @@ const int g_Field_Diaphragm_IL = 94; // motorized with maximum 12 positions
 const int g_Aperture_Diaphragm_IL = 95; // motorized diaphragm disk with maximum 12 positions
 const int g_Constant_Color_Intensity_Control_TL = 97; // 12 bits
 const int g_TL_Polarizer = 98; // motorizedin the condenser
+
 
 //////////////////////////////////////////////////////////////////////////////
 // Error codes

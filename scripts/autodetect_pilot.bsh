@@ -1,0 +1,98 @@
+/*
+autodetect_pilot.bsh
+
+With this script we will test the possiblity of auto-detecting hardware.
+Three core calls are made to attempt to connect to all possible devices:
+getAvailableDevices, loadDevice, initializeDevice.
+If any of these methods throws an exception, then the device is deemed
+to be not detected.
+
+After we correct device adapters' source code (so there are no crashes,
+no pop-ups, no false positives, and proper handling of serial ports)
+then this auto-detect scheme could be implemented in the core.
+*/
+
+// Libraries in forbiddenLibs cause problems in this auto-detect scheme and
+// therefore we currently don't attempt to auto-detect them:
+forbiddenLibs = new ArrayList();
+//forbiddenLibs.add("PCO_Camera");
+
+forbiddenLibs.add("DemoCamera");   // Demos don't need to be autodetected! :)
+forbiddenLibs.add("DemoRGBCamera");   
+forbiddenLibs.add("DemoStreamingCamera");  
+forbiddenLibs.add("Utilities");  // Utilities shouldn't be detected either.
+
+
+// Device discovery routine:
+detectedDevices = new ArrayList();
+mmc.unloadAllDevices();
+libs = mmc.getDeviceLibraries(".");
+print(libs.size() + " libraries found.");
+
+public void discover(String libraryName) {
+	try {	
+		print("\tattempting to load library...");
+		devs = mmc.getAvailableDevices(libraryName);
+		print("\tsucceeded!");
+		// Loop through devices in library:
+		for (j=0;j<devs.size();++j) {
+			label = libraryName+"-"+devs.get(j);
+			print("\tDevice: "+label);
+			//mmc.sleep(1000);
+			try {
+				print("\t\tattempting to load device...");
+				//mmc.sleep(1500);
+				mmc.loadDevice(label,libraryName,devs.get(j));
+				print("\t\tsucceeded!");
+			} catch (Throwable e) {
+				break;
+			}
+			try {
+				print("\t\tattempting to initialize device...");
+				//mmc.sleep(1500);
+				mmc.initializeDevice(label);
+				print("\t\tsucceeded!");
+				detectedDevices.add(label);
+				print("\t\tdevice deemed detected.");
+			} catch (Throwable e) {
+				print("\t\tfailed! "+e);
+			}
+		}
+	} catch (Throwable e) {
+		print("\tfailed! ");
+	}
+}
+
+public void discover() {
+	detectedDevices.clear();
+	// Loop through libraries:
+	for (i=0;i<libs.size();++i) {
+		//mmc.sleep(1000);
+		lib = libs.get(i);
+		print("Library: "+lib);
+		if (!forbiddenLibs.contains(lib)) {
+			discover(lib);		
+		} else {
+			print("\tforbidden.");
+		}
+	}
+	
+	print("Detection done.\n\n");
+	
+	print("\"Detected\" Devices: -------------------");
+	
+	for (i=0;i<detectedDevices.size();++i) {
+		print(detectedDevices.get(i));
+	}
+	
+	print("----------------------------------------");
+	
+	//mmc.unloadAllDevices();
+}	
+
+public void unloadAll() {
+	mmc.unloadAllDevices();
+	detectedDevices.clear();
+}
+
+update();

@@ -1,0 +1,24 @@
+  // MeasureOutside.txt
+  // Measures the region outside of the current selection.
+  requires("1.30a");
+  if (selectionType()==-1)
+      exit("Selection required");
+  if (bitDepth()==24 || bitDepth()==32)
+      exit("8 or 16 bit image required"); 
+  id = getImageID();
+  run("Select None");
+  run("Duplicate...", "title=Temp");
+  selectWindow("Temp");
+  run("Restore Selection");
+  if (bitDepth()!=16)
+      run("16-bit");
+  setColor(65535);
+  fill();
+  run("Select None");
+  setThreshold(0, 65534);
+  run("Set Measurements...", "area mean standard min limit decimal=3");
+  run("Measure");
+  run("Close");
+  selectImage(id);
+  run("Restore Selection");
+

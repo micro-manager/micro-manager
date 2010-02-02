@@ -2,7 +2,6 @@ package org.micromanager.script;
 
 import org.micromanager.api.ScriptingEngine;
 import org.micromanager.api.ScriptingGUI;
-import org.micromanager.utils.MMLogger;
 import org.micromanager.utils.MMScriptException;
 
 import bsh.EvalError;
@@ -16,8 +15,8 @@ public class BeanshellEngine implements ScriptingEngine {
    boolean error_ = false;
    EvalThread evalThd_;
    boolean stop_ = false;
-   private static MMLogger logger_;
    private ScriptingGUI gui_;
+   private Interpreter interp_old_;
 
    public class EvalThread extends Thread {
       String script_;
@@ -42,7 +41,8 @@ public class BeanshellEngine implements ScriptingEngine {
             // has bugs and does not return line numbers
             String msg = e.getMessage();
             String lineNumberTxt = msg.substring(20, msg.indexOf(','));
-            MMLogger.getLogger().info(msg);
+            // TODO: logging
+            // core_.logMessage(msg);
             gui_.displayError("Parse error: " + msg, Integer.parseInt(lineNumberTxt));
          } catch (EvalError e) {
             int lineNo = e.getErrorLineNumber(); 
@@ -57,21 +57,34 @@ public class BeanshellEngine implements ScriptingEngine {
       }
    }
 
+   
+   public void setInterpreter(Interpreter interp) {
+	   interp_old_ = interp_;
+	   interp_ = interp;
+   }
+   
+   public void resetInterpreter() {
+	   interp_ = interp_old_;
+   }
+   
    public BeanshellEngine(ScriptingGUI gui) {
-      interp_ = new Interpreter();
+      //interp_ = new Interpreter();
       running_ = false;
       evalThd_ = new EvalThread("");
-      logger_ = new MMLogger();
       gui_ = gui;
    }
 
    public void evaluate(String script) throws MMScriptException {
       try {
          interp_.eval(script);
+    	 // interp_.set("micro_manager_script",script);
       } catch (EvalError e) {
          throw new MMScriptException(formatBeanshellError(e, e.getErrorLineNumber()));
       }
    }
+
+   
+   
    public void evaluateAsync(String script) throws MMScriptException {
       if (evalThd_.isAlive())
          throw new MMScriptException("Another script execution in progress!");
@@ -88,10 +101,16 @@ public class BeanshellEngine implements ScriptingEngine {
       }
    }
 
+   @SuppressWarnings("deprecation")
    public void stopRequest() {
-      if (evalThd_.isAlive())
-         evalThd_.interrupt();
+	  // Thread.stop() is deprecated, but I use it here
+	  // because it is apparently the only way to actually interrupt
+	  // a Thread executing a beanshell interpreter that has
+	  // been created external to it. Thread.interrupt() doesn't work.
+      if (evalThd_.isAlive())    	  
+         evalThd_.stop();
       stop_ = true;
+      
    }
 
    public boolean stopRequestPending() {
@@ -115,7 +134,7 @@ public class BeanshellEngine implements ScriptingEngine {
       try {
          Thread.sleep(ms);
       } catch (InterruptedException e) {
-         throw new MMScriptException("Execution interrupted by the user");
+         throw new MMScriptException	("Execution interrupted by the user");
       }
    }
 }

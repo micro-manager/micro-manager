@@ -1,0 +1,81 @@
+// CircularQuadrantMeasure.txt
+// This tool creates an oval (or circular) selection centered around
+// where you click and measures and labels its four quadrants:
+// 1) top right, 2) top left, 3) bottom left 4) bottom right.
+// Double click on the tool icon to change the radius.
+
+var radiusw = 30;
+var radiush = 30;
+
+macro "Measure And Label Tool-C00bO11cc" {
+    getCursorLoc(x, y, z, flags);
+    xc=x-radiusw;
+    yc= y-radiusw;
+    makeOval(xc, yc, radiusw*2, radiush*2);
+    getBoundingRect(x, y, width, height);
+    midx = x + width/2;
+    midy = y + height/2;
+    getSelectionCoordinates(sx, sy);
+    for (i=0; i<sx.length; i++)
+        if (sx[i]<midx) sx[i] = midx;
+    for (i=0; i<sy.length; i++)
+        if (sy[i]>midy) sy[i] = midy;
+    makeSelection(3, sx, sy); //top right quadrant
+    run("Measure");
+
+
+    makeOval(xc, yc, radiusw*2, radiush*2);
+    getBoundingRect(x, y, width, height);
+    midx = x + width/2;
+    midy = y + height/2;
+    getSelectionCoordinates(sx, sy);
+    for (i=0; i<sx.length; i++)
+        if (sx[i]>midx) sx[i] = midx;
+    for (i=0; i<sy.length; i++)
+        if (sy[i]>midy) sy[i] = midy;
+    makeSelection(3, sx, sy); //top left quadrant
+    run("Measure");
+
+    makeOval(xc, yc, radiusw*2, radiush*2);
+    getBoundingRect(x, y, width, height);
+    midx = x + width/2;
+    midy =  y + height/2;
+    getSelectionCoordinates(sx, sy);
+    for (i=0; i<sx.length; i++)
+        if (sx[i]>midx) sx[i] = midx;
+    for (i=0; i<sy.length; i++)
+        if (sy[i]<midy) sy[i] = midy;
+    makeSelection(3, sx, sy); //bottom left quadrant
+    run("Measure");
+
+    makeOval(xc, yc, radiusw*2, radiush*2);
+    getBoundingRect(x, y, width, height);
+    midx = x + width/2;
+    midy = y + height/2;
+    getSelectionCoordinates(sx, sy);
+    for (i=0; i<sx.length; i++)
+        if (sx[i]<midx) sx[i] = midx;
+    for (i=0; i<sy.length; i++)
+        if (sy[i]<midy) sy[i] = midy;
+    makeSelection(3, sx, sy); //bottom right quadrant
+    run("Measure");
+
+    // label after measuring
+    makeOval(xc, yc, radiusw*2, radiush*2);
+    run("Draw");
+    run("Select None");
+    n=nResults;
+    setJustification("center");
+    drawLine(xc,yc+radiush,xc+radiusw*2,yc+radiush);
+    drawLine(xc+radiusw,yc,xc+radiusw,yc+radiush*2);
+    drawString(""+(n-3),xc+radiusw*1.5,yc+radiush/1.5);
+    drawString(""+(n-2),xc+radiusw*0.5,yc+radiush/1.5);
+    drawString(""+(n-1), xc+radiusw*0.5,yc+radiush*1.5);
+    drawString(""+n,xc+radiusw*1.5,yc+radiush*1.5);
+}
+
+
+macro "Measure And Label Tool Options" {
+    radiusw = getNumber("Radiusw (pixels):", radiusw);
+    radiush = getNumber("Radiush (pixels):", radiush);
+}

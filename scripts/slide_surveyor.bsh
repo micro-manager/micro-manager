@@ -1,0 +1,519 @@
+// Arthur Edelstein
+// Micro-Manager 
+// UCSF, 2009
+// (Under development)
+
+long now, then;
+String lblthen="";
+showTime (String lbl) {
+	now = System.currentTimeMillis();
+	print(lblthen+"-"+lbl + ":" + (now-then));
+	lblthen = lbl;
+	then = now;
+}
+update();
+
+showTime("a");
+import org.micromanager.image5D.Image5D;
+import ij.ImagePlus;
+import ij.IJ;
+import ij.gui.Roi;
+import ij.gui.ImageWindow;
+import ij.process.ImageProcessor;
+import ij.process.ByteProcessor;
+import ij.process.ShortProcessor;
+import ij.process.ColorProcessor;
+import ij.plugin.frame.RoiManager;
+import ij.plugin.CanvasResizer;
+import java.awt.event.MouseAdapter;
+import java.awt.event.KeyAdapter;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.ActionEvent;
+import java.lang.Thread;
+import java.awt.Button;
+import java.awt.Label;
+import java.awt.TextField;
+import javax.swing.JPanel;
+
+import org.micromanager.utils.NumberUtils;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
+showTime("b");
+
+DIRECTION_RIGHT = 0;
+DIRECTION_UP = 1;
+DIRECTION_LEFT = 2;
+DIRECTION_DOWN = 3;
+
+
+source("/projects/micromanager1.3/scripts/roi_md_acquisition.bsh");
+showTime("b1");
+source("/projects/micromanager1.3/scripts/find_contiguous_regions.bsh");
+showTime("b2");
+source("/projects/micromanager1.3/scripts/place_patch_in_image5d.bsh");
+showTime("b3");
+source("/projects/micromanager1.3/scripts/MMAcquisitionMTMosaic.bsh");
+	
+showTime("c");
+// Coordinates (transforming between stage and "offscreen" pixels) -----
+
+AffineTransform offScreenToStageTransform;
+
+void setupCoordinateTransform(Point2D.Double origin, double angle, boolean flip, double pixelSize) {
+	offScreenToStageTransform = new AffineTransform();
+	offScreenToStageTransform.translate(origin.x, origin.y);
+	offScreenToStageTransform.rotate(angle);
+	if (flip)
+		offScreenToStageTransform.scale(-1,1); // Mirror the x-axis.
+	offScreenToStageTransform.scale(pixelSize, pixelSize);
+	//print(transform);
+}
+
+Point stageToOffScreen(Point2D.Double stagePos) {
+	offScreenValue = new Point2D.Double();
+	offScreenToStageTransform.inverseTransform(stagePos, offScreenValue);
+	return new Point((int)(offScreenValue.x + 0.5), (int)(offScreenValue.y + 0.5));
+}
+
+
+Point2D.Double offScreenToStage(Point offScreen) {
+	offScreenDouble = new Point2D.Double(offScreen.x, offScreen.y);
+	stageValue = new Point2D.Double();
+	offScreenToStageTransform.transform(offScreenDouble, stageValue);
+	return stageValue;
+}
+
+void setOrigin(Point2D.Double stagePos) {
+	setupCoordinateTransform(stagePos, angle, flip, pixelSize);
+}
+
+Point2D.Double moveOriginTo(Point offScreenPos) {
+	newOrigin = offScreenToStage(offScreenPos);
+	setOrigin(newOrigin);
+	return newOrigin;
+}
+
+	
+
+showTime("d");
+// Geometry utils  -------------------------------------------
+
+Point addVector(Point p1, Point p2) {
+	return new Point(p1.x + p2.x, p1.y + p2,y);
+}
+
+Rectangle unionRect(Rectangle rect1, Rectangle rect2) {
+	rect = new Rectangle();
+	rect.x = Math.min(rect1.x, rect2.x);
+	rect.y = Math.min(rect1.y, rect2.y);
+	rect.width = Math.max(rect1.x+rect1.width, rect2.x+rect2.width) - rect.x;
+	rect.height = Math.max(rect1.y+rect1.height, rect2.y+rect2.height) - rect.y;
+	return rect;
+}
+	
+
+// Stage commands -------------------------------------------
+
+Point2D.Double getXYStagePosition() {
+	return gui.getXYStagePosition();
+}
+
+void setXYStagePosition(x, y) {
+	gui.setXYStagePosition(x, y);
+
+}
+
+void setXYStagePosition(pos) {
+	setXYStagePosition(pos.x, pos.y);
+}
+
+stageGo(Point2D.Double stagePos) {
+	xystage = mmc.getXYStageDevice();
+	oldPos = getXYStagePosition();
+
+	if ((oldPos.x != stagePos.x) || (oldPos.y != stagePos.y)) {
+		while(mmc.deviceBusy(xystage));
+		setXYStagePosition(stagePos.x,stagePos.y);
+		while(mmc.deviceBusy(xystage)) {
+			updateStagePositionRect();
+			mmc.sleep(100);
+		}
+		updateStagePositionRect();
+	}
+}
+
+showTime("e");
+// ImageJ/dislay stuff -----------------------------
+
+ImageProcessor makeProcessor(short [] imgArray) {
+	w = (short) mmc.getImageWidth();
+	h = (short) mmc.getImageHeight();
+	return new ShortProcessor(w,h,imgArray,null);
+}
+
+ImageProcessor makeProcessor(byte [] imgArray) {
+	w = (short) mmc.getImageWidth();
+	h = (short) mmc.getImageHeight();
+	return new ByteProcessor(w,h,imgArray,null);
+}
+
+ImageProcessor makeProcessor(int [] imgArray) {
+	w = (short) mmc.getImageWidth();
+	h = (short) mmc.getImageHeight();
+	return new ColorProcessor(w,h,imgArray);
+}
+
+
+expandImagePlus(ImagePlus imgp, Point offScreenPos) {
+	proc = imgp.getProcessor();
+	posRect = new Rectangle(offScreenPos.x, offScreenPos.y, roiWidth, roiHeight);
+	procRect = new Rectangle(0, 0, imgp.getWidth(), imgp.getHeight());
+	finalRect = unionRect(posRect, procRect);
+
+	xoffset = - finalRect.x; // Should be positive
+	yoffset = - finalRect.y; // Should be positive
+
+	surveyorOrigin = moveOriginTo(new Point(finalRect.x, finalRect.y));
+
+	if (finalRect.width > procRect.width || finalRect.height > procRect.height) {
+		cr = new CanvasResizer();
+		win = imgp.getWindow();
+		cvs = win.getCanvas();
+		cr.zeroFill = true;
+
+		proc2 = cr.expandImage(proc,finalRect.width,finalRect.height,xoffset,yoffset);
+	
+		imgp.ip = proc2;
+
+		imgp.width = proc2.getWidth();
+		imgp.height = proc2.getHeight();
+		cvs.imageWidth = imgp.width;
+		cvs.imageHeight = imgp.height;
+
+		cvs.srcRect.x += xoffset; // Keep view in the same place.
+		cvs.srcRect.y += yoffset;
+
+		roiRect.x += xoffset; // Keep ROI rectangle in the same place.
+		roiRect.y += yoffset;
+
+		imgp.updateImage();
+		cvs.repaint();
+		win.repaint();
+		imgp.setRoi(roiRect);
+	}
+}
+
+placeSubImage(img,imgp,int x,int y) {
+	ipsmall = makeProcessor(img);
+	proc = imgp.getProcessor();
+	proc.insert(ipsmall, x, y);
+	imgp.updateImage();
+}
+
+slideToPixel(imgp,x,y) {
+	double steps = 32;
+	cvs = imgp.getCanvas();
+	win = imgp.getWindow();
+	r = cvs.srcRect;
+	roi = getROI();
+	w = roi[2];
+	h = roi[3];
+
+	xold = r.x;
+	yold = r.y;
+
+	imgw = imgp.getWidth();
+	imgh = imgp.getHeight();
+
+	if (x < r.x)
+		xnew = x;
+	else if ((x + w) > (r.x + r.width))
+		xnew = x + w - r.width;
+	else 
+		xnew = xold;
+
+	if (y < r.y)
+		ynew = y;
+	else if ((y + h) > (r.y + r.height))
+		ynew = y + h - r.height;
+	else 
+		ynew = yold;
+
+	deltax = xnew-xold;
+	deltay = ynew-yold;
+	
+	if ((deltax != 0) || (deltay != 0)) {
+		for (i=1;i<=steps;i++) {
+			r.x = (int) (xold + i*(deltax/steps));
+			r.y = (int) (yold + i*(deltay/steps));
+			mmc.sleep(1);
+			cvs.repaint();
+		}
+
+		
+	}
+	cvs.repaint();
+}
+
+updateMap(boolean doSnap) {
+	setOrigin(surveyorOrigin);
+
+	roi = getROI();
+	pixel = stageToOffScreen(getXYStagePosition());
+
+	expandImagePlus(imgp,pixel);
+	// Coordinates have changed, so re-read pixel position.
+	pixel = stageToOffScreen(getXYStagePosition());	
+
+	if (doSnap) {
+		img = acquire();
+		placeSubImage(img,imgp,pixel.x, pixel.y);
+	}
+	slideToPixel(imgp, pixel.x, pixel.y);
+}
+
+
+updateStagePositionRect() {
+	pixel = stageToOffScreen(getXYStagePosition());
+	roiRect.setLocation((int) pixel.x-1,(int) pixel.y-1);
+	imgp.setRoi(roiRect);
+}
+
+Point onScreenToOffScreen(Point onScreen) {
+	return new Point( cvs.offScreenX(onScreen.x), cvs.offScreenY(onScreen.y) );
+}
+showTime("f");
+
+// Camera utilities -----------------------------
+
+getROI() {
+	// ROI values are give as x,y,w,h in individual one-member arrays (pointers in C++):
+	a = new int[4][1];
+	mmc.getROI(a[0],a[1],a[2],a[3]);
+	// Return as a single array with x,y,w,h:
+	int[] roiRect = {a[0][0],a[1][0],a[2][0],a[3][0]};
+	return roiRect;
+}
+
+acquire() {
+	mmc.snapImage();
+	img0 = mmc.getImage();
+	proc = makeProcessor(img0);
+	return proc.getPixels();
+}
+
+// Spiral generator   -------------------------
+
+
+Vector generateSpiral(finalSideLength) {
+	traj = new Vector();
+	int n=0;
+	direction=0;
+	s=1;
+	pos = stageToOffScreen(getXYStagePosition());
+	int xSize = roiWidth - overlap;
+	int ySize = roiHeight - overlap;
+
+	while(n<finalSideLength*finalSideLength) {
+		
+		for (i=1;i<=s;i++) {
+			p = offScreenToStage(pos);
+			traj.add(p);
+			n++;
+
+			if (direction == DIRECTION_RIGHT)
+				pos.x += xSize;
+			if (direction == DIRECTION_LEFT)
+				pos.x -= xSize;
+			if (direction == DIRECTION_UP)
+				pos.y -= ySize;
+			if (direction == DIRECTION_DOWN)
+				pos.y += ySize;;
+	
+		}
+	
+		direction++;
+		direction %= 4;
+	
+		if ((direction == DIRECTION_LEFT) || (direction == DIRECTION_RIGHT))
+			s++;
+
+	}
+	
+	return traj;
+}
+
+
+// User input --------------------------------
+
+moveThread (keyCode) {
+	_keyCode = keyCode;
+	run () {
+		roi = getROI();
+		offScreenPos = stageToOffScreen(getXYStagePosition());
+
+		if (_keyCode == KeyEvent.VK_LEFT)
+			offScreenPos.x -= (roi[2] - overlap);
+		if (_keyCode == KeyEvent.VK_RIGHT)
+			offScreenPos.x += (roi[2] - overlap);
+		if (_keyCode == KeyEvent.VK_UP)
+			offScreenPos.y -= (roi[3] - overlap);
+		if (_keyCode == KeyEvent.VK_DOWN)
+			offScreenPos.y += (roi[3] - overlap);
+		if (_keyCode == KeyEvent.VK_ENTER)
+			cvs.requestFocus();
+
+		stageGo(offScreenToStage(offScreenPos));
+		updateMap(true);
+	}
+	return this;
+}
+
+spiralButtonThread() {
+	run () {
+		doSpiral(NumberUtils.displayStringToInt(spiralSizeInput.getText()));
+	}
+	return this;
+}
+
+mouseClickThread(clickCount,x,y) {
+	run () {
+		setOrigin(surveyorOrigin);
+		if (clickCount==1) {
+			offScreenPos = onScreenToOffScreen(new Point(x,y));
+			offScreenPos.x -= (int) (0.5 + roiWidth/2);
+			offScreenPos.y -= (int) (0.5 + roiHeight/2);
+			stageGo(offScreenToStage(offScreenPos));
+		}
+		else if (clickCount==2) {
+			xystage = mmc.getXYStageDevice();
+			while(mmc.deviceBusy(xystage));
+			updateMap(true);
+		}
+	}
+	return this;
+}
+
+void processKeyPress(keyCode) {
+	if ((keyCode>=KeyEvent.VK_LEFT && keyCode<=KeyEvent.VK_DOWN) || keyCode==KeyEvent.VK_ENTER) {
+		new Thread(moveThread(keyCode)).start();
+	}
+}
+
+// Functions for use in the interactive interpreter:
+
+void setRange(int min, int max) {
+	imgp.getProcessor().setMinAndMax(min,max);
+	imgp.updateAndDraw();
+}
+
+doSpiral(n) {
+	origOffScreenPos = stageToOffScreen(getXYStagePosition());
+	traj = generateSpiral(n);
+
+	for (trajStep : traj) {
+		stageGo(trajStep);
+		updateMap(true);
+	}
+}
+
+showTime("g");
+
+update();
+
+//// Main Program ///////////////////////////////////////////////////
+
+
+boolean flip = false;
+int rotate = 3;
+int overlap = 5; // in pixels
+
+
+
+roi = getROI(); // in pixels
+roiWidth = roi[2]; 
+roiHeight = roi[3];
+pixelSize = mmc.getPixelSizeUm();
+
+if (pixelSize==0) {
+	print("Pixels not calibrated! Please calibrated them first before using the Surveyor.");
+	return;
+	}
+
+if (mmc.getBytesPerPixel()==1)
+	typeString = "8-bit black";
+if (mmc.getBytesPerPixel()==2)
+	typeString = "16-bit black";
+if (mmc.getBytesPerPixel()==4)
+	typeString = "RGB black";
+imgp = IJ.createImage("Slide surveyor",typeString,roiWidth,roiHeight,1);
+win = new ImageWindow(imgp);
+controls = new JPanel();
+spiralText = new Label("Spiral: ");
+spiralSizeInput = new TextField("5");
+spiralButton = new Button("Go!");
+acquireButton = new Button("Acquire ROIs...");
+controls.add(spiralText);
+spiralSizeInput.setColumns(2);
+controls.add(spiralSizeInput);
+controls.add(spiralButton);
+controls.add(acquireButton);
+win.add(controls);
+win.pack();
+
+showTime("h");
+
+double [] angles = {0.,Math.PI/2., Math.PI, Math.PI*3./2.};
+//angle = angles[rotate];
+angle = 4.75;
+surveyorOrigin = getXYStagePosition();
+setupCoordinateTransform(surveyorOrigin, angle, flip, pixelSize);
+
+roiRect = new Roi(-1,-1,imgp.getWidth()+1,imgp.getHeight()+1);
+imgp.setRoi(roiRect);
+
+Point2D.Double stagePos = getXYStagePosition();
+
+img = acquire();
+placeSubImage(img,imgp,0,0);
+slideToPixel(imgp,0,0);
+
+cvs = win.getCanvas();
+
+showTime("i");
+
+cvs.addKeyListener(new KeyAdapter() {
+	public void keyPressed(KeyEvent e) {
+		processKeyPress(e.keyCode);
+	}
+});
+
+cvs.addMouseListener(new MouseAdapter() {
+	public void mouseClicked(MouseEvent e) {
+		new Thread(mouseClickThread(e.getClickCount(),e.getX(),e.getY())).start();
+	}
+});
+
+spiralButton.addActionListener(new ActionListener() {
+	public void actionPerformed(ActionEvent e) {
+		new Thread(spiralButtonThread()).start();
+		cvs.requestFocus();
+	}
+});
+
+showTime("x");
+acquireButton.addActionListener(new ActionListener() {
+	public void actionPerformed(ActionEvent e) {
+		eng = newMosaicEngine();
+		createMosaicAcqDialog(eng);
+	}
+});
+showTime("y");
+rm = new RoiManager();
+RoiManager.instance=rm;
+cvs.setShowAllROIs(true);
+cvs.requestFocus();
+showTime("z");

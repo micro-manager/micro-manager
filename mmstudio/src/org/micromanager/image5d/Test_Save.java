@@ -1,16 +1,20 @@
 package org.micromanager.image5d;
 
-import java.io.*;
-
-import ij.*;
-import ij.io.*;
+import ij.IJ;
+import ij.ImageJ;
+import ij.ImagePlus;
+import ij.WindowManager;
+import ij.io.FileInfo;
+import ij.io.SaveDialog;
+import ij.io.TiffEncoder;
 import ij.measure.Calibration;
-import ij.plugin.*;
+import ij.plugin.PlugIn;
 import ij.process.ImageProcessor;
-/*
- * Created on 21.08.2005
- *
- */
+
+import java.io.BufferedOutputStream;
+import java.io.DataOutputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 /**
  * For testing ImageJ extensions for saving extra Metadata
@@ -100,7 +104,7 @@ public boolean saveAsTiffStack(String path) {
 }
     
 void showErrorMessage(IOException e) {
-	IJ.error("An error occured writing the file.\n \n" + e);
+	IJ.error("An error occurred writing the file.\n \n" + e);
 }
 
 /** Returns a string containing information about the specified  image. */

@@ -1,0 +1,11 @@
+    // Converta an 16-bit image to 8 bits by multiplying by 0.00389 (255/65535)
+    if (bitDepth!=16)
+        exit('16 bit image required');
+    p1 = getPixel(0, 0);
+    p2 = getPixel(1, 0);
+    setPixel(0, 0, 65535);
+    setPixel(1, 0, 0);
+    resetMinAndMax();
+    run("8-bit");
+    setPixel(0, 0, p1*0.00389);
+    setPixel(1, 0, p2*0.00389);

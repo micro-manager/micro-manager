@@ -31,7 +31,7 @@
 #include <map>
 
 #ifdef WIN32
-#pragma warning(disable : 4996) // disable warning for deperecated CRT functions on Windows 
+#pragma warning(disable : 4996) // disable warning for deprecated CRT functions on Windows 
 #endif
 
 namespace MM {
@@ -170,6 +170,7 @@ public:
    double GetUpperLimit() const {return limits_ ? upperLimit_ : 0.0;}
    bool SetLimits(double lowerLimit, double upperLimit)
    {
+      limits_ = true;
       // do not allow limits for properties with discrete values defined
       if (values_.size() > 0)
          limits_ = false;
@@ -177,7 +178,6 @@ public:
       if (lowerLimit >= upperLimit)
          limits_ = false;
 
-      limits_ = true;
       lowerLimit_ = lowerLimit;
       upperLimit_ = upperLimit;
 
@@ -241,7 +241,7 @@ private:
 class FloatProperty : public Property
 {
 public:
-   FloatProperty(): Property(), value_(0.0), decimalPlaces_(2) {}      
+   FloatProperty(): Property(), value_(0.0), decimalPlaces_(4) {}      
    virtual ~FloatProperty() {};
             
    PropertyType GetType() {return Float;}
@@ -307,6 +307,7 @@ public:
    int CreateProperty(const char* name, const char* value, PropertyType eType, bool bReadOnly, ActionFunctor* pAct=0, bool initStatus=false);
    int RegisterAction(const char* name, ActionFunctor* fpAct);
    int SetAllowedValues(const char* name, std::vector<std::string>& values);
+   int ClearAllowedValues(const char* name);
    int AddAllowedValue(const char* name, const char* value, long data);
    int AddAllowedValue(const char* name, const char* value);
    int GetPropertyData(const char* name, const char* value, long& data);

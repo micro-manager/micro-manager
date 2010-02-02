@@ -21,37 +21,48 @@
 
 package org.micromanager.navigation;
 
-import ij.*;
-import ij.gui.*;
+import ij.WindowManager;
+import ij.gui.ImageCanvas;
+import ij.gui.ImageWindow;
+
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 
 import javax.swing.JOptionPane;
+
+import org.micromanager.MMStudioMainFrame;
 import mmcorej.CMMCore;
+import org.micromanager.utils.ReportingUtils;
 
 /**
 */
 public class ZWheelListener implements MouseWheelListener {
    private CMMCore core_;
+   private MMStudioMainFrame gui_;
    private ImageCanvas canvas_;
    private static boolean isRunning_ = false;
-   private static final double moveIncrement_ = 0.10;
+   private static final double moveIncrement_ = 0.20;
 
-   public ZWheelListener(CMMCore core) {
+   public ZWheelListener(CMMCore core, MMStudioMainFrame gui) {
       core_ = core;
+      gui_ = gui;
    }
 
    public void start () {
-      if (isRunning_)
-         return;
-
-      isRunning_ = true;
-
       // Get a handle to the AcqWindow
-      if (WindowManager.getFrame("AcqWindow") != null) {
-         ImagePlus img = WindowManager.getImage("AcqWindow");
-         attach(img);
+      if (WindowManager.getCurrentWindow() != null) {
+         start (WindowManager.getCurrentWindow());
       }
+   }
+   
+   public void start (ImageWindow img) {
+      if (isRunning_)
+         stop(); 
+
+	  isRunning_ = true;
+	  if (img != null) {
+		  attach(img);
+	  }
    }
 
    public void stop() {
@@ -65,10 +76,9 @@ public class ZWheelListener implements MouseWheelListener {
       return isRunning_;
    }
 
-   public void attach(ImagePlus img) {
+   public void attach(ImageWindow win) {
       if (!isRunning_)
          return;
-      ImageWindow win = img.getWindow();
       canvas_ = win.getCanvas();
       canvas_.addMouseWheelListener(this);
       // TODO:  add to ImageJ Toolbar
@@ -78,26 +88,30 @@ public class ZWheelListener implements MouseWheelListener {
    }
 
    public void mouseWheelMoved(MouseWheelEvent e) {
-      // Get needed info from core
-      String zStage = core_.getFocusDevice();
-      if (zStage == null)
-         return;
+	  synchronized(this) {
+		  // Get needed info from core
+		  String zStage = core_.getFocusDevice();
+		  if (zStage == null)
+			  return;
  
-      double moveIncrement = moveIncrement_;
-      double pixSizeUm = core_.getPixelSizeUm();
-      if (pixSizeUm > 0.0) {
-         moveIncrement = pixSizeUm;
-      }
-      // Get coordinates of event
-      int move = e.getWheelRotation();
+		  double moveIncrement = moveIncrement_;
+		  double pixSizeUm = core_.getPixelSizeUm();
+		  if (pixSizeUm > 0.0) {
+			  moveIncrement = 2 * pixSizeUm;
+		  }
+		  // Get coordinates of event
+		  int move = e.getWheelRotation();
+		  
+		  // Move the stage
+		  try {
+			  core_.setRelativePosition(zStage, move * moveIncrement);
+		  } catch (Exception ex) {
+			  ReportingUtils.showError(ex);
+			  return;
+		  }
 
-      // Move the stage
-      try {
-         core_.setRelativePosition(zStage, move * moveIncrement);
-      } catch (Exception ex) {
-         JOptionPane.showMessageDialog(null, ex.getMessage()); 
-         return;
-      }
+        gui_.updateZPosRelative(move * moveIncrement);
+	  }
 
    } 
 

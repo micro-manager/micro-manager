@@ -1,0 +1,20 @@
+// "Show_Selection_As_Text"
+// This macro displays the contents of
+// the current selection in the Results
+// window.
+
+  macro 'Show Selection as Text' { 
+      if (selectionType==-1)
+          exit('Rectangular selection required');
+      getBoundingRect(xbase, ybase, width, height);
+      if (width>29)
+          exit('Selection cannot be wider than 29 pixels');
+      run('Clear Results');
+      for (y=ybase; y<ybase+height; y++) {
+          setResult('Label', y-ybase, y);
+          for (x=xbase; x<xbase+width; x++) {
+              setResult(''+x, y-ybase, getPixel(x,y));
+          }
+      }
+      updateResults;
+  }

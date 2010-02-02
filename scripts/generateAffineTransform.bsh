@@ -1,0 +1,70 @@
+import org.apache.commons.math.linear.*;
+import java.awt.geom.*;
+
+public void insertPoint2DInMatrix(RealMatrix m, Point2D.Double pt, int row) {
+	// Set row to [x,y,1]:
+	m.setEntry(row, 0, pt.x);
+	m.setEntry(row, 1, pt.y);
+	m.setEntry(row, 2, 1);
+}
+
+public AffineTransform generateAffineTransformFromPointPairs(Map pointPairs) {
+	u = new Array2DRowRealMatrix(pointPairs.size(),3);
+	v = new Array2DRowRealMatrix(pointPairs.size(),3);
+
+	// Create u (source) and v (dest) matrices whose row vectors
+	// are [x,y,1] for each Point2D.Double:
+
+	int i = 0;
+	for (Map.Entry pair:pointPairs.entrySet()) {
+		uPt = pair.getKey();
+		vPt = pair.getValue();
+	
+		insertPoint2DInMatrix(u,uPt,i);
+		insertPoint2DInMatrix(v,vPt,i);
+	
+		i++;
+	}
+
+	// Find the 3x3 linear least squares solution to u*m'=v
+	// (the last row should be [0,0,1]):
+	solver = (new QRDecompositionImpl(u)).getSolver();
+	double[][] m = solver.solve(v).transpose().getData();
+
+	// Create an AffineTransform object from the elements of m
+	// (the last row is omitted as specified in AffineTransform class):
+	return new AffineTransform(m[0][0], m[1][0], m[0][1], m[1][1], m[0][2], m[1][2]);
+}
+
+public void runAffineTest() {
+
+	pointPairs = new HashMap();
+
+
+	// Create sample src and dest points:
+	pointPairs.put(new Point2D.Double(1,1),new Point2D.Double(18,2));
+	pointPairs.put(new Point2D.Double(1,9),new Point2D.Double(2,2));
+	pointPairs.put(new Point2D.Double(9,9),new Point2D.Double(2,18));
+	pointPairs.put(new Point2D.Double(9,1),new Point2D.Double(18,18));
+
+	// Run the computation to be tested:
+	affineTransform = generateAffineTransformFromPointPairs(pointPairs);
+
+	// Print input and output:
+	print(pointPairs);
+	print(affineTransform);
+
+	// Check that affineTransform works correctly:
+	for (Map.Entry pair:pointPairs.entrySet()) {
+		uPt = pair.getKey();
+		vPt = pair.getValue();
+		result = new Point2D.Double();	
+		affineTransform.transform(uPt,result);
+		print(uPt+"->"+result+" residual: "+vPt.distance(result));
+	
+		i++;
+	}
+}
+
+update();
+

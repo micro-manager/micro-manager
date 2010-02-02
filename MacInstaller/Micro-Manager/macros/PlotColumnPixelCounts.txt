@@ -1,0 +1,16 @@
+// For each column in the image, this macro plots on the 
+// y-axis the number of pixels in that column that fall in a 
+// given grayscale value range (default: 40<value<110).
+  v1=40;  v2=110;
+  width=getWidth; height=getHeight;
+  counts = newArray(width);
+  for (x=0; x<width; x++) {
+      for (y=0; y<height; y++) {
+          value = getPixel(x,y);
+          if (value>v1 && value<v2)
+              counts[x]++;
+      }
+      if (x%10==0) showProgress(x, width);
+  }
+  yLabel = "Count ("+v1+"<v<"+v2+")";
+  Plot.create("Column Pixel Counts", "X", yLabel, counts);

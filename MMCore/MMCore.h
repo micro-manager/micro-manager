@@ -67,6 +67,11 @@
 #include "Error.h"
 #include "ErrorCodes.h"
 
+//class ACE_Mutex;
+
+#include "../MMDevice/DeviceThreads.h"
+
+
 // forward declarations
 class CircularBuffer;
 class Configuration;
@@ -78,6 +83,8 @@ class CoreCallback;
 class PixelSizeConfigGroup;
 class Metadata;
 class MMEventCallback;
+
+typedef unsigned int* imgRGB32;
 
 /**
  * The interface to the core image acquisition services.
@@ -180,12 +187,16 @@ public:
    std::string getXYStageDevice();
    std::string getAutoFocusDevice();
    std::string getImageProcessorDevice();
+   std::string getSLMDevice();
+   std::string getChannelGroup();
    void setCameraDevice(const char* cameraLabel) throw (CMMError);
    void setShutterDevice(const char* shutterLabel) throw (CMMError);
    void setFocusDevice(const char* focusLabel) throw (CMMError);
    void setXYStageDevice(const char* xyStageLabel) throw (CMMError);
    void setAutoFocusDevice(const char* focusLabel) throw (CMMError);
    void setImageProcessorDevice(const char* procLabel) throw (CMMError);
+   void setSLMDevice(const char* slmLabel) throw (CMMError);
+   void setChannelGroup(const char* channelGroup) throw (CMMError);
    //@ }
 
 
@@ -193,25 +204,32 @@ public:
     * A single configuration applies to multiple devices at the same time.
     */
    //@ {
-   void defineConfig(const char* groupName, const char* configName, const char* deviceName, const char* propName, const char* value);
+   void defineConfig(const char* groupName, const char* configName) throw (CMMError);
+   void defineConfig(const char* groupName, const char* configName, const char* deviceName, const char* propName, const char* value) throw (CMMError);
    void defineConfigGroup(const char* groupName) throw (CMMError);
    void deleteConfigGroup(const char* groupName) throw (CMMError);
+   void renameConfigGroup(const char* oldGroupName, const char* newGroupName) throw (CMMError);
    bool isGroupDefined(const char* groupName);
    bool isConfigDefined(const char* groupName, const char* configName);
    void setConfig(const char* groupName, const char* configName) throw (CMMError);
    void deleteConfig(const char* groupName, const char* configName) throw (CMMError);
+   void deleteConfig(const char* groupName, const char* configName, const char* deviceLabel, const char* propName) throw (CMMError);
+   void renameConfig(const char* groupName, const char* oldConfigName, const char* newConfigName) throw (CMMError);
    std::vector<std::string> getAvailableConfigGroups() const;
    std::vector<std::string> getAvailableConfigs(const char* configGroup) const;
    std::string getCurrentConfig(const char* groupName) const throw (CMMError);
    Configuration getConfigData(const char* configGroup, const char* configName) const throw (CMMError);
+   std::string getCurrentPixelSizeConfig() const throw (CMMError);
    double getPixelSizeUm() const;
-   double getPixelSizeUm(const char* resolutionID) throw (CMMError);
+   double getPixelSizeUmByID(const char* resolutionID) throw (CMMError);
    double getMagnificationFactor() const;
    void setPixelSizeUm(const char* resolutionID, double pixSize)  throw (CMMError);
    void definePixelSizeConfig(const char* resolutionID, const char* deviceName, const char* propName, const char* value);
+   void definePixelSizeConfig(const char* resolutionID);
    std::vector<std::string> getAvailablePixelSizeConfigs() const;
    bool isPixelSizeConfigDefined(const char* resolutionID) const;
    void setPixelSizeConfig(const char* resolutionID) throw (CMMError);
+   void renamePixelSizeConfig(const char* oldConfigName, const char* newConfigName) throw (CMMError);
    void deletePixelSizeConfig(const char* configName) const throw (CMMError);
    Configuration getPixelSizeConfigData(const char* configName) const throw (CMMError);
 
@@ -233,7 +251,7 @@ public:
    unsigned getImageHeight() const;
    unsigned getBytesPerPixel() const;
    unsigned getImageBitDepth() const;
-   unsigned getNumberOfChannels() const;
+   unsigned getNumberOfComponents() const;
    std::vector<std::string> getChannelNames() const;
    long getImageBufferSize() const;
    void assignImageSynchro(const char* deviceLabel) throw (CMMError);
@@ -243,17 +261,20 @@ public:
    bool getAutoShutter();
    void setShutterOpen(bool state) throw (CMMError);
    bool getShutterOpen() throw (CMMError);
-   void startSequenceAcquisition(long numImages, double intervalMs) throw (CMMError);
+
+   void startSequenceAcquisition(long numImages, double intervalMs, bool stopOnOverflow) throw (CMMError);
+   void startSequenceAcquisition(const char* cameraLabel, long numImages, double intervalMs, bool stopOnOverflow) throw (CMMError);
+   void prepareSequenceAcquisition(const char* cameraLabel) throw (CMMError);
+   void startContinuousSequenceAcquisition(double intervalMs) throw (CMMError);
    void stopSequenceAcquisition() throw (CMMError);
+   void stopSequenceAcquisition(const char* label) throw (CMMError);
+   bool isSequenceRunning() throw ();
+   bool isSequenceRunning(const char* label) throw (CMMError);
    void* getLastImage() const throw (CMMError);
    void* popNextImage() throw (CMMError);
 
    void* getLastImageMD(unsigned channel, unsigned slice, Metadata& md) const throw (CMMError);
    void* popNextImageMD(unsigned channel, unsigned slice, Metadata& md) throw (CMMError);
-
-   long snapImageMD() throw (CMMError);
-   void* getImageMD(long handle, unsigned channel, unsigned slice) throw (CMMError);
-   Metadata getImageMetadata(long handle, unsigned channel, unsigned slice) throw (CMMError);
 
    long getRemainingImageCount();
    long getBufferTotalCapacity();
@@ -261,18 +282,22 @@ public:
    double getBufferIntervalMs() const;
    bool isBufferOverflowed() const;
    void setCircularBufferMemoryFootprint(unsigned sizeMB) throw (CMMError);
+   void intializeCircularBuffer() throw (CMMError);
    //@ }
 
    /** @name Auto-focusing
     * API for controlling auto-focusing devices or software modules.
     */
    //@ {
-   double getFocusScore();
+   double getLastFocusScore();
+   double getCurrentFocusScore();
    void enableContinuousFocus(bool enable) throw (CMMError);
    bool isContinuousFocusEnabled() throw (CMMError);
    bool isContinuousFocusLocked() throw (CMMError);
    void fullFocus() throw (CMMError);
    void incrementalFocus() throw (CMMError);
+   void setAutoFocusOffset(double offset) throw (CMMError);
+   double getAutoFocusOffset() throw (CMMError);
    //@}
 
    /** @name State device support
@@ -328,12 +353,26 @@ public:
    std::vector<char> readFromSerialPort(const char* deviceLabel) throw (CMMError);
    //@ }
 
+   /** @name SLM control
+    * API for spatial light modulators such as liquid crystal on silicon (LCoS), digital micromirror devices (DMD), or multimedia projectors. 
+    */
+   //@ {
+   void setSLMImage(const char* deviceLabel, unsigned char * pixels) throw (CMMError);
+   void setSLMImage(const char* deviceLabel, imgRGB32 pixels) throw (CMMError);
+   void setSLMPixelsTo(const char* deviceLabel, unsigned char intensity) throw (CMMError);
+   void setSLMPixelsTo(const char* deviceLabel, unsigned char red, unsigned char green, unsigned char blue) throw (CMMError);
+   void displaySLMImage(const char* deviceLabel) throw (CMMError);
+   unsigned getSLMWidth(const char* deviceLabel) const;
+   unsigned getSLMHeight(const char* deviceLabel) const;
+   unsigned getSLMNumberOfComponents(const char* deviceLabel) const;
+   unsigned getSLMBytesPerPixel(const char* deviceLabel) const;
+   //@ }
+
    /** @name "  "
     */
    //@ {
    
    //@ }
-
 private:
    // make object non-copyable
    CMMCore(const CMMCore& /*c*/) {}
@@ -342,11 +381,20 @@ private:
    typedef std::map<std::string, Configuration*> CConfigMap;
    typedef std::map<std::string, PropertyBlock*> CPropBlockMap;
 
+   //static ACE_Mutex deviceLock_;
+	static MMThreadLock deviceLock_;
+
+   char* pathBuf_; // cached version of current working directoy
+
    MM::Camera* camera_;
+	bool everSnapped_;
    MM::Shutter* shutter_;
    MM::Stage* focusStage_;
    MM::XYStage* xyStage_;
    MM::AutoFocus* autoFocus_;
+   MM::SLM* slm_;
+
+   std::string channelGroup_;
    MM::ImageProcessor* imageProcessor_;
    long pollingIntervalMs_;
    long timeoutMs_;
@@ -376,6 +424,7 @@ private:
    std::string getDeviceErrorText(int deviceCode, MM::Device* pDevice) const;
    std::string getDeviceName(MM::Device* pDev);
    void logError(const char* device, const char* msg, const char* file=0, int line=0) const;
+   void updateAllowedChannelGroups();
 
    // >>>>> OBSOLETE >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
    void defineConfiguration(const char* configName, const char* deviceName, const char* propName, const char* value);
@@ -385,6 +434,11 @@ private:
    std::vector<std::string> getAvailableConfigurations() const;
    std::string getConfiguration() const;
    Configuration getConfigurationData(const char* config) const throw (CMMError);
+
+
+   MMThreadLock* pPostedErrorsLock_;
+   mutable std::vector<std::pair< int, std::string> > postedErrors_;
+
 };
 
 #endif //_MMCORE_H_

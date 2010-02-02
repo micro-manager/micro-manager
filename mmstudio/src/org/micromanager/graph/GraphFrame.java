@@ -41,6 +41,7 @@ import javax.swing.UIManager;
 import javax.swing.border.LineBorder;
 
 import org.micromanager.utils.MMFrame;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  * XY Graph window.
@@ -65,7 +66,7 @@ public class GraphFrame extends MMFrame {
          GraphFrame frame = new GraphFrame();
          frame.setVisible(true);
       } catch (Exception e) {
-         e.printStackTrace();
+         ReportingUtils.showError(e);
       }
    }
    
@@ -99,6 +100,23 @@ public class GraphFrame extends MMFrame {
       }
       panel_.setBounds(bounds);
       panel_.repaint();
+   }
+   // This is a temporary hack to allow the setting of xlimits manually as the
+   // auto identification is buggy. --Prashanth (14th May 2009)
+   public void SetXLimits(double xmin, double xmax)
+   {
+	      GraphData.Bounds bounds = panel_.getGraphBounds();
+	      if (fldXMin.getText().length() > 0 && fldYMin.getText().length() > 0 && 
+	          fldXMax.getText().length() > 0 && fldYMax.getText().length() > 0 )
+	      {      
+	         bounds.xMin = xmin;
+	         bounds.xMax = xmax;
+	         bounds.yMin = Double.parseDouble(fldYMin.getText());
+	         bounds.yMax = Double.parseDouble(fldYMax.getText());
+	       }
+	      panel_.setBounds(bounds);
+	      panel_.repaint();
+	   
    }
 
    public GraphFrame() {

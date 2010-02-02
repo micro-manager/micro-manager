@@ -26,12 +26,12 @@ package org.micromanager.conf;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.Vector;
 import java.util.prefs.Preferences;
-import java.awt.event.KeyEvent;
 
 import javax.swing.InputMap;
 import javax.swing.JCheckBox;
@@ -44,6 +44,10 @@ import javax.swing.ListCellRenderer;
 import javax.swing.ListSelectionModel;
 import javax.swing.border.LineBorder;
 import javax.swing.table.TableColumn;
+import org.micromanager.utils.PropertyItem;
+import org.micromanager.utils.PropertyNameCellRenderer;
+import org.micromanager.utils.PropertyValueCellEditor;
+import org.micromanager.utils.PropertyValueCellRenderer;
 
 /**
  * Config Wizard COM ports page.
@@ -154,11 +158,11 @@ public class ComPortsPage extends PagePanel {
                Setting s = ptm.getSetting(i);
                core_.setProperty(s.deviceName_, s.propertyName_, s.propertyValue_);
                Device dev = model_.findSerialPort(s.deviceName_);
-               Property prop = dev.findSetupProperty(s.propertyName_);
+               PropertyItem prop = dev.findSetupProperty(s.propertyName_);
                if (prop == null)
-                  dev.addSetupProperty(new Property(s.propertyName_, s.propertyValue_, true));
+                  dev.addSetupProperty(new PropertyItem(s.propertyName_, s.propertyValue_, true));
                else
-                  prop.value_ = s.propertyValue_;
+                  prop.value = s.propertyValue_;
             }
          }
       } catch (Exception e) {
@@ -193,8 +197,8 @@ public class ComPortsPage extends PagePanel {
                core_.loadDevice(ports[i].getAdapterName(), ports[i].getLibrary(), ports[i].getAdapterName());
                // apply setup properties
                for (int j=0; j<ports[i].getNumberOfSetupProperties(); j++) {
-                  Property p = ports[i].getSetupProperty(j);
-                  core_.setProperty(ports[i].getName(), p.name_, p.value_);
+                  PropertyItem p = ports[i].getSetupProperty(j);
+                  core_.setProperty(ports[i].getName(), p.name, p.value);
                }
                
                ports[i].loadDataFromHardware(core_);
@@ -205,14 +209,20 @@ public class ComPortsPage extends PagePanel {
       
       PropertyTableModel tm = new PropertyTableModel(this, model_, PropertyTableModel.COMPORT);
       portTable_.setModel(tm);
-      PropertyCellEditor cellEditor = new PropertyCellEditor();
-      PropertyCellRenderer renderer = new PropertyCellRenderer();
-     
+      PropertyValueCellEditor propValueEditor = new PropertyValueCellEditor();
+      PropertyValueCellRenderer propValueRenderer = new PropertyValueCellRenderer();
+      PropertyNameCellRenderer propNameRenderer = new PropertyNameCellRenderer();
+
+
       if (portTable_.getColumnCount() == 0) {
-         for (int k=0; k < tm.getColumnCount(); k++) {
-            TableColumn column = new TableColumn(k, 200, renderer, cellEditor);
+            TableColumn column;
+            column = new TableColumn(0, 200, propNameRenderer, null);
             portTable_.addColumn(column);
-         }
+            column = new TableColumn(1, 200, propNameRenderer, null);
+            portTable_.addColumn(column);
+            column = new TableColumn(2, 200, propValueRenderer, propValueEditor);
+            portTable_.addColumn(column);
+         
       }
 
       tm.fireTableStructureChanged();

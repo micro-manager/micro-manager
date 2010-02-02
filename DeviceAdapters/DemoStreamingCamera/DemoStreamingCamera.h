@@ -26,7 +26,6 @@
 #ifndef _DEMO_STREAMINGCAMERA_H_
 #define _DEMO_STREAMINGCAMERA_H_
 
-#include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/DeviceBase.h"
 #include "../../MMDevice/ImgBuffer.h"
 #include "../../MMDevice/DeviceThreads.h"
@@ -41,8 +40,6 @@
 #define ERR_BUSY_ACQIRING           105
 #define ERR_UNSUPPORTED_IMAGE_TYPE  106
 #define ERR_DEVICE_NOT_AVAILABLE    107
-
-class AcqSequenceThread;
 
 //////////////////////////////////////////////////////////////////////////////
 // DemoStreamingCamera class
@@ -67,8 +64,8 @@ public:
    int SnapImage();
    const unsigned char* GetImageBuffer();
    const unsigned int* GetImageBufferAsRGB32();
-   unsigned GetNumberOfChannels() const;
-   int GetChannelName(unsigned int channel, char* name);
+   unsigned GetNumberOfComponents() const;
+   int GetComponentName(unsigned int channel, char* name);
    unsigned GetImageWidth() const;
    unsigned GetImageHeight() const;
    unsigned GetImageBytesPerPixel() const;
@@ -79,8 +76,8 @@ public:
    int SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize); 
    int GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize); 
    int ClearROI();
-   int StartSequenceAcquisition(long numImages, double interval_ms);
-   int StopSequenceAcquisition();
+   int StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow);
+   int PrepareSequenceAcqusition() {return DEVICE_OK;}
    double GetNominalPixelSizeUm() const {return nominalPixelSizeUm_;}
    double GetPixelSizeUm() const {return nominalPixelSizeUm_ * GetBinning();}
    int GetBinning() const;
@@ -93,12 +90,15 @@ public:
    int OnReadoutTime(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnColorMode(MM::PropertyBase* pProp, MM::ActionType eAct);
 
-   // custom interface for thread callbacks
-   long GetCounter() {return imageCounter_;}
-   long GetSequenceLength() {return sequenceLength_;}
    int PushImage();
 
 private:
+
+   //Do necessary for capturing
+   //Is called from the thread function
+   //Overrides ones defined in the CCameraBase class 
+   int ThreadRun();
+
    static const double nominalPixelSizeUm_;
    static const int imageSize_;
 
@@ -107,15 +107,23 @@ private:
    bool busy_;
    long readoutUs_;
    MM::MMTime readoutStartTime_;
-   AcqSequenceThread* acqThread_;
-   long imageCounter_;
-   long sequenceLength_;
-   bool acquiring_;
+   MM::MMTime startTime_;
    bool color_;
    unsigned char* rawBuffer_;
+   bool stopOnOverflow_;
+   MMThreadLock rawBufferLock_;
 
    void GenerateSyntheticImage(ImgBuffer& img, double exp);
-   int ResizeImageBuffer();
+
+   int ResizeImageBuffer(  int imageSizeW = imageSize_, 
+                           int imageSizeH = imageSize_);
+   int ResizeImageBuffer(
+                           int imageSizeW, 
+                           int imageSizeH, 
+                           int byteDepth, 
+                           int binSize = 1);
+   int CopyToRawBuffer();
+
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -183,19 +191,23 @@ private:
 
 /**
  * Acquisition thread
- */
+ *
 class AcqSequenceThread : public MMDeviceThreadBase
 {
 public:
    AcqSequenceThread(DemoStreamingCamera* pCam) : 
-      intervalMs_(100.0), numImages_(1), busy_(false), stop_(false) {camera_ = pCam;}
+      intervalMs_(100.0), numImages_(1), busy_(false), stop_(false), suspend_(false), suspended_(false)
+      {camera_ = pCam;}
    ~AcqSequenceThread() {}
    int svc(void);
 
    void SetInterval(double intervalMs) {intervalMs_ = intervalMs;}
    void SetLength(long images) {numImages_ = images;}
-   void Stop() {stop_ = true;}
+   void Stop();
    void Start();
+   void Suspend() {suspend_ = true;}
+   bool IsSuspended() {return suspended_;}
+   void Resume() {suspend_ = false;}
 
 private:
    DemoStreamingCamera* camera_;
@@ -203,7 +215,9 @@ private:
    long numImages_;
    bool busy_;
    bool stop_;
+   bool suspend_;
+   bool suspended_;
 };
-
+*/
 
 #endif //_DEMO_STREAMINGCAMERA_H_

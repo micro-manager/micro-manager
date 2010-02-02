@@ -23,8 +23,10 @@
 #ifndef _SPECTRALLMM5_H_
 #define _SPECTRALLMM5_H_
 
-#include "../../MMDevice/MMDevice.h"
+#include "../../MMDevice/ModuleInterface.h"
 #include "../../MMDevice/DeviceBase.h"
+#include <stdint.h>
+#include <cstdio>
 #include <string>
 #if WIN32
 #include <stdint.h>

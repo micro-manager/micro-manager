@@ -1,11 +1,11 @@
 AM_CXXFLAGS = -fpermissive
-lib_LTLIBRARIES = USBManager.la
-USBManager_la_SOURCES = USBManager.cpp USBManager.h 
+lib_LTLIBRARIES = libmmgr_dal_USBManager.la
+libmmgr_dal_USBManager_la_SOURCES = USBManager.cpp USBManager.h 
 ## adding the libtool library gives problems on OS X 10.4, adding the static lib works
-USBManager_la_LIBADD = ../../MMDevice/.libs/libMMDevice.a  $(LIBUSB)
-USBManager_la_LDFLAGS = -module
+libmmgr_dal_USBManager_la_LIBADD = ../../MMDevice/.libs/libMMDevice.a  $(LIBUSB)
+libmmgr_dal_USBManager_la_LDFLAGS = -module
 
 install:
-	cp .libs/USBManager.so $(DEVICEADAPTERPATH)/$(MMPREFIX)USBManager$(MMSUFFIX)
+	cp .libs/libmmgr_dal_USBManager.so $(DESTDIR)$(DEVICEADAPTERPATH)/libmmgr_dal_USBManager$(MMSUFFIX)
 
 EXTRA_DIST = license.txt

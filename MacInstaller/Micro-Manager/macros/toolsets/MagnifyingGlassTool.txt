@@ -1,0 +1,296 @@
+///////////////////////////////////////////////////////////////////////
+// Magnifying Glass Tool
+// available in the IJ macros tools repertory at
+//  http://rsb.info.nih.gov/ij/macros/tools/MagnifyingGlassTool.txt
+///////////////////////////////////////////////////////////////////////
+// Author: Gilles Carpentier, Faculte des Sciences et
+// Technologies,  Universite Paris 12 Val de Marne, France
+///////////////////////////////////////////////////////////////////////
+// Double click on the tool to change the size of the Magnifying Glass Window
+// Move pixel by pixel in  8 cardinal directions using the keypad (8,9,6,3,2,1,4,7):
+// ! for slow computer (< 1Ghz), avoid to keep down a key with a Magnifying glass window
+// size of 512x512 pixels. ImageJ could become unstable and quit.
+// documentation available at http://image.bio.methods.free.fr/magtooldoc.html
+
+var x,  y, xinit,yinit,xo,yo,xa,ya,x3,y3;
+var glassid,xglass=128,yglass=128,newglass=128;
+var tool;
+var imageinitid,glassid,testid;
+var px = newArray(12);
+var py = newArray(12);
+var step=0,busy;
+
+// Based on the Macro BigCursorTool writen by Wayne Rasband, and available on the  ImageJ website at
+// http://rsb.info.nih.gov/ij/macros/tools/BigCursorTool.txt
+
+macro "SingleCursorMagGlas Tool -C00b-B11-O11cc-F6622" {
+	requires("1.35i");
+	setBatchMode(true);
+	run("Colors...", "selection=yellow");
+	imageinitid = getImageID();
+	nomdimage = getTitle;
+	xinit = getWidth(); yinit = getHeight();
+	yglass=newglass; xglass=newglass;
+	if (nomdimage == "Magnifying Glass")  exit;
+	cursareasize ();
+	singlecursor ();
+	setBatchMode(false);
+	//selectImage(imageinitid);
+}
+
+macro "Display Coordinates" {
+    	showMessage("Cursor coordinates: X="+ x + " / Y="+y+"\nSelection coordinates: \nXo Selec= "+xo+" / Yo Selec="+yo+" \nX Selec="+xa+" / Y Selec="+ya );
+}
+
+macro "SingleCursorMagGlas Tool Options" {
+	imageoption = getImageID();
+	nomdimage = getTitle;
+	testpolgon=0;
+	if (selectionType() == 2) {
+		getSelectionCoordinates(xCoordinates, yCoordinates);
+		if (xCoordinates.length == 12) testpolgon=1;
+	}
+	setBatchMode(true);
+	if ((nomdimage != "Magnifying Glass") && (imageoption !=  imageinitid)) {
+		imageinitid = imageoption;
+		xinit = getWidth(); yinit = getHeight();
+	}
+	glasssizes=newArray("64","128","256","512");
+	Dialog.create("New Window Size Choice");
+	Dialog.addChoice("Choose a new Magnifying Glass Window Size",glasssizes, toString(newglass));
+	Dialog.show();
+	newglass = parseFloat (Dialog.getChoice());
+
+	if (testpolgon == 1) {
+		statut= isOpen("Magnifying Glass");
+  		if (statut==1) {
+       			selectImage("Magnifying Glass");
+      			w = getWidth(); h = getHeight();
+       			if (w != newglass) close();
+  		}
+	xglass=newglass; yglass=newglass;
+	windowglass (xglass,yglass);
+	x=(xCoordinates[2]);
+	x=x+1;
+	y=(yCoordinates[2]);
+	testimage ();move ();
+	}
+}
+
+macro "up  [n8]" {
+	setBatchMode(true);
+	if (toolID==10) {
+		if (busy) return;
+		busy = true;y=y-1;testimage ();move ();busy = false;
+	}
+}
+
+macro "up right [n9]" {
+	setBatchMode(true);
+	if (toolID==10) {
+		if (busy) return;
+		busy = true;y=y-1;x=x+1;testimage ();move ();busy = false;
+	}
+}
+
+macro "right [n6]" {
+	setBatchMode(true);
+	if (toolID==10) {
+		if (busy) return;
+		busy = true; x=x+1;testimage ();move (); busy = false;
+	}
+}
+
+macro "down right [n3]" {
+	setBatchMode(true);
+	if (toolID==10) {
+		if (busy) return;
+		busy = true;y=y+1;x=x+1;testimage ();move ();busy = false;
+	}
+}
+
+macro "down [n2]" {
+	setBatchMode(true);
+	if (toolID==10) {
+		if (busy) return;
+		busy = true;y=y+1;testimage ();move ();busy = false;
+	}
+}
+
+macro "down left [n1]" {
+	setBatchMode(true);
+	if (toolID==10) {
+		if (busy) return;
+		busy = true;y=y+1;x=x-1;testimage ();move ();busy = false;
+	}
+}
+
+macro "left [n4]" {
+	setBatchMode(true);
+	if (toolID==10) {
+		if (busy) return;
+		busy = true;x=x-1;testimage ();move ();busy = false;
+	}
+}
+
+macro "up left [n7]" {
+	setBatchMode(true);
+	 if (toolID==10) {
+		if (busy) return;
+		busy = true;y=y-1;x=x-1;testimage ();move ();busy = false;
+	}
+}
+
+// functions
+
+function singlecursor () {
+	getCursorLoc(x, y, z, flags);
+	xstart=x; ystart=y;
+	w = getWidth(); h = getHeight();
+	px = newArray(12);
+	py = newArray(12);
+	x2=x; y2=y;
+	while (flags&16!=0) {
+		getCursorLoc(x, y, z, flags);
+		x3=x;y3=y;
+		if (x<0) x= 0;
+		if (x>xinit) x=(xinit-1);
+		if (y<0) y=0;
+		if (y>yinit) y=(yinit-1);
+		edgetest(x,y,x3,y3);
+		if (x!=x2 || y!=y2) 
+			drawpol ();
+		 x2=x; y2=y;
+       		 wait(10);
+	};
+	if (x!=xstart || y!=ystart) 
+		selection ();
+}
+
+function selection () {
+	windowglass (xglass,yglass);
+	selectImage (imageinitid);
+	makeRectangle (xo,yo,xa,ya) ;
+	run("Copy");
+	run("Select None");
+	selectImage(imageinitid);
+	drawpol ();
+	setBatchMode(false);
+	selectImage(glassid);
+	setBatchMode(true);
+	makeRectangle (0,0,xglass,yglass) ;
+	run("Paste");
+	run("Select None");
+	r=255; g=255; b=0;
+	setColor(r, g, b);
+	setLineWidth(1);
+	xv=(x-xo); yh=(y-yo);
+	drawLine (0, yh, xglass,yh);
+	drawLine (xv,0,xv,(yglass-1));
+}
+
+function windowglass (xglass,yglass) {
+	magglass="Magnifying Glass";
+	screenx=screenWidth;
+	screeny=screenHeight;
+	ansvers=isOpen(magglass);
+	if (ansvers == 1) {
+		selectImage(magglass);
+		glassid=getImageID();
+		w = getWidth(); h = getHeight();
+		if (w > xglass || w !=(xglass)) {
+			selectImage(glassid);
+			close();
+			ansvers=0;
+		}
+	}
+	if (ansvers == 0) {
+		setBatchMode(false);
+		newImage(magglass,"RGB Black",xglass,(yglass+10),1);
+		setLocation(0, (screeny - (yglass+51)));
+		glassid=getImageID();
+		selectImage(imageinitid);
+		setBatchMode(true);
+	}
+}
+
+function edgetest(x,y,x3,y3) {
+	if ((x-(xglass/2)) <0) x3=xglass/2;
+	if ((x+(xglass/2)) > xinit) x3=(xinit-(xglass/2));
+	if ((y-(yglass/2)) <0) y3=yglass/2;
+	if ((y+(yglass/2))> yinit) y3=(yinit-(yglass/2));
+	xo=(x3-(xglass/2)); yo=(y3-(yglass/2));
+	xa=xglass; ya=yglass;
+}
+
+function move() {
+	cursareasize ();
+	windowglass (xglass,yglass);
+	if (x<0) x= 0;
+	if (x>xinit) x=x-1;
+	if (y<0) y=0;
+	if (y>(yinit-1)) y=y-1;
+	x3=x;y3=y;
+	edgetest(x,y,x3,y3);
+	selection ();
+}
+
+function drawpol () {
+	selectImage(imageinitid);
+	w = getWidth(); h = getHeight();
+	px[0]=0; py[0]=y;
+	px[1]=w; py[1]=y;
+	px[2]=x; py[2]=y;
+	px[3]=x; py[3]=0;
+	px[4]=x; py[4]=h;
+	px[5]=x; py[5]=y;
+	px[6]=xo; py[6]=y;
+	px[7]=xo; py[7]=yo;
+	px[8]=(xo+xa); py[8]=yo;
+	px[9]=(xo+xa); py[9]=(yo+ya);
+	px[10]=xo; py[10]=(yo+ya);
+	px[11]=xo; py[11]=y;
+	makeSelection("polgon", px, py);
+	showStatus(x+","+y);
+}
+
+function cursareasize () {
+	while (xinit < xglass ) {
+    		xglass = xglass/2;
+  	}
+	while (yinit < yglass ) {
+     		yglass = yglass/2;
+  	}
+	newglass = minOf(xglass, yglass);
+	yglass=newglass; xglass=newglass;
+}
+
+function testimage () {
+	testid= getImageID();
+	if ((testid != imageinitid) && (testid !=glassid )){
+		imageinitid=testid;
+		xinit = getWidth(); yinit = getHeight();
+		if (selectionType() == 2) {
+			getSelectionCoordinates(xCoordinates, yCoordinates);
+			if ((selectionType() == 2) && (xCoordinates.length == 12)) {
+				x=(xCoordinates[2]);
+				y=(yCoordinates[2]);
+				xo=(xCoordinates[7]);
+				xa=(xCoordinates[9]);
+				xglass = xa-xo; yglass= xglass;
+				if (isOpen("Magnifying Glass") == 1) {
+					selectImage ("Magnifying Glass");
+					w = getWidth();
+					if (xglass != w) close();
+				}
+			}
+			} else {
+				x=1;y=1;newglass=128;xglass=128;yglass=128;
+				if (isOpen("Magnifying Glass") == 1) {
+					selectImage ("Magnifying Glass");
+					close();
+				}
+			}
+		}
+	}
+}

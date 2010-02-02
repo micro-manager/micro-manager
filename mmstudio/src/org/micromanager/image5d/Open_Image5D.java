@@ -5,15 +5,22 @@ package org.micromanager.image5d;
  * Severely copied from ij.io.Opener. Opener is not used or inherited, because 
  * detailed changes to the dialog and behaviour are planned. */
 
-import java.awt.*;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.io.FileInfo;
+import ij.io.FileOpener;
+import ij.io.OpenDialog;
+import ij.io.Opener;
+import ij.io.TiffDecoder;
+import ij.plugin.PlugIn;
+
+import java.awt.Color;
 import java.awt.image.IndexColorModel;
-import java.io.*;
-import java.util.*;
-
-
-import ij.*;
-import ij.io.*;
-import ij.plugin.*;
+import java.io.ByteArrayInputStream;
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
 
 public class Open_Image5D implements PlugIn {
     // Structure: int type (1 for 768 byte RGB LUT)

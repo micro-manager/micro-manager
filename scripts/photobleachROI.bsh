@@ -1,0 +1,47 @@
+import ij.IJ;
+import ij.ImagePlus;
+import ij.process.ByteProcessor;
+import ij.gui.ShapeRoi;
+import java.awt.image.BufferedImage;
+import java.awt.geom.AffineTransform;
+import java.awt.image.AffineTransformOp;
+import java.awt.Color;
+import org.micromanager.utils.ReportingUtils;
+import ij.process.ImageProcessor;
+
+
+cmo = new AffineTransformOp(trans, AffineTransformOp.TYPE_BILINEAR);
+imgpCamera = null;
+
+if (gui.imageWin_ != null)
+	imgpCamera = gui.imageWin_.getImagePlus();
+
+if (imgpCamera != null) {
+	procCamera = imgpCamera.getProcessor();
+	cvsCamera = imgpCamera.getCanvas();
+	roiCamera = imgpCamera.getRoi();
+	
+	if (roiCamera != null) {
+		procMask = new ByteProcessor(imgWidth, imgHeight);
+		procMask.setColor(Color.black);
+		procMask.fill();
+		procMask.setColor(Color.white);
+		procMask.fill(roiCamera);
+		//imgpMask = new ImagePlus("", procMask);
+		//imgpMask.show();
+
+		imgMask = procMask.getBufferedImage();
+		imgSLM = new BufferedImage(slmWidth,slmHeight,BufferedImage.TYPE_BYTE_GRAY);
+		cmo.filter(imgMask,imgSLM);
+		procSLM = new ByteProcessor(imgSLM);
+		//(new ImagePlus("",procSLM)).show();
+		mmc.setSLMImage(slm, procSLM.getPixels());
+		mmc.displaySLMImage(slm);
+		gui.snapSingleImage();
+	} else {
+		ReportingUtils.showMessage("Please draw an ROI for bleaching.");
+	}
+} else {
+	ReportingUtils.showMessage("Please snap an image first.");
+}
+

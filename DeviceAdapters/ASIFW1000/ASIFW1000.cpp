@@ -33,6 +33,7 @@
 
 #include "ASIFW1000.h"
 #include "ASIFW1000Hub.h"
+#include <cstdio>
 #include <string>
 #include <math.h>
 #include "../../MMDevice/ModuleInterface.h"
@@ -128,6 +129,10 @@ bool Hub::Busy()
 
 int Hub::Initialize()
 {
+   // Ensure a serial port has been set -- otherwise return an error.
+   if (! g_hub.IsConnected())
+      return DEVICE_ERR;
+
    // set property list
    // -----------------
    
@@ -247,6 +252,10 @@ void FilterWheel::GetName(char* name) const
 
 int FilterWheel::Initialize()
 {
+   // Ensure a serial port has been set -- otherwise return an error.
+   if (! g_hub.IsConnected())
+      return DEVICE_ERR;
+
    // Name
    int ret = CreateProperty(MM::g_Keyword_Name, name_.c_str(), MM::String, true);
    if (DEVICE_OK != ret)
@@ -263,6 +272,9 @@ int FilterWheel::Initialize()
    if (ret != DEVICE_OK) 
       return ret; 
 
+   // Gate Closed Position
+   ret = CreateProperty(MM::g_Keyword_Closed_Position,"", MM::String, false);
+
    // Get the number of filters in this wheel and add these as allowed values
    ret = g_hub.SetCurrentWheel(*this, *GetCoreCallback(), wheelNr_);
    if (ret != DEVICE_OK)
@@ -275,6 +287,7 @@ int FilterWheel::Initialize()
    {
       sprintf(pos, "%d", i);
       AddAllowedValue(MM::g_Keyword_State, pos);
+      AddAllowedValue(MM::g_Keyword_Closed_Position, pos);
    }
 
    // Get current position
@@ -298,6 +311,8 @@ int FilterWheel::Initialize()
       SetPositionLabel(i,state);
    }
 
+   GetGateOpen(open_);
+
    ret = UpdateStatus();
    if (ret != DEVICE_OK) 
       return ret; 
@@ -309,7 +324,7 @@ int FilterWheel::Initialize()
 
 bool FilterWheel::Busy()
 {
-   bool busy;
+   bool busy(false);
    g_hub.FilterWheelBusy(*this, *GetCoreCallback(), busy);
    return busy;
 }
@@ -338,22 +353,33 @@ int FilterWheel::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    else if (eAct == MM::AfterSet)
    {
       long pos;
+      int ret;
+      bool gateOpen;
+      GetGateOpen(gateOpen);
       pProp->Get(pos);
-      if (pos == pos_)
-         return DEVICE_OK;
       // sanity check
       if (pos < 0)
          pos = 0;
       if (pos >= numPos_)
          pos = numPos_ - 1;
-      int ret = g_hub.SetFilterWheelPosition(*this, *GetCoreCallback(), wheelNr_, pos);
-      if (ret == DEVICE_OK) {
-         pos_ = pos;
-         pProp->Set(pos_);
+      if ((pos == pos_) && (open_ == gateOpen))
          return DEVICE_OK;
+
+      if (gateOpen)
+         ret = g_hub.SetFilterWheelPosition(*this, *GetCoreCallback(), wheelNr_, pos);
+      else {
+         char closedPos[MM::MaxStrLength];
+         GetProperty(MM::g_Keyword_Closed_Position, closedPos);
+         int gateClosedPosition = atoi(closedPos);
+
+         ret = g_hub.SetFilterWheelPosition(*this, *GetCoreCallback(), wheelNr_, gateClosedPosition);
       }
-      else
-         return  ret;
+      if (ret != DEVICE_OK)
+         return ret;
+
+      pos_ = pos;
+      open_ = gateOpen;
+      pProp->Set(pos_);
    }
    return DEVICE_OK;
 }
@@ -424,6 +450,10 @@ void Shutter::GetName(char* name) const
 
 int Shutter::Initialize()
 {
+   // Ensure a serial port has been set -- otherwise return an error.
+   if (! g_hub.IsConnected())
+      return DEVICE_ERR;
+
   // Name
    int ret = CreateProperty(MM::g_Keyword_Name, name_.c_str(), MM::String, true);
    if (DEVICE_OK != ret)

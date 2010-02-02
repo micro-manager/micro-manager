@@ -1,0 +1,84 @@
+// VolumeFractionOfBone
+
+// We do a lot of quantitative backscattered electron
+// microscopy (qBSE) of mineralised tissues in our lab.  I've
+// just written a macro for measuring the volume fraction of
+// bone matrix, the mineral density of bone matrix and the
+// apparent mineral density of the ROI (which is usually less
+// becuase the ROI tends to contain some non-bone-matrix marrow
+// space).
+
+// I guess it would work for any situation where you want to
+// measure the mean grey values of only the foreground pixels.
+
+// The macro uses threshold values from
+// Image-Adjust-Threshold... You have to set a threshold or
+// else it can't work out what to measure! 
+
+//  If you install it, it runs when you hit q.
+
+// You will need ij.jar version 1.34h or later.
+
+// If you spot any mistakes or have any improvements 
+// then please let me know.
+
+// Michael Doube BPhil BVSc MRCVS (m.doube at QMUL.AC.UK)
+// MPhil / PhD Student
+// Dental Institute
+// Barts and The London School of Medicine and Dentistry
+// Queen Mary, University of London
+
+macro "Volume Fraction of Bone [q]" {
+    requires("1.34h");
+    n = getSliceNumber();
+    row = nResults;
+    vhistogram = newArray(0);
+    for (i=1; i<=nSlices; i++) {
+        setSlice(i);
+        getRawStatistics(count, mean, min, max, std, histogram);
+        getThreshold(lower, upper);
+        if (lower==-1)
+            exit("Use Image>Adjust>Threshold to set the threshold");
+
+       background = 0;
+       for (k=0; k<lower; k++) {
+            background = background + histogram[k];
+            fraction = (count - background) / count;
+       }
+
+        cumulative = 0;
+        av= 0;
+        for (j=lower; j<upper; j++) {
+            cumulative = cumulative + histogram[j];
+            av = av + j * histogram[j];
+            bmmd = av / cumulative;
+       }
+
+
+      vfraction = vfraction+fraction;
+      vbmmd = vbmmd+bmmd;
+      vmean = vmean+mean;
+
+      for (p=0; p==upper; p++) {
+	   vhistogram[p] = vhistogram[p]+histogram[p];
+      }
+  
+    }
+
+    mode = 0;
+    for (p=lower; p<upper; p++) {
+        if (mode < histogram[p]) {
+        mode = histogram[p];
+       setResult("Mode Matrix", row, p);
+        modep = p;
+    }
+    }
+     vfraction = vfraction/(i-1);
+     vbmmd = vbmmd/(i-1);   
+     vmean = vmean/(i-1);  
+      setResult("Vfb", row, vfraction);
+      setResult("Mean Matrix", row, vbmmd);
+      setResult("Mean ROI", row, vmean);
+      setSlice(n);
+     updateResults();
+}

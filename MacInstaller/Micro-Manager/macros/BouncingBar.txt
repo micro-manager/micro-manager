@@ -1,0 +1,64 @@
+// "BouncingBar"
+//
+// This example macro animates a color bar and displays the frame rate.
+//
+// It is useful for answering the following questions:
+//    What happens when the window a macro is drawing in closes?
+//    What happens when the user switches to a different window?
+//    What happens when you try to run more than one copy of a macro?
+//    What happens if you leave a macro running for a long time?
+//    How fast is Java on my machine?
+
+  width = 600;
+  height = 200;
+  run("New...", "name=Untitled type='32-bit RGB' width="+width+" height="+height);
+  lw = width/15; lw2 = lw/2;
+  snapshot(); // create a backup image that can be restored later
+  autoUpdate(false); // disable automatic display updates
+  x1=0.2*width; y1=0.5*height; x2=0.8*width; y2=y1;
+  inc=2;
+  x1inc=0.5*inc; y1inc=-inc; x2inc=-inc; y2inc=0.5*inc;
+  rinc=1; binc=1; ginc=0.5;
+  r=255; g=0; b=0;
+  radius = 15;
+  nsides = 6;
+  angle = 0;
+  frames=0;
+  start=getTime();
+  while (true) {
+      x1+=x1inc; y1+=y1inc; x2+=x2inc; y2+=y2inc;
+      if (x1<=lw2 || x1>=width-lw2) x1inc=-x1inc;
+      if (y1<=lw2 || y1>=height-lw2) y1inc=-y1inc;
+      if (x2<=lw2 || x2>=width-lw2) x2inc=-x2inc;
+      if (y2<=lw2 || y2>=height-lw2) y2inc=-y2inc;
+      r-=rinc; g+=ginc; b+=binc;
+      if (r<=0||r>=255) rinc=-rinc;
+      if (g<=0||g>=255) ginc=-ginc;
+      if (b<=0||b>=255) binc=-binc;
+      reset(); // restore the backup image
+      setColor(r,g,b);
+      setLineWidth(lw);
+      drawLine(x1,y1,x2,y2);
+      setColor(0,0,0);
+      drawString(round(frames++/((getTime()-start)/1000)) + " fps", radius*2+12, radius+12);
+      drawPolygon(radius+5, radius+5, radius, nsides, angle);
+      angle += PI/90;
+      updateDisplay();
+   }
+
+function drawPolygon(x, y, r, n, angle) {
+    setLineWidth(1);
+    twoPi = 2*PI;
+    inc = twoPi/n;
+    for (a1=angle; a1<angle+twoPi; a1+=inc) {
+        x1 = r*sin(a1) + x;
+        y1 = r*cos(a1) + y;
+        for (a2=a1; a2<angle+twoPi; a2+=inc) {
+            x2 = r*sin(a2) + x;
+            y2 = r*cos(a2) + y;
+            drawLine(x1,y1,x2,y2);
+        }
+     }
+}
+
+

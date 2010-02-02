@@ -44,7 +44,7 @@ double noise1(double ampl)
    /* the white noise */
    static double noise = 0.0;
 
-   random = ((float)rand() / (float)(RAND_MAX + 1));
+   random = ((float)rand() / (float)((float)RAND_MAX + 1.0));
    noise = (2.0 * ((random * c2) + (random * c2) + (random * c2)) - 3.0 * (c2 - 1.0)) * c3;
 
    return ampl * noise;

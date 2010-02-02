@@ -1,0 +1,59 @@
+// These macros generate a sine/cosine table and display 
+// it in either the "Log" or "Results" window. The second 
+// macro requires ImageJ 1.31g or later, which adds the 
+// setResult() and updateResults() macro functions. 
+
+    macro "Make Sine Table (Log-space)" {
+        resetLog();
+        for (n=0; n<=2*PI; n += 0.1)
+            print(n + "  " + sin(n) + "  " + cos(n));
+        saveLog();
+    }
+
+    macro "Make Sine Table (Log-comma)" {
+        resetLog();
+        for (n=0; n<=2*PI; n += 0.1)
+            print(n + "," + sin(n) + "," + cos(n));
+        saveLog();
+    }
+
+    function resetLog() {
+        if (isOpen("Log")) {
+            selectWindow("Log");
+            run("Close");
+        }
+    }
+
+    // save the contents of the "Log" window to a user-specified file.
+    // Record the File>Save As>Text command to generate a run 
+    // command like the following that saves without a dialog box.
+    //     run("Text...", "save=/Users/wayne/Results.txt"); 
+    function saveLog() {
+        selectWindow("Log");
+        run("Text..."); // File>Save As>Text
+    }
+
+    macro "Make Sine Table (Results-tab)" {
+        requires("1.31g");
+        run("Clear Results");
+        row = 0;
+        for (n=0; n<=2*PI; n += 0.1) {
+            setResult("n", row, n);
+            setResult("Sine(n)", row, sin(n));
+            setResult("Cos(n)", row, cos(n));
+            row++;
+        }
+        updateResults()
+        selectWindow("Results");
+        run("Text..."); // File>Save As>Text
+    }
+
+    // tab delimeters so not seem to work
+    //macro "Make Sine Table (Log-tab)" {
+    //    resetLog();
+    //    for (n=0; n<=2*PI; n += 0.1)
+    //        print(n + "\t" + sin(n) + "\t" + cos(n));
+    //    saveLog();
+   // }
+
+

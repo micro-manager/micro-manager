@@ -4,11 +4,11 @@ import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
 import ij.WindowManager;
-import ij.gui.GenericDialog;
 import ij.gui.StackWindow;
 import ij.macro.Interpreter;
 import ij.measure.Calibration;
 
+import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Insets;
 import java.awt.Scrollbar;
@@ -18,34 +18,27 @@ import java.awt.event.ActionListener;
 import java.awt.event.AdjustmentEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.Color;
 import java.awt.image.ColorModel;
 import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.Timer;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-import org.micromanager.MMAcquisitionEngineMT;
 import org.micromanager.PlaybackPanel;
+import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.metadata.AcquisitionData;
 import org.micromanager.metadata.DisplaySettings;
 import org.micromanager.metadata.ImageKey;
 import org.micromanager.metadata.ImagePropertyKeys;
-import org.micromanager.metadata.MetadataDlg;
 import org.micromanager.metadata.MMAcqDataException;
-import org.micromanager.metadata.SaveProgressCallback;
-
-import org.micromanager.metadata.SummaryKeys;
-import org.micromanager.api.AcquisitionEngine;
+import org.micromanager.metadata.MetadataDlg;
 import org.micromanager.utils.ChannelSpec;
 import org.micromanager.utils.ProgressBar;
+import org.micromanager.utils.ReportingUtils;
 
 /*
  * Created on 28.03.2005
@@ -64,7 +57,7 @@ public class Image5DWindow extends StackWindow {
    protected ChannelControl channelControl;
    protected Scrollbar[] Scrollbars;
    protected Image5D i5d;
-   
+
    // >>>>>>> Micro-Manager >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
    ChannelSpec channelsMM_[]; // Micro-Manager channel info
    private MetadataDlg metaDlg_;
@@ -79,7 +72,7 @@ public class Image5DWindow extends StackWindow {
    long playInterval_ = 100;
    private Preferences prefs_;
    private static final String PLAY_INTERVAL = "PlayInterval";
-   private String rootDir_ = "";
+   protected String rootDir_ = "";
    // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
    
    // Array for storing change of position in each dimension. 
@@ -89,7 +82,7 @@ public class Image5DWindow extends StackWindow {
    protected int nDimensions = 5;
    
    protected boolean isInitialized = false;
-   private PlaybackPanel pb_;
+   protected PlaybackPanel pb_;
    private int framesToGo_=0;
    private int playbackFrames_ = 0;
 
@@ -102,13 +95,33 @@ public class Image5DWindow extends StackWindow {
       this(imp, new Image5DCanvas(imp));
    }
 
-   
+
+   /**
+    * @param imp
+    * @param visible
+    */
+   public Image5DWindow(Image5D imp, boolean visible) {
+      this(imp, new Image5DCanvas(imp), visible);
+   }
+
    /**
     * @param imp
     * @param ic
     */
    public Image5DWindow(Image5D imp, Image5DCanvas ic) {
+      this(imp, ic, true);
+   }
+   
+   /**
+    * @param imp
+    * @param ic
+    * @param visible
+    */
+   public Image5DWindow(Image5D imp, Image5DCanvas ic, boolean visible) {
       super(imp, ic);
+            
+      if (!visible)
+         setVisible(false);
       
       i5d = imp;
       
@@ -120,7 +133,7 @@ public class Image5DWindow extends StackWindow {
       positions = new int[nDimensions];
       
       // Remove all components and then add them with the Image5DLayout layoutmanager.
-      remove(sliceSelector);
+  	   remove(sliceSelector);
       remove(ic);
       
       setLayout(new Image5DLayout(ic));
@@ -132,27 +145,11 @@ public class Image5DWindow extends StackWindow {
       channelControl = new ChannelControl(this);
       add(channelControl, Image5DLayout.CHANNEL_SELECTOR);
       
-      int size;
-      ScrollbarWithLabel bar;
-      
-      // Add slice selector
-      size = imp.getNSlices();	
-      bar = new ScrollbarWithLabel(Scrollbar.HORIZONTAL, 1, 1, 1, size+1, imp.getDimensionLabel(3));
-      Scrollbars[3] = bar.getScrollbar();		
-      add(bar, Image5DLayout.SLICE_SELECTOR);
-      if (ij!=null) bar.getScrollbar().addKeyListener(ij);
-      
-      // Add frame selector
-      size = imp.getNFrames();	
-      bar = new ScrollbarWithLabel(Scrollbar.HORIZONTAL, 1, 1, 1, size+1, imp.getDimensionLabel(4));
-      Scrollbars[4] = bar.getScrollbar();		
-      add(bar, Image5DLayout.FRAME_SELECTOR);
-      if (ij!=null) bar.getScrollbar().addKeyListener(ij);
-      
+      addHorizontalScrollbars(imp);
       
       // >>>>>>>>>>>>>>>>>>>>>>>>>>> Micro-Manager >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
       // add button panel
-      pb_ = new PlaybackPanel(this);
+      pb_ = createPlaybackPanel();
       prefs_ = Preferences.userNodeForPackage(this.getClass());
       playInterval_ = prefs_.getLong(PLAY_INTERVAL, 500);
       
@@ -169,7 +166,9 @@ public class Image5DWindow extends StackWindow {
                else
                   numFrames = playbackFrames_;
             
-            int nextFrame = (curFrame + 1) % numFrames;
+            int nextFrame = 0;
+            if ( 0 < numFrames)
+               nextFrame = (curFrame + 1) % numFrames;
             i5d.setCurrentPosition(4, nextFrame); // zero based index
 //            if (acqEng_ != null)
 //               pb_.setElapsedTime(nextFrame * acqEng_.getFrameIntervalMs());
@@ -221,15 +220,22 @@ public class Image5DWindow extends StackWindow {
             
       // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
       
+      int size = imp.getNFrames();
+      
       for(int i=3; i<nDimensions; ++i) {
-         Scrollbars[i].addAdjustmentListener(this);
-         int blockIncrement = size/10;
-         if (blockIncrement<1) blockIncrement = 1;
-         Scrollbars[i].setUnitIncrement(1);
-         Scrollbars[i].setBlockIncrement(blockIncrement); 
+    	 if (Scrollbars[i] != null) { 
+	         Scrollbars[i].addAdjustmentListener(this);
+	         Scrollbars[i].setUnitIncrement(1);
+	         if (i==3) {
+		         int blockIncrement = size/10;
+		         if (blockIncrement<1) blockIncrement = 1;
+		         Scrollbars[i].setBlockIncrement(blockIncrement); 
+	         }
+    	 }
       }			
       
       sliceSelector = Scrollbars[3];
+
       
       pack();
       isInitialized = true;	
@@ -272,7 +278,7 @@ public class Image5DWindow extends StackWindow {
 //         i5d.changes = true;
 //      } catch (MMAcqDataException e) {
 //         // TODO Auto-generated catch block
-//         e.printStackTrace();
+//         ReportingUtils.logError(e);
 //      }
 //   }
    
@@ -339,25 +345,26 @@ public class Image5DWindow extends StackWindow {
       if (acqEng_ == null)
          return true;
       
-      if (acqEng_.isPaused()) {
-         JOptionPane.showMessageDialog(this,
-               "Acquisition is currently paused.\n" +
-               "You must resume acquisition before pressing the Abort button.");
-         return false;
-      }
-      
       if (acqEng_.isAcquisitionRunning() && acqActive_) {
          int result = JOptionPane.showConfirmDialog(this,
                "Abort current acquisition task ?",
                "Micro-Manager", JOptionPane.YES_NO_OPTION,
                JOptionPane.INFORMATION_MESSAGE);
-         
-         if (result == JOptionPane.YES_OPTION) {
-            acqEng_.shutdown();
-            // TODO: needs to clean-up properly
-         } else
-            return false; // abort cancelled
-      }
+
+         try {
+             if (result == JOptionPane.YES_OPTION) {
+                if (acqEng_ != null && acqEng_.isPaused())
+                   acqEng_.setPause(false);
+                acqEng_.stop(true);
+                // TODO: needs to clean-up properly
+             } else {
+                return false; // abort cancelled
+             }
+         } catch (NullPointerException e) {
+             if (acqEng_ != null)
+                 ReportingUtils.logError(e);
+         }
+         }
       return true;
    }
    
@@ -401,86 +408,108 @@ public class Image5DWindow extends StackWindow {
    /**
     * Saves the data set in the micro-manager format.
     */
-   public void saveAs() {
-      // NOTE: >> save as directory instead of image 5D
-//      Save_Image5D save = new Save_Image5D();
-//      save.run("");
-//      acqNeedsSave_ = false;
-      
-      if (acqData_ == null) {
-         JOptionPane.showMessageDialog(this,
-               "This 5D-image was not generated by Micro-Manager acquisition process or data is corruped.\n" +
-         "Unable to save.");
-         return;
-      }
+    public void saveAs() {
+        // NOTE: >> save as directory instead of image 5D
 
-      try {
-
-         for (int i=0; i<acqData_.getNumberOfChannels(); i++) {
-            ChannelDisplayProperties cdp = i5d.getChannelDisplayProperties(i+1);
-            DisplaySettings ds = new DisplaySettings();
-            ds.min = cdp.getMinValue();
-            ds.max = cdp.getMaxValue();
-            acqData_.setChannelDisplaySetting(i, ds);
-         }
-      } catch (MMAcqDataException e1) {
-         JOptionPane.showMessageDialog(this, e1.getMessage());
-      }
-            
-      if (acqData_.getNumberOfFrames() > i5d.getNFrames()) {
-         JOptionPane.showMessageDialog(this, "Internal error: detected number of frames invalid " + acqData_.getNumberOfFrames());
-         return;
-      }
-      
-      // choose output directory
-      JFileChooser fc = new JFileChooser();
-      fc.setSelectedFile(new File(rootDir_ + "/" + i5d.getTitle()));
-      boolean saveFile = true;
-      File f;
-      
-      do {         
-         int retVal = fc.showSaveDialog(this);
-         if (retVal == JFileChooser.APPROVE_OPTION) {
-            f = fc.getSelectedFile();
-            
-            // check if file already exists
-            if( f.exists() ) { 
-               JOptionPane.showMessageDialog( this,
-                     "Owriting existing data is not allowed: " + f.getName());
-               saveFile = false;
-            }
-         }
-         else
+        if (acqData_ == null) {
+            JOptionPane.showMessageDialog(this,
+                    "This 5D-image was not generated by Micro-Manager acquisition process or data is corruped.\n" +
+                    "Unable to save.");
             return;
-      } while (saveFile == false);
-      
-      //String acqSavePath = "";
-      final ProgressBar progressBar = new ProgressBar ("Saving File...", 0, acqData_.getNumberOfFrames());
-      try {
-         acqSavePath_ = f.getAbsolutePath();       
-         acqData_.save(f.getName(), f.getParent(), false, null);
-         for (int i=0; i<acqData_.getNumberOfFrames(); i++) {
-            for (int j=0; j<i5d.getNSlices(); j++) {
-               for (int k=0; k<i5d.getNChannels(); k++) {
-                  // save only images that were actually acquired, i.e. the ones recorded in the metadata
-                  if (acqData_.hasImageMetadata(i, k, j)) {
-                     Object img = i5d.getPixels(k+1, j+1, i+1);
-                     acqData_.attachImage(img, i, k, j);
-                  }
-               }
+        }
+
+        try {
+            if (metaDlg_ != null) {
+                acqData_.setComment(metaDlg_.getComment());
             }
-            progressBar.setProgress(i);
-         }
-         acqData_.saveMetadata();
-      } catch (MMAcqDataException e) {
-         JOptionPane.showMessageDialog(this, e.getMessage());
-      } finally {
-         if (progressBar != null)
-            progressBar.setVisible(false);
-      }
-      
-      i5d.changes = false;
-   }
+            for (int i = 0; i < acqData_.getNumberOfChannels(); i++) {
+                i5d.storeChannelProperties(i + 1);
+                ChannelDisplayProperties cdp = i5d.getChannelDisplayProperties(i + 1);
+                DisplaySettings ds = new DisplaySettings(cdp.getMinValue(), cdp.getMaxValue());
+                acqData_.setChannelDisplaySetting(i, ds);
+                Color c = getColor(i + 1);
+                acqData_.setChannelColor(i, c.getRGB());
+            }
+        } catch (MMAcqDataException e1) {
+            ReportingUtils.showError(e1);
+        }
+
+        if (acqData_.getNumberOfFrames() > i5d.getNFrames()) {
+            ReportingUtils.showError("Internal error: detected number of frames invalid " + acqData_.getNumberOfFrames());
+            return;
+        }
+
+        // choose output directory
+        JFileChooser fc = new JFileChooser();
+        fc.setSelectedFile(new File(rootDir_ + "/" + i5d.getTitle()));
+        boolean saveFile = true;
+        File f;
+
+        do {
+            saveFile = true;
+            int retVal = fc.showSaveDialog(this);
+            if (retVal == JFileChooser.APPROVE_OPTION) {
+                f = fc.getSelectedFile();
+                rootDir_ = new File(f.getPath()).getParent();
+                // check if file already exists
+                if (f.exists()) {
+                    JOptionPane.showMessageDialog(this,
+                            f.getName() + " already exists. Existing data can not be overwritten.");
+                    saveFile = false;
+                }
+            } else {
+                return;
+            }
+        } while (saveFile == false);
+
+        final ProgressBar progressBar = new ProgressBar("Saving File...", 0, acqData_.getNumberOfFrames());
+
+        acqSavePath_ = f.getAbsolutePath();
+        try {
+            acqData_.save(f.getName(), f.getParent(), false, null);
+        } catch (MMAcqDataException ex) {
+            ReportingUtils.logError(ex);
+        }
+
+        final File f2 = f;
+
+        Thread t = new Thread() {
+
+            public void run() {
+
+                for (int i = 0; i < acqData_.getNumberOfFrames(); i++) {
+                    for (int j = 0; j < i5d.getNSlices(); j++) {
+                        for (int k = 0; k < i5d.getNChannels(); k++) {
+                            // save only images that were actually acquired, i.e. the ones recorded in the metadata
+                            if (acqData_.hasImageMetadata(i, k, j)) {
+                                Object img = i5d.getPixels(k + 1, j + 1, i + 1);
+                                try {
+                                    acqData_.attachImage(img, i, k, j);
+                                } catch (MMAcqDataException ex) {
+                                    ReportingUtils.logError(ex);
+                                }
+                            }
+                        }
+                    }
+                    progressBar.setProgress(i);
+                }
+                try {
+                    acqData_.saveMetadata();
+                } catch (MMAcqDataException e) {
+                    ReportingUtils.showError(e);
+                }
+                setTitle(f2.getName());
+
+                if (progressBar != null) {
+                    progressBar.setVisible(false);
+                }
+
+                i5d.changes = false;
+            }
+        };
+        t.start();
+
+    }
    
    
    /** Removes this window from the window list and disposes of it.
@@ -492,20 +521,16 @@ public class Image5DWindow extends StackWindow {
       running = running2 = false;
       if (isRunning) IJ.wait(500);
       ImageJ ij = IJ.getInstance();
-      if (IJ.getApplet()!=null || Interpreter.isBatchMode() ||  IJ.macroRunning())
-         imp.changes = false;
-      
-      if (acqEng_ != null && acqEng_.isAcquisitionRunning()) {
-         JOptionPane.showMessageDialog(Image5DWindow.this, "Unable to close window: acquisition still in progress.\n" +
-         "Stop the acquistion first.");
-         return false;
-      }
+
+      abortAcquisition();
 
       if (imp.changes && (!autoSave_)) {
-         GenericDialog dlg = new GenericDialog("Micro-Manage-Image5D", null);
-         dlg.addMessage("Close window and discard unsaved data?");
-         dlg.showDialog();
-         if (dlg.wasCanceled())
+         int result = JOptionPane.showConfirmDialog(this,
+               "Close window and discard unsaved data?",
+               "Micro-Manager", JOptionPane.OK_CANCEL_OPTION,
+               JOptionPane.INFORMATION_MESSAGE);
+
+         if (result == JOptionPane.CANCEL_OPTION)
             return false;
       }
       
@@ -535,6 +560,7 @@ public class Image5DWindow extends StackWindow {
             if (e.getSource()==Scrollbars[i])
                positions[i] = Scrollbars[i].getValue();
          }
+
          notify();
       }
    }
@@ -573,11 +599,13 @@ public class Image5DWindow extends StackWindow {
          // update z- and time control
          int size, max;
          for(int i=3; i<nDimensions; ++i) {
-            size = dimensions[i];
-            max = Scrollbars[i].getMaximum();
-            if (max!=(size+1))
-               Scrollbars[i].setMaximum(size+1);
-            Scrollbars[i].setValue(((Image5D)imp).getCurrentPosition(i)+1);
+        	if (Scrollbars[i]!= null) {
+	            size = dimensions[i];
+	            max = Scrollbars[i].getMaximum();
+	            if (max!=(size+1))
+	               Scrollbars[i].setMaximum(size+1);
+	            Scrollbars[i].setValue(((Image5D)imp).getCurrentPosition(i)+1);
+        	}
 //            if (i == 4 && pb_ != null && acqEng_ != null) {
 //               pb_.setElapsedTime(((Image5D)imp).getCurrentPosition(i) * acqEng_.getFrameIntervalMs());
 //            }
@@ -605,6 +633,20 @@ public class Image5DWindow extends StackWindow {
          s += "; ";
       }    	
       
+      // Pixel Size display in header
+      try {
+         double pixSizeUm = Double.parseDouble(acqData_.getImageValue(i5d.getCurrentFrame()-1, i5d.getCurrentChannel()-1, i5d.getCurrentSlice()-1, ImagePropertyKeys.X_UM));
+         //cal = getImagePlus().getCalibration();
+         if (pixSizeUm > 0) {
+            cal.setUnit("um");
+            cal.pixelWidth = pixSizeUm;
+            cal.pixelHeight = pixSizeUm;
+         }
+         img5.setCalibration(cal);
+      } catch (Exception ex) {
+        // N.B. intentionally ignoring this exception; in some cases there is no X stage calibration - KH
+      }
+
       // x/y size
       if (cal.pixelWidth!=1.0 || cal.pixelHeight!=1.0)
          s += IJ.d2s(imp.getWidth()*cal.pixelWidth,2) + "x" + IJ.d2s(imp.getHeight()*cal.pixelHeight,2)
@@ -641,11 +683,12 @@ public class Image5DWindow extends StackWindow {
          s += "; " + size + "K";
       g.drawString(s, 5, insets.top+TEXT_GAP);
       
-      // micro-manager - metadata display
+      // micro-manager - madata display
       if (metaDlg_ != null) {
          metaDlg_.displayImageData(i5d.getCurrentFrame()-1, i5d.getCurrentChannel()-1, i5d.getCurrentSlice()-1);
       }
       
+
       if (pb_ != null && acqData_ != null)
          pb_.setImageInfo(ImageKey.getImageInfo(acqData_, i5d.getCurrentFrame()-1, i5d.getCurrentChannel()-1, i5d.getCurrentSlice()-1));
    }
@@ -656,7 +699,9 @@ public class Image5DWindow extends StackWindow {
       while (!done) {
          synchronized(this) {
             try {wait(500);}
-            catch(InterruptedException e) {}
+            catch(InterruptedException e) {
+                ReportingUtils.logError(e);
+            }
          }
          if (done) return;
          
@@ -698,4 +743,32 @@ public class Image5DWindow extends StackWindow {
       Color c = new Color(red, green, blue);
       return c;   
    }
+   
+   public PlaybackPanel createPlaybackPanel () {
+	   return new PlaybackPanel(this);
+   }
+   
+   
+   protected void addHorizontalScrollbars(Image5D imp) {
+	      
+	  int size;
+       
+      // Add slice selector
+      ScrollbarWithLabel bar;
+      size = imp.getNSlices();	
+      bar = new ScrollbarWithLabel(Scrollbar.HORIZONTAL, 1, 1, 1, size+1, imp.getDimensionLabel(3));
+      Scrollbars[3] = bar.getScrollbar();		
+      add(bar, Image5DLayout.SLICE_SELECTOR);
+      if (ij!=null) bar.getScrollbar().addKeyListener(ij);
+      
+      
+      // Add frame selector
+      size = imp.getNFrames();	
+      bar = new ScrollbarWithLabel(Scrollbar.HORIZONTAL, 1, 1, 1, size+1, imp.getDimensionLabel(4));
+      Scrollbars[4] = bar.getScrollbar();		
+      add(bar, Image5DLayout.FRAME_SELECTOR);
+      if (ij!=null) bar.getScrollbar().addKeyListener(ij);
+   }
+   
+   
 }

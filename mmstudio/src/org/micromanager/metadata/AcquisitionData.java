@@ -44,6 +44,9 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.UnknownHostException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Enumeration;
 import java.util.GregorianCalendar;
 import java.util.Hashtable;
@@ -54,6 +57,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.quirkware.guid.PlatformIndependentGuidGen;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  * Encapsulation of the acquisition data files.
@@ -62,6 +66,8 @@ import com.quirkware.guid.PlatformIndependentGuidGen;
 public class AcquisitionData {
    public static final String METADATA_FILE_NAME = "metadata.txt";
    public static final String METADATA_SITE_PREFIX = "site";
+   public static final String DATE_FORMAT = "yyyy-MM-dd";
+   public static final String TIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
 
    private JSONObject metadata_;
    private JSONObject summary_;
@@ -87,7 +93,7 @@ public class AcquisitionData {
 
    private PlatformIndependentGuidGen guidgen_;
 
-   private GregorianCalendar creationTime_;
+   private Calendar creationTime_;
 
    private static final String ERR_METADATA_CREATE = "Internal error creating metadata";
    private static final String ERR_CHANNEL_INDEX = "Channel index out of bounds";
@@ -99,45 +105,13 @@ public class AcquisitionData {
    public AcquisitionData() {
       positionProperties_ = new JSONObject();
       guidgen_ = PlatformIndependentGuidGen.getInstance();
-      creationTime_ = new GregorianCalendar();
+      creationTime_ = Calendar.getInstance();
       inmemory_ = true;
       images_ = null;
       name_ = new String();
       basePath_ = null;
       metadata_ = new JSONObject();
    }
-
-   /**
-    * Checks if the specified directory contains micro-manager metadata file
-    * @param dir - directory path
-    * @return
-    */
-   public static boolean hasMetadata(String dir) {
-      File metaFile = new File(dir + "/" + METADATA_FILE_NAME);
-      if (metaFile.exists())
-         return true;
-      else
-         return false;
-   }
-
-   /**
-    * Returns the path containing a full data set: metadata and images.
-    * @return - path
-    */
-   public String getBasePath() throws MMAcqDataException {
-      if (inmemory_)
-         throw new MMAcqDataException("Base path not defined - acquisition data is created in-memory.");
-      return new String(basePath_);
-   }
-   
-   public boolean isInMemory() {
-      return inmemory_;
-   }
-   
-   public String getName() {
-      return name_;
-   }
-
    /**
     * Loads the metadata from the acquisition files stored on disk and initializes the object.
     * This method must be called prior to any other calls.
@@ -194,7 +168,88 @@ public class AcquisitionData {
       metadata_ = metadata;
       parse();
    }
+ 
+   /**
+    * Converts an in-memory data to persistent disk based directory.
+    * @param path
+    * @throws MMAcqDataException 
+    */
+   public void save(String name, String path, boolean autoName, SaveProgressCallback scb) throws MMAcqDataException {
+      if (!inmemory_)
+         throw new MMAcqDataException("This data is already created as persistent - location can't be changed.");
+
+      // create directory
+      String actualName = name; 
+      if (autoName)
+         actualName = generateRootName(name, path);
+      
+      String bp = path + "/" + actualName;
+      File outDir = new File(bp);
+      if(!outDir.exists()){
+      if (!outDir.mkdirs()) {
+         throw new MMAcqDataException("Unable to create directory: " + bp);
+      }
+      }else{
+          if( !outDir.isDirectory() )
+              throw new MMAcqDataException( bp + " is not a directory");
+      }
+
+
+      basePath_ = bp;
+      name_ = actualName;
+
+      // write initial metadata
+      writeMetadata();
+      
+      // write images
+      for (Enumeration<String> e = images_.keys() ; e.hasMoreElements(); ) {
+         String frameKey = e.nextElement();
+         JSONObject frameData;
+         String fname;
+         try {
+            frameData = metadata_.getJSONObject(frameKey);
+            if (frameData.has(ImagePropertyKeys.FILE)) {
+               fname = frameData.getString(ImagePropertyKeys.FILE);
+               String filePath = basePath_ + "/" + fname;
+               ImagePlus imp = new ImagePlus(fname, images_.get(frameKey));
+               FileSaver fs = new FileSaver(imp);
+               fs.saveAsTiff(filePath);
+            }
+         } catch (JSONException exc) {
+            throw new MMAcqDataException(exc);
+         }
+         
+         if (scb != null)
+            scb.imageSaved();
+      }
+      
+      // finally tag the object as persistent (not in-memory)
+      inmemory_ = false;
+      images_ = null;
+   }
    
+   /**
+    * Commits currently cached metadata to disk.
+    * @throws MMAcqDataException
+    */
+   public void saveMetadata() throws MMAcqDataException {
+      if (inmemory_)
+         throw new MMAcqDataException("Unable to save metadata - this acquisition is defined as 'in-memory'.");
+      
+      writeMetadata();
+   }
+
+   /**
+    * Creates a copy of the entire data set with exact replica of the metadata.
+    * However, files are not copied at the second location. Instead, file references are removed
+    * from the original instance, and retained in the new one.
+    * 
+    * TODO: it is not clear why is this method required and how is it intended to be used
+    * Consider removing
+    * 
+    * @return - new instance
+    * @throws MMAcqDataException
+    */
    public AcquisitionData createCopy() throws MMAcqDataException {
       AcquisitionData ad = new AcquisitionData();
       try {
@@ -225,6 +280,235 @@ public class AcquisitionData {
       
       return ad;
    }
+
+
+   /**
+    * Creates the new acquisition data set.
+    * If the object was already pointing to another data set, it
+    * will be simply disconnected from it - no data will be lost.
+    * The actual name of the directory for the data set will be
+    * created using "name" variable as the prefix and the acquisition
+    * number as the suffix. Acquisition numbers are automatically generated:
+    * e.g. "name_0", "name_1", etc.
+    * @param name - acquisition name (title)
+    * @param path - root directory for the acquisition
+    * @throws MMAcqDataException
+    */
+   public void createNew(String name, String path, boolean autoName) throws MMAcqDataException {
+
+      metadata_ = new JSONObject();
+      summary_ = new JSONObject();
+      positionProperties_ = new JSONObject();
+      
+      frames_=0;
+      slices_=0;
+      channels_=0;
+
+      imgWidth_= 0;
+      imgHeight_= 0;
+      imgDepth_= 0;
+
+      pixelSize_um_ = 0.0;
+      pixelAspect_ = 1.0;
+      ijType_ = 0;
+
+      channelNames_ = new String[channels_];
+
+      // set initial summary data
+      try {
+         summary_.put(SummaryKeys.GUID, guidgen_.genNewGuid());
+         version_ = SummaryKeys.VERSION;
+         summary_.put(SummaryKeys.METADATA_VERSION, version_);
+         summary_.put(SummaryKeys.METADATA_SOURCE, SummaryKeys.SOURCE);
+
+         summary_.put(SummaryKeys.NUM_FRAMES, frames_);
+         summary_.put(SummaryKeys.NUM_CHANNELS, channels_);
+         summary_.put(SummaryKeys.NUM_SLICES, slices_);
+         summary_.put(SummaryKeys.IMAGE_WIDTH, imgWidth_);
+         summary_.put(SummaryKeys.IMAGE_HEIGHT, imgHeight_);
+         summary_.put(SummaryKeys.IMAGE_DEPTH, imgDepth_);
+         summary_.put(SummaryKeys.IJ_IMAGE_TYPE, ijType_);
+         summary_.put(SummaryKeys.IMAGE_PIXEL_SIZE_UM, pixelSize_um_);
+         summary_.put(SummaryKeys.IMAGE_PIXEL_ASPECT, pixelAspect_);
+         summary_.put(SummaryKeys.IMAGE_INTERVAL_MS, 0.0);
+         summary_.put(SummaryKeys.IMAGE_Z_STEP_UM, 0.0);
+
+         // set time and date of creation
+         creationTime_ = new GregorianCalendar();
+         SimpleDateFormat sdfDate = new SimpleDateFormat(DATE_FORMAT);
+         SimpleDateFormat sdfTime = new SimpleDateFormat(TIME_FORMAT);
+
+         summary_.put(SummaryKeys.TIME, sdfTime.format(creationTime_.getTime()));
+         summary_.put(SummaryKeys.DATE, sdfDate.format(creationTime_.getTime()));
+         summary_.put(SummaryKeys.COMMENT, "empty");
+         
+         // set user name and computer name
+         try
+         {
+            java.net.InetAddress localMachine = java.net.InetAddress.getLocalHost();   
+            summary_.put(SummaryKeys.COMPUTER_NAME, localMachine.getHostName());
+         }
+         catch(UnknownHostException e)
+         {
+            ReportingUtils.showError(e);
+         }
+         summary_.put(SummaryKeys.USER_NAME, System.getProperty("user.name"));
+
+         metadata_.put(SummaryKeys.SUMMARY_OBJ, summary_);
+         
+      } catch (JSONException e) {
+         throw new MMAcqDataException(e);
+      }
+
+      if (path != null) {
+      // create directory
+	      String actualName = name; 
+	      if (autoName)
+	         actualName = generateRootName(name, path);
+	
+         basePath_ = path + "/" + actualName;
+	      
+         File outDir = new File(basePath_);
+         if (!outDir.mkdirs())
+	         throw new MMAcqDataException("Unable to create directory: " + basePath_ + ". It already exists.");
+	      
+         name_ = actualName;
+
+     	   inmemory_ = false;
+         images_ = null;
+
+         // write initial metadata
+         writeMetadata();
+      } else {
+         inmemory_ = true;
+         images_ = new Hashtable<String, ImageProcessor>();
+         basePath_ = null;
+         name_ = "in-memory";
+      }
+   }
+
+
+   /**
+    * Creates a new in-memory acquisition data set.
+    * If the object was already pointing to another data set, it
+    * will be simply disconnected from it - no data will be lost.
+    * @throws MMAcqDataException
+    */
+   public void createNew() throws MMAcqDataException {
+	   createNew("in-memory",null,false);
+   }
+
+   /**
+    * Defines physical dimensions of the image: height and width in pixels,
+    * depth in bytes.
+    * @param width - X dimension (columns)
+    * @param height - Y dimension (rows)
+    * @param depth - bytes per pixel
+    * @throws MMAcqDataException
+    */
+   public void setImagePhysicalDimensions(int width, int height, int depth) throws MMAcqDataException {
+      imgWidth_= width;
+      imgHeight_= height;
+      imgDepth_= depth;
+
+      if (imgDepth_ == 1)
+         ijType_ = ImagePlus.GRAY8;
+      else if (imgDepth_ == 2)
+         ijType_ = ImagePlus.GRAY16;
+      else
+         throw new MMAcqDataException("Unsupported pixel depth: " + imgDepth_);
+
+      try {
+         summary_.put(SummaryKeys.IMAGE_WIDTH, imgWidth_);
+         summary_.put(SummaryKeys.IMAGE_HEIGHT, imgHeight_);
+         summary_.put(SummaryKeys.IMAGE_DEPTH, imgDepth_);
+         summary_.put(SummaryKeys.IJ_IMAGE_TYPE, ijType_);
+
+         metadata_.put(SummaryKeys.SUMMARY_OBJ, summary_);
+      } catch (JSONException e) {
+         throw new MMAcqDataException(e);
+      }
+
+      if (!inmemory_)
+         writeMetadata();
+   }
+
+   /**
+    * Sets time, wavelength and focus dimensions of the data set.
+    * @param frames - number or frames (time)
+    * @param channels - number of channels (wavelength)
+    * @param slices - number of slices (Z, or focus)
+    * @throws MMAcqDataException
+    */
+   public void setDimensions(int frames, int channels, int slices) throws MMAcqDataException {
+      
+      boolean resetNames = false;
+      if (channels != channels_)
+         resetNames = true;
+      
+      frames_ = frames;
+      channels_ = channels;
+      slices_ = slices;
+
+      // update summary
+      try {
+         summary_.put(SummaryKeys.NUM_FRAMES, frames_);
+         summary_.put(SummaryKeys.NUM_CHANNELS, channels_);
+         summary_.put(SummaryKeys.NUM_SLICES, slices_);
+
+         // TODO: non-destructive fill-in of default names
+         if (resetNames)
+            defaultChannelNames();
+
+         metadata_.put(SummaryKeys.SUMMARY_OBJ, summary_);
+
+      } catch (JSONException e) {
+         ReportingUtils.showError(e);
+      }
+
+      //if (!inmemory_)
+         //writeMetadata();
+   }
+
+   /**
+    * Checks if the specified directory contains micro-manager metadata file
+    * @param dir - directory path
+    * @return - true if correct metadata file was identified
+    */
+   public static boolean hasMetadata(String dir) {
+      File metaFile = new File(dir + "/" + METADATA_FILE_NAME);
+      if (metaFile.exists())
+         return true;
+      else
+         return false;
+   }
+
+   /**
+    * Returns the path containing a full data set: metadata and images.
+    * @return - path
+    */
+   public String getBasePath() throws MMAcqDataException {
+      if (inmemory_)
+         throw new MMAcqDataException("Base path not defined - acquisition data is created in-memory.");
+      return new String(basePath_);
+   }
+   
+   /**
+    * Returns the data mode: in memory or on disk
+    * @return - true if data is stored in the memory
+    */
+   public boolean isInMemory() {
+      return inmemory_;
+   }
+   
+   /**
+    * Returns the name of the acquisition data set
+    * @return - name
+    */
+   public String getName() {
+      return name_;
+   }
+
 
    /**
     * Returns number of frames - time dimension.
@@ -294,6 +578,73 @@ public class AcquisitionData {
    public int getImageJType() {
       return ijType_;
    }
+   /**
+    * @return the imageInterval
+    */
+   public double getImageIntervalMs() {
+      return imageInterval_ms_;
+   }
+
+   /**
+    * Sets image interval annotation.
+    * @param imageInterval_ms
+    */
+   public void setImageIntervalMs(double imageInterval_ms) {
+      imageInterval_ms_ = imageInterval_ms;
+      try {
+         summary_.put(SummaryKeys.IMAGE_INTERVAL_MS, imageInterval_ms);
+      } catch (JSONException e) {
+         ReportingUtils.showError(e);
+      }
+   }
+
+   /**
+    * Returns focus step for slices.
+    * @return the imageZStep_um_
+    */
+   public double getImageZStepUm() {
+      return imageZStep_um_;
+   }
+
+   /**
+    * Sets focus step for slices.
+    * @param imageZStep_um
+    */
+   public void setImageZStepUm(double imageZStep_um) {
+      imageZStep_um_ = imageZStep_um;
+      try {
+         summary_.put(SummaryKeys.IMAGE_Z_STEP_UM, imageZStep_um);
+      } catch (JSONException e) {
+         ReportingUtils.showError(e);
+      }
+   }
+   
+   /**
+    * Sets the comment field in the summary section
+    * @param comment
+    * @throws MMAcqDataException
+    */
+   public void setComment(String comment) throws MMAcqDataException {
+      setSummaryValue(SummaryKeys.COMMENT, comment);
+   }
+   
+   /**
+    * Returns the comment field from the summary section
+    * @return - comment field
+    * @throws MMAcqDataException
+    */
+   public String getComment() throws MMAcqDataException {
+      return getSummaryValue(SummaryKeys.COMMENT);
+   }
+
+   /**
+    * Defines the pixel size parameter
+    * @param pixelSize_um - pixel size in microns
+    * @throws MMAcqDataException
+    */
+   public void setPixelSizeUm(double pixelSize_um) throws MMAcqDataException {
+      setSummaryValue(SummaryKeys.IMAGE_PIXEL_SIZE_UM, Double.toString(pixelSize_um));
+   }
 
    /**
     * Returns serialized metadata.
@@ -303,7 +654,7 @@ public class AcquisitionData {
          return metadata_.toString(3);
       } catch (JSONException e) {
          // TODO Auto-generated catch block
-         e.printStackTrace();
+         ReportingUtils.showError(e);
          return null;
       }
    }
@@ -332,8 +683,8 @@ public class AcquisitionData {
          channelNames.put(names[i]);
 
       try {
-         summary_.put(SummaryKeys.CHANNEL_NAMES, channelNames);
-         metadata_.put(SummaryKeys.SUMMARY, summary_);
+         summary_.put(SummaryKeys.CHANNEL_NAMES_ARRAY, channelNames);
+         metadata_.put(SummaryKeys.SUMMARY_OBJ, summary_);
       } catch (JSONException e) {
          throw new MMAcqDataException(e);
       }
@@ -355,13 +706,13 @@ public class AcquisitionData {
       JSONArray channelNames;
 
       try {
-         if (summary_.has(SummaryKeys.CHANNEL_NAMES))
-            channelNames = summary_.getJSONArray(SummaryKeys.CHANNEL_NAMES);
+         if (summary_.has(SummaryKeys.CHANNEL_NAMES_ARRAY))
+            channelNames = summary_.getJSONArray(SummaryKeys.CHANNEL_NAMES_ARRAY);
          else
             channelNames = new JSONArray();
 
          channelNames.put(channelIdx, name);
-         summary_.put(SummaryKeys.CHANNEL_NAMES, channelNames);
+         summary_.put(SummaryKeys.CHANNEL_NAMES_ARRAY, channelNames);
       } catch (JSONException e) {
          throw new MMAcqDataException(e);
       }
@@ -385,6 +736,13 @@ public class AcquisitionData {
       return keys;
    }
    
+   /**
+    * Returns the entire summary metadata in the JSON format.
+    * TODO: this method exposes internal data formats
+    * Consider removing
+    * @return - JSON object with summary metadata
+    * @throws MMAcqDataException
+    */
    public JSONObject getSummaryMetadata() throws MMAcqDataException {
       if (summary_ == null)
          throw new MMAcqDataException("The acquisition data is empty.");
@@ -399,7 +757,7 @@ public class AcquisitionData {
    /**
     * Returns all available keys associated with the position.
     * "Position" in this context usually means XY location
-    * @return
+    * @return - an array of keys
     */
    @SuppressWarnings("unchecked")
    public String[] getPositionPropertyKeys() {
@@ -423,14 +781,13 @@ public class AcquisitionData {
    /**
     * Sets a property value associated with the position
     * @param key
-    * @return - value
     * @throws JSONException
     */
-   public void setPositionProperty(String key, String prop) {
+   public void setPositionProperty(String key, String prop) throws MMAcqDataException {
       try {
          positionProperties_.put(key, prop);
       } catch (JSONException e) {
-         new MMAcqDataException(e);
+         throw new MMAcqDataException(e);
       }
    }
 
@@ -467,7 +824,7 @@ public class AcquisitionData {
    /**
     * Test whether the particular key exists in the summary metadata
     * @param key
-    * @return
+    * @return - true if it exists
     */
    public boolean hasSummaryValue(String key) {
       return summary_.has(key);
@@ -475,7 +832,7 @@ public class AcquisitionData {
    
    /**
     * Test whether the particular image coordinate exists
-    * @return
+    * @return - true if metadata exists
     * @throws MMAcqDataException 
     */
    public boolean hasImageMetadata(int frame, int channel, int slice) {
@@ -483,6 +840,15 @@ public class AcquisitionData {
       return metadata_.has(frameKey);
    }
    
+   /**
+    * Returns entire metadata associated with a single image in the JSON format.
+    * TODO: this method exposes internal data formats. Consider removing.
+    * @param frame
+    * @param channel
+    * @param slice
+    * @return - JSON object with image metadata
+    * @throws MMAcqDataException
+    */
    public JSONObject getImageMetadata(int frame, int channel, int slice) throws MMAcqDataException {
       String frameKey = ImageKey.generateFrameKey(frame, channel, slice);
       try {
@@ -518,6 +884,15 @@ public class AcquisitionData {
       }
    }
    
+   /**
+    * Sets string property value associated with key for a single image, defined by image coordinates
+    * @param frame
+    * @param channel
+    * @param slice
+    * @param key
+    * @param value
+    * @throws MMAcqDataException
+    */
    public void setImageValue(int frame, int channel, int slice, String key, String value) throws MMAcqDataException {
       if (metadata_ == null)
          throw new MMAcqDataException("No image data available.");
@@ -534,13 +909,41 @@ public class AcquisitionData {
       }
    }
    
+   /**
+    * Sets integer property value associated with key for a single image, defined by image coordinates
+    * @param frame
+    * @param channel
+    * @param slice
+    * @param key
+    * @param value
+    * @throws MMAcqDataException
+    */
    public void setImageValue(int frame, int channel, int slice, String key, int value) throws MMAcqDataException {
       setImageValue(frame, channel, slice, key, Integer.toString(value));
    }
+   
+   /**
+    * Sets integer property value associated with key for a single image, defined by image coordinates
+    * @param frame
+    * @param channel
+    * @param slice
+    * @param key
+    * @param value
+    * @throws MMAcqDataException
+    */
    public void setImageValue(int frame, int channel, int slice, String key, double value) throws MMAcqDataException {
       setImageValue(frame, channel, slice, key, Double.toString(value));
    }
    
+   /**
+    * Sets entire state data for a single image in the form of the JSON object. The data in JSON object
+    * is expected to be flat, i.e. a collection of property value pairs
+    * @param frame
+    * @param channel
+    * @param slice
+    * @param state
+    * @throws MMAcqDataException
+    */
    public void setSystemState(int frame, int channel, int slice, JSONObject state) throws MMAcqDataException {
       if (metadata_ == null)
          throw new MMAcqDataException("No image data available.");
@@ -551,17 +954,25 @@ public class AcquisitionData {
       String frameKey = ImageKey.generateFrameKey(frame, channel, slice);
       JSONObject stateData;
       try {
-         if (metadata_.has(SummaryKeys.SYSTEM_STATE))
-            stateData = metadata_.getJSONObject(SummaryKeys.SYSTEM_STATE);
+         if (metadata_.has(SummaryKeys.SYSTEM_STATE_OBJ))
+            stateData = metadata_.getJSONObject(SummaryKeys.SYSTEM_STATE_OBJ);
          else
             stateData = new JSONObject();
          stateData.put(frameKey, state);
-         metadata_.put(SummaryKeys.SYSTEM_STATE, stateData);
+         metadata_.put(SummaryKeys.SYSTEM_STATE_OBJ, stateData);
       } catch (JSONException e) {
          throw new MMAcqDataException(e);
       }
    }
    
+   /**
+    * Returns state data as JSON object, associated with a single image.
+    * @param frame
+    * @param channel
+    * @param slice
+    * @return - JSON data object containing a collection of property-value pairs
+    * @throws MMAcqDataException
+    */
    public JSONObject getSystemState(int frame, int channel, int slice) throws MMAcqDataException {
       if (metadata_ == null)
          throw new MMAcqDataException("No image data available.");
@@ -569,18 +980,31 @@ public class AcquisitionData {
       if (frame <0 || frame >= frames_ || channel < 0 || channel >= channels_ || slice < 0 || slice >= slices_)
          throw new MMAcqDataException("Invalid image coordinates (frame,channel,slice): " + frame + "," + channel + "," + slice);
       
-      if (!metadata_.has(SummaryKeys.SYSTEM_STATE))
+      if (!metadata_.has(SummaryKeys.SYSTEM_STATE_OBJ))
          return new JSONObject();
 
       String frameKey = ImageKey.generateFrameKey(frame, channel, slice);
+      JSONObject stateData;
       try {
-         JSONObject stateData = metadata_.getJSONObject(SummaryKeys.SYSTEM_STATE);
-         return stateData.getJSONObject(frameKey);
+         stateData = metadata_.getJSONObject(SummaryKeys.SYSTEM_STATE_OBJ);
+         if (stateData.has(frameKey))
+            return stateData.getJSONObject(frameKey);
+         else
+            return new JSONObject();
       } catch (JSONException e) {
          throw new MMAcqDataException(e);
       }
    }
    
+   /**
+    * 
+    * @param frame
+    * @param channel
+    * @param slice
+    * @param key
+    * @return - value
+    * @throws MMAcqDataException
+    */
    public String getSystemStateValue(int frame, int channel, int slice, String key) throws MMAcqDataException {
       if (metadata_ == null)
          throw new MMAcqDataException("No image data available.");
@@ -588,12 +1012,12 @@ public class AcquisitionData {
       if (frame <0 || frame >= frames_ || channel < 0 || channel >= channels_ || slice < 0 || slice >= slices_)
          throw new MMAcqDataException("Invalid image coordinates (frame,channel,slice): " + frame + "," + channel + "," + slice);
       
-      if (!metadata_.has(SummaryKeys.SYSTEM_STATE))
+      if (!metadata_.has(SummaryKeys.SYSTEM_STATE_OBJ))
          return "";
 
       String frameKey = ImageKey.generateFrameKey(frame, channel, slice);
       try {
-         JSONObject stateData = metadata_.getJSONObject(SummaryKeys.SYSTEM_STATE);
+         JSONObject stateData = metadata_.getJSONObject(SummaryKeys.SYSTEM_STATE_OBJ);
          JSONObject state = stateData.getJSONObject(frameKey);
          return state.getString(key);
       } catch (JSONException e) {
@@ -638,14 +1062,20 @@ public class AcquisitionData {
     * @throws MMAcqDataException
     */
    public Color[] getChannelColors() throws MMAcqDataException {
-      if (!summary_.has(SummaryKeys.CHANNEL_COLORS))
-         return null;
+      Color colors[] = new Color[channels_];
+
+      if (!summary_.has(SummaryKeys.CHANNEL_COLORS_ARRAY)) {
+         for (int i=0; i<channels_; i++) {
+            colors[i] = Color.GRAY;
+         }
+         
+         return colors;
+      }
 
       JSONArray metaColors;
-      Color colors[] = new Color[channels_];
       if (channels_ > 0) {
          try {
-            metaColors = summary_.getJSONArray(SummaryKeys.CHANNEL_COLORS);
+            metaColors = summary_.getJSONArray(SummaryKeys.CHANNEL_COLORS_ARRAY);
             for (int i=0; i<channels_; i++) {
                colors[i] = new Color(metaColors.getInt(i));
             }
@@ -668,8 +1098,8 @@ public class AcquisitionData {
          jsonColors.put(colors[i].getRGB());
       }
       try {
-         summary_.put(SummaryKeys.CHANNEL_COLORS, jsonColors);
-         metadata_.put(SummaryKeys.SUMMARY, summary_);
+         summary_.put(SummaryKeys.CHANNEL_COLORS_ARRAY, jsonColors);
+         metadata_.put(SummaryKeys.SUMMARY_OBJ, summary_);
       } catch (JSONException e) {
          throw new MMAcqDataException(e);
       }
@@ -690,13 +1120,13 @@ public class AcquisitionData {
 
       JSONArray chanColors;
       try {
-         if (summary_.has(SummaryKeys.CHANNEL_COLORS))
-            chanColors = summary_.getJSONArray(SummaryKeys.CHANNEL_COLORS);
+         if (summary_.has(SummaryKeys.CHANNEL_COLORS_ARRAY))
+            chanColors = summary_.getJSONArray(SummaryKeys.CHANNEL_COLORS_ARRAY);
          else {
             chanColors = new JSONArray();
          }
          chanColors.put(channel, rgb);
-         summary_.put(SummaryKeys.CHANNEL_COLORS, chanColors);
+         summary_.put(SummaryKeys.CHANNEL_COLORS_ARRAY, chanColors);
       } catch (JSONException e) {
          throw new MMAcqDataException(e);
       }
@@ -711,10 +1141,10 @@ public class AcquisitionData {
       JSONArray minContrast = null;
       JSONArray maxContrast = null;
       DisplaySettings settings[] = new DisplaySettings[channels_];
-      if (summary_.has(SummaryKeys.CHANNEL_CONTRAST_MIN) && summary_.has(SummaryKeys.CHANNEL_CONTRAST_MAX)) {
+      if (summary_.has(SummaryKeys.CHANNEL_CONTRAST_MIN_ARRAY) && summary_.has(SummaryKeys.CHANNEL_CONTRAST_MAX_ARRAY)) {
          try {
-            minContrast = summary_.getJSONArray(SummaryKeys.CHANNEL_CONTRAST_MIN);
-            maxContrast = summary_.getJSONArray(SummaryKeys.CHANNEL_CONTRAST_MAX);
+            minContrast = summary_.getJSONArray(SummaryKeys.CHANNEL_CONTRAST_MIN_ARRAY);
+            maxContrast = summary_.getJSONArray(SummaryKeys.CHANNEL_CONTRAST_MAX_ARRAY);
             for (int i=0; i<channels_; i++) {
                settings[i] = new DisplaySettings(minContrast.getDouble(i), maxContrast.getDouble(i));
             }
@@ -742,10 +1172,10 @@ public class AcquisitionData {
             maxContrast.put(ds[i].max);
          }
 
-         summary_.put(SummaryKeys.CHANNEL_CONTRAST_MIN, minContrast);
-         summary_.put(SummaryKeys.CHANNEL_CONTRAST_MAX, maxContrast);
+         summary_.put(SummaryKeys.CHANNEL_CONTRAST_MIN_ARRAY, minContrast);
+         summary_.put(SummaryKeys.CHANNEL_CONTRAST_MAX_ARRAY, maxContrast);
 
-         metadata_.put(SummaryKeys.SUMMARY, summary_);
+         metadata_.put(SummaryKeys.SUMMARY_OBJ, summary_);
 
       } catch (JSONException e) {
          throw new MMAcqDataException(e);
@@ -765,21 +1195,21 @@ public class AcquisitionData {
       JSONArray minContrast;
       JSONArray maxContrast;
       try {
-         if (summary_.has(SummaryKeys.CHANNEL_CONTRAST_MIN))
-            minContrast = summary_.getJSONArray(SummaryKeys.CHANNEL_CONTRAST_MIN);
+         if (summary_.has(SummaryKeys.CHANNEL_CONTRAST_MIN_ARRAY))
+            minContrast = summary_.getJSONArray(SummaryKeys.CHANNEL_CONTRAST_MIN_ARRAY);
          else
             minContrast = new JSONArray();
 
-         if (summary_.has(SummaryKeys.CHANNEL_CONTRAST_MAX))
-            maxContrast = summary_.getJSONArray(SummaryKeys.CHANNEL_CONTRAST_MAX);
+         if (summary_.has(SummaryKeys.CHANNEL_CONTRAST_MAX_ARRAY))
+            maxContrast = summary_.getJSONArray(SummaryKeys.CHANNEL_CONTRAST_MAX_ARRAY);
          else
             maxContrast = new JSONArray();
 
          minContrast.put(channelIdx, ds.min);
          maxContrast.put(channelIdx, ds.max);
 
-         summary_.put(SummaryKeys.CHANNEL_CONTRAST_MIN, minContrast);
-         summary_.put(SummaryKeys.CHANNEL_CONTRAST_MAX, maxContrast);
+         summary_.put(SummaryKeys.CHANNEL_CONTRAST_MIN_ARRAY, minContrast);
+         summary_.put(SummaryKeys.CHANNEL_CONTRAST_MAX_ARRAY, maxContrast);
 
       } catch (JSONException e) {
          throw new MMAcqDataException(e);
@@ -859,7 +1289,25 @@ public class AcquisitionData {
          throw new MMAcqDataException("Image path not defined - acquisition data is created in-memory.");   
       return basePath_ + "/" + getImageFileName(frame, channel, slice);
    }
+   
+   /**
+    * Returns the path of the metadata file.
+    * @throws MMAcqDataException 
+    */
+   public String getMetadataPath() throws MMAcqDataException {
+      if (inmemory_)
+         throw new MMAcqDataException("Metadata path not defined - acquisition data is created in-memory.");   
+      return basePath_ + "/" + METADATA_FILE_NAME;
+   }
 
+   /**
+    * Returns image file name associated with given coordinates
+    * @param frame
+    * @param channel
+    * @param slice
+    * @return - full path of the image file
+    * @throws MMAcqDataException
+    */
    public String getImageFileName(int frame, int channel, int slice) throws MMAcqDataException {
 
       if (metadata_ == null)
@@ -884,7 +1332,7 @@ public class AcquisitionData {
 
    /**
     * ImageJ specific command, to provide calibration information.
-    * @return
+    * @return - Calibration object (ImageJ)
     */
    public Calibration ijCal() {
       Calibration cal = new Calibration();
@@ -909,9 +1357,11 @@ public class AcquisitionData {
             }
          }
          catch (JSONException j) {
+            ReportingUtils.logError(j);
             return null;
          }
          catch (MMAcqDataException e) {
+            ReportingUtils.logError(e);
             return null;
          }
          cal.pixelDepth = zDist;
@@ -932,11 +1382,11 @@ public class AcquisitionData {
             }
          }
          catch (JSONException j) {
-            System.out.println("JSON exception in t");
+            ReportingUtils.logError(j, "JSON exception in t");
             return null;
          }
          catch (MMAcqDataException e) {
-            System.out.println("Caught exception in t");
+            ReportingUtils.logError(e);
             return null;
          }
          cal.frameInterval = interval;
@@ -949,7 +1399,6 @@ public class AcquisitionData {
    /**
     * Determine contrast display settings based on the specified image
     * @param frame
-    * @param channel
     * @param slice
     * @throws MMAcqDataException 
     */
@@ -981,10 +1430,10 @@ public class AcquisitionData {
             settings[i].min = istat.min;
             settings[i].max = istat.max;
          }
-         summary_.put(SummaryKeys.CHANNEL_CONTRAST_MIN, minArray);
-         summary_.put(SummaryKeys.CHANNEL_CONTRAST_MAX, maxArray);
+         summary_.put(SummaryKeys.CHANNEL_CONTRAST_MIN_ARRAY, minArray);
+         summary_.put(SummaryKeys.CHANNEL_CONTRAST_MAX_ARRAY, maxArray);
          
-         metadata_.put(SummaryKeys.SUMMARY, summary_);
+         metadata_.put(SummaryKeys.SUMMARY_OBJ, summary_);
       } catch (JSONException e) {
          throw new MMAcqDataException(e);
       }
@@ -992,218 +1441,6 @@ public class AcquisitionData {
       if (!inmemory_)
          writeMetadata();
       return settings;
-   }
-
-   /**
-    * Creates the new acquisition data set.
-    * If the object was already pointing to another data set, it
-    * will be simply disconnected from it - no data will be lost.
-    * The actual name of the directory for the data set will be
-    * created using "name" variable as the prefix and the acquisition
-    * number as the suffix. Acquisition numbers are automatically generated:
-    * e.g. "name_0", "name_1", etc.
-    * @param name - acquisition name (title)
-    * @param path - root directory for the acquisition
-    * @throws MMAcqDataException
-    */
-   public void createNew(String name, String path, boolean autoName) throws MMAcqDataException {
-
-      metadata_ = new JSONObject();
-      summary_ = new JSONObject();
-      positionProperties_ = new JSONObject();
-      inmemory_ = false;
-      images_ = null;
-
-      frames_=0;
-      slices_=0;
-      channels_=0;
-
-      imgWidth_= 0;
-      imgHeight_= 0;
-      imgDepth_= 0;
-
-      pixelSize_um_ = 0.0;
-      pixelAspect_ = 1.0;
-      ijType_ = 0;
-
-      channelNames_ = new String[channels_];
-
-      // set initial summary data
-      try {
-         summary_.put(SummaryKeys.GUID, guidgen_.genNewGuid());
-         version_ = SummaryKeys.VERSION;
-         summary_.put(SummaryKeys.METADATA_VERSION, version_);
-         summary_.put(SummaryKeys.METADATA_SOURCE, SummaryKeys.SOURCE);
-
-         summary_.put(SummaryKeys.NUM_FRAMES, frames_);
-         summary_.put(SummaryKeys.NUM_CHANNELS, channels_);
-         summary_.put(SummaryKeys.NUM_SLICES, slices_);
-         summary_.put(SummaryKeys.IMAGE_WIDTH, imgWidth_);
-         summary_.put(SummaryKeys.IMAGE_HEIGHT, imgHeight_);
-         summary_.put(SummaryKeys.IMAGE_DEPTH, imgDepth_);
-         summary_.put(SummaryKeys.IJ_IMAGE_TYPE, ijType_);
-         summary_.put(SummaryKeys.IMAGE_PIXEL_SIZE_UM, pixelSize_um_);
-         summary_.put(SummaryKeys.IMAGE_PIXEL_ASPECT, pixelAspect_);
-         summary_.put(SummaryKeys.IMAGE_INTERVAL_MS, 0.0);
-         summary_.put(SummaryKeys.IMAGE_Z_STEP_UM, 0.0);
-
-         creationTime_ = new GregorianCalendar();
-         summary_.put(SummaryKeys.TIME, creationTime_.getTime());
-         summary_.put(SummaryKeys.COMMENT, "empty");
-
-         metadata_.put(SummaryKeys.SUMMARY, summary_);
-      } catch (JSONException e) {
-         throw new MMAcqDataException(e);
-      }
-
-      // create directory
-      String actualName = name; 
-      if (autoName)
-         actualName = generateRootName(name, path);
-
-      basePath_ = path + "/" + actualName;
-      
-      File outDir = new File(basePath_);
-      if (!outDir.mkdirs())
-         throw new MMAcqDataException("Unable to create directory: " + basePath_ + ". It already exists.");
-      
-      name_ = actualName;
-
-      // write initial metadata
-      writeMetadata();
-   }
-   /**
-    * Creates a new in-memory acquisition data set.
-    * If the object was already pointing to another data set, it
-    * will be simply disconnected from it - no data will be lost.
-    * @throws MMAcqDataException
-    */
-   
-   public void createNew() throws MMAcqDataException {
-
-      metadata_ = new JSONObject();
-      summary_ = new JSONObject();
-      positionProperties_ = new JSONObject();
-      inmemory_ = true;
-
-      frames_=0;
-      slices_=0;
-      channels_=0;
-
-      imgWidth_= 0;
-      imgHeight_= 0;
-      imgDepth_= 0;
-
-      pixelSize_um_ = 0.0;
-      pixelAspect_ = 1.0;
-      ijType_ = 0;
-
-      channelNames_ = new String[channels_];
-
-      // set initial summary data
-      try {
-         summary_.put(SummaryKeys.GUID, guidgen_.genNewGuid());
-         version_ = SummaryKeys.VERSION;
-         summary_.put(SummaryKeys.METADATA_VERSION, version_);
-         summary_.put(SummaryKeys.METADATA_SOURCE, SummaryKeys.SOURCE);
-
-         summary_.put(SummaryKeys.NUM_FRAMES, frames_);
-         summary_.put(SummaryKeys.NUM_CHANNELS, channels_);
-         summary_.put(SummaryKeys.NUM_SLICES, slices_);
-         summary_.put(SummaryKeys.IMAGE_WIDTH, imgWidth_);
-         summary_.put(SummaryKeys.IMAGE_HEIGHT, imgHeight_);
-         summary_.put(SummaryKeys.IMAGE_DEPTH, imgDepth_);
-         summary_.put(SummaryKeys.IJ_IMAGE_TYPE, ijType_);
-         summary_.put(SummaryKeys.IMAGE_PIXEL_SIZE_UM, pixelSize_um_);
-         summary_.put(SummaryKeys.IMAGE_PIXEL_ASPECT, pixelAspect_);
-         summary_.put(SummaryKeys.IMAGE_INTERVAL_MS, 0.0);
-         summary_.put(SummaryKeys.IMAGE_Z_STEP_UM, 0.0);
-
-         creationTime_ = new GregorianCalendar();
-         summary_.put(SummaryKeys.TIME, creationTime_.getTime());
-         summary_.put(SummaryKeys.COMMENT, "empty");
-
-         metadata_.put(SummaryKeys.SUMMARY, summary_);
-      } catch (JSONException e) {
-         throw new MMAcqDataException(e);
-      }
-
-      basePath_ = null;
-      name_ = "in-memory";
-      images_ = new Hashtable<String, ImageProcessor>();
-   }
-
-   /**
-    * Defines physical dimensions of the image: height and width in pixels,
-    * depth in bytes.
-    * @param width - X dimension (columns)
-    * @param height - Y dimension (rows)
-    * @param depth - bytes per pixel
-    * @throws MMAcqDataException
-    */
-   public void setImagePhysicalDimensions(int width, int height, int depth) throws MMAcqDataException {
-      imgWidth_= width;
-      imgHeight_= height;
-      imgDepth_= depth;
-
-      if (imgDepth_ == 1)
-         ijType_ = ImagePlus.GRAY8;
-      else if (imgDepth_ == 2)
-         ijType_ = ImagePlus.GRAY16;
-      else
-         throw new MMAcqDataException("Unsupported pixel depth: " + imgDepth_);
-
-      try {
-         summary_.put(SummaryKeys.IMAGE_WIDTH, imgWidth_);
-         summary_.put(SummaryKeys.IMAGE_HEIGHT, imgHeight_);
-         summary_.put(SummaryKeys.IMAGE_DEPTH, imgDepth_);
-         summary_.put(SummaryKeys.IJ_IMAGE_TYPE, ijType_);
-
-         metadata_.put(SummaryKeys.SUMMARY, summary_);
-      } catch (JSONException e) {
-         throw new MMAcqDataException(e);
-      }
-
-      if (!inmemory_)
-         writeMetadata();
-   }
-
-   /**
-    * Sets time, wavelength and focus dimensions of the data set.
-    * @param frames - number or frames (time)
-    * @param channels - number of channels (wavelength)
-    * @param slices - number of slices (Z, or focus)
-    * @throws MMAcqDataException
-    */
-   public void setDimensions(int frames, int channels, int slices) throws MMAcqDataException {
-      
-      boolean resetNames = false;
-      if (channels != channels_)
-         resetNames = true;
-      
-      frames_ = frames;
-      channels_ = channels;
-      slices_ = slices;
-
-      // update summary
-      try {
-         summary_.put(SummaryKeys.NUM_FRAMES, frames_);
-         summary_.put(SummaryKeys.NUM_CHANNELS, channels_);
-         summary_.put(SummaryKeys.NUM_SLICES, slices_);
-
-         // TODO: non-destructive fill-in of default names
-         if (resetNames)
-            defaultChannelNames();
-
-         metadata_.put(SummaryKeys.SUMMARY, summary_);
-
-      } catch (JSONException e) {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
-      }
-
-      //if (!inmemory_)
-         //writeMetadata();
    }
 
    /**
@@ -1240,7 +1477,7 @@ public class AcquisitionData {
          GregorianCalendar gc = new GregorianCalendar();
          frameData.put(ImagePropertyKeys.TIME, gc.getTime());
          frameData.put(ImagePropertyKeys.ELAPSED_TIME_MS, gc.getTimeInMillis() - creationTime_.getTimeInMillis() );
-         frameData.put(ImagePropertyKeys.EXPOSURE_MS, 0.0); // TODO
+         //frameData.put(ImagePropertyKeys.EXPOSURE_MS, 0.0); // TODO
 
          metadata_.put(frameKey, frameData);
       } catch (JSONException e) {
@@ -1308,11 +1545,9 @@ public class AcquisitionData {
    /**
     * Inserts a single image metadata into the acquisition data set.
     * This method is used to generate metadata without recording pixel data in any way.
-    * @param img - image object pixels
     * @param frame - frame (time sample)index
     * @param channel - channel index
     * @param slice - slice (focus) index
-    * @return - actual file name without the path
     * @throws MMAcqDataException
     */
    public void insertImageMetadata(int frame, int channel, int slice) throws MMAcqDataException {
@@ -1349,65 +1584,6 @@ public class AcquisitionData {
          //writeMetadata();
       }
    }
-
-   /**
-    * Converts an in-memory data to persistent disk based directory.
-    * @param path
-    * @throws MMAcqDataException 
-    */
-   public void save(String name, String path, boolean autoName, SaveProgressCallback scb) throws MMAcqDataException {
-      if (!inmemory_)
-         throw new MMAcqDataException("This data is already created as persistent - location can't be changed.");
-
-      // create directory
-      String actualName = name; 
-      if (autoName)
-         actualName = generateRootName(name, path);
-      
-      String bp = path + "/" + actualName;
-      File outDir = new File(bp);
-      if (!outDir.mkdirs()) {
-         throw new MMAcqDataException("Unable to create directory: " + bp);
-      }
-      basePath_ = bp;
-      name_ = actualName;
-
-      // write initial metadata
-      writeMetadata();
-      
-      // write images
-      for (Enumeration<String> e = images_.keys() ; e.hasMoreElements(); ) {
-         String frameKey = e.nextElement();
-         JSONObject frameData;
-         String fname;
-         try {
-            frameData = metadata_.getJSONObject(frameKey);
-            if (frameData.has(ImagePropertyKeys.FILE)) {
-               fname = frameData.getString(ImagePropertyKeys.FILE);
-               String filePath = basePath_ + "/" + fname;
-               ImagePlus imp = new ImagePlus(fname, images_.get(frameKey));
-               FileSaver fs = new FileSaver(imp);
-               fs.saveAsTiff(filePath);
-            }
-         } catch (JSONException exc) {
-            throw new MMAcqDataException(exc);
-         }
-         
-         if (scb != null)
-            scb.imageSaved();
-      }
-      
-      // finally tag the object as persistent (not in-memory)
-      inmemory_ = false;
-      images_ = null;
-   }
-   
-   public void saveMetadata() throws MMAcqDataException {
-      if (inmemory_)
-         throw new MMAcqDataException("Unable to save metadata - this acquisition is defined as 'in-memory'.");
-      
-      writeMetadata();
-   }
    
    /**
     * Utility to save TIF files.
@@ -1416,7 +1592,7 @@ public class AcquisitionData {
     * @param img - pixels
     * @param width
     * @param height
-    * @return
+    * @return - true if successful
     */
    static public boolean saveImageFile(String fname, Object img, int width, int height) {
       ImageProcessor ip;
@@ -1435,69 +1611,15 @@ public class AcquisitionData {
       FileSaver fs = new FileSaver(imp);
       return fs.saveAsTiff(fname);
    }
-   
-   /**
-    * @return the imageInterval
-    */
-   public double getImageIntervalMs() {
-      return imageInterval_ms_;
-   }
 
-   /**
-    * Sets image interval annotation.
-    * @param imageInterval_ms
-    */
-   public void setImageIntervalMs(double imageInterval_ms) {
-      imageInterval_ms_ = imageInterval_ms;
-      try {
-         summary_.put(SummaryKeys.IMAGE_INTERVAL_MS, imageInterval_ms);
-      } catch (JSONException e) {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
-      }
-   }
-
-   /**
-    * Returns focus step for slices.
-    * @return the imageZStep_um_
-    */
-   public double getImageZStepUm() {
-      return imageZStep_um_;
-   }
-
-   /**
-    * Sets focus step for slices.
-    * @param imageZStep_um
-    */
-   public void setImageZStepUm(double imageZStep_um) {
-      imageZStep_um_ = imageZStep_um;
-      try {
-         summary_.put(SummaryKeys.IMAGE_Z_STEP_UM, imageZStep_um);
-      } catch (JSONException e) {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
-      }
-   }
-   
-   public void setComment(String comment) throws MMAcqDataException {
-      setSummaryValue(SummaryKeys.COMMENT, comment);
-   }
-   
-   public String getComment() throws MMAcqDataException {
-      return getSummaryValue(SummaryKeys.COMMENT);
-   }
-
-   public void setPixelSizeUm(double pixelSize_um) throws MMAcqDataException {
-      setSummaryValue(SummaryKeys.IMAGE_PIXEL_SIZE_UM, Double.toString(pixelSize_um));
-   }
-   
    ////////////////////////////////////////////////////////////////////////////
    // Private methods
    ////////////////////////////////////////////////////////////////////////////
-   
+   /*
    static private String generateRootPath(String name, String baseDir) {
       return baseDir + "/" + generateRootName(name, baseDir);
    }
+   */
    
    static private String generateRootName(String name, String baseDir) {
       // create new acquisition directory
@@ -1559,11 +1681,11 @@ public class AcquisitionData {
 
    private void parse() throws MMAcqDataException {
       try {
-         summary_ = metadata_.getJSONObject(SummaryKeys.SUMMARY);
+         summary_ = metadata_.getJSONObject(SummaryKeys.SUMMARY_OBJ);
 
          // extract position properties (if any)
-         if (summary_.has(SummaryKeys.POSITION_PROPERTIES)) {
-            positionProperties_ = summary_.getJSONObject(SummaryKeys.POSITION_PROPERTIES);
+         if (summary_.has(SummaryKeys.POSITION_PROPERTIES_OBJ)) {
+            positionProperties_ = summary_.getJSONObject(SummaryKeys.POSITION_PROPERTIES_OBJ);
          } else {
             // initialize to empty
             positionProperties_ = new JSONObject();
@@ -1605,7 +1727,7 @@ public class AcquisitionData {
             imageZStep_um_ = 0.0;
          }
 
-         if (!summary_.has(SummaryKeys.CHANNEL_NAMES)) {
+         if (!summary_.has(SummaryKeys.CHANNEL_NAMES_ARRAY)) {
             defaultChannelNames();
          }
 
@@ -1613,7 +1735,7 @@ public class AcquisitionData {
          channelNames_ = new String[channels_];
          if (channels_ > 0) {
             try {
-               metaNames = summary_.getJSONArray(SummaryKeys.CHANNEL_NAMES);
+               metaNames = summary_.getJSONArray(SummaryKeys.CHANNEL_NAMES_ARRAY);
                for (int i=0; i<channels_; i++) {
                   channelNames_[i] = metaNames.getString(i);
                }
@@ -1634,7 +1756,7 @@ public class AcquisitionData {
          channelNames_[i] = new String("Channel-" + i);
          channelNames.put(channelNames_[i]);
       }
-      summary_.put(SummaryKeys.CHANNEL_NAMES, channelNames);
+      summary_.put(SummaryKeys.CHANNEL_NAMES_ARRAY, channelNames);
    }
    
    private ImageProcessor createCompatibleIJImageProcessor(Object img) throws MMAcqDataException {
@@ -1654,5 +1776,6 @@ public class AcquisitionData {
          return ip;
    }
 
+   
 }
 

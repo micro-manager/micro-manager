@@ -1,0 +1,16 @@
+var sum, count;
+
+macro "Total Areas [f9]" {
+    requires('1.31g');
+    run("Measure");
+    sum += getResult('Area', nResults-1);
+    count++;
+    setResult('Total', nResults-1, sum);
+    setResult('Average', nResults-1, sum/count);
+    updateResults();
+}
+
+macro "Reset Total" {
+    sum = 0;
+    count = 0;
+}

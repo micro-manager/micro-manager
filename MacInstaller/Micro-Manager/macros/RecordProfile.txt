@@ -1,0 +1,17 @@
+// "RecordProfile.txt"
+// This macro generates a profile plot (without showing the plot)
+// and saves the y-values in the next available "Results" table column.
+ 
+  var count;
+
+  showMessage("Record Profile Plot", "To run this macro, install it, then type 'q'.");
+
+  macro "Record Profile Plot [q]" {
+      if (!isOpen("Results")) count=0;
+      profile = getProfile();
+      count++;
+      for (i=0; i<profile.length; i++)
+          setResult("p"+count, i, profile[i]);
+      updateResults();
+  }
+

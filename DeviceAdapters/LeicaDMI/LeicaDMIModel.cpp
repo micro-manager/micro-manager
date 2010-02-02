@@ -87,7 +87,7 @@ int LeicaDeviceModel::GetBusy(bool& busy)
  * Holds information about individual reflector cubes
  */
 LeicaCubeModel::LeicaCubeModel() :
-   cubeMethods_(LeicaDMIModel::maxNrMethods_, false)
+   cubeMethods_(LeicaDMIModel::maxNrMethods_ + 1, false)
 {
 }
 
@@ -100,12 +100,25 @@ bool LeicaCubeModel::IsMethodAvailable(int methodId)
  * IL model. Inherits from LeicaDeviceModel
  */
 LeicaILTurretModel::LeicaILTurretModel() :
-   cube_(maxNrCubes_)
+   cube_(maxNrCubes_ + 1)
 {
    LeicaDeviceModel::LeicaDeviceModel();
    position_ = 1;
 }
 
+/*
+ * Condensor model. 
+ */
+LeicaCondensorModel::LeicaCondensorModel() :
+   filter_(maxNrFilters_ + 1)
+{
+   LeicaDeviceModel::LeicaDeviceModel();
+   position_ = 1;
+}
+
+/*
+ * Holds info about individual objectives
+ */
 /*
  * Holds info about individual objectives
  */
@@ -123,10 +136,38 @@ bool LeicaObjectiveModel::IsMethodAvailable(int methodId)
  * ObjectiveTurret model. Inherits from LeicaDeviceModel
  */
 LeicaObjectiveTurretModel::LeicaObjectiveTurretModel() :
-   objective_(maxNrObjectives_)
+   objective_(maxNrObjectives_ + 1)
 {
    LeicaDeviceModel::LeicaDeviceModel();
    position_ = 1;
+}
+
+
+/*
+ * DIC Turret model
+ */
+LeicaDICPrismTurretModel::LeicaDICPrismTurretModel() :
+   motorized_(false),
+   prismName_(maxNrPrisms_ + 1)
+{
+   LeicaDeviceModel::LeicaDeviceModel();
+   position_ = 1;
+}
+
+int LeicaDICPrismTurretModel::GetFinePosition(int& finePosition)
+{
+   MM_THREAD_GUARD_LOCK(&mutex_);
+   finePosition = finePosition_;
+   MM_THREAD_GUARD_UNLOCK(&mutex_);
+   return DEVICE_OK;
+}
+
+int LeicaDICPrismTurretModel::SetFinePosition(int finePosition)
+{
+   MM_THREAD_GUARD_LOCK(&mutex_);
+   finePosition_ = finePosition;
+   MM_THREAD_GUARD_UNLOCK(&mutex_);
+   return DEVICE_OK;
 }
 
 /*
@@ -192,7 +233,7 @@ int LeicaDriveModel::SetPosFocus(int posFocus)
  * Leica Motorized Magnification changer.
  */
 LeicaMagChangerModel::LeicaMagChangerModel() :
-   magnification_(maxMags_, 0)
+   magnification_(maxMags_ + 1, 0)
 {
 }
 
@@ -213,9 +254,10 @@ int LeicaMagChangerModel::SetMagnification(int pos, double mag)
  * Class that keeps a model of the state of the Leica DMI microscope
  */
 LeicaDMIModel::LeicaDMIModel() :
+   usesMethods_(false),
    availableDevices_(maxNrDevices_, false),
    availableMethods_(maxNrMethods_, false),
-   methodNames_(maxNrMethods_)
+   methodNames_(maxNrMethods_ + 1)
 {
    methodNames_[0] = "TL BF";
    methodNames_[1] = "TL PH";
@@ -256,21 +298,26 @@ bool LeicaDMIModel::IsDeviceAvailable(int devId)
 
 void LeicaDMIModel::SetMethodAvailable(int methodId)
 {
-   if (methodId > 0 && methodId < maxNrMethods_)
+   if (methodId >= 0 && methodId < maxNrMethods_)
       availableMethods_[methodId] = true;
 }
 
 bool LeicaDMIModel::IsMethodAvailable(int methodId)
 {
-   return availableMethods_[methodId];
+   if (usesMethods_)
+      return availableMethods_[methodId];
+
+   return false;
 }
 
 
 bool LeicaDMIModel::IsMethodAvailable(std::string methodLabel)
 {
-   for (int i=0; i<16; i++)
-      if (methodNames_.at(i).compare(methodLabel) == 0 && IsMethodAvailable(i))
-         return true;
+   if (usesMethods_)
+      for (int i=0; i<16; i++)
+         if (methodNames_.at(i).compare(methodLabel) == 0 && IsMethodAvailable(i))
+            return true;
+
    return false;
 }
          
@@ -281,9 +328,21 @@ std::string LeicaDMIModel::GetMethod(int methodId)
 
 int LeicaDMIModel::GetMethodID(std::string method)
 {
-   for (int i=0; i<16; i++) {
-      if (method.compare(methodNames_.at(i)) == 0)
-         return i;
+   if (usesMethods_) {
+      for (int i=0; i<16; i++) {
+         if (method.compare(methodNames_.at(i)) == 0)
+            return i;
+      }
    }
    return -1;
+}
+
+bool LeicaDMIModel::UsesMethods()
+{
+   return usesMethods_;
+}
+
+void LeicaDMIModel::SetUsesMethods(bool use)
+{
+   usesMethods_ = use;
 }

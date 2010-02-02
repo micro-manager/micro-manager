@@ -1,10 +1,10 @@
 AM_CXXFLAGS = -fpermissive
-lib_LTLIBRARIES = NIDAQ.la
-NIDAQ_la_SOURCES = NIDAQ.cpp NIDAQ.h \
+lib_LTLIBRARIES = libmmgr_dal_NIDAQ.la
+libmmgr_dal_NIDAQ_la_SOURCES = NIDAQ.cpp NIDAQ.h \
    ../../MMDevice/MMDevice.h ../../MMDevice/DeviceBase.h
 ## adding the libtool library gives problems on OS X 10.4, adding the static lib works
-NIDAQ_la_LIBADD = ../../MMDevice/.libs/libMMDevice.a
-NIDAQ_la_LDFLAGS = -module -framework nidaqmxbase -framework nidaqmxbaselv
+libmmgr_dal_NIDAQ_la_LIBADD = ../../MMDevice/.libs/libMMDevice.a
+libmmgr_dal_NIDAQ_la_LDFLAGS = -module -framework nidaqmxbase -framework nidaqmxbaselv
 
 install:
-	cp .libs/NIDAQ.so $(DEVICEADAPTERPATH)/$(MMPREFIX)NIDAQ$(MMSUFFIX)
+	cp .libs/libmmgr_dal_NIDAQ.so $(DESTDIR)$(DEVICEADAPTERPATH)/libmmgr_dal_NIDAQ$(MMSUFFIX)

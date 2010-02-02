@@ -7,20 +7,16 @@ AC_CONFIG_SRCDIR([DemoCamera/DemoCamera.cpp])
 #AC_CONFIG_HEADER([config.h])
 AC_CANONICAL_HOST
 AM_INIT_AUTOMAKE
-
+AC_PROG_LIBTOOL
 
 m4_include([../configure.common])
-
-
-
-
 
 
 # Checks for header files.
 # Only build Hamamatsu driver when header files are present
 AC_MSG_CHECKING(for Hamamatsu Dcam)
 AM_CONDITIONAL([BUILD_HAMAMATSU],[test -f "/Library/Frameworks/dcamapi.framework/Headers/dcamapi.h"])
-if test -z "${BUILD_HAMAMATSU}" ; then
+if test -f "/Library/Frameworks/dcamapi.framework/Headers/dcamapi.h"; then
    AC_MSG_RESULT([found])
 else
    AC_MSG_RESULT([not found])
@@ -28,8 +24,12 @@ fi
 
 # Same for PVCAM
 AC_MSG_CHECKING(for Pvcam)
-AM_CONDITIONAL([BUILD_PVCAM],[test -f "/Library/Frameworks/PVCAM.framework/Headers/pvcam.h"])
-if test -z "${BUILD_PVCAM}" ; then
+AC_FIND_FILE([pvcam.h], [/usr/include/pvcam /Library/Frameworks/PVCAM.framework/Headers], PVCAMINCDIR)
+if test x$PVCAMINCDIR = xNO; then
+   AC_MSG_RESULT([not found])
+fi
+AM_CONDITIONAL([BUILD_PVCAM], [test -f "$PVCAMINCDIR/pvcam.h"])
+if test -f "$PVCAMINCDIR/pvcam.h" ; then
    AC_MSG_RESULT([found])
 else
    AC_MSG_RESULT([not found])
@@ -38,76 +38,106 @@ fi
 # Same for QCam
 AC_MSG_CHECKING(for QCam)
 AM_CONDITIONAL([BUILD_QCAM],[test -f "/Library/Frameworks/QCam.framework/Headers/QCamApi.h"])
-if test -z "${BUILD_QCAM}" ; then
+if test -f "/Library/Frameworks/QCam.framework/Headers/QCamApi.h" ; then
+   AC_MSG_RESULT([found])
+else
+   AC_MSG_RESULT([not found])
+fi
+
+# Same for Scion
+AC_MSG_CHECKING(for Scion)
+AM_CONDITIONAL([BUILD_SCION],[test -f "/Library/Frameworks/sfwlib.framework/Headers/sfwlib.h"])
+if test -f "/Library/Frameworks/sfwlib.framework/Headers/sfwlib.h"; then
+   AC_MSG_RESULT([found])
+else
+   AC_MSG_RESULT([not found])
+fi
+
+# Same for Diagnostic Spot
+AC_MSG_CHECKING(for Diagnostic Spot)
+AM_CONDITIONAL([BUILD_SPOT],[test -f "/Library/Frameworks/SpotCam.framework/Headers/SpotCam.h"])
+if test -f "/Library/Frameworks/SpotCam.framework/Headers/SpotCam.h"; then
    AC_MSG_RESULT([found])
 else
    AC_MSG_RESULT([not found])
 fi
 
 # and for Firewire cameras (libdc1394) 
-# TODO: Need better test here
 AC_MSG_CHECKING(for libdc1394)
-AM_CONDITIONAL([BUILD_DC1394],[test -f "/usr/local/include/dc1394/control.h"])
-if test -z "${BUILD_DC1394}" ; then
+AC_FIND_FILE([dc1394], [/usr/include /usr/local/$ARCH/include], DC1394INCDIR)
+if test x$DC1394INCDIR = xNO; then
+   AC_MSG_RESULT([not found])
+else
+   AC_CHECK_HEADERS([$DC1394INCDIR/dc1394/dc1394.h])
+   if test -z "$LIBDC1394" ; then
+      AC_FIND_FILE([libdc1394.a], [/usr/lib /usr/lib64 /usr/local/$ARCH/lib], DC1394LIBDIR)
+      if test x$DC1394LIBDIR = xNO; then
+         AC_MSG_RESULT([libdc1394 not found])
+      else
+         AC_MSG_RESULT([libdc1394.a found])
+         LIBDC1394="$DC1394LIBDIR/libdc1394.a"
+      fi
+   fi
+fi
+AC_SUBST(LIBDC1394)
+AM_CONDITIONAL([BUILD_DC1394], [test -f "$LIBDC1394"])
+
+# and for National Instrumenst boards 
+AC_MSG_CHECKING(for NIDaQ)
+AM_CONDITIONAL([BUILD_NIDAQ],[test -f "../../3rdParty/trunk/NationalInstruments/NI-DAQmxBase/includes/NIDAQmxBase.h"])
+if test -f "../../3rdParty/trunk/NationalInstruments/NI-DAQmxBase/includes/NIDAQmxBase.h" ; then
    AC_MSG_RESULT([found])
 else
    AC_MSG_RESULT([not found])
 fi
 
-# and for Velleman K8055 
-# TODO: Need better test here
-AC_MSG_CHECKING(for libk8055)
-AM_CONDITIONAL(BUILD_K8055, test -f "/usr/local/include/usb.h")
-if test -z "${BUILD_K8055}" ; then
+# Andor on linux 
+AC_MSG_CHECKING(for Andor)
+AM_CONDITIONAL([BUILD_ANDOR],[test -f "/usr/local/include/atmcdLXd.h"])
+if test -f "/usr/local/include/atmcdLXd.h" ; then
    AC_MSG_RESULT([found])
 else
    AC_MSG_RESULT([not found])
 fi
 
-# and for Velleman K8061 
-# TODO: Need better test here
-AC_MSG_CHECKING(for libk8061)
-AM_CONDITIONAL(BUILD_K8061, test -f "/usr/local/include/usb.h")
-if test -z "${BUILD_K8061}" ; then
+# Sensicam on linux 
+AC_MSG_CHECKING(for Sensicam)
+AM_CONDITIONAL([BUILD_SENSICAM],[test -f "/usr/local/include/sensicam.h"])
+if test -f "/usr/local/include/sensicam.h"; then
    AC_MSG_RESULT([found])
 else
    AC_MSG_RESULT([not found])
 fi
+
+
+# ITC on linux 
+AC_MSG_CHECKING(for ITC)
+AM_CONDITIONAL([BUILD_ITC],[test -f "/usr/local/include/ITC18.h"])
+if test -f "/usr/local/include/ITC18.h" ; then
+   AC_MSG_RESULT([found])
+else
+   AC_MSG_RESULT([not found])
+fi
+
 # and for libUSB 
-# TODO: Need better test here
 AC_MSG_CHECKING(for libusb)
-AM_CONDITIONAL(BUILD_USBMANAGER, test -f "/usr/local/include/usb.h")
-if test -z "$LIBUSB" ; then
-   if test -r /usr/local/lib/libUSB.a ; then
-      LIBUSB="/usr/local/lib/libUSB.a"
-      AC_MSG_RESULT([found])
-   else
-      AC_MSG_RESULT([not found])
+AC_FIND_FILE([usb.h], [/usr/include /usr/local/$ARCH/include], USBINCDIR)
+if test x$USBINCDIR = xNO; then
+   AC_MSG_RESULT([not found])
+else
+   AC_CHECK_HEADERS([$USBINCDIR/usb.h])
+   if test -z "$LIBUSB" ; then
+      AC_FIND_FILE([libusb.a], [/usr/lib /usr/lib64 /usr/local/$ARCH/lib], USBLIBDIR)
+      if test x$USBLIBDIR = xNO; then
+         AC_MSG_RESULT([lib not found])
+      else
+         AC_MSG_RESULT([libusb.a found])
+         LIBUSB="$USBLIBDIR/libusb.a"
+      fi
    fi
 fi
 AC_SUBST(LIBUSB)
-
-# Only build the Nikon TE2000 when the code is there
-AM_CONDITIONAL([BUILD_TE2000],[test -f "NikonTE2000/NikonTE2000.h"])
-if test -f "NikonTE2000/NikonTE2000.h"; then
-   # TE2000=NikonTE2000
-   TE2000MAKEFILE="NikonTE2000/Makefile"
-else
-   # TE2000=
-   TE2000MAKEFILE=
-fi
-#AC_SUBST(TE2000)
-
-# Only build the Nikon AZ100 when the code is there
-AM_CONDITIONAL([BUILD_AZ100],[test -f "NikonAZ100/NikonAZ100.h"])
-if test -f "NikonAZ100/NikonAZ100.h"; then
-   AZ100=NikonAZ100
-   AZ100MAKEFILE="NikonAZ100/Makefile"
-else
-   AZ100=
-   AZ100MAKEFILE=
-fi
-AC_SUBST(AZ100)
+AM_CONDITIONAL([BUILD_USBMANAGER], [test -f "$LIBUSB"])
 
 # Only build ... when the code is there
 AM_CONDITIONAL([BUILD_TEST],[test -f "Test/Test.h"])
@@ -135,12 +165,21 @@ case $host in
       AC_MSG_CHECKING(pvcam linker flags)
       PVCAMFRAMEWORKS="-framework PVCAM"
       AC_MSG_RESULT($PVCAMFRAMEWORKS)
+      AC_MSG_CHECKING(diagnostic spot linker flags)
+      SPOTFRAMEWORKS="-framework SpotCam"
+      AC_MSG_RESULT($SPOTFRAMEWORKS)
       AC_MSG_CHECKING(Serial adapter linker flags)
       SERIALFRAMEWORKS="-framework CoreFoundation -framework IOKit"
       AC_MSG_RESULT($SERIALFRAMEWORKS)
+      ;;
+   *linux*)
+      AC_MSG_CHECKING(pvcam linker flags)
+      PVCAMFRAMEWORKS="-lpvcam"
+      ;;
 esac
 AC_SUBST(DCAMFRAMEWORKS)
 AC_SUBST(PVCAMFRAMEWORKS)
+AC_SUBST(SPOTFRAMEWORKS)
 AC_SUBST(SERIALFRAMEWORKS)
 
 # Micro-Manager libraries have a prefix & suffix to make them unique.  These are defined here:
@@ -169,5 +208,5 @@ AC_SUBST(MMPREFIX)
 AC_HEADER_STDC
 AC_CHECK_FUNCS([memset])
 
-AC_CONFIG_FILES(Makefile AOTF/Makefile Andor/Makefile ASIFW1000/Makefile ASIStage/Makefile DAZStage/Makefile DAShutter/Makefile DTOpenLayer/Makefile DemoCamera/Makefile DemoStreamingCamera/Makefile SerialManager/Makefile SerialManagerUNIX/Makefile USBManager/Makefile Ludl/Makefile LudlLow/Makefile ZeissCAN/Makefile ZeissCAN29/Makefile Vincent/Makefile Conix/Makefile K8055/Makefile K8061/Makefile NIDAQ/Makefile Hamamatsu/Makefile PVCAM/Makefile MultiShutter/Makefile Nikon/Makefile NikonTE2000/Makefile $AZ100MAKEFILE ParallelPort/Makefile Pecon/Makefile Sensicam/Makefile StanfordPhotonics/Makefile SpectralLMM5/Makefile SutterLambda/Makefile Prior/Makefile PI/Makefile PI_GCS/Makefile dc1394/Makefile QCam/Makefile Yokogawa/Makefile $TESTMAKEFILE)
+AC_CONFIG_FILES(Makefile ITC18/Makefile AOTF/Makefile Andor/Makefile Arduino/Makefile ASIFW1000/Makefile ASIStage/Makefile ASIWPTR/Makefile Cobolt/Makefile CoherentCube/Makefile DTOpenLayer/Makefile DemoCamera/Makefile DemoRGBCamera/Makefile DemoStreamingCamera/Makefile SerialManager/Makefile SerialManagerUNIX/Makefile SimpleAF/Makefile USBManager/Makefile LeicaDMI/Makefile LeicaDMR/Makefile Ludl/Makefile LudlLow/Makefile ZeissCAN/Makefile ZeissCAN29/Makefile Vincent/Makefile Conix/Makefile K8055/Makefile K8061/Makefile NIDAQ/Makefile Hamamatsu/Makefile PVCAM/Makefile Neos/Makefile Nikon/Makefile NikonTE2000/Makefile ParallelPort/Makefile Pecon/Makefile PrecisExcite/Makefile ScionCam/Makefile Sensicam/Makefile SpectralLMM5/Makefile Spot/Makefile SutterLambda/Makefile ThorlabsDCxxxx/Makefile ThorlabsFilterWheel/Makefile ThorlabsSC10/Makefile Prior/Makefile PI/Makefile PI_GCS/Makefile Utilities/Makefile dc1394/Makefile QCam/Makefile Yokogawa/Makefile)
 AC_OUTPUT

@@ -1,0 +1,17 @@
+  getSelectionCoordinates(xc, yc);
+  leftx=99999; topy=99999; rightx=0; bottomy=0;
+  for (i=0; i<xc.length; i++) {
+      x=xc[i]; y=yc[i];
+      if (x<leftx) {leftx = x; lefty = y; }
+      if (y<topy) {topy = y; topx = x; }
+      if (x>rightx) {rightx = x; righty = y; }
+      if (y>bottomy) {bottomy = y; bottomx = x; }
+  }
+  print("left: " + leftx + "," + lefty);
+  print("top: " + topx + "," + topy);
+  print("right: " + (rightx-1) + "," + righty);
+  print("bottom: " + bottomx + "," + (bottomy-1));
+  //setPixel(leftx, lefty, 0);
+  //setPixel(topx, topy, 0);
+  //setPixel(rightx, righty, 0);
+  //setPixel(bottomx, bottomy, 0);

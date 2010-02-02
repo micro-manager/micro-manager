@@ -45,10 +45,13 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import org.micromanager.utils.ReportingUtils;
 
 public class RegistrationDlg extends JDialog {
    private static final long serialVersionUID = 1L;
    public static final String REGISTRATION = "registered";
+   public static final String REGISTRATION_NEVER = "reg_never";
+   public static final String REGISTRATION_ATTEMPTS = "registration_attempts";
    public static final String REGISTRATION_NAME = "reg_name";
    public static final String REGISTRATION_INST = "reg_institution";
 
@@ -56,13 +59,17 @@ public class RegistrationDlg extends JDialog {
    private JTextField email_;
    private JTextField inst_;
    private JTextField name_;
-   
+   private Preferences prefs_;
 
    /**
     * Dialog to collect registration data from the user.
     */
-   public RegistrationDlg() {
+   public RegistrationDlg(Preferences prefs) {
       super();
+      prefs_ = prefs;
+      
+      incrementRegistrationAttempts();
+      
       setModal(true);
       setUndecorated(true);
       setTitle("Micro-Manager Registration");
@@ -105,69 +112,66 @@ public class RegistrationDlg extends JDialog {
       okButton.setFont(new Font("", Font.BOLD, 12));
       okButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
-            
-            try {
-               URL url;
-               InputStream is;
-               BufferedReader br;
-               if (name_.getText().length() == 0 || email_.getText().length() == 0) {
-                  JOptionPane.showMessageDialog(RegistrationDlg.this, "Name and email fields can't be empty.");
-                  return;
-               }
-               // save registration information to registry
-               Preferences prefs = Preferences.systemNodeForPackage(this.getClass());
-               prefs.put(REGISTRATION_NAME, name_.getText());
-               prefs.put(REGISTRATION_INST, inst_.getText());
-               
-               // replace special characters to properly format the command string
-               String name = name_.getText().replaceAll("[ \t]", "%20");
-               name = name.replaceAll("[&]", "%20and%20");
-               String inst = inst_.getText().replaceAll("[ \t]", "%20");
-               inst = inst.replaceAll("[&]", "%20and%20");
-               String email = email_.getText().replaceAll("[ \t]", "%20");
-               email = email.replaceAll("[&]", "%20and%20");
-               
-               String regText = "http://valelab.ucsf.edu/micro-manager-registration.php?Name=" + name +
-               "&Institute=" + inst + "&email=" + email;
-               
-               url = new URL(regText);
-               is = url.openStream();
-               br = new BufferedReader(new InputStreamReader(is));
-               String response = br.readLine();
-               if (response.compareTo("SUCCESS") != 0) {
-                  JOptionPane.showMessageDialog(RegistrationDlg.this, "Registration did not succeed. You will be prompted again next time.");
-                  dispose();
-                  return;
-               }
-               
-               // save to registry
-               prefs.putBoolean(REGISTRATION, true);
-               
-            } catch (java.net.UnknownHostException e) {
-               JOptionPane.showMessageDialog(RegistrationDlg.this, "Registration did not succeed. You are probably not connected to the Internet.\n" +
-                                             "You will be prompted again next time you start.");
-            } catch (MalformedURLException e) {
-               // TODO Auto-generated catch block
-               e.printStackTrace();
-            } catch (IOException e) {
-               // TODO Auto-generated catch block
-               e.printStackTrace(); 
-            } catch (SecurityException e){
-               JOptionPane.showMessageDialog(RegistrationDlg.this, e.getMessage() + 
-                     "\nThe program failed to save registration status.\n" +
-                     "Most likely you are not logged in with administrator privileges.\n" +
-               "Please try registering again using the administrator's account.");
+            if (name_.getText().length() == 0 || email_.getText().length() == 0) {
+               JOptionPane.showMessageDialog(RegistrationDlg.this, "Name and email fields can't be empty.");
+            } else {
+               try {
+                  URL url;
+                  InputStream is;
+                  BufferedReader br;
+                  
+                  // save registration information to registry
+                  prefs_.put(REGISTRATION_NAME, name_.getText());
+                  prefs_.put(REGISTRATION_INST, inst_.getText());
+                  
+                  // replace special characters to properly format the command string
+                  String name = name_.getText().replaceAll("[ \t]", "%20");
+                  name = name.replaceAll("[&]", "%20and%20");
+                  String inst = inst_.getText().replaceAll("[ \t]", "%20");
+                  inst = inst.replaceAll("[&]", "%20and%20");
+                  String email = email_.getText().replaceAll("[ \t]", "%20");
+                  email = email.replaceAll("[&]", "%20and%20");
+                  
+                  String regText = "http://valelab.ucsf.edu/micro-manager-registration.php?Name=" + name +
+                  "&Institute=" + inst + "&email=" + email;
+                  
+                  url = new URL(regText);
+                  is = url.openStream();
+                  br = new BufferedReader(new InputStreamReader(is));
+                  String response = br.readLine();
+                  if (response.compareTo("SUCCESS") != 0) {
+                     JOptionPane.showMessageDialog(RegistrationDlg.this, "Registration did not succeed. You will be prompted again next time.");
+                     dispose();
+                     return;
+                  }
+                  
+                  } catch (java.net.UnknownHostException e) {
+                     ReportingUtils.showError(e, "Registration did not succeed. You are probably not connected to the Internet.\n" +
+                                                   "You will be prompted again next time you start.");
+                  } catch (MalformedURLException e) {
+                     ReportingUtils.showError(e);
+                  } catch (IOException e) {
+                     ReportingUtils.showError(e);
+                  } catch (SecurityException e){
+                     ReportingUtils.showError(e,
+                           "\nThe program failed to save registration status.\n" +
+                           "Most likely you are not logged in with administrator privileges.\n" +
+                     "Please try registering again using the administrator's account.");
+   
+                  } catch (Exception e) {
+                     ReportingUtils.logError(e);
+                  } finally {
+                     dispose();
+                  
+                  }   
+                  // save to registry
+                  prefs_.putBoolean(REGISTRATION, true);
+            }
 
-            }catch (Exception e) {
-               // TODO Auto-generated catch block
-               e.printStackTrace();
-            } finally {
-               dispose();
-            }   
          }
       });
       okButton.setText("OK");
-      okButton.setBounds(152, 266, 93, 23);
+      okButton.setBounds(50, 266, 100, 23);
       getContentPane().add(okButton);
 
       welcomeTextArea_ = new JTextArea();
@@ -189,15 +193,44 @@ public class RegistrationDlg extends JDialog {
       final JButton skipButton = new JButton();
       skipButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
-            JOptionPane.showMessageDialog(RegistrationDlg.this, "You choose to skip registering this time.\n" +
+            JOptionPane.showMessageDialog(RegistrationDlg.this, "You choose to postpone registration.\n" +
                   "This prompt will appear again next time you start the application.");
+            prefs_.putBoolean(REGISTRATION_NEVER,false);
             dispose();
          }
       });
-      skipButton.setText("Skip");
-      skipButton.setBounds(323, 266, 65, 23);
+      skipButton.setText("Later");
+      skipButton.setBounds(160, 266, 100, 23);
       getContentPane().add(skipButton);
       //
+      
+      if (getRegistrationAttempts()>1) {        // Don't show "never" button the first time
+         final JButton neverButton = new JButton();
+         neverButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent arg0) {
+               JOptionPane.showMessageDialog(RegistrationDlg.this, "You have chosen never to register. \n" +
+                     "If you change your mind in the future, please\nchoose the \"Register\" option in the Help menu.");
+               prefs_.putBoolean(REGISTRATION_NEVER,true);
+               dispose();
+            }
+         });
+         
+         neverButton.setText("Never");
+         neverButton.setBounds(270, 266, 100, 23);
+         getContentPane().add(neverButton);
+      }
+      
+   }
+   
+   private int incrementRegistrationAttempts() {
+      int attempts = getRegistrationAttempts();
+      attempts++;
+      prefs_.putInt(REGISTRATION_ATTEMPTS, attempts);
+      return attempts;
+   }
+   
+   public int getRegistrationAttempts() {
+      return prefs_.getInt(REGISTRATION_ATTEMPTS,0);
    }
 
 }

@@ -1,0 +1,16 @@
+// These macros allow tools to be selected by pressing function keys. To have
+// them installed on startup, rename this file "StartupMacros.txt" and move 
+// it to the "macros" folder in the "ImageJ" folder.
+
+macro 'Rectangle [f1]' {setTool(0)}
+macro 'Oval [f2]' {setTool(1)}
+macro 'Polygon [f3]' {setTool(2)}
+macro 'Freehand [f4]' {setTool(3)}
+macro 'Straight Line [f5]' {setTool(4)}
+macro 'Segmented Line [f6]' {setTool(5)}
+macro 'Freeline [f7]' {setTool(6)}
+macro 'Angle [f8]' {setTool(14)}
+macro 'Crosshair [f9]' {setTool(7)}
+macro 'Wand [f10]' {setTool(8)}
+macro 'Text [f11]' {setTool(9)}
+macro 'Magnifying Glass [f12]' {setTool(11)}

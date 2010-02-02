@@ -166,6 +166,22 @@ bool Configuration::isPropertyIncluded(const char* device, const char* prop)
 }
 
 /**
+  * Get the setting with specified device name and property name.
+  */
+
+PropertySetting Configuration::getSetting(const char* device, const char* prop)
+{
+   map<string, int>::iterator it = index_.find(PropertySetting::generateKey(device, prop));
+   if (it == index_.end())
+   {
+      std::ostringstream errTxt;
+      errTxt << "Property " << prop << " not found in device " << device << ".";
+      throw CMMError(errTxt.str().c_str(), MMERR_DEVICE_GENERIC);
+   }
+   return settings_[it->second];
+}
+
+/**
   * Checks whether the setting is included in the  configuration.
   */
 
@@ -211,6 +227,23 @@ void Configuration::addSetting(const PropertySetting& setting)
       index_[setting.getKey()] = (int)settings_.size();
       settings_.push_back(setting);
    }
+}
+
+/**
+ * Removes property setting, specified by device and property names, from the configuration.
+ */
+void Configuration::deleteSetting(const char* device, const char* prop)
+{
+   map<string, int>::iterator it = index_.find(PropertySetting::generateKey(device, prop));
+   if (it == index_.end())
+   {
+      std::ostringstream errTxt;
+      errTxt << "Property " << prop << " not found in device " << device << ".";
+      throw CMMError(errTxt.str().c_str(), MMERR_DEVICE_GENERIC);
+   }
+
+   settings_.erase(settings_.begin() + it->second); // The argument of erase produces an iterator at the desired position.
+   index_.erase(it);
 }
 
 

@@ -1,0 +1,15 @@
+
+getPixelSize(unit, pw, ph, pd);
+run("3D Project...", "projection='Brightest Point' axis=Y-Axis slice="+pd+" initial=-20 total=40 rotation=5 lower=1 upper=255 opacity=20 surface=100 interior=80 interpolate");
+  
+originallength = nSlices;
+  for(i=1;i<=originallength;i++){
+     run("Set Slice...", "slice="+(originallength+1-i));
+     run("Select All");
+     run("Copy");
+     run("Set Slice...", "slice="+nSlices);
+     run("Add Slice");
+     run("Paste");
+  }  // for loop
+run("Select None");
+

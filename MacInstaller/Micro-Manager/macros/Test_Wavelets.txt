@@ -1,0 +1,64 @@
+//  This macro is useful for finding suitable coefficients
+//   for use with the HaarWavelet_Filter plugin at
+//  "http://rsb.info.nih.gov/ij/plugins/haar-wavelet-filter.html".
+
+macro "HWL_test [F5]" {
+
+requires("1.34e"); 
+t = getTitle();
+
+//uncomment the result you wish to display, comment out the other. 
+//action ="noise"; 
+action ="result"; 
+
+setBatchMode(true);
+newImage(action, "8-bit Black", getWidth(), getHeight, 1);
+
+for (i=0;i<10;i++) {
+
+	k1 = i/4;
+	k2 = k1*0.66;
+	k2 = (parseInt(""+k2*100*2/3))/100;
+	k3 = k2;
+
+	selectWindow(t);	
+	run("Haar wavelet filter", "k1="+k1+" k2="+k2+" k3="+k3+" non std=2 noise");
+	
+	if (action=="noise") {
+	selectWindow("Denoised image");
+	run("Close");
+	selectWindow("Removed noise");
+	run("Select All");
+	run("Copy");
+	run("Close");}
+
+	if (action=="result") {
+	selectWindow("Removed noise");
+	run("Close");
+	selectWindow("Denoised image");
+	run("Select All");
+	run("Copy");
+	run("Close");}
+
+	selectWindow(action);
+	run("Paste");
+	run("Select None");
+	setForegroundColor(0, 0, 0);
+	setFont("Monospaced",14,"bold");
+	drawString("k1:"+k1,10,20);
+	drawString("k2:"+k2,70,20);
+	drawString("k3:"+k3,130,20);
+	setForegroundColor(255, 255, 255);
+	setFont("Monospaced",14,"bold");
+	drawString("k1:"+k1,11,21);
+	drawString("k2:"+k2,71,21);
+	drawString("k3:"+k3,131,21);
+	run("Add Slice");
+	showProgress(i, 10);
+}
+
+selectWindow(action);
+run("Delete Slice");
+setSlice(1);
+setBatchMode(false);
+}

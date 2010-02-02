@@ -23,14 +23,24 @@
 //
 package org.micromanager.conf;
 
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.prefs.Preferences;
+
+import javax.swing.CellEditor;
+import javax.swing.InputMap;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.KeyStroke;
+import javax.swing.ListSelectionModel;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 
 import org.micromanager.conf.DevicesPage.DeviceTable_TableModel;
+import org.micromanager.utils.GUIUtils;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  * Wizard page to set device delays.
@@ -95,7 +105,7 @@ public class DelayPage extends PagePanel {
                devices_.get(row).setDelay(Double.parseDouble((String)value));
                fireTableCellUpdated(row, col);
             } catch (Exception e) {
-               handleError(e.getMessage());
+               ReportingUtils.logError(e);
             }
          }
       }
@@ -138,8 +148,12 @@ public class DelayPage extends PagePanel {
       add(scrollPane);
 
       deviceTable_ = new JTable();
+      deviceTable_.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+      InputMap im = deviceTable_.getInputMap(JTable.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+      im.put( KeyStroke.getKeyStroke( KeyEvent.VK_ENTER, 0 ), "none" );
       scrollPane.setViewportView(deviceTable_);
-      //
+      GUIUtils.setClickCountToStartEditing(deviceTable_,1);
+      GUIUtils.stopEditingOnLosingFocus(deviceTable_);
    }
 
    public boolean enterPage(boolean next) {      
@@ -148,11 +162,16 @@ public class DelayPage extends PagePanel {
   }
 
    public boolean exitPage(boolean next) {
+      CellEditor ce = deviceTable_.getCellEditor();
+      if (ce != null) {
+        deviceTable_.getCellEditor().stopCellEditing();
+      }
       // apply delays to hardware
       try {
+
          model_.applyDelaysToHardware(core_);
       } catch (Exception e) {
-         handleError(e.getMessage());
+         ReportingUtils.logError(e);
          if (next)
             return false; // refuse to go to the next page
       }

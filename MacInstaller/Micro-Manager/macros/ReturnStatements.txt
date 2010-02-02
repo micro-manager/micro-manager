@@ -1,0 +1,46 @@
+  // This macro demonstrates how user defined functions can use
+  // the return statement to return numbers, strings or arrays
+
+  requires("1.30p");
+  v=f1(); print("Number: "+v);
+  v=f2(); print("String: "+v);
+  v=f3(); printArray("Array of numbers:", v);
+  v=f4(); printArray("Array of strings:", v);
+  v=f5(); printArray("Mixed array:", v);
+
+  print("Number: "+f1());
+  print("String: "+f2());
+  printArray("Array of numbers:", f3());
+  printArray("Array of strings:", f4());
+  printArray("Mixed array:", f5());
+
+  function printArray(title, a) {
+      print(title);
+      for (i=0; i<a.length; i++)
+          print("  "+i+" "+a[i]);
+  }
+
+  function f1() {
+     return 123;
+  }
+
+  function f2() {
+     s = "Hello";
+     return s;
+  }
+
+  function f3() {
+      return newArray(1,2,3);
+  }
+
+  function f4() {
+      return newArray("cat","dog","fish");
+  }
+
+  function f5() {
+      a = newArray(3);
+      a[0] = 'dog';
+      a[1] = 123.45;
+      a[2] = 'cat';
+      return a;
+}  

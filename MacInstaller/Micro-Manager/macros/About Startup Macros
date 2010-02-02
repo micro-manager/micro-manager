@@ -1,0 +1,8 @@
+  Macros, such as this one, contained in a file named "StartupMacros.txt",
+  located in the "macros" folder inside the ImageJ folder, are automatically
+  installed in the Plugins>Macros menu when ImageJ starts. 
+
+  More information is available at:
+  <http://rsb.info.nih.gov/ij/developer/macro/macros.html>
+
+

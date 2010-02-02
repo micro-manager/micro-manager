@@ -1,0 +1,21 @@
+// These macro measure all the slices in a stack.
+// The first macro works with both single images
+// and stacks but it requires ImageJ 1.33r or later.
+// The second works with older versions of ImageJ
+// but does not work with single images.
+
+  macro "Measure Stack" {
+      requires("1.33r");
+      for (n=1; n<=nSlices; n++) {
+          setSlice(n);
+          run("Measure");
+      }
+  }
+
+
+  macro "Measure Stack 2" {
+      for (i=1; i<=nSlices; i++) {
+          run("Set Slice...", "slice="+i);
+          run("Measure");
+     }
+  }

@@ -1,0 +1,14 @@
+  requires("1.30i");
+  s = "012345";
+  print("s = \""+s + "\"");
+  print("lengthOf(s): "+lengthOf(s));
+  print('substring(s, 0, 2): "' + substring(s, 0, 2) + '"');
+  print('substring(s, 2, lengthOf(s)): "' + substring(s, 2, lengthOf(s)) + '"');
+  for (i=0; i<lengthOf(s); i++)
+      print('s['+i+']: "'+substring(s, i, i+1) + '"');
+  print('indexOf(s, "34"): '+ indexOf(s, "34"));
+  print('indexOf(s, "xx"): '+ indexOf(s, "xx"));
+  print('lastIndexOf(s+s, "34"): '+ lastIndexOf(s+s, "34"));
+  print('s=="012345": ' + (s=="012345") + " (true)");
+  print('s=="xx": ' + (s=="xx") + " (false)");
+ 

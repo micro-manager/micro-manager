@@ -1,0 +1,159 @@
+// MeasurePieSegmentsTool.txt r.p.j.delange@med.uu.nl
+// This tool creates predefined pie shaped selections centered around
+// where you click (x,y) and measures and labels them. The pie segments are defined
+// as polygons shapes, based on a bounding circle with 
+// user defined radius (double click the tool icon to change the radius).
+// For example x1,y1 defines the point on this
+// circle where the first segment starts, at 47 degrees; x3,y3 where the segment ends,
+// at 128 degrees. I've added one extra point for each segment to preserve 'circularity'.
+// I designed the tool to define rat periaquaductal gray areas from the aquaduct (DMPAG, LPAG etc).
+
+
+
+var radius = 30;
+
+
+
+macro "Measure And Label Pie Segments Tool-C00b11P118ee111" {
+    
+//Measuring
+    getCursorLoc(x, y, z, flags);
+    //DMPAG 47 to 128 degrees, 87 as extra
+    x1 = x-(0.681998*radius); //cosine 47
+    x2 = x-(0.052335956*radius); // cosine 87
+    x3 = x-(-0.61566*radius); //cosine 128
+    y1 = y-(0.731354*radius);// sine 47
+    y2 = y-(0.998629535*radius);// sine 47
+    y3 = y-(0.788011*radius);// sine 128
+    makeSelection("polygon", newArray(x,x1,x2,x3), newArray(y,y1,y2,y3));
+      run("Measure");
+
+    getCursorLoc(x, y, z, flags);
+    //lDLPAG 14 to 47 degrees, 30 as extra
+    x4 = x-(0.970295726*radius); //cosine 14
+    x5 = x-(0.866025404*radius); // cosine 30
+    x6 = x-(0.68199836*radius); //cosine 47
+    y4 = y-(0.241921896*radius);// sine 14
+    y5 = y-(0.5*radius);// sine 30
+    y6 = y-(0.731353702*radius);// sine 47
+    makeSelection("polygon", newArray(x,x4,x5,x6), newArray(y,y4,y5,y6));
+      run("Measure");
+
+    getCursorLoc(x, y, z, flags);
+    //lLPAG 14 to 335 degrees, 354 as extra point
+    x7 = x-(0.970295726*radius); //cosine 14
+    x8 = x-(0.994521895*radius); // cosine 354
+    x9 = x-(0.906307787*radius); //cosine 335
+    y7 = y-(0.241921896*radius);// sine 14
+    y8 = y-(-0.104528463*radius);// sine 354
+    y9 = y-(-0.422618262*radius);// sine 335
+    makeSelection("polygon", newArray(x,x7,x8,x9), newArray(y,y7,y8,y9));
+      run("Measure");
+
+
+    getCursorLoc(x, y, z, flags);
+    //lVLPAG 298 to 335 degrees, 314 as extra point
+    x10 = x-(0.469471563*radius); //cosine 298
+    x11 = x-(0.69465837*radius); // cosine 314
+    x12 = x-(0.906307787*radius); //cosine 335
+    y10 = y-(-0.882947593*radius);// sine 298
+    y11 = y-(-0.7193398*radius);// sine 314
+    y12 = y-(-0.422618262*radius);// sine 335
+    makeSelection("polygon", newArray(x,x10,x11,x12), newArray(y,y10,y11,y12));
+      run("Measure");
+
+    getCursorLoc(x, y, z, flags);
+    //DR 238 to 298 degrees, 268 as extra point
+    x13 = x-(-0.529919264*radius); //cosine 238
+    x14 = x-(-0.034899497*radius); // cosine 268
+    x15 = x-(0.469471563*radius); //cosine 298
+    y13 = y-(-0.848048096*radius);// sine 238
+    y14 = y-(-0.999390827*radius);// sine 268
+    y15 =  y-(-0.882947593*radius);// sine 298
+    makeSelection("polygon", newArray(x,x13,x14,x15), newArray(y,y13,y14,y15));
+      run("Measure");
+
+    getCursorLoc(x, y, z, flags);
+    //rVLPAG 207 to 238 degrees, 222 as extra point
+    x16 = x-(-0.529919264*radius); //cosine 238
+    x17 = x-(-0.743144825*radius); // cosine 222
+    x18 = x-(-0.891006524*radius); //cosine 207
+    y16 = y-(-0.848048096*radius);// sine 238
+    y17 = y-(-0.669130606*radius);// sine 222
+    y18 =  y-(-0.4539905*radius);// sine 207
+    makeSelection("polygon", newArray(x,x16,x17,x18), newArray(y,y16,y17,y18));
+      run("Measure");
+
+    getCursorLoc(x, y, z, flags);
+    //rLPAG 172 to 207 degrees, 190 as extra point
+    x19 = x-(-0.990268069*radius); //cosine 172
+    x20 = x-(-0.984807753*radius); // cosine 190
+    x21 = x-(-0.891006524*radius); //cosine 207
+    y19 = y-(0.139173101*radius);// sine 172
+    y20 = y-(-0.173648178*radius);// sine 190
+    y21 =  y-(-0.4539905*radius);// sine 207
+    makeSelection("polygon", newArray(x,x19,x20,x21), newArray(y,y19,y20,y21));
+      run("Measure");
+
+
+    getCursorLoc(x, y, z, flags);
+    //rDLPAG 128 to 172 degrees, 151 as extra point
+    x22 = x-(-0.990268069*radius); //cosine 172
+    x23 = x-(-0.874619707*radius); // cosine 151
+    x24 = x-(-0.615661475*radius); //cosine 128
+    y22 = y-(0.139173101*radius);// sine 172
+    y23 = y-(0.48480962*radius);// sine 151
+    y24 =  y-(0.788010754*radius);// sine 128
+    makeSelection("polygon", newArray(x,x22,x23,x24), newArray(y,y22,y23,y24));
+      run("Measure");
+
+
+
+// labelling after measuring
+    run("Select None");
+    makeSelection("polygon", newArray(x1,x2,x3,x23,x22,x20,x21,x17,x16,x14,x15,x11,x12,x8,x4,x5), newArray(y1,y2,y3,y23,y22,y20,y21,y17,y16,y14,y15,y11,y12,y8,y4,y5));
+       run("Draw");
+    run("Select None");
+    n=nResults;
+    setJustification("center");
+    drawLine(x,y,x1,y1);
+    drawLine(x,y,x3,y3);
+    drawLine(x,y,x22,y22);
+    drawLine(x,y,x21,y21);
+    drawLine(x,y,x16,y16);
+    drawLine(x,y,x15,y15);
+    drawLine(x,y,x12,y12);
+    drawLine(x,y,x4,y4);
+
+    drawString(""+(n-7),x+((x-x2)/1),y-((y-y2)/1));        
+    drawString(""+(n-6),x+((x-x23)/1),y-((y-y23)/1));    
+    drawString(""+(n-5),x+((x-x20)/1),y-((y-y20)/1));
+    drawString(""+(n-4),x+((x-x17)/1),y-((y-y17)/1));
+    drawString(""+(n-3),x+((x-x14)/1),y-((y-y14)/1));
+    drawString(""+(n-2),x+((x-x11)/1),y-((y-y11)/1));
+    drawString(""+(n-1),x+((x-x8)/1),y-((y-y8)/1));
+    drawString(""+n,x+((x-x5)/1),y-((y-y5)/1));
+
+
+
+
+}
+
+macro "Measure And Label Pie Segments Tool Options" {
+    radius = getNumber("Radius (pixels):", radius);
+   
+}
+ 
+macro "background [b]" {
+	setTool(0);
+	makeRectangle(20, 20, 30, 28);
+	run("Measure");
+}
+
+macro "Save as JPEG [j]" {
+    a=getTitle();    
+    run("Jpeg...", "save");
+    run("Close");
+    selectWindow("Results");
+
+}

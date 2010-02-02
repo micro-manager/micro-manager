@@ -133,12 +133,15 @@ public:
     * Adds new property setting to the existing contents.
     */
    void addSetting(const PropertySetting& setting);
+   void deleteSetting(const char* device, const char* prop);
 
    bool isPropertyIncluded(const char* device, const char* property);
    bool isSettingIncluded(const PropertySetting& ps);
    bool isConfigurationIncluded(const Configuration& cfg);
 
    PropertySetting getSetting(size_t index) const throw (CMMError);
+   PropertySetting getSetting(const char* device, const char* prop);
+   
    /**
     * Returns the number of settings.
     */

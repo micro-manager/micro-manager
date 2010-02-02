@@ -27,6 +27,7 @@
 #include <vector>
 #include <map>
 #include "MMDevice.h"
+#include "ImageMetadata.h"
 
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -49,6 +50,7 @@ public:
    void SetPixels(const void* pixArray);
    void ResetPixels();
    const unsigned char* GetPixels() const;
+   unsigned char* GetPixelsRW();
 
    void Resize(unsigned xSize, unsigned ySize, unsigned pixDepth);
    void Resize(unsigned xSize, unsigned ySize);
@@ -56,8 +58,8 @@ public:
 
    void SetName(const char* name) {name_ = name;}
    const std::string& GetName() {return name_;}
-   void SetMetadata(MM::ImageMetadata& md) {metadata_ = md;}
-   const MM::ImageMetadata& GetMetadata() const {return metadata_;}
+   void SetMetadata(const Metadata& md);
+   const Metadata& GetMetadata() const {return metadata_;}
 
    void Copy(const ImgBuffer& rhs);
    ImgBuffer& operator=(const ImgBuffer& rhs);
@@ -68,7 +70,8 @@ private:
    unsigned int height_;
    unsigned int pixDepth_;
    std::string name_;
-   MM::ImageMetadata metadata_;
+   //MM::ImageMetadata metadata_;
+   Metadata metadata_;
 };
 
 class FrameBuffer

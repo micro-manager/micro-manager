@@ -1,0 +1,48 @@
+// Generates a color map where values 2.0-3.0 
+// are blue, 3.0-4.0 are yellow, and >4.0 are red.
+
+  //makeLut();  exit();
+
+  w = getWidth();
+  h = getHeight();
+  showStatus("Generating color map...");
+  a = newArray(w*h);
+  red = 255<<16;
+  green = 255<<8;
+  blue = 255;
+  yellow = red + green;
+  i = 0;
+  for (y=0; y<h; y++) {
+      for (x=0; x<w; x++) {
+          v = getPixel(x, y);
+          if (v>=2 && v<=3)
+              a[i] = blue;
+          else if (v>3 && v<=4)
+              a[i] = yellow;
+          else if (v>4)
+              a[i] = red;
+          i++;
+      }
+      if (y%20==0) showProgress(i, w*h);
+  }
+  run("New...", "name=ColorMap type=RGB fill=White width="+w+" height="+h+" slices=1");
+  i = 0;
+  for (y=0; y<h; y++) {
+      for (x=0; x<w; x++) {
+          setPixel(x, y, a[i++]);
+      }
+      if (y%20==0) showProgress(i, w*h);
+  }
+
+  function makeLut() {
+      reds = newArray(256); 
+      greens = newArray(256); 
+      blues = newArray(256);
+      blues[2] = 255;
+      reds[3] = 255;
+      greens[3] = 255;
+      for (i=4; i<256; i++)
+          reds[i] = 255;
+      setLut(reds, greens, blues);
+      setMinAndMax(0. 255);
+  }

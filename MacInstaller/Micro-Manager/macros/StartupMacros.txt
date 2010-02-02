@@ -1,0 +1,526 @@
+var x,  y,  quadrantx,xlocation,ylocation,spacer,xinit,yinit,xprime,yprime,arrowline ;
+var  arrowlenght=20, arrowwidth=6, arrowconcav=21, taillenght=20;
+var tailwidth=4, tailcolor="Cyan", tailorient="East", orientangle;
+var autoslice =true;
+   var x1, y1, z1
+   var markSize = 0;
+   var label = false;
+  var sprayWidth = 50;
+ var dotSize  = 1;
+ var pencilWidth=1, brushWidth=10, eraserWidth=10, leftClick=16, alt=8;
+var totalDistance=0;
+var x,  y, xinit,yinit,xo,yo,xa,ya,x3,y3;
+
+
+macro 'Zoom tool [f11]' {setTool(11)}
+
+
+
+ 
+ //  This is a set of tools similar to the pencil, paintbrush and 
+//  eraser tools in NIH Image. The pencil and paintbrush draw
+//  in the current foreground color and the eraser draws in the
+//  current background color. The foreground and background
+//  colors can be set by double-clicking on the eye dropper tool. 
+//  Double-click on a tool icon to set the drawing width.
+//     Crgb - set color
+//     Bxy - set base location
+//     Rxywh - draw rectangle
+//     Fxywh - draw filled rectangle
+//     Oxywh - draw oval
+//     oxywh - draw filled oval
+//     Lxyxy - draw line
+//     Pxyxy...xy0 - draw polyline
+//     Txyssc - draw character
+
+macro "Unused Tool-1 - " {}  // leave slot between text tool and magnifying glass unused
+
+
+ macro "Paintbrush Tool - C059La077 Ld098 L6859 L4a2f L2f4f L3f99 L5e9b L9b98 L6888 L5e8d L888c " {
+        getCursorLoc(x, y, z, flags);
+        if (flags&alt!=0)
+              setColorToBackgound();
+        draw(brushWidth);
+   }
+  macro "Pencil Tool - C059L494f L4990 L90b0 Lc1c3 L82a4 Lb58b L7c4f Lb4b4 L5a5d L6b6c L7b7b" {
+        getCursorLoc(x, y, z, flags);
+        if (flags&alt!=0)
+              setColorToBackgound();
+        draw(pencilWidth);
+   }
+
+
+// Macro BigCursorTool writen by Wayne Rasband, ang avaible on the  ImageJ website at
+//http://rsb.info.nih.gov/ij/macros/tools/BigCursorTool.txt
+
+macro "Arrow Maker Tool -C037L1ee1L65e1La9e1" {
+     requires("1.34n");
+     getCursorLoc(x, y, z, flags);
+     xstart=x; ystart=y;
+     w = getWidth(); h = getHeight();
+     px = newArray(6);
+     py = newArray(6);
+     x2=x; y2=y;
+     while (flags&16!=0) {
+         getCursorLoc(x, y, z, flags);
+         if (x!=x2 || y!=y2) {
+             px[0]=0; py[0]=y;
+             px[1]=w; py[1]=y;
+             px[2]=x; py[2]=y;
+             px[3]=x; py[3]=0;
+             px[4]=x; py[4]=h;
+             px[5]=x; py[5]=y;
+             makeSelection("polgon", px, py);
+             showStatus(x+","+y);
+         }
+         x2=x; y2=y;
+         wait(10);
+     };
+
+    /// draw the arrow
+    setupUndo();
+    if (x!=xstart && y!=ystart) {
+        arrow ();
+        run("Select None");
+    }
+
+} /// end of the arrow tool
+
+macro "Undo Last Arrow [z]"{
+      run("Undo");
+}
+
+ macro "Display Coordinates" {
+     showMessage("X Coordinate: "+x + "\nY Coordinate: "+y);
+ }
+
+
+///////////////// Functions ////////////////////
+
+function arrow () {
+
+//parameters of the arrow
+
+previewarrow=0;
+
+arrowchoices1=newArray("3","6","10","15","20","25","30");
+arrowchoices2=newArray("10","15","20","25","30");
+arrowchoices3=newArray("6","11","16","21","26","31");
+arrowchoices4=newArray("0","5","10","15","20","25","30");
+arrowchoices5=newArray("0","2","4","6","12");
+arrowchoices6=newArray("Magenta","Cyan","Yellow","Black","White");
+arrowchoices7=newArray("North","N-E","East","S-E","South","S- W","West","N-W");
+
+ Dialog.create("Arrow Size and Form");
+ Dialog.addChoice("Arrow length:", arrowchoices2);
+ Dialog.addChoice("Arrow width:", arrowchoices1);
+ Dialog.addChoice("Arrowhead Filling Level:", arrowchoices3);
+ Dialog.addChoice("Tail Size (Length):", arrowchoices4);
+ Dialog.addChoice("Tail Size (Width):", arrowchoices5);
+ Dialog.addChoice("Arrow Color:",newArray("Magenta","Cyan","Yellow","Black","White"), tailcolor);
+ Dialog.addChoice("Arrow Orientation:",arrowchoices7);
+ Dialog.addCheckbox("Preview", false);
+ Dialog.addMessage("          Press 'z' to Undo");
+
+ Dialog.show();
+
+
+arrowlenght = parseFloat (Dialog.getChoice());
+arrowwidth = parseFloat (Dialog.getChoice());
+arrowconcav = parseFloat( Dialog.getChoice());
+taillenght = parseFloat(Dialog.getChoice());
+tailwidth = parseFloat(Dialog.getChoice());
+tailcolor = Dialog.getChoice();
+tailorient = Dialog.getChoice();
+
+previewarrow = parseFloat (Dialog.getCheckbox());
+
+if (tailcolor=="Magenta"){
+r = 255; g= 0; b = 225;
+}
+if (tailcolor=="Cyan"){
+r=0; g=255; b=255;
+}
+if (tailcolor=="Yellow"){
+r=255; g=255; b=0;
+}
+if (tailcolor=="White") {
+r =255; g =255; b=255;
+}
+if (tailcolor=="Black"){
+r=0; g=0; b=0;
+}
+
+setColor(r, g, b);
+if (arrowconcav > (arrowlenght+1)) arrowconcav=(arrowlenght+1);
+if (tailwidth > arrowwidth) tailwidth = (arrowwidth-3);
+
+arrowline=1;
+
+if (tailorient == "North") orientangle=0;
+if (tailorient == "N-E") orientangle=(PI/4);arrowline=2;
+if (tailorient == "East") orientangle=(PI/2);
+if (tailorient == "S-E") orientangle=(PI*3/4);arrowline=2;
+if (tailorient == "South") orientangle=(PI);
+if (tailorient == "S-W") orientangle=(5*PI/4);arrowline=2;
+if (tailorient == "West") orientangle=(3*PI/2);
+if (tailorient == "N-W") orientangle=(-(PI/4));arrowline=2;
+
+xfleche=x; yfleche=y;
+
+if (previewarrow == true)  {
+   preview();
+   }
+for (a=0;a<4;a++){
+   xfleche = (x + (a*xinit) + (a*spacer)); i=0;
+   builtarrow ();
+   }
+}
+
+function preview () {
+    prev="Arrow preview";
+
+    newImage(prev,"RGB Black",200,300,1);
+    image=getImageID();
+    xfleche=100;yfleche=75;
+
+    setFont("Serif", 12);
+    builtarrow ();
+    selectImage(image);
+    setColor(255,255,255);
+
+    drawString("Arrow lenght: "+arrowlenght +  "\n Arrow width:  "+arrowwidth, 2,210);
+    drawString("Arrowhead Filling Level: "+arrowconcav,2,225);
+    drawString("Tail Lenght: "+taillenght+ " Tail Width: "+tailwidth,2,240);
+    drawString("Arrow Color: "+tailcolor,2,260);
+    drawString("Arrow Orientation: "+tailorient,2,275);
+    exit
+}
+
+function builtarrow () {
+    autoUpdate(false);
+    fleche1=newArray (3);
+    fleche2=newArray (3);
+
+    alpha3a=(PI/2);lineWidth=1;xi=0;
+    setLineWidth(arrowline);
+
+  // arrowhead drawing
+   moveTo(xfleche, yfleche);
+   x1=(-1*arrowwidth);y1=(arrowlenght); alpha1a=(atan2(y1,x1));  alpha1b=(alpha1a+orientangle);
+   getxy (x1,y1,alpha1b);
+   fleche1[0]=(xfleche+xprime);fleche2[0]=(yfleche+ yprime);
+   x2=(arrowwidth);y2=(arrowlenght);  alpha2a=(atan2(y2,x2));alpha2b=(alpha2a+orientangle);
+   getxy (x2,y2,alpha2b);
+   fleche1[2]=(xfleche+xprime);fleche2[2]=(yfleche+yprime);
+
+    for (i=2; i<arrowconcav; i++) {
+       getxy (xi,i,alpha3a);
+       getxy (xprime,yprime,(alpha3a+orientangle));
+       fleche1[1]=(xfleche + xprime);fleche2[1]=(yfleche + yprime);
+
+       drawLine(fleche1[0], fleche2[0], fleche1[1], fleche2[1]);
+       drawLine(fleche1[2],fleche2[2], fleche1[1], fleche2[1]);
+     }
+
+    // tail drawing
+    if (tailwidth != 0) {
+        getxy (0,arrowconcav,alpha3a);
+        getxy (xprime,yprime,(alpha3a+orientangle));
+        x3a=xprime;y3a=yprime;
+        getxy (0,(arrowconcav+taillenght),alpha3a);
+        getxy (xprime,yprime,(alpha3a+orientangle));
+        x3b=xprime;y3b=yprime;
+        lineWidth=tailwidth;
+        setLineWidth(tailwidth);
+        drawLine ((xfleche+x3a), (yfleche + y3a), (xfleche+x3b),(yfleche+y3b));
+    }
+    updateDisplay;
+
+}
+
+function getxy (xxx,yyy,beta) {
+    if (xxx==0) xxx=1;
+    if (yyy==0) yyy=1;
+    xprime=round( (cos(beta) *(xxx/(cos(atan2(yyy,xxx))))));
+    yprime=round( (sin(beta) *(xxx/(cos(atan2(yyy,xxx))))));
+}
+
+
+   macro "Eraser Tool - C037R0aa4 P0a61f1aa0Pbef5f1" {
+        setColorToBackgound();
+        draw(eraserWidth);
+   }
+macro 'Spray Can Tool-C059 L2020L2222L2424L4141 L4343L6262L8282La2a2L93b3L8484Lc4c4L75d5L757f Ld5df La7d7LabdbLa9d9LacdcLa7ac' {
+         requires("1.30k");
+         setLineWidth(dotSize);
+    getCursorLoc(x, y, z, flags);
+  if (flags&alt!=0)
+              setColorToBackgound();
+         radius=sprayWidth/2; radius2=radius*radius;
+         start = getTime();
+         autoUpdate(false);
+         while (true) {
+            getCursorLoc(x, y, z, flags);
+            if (flags&16==0) exit();
+            x2 = (random()-0.5)*sprayWidth;
+            y2 = (random()-0.5)*sprayWidth;
+            if (x2*x2+y2*y2<radius2) {
+                x += x2;
+                y += y2;
+                drawLine(x, y, x, y);
+                if (getTime()>start+50) {
+                    updateDisplay();
+                    start = getTime();
+                 }
+            }
+            wait(1);
+        }
+
+
+
+   function draw(width) {
+        leftClick=16;
+        //setupUndo(); // requires 1.32g
+        getCursorLoc(x, y, z, flags);
+        setLineWidth(width);
+        moveTo(x,y);
+        x2=-1; y2=-1;
+        while (true) {
+            getCursorLoc(x, y, z, flags);
+            if (flags&leftClick==0) exit();
+            if (x!=x2 || y!=y2)
+                lineTo(x,y);
+            x2=x; y2 =y;
+            wait(10);
+        }
+   }
+
+  
+
+
+   function setColorToBackgound() {
+       savep = getPixel(0, 0);
+       makeRectangle(0, 0, 1, 1);
+       run("Clear");
+       background = getPixel(0, 0);
+       run("Select None");
+       setPixel(0, 0, savep);
+       setColor( background);
+   }
+
+  // ImageJ runs this macro when user double-clicks on the pencil tool icon
+  macro 'Pencil Tool Options' {
+      pencilWidth = getNumber("Pencil Width:", pencilWidth);
+  }
+
+  // ImageJ runs this macro when user double-clicks on the paint brush tool icon
+  macro 'Paintbrush Tool Options' {
+      brushWidth = getNumber("Brush Width:", brushWidth);
+  }
+
+  // ImageJ runs this macro when user double-clicks on the eraser tool icon
+  macro 'Eraser Tool Options' {
+      eraserWidth = getNumber("Eraser Width:", eraserWidth);
+  }
+ macro 'Smooth Tool Options' {
+      smoothWidth = getNumber("Smooth Width:", smoothWidth);
+
+
+     
+
+  }
+
+
+macro "left [n4]" {
+	setBatchMode(true);
+	if (toolID==10) {
+		if (busy) return;
+		busy = true;x=x-1;testimage ();move ();busy = false;
+	}
+}
+
+macro "up left [n7]" {
+	setBatchMode(true);
+	 if (toolID==10) {
+		if (busy) return;
+		busy = true;y=y-1;x=x-1;testimage ();move ();busy = false;
+	}
+}
+
+// functions
+
+function singlecursor () {
+	getCursorLoc(x, y, z, flags);
+	xstart=x; ystart=y;
+	w = getWidth(); h = getHeight();
+	px = newArray(12);
+	py = newArray(12);
+	x2=x; y2=y;
+	while (flags&16!=0) {
+		getCursorLoc(x, y, z, flags);
+		x3=x;y3=y;
+		if (x<0) x= 0;
+		if (x>xinit) x=(xinit-1);
+		if (y<0) y=0;
+		if (y>yinit) y=(yinit-1);
+		edgetest(x,y,x3,y3);
+		if (x!=x2 || y!=y2) 
+			drawpol ();
+		 x2=x; y2=y;
+       		 wait(10);
+	};
+	if (x!=xstart || y!=ystart) 
+		selection ();
+}
+
+function selection () {
+	windowglass (xglass,yglass);
+	selectImage (imageinitid);
+	makeRectangle (xo,yo,xa,ya) ;
+	run("Copy");
+	run("Select None");
+	selectImage(imageinitid);
+	drawpol ();
+	setBatchMode(false);
+	selectImage(glassid);
+	setBatchMode(true);
+	makeRectangle (0,0,xglass,yglass) ;
+	run("Paste");
+	run("Select None");
+	r=255; g=255; b=0;
+	setColor(r, g, b);
+	setLineWidth(1);
+	xv=(x-xo); yh=(y-yo);
+	drawLine (0, yh, xglass,yh);
+	drawLine (xv,0,xv,(yglass-1));
+}
+
+function windowglass (xglass,yglass) {
+	magglass="Magnifying Glass";
+	screenx=screenWidth;
+	screeny=screenHeight;
+	ansvers=isOpen(magglass);
+	if (ansvers == 1) {
+		selectImage(magglass);
+		glassid=getImageID();
+		w = getWidth(); h = getHeight();
+		if (w > xglass || h>(yglass+51)) {
+			selectImage(glassid);
+			close();
+			ansvers=0;
+		}
+	}
+	if (ansvers == 0) {
+		setBatchMode(false);
+		newImage(magglass,"RGB Black",xglass,(yglass+10),1);
+		setLocation(0, (screeny - (yglass+51)));
+		glassid=getImageID();
+		selectImage(imageinitid);
+		setBatchMode(true);
+	}
+}
+
+function edgetest(x,y,x3,y3) {
+	if ((x-(xglass/2)) <0) x3=xglass/2;
+	if ((x+(xglass/2)) > xinit) x3=(xinit-(xglass/2));
+	if ((y-(yglass/2)) <0) y3=yglass/2;
+	if ((y+(yglass/2))> yinit) y3=(yinit-(yglass/2));
+	xo=(x3-(xglass/2)); yo=(y3-(yglass/2));
+	xa=xglass; ya=yglass;
+}
+
+function move() {
+	cursareasize ();
+	windowglass (xglass,yglass);
+	if (x<0) x= 0;
+	if (x>xinit) x=x-1;
+	if (y<0) y=0;
+	if (y>(yinit-1)) y=y-1;
+	x3=x;y3=y;
+	edgetest(x,y,x3,y3);
+	selection ();
+}
+
+function drawpol () {
+	selectImage(imageinitid);
+	w = getWidth(); h = getHeight();
+	px[0]=0; py[0]=y;
+	px[1]=w; py[1]=y;
+	px[2]=x; py[2]=y;
+	px[3]=x; py[3]=0;
+	px[4]=x; py[4]=h;
+	px[5]=x; py[5]=y;
+	px[6]=xo; py[6]=y;
+	px[7]=xo; py[7]=yo;
+	px[8]=(xo+xa); py[8]=yo;
+	px[9]=(xo+xa); py[9]=(yo+ya);
+	px[10]=xo; py[10]=(yo+ya);
+	px[11]=xo; py[11]=y;
+	makeSelection("polgon", px, py);
+	showStatus(x+","+y);
+}
+
+function cursareasize () {
+	while (xinit < xglass ) {
+    		xglass = xglass/2;
+  	}
+	while (yinit < yglass ) {
+     		yglass = yglass/2;
+  	}
+	newglass = minOf(xglass, yglass);
+	yglass=newglass; xglass=newglass;
+}
+
+function testimage () {
+	testid= getImageID();
+	if ((testid != imageinitid) && (testid !=glassid )){
+		imageinitid=testid;
+		xinit = getWidth(); yinit = getHeight();
+		if (selectionType() == 2) {
+			getSelectionCoordinates(xCoordinates, yCoordinates);
+			if ((selectionType() == 2) && (xCoordinates.length == 12)) {
+				x=(xCoordinates[2]);
+				y=(yCoordinates[2]);
+				xo=(xCoordinates[7]);
+				xa=(xCoordinates[9]);
+				xglass = xa-xo; yglass= xglass;
+				if (isOpen("Magnifying Glass") == 1) {
+					selectImage ("Magnifying Glass");
+					w = getWidth();
+					if (xglass != w) close();
+				}
+			}
+			} else {
+				x=1;y=1;newglass=128;xglass=128;yglass=128;
+				if (isOpen("Magnifying Glass") == 1) {
+					selectImage ("Magnifying Glass");
+					close();
+				}
+			}
+		}
+	}
+}
+
+
+    macro "Flood Fill Tool -C037B21P085373b75d0L4d1aL3135L4050L6166D57D77D68La5adLb6bcD09D94" {
+        requires("1.34j");
+        setupUndo();
+        getCursorLoc(x, y, z, flags);
+        if (flags&alt!=0) setColorToBackgound();
+        floodFill(x, y);
+    }
+
+
+macro "AutoRun" {
+   run("Micro-Manager Studio");
+} 
+
+  // Runs when the user double-clicks on the flood fill tool icon
+  macro 'Flood Fill Tool Options...' {
+      requires("1.34j");
+      restorePreviousTool();
+      run("Color Picker...");
+  }
+
+

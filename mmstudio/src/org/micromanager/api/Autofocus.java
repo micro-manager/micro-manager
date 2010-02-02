@@ -2,11 +2,36 @@ package org.micromanager.api;
 
 import mmcorej.CMMCore;
 
+import org.micromanager.metadata.AcquisitionData;
+import org.micromanager.utils.MMException;
+import org.micromanager.utils.PropertyItem;
+
 public interface Autofocus {
-   public void showOptionsDialog();
+   public void applySettings();
+   public void saveSettings();
    public void setMMCore(CMMCore core);
-   public double fullFocus();
-   public double incrementalFocus();
+   public double fullFocus() throws MMException;
+   public double incrementalFocus() throws MMException;
+   public int getNumberOfImages();
+   public AcquisitionData getFocusingSequence() throws MMException;
    public String getVerboseStatus();
-   public void focus(double coarseStep, int numCoarse, double fineStep, int numFine);
+   
+   public PropertyItem[] getProperties();
+   public String[] getPropertyNames();
+   public PropertyItem getProperty(String key) throws MMException;
+   public void setProperty(PropertyItem p) throws MMException;
+   public String getPropertyValue(String name) throws MMException;
+   public void setPropertyValue(String name, String value) throws MMException;
+
+   public double getCurrentFocusScore();
+   public String getDeviceName();
+   public void enableContinuousFocus(boolean enable) throws MMException;
+   public boolean isContinuousFocusEnabled() throws MMException;
+   public boolean isContinuousFocusLocked() throws MMException;
+
+   /**
+    * OBSOLETE - do not use this method.
+    */
+   public void focus(double coarseStep, int numCoarse, double fineStep, int numFine) throws MMException;
+   
 }

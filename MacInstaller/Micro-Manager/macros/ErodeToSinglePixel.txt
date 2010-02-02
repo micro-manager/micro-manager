@@ -1,0 +1,19 @@
+// This macro erodes particles to a single pixel.
+// It assumes foreground is black and background is white.
+
+run("Set Measurements...", "area mean centroid");
+run("Analyze Particles...", "clear record");
+setForegroundColor(0, 0, 0);
+setBackgroundColor(255, 255, 255);
+
+for (i=0; i<nResults; i++) {
+    x = getResult('XStart', i);
+    y = getResult('YStart', i);
+    doWand(x, y);
+    run("Clear");
+    x = getResult('X', i);
+    y = getResult('Y', i);
+    drawLine(x, y, x, y);
+}
+run("Select None");
+

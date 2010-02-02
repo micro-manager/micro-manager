@@ -38,6 +38,7 @@
 
 #include "CSUX.h"
 #include "CSUXHub.h"
+#include <cstdio>
 #include <string>
 #include <math.h>
 #include "../../MMDevice/ModuleInterface.h"

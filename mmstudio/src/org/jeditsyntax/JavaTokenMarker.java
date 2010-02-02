@@ -9,7 +9,6 @@
 
 package org.jeditsyntax;
 
-import javax.swing.text.Segment;
 
 /**
  * Java token marker.

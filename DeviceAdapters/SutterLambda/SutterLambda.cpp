@@ -25,6 +25,7 @@
 #endif
 
 #include "SutterLambda.h"
+#include <cstdio>
 #include <string>
 #include <math.h>
 #include "../../MMDevice/ModuleInterface.h"
@@ -131,7 +132,7 @@ Wheel::Wheel(const char* name, unsigned id) :
    curPos_(0), 
    speed_(3), 
    busy_(false),
-   answerTimeoutMs_(200)
+   answerTimeoutMs_(500)
 {
    assert(id==0 || id==1 || id==2);
    assert(strlen(name) < (unsigned int) MM::MaxStrLength);
@@ -198,11 +199,14 @@ int Wheel::Initialize()
 
    // set property list
    // -----------------
-   
+
+   // Gate Closed Position
+   int ret = CreateProperty(MM::g_Keyword_Closed_Position,"", MM::String, false);
+
    // State
    // -----
    CPropertyAction* pAct = new CPropertyAction (this, &Wheel::OnState);
-   int ret = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
+   ret = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -212,6 +216,11 @@ int Wheel::Initialize()
    ret = CreateProperty(MM::g_Keyword_Speed, "3", MM::Integer, false, pAct);
    if (ret != DEVICE_OK)
       return ret;
+   for (int i=0; i<8; i++) {
+      std::ostringstream os;
+      os << i;
+      AddAllowedValue(MM::g_Keyword_Speed, os.str().c_str());
+   }
 
    // Label
    // -----
@@ -243,7 +252,12 @@ int Wheel::Initialize()
    {
       snprintf(buf, bufSize, "Filter-%d", i);
       SetPositionLabel(i, buf);
+      // Also give values for Closed-Position state while we are at it
+      snprintf(buf, bufSize, "%d", i);
+      AddAllowedValue(MM::g_Keyword_Closed_Position, buf); 
    }
+
+   GetGateOpen(open_);
 
    ret = UpdateStatus();
    if (ret != DEVICE_OK)
@@ -282,11 +296,7 @@ bool Wheel::SetWheelPosition(unsigned pos)
    unsigned long startTime = GetClockTicksUs();
    while (Busy() && (GetClockTicksUs() - startTime)/1000.0 < g_busyTimeoutMs)
    {
-#ifdef WIN32
-       Sleep(10);
-#else
-       usleep(10000);
-#endif
+      CDeviceUtils::SleepMs(10);
    }
 
    unsigned char command = 0;
@@ -295,22 +305,22 @@ bool Wheel::SetWheelPosition(unsigned pos)
    else if (id_==1)
       command = (unsigned char)(128 + speed_ * 16 + pos);
 
-   unsigned char msg[3];
+   unsigned char msg[2];
    msg[0] = (unsigned char)252; // used for filter C
    msg[1] = command;
-   msg[2] = 13; // CR
+  // msg[2] = 13; // CR
 
    // send command
    if (id_==0 || id_==1)
    {
       // filters A and B
-      if (DEVICE_OK != WriteToComPort(port_.c_str(), msg+1, 2))
+      if (DEVICE_OK != WriteToComPort(port_.c_str(), msg+1, 1))
          return false;
    }
    else if (id_==2)
    {
       // filter C
-      if (DEVICE_OK != WriteToComPort(port_.c_str(), msg, 3))
+      if (DEVICE_OK != WriteToComPort(port_.c_str(), msg, 2))
          return false;
    }
 
@@ -347,12 +357,10 @@ int Wheel::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet)
    {
+      bool gateOpen;
+      GetGateOpen(gateOpen);
       long pos;
       pProp->Get(pos);
-
-      //check if we are already in that state
-      if ((unsigned)pos == curPos_)
-         return DEVICE_OK;
 
       if (pos >= (long)numPos_ || pos < 0)
       {
@@ -360,13 +368,36 @@ int Wheel::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
          return ERR_UNKNOWN_POSITION;
       }
 
-      // try to apply the value
-      if (!SetWheelPosition(pos))
-      {
-         pProp->Set((long)curPos_); // revert
-         return ERR_SET_POSITION_FAILED;
+      // For efficiency, the previous state and gateOpen position is cached
+      if (gateOpen) {
+         // check if we are already in that state
+         if (((unsigned)pos == curPos_) && open_)
+            return DEVICE_OK;
+
+         // try to apply the value
+         if (!SetWheelPosition(pos))
+         {
+            pProp->Set((long)curPos_); // revert
+            return ERR_SET_POSITION_FAILED;
+         }
+      } else {
+         if (!open_) {
+            curPos_ = pos;
+            return DEVICE_OK;
+         }
+
+         char closedPos[MM::MaxStrLength];
+         GetProperty(MM::g_Keyword_Closed_Position, closedPos);
+         int gateClosedPosition = atoi(closedPos);
+
+         if (!SetWheelPosition(gateClosedPosition))
+         {
+            pProp->Set((long) curPos_); // revert
+            return ERR_SET_POSITION_FAILED;
+         }
       }
       curPos_ = pos;
+      open_ = gateOpen;
    }
 
    return DEVICE_OK;
@@ -504,10 +535,6 @@ int Shutter::Initialize()
    AddAllowedValue(MM::g_Keyword_State, "0");
    AddAllowedValue(MM::g_Keyword_State, "1");
 
-   ret = UpdateStatus();
-   if (ret != DEVICE_OK)
-      return ret;
-
    // Shutter mode
    // ------------
    pAct = new CPropertyAction (this, &Shutter::OnMode);
@@ -515,7 +542,7 @@ int Shutter::Initialize()
    modes.push_back(g_FastMode);
    modes.push_back(g_SoftMode);
 
-   CreateProperty(g_ShutterModeProperty, g_FastMode, MM::String, false, pAct, true);
+   CreateProperty(g_ShutterModeProperty, g_FastMode, MM::String, false, pAct);
    SetAllowedValues(g_ShutterModeProperty, modes);
 
    // Transfer to On Line
@@ -526,6 +553,11 @@ int Shutter::Initialize()
 
    // set initial values
    SetProperty(g_ShutterModeProperty, curMode_.c_str());
+
+   ret = UpdateStatus();
+   if (ret != DEVICE_OK)
+      return ret;
+
 
    // Needed for Busy flag
    changedTime_ = GetCurrentMMTime();
@@ -599,7 +631,7 @@ bool Shutter::SetShutterPosition(bool state)
    msg[1] = 13; // CR
 
    // send command
-   if (DEVICE_OK != WriteToComPort(port_.c_str(), msg, 2))
+   if (DEVICE_OK != WriteToComPort(port_.c_str(), msg, 1))
       return false;
 
    // Start timer for Busy flag
@@ -619,17 +651,22 @@ bool Shutter::SetShutterPosition(bool state)
    }
    while(!ret && (GetCurrentMMTime() - startTime) < (answerTimeoutMs_ * 1000.0) );
 
+   g_Busy = true;
+
    return ret;
 }
 
 bool Shutter::Busy()
 {
+   return ControllerBusy();
+   /*
    MM::MMTime interval = GetCurrentMMTime() - changedTime_;
    MM::MMTime delay(GetDelayMs()*1000.0);
    if (interval < delay )
       return true;
    else
       return false;
+   */
 }
 
 bool Shutter::ControllerBusy()
@@ -1010,6 +1047,7 @@ void DG4Wheel::GetName(char* name) const
 
 bool DG4Wheel::Busy()
 {
+   // TODO: Implement as for shutter and wheel (ASCII 13 is send as a completion message)
 	return false;
 }
 

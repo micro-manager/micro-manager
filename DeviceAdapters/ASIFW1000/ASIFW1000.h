@@ -26,7 +26,6 @@
 #ifndef _ASIFW1000_H_
 #define _ASIFW1000_H_
 
-#include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/DeviceBase.h"
 #include <string>
 #include <map>
@@ -137,6 +136,7 @@ public:
    int OnWheelNr(MM::PropertyBase* pProp, MM::ActionType eAct);                
                                                                              
 private:                                                                     
+   bool open_;
    bool initialized_;                                                        
    std::string name_;  
    long  pos_;

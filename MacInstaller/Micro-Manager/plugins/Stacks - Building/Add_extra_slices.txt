@@ -1,0 +1,5 @@
+//hold ALT key down to add slices befre
+extraSlices = getNumber("Number of slices", 1);
+for (i=0; i<extraSlices; i++) {
+     run("Add Slice");}
+

@@ -1,0 +1,11 @@
+  macro "Invert  16-bit Full Range" {
+      v0 = getPixel(0, 0);
+      v1 = getPixel(0, 1);
+      setPixel(0, 0, 0);
+      setPixel(0, 1, 65535);
+      run("Invert LUT");
+      run("Invert");
+      setPixel(0, 0, 65535-v0);
+      setPixel(0, 1, 65535-v1);
+      resetMinAndMax();h
+  }

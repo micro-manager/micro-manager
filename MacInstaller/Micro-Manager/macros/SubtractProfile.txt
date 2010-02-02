@@ -1,0 +1,22 @@
+// This macro subtracts the average of the lines in a rectangular 
+// selection from each line in an image. The selection must be the
+// same width as the image.
+
+  if (selectionType!=0)
+      exit("Rectangular selection required");
+  getBoundingRect(x, y, width, height);
+  if (width!=getWidth)
+      exit("Selection width must equal image width");
+  if (bitDepth==24)
+      exit("This macro does not work with RGB images");
+  setupUndo();
+  profile = getProfile();
+  width = getWidth;
+  height = getHeight;
+  for (y=0; y<height; y++) {
+      for (x=0; x<width; x++) {
+          value = getPixel(x,y)-profile[x];
+          setPixel(x, y, value);
+      }
+      showProgress(y, height);
+  }

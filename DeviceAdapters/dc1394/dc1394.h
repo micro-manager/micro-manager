@@ -52,6 +52,7 @@
 #define ERR_GET_F7_MAX_IMAGE_SIZE_FAILED 127
 #define ERR_NOT_IMPLEMENTED 128
 #define ERR_BUSY_ACQUIRING 129
+#define ERR_DC1394 130
 
 // From Guppy Tech Manual there is:
 // 00 0A 47 …. Node_Vendor_Id
@@ -75,7 +76,8 @@ public:
    int Initialize();
    int Shutdown();
    void GetName(char* pszName) const;
-   bool Busy() {return m_bBusy || acquiring_;}
+   bool Busy() {return m_bBusy;}
+   bool IsCapturing() {return acquiring_;}
    
    // MMCamera API
    int SnapImage();
@@ -110,7 +112,8 @@ public:
    int OnMode(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    // high-speed interface
-   int StartSequenceAcquisition(long numImages, double interval_ms);
+   int StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow);
+   int StartSequenceAcquisition(double interval_ms);
    int StopSequenceAcquisition();
    int PushImage(dc1394video_frame_t *myframe);
 
@@ -183,6 +186,8 @@ private:
    std::ostringstream logMsg_;
    
    // For Burst Mode
+   bool stopOnOverflow_;
+   bool multi_shot_;
    bool acquiring_;
    unsigned long imageCounter_;
    unsigned long sequenceLength_;

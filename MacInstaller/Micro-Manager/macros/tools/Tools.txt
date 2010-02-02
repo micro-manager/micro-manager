@@ -1,0 +1,62 @@
+// Example tool macros
+//
+//  Icons are defined using a simple and compact instruction set consisting 
+//  of a one letter commands followed by two or more lower case hex digits.
+//
+//     Crgb  - set color
+//     Bxy   - set base location (default is (0,0))
+//     Rxywh - draw rectangle
+//     Fxywh - draw filled rectangle
+//     Oxywh - draw oval
+//     oxywh - draw filled oval
+//     Lxyxy - draw line
+//     Dxy   - draw dot // 1.32g or later
+//     Pxyxy...xy0 - draw polyline
+//     Txyssc - draw character
+//
+//   Where x (x coordinate), y (y coodinate), w (width), h (height), 
+//   r (red), g (green) and b (blue) are lower case hex digits that
+//   specify a values in the range 0-15. When drawing a character (T),
+//   ss is the decimal point size and c is an ASCII character.
+
+  macro "Square Tool - Cc00R11cc" {
+      requires("1.30k");
+      getCursorLoc(x, y, z, flags);
+      print("Square  Tool: "+x+" "+y+" "+flags);
+  }
+
+  macro "Circular Selection Tool - C00cO11cc" {
+      radius = 10;
+      flags=-1; x2=0; y2=0;
+      while (flags!=0) {
+          getCursorLoc(x, y, z, flags);
+          if (x!=x2 || y!=y2) {
+              makeOval(x-radius, y-radius, radius*2, radius*2);
+              //run("Fill");
+          }
+          x2 = x; y2 = y;
+      }
+  }
+
+  macro "Measurement Tool - C0aao33aa" {
+      radius = 10;
+      getCursorLoc(x, y, z, flags);
+      makeOval(x-radius, y-radius, radius*2, radius*2);
+      run("Measure");
+  }
+
+  macro "Triangle Tool - Caa0B11P81ec1c81" {
+      getCursorLoc(x, y, z, flags);
+      print("Triangle Tool: "+x+" "+y+" "+flags);
+  }
+
+  macro "Cross Tool - C0a0L18f8L818f" {
+      getCursorLoc(x, y, z, flags);
+      print("Cross Tool: "+x+" "+y+" "+flags);
+  }
+
+  macro "Shape Tool - Ca39P71d5dd791d1571" {
+      getCursorLoc(x, y, z, flags);
+      print("Shape Tool: "+x+" "+y+" "+flags);
+  }
+

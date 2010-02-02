@@ -36,6 +36,7 @@ import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
 
 import org.micromanager.utils.GUIUtils;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  * Wizard page for editing device roles 
@@ -75,7 +76,7 @@ public class RolesPage extends PagePanel {
             try {
                model_.setDeviceSetupProperty(MMCoreJ.getG_Keyword_CoreDevice(), MMCoreJ.getG_Keyword_CoreCamera(), (String)cameraComboBox_.getSelectedItem());
             } catch (MMConfigFileException e) {
-               handleError(e.getMessage());
+               ReportingUtils.showError(e);
             }
          }
       });
@@ -101,7 +102,7 @@ public class RolesPage extends PagePanel {
 
       final JLabel cameraLabel_2 = new JLabel();
       cameraLabel_2.setText("Default focus stage");
-      cameraLabel_2.setBounds(23, 128, 120, 24);
+      cameraLabel_2.setBounds(23, 128, 150, 24);
       add(cameraLabel_2);
 
       focusComboBox_ = new JComboBox();
@@ -128,12 +129,12 @@ public class RolesPage extends PagePanel {
                   as = "0";
                model_.setDeviceSetupProperty(MMCoreJ.getG_Keyword_CoreDevice(), MMCoreJ.getG_Keyword_CoreAutoShutter(), as);
             } catch (MMConfigFileException e) {
-               handleError(e.getMessage());;
+               ReportingUtils.showError(e);
             }
          }
       });
       autoshutterCheckBox_.setText("Auto-shutter");
-      autoshutterCheckBox_.setBounds(21, 192, 101, 23);
+      autoshutterCheckBox_.setBounds(21, 192, 141, 23);
       add(autoshutterCheckBox_);
       //
    }
@@ -148,7 +149,7 @@ public class RolesPage extends PagePanel {
          shutters = core_.getLoadedDevicesOfType(DeviceType.ShutterDevice);
          stages = core_.getLoadedDevicesOfType(DeviceType.StageDevice);
       } catch (Exception e) {
-         handleException(e);
+         ReportingUtils.showError(e);
          return false;
       }
       
@@ -204,7 +205,7 @@ public class RolesPage extends PagePanel {
          else
             autoshutterCheckBox_.setSelected(false);
      } catch (MMConfigFileException e) {
-         handleError(e.getMessage());
+         ReportingUtils.showError(e);
       }
       
       return true;

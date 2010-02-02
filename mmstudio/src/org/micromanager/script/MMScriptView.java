@@ -59,6 +59,7 @@ import javax.swing.event.DocumentListener;
 import org.micromanager.api.ScriptingEngine;
 import org.micromanager.api.ScriptingGUI;
 import org.micromanager.utils.MMScriptException;
+import org.micromanager.utils.ReportingUtils;
 import org.micromanager.utils.ScriptFileFilter;
 
 /**
@@ -219,8 +220,7 @@ public class MMScriptView extends JTabbedPane implements ScriptingGUI{
     * @param e
     */
    public void handleException (Exception e) {
-      String errText = "Exeption occured: " + e.getMessage();
-      JOptionPane.showMessageDialog(this, errText);
+      ReportingUtils.logError(e);
    }
    
    /**
@@ -232,6 +232,7 @@ public class MMScriptView extends JTabbedPane implements ScriptingGUI{
       outText += text + "\n";
       outputPane_.setText(outText);
       setSelectedComponent(outputView_);
+      
    }
    
    /**
@@ -253,6 +254,7 @@ public class MMScriptView extends JTabbedPane implements ScriptingGUI{
          message("Ended " + today.getTime() + "\n");
       } catch (MMScriptException e) {
          // General Error evaluating script
+         ReportingUtils.logError(e);
          message(e.getMessage());
       }   
    }
@@ -264,6 +266,7 @@ public class MMScriptView extends JTabbedPane implements ScriptingGUI{
          commandLine_.setText("");
       } catch (MMScriptException e) {
          // General Error evaluating script
+          ReportingUtils.logError(e);
          message(e.getMessage());
       }   
    }
@@ -483,6 +486,7 @@ public class MMScriptView extends JTabbedPane implements ScriptingGUI{
          interp_.evaluateAsync(script);
       } catch (MMScriptException e) {
          // General Error evaluating script
+          ReportingUtils.logError(e);
          message(e.getMessage());
       }   
    }

@@ -1,8 +1,12 @@
 package org.micromanager.image5d;
 
-import java.awt.*;
+import ij.gui.ImageLayout;
 
-import ij.gui.*;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Insets;
+import java.awt.LayoutManager2;
 
 /** Extended ImageLayout: compatible with two scrollbars for z and t below the image
  * and a channelControl panel to the right of the image. 
@@ -57,6 +61,8 @@ public class Image5DLayout extends ImageLayout implements LayoutManager2 {
      * have call to ImageCanvas.resizeCanvas(), which has "default" access.
      */
     public void layoutContainer(Container target) {
+        if (main == null)
+            return;
     	// Call super to call ImageCanvas.resizeCanvas().
 //    	super.layoutContainer(target);
     	// Do layout completely anew.
@@ -191,7 +197,11 @@ public class Image5DLayout extends ImageLayout implements LayoutManager2 {
 		// Take width of ImageCanvas.
 		// Give enough room for horizontal controls.
 		int width = 0;
-		width = main.getPreferredSize().width;
+        try {
+            width = main.getPreferredSize().width;
+        } catch (NullPointerException e) {
+            return 0;
+        }
 		if (slice != null) {
 			width = Math.max(width, slice.getMinimumSize().width);
 		}

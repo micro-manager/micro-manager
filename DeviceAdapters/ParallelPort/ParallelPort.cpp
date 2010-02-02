@@ -75,7 +75,6 @@ MODULE_API void InitializeModuleData()
 {
 	AddAvailableDeviceName(g_DeviceName, "Printer port TTL digital output");
 	AddAvailableDeviceName(g_ShutterDevice, "Printer port TTLs used as shutters");
-
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)

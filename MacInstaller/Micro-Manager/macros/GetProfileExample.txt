@@ -1,0 +1,23 @@
+// This example macro demonstrates how to use the getProfile() function
+
+  // Close "Log" window
+  if (isOpen("Log")) {
+      selectWindow("Log");
+      run("Close");
+  }
+
+  // Set alt key down for vertical profiles
+  //setKeyDown("alt");
+ 
+  // Get profile and display values in "Log" window
+  profile = getProfile();
+  for (i=0; i<profile.length; i++)
+      print(i+"  "+profile[i]);
+
+  // Plot profile
+  Plot.create("Profile", "X", "Value", profile);
+
+  // Save as spreadsheet compatible text file
+  selectWindow("Log");
+  //saveAs("Text", "/Users/wayne/profile.txt");
+

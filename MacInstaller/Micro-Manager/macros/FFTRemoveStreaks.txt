@@ -1,0 +1,161 @@
+// This macro demonstrates an example of Process>FFT>Custom Filter 
+// command for removing horizontal interference streaks of different  
+// amplitude in transmission mode confocal images.
+
+// Author: Gilles Carpentier, Faculte des Sciences et 
+// Technologies,  Universite Paris 12 Val de Marne 
+
+// A sample image is available at 
+//   "http://rsb.info.nih.gov/ij/macros/images/MyoblastCells.tif"
+// These are myoblast rat cells in early begining of differentiation, 
+// in vitro.  Acquisition by Gilles Carpentier. Dr Isabelle Barbosa 
+// created the cell culture.
+
+// Image acquisition :
+// Confocal microscopy images of myoblasts cells were acquired
+// with a Zeiss  LSM 410 laser scanning confocal Axiovert 135M
+// inverted microscopein in transmission mode with 488 nm
+// emission ray of a Ar/Kr  used as lighting, no emission
+// filter was used. Debluring was performed before FFT treatment.
+
+//Comments:
+
+// Gilles Carpentier(1), Eric Delechelle(2) and Patrick Karasinski(2)
+
+// (1) Faculte des Sciences et Technologies, laboratoire CRRET,
+// CNRS, FRE-2412, Universite Paris 12-Val de Marne,
+// 61 Avenue du General de Gaulle, 94010 Creteil cedex, France.
+
+// (2) Faculte des Sciences et Technologies, laboratoire LERISS, 
+// Universite Paris 12-Val de Marne,
+// 61 Avenue du General de Gaulle, 94010 Creteil cedex, France.
+
+//Methods were first developped with The NIH Image software. 
+//Here is a description of the priciple of the method:
+
+// Removal of artifactual horizontal stripes was performed 
+// using fast Fourrier transform (FFT):
+// First, a fast Harley transform procedure is performed on 
+// a squared 512x512 image, with swapping the quadrants of 
+// power spectrum. A filtering using a mask in the frequency 
+// domain is performed [Bracewell,1984]. The vertical 
+// rectangular area used as mask, is centred on the vertical 
+// axis of symmetry, and covers about 1 % of the spectrum. This
+// mask, used as a filter (zero value), eliminates the periodic
+// structures on the Y axis whatever was their frequencies on 
+// Y axis, and with a very low frequency in the X axis. 
+// Furthermore, it centrered the histogram by subtracting 
+// the mean grey level of the image. The inverse FFT was
+// performed after using a gaussian transition [Reeves, 1990]. 
+// The final image was then free of horizontal periodic artefacts.
+
+// References :
+// Bracewell, R.N., The Fast Harley Transform, 
+// Proc. IEEE. Vol. 72, /NÁ8, 1984.
+
+// Reeves A.A. Optimized Fast Hartley Transform for the 
+// MC68000 with Applications in Image Processing. Master 
+// of Science Thesis, Thayer School of Engineering.
+// Dartmouth College Hanover, New Hampshire, 1990.
+
+// delete any existing Transmission_Filter
+  if (isOpen("Transmission_Filter")) {
+      selectWindow("Transmission_Filter");
+      run("Close");
+  }
+
+// Runs faster in batch mode but this requires ImageJ 1.33o or later.
+requires("1.33o");
+
+percent = getNumber("Percent of the half vertical axis of power spectra for hight frequencies:", 0.005);
+sdhight = getNumber("Standard Deviation of gaussian transition for hight frequencies:", 3.5);
+//setBatchMode(true);
+
+// to get the id number the active image to be treated:
+// see http://rsb.info.nih.gov/ij/developer/macro/functions.html
+imageid = getImageID();
+
+//get the name and dimensions of the active image to be treated
+nomdimage = getTitle;
+imagey = getHeight();
+imagex = getWidth();
+
+// Create mask filter
+size =imagex;
+run("New...", "name=Transmission_Filter type=8-bit fill=Black width="+size+" height="+size+" slices=1");
+
+//make a vertical rectangular (3x(size)) mask centered on the filter image  
+width=3;
+
+halfwidth=(floor(width/2));
+
+//position of the hight left rectangle selection
+//((size/2)-halfwidth);
+
+barre(((size/2)-halfwidth),0,width,size);
+
+// gaussian convolution matrix  for a gaussian transition of filter
+
+matrice= matrix(9,40);
+selectWindow("Transmission_Filter");
+
+it=4;
+for (nconv=0;nconv <it;nconv++) {
+run("Convolve...", "text1=["+ matrice+"] normalize");
+}
+
+//percent=0.005;
+longueur=floor(size*percent);
+width=1;
+halfwidth=(floor(width/2));
+
+barre(((size/2)-halfwidth),0,width,longueur);
+barre(((size/2)-halfwidth),(size-longueur),width,longueur);
+
+//sdhight=3.5;
+matrice= matrix(13,sdhight);
+run("Convolve...", "text1=["+ matrice+"] normalize");
+run("Enhance Contrast", "saturated=0 normalize");
+
+run("Invert");
+selectImage(imageid);
+run("32-bit");
+
+run("Custom Filter...", "filter=Transmission_Filter");
+run("8-bit");
+//undo to keep the histogram resulting from the treatment
+run("Enhance Contrast", "saturated=0.05 normalize");
+exit();
+
+
+//  function to draw white rectangle
+function barre(barx,bary,largbar,hautbar) {
+    makeRectangle(barx, bary, largbar, hautbar);
+    setForegroundColor(255, 255, 255);
+    run("Fill");
+    run("Select None");
+}
+
+// square function
+function carre (car) {
+    car= (car * car);
+    return car;
+}
+
+// gaussian convolution matrix function
+function matrix (taille,gauss) {
+    matrice="";
+    for (j=0; j < taille; j++) {
+        lignea="";
+        for (i=0; i < taille; i++) {
+            numer = -(carre(i-floor(taille/2)) + carre(j-floor(taille/2)));
+            denom = 2 * carre(gauss);
+            coeff=exp(numer/denom);
+            lignea = lignea + " " + coeff;
+        } 
+        matrice = matrice + lignea + "\n";	
+    }
+    return matrice;
+}
+
+

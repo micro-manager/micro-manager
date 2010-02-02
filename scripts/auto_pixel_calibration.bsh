@@ -1,0 +1,70 @@
+import ij.process.*;
+
+import ij.IJ;
+import org.micromanager.utils.ImageUtils;
+import ij.plugin.FFTMath;
+import java.awt.Point;
+import ij.process.ImageProcessor;
+import ij.ImagePlus;
+import ij.process.FHT;
+import java.awt.geom.Point2D;
+import ij.process.ShortProcessor;
+
+// Performs a 2D cross-correlation between two images)
+
+ImageProcessor crossCorrelate(ImageProcessor proc1, ImageProcessor proc2) {
+	h1 = new FHT(proc1);
+	h2 = new FHT(proc2);
+	h1.transform();
+	h2.transform();
+	result = h1.conjugateMultiply(h2);
+	result.inverseTransform();
+	result.swapQuadrants();
+	result.resetMinAndMax();
+	return result;
+}
+
+// Measures the displacement between two images by cross-correlating, and then finding the maximum value.
+// Accurate to one pixel only.
+
+Point measureDisplacement(ImageProcessor proc1, ImageProcessor proc2) {
+	result = crossCorrelate(proc1,proc2);
+	img = new ImagePlus("",result);
+	p = ImageUtils.findMaxPixel(img);
+	d = new Point(p.x - img.getWidth()/2, p.y - img.getHeight()/2);
+	img.show();
+	img.setRoi(p.x-5,p.y-5,11,11);
+	return d;
+}
+
+moveRelative(dx, dy) {
+	xystage = mmc.getXYStageDevice();
+	mmc.waitForDevice(xystage);
+	startPos = gui.getXYStagePosition();
+	mmc.waitForDevice(xystage);
+	gui.setXYStagePosition(startPos.x + dx, startPos.y + dy);
+	mmc.waitForDevice(xystage);
+	curPos = gui.getXYStagePosition();
+	return new Point2D.Double(curPos.x - startPos.x, curPos.y - startPos.y);
+}
+
+update();
+/*
+stageDelta = 20;
+mmc.snapImage();
+pix1 = mmc.getImage();
+gui.displayImage(pix1);
+stageMove = moveRelative(0,stageDelta);
+mmc.snapImage();
+pix2 = mmc.getImage();
+gui.displayImage(pix2);
+proc1 = new ShortProcessor(512,512);
+proc1.setPixels(pix1);
+proc2 = new ShortProcessor(512,512);
+proc2.setPixels(pix2);
+pixelDelta = measureDisplacement(proc1,proc2);
+print("Stage: " + stageMove.y + " um.");
+print("Pixels: " + pixelDelta.x);
+print("Pixel size: " + (stageMove.y / (float) pixelDelta.x) + " um/pixel");
+*/
+

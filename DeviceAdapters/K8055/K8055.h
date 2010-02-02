@@ -14,8 +14,8 @@
 #ifndef _K8055_H_
 #define _K8055_H_
 
-#include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/DeviceBase.h"
+#include "../../MMDevice/ModuleInterface.h"
 #include "K8055Interface.h"
 #include <string>
 #include <map>

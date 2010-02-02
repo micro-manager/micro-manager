@@ -1,0 +1,62 @@
+// The macro does redirected particle analysis on a two slice stack.
+// It segments and does particle analyses the first slice while using 
+// the intensity data from corresponding locations in the second slice. 
+
+  var minSize = 100;
+  var maxSize = 400;
+  var minCircularity = 0.85;
+
+  macro "Create Mask" {
+       title = getTitle();
+       createMask(title);
+ }
+
+   macro "Analyze Redirected" {
+       AnalyzeRedirected();
+  }
+
+ function AnalyzeRedirected() {
+      title = getTitle();
+      if (!isOpen("Mask of "+title))
+          createMask(title);
+      selectWindow(title);
+      run("Set Slice...", "slice=2");
+      selectWindow("Mask of "+title);
+      quotedTitle = "'" + title + "'";
+      run("Set Measurements...", "area mean centroid redirect="+quotedTitle);
+      run("Analyze Particles...", "minimum=100 show=Nothing display exclude clear");
+      run("Set Measurements...", "area mean centroid redirect=None");
+  }
+
+  function createMask(title) {
+      requires("1.31m");
+      if (nSlices!=2)
+         exit("This macro requires a 2 slice stack");
+      title = getTitle();
+      run("Set Slice...", "slice=1");
+      run("Threshold...");
+      run("Set Measurements...", "area circularity decimal=2");
+      run("Analyze Particles...", "show=Masks exclude clear slice record minimum="+minSize);
+      selectWindow("Threshold");
+      run("Close");
+      selectWindow(title);
+      resetThreshold();
+      selectWindow("Mask of "+title);
+      resetThreshold();
+      run("Watershed", "white");
+      removeNonCircularCells();
+  }
+
+  function removeNonCircularCells() {
+      setColor(0);
+      for (i=0; i<nResults; i++) {
+          x = getResult('XStart', i);
+          y = getResult('YStart', i);
+          circularity = getResult('Circ.', i);
+          if (circularity<minCircularity) {
+              doWand(x,y);
+              fill();
+          }
+      }
+      run("Select None");
+  }

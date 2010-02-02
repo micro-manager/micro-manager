@@ -1,0 +1,30 @@
+// "RoiManagerSpeedTest"
+//
+// Use this macro to test the speed of the RoiManager functions.
+
+  width = 1000;
+  height = 1000;
+  n = 250;
+  setBatchMode(true);
+  roiManager("reset");
+  newImage("Untitled", "8-bit", width, height, 1)
+  start = getTime;
+  for (i=0; i<n; i++) {
+      showProgress(i, n);
+      w = random()*width/10+5;
+      h = random()*width/10+5;
+      x = random()*width-w/10;
+      y = random()*height-h/10;
+      makeOval(x, y, w, h);
+      roiManager("add");
+   }
+   for (i=0; i<n; i++) {
+      showProgress(i, n);
+      roiManager('select', i);
+      setColor(random*255);
+      run("Measure");
+      run("Label");
+   }
+  print((getTime-start)/1000, "seconds");
+  setBatchMode(false);
+

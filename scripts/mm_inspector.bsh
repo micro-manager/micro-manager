@@ -1,0 +1,130 @@
+// Beanshell object inspector for Micro-Manager
+// Arthur Edelstein, UCSF, 2009
+
+import javax.swing.table.JTable;
+import javax.swing.table.DefaultTableModel;
+import org.jdesktop.swingx.*;
+import org.jdesktop.swingx.decorator.*;
+
+
+MemberViewer () {
+	String [] fieldColNames = {"Name","Value","Type","Declared in"};
+	String [] methodColNames = {"Name","Return type","Parameter types","Declared in"};
+	Vector fieldColNamesVec;
+	Vector methodColNamesVec;
+	Object theObject;
+
+	MembersTab (String name, JTabbedPane tabbedPane) { 
+		JPanel panel;
+		JXTable table;
+		DefaultTableModel tableModel;
+		JScrollPane scrollPane;
+	
+		table = new JXTable();
+		//table = new JTable();
+		tableModel = new DefaultTableModel();
+		table.setModel(tableModel);
+		scrollPane = new JScrollPane(table);
+		tabbedPane.addTab(name,scrollPane);
+		return this;
+	}
+
+
+	void inspect(obj) {
+		theObject = obj;
+		fieldsData = getFieldsData();
+		methodsData = getMethodsData();
+
+		fieldsTab.tableModel.setDataVector(fieldsData,fieldColNamesVec);
+		methodsTab.tableModel.setDataVector(methodsData,methodColNamesVec);
+		theFrame.show();
+		
+	}
+
+	Vector arrayToVector(Object [] ObjectArray) {
+		theVec = new Vector();
+		for (item : ObjectArray) {
+			theVec.add(item);
+		}
+		return theVec;
+	}
+
+	Vector getFieldsData() {
+		rows = new Vector();
+		row = new Vector();
+		
+		curClass = theObject.Class;
+		while (curClass != null) {
+			fields = curClass.DeclaredFields;
+			for (field : fields) {
+				row = new Vector();
+				row.add(field.name);
+				val = eval("theObject."+field.Name);
+				if (val!=null)
+					row.add(val.toString());
+				else
+					row.add("null");
+
+				row.add(field.type);
+				row.add(curClass.Name);
+				rows.add(row);
+			}
+			curClass = curClass.Superclass;
+		}
+	return rows;
+	}
+
+	Vector getMethodsData() {
+		rows = new Vector();
+		row = new Vector();
+		String parameterTypeList;
+
+		curClass = theObject.Class;
+		while (curClass != null) {
+			methods = curClass.DeclaredMethods;
+			for (method : methods) {
+				row = new Vector();
+				row.add(method.name);
+				row.add(method.returnType);
+				parameterTypeList = "";
+				for (parameterType : method.parameterTypes)
+					parameterTypeList = parameterTypeList + parameterType + ", ";
+				if (parameterTypeList.length()>0)
+					parameterTypeList = parameterTypeList.substring(0,parameterTypeList.length()-2);
+				row.add(parameterTypeList);
+				row.add(curClass.Name);
+				rows.add(row);
+			}
+			curClass = curClass.Superclass;
+		}
+		return rows;
+	}
+
+	setAccessibility(true);
+	searchBox = new JTextField(25);
+	theFrame = new JFrame();
+	theTabbedPane = new JTabbedPane();
+	methodsTab = MembersTab("Methods",theTabbedPane);
+	fieldsTab = MembersTab("Fields",theTabbedPane);
+	fieldColNamesVec = arrayToVector(fieldColNames);
+	methodColNamesVec = arrayToVector(methodColNames);
+	theFrame.add(theTabbedPane);
+	theFrame.pack();
+	theFrame.setBounds(100,100,800,500);
+
+
+	return this;
+}
+
+__mv = null;
+
+void inspect(obj) {
+	if (super.__mv == null) {
+		print("Please wait while inspector is generated...");
+		super.__mv = MemberViewer();
+		}
+	super.__mv.inspect(obj);
+}
+
+update();
+

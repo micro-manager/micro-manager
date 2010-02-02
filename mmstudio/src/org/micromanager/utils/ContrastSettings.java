@@ -44,4 +44,8 @@ public class ContrastSettings {
    public double getRange() {
       return max - min;
    }
+   public void Set(double min, double max) {
+	      this.min = min;
+	      this.max = max;
+   }
 }

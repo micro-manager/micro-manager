@@ -33,6 +33,7 @@
 #endif
 
 #include "ASIStage.h"
+#include <cstdio>
 #include <string>
 #include <math.h>
 #include "../../MMDevice/ModuleInterface.h"
@@ -132,7 +133,12 @@ XYStage::XYStage() :
    port_("Undefined"), 
    stepSizeXUm_(0.0), 
    stepSizeYUm_(0.0), 
+   ASISerialUnit_(10.0),
    motorOn_(true),
+   joyStickSpeedFast_(60),
+   joyStickSpeedSlow_(5),
+   joyStickMirror_(false),
+   joyStickSwapXY_(false),
    nrMoveRepetitions_(0),
    answerTimeoutMs_(1000)
 {
@@ -168,7 +174,6 @@ int XYStage::Initialize()
    // empty the Rx serial buffer before sending command
    ClearPort(*this, *GetCoreCallback(), port_.c_str()); 
 
-   // TODO: add version command (V) and the  CCA Y=n property when firmware > 7.3
    CPropertyAction* pAct = new CPropertyAction (this, &XYStage::OnVersion);
    CreateProperty("Version", "", MM::String, true, pAct);
 
@@ -190,14 +195,12 @@ int XYStage::Initialize()
       return ret;
 
    // set stage step size and resolution
-   double resX, resY;
-   // default values
-   resX = 0.1;
-   resY = 0.1;
-   // if find a function can get the step size in the future, can fit it here
-
-   stepSizeXUm_ = resX;
-   stepSizeYUm_ = resY;
+   /**
+    * NOTE:  ASI return numbers in 10th of microns with an extra decimal place
+	* To convert into steps, we multiply by 10 (variable ASISerialUnit_) making the step size 0.01 microns
+	*/
+   stepSizeXUm_ = 0.01;
+   stepSizeYUm_ = 0.01;
 
    // Step size
    pAct = new CPropertyAction (this, &XYStage::OnStepSizeX);
@@ -248,12 +251,30 @@ int XYStage::Initialize()
    AddAllowedValue("MotorOnOff", "On");
    AddAllowedValue("MotorOnOff", "Off");
 
+   // JoyStick MirrorsX 
+   // TODO: the following properties should only appear in controllers version 8 and higher
+   pAct = new CPropertyAction (this, &XYStage::OnJSMirror);
+   CreateProperty("JoyStick Reverse", "Off", MM::String, false, pAct);
+   AddAllowedValue("JoyStick Reverse", "On");
+   AddAllowedValue("JoyStick Reverse", "Off");
+
+   pAct = new CPropertyAction (this, &XYStage::OnJSFastSpeed);
+   CreateProperty("JoyStick Fast Speed", "100", MM::Integer, false, pAct);
+   SetPropertyLimits("JoyStick Fast Speed", 1, 100);
+
+   pAct = new CPropertyAction (this, &XYStage::OnJSSlowSpeed);
+   CreateProperty("JoyStick Slow Speed", "100", MM::Integer, false, pAct);
+   SetPropertyLimits("JoyStick Slow Speed", 1, 100);
+
+
+   /* Disabled.  Use the MA command instead
    // Number of times stage approaches a new position (+1)
-   if (hasCommand("CCA Y=?")) {
+   if (hasCommand("CCA Y?")) {
       pAct = new CPropertyAction(this, &XYStage::OnNrMoveRepetitions);
       CreateProperty("NrMoveRepetitions", "0", MM::Integer, false, pAct);
       SetPropertyLimits("NrMoveRepetitions", 0, 10);
    }
+   */
 
    ret = UpdateStatus();  
    if (ret != DEVICE_OK)
@@ -300,13 +321,13 @@ bool XYStage::Busy()
 }
 
 
-int XYStage::SetPositionUm(double x, double y)
+int XYStage::SetPositionSteps(long x, long y)
 {
    // empty the Rx serial buffer before sending command
    ClearPort(*this, *GetCoreCallback(), port_.c_str()); 
 
    ostringstream command;
-   command << "M X=" << x/stepSizeXUm_ << " Y=" << y/stepSizeYUm_; // in 10th of micros
+   command << "M X=" << x/ASISerialUnit_ << " Y=" << y/ASISerialUnit_; // steps are 10th of micros
 
    // send command
    int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
@@ -333,13 +354,13 @@ int XYStage::SetPositionUm(double x, double y)
    return ERR_UNRECOGNIZED_ANSWER;  
 }
 
-int XYStage::SetRelativePositionUm(double x, double y)
+int XYStage::SetRelativePositionSteps(long x, long y)
 {
    // empty the Rx serial buffer before sending command
    ClearPort(*this, *GetCoreCallback(), port_.c_str()); 
 
    ostringstream command;
-   command << "R X=" << x/stepSizeXUm_ << " Y=" << y/stepSizeYUm_; // in 10th of micros
+   command << "R X=" << x/ASISerialUnit_  << " Y=" << y/ASISerialUnit_; // in 10th of micros
 
    // send command
    int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
@@ -366,7 +387,7 @@ int XYStage::SetRelativePositionUm(double x, double y)
    return ERR_UNRECOGNIZED_ANSWER;  
 }
 
-int XYStage::GetPositionUm(double& x, double& y)
+int XYStage::GetPositionSteps(long& x, long& y)
 {
    // empty the Rx serial buffer before sending command
    ClearPort(*this, *GetCoreCallback(), port_.c_str()); 
@@ -392,15 +413,13 @@ int XYStage::GetPositionUm(double& x, double& y)
    }
    else if (answer.length() > 0)
    {
-      char head[64];
 	  float xx, yy;
+      char head[64];
 	  char iBuf[256];
 	  strcpy(iBuf,answer.c_str());
 	  sscanf(iBuf, "%s %f %f\r\n", head, &xx, &yy);
-	  //x = xx/10;
-	  //y = yy/10;
-	  x = xx*stepSizeXUm_;
-	  y = yy*stepSizeXUm_;
+	  x = (long) (xx * ASISerialUnit_);
+	  y = (long) (yy * ASISerialUnit_); 
 
       return DEVICE_OK;
    }
@@ -408,53 +427,10 @@ int XYStage::GetPositionUm(double& x, double& y)
    return ERR_UNRECOGNIZED_ANSWER;
 }
   
-int XYStage::SetPositionSteps(long /*x*/, long /*y*/)
-{
-   // for prior, may not need it for ASI
-
-   //ostringstream command;
-   //command << "G," << x << "," << y;
-
-   //// send command
-   //int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-   //if (ret != DEVICE_OK)
-   //   return ret;
-
-   //// block/wait for acknowledge, or until we time out;
-   //string answer;
-   //ret = GetSerialAnswer(port_.c_str(), "\r", answer);
-   //if (ret != DEVICE_OK)
-   //   return ret;
-
-   //if (answer.substr(0,1).compare("R") == 0)
-   //{
-   //   return DEVICE_OK;
-   //}
-   //else if (answer.substr(0, 1).compare("E") == 0 && answer.length() > 2)
-   //{
-   //   int errNo = atoi(answer.substr(2).c_str());
-   //   return ERR_OFFSET + errNo;
-   //}
-
-   return ERR_UNRECOGNIZED_ANSWER;   
-}
- 
-int XYStage::GetPositionSteps(long& /*x*/, long& /*y*/)
-{
-   //// for prior
-   //int ret = GetPositionStepsSingle('X', x);
-   //if (ret != DEVICE_OK)
-   //   return ret;
-
-   //return GetPositionStepsSingle('Y', y);
-
-   return 0; // remove it if need this function later
-}
-
 int XYStage::SetOrigin()
 {
    // send command
-   int ret = SendSerialCommand(port_.c_str(), "H X Y", "\r"); // use command HERE, zero (z) zero all x,y,z
+   int ret = SendSerialCommand(port_.c_str(), "H X=0 Y=0", "\r"); // use command HERE, zero (z) zero all x,y,z
    if (ret != DEVICE_OK)
       return ret;
 
@@ -477,30 +453,6 @@ int XYStage::SetOrigin()
    return ERR_UNRECOGNIZED_ANSWER;   
 };
 
-//bool XYStage::XyIsBusy(){
-//
-//   const char* command = "/";
-//   // send command
-//   int ret = SendSerialCommand(port_.c_str(), command, "\r\n");
-//   if (ret != DEVICE_OK)
-//      return true;
-//
-//   // block/wait for acknowledge, or until we time out;
-//   string answer;
-//   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-//   if (ret != DEVICE_OK)
-//      return true;
-//
-//   if (answer.length() >= 1)
-//   {
-//	  if (answer.substr(0,1) == "B") return true;
-//	  else if (answer.substr(0,1) == "N") return false;
-//	  else return true;
-//   }
-//
-//   return true;
-//
-//}
 
 void XYStage::Wait()
 {
@@ -1288,38 +1240,158 @@ int XYStage::OnMotorCtrl(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-// XYStage utility functions
-int XYStage::GetResolution(double& /*resX*/, double& /*resY*/)
+int XYStage::OnJSMirror(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   return 0; // will remove it if need this function
+   if (eAct == MM::BeforeGet)
+   {
+      // TODO: read from device, at least on initialization
+      if (joyStickMirror_)
+         pProp->Set("On");
+      else
+         pProp->Set("Off");
+
+      return DEVICE_OK;
+   }
+   else if (eAct == MM::AfterSet) {
+      string mirror;
+      string value;
+      pProp->Get(mirror);
+      if (mirror == "On") {
+         if (joyStickMirror_)
+            return DEVICE_OK;
+         joyStickMirror_ = true;
+         value = "-";
+      } else {
+         if (!joyStickMirror_)
+            return DEVICE_OK;
+         joyStickMirror_ = false;
+         value = "";
+      }
+      ostringstream command;
+      command << "JS X=" << value << joyStickSpeedFast_ << " Y=" << value << joyStickSpeedSlow_;
+      // send command
+      int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+      if (ret != DEVICE_OK)
+         return ret;
+
+      // block/wait for acknowledge, or until we time out;
+      string answer;
+      ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      if (answer.substr(0,2).compare(":A") == 0)
+         return DEVICE_OK;
+      else if (answer.substr(answer.length(), 1) == "A")
+         return DEVICE_OK;
+      else if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2)
+      {
+         int errNo = atoi(answer.substr(3).c_str());
+         return ERR_OFFSET + errNo;
+      }
+      else
+         return ERR_UNRECOGNIZED_ANSWER;
+   }
+   return DEVICE_OK;
 }
 
-int XYStage::GetDblParameter(const char* /*command*/, double& /*param*/)
+
+int XYStage::OnJSSwapXY(MM::PropertyBase* /* pProp*/ , MM::ActionType /* eAct*/)
 {
-   //// send command
-   //int ret = SendSerialCommand(port_.c_str(), command, "\r");
-   //if (ret != DEVICE_OK)
-   //   return ret;
-
-   //// block/wait for acknowledge, or until we time out;
-   //string answer;
-   //ret = GetSerialAnswer(port_.c_str(), "\r", answer);
-   //if (ret != DEVICE_OK)
-   //   return ret;
-
-   //if (answer.length() > 2 && answer.substr(0, 1).compare("E") == 0)
-   //{
-   //   int errNo = atoi(answer.substr(2).c_str());
-   //   return ERR_OFFSET + errNo;
-   //}
-   //else if (answer.length() > 0)
-   //{
-   //   param = atof(answer.c_str());
-   //   return DEVICE_OK;
-   //}
-
-   return ERR_UNRECOGNIZED_ANSWER;
+   return DEVICE_NOT_SUPPORTED;
 }
+
+int XYStage::OnJSFastSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      // TODO: read from device, at least on initialization
+      pProp->Set((long) joyStickSpeedFast_);
+      return DEVICE_OK;
+   }
+   else if (eAct == MM::AfterSet) {
+      long speed;
+      pProp->Get(speed);
+      joyStickSpeedFast_ = (int) speed;
+
+      string value = "";
+      if (joyStickMirror_)
+         value = "-";
+
+      ostringstream command;
+      command << "JS X=" << value << joyStickSpeedFast_ << " Y=" << value << joyStickSpeedSlow_;
+      // send command
+      int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+      if (ret != DEVICE_OK)
+         return ret;
+
+      // block/wait for acknowledge, or until we time out;
+      string answer;
+      ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      if (answer.substr(0,2).compare(":A") == 0)
+         return DEVICE_OK;
+      else if (answer.substr(answer.length(), 1) == "A")
+         return DEVICE_OK;
+      else if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2)
+      {
+         int errNo = atoi(answer.substr(3).c_str());
+         return ERR_OFFSET + errNo;
+      }
+      else
+         return ERR_UNRECOGNIZED_ANSWER;
+   }
+   
+   return DEVICE_OK;
+}
+
+int XYStage::OnJSSlowSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      // TODO: read from device, at least on initialization
+      pProp->Set((long) joyStickSpeedSlow_);
+      return DEVICE_OK;
+   }
+   else if (eAct == MM::AfterSet) {
+      long speed;
+      pProp->Get(speed);
+      joyStickSpeedSlow_ = (int) speed;
+
+      string value = "";
+      if (joyStickMirror_)
+         value = "-";
+
+      ostringstream command;
+      command << "JS X=" << value << joyStickSpeedFast_ << " Y=" << value << joyStickSpeedSlow_;
+      // send command
+      int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+      if (ret != DEVICE_OK)
+         return ret;
+
+      // block/wait for acknowledge, or until we time out;
+      string answer;
+      ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      if (answer.substr(0,2).compare(":A") == 0)
+         return DEVICE_OK;
+      else if (answer.substr(answer.length(), 1) == "A")
+         return DEVICE_OK;
+      else if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2) {
+         int errNo = atoi(answer.substr(3).c_str());
+         return ERR_OFFSET + errNo;
+      }
+      else
+         return ERR_UNRECOGNIZED_ANSWER;
+   }
+
+   return DEVICE_OK;
+}
+
 
 int XYStage::GetPositionStepsSingle(char /*axis*/, long& /*steps*/)
 {
@@ -1784,6 +1856,19 @@ bool CRIF::Busy()
    return false;
 }
 
+// TODO: See if this can be implemented for the CRIF
+int CRIF::GetOffset(double& offset)
+{
+   offset = 0;
+   return DEVICE_OK;
+}
+
+// TODO: See if this can be implemented for the CRIF
+int CRIF::SetOffset(double /* offset */)
+{
+   return DEVICE_OK;
+}
+
 void CRIF::GetName(char* pszName) const
 {
    CDeviceUtils::CopyLimitedString(pszName, g_CRIFDeviceName);
@@ -1937,8 +2022,6 @@ int CRIF::SetFocusState(std::string focusState)
 
 bool CRIF::IsContinuousFocusLocked()
 {
-   // TODO: implement
-
    std::string focusState;
    int ret = GetFocusState(focusState);
    if (ret != DEVICE_OK)
@@ -1946,8 +2029,8 @@ bool CRIF::IsContinuousFocusLocked()
 
    if (focusState == g_CRIF_K)
       return true;
-   else
-      return false;
+
+   return false;
 }
 
 
@@ -2014,7 +2097,7 @@ int CRIF::IncrementalFocus()
    return SetContinuousFocusing(true);
 }
 
-int CRIF::GetFocusScore(double& score)
+int CRIF::GetLastFocusScore(double& score)
 {
    // empty the Rx serial buffer before sending command
    ClearPort(*this, *GetCoreCallback(), port_.c_str()); 

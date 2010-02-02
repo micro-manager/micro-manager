@@ -14,7 +14,6 @@
 #ifndef _K8061_H_
 #define _K8061_H_
 
-#include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/DeviceBase.h"
 #include "K8061Interface.h"
 #include <string>

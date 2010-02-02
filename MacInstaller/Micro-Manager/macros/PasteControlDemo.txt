@@ -1,0 +1,24 @@
+//  Creates a circular 0 and 1 mask and paste/multiplies
+//  it into four different locations in an image.
+
+// Updated 2005/1/7 to use setBatchMode() and newImage()
+
+  requires("1.33u");
+  setBatchMode(true);
+  size = 256;
+  newImage("Ramp", "8-bit ramp", size*2, size*2, 1)
+  newImage("Mask", "8-bit black", size, size, 1)
+  selectWindow("Mask");
+  makeOval(size*0.1, size*0.1, size*0.8, size*0.8);
+  setColor(1);
+  fill();
+  makeRectangle(0,0,size,size);
+  run("Copy");
+  selectWindow("Ramp");
+  setPasteMode("Multiply");
+  makeRectangle(0,0,size,size); run("Paste");
+  makeRectangle(size,0,size,size); run("Paste");
+  makeRectangle(size,size,size,size); run("Paste");
+  makeRectangle(0,size,size,size); run("Paste");
+  setBatchMode(false); // display image
+

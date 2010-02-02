@@ -1,0 +1,112 @@
+import java.lang.Math;
+import java.util.ArrayList;
+
+contigs = new ArrayList();
+
+boolean areContiguous(pos1, pos2) {
+	if (! pos1.getDefaultXYStage().contentEquals(pos2.getDefaultXYStage()))
+		return false;
+	if (Math.abs(pos1.getX()-pos2.getX()) > frameWidth*pixelSize)
+		return false;
+	if (Math.abs(pos1.getY()-pos2.getY()) > frameHeight*pixelSize)
+		return false;
+	if (pos1.getZ() != pos2.getZ())
+		return false;
+	return true;
+}
+
+ArrayList getContig(pos) {
+	for (contig:contigs)
+		if (contig.contains(pos))
+			return contig;
+	contig = new ArrayList();
+	contigs.add(contig);
+	contig.add(pos);
+	return contig;
+}
+
+void mergeContigs(contigA, contigB) {
+	if (contigA != contigB) {
+		contigA.addAll(contigB);
+		contigs.remove(contigB);
+	}
+}
+
+void findContigs(posList) {
+	contigs.clear();
+	n = posList.getNumberOfPositions();
+	for (int i=0;i<n;i++) {
+		posA = posList.getPosition(i);
+		contigA = getContig(posA);
+		for (int j=i+1;j<n;j++) {
+			posB = posList.getPosition(j);
+			contigB = getContig(posB);
+			//print(contigs);
+			if (areContiguous(posA, posB))
+				mergeContigs(contigA, contigB);
+		}
+	}
+}
+
+void printContigs() {
+	int i=0;
+	for (contig:contigs) {
+		i++;
+		print("\nContig " + i + ":");
+		for(pos:contig)
+			print("    " + pos);
+	}
+}
+
+Rectangle2D.Double getContigBounds(ArrayList contig) {
+	double left, top, right, bottom;
+	pos = contig.get(0);
+	left = pos.getX();
+	right = pos.getX();
+	top = pos.getY();
+	bottom = pos.getY();
+	for(pos:contig) {
+		if (pos.getX() < left)
+			left = pos.getX();
+		if (pos.getX() > right)
+			right = pos.getX();
+		if (pos.getY() < top)
+			top = pos.getY();
+		if (pos.getY() > bottom)
+			bottom = pos.getY();
+	}
+	right += frameWidth * pixelSize;
+	bottom += frameHeight * pixelSize;
+	return new Rectangle2D.Double(left, top, right-left, bottom-top);
+}
+
+Rectangle2D.Double getContigBoundsOffScreen(ArrayList contig) {
+	double left, top, right, bottom;
+	pos = contig.get(0);
+	screenPos = stageToOffScreen(new Point2D.Double(pos.getX(), pos.getY()));
+	left = screenPos.x;
+	right = left;
+	top = screenPos.y;
+	bottom = top;
+	for(pos:contig) {
+		screenPos = stageToOffScreen(new Point2D.Double(pos.getX(), pos.getY()));
+		if (screenPos.x < left)
+			left = screenPos.x;
+		if (screenPos.x > right)
+			right = screenPos.x;
+		if (screenPos.y < top)
+			top = screenPos.y;
+		if (screenPos.y > bottom)
+			bottom = screenPos.y;
+	}
+	right += frameWidth;
+	bottom += frameHeight;
+	return new Rectangle2D.Double(left, top, right-left, bottom-top);
+}
+
+
+
+update();
+
+
+

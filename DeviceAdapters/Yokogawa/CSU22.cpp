@@ -38,6 +38,7 @@
 
 #include "CSU22.h"
 #include "CSU22Hub.h"
+#include <cstdio>
 #include <string>
 #include <math.h>
 #include "../../MMDevice/ModuleInterface.h"
@@ -352,19 +353,17 @@ int FilterSet::Initialize()
    if (DEVICE_OK != ret)
       return ret;
 
-   printf("Filter State\n");
    // State
    CPropertyAction* pAct = new CPropertyAction (this, &FilterSet::OnState);
    ret = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct); 
    if (ret != DEVICE_OK) 
       return ret; 
 
-   printf("Filter State Allowed Values\n");
+   AddAllowedValue(MM::g_Keyword_State, "0");
    AddAllowedValue(MM::g_Keyword_State, "1");
    AddAllowedValue(MM::g_Keyword_State, "2");
    AddAllowedValue(MM::g_Keyword_State, "3");
    AddAllowedValue(MM::g_Keyword_State, "4");
-   AddAllowedValue(MM::g_Keyword_State, "5");
 
    printf("Filter State Labels\n");
    // Label                                                                  
@@ -374,11 +373,11 @@ int FilterSet::Initialize()
       return ret;                                                            
                                                                              
    // create default positions and labels
-   SetPositionLabel(1, "State-1");                               
-   SetPositionLabel(2, "State-2");                               
-   SetPositionLabel(3, "State-3");                               
-   SetPositionLabel(4, "State-4");                               
-   SetPositionLabel(5, "State-5");                               
+   SetPositionLabel(0, "Filter-1");                               
+   SetPositionLabel(1, "Filter-2");                               
+   SetPositionLabel(2, "Filter-3");                               
+   SetPositionLabel(3, "Filter-4");                               
+   SetPositionLabel(4, "Filter-5");                               
 
    ret = UpdateStatus();
    if (ret != DEVICE_OK) 
@@ -414,7 +413,7 @@ int FilterSet::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    if (eAct == MM::BeforeGet)
    {
       // return pos as we know it
-      pProp->Set((long)pos_);
+      pProp->Set((long)(pos_ - 1));
    }
    else if (eAct == MM::AfterSet)
    {
@@ -422,6 +421,8 @@ int FilterSet::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
       long dichroic = 1;
       long filter = 1;
       pProp->Get(pos);
+      pos +=1;
+
       if (pos == pos_)
          return DEVICE_OK;
       if (pos < 1)

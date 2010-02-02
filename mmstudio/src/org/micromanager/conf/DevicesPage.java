@@ -36,6 +36,7 @@ import javax.swing.table.TableModel;
 
 import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
+import org.micromanager.utils.PropertyItem;
 
 /**
  * Wizard page to add or remove devices.
@@ -226,8 +227,8 @@ public class DevicesPage extends PagePanel {
                    core_.loadDevice(ports[i].getName(), ports[i].getLibrary(), ports[i].getAdapterName());
                    Device d = model_.findSerialPort(ports[i].getName());
                    for (int j=0; j<d.getNumberOfSetupProperties(); j++) {
-                       Property prop = d.getSetupProperty(j);
-                       core_.setProperty(d.getName(), prop.name_, prop.value_);
+                       PropertyItem prop = d.getSetupProperty(j);
+                       core_.setProperty(d.getName(), prop.name, prop.value);
                     }
                }
             }

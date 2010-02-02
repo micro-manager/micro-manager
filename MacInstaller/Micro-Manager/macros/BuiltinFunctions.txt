@@ -1,0 +1,77 @@
+ requires("1.29o");
+
+print("");
+print("    Math functions");
+
+print('absolute value of -2: ' + abs(-2));    // single quotes are also okay
+
+"e^1: " + exp(1);  // shortcut for print("e^1: " + exp(1));
+
+"1.9 rounded: " + round(1.9)  // okay to leave off ';' outside of loops
+
+"1.9 truncated: " + floor(1.9)
+
+"2^16: " + pow(2,16)
+
+"square root of 2: " + sqrt(2)
+
+"minOf(2,3): "+minOf(2,3)
+"maxOf(2,3): "+maxOf(2,3)
+
+print("");
+print("Angle  Sine     Cosine    Tangent"); 
+for (degrees=0; degrees<=180; degrees+=30) {
+    radians = degrees*(PI/180);
+    print(degrees+"      "+d2s(sin(radians),4)+"      "+d2s(cos(radians),4)+"      "+d2s(tan(radians),4));
+}
+
+print("");
+print("n       logE(n)       log10(n)");
+for (n=1; n<=1000000; n*=10)
+    print(n+"      "+d2s(log(n),4)+"      "+d2s(log(n)/log(10),4));
+
+" "
+"    String functions"
+"1.23456 to 2 decimal places: " + d2s(1.23456, 2) // d2s = double to string
+"9.99 rounded to an integer is: " + d2s(9.99, 0)
+"65535 in hex: " + toHex(65535)
+"240 (hex f0) in binary: " + toBinary(0xf0)
+
+" "
+"    getTime function"
+n=400000; start=getTime();
+for (i=0; i<n; i++);
+time = getTime()-start;
+print("time: "+time/1000+" seconds ("+time*1000/n+" usec/loop)");
+
+" "
+"    utilities"
+
+n = 50;
+for (i=0; i<n; i++) {
+    showStatus("Progress: "+i+'/'+n);
+    showProgress(i, n-1);
+    wait(10);
+}
+
+n = getNumber("Enter a number:", 123);
+showMessage('The user entered "'+n+'"');
+
+s = getString("Enter a string:", "Default string");
+showMessage('The user entered "'+s+'"');
+
+showMessage('Test Message',
+    'This is a multi-line message with a title.\n'
+    +'This is the second line of the message\n'
+    +'and this is the third.');
+
+showMessageWithCancel("OK or Cancel?", "Click on OK or Cancel");
+
+if (nImages>0) {
+    print("Title: "+getTitle());
+    print("Width: "+getWidth());
+    print("Height: "+getHeight());
+    print("Slices: "+nSlices);
+} else
+    print("No images are open");
+

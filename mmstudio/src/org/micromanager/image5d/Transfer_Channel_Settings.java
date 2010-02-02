@@ -1,9 +1,11 @@
 package org.micromanager.image5d;
 
 
-import ij.*;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.WindowManager;
 import ij.gui.GenericDialog;
-import ij.plugin.*;
+import ij.plugin.PlugIn;
 /** Transfers channels colormaps from one Image5D to the current Image5D */
 public class Transfer_Channel_Settings implements PlugIn {
 

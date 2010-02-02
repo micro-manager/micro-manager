@@ -1,0 +1,73 @@
+// BeanShell javadoc finding script for Micro-Manager.
+// This script is called from mm_beanshell_startup.bsh
+// Arthur Edelstein, UCSF, 2009
+
+import bsh.ClassIdentifier;
+import ij.plugin.BrowserLauncher;
+
+
+
+getClassName(bsh.ClassIdentifier o) {
+	return getClassName(o,this.caller.namespace);
+}
+
+getClassName(Object o) {
+	return getClassName(o,this.caller.namespace);
+}
+
+getClassName(bsh.ClassIdentifier o, namespace) {
+	return namespace.identifierToClass(o).getName();
+}
+
+getClassName(Object o, namespace) {
+	if (o instanceof String)
+		return namespace.getClass((String) o).getName();
+	else if (o instanceof Class)
+		return o.getName();
+	else
+		return o.getClass().getName();
+}
+
+doc(bsh.ClassIdentifier o) {
+	className = getClassName(o,this.caller.namespace);
+	doc_className(className);
+}
+
+doc(Object o) {
+	className = getClassName(o,this.caller.namespace);
+	doc_className(className);
+}
+
+doc_className(String className) {
+	print(className);
+	String [] sunAPIpkgs = {"java","javax","org.ietf","org.omg","org.w3c","org.xml"};
+
+	boolean sunAPI = false;
+	boolean ijAPI = false;
+	for (sunAPIpkg : sunAPIpkgs) {
+		sunAPI = sunAPI || className.startsWith(sunAPIpkg + ".");
+		}
+	
+	suffix = className.replace(".","/") + ".html";
+
+	theUrl = null;
+	if (sunAPI)	
+		theUrl = "http://java.sun.com/javase/6/docs/api/" + suffix;
+	if (className.startsWith("ij.")) // ImageJ API
+		theUrl = "http://rsb.info.nih.gov/ij/developer/api/" + suffix;
+	if (className.startsWith("bsh.")) // Beanshell API
+		theUrl = "http://odelacot.homelinux.org/doc/bsh-doc/api/" + suffix;
+	if (className.startsWith("org.micromanager")) // Micro-Manager API
+		theUrl = "http://micro-manager.org/content/doc/mmstudio/" + suffix;
+	if (className.startsWith("mmcorej.CMMCore"))
+		theUrl = "http://micro-manager.org/content/doc/CMMCore.html";
+	if (className.startsWith("org.jdesktop.swingx"))
+		theUrl = "http://download.java.net/javadesktop/swinglabs/releases/0.8/docs/api/index.html?" + suffix;
+
+	if (theUrl!=null)
+		BrowserLauncher.openURL(theUrl);
+	else
+		print("No docs found.");
+}
+
+update();

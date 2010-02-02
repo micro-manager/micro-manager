@@ -1,11 +1,34 @@
 package org.micromanager.image5d;
 
-import ij.*;
-import ij.plugin.*;
+import ij.IJ;
+import ij.ImageJ;
+import ij.plugin.LUT_Editor;
 
-import java.awt.*;
-import java.awt.event.*;
-import java.awt.image.*;
+import java.awt.BorderLayout;
+import java.awt.Button;
+import java.awt.Canvas;
+import java.awt.Checkbox;
+import java.awt.CheckboxGroup;
+import java.awt.Choice;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.GridLayout;
+import java.awt.Panel;
+import java.awt.Rectangle;
+import java.awt.ScrollPane;
+import java.awt.Scrollbar;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.AdjustmentEvent;
+import java.awt.event.AdjustmentListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.image.BufferedImage;
+import java.awt.image.ColorModel;
+import java.awt.image.IndexColorModel;
 
 
 /*
@@ -32,7 +55,7 @@ public class ChannelControl extends Panel implements ItemListener,
 	int displayMode;
 	
 	Panel selectorPanel;
-	ScrollbarWithLabel scrollbarWL;
+	public ScrollbarWithLabel scrollbarWL;
 	Scrollbar scrollbar;
 	ChannelSelectorOverlay channelSelectorOverlay;
 	

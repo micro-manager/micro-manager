@@ -1,0 +1,34 @@
+macro "Set Scale..." {
+  Dialog.create("Set Scale");
+  Dialog.addNumber("Pixel Width (microns):", 6.7);
+  Dialog.addNumber("Pixel Height (microns):", 6.7);
+  Dialog.addNumber("Objective:", 40);
+  Dialog.show();A
+  width = Dialog.getNumber();
+  height = Dialog.getNumber();;
+  objective = Dialog.getNumber();
+  width = width/objective;
+  height = height/objective;
+  //setVoxelSize(width, height, 1, "um");
+  run("Properties...", "unit=µm pixel_width="+width+" pixel_height="+height+" global");
+}
+
+macro "Record Distances" {
+  if (selectionType!=10)
+      exit("Point selection required");
+  getSelectionCoordinates(x, y);
+  if (x.length<2)
+      exit("At least two points required");
+  run("Clear Results");
+  run("Measure");
+  getPixelSize(unit, pw, ph);
+  setColor(255, 255, 255);
+  drawLine(x[0], y[0]-12, x[0], y[0]+12);
+  for (i=1; i<x.length; i++) {
+     dx = (x[i] - x[i-1])*pw;
+     dy = (y[i] - y[i-1])*ph;
+     setResult("Distance", i, sqrt(dx*dx + dy*dy));
+     drawLine(x[i], y[i]-12, x[i], y[i]+12);
+  }
+  updateResults;
+}

@@ -9,11 +9,15 @@
 
 package org.jeditsyntax;
 
-import javax.swing.KeyStroke;
-import java.awt.event.*;
 import java.awt.Toolkit;
+import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.util.Hashtable;
 import java.util.StringTokenizer;
+
+import javax.swing.KeyStroke;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  * The default input handler. It maps sequences of keystrokes into actions
@@ -28,7 +32,7 @@ public class DefaultInputHandler extends InputHandler
 	 */
 	public DefaultInputHandler()
 	{
-		bindings = currentBindings = new Hashtable();
+		bindings = currentBindings = new Hashtable<KeyStroke, Object>();
 	}
 
 	/**
@@ -97,9 +101,10 @@ public class DefaultInputHandler extends InputHandler
 	 * @param keyBinding The key binding
 	 * @param action The action
 	 */
-	public void addKeyBinding(String keyBinding, ActionListener action)
+	@SuppressWarnings("unchecked")
+   public void addKeyBinding(String keyBinding, ActionListener action)
 	{
-	        Hashtable current = bindings;
+	        Hashtable<KeyStroke, Object> current = bindings;
 
 		StringTokenizer st = new StringTokenizer(keyBinding);
 		while(st.hasMoreTokens())
@@ -112,12 +117,12 @@ public class DefaultInputHandler extends InputHandler
 			{
 				Object o = current.get(keyStroke);
 				if(o instanceof Hashtable)
-					current = (Hashtable)o;
+					current = (Hashtable<KeyStroke, Object>)o;
 				else
 				{
-					o = new Hashtable();
+					o = new Hashtable<Object, Object>();
 					current.put(keyStroke,o);
-					current = (Hashtable)o;
+					current = (Hashtable<KeyStroke, Object>)o;
 				}
 			}
 			else
@@ -157,7 +162,8 @@ public class DefaultInputHandler extends InputHandler
 	 * Handle a key pressed event. This will look up the binding for
 	 * the key stroke and execute it.
 	 */
-	public void keyPressed(KeyEvent evt)
+	@SuppressWarnings("unchecked")
+   public void keyPressed(KeyEvent evt)
 	{
 		int keyCode = evt.getKeyCode();
 		int modifiers = evt.getModifiers();
@@ -215,7 +221,7 @@ public class DefaultInputHandler extends InputHandler
 			}
 			else if(o instanceof Hashtable)
 			{
-				currentBindings = (Hashtable)o;
+				currentBindings = (Hashtable<KeyStroke, Object>)o;
 				evt.consume();
 				return;
 			}
@@ -225,7 +231,8 @@ public class DefaultInputHandler extends InputHandler
 	/**
 	 * Handle a key typed event. This inserts the key into the text area.
 	 */
-	public void keyTyped(KeyEvent evt)
+	@SuppressWarnings("unchecked")
+   public void keyTyped(KeyEvent evt)
 	{
 		int modifiers = evt.getModifiers();
 		char c = evt.getKeyChar();
@@ -242,7 +249,7 @@ public class DefaultInputHandler extends InputHandler
 
 				if(o instanceof Hashtable)
 				{
-					currentBindings = (Hashtable)o;
+					currentBindings = (Hashtable<KeyStroke, Object>)o;
 					return;
 				}
 				else if(o instanceof ActionListener)
@@ -327,7 +334,7 @@ public class DefaultInputHandler extends InputHandler
 		}
 		else if(key.length() == 0)
 		{
-			System.err.println("Invalid key stroke: " + keyStroke);
+			ReportingUtils.logError("Invalid key stroke: " + keyStroke);
 			return null;
 		}
 		else
@@ -341,7 +348,7 @@ public class DefaultInputHandler extends InputHandler
 			}
 			catch(Exception e)
 			{
-				System.err.println("Invalid key stroke: "
+                ReportingUtils.logError("Invalid key stroke: "
 					+ keyStroke);
 				return null;
 			}
@@ -351,8 +358,8 @@ public class DefaultInputHandler extends InputHandler
 	}
 
 	// private members
-	private Hashtable bindings;
-	private Hashtable currentBindings;
+	private Hashtable<KeyStroke, Object> bindings;
+	private Hashtable<KeyStroke, Object> currentBindings;
 
 	private DefaultInputHandler(DefaultInputHandler copy)
 	{

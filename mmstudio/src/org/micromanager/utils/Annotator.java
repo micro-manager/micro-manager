@@ -48,8 +48,7 @@ public class Annotator {
             md.put(s.getKey(), s.getPropertyValue());
          }
       } catch (Exception e) {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
+         ReportingUtils.showError(e);
       }
       return md;
    }
@@ -67,7 +66,7 @@ public class Annotator {
          acq.setSystemState(frame, channel, slice, md);
       } catch (MMAcqDataException e) {
          // TODO Auto-generated catch block
-         e.printStackTrace();
+         ReportingUtils.logError(e);
       }
    }
    
@@ -81,17 +80,15 @@ public class Annotator {
     */
    public static void setImageMetadata(AcquisitionData acq, int frame, int channel, int slice, JSONObject md) {
       try {
-         for (Iterator i = md.keys(); i.hasNext();) {
+         for (Iterator<?> i = md.keys(); i.hasNext();) {
             String key = (String)i.next();
             acq.setImageValue(frame, channel, slice, key, md.getString(key));
          }
       } catch (MMAcqDataException e) {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
+         ReportingUtils.logError(e);
       }
       catch (JSONException e) {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
+          ReportingUtils.logError(e);
       }
    }
 
@@ -111,8 +108,7 @@ public class Annotator {
             acq.setImageValue(frame, channel, slice, s.getKey(), s.getPropertyValue());
          }
       } catch (Exception e) {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
+         ReportingUtils.logError(e);
       }
    }
    
@@ -128,8 +124,7 @@ public class Annotator {
       try {
          setStateMetadata(acq, frame, channel, slice, generateJSONMetadata(cfg));
       } catch (Exception e) {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
+         ReportingUtils.logError(e);
       }
    }
 

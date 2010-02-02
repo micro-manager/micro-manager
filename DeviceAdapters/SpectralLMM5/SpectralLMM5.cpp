@@ -19,16 +19,14 @@
 // AUTHOR:        Nico Stuurman, 01/17/2008
 //
 
-#include "../../MMDevice/MMDevice.h"
-#include "../../MMDevice/DeviceBase.h"
-#include "../../MMDevice/ModuleInterface.h"
 #include "SpectralLMM5.h"
 #include "SpectralLMM5Interface.h"
 
 #ifdef WIN32
-   #include <windows.h>
+   #include <winsock.h>
+
 #else
-#include <netinet/in.h>
+   #include <netinet/in.h>
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
@@ -46,7 +44,7 @@ const char* g_DeviceNameLMM5Hub = "LMM5-Hub";
 const char* g_DeviceNameLMM5Shutter = "LMM5-Shutter";
 const char* g_DeviceNameLMM5Switch = "LMM5-Switch";
 
-SpectralLMM5Interface* g_Interface;
+SpectralLMM5Interface* g_Interface = NULL;
 
 ////////////////////////////////
 // Exported MMDevice API
@@ -104,6 +102,9 @@ void LMM5Hub::GetName(char* name) const
 
 int LMM5Hub::Initialize()
 {
+   if (g_Interface == NULL)
+      return DEVICE_NOT_CONNECTED;
+
    int ret = g_Interface->DetectLaserLines(*this, *GetCoreCallback());
    nrLines_= g_Interface->GetNrLines();
    if (ret != DEVICE_OK)
@@ -340,6 +341,9 @@ LMM5Shutter::~LMM5Shutter()
 
 int LMM5Shutter::Initialize()
 {
+   if (g_Interface == NULL)
+      return DEVICE_NOT_CONNECTED;
+
    // Name                                                                   
    CreateProperty(MM::g_Keyword_Name, name_.c_str(), MM::String, true);      
                                                                              

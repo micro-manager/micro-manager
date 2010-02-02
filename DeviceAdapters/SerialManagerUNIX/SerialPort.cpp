@@ -19,6 +19,7 @@
  ***************************************************************************/
 
 #include "SerialPort.h"
+#include <cstdio>
 #include <queue>
 #include <map>
 #include <cerrno>
@@ -563,7 +564,6 @@ SerialPort::SerialPortImpl::SerialPortImpl( const std::string& serialPortName ) 
     mFileDescriptor(-1),
     mOldPortSettings()
 {
-   printf("Opening port with name: %s\n", serialPortName.c_str() );
     /* empty */
 }
 
@@ -604,13 +604,13 @@ SerialPort::SerialPortImpl::Open()
      * calling open() again.
      */
 
-    // printf ("Now going to open port %s\n", mSerialPortName.c_str());
+     printf ("Now going to open port %s\n", mSerialPortName.c_str());
     
     mFileDescriptor = open( mSerialPortName.c_str(),
                             O_RDWR | O_NOCTTY |  O_NONBLOCK ) ;
     if ( mFileDescriptor < 0 )
     {
-       // printf ("Failed to open serial Port: %s\n",mSerialPortName.c_str());
+        printf ("Failed to open serial Port: %s\n",mSerialPortName.c_str());
 
        throw SerialPort::OpenFailed( strerror(errno) )  ;
     }
@@ -814,40 +814,40 @@ SerialPort::SerialPortImpl::SetBaudRate( const int baudRate )
 {
    switch (baudRate)
    {
-   case BAUD_200:
+   case 200:
       SetBaudRate(BAUD_200);
       break;
-   case BAUD_300:
+   case 300:
       SetBaudRate(BAUD_300);
       break;
-   case BAUD_600:
+   case 600:
       SetBaudRate(BAUD_600);
       break;
-   case BAUD_1200:
+   case 1200:
       SetBaudRate(BAUD_1200);
       break;
-   case BAUD_2400:
+   case 2400:
       SetBaudRate(BAUD_2400);
       break;
-   case BAUD_4800:
+   case 4800:
       SetBaudRate(BAUD_4800);
       break;
-   case BAUD_9600:
+   case 9600:
       SetBaudRate(BAUD_9600);
       break;
-   case BAUD_19200:
+   case 19200:
       SetBaudRate(BAUD_19200);
       break;
-   case BAUD_38400:
+   case 38400:
       SetBaudRate(BAUD_38400);
       break;
-   case BAUD_57600:
+   case 57600:
       SetBaudRate(BAUD_57600);
       break;
-   case BAUD_115200:
+   case 115200:
       SetBaudRate(BAUD_115200);
       break;
-   case BAUD_230400:
+   case 230400:
       SetBaudRate(BAUD_230400);
       break;
    default :

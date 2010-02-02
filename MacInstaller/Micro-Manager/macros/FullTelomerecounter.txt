@@ -1,0 +1,119 @@
+//Full fluorescent counter macro by Anthony Joshua, with contributions from Tony Collins, Christopher Mei and thansk to Wayne Rasband for the Paintbrush tool macro incorporated herein
+
+macro "Setup [F1]" {
+
+//Ask for file containing raw flourescent image
+image=getBoolean("Do you want to open the composite image");
+if (image==1) {open();}
+else if (image==0) {}
+
+//Ask for need for copy
+copy=getBoolean("Do you want to copy the composite image");
+if (copy==1) {run("Duplicate...", "title=CopyofComposite");}
+else if (image==0) {}
+
+//Ask for file containing DAPI image
+image2 = getBoolean("Do you want to open the DAPI image");
+if (image2==1) {open();}
+else if (image2==0) {}
+
+//Select the fluorescent image
+selectImage(1);
+
+//Ask for ROIs
+ROI=getBoolean("Can you open the region of interest file");
+if (ROI==1){open();}
+else if (ROI==0){showMessage("ROI","Please define ROIs,save them, then press F1 to restart");
+run("ROI Manager...");
+exit;}
+
+//Carry out rolling ball
+rb=getNumber("Rolling ball radius[recommended]", 5);
+run("Subtract Background...", "rolling="+rb);
+
+//Ask user to remove lipofuscin and colour lumens black
+showMessage("Removing Noise", "Please remove luminal noise and autoflourescence then press F2 OR after thresholding visually press F3");
+	stage = 2;
+//open paintbrush tool
+
+//   This is a tool macro similar to the paint brush tool in NIH Image.
+//   It draws in the current foreground color, which can be set by
+//   double-clicking on the eye dropper tool. Double-click on 
+//   the paintbrush tool icon to set the brush width.
+ 
+   macro "Paintbrush Tool - C0aao33aa" {
+	var brushWidth = 10;
+        leftClick=16;
+        //setupUndo(); // requires 1.32g or later
+        getCursorLoc(x, y, z, flags);
+        setLineWidth(brushWidth);
+        moveTo(x,y);
+        x2=-1; y2=-1;
+        while (true) {
+            getCursorLoc(x, y, z, flags);
+            if (flags&leftClick==0) exit();
+            if (x!=x2 || y!=y2)
+                lineTo(x,y);
+            x2=x; y2 =y;
+            wait(10);
+        }
+   }
+
+  // ImageJ runs this macro when user double-clicks on the paint brush tool icon
+  macro 'Paintbrush Tool Options' {
+      brushWidth = getNumber("Brush Width:", brushWidth);
+  }
+
+
+macro "Process [F2]" {
+
+showMessage("Thresholding", "Ready for Otsu Thresholding- please wait");
+
+//Carry out Otsu Thresholding
+run("OtsuThresholding 16Bit");
+
+//Check the threshold
+getThreshold(lower,upper);
+print("your thresholds are;"+ lower,"to"+ upper);
+
+//Run through the ROIs
+run("Set Measurements...", "area mean standard min limit redirect=None decimal=3");
+run("Set Scale...", "distance=1 known=1 pixel=1 unit=pixel global");
+n = roiManager("count");
+dir = getDirectory("Select a directory for output files");
+name = getString("Name of file:", "output file name");
+  for (i=0; i<n; i++) {
+      	roiManager("select", i);
+	run("Analyze Particles...", "minimum=1 maximum=999999 bins=256 show=Nothing display clear");
+  	updateResults();
+	j=i+1;
+	saveAs("text", dir+name+j+".txt");
+
+  }
+macro "Analysis-only [F3]" {
+
+showMessage("Thresholded Image", "Your image should already be thresholded");
+
+//Check the threshold
+getThreshold(lower,upper);
+print("your thresholds are;"+ lower,"to"+ upper);
+
+//Run through the ROIs
+run("Set Measurements...", "area mean standard min limit redirect=None decimal=3");
+run("Set Scale...", "distance=1 known=1 pixel=1 unit=pixel global");
+n = roiManager("count");
+dir = getDirectory("Select a directory for output files");
+name = getString("Name of file:", "output file name");
+  for (i=0; i<n; i++) {
+      	roiManager("select", i);
+	run("Analyze Particles...", "minimum=1 maximum=999999 bins=256 show=Nothing display clear");
+  	updateResults();
+	j=i+1;
+	saveAs("text", dir+name+j+".txt");
+
+  }
+}
+selectWindow("Results");
+run("Close");
+roiManager("deselect");
+

@@ -1,0 +1,179 @@
+// Macro language regression tests
+// Requires the ImageJ 1.33 or later
+
+requires("1.33q");
+test = "null";
+logic("Logic");
+math("Math");
+functionCalls("FunctionCall");
+images("Image");
+setBatchMode(true); images("BatchImage"); setBatchMode(false);
+benchmarks("Benchmark");
+exit();
+
+
+// Logic tests
+function logic(thisTest) {
+    test = thisTest;
+    if (1>2) fail(1);
+    if (2>1) ; else fail(2);
+    if (1+2*3!=7||2/3+1!=1+(2/3)) fail(3);
+    s = "ImageJ has a very nice macro language";
+    if (s=="ImageJ has a very nice macro language2") fail(4);
+    if ("ImageJ has a very nice macro language "==s) fail(5);
+    a = newArray(1, 2, 3);
+    if (a[0]+a[0]!=a[1]) fail(6);
+    s = newArray('one', 'two');
+    if (s[0]+s[1] != 'onetwo') fail(7);
+    if (s[0]>=s[1]) fail(8);
+}
+
+// Math tests
+// Requires ImageJ 1.34b or later 
+function math(thisTest) {
+    test = thisTest;
+    n = 10;
+    if (n++!=10) fail(1);
+    if (++n!=12) fail(2);
+    if (n--!=12) fail(3);
+    if (--n!=10) fail(4);
+    a=newArray(0,1,2,3,4,5,6);
+    for (i=0; i<a.length; i++)
+        sum = sum+=a[i];
+    if (sum!=21) fail(10);
+    i = 2;
+    if (a[i++]!=2) fail(11);
+    if (i!=3) fail(12);
+    if (a[++i]!=4) fail(13);
+    if (i!=4) fail(14);
+    if (a[i--]!=4) fail(15);
+    if (i!=3) fail(16);
+    if (a[--i]!=2) fail(17);
+    if (i!=2) fail(18);
+    i = 1;
+    n = a[i++];
+    if (n!=1) fail(19);
+    if (i!=2) fail(20);
+    n = a[++i];
+    if (n!=3) fail(21);
+    if (i!=3) fail(21);
+}
+
+function functionCalls(thisTest) {
+   test = thisTest;
+   f1(123);
+   f2("aString");
+   f3(1+2/3);
+   v=1.5; f4(v);
+   v = 'hello'; f5(v);
+   if (f6()!=-1) fail(6);
+   if (2-3!=f6()) fail(6);
+   if ("return"!=f7()) fail(7); //**
+   a = f8(); if (a.length!=3 || a[1]!=22) fail(8);
+   a = newArray(1,2); 
+   b = newArray('one','two'); 
+   f9(a);
+   f10(b);
+   f11(a[0]);
+   f12(b[1]);
+}
+
+function f1(a) {if (a!=123) fail(1);}
+function f2(a) {if (a!='aString') fail(2);}
+function f3(a) {if (a!=1+2/3) fail(3);}
+function f4(a) {if (a!=1.5) fail(4);}
+function f5(a) {if (a!='hello') fail(5);}
+function f6() {return -1;}
+function f7() {return 'return';}
+function f8() {a=newArray(11,22,33); return a;}
+function f9(b) {if (b.length!=2||b[1]!=2) fail(9);}
+function f10(b) {if (b.length!=2||b[0]!='one') fail(10);}
+function f11(a) {if (a!=1) fail(11);}
+function f12(a) {if (a!='two') fail(12);}
+
+
+function images(thisTest) {
+    test = thisTest;
+    n = 10;
+    openAtStart = nImages;
+    id = newArray(n);
+    for (i=0; i<n; i++) {
+        size = 20*(i+1)*(i+1);
+        run("New...", "name=Image"+i+" type=8-bit fill=Ramp width="+size+" height="+size+" slices=1");
+        id[i] = getImageID();
+    }
+    for (i=0; i<n; i++) {
+        title = "Image"+i;
+        selectImage(title);
+        if (getTitle()!="Image"+i) fail(1);
+    }
+    for (i=0; i<n; i++) {
+        selectImage(id[i]);
+        if (getTitle()!="Image"+i) fail(2);
+    }
+    for (i=0; i<n; i++) {
+        title = "Image"+i;
+        selectWindow(title);
+        if (getTitle()!=title) fail(3);
+    }
+    for (i=0; i<n; i++) {
+        selectImage(id[i]);
+        run("Close");
+        if (nImages()!=openAtStart + n-i-1) fail(4);
+    }
+    runRGBSplitTest();
+}
+
+function runRGBSplitTest() {
+    name = "Test Image";
+    run("New...", "name=["+name+"] type=8-bit fill=White width=1000 height=1000 slices=1");
+    run("Red");
+    run("RGB Color");
+    run("RGB Split");
+    selectWindow(name+" (red)");
+    run("Invert");
+    selectWindow(name+" (green)");
+    run("Invert");
+    run("RGB Merge...", "red=["+name+" (red)] green=["+name+" (green)] blue=["+name+" (blue)]");
+    if (toHex(getPixel(0,0))!="ff00ff00") fail(5);
+    close();
+}
+
+function benchmarks(thisTest) {
+    test = thisTest;
+    if (sieve()!=1899) fail(1);
+    if (ackermann(2,5)!=13) fail(2);
+}
+
+function sieve() {
+    SIZE = 8190;
+    flags = newArray(SIZE+1);
+    //start = getTime();
+    count=0;
+    for(i=0; i<=SIZE; i++) flags[i]=true;
+    for (i=0; i<=SIZE; i++) {
+       if (flags[i]) {
+          prime=i+i+3;
+          for(k=i+prime; k<=SIZE; k+=prime)
+             flags[k]=false;
+          count++;
+       }
+    }
+    //print((getTime-start)/1000);
+    return count;
+}
+
+function ackermann(m, n) {
+    if (m==0)
+        return n + 1;
+    else if (n==0)
+        return ackermann(m-1, 1);
+    else
+        return ackermann(m-1, ackermann(m, n-1));
+}
+
+function fail(n) {
+  print(test+ " test "+n+" failed");
+}
+
+

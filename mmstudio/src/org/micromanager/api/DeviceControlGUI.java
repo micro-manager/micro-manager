@@ -24,6 +24,7 @@
 package org.micromanager.api;
 
 import org.micromanager.navigation.PositionList;
+import org.micromanager.utils.AutofocusManager;
 import org.micromanager.utils.ContrastSettings;
 import org.micromanager.utils.MMScriptException;
 
@@ -33,8 +34,11 @@ import org.micromanager.utils.MMScriptException;
 public interface DeviceControlGUI {
    public void updateGUI(boolean updateConfigPadStructure);
    public void initializeGUI();
+   public String getVersion();
    public boolean updateImage();
    public boolean displayImage(Object pixels);
+   public boolean displayImageWithStatusLine(Object pixels, String statusLine);   
+   public void displayStatusLine(String statusLine);
    public boolean okToAcquire();
    public void stopAllActivity();
    public boolean getLiveMode();
@@ -47,6 +51,10 @@ public interface DeviceControlGUI {
    public ContrastSettings getContrastSettings();
    public boolean is16bit();
    public void showXYPositionList();
+   /*
+    * Make the mian window the frontmose, active window again
+    */
+   public void makeActive();
    
    // acquisition control
    public void startBurstAcquisition() throws MMScriptException;
@@ -57,4 +65,5 @@ public interface DeviceControlGUI {
    public void sleep(long ms) throws MMScriptException;
    
    public void setPositionList(PositionList pl) throws MMScriptException;
+   public AutofocusManager getAutofocusManager();
 }

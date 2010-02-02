@@ -225,9 +225,9 @@ public:
 
    // XYStage API                                                            
    // -----------
-  int SetPositionUm(double x, double y);
-  int SetRelativePositionUm(double x, double y);
-  int GetPositionUm(double& x, double& y);
+  //int SetPositionUm(double x, double y);
+  //int SetRelativePositionUm(double x, double y);
+  //int GetPositionUm(double& x, double& y);
   int SetPositionSteps(long x, long y);
   int SetRelativePositionSteps(long x, long y);
   int GetPositionSteps(long& x, long& y);
@@ -244,8 +244,8 @@ public:
    // ----------------
    int OnAcceleration(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnMirrorX(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnMirrorY(MM::PropertyBase* pProp, MM::ActionType eAct);
+   //int OnMirrorX(MM::PropertyBase* pProp, MM::ActionType eAct);
+   //int OnMirrorY(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 
 private:
@@ -255,8 +255,8 @@ private:
    std::string description_;
    long originXSteps_;
    long originYSteps_;
-   bool mirrorX_;
-   bool mirrorY_;
+   //bool mirrorX_;
+   //bool mirrorY_;
 };
 
 class Diaphragm : public CGenericBase<Diaphragm>
@@ -311,6 +311,124 @@ private:
    long pos_;
    std::string name_;
    std::string description_;
+};
+
+class TLPolarizer : public CStateDeviceBase<TLPolarizer>
+{
+public:
+   TLPolarizer();
+   ~TLPolarizer();
+
+   // MMDevice API
+   int Initialize();
+   int Shutdown();
+    
+   void GetName(char* pszName) const;
+   bool Busy();
+   unsigned long GetNumberOfPositions()const {return numPos_;};
+
+   // action interface
+   int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+protected:
+   unsigned int numPos_;
+
+private:
+   bool initialized_;
+   long pos_;
+   std::string name_;
+   std::string description_;
+};
+
+class DICTurret : public CStateDeviceBase<DICTurret>
+{
+public:
+   DICTurret();
+   ~DICTurret();
+
+   // MMDevice API
+   int Initialize();
+   int Shutdown();
+    
+   void GetName(char* pszName) const;
+   bool Busy();
+   unsigned long GetNumberOfPositions()const {return numPos_;};
+
+   // action interface
+   int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnPrismFinePosition(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+protected:
+   unsigned int numPos_;
+
+private:
+   bool initialized_;
+   long pos_;
+   double finePos_;
+   std::string name_;
+   std::string description_;
+};
+
+class CondensorTurret : public CStateDeviceBase<CondensorTurret>
+{
+public:
+   CondensorTurret();
+   ~CondensorTurret();
+
+   // MMDevice API
+   int Initialize();
+   int Shutdown();
+    
+   void GetName(char* pszName) const;
+   bool Busy();
+   unsigned long GetNumberOfPositions()const {return numPos_;};
+
+   // action interface
+   int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+protected:
+   unsigned int numPos_;
+
+private:
+   bool initialized_;
+   long pos_;
+   std::string name_;
+   std::string description_;
+};
+
+// The incident light a.k.a the flourecense lamp is being derived
+// from the shutter base. This is to make sure that for cases
+// where there is no bright field shutter the flouroscent lamp
+// can be switched off and on so that one can mix the bright-field
+// and flourecense imaging in the same acquisition protocol
+// -- Prashanth 26th Feb 2009
+
+class TransmittedLight: public CShutterBase<TransmittedLight>
+{
+public:
+	TransmittedLight();
+	~TransmittedLight();
+
+   int Initialize();
+   int Shutdown();
+
+   void GetName (char* pszName) const;
+   bool Busy();
+
+   // Shutter API
+   int SetOpen (bool open = true);
+   int GetOpen(bool& open);
+   int Fire(double deltaT);
+
+   // action interface
+   int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+private:
+   bool initialized_;
+   std::string name_;
+   std::string description_;
+   bool state_;
+
 };
 
 #endif // _LeicaDMI_H_

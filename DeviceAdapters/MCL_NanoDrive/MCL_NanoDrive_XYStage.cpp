@@ -53,72 +53,80 @@ int MCL_NanoDrive_XYStage::Initialize()
 // BEGIN LOCKING
 HandleListLock();
 
-	int err = DEVICE_OK;
-	ProductInformation pi = {NULL, 0, 0, 0, 0, 0}; 
-	bool valid = false; 
-	int possHandle = 0;
+   int err = DEVICE_OK;
+   int possHandle = 0;
+   bool valid = false; 
+   
+   ProductInformation pi;
+   memset(&pi, 0, sizeof(ProductInformation));
 
-	if (initialized_) 
-	{
-	  goto XYSTAGE_INIT_EXIT;
-	}
+   if (initialized_)
+   { 
+	  // If already initialized, no need to continue
+	  goto INIT_ERROR;
+   }
 
-	int numHandles = MCL_GrabAllHandles();
-	if (numHandles == 0)
-	{
+   int numHandles = MCL_GrabAllHandles();
+   if (numHandles == 0)
+   { 
+	   // No handles, i.e. no devices currently attached
 	   err = MCL_INVALID_HANDLE;
-	   goto XYSTAGE_INIT_EXIT;
-	}
+	   goto INIT_ERROR;
+   }
 
-	int* handlesToUseOrRelease = NULL;
-	handlesToUseOrRelease = (int*) malloc(sizeof(int*) * numHandles);
-	MCL_GetAllHandles(handlesToUseOrRelease, numHandles);
+   int* handlesToUseOrRelease = NULL;
+   handlesToUseOrRelease = (int*) malloc(sizeof(int*) * numHandles);
+   MCL_GetAllHandles(handlesToUseOrRelease, numHandles);
 
-	HandleListType* device = (HandleListType*)GlobalHeapAllocate(sizeof(HandleListType));
-	device->Initialize(possHandle, XY_TYPE);
-
-	for (int i = 0; i < numHandles; i++)
-	{	   
+   HandleListType* device = (HandleListType*)GlobalHeapAllocate(sizeof(HandleListType));
+   device->Initialize(possHandle, XY_TYPE);
+   for (int i = 0; i < numHandles; i++)
+   {   
 		possHandle = handlesToUseOrRelease[i];
-		MCL_GetProductInfo(&pi, possHandle);
-		
 		device->setHandle(possHandle);
 
-		if (((pi.axis_bitmap & 0x3) == 0x3) && (!HandleExistsOnLockedList(device)) && (possHandle > 0))
-		{
+		MCL_GetProductInfo(&pi, possHandle);
+		
+		// check to see which axes are valid
+		bool validXaxis = ((pi.axis_bitmap & VALIDX) == VALIDX);
+		bool validYaxis = ((pi.axis_bitmap & VALIDY) == VALIDY);
+
+		if ( (validXaxis && validYaxis) && 
+			 (!HandleExistsOnLockedList(device)) &&
+			 (possHandle > 0) )
+		{	
 			valid = true;
 
 			HandleListAddToLockedList(device);
 			MCLhandle_ = possHandle;
 
-			// release handles not in use
+			// release handles not in use.
 			for (int j = i+1; j < numHandles; j++)
-			{ 
+			{
 				possHandle = handlesToUseOrRelease[j];
-
-				if (possHandle > 0 && !HandleExistsOnLockedList(possHandle))
-				{ 				
+				if (!HandleExistsOnLockedList(possHandle) && possHandle > 0)
+				{ 	
 					MCL_ReleaseHandle(possHandle);
 				}
 			}
-			break;
+			break; // found a valid handle, so no need to check any further
 		}
 		else
 		{
 			if (!HandleExistsOnLockedList(possHandle) && possHandle > 0)
-			{ 
+			{
 				MCL_ReleaseHandle(possHandle);
 			}
 		}
-	}
-	free (handlesToUseOrRelease);
+   }
+   free (handlesToUseOrRelease);
 
-	if (!valid)
-	{
+   if (!valid)
+   {
 	   GlobalHeapFree(device);
 	   err = MCL_INVALID_HANDLE;
-	   goto XYSTAGE_INIT_EXIT;
-	}
+	   goto INIT_ERROR;
+   }
 
 	xMin_ = 0;
 	yMin_ = 0;
@@ -127,80 +135,75 @@ HandleListLock();
 	if (xMax_ < 0)
 	{
 		err = (int) xMax_;
-		goto XYSTAGE_INIT_EXIT;
+		goto INIT_ERROR;
 	}
-
+	
 	yMax_ = MCL_GetCalibration(YAXIS, MCLhandle_);
 	if (yMax_ < 0)
 	{
 		err = (int) yMax_;
-		goto XYSTAGE_INIT_EXIT;
+		goto INIT_ERROR;
 	}
 
 	if (pi.Product_id == 0x1230 || pi.Product_id == 0x1253 || pi.Product_id == 0x2201 || 
-	   pi.Product_id == 0x2203 || pi.Product_id == 0x2253)
-	{ 
-		  
-		stepSize_um_ = xMax_ / NUM_STEPS_20;
+		pi.Product_id == 0x2203 || pi.Product_id == 0x2253)
+	{
+		stepSizeX_um_ = xMax_ / NUM_STEPS_20;
+		stepSizeY_um_ = yMax_ / NUM_STEPS_20;
+		is20Bit_ = true;
 	}
 	else 
 	{
-		stepSize_um_ = xMax_ / NUM_STEPS_16;
+		stepSizeX_um_ = xMax_ / NUM_STEPS_16;
+		stepSizeY_um_ = yMax_ / NUM_STEPS_16;
+		is20Bit_ = false;
 	}
-
+	
 	curXpos_ = MCL_SingleReadN(XAXIS, MCLhandle_);
-
-	// note 20 bit systems can read slightly below 0, so truncate
 	if ((int)curXpos_ < 0)
 	{ 
 		err = (int) curXpos_;
-		goto XYSTAGE_INIT_EXIT;
+		goto INIT_ERROR;
 	}
-	
-	// note 20 bit systems can read slighlty below 0, so truncate
+
 	curYpos_ = MCL_SingleReadN(YAXIS, MCLhandle_);
 	if ((int)curYpos_ < 0)
-	{ 
+	{  
 		err = (int) curYpos_;
-		goto XYSTAGE_INIT_EXIT;
+		goto INIT_ERROR;
 	}
 
 	serialNumber_ = MCL_GetSerialNumber(MCLhandle_);
 	if (serialNumber_ < 0)
-	{ 
-	   err = (int) serialNumber_;
-	   goto XYSTAGE_INIT_EXIT;
+	{
+		err = (int) serialNumber_;
+		goto INIT_ERROR;
 	}
 
 	err = SetDeviceProperties();
 	if (err != DEVICE_OK)
-		goto XYSTAGE_INIT_EXIT;
+	{
+		goto INIT_ERROR;
+	}
 
 	err = UpdateStatus();
 	if (err != DEVICE_OK)
-		goto XYSTAGE_INIT_EXIT;
+	{
+		goto INIT_ERROR;
+	}
 
 	initialized_ = true;
 
-XYSTAGE_INIT_EXIT:
+INIT_ERROR:
 
-// END LOCKING
+// END LOCKING	
 HandleListUnlock();
 
 	return err;
 }
 
-/**
- * Shuts down (unloads) the device.
- * Required by the MM::Device API.
- * Ideally this method will completely unload the device and release all resources.
- * Shutdown() may be called multiple times in a row.
- * After Shutdown() we should be allowed to call Initialize() again to load the device
- * without causing problems.
- */
 int MCL_NanoDrive_XYStage::Shutdown()
 {
-// BEGIN LOCKING
 HandleListLock();
 
    HandleListType * device = new HandleListType(MCLhandle_, XY_TYPE);
@@ -219,7 +222,6 @@ HandleListLock();
    initialized_ = false;
 
 HandleListUnlock();
-// END LOCKING
 
    return DEVICE_OK;
 }
@@ -301,9 +303,8 @@ int MCL_NanoDrive_XYStage::SetDeviceProperties()
 
 	// Set limits i.e. create a slide bar for the x position
 	err = SetPropertyLimits(g_Keyword_SetPosXUm, xMin_, xMax_); 
-	if (err != DEVICE_OK){
+	if (err != DEVICE_OK)
 		return err;
-	}
 
 	// Change y position
 	origYpos = MCL_SingleReadN(YAXIS, MCLhandle_);
@@ -361,18 +362,18 @@ int MCL_NanoDrive_XYStage::SetPositionUm(double x, double y)
 	if (x != curXpos_ || firstWriteX_)
 	{
 		err = SetPositionXUm(x);
-		if (err != DEVICE_OK){
+		if (err != DEVICE_OK)
 			return err;
-		}
+
 		xMoved = true;
 	}
 
 	if (y != curYpos_ || firstWriteY_)
 	{
 		err = SetPositionYUm(y);
-		if (err != DEVICE_OK){
+		if (err != DEVICE_OK)
 			return err;
-		}
+
 		yMoved = true;
 	}
 
@@ -446,14 +447,14 @@ int MCL_NanoDrive_XYStage::GetPositionUm(double& x, double& y)
 
 double MCL_NanoDrive_XYStage::GetStepSize()
 {
-	return stepSize_um_;
+	return DEVICE_UNSUPPORTED_COMMAND;
 }
 
 int MCL_NanoDrive_XYStage::SetPositionSteps(long x, long y)
 {
 	int err = DEVICE_OK;
 
-	err = SetPositionUm(x * stepSize_um_, y * stepSize_um_);
+	err = SetPositionUm(x * stepSizeX_um_, y * stepSizeY_um_);
 
 	return err;
 }
@@ -467,8 +468,8 @@ int MCL_NanoDrive_XYStage::GetPositionSteps(long &x, long &y)
 	if (err != DEVICE_OK)
 		return err;
 
-	x = (long) (xPos / stepSize_um_);
-	y = (long) (yPos / stepSize_um_);
+	x = (long) (xPos / stepSizeX_um_);
+	y = (long) (yPos / stepSizeY_um_);
 
 	return DEVICE_OK;
 }
@@ -526,8 +527,13 @@ int MCL_NanoDrive_XYStage::SetOrigin()
 	return DEVICE_OK;
 }
 
-int MCL_NanoDrive_XYStage::GetLimits(double& xMin, double& xMax, double& yMin, double& yMax){
+int MCL_NanoDrive_XYStage::GetLimits(double&, double&)
+{
+	return DEVICE_UNSUPPORTED_COMMAND;
+}
 
+int MCL_NanoDrive_XYStage::GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax)
+{
 	xMin = xMin_;
 	xMax = xMax_;
 	yMin = yMin_;
@@ -535,6 +541,24 @@ int MCL_NanoDrive_XYStage::GetLimits(double& xMin, double& xMax, double& yMin, d
 
 	return DEVICE_OK;
 } 
+
+int MCL_NanoDrive_XYStage::GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax)
+{
+	xMin = yMin = 0;
+	xMax = yMax = is20Bit_ ? NUM_STEPS_20 : NUM_STEPS_16;
+
+	return DEVICE_OK;
+}
+
+double MCL_NanoDrive_XYStage::GetStepSizeXUm()
+{
+	return stepSizeX_um_;
+}
+
+double MCL_NanoDrive_XYStage::GetStepSizeYUm()
+{
+	return stepSizeY_um_;
+}
 
 //////////////////////
 ///ActionHandlers

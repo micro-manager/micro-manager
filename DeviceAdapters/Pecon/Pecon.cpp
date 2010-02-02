@@ -14,6 +14,7 @@
 #endif
 
 #include "Pecon.h"
+#include <cstdio>
 #include <string>
 #include <math.h>
 #include "../../MMDevice/ModuleInterface.h"
@@ -366,7 +367,7 @@ int TempControl::GetTemp(int channel, double& temp)
 int TempControl::GetHeating(int channel, int& status)
 {     
 	if(!WakeUp()) return DEVICE_SERIAL_INVALID_RESPONSE;
-	char * command_ = "H000"; //what is the current heating status?
+	const char * command_ = "H000"; //what is the current heating status?
 	std::string answer;
 	int ret = SendSerialCommand(port_.c_str(), command_, "");
 	if (ret != DEVICE_OK)

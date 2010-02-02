@@ -1,0 +1,15 @@
+// Resizes the selection by a specified scale.
+// Does not work with straight line and composite
+// selections.
+//
+// See Also: RotateSelection macro
+
+  requires("1.32g");
+  scale = getNumber("Scale: ", 0.5);
+  getSelectionCoordinates(x, y);
+  for (i=0; i<x.length; i++) {
+      x[i] = x[i]*scale;
+      y[i] = y[i]*scale;
+  }
+  makeSelection(selectionType, x, y);
+

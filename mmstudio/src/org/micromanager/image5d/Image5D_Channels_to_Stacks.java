@@ -1,6 +1,5 @@
 package org.micromanager.image5d;
 
-import org.micromanager.image5d.Image5D;
 import ij.IJ;
 import ij.ImagePlus;
 import ij.ImageStack;

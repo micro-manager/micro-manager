@@ -1,0 +1,24 @@
+// This macro measures the current selection, outlines it in 
+// the current foreground color, prompts the user for a label,
+// and draws the measurement number and label.
+// Also adds the label to last row in the the "Results"
+//  table if "Display Label" is checked in Analyze>
+// Set Measurements.
+
+  macro "Measure And Set Label" {
+       requires("1.33u");
+       fontSize = 12;
+       title = getTitle();
+       label = getString("Label:", "A");
+       run("Rename...", "title='"+label+"'");
+       run("Measure");
+       run("Rename...", "title='"+title+"'");
+       setJustification("center");
+       setFont("SansSerif", fontSize);
+       run("Draw");
+       getBoundingRect(x, y, width, height);
+       label2 = "" + nResults+"-"+label;
+       drawString(label2, x+width/2, y+height/2+fontSize/2);
+  }
+
+

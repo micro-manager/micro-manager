@@ -1,0 +1,20 @@
+// HSB_Histogram.txt
+// G.Landini 11/May/2004
+// Calculates the HSB histogram of an RGB image
+// The RGB histograms correspond to the H, S and B components respectively
+// Requires Color_Histogram plugin by Dimiter Prodanov at
+// http://rsb.info.nih.gov/ij/plugins/color-histogram.html
+
+   a=getTitle();
+   if (bitDepth()!=24)
+      exit(""+a+" is not an RGB image.");
+   run("HSB Stack");
+   run("Convert Stack to RGB");
+   run("Color Histogram");
+   selectWindow(a+" (RGB)");
+   run("Close");
+   selectWindow(a);
+   run("RGB Color");
+   b="title='HSB Histogram of "+a+"'";
+   selectWindow("Histogram of "+a);
+   run("Rename...", b);

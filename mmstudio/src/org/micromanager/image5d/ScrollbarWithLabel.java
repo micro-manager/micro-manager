@@ -1,9 +1,10 @@
 package org.micromanager.image5d;
 
-import java.awt.*;
-/*
- * Created on 10.04.2005
- */
+import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.Label;
+import java.awt.Panel;
+import java.awt.Scrollbar;
 
 /** Quick hack to add labels to the dimension sliders of Image5DWindow
  * @author Joachim Walter

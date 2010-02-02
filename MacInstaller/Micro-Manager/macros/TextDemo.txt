@@ -1,0 +1,35 @@
+// This macro demonstrates the use of the setFont(), drawString() 
+// and setColor() functions.
+
+  requires("1.33j"); // setFont() added in 1.33j
+  run("New...", "name=temp type=RGB fill=White width=400 height=200 slices=1");
+
+  setColor(0, 0, 0);
+  x=10; y=20;
+  drawString("This is the default font.", x, y);
+
+  setFont("SansSerif", 9);
+  y += 20;
+  drawString("This is 9-point, 'SansSerif'", x, y);
+
+  setFont("Monospaced", 12);
+  y += 20;
+  drawString("This is 12-point, 'Monospaced'", x, y);
+
+  setFont("Serif", 18);
+  y += 30;
+  drawString("This is 18-point, 'Serif'", x, y);
+
+  setFont("SansSerif", 20, "bold");
+  y += 30;
+   drawString("This is 20-point, 'SansSerif', bold", x, y);
+
+  setFont("SansSerif" , 24, "italic");
+  y += 30;
+  setColor(0, 0, 255);
+  drawString("24-point, 'SansSerif', italic", x, y);
+
+ setFont("SansSerif" , 28);
+  y += 35;
+  setColor(255, 0, 0);
+  drawString("28-point, 'SansSerif'", x, y);

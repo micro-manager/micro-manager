@@ -1,0 +1,16 @@
+// Resize2Rotate_.txt
+// G. Landini 27 May 2005
+// This macro enlarges an image, so when rotated there is no
+// loss of pieces of the image that are left outside the image frame
+a=getBoolean("Fill with zero?");
+x=getWidth();
+h=getHeight();
+d=2+sqrt(x*x+h*h);
+if (a)
+   run("Canvas Size...", "width="+d+" height="+d+" position=Center zero");
+else{
+   saveSettings();
+   run("Colors...", "foreground=black background=white selection=yellow");
+   run("Canvas Size...", "width="+d+" height="+d+" position=Center");
+   restoreSettings();
+}

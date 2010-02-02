@@ -1,0 +1,39 @@
+// "ParticleClusterAnalysis"
+// Displays the percentage of particles that have a 
+// neighbor within 13nm (center-to-center). Such particles
+// are assumed to be part of a cluster. The scale
+// is assumed to be 3.997 pixels/nm.
+
+   maxDistance = 13; //nm
+   scale = 3.997; //pixels/nm
+   run("Set Scale...", "distance="+scale+" known=1 unit=nm pixel=1");
+   title = getTitle();
+   setAutoThreshold();
+   saveSettings();
+   run("Set Measurements...", "centroid redirect=None decimal=2");
+   run("Analyze Particles...", "minimum=50 maximum=9999 bins=100 show=Nothing display clear");
+   restoreSettings();
+   n = nResults; 
+   xloc = newArray(n); 
+   yloc = newArray(n);
+   for (i=0; i<n; i++) { 
+      xloc[i] = getResult("X", i); 
+      yloc[i] = getResult("Y", i); 
+   } 
+   count = 0;
+   for (i=0; i<n; i++) {
+       if (i%10==0) showProgress(i, n);
+       found = false;
+       j = 0;
+       while (j<n && !found) {
+           dx = xloc[j]-xloc[i]; 
+           dy = yloc[j]-yloc[i];
+           distance = sqrt(dx*dx+dy*dy); 
+           if (distance>0 && distance<maxDistance) {
+               count++;
+               found = true;
+           }
+           j++; 
+       }
+   } 
+   print(title+": "+count+" out of "+n+" ("+d2s(count/n*100,2)+"%) particles are in clusters");

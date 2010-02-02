@@ -1,0 +1,22 @@
+// This macro converts all the files in a folder to binary. The binary
+// files are saved in the same folder with a "-bin.tif" suffix.
+
+  macro "Batch Convert to Binary" {
+      requires("1.33s");
+      dir = getDirectory("Choose a Directory ");
+      list = getFileList(dir);
+      setBatchMode(true);
+      for (i=0; i<list.length; i++) {
+          path = dir+list[i];
+          open(path);
+          run("8-bit");
+          setAutoThreshold();
+          run("Apply LUT");
+          dotIndex = lastIndexOf(path, ".");
+          if (dotIndex!=-1)
+              path = substring(path, 0, dotIndex); // remove extension
+          save(path+"-bin.tif");
+          close();
+      }
+  }
+ 

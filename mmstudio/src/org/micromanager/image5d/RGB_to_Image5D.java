@@ -1,15 +1,13 @@
 package org.micromanager.image5d;
 
-import java.awt.*;
-
-
-import ij.*;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.WindowManager;
 import ij.gui.GenericDialog;
-import ij.plugin.*;
-import ij.process.*;
-/*
- * Created on 07.04.2005
- */
+import ij.plugin.PlugIn;
+import ij.process.ColorProcessor;
+
+import java.awt.Color;
 
 /** Converts an RGB image or RGB stack to an Image5D with three channels corresponding
  * to the R, G and B components.

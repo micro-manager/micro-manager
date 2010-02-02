@@ -27,7 +27,7 @@
 //
 package org.micromanager.navigation;
 
-import java.text.DecimalFormat;
+import org.micromanager.utils.NumberUtils;
 
 public class StagePosition {
    public double x;
@@ -35,7 +35,6 @@ public class StagePosition {
    public double z;
    public String stageName;
    public int numAxes;
-   private static DecimalFormat fmt = new DecimalFormat("#0.00");
    
    public StagePosition() {
       stageName = new String("Undefined");
@@ -57,11 +56,14 @@ public class StagePosition {
    
    public String getVerbose() {
       if (numAxes == 1)
-         return new String(stageName + "(" + fmt.format(x) + ")");
+         return new String(stageName + "(" + NumberUtils.doubleToDisplayString(x) + ")");
       else if (numAxes == 2)
-         return new String(stageName + "(" + fmt.format(x) + "," + fmt.format(y) + ")");
+         return new String(stageName + "(" + NumberUtils.doubleToDisplayString(x) +
+                 "," + NumberUtils.doubleToDisplayString(y) + ")");
       else
-         return new String(stageName + "(" + fmt.format(x) + "," + fmt.format(y) + "," + fmt.format(z) + ")");
+         return new String(stageName + "(" + NumberUtils.doubleToDisplayString(x) +
+                 "," + NumberUtils.doubleToDisplayString(y) +
+                 "," + NumberUtils.doubleToDisplayString(z) + ")");
 
    }
 }

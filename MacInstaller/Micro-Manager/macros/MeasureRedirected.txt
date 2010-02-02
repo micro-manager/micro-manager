@@ -1,0 +1,27 @@
+// Use these macros to measure the green channel of an RGB image. The first
+// splits off the green channel as a separate image and the second measures  
+// the green channel using a selection on the RGB image.
+
+macro "Setup to Measure Green Channel [f8]" {
+    if (nImages()!=1 || bitDepth()!=24)
+        exit("Exactly one RGB image required");
+    id = getImageID();
+    run("Duplicate...", "title=Copy");
+    run("RGB Split");
+    selectWindow("Copy (red)");
+    run("Close");
+    selectWindow("Copy (blue)");
+    run("Close");
+    selectImage(id);
+}
+
+macro "Measure Redirected [f9]" {
+    if (nImages!=2)
+        exit("Exactly 2 images required");
+    if (selectionType()==-1)
+        exit("Selection required");
+    run("Put Behind [tab]");
+    run("Restore Selection");
+    run("Measure");
+    run("Put Behind [tab]");
+}

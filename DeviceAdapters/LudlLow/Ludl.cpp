@@ -34,6 +34,7 @@
 #include "Ludl.h"
 #include "../../MMDevice/ModuleInterface.h"
 #include "../../MMDevice/DeviceBase.h"
+#include <cstdio>
 #include <math.h>
 
 // XYStage

@@ -1,14 +1,15 @@
-/*
-File:		MCL_NanoDrive.h
-Copyright:	Mad City Labs Inc., 2008
-License:	Distributed under the BSD license.
-*/
 #ifndef _MCL_NANODRIVE_H_
 #define _MCL_NANODRIVE_H_
 
+// x = 1, y = 2, z = 3 as defined by Madlib.h
 #define XAXIS 1
 #define YAXIS 2
-#define ZAXIS 3    
+#define ZAXIS 3  
+
+#define VALIDX 0x1
+#define VALIDY 0x2
+#define VALIDZ 0x4
+#define AXIS_MASK 0x7
 
 #define NUM_STEPS_16 65535		// total number of steps that can be made by a 16 bit device
 #define NUM_STEPS_20 1048575	// total number of steps that can be made by a 20 bit device

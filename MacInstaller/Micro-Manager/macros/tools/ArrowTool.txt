@@ -1,0 +1,55 @@
+// This tool draws arrows. Double click on the
+// tool icon to set the line width. Double click
+// on the eye dropper tool to define the color.
+// Press "z" to undo.
+
+  var lineWidth=2;
+
+  macro "Arrow Tool -C00bL1ee1L65e1La9e1" {
+      getCursorLoc(x, y, z, flags); 
+      xstart = x; ystart = y; 
+      x2=x; y2=y; 
+      while (flags&16 !=0) { 
+          getCursorLoc(x, y, z, flags); 
+          if (x!=x2 || y!=y2) 
+              makeLine(xstart, ystart, x, y); 
+              x2=x; y2=y; 
+              wait(10); 
+      }
+      if (x!=xstart || y!=ystart)
+          drawArrow(xstart, ystart, x, y, lineWidth);
+      run("Select None");   
+  }
+
+  function drawArrow(x1, y1, x2, y2, lineWidth) {
+      setupUndo();
+      setLineWidth(lineWidth);
+      size = 12+12*lineWidth*0.25;
+      dx = x2-x1;
+      dy = y2-y1;
+      ra = sqrt(dx*dx + dy*dy);
+      dx /= ra;
+      dy /= ra;
+      x3 = round(x2-dx*size);
+      y3 = round(y2-dy*size);
+      r = 0.3*size;
+      x4 = round(x3+dy*r);
+      y4 = round(y3-dx*r);
+      x5 = round(x3-dy*r);
+      y5 = round(y3+dx*r);
+      drawLine(x1, y1, x2, y2);
+      moveTo(x4,y4); lineTo(x2,y2); lineTo(x5,y5);
+  }
+
+  // ImageJ runs this macro when user double-clicks on the tool icon
+  macro "Arrow Tool Options" {
+      lineWidth = getNumber("Line Width:", lineWidth);
+ }
+
+  macro "Set Arrow Color..."{ 
+      run("Color Picker..."); 
+  }
+
+  macro "Undo Last Arrow [z]"{ 
+      run("Undo"); 
+  }

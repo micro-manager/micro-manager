@@ -4,31 +4,27 @@ import java.util.TimerTask;
 import mmcorej.CMMCore;
 
 import org.micromanager.api.DeviceControlGUI;
+import org.micromanager.utils.ReportingUtils;
 
 public class DisplayTimerTask extends TimerTask {
 
    private CMMCore core_;
-   private String cameraName_;
    private DeviceControlGUI parentGUI_;
    
    public DisplayTimerTask(CMMCore core, DeviceControlGUI pg) {
       parentGUI_ = pg;
       core_ = core;
-      // obtain camera name
-      cameraName_ = core_.getCameraDevice();
    }
 
    public void run() {
 
       try {
-         if (core_.deviceBusy(cameraName_)) {
+         if (core_.isSequenceRunning()) 
+         {
             updateImage();
          }
-      } catch (InterruptedException e) {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
       } catch (Exception e) {
-         //e.printStackTrace();
+         ReportingUtils.logError(e);
          cancel();
       }
    }
@@ -37,11 +33,11 @@ public class DisplayTimerTask extends TimerTask {
       try {
          // update image window
          Object img = core_.getLastImage();
-         parentGUI_.displayImage(img);
+         if (img != null)
+            parentGUI_.displayImage(img);
          //
       } catch (Exception e){
-         // TODO Auto-generated catch block
-         e.printStackTrace();
+         ReportingUtils.logError(e);
       }
    }   
 }

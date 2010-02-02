@@ -10,7 +10,6 @@
 
 package org.jeditsyntax;
 
-import javax.swing.text.Segment;
 
 /**
  * IDL token marker.

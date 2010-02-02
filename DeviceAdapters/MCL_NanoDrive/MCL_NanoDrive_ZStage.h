@@ -64,6 +64,8 @@ private:
    double curZpos_;
 
    bool firstWrite_;
+
+   int axis_;
 };
 
 #endif // _MCL_NANODRIVE_ZSTAGE_H_

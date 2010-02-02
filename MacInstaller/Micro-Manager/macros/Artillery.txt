@@ -1,0 +1,166 @@
+// This macro demonstrates macro programming 
+// techniques, and also provides a little relaxation.
+
+
+// global variables
+var window_width = 480;
+var window_height = 300;
+var xori = 5;
+var yori = window_height-5;
+var tsize = 8;
+var color = 25;
+var background = 80;
+var tx, hit, shots, newgame, istext;
+var x1, y1, x2, y2;
+
+showMessage("Artillery", "To run this macro, install it, then press 'a'.");
+
+macro "Artillery [a]" {
+    requires("1.34g");
+    if (!isOpen("Artillery"))
+        new_game();
+    if (selectionType==-1) {
+        if (!newgame) {
+            position_target();
+            reset();
+        }
+        shots = 0;
+        hit = false;
+        if (!newgame) show_status();
+        setTool(4);
+        newgame=false;
+        makeLine(xori, yori, xori+80, yori-100);
+    } else {
+        getLine(x1, y1, x2, y2, lw);
+        if (x1==-1) {
+            makeLine(xori, yori, xori+80, yori-100);
+            getLine(x1, y1, x2, y2, lw);
+        }
+        if (istext) clear_text(0, 0, window_width, 110);
+        dx=x2-x1; dy=y2-y1;
+        alpha = abs(atan2(dy, dx));
+        strength = sqrt(dx*dx+dy*dy);
+        shoot(alpha, strength/2);
+        log_action(alpha, strength);
+        if (hit) splash(tx+tsize/2, yori, 0.9, 100);
+    }
+}
+
+//macro "Set Target Size" {
+//    tsize = getNumber("Target Size:", tsize);
+//    draw_shootingpoint();
+//}
+
+
+function log_action(alpha,strength) {
+    autoUpdate(false);
+    clear_text(window_width-110, 0, 110, 42);
+    setFont("SansSerif", 14);
+    setColor(255, 100, 0);
+    setJustification("right");
+    drawString("Angle: "+round(alpha/3.1415926535*180), window_width-10, 20);
+    drawString("Strength: "+round(strength), window_width-10, 40);
+    shots++;
+    if (x1!=xori||y1!=yori) makeLine(xori, yori, xori+(x2-x1), yori-(y1-y2));
+}
+
+function shoot(alpha, strength) {
+    beep();
+    color += 25;
+    if (color>240) color = 50;
+    x=1; y=1;
+    while  ((x<window_width-xori)&&(y>-5)) {
+        y=-0.5*10/((strength*cos(alpha))*(strength*cos(alpha)))*x*x+x*tan(alpha)   ;
+        if (((xori+x)>=(tx-tsize/2))&&((xori+x)<=(tx+tsize/2))&&((yori-y)>=(yori-tsize/2))&&((yori-y)<=(yori+tsize/2)))
+            hit = true;
+        setPixel (xori+x, yori-y, color);
+        x += 0.5;
+    }
+}
+
+function position_target() {
+    tx = xori+(random()*(window_width-xori-tsize));
+    if (tx<window_width/6) position_target();
+}
+
+function new_game() {
+    autoUpdate(false);
+    newImage('Artillery', '8-bit black',  window_width, window_height, 1); 
+    setLocation(screenWidth/2-getWidth/2, screenHeight/3-getHeight/2);
+    run("Fire");
+    position_target();
+    reset();
+    setFont("SansSerif", 18);
+    setJustification("center");
+    setColor(255, 100, 0);
+    drawString("Artillery", window_width/2, 30);
+    drawString("Shoot from lower left corner to the box", window_width/2, 60);
+    drawString("target. Define shooting vector with a ", window_width/2, 80);
+    drawString("line selection and press 'a' to fire.", window_width/2, 100);
+    newgame = true;
+    istext = true;
+}
+
+function reset() {
+    setColor(0, 0, background);
+    fillRect(0, 0, window_width, window_height);
+    setColor(255, 0, 0);
+    fillRect(xori-2, yori, 5, 5); // shoting point
+    fillRect(tx, yori-tsize/2, tsize, tsize); // target
+}
+
+function clear_text(x, y, width, height) {
+    //print("clear_text:", x, y, width, height);
+    setColor(0, 0, background);
+    fillRect(x, y, width, height);
+    istext = false;
+}
+
+function show_status() {
+    setFont("SansSerif", 14);
+    setColor(255, 100, 0);
+    setJustification("center");
+    drawString("Define shooting vector with line selection and run again ('a')", window_width/2, 30);
+    istext = true;
+}
+
+function splash(xs, ys, angle, number) {
+    run("Select None");
+    reset();
+    background = 0;
+    inc = 10;
+    foreground = 250;
+    for (i=0; i<number; i++)	{
+        if (random()>0.5) direction=1; else direction=-1; 
+        background += inc;
+        if (background>140 || background<abs(inc)) inc = -inc;
+        run("Add...", "value="+inc);
+        alpha = angle+random()*(3.1416/2-angle);
+        strength = 10+random()*10*alpha*alpha;
+        x=1; y=1;
+        foreground -= 10;
+        if (foreground<100) foreground = 250; 
+        while (y>-5) {
+            y=-0.5*5/((strength*cos(alpha))*(strength*cos(alpha)))*x*x+x*tan(alpha);
+            setPixel (xs+direction*x, ys-y, foreground); 
+            x += 0.5;
+        }
+    }
+    run ("Select All");
+    setBackgroundColor(0, 0, background);
+    run("Clear");
+    run("Select None");
+    setFont("SansSerif", 42);
+    setColor(255, 100, 0);
+    setJustification("center");
+    drawString("Congratulations", window_width/2, 50);
+    for (i=0; i<50; i++) run("Add...", "value=5");
+    for (i=0;i<50;i++) run("Subtract...", "value=5");
+    setColor(255, 100, 0);
+    drawString("Congratulations", window_width/2, 50);
+    setFont("SansSerif" , 28);
+    s = ""; if (shots>1) s = "s";
+    drawString("You did it in "+shots+" shot"+s, window_width/2, 80);
+    drawString("Press 'a' to play again", window_width/2, 195);
+}
+

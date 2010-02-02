@@ -1,0 +1,24 @@
+// parseFloat() and parseInt() examples
+
+print("\"-2\": "+parseFloat("-2"));
+print("\"2.5\": "+parseFloat("2.5")); 
+print("\"  2.5 \": "+parseFloat(" 2.5 ")); 
+print("\"foo\": "+parseFloat("foo")); 
+print("\"3.14xxx\": "+parseFloat("3.13xxx"));
+print("\"0junk\": "+parseFloat("0junk"));
+print("\"314e-2\": "+parseFloat("314e-2"));
+print("\"0.0314E+2\": "+parseFloat("0.0314E+2"));
+print("\"3.14e6\": "+parseFloat("3.14e6"));
+x = "3.14"; print("\"3.14\": "+parseFloat(x));
+print("\"ff2\": "+parseFloat("ff2"));
+print("");
+print("\"3.6\": "+parseInt("3.6"));
+print("\"bar\": "+parseInt("bar"));
+print("\"4foo\": "+parseInt("4foo"));
+print("\"3E8\": "+parseInt("3E8", 16));
+print("\"1111\": "+parseInt("1111", 2));
+print("\"F\": "+parseInt("F", 16));
+print("\"zz\": "+parseInt("zz", 16));
+print("\"zz\": "+parseInt("zz", 36)); // 35*36+35
+
+

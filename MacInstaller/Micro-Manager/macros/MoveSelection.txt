@@ -1,0 +1,38 @@
+  // Moves the selection left and down a specified distance in pixels.
+  // Does not work with traced or straight line selections.
+
+  macro "Move Selection" {
+      dx = getNumber("Delta X:", 10);
+      dy = getNumber("Delta Y:", 10);
+      moveSelection(dx, dy);
+  }
+
+  function moveSelection(dx, dy) {
+      requires("1.31b");
+      if (selectionType<0)
+          exit("Selection required");
+      getBoundingRect(x, y, width, height);
+      if (selectionType==0)
+          makeRectangle(x+dx, y+dy, width, height);
+      else if (selectionType==1)
+          makeOval(x+dx, y+dy, width, height);
+      else {
+          getSelectionCoordinates(xCoordinates, yCoordinates);
+          for (i=0; i<xCoordinates.length; i++) {
+              xCoordinates[i] += dx;
+              yCoordinates[i] += dy;
+          }
+          if (selectionType==2)
+              makeSelection("polygon", xCoordinates, yCoordinates);          
+          else if (selectionType==3)
+              makeSelection("freehand", xCoordinates, yCoordinates);          
+           else if (selectionType==6)
+              makeSelection("line", xCoordinates, yCoordinates);          
+           else if (selectionType==7)
+              makeSelection("freeline", xCoordinates, yCoordinates);          
+           else if (selectionType==8)
+              makeSelection("angle", xCoordinates, yCoordinates);          
+          else
+              exit("Unsupported selection type: "+selectionType);          
+      }
+  }

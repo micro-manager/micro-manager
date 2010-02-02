@@ -30,6 +30,7 @@ import java.awt.Color;
 public class ChannelSpec {
    public static final String DEFAULT_CHANNEL_GROUP = "Channel";
    
+   public Boolean doZStack_ = true;
    public String config_ = "";
    public double exposure_ = 10.0; // ms
    public double zOffset_ = 0.0; // um
@@ -38,6 +39,8 @@ public class ChannelSpec {
    public ContrastSettings contrast16_;
    public String name_ = "";
    public int skipFactorFrame_ = 0;
+   public double min_ = 65535;
+   public double max_ = 0;
    
    public ChannelSpec(){
       contrast8_ = new ContrastSettings(0, 255);

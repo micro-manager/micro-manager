@@ -1,9 +1,10 @@
 package org.micromanager.image5d;
 
-import java.awt.*;
-import java.awt.image.*;
+import ij.process.ImageProcessor;
 
-import ij.process.*;
+import java.awt.Color;
+import java.awt.image.ColorModel;
+import java.awt.image.IndexColorModel;
 
 /*
  * Created on 08.04.2005

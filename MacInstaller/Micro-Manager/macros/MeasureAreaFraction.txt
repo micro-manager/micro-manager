@@ -1,0 +1,46 @@
+// "MeasureAreaFraction"
+//
+// This macro measures the percentage of foreground pixels
+// in a  thresholded image or in a 8-bit binary image.
+
+  macro "Measure Percent Area [F9]" {
+      getThreshold(lower, upper);
+      if (lower!=-1)
+          measureThresholdedImage(lower, upper);
+       else {
+           ok = measureBinaryImage();
+           if (!ok)
+               showMessage("Thresholded image or 8-bit binary image required");
+       }      
+  }
+
+
+  function measureThresholdedImage(lower, upper) {
+      if (bitDepth==32)
+          exit("This macro does not work with 32-bit images");
+      getRawStatistics(n, mean, min, max, std, histogram);
+      sum = 0;
+      total = 0;
+      //print(min, max, lengthOf(histogram));
+      for (i=min; i<=max; i++) {
+          if (i>=lower && i<=upper)
+              sum += histogram[i];
+          total += histogram[i];
+      }
+      percent = sum*100/total;
+      run("Measure");
+      setResult("%Area", nResults-1, percent);
+      updateResults();
+  }
+
+ function measureBinaryImage() {
+      if (bitDepth!=8) return false;
+      getStatistics(n, mean, min, max, std, histogram);
+      if (n != histogram[0]+histogram[255])
+          return false;
+      percent = histogram[255]*100/n;
+      run("Measure");
+      setResult("%Area", nResults-1, percent);
+      updateResults();
+      return true;
+  }

@@ -13,3 +13,5 @@ Stuurman
 microns
 uncalibrated
 classpath
+registry
+decrypt

@@ -1,0 +1,101 @@
+//////////////////////////////////////////////////////////////////////////////
+// macro 3D flight has some functions useful 
+// for scripting Kai Barthel's Volume viewer plugin
+// author : Jerome Mutterer
+//////////////////////////////////////////////////////////////////////////////
+
+var display_mode, axes, markers, lut, scale,  zaspect, dist, depth, thresh, angle_x, angle_z, arguments, stack2;
+
+macro "3Dflight" {
+    requires("1.33r");
+
+    // example
+    run("MRI Stack (528K)");
+
+    saveSettings();
+    stack1 = getImageID;
+    if (nSlices==1) exit("Stack required");
+    setBatchMode(true);
+
+    //////////////////////////////////////////////////////////////////////////////
+    // movements implemented here
+    //////////////////////////////////////////////////////////////////////////////
+    resetview();
+    fly (2.5,90,0,5);
+    for (dist =-110; dist <0; dist=dist+20)
+        addview(1);
+    //////////////////////////////////////////////////////////////////////////////
+
+    // clean exit
+    setSlice(1);
+    setBatchMode(false);
+    restoreSettings();
+    print (arguments);
+
+    // start animation
+    run("Animation Options...", "speed=3 start");
+}
+
+//////////////////////////////////////////////////////////////////////////////
+// functions implemented here
+//////////////////////////////////////////////////////////////////////////////
+function addview(frames) {
+	arguments="";
+	arguments=arguments+" display_mode="+ display_mode;
+	arguments=arguments+" markers="+ markers;
+	arguments=arguments+" lut="+ lut;
+	arguments=arguments+" axes="+ axes;
+	arguments=arguments+" scale="+ scale;
+	arguments=arguments+" z-aspect="+ zaspect;
+	arguments=arguments+" dist="+ dist;
+	arguments=arguments+" depth="+ depth;
+	arguments=arguments+" thresh="+ thresh;
+	arguments=arguments+" angle_x="+ angle_x;
+	arguments=arguments+" angle_z="+ angle_z;
+	// print (arguments);
+	selectImage(stack1);
+	run("Volume Viewer", arguments );
+	run("Copy");
+	w = getWidth; h = getHeight;
+	close();     
+	for (i=0;i<frames; i++) {
+	if (stack2==0) {
+		run("New...", "name=Plots type=RGB Color width="+w+" height="+h+" slices=1");
+		stack2 = getImageID;
+	} else {
+		selectImage(stack2);
+    		run("Add Slice");
+	}
+	run("Paste");
+	}
+}
+
+function fly(sc,ax,az,frames) {
+    s_step= ((sc-scale)/frames);
+    x_step= ((ax-angle_x)/frames);
+    z_step= ((az-angle_z)/frames);
+    for (i=0;i<frames; i++) {
+        scale = scale + s_step;
+        angle_x= angle_x+ x_step;
+        angle_z= angle_z+ z_step;
+        addview(1);
+    }
+}
+
+function resetview() {
+	display_mode=5;
+	axes=0;
+	markers=0;
+	lut=0;
+	scale=1;
+	zaspect=4;
+	dist=-300; 
+	depth=6; 
+	thresh=40; 
+	angle_x=110;
+	angle_z=110;
+} 
+
+// addview(frames); adds specified number of  frames with the current settings
+// resetview(); resets all settings to defaults
+// fly(sc,ax,az,n); computes n frames towards sc, ax,az position.

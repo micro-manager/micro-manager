@@ -28,6 +28,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.text.ParseException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 
 import javax.swing.JButton;
@@ -43,11 +46,12 @@ import org.micromanager.metadata.ImageKey;
 import org.micromanager.navigation.MultiStagePosition;
 import org.micromanager.navigation.StagePosition;
 import org.micromanager.utils.MMDialog;
+import org.micromanager.utils.NumberUtils;
+import org.micromanager.utils.ReportingUtils;
 
 public class TileCreatorDlg extends MMDialog {
    private static final long serialVersionUID = 1L;
    private CMMCore core_;
-   private MMOptions opts_;
    private MultiStagePosition[] endPosition_;
    private boolean[] endPositionSet_;
    private PositionListDlg positionListDlg_;
@@ -73,7 +77,6 @@ public class TileCreatorDlg extends MMDialog {
          }
       });
       core_ = core;
-      opts_ = opts;
       positionListDlg_ = positionListDlg;
       endPosition_ = new MultiStagePosition[4];
       endPositionSet_ = new boolean[4];
@@ -230,7 +233,7 @@ public class TileCreatorDlg extends MMDialog {
       pixelSizeField_ = new JTextField();
       pixelSizeField_.setFont(new Font("", Font.PLAIN, 10));
       pixelSizeField_.setBounds(259, 186, 50, 20);
-      pixelSizeField_.setText(Double.toString(core_.getPixelSizeUm()));
+      pixelSizeField_.setText(NumberUtils.doubleToDisplayString(core_.getPixelSizeUm()));
       getContentPane().add(pixelSizeField_);
 
       final JButton okButton = new JButton();
@@ -301,7 +304,7 @@ public class TileCreatorDlg extends MMDialog {
             msp.add(sp);
          }
       } catch (Exception e) {
-         handleError(e.getMessage());
+         ReportingUtils.showError(e);
       }
 
       endPosition_[location] = msp;
@@ -337,7 +340,7 @@ public class TileCreatorDlg extends MMDialog {
             sb.append(sp.getVerbose() + "\n");
          }
       } catch (Exception e) {
-         handleError(e.getMessage());
+         ReportingUtils.showError(e);
       }
 
       return sb.toString();
@@ -350,9 +353,9 @@ public class TileCreatorDlg extends MMDialog {
       // check if we are calibrated, TODO: allow input of image size
       double pixSizeUm = 0.0;
       try {
-         pixSizeUm = Double.parseDouble(pixelSizeField_.getText());
+         pixSizeUm = NumberUtils.displayStringToDouble(pixelSizeField_.getText());
       } catch (Exception e) {
-         //handleError(e.getMessage());
+         ReportingUtils.logError(e);
       }
       if (pixSizeUm <= 0.0) {
          JOptionPane.showMessageDialog(this, "Pixel Size should be a value > 0 (usually 0.1 -1 um).  It should be experimentally determined. ");
@@ -361,7 +364,7 @@ public class TileCreatorDlg extends MMDialog {
 
       double overlapUm = 0.0;
       try {
-         overlapUm = Double.parseDouble(overlapField_.getText());
+         overlapUm = NumberUtils.displayStringToDouble(overlapField_.getText());
       } catch (Exception e) {
          //handleError(e.getMessage());
       }
@@ -440,8 +443,8 @@ public class TileCreatorDlg extends MMDialog {
             msp.add(spXY);
             // Add 'metadata'
             msp.setGridCoordinates(y, tmpX);
-            msp.setProperty("OverlapUm", Double.toString(overlapUm));
-            msp.setProperty("OverlapPixels", Integer.toString(overlapPix));
+            msp.setProperty("OverlapUm", NumberUtils.doubleToCoreString(overlapUm));
+            msp.setProperty("OverlapPixels", NumberUtils.intToCoreString(overlapPix));
             // Add to position list
             positionListDlg_.addPosition(msp, ImageKey.generatePosLabel("Pos", tmpX, y));
          }
@@ -460,7 +463,11 @@ public class TileCreatorDlg extends MMDialog {
       labelRight_.setText("");
       labelBottom_.setText("");
       labelLeft_.setText("");
-      pixelSizeField_.setText(Double.toString(core_.getPixelSizeUm()));
+        try {
+            pixelSizeField_.setText(NumberUtils.doubleStringCoreToDisplay(core_.getPixelSizeUm()));
+        } catch (ParseException ex) {
+            ReportingUtils.logError(ex);
+        }
       overlapField_.setText("0");
    }
    
@@ -471,7 +478,7 @@ public class TileCreatorDlg extends MMDialog {
       try { 
          MultiStagePosition.goToPosition(position, core_);
       } catch (Exception e) {
-         handleError(e.getMessage());
+         ReportingUtils.logError(e);
       }
    }
 

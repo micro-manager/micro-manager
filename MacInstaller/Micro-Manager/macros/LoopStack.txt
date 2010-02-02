@@ -1,0 +1,25 @@
+// So you've made a 60 degrees projection of a stack beginning at 330 degrees
+// (because this is the equivalent of -30 degrees) and you want to export it looping
+// back and forth to .AVI or .MOV
+// If you simply save it as is, it will play forwards and then jump back to the
+// beginning.
+// This macro solves the problem by keeping the stack in its forwards 
+// orientation and by reversing the stack and adding it at the end.
+
+// Michael Cammer
+// Analytical Imaging Facility
+// Albert Einstein Coll. of Med.
+// http://www.aecom.yu.edu/aif/
+
+macro 'Loop Stack'{
+    originallength = nSlices;
+    for(i=1;i<=originallength;i++){
+        run("Set Slice...", "slice="+(originallength+1-i));
+        run("Select All");
+        run("Copy");
+        run("Set Slice...", "slice="+nSlices);
+        run("Add Slice");
+        run("Paste");
+    }  // for loop
+    run("Select None");
+} // Loop Stack

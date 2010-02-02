@@ -1,0 +1,48 @@
+// This macro demonstrates how to use the makeRectangle(),
+// makeOval(), makeLine() and makeSelection() macro functions.
+
+  run("New...", "name=Demo type=8-bit fill=White width=200 height=125 slices=1");
+  delay = 1500;
+
+  run("Rename...", "title=Rectangle");
+  makeRectangle(41, 21, 105, 68);
+  wait(delay);
+
+  run("Rename...", "title=Oval");
+  makeOval(70, 20, 50, 80);
+  wait(delay);
+
+  run("Rename...", "title=Polygon");
+  makeSelection("polygon", newArray(50,100,150,100), newArray(50,25,50,100));
+  wait(delay);
+
+  run("Rename...", "title=Freehand");
+  makeSelection("freehand", newArray(50,100,150,100), newArray(50,25,50,100));
+  wait(delay);
+
+  run("Rename...", "title='Straight Line'");
+  makeLine(30, 80, 160, 40);
+  wait(delay);
+
+  run("Rename...", "title=Polyline");
+  makeSelection("polyline", newArray(50,100,150,100), newArray(50,25,50,100));
+  wait(delay);
+
+  run("Rename...", "title=Freeline");
+  makeSelection("freeline", newArray(50,100,150,100), newArray(50,25,50,100));
+  wait(delay);
+
+  run("Rename...", "title=Angle");
+  makeSelection("angle", newArray(140,50,130), newArray(20,40,100));
+  wait(delay);
+
+  // "point" type requires 1.33g or later
+  run("Rename...", "title=Point");
+  x=newArray(1); y=newArray(1);
+  x[0]=90; y[0]=50;
+  makeSelection("point", x, y);
+  wait(delay);
+
+  run("Rename...", "title=Points");
+  makeSelection("point", newArray(50,100,150,140), newArray(40,25,50,100));
+  wait(delay);

@@ -1,0 +1,45 @@
+// These macros convert all the files in a folder to a different format. 
+// Two dialog boxes are displayed. Select the source folder in the
+// first and the destination folder in the second.
+
+// Conversion to JPEG or BMP requires the ImageJ 1.34b preview available at
+// "http://rsb.info.nih.gov/ij/ij.jar".
+
+  macro "Batch Convert to TIFF" {convert("tiff");}
+
+  macro "Batch Convert to 8-bit TIFF" {convert("8-bit tiff");}
+
+  macro "Batch Convert to JPEG" {convert("jpeg");}
+
+  macro "Batch Convert to GIF" {convert("8-bit gif");}
+
+  macro "Batch Convert to BMP" {convert("bmp");}
+
+  macro "Batch Convert to Raw" {convert("raw");}
+ 
+  macro "Batch Convert to ZIP" {convert("zip");}
+
+  macro "Batch Convert to Text Images" {convert("text image");}
+
+
+  function convert(format) {
+      requires("1.33s");
+      dir1 = getDirectory("Choose Source Directory ");
+      dir2 = getDirectory("Choose Destination Directory ");
+      list = getFileList(dir1);
+      setBatchMode(true);
+      for (i=0; i<list.length; i++) {
+          showProgress(i+1, list.length);
+          open(dir1+list[i]);
+          if (startsWith(format, "8-bit")) convertTo8Bit();
+          saveAs(format, dir2+list[i]);
+          close();
+      }
+  }
+
+  function convertTo8Bit() {
+      if (bitDepth==24)
+          run("8-bit Color", "number=256");
+      else
+          run("8-bit");
+  }

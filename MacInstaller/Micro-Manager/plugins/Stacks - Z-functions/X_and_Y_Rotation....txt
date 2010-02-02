@@ -1,0 +1,117 @@
+origID = getImageID();
+origTitle = getTitle();
+getPixelSize(unit, pw, ph, pd);
+run("Select All");
+totAngle = getNumber("Total angle of rotation?",40);
+angle = getNumber("Angle between steps?",5);
+if (angle>360) exit("Total angle must be less than 360°");
+
+run("3D Project...", "projection='Brightest Point' axis=Y-Axis slice="+pd+" initial="+-(totAngle/2)+" total="+totAngle+" rotation="+angle+" lower=1 upper=255 opacity=20 surface=100 interior=80 interpolate");
+originallength = nSlices;
+
+for(i=1;i<=originallength;i++){
+    	run("Set Slice...", "slice="+(originallength+1-i));
+    	run("Select All");
+     	run("Copy");
+    	run("Set Slice...", "slice="+nSlices);
+     	run("Add Slice");
+     	run("Paste");
+  	}  
+
+  for(i=1;i<=originallength/2;i++){
+     	run("Set Slice...", "slice="+(i));
+    	run("Select All");
+    	run("Copy");
+   	run("Set Slice...", "slice="+nSlices);
+    	run("Add Slice");
+   	run("Paste");
+ 	} 
+
+firstRotation = getImageID();
+firstRotTitle = getTitle();
+
+selectImage(origID);
+run("Rotate 90 Degrees Right");
+origID = getImageID();
+
+run("3D Project...", "projection='Brightest Point' axis=Y-Axis slice="+pd+" initial="+-(totAngle/2)+" total="+totAngle+" rotation="+angle+" lower=1 upper=255 opacity=20 surface=100 interior=80 interpolate");
+originallength = nSlices;
+
+secondRotation = getImageID();
+secondRotTitle = getTitle();
+selectImage(secondRotation);
+
+for(i=1;i<=originallength;i++){
+	 run("Set Slice...", "slice="+(originallength+1-i));
+     	run("Select All");
+     	run("Copy");
+    	 run("Set Slice...", "slice="+nSlices);
+   	  run("Add Slice");
+   	  run("Paste");
+ 	 }  
+
+for(i=1;i<=originallength/2;i++){
+    	 run("Set Slice...", "slice="+(i));
+     	run("Select All");
+     	run("Copy");
+     	run("Set Slice...", "slice="+nSlices);
+     	run("Add Slice");
+     	run("Paste");
+  	} 
+n2Slices=nSlices;
+for(i=n2Slices;i>=1;i--){
+     	run("Set Slice...", "slice="+(i));
+     	run("Select All");
+     	run("Copy");
+     	run("Set Slice...", "slice="+nSlices);
+    	 run("Add Slice");
+     	run("Paste");    
+	run("Set Slice...", "slice="+(i));
+	run("Delete Slice");
+  	} 
+
+run("Rotate 90 Degrees Left");
+secondRotation = getImageID();
+secondRotTitle = getTitle();
+selectImage(origID);
+run("Rotate 90 Degrees Left");
+origID = getImageID();
+selectImage(firstRotation);
+width1 = getWidth();
+height1 =getHeight();
+selectImage(secondRotation);
+width2 = getWidth();
+height2 =getHeight();
+if (width1<width2) width1=width2;
+if (height1<height2) height1=height2;
+selectImage(firstRotation);
+run("Canvas Size...", "width="+width1+" height="+height1+" position=Center");
+selectImage(secondRotation);
+run("Canvas Size...", "width="+width1+" height="+height1+" position=Center");
+
+for(i=1;i<=n2Slices;i++){
+	selectImage(secondRotation);
+	run("Set Slice...", "slice="+(i));
+	run("Select All");
+	run("Copy");
+	selectImage(firstRotation);
+	run("Set Slice...", "slice="+nSlices+i);
+	run("Add Slice");
+	run("Paste");    
+	 }  
+selectImage(secondRotation);
+close();
+
+finallength = nSlices;
+for(i=1;i<=finallength ;i++){
+     run("Set Slice...", "slice="+(finallength +1-i));
+     run("Select All");
+     run("Copy");
+     run("Set Slice...", "slice="+nSlices);
+     run("Add Slice");
+     run("Paste");
+  }
+//run("Start Animation");
+
+
+

@@ -1,0 +1,17 @@
+// This macro demonstrates how to create a composite
+// selection in batch mode.
+
+// It requires the ImageJ 1.33o preview at
+// http://rsb.info.nih.gov/ij/ij.jar
+
+setBatchMode(true);
+run("Blobs (25K)"); // open "Blobs" sample image
+setThreshold(125, 248);
+doWand(80, 36);
+setKeyDown("shift");
+doWand(99, 75);
+doWand(105, 111);
+makeRectangle(107, 112, 40, 40);
+makeOval(135, 140, 30, 30);
+run("Fill");
+setBatchMode(false); // display the image

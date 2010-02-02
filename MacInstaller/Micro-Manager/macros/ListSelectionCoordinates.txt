@@ -1,0 +1,30 @@
+// ListSelectionCoordinates.txt
+// This macro lists the coordinates of the points
+// that define the current selection, the length
+// of the line segments that connect the points
+// and the average segment length. Works with
+// all selection types except for straight lines.
+// Works with multi-point selections, a
+// feature added in ImageJ 1.33g.
+
+  if (selectionType==-1)
+      exit("Selection required");
+  getSelectionCoordinates(x, y);
+  run("Clear Results");
+  count = 0;
+  n = x.length;
+  for (i=0; i<n; i++) {
+      setResult("X", i, x[i]);
+      setResult("Y", i, y[i]);
+      dx = x[(i+1)%n] - x[i];
+      dy = y[(i+1)%n] - y[i];
+      length = sqrt(dx*dx+dy*dy);
+      if (i<n-1 || selectionType<=4) {
+          setResult("Length", i, length); 
+          sumLength += length;
+          count++;
+      }      
+  }
+  if (count>0)
+      setResult("Length", n, sumLength/count);
+  updateResults();

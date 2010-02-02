@@ -1,0 +1,30 @@
+// This macro measures the current selection, outlines it in 
+// the current foreground color and labels it with the
+// X, Y and Z coordinates.
+//
+// It required the ImageJ 1.34g preview available at:
+// http://rsb.info.nih.gov/ij/ij.jar
+
+  macro "Measure And Label With Coordinates" {
+       requires("1.34g");
+       dp = decimalPlaces = 2;
+       lineWidth = 2;
+       run("Measure");
+       fontSize = 12;
+       setJustification("center");
+       setFont("SansSerif", fontSize);
+       run("Line Width...", "line="+lineWidth);
+       run("Draw");
+       x = getResult("X");
+       y = getResult("Y");
+       if (isNaN(x))
+           exit("'Centroid' must be checked in Analyze>Set Measurements");
+       z = getSliceNumber()-1;
+       getVoxelSize(w, h, d, unit);
+       z = z*d;
+       label = ""+nResults+":("+d2s(x,dp)+", "+d2s(y,dp)+", "+d2s(z,dp)+")";
+       getBounds(xbase, ybase, width, height);
+       drawString(label, xbase+width/2, ybase+height+1.5*fontSize);
+   }
+
+

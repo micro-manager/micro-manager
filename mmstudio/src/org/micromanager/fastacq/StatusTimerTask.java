@@ -3,6 +3,7 @@ import java.util.TimerTask;
 
 import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
+import org.micromanager.utils.ReportingUtils;
 
 public class StatusTimerTask extends TimerTask {
 
@@ -19,12 +20,12 @@ public class StatusTimerTask extends TimerTask {
       try {
          hasActualInterval_ = core_.hasProperty(cameraName_, MMCoreJ.getG_Keyword_ActualInterval_ms());
       } catch (Exception e) {
+         ReportingUtils.logError(e);
          hasActualInterval_ = false;
       }
    }
 
    public void run() {
-
       try {
          totalCapacity_ = core_.getBufferTotalCapacity();
          int remaining = core_.getRemainingImageCount();
@@ -38,7 +39,7 @@ public class StatusTimerTask extends TimerTask {
          int percentFree = 0;
          if (totalCapacity_ > 0)
             percentFree = free * 100 / totalCapacity_;
-         boolean acquiring = core_.deviceBusy(cameraName_);
+         boolean acquiring = core_.isSequenceRunning();
          String bufState = new String("Acquiring.");
          if (!acquiring) {
             if (core_.isBufferOverflowed())
@@ -53,10 +54,10 @@ public class StatusTimerTask extends TimerTask {
          gui_.displayMessage(msg);
          
       } catch (InterruptedException e) {
+         ReportingUtils.logError(e);
          cancel();
       } catch (Exception e) {
-         core_.logMessage(e.getMessage());
-         gui_.displayMessage("Error in getting info from the camera");
+         ReportingUtils.showError(e, "Error in getting info from the camera");
          cancel();
       }
    }

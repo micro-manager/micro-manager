@@ -1,13 +1,11 @@
 package org.micromanager.image5d;
 
 
-import ij.*;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.WindowManager;
 import ij.gui.GenericDialog;
-import ij.plugin.*;
-/*
- * Created on 09.08.2005
- *
- */
+import ij.plugin.PlugIn;
 
 /**
  * @author Joachim Walter

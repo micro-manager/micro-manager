@@ -31,6 +31,8 @@ import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Iterator;
 
+import org.micromanager.utils.MMException;
+
 import mmcorej.CMMCore;
 
 public class MultiStagePosition {
@@ -218,6 +220,9 @@ public class MultiStagePosition {
     */
    public static void goToPosition(MultiStagePosition msp, CMMCore core_) throws Exception {
       for (int i=0; i<msp.size(); i++) {
+    	  try{
+    		  
+    	  
          StagePosition sp = msp.get(i);
          if (sp.numAxes == 1) {
             core_.setPosition(sp.stageName, sp.x);
@@ -228,6 +233,11 @@ public class MultiStagePosition {
          // wait for one device at the time
          // TODO: this should not be here
          core_.waitForDevice(sp.stageName);
+    	  }
+    	  catch(Exception e)
+    	  {
+    		  throw new Exception("XY stage error");
+    	  }
       }
       
    }

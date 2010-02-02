@@ -1,0 +1,1 @@
+SUBDIRS =  Test_MMCore

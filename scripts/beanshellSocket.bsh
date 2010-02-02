@@ -1,0 +1,19 @@
+import java.net.ServerSocket;
+import java.io.*;
+
+i = new Interpreter();
+i.set("gui",gui);
+i.set("mmc",mmc);
+i.set("acq",acq);
+
+socketServer = new ServerSocket(9999);
+clientSocket = socketServer.accept();
+br = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+ps = new PrintStream(clientSocket.getOutputStream());
+
+
+while(true) {
+	cmd = br.readLine();
+	res = i.eval(cmd);
+	ps.write(res+"\n");
+}

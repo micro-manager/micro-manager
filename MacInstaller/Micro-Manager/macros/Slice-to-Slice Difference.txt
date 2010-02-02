@@ -1,0 +1,16 @@
+// Subtracts each slice in a stack from the next, successively
+// through the stack to reveals pixels regions that have
+// changed in value from slice to slice.
+
+// Author: Jacob Pruess
+
+     setPasteMode("Subtract");
+     run("Set Slice...", "slice="+nSlices);
+     run("Select All");
+     for(i=1; i<nSlices; i++) {
+         run("Previous Slice [<]");
+         run("Copy");
+         run("Next Slice [>]");
+         run("Paste");
+         run("Previous Slice [<]");
+     }

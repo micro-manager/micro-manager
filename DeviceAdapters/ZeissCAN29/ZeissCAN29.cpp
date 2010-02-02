@@ -12,10 +12,10 @@
 // LICENSE:       Please note: This code could only be developed thanks to information 
 //                provided by Zeiss under a non-disclosure agreement.  Subsequently, 
 //                this code has been reviewed by Zeiss and we were permitted to release 
-//                this under the LGPL on 1/16/2008 (and again on 7/3/2208 after changes 
-//                to the code).  If you modify this code using information you obtained 
+//                this under the LGPL on 1/16/2008 (permission re-granted on 7/3/2008, 7/1/2009//                after changes to the code).
+//                If you modify this code using information you obtained 
 //                under a NDA with Zeiss, you will need to ask Zeiss whether you can release 
-//                your modifications.  
+//                your modifications. 
 //                
 //                This library is free software; you can redistribute it and/or
 //                modify it under the terms of the GNU Lesser General Public
@@ -36,19 +36,15 @@
 
 
 
-#ifdef WIN32
-#include <windows.h>
-#define snprintf _snprintf 
-#else
-#include <netinet/in.h>
-#endif
+
 
 #include "ZeissCAN29.h"
 #include "../../MMDevice/ModuleInterface.h"
+#include "../../MMDevice/DeviceUtils.h"
+#include <cstdio>
 #include <string>
 #include <math.h>
 #include <sstream>
-#include <algorithm>
 
 // TODO: linux entry code
 // Note that this only works with gcc (which we should be testing for)
@@ -83,17 +79,7 @@ void __attribute__ ((destructor)) my_fini(void)
    }
 #endif
 
-using namespace std;
-MM_THREAD_GUARD mutex;
-
-static ZeissDeviceInfo g_deviceInfo[MAXNUMBERDEVICES];
-std::string ZeissHub::reflectorList_[10];
-std::string ZeissHub::objectiveList_[7];
-std::string ZeissHub::tubeLensList_[5];
-std::string ZeissHub::sidePortList_[3];
-std::string ZeissHub::condenserList_[7];
-//static std::vector<ZeissUByte > g_commandGroup; // relates device to commandgroup, initialized in constructor
-ZeissUByte g_commandGroup[MAXNUMBERDEVICES];
+//using namespace std;
 
 ZeissHub g_hub;
 
@@ -124,6 +110,10 @@ const char* g_ZeissLSMPort = "ZeissLSMPort";
 const char* g_ZeissBasePort = "ZeissBasePort";
 const char* g_ZeissUniblitz = "ZeissUniblitz";
 const char* g_ZeissFilterWheel = "ZeissFilterWheel";
+const char* g_ZeissDefiniteFocus = "ZeissDefiniteFocus";
+const char* g_ZeissDFOffset = "ZeissDefiniteFocusOffset";
+const char* g_ZeissColibri = "ZeissColibri";
+
 
 // List of Device numbers (from Zeiss documentation)
 ZeissUByte g_ReflectorChanger = 0x01;
@@ -148,6 +138,13 @@ ZeissUByte g_LSMPortChanger = 0x2B;  // RearPort, reflected light
 ZeissUByte g_BasePortChanger = 0x40;
 ZeissUByte g_UniblitzShutter = 0x41;
 ZeissUByte g_FilterWheelChanger = 0x42;
+
+// convenience strings
+const char* g_COperationMode = "Operation Mode";
+const char* g_CExternalShutter = "Shutter";
+const char* g_focusMethod = "Focus Method";
+const char* g_focusThisPosition = "Measure";
+const char* g_focusLastPosition = "Apply";
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -174,7 +171,11 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_ZeissBasePort,"Base Port switcher"); 
    AddAvailableDeviceName(g_ZeissUniblitz,"Uniblitz Shutter"); 
    AddAvailableDeviceName(g_ZeissFilterWheel,"Filter Wheel"); 
+   AddAvailableDeviceName(g_ZeissDefiniteFocus,"Definite Focus"); 
+   AddAvailableDeviceName(g_ZeissDFOffset,"Definite Focus Offset-drive"); 
+   AddAvailableDeviceName(g_ZeissColibri,"Colibri"); 
 }
+
 using namespace std;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -228,6 +229,12 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
         return new Shutter(g_UniblitzShutter, g_ZeissUniblitz, "Uniblitz Shutter");
    else if (strcmp(deviceName, g_ZeissFilterWheel) == 0)
         return new Turret(g_FilterWheelChanger, g_ZeissFilterWheel, "Filter Wheel");
+   else if (strcmp(deviceName, g_ZeissDefiniteFocus) == 0)
+        return new DefiniteFocus();
+   else if (strcmp(deviceName, g_ZeissDFOffset) == 0)
+        return new DFOffsetStage();
+   else if (strcmp(deviceName, g_ZeissColibri) == 0)
+        return new Colibri();
 
    return 0;
 }
@@ -237,1181 +244,7 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
    delete pDevice;                                                           
 }
 
-//////////////////////////////////////////
-// Interface to the Zeis microscope
-//
-ZeissHub::ZeissHub() :
-   portInitialized_ (false),
-   monitoringThread_(0),
-   timeOutTime_(250000),
-   scopeInitialized_ (false)
-{
-   // initialize deviceinfo
-   for (int i=0; i< MAXNUMBERDEVICES; i++) {
-      g_deviceInfo[i].present = false;
-   }
-   // Set vector g_commandGroup
-   // default all devices to Changer
-   for (int i=0; i< MAXNUMBERDEVICES; i++) {
-      g_commandGroup[i] = 0xA1;
-   }
-   // Set System devices
-   g_commandGroup[0x15]=0xA0; g_commandGroup[0x18]=0xA0; g_commandGroup[0x19]=0xA0;
-   // Set Servos
-   g_commandGroup[0x08]=0xA2; g_commandGroup[0x09]=0xA2; g_commandGroup[0x28]=0xA2; g_commandGroup[0x29]=0xA2, g_commandGroup[0x2D]=0xA2;
-   // Set Axis
-   g_commandGroup[0x0F]=0xA3; g_commandGroup[0x25]=0xA3; g_commandGroup[0x26]=0xA3; g_commandGroup[0x27]=0xA3;
 
-   MM_THREAD_INITIALIZE_GUARD(&mutex);
-}
-
-ZeissHub::~ZeissHub()
-{
-   printf("in Hub destructor\n");
-   MM_THREAD_DELETE_GUARD(&mutex);
-}
-
-/**
- * Clears the serial receive buffer.
- */
-void ZeissHub::ClearRcvBuf()
-{
-   memset(rcvBuf_, 0, RCV_BUF_LENGTH);
-}
-
-/*
- * Reads version number, available devices, device properties and some labels from the microscope and then starts a thread that keeps on reading data from the scope.  Data are stored in the array deviceInfo from which they can be retrieved by the device adapters
- */
-int ZeissHub::Initialize(MM::Device& device, MM::Core& core)
-{
-   if (!portInitialized_)
-      return ERR_PORT_NOT_OPEN;
-   
-   ostringstream os;
-   os << "Initializing Hub";
-   core.LogMessage (&device, os.str().c_str(), false);
-   os.str("");
-   // empty the Rx serial buffer before sending commands
-   ClearRcvBuf();
-   ClearPort(device, core);
-
-   int ret = GetVersion(device, core);
-   if (ret != DEVICE_OK) {
-      // Sometimes we time out on the first try....  Try twice more...
-      ret = GetVersion(device, core);
-      if (ret != DEVICE_OK) {
-         ret = GetVersion(device, core);
-         if (ret != DEVICE_OK)
-            return ret;
-      }
-   }
-
-   availableDevices_.clear();
-   ret = FindDevices(device, core);
-   if (ret != DEVICE_OK)
-      return ret;
-
-   for (ZeissUByte i=0; i< availableDevices_.size(); i++) {
-      // report on devices found
-      os << "Found device: " << hex << (unsigned int) availableDevices_[i] << ", group: " << hex << (unsigned int) g_commandGroup[availableDevices_[i]];
-      core.LogMessage (&device, os.str().c_str(), false);
-      os.str("");
-
-      // reset  the 'vectors' in ZeissDeviceInfo so that they do not grow out of bounds between invocations of the adapter:
-      g_deviceInfo[availableDevices_[i]].deviceScalings.clear();
-      g_deviceInfo[availableDevices_[i]].nativeScale.clear();
-      g_deviceInfo[availableDevices_[i]].scaledScale.clear();
-   }
-
-   // Get the status for all devices found in this scope
-   for (ZeissUByte i=0; i < availableDevices_.size(); i++) {
-      ZeissUByte devId = availableDevices_[i];
-      ZeissLong position, maxPosition;
-      GetPosition(device, core, g_commandGroup[devId], (ZeissUByte)devId, position);
-      g_deviceInfo[devId].currentPos = position;
-      GetMaxPosition(device, core, g_commandGroup[devId], devId, maxPosition);
-      g_deviceInfo[devId].maxPos = maxPosition;
-      if ((g_commandGroup[devId] == (ZeissUByte) 0xA2) || (g_commandGroup[devId] == (ZeissUByte) 0xA3)) { // only Axis and Servos have scaling information
-         GetDeviceScalings(device, core, g_commandGroup[devId], devId, g_deviceInfo[devId]);
-         for (unsigned int j=0; j<g_deviceInfo[devId].deviceScalings.size(); j++) {
-            if (g_deviceInfo[devId].deviceScalings[j] != "native") {
-               GetScalingTable(device, core, g_commandGroup[devId], devId, g_deviceInfo[devId],g_deviceInfo[devId].deviceScalings[j]);
-            }
-         }
-         if (g_commandGroup[devId] == 0xA3)
-            GetMeasuringOrigin(device, core, g_commandGroup[devId], devId, g_deviceInfo[devId]);
-      }
-      g_deviceInfo[devId].busy = false;
-      g_deviceInfo[devId].lastRequestTime == core.GetCurrentMMTime();
-      g_deviceInfo[devId].lastUpdateTime == core.GetCurrentMMTime();
-
-      os << "Device " << std::hex << (unsigned int) devId << " has ";
-      os << std::dec << maxPosition << " positions and is now at position "<< position;
-      core.LogMessage(&device, os.str().c_str(), false);
-      os.str("");
-      g_deviceInfo[devId].print(device, core);
-   }
- 
-   // get labels for objectives and reflectors
-   GetReflectorLabels(device, core);
-   os << "Reflectors: ";
-   for (int i=0; i< g_deviceInfo[0x01].maxPos && i < 10;i++) {
-      os << "\n" << reflectorList_[i].c_str();
-   }
-   core.LogMessage(&device, os.str().c_str(), false);
-
-   GetObjectiveLabels(device, core);
-   os.str("");
-   os <<"Objectives: ";
-   for (int i=0; i< g_deviceInfo[0x02].maxPos && i < 8;i++) {
-      os << "\n" << objectiveList_[i].c_str();
-   }
-   core.LogMessage(&device, os.str().c_str(), false);
-
-   GetTubeLensLabels(device, core);
-   os.str("");
-   os <<"TubeLens: ";
-   for (int i=0; i< g_deviceInfo[g_TubeLensChanger].maxPos && i < 5;i++) {
-      os << "\n" << tubeLensList_[i].c_str();
-   }
-   core.LogMessage(&device, os.str().c_str(), false);
-
-   GetSidePortLabels(device, core);
-   os.str("");
-   os <<"SidePort: ";
-   for (int i=0; i< g_deviceInfo[0x14].maxPos && i < 3;i++) {
-      os << "\n" << sidePortList_[i].c_str();
-   }
-   core.LogMessage(&device, os.str().c_str(), false);
-
-   GetCondenserLabels(device, core);
-   os.str("");
-   os <<"Condenser: ";
-   for (int i=0; i< g_deviceInfo[0x22].maxPos && i < 8;i++) {
-      os << "\n" << condenserList_[i].c_str();
-   }
-   core.LogMessage(&device, os.str().c_str(), false);
-
-   monitoringThread_ = new ZeissMonitoringThread(device, core);
-   monitoringThread_->Start();
-   scopeInitialized_ = true;
-   return DEVICE_OK;
-}
-
-/**
- * Reads in version info
- * Stores version info in variable version_
- */
-int ZeissHub::GetVersion(MM::Device& device, MM::Core& core)
-{
-   const int commandLength = 5;
-   unsigned char command[commandLength];
-   // Size of data block
-   command[0] = 0x02;
-   // Read command, immediate answer
-   command[1] = 0x18;
-   // 'Get Applications Version'
-   command[2] = 0x02;
-   // ProcessID
-   command[3] = 0x11;
-   // SubID 
-   command[4] = 0x07;
-
-   int ret = ExecuteCommand(device, core,  command, commandLength);
-   if (ret != DEVICE_OK)
-      return ret;
-
-   // Version string starts in 6th character, length is in first char
-   long unsigned int responseLength = RCV_BUF_LENGTH;
-   unsigned char response[RCV_BUF_LENGTH];
-   unsigned long signatureLength = 4;
-   unsigned char signature[] = { 0x08, command[2], command[3], command[4] };
-   ret = GetAnswer(device, core, response, responseLength, signature, 1, signatureLength);
-   if (ret != DEVICE_OK)
-      return ret;
-   response[responseLength] = 0;
-   string answer((char *)response);
-   version_ = "Application version: " + answer.substr(6, atoi(answer.substr(0,1).c_str()));
-  
-   if (ret != DEVICE_OK)
-      return ret;
-
-   return DEVICE_OK;
-}
-
-/*
- * Queries the microscope directly for the position of the given device
- * Should only be called from the Initialize function
- * position will always be cast to a long, even though it is a short for commandGroups 0xA2 and 0xA1
- * Only to be called from ZeissHub::Initialize
- */
-int ZeissHub::GetPosition(MM::Device& device, MM::Core& core, ZeissUByte commandGroup, ZeissUByte devId, ZeissLong& position)
-{
-   int ret;
-   unsigned char command[8];
-   // Size of data block
-   command[0] = 0x03;
-   // Read command, immediate answer
-   command[1] = 0x18;
-   command[2] = commandGroup;
-   // ProcessID
-   command[3] = 0x11;
-   // SubID (01 = absolute position)
-   command[4] = 0x01;
-   // Device ID
-   command[5] = (ZeissUByte) devId;
-
-   ret = ExecuteCommand(device, core, command, 6);
-   if (ret != DEVICE_OK)
-      return ret;
-
-   long unsigned int responseLength = RCV_BUF_LENGTH;
-   unsigned char response[RCV_BUF_LENGTH];
-   unsigned long signatureLength = 5;
-   unsigned char signature[] = { 0x08, commandGroup, command[3], command[4], devId };
-   ret = GetAnswer(device, core, response, responseLength, signature, 1, signatureLength);
-   if (ret != DEVICE_OK)
-      return ret;
-
-   if (commandGroup == 0xA3) {
-      ZeissLong tmp = 0;
-      memcpy (&tmp, response + 6, ZeissLongSize);
-      position = (long) ntohl(tmp);
-   }
-   else {
-      ZeissShort tmp = 0;
-      memcpy (&tmp, response + 6, ZeissShortSize);
-      position = (long) ntohs(tmp);
-   }
-   
-   return DEVICE_OK;
-}
-
-/*
- * Queries the microscope for the total number of positions for this device
- * Only to be called from ZeissHub::Initialize
- */
-int ZeissHub::GetMaxPosition(MM::Device& device, MM::Core& core, ZeissUByte groupName, ZeissUByte devId, ZeissLong& position)
-{
-   int ret;
-   const int commandLength = 6;
-   unsigned char command[commandLength];
-   // Size of data block
-   command[0] = 0x03;
-   // Read command, immediate answer
-   command[1] = 0x18;
-   // 'Changer command??'
-   command[2] = groupName;
-   // ProcessID (first data byte)
-   command[3] = 0x11;
-   // SubID (05 = total positions)
-   command[4] = 0x05;
-   // Device ID
-   command[5] = devId;
-
-   ret = ExecuteCommand(device, core, command, commandLength);
-   if (ret != DEVICE_OK)
-      return ret;
-
-   long unsigned int responseLength = RCV_BUF_LENGTH;
-   unsigned char response[RCV_BUF_LENGTH];
-   unsigned long signatureLength = 5;
-   unsigned char signature[] = {0x08, groupName, command[3], command[4], devId};
-   ret = GetAnswer(device, core, response, responseLength, signature, 1, signatureLength);
-   if (ret != DEVICE_OK)
-      return ret;
-
-   // Answer is in bytes 6 and 7 of the already stripped answer:
-   // [0] = number of data bytes
-   // [1] = command class (should be 0x08)
-   // [2] = command number (0xA1)
-   // [3] = Process ID (same as in query)
-   // [4] = SubID (01 = absolute position
-   // [5] = DeviceID (should be same as what we asked for)
-   // [6] = high byte of position
-   // [7] = low byte of position
- 
-   if (groupName == 0xA3) {
-      ZeissLong tmp;
-      memcpy (&tmp, response + 6, ZeissLongSize);
-      position = (long) ntohl(tmp);
-   }
-   else {
-      ZeissShort tmp;
-      memcpy (&tmp, response + 6, ZeissShortSize);
-      position = (long) ntohs(tmp);
-   }
-
-   return DEVICE_OK;
-}
-
-/*
- * Queries the microscope for the device scaling strings
- * Only to be called from ZeissHub::Initialize
- */
-int ZeissHub::GetDeviceScalings(MM::Device& device, MM::Core& core, ZeissUByte groupName, ZeissUByte devId, ZeissDeviceInfo& deviceInfo)
-{
-   const int commandLength = 6;
-   unsigned char command[commandLength];
-   // Size of data block
-   command[0] = 0x03;
-   // Read command, immediate answer
-   command[1] = 0x15;
-   // 'Find Devices'
-   command[2] = groupName;
-   // ProcessID
-   command[3] = 0x24;
-   // SubID 
-   command[4] = 0x08;
-   // Dev-ID (all devices)
-   command[5] = devId;
-
-   int ret = ExecuteCommand(device, core,  command, commandLength);
-   if (ret != DEVICE_OK)
-      return ret;
-
-   long unsigned int responseLength = RCV_BUF_LENGTH;
-   unsigned char response[RCV_BUF_LENGTH];
-   unsigned long signatureLength = 4;
-   unsigned char signature[] = {command[2], command[3], command[4], command[5] };
-   do {
-      memset(response, 0, RCV_BUF_LENGTH);
-      ret = GetAnswer(device, core, response, responseLength, signature, 2, signatureLength);
-      if (ret != DEVICE_OK)
-         return ret;
-      if ( (response[0]>3) && (response[0]==responseLength-5)) {
-         vector<char> tmp(response[0]-2);
-         memcpy(&(tmp[0]), response + 6, response[0]-3);
-         tmp[response[0] - 3] = 0;
-         deviceInfo.deviceScalings.push_back(std::string((char*) &(tmp[0])));
-      }
-   } while (response[1] == 0x05); // last response of the list is of class 0x09
-  
-   return DEVICE_OK;
-}
-
-/*
- * Queries the microscope for the Scaling table.
- * Each device scaling (unit) has associated with it a list of at least two sets of datapoints that relate the numeric positions (steps) to real world coordinates
- * Data should be related by interpolation
- * Only to be called from ZeissHub::Initialize
- */
-int ZeissHub::GetScalingTable(MM::Device& device, MM::Core& core, ZeissUByte groupName, ZeissUByte devId, ZeissDeviceInfo& deviceInfo, std::string unit)
-{
-   unsigned int commandLength = 6 + (unsigned int) unit.length();
-   vector<unsigned char> command(commandLength);
-   // Size of data block
-   command[0] = 0x03 + (unsigned char) unit.length();
-   // Read command, immediate answer
-   command[1] = 0x15;
-   // 'Find Devices'
-   command[2] = groupName;
-   // ProcessID
-   command[3] = 0x25;
-   // SubID 
-   command[4] = 0x09;
-   // Dev-ID (all devices)
-   command[5] = devId;
-   for (unsigned int i=0; i<unit.length(); i++)
-      command[6+i] = (unsigned char) unit[i];
-
-   int ret = ExecuteCommand(device, core,  &(command[0]), (int) command.size());
-   if (ret != DEVICE_OK)
-      return ret;
-
-   long unsigned int responseLength = RCV_BUF_LENGTH;
-   unsigned char response[RCV_BUF_LENGTH];
-   unsigned long signatureLength = 4;
-   unsigned char signature[] = {command[2], command[3], command[4], command[5] };
-   do {
-      memset(response, 0, RCV_BUF_LENGTH);
-      ret = GetAnswer(device, core, response, responseLength, signature, 2, signatureLength);
-      if (ret != DEVICE_OK)
-         return ret;
-
-      if (groupName == 0xA3) {
-         ZeissLong tmp;
-         memcpy (&tmp, response + 6, ZeissLongSize);
-         deviceInfo.nativeScale[unit].push_back(ntohl(tmp));
-         ZeissLong tmpl;
-         ZeissFloat tmpf;
-         memcpy(&tmpl, response + 6 + ZeissShortSize, ZeissLongSize);
-         tmpl = ntohl(tmpl);
-         memcpy(&tmpf, &tmpl, ZeissFloatSize);
-         deviceInfo.scaledScale[unit].push_back(tmpf);
-      }
-      else { // groupName == 0xA2
-         ZeissShort tmp;
-         memcpy (&tmp, response + 6, ZeissShortSize);
-         deviceInfo.nativeScale[unit].push_back(ntohs(tmp));
-         ZeissLong tmpl;
-         ZeissFloat tmpf;
-         memcpy(&tmpl, response + 6 + ZeissShortSize, ZeissLongSize);
-         tmpl = ntohl(tmpl);
-         memcpy(&tmpf, &tmpl, ZeissFloatSize);
-         deviceInfo.scaledScale[unit].push_back(tmpf);
-      }
-   } while (response[1] == 0x05); // last response starts with 0x09
-  
-   return DEVICE_OK;
-}
-
-/*
- * Queries the microscope for the Axis's measuring origin
- * Only works for Axis
- * Only to be called from ZeissHub::Initialize
- */
-int ZeissHub::GetMeasuringOrigin(MM::Device& device, MM::Core& core, ZeissUByte commandGroup, ZeissUByte devId, ZeissDeviceInfo& deviceInfo)
-{
-   if (commandGroup!=0xA3)
-      return DEVICE_OK;
-   const int commandLength = 6;
-   unsigned char command[commandLength];
-   // Size of data block
-   command[0] = 0x03;
-   // Read command, immediate answer
-   command[1] = 0x18;
-   // only works on Axis
-   command[2] = commandGroup;
-   // ProcessID (first data byte)
-   command[3] = 0x11;
-   // SubID (24 = Measuring origin
-   command[4] = 0x24;
-   // Device ID
-   command[5] = devId;
-
-   int ret = ExecuteCommand(device, core, command, commandLength);
-   if (ret != DEVICE_OK)
-      return ret;
-
-   long unsigned int responseLength = RCV_BUF_LENGTH;
-   unsigned char response[RCV_BUF_LENGTH];
-   unsigned long signatureLength = 5;
-   unsigned char signature[] = {0x08, command[2], command[3], command[4], devId};
-   ret = GetAnswer(device, core, response, responseLength, signature, 1, signatureLength);
-   if (ret != DEVICE_OK)
-      return ret;
-
-   ZeissLong tmp;
-   memcpy (&tmp, response + 6, ZeissLongSize);
-   tmp = (long) ntohl(tmp);
-   deviceInfo.measuringOrigin = tmp;
-
-   return DEVICE_OK;
-}
-
-/**
- * Queries the microscope for available motorized devices
- * Stores devices IDs in vector availableDevice_
- * Does not return 0x11 (PC) 0x15 (BIOS), 0x18 (TFT display), 0x19 (Main program) 
- */
-int ZeissHub::FindDevices(MM::Device& device, MM::Core& core)
-{
-   const int commandLength = 6;
-   unsigned char command[commandLength];
-   // Size of data block
-   command[0] = 0x03;
-   // Read command, immediate answer
-   command[1] = 0x15;
-   // 'Find Devices'
-   command[2] = 0xA0;
-   // ProcessID
-   command[3] = 0x23;
-   // SubID 
-   command[4] = 0xFE;
-   // Dev-ID (all devices)
-   command[5] = 0x00;
-
-   int ret = ExecuteCommand(device, core,  command, commandLength);
-   if (ret != DEVICE_OK)
-      return ret;
-
-   long unsigned int responseLength = RCV_BUF_LENGTH;
-   unsigned char response[RCV_BUF_LENGTH];
-   unsigned long signatureLength = 3;
-   unsigned char signature[] = { 0xA0,  command[3], command[4] };
-   do {
-      memset(response, 0, responseLength);
-      ret = GetAnswer(device, core, response, responseLength, signature, 2, signatureLength);
-      if (ret != DEVICE_OK)
-         return ret;
-      // We are only interested in motorized devices and do not want any of the system devices:
-      if (response[5] <= MAXNUMBERDEVICES) {
-         if (response[5] != 0x11 && response[5] != 0x15 && response[5] != 0x18 && response[5] != 0x19 && (response[6] & 3)) {
-            availableDevices_.push_back(response[5]);
-            g_deviceInfo[response[5]].present = true;
-         }
-         g_deviceInfo[response[5]].status = response[6];
-      }
-   } while (response[1] == 0x05); // last response starts with 0x09
-  
-   return DEVICE_OK;
-}
-
-/*
- * Reads reflector labels from the microscope and stores them in a static array
- */
-int ZeissHub::GetReflectorLabels(MM::Device& device, MM::Core& core)
-{
-   unsigned char data[g_hub.RCV_BUF_LENGTH];
-   unsigned char  dataLength;
-   ZeissUByte dataType;
-   std::string label;
-   if (!g_deviceInfo[0x01].present)
-      return 0; // no reflectors, lets not make a fuss
-   for (ZeissUShort i=0; i< g_deviceInfo[0x01].maxPos && i < 10; i++) {
-      // Short name 1
-      memset(data, 0, g_hub.RCV_BUF_LENGTH);
-      GetPermanentParameter(device, core, (ZeissUShort) 0x1500 + i + 1, 0x15, dataType, data, dataLength);
-      std::ostringstream os;
-      os << (i+1) << "-";
-      label = os.str() + std::string(reinterpret_cast<char*> (data));
-      size_t pos = label.find(16);
-      if (pos != std::string::npos)
-         label.replace(pos, 1, " ");
-      // Short name 2
-      memset(data, 0, g_hub.RCV_BUF_LENGTH);
-      GetPermanentParameter(device, core, (ZeissUShort) 0x1500 + i + 1, 0x16, dataType, data, dataLength);
-      label += " ";
-      label += reinterpret_cast<char*> (data);
-      pos = label.find(16);
-      if (pos != std::string::npos)
-         label.replace(pos, 1, " ");
-      reflectorList_[i] = label;
-   }
-   return 0;
-} 
-
-/*
- * Reads objective labels from the microscope and stores them in a static array
- */
-int ZeissHub::GetObjectiveLabels(MM::Device& device, MM::Core& core)
-{
-   unsigned char data[g_hub.RCV_BUF_LENGTH];
-   unsigned char  dataLength;
-   ZeissUByte dataType;
-   std::string label;
-   if (!g_deviceInfo[0x02].present)
-      return DEVICE_OK; // no objectives, lets not make a fuss
-   for (ZeissLong i=0; (i<= g_deviceInfo[0x02].maxPos) && (i < 7); i++) {
-      memset(data, 0, g_hub.RCV_BUF_LENGTH);
-      dataLength =0;
-      GetPermanentParameter(device, core, (ZeissUShort) 0x1410, (ZeissByte) (0x00 + ((i+1)*0x10)), dataType, data, dataLength);
-      std::ostringstream os;
-      os << (i+1) << "-";
-      label = os.str() + std::string(reinterpret_cast<char*> (data));
-      objectiveList_[i] = label;
-   }
-   return 0;
-}
-
-/*
- * Reads TubeLens Magnification from the microscope and stores them in a static array
- */
-int ZeissHub::GetTubeLensLabels(MM::Device& device, MM::Core& core)
-{
-   unsigned char data[g_hub.RCV_BUF_LENGTH];
-   unsigned char  dataLength;
-   ZeissUByte dataType;
-   std::string label;
-   if (!g_deviceInfo[0x12].present)
-      return DEVICE_OK; // no TubeLens, lets not make a fuss
-   for (ZeissLong i=0; (i<= g_deviceInfo[0x12].maxPos) && (i < 5); i++) {
-      memset(data, 0, g_hub.RCV_BUF_LENGTH);
-      dataLength =0;
-      GetPermanentParameter(device, core, (ZeissUShort) 0x1430, (ZeissByte) (0x10 + ((i)*0x10)), dataType, data, dataLength);
-      std::ostringstream os;
-      os << (i+1) << "-";
-      label = os.str() + std::string(reinterpret_cast<char*> (data));
-      tubeLensList_[i] = label;
-   }
-   return 0;
-}
-
-/*
- * Reads SidePort Labels  from the microscope and stores them in a static array
- */
-int ZeissHub::GetSidePortLabels(MM::Device& device, MM::Core& core)
-{
-   unsigned char data[g_hub.RCV_BUF_LENGTH];
-   unsigned char  dataLength;
-   ZeissUByte dataType;
-   std::string label;
-   if (!g_deviceInfo[0x14].present)
-      return DEVICE_OK; // no SidePort, lets not make a fuss
-   for (ZeissLong i=0; (i<= g_deviceInfo[0x14].maxPos) && (i < 3); i++) {
-      memset(data, 0, g_hub.RCV_BUF_LENGTH);
-      dataLength =0;
-      GetPermanentParameter(device, core, (ZeissUShort) 0x1450, (ZeissByte) (0x41 + ((i)*0x10)), dataType, data, dataLength);
-      std::ostringstream os;
-      os << (i+1) << "-";
-      label = os.str() + std::string(reinterpret_cast<char*> (data));
-      std::string::size_type loc = label.find("Aquila.SideportElement_",0);
-      if (loc != std::string::npos)
-            label = label.substr(0,2) + label.substr(25);
-      sidePortList_[i] = label;
-   }
-   return 0;
-}
-
-
-/*
- * Reads Condenser Labels  from the microscope and stores them in a static array
- */
-int ZeissHub::GetCondenserLabels(MM::Device& device, MM::Core& core)
-{
-   unsigned char data[g_hub.RCV_BUF_LENGTH];
-   unsigned char  dataLength;
-   ZeissUByte dataType;
-   std::string label;
-   if (!g_deviceInfo[0x22].present)
-      return DEVICE_OK; // no Condenser, lets not make a fuss
-   for (ZeissLong i=0; (i<= g_deviceInfo[0x22].maxPos) && (i < 7); i++) {
-      memset(data, 0, g_hub.RCV_BUF_LENGTH);
-      dataLength =0;
-      GetPermanentParameter(device, core, (ZeissUShort) 0x1470, (ZeissByte) (0x15 + ((i)*8)), dataType, data, dataLength);
-      std::ostringstream os;
-      os << (i+1) << "-";
-      label = os.str() + std::string(reinterpret_cast<char*> (data));
-      condenserList_[i] = label;
-   }
-   return 0;
-}
-
-
-int ZeissHub::GetPermanentParameter(MM::Device& device, MM::Core& core, ZeissUShort descriptor, ZeissByte entry, ZeissUByte& dataType, unsigned char* data, unsigned char& dataLength)
-{
-   int ret;
-   const int commandLength = 8;
-   unsigned char command[commandLength];
-   // Size of data block
-   command[0] = 0x05;
-   // Read command, immediate answer
-   command[1] = 0x18;
-   // Command Number
-   command[2] = 0x15;
-   // ProcessID (first data byte)
-   command[3] = 0x11;
-   // SubID (04 = ReadParameter(permanent))
-   command[4] = 0x04;
-   descriptor = ntohs(descriptor);
-   memcpy((void *) &(command[5]), &descriptor, ZeissShortSize);
-   // Byte entry
-   command[7] = entry;
-
-   ret = ExecuteCommand(device, core, command, commandLength);
-   if (ret != DEVICE_OK)
-      return ret;
-
-   long unsigned int responseLength = g_hub.RCV_BUF_LENGTH;
-   unsigned char response[g_hub.RCV_BUF_LENGTH];
-   unsigned long signatureLength = 7;
-   unsigned char signature[] = {0x08,  0x15, 0x11, 0x04, command[5], command[6], command[7]};
-   ret = GetAnswer(device, core, response, responseLength, signature, 1, signatureLength);
-   if (ret != DEVICE_OK)
-      return ret;
-
-   // if we have the right answer, data is at position 9 and has a length we can calculate from the first byte in the answer
-   if (response[0] > 5) {
-      dataType = response[8];
-      memcpy(data, response+9, response[0]-5);
-      dataLength = response[0] - 5;
-   } else
-      dataLength = 0;
-
-   data[dataLength] = 0;
-   return DEVICE_OK;
-}
-
-/**
- * Access function for version information
- */
-int ZeissHub::GetVersion(MM::Device& device, MM::Core& core, std::string& ver)
-{
-   if (!scopeInitialized_) {
-      int ret = Initialize(device, core);
-      if (ret != DEVICE_OK)
-         return ret;
-   }
-   ver = version_;
-   return DEVICE_OK;
-}
-
-/**
- * Sends command to serial port
- * The first (10 02 19 11) and last part of the command (10 03) are added here
- */
-int ZeissHub::ExecuteCommand(MM::Device& device, MM::Core& core, const unsigned char* command, int commandLength, unsigned char targetDevice) 
-{
-   // Prepare command according to CAN29 Protocol
-   vector<unsigned char> preparedCommand(commandLength + 20); // make provision for doubling tens
-   preparedCommand[0] = 0x10;
-   preparedCommand[1] = 0x02;
-   preparedCommand[2] = targetDevice;
-   preparedCommand[3] = 0x11;
-   // copy command into preparedCommand, but double 0x10
-   int tenCounter = 0;
-   for (int i=0; i< commandLength; i++) {
-      preparedCommand[i+4+tenCounter] = command[i];
-      if (command[i]==0x10) {
-         tenCounter++;
-         preparedCommand[i+4+tenCounter] = command[i];
-      }
-   }
-   preparedCommand[commandLength+4+tenCounter]=0x10;
-   preparedCommand[commandLength+5+tenCounter]=0x03;
-
-   // int preparedCommandLength = commandLength + 6 + tenCounter;
-   // send command
-   //int ret = core.WriteToSerial(&device, port_.c_str(), &(preparedCommand[0]), (unsigned long) preparedCommand.size());
-   int ret = core.WriteToSerial(&device, port_.c_str(), &(preparedCommand[0]), (unsigned long) commandLength + tenCounter + 6);
-   if (ret != DEVICE_OK)                                                     
-      return ret;                                                            
-                                                                             
-   // core.LogMessage(&device, preparedCommand, true);
-
-   return DEVICE_OK;                                                         
-}
-
-/**
- * Receive answers from the microscope and stores them in rcvBuf_
- * Strip message start, target address and source address
- */
-int ZeissHub::GetAnswer(MM::Device& device, MM::Core& core, unsigned char* answer, unsigned long &answerLength) 
-{     
-   int ret(DEVICE_OK);
-   long unsigned int dataLength = 1;
-   bool terminatorFound = false;
-   bool timeOut = false;
-   MM::MMTime startTime = core.GetCurrentMMTime();
-   bool tenFound = false;
-   unsigned long charsRead;
-   unsigned char dataRead[RCV_BUF_LENGTH];
-   memset(dataRead, 0, RCV_BUF_LENGTH);
-   long dataReadLength = 0;
-
-   while (!terminatorFound && !timeOut && (dataReadLength < RCV_BUF_LENGTH)) {
-      ret = core.ReadFromSerial(&device, port_.c_str(), rcvBuf_, dataLength, charsRead); 
-      //usleep(500);
-      if (charsRead > 0) {
-        if (ret != DEVICE_OK) 
-           timeOut = true;
-        memcpy((void *)(dataRead + dataReadLength), rcvBuf_, 1); 
-        if (tenFound) {
-           if (rcvBuf_[0] == 3)
-              terminatorFound = true;
-           // There is some weird stuff going on here.  This works most of the time
-           else if (rcvBuf_[0] == 0x10) {
-              tenFound = false;
-              dataReadLength -= 1;
-           }
-           else {
-              tenFound = false;
-           }
-         }
-         else if (rcvBuf_[0] == 0x10)
-            tenFound = true;
-         dataReadLength += 1;
-      }
-      if ((core.GetCurrentMMTime() - startTime) > timeOutTime_)
-         timeOut = true;
-   }
-   
-   // strip message start, target address and source address
-   if (dataReadLength >= 4)
-   {
-      memcpy ((void *) answer,  dataRead + 4, dataReadLength -4); 
-      answerLength = dataReadLength - 4;
-   }
-   else { 
-      ostringstream os;
-      os << "Time out in answer.  Read so far: ";
-      for (int i =0; i < dataReadLength; i++) 
-         os << hex << (unsigned int) answer[i] << " ";
-      core.LogMessage(&device, os.str().c_str(), false);
-      return ERR_ANSWER_TIMEOUT;
-   }
-
-
-   if (terminatorFound)
-      core.LogMessage(&device, "Found terminator in Scope answer", true);
-   else if (timeOut)
-      core.LogMessage(&device, "Timeout in Scope answer", true);
-
-   ostringstream os;
-   os << "Answer(hex): ";
-   for (unsigned long i=0; i< answerLength; i++)
-      os << std::hex << (unsigned int) answer[i] << " ";
-   core.LogMessage(&device, os.str().c_str(), true);
-
-   return DEVICE_OK;                                                         
-}
-         
-/**
- * Same as GetAnswer, but check that this answer matches the given signature
- * Signature starts at the first returned byte, check for signatureLength bytes
- * Timeout if the correct answer is not found in time
-*/ int ZeissHub::GetAnswer(MM::Device& device, MM::Core& core, unsigned char* answer, unsigned long &answerLength, unsigned char* signature, unsigned long signatureStart, unsigned long signatureLength) {
-   bool timeOut = false;
-   MM::MMTime startTime = core.GetCurrentMMTime();
-   int ret = DEVICE_OK;
-   // We are looking for a signature in the answer that runs from byte 0 
-   while (!signatureFound(answer, signature, signatureStart, signatureLength) && !timeOut) {
-      ret = GetAnswer(device, core, answer, answerLength);
-      if (ret != DEVICE_OK)
-         return ret;
-      // MM::MMTime dif = core.GetCurrentMMTime() - startTime;
-      // printf ("Waited for %f usec, timeout: %f usec\n", dif.getUsec(), timeOutTime_.getUsec());
-      if ((core.GetCurrentMMTime() - startTime) > timeOutTime_) {
-         timeOut = true;
-         ret = ERR_ANSWER_TIMEOUT;
-      }
-   }
-   return ret;
-}
-
-int ZeissHub::ClearPort(MM::Device& device, MM::Core& core)
-{
-   // Clear contents of serial port 
-   const unsigned int bufSize = 255;
-   unsigned char clear[bufSize];
-   unsigned long read = bufSize;
-   int ret;
-   while (read == bufSize)
-   {
-      ret = core.ReadFromSerial(&device, port_.c_str(), clear, bufSize, read);
-      if (ret != DEVICE_OK)
-         return ret;
-   }
-   return DEVICE_OK;
-} 
-
-bool ZeissHub::signatureFound(unsigned char* answer, unsigned char* signature, unsigned long signatureStart, unsigned long signatureLength) {
-   unsigned long i = signatureStart;
-   while ( (answer[i] == signature[i-signatureStart]) && i< (signatureLength + signatureStart))
-      i++;
-   if (i >= (signatureLength + signatureStart)) {
-      return true;
-   }
-   return false;
-}
-
-///////////// Access functions for device status ///////////////
-/*
- * Sets position in scope model.  
- */
-int ZeissHub::SetModelPosition(ZeissUByte devId, ZeissLong position) {
-   MM_THREAD_GUARD_LOCK(&mutex);
-   g_deviceInfo[devId].currentPos = position;
-   MM_THREAD_GUARD_UNLOCK(&mutex);
-   return DEVICE_OK;
-}
-
-/*
- * Sets Upper Hardware Stop in scope model 
- */
-int ZeissHub::SetUpperHardwareStop(ZeissUByte devId, ZeissLong position) {
-   MM_THREAD_GUARD_LOCK(&mutex);
-   g_deviceInfo[devId].upperHardwareStop = position;
-   MM_THREAD_GUARD_UNLOCK(&mutex);
-   return DEVICE_OK;
-}
-
-/*
- * Sets Lower Hardware Stop in scope model 
- */
-int ZeissHub::SetLowerHardwareStop(ZeissUByte devId, ZeissLong position) {
-   MM_THREAD_GUARD_LOCK(&mutex);
-   g_deviceInfo[devId].lowerHardwareStop = position;
-   MM_THREAD_GUARD_UNLOCK(&mutex);
-   return DEVICE_OK;
-}
-
-/*
- * Sets status in scope model.  
- */
-int ZeissHub::SetModelStatus(ZeissUByte devId, ZeissULong status) {
-   MM_THREAD_GUARD_LOCK(&mutex);
-   g_deviceInfo[devId].status = status;
-   MM_THREAD_GUARD_UNLOCK(&mutex);
-   return DEVICE_OK;
-}
-
-
-/*
- * Sets busy flag in scope model.  
- */
-int ZeissHub::SetModelBusy(ZeissUByte devId, bool busy) {
-   MM_THREAD_GUARD_LOCK(&mutex);
-   g_deviceInfo[devId].busy = busy;
-   MM_THREAD_GUARD_UNLOCK(&mutex);
-   return DEVICE_OK;
-}
-
-/*
- * Starts initialize or returns cached position
- */
-int ZeissHub::GetModelPosition(MM::Device& device, MM::Core& core, ZeissUByte devId, ZeissLong& position) {
-   if (! scopeInitialized_) {
-      int ret = Initialize(device, core);
-      if (ret != DEVICE_OK)
-         return ret;
-   }
-   MM_THREAD_GUARD_LOCK(&mutex);
-   position = g_deviceInfo[devId].currentPos;
-   MM_THREAD_GUARD_UNLOCK(&mutex);
-   return DEVICE_OK;
-}
-
-
-/*
- * Starts initialize or returns number of positions
- */
-int ZeissHub::GetModelMaxPosition(MM::Device& device, MM::Core& core, ZeissUByte devId, ZeissLong& maxPosition) {
-   if (! scopeInitialized_) {
-      int ret = Initialize(device, core);
-      if (ret != DEVICE_OK)
-         return ret;
-   }
-   MM_THREAD_GUARD_LOCK(&mutex);
-   maxPosition = g_deviceInfo[devId].maxPos;
-   MM_THREAD_GUARD_UNLOCK(&mutex);
-   return DEVICE_OK;
-
-}
-
-/*
- * Returns status of device or starts initialize if not initialized yet
- */
-int ZeissHub::GetModelStatus(MM::Device& device, MM::Core& core, ZeissUByte devId, ZeissULong& status) {
-   if (! scopeInitialized_) {
-      int ret = Initialize(device, core);
-      if (ret != DEVICE_OK)
-         return ret;
-   }
-   MM_THREAD_GUARD_LOCK(&mutex);
-   status = g_deviceInfo[devId].status;
-   MM_THREAD_GUARD_UNLOCK(&mutex);
-   return DEVICE_OK;
-}
-
-/*
- * Returns presence of device or starts initialize if not initialized yet
- */
-int ZeissHub::GetModelPresent(MM::Device& device, MM::Core& core, ZeissUByte devId, bool &present) {
-   if (! scopeInitialized_) {
-      int ret = Initialize(device, core);
-      if (ret != DEVICE_OK)
-         return ret;
-   }
-   MM_THREAD_GUARD_LOCK(&mutex);
-   present = g_deviceInfo[devId].present;
-   MM_THREAD_GUARD_UNLOCK(&mutex);
-   return DEVICE_OK;
-}
-
-/*
- * Returns busy flag of device or starts initialize if not initialized yet
- */
-int ZeissHub::GetModelBusy(MM::Device& device, MM::Core& core, ZeissUByte devId, bool &busy) {
-   if (! scopeInitialized_) {
-      int ret = Initialize(device, core);
-      if (ret != DEVICE_OK)
-         return ret;
-   }
-   MM_THREAD_GUARD_LOCK(&mutex);
-   busy = g_deviceInfo[devId].busy;
-   MM_THREAD_GUARD_UNLOCK(&mutex);
-   return DEVICE_OK;
-}
-
-/*
- * Utility class for ZeissMonitoringThread
- */
-ZeissMessageParser::ZeissMessageParser(unsigned char* inputStream, long inputStreamLength) :
-   index_(0)
-{
-   inputStream_ = inputStream;
-   inputStreamLength_ = inputStreamLength;
-}
-
-int ZeissMessageParser::GetNextMessage(unsigned char* nextMessage, int& nextMessageLength) {
-   bool startFound = false;
-   bool endFound = false;
-   bool tenFound = false;
-   nextMessageLength = 0;
-   long remainder = index_;
-   while ( (endFound == false) && (index_ < inputStreamLength_) && (nextMessageLength < messageMaxLength_) ) {
-      if (tenFound && inputStream_[index_] == 0x02) {
-         startFound = true;
-         tenFound = false;
-      }
-      else if (tenFound && inputStream_[index_] == 0x03) {
-         endFound = true;
-         tenFound = false;
-      }
-      else if (tenFound && inputStream_[index_] == 0x10) {
-         nextMessage[nextMessageLength] = inputStream_[index_];
-         nextMessageLength++;
-         tenFound = false;
-      }
-      else if (inputStream_[index_] == 0x10)
-         tenFound = true;
-      else if (startFound) {
-         nextMessage[nextMessageLength] = inputStream_[index_];
-         nextMessageLength++;
-      }
-      index_++;
-   }
-   if (endFound)
-      return 0;
-   else {
-      // no more complete message found, return the whole stretch we were considering:
-      for (long i= remainder; i < inputStreamLength_; i++)
-         nextMessage[i-remainder] = inputStream_[i];
-      nextMessageLength = inputStreamLength_ - remainder;
-      return -1;
-   }
-}
-
-/*
- * Thread that continuously monitors messages from the Zeiss scope and inserts them into a model of the microscope
- */
-ZeissMonitoringThread::ZeissMonitoringThread(MM::Device& device, MM::Core& core) :
-   device_ (device),
-   core_ (core),
-   stop_ (true),
-   intervalUs_(5000) // check every 5 ms for new messages, 
-{
-}
-
-ZeissMonitoringThread::~ZeissMonitoringThread()
-{
-   printf("Destructing monitoringThread\n");
-}
-
-void ZeissMonitoringThread::interpretMessage(unsigned char* message)
-{
-   //if (!(message[5] == 0)) // only message with Proc Id 0 are meant for us
-   //  In reality I see here 0, 6, and 7???
-   //   return;
-   if (message[3] == 0x07) { // events/unsolicited message
-      if (message[6] == 0x01) // leaving settled position
-         g_hub.SetModelBusy(message[5], true);
-      else if (message[6] == 0x02) { // actual moving position 
-         ZeissLong position;
-         if (message[4] == 0xA3) {
-            memcpy(&position, message + 8, 4);
-            position = ntohl(position);
-         } else {
-            memcpy(&position, message + 8, 2);
-            position = ntohs((unsigned short) position);
-         }
-         g_hub.SetModelPosition(message[7], position);
-         g_hub.SetModelBusy(message[7], true);
-      }
-      else if (message[6] == 0x03) { // target position settled
-         ZeissLong position;
-         if (message[4] == 0xA3) {
-            memcpy(&position, message + 8, 4);
-            position = ntohl(position);
-         } else {
-            memcpy(&position, message + 8, 2);
-            position = ntohs((unsigned short) position);
-         }
-         g_hub.SetModelPosition(message[7], position);
-         g_hub.SetModelBusy(message[7], false);
-      }
-      else if (message[6] == 0x04) { // status changed
-         ZeissULong status;
-         memcpy(&status, message + 8, 4);
-         status = ntohl(status);
-         g_hub.SetModelStatus(message[7], status);
-         g_hub.SetModelBusy(message[7], !(status & 32)); // 'is settled' bit 
-      }
-   } else if (message[3] == 0x08) { // Some direct answers that we want to interpret
-      if (message[6] == 0x20) { // Axis: Upper hardware stop reached
-         g_hub.SetModelBusy(message[5], false);
-         ZeissLong position;
-         memcpy(&position, message + 8, 4);
-         position = ntohl(position);
-         g_hub.SetUpperHardwareStop(message[5], position);
-         // TODO: How to unlock the stage from here?
-      } else if (message[6] == 0x21) { // Axis:: Lower hardware stop reached
-         g_hub.SetModelBusy(message[5], false);
-         ZeissLong position;
-         memcpy(&position, message + 8, 4);
-         position = ntohl(position);
-         g_hub.SetLowerHardwareStop(message[5], position);
-         // TODO: How to unlock the stage from here?
-       }
-   }
-}
-
-MM_THREAD_FUNC_DECL ZeissMonitoringThread::svc(void *arg) {
-   ZeissMonitoringThread* thd = (ZeissMonitoringThread*) arg;
-
-   printf ("Starting MonitoringThread\n");
-
-   unsigned long dataLength;
-   unsigned long charsRead = 0;
-   unsigned long charsRemaining = 0;
-   unsigned char rcvBuf[ZeissHub::RCV_BUF_LENGTH];
-   memset(rcvBuf, 0, ZeissHub::RCV_BUF_LENGTH);
-
-   while (!thd->stop_) 
-   {
-      do { 
-         dataLength = ZeissHub::RCV_BUF_LENGTH - charsRemaining;
-         // Do the scope monitoring stuff here
-         int ret = thd->core_.ReadFromSerial(&(thd->device_), g_hub.port_.c_str(), rcvBuf + charsRemaining, dataLength, charsRead); 
-         if (ret != DEVICE_OK) {
-            ostringstream oss;
-            oss << "Monitoring Thread: ERROR while reading from serial port, error code: " << ret;
-            thd->core_.LogMessage(&(thd->device_), oss.str().c_str(), false);
-         } else if (charsRead > 0) {
-            ZeissMessageParser* parser = new ZeissMessageParser(rcvBuf, charsRead + charsRemaining);
-            do {
-               unsigned char message[ZeissMessageParser::messageMaxLength_];
-               int messageLength;
-               ret = parser->GetNextMessage(message, messageLength);
-               if (ret == 0) {
-                  // Report 
-                  ostringstream os;
-                  os << "Monitoring Thread incoming message: ";
-                  for (int i=0; i< messageLength; i++)
-                     os << hex << (unsigned int)message[i] << " ";
-                  thd->core_.LogMessage(&(thd->device_), os.str().c_str(), true);
-                  // and do the real stuff
-                  thd->interpretMessage(message);
-                }
-               else {
-                  // no more messages, copy remaining (if any) back to beginning of buffer
-                  memset(rcvBuf, 0, ZeissHub::RCV_BUF_LENGTH);
-                  for (int i = 0; i < messageLength; i++)
-                     rcvBuf[i] = message[i];
-                  charsRemaining = messageLength;
-               }
-            } while (ret == 0);
-         }
-      } while ((charsRead != 0) && (!thd->stop_)); 
-
-       CDeviceUtils::SleepMs(thd->intervalUs_/1000);
-   }
-   printf("Monitoring thread finished\n");
-   return 0;
-}
-
-void ZeissMonitoringThread::Start()
-{
-
-   stop_ = false;
-   //pthread_create(&thread_, NULL, svc, this);
-   MM_THREAD_CREATE(&thread_, svc, this);
-   //activate();
-   //activate(THR_NEW_LWP | THR_JOINABLE, 1, 1, ACE_THR_PRI_OTHER_MAX);
-   //activate(THR_NEW_LWP | THR_JOINABLE, 1, 1, THREAD_PRIORITY_TIME_CRITICAL);
-}
 
 
 /*
@@ -1419,7 +252,6 @@ void ZeissMonitoringThread::Start()
  */
 ZeissDevice::ZeissDevice() 
 {
-   // targetProcessId_ = 0x12;
 }
 
 ZeissDevice::~ZeissDevice()
@@ -1435,7 +267,7 @@ int ZeissDevice::GetPosition(MM::Device& device, MM::Core& core, ZeissUByte devI
  * Send command to microscope to set position of Servo and Changer. 
  * Do not use this for Axis (override in Axis device)
  */
-int ZeissDevice::SetPosition(MM::Device& device, MM::Core& core, ZeissUByte commandGroup, ZeissUByte devId, int position, unsigned char targetDevice)
+int ZeissDevice::SetPosition(MM::Device& device, MM::Core& core, ZeissUByte commandGroup, ZeissUByte devId, int position)
 {
    int ret;
    const int commandLength = 8;
@@ -1454,21 +286,52 @@ int ZeissDevice::SetPosition(MM::Device& device, MM::Core& core, ZeissUByte comm
    // position is a short (2-byte) in big endian format...
    ZeissShort tmp = htons((ZeissShort) position);
    memcpy(command+6, &tmp, ZeissShortSize); 
-   ostringstream os;
-   os << "Setting device "<< hex << (unsigned int) devId << " to position " << dec << position;
-   core.LogMessage(&device, os.str().c_str(), false);
-   ret = g_hub.ExecuteCommand(device, core,  command, commandLength, targetDevice);
+   if (g_hub.debug_) {
+     ostringstream os;
+     os << "Setting device "<< hex << (unsigned int) devId << " to position " << dec << position << " and Busy flag to true";
+     core.LogMessage(&device, os.str().c_str(), false);
+   }
+   ret = g_hub.ExecuteCommand(device, core,  command, commandLength);
    if (ret != DEVICE_OK)
       return ret;
    g_hub.SetModelBusy(devId, true);
 
    return DEVICE_OK;
 }
+/*
+ * Send status request to Servo or Changer. 
+ */
+int ZeissDevice::GetStatus(MM::Device& device, MM::Core& core, ZeissUByte commandGroup, ZeissUByte devId)
+{
+   int ret;
+   const int commandLength = 6;
+   unsigned char command[commandLength];
+   // Size of data block
+   command[0] = 0x03;
+   // Write command, do not expect answer:
+   command[1] = 0x18;
+   command[2] = commandGroup; 
+   // ProcessID
+   command[3] = 0x11;
+   // SubID
+   command[4] = 0x07;
+   // Device ID
+   command[5] = devId;
+   if (g_hub.debug_) {
+      ostringstream os;
+      os << "Requesting status for device: "<< hex << (unsigned int) devId;
+      core.LogMessage(&device, os.str().c_str(), true);
+   }
+   ret = g_hub.ExecuteCommand(device, core,  command, commandLength);
+   if (ret != DEVICE_OK)
+      return ret;
 
+   return DEVICE_OK;
+}
 /*
  * Requests Lock from Microscope 
  */
-int ZeissDevice::SetLock(MM::Device& device, MM::Core& core, ZeissUByte devId, bool on, unsigned char targetDevice)
+int ZeissDevice::SetLock(MM::Device& device, MM::Core& core, ZeissUByte devId, bool on)
 {
    int ret;
    const int commandLength = 14;
@@ -1497,6 +360,8 @@ int ZeissDevice::SetLock(MM::Device& device, MM::Core& core, ZeissUByte devId, b
       loMask |= 1 << devId;
    else
       hiMask |= 1 << (devId - 32);
+   hiMask = ntohl(hiMask);
+   loMask = ntohl(loMask);
    memcpy(command+6, &hiMask, ZeissLongSize); 
    memcpy(command+10, &loMask, ZeissLongSize); 
 
@@ -1506,7 +371,7 @@ int ZeissDevice::SetLock(MM::Device& device, MM::Core& core, ZeissUByte devId, b
    else
       os << "Requesting unlocking for device "<< hex << (unsigned int) devId ;
    core.LogMessage(&device, os.str().c_str(), false);
-   ret = g_hub.ExecuteCommand(device, core,  command, commandLength, targetDevice);
+   ret = g_hub.ExecuteCommand(device, core,  command, commandLength);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -1592,7 +457,7 @@ ZeissChanger::~ZeissChanger()
 
 int ZeissChanger::SetPosition(MM::Device& device, MM::Core& core, ZeissUByte devId, int position)
 {
-   return ZeissDevice::SetPosition(device, core, g_commandGroup[devId], devId, position);
+   return ZeissDevice::SetPosition(device, core, g_hub.GetCommandGroup(devId), devId, position);
 }
 
 /////////////////////////////////////////////////////////////
@@ -1608,7 +473,7 @@ ZeissServo::~ZeissServo()
 
 int ZeissServo::SetPosition(MM::Device& device, MM::Core& core, ZeissUByte devId, int position)
 {
-   return ZeissDevice::SetPosition(device, core, g_commandGroup[devId], devId, position);
+   return ZeissDevice::SetPosition(device, core, g_hub.GetCommandGroup(devId), devId, position);
 }
 
 /////////////////////////////////////////////////////////////
@@ -1625,7 +490,7 @@ ZeissAxis::~ZeissAxis()
 /*
  * Send command to microscope to set position of Axis. 
  */
-int ZeissAxis::SetPosition(MM::Device& device, MM::Core& core, ZeissUByte devId, long position, ZeissByte moveMode, unsigned char targetDevice)
+int ZeissAxis::SetPosition(MM::Device& device, MM::Core& core, ZeissUByte devId, long position, ZeissByte moveMode)
 {
    int ret;
    const int commandLength = 11;
@@ -1646,7 +511,7 @@ int ZeissAxis::SetPosition(MM::Device& device, MM::Core& core, ZeissUByte devId,
    // position is a ZeissLong (4-byte) in big endian format...
    ZeissLong tmp = htonl((ZeissLong) position);
    memcpy(command+7, &tmp, ZeissLongSize); 
-   ret = g_hub.ExecuteCommand(device, core,  command, commandLength, targetDevice);
+   ret = g_hub.ExecuteCommand(device, core,  command, commandLength);
    if (ret != DEVICE_OK)
       return ret;
    g_hub.SetModelBusy(devId, true);
@@ -1657,7 +522,7 @@ int ZeissAxis::SetPosition(MM::Device& device, MM::Core& core, ZeissUByte devId,
 /*
  * Send command to microscope to move relative to current position of Axis
  */
-int ZeissAxis::SetRelativePosition(MM::Device& device, MM::Core& core, ZeissUByte devId, long increment, ZeissByte moveMode, unsigned char targetDevice)
+int ZeissAxis::SetRelativePosition(MM::Device& device, MM::Core& core, ZeissUByte devId, long increment, ZeissByte moveMode)
 {
    int ret;
    const int commandLength = 11;
@@ -1679,7 +544,7 @@ int ZeissAxis::SetRelativePosition(MM::Device& device, MM::Core& core, ZeissUByt
    ZeissLong tmp = htonl((ZeissLong) increment);
    memcpy(command+7, &tmp, ZeissLongSize); 
 
-   ret = g_hub.ExecuteCommand(device, core,  command, commandLength, targetDevice);
+   ret = g_hub.ExecuteCommand(device, core,  command, commandLength);
    if (ret != DEVICE_OK)
       return ret;
    g_hub.SetModelBusy(devId, true);
@@ -1690,7 +555,7 @@ int ZeissAxis::SetRelativePosition(MM::Device& device, MM::Core& core, ZeissUByt
 /*
  * Moves the Stage to the specified (upper or lower) hardware stop
  */
-int ZeissAxis::FindHardwareStop(MM::Device& device, MM::Core& core, ZeissUByte devId, HardwareStops stop, unsigned char targetDevice)
+int ZeissAxis::FindHardwareStop(MM::Device& device, MM::Core& core, ZeissUByte devId, HardwareStops stop)
 {
    // Lock the stage
    int ret = SetLock(device, core, devId, true);
@@ -1714,7 +579,7 @@ int ZeissAxis::FindHardwareStop(MM::Device& device, MM::Core& core, ZeissUByte d
    // Device ID
    command[5] = devId;
 
-   ret = g_hub.ExecuteCommand(device, core,  command, commandLength, targetDevice);
+   ret = g_hub.ExecuteCommand(device, core,  command, commandLength);
    if (ret != DEVICE_OK)
       return ret;
    g_hub.SetModelBusy(devId, true);
@@ -1726,7 +591,7 @@ int ZeissAxis::FindHardwareStop(MM::Device& device, MM::Core& core, ZeissUByte d
 /*
  * Stops movement for this Axis immediately
  */
-int ZeissAxis::StopMove(MM::Device& device, MM::Core& core, ZeissUByte devId, ZeissByte moveMode, unsigned char targetDevice)
+int ZeissAxis::StopMove(MM::Device& device, MM::Core& core, ZeissUByte devId, ZeissByte moveMode)
 {
    int ret;
    const int commandLength = 11;
@@ -1745,7 +610,7 @@ int ZeissAxis::StopMove(MM::Device& device, MM::Core& core, ZeissUByte devId, Ze
    // movemode
    command[6] = moveMode;
 
-   ret = g_hub.ExecuteCommand(device, core,  command, commandLength, targetDevice);
+   ret = g_hub.ExecuteCommand(device, core,  command, commandLength);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -1759,10 +624,11 @@ int ZeissAxis::StopMove(MM::Device& device, MM::Core& core, ZeissUByte devId, Ze
 ZeissScope::ZeissScope() :
    initialized_(false),
    port_("Undefined"),                                                       
-   answerTimeoutMs_(250)
+   answerTimeoutMs_(500)
 {
    InitializeDefaultErrorMessages();
    SetErrorText(ERR_ANSWER_TIMEOUT, "The Zeiss microscope does not answer.  Is it switched on and connected to this computer?");
+   SetErrorText(ERR_PORT_NOT_OPEN, "The communication port to the microscope can not be opened");
 
    // create pre-initialization properties
    // ------------------------------------
@@ -1784,12 +650,9 @@ ZeissScope::ZeissScope() :
 
 ZeissScope::~ZeissScope() 
 {
-   printf ("In ZeissScope destructor\n");
    if (g_hub.monitoringThread_ != 0) {
       g_hub.monitoringThread_->Stop();
-   printf ("Stopping monitoringThread\n");
       g_hub.monitoringThread_->wait();
-   printf ("Thread stopped\n");
       delete g_hub.monitoringThread_;
       g_hub.monitoringThread_ = 0;
    }
@@ -1880,9 +743,11 @@ Shutter::Shutter (ZeissUByte devId, std::string name, std::string description):
    name_ = name;
    description_ = description;
    InitializeDefaultErrorMessages();
-
+ 
    SetErrorText(ERR_SCOPE_NOT_ACTIVE, "Zeiss Scope is not initialized.  It is needed for the Zeiss Shutter to work");
    SetErrorText(ERR_MODULE_NOT_FOUND, "This shutter is not installed in this Zeiss microscope");
+   SetErrorText(ERR_SHUTTER_POS_UNKNOWN, "Shutter reported that it was neither opened or closed, so I am confused");
+
 }
 
 Shutter::~Shutter ()
@@ -1984,7 +849,6 @@ int Shutter::SetOpen(bool open)
 
 int Shutter::GetOpen(bool &open)
 {
-
    int position;
    int ret = GetPosition(*this, *GetCoreCallback(), devId_, position);
    if (ret != DEVICE_OK)
@@ -1995,8 +859,12 @@ int Shutter::GetOpen(bool &open)
       open = false;
    else if (position == 2)
       open = true;
-   else
-      return ERR_UNEXPECTED_ANSWER;
+   else {
+      std::ostringstream os;
+      os << "Shutter was in unexpected position: " << position;
+      LogMessage(os.str(), false);
+      return ERR_SHUTTER_POS_UNKNOWN;
+   }
 
    return DEVICE_OK;
 }
@@ -2354,8 +1222,8 @@ Servo::Servo(ZeissUByte devId, std::string name, std::string description):
    InitializeDefaultErrorMessages();
 
    // TODO provide error messages
-   SetErrorText(ERR_SCOPE_NOT_ACTIVE, "Zeiss Scope is not initialized.  It is needed for this Turret to work");
-   SetErrorText(ERR_INVALID_TURRET_POSITION, "The requested position is not available on this turret");
+   SetErrorText(ERR_SCOPE_NOT_ACTIVE, "Zeiss Scope is not initialized.  It is needed for this Servo to work");
+   SetErrorText(ERR_INVALID_TURRET_POSITION, "The requested position is not available on this servo");
    SetErrorText(ERR_MODULE_NOT_FOUND, "This device is not installed in this Zeiss microscope");
 
    // Create pre-initialization properties
@@ -2400,26 +1268,26 @@ int Servo::Initialize()
    // -----
    CPropertyAction* pAct = new CPropertyAction(this, &Servo::OnPosition);
    // if there are multiple units, which one will we take?  For simplicity, use the last one for now
-   unit_ = g_deviceInfo[devId_].deviceScalings[g_deviceInfo[devId_].deviceScalings.size()-1];
+   unit_ = ZeissHub::deviceInfo_[devId_].deviceScalings[ZeissHub::deviceInfo_[devId_].deviceScalings.size()-1];
 
    ret = CreateProperty(unit_.c_str(), "1", MM::Float, false, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
-   minPosScaled_ = g_deviceInfo[devId_].scaledScale[unit_][0];
-   maxPosScaled_ = g_deviceInfo[devId_].scaledScale[unit_][0];
-   minPosNative_ = g_deviceInfo[devId_].nativeScale[unit_][0];
-   maxPosNative_ = g_deviceInfo[devId_].nativeScale[unit_][0];
-   for (size_t i=0; i < g_deviceInfo[devId_].scaledScale[unit_].size(); i++) {
-      if (minPosScaled_ > g_deviceInfo[devId_].scaledScale[unit_][i])
+   minPosScaled_ = ZeissHub::deviceInfo_[devId_].scaledScale[unit_][0];
+   maxPosScaled_ = ZeissHub::deviceInfo_[devId_].scaledScale[unit_][0];
+   minPosNative_ = ZeissHub::deviceInfo_[devId_].nativeScale[unit_][0];
+   maxPosNative_ = ZeissHub::deviceInfo_[devId_].nativeScale[unit_][0];
+   for (size_t i=0; i < ZeissHub::deviceInfo_[devId_].scaledScale[unit_].size(); i++) {
+      if (minPosScaled_ > ZeissHub::deviceInfo_[devId_].scaledScale[unit_][i])
       {
-         minPosScaled_ = g_deviceInfo[devId_].scaledScale[unit_][i];
-         minPosNative_ = g_deviceInfo[devId_].nativeScale[unit_][i];
+         minPosScaled_ = ZeissHub::deviceInfo_[devId_].scaledScale[unit_][i];
+         minPosNative_ = ZeissHub::deviceInfo_[devId_].nativeScale[unit_][i];
       }
-      if (maxPosScaled_ < g_deviceInfo[devId_].scaledScale[unit_][i])
+      if (maxPosScaled_ < ZeissHub::deviceInfo_[devId_].scaledScale[unit_][i])
       {
-         maxPosScaled_ = g_deviceInfo[devId_].scaledScale[unit_][i];
-         maxPosNative_ = g_deviceInfo[devId_].nativeScale[unit_][i];
+         maxPosScaled_ = ZeissHub::deviceInfo_[devId_].scaledScale[unit_][i];
+         maxPosNative_ = ZeissHub::deviceInfo_[devId_].nativeScale[unit_][i];
       }
    }
 
@@ -2463,20 +1331,20 @@ int Servo::OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct) {
          return ret;
       // We have the native position here, translate to the 'scaled' position'
       // For simplicities sake we just do linear interpolation
-      double posScaled = ((double)pos/(maxPosNative_-minPosNative_) * (maxPosScaled_ - minPosScaled_)) + minPosScaled_; 
+      double posScaled = ((double)(pos-minPosNative_)/(maxPosNative_-minPosNative_) * (maxPosScaled_ - minPosScaled_)) + minPosScaled_; 
       pProp->Set(posScaled);
    }
    else if (eAct == MM::AfterSet)
    {
       double posScaled;
       pProp->Get(posScaled);
-      int posNative = (int) (posScaled/(maxPosScaled_-minPosScaled_) * (maxPosNative_ - minPosNative_)) + minPosNative_;
+      int posNative = (int) ( (posScaled-minPosScaled_)/(maxPosScaled_-minPosScaled_) * (maxPosNative_ - minPosNative_)) + minPosNative_;
       return ZeissServo::SetPosition(*this, *GetCoreCallback(), devId_, posNative);
    }
    return DEVICE_OK;
 }
 
-/*
+/*************************************************************
  * ZeissFocusStage: Micro-Manager implementation of focus drive
  */
 Axis::Axis (ZeissUByte devId, std::string name, std::string description): 
@@ -2497,7 +1365,7 @@ Axis::Axis (ZeissUByte devId, std::string name, std::string description):
    description_ = description;
    InitializeDefaultErrorMessages();
 
-   SetErrorText(ERR_SCOPE_NOT_ACTIVE, "Zeiss Scope is not initialized.  It is needed for the Zeiss Shutter to work");
+   SetErrorText(ERR_SCOPE_NOT_ACTIVE, "Zeiss Scope is not initialized.  It is needed for this Zeiss Axis to work");
    SetErrorText(ERR_MODULE_NOT_FOUND, "This Axis is not installed in this Zeiss microscope");
 }
 
@@ -2706,7 +1574,7 @@ int Axis::OnVelocity(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;                                          
 }
 
-/*
+/************************************************************
  * ZeissXYStage: Micro-Manager implementation of X and Y Stage
  */
 XYStage::XYStage (): 
@@ -2725,7 +1593,7 @@ XYStage::XYStage ():
    name_ = g_ZeissXYStage;
    InitializeDefaultErrorMessages();
 
-   SetErrorText(ERR_SCOPE_NOT_ACTIVE, "Zeiss Scope is not initialized.  It is needed for the Zeiss Shutter to work");
+   SetErrorText(ERR_SCOPE_NOT_ACTIVE, "Zeiss Scope is not initialized.  It is needed for the Zeiss XYStage to work");
    SetErrorText(ERR_MODULE_NOT_FOUND, "No XYStage installed on this Zeiss microscope");
 }
 
@@ -2745,7 +1613,7 @@ bool XYStage::Busy()
    if (ret != DEVICE_OK)  // This is bad and should not happen
       return false;
 
-   return xBusy && yBusy;
+   return xBusy || yBusy;
 }
 
 void XYStage::GetName (char* Name) const
@@ -2821,55 +1689,31 @@ int XYStage::Shutdown()
 
 int XYStage::GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax) 
 {
-   // TODO: rework to our own coordinate system
-   xMin = 0;
-   yMin = 0;
-   xMax = g_deviceInfo[g_StageXAxis].maxPos;
-   yMax = g_deviceInfo[g_StageYAxis].maxPos;
+   long xMi, xMa, yMi, yMa;
+   GetStepLimits(xMi, xMa, yMi, yMa);
+   xMin = xMi * stepSize_um_;
+   yMin = yMi * stepSize_um_;
+   xMax = xMa * stepSize_um_;
+   yMax = yMa * stepSize_um_;
 
    return DEVICE_OK;
 }
 
-int XYStage::GetStepLimits(long& /*xMin*/, long& /*xMax*/, long& /*yMin*/, long& /*yMax*/) 
+int XYStage::GetStepLimits(long& xMin, long& xMax, long& yMin, long& yMax) 
 {
-   // TODO: decide how to deal with this command with respect to above
-   return DEVICE_UNSUPPORTED_COMMAND;
-}
-
-
-int XYStage::SetPositionUm(double x, double y)
-{
-   long xSteps = (long)(x / stepSize_um_);
-   long ySteps = (long)(y / stepSize_um_);
-   int ret = SetPositionSteps(xSteps, ySteps);
-   if (ret != DEVICE_OK)
-      return ret;
-
+   //xMin = ZeissHub::deviceInfo_[g_StageXAxis].lowerHardwareStop;
+   ZeissLong xMi, xMa, yMi, yMa;
+   g_hub.GetLowerHardwareStop(g_StageXAxis, xMi);
+   xMin = xMi;
+   g_hub.GetLowerHardwareStop(g_StageYAxis, yMi);
+   yMin = yMi;
+   g_hub.GetUpperHardwareStop(g_StageXAxis, xMa);
+   xMax = xMa;
+   g_hub.GetUpperHardwareStop(g_StageYAxis, yMa);
+   yMax = yMa;
    return DEVICE_OK;
 }
 
-int XYStage::SetRelativePositionUm(double x, double y)
-{
-   long xSteps = (long)(x / stepSize_um_);
-   long ySteps = (long)(y / stepSize_um_);
-   int ret = SetRelativePositionSteps(xSteps, ySteps);
-   if (ret != DEVICE_OK)
-      return ret;
-
-   return DEVICE_OK;
-}
-
-int XYStage::GetPositionUm(double& x, double& y)
-{
-   long xSteps, ySteps;
-   int ret = GetPositionSteps(xSteps, ySteps);                         
-   if (ret != DEVICE_OK)                                      
-      return ret;                                             
-   x = xSteps * stepSize_um_;
-   y = ySteps * stepSize_um_;
-
-   return DEVICE_OK;
-}
 
 int XYStage::SetPositionSteps(long xSteps, long ySteps)
 {
@@ -2985,5 +1829,921 @@ int XYStage::OnVelocity(MM::PropertyBase* pProp, MM::ActionType eAct)
    }                                                          
                                                               
    return DEVICE_OK;                                          
+}
+
+
+/***********************************
+ * Definite Focus
+ */
+DefiniteFocus::DefiniteFocus() :
+   offsets_(),
+   focusMethod_(g_focusThisPosition),
+   initialized_ (false)
+{
+   InitializeDefaultErrorMessages();
+
+   SetErrorText(ERR_MODULE_NOT_FOUND, "Definite Focus not found.  Is it installed on this Zeiss microscope?");
+   SetErrorText(ERR_UNKNOWN_OFFSET, "Definite Focus Offset requested that had not been previously defined");
+   SetErrorText(ERR_DEFINITE_FOCUS_NOT_LOCKED, "Definite Focus not locked");
+   SetErrorText(ERR_DEFINITE_FOCUS_TIMEOUT, "Definite Focus timed out.  Increase the value of Core-Timeout if the definite focus is still searching");
+}
+
+
+DefiniteFocus::~DefiniteFocus()
+{
+}
+
+
+bool DefiniteFocus::Busy()
+{
+   bool busy = false;
+   g_hub.definiteFocusModel_.GetBusy(busy);
+   return busy;
+}
+
+
+void DefiniteFocus::GetName (char* Name) const
+{
+   CDeviceUtils::CopyLimitedString(Name, "ZeissDefiniteFocus");
+}
+
+
+int DefiniteFocus::Initialize()
+{
+   if (initialized_)
+      return DEVICE_OK;
+
+   ZeissUShort status;
+   ZeissHub::definiteFocusModel_.GetStatus(status);
+   if ((status & 1) != 1)
+      return ERR_MODULE_NOT_FOUND;
+
+   // Name
+   int ret = CreateProperty(MM::g_Keyword_Name, "Definite Focus", MM::String, true);
+   if (DEVICE_OK != ret)
+      return ret;
+
+   // Description
+   ret = CreateProperty(MM::g_Keyword_Description, "Zeiss Definite Focus adapter", MM::String, true);
+   if (DEVICE_OK != ret)
+      return ret;
+   
+   CPropertyAction* pAct = new CPropertyAction(this, &DefiniteFocus::OnDFWorkingPosition);
+   ret = CreateProperty("DF Working Position", "0.0", MM::Float, true, pAct);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   pAct = new CPropertyAction(this, &DefiniteFocus::OnPeriod);
+   ret = CreateProperty("Period", "0", MM::Integer, false, pAct);
+   if (ret != DEVICE_OK)
+      return ret;
+   // TODO: set the real maximum
+   SetPropertyLimits("Period", 0, 100000);
+   
+   pAct = new CPropertyAction(this, &DefiniteFocus::OnFocusMethod);
+   ret = CreateProperty(g_focusMethod, focusMethod_.c_str(), MM::String, false, pAct);
+   if (ret != DEVICE_OK)
+      return ret;
+   AddAllowedValue(g_focusMethod, g_focusThisPosition);
+   AddAllowedValue(g_focusMethod, g_focusLastPosition);
+
+   return DEVICE_OK;
+}
+
+
+int DefiniteFocus::Shutdown()
+{
+   initialized_ = false;
+   return DEVICE_OK;
+}
+
+/**
+ * Writes data describing position to be stabilized to DF
+ * Engages DF and lets go (i.e., as if "once" was pressed on the remote pad)
+ */
+int DefiniteFocus::StabilizeThisPosition(ZeissUByte dataLength, ZeissUByte* data)
+{
+   // - Stabilize This Position (0x02)
+   const int commandLength = 7 + dataLength;
+   unsigned char command[7 + UCHAR_MAX];
+   // Size of data block
+   command[0] = 0x04 + dataLength;
+   // Command, request completion message
+   command[1] = 0x19;
+   // 'Definite Focus command number'
+   command[2] = 0xB3;
+   // ProcessID
+   command[3] = 0x11;
+   // SubID: Stabilize This Focus Position
+   command[4] = 0x02;
+   // DevID (0x0 for Definite Focus)
+   command[5] = 0x00;
+   command[6] = dataLength;
+   for (ZeissUByte i = 0; i < dataLength; i++)
+      command[7+i] = data[i];
+
+   g_hub.definiteFocusModel_.SetBusy(true);
+
+   int ret = g_hub.ExecuteCommand(*this, *GetCoreCallback(),  command, commandLength, DEFINITEFOCUS); 
+   if (ret != DEVICE_OK)
+      return ret;
+
+   return DEVICE_OK; 
+}
+
+/**
+ * Overloaded form that uses our own DFOffset struct as input
+ */
+int DefiniteFocus::StabilizeThisPosition(DFOffset position)
+{
+   return StabilizeThisPosition(position.length_, position.data_);
+}
+
+/**
+ * Requests data describing the currently focussed position
+ */
+int DefiniteFocus::GetStabilizedPosition()
+{
+   // - Stabilize This Position (0x02)
+   const int commandLength = 6;
+   unsigned char command[commandLength];
+   // Size of data block
+   command[0] = 0x03;
+   // Request
+   command[1] = 0x18;
+   // 'Definite Focus command number'
+   command[2] = 0xB3;
+   // ProcessID
+   command[3] = 0x11;
+   // SubID: Stabilize This Focus Position
+   command[4] = 0x02;
+   // DevID (0x0 for Definite Focus)
+   command[5] = 0x00;
+
+   g_hub.definiteFocusModel_.SetBusy(true);
+
+   int ret = g_hub.ExecuteCommand(*this, *GetCoreCallback(),  command, commandLength, DEFINITEFOCUS); 
+   if (ret != DEVICE_OK)
+      return ret;
+
+   return DEVICE_OK; 
+}
+
+int DefiniteFocus::StabilizeLastPosition()
+{
+   // - Stabilize Position last stabilized (0x03)
+   const int commandLength = 6;
+   unsigned char command[commandLength];
+   // Size of data block
+   command[0] = 0x03;
+   // Command, request completion message
+   command[1] = 0x19;
+   // 'Definite Focus command number'
+   command[2] = 0xB3;
+   // ProcessID
+   command[3] = 0x11;
+   // SubID: Do Stabilize Position
+   command[4] = 0x03;
+   // DevID (0x0 for Definite Focus)
+   command[5] = 0x00;
+
+   g_hub.definiteFocusModel_.SetBusy(true);
+
+   int ret = g_hub.ExecuteCommand(*this, *GetCoreCallback(),  command, commandLength, DEFINITEFOCUS); 
+   if (ret != DEVICE_OK)
+      return ret;
+
+   return DEVICE_OK; 
+}
+
+int DefiniteFocus::IlluminationFeatures()
+{
+   const int commandLength = 6;
+   unsigned char command[commandLength];
+   // Size of data block
+   command[0] = 0x03;
+   // Get request
+   command[1] = 0x18;
+   // 'Definite Focus command number'
+   command[2] = 0xB3;
+   // ProcessID
+   command[3] = 0x11;
+   // SubID: Illumination Features
+   command[4] = 0x13;
+   // DevID (0x0 for Definite Focus)
+   command[5] = 0x00;
+
+   g_hub.definiteFocusModel_.SetBusy(true);
+
+   int ret = g_hub.ExecuteCommand(*this, *GetCoreCallback(),  command, commandLength, DEFINITEFOCUS); 
+   if (ret != DEVICE_OK)
+      return ret;
+
+   return DEVICE_OK; 
+}
+
+/*
+ * Stabilizes the last stablized position (or the current position if not stabilized before)
+ * This function also keep the DF active (subID 2 and 3 are OneShot)
+ * Activity interval is set with the period parameter (0 for as fast as possible)
+ */
+int DefiniteFocus::FocusControlOnOff(bool state)
+{
+   // Only send commands to the device when a state change is needed
+   if ( (state && IsContinuousFocusLocked()) || (!state && !IsContinuousFocusLocked()))
+      return DEVICE_OK;
+
+   // - Focus control on/off (0x01)
+   const int commandLength = 7;
+   unsigned char command[commandLength];
+   // Size of data block
+   command[0] = 0x04;
+   // Command, ask for direct reply
+   command[1] = 0x19;
+   // 'Definite Focus command number'
+   command[2] = 0xB3;
+   // ProcessID
+   command[3] = 0x11;
+   // SubID: Focus control on/off
+   command[4] = 0x01;
+   // DevID (0x0 for Definite Focus)
+   command[5] = 0x00;
+   command[6] = 0x00;
+   if (state)
+      command[6] = 0x01;
+
+   g_hub.definiteFocusModel_.SetBusy(true);
+
+   return g_hub.ExecuteCommand(*this, *GetCoreCallback(),  command, commandLength, DEFINITEFOCUS); 
+}
+
+
+/*
+ * Lock onto the current position
+ */
+int DefiniteFocus::SetContinuousFocusing(bool state)
+{
+   return FocusControlOnOff(state);
+}
+
+/*
+ * Waits until device is Locked or timeout expires
+ */
+int DefiniteFocus::Wait() 
+{
+   char timeout[MM::MaxStrLength];
+   MM::Core* core = GetCoreCallback();
+   core->GetDeviceProperty("Core", "TimeoutMs", timeout);
+   MM::MMTime dTimeout = MM::MMTime (atof(timeout) * 1000.0);
+   MM::MMTime start = core->GetCurrentMMTime();
+   while(!IsContinuousFocusLocked() && ((core->GetCurrentMMTime() - start) < dTimeout)) {
+      CDeviceUtils::SleepMs(20);
+   }
+   if (!IsContinuousFocusLocked())
+      return ERR_DEFINITE_FOCUS_NOT_LOCKED;
+
+   return DEVICE_OK;
+}
+
+/*
+ * Waits for stabilization data to return from the Definite Focus
+ */
+int DefiniteFocus::WaitForStabilizationData() 
+{
+   char timeout[MM::MaxStrLength];
+   MM::Core* core = GetCoreCallback();
+   core->GetDeviceProperty("Core", "TimeoutMs", timeout);
+   MM::MMTime dTimeout = MM::MMTime (atof(timeout) * 1000.0);
+   MM::MMTime start = core->GetCurrentMMTime();
+   while(g_hub.definiteFocusModel_.GetWaitForStabilizationData() && ((core->GetCurrentMMTime() - start) < dTimeout)) {
+      CDeviceUtils::SleepMs(20);
+   }
+   if (g_hub.definiteFocusModel_.GetWaitForStabilizationData())
+      return ERR_DEFINITE_FOCUS_NO_DATA;
+
+   return DEVICE_OK;
+}
+
+/*
+ * Waits for device to become not-Busy
+ */
+int DefiniteFocus::WaitForBusy() 
+{
+   char timeout[MM::MaxStrLength];
+   MM::Core* core = GetCoreCallback();
+   core->GetDeviceProperty("Core", "TimeoutMs", timeout);
+   MM::MMTime dTimeout = MM::MMTime (atof(timeout) * 1000.0);
+   MM::MMTime start = core->GetCurrentMMTime();
+   while(Busy() && ((core->GetCurrentMMTime() - start) < dTimeout)) {
+      CDeviceUtils::SleepMs(20);
+   }
+   if (Busy())
+      return ERR_DEFINITE_FOCUS_TIMEOUT;
+
+   return DEVICE_OK;
+}
+
+/*
+ * Request stabilized position from the DF
+ */
+int DefiniteFocus::GetOffset(double& offset)
+{
+   g_hub.definiteFocusModel_.SetWaitForStabilizationData(true);
+   // work around for problem in firmware.  Should be called only for specific firmware versions
+   int ret = IlluminationFeatures();
+   if (ret != DEVICE_OK)
+      return ret;
+   ret = GetStabilizedPosition();
+   if (ret != DEVICE_OK)
+      return ret;
+
+   ret = WaitForStabilizationData();
+   if (ret != DEVICE_OK)
+      return ret;
+
+   DFOffset dfOffset = g_hub.definiteFocusModel_.GetData();
+   // work around problem in firmware.  Should be called only for specific firmware version
+   if (dfOffset.length_ == 8 || dfOffset.length_ == 12) {
+      DFOffset* dfOffset_new = new DFOffset((ZeissUByte) (dfOffset.length_ + 3));
+      memcpy(dfOffset_new->data_, dfOffset.data_, dfOffset.length_);
+      ZeissShort shutterFactor;
+      ZeissByte brightnessLED;
+      g_hub.definiteFocusModel_.GetShutterFactor(shutterFactor);
+      g_hub.definiteFocusModel_.GetBrightnessLED(brightnessLED);
+      memcpy(dfOffset_new->data_ + dfOffset.length_, &shutterFactor, 2);
+      memcpy(dfOffset_new->data_ + dfOffset.length_ + 2, &brightnessLED, 1);
+      dfOffset = *dfOffset_new;
+   }
+
+   vector<DFOffset>::iterator it;
+   it = find(offsets_.begin(), offsets_.end(), dfOffset);
+   if (it == offsets_.end()) {
+      offsets_.push_back(dfOffset);
+      it = find(offsets_.begin(), offsets_.end(), dfOffset);
+      std::ostringstream os;
+      os << (int) (it -offsets_.begin());
+      AddAllowedValue("Offset",os.str().c_str());
+   }
+   int i = it - offsets_.begin();
+   offset = (double) i;
+
+   return DEVICE_OK;
+}
+
+
+/*
+ * Copy measured offset to the current offest
+ */
+int DefiniteFocus::SetOffset(double offset)
+{
+   if (offset >= 0 && (unsigned int)offset < offsets_.size())
+      currentOffset_ = offsets_[(int) offset];
+   return DEVICE_OK;
+}
+
+int DefiniteFocus::GetContinuousFocusing(bool& state)
+{
+   ZeissUShort status;
+   g_hub.definiteFocusModel_.GetStatus(status);
+   state = false;
+   if (status >= 16)
+      state = true;
+   return DEVICE_OK; 
+}
+
+
+bool DefiniteFocus::IsContinuousFocusLocked()
+{
+   ZeissUShort status;
+   g_hub.definiteFocusModel_.GetStatus(status);
+   if (status & 16)
+      return true;
+   return false;
+}
+
+
+/*
+ * Focus once, either on the current position, or on the last stabilized position
+ */
+int DefiniteFocus::FullFocus()
+{
+   LogMessage("DOING FULL FOCUS NOW!!!");
+   if (focusMethod_ == g_focusThisPosition)
+      StabilizeThisPosition(0);
+   else {
+      if (currentOffset_.length_ != 0) {
+         StabilizeThisPosition(currentOffset_);
+         int ret = WaitForBusy();
+         if (ret != DEVICE_OK)
+            return ret;
+         currentOffset_.length_ = 0;
+      } 
+      //  StabilizeLastPosition();
+   }
+   return WaitForBusy();
+}
+
+
+/*
+ * Focus once, either on the current position, or on the last stabilized position
+ */
+int DefiniteFocus::IncrementalFocus()
+{
+   return FullFocus();
+}
+
+
+/*
+ * Period for continuous focus.  0- do as often as possible, otherwise in seconds
+ * only has effect for continuous focus
+ */
+int DefiniteFocus::OnPeriod(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet) {
+      ZeissULong period;
+      g_hub.definiteFocusModel_.GetPeriod(period);
+      pProp->Set((long)period);
+   } else if (eAct ==MM::AfterSet) {
+      long int period;
+      pProp->Get(period);
+      g_hub.definiteFocusModel_.SetPeriod((ZeissULong) period);
+   }
+
+   return DEVICE_OK;
+}
+
+
+/*
+int DefiniteFocus::OnOffset(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet) {
+      double offsetPosition;
+      int ret = MeasureOffset(offsetPosition);
+      if (ret != DEVICE_OK)
+         return ret;
+      pProp->Set((long) offsetPosition);
+   } else if (eAct ==MM::AfterSet) {
+      long index;
+      pProp->Get(index);
+      if (index < offsets_.size() && index >= 0) {
+         currentOffset_ = offsets_[index];
+      } else
+         return ERR_UNKNOWN_OFFSET;
+      if (currentOffset_.length_ != 0) {
+         StabilizeThisPosition(currentOffset_);
+         currentOffset_.length_ = 0;
+      }
+   }
+
+   return DEVICE_OK;
+}
+*/
+int DefiniteFocus::OnDFWorkingPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet) {
+      double workingPosition;
+      g_hub.definiteFocusModel_.GetWorkingPosition(workingPosition);
+      pProp->Set(workingPosition);
+   }
+   return DEVICE_OK;
+}
+
+int DefiniteFocus::OnFocusMethod(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet) {
+      pProp->Set(focusMethod_.c_str());
+   } else if (eAct ==MM::AfterSet) {
+      pProp->Get(focusMethod_);
+   }
+
+   return DEVICE_OK;
+}
+
+
+/**************************
+ * Definite Focus Offset stage implementation
+ */
+
+DFOffsetStage::DFOffsetStage() :
+   initialized_ (false),
+   pos_ (0.0),
+   originPos_ (0.0)
+{
+   InitializeDefaultErrorMessages();
+
+   SetErrorText(ERR_NO_AUTOFOCUS_DEVICE_FOUND, "No AutoFocus Device loaded");
+   SetErrorText(ERR_DEFINITE_FOCUS_TIMEOUT, "Definite Focus timed out.  Increase the value of Core-Timeout if the definite focus is still searching");
+
+   // Name                                                                   
+   CreateProperty(MM::g_Keyword_Name, g_ZeissDFOffset, MM::String, true); 
+                                                                             
+   // Description                                                            
+   CreateProperty(MM::g_Keyword_Description, "Definite Focus offset treated as a ZStage", MM::String, true);
+
+}  
+ 
+DFOffsetStage::~DFOffsetStage()
+{
+}
+
+void DFOffsetStage::GetName(char* Name) const                                       
+{                                                                            
+   CDeviceUtils::CopyLimitedString(Name, g_ZeissDFOffset);                
+}                                                                            
+                                                                             
+int DFOffsetStage::Initialize() 
+{
+   if (initialized_)
+      return DEVICE_OK;
+
+   ZeissUShort status;
+   ZeissHub::definiteFocusModel_.GetStatus(status);
+   if ((status & 1) != 1)
+      return ERR_MODULE_NOT_FOUND;
+
+  // get list with available AutoFocus devices.   TODO: this is a initialization parameter, which makes it harder for the end-user to set up!
+   availableAutoFocusDevices_ = GetLoadedDevicesOfType(MM::AutoFocusDevice);
+
+   CPropertyAction* pAct = new CPropertyAction (this, &DFOffsetStage::OnAutoFocusDevice);      
+   std::string defaultAutoFocus = "Undefined";
+   if (availableAutoFocusDevices_.size() >= 1) {
+      defaultAutoFocus = availableAutoFocusDevices_[0];
+      autoFocusDeviceName_ = availableAutoFocusDevices_[0];
+   }
+   CreateProperty("AutoFocus Device", defaultAutoFocus.c_str(), MM::String, false, pAct, false);         
+   if (availableAutoFocusDevices_.size() >= 1)
+      SetAllowedValues("AutoFocus Device", availableAutoFocusDevices_);
+   else
+      return ERR_NO_AUTOFOCUS_DEVICE_FOUND;
+
+   // This is needed, otherwise DeviceAUtofocus_ is not always set resulting in crashes
+   // This could lead to strange problems if multiple AutoFocus devices are loaded
+   SetProperty("AutoFocus Device", defaultAutoFocus.c_str());
+
+   int ret = UpdateStatus();
+   if (ret != DEVICE_OK)
+      return ret;
+
+   std::ostringstream tmp;
+   tmp << autoFocusDevice_;
+   LogMessage(tmp.str().c_str());
+
+   initialized_ = true;
+
+   return DEVICE_OK;
+}
+
+int DFOffsetStage::Shutdown()
+{
+   if (initialized_)
+      initialized_ = false;
+
+   return DEVICE_OK;
+}
+
+bool DFOffsetStage::Busy()
+{
+   if (autoFocusDevice_ != 0)
+      return autoFocusDevice_->Busy();
+
+   // If we are here, there is a problem.  No way to report it.
+   return false;
+}
+
+/*
+ * Sets the position of the stage in um relative to the position of the origin
+ */
+int DFOffsetStage::SetPositionUm(double pos)
+{
+   if (autoFocusDevice_ == 0)
+      return ERR_NO_AUTOFOCUS_DEVICE;
+
+   return autoFocusDevice_->SetOffset(pos);
+}
+
+/*
+ * Reports the current position of the stage in um relative to the origin
+ */
+int DFOffsetStage::GetPositionUm(double& pos)
+{
+   if (autoFocusDevice_ == 0)
+      return ERR_NO_AUTOFOCUS_DEVICE;
+
+   return  autoFocusDevice_->GetOffset(pos);;
+}
+
+/*
+ * Sets a voltage (in mV) on the DA, relative to the minimum Stage position
+ * The origin is NOT taken into account
+ */
+int DFOffsetStage::SetPositionSteps(long /*steps */)
+{
+   if (autoFocusDevice_ == 0)
+      return ERR_NO_AUTOFOCUS_DEVICE;
+
+   return  DEVICE_UNSUPPORTED_COMMAND;
+}
+
+int DFOffsetStage::GetPositionSteps(long& /*steps*/)
+{
+   if (autoFocusDevice_ == 0)
+      return ERR_NO_AUTOFOCUS_DEVICE;
+
+   return  DEVICE_UNSUPPORTED_COMMAND;
+}
+
+/*
+ * Sets the origin (relative position 0) to the current absolute position
+ */
+int DFOffsetStage::SetOrigin()
+{
+   if (autoFocusDevice_ == 0)
+      return ERR_NO_AUTOFOCUS_DEVICE;
+
+   return  DEVICE_UNSUPPORTED_COMMAND;
+}
+
+int DFOffsetStage::GetLimits(double& /* min */, double& /* max */)
+{
+   if (autoFocusDevice_ == 0)
+      return ERR_NO_AUTOFOCUS_DEVICE;
+
+   return  DEVICE_UNSUPPORTED_COMMAND;
+}
+
+
+///////////////////////////////////////
+// Action Interface
+//////////////////////////////////////
+int DFOffsetStage::OnAutoFocusDevice(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(autoFocusDeviceName_.c_str());
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      std::string autoFocusDeviceName;
+      pProp->Get(autoFocusDeviceName);
+      MM::AutoFocus* autoFocusDevice = (MM::AutoFocus*) GetDevice(autoFocusDeviceName.c_str());
+      if (autoFocusDevice != 0) {
+         autoFocusDevice_ = autoFocusDevice;
+         autoFocusDeviceName_ = autoFocusDeviceName;
+      } else
+         return ERR_NO_AUTOFOCUS_DEVICE;
+   }
+   return DEVICE_OK;
+}
+
+
+/***********************************************
+ * Adapter for the Zeiss LED illuminator Colibri
+ */
+Colibri::Colibri() :
+   initialized_ (false),
+   useExternalShutter_(false)
+{
+   SetErrorText(ERR_MODULE_NOT_FOUND, "No Colibri installed in this Zeiss microscope");
+}
+
+Colibri::~Colibri()
+{
+}
+
+int Colibri::Initialize()
+{
+   if (initialized_)
+      return DEVICE_OK;
+
+   ZeissULong status;
+   ZeissHub::colibriModel_.GetStatus(status);
+   if ((status && 1) != 1)
+      return ERR_MODULE_NOT_FOUND;
+
+   // Name
+   int ret = CreateProperty(MM::g_Keyword_Name, "Colibri", MM::String, true);
+   if (DEVICE_OK != ret)
+      return ret;
+
+   // Description
+   ret = CreateProperty(MM::g_Keyword_Description, "Zeiss Colibri adapter", MM::String, true);
+   if (DEVICE_OK != ret)
+      return ret;
+
+   // External Shutter
+   CPropertyAction* pAct = new CPropertyAction(this, &Colibri::OnExternalShutter);
+   ret = CreateProperty(g_CExternalShutter, "LED", MM::String, false, pAct);
+   if (ret != DEVICE_OK)
+      return ret;
+   AddAllowedValue(g_CExternalShutter, "External");
+   AddAllowedValue(g_CExternalShutter, "LED");
+   
+   // Operation Mode
+   pAct = new CPropertyAction(this, &Colibri::OnOperationMode);
+   ret = CreateProperty(g_COperationMode, "Normal", MM::String, false, pAct);
+   if (ret != DEVICE_OK)
+      return ret;
+   AddAllowedValue(g_COperationMode, "Normal", 0x01);
+   AddAllowedValue(g_COperationMode, "Trigger Buffer", 0x02);
+   AddAllowedValue(g_COperationMode, "External Source", 0x04);
+   AddAllowedValue(g_COperationMode, "Pulsed", 0x11);
+   AddAllowedValue(g_COperationMode, "Trigger Buffer (Pulsed)", 0x12);
+   AddAllowedValue(g_COperationMode, "Gated", 0x21);
+   AddAllowedValue(g_COperationMode, "Trigger Buffer (Gated)", 0x22);
+   
+   // Intensity, name and info for each individual LED
+   CPropertyActionEx* pActEx;
+   for (long i = 0; i < ColibriModel::NRLEDS; i++) {
+      if (g_hub.colibriModel_.available_[i]) {
+         pActEx = new CPropertyActionEx(this, &Colibri::OnIntensity, i);
+         std::ostringstream os;
+         os << "Intensity LED-" << g_hub.colibriModel_.info_[i].wavelengthNm_ << "nm";
+         ret = CreateProperty(os.str().c_str(), "0", MM::Integer, false, pActEx);
+         if (ret != DEVICE_OK)
+               return ret;
+         SetPropertyLimits(os.str().c_str(), 0, 100);
+         
+         pActEx = new CPropertyActionEx(this, &Colibri::OnName, i);
+         std::ostringstream ns;
+         ns << "Name LED-" << g_hub.colibriModel_.info_[i].wavelengthNm_ << "nm";
+         ret = CreateProperty(ns.str().c_str(), "", MM::String, true, pActEx);
+         if (ret != DEVICE_OK)
+               return ret;
+
+         pActEx = new CPropertyActionEx(this, &Colibri::OnInfo, i);
+         std::ostringstream is;
+         is << "Info LED-" << g_hub.colibriModel_.info_[i].wavelengthNm_ << "nm";
+         ret = CreateProperty(is.str().c_str(), "", MM::String, true, pActEx);
+         if (ret != DEVICE_OK)
+               return ret;
+      }
+   }
+
+   ZeissByte operationMode = g_hub.colibriModel_.GetMode();
+   if (operationMode == 4)
+      useExternalShutter_ = true;
+
+   return DEVICE_OK;
+}
+
+int Colibri::Shutdown()
+{
+   return DEVICE_OK;
+}
+
+bool Colibri::Busy()
+{
+   if (g_hub.colibriModel_.GetBusy())
+      return true;
+
+   return false;
+}
+
+void Colibri::GetName (char* Name) const
+{
+   CDeviceUtils::CopyLimitedString(Name, "ZeissColibri");
+}
+
+
+/**
+ * Switches our virtual shutter between the LEDS and external shutter
+ * Switches operation mode to accomplish this
+ */
+int Colibri::OnExternalShutter(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct==MM::BeforeGet) {
+      ZeissByte operationMode = g_hub.colibriModel_.GetMode();
+      if (operationMode == 4)
+         useExternalShutter_ = true;
+      if (useExternalShutter_)
+         pProp->Set("External");
+      else
+         pProp->Set("LED");
+   } else if (eAct == MM::AfterSet) {
+      std::string use;
+      pProp->Get(use);
+      bool open = g_hub.colibriModel_.GetOpen() || (g_hub.colibriModel_.GetExternalShutterState() == 2);
+      if (open)
+         SetOpen(false);
+      if (use == "External") {
+         if (g_hub.colibriModel_.GetMode() != 0x04)
+            g_hub.ColibriOperationMode(*this, *GetCoreCallback(), 0x04);
+         useExternalShutter_ = true;
+      } else {
+         if (g_hub.colibriModel_.GetMode() != 0x01)
+            g_hub.ColibriOperationMode(*this, *GetCoreCallback(), 0x01);
+         useExternalShutter_ = false;
+      }
+      CDeviceUtils::SleepMs(100);
+      if (open)
+         SetOpen(true);
+   }
+   return DEVICE_OK;
+}
+
+
+/**
+ * Translate Intensity to percentages, just like the Colibri controller does
+ */
+int Colibri::OnIntensity(MM::PropertyBase* pProp, MM::ActionType eAct, long index)
+{
+   double calibrationValue = (double)g_hub.colibriModel_.GetCalibrationValue(index);
+
+   if (eAct==MM::BeforeGet) {
+      double intensity = (double) g_hub.colibriModel_.GetBrightness(index);
+      pProp->Set(floor(intensity/calibrationValue * 100));
+   } else if (eAct == MM::AfterSet) {
+      long intensity;
+      pProp->Get(intensity);
+      if (intensity != (long) ((double)g_hub.colibriModel_.GetBrightness(index)/calibrationValue * 100)) {
+         int ret = g_hub.ColibriBrightness(*this, *GetCoreCallback(),
+                                       index, (ZeissShort) ceil ((double)intensity/100.0 * calibrationValue));
+         if (ret != DEVICE_OK)
+            return ret;
+      }
+   }
+
+   return DEVICE_OK;
+}
+
+
+int Colibri::OnOperationMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet) {
+      ZeissByte operationMode = g_hub.colibriModel_.GetMode();
+      char msg[MM::MaxStrLength];
+      long data;
+      for (unsigned i=0; i<GetNumberOfPropertyValues(g_COperationMode); i++) {
+         if (GetPropertyValueAt(g_COperationMode, i, msg)) {
+            GetPropertyData(g_COperationMode, msg, data);
+            if (data == operationMode) {
+               pProp->Set(msg);
+               return DEVICE_OK;
+            }
+         }
+      }
+   } else if (eAct == MM::AfterSet) {
+      std::string propS;
+      pProp->Get(propS);
+      long data;
+      GetPropertyData(g_COperationMode, propS.c_str(), data);
+      if ( (ZeissByte) data != g_hub.colibriModel_.GetMode())
+         return g_hub.ColibriOperationMode(*this, *GetCoreCallback(), (ZeissByte) data);
+   }
+
+   return DEVICE_OK;
+}
+      
+
+int Colibri::OnName(MM::PropertyBase* pProp, MM::ActionType eAct, long index)
+{
+   if (eAct==MM::BeforeGet) {
+      std::string name = g_hub.colibriModel_.GetName(index);
+      pProp->Set(name.c_str());
+   }
+   return DEVICE_OK;
+}
+
+int Colibri::OnInfo(MM::PropertyBase* pProp, MM::ActionType eAct, long index)
+{
+   if (eAct==MM::BeforeGet) {
+      std::string info = g_hub.colibriModel_.GetInfo(index);
+      pProp->Set(info.c_str());
+   }
+   return DEVICE_OK;
+}
+
+/**
+ * Switches LEDS or external shutter depending on flag useExternalShutter
+ * Only switch on LEDs that have their intensity set higher than 0
+ */
+int Colibri::SetOpen(bool open)
+{
+   int ret = DEVICE_OK;
+   if (useExternalShutter_) {
+      // Note: should the operation mode be checked here?
+      if (open != (g_hub.colibriModel_.GetExternalShutterState() == 2) ) {
+         return g_hub.ColibriExternalShutter(*this, *GetCoreCallback(), open);
+      }
+   } else {
+      // Note: should the operation mode be checked here?
+      for (int i=0; i<g_hub.colibriModel_.NRLEDS; i++) {
+         if (g_hub.colibriModel_.GetBrightness(i) != 0 && 
+               g_hub.colibriModel_.available_[i]  &&
+               ( (g_hub.colibriModel_.GetOnOff(i) == 2) != open) ) {
+            ret = g_hub.ColibriOnOff(*this, *GetCoreCallback(), (ZeissByte) i, open);
+            if (ret != DEVICE_OK)
+               return ret;
+         }
+      }
+   }
+
+   return ret;
+}
+
+int Colibri::GetOpen(bool& open)
+{
+   open =  g_hub.colibriModel_.GetOpen();
+   return DEVICE_OK;
 }
 

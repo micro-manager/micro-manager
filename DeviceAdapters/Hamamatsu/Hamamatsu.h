@@ -5,6 +5,8 @@
 //-----------------------------------------------------------------------------
 // DESCRIPTION:   Hamamatsu camera module based on DCAM API
 // COPYRIGHT:     University of California, San Francisco, 2006, 2007, 2008
+//                100X Imaging Inc, 2008
+//
 // LICENSE:       This library is free software; you can redistribute it and/or
 //                modify it under the terms of the GNU Lesser General Public
 //                License as published by the Free Software Foundation.
@@ -101,8 +103,11 @@ public:
    int SetBinning(int binSize); 
 
    // high-speed interface
-   int StartSequenceAcquisition(long numImages, double interval_ms);
+   int StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow);
    int StopSequenceAcquisition();
+   int RestartSequenceAcquisition();
+   bool IsCapturing();
+   int RestartSnapMode();
 
    // action interface
    int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -111,12 +116,14 @@ public:
    int OnOutTrigPolarity(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnExtended(MM::PropertyBase* pProp, MM::ActionType eAct, long featureId);
+   int OnExtendedProperty(MM::PropertyBase* pProp, MM::ActionType eAct, long propertyId);
+   int OnFrameBufferSize(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnGain(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnOffset(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnReadoutTime(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnActualIntervalMs(MM::PropertyBase* pProp, MM::ActionType eAct);
-   //int OnSensitivity(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSensitivity(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnScanMode(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnCCDMode(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPhotonImagingMode(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -131,9 +138,11 @@ private:
    int ResizeImageBuffer();
    int ResizeImageBuffer(long frameBufSize);
    int ShutdownImageBuffer();
+   int SetTrigMode(std::string triggerMode);
    bool IsFeatureSupported(int featureId);
    bool IsScanModeSupported(int32_t& maxSpeed);
-   bool IsPropertySupported(DCAM_PROPERTYATTR& propAttr, long property);
+   bool IsPropertySupported(DCAM_PROPERTYATTR& propAttr, long propertyId);
+   int AddExtendedProperty(std::string propName, long propertyId);
    long ReportError(std::string message);
    int SetAvailableTriggerModes(DWORD cap);
    int SetAllowedBinValues(DWORD cap);
@@ -141,9 +150,17 @@ private:
    int SetAllowedGainValues(DCAM_PARAM_FEATURE_INQ featureInq);
    int SetAllowedPropValues(DCAM_PROPERTYATTR propAttr, std::string propName);
    DCAM_PARAM_FEATURE_INQ GetFeatureInquiry(int featureId);
+   void SetTextInfo();
+
+   typedef std::map<std::string, long> MapLongByString;
+   typedef std::map<long, std::string> MapStringByLong;
+   std::map<long, MapLongByString> dcamLongByString_;
+   std::map<long, MapStringByLong> dcamStringByLong_;
 
  //  static CHamamatsu* m_pInstance;
    static unsigned refCount_;
+   long frameBufferSize_;
+   long currentBufferSize_;
    ImgBuffer img_;
    bool m_bInitialized;
    bool m_bBusy;
@@ -155,7 +172,6 @@ private:
    long slot_;
    long frameCount_;
    long lastImage_;
-   long frameBufSize_;
 
    static HINSTANCE m_hDCAMModule; // DCAM dll handle
    unsigned long imageCounter_;
@@ -164,6 +180,9 @@ private:
    AcqSequenceThread* seqThread_; // burst mode thread
    std::string triggerMode_;
    std::string originalTrigMode_;
+   double dExp_;
+   bool stopOnOverflow_;
+   double interval_ms_;
 };
 
 /*

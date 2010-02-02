@@ -34,6 +34,19 @@
 #define ERR_UNKNOWN_CAMERA_TYPE  11
 #define ERR_TIMEOUT              12
 
+// warning code definitions from MA_SCDPHPSDKWINE_515.pdf
+//   http://www.pco.de/fileadmin/user_upload/db/download/MA_SCDPHPSDKWINE_515.pdf
+// (SDK Software Development Kit Windows 95/98/NT/2000 Version 5.15 		 )
+
+#define	NO_IMAGE_IN_PCI_BUFFER	100
+#define	PICTURE_TOO_DARK	101
+#define	PICTURE_TOO_BRIGHT	102
+#define	ONE_OR_MORE_VALUES_CHANGED	103
+#define	BUFFER_FOR_BUILDED_STRING_TOO_SHORT	104
+
+#define IsSensicamWarning(x) ((NO_IMAGE_IN_PCI_BUFFER<=(x))&&((x)<=BUFFER_FOR_BUILDED_STRING_TOO_SHORT))
+#define IsSensicamError(x) ((0!=(x))&&(!(IsSensicamWarning(x))))
+
 //////////////////////////////////////////////////////////////////////////////
 // Implementation of the MMDevice and MMCamera interfaces
 //
@@ -70,6 +83,9 @@ public:
    int SetROI(unsigned uX, unsigned uY, unsigned uXSize, unsigned uYSize); 
    int GetROI(unsigned& uX, unsigned& uY, unsigned& uXSize, unsigned& uYSize); 
    int ClearROI();
+   int StartSequenceAcquisition(long numImages, double /*interval_ms*/, bool stopOnOverflow);
+   int StopSequenceAcquisition();
+   bool IsCapturing();
 
    // action interface
    int OnBoard(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -97,10 +113,44 @@ private:
    CSensicam();
    int ResizeImageBuffer();
 
+   class SequenceThread : public MMDeviceThreadBase
+   {
+      public:
+         SequenceThread(CSensicam* pCam) : stop_(false), numImages_(0) {camera_ = pCam;}
+         ~SequenceThread() {}
+
+         int svc (void);
+
+         void Stop() {stop_ = true;}
+
+         void Start()
+         {
+            stop_ = false;
+            activate();
+         }
+
+         void SetLength(long images) {numImages_ = images;}
+		 long GetLength(void) {return numImages_;};
+
+      private:
+         CSensicam* camera_;
+         bool stop_;
+         long numImages_;
+   };
+
+   SequenceThread* sthd_;
+   bool stopOnOverflow_;
+
+   int InsertImage();
+
+
    static CSensicam* m_pInstance;
    ImgBuffer img_;
    int pixelDepth_;
    float pictime_;
+   bool sequenceRunning_;
+
+
    double m_dExposure; 
    bool m_bBusy;
    bool m_bInitialized;

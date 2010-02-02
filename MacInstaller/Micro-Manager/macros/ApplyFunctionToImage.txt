@@ -1,0 +1,70 @@
+
+  macro "Atan" {
+      requires("1.30e");
+      start = getTime();
+      w = getWidth(); h = getHeight();
+      for (y=0; y<h; y++) {
+          for (x=0; x<w; x++)
+              setPixel(x, y, atan(getPixel(x, y)));   
+          if (y%10==0) showProgress(y, h);
+      }
+      showTime(start)
+ }
+
+   macro "Sqr" {
+      start = getTime();
+      w = getWidth(); h = getHeight();
+      for (y=0; y<h; y++) {
+          for (x=0; x<w; x++)
+              setPixel(x, y, sqr(getPixel(x, y)));   
+          if (y%10==0) showProgress(y, h);
+      }
+      showTime(start)
+   }
+
+   macro "Faster Sqr" {
+      start = getTime();
+      w = getWidth(); h = getHeight();
+      for (y=0; y<h; y++) {
+          for (x=0; x<w; x++) {
+              v = getPixel(x, y);
+              setPixel(x, y, v*v); 
+      }  
+          if (y%10==0) showProgress(y, h);
+      }
+     showTime(start)
+  }
+
+  macro "Sqrt" {
+      start = getTime();
+      w = getWidth(); h = getHeight();
+      for (y=0; y<h; y++) {
+          for (x=0; x<w; x++)
+              setPixel(x, y, sqrt(getPixel(x, y)));   
+          if (y%10==0) showProgress(y, h);
+      }
+      showTime(start)
+  }
+
+  macro "Inverse Log" {
+      E = 2.7182818284590452354;
+      start = getTime();
+      w = getWidth(); h = getHeight();
+      for (y=0; y<h; y++) {
+          for (x=0; x<w; x++)
+              setPixel(x, y, pow(E, getPixel(x, y)));   
+          if (y%10==0) showProgress(y, h);
+      }
+      showTime(start)
+  }
+
+ function showTime(start) {
+      showStatus((getTime()-start)*1000/(w*h)+" usec/pixel");
+  }
+
+  function sqr(x) {
+      return x*x;
+  }
+
+
+

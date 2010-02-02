@@ -42,6 +42,7 @@ import org.micromanager.metadata.AcquisitionData;
 import org.micromanager.metadata.DisplaySettings;
 import org.micromanager.metadata.MMAcqDataException;
 import org.micromanager.utils.ProgressBar;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  * ImageJ plugin to read Micro-Manager image5d file format.
@@ -53,7 +54,7 @@ public class MMImage5DReaderPlugin_ implements PlugIn {
 
    public void run(String arg) {
       // 1.32c is needed for reading prefs through IJ, we might need even later
-      if (IJ.versionLessThan("1.32c"))
+      if (IJ.versionLessThan("1.42n"))
          return;
       
       // TODO: use global look and feel set
@@ -64,16 +65,16 @@ public class MMImage5DReaderPlugin_ implements PlugIn {
 //    UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 //    } catch (ClassNotFoundException e) {
 //    // TODO Auto-generated catch block
-//    e.printStackTrace();
+//    ReportingUtils.logError(e);
 //    } catch (InstantiationException e) {
 //    // TODO Auto-generated catch block
-//    e.printStackTrace();
+//    ReportingUtils.logError(e);
 //    } catch (IllegalAccessException e) {
 //    // TODO Auto-generated catch block
-//    e.printStackTrace();
+//    ReportingUtils.logError(e);
 //    } catch (UnsupportedLookAndFeelException e) {
 //    // TODO Auto-generated catch block
-//    e.printStackTrace();
+//    ReportingUtils.logError(e);
 //    }
 
       // choose the directory
@@ -182,7 +183,7 @@ public class MMImage5DReaderPlugin_ implements PlugIn {
             img5d.changes = false;
 
          } catch (MMAcqDataException e) {
-            JOptionPane.showMessageDialog(IJ.getInstance().getOwner(), e.getMessage());
+            ReportingUtils.showError(e);
             if (progressBar != null) 
             {
                progressBar.setVisible(false);

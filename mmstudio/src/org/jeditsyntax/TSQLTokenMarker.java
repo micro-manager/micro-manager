@@ -9,8 +9,6 @@
 
 package org.jeditsyntax;
 
-import javax.swing.text.Segment;
-
 /**
  * Transact-SQL token marker.
  *

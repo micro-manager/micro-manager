@@ -27,14 +27,18 @@
 //
 #include "CircularBuffer.h"
 #include "CoreUtils.h"
+#include "../MMDevice/DeviceUtils.h"
+#include "../MMDevice/DeviceThreads.h"
+#include "boost/date_time/posix_time/posix_time.hpp"
+#include <cstdio>
 
 #ifdef WIN32
 #pragma warning (disable : 4312 4244)
 #endif
 
-#include <ace/Mutex.h>
-#include <ace/Guard_T.h>
-#include "ace/High_Res_Timer.h"
+//#include <ace/Mutex.h>
+//#include <ace/Guard_T.h>
+//#include "ace/High_Res_Timer.h"
 
 #ifdef WIN32
 #pragma warning (default : 4312 4244)
@@ -46,9 +50,12 @@
 
 const int bytesInMB = 1048576;
 const long adjustThreshold = LONG_MAX / 2;
+const int maxCBSize = 1000;    //a reasonable limit to circular buffer size
 
 // mutex
-static ACE_Mutex g_bufferLock;
+//static ACE_Mutex g_bufferLock;
+
+static MMThreadLock g_bufferLock;
 
 CircularBuffer::CircularBuffer(unsigned int memorySizeMB) :
    width_(0), height_(0), pixDepth_(0), insertIndex_(0), saveIndex_(0), memorySizeMB_(memorySizeMB), overflow_(false), estimatedIntervalMs_(0)
@@ -84,14 +91,21 @@ bool CircularBuffer::Initialize(unsigned channels, unsigned slices, unsigned int
    if (cbSize == 0)
       return false; // memory footprint too small
 
-   // TODO: verify if we have enough RAM to satisfy this request   
+   // set a reasonable limit to circular buffer capacity 
+   if (cbSize > maxCBSize)
+      cbSize=maxCBSize; 
 
-   // allocate buffers
+   // TODO: verify if we have enough RAM to satisfy this request
+
+   for (unsigned long i=0; i<frameArray_.size(); i++)
+      frameArray_[i].Clear();
+
+   // allocate buffers  - could conceivably throw an out-of-memory exception
    frameArray_.resize(cbSize);
    for (unsigned long i=0; i<frameArray_.size(); i++)
    {
       frameArray_[i].Resize(w, h, pixDepth);
-      frameArray_[i].Preallocate(1, 1);
+      frameArray_[i].Preallocate(numChannels_, numSlices_);
    }
 
    return true;
@@ -104,8 +118,6 @@ unsigned long CircularBuffer::GetSize() const
 
 unsigned long CircularBuffer::GetFreeSize() const
 {
-   //ACE_Guard<ACE_Mutex> guard(g_bufferLock);
-
    long freeSize = (long)frameArray_.size() - (insertIndex_ - saveIndex_);
    if (freeSize < 0)
       return 0;
@@ -115,14 +127,13 @@ unsigned long CircularBuffer::GetFreeSize() const
 
 unsigned long CircularBuffer::GetRemainingImageCount() const
 {
-   //ACE_Guard<ACE_Mutex> guard(g_bufferLock);
    return (unsigned long)(insertIndex_ - saveIndex_);
 }
 
 /**
  * Inserts a single image in the buffer.
  */
-bool CircularBuffer::InsertImage(const unsigned char* pixArray, unsigned int width, unsigned int height, unsigned int byteDepth, MM::ImageMetadata* pMd)
+bool CircularBuffer::InsertImage(const unsigned char* pixArray, unsigned int width, unsigned int height, unsigned int byteDepth, const Metadata* pMd) throw (CMMError)
 {
    return InsertMultiChannel(pixArray, 1, width, height, byteDepth, pMd);
 }
@@ -130,9 +141,9 @@ bool CircularBuffer::InsertImage(const unsigned char* pixArray, unsigned int wid
 /**
  * Inserts a multi-channel frame in the buffer.
  */
-bool CircularBuffer::InsertMultiChannel(const unsigned char* pixArray, unsigned numChannels, unsigned width, unsigned height, unsigned byteDepth, MM::ImageMetadata* pMd)
+bool CircularBuffer::InsertMultiChannel(const unsigned char* pixArray, unsigned numChannels, unsigned width, unsigned height, unsigned byteDepth, const Metadata* pMd) throw (CMMError)
 {
-   ACE_Guard<ACE_Mutex> guard(g_bufferLock);
+   /*ACE_Guard<ACE_Mutex>*/  MMThreadGuard guard(g_bufferLock);
 
    unsigned long singleChannelSize = (unsigned long)width * height * byteDepth;
    static unsigned long previousTicks = 0;
@@ -144,7 +155,7 @@ bool CircularBuffer::InsertMultiChannel(const unsigned char* pixArray, unsigned 
 
    // check image dimensions
    if (width != width_ || height_ != height || byteDepth != byteDepth)
-      return false; // incompatible size
+      throw CMMError("Incompatible image dimensions in the circular buffer", MMERR_CircularBufferIncompatibleImage);
 
    
    if ((long)frameArray_.size() - (insertIndex_ - saveIndex_) > 0)
@@ -158,12 +169,19 @@ bool CircularBuffer::InsertMultiChannel(const unsigned char* pixArray, unsigned 
             return false;
 
          if (pMd)
+         {
+            // TODO: the same metadata is inserted for each channel ???
+            // Perhaps we need to add specific tags to each channel
             pImg->SetMetadata(*pMd);
+         }
          else
          {
             // if metadata was not supplied by the camera insert current timestamp
             MM::MMTime timestamp = GetMMTimeNow();
-            MM::ImageMetadata md(timestamp, 0.0);
+            Metadata md;
+            MetadataSingleTag mst(MM::g_Keyword_Elapsed_Time_ms, "Buffer", true);
+            mst.SetValue(CDeviceUtils::ConvertToString(timestamp.getMsec()));
+            md.SetTag(mst);
             pImg->SetMetadata(md);
          }
          pImg->SetPixels(pixArray + i*singleChannelSize);
@@ -191,8 +209,7 @@ bool CircularBuffer::InsertMultiChannel(const unsigned char* pixArray, unsigned 
 
 const unsigned char* CircularBuffer::GetTopImage() const
 {
-//   printf("Entered CB GetTopImage\n");
-   ACE_Guard<ACE_Mutex> guard(g_bufferLock);
+   /*ACE_Guard<ACE_Mutex>*/  MMThreadGuard guard(g_bufferLock);
 
    if (frameArray_.size() == 0)
       return 0;
@@ -205,7 +222,7 @@ const unsigned char* CircularBuffer::GetTopImage() const
 
 const ImgBuffer* CircularBuffer::GetTopImageBuffer(unsigned channel, unsigned slice) const
 {
-   ACE_Guard<ACE_Mutex> guard(g_bufferLock);
+   /*ACE_Guard<ACE_Mutex>*/  MMThreadGuard guard(g_bufferLock);
 
    if (frameArray_.size() == 0)
       return 0;
@@ -221,7 +238,7 @@ const ImgBuffer* CircularBuffer::GetTopImageBuffer(unsigned channel, unsigned sl
 
 const unsigned char* CircularBuffer::GetNextImage()
 {
-   ACE_Guard<ACE_Mutex> guard(g_bufferLock);
+   /*ACE_Guard<ACE_Mutex>*/  MMThreadGuard guard(g_bufferLock);
 
    if (saveIndex_ < insertIndex_)
    {
@@ -234,7 +251,7 @@ const unsigned char* CircularBuffer::GetNextImage()
 
 const ImgBuffer* CircularBuffer::GetNextImageBuffer(unsigned channel, unsigned slice)
 {
-   ACE_Guard<ACE_Mutex> guard(g_bufferLock);
+   /*ACE_Guard<ACE_Mutex>*/  MMThreadGuard guard(g_bufferLock);
 
    // TODO: we may return NULL pointer if channel and slice indexes are wrong
    // this will cause problem in the SWIG - Java layer
@@ -249,7 +266,7 @@ const ImgBuffer* CircularBuffer::GetNextImageBuffer(unsigned channel, unsigned s
 
 double CircularBuffer::GetAverageIntervalMs() const
 {
-   ACE_Guard<ACE_Mutex> guard(g_bufferLock);
+   /*ACE_Guard<ACE_Mutex>*/  MMThreadGuard guard(g_bufferLock);
 
    // TODO: below is not working properly
    //const unsigned avgSize = 10;
@@ -272,15 +289,24 @@ double CircularBuffer::GetAverageIntervalMs() const
    return (double)estimatedIntervalMs_;
 }
 
+//N.B. an unsigned long millisecond clock tick rolls over in 47 days.
+// millisecond clock tick incrementing from the time first requested
 unsigned long CircularBuffer::GetClockTicksMs() const
 {
-#ifdef __APPLE__
-      struct timeval t;
-      gettimeofday(&t,NULL);
-      return t.tv_sec * 1000L + t.tv_usec * 1000L;
-#else
-      ACE_High_Res_Timer timer;
-      ACE_Time_Value t = timer.gettimeofday();
-      return (unsigned long) (t.sec() * 1000L + t.usec() / 1000L);
-#endif
+	using namespace boost::posix_time;
+	using namespace boost::gregorian;
+	// use tick from the first time this is call is requested
+	static boost::posix_time::ptime sst(boost::date_time::not_a_date_time);
+	if (boost::posix_time::ptime(boost::date_time::not_a_date_time) == sst)
+	{
+		boost::gregorian::date today( day_clock::local_day());
+		sst = boost::posix_time::ptime(today); 
+	}
+
+	boost::posix_time::ptime t = boost::posix_time::microsec_clock::local_time();
+
+	time_duration diff = t - sst;
+	return static_cast<unsigned long>(diff.total_milliseconds());
+
+
 }

@@ -1,0 +1,43 @@
+// "LSM_Batch_With_Colors"
+// This is a macro that uses LSM Reader to batch convert 
+// LSM files, keeping the original channel colors.
+// Requires LSM Reader v3.2f or later.
+
+macro "lsm_batch_with_colors" {
+  sourcedir=getDirectory("select source directory with lsm files");
+  destdir=getDirectory("select or create destination directory");
+
+  Dialog.create("LSM Batch color converter options");
+  Dialog.addChoice("Export format  ", newArray("Tiff", "Jpeg"));
+  Dialog.addCheckbox("Split Stacks ", false);
+  Dialog.show();
+
+  type = Dialog.getChoice();
+  split_stacks = Dialog.getCheckbox();
+
+  list = getFileList(sourcedir);
+  setBatchMode(true);
+  for (i=0; i<list.length; i++) {
+	path = sourcedir+list[i];
+	if (endsWith(path, ".lsm")) {
+          open(path);
+          save_all();
+	}
+  }
+}
+
+function save_all() {
+  while (nImages > 0) {
+    name=getTitle();
+    name = replace(name,".","_");
+    name = replace(name,":","_");
+    name = replace(name," ","_");
+    rename(name);
+    if (split_stacks) { 
+      run("Image Sequence... ", "format="+type+" name="+name+" start=0 digits=4 save=["+destdir+name+"]");
+    } else {
+      saveAs(type,destdir+name); 
+    }
+    close();
+  }
+}

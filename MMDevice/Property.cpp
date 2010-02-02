@@ -22,6 +22,7 @@
 
 const int BUFSIZE = 60;
 #include <assert.h>
+#include <cstdio>
 #include "Property.h"
 using namespace std;
 
@@ -165,7 +166,7 @@ double MM::FloatProperty::Truncate(double dVal)
    char fmtStr[20];
    char buf[BUFSIZE];
    sprintf(fmtStr, "%%.%df", decimalPlaces_);
-   sprintf(buf, fmtStr, dVal);
+   snprintf(buf, BUFSIZE, fmtStr, dVal);
    return atof(buf);
 }
 
@@ -208,7 +209,7 @@ bool MM::FloatProperty::Get(std::string& strVal) const
    char fmtStr[20];
    char buf[BUFSIZE];
    sprintf(fmtStr, "%%.%df", decimalPlaces_);
-   sprintf(buf, fmtStr, value_);
+   snprintf(buf, BUFSIZE, fmtStr, value_);
    strVal = buf;
    return true;
 }
@@ -419,6 +420,16 @@ int MM::PropertyCollection::SetAllowedValues(const char* pszName, vector<string>
    for (unsigned i=0; i<values.size(); i++)
       pProp->AddAllowedValue(values[i].c_str());
 
+   return DEVICE_OK;
+}
+
+int MM::PropertyCollection::ClearAllowedValues(const char* pszName)
+{
+   MM::Property* pProp = Find(pszName);
+   if (!pProp)
+      return DEVICE_INVALID_PROPERTY; // name not found
+
+   pProp->ClearAllowedValues();
    return DEVICE_OK;
 }
 

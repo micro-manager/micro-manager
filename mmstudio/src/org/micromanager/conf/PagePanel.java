@@ -30,11 +30,13 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 
 import mmcorej.CMMCore;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  * Wizard panel used as the abstract base class for all pages.
  */
 public abstract class PagePanel extends JPanel{
+   private static final long serialVersionUID = -4598248516499305300L;
    protected MicroscopeModel model_;
    protected CMMCore core_;
    protected Preferences prefs_;
@@ -95,7 +97,7 @@ public abstract class PagePanel extends JPanel{
       JOptionPane.showMessageDialog(this, txt);           
    }
    protected void handleException(Exception e) {
-      JOptionPane.showMessageDialog(this, "Message: " + e.getMessage() + (e.getCause() != null ? "\nCause:" + e.getCause() : ""));           
+      ReportingUtils.showError(e);
    }
 
    public abstract void refresh();

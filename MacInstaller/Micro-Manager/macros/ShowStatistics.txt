@@ -1,0 +1,110 @@
+// These macros demonstrate the use of the getStatistics() function.
+// Requires the 1.34h preview at
+// "http://rsb.info.nih.gov/ij/ij.jar".
+
+  macro "Show Statistics" {
+      requires("1.34h");
+      if (nSlices>1) run("Clear Results");
+      getVoxelSize(w, h, d, unit);
+      n = getSliceNumber();
+      for (i=1; i<=nSlices; i++) {
+          setSlice(i);
+          getStatistics(area, mean, min, max, std);
+          row = nResults;
+          if (nSlices==1)
+              setResult("Area ("+unit+"^2)", row, area);
+          setResult("Mean ", row, mean);
+          setResult("Std ", row, std);
+          setResult("Min ", row, min);
+          setResult("Max ", row, max);
+      }
+      setSlice(n);
+      updateResults();
+  }
+
+  macro "Show Raw Statistics" {
+      requires("1.34h");
+      if (nSlices>1) run("Clear Results");
+      n = getSliceNumber();
+      for (i=1; i<=nSlices; i++) {
+          setSlice(i);
+          getRawStatistics(count, mean, min, max, std);
+          row = nResults;
+          if (nSlices==1)
+             setResult("Pixels", row, count);
+          setResult("Mean ", row, mean);
+          setResult("Std ", row, std);
+          setResult("Min ", row, min);
+          setResult("Max ", row, max);
+      }
+      setSlice(n);
+      updateResults();
+  }
+
+  macro "Plot Histogram" {
+       getStatistics(area, mean, min, max, std, histogram);
+       if (bitDepth==8 || bitDepth==24)
+           Plot.create("Histogram", "Value", "Count", histogram);
+       else {
+           values = newArray(256);
+           value = min;
+           binWidth = (max-min)/256;
+           for (i=0; i<256; i++) {
+               values[i] = value;
+               value += binWidth;
+          }
+          Plot.create("Histogram", "Value", "Count", values, histogram);
+       }
+  }
+
+  macro "List Histogram Counts" {
+       run("Clear Results");
+       getStatistics(area, mean, min, max, std, histogram);
+       if (bitDepth==8 || bitDepth==24) {
+           for (i=0; i<histogram.length; i++) {
+               setResult("Value", i, i);
+               setResult("Count", i, histogram[i]);
+          }
+       } else {
+           value = min;
+           binWidth = (max-min)/256;
+           for (i=0; i<histogram.length; i++) {
+               setResult("Value", i, value);
+               setResult("Count", i, histogram[i]);
+               value += binWidth;
+          }
+       }
+       updateResults();
+  }
+
+  macro "Plot Z-axis Profile" {
+      requires("1.34h");
+      if (nSlices==1) exit("This macro requires a stack");
+      n = getSliceNumber();
+      means = newArray(nSlices);
+      for (i=1; i<=nSlices; i++) {
+          setSlice(i);
+          getStatistics(area, mean);
+          means[i-1] = mean;
+      }
+      setSlice(n);
+      Plot.create("Histogram", "Slice", "Mean", means);
+  }
+
+  macro "Test getRawStatistics Speed" {
+      getStatistics(count);
+      n = 50;
+      if (count<10000) n = 500;
+      start = getTime;
+      for (i=0; i<n; i++)
+          getRawStatistics(count, mean, min, max, std, histogram);
+      time = getTime-start;
+      print("getRawStatistics(count, mean, min, max, std, histogram)");
+      print(time/n+" ms/call");
+      start = getTime;
+      for (i=0; i<n; i++)
+          getRawStatistics(count, mean);
+      time = getTime-start;
+      print("getRawStatistics(count, mean)");
+      print(time/n+" ms/call");
+ }

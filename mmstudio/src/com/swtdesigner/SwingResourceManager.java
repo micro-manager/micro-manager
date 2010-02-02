@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Iterator;
+
 import javax.swing.ImageIcon;
 
 /**
@@ -55,7 +56,7 @@ public class SwingResourceManager {
      * @param path String The path to the image file
      * @return Image The image stored in the file at the specified path
      */
-	public static Image getImage(Class clazz, String path) {
+	public static Image getImage(Class<?> clazz, String path) {
 		String key = clazz.getName() + '|' + path;
 		Image image = m_ClassImageMap.get(key);
 		if (image == null) {
@@ -106,7 +107,7 @@ public class SwingResourceManager {
 	 * @param section the section do clear
 	 */
 	public static void clearImages(String section) {
-		for (Iterator I = m_ClassImageMap.keySet().iterator(); I.hasNext();) {
+		for (Iterator<String> I = m_ClassImageMap.keySet().iterator(); I.hasNext();) {
 			String key = (String) I.next();
 			if (!key.startsWith(section + '|'))
 				continue;
@@ -122,7 +123,7 @@ public class SwingResourceManager {
      * @param path String The path to the icon file
      * @return Icon The icon stored in the file at the specified path
      */
-	public static ImageIcon getIcon(Class clazz, String path) {
+	public static ImageIcon getIcon(Class<?> clazz, String path) {
 		return getIcon(getImage(clazz, path));
 	}
 	

@@ -72,12 +72,13 @@ class USBDeviceLister
       USBDeviceLister();
       ~USBDeviceLister();
 
-      // returns the list of ports discovered in the constructor
+      // returns the current list of ports
       void ListUSBDevices(std::vector<std::string> &availableDevices);
-      // returns the list of ports discover now and stored this for future use in ListPorts
-      void ListCurrentUSBDevices(std::vector<std::string> &availableDevices);
+      // returns a cached list of devices
+      void ListCachedUSBDevices(std::vector<std::string> &availableDevices);
 
    private:
+      MM::MMTime GetCurrentMMTime();
       std::vector<std::string> storedAvailableUSBDevices_;
       void FindUSBDevices(std::vector<std::string> &availableDevices);
 };
@@ -103,7 +104,7 @@ public:
 class MDUSBDevice : public CSerialBase<MDUSBDevice>  
 {
 public:
-   MDUSBDevice(std::string portName);
+   MDUSBDevice(std::string deviceName);
    ~MDUSBDevice();
   
    // MMDevice API
@@ -151,10 +152,11 @@ private:
    int deviceOutputEndPoint_;
    int maxPacketSize_;
 
-   int MDUSBDevice::HandleError(int errorCode);
+   int HandleError(int errorCode);
 
-   char* buffer_;
-   unsigned bufferLen_;
+   char* overflowBuffer_;
+   unsigned overflowBufferOffset_;
+   unsigned overflowBufferLength_;
 };
 
 class USBManager
@@ -169,28 +171,5 @@ public:
 private:
    std::vector<MDUSBDevice*> devices_;
 };
-
- 
-/*
-class USBDevice
-{
-   public:
-      USBDevice(std::string deviceName);
-      ~USBDevice();
-
-      bool IsOpen() { return open_; };
-      int Open();
-      int Close();
-      int WriteByte(const unsigned char dataByte);
-      std::string ReadLine(const unsigned int msTimeOut, const char* lineTerminator) throw (NotOpen, ReadTimeout, std::runtime_error);
-     
-
-   private:
-      std::string deviceName_;
-      usb_device_descriptor deviceDescriptor;
-      bool open_;
-};
-*/
-
 
 #define _USB_h_

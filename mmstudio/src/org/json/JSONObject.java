@@ -24,11 +24,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+import java.io.IOException;
+import java.io.Writer;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.io.IOException;
-import java.io.Writer;
 
 /**
  * A JSONObject is an unordered collection of name/value pairs. Its
@@ -126,7 +126,7 @@ public class JSONObject {
     /**
      * The hash map where the JSONObject's properties are kept.
      */
-    private HashMap myHashMap;
+    private HashMap<String, Object> myHashMap;
 
 
     /**
@@ -142,7 +142,7 @@ public class JSONObject {
      * Construct an empty JSONObject.
      */
     public JSONObject() {
-        this.myHashMap = new HashMap();
+        this.myHashMap = new HashMap<String, Object>();
     }
 
 
@@ -227,8 +227,8 @@ public class JSONObject {
      * @param map A map object that can be used to initialize the contents of
      *  the JSONObject.
      */
-    public JSONObject(Map map) {
-        this.myHashMap = new HashMap(map);
+    public JSONObject(Map<String, ?> map) {
+        this.myHashMap = new HashMap<String, Object>(map);
     }
 
 
@@ -439,7 +439,7 @@ public class JSONObject {
      *
      * @return An iterator of the keys.
      */
-    public Iterator keys() {
+    public Iterator<String> keys() {
         return this.myHashMap.keySet().iterator();
     }
 
@@ -462,7 +462,7 @@ public class JSONObject {
      */
     public JSONArray names() {
         JSONArray ja = new JSONArray();
-        Iterator  keys = keys();
+        Iterator<?>  keys = keys();
         while (keys.hasNext()) {
             ja.put(keys.next());
         }
@@ -922,7 +922,7 @@ public class JSONObject {
      */
     public String toString() {
         try {
-            Iterator     keys = keys();
+            Iterator<?>     keys = keys();
             StringBuffer sb = new StringBuffer("{");
 
             while (keys.hasNext()) {
@@ -978,7 +978,7 @@ public class JSONObject {
         if (n == 0) {
             return "{}";
         }
-        Iterator     keys = keys();
+        Iterator<?>     keys = keys();
         StringBuffer sb = new StringBuffer("{");
         int          newindent = indent + indentFactor;
         Object       o;
@@ -1089,7 +1089,7 @@ public class JSONObject {
      public Writer write(Writer writer) throws JSONException {
         try {
             boolean  b = false;
-            Iterator keys = keys();
+            Iterator<?> keys = keys();
             writer.write('{');
 
             while (keys.hasNext()) {

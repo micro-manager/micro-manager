@@ -32,6 +32,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.prefs.Preferences;
 
 import javax.swing.AbstractCellEditor;
@@ -62,8 +63,12 @@ import mmcorej.StrVector;
 
 import org.micromanager.api.DeviceControlGUI;
 import org.micromanager.utils.MMDialog;
+import org.micromanager.utils.NumberUtils;
+import org.micromanager.utils.PropertyItem;
+import org.micromanager.utils.ReportingUtils;
 import org.micromanager.utils.ShowFlags;
-
+import org.micromanager.utils.SliderPanel;
+import org.micromanager.utils.SortFunctionObjects;
 /**
  * Dialog based GUI component for generic editing of device properties.
  * Represents the entire system state as a list of triplets:
@@ -314,7 +319,7 @@ public class CalibrationEditor extends MMDialog {
 
       String duplicate = data_.findMatchingPreset();
       if (duplicate != null && duplicate.compareTo(label_)!=0) {
-         JOptionPane.showMessageDialog(this, "This calibration is the same as the already existing one: " + duplicate +
+         JOptionPane.showMessageDialog(this, "This calibration is the same as: " + duplicate +
          "\nYou must choose a unique set of values.");
          return false;
       }
@@ -334,7 +339,7 @@ public class CalibrationEditor extends MMDialog {
          try {
             core.setPixelSizeConfig(label_);
          } catch (Exception e) {
-            handleException (e);
+            ReportingUtils.showError(e);
          }
       }
  
@@ -373,30 +378,10 @@ public class CalibrationEditor extends MMDialog {
    }
    
    private void handleException (Exception e) {
-      String errText = "Exeption occured: " + e.getMessage();
+      String errText = "Exception occurred: " + e.getMessage();
       JOptionPane.showMessageDialog(this, errText);
    }
       
-   
-   /**
-    * Property descriptor, representing MMCore data
-    */
-   private class PropertyItem {
-      public String device;  // device name (label)
-      public String name;    // property name
-      public String value;   // property value
-      public boolean readOnly = false;    // is it read-only ?
-      public boolean preInit = false; // is it pre initialization property ?
-      public String allowed[];            // the list of allowed values
-      public boolean show = true; // is it included in the current configuration ?
-      public boolean orgSel = false;
-      public boolean confInclude = false; // is it included in the current configuration ?
-      public boolean hasRange = false; // is there a range for values
-      public double lowerLimit = 0.0;
-      public double upperLimit = 0.0;
-      public boolean isInt = false; // is this an integer property
-   }
-   
 
    /**
     * Property table data model, representing MMCore data
@@ -455,7 +440,7 @@ public class CalibrationEditor extends MMDialog {
                if (core_.isPixelSizeConfigDefined(oldLabel))
                   core_.deletePixelSizeConfig(oldLabel);
             } catch (Exception e) {
-               handleException(e);
+               ReportingUtils.showError(e);
                return false;
             }
          }
@@ -465,6 +450,10 @@ public class CalibrationEditor extends MMDialog {
             PropertyItem item = propList_.get(i);
             if (item.confInclude)
                selected.add(item);
+         }
+         if (selected.size() == 0) {
+            JOptionPane.showMessageDialog(null, "Please select \"Use\" column for at least one Property that affects pixel size");
+            return false;
          }
                   
          ArrayList<PropertyItem> mismatched = new ArrayList<PropertyItem>();
@@ -531,10 +520,10 @@ public class CalibrationEditor extends MMDialog {
                PropertyItem item = selected.get(i);
                core_.definePixelSizeConfig(newLabel, item.device, item.name, item.value);
             }
-            core_.setPixelSizeUm(newLabel, Double.parseDouble(pixelSize));
+            core_.setPixelSizeUm(newLabel, NumberUtils.displayStringToDouble(pixelSize));
             
          } catch (Exception e) {
-            handleException(e);
+            ReportingUtils.showError(e);
             return false;
          }
          
@@ -549,7 +538,7 @@ public class CalibrationEditor extends MMDialog {
          try {
             core_.deletePixelSizeConfig(configName);
          } catch (Exception e) {
-            handleException(e);
+            ReportingUtils.showError(e);
          }
       }
   
@@ -580,8 +569,6 @@ public class CalibrationEditor extends MMDialog {
          else if (col == 1)
             return item.value;
          else if (col == 2) {
-            //JCheckBox cb = new JCheckBox();
-            //cb.setSelected(item.confInclude);
             return new Boolean(item.confInclude);
          }
          
@@ -592,16 +579,22 @@ public class CalibrationEditor extends MMDialog {
          PropertyItem item = propList_.get(row);
          if (col == 1) {
             try {
-               core_.setProperty(item.device, item.name, value.toString());
-               //item.m_value = core_.getProperty(item.m_device, item.m_name);
+               if (item.isInteger()) {
+                  core_.setProperty(item.device, item.name, new Integer (NumberUtils.displayStringToInt((String)value)).toString());
+               } else if (item.isFloat()) {
+                  core_.setProperty(item.device, item.name, new Double (NumberUtils.displayStringToDouble((String)value)).toString());
+               } else  {
+                  core_.setProperty(item.device, item.name, value.toString());
+               }
                core_.waitForDevice(item.device);
+
                refresh();
-               //item.m_value = value.toString();
+
                if (parentGUI_ != null)
                   parentGUI_.updateGUI(true);              
                fireTableCellUpdated(row, col);
             } catch (Exception e) {
-               handleException(e);
+               ReportingUtils.showError(e);
             }
          }  else if (col == 2)  {
             item.confInclude = ((Boolean)value).booleanValue();
@@ -624,18 +617,6 @@ public class CalibrationEditor extends MMDialog {
             return false;
       }
       
-      /*
-      String getConfig(String group) {
-         String config = "";
-         try {
-            config = core_.getCurrentConfig(group);
-         } catch (Exception e) {
-            handleException(e);
-         }
-         return config;
-      }
-      */
-      
       StrVector getAvailablePixelSizeConfigs() {
           return core_.getAvailablePixelSizeConfigs();
       }
@@ -648,7 +629,7 @@ public class CalibrationEditor extends MMDialog {
             }
             this.fireTableDataChanged();
          } catch (Exception e) {
-            handleException(e);
+            ReportingUtils.showError(e);
          }
       }
 
@@ -680,7 +661,7 @@ public class CalibrationEditor extends MMDialog {
                   groupSignature_ = new PropertySetting[0];
                }
          } catch (Exception e) {
-            handleException(e);
+            ReportingUtils.showError(e);
          }
          
          try {
@@ -693,6 +674,8 @@ public class CalibrationEditor extends MMDialog {
                DeviceType dtype = core_.getDeviceType(devices.get(i));
                boolean showDevice = false;
                if (dtype == DeviceType.MagnifierDevice)
+                  showDevice = false;
+               else if (dtype == DeviceType.SerialDevice)
                   showDevice = false;
                else if (dtype == DeviceType.CameraDevice)
                   showDevice = flags_.cameras_;
@@ -725,19 +708,41 @@ public class CalibrationEditor extends MMDialog {
                      item.hasRange = core_.hasPropertyLimits(devices.get(i), properties.get(j));
                      item.lowerLimit = core_.getPropertyLowerLimit(devices.get(i), properties.get(j));
                      item.upperLimit = core_.getPropertyUpperLimit(devices.get(i), properties.get(j));
-                     item.isInt = PropertyType.Integer == core_.getPropertyType(item.device, item.name);
+                     item.type = core_.getPropertyType(item.device, item.name);
                      StrVector values = core_.getAllowedPropertyValues(devices.get(i), properties.get(j));
                      item.allowed = new String[(int)values.size()];
                      for (int k=0; k<values.size(); k++){
                         item.allowed[k] = values.get(k);
                      }
+         
+                     // todo - no need to re-new the comparators inside the loop!
+                     if ( PropertyType.Float == item.type){
+                    	   Arrays.sort(item.allowed, new SortFunctionObjects.DoubleStringComp());
+                     }
+                     else if ( PropertyType.Integer == item.type){
+                        //ReportingUtils.logMessage("Sorting " + device + "."+ name);
+                        Arrays.sort(item.allowed, new SortFunctionObjects.IntStringComp());
+                     }
+                     else if ( PropertyType.String == item.type){
+                         boolean allNumeric = true;
+                         // test that first character of every possible value is a numeral
+                         // if so, show user the list sorted by the numeric prefix
+                         for (int k=0; k<item.allowed.length; k++){
+                            if (item.allowed[k].equals("") || !Character.isDigit(item.allowed[k].charAt(0))){
+                            allNumeric = false;
+                    			 break;
+                    		 }
+                    	 }
+                    	 if( allNumeric)
+                         Arrays.sort(item.allowed, new SortFunctionObjects.NumericPrefixStringComp());
+                    	 else
+                    		 Arrays.sort(item.allowed);
+                     }                     
                      
                      if (!item.readOnly && !item.preInit) {
                         if(initialCfg_.isPropertyIncluded(item.device, item.name)){
-                           item.orgSel  = true;
                            item.confInclude = true;
                         } else {
-                           item.orgSel = false;
                            item.confInclude = false;
                         }
                         
@@ -751,7 +756,7 @@ public class CalibrationEditor extends MMDialog {
                }
             }
          } catch (Exception e) {
-            handleException(e);
+            ReportingUtils.showError(e);
          }
          this.fireTableStructureChanged();
       }
@@ -806,7 +811,7 @@ public class CalibrationEditor extends MMDialog {
                }
             }
          } catch (Exception e) {
-            handleException(e);
+            ReportingUtils.showError(e);
          }
       }
       
@@ -866,9 +871,6 @@ public class CalibrationEditor extends MMDialog {
             }            
          });
          slider_.addSliderMouseListener(new MouseAdapter() {
-            public void mousePressed(MouseEvent e) {                         
-               slider_.setPosition(e.getX());
-            }                                                                
             public void mouseReleased(MouseEvent e) {
                fireEditingStopped();
             }
@@ -892,10 +894,16 @@ public class CalibrationEditor extends MMDialog {
          if (colIndex == 1) {
             if (item_.allowed.length == 0) {
                if (item_.hasRange) {
-                  if (item_.isInt)
+                  if (item_.isInteger())
                      slider_.setLimits((int)item_.lowerLimit, (int)item_.upperLimit);
-                  else
+                  else {
                      slider_.setLimits(item_.lowerLimit, item_.upperLimit);
+                     try {
+                        value = NumberUtils.doubleToDisplayString(Double.parseDouble((String) value));
+                     } catch (Exception e) {
+                        ReportingUtils.logError(e);
+                     }
+                  }
                   slider_.setText((String)value);
                   return slider_;
                } else {
@@ -953,13 +961,7 @@ public class CalibrationEditor extends MMDialog {
          item_ = data.getPropertyItem(rowIndex);
          
          JLabel lab = new JLabel();
-         //lab.setOpaque(true);
          lab.setHorizontalAlignment(JLabel.LEFT);
-//         if (isSelected) {
-//            lab.setBackground(Color.LIGHT_GRAY);
-//         } else {
-//            lab.setBackground(Color.WHITE);
-//         }
          
          if (hasFocus) {
             // this cell is the anchor and the table has the focus
@@ -968,12 +970,23 @@ public class CalibrationEditor extends MMDialog {
          Component comp;
          
          if (colIndex == 0) {
-            lab.setText((String)value + (item_.orgSel ? "*" : ""));
+            lab.setText((String)value);
             comp = lab;
          } else if (colIndex == 1) {
             if (item_.hasRange) {
-               SliderPanel slider = new SliderPanel();
-               slider.setLimits(item_.lowerLimit, item_.upperLimit);
+               SliderPanel slider = new SliderPanel();           
+               if (item_.isInteger())
+                   slider.setLimits((int)item_.lowerLimit, (int)item_.upperLimit);
+               else
+            	   slider.setLimits(item_.lowerLimit, item_.upperLimit);               
+               try {
+            	   if (item_.isFloat())
+            		   value = NumberUtils.doubleToDisplayString(Double.parseDouble((String) value));
+            	   else if (item_.isInteger())
+            		   value = NumberUtils.intToDisplayString(Integer.parseInt((String) value));
+               } catch (Exception e) {
+                  ReportingUtils.logError(e);
+               }
                slider.setText((String)value);
                slider.setToolTipText((String)value);
                comp = slider;

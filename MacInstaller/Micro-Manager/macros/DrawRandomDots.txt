@@ -1,0 +1,13 @@
+// This macro draws 25 random dots on the active
+// image in the current foreground color.
+
+dotSize = 25;
+  width = getWidth();
+  height = getHeight();
+  for (i=0; i<25; i++) {
+      x = random()*width-dotSize/2;
+      y = random()*height-dotSize/2;
+      makeOval(x, y, dotSize, dotSize);
+      run("Fill");
+   }
+   run("Select None");

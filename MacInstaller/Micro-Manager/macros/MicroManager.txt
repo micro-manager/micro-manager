@@ -1,0 +1,16 @@
+var x = installMicroManagerExtensions();
+
+function installMicroManagerExtensions() {
+   Ext.install("MMtest");
+   return 0;
+}
+
+// Set exposure time
+macro "SetExposureTime" {
+   Ext.setExposure(10);
+}
+
+macro "GetExposureTime" {
+   Ext.getExposure(exposure);
+   print("Exposure time is " + exposure + " ms");
+}

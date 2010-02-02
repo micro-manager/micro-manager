@@ -1,0 +1,20 @@
+ageNumber = getNumber("How many frames to average for Fzero?",6);
+origTitle=getTitle();
+origID=getImageID();
+run("Z Project...", "start=1 stop="+ageNumber +" projection=[Average Intensity]");
+rename("Fzero");
+fZeroID=getImageID();
+run("Image Calculator...", "image1="+origTitle+" operation=Divide image2=Fzero create 32-bit stack");
+rename(origTitle+"-FdivFzero");
+getMinAndMax(min, max);
+selectImage(fZeroID);
+setAutoThreshold();
+run("Threshold", "thresholded remaining black");
+run("Despeckle");
+run("Fill Holes");
+run("Image Calculator...", "image1="+origTitle+"-FdivFzero operation=Subtract image2=Fzero stack");
+selectWindow(origTitle+"-FdivFzero");
+setMinAndMax(0, max);
+selectWindow("Fzero");
+close();
+

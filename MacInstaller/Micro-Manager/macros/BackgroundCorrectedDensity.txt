@@ -1,0 +1,53 @@
+macro "Background Corrected Density [F12]" {
+
+//  Written by Paul Werten and Wayne Rasband (10.03.2005)
+//
+//  This macro uses the points along the selection boundary to calculate the
+//  background of the selection, and then uses this value to calculate the
+//  background-corrected integrated density. Size and shape of the selection
+//  may be changed at any time during the measurements. To obtain meaningful
+//  results, background values should be smaller than the actual data values
+//  (i.e., the background should appear dark, while data should be light). It
+//  may therefore be necessary to invert the image before analyzing it. Also,
+//  for the macro to work, "Area" and "Mean" must first be selected in the 
+//  "Analyze / Set Measurements" menu option. To actually measure, make an 
+//  appropriate selection and use F12 to get the results.
+
+    requires('1.34h');
+    sum=0;
+    count=0;
+    if (selectionType==-1)
+        exit("Selection required");
+    getSelectionCoordinates(x,y);
+    for (i=0;i<x.length;i++) {
+        if (i<x.length-1) {
+            dx=x[i+1]-x[i];
+            dy=y[i+1]-y[i];
+        } else {
+            dx=x[0]-x[i];
+            dy=y[0]-y[i];
+        }
+        n=round(sqrt(dx*dx+dy*dy));
+        xinc=dx/n;
+        yinc=dy/n;
+        xx=x[i];
+        yy=y[i];
+        for (j=0;j<n;j++) {
+            sum+=calibrate(getPixel(round(xx),round(yy)));
+            xx+=xinc;
+            yy+=yinc;
+            count++;
+        }
+    }
+    run("Measure");
+    background=sum/count;
+    area=getResult('Area',nResults-1);
+    mean=getResult('Mean',nResults-1);
+    if (isNaN(area)||isNaN(mean))
+        exit("Area and Mean must be be selected in Analyze>Set Measurements");
+    corden=area*(mean-background);
+    setResult('Background',nResults-1,background);
+    setResult('CorDen',nResults-1,corden);
+    updateResults();
+}
+

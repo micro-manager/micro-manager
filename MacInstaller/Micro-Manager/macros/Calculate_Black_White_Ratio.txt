@@ -1,0 +1,20 @@
+// Save this file in the plugins folder as
+// "Calculate_Black_to_White_Ratio.txt"
+// and restart ImageJ to create a
+// "Calculate Black to White Ratio" command.
+
+  requires("1.32g");
+  if (bitDepth!=8)
+      exit("This macro requires an 8-bit image");
+  black = 0;
+  white = 255;
+  getHistogram(0, hist, 256);
+  total = 0;
+  for (i=0; i<256; i++)
+      total += hist[i];
+  print("");
+  print("Black pixels: " + hist[black]);
+  print("White pixels: " + hist[white]);
+  print("Percent black:" +100*hist[black]/total);
+  print("Percent white:" +100*hist[white]/total);
+  print("Black/white ratio: " + hist[black]/hist[white]);

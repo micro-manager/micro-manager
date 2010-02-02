@@ -1,0 +1,28 @@
+macro "List XY Coordinates" {
+     requires("1.30k");
+     getSelectionCoordinates(x, y);
+     for (i=0; i<x.length; i++)
+         print(i+" "+x[i]+" "+y[i]);
+}
+
+macro "Plot Selection" {
+     requires("1.30k");
+     getSelectionCoordinates(x, y);
+     type = selectionType();
+     run("New...", "name=Outline type=8-bit fill=White width="+getWidth()+" height="+getHeight());
+     moveTo(x[0], y[0]);
+     for (i=1; i<x.length; i++)
+         lineTo(x[i], y[i]);
+     if (type==2 || type==3)
+        lineTo(x[0], y[0]);
+}
+
+macro "Test Speed" {
+    start = getTime();
+    count = 0;
+    do {
+        getSelectionCoordinates(x, y);
+        count++;
+     } while (getTime()<start+1000);
+    print(count + " getSelectionCoordinates() calls per second");
+}

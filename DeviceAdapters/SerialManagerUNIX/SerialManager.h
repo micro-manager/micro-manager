@@ -60,8 +60,10 @@ class SerialPortLister
       void ListCurrentPorts(std::vector<std::string> &availablePorts);
 
    private:
-      std::vector<std::string> storedAvailablePorts_;
-      void ListSerialPorts(std::vector<std::string> &availablePorts);
+      static const int serialPortListTimeout_ = 15;
+      static std::vector<std::string> ListSerialPorts();
+      static MM::MMTime GetCurrentMMTime();
+      static bool portAccessible(const char*  portName);
 };
 
 //////////////////////////////////////////////////////////////////////////////

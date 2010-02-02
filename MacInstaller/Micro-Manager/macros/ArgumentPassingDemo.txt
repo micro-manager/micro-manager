@@ -1,0 +1,15 @@
+// This macro demonstrates how to use string concatenation to 
+// pass  arguments  to commands called using the run() function.
+
+name1 = "Test";
+name2 = "Test Image";
+name2 = "'"+name2+"'"; // must be single quoted because of space
+width = 400;
+height = 300;
+scale = 150; // 150 pixels/mm
+unit = "mm";
+angle = 45;
+run("New...", "name="+name1+" type=8-bit fill=Ramp width="+width+" height="+height+" slices=1");
+run("Rename...", "title="+name2);
+run("Set Scale...", "distance="+scale+" known=1 pixel=1 unit="+unit);
+run("Arbitrarily...", "angle="+angle+" interpolate");

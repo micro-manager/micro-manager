@@ -17,6 +17,7 @@
 #endif
 
 #include "Conix.h"
+#include <cstdio>
 #include <string>
 #include <math.h>
 #include "../../MMDevice/ModuleInterface.h"
@@ -98,27 +99,38 @@ int QuadFluor::Initialize()
    // set property list
    // -----------------
    
-   // read out the version and set is as a read-only value
-   //char* version = QuadFluor::GetVersion();
-
-   // Get and Set State (allowed values 1-4
+   // Get and Set State (allowed values 1-4, start at 0 for Hardware Configuration Wizard))
    CPropertyAction *pAct = new CPropertyAction (this, &QuadFluor::OnState);
-   int nRet=CreateProperty(MM::g_Keyword_State, "1", MM::Integer, false, pAct);
+   int nRet=CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
    if (nRet != DEVICE_OK)
       return nRet;
 
    vector<string> states;
+   states.push_back("0");
    states.push_back("1");
    states.push_back("2");
    states.push_back("3");
-   states.push_back("4");
    nRet = SetAllowedValues(MM::g_Keyword_State, states);
 
+   // create default positions and labels
+   for (long i=0; i < 4; i++)
+   {
+      std::ostringstream os;
+      os << "Position: " << i;
+      SetPositionLabel(i, os.str().c_str());
+   }
 
-   // ?? What is this for ? - NS
-   int ret = UpdateStatus();
-   if (ret != DEVICE_OK)
-      return ret;
+
+   // Label
+   // -----
+   pAct = new CPropertyAction (this, &CStateBase::OnLabel);
+   nRet = CreateProperty(MM::g_Keyword_Label, "", MM::String, false, pAct);
+   if (nRet != DEVICE_OK)                                                     
+      return nRet;   
+
+   nRet = UpdateStatus();
+   if (nRet != DEVICE_OK)
+      return nRet;
 
    initialized_ = true;
    return DEVICE_OK;
@@ -274,13 +286,13 @@ int QuadFluor::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
       ret = GetPosition(position);
       if (ret != DEVICE_OK)
          return ret;
-      pProp->Set((long) position);
+      pProp->Set((long) position - 1);
    }
    else if (eAct == MM::AfterSet) {
       long position;
       int ret;
       pProp->Get(position);
-      ret = SetPosition((int) position);
+      ret = SetPosition((int) position + 1);
       if (ret != DEVICE_OK)
          return ret;
    }

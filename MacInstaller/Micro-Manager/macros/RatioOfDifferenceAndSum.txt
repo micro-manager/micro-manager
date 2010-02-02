@@ -1,0 +1,24 @@
+// Creates a new image using the formula w3 =abs(w1-w2)/(w1+w2),
+// where w1 is assumed to be the first  image opend and w2 is the
+// second. Requires that exactly two images be open.
+
+requires("1.31d");
+if (nImages!=2)
+	exit("This macro requires exactly two open images");
+selectImage(1);
+w1 = getTitle();
+selectImage(2);
+w2 = getTitle();
+run("Image Calculator...", "image1="+w1+" operation=Add image2="+w2+" create 32-bit");
+run("Rename...", "title=Sum");
+run("Image Calculator...", "image1="+w1+" operation=Subtract image2="+w2+" create 32-bit");
+selectWindow("Result of "+w1);
+run("Rename...", "title=Difference");
+run("Image Calculator...", "image1=Difference operation=Divide image2=Sum  ");
+selectWindow("Difference");
+run("Rename...", "title=Ratio");
+selectWindow("Sum");
+run("Close");
+selectWindow("Ratio");
+run("Abs"); // requires ImageJ 1.31v or later
+

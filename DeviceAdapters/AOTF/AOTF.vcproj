@@ -43,6 +43,7 @@
 				Optimization="0"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				MinimalRebuild="true"
+				ExceptionHandling="2"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				RuntimeTypeInfo="true"
@@ -50,6 +51,7 @@
 				WarningLevel="4"
 				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="4"
+				DisableSpecificWarnings="4290"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -65,7 +67,7 @@
 				AdditionalDependencies="inpout32.lib"
 				OutputFile="$(OutDir)/mmgr_dal_AOTF.dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="..\..\..\3rdParty\\inpout32\lib"
+				AdditionalLibraryDirectories="..\..\..\3rdParty\inpout32\lib"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/AOTF.pdb"
 				SubSystem="2"
@@ -123,12 +125,14 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
+				ExceptionHandling="2"
 				RuntimeLibrary="0"
 				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="4"
 				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="3"
+				DisableSpecificWarnings="4290"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -144,7 +148,7 @@
 				AdditionalDependencies="inpout32.lib"
 				OutputFile="$(OutDir)/mmgr_dal_AOTF.dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="C:\projects\3rdparty\inpout32\lib"
+				AdditionalLibraryDirectories="..\..\..\3rdParty\inpout32\lib"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"

@@ -9,8 +9,9 @@
 
 package org.jeditsyntax;
 
-import javax.swing.JPopupMenu;
 import java.awt.Color;
+
+import javax.swing.JPopupMenu;
 
 /**
  * Encapsulates default settings for a text area. This can be passed
@@ -63,7 +64,7 @@ public class TextAreaDefaults
 
 			DEFAULTS.caretVisible = true;
 			DEFAULTS.caretBlinks = true;
-			DEFAULTS.electricScroll = 3;
+			DEFAULTS.electricScroll = 0;
 
 			DEFAULTS.cols = 80;
 			DEFAULTS.rows = 25;

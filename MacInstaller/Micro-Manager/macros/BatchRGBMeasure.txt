@@ -1,0 +1,62 @@
+// This macro batch processes a folder of images,
+// measuring the RGB values separately and with the
+// option of specifying an ROI for all of the processed 
+// images. The optional ROIs should have the same name 
+// as the corresponding image and an ".roi" extension.
+// Press Esc to abort.
+
+  requires("1.33n"); 
+  dir = getDirectory("Choose a Directory ");
+  list = getFileList(dir);
+  run("Set Measurements...",
+     "  mean display redirect=None decimal=3");
+  roi = "";
+  start = getTime();
+  titles = newArray(list.length);
+  run("Clear Results");
+  setBatchMode(true); // runs up to 20 times faster
+  j = 0;
+  for (i=0; i<list.length; i++) {
+      path = dir+list[i];
+      if (endsWith(path, ".roi"))
+          roi = path;
+      else {
+          open(path);
+          title = getTitle();
+          titles[j++] = title;
+          //print(i+"  "+title);
+          run("RGB Split");
+          measure(""+title+" (red)", roi);
+          measure(""+title+" (green)", roi);
+          measure(""+title+" (blue)", roi);
+      }
+  }
+  reformatResults(titles);
+  //print((getTime()-start)/1000);
+
+  function measure(title, roi) {
+      selectImage(title);
+      if (roi!="") open(roi);
+      run("Measure");
+      close();
+  }
+
+  function reformatResults(titles) {
+      n = nResults/3;
+      reds = newArray(n);
+      greens = newArray(n);
+      blues = newArray(n);
+      for (i=0; i<n; i++) {
+          reds[i] = getResult("Mean", i*3);
+          greens[i] = getResult("Mean", i*3+1);
+          blues[i] = getResult("Mean", i*3+2);
+      }
+      run("Clear Results");
+      for (i=0; i<n; i++) {
+          setResult("Label", i, titles[i]);
+          setResult("Red", i, reds[i]);
+          setResult("Green", i, greens[i]);
+          setResult("Blue", i, blues[i]);
+      }
+       updateResults()
+  }

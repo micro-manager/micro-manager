@@ -1,0 +1,124 @@
+// 
+// Useless Etch-a-sketch (telecran) macro by Leo Durosemont
+// 
+// install, run the "Initialize" macro, draw using the numeric keypad, have fun
+ 
+var x = 320;
+var y = 240;
+var px = newArray(6);
+var py = newArray(6);
+var pencil = false;
+var drawingcolor = 0;
+var colors = newArray("red","green","blue","orange","black","[magenta     ]","white","cyan","yellow");
+var tools = newArray(0,1,10);
+var tool = 1;
+var toolsizes = newArray(2,5,10,15,20,25,30,35,40,45,50,55,60,70,80,100);
+var toolsize = 3;
+
+initialize();
+exit();
+
+macro "Initialize" {
+initialize();
+}
+
+macro "toggle pencil [n5]" {
+if (pencil==false) {
+	run("Colors...", "selection=red");
+	showStatus("Drawing");
+	pencil = true;
+	} else {
+	run("Colors...", "selection=green");
+	showStatus("Not drawing");
+	pencil = false;	
+	}
+}
+
+macro "cycle colors [n-]" {
+drawingcolor++;
+if (drawingcolor>=colors.length) drawingcolor=0;
+run("Colors...", "foreground="+colors[drawingcolor]);
+showStatus("Drawing color set to : "+colors[drawingcolor]);
+}
+
+macro "cycle tool [n*]" {
+tool++;
+if (tool>=tools.length) tool=0;
+setTool(tools[tool]);
+s=toolsizes[toolsize];
+if (tool==1) makeOval (x-(s/2),y-(s/2),s,s);
+else makeRectangle (x-(s/2),y-(s/2),s,s);
+}
+
+macro "cycle toolsize[n+]" {
+toolsize++;
+if (toolsize>= toolsizes.length) toolsize=0;
+s=toolsizes[toolsize];
+if (tool==1) makeOval (x-(s/2),y-(s/2),s,s);
+else makeRectangle (x-(s/2),y-(s/2),s,s);
+showStatus("Brush size set to : "+s);
+}
+
+macro "surprise Tool - Cf00T3f20*" {
+//empty
+}
+
+macro "up [n8]" {paint();y=y-2;curseur();}
+macro "down [n2]" {paint();y=y+2;curseur();}
+macro "left [n4]" {paint();x=x-2;curseur();}
+macro "right [n6]" {paint();x=x+2;curseur();}
+macro "upright [n9]" {paint();x=x+2;y=y-2;curseur();}
+macro "downright [n3]" {paint();x=x+2;y=y+2;curseur();}
+macro "upleft [n7]" {paint();x=x-2;y=y-2;curseur();}
+macro "downleft [n1]" {paint();x=x-2;y=y+2;curseur();}
+macro "floodfill [t]" {if (pencil==true) floodFill(x, y);}
+
+function initialize() {
+if (isOpen("Log")) {
+    selectWindow("Log");
+    run("Close");
+}
+print ("--Etch A Sketch (Telecran)--");
+print ("n1..n4 n6..n9 move/draw (up/down, left/right, diagonals)");
+print ("n5 pen up/down");
+print ("n* cycle tool type (square, circle, smiley)");
+print ("n+ cycle tool size (from 2 to 100 pixels)");
+print ("n- cycle drawing color");
+print ("t flood fill (use it to set bg color)");
+newImage("Etch-a-sketch (telecran) ", "RGB White", 640, 480, 1);
+setTool(1);
+curseur();
+run("Colors...", "selection=green");
+}
+
+
+function curseur() {
+w = getWidth(); h = getHeight();
+px[0]=0; py[0]=y;
+px[1]=w; py[1]=y;
+px[2]=x; py[2]=y;
+px[3]=x; py[3]=0;
+px[4]=x; py[4]=h;
+px[5]=x; py[5]=y;
+makeSelection("polgon", px, py);
+}
+
+function paint() {
+if (pencil==true) {s=toolsizes[toolsize];
+if (tool==0) {makeRectangle(x-(s/2),y-(s/2),s,s);fill();}
+if (tool==1) {makeOval (x-(s/2),y-(s/2),s,s);fill();}
+if (tool==2) {
+	makeOval (x-(s/2),y-(s/2),s,s);fill();
+	setColor(0);
+	makeOval (x-(s/3),y-(s/3),s/3,s/3);fill();
+	makeOval (x,y-(s/3),s/3,s/3);fill();
+	makeOval (x-(s/3),y+(s/10),s/1.5,s/5);fill();
+
+ }
+
+
+
+
+
+}
+}

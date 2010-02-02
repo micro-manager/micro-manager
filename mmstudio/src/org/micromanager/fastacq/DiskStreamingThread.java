@@ -1,6 +1,5 @@
 package org.micromanager.fastacq;
 
-import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
@@ -20,7 +19,7 @@ import org.micromanager.metadata.AcquisitionData;
 import org.micromanager.metadata.ImagePropertyKeys;
 import org.micromanager.metadata.MMAcqDataException;
 import org.micromanager.utils.Annotator;
-import org.micromanager.utils.MMLogger;
+import org.micromanager.utils.ReportingUtils;
 
 public class DiskStreamingThread extends Thread {
 
@@ -31,7 +30,6 @@ public class DiskStreamingThread extends Thread {
    boolean stack_;
    double intervalMs_;
    private double pixelSize_um_;
-   private double pixelAspect_;
    private double elapsedTimeMs_;
    private AcquisitionData acqData_;
    private String acqName_;
@@ -51,10 +49,11 @@ public class DiskStreamingThread extends Thread {
          else
             intervalMs_ = intervalMs;
       } catch (NumberFormatException nfe) {
+         ReportingUtils.logError(nfe);
          intervalMs_ = 0;
       } catch (Exception e) {
+         ReportingUtils.logError(e);
          intervalMs_ = 0;
-         MMLogger.getLogger().severe(e.getMessage());
       } 
       
       // create unique directory name for storing acquisition images
@@ -68,6 +67,7 @@ public class DiskStreamingThread extends Thread {
             acqData_.setDimensions(0, 1, 1);
             acqData_.setChannelName(0, "Sequence");
          } catch (MMAcqDataException e) {
+            ReportingUtils.logError(e);
             gui_.displayStreamingMessage("Error creating acquisition data file.");
          }
       } else {
@@ -77,6 +77,7 @@ public class DiskStreamingThread extends Thread {
             acqData_.setDimensions(0, 1, 1);
             acqData_.setChannelName(0, "Sequence");
          } catch (MMAcqDataException e) {
+            ReportingUtils.logError(e);
             gui_.displayStreamingMessage("Error creating in-memory acquisition data.");
          }
       }
@@ -87,15 +88,13 @@ public class DiskStreamingThread extends Thread {
       elapsedTimeMs_ = 0;
       
       // obtain camera name
-      String camera = core_.getCameraDevice();
       int width = (int)core_.getImageWidth();
       int height = (int)core_.getImageHeight();
       long byteDepth = core_.getBytesPerPixel();
       try {
          acqData_.setImagePhysicalDimensions(width, height, (int)byteDepth);
       } catch (MMAcqDataException e1) {
-         // TODO Auto-generated catch block
-         e1.printStackTrace();
+         ReportingUtils.logError(e1);
       }
       double expMs = 0.0;
       
@@ -116,10 +115,8 @@ public class DiskStreamingThread extends Thread {
       ip.setColor(Color.black);
       ip.fill();
       ImageStack stack = new ImageStack(width, height);
-      ImagePlus imp = new ImagePlus("sequence", ip);
             
       // Start streaming to disk
-      GregorianCalendar cld = new GregorianCalendar(); // begin time
       int count = 0;
       boolean error = false;
       try {
@@ -128,7 +125,8 @@ public class DiskStreamingThread extends Thread {
          // the speed is important here so we will not save the entire state
          // TODO: resolve
          Configuration state = core_.getSystemStateCache();
-         while ((core_.getRemainingImageCount() > 0 || core_.deviceBusy(camera)) && !error && !stop_)
+
+         while ((core_.getRemainingImageCount() > 0 || core_.isSequenceRunning()) && !error && !stop_)
          {
             if (core_.getRemainingImageCount() > 0)
             {
@@ -164,16 +162,11 @@ public class DiskStreamingThread extends Thread {
          else
             gui_.displayStreamingMessage("Finished. " + count + " images saved.");
          
-         
-      } catch (InterruptedException e) {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
+        
       } catch (Exception e) {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
+         ReportingUtils.logError(e);
       } catch (OutOfMemoryError e) {
-         // TODO Auto-generated catch block
-         e.printStackTrace();         
+         ReportingUtils.logError(e);
       }
       
       try {
@@ -183,11 +176,11 @@ public class DiskStreamingThread extends Thread {
          pixelSize_um_ = core_.getPixelSizeUm();
          acqData_.setPixelSizeUm(pixelSize_um_);      
          acqData_.setImageIntervalMs(intervalMs_);
-         acqData_.saveMetadata();
+         if (!acqData_.isInMemory())
+            acqData_.saveMetadata();
          
       } catch (MMAcqDataException e) {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
+         ReportingUtils.logError(e);
       }
          
       if (stack_ && stack.getSize() > 0) {

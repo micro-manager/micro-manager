@@ -37,6 +37,8 @@ import org.micromanager.image5d.Duplicate_Image5D;
 import org.micromanager.image5d.Image5D;
 import org.micromanager.image5d.Make_Montage;
 import org.micromanager.image5d.Z_Project;
+import org.micromanager.utils.AutofocusManager;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  * ImageJ plugin wrapper for Micro-Manager.
@@ -46,13 +48,14 @@ public class MMStudioPlugin implements PlugIn, CommandListener {
     
    @SuppressWarnings("unchecked")
    public void run(String arg) {
-      if (!IJ.versionLessThan("1.39l")){
+      if (!IJ.versionLessThan("1.43j")){
          Executer.addCommandListener(this);
       }
 
       try {
          // create and display control panel frame
          if (System.getProperty("os.name").indexOf("Mac OS X") != -1) {
+            System.setProperty("apple.laf.useScreenMenuBar", "true");
             // on the Mac, try using a native file opener when it is present
             try {
                // test if quaqua is in the class path
@@ -63,11 +66,11 @@ public class MMStudioPlugin implements PlugIn, CommandListener {
                  "ch.randelshofer.quaqua.QuaquaLookAndFeel");
                  // set UI manager properties here that affect Quaqua
                  //          ...
-                System.setProperty("apple.laf.useScreenMenuBar", "true");
             } catch (ClassNotFoundException e) {
+                ReportingUtils.logError(e);
                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             } catch (Exception e) {
-               e.printStackTrace();
+               ReportingUtils.logError(e);
                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             }
          } else
@@ -82,7 +85,7 @@ public class MMStudioPlugin implements PlugIn, CommandListener {
             "Only one instance allowed.");
          }
       } catch (Exception e) {
-         e.printStackTrace();
+         ReportingUtils.logError(e);
       }
    }
     
@@ -109,12 +112,23 @@ public class MMStudioPlugin implements PlugIn, CommandListener {
        }
        return command;
     }
-    
+
+    public static MMStudioMainFrame getMMStudioMainFrameInstance() {
+        return frame_;
+    }
+
     public static CMMCore getMMCoreInstance() {
        if (frame_ == null || !frame_.isRunning())
           return null;
        else
           return frame_.getMMCore();
+    }
+
+    public static AutofocusManager getAutofocusManager() {
+       if (frame_ == null || !frame_.isRunning())
+          return null;
+       else
+          return frame_.getAutofocusManager();
     }
 
 }

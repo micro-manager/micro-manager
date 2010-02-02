@@ -26,96 +26,88 @@
 #pragma once
 
 #include "../MMDevice/MMDevice.h"
-#include "ace/High_Res_Timer.h"
-#include "ace/Log_Msg.h"
+//#include "ace/High_Res_Timer.h"
+//#include "ace/Log_Msg.h"
 
-#define CORE_DEBUG_PREFIX "DBG(%P, %t:) "
+//#include "../../3rdparty/boost/boost/date_time/posix_time/posix_time.hpp"
+#include "boost/date_time/posix_time/posix_time.hpp"
+
+
 #define CORE_LOG_PREFIX "LOG(%P, %t:): "
-
-#define CORE_DEBUG(FMT)                         ACE_DEBUG((LM_DEBUG, CORE_DEBUG_PREFIX FMT))
-#define CORE_DEBUG1(FMT, arg1)                  ACE_DEBUG((LM_DEBUG, CORE_DEBUG_PREFIX FMT, arg1))
-#define CORE_DEBUG2(FMT, arg1, arg2)            ACE_DEBUG((LM_DEBUG, CORE_DEBUG_PREFIX FMT, arg1, arg2))
-#define CORE_DEBUG3(FMT, arg1, arg2, arg3)      ACE_DEBUG((LM_DEBUG, CORE_DEBUG_PREFIX FMT, arg1, arg2, arg3))
-#define CORE_DEBUG4(FMT, arg1, arg2, arg3, arg4) ACE_DEBUG((LM_DEBUG, CORE_DEBUG_PREFIX FMT, arg1, arg2, arg3, arg4))
-
-#define CORE_LOG(FMT)                           ACE_DEBUG((LM_INFO, CORE_LOG_PREFIX FMT))
-#define CORE_LOG1(FMT, arg1)                    ACE_DEBUG((LM_INFO, CORE_LOG_PREFIX FMT, arg1))
-#define CORE_LOG2(FMT, arg1, arg2)              ACE_DEBUG((LM_INFO, CORE_LOG_PREFIX FMT, arg1, arg2))
-#define CORE_LOG3(FMT, arg1, arg2, arg3)        ACE_DEBUG((LM_INFO, CORE_LOG_PREFIX FMT, arg1, arg2, arg3))
-#define CORE_LOG4(FMT, arg1, arg2, arg3, arg4)  ACE_DEBUG((LM_INFO, CORE_LOG_PREFIX FMT, arg1, arg2, arg3, arg4))
-#define CORE_LOG5(FMT, arg1, arg2, arg3, arg4, arg5)  ACE_DEBUG((LM_INFO, CORE_LOG_PREFIX FMT, arg1, arg2, arg3, arg4, arg5))
-#define CORE_TIMESTAMP()                        ACE_DEBUG((LM_INFO, CORE_LOG_PREFIX "%D\n"))
 
 ///////////////////////////////////////////////////////////////////////////////
 // Utility classes
 // ---------------
 
+
+
 class TimeoutMs
 {
+	
+
 public:
-   TimeoutMs(double intervalMs) : intervalMs_(intervalMs)
+	// ASSUME boost::posix_time::time_duration contructor TAKES microseconds !!!!!!!!!!!!!!!!!
+	TimeoutMs(double intervalMs):interval_(0,0,0,static_cast<boost::posix_time::time_duration::fractional_seconds_type>(0.5+intervalMs*1000.)), startTime_(boost::posix_time::microsec_clock::local_time() )
    {
-      timer_ = new ACE_High_Res_Timer();
-      startTime_ = timer_->gettimeofday();
    }
    ~TimeoutMs()
    {
-      delete timer_;
+    
    }
    bool expired()
    {
-      ACE_Time_Value elapsed = timer_->gettimeofday() - startTime_;
-      //CORE_DEBUG2("Elapsed=%d, limit=%d\n", elapsed.usec()/1000, (long)intervalMs_);
-      double elapsedMs = (double)(elapsed.sec() * 1000 + elapsed.usec() / 1000);
-      if (elapsedMs > intervalMs_)
-         return true;
-      else
-         return false;
+      boost::posix_time::time_duration elapsed = boost::posix_time::microsec_clock::local_time() - startTime_;
+      return (interval_ < elapsed);
    }
 
 private:
    TimeoutMs(const TimeoutMs&) {}
    const TimeoutMs& operator=(const TimeoutMs&) {return *this;}
 
-   double intervalMs_;
-   ACE_High_Res_Timer* timer_;
-   ACE_Time_Value startTime_;
+   boost::posix_time::time_duration  interval_;
+	boost::posix_time::ptime startTime_;
 };
 
 class TimerMs
 {
 public:
-   TimerMs()
+	TimerMs():startTime_(boost::posix_time::microsec_clock::local_time() )
    {
-      startTime_ = timer_.gettimeofday();
    }
    ~TimerMs()
    {
    }
    double elapsed()
    {
-      ACE_Time_Value elapsed = timer_.gettimeofday() - startTime_;
-      return (double)(elapsed.sec() * 1000 + elapsed.usec() / 1000);
+		boost::posix_time::time_duration delta = boost::posix_time::microsec_clock::local_time() - startTime_;
+
+		return (double)delta.total_microseconds() ;
+		//MM::MMTime mt0((long)(delta.ticks()/time_duration::rep_type::res_adjust()), (long) (1000000L*delta.fractional_seconds())/delta.ticks_per_second()   );
+ 		//return mt0.getMsec() + mt0.getUsec()/1000.;
+		//return (double)( (long long)(delta.ticks()/time_duration::rep_type::res_adjust())*1000L + (long long)(delta.fractional_seconds()/1000L)) ;
    }
 
 private:
-   TimerMs(const TimeoutMs&) {}
-   const TimerMs& operator=(const TimeoutMs&) {return *this;}
+	// ?
+ //  TimerMs(const TimeoutMs&) {}
+  // const TimerMs& operator=(const TimeoutMs&) {return *this;}
 
-   ACE_High_Res_Timer timer_;
-   ACE_Time_Value startTime_;
+    boost::posix_time::ptime startTime_;
 };
 
+//NB we are starting the 'epoch' on 2000 01 01
 inline MM::MMTime GetMMTimeNow()
 {
-   #ifdef __APPLE__
-      struct timeval t;
-      gettimeofday(&t,NULL);
-      return MM::MMTime(t.tv_sec, t.tv_usec);
-   #else
-      ACE_High_Res_Timer timer;
-      ACE_Time_Value t = timer.gettimeofday();
-      return MM::MMTime((long)t.sec(), (long)t.usec());
-   #endif
+	using namespace boost::posix_time;
+	using namespace boost::gregorian;
+	boost::posix_time::ptime t0 = boost::posix_time::microsec_clock::local_time();
+	ptime timet_start(date(2000,1,1)); 
+	time_duration diff = t0 - timet_start; 
+	return MM::MMTime( (double) diff.total_microseconds());
+
+
+   //struct timeval t;
+   //gettimeofday(&t,NULL);
+   //return MM::MMTime(t.tv_sec, t.tv_usec);
 }
 

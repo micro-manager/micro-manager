@@ -63,6 +63,16 @@
 #define DEVICE_INVALID_PROPERTY_LIMTS  24
 #define DEVICE_SNAP_IMAGE_FAILED       25
 #define DEVICE_IMAGE_PARAMS_FAILED     26
+#define DEVICE_CORE_FOCUS_STAGE_UNDEF  27
+#define DEVICE_CORE_EXPOSURE_FAILED    28
+#define DEVICE_CORE_CONFIG_FAILED      29
+#define DEVICE_CAMERA_BUSY_ACQUIRING   30
+#define DEVICE_INCOMPATIBLE_IMAGE      31
+#define DEVICE_CAN_NOT_SET_PROPERTY    32
+#define DEVICE_CORE_CHANNEL_PRESETS_FAILED  33
+#define DEVICE_LOCALLY_DEFINED_ERROR   34
+#define DEVICE_NOT_CONNECTED           35
+
 
 namespace MM {
    const int MaxStrLength = 1024;
@@ -75,9 +85,9 @@ namespace MM {
    const char* const g_Keyword_Binning          = "Binning";
    const char* const g_Keyword_Exposure         = "Exposure";
    const char* const g_Keyword_ActualExposure   = "ActualExposure";
-   const char* const g_Keyword_Interval_ms      = "Interval_ms";
-   const char* const g_Keyword_ActualInterval_ms = "ActualInterval_ms";
-   const char* const g_Keyword_Elapsed_Time_ms  = "ElapsedTime_ms";
+   const char* const g_Keyword_ActualInterval_ms= "ActualInterval-ms";
+   const char* const g_Keyword_Interval_ms      = "Interval-ms";
+   const char* const g_Keyword_Elapsed_Time_ms  = "ElapsedTime-ms";
    const char* const g_Keyword_PixelType        = "PixelType";
    const char* const g_Keyword_ReadoutTime      = "ReadoutTime";
    const char* const g_Keyword_ReadoutMode      = "ReadoutMode";
@@ -106,7 +116,9 @@ namespace MM {
    const char* const g_Keyword_CoreFocus        = "Focus";
    const char* const g_Keyword_CoreAutoFocus    = "AutoFocus";
    const char* const g_Keyword_CoreAutoShutter  = "AutoShutter";
+   const char* const g_Keyword_CoreChannelGroup = "ChannelGroup";
    const char* const g_Keyword_CoreImageProcessor = "ImageProcessor";
+   const char* const g_Keyword_CoreSLM          = "SLM";
    const char* const g_Keyword_CoreTimeoutMs    = "TimeoutMs";
    const char* const g_Keyword_Channel          = "Channel";
    const char* const g_Keyword_Version          = "Version";
@@ -115,6 +127,14 @@ namespace MM {
    const char* const g_Keyword_Transpose_MirrorX = "TransposeMirrorX";
    const char* const g_Keyword_Transpose_MirrorY = "TransposeMirrorY";
    const char* const g_Keyword_Transpose_Correction = "TransposeCorrection";
+   const char* const g_Keyword_Closed_Position = "ClosedPosition";
+
+   // image annotations
+   const char* const g_Keyword_Metadata_Z           = "Z-um";
+   const char* const g_Keyword_Meatdata_Exposure    = "Exposure-ms";
+   const char* const g_Keyword_Metadata_Score       = "Score";
+   const char* const g_Keyword_Metadata_ImageNumber = "ImageNumber";
+   const char* const g_Keyword_Metadata_StartTime   = "StartTime-ms";
 
    // configuration file format constants
    const char* const g_FieldDelimiters = ",";
@@ -176,7 +196,10 @@ namespace MM {
       ImageProcessorDevice,
       ImageStreamerDevice,
       SignalIODevice,
-      MagnifierDevice
+      MagnifierDevice,
+      ProgrammableIODevice,
+      SLMDevice,
+      CommandDispatchDevice
    };
 
    enum PropertyType {
@@ -189,7 +212,7 @@ namespace MM {
    enum ActionType {
       NoAction,
       BeforeGet,
-      AfterSet
+      AfterSet,
    };
 
    enum PortType {

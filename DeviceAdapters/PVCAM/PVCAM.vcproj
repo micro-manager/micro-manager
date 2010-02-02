@@ -4,6 +4,7 @@
 	Version="9.00"
 	Name="PVCAM"
 	ProjectGUID="{A28DEB4E-E645-4990-A91D-4A7FF6762239}"
+	RootNamespace="PVCAM"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="131072"
 	>
@@ -41,9 +42,10 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories=""
+				AdditionalIncludeDirectories="&quot;..\..\..\3rdparty\Microsoft\VisualC++\include&quot;;../../../3rdparty/RoperScientific/WindowsLatest/PvCam/SDK"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				MinimalRebuild="true"
+				ExceptionHandling="2"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				RuntimeTypeInfo="true"
@@ -51,6 +53,7 @@
 				WarningLevel="4"
 				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="4"
+				DisableSpecificWarnings="4290"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -122,14 +125,16 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories=""
+				AdditionalIncludeDirectories="&quot;..\..\..\3rdparty\Microsoft\VisualC++\include&quot;;../../../3rdparty/RoperScientific/WindowsLatest/PvCam/SDK"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
+				ExceptionHandling="2"
 				RuntimeLibrary="0"
 				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="4"
 				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="3"
+				DisableSpecificWarnings="4290"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -187,10 +192,6 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\Cascade.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\MMDevice\DeviceUtils.cpp"
 				>
 			</File>
@@ -225,6 +226,10 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
+				RelativePath="..\..\MMDevice\DeviceBase.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\MMDevice\DeviceUtils.h"
 				>
 			</File>
@@ -256,7 +261,7 @@
 			>
 		</Filter>
 		<File
-			RelativePath="..\..\..\3rdparty\RoperScientific\Windows\PvCam\Sdk\Libs\Pvcam32.lib"
+			RelativePath="..\..\..\3rdparty\RoperScientific\WindowsLatest\PvCam\Sdk\Libs\Pvcam32.lib"
 			>
 		</File>
 	</Files>

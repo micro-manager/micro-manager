@@ -1,0 +1,1059 @@
+////////////////////////////////////////////////////////////////////////////////////////////
+// Three Channels Fluorescence Images Exploration Tool
+////////////////////////////////////////////////////////////////////////////////////////////
+// Author : Gilles Carpentier
+// Faculte des Sciences et Technologies,
+// Universite Paris 12 Val de Marne, France.
+
+// Many thanks to Alessandra Albano for the english correction of the code comments.
+
+// For images from size about 1360x1024, it is advise to set the memory of ImageJ at least at 350 Mo.
+
+/////////////////////////////////////////////////////////// Calibration data specific for each microscope ////////////////////////////////////////////////////////////////////////
+// List of calibration options. Make the objective name as short as possible (as shown). 
+// Calibration data specific to your microscope have to be set in the var microscope1 array below.
+// The data are in this form: "name of objective","pixel distance","known distance (µm)","scale bar value (µm)".
+// Example: "Obj 4x","832","1000","100".
+// The [0] value of the array contains the name of the microscope.
+
+// The following set of calibration data is given for a Scion CFW-1310M CCD camera mounted on an Olympus BH-2 with a
+// 0.3x C-mount optical adaptor.
+
+// Web site: http://image.bio.methods.free.fr/Fluotooldoc.html
+
+// Image sample, http://rsb.info.nih.gov/ij/macros/images/myotube.tif.zip
+
+// The RGB image sample, is a composite of three microscopic images of the same field in fluorescence mode.
+// The example contains a triple lableling of a differentiated mouse myogenic cell line.
+
+// Cell culture and immunochemistry; Juliette Peltzer.
+// Images from the courtesy of Dr Angelica Keller.
+// For more details about the cell line, contact Dr Angelica Keller at keller@univ-paris12.fr
+// Faculte des Sciences et Technologies,
+// Universite Paris 12 Val de Marne, France.
+
+
+// Array containing the calibration data specific to each acquisition device:
+var microscope1 = newArray("Olympus BH-2","Obj 4x","832","1000","100","Obj 10x","207","100","50","Obj 20x","417","100","50","Obj 40x","833","100","10","Obj 100x","185","9","10");
+
+// Global variables :
+
+var calibdata=microscope1;
+
+var  objective = newArray("Unchanged","Uncalibrated","","","","","","Other");
+var objectdata = newArray(16);
+var blackmarge = 2,objectcode=0,pixmargin=0,pixobj=0,imagex,imagey,xinit,yinit,nblinecom=3,hightnblinecom=15,hightcom=24;
+var spacer=5,pixdist,knowndist,scaleunit,defaultbar,color="Grey",obj,model="Unknown";
+var TimeString="",otherobjective,otherobjecvalue,comments ="none",zoom=1;
+// Variables for tools.
+var x,  y,  quadrantx,xlocation,ylocation,spacer,xinit,yinit,xprime,yprime,arrowline,autoarrow ;
+var  arrowlenght=20, arrowwidth=6, arrowconcav=21, taillenght=20, lineWidth=2,imageid;
+var tailwidth=4, tailcolor="Magenta", tailorient="North", orientangle;
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Macro making the so called (presentation) three channels panel with  '_pl' suffix.
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+macro 'Presentation Panel [p]' {
+
+setBatchMode(true);
+requires("1.34o"); 
+
+blackmarge = 2; pixobj=0;objectcode=0;
+imageid = getImageID();
+nomdimage = getTitle;
+testpl = indexOf(nomdimage,"_pl");
+if (testpl > 0) exit ("This image is already a presentation");
+testpl = indexOf(nomdimage,"_zone");
+if (testpl > 0) exit ("This image is already a final ROI panel. Start from a RGB image to use this function.");
+chemin = getDirectory("image");
+if (chemin == "") exit('Images must be saved before treatment.');
+cheminimage = chemin + nomdimage;
+imagey = getHeight(); imagex = getWidth(); depth = bitDepth; nbslice = getSliceNumber();
+if (depth != 24) exit('Image must be 8 bit RGB encoded');
+nbslice = nSlices;
+if (nbslice > 1) exit('Initial images must single slice');
+
+// set an array containing the list of objectives available from the calibdata objective array.
+objectlist = getlistobj (calibdata);
+
+if (otherobjecvalue != 0){
+ objectlist[6] = otherobjective;
+}else{
+model=objectdata[0];
+
+}
+
+resultchoices=userparameters (nomdimage);
+
+if (pixobj==6) {
+resultchoices[7]=otherobjective;
+objectlist[6]=otherobjective;
+} else {
+model=objectdata[0];
+zoom=1;
+}
+
+run("Set Scale...", resultchoices[9]);
+spacer = resultchoices[2];
+sufix= endsWith(nomdimage, ".tif");
+if (sufix ==1) {
+      index2=indexOf(nomdimage, ".tif");
+      planchename = substring (nomdimage,0,index2);
+      planchename = planchename + "_pl";
+	} else {
+	planchename = nomdimage + "_pl";
+}
+if (resultchoices[8] == 1 && resultchoices[10] != 0) blackmarge =(hightcom*nblinecom);
+newImage(planchename, "RGB Black", (4*imagex+(3*spacer)),(imagey+blackmarge), 1);
+drawcodes (planchename,imagex,imagey,blackmarge,spacer,objectcode);
+run("Set Scale...", resultchoices[9]);
+makespacer (imagex,imagey,spacer);
+
+RGBtoPL (spacer,0,0,imagex,imagey,imageid,cheminimage,chemin,nomdimage,planchename);
+
+if (resultchoices[8] == 1 && resultchoices[10] != 0) SetBar (resultchoices[7],resultchoices[10],spacer,imagex,imagey);
+setBatchMode(false);
+
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Macro making a panel from a ROI selected on a prebuilt so called  'presentation'  three channels panel (with suffix '_pl'),
+// first obtained with the above 'Presentation Panel' macro (result panel with the suffix '_zone').
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+macro 'Make a ROI panel from a presentation [r]' {
+
+setBatchMode(true);
+requires("1.34m"); 
+ 
+userroi=0;roix=0;roiy=0;largroi=0;hautroi=0;fullimage=0;
+userroi = selectionType();
+getSelectionBounds(roix, roiy, largroi, hautroi);
+if (userroi == -1 ) {
+showMessageWithCancel('There is no ROI selection. The full initial image size will be used as default selection.');
+fullimage=1;
+}
+if (fullimage==1){
+ largroi=1; hautroi=1;
+}
+imageid = getImageID();
+nomdimage = getTitle;
+testpl = indexOf(nomdimage,"_pl");
+if (testpl < 0) exit ("This image is not a presentation, first make a presentation.");
+depth = bitDepth;
+if (depth != 24) exit('Presentations must be RGB encoded.');
+nbslice = nSlices;
+if (nbslice > 1) exit('Presentation must be RVB, single slice.');
+sufix= endsWith(nomdimage, "_pl"); 
+suffix= endsWith(nomdimage, "_pl.tif");
+if (sufix != 1 && suffix != 1) exit('This does not seems to be a presentation.');
+if (sufix==1)  index2=indexOf(nomdimage, "_pl");
+if (suffix==1) index2=indexOf(nomdimage, "_pl.tif");
+planchename = substring (nomdimage,0,index2); planchename = planchename + "_zone";
+chemin = getDirectory("image");
+if (chemin == "") showMessage ("This presentation isn't saved.");
+cheminimage = chemin + nomdimage; imagey = getHeight(); imagex = getWidth(); spacer=""; 
+setSlice(1);
+objectlist = getlistobj (calibdata);
+getuserparam (nomdimage);
+xinit=((imagex -(3*spacer))/4); 
+yinit=(imagey-blackmarge);
+if (fullimage ==1) {
+largroi=xinit; hautroi=yinit; roix=0; roiy=0;
+}
+
+// Tests for the position of the user selection.
+if ((roiy + hautroi) > yinit || hautroi > yinit) exit('The ROI selection overflows on the comments margin.');
+if (largroi>xinit) exit('The ROI selection is higher than the original image size.');
+a=0; quadrant=0; test=0; quadrantx=0;
+for (a =0; a<4; a ++) {
+
+quadrant=((a*xinit) + (a*spacer));
+   		 if (roix >= quadrant && roix <= (quadrant+xinit)) {
+		quadrantx=(a+1);
+		
+		test=1;
+		 		 if( ((roix-quadrant)+largroi)> xinit) {
+					test=2;
+					if( (((roix-quadrant)+largroi)-xinit) <= spacer){
+					test=3;
+					}
+				}
+		} 
+}
+
+if (test == 0) exit('The origin of the ROI selection overlaps on a spacer.');
+if (test == 2) exit('The right limit of the ROI selection overlaps on the next neighbor subpanel.');
+if (test == 3) exit('The right limit of the ROI selection overlaps on a spacer.');
+
+newImage("sample", "RGB Black", largroi, hautroi, 1);
+imageid = getImageID();
+sample = getTitle;
+run("RGB Stack");
+selectImage(nomdimage);
+run("RGB Stack");
+couche=0;
+roixx=(roix-(( (quadrantx -1) * xinit)+((quadrantx-1) * spacer)));
+for (chanelroi =0; chanelroi <3; chanelroi ++) {
+	selectWindow(nomdimage);
+          couche=(chanelroi+1);
+	setSlice(couche); //chanel
+	makeRectangle (  (roixx+(chanelroi*xinit)+(chanelroi*spacer)), roiy, largroi, hautroi );
+	run("Copy");
+	run("Select None");
+	selectWindow(sample);
+	setSlice(couche);
+	makeRectangle(0,0, largroi, hautroi);
+	run("Paste");
+	run("Select None");
+}
+
+
+if (otherobjecvalue != 0){
+ objectlist[6] = otherobjective;
+ }else{
+model=objectdata[0];
+}
+
+resultchoices=userparameters (nomdimage);
+
+if (pixobj==6) {
+resultchoices[7]=otherobjective;
+objectlist[6]=otherobjective;
+} else {
+model=objectdata[0];
+zoom=1;
+}
+
+blackmarge=2;
+if (resultchoices[8] == 1 && resultchoices[10] != 0) blackmarge = (nblinecom*hightcom);
+spacer = resultchoices[2];
+newImage(planchename, "RGB Black", (4*largroi+(3*spacer)), (hautroi+(blackmarge)), 1);
+drawcodes (planchename,largroi,hautroi,blackmarge,spacer,objectcode);
+run("Set Scale...", resultchoices[9]);
+makespacer (largroi,hautroi,spacer);
+
+selectImage(sample);
+run("RGB Color");
+selectImage(nomdimage);
+run("RGB Color");
+run("Select None");
+imagepath=""; imagepathfolder="";
+
+RGBtoPL (spacer,0,0,largroi,hautroi,sample,imagepath,imagepathfolder,nomdimage,planchename);
+
+selectImage(sample);
+close();
+selectImage(nomdimage);
+makeRectangle(roix,roiy, largroi, hautroi);
+selectImage(planchename);
+getuserparam (planchename);
+
+if (blackmarge > 2) {
+	imagey=hautroi;
+	SetBar (resultchoices[7],resultchoices[10],spacer,largroi,hautroi);
+	}
+selectImage (planchename);
+setBatchMode(false);
+
+}
+
+////////////////////////////////////////////////////////////////////
+// Macros for location, and drawing arrows.
+////////////////////////////////////////////////////////////////////
+// Menu divider 
+  macro '-' {
+      eraserWidth = getNumber("Eraser Width:", eraserWidth);
+  }
+
+macro "MultiCursor Tool -C00cL08f8L515eLb1be" {
+autoarrow=0;
+getspecif ();
+selectImage(imageid);
+
+MultiCursor (autoarrow,xinit,yinit,spacer);
+}
+
+macro "Arrow Tool - C0aOB11P81ec1c81L18f8L818f"  {
+};
+}
+
+macro "Arrow Tool Selected" {
+test=selectionType();
+if ( test == -1) {
+ showMessageWithCancel('There is no target selection. Choose first a target with the MultiCursor Tool.');
+exit
+}
+setupUndo();
+if (x != 0 && y!=0) {
+arrow ();
+run("Select None");
+}
+}
+
+macro "Arrow Maker Tool -Ca0bL1ee1L65e1La9e1" {
+ requires("1.34o");
+autoarrow=1;
+getspecif ();
+selectImage(imageid);
+MultiCursor (autoarrow,xinit,yinit,spacer);
+}
+
+macro "Undo Last Arrow [z]"{
+run("Undo");
+}
+
+ macro "Display Coordinates" {
+     showMessage("X Coordinate: "+x + "\nY Coordinate: "+y);
+ }
+
+// Macro ArrowTool allowing user to make free hand arrows. Author: Wayne Rasband. Avaible on the ImageJ web site at
+// web site at http://rsb.info.nih.gov/ij/macros/tools/ArrowTool.txt
+
+ macro "FreeHandArrow Tool -C00bL1ee1L65e1La9e1" {
+getspecif ();
+selectImage(imageid);
+        setupUndo();
+        getCursorLoc(x, y, z, flags);
+        xstart = x; ystart = y;
+        x2=x; y2=y;        
+        while (true) {
+            getCursorLoc(x, y, z, flags);
+            if (flags&16==0) {
+                drawArrow(xstart, ystart, x, y, lineWidth);
+                run("Select None");
+                exit;
+            }
+            if (x!=x2 || y!=y2)
+                makeLine(xstart, ystart, x, y);
+            x2=x; y2=y;
+            wait(10);
+        };
+    }
+
+  // ImageJ runs this macro when user double-clicks on the ArrowTool icon.
+  macro "FreeHandArrow Tool Options" {
+      lineWidth = getNumber("Line Width:", lineWidth);
+ }
+
+ // Menu divider
+  macro '-' {
+      eraserWidth = getNumber("Eraser Width:", eraserWidth);
+  }
+
+ macro "About 3FluoLableling Exploring Tool - C059T3e16?" {
+  }
+
+  // About, Notice
+  macro "About 3FluoLableling Exploring Tool Selected" {
+message = 'About 3FluoLableling Exploring Tool \n'+'                      ---------------                 \n'+'Author: Gilles Carpentier, Faculte des Sciences et Technologies, Universite Paris 12 Val de Marne, France.\n'+'                      ---------------                 \n'+'This program has been imagined to make easier the analysis of three channels microscopic fluorecence images.\n' + 'It generates master panels called *Presentations* (_pl),  from rgb images, including 4 quadrants presenting\n'+'the 3 singles channels (in grey or pseudo color), and a rgb composite representation. These *Presentations*\n'+'are calibrated according to the objective used for the acquisition of the images. All these informations, once set,\n'+'are encoded in the panels images.\n'+'A second function allows to obtain the same kind of panels, from a region of interest called ROI (_zone) selected\n'+'on a *Presentation*.\n'+'                      ---------------                 \n'+'To obtain a *Presentation* master panel from a rvb image, just press (p) on the keybord.\n'+'To obtain a ROI panel from a user selection  made on a *Presentation*, just press (r) on the keyboard.\n'+'                      ---------------                 \n'+'The tools provided allow to explore in a dynamic and simultaneous way the signal location of the 4 generated quandrants:\n'+' \n'+'- Use the blue MultyCursor tool to colocate visually and dynamically some structure of interest.\n'+'- Use the green Arrow tool to draw at the same place in the 4 quadrant some customisable arrows.\n'+'- Use the magenta ArrowMaker tool to obtain a MultiCursor tool which draws  customisable arrows when you unclick.\n'+'- Use the blue FreeHandArrow tool to draw a single arrow.';
+  showMessage(message);
+  }
+
+// --------------------------------------------------------------------------- functions-----------------------------------------------------------------------//
+
+///////////////////////////////////////////////////////////////
+// Function  filling chanels area in panel.
+///////////////////////////////////////////////////////////////
+
+function fillareawith (slice,x,y,larg,haut,fnchoice,histo) {
+
+	if (fnchoice == 2) {
+         color = 0;
+	for (color =1; color < 4; color++){
+		setSlice(color);
+		makeRectangle (x,y,larg,haut);
+		run("Paste");
+			if (histo == 1) {
+			run("Enhance Contrast", "saturated=0 normalize");
+			}
+		run("Select None");
+		}
+	} else {setSlice(slice);
+		makeRectangle (x,y,larg,haut);
+		run("Paste");
+			if (histo == 1) {
+			run("Enhance Contrast", "saturated=0 normalize");
+			}
+		run("Select None");
+	}
+}
+
+//////////////////////////////////////////////////////////////////////
+// Function making white spacers in a panel.
+//////////////////////////////////////////////////////////////////////
+
+function makespacer (imagex,imagey,spacer) {
+nbspacer = ""; xspacer = "";
+	for (nbspacer = 1;  nbspacer <4;  nbspacer ++) {
+		xspacer =( (nbspacer *imagex)+((nbspacer-1)*spacer));
+		makeRectangle (xspacer, 0, spacer, (imagey+1));
+		setForegroundColor(255, 255, 255);
+		run("Fill");
+		run("Select None");
+	}
+}
+
+///////////////////////////////////////////////////////////////////////////////////////
+// Function distributing the rvb components in a panel.
+///////////////////////////////////////////////////////////////////////////////////////
+
+function RGBtoPL (spacer,xselect,yselect,largselect,hautselect,imagervb,imagepath,imagepathfolder,imagename,planchename) {
+
+selectImage(imagervb);
+run("RGB Stack");
+selectImage(planchename);
+run("RGB Stack");
+sliceinit = 0; slicedest = 0;
+// Fill the monochanel area.
+
+	for (sliceinit = 1; sliceinit <4; sliceinit ++) {
+
+		selectImage(imagervb);
+		setSlice(sliceinit);
+                  makeRectangle(xselect, yselect, largselect, hautselect);
+		run("Copy");
+		run("Select None");
+		selectWindow (planchename);
+		slicedest = sliceinit;
+                   x= ( ((slicedest-1) * largselect) + ((slicedest -1) * spacer ) ); y=yselect; larg=largselect; haut=hautselect;
+
+choice=resultchoices[1];
+if (slicedest == 1){
+	histo = resultchoices[3]; 
+	aa=resultchoices[11];
+	}
+if (slicedest == 2){
+	histo = resultchoices[4];
+	aa=resultchoices[12];
+	}
+if (slicedest == 3) {
+	 histo = resultchoices[5];
+	aa=resultchoices[13];
+	}
+		fillareawith (slicedest,x,y,larg,haut,choice,histo);
+// Fill the composite area.
+		fnchoice=1;
+		x=((3 * largselect) + (3*spacer));
+histo =aa;
+		fillareawith (slicedest,x,y,larg,haut,fnchoice,histo);
+	}
+
+selectImage(imagervb);
+run("RGB Color");
+selectWindow (planchename);
+run("RGB Color");
+}
+
+////////////////////////////////////////////////////////
+// Function to get the user settings.
+////////////////////////////////////////////////////////
+function userparameters (image) {
+
+selectImage(image);
+
+// Current calibration (pixel are supposed to be squared) :
+getPixelSize(unit, pixelWidth, pixelHeight);
+calibration ="";
+if (unit !="µm") {
+	calibration = "µm uncalibrated";
+	}
+	else {
+	calibration = " "+ pixelWidth +" "+unit+" /pixel";
+	}
+
+textcalib="Current spatial calibration is ("+calibration+" ), objective ( "+objectlist[pixobj]+" ). Do you want to set it to" ;
+obj=objectlist[pixobj];
+
+  userchoices = newArray(14); 
+defaultspacer = 5; 
+choices = newArray("Grey", "Color");
+
+  Dialog.create("User settings for the panel.");
+  Dialog.addChoice("Single channels : pseudo-color or grey levels?", choices, toString (color));
+  Dialog.addNumber("Spacer thickness in pixels (integer, limited to 50)?",defaultspacer);
+  Dialog.addCheckbox("Histogram strech of the red channel. ", false);
+  Dialog.addCheckbox("Histogram strech of the green channel. ", false);
+  Dialog.addCheckbox("Histogram strech of the blue channel. ", false);
+  
+Dialog.addMessage("Histogram strech of the RGB composite: ");
+
+  Dialog.addCheckbox("Histogram strech of the Red channel of the composite. ", false);
+  Dialog.addCheckbox("Histogram strech of the Green channel of the composite. ", false);
+  Dialog.addCheckbox("Histogram strech of the Blue channel of the composite. ", false);
+  Dialog.addChoice(textcalib, objective);
+  Dialog.addCheckbox("Scale bar and comments ? ", true);
+  Dialog.addMessage ("Calibrated  for Microscope Model: "+ model);
+  Dialog.show();
+
+  color = Dialog.getChoice();
+  if (color == "Grey")  { 
+	userchoices[1] = 2;
+	 }
+	else {
+	userchoices[1] = 1;
+	 }
+spacer = Dialog.getNumber();
+  if (spacer > 0 && spacer < 51)  {
+	userchoices[2] = spacer;
+	} 
+	else {
+	showMessage ("The spacer is out of range, the " + defaultspacer+" default value will be used");
+	userchoices[2] = defaultspacer;
+	}
+red = Dialog.getCheckbox();
+if (red == true)  userchoices[3] = 1;
+green = Dialog.getCheckbox();
+if (green == true)  userchoices[4] = 1;
+blue = Dialog.getCheckbox();
+if (blue == true)  userchoices[5] = 1;
+histored = Dialog.getCheckbox();
+if (histored == true) userchoices[11] = 1;
+histogreen = Dialog.getCheckbox();
+if (histogreen == true) userchoices[12] = 1;
+histoblue = Dialog.getCheckbox();
+if (histoblue == true) userchoices[13] = 1;
+obj = Dialog.getChoice();
+userchoices[7] = obj;
+bar = Dialog.getCheckbox();
+if (bar == true)  userchoices[8] = 1;
+userchoices[6] =0;
+
+defaultbar=""; pixdist=""; scaleunit=""; knowndist=""; spcalibration="";
+if (obj == objectlist[1])  {
+	pixdist= objectdata[1]; knowndist=objectdata[2];scaleunit="µm";defaultbar=objectdata[3];pixobj=1;
+	}
+if (obj == objectlist[2])  {
+	pixdist= objectdata[4]; knowndist=objectdata[5];scaleunit="µm";defaultbar=objectdata[6];pixobj=2;
+	}
+if (obj == objectlist[3])  {
+	pixdist= objectdata[7]; knowndist=objectdata[8];scaleunit="µm";defaultbar=objectdata[9];pixobj=3;
+	}
+if (obj == objectlist[4])  {
+	pixdist= objectdata[10]; knowndist=objectdata[11];scaleunit="µm";defaultbar=objectdata[12];pixobj=4;
+	}
+if (obj == objectlist[5])  {
+	pixdist= objectdata[13]; knowndist=objectdata[14];scaleunit="µm";defaultbar=objectdata[15];pixobj=5;
+	}
+if (obj == "Uncalibrated")  {
+	pixdist= 0; knowndist=0;scaleunit="pixel";defaultbar=0;
+	}
+if (obj == "Unchanged" )  {
+	pixdist= 100; knowndist=(pixelWidth*100);scaleunit=unit;defaultbar=50;
+	}
+if (obj == "Other")  {
+	other (image);
+	}
+if (unit !="µm"  && obj == "Unchanged")  userchoices[8] = 0;
+
+spcalibration= "distance="+pixdist+" known="+knowndist+" pixel=1 unit="+scaleunit;
+userchoices[9] =spcalibration; 
+userchoices[10]=defaultbar;
+getPixelSize(unit, pixelWidth, pixelHeight);
+userchoices[7]=objectlist[pixobj];  objectcode= pixobj;
+if (obj== "Uncalibrated") {
+objectcode= 0; 
+userchoices[8] = 0;
+}
+return userchoices;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////
+// Function drawing a scale bar in the lower black margin.
+////////////////////////////////////////////////////////////////////////////////////////////
+
+function SetBar (objec,baresize,spacer,imagex,imagey) {
+
+imageid = getImageID();
+largimage = getWidth();
+hautimage =getHeight();
+getPixelSize(unit, pixelWidth, pixelHeight);
+pixbar= floor(baresize/pixelWidth);
+if (pixbar >= (largimage/5)) {
+	while (pixbar >= (largimage/5)) {
+         pixbar= floor(baresize/pixelWidth);
+	baresize = floor(baresize / 2);
+	}
+}
+maxcustbar= floor((pixelWidth*(largimage + 3*spacer))/4);
+if (maxcustbar == 0) maxcustbar =1;
+custuserbar = 0;
+
+while (custuserbar < 1 || custuserbar > maxcustbar){ 
+          if (baresize == 0) baresize =1;
+         message="Size of the bar, for "+objec+" will be: " + baresize + " µm. You can set a custom size  to from 1 to "+ maxcustbar +" µm";
+ 	Dialog.create("Custom user scale bar size. ");
+	Dialog.addNumber(message, baresize);
+	Dialog.show(); 	custuserbar = Dialog.getNumber();
+} 
+baresize = custuserbar;
+barx=newArray(1); bary=newArray(1);
+bar="width="+baresize+" height=2 font=12 color=Yellow location=[At Selection] bold";
+barx[0]=10;
+bary[0]=(hautimage-(blackmarge - 5));
+makeSelection("point", barx, bary);
+run("Scale Bar...",bar);
+run("Select None");
+
+// Insert scale in the black margin (line 0).
+ setColor(0, 255, 0);
+thescale = "Scale: "+ pixelWidth +" µm / pixel";
+if ((largimage - ((baresize/pixelWidth) - 20)  ) > 150) {
+xobjec=((baresize/pixelWidth) + 20); yobjec=(imagey + (blackmarge/nblinecom));
+drawString(thescale, xobjec, yobjec);
+}
+
+// Insert objective in the black margin (line 1).
+setColor(0, 255, 255);
+
+if ((largimage+130) > 50) {
+  xobjec=10; yobjec=(imagey + (blackmarge/nblinecom + hightnblinecom));
+  drawString(objec, xobjec, yobjec);
+}
+
+if (pixobj==6){
+// Insert zoom and additional info in the black margin (line 1).
+setColor(0, 255, 255);
+message="Zoom factor (LSM): "+zoom;
+if (largimage  > 290) {
+  xobjec=70; yobjec=(imagey + (blackmarge/nblinecom + hightnblinecom));
+  drawString(message, xobjec, yobjec);
+}
+}
+
+// Insert the date in the black margin (line 2).
+thedate = GetTime ();
+ setColor(150, 150, 255);
+if (largimage  > 290) {
+  xobjec=10; yobjec=(imagey + (blackmarge/nblinecom +2*hightnblinecom));
+  drawString(TimeString, xobjec, yobjec);
+}
+// Insert the model of microscope corresponding to the scaling values in the black margin (line 3).
+setColor(150, 150, 255);
+message="Microscope model: "+model;
+if (largimage  > 290) {
+  xobjec=10; yobjec=(imagey + (blackmarge/nblinecom +3*hightnblinecom));
+  drawString(message, xobjec, yobjec);
+}
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Function based on the code of the "Get Time" macro, writen by Bill Heeschen, and avaible at
+// http://rsb.info.nih.gov/ij/macros/GetDateAndTime.txt
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+function GetTime () {
+
+	MonthNames = newArray("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec");
+	DayNames = newArray("Sun", "Mon","Tue","Wed","Thu","Fri","Sat");
+	getDateAndTime(year, month, dayOfWeek, dayOfMonth, hour, minute, second, msec);
+	TimeString ="Treatment date: "+DayNames[dayOfWeek]+" ";
+	if (dayOfMonth<10) {TimeString = TimeString+"0";}
+	TimeString = TimeString+dayOfMonth+"-"+MonthNames[month]+"-"+year+" Time: ";
+	if (hour<10) {TimeString = TimeString+"0";}
+	TimeString = TimeString+hour+":";
+	if (minute<10) {TimeString = TimeString+"0";}
+	TimeString = TimeString+minute+":";
+	if (second<10) {TimeString = TimeString+"0";}
+	TimeString = TimeString+second;
+      	return TimeString;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////
+// Function to set and extract informations about the image.
+//////////////////////////////////////////////////////////////////////////////////////////////
+
+function getuserparam (image) {
+
+selectWindow(image);
+imagey = getHeight(); 
+imagex = getWidth();
+pixobj=getPixel(1,(imagey-1));
+pixobj=pixobj&0xff;
+pixmargin=getPixel(0,(imagey-1));
+blackmarge=pixmargin&0xff;
+spacer=getPixel(2,(imagey-1));
+spacer=spacer&0xff;
+return spacer;
+return pixobj;
+return blackmarge;
+return imagey;
+return imagex;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Function creating working arrays from the (calibdata) array containg the microscope(n) data (n=1).
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+function getlistobj (microdata) {
+
+for (i=0;i<5;i++){
+	ii=(i*4+1);
+objective[i+2]=microdata[ii];
+}
+objectdata[0]=microdata[0];
+a=0;
+for (ii=0;ii<5;ii++) {
+	for (i=1;i<4;i++){
+		a=a+1;
+		objectdata[a]=microdata[ii*4+i+1];
+		//print (objectdata[a]);
+	}
+}
+
+nbobj = 6;
+objectlist = newArray(nbobj+1);
+objectlist[0]="Obj ?";
+
+for (ob = 1; ob <= nbobj; ob ++) {
+objectlist[ob]=objective[ob+1];
+}
+
+return objectlist;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Function coding in the images the parameters from the microscope specific array defined at the top of the code text.
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////	
+function drawcodes (image,xcode,ycode,blackmarge,spacer,objectcode) {
+
+selectWindow (image);
+makeLine(0,ycode, (4*xcode+(3*spacer)),ycode);
+setForegroundColor(254,254,254);
+run("Fill");
+run("Select None");
+makeLine( 0, (ycode+(blackmarge-1)), (4*xcode+(3*spacer)),  (ycode+(blackmarge-1)));
+setForegroundColor(255,255,255);
+run("Fill");
+run("Select None");
+setPixel(0, (ycode+(blackmarge-1)), blackmarge);
+setPixel(1, (ycode+(blackmarge-1)), objectcode);
+setPixel(2, (ycode+(blackmarge-1)), spacer);
+
+}
+
+////////////////////////////////////////////////////
+// Functions for the location tools.	
+////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ArrowMaker function, based on the code of the ArrowMakerTool avaible on the ImageJ website at
+// http://rsb.info.nih.gov/ij/macros/tools/ArrowMakerTool.txt
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+function arrow () {
+
+setupUndo();
+// Parameters of the arrow:
+previewarrow=0;
+
+arrowchoices1=newArray("3","6","10","15","20","25","30");
+arrowchoices2=newArray("10","15","20","25","30");
+arrowchoices3=newArray("6","11","16","21","26","31");
+arrowchoices4=newArray("0","5","10","15","20","25","30");
+arrowchoices5=newArray("0","2","4","6","12");
+arrowchoices6=newArray("Magenta","Cyan","Yellow","Black","White");
+arrowchoices7=newArray("North","N-E","East","S-E","South","S-W","West","N-W");
+
+ Dialog.create("Arrow Size and Form");
+ Dialog.addChoice("Arrow length:", arrowchoices2,  toString(arrowlenght));
+ Dialog.addChoice("Arrow width:", arrowchoices1,  toString(arrowwidth));
+ Dialog.addChoice("Arrowhead Filling Level:", arrowchoices3, toString(arrowconcav));
+ Dialog.addChoice("Tail Size (Length):", arrowchoices4,  toString(taillenght));
+ Dialog.addChoice("Tail Size (Width):", arrowchoices5,  toString(tailwidth));
+ Dialog.addChoice("Arrow Color:",newArray("Magenta","Cyan","Yellow","Black","White"), tailcolor);
+ Dialog.addChoice("Arrow Orientation:",arrowchoices7, tailorient);
+ Dialog.addCheckbox("Preview", false);
+ Dialog.addMessage("          Press 'z' to Undo");
+
+ Dialog.show();
+
+arrowlenght = parseFloat (Dialog.getChoice());
+arrowwidth = parseFloat (Dialog.getChoice());
+arrowconcav = parseFloat( Dialog.getChoice());
+taillenght = parseFloat(Dialog.getChoice());
+tailwidth = parseFloat(Dialog.getChoice());
+tailcolor = Dialog.getChoice();
+tailorient = Dialog.getChoice();
+
+previewarrow = parseFloat (Dialog.getCheckbox());
+
+if (tailcolor=="Magenta"){
+r = 255; g= 0; b = 225;
+}
+if (tailcolor=="Cyan"){
+r=0; g=255; b=255;
+}
+if (tailcolor=="Yellow"){
+r=255; g=255; b=0;
+}
+if (tailcolor=="White") {
+r =255; g =255; b=255;
+}
+if (tailcolor=="Black"){
+r=0; g=0; b=0;
+}
+
+setColor(r, g, b);
+if (arrowconcav > (arrowlenght+1)) arrowconcav=(arrowlenght+1);
+if (tailwidth > arrowwidth) tailwidth = (arrowwidth-3);
+
+arrowline=1;
+
+if (tailorient == "North") orientangle=0;
+if (tailorient == "N-E") orientangle=(PI/4);arrowline=2;
+if (tailorient == "East") orientangle=(PI/2);
+if (tailorient == "S-E") orientangle=(PI*3/4);arrowline=2;
+if (tailorient == "South") orientangle=(PI);
+if (tailorient == "S-W") orientangle=(5*PI/4);arrowline=2;
+if (tailorient == "West") orientangle=(3*PI/2);
+if (tailorient == "N-W") orientangle=(-(PI/4));arrowline=2;
+
+xfleche=x; yfleche=y;
+
+if (previewarrow == true)  {
+   preview();
+   }
+for (a=0;a<4;a++){
+   xfleche = (x + (a*xinit) + (a*spacer)); i=0;
+   builtarrow ();
+   }
+}
+
+function preview () {
+    prev="Arrow preview";
+
+    newImage(prev,"RGB Black",200,300,1);
+    image=getImageID();
+    xfleche=100;yfleche=75;
+
+    setFont("Serif", 12);
+    builtarrow ();
+    selectImage(image);
+    setColor(255,255,255);
+
+    drawString("Arrow lenght: "+arrowlenght +  "\n Arrow width:  "+arrowwidth, 2,210);
+    drawString("Arrowhead Filling Level: "+arrowconcav,2,225);
+    drawString("Tail Lenght: "+taillenght+ " Tail Width: "+tailwidth,2,240);
+    drawString("Arrow Color: "+tailcolor,2,260);
+    drawString("Arrow Orientation: "+tailorient,2,275);
+    exit
+}
+
+function builtarrow () {
+    autoUpdate(false);
+	
+    fleche1=newArray (3);
+    fleche2=newArray (3);
+
+    alpha3a=(PI/2);lineWidth=1;xi=0;
+    setLineWidth(arrowline);
+
+  // Arrowhead drawing:
+   moveTo(xfleche, yfleche);
+   x1=(-1*arrowwidth);y1=(arrowlenght); alpha1a=(atan2(y1,x1));  alpha1b=(alpha1a+orientangle);
+   getxy (x1,y1,alpha1b);
+   fleche1[0]=(xfleche+xprime);fleche2[0]=(yfleche+ yprime);
+   x2=(arrowwidth);y2=(arrowlenght);  alpha2a=(atan2(y2,x2));alpha2b=(alpha2a+orientangle);
+   getxy (x2,y2,alpha2b);
+   fleche1[2]=(xfleche+xprime);fleche2[2]=(yfleche+yprime);
+
+    for (i=2; i<arrowconcav; i++) {
+       getxy (xi,i,alpha3a);
+       getxy (xprime,yprime,(alpha3a+orientangle));
+       fleche1[1]=(xfleche + xprime);fleche2[1]=(yfleche + yprime);
+
+       drawLine(fleche1[0], fleche2[0], fleche1[1], fleche2[1]);
+       drawLine(fleche1[2],fleche2[2], fleche1[1], fleche2[1]);
+     }
+
+    // Tail of the arrow drawing:
+    if (tailwidth != 0) {
+        getxy (0,arrowconcav,alpha3a);
+        getxy (xprime,yprime,(alpha3a+orientangle));
+        x3a=xprime;y3a=yprime;
+        getxy (0,(arrowconcav+taillenght),alpha3a);
+        getxy (xprime,yprime,(alpha3a+orientangle));
+        x3b=xprime;y3b=yprime;
+        setLineWidth(tailwidth);
+        drawLine ((xfleche+x3a), (yfleche + y3a), (xfleche+x3b),(yfleche+y3b));
+    }
+    updateDisplay;
+
+}
+
+function getxy (xxx,yyy,beta) {
+    if (xxx==0) xxx=1;
+    if (yyy==0) yyy=1;
+    xprime=round( (cos(beta) *(xxx/(cos(atan2(yyy,xxx))))));
+    yprime=round( (sin(beta) *(xxx/(cos(atan2(yyy,xxx))))));
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Function MultiCursor, based on the code of the MultiCursorTool avaible on the ImageJ website at
+// http://rsb.info.nih.gov/ij/macros/tools/MultiCursorTool.txt
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+function MultiCursor (autoarrow,xinit,yinit,spacer) {
+      getCursorLoc(x, y, z, flags);
+     xstart=x; ystart=y;
+
+ w = getWidth(); h = getHeight();
+h=yinit; // Height of the polygone forming cursor.
+
+      px = newArray(19);     py = newArray(19);
+      x2=x; y2=y;        
+      while (flags&16!=0) {
+          getCursorLoc(x, y, z, flags);
+	if (x <0) x=0;
+	if (x > w) x=(w-1);
+	
+// Determination of the sub-image in which is the cursor at a given time (quadrant):
+// used to deduce the x cursor coordinates reported to the origin of the sub-images. 
+
+		a=0; quadrant=0; quadrantx=0;
+		for (a =0; a<4; a ++) {
+			quadrant=((a*xinit) + (a*spacer));
+   			 if (x >= (quadrant) && x < ((quadrant)+xinit + spacer)) quadrantx=(a+1);
+		 }
+
+	xlocation=(x- ((quadrantx-1)*(xinit)) -((quadrantx-1)* spacer));
+	x = xlocation;
+	if (xlocation > (xinit-1)) x=xlocation - (xlocation-(xinit-1));
+		
+	ylocation=y;
+	if (ylocation > (yinit-1)) {
+		y=ylocation - (ylocation-(yinit-1));
+		}
+   	if (ylocation < 0) {
+		y=0;
+		}
+
+          if (x!=x2 || y!=y2) {
+              px[0]=0; py[0]=y;
+              px[1]=w; py[1]=y;
+              px[2]=((3*xinit)+(3*spacer)+x); py[2]=y;
+              px[3]=((3*xinit)+(3*spacer)+x); py[3]=0;
+              px[4]=((3*xinit)+(3*spacer)+x); py[4]=h;
+              px[5]=((3*xinit)+(3*spacer)+x); py[5]=y;
+	     px[6]=((2*xinit)+(2*spacer)+x); py[6]=y;
+ 	     px[7]=((2*xinit)+(2*spacer)+x); py[7]=0;
+              px[8]=((2*xinit)+(2*spacer)+x); py[8]=h;
+              px[9]=((2*xinit)+(2*spacer)+x); py[9]=y;
+              px[10]=(xinit+spacer+x); py[10]=y;
+              px[11]=(xinit+spacer+x); py[11]=0;
+              px[12]=(xinit+spacer+x); py[12]=h;
+	    px[13]=(xinit+spacer+x); py[13]=y;
+	    px[14]=x; py[14]=y;
+              px[15]=x; py[15]=0;
+              px[16]=x; py[16]=h;
+	     px[17]=x; py[17]=y;
+	     px[18]=0; py[18]=y;
+
+              makeSelection("polgon", px, py);
+              showStatus(x+","+y);
+          }
+          x2=x; y2=y;
+          wait(10);
+      };
+	if (autoarrow ==1) {
+    		if (x!=xstart && y!=ystart) {
+        	arrow ();
+        	run("Select None");
+		}
+	}
+}
+
+  function drawArrow(x1, y1, x2, y2, lineWidth) {
+      if (x1==x2 && y1==y2) return;
+      setLineWidth(lineWidth);
+      size = 12+12*lineWidth*0.25;
+      dx = x2-x1;
+      dy = y2-y1;
+      ra = sqrt(dx*dx + dy*dy);
+      dx /= ra;
+      dy /= ra;
+      x3 = round(x2-dx*size);
+      y3 = round(y2-dy*size);
+      r = 0.3*size;
+      x4 = round(x3+dy*r);
+      y4 = round(y3-dx*r);
+      x5 = round(x3-dy*r);
+      y5 = round(y3+dx*r);
+      drawLine(x1, y1, x2, y2);
+      moveTo(x4,y4); lineTo(x2,y2); lineTo(x5,y5);
+  }
+
+function getspecif () {
+
+imageid = getImageID();
+nomdimage = getTitle;
+selectWindow(nomdimage);
+sufix1= endsWith(nomdimage, "_pl"); 
+sufix2= endsWith(nomdimage, "_pl.tif");
+sufix3= endsWith(nomdimage, "_zone"); 
+sufix4= endsWith(nomdimage, "_zone.tif");
+if (sufix1 != 1 && sufix2 != 1) {
+	if (sufix3 != 1 && sufix4 != 1) {
+	exit('This tool works on ( _pl) or (_zone) panels');
+}
+}
+
+imagey = getHeight(); 
+imagex = getWidth();
+pixmargin=getPixel(0,(imagey-1));
+blackmarge=pixmargin&0xff;
+spacer=getPixel(2,(imagey-1));
+spacer=spacer&0xff;
+xinit=((imagex -(3*spacer))/4); 
+yinit=(imagey-blackmarge);
+return spacer;
+return yinit;
+return xinit;
+return imageid;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Function for spacial calibration with other data than these contained in the microscope specific array.
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+function other (image) {
+
+getPixelSize(unit, pixelWidth, pixelHeight);
+calibration ="";
+if (unit !="µm") {
+	calibration = "µm uncalibrated";
+	}
+	else {
+	calibration = " "+ pixelWidth +" "+unit+" /pixel";
+	}
+textcalib="Current spatial calibration is ("+calibration+" ). To keep it, let the calibration values unchanged. " ;
+obj=objectlist[pixobj];
+
+pixdist= 1; knowndist=0.2; scaleunit="µm"; defaultbar=10; pixobj=6;
+
+Dialog.create("Other settings for the calibration.");
+Dialog.addMessage(textcalib);
+Dialog.addNumber("Magnify factor of the objective (< 100, with the number format: xx.x)? ",otherobjecvalue);
+Dialog.addNumber("Distance in pixels? ",pixdist);
+Dialog.addNumber("Known distance (in the following format: x.xx)? ",pixelWidth);
+Dialog.addNumber("Zoom factor (LSM)? ",1);
+Dialog.addString("Microscope model? ", model);
+Dialog.show();
+otherobjecvalue = Dialog.getNumber();
+otherobjective="Obj "+otherobjecvalue+"x";
+pixdist = Dialog.getNumber();
+knowndist = Dialog.getNumber();
+zoom=Dialog.getNumber();
+model=Dialog.getString();
+pixdist=pixdist*100;
+knowndist=knowndist*100;	
+return pixdist;
+return knowndist;
+return scaleunit;
+return defaultbar;
+return pixobj;
+return otherobjective;
+return zoom;
+}

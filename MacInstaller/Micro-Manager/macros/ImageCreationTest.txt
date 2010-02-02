@@ -1,0 +1,18 @@
+// This macro opens and inverts 20 images,
+// verifying that the image was actually inverted. 
+// ImageJ 1.31c fixes a synchronization bug that
+// caused this macro to sometimes fail on Mac OS X. 
+  n = 20;
+  for (i=1; i<=n; i++) {
+      run("New...", "name="+i+" type=8-bit fill=White width=100 height=100");
+      run("Invert");
+      if (getPixel(0,0)!=0)
+          print("Synchronization error: "+i);
+ }
+  for (i=n; i>=1; i--) {
+       selectWindow(""+i);
+      run("Close");
+ }
+
+ 
+

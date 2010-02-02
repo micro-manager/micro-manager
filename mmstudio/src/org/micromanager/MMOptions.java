@@ -35,11 +35,13 @@ public class MMOptions {
    private static final String SKIP_CONFIG = "SkipSplashScreen";
    private static final String BUFFSIZE_MB = "bufsize_mb";
    private static final String DISPLAY_BACKGROUND = "displayBackground";
+   private static final String STARTUP_SCRIPT_FILE = "startupScript";
    
    public boolean debugLogEnabled = false;
    public boolean doNotAskForConfigFile = false;
    public int circularBufferSizeMB = 25;
    public String displayBackground = "Day";
+   public String startupScript = "MMStartup.bsh";
    
    public void saveSettings() {
       Preferences root = Preferences.userNodeForPackage(this.getClass());
@@ -49,7 +51,7 @@ public class MMOptions {
       prefs.putBoolean(SKIP_CONFIG, doNotAskForConfigFile);
       prefs.putInt(BUFFSIZE_MB, circularBufferSizeMB);
       prefs.put(DISPLAY_BACKGROUND, displayBackground);
-   }
+      prefs.put(STARTUP_SCRIPT_FILE, startupScript);   }
    
    public void loadSettings() {
       Preferences root = Preferences.userNodeForPackage(this.getClass());
@@ -59,5 +61,6 @@ public class MMOptions {
       doNotAskForConfigFile = prefs.getBoolean(SKIP_CONFIG, doNotAskForConfigFile);
       circularBufferSizeMB = prefs.getInt(BUFFSIZE_MB, circularBufferSizeMB);
       displayBackground = prefs.get(DISPLAY_BACKGROUND, displayBackground);
+      startupScript = prefs.get(STARTUP_SCRIPT_FILE, startupScript);
    }
 }

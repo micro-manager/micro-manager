@@ -1,0 +1,14 @@
+// This macro displays the particle boundary coordinates
+// used by Analyze>Analyze Particels.
+
+run("Analyze Particles...", "clear record");
+for (i=0; i<nResults; i++) {
+    xstart = getResult('XStart', i);
+    ystart = getResult('YStart', i);
+    doWand(xstart, ystart);
+    getSelectionCoordinates(x, y);
+    for (j=0; j<x.length; j++)
+        print(i+"  "+x[j]+"  "+y[j]);
+}
+run("Select None");
+

@@ -1,0 +1,56 @@
+<!-- Ant makefile for the Micro-Manager Tracking plugins  -->
+<!-- This file assumes Micro-Manager project tree structure -->
+
+<project name="MMSurveyor" default="buildMMSurveyor">
+
+	<!-- Specify the system path to the ImageJ root directory -->
+	<property name="ImageJPath" value="C:/Program Files/ImageJ"/>
+	<property name="InstallRoot" value="C:/projects/micromanager1.3/Install/micro-manager"/>
+
+	<!-- Do not modify from this point on -->
+	<property name="MMPluginDir" value="${ImageJPath}/plugins/Micro-Manager"/>
+	<property name="IJ" value="../../classext/ij.jar"/>
+	<property name="MMCoreJ" value="../../bin/MMCoreJ.jar"/>
+	<property name="MMPluginDir-inst" value="${InstallRoot}/plugins/Micro-Manager"/>
+	<property name="BinRoot" value="../../bin"/>
+
+	<path id="project.MMPlugins.path">
+		<pathelement location="${MMPluginDir}"/>
+	</path>
+
+	<path id="project.run.path">
+		<pathelement location="${MMPluginDir}/MMJ_.jar"/>
+		<pathelement location="${MMPluginDir}/MMCoreJ.jar"/>
+		<pathelement location="${MMPluginDir}/bsh-2.0b4.jar"/>
+		<pathelement location="${IJ}"/>
+	</path>
+
+	<path id="project.class.path">
+		<pathelement location="${IJ}" />
+		<pathelement location="${beanshell}" />
+		<pathelement location="${MMCoreJ}" />
+	   <pathelement location="${MMPluginDir}/MMJ_.jar"/>
+	</path>
+
+	<target name="compileMMSurveyor" description="Compile Surveyor plugin.">
+		<mkdir dir="build" />
+		<javac srcdir="./src" destdir="./build" optimize="on" source="1.4" debug="off">
+			<classpath refid="project.class.path" />
+		</javac>
+	</target>
+
+	<target name="buildMMSurveyor" description="Build Surveyor.jar">
+
+		<jar jarfile="Surveyor.jar" basedir="build" />
+		
+		<mkdir dir="${MMPluginDir}" />
+		<copy file="Surveyor.jar" todir="${MMPluginDir-inst}" />
+      <copy file="Surveyor.jar" todir="${BinRoot}" />
+	</target>
+	
+	<target name="cleanMMSurveyor" description="Delete the Surveyor build files.">
+		<delete dir="build" />
+		<delete file="MMSurveyor.jar" />
+	</target>
+	
+</project>

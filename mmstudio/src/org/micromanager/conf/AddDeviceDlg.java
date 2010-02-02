@@ -38,6 +38,7 @@ import javax.swing.JTable;
 import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.AbstractTableModel;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  * Dialog to add a new device to the configuration.
@@ -189,7 +190,7 @@ public class AddDeviceDlg extends JDialog implements MouseListener{
             model_.addDevice(newDev);
             validName = true;
          } catch (MMConfigFileException e) {
-            JOptionPane.showMessageDialog(this, e.getMessage());
+            ReportingUtils.showError(e);
          }
       }
       return true;

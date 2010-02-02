@@ -1,13 +1,19 @@
 package org.micromanager.image5d;
 
-import java.awt.Color;
-
-
-import ij.*;
-import ij.gui.*;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.WindowManager;
+import ij.gui.GenericDialog;
 import ij.measure.Calibration;
-import ij.plugin.*;
-import ij.process.*;
+import ij.plugin.PlugIn;
+import ij.process.ColorProcessor;
+import ij.process.FloatProcessor;
+import ij.process.ImageProcessor;
+import ij.process.ShortProcessor;
+import ij.process.TypeConverter;
+
+import java.awt.Color;
 
 /** Does Montages of Image5Ds
  * with help of ij.plugin.Make_Montage
@@ -204,7 +210,7 @@ public class Make_Montage implements PlugIn {
                 i5d.setCurrentPosition(0, 0, srcChannel-1, currentSlice-1, frame-1);
                 ImagePlus tempImg = new ImagePlus(imp.getTitle()+" Montage", i5d.getStack());
                 ImagePlus montage = makeMontage(tempImg, columns, rows, scale, first, last, inc, borderWidth, label);
-                tempImg.flush();
+                // tempImg.flush();
                 if(bDoScaling) {
                     montage.getProcessor().setMinAndMax(i5d.getChannelDisplayProperties(srcChannel).getMinValue(), i5d.getChannelDisplayProperties(srcChannel).getMaxValue());
                 } else {

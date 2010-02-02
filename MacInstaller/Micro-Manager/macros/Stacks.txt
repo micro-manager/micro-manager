@@ -1,0 +1,39 @@
+macro 'First Slice' {
+    requires("1.29k");
+    run("Set Slice...", "slice=1");
+}
+
+macro 'Last Slice' {
+    run("Set Slice...", "slice="+nSlices);
+}
+
+macro 'Animate' {
+    run("Animation Options...", "speed=7 start");
+}
+
+macro 'Animate Options...' {
+    run("Animation Options...");
+}
+
+macro 'Stop Animation' {
+     run("Stop Animation");
+}
+
+// press esc to abort
+macro 'Flicker' {
+    while (true) {
+        run("Set Slice...", "slice=1");
+        wait(100);
+        run("Set Slice...", "slice=2");
+        wait(100);
+   }
+}
+
+macro 'Info' {
+    print('');
+    print('nImages: '+nImages);
+    print('nSlices: '+nSlices);
+}
+
+
+

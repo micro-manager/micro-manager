@@ -1,0 +1,14 @@
+// This macro opens 16-bit images created
+// by the Mac version of IPLab.
+
+  macro "Open IPLab (Mac)" {
+      run("Raw...", "image=8-bit width=100 height=1 offset=0 number=1");
+      width = getPixel(8,0)*256 + getPixel(9,0);
+      height = getPixel(12,0)*256 + getPixel(13,0);
+      path = "'"+getDirectory("image")+getTitle+"'";
+      run("Close");
+      if (width<100||height<100||width>5000||height>5000)
+         exit("This does not appear to be an IPLab (Mac) image");
+      run("Raw...", "open="+path+" image='16-bit Unsigned' width="
+         +width+" height="+height+" offset=2120 number=1");
+  }

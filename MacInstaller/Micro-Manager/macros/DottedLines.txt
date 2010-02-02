@@ -1,0 +1,1 @@
+macro "Small Dash" {run("Dotted Line", "line=2 dash='2, 2'");}macro "Medium Dash" {run("Dotted Line", "line=2 dash='6, 6'");}macro "Long Dash" {run("Dotted Line", "line=2 dash='12, 12'");}macro "Thick Dash" {run("Dotted Line", "line=4 dash='12, 12'");}macro "Alternating Dash" {run("Dotted Line", "line=2 dash='10, 5, 4, 5'");}

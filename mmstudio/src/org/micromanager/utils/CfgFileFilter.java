@@ -24,6 +24,7 @@
 package org.micromanager.utils;
 
 import java.io.File;
+
 import javax.swing.filechooser.FileFilter;
 
 /**

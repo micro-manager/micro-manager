@@ -1,0 +1,125 @@
+// This macros draws a graph in a stack using the  
+// Plot.* functions added in ImageJ 1.31k. It requires v1.34j.
+// The macro reads a space (?) or tab seperated text file. If only one column is found than these are plotted against the row number
+// When more than one column is found, than the first is used as x-values and the rest as y-values
+// An example text file is available at:
+//     http://rsb.info.nih.gov/ij/macros/data/PlotStackData.txt
+
+//author andreas schleifenbaum aschleifenbaum at web dot de
+
+ macro "Plot-Stack" {
+
+//These are all colors allowed by Plot.setColor(); change the order as you like; colors may be duplicated to allow for more curves, or somewhere down changeColor may be introduced ...
+	colors = newArray("red", "blue", "green", "black", "cyan", "darkGray", "gray", "lightGray", "magenta", "orange", "pink", "yellow")
+	maxcolors=lengthOf(colors);
+
+	requires("1.34j");
+	offset=getNumber("Offset",0.01);		//Offset: % added to max/min of y-limits
+	run("Text File... ");			//open txt-file containing 2 space or tab-seperated columns
+	starttime = getTime();
+	d=split(getInfo(),'\n');			//read rows into an array d; getInfo gives the content of the txt-file
+	run("Close");			//close the txt-window
+	current=split(d[0],'');			// current is a working array
+	curvecount = lengthOf(current);		// get number of columns
+	if (curvecount==1) {			// if only one column, introduce an artificial x column
+		for (i=0;i<lengthOf(d);i++) d[i]=""+i+"\t"+d[i];	
+		curvecount=2;
+	}
+	curvecount = minOf(curvecount,maxcolors);	//no more columns than colors ... there could come a worning
+	if (curvecount==2) colors[0]="black";	// if only one column, than no color is needed ... or set any color you like
+	values= newArray(curvecount);		//there are no 2D arrays allowed, so a 2D is simulated as a 1D array with tab-delimitted strings
+	for (i=0;i<lengthOf(d);i++)		//these can be always splitted into a working array (called current); the columns are transferred into "rows"
+	   for (j=0;j<curvecount;j++) {
+		current=split(d[i],'');
+		values[j]=""+values[j]+current[j]+'\t';	//values is the pseudo-2D array containing the data
+	   }
+	
+
+	xValues=split(values[0],'');		//x values extracted
+	xmin=xValues[0];			//min and max of x are supposed to be first and last x value
+	xmax=xValues[0];
+	current=split(values[1],'');
+	ymax=current[0];			//set constants to find limits of the plot
+	ymin=current[0];
+	for(i=0;i<lengthOf(xValues);i++){
+		xmin=minOf(xmin,xValues[i]);
+		xmax=maxOf(xmax,xValues[i]);
+	}
+	for(j=1;j<curvecount;j++) {
+	   current=split(values[j],'');
+	   for(i=0;i<lengthOf(current);i++){		//find y-limits
+		ymax=maxOf(ymax,current[i]);
+		ymin=minOf(ymin,current[i]);
+	   }
+	}
+	ymax+= abs(ymax)*offset;		//add offset for the y-axis 
+	ymin-=  abs(ymin)*offset;
+
+//******************** Set some plot properties here *************************************
+
+	//xmin = -2.75; xmax = 14; ymin =80; ymax = 180	//***YOU MAY WANT TO SET PLOT LIMITS HERE BY HAND***
+	plottitle = "Timelapse";			//***CHANGE PLOT SETTINGS HERE***
+	xtitle = "x";
+	ytitle = "y";
+	linewidth = 2;
+	plottype="RGB";
+
+//********************************************************************************************
+
+	setBatchMode(true);
+	current=split(values[1],'');
+	xp=newArray(1);
+	yp=newArray(1);
+	newImage("Plot",plottype,470,250,1);		//generate new image 'plot' with the dimensions of a plot
+	stack=getImageID();
+
+	xp[0]=xValues[0];
+	yp[0]=current[0];
+
+	Plot.create(plottitle, xtitle, ytitle, xp, yp);		//generate first plot
+
+	for (i=1;i<curvecount;i++) {
+		current = split(values[i],'');
+		xp=newArray(1);
+		yp=newArray(1);
+
+		Plot.add("line",xp,yp);
+	}
+	Plot.setLimits(xmin,xmax,ymin,ymax);
+	Plot.setLineWidth(linewidth);
+	Plot.show();
+	run("Copy");			//copy plot window content
+	run("Close");			//close the plot window
+	selectImage(stack);
+	run("Paste");			//paste into the image 'plot'
+
+        	for(i=1;i<xValues.length;i++){		//add for every xValue a new slice
+		if (i%10==0) showProgress(i,xValues.length);
+		xp=newArray(i+1);		//generate dummy arrays of the correct size
+		yp=newArray(i+1);		//larger arrays are filled with zero and will lead to artefacts
+		current=split(values[1],'');	//here the first y series must be extracted to allow the Plot.create command
+		for(j=0;j<=i;j++){		//fill dummy arrays
+			xp[j]=xValues[j];
+			yp[j]=current[j];
+		}
+		Plot.create(plottitle,xtitle,ytitle,xp, yp);	//generate plot
+		Plot.setColor(colors[0]);
+		Plot.setLimits(xmin,xmax,ymin,ymax);
+		Plot.setLineWidth(2);
+		for (k=1;k<curvecount;k++) {		//go through columns
+			current = split(values[k],'');	//why here no dummy array is needed, like with Plot.create, I do not know .... but it works
+			Plot.add("line",xp, current);	//add graph plot
+			Plot.setColor(colors[k]);	//with color
+		}
+		Plot.setColor(colors[0]);		//this must be so that the first curve really has the first color, otherwiese it will have the last color
+		Plot.show();
+		run("Copy");			//copy plot content
+		run("Close");			//close plot
+		selectImage(stack);			//select image 'plot'
+		run("Add Slice");			//add a new slice
+		run("Paste");			//paste the last plot content
+	}
+	setBatchMode(false);
+	seconds = (getTime-starttime)/1000;
+	showStatus(seconds+" seconds ("+(seconds/xValues.length)+" sec/frame)");
+    }

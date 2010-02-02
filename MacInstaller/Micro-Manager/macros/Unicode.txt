@@ -1,0 +1,28 @@
+// This macro uses the fromCharCode() function to display a table of Unicode characters
+
+// http://www.datawranglers.com/docs/chars.php
+
+lines = 30; x = 10; ystart = 20; y = ystart; yinc = 15;
+run("New...", "name=Symbols type=8-bit fill=White width=400 height=" + (ystart+lines*yinc));
+setColor(0, 0, 0);
+autoUpdate(false);
+drawString("Angstrom (0x0212b): " + fromCharCode(0x0212b), x, y);
+y += yinc;
+drawString("Angstrom (197): " + fromCharCode(197), x, y);
+y += yinc;
+drawString("Microm (181): " + fromCharCode(181), x, y);
+y += yinc;
+drawString("Bullet: " + fromCharCode(8226), x, y);
+y += yinc;
+drawString ("Arrows: " + fromCharCode(8592, 8593, 8594, 8595, 8596, 8629, 8656, 8658, 8660), x, y);
+y += yinc;
+
+tableStart = 110; y = tableStart;
+for (i=161; i<255; i++) {
+    drawString(i+":  "+fromCharCode(i), x, y);
+    y += yinc;
+    if (y>getHeight()-10) {
+        y = tableStart;
+        x += 75;
+    }
+}

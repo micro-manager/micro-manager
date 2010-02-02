@@ -1,0 +1,63 @@
+// "ImageCalculatorDemo"
+// These macros demonstrate how to use the imageCalculator() function.
+
+  macro "Average and create by name" {
+      run("Embryos (42K)");
+      run("Leaf (36K)");
+      imageCalculator("Average create", "embryos.jpg", "leaf.jpg");
+      exit;
+  }
+
+  macro "Add two images using positive IDs" {
+      run("Boats (356K)");
+      run("Bridge (174K)");
+      if (nImages!=2)
+          exit("This macro requires exactly two images");
+      imageCalculator('add', 1, 2);
+      selectImage(1);
+  }
+
+  macro "AND stack with a mask" {
+      if (isOpen("mri-stack.tif")) {
+          selectImage("mri-stack.tif");
+          close();
+      }
+      run("MRI Stack (528K)");
+      makeOval(41, 54, 97, 101);
+      run("Create Mask");
+      imageCalculator("AND stack", "mri-stack.tif","Mask");
+      selectImage("mri-stack.tif");
+  }
+
+  macro "AND stack with a mask in batch mode" {
+      if (isOpen("mri-stack.tif")) {
+          selectImage("mri-stack.tif");
+          close();
+      }
+      run("MRI Stack (528K)");
+      setBatchMode(true);
+      makeOval(41, 54, 97, 101);
+      run("Create Mask");
+      imageCalculator("AND stack", "mri-stack.tif","Mask");
+  }
+
+  macro "Max using name variables" {
+      run("Boats (356K)");
+      img1 = getTitle;
+      run("Bridge (174K)");
+      img2 = getTitle;
+      imageCalculator("Max create", img1, img2);
+  }
+
+  macro "XOR using ID variables and batch mode" {
+      setBatchMode(true);
+      run("Boats (356K)");
+      id1 = getImageID;
+      run("Bridge (174K)");
+      id2 = getImageID;
+      imageCalculator("XOR", id1, id2);
+      selectImage(id1);
+      rename("Min of Boats and Bridge");
+      setBatchMode(false);
+  }
+

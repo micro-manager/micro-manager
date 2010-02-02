@@ -12,7 +12,7 @@
 //
 
 #include "K8055.h"
-#include "../../MMDevice/ModuleInterface.h"
+#include <cstdio>
 
 #ifdef WIN32
    #define WIN32_LEAN_AND_MEAN
@@ -276,7 +276,7 @@ int CK8055Switch::Initialize()
    // Label
    // -----
    pAct = new CPropertyAction (this, &CStateBase::OnLabel);
-   nRet = CreateProperty(MM::g_Keyword_Label, "", MM::String, false, pAct);
+	nRet = CreateProperty(MM::g_Keyword_Label, "", MM::Integer , false, pAct);
    if (nRet != DEVICE_OK)
       return nRet;
 
@@ -458,8 +458,6 @@ int CK8055DA::SetGateOpen(bool open)
       gatedVolts_ = 0;
       return WriteSignal(0.0);
    }
-
-   return DEVICE_OK;
 }
 
 
@@ -509,7 +507,7 @@ bool CK8055Shutter::Busy()
 {
    MM::MMTime interval = GetCurrentMMTime() - changedTime_;
 
-   if (interval < (1000.0 < GetDelayMs() ))
+   if (interval < (1000.0 * GetDelayMs() ))
       return true;
    else
        return false;

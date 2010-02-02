@@ -1,0 +1,36 @@
+/*
+This macro demonstrates how to do string processing.
+What it does is convert the DICOM data dictionary from  
+Part 6 of the DICOM standard, which looks like this:
+
+   (0054,0011) Number of Energy Windows US 1
+   (0054,0012) Energy Window Information Sequence SQ 1
+   (0054,0020) Detector Vector US 1-n
+
+to the format used by ImageJ in DICOM.java:
+
+   "054,0011=USumber of Energy Windows",
+   "00540012=SQEnergy Window Information Sequence",
+   "00540020=USDetector Vector",
+
+The input dictionary is assumed to be in a text window
+named 'dict.txt'. The output is displayed in the "Log" window.
+*/
+
+  name = 'dict.txt';
+  selectWindow(name);
+  data=getInfo();
+  data = split(data, '\n');
+  for (i=0; i<data.length; i++) {
+      d = data[i];
+      d = substring(d, 1, lengthOf(d)); //remove '('
+      d = substring(d, 0, 4) + substring(d, 5, lengthOf(d)); //remove ','
+      d = substring(d, 0, lastIndexOf(d, ' '));  // remove '1' or '1-n'
+      vr = substring(d, lengthOf(d)-2, lengthOf(d)); // get VR (e.g. 'US')
+      d = substring(d, 0, lengthOf(d)-3); // remove VR
+      d = substring(d, 0, 8) + '=' + vr + substring(d, 10, lengthOf(d)); //insert VR
+      d = '"' + d; // add leading double quote
+      d =d +'",'; // add trailing double quote and comma
+      data[i] = d;
+      print(data[i]);
+  }

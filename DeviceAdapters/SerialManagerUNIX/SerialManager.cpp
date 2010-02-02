@@ -45,13 +45,24 @@
 #include <IOKit/IOBSD.h>                                                     
 #endif
 
+#ifdef linux
+#include <dirent.h>
+#endif
+
 #include "../../MMDevice/ModuleInterface.h"
+#include "../../MMDevice/DeviceBase.h"
 #include "SerialManager.h"
+#include <cstdio>
 #include <sstream>
+#include <algorithm>
+#include <sys/time.h>
 
 using namespace std;
 
+// declaration of global variables
 SerialManager g_serialManager;
+std::vector<std::string> g_storedAvailablePorts;
+MM::MMTime g_lastUpdated = MM::MMTime(0);
 
 const char* g_StopBits_1 = "1";
 //const char* g_StopBits_1_5 = "1.5";
@@ -63,6 +74,7 @@ static const char* FLOW_CONTROL_HARD = "Hardware";
 ///////////////////////////////////////////////////////////////////////////////
 // Exported MMDevice API
 ///////////////////////////////////////////////////////////////////////////////
+
 MODULE_API void InitializeModuleData()
 {
    std::string portName;
@@ -80,10 +92,9 @@ MODULE_API void InitializeModuleData()
       AddAvailableDeviceName(portName.c_str(),"Serial communication port");
       ++iter;                                                                
    }
-   // Todo: output to log message
-   //this->LogMessage(logMsg.str().c_str(), true);
-   //cout << logMsg.str();
+   // Todo: output to log message (needs static LogMsg)
 }
+
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
 {
@@ -125,30 +136,10 @@ MM::Device* SerialManager::CreatePort(const char* portName)
       }
    }
 
-   // no such port found, so try to create a new one
+   // no such port found, so create a new one
    MDSerialPort* pPort = new MDSerialPort(portName);
-   // try opening, do not check whether this succeeded
-   // printf("Opening port %s\n",portName);
-   pPort->Open(portName);
-   // printf("Port opened\n");
-   ports_.push_back(pPort);
-   // printf("Added to the list\n");
-   pPort->AddReference();
-   // printf("Reference added\n");
-   return pPort;
-      /*
-   if (pPort->Open(portName) == DEVICE_OK)
-   {
-      // open port succeeded, so add it to the list
-      ports_.push_back(pPort);
-      pPort->AddReference();
-      return pPort;
-   }
 
-   // open port failed
-   delete pPort;
-   return 0;
-   */
+   return pPort;
 }
 
 void SerialManager::DestroyPort(MM::Device* port)
@@ -174,7 +165,6 @@ void SerialManager::DestroyPort(MM::Device* port)
 
 MDSerialPort::MDSerialPort(std::string portName) :
    refCount_(0),
-   //port_(0),
    busy_(false),
    initialized_(false),
    portTimeoutMs_(2000.0),
@@ -257,7 +247,6 @@ MDSerialPort::MDSerialPort(std::string portName) :
    assert(ret == DEVICE_OK);
    vector<string> stopBitValues;
    stopBitValues.push_back(g_StopBits_1);
-   //stopBitValues.push_back(g_StopBits_1_5);
    stopBitValues.push_back(g_StopBits_2);
    ret = SetAllowedValues(MM::g_Keyword_StopBits,stopBitValues);
 
@@ -308,6 +297,16 @@ int MDSerialPort::Open(const char* portName)
       return ERR_PORT_ALREADY_OPEN;
    } 
 
+   // set-up handshaking
+   try {
+      if (flowControl_ == FLOW_CONTROL_HARD)
+         port_->SetFlowControl(port_->FLOW_CONTROL_HARD);
+      else
+         port_->SetFlowControl(port_->FLOW_CONTROL_NONE);
+   } catch ( ... ) {
+      return ERR_HANDSHAKE_SETUP_FAILED;
+   }
+
    ostringstream logMsg;
    logMsg << "Serial port " << portName_ << " opened." << endl; 
    this->LogMessage(logMsg.str().c_str());
@@ -324,33 +323,13 @@ int MDSerialPort::Initialize()
    if (!IsCallbackRegistered())
       return DEVICE_NO_CALLBACK_REGISTERED;
 
-   // long sb;
-   int ret;
-   //int ret = GetPropertyData(MM::g_Keyword_StopBits, stopBits_.c_str(), sb);
-   //assert(ret == DEVICE_OK);
-
    try {
-      port_->SetBaudRate(baudRate_);
-      port_->SetCharSize(dataBits_);
-      port_->SetParity(port_->PARITY_NONE);
-      port_->SetNumOfStopBits(stopBits_);
-      //long lastError = port_->Setup(CSerial::EBaud9600, CSerial::EData8, CSerial::EParNone, (CSerial::EStopBits)sb);
+      Open(portName_.c_str() );
    } catch ( ... ) {
 		return HandleError(ERR_SETUP_FAILED);
    }
 
-   // set-up handshaking
-   try {
-      if (flowControl_ == FLOW_CONTROL_HARD)
-         port_->SetFlowControl(port_->FLOW_CONTROL_HARD);
-      else
-         port_->SetFlowControl(port_->FLOW_CONTROL_NONE);
-   } catch ( ... ) {
-		return ERR_HANDSHAKE_SETUP_FAILED;
-   }
-   
-
-   ret = UpdateStatus();
+   int ret = UpdateStatus();
    if (ret != DEVICE_OK)
       return ret;
 
@@ -490,8 +469,10 @@ int MDSerialPort::Read(unsigned char* buf, unsigned long bufLen, unsigned long& 
    } while (charsRead < bufLen);
 
    logMsg << endl;
+   /*
    if (charsRead > 0)
       LogMessage(logMsg.str().c_str(), true);
+      */
 
    return DEVICE_OK;
 }
@@ -555,14 +536,16 @@ int MDSerialPort::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet)
    {
-      if (initialized_) 
-      {
-         return ERR_PORT_CHANGE_FORBIDDEN;
-      }
-      else
-      {
+      if (port_->IsOpen()) {
+         port_->Close();
+         delete port_;
          pProp->Get(portName_);
-         Open(portName_.c_str() );
+         port_ = new SerialPort(portName_.c_str());
+         int ret =  Open(portName_.c_str());
+         if (ret != DEVICE_OK)
+            return ret;
+      } else {
+            pProp->Get(portName_);
       }
    }
 
@@ -629,16 +612,18 @@ int MDSerialPort::OnFlowControl(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       std::string oldFlowControl;
       pProp->Get(flowControl_);
-      try {
-         if (flowControl_ == FLOW_CONTROL_NONE) {
-            port_->SetFlowControl(port_->FLOW_CONTROL_NONE);
-         } else if (flowControl_ == FLOW_CONTROL_HARD) {
-            port_->SetFlowControl(port_->FLOW_CONTROL_HARD);
-         }
-      } catch (...) {
-         flowControl_ = oldFlowControl;
-         pProp->Set(flowControl_.c_str());
+      if (initialized_) {
+         try {
+            if (flowControl_ == FLOW_CONTROL_NONE) {
+               port_->SetFlowControl(port_->FLOW_CONTROL_NONE);
+            } else if (flowControl_ == FLOW_CONTROL_HARD) {
+               port_->SetFlowControl(port_->FLOW_CONTROL_HARD);
+            }
+         } catch (...) {
+            flowControl_ = oldFlowControl;
+            pProp->Set(flowControl_.c_str());
          return  ERR_SETUP_FAILED;
+         }
       }
    }
    return DEVICE_OK;
@@ -693,7 +678,6 @@ int MDSerialPort::OnTransmissionDelay(MM::PropertyBase* pProp, MM::ActionType eA
    {  
       double transmitCharWaitMs;
       pProp->Get(transmitCharWaitMs);
-      printf ("Settings transmit delay to: %f\n", transmitCharWaitMs);
       if (transmitCharWaitMs >= 0 && transmitCharWaitMs < 250)
          transmitCharWaitMs_ = transmitCharWaitMs;
    }     
@@ -701,56 +685,100 @@ int MDSerialPort::OnTransmissionDelay(MM::PropertyBase* pProp, MM::ActionType eA
    return DEVICE_OK;
 }
 
+
 /*
  * Class whose sole function is to list serial ports available on the user's system
  * Methods are provided to give a fresh or a cached list
  */
 SerialPortLister::SerialPortLister()
 {
-   // TODO make storedAvailablePorts_ persist between instances
-   ListSerialPorts(storedAvailablePorts_);
+   bool stale = GetCurrentMMTime() - g_lastUpdated > MM::MMTime(15,0) ? true : false;
+
+   if ((int) g_storedAvailablePorts.size() == 0 || stale ) {
+      g_storedAvailablePorts.clear();
+      g_storedAvailablePorts = ListSerialPorts();
+      g_lastUpdated = GetCurrentMMTime();
+   }
+
 }
 
 SerialPortLister::~SerialPortLister()
 {
 }
 
+MM::MMTime SerialPortLister::GetCurrentMMTime()
+{
+   struct timeval t;
+   gettimeofday(&t,NULL);
+   return MM::MMTime(t.tv_sec, t.tv_usec);
+}
+
 void SerialPortLister::ListPorts(std::vector<std::string> &availablePorts)
 {
    // TODO check that we actually have a list
-   availablePorts =  storedAvailablePorts_;
+   availablePorts = g_storedAvailablePorts;
 }
 
 void SerialPortLister::ListCurrentPorts(std::vector<std::string> &availablePorts)
 {
-   ListSerialPorts(storedAvailablePorts_);
-   availablePorts =  storedAvailablePorts_;
+   g_storedAvailablePorts = ListSerialPorts();
+   availablePorts = g_storedAvailablePorts;
 }
 
-// lists all serial ports available on this system
-//std::vector<string> SerialManager::ListPorts()
-void SerialPortLister::ListSerialPorts(std::vector<std::string> &availablePorts)
-{
-#ifdef WIN32
-   // WIndows has its port names pre-defined:
-   availablePorts.push_back("COM1");
-   availablePorts.push_back("COM2");
-   availablePorts.push_back("COM3");
-   availablePorts.push_back("COM4");
-   availablePorts.push_back("COM5");
-   availablePorts.push_back("COM6");
-   availablePorts.push_back("COM7");
-   availablePorts.push_back("COM8");
-#endif
+/*
+ * Tests whether given serial port can be used by opening it
+ * Closes port on succss
+ */
+bool SerialPortLister::portAccessible(const char* portName)
+{ 
+   printf("Testing port %s\n", portName);
+   SerialPort* port = new SerialPort(portName);
+   try {
+      port->Open(9600, 8, port->PARITY_NONE, 1, port->FLOW_CONTROL_DEFAULT);
+   } catch ( SerialPort::OpenFailed ) {
+      printf("OpenFailed\n");
+		return false;
+   } catch (SerialPort::AlreadyOpen) {
+      printf("Port already open\n");
+      return false;
+   } 
+   port->Close();
+   delete port;
+   return true;
+   return false;
+}
 
-//TODO: Need port discovery code for linus
+/**
+ * Lists all serial ports available on this system
+ * Use platform specific mechanism for dicovery
+ * Checks whether dicovered ports can be opened using function portAccessible
+ */
+std::vector<std::string> SerialPortLister::ListSerialPorts()
+{
+   printf ("Listing serial ports\n");
+   std::vector<std::string> availablePorts;
+#ifdef linux
+   // Look for /dev files with correct signature in their name
+   DIR* pdir = opendir("/dev");
+   struct dirent *pent;
+   if (pdir) {
+      while (pent = readdir(pdir)) {
+         if ( (strstr(pent->d_name, "ttyS") != 0) || (strstr(pent->d_name, "ttyUSB") != 0) )  {
+            string p = ("/dev/");
+            p.append(pent->d_name);
+            if (portAccessible(p.c_str())) 
+               availablePorts.push_back(p.c_str());
+         }
+      }
+   }
+#endif // linux
    
 #ifdef __APPLE__    
    // port discovery code for Darwin/Mac OS X
    // Derived from Apple's examples at: http://developer.apple.com/samplecode/SerialPortSample/SerialPortSample.html
    io_iterator_t   serialPortIterator;
    char            bsdPath[256];
-   kern_return_t       kernResult;                                          
+   kern_return_t       kernResult;
    CFMutableDictionaryRef classesToMatch;
        
    // Serial devices are instances of class IOSerialBSDClient               
@@ -772,7 +800,7 @@ void SerialPortLister::ListSerialPorts(std::vector<std::string> &availablePorts)
    io_object_t      modemService;
    Boolean       modemFound = false;    
       
-    // Initialize the returned path    
+    // Initialize the returned path
     *bsdPath = '\0';    
     // Iterate across all modems found. 
     while ( (modemService = IOIteratorNext(serialPortIterator)) ) {
@@ -783,6 +811,7 @@ void SerialPortLister::ListSerialPorts(std::vector<std::string> &availablePorts)
                                                            kCFAllocatorDefault,
                                                            0);              
       if (bsdPathAsCFString) { 
+         printf("Found one");
           Boolean result;                                                  
           // Convert the path from a CFString to a C (NUL-terminated) string for use     
           // with the POSIX open() call.                                      
@@ -792,23 +821,27 @@ void SerialPortLister::ListSerialPorts(std::vector<std::string> &availablePorts)
                                       kCFStringEncodingUTF8);              
 
           CFRelease(bsdPathAsCFString);                                    
+         printf("%s\n", bsdPath);
 
 	       // add the name to our vector<string> only when this is not a dialup port
           string rresult (bsdPath);
           string::size_type loc = rresult.find("DialupNetwork", 0);
           if (result && (loc == string::npos)) {
-               availablePorts.push_back(bsdPath);
-               modemFound = true;                                           
-               kernResult = KERN_SUCCESS;
-           }                                                                
-        }
-     }
+             if (portAccessible(bsdPath))  {
+                printf("Port was opened\n");
+                availablePorts.push_back(bsdPath);
+             }
+             modemFound = true;                                           
+             kernResult = KERN_SUCCESS;
+          }                                                                
+       }
+    }
  
     // Release the io_service_t now that we are done with it.            
     (void) IOObjectRelease(modemService);                                  
 
-    return;
 #endif
+    return availablePorts;
 }
 
 

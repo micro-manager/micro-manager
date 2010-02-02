@@ -1,0 +1,112 @@
+//////////////////////////////////////////////////////////////
+// Example macro tool based on the BigCursorTool 
+// example available on the ImageJ web site at 
+// http://rsb.info.nih.gov/ij/macros/tools/BigCursorTool.txt
+/////////////////////////////////////////////////////////////
+// Author: Gilles Carpentier, Faculte des Sciences et 
+// Technologies,  Universite Paris 12 Val de Marne, France
+
+// The example image at "http://rsb.info.nih.gov/ij/macros/images/multicursor.jpg"
+// shows how this full size cursor can be used to "multipoint " a panel of 4
+// microscopic images of the same field in fluorescence mode. The example panel
+// contains a triple lableling of cloned myoblast cells (mouse). From the left to right; the red 
+// channel (red fluorescence), the green channel (green fluorescence), the blue channel 
+// (blue fluorescence,hoechst), and the composite images of the three channels.
+
+// Cell culture and immunochemistry; Juliette peltzer.
+// Images from the courtasy of Dr angelica Keller.
+
+// The number of cursors can be changed by double clicking on 
+// the tool icon and the cursor coordinates and section are displayed 
+// when the "1" key is pressed on the numeric keypad.
+
+  var nCursors = 4;  // maximum of 4
+  var x,  y, unit, quadrantx, xlocation, ylocation;
+  var pw, ph,  unit;
+
+  // This macro runs when the user clicks and drags on the image.
+  macro "MultiCursor Tool -C00cL08f8L515eLb1be" {
+      getCursorLoc(x, y, z, flags);
+      w = getWidth();  h = getHeight();
+      xinit = getWidth/nCursors; // width of the sub-images of the panel
+      yinit = getHeight; // height of the sub-images of the panel
+      spacer = 0;  //size of the white spacer of the subimages in the panel
+      h=yinit; // height of the polygone forming cursor
+      px = newArray(19);
+      py = newArray(19);
+      x2=x; y2=y;   
+      getVoxelSize(pw, ph, pd, unit);     
+      while (flags&16!=0) {
+          getCursorLoc(x, y, z, flags);
+          if (x<0) x=0;
+          if (x > w) x=w-1;
+
+          // determination of the sub-image in which is the cursor at a given time (quadrant):
+          // used to deduce the x cursor coordinates reported to the origin of the sub-images. 
+          a=0;
+          quadrant=0;
+          quadrantx=0;
+          for (a =0; a<4; a ++) {
+              quadrant=((a*xinit) + (a*spacer));
+              if (x >= (quadrant) && x < ((quadrant)+xinit + spacer))
+                  quadrantx=(a+1);
+          }
+
+          xlocation=(x- ((quadrantx-1)*(xinit)) -((quadrantx-1)* spacer));
+          x = xlocation;
+          if (xlocation > (xinit-1))
+              x=xlocation - (xlocation-(xinit-1));
+          ylocation = y;
+          if (ylocation > (yinit-1))
+              y=ylocation - (ylocation-(yinit-1));
+          if (ylocation < 0) y=0;
+
+          if (x!=x2 || y!=y2) {
+              px[0]=0; py[0]=y;
+              px[1]=w; py[1]=y;
+              px[2]=((3*xinit)+(3*spacer)+x); py[2]=y;
+              px[3]=((3*xinit)+(3*spacer)+x); py[3]=0;
+              px[4]=((3*xinit)+(3*spacer)+x); py[4]=h;
+              px[5]=((3*xinit)+(3*spacer)+x); py[5]=y;
+              px[6]=((2*xinit)+(2*spacer)+x); py[6]=y;
+              px[7]=((2*xinit)+(2*spacer)+x); py[7]=0;
+              px[8]=((2*xinit)+(2*spacer)+x); py[8]=h;
+              px[9]=((2*xinit)+(2*spacer)+x); py[9]=y;
+              px[10]=(xinit+spacer+x); py[10]=y;
+              px[11]=(xinit+spacer+x); py[11]=0;
+              px[12]=(xinit+spacer+x); py[12]=h;
+              px[13]=(xinit+spacer+x); py[13]=y;
+              px[14]=x; py[14]=y;
+              px[15]=x; py[15]=0;
+              px[16]=x; py[16]=h;
+              px[17]=x; py[17]=y;
+              px[18]=0; py[18]=y;
+              makeSelection("polgon", px, py);
+              showStatus(d2s(x*pw,2)+", "+d2s(y*ph,2)+ " " +unit);
+          }
+          x2=x; y2=y;
+          wait(10);
+      };
+  }
+
+  // This macro runs when the user double clicks on the tool
+  // icon or selects "MultiCursor Tool Options" from the
+  // Plugins>Macros menu.
+  // The name of this macro must be the same as the name of the
+  // tool (without the hex icon description) followed by " Options".
+  macro "MultiCursor Tool Options" {
+      nCursors = getNumber("Number of Cursors (1-4): ", nCursors);
+      if (nCursors<1) nCursors = 1;
+      if (nCursors>4) nCursors = 4;
+  }
+
+  // This macro runs when the user selects "Display Coordinates" 
+  // from the Plugins>Macros menu or when the user presses the
+  // "1" key on the numeric keypad.
+  macro "Display Coordinates [N1]" {
+      showMessage("MultiCursor ", "X Coordinate: "+x*pw
+        +"\nY Coordinate:  "+y*ph
+        +"\nUnit: "+unit
+        +"\nSection: "+quadrantx);
+  }
+

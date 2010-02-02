@@ -1,0 +1,28 @@
+// "GetRGBPixelCount"
+//
+// Counts the number of pixels in an RGB image with a given color.
+
+  red = 255;
+  green = 255;
+  blue = 255;
+  if (bitDepth!=24)
+      exit("RGB Image required");
+  count = getCount(red, green, blue);
+  print("Count for "+red+","+green+","+blue+" = "+ count);
+  print("Area fraction = "+count*100/(getWidth*getHeight) + "%");
+  exit;
+
+  function getCount(red, green, blue) {
+      color = red<<16 + green<<8 + blue;
+      w= getHeight;
+      h = getHeight;
+      count = 0;
+      for (y=0; y<getHeight; y++) {
+          for (x=0; x<getWidth; x++) {
+              if (getPixel(x, y)&0xffffff==color)
+                  count++;
+          }
+          if (y%10==0) showProgress(y, h);
+      }
+      return count;
+  }

@@ -1,0 +1,10 @@
+if (selectionType==-1) {exit("No background ROI selected");}
+run("Set Measurements...", "  mean standard redirect=None decimal=0");
+SDscale = getNumber("Scaling factor?:", 5);
+run("Measure");
+i = nResults-1;
+bgmean=getResult("Mean", i);
+bgstdev=getResult("StdDev",i);
+bgmin  = bgmean+(SDscale*bgstdev);
+setThreshold(bgmin,255);
+

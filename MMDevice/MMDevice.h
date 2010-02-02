@@ -34,11 +34,10 @@
 // Header version
 // If any of the class declarations changes, the interface version
 // must be incremented
-#define DEVICE_INTERFACE_VERSION 28
+#define DEVICE_INTERFACE_VERSION 34
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef _MMDEVICE_H_
-#define _MMDEVICE_H_
+#pragma once
 
 #include "MMDeviceConstants.h"
 #include <string>
@@ -46,10 +45,18 @@
 #include <climits>
 #include <cstdlib>
 #include <vector>
+#include <sstream>
 
+#ifdef WIN32
+   #define WIN32_LEAN_AND_MEAN
+   #include <windows.h>
+   #define snprintf _snprintf 
+#endif
 
 #define HDEVMODULE void*
+
 class Metadata;
+class ImgBuffer;
 
 namespace MM {
 
@@ -75,6 +82,18 @@ namespace MM {
          }
 
          ~MMTime() {}
+
+         MMTime(std::string serialized) {
+            std::stringstream is(serialized);
+            is >> sec_ >> uSec_;
+            Normalize();
+         }
+
+         std::string serialize() {
+            std::ostringstream os;
+            os << sec_ << " " << uSec_;
+            return os.str().c_str();
+         }
 
          long sec_;
          long uSec_;
@@ -157,11 +176,13 @@ namespace MM {
 
    struct ImageMetadata
    {
-      ImageMetadata() : exposureMs(0.0) {}
+      ImageMetadata() : exposureMs(0.0), ZUm(0.0), score(0.0) {}
       ImageMetadata(MMTime& time, double expMs) : exposureMs(expMs), timestamp(time) {}
 
       double exposureMs;
       MMTime timestamp;
+      double ZUm;
+      double score;
    };
 
    /**
@@ -201,6 +222,14 @@ namespace MM {
       virtual void GetModuleName(char* name) const = 0;
 
       virtual int Initialize() = 0;
+      /**
+       * Shuts down (unloads) the device.
+       * Required by the MM::Device API.
+       * Ideally this method will completely unload the device and release all resources.
+       * Shutdown() may be called multiple times in a row.
+       * After Shutdown() we should be allowed to call Initialize() again to load the device
+       * without causing problems.
+       */
       virtual int Shutdown() = 0;
    
       virtual DeviceType GetType() const = 0;
@@ -220,27 +249,127 @@ namespace MM {
       static const DeviceType Type = CameraDevice;
 
       // Camera API
+      /**
+       * Performs exposure and grabs a single image.
+       * Required by the MM::Camera API.
+       *
+       * SnapImage should start the image exposure in the camera and block until
+       * the exposure is finished.  It should not wait for read-out and transfer of data.
+       * Return DEVICE_OK on succes, error code otherwise.
+       */
       virtual int SnapImage() = 0;
+      /**
+       * Returns pixel data.
+       * Required by the MM::Camera API.
+       * GetImageBuffer will be called shortly after SnapImage returns.  
+       * Use it to wait for camera read-out and transfer of data into memory
+       * Return a pointer to a buffer containing the image data
+       * The calling program will assume the size of the buffer based on the values
+       * obtained from GetImageBufferSize(), which in turn should be consistent with
+       * values returned by GetImageWidth(), GetImageHight() and GetImageBytesPerPixel().
+       * The calling program allso assumes that camera never changes the size of
+       * the pixel buffer on its own. In other words, the buffer can change only if
+       * appropriate properties are set (such as binning, pixel type, etc.)
+       *
+       */
       virtual const unsigned char* GetImageBuffer() = 0;
+      /**
+       * Returns pixel data with interleaved RGB pixels in 32 bpp format
+       */
       virtual const unsigned int* GetImageBufferAsRGB32() = 0;
-      virtual unsigned GetNumberOfChannels() const = 0;
-      virtual int GetChannelName(unsigned channel, char* name) = 0;
+      /**
+       * Returns the number of channels in this image.  This is '1' for grayscale cameras,
+       * and '4' for RGB cameras.
+       */
+      virtual unsigned GetNumberOfComponents() const = 0;
+      /**
+       * Returns the name for each channel 
+       */
+      virtual int GetComponentName(unsigned channel, char* name) = 0;
+      /**
+       * Returns the size in bytes of the image buffer.
+       * Required by the MM::Camera API.
+       */
       virtual long GetImageBufferSize()const = 0;
+      /**
+       * Returns image buffer X-size in pixels.
+       * Required by the MM::Camera API.
+       */
       virtual unsigned GetImageWidth() const = 0;
+      /**
+       * Returns image buffer Y-size in pixels.
+       * Required by the MM::Camera API.
+       */
       virtual unsigned GetImageHeight() const = 0;
+      /**
+       * Returns image buffer pixel depth in bytes.
+       * Required by the MM::Camera API.
+       */
       virtual unsigned GetImageBytesPerPixel() const = 0;
+      /**
+       * Returns the bit depth (dynamic range) of the pixel.
+       * This does not affect the buffer size, it just gives the client application
+       * a guideline on how to interpret pixel values.
+       * Required by the MM::Camera API.
+       */
       virtual unsigned GetBitDepth() const = 0;
+      /**
+       * Returns binnings factor.  Used to calculate current pixelsize
+       * Not appropriately named.  Implemented in DeviceBase.h
+       */
       virtual double GetPixelSizeUm() const = 0;
+      /**
+       * Returns the current binning factor.
+       */
       virtual int GetBinning() const = 0;
+      /**
+       * Sets binning factor.
+       */
       virtual int SetBinning(int binSize) = 0;
+      /**
+       * Sets exposure in milliseconds.
+       */
       virtual void SetExposure(double exp_ms) = 0;
+      /**
+       * Returns the current exposure setting in milliseconds.
+       */
       virtual double GetExposure() const = 0;
+      /**
+       * Sets the camera Region Of Interest.
+       * Required by the MM::Camera API.
+       * This command will change the dimensions of the image.
+       * Depending on the hardware capabilities the camera may not be able to configure the
+       * exact dimensions requested - but should try do as close as possible.
+       * If the hardware does not have this capability the software should simulate the ROI by
+       * appropriately cropping each frame.
+       * @param x - top-left corner coordinate
+       * @param y - top-left corner coordinate
+       * @param xSize - width
+       * @param ySize - height
+       */
       virtual int SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize) = 0; 
+      /**
+       * Returns the actual dimensions of the current ROI.
+       */
       virtual int GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize) = 0;
+      /**
+       * Resets the Region of Interest to full frame.
+       */
       virtual int ClearROI() = 0;
 
-      virtual int StartSequenceAcquisition(long numImages, double interval_ms) = 0;
+      /**
+       * Starts continuous acquisition.
+       */
+      virtual int StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow) = 0;
+      virtual int StartSequenceAcquisition(double interval_ms) = 0;
       virtual int StopSequenceAcquisition() = 0;
+      virtual int PrepareSequenceAcqusition() = 0;
+      /**
+       * Flag to indicate whether Sequence Acquisition is currently running.
+       * Return true when Sequence acquisition is activce, false otherwise
+       */
+      virtual bool IsCapturing() = 0;
+
    };
 
    /** 
@@ -278,6 +407,7 @@ namespace MM {
       // Stage API
       virtual int SetPositionUm(double pos) = 0;
       virtual int SetRelativePositionUm(double d) = 0;
+      virtual int Move(double velocity) = 0;
       virtual int SetAdapterOriginUm(double d) = 0;
       virtual int GetPositionUm(double& pos) = 0;
       virtual int SetPositionSteps(long steps) = 0;
@@ -305,6 +435,7 @@ namespace MM {
       virtual int SetAdapterOriginUm(double x, double y) = 0;
       virtual int GetPositionUm(double& x, double& y) = 0;
       virtual int GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax) = 0;
+      virtual int Move(double vx, double vy) = 0;
 
       virtual int SetPositionSteps(long x, long y) = 0;
       virtual int GetPositionSteps(long& x, long& y) = 0;
@@ -339,7 +470,74 @@ namespace MM {
       virtual int GetLabelPosition(const char* label, long& pos) const = 0;
       virtual int SetPositionLabel(long pos, const char* label) = 0;
       virtual unsigned long GetNumberOfPositions() const = 0;
+      virtual int SetGateOpen(bool open = true) = 0;
+      virtual int GetGateOpen(bool& open) = 0;
    };
+
+   /**
+    * Programmable I/O device API, for programmable I/O boards with patterns
+    * and sequences
+    */
+   class ProgrammableIO : public Device
+   {
+   public:
+      ProgrammableIO() {}
+      virtual ~ProgrammableIO() {}
+      
+      // MMDevice API
+      virtual DeviceType GetType() const {return Type;}
+      static const DeviceType Type = ProgrammableIODevice;
+      
+      // ProgrammableIO API
+
+      /**
+       * Stores the current set of properties (state) into a specified slot.
+       * The device should automatically resize its internal pattern array to the highest
+       * requested index, or return error if it can't.
+       * NOTE: the device must handle the concept of the 'undefined'or 'default' pattern in order to
+       * pad the pattern array if necessary
+       */
+      virtual int DefineCurrentStateAsPattern(long index) = 0;
+
+      /**
+       * Cycles through the pattern array.
+       * Convenient to use for external triggering.
+       */
+      virtual int SetNextPattern() = 0;
+
+      /**
+       * Set the pattern based either on the index.
+       */
+      virtual int SetPattern(long index) = 0;
+      /**
+       * Set the pattern based either on the label.
+       */
+      virtual int SetPattern(const char* label) = 0;
+
+      /**
+       * Get current pattern index.
+       */
+      virtual int GetPattern(long& index) const = 0;
+      /**
+       * Get current pattern label.
+       */
+      virtual int GetPattern(char* label) const = 0;
+
+      /**
+       * Get the label assigned to a specific position.
+       */
+      virtual int GetPatternLabel(long pos, char* label) const = 0;
+      /**
+       * Assign a label to the specific position.
+       */
+      virtual int SetPatternLabel(long pos, const char* label) = 0;
+
+      /**
+       * Returns size of the pattern array.
+       */
+      virtual unsigned long GetNumberOfPatterns() const = 0;
+   };
+
 
    /**
     * Serial port API.
@@ -382,7 +580,11 @@ namespace MM {
       virtual bool IsContinuousFocusLocked() = 0;
       virtual int FullFocus() = 0;
       virtual int IncrementalFocus() = 0;
-      virtual int GetFocusScore(double& score) = 0;
+      virtual int GetLastFocusScore(double& score) = 0;
+      virtual int GetCurrentFocusScore(double& score) = 0;
+      virtual int AutoSetParameters() = 0;
+      virtual int GetOffset(double &offset) = 0;
+      virtual int SetOffset(double offset) = 0;
    };
 
    /**
@@ -459,6 +661,84 @@ namespace MM {
    };
 
 
+   /** 
+    * SLM API
+    */
+   class SLM : public Device
+   {
+   public:
+      SLM() {}
+      virtual ~SLM() {}
+
+      DeviceType GetType() const {return Type;}
+      static const DeviceType Type = SLMDevice;
+
+      // SLM API
+      /**
+       * Load the image into the SLM device adapter.
+       */
+      virtual int SetImage(unsigned char * pixels) = 0;
+
+     /**
+       * Load a 32-bit image into the SLM device adapter.
+       */
+      virtual int SetImage(unsigned int * pixels) = 0;
+
+      /**
+       * Command the SLM to display the loaded image.
+       */
+      virtual int DisplayImage() = 0;
+
+      /**
+       * Command the SLM to display one 8-bit intensity.
+       */
+      virtual int SetPixelsTo(unsigned char intensity) = 0;
+
+      /**
+       * Command the SLM to display one 32-bit color.
+       */
+      virtual int SetPixelsTo(unsigned char red, unsigned char green, unsigned char blue) = 0;
+
+      /**
+       * Get the SLM width in pixels.
+       */
+      virtual unsigned GetWidth() = 0;
+
+      /**
+       * Get the SLM height in pixels.
+       */
+      virtual unsigned GetHeight() = 0;
+
+      /**
+       * Get the SLM number of components (colors).
+       */
+      virtual unsigned GetNumberOfComponents() = 0;
+
+      /**
+       * Get the SLM number of bytes per pixel.
+       */
+      virtual unsigned GetBytesPerPixel() = 0;
+
+   };
+
+   /**
+    * Command monitoring and control device.
+    */
+   class CommandDispatch : public Device
+   {
+   public:
+      CommandDispatch() {}
+      virtual ~CommandDispatch() {}
+
+      // MMDevice API
+      virtual DeviceType GetType() const {return CommandDispatchDevice;}
+      static const DeviceType Type = CommandDispatchDevice;
+
+      // Command dispatch API
+      virtual int LogCommand(const char* logCommandText) = 0;
+   };
+
+
    /**
     * Callback API to the core control module.
     * Devices use this abstract interface to use services of the control client.
@@ -469,8 +749,10 @@ namespace MM {
       Core() {}
       virtual ~Core() {}
 
-      virtual int LogMessage(const Device* caller, const char* msg, bool debugOnly) = 0;
+      virtual int LogMessage(const Device* caller, const char* msg, bool debugOnly) const = 0;
       virtual Device* GetDevice(const Device* caller, const char* label) = 0;
+      virtual int GetDeviceProperty(const char* deviceName, const char* propName, char* value) = 0;
+      virtual int SetDeviceProperty(const char* deviceName, const char* propName, const char* value) = 0;
       virtual std::vector<std::string> GetLoadedDevicesOfType(const Device* caller, MM::DeviceType devType) = 0;
       virtual int SetSerialCommand(const Device* caller, const char* portName, const char* command, const char* term) = 0;
       virtual int GetSerialAnswer(const Device* caller, const char* portName, unsigned long ansLength, char* answer, const char* term) = 0;
@@ -481,7 +763,10 @@ namespace MM {
       virtual int OnStatusChanged(const Device* caller) = 0;
       virtual int OnFinished(const Device* caller) = 0;
       virtual int OnPropertiesChanged(const Device* caller) = 0;
-      virtual long GetClockTicksUs(const Device* caller) = 0;
+
+      virtual int OnCoordinateUpdate(const Device* caller) = 0;
+
+      virtual unsigned long GetClockTicksUs(const Device* caller) = 0;
       virtual MM::MMTime GetCurrentMMTime() = 0;
 
       // continuous acquisition
@@ -489,8 +774,11 @@ namespace MM {
       virtual int CloseFrame(const Device* caller) = 0;
       virtual int AcqFinished(const Device* caller, int statusCode) = 0;
       virtual int PrepareForAcq(const Device* caller) = 0;
-      virtual int InsertImage(const Device* caller, const unsigned char* buf, unsigned width, unsigned height, unsigned byteDepth, ImageMetadata* md = 0) = 0;
-      virtual int InsertMultiChannel(const Device* caller, const unsigned char* buf, unsigned numChannels, unsigned width, unsigned height, unsigned byteDepth, ImageMetadata* md = 0) = 0;
+      virtual int InsertImage(const Device* caller, const ImgBuffer& buf) = 0;
+      virtual int InsertImage(const Device* caller, const unsigned char* buf, unsigned width, unsigned height, unsigned byteDepth, const Metadata* md = 0) = 0;
+      virtual void ClearImageBuffer(const Device* caller) = 0;
+      virtual bool InitializeImageBuffer(unsigned channels, unsigned slices, unsigned int w, unsigned int h, unsigned int pixDepth) = 0;
+      virtual int InsertMultiChannel(const Device* caller, const unsigned char* buf, unsigned numChannels, unsigned width, unsigned height, unsigned byteDepth, Metadata* md = 0) = 0;
       virtual void SetAcqStatus(const Device* caller, int statusCode) = 0;
 
       // autofocus
@@ -498,13 +786,30 @@ namespace MM {
       virtual int GetImageDimensions(int& width, int& height, int& depth) = 0;
       virtual int GetFocusPosition(double& pos) = 0;
       virtual int SetFocusPosition(double pos) = 0;
+      virtual int MoveFocus(double velocity) = 0;
+      virtual int SetXYPosition(double x, double y) = 0;
+      virtual int GetXYPosition(double& x, double& y) = 0;
+      virtual int MoveXYStage(double vX, double vY) = 0;
+      virtual int SetExposure(double expMs) = 0;
+      virtual int GetExposure(double& expMs) = 0;
+      virtual int SetConfig(const char* group, const char* name) = 0;
+      virtual int GetCurrentConfig(const char* group, int bufLen, char* name) = 0;
+      virtual int GetChannelConfigs(std::vector<std::string>& groups) = 0;
 
       // device management
       virtual MM::ImageProcessor* GetImageProcessor(const MM::Device* caller) = 0;
       virtual MM::State* GetStateDevice(const MM::Device* caller, const char* deviceName) = 0;
+
+      // asynchronous error handling
+      virtual std::vector<std::pair< int, std::string> > PostedErrors(void) = 0 ;
+      virtual void PostError( const std::pair< int, std::string>& ) = 0;
+      virtual void ClearPostedErrors( void) = 0;
    
    };
 
 } // namespace MM
 
-#endif //_MMDEVICE_H_
+//usage: int ret = INVOKE_CALLBACK(AcqFinished(...))
+# define INVOKE_CALLBACK(callback) \
+   GetCoreCallback()?GetCoreCallback()->callback:DEVICE_OK;
+

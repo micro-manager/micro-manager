@@ -99,6 +99,18 @@ public:
 };
 
 /*
+ * Model for Leica Condensor
+ */
+class LeicaCondensorModel : public LeicaDeviceModel
+{
+public:
+   LeicaCondensorModel();
+   std::vector<std::string> filter_;
+
+   static const int maxNrFilters_ = 7;
+};
+
+/*
  * Model for Leica Objectives
  */
 class LeicaObjectiveModel
@@ -154,7 +166,7 @@ public:
    int GetPosFocus(int& posFocus);
    int SetPosFocus(int posFocus);
 
-   // Not Threads safe:
+   // Not Thread safe:
    int GetMinRamp() {return minRamp_;};
    int GetMaxRamp() {return maxRamp_;};
    int GetMinSpeed() {return minSpeed_;};
@@ -187,6 +199,37 @@ private:
 };
 
 /*
+ * Model for Leica DIC Prism changer
+ */
+class LeicaDICPrismTurretModel : public LeicaDeviceModel
+{
+public:
+   LeicaDICPrismTurretModel();
+
+   std::vector<std::string> prismName_;
+
+   // Thread safe
+   int GetFinePosition(int& finePosition);
+   int SetFinePosition(int finePosition);
+
+   // Not Thread safe:
+   bool isEncoded () {return !motorized_;};
+   bool isMotorized () {return motorized_;};
+   void SetMotorized (bool motorized) {motorized_ = motorized;};
+   int GetMinFinePosition() {return minFinePosition_;};
+   int GetMaxFinePosition() {return maxFinePosition_;};
+   void SetMinFinePosition(int minFinePosition) {minFinePosition_ = minFinePosition;};
+   void SetMaxFinePosition(int maxFinePosition) {maxFinePosition_ = maxFinePosition;};
+
+private:
+   static const int maxNrPrisms_ = 4;
+   bool motorized_;
+   int finePosition_;
+   int minFinePosition_;
+   int maxFinePosition_;
+};
+
+/*
  * Abstract model of the Lecia DMI microscope
  * All get and set methods refer to the model, not to the actual microscope
  * No communication with the microscope takes place in the model, this is merely
@@ -207,12 +250,16 @@ public:
    bool IsMethodAvailable(int methodId);
    std::string GetMethod(int methodId);
    int GetMethodID(std::string method);
+   bool UsesMethods();
+   void SetUsesMethods(bool use);
    bool IsMethodAvailable(std::string methodLabel);
    void SetMethodAvailable(int devId);
 
    // Not thread safe
    int GetStandType(std::string& standType) {standType = standType_; return DEVICE_OK;};
    int SetStandType(std::string standType) {standType_ = standType; return DEVICE_OK;};
+   int GetStandFamily(int& standFamily) {standFamily = standFamily_; return DEVICE_OK;};
+   int SetStandFamily(int standFamily) {standFamily_ = standFamily; return DEVICE_OK;};
    int GetStandVersion(std::string& standVersion) 
       {standVersion = standVersion_; return DEVICE_OK;};
    int SetStandVersion(std::string standVersion) 
@@ -221,7 +268,9 @@ public:
    LeicaDeviceModel method_;   
    LeicaDeviceModel TLShutter_;
    LeicaDeviceModel ILShutter_;
+   LeicaDeviceModel TransmittedLight_;
    LeicaILTurretModel ILTurret_;
+   LeicaCondensorModel Condensor_;
    LeicaObjectiveTurretModel ObjectiveTurret_;
    LeicaDriveModel ZDrive_;
    LeicaDriveModel XDrive_;
@@ -230,10 +279,13 @@ public:
    LeicaDeviceModel apertureDiaphragmTL_;
    LeicaDeviceModel fieldDiaphragmIL_;
    LeicaDeviceModel apertureDiaphragmIL_;
+   LeicaDICPrismTurretModel dicTurret_;
+   LeicaDeviceModel tlPolarizer_;
    LeicaMagChangerModel magChanger_;
 
 private:
    std::vector<bool> availableDevices_;
+   bool usesMethods_;
    std::vector<bool> availableMethods_;
    std::vector<std::string> methodNames_;
 
@@ -241,6 +293,7 @@ private:
    static const int maxNrMethods_ = 16;
 
    std::string standType_;
+   int standFamily_;
    std::string standVersion_;
 
 };

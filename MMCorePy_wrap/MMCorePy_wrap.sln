@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual Studio 2008
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MMCorePy_wrap", "MMCorePy_wrap.vcproj", "{EFA68887-8A97-49D7-BAB4-768E15A4E597}"
+	ProjectSection(ProjectDependencies) = postProject
+		{36571628-728C-4ACD-A47F-503BA91C5D43} = {36571628-728C-4ACD-A47F-503BA91C5D43}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MMCore", "..\MMCore\MMCore.vcproj", "{36571628-728C-4ACD-A47F-503BA91C5D43}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Quick|Win32 = Quick|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EFA68887-8A97-49D7-BAB4-768E15A4E597}.Debug|Win32.ActiveCfg = Release|Win32
+		{EFA68887-8A97-49D7-BAB4-768E15A4E597}.Debug|Win32.Build.0 = Release|Win32
+		{EFA68887-8A97-49D7-BAB4-768E15A4E597}.Quick|Win32.ActiveCfg = Release|Win32
+		{EFA68887-8A97-49D7-BAB4-768E15A4E597}.Quick|Win32.Build.0 = Release|Win32
+		{EFA68887-8A97-49D7-BAB4-768E15A4E597}.Release|Win32.ActiveCfg = Release|Win32
+		{EFA68887-8A97-49D7-BAB4-768E15A4E597}.Release|Win32.Build.0 = Release|Win32
+		{36571628-728C-4ACD-A47F-503BA91C5D43}.Debug|Win32.ActiveCfg = Debug|Win32
+		{36571628-728C-4ACD-A47F-503BA91C5D43}.Debug|Win32.Build.0 = Debug|Win32
+		{36571628-728C-4ACD-A47F-503BA91C5D43}.Quick|Win32.ActiveCfg = Quick|Win32
+		{36571628-728C-4ACD-A47F-503BA91C5D43}.Quick|Win32.Build.0 = Quick|Win32
+		{36571628-728C-4ACD-A47F-503BA91C5D43}.Release|Win32.ActiveCfg = Release|Win32
+		{36571628-728C-4ACD-A47F-503BA91C5D43}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

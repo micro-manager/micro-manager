@@ -7,6 +7,7 @@
 //
 // AUTHOR:        Nenad Amodaj, nenad@amodaj.com, 06/07/2007
 // COPYRIGHT:     University of California, San Francisco, 2007
+//                100X Imaging Inc, 2008
 //
 // LICENSE:       This file is distributed under the "Lesser GPL" (LGPL) license.
 //                License text is included with the source distribution.
@@ -31,11 +32,12 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <sstream>
 
 ///////////////////////////////////////////////////////////////////////////////
 // MetadataError
 // -------------
-// Micro-Manager metadta error class, used to create exception objects
+// Micro-Manager metadata error class, used to create exception objects
 // 
 class MetadataError
 {
@@ -71,6 +73,9 @@ public:
 };
 
 
+class MetadataSingleTag;
+class MetadataArrayTag;
+
 /**
  * Image information tags - metadata.
  */
@@ -88,8 +93,33 @@ public:
 
    void SetDevice(const char* device) {deviceLabel_ = device;}
    void SetName(const char* name) {name_ = name;}
+   void SetReadOnly(bool ro) {readOnly_ = ro;}
+
+   /**
+    * Equivalent of dynamic_cast<MetadataSingleTag*>(this), but does not use
+    * RTTI. This makes it safe against multiple definitions when using 
+    * dynamic libraries on Linux (original cause: JVM uses 
+    * dlopen with RTLD_LOCAL when loading libraries.
+    */
+   virtual const MetadataSingleTag* ToSingleTag() const { return 0; }
+   /**
+    * Equivalent of dynamic_cast<MetadataArrayTag*>(this), but does not use
+    * RTTI. @see ToSingleTag
+    */
+   virtual const MetadataArrayTag*  ToArrayTag()  const { return 0; }
+
+   inline  MetadataSingleTag* ToSingleTag() {
+      const MetadataTag *p = this;
+      return const_cast<MetadataSingleTag*>(p->ToSingleTag());
+   }
+   inline  MetadataArrayTag* ToArrayTag() {
+      const MetadataTag *p = this;
+      return const_cast<MetadataArrayTag*>(p->ToArrayTag());
+   }
 
    virtual MetadataTag* Clone() = 0;
+   virtual std::string Serialize() = 0;
+   virtual bool Restore(const char* stream) = 0;
 
 private:
    std::string name_;
@@ -108,9 +138,39 @@ public:
    const std::string& GetValue() {return value_;}
    void SetValue(const char* val) {value_ = val;}
 
-   virtual MetadataTag* Clone()
+   virtual const MetadataSingleTag* ToSingleTag() const { return this; }
+
+   MetadataTag* Clone()
    {
       return new MetadataSingleTag(*this);
+   }
+
+   std::string Serialize()
+   {
+      std::ostringstream os;
+      os << GetName() << std::endl << GetDevice() << std::endl << IsReadOnly() << value_ << std::endl;
+      return os.str();
+   }
+
+   bool Restore(const char* stream)
+   {
+      std::istringstream is(stream);
+
+      std::string name;
+      is >> name;
+      SetName(name.c_str());
+
+      std::string device;
+      is >> device;
+      SetDevice(device.c_str());
+
+      bool ro;
+      is >> ro;
+      SetReadOnly(ro);
+
+      is >> value_;
+
+      return true;
    }
 
 private:
@@ -122,6 +182,8 @@ class MetadataArrayTag : public MetadataTag
 public:
    MetadataArrayTag() {}
    ~MetadataArrayTag() {}
+
+   virtual const MetadataArrayTag* ToArrayTag() const { return this; }
 
    void AddValue(const char* val) {values_.push_back(val);}
    void SetValue(const char* val, size_t idx)
@@ -139,9 +201,45 @@ public:
 
    size_t GetSize() {return values_.size();}
 
-   virtual MetadataTag* Clone()
+   MetadataTag* Clone()
    {
       return new MetadataArrayTag(*this);
+   }
+
+   std::string Serialize()
+   {
+      std::ostringstream os;
+      os << GetName() << std::endl << GetDevice() << std::endl << IsReadOnly() << values_.size();
+      for (size_t i=0; i<values_.size(); i++)
+         os << values_[i];
+      return os.str();
+   }
+
+   bool Restore(const char* stream)
+   {
+      std::istringstream is(stream);
+
+      std::string name;
+      is >> name;
+      SetName(name.c_str());
+
+      std::string device;
+      is >> device;
+      SetDevice(device.c_str());
+
+      bool ro;
+      is >> ro;
+      SetReadOnly(ro);
+
+      size_t size;
+      is >> size;
+
+      values_.resize(size);
+
+      for (size_t i=0; i<values_.size(); i++)
+         is >> values_[i];
+
+      return true;
    }
 
 private:
@@ -178,17 +276,17 @@ public:
       return keyList;
    }
    
-   MetadataSingleTag GetSingleTag(const char* key) const
+   MetadataSingleTag GetSingleTag(const char* key) const throw (MetadataKeyError)
    {
       MetadataTag* tag = FindTag(key);
-      MetadataSingleTag* stag = dynamic_cast<MetadataSingleTag*>(tag);
+      MetadataSingleTag* stag = tag->ToSingleTag();
       return *stag;
    }
 
-   MetadataArrayTag GetArrayTag(const char* key) const
+   MetadataArrayTag GetArrayTag(const char* key) const throw (MetadataKeyError)
    {
       MetadataTag* tag = FindTag(key);
-      MetadataArrayTag* atag = dynamic_cast<MetadataArrayTag*>(tag);
+      MetadataArrayTag* atag = tag->ToArrayTag();
       return *atag;
    }
 
@@ -216,6 +314,118 @@ public:
       }
 
       return *this;
+   }
+
+   std::string Serialize() const
+   {
+      std::ostringstream os;
+
+      os << tags_.size();
+      for (TagIterator it = tags_.begin(); it != tags_.end(); it++)
+      {
+         std::string id("s");
+         if (it->second->ToArrayTag())
+            id = "a";
+
+         os << id << std::endl;
+         os << it->second->GetName() << std::endl << it->second->GetDevice() << std::endl;
+         os << (it->second->IsReadOnly() ? 1 : 0) << std::endl;
+
+         if (id.compare("s") == 0)
+         {
+            MetadataSingleTag* st = it->second->ToSingleTag();
+            os << st->GetValue() << std::endl;
+         }
+         else
+         {
+            MetadataArrayTag* at = it->second->ToArrayTag();
+
+            os << (long) at->GetSize() << std::endl;
+            for (size_t i=0; i<at->GetSize(); i++)
+               os << at->GetValue(i) << std::endl;
+         }
+      }
+
+      return os.str();
+   }
+
+   bool Restore(const char* stream)
+   {
+      tags_.clear();
+      std::istringstream is(stream);
+      size_t sz;
+      is >> sz;
+
+      for (size_t i=0; i<sz; i++)
+      {
+         std::string id;
+         std::string stream;
+         is >> id;
+
+         if (id.compare("s") == 0)
+         {
+            MetadataSingleTag ms;
+            std::string strVal;
+            is >> strVal;
+            ms.SetName(strVal.c_str());
+            is >> strVal;
+            ms.SetDevice(strVal.c_str());
+            int ro;
+            is >> ro;
+            ms.SetReadOnly(ro == 1 ? true : false);
+            is >> strVal;
+            ms.SetValue(strVal.c_str());
+
+            MetadataTag* newTag = ms.Clone();
+            tags_[ms.GetName()] = newTag;
+         }
+         else if (id.compare("a") == 0)
+         {
+            MetadataArrayTag as;
+            std::string strVal;
+            is >> strVal;
+            as.SetName(strVal.c_str());
+            is >> strVal;
+            as.SetDevice(strVal.c_str());
+            int ro;
+            is >> ro;
+            as.SetReadOnly(ro == 1 ? true : false);
+
+            long sizea;
+            is >> sizea;
+
+            for (long i=0; i<sizea; i++)
+            {
+               is >> strVal;
+               as.AddValue(strVal.c_str());
+            }
+
+            MetadataTag* newTag = as.Clone();
+            tags_[as.GetName()] = newTag;
+         }
+         else
+         {
+            return false;
+         }
+      }
+      return true;
+   }
+
+   std::string Dump()
+   {
+      std::ostringstream os;
+
+      os << tags_.size();
+      for (TagIterator it = tags_.begin(); it != tags_.end(); it++)
+      {
+         std::string id("s");
+         if (it->second->ToArrayTag())
+            id = "a";
+         std::string ser = it->second->Serialize();
+         os << id << " : " << ser << std::endl;
+      }
+
+      return os.str();
    }
 
 private:

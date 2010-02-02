@@ -25,6 +25,7 @@ package org.micromanager;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Insets;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -35,11 +36,11 @@ import java.awt.event.MouseListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.Vector;
 import java.util.prefs.Preferences;
 
@@ -83,7 +84,12 @@ import org.micromanager.utils.GUIColors;
 import org.micromanager.utils.MMFrame;
 import org.micromanager.utils.MMScriptException;
 
+import bsh.EvalError;
+import bsh.Interpreter;
+import bsh.util.JConsole;
+
 import com.swtdesigner.SwingResourceManager;
+import org.micromanager.utils.ReportingUtils;
 
 
 public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI {
@@ -104,7 +110,10 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
    private JTextPane messagePane_;
    private StyleContext sc_;
    private ScriptPanelMessageWindow messageWindow_;
-
+   private Interpreter beanshellREPLint_;
+   private JConsole cons_;
+   
+   
    private static final String SCRIPT_DIRECTORY = "script_directory";
    private static final String SCRIPT_FILE = "script_file_";
    private static final String RIGHT_DIVIDER_LOCATION = "right_divider_location";
@@ -129,6 +138,7 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
          lastModArray_ = new ArrayList<Long>();
       }
 
+      /*
       public void setData (ArrayList<File> scriptFileArray) {
          scriptFileArray_ = scriptFileArray;
          lastModArray_ = new ArrayList<Long>();
@@ -138,10 +148,22 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
             lastModArray_.add(f.lastModified());
          }
       }
-
+	  */
+      
+      public Boolean HasScriptAlready(File f) {
+         Boolean preExisting = false;
+         for (File scriptFile:scriptFileArray_) {
+            if (scriptFile.getAbsolutePath().equals(f.getAbsolutePath()))
+                  preExisting=true;
+         }
+         return preExisting;
+      }
+      
       public void AddScript(File f) {
-         scriptFileArray_.add(f);
-         lastModArray_.add(f.lastModified());
+         if (false == HasScriptAlready(f)) {
+            scriptFileArray_.add(f);
+            lastModArray_.add(f.lastModified());
+         }
       }
 
       public void GetCell(File f, int[] cellAddress)
@@ -249,7 +271,7 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
                         setTitle(file.getName());
                         model_.setLastMod(table_.getSelectedRow(), 0, file.lastModified());
                      } catch (Exception ee) {
-                        System.out.println(ee.getMessage());
+                        ReportingUtils.logError(ee);
                      }
                   } else if (EXT_ACQ.equals(getExtension(file))) {
                      scriptPane_.setText("gui.loadAcquisition(\"" + file.getAbsolutePath() + 
@@ -295,12 +317,55 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
 
    }
 
+   public void createBeanshellREPL() {
+	   // Create console and REPL interpreter:
+	   cons_ = new JConsole();
+	   beanshellREPLint_ = new Interpreter(cons_);
+	   new Thread(beanshellREPLint_).start();
+
+	   try {
+		 File f = new File("scripts/mm_beanshell_startup.bsh");
+		 if (f.exists())
+			 beanshellREPLint_.source("scripts/mm_beanshell_startup.bsh");
+	     else {
+	    	 f = new File("../scripts/mm_beanshell_startup.bsh");
+	    	 if (f.exists())
+	    		 beanshellREPLint_.source("../scripts/mm_beanshell_startup.bsh");
+	     }
+      } catch (FileNotFoundException e) {
+         ReportingUtils.showError(e);
+      } catch (IOException e) {
+         ReportingUtils.showError(e);
+      } catch (EvalError e) {
+         ReportingUtils.showError(e);
+      }
+	   
+	   // This command allows variables to be inspected in the command-line
+	   // (e.g., typing "x;" causes the value of x to be returned):
+	   beanshellREPLint_.setShowResults(true);
+
+	   // Set up window for interpreter:
+/*	   JFrame frame = new JFrame();
+	   frame.setBounds(100,100,500,500);
+	   frame.setTitle("Beanshell Interactive Console (Micro-Manager)");
+	   frame.add(cons_);
+	   frame.setVisible(true);*/
+	   
+   }
+   
+   public JConsole getREPLCons() {
+	   return cons_;
+   }
+   
    /**
     * Create the dialog
     */
    public ScriptPanel(CMMCore core, MMOptions options) {
       super();
-
+      
+      // Beanshell REPL Console
+      createBeanshellREPL();
+      
       // Needed when Cancel button is pressed upon save file warning
       setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
@@ -317,6 +382,7 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
       });
 
       interp_ = new BeanshellEngine(this);
+      interp_.setInterpreter(beanshellREPLint_);;
       
       new GUIColors();
       setTitle("Script Panel");
@@ -361,6 +427,7 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
       leftPanel.add(addButton);
 
       final JButton removeButton = new JButton();
+      removeButton.setMargin(new Insets(0,0,0,0));
       removeButton.setFont(new Font("", Font.PLAIN, 10));
       removeButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
@@ -401,7 +468,10 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
       spTopRight.putConstraint(SpringLayout.WEST, scriptPane_, 0, SpringLayout.WEST, topRightPanel);
       spTopRight.putConstraint(SpringLayout.NORTH, scriptPane_, buttonHeight + 2 * gap, SpringLayout.NORTH, topRightPanel);
       topRightPanel.add(scriptPane_);
+      
 
+      bottomRightPanel.add(cons_);
+      
       // Immediate Pane (executes single lines of script)
       immediatePane_ = new JTextField();
       immediatePane_.setFont(new Font("Courier New", Font.PLAIN, 12));
@@ -421,7 +491,7 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
       });
       immediatePane_.setMinimumSize(new Dimension(100, 15));
       immediatePane_.setMaximumSize(new Dimension(2000, 15));
-      bottomRightPanel.add(immediatePane_);
+      //bottomRightPanel.add(immediatePane_);
 
       // Message (output) pane
       messagePane_ = new JTextPane();
@@ -430,7 +500,7 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
       final JScrollPane messageScrollPane = new JScrollPane(messagePane_);
       messageScrollPane.setMinimumSize(new Dimension(100, 30));
       messageScrollPane.setMaximumSize(new Dimension(2000, 2000));
-      bottomRightPanel.add(messageScrollPane);
+      //bottomRightPanel.add(messageScrollPane);
 
       // Set up styles for the messagePane
       sc_ = new StyleContext();
@@ -442,6 +512,7 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
 
       // disable user input to the messagePane
       messagePane_.setKeymap(null);
+          
       
       // Pane with buttons
       scriptTable_ = new JTable();
@@ -473,6 +544,20 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
       spTopRight.putConstraint(SpringLayout.NORTH, runPaneButton, gap, SpringLayout.NORTH, topRightPanel);
       spTopRight.putConstraint(SpringLayout.WEST, runPaneButton, gap, SpringLayout.WEST, topRightPanel);
 
+/*      final JButton injectPaneButton = new JButton();
+      topRightPanel.add(injectPaneButton);
+      injectPaneButton.setFont(new Font("", Font.PLAIN, 10));
+      injectPaneButton.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent arg0) {
+             injectPane();
+         }
+      });
+      injectPaneButton.setText("Inject");
+      injectPaneButton.setPreferredSize(buttonSize);
+      spTopRight.putConstraint(SpringLayout.NORTH, injectPaneButton, gap, SpringLayout.NORTH, topRightPanel);
+      spTopRight.putConstraint(SpringLayout.WEST, injectPaneButton, gap, SpringLayout.WEST, runPaneButton);
+*/
+      
       final JButton stopButton = new JButton();
       topRightPanel.add(stopButton);
       stopButton.setFont(new Font("", Font.PLAIN, 10));
@@ -526,6 +611,7 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
       spTopRight.putConstraint(SpringLayout.WEST, saveButton, gap, SpringLayout.EAST, openButton);
       
       final JButton saveAsButton = new JButton();
+      saveAsButton.setMargin(new Insets(0,0,0,0));
       topRightPanel.add(saveAsButton);
       saveAsButton.setFont(new Font("", Font.PLAIN, 10));
       saveAsButton.addActionListener(new ActionListener() {
@@ -612,40 +698,55 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
     * Lets the user select a script file to add to the shortcut table
     */
    private void addScript() {
-      // check for changes and offer to save if needed
-      if (!promptToSave()) 
-         return;
-
-      File curFile;
-
-      JFileChooser fc = new JFileChooser();
-      fc.addChoosableFileFilter(new ScriptFileFilter());
-
-      String scriptListDir = prefs_.get(SCRIPT_FILE, null);
-      if (scriptListDir != null) {
-         fc.setSelectedFile(new File(scriptListDir));
+      if (scriptFile_ != null && !model_.HasScriptAlready(scriptFile_)) {
+         addScriptToModel(scriptFile_);
       }
+      else if (scriptFile_ == null && ! scriptPaneSaved_) {
+         if (!promptToSave()) 
+            return;
+         addScriptToModel(scriptFile_);
+      }
+      else
+      {
+         // check for changes and offer to save if needed
+         if (!promptToSave()) 
+            return;
 
-      // int retval = fc.showOpenDialog(this);
-      int retval = fc.showDialog(this, "New/Open");
-      if (retval == JFileChooser.APPROVE_OPTION) {
-         curFile = fc.getSelectedFile();
-         try {
-            scriptListDir = curFile.getParent();
-            prefs_.put(SCRIPT_DIRECTORY, scriptListDir);
-            prefs_.put(SCRIPT_FILE, curFile.getAbsolutePath());
-            // only creates a new file when a file with this name does not exist
-            curFile.createNewFile();
-         } catch (Exception e) {
-            handleException (e);
-         } finally {
-            model_.AddScript(curFile);
-            model_.fireTableDataChanged();
-            int[] cellAddress = new int[2];
-            model_.GetCell(curFile, cellAddress);
-            scriptTable_.changeSelection(cellAddress[0], cellAddress[1], false, false);
+         File curFile;
+
+         JFileChooser fc = new JFileChooser();
+         fc.addChoosableFileFilter(new ScriptFileFilter());
+
+         String scriptListDir = prefs_.get(SCRIPT_FILE, null);
+         if (scriptListDir != null) {
+            fc.setSelectedFile(new File(scriptListDir));
+         }
+
+         // int retval = fc.showOpenDialog(this);
+         int retval = fc.showDialog(this, "New/Open");
+         if (retval == JFileChooser.APPROVE_OPTION) {
+            curFile = fc.getSelectedFile();
+            try {
+               scriptListDir = curFile.getParent();
+               prefs_.put(SCRIPT_DIRECTORY, scriptListDir);
+               prefs_.put(SCRIPT_FILE, curFile.getAbsolutePath());
+               // only creates a new file when a file with this name does not exist
+               curFile.createNewFile();
+            } catch (Exception e) {
+               handleException (e);
+            } finally {
+               addScriptToModel(curFile);
+            }
          }
       }
+   }
+   
+   private void addScriptToModel(File curFile) {
+      model_.AddScript(curFile);
+      model_.fireTableDataChanged();
+      int[] cellAddress = new int[2];
+      model_.GetCell(curFile, cellAddress);
+      scriptTable_.changeSelection(cellAddress[0], cellAddress[1], false, false);
    }
 
    /**
@@ -661,6 +762,7 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
       scriptPane_.setText("");
       scriptPaneSaved_ = true;
       this.setTitle("");
+      scriptFile_ = null;
    }
 
    /**
@@ -697,7 +799,7 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
          model_.setLastMod(cellAddress[0], 0, scriptFile_.lastModified());
          JOptionPane.showMessageDialog(this, "File saved");
       } catch (IOException ioe){
-         message("IO exception" + ioe.getMessage());
+         ReportingUtils.showError(ioe);
       }
    }
 
@@ -736,9 +838,19 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
             scriptPaneSaved_ = true;
             this.setTitle(saveFile.getName());
          } catch (IOException ioe){
-            message("IO exception" + ioe.getMessage());
+            ReportingUtils.showError(ioe);
          }
       }
+   }
+   
+   /*
+    * Runs the content of the editor Pane in the REPL context.
+    */
+   @SuppressWarnings("unused")
+   private void injectPane() {
+	   interp_.setInterpreter(beanshellREPLint_);
+	   runPane();
+	   interp_.resetInterpreter();
    }
    
    /*
@@ -776,8 +888,11 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
          }
       }
       try {
+    
          interp_.evaluateAsync(scriptPane_.getText());
+         //interp_.evaluate(scriptPane_.getText());
       } catch (MMScriptException e) {
+         ReportingUtils.logError(e);
          messageException(e.getMessage(), -1);
       }
    }
@@ -798,6 +913,7 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
       scriptPaneSaved_ = true;
       scriptFile_ = null;
       this.setTitle("");
+      scriptPane_.requestFocusInWindow();
    }
 
    /*
@@ -844,6 +960,7 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
    public void insertScriptingObject(String varName, Object obj) {
       try {
          interp_.insertGlobalObject(varName, obj);
+         beanshellREPLint_.set(varName,obj);
       } catch (Exception e) {
          handleException(e);
       }
@@ -899,8 +1016,7 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
     * @param e
     */
    public void handleException (Exception e) {
-      String errText = "Exeption occured: " + e.getMessage();
-      JOptionPane.showMessageDialog(this, errText);
+      ReportingUtils.showError(e);
    }
 
    /**
@@ -910,6 +1026,8 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
    public void message (String text) {
       messagePane_.setCharacterAttributes(sc_.getStyle(blackStyleName_), false);
       messagePane_.replaceSelection(text + "\n");
+      cons_.print("\n"+text,java.awt.Color.black);
+      showPrompt();
    }
 
    public void Message (String text) {
@@ -929,13 +1047,43 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
       }
       messagePane_.setCharacterAttributes(sc_.getStyle(redStyleName_), false);
       messagePane_.replaceSelection(text + "\n");
+      cons_.print("\n"+text,java.awt.Color.red);
+      showPrompt();
+
    }
 
+   private void showPrompt() {
+	  String promptStr;
+      try {
+    	  promptStr = (String) beanshellREPLint_.eval("getBshPrompt();");
+      } catch (EvalError e) {
+          ReportingUtils.logError(e);
+    	  promptStr = "bsh % ";
+      } 
+	  cons_.print("\n"+promptStr,java.awt.Color.darkGray);  
+   }
+   
    /**
     * Clears the content of the message window
     */
    public void clearOutput() {
-      messagePane_.setText("");
+	   boolean originalAccessibility = true;
+	   try {
+		   beanshellREPLint_.eval("bsh.console.text");
+	   } catch (EvalError e) {
+		   originalAccessibility = false;
+		   try {
+			   beanshellREPLint_.eval("setAccessibility(true);");
+		   } catch (EvalError e1) {
+               ReportingUtils.showError(e1);
+		   }
+	   }
+	   try {
+		   beanshellREPLint_.eval("bsh.console.text.setText(\"\");"
+				   + "setAccessibility("+originalAccessibility+");");
+	   } catch (EvalError e) {
+           ReportingUtils.showError(e);
+	   }
    }
 
    public void ClearOutput() {
@@ -1052,21 +1200,25 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
       public void run() {
          if (error_)
             messageException(msg_, lineNumber_);
+         	
          else
             message(msg_);
       }
    }
    
    public void displayMessage(String message) {
-      SwingUtilities.invokeLater(new ExecuteDisplayMessage(message));        
+      SwingUtilities.invokeLater(new ExecuteDisplayMessage(message));
+      ReportingUtils.logMessage(message);
    }
 
    public void displayError(String text) {
-      SwingUtilities.invokeLater(new ExecuteDisplayMessage(text, true));        
+      SwingUtilities.invokeLater(new ExecuteDisplayMessage(text, true));
+      ReportingUtils.logError(text);
    }
    
    public void displayError(String text, int lineNumber) {
-      SwingUtilities.invokeLater(new ExecuteDisplayMessage(text, true, lineNumber));        
+      SwingUtilities.invokeLater(new ExecuteDisplayMessage(text, true, lineNumber));
+      ReportingUtils.logError(text);
    }
 
    public boolean stopRequestPending() {

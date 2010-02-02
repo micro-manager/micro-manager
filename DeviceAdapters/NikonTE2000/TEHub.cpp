@@ -17,6 +17,7 @@
 
 #include "TEHub.h"
 #include "assert.h"
+#include <cstdio>
 #include <memory.h>
 #include <sstream>
 #include <iostream>
@@ -175,6 +176,66 @@ bool TEHub::IsFilterBlockBusy(MM::Device& device, MM::Core& core)
    {
       FetchSerialData(device, core);
       return IsCommandWaiting("HDM", device, core);
+   }
+   return
+      false;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Excitation Side Filter Block Commands
+///////////////////////////////////////////////////////////////////////////////
+
+int TEHub::SetExcitationFilterBlockPosition(MM::Device& device, MM::Core& core, int pos)
+{
+   const char* command = "FDM";
+   ostringstream os;
+   os << command << pos << '\r';
+
+   // send command
+   int ret = ExecuteCommand(device, core, commandMode_.c_str(), os.str().c_str());
+   if (ret != DEVICE_OK)
+      return ret;
+
+   // parse response
+   string value;
+   core.GetSerialAnswer(&device, port_.c_str(), RCV_BUF_LENGTH, rcvBuf_, "\r\n");
+   ret = ParseResponse(device, core, command, value);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if (GetCommandMode() == Async)
+      waitingCommands_.insert(make_pair(command, core.GetClockTicksUs(&device)));
+   return DEVICE_OK;
+}
+
+int TEHub::GetExcitationFilterBlockPosition(MM::Device& device, MM::Core& core, int& pos)
+{
+   const char* command = "FAR";
+   int ret = ExecuteCommand(device, core, "r", command);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if (strlen(rcvBuf_) < 5)
+      return DEVICE_SERIAL_INVALID_RESPONSE;
+
+   // parse the response
+   string value;
+   ret = ParseResponse(device, core, command, value);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   pos = atoi(value.c_str());
+
+   return DEVICE_OK;
+}
+
+bool TEHub::IsExcitationFilterBlockBusy(MM::Device& device, MM::Core& core)
+{
+   if (this->GetCommandMode() == Async)
+   {
+      FetchSerialData(device, core);
+      return IsCommandWaiting("FCR", device, core);
    }
    return
       false;
@@ -854,7 +915,8 @@ int TEHub::ParseResponse(MM::Device& device, MM::Core& core, const char* cmd, st
       return DEVICE_SERIAL_INVALID_RESPONSE;
 
    value = rcvBuf_ + 4;
-   if (rcvBuf_[0] == 'n' && strlen(rcvBuf_) > 4)
+   unsigned int responselength_ = strlen(rcvBuf_);
+   if (rcvBuf_[0] == 'n' && responselength_ > 4)
    {
       int err = atoi(value.c_str()); // error occured
       LogError(err, device, core, "ParseResponse-device reported an error");

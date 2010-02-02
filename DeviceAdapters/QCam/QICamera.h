@@ -5,7 +5,7 @@
 //-----------------------------------------------------------------------------
 // DESCRIPTION:   Micro-Manager plugin for QImaging cameras using the QCam API.
 //                
-// AUTHOR:        QImaging
+// AUTHOR:        QImaging, updated by Jeff R. Kuhn, jrkuhn@vt.edu, Oct 2009
 //
 // COPYRIGHT:     Copyright (C) 2007 Quantitative Imaging Corporation (QImaging).
 //
@@ -26,54 +26,78 @@
 #ifndef _QICAMERA_H_
 #define _QICAMERA_H_
 
-#include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/DeviceBase.h"
 #include "../../MMDevice/ImgBuffer.h"
 #include "../../MMDevice/ModuleInterface.h"
+#include "../../MMDevice/DeviceThreads.h"
+#include "DeviceEvents.h"
 #include <string>
 #include <map>
 
-#include <QCam/QCamAPI.h>
+#ifdef WIN32
+#include <QCamApi.h>
+#include <QCamImgfnc.h>
+#else
+#include <QCam/QCamApi.h>
 #include <QCam/QCamImgfnc.h>
+#endif
 
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
 //
-#define ERR_NO_CAMERAS_FOUND				100
+#define ERR_NO_CAMERAS_FOUND			    100
+#define ERR_SOFTWARE_TRIGGER_FAILED         1004
+#define ERR_BUSY_ACQUIRING                  1003
+#define ERR_NO_CAMERA_FOUND                 1005
 
+//Unused error codes - reserved for future expansion
+//#define ERR_INTERNAL_BUFFER_FULL            1004
+//#define ERR_BUFFER_ALLOCATION_FAILED        1001
+//#define ERR_INCOMPLETE_SNAP_IMAGE_CYCLE     1002
+
+//////////////////////////////////////////////////////////////////////////////
+// Properties
+//
 #define	g_Keyword_Cooler					"Cooler"
-#define	g_Keyword_CCDTemperature_Min		"CCDTemperature Min"
-#define	g_Keyword_CCDTemperature_Max		"CCDTemperature Max"
-#define g_Keyword_Gain_Min					"Gain Min"
-#define g_Keyword_Gain_Max					"Gain Max"
-#define g_Keyword_Offset_Min				"Offset Min"
-#define g_Keyword_Offset_Max				"Offset Max"
-#define g_Keyword_EMGain_Min				"EMGain Min"
-#define g_Keyword_EMGain_Max				"EMGain Max"
-#define g_Keyword_ITGain					"Intensifier Gain"
-#define g_Keyword_ITGain_Min				"Intensifier Gain Min"
-#define g_Keyword_ITGain_Max				"Intensifier Gain Max"
+#define	g_Keyword_CCDTemperature_Min		"CCDTemperatureMin"
+#define	g_Keyword_CCDTemperature_Max		"CCDTemperatureMax"
+#define g_Keyword_Exposure_Min				"ExposureMin"
+#define g_Keyword_Exposure_Max				"ExposureMax"
+#define g_Keyword_Gain_Min					"GainMin"
+#define g_Keyword_Gain_Max					"GainMax"
+#define g_Keyword_Offset_Min				"OffsetMin"
+#define g_Keyword_Offset_Max				"OffsetMax"
+#define g_Keyword_EMGain_Min				"EMGainMin"
+#define g_Keyword_EMGain_Max				"EMGainMax"
+#define g_Keyword_ITGain					"IntensifierGain"
+#define g_Keyword_ITGain_Min				"IntensifierGainMin"
+#define g_Keyword_ITGain_Max				"IntensifierGainMax"
+#define g_Keyword_TriggerType               "TriggerType"
+#define g_Keyword_TriggerDelay              "TriggerDelay"
+#define g_Keyword_TriggerDelay_Min          "TriggerDelayMin"
+#define g_Keyword_TriggerDelay_Max          "TriggerDelayMax"
 
+//////////////////////////////////////////////////////////////////////////////
+// Other constants
+//
 
-#define CHECK_ERROR(inErr) \
-{ \
-	if (inErr != qerrSuccess) \
-	{ \
-		printf("QCam error %d occured\n", inErr); \
-		QCam_ReleaseDriver(); \
-\
-		return DEVICE_ERR; \
-	} \
-}
+// Number of buffers in image queue - Here for testing purposes
+#define QICAMERA_QUEUE_BUFFERS   3
 
-// has to be a C function
-void QCAMAPI PreviewCallback
-(
-	void*				userPtr,			// User defined
-	unsigned long		userData,			// User defined
-	QCam_Err			errcode,			// Error code
-	unsigned long		flags				// Combination of flags (see QCam_qcCallbackFlags)
-);
+//////////////////////////////////////////////////////////////////////////////
+// Global functions
+//
+
+// QCam driver Queue callback function. Must be a "C" function.
+void QCAMAPI FrameDoneCallback(void* userPtr, unsigned long userData, QCam_Err errcode, unsigned long flags);
+
+// Helper Functions
+void ConvertReadoutSpeedToString(QCam_qcReadoutSpeed inSpeed, char *outString);
+void ConvertReadoutSpeedToEnum(const char *inSpeed, QCam_qcReadoutSpeed *outSpeed);
+void ConvertReadoutPortToString(QCam_qcReadoutPort inPort, char *outString);
+void ConvertReadoutPortToEnum(const char *inSpeed, QCam_qcReadoutPort *outPort);
+void ConvertTriggerTypeToString(QCam_qcTriggerType inType, char *outString);
+void ConvertTriggerTypeToEnum(const char *inType, QCam_qcTriggerType *outType);
 
 //////////////////////////////////////////////////////////////////////////////
 // QICamera class
@@ -81,87 +105,142 @@ void QCAMAPI PreviewCallback
 class QICamera : public CCameraBase<QICamera>  
 {
 public:
-   QICamera();
-   ~QICamera();
-  
-   // MMDevice API
-   // ------------
-   int Initialize();
-   int Shutdown();
-  
-   void GetName(char* name) const;      
-   bool Busy();
+    QICamera();
+    ~QICamera();
 
-   // helper
-   void ConvertReadoutSpeedToString(QCam_qcReadoutSpeed inSpeed, char *outString);
-   void ConvertReadoutSpeedToEnum(const char *inSpeed, QCam_qcReadoutSpeed *outSpeed);
+    // MMDevice API
+    // ------------
+    int Initialize();
+    int Shutdown();
 
-   // setup
-   int SetupExposure();
-   int SetupBinning();
-   int SetupGain();
-   int SetupOffset();
-   int SetupReadoutSpeed();
-   int SetupBitDepth();
-   int SetupCooler();
-   int SetupRegulatedCooling();
-   int SetupEMGain();
-   int SetupITGain();
-   int SetupFrames();
+    void GetName(char* name) const;      
+    virtual bool Busy();
 
-   // streaming
-   int StartStreamingImages();
-   void SetCurrentFrameNumber(unsigned long inFrameNumber);
-   void ExposureDone();
+    // MMCamera API
+    // ------------
+    int SnapImage();
+    int Trigger();  // for software triggering
+    const unsigned char* GetImageBuffer();
+    unsigned GetImageWidth() const;
+    unsigned GetImageHeight() const;
+    unsigned GetImageBytesPerPixel() const;
+    unsigned GetBitDepth() const;
+    int GetBinning() const;
+    int SetBinning(int binSize);
+    long GetImageBufferSize() const;
+    double GetExposure() const;
+    void SetExposure(double exp);
+    int SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize); 
+    int GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize); 
+    int ClearROI();
+    // Sequence acquisition interface
+    int StartSequenceAcquisition(double interval_ms);
+    int StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow);
+    int StopSequenceAcquisition();
+    int RestartSequenceAcquisition();
+    bool IsCapturing() { return m_sthd->IsRunning(); };
 
-   // MMCamera API
-   // ------------
-   int SnapImage();
-   const unsigned char* GetImageBuffer();
-   unsigned GetImageWidth() const;
-   unsigned GetImageHeight() const;
-   unsigned GetImageBytesPerPixel() const;
-   unsigned GetBitDepth() const;
-   int GetBinning() const;
-   int SetBinning(int binSize);
-   long GetImageBufferSize() const;
-   double GetExposure() const;
-   void SetExposure(double exp);
-   int SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize); 
-   int GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize); 
-   int ClearROI();
+    // action interface
+    // ----------------
+    int OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnGain(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnOffset(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnReadoutSpeed(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnReadoutPort(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnCooler(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnRegulatedCooling(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnEMGain(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnITGain(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnTriggerType(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnTriggerDelay(MM::PropertyBase* pProp, MM::ActionType eAct);
 
-	// action interface
-	// ----------------
-	int OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnGain(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnOffset(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnReadoutSpeed(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnCooler(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnRegulatedCooling(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnEMGain(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnITGain(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int LogError(std::string message, int err, char* file=NULL, int line=0) const;
 
 private:
+    //////////////////////////////////////////////////////////////////////////
+    // Thread interface
+    class QISequenceThread : public MMDeviceThreadBase {
+    public:
+        QISequenceThread(QICamera* pCam) : m_stop(false), m_numImages(0), 
+            m_captureCount(0), m_pCam(pCam), m_isRunning(false) { }
 
-   ImgBuffer			m_snappedImageBuffer;
-   bool					m_isInitialized;
-   bool					m_isBusy;
-   QCam_Handle			m_camera;
-   QCam_Settings		m_settings;
-   QCam_Frame			*m_frame1, *m_frame2;
+        ~QISequenceThread() {}
 
-#ifdef WIN32
-   HANDLE				m_waitCondition;
-#elif __APPLE_CC__
-   pthread_mutex_t		m_waitMutex;
-   pthread_cond_t		m_waitCondition;
+        int svc(void);
+
+        void Stop() { m_stop = true; }
+
+        void Start() 
+        { 
+            m_isRunning = true; 
+            m_stop = false; 
+            activate(); 
+        }
+
+        bool IsRunning() { return m_isRunning; }
+
+        void SetLength(long images) { m_numImages = images; }
+
+        long GetLength(void) { return m_numImages; }
+
+        long GetRemaining(void) { return m_numImages - m_captureCount; }
+
+    private:
+        QICamera*           m_pCam;         // parent camera
+        bool                m_stop;         // thread stop requested
+        long                m_numImages;    // total number of images to capture
+        long                m_captureCount; // current count of images
+        bool                m_isRunning;    // is the thread running?
+    }; // class QISequenceThread
+
+    // Setup
+    int SetupExposure();
+    int SetupBinning();
+    int SetupGain();
+    int SetupOffset();
+    int SetupReadoutSpeed();
+    int SetupReadoutPort();
+    int SetupBitDepth();
+    int SetupCooler();
+    int SetupRegulatedCooling();
+    int SetupEMGain();
+    int SetupITGain();
+    int SetupFrames();
+    int SetupTriggerType();
+    int SetupTriggerDelay();
+
+    // helper functions
+    friend void QCAMAPI FrameDoneCallback(void*, unsigned long, QCam_Err, unsigned long);
+    int ResizeImageBuffer();
+    int InsertImage(int iFrameBuff);
+    int QueueFrame(int iFrameBuff);
+    void FrameDone(long frameNumber, QCam_Err errcode);
+#ifdef QCAM_EXPOSURE_DONE_REQUIRED
+    void ExposureDone(long frameNumber, QCam_Err errcode);
 #endif
+    int SendSettingsToCamera(QCam_Settings* settings);
 
-   int ResizeImageBuffer();
+    bool				m_isInitialized;    // Has the camera been initialized (setup)?
+    QCam_Handle			m_camera;           // handle to the camera. Used by all QCam_* functions
+    QCam_Settings		m_settings;         // Current settings. Used internally by QCam_* functions
+    QISequenceThread*   m_sthd;             // Pointer to the sequencing thread
+    bool                m_softwareTrigger;  // Is the camera in software triggering mode
+    double              m_dExposure;        // Current exposure setting
+    double              m_interval;         // Current sequence capture interval
+    unsigned int        m_imageWidth;       // Current capture width
+    unsigned int        m_imageHeight;      // Current capture height
+    unsigned int        m_bitDepth;         // Current image depth in bits (8bit, 10bit, 12bit, etc..)
+    unsigned int        m_maxBitDepth;      // Maximum possible bit depth for camera
+
+    // Frame Buffer for continuous acquisition
+    static const int    m_nFrameBuffs = QICAMERA_QUEUE_BUFFERS; // Total frame buffers in the circular queue
+    QCam_Frame**        m_frameBuffs;       // Circular queue of individual frames
+    bool*               m_frameBuffsAvail;  // TRUE: Buffer can safely be requeued. FALSE: MMCore is accessing the buffer.
+    MMEvent             m_frameDoneEvent;   // Signals the sequence thread when a frame was captured
+    int		            m_frameDoneBuff;    // Tells the sequence thread which frame was just captured
+    MMThreadLock        m_frameDoneLock;    // Locks access to m_frameDoneBuff
 };
 
 #endif //_QICAMERA_H_

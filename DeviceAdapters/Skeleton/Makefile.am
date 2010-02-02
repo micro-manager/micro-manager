@@ -6,6 +6,6 @@ Skeleton__la_LIBADD = ../../MMDevice/.libs/libMMDevice.a
 Skeleton_la_LDFLAGS = -module
 
 install:
-	cp .libs/Skeleton.so $(DEVICEADAPTERPATH)/$(MMPREFIX)Skeleton$(MMSUFFIX)
+	cp .libs/Skeleton.so $(DESTDIR)$(DEVICEADAPTERPATH)/$(MMPREFIX)Skeleton$(MMSUFFIX)
 
 EXTRA_DIST = license.txt

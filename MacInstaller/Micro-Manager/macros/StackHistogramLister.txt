@@ -1,0 +1,46 @@
+// This macro prompts for the bin count and histogram 
+// min and max and then writes the histogram counts of
+// the current image or stack to the "Results" window.
+
+  requires("1.34m");
+  Dialog.create("Histogram Lister");
+  Dialog.addNumber("Number of Bins:", 256);
+  Dialog.addNumber("Histogram Min:", 0);
+  Dialog.addNumber("Histogram Max:", 256);
+  Dialog.show();
+  nBins = Dialog.getNumber();
+  hMin = Dialog.getNumber();
+  hMax = Dialog.getNumber();
+  row=0;
+  run("Clear Results");
+  if (bitDepth==32) {
+      for (slice=1; slice<=nSlices; slice++) {
+          if (nSlices>1) run("Set Slice...", "slice=" + slice);
+          getHistogram(values,counts,nBins,hMin,hMax);
+          for (i=0; i<nBins; i++) {
+              if (nSlices>1) setResult("Slice", row, slice);
+              setResult("Value", row, values[i]);
+              setResult("Count", row, counts[i]);
+              row++;
+          }
+      }
+  } else {
+      setBatchMode(true);
+      stack = getImageID();
+      for (slice=1; slice<=nSlices; slice++) {
+          selectImage(stack);
+          if (nSlices>1) run("Set Slice...", "slice=" + slice);
+          run("Duplicate...", "title=temp");
+          run("32-bit");
+          getHistogram(values,counts,nBins,hMin,hMax);
+          close();
+          for (i=0; i<nBins; i++) {
+              if (nSlices>1) setResult("Slice", row, slice);
+              setResult("Value", row, values[i]);
+              setResult("Count", row, counts[i]);
+              row++;
+          }
+      }
+  }
+  updateResults()
+

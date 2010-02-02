@@ -1,0 +1,6 @@
+// This macro demonstrate how to use the File.open function
+
+   f = File.open(""); // use file open dialog
+   //f = File.open("/Users/wayne/table.txt");
+   for (i=0; i<=2*PI; i+=0.01)
+      print(f, i + "  \t" + sin(i) + " \t" + cos(i));

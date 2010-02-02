@@ -1,0 +1,176 @@
+/*
+  * Script to acquire Z-stack at very high speeds using the ASI piezo stage and Arduino control
+  * This will only work with the newest ASI firmware (as of October 2008)
+  * The camera should be able to generate a TTL pulse.  
+  * Hook up the camera TTL out to the ARduino 
+  * Set up the numbers below and run the script
+  * Make sure that the ASI Pieze Z-drive is the Core-Focus device
+  */
+
+// file locations
+acqName = "test-ASI-Z";
+rootDirName = "C:/acquisitionData";
+
+// number of slices
+nrSlices = 10;
+// distance in um between slices
+distance = 0.25;
+// number of channels (should be two or less)
+nrChannels = 2;
+// Number of timepoints
+nrFrames = 3;
+// Time between timePoints (in Ms);
+intervalMs = 2000;
+
+// The following two arrays must have size nrChannels
+String [] channelName = new String [] {"Cy3", "FITC"};
+Color [] channelColor = new Color [] {Color.RED, Color.GREEN};
+
+//Arduino digital patters (MUST have size of 2 * nrChannels)
+// Odd patterns are triggered on exposure start, even patterns on exposure stop
+int [] dPattern = new int [] {1,0,32,2};
+
+// Port for communication with ASI stage controller
+port = "COM4";
+
+
+// DO NOT EDIT BELOW THIS LINE
+// Remember original channel group
+channelPreset = mmc.getCurrentConfig("Channel");
+mmc.setConfig("Channel", "DAC-Open");
+
+int nrPatterns = nrChannels * 2;
+// Set up Arduino: 
+for (int i = 0; i < nrPatterns; i++) { 
+   mmc.setProperty("Arduino-Switch", "State", new Integer (dPattern[i]).toString());
+   mmc.setProperty("Arduino-Switch", "SetPattern", " " + new Integer(i).toString());
+}
+mmc.setProperty("Arduino-Switch", "Nr. Patterns Used", new Integer(nrPatterns).toString());
+
+// switch off autoshutter but remember its state so that it can be restored
+boolean autoShutter = false;
+if (mmc.getAutoShutter()) {
+   autoShutter = true;
+   mmc.setAutoShutter(false);
+}
+
+// clear all previous acquisitions
+gui.closeAllAcquisitions();
+gui.clearMessageWindow();
+gui.openAcquisition(acqName, rootDirName, nrFrames, nrChannels, nrSlices);
+for (int i=0; i< nrChannels; i++) {
+   gui.setChannelColor(acqName, i, channelColor[i]);
+   gui.setChannelName(acqName, i, channelName[i]);
+}
+long width = mmc.getImageWidth();
+long height = mmc.getImageHeight();
+long depth = mmc.getBytesPerPixel();
+
+
+// Use TTL mode 2 (repeat last MOVREL command).  
+
+// Store current Z position as a reference to retrun to after acquiring the stack
+zPos = mmc.getPosition(mmc.getFocusDevice());
+gui.message("Position: "  + zPos);
+
+// Move down so that the current position will be in the middle of the stack
+//mmc.setRelativePosition(mmc.getFocusDevice(), -distance * (nrSlices / 2));
+double basePos = zPos - (distance * (nrSlices / 2));
+mmc.setPosition(mmc.getFocusDevice(), basePos);
+
+
+// First give it the correct MOVREL by going down and then back up
+command = "R Z=" +  -10*distance;
+mmc.setSerialPortCommand(port, command, "\r");
+answer = mmc.getSerialPortAnswer(port, "\r\n");
+gui.message(answer);
+
+command = "R Z=" + 10*distance;
+mmc.setSerialPortCommand(port, command, "\r");
+answer = mmc.getSerialPortAnswer(port, "\r\n");
+gui.message(answer);
+// Set controller in TTL Mode 2
+command ="TTL X=2";
+mmc.setSerialPortCommand(port, command, "\r");
+answer = mmc.getSerialPortAnswer(port, "\r\n");
+gui.message(answer);
+
+
+mmc.setProperty("Arduino-Switch", "TriggerMode", "Start");
+
+gui.initializeAcquisition(acqName, (int) width, (int) height, (int) depth);
+
+exposure = mmc.getExposure();
+binning = mmc.getProperty(mmc.getCameraDevice(), "Binning");
+
+// There is an extra image to deal with if the exposure is more than 35 ms
+int extra = 1;
+if (binning.equals("1")) {
+   if (exposure > 35.0)
+      extra = 2;
+} else if (binning.equals("2")) {
+   if (exposure > 20.0)
+      extra = 2;
+} else if (binning.equals("4")) {
+   if (exposure > 11.5) 
+      extra = 2;
+}
+gui.message ("Extra: " + extra);
+
+for (frame=0; frame < nrFrames; frame++) {
+
+   // first image is blank.  Skip
+   // There is something weird going on depending on exposure time
+   // longer exposures need an extra image at the end, shorter ones (< 31 ms) do not...
+   // this code adds an extra image at the end
+   mmc.startSequenceAcquisition((nrChannels * nrSlices) + extra, 0, false);
+
+   now = System.currentTimeMillis();
+   int slice = 0;
+   int channel = 0;
+   int counter = 0;
+   while (mmc.getRemainingImageCount() > 0 || mmc.deviceBusy(mmc.getCameraDevice())) {
+      if (mmc.getRemainingImageCount() > 0) {
+         img = mmc.popNextImage();
+         if (counter > 0 && (slice < nrSlices)) {
+            gui.addImage(acqName, img, frame, channel, slice);
+            gui.setImageProperty(acqName, frame, channel, slice, "Z-um", Double.toString(basePos + (slice * distance)));
+            gui.setImageProperty(acqName, frame, channel, slice, "Exposure", Double.toString(mmc.getExposure()));
+            if (channel == (nrChannels - 1)) {
+               if (slice == (nrSlices /2) + 1)
+                  gui.setContrastBasedOnFrame(acqName, frame, slice -1);
+               slice++;
+               channel = 0;
+            } else
+               channel++;        
+         }
+         counter++;
+      } 
+   }
+   mmc.setPosition(mmc.getFocusDevice(), basePos);
+   itTook = System.currentTimeMillis() - now;
+   if ((intervalMs - itTook) > 0)
+      gui.sleep(intervalMs - itTook);
+
+}
+
+mmc.stopSequenceAcquisition();
+
+// Reset Arduino
+mmc.setProperty("Arduino-Switch", "TriggerMode", "Stop");
+
+// Reset ASI controller TTL behavior
+command ="TTL X=0";
+mmc.setSerialPortCommand(port, command, "\r");
+answer = mmc.getSerialPortAnswer(port, "\r\n");
+gui.message(answer);
+
+// Return to original position
+mmc.setPosition(mmc.getFocusDevice(), zPos);
+
+// Restore original Channel
+mmc.setConfig("Channel", channelPreset);
+
+// restore autoShutter status
+if (autoShutter)
+   mmc.setAutoShutter(true);

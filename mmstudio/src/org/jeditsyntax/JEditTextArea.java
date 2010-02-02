@@ -9,17 +9,59 @@
 
 package org.jeditsyntax;
 
-import javax.swing.event.*;
-import javax.swing.text.*;
-import javax.swing.undo.*;
-import javax.swing.*;
-import java.awt.datatransfer.*;
-import java.awt.event.*;
-import java.awt.*;
+import java.awt.AWTEvent;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Insets;
+import java.awt.LayoutManager;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.StringSelection;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.AdjustmentEvent;
+import java.awt.event.AdjustmentListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionListener;
+import java.awt.event.MouseWheelListener;
+import java.awt.event.MouseWheelEvent;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.Enumeration;
 import java.util.Vector;
-import java.io.InputStreamReader;
-import java.io.IOException;
+
+import javax.swing.JComponent;
+import javax.swing.JPopupMenu;
+import javax.swing.JScrollBar;
+import javax.swing.SwingUtilities;
+import javax.swing.Timer;
+import javax.swing.event.CaretEvent;
+import javax.swing.event.CaretListener;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.event.EventListenerList;
+import javax.swing.event.UndoableEditEvent;
+import javax.swing.event.UndoableEditListener;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Element;
+import javax.swing.text.Segment;
+import javax.swing.text.Utilities;
+import javax.swing.undo.AbstractUndoableEdit;
+import javax.swing.undo.CannotRedoException;
+import javax.swing.undo.CannotUndoException;
+import javax.swing.undo.UndoManager;
+import javax.swing.undo.UndoableEdit;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  * jEdit's text area component. It is more suited for editing program
@@ -54,6 +96,11 @@ import java.io.IOException;
 public class JEditTextArea extends JComponent
 {
 	/**
+    * 
+    */
+   private static final long serialVersionUID = -2830116082820726753L;
+
+   /**
 	 * Adding components with this name to the text area will place
 	 * them left of the horizontal scroll bar. In jEdit, the status
 	 * bar is added this way.
@@ -114,6 +161,7 @@ public class JEditTextArea extends JComponent
 		painter.addComponentListener(new ComponentHandler());
 		painter.addMouseListener(new MouseHandler());
 		painter.addMouseMotionListener(new DragHandler());
+		painter.addMouseWheelListener(new WheelHandler());
 		addFocusListener(new FocusHandler());
 
 		// Load the defaults
@@ -282,7 +330,6 @@ public class JEditTextArea extends JComponent
 	{
 		if(firstLine == this.firstLine)
 			return;
-		int oldFirstLine = this.firstLine;
 		this.firstLine = firstLine;
 		if(firstLine != vertical.getValue())
 			updateScrollBars();
@@ -307,7 +354,6 @@ public class JEditTextArea extends JComponent
 			return;
 		int height = painter.getHeight();
 		int lineHeight = painter.getFontMetrics().getHeight();
-		int oldVisibleLines = visibleLines;
 		visibleLines = height / lineHeight;
 		updateScrollBars();
 	}
@@ -345,7 +391,6 @@ public class JEditTextArea extends JComponent
 	public boolean setOrigin(int firstLine, int horizontalOffset)
 	{
 		boolean changed = false;
-		int oldFirstLine = this.firstLine;
 
 		if(horizontalOffset != this.horizontalOffset)
 		{
@@ -513,7 +558,6 @@ public class JEditTextArea extends JComponent
 					= tokenMarker.markTokens(lineSegment,line);
 			}
 
-			Toolkit toolkit = painter.getToolkit();
 			Font defaultFont = painter.getFont();
 			SyntaxStyle[] styles = painter.getStyles();
 
@@ -612,7 +656,6 @@ public class JEditTextArea extends JComponent
 			}
 
 			int offset = 0;
-			Toolkit toolkit = painter.getToolkit();
 			Font defaultFont = painter.getFont();
 			SyntaxStyle[] styles = painter.getStyles();
 
@@ -802,7 +845,7 @@ public class JEditTextArea extends JComponent
 		}
 		catch(BadLocationException bl)
 		{
-			bl.printStackTrace();
+			ReportingUtils.showError(bl);
 			return null;
 		}
 	}
@@ -820,7 +863,7 @@ public class JEditTextArea extends JComponent
 		}
 		catch(BadLocationException bl)
 		{
-			bl.printStackTrace();
+			ReportingUtils.logError(bl);
 		}
 		finally
 		{
@@ -836,7 +879,7 @@ public class JEditTextArea extends JComponent
       try {
          document.remove(0,document.getLength());
       } catch(BadLocationException bl) {
-         bl.printStackTrace();
+         ReportingUtils.logError(bl);
       }
       document.beginCompoundEdit();
       char[] buf = new char[1024];
@@ -849,9 +892,9 @@ public class JEditTextArea extends JComponent
             location += bytesRead;
          }
       } catch (IOException e) {
-         e.printStackTrace();
+         ReportingUtils.logError(e);
       } catch (BadLocationException bl) {
-         bl.printStackTrace();
+         ReportingUtils.logError(bl);
       }
       document.endCompoundEdit();
       // Set Caret at the beginning of the document
@@ -872,7 +915,7 @@ public class JEditTextArea extends JComponent
 		}
 		catch(BadLocationException bl)
 		{
-			bl.printStackTrace();
+			ReportingUtils.logError(bl);
 			return null;
 		}
 	}
@@ -892,7 +935,7 @@ public class JEditTextArea extends JComponent
 		}
 		catch(BadLocationException bl)
 		{
-			bl.printStackTrace();
+			ReportingUtils.logError(bl);
 			segment.offset = segment.count = 0;
 		}
 	}
@@ -1297,7 +1340,7 @@ public class JEditTextArea extends JComponent
 		}
 		catch(BadLocationException bl)
 		{
-			bl.printStackTrace();
+			ReportingUtils.logError(bl);
 			throw new InternalError("Cannot replace"
 				+ " selection");
 		}
@@ -1400,7 +1443,7 @@ public class JEditTextArea extends JComponent
 		}
 		catch(BadLocationException bl)
 		{
-			bl.printStackTrace();
+			ReportingUtils.logError(bl);
 		}
 		finally
 		{
@@ -1542,7 +1585,7 @@ public class JEditTextArea extends JComponent
 			catch(Exception e)
 			{
 				getToolkit().beep();
-				System.err.println("Clipboard does not"
+				ReportingUtils.logError("Clipboard does not"
 					+ " contain a string");
 			}
 		}
@@ -1665,7 +1708,7 @@ public class JEditTextArea extends JComponent
 		}
 		catch(BadLocationException bl)
 		{
-			bl.printStackTrace();
+			ReportingUtils.logError(bl);
 		}
 
 		bracketLine = bracketPosition = -1;
@@ -1790,7 +1833,7 @@ public class JEditTextArea extends JComponent
 				centerHeight);
 
 			// Lay out all status components, in order
-			Enumeration status = leftOfScrollBar.elements();
+			Enumeration<Component> status = leftOfScrollBar.elements();
 			while(status.hasMoreElements())
 			{
 				Component comp = (Component)status.nextElement();
@@ -1828,7 +1871,12 @@ public class JEditTextArea extends JComponent
 
 	class MutableCaretEvent extends CaretEvent
 	{
-		MutableCaretEvent()
+		/**
+       * 
+       */
+      private static final long serialVersionUID = 9185882307037856685L;
+
+      MutableCaretEvent()
 		{
 			super(JEditTextArea.this);
 		}
@@ -1954,6 +2002,15 @@ public class JEditTextArea extends JComponent
 		public void mouseMoved(MouseEvent evt) {}
 	}
 
+	class WheelHandler implements MouseWheelListener
+	{
+		public void mouseWheelMoved(MouseWheelEvent evt)
+		{
+         // setCaretPosition(getCaretPosition() + evt.getUnitsToScroll());
+         vertical.setValue(vertical.getValue()+ evt.getUnitsToScroll());
+      }
+   }
+
 	class FocusHandler implements FocusListener
 	{
 		public void focusGained(FocusEvent evt)
@@ -2000,15 +2057,15 @@ public class JEditTextArea extends JComponent
 				// it can throw a BLE
 				try
 				{
-					doDoubleClick(evt,line,offset,dot);
+					doDoubleClick(line,offset,dot);
 				}
 				catch(BadLocationException bl)
 				{
-					bl.printStackTrace();
+					ReportingUtils.logError(bl);
 				}
 				break;
 			case 3:
-				doTripleClick(evt,line,offset,dot);
+				doTripleClick(line);
 				break;
 			}
 		}
@@ -2025,7 +2082,7 @@ public class JEditTextArea extends JComponent
 				setCaretPosition(dot);
 		}
 
-		private void doDoubleClick(MouseEvent evt, int line,
+		private void doDoubleClick(int line,
 			int offset, int dot) throws BadLocationException
 		{
 			// Ignore empty lines
@@ -2051,7 +2108,7 @@ public class JEditTextArea extends JComponent
 			}
 			catch(BadLocationException bl)
 			{
-				bl.printStackTrace();
+				ReportingUtils.logError(bl);
 			}
 
 			// Ok, it's not a bracket... select the word
@@ -2109,8 +2166,7 @@ public class JEditTextArea extends JComponent
 			*/
 		}
 
-		private void doTripleClick(MouseEvent evt, int line,
-			int offset, int dot)
+		private void doTripleClick(int line)
 		{
 			select(getLineStartOffset(line),getLineEndOffset(line)-1);
 		}
@@ -2118,7 +2174,11 @@ public class JEditTextArea extends JComponent
 
 	class CaretUndo extends AbstractUndoableEdit
 	{
-		private int start;
+		/**
+       * 
+       */
+      private static final long serialVersionUID = 3912284959862652298L;
+      private int start;
 		private int end;
 
 		CaretUndo(int start, int end)

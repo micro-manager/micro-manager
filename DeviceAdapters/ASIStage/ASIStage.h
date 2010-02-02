@@ -72,10 +72,8 @@ public:
 
    // XYStage API
    // -----------
-  int SetPositionUm(double x, double y);
-  int SetRelativePositionUm(double x, double y);
-  int GetPositionUm(double& x, double& y);
   int SetPositionSteps(long x, long y);
+  int SetRelativePositionSteps(long x, long y);
   int GetPositionSteps(long& x, long& y);
   int Home();
   int Stop();
@@ -104,8 +102,10 @@ private:
    int OnMotorCtrl(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnVersion(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnNrMoveRepetitions(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int GetResolution(double& resX, double& resY);
-   int GetDblParameter(const char* command, double& param);
+   int OnJSMirror(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnJSSwapXY(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnJSFastSpeed(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnJSSlowSpeed(MM::PropertyBase* pProp, MM::ActionType eAct);
    int GetPositionStepsSingle(char axis, long& steps);
    int SetAxisDirection();
    bool hasCommand(std::string commnand);
@@ -115,8 +115,14 @@ private:
    std::string port_;
    double stepSizeXUm_;
    double stepSizeYUm_;
+   // This variable convert the floating point number provided by ASI (expressing 10ths of microns) into a long
+   double ASISerialUnit_;
    bool motorOn_;
    long nrMoveRepetitions_;
+   int joyStickSpeedFast_;
+   int joyStickSpeedSlow_;
+   bool joyStickMirror_;
+   bool joyStickSwapXY_;
    double answerTimeoutMs_;
    bool stopSignal_;
 };
@@ -183,7 +189,10 @@ public:
    virtual bool IsContinuousFocusLocked();
    virtual int FullFocus();
    virtual int IncrementalFocus();
-   virtual int GetFocusScore(double& score);
+   virtual int GetLastFocusScore(double& score);
+   virtual int GetCurrentFocusScore(double& /*score*/) {return DEVICE_UNSUPPORTED_COMMAND;}
+   virtual int GetOffset(double& offset);
+   virtual int SetOffset(double offset);
 
    // action interface
    // ----------------

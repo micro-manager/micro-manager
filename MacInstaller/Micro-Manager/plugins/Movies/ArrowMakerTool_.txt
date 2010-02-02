@@ -1,0 +1,213 @@
+/////////////////////////////////////////////////////////////////////// 
+// Histological Arrow maker, associated to the BigCursor Tool
+// avaible in the IJ macros tools repertory at  
+// http://rsb.info.nih.gov/ij/macros/tools/BigCursorTool.txt
+/////////////////////////////////////////////////////////////////////// 
+// Author: Gilles Carpentier, Faculte des Sciences et
+// Technologies,  Universite Paris 12 Val de Marne, France
+
+// More information is available at
+// http://image.bio.methods.free.fr/Arrowsdoc.html
+
+// Requires the ImageJ 1.34o preview at
+// http://rsb.info.nih.gov/ij/ij.jar
+
+var x,  y,  quadrantx,xlocation,ylocation,spacer,xinit,yinit,xprime,yprime,arrowline ;
+var  arrowlenght=20, arrowwidth=6, arrowconcav=21, taillenght=20;
+var tailwidth=4, tailcolor="Cyan", tailorient="East", orientangle;
+
+// Macro BigCursorTool writen by Wayne Rasband, ang avaible on the  ImageJ website at
+//http://rsb.info.nih.gov/ij/macros/tools/BigCursorTool.txt
+
+macro "Arrow Maker Tool -Ca0bL1ee1L65e1La9e1" {
+     requires("1.34o");
+     getCursorLoc(x, y, z, flags);
+     xstart=x; ystart=y;
+     w = getWidth(); h = getHeight();
+     px = newArray(6);
+     py = newArray(6);
+     x2=x; y2=y;
+     while (flags&16!=0) {
+         getCursorLoc(x, y, z, flags);
+         if (x!=x2 || y!=y2) {
+             px[0]=0; py[0]=y;
+             px[1]=w; py[1]=y;
+             px[2]=x; py[2]=y;
+             px[3]=x; py[3]=0;
+             px[4]=x; py[4]=h;
+             px[5]=x; py[5]=y;
+             makeSelection("polgon", px, py);
+             showStatus(x+","+y);
+         }
+         x2=x; y2=y;
+         wait(10);
+     };
+
+    /// draw the arrow
+    setupUndo();
+    if (x!=xstart && y!=ystart) {
+        arrow ();
+        run("Select None");
+    }
+
+} /// end of the arrow tool
+
+macro "Undo Last Arrow [z]"{
+      run("Undo");
+}
+
+ macro "Display Coordinates" {
+     showMessage("X Coordinate: "+x + "\nY Coordinate: "+y);
+ }
+
+
+///////////////// Functions ////////////////////
+
+function arrow () {
+
+//parameters of the arrow
+
+previewarrow=0;
+
+arrowchoices1=newArray("3","6","10","15","20","25","30");
+arrowchoices2=newArray("10","15","20","25","30");
+arrowchoices3=newArray("6","11","16","21","26","31");
+arrowchoices4=newArray("0","5","10","15","20","25","30");
+arrowchoices5=newArray("0","2","4","6","12");
+arrowchoices6=newArray("Magenta","Cyan","Yellow","Black","White");
+arrowchoices7=newArray("North","N-E","East","S-E","South","S- W","West","N-W");
+
+ Dialog.create("Arrow Size and Form");
+ Dialog.addChoice("Arrow length:", arrowchoices2,  toString(arrowlenght));
+ Dialog.addChoice("Arrow width:", arrowchoices1,  toString(arrowwidth));
+ Dialog.addChoice("Arrowhead Filling Level:", arrowchoices3, toString(arrowconcav));
+ Dialog.addChoice("Tail Size (Length):", arrowchoices4,  toString(taillenght));
+ Dialog.addChoice("Tail Size (Width):", arrowchoices5,  toString(tailwidth));
+ Dialog.addChoice("Arrow Color:",newArray("Magenta","Cyan","Yellow","Black","White"), tailcolor);
+ Dialog.addChoice("Arrow Orientation:",arrowchoices7, tailorient);
+ Dialog.addCheckbox("Preview", false);
+ Dialog.addMessage("          Press 'z' to Undo");
+
+ Dialog.show();
+
+
+arrowlenght = parseFloat (Dialog.getChoice());
+arrowwidth = parseFloat (Dialog.getChoice());
+arrowconcav = parseFloat( Dialog.getChoice());
+taillenght = parseFloat(Dialog.getChoice());
+tailwidth = parseFloat(Dialog.getChoice());
+tailcolor = Dialog.getChoice();
+tailorient = Dialog.getChoice();
+
+previewarrow = parseFloat (Dialog.getCheckbox());
+
+if (tailcolor=="Magenta"){
+r = 255; g= 0; b = 225;
+}
+if (tailcolor=="Cyan"){
+r=0; g=255; b=255;
+}
+if (tailcolor=="Yellow"){
+r=255; g=255; b=0;
+}
+if (tailcolor=="White") {
+r =255; g =255; b=255;
+}
+if (tailcolor=="Black"){
+r=0; g=0; b=0;
+}
+
+setColor(r, g, b);
+if (arrowconcav > (arrowlenght+1)) arrowconcav=(arrowlenght+1);
+if (tailwidth > arrowwidth) tailwidth = (arrowwidth-3);
+
+arrowline=1;
+
+if (tailorient == "North") orientangle=0;
+if (tailorient == "N-E") orientangle=(PI/4);arrowline=2;
+if (tailorient == "East") orientangle=(PI/2);
+if (tailorient == "S-E") orientangle=(PI*3/4);arrowline=2;
+if (tailorient == "South") orientangle=(PI);
+if (tailorient == "S-W") orientangle=(5*PI/4);arrowline=2;
+if (tailorient == "West") orientangle=(3*PI/2);
+if (tailorient == "N-W") orientangle=(-(PI/4));arrowline=2;
+
+xfleche=x; yfleche=y;
+
+if (previewarrow == true)  {
+   preview();
+   }
+for (a=0;a<4;a++){
+   xfleche = (x + (a*xinit) + (a*spacer)); i=0;
+   builtarrow ();
+   }
+}
+
+function preview () {
+    prev="Arrow preview";
+
+    newImage(prev,"RGB Black",200,300,1);
+    image=getImageID();
+    xfleche=100;yfleche=75;
+
+    setFont("Serif", 12);
+    builtarrow ();
+    selectImage(image);
+    setColor(255,255,255);
+
+    drawString("Arrow lenght: "+arrowlenght +  "\n Arrow width:  "+arrowwidth, 2,210);
+    drawString("Arrowhead Filling Level: "+arrowconcav,2,225);
+    drawString("Tail Lenght: "+taillenght+ " Tail Width: "+tailwidth,2,240);
+    drawString("Arrow Color: "+tailcolor,2,260);
+    drawString("Arrow Orientation: "+tailorient,2,275);
+    exit
+}
+
+function builtarrow () {
+    autoUpdate(false);
+    fleche1=newArray (3);
+    fleche2=newArray (3);
+
+    alpha3a=(PI/2);lineWidth=1;xi=0;
+    setLineWidth(arrowline);
+
+  // arrowhead drawing
+   moveTo(xfleche, yfleche);
+   x1=(-1*arrowwidth);y1=(arrowlenght); alpha1a=(atan2(y1,x1));  alpha1b=(alpha1a+orientangle);
+   getxy (x1,y1,alpha1b);
+   fleche1[0]=(xfleche+xprime);fleche2[0]=(yfleche+ yprime);
+   x2=(arrowwidth);y2=(arrowlenght);  alpha2a=(atan2(y2,x2));alpha2b=(alpha2a+orientangle);
+   getxy (x2,y2,alpha2b);
+   fleche1[2]=(xfleche+xprime);fleche2[2]=(yfleche+yprime);
+
+    for (i=2; i<arrowconcav; i++) {
+       getxy (xi,i,alpha3a);
+       getxy (xprime,yprime,(alpha3a+orientangle));
+       fleche1[1]=(xfleche + xprime);fleche2[1]=(yfleche + yprime);
+
+       drawLine(fleche1[0], fleche2[0], fleche1[1], fleche2[1]);
+       drawLine(fleche1[2],fleche2[2], fleche1[1], fleche2[1]);
+     }
+
+    // tail drawing
+    if (tailwidth != 0) {
+        getxy (0,arrowconcav,alpha3a);
+        getxy (xprime,yprime,(alpha3a+orientangle));
+        x3a=xprime;y3a=yprime;
+        getxy (0,(arrowconcav+taillenght),alpha3a);
+        getxy (xprime,yprime,(alpha3a+orientangle));
+        x3b=xprime;y3b=yprime;
+        lineWidth=tailwidth;
+        setLineWidth(tailwidth);
+        drawLine ((xfleche+x3a), (yfleche + y3a), (xfleche+x3b),(yfleche+y3b));
+    }
+    updateDisplay;
+
+}
+
+function getxy (xxx,yyy,beta) {
+    if (xxx==0) xxx=1;
+    if (yyy==0) yyy=1;
+    xprime=round( (cos(beta) *(xxx/(cos(atan2(yyy,xxx))))));
+    yprime=round( (sin(beta) *(xxx/(cos(atan2(yyy,xxx))))));
+}

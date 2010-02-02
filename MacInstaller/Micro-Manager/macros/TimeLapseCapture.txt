@@ -1,0 +1,21 @@
+interval = 10; // seconds
+frames = 5;
+nextTime = getTime() + interval*1000;
+for (i=0; i<frames; i++) {
+    run("QT Capture", "grab");
+    wait(5000);
+    selectWindow("Captured Video");
+    if (i==0)
+        run("Rename...", "title=Stack");
+    else {
+        run("Select All");
+        run("Copy");
+        run("Close");
+        selectWindow("Stack");
+        run("Add Slice");
+        run("Paste");
+     }
+    while (getTime()<nextTime)
+        wait(1);
+    nextime += interval*1000;
+}

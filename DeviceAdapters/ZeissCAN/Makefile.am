@@ -1,9 +1,9 @@
 AM_CXXFLAGS = -fpermissive
-lib_LTLIBRARIES = ZeissCAN.la
-ZeissCAN_la_SOURCES = ZeissCAN.cpp ZeissCAN.h
+lib_LTLIBRARIES = libmmgr_dal_ZeissCAN.la
+libmmgr_dal_ZeissCAN_la_SOURCES = ZeissCAN.cpp ZeissCAN.h
 ## adding the libtool library gives problems on OS X 10.4, adding the static lib works
-ZeissCAN_la_LIBADD = ../../MMDevice/.libs/libMMDevice.a 
-ZeissCAN_la_LDFLAGS = -module
+libmmgr_dal_ZeissCAN_la_LIBADD = ../../MMDevice/.libs/libMMDevice.a 
+libmmgr_dal_ZeissCAN_la_LDFLAGS = -module
 
 install:
-	cp .libs/ZeissCAN.so $(DEVICEADAPTERPATH)/$(MMPREFIX)ZeissCAN$(MMSUFFIX)
+	cp .libs/libmmgr_dal_ZeissCAN.so $(DESTDIR)$(DEVICEADAPTERPATH)/libmmgr_dal_ZeissCAN$(MMSUFFIX)

@@ -69,6 +69,7 @@ public:
    static std::vector<long> GetAvailableDeviceTypes(const char* moduleName) throw (CMMError);
 
    // persistence
+   static void SetPersistentData(HDEVMODULE hLib, const char* moduleName);
    std::string Serialize();
    void Restore(const std::string& data);
   
@@ -81,8 +82,13 @@ private:
 
    typedef std::map<std::string, HDEVMODULE> CModuleMap;
    typedef std::map<std::string, MM::Device*> CDeviceMap;
-   //CModuleMap modules_;
+   typedef std::vector<MM::Device*> DeviceArray;
+
+   typedef std::vector<std::string>  CPersistentData;
+   typedef std::map<std::string, CPersistentData> CPersistentDataMap;
+   static CPersistentDataMap persistentDataMap;
    CDeviceMap devices_;
+   DeviceArray devArray_;
 };
 
 #endif //_PLUGIN_MANAGER_H_

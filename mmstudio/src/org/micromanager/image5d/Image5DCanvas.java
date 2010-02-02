@@ -1,9 +1,6 @@
 package org.micromanager.image5d;
 
-import ij.gui.*;
-/*
- * Created on 29.05.2005
- */
+import ij.gui.ImageCanvas;
 
 /** Canvas compatible with Image5DLayout.
  * @author Joachim Walter

@@ -38,6 +38,7 @@
 #include "LeicaDMI.h"
 #include "LeicaDMICodes.h"
 #include "../../MMDevice/ModuleInterface.h"
+#include <cstdio>
 #include <string>
 #include <math.h>
 #include <sstream>
@@ -58,11 +59,8 @@ LeicaScopeInterface::LeicaScopeInterface() :
 LeicaScopeInterface::~LeicaScopeInterface()
 {
    if (monitoringThread_ != 0) {
-   printf ("Stopping Thread\n");
       monitoringThread_->Stop();
-   printf ("Waiting Thread\n");
       monitoringThread_->wait();
-   printf ("Deleting Thread\n");
       delete (monitoringThread_);
       monitoringThread_ = 0;
    }
@@ -93,53 +91,84 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
    core.LogMessage (&device, os.str().c_str(), false);
    os.str("");
 
-   //  suppress all events untill we are done configuring the system
-   command << g_Master << "003" << " 0 0 0";
-   int ret = GetAnswer(device, core, command.str().c_str(), answer);
-   if (ret != DEVICE_OK)
-      return ret;
-   command.str("");
+   // empty the Rx serial buffer before sending commands
+   ClearRcvBuf();
+   ClearPort(device, core);
 
-   command << g_Lamp << "003" << " 0 0 0 0 0 0";
+   // Get info about stand, firmware and available devices and store in the model
+   int ret = GetStandInfo(device, core);
+   if (ret != DEVICE_OK) 
+      return ret;
+
+   //  suppress all events until we are done configuring the system
+   command << g_Master << "003" << " 0 0 0";
    ret = GetAnswer(device, core, command.str().c_str(), answer);
    if (ret != DEVICE_OK)
       return ret;
    command.str("");
+
+   if (scopeModel_->IsDeviceAvailable(g_Lamp)) {
+      command << g_Lamp << "003" << " 0 0 0 0 0 0";
+      ret = GetAnswer(device, core, command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+      command.str("");
+   }
 
    // Suppress event reporting for IL Turret
-   command << g_IL_Turret << "003 0";
-   ret = GetAnswer(device, core, command.str().c_str(), answer);
-   if (ret != DEVICE_OK)
-      return ret;
-   command.str("");
+   if (scopeModel_->IsDeviceAvailable(g_IL_Turret)) {
+      command << g_IL_Turret << "003 0";
+      ret = GetAnswer(device, core, command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+      command.str("");
+   }
+
+   // Suppress event reporting for Condensor
+   if (scopeModel_->IsDeviceAvailable(g_Condensor)) {
+      command << g_Condensor << "003 0";
+      ret = GetAnswer(device, core, command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+      command.str("");
+   }
 
    // Suppress event reporting for Objective Turret
-   command << g_Revolver << "003 0 0 0 0 0 0 0 0 0";
-   ret = GetAnswer(device, core, command.str().c_str(), answer);
-   if (ret != DEVICE_OK)
-      return ret;
-   command.str("");
+   if (scopeModel_->IsDeviceAvailable(g_Revolver)) {
+      command << g_Revolver << "003 0 0 0 0 0 0 0 0 0";
+      ret = GetAnswer(device, core, command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+      command.str("");
+   }
+
 
    // Suppress event reporting for Z Drive
-   command << g_ZDrive << "003 0 0 0 0 0 0 0 0 0";
-   ret = GetAnswer(device, core, command.str().c_str(), answer);
-   if (ret != DEVICE_OK)
-      return ret;
-   command.str("");
+   if (scopeModel_->IsDeviceAvailable(g_ZDrive)) {
+      command << g_ZDrive << "003 0 0 0 0 0 0 0 0 0";
+      ret = GetAnswer(device, core, command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+      command.str("");
+   }
 
    // Suppress event reporting for X Drive
-   command << g_XDrive << "003 0 0 0 0 0 0 0";
-   ret = GetAnswer(device, core, command.str().c_str(), answer);
-   if (ret != DEVICE_OK)
-      return ret;
-   command.str("");
+   if (scopeModel_->IsDeviceAvailable(g_XDrive)) {
+      command << g_XDrive << "003 0 0 0 0 0 0 0";
+      ret = GetAnswer(device, core, command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+      command.str("");
+   }
 
    // Suppress event reporting for Y Drive
-   command << g_YDrive << "003 0 0 0 0 0 0";
-   ret = GetAnswer(device, core, command.str().c_str(), answer);
-   if (ret != DEVICE_OK)
-      return ret;
-   command.str("");
+   if (scopeModel_->IsDeviceAvailable(g_YDrive)) {
+      command << g_YDrive << "003 0 0 0 0 0 0";
+      ret = GetAnswer(device, core, command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+      command.str("");
+   }
 
    // Suppress event reporting for Diaphragms
    int diaphragm[4] = {g_Field_Diaphragm_TL, g_Aperture_Diaphragm_TL, g_Field_Diaphragm_IL, g_Aperture_Diaphragm_IL};
@@ -152,22 +181,33 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
    }
 
    // Suppress event reporting for Mag Changer
-   command << g_Mag_Changer_Mot << "003 0";
-   ret = GetAnswer(device, core, command.str().c_str(), answer);
-   if (ret != DEVICE_OK)
-      return ret;
-   command.str("");
+   if (scopeModel_->IsDeviceAvailable(g_Mag_Changer_Mot)) {
+      command << g_Mag_Changer_Mot << "003 0";
+      ret = GetAnswer(device, core, command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+      command.str("");
+   }
+
+   // Suppress event reporting for DIC Turret
+   if (scopeModel_->IsDeviceAvailable(g_DIC_Turret)) {
+      command << g_DIC_Turret << "003 0";
+      ret = GetAnswer(device, core, command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+      command.str("");
+   }
+
+   // Suppress event reporting for TL Polarizer
+   if (scopeModel_->IsDeviceAvailable(g_TL_Polarizer)) {
+      command << g_TL_Polarizer << "003 0";
+      ret = GetAnswer(device, core, command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+      command.str("");
+   }
 
    CDeviceUtils::SleepMs(100);
-
-   // empty the Rx serial buffer before sending commands
-   ClearRcvBuf();
-   ClearPort(device, core);
-
-   // Get info about stand, firmware and available devices and store in the model
-   ret = GetStandInfo(device, core);
-   if (ret != DEVICE_OK) 
-      return ret;
 
    if (scopeModel_->IsDeviceAvailable(g_Lamp)) {
       scopeModel_->TLShutter_.SetMaxPosition(1);
@@ -178,6 +218,12 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
 
    if (scopeModel_->IsDeviceAvailable(g_IL_Turret)) {
       ret = GetILTurretInfo(device, core);
+      if (ret != DEVICE_OK)
+         return ret;
+   }
+
+   if (scopeModel_->IsDeviceAvailable(g_Condensor)) {
+      ret = GetCondensorInfo(device, core);
       if (ret != DEVICE_OK)
          return ret;
    }
@@ -236,14 +282,28 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
          return ret;
    }
 
+   if (scopeModel_->IsDeviceAvailable(g_TL_Polarizer)) {
+      ret = GetTLPolarizerInfo(device, core);
+      if (ret != DEVICE_OK)
+         return ret;
+   }
+
+   if (scopeModel_->IsDeviceAvailable(g_DIC_Turret)) {
+      ret = GetDICTurretInfo(device, core);
+      if (ret != DEVICE_OK)
+         return ret;
+   }
+
    // Start all events at this point
 
    // Start event reporting for method changes
-   command << g_Master << "003" << " 1 0 0";
-   ret = GetAnswer(device, core, command.str().c_str(), answer);
-   if (ret != DEVICE_OK)
-      return ret;
-   command.str("");
+   if (scopeModel_->UsesMethods()) {
+      command << g_Master << "003" << " 1 0 0";
+         ret = GetAnswer(device, core, command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+      command.str("");
+   }
 
    // Start event reporting for TL Shutter:
    if (scopeModel_->IsDeviceAvailable(g_Lamp)) {
@@ -257,6 +317,15 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
    // Start event reporting for IL Turret
    if (scopeModel_->IsDeviceAvailable(g_IL_Turret)) {
       command << g_IL_Turret << "003 1";
+      ret = GetAnswer(device, core, command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+      command.str("");
+   }
+
+   // Start event reporting for Condensor
+   if (scopeModel_->IsDeviceAvailable(g_Condensor)) {
+      command << g_Condensor << "003 1";
       ret = GetAnswer(device, core, command.str().c_str(), answer);
       if (ret != DEVICE_OK)
          return ret;
@@ -319,6 +388,27 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
       command.str("");
    }
 
+   // Start event reporting for Polarizer
+   if (scopeModel_->IsDeviceAvailable(g_TL_Polarizer)) {
+      command << g_TL_Polarizer << "003 1";
+      ret = GetAnswer(device, core, command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+      command.str("");
+   }
+
+   // Start event reporting for DIC prism Turret
+   if (scopeModel_->IsDeviceAvailable(g_DIC_Turret)) {
+      if (scopeModel_->dicTurret_.isEncoded())
+         command << g_DIC_Turret << "003 1";
+      else
+         command << g_DIC_Turret << "003 1 1";
+      ret = GetAnswer(device, core, command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+      command.str("");
+   }
+
    // Start monitoring of all messages coming from the microscope
    monitoringThread_ = new LeicaMonitoringThread(device, core, port_, scopeModel_);
    monitoringThread_->Start();
@@ -341,6 +431,14 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
 
    if (scopeModel_->IsDeviceAvailable(g_IL_Turret)) {
       command << g_IL_Turret << "023";
+      ret = core.SetSerialCommand(&device, port_.c_str(), command.str().c_str(), "\r");
+      if (ret != DEVICE_OK)
+         return ret;
+      command.str("");
+   }
+
+   if (scopeModel_->IsDeviceAvailable(g_Condensor)) {
+      command << g_Condensor << "023";
       ret = core.SetSerialCommand(&device, port_.c_str(), command.str().c_str(), "\r");
       if (ret != DEVICE_OK)
          return ret;
@@ -397,6 +495,21 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
       command.str("");
    }
 
+   if (scopeModel_->IsDeviceAvailable(g_DIC_Turret)) {
+      command << g_DIC_Turret << "023";
+      ret = core.SetSerialCommand(&device, port_.c_str(), command.str().c_str(), "\r");
+      if (ret != DEVICE_OK)
+         return ret;
+      command.str("");
+      if (scopeModel_->dicTurret_.isMotorized()) {
+         command << g_DIC_Turret << "048";
+         ret = core.SetSerialCommand(&device, port_.c_str(), command.str().c_str(), "\r");
+         if (ret != DEVICE_OK)
+            return ret;
+         command.str("");
+      }
+   }
+
    initialized_ = true;
    return DEVICE_OK;
 }
@@ -427,7 +540,7 @@ int LeicaScopeInterface::GetAnswer(MM::Device& device, MM::Core& core, const cha
  */
 int LeicaScopeInterface::GetStandInfo(MM::Device& device, MM::Core& core)
 {
-   // returns the stand designation and list of IDs of all addressabel IDs
+   // returns the stand designation and list of IDs of all addressable IDs
    std::ostringstream os;
    os << g_Master << "001";
    int ret = core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
@@ -447,6 +560,15 @@ int LeicaScopeInterface::GetStandInfo(MM::Device& device, MM::Core& core)
    
    ss >> stand;
    scopeModel_->SetStandType(stand);
+   scopeModel_->SetStandFamily(g_DMI456);
+   standFamily_ = g_DMI456;
+   if (stand == "DMLA100" || stand == "DMRXA2" || stand == "DMLALED" ||
+         stand == "DMRA2" || stand == "DMLFSA" || stand == "DMIRE2") {
+      core.LogMessage(&device, "Stand Family CTRMIC detected", false);
+      scopeModel_->SetStandFamily(g_CTRMIC);
+      standFamily_ = g_CTRMIC;
+   }
+
    int devId;
    while (ss >> devId) {
       scopeModel_->SetDeviceAvailable(devId);
@@ -487,12 +609,15 @@ int LeicaScopeInterface::GetStandInfo(MM::Device& device, MM::Core& core)
    std::stringstream sm(response);
    std::string methods;
    sm >> answer;
-   if (answer.compare(os3.str()) != 0)
-      return ERR_SCOPE_NOT_ACTIVE;
-   sm >> methods;
-   for (int i=0; i< 16; i++) {
-      if (methods[i] == '1')
-         scopeModel_->SetMethodAvailable(15 - i);
+   if (answer.compare(os3.str()) != 0) {
+      scopeModel_->SetUsesMethods(false);
+   } else {
+      scopeModel_->SetUsesMethods(true);
+      sm >> methods;
+      for (int i=0; i< 16; i++) {
+         if (methods[i] == '1')
+            scopeModel_->SetMethodAvailable(15 - i);
+      }
    }
    
 
@@ -538,6 +663,7 @@ int LeicaScopeInterface::GetILTurretInfo(MM::Device& device, MM::Core& core)
 
    // Get name of cube and aperture protection type
    for (int i=minPos; i<=maxPos; i++) {
+      // Note that the CTRMIC does not specify the name of the cube, but the name in a table with 40 positions (0-39).  Rewrite this for CTR_MIC if needed
       command << g_IL_Turret << "027 " << i;
       ret = GetAnswer(device, core, command.str().c_str(), answer);
       if (ret != DEVICE_OK)
@@ -550,8 +676,6 @@ int LeicaScopeInterface::GetILTurretInfo(MM::Device& device, MM::Core& core)
          tu >> j;
          if (i==j) {
             tu >> token;
-            std::stringstream name;
-            name << j << "-" << token.substr(0,token.size()-1);
             scopeModel_->ILTurret_.cube_[i].name = token.substr(0,token.size()-1);
 
             if (token.substr(token.size()-1,1) == "1")
@@ -564,31 +688,88 @@ int LeicaScopeInterface::GetILTurretInfo(MM::Device& device, MM::Core& core)
    }
 
    // Get methods allowed with each cube
-   for (int i=minPos; i<=maxPos; i++) {
-      command << g_IL_Turret << "030 " << i;
-      ret = GetAnswer(device, core, command.str().c_str(), answer);
-      if (ret != DEVICE_OK)
-         return ret;
-      std::stringstream tw(answer);
-      tw >> token;
-      if (token == ("78030")) {
-         int j;
-         tw >> j;
-         if (i==j) {
-            tw >> token;
-            for (int k=0; k< 16; k++) {
-               if (token[k] == '1') {
-                  scopeModel_->ILTurret_.cube_[i].cubeMethods_[15 - k] = true;
+   if (scopeModel_->UsesMethods()) {
+      for (int i=minPos; i<=maxPos; i++) {
+         command << g_IL_Turret << "030 " << i;
+         ret = GetAnswer(device, core, command.str().c_str(), answer);
+         if (ret != DEVICE_OK)
+            return ret;
+         std::stringstream tw(answer);
+         tw >> token;
+         if (token == ("78030")) {
+            int j;
+            tw >> j;
+            if (i==j) {
+               tw >> token;
+               for (int k=0; k< 16; k++) {
+                  if (token[k] == '1') {
+                     scopeModel_->ILTurret_.cube_[i].cubeMethods_[15 - k] = true;
+                  }
                }
             }
          }
+         command.str("");
+      }
+   }
+
+   return DEVICE_OK;
+}
+
+int LeicaScopeInterface::GetCondensorInfo(MM::Device& device, MM::Core& core)
+{
+   std::ostringstream command;
+   std::string answer, token;
+
+   // Get minimum position
+   command << g_Condensor << "029";
+   int ret = GetAnswer(device, core, command.str().c_str(), answer);
+   if (ret != DEVICE_OK)
+      return ret;
+   command.str("");
+
+   std::stringstream ts(answer);
+   int minPos;
+   ts >> minPos;
+   ts >> minPos;
+   if ( 0 < minPos && minPos < 10)
+   scopeModel_->Condensor_.SetMinPosition(minPos);
+   ts.clear();
+   ts.seekg(0,std::ios::beg);
+   command.str("");
+
+   // Get maximum position
+   command << g_Condensor << "030";
+   ret = GetAnswer(device, core, command.str().c_str(), answer);
+   if (ret != DEVICE_OK)
+      return ret;
+   command.str("");
+
+   int maxPos;
+   std::stringstream tt(answer);
+   tt >> maxPos;
+   tt >> maxPos;
+   if ( 0 < maxPos && maxPos < 10)
+      scopeModel_->Condensor_.SetMaxPosition(maxPos);
+   tt.str("");
+
+   // Get name of Filters
+   for (int i=minPos; i<=maxPos; i++) {
+      command << g_Condensor << "027 " << i;
+      ret = GetAnswer(device, core, command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+      std::stringstream tu(answer);
+      tu << answer;
+      tu >> token;
+      if (token == "82027") {
+         tu >> token;
+         scopeModel_->Condensor_.filter_[i] = token;
       }
       command.str("");
    }
 
    return DEVICE_OK;
 }
-
 int LeicaScopeInterface::GetRevolverInfo(MM::Device& device, MM::Core& core)
 {
    std::ostringstream command;
@@ -697,27 +878,29 @@ int LeicaScopeInterface::GetRevolverInfo(MM::Device& device, MM::Core& core)
    }
 
    // Get methods allowed with each objective
-   for (int i=minPos; i<=maxPos; i++) {
-      command << g_Revolver << "033 " << i << " 4";
-      ret = GetAnswer(device, core, command.str().c_str(), answer);
-      if (ret != DEVICE_OK)
-         return ret;
-      std::stringstream tv(answer);
-      tv >> token;
-      if (token == "76033") {
-         int j;
-         tv >> j;
-         if (i==j) {
-            tv >> token;
-            tv >> token;
-            for (int k=0; k< 16; k++) {
-               if (token[k] == '1') {
-                  scopeModel_->ObjectiveTurret_.objective_[i].methods_[15 - k] = true;
+   if (scopeModel_->UsesMethods()) {
+      for (int i=minPos; i<=maxPos; i++) {
+         command << g_Revolver << "033 " << i << " 4";
+         ret = GetAnswer(device, core, command.str().c_str(), answer);
+         if (ret != DEVICE_OK)
+            return ret;
+         std::stringstream tv(answer);
+         tv >> token;
+         if (token == "76033") {
+            int j;
+            tv >> j;
+            if (i==j) {
+               tv >> token;
+               tv >> token;
+               for (int k=0; k< 16; k++) {
+                  if (token[k] == '1') {
+                     scopeModel_->ObjectiveTurret_.objective_[i].methods_[15 - k] = true;
+                  }
                }
             }
          }
+         command.str("");
       }
-      command.str("");
    }
 
    return DEVICE_OK;
@@ -934,6 +1117,144 @@ int LeicaScopeInterface::GetDiaphragmInfo(MM::Device& device, MM::Core& core, Le
    return DEVICE_OK;
 }
 
+int LeicaScopeInterface::GetTLPolarizerInfo(MM::Device& device, MM::Core& core)
+{
+   std::ostringstream command;
+   std::string answer, token;
+
+   // Get minimum position
+   command << g_TL_Polarizer << "029";
+   int ret = GetAnswer(device, core, command.str().c_str(), answer);
+   if (ret != DEVICE_OK)
+      return ret;
+   command.str("");
+
+   std::stringstream ts(answer);
+   int minPos;
+   ts >> minPos;
+   ts >> minPos;
+   if ( 0 <= minPos)
+      scopeModel_->tlPolarizer_.SetMinPosition(minPos);
+   ts.clear();
+   ts.str("");
+
+   // Get maximum position
+   command << g_TL_Polarizer << "030";
+   ret = GetAnswer(device, core, command.str().c_str(), answer);
+   if (ret != DEVICE_OK)
+      return ret;
+   command.str("");
+
+   ts << answer;
+   int maxPos;
+   ts >> maxPos;
+   ts >> maxPos;
+   if (0 <= maxPos)
+      scopeModel_->tlPolarizer_.SetMinPosition(maxPos);
+
+   return DEVICE_OK;
+}
+
+int LeicaScopeInterface::GetDICTurretInfo(MM::Device& device, MM::Core& core)
+{
+   std::ostringstream command;
+   std::string answer, token;
+
+   // Check if this a motorized or encoded turret
+   command << g_DIC_Turret << "001";
+   int ret = GetAnswer(device, core, command.str().c_str(), answer);
+   if (ret != DEVICE_OK)
+      return ret;
+   command.str("");
+   std::stringstream ts(answer);
+   std::string tmp;
+   ts >> tmp;
+   ts >> tmp;
+   if (tmp == "DIC-TURRET")
+      scopeModel_->dicTurret_.SetMotorized(true);
+   else
+      scopeModel_->dicTurret_.SetMotorized(true);
+   ts.clear();
+   ts.str("");
+
+   // Get minimum position
+   command << g_DIC_Turret << "029";
+   ret = GetAnswer(device, core, command.str().c_str(), answer);
+   if (ret != DEVICE_OK)
+      return ret;
+   command.str("");
+
+   ts << answer;
+   int minPos;
+   ts >> minPos;
+   ts >> minPos;
+   if ( 0 <= minPos)
+      scopeModel_->dicTurret_.SetMinPosition(minPos);
+   ts.clear();
+   ts.str("");
+
+   // Get maximum position
+   command << g_DIC_Turret << "030";
+   ret = GetAnswer(device, core, command.str().c_str(), answer);
+   if (ret != DEVICE_OK)
+      return ret;
+   command.str("");
+
+   ts << answer;
+   int maxPos;
+   ts >> maxPos;
+   ts >> maxPos;
+   if (0 <= maxPos)
+      scopeModel_->dicTurret_.SetMaxPosition(maxPos);
+
+   // Get DIC Turret Names
+   for (int i=minPos; i<=maxPos; i++) {
+      command << g_DIC_Turret << "027 " << i;
+      ret = GetAnswer(device, core, command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+      std::stringstream tw(answer);
+      tw >> token;
+      if (token == "85027") {
+         std::string prismName;
+         tw >> prismName;
+         scopeModel_->dicTurret_.prismName_[i] = prismName;
+      }
+      command.str("");
+   }
+
+   // Get minimum fine position
+   command << g_DIC_Turret << "045";
+   ret = GetAnswer(device, core, command.str().c_str(), answer);
+   if (ret != DEVICE_OK)
+      return ret;
+   command.str("");
+
+   ts << answer;
+   int minFinePos;
+   ts >> minFinePos;
+   ts >> minFinePos;
+   scopeModel_->dicTurret_.SetMinFinePosition(-5000);
+   ts.clear();
+   ts.str("");
+
+   // Get maximum fine position
+   command << g_DIC_Turret << "046";
+   ret = GetAnswer(device, core, command.str().c_str(), answer);
+   if (ret != DEVICE_OK)
+      return ret;
+   command.str("");
+
+   ts << answer;
+   int maxFinePos;
+   ts >> maxFinePos;
+   ts >> maxFinePos;
+   scopeModel_->dicTurret_.SetMaxFinePosition(maxFinePos);
+   ts.clear();
+
+   return DEVICE_OK;
+}
+
 int LeicaScopeInterface::GetMagChangerInfo(MM::Device& device, MM::Core& core)
 {
    std::ostringstream command;
@@ -1058,7 +1379,12 @@ int LeicaScopeInterface::SetILShutterPosition(MM::Device& device, MM::Core& core
 {
    scopeModel_->ILShutter_.SetBusy(true);
    std::ostringstream os;
-   os << g_Lamp << "032" << " 1" << " " << position;
+   if (standFamily_ == g_DMI456) {
+      os << g_Lamp << "032" << " 1" << " " << position;
+      return core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+   }
+   // in case of CTRMIC
+   os << g_IL_Turret << "025 " << position;
    return core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
 }
 
@@ -1073,6 +1399,19 @@ int LeicaScopeInterface::SetILTurretPosition(MM::Device& device, MM::Core& core,
    return core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
 }
 
+/**
+ * Sets state of Condensor
+ */
+int LeicaScopeInterface::SetCondensorPosition(MM::Device& device, MM::Core& core, int position)
+{
+   scopeModel_->Condensor_.SetBusy(true);
+   std::ostringstream os;
+   os << g_Condensor << "022" << " " << position;
+   return core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+}
+
+/**
+ * Sets state of objective Turret
 /**
  * Sets state of objective Turret
  */
@@ -1133,6 +1472,10 @@ int LeicaScopeInterface::StopDrive(MM::Device& device, MM::Core& core, LeicaDriv
  */
 int LeicaScopeInterface::SetDiaphragmPosition(MM::Device& device, MM::Core& core, LeicaDeviceModel* diaphragm, int deviceID, int position)
 {
+   int pos;
+   diaphragm->GetPosition(pos);
+   if (pos == position)
+      return DEVICE_OK;
    diaphragm->SetBusy(true);
    std::ostringstream os;
    os << deviceID << "022 " << position;
@@ -1147,6 +1490,39 @@ int LeicaScopeInterface::SetMagChangerPosition(MM::Device& device, MM::Core& cor
    scopeModel_->magChanger_.SetBusy(true);
    std::ostringstream os;
    os << g_Mag_Changer_Mot << "022" << " " << position;
+   return core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+}
+
+/**
+ * Sets Position of TL Polarizer
+ */
+int LeicaScopeInterface::SetTLPolarizerPosition(MM::Device& device, MM::Core& core, int position)
+{
+   scopeModel_->tlPolarizer_.SetBusy(true);
+   std::ostringstream os;
+   os << g_TL_Polarizer << "022" << " " << position;
+   return core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+}
+
+/**
+ * Sets Position of DIC Prism Turret
+ */
+int LeicaScopeInterface::SetDICPrismTurretPosition(MM::Device& device, MM::Core& core, int position)
+{
+   scopeModel_->dicTurret_.SetBusy(true);
+   std::ostringstream os;
+   os << g_DIC_Turret << "022" << " " << position;
+   return core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+}
+
+/**
+ * Sets fine Position of current DIC Prism
+ */
+int LeicaScopeInterface::SetDICPrismFinePosition(MM::Device& device, MM::Core& core, int position)
+{
+   scopeModel_->dicTurret_.SetBusy(true);
+   std::ostringstream os;
+   os << g_DIC_Turret << "040" << " " << position;
    return core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
 }
 
@@ -1204,7 +1580,73 @@ int LeicaScopeInterface::ClearPort(MM::Device& device, MM::Core& core)
    return DEVICE_OK;
 } 
 
+/*
+ * Sets and gets the incident light states
+ */
+int LeicaScopeInterface::SetTransmittedLightState(MM::Device& device, MM::Core& core, int position)
+{	if(position == 1 || position == 0)
+	{
+		int pos = 0;
+		// If you want the light on, get the values 
+		// from the scope model, else just enter 0
+		if(pos == 1)
+		{
+			scopeModel_->TransmittedLight_.GetPosition(pos);
+		}
+		int ret = SetTransmittedLightShutterPosition(device,core,pos);
+		if(ret != DEVICE_OK)
+			return ret;
+		return DEVICE_OK;		
+	}
+	return DEVICE_UNKNOWN_POSITION;
+}
 
+int LeicaScopeInterface::GetTransmittedLightState(MM::Device& device, MM::Core& core, int & position)
+{
+	int value = -1;
+	int ret = GetTransmittedLightShutterPosition(device,core,value);
+	if(ret == DEVICE_OK)
+	{
+		if(value == -1)
+		{
+			return DEVICE_ERR;
+		}
+		else
+		if(value == 0)
+		{
+			position = 0;
+		}
+		else
+		{
+			position = 1;
+		}
+	}
+	else 
+	{
+		return ret;
+	}
+	return DEVICE_OK;
+}
+
+int LeicaScopeInterface::SetTransmittedLightShutterPosition(MM::Device &device, MM::Core &core, int position)
+{
+	if(position > 255 || position < 0)
+	{
+		return DEVICE_UNKNOWN_POSITION;
+	}
+	std::stringstream os;
+	os<<g_Lamp<<"020"<<" "<<position;
+	int ret = core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+	if(ret != DEVICE_OK)
+		return ret;	
+	return DEVICE_OK;
+}
+
+int LeicaScopeInterface::GetTransmittedLightShutterPosition(MM::Device &device, MM::Core &core, int & position)
+{
+	position = scopeModel_->TransmittedLight_.GetPosition(position);
+	return DEVICE_OK;
+}
 /*
  * Thread that continuously monitors messages from the Leica scope and inserts them into a model of the microscope
  */
@@ -1216,11 +1658,13 @@ LeicaMonitoringThread::LeicaMonitoringThread(MM::Device& device, MM::Core& core,
    intervalUs_(10000), // check every 10 ms for new messages, 
    scopeModel_(scopeModel)
 {
+   scopeModel_->GetStandFamily(standFamily_);
+   core_.LogMessage (&device_, "Creating MonitoringThread", true);
 }
 
 LeicaMonitoringThread::~LeicaMonitoringThread()
 {
-   printf("Destructing monitoringThread\n");
+   core_.LogMessage (&device_, "Destructing MonitoringThread", true);
 }
 
 void LeicaMonitoringThread::interpretMessage(unsigned char* message)
@@ -1230,7 +1674,7 @@ void LeicaMonitoringThread::interpretMessage(unsigned char* message)
 
 int LeicaMonitoringThread::svc() 
 {
-   printf ("Starting MonitoringThread\n");
+   core_.LogMessage (&device_, "Starting MonitoringThread", true);
 
    unsigned long dataLength = 0;
    unsigned long charsRead = 0;
@@ -1243,9 +1687,15 @@ int LeicaMonitoringThread::svc()
    {
       do { 
          dataLength = LeicaScopeInterface::RCV_BUF_LENGTH - strlen(rcvBuf);
-		 int bufLen = strlen(rcvBuf);
+         int bufLen = strlen(rcvBuf);
          int ret = core_.ReadFromSerial(&device_, port_.c_str(), (unsigned char*) (rcvBuf + bufLen), dataLength, charsRead);
-		 rcvBuf[charsRead + bufLen] = 0;
+
+         // Remove after debuggging with Stamatis!
+         std::ostringstream tmpOut;
+         tmpOut << "MonitoringThread, read " << charsRead << " from serial port";
+         core_.LogMessage(&device_, tmpOut.str().c_str(), true);
+
+         rcvBuf[charsRead + bufLen] = 0;
          memset(message, 0, strlen(message));
          if (ret == DEVICE_OK && (strlen(rcvBuf) > 4) && !stop_) {
             const char* eoln = strstr(rcvBuf, "\r");
@@ -1315,6 +1765,28 @@ int LeicaMonitoringThread::svc()
                          os >> pos;
                          scopeModel_->ILTurret_.SetPosition(pos);
                          scopeModel_->ILTurret_.SetBusy(false);
+                         if (standFamily_ == g_CTRMIC) {
+                            // TODO: cleanup after user feedback
+                            std::string tmp;
+                            os >> tmp;
+                            os >> pos;
+                            if (tmp == "--") {
+                               scopeModel_->TLShutter_.SetPosition(pos);
+                               scopeModel_->TLShutter_.SetBusy(false);
+                            }
+                            std::ostringstream pp;
+                            pp << "ILTurret reports, tmp: " << tmp << " pos: " << pos;
+                            core_.LogMessage(&device_, pp.str().c_str(), true);
+                         }
+                         break;
+                         // dark flap in CTR_MIC
+                      case (25) :
+                         scopeModel_->ILShutter_.SetBusy(false);
+                      case (26) :
+                         int posILS;
+                         os >> posILS;
+                         scopeModel_->ILShutter_.SetPosition(posILS);
+                         scopeModel_->ILShutter_.SetBusy(false);
                          break;
                       case (122) :  // No cube in this position, or not allowed with this method
                          // TODO: Set an error?
@@ -1325,6 +1797,16 @@ int LeicaMonitoringThread::svc()
                          scopeModel_->ILTurret_.SetBusy(false);
                          break;
                        default : // TODO: error handling
+                         break;
+                   }
+                   break;
+                case (g_Condensor) :
+                   switch (commandId) {
+                      case (23) :
+                         int pos;
+                         os >> pos;
+                         scopeModel_->Condensor_.SetPosition(pos);
+                         scopeModel_->Condensor_.SetBusy(false);
                          break;
                    }
                    break;
@@ -1623,10 +2105,67 @@ int LeicaMonitoringThread::svc()
                         os >> pos;
                         scopeModel_->magChanger_.SetPosition(pos);
                         scopeModel_->magChanger_.SetBusy(false);
-                        printf("Set Mag Changer Busy to false\n");
-
                         break;
                      }
+                     break;
+                  }
+                  break;
+               case (g_TL_Polarizer) :
+                  switch (commandId) {
+                     case (4) :
+                     {
+                        int status;
+                        os >> status;
+                        if (status == 1) {
+                           scopeModel_->tlPolarizer_.SetBusy(false);
+                        }
+                        break;
+                     }
+                     case (23) : // Absolute position
+                     {
+                        int pos;
+                        os >> pos;
+                        scopeModel_->tlPolarizer_.SetPosition(pos);
+                        scopeModel_->tlPolarizer_.SetBusy(false);
+                        break;
+                     }
+                     case (28) : // Absolute position
+                     {
+                        int pos;
+                        os >> pos;
+                        scopeModel_->tlPolarizer_.SetPosition(pos);
+                        scopeModel_->tlPolarizer_.SetBusy(false);
+                        break;
+                     }
+                     break;
+                  }
+                  break;
+               case (g_DIC_Turret) :
+                  switch (commandId) {
+                     case (23) : // Absolute position
+                     {
+                        int pos;
+                        os >> pos;
+                        scopeModel_->dicTurret_.SetPosition(pos);
+                        scopeModel_->dicTurret_.SetBusy(false);
+                        break;
+                     }
+                     case (41) : // Fine position of current DIC prism in turret
+                     {
+                        int pos;
+                        os >> pos;
+                        scopeModel_->dicTurret_.SetFinePosition(pos);
+                        scopeModel_->dicTurret_.SetBusy(false);
+                        break;
+                     }
+					 case (77) : // Transmission Lamp State, put other lamp stuff here too
+					 {
+						 int pos;
+						 os>>pos;
+						 scopeModel_->TransmittedLight_.SetPosition(pos);
+						 scopeModel_->TransmittedLight_.SetBusy(false);
+						 break;
+					 }
                      break;
                   }
               }

@@ -1,0 +1,34 @@
+// Use these three macros to measure the straight line length of three objects
+// in an image.  The results are wriiten to the "Log" window as four columns: 
+//  filename, length1, length2, length3.
+
+var length1=-1, length2=-1, length3=-1;
+
+macro "Measure Length 1 [f9]" {
+    requires("1.30h");
+    length1 = getLength(1);
+ }
+
+macro "Measure Length 2 [f10]" {
+    length2 = getLength(2);
+ }
+
+macro "Measure Length 3 [f11]" {
+    if (length1==-1)
+        exit("Length1 is missing");
+    if (length2==-1)
+        exit("Length2 is missing");
+    length3 = getLength(3);
+    print(getTitle()+" \t"+length1+" \t"+length2+" \t"+length3);
+    length1=-1; length2=-1; length3=-1;
+}
+
+function getLength(n) {
+    getLine(x1, y1, x2, y2, width);
+    getVoxelSize(width, height, depth, unit);
+    length = sqrt((x2-x1)*(x2-x1)*width*width + (y2-y1)*(y2-y1)*height*height);
+    if (x1==-1)
+        exit("Stright line selection required");
+    showStatus("Length"+n+" = "+length+" "+unit);
+    return length;
+}

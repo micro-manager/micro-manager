@@ -1,0 +1,13 @@
+// This macro generates a 256 bin histogram and
+// displays the counts in the "Results" window.
+
+  nBins = 256;
+  run("Clear Results");
+  row = 0;
+  getHistogram(values, counts, nBins);
+  for (i=0; i<nBins; i++) {
+      setResult("Value", row, values[i]);
+      setResult("Count", row, counts[i]);
+      row++;
+   }
+  updateResults();

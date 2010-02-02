@@ -1,0 +1,10 @@
+// This macro demonstates how to use the eval() function.
+
+  requires("1.34g");
+  expression = getString("Enter an expression:", "1+sqrt(2)");
+  theMacro = "result="+expression+"; return toString(result));";
+  result = eval(theMacro);
+  print("");
+  print("expression: " + expression);
+  print("macro: " + theMacro);
+  print("result: " + result);

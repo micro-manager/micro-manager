@@ -1,0 +1,37 @@
+//dump();
+function f1(i) {
+    print('f1: '+i);
+}
+
+f1(123);
+f2();
+print("sum="+sum(2,2));
+
+function sum(a1, a2) {
+    return a1+a1;
+}
+
+function f2() {
+    for (i=1;i<5;i++) {
+        print('f2: '+i);
+        if (i==3)
+            return 999;
+    }
+}
+
+f1(456);
+
+
+for (i=1;i<1000;i+=10) {
+    print(leftPad(i, 4));
+}
+
+x = ""+leftPad(9, 4); // x = leftPad(9, 4); won't work
+print(x);
+
+function leftPad(n, width) {
+  s =""+n;
+  while (lengthOf(s)<width)
+    s = "0"+s;
+  return s;
+}

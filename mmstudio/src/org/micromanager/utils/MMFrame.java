@@ -53,7 +53,17 @@ public class MMFrame extends JFrame {
                 prefs_.getInt(WINDOW_WIDTH, width),
                 prefs_.getInt(WINDOW_HEIGHT, height));      
    }
-   
+
+   public void loadPosition(int x, int y) {
+      if (prefs_ == null)
+         return;
+      
+      setBounds(prefs_.getInt(WINDOW_X, x),
+                prefs_.getInt(WINDOW_Y, y),
+                getWidth(),
+                getHeight());      
+   }
+
    public void savePosition() {
       if (prefs_ == null)
          return;

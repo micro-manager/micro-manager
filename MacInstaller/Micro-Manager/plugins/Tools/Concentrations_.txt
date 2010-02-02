@@ -1,0 +1,95 @@
+requires("1.34m");
+isRow=true;
+Dialog.create("Conculator");
+
+massArray = newArray(" g", " mg", " µg");
+volArray = newArray(" l", " ml", " µl")
+concArray = newArray(" M", " mM", " µM")
+
+Dialog.addNumber("MW:",125 );
+Dialog.addMessage("");
+Dialog.addNumber("Mass:",62.5 );
+Dialog.addChoice("", massArray," mg");
+
+Dialog.addMessage("")
+Dialog.addNumber("Concentration:", 20);
+Dialog.addChoice("", concArray, " mM" );
+
+Dialog.addMessage("");
+Dialog.addNumber("Volume:", 0);
+Dialog.addChoice("", volArray," ml");
+Dialog.addCheckbox("Results as row", isRow);
+
+Dialog.show();
+
+MW=Dialog.getNumber();
+mass = Dialog.getNumber();
+massUnits = Dialog.getChoice();
+
+conc= Dialog.getNumber();
+concUnits = Dialog.getChoice();
+volume = Dialog.getNumber();
+volUnits = Dialog.getChoice();
+isRow = Dialog.getCheckbox();
+volScale=1;
+massScale=1;
+concScale = 1;
+volPref="";
+massPref="";
+concPref="";
+
+if (volUnits==" ml")
+	volScale = 1000;
+if (volUnits==" µl")
+	volScale = 1000000;
+
+if (massUnits==" mg")
+	massScale = 1000;
+if (massUnits==" µg")
+	massScale = 1000000;
+
+if (concUnits==" mM")
+	concScale = 1000;
+if (concUnits==" µM")
+	concScale = 1000000;
+
+if (volume==0)
+	{
+	volume = (mass/massScale)/(MW*(conc/concScale));	
+	volume= volume*volScale;
+	volPref="**";
+	}	
+
+if (mass ==0)
+	{
+	mass = MW*((volume/volScale)*(conc/concScale));	
+	mass = mass*massScale;
+	massPref="**";
+	}
+
+if (conc==0)
+	{
+	conc= (mass/massScale)/(MW*(volume/volScale));
+	conc = conc*concScale;
+	concPref="**";
+	}
+
+MWString ="MW:  "+ d2s(MW,2);
+massString = massPref+"Mass: "+d2s(mass,2)+massUnits+massPref;
+volString = volPref+"Volume: "+d2s(volume,2)+ volUnits+volPref;
+concString = concPref+"Conc: "+d2s(conc,2)+concUnits+concPref;
+
+if (isRow)
+	{
+	print(MWString+"\t   "+massString+"\t   "+volString+ "\t   "+concString);
+	}
+else
+	{
+	print(MWString); print(massString); print(volString);print(concString); print( "---");	
+	}	
+Dialog.create("Conculator - Results");
+Dialog.addMessage(MWString);
+Dialog.addMessage(massString);
+Dialog.addMessage(volString);
+Dialog.addMessage(concString);
+Dialog.show();

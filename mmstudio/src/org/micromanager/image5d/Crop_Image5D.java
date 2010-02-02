@@ -1,13 +1,12 @@
 package org.micromanager.image5d;
 
-import org.micromanager.image5d.Image5D;
-import org.micromanager.metadata.AcquisitionData;
-import org.micromanager.metadata.MMAcqDataException;
-
 import ij.IJ;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.plugin.PlugIn;
+
+import org.micromanager.metadata.AcquisitionData;
+import org.micromanager.metadata.MMAcqDataException;
 
 /*
  * Duplicates the ROI of Micro-Manager Image5D and deletes the original

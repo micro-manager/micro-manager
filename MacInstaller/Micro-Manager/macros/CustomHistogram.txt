@@ -1,0 +1,63 @@
+// "CustomHistogram"
+//
+// This macro displays a histogram of the active image using
+// a specified number of bins and fixed X and Y axis. For  
+// stacks, it creates a stack containing the histograms of 
+// each slice.
+
+  requires("1.34m");
+  if (bitDepth==8 || bitDepth==24) {
+      min = 0;
+      max = 255;
+  } else {
+      if (bitDepth==16)
+          getStatistics(nPixels, mean, min, max);
+     else
+          getRawStatistics(nPixels, mean, min, max);
+  }
+  Dialog.create("Histogram");
+  Dialog.addNumber("X Min:", min);
+  Dialog.addNumber("X Max:", max);
+  Dialog.addString("Y Max:", "auto");
+  Dialog.addNumber("Bins:", 256);
+  Dialog.show();
+  xmin = Dialog.getNumber();
+  xmax = Dialog.getNumber();
+  ymax = toLowerCase(Dialog.getString());
+  if (ymax!="auto")
+      ymax = parseFloat(ymax);
+  bins = Dialog.getNumber();
+  n = nSlices;
+  setBatchMode(true);
+  if (n==1) {
+       run("Duplicate...", "temp");
+       if (bitDepth==24) run("8-bit");
+       run("32-bit");
+       run("Histogram", "bins="+bins+" x_min="+xmin
+          +" x_max="+xmax+" y_max="+ymax);
+  } else {
+      stack = getImageID;
+      histograms = 0;
+      for (i=1; i<=n; i++) {
+          showProgress(i, n);
+          selectImage(stack);
+          setSlice(i);
+          run("Duplicate...", "temp");
+          if (bitDepth==24) run("8-bit");
+          run("32-bit");
+          run("Histogram", "bins="+bins+" x_min="+xmin
+              +" x_max="+xmax+" y_max="+ymax);
+          run("Copy");
+          width=getWidth; height=getHeight;
+          type = "8-bit"; if (bitDepth==24) type = "RGB";
+          close();
+          if (histograms==0) {
+              newImage("Histogram", type, width, height, n);
+              histograms = getImageID;
+          }
+          selectImage(histograms);
+          setSlice(i);
+          run("Paste");
+      }
+  }
+  setBatchMode(false);

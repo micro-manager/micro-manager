@@ -1,0 +1,21 @@
+// This macro demonstrates how to 
+// label particles with their area.
+
+requires("1.33f"); //1.33f fixes setJustification bug
+run("Blobs (25K)");
+setThreshold(125, 248);
+run("Set Measurements...", "area centroid decimal=3");
+run("Analyze Particles...", "minimum=1 maximum=999999 bins=20 show=Nothing clear record");
+
+setJustification("center");
+for (i=0; i<nResults; i++) {
+    x = getResult('XStart', i);
+    y = getResult('YStart', i);
+    doWand(x,y);
+    area = getResult('Area', i);
+    x = getResult('X',i);
+    y = getResult('Y',i);
+    run("Clear");
+    drawString(area, x, y+6);
+}
+run("Select None");

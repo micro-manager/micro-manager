@@ -9,8 +9,11 @@
 
 package org.jeditsyntax;
 
-import java.awt.*;
-import java.util.StringTokenizer;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Toolkit;
 
 /**
  * A simple text style class. It can specify the color, italic flag,
@@ -87,7 +90,8 @@ public class SyntaxStyle
 	/**
 	 * Returns the font metrics for the styled font.
 	 */
-	public FontMetrics getFontMetrics(Font font)
+	@SuppressWarnings("deprecation")
+   public FontMetrics getFontMetrics(Font font)
 	{
 		if(font == null)
 			throw new NullPointerException("font param must not"

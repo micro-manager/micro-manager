@@ -1,0 +1,60 @@
+// RandomSampleAndMeasure.txt
+// get random areas, measure, and label them
+// G. Landini at bham. ac. uk
+
+saveSettings();
+original=getTitle();
+setForegroundColor(255,0,0);
+
+width = getWidth()-30;   // width of ROi
+height = getHeight()-30; // height of ROI
+RoisN =50; // number of ROIs
+trials=5000 ; //maximum trials to avoid infinite loop
+
+i=0;
+j=0;
+
+xa=newArray(RoisN);
+ya=newArray(RoisN);
+
+run("Duplicate...", "title=Reference");
+run("8-bit"); //make it greyscale
+run("RGB Color"); //RGB to display colours
+
+while (i<RoisN && j<trials){
+        w = 30;
+        h = 30;
+        x = random()*width;
+        y = random()*height;
+        j++;
+        //Check for pixels with value (255,0,0):
+        flag= -1;
+        makeRectangle(x, y, w, h);
+        //Scanning the rectangle perimeter should be faster than scanning the whole box.
+        //This is slower, as checks all the points in the box:
+        for (xs=x;xs<x+w;xs++){
+            for (ys=y;ys<y+h;ys++){
+                if (getPixel(xs,ys)==-65536) // pixel is (255,0,0)
+                    flag=0;
+            }
+        }
+        if (flag==-1){
+            xa[i]=x;
+            ya[i]=y;
+            run("Fill");
+            i++;
+        }
+}
+
+close();
+selectWindow(original);
+
+setForegroundColor(255,255,0);
+for (j=0;j<i;j++){
+        makeRectangle(xa[j], ya[j], w, h);
+        run("Measure");
+        run("Label");
+}
+
+run("Select None");
+restoreSettings();

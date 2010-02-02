@@ -1,0 +1,12 @@
+  // This macro creates a composite selection from a binary mask
+
+  requires("1.33c"); // setKeyDown() added in v1.33c
+  run("Set Measurements...", "area perimeter circularity decimal=3");
+  run("Analyze Particles...", "minimum=1 maximum=999999 show=Nothing clear record");
+  setKeyDown("none");
+  for (i=0; i<nResults; i++) {
+      x = getResult('XStart', i);
+      y = getResult('YStart', i);
+      if (i>0) setKeyDown("shift");
+      doWand(x,y);
+  }

@@ -9,9 +9,13 @@
 
 package org.jeditsyntax;
 
-import javax.swing.event.*;
-import javax.swing.text.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Element;
+import javax.swing.text.PlainDocument;
+import javax.swing.text.Segment;
 import javax.swing.undo.UndoableEdit;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  * A document implementation that can be tokenized by the syntax highlighting
@@ -22,7 +26,9 @@ import javax.swing.undo.UndoableEdit;
  */
 public class SyntaxDocument extends PlainDocument
 {
-	/**
+   private static final long serialVersionUID = 7455643427227506915L;
+
+   /**
 	 * Returns the token marker that is to be used to split lines
 	 * of this document up into tokens. May return null if this
 	 * document is not to be colorized.
@@ -88,7 +94,7 @@ public class SyntaxDocument extends PlainDocument
 		}
 		catch(BadLocationException bl)
 		{
-			bl.printStackTrace();
+			ReportingUtils.logError(bl);
 		}
 	}
 

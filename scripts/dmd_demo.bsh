@@ -1,0 +1,5 @@
+import ij.IJ;
+pix = IJ.getImage().getProcessor().getPixels();
+slm = mmc.getSLMDevice();
+mmc.setSLMImage(slm,pix);
+mmc.displaySLMImage(slm);

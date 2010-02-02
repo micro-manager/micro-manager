@@ -81,6 +81,7 @@
 
 #include "K8055.h"
 #include "K8055Interface.h"
+#include <cstdio>
 #include <math.h>
 
 #define STR_BUFF 256
@@ -122,44 +123,14 @@ K8055Interface::~K8055Interface()
 
 int K8055Interface::ReadK8055Data(MM::Device& device, MM::Core& core)
 {
-    //int read_status = 0;
-
     unsigned long read;
-    int ret = core.ReadFromSerial(&device, port_.c_str(), data_in, 8, read);
-    return ret;
-
-   /* 
-    for(i=0; i < 3; i++)
-        {
-
-        read_status = usb_interrupt_read(device_handle, USB_INP_EP, (char *)data_in, PACKET_LEN, USB_TIMEOUT);
-        if ((read_status == PACKET_LEN)) return 0;
-        //if ((read_status == PACKET_LEN) && (data_in[1] & 0x01)) return 0;
-        printf("read_status %d, data %d, result %d\n",  read_status, data_in[0], data_in[1]);
-        if (DEBUG)
-            fprintf(stderr, "Read retry\n");
-        }
-        */
+    return core.ReadFromSerial(&device, port_.c_str(), data_in, 8, read);
 }
 
 int K8055Interface::WriteK8055Data(MM::Device& device, MM::Core& core, unsigned char cmd)
 {
-    //int write_status = 0, i = 0;
-
     data_out[0] = cmd;
-    int ret = core.WriteToSerial(&device, port_.c_str(), data_out, 8);
-    return ret;
-    
-    /*
-    for(i=0; i < 3; i++)
-        {
-	// usb_interrupt_write requires 16-bit output, USB1.1 uses 8-bit. a small "feature" gained with USB2.0 
-        write_status = usb_interrupt_write(device_handle, USB_OUT_EP, (char *)data_out, PACKET_LEN, USB_TIMEOUT);
-        if((write_status == PACKET_LEN) && (ReadK8055Data() == 0)) return 0;
-        if (DEBUG)
-            fprintf(stderr, "Write retry\n");
-        }
-*/
+    return core.WriteToSerial(&device, port_.c_str(), data_out, 8);
 }
 
 

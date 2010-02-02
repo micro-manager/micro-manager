@@ -1,0 +1,21 @@
+// This macro demonstrates how to retrieve the scale of the  active image
+
+  var scale, unit;
+
+  getScaleAndUnit();
+  print("Scale: "+scale+" pixels per "+unit);  
+
+  // Sets the global variables 'scale' and 'unit' based on the 'Resolution: '
+  // line from the active images 'Show Info' string. 
+  function getScaleAndUnit() {
+      selectImage(getImageID);
+      info = getInfo();
+      index1 = indexOf(info, "Resolution: ");
+      if (index1==-1)
+          {scale=1; unit = "pixel"; return;}          
+      index2 = indexOf(info, "\n", index1);
+      line = substring(info, index1+12, index2);
+      words = split(line, "");
+      scale = 0+words[0];
+      unit = words[3];
+  }

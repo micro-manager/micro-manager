@@ -20,11 +20,8 @@
 // CVS:           $Id$
 // 
 
-#ifdef WIN32
-   #define snprintf _snprintf 
-#endif
-
 #include "NikonTE2000.h"
+#include <cstdio>
 #include <string>
 #include <math.h>
 #include "../../MMDevice/ModuleInterface.h"
@@ -47,6 +44,7 @@ const char* g_HubName = "TE2000";
 const char* g_Control = "Control";
 const char* g_ControlMicroscope = "Microscope";
 const char* g_ControlPad = "Control Pad";
+const char* g_ExcitationFilterWheelName = "Excitation Filter wheel";
 
 using namespace std;
 
@@ -98,6 +96,7 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_UniblitzShutterName, "Uniblitz shutter");
    AddAvailableDeviceName(g_AutoFocusName,  "PFS autofocus device");
    AddAvailableDeviceName(g_PFSOffsetName,  "PFS Offset Lens");
+   AddAvailableDeviceName(g_ExcitationFilterWheelName, "Nikon excitation side filter changer");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
@@ -153,6 +152,11 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
    else if (strcmp(deviceName, g_PFSOffsetName) == 0)
    {
       return new PFSOffset;
+   }
+   else if (strcmp (deviceName, g_ExcitationFilterWheelName) == 0)
+   {
+	   // Return the FLEW adapter object
+		 return new ExcitationFilterBlock;
    }
 
    return 0;
@@ -219,8 +223,12 @@ int Hub::Initialize()
       return DEVICE_NO_CALLBACK_REGISTERED;
    string ver;
    ret = g_hub.GetVersion(*this, *GetCoreCallback(), ver);
-   if (ret != DEVICE_OK)
-      return ret;
+   if (ret != DEVICE_OK) {
+      // there are serial ports that screw up the first time, so try one more time:
+      ret = g_hub.GetVersion(*this, *GetCoreCallback(), ver);
+      if (ret != DEVICE_OK)
+         return ret;
+   }
 
    // Version
    ret = CreateProperty(MM::g_Keyword_Version, ver.c_str(), MM::String, true);
@@ -384,20 +392,157 @@ int Nosepiece::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
       long pos;
       pProp->Get(pos);
       pos += 1;
+
+      int oldPos;
+      int ret = g_hub.GetNosepiecePosition(*this, *GetCoreCallback(), oldPos);
+
+      if (pos > (long)numPos_ || pos < 1)
+      {
+         // restore current position
+
+         if (ret != 0)
+            return ret;
+         pProp->Set((long)oldPos-1); // revert
+         return ERR_UNKNOWN_POSITION;
+      }
+
+      // apply the value if it is different from the currently reported state
+      if (pos != oldPos) {
+         int ret = g_hub.SetNosepiecePosition(*this, *GetCoreCallback(), (int)pos);
+         if (ret != 0)
+            return ret;
+      }
+   }
+
+   return DEVICE_OK;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Excitation side filter wheel
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+ExcitationFilterBlock::ExcitationFilterBlock(): initialized_(false), numPos_(8), name_(g_ExcitationFilterWheelName)
+{
+	InitializeDefaultErrorMessages();
+
+	SetErrorText(ERR_NOT_CONNECTED, "Not connected with the hardware" );
+	SetErrorText(ERR_UNKNOWN_POSITION, "Position out of range ? ");
+	SetErrorText(ERR_TYPE_NOT_DETECTED, "Device Not detected");
+}
+
+ExcitationFilterBlock::~ExcitationFilterBlock()
+{
+	Shutdown();
+}
+
+void ExcitationFilterBlock::GetName(char* name) const
+{
+   assert(name_.length() < CDeviceUtils::GetMaxStringLength());
+   CDeviceUtils::CopyLimitedString(name, name_.c_str());
+}
+
+bool ExcitationFilterBlock::Busy()
+{
+	// Change this to the appropriate value for the excitation filter 
+   return g_hub.IsExcitationFilterBlockBusy(*this, *GetCoreCallback());
+}
+
+int ExcitationFilterBlock::Initialize()
+{
+   // set property list
+   // -----------------
+   
+   // Name
+   int ret = CreateProperty(MM::g_Keyword_Name, name_.c_str(), MM::String, true);
+   if (DEVICE_OK != ret)
+      return ret;
+
+   // Description
+   ret = CreateProperty(MM::g_Keyword_Description, "Nikon TE2000 filter block changeover adapter", MM::String, true);
+   if (DEVICE_OK != ret)
+      return ret;
+
+   // State
+   // -----
+   CPropertyAction* pAct = new CPropertyAction (this, &ExcitationFilterBlock::OnState);
+   ret = CreateProperty(MM::g_Keyword_State, "1", MM::Integer, false, pAct);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   // set allowed states
+   for (unsigned i=0; i<numPos_; i++)
+   {
+      ostringstream os;
+      os << i;
+      AddAllowedValue(MM::g_Keyword_State, os.str().c_str());
+   }
+
+   // Label
+   // -----
+   pAct = new CPropertyAction (this, &CStateBase::OnLabel);
+   ret = CreateProperty(MM::g_Keyword_Label, "Undefined", MM::String, false, pAct);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   // create default positions and labels
+   for (unsigned i=0; i<numPos_; i++)
+   {
+      ostringstream os;
+      os << "Position-" << i+1;
+      SetPositionLabel(i, os.str().c_str());
+   }
+
+   ret = UpdateStatus();
+   if (ret != DEVICE_OK)
+      return ret;
+
+   initialized_ = true;
+
+   return DEVICE_OK;
+}
+
+int ExcitationFilterBlock::Shutdown()
+{
+   if (initialized_)
+   {
+      initialized_ = false;
+   }
+   return DEVICE_OK;
+}
+
+int ExcitationFilterBlock::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      int pos;
+	  int ret = g_hub.GetExcitationFilterBlockPosition(*this, *GetCoreCallback(), pos);
+      if (ret != DEVICE_OK)
+         return ret;
+      pos -= 1;
+      pProp->Set((long)pos);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      long pos;
+      pProp->Get(pos);
+      pos += 1;
       if (pos > (long)numPos_ || pos < 1)
       {
          // restore current position
          int oldPos;
-         int ret = g_hub.GetNosepiecePosition(*this, *GetCoreCallback(), oldPos);
+         int ret = g_hub.GetExcitationFilterBlockPosition(*this, *GetCoreCallback(), oldPos);
          if (ret != 0)
             return ret;
          pProp->Set((long)oldPos-1); // revert
          return ERR_UNKNOWN_POSITION;
       }
       // apply the value
-      int ret = g_hub.SetNosepiecePosition(*this, *GetCoreCallback(), (int)pos);
+      int ret = g_hub.SetExcitationFilterBlockPosition(*this, *GetCoreCallback(), (int)pos);
       if (ret != 0)
          return ret;
+	  pProp->Set((long)pos);
+	  ret = UpdateStatus();
+	  
    }
 
    return DEVICE_OK;
@@ -422,6 +567,7 @@ FilterBlock::~FilterBlock()
 {
    Shutdown();
 }
+
 
 void FilterBlock::GetName(char* name) const
 {
@@ -593,7 +739,7 @@ int FocusStage::Initialize()
    char buffer[4];
    sprintf(buffer, "%d", stepSize_nm_);
    pAct = new CPropertyAction (this, &FocusStage::OnStepSize);
-   ret = CreateProperty(stepSizeName, buffer, MM::String, false, pAct, true);
+   ret = CreateProperty(stepSizeName, buffer, MM::String, false, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -1511,6 +1657,7 @@ PerfectFocus::PerfectFocus() :
 {
    // Custom error messages
    SetErrorText(ERR_PFS_NOT_CONNECTED,"Perfect Focus device not found.  Is it switched on and connected?");
+   SetErrorText(ERR_PFS_FOCUS_FAILED,"Perfect Focus failed to lock");
 }
 
 PerfectFocus::~PerfectFocus()
@@ -1558,6 +1705,13 @@ int PerfectFocus::Initialize()
    ret = CreateProperty("Version", version.c_str(), MM::String, true);
    if (ret != DEVICE_OK)
       return ret;
+
+   CPropertyAction* pAct = new CPropertyAction(this, &PerfectFocus::OnState);
+   ret = CreateProperty("State", "off", MM::String, false, pAct);
+   if (ret != DEVICE_OK)
+      return ret;
+   AddAllowedValue("State", "on");
+   AddAllowedValue("State", "off");
 
    ret = UpdateStatus();
    if (ret != DEVICE_OK)
@@ -1614,19 +1768,77 @@ bool PerfectFocus::IsContinuousFocusLocked()
 
 int PerfectFocus::FullFocus()
 {
-   return g_hub.SetPFocusOn(*this, *GetCoreCallback());
+   // If PFS is already on, do nothing
+   bool state;
+   int ret = GetContinuousFocusing(state);
+   if (ret != DEVICE_OK)
+      return ret;
+   if (state)
+      return DEVICE_OK;
+
+   ret = g_hub.SetPFocusOn(*this, *GetCoreCallback());
+   if (ret != DEVICE_OK)
+      return ret;
+
+   char timeout[MM::MaxStrLength];
+   MM::Core* core = GetCoreCallback();
+   core->GetDeviceProperty("Core", "TimeoutMs", timeout);
+   MM::MMTime dTimeout = MM::MMTime (atof(timeout) * 1000.0);
+   MM::MMTime start = core->GetCurrentMMTime();
+   bool locked = false;
+   while(!locked && ((core->GetCurrentMMTime() - start) < dTimeout)) {
+      locked = IsContinuousFocusLocked();
+      CDeviceUtils::SleepMs(200);
+   }
+   
+   // sometines the PFS reports to be locked but then "bounces around" 
+   CDeviceUtils::SleepMs(300);
+   if (!locked) {
+      g_hub.SetPFocusOff(*this, *GetCoreCallback());
+      return ERR_PFS_FOCUS_FAILED;
+   }
+
+   return g_hub.SetPFocusOff(*this, *GetCoreCallback());
 }
 
 int PerfectFocus::IncrementalFocus()
 {
-   return g_hub.SetPFocusOn(*this, *GetCoreCallback());
+   return FullFocus();
 }
 
 
-int GetFocusScore(double& /*score*/)
+/*
+int PerfectFocus::GetFocusScore(double& score)
 {
    return DEVICE_UNSUPPORTED_COMMAND;
 }
+*/
+
+int PerfectFocus::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet) {
+      bool state;
+      int ret = GetContinuousFocusing(state);
+      if (ret != DEVICE_OK)
+         return ret;
+      if (state)
+         pProp->Set("on");
+      else
+         pProp->Set("off");
+   } else if (eAct == MM::AfterSet) {
+      std::string state;
+      int ret;
+      pProp->Get(state);
+      if (state == "on")
+         ret = SetContinuousFocusing(true);
+      else
+         ret = SetContinuousFocusing(false);
+      return ret;
+   }
+   return DEVICE_OK;
+}
+
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // PFSOffset implementation

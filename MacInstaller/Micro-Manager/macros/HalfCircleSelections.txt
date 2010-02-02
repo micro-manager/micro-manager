@@ -1,0 +1,50 @@
+// These macros create half circle selections.
+
+  macro "Make right half circle" {
+      if (selectionType!=1)
+          exit("Elliptical selection required");
+      getBoundingRect(x, y, width, height);
+      midx = x + width/2;
+      getSelectionCoordinates(sx, sy);
+      for (i=0; i<sx.length; i++) {
+          if (sx[i]<midx) sx[i] = midx;
+      }
+      makeSelection(3, sx, sy);
+  }
+
+  macro "Make left half circle" {
+      if (selectionType!=1)
+          exit("Elliptical selection required");
+      getBoundingRect(x, y, width, height);
+      midx = x + width/2;
+      getSelectionCoordinates(sx, sy);
+      for (i=0; i<sx.length; i++) {
+          if (sx[i]>midx) sx[i] = midx;
+      }
+      makeSelection(3, sx, sy);
+  }
+
+  macro "Make bottom half circle" {
+      if (selectionType!=1)
+          exit("Elliptical selection required");
+      getBoundingRect(x, y, width, height);
+      midy = y + height/2;
+      getSelectionCoordinates(sx, sy);
+      for (i=0; i<sy.length; i++) {
+          if (sy[i]<midy) sy[i] = midy;
+      }
+      makeSelection(3, sx, sy);
+  }
+
+  macro "Make top half circle" {
+      if (selectionType!=1)
+          exit("Elliptical selection required");
+      getBoundingRect(x, y, width, height);
+      midy = y + height/2;
+      getSelectionCoordinates(sx, sy);
+      for (i=0; i<sy.length; i++) {
+          if (sy[i]>midy) sy[i] = midy;
+      }
+      makeSelection(3, sx, sy);
+  }
+

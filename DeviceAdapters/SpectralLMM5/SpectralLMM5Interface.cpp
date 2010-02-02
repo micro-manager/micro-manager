@@ -23,7 +23,7 @@
 #include "SpectralLMM5.h"
 
 #ifdef WIN32
-#include <windows.h>
+#include <winsock.h>
 #else
 #include <netinet/in.h>
 #endif

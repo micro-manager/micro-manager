@@ -1,0 +1,59 @@
+// This macro smooths an image by convolving it with a custom Gaussian
+// matrix. The size of the matrix and the standard deviation of the
+// Gaussian sre specified by entering values into dialog boxes.
+// After running the macro, view the convolution matrix using
+//  Process>Filters>Convolve.
+//
+// Author: Gilles Carpentier, Faculte des Sciences et 
+// Technologies,  Universite Paris 12 Val de Marne 
+//
+// A sample image is available at
+// "http://rsb.info.nih.gov/ij/macros/images/sample-denoise.tif".
+// Try a matrix size of 23 and SD of 0.8.
+//
+// Immunostaining of myoblasts from rat satellite cell
+// primary culture courtesy of Dr Angelica Keller (*).
+// Double channel confocal image acquisition with a
+// Zeiss LSM 510/Axiovert 200 microscope by Gilles Carpentier.
+
+// (*) Faculte des Sciences et Technologies, laboratoire CRRET,
+// CNRS, FRE-2412, Universite Paris 12-Val de Marne,
+// 61 Avenue du General de Gaulle, 94010 Creteil cedex, France.
+
+macro "Gaussian Convolution" {
+    requires("1.33o");
+    if (nImages == 0)
+        exit("No open image to be treated or no active image");
+    // taille= matrix size; gauss, sd of the gaussian function
+    taille = getNumber("Matrix Size:", 5);
+    gauss = getNumber("Standard Deviation:", 1.5);
+    matrice = matrix(taille,gauss);
+    //print(matrice);
+    run("Convolve...", "text1=["+ matrice+"] normalize");
+}
+
+// square function
+function carre (car) {
+    car= (car * car);
+    return car;
+}
+
+// Matrix build function, based on the method developed by
+// David Romeuf, Centre de Ressources Informatiques (CRI)
+// Universite Lyon, Administrations, Laboratoires & Pedagogie,
+// Campus Sud, Mediatheque - 8, avenue Rockefeller,
+// 69373 Lyon cedex 08
+function matrix (taille,gauss) {
+    matrice="";
+    for (j=0; j < taille; j++) {
+        lignea="";
+        for (i=0; i < taille; i++) {
+            numer = -(carre(i-floor(taille/2)) + carre(j-floor(taille/2)));
+            denom = 2 * carre(gauss);
+            coeff=exp(numer/denom);
+            lignea = lignea + " " + coeff;
+        }
+        matrice = matrice + lignea + "\n";
+    }
+    return matrice;
+}

@@ -1,0 +1,2 @@
+SECTIONS
+   .sDalShared      SHARED

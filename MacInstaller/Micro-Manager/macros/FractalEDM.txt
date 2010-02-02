@@ -1,0 +1,54 @@
+//  This macro is an ImageJ version of the NIH Image macro from
+//  High precision boundary fractal analysis for shape characterization*
+//  AU: D. Berube, M. Jebrak
+//  SO: Computers & Geosciences v. 25, no. 9, pp. 1059-1071
+
+//  It uses the sum of two Euclidean Distance Maps to generate a table 
+//  that can be used to calculate the boundary fractal dimension of
+//  a binary image (white background pixels). It generates the table
+//  by measuring the surface of the Minkowski sausage as determined
+//  by the number of gray levels selected by thresholding. An 
+//  exponential suite of gray levels is used to optimize the number
+//  of points on the graph. To save the table, right-click on the "Log"
+//  window and select "Save As".
+
+  requires("1.30p");
+  id = getImageID();
+  run("Duplicate...", "title=edm1");
+  selectWindow("edm1");
+  run("Distance Map");
+  selectImage(id);
+  run("Duplicate...", "title=edm2");
+  selectWindow("edm2");
+  run("Invert");
+  run("Distance Map");
+  run("Image Calculator...", "image1=edm1 operation=Add image2=edm2");
+  selectWindow("edm1");
+  
+  run("Clear Results");
+  run("Set Measurements...", "area limit decimal=3");
+  if (isOpen("Log")) {
+    selectWindow("Log");
+    run("Close");
+  }
+  print("Width \tArea");
+  lg = 0;
+  counter=0;
+  
+  for (i=1; i<=50; i++) {
+    y = round(pow(1.1, i));
+    if (lg!=y) {
+      lg = y;
+      setThreshold(0, lg);
+      run("Measure");
+      print(2*lg+' \t'+getResult("Area", counter++));
+    }
+  }
+  
+  selectWindow("edm1");
+  run("Close");
+  selectWindow("edm2");
+  run("Close");
+  selectWindow("Results");
+  run("Close");
+  selectWindow("Log");

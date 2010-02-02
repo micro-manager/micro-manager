@@ -1,0 +1,41 @@
+  // This macro calculates convexity (convex perimeter/perimeter)
+  // and solidarity (area/convex area). It requires ImageJ 1.31g,
+  // which adds the Edit>Selection>Convex Hull command and 
+  // the setResult() and updateResults() macro functions.
+  
+  macro "Caculate Convexity and Solidarity" {
+    requires("1.31g");
+    run("Set Measurements...", "area perimeter");
+    run("Analyze Particles...", "minimum=50 show=Nothing display exclude clear record");
+    n = nResults;
+    area1 = newArray(n);
+    length1 = newArray(n);
+    area2 = newArray(n);
+    length2 = newArray(n);
+    xstart = newArray(n);
+    ystart = newArray(n);
+    for (i=0; i<n; i++) {
+      area1[i] = getResult('Area', i);
+      length1[i] = getResult('Perim.', i);
+      xstart[i] = getResult('XStart', i);
+      ystart[i] = getResult('YStart', i);
+    }
+    run("Clear Results");
+    for (i=0; i<n; i++) {
+      doWand(xstart[i], ystart[i]);
+      run("Convex Hull");
+      run("Measure");
+      area2[i] = getResult('Area', i);
+      length2[i] = getResult('Perim.', i);
+    }
+    run("Select None");
+    for (i=0; i<n; i++) {
+      setResult("Area", i, area1[i]);
+      setResult("Perim.", i, length1[i]);
+      setResult("CH Area", i, area2[i]);
+      setResult("CH Perim.", i, length2[i]);
+      setResult("Solidarity", i, area1[i]/area2[i]);
+      setResult("Convexity", i, length2[i]/length1[i]);
+    }
+     updateResults();
+  }

@@ -1,0 +1,27 @@
+// ChangeColors
+// This macro changes the value of pixels in the image
+// or selection that are in the foreground color to the 
+// background color. Use Edit>Undo to revert back to
+// the original.
+
+macro "Change Colors" {
+    setupUndo();
+    isSelection = selectionType!=-1;
+    value = getPixel(0, 0);
+    makeRectangle(0, 0, 1, 1);
+    run("Fill");
+    foreground = getPixel(0, 0);
+    run("Clear");
+    background = getPixel(0, 0);
+    setPixel(0, 0, value);
+    if (isSelection)
+        run("Restore Selection");
+    else
+        run("Select None");
+    if (bitDepth==24) {
+        // not needed in ImageJ 1.34n or later
+        foreground = foreground&0xffffff;
+        background = background&0xffffff;
+    }
+    changeValues(foreground, foreground, background);
+}

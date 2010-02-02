@@ -1,0 +1,13 @@
+// This tool displays the coordinates and value of the pixel clicked on
+
+    macro "Pixel Picker Tool -C444-o4499" {
+        requires("1.30k");
+        if (bitDepth==24)
+            exit("Use the ColorPickerToo macro with RGB images");
+        getCursorLoc(x, y, z, flags);
+        v = getPixel(x,y);
+        if (nSlices>1)
+            print("x="+x+", y="+y+", z="+z+", value="+v);
+        else
+            print("x="+x+", y="+y+", value="+v);
+   }

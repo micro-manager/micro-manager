@@ -9,11 +9,18 @@
 
 package org.jeditsyntax;
 
-import javax.swing.text.*;
-import javax.swing.JPopupMenu;
-import java.awt.event.*;
 import java.awt.Component;
-import java.util.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.util.Enumeration;
+import java.util.EventObject;
+import java.util.Hashtable;
+
+import javax.swing.JPopupMenu;
+import javax.swing.text.BadLocationException;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  * An input handler converts the user's key strokes into concrete actions.
@@ -141,7 +148,7 @@ public abstract class InputHandler extends KeyAdapter
 	 */
 	public static String getActionName(ActionListener listener)
 	{
-		Enumeration enumarator = getActions();
+		Enumeration<String> enumarator = getActions();
 		while(enumarator.hasMoreElements())
 		{
 			String name = (String)enumarator.nextElement();
@@ -155,7 +162,7 @@ public abstract class InputHandler extends KeyAdapter
 	/**
 	 * Returns an enumeration of all available actions.
 	 */
-	public static Enumeration getActions()
+	public static Enumeration<String> getActions()
 	{
 		return actions.keys();
 	}
@@ -350,8 +357,8 @@ public abstract class InputHandler extends KeyAdapter
 		}
 
 		// this shouldn't happen
-		System.err.println("BUG: getTextArea() returning null");
-		System.err.println("Report this to Slava Pestov <sp@gjt.org>");
+		ReportingUtils.logError("BUG: getTextArea() returning null");
+		ReportingUtils.logError("Report this to Slava Pestov <sp@gjt.org>");
 		return null;
 	}
 
@@ -482,8 +489,8 @@ public abstract class InputHandler extends KeyAdapter
 					textArea.getDocument().remove(caret - 1,1);
 				}
 				catch(BadLocationException bl)
-				{
-					bl.printStackTrace();
+				{;
+					ReportingUtils.logError(bl);
 				}
 			}
 		}
@@ -530,7 +537,7 @@ public abstract class InputHandler extends KeyAdapter
 			}
 			catch(BadLocationException bl)
 			{
-				bl.printStackTrace();
+				ReportingUtils.logError(bl);
 			}
 		}
 	}
@@ -566,7 +573,7 @@ public abstract class InputHandler extends KeyAdapter
 				}
 				catch(BadLocationException bl)
 				{
-					bl.printStackTrace();
+					ReportingUtils.showError(bl);
 				}
 			}
 		}
@@ -612,7 +619,7 @@ public abstract class InputHandler extends KeyAdapter
 			}
 			catch(BadLocationException bl)
 			{
-				bl.printStackTrace();
+				ReportingUtils.showError(bl);
 			}
 		}
 	}

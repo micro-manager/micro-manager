@@ -39,11 +39,19 @@ public:
    /**
     * Defines a new preset.
     */
+   void Define(const char* configName)
+   {
+      configs_[configName];
+   }
+
+	/**
+    * Defines a new preset.
+    */
    void Define(const char* configName, const char* deviceLabel, const char* propName, const char* value)
    {
       PropertySetting setting(deviceLabel, propName, value);
       configs_[configName].addSetting(setting);
-   }
+	   }
 
    /**
     * Finds preset by name.
@@ -57,6 +65,27 @@ public:
          return &(it->second);
    }
 
+    /**
+    * Renames a preset (addressed by old name).
+    */
+   bool Rename(const char* oldConfigName, const char* newConfigName)
+   {
+      // tolerate empty configuration names
+      if (strlen(oldConfigName) == 0)
+         return true;
+
+      typename std::map<std::string, T>::const_iterator it = configs_.find(oldConfigName);
+      if (it == configs_.end())
+         return false;
+	  
+	  configs_[newConfigName] = it->second;
+      configs_.erase(it->first);
+      return true;
+   }
+
+    /**
+    * Deletes a preset by name.
+    */
    bool Delete(const char* configName)
    {
       // tolerate empty configuration names
@@ -68,6 +97,25 @@ public:
          return false;
       configs_.erase(configName);
       return true;
+   }
+
+   /**
+    * Deletes a preset property by name.
+    */
+   bool Delete(const char* configName, const char* deviceLabel, const char* propName)
+   {
+      // tolerate empty configuration names
+      if (strlen(configName) == 0)
+         return true;
+
+	  // Check if configuration with configName exists:
+	  typename std::map<std::string, T>::const_iterator it = configs_.find(configName);
+	  if (it == configs_.end())
+		  return false;
+	  
+	  // Delete the specified property
+      configs_[configName].deleteSetting(deviceLabel,propName);
+	  return true;
    }
 
    /**
@@ -111,6 +159,17 @@ public:
    ConfigGroupCollection() {}
    ~ConfigGroupCollection() {}
 
+   /**
+    * Define a configuration.
+    */
+   void Define(const char* groupName, const char* configName)
+   {
+      groups_[groupName].Define(configName);
+   }
+
+   /**
+    * Define a configuration property value.
+    */
    void Define(const char* groupName, const char* configName, const char* deviceLabel, const char* propName, const char* value)
    {
       groups_[groupName].Define(configName, deviceLabel, propName, value);
@@ -156,6 +215,51 @@ public:
    }
 
    /**
+    * Rename a configuration preset within a group
+    */
+   bool RenameConfig(const char* groupName, const char* oldConfigName, const char* newConfigName)
+   {
+      // tolerate empty group names
+      if (strlen(groupName) == 0)
+         return true;
+
+      std::map<std::string, ConfigGroup>::iterator it = groups_.find(groupName);
+      if (it == groups_.end())
+         return false; // group not found
+      if (it->second.Rename(oldConfigName, newConfigName))
+      {
+         // NOTE: changed to not remove empty groups, N.A. 1.31.2006
+         // check if the config group is empty, and if so remove it
+         //if (it->second.IsEmpty())
+            //groups_.erase(it->first);
+         return true;
+      }
+      else
+         return false; // config not found within a group
+   }
+
+   /**
+    * Delete a property from a configuration in the specified group
+    */
+   bool Delete(const char* groupName, const char* configName, const char* deviceLabel, const char* propName)
+   {
+      // tolerate empty group names
+      if (strlen(groupName) == 0)
+         return true;
+
+      std::map<std::string, ConfigGroup>::iterator it = groups_.find(groupName);
+      if (it == groups_.end())
+         return false; // group not found
+      if (it->second.Delete(configName, deviceLabel, propName))
+      {
+         return true;
+      }
+      else
+         return false; // config not found within a group
+   }
+
+
+   /**
     * Delete a configuration from group
     */
    bool Delete(const char* groupName, const char* configName)
@@ -192,6 +296,25 @@ public:
       if (it != groups_.end())
       {
          groups_.erase(it->first);
+         return true;
+      }
+      return false; //not found
+   }
+
+    /**
+    * Rename a configuration group.
+    */
+   bool RenameGroup(const char* oldGroupName, const char* newGroupName)
+   {
+      // tolerate empty group names
+      if (strlen(oldGroupName) == 0 || strlen(newGroupName)==0)
+         return true;
+
+      std::map<std::string, ConfigGroup>::iterator it = groups_.find(oldGroupName);
+      if (it != groups_.end())
+      {
+         groups_[newGroupName] = it->second;
+		 groups_.erase(it->first);
          return true;
       }
       return false; //not found

@@ -1,0 +1,231 @@
+// Particles to Selection
+// Mask to Selection
+// Expand/Shrink Selection
+//
+// Michael Schmid, version 05-Nov-2004
+
+   var expand = 1;       	//for Expand/Shrink Selection Macro
+   var shrinkFromEdge = true;   //for Expand/Shrink Selection Macro (Options)
+
+
+//---------------------- P a r t i c l e s   t o   S e l e c t i o n -----------------------
+// convert thresholded or mask (black=selected) to ROI
+// the interior of the particles is included in the selection
+// NOTE: Roi Manager Contents and Results list will be deleted
+
+macro 'Particles to Selection' {
+  requires("1.33o");
+  debug=false;//true;//
+  run("Select None");
+
+  if (isOpen("ROI Manager")) {
+    selectWindow("ROI Manager");
+    run("Close");
+  }
+  setBatchMode(!debug);
+  unThresholded=(indexOf(getInfo(), "No Threshold")>=0); //upper and lower might be set even without thresholding
+  if (unThresholded) {			//wand can have problems without thresholding
+    if (indexOf(getInfo(), "inverted grayscale")>=0) setThreshold(128,255);
+    else setThreshold(0,127);
+  }
+  run("Analyze Particles...", "minimum=1 maximum=9999999 bins=2 show=Nothing clear record");
+  for (i=0; i<nResults; i++) {
+    x = getResult('XStart', i);
+    y = getResult('YStart', i);
+    doWand(x,y);
+    if (debug && (i<10||i>nResults-3)) showMessage("Adding Particle");
+    roiManager("add");
+  }
+  if (nResults>0) {
+    if (nResults>10) showStatus("Combining "+nResults+" selections - this may take a while...");
+    roiManager("Combine");
+    roiManager("Delete");
+  } else {
+    run("Select None");
+  }
+  if (unThresholded)
+    resetThreshold(); //revert to unthresholded if it was so
+  setBatchMode(false);
+  if (isOpen("ROI Manager")) {
+    selectWindow("ROI Manager");
+    run("Close");
+  }
+  showStatus("Particles to Selection - Done");
+}
+
+
+//-------------------------- M a s k   t o   S e l e c t i o n ----------------------------
+// convert thresholded or mask (black=selected) to ROI
+// NOTE: Roi Manager Contents and Results list will be deleted
+
+macro 'Mask to Selection' {
+  requires("1.33o");
+  debug=false;//true;//
+
+  if (isOpen("ROI Manager")) {
+    selectWindow("ROI Manager");
+    run("Close");
+  }
+  setBatchMode(!debug);
+  maskImageID=getImageID();
+
+  run("Select None");
+  tempname=getTitle()+"-mask2roiTemp";
+  unThresholded=(indexOf(getInfo(), "No Threshold")>=0); //upper and lower might be set even without thresholding
+  getThreshold(lower, upper);
+  run("Duplicate...", "title="+tempname);
+  workImageID=getImageID();
+  if(!unThresholded) {			//thresholded image to mask
+    setThreshold(lower, upper);
+    run("Threshold", "thresholded remaining black");
+  }
+
+  found=createSelection(workImageID,debug);
+  selectImage(maskImageID);
+  if (found) run("Restore Selection"); 	//apply selection to original image
+
+  setBatchMode(false);
+  if (isOpen("ROI Manager")) {
+    selectWindow("ROI Manager");
+    run("Close");
+  }
+  showStatus("Mask to Selection - Done");
+
+} //end of macro 'Mask to Selection'
+
+
+//---------------------- E x p a n d  /  S h r i n k   S e l e c t i o n -----------------------
+// Expand or Shrink Roi
+// NOTE: Roi Manager Contents and Results list will be deleted
+
+macro 'Expand or Shrink Selection...' {
+  requires("1.33o");
+  
+  debug=false;//true;//
+  if (selectionType()==-1) exit;
+  myImageID=getImageID();
+  expand=getNumber("Expand(+)/Shrink(-) by Pixels:", expand);
+  if (abs(expand)<0.5) exit;
+
+  if (isOpen("ROI Manager")) {
+    selectWindow("ROI Manager");
+    run("Close");
+  }
+  while (isOpen("Mask")) {
+    selectWindow("Mask");	//rename any image named "Mask": it would interfere with creating a new "Mask"
+    run("Rename...", "title=RenamedMask");
+    selectImage(myImageID);
+  }
+  setBatchMode(!debug);
+  run("Create Mask");
+  wid=getWidth();			//create white border for shrink (minimum)
+  hei=getHeight();
+  if (shrinkFromEdge && expand<0)
+    run("Canvas Size...", "width="+(wid+2)+" height="+(hei+2)+" position=Center zero");
+  //using minimum or maximum has the advantage of a circular mask (erode, dilate: square mask)
+  if (expand>0) run("Maximum...", "radius="+abs(expand));
+  else run("Minimum...", "radius="+abs(expand));
+  if (shrinkFromEdge && expand<0)
+    run("Canvas Size...", "width="+wid+" height="+hei+" position=Center");
+  workImageID=getImageID();
+  if(workImageID==myImageID) exit ("Creating mask failed"); //This can happen sometimes on OS X - work image=original image; not reproducible
+  found=createSelection(workImageID,debug);  // convert mask to selection
+  selectImage(myImageID);
+  if (found) run("Restore Selection"); 	//apply selection to original image
+  else run("Select None");
+  setBatchMode(false);
+  if (isOpen("ROI Manager")) {
+    selectWindow("ROI Manager");
+    run("Close");
+  }
+  showStatus("Expand/Shrink Selection - Done");
+
+} //end of macro 'Expand or Shrink Selection'
+
+
+
+//-------------- E x p a n d  /  S h r i n k   S e l e c t i o n   O p t i o n s ---------------
+
+macro 'Expand or Shrink Selection Options...' {
+  requires("1.33o");
+  shrinkFromEdge=getBoolean("Shrink Selections from Image Edge?");
+}
+
+//------------- f u n c t i o n ------------
+function createSelection(workImageID,debug) {
+  //needs a mask as workImage, creates a selection from it
+  //(workImage is destroyed and deleted)
+  //returns true if the selection is non-empty;
+  //in this case use "restore selection" to get it
+
+  selectImage(workImageID);
+  run("Select None");
+  invertedGreyscale=(indexOf(getInfo(), "inverted grayscale")>=0);
+  pixel00Black=((getPixel(0,0)<127) ^ invertedGreyscale);
+  inverted=false;
+  found=false;
+  first=true;
+  maxSize=getWidth*getHeight-1;
+
+  do {
+    if (!first){ 		//don't do this at the start when the Roi manager is empty
+      inverted=!inverted;
+      if (nResults>10) showStatus("Combining "+nResults+" selections - this may take a while...");
+      roiManager("Combine");
+      run("Make Inverse");
+      roiManager("Delete");
+      roiManager("Add");
+      run("Select None");
+    }
+    if (invertedGreyscale) setThreshold(128,255);
+    else setThreshold(0,127);
+    if (debug) {
+      workName=getTitle();
+      run("Analyze Particles...", "minimum=1 maximum="+maxSize+" bins=2 show=Masks clear record");
+      showMessage("found "+nResults+" areas.");
+      if (nResults>0) {
+        selectWindow("Mask of "+workName);
+        run("Close");
+        selectImage(workImageID);
+      }
+    } else {
+      run("Analyze Particles...", "minimum=1 maximum="+maxSize+" bins=2 show=Nothing clear record");
+    }
+    if (first&&nResults==0) { //this may be due to a black background
+      if (debug) showMessage("Black background? retry inverted");
+      run("Select All");
+      run("Invert");
+      inverted=!inverted;
+    if (invertedGreyscale) setThreshold(128,255);
+    else setThreshold(0,127);
+      run("Analyze Particles...", "minimum=1 maximum="+maxSize+" bins=2 show=Nothing clear record");
+      if (debug) showMessage("now found "+nResults+" areas.");
+    }
+    for (i=0; i<nResults; i++) {
+      run("Select None");
+      x = getResult('XStart', i);
+      y = getResult('YStart', i);
+      doWand(x,y);
+      run("Invert");
+      if (debug && (i<10||i>nResults-3)) showMessage("particle inverted");    
+      roiManager("Add");
+      found=true;
+      if (i%10==1) showProgress(i/nResults*0.8);
+    }
+    first=false;
+  } while (nResults>0)
+  if (found) {
+    if (debug) showMessage("going to combine ROIs now; inverted="+inverted);
+    if (nResults>10) showStatus("Combining "+nResults+" selections - this may take a while...");
+    roiManager("Combine");
+    if (inverted) run("Make Inverse");
+    roiManager("Delete");
+  } else {
+    if (pixel00Black) {
+      run("Select All");
+      found=true;
+    }
+  }
+  if (!debug) close();
+  return found;
+}

@@ -26,11 +26,13 @@ package org.micromanager.conf;
 import java.util.ArrayList;
 
 import javax.swing.table.AbstractTableModel;
+import org.micromanager.api.MMPropertyTableModel;
+import org.micromanager.utils.PropertyItem;
 
 /**
  * Table model for device property tables. 
  */
-class PropertyTableModel extends AbstractTableModel {
+class PropertyTableModel extends AbstractTableModel implements MMPropertyTableModel {
    private final PagePanel parentPage_;
    
    private static final long serialVersionUID = 1L;
@@ -48,7 +50,7 @@ class PropertyTableModel extends AbstractTableModel {
    
    MicroscopeModel model_;
    Device devices_[];
-   Property props_[];
+   PropertyItem props_[];
    String devNames_[];
    
    public PropertyTableModel(PagePanel page, MicroscopeModel model, int mode) {
@@ -61,40 +63,40 @@ class PropertyTableModel extends AbstractTableModel {
       
       model_.dumpComPortsSetupProps(); // >>>>>>>
       
-      ArrayList<Property> props = new ArrayList<Property>();
+      ArrayList<PropertyItem> props = new ArrayList<PropertyItem>();
       ArrayList<String> dn = new ArrayList<String>();
       for (int i=0; i<devices_.length; i++) {
          for (int j=0; j<devices_[i].getNumberOfProperties(); j++) {
-            Property p = devices_[i].getProperty(j);
+            PropertyItem p = devices_[i].getProperty(j);
             if (mode == PREINIT) {
-               if (!p.readOnly_ && p.preInit_  && !devices_[i].isSerialPort() && !p.readOnly_) {
+               if (!p.readOnly && p.preInit  && !devices_[i].isSerialPort() && !p.readOnly) {
                   props.add(p);
                   dn.add(devices_[i].getName());
-                  Property setupProp = devices_[i].findSetupProperty(p.name_);
+                  PropertyItem setupProp = devices_[i].findSetupProperty(p.name);
                   if (setupProp != null)
-                     p.value_ = setupProp.value_;
+                     p.value = setupProp.value;
                }
             } else if (mode == COMPORT) {
-               if (devices_[i].isSerialPort() && model_.isPortInUse(devices_[i]) && !p.readOnly_) {
+               if (devices_[i].isSerialPort() && model_.isPortInUse(devices_[i]) && !p.readOnly) {
                   props.add(p);
                   dn.add(devices_[i].getName());
-                  Property setupProp = devices_[i].findSetupProperty(p.name_);
+                  PropertyItem setupProp = devices_[i].findSetupProperty(p.name);
                   if (setupProp != null)
-                     p.value_ = setupProp.value_;
+                     p.value = setupProp.value;
                }
             } else {               
-               if (!p.readOnly_ && !devices_[i].isSerialPort() && !p.readOnly_) {
+               if (!p.readOnly && !devices_[i].isSerialPort()) {
                   props.add(p);
                   dn.add(devices_[i].getName());
-                  Property setupProp = devices_[i].findSetupProperty(p.name_);
+                  PropertyItem setupProp = devices_[i].findSetupProperty(p.name);
                   if (setupProp != null)
-                     p.value_ = setupProp.value_;
+                     p.value = setupProp.value;
                }               
             }
          }
       }
       
-      props_ = new Property[props.size()];
+      props_ = new PropertyItem[props.size()];
       devNames_ = new String[dn.size()];
       for (int i=0; i<props.size(); i++) {
          props_[i] = props.get(i);
@@ -116,16 +118,16 @@ class PropertyTableModel extends AbstractTableModel {
       if (columnIndex == 0)
          return devNames_[rowIndex];
       else if (columnIndex == 1)
-         return props_[rowIndex].name_;
+         return props_[rowIndex].name;
       else
-         return props_[rowIndex].value_;
+         return props_[rowIndex].value;
    }
    
    public void setValueAt(Object value, int row, int col) {
       // Device dev = model_.findDevice(devNames_[row]);
       if (col == 2) {
          try {
-            props_[row].value_ = (String)value;
+            props_[row].value = (String)value;
             fireTableCellUpdated(row, col);
          } catch (Exception e) {
             parentPage_.handleError(e.getMessage());
@@ -134,7 +136,7 @@ class PropertyTableModel extends AbstractTableModel {
    }
    
    public boolean isCellEditable(int nRow, int nCol) {
-      if(nCol == 2 && !props_[nRow].readOnly_)
+      if(nCol == 2 && !props_[nRow].readOnly)
          return true;
       else
          return false;
@@ -144,15 +146,15 @@ class PropertyTableModel extends AbstractTableModel {
       this.fireTableDataChanged();
    }
    
-   public Property getPropertyItem(int rowIndex) {
+   public PropertyItem getPropertyItem(int rowIndex) {
       return props_[rowIndex];
    }
    
    public Setting getSetting(int rowIndex) {
-      return new Setting(devNames_[rowIndex], props_[rowIndex].name_, props_[rowIndex].value_);
+      return new Setting(devNames_[rowIndex], props_[rowIndex].name, props_[rowIndex].value);
    }
    
-   public Property getProperty(Setting s) {
+   public PropertyItem getProperty(Setting s) {
       for (int i=0; i<devices_.length; i++)
          if (devices_[i].getName().compareTo(s.deviceName_) == 0)
             return devices_[i].findSetupProperty(s.propertyName_);

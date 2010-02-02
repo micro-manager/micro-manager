@@ -11,6 +11,7 @@
 // AUTHOR:        Nenad Amodaj, nenad@amodaj.com, 06/08/2005
 //
 // COPYRIGHT:     University of California, San Francisco, 2006
+//                100X Imaging Inc, 2008
 //
 // LICENSE:       This file is distributed under the BSD license.
 //                License text is included with the source distribution.
@@ -29,9 +30,9 @@
 #ifndef _DEMOCAMERA_H_
 #define _DEMOCAMERA_H_
 
-#include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/DeviceBase.h"
 #include "../../MMDevice/ImgBuffer.h"
+#include "../../MMDevice/DeviceThreads.h"
 #include <string>
 #include <map>
 
@@ -58,7 +59,6 @@ public:
    int Shutdown();
   
    void GetName(char* name) const;      
-   bool Busy();
    
    // MMCamera API
    // ------------
@@ -81,10 +81,16 @@ public:
 
    // action interface
    // ----------------
+	// floating point read-only property for testing
+	int OnTestProperty(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+
    int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnReadoutTime(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnScanMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnErrorSimulation(MM::PropertyBase* , MM::ActionType );
 
 private:
    int SetAllowedBinning();
@@ -93,10 +99,13 @@ private:
 
    ImgBuffer img_;
    bool initialized_;
-   bool busy_;
    double readoutUs_;
    MM::MMTime readoutStartTime_;
    long scanMode_;
+   int bitDepth_;
+   unsigned roiX_;
+   unsigned roiY_;
+   bool errorSimulation_;
 
    void GenerateSyntheticImage(ImgBuffer& img, double exp);
    int ResizeImageBuffer();
@@ -247,24 +256,26 @@ public:
    int Shutdown();
      
    // Stage API
-   virtual int SetPositionUm(double pos) {pos_um_ = pos; return DEVICE_OK;}
-   virtual int GetPositionUm(double& pos) {pos = pos_um_; return DEVICE_OK;}
-   virtual double GetStepSize() {return stepSize_um_;}
-   virtual int SetPositionSteps(long steps) {pos_um_ = steps * stepSize_um_; return DEVICE_OK;}
-   virtual int GetPositionSteps(long& steps) {steps = (long)(pos_um_ / stepSize_um_); return DEVICE_OK;}
-   virtual int SetOrigin() {return DEVICE_OK;}
-   virtual int GetLimits(double& lower, double& upper)
+   int SetPositionUm(double pos);
+   int GetPositionUm(double& pos) {pos = pos_um_; LogMessage("Reporting position", true); return DEVICE_OK;}
+   double GetStepSize() {return stepSize_um_;}
+   int SetPositionSteps(long steps) {pos_um_ = steps * stepSize_um_; return DEVICE_OK;}
+   int GetPositionSteps(long& steps) {steps = (long)(pos_um_ / stepSize_um_); return DEVICE_OK;}
+   int SetOrigin() {return DEVICE_OK;}
+   int GetLimits(double& lower, double& upper)
    {
       lower = lowerLimit_;
       upper = upperLimit_;
       return DEVICE_OK;
    }
+   int Move(double /*v*/) {return DEVICE_OK;}
 
    // action interface
    // ----------------
    int OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
+   void SetIntensityFactor(double pos);
    double stepSize_um_;
    double pos_um_;
    bool busy_;
@@ -291,8 +302,12 @@ public:
    int Shutdown();
      
    // XYStage API
-   virtual int SetPositionUm(double x, double y) {posX_um_ = x; posY_um_ = y; return DEVICE_OK;}
-   virtual int GetPositionUm(double& x, double& y) {x = posX_um_; y = posY_um_; return DEVICE_OK;}
+   /* Note that only the Set/Get PositionStep functions are implemented in the adapter
+    * It is best not to override the Set/Get PositionUm functions in DeviceBase.h, since
+    * those implement corrections based on whether or not X and Y directionality should be mirrored
+    * and based on a user defined origin
+    */
+   // This must be correct or the conversions between steps and Um will go wrong
    virtual double GetStepSize() {return stepSize_um_;}
    virtual int SetPositionSteps(long x, long y)
    {
@@ -306,10 +321,20 @@ public:
       y = (long)(posY_um_ / stepSize_um_);
       return DEVICE_OK;
    }
+   int SetRelativePositionSteps(long x, long y)                                                           
+   {                                                                                                      
+      long xSteps, ySteps;                                                                                
+      GetPositionSteps(xSteps, ySteps);                                                   
+
+      return this->SetPositionSteps(xSteps+x, ySteps+y);                                                  
+   } 
    virtual int Home() {return DEVICE_OK;}
    virtual int Stop() {return DEVICE_OK;}
+   // This sets the 0,0 position of the adapter to the current position.  If possible, the stage controller itself
+   // should also be set to 0, 0
+   // Note that this differs form the function SetAdapterOrigin(), which sets the coordinate system used by the adapter
+   // to values different from the system used by the stage controller
    virtual int SetOrigin() {return DEVICE_OK;}//jizhen 4/12/2007
-   virtual int SetAdapterOriginUm(double x, double y) {posX_um_ = x; posY_um_ = y; return DEVICE_OK;}
    virtual int GetLimits(double& lower, double& upper)
    {
       lower = lowerLimit_;
@@ -329,6 +354,7 @@ public:
    }
    double GetStepSizeXUm() {return stepSize_um_;}
    double GetStepSizeYUm() {return stepSize_um_;}
+   int Move(double /*vx*/, double /*vy*/) {return DEVICE_OK;}
 
    // action interface
    // ----------------
@@ -342,42 +368,6 @@ private:
    bool initialized_;
    double lowerLimit_;
    double upperLimit_;
-};
-
-//////////////////////////////////////////////////////////////////////////////
-// DemoAutoFocus class
-// Simulation of the auto-focusing module
-//////////////////////////////////////////////////////////////////////////////
-class DemoAutoFocus : public CAutoFocusBase<DemoAutoFocus>
-{
-public:
-   DemoAutoFocus() : 
-      running_(false), 
-      busy_(false), 
-      initialized_(false)  
-   {}
-
-   ~DemoAutoFocus() {}
-      
-   // MMDevice API
-   bool Busy() {return busy_;}
-   void GetName(char* pszName) const;
-
-   int Initialize();
-   int Shutdown(){initialized_ = false; return DEVICE_OK;}
-
-   // AutoFocus API
-   virtual int SetContinuousFocusing(bool state) {running_ = state; return DEVICE_OK;}
-   virtual int GetContinuousFocusing(bool& state) {state = running_; return DEVICE_OK;}
-   virtual bool IsContinuousFocusLocked() {return running_;}
-   virtual int FullFocus() {return DEVICE_UNSUPPORTED_COMMAND;}
-   virtual int IncrementalFocus() {return DEVICE_UNSUPPORTED_COMMAND;}
-   virtual int GetFocusScore(double& /*score*/) {return DEVICE_UNSUPPORTED_COMMAND;}
-
-private:
-   bool running_;
-   bool busy_;
-   bool initialized_;
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -423,7 +413,7 @@ public:
    ~DemoDA ();
 
    int Shutdown() {return DEVICE_OK;}
-   void GetName(char* name) const {name = "Demo DA";}
+   void GetName(char* name) const {strcpy(name,"Demo DA");}
    int SetGateOpen(bool open); 
    int GetGateOpen(bool& open);
    int SetSignal(double volts);
@@ -451,7 +441,7 @@ public:
    ~DemoMagnifier () {}
 
    int Shutdown() {return DEVICE_OK;}
-   void GetName(char* name) const {name = "Demo Optovar";}
+   void GetName(char* name) const {strcpy(name,"Demo Optovar");}
 
    bool Busy() {return false;}
    int Initialize();
@@ -465,5 +455,45 @@ public:
 private:
    int position;
 };
+
+//////////////////////////////////////////////////////////////////////////////
+// DemoAutoFocus class
+// Simulation of the auto-focusing module
+//////////////////////////////////////////////////////////////////////////////
+class DemoAutoFocus : public CAutoFocusBase<DemoAutoFocus>
+{
+public:
+   DemoAutoFocus() : 
+      running_(false), 
+      busy_(false), 
+      initialized_(false)  
+   {}
+
+   ~DemoAutoFocus() {}
+      
+   // MMDevice API
+   bool Busy() {return busy_;}
+   void GetName(char* pszName) const;
+
+   int Initialize();
+   int Shutdown(){initialized_ = false; return DEVICE_OK;}
+
+   // AutoFocus API
+   virtual int SetContinuousFocusing(bool state) {running_ = state; return DEVICE_OK;}
+   virtual int GetContinuousFocusing(bool& state) {state = running_; return DEVICE_OK;}
+   virtual bool IsContinuousFocusLocked() {return running_;}
+   virtual int FullFocus() {return DEVICE_UNSUPPORTED_COMMAND;}
+   virtual int IncrementalFocus() {return DEVICE_OK;}
+   virtual int GetLastFocusScore(double& score) {score = 0.0; return DEVICE_OK;}
+   virtual int GetCurrentFocusScore(double& score) {score = 1.0; return DEVICE_OK;}
+   virtual int GetOffset(double& /*offset*/) {return DEVICE_OK;}
+   virtual int SetOffset(double /*offset*/) {return DEVICE_OK;}
+
+private:
+   bool running_;
+   bool busy_;
+   bool initialized_;
+};
+
 
 #endif //_DEMOCAMERA_H_

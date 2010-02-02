@@ -137,9 +137,17 @@ void CorePropertyCollection::Execute(const char* propName, const char* value)
    {
       core_->setImageProcessorDevice(value);
    }
+   else if (strcmp(propName, MM::g_Keyword_CoreSLM) == 0)
+   {
+      core_->setSLMDevice(value);
+   }
    else if (strcmp(propName, MM::g_Keyword_CoreTimeoutMs) == 0)
    {
       core_->setTimeoutMs(atol(value));
+   }
+   else if (strcmp(propName, MM::g_Keyword_CoreChannelGroup) == 0)
+   {
+      core_->setChannelGroup(value);
    }
    // unknown property
    else
@@ -203,8 +211,15 @@ void CorePropertyCollection::Refresh()
    // Image processor
    Set(MM::g_Keyword_CoreImageProcessor, core_->getImageProcessorDevice().c_str());
 
+   // SLM
+   Set(MM::g_Keyword_CoreSLM, core_->getSLMDevice().c_str());
+
    // Timeout for Device Busy checking
    Set(MM::g_Keyword_CoreTimeoutMs, CDeviceUtils::ConvertToString(core_->getTimeoutMs()));
+
+   // Channel group
+   Set(MM::g_Keyword_CoreChannelGroup, core_->getChannelGroup().c_str());
+
 }
 
 bool CorePropertyCollection::IsReadOnly(const char* propName) const

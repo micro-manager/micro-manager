@@ -1,0 +1,57 @@
+/////////////////////////////////////////////////////////////////////// 
+// Change Color Tool
+// avalible in the IJ macros tools repertory at  
+// http://rsb.info.nih.gov/ij/macros/tools/ChangeColorTool.txt
+// This tool allows you to change the color of
+// an object composed of identical RGB pixels.
+// An example image is available at
+// http://rsb.info.nih.gov/ij/macros/images/RGB_zone.tif
+/////////////////////////////////////////////////////////////////////// 
+// Author: Gilles Carpentier, Faculte des Sciences et
+// Technologies,  Universite Paris 12 Val de Marne, France
+
+var x,  y;
+var newcolor = "Magenta";
+
+  macro "Color Tool -Ca0b44f-o4499" {
+        setupUndo();
+        getCursorLoc(x, y, z, flags);
+        xstart=x; ystart=y;
+        doWand(x, y);
+
+        colorchoices=newArray("Magenta","Cyan","Yellow","Black","White");
+
+        Dialog.create("New Color Choice");
+        Dialog.addChoice("Color?",colorchoices, toString(newcolor));
+        Dialog.addMessage("          Press 'z' to Undo");
+        Dialog.show();
+
+        newcolor = Dialog.getChoice();
+
+        if (newcolor=="Magenta") {
+            r = 255; g= 0; b = 225;
+        }
+        if (newcolor=="Cyan") {
+            r=0; g=255; b=255;
+        }
+        if (newcolor=="Yellow") {
+            r=255; g=255; b=0;
+        }
+        if (newcolor=="White") {
+            r =255; g =255; b=255;
+        }
+        if (newcolor=="Black"){
+            r=0; g=0; b=0;
+        }
+
+        setColor(r, g, b);
+
+        fill();
+        run("Select None");
+  }
+
+  macro "Undo Color [z]"{
+        run("Undo");
+
+  }
+

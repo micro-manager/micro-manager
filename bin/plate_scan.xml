@@ -21,7 +21,7 @@
             <entry key="acqSaveFiles" value="true"/>
             <entry key="singleFrame" value="false"/>
             <entry key="acqDirName" value="plate_test"/>
-            <entry key="acqRootName" value="C:/AcquisitionData"/>
+            <entry key="acqRootName" value="/AcquisitionData"/>
             <entry key="sliceMode" value="0"/>
             <entry key="positionMode" value="0"/>
             <entry key="autofocus_enabled" value="false"/>

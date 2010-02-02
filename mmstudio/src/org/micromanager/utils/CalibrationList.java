@@ -26,6 +26,7 @@ package org.micromanager.utils;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Hashtable;
+
 import javax.swing.JOptionPane;
 
 import mmcorej.CMMCore;
@@ -54,11 +55,11 @@ public class CalibrationList {
             Calibration cal = new Calibration();
             cal.setConfiguration(core_.getPixelSizeConfigData(calibrations.get(i)));
             cal.setLabel(calibrations.get(i));
-            cal.setPixelSizeUm(core_.getPixelSizeUm(calibrations.get(i)));
+            cal.setPixelSizeUm(core_.getPixelSizeUmByID(calibrations.get(i)));
 
             calibrationList_.add(cal);
          } catch (Exception e) {
-            handleException(e);
+            ReportingUtils.logError(e);
          }
 
       }
@@ -95,7 +96,7 @@ public class CalibrationList {
    }
 
    private void handleException (Exception e) {
-      String errText = "Exeption occured: " + e.getMessage();
+      String errText = "Exception occurred: " + e.getMessage();
       JOptionPane.showMessageDialog(null, errText);
    }
 

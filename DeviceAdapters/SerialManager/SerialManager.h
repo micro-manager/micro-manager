@@ -52,7 +52,7 @@ class CSerial;
 class SerialPort : public CSerialBase<SerialPort>  
 {
 public:
-   SerialPort();
+   SerialPort(const char* portName);
    ~SerialPort();
   
    // MMDevice API
@@ -79,7 +79,7 @@ public:
    int OnTimeout(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnDelayBetweenCharsMs(MM::PropertyBase* pProp, MM::ActionType eAct);
 
-   int Open(const char* portName);
+   int Open();
    void Close();
    void AddReference() {refCount_++;}
    void RemoveReference() {refCount_--;}
@@ -87,6 +87,8 @@ public:
 
 private:
    std::string portName_;
+   std::string portNameWinAPI_;
+
    bool initialized_;
    bool busy_;
    CSerial* port_;
@@ -98,6 +100,9 @@ private:
 
    std::string stopBits_;
    std::string parity_;
+
+
+
 };
 
 class SerialManager

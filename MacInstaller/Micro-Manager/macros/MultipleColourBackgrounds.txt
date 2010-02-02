@@ -1,0 +1,36 @@
+// Generic multiple colour macro for assisting setting of thresholds
+// Analyses pixel intensities along a line selection
+// for a series of greyscale slices in a stack, each corresponding to a colour channel
+// Expandable to any number of colour channels (slices)
+
+// Check for RGB image and convert to greyscale stack
+// Breaks if image name includes "(RGB)"
+image = getImageID(); selectImage(image); info = getInfo(); 
+if (indexOf(info, "(RGB)") >1) {
+	getLine(x1,y1,x2,y2,width);
+	run("RGB Split");
+	run("Convert Images to Stack");
+	makeLine(x1,y1,x2,y2);}
+
+Greyscales = 255; if (indexOf(info, "pixel: 16")>1) {Greyscales = 65535;}
+
+setLineWidth(1);
+getLine(startx, starty, endx, endy, temp);
+stack = getImageID();
+
+selectImage(stack); slices = nSlices();
+
+for (i =0; i<slices; i++) {
+	selectImage(stack);
+	slice = "slice="+(i+1);
+	run("Set Slice...", slice);
+	ydata = getProfile();
+        	Plot.create(slice, "pixels", "intensity");
+        	Plot.setLimits(0, ydata.length, 0, Greyscales);
+        	Plot.setLineWidth(1);
+	Plot.setColor("red");
+	Plot.add("line", ydata);
+	Plot.show();
+	}
+
+

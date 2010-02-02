@@ -33,13 +33,19 @@
 #include "PVCAM.h"
 
 #ifdef WIN32
-#include "../../../3rdparty/RoperScientific/Windows/PvCam/SDK/Headers/pvcam.h"
-#else
+#include "Headers/master.h"
+#include "Headers/pvcam.h"
+#endif
+
 #ifdef __APPLE__
 #define __mac_os_x
 #include <PVCAM/master.h>
 #include <PVCAM/pvcam.h>
 #endif
+
+#ifdef linux
+#include <pvcam/master.h>
+#include <pvcam/pvcam.h>
 #endif
 
 #include <string>
@@ -67,22 +73,6 @@ const char* g_ReadoutPort_Normal = "Normal";
 const char* g_ReadoutPort_Multiplier = "EM";
 const char* g_ReadoutPort_LowNoise = "LowNoise";
 const char* g_ReadoutPort_HighCap = "HighCap";
-
-/*
-// Unix entry code
-#ifdef __GNUC__
-void __attribute__ ((constructor)) my_init(void)
-{
-   if (ACE::init_fini_count_ == 0)
-      ACE::init();
-}
-void __attribute__ ((destructor)) my_fini(void)
-{
-//   printf ("Destructing ACE in Demo\n");
- //  ACE::fini();
-}
-#endif
-*/
 
 // windows DLL entry code
 #ifdef WIN32
@@ -126,12 +116,10 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
    if (deviceName == 0)
       return 0;
    
-   if (strcmp(deviceName, g_DeviceCascade) == 0)
-      return Cascade::GetInstance();
-   else if (strcmp(deviceName, g_DeviceUniversal_1) == 0)
-      return Universal::GetInstance(0);
+   if (strcmp(deviceName, g_DeviceUniversal_1) == 0)
+      return new Universal(0);
    else if (strcmp(deviceName, g_DeviceUniversal_2) == 0)
-      return Universal::GetInstance(1);
+      return new Universal(1);
    
    return 0;
 }

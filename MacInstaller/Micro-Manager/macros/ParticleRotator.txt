@@ -1,0 +1,15 @@
+// generate test image with single particle
+run("New...", "name=Untitled type='8-bit Unsigned' fill=White width=400 height=400");
+makeLine(60, 200, 200, 75);
+run("Line Width...", "line=30");
+setForegroundColor(100, 100, 100);
+run("Draw");
+
+// rotate the particle
+run("Set Measurements...", "area mean min fit decimal=3");
+setThreshold(0,128); // there needs to be an autoThreshold() function
+run("Analyze Particles...", "show=Nothing display clear");
+run("Duplicate...", "title='Rotated Image'");
+angle = getResult('Angle', getResultsCount()-1);
+//print('angle: '+angle+' degrees');
+run("Arbitrarily...", "angle="+angle+" interpolate");

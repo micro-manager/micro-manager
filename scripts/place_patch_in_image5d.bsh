@@ -1,0 +1,55 @@
+import org.micromanager.image5d.Image5D;
+
+ImageProcessor makeProcessor(short [] imgArray) {
+	w = (short) mmc.getImageWidth();
+	h = (short) mmc.getImageHeight();
+	return new ShortProcessor(w,h,imgArray,null);
+}
+
+ImageProcessor makeProcessor(byte [] imgArray) {
+	w = (short) mmc.getImageWidth();
+	h = (short) mmc.getImageHeight();
+	return new ByteProcessor(w,h,imgArray,null);
+}
+
+ImageProcessor makeProcessor(short [] imgArray, w, h) {
+	return new ShortProcessor((short) w, (short) h,imgArray,null);
+}
+
+ImageProcessor makeProcessor(byte [] imgArray, w, h) {
+	return new ByteProcessor((short) w,(short) h,imgArray,null);
+}
+
+void placePatchInImage5D(Image5D i5d, channel, slice, frame, x, y, patchPixels, patchWidth, patchHeight) {
+	hostPixels = i5d.getPixels(channel, slice, frame);
+	hostWidth = i5d.getWidth();
+	hostHeight = i5d.getHeight();
+	hostProc = makeProcessor(hostPixels, hostWidth, hostHeight);
+	patchProc = makeProcessor(patchPixels, patchWidth, patchHeight);
+	hostProc.insert(patchProc,(int) x,(int) y);
+}
+
+void snapAndPatchIntoImage5D(i5d,channel,slice,frame,x,y) {
+	mmc.snapImage();
+	pix = mmc.getImage();
+	w = mmc.getImageWidth();
+	h = mmc.getImageHeight();
+	placePatchInImage5D(i5d,channel,slice,frame,x,y,pix,w,h);
+}
+
+void testPatchesInImage5D() {
+	i5d = (Image5D) IJ.getImage();
+	for (t=1;t<=i5d.getNFrames();t++)
+		for (x=0;x<=400;x+=50)
+			for(y=0;y<=400;y+=50)
+				for(z=1;z<=i5d.getNSlices();z++)
+					for(c=1;c<=i5d.getNChannels();c++) {
+						snapAndPatchIntoImage5D(i5d,c,z,t,x,y);
+						i5d.setCurrentPosition(0,0,c-1,z-1,t-1);
+					}
+}
+
+update();
+
+// To get the image to appear, use:
+// i5d.updateImageAndDraw();

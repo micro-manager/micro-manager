@@ -1,0 +1,28 @@
+//   This is a tool macro similar to the paint brush tool in NIH Image.
+//   It draws in the current foreground color, which can be set by
+//   double-clicking on the eye dropper tool. Double-click on 
+//   the paintbrush tool icon to set the brush width.
+
+  var brushWidth = 10;
+ 
+   macro "Paintbrush Tool - C0aao33aa" {
+        leftClick=16;
+        //setupUndo(); // requires 1.32g or later
+        getCursorLoc(x, y, z, flags);
+        setLineWidth(brushWidth);
+        moveTo(x,y);
+        x2=-1; y2=-1;
+        while (true) {
+            getCursorLoc(x, y, z, flags);
+            if (flags&leftClick==0) exit();
+            if (x!=x2 || y!=y2)
+                lineTo(x,y);
+            x2=x; y2 =y;
+            wait(10);
+        }
+   }
+
+  // ImageJ runs this macro when user double-clicks on the paint brush tool icon
+  macro 'Paintbrush Tool Options' {
+      brushWidth = getNumber("Brush Width:", brushWidth);
+  }

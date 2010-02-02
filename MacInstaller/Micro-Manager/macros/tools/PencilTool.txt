@@ -1,0 +1,29 @@
+//   This is a tool macro similar to the pencil tool in NIH Image.
+//   Use it to draw lines in the current foreground color (requires 1.30l).
+//   Double-click on the tool icon to set the line width (requires 1.30l).
+//   Press shift to draw wider lines
+
+   var lineWidth  = 1;
+
+   macro 'Pencil Tool - C059P1f418db3daf5' {
+        requires("1.30k");
+        leftClick=16; rightClick=4;
+        shift=1; control=2; alt=8;
+        getCursorLoc(x, y, z, flags);
+        moveTo(x,y);
+        x2=-1; y2=-1;
+        while (true) {
+            getCursorLoc(x, y, z, flags);
+            if (flags&leftClick==0) exit();
+            if (flags&shift!=0) setLineWidth(10); else setLineWidth(lineWidth);
+            if (x!=x2 || y!=y2)
+                lineTo(x,y);
+            x2=x; y2 =y;
+            wait(10);
+        }
+   }
+
+  // ImageJ runs this macro when user double-clicks on the pencil tool icon
+  macro 'Pencil Tool Options' {
+    lineWidth = getNumber("Line Width:", lineWidth);
+  }

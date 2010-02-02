@@ -42,9 +42,10 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\3rdparty\ACE_wrappers_5.5"
-				PreprocessorDefinitions="WIN32;_DEBUG;_LIB"
+				AdditionalIncludeDirectories="../../3rdparty;../../3rdparty/boost;../../3rdparty\boost\boost;&quot;..\..\3rdparty\Microsoft\VisualC++\include&quot;"
+				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;_WINDOWS"
 				MinimalRebuild="true"
+				ExceptionHandling="2"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				RuntimeTypeInfo="true"
@@ -52,6 +53,7 @@
 				WarningLevel="4"
 				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="4"
+				DisableSpecificWarnings="4290"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -65,6 +67,7 @@
 			<Tool
 				Name="VCLibrarianTool"
 				OutputFile="$(OutDir)/MMCore.lib"
+				AdditionalLibraryDirectories="..\..\3rdparty\boost\stage\lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -108,14 +111,17 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\..\3rdparty\ACE_wrappers_5.5"
-				PreprocessorDefinitions="WIN32;NDEBUG;_LIB"
+				AdditionalOptions="/wd4244"
+				AdditionalIncludeDirectories="../../3rdparty;../../3rdparty/boost;../../3rdparty\boost\boost;&quot;..\..\3rdparty\Microsoft\VisualC++\include&quot;"
+				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;_WINDOWS"
+				ExceptionHandling="2"
 				RuntimeLibrary="0"
 				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="4"
 				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="3"
+				DisableSpecificWarnings="4290"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -129,6 +135,7 @@
 			<Tool
 				Name="VCLibrarianTool"
 				OutputFile="$(OutDir)/MMCore.lib"
+				AdditionalLibraryDirectories="..\..\3rdparty\boost\stage\lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -145,6 +152,63 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				CommandLine="copy &quot;$(TargetPath)&quot; ..\lib&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; ..\lib\$(TargetName)r.lib&#x0D;&#x0A;"
+			/>
+		</Configuration>
+		<Configuration
+			Name="Quick|Win32"
+			ConfigurationType="1"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				AdditionalIncludeDirectories="../../3rdparty;../../3rdparty/boost;../../3rdparty\boost\boost;&quot;..\..\3rdparty\Microsoft\VisualC++\include&quot;"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
 			/>
 		</Configuration>
 	</Configurations>
@@ -174,6 +238,10 @@
 			</File>
 			<File
 				RelativePath="..\MMDevice\DeviceUtils.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\FastLogger.cpp"
 				>
 			</File>
 			<File
@@ -227,11 +295,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FastLogger.h"
+				>
+			</File>
+			<File
 				RelativePath="..\MMDevice\ImageMetadata.h"
 				>
 			</File>
 			<File
 				RelativePath="..\MMDevice\ImgBuffer.h"
+				>
+			</File>
+			<File
+				RelativePath=".\IMMLogger.h"
 				>
 			</File>
 			<File

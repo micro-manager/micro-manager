@@ -1,0 +1,55 @@
+// "OpenSeriesUsingFilter.txt"
+// Opens an image series as a stack using a customizable
+// file name filter. To customize the filter, edit the
+// filter() method.
+
+macro "Open Series Using Filter" {
+    requires("1.34e"); 
+    dir = getDirectory("Choose a Directory ");
+    list = getFileList(dir);
+    stack = 0;
+    setBatchMode(true); 
+    for (i=0; i<list.length; i++) {
+        showProgress(i, list.length);
+        if (filter(i, list[i])) {
+            open(dir+list[i]);
+            run("Copy");
+            if (stack==0) {
+                type = "" +bitDepth;
+                if (type=="24") type = "RGB";
+                w=getWidth(); h=getHeight();
+                close();
+                newImage("stack",type,w,h,1);
+                stack = getImageID();
+            } else {
+                close();
+                selectImage(stack);
+                run("Add Slice");
+            }
+            run("Paste");
+        }
+    }
+    if (stack!=0) setSlice(1);
+    setBatchMode(false);
+}
+
+function filter(i, name) {
+    // is directory?
+    if (endsWith(name,"/")) return false;
+
+    // is tiff?
+    if (!endsWith(name,".tif")) return false;
+
+    // ignore text files
+    // if (endsWith(name,".txt")) return false;
+
+    // does name contain both "Series002" and "ch01"
+    // if (indexOf(name,"Series002")==-1) return false;
+    // if (indexOf(name,"ch01")==-1) return false;
+
+    // open only first 10 images
+    // if (i>=10) return false;
+
+    return true;
+}
+ 

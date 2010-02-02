@@ -34,7 +34,9 @@ import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
+
 import org.micromanager.image5d.Image5DWindow;
+
 import com.swtdesigner.SwingResourceManager;
 
 /**
@@ -50,7 +52,12 @@ public class PlaybackPanel extends Panel {
    /**
     * Create the panel
     */
+   
    public PlaybackPanel(Image5DWindow wnd) {
+	   this(wnd,false);
+   }
+   
+   public PlaybackPanel(Image5DWindow wnd, boolean snap) {
       super();
       wnd_ = wnd;
       setSize(590, 37);
@@ -67,16 +74,18 @@ public class PlaybackPanel extends Panel {
       saveAsButton_.setBounds(6, 5, 37, 24);
       add(saveAsButton_);
 
-      final JButton abortButton_ = new JButton();
-      abortButton_.addActionListener(new ActionListener() {
-         public void actionPerformed(final ActionEvent e) {
-            wnd_.abortAcquisition();
-         }
-      });
-      abortButton_.setToolTipText("Abort current acquistion");
-      abortButton_.setIcon(SwingResourceManager.getIcon(PlaybackPanel.class, "/org/micromanager/icons/cancel.png"));
-      abortButton_.setBounds(44, 5, 37, 24);
-      add(abortButton_);
+      if (! snap) {
+	      final JButton abortButton_ = new JButton();
+	      abortButton_.addActionListener(new ActionListener() {
+	         public void actionPerformed(final ActionEvent e) {
+	            wnd_.abortAcquisition();
+	         }
+	      });
+	      abortButton_.setToolTipText("Abort current acquistion");
+	      abortButton_.setIcon(SwingResourceManager.getIcon(PlaybackPanel.class, "/org/micromanager/icons/cancel.png"));
+	      abortButton_.setBounds(44, 5, 37, 24);
+	      add(abortButton_);
+      }
 
       final JLabel framessecLabel = new JLabel();
       framessecLabel.setFont(new Font("Arial", Font.PLAIN, 10));
@@ -137,25 +146,27 @@ public class PlaybackPanel extends Panel {
       contrastButton_.setBounds(164, 5, 37, 24);
       add(contrastButton_);
 
-      final JToggleButton togglePauseButton_ = new JToggleButton();
-      togglePauseButton_.setIcon(SwingResourceManager.getIcon(PlaybackPanel.class, "/org/micromanager/icons/control_pause.png"));
-      togglePauseButton_.setToolTipText("Pause acquisition");
-      togglePauseButton_.addActionListener(new ActionListener() {
-         public void actionPerformed(final ActionEvent e) {
-            if (togglePauseButton_.isSelected()){
-               wnd_.pause();
-               togglePauseButton_.setIcon(SwingResourceManager.getIcon(PlaybackPanel.class, "/org/micromanager/icons/film_go.png"));
-               togglePauseButton_.setToolTipText("Resume");
-            } else {
-               wnd_.resume();
-               togglePauseButton_.setIcon(SwingResourceManager.getIcon(PlaybackPanel.class, "/org/micromanager/icons/control_pause.png"));
-               togglePauseButton_.setToolTipText("Pause");
-            }
-         }
-      });
-      togglePauseButton_.setBounds(83, 5, 37, 24);
-      add(togglePauseButton_);
-
+      
+      if (! snap) {
+	      final JToggleButton togglePauseButton_ = new JToggleButton();
+	      togglePauseButton_.setIcon(SwingResourceManager.getIcon(PlaybackPanel.class, "/org/micromanager/icons/control_pause.png"));
+	      togglePauseButton_.setToolTipText("Pause acquisition");
+	      togglePauseButton_.addActionListener(new ActionListener() {
+	         public void actionPerformed(final ActionEvent e) {
+	            if (togglePauseButton_.isSelected()){
+	               wnd_.pause();
+	               togglePauseButton_.setIcon(SwingResourceManager.getIcon(PlaybackPanel.class, "/org/micromanager/icons/film_go.png"));
+	               togglePauseButton_.setToolTipText("Resume");
+	            } else {
+	               wnd_.resume();
+	               togglePauseButton_.setIcon(SwingResourceManager.getIcon(PlaybackPanel.class, "/org/micromanager/icons/control_pause.png"));
+	               togglePauseButton_.setToolTipText("Pause");
+	            }
+	         }
+	      });
+	      togglePauseButton_.setBounds(83, 5, 37, 24);
+	      add(togglePauseButton_);
+      }
       //
    }
    

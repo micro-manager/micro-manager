@@ -30,6 +30,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
+import java.text.ParseException;
 import java.util.Timer;
 import java.util.prefs.Preferences;
 
@@ -48,17 +49,18 @@ import javax.swing.border.LineBorder;
 import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
 
+import org.micromanager.api.DeviceControlGUI;
 import org.micromanager.fastacq.DiskStreamingThread;
 import org.micromanager.fastacq.DisplayTimerTask;
 import org.micromanager.fastacq.GUIStatus;
 import org.micromanager.fastacq.StatusTimerTask;
-import org.micromanager.api.DeviceControlGUI;
 import org.micromanager.utils.GUIColors;
-import org.micromanager.utils.MMLogger;
 import org.micromanager.utils.MemoryUtils;
+import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.TextUtils;
 
 import com.swtdesigner.SwingResourceManager;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  * Dialog box to set up fast sequence acquisition mode.
@@ -107,8 +109,19 @@ public class FastAcqDlg extends JDialog implements GUIStatus {
       guiColors_ = new GUIColors();
       
       addWindowListener(new WindowAdapter() {
+         public void windowClosing(WindowEvent arg0) {
+             if (canExit()) {
+                 dispose();
+                 saveSettings();
+                 parentGUI_.makeActive();
+               } else {
+                 displayMessageDialog("Saving to disk not finished.\n" +
+                       "Please wait until all acquired images are procesessed.");
+                 return;
+              }
+         }
+
          public void windowClosed(WindowEvent arg0) {
-            saveSettings();
             if (statusTimer_ != null)
                statusTimer_.cancel();
             if (dispTimer_ != null)
@@ -138,7 +151,7 @@ public class FastAcqDlg extends JDialog implements GUIStatus {
       
       final JLabel sequenceLengthLabel = new JLabel();
       sequenceLengthLabel.setText("Sequence length");
-      sequenceLengthLabel.setBounds(10, 10, 101, 14);
+      sequenceLengthLabel.setBounds(10, 10, 106, 14);
       getContentPane().add(sequenceLengthLabel);
 
       final JLabel intervalmsLabel = new JLabel();
@@ -157,15 +170,15 @@ public class FastAcqDlg extends JDialog implements GUIStatus {
       getContentPane().add(namePrefixLabel);
 
       seqLength_ = new JTextField();
-      seqLength_.setBounds(115, 5, 79, 20);
+      seqLength_.setBounds(120, 7, 74, 20);
       getContentPane().add(seqLength_);
 
       dirRoot_ = new JTextField();
-      dirRoot_.setBounds(115, 46, 281, 20);
+      dirRoot_.setBounds(120, 48, 276, 20);
       getContentPane().add(dirRoot_);
 
       namePrefix_ = new JTextField();
-      namePrefix_.setBounds(115, 73, 281, 20);
+      namePrefix_.setBounds(120, 73, 276, 20);
       getContentPane().add(namePrefix_);
 
       final JButton startButton = new JButton();
@@ -196,6 +209,7 @@ public class FastAcqDlg extends JDialog implements GUIStatus {
             if (canExit()) {
                dispose();
                saveSettings();
+               parentGUI_.makeActive();
              } else {
                displayMessageDialog("Saving to disk not finished.\n" +
                      "Please wait until all acquired images are procesessed.");
@@ -313,7 +327,14 @@ public class FastAcqDlg extends JDialog implements GUIStatus {
       int height = (int)core_.getImageHeight();
       int depth = (int)core_.getBytesPerPixel();
       
-      final int numFrames = Integer.parseInt(seqLength_.getText());
+      int numFrames;
+      try {
+		numFrames = NumberUtils.displayStringToInt(seqLength_.getText());
+      } catch (ParseException e1) {
+		// TODO Auto-generated catch block
+		ReportingUtils.showError(e1);
+		return;
+      }
       if (cameraName_.length() == 0) {
          displayMessageDialog("Camera device not defined or configured.");
          return;
@@ -327,7 +348,7 @@ public class FastAcqDlg extends JDialog implements GUIStatus {
       // check if we have enough memory to acquire the entire sequence
       long freeBytes = MemoryUtils.freeMemory();
       long requiredBytes = ((long)numFrames + 10) * (width * height * depth);
-      MMLogger.getLogger().info("Remaining memory " + freeBytes + " bytes. Required: " + requiredBytes);
+      core_.logMessage("Remaining memory " + freeBytes + " bytes. Required: " + requiredBytes);
       if (createStackRadioButton_.isSelected() && freeBytes <  requiredBytes) {
          handleError("Remaining memory " + TextUtils.FMT2.format(freeBytes/1048576.0) +
                " MB. Required for screen display: " + TextUtils.FMT2.format(requiredBytes/1048576.0) + " MB\n" +
@@ -342,8 +363,8 @@ public class FastAcqDlg extends JDialog implements GUIStatus {
          
          // start acquiring
          // ---------------
-         core_.startSequenceAcquisition(numFrames, acqIntervalMs);
-         MMLogger.getLogger().info("core_.startSequenceAcquisition() called.");            
+         core_.startSequenceAcquisition(numFrames, acqIntervalMs, true);
+         core_.logMessage("core_.startSequenceAcquisition() called.");            
          
          // try to get actual interval
          // --------------------------
@@ -371,12 +392,12 @@ public class FastAcqDlg extends JDialog implements GUIStatus {
          }
          
       } catch (Exception e) {
-         handleError(e.getMessage());
+         ReportingUtils.showError(e);
          if (dispTimer_ != null)
             dispTimer_.cancel();
          if (streamThread_ != null)
             streamThread_.interrupt();
-      }            
+      }
    }
    
    private void handleError(String message) {
@@ -397,7 +418,7 @@ public class FastAcqDlg extends JDialog implements GUIStatus {
                   
       } catch (Exception e) {
          // TODO Auto-generated catch block
-         e.printStackTrace();
+         ReportingUtils.showError(e);
       }
    }
    
@@ -450,7 +471,7 @@ public class FastAcqDlg extends JDialog implements GUIStatus {
    }
    
    /**
-    * Tests if the acquistion is still in progress.
+    * Tests if the acquisition is still in progress.
     */
    public boolean isBusy() {
       // make sure writing thread finishes
@@ -459,12 +480,11 @@ public class FastAcqDlg extends JDialog implements GUIStatus {
       }
       
       try {
-         if (core_.deviceBusy(cameraName_)) {
+         if (core_.deviceBusy(cameraName_) || core_.isSequenceRunning()) {
             return true;
          }
       } catch (Exception e) {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
+         ReportingUtils.logError(e);
       }
       
       return false;   
@@ -485,4 +505,29 @@ public class FastAcqDlg extends JDialog implements GUIStatus {
       setBackground(guiColors_.background.get(style));
       repaint();
    } 
+
+   /**
+    * Access function to programmatically set root directory
+    */
+   public void setDirRoot(String root) {
+      dirRoot_.setText(root);
+   }
+
+   /**
+    * Access function to programmatically set image name
+    */
+   public void setName(String name) {
+      namePrefix_.setText(name);
+   }
+
+   /**
+
+   /**
+    * Access function to programmatically set root directory
+    */
+   public void setSequenceLength(int nr) {
+      seqLength_.setText(Integer.toString(nr));
+   }
 }
+
+

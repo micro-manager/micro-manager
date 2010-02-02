@@ -1,0 +1,8 @@
+run("Select All");
+run("Set Measurements...", "  mean redirect=None decimal=0");
+run("Measure");
+i=nResults-1;
+frameMean = getResult("Mean", i);
+run("Add Slice");
+setColor(frameMean);
+fill();

@@ -108,6 +108,10 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_FluoArcLampName);
 }
 
+MODULE_API void GetPersistentData(std::vector<std::string>& persistentData)
+{
+}
+
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
 {
    if (deviceName == 0)

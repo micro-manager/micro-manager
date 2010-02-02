@@ -1,0 +1,27 @@
+// ResizeImagesAndStack.txt
+// G. Landini @ bham. ac. uk
+// Takes a number of images and resizes them
+// according to the largest one and makes a stack 
+
+macro "Resize Images And Stack" {
+    requires("1.33r");
+    w = 0;
+    h = 0;
+
+    // generate test images
+    //for (i=1; i<=10; i++)
+    //    run("New...", "name="+i+" type=8-bit fill=Ramp width="+(100+50*i)+" height="+(100+50*i)+" slices=1");
+
+    for (i=1; i<=nImages; i++) {
+	    selectImage(i);
+	    if (getWidth>w) w=getWidth;
+	    if (getHeight>h) h=getHeight;
+    }
+
+    for (i=1; i<=nImages; i++) {
+        selectImage(i);
+        run("Canvas Size...", "width="+w+" height="+h+" position=Top-Left");
+    }
+    run("Convert Images to Stack");
+}
+

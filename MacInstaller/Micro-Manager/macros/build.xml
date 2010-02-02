@@ -1,0 +1,13 @@
+<!-- Ant makefile for creating a macro ZIP archive -->
+
+<project name="Macros" default="zip">
+
+  <target name="zip" description="Build macros.zip.">
+    <zip zipfile="../macros.zip"
+       basedir=".."
+       includes="macros/**"
+    />
+  </target>
+
+</project>
+

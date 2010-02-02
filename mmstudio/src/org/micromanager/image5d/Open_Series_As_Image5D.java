@@ -1,8 +1,10 @@
 package org.micromanager.image5d;
 
 
-import ij.*;
-import ij.plugin.*;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.WindowManager;
+import ij.plugin.PlugIn;
 
 /*
  * Created on 29.05.2005

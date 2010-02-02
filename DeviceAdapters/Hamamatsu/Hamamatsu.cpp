@@ -25,7 +25,8 @@
 // NOTES:    
 //
 // CVS:           $Id$
-//
+
+
 #ifdef WIN32
    #define WIN32_LEAN_AND_MEAN
    #include <windows.h>
@@ -33,7 +34,7 @@
    #include <memory.h>
    void ZeroMemory(void* mem, int size) 
    {
-      memset(mem,size,0);
+      memset(mem,0,size);
    }
 #endif
 #include "../../MMDevice/ModuleInterface.h"
@@ -76,6 +77,7 @@ const char* g_TrigMode_Start = "Start";
 const char* g_TrigMode_SyncReadout = "Sync Readout";
 const char* g_TrigPolarity_Positive = "Positive";
 const char* g_TrigPolarity_Negative = "Negative";
+const char* g_HighDynamicRangeMode = "High Dynamic Range Mode";
 
 
 // singleton instance
@@ -134,6 +136,7 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
 
 CHamamatsu::CHamamatsu() :
    CCameraBase<CHamamatsu> (),
+   frameBufferSize_(30),
    m_bInitialized(false),
    m_bBusy(false),
    acquiring_(false),
@@ -142,7 +145,10 @@ CHamamatsu::CHamamatsu() :
    softwareTriggerEnabled_ (false),
    lnBin_(1),
    slot_(0),
-   originalTrigMode_("")
+   originalTrigMode_(""),
+   dExp_(50.0),
+   stopOnOverflow_(true),
+   interval_ms_ (0)
 {
    InitializeDefaultErrorMessages();
    // slot
@@ -187,6 +193,10 @@ int CHamamatsu::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::AfterSet)
    {
+      bool acquiring = IsCapturing();
+      if (acquiring)
+         StopSequenceAcquisition();
+
       pProp->Get(lnBin_);
       int nRet = ShutdownImageBuffer();
       if (nRet != DEVICE_OK)
@@ -196,6 +206,22 @@ int CHamamatsu::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
       nRet = ResizeImageBuffer();
       if (nRet != DEVICE_OK)
          return nRet;
+
+      // Changed binning might affect High Dynamic Range mode
+      DCAM_PROPERTYATTR propAttr;
+      if (IsPropertySupported(propAttr, DCAM_IDPROP_HIGHDYNAMICRANGE_MODE)) {
+         SetAllowedPropValues(propAttr, g_HighDynamicRangeMode);
+         // propagate changes to GUI
+         if (m_bInitialized) {
+            nRet = OnPropertiesChanged();
+            if (nRet != DEVICE_OK)
+               return nRet;
+         }
+      }
+
+      if (acquiring)
+         RestartSequenceAcquisition();
+
    }
    else if (eAct == MM::BeforeGet)
    {
@@ -211,6 +237,10 @@ int CHamamatsu::OnTrigPolarity(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::AfterSet)
    {
+      bool acquiring = IsCapturing();
+      if (acquiring)
+         StopSequenceAcquisition();
+
       std::string triggerPolarity;
       pProp->Get(triggerPolarity);
       int nRet = ShutdownImageBuffer();
@@ -224,6 +254,9 @@ int CHamamatsu::OnTrigPolarity(MM::PropertyBase* pProp, MM::ActionType eAct)
       nRet = ResizeImageBuffer();
       if (nRet != DEVICE_OK)
          return nRet;
+
+      if (acquiring)
+         RestartSequenceAcquisition();
    }
    else if (eAct == MM::BeforeGet)
    {
@@ -238,49 +271,68 @@ int CHamamatsu::OnTrigPolarity(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+int CHamamatsu::SetTrigMode(std::string triggerMode)
+{
+   int nRet = ShutdownImageBuffer();
+   if (nRet != DEVICE_OK)
+      return nRet;
+   long mode = DCAM_TRIGMODE_SOFTWARE;
+   if (triggerMode == g_TrigMode_Software)
+      mode = DCAM_TRIGMODE_SOFTWARE;
+   else if (triggerMode == g_TrigMode_Internal)
+      mode = DCAM_TRIGMODE_INTERNAL;
+   else if (triggerMode == g_TrigMode_Edge)
+      mode = DCAM_TRIGMODE_EDGE;
+   else if (triggerMode == g_TrigMode_Level)
+      mode = DCAM_TRIGMODE_LEVEL;
+   else if (triggerMode == g_TrigMode_MultiShot_Sensitive)
+      mode = DCAM_TRIGMODE_MULTISHOT_SENSITIVE;
+   else if (triggerMode == g_TrigMode_Cycle_Delay)
+      mode = DCAM_TRIGMODE_CYCLE_DELAY;
+   else if (triggerMode == g_TrigMode_FastRepetition)
+      mode = DCAM_TRIGMODE_FASTREPETITION;
+   else if (triggerMode == g_TrigMode_TDI)
+      mode = DCAM_TRIGMODE_TDI;
+   else if (triggerMode == g_TrigMode_TDIInternal)
+      mode = DCAM_TRIGMODE_TDIINTERNAL;
+   else if (triggerMode == g_TrigMode_Start)
+      mode = DCAM_TRIGMODE_START;
+   else if (triggerMode == g_TrigMode_SyncReadout)
+      mode = DCAM_TRIGMODE_SYNCREADOUT;
+
+   ostringstream os;
+   os << "Setting triggermode to: " << mode;
+   LogMessage(os.str().c_str(), true); 
+
+   if (!dcam_settriggermode(m_hDCAM, mode))
+      return ReportError("Error in dcam_settriggermode: ");
+   triggerMode_ = triggerMode;
+
+   // Some cameras (e.g. C4742-95 with Phoenix card) have a different exposure time in software trugger versus internal trigger modes
+   if (!dcam_setexposuretime(m_hDCAM, dExp_ / 1000.0))
+       return ReportError("Error in dcam_setexposuretime: ");
+
+   nRet = ResizeImageBuffer();
+   if (nRet != DEVICE_OK)
+      return nRet;
+
+   return DEVICE_OK;
+}
+
+
 // Trigger Mode
 int CHamamatsu::OnTrigMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::AfterSet)
    {
+      if (IsCapturing())
+         return ERR_BUSY_ACQUIRING;;
+
       std::string triggerMode;
       pProp->Get(triggerMode);
-      int nRet = ShutdownImageBuffer();
-      if (nRet != DEVICE_OK)
-         return nRet;
-      long mode = DCAM_TRIGMODE_SOFTWARE;
-      if (triggerMode == g_TrigMode_Software)
-         mode = DCAM_TRIGMODE_SOFTWARE;
-      else if (triggerMode == g_TrigMode_Internal)
-         mode = DCAM_TRIGMODE_INTERNAL;
-      else if (triggerMode == g_TrigMode_Edge)
-         mode = DCAM_TRIGMODE_EDGE;
-      else if (triggerMode == g_TrigMode_Level)
-         mode = DCAM_TRIGMODE_LEVEL;
-      else if (triggerMode == g_TrigMode_MultiShot_Sensitive)
-         mode = DCAM_TRIGMODE_MULTISHOT_SENSITIVE;
-      else if (triggerMode == g_TrigMode_Cycle_Delay)
-         mode = DCAM_TRIGMODE_CYCLE_DELAY;
-      else if (triggerMode == g_TrigMode_FastRepetition)
-         mode = DCAM_TRIGMODE_FASTREPETITION;
-      else if (triggerMode == g_TrigMode_TDI)
-         mode = DCAM_TRIGMODE_TDI;
-      else if (triggerMode == g_TrigMode_TDIInternal)
-         mode = DCAM_TRIGMODE_TDIINTERNAL;
-      else if (triggerMode == g_TrigMode_Start)
-         mode = DCAM_TRIGMODE_START;
-
-      ostringstream os;
-      os << "Setting triggermode to: " << mode;
-      LogMessage(os.str().c_str(), true); 
-
-      if (!dcam_settriggermode(m_hDCAM, mode))
-         return ReportError("Error in dcam_settriggermode: ");
-      triggerMode_ = triggerMode;
-
-      nRet = ResizeImageBuffer();
-      if (nRet != DEVICE_OK)
-         return nRet;
+      int ret = SetTrigMode(triggerMode);
+      if (ret != DEVICE_OK)
+            return ret;
    }
    else if (eAct == MM::BeforeGet)
    {
@@ -300,6 +352,7 @@ int CHamamatsu::OnTrigMode(MM::PropertyBase* pProp, MM::ActionType eAct)
          case DCAM_TRIGMODE_TDI: triggerMode_ = g_TrigMode_TDI; break;
          case DCAM_TRIGMODE_TDIINTERNAL: triggerMode_ = g_TrigMode_TDIInternal; break;
          case DCAM_TRIGMODE_START: triggerMode_ = g_TrigMode_Start; break;
+         case DCAM_TRIGMODE_SYNCREADOUT: triggerMode_ = g_TrigMode_SyncReadout; break;
       }
       pProp->Set(triggerMode_.c_str());
    }
@@ -313,17 +366,24 @@ int CHamamatsu::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
    // while the driver returns the value in seconds
    if (eAct == MM::BeforeGet)
    {
-      double dExp;
-      if (!dcam_getexposuretime(m_hDCAM, &dExp))
-         return ReportError("Error in dcam_getexposuretime: ");
-      pProp->Set(dExp * 1000.0);
+      pProp->Set(dExp_);
    }
    else if (eAct == MM::AfterSet)
    {
+      bool acquiring = IsCapturing();
+      if (acquiring)
+         StopSequenceAcquisition();
+
       double dExp;
       pProp->Get(dExp);
       if (!dcam_setexposuretime(m_hDCAM, dExp / 1000.0))
          return ReportError("Error in dcam_setexposuretime: ");
+
+      dExp_ = dExp;
+
+      if (acquiring)
+         RestartSequenceAcquisition();
+
    }
    return DEVICE_OK;
 }
@@ -353,6 +413,10 @@ int CHamamatsu::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet)
    {
+      bool acquiring = IsCapturing();
+      if (acquiring)
+         StopSequenceAcquisition();
+
       ccDatatype ccDataType;
       string strType;
       pProp->Get(strType);
@@ -374,6 +438,9 @@ int CHamamatsu::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
       nRet = ResizeImageBuffer();
       if (nRet != DEVICE_OK)
          return nRet;
+
+      if (acquiring)
+         RestartSequenceAcquisition();
    }
    return DEVICE_OK;
 }
@@ -388,6 +455,10 @@ int CHamamatsu::OnScanMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 
    if (eAct == MM::AfterSet)
    {
+      bool acquiring = IsCapturing();
+      if (acquiring)
+         StopSequenceAcquisition();
+
       long lnScanMode;
       pProp->Get(lnScanMode);
       ScanMode.speed = lnScanMode;
@@ -401,7 +472,7 @@ int CHamamatsu::OnScanMode(MM::PropertyBase* pProp, MM::ActionType eAct)
       if (ret != DEVICE_OK)
          return ret;
 
-      // Reset allowedValues for binning and gain
+      // Reset allowedValues for binning and gain, and high dynamic range mode
       DWORD	cap;
       if(!dcam_getcapability(m_hDCAM, &cap, DCAM_QUERYCAPABILITY_FUNCTIONS))
          return ReportError("Error in dcam_getcapability: ");
@@ -415,15 +486,29 @@ int CHamamatsu::OnScanMode(MM::PropertyBase* pProp, MM::ActionType eAct)
          if (ret != DEVICE_OK)
             return ret;
       }
+      DCAM_PROPERTYATTR propAttr;
+      if (IsPropertySupported(propAttr, DCAM_IDPROP_HIGHDYNAMICRANGE_MODE)) {
+         SetAllowedPropValues(propAttr, g_HighDynamicRangeMode);
+      }
+    
       // propagate changes to GUI
-      ret = OnPropertiesChanged();
-      if (ret != DEVICE_OK)
-         return ret;
+      if (m_bInitialized) {
+         ret = OnPropertiesChanged();
+         if (ret != DEVICE_OK)
+            return ret;
+      }
+
+      if (acquiring)
+         RestartSequenceAcquisition();
    }
    else if (eAct == MM::BeforeGet)
    {
-      if (!dcam_extended(m_hDCAM,DCAM_IDMSG_GETPARAM, (LPVOID)&ScanMode, sizeof(DCAM_PARAM_SCANMODE)))
-         return ReportError("Error in dcam_extended (ScanMode): ");
+      if (!dcam_extended(m_hDCAM,DCAM_IDMSG_GETPARAM, (LPVOID)&ScanMode, sizeof(DCAM_PARAM_SCANMODE))) {
+         LogMessage("Failed to get ScanMode from the Camera");
+         // Do not return error since this leaves the camera in a bad state
+         return DEVICE_OK;
+        // return ReportError("Error in dcam_extended (ScanMode): ");
+      } 
       pProp->Set(ScanMode.speed);
    }
    return DEVICE_OK;
@@ -434,6 +519,10 @@ int CHamamatsu::OnCCDMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::AfterSet)
    {
+      bool acquiring = IsCapturing();
+      if (acquiring)
+         StopSequenceAcquisition();
+
       double ccdMode;
       pProp->Get(ccdMode);
       int ret = ShutdownImageBuffer();
@@ -461,9 +550,14 @@ int CHamamatsu::OnCCDMode(MM::PropertyBase* pProp, MM::ActionType eAct)
             return ret;
       }
       // propagate changes to GUI
-      ret = OnPropertiesChanged();
-      if (ret != DEVICE_OK)
-         return ret;
+      if (m_bInitialized) {
+         ret = OnPropertiesChanged();
+         if (ret != DEVICE_OK)
+            return ret;
+      }
+
+      if (acquiring)
+         RestartSequenceAcquisition();
    }
    else if (eAct == MM::BeforeGet)
    {
@@ -478,11 +572,15 @@ int CHamamatsu::OnCCDMode(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-// PhotonImagingDMode
+// PhotonImagingMode
 int CHamamatsu::OnPhotonImagingMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::AfterSet)
    {
+      bool acquiring = IsCapturing();
+      if (acquiring)
+         StopSequenceAcquisition();
+
       double mode;
       pProp->Get(mode);
       int ret = ShutdownImageBuffer();
@@ -510,9 +608,14 @@ int CHamamatsu::OnPhotonImagingMode(MM::PropertyBase* pProp, MM::ActionType eAct
             return ret;
       }
       // propagate changes to GUI
-      ret = OnPropertiesChanged();
-      if (ret != DEVICE_OK)
-         return ret;
+      if (m_bInitialized) {
+         ret = OnPropertiesChanged();
+         if (ret != DEVICE_OK)
+            return ret;
+      }
+
+      if (acquiring)
+         RestartSequenceAcquisition();
    }
    else if (eAct == MM::BeforeGet)
    {
@@ -520,6 +623,27 @@ int CHamamatsu::OnPhotonImagingMode(MM::PropertyBase* pProp, MM::ActionType eAct
       if (!dcam_getpropertyvalue(m_hDCAM, DCAM_IDPROP_PHOTONIMAGINGMODE, &photonMode))
          return ReportError("Error in dcam_getpropertyvalue (photonimagingmode): ");
       pProp->Set(photonMode);
+   }
+   return DEVICE_OK;
+}
+
+// Sensitivity (Em Gain?)
+int CHamamatsu::OnSensitivity(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::AfterSet)
+   {
+      double sensitivity;
+      pProp->Get(sensitivity);
+
+      if (!dcam_setpropertyvalue(m_hDCAM, DCAM_IDPROP_SENSITIVITY, sensitivity))
+         return ReportError("Error in dcam_setpropertyvalue (Sensitivity): ");
+   }
+   else if (eAct == MM::BeforeGet)
+   {
+      double sensitivity;
+      if (!dcam_getpropertyvalue(m_hDCAM, DCAM_IDPROP_SENSITIVITY, &sensitivity))
+         return ReportError("Error in dcam_getpropertyvalue (sensitivity): ");
+      pProp->Set(sensitivity);
    }
    return DEVICE_OK;
 }
@@ -553,10 +677,7 @@ int CHamamatsu::OnActualIntervalMs(MM::PropertyBase* pProp, MM::ActionType eAct)
 	   if (ret != DEVICE_OK)
 		   return ret;
        readoutTime = atof(rT);
-       double dExp;
-       if (!dcam_getexposuretime(m_hDCAM, &dExp))
-          return ReportError("Error in dcam_exposuretime: ");
-       double interval = max(readoutTime, dExp * 1000);
+       double interval = max(readoutTime, dExp_ * 1000);
 	   pProp->Set(interval);
 	}
 	return DEVICE_OK;
@@ -574,11 +695,17 @@ int CHamamatsu::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
 
    if (eAct == MM::AfterSet)
    {
+      bool acquiring = IsCapturing();
+      if (acquiring)
+         StopSequenceAcquisition();
+
       long lnGain;
       pProp->Get(lnGain);
       FeatureValue.featurevalue = (float)lnGain;
       if (!dcam_extended(m_hDCAM, DCAM_IDMSG_SETPARAM, (LPVOID)&FeatureValue, sizeof(DCAM_PARAM_FEATURE)))
          return ReportError("Error in dcam_extended (set gain): ");
+      if (acquiring)
+         RestartSequenceAcquisition();
    }
    else if (eAct == MM::BeforeGet)
    {
@@ -642,7 +769,73 @@ int CHamamatsu::OnOffset(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-// Extended
+// Extended Property
+int CHamamatsu::OnExtendedProperty(MM::PropertyBase* pProp, MM::ActionType eAct, long propertyId)
+{
+   if (eAct == MM::AfterSet)
+   {
+      bool acquiring = IsCapturing();
+      if (acquiring)
+         StopSequenceAcquisition();
+
+      int ret = ShutdownImageBuffer();
+      if (ret != DEVICE_OK)
+         return ret;
+
+      double value;
+
+      if (!dcamLongByString_[propertyId].empty()) {
+         std::string strValue;
+         pProp->Get(strValue);
+         value = dcamLongByString_[propertyId][strValue];
+      } else 
+         pProp->Get(value);
+      if (!dcam_setpropertyvalue(m_hDCAM, propertyId, value))
+         return ReportError("Error in dcam_setpropertyvalue (): ");
+
+      ret = ResizeImageBuffer();
+      if (ret != DEVICE_OK)
+         return ret;
+
+      // Reset allowedValues for binning and gain
+      DWORD	cap;
+      if(!dcam_getcapability(m_hDCAM, &cap, DCAM_QUERYCAPABILITY_FUNCTIONS))
+         return ReportError("Error in dcam_getcapability: ");
+      ret = SetAllowedBinValues(cap);
+      if (ret != DEVICE_OK)
+         return ret;
+      if (IsFeatureSupported(DCAM_IDFEATURE_GAIN)) 
+      {
+         DCAM_PARAM_FEATURE_INQ featureInq = GetFeatureInquiry(DCAM_IDFEATURE_GAIN);
+         ret = SetAllowedGainValues(featureInq);
+         if (ret != DEVICE_OK)
+            return ret;
+      }
+      // propagate changes to GUI
+      if (m_bInitialized) {
+         ret = OnPropertiesChanged();
+         if (ret != DEVICE_OK)
+            return ret;
+      }
+
+      if (acquiring)
+         RestartSequenceAcquisition();
+
+   }
+   else if (eAct == MM::BeforeGet)
+   {
+      double value;
+      if (!dcam_getpropertyvalue(m_hDCAM, propertyId, &value))
+         return ReportError("Error in dcam_getpropertyvalue (value): ");
+      if (!dcamStringByLong_[propertyId].empty()) {
+         pProp->Set(dcamStringByLong_[propertyId][(long)value].c_str());
+      } else
+         pProp->Set(value);
+   }
+   return DEVICE_OK;
+}
+
+// Extended Feature
 int CHamamatsu::OnExtended(MM::PropertyBase* pProp, MM::ActionType eAct, long featureId)
 {
 	DCAM_PARAM_FEATURE FeatureValue;
@@ -705,6 +898,19 @@ int CHamamatsu::OnTemperature(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+int CHamamatsu::OnFrameBufferSize(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::AfterSet)
+   {
+      pProp->Get(frameBufferSize_);
+   }
+   else if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(frameBufferSize_);
+   }
+   return DEVICE_OK;
+}
+
 int CHamamatsu::OnSlot(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::AfterSet)
@@ -727,7 +933,7 @@ void CHamamatsu::GetName(char* name) const
 }
 
 long CHamamatsu::ReportError(std::string message) {
-    long err = dcam_getlasterror(m_hDCAM, NULL, 0);
+    unsigned long err = dcam_getlasterror(m_hDCAM, NULL, 0);
     ostringstream os;
     os << message << err;
     LogMessage(os.str().c_str());
@@ -793,6 +999,9 @@ int CHamamatsu::Initialize()
       LogMessage (strcat(msg, dcamAPIVersion));
    }
 
+   // Set up maps that convert between property numbers and text
+   SetTextInfo();
+
    // gather information about the equipment
    // ------------------------------------------
 
@@ -814,9 +1023,9 @@ int CHamamatsu::Initialize()
 	} else {    
 		if (!dcam_settriggermode(m_hDCAM, DCAM_TRIGMODE_SOFTWARE)) {
 			LogMessage("This camera says it supports software triggers, but when I try to set it, the camera fails");
-		}
-		else {
+      } else {
 	       softwareTriggerEnabled_ = true;
+          triggerMode_ = g_TrigMode_Software;
 		}
 	}
 
@@ -892,7 +1101,6 @@ int CHamamatsu::Initialize()
    AddAllowedValue("TriggerPolarity", g_TrigPolarity_Positive);
    AddAllowedValue("TriggerPolarity", g_TrigPolarity_Negative);
 
-
    // pixel type
    pAct = new CPropertyAction (this, &CHamamatsu::OnPixelType);
    nRet = CreateProperty(MM::g_Keyword_PixelType, CameraID, MM::String, false, pAct);
@@ -912,6 +1120,9 @@ int CHamamatsu::Initialize()
       return nRet;
 
    // exposure
+   if (!dcam_getexposuretime(m_hDCAM, &dExp_))
+      return ReportError("Error in dcam_getexposuretime: ");
+   dExp_ = dExp_ * 1000.0;
    pAct = new CPropertyAction (this, &CHamamatsu::OnExposure);
    nRet = CreateProperty(MM::g_Keyword_Exposure, "10.0", MM::Float, false, pAct);
    assert(nRet == DEVICE_OK);
@@ -936,52 +1147,87 @@ int CHamamatsu::Initialize()
       assert(nRet == DEVICE_OK);
    }
    
-   // CCDMode
    DCAM_PROPERTYATTR propAttr;
-   if (IsPropertySupported(propAttr, DCAM_IDPROP_CCDMODE))
+
+   // Sensitivity Mode
+   if (IsPropertySupported(propAttr, DCAM_IDPROP_SENSITIVITY))
    {
       ostringstream defaultValue;
       defaultValue << propAttr.valuedefault;
-      pAct = new CPropertyAction (this, &CHamamatsu::OnCCDMode);
-      nRet = CreateProperty("CCDMode", defaultValue.str().c_str(), MM::Integer, false, pAct);
+      pAct = new CPropertyAction (this, &CHamamatsu::OnSensitivity);
+      nRet = CreateProperty("EMGain", defaultValue.str().c_str(), MM::Integer, false, pAct);
       if (nRet != DEVICE_OK)
          return nRet;
-      nRet = SetAllowedPropValues(propAttr, "CCDMode");
+      nRet = SetPropertyLimits("EMGain", propAttr.valuemin, propAttr.valuemax);
       if (nRet != DEVICE_OK)
          return nRet;
    }
-
-   // Photon Imaging Mode
-   if (IsPropertySupported(propAttr, DCAM_IDPROP_PHOTONIMAGINGMODE))
+ 
+   // Sensor temperature readout
+   /*
+   if (IsPropertySupported(propAttr, DCAM_IDPROP_SENSORTEMPERATURE))
    {
       ostringstream defaultValue;
       defaultValue << propAttr.valuedefault;
-      pAct = new CPropertyAction (this, &CHamamatsu::OnPhotonImagingMode);
-      nRet = CreateProperty("PhotonImagingMode", defaultValue.str().c_str(), MM::Integer, false, pAct);
-      if (nRet != DEVICE_OK)
-         return nRet;
-      nRet = SetAllowedPropValues(propAttr, "PhotonImagingMode");
+      CPropertyActionEx* pActEx = new CPropertyActionEx (this, &CHamamatsu::OnExtendedProperty, (long) DCAM_IDPROP_SENSORTEMPERATURE);
+      nRet = CreateProperty("Temperature", defaultValue.str().c_str(), MM::Float, true, pActEx);
       if (nRet != DEVICE_OK)
          return nRet;
    }
+   */
 
-   // Sensivity (=EM GAIN?)
-   if (IsFeatureSupported(DCAM_IDFEATURE_SENSITIVITY))
-   {
-      DCAM_PARAM_FEATURE_INQ featureInq = GetFeatureInquiry(DCAM_IDFEATURE_SENSITIVITY);
-      CPropertyActionEx* pActEx = new CPropertyActionEx (this, &CHamamatsu::OnExtended, (long) DCAM_IDFEATURE_SENSITIVITY);
-      ostringstream defaultValue;
-      defaultValue << featureInq.defaultvalue;
-      if (featureInq.step == 1.0)
-         nRet = CreateProperty("Sensitivity", defaultValue.str().c_str(), MM::Integer, false, pActEx);
-      else
-         nRet = CreateProperty("Sensitivity", defaultValue.str().c_str(), MM::Float, false, pActEx);
-      assert(nRet == DEVICE_OK);
-      if (featureInq.max > featureInq.min)
-      {
-         nRet = SetPropertyLimits("Sensitivity", featureInq.min, featureInq.max);
-      }
-   }
+   nRet = AddExtendedProperty("CCDMode",  DCAM_IDPROP_CCDMODE);
+   if (nRet != DEVICE_OK)
+      return nRet;
+
+   nRet = AddExtendedProperty("PhotonImagingMode",  DCAM_IDPROP_PHOTONIMAGINGMODE);
+   if (nRet != DEVICE_OK)
+      return nRet;
+
+   nRet = AddExtendedProperty(g_HighDynamicRangeMode,  DCAM_IDPROP_HIGHDYNAMICRANGE_MODE);
+   if (nRet != DEVICE_OK)
+      return nRet;
+
+   nRet = AddExtendedProperty("Bits per Channel",  DCAM_IDPROP_BITSPERCHANNEL);
+   if (nRet != DEVICE_OK)
+      return nRet;
+
+   nRet = AddExtendedProperty("Temperature Set Point",  DCAM_IDPROP_SENSORTEMPERATURETARGET);
+   if (nRet != DEVICE_OK)
+      return nRet;
+
+   nRet = AddExtendedProperty("Direct EM Gain Mode",  DCAM_IDPROP_DIRECTEMGAIN_MODE);
+   if (nRet != DEVICE_OK)
+      return nRet;
+
+   nRet = AddExtendedProperty("Sensor Temperature", DCAM_IDPROP_SENSORTEMPERATURE);
+   if (nRet != DEVICE_OK)
+      return nRet;
+
+   nRet = AddExtendedProperty("Sensor Cooler", DCAM_IDPROP_SENSORCOOLER);
+   if (nRet != DEVICE_OK)
+      return nRet;
+
+   nRet = AddExtendedProperty("Sensor Cooler Fan", DCAM_IDPROP_SENSORCOOLERFAN);
+   if (nRet != DEVICE_OK)
+      return nRet;
+
+   nRet = AddExtendedProperty("Output Trigger Polarity", DCAM_IDPROP_OUTPUTTRIGGER_POLARITY);
+   if (nRet != DEVICE_OK)
+      return nRet;
+
+   nRet = AddExtendedProperty("Output Trigger Active", DCAM_IDPROP_OUTPUTTRIGGER_ACTIVE);
+   if (nRet != DEVICE_OK)
+      return nRet;
+
+   nRet = AddExtendedProperty("Output Trigger Delay", DCAM_IDPROP_OUTPUTTRIGGER_DELAY);
+   if (nRet != DEVICE_OK)
+      return nRet;
+
+   nRet = AddExtendedProperty("Output Trigger Period", DCAM_IDPROP_OUTPUTTRIGGER_PERIOD);
+   if (nRet != DEVICE_OK)
+      return nRet;
+
 
    // camera gain
    if (IsFeatureSupported(DCAM_IDFEATURE_GAIN)) 
@@ -1022,7 +1268,7 @@ int CHamamatsu::Initialize()
 
    // Actual Interval
    pAct = new CPropertyAction (this, &CHamamatsu::OnActualIntervalMs);
-   nRet = CreateProperty(MM::g_Keyword_ActualInterval_ms, "0.0", MM::Float, true, pAct);
+   nRet = CreateProperty(MM::g_Keyword_ActualInterval_ms, "0.0", MM::Float, false, pAct);
 
 
    // camera offset
@@ -1032,6 +1278,11 @@ int CHamamatsu::Initialize()
    //pAct = new CPropertyAction (this, &CHamamatsu::OnOffset);
    //nRet = CreateProperty(MM::g_Keyword_Offset, "1", MM::Integer, false, pAct);
    //assert(nRet == DEVICE_OK);
+
+   // Frame Buffer Size.  On some systems, the driver can not allocate enough memory for 30 frames.  Set the number of frames to be used here:
+   pAct = new CPropertyAction (this, &CHamamatsu::OnFrameBufferSize);
+   nRet = CreateProperty("FrameBufferSize", "30", MM::Integer, false, pAct);
+   SetPropertyLimits("FrameBufferSize", 3, 100);
 
    // camera temperature
    if (IsFeatureSupported(DCAM_IDFEATURE_TEMPERATURE))
@@ -1104,8 +1355,14 @@ int CHamamatsu::Shutdown()
 
 bool CHamamatsu::Busy()
 {
-   return (acquiring_ || snapInProgress_);
+   return (snapInProgress_);
 }
+
+bool CHamamatsu::IsCapturing()
+{
+   return acquiring_;
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Function name   : CHamamatsu::SnapImage
@@ -1122,22 +1379,31 @@ int CHamamatsu::SnapImage()
       return ERR_INCOMPLETE_SNAP_IMAGE_CYCLE;
    }
 
-   double dExp;
-   if (!dcam_getexposuretime(m_hDCAM, &dExp))
-      dcam_getlasterror(m_hDCAM, NULL, 0);
-
    // start capture
-   // TODO: figure out what to do with Internal triggers
-   if (triggerMode_.compare(g_TrigMode_Software) == 0)
+   if (triggerMode_.compare(g_TrigMode_Software) == 0) {
       if (!dcam_firetrigger(m_hDCAM))
          return dcam_getlasterror(m_hDCAM, NULL, 0);
+   } else if (triggerMode_.compare(g_TrigMode_Internal) == 0) {
+      // With internal triggers, wait until a new frame starts
+      // I do not understand how this works, but it seems to synchronize shutter and exposure down to about 50 msec.  
+      CDeviceUtils::SleepMs((long) (dExp_*1000.0));
+      DWORD dwEvent = DCAM_EVENT_FRAMEEND; 
+      if (!dcam_wait(m_hDCAM, &dwEvent, (_DWORD) (dExp_/1000.0 + 5), NULL))
+	  {
+        unsigned long lnLastErr = static_cast<unsigned long>(dcam_getlasterror(m_hDCAM, NULL, 0));
+		 if (lnLastErr != ccErr_none)
+		 {
+			 std::ostringstream mezz;
+			 mezz << "error in  dcam_wait: 0x" <<std::hex<< lnLastErr ;
+			 LogMessage( mezz.str());
+			 return lnLastErr;
+		 }
+	  }
+   }
 
    snapInProgress_ = true;
-#ifdef WIN32
-   Sleep((DWORD)(dExp*1000.0));
-#else
-   usleep(dExp*1000000.0);
-#endif
+
+   CDeviceUtils::SleepMs((long) (dExp_));
 
    return DEVICE_OK;
 }
@@ -1162,20 +1428,23 @@ void CHamamatsu::SetExposure(double dExp)
 const unsigned char* CHamamatsu::GetImageBuffer()
 {
     // wait until the frame becomes available
-   double dExp;
-   if (!dcam_getexposuretime(m_hDCAM, &dExp))
-      return 0;
-      // return dcam_getlasterror(m_hDCAM, NULL, 0);
+   double dReadoutTime;
+   char rT[MM::MaxStrLength];
+   GetProperty(MM::g_Keyword_ReadoutTime, rT);
+   dReadoutTime = atof(rT);
    
-   long lnTimeOut = (long) ((dExp + 5.0) * 1000.0);
+   long lnTimeOut = (long) ((dReadoutTime + 200.0) * 1000.0);
    
    DWORD dwEvent = DCAM_EVENT_FRAMEEND;
    if (!dcam_wait(m_hDCAM, &dwEvent, lnTimeOut, NULL))
    {
-      long lnLastErr = dcam_getlasterror(m_hDCAM, NULL, 0);
-      if (lnLastErr != ccErr_none)
-         return 0;
-         //return lnLastErr;
+        unsigned long lnLastErr = static_cast<unsigned long>(dcam_getlasterror(m_hDCAM, NULL, 0));
+		 if (lnLastErr != ccErr_none)
+		 {
+			 std::ostringstream mezz;
+			 mezz << "error in  dcam_wait: 0x" <<std::hex<< lnLastErr ;
+			 LogMessage( mezz.str());
+		 }
    }
 
    // get pixels
@@ -1194,6 +1463,9 @@ const unsigned char* CHamamatsu::GetImageBuffer()
 
 int CHamamatsu::SetROI(unsigned uX, unsigned uY, unsigned uXSize, unsigned uYSize)
 {
+   if (IsCapturing())
+      return ERR_BUSY_ACQUIRING;
+
    int ret = ShutdownImageBuffer();
    if (ret != DEVICE_OK)
       return ret;
@@ -1282,6 +1554,9 @@ int CHamamatsu::GetROI(unsigned& uX, unsigned& uY, unsigned& uXSize, unsigned& u
 
 int CHamamatsu::ClearROI()
 {
+   if (IsCapturing())
+      return ERR_BUSY_ACQUIRING;
+
   // inquire about capabilities
    DCAM_PARAM_SUBARRAY_INQ SubArrayInquiry;
    ZeroMemory((LPVOID)&SubArrayInquiry,sizeof(DCAM_PARAM_SUBARRAY_INQ));
@@ -1382,15 +1657,37 @@ int CHamamatsu::ResizeImageBuffer(long frameBufSize)
    if (!dcam_freeframe(m_hDCAM))
       return ReportError("Error in dcam_freeframe: ");
 
-   if (!dcam_allocframe(m_hDCAM, frameBufSize))
-      return ReportError("Error in dcam_allocframe: ");
-
    long numFrames;
-   if (!dcam_getframecount(m_hDCAM, &numFrames))
-      return ReportError("Error in dcam_getframecount: ");
+   if (!dcam_allocframe(m_hDCAM, frameBufSize)) {
+      // If we did not get what we asked for, ask for the optimum
+      /* This does not seem to work on the current DCAM!!!
+      if (!dcam_allocframe(m_hDCAM, 0)) {
+         return ReportError("Error in dcam_allocframe: ");
+      }
+      */
+      BOOL success = false;
+      for (long i = frameBufSize - 3; i >= 3 && !success; i-=3) {
+         success = dcam_allocframe(m_hDCAM, i);
+      }
+      if (!success) 
+         return ReportError("Could not allocate memory in the frame buffer: ");
 
-   if (numFrames != frameBufSize)
-      return ERR_BUFFER_ALLOCATION_FAILED;
+      if (!dcam_getframecount(m_hDCAM, &numFrames))
+         return ReportError("Error in dcam_getframecount: ");
+      ostringstream os;
+      os << "Allocated " << numFrames << " frames";
+      LogMessage(os.str().c_str());
+      // remember for next time how much memory we should maximally request:
+      frameBufferSize_ = numFrames;
+      // remember how many frames we have in the current buffer (needed in PushImage)
+      currentBufferSize_ = numFrames;
+   } else {
+      if (!dcam_getframecount(m_hDCAM, &numFrames))
+         return ReportError("Error in dcam_getframecount: ");
+
+      if (numFrames != frameBufSize)
+         return ERR_BUFFER_ALLOCATION_FAILED;
+   }
 
    DWORD dwDataBufferSize;
    if (!dcam_getdataframebytes(m_hDCAM, &dwDataBufferSize))
@@ -1451,22 +1748,105 @@ bool CHamamatsu::IsScanModeSupported(int32_t& maxSpeed)
    ZeroMemory((LPVOID)&ScanMode, sizeof(DCAM_PARAM_SCANMODE));
    ScanMode.hdr.cbSize = sizeof(DCAM_PARAM_SCANMODE);
    ScanMode.hdr.id = (DWORD) DCAM_IDPARAM_SCANMODE;
-
    if (dcam_extended(m_hDCAM, DCAM_IDMSG_GETPARAM,(LPVOID)&featureInquiry, sizeof(DCAM_PARAM_SCANMODE_INQ)) == TRUE && dcam_extended(m_hDCAM,DCAM_IDMSG_GETPARAM, (LPVOID)&ScanMode, sizeof(DCAM_PARAM_SCANMODE)) == TRUE) {
       maxSpeed = featureInquiry.speedmax;
+      LogMessage("ScanMode works");
       return true;
    }
    return false;
 }
 
-bool CHamamatsu::IsPropertySupported(DCAM_PROPERTYATTR& propAttr, long property)
+bool CHamamatsu::IsPropertySupported(DCAM_PROPERTYATTR& propAttr, long propertyId)
 {
    memset(&propAttr, 0, sizeof(propAttr));
    propAttr.cbSize = sizeof(propAttr);
-   propAttr.iProp = property;
+   propAttr.iProp = propertyId;
    if (dcam_getpropertyattr(m_hDCAM, &propAttr))
       return true;
    return false;
+}
+
+
+/*
+ * Set up maps dcamLongByString_ and dcamStringByLong_
+ */
+void CHamamatsu::SetTextInfo()
+{
+   dcamLongByString_.clear();
+   dcamStringByLong_.clear();
+
+   dcamLongByString_[DCAM_IDPROP_CCDMODE]["Normal CCD"] =  DCAMPROP_CCDMODE__NORMALCCD;
+   dcamStringByLong_[DCAM_IDPROP_CCDMODE][DCAMPROP_CCDMODE__NORMALCCD]="Normal CCD";
+   dcamLongByString_[DCAM_IDPROP_CCDMODE]["EM CCD"] =  DCAMPROP_CCDMODE__EMCCD;
+   dcamStringByLong_[DCAM_IDPROP_CCDMODE][DCAMPROP_CCDMODE__EMCCD]="EM CCD";
+
+   dcamLongByString_[DCAM_IDPROP_SENSORCOOLER]["Off"] =  DCAMPROP_SENSORCOOLER__OFF;
+   dcamStringByLong_[DCAM_IDPROP_SENSORCOOLER][DCAMPROP_SENSORCOOLER__OFF]="Off";
+   dcamLongByString_[DCAM_IDPROP_SENSORCOOLER]["On"] =  DCAMPROP_SENSORCOOLER__ON;
+   dcamStringByLong_[DCAM_IDPROP_SENSORCOOLER][DCAMPROP_SENSORCOOLER__ON]="On";
+   dcamLongByString_[DCAM_IDPROP_SENSORCOOLER]["Max"] =  DCAMPROP_SENSORCOOLER__MAX;
+   dcamStringByLong_[DCAM_IDPROP_SENSORCOOLER][DCAMPROP_SENSORCOOLER__MAX]="Max";
+
+   dcamLongByString_[DCAM_IDPROP_TRIGGERSOURCE]["Internal"] = DCAMPROP_TRIGGERSOURCE__INTERNAL;
+   dcamStringByLong_[DCAM_IDPROP_TRIGGERSOURCE][DCAMPROP_TRIGGERSOURCE__INTERNAL]="Internal";
+   dcamLongByString_[DCAM_IDPROP_TRIGGERSOURCE]["External"] = DCAMPROP_TRIGGERSOURCE__EXTERNAL;
+   dcamStringByLong_[DCAM_IDPROP_TRIGGERSOURCE][DCAMPROP_TRIGGERSOURCE__EXTERNAL]="External";
+   dcamLongByString_[DCAM_IDPROP_TRIGGERSOURCE]["Software"] = DCAMPROP_TRIGGERSOURCE__SOFTWARE;
+   dcamStringByLong_[DCAM_IDPROP_TRIGGERSOURCE][DCAMPROP_TRIGGERSOURCE__SOFTWARE]="Software";
+
+   dcamLongByString_[DCAM_IDPROP_TRIGGERPOLARITY]["Negative"] = DCAMPROP_TRIGGERPOLARITY__NEGATIVE;
+   dcamStringByLong_[DCAM_IDPROP_TRIGGERPOLARITY][DCAMPROP_TRIGGERPOLARITY__NEGATIVE]="Negative";
+   dcamLongByString_[DCAM_IDPROP_TRIGGERPOLARITY]["Positive"] = DCAMPROP_TRIGGERPOLARITY__POSITIVE;
+   dcamStringByLong_[DCAM_IDPROP_TRIGGERPOLARITY][DCAMPROP_TRIGGERPOLARITY__POSITIVE]="Positive";
+
+   dcamLongByString_[DCAM_IDPROP_OUTPUTTRIGGER_POLARITY]["Negative"] = DCAMPROP_OUTPUTTRIGGER_POLARITY__NEGATIVE;
+   dcamStringByLong_[DCAM_IDPROP_OUTPUTTRIGGER_POLARITY][DCAMPROP_OUTPUTTRIGGER_POLARITY__NEGATIVE]="Negative";
+   dcamLongByString_[DCAM_IDPROP_OUTPUTTRIGGER_POLARITY]["Positive"] = DCAMPROP_OUTPUTTRIGGER_POLARITY__POSITIVE;
+   dcamStringByLong_[DCAM_IDPROP_OUTPUTTRIGGER_POLARITY][DCAMPROP_OUTPUTTRIGGER_POLARITY__POSITIVE]="Positive";
+}
+
+/*
+ * Adds the DCAM property 'property' as Micro-Manager property 'propName'
+ * Sets the Micro-Manager type based on the step size of the property
+ * Also sets limits based on the values it finds in the property
+ * Works closely together with OnExtendedProperty
+ */
+int CHamamatsu::AddExtendedProperty(std::string propName, long propertyId)
+{
+   DCAM_PROPERTYATTR propAttr;
+   if (IsPropertySupported(propAttr, propertyId))
+   {
+      int nRet;
+      ostringstream defaultValue;
+      defaultValue << propAttr.valuedefault;
+      CPropertyActionEx* pActEx = new CPropertyActionEx (this, &CHamamatsu::OnExtendedProperty, propertyId);
+      if (!dcamStringByLong_[propertyId].empty()) {
+         nRet = CreateProperty(propName.c_str(), dcamStringByLong_[propertyId][(long)propAttr.valuedefault].c_str(), MM::String, false, pActEx);
+         long step = (long) propAttr.valuestep;
+         if (step == 0)
+            step = 1; 
+         for (long i = (long) propAttr.valuemin; i <= propAttr.valuemax; i+= step) {
+            AddAllowedValue(propName.c_str(), dcamStringByLong_[propertyId][i].c_str());
+         }
+         return DEVICE_OK;
+      }
+
+      if (propAttr.valuestep == 1.0 || propAttr.valuestep == 0.0) 
+         nRet = CreateProperty(propName.c_str(), defaultValue.str().c_str(), MM::Integer, false, pActEx);
+      else {
+         nRet = CreateProperty(propName.c_str(), defaultValue.str().c_str(), MM::Float, false, pActEx);
+         if (propAttr.valuemax > propAttr.valuemin) {
+            SetPropertyLimits(propName.c_str(), propAttr.valuemin, propAttr.valuemax);
+         }
+      }
+      if (nRet != DEVICE_OK)
+         return nRet;
+      nRet = SetAllowedPropValues(propAttr, propName);
+      if (nRet != DEVICE_OK)
+         return nRet;
+   }
+
+   return DEVICE_OK;
 }
 
 
@@ -1543,20 +1923,32 @@ int CHamamatsu::SetAllowedPropValues(DCAM_PROPERTYATTR propAttr, std::string pro
 {
    int ret;
    vector<string>values;
+ 
    // clear existing values
    SetAllowedValues(propName.c_str(), values);
+
    // low number of values, make a list
-   if ( (propAttr.valuemax >= propAttr.valuemin) && ((propAttr.valuemax - propAttr.valuemin) < 10) && (propAttr.valuestep == 1.0 || propAttr.valuestep==0.0) )
-   {
-      for (long i = (long) propAttr.valuemin; i<= (long) propAttr.valuemax; i++) {
+   if ( (propAttr.valuemax >= propAttr.valuemin) && ((propAttr.valuemax - propAttr.valuemin) < 10) && (propAttr.valuestep == 1.0 || propAttr.valuestep==0.0) ) {
+      if (propAttr.valuestep == 0.0) {
          ostringstream value;
-         value << i;
+         value << propAttr.valuemin;
          values.push_back(value.str());
+         if (propAttr.valuemin != propAttr.valuemax) {
+            ostringstream valuemax;
+            valuemax << propAttr.valuemax;
+            values.push_back(valuemax.str());
+         }
+      } else {
+         for (long i = (long) propAttr.valuemin; i<= (long) propAttr.valuemax; i++) {
+            ostringstream value;
+            value << i;
+            values.push_back(value.str());
+         }
       }
       return SetAllowedValues(propName.c_str(), values);
-   } else if (propAttr.valuemax > propAttr.valuemin)
+
+   } else if (propAttr.valuemax > propAttr.valuemin) {
       // higher number: set limits
-   {
       ret = SetPropertyLimits(propName.c_str(), propAttr.valuemin, propAttr.valuemax);
       if (ret != DEVICE_OK)
          return ret;
@@ -1586,30 +1978,39 @@ int AcqSequenceThread::svc(void)
 {
    long imageCounter(0);
 
+
    double dExp;                                                                       
    if (!dcam_getexposuretime(camera_->m_hDCAM, &dExp))                                         
       return  dcam_getlasterror(camera_->m_hDCAM, NULL, 0);
 
+
    do
    {
-       // wait until the frame becomes available
-      long lnTimeOut = (long) ((dExp + 5.0) * 1000.0); 
+       // wait until the frame becomes available - waits in PushImage
+      long lnTimeOut = (long) ((dExp + 50.0) * 1000.0); 
 
       DWORD dwEvent = DCAM_EVENT_FRAMEEND; 
       if (!dcam_wait(camera_->m_hDCAM, &dwEvent, lnTimeOut, NULL))
       {            
-         long lnLastErr = dcam_getlasterror(camera_->m_hDCAM, NULL, 0);
+         unsigned long lnLastErr = static_cast<unsigned long>(dcam_getlasterror(camera_->m_hDCAM, NULL, 0));
          if (lnLastErr != ccErr_none)
-            return 0;
-            //return lnLastErr;                                                          
+         {
+            std::ostringstream mezz;
+            mezz << "error in  dcam_wait: 0x" <<std::hex<< lnLastErr ;
+            //insert the error into the core's error collection for processing later
+            camera_->GetCoreCallback()->PostError(std::make_pair( (int)DEVICE_IMAGE_PARAMS_FAILED, mezz.str()));
+            Stop();
+            return lnLastErr;
+         }
       }
+
       int ret = camera_->PushImage();
       if (ret != DEVICE_OK)
       {
-	      ostringstream os;
+	       ostringstream os;
           os << "PushImage() failed with errorcode: " << ret;
-		  camera_->LogMessage(os.str().c_str());
-          camera_->StopSequenceAcquisition();
+          camera_->LogMessage(os.str().c_str());
+          Stop();
           return 2;
       }
       //printf("Acquired frame %ld.\n", imageCounter);                         
@@ -1622,7 +2023,7 @@ int AcqSequenceThread::svc(void)
       return 0;
    }
 
-   camera_->StopSequenceAcquisition();
+   camera_->RestartSnapMode();
    printf("Acquisition completed.\n");
    return 0;
 }
@@ -1631,10 +2032,15 @@ int AcqSequenceThread::svc(void)
 /**
  * Starts continuous acquisition
  */
-int CHamamatsu::StartSequenceAcquisition(long numImages, double interval_ms)
+int CHamamatsu::StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow)
 {
+   GetCoreCallback()->ClearPostedErrors();
+
    if (acquiring_)
       return ERR_BUSY_ACQUIRING;
+
+   stopOnOverflow_ = stopOnOverflow;
+   interval_ms_ = interval_ms;   
 
    // Switch from software to internal trigger, leave other trigger modes alone (needs to be done before shutting down image buffer)
    char trigMode[MM::MaxStrLength];
@@ -1643,10 +2049,13 @@ int CHamamatsu::StartSequenceAcquisition(long numImages, double interval_ms)
 	   return ret;
    if (strcmp(trigMode, g_TrigMode_Software) == 0)
    {
-	   originalTrigMode_ = g_TrigMode_Software;
-	   ret = SetProperty(g_TrigMode, g_TrigMode_Internal);
-	   if (ret != DEVICE_OK)
-		   return ret;
+      originalTrigMode_ = g_TrigMode_Software;
+      ret = SetTrigMode(g_TrigMode_Internal);
+      if (ret != DEVICE_OK)
+          return ret;
+      // Some cameras (e.g. C4742-95 with Phoenix card) have a different exposure time in software trugger versus internal trigger modes
+      if (!dcam_setexposuretime(m_hDCAM, dExp_ / 1000.0))
+          return ReportError("Error in dcam_setexposuretime: ");
    }
 
    ret = ShutdownImageBuffer();
@@ -1655,7 +2064,6 @@ int CHamamatsu::StartSequenceAcquisition(long numImages, double interval_ms)
 
    frameCount_ = 0;
    lastImage_ = 0;
-   long hamBufSize = 100;
 
    ostringstream os;
    os << "Started sequence acquisition: " << numImages << " at " << interval_ms << " ms" << endl;
@@ -1663,11 +2071,10 @@ int CHamamatsu::StartSequenceAcquisition(long numImages, double interval_ms)
 
 
    // prepare the camera
-   // TODO: prepare the camera
-   frameBufSize_ = hamBufSize;
-   if (numImages < hamBufSize)
-      frameBufSize_ = numImages;
-   ret = ResizeImageBuffer(frameBufSize_);
+   currentBufferSize_ = frameBufferSize_;
+   if (numImages < currentBufferSize_)
+      currentBufferSize_ = numImages;
+   ret = ResizeImageBuffer(currentBufferSize_);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -1675,11 +2082,9 @@ int CHamamatsu::StartSequenceAcquisition(long numImages, double interval_ms)
    char rT[MM::MaxStrLength];
    ret = GetProperty(MM::g_Keyword_ReadoutTime, rT);
    readoutTime = atof(rT);
-   double dExp;
-   if (!dcam_getexposuretime(m_hDCAM, &dExp))
-      return ReportError("Error in dcam_getexposuretime: ");
+
    os.clear();
-   double interval = max(readoutTime, dExp * 1000);
+   double interval = max(readoutTime, dExp_);
    os << interval;
    SetProperty(MM::g_Keyword_ActualInterval_ms, os.str().c_str());
 
@@ -1691,13 +2096,14 @@ int CHamamatsu::StartSequenceAcquisition(long numImages, double interval_ms)
       return ret;
    }
 
+   // make sure the circular buffer is properly sized
+   GetCoreCallback()->InitializeImageBuffer(1, 1, GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel());
+
    // start thread
    imageCounter_ = 0;
    sequenceLength_ = numImages;
 
    seqThread_->SetLength(numImages);
-
-   // TODO: check trigger mode, etc..
 
    seqThread_->Start();
 
@@ -1708,33 +2114,38 @@ int CHamamatsu::StartSequenceAcquisition(long numImages, double interval_ms)
    return DEVICE_OK;
 }
 
+int CHamamatsu::RestartSequenceAcquisition() {
+   return StartSequenceAcquisition(sequenceLength_ - imageCounter_, interval_ms_, stopOnOverflow_);
+}
+
 /**
  * Stops Burst acquisition
  */
 int CHamamatsu::StopSequenceAcquisition()
 {
-   LogMessage("Stopped sequence acquisition");
-   if (!dcam_idle(m_hDCAM))
-      return ReportError("Error in dcam_idle: ");
-
-   if (!dcam_freeframe(m_hDCAM))
-      return ReportError("Error in dcam_freeframe ");
-
    seqThread_->Stop();
-   acquiring_ = false;
+   seqThread_->wait();
+ 
+   return RestartSnapMode();
+}
 
-   // Set camera back into snap state
-   int nRet = ResizeImageBuffer();
-   if (nRet != DEVICE_OK)
-      return nRet;
+int CHamamatsu::RestartSnapMode() 
+{
+   int ret;
 
+   // Switch back to software triggering
+   // This also calls Shutdown Image buffer and ResizeImageBuffer
    if (originalTrigMode_.compare(g_TrigMode_Software) == 0)
    {
-	   int ret = SetProperty(g_TrigMode, g_TrigMode_Software);
+	   ret = SetTrigMode(g_TrigMode_Software);
 	   if (ret != DEVICE_OK)
 		   return ret;
 	   originalTrigMode_ = "";
    }
+
+   LogMessage("Stopped sequence acquisition (Camera back in softare trigger mode");
+
+   acquiring_ = false;
 
    MM::Core* cb = GetCoreCallback();
    if (cb)
@@ -1757,33 +2168,36 @@ int CHamamatsu::PushImage()
       return ReportError("Error in dcam_gettransferinfo: ");
    if (frameCount <= frameCount_) {
       // there is no new frame, wait for a new one
-      double dExp;
-      if (!dcam_getexposuretime(m_hDCAM, &dExp))
-         return ReportError("Error in dcam_getexposuretime: ");
-      long lnTimeOut = (long) ((dExp + 5.0) * 1000.0);
+      long lnTimeOut = (long) ((dExp_ + 500.0) * 1000.0);
       DWORD dwEvent = DCAM_EVENT_FRAMEEND;
       if (!dcam_wait(m_hDCAM, &dwEvent, lnTimeOut, NULL))
       {
-         long lnLastErr = dcam_getlasterror(m_hDCAM, NULL, 0);
-         if (lnLastErr != ccErr_none)
-            return 0;
-            //return lnLastErr;
+         unsigned long lnLastErr = static_cast<unsigned long>(dcam_getlasterror(m_hDCAM, NULL, 0));
+		 if (lnLastErr != ccErr_none)
+		 {
+			 std::ostringstream mezz;
+			 mezz << "error in  dcam_wait: 0x" <<std::hex<< lnLastErr ;
+			 LogMessage( mezz.str());
+			 return lnLastErr;
+		 }
       }
       if (!dcam_gettransferinfo(m_hDCAM, &lastImage, &frameCount)) 
          return ReportError("Error in dcam_gettransferinfo: ");
    }
 
-   if ( (frameCount - frameCount_) >= frameBufSize_)
+   if ( (frameCount - frameCount_) >= currentBufferSize_ && stopOnOverflow_)
 	   return ERR_INTERNAL_BUFFER_FULL;
 
    frameCount_++;
    // There is a new frame, copy it into the circular buffer
-   // To make sure that we have the last frame, keep track of the lastImage acquired
-   if ( (lastImage != (lastImage_ + 1))  && !(lastImage == 0 && lastImage_ == 0) && !(lastImage == 0 && (lastImage_ == (frameBufSize_ - 1))) ) {
-	   if (lastImage_ == (frameBufSize_ - 1)) 
-		   lastImage = 0;
-	   else
-		   lastImage = lastImage_ + 1;
+   if (stopOnOverflow_) { // this is a controversial, overloaded function of variable stopOnOverflow_
+      // To make sure that we have the last frame, keep track of the lastImage acquired
+      if ( (lastImage != (lastImage_ + 1))  && !(lastImage == 0 && lastImage_ == 0) && !(lastImage == 0 && (lastImage_ == (currentBufferSize_ - 1))) ) {
+         if (lastImage_ == (currentBufferSize_ - 1)) 
+            lastImage = 0;
+         else
+            lastImage = lastImage_ + 1;
+      }
    }
 
    lastImage_ = lastImage;
@@ -1793,7 +2207,7 @@ int CHamamatsu::PushImage()
    long sRow;
    //dcam_lockdata(m_hDCAM, &imgPtr, &sRow, frameCount_);
    if (!dcam_lockdata(m_hDCAM, &imgPtr, &sRow, lastImage))
-      return ReportError("Error in dcam_loackdata: ");
+      return ReportError("Error in dcam_lockdata: ");
 
    // process image
    MM::ImageProcessor* ip = GetCoreCallback()->GetImageProcessor(this);      
@@ -1803,17 +2217,26 @@ int CHamamatsu::PushImage()
       if (ret != DEVICE_OK)                                                  
          return ret;                                                         
    }                                                                         
-                                                                            
    // This method inserts new image in the circular buffer (residing in MMCore)
    int ret = GetCoreCallback()->InsertImage(this, (unsigned char*) imgPtr,      
                                            GetImageWidth(),                  
                                            GetImageHeight(),                 
-                                           GetImageBytesPerPixel());         
-   if (ret != DEVICE_OK)
-      return ret;
+                                           GetImageBytesPerPixel());
+
+   if (!stopOnOverflow_ && ret == DEVICE_BUFFER_OVERFLOW)
+   {
+      // do not stop on overflow - just reset the buffer
+      GetCoreCallback()->ClearImageBuffer(this);
+      ret = GetCoreCallback()->InsertImage(this, (unsigned char*) imgPtr,      
+                                           GetImageWidth(),                  
+                                           GetImageHeight(),                 
+                                           GetImageBytesPerPixel());
+   }
 
    if (!dcam_unlockdata(m_hDCAM))
       return ReportError("Error in dcam_unlockdata: ");
 
-   return DEVICE_OK;
+   LogMessage("Pushed an image into the circular buffer", true);
+  
+   return ret;
 }

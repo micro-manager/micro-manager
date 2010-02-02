@@ -30,8 +30,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.Point;
-
 import java.util.prefs.Preferences;
 
 import javax.swing.JButton;
@@ -44,15 +42,12 @@ import javax.swing.table.AbstractTableModel;
 
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
-import mmcorej.PropertySetting;
 
 import org.micromanager.api.DeviceControlGUI;
-import org.micromanager.utils.GUIColors;
-import org.micromanager.utils.MMDialog;
 import org.micromanager.utils.Calibration;
 import org.micromanager.utils.CalibrationList;
-
-import com.swtdesigner.SwingResourceManager;
+import org.micromanager.utils.MMDialog;
+import org.micromanager.utils.ReportingUtils;
 
 public class CalibrationListDlg extends MMDialog {
    private static final long serialVersionUID = 1L;
@@ -62,9 +57,9 @@ public class CalibrationListDlg extends MMDialog {
    private JTable calTable_;
    private SpringLayout springLayout;
    private CMMCore core_;
-   private MMOptions opts_;
+   //private MMOptions opts_;
    private Preferences prefs_;
-   private GUIColors guiColors_;
+   //private GUIColors guiColors_;
    private CalibrationList calibrationList_;
    private DeviceControlGUI parentGUI_;
 
@@ -125,7 +120,7 @@ public class CalibrationListDlg extends MMDialog {
       }
 
       private void handleException (Exception e) {
-         String errText = "Exeption occured: " + e.getMessage();
+         String errText = "Exception occurred: " + e.getMessage();
          JOptionPane.showMessageDialog(null, errText);
       }
    }
@@ -134,7 +129,7 @@ public class CalibrationListDlg extends MMDialog {
    /**
     * Create the dialog
     */
-   public CalibrationListDlg(CMMCore core,  MMOptions opts) {
+   public CalibrationListDlg(CMMCore core) {
       super();
       addWindowListener(new WindowAdapter() {
          public void windowClosing(WindowEvent arg0) {
@@ -142,8 +137,8 @@ public class CalibrationListDlg extends MMDialog {
          }
       });
       core_ = core;
-      opts_ = opts;
-      guiColors_ = new GUIColors();
+      //opts_ = opts;
+      //guiColors_ = new GUIColors();
       setTitle("Pixel Size calibration");
       springLayout = new SpringLayout();
       getContentPane().setLayout(springLayout);
@@ -166,6 +161,8 @@ public class CalibrationListDlg extends MMDialog {
 
       // Create table with tooltip to show what is in the pixel size configurtaion
       calTable_ = new JTable() {
+         private static final long serialVersionUID = -5870707914970187465L;
+
          public String getToolTipText(MouseEvent e) {
             String tip = "";
             java.awt.Point p = e.getPoint();
@@ -355,11 +352,10 @@ public class CalibrationListDlg extends MMDialog {
    }
 
    private void handleException (Exception e) {
-      String errText = "Exeption occured: " + e.getMessage();
-      JOptionPane.showMessageDialog(null, errText);
+      ReportingUtils.showError(e);
    }
 
    private void handleError (String errText) {
-      JOptionPane.showMessageDialog(null, errText);
+      ReportingUtils.showError(errText);
    }
 }

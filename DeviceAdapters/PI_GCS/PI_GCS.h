@@ -65,6 +65,8 @@ public:
    int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnStepSizeUm(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnAxisName(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnAxisLimit(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    int ExecuteCommand(const std::string& cmd, std::string& response);
@@ -80,6 +82,7 @@ private:
    bool initialized_;
    long curSteps_;
    double answerTimeoutMs_;
+   double axisLimitUm_;
 };
 
 

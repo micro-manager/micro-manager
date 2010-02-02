@@ -44,6 +44,7 @@
 				AdditionalIncludeDirectories="..\..\..\3rdparty\QImaging\QCam SDK\Headers"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				MinimalRebuild="true"
+				ExceptionHandling="2"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				RuntimeTypeInfo="true"
@@ -51,6 +52,7 @@
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="4"
+				DisableSpecificWarnings="4290"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -63,7 +65,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="qcamdriverDEBUG.lib"
+				AdditionalDependencies="qcamdriver.lib"
 				OutputFile="$(OutDir)/mmgr_dal_QCam.dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="..\..\..\3rdparty\QImaging\QCam SDK\libs"
@@ -125,12 +127,14 @@
 				Name="VCCLCompilerTool"
 				AdditionalIncludeDirectories="..\..\..\3rdparty\QImaging\QCam SDK\Headers"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
+				ExceptionHandling="2"
 				RuntimeLibrary="0"
 				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="4"
 				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="3"
+				DisableSpecificWarnings="4290"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"

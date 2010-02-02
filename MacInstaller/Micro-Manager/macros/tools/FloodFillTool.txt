@@ -1,0 +1,79 @@
+//  Flood fill tool
+//  Requires ImageJ 1.34j or later, available at
+//  http://rsb.info.nih.gov/ij/upgrade/
+
+  var stack = newArray(1000);;
+  var stackSize;
+
+  macro "Flood Fill Tool -C037B21P085373b75d0L4d1aL3135L4050L6166D57D77D68La5adLb6bcD09D94" {
+      setupUndo();
+      getCursorLoc(x, y, z, flags);
+      //floodFill3(x,  y, getPixel(x, y));
+      requires("1.34j");
+      floodFill(x, y); // built into ImageJ 1.34j and later
+  }
+
+  //  Slow recursive algorithm that frequently
+  //  causes the stack to overflow. 
+  function floodFill2(x, y, color) {
+      if (getPixel(x,y)==color) { 
+          drawLine(x, y, x, y);
+          //if (debug) {updateDisplay(); wait(10);}
+          floodFill2(x+1, y, color); 
+          floodFill2(x, y+1, color); 
+          floodFill2(x-1, y, color); 
+          floodFill2(x, y-1, color); 
+      } 
+  }
+
+   // Faster, non-recursive scan-line fill. 
+   // This is the algorithm used by the built in
+   // floodFill() function.
+   function floodFill3(x, y, color) {
+      autoUpdate(false);
+      stackSize = 0;
+      push(x, y);
+      while(true) {   
+          coordinates = pop(); 
+          if (coordinates ==-1) return;
+          x = coordinates&0xffff;
+          y = coordinates>>16;
+          i = x;
+          while (getPixel(i,y)==color && i>=0) i--;
+          i++; x1=i;
+          while(getPixel(i,y)==color && i<getWidth) i++;                   
+          x2 = i-1;
+          drawLine(x1,y, x2,y); // fill scan-line
+          inScanLine = false;
+          for (i=x1; i<=x2; i++) { // find scan-lines above this one
+              if (!inScanLine && y>0 && getPixel(i,y-1)==color)
+                  {push(i, y-1); inScanLine = true;}
+              else if (inScanLine && y>0 && getPixel(i,y-1)!=color)
+                      inScanLine = false;
+          }
+          inScanLine = false;
+          for (i=x1; i<=x2; i++) { // find scan-lines below this one
+              if (!inScanLine && y<getHeight-1 && getPixel(i,y+1)==color)
+                  {push(i, y+1); inScanLine = true;}
+              else if (inScanLine && y<getHeight-1 && getPixel(i,y+1)!=color)
+                      inScanLine = false;
+          }
+     }        
+  }
+
+  function push(x, y) {
+      stackSize++;
+      stack[stackSize-1] = x + y<<16;
+  }
+
+  function pop() {
+      if (stackSize==0)
+          return -1;
+      else {
+          value = stack[stackSize-1];
+          stackSize--;
+          return value;
+      }
+  }
+
+

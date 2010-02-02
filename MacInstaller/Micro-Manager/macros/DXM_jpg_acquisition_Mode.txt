@@ -1,0 +1,32 @@
+//
+// This macro tries to retrieve the camera mode that was selected 
+// in the Nikon ACT1 software upon image acquisition.
+//
+// This info is usefull to compute image scale. 
+//
+// 'Quick' mode is always full-field acquisition.
+// 'Fine' mode yields a subregion of the CCD.
+//
+// NB : These special tags in the Jpeg images are not currently listed with 'Exif Reader' plugin.
+// 
+// Operation : open the Nikon Jpeg file with File Open... menu and run the DXM_jpg_acquisition_Mode macro.
+// result is displayed in the log window.
+// 
+
+macro 'DXM_Mode' {
+    titre = getTitle();
+    path = getDirectory("image");
+    run("Text File... ", "open="+path+titre+"");
+    lines = split(getInfo(),'[');
+    run ("Close");
+    print ("----");
+    print ("ACT1 DXM1200 mode detection :");
+    print ("File name :"+path+titre);
+    print ("Nikon encoded name : "+substring(lines[1],0,(indexOf(lines[1],']'))));
+    print ("Capture mode : "+substring(lines[2],0,(indexOf(lines[2],']'))));
+    //
+    // I commented out this 3rd info because I don't know what it is
+    //print ("misc : "+substring(lines[3],0,(indexOf(lines[3],']'))));
+    //
+}
+

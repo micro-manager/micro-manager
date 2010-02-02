@@ -22,10 +22,21 @@
 // CVS:          $Id$
 //
 package org.micromanager.graph;
-import java.awt.*;
-import javax.swing.*;
-import java.awt.geom.*;
-import java.text.*;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Paint;
+import java.awt.Rectangle;
+import java.awt.Stroke;
+import java.awt.geom.GeneralPath;
+import java.awt.geom.Line2D;
+import java.awt.geom.Point2D;
+import java.text.DecimalFormat;
+
+import javax.swing.JPanel;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  * XY graph view. 
@@ -113,10 +124,19 @@ public class GraphPanel extends JPanel {
       float xUnit = 1.0f;
       float yUnit = 1.0f;
       
+      // correct if Y rabnge is zero
+      if (bounds_.getRangeY() == 0.0) {
+         if (bounds_.yMax > 0.0)
+            bounds_.yMin = 0.0;
+         else if (bounds_.yMax < 0.0) {
+            bounds_.yMax = 0.0;
+         }
+      }
+
       if (bounds_.getRangeX() <= 0.0 || bounds_.getRangeY() <= 0.0) {
          return; // invalid range data
       }
-      
+            
       xUnit = (float) (box.width / bounds_.getRangeX());
       yUnit = (float) (box.height / bounds_.getRangeY());
       
@@ -137,11 +157,20 @@ public class GraphPanel extends JPanel {
       float xUnit = 1.0f;
       float yUnit = 1.0f;
       
+      // correct if Y range is zero
+      if (bounds_.getRangeY() == 0.0) {
+         if (bounds_.yMax > 0.0)
+            bounds_.yMin = 0.0;
+         else if (bounds_.yMax < 0.0) {
+            bounds_.yMax = 0.0;
+         }
+      }
+
       if (bounds_.getRangeX() <= 0.0 || bounds_.getRangeY() <= 0.0) {
-         System.out.println("Out of range " + bounds_.getRangeX() + ", " + bounds_.getRangeY());
+         ReportingUtils.logMessage("Out of range " + bounds_.getRangeX() + ", " + bounds_.getRangeY());
          return; // invalid range data
       }
-      
+            
       xUnit = (float) (box.width / bounds_.getRangeX());
       yUnit = (float) (box.height / bounds_.getRangeY());
 
@@ -177,13 +206,22 @@ public class GraphPanel extends JPanel {
     */
    private void drawGrid(Graphics2D g, Rectangle box) {
       if (data_.getSize() < 2) {
-         System.out.println("Invalid size " + data_.getSize());
+         ReportingUtils.logMessage("Invalid size " + data_.getSize());
          return;
+      }
+      
+      // correct if Y range is zero
+      if (bounds_.getRangeY() == 0.0) {
+         if (bounds_.yMax > 0.0)
+            bounds_.yMin = 0.0;
+         else if (bounds_.yMax < 0.0) {
+            bounds_.yMax = 0.0;
+         }
       }
       
       if (bounds_.getRangeX() <= 0.0 || bounds_.getRangeY() <= 0.0)
       {
-         System.out.println("Out of range " + bounds_.getRangeX() + ", " + bounds_.getRangeY());
+         ReportingUtils.logMessage("Out of range " + bounds_.getRangeX() + ", " + bounds_.getRangeY());
          return; // invalid range data
       }
       

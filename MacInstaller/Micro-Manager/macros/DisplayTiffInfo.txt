@@ -1,0 +1,36 @@
+// This macro displays contents of the Image Description tag
+// in the header of TIFF files created by programs such ImageJ
+// and MetaMorph.  
+
+// Author: Gilles Carpentier, Faculte des Sciences et 
+// Technologies,  Universite Paris 12 Val de Marne 
+
+  macro "Display TIFF Info" {
+      requires("1.34h");
+      setBatchMode(true);
+      id = getImageID();
+      title = getTitle();
+      if (indexOf(toLowerCase(title), ".tif")==-1)
+          exit("The macro requires a TIFF image");
+      dir  = getDirectory("image");
+      if (isOpen("Log")) {
+          selectWindow("Log");
+          run("Close");
+      }
+      run("Misc...", "divide=Infinity antialiased debug");
+      open(dir+title);
+      close();
+      run("Misc...", "divide=Infinity antialiased");
+      selectWindow("Log");
+      info = getInfo();
+      run("Close");
+      index1 = indexOf(info, "Image Description:");
+      if (index1==-1)
+          exit("This TIFF does not appear to have an image description tag");
+      index1 += 19;
+      index2=indexOf(info, "\n", index1);
+      data = substring(info, index1,index2);
+      if (lengthOf(data)>200 && indexOf(data, "\n")==-1)
+          exit("The image description is longer than 200 characters.");
+      showMessage ("Image description from "+title, data);
+}

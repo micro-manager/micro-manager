@@ -1,14 +1,23 @@
 package org.micromanager.image5d;
 
-import java.awt.*;
-import java.awt.image.*;
-import java.io.*;
-import java.awt.event.*;
-import ij.*;
-import ij.io.*;
-import ij.gui.*;
-import ij.process.*;
-import ij.plugin.*;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.gui.GenericDialog;
+import ij.io.FileInfo;
+import ij.io.OpenDialog;
+import ij.io.Opener;
+import ij.plugin.PlugIn;
+import ij.process.ImageConverter;
+import ij.process.ImageProcessor;
+
+import java.awt.Checkbox;
+import java.awt.Label;
+import java.awt.TextField;
+import java.awt.event.ItemEvent;
+import java.awt.event.TextEvent;
+import java.awt.image.ColorModel;
+import java.io.File;
 
 /** Opens a folder of image stacks as one big stack ("Hypervolume").
  * 	Can be used with the Hypervolume Browser and Shuffler.  
@@ -161,7 +170,7 @@ public class Hypervolume_Opener implements PlugIn {
 				if (count>=n)
 					break;
 			} // for loop over files in directory
-		} catch(OutOfMemoryError e) {
+		} catch (OutOfMemoryError e) {
 			IJ.outOfMemory("Hypervolume_Opener");
 			if (stack!=null) stack.trim();
 		}

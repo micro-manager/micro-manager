@@ -1,0 +1,37 @@
+// "RadialIntegratedIntensity.txt"
+// This macro plots the radial intensity of an image
+// or selection over 0-360 degrees, integrating each 
+// five degree segment. Each plot y value is the sum 
+// of the pixels in one segment of the image or selection. 
+// Edit the statement 'angleIncrement = 5' to change 
+// the angle that determines the segment size.
+
+  requires("1.33p");
+  angleIncrement = 5; //degrees
+  type = selectionType;
+  if (type>4)
+    exit("Area selection, or no selection, required");
+  if (type>=0) {
+     run("Duplicate...", "title=Temp");
+     run("Restore Selection");
+     setBackgroundColor(0,0,0);
+     run("Clear Outside");    
+  }
+  sums = newArray(360/angleIncrement);
+  angles = newArray(360/angleIncrement);
+  for (i=0; i<angles.length; i++)
+      angles[i] = i*angleIncrement;
+  width=getWidth(); height=getHeight();
+  xcenter = width/2;
+  ycenter = height/2;
+  for (y=0; y<height; y++) {
+      if (y%10==0) showProgress(y, height);
+      for (x=0; x<width; x++) {
+          value = getPixel(x, y);
+          angle = atan2(height-y-ycenter-1, x-xcenter)*180/PI;
+          if (angle<0) angle += 360;
+          sums[floor(angle)/angleIncrement] += value;
+      }
+  }
+  if (type>=0) close();
+  Plot.create("Radial Integrated Intensity", "Angle", "Intensity", angles, sums);

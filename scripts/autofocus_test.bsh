@@ -1,10 +1,225 @@
-// run auto-focus with current options
-//gui.autofocus();
+// 
+// Script to test Autofocus alogrithms by testing them against the existing autofocus 
+// Prashanth
+//
 
-// run auto-focus with paramters
-coarseStep = 2.0;
-numCoarseSteps = 2;
-fineStep = 0.2;
-numFineSteps = 6;
+import java.io.FileWriter;
+import java.io.IOException;
+import javax.swing.JTextField;
+import javax.swing.JLabel;
+import javax.swing.JFrame;
+import java.awt.Container;
+import java.awt.FlowLayout;
+import java.lang.Math;
+import mmcorej.StrVector;
+import org.micromanager.api.Autofocus;
+import org.micromanager.api.AcquisitionOptions;
 
-gui.autofocus(coarseSteps, numCoarseSteps, fineStep, numFineSteps);
+
+// Force load of the java plugin if not installed
+//acq.installAutofocusPlugin("Autofocus_"); 
+
+int 	maxDisplacement 				= 			30;
+int	numTests		  					= 			11;
+String 	outputfilePath 				= 			"C://projects//micromanager1.3//DeviceAdapters//SimpleAF//autofocus_output.txt";
+// file locations for storing the output sequence
+acqName = "test-af-visual";
+rootDirName = "C:/acquisitionData";
+// general parameters for autofocus tests
+numFrames = 3;
+String[] channels = {"AF-Channel"};
+Color[] colors = {Color.GRAY};
+numSlices = 1;
+intervalMs = 1000;
+exposure = 10;
+
+try
+{
+	Autofocus af = gui.getAutofocus();
+	String autofocusname = mmc.getProperty("Core",mmc.getDevicePropertyNames("Core").get(0));
+	String ZStage = mmc.getFocusDevice();
+	//gui.message(ZStage);
+	FileWriter writer = new FileWriter(outputfilePath,true);	// Which file to write that data into
+	double manualFocus = mmc.getPosition(ZStage);		// Enter the point of manual focus here
+	
+	String Mesg = autofocusname+" test - All measurements of errors and error statistics in microns, \n---------------------------------------------------------------------------------------------";
+   Mesg += "\nManual best focus is : "+((double)Math.round(manualFocus*1000)/1000)
+				+"\n";
+	Double [] displacements = new Double[numTests];
+	double step			  = (2*(double)maxDisplacement)/(double)numTests;
+	Double [] err = new Double[numTests];
+	boolean addoneFlag = false;
+	double displacement;
+	// Calculate the standard deviation
+	Double [] residuals = new Double[numTests];
+	Double sd = 0;
+	// Calculate mean error
+	Double signedmean = 0;
+	// Calculate minimum error and maximum error
+	Double minerror = 500000000.0;
+   Double maxerror = -50000000.0;
+	// Create the displacement array that the script willl have to run
+	for(int i = 0; i < numTests; ++i)
+	{
+		displacement = (manualFocus - maxDisplacement) + i*(step);
+		if(displacement == 0 || addoneFlag)
+		{
+			displacement = ((i+1)*step -maxDisplacement);
+			addoneFlag = true;
+		}
+		displacements[i] = displacement;
+		double z_stagedispfrombest = (- maxDisplacement) + i*(step);
+		mmc.setPosition(ZStage,(displacement));
+		double start = System.currentTimeMillis();
+		af.fullFocus();
+		String valfull = "Not-Initialized";
+		StrVector properties = mmc.getDevicePropertyNames(autofocusname);
+		for (int i=0; i<properties.size(); i++) 
+		{
+	 		//String Mesg;
+    		String prop = properties.get(i);
+			if(prop.equals("Total Number of images acquired by autofocus"))
+	 		{
+				valfull = mmc.getProperty(autofocusname, prop);					
+    			
+			}
+		}
+		af.incrementalFocus();
+		double stop = System.currentTimeMillis();
+		String valinc = "Not-Initialized";
+		StrVector properties = mmc.getDevicePropertyNames(autofocusname);
+		for (int i=0; i<properties.size(); i++) 
+		{
+	 		//String Mesg;
+    		String prop = properties.get(i);
+			if(prop.equals("Total Number of images acquired by autofocus"))
+	 		{
+				valinc = mmc.getProperty(autofocusname, prop);	
+			}
+		}
+		//gui.autofocus(); 
+		
+		double pos = mmc.getPosition(ZStage);
+		err[i] = pos - manualFocus;
+		Mesg+="z-displacement : "+((float)Math.round((z_stagedispfrombest)*1000)/1000)+" mic "+
+				//"("+(float)(Math.round(z_stagedispfrombest*1000)/1000)+" units)"+
+				"\tz-error : "+((double)Math.round((err[i]*1000))/1000)+" mic "+
+				"\tz-autofocus : "+(double)((double)Math.round(pos*1000)/1000)+" mic"+
+				//"( "+(float)(Math.round(pos*1000)/1000)+" units) "+
+				"\tTime Taken : "+((double)(stop-start)/1000)+" secs"+
+				"\tImages taken : "+valfull+"/"+valinc+"\n";
+
+	}
+	
+	for(int i = 0; i < numTests; ++i)
+	{
+		signedmean += err[i]/numTests;
+	}
+	
+	for(int i = 0; i < numTests; i++)
+	{
+			if(err[i] < minerror)
+				minerror = err[i];
+			if(err[i] > maxerror)
+				maxerror = err[i];		
+	}
+
+
+   Mesg += "Run report : ("+autofocusname+")\n************\n";
+	Mesg += "Average focus : "+(signedmean + manualFocus)+"\n";
+	Mesg += "Mean error : "+(signedmean)+" microns \n";
+	Mesg += "Highest Focus Point : "+((manualFocus - minerror))+" \n";
+	Mesg += "Lowest Focus Point : "+((manualFocus - maxerror))+" \n";
+	Mesg += "Span of the autofocus values is : "+((((double)Math.round((maxerror - minerror)*1000)))/1000)+" microns \n";
+	Double meanfocus = manualFocus + signedmean;
+	// Find maximum deviation from mean focus
+	Double maxdeviation  = -1000000;
+	double maxdeviationPos = 0;
+	for(int i = 0; i < numTests; i++)
+	{
+			if(Math.abs((manualFocus+err[i]) - meanfocus) > maxdeviation)
+			{
+				maxdeviation = (manualFocus+err[i]) - meanfocus;
+				maxdeviationPos = manualFocus+err[i];
+			}		
+	}
+	Mesg += "Maximum deviation from mean computed focus is : "+maxdeviation+" microns \n";
+	
+	
+	
+
+	for(int i = 0; i < numTests; ++i)
+	{	
+		residuals[i] = (err[i] - signedmean)*(err[i] - signedmean);
+	}
+	for(int i = 0; i < numTests; ++i)
+	{
+		sd += residuals[i]/numTests;
+	}
+	sd = Math.sqrt(sd);
+	Mesg += "The standard deviation of the errors (calculated with the signed mean) is : "+(sd)+" microns \n\n\n";
+	//Mesg += "The lowest AF value observed was "+lowest+" , and the highest AF value observed was "+highest+" span being "+(highest - lowest);
+	Mesg+= "Properties for the device are: \n";
+	//String autofocusname = mmc.getProperty("Core",mmc.getDevicePropertyNames("Core").get(0));
+	StrVector properties = mmc.getDevicePropertyNames(autofocusname);
+	//properties = mmc.getDevicePropertyNames(getProperty(properties.get(0));
+	for (int i=0; i<properties.size(); i++) 
+	{
+	 //String Mesg;
+    	String prop = properties.get(i);
+	 	String val = mmc.getProperty(autofocusname, prop);
+    	Mesg += "\tProperty Name : \t" + prop + "\n\tProperty value: \t" + val + "\n";
+	}
+	gui.message(Mesg);
+	writer.append(Mesg);
+	writer.flush();
+	writer.close();
+	gui.closeAllAcquisitions();
+	// Displaying the autofocus images at the key points
+	// 1st at manual best focus
+	// 2nd at average computed focus
+	//3rd at worst computed focus i.e maximum deviation from mean
+	gui.openAcquisition(acqName, rootDirName, numFrames, channels.length, numSlices);
+	for (int i=0; i<colors.length; i++)
+   	gui.setChannelColor(acqName, i, colors[i]);
+	for (int i=0; i<channels.length; i++)
+   	gui.setChannelName(acqName, i, channels[i]);
+	for (int i=0; i<numFrames; i++) 
+	{
+		if(i == 0)
+		{
+			// Go to manual best focus
+			mmc.setPosition(ZStage,manualFocus);			
+		}
+		if(i == 1)
+		{
+			double averageFocalPlane = signedmean + manualFocus;
+			// Go to the mean focus plane
+			mmc.setPosition(ZStage,averageFocalPlane);
+		}
+		if(i == 2)
+		{
+			// Go to the worst focus plane
+			mmc.setPosition(ZStage,maxdeviationPos);
+		}
+			mmc.setExposure(exposure);
+   	
+       	gui.snapAndAddImage(acqName, i, 0, 0);   
+   	// set channel contrast based on the first frame
+   	if (i==0) 
+		{
+      	gui.setContrastBasedOnFrame(acqName, i, 0);
+   	}
+   	gui.sleep(intervalMs);
+	}
+	double averageFocalPlane = signedmean + manualFocus;
+	// Go to the mean focus plane
+	mmc.setPosition(ZStage,averageFocalPlane);
+
+
+}
+catch(Exception e)
+{
+	e.printStackTrace();
+}
+

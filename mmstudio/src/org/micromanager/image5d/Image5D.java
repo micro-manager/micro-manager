@@ -1,17 +1,34 @@
 package org.micromanager.image5d;
 
-import java.awt.*;
-import java.awt.image.*;
-import java.lang.reflect.Array;
-
-
-import ij.*;
-import ij.gui.*;
-import ij.io.*;
+import ij.IJ;
+import ij.ImageJ;
+import ij.ImagePlus;
+import ij.ImageStack;
+import ij.WindowManager;
+import ij.gui.ImageWindow;
+import ij.gui.Roi;
+import ij.io.FileInfo;
 import ij.macro.Interpreter;
-import ij.measure.*;
-import ij.process.*;
-import ij.plugin.filter.*;
+import ij.measure.Calibration;
+import ij.process.ByteProcessor;
+import ij.process.ColorProcessor;
+import ij.process.FloatProcessor;
+import ij.process.ImageProcessor;
+import ij.process.LUT;
+import ij.process.ShortProcessor;
+import ij.process.StackProcessor;
+
+import java.awt.Color;
+import java.awt.Image;
+import java.awt.Rectangle;
+import java.awt.Toolkit;
+import java.awt.image.ColorModel;
+import java.awt.image.DirectColorModel;
+import java.awt.image.IndexColorModel;
+import java.awt.image.MemoryImageSource;
+import java.awt.image.PixelGrabber;
+import java.lang.reflect.Array;
+import org.micromanager.utils.ReportingUtils;
 
 /*
  * Created on 26.03.2005
@@ -63,7 +80,7 @@ public class Image5D extends ImagePlus {
    static final int nDefaultDimensions = 5;
 	protected int nDimensions = nDefaultDimensions;
     
-   private String[] dimensionLabels = {"x", "y", "ch", "z", "t"};
+	protected String[] dimensionLabels = {"x", "y", "ch", "z", "t"};
 	
 	protected boolean isInitialized;
 	
@@ -152,47 +169,6 @@ public class Image5D extends ImagePlus {
       this (title, stack, 1, 1, stack.getSize());
    }
 		
-      /*
-		super(title, stack);
-		if(IJ.versionLessThan("1.34p")) throw new IllegalArgumentException("too old ImageJ version");
-		
-		// Initialize Image5D:currentPosition, imageData reference.
-		for (int i=0; i<nDimensions; i++) {
-			currentPosition[i] = 0;
-		}
-		
-		imageStack = stack;
-		imageStackSize = getStackSize();
-
-      chCalibration = new ChannelCalibration[1];
-      chCalibration[0] = new ChannelCalibration();
-        
-      chDisplayProps = new ChannelDisplayProperties[1];
-		chDisplayProps[0] = new ChannelDisplayProperties();
-		chDisplayProps[0].setColorModel(ip.getColorModel());
-		chDisplayProps[0].setMinValue(ip.getMin());
-		chDisplayProps[0].setMaxValue(ip.getMax());
-		chDisplayProps[0].setMinThreshold(ip.getMinThreshold());
-		chDisplayProps[0].setMaxThreshold(ip.getMaxThreshold());
-		chDisplayProps[0].setLutUpdateMode(ip.getLutUpdateMode());
-		chDisplayProps[0].setDisplayedGray(false);
-        
-		
-		//displayMode = ChannelControl.OVERLAY;
-      displayMode = ChannelControl.ONE_CHANNEL_COLOR;
-		displayAllGray = false;
-		channelIPs[0] = getProcessor();
-		
-		grayColorModel = ChannelDisplayProperties.createModelFromColor(Color.white);
-		
-		imageStack.setColorModel(grayColorModel);
-        
-        setCalibration(super.getCalibration());
-		
-		isInitialized = true;
-	}
-   */
-
     /**
      * Makes an Image5D from an ImageStack and dimension sizes.
      * All other constructors of Image5D eventually call this one. So changes that apply to all 
@@ -288,6 +264,7 @@ public class Image5D extends ImagePlus {
 	Type ColorRGB is not permitted.
 	If the Image5D is initialized, stack type and dimensions have to match to current type/dims.*/
 	public void setStack(String title, ImageStack stack) {
+      ReportingUtils.logMessage("setStack called");
 		// Exception, if dimensions or data type don't match. 
 		if (stack.getProcessor(1) instanceof ColorProcessor)
 			throw new IllegalArgumentException("Cannot accept RGB stack for Image5D.");
@@ -668,6 +645,22 @@ public class Image5D extends ImagePlus {
         chDisplayProps[channel-1].setMaxValue(maxValue);
         restoreChannelProperties(channel);
     }
+
+   /**
+    * Overrides method in ImagePlus available since ImageJ version 1.42m
+    * This methods is used by the ImageJ Hyperstack->Stack command to determine
+    * which colors to use for the Hyperstack channels
+    * TODO: make this work for our Image5D
+    */
+    public LUT[] getLuts() {
+       LUT[] luts = new LUT[getNChannels()];
+       for (int i=0; i < getNChannels(); i++) {
+          luts[i] = new LUT( (IndexColorModel)chDisplayProps[i].getColorModel(), chDisplayProps[i].getMinValue(), chDisplayProps[i].getMaxValue() );
+       }
+       return luts;
+    }
+   
+
 //	/** Returns, whether the given channel is selected to be displayed in grayscale.
 //	 * 
 //	 * @param channel
@@ -840,7 +833,9 @@ public class Image5D extends ImagePlus {
 				try {
 					pg.grabPixels();
 				}
-				catch (InterruptedException e){};
+				catch (InterruptedException e) {
+                    ReportingUtils.logError(e);
+                };
 			}
 			for (int i=0; i<imageSize; ++i) {
 				redValue=0; greenValue=0; blueValue=0;
@@ -1014,7 +1009,7 @@ public class Image5D extends ImagePlus {
 	 * @param fill: if true, create black image for each position, 
 	 * 		if false, link a common dummy image to each position
 	 */	
-	synchronized protected void expandDimension(int dimension, int newSize, boolean fill) {
+	synchronized public void expandDimension(int dimension, int newSize, boolean fill) {
 		if (dimension<2 || dimension>nDimensions)
 			throw new IllegalArgumentException("Invalid dimension: "+dimension);
 		
@@ -1329,7 +1324,7 @@ public class Image5D extends ImagePlus {
            newStack.addSlice(slicename+n,theslice.crop());
         }
         */
-        System.out.println(getNSlices() + ", " + getNFrames() + ", " + newStack.getSize() + ", " + stack.getSize()); 
+        ReportingUtils.logMessage(getNSlices() + ", " + getNFrames() + ", " + newStack.getSize() + ", " + stack.getSize());
         Image5D i5d = new Image5D(newTitle, newStack, 2, getNSlices(), getNFrames());
        
         // Copy the calibration data.
@@ -1361,11 +1356,9 @@ public class Image5D extends ImagePlus {
        if (roi == null)
           throw new IllegalArgumentException("No ROI selected");
        ImagePlus impCrop = (new ij.plugin.filter.Duplicater()).duplicateStack(impOrig, newTitle);
-       impCrop.setRoi(roi);
-       PlugInFilter crop = new ij.plugin.filter.Resizer();
-       crop.setup("crop", impCrop);
-       crop.run(impCrop.getProcessor());
-       ImageStack stackCopy = impCrop.getStack();
+       StackProcessor sp = new StackProcessor(impCrop.getStack(), impCrop.getProcessor());
+       Rectangle rt = roi.getBounds();
+       ImageStack stackCopy = sp.crop(rt.x, rt.y, rt.width, rt.height);
        
        Image5D i5d = new Image5D(newTitle, stackCopy, getNChannels(), getNSlices(), getNFrames());
        

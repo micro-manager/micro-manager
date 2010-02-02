@@ -5,7 +5,10 @@ License:	Distributed under the BSD license.
 */
 #include "MCL_NanoDrive_ZStage.h"
 
-MCL_NanoDrive_ZStage::MCL_NanoDrive_ZStage():	
+#include <vector>
+#include <string>
+
+MCL_NanoDrive_ZStage::MCL_NanoDrive_ZStage() :	
    busy_(false),
    initialized_(false),
    settlingTimeZ_ms_(100),
@@ -13,6 +16,7 @@ MCL_NanoDrive_ZStage::MCL_NanoDrive_ZStage():
    firstWrite_(true),
    MCLhandle_(0)
 {
+	// Basically only construct error messages in the constructor
 	InitializeDefaultErrorMessages();
 	
 	// MCL error messages 
@@ -43,135 +47,162 @@ bool MCL_NanoDrive_ZStage::Busy()
 
 int MCL_NanoDrive_ZStage::Initialize()
 {
-// BEGIN LOCKING
+// BEGIN LOCKING -> make sure to unlock before any return call
 HandleListLock(); 
 
 	int err = DEVICE_OK;
-	ProductInformation pi = {NULL, 0, 0, 0, 0, 0};
-	bool valid = false;
 	int possHandle = 0;
+	bool valid = false;
 
+	ProductInformation pi = {NULL, 0, 0, 0, 0, 0};
+   
 	if (initialized_)
 	   goto ZSTAGE_INIT_EXIT;
 
-	int numHandles = MCL_GrabAllHandles();
-	if (numHandles == 0)
-	{
+   int numHandles = MCL_GrabAllHandles();
+   if (numHandles == 0)
+   {
 	   err = MCL_INVALID_HANDLE;
 	   goto ZSTAGE_INIT_EXIT;
-	}
+   }
 
-	int* handlesToUseOrRelease = NULL;
-	handlesToUseOrRelease = (int*) malloc(sizeof(int*) * numHandles);
-	MCL_GetAllHandles(handlesToUseOrRelease, numHandles);
+   int* handlesToUseOrRelease = NULL;
+   handlesToUseOrRelease = (int*) malloc(sizeof(int*) * numHandles);
+   MCL_GetAllHandles(handlesToUseOrRelease, numHandles);
 
-	HandleListType* device = (HandleListType*)GlobalHeapAllocate(sizeof(HandleListType));
-	device->Initialize(possHandle, Z_TYPE);
+   HandleListType* device = (HandleListType*)GlobalHeapAllocate(sizeof(HandleListType));
+   device->Initialize(possHandle, Z_TYPE);
 
-	for (int i = 0; i < numHandles; i++)
-	{
-		possHandle = handlesToUseOrRelease[i]; 
-		MCL_GetProductInfo(&pi, possHandle);
-
+   for (int i = 0; i < numHandles; i++)
+   {
+		possHandle = handlesToUseOrRelease[i];
 		device->setHandle(possHandle);
 
-		if (((pi.axis_bitmap & 0x4) == 0x4) && (!HandleExistsOnLockedList(device)) && (possHandle > 0))
+		MCL_GetProductInfo(&pi, possHandle);
+		
+		// By default use the Z axis.
+		bool validAxis = ((pi.axis_bitmap & VALIDZ) == VALIDZ);
+		if (validAxis)
+		{
+			axis_  = ZAXIS;
+		}
+		// Otherwise use the X or Y axis of a single axis system.
+		else if ( (pi.axis_bitmap & (VALIDX | VALIDY) ) != (VALIDX | VALIDY) )
+		{
+			if ( (pi.axis_bitmap & AXIS_MASK) == VALIDX )
+			{
+				axis_ = XAXIS;
+				validAxis = true;
+			}
+
+			if ( (pi.axis_bitmap & AXIS_MASK) == VALIDY )
+			{
+				axis_ = YAXIS;
+				validAxis = true;
+			}
+		}
+
+		if ((validAxis) && (!HandleExistsOnLockedList(device)) && (possHandle > 0))
 		{ 
 			valid = true;
 
 			HandleListAddToLockedList(device);
 			MCLhandle_ = possHandle;
 
-			// release handles not in use
+			// release handles not in use.
 			for (int j = i+1; j < numHandles; j++)
 			{
 				possHandle = handlesToUseOrRelease[j];
-
-				if (possHandle > 0 && !HandleExistsOnLockedList(possHandle))
-				{
+				if (!HandleExistsOnLockedList(possHandle) && possHandle > 0)
+				{	
 					MCL_ReleaseHandle(possHandle);
 				}
 			}
-			break;
+			break; // done, no need to check further
 		}
 		else 
-		{
+		{ 
 			if (!HandleExistsOnLockedList(possHandle) && possHandle > 0)
-			{			
+			{
 				MCL_ReleaseHandle(possHandle);
 			}
 		}
-	}
-	free (handlesToUseOrRelease);
+   }
+   free (handlesToUseOrRelease);
 
-	if (!valid)
-	{
+   if (!valid)
+   {
 	   GlobalHeapFree(device);
 	   err = MCL_INVALID_HANDLE;
 	   goto ZSTAGE_INIT_EXIT;
-	}
+   }
 
-	calibration_ = MCL_GetCalibration(ZAXIS, MCLhandle_);
+   calibration_ = MCL_GetCalibration(axis_, MCLhandle_);
 
-	if ((int)calibration_ < 0)
-	{
+   if ((int)calibration_ < 0)
+   {
 	   err = (int) calibration_;
 	   goto ZSTAGE_INIT_EXIT;
-	}
+   }
 
-	if (pi.Product_id == 0x1230 || pi.Product_id == 0x1253 || pi.Product_id == 0x2201 || 
+   if (pi.Product_id == 0x1230 || pi.Product_id == 0x1253 || pi.Product_id == 0x2201 || 
 	   pi.Product_id == 0x2203 || pi.Product_id == 0x2253)
-	{
-
+   { 
+		// 20 bit system
 		stepSize_um_ = calibration_ / NUM_STEPS_20;
-	}
-	else 
-	{
+   }
+   else 
+   { 
 		stepSize_um_ = calibration_ / NUM_STEPS_16;
-	}
+   }
 
-	upperLimit_ = MCL_GetCalibration(ZAXIS, MCLhandle_);
-	if (upperLimit_ < 0)
-	{
+   upperLimit_ = MCL_GetCalibration(axis_, MCLhandle_);
+   if (upperLimit_ < 0)
+   { 
 	   err = (int) upperLimit_;
 	   goto ZSTAGE_INIT_EXIT;
-	}
+   }
 
-	lowerLimit_ = 0;
+   lowerLimit_ = 0;
 
-	curZpos_ = MCL_SingleReadZ(MCLhandle_);
-	if ((int) curZpos_ < 0)
-	{
+   curZpos_ = MCL_SingleReadN(axis_, MCLhandle_);
+   if ((int) curZpos_ < 0)
+   {
 	   err = (int) curZpos_;
 	   goto ZSTAGE_INIT_EXIT;
-	}
+   }
 
-	serialNumber_ = MCL_GetSerialNumber(MCLhandle_);
-	if (serialNumber_ < 0)
-	{
+   serialNumber_ = MCL_GetSerialNumber(MCLhandle_);
+   if (serialNumber_ < 0)
+   {
 	   err = (int) serialNumber_;
 	   goto ZSTAGE_INIT_EXIT;
-	}
+   }
 
-	err = CreateZStageProperties();
-	if (err != DEVICE_OK)
+   err = CreateZStageProperties();
+   if (err != DEVICE_OK)
+   {
 	   goto ZSTAGE_INIT_EXIT;
-
-	err = UpdateStatus();
-	if (err != DEVICE_OK)
+   }
+  
+   err = UpdateStatus();
+   if (err != DEVICE_OK)
+   {
 	   goto ZSTAGE_INIT_EXIT;
+   }
 
-	initialized_ = true;
+   initialized_ = true; 
+
 
 ZSTAGE_INIT_EXIT:
-
-HandleListUnlock();
-// END LOCKING
+	HandleListUnlock();
 
 	return err;
 }
 
-int MCL_NanoDrive_ZStage::Shutdown(){
+
+int MCL_NanoDrive_ZStage::Shutdown()
+{
 	
 // BEGIN LOCKING
 HandleListLock();
@@ -197,90 +228,109 @@ HandleListUnlock();
 
 int MCL_NanoDrive_ZStage::CreateZStageProperties()
 {
-   int err;
-   char iToChar[25];
-   double zPos;
+	int err;
+	char iToChar[25];
+	double zPos;
 
-   /// Read only properties
+	/// Read only properties
 
-   // Name property (read-only)
-   err = CreateProperty(MM::g_Keyword_Name, g_StageDeviceName, MM::String, true);
-   if (err != DEVICE_OK)
-      return err;
+	// Name property (read-only)
+	err = CreateProperty(MM::g_Keyword_Name, g_StageDeviceName, MM::String, true);
+	if (err != DEVICE_OK)
+		return err;
    
-   // Description property (read-only)
-   err = CreateProperty(MM::g_Keyword_Description, "ZStage driver", MM::String, true);
-   if (err != DEVICE_OK)
-      return err;
+	// Description property (read-only)
+	err = CreateProperty(MM::g_Keyword_Description, "ZStage driver", MM::String, true);
+	if (err != DEVICE_OK)
+		return err;
 
-   // See what device you are connected too (read-only)
-   sprintf(iToChar, "%d", MCLhandle_);
-   err = CreateProperty("Device Handle", iToChar, MM::Integer, true);
-   if (err != DEVICE_OK)
-      return err;
+	// See what device you are connected too (read-only)
+	sprintf(iToChar, "%d", MCLhandle_);
+	err = CreateProperty("Device Handle", iToChar, MM::Integer, true);
+	if (err != DEVICE_OK)
+		return err;
 
-   // Look at the calibration value (read-only)
-   sprintf(iToChar, "%f",calibration_);
-   err = CreateProperty("Calibration", iToChar, MM::Float, true);
-   if (err != DEVICE_OK)
-	   return err;
+	// Look at the calibration value (read-only)
+	sprintf(iToChar, "%f",calibration_);
+	err = CreateProperty("Calibration", iToChar, MM::Float, true);
+	if (err != DEVICE_OK)
+		return err;
 
-   // Lowest measurement (in um) the device can be set to (read-only)
-   sprintf(iToChar, "%f",lowerLimit_);
-   err = CreateProperty("Lower Limit", iToChar, MM::Float, true);
-   if (err != DEVICE_OK)
-	   return err;
+	// Lowest measurement (in um) the device can be set to (read-only)
+	sprintf(iToChar, "%f",lowerLimit_);
+	err = CreateProperty("Lower Limit", iToChar, MM::Float, true);
+	if (err != DEVICE_OK)
+		return err;
     
-   // Highest measurement (in um) the device can be set to (read-only)
-   sprintf(iToChar, "%f",upperLimit_);
-   err = CreateProperty("Upper Limit", iToChar, MM::Float, true);
-   if (err != DEVICE_OK)
-	   return err;
+	// Highest measurement (in um) the device can be set to (read-only)
+	sprintf(iToChar, "%f",upperLimit_);
+	err = CreateProperty("Upper Limit", iToChar, MM::Float, true);
+	if (err != DEVICE_OK)
+		return err;
 
-   // Device serial number (read-only)
-   sprintf(iToChar, "%d", MCL_GetSerialNumber(MCLhandle_));
-   err = CreateProperty("Serial Number", iToChar, MM::String, true);
-   if (err != DEVICE_OK)
-	   return err;
+	// Device serial number (read-only)
+	sprintf(iToChar, "%d", MCL_GetSerialNumber(MCLhandle_));
+	err = CreateProperty("Serial Number", iToChar, MM::String, true);
+	if (err != DEVICE_OK)
+		return err;
 
-   /// Action properties
+    if (axis_ == ZAXIS)
+	{
+		sprintf(iToChar, "Z axis");
+	}
+	else if (axis_ == XAXIS)
+	{
+		sprintf(iToChar, "X axis");
+	}
+	else 
+	{
+	   sprintf(iToChar, "Y axis");
+	}
+ 
+	err = CreateProperty("Axis being used as Z axis", iToChar, MM::String, true);
+	if (err != DEVICE_OK)
+	{
+		return err;
+	}
+
+	/// Action properties
    
-   // Change Z position (um)
-   zPos = MCL_SingleReadZ(MCLhandle_);
-   if ((int)zPos < 0)
-	   return (int) zPos;
+	// Change Z position (um)
+	zPos = MCL_SingleReadN(axis_, MCLhandle_);
+	if ((int)zPos < 0)
+		return (int) zPos;
 
-   sprintf(iToChar, "%f", zPos);
-   CPropertyAction* pAct = new CPropertyAction (this, &MCL_NanoDrive_ZStage::OnPositionUm);
-   err = CreateProperty(g_Keyword_SetPosZUm, iToChar, MM::Float, false, pAct);
-   if (err != DEVICE_OK)
-	   return err;
+	sprintf(iToChar, "%f", zPos);
+	CPropertyAction* pAct = new CPropertyAction (this, &MCL_NanoDrive_ZStage::OnPositionUm);
+	err = CreateProperty(g_Keyword_SetPosZUm, iToChar, MM::Float, false, pAct);
+	if (err != DEVICE_OK)
+		return err;
 
-   // Set the limits i.e. make a slide bar for setting the position
-   err = SetPropertyLimits(g_Keyword_SetPosZUm, lowerLimit_, upperLimit_); 
-   if (err != DEVICE_OK)
-	   return err;
+	// Set the limits i.e. make a slide bar for setting the position
+	err = SetPropertyLimits(g_Keyword_SetPosZUm, lowerLimit_, upperLimit_); 
+	if (err != DEVICE_OK)
+		return err;
 
-   // Settling time (ms) for the device
-   sprintf(iToChar, "%d", settlingTimeZ_ms_);
-   pAct = new CPropertyAction(this, &MCL_NanoDrive_ZStage::OnSettlingTimeZMs);
-   err = CreateProperty("Settling time Z axis (ms)", iToChar, MM::Integer, false, pAct);
-   if (err != DEVICE_OK)
-	   return err;
+	// Settling time (ms) for the device
+	sprintf(iToChar, "%d", settlingTimeZ_ms_);
+	pAct = new CPropertyAction(this, &MCL_NanoDrive_ZStage::OnSettlingTimeZMs);
+	err = CreateProperty("Settling time Z axis (ms)", iToChar, MM::Integer, false, pAct);
+	if (err != DEVICE_OK)
+		return err;
 
-   // Set the origin at the current position
-   pAct = new CPropertyAction(this, &MCL_NanoDrive_ZStage::OnSetOrigin);
-   err = CreateProperty(g_Keyword_SetOrigin, "No", MM::String, false, pAct);
-   if (err != DEVICE_OK)
-	   return err;
+	// Set the origin at the current position
+	pAct = new CPropertyAction(this, &MCL_NanoDrive_ZStage::OnSetOrigin);
+	err = CreateProperty(g_Keyword_SetOrigin, "No", MM::String, false, pAct);
+	if (err != DEVICE_OK)
+		return err;
 
-   // Allows user to choose either "Yes" or "No" for wanting to set the origin
-   std::vector<std::string> yesNoList;
-   yesNoList.push_back("No");
-   yesNoList.push_back("Yes");
-   SetAllowedValues(g_Keyword_SetOrigin, yesNoList);
+	// Allows user to choose either "Yes" or "No" for wanting to set the origin
+	std::vector<std::string> yesNoList;
+	yesNoList.push_back("No");
+	yesNoList.push_back("Yes");
+	SetAllowedValues(g_Keyword_SetOrigin, yesNoList);
 
-   return DEVICE_OK;
+	return DEVICE_OK;
 }
 
 int MCL_NanoDrive_ZStage::SetPositionUm(double pos)
@@ -291,7 +341,7 @@ int MCL_NanoDrive_ZStage::SetPositionUm(double pos)
 		return DEVICE_OK;
 
 	// position to write to is pos (position from origin) - lowerLimit (lower bounds)
-	err = MCL_SingleWriteZ(pos - lowerLimit_, MCLhandle_); 
+	err = MCL_SingleWriteN(pos - lowerLimit_, axis_, MCLhandle_);  
 	if (err != MCL_SUCCESS)
 		return err;
 
@@ -306,7 +356,7 @@ int MCL_NanoDrive_ZStage::SetPositionUm(double pos)
 
 int MCL_NanoDrive_ZStage::GetPositionUm(double& pos)
 {
-    pos = MCL_SingleReadZ(MCLhandle_);
+	pos = MCL_SingleReadN(axis_, MCLhandle_);
 	/// 20 bit systems can read slightly below zero.  Truncate the result to check for errors.
 	if ((int)pos < 0)
 		return (int) pos;

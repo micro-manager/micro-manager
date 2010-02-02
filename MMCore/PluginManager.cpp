@@ -40,11 +40,14 @@
 
 #include <assert.h>
 #include <sstream>
+#include <iostream>
 using namespace std;
 
 ///////////////////////////////////////////////////////////////////////////////
 // CPluginManager class
 // --------------------
+
+CPluginManager::CPersistentDataMap CPluginManager::persistentDataMap;
 
 CPluginManager::CPluginManager() 
 {
@@ -60,15 +63,21 @@ CPluginManager::~CPluginManager()
 #pragma warning(disable : 4189)
 #endif
 
-/** Unloads the plugin library */
-void CPluginManager::ReleasePluginLibrary(HDEVMODULE hLib)
+/** 
+ * Unloads the plugin library 
+ * This function is deprecated.  Unloading the plugin libraries disallows them to maintain information
+ * between invocations.  Not releasing the libraries does not seem to have bad consequences.  
+ * This function can be removed and the code involved can be refactored
+ */
+void CPluginManager::ReleasePluginLibrary(HDEVMODULE)
 {
    #ifdef WIN32
-      BOOL ret = FreeLibrary((HMODULE)hLib);
-      assert(ret);
+      //BOOL ret = FreeLibrary((HMODULE)hLib);
+      //assert(ret);
    #else
-      int nRet = dlclose(hLib);
-      assert(nRet == 0);
+   // Note that even though we use the RTLD_NODELETE flag, the library still disappears (at least on the Mac) when dlclose is called...
+      //int nRet = dlclose(hLib);
+      //assert(nRet == 0);
    #endif
 }
 #ifdef WIN32
@@ -90,21 +99,28 @@ HDEVMODULE CPluginManager::LoadPluginLibrary(const char* shortName)
 
    string errorText;
    #ifdef WIN32
-   HMODULE hMod = LoadLibrary(name.c_str());
+      int originalErrorMode = SetErrorMode(SEM_NOOPENFILEERRORBOX | SEM_FAILCRITICALERRORS);
+      HMODULE hMod = LoadLibrary(name.c_str());
+      SetErrorMode(originalErrorMode);
       if (hMod)
          return (HDEVMODULE) hMod;
    #else
-      HDEVMODULE hMod = dlopen(name.c_str(), RTLD_LAZY);
+      HDEVMODULE hMod = dlopen(name.c_str(), RTLD_LAZY | RTLD_NOLOAD| RTLD_LOCAL);
       if (hMod)
-         return (HDEVMODULE) hMod;
+         return  hMod;
+      hMod = dlopen(name.c_str(), RTLD_LAZY | RTLD_NODELETE | RTLD_LOCAL);
+      if (hMod)
+         return  hMod;
       #ifdef linux
       // Linux-specific code block by Johan Henriksson
       else {
-         string name2(shortName);
-         name2 += ".so.0";
-         hMod = dlopen(name2.c_str(), RTLD_LAZY);
+         string name2 = (string) name + (string) ".so.0";
+         hMod = dlopen(name2.c_str(), RTLD_LAZY | RTLD_NOLOAD | RTLD_LOCAL);
          if (hMod)
-            return (HDEVMODULE) hMod;
+            return hMod;
+         hMod = dlopen(name2.c_str(), RTLD_LAZY | RTLD_NODELETE | RTLD_LOCAL);
+         if (hMod)
+            return hMod;
       }
       #endif // linux
    #endif // WIN32
@@ -134,7 +150,7 @@ void* CPluginManager::GetModuleFunction(HDEVMODULE hLib, const char* funcName)
    #endif
    errorText += " ";
    errorText += funcName;
-   throw CMMError(errorText.c_str(), MMERR_LibaryFunctionNotFound);
+   throw CMMError(errorText.c_str(), MMERR_LibraryFunctionNotFound);
 }
 
 /** Platform dependent system error text */
@@ -159,8 +175,6 @@ void CPluginManager::GetSystemError(string& errorText)
    }
    #else
       errorText = dlerror();  
-   //TODO: >> obtain error text on Linux/Mac
-   ;
    #endif
 }
 
@@ -220,6 +234,15 @@ void CPluginManager::UnloadDevice(MM::Device* pDevice)
    // invalidate the entry in the label-device map
    string label = GetDeviceLabel(*pDevice);
    devices_[label] = 0;
+
+   // remove the entry from the device array
+   DeviceArray::iterator it;
+   for (it = devArray_.begin(); it != devArray_.end(); it++)
+      if (*it == pDevice)
+      {
+         devArray_.erase(it);
+         break;
+      }
 }
 
 /**
@@ -241,6 +264,7 @@ void CPluginManager::UnloadAllDevices()
          UnloadDevice(it->second);
 
    devices_.clear();
+   devArray_.clear();
 }
 
 /**
@@ -292,6 +316,7 @@ MM::Device* CPluginManager::LoadDevice(const char* label, const char* moduleName
 
    // assign label
    devices_[label] = pDevice;
+   devArray_.push_back(pDevice);
 
    return pDevice;
 }
@@ -342,11 +367,14 @@ string CPluginManager::GetDeviceLabel(const MM::Device& device) const
 vector<string> CPluginManager::GetDeviceList(MM::DeviceType type) const
 {
    vector<string> labels;
-   CDeviceMap::const_iterator it;
-   for (it=devices_.begin(); it != devices_.end(); it++)
+   for (size_t i=0; i<devArray_.size(); i++)
    {
-      if (type == MM::AnyType || type == it->second->GetType())
-         labels.push_back(it->first);
+      char buf[MM::MaxStrLength];
+      if (type == MM::AnyType || type == devArray_[i]->GetType())
+      {
+         devArray_[i]->GetLabel(buf);
+         labels.push_back(buf);
+      }
    }
    return labels;
 }
@@ -445,6 +473,7 @@ vector<string> CPluginManager::GetAvailableDevices(const char* moduleName) throw
    return devices;
 }
 
+
 /**
  * List all available devices in the specified module.
  */
@@ -514,6 +543,7 @@ vector<long> CPluginManager::GetAvailableDeviceTypes(const char* moduleName) thr
       assert(hGetDeviceName);
       
       unsigned numDev = hGetNumberOfDevices();
+
       for (unsigned i=0; i<numDev; i++)
       {
          char deviceName[MM::MaxStrLength];
@@ -533,7 +563,7 @@ vector<long> CPluginManager::GetAvailableDeviceTypes(const char* moduleName) thr
 
 
             // release device resources
-            pDevice->Shutdown();
+            //pDevice->Shutdown();
             
             // delete device
             hDeleteDeviceFunc(pDevice);

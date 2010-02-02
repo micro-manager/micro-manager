@@ -1,0 +1,19 @@
+// This macro demonstrates how to use the setkeyDown() and doWand() functions
+
+  requires("1.33c");
+  run("Blobs (25K)");
+  setThreshold(125, 248);
+  setKeyDown("none");
+  doWand(72, 43);
+  setKeyDown("shift");
+  doWand(98, 77);
+  doWand(105, 114);
+  doWand(131, 89);
+  doWand(130, 126);
+  doWand(64, 83);
+  run("Invert"); wait(1000); run("Invert");
+  setKeyDown("alt");
+  doWand(98, 77);
+  doWand(105, 114);
+  setKeyDown("none");
+  run("Invert"); wait(1000); run("Invert");

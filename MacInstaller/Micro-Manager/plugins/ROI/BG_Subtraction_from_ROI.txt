@@ -1,0 +1,39 @@
+// Michael Cammer  20030118
+// macros for cleaning up time series data
+//---------------------------------------------
+// User selects a ROI in the background of a stack.
+// This ROI is measured in each slice and the mean value of each slice is subtracted
+//  from the correct slice.  This corrects for variation in background value over time.
+//Added single slice function and ability to set Stdev c\valkue
+
+currentTitle = getTitle();
+currentID=getImageID();
+run("Set Measurements...", "  mean standard redirect=None decimal=0");
+scaling=getNumber("Enter Scaling factor",3)
+ 
+selectImage(currentID);
+if (nSlices>1){
+//	setSlice(1);
+	 run("Plot Z-axis Profile");    run("Close"); 
+	  for (i=1; i<=nSlices; i++){
+	  	bgmean=getResult("Mean",(i-1));
+		bgStdev=getResult("StdDev",(nResults-1));
+		bgTotal=bgmean+(scaling*bgStdev);
+		selectImage(currentID);
+		run("Set Slice...", "slice="+i);
+		run("Select All");
+		run("Subtract...", "slice value="+bgTotal);}
+		}
+if (nSlices==1)  {run("Measure"); 
+		selectImage(currentID);
+ 		bgmean=getResult("Mean",(nResults-1));
+		bgStdev=getResult("StdDev",(nResults-1));
+		bgTotal=bgmean+(scaling*bgStdev);
+		run("Select All");
+		run("Subtract...", "value="+bgTotal);
+		run("Select None");
+		}
+selectWindow("Results");
+run("Close");
+//showMessage("StDev="+bgStDev+ " Mean BG = "+bgmean);
+run("Set Measurements...", "  mean  redirect=None decimal=0");

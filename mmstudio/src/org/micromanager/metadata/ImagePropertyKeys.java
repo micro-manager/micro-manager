@@ -26,6 +26,8 @@ package org.micromanager.metadata;
 
 /**
  * List of image properties (keywords).
+ * These keys are associated with each individual image,
+ * but not guaranteed to be available.
  */
 public class ImagePropertyKeys {
    public static final String FILE="FileName";

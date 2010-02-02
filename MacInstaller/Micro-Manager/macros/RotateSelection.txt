@@ -1,0 +1,23 @@
+// RotateSelection.txt
+//
+// Rotates the selection by a specified angle.
+// Does not work with straight line and composite
+// selections.
+//
+// See Also: ScaleSelection.txt, MoveSelection.txt
+
+  macro "Rotate Selection" {
+      angle = getNumber("Angle: ", 45)*PI/180;
+      getBoundingRect(xbase, ybase, width, height);
+      xcenter=xbase+width/2; ycenter=ybase+height/2;
+      getSelectionCoordinates(x, y);
+      for (i=0; i<x.length; i++) {
+          dx=x[i]-xcenter; dy=ycenter-y[i];
+          r = sqrt(dx*dx+dy*dy);
+          a = atan2(dy, dx);
+          x[i] = xcenter + r*cos(a+angle);
+          y[i] = ycenter - r*sin(a+angle);
+      }
+      makeSelection(selectionType, x, y);
+  }
+

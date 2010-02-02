@@ -26,10 +26,11 @@ package org.micromanager.api;
 import java.awt.Color;
 import java.awt.geom.Point2D;
 
+import mmcorej.CMMCore;
+
 import org.micromanager.metadata.WellAcquisitionData;
 import org.micromanager.navigation.PositionList;
 import org.micromanager.utils.MMScriptException;
-
 /**
  * Interface to execute commands in the main panel.
  * All functions throw MMScriptException (TBD)
@@ -74,6 +75,16 @@ public interface ScriptInterface {
    public void openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices) throws MMScriptException;
    
    /**
+    * Opens a new acquisition context with explicit image physical parameters.
+    * Makes it possible to run acquisition without displaying a window
+    * @throws MMScriptException 
+    */
+   
+   public void openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices, boolean show) throws MMScriptException;
+
+   public void initializeAcquisition(String name, int width, int height, int depth) throws MMScriptException;
+   
+   /**
     * Closes the acquisition.
     * After this command metadata is complete and all the references to this data set are cleaned-up
     * @throws MMScriptException 
@@ -90,16 +101,21 @@ public interface ScriptInterface {
     * @throws MMScriptException 
     */
    public void snapAndAddImage(String name, int frame, int channel, int z) throws MMScriptException;
-
+   
+   /**
+    * Inserts image into the acquisition handle
+    */
+   public void addImage(String name, Object img, int frame, int channel, int z) throws MMScriptException;
+   
    /**
     * Sets custom property attached to the acquisition summary
     */
-   public void setAcquisitionProperty(String acqName, String propertyName, String value);
+   public void setAcquisitionProperty(String acqName, String propertyName, String value) throws MMScriptException;
    
    /**
     * Sets property attached to an individual image
     */
-   public void setImageProperty(String acqName, int frame, int channel, int slice, String propName, String value);
+   public void setImageProperty(String acqName, int frame, int channel, int slice, String propName, String value) throws MMScriptException;
 
    /**
     * Blocks the script until the system is ready to start acquiring
@@ -112,10 +128,36 @@ public interface ScriptInterface {
     * Returns after Burst Acquisition finishes
     */
    public void runBurstAcquisition() throws MMScriptException;
-
+   
+   /**
+    * Execute burst acquisition with settings from Burst Acquisition Dialog
+    * changed using the provided parameters
+    * Will open the Dialog when it is not open yet
+    * Returns after Burst Acquisition finishes
+    * @param name - imagename to save the data to
+    * @param root - root directory for image data
+    * @param nr - nr of frames
+    * @throws MMScriptExcpetion 
+    *
+    */
+   public void runBurstAcquisition(int nr, String name, String root) throws MMScriptException;
+   
+   /**
+    * Execute burst acquisition with settings from Burst Acquisition Dialog
+    * changed using the provided parameters
+    * Will open the Dialog when it is not open yet
+    * Returns after Burst Acquisition finishes
+    * @param nr - nr of frames
+    * @throws MMScriptExcpetion 
+    *
+    */
+   public void runBurstAcquisition(int nr) throws MMScriptException;
+   
    /**
     * Load setting for Burst Acquisition from file
     * Will open Burst Acquisition Dialog when it is not yet open
+    * Not Implemented!
+    * @Depreciated
     */
    public void loadBurstAcquisition(String path) throws MMScriptException;
 
@@ -130,14 +172,25 @@ public interface ScriptInterface {
     * Executes Acquisition with current settings but allows for changing the data path
     * Will open the Acquisition Dialog when it is not open yet.
     * Returns after Acquisition finishes
+    * @Depreciated - typo
     */
    public void runAcqusition(String name, String root) throws MMScriptException;
 
    /**
-    * Executes Acquisition for a single well, using the plate scanning convention and data structure.
+    * Executes Acquisition with current settings but allows for changing the data path
+    * Will open the Acquisition Dialog when it is not open yet.
     * Returns after Acquisition finishes
+    * @Depreciated - typo
     */
-   public void runWellScan(WellAcquisitionData wad) throws MMScriptException;
+   public void runAcquisition(String name, String root) throws MMScriptException;
+
+   /**
+    * Executes Acquisition for a single well, using the plate scanning convention and data structure.
+    * Returns after Acquisition finishes.
+    * @param wad - well acquisition data objec
+    * @param incrementalAF - enable or disable incremental autofocusing between imaging sites
+    */
+   public boolean runWellScan(WellAcquisitionData wad) throws MMScriptException;
 
    /**
     * Loads setting for Acquisition Dialog from file
@@ -151,6 +204,11 @@ public interface ScriptInterface {
     * It will open a position list dialog if it was not already open.
     */
    public void setPositionList(PositionList pl) throws MMScriptException;
+   
+   /**
+    * Returns a copy of the current PositionList, the one used by the Acquisition Protocol
+    */
+   public PositionList getPositionList() throws MMScriptException;
    
    /**
     * Sets the color of the specified channel in an image5d
@@ -208,14 +266,39 @@ public interface ScriptInterface {
     */
    //public void openCompatibleImage5D(String title, int frames, int channels, int slices) throws MMScriptException;
    
-   public void autofocus() throws MMScriptException;
-   
-   public void autofocus(double coarseStep, int numCoarse, double fineStep, int numFine) throws MMScriptException;
-
    public String getXYStageName();
    
    public void setXYOrigin(double x, double y) throws MMScriptException;
    
-   public String installPlugin(String className, String menuName);
+   /**
+    * Install a plugin class from the class path.
+    */
+   public String installPlugin(String className);
    
+   /**
+    * Deprecated. Use installPlugin(String className) instead.
+    */
+   public String installPlugin(String className, String menuName); 
+   
+   public String installAutofocusPlugin(String className);
+   
+   public CMMCore getMMCore();
+   
+   public Autofocus getAutofocus();
+   
+   public void showAutofocusDialog();
+   
+   public AcquisitionEngine getAcquisitionEngine();
+
+
+   public void logMessage(String msg);
+   public void showMessage(String msg);
+
+   public void logError(Exception e, String msg);
+   public void logError(Exception e);
+   public void logError(String msg);
+
+   public void showError(Exception e, String msg);
+   public void showError(Exception e);
+   public void showError(String msg);
 }

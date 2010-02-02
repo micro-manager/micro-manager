@@ -1,0 +1,26 @@
+// This macro batch measures a folder of images.
+// Use the Analyze>Set Measurements command
+// to specify the measurement parameters. Check 
+// "Display Label" in the Set Measurements dialog
+// and the file names will be added to the first 
+// column of the "Results" table.
+
+macro "Batch Measure" {
+    requires("1.33n"); 
+    dir = getDirectory("Choose a Directory ");
+    list = getFileList(dir);
+    start = getTime();
+    setBatchMode(true); // runs up to 6 times faster
+    for (i=0; i<list.length; i++) {
+        path = dir+list[i];
+        showProgress(i, list.length);
+        if (!endsWith(path,"/")) open(path);
+        if (nImages>=1) {
+            run("Measure");
+            close();
+        }
+    }
+  //print((getTime()-start)/1000);
+}
+
+

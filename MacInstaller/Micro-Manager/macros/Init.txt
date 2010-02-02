@@ -1,0 +1,15 @@
+// This is an example initialization macro that runs when Image starts up.
+// Requires running ImageJ from the command line using something like:
+//
+//  java -Xmx200m -jar ij.jar macros/Init.txt
+//
+// On Windows, you can edit the "Target" field of the shortcut that
+// runs ImageJ so it looks somethine like this:
+//
+//   C:\ImageJ\jre\bin\javaw.exe -mx150m -cp ij.jar ij.ImageJ macros\Init.txt
+//
+//
+// Change the default kernel in Process>Filters>Convolve
+run("New...", "name=Temp type=32-bit width=10 height=10 slices=1");
+run("Convolve...", "text1='-1 -1 -1\n-1  8 -1\n-1 -1 -1  ' normalize");
+run("Close");

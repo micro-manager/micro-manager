@@ -5,6 +5,7 @@ import java.util.Enumeration;
 import java.util.Locale;
 import java.util.Properties;
 import java.util.Random;
+import org.micromanager.utils.ReportingUtils;
 
 
 /*
@@ -86,7 +87,7 @@ public class PlatformIndependentGuidGen
                                //or config dependant stuff as I could come up with
  
     Properties systemProps = System.getProperties();
-    Enumeration systemPropKeys = systemProps.keys();
+    Enumeration<Object> systemPropKeys = systemProps.keys();
     String systemPropKey = null;
     Locale[] locales = Locale.getAvailableLocales();
     int iCounter = 0;
@@ -140,10 +141,10 @@ public class PlatformIndependentGuidGen
     }
     catch(Exception e)
     {
-      //Do nothing
+      ReportingUtils.logError(e);
     }
  
-    //System.out.println(hashingString);
+    //ReportingUtils.logMessage(hashingString);
  
     return hashingString.hashCode();
   }

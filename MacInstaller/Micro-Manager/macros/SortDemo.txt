@@ -1,0 +1,40 @@
+// SortDemo
+//
+// This macro demonstrates how to sort an array 
+// of numbers or an array of strings.
+
+  a = newArray(10, 1, 7, 3, 15, 4, 12);
+  sort(a);
+  list(a);
+
+  a = newArray("dog","cat","rabbit","mouse","fish","bird");
+  sort(a);
+  list(a);
+
+  n=10000; a = newArray(n);
+  for (i=0; i<n; i++) a[i] = random();
+  start = getTime();
+  sort(a);
+  print(n+" numbers sorted in "+(getTime-start)+" msec");
+  //list(a);
+
+  function sort(a) {quickSort(a, 0, lengthOf(a)-1);}
+
+  function quickSort(a, from, to) {
+      i = from; j = to;
+      center = a[(from+to)/2];
+      do {
+          while (i<to && center>a[i]) i++;
+          while (j>from && center<a[j]) j--;
+          if (i<j) {temp=a[i]; a[i]=a[j]; a[j]=temp;}
+          if (i<=j) {i++; j--;}
+      } while(i<=j);
+      if (from<j) quickSort(a, from, j);
+      if (i<to) quickSort(a, i, to);
+  }
+
+  function list(a) {
+      for (i=0; i<a.length; i++)
+          print(a[i]);
+      print("");
+  }

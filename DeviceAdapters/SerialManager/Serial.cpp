@@ -24,7 +24,7 @@
 #include <crtdbg.h>
 #include <tchar.h>
 #include <windows.h>
-
+#include <time.h>
 
 //////////////////////////////////////////////////////////////////////
 // Include module headerfile
@@ -610,10 +610,12 @@ LONG CSerial::SetupHandshaking (EHandshake eHandshake)
 	case EHandshakeOff:
 		dcb.fOutxCtsFlow = false;					// Disable CTS monitoring
 		dcb.fOutxDsrFlow = false;					// Disable DSR monitoring
-		dcb.fDtrControl = DTR_CONTROL_DISABLE;		// Disable DTR monitoring
+		dcb.fDtrControl = DTR_CONTROL_ENABLE;		// Enable DTR line
+      // See http://tinyurl.com/8bulcg for explanation
 		dcb.fOutX = false;							// Disable XON/XOFF for transmission
 		dcb.fInX = false;							// Disable XON/XOFF for receiving
-		dcb.fRtsControl = RTS_CONTROL_DISABLE;		// Disable RTS (Ready To Send)
+		dcb.fRtsControl = RTS_CONTROL_ENABLE;		// Enable RTS line
+      // See http://tinyurl.com/8bulcg for explanation
 		break;
 
 	case EHandshakeHardware:
@@ -948,6 +950,10 @@ CSerial::EHandshake CSerial::GetHandshaking (void)
 
 LONG CSerial::Write (const void* pData, size_t iLen, DWORD* pdwWritten, LPOVERLAPPED lpOverlapped, DWORD dwTimeout)
 {
+   clock_t start,end;
+
+   start = clock();
+
 	// Check if time-outs are supported
 	CheckRequirements(lpOverlapped,dwTimeout);
 
@@ -1067,6 +1073,7 @@ LONG CSerial::Write (const void* pData, size_t iLen, DWORD* pdwWritten, LPOVERLA
 			::SetEvent(lpOverlapped->hEvent);
 	}
 
+
 #else
 
 	// Write the data
@@ -1082,6 +1089,8 @@ LONG CSerial::Write (const void* pData, size_t iLen, DWORD* pdwWritten, LPOVERLA
 
 #endif
 
+   end = clock();
+   double dif = (end-start)/CLOCKS_PER_SEC;
 	// Return successfully
 	return m_lLastError;
 }

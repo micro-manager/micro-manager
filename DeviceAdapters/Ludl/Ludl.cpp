@@ -35,6 +35,7 @@
 #include "../../MMDevice/ModuleInterface.h"
 #include "../../MMDevice/DeviceBase.h"
 #include "../../MMDevice/DeviceUtils.h"
+#include <cstdio>
 #include <math.h>
 
 // XYStage
@@ -56,6 +57,7 @@ const char* g_Device_Number_Shutter = "LudlDeviceNumberShutter";
 const char* g_Device_Number_Wheel = "LudlDeviceNumberWheel";
 const char* g_Shutter_Number = "LudlShutterNumber";
 const char* g_Wheel_Number = "LudlWheelNumber";
+const char* g_Wheel_Nr_Pos = "Fiter Positions";
 
 using namespace std;
 
@@ -170,6 +172,9 @@ int changeCommandLevel(MM::Device& device, MM::Core& core, const char* commandLe
    else 
       return ERR_INVALID_COMMAND_LEVEL;
    
+   if (port_ == "")
+      return ERR_NO_CONTROLLER;
+
    const unsigned cmdLen = 2;
    unsigned char cmd[cmdLen];
    cmd[0] = (unsigned)255;
@@ -397,7 +402,7 @@ int Hub::OnReset(MM::PropertyBase* pProp, MM::ActionType pAct)
       if (request == "Reset")
       {
          // Send the Reset Command
-         char* cmd = "Remres";
+         const char* cmd = "Remres";
          int ret = SendSerialCommand(port_.c_str(), cmd, "\r");
          if (ret !=DEVICE_OK)
             return ret;
@@ -490,6 +495,7 @@ Wheel::Wheel() :
    SetErrorText(ERR_UNRECOGNIZED_ANSWER, "Unrecognized answer recived from the device");
    SetErrorText(ERR_INVALID_ID, "Ludl Module ID is a number between 0 and 20");
    SetErrorText(ERR_INVALID_WHEEL_NUMBER, "There can be 1 or 2 filterwheels in each Ludl module");
+   SetErrorText(ERR_NO_CONTROLLER, "Please add the LudlController device first!");
    SetErrorText(ERR_INVALID_WHEEL_POSITION, "Invalid filter position requested.  Positions 1 through 6 are valid");
    SetErrorText(ERR_UNKNOWN_POSITION, "Position out of range");
    SetErrorText(ERR_SET_POSITION_FAILED, "Set position failed.");
@@ -521,6 +527,13 @@ Wheel::Wheel() :
    AddAllowedValue(g_Wheel_Number, "1");
    AddAllowedValue(g_Wheel_Number, "2");
 
+   // Number of positions in the wheel
+   // -----
+   pAct = new CPropertyAction (this, &Wheel::OnWheelNrPos);
+   ret = CreateProperty(g_Wheel_Nr_Pos, "6", MM::Integer, false, pAct, true);
+   AddAllowedValue(g_Wheel_Nr_Pos, "6");
+   AddAllowedValue(g_Wheel_Nr_Pos, "10");
+
    // Wait this long for wheel to time out:
    pAct = new CPropertyAction (this, &Wheel::OnWheelHomeTimeout);
    ret = CreateProperty("Home-Timeout-(s)", "10", MM::Float, false, pAct, true);
@@ -530,7 +543,7 @@ Wheel::Wheel() :
    CreateProperty("ID", "17", MM::Integer, false, pAct, true);
    */
 
-   UpdateStatus();
+   // UpdateStatus();
 
 }
 
@@ -834,6 +847,21 @@ int Wheel::OnWheelNumber(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+int Wheel::OnWheelNrPos(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set((long)numPos_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      long tmp;
+      pProp->Get(tmp);
+      numPos_ = (int) tmp;
+   }
+   return DEVICE_OK;
+}
+
 int Wheel::OnWheelHomeTimeout(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
@@ -869,6 +897,7 @@ Shutter::Shutter() :
    SetErrorText(ERR_SHUTTER_COMMAND_FAILED, "Error while sending a command to the shutter");
    SetErrorText(ERR_DEVICE_CHANGE_NOT_ALLOWED, "Device number can not be changed");
    SetErrorText(ERR_SHUTTER_USED, "A shutter with this device and shutter number is already in use");
+   SetErrorText(ERR_NO_CONTROLLER, "Please add the LudlController device first!");
 
    // create pre-initialization properties
    // ------------------------------------
@@ -1261,6 +1290,7 @@ XYStage::XYStage() :
    // ------------------------------------
    // NOTE: pre-initialization properties contain parameters which must be defined fo
    // proper startup
+   SetErrorText(ERR_NO_CONTROLLER, "Please add the LudlController device first!");
 
    // Name, read-only (RO)
    CreateProperty(MM::g_Keyword_Name, g_StageDeviceName, MM::String, true);
@@ -1905,6 +1935,7 @@ Stage::Stage() :
    answerTimeoutMs_(1000)
 {
    InitializeDefaultErrorMessages();
+   SetErrorText(ERR_NO_CONTROLLER, "Please add the LudlController device first!");
 
    // create pre-initialization properties
    // ------------------------------------

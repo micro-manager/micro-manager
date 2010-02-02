@@ -1,9 +1,12 @@
 package org.micromanager.image5d;
 
 
-import ij.*;
-import ij.gui.*;
-import ij.plugin.*;
+import ij.IJ;
+import ij.ImagePlus;
+import ij.WindowManager;
+import ij.gui.GenericDialog;
+import ij.gui.ImageWindow;
+import ij.plugin.PlugIn;
 
 public class Set_Position implements PlugIn {
     

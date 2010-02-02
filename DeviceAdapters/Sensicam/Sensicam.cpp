@@ -22,6 +22,7 @@
 //
 // Modified May 14th 2007 by Liisa Hirvonen, King's College London
 
+// N.B. set tabs and indent to 3 spaces in your source editor
 
 #ifdef WIN32
    #define WIN32_LEAN_AND_MEAN
@@ -38,6 +39,11 @@
 #include <string>
 #include <sstream>
 #include <cmath>	// Liisa: for ceil
+
+
+
+// temp
+#include "stdio.h"
 
 using namespace std;
 
@@ -98,9 +104,12 @@ MODULE_API MM::Device* CreateDevice(const char* pszDeviceName)
 
 CSensicam::CSensicam() :
    CCameraBase<CSensicam> (),
+   sequenceRunning_(false),
    m_bInitialized(false),
    m_bBusy(false),
    m_dExposure(0.0),
+   sthd_(0), 
+   stopOnOverflow_(false),
    pixelDepth_(2),
    pictime_(0.0)
 {
@@ -121,6 +130,7 @@ CSensicam::CSensicam() :
    m_nTimesLen = MMSENSICAM_MAX_STRLEN;
 
    InitializeDefaultErrorMessages();
+   sthd_ = new SequenceThread(this);
 }
 
 CSensicam::~CSensicam()
@@ -242,21 +252,48 @@ int CSensicam::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Set(m_dExposure);
    else if (eAct == MM::AfterSet)
    {
+	  bool wasCapturing = false;
       int nErr;
+
+	  if (IsCapturing())
+	  {
+		  wasCapturing = (0 < sthd_->GetLength());
+		  StopSequenceAcquisition();
+	  }
       pProp->Get(m_dExposure);
       sprintf(m_pszTimes, "0,%d,-1,-1", (int)m_dExposure); 
       nErr = SET_COC(m_nMode, m_nTrig, m_nRoiXMin, m_nRoiXMax, m_nRoiYMin, m_nRoiYMax,
                      m_nHBin, m_nVBin, m_pszTimes);
-      if (nErr != 0)
+	  if (0!=nErr)
+	  {
+	     std::ostringstream logMe;
+		  logMe<<"Sensicam::OnExposure SET_COC returns "<<nErr<<endl;
+		  LogMessage(logMe.str().c_str());
+	  }
+      if (IsSensicamError(nErr))
          return nErr;
-	    
+
 	  // Liisa: m_nTimesLen needs to be updated otherwise if the string is now longer that
 	  // previously, GET_COC_SETTING will not be able to read the string
 	  nErr = TESTCOC(&m_nMode, &m_nTrig, &m_nRoiXMin, &m_nRoiXMax, &m_nRoiYMin, &m_nRoiYMax,
                   &m_nHBin, &m_nVBin, m_pszTimes, &m_nTimesLen);
-	  if (nErr != 0)
-		return nErr;
+	  if (0!=nErr)
+	  {
+	     std::ostringstream logMe;
+		  logMe<<"Sensicam::OnExposure TESTCOC returns "<<nErr<<endl;
+		  LogMessage(logMe.str().c_str());
+	  }
+      if (IsSensicamError(nErr))
+         return nErr;
+
 	  // end Liisa
+
+	  if(wasCapturing)  // resume sequence if necessary
+	  {
+
+		  double dummy = this->m_dExposure ; // argument is not used
+		  StartSequenceAcquisition(sthd_->GetLength(), dummy, this->stopOnOverflow_ );
+	  }
    }
    return DEVICE_OK;
 }
@@ -267,7 +304,13 @@ int CSensicam::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
    int nMode;
    int nErr = GET_COC_SETTING(&nMode, &m_nTrig, &m_nRoiXMin, &m_nRoiXMax, &m_nRoiYMin, &m_nRoiYMax,
                            &m_nHBin, &m_nVBin, m_pszTimes, m_nTimesLen);
-   if (nErr != 0)
+	if (0!=nErr)
+	{
+		std::ostringstream logMe;
+		logMe<<"Sensicam::OnBinning GET_COC_SETTING returns "<<nErr<<endl;
+		LogMessage(logMe.str().c_str());
+	}
+   if (IsSensicamError(nErr))
       return nErr;
 
    if (eAct == MM::AfterSet)
@@ -278,11 +321,16 @@ int CSensicam::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
       m_nVBin = bin;
       int nErr = SET_COC(nMode, m_nTrig, m_nRoiXMin, m_nRoiXMax, m_nRoiYMin, m_nRoiYMax,
                          m_nHBin, m_nVBin, m_pszTimes);
-      if(nErr != 0)
-      {
-         return nErr;
-      }
-      return ResizeImageBuffer();
+		if (0!=nErr)
+		{
+			std::ostringstream logMe;
+			logMe<<"Sensicam::OnBinning SET_COC returns "<<nErr<<endl;
+			LogMessage(logMe.str().c_str());
+		}
+		if (IsSensicamError(nErr))
+	      return nErr;
+   
+		return ResizeImageBuffer();
    }
    else if (eAct == MM::BeforeGet)
    {
@@ -583,29 +631,56 @@ int CSensicam::SnapImage()
 	int nErr = SET_COC(m_nMode, m_nTrig, m_nRoiXMin, m_nRoiXMax, m_nRoiYMin, m_nRoiYMax,
                         m_nHBin, m_nVBin, m_pszTimes);
 	// end Liisa
-
-   // start camera single picture
+	if (0!=nErr)
+	{
+		std::ostringstream logMe;
+		logMe<<"Sensicam::SnapImage SET_COC returns "<<nErr<<endl;
+		LogMessage(logMe.str().c_str());
+	}
+	if (IsSensicamError(nErr))
+		return nErr;
+	
+	// start camera single picture
    nErr = RUN_COC(4);
-   if (nErr != 0)
-      return nErr;
 
+	if (0!=nErr)
+	{
+		std::ostringstream logMe;
+		logMe<<"Sensicam::SnapImage RUN_COC returns "<<nErr<<endl;
+		LogMessage(logMe.str().c_str());
+	}
+	if (IsSensicamError(nErr))
+		return nErr;
+   
    // wait for picture
-   int nWaittime = static_cast<int> (pictime_/1000.0 + 20);
+   int nWaittime = static_cast<int> (pictime_/1000.0 + 100);
 
    unsigned int uT1, uT2;
    int nPicstat;
    uT1=GetTickCount();
    nErr = 0;
+
    do
    {
       nErr = GET_IMAGE_STATUS(&nPicstat);
+		if(IsSensicamWarning(nErr))
+		{
+			std::ostringstream logMe;
+			logMe<<"Sensicam::SnapImage GET_IMAGE_STATUS returns "<<nErr<<endl;
+			LogMessage(logMe.str().c_str());
+		}
       uT2=GetTickCount();
    }
-   while((nErr==0) && (uT2 < uT1 + nWaittime)&&((nPicstat & 0x02)!= 0));
+   while((!IsSensicamError(nErr)) && (uT2 < uT1 + nWaittime)&&((nPicstat & 0x02)!= 0));
 
-   if (nErr != 0)
-      return nErr;
-   
+	if (IsSensicamError(nErr))
+	{
+		std::ostringstream logMe;
+		logMe<<"Sensicam::SnapImage GET_IMAGE_STATUS returns "<<nErr<<endl;
+		LogMessage(logMe.str().c_str());
+		return nErr;
+	}
+
    if((nPicstat & 0x02) != 0)
       return ERR_TIMEOUT; // timeout
       //return 0;
@@ -675,10 +750,10 @@ int CSensicam::SetROI(unsigned uX, unsigned uY, unsigned uXSize, unsigned uYSize
       return nErr;
 
    // Liisa: changed these to round up, else uX or uY < 32 rounds to zero, Sensicam needs min 1.
-   m_nRoiXMin = (int) ceil( ( (double) uX / 32) );
-   m_nRoiYMin = (int) ceil( ( (double) uY / 32) );
-   m_nRoiXMax = (int) ceil( ( ( (double) uX + uXSize) / 32) -1 );
-   m_nRoiYMax = (int) ceil( ( ( (double) uY + uYSize) / 32) -1 );
+   m_nRoiXMin = (int) ceil( ( (double) uX * m_nHBin / 32) );
+   m_nRoiYMin = (int) ceil( ( (double) uY * m_nHBin / 32) );
+   m_nRoiXMax = (int) ceil( ( ( (double) uX + uXSize) * m_nHBin / 32) -1 );
+   m_nRoiYMax = (int) ceil( ( ( (double) uY + uYSize) * m_nHBin / 32) -1 );
 
    nErr = SET_COC(m_nMode, m_nTrig, m_nRoiXMin, m_nRoiXMax, m_nRoiYMin, m_nRoiYMax,
                         m_nHBin, m_nVBin, m_pszTimes);
@@ -760,4 +835,77 @@ int CSensicam::ResizeImageBuffer()
 	assert(pixelDepth_ == 1 || pixelDepth_ == 2);
 	img_.Resize(nWidth, nHeight, pixelDepth_);
 	return DEVICE_OK;
+}
+
+int CSensicam::StartSequenceAcquisition(long numImages, double /*interval_ms*/, bool stopOnOverflow)
+{
+   if (Busy() || sequenceRunning_)
+      return DEVICE_CAMERA_BUSY_ACQUIRING;
+
+   int ret = GetCoreCallback()->PrepareForAcq(this);
+   if (ret != DEVICE_OK)
+      return ret;
+   sequenceRunning_ = true;
+   sthd_->SetLength(numImages);
+   sthd_->Start();
+   stopOnOverflow_ = stopOnOverflow;
+   return DEVICE_OK;
+}
+
+int CSensicam::StopSequenceAcquisition()
+{
+   sthd_->Stop();
+   sthd_->wait();
+   sequenceRunning_ = false;
+   return DEVICE_OK;
+}
+
+bool CSensicam::IsCapturing()
+{
+   return sequenceRunning_;
+}
+
+int CSensicam::InsertImage()
+{
+   const unsigned char* img = GetImageBuffer();
+   if (img == 0) 
+      return ERR_TIMEOUT;
+
+   int ret = GetCoreCallback()->InsertImage(this, img, GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel());
+
+
+
+   if (!stopOnOverflow_ && ret == DEVICE_BUFFER_OVERFLOW)
+   {
+      // do not stop on overflow - just reset the buffer
+      GetCoreCallback()->ClearImageBuffer(this);
+      return GetCoreCallback()->InsertImage(this, img, GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel());
+   } else
+      return ret;
+}
+
+
+int CSensicam::SequenceThread::svc()
+{
+   long count(0);
+   while (!stop_ && count < numImages_)
+   {
+      int ret = camera_->SnapImage();
+      if (ret != DEVICE_OK)
+      {
+         camera_->StopSequenceAcquisition();
+         return 1;
+      }
+
+      ret = camera_->InsertImage();
+      if (ret != DEVICE_OK)
+      {
+         camera_->StopSequenceAcquisition();
+         return 1;
+      }
+		// removed this 20090728 KH
+      //CDeviceUtils::SleepMs(20);
+      count++;
+   }
+   return 0;
 }

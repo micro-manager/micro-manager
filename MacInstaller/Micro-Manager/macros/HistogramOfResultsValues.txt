@@ -1,0 +1,32 @@
+// "HistogramOfResultsValues"
+// This macro creates a histogram from a selected column in the "Results" table.
+
+  var variables = newArray("Area", "Mean", "StdDev", "Mode", "Min",  
+    "Max", "Perim.", "Circ.", "IntDen", "Median","Skew","Kurt" );
+  var variable = "Mean";
+  var nBins = 20;
+
+  macro "Histogram of Results..." {
+      requires("1.34m");
+      n = nResults;
+      if (n==0)
+          exit("Results table is empty");
+      Dialog.create("Histrogram");
+      Dialog.addChoice("Variable:", variables, variable);
+      Dialog.addNumber("Number of Bins:", nBins);
+      Dialog.show();
+      variable = Dialog.getChoice();
+      nBins = Dialog.getNumber();
+      //setBatchMode(true); // works in 1.35a or later
+      if (isNaN(getResult(variable, 0)))
+           exit("\""+ variable +"\" not in results table");
+      newImage(variable, "32-bit", n, 1, 1);
+      for (i=0; i<n; i++)
+           setPixel(i, 0, getResult(variable, i));
+      run("Histogram", "bins="+nBins+" use y_max=Auto");
+      id = getImageID;
+      selectImage(variable);
+      close();
+      selectImage(id);
+      setBatchMode(false);
+  }

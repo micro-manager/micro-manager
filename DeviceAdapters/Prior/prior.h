@@ -149,11 +149,15 @@ public:
    int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnStepSizeX(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnStepSizeY(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnMaxSpeed(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnAcceleration(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSCurve(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    int GetResolution(double& resX, double& resY);
    int GetDblParameter(const char* command, double& param);
    int GetPositionStepsSingle(char axis, long& steps);
+   bool HasCommand(std::string command);
   
    bool initialized_;
    std::string port_;
@@ -197,6 +201,47 @@ private:
    int ExecuteCommand(const std::string& cmd, std::string& response);
    int Autofocus(long param);
    int GetResolution(double& res);
+
+   bool initialized_;
+   std::string port_;
+   double stepSizeUm_;
+   long curSteps_;
+   double answerTimeoutMs_;
+};
+
+class NanoZStage : public CStageBase<NanoZStage>
+{
+public:
+   NanoZStage();
+   ~NanoZStage();
+  
+   // Device API
+   // ----------
+   int Initialize();
+   int Shutdown();
+  
+   void GetName(char* pszName) const;
+   bool Busy();
+
+   // Stage API
+   // ---------
+  int SetPositionUm(double pos);
+  int SetRelativePositionUm(double pos);
+  int GetPositionUm(double& pos);
+  int SetPositionSteps(long steps);
+  int GetPositionSteps(long& steps);
+  int SetOrigin();
+  int GetLimits(double& min, double& max);
+
+   // action interface
+   // ----------------
+   int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnVersion(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+private:
+   int ExecuteCommand(const std::string& cmd, std::string& response);
+   bool HasCommand(std::string command);
+   int GetModelAndVersion(std::string& model, std::string& version);
 
    bool initialized_;
    std::string port_;

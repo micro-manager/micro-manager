@@ -9,11 +9,23 @@
 
 package org.jeditsyntax;
 
-import javax.swing.ToolTipManager;
-import javax.swing.text.*;
-import javax.swing.JComponent;
+import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
+import java.awt.Rectangle;
+import java.awt.Toolkit;
 import java.awt.event.MouseEvent;
-import java.awt.*;
+
+import javax.swing.JComponent;
+import javax.swing.ToolTipManager;
+import javax.swing.text.PlainDocument;
+import javax.swing.text.Segment;
+import javax.swing.text.TabExpander;
+import javax.swing.text.Utilities;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  * The text area repaint manager. It performs double buffering and paints
@@ -23,7 +35,9 @@ import java.awt.*;
  */
 public class TextAreaPainter extends JComponent implements TabExpander
 {
-	/**
+   private static final long serialVersionUID = 6852129063983581791L;
+
+   /**
 	 * Creates a new repaint manager. This should be not be called
 	 * directly.
 	 */
@@ -347,7 +361,8 @@ public class TextAreaPainter extends JComponent implements TabExpander
 	 * cached font metrics and to recalculate which lines are visible.
 	 * @param font The font
 	 */
-	public void setFont(Font font)
+	@SuppressWarnings("deprecation")
+   public void setFont(Font font)
 	{
 		super.setFont(font);
 	   fm = Toolkit.getDefaultToolkit().getFontMetrics(font);
@@ -397,12 +412,12 @@ public class TextAreaPainter extends JComponent implements TabExpander
 				repaint(0,h,getWidth(),getHeight() - h);
 			}
 		}
-		catch(Exception e)
+		catch (Exception e)
 		{
 			System.err.println("Error repainting line"
 				+ " range {" + firstInvalid + ","
 				+ lastInvalid + "}:");
-			e.printStackTrace();
+			ReportingUtils.logError(e);
 		}
 	}
 

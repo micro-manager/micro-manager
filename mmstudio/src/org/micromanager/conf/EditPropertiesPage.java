@@ -27,13 +27,20 @@ package org.micromanager.conf;
 import java.util.ArrayList;
 import java.util.prefs.Preferences;
 
-import javax.swing.JScrollPane;
 import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.TableColumn;
 
+import org.micromanager.utils.GUIUtils;
+
 import mmcorej.MMCoreJ;
+import org.micromanager.utils.PropertyItem;
+import org.micromanager.utils.PropertyNameCellRenderer;
+import org.micromanager.utils.PropertyNameCellRenderer;
+import org.micromanager.utils.PropertyValueCellEditor;
+import org.micromanager.utils.PropertyValueCellRenderer;
 
 /**
  * Wizard page to set device properties.
@@ -64,21 +71,24 @@ public class EditPropertiesPage extends PagePanel {
       propTable_.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       propTable_.setAutoCreateColumnsFromModel(false);
       scrollPane_.setViewportView(propTable_);
-      //
    }
    
    
    private void rebuildTable() {
       PropertyTableModel tm = new PropertyTableModel(this, model_, PropertyTableModel.PREINIT);
       propTable_.setModel(tm);
-      PropertyCellEditor cellEditor = new PropertyCellEditor();
-      PropertyCellRenderer renderer = new PropertyCellRenderer();
+      PropertyValueCellEditor propValueEditor = new PropertyValueCellEditor();
+      PropertyValueCellRenderer propValueRenderer = new PropertyValueCellRenderer();
+      PropertyNameCellRenderer propNameRenderer = new PropertyNameCellRenderer();
      
       if (propTable_.getColumnCount() == 0) {
-         for (int k=0; k < tm.getColumnCount(); k++) {
-            TableColumn column = new TableColumn(k, 200, renderer, cellEditor);
+            TableColumn column;
+            column = new TableColumn(0, 200, propNameRenderer, null);
             propTable_.addColumn(column);
-         }
+            column = new TableColumn(1, 200, propNameRenderer, null);
+            propTable_.addColumn(column);
+            column = new TableColumn(2, 200, propValueRenderer, propValueEditor);
+            propTable_.addColumn(column);
       }
 
       tm.fireTableStructureChanged();
@@ -99,8 +109,8 @@ public class EditPropertiesPage extends PagePanel {
       Device devices[] = model_.getDevices();
       for (int i=0; i<devices.length; i++) {
          for (int j=0; j<devices[i].getNumberOfProperties(); j++) {
-            Property p = devices[i].getProperty(j);
-            if (p.name_.compareTo(MMCoreJ.getG_Keyword_Port()) == 0) {
+            PropertyItem p = devices[i].getProperty(j);
+            if (p.name.compareTo(MMCoreJ.getG_Keyword_Port()) == 0) {
             	if (ports.size() == 0) {
             		// no ports available, tell user and return
             		JOptionPane.showMessageDialog(null, "First select a serial port in step 2 of the wizard");
@@ -109,7 +119,7 @@ public class EditPropertiesPage extends PagePanel {
                String allowed[] = new String[ports.size()];
                for (int k=0; k<ports.size(); k++)
                   allowed[k] = ports.get(k).getName();
-               p.allowedValues_ = allowed;
+               p.allowed = allowed;
             }
          }
       }
@@ -139,18 +149,20 @@ public class EditPropertiesPage extends PagePanel {
                }
                core_.setProperty(s.deviceName_, s.propertyName_, s.propertyValue_);
                Device dev = model_.findDevice(s.deviceName_);
-               Property prop = dev.findSetupProperty(s.propertyName_);
+               PropertyItem prop = dev.findSetupProperty(s.propertyName_);
             	   
                if (prop == null)
-                  model_.addSetupProperty(s.deviceName_, new Property(s.propertyName_, s.propertyValue_, true));
+                  model_.addSetupProperty(s.deviceName_, new PropertyItem(s.propertyName_, s.propertyValue_, true));
                model_.setDeviceSetupProperty(s.deviceName_, s.propertyName_, s.propertyValue_);
             }
             
             // initialize the entire system
             core_.initializeAllDevices();
+            GUIUtils.preventDisplayAdapterChangeExceptions();
             model_.loadDeviceDataFromHardware(core_);
          } else {
             core_.unloadAllDevices();
+            GUIUtils.preventDisplayAdapterChangeExceptions();
          }
       } catch (Exception e) {
          handleException(e);

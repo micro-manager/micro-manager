@@ -1,0 +1,26 @@
+// "ExtractRGBChannels"
+// This macro demonstrates how to extract the red, 
+// green or blue channel from an RGB image.
+
+  requires("1.35b");
+  if (nImages==0)
+      run("Fluorescent Cells (58K)");
+  if (bitDepth!=24)
+      run("Fluorescent Cells (58K)");
+  title = getTitle;
+  setRGBWeights(1, 0, 0);
+  run("8-bit"); // Image>Type>8-bit command
+  rename(title+"-red");
+  wait(2000);
+  run("Undo");
+  setRGBWeights(0, 1, 0);
+  run("8-bit");
+  rename(title+"-green");
+  wait(2000);
+  run("Undo");
+  setRGBWeights(0, 0, 1);
+  run("8-bit");
+  rename(title+"-blue");
+  wait(2000);
+  run("Undo");
+  rename(title);

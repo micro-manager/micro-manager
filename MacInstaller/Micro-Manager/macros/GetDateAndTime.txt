@@ -1,0 +1,103 @@
+// function timeArray(arg) for use in ImageJ macros
+// Written by Bill Heeschen
+// Disclaimer: Consent to use is granted to all.  User assumes all responsibility for execution of code and validity of output.
+// Use:
+//	 Copy/Paste the function into your macro file.
+//	 Call it with an argument that is an offset in hours from Greenwich Mean Time.
+//	 Returns time as an 8-element numeric array: Year Month Day Hour Minute Second mSecond Day-of-Week
+// Example: Tuesday, 3-May-2005, 14:33:12.589 tranlates to 2005 5 3 14 33 12 589 2)
+// Argument is local current offset from Greenwich Mean Time.  For example:
+//	 U.S. Eastern Daylight Time is -4 hours from GMT
+//	 U.S. Central Standard Time is -6 hours from GMT
+// Keeps track of leap years, but not leap seconds.  2000 was a leap year since it is a divisible-by-400 year.
+// Does NOT automatically correct for daylight savings time
+// Function will not give accurate dates after February 28, 2100 due to leap year definitions.  See trap code using "AM1200_2100Mar01".
+
+// Example Macro that calls the timeArray function
+macro "Get Time" {
+	MonthNames = newArray("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec");
+	DayNames = newArray("Mon","Tue","Wed","Thu","Fri","Sat","Sun");
+	GMTDiff= -4;
+	MyTime = timeArray(GMTDiff);
+	TimeString ="Date: "+DayNames[MyTime[7]-1]+" ";
+	if (MyTime[2]<10) {TimeString = TimeString+"0";}
+	TimeString = TimeString+MyTime[2]+"-"+MonthNames[MyTime[1]-1]+"-"+MyTime[0]+"\nTime: ";
+	if (MyTime[3]<10) {TimeString = TimeString+"0";}
+	TimeString = TimeString+MyTime[3]+":";
+	if (MyTime[4]<10) {TimeString = TimeString+"0";}
+	TimeString = TimeString+MyTime[4]+":";
+	if (MyTime[5]<10) {TimeString = TimeString+"0";}
+	TimeString = TimeString+(MyTime[5]+MyTime[6]/1000);
+	showMessage(TimeString);
+}
+
+// Example Macro that calls the built in getDateAndTime 
+// function, available in ImageJ 1.34n or later.
+// Requires the ImageJ 1.34n preview available at
+// http://rsb.info.nih.gov/ij/ij.jar
+macro "Get Time 2" {
+	MonthNames = newArray("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec");
+	DayNames = newArray("Sun", "Mon","Tue","Wed","Thu","Fri","Sat");
+	getDateAndTime(year, month, dayOfWeek, dayOfMonth, hour, minute, second, msec);
+	TimeString ="Date: "+DayNames[dayOfWeek]+" ";
+	if (dayOfMonth<10) {TimeString = TimeString+"0";}
+	TimeString = TimeString+dayOfMonth+"-"+MonthNames[month]+"-"+year+"\nTime: ";
+	if (hour<10) {TimeString = TimeString+"0";}
+	TimeString = TimeString+hour+":";
+	if (minute<10) {TimeString = TimeString+"0";}
+	TimeString = TimeString+minute+":";
+	if (second<10) {TimeString = TimeString+"0";}
+	TimeString = TimeString+second;
+	showMessage(TimeString);
+}
+
+function timeArray(GMTOffset){
+	requires("1.34m");
+	if (isNaN(GMTOffset)) {GMTOffset=0;}//trap in case argument is gibberish
+	year = 31536000;//365 days measured in seconds
+	day = 86400;
+	hour= 3600;
+	minute=60;
+	MonthDays=newArray(31,28,31,30,31,30,31,31,30,31,30,31);//days in each month
+	BaseDay=4;//Monday = 1;
+	CurrTime=getTime();//time in milliseconds since 12:00 AM on Thursday, 1-jan-1970
+	CurrTime=CurrTime/1000;//convert to seconds
+	CurrTime = CurrTime + GMTOffset*hour;
+	AM1200_2100Mar01=47540*day;//ellapsed time since 12:00AM on 1-jan-1970 at 12:00AM 01-Mar-2100, in seconds
+	if (CurrTime>AM1200_2100Mar01) {showMessage("Date is inaccurate after Feb. 28, 2100: year 2100 is NOT a leap year");}//not likely to still be in use by 2100!
+	Time73=CurrTime-(day+3*year);//time in seconds since 12:00 AM on 1-jan-1973.  1973 is beginning of new leap year block.
+	RemainTime = Time73;
+	LeapCycle = day+4*year;
+	NumLeaps = floor(Time73/LeapCycle);//4-year blocks
+	RemainTime = RemainTime-NumLeaps*LeapCycle;
+	NormYears=floor(RemainTime/year);//Full years since last leap year
+	RemainTime = RemainTime-NormYears*year;
+	if (NormYears==3) {MonthDays[1]=29;}//current year is a leap year, Feb index is 1.
+	else {MonthDays[1]=28;}
+	Days=floor(RemainTime/day);
+	RemainTime=RemainTime-Days*day;
+	MonthIndex=-1;
+	Index=0;
+	while (MonthIndex<0) {
+		if (Days>MonthDays[Index]) {
+			Days=Days-MonthDays[Index];
+			Index++;
+		}
+		else {MonthIndex=Index;}
+	}
+	Hours = floor(RemainTime/hour);
+	RemainTime = RemainTime - Hours*hour;
+	Minutes = floor(RemainTime/minute);
+	RemainTime = RemainTime - Minutes*minute;
+	Seconds = floor(RemainTime/1);
+	MilliSecs = floor(1000*(RemainTime-Seconds));
+	
+	CurrYear = 1973+NumLeaps*4+NormYears;
+	CurrMonth = MonthIndex+1;//index starts at 0, month count starts at 1...
+	DayOfMonth=Days+1;
+	DayOfWeek= floor(CurrTime/day);
+	DayOfWeek=BaseDay+(DayOfWeek-7*floor(DayOfWeek/7));
+	if (DayOfWeek>7) {DayOfWeek = DayOfWeek-7;}
+	Output = newArray(CurrYear,CurrMonth,DayOfMonth,Hours,Minutes,Seconds,MilliSecs,DayOfWeek);
+	return Output;
+}

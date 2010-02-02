@@ -16,14 +16,15 @@ License:	Distributed under the BSD license.
 #define		MCL_INVALID_AXIS		-7
 #define		MCL_INVALID_HANDLE		-8
 
+#define     INVALID_VELOCITY        -10
+
 #ifdef __cplusplus
-	extern"C"{
+	extern"C" {
 #else
 	typedef unsigned char bool;
 #endif
 
 #define MICRODRIVE_API
-
 
 MICRODRIVE_API	bool	MCL_InitLibrary();
 MICRODRIVE_API	void	MCL_ReleaseLibrary();
@@ -31,6 +32,7 @@ MICRODRIVE_API	void	MCL_ReleaseLibrary();
 MICRODRIVE_API  int		MCL_InitHandle();
 MICRODRIVE_API  void	MCL_ReleaseHandle(int handle);
 
+MICRODRIVE_API  int		MCL_MicroDriveWait(int handle);
 MICRODRIVE_API	int		MCL_MicroDriveMoveProfileXY(
 							double velocityX,
 							double distanceX,

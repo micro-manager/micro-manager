@@ -1,0 +1,41 @@
+  size = 500;
+  nsides =20;
+  lineWidth = 1;
+  requires("1.29p");
+  run("New...", "name=Untitled type='32-bit RGB' width="+size+" height="+size);
+  autoUpdate(false); // disable automatic display updates
+  radius = size/2;
+  angle = 0;
+  frames=0;
+  start=getTime();
+  setLineWidth(lineWidth);
+  setColor(0,0,0);
+  fill();
+  snapshot(); // create a backup image that can be restored later
+  setColor(0,0,255);
+  while (true) {
+      reset(); // restore the backup image
+      drawString(round(frames++/((getTime()-start)/1000)) + " fps", 5, 20);
+      drawPolygon(radius, radius, radius, nsides, angle);
+      angle += PI/90;
+      updateDisplay();
+  }
+
+  function drawPolygon(x, y, r, n, angle) {
+       twoPi = 2*PI;
+      inc = twoPi/n;
+      for (a1=angle; a1<angle+twoPi; a1+=inc) {
+          x1 = r*sin(a1) + x;
+          y1 = r*cos(a1) + y;
+          for (a2=a1; a2<angle+twoPi; a2+=inc) {
+              x2 = r*sin(a2) + x;
+              y2 = r*cos(a2) + y;
+              drawLine(x1,y1,x2,y2);
+          }
+       }
+  }
+
+
+
+
+

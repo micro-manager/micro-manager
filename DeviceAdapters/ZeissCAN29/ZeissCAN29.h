@@ -1,19 +1,25 @@
 ///////////////////////////////////////////////////////////////////////////////
-// FILE:       ZeissCAN.h
-// PROJECT:    MicroManage
+// FILE:       ZeissCAN29.h
+// PROJECT:    MicroManager
 // SUBSYSTEM:  DeviceAdapters
 //-----------------------------------------------------------------------------
 // DESCRIPTION:
-// Zeiss CAN bus adapater
-//   
-// COPYRIGHT:     University of California, San Francisco, 2007
+// Zeiss CAN29 bus controller, see Zeiss CAN29 bus documentation
+//                
+// AUTHOR: Nico Stuurman, 6/18/2007 - 
+//
+// COPYRIGHT:     University of California, San Francisco, 2007, 2008, 2009
 // LICENSE:       Please note: This code could only be developed thanks to information 
 //                provided by Zeiss under a non-disclosure agreement.  Subsequently, 
 //                this code has been reviewed by Zeiss and we were permitted to release 
-//                this under the LGPL on 1/16/2008 (and again on 7/3/2208 after changes 
-//                to the code).  If you modify this code using information you obtained 
+//                this under the LGPL on 1/16/2008 (permission re-granted on 7/3/2008, 7/1/2009
+//                after changes to the code).
+//                If you modify this code using information you obtained 
 //                under a NDA with Zeiss, you will need to ask Zeiss whether you can release 
 //                your modifications.  
+//
+//                This version contains changes not yet approved by Zeiss.  This code
+//                can therefore not be made publicly available and the license below does not apply
 //                
 //                This library is free software; you can redistribute it and/or
 //                modify it under the terms of the GNU Lesser General Public
@@ -31,11 +37,18 @@
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.  
-// AUTOR:         Nico Stuurman, nico@cmp.ucsf.edu 5/14/2007
-// REVISIONS:     Added Win32 compatibilty, N.A. 11/20/2007
+
 
 #ifndef _ZEISSCAN29_H_
 #define _ZEISSCAN29_H_
+
+#ifdef WIN32
+#include <windows.h>
+#include <winsock.h>
+#define snprintf _snprintf 
+#else
+#include <netinet/in.h>
+#endif
 
 #include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/DeviceBase.h"
@@ -43,6 +56,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <algorithm>
 
 ////////////
 // Typedefs for the following Zeiss datatypes:
@@ -72,8 +86,11 @@ typedef double ZeissDouble;
 // The highest device number in the Zeiss Scope
 #define MAXNUMBERDEVICES 0x80
 
-// Target addresses for various Zeiss CAN controllers:
+// Target (CAN) addresses for various Zeiss CAN controllers:
 #define AXIOOBSERVER 0x19
+#define AXIOIMAGER 0x1B
+#define COLIBRI 0x50
+#define DEFINITEFOCUS 0x60
 
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
@@ -91,7 +108,15 @@ typedef double ZeissDouble;
 #define ERR_INVALID_TURRET_POSITION  10013
 #define ERR_MODULE_NOT_FOUND         10014
 #define ERR_ANSWER_TIMEOUT           10015
-#define ERR_PORT_NOT_OPEN            10016
+// Use the same value as used in the serial port adapter
+#define ERR_PORT_NOT_OPEN            104
+#define ERR_SHUTTER_POS_UNKNOWN      10017
+#define ERR_UNKNOWN_OFFSET           10018
+#define ERR_DEFINITE_FOCUS_NOT_LOCKED           10019
+#define ERR_DEFINITE_FOCUS_NO_DATA   10020
+#define ERR_DEFINITE_FOCUS_TIMEOUT   10021
+#define ERR_NO_AUTOFOCUS_DEVICE_FOUND           10022
+#define ERR_NO_AUTOFOCUS_DEVICE       10023
 
 enum HardwareStops {
    UPPER,
@@ -100,6 +125,9 @@ enum HardwareStops {
 
 class ZeissMonitoringThread;
 
+/**
+ * Model that holds info about each device in the Zeiss scope
+ */
 struct ZeissDeviceInfo {
    ZeissDeviceInfo(){
       lastUpdateTime = 0;
@@ -135,22 +163,202 @@ struct ZeissDeviceInfo {
    bool present;
    void print (MM::Device& device, MM::Core& core) {
       std::ostringstream os;
-      printf ("Found %d scalings\n", (int) deviceScalings.size());
       for (size_t i = 0; i< deviceScalings.size(); i++) {
          os << "\nScale: " << deviceScalings[i].c_str() ;
-         //printf("Scale: %s\n", deviceScalings[i].c_str());
-         //printf ("Found %d nativeScales\n", (int) nativeScale[deviceScalings[i]].size());
          for (size_t j = 0; j< nativeScale[deviceScalings[i]].size(); j++) {
             os << "\nNative: " << nativeScale[deviceScalings[i]][j] << " non-Native: " << scaledScale[deviceScalings[i]][j]; 
-            //printf("Native: %d, non-native: %f\n", nativeScale[deviceScalings[i]][j], scaledScale[deviceScalings[i]][j]);
          }
-
          core.LogMessage(&device, os.str().c_str(), false);
       }
    }
 };
 
+
+/*
+ * Helper class to store Definite Focus offsets
+ */
+class DFOffset
+{
+   public:
+      DFOffset(ZeissUByte length) :
+         length_ (length)
+      {
+         if (length > 0)
+            data_ = new ZeissUByte[length_];
+      };
+      DFOffset(const DFOffset& original)
+      {
+         length_ = original.length_;
+         if (length_ > 0) {
+            data_ = new ZeissUByte[length_];
+            for (ZeissUByte i=0; i<length_; i++)
+               data_[i] = original.data_[i];
+         }
+      };
+      DFOffset() : length_(0) {
+      };
+      ~DFOffset()
+      {
+         if (length_ != 0)
+            delete[] (data_);
+      };
+
+      DFOffset& operator=(DFOffset x)
+      {
+         length_ = x.length_;
+         data_ = new ZeissUByte[length_];
+         for (ZeissUByte i=0; i<x.length_; i++) {
+            data_[i] = x.data_[i];
+         }
+         return *this;
+      }
+      bool operator==(DFOffset x) 
+      {
+         if (x.length_ == length_) {
+            for (ZeissUByte i=0; i<x.length_; i++) {
+               if (x.data_[i] != data_[i])
+                  return false;
+            }
+            return true;
+         }
+         return false;
+      };
+      ZeissUByte length_;
+      ZeissUByte* data_;
+};
+
+/**
+ * Model that holds current state of the Definite focus device
+*/
+class DefiniteFocusModel
+{
+   public:
+      DefiniteFocusModel();
+
+      int GetControlOnOff(ZeissByte& controlOnOff);
+      int SetControlOnOff(ZeissByte controlOnOff); 
+      int GetPeriod(ZeissULong& period);
+      int SetPeriod(ZeissULong period);
+      int GetStatus(ZeissUShort& status);
+      int SetStatus(ZeissUShort status);
+      int GetError(ZeissUShort& error);
+      int SetError(ZeissUShort error);
+      int GetDeviation(ZeissLong& deviation);
+      int SetDeviation(ZeissLong deviation);
+      DFOffset GetData();
+      int SetData(ZeissUByte dataLength, ZeissUByte* data);
+      int GetBrightnessLED(ZeissByte& brightness);
+      int SetBrightnessLED(ZeissByte brightness);
+      int GetShutterFactor(ZeissShort& shutterFactor);
+      int GetWorkingPosition(double& workingPosition);
+      int SetWorkingPosition(double workingPosition);
+      int SetShutterFactor(ZeissShort shutterFactor);
+      bool GetWaitForStabilizationData();
+      int SetWaitForStabilizationData(bool state);
+      int GetBusy(bool& busy);
+      int SetBusy(bool busy);
+
+   private:
+      MMThreadLock dfLock_;
+      ZeissByte controlOnOff_;
+      ZeissULong period_;
+      ZeissUShort status_;
+      ZeissUShort error_;
+      ZeissLong deviation_;
+      ZeissUByte dataLength_;
+      ZeissUByte data_[UCHAR_MAX];
+      ZeissByte brightnessLED_;
+      ZeissShort shutterFactor_;
+      double workingPosition_;
+      bool waitForStabilizationData_;
+      bool busy_;
+};
    
+/*
+ * Helper class for Colibri
+ */
+class LEDInfo
+{
+   public:
+      ZeissByte serialNumber_[8];
+      char orderId_[15];
+      int wavelengthNm_;
+      int calRefValue_;
+      char name_[21];
+      int halfPowerBandwidth_;
+      int nominalCurrent_;
+};
+
+/*
+ * Helper class for Colibri
+ */
+class TriggerBufferEntry
+{
+   public:
+      ZeissShort brightness_;
+      ZeissULong duration_;
+};
+
+/*
+ * Model and Access functions for Colibri
+ * LEDS are Zeiss DevId 1-4.  States of various properties are stored in (zero-based) arrays.
+ */
+class ColibriModel
+{
+   public:
+      ColibriModel(); 
+         
+      int GetStatus(ZeissULong& status);
+      int SetStatus(ZeissULong status);
+      ZeissShort GetBrightness(int ledNr);
+      ZeissShort GetCalibrationValue(int ledNr);
+      std::string GetName(int ledNr);
+      std::string GetInfo(int ledNr);
+      int SetBrightness(int ledNr, ZeissShort brightness);
+
+      bool GetOpen();
+
+      // access function to actual onoff states of individual LEDs
+      int GetOnOff(int ledNr);
+      int SetOnOff(int ledNr, ZeissByte onOff);
+      ZeissByte GetExternalShutterState();
+      void SetExternalShutterState(ZeissByte externalShutterState);
+
+      bool GetBusy();
+      bool GetBusy(int ledNr);
+      int SetBusy(int ledNr, bool busy);
+      int SetBusyExternal(bool busy);
+      LEDInfo GetLEDInfo(int ledNr);
+      ZeissByte GetMode();
+      void SetMode (ZeissByte mode);
+
+      static const int NRLEDS = 4;
+      LEDInfo info_[NRLEDS];
+      std::string infoString_[NRLEDS];
+      bool available_[NRLEDS];
+
+   private:
+      MMThreadLock dfLock_;
+      ZeissShort calibrationValue_[NRLEDS];
+      ZeissShort calibrationReferenceValue_[NRLEDS];
+      ZeissShort brightness_[NRLEDS];
+      ZeissULong duration_[NRLEDS];
+      ZeissByte triggerChannel_[NRLEDS];
+      ZeissByte onOff_[NRLEDS];
+      std::string name_[NRLEDS];
+      ZeissByte operationMode_;
+      ZeissULong status_;
+      ZeissByte externalShutterState_;
+      ZeissByte triggerSignalSignIn_;
+      ZeissByte triggerSignalSignOut_;
+      ZeissByte shutterTriggerChannel_;
+      ZeissByte triggerBufferPointer_;
+      TriggerBufferEntry triggerBufferEntry_[NRLEDS];
+      bool busy_[NRLEDS];
+      bool busyExternal_;
+};
+
+
 class ZeissHub
 {
    friend class ZeissScope;
@@ -160,11 +368,15 @@ class ZeissHub
       ZeissHub();
       ~ZeissHub();
 
-      int ExecuteCommand(MM::Device& device, MM::Core& core, const unsigned char* command, int commandLength, unsigned char targetDevice = AXIOOBSERVER);
+      int ExecuteCommand(MM::Device& device, MM::Core& core, const unsigned char* command, int commandLength, unsigned char targetDevice = 0);
       int GetAnswer(MM::Device& device, MM::Core& core, unsigned char* answer, unsigned long &answerLength); 
       int GetAnswer(MM::Device& device, MM::Core& core, unsigned char* answer, unsigned long &answerLength, unsigned char* signature, unsigned long signatureStart, unsigned long signatureLength); 
       MM::MMTime GetTimeOutTime(){ return timeOutTime_;}
       void SetTimeOutTime(MM::MMTime timeOutTime) { timeOutTime_ = timeOutTime;}
+
+
+      // Tells whether we have an AxioImager or AxioObserver
+      unsigned char GetAxioType() {return targetDevice_;};
 
       // access functions for device info from microscope model (use lock)
       int GetVersion(MM::Device& device, MM::Core& core, std::string& ver);
@@ -173,20 +385,35 @@ class ZeissHub
       int GetModelStatus(MM::Device& device, MM::Core& core, ZeissUByte devId, ZeissULong& status);
       int GetModelPresent(MM::Device& device, MM::Core& core, ZeissUByte devId, bool &present);
       int GetModelBusy(MM::Device& device, MM::Core& core, ZeissUByte devId, bool &busy);
+      int GetUpperHardwareStop(ZeissUByte devId, ZeissLong& position);
+      int GetLowerHardwareStop(ZeissUByte devId, ZeissLong& position);
       // a few classes can set devices in the microscope model to be busy
       int SetModelBusy( ZeissUByte devId, bool busy);
 
-      static std::string reflectorList_[10];
-      static std::string objectiveList_[7];
-      static std::string tubeLensList_[5];
-      static std::string sidePortList_[3];
-      static std::string condenserList_[7];
+      // Switch LEDS in Colibri on or off.  Needs to be in hub as the monitoringThread can access this too
+      int ColibriOnOff(MM::Device& device, MM::Core& core, ZeissByte ledNr, bool state);
+      int ColibriExternalShutter(MM::Device& device, MM::Core& core, bool state);
+      int ColibriOperationMode(MM::Device& device, MM::Core& core, ZeissByte mode);
+      int ColibriBrightness(MM::Device& device, MM::Core& core, int ledNr, ZeissShort brightness);
+
+      ZeissUByte GetCommandGroup(ZeissUByte devId) {return commandGroup_[devId];};
+
+      static std::string reflectorList_[];
+      static std::string objectiveList_[];
+      static std::string tubeLensList_[];
+      static std::string sidePortList_[];
+      static std::string condenserList_[];
+      static const bool debug_ = false;
       std::string port_;
       bool portInitialized_;
       static const int RCV_BUF_LENGTH = 1024;
       unsigned char rcvBuf_[RCV_BUF_LENGTH];
+      static ZeissDeviceInfo deviceInfo_[];
+      static DefiniteFocusModel definiteFocusModel_;
+      static ColibriModel colibriModel_;
 
    private:
+      static ZeissUByte commandGroup_[MAXNUMBERDEVICES];
       void ClearRcvBuf();
       int ClearPort(MM::Device& device, MM::Core& core);
       //void SetPort(const char* port) {port_ = port; portInitialized_ = true;}
@@ -215,16 +442,46 @@ class ZeissHub
       int GetTubeLensLabels(MM::Device& device, MM::Core& core);
       int GetSidePortLabels(MM::Device& device, MM::Core& core);
       int GetCondenserLabels(MM::Device& device, MM::Core& core);
+      int InitDev(MM::Device& device, MM::Core& core, ZeissUByte commandGroup, ZeissUByte devId);
 
+      // functions used to initialize DefiniteFocus
+      int InitDefiniteFocusEventMonitoring(MM::Device& device, MM::Core& core, bool start);
+      int GetDefiniteFocusInfo(MM::Device& device, MM::Core& core);
+
+      // functions for  Colibri
+      int GetLEDInfo(MM::Device& device, MM::Core& core, int ledNr);
+      int GetColibriInfo(MM::Device& device, MM::Core& core);
+      int InitColibriEventMonitoring(MM::Device& device, MM::Core& core, bool start);
+      int RequestColibriBrightness(MM::Device& device, MM::Core& core, ZeissByte ledNr);
+      int RequestColibriOnOff(MM::Device& device, MM::Core& core, ZeissByte ledNr);
+      int RequestColibriOperationMode(MM::Device& device, MM::Core& core);
+      int RequestColibriExternalOnOff(MM::Device& device, MM::Core& core);
+
+
+      // BIOS level functions
+      // Figure out which CAN nodes are present in this system
+      int GetCANNodes(MM::Device& device, MM::Core& core);
+      // Do software reset.  Currently only called from Definite Focus module
+      int GetBiosInfo(MM::Device& device, MM::Core& core, ZeissUByte canNode, ZeissUByte infoType, std::string& info);
+      // vector to store CAN nodes present in the system
+      std::vector<ZeissByte> canNodes_;
+
+      MM_THREAD_GUARD mutex;
+      MMThreadLock executeLock_;
       ZeissMonitoringThread* monitoringThread_;
       MM::MMTime timeOutTime_;
-      //static ZeissDeviceInfo deviceInfo_[MAXNUMBERDEVICES];
+      unsigned char targetDevice_;
       std::vector<ZeissUByte > availableDevices_;
-      //static std::vector<ZeissUByte > commandGroup_; // relates device to commandgroup, initialized in constructor
       std::string version_;
       bool scopeInitialized_;
 };
 
+
+/*
+ * ZeissMessageParser: Takes a stream containing CAN29 messages and
+ * splits this stream into individual messages.
+ * Also removes escaped characters (like 0x10 0x10) 
+ */
 class ZeissMessageParser{
    public:
       ZeissMessageParser(unsigned char* inputStream, long inputStreamLength);
@@ -238,30 +495,37 @@ class ZeissMessageParser{
       long index_;
 };
 
-class ZeissMonitoringThread
+class ZeissMonitoringThread : public MMDeviceThreadBase
 {
    public:
-      ZeissMonitoringThread(MM::Device& device, MM::Core& core); 
+      ZeissMonitoringThread(MM::Device& device, MM::Core& core, ZeissHub& hub, ZeissDeviceInfo* deviceInfo, bool debug); 
       ~ZeissMonitoringThread(); 
-      static MM_THREAD_FUNC_DECL svc(void *arg);
+      int svc();
       int open (void*) { return 0;}
       int close(unsigned long) {return 0;}
 
       void Start();
       void Stop() {stop_ = true;}
-      void wait() {MM_THREAD_JOIN(thread_);}
+      //void wait() {MM_THREAD_JOIN(thread_);}
 
    private:
+      ZeissDeviceInfo * deviceInfo_;
       MM_THREAD_HANDLE thread_;
       void interpretMessage(unsigned char* message);
       MM::Device& device_;
       MM::Core& core_;
+      ZeissHub& hub_;
+      bool debug_;
       bool stop_;
       long intervalUs_;
       ZeissMonitoringThread& operator=(ZeissMonitoringThread& /*rhs*/) {assert(false); return *this;}
 };
 
 
+///////////////// Zeiss Devices ////////////////////////
+/**
+ * Base class for all Zeiss Devices
+ */
 class ZeissDevice
 {
    protected:
@@ -269,11 +533,12 @@ class ZeissDevice
       virtual ~ZeissDevice();
 
       int GetPosition(MM::Device& device, MM::Core& core, ZeissUByte devId, ZeissLong& position);
-      int SetPosition(MM::Device& device, MM::Core& core, ZeissUByte commandGroup, ZeissUByte devId, int position, unsigned char targetDevice = AXIOOBSERVER);
+      int SetPosition(MM::Device& device, MM::Core& core, ZeissUByte commandGroup, ZeissUByte devId, int position);
+      int GetStatus(MM::Device& device, MM::Core& core, ZeissUByte commandGroup, ZeissUByte devId);
       int GetTargetPosition(MM::Device& device, MM::Core& core, ZeissUByte devId, ZeissLong& position);
       int GetMaxPosition(MM::Device& device, MM::Core& core, ZeissUByte devId, ZeissLong& position);
       int GetStatus(MM::Device& device, MM::Core& core, ZeissUByte devId, ZeissULong& status);
-      int SetLock(MM::Device& device, MM::Core& core, ZeissUByte devId, bool on, unsigned char targetDevice = AXIOOBSERVER);
+      int SetLock(MM::Device& device, MM::Core& core, ZeissUByte devId, bool on);
       int GetBusy(MM::Device& device, MM::Core& core, ZeissUByte devId, bool& busy);
       int GetPresent(MM::Device& device, MM::Core& core, ZeissUByte devId, bool& present);
 
@@ -314,10 +579,10 @@ class ZeissAxis : public ZeissDevice
       ZeissAxis();
       ~ZeissAxis();
 
-      int SetPosition(MM::Device& device, MM::Core& core, ZeissUByte devId, long position, ZeissByte moveMode, unsigned char targetDevice = AXIOOBSERVER);
-      int SetRelativePosition(MM::Device& device, MM::Core& core, ZeissUByte devId, long increment, ZeissByte moveMode, unsigned char targetDevice = AXIOOBSERVER);
-      int FindHardwareStop(MM::Device& device, MM::Core& core, ZeissUByte devId, HardwareStops stop, unsigned char targetDevice = AXIOOBSERVER);
-      int StopMove(MM::Device& device, MM::Core& core, ZeissUByte devId, ZeissByte moveMode, unsigned char targetDevice = AXIOOBSERVER);
+      int SetPosition(MM::Device& device, MM::Core& core, ZeissUByte devId, long position, ZeissByte moveMode);
+      int SetRelativePosition(MM::Device& device, MM::Core& core, ZeissUByte devId, long increment, ZeissByte moveMode);
+      int FindHardwareStop(MM::Device& device, MM::Core& core, ZeissUByte devId, HardwareStops stop);
+      int StopMove(MM::Device& device, MM::Core& core, ZeissUByte devId, ZeissByte moveMode);
       ZeissUByte devId_;
 
    private:
@@ -349,6 +614,10 @@ class ZeissScope : public CGenericBase<ZeissScope>
 };
 
 
+///////////////// Micro-Manager Devices ////////////////////////
+/**
+ * Shutter
+ */
 class Shutter : public CShutterBase<Shutter>, public ZeissChanger
 {
 public:
@@ -554,9 +823,6 @@ public:
 
    // XYStage API                                                            
    // -----------
-  int SetPositionUm(double x, double y);
-  int SetRelativePositionUm(double x, double y);
-  int GetPositionUm(double& x, double& y);
   int SetPositionSteps(long x, long y);
   int SetRelativePositionSteps(long x, long y);
   int GetPositionSteps(long& x, long& y);
@@ -588,6 +854,123 @@ private:
    std::string name_;
    std::string description_;
    std::string direct_, uni_, biSup_, biAlways_, fast_, smooth_;
+};
+
+class DefiniteFocus : public CAutoFocusBase<DefiniteFocus>
+{
+   public:
+      DefiniteFocus();
+      ~DefiniteFocus();
+
+      // MMDevice API
+      bool Busy();
+      void GetName(char* pszName) const;
+
+      int Initialize();
+      int Shutdown();
+
+      // AutoFocus API
+      virtual int SetContinuousFocusing(bool state);
+      virtual int GetContinuousFocusing(bool& state);
+      bool isContinuousFocusingAvailable() {return true;};
+      virtual int FullFocus();
+      virtual int IncrementalFocus();
+      virtual int GetLastFocusScore(double& /*score*/) {return DEVICE_UNSUPPORTED_COMMAND;}
+      virtual int GetCurrentFocusScore(double& score) { score = 0.0; return DEVICE_OK;}
+      virtual bool IsContinuousFocusLocked();
+      int GetOffset(double& offset);
+      int SetOffset(double offset);
+      int OnPeriod(MM::PropertyBase* pProp, MM::ActionType eAct); 
+      int OnDFWorkingPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
+      int OnFocusMethod(MM::PropertyBase* pProp, MM::ActionType eAct); 
+
+   private:
+      int FocusControlOnOff(bool state);
+      int GetStabilizedPosition();
+      int IlluminationFeatures();
+      int Wait();
+      int WaitForStabilizationData();
+      int WaitForBusy();
+      int StabilizeThisPosition(ZeissUByte dataLength, ZeissUByte* data = 0);
+      int StabilizeThisPosition(DFOffset position);
+      int StabilizeLastPosition();
+
+      std::vector<DFOffset> offsets_;
+      DFOffset currentOffset_;
+      std::string focusMethod_;
+      
+      bool initialized_;
+};
+
+/**
+ * Treats the Definite Focus Offset as a Drive.
+ * Can be used to make the DF offset appear in the position list
+ */
+class DFOffsetStage : public CStageBase<DFOffsetStage>
+{
+public:
+   DFOffsetStage();
+   ~DFOffsetStage();
+  
+   // Device API
+   // ----------
+   int Initialize();
+   int Shutdown();
+  
+   void GetName(char* pszName) const;
+   bool Busy();
+
+   // Stage API
+   // ---------
+  int SetPositionUm(double pos);
+  int GetPositionUm(double& pos);
+  int SetPositionSteps(long steps);
+  int GetPositionSteps(long& steps);
+  int SetOrigin();
+  int GetLimits(double& min, double& max);
+
+   // action interface
+   // ----------------
+   int OnAutoFocusDevice(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+private:
+   std::vector<std::string> availableAutoFocusDevices_;
+   MM::AutoFocus* autoFocusDevice_;
+   std::string autoFocusDeviceName_;
+   bool initialized_;
+   double pos_;
+   double originPos_;
+};
+
+class Colibri : public CShutterBase<Colibri>
+{
+   public:
+      Colibri();
+      ~Colibri();
+
+      // MMDevice API
+      int Initialize();
+      int Shutdown();
+      bool Busy();
+      void GetName(char* pszName) const;
+
+      // action interface
+      int OnExternalShutter(MM::PropertyBase* pProp, MM::ActionType eAct);
+      int OnIntensity(MM::PropertyBase* pProp, MM::ActionType eAct, long index);
+      int OnName(MM::PropertyBase* pProp, MM::ActionType eAct, long index);
+      int OnInfo(MM::PropertyBase* pProp, MM::ActionType eAct, long index);
+      int OnOperationMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+      // Shutter API
+      int SetOpen(bool open = true);
+      int GetOpen(bool& open);
+      int Fire(double /* deltaT */) {return DEVICE_UNSUPPORTED_COMMAND;};
+
+   private:
+      int OnOff(int ledNr, bool state);
+
+      bool initialized_;
+      bool useExternalShutter_;
 };
 
 #endif // _ZeissCAN29_H_

@@ -1,0 +1,46 @@
+// EDM_16bits.txt
+// Euclidean distance map extended to support up to
+// distances of 65535. Uses ImageJ EDM command
+// G.Landini at bham. ac. uk
+// 14/11/2004
+
+saveSettings();
+name=getTitle();
+flag=-1;
+i=0;
+nBins=256;
+th=255;
+
+selectWindow(name);
+run("Duplicate...", "title=EDM_"+i);
+selectWindow("EDM_"+i);
+run("Distance Map");
+getHistogram(values, counts, nBins);
+if (counts[255]>0){
+     while (flag<0){
+          i++;
+          if (i>255) showMessage("Warning!","Image is too large, EDM cannot be completed.");
+          run("Duplicate...", "title=EDM_"+i);
+          if (i>1) th=254;
+          setThreshold(th, th);
+          run("Threshold", "thresholded remaining");
+          run("Distance Map");
+          run("Subtract...", "value=1");
+          getHistogram(values, counts, nBins);
+          if (counts[254]==0)  flag=0;
+      }  
+}
+
+run("Convert Images to Stack");
+run("Z Project...", "start=2 stop="+(i+2)+" projection='Sum Slices'");
+run("Rename...", "title=EDM");
+run("Conversions...", " ");
+run("16-bit");
+//run("Fire");
+selectWindow("Stack");
+run("Set Slice...", "slice=1");
+run("Duplicate...", "title="+name);
+selectWindow("Stack");
+run("Close");
+selectImage("EDM");
+restoreSettings()

@@ -1,0 +1,12 @@
+// Converts a stack to binary  by thresholding each slice
+// with the corresponding auto threshold value
+
+for (i=1; i<=nSlices; i++) {
+    run("Set Slice...", "slice="+i);
+    run("Threshold", "slice");
+ }
+
+// This method is faster but the threshold value of 
+// the first slice is applied to the entire stack.
+// 
+//run("Threshold", "stack");

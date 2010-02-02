@@ -1,0 +1,112 @@
+import ij.IJ;
+import ij.ImagePlus;
+import ij.process.ByteProcessor;
+import ij.gui.ShapeRoi;
+import java.awt.image.BufferedImage;
+import java.awt.geom.AffineTransform;
+import java.awt.image.AffineTransformOp;
+import java.awt.Color;
+import org.micromanager.utils.ReportingUtils;
+import ij.process.ImageProcessor;
+import org.micromanager.utils.ImageUtils;
+import java.awt.geom.Point2D;
+
+String slm;
+int slmWidth;
+int slmHeight;
+int diameter;
+
+public void addSpot(ImageProcessor proc, x, y, dia) {
+	proc.fillOval(x-dia/2, y-dia/2, dia, dia);
+}
+
+public Point findMax(ImageProcessor proc) {
+	int w = proc.getWidth();
+	int h = proc.getHeight();
+	pixels = proc.getPixels();
+	long n;
+	short max=0;
+	for (long j=0;j<pixels.length;++j) {
+		if (pixels[j] > max) {
+			max = pixels[j];
+			n = j;
+		}
+	}
+
+	return new Point((int) (n%w),(int) (n/w));
+}
+		
+public void displaySpot(int x, int y) {
+	proc = new ByteProcessor(slmWidth, slmHeight);
+	proc.setColor(Color.white);
+	proc.fill();
+	proc.setColor(Color.black);
+	addSpot(proc,x,y, diameter);
+	img = new ImagePlus("",proc);
+	//img.show();
+	mmc.setSLMImage(slm, proc.getPixels());
+	mmc.displaySLMImage(slm);
+}
+
+public Point measureSpot(Point dmdPt) {
+	displaySpot(dmdPt.x,dmdPt.y);
+	gui.snapSingleImage();
+	proc = IJ.getImage().getProcessor();
+	maxPt = findMax(proc);
+	return maxPt;
+}
+
+public void mapSpot(Map spotMap, Point ptSLM) {
+	ptSLMDouble = new Point2D.Double(ptSLM.x, ptSLM.y);
+	ptCam = measureSpot(ptSLM);
+	ptCamDouble = new Point2D.Double(ptCam.x, ptCam.y);
+	spotMap.put(ptCamDouble, ptSLMDouble);
+}
+
+public void mapSpot(Map spotMap, Point2D.Double ptSLM) {
+	mapSpot(spotMap, new Point((int) ptSLM.x, (int) ptSLM.y));
+}
+
+public AffineTransform getFirstApproxTransform() {
+	x = slmWidth/2;
+	y = slmHeight/2;
+
+	s = 50;
+	spotMap = new HashMap();
+
+	mapSpot(spotMap, new Point(x,y));
+	mapSpot(spotMap, new Point(x,y+s));
+	mapSpot(spotMap, new Point(x+s,y));
+	mapSpot(spotMap, new Point(x,y-s));
+	mapSpot(spotMap, new Point(x-s,y));
+
+	return generateAffineTransformFromPointPairs(spotMap);
+}
+
+update();
+
+slm = mmc.getSLMDevice();
+slmWidth = (int) mmc.getSLMWidth(slm);
+slmHeight = (int) mmc.getSLMHeight(slm);
+diameter = 5;
+
+spotMap2 = new HashMap();
+firstApprox = getFirstApproxTransform();
+imgWidth = mmc.getImageWidth();
+imgHeight = mmc.getImageHeight();
+
+s = 30;
+dmdPoint = firstApprox.transform(new Point2D.Double((double) s,(double) s),null);
+mapSpot(spotMap2, dmdPoint);
+dmdPoint = firstApprox.transform(new Point2D.Double((double) imgWidth-s,(double) s),null);
+mapSpot(spotMap2, dmdPoint);
+dmdPoint = firstApprox.transform(new Point2D.Double((double) imgWidth-s,(double) imgHeight-s),null);
+mapSpot(spotMap2, dmdPoint);
+dmdPoint = firstApprox.transform(new Point2D.Double((double) s,(double) imgHeight-s),null);
+mapSpot(spotMap2, dmdPoint);
+
+trans = generateAffineTransformFromPointPairs(spotMap2);
+
+
+
+print("done.");

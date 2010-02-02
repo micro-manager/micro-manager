@@ -45,7 +45,8 @@
 
 using namespace std;
 
-ASIFW1000Hub::ASIFW1000Hub ()
+ASIFW1000Hub::ASIFW1000Hub ()  :
+	port_("Undefined")
 {
    expireTimeUs_ = 5000000; // each command will finish within 5sec
 
@@ -248,27 +249,37 @@ int ASIFW1000Hub::GetNumberOfPositions(MM::Device& device, MM::Core& core, int w
 
 int ASIFW1000Hub::FilterWheelBusy(MM::Device& device, MM::Core& core, bool& busy)
 { 
+   busy = false;
    ClearAllRcvBuf(device, core);
    int ret = core.SetSerialCommand(&device, port_.c_str(), "?", "");
-   if (ret != DEVICE_OK)                                                     
-      return ret;                                                           
+   if (ret != DEVICE_OK) {
+      std::ostringstream os;
+      os << "ERROR: SetSerialCommand returned error code: " << ret;
+      core.LogMessage(&device, os.str().c_str(), false);
+      return ret;
+   }
 
    unsigned long read = 0;
    MM::MMTime startTime = core.GetCurrentMMTime();
    while (read == 0 && ( (core.GetCurrentMMTime() - startTime) < 10000))
       ret = core.ReadFromSerial(&device, port_.c_str(), (unsigned char*)rcvBuf_, 1, read);  
-   if (ret != DEVICE_OK)                                                     
-      return ret;                                                           
+   if (ret != DEVICE_OK) {
+      std::ostringstream os;
+      os << "ERROR: ReadFromSerial returned error code: " << ret;
+      core.LogMessage(&device, os.str().c_str(), false);
+      return ret;
+   }
 
    if (read != 1) {
-      printf (" FilterWheel received no answer!\n");
+      std::ostringstream os;
+      os << "ERROR: Read " << read << " characters instead of 1";
+      core.LogMessage(&device, os.str().c_str(), false);
       return ERR_NO_ANSWER;
    }
 
    if (rcvBuf_[0] == '0' || rcvBuf_[0] == '1' || rcvBuf_[0] =='2')
       busy = false;
-   else
-   if (rcvBuf_[0] == '3')
+   else if (rcvBuf_[0] == '3')
       busy = true;
 
    return DEVICE_OK;
@@ -380,5 +391,13 @@ int ASIFW1000Hub::ExecuteCommand(MM::Device& device, MM::Core& core,  const char
    // send command
    return core.SetSerialCommand(&device, port_.c_str(), command, "\r");
   
+}
+
+/**
+ * Tests if serial port is connected.
+ */
+bool ASIFW1000Hub::IsConnected()
+{
+   return (port_.compare("Undefined") != 0);
 }
 

@@ -32,8 +32,6 @@ public:
    int Shutdown();
      
    // XYStage API
-   virtual int SetPositionUm(double x, double y);
-   virtual int GetPositionUm(double& x, double& y);
    virtual double GetStepSize();
    virtual int SetPositionSteps(long x, long y);
    virtual int GetPositionSteps(long& x, long& y);
@@ -41,7 +39,11 @@ public:
    virtual int Stop();
    virtual int SetOrigin();
    virtual int GetLimits(double& lower, double& upper);
-   virtual int GetLimits(double& xMin, double& xMax, double& yMin, double& yMax);
+   virtual int GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax);
+   virtual int GetStepLimits(long &xMin, long &xMax, long &yMin, long &yMax);
+   virtual double GetStepSizeXUm();
+   virtual double GetStepSizeYUm();
+   virtual int SetRelativePositionUm(double dx, double dy);
 
    // Action interface
    int OnPositionXmm(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -49,8 +51,8 @@ public:
    int OnSetOriginHere(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnCalibrate(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnReturnToOrigin(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnPositionTypeAbsRel(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPositionXYmm(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnVelocity(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    /// Private methods
@@ -61,8 +63,11 @@ private:
    // Set positions
    int SetPositionMm(double x, double y);
    int GetPositionMm(double& x, double& y);
+   int SetRelativePositionMm(double x, double y);
    int SetPositionXSteps(long x);
    int SetPositionYSteps(long y);
+   int SetPositionUm(double x, double y);
+   int GetPositionUm(double& x, double& y);
 
    // Calibration & origin methods
    int Calibrate();
@@ -70,15 +75,15 @@ private:
    int ReturnToOrigin();
 
    // Pause devices
-   void PauseDeviceDistanceMm(double distance);
-   void PauseDeviceTimeMs(int milliseconds);
+   void PauseDevice();
 
    // Check if blocked
    bool XMoveBlocked(double possNewPos);
    bool YMoveBlocked(double possNewPos);
 
+   void GetOrientation(bool& mirrorX, bool& mirrorY);
+
    /// Private variables
-   
    int MCLhandle_;
    double stepSize_mm_;
    bool busy_;
@@ -86,8 +91,8 @@ private:
    double encoderResolution_; 
    double maxVelocity_;
    double minVelocity_;
+   double velocity_;
    int rounding_;
-   bool relative_;
 };
 
 

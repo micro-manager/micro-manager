@@ -7,6 +7,8 @@
 //                
 // AUTHOR:        Nenad Amodaj, nenad@amodaj.com, 06/30/2006
 // COPYRIGHT:     University of California, San Francisco, 2006
+//                100X Imaging Inc, 2008
+//
 // LICENSE:       This file is distributed under the BSD license.
 //                License text is included with the source distribution.
 //
@@ -38,10 +40,12 @@
 #define _ANDOR_H_
 
 #include "../../MMDevice/DeviceBase.h"
+#include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/ImgBuffer.h"
 #include "../../MMDevice/DeviceUtils.h"
 #include "../../MMDevice/DeviceThreads.h"
 #include <string>
+#include <sstream>
 #include <map>
 
 // error codes
@@ -53,29 +57,31 @@
 #define ERR_BUSY_ACQUIRING 106
 #define ERR_INVALID_PREAMPGAIN 107
 #define ERR_INVALID_VSPEED 108
-#define ERR_SOFTWARE_TRIGGER_NOT_SUPPORTED 109
+#define ERR_TRIGGER_NOT_SUPPORTED 109
 #define ERR_OPEN_OR_CLOSE_SHUTTER_IN_ACQUISITION_NOT_ALLOWEDD 110
+#define ERR_NO_AVAIL_AMPS 111
 
 class AcqSequenceThread;
-
+ 
 //////////////////////////////////////////////////////////////////////////////
 // Implementation of the MMDevice and MMCamera interfaces
 //
-class Ixon : public CCameraBase<Ixon>
+class AndorCamera : public CCameraBase<AndorCamera>
 {
 public:
-   static Ixon* GetInstance();
+   friend class AcqSequenceThread;
+   static AndorCamera* GetInstance();
    unsigned DeReference(); // jizhen 05.16.2007
-   static void ReleaseInstance(Ixon*); // jizhen 05.16.2007
+   static void ReleaseInstance(AndorCamera*); // jizhen 05.16.2007
 
-   ~Ixon();
+   ~AndorCamera();
    
    // MMDevice API
    int Initialize();
    int Shutdown();
    
    void GetName(char* pszName) const;
-   bool Busy() {return acquiring_;}
+   bool Busy() {return false;}
    
    // MMCamera API
    int SnapImage();
@@ -94,15 +100,26 @@ public:
    int ClearROI();
 
    // high-speed interface
-   int StartSequenceAcquisition(long numImages, double interval_ms);
-   int StopSequenceAcquisition();
+   int StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow);
+   /**
+   * Continuous sequence acquisition.  
+   * Default to sequence acquisition with a high number of images
+   */
+   int StartSequenceAcquisition(double interval)
+   {
+      return StartSequenceAcquisition(LONG_MAX, interval, false);
+   }
+
+   int StopSequenceAcquisition(); // temporary=true 
+   int StopSequenceAcquisition(bool temporary);
+   bool IsCapturing(){return sequenceRunning_;};
 
    // action interface for the camera
    int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnGain(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnEMGain(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnEMSwitch(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnReadoutMode(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnReadoutTime(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnOffset(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -128,45 +145,74 @@ public:
    int OnVCVoltage(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBaselineClamp(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnActualIntervalMS(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnUseSoftwareTrigger(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSelectTrigger(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnTimeOut(MM::PropertyBase* pProp, MM::ActionType eAct);  // kdb July-30-2009
+   
 
 
    // custom interface for the thread
    int PushImage();
 
-   //static void ReleaseInstance(Ixon * ixon);
+   //static void ReleaseInstance(AndorCamera * AndorCamera);
 
 private:
-   Ixon();
+   AndorCamera();
    int ResizeImageBuffer();
-   static Ixon* instance_;
+   int StopCameraAcquisition();
+   void UpdateEMGainRange();
+   void CheckError(unsigned int errorVal);
+   bool IsThermoSteady();
+   void SetToIdle();
+   bool IsAcquiring();
+   int SetExposure_();
+
+   void LogStatus();
+	int PrepareSnap();
+	unsigned int UpdateSnapTriggerMode();
+
+
+   bool EMSwitch_;
+
+   unsigned int ui_swVersion;
+
+   static AndorCamera* instance_;
    static unsigned refCount_;
    ImgBuffer img_;
    bool initialized_;
    bool snapInProgress_;
-   bool acquiring_;
+   bool sequenceRunning_;
    long imageCounter_;
+   long imageTimeOut_ms_;
    long sequenceLength_;
+   bool stopOnOverflow_;
+   double intervalMs_;
 
-   //daigang 24-may-2007
-   void UpdateEMGainRange();
    long lSnapImageCnt_;
    std::vector<std::string> PreAmpGains_;
    long currentGain_;
 
    std::vector<std::string> VSpeeds_;
-   void SetToIdle();
-   bool IsAcquiring();
-   bool IsThermoSteady();
-   void CheckError(unsigned int errorVal);
+
+
    double currentExpMS_;
 
    long ReadoutTime_, KeepCleanTime_;
+
    long GetReadoutTime();
+
+// kdb 2/27/2009
+#ifdef WIN32
    HMODULE hAndorDll;
    typedef unsigned int (CALLBACK *FPGetReadOutTime)(float *_fReadoutTime);
-   FPGetReadOutTime fpGetReadOutTime;
    typedef unsigned int (CALLBACK *FPGetKeepCleanTime)(float *_ftime);
+#else   
+   HDEVMODULE hAndorDll; 
+   typedef unsigned int (*FPGetReadOutTime)(float *_fReadoutTime);
+   typedef unsigned int (*FPGetKeepCleanTime)(float *_ftime);
+#endif
+// end of kdb
+   FPGetReadOutTime fpGetReadOutTime;
+   //typedef unsigned int (CALLBACK *FPGetKeepCleanTime)(float *_ftime);
    FPGetKeepCleanTime fpGetKeepCleanTime;
    //typedef unsigned int (CALLBACK *FPSendSoftwareTrigger)();
    //FPSendSoftwareTrigger fpSendSoftwareTrigger;
@@ -201,17 +247,24 @@ private:
 
    AcqSequenceThread* seqThread_;
 
-   bool bShuterIntegrated;
+   bool bShutterIntegrated_;
    int ADChannelIndex_, OutputAmplifierIndex_;
    void UpdateHSSpeeds();
 
    int HSSpeedIdx_;
 
-   bool bSoftwareTriggerSupported;
+   bool bSoftwareTriggerSupported_;
+   int  iCurrentTriggerMode_;
 
-   long CurrentCameraID_;
-   long NumberOfAvailableCameras_;
-   long NumberOfWorkableCameras_;
+   enum {
+	   INTERNAL,
+	   EXTERNAL,
+	   SOFTWARE
+   };
+
+   at_32 CurrentCameraID_;
+   at_32 NumberOfAvailableCameras_;
+   at_32 NumberOfWorkableCameras_;
    std::vector<std::string> cameraName_;
    std::vector<std::string> cameraSN_;
    std::vector<int> cameraID_;
@@ -229,16 +282,33 @@ private:
    std::string BaselineClampValue_;
    float ActualInterval_ms_;
 
-   std::string UseSoftwareTrigger_;
-   std::vector<std::string> vUseSoftwareTrigger_;
+   std::string strCurrentTriggerMode_;
+   std::vector<std::string> vTriggerModes;
+
+    std::string strCurrentAmp;
+   std::vector<std::string> vAvailAmps;
+   std::map<std::string, int> mapAmps;
+
+   std::string strCurrentChannel;
+   std::vector<std::string> vChannels;
 
    bool bFrameTransfer_;
 
-   unsigned char* GetImageBuffer_();
+   std::string m_str_frameTransferProp;
+   std::string m_str_camType;
+   std::vector<std::string> vCameraType;
+
    unsigned char* pImgBuffer_;
-   int SetExposure_();
+   unsigned char* GetAcquiredImage();
+   std::string getCameraType();
+   unsigned int createGainProperty(AndorCapabilities * caps);
+   unsigned int createTriggerProperty(AndorCapabilities * caps);
 
+   bool mb_canUseFan;
+   bool mb_canSetTemp;
+   bool bEMGainSupported;
 
+   bool sequencePaused_;
 
 };
 
@@ -249,22 +319,38 @@ private:
 class AcqSequenceThread : public MMDeviceThreadBase
 {
 public:
-   AcqSequenceThread(Ixon* pCam) : 
-      intervalMs_(100.0), numImages_(1), busy_(false), stop_(false) {camera_ = pCam;}
+   AcqSequenceThread(AndorCamera* pCam) : 
+      intervalMs_(100.0), 
+      numImages_(1),
+      waitTime_(10),
+      busy_(false), 
+      stop_(false) 
+   {
+      camera_ = pCam;
+   };
    ~AcqSequenceThread() {}
+ 
    int svc(void);
 
    void SetInterval(double intervalMs) {intervalMs_ = intervalMs;}
+   void SetWaitTime (long waitTime) { waitTime_ = waitTime;}
+   void SetTimeOut (long imageTimeOut) { imageTimeOut_ = imageTimeOut;}
    void SetLength(long images) {numImages_ = images;}
    void Stop() {stop_ = true;}
    void Start() {stop_ = false; activate();}
 
 private:
-   Ixon* camera_;
+   AndorCamera* camera_;
    double intervalMs_;
    long numImages_;
+   long waitTime_;
+   long imageTimeOut_;
    bool busy_;
    bool stop_;
 };
+
+
+
+
 
 #endif //_ANDOR_H_

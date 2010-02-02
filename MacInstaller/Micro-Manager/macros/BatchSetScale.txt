@@ -1,0 +1,21 @@
+// This macro batch processes a folder of images,
+// setting the scales to a given specification.
+// All the images must be in TIFF format.
+
+   requires("1.33n"); 
+   dir = getDirectory("Choose a Directory ");
+   list = getFileList(dir);
+   start = getTime();
+   setBatchMode(true); // runs up to 6 times faster
+   for (i=0; i<list.length; i++) {
+        path = dir+list[i];
+        //print(i+"  "+path);
+        showProgress(i, list.length);
+        open(path);
+        title = getTitle();
+        run("Set Scale...", "distance=1 known=25 pixel=1 unit=µm");
+        run("Save");
+        close();
+  }
+ // print((getTime()-start)/1000);
+

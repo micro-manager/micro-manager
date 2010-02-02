@@ -1,0 +1,32 @@
+// This macro batch processes a folder of images,
+// rescaling them to 800*600 pixels
+
+macro "Batch Convert to JPEG" {convert("jpeg");}
+
+
+  function convert(format) {
+      requires("1.33s");
+
+      dir1 = getDirectory("Choose Source Directory ");
+      dir2 = getDirectory("Choose Destination Directory ");
+      list = getFileList(dir1);
+      setBatchMode(true);
+      for (i=0; i<list.length; i++) {
+          showProgress(i+1, list.length);
+          open(dir1+list[i]);
+          if (!endsWith(list[i], '.jpg'))
+                print("Not JPEG: "+dir1+list[i]);
+         else {
+                   a = getHeight();
+                   b = getWidth();
+                  if (a>b) {
+                    run("Size...", "width=600 height=800");
+                      }
+                  else {
+                      run("Size...", "width=800 height=600");
+                     }
+           }
+          saveAs(format, dir2+list[i]);
+          close();
+          }
+  }

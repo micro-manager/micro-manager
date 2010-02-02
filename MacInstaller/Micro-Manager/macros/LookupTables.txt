@@ -1,0 +1,78 @@
+macro "List LUT" {
+     requires("1.30j");
+     getLut(reds, greens, blues);
+     for (i=0; i<reds.length; i++)
+         print(i+" "+reds[i]+" "+greens[i]+" "+blues[i]);
+}
+
+macro "Invert LUT" {
+    requires("1.30j");
+    getLut(reds, greens, blues);
+    for (i=0; i<reds.length; i++) {
+        reds[i] = 255-reds[i];
+        greens[i] = 255-greens[i];
+        blues[i] = 255-blues[i];
+    }
+    setLut(reds, greens, blues);
+}
+
+macro "Grayscale LUT" {
+    reds = newArray(256); 
+    greens = newArray(256); 
+    blues = newArray(256);
+    for (i=0; i<256; i++) {
+        reds[i] = i;
+        greens[i] = i;
+        blues[i] = i;
+    }
+    setLut(reds, greens, blues);
+}
+
+macro "Red LUT" {
+    reds = newArray(256); 
+    greens = newArray(256); 
+    blues = newArray(256);
+    for (i=0; i<256; i++)
+        reds[i] = i;
+    setLut(reds, greens, blues);
+}
+
+macro "Green LUT" {
+    reds = newArray(256); 
+    greens = newArray(256); 
+    blues = newArray(256);
+    for (i=0; i<256; i++)
+        greens[i] = i;
+    setLut(reds, greens, blues);
+}
+
+macro "Blue LUT" {
+    reds = newArray(256); 
+    greens = newArray(256); 
+    blues = newArray(256);
+    for (i=0; i<256; i++)
+        blues[i] = i;
+    setLut(reds, greens, blues);
+}
+
+macro "LUT Animation" {
+    getLut(r1, g1, b1);
+    getLut(r2, g2, b2);
+    offset = 0;
+    while (true) {
+        for (i=0; i<256; i++) {
+            k = (i + offset)%256;
+            r2[i] = r1[ k];
+            g2[i] = g1[k];
+            b2[i] = b1[k];
+        }
+        setLut(r2, g2, b2);
+        offset += 2;
+        getCursorLoc(x, y, z, flags);
+        if (flags!=0) {
+            setLut(r1, g1, b1);
+            exit();
+         }
+    }
+}
+

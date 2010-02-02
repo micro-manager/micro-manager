@@ -1,0 +1,13 @@
+// This macro demonstrates how to add particle analyzer
+// outlines to the ROI Manager. Note that doWand() may
+// not work reliably unless the objects being traced
+// have been highlighted in red using setThreshold().
+
+requires("1.33f");
+for (i=0; i<nResults; i++) {
+    x = getResult('XStart', i);
+    y = getResult('YStart', i);
+    doWand(x,y);
+    roiManager("add");
+}
+

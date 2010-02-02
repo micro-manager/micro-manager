@@ -1,0 +1,41 @@
+  // This macro multiplies an image or the images in a stack by the 
+  // DICOM Rescale Slope value (tag 0028,1053).  The image or stack 
+  // is converted to 32-bits if any of the values are greater than 1.0.
+
+  slopes = newArray(nSlices);
+  for (slice=1; slice<=nSlices; slice++) {
+      if (nSlices>1) run("Set Slice...", "slice="+slice);      
+      selectImage(getImageID());
+      tags = getInfo();
+      if (indexOf(tags, "0008,0060")==-1)
+          exit("This does not seem to be a DICOM image");
+      //intercept = getValue(tags, "0028,1052");
+      slopes[slice-1] = getValue(tags, "0028,1053");
+  }
+  maxSlope = 0;
+  for (i=1; i<=nSlices; i++) {
+      slope = slopes[i-1];
+      if (slope>maxSlope) maxSlope = slope;
+      print(i+"  "+slopes[i-1]);
+  }
+  print("max slope: "+maxSlope);
+  if (maxSlope>1.0)
+      run("32-bit"); // convert to 32-bits
+  for (i=1; i<=nSlices; i++) {
+      if (nSlices>1) run("Set Slice...", "slice="+i);      
+      if (slopes[i-1]!=1.0 && slopes[i-1]!=-1)
+      run("Multiply...", "slice value="+slopes[i-1]);
+  }
+  exit;
+
+
+ function getValue(tags, tag) {
+      index1 = indexOf(tags, tag);      
+      if (index1==-1) return -1;
+      index1 = indexOf(tags, ":", index1);
+      if (index1==-1) return -1;
+      index2 =  indexOf(tags, "\n", index1);
+      value = substring(tags, index1+1, index2);
+      //print("!"+value+"!");
+      return 0+value;
+  }  

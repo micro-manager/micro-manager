@@ -36,9 +36,8 @@
 #include <vector>
 #include <map>
 
-//////////////////////////////////////////////////////////////////////////////
-// Error codes
-//
+class LeicaMonitoringThread;
+
 class LeicaScopeInterface
 {
    friend class LeicaScope;
@@ -58,18 +57,24 @@ class LeicaScopeInterface
       int GetAnswer(MM::Device& device, MM::Core& core, const char* command, std::string& answer);
       int GetStandInfo(MM::Device& device, MM::Core& core);
       int GetILTurretInfo(MM::Device& device, MM::Core& core);
+      int GetCondensorInfo(MM::Device& device, MM::Core& core);
       int GetRevolverInfo(MM::Device& device, MM::Core& core);
       int GetZDriveInfo(MM::Device& device, MM::Core& core);
       int GetDriveInfo(MM::Device& device, MM::Core& core, LeicaDriveModel& drive, int deviceID);
       int GetDiaphragmInfo(MM::Device& device, MM::Core& core, LeicaDeviceModel& diaphrahm, int deviceID);
+      int GetTLPolarizerInfo(MM::Device& device, MM::Core& core);
+      int GetDICTurretInfo(MM::Device& device, MM::Core& core);
       int GetMagChangerInfo(MM::Device& device, MM::Core& core);
       int GetDriveParameters(MM::Device& device, MM::Core& core, int deviceID);
+	  int GetTransmittedLightState(MM::Device& device, MM::Core& core, int & position);
+	  int GetTransmittedLightShutterPosition(MM::Device& device, MM::Core& core, int & position);
      
       // commands to set individual components
       int SetMethod(MM::Device& device, MM::Core& core, int position);
       int SetTLShutterPosition(MM::Device& device, MM::Core& core, int position);
       int SetILShutterPosition(MM::Device& device, MM::Core& core, int position);
       int SetILTurretPosition(MM::Device& device, MM::Core& core, int position);
+      int SetCondensorPosition(MM::Device& device, MM::Core& core, int position);
       int SetRevolverPosition(MM::Device& device, MM::Core& core, int position);
       int SetDrivePosition(MM::Device& device, MM::Core& core, LeicaDriveModel& drive, int deviceID, int position);
       int SetDrivePositionRelative(MM::Device& device, MM::Core& core, LeicaDriveModel& drive, int deviceID, int position);
@@ -79,6 +84,11 @@ class LeicaScopeInterface
       int StopDrive(MM::Device& device, MM::Core& core, LeicaDriveModel& drive, int deviceID);
       int SetDiaphragmPosition(MM::Device& device, MM::Core& core, LeicaDeviceModel* diaphragm, int deviceID, int position);
       int SetMagChangerPosition(MM::Device& device, MM::Core& core, int position);
+      int SetTLPolarizerPosition(MM::Device& device, MM::Core& core, int position);
+      int SetDICPrismTurretPosition(MM::Device& device, MM::Core& core, int position);
+      int SetDICPrismFinePosition(MM::Device& device, MM::Core& core, int position);
+	  int SetTransmittedLightState(MM::Device& device, MM::Core& core, int position);
+	  int SetTransmittedLightShutterPosition(MM::Device& device, MM::Core& core, int position);
 
       LeicaMonitoringThread* monitoringThread_;
       LeicaDMIModel* scopeModel_;
@@ -90,6 +100,7 @@ class LeicaScopeInterface
       unsigned char rcvBuf_[RCV_BUF_LENGTH];
 
    private:
+      int standFamily_;
       void ClearRcvBuf();
       int ClearPort(MM::Device& device, MM::Core& core);
 
@@ -103,14 +114,12 @@ class LeicaMonitoringThread : public MMDeviceThreadBase
    public:
       LeicaMonitoringThread(MM::Device& device, MM::Core& core, std::string port, LeicaDMIModel* scopeModel); 
       ~LeicaMonitoringThread(); 
-      //MM_THREAD_FUNC_DECL svc(void *arg);
       int svc();
       int open (void*) { return 0;}
       int close(unsigned long) {return 0;}
 
       void Start();
       void Stop() {stop_ = true;}
-      //void wait() {MM_THREAD_JOIN(thread_);}
 
    private:
       std::string port_;
@@ -120,6 +129,7 @@ class LeicaMonitoringThread : public MMDeviceThreadBase
       bool stop_;
       long intervalUs_;
       LeicaDMIModel* scopeModel_;
+      int standFamily_;
       LeicaMonitoringThread& operator=(LeicaMonitoringThread& ) {assert(false); return *this;}
 };
 

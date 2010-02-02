@@ -36,6 +36,7 @@
 #define ERR_TYPE_NOT_DETECTED     10004
 #define ERR_EMPTY_ANSWER_RECEIVED 10005
 #define ERR_PFS_NOT_CONNECTED     10006
+#define ERR_PFS_FOCUS_FAILED      10007
 
 class Hub : public CGenericBase<Hub>
 {
@@ -142,6 +143,31 @@ public:
    FilterBlock();
    ~FilterBlock();
   
+   // MMDevice API
+   // ------------
+   int Initialize();
+   int Shutdown();
+  
+   void GetName(char* pszName) const;
+   bool Busy();
+   unsigned long GetNumberOfPositions()const {return numPos_;}
+
+   // action interface
+   // ----------------
+   int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+private:
+   bool initialized_;
+   unsigned numPos_;
+   std::string name_;
+};
+
+class ExcitationFilterBlock : public CStateDeviceBase<ExcitationFilterBlock>
+{
+public:
+	ExcitationFilterBlock();
+	~ExcitationFilterBlock();
+
    // MMDevice API
    // ------------
    int Initialize();
@@ -350,8 +376,16 @@ public:
    virtual int GetContinuousFocusing(bool& state);
    virtual int FullFocus();
    virtual int IncrementalFocus();
-   virtual int GetFocusScore(double& /*score*/) {return DEVICE_UNSUPPORTED_COMMAND;}
-   virtual bool IsContinuousFocusLocked();
+   virtual int GetLastFocusScore(double& /*score*/) {return DEVICE_UNSUPPORTED_COMMAND;}
+   virtual int GetCurrentFocusScore(double& score) {score = 0.0; return DEVICE_OK;}
+   virtual bool IsContinuousFocusLocked(); 
+   // These are required by the API.  However, we implemenet the PFSOffset drive instead
+   virtual int GetOffset(double& offset) {offset = 0; return DEVICE_OK;};
+   virtual int SetOffset(double /* offset */) {return DEVICE_OK;};
+
+   // action interface
+   // ----------------
+   int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    bool initialized_;

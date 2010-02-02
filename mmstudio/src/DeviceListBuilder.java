@@ -21,11 +21,8 @@
 //
 // CVS:           $Id$
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-
 import org.micromanager.conf.MicroscopeModel;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  * Utility to generate a list of available devices for use with
@@ -34,28 +31,12 @@ import org.micromanager.conf.MicroscopeModel;
 public class DeviceListBuilder {
 
    public static void main(String[] args) {
-      System.out.println("Scan the system for available devices and re-generate the list? [y] or [n]");
-      BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-
-      String answer = null;
-
-      //  read the username from the command-line; need to use try/catch with the
-      //  readLine() method
-      try {
-         answer = br.readLine();
-      } catch (IOException ioe) {
-         System.out.println("IO error trying process your input!");
-         System.exit(1);
-      }
-      
-      if (answer.compareTo("y") == 0) {
-         if (MicroscopeModel.generateDeviceListFile())
-            System.out.println("Device list genereated.");
-         else
-            System.out.println("Device list not generated or invalid. Re-install the application.");
-      } else {
-         System.out.println();
-      }
+	   
+      if (MicroscopeModel.generateDeviceListFile())
+         ReportingUtils.logMessage("Device list generated.");
+      else
+         ReportingUtils.logMessage("Device list not generated or invalid.");
+ 
    }
 
 }

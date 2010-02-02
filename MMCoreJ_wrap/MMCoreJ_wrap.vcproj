@@ -43,9 +43,10 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;C:\Program Files\Java\jdk1.6.0_05\include\win32&quot;;&quot;C:\Program Files\Java\jdk1.6.0_05\include&quot;"
+				AdditionalIncludeDirectories="$(JAVA_HOME)\include\win32;$(JAVA_HOME)\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MMCOREJ_WRAP_EXPORTS"
 				MinimalRebuild="true"
+				ExceptionHandling="2"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
 				RuntimeTypeInfo="true"
@@ -53,6 +54,7 @@
 				WarningLevel="4"
 				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="4"
+				DisableSpecificWarnings="4290"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -65,11 +67,11 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="mmcored.lib aced.lib"
+				AdditionalDependencies="mmcored.lib"
 				ShowProgress="0"
 				OutputFile="$(OutDir)/MMCoreJ_wrap.dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="..\lib;..\..\3rdparty\ACE_wrappers_5.5\lib"
+				AdditionalLibraryDirectories="..\..\3rdparty\boost\stage\lib;..\lib;"
 				IgnoreAllDefaultLibraries="false"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/MMCoreJ_wrap.pdb"
@@ -99,7 +101,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\bin&#x0D;&#x0A;del mmcorej\*.class&#x0D;&#x0A;%JAVA_HOME%\bin\javac -source 1.4 mmcorej\*.java&#x0D;&#x0A;%JAVA_HOME%\bin\jar cvf MMCoreJ.jar mmcorej\*.class&#x0D;&#x0A;copy *.jar ..\bin&#x0D;&#x0A;copy *.jar \&quot;Program Files&quot;\ImageJ\plugins\Micro-Manager&#x0D;&#x0A;copy ..\bin\*.dll  \&quot;Program Files&quot;\ImageJ&#x0D;&#x0A;"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\bin&#x0D;&#x0A;del mmcorej\*.class&#x0D;&#x0A;&quot;%JAVA_HOME%\bin\javac&quot; -source 5 mmcorej\*.java&#x0D;&#x0A;&quot;%JAVA_HOME%\bin\jar&quot; cvf MMCoreJ.jar mmcorej\*.class&#x0D;&#x0A;copy *.jar ..\bin&#x0D;&#x0A;copy *.jar \&quot;Program Files&quot;\ImageJ\plugins\Micro-Manager&#x0D;&#x0A;copy ..\bin\*.dll  \&quot;Program Files&quot;\ImageJ&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -128,14 +130,16 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="&quot;C:\Program Files\Java\jdk1.6.0_05\include&quot;;&quot;C:\Program Files\Java\jdk1.6.0_05\include\win32&quot;"
+				AdditionalIncludeDirectories="$(JAVA_HOME)\include\win32;$(JAVA_HOME)\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MMCOREJ_WRAP_EXPORTS"
+				ExceptionHandling="2"
 				RuntimeLibrary="0"
 				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="4"
 				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="3"
+				DisableSpecificWarnings="4290"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -148,10 +152,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="mmcorer.lib ace.lib"
+				AdditionalDependencies="mmcorer.lib"
 				OutputFile="$(OutDir)/MMCoreJ_wrap.dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\lib;..\..\3rdparty\ACE_wrappers_5.5\lib"
+				AdditionalLibraryDirectories="..\..\3rdparty\boost\stage\lib;..\lib;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -181,7 +185,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\bin&#x0D;&#x0A;del mmcorej\*.class&#x0D;&#x0A;%JAVA_HOME%\bin\javac -source 1.4 mmcorej\*.java&#x0D;&#x0A;%JAVA_HOME%\bin\jar cvf MMCoreJ.jar mmcorej\*.class&#x0D;&#x0A;copy *.jar ..\bin&#x0D;&#x0A;copy *.jar \&quot;Program Files&quot;\ImageJ\plugins\Micro-Manager&#x0D;&#x0A;copy ..\bin\*.dll  \&quot;Program Files&quot;\ImageJ&#x0D;&#x0A;"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\bin&#x0D;&#x0A;del mmcorej\*.class&#x0D;&#x0A;&quot;%JAVA_HOME%\bin\javac&quot; -source 5 mmcorej\*.java&#x0D;&#x0A;&quot;%JAVA_HOME%\bin\jar&quot; cvf MMCoreJ.jar mmcorej\*.class&#x0D;&#x0A;copy *.jar ..\bin&#x0D;&#x0A;copy *.jar \&quot;Program Files&quot;\ImageJ\plugins\Micro-Manager&#x0D;&#x0A;copy ..\bin\*.dll  \&quot;Program Files&quot;\ImageJ&#x0D;&#x0A;"
 			/>
 		</Configuration>
 	</Configurations>
@@ -200,6 +204,14 @@
 			<File
 				RelativePath=".\MMCoreJ_wrap.cxx"
 				>
+				<FileConfiguration
+					Name="Debug|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
+						AdditionalOptions="/wd4701"
+					/>
+				</FileConfiguration>
 			</File>
 		</Filter>
 		<Filter

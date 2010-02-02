@@ -1,0 +1,22 @@
+// This macro translates (shifts) an image
+// by a specified number of pixels in the x 
+// and y dimensions.
+
+  macro "Translate..." {
+      requires("1.34m");
+      Dialog.create("Translate");
+      Dialog.addNumber("X:", 10);
+      Dialog.addNumber("Y:", 10);
+      Dialog.show();
+      x = Dialog.getNumber();
+      y = Dialog.getNumber();
+      translate (x, y);
+  }
+
+  function translate(x, y) {
+      run("Select All");
+      run("Cut");
+      makeRectangle(x, y, getWidth(), getHeight());
+      run("Paste");
+      run("Select None");
+  }

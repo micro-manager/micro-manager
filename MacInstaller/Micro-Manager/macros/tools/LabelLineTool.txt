@@ -1,0 +1,20 @@
+// Use this tool to label a line selection with the length of the line.
+// You can move the label until the mouse button is released.
+
+  macro "Label Line Tool - Ca00P323ece00P424dde00" {
+      getCursorLoc(x, y, z, flags);
+      if (selectionType<5 || selectionType>7)
+          exit("Line selection required");
+      run("Measure");
+      length = getResult("Length", nResults-1);
+      run("Draw");
+      run("Select None");
+      snapshot();
+      while(flags&16!=0) {
+          drawString(round(length), x, y);
+          getCursorLoc(x, y, z, flags);
+          wait(25);
+          reset();
+     }
+     drawString(round(length), x, y);
+ }

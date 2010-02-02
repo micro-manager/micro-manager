@@ -35,6 +35,7 @@ import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 
 import org.micromanager.utils.CfgFileFilter;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  * The first page of the Configuration Wizard.
@@ -139,7 +140,7 @@ public class IntroPage extends PagePanel {
          try {
             model_.loadFromFile(filePathField_.getText());
          } catch (MMConfigFileException e) {
-            handleError(e.getMessage());
+            ReportingUtils.showError(e);
             model_.reset();
             return false;
          }

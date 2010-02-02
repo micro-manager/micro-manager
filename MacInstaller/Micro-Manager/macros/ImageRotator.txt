@@ -1,0 +1,11 @@
+// "ImageRotator"
+//
+// This macro uses the snapshot and reset functions, and 
+// the Image>Rotate>Arbitrarily command, to rotate
+// an image 360 degrees in 5 degree increments.
+
+  snapshot;
+  for (i=0; i<=360; i+=5) {
+      reset;
+      run("Arbitrarily...", "interpolate angle="+i);
+  }

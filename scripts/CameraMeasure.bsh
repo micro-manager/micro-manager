@@ -1,0 +1,72 @@
+/****
+ * Script that measures several aspects of the camera:
+ * 1. Averaged background image
+ * 2. Calculates read-noise and elctron conversion factor from multiple images of the same object/
+ */
+
+import java.lang.Thread;
+
+
+// file locations
+acqName = "cameraTest";
+rootDirName = "C:/acquisitionData";
+
+
+// number of channels (should be two or less)
+nrChannels = 1;
+// The following two arrays must have size nrChannels
+String [] channelName = new String [] {"Dark",};
+Color [] channelColor = new Color [] {Color.WHITE};
+
+// Number of timepoints
+nrFrames = 25;
+
+
+// clear all previous acquisitions
+gui.closeAllAcquisitions();
+gui.clearMessageWindow();
+gui.openAcquisition(acqName, rootDirName, nrFrames, 1, 1);
+for (int i=0; i< nrChannels; i++) {
+   gui.setChannelColor(acqName, i, channelColor[i]);
+   gui.setChannelName(acqName, i, channelName[i]);
+}
+long width = mmc.getImageWidth();
+long height = mmc.getImageHeight();
+long depth = mmc.getBytesPerPixel();
+
+gui.initializeAcquisition(acqName, (int) width, (int) height, (int) depth);
+
+exposure = mmc.getExposure();
+binning = mmc.getProperty(mmc.getCameraDevice(), "Binning");
+
+   // first image is blank.  Skip
+   // There is something weird going on depending on exposure time
+   // longer exposures need an extra image at the end, shorter ones (< 31 ms) do not...
+   // this code adds an extra image at the end
+mmc.startSequenceAcquisition(nrFrames, 0, false);
+
+Double exp = mmc.getExposure();
+
+now = System.currentTimeMillis();
+int frame = 0;
+int slice = 0;
+int channel = 0;
+int counter = 0;
+while (mmc.getRemainingImageCount() > 0 || mmc.isSequenceRunning() ) {
+   if (mmc.getRemainingImageCount() > 0) {
+      img = mmc.popNextImage();
+      if (counter > -1) {
+         gui.addImage(acqName, img, frame, channel, slice);
+         gui.setImageProperty(acqName, frame, channel, slice, "Exposure", exp.toString());
+         gui.setContrastBasedOnFrame(acqName, frame, slice);
+
+			frame++;    
+      }
+      counter++;
+   } 
+	Thread.sleep(exp.longValue());
+}
+itTook = System.currentTimeMillis() - now;
+
+
+

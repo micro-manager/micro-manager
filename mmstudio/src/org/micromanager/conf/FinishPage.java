@@ -37,6 +37,9 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.border.LineBorder;
 
+import org.micromanager.utils.GUIUtils;
+import org.micromanager.utils.ReportingUtils;
+
 /**
  * The last wizard page.
  *
@@ -81,7 +84,7 @@ public class FinishPage extends PagePanel {
          }
       });
       saveAndTestButton.setText("Save and test the new configuration");
-      saveAndTestButton.setBounds(136, 69, 227, 30);
+      saveAndTestButton.setBounds(96, 69, 277, 30);
       add(saveAndTestButton);
 
       logArea_ = new JTextArea();
@@ -119,6 +122,8 @@ public class FinishPage extends PagePanel {
    private void saveAndTest() {
       try {
          core_.unloadAllDevices();
+         GUIUtils.preventDisplayAdapterChangeExceptions();
+         
          File f = new File(fileNameField_.getText());
          if( f.exists() ) { 
             int sel = JOptionPane.showConfirmDialog(this,
@@ -134,11 +139,11 @@ public class FinishPage extends PagePanel {
          model_.removeInvalidConfigurations();
          model_.saveToFile(fileNameField_.getText());
          core_.loadSystemConfiguration(model_.getFileName());
+         GUIUtils.preventDisplayAdapterChangeExceptions();
       } catch (MMConfigFileException e) {
-         // TODO Auto-generated catch block
-         e.printStackTrace();
+         ReportingUtils.showError(e);
       } catch (Exception e) {
-         logArea_.setText(e.getMessage());
+         ReportingUtils.showError(e);
          return;
       }
       

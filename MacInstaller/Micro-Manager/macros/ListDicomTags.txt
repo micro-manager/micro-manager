@@ -1,0 +1,72 @@
+// "ListDicomTags.txt"
+// This macro lists selected tags of a DICOM stack opened
+// with File>Import>Image Sequence. Edit the first two lines
+// of the macro to specify which tags get listed.
+// Note that the tags must be numeric.
+
+  macro "List Stack Tags" {
+      tags = newArray("0018,0050","0018,0088");
+      names = newArray("Slice Thickness","Slice Spacing");
+
+      requires("1.33q");
+      run("Clear Results");
+      for (slice=1; slice<=nSlices; slice++) {
+      setSlice(slice);
+      for (i=0; i<tags.length; i++) {
+          value = getNumericTag(tags[i]);
+          //print(slice+" "+ tags[i]+"  "+value);
+          setResult(names[i], slice-1, value);
+        }
+      }
+      updateResults();
+  }
+
+  // This macro prompt the user for a tag
+  // and then displays the value of that tag.
+  macro "Get Tag Value" {
+      tag = getString("Enter a tag:", "0010,0010");
+      print(tag+": "+getTag(tag));
+  }
+
+  // This macro is an example of how to get
+  // the value of specified DICOM tags.
+  macro "List Selected Tags" {
+      sliceThickness = getNumericTag("0018,0050");
+      sliceSpacing = getNumericTag("0018,0088");
+      pixelSpacing = getNumericTag("0028,0030");
+      name = getTag("0010,0010");
+      print("Patient Name: " + name);
+      print("Slice Thickness: " + sliceThickness);
+      print("Slice Spacing: " + sliceSpacing);
+      print("Pixel Spacing: " + pixelSpacing);
+      print("Slice Spacing/Pixel Spacing: " + sliceSpacing/pixelSpacing);
+  }
+ 
+  // This function returns the numeric value of the 
+  // specified tag (e.g., "0018,0050"). Returns NaN 
+  // (not-a-number) if the tag is not found or it 
+  // does not have a numeric value.
+  function getNumericTag(tag) {
+    value = getTag(tag);
+    if (value=="") return NaN;
+    index3 = indexOf(value, "\\");
+    if (index3>0)
+      value = substring(value, 0, index3);
+    value = 0 + value; // convert to number
+    return value;
+  }
+
+  // This function returns the value of the specified 
+  // tag  (e.g., "0010,0010") as a string. Returns "" 
+  // if the tag is not found.
+  function getTag(tag) {
+      info = getImageInfo();
+      index1 = indexOf(info, tag);
+      if (index1==-1) return "";
+      index1 = indexOf(info, ":", index1);
+      if (index1==-1) return "";
+      index2 = indexOf(info, "\n", index1);
+      value = substring(info, index1+1, index2);
+      return value;
+  }
+
