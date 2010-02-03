@@ -1,4 +1,4 @@
-///////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////
 // FILE:          MMCoreJ.i
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     MMCoreJ
@@ -26,6 +26,7 @@
 
 %module (directors="1") MMCoreJ
 %feature("director") MMEventCallback;
+%feature("director") MMRunnable;
 
 %include std_string.i
 %include std_vector.i
@@ -343,6 +344,7 @@
 #include "../MMDevice/ImageMetadata.h"
 #include "../MMCore/MMEventCallback.h"
 #include "../MMCore/MMCore.h"
+#include "../MMCore/MMRunnable.h"
 %}
 
 
@@ -375,7 +377,7 @@ namespace std {
 						++i_;
 						return get(i_-1);
 					} else {
-						throw new NoSuchElementException();
+					throw new NoSuchElementException();
 					}
 				}
 					
@@ -406,6 +408,10 @@ namespace std {
 
 }
 
+%typemap(javaimports) MMRunnable %{
+import java.lang.Runnable;
+%}
+%typemap(javainterfaces) MMRunnable %{Runnable%}
 
 %include "../MMDevice/MMDeviceConstants.h"
 %include "../MMCore/Error.h"
@@ -413,3 +419,4 @@ namespace std {
 %include "../MMCore/MMCore.h"
 %include "../MMDevice/ImageMetadata.h"
 %include "../MMCore/MMEventCallback.h"
+%include "../MMCore/MMRunnable.h"
