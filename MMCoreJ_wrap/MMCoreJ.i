@@ -26,7 +26,7 @@
 
 %module (directors="1") MMCoreJ
 %feature("director") MMEventCallback;
-%feature("director") MMRunnable;
+%feature("director") MMRunnable::run;
 
 %include std_string.i
 %include std_vector.i
