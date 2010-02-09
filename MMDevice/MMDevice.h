@@ -799,6 +799,7 @@ namespace MM {
       // device management
       virtual MM::ImageProcessor* GetImageProcessor(const MM::Device* caller) = 0;
       virtual MM::State* GetStateDevice(const MM::Device* caller, const char* deviceName) = 0;
+      virtual MM::SignalIO* GetSignalIODevice(const MM::Device* caller, const char* deviceName) = 0;
 
       // asynchronous error handling
       virtual std::vector<std::pair< int, std::string> > PostedErrors(void) = 0 ;
