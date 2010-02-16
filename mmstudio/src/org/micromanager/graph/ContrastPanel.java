@@ -442,17 +442,15 @@ public class ContrastPanel extends JPanel implements ImageController, PropertyCh
 		int max = sliderHigh_.getValue();
 
 		// correct slider relative positions if necessary
-      // This does not fully work as expected, dragging the high slider lower
-      // lowers the low slider, but not the other way around???
-      // TODO: fix
       if (min >= max) {
-         if (max > 0)
+         if (sliderHigh_.getValueIsAdjusting() && max > 0)
             min = max - 1;
-         else
-            max += 1;
+         else 
+            if (max < maxIntensity_)
+               max += 1;
 
-			sliderHigh_.setValue(max);
-			sliderLow_.setValue(min);
+         sliderHigh_.setValue(max);
+         sliderLow_.setValue(min);
       }
 
 		updateCursors();
@@ -577,13 +575,6 @@ public class ContrastPanel extends JPanel implements ImageController, PropertyCh
 			sliderLow_.removeChangeListener(l);
 		for (ChangeListener l:l2)
 			sliderHigh_.removeChangeListener(l);		
-		
-      if (min == max) {
-         if (min == 0)
-            max += 1;
-         else
-            min -= 1;
-      }
 
 		sliderLow_.setMinimum(0);
 		sliderLow_.setMaximum(maxIntensity_);
@@ -626,11 +617,11 @@ public class ContrastPanel extends JPanel implements ImageController, PropertyCh
 	 * 
 	 */
 	private void setAutoScale() {
-		if (image_ == null)
+		if (image_ == null) {
 			return;
+      }
 
-		ImageStatistics stats = image_.getStatistics(); // get uncalibrated
-		// image_.getProcessor().setMinAndMax(stats.min, stats.max);
+		ImageStatistics stats = image_.getStatistics();
 
       updateSliders(true, (int) stats.min, (int) stats.max);
 

@@ -91,6 +91,10 @@ private:
 
    bool initialized_;
    bool busy_;
+
+   // thread locking for the port 
+   MMThreadLock portLock_;
+
    CSerial* port_;
    double portTimeoutMs_;
    double answerTimeoutMs_;

@@ -79,7 +79,6 @@ import org.micromanager.api.ScriptInterface;
 import org.micromanager.api.ScriptingEngine;
 import org.micromanager.api.ScriptingGUI;
 import org.micromanager.script.BeanshellEngine;
-import org.micromanager.script.ScriptPanelMessageWindow;
 import org.micromanager.utils.GUIColors;
 import org.micromanager.utils.MMFrame;
 import org.micromanager.utils.MMScriptException;
@@ -109,7 +108,6 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
    private ScriptInterface parentGUI_;
    private JTextPane messagePane_;
    private StyleContext sc_;
-   private ScriptPanelMessageWindow messageWindow_;
    private Interpreter beanshellREPLint_;
    private JConsole cons_;
    
@@ -123,6 +121,7 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
    private static final String APP_NAME = "MMScriptPanel";
    private static final String blackStyleName_ = "blackStyle";
    private static final String redStyleName_ = "Red";
+   private final MMStudioMainFrame gui_;
 
    /*
     * Table model that manages the shortcut script table
@@ -320,6 +319,9 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
    public void createBeanshellREPL() {
 	   // Create console and REPL interpreter:
 	   cons_ = new JConsole();
+      if (gui_.defaultScriptFont_ != null)
+         cons_.setFont(gui_.defaultScriptFont_);
+      
 	   beanshellREPLint_ = new Interpreter(cons_);
 	   new Thread(beanshellREPLint_).start();
 
@@ -360,9 +362,10 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
    /**
     * Create the dialog
     */
-   public ScriptPanel(CMMCore core, MMOptions options) {
+   public ScriptPanel(CMMCore core, MMOptions options, MMStudioMainFrame gui) {
       super();
-      
+      gui_ = gui;
+
       // Beanshell REPL Console
       createBeanshellREPL();
       
@@ -451,7 +454,10 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
       // Editor Pane
       scriptPane_ = new JEditTextArea();
       scriptPane_.setTokenMarker(new JavaTokenMarker());
-      scriptPane_.setFont(new Font("Courier New", Font.PLAIN, 12));
+      if (gui_.defaultScriptFont_ != null) {
+         scriptPane_.getPainter().setFont(gui_.defaultScriptFont_);
+      }
+      
       scriptPane_.getDocument().putProperty(PlainDocument.tabSizeAttribute, 3);
       scriptPane_.setBackground(Color.WHITE);
       scriptPane_.getDocument().addDocumentListener(new MyDocumentListener());
@@ -1004,8 +1010,8 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
    public void closePanel() {
       if (!promptToSave()) 
          return;
-      if (messageWindow_ != null)
-         messageWindow_.closeWindow();
+ //     if (messageWindow_ != null)
+ //        messageWindow_.closeWindow();
       savePosition();
       saveScriptsToPrefs();
       dispose();

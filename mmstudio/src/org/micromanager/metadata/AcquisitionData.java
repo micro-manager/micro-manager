@@ -52,6 +52,8 @@ import java.util.GregorianCalendar;
 import java.util.Hashtable;
 import java.util.Iterator;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -97,6 +99,7 @@ public class AcquisitionData {
 
    private static final String ERR_METADATA_CREATE = "Internal error creating metadata";
    private static final String ERR_CHANNEL_INDEX = "Channel index out of bounds";
+   private String lastImageFilePath_ = "";
 
    /**
     * Constructs an empty object.
@@ -186,14 +189,13 @@ public class AcquisitionData {
       String bp = path + "/" + actualName;
       File outDir = new File(bp);
       if(!outDir.exists()){
-      if (!outDir.mkdirs()) {
-         throw new MMAcqDataException("Unable to create directory: " + bp);
-      }
-      }else{
+         if (!outDir.mkdirs()) {
+            throw new MMAcqDataException("Unable to create directory: " + bp);
+         }
+      } else{
           if( !outDir.isDirectory() )
               throw new MMAcqDataException( bp + " is not a directory");
       }
-
 
       basePath_ = bp;
       name_ = actualName;
@@ -658,6 +660,11 @@ public class AcquisitionData {
          return null;
       }
    }
+
+   public JSONObject getMetadataObject() {
+      return metadata_;
+   }
+
 
    /**
     * Returns channel names.
@@ -1491,6 +1498,11 @@ public class AcquisitionData {
       } else {
          // save pixels to disk
          saveImageFile(basePath_ + "/" + fname, img, (int)imgWidth_, (int)imgHeight_);
+         try {
+            lastImageFilePath_ = new File(basePath_ + "/" + fname).getCanonicalPath();
+         } catch (IOException ex) {
+            ReportingUtils.logError(ex);
+         }
          //writeMetadata();
       }
 
@@ -1536,6 +1548,11 @@ public class AcquisitionData {
       } else {
          // save pixels to disk
          saveImageFile(basePath_ + "/" + fname, img, (int)imgWidth_, (int)imgHeight_);
+         try {
+            lastImageFilePath_ = new File(basePath_ + "/" + fname).getCanonicalPath();
+         } catch (IOException ex) {
+            ReportingUtils.logError(ex);
+         }
          // writeMetadata();
       }
 
@@ -1776,6 +1793,12 @@ public class AcquisitionData {
          return ip;
    }
 
-   
+   public String getLastImageFilePath() {
+       return lastImageFilePath_;
+   }
+
+   public Boolean inMemory() {
+      return inmemory_;
+   }
 }
 

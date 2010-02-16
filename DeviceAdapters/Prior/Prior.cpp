@@ -837,6 +837,8 @@ int XYStage::Shutdown()
 
 bool XYStage::Busy()
 {
+   MMThreadGuard guard(lock_);
+
    // First Clear serial port from previous stuff
    int ret = ClearPort(*this, *GetCoreCallback(), port_);
    if (ret != DEVICE_OK)
@@ -871,6 +873,8 @@ bool XYStage::Busy()
  
 int XYStage::SetPositionSteps(long x, long y)
 {
+   MMThreadGuard guard(lock_);
+
    // First Clear serial port from previous stuff
    int ret = ClearPort(*this, *GetCoreCallback(), port_);
    if (ret != DEVICE_OK)
@@ -905,6 +909,8 @@ int XYStage::SetPositionSteps(long x, long y)
  
 int XYStage::SetRelativePositionSteps(long x, long y)
 {
+   MMThreadGuard guard(lock_);
+
    // First Clear serial port from previous stuff
    int ret = ClearPort(*this, *GetCoreCallback(), port_);
    if (ret != DEVICE_OK)
@@ -948,6 +954,8 @@ int XYStage::GetPositionSteps(long& x, long& y)
  
 int XYStage::Home()
 {
+   MMThreadGuard guard(lock_);
+
    // First Clear serial port from previous stuff
    int ret = ClearPort(*this, *GetCoreCallback(), port_);
    if (ret != DEVICE_OK)
@@ -984,6 +992,8 @@ int XYStage::Home()
 
 int XYStage::Stop()
 {
+   MMThreadGuard guard(lock_);
+
    int ret = SendSerialCommand(port_.c_str(), "K", "\r"); // command HALT the movement
    if (ret != DEVICE_OK)
       return ret;
@@ -1009,6 +1019,8 @@ int XYStage::Stop()
 
 int XYStage::SetOrigin()
 {
+   MMThreadGuard guard(lock_);
+
    // First Clear serial port from previous stuff
    int ret = ClearPort(*this, *GetCoreCallback(), port_);
    if (ret != DEVICE_OK)

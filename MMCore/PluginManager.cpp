@@ -35,7 +35,7 @@
 #endif // WIN32
 
 #include "../MMDevice/ModuleInterface.h"
-#include "Error.h"
+#include "../MMCore/Error.h"
 #include "PluginManager.h"
 
 #include <assert.h>
@@ -300,8 +300,12 @@ MM::Device* CPluginManager::LoadDevice(const char* label, const char* moduleName
    }
    catch (CMMError& err)
    {
+      std::ostringstream o;
+      o << label << " module " << moduleName << " device " << deviceName;
+
+      CMMError newErr( o.str().c_str(), err.getCoreMsg().c_str(), err.getCode());
       ReleasePluginLibrary(hLib);
-      throw err;
+      throw newErr;
    }
    
    // instantiate the new device
@@ -463,10 +467,14 @@ vector<string> CPluginManager::GetAvailableDevices(const char* moduleName) throw
             devices.push_back(deviceName);
       }
    }
-   catch (CMMError&)
+   catch (CMMError& err)
    {
+      std::ostringstream o;
+      o << " module " << moduleName;
+
+      CMMError newErr( o.str().c_str(), err.getCoreMsg().c_str(), err.getCode());
       ReleasePluginLibrary(hLib);
-      throw;
+      throw newErr;
    }
    
    ReleasePluginLibrary(hLib);
@@ -505,10 +513,14 @@ vector<string> CPluginManager::GetAvailableDeviceDescriptions(const char* module
             descriptions.push_back(deviceDescr);
       }
    }
-   catch (CMMError&)
+   catch (CMMError& err)
    {
+      std::ostringstream o;
+      o << " module " << moduleName ;
+
+      CMMError newErr( o.str().c_str(), err.getCoreMsg().c_str(), err.getCode());
       ReleasePluginLibrary(hLib);
-      throw;
+      throw newErr;
    }
    
    ReleasePluginLibrary(hLib);
@@ -570,10 +582,14 @@ vector<long> CPluginManager::GetAvailableDeviceTypes(const char* moduleName) thr
          }
       }
    }
-   catch (CMMError&)
+   catch (CMMError& err)
    {
+      std::ostringstream o;
+      o << " module " << moduleName;
+
+      CMMError newErr( o.str().c_str(), err.getCoreMsg().c_str(), err.getCode());
       ReleasePluginLibrary(hLib);
-      throw;
+      throw newErr;
    }
    
    ReleasePluginLibrary(hLib);

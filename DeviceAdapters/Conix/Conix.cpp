@@ -1,12 +1,13 @@
 ///////////////////////////////////////////////////////////////////////////////
-// FILE:       Vincent.cpp
+// FILE:       Conix.cpp
 // PROJECT:    MicroManage
 // SUBSYSTEM:  DeviceAdapters
 //-----------------------------------------------------------------------------
 // DESCRIPTION:
-// Vincent VMM controller adapter
+// Conix adapter
 //                
 // AUTHOR: Nico Stuurman, 02/27/2006
+//         Trevor Osborn (ConixXYStage), trevor@conixresearch.com, 02/10/2010
 //
 // Based on Ludl controller adpater by Nenad Amodaj
 //
@@ -25,8 +26,10 @@
 #include <iostream>
 
 const char* g_ConixQuadFilterName = "ConixQuadFilter";
+const char* g_ConixXYStageName = "ConixXYStage";
 
 using namespace std;
+
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -34,21 +37,25 @@ using namespace std;
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-      AddAvailableDeviceName(g_ConixQuadFilterName,"External Filter Cube Switcher");   
+	AddAvailableDeviceName(g_ConixQuadFilterName,"External Filter Cube Switcher");
+	AddAvailableDeviceName(g_ConixXYStageName, "Conix XY stage");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
 {
-   if (deviceName == 0)
-      return 0;
+	if (deviceName == 0) {
+		return 0;
+	}
 
-   if (strcmp(deviceName, g_ConixQuadFilterName) == 0)
-   {
-      QuadFluor* pQF = new QuadFluor();
-      return pQF;
-   }
+	if (strcmp(deviceName, g_ConixQuadFilterName) == 0) {
+		QuadFluor* pQF = new QuadFluor();
+		return pQF;
+	} else if (strcmp(deviceName, g_ConixXYStageName) == 0) {
+		// create stage
+		return new ConixXYStage();
+	}
 
-   return 0;
+	return 0;
 }
 
 MODULE_API void DeleteDevice(MM::Device* pDevice)
@@ -317,3 +324,340 @@ printf ("%s\n","Outof OnCommand");
    return DEVICE_OK;
 }
 
+
+
+///////////////////////////////////////////////////////////////////////////////
+// ConixXYStage implementation
+// ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+ConixXYStage::ConixXYStage() : 
+CXYStageBase<ConixXYStage>(),
+stepSize_um_(0.015),
+posX_um_(0.0),
+posY_um_(0.0),
+busy_(false),
+initialized_(false),
+lowerLimit_(0.0),
+upperLimit_(20000.0)
+{
+	InitializeDefaultErrorMessages();
+
+	// set property list
+	// -----------------
+
+	// Name
+	CreateProperty(MM::g_Keyword_Name, g_ConixXYStageName, MM::String, true);
+	
+	// Description
+	CreateProperty(MM::g_Keyword_Description, "Conix XY stage driver", MM::String, true);
+
+	// Port
+	CPropertyAction* pAct = new CPropertyAction (this, &ConixXYStage::OnPort);
+	CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
+
+	UpdateStatus();
+}
+
+
+ConixXYStage::~ConixXYStage()
+{
+	Shutdown();
+}
+
+
+void ConixXYStage::GetName(char* Name) const
+{
+	CDeviceUtils::CopyLimitedString(Name, g_ConixXYStageName);
+}
+
+
+int ConixXYStage::Initialize()
+{
+	if (initialized_) {
+		return DEVICE_OK;
+	}
+
+	// set the stage to use microns
+	int ret = SetComUnits();
+	if (ret != DEVICE_OK) {
+		return ret;
+	}
+
+	initialized_ = true;
+
+	return DEVICE_OK;
+}
+
+
+int ConixXYStage::Shutdown()
+{
+	if (initialized_) {
+		initialized_ = false;
+	}
+	return DEVICE_OK;
+}
+
+
+bool ConixXYStage::Busy()
+{
+	unsigned char response[2];
+	unsigned long charsRead;
+	MM::MMTime timeout(0, 1000000); // wait for 1sec
+	MM::MMTime start_time = GetCurrentMMTime();
+	MM::MMTime elapsed_time;
+
+	// cmd STATUS (the shortcut is /)
+	int ret = SendSerialCommand(port_.c_str(), "/", "\r");
+	if (ret != DEVICE_OK) {
+		// we have to return false if a serial command fails to
+		// prevent infinite looping
+		return false;
+	}
+
+	// read the response from the status command, it responds with a
+	// single character (no CR at the end) so I'm using ReadFromComPort
+	// instead of GetSerialAnswer.
+	response[0] = '\0';
+
+	while (response[0] != 'B' && response[0] != 'N' && (elapsed_time < timeout)) {
+		ReadFromComPort(port_.c_str(), response, 1, charsRead);
+		elapsed_time = (GetCurrentMMTime() - start_time);
+	}
+	if (response[0] == 'B') {
+		// only return true if the stage tells us it's busy...
+		return true;
+	}
+	// ...otherwise it is either not busy or not connected,
+	// in both cases we want to return false
+	return false;
+}
+
+
+int ConixXYStage::GetPositionUm(double& x, double& y)
+{
+	while (Busy());  // make sure stage is not busy
+
+	// cmd WHERE X Y (the shortcut is W)
+	int ret = SendSerialCommand(port_.c_str(), "W X Y", "\r");
+	if (ret != DEVICE_OK) {
+		return ret;
+	}
+
+	string resp;
+	ret = GetSerialAnswer(port_.c_str(), "\r", resp);
+	if (ret != DEVICE_OK) {
+		return ret;
+	}
+	if (resp.length() < 1) {
+		return DEVICE_SERIAL_COMMAND_FAILED;
+	}
+
+	istringstream is(resp);
+	string outcome;
+	is >> outcome;
+
+	// this command seems to want DECIMAL OFF
+	if (outcome.compare(":A") == 0) {
+		is >> x;
+		is >> y;
+		return DEVICE_OK; // success!
+	}
+
+	// return the error code
+	int code;
+	is >> code;
+	return code;
+}
+
+
+int ConixXYStage::SetPositionUm(double x, double y)
+{
+	ostringstream cmd;
+
+	// cmd MOVE X=x Y=y (shortcut is M Xx Yy)
+	cmd << "M " << "X" << x << " " << "Y" << y;
+
+	while (Busy());  // make sure stage is not busy
+
+	int ret = SendSerialCommand(port_.c_str(), cmd.str().c_str(), "\r");
+	if (ret != DEVICE_OK) {
+		return ret;
+	}
+
+	string resp;
+	ret = GetSerialAnswer(port_.c_str(), "\r", resp);
+	if (ret != DEVICE_OK) {
+		return ret;
+	}
+	if (resp.length() < 1) {
+		return DEVICE_SERIAL_COMMAND_FAILED;
+	}
+
+	istringstream is(resp);
+	string outcome;
+	is >> outcome;
+
+	if (outcome.compare(":A") == 0) { // command recieved correctly
+		posX_um_ = x;
+		posY_um_ = y;
+		return DEVICE_OK; // success!
+	}
+
+	// return the error code
+	int code;
+	is >> code;
+	return code;
+}
+
+
+int ConixXYStage::Home()
+{
+	while (Busy());  // make sure stage is not busy
+
+	// cmd HOME (shortcut !)
+	int ret = SendSerialCommand(port_.c_str(), "!", "\r");
+	if (ret != DEVICE_OK) {
+		return ret;
+	}
+
+	string resp;
+	ret = GetSerialAnswer(port_.c_str(), "\r", resp);
+	if (ret != DEVICE_OK) {
+		return ret;
+	}
+	if (resp.length() < 1) {
+		return DEVICE_SERIAL_COMMAND_FAILED;
+	}
+
+	istringstream is(resp);
+	string outcome;
+	is >> outcome;
+
+	if (outcome.compare(":A") == 0) { // command was received correctly
+		return DEVICE_OK; // success!
+	}
+
+	// return the error code
+	int code;
+	is >> code;
+	return code;
+}
+
+
+int ConixXYStage::Stop()
+{
+	// cmd HALT (shortcut \)
+	int ret = SendSerialCommand(port_.c_str(), "\\", "\r");
+	if (ret != DEVICE_OK) {
+		return ret;
+	}
+
+	string resp;
+	ret = GetSerialAnswer(port_.c_str(), "\r", resp);
+	if (ret != DEVICE_OK) {
+		return ret;
+	}
+	if (resp.length() < 1) {
+		return DEVICE_SERIAL_COMMAND_FAILED;
+	}
+
+	istringstream is(resp);
+	string outcome;
+	is >> outcome;
+
+	if (outcome.compare(":A") == 0) {
+		return DEVICE_OK; // success!
+	} else if (outcome.compare(":N-21") == 0) {
+		return DEVICE_OK; // halt called while stage is in motion,
+	}	                  // not sure what to return
+
+	// return the error code
+	int code;
+	is >> code;
+	return code;
+}
+
+
+int ConixXYStage::SetOrigin()
+{
+	while (Busy());  // make sure stage is not busy
+
+	// cmd HERE (shortcut H)
+	int ret = SendSerialCommand(port_.c_str(), "H", "\r");
+	if (ret != DEVICE_OK) {
+		return ret;
+	}
+
+	string resp;
+	ret = GetSerialAnswer(port_.c_str(), "\r", resp);
+	if (ret != DEVICE_OK) {
+		return ret;
+	}
+	if (resp.length() < 1) {
+		return DEVICE_SERIAL_COMMAND_FAILED;
+	}
+
+	istringstream is(resp);
+	string outcome;
+	is >> outcome;
+
+	if (outcome.compare(":A") == 0) {
+	  return DEVICE_OK; // success!
+	  // FIXME return SetAdapterOrigin?
+	}
+	return DEVICE_SERIAL_COMMAND_FAILED;
+}
+
+
+int ConixXYStage::SetComUnits(std::string unit_type /*= "UM"*/)
+{
+	while (Busy());  // make sure stage is not busy
+
+	// make stage use microns if default value is used
+	// cmd COMUNITS UM
+	string command = "COMUNITS " + unit_type;
+	int ret = SendSerialCommand(port_.c_str(), command.c_str(), "\r");
+	if (ret != DEVICE_OK) {
+		return ret;
+	}
+
+	string resp;
+	ret = GetSerialAnswer(port_.c_str(), "\r", resp);
+	if (ret != DEVICE_OK) {
+		return ret;
+	}
+	if (resp.length() < 1) {
+		return DEVICE_SERIAL_COMMAND_FAILED;
+	}
+
+	istringstream is(resp);
+	string outcome;
+	is >> outcome;
+
+	if (outcome.compare(":A") == 0) {
+		return DEVICE_OK; // success!
+	}
+	return DEVICE_SERIAL_COMMAND_FAILED;
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Action handlers
+///////////////////////////////////////////////////////////////////////////////
+
+int ConixXYStage::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	if (eAct == MM::BeforeGet) {
+		pProp->Set(port_.c_str());
+	} else if (eAct == MM::AfterSet) {
+		if (initialized_) {
+			// revert
+			pProp->Set(port_.c_str());
+			return ERR_PORT_CHANGE_FORBIDDEN;
+		}
+		pProp->Get(port_);
+	}
+
+	return DEVICE_OK;
+}

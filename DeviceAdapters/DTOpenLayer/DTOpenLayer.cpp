@@ -33,6 +33,8 @@ const char* g_DeviceNameDTOLSwitch = "DTOL-Switch";
 const char* g_DeviceNameDTOLShutter = "DTOL-Shutter";
 const char* g_DeviceNameDTOLDA0 = "DTOL-DAC-0";
 const char* g_DeviceNameDTOLDA1 = "DTOL-DAC-1";
+const char* g_DeviceNameDTOLDA2 = "DTOL-DAC-2";
+const char* g_DeviceNameDTOLDA3 = "DTOL-DAC-3";
 
 const char* g_volts = "Volts";
 
@@ -173,6 +175,8 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_DeviceNameDTOLShutter);
    AddAvailableDeviceName(g_DeviceNameDTOLDA0);
    AddAvailableDeviceName(g_DeviceNameDTOLDA1);
+   AddAvailableDeviceName(g_DeviceNameDTOLDA2);
+   AddAvailableDeviceName(g_DeviceNameDTOLDA3);
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
@@ -195,6 +199,14 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
    else if (strcmp(deviceName, g_DeviceNameDTOLDA1) == 0)
    {
       return new CDTOLDA(1, g_DeviceNameDTOLDA1);
+   }
+      else if (strcmp(deviceName, g_DeviceNameDTOLDA2) == 0)
+   {
+      return new CDTOLDA(2, g_DeviceNameDTOLDA2);
+   }
+   else if (strcmp(deviceName, g_DeviceNameDTOLDA3) == 0)
+   {
+      return new CDTOLDA(3, g_DeviceNameDTOLDA3);
    }
 
 
@@ -388,10 +400,14 @@ int CDTOLDA::Initialize()
    if (DEVICE_OK != nRet)
       return nRet;
 
-   // State
+   // Voltage
    // -----
    CPropertyAction* pAct = new CPropertyAction (this, &CDTOLDA::OnVolts);
    nRet = CreateProperty(g_volts, "0.0", MM::Float, false, pAct);
+   if (nRet != DEVICE_OK)
+      return nRet;
+
+   nRet = SetPropertyLimits(g_volts, minV_, maxV_);
    if (nRet != DEVICE_OK)
       return nRet;
 

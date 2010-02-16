@@ -87,6 +87,12 @@ public interface AcquisitionEngine {
     */
    public void stop(boolean interrupted);
 
+
+   /**
+    * Request immediate abort of current task
+    */
+   public void abortRequest();
+
    /**
     * Signals that a running acquisition is done.
     */

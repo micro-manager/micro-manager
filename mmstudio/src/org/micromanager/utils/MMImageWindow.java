@@ -273,8 +273,11 @@ public class MMImageWindow extends ImageWindow {
 		});
 		addWindowListener(new WindowAdapter() {
 			public void windowClosed(WindowEvent e) {
-				if (contrastPanel_ != null)
+            if (closed)
+               return;
+				if (contrastPanel_ != null) {
 					contrastPanel_.setImagePlus(null, null, null);
+            }
 
 			}
 		});
@@ -411,13 +414,12 @@ public class MMImageWindow extends ImageWindow {
 			throw (new RuntimeException("Image bytelenth does not much"));
 		}
 		ImagePlus ip = getImagePlus();
-		if(null != ip)
-		{
+		if(null != ip) {
 			ip.setTitle(title_);
 			ImageProcessor ipr = ip.getProcessor();
-			if(null != ipr){
+			if(null != ipr) {
 				ipr.setPixels(img);
-			}
+         }
 
 
 			updateHistogram();
@@ -426,8 +428,7 @@ public class MMImageWindow extends ImageWindow {
 			// update coordinate and pixel info in imageJ by simulating mouse
 			// move
 			ImageCanvas ic = getCanvas();
-			if(null != ic)
-			{
+			if(null != ic) {
 				Point pt = ic.getCursorLoc();
 				ip.mouseMoved(pt.x, pt.y);
 			}

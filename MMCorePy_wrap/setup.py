@@ -26,9 +26,8 @@ mmcorepy_module = Extension('_MMCorePy',
 			'../MMCore/MMCore.cpp',
 			'../MMCore/PluginManager.cpp'],
 			language = "c++",
-			extra_objects = ["/usr/local/lib/libACE.a"],
-                        include_dirs = ["/projects/3rdparty/ACE_wrappers/",
-                          "/Developer/SDKs/MacOSX10.5.sdk/System/Library/Frameworks/Python.framework/Versions/2.5/Extras/lib/python/numpy/core/include/numpy"]
+			extra_objects = [],
+                        include_dirs = ["/Developer/SDKs/MacOSX10.5.sdk/System/Library/Frameworks/Python.framework/Versions/2.5/Extras/lib/python/numpy/core/include/numpy"]
                            )
 
 setup (name = 'MMCorePy',

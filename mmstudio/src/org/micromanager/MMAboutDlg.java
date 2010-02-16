@@ -60,7 +60,7 @@ public class MMAboutDlg extends JDialog {
    
    public MMAboutDlg() {
       super();
-      Dimension winSize = new Dimension(384, 342);
+      Dimension winSize = new Dimension(384, 392);
       setSize(winSize);
       setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
       setName("aboutDlg");
@@ -86,6 +86,18 @@ public class MMAboutDlg extends JDialog {
       openSourceAutomatedLabel.setBounds(44, 30, 329, 18);
       getContentPane().add(openSourceAutomatedLabel);
 
+      final JTextArea citeUs = new JTextArea();
+      citeUs.setFont(new Font("Arial", Font.PLAIN, 10));
+      citeUs.setEditable(false);
+      citeUs.setLineWrap(true);
+      citeUs.setWrapStyleWord(true);
+      citeUs.setBorder(new LineBorder(Color.black, 1, false));
+      citeUs.setBackground(new Color(192, 192, 192));
+      citeUs.setText("If you've found this software useful, please cite Micro-Manager in your publications.");
+      citeUs.setBounds(5, 277, 368, 40);
+      getContentPane().add(citeUs);
+
+
       final JButton okButton = new JButton();
       okButton.setFont(new Font("Arial", Font.PLAIN, 10));
       okButton.addActionListener(new ActionListener() {
@@ -94,7 +106,7 @@ public class MMAboutDlg extends JDialog {
          }
       });
       okButton.setText("OK");
-      okButton.setBounds(145, 272, 91, 28);
+      okButton.setBounds(145, 322, 91, 28);
       getContentPane().add(okButton);
 
       versionInfo_ = new JTextArea();

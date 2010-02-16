@@ -116,18 +116,6 @@ Source: ..\scripts\*; DestDir: {app}\scripts; Flags: ignoreversion
 Source: micro-manager\MMConfig_demo.cfg; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\MMDeviceList.txt; DestDir: {app}; Flags: ignoreversion
 
-; configurator help files
-Source: micro-manager\conf_intro_page.html; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\conf_comport_page.html; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\conf_devices_page.html; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\conf_delays_page.html; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\conf_finish_page.html; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\conf_labels_page.html; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\conf_presets_page.html; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\conf_roles_page.html; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\conf_synchro_page.html; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\conf_preinit_page.html; DestDir: {app}; Flags: ignoreversion
-
 ; ImageJ files
 Source: micro-manager\ImageJ.exe; DestDir: {app}; Flags: ignoreversion
 ;Source: micro-manager\ImageJ.cfg; DestDir: {app}; Flags: onlyifdoesntexist

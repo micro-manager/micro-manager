@@ -206,7 +206,9 @@ SerialPort::SerialPort(const char* portName) :
    stopBits_(g_StopBits_1),
    parity_(g_Parity_None)
 {
+   MMThreadGuard g(portLock_);
    port_ = new CSerial();
+
    portName_ = portName;
    portNameWinAPI_ = "\\\\.\\";
    portNameWinAPI_ += portName;
@@ -288,12 +290,14 @@ SerialPort::SerialPort(const char* portName) :
 
 SerialPort::~SerialPort()
 {
+   MMThreadGuard g(portLock_);
    Shutdown();
    delete port_;
 }
 
 int SerialPort::Open()
 {
+   MMThreadGuard g(portLock_);
    assert(port_);
 
    long lastError;
@@ -310,6 +314,8 @@ int SerialPort::Open()
 
 int SerialPort::Initialize()
 {
+   MMThreadGuard g(portLock_);
+
    assert(port_);
 
    // verify callbacks are supported and refuse to continue if not
@@ -389,6 +395,7 @@ int SerialPort::SetCommand(const char* command, const char* term)
 
    if (transmitCharWaitMs_==0)
    {
+      MMThreadGuard g(portLock_);
       lastError = port_->Write(sendText.c_str(), sendText.length(), (DWORD *) &written);
       if (lastError != ERROR_SUCCESS)
       {
@@ -409,6 +416,7 @@ int SerialPort::SetCommand(const char* command, const char* term)
          int retryCounter = 0;
          do
          {
+            MMThreadGuard g(portLock_);
             lastError = port_->Write(sendText.c_str() + written, 1, &one);
             Sleep((DWORD)transmitCharWaitMs_);         
             if (retryCounter > 0)
@@ -462,6 +470,7 @@ int SerialPort::GetAnswer(char* answer, unsigned bufLen, const char* term)
    int retryCounter = 0;
    do
    {
+      MMThreadGuard g(portLock_);
       lastError = port_->Read(bufPtr, 1 /*bufLen*/, &read);
       if (retryCounter > 0)
          LogMessage("Retrying serial Read command!\n");
@@ -512,6 +521,7 @@ int SerialPort::GetAnswer(char* answer, unsigned bufLen, const char* term)
       retryStart = GetCurrentMMTime();
       do
       {
+         MMThreadGuard g(portLock_);
          lastError = port_->Read(bufPtr , /*bufLen-totalRead*/1, &read);
          if (retryCounter > 0)
             LogMessage("Retrying serial Read command!\n");
@@ -552,6 +562,7 @@ int SerialPort::Write(const unsigned char* buf, unsigned long bufLen)
    logMsg << "Serial TX: ";
    for (unsigned i=0; i<bufLen; i++)
    {
+      MMThreadGuard g(portLock_);
       unsigned long written = 0;
       long lastError = port_->Write(buf + i, 1, &written);
       Sleep((DWORD)transmitCharWaitMs_);
@@ -577,6 +588,7 @@ int SerialPort::Read(unsigned char* buf, unsigned long bufLen, unsigned long& ch
    logMsg << "Serial RX: ";
 
    charsRead = 0;
+   MMThreadGuard g(portLock_);
    long lastError = port_->Read(buf, bufLen, &charsRead);
 	if (lastError != ERROR_SUCCESS)
    {
@@ -584,27 +596,28 @@ int SerialPort::Read(unsigned char* buf, unsigned long bufLen, unsigned long& ch
 		return ERR_RECEIVE_FAILED;
    }
 
-   for (unsigned long i=0; i<charsRead; i++)
-      if (buf[i]==10)
-         logMsg << "\\n";
-      else
-         logMsg << buf[i];
+   //for (unsigned long i=0; i<charsRead; i++)
+   //   if (buf[i]==10)
+   //      logMsg << "\\n";
+   //   else
+   //      logMsg << buf[i];
 
-   logMsg << " [";
+   //logMsg << " [";
 
-   for (unsigned long i=0; i<charsRead; i++)
-      logMsg << (int) *(buf + i) << " ";
+   //for (unsigned long i=0; i<charsRead; i++)
+   //   logMsg << (int) *(buf + i) << " ";
 
-   logMsg << "]" << endl;
+   //logMsg << "]" << endl;
 
-   if (charsRead > 0)
-      LogMessage(logMsg.str().c_str(), true);
+   //if (charsRead > 0)
+   //   LogMessage(logMsg.str().c_str(), true);
 
    return DEVICE_OK;
 }
 
 int SerialPort::Purge()
 {
+   MMThreadGuard g(portLock_);
    long lastError = port_->Purge();
 	if (lastError != ERROR_SUCCESS)
 		return ERR_PURGE_FAILED;

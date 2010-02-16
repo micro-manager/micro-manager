@@ -34,7 +34,7 @@
 
 	<target name="compileMMSurveyor" description="Compile Surveyor plugin.">
 		<mkdir dir="build" />
-		<javac srcdir="./src" destdir="./build" optimize="on" source="5" debug="off">
+		<javac srcdir="./src" destdir="./build" optimize="on" source="1.5" target="1.5" debug="on">
 			<classpath refid="project.class.path" />
 		</javac>
 	</target>

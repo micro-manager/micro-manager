@@ -150,7 +150,7 @@ import org.micromanager.utils.ReportingUtils;
 public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, ScriptInterface {
 
 	private static final String MICRO_MANAGER_TITLE = "Micro-Manager 1.4";
-	private static final String VERSION = "1.4.0  20100202";
+	private static final String VERSION = "1.4.0";
 	private static final long serialVersionUID = 3556500289598574541L;
 
 	private static final String MAIN_FRAME_X = "x";
@@ -258,7 +258,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 	private int snapCount_ = -1;
 	private boolean liveModeSuspended_;
 	private boolean liveModeFullyStarted_;
-
+   public Font defaultScriptFont_ = null;
+   
 	public static MMImageWindow getLiveWin() {
 		return imageWin_;
 	}
@@ -388,11 +389,18 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
       // set the location for app preferences
       mainPrefs_ = Preferences.userNodeForPackage(this.getClass());
+      systemPrefs_ = mainPrefs_;
       // check system preferences
-      systemPrefs_ = Preferences.systemNodeForPackage(this.getClass());
-      // if we can not write to the systemPrefs, use AppPrefs instead
-      if (!JavaUtils.backingStoreAvailable(systemPrefs_))
-            systemPrefs_ = mainPrefs_;
+      try{
+         Preferences p = Preferences.systemNodeForPackage(this.getClass());
+         if( null != p ){
+            // if we can not write to the systemPrefs, use AppPrefs instead
+            if (JavaUtils.backingStoreAvailable(p))
+               systemPrefs_ = p;
+         }
+      }catch(Exception e){
+         ReportingUtils.logError(e);
+      }
 
 		// show registration dialog if not already registered
 		// first check user preferences (for legacy compatibility reasons)
@@ -2221,7 +2229,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
 	private void createScriptPanel() {
 		if (scriptPanel_ == null) {
-			scriptPanel_ = new ScriptPanel(core_, options_);
+			scriptPanel_ = new ScriptPanel(core_, options_, this);
 			scriptPanel_.insertScriptingObject(SCRIPT_CORE_OBJECT, core_);
 			scriptPanel_.insertScriptingObject(SCRIPT_ACQENG_OBJECT, engine_);
 			scriptPanel_.setParentGUI(this);
@@ -2545,12 +2553,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
 			long channels = core_.getNumberOfComponents();
 
-
-			/*
-			 * //!!! if (channels > 1) { if (channels != 4 && bpp != 1) {
-			 * handleError("Unsupported image format."); return false; } }
-			 */
-
 			core_.snapImage();
 			Object img;
 			if (channels == 1)
@@ -2565,7 +2567,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
 			if (!isCurrentImageFormatSupported())
 				return false;
-
 			
 			imageWin_.newImage(img);
 			updateLineProfile();
@@ -2645,17 +2646,18 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          Cursor waitCursor = new Cursor(Cursor.WAIT_CURSOR);
          setCursor(waitCursor);
 
-			if (!isImageWindowOpen())
+			if (!isImageWindowOpen()) {
 				imageWin_ = createImageWindow();
+         }
 
 			imageWin_.toFront();
 
 			setIJCal(imageWin_);
 			// this is needed to clear the subtite, should be folded into
 			// drawInfo
-			imageWin_.getGraphics().clearRect(0, 0, imageWin_.getWidth(), 40);
-			imageWin_.drawInfo(imageWin_.getGraphics());
-            imageWin_.setSubTitle("Snap");
+         imageWin_.getGraphics().clearRect(0, 0, imageWin_.getWidth(), 40);
+         imageWin_.drawInfo(imageWin_.getGraphics());
+         imageWin_.setSubTitle("Snap");
             
 			String expStr = textFieldExp_.getText();
 			if (expStr.length() > 0) {
@@ -2664,13 +2666,12 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 			} else
 				handleError("Exposure field is empty!");
 		} catch (Exception e) {
-			ReportingUtils.showError(e);
+         ReportingUtils.showError(e);
 		}
-                Cursor defaultCursor = new Cursor(Cursor.DEFAULT_CURSOR);
-                setCursor(defaultCursor);
-
-
+      Cursor defaultCursor = new Cursor(Cursor.DEFAULT_CURSOR);
+      setCursor(defaultCursor);
 	}
+
 
 	public void initializeGUI() {
 		try {

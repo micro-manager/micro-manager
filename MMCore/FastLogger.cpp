@@ -168,8 +168,18 @@ bool FastLogger::Initialize(std::string logFileName, std::string logInstanceName
    {
       failureReported=false;
       logInstanceName_=logInstanceName;
-      logFileName_ = logFileName;
-  
+
+      std::string homePath;
+
+      if( logFileName_.length() < 1)
+      {
+#ifdef _WINDOWS
+         homePath = std::string(getenv("HOMEPATH")) + "\\";
+#else
+         homePath = std::string(getenv("HOME")) + "/";
+#endif
+         logFileName_ = homePath + logFileName;
+      }
 		do // scope for the file lock
 		{
 			MMThreadGuard guard(logFileLock_g);		
@@ -191,8 +201,11 @@ bool FastLogger::Initialize(std::string logFileName, std::string logInstanceName
 			set_flags (fast_log_flags_);
 		}while(bfalse);
 
-		pLogThread_g = new LoggerThread();
-		pLogThread_g->Start();
+      if( NULL == pLogThread_g)
+      {
+		   pLogThread_g = new LoggerThread();
+		   pLogThread_g->Start();
+      }
 
 
    }
@@ -477,14 +490,15 @@ void FastLogger::Log(IMMLogger::priority p, const char* format, ...)throw()
 		std::ostringstream percenttReplacement;
 #ifdef _WINDOWS_
 		boost::thread::id tid = boost::this_thread::get_id();//thread::get_thread_info;native_handle()
+                percenttReplacement << tid;
+
 #else
-		unsigned long tid = 0;
+		//unsigned long tid = 0;
 		pthread_t pthreadInfo;
 		pthreadInfo = pthread_self();
-		tid = *(unsigned long*)(pthreadInfo);
+		//tid = *(unsigned long*)(pthreadInfo);
+		percenttReplacement << pthreadInfo;
 #endif
-
-		percenttReplacement << tid;
 
 		ifind = workingString.find("%t");
 		while(std::string::npos != ifind)

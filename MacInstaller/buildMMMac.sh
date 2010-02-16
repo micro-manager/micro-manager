@@ -2,7 +2,7 @@
 # from a single repository.
 # It does a clean build, and therefore can best be used only for a full release
 
-REPOSITORY=/Users/MM/svn/micromanager1.3
+REPOSITORY=`pwd`/..
 BUILDDIR=/Users/MM/MMBuild
 
 
@@ -38,12 +38,17 @@ cp classext/ij.jar $X86_64
 cp classext/bsh-2.0b4.jar $X86_64/plugins/
 cp classext/swingx-0.9.5.jar $X86_64/plugins/
 
-autoreconf || exit
+./mmUnixBuild.sh || exit
+cd $REPOSITORY
 
+# set version variable and change version in java source code to include build date stamp
+VERSION=`cat version.txt`
+echo $VERSION
+sed -i -e "s/\"1.3.*\"/\"$VERSION\"/"  mmstudio/src/org/micromanager/MMStudioMainFrame.java || exit
 
 # build PPC
 MACOSX_DEPLOYMENT_TARGET=10.4
-./configure --with-imagej=$PPC --enable-arch=ppc CXX="g++ -V 4.0.1" CXXFLAGS="-g -O2 -mmacosx-version-min=10.4 -isysroot /Developer/SDKs/MacOSX10.4u.sdk -arch ppc" --disable-dependency-tracking || exit
+./configure --with-imagej=$PPC --enable-python --enable-arch=ppc CXX="g++ -V 4.0.1" CXXFLAGS="-g -O2 -mmacosx-version-min=10.4 -isysroot /Developer/SDKs/MacOSX10.4u.sdk -arch ppc" --disable-dependency-tracking || exit
 make clean || exit
 make || exit
 make install || exit
@@ -72,8 +77,8 @@ for f in $FILES; do lipo -create $PPC/$f $I386/$f $X86_64/$f -o $TARGET/$f; done
 
 # copy installed files 
 cp $PPC/plugins/Micro-Manager/* $TARGET/plugins/Micro-Manager/
-cp $PPC/*.html $TARGET/
 cp $PPC/*.cfg $TARGET/
+cp $PPC/_MMCorePy.so $TARGET/
 cp -r $PPC/mmplugins $TARGET/
 cp -r $PPC/mmautofocus $TARGET/ 
 cp -r $PPC/scripts $TARGET/

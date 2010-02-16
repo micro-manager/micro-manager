@@ -85,12 +85,13 @@ chmod 0755 $ROOTIJ/usr/bin/imagejmm
 
 echo "#!/bin/sh" > $ROOTIJ/DEBIAN/postinst
 chmod 0755 $ROOTIJ/DEBIAN/postinst
-echo "rm /usr/bin/imagej" >> $ROOTIJ/DEBIAN/postinst
-echo "ln -s /usr/bin/imagejmm /usr/bin/imagej" >> $ROOTIJ/DEBIAN/postinst
+#echo "rm /usr/bin/imagej" >> $ROOTIJ/DEBIAN/postinst
+#echo "ln -s /usr/bin/imagejmm /usr/bin/imagej" >> $ROOTIJ/DEBIAN/postinst
 
 ########################################## Put together
 cd ..
 dpkg-deb -b $ROOTPORT
 dpkg-deb -b $ROOTIJ
-mv $ROOTPORT.deb "micromanager-$VERSION"-1"_$ARCH.deb"
-mv $ROOTIJ.deb "micromanager-ij-$VERSION"-1"_all.deb"
+CURDATE=`date +%s`
+mv $ROOTPORT.deb "micromanager-$VERSION"-$CURDATE"_$ARCH.deb"
+mv $ROOTIJ.deb "micromanager-ij-$VERSION"-$CURDATE"_all.deb"

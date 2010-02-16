@@ -40,6 +40,8 @@ import org.micromanager.utils.ChannelSpec;
 import org.micromanager.utils.ProgressBar;
 import org.micromanager.utils.ReportingUtils;
 
+import org.json.JSONObject;
+
 /*
  * Created on 28.03.2005
  */
@@ -262,25 +264,26 @@ public class Image5DWindow extends StackWindow {
       return channelsMM_;
    }
    
-//   /**
-//    * Gets the metadata from the external source and creates
-//    * an internal acquisition data object.
-//    * IMPORTANT NOTE: this metadata is always instantiated as in-memory,
-//    * regardless of whether the original source actually saved it.
-//    * TODO: Do we need to clear the potential references to files ???
-//    * @param metaStream - serialized metadata
-//    */
-//   public void setMetadata(String metaStream) {
-//      try {
-//         acqData_ = new AcquisitionData();
-//         acqData_.createNew();
-//         acqData_.load(metaStream);
-//         i5d.changes = true;
-//      } catch (MMAcqDataException e) {
-//         // TODO Auto-generated catch block
-//         ReportingUtils.logError(e);
-//      }
-//   }
+   /**
+    * Gets the metadata from the external source and creates
+    * an internal acquisition data object.
+    * IMPORTANT NOTE: this metadata is always instantiated as in-memory,
+    * regardless of whether the original source actually saved it.
+    * TODO: Do we need to clear the potential references to files ???
+    * @param metaStream - metadata
+    */
+   private void setMetadata(JSONObject metaData) {
+      try {
+         acqData_ = new AcquisitionData();
+//System.out.println(metaStream);
+         acqData_.createNew();
+         acqData_.load(metaData);
+         i5d.changes = true;
+      } catch (MMAcqDataException e) {
+         // TODO Auto-generated catch block
+         ReportingUtils.logError(e);
+      }
+   }
    
    /**
     * 
@@ -355,6 +358,7 @@ public class Image5DWindow extends StackWindow {
              if (result == JOptionPane.YES_OPTION) {
                 if (acqEng_ != null && acqEng_.isPaused())
                    acqEng_.setPause(false);
+                acqEng_.abortRequest();
                 acqEng_.stop(true);
                 // TODO: needs to clean-up properly
              } else {
@@ -465,10 +469,14 @@ public class Image5DWindow extends StackWindow {
         final ProgressBar progressBar = new ProgressBar("Saving File...", 0, acqData_.getNumberOfFrames());
 
         acqSavePath_ = f.getAbsolutePath();
+        if (!acqData_.inMemory()) {
+           // this creates a new acqData_ object copied form the old one
+           setMetadata(acqData_.getMetadataObject());
+        }
         try {
             acqData_.save(f.getName(), f.getParent(), false, null);
         } catch (MMAcqDataException ex) {
-            ReportingUtils.logError(ex);
+            ReportingUtils.showError(ex);
         }
 
         final File f2 = f;

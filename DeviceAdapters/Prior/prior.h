@@ -159,6 +159,7 @@ private:
    int GetPositionStepsSingle(char axis, long& steps);
    bool HasCommand(std::string command);
   
+   MMThreadLock lock_;
    bool initialized_;
    std::string port_;
    double stepSizeXUm_;

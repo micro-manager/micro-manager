@@ -46,7 +46,7 @@
 
 	<target name="compileMMStudio" description="Compile MM Studio.">
 		<mkdir dir="build" />
-		<javac srcdir="./src" destdir="./build" sourcepath="./src/org/micromanager/utils/AutofocusBase.java" optimize="on" source="1.5" target="1.5" debug="off">
+		<javac srcdir="./src" destdir="./build" sourcepath="./src/org/micromanager/utils/AutofocusBase.java" optimize="on" source="1.5" target="1.5" debug="on">
 			
 			<classpath refid="project.class.path" />
 			<!-- <compilerarg value="-Xlint"/> -->
@@ -56,6 +56,11 @@
 			<fileset dir="./src/org/micromanager/icons" casesensitive="no">
 				<include name="**/*.png"/>
 				<include name="**/*.gif"/>
+			</fileset>
+		</copy>
+		<copy todir="./build/org/micromanager/conf">
+			<fileset dir="./src/org/micromanager/conf" casesensitive="no">
+				<include name="**/*.html"/>
 			</fileset>
 		</copy>
 	</target>
@@ -102,6 +107,7 @@
 		<copy file="${BinRoot}/mmgr_dal_AOTF.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_Apogee.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_Andor.dll" todir="${InstallRoot}" />
+		<copy file="${BinRoot}/mmgr_dal_AndorLaserCombiner.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_Arduino.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_ASIFW1000.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_ASIStage.dll" todir="${InstallRoot}" />
@@ -156,16 +162,7 @@
 		<copy file="${BinRoot}/mmgr_dal_ZeissCAN.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_ZeissCAN29.dll" todir="${InstallRoot}" />
 		
-		<copy file="${BinRoot}/conf_intro_page.html" todir="${InstallRoot}" />
-		<copy file="${BinRoot}/conf_comport_page.html" todir="${InstallRoot}" />
-		<copy file="${BinRoot}/conf_devices_page.html" todir="${InstallRoot}" />
-		<copy file="${BinRoot}/conf_delays_page.html" todir="${InstallRoot}" />
-		<copy file="${BinRoot}/conf_finish_page.html" todir="${InstallRoot}" />
-		<copy file="${BinRoot}/conf_labels_page.html" todir="${InstallRoot}" />
-		<copy file="${BinRoot}/conf_presets_page.html" todir="${InstallRoot}" />
-		<copy file="${BinRoot}/conf_roles_page.html" todir="${InstallRoot}" />
-		<copy file="${BinRoot}/conf_synchro_page.html" todir="${InstallRoot}" />
-		<copy file="${BinRoot}/conf_preinit_page.html" todir="${InstallRoot}" />
+	
 
       <copy file="${ScriptsRoot}/sdemo1.bsh" todir="${ScriptsInstall}" />
       <copy file="${ScriptsRoot}/sdemo2.bsh" todir="${ScriptsInstall}" />

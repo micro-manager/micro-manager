@@ -33,6 +33,7 @@ MMJ_.jar:  \
         $(srcdir)/src/org/micromanager/api/DeviceControlGUI.java \
 	$(srcdir)/src/org/micromanager/api/MMPropertyTableModel.java \
 	$(srcdir)/src/org/micromanager/api/ScriptInterface.java \
+	$(srcdir)/src/org/micromanager/conf/*.html \
 	$(srcdir)/src/org/micromanager/conf/AddDeviceDlg.java \
 	$(srcdir)/src/org/micromanager/conf/ComPortsPage.java \
 	$(srcdir)/src/org/micromanager/conf/ConfigGroup.java \
@@ -106,9 +107,6 @@ MMJ_.jar:  \
 	$(srcdir)/src/org/micromanager/navigation/XYZKeyListener.java \
 	$(srcdir)/src/org/micromanager/navigation/ZWheelListener.java \
 	$(srcdir)/src/org/micromanager/script/BeanshellEngine.java \
-	$(srcdir)/src/org/micromanager/script/MMScriptFrame.java \
-	$(srcdir)/src/org/micromanager/script/MMScriptView.java \
-	$(srcdir)/src/org/micromanager/script/ScriptPanelMessageWindow.java \
 	$(srcdir)/src/org/micromanager/utils/Annotator.java \
 	$(srcdir)/src/org/micromanager/utils/AutofocusBase.java \
 	$(srcdir)/src/org/micromanager/utils/AutofocusManager.java \
@@ -163,6 +161,7 @@ MMJ_.jar:  \
 	cp $(srcdir)/bin/plugins_mmstudio.config build/plugins.config
 	$(JAVAC) -source 1.5 -target 1.5 -sourcepath ../MMCoreJ_wrap:$(srcdir)/src:../hcs/src:. -classpath $(IJJARPATH):$(BSHJARPATH):$(SWINGXJARPATH):$(topsrcdir)/bin/MMCoreJ.jar:. $(srcdir)/src/*.java $(srcdir)/src/org/micromanager/utils/*.java -d build
 	cp -rf $(srcdir)/src/org/micromanager/icons build/org/micromanager
+	cp -rf $(srcdir)/src/org/micromanager/conf/*html build/org/micromanager/conf
 	## Work around bug in 'jar': jar cf MM_.jar -C bin/ bin/* does not work
 	cd build && jar cf ../MMJ_.jar * 
 

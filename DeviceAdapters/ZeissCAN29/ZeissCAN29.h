@@ -403,7 +403,7 @@ class ZeissHub
       static std::string tubeLensList_[];
       static std::string sidePortList_[];
       static std::string condenserList_[];
-      static const bool debug_ = false;
+      static const bool debug_ = true;
       std::string port_;
       bool portInitialized_;
       static const int RCV_BUF_LENGTH = 1024;

@@ -1265,6 +1265,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
         stopButton.addActionListener(new ActionListener() {
 
             public void actionPerformed(final ActionEvent e) {
+                acqEng_.abortRequest();
                 acqEng_.stop(true);
             }
         });

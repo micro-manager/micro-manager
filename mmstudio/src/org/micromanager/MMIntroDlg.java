@@ -49,6 +49,7 @@ import java.util.Vector;
 import javax.swing.BorderFactory;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
+import javax.swing.border.EtchedBorder;
 
 /**
  * Splash screen and introduction dialog. 
@@ -57,6 +58,8 @@ import javax.swing.JPanel;
 public class MMIntroDlg extends JDialog {
    private static final long serialVersionUID = 1L;
    private JTextArea welcomeTextArea_;
+   private JTextArea supportTextArea_;
+   
    //private JTextField textFieldFile_;
    ArrayList<String> mruCFGFileList_;
 
@@ -69,7 +72,14 @@ public class MMIntroDlg extends JDialog {
       "of merchantability or fitness for a particular purpose. In no event shall the copyright owner or contributors " +
       "be liable for any direct, indirect, incidental, special, examplary, or consequential damages.\n\n" +
       
-      "Copyright University of California San Francisco, 2007, 2008, 2009, 2010. All rights reserved.\n\n";
+      "Copyright University of California San Francisco, 2007, 2008, 2009, 2010. All rights reserved.";
+
+   public static String SUPPORT_TEXT =
+      "Micro-Manager was initially funded by grants from the Sandler Foundation and is now supported by a grant from the NIH.";
+
+   public static String CITATION_TEXT =
+      "If you have found this software useful, please cite Micro-Manager in your publications.";
+
    
    public MMIntroDlg(String ver, ArrayList<String> mruCFGFileList) {
       super();
@@ -83,7 +93,7 @@ public class MMIntroDlg extends JDialog {
       setUndecorated(true);
       if (! IJ.isMacOSX())
         ((JPanel) getContentPane()).setBorder(BorderFactory.createLineBorder(Color.GRAY));
-      setSize(new Dimension(392, 453));
+      setSize(new Dimension(392, 533));
       Dimension winSize = getSize();
       Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
       setLocation(screenSize.width/2 - (winSize.width/2), screenSize.height/2 - (winSize.height/2));
@@ -106,9 +116,9 @@ public class MMIntroDlg extends JDialog {
       });
       okButton.setText("OK");
       if (System.getProperty("os.name").indexOf("Mac OS X") != -1)
-         okButton.setBounds(150, 397, 81, 24);
+         okButton.setBounds(150, 497, 81, 24);
       else
-         okButton.setBounds(150, 392, 81, 24);
+         okButton.setBounds(150, 492, 81, 24);
       getContentPane().add(okButton);
       getRootPane().setDefaultButton(okButton);
 
@@ -146,19 +156,23 @@ public class MMIntroDlg extends JDialog {
       getContentPane().add(cfgFileDropperDown_);
 
 
-      welcomeTextArea_ = new JTextArea();
-      welcomeTextArea_.setBorder(new LineBorder(Color.black, 1, false));
+      welcomeTextArea_ = new JTextArea() {
+         public Insets getInsets() {
+            return new Insets(10,10,10,10);
+         }
+      };
+      welcomeTextArea_.setBorder(new EtchedBorder());
       welcomeTextArea_.setWrapStyleWord(true);
-      welcomeTextArea_.setText(DISCLAIMER_TEXT);
-      
-      welcomeTextArea_.setMargin(new Insets(10, 10, 10, 10));
+      welcomeTextArea_.setText(DISCLAIMER_TEXT + "\n\n" + SUPPORT_TEXT + "\n\n" + CITATION_TEXT);
+
       welcomeTextArea_.setLineWrap(true);
       welcomeTextArea_.setFont(new Font("Arial", Font.PLAIN, 10));
       welcomeTextArea_.setFocusable(false);
       welcomeTextArea_.setEditable(false);
-      welcomeTextArea_.setBackground(new Color(192, 192, 192));
-      welcomeTextArea_.setBounds(10, 284, 366, 105);
+      welcomeTextArea_.setBackground(Color.WHITE);
+      welcomeTextArea_.setBounds(10, 284, 356, 205);
       getContentPane().add(welcomeTextArea_);
+
    }
 
 

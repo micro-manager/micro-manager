@@ -4011,6 +4011,7 @@ void CMMCore::loadSystemState(const char* fileName) throw (CMMError)
          }
       }
    }
+   updateAllowedChannelGroups();
 }
 
 
@@ -4347,11 +4348,11 @@ void CMMCore::loadSystemConfiguration(const char* fileName) throw (CMMError)
       throw CMMError(summaryErrorText.str().c_str(), MMERR_InvalidConfigurationFile);
    }
 
+   updateAllowedChannelGroups();
+
    // file parsing finished, try to set startup configuration
    if (isConfigDefined(MM::g_CFGGroup_System, MM::g_CFGGroup_System_Startup))
       this->setConfig(MM::g_CFGGroup_System, MM::g_CFGGroup_System_Startup);
-
-   updateAllowedChannelGroups();
 
    waitForSystem();
 
@@ -4738,6 +4739,10 @@ void CMMCore::updateAllowedChannelGroups()
    properties_->AddAllowedValue(MM::g_Keyword_CoreChannelGroup, ""); // No channel group
    for (unsigned i=0; i<groups.size(); i++)
       properties_->AddAllowedValue(MM::g_Keyword_CoreChannelGroup, groups[i].c_str());
+
+   // If we don't have the group assigned to ChannelGroup anymore, set ChannelGroup to blank.
+   if (!isGroupDefined(getChannelGroup().c_str()))
+      setChannelGroup("");
 }
 
 

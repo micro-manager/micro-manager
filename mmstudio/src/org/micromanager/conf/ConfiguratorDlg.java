@@ -32,7 +32,11 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.InputStream;
+import java.io.BufferedReader;
 import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.prefs.Preferences;
 
 import javax.swing.JButton;
@@ -46,6 +50,8 @@ import javax.swing.WindowConstants;
 import javax.swing.border.LineBorder;
 
 import mmcorej.CMMCore;
+
+import org.micromanager.conf.ConfiguratorDlg;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -106,6 +112,8 @@ public class ConfiguratorDlg extends JDialog {
       helpTextPane_.setEditable(false);
       //helpTextPane_.setBorder(new LineBorder(Color.black, 1, false));
 
+      helpTextPane_.setContentType("text/html; charset=ISO-8859-1");
+      
       nextButton_ = new JButton();
       nextButton_.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
@@ -208,18 +216,21 @@ public class ConfiguratorDlg extends JDialog {
          nextButton_.setText("Next >");
       
       titleLabel_.setText(pages_[curPage_].getTitle());
+      
+      // By default, load plain text help
+      helpTextPane_.setContentType("text/plain");
       helpTextPane_.setText(pages_[curPage_].getHelpText());
       
-      // load help text
-      java.net.URL helpURL;
+      // Try to load html help text
       try {
          File curDir = new File(".");
          String helpFileName = pages_[curPage_].getHelpFileName();
          if (helpFileName == null)
             return;
-         helpURL = new java.net.URL("file:///" + curDir.getCanonicalPath() + "/" + helpFileName);
-         if (helpURL != null)
-            helpTextPane_.setPage(helpURL);
+         URL htmlURL=ConfiguratorDlg.class.getResource(helpFileName);
+         String helpText=readStream(ConfiguratorDlg.class.getResourceAsStream(helpFileName));
+         helpTextPane_.setContentType("text/html; charset=ISO-8859-1");
+         helpTextPane_.setText(helpText);
          
       } catch (MalformedURLException e1) {
           ReportingUtils.showError(e1);
@@ -290,4 +301,24 @@ public class ConfiguratorDlg extends JDialog {
    public String getFileName() {
       return microModel_.getFileName();
    }   
+   
+   
+   
+   /**
+    * Read string out of stream
+    */
+   private static String readStream(InputStream is) throws IOException {
+           StringBuffer bf=new StringBuffer();
+           BufferedReader br=new BufferedReader(new InputStreamReader(is));
+           String line;
+           //Note: not exactly the original
+           while((line=br.readLine())!=null) {
+                   bf.append(line);
+                   bf.append("\n");
+                   }
+           return bf.toString();
+           }
+
+   
+   
 }

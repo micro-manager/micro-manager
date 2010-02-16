@@ -68,6 +68,11 @@ public:
    int getCode() {return errCode_;}
    void setCoreMsg(const char* msg) {coreMsg_ = msg;}
 
+   virtual std::string getCoreMsg()
+   {
+      return coreMsg_;
+   }
+
 private:
    long errCode_;
    std::string specificMsg_;

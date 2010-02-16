@@ -35,5 +35,5 @@ if BUILD_SCION
 endif
 
 
-SUBDIRS =  AOTF $(ANDOR) Arduino ASIFW1000 ASIStage ASIWPTR Cobolt CoherentCube Conix $(DC1394) DTOpenLayer DemoCamera DemoRGBCamera DemoStreamingCamera $(HAMAMATSU) $(ITC) K8055 K8061 LeicaDMI LeicaDMR Ludl LudlLow Neos $(NIDAQ) Nikon NikonTE2000 PI PI_GCS Prior ParallelPort Pecon PrecisExcite $(PVCAM) $(QCAM) $(SCION) $(SENSICAM) SerialManager SerialManagerUNIX SimpleAF SpectralLMM5 SutterLambda ThorlabsDCxxxx ThorlabsFilterWheel ThorlabsSC10 $(USBMANAGER) Utilities Vincent Yokogawa ZeissCAN ZeissCAN29
+SUBDIRS =  AAAOTF AOTF $(ANDOR) Arduino ASIFW1000 ASIStage ASIWPTR Cobolt CoherentCube Conix $(DC1394) DTOpenLayer DemoCamera DemoRGBCamera DemoStreamingCamera $(HAMAMATSU) $(ITC) K8055 K8061 LeicaDMI LeicaDMR Ludl LudlLow Neos $(NIDAQ) Nikon NikonTE2000 PI PI_GCS Prior ParallelPort Pecon PrecisExcite $(PVCAM) $(QCAM) $(SCION) $(SENSICAM) SerialManager SerialManagerUNIX SimpleAF SpectralLMM5 SutterLambda ThorlabsDCxxxx ThorlabsFilterWheel ThorlabsSC10 $(USBMANAGER) Utilities Vincent Yokogawa ZeissCAN ZeissCAN29
  
