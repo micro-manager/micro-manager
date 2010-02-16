@@ -742,5 +742,5 @@ int SimpleAF::GetImageForAnalysis(ImgBuffer & buffer, bool stretch )
 
 double SimpleAF::GetScore(ImgBuffer & buffer)
 {
-	return scorer_.GetScore(buffer);
+	return scorer_.GetScore(buffer, true);
 }

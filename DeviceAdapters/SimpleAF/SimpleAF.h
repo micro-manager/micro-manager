@@ -169,4 +169,5 @@ private:
    bool initialized_;
    std::string afDevice_;
    MM::AutoFocus* pAFDevice_;
+   ImageSharpnessScorer scorer_;
 };

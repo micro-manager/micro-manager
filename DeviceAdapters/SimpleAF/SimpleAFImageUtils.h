@@ -283,8 +283,8 @@ public:
 	void MedianFilter(int xsize, int ysize);
 	void MedianFilter(unsigned char * buffer, unsigned int imagesizex, unsigned int imagesizey, int kernelxsize, int kernelysize);
 	double LaplacianFilter();
-	double GetScore();
-	double GetScore(ImgBuffer & );
+	double GetScore(bool median);
+	double GetScore(ImgBuffer &buf, bool median);
 	void SetCore(MM::Core * );
 	void SetImage(unsigned char * buffer, int width, int height, int depth);
 

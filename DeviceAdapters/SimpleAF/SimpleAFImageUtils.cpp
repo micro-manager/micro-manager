@@ -480,19 +480,18 @@ void ImageSharpnessScorer::MedianFilter(int xsize, int ysize)
 	buffer_ = filtimage_;	
 }
 
-double ImageSharpnessScorer::GetScore()
+double ImageSharpnessScorer::GetScore(bool median)
 {
-  // 1. Get the median filtering done
-	this->MedianFilter(3,3);
-  // 2. Run the laplacian filter
-	double score = this->LaplacianFilter();
-	return score;
+   if (median)
+	   MedianFilter(3,3);
+
+	return LaplacianFilter();
 }
 
-double ImageSharpnessScorer::GetScore(ImgBuffer & buffer)
+double ImageSharpnessScorer::GetScore(ImgBuffer & buffer, bool median)
 {
 	buffer_.Copy(buffer);
-	return GetScore();
+	return GetScore(median);
 
 }
 
