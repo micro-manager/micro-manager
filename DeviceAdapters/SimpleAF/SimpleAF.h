@@ -34,6 +34,7 @@
 # include "../../MMDevice/ImgBuffer.h"
 # include <string>
 # include <ctime>
+#include <queue>
 #include "SimpleAFImageUtils.h"
 
 //////////////////////////////////////////////////////////////////////////////
@@ -41,6 +42,8 @@
 //
 #define ERR_AF_IMAGE_ERROR          10010
 #define ERR_AF_DEBUG_BUFFER_ERROR   10011
+
+#define ERR_IP_NO_AF_DEVICE   10100
 
 // Metadata keywords
 
@@ -166,8 +169,11 @@ public:
    int OnAFDevice(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
+   static const int QUEUE_SIZE = 5;
    bool initialized_;
-   std::string afDevice_;
-   MM::AutoFocus* pAFDevice_;
+   bool afNeeded_;
    ImageSharpnessScorer scorer_;
+   std::queue<double> scoreQueue_;
+
+   int DoAF();
 };

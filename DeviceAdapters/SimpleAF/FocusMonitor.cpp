@@ -43,14 +43,16 @@
 using namespace std;
 
 extern const char* g_FocusMonitorDeviceName;
-
+const char* g_PropertyAFDevice = "AFDevice";
+const char* g_PropertyScore = "AFScore";
+const char* g_PropertyThreshold = "Threshold";
+const char* g_PropertyDelaySec = "Delay_sec";
 
 FocusMonitor::FocusMonitor() : 
-   initialized_(false), pAFDevice_(0)
+   initialized_(false), afNeeded_(false)
 {
    // call the base class method to set-up default error codes/messages
    InitializeDefaultErrorMessages();
-   
 }
 
 FocusMonitor::~FocusMonitor()
@@ -98,9 +100,14 @@ int FocusMonitor::Initialize()
    if (DEVICE_OK != nRet)
       return nRet;
 
-   // stdDev
-   CPropertyAction *pAct = new CPropertyAction (this, &FocusMonitor::OnAFDevice);
-   nRet = CreateProperty("AFDevice", "", MM::String, false, pAct);
+   // device
+   nRet = CreateProperty(g_PropertyDelaySec, "1", MM::Integer, false);
+   assert(nRet == DEVICE_OK);
+
+   nRet = CreateProperty(g_PropertyScore, "0.0", MM::Float, false);
+   assert(nRet == DEVICE_OK);
+
+   nRet = CreateProperty(g_PropertyThreshold, "0.0", MM::Float, false);
    assert(nRet == DEVICE_OK);
 
    // synchronize all properties
@@ -125,22 +132,56 @@ int FocusMonitor::Shutdown()
 
 int FocusMonitor::Process(unsigned char* buffer, unsigned width, unsigned height, unsigned byteDepth)
 {
-   // TODO: calculate score
+   afNeeded_ = false;
+
+   // verify dimensions
+   scorer_.SetImage(buffer, width, height, byteDepth);
+   double score = scorer_.GetScore(false);
+
+   // keep size constant
+   if (scoreQueue_.size() == QUEUE_SIZE)
+      scoreQueue_.pop();
+
+   scoreQueue_.push(score);
+
+   // update the property
+   int ret = SetProperty(g_PropertyScore, CDeviceUtils::ConvertToString(score));
+   assert(ret == DEVICE_OK);
+
+   // decide if we need to start af procedure
+   // compare to threshold
+   double threshold(0.0);
+   char val[MM::MaxStrLength];
+   ret = GetProperty(g_PropertyThreshold, val);
+   assert(ret == DEVICE_OK);
+   threshold = atof(val);
+
+   if (score < threshold)
+   {
+      afNeeded_ = true;
+   }
 
    return DEVICE_OK;
 }
 
+// OBSOLETE
 int FocusMonitor::OnAFDevice(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::AfterSet)
    {
-      pProp->Get(afDevice_);
-      pAFDevice_ = 0;
    }
    else if (eAct == MM::BeforeGet)
    {
-      pProp->Set(afDevice_.c_str());
    }
 
    return DEVICE_OK; 
+}
+
+int FocusMonitor::DoAF()
+{
+   MM::AutoFocus* afDev = GetCoreCallback()->GetAutoFocus(this);
+   if (afDev)
+      return afDev->IncrementalFocus();
+   else
+      return ERR_IP_NO_AF_DEVICE;
 }

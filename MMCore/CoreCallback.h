@@ -202,6 +202,17 @@ public:
       }
    }
 
+   MM::AutoFocus* GetAutoFocus(const MM::Device* /* caller */)
+   {
+      try {
+         return core_->autoFocus_;
+      } catch(...) {
+         //trap all exceptions
+         return 0;
+      }
+   }
+
+
    std::vector<std::string> GetLoadedDevicesOfType(const MM::Device* /* caller */, MM::DeviceType devType)
    {
       return core_->getLoadedDevicesOfType(devType);

@@ -796,8 +796,10 @@ namespace MM {
       virtual int GetCurrentConfig(const char* group, int bufLen, char* name) = 0;
       virtual int GetChannelConfigs(std::vector<std::string>& groups) = 0;
 
-      // device management
+      // direct access to specific device types
       virtual MM::ImageProcessor* GetImageProcessor(const MM::Device* caller) = 0;
+      virtual MM::AutoFocus* GetAutoFocus(const MM::Device* caller) = 0;
+
       virtual MM::State* GetStateDevice(const MM::Device* caller, const char* deviceName) = 0;
       virtual MM::SignalIO* GetSignalIODevice(const MM::Device* caller, const char* deviceName) = 0;
 
