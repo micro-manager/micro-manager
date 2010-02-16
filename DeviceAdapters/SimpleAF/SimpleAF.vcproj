@@ -185,6 +185,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\FocusMonitor.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\MMDevice\ImgBuffer.cpp"
 				>
 			</File>
