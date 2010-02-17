@@ -151,10 +151,10 @@ int PIZStage::Initialize()
    CreateProperty("StepSizeUm", "0.01", MM::Float, false, pAct);
    stepSizeUm_ = 0.01;
 
-   // axis limits (assumed symmetrical)
+   // axis limits
    pAct = new CPropertyAction (this, &PIZStage::OnPosition);
    CreateProperty(MM::g_Keyword_Position, "0.0", MM::Float, false, pAct);
-   SetPropertyLimits(MM::g_Keyword_Position, -axisLimitUm_, axisLimitUm_);
+   SetPropertyLimits(MM::g_Keyword_Position, 0, axisLimitUm_);
 
    ret = UpdateStatus();
    if (ret != DEVICE_OK)

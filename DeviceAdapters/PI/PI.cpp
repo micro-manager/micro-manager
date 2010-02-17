@@ -36,6 +36,10 @@
 
 const char* g_PI_ZStageDeviceName = "PIZStage";
 const char* g_PI_ZStageAxisName = "Axis";
+const char* g_PropertyMaxUm = "MaxZ_um";
+const char* g_PropertyWaitForResponse = "WaitForResponse";
+const char* g_Yes = "Yes";
+const char* g_No = "No";
 
 using namespace std;
 
@@ -91,7 +95,8 @@ PIZStage::PIZStage() :
    port_("Undefined"),
    stepSizeUm_(0.1),
    initialized_(false),
-   answerTimeoutMs_(1000)
+   answerTimeoutMs_(1000),
+   pos_(0.0)
 {
    InitializeDefaultErrorMessages();
 
@@ -108,6 +113,10 @@ PIZStage::PIZStage() :
    CPropertyAction* pAct = new CPropertyAction (this, &PIZStage::OnPort);
    CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
 
+   CreateProperty(g_PropertyMaxUm, "500.0", MM::Float, false, 0, true);
+   CreateProperty(g_PropertyWaitForResponse, g_Yes, MM::String, false, 0, true);
+   AddAllowedValue(g_PropertyWaitForResponse, g_Yes);
+   AddAllowedValue(g_PropertyWaitForResponse, g_No);
 }
 
 PIZStage::~PIZStage()
@@ -146,6 +155,12 @@ int PIZStage::Initialize()
    CreateProperty("Interface", "Computer", MM::String, false, pAct);
    AddAllowedValue("Interface", "Remote: Interface commands mode");
    AddAllowedValue("Interface", "Local: Frontpanel control");
+
+   pAct = new CPropertyAction (this, &PIZStage::OnPosition);
+   CreateProperty(MM::g_Keyword_Position, "0.0", MM::Float, false, pAct);
+   double upperLimit = getAxisLimit();
+   if (upperLimit > 0.0)
+      SetPropertyLimits(MM::g_Keyword_Position, 0.0, upperLimit);
    
    ret = UpdateStatus();
    if (ret != DEVICE_OK)
@@ -197,40 +212,57 @@ int PIZStage::SetPositionUm(double pos)
       return ret;
 
    CDeviceUtils::SleepMs(10);
-   // block/wait for acknowledge, or until we time out;
-   ret = SendSerialCommand(port_.c_str(), "ERR?", "\n");
-   if (ret != DEVICE_OK)
-      return ret;
-   string answer;
-   ret = GetSerialAnswer(port_.c_str(), "\n", answer);
-   if (ret != DEVICE_OK)
-      return ret;
 
-   int errNo = atoi(answer.c_str());
-   if (errNo == 0)
-	   return DEVICE_OK;
+   if (waitForResponse())
+   {
 
-   return ERR_OFFSET + errNo;   
+      // block/wait for acknowledge, or until we time out;
+      ret = SendSerialCommand(port_.c_str(), "ERR?", "\n");
+      if (ret != DEVICE_OK)
+         return ret;
+      string answer;
+      ret = GetSerialAnswer(port_.c_str(), "\n", answer);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      int errNo = atoi(answer.c_str());
+      if (errNo == 0)
+	      return DEVICE_OK;
+
+      return ERR_OFFSET + errNo;
+   }
+   else
+   {
+      pos_ = pos;
+      return DEVICE_OK;
+   }
 }
   
 int PIZStage::GetPositionUm(double& pos)
 {
-   ostringstream command;
-   command << "POS? " << axisName_;
+   if (waitForResponse())
+   {
+      ostringstream command;
+      command << "POS? " << axisName_;
 
-   // send command
-   int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\n");
-   if (ret != DEVICE_OK)
-      return ret;
+      // send command
+      int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\n");
+      if (ret != DEVICE_OK)
+         return ret;
 
-   // block/wait for acknowledge, or until we time out;
-   string answer;
-   ret = GetSerialAnswer(port_.c_str(), "\n", answer);
-   if (ret != DEVICE_OK)
-      return ret;
+      // block/wait for acknowledge, or until we time out;
+      string answer;
+      ret = GetSerialAnswer(port_.c_str(), "\n", answer);
+      if (ret != DEVICE_OK)
+         return ret;
 
-   if (!GetValue(answer, pos))
-      return ERR_UNRECOGNIZED_ANSWER;
+      if (!GetValue(answer, pos))
+         return ERR_UNRECOGNIZED_ANSWER;
+   }
+   else
+   {
+      pos = pos_;
+   }
 
    return DEVICE_OK;
 }
@@ -288,19 +320,25 @@ int PIZStage::OnInterface(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
-      // send command
-      int ret = SendSerialCommand(port_.c_str(), "DEV:CONT?", "\n");
-      if (ret != DEVICE_OK)
-         return ret;
 
       // block/wait for acknowledge, or until we time out;
-      string answer;
-      ret = GetSerialAnswer(port_.c_str(), "\n", answer);
-      if (ret != DEVICE_OK)
-         return ret;
-      LogMessage(answer.c_str(), false);
-      pProp->Set(answer.c_str());
-   } else if (eAct == MM::AfterSet)
+      if (waitForResponse())
+      {
+         // send command
+         int ret = SendSerialCommand(port_.c_str(), "DEV:CONT?", "\n");
+         if (ret != DEVICE_OK)
+            return ret;
+         
+         string answer;
+
+         ret = GetSerialAnswer(port_.c_str(), "\n", answer);
+         if (ret != DEVICE_OK)
+            return ret;
+         LogMessage(answer.c_str(), false);
+         pProp->Set(answer.c_str());
+      }
+   }
+   else if (eAct == MM::AfterSet)
    {
       std::string mode;
       pProp->Get(mode);
@@ -318,6 +356,29 @@ int PIZStage::OnInterface(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+int PIZStage::OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      double pos;
+      int ret = GetPositionUm(pos);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      pProp->Set(pos);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      double pos;
+      pProp->Get(pos);
+      int ret = SetPositionUm(pos);
+      if (ret != DEVICE_OK)
+         return ret;
+
+   }
+
+   return DEVICE_OK;
+}
 
 
 
@@ -360,4 +421,23 @@ bool PIZStage::GetValue(string& sMessage, double& pos)
    return false;
 }
 
+bool PIZStage::waitForResponse()
+{
+   char val[MM::MaxStrLength];
+   int ret = GetProperty(g_PropertyWaitForResponse, val);
+   assert(ret == DEVICE_OK);
+   if (strcmp(val, g_Yes) == 0)
+      return true;
+   else
+      return false;
+}
 
+double PIZStage::getAxisLimit()
+{
+   char val[MM::MaxStrLength];
+   int ret = GetProperty(g_PropertyMaxUm, val);
+   if(ret == DEVICE_OK)
+      return atof(val);
+   else
+      return 0.0;
+}
