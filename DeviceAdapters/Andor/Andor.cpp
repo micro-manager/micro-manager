@@ -222,6 +222,8 @@ AndorCamera::AndorCamera() :
   SetErrorText(ERR_TRIGGER_NOT_SUPPORTED, "Trigger Not supported.");
   SetErrorText(ERR_INVALID_VSPEED, "Invalid Vertical Shift Speed.");
   SetErrorText(ERR_INVALID_PREAMPGAIN, "Invalid Pre-Amp Gain.");
+  SetErrorText(ERR_CAMERA_DOES_NOT_EXIST, "No Camera Found.  Make sure it is connected and switched on, and try again");
+
 
   seqThread_ = new AcqSequenceThread(this);
 

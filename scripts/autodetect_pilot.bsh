@@ -25,6 +25,7 @@ forbiddenLibs.add("Utilities");  // Utilities shouldn't be detected either.
 
 // Device discovery routine:
 detectedDevices = new ArrayList();
+notDetectedDevices = new ArrayList();
 mmc.unloadAllDevices();
 libs = mmc.getDeviceLibraries(".");
 print(libs.size() + " libraries found.");
@@ -56,6 +57,7 @@ public void discover(String libraryName) {
 				print("\t\tdevice deemed detected.");
 			} catch (Throwable e) {
 				print("\t\tfailed! "+e);
+				notDetectedDevices.add(label);
 			}
 		}
 	} catch (Throwable e) {
@@ -83,6 +85,12 @@ public void discover() {
 	
 	for (i=0;i<detectedDevices.size();++i) {
 		print(detectedDevices.get(i));
+	}
+
+	print("Devices not detected: -------------------");
+	
+	for (i=0;i<notDetectedDevices.size();++i) {
+		print(notDetectedDevices.get(i));
 	}
 	
 	print("----------------------------------------");

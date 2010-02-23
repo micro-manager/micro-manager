@@ -18,7 +18,7 @@
 //
 // AUTHOR:        Karl Hoover, karl.hoover@ucsf.edu, 2009 11 11
 // 
-// CVS:           $Id: FastLogger.cpp $
+// CVS:           $Id:$
 
 
 
@@ -168,32 +168,12 @@ bool FastLogger::Initialize(std::string logFileName, std::string logInstanceName
    {
       failureReported=false;
       logInstanceName_=logInstanceName;
-
-      std::string homePath;
-
-      if( logFileName_.length() < 1)
-      {
-#ifdef _WINDOWS
-         homePath = std::string(getenv("HOMEPATH")) + "\\";
-#else
-         homePath = std::string(getenv("HOME")) + "/";
-#endif
-         logFileName_ = homePath + logFileName;
-      }
 		do // scope for the file lock
 		{
-			MMThreadGuard guard(logFileLock_g);		
-			if(NULL == plogFile_g)
-			{
-				plogFile_g = new std::ofstream();
-			}
-			if (!plogFile_g->is_open())
-			{
-				plogFile_g->open(logFileName_.c_str(), ios_base::app);
-			}
-
+			MMThreadGuard guard(logFileLock_g);
+         bRet = Open(logFileName);
 			fast_log_flags_ = flags();
-			if(plogFile_g->is_open())
+			if(bRet)
 			{
 				fast_log_flags_ |= OSTREAM;
 			}
@@ -607,3 +587,56 @@ void FastLogger::InitializeInCurrentThread()
    set_flags (fast_log_flags_);
 }
 */
+
+
+bool FastLogger::Open(const std::string specifiedFile)
+{
+
+   bool bRet = false;
+   try
+   {
+		if(NULL == plogFile_g)
+		{
+			plogFile_g = new std::ofstream();
+         std::cout << "created new log ofstream" << std::endl;
+		}
+		if (!plogFile_g->is_open())
+		{
+         // N.B. we do NOT handle re-opening of the log file on a different path!!
+         
+         if(logFileName_.length() < 1) // if log file path has not yet been specified:
+         {
+            std::cout << "setting log file to  " << specifiedFile.c_str()  << std::endl;
+            logFileName_ = specifiedFile;
+         }
+
+         // first try to open the specified file without any assumption about the path
+			plogFile_g->open(logFileName_.c_str(), ios_base::app);
+         std::cout << "first attempt to open  " << logFileName_.c_str() << (plogFile_g->is_open()?" OK":" FAILED")  << std::endl;
+
+         // if the open failed, assume that this is because the ordinary user does not have write access to the application / program directory
+			if (!plogFile_g->is_open())
+         {
+            std::string homePath;
+#ifdef _WINDOWS
+            homePath = std::string(getenv("HOMEPATH")) + "\\";
+#else
+            homePath = std::string(getenv("HOME")) + "/";
+#endif
+            logFileName_ = homePath + specifiedFile;
+				plogFile_g->open(logFileName_.c_str(), ios_base::app);
+            std::cout << "2nd attempt to open  " << logFileName_.c_str() << (plogFile_g->is_open()?" OK":" FAILED")  << std::endl;
+         }
+
+		}
+      else
+      {
+         std::cout << "log file " << logFileName_.c_str() << " was open already" << std::endl;
+      }
+
+      bRet = plogFile_g->is_open();
+   }
+   catch(...){}
+   return bRet;
+
+}

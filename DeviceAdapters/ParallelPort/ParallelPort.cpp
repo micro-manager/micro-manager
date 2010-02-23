@@ -167,6 +167,20 @@ int CParallelPort::Initialize()
 	if (nRet != DEVICE_OK)
 		return nRet;
 
+      //Input
+	pAct = new CPropertyAction (this, &CParallelPort::OnInput);
+	nRet = CreateProperty("Input", "0", MM::Integer, true, pAct);
+	if (nRet != DEVICE_OK)
+		return nRet;
+
+   // write 0 for output only,
+   // write 32  0x20 for bi-directional
+	pAct = new CPropertyAction (this, &CParallelPort::OnControlRegister);
+	nRet = CreateProperty("ControlRegister", "0", MM::Integer, false, pAct);
+	if (nRet != DEVICE_OK)
+		return nRet;
+
+
 	nRet = UpdateStatus();
 	if (nRet != DEVICE_OK)
 		return nRet;
@@ -223,6 +237,49 @@ int CParallelPort::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 	return DEVICE_OK;
 }
+
+
+
+int CParallelPort::OnInput(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	if (eAct == MM::BeforeGet)
+	{
+      // read value from hardware
+	   const short addrLPT1 = 0x378;
+      short buf;
+	   buf = Inp32(addrLPT1);
+      pProp->Set((long)buf);
+	}
+	else if (eAct == MM::AfterSet)
+	{
+         // nothing to do for this read-only property
+	}
+
+	return DEVICE_OK;
+}
+
+
+
+int CParallelPort::OnControlRegister(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	if (eAct == MM::BeforeGet)
+	{
+		// nothing to do, let the caller to use cached property
+	}
+	else if (eAct == MM::AfterSet)
+	{
+		long pos;
+		pProp->Get(pos);
+      short buf = pos;
+   	const short addr = 0x378 + 2; // the control register is the base port + 2
+	   Out32(addr, buf);
+   }
+
+	return DEVICE_OK;
+}
+
+
+
 
 
 ///////////////////////////////////////////////////////////////////////////////

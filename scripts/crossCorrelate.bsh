@@ -7,8 +7,13 @@ import ij.ImagePlus;
 import ij.process.FHT;
 import java.awt.geom.Point2D;
 import ij.process.ShortProcessor;
+import java.lang.Math;
+import java.awt.geom.AffineTransform;
 
 // Performs a 2D cross-correlation between two images)
+
+
+ImageProcessor theSlide = null;
 
 ImageProcessor crossCorrelate(ImageProcessor proc1, ImageProcessor proc2) {
 	h1 = new FHT(proc1);
@@ -25,13 +30,16 @@ ImageProcessor crossCorrelate(ImageProcessor proc1, ImageProcessor proc2) {
 // Measures the displacement between two images by cross-correlating, and then finding the maximum value.
 // Accurate to one pixel only.
 
-Point measureDisplacement(ImageProcessor proc1, ImageProcessor proc2) {
+Point measureDisplacement(ImageProcessor proc1, ImageProcessor proc2, boolean display) {
 	result = crossCorrelate(proc1,proc2);
 	img = new ImagePlus("",result);
 	p = ImageUtils.findMaxPixel(img);
 	d = new Point(p.x - img.getWidth()/2, p.y - img.getHeight()/2);
-	img.show();
-	img.setRoi(p.x-5,p.y-5,11,11);
+
+	if (display) {
+		img.show();
+		img.setRoi(p.x-5,p.y-5,11,11);
+	}
 	return d;
 }
 
@@ -44,6 +52,121 @@ moveRelative(dx, dy) {
 	mmc.waitForDevice(xystage);
 	curPos = gui.getXYStagePosition();
 	return new Point2D.Double(curPos.x - startPos.x, curPos.y - startPos.y);
+}
+
+ImageProcessor getSubImage(ImageProcessor proc, int x, int y, int w, int h) {
+	proc2 = new ShortProcessor(w,h);
+	proc2.insert(proc,-x,-y);
+	return proc2;
+}
+
+ImageProcessor simulateAcquire(slideProc, x, y) {
+	int w = slideProc.getWidth();
+	int h = slideProc.getHeight();
+	return getSubImage(slideProc, x, y, w, h);
+}
+
+ImageProcessor snapImageAt(double x, double y, boolean simulate) {
+	if (simulate) {
+		return simulateAcquire(theSlide,(int) (x+(3*Math.random()-1.5)),(int) (y+(3*Math.random()-1.5)));
+	} else {
+		gui.setXYStagePosition(x,y);
+		mmc.waitForDevice(mmc.getXYStageDevice());
+		mmc.snapImage();
+		pix = mmc.getImage();
+		gui.displayImage(pix);
+		return ImageUtils.makeProcessor(mmc,pix);
+	}
+}
+
+
+pointPairs = new Hashtable();
+
+runSearch(double dxi, double dyi, boolean sim) {
+
+
+	double x;
+	double y;
+	if (sim) {
+		x = 0.;
+		y = 0.;
+	} else {
+		p = gui.getXYStagePosition();
+		x = p.x;
+		y = p.y;
+	}
+
+	// First find the smallest detectable displacement.
+	baseImage = snapImageAt(x,y,sim);
+	int w = baseImage.getWidth();
+	int h = baseImage.getHeight();
+	double mag = 0;
+	double dx = dxi;
+	double dy = dyi;
+
+	while (mag<0.25) {
+		dx = dx*2;
+		dy = dy*2;
+		latestImage = snapImageAt(x+dx,y+dy,sim);
+		d = measureDisplacement(baseImage,latestImage,false);
+		mag = Math.sqrt(d.x*d.x + d.y*d.y);
+	}
+	print("Smallest detected displacement: "+d);
+
+	// Now continue to double displacements and match acquired half-size images with expected half-size images
+
+	for (i=1;i<25;i++) {
+
+		print(dx+","+dy+","+d);
+		if ((8*Math.abs(d.y)>h) || (8*Math.abs(d.x)>w))
+			break;
+
+		dx = dx*2;
+		dy = dy*2;
+		d.x = d.x*2;
+		d.y = d.y*2;
+
+		ImageProcessor snap = (ImageProcessor) snapImageAt(x+dx,y+dy,sim);
+		ImageProcessor foundImage = getSubImage(snap,(int) w/4,(int) h/4,w/2,h/2);
+		//new ImagePlus("f "+dx,foundImage).show();
+		ImageProcessor simulatedImage = getSubImage(baseImage,(int) (x+d.x+w/4),(int) (y+d.y+h/4),w/2,h/2);
+		//new ImagePlus("s "+dx,simulatedImage).show();
+		dNew = measureDisplacement(simulatedImage, foundImage, false);
+
+		d.x = d.x + dNew.x;
+		d.y = d.y + dNew.y;
+
+	}
+	pointPairs.put(new Point2D.Double(d.x, d.y),new Point2D.Double(dx,dy));
+}
+
+AffineTransform measureCameraToStageTransform(boolean sim) {
+	if (sim && theSlide == null) {
+		theSlide = IJ.getImage().getProcessor();
+	}
+
+	roi = gui.getROI();
+	w = roi.width;
+	h = roi.height;
+	w2 = 1 << ((int) Math.floor(Math.log(w)/Math.log(2)));
+	h2 = 1 << ((int) Math.floor(Math.log(h)/Math.log(2)));
+
+	if ((w != w2) || (h != h2)) {
+		mmc.setROI((w-w2)>>1,(h-h2)>>1,w2,h2);
+	}
+	
+
+	pointPairs.clear();
+
+	runSearch(-0.125,0,sim);
+	runSearch(0.125,0,sim);
+	runSearch(0,-0.125,sim);
+	runSearch(0,0.125,sim);
+	return generateAffineTransformFromPointPairs(pointPairs);
+}
+
+double getPixelSize(AffineTransform cameraToStage) {
+	return Math.sqrt(cameraToStage.getDeterminant());
 }
 
 update();

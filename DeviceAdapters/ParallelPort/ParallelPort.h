@@ -62,6 +62,9 @@ public:
    // action interface
    // ----------------
    int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnInput(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnControlRegister(MM::PropertyBase* pProp, MM::ActionType eAct);
+
 
 private:
    int OpenPort(const char* pszName, long lnValue);

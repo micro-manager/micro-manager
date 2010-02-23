@@ -1,9 +1,14 @@
 package org.micromanager.utils;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
@@ -13,6 +18,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import java.util.prefs.BackingStoreException;
 
@@ -187,5 +194,39 @@ public class JavaUtils {
         return true;
     }
 
+    /*
+     * Serializes an object and stores it in Preferences
+     */
+    public static void putObjectInPrefs(Preferences prefs, String key, Serializable obj) {
+        ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+        try {
+            ObjectOutputStream objectStream = new ObjectOutputStream(byteStream);
+            objectStream.writeObject(obj);
+        } catch (Exception e) {
+            ReportingUtils.logError(e, "Failed to save object in Preferences.");
+            return;
+        }
+        byte [] serialBytes = byteStream.toByteArray();
+        prefs.putByteArray(key, serialBytes);
+    }
+
+    /*
+     * Retrieves an object from Preferences (deserialized).
+     */
+
+    public static Object getObjectFromPrefs(Preferences prefs, String key, Object def) {
+        byte [] serialBytes = prefs.getByteArray(key, new byte[0]);
+        if (serialBytes.length == 0)
+            return def;
+        ByteArrayInputStream byteStream = new ByteArrayInputStream(serialBytes);
+        try {
+            ObjectInputStream objectStream = new ObjectInputStream(byteStream);
+            return objectStream.readObject();
+        } catch (Exception e) {
+            ReportingUtils.logError(e, "Failed to get object from preferences.");
+            return def;
+        }
+    }
+    
 }
 

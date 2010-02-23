@@ -37,6 +37,8 @@ const char* g_DeviceNameDTOLDA2 = "DTOL-DAC-2";
 const char* g_DeviceNameDTOLDA3 = "DTOL-DAC-3";
 
 const char* g_volts = "Volts";
+const char* g_PropertyMin = "MinV";
+const char* g_PropertyMax = "MaxV";
 
 // Global state of the DTOL switch to enable simulation of the shutter device.
 // The virtual shutter device uses this global variable to restore state of the switch
@@ -353,6 +355,10 @@ CDTOLDA::CDTOLDA(unsigned channel, const char* name) :
    SetErrorText(ERR_INITIALIZE_FAILED, "Initialization of the device failed");
    SetErrorText(ERR_WRITE_FAILED, "Failed to write data to the device");
    SetErrorText(ERR_CLOSE_FAILED, "Failed closing the device");
+
+   CreateProperty(g_PropertyMin, "0.0", MM::Float, false, 0, true);
+   CreateProperty(g_PropertyMax, "5.0", MM::Float, false, 0, true);
+      
 }
 
 CDTOLDA::~CDTOLDA()
@@ -402,6 +408,13 @@ int CDTOLDA::Initialize()
 
    // Voltage
    // -----
+   char value[MM::MaxStrLength];
+   GetProperty(g_PropertyMin, value);
+   minV_ = atof(value);
+
+   GetProperty(g_PropertyMax, value);
+   maxV_ = atof(value);
+
    CPropertyAction* pAct = new CPropertyAction (this, &CDTOLDA::OnVolts);
    nRet = CreateProperty(g_volts, "0.0", MM::Float, false, pAct);
    if (nRet != DEVICE_OK)

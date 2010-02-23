@@ -41,6 +41,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalOptions="/D &quot;_CRT_SECURE_NO_WARNINGS&quot;"
 				Optimization="0"
 				AdditionalIncludeDirectories="../../3rdparty;../../3rdparty/boost;../../3rdparty\boost\boost;&quot;..\..\3rdparty\Microsoft\VisualC++\include&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;_WINDOWS"
@@ -111,7 +112,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalOptions="/wd4244"
+				AdditionalOptions="/D &quot;_CRT_SECURE_NO_WARNINGS&quot;"
 				AdditionalIncludeDirectories="../../3rdparty;../../3rdparty/boost;../../3rdparty\boost\boost;&quot;..\..\3rdparty\Microsoft\VisualC++\include&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;_WINDOWS"
 				ExceptionHandling="2"
@@ -175,6 +176,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalOptions="/D &quot;_CRT_SECURE_NO_WARNINGS&quot;"
 				AdditionalIncludeDirectories="../../3rdparty;../../3rdparty/boost;../../3rdparty\boost\boost;&quot;..\..\3rdparty\Microsoft\VisualC++\include&quot;"
 			/>
 			<Tool

@@ -225,7 +225,7 @@ public class Hub {
     }
 
     public void updateView() {
-        SwingUtilities.invokeLater(new TilePlacer(null));
+        SwingUtilities.invokeLater(new GUIUpdater(null));
     }
 
     protected void finalize() throws Throwable {
@@ -503,8 +503,8 @@ public class Hub {
 		public AcqControlDlgMosaic(MMAcquisitionEngineMTMosaic eng, ScriptInterface app) {
 			super(eng, null, (DeviceControlGUI) app_);
 
-			multiPosCheckBox_.setVisible(false);
-			multiPosCheckBox_.setSelected(true);
+			//multiPosCheckBox_.setVisible(false);
+			positionsPanel_.setSelected(true);
 			listButton_.setVisible(false);
 			JLabel surveyorRoiLabel = new JLabel("(Each Surveyor ROI makes one mosaic.)");
 			surveyorRoiLabel.setFont(new Font("Arial", Font.PLAIN, 10));
@@ -517,21 +517,32 @@ public class Hub {
 	}
 
     /*
-     * Draws tiles at the end of the Swing Event Dispatcher Thread Queue.
+     * Draws tiles and the ROI at the end of the Swing Event Dispatcher Thread Queue.
      */
-    class TilePlacer implements Runnable {
+    class GUIUpdater implements Runnable {
 
-        private Point tileIndex_;
+        private Point tileIndex_ = null;
+        private boolean regenerate_ = true;
 
-        TilePlacer(Point tileIndex) {
+        GUIUpdater(Point tileIndex) {
             tileIndex_ = tileIndex;
         }
 
+        GUIUpdater() {
+            tileIndex_ = null;
+        }
+
+        GUIUpdater(boolean regenerate) {
+            regenerate_ = regenerate;
+        }
+        
         public void run() {
             if (tileIndex_ == null) {
-                regenerateView();
+                if (regenerate_)
+                    regenerateView();
                 if (modeMgr_.getMode() == ModeManager.NAVIGATE) {
                     Point offScreenPos = coords_.mapToOffScreen(controller_.getCurrentMapPosition());
+                    coords_.setRoiDimensionsOnMap(controller_.getCurrentRoiDimensions());
                     display_.showRoiAt(coords_.offScreenToRoiRect(offScreenPos));
                 } else {
                     display_.hideRoi();
@@ -593,13 +604,13 @@ public class Hub {
 
         public void run() {
             while (stopTileGrabberThread_ == false) {
-                ArrayList<Point> missingTiles = findMissingTiles();
                 if (modeMgr_.getMode() == ModeManager.SURVEY) {
+                    ArrayList<Point> missingTiles = findMissingTiles();
                     if (missingTiles.size() > 0) {
                         try {
                             Point tile = findBestTile(missingTiles);
                             acquireNewTile(tile);
-                            SwingUtilities.invokeLater(new TilePlacer(tile));
+                            SwingUtilities.invokeLater(new GUIUpdater(tile));
                         } catch (Throwable e) {
                             ReportingUtils.logError(e);
                         }
@@ -609,6 +620,13 @@ public class Hub {
                         } catch (InterruptedException e) {
                             ReportingUtils.logError(e, "tileGrabberThread sleep resulted in an exception.");
                         }
+                    }
+                } else {
+                    SwingUtilities.invokeLater(new GUIUpdater(false));
+                    try {
+                        sleep(20);
+                    } catch (InterruptedException e) {
+                        ReportingUtils.logError(e, "tileGrabberThread sleep resulted in an exception.");
                     }
                 }
             }

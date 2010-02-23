@@ -1,12 +1,11 @@
-<?xml version="1.0" encoding="Windows-1252"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="9.00"
-	Name="mmgrProgRes"
-	ProjectGUID="{9D891399-2C51-4BDA-8F44-3A8A506657BA}"
-	RootNamespace="mmgrProgRes"
+	Version="9,00"
+	Name="Marzhauser"
+	ProjectGUID="{2B522528-9660-4B78-8E2A-BC296C9B9937}"
 	Keyword="Win32Proj"
-	TargetFrameworkVersion="131072"
+	TargetFrameworkVersion="0"
 	>
 	<Platforms>
 		<Platform
@@ -42,8 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\..\3rdparty\Jenoptik\sdk;..\..\..\3rdparty\Jenoptik;&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\include&quot;"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS;USBCAMERAS"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;MODULE_EXPORTS"
 				MinimalRebuild="true"
 				ExceptionHandling="2"
 				BasicRuntimeChecks="3"
@@ -66,16 +64,13 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="shlwapi.lib"
-				OutputFile="$(OutDir)/mmgr_dal_ProgRes.dll"
+				OutputFile="$(OutDir)/mmgr_dal_Marzhauser.dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile="$(OutDir)/mmgrProgRes.pdb"
+				ProgramDatabaseFile="$(OutDir)/Marzhausewr.pdb"
 				SubSystem="2"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary="$(OutDir)/mmgrProgRes.lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -126,8 +121,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\..\..\3rdparty\Jenoptik\sdk;..\..\..\3rdparty\Jenoptik;&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\include&quot;"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS;USBCAMERAS"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;MODULE_EXPORTS"
 				ExceptionHandling="2"
 				RuntimeLibrary="0"
 				RuntimeTypeInfo="true"
@@ -148,17 +142,14 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="shlwapi.lib"
-				OutputFile="$(OutDir)/mmgr_dal_ProgRes.dll"
+				OutputFile="$(OutDir)/mmgr_dal_Marzhauser.dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary="$(OutDir)/mmgrProgRes.lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -198,60 +189,8 @@
 				>
 			</File>
 			<File
-				RelativePath=".\ExpCtrl.cpp"
+				RelativePath=".\Marzhauser.cpp"
 				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\FocusCallback.cpp"
-				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\..\MMDevice\ImgBuffer.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\ImgFinalProc.cpp"
-				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\..\..\3rdparty\Jenoptik\sdk\MexExlImplement.c"
-				>
-			</File>
-			<File
-				RelativePath=".\mmgrProgRes.cpp"
-				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\MMDevice\ModuleInterface.cpp"
@@ -260,18 +199,6 @@
 			<File
 				RelativePath="..\..\MMDevice\Property.cpp"
 				>
-			</File>
-			<File
-				RelativePath=".\TriggerWaitProc.cpp"
-				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="0"
-					/>
-				</FileConfiguration>
 			</File>
 		</Filter>
 		<Filter
@@ -288,15 +215,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\MMDevice\ImgBuffer.h"
+				RelativePath=".\Marzhauser.h"
 				>
 			</File>
 			<File
-				RelativePath=".\mmgrProgRes.h"
+				RelativePath="..\..\MMDevice\MMDevice.h"
 				>
 			</File>
 			<File
-				RelativePath="MMDevice\ModuleInterface.h"
+				RelativePath="..\..\MMDevice\MMDeviceConstants.h"
 				>
 			</File>
 			<File
@@ -307,30 +234,14 @@
 				RelativePath="..\..\MMDevice\Property.h"
 				>
 			</File>
-			<File
-				RelativePath=".\resource.h"
-				>
-			</File>
-			<File
-				RelativePath=".\stdafx.h"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"
 			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx"
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
 			>
-			<File
-				RelativePath=".\mmgrProgRes.rc"
-				>
-			</File>
 		</Filter>
 	</Files>
 	<Globals>
-		<Global
-			Name="RESOURCE_FILE"
-			Value="mmgrProgRes.rc"
-		/>
 	</Globals>
 </VisualStudioProject>

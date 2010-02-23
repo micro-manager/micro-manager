@@ -32,6 +32,7 @@
 
 const char* g_DeviceNameMultiShutter = "Multi Shutter";
 const char* g_Undefined = "Undefined";
+const char*  g_NoDevice = "None";
 const char* g_DeviceNameDAShutter = "DA Shutter";
 const char* g_DeviceNameDAZStage = "DA Z Stage";
 const char* g_DeviceNameAutoFocusStage = "AutoFocus Stage";
@@ -719,7 +720,7 @@ int AutoFocusStage::GetPositionUm(double& pos)
  * Sets a voltage (in mV) on the DA, relative to the minimum Stage position
  * The origin is NOT taken into account
  */
-int AutoFocusStage::SetPositionSteps(long steps)
+int AutoFocusStage::SetPositionSteps(long /* steps */)
 {
    if (AutoFocusDevice_ == 0)
       return ERR_NO_AUTOFOCUS_DEVICE;
@@ -727,7 +728,7 @@ int AutoFocusStage::SetPositionSteps(long steps)
    return  DEVICE_UNSUPPORTED_COMMAND;
 }
 
-int AutoFocusStage::GetPositionSteps(long& steps)
+int AutoFocusStage::GetPositionSteps(long& /*steps */)
 {
    if (AutoFocusDevice_ == 0)
       return ERR_NO_AUTOFOCUS_DEVICE;
@@ -746,7 +747,7 @@ int AutoFocusStage::SetOrigin()
    return  DEVICE_UNSUPPORTED_COMMAND;
 }
 
-int AutoFocusStage::GetLimits(double& min, double& max)
+int AutoFocusStage::GetLimits(double& /*min*/, double& /*max*/)
 {
    if (AutoFocusDevice_ == 0)
       return ERR_NO_AUTOFOCUS_DEVICE;
@@ -785,6 +786,7 @@ int AutoFocusStage::OnAutoFocusDevice(MM::PropertyBase* pProp, MM::ActionType eA
  */
 StateDeviceShutter::StateDeviceShutter() :
    stateDeviceName_ (""),
+   stateDevice_ (0),
    initialized_ (false)
 {
    InitializeDefaultErrorMessages();
@@ -813,26 +815,22 @@ void StateDeviceShutter::GetName(char* Name) const
                                                                              
 int StateDeviceShutter::Initialize() 
 {
-  // get list with available DA devices.   TODO: this is a initialization parameter, which makes it harder for the end-user to set up!
+  // get list with available DA devices. 
    availableStateDevices_ = GetLoadedDevicesOfType(MM::StateDevice);
+   std::vector<std::string>::iterator it;
+   it = availableStateDevices_.begin();
+   availableStateDevices_.insert(it, g_NoDevice);
+
 
    CPropertyAction* pAct = new CPropertyAction (this, &StateDeviceShutter::OnStateDevice);      
-   std::string defaultStateDevice = "Undefined";
-   if (availableStateDevices_.size() >= 1)
-      defaultStateDevice = availableStateDevices_[0];
+   std::string defaultStateDevice = g_NoDevice;
    CreateProperty("State Device", defaultStateDevice.c_str(), MM::String, false, pAct, false);         
    if (availableStateDevices_.size() >= 1)
       SetAllowedValues("State Device", availableStateDevices_);
    else
       return ERR_NO_STATE_DEVICE_FOUND;
 
-   // This is needed, otherwise DeviceDA_ is not always set resulting in crashes
-   // This could lead to strange problems if multiple DA devices are loaded
    SetProperty("State Device", defaultStateDevice.c_str());
-
-   int ret = UpdateStatus();
-   if (ret != DEVICE_OK)
-      return ret;
 
    initialized_ = true;
 
@@ -849,12 +847,12 @@ bool StateDeviceShutter::Busy()
 }
 
 /*
- * Opens or closes the shutter.  Remembers voltage from the 'open' position
+ * Opens or closes the shutter. 
  */
 int StateDeviceShutter::SetOpen(bool open)
 {
    if (stateDevice_ == 0)
-      return ERR_NO_STATE_DEVICE;
+      return DEVICE_OK;
 
    return stateDevice_->SetGateOpen(open);
 }
@@ -862,7 +860,7 @@ int StateDeviceShutter::SetOpen(bool open)
 int StateDeviceShutter::GetOpen(bool& open)
 {
    if (stateDevice_ == 0)
-      return ERR_NO_STATE_DEVICE;
+      return DEVICE_OK;
 
    return stateDevice_->GetGateOpen(open);
 }
@@ -877,15 +875,24 @@ int StateDeviceShutter::OnStateDevice(MM::PropertyBase* pProp, MM::ActionType eA
       pProp->Set(stateDeviceName_.c_str());
    }
    else if (eAct == MM::AfterSet)
-   {
+  {
+      // Avoid leaving a State device in the closed positions!
+      SetOpen(true);
+      
       std::string stateDeviceName;
       pProp->Get(stateDeviceName);
-      MM::State* stateDevice = (MM::State*) GetDevice(stateDeviceName.c_str());
-      if (stateDevice != 0) {
-         stateDevice_ = stateDevice;
-         stateDeviceName_ = stateDeviceName;
-      } else
-         return ERR_INVALID_DEVICE_NAME;
+      if (stateDeviceName == g_NoDevice) {
+         stateDevice_ = 0;
+         stateDeviceName_ = g_NoDevice;
+      } else {
+         MM::State* stateDevice = (MM::State*) GetDevice(stateDeviceName.c_str());
+         if (stateDevice != 0) {
+            stateDevice_ = stateDevice;
+            stateDeviceName_ = stateDeviceName;
+         } else {
+            return ERR_INVALID_DEVICE_NAME;
+         }
+      }
    }
    return DEVICE_OK;
 }

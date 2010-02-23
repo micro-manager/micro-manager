@@ -118,6 +118,7 @@ public:
    bool IsValid()throw();
    void Shutdown()throw(IMMLogger::runtime_exception);
    bool Reset()throw(IMMLogger::runtime_exception);
+   bool Open(const std::string f__);
    priority SetPriorityLevel(priority level)throw();
    bool EnableLogToStderr(bool enable)throw();
    IMMLogger::priority  EnableTimeStamp(IMMLogger::priority flags)throw();

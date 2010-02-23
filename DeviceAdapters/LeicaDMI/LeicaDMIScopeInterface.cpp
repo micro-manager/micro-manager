@@ -173,11 +173,13 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
    // Suppress event reporting for Diaphragms
    int diaphragm[4] = {g_Field_Diaphragm_TL, g_Aperture_Diaphragm_TL, g_Field_Diaphragm_IL, g_Aperture_Diaphragm_IL};
    for (int i=0; i<4; i++) {
-      command << diaphragm[i] << "003 0 0";
-      ret = GetAnswer(device, core, command.str().c_str(), answer);
-      if (ret != DEVICE_OK)
-         return ret;
-      command.str("");
+      if (scopeModel_->IsDeviceAvailable(diaphragm[i])) {
+         command << diaphragm[i] << "003 0 0";
+         ret = GetAnswer(device, core, command.str().c_str(), answer);
+         if (ret != DEVICE_OK)
+            return ret;
+         command.str("");
+      }
    }
 
    // Suppress event reporting for Mag Changer

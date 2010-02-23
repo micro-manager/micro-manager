@@ -1,5 +1,5 @@
 Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual Studio 2008
+# Visual C++ Express 2008
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MMCore", "..\MMCore\MMCore.vcproj", "{36571628-728C-4ACD-A47F-503BA91C5D43}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MMCoreJ_wrap", "MMCoreJ_wrap.vcproj", "{EFA68887-8A97-49D7-BAB4-768E15A4E597}"
@@ -179,6 +179,12 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GenericSLM", "..\DeviceAdapters\GenericSLM\GenericSLM.vcproj", "{E3DA287B-6861-49E2-8484-B08DBA020F7D}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AndorLaserCombiner", "..\DeviceAdapters\AndorLaserCombiner\AndorLaserCombiner.vcproj", "{489AF9AB-7A0E-43DE-8483-3E4B8CCCBFCD}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mmgrProgRes", "..\DeviceAdapters\Jenoptik\mmgrProgRes.vcproj", "{9D891399-2C51-4BDA-8F44-3A8A506657BA}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BaumerOptronic", "..\SecretDeviceAdapters\BaumerOptronic\BaumerOptronic.vcproj", "{B06A629B-7EAA-4265-A4C0-8A0EC03B00B0}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Marzhauser", "..\DeviceAdapters\Marzhauser\Marzhauser.vcproj", "{2B522528-9660-4B78-8E2A-BC296C9B9937}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -426,6 +432,18 @@ Global
 		{489AF9AB-7A0E-43DE-8483-3E4B8CCCBFCD}.Debug|Win32.Build.0 = Debug|Win32
 		{489AF9AB-7A0E-43DE-8483-3E4B8CCCBFCD}.Release|Win32.ActiveCfg = Release|Win32
 		{489AF9AB-7A0E-43DE-8483-3E4B8CCCBFCD}.Release|Win32.Build.0 = Release|Win32
+		{9D891399-2C51-4BDA-8F44-3A8A506657BA}.Debug|Win32.ActiveCfg = Debug|Win32
+		{9D891399-2C51-4BDA-8F44-3A8A506657BA}.Debug|Win32.Build.0 = Debug|Win32
+		{9D891399-2C51-4BDA-8F44-3A8A506657BA}.Release|Win32.ActiveCfg = Release|Win32
+		{9D891399-2C51-4BDA-8F44-3A8A506657BA}.Release|Win32.Build.0 = Release|Win32
+		{B06A629B-7EAA-4265-A4C0-8A0EC03B00B0}.Debug|Win32.ActiveCfg = Debug|Win32
+		{B06A629B-7EAA-4265-A4C0-8A0EC03B00B0}.Debug|Win32.Build.0 = Debug|Win32
+		{B06A629B-7EAA-4265-A4C0-8A0EC03B00B0}.Release|Win32.ActiveCfg = Release|Win32
+		{B06A629B-7EAA-4265-A4C0-8A0EC03B00B0}.Release|Win32.Build.0 = Release|Win32
+		{2B522528-9660-4B78-8E2A-BC296C9B9937}.Debug|Win32.ActiveCfg = Debug|Win32
+		{2B522528-9660-4B78-8E2A-BC296C9B9937}.Debug|Win32.Build.0 = Debug|Win32
+		{2B522528-9660-4B78-8E2A-BC296C9B9937}.Release|Win32.ActiveCfg = Release|Win32
+		{2B522528-9660-4B78-8E2A-BC296C9B9937}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

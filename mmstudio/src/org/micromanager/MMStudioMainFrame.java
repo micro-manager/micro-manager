@@ -1799,6 +1799,14 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 		profileWin_.setVisible(true);
 	}
 
+   public Rectangle getROI() throws Exception {
+	// ROI values are give as x,y,w,h in individual one-member arrays (pointers in C++):
+      int[][] a = new int[4][1];
+      core_.getROI(a[0],a[1],a[2],a[3]);
+      // Return as a single array with x,y,w,h:
+      return new Rectangle(a[0][0],a[1][0],a[2][0],a[3][0]);
+   }
+
 	private void calculateLineProfileData(ImagePlus imp) {
 		// generate line profile
 		Roi roi = imp.getRoi();
@@ -1829,6 +1837,19 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 			lineProfileData_ = new GraphData();
 		lineProfileData_.setData(line.getPixels());
 	}
+
+   public void setROI(Rectangle r) throws Exception {
+         boolean liveRunning = false;
+			if (liveRunning_) {
+				liveRunning = liveRunning_;
+				enableLiveMode(false);
+			}
+			core_.setROI(r.x, r.y, r.width, r.height);
+			updateStaticInfo();
+			if (liveRunning)
+				enableLiveMode(true);
+
+   }
 
 	private void setROI() {
 		ImagePlus curImage = WindowManager.getCurrentImage();
@@ -1863,15 +1884,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
 			Rectangle r = roi.getBoundingRect();
 			// Stop (and restart) live mode if it is running
-			boolean liveRunning = false;
-			if (liveRunning_) {
-				liveRunning = liveRunning_;
-				enableLiveMode(false);
-			}
-			core_.setROI(r.x, r.y, r.width, r.height);
-			updateStaticInfo();
-			if (liveRunning)
-				enableLiveMode(true);
+         setROI(r);
 
 		} catch (Exception e) {
 			ReportingUtils.showError(e);

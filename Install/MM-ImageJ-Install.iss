@@ -36,7 +36,10 @@ Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.MFC\mfc90.dll 
 Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.MFC\mfc90u.dll ; DestDir: {app}; Flags: ignoreversion
 Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.MFC\mfcm90.dll ; DestDir: {app}; Flags: ignoreversion
 Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.MFC\mfcm90u.dll ; DestDir: {app}; Flags: ignoreversion
+Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.ATL\atl90.dll ; DestDir: {app}; Flags: ignoreversion
+
 Source: micro-manager\ATMCD32D.dll; DestDir: {app}; Flags: ignoreversion
+; ABS & Jenoptik vendor library not installed with their products
 Source: micro-manager\CamUsb_API.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\inpout32.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\libusb0.dll; DestDir: {app}; Flags: ignoreversion
@@ -53,6 +56,7 @@ Source: micro-manager\mmgr_dal_ASIFW1000.dll; DestDir: {app}; Flags: ignoreversi
 Source: micro-manager\mmgr_dal_ASIStage.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_ASIwptr.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_CoherentCube.dll; DestDir: {app}; Flags: ignoreversion
+Source: micro-manager\mmgr_dal_BaumerOptronic.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Conix.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_CSUX.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_DemoCamera.dll; DestDir: {app}; Flags: ignoreversion
@@ -66,6 +70,7 @@ Source: micro-manager\mmgr_dal_K8061.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_LeicaDMI.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_LeicaDMR.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Ludl.dll; DestDir: {app}; Flags: ignoreversion
+Source: micro-manager\mmgr_dal_Marzhauser.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_MCL_MicroDrive.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_MCL_NanoDrive.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Neos.dll; DestDir: {app}; Flags: ignoreversion
@@ -82,6 +87,7 @@ Source: micro-manager\mmgr_dal_PI_GCS.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Piper.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_PrecisExcite.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Prior.dll; DestDir: {app}; Flags: ignoreversion
+Source: micro-manager\mmgr_dal_ProgRes.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_PVCAM.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_QCam.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_ScionCam.dll; DestDir: {app}; Flags: ignoreversion
@@ -100,6 +106,15 @@ Source: micro-manager\mmgr_dal_Vincent.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Yokogawa.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_ZeissCAN.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_ZeissCAN29.dll; DestDir: {app}; Flags: ignoreversion
+; Jenoptik vendor libraries (not installed with product)
+Source: micro-manager\camconj.dll; DestDir: {app}; Flags: ignoreversion
+Source: micro-manager\FireCamJ.dll; DestDir: {app}; Flags: ignoreversion
+Source: micro-manager\MexJCam.dll; DestDir: {app}; Flags: ignoreversion
+Source: micro-manager\ProcessLib.dll; DestDir: {app}; Flags: ignoreversion
+; Baumer Optronic vendor libraries  (not installed with product)
+Source: micro-manager\FxLib.dll; DestDir: {app}; Flags: ignoreversion
+Source: micro-manager\SysInfo.dll; DestDir: {app}; Flags: ignoreversion
+
 
 ; python wrapper
 Source: micro-manager\_MMCorePy.pyd; DestDir: {app}; Flags: ignoreversion skipifsourcedoesntexist
