@@ -1001,7 +1001,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
          }
 
          // return to the starting position, but only if the hardware focus is OFF 
-         if (isFocusStageAvailable() && !afMgr_.getDevice().isContinuousFocusEnabled()) {
+         if (isFocusStageAvailable() && afMgr_.getDevice() != null && !afMgr_.getDevice().isContinuousFocusEnabled()) {
             core_.setPosition(zStage_, startZPosUm_);
             core_.waitForDevice(zStage_);
          }
@@ -1030,6 +1030,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
          ReportingUtils.showError(e, "JSONException");
          return;
       } catch (Exception e) {
+         e.printStackTrace();
          terminate();
          ReportingUtils.showError(e, "Exception");
          return;
