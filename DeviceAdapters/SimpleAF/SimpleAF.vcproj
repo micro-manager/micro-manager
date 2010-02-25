@@ -204,6 +204,10 @@
 				RelativePath=".\SimpleAFImageUtils.cpp"
 				>
 			</File>
+			<File
+				RelativePath=".\ThreePointAF.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"

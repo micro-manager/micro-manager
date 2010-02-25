@@ -44,6 +44,7 @@
 using namespace std;
 const char* g_AutoFocusDeviceName = "SimpleAF";
 const char* g_FocusMonitorDeviceName = "FocusMonitor";
+const char* g_TPFocusDeviceName = "TPFocus";
 const char* g_PresetPropName = "Preset";
 
 // windows DLL entry code
@@ -73,6 +74,7 @@ MODULE_API void InitializeModuleData()
 {
    AddAvailableDeviceName(g_AutoFocusDeviceName, "Exhaustive search AF - 100XImaging Inc.");
    AddAvailableDeviceName(g_FocusMonitorDeviceName, "Focus score monitor - 100XImaging Inc.");
+   AddAvailableDeviceName(g_TPFocusDeviceName, "Three point focus - 100XImaging Inc.");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
@@ -90,6 +92,11 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
    {
       // create autoFocus
       return new FocusMonitor();
+   }
+   if (strcmp(deviceName, g_TPFocusDeviceName) == 0)
+   {
+      // create autoFocus
+      return new ThreePointAF();
    }
 
    // ...supplied name not recognized
@@ -546,11 +553,11 @@ int SimpleAF::Focus(SimpleAF::FocusMode focusmode)
 		GetImageForAnalysis(image);
 		Metadata IMd;
 		MetadataSingleTag stgExp(MM::g_Keyword_Exposure, g_AutoFocusDeviceName, true);
-		stgExp.SetValue(CDeviceUtils::ConvertToString(param_afexposure_));
+		//stgExp.SetValue(CDeviceUtils::ConvertToString(param_afexposure_));
 		IMd.SetTag(stgExp);
 
 		MetadataSingleTag stgZ(MM::g_Keyword_Metadata_Z, g_AutoFocusDeviceName, true);
-		stgZ.SetValue(CDeviceUtils::ConvertToString(dzPos));
+		//stgZ.SetValue(CDeviceUtils::ConvertToString(dzPos));
 		IMd.SetTag(stgZ);
 		
 		//2. Get its sharness score
@@ -558,7 +565,7 @@ int SimpleAF::Focus(SimpleAF::FocusMode focusmode)
 
 		
 		MetadataSingleTag stgScore(MM::g_Keyword_Metadata_Score, g_AutoFocusDeviceName, true);
-		stgScore.SetValue(CDeviceUtils::ConvertToString(score_));
+		//stgScore.SetValue(CDeviceUtils::ConvertToString(score_));
 		IMd.SetTag(stgScore);
 	
 		reporter_.InsertCurrentImageInDebugStack(&IMd);

@@ -111,7 +111,7 @@ int FocusMonitor::Initialize()
    nRet = CreateProperty(g_PropertyDelaySec, "1", MM::Integer, false);
    assert(nRet == DEVICE_OK);
 
-   nRet = CreateProperty(g_PropertyScore, "0.0", MM::Float, false);
+   nRet = CreateProperty(g_PropertyScore, "0.0", MM::Float, true);
    assert(nRet == DEVICE_OK);
 
    nRet = CreateProperty(g_PropertyThreshold, "0.0", MM::Float, false);
