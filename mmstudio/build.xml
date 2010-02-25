@@ -20,8 +20,8 @@
 	<property name="IJ" value="../classext/ij.jar"/>
 	<property name="beanshell" value="../classext/bsh-2.0b4.jar"/>
 	<property name="swingx" value="../classext/swingx-0.9.5.jar"/>
-	<property name="swing_layout" value="../swing-layout-1.0.4.jar"/>
-	<property name="commons_math" value="../commons-math-2.0.jar"/>
+	<property name="swing_layout" value="../classext/swing-layout-1.0.4.jar"/>
+	<property name="commons_math" value="../classext/commons-math-2.0.jar"/>
 	<property name="MMCoreJ" value="../bin/MMCoreJ.jar"/>
 	<property name="MMPluginDir-inst" value="${InstallRoot}/plugins/Micro-Manager"/>
 	<property name="BinRoot" value="../bin"/>
@@ -173,7 +173,6 @@
 		<copy file="${BinRoot}/mmgr_dal_Yokogawa.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_ZeissCAN.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_ZeissCAN29.dll" todir="${InstallRoot}" />
-
 		<!-- Jenoptik vendor libraries (not installed with product) -->
 		<copy file="${BinRoot}/camconj.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/FireCamJ.dll" todir="${InstallRoot}" />

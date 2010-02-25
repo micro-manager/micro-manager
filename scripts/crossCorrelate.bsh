@@ -80,13 +80,64 @@ ImageProcessor snapImageAt(double x, double y, boolean simulate) {
 }
 
 
+Point measureDisplacement(double x1, double y1, Point d, boolean display, boolean sim) {
+		ImageProcessor snap = (ImageProcessor) snapImageAt(x1,y1,sim);
+		ImageProcessor foundImage = getSubImage(snap,(int) ((w-w_small)/2),(int) ((h-h_small)/2),w_small,h_small);
+		//new ImagePlus("found at "+dx+","+dy,foundImage).show();
+		ImageProcessor simulatedImage = getSubImage(baseImage,(int) (d.x-w_small/2+w/2),(int) (d.y-h_small/2+h/2),w_small,h_small);
+		//new ImagePlus("simulated at "+dx+","+dy,simulatedImage).show();
+		dChange = measureDisplacement(simulatedImage, foundImage, display);
+		return new Point(d.x + dChange.x,d.y + dChange.y);
+}
+
 pointPairs = new Hashtable();
 
-runSearch(double dxi, double dyi, boolean sim) {
+Point2D.Double runSearch(double dxi, double dyi, boolean sim) {
+
+	double dx = dxi;
+	double dy = dyi;
+	d = new Point(0,0);
+
+	// Now continue to double displacements and match acquired half-size images with expected half-size images
+
+	for (i=0;i<25;i++) {
+
+		print(dx+","+dy+","+d);
+		if ((2*d.x+w_small/2)>=w/2 || (2*d.y+h_small/2)>=h/2 || (2*d.x-w_small/2)<-(w/2) || (2*d.y-h_small/2)<-(h/2))
+			break;
+
+		dx = dx*2;
+		dy = dy*2;
+		d.x = d.x*2;
+		d.y = d.y*2;
+
+		d = measureDisplacement(x+dx, y+dy, d, false, sim);
+
+	}
+	stagePos = new Point2D.Double(x+dx,y+dy);
+	pointPairs.put(new Point2D.Double(d.x, d.y),stagePos);
+	return stagePos;
+	
+}
+
+int smallestPowerOf2LessThanOrEqualTo(int x) {
+	return 1 << ((int) Math.floor(Math.log(x)/Math.log(2)));
+}
+
+double x;
+double y;
+ImageProcessor baseImage;
+int w;
+int h;
+int w_small;
+int h_small;
+
+AffineTransform getFirstApprox(boolean sim) {
+	if (sim && theSlide == null) {
+		theSlide = IJ.getImage().getProcessor();
+	}
 
 
-	double x;
-	double y;
 	if (sim) {
 		x = 0.;
 		y = 0.;
@@ -98,75 +149,47 @@ runSearch(double dxi, double dyi, boolean sim) {
 
 	// First find the smallest detectable displacement.
 	baseImage = snapImageAt(x,y,sim);
-	int w = baseImage.getWidth();
-	int h = baseImage.getHeight();
-	double mag = 0;
-	double dx = dxi;
-	double dy = dyi;
 
-	while (mag<0.25) {
-		dx = dx*2;
-		dy = dy*2;
-		latestImage = snapImageAt(x+dx,y+dy,sim);
-		d = measureDisplacement(baseImage,latestImage,false);
-		mag = Math.sqrt(d.x*d.x + d.y*d.y);
-	}
-	print("Smallest detected displacement: "+d);
+	w = baseImage.getWidth();
+	h = baseImage.getHeight();
+	w_small = smallestPowerOf2LessThanOrEqualTo(w/4);
+	h_small = smallestPowerOf2LessThanOrEqualTo(h/4);
 
-	// Now continue to double displacements and match acquired half-size images with expected half-size images
-
-	for (i=1;i<25;i++) {
-
-		print(dx+","+dy+","+d);
-		if ((8*Math.abs(d.y)>h) || (8*Math.abs(d.x)>w))
-			break;
-
-		dx = dx*2;
-		dy = dy*2;
-		d.x = d.x*2;
-		d.y = d.y*2;
-
-		ImageProcessor snap = (ImageProcessor) snapImageAt(x+dx,y+dy,sim);
-		ImageProcessor foundImage = getSubImage(snap,(int) w/4,(int) h/4,w/2,h/2);
-		//new ImagePlus("f "+dx,foundImage).show();
-		ImageProcessor simulatedImage = getSubImage(baseImage,(int) (x+d.x+w/4),(int) (y+d.y+h/4),w/2,h/2);
-		//new ImagePlus("s "+dx,simulatedImage).show();
-		dNew = measureDisplacement(simulatedImage, foundImage, false);
-
-		d.x = d.x + dNew.x;
-		d.y = d.y + dNew.y;
-
-	}
-	pointPairs.put(new Point2D.Double(d.x, d.y),new Point2D.Double(dx,dy));
-}
-
-AffineTransform measureCameraToStageTransform(boolean sim) {
-	if (sim && theSlide == null) {
-		theSlide = IJ.getImage().getProcessor();
-	}
-
-	roi = gui.getROI();
-	w = roi.width;
-	h = roi.height;
-	w2 = 1 << ((int) Math.floor(Math.log(w)/Math.log(2)));
-	h2 = 1 << ((int) Math.floor(Math.log(h)/Math.log(2)));
-
-	if ((w != w2) || (h != h2)) {
-		mmc.setROI((w-w2)>>1,(h-h2)>>1,w2,h2);
-	}
-	
 
 	pointPairs.clear();
+	pointPairs.put(new Point2D.Double(0.,0.),new Point2D.Double(x,y));
+	runSearch(0.1,0,sim);
+	runSearch(0,0.1,sim);
+	
+	return generateAffineTransformFromPointPairs(pointPairs);
+}
 
-	runSearch(-0.125,0,sim);
-	runSearch(0.125,0,sim);
-	runSearch(0,-0.125,sim);
-	runSearch(0,0.125,sim);
+measureCorner(AffineTransform firstApprox, Point c1, sim) {
+	s1 = firstApprox.transform(new Point2D.Double(c1.x, c1.y),null);
+	c2 = measureDisplacement(s1.x, s1.y, c1, false, sim);
+	pointPairs.put(new Point2D.Double(c2.x, c2.y), s1);
+}
+
+getSecondApprox(AffineTransform firstApprox, boolean sim) {
+	pointPairs.clear();
+	s1 = new Point2D.Double();
+	ax = w/2 - w_small/2;
+	ay = h/2 - h_small/2;
+	
+	c1 = new Point(-ax,-ay);
+	measureCorner(firstApprox, c1, sim);
+	c1 = new Point(-ax,ay);
+	measureCorner(firstApprox, c1, sim);
+	c1 = new Point(ax,ay);
+	measureCorner(firstApprox, c1, sim);
+	c1 = new Point(ax,-ay);
+	measureCorner(firstApprox, c1, sim);
+
 	return generateAffineTransformFromPointPairs(pointPairs);
 }
 
 double getPixelSize(AffineTransform cameraToStage) {
-	return Math.sqrt(cameraToStage.getDeterminant());
+	return Math.sqrt(Math.abs(cameraToStage.getDeterminant()));
 }
 
 update();

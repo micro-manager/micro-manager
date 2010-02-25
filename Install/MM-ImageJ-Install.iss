@@ -39,7 +39,6 @@ Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.MFC\mfcm90u.dl
 Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.ATL\atl90.dll ; DestDir: {app}; Flags: ignoreversion
 
 Source: micro-manager\ATMCD32D.dll; DestDir: {app}; Flags: ignoreversion
-; ABS & Jenoptik vendor library not installed with their products
 Source: micro-manager\CamUsb_API.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\inpout32.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\libusb0.dll; DestDir: {app}; Flags: ignoreversion
@@ -106,12 +105,10 @@ Source: micro-manager\mmgr_dal_Vincent.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Yokogawa.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_ZeissCAN.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_ZeissCAN29.dll; DestDir: {app}; Flags: ignoreversion
-; Jenoptik vendor libraries (not installed with product)
 Source: micro-manager\camconj.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\FireCamJ.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\MexJCam.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\ProcessLib.dll; DestDir: {app}; Flags: ignoreversion
-; Baumer Optronic vendor libraries  (not installed with product)
 Source: micro-manager\FxLib.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\SysInfo.dll; DestDir: {app}; Flags: ignoreversion
 

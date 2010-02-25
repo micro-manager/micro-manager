@@ -121,7 +121,7 @@ int SpectralLMM5Interface::DetectLaserLines(MM::Device& device, MM::Core& core) 
    }
 
    uint16_t* lineP = (uint16_t*) (answer + 1);
-   nrLines_ = (read/2) - 1;
+   nrLines_ = (read-1)/2;
    printf("NrLines: %d\n", nrLines_);
    for (int i=0; i<nrLines_; i++) 
    {

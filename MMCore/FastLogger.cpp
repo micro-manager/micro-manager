@@ -619,7 +619,7 @@ bool FastLogger::Open(const std::string specifiedFile)
          {
             std::string homePath;
 #ifdef _WINDOWS
-            homePath = std::string(getenv("HOMEPATH")) + "\\";
+            homePath = std::string(getenv("HOMEDRIVE")) + std::string(getenv("HOMEPATH")) + "\\";
 #else
             homePath = std::string(getenv("HOME")) + "/";
 #endif

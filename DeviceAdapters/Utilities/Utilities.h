@@ -42,6 +42,7 @@
 #define ERR_NO_AUTOFOCUS_DEVICE_FOUND      10009
 #define ERR_NO_AUTOFOCUS_DEVICE_FOUND      10009
 #define ERR_DEFINITE_FOCUS_TIMEOUT         10020
+#define ERR_TIMEOUT                        10021
 
 /*
  * MultiShutter: Combines multiple physical shutters into one logical device
@@ -230,6 +231,7 @@ public:
    int OnStateDevice(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
+   int WaitWhileBusy();
    std::vector<std::string> availableStateDevices_;
    std::string stateDeviceName_;
    MM::State* stateDevice_;

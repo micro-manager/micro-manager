@@ -22,6 +22,7 @@
 
 #include "Utilities.h"
 #include "../../MMDevice/ModuleInterface.h"
+#include "../../MMDevice/MMDevice.h"
 
 #ifdef WIN32
    #define WIN32_LEAN_AND_MEAN
@@ -32,7 +33,7 @@
 
 const char* g_DeviceNameMultiShutter = "Multi Shutter";
 const char* g_Undefined = "Undefined";
-const char*  g_NoDevice = "None";
+const char* g_NoDevice = "None";
 const char* g_DeviceNameDAShutter = "DA Shutter";
 const char* g_DeviceNameDAZStage = "DA Z Stage";
 const char* g_DeviceNameAutoFocusStage = "AutoFocus Stage";
@@ -794,6 +795,7 @@ StateDeviceShutter::StateDeviceShutter() :
    SetErrorText(ERR_INVALID_DEVICE_NAME, "Please select a valid State device");
    SetErrorText(ERR_NO_STATE_DEVICE, "No State Device selected");
    SetErrorText(ERR_NO_STATE_DEVICE_FOUND, "No State Device loaded");
+   SetErrorText(ERR_TIMEOUT, "Device was busy.  Try increasing the Core-Timeout property");
 
    // Name                                                                   
    CreateProperty(MM::g_Keyword_Name, g_DeviceNameStateDeviceShutter, MM::String, true); 
@@ -854,6 +856,10 @@ int StateDeviceShutter::SetOpen(bool open)
    if (stateDevice_ == 0)
       return DEVICE_OK;
 
+   int ret = WaitWhileBusy();
+   if (ret != DEVICE_OK)
+      return ret;
+
    return stateDevice_->SetGateOpen(open);
 }
 
@@ -862,7 +868,30 @@ int StateDeviceShutter::GetOpen(bool& open)
    if (stateDevice_ == 0)
       return DEVICE_OK;
 
+   int ret = WaitWhileBusy();
+   if (ret != DEVICE_OK)
+      return ret;
+
    return stateDevice_->GetGateOpen(open);
+}
+
+int StateDeviceShutter::WaitWhileBusy()
+{
+   if (stateDevice_ == 0)
+      return DEVICE_OK;
+
+   bool busy = true;
+   char timeout[MM::MaxStrLength];
+   GetCoreCallback()->GetDeviceProperty("Core", "TimeoutMs", timeout);
+   MM::MMTime dTimeout = MM::MMTime (atof(timeout) * 1000.0);
+   MM::MMTime start = GetCoreCallback()->GetCurrentMMTime();
+   while (busy && (GetCoreCallback()->GetCurrentMMTime() - start) < dTimeout)
+      busy = Busy();
+
+   if (busy)
+      return ERR_TIMEOUT;
+
+   return DEVICE_OK;
 }
 
 ///////////////////////////////////////

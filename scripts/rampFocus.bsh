@@ -1,0 +1,28 @@
+// Arthur Edelstein
+// the script tests the ability of a z-drive to ramp.
+
+double zstart = -100;
+double zstop = +100;
+double zstep = 0.5;
+double speed_um_per_s = 25;
+
+zstage = mmc.getFocusDevice();
+z0 = mmc.getPosition(zstage);
+mmc.setPosition(zstage,zstart+z0);
+mmc.waitForDevice(zstage);
+waitTime = 1000*zstep/speed_um_per_s;
+
+t1 = System.currentTimeMillis();
+n=0;
+print ("Start ramp...");
+for (double z=zstart+z0;z<zstop+z0;z+=zstep) {
+	//print(i);
+	mmc.setPosition(zstage,z);
+	n++;
+	mmc.sleep(waitTime);
+	//mmc.waitForDevice(zstage);
+	//print(mmc.getPosition(zstage));
+}
+t2 = System.currentTimeMillis();
+print ("   ...done.");
+print(((t2-t1)/(double) n) + " ms per step.");
