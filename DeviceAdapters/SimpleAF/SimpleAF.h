@@ -174,18 +174,18 @@ public:
 private:
    static const int QUEUE_SIZE = 5;
    bool initialized_;
-   bool afNeeded_;
    ImageSharpnessScorer scorer_;
    std::queue<double> scoreQueue_;
 
    class AFThread : public MMDeviceThreadBase
    {
       public:
-         AFThread(FocusMonitor* fm, double delaySec) : fm_(fm), delaySec_(delaySec) {}
+         AFThread(FocusMonitor* fm) : fm_(fm), delaySec_(2.0), running_(false) {}
          ~AFThread() {}
 
          int svc (void)
          {
+            running_ = true;
             CDeviceUtils::SleepMs((long)(delaySec_*1000));
             int ret = fm_->DoAF();
             if (ret != DEVICE_OK)
@@ -194,13 +194,21 @@ private:
                txt << "Focus monitor AF failed with code " << ret;
                fm_->GetCoreCallback()->LogMessage(fm_, txt.str().c_str(), false);
             }
+            running_ = false;
             return 0;
          }
+
+         bool isRunning() { return running_;}
+         void setDelaySec(double sec) {delaySec_ = sec;}
+
+         double getDelaySec(){return delaySec_;}
 
       private:
          double delaySec_;
          FocusMonitor* fm_;
+         bool running_;
    };
 
-   int DoAF();
+  AFThread* delayThd_;
+  int DoAF();
 };

@@ -53,10 +53,11 @@ const char* g_ON = "ON";
 const char* g_OFF = "OFF";
 
 FocusMonitor::FocusMonitor() : 
-   initialized_(false), afNeeded_(false)
+   initialized_(false)
 {
    // call the base class method to set-up default error codes/messages
    InitializeDefaultErrorMessages();
+
 }
 
 FocusMonitor::~FocusMonitor()
@@ -92,6 +93,8 @@ int FocusMonitor::Initialize()
    if (initialized_)
       return DEVICE_OK;
 
+   delayThd_ = new AFThread(this);
+
    // set property list
    // -----------------   
    // Name
@@ -114,7 +117,7 @@ int FocusMonitor::Initialize()
    nRet = CreateProperty(g_PropertyThreshold, "0.0", MM::Float, false);
    assert(nRet == DEVICE_OK);
 
-   nRet = CreateProperty(g_PropertyOnOff, g_ON, MM::Float, false);
+   nRet = CreateProperty(g_PropertyOnOff, g_OFF, MM::String, false);
    assert(nRet == DEVICE_OK);
 
    vector<string> vals;
@@ -140,14 +143,13 @@ int FocusMonitor::Initialize()
  */
 int FocusMonitor::Shutdown()
 {
+   delete delayThd_;
    initialized_ = false;
    return DEVICE_OK;
 }
 
 int FocusMonitor::Process(unsigned char* buffer, unsigned width, unsigned height, unsigned byteDepth)
 {
-   afNeeded_ = false;
-
    if (!IsPropertyEqualTo(g_PropertyOnOff, g_ON))
       return DEVICE_OK; // processor inactive
 
@@ -173,7 +175,11 @@ int FocusMonitor::Process(unsigned char* buffer, unsigned width, unsigned height
 
    if (score < threshold)
    {
-      afNeeded_ = true;
+      double delay;
+      ret = GetProperty(g_PropertyDelaySec, delay);
+      assert(ret == DEVICE_OK);
+      delayThd_->setDelaySec(delay);
+      delayThd_->activate();
    }
 
    return DEVICE_OK;
