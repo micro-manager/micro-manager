@@ -96,6 +96,11 @@ int ThreePointAF::Initialize()
    return DEVICE_OK;
 }
 
+int ThreePointAF::Shutdown()
+{
+	return DEVICE_OK;
+}
+
 int ThreePointAF::FullFocus()
 {
 	return DEVICE_OK;
@@ -180,7 +185,7 @@ int ThreePointAF::OnCropFactor(MM::PropertyBase *pProp, MM::ActionType eAct)
 {
 	if(eAct == MM::AfterSet)
 	{
-		double cr = cr;
+		double cr;
 		pProp->Get(cr);
 		cropFactor_ = cr;
 	}
