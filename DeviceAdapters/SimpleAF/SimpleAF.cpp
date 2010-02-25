@@ -484,9 +484,12 @@ int SimpleAF::Focus(SimpleAF::FocusMode focusmode)
 	bestscore_ = -1.0;
 	double previousbest = -1.0;
 	// Set Channel to the required channel
-	int ret = GetCoreCallback()->SetConfig("Channel",param_channel_.c_str());
-	if(ret != DEVICE_OK)
-		return ret;
+   if (!param_channel_.empty())
+   {
+      int ret = GetCoreCallback()->SetConfig(MM::g_Keyword_Channel, param_channel_.c_str());
+	   if(ret != DEVICE_OK)
+		   return ret;
+   }
 	// Do full focus
 	if(focusmode == FULLFOCUS)
 	{
@@ -502,7 +505,7 @@ int SimpleAF::Focus(SimpleAF::FocusMode focusmode)
 	}
 
 	// Set scope to the way you need it to do AF
-	ret = InitScope();
+	int ret = InitScope();
 	if(ret != DEVICE_OK)
 		return ret;
 

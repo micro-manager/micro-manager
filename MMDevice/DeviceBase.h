@@ -179,7 +179,7 @@ public:
    * @param name - property identifier (name)
    * @param value - the value of the property
    */
-   int GetProperty(const char* name, double val)
+   int GetProperty(const char* name, double& val)
    {
       std::string strVal;
       int nRet = properties_.Get(name, strVal);
@@ -193,7 +193,7 @@ public:
    * @param name - property identifier (name)
    * @param value - the value of the property
    */
-   int GetProperty(const char* name, long val)
+   int GetProperty(const char* name, long& val)
    {
       std::string strVal;
       int nRet = properties_.Get(name, strVal);

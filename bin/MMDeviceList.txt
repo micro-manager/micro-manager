@@ -173,6 +173,7 @@ QCam,QCamera,QImaging universal camera adapter,2
 ScionCam,ScionCam,Scion 1394 Camera,2
 Sensicam,Sensicam,PCO Sensicam camera adapter,2
 SimpleAF,SimpleAF,Exhaustive search AF - 100XImaging Inc.,9
+SimpleAF,FocusMonitor,TIRF focus monitor - 100XImaging Inc.,11
 SpectralLMM5,LMM5-Hub,Description N/A,8
 SpectralLMM5,LMM5-Shutter,Description N/A,3
 SpotCamera,Spot,SpotCam,2
