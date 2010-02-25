@@ -29,11 +29,12 @@
 
 #pragma once;
 
-# include "../../MMDevice/MMDevice.h"
-# include "../../MMDevice/DeviceBase.h"
-# include "../../MMDevice/ImgBuffer.h"
-# include <string>
-# include <ctime>
+#include "../../MMDevice/MMDevice.h"
+#include "../../MMDevice/DeviceBase.h"
+#include "../../MMDevice/ImgBuffer.h"
+#include "../../MMDevice/DeviceThreads.h"
+#include <string>
+#include <ctime>
 #include <queue>
 #include "SimpleAFImageUtils.h"
 
@@ -151,7 +152,7 @@ class FocusMonitor : public CImageProcessorBase<FocusMonitor>
 public:
    FocusMonitor();
    ~FocusMonitor();
-  
+ 
    // MMDevice API
    // ------------
    int Initialize();
@@ -168,12 +169,38 @@ public:
    // ----------------
    int OnAFDevice(MM::PropertyBase* pProp, MM::ActionType eAct);
 
+   friend class AFThread;
+
 private:
    static const int QUEUE_SIZE = 5;
    bool initialized_;
    bool afNeeded_;
    ImageSharpnessScorer scorer_;
    std::queue<double> scoreQueue_;
+
+   class AFThread : public MMDeviceThreadBase
+   {
+      public:
+         AFThread(FocusMonitor* fm, double delaySec) : fm_(fm), delaySec_(delaySec) {}
+         ~AFThread() {}
+
+         int svc (void)
+         {
+            CDeviceUtils::SleepMs((long)(delaySec_*1000));
+            int ret = fm_->DoAF();
+            if (ret != DEVICE_OK)
+            {
+               std::ostringstream txt;
+               txt << "Focus monitor AF failed with code " << ret;
+               fm_->GetCoreCallback()->LogMessage(fm_, txt.str().c_str(), false);
+            }
+            return 0;
+         }
+
+      private:
+         double delaySec_;
+         FocusMonitor* fm_;
+   };
 
    int DoAF();
 };

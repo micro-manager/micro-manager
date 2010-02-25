@@ -175,6 +175,50 @@ public:
    }
 
    /**
+   * Obtains the value of the property.
+   * @param name - property identifier (name)
+   * @param value - the value of the property
+   */
+   int GetProperty(const char* name, double val)
+   {
+      std::string strVal;
+      int nRet = properties_.Get(name, strVal);
+      if (nRet == DEVICE_OK)
+         val = atof(strVal.c_str());
+      return nRet;
+   }
+
+   /**
+   * Obtains the value of the property.
+   * @param name - property identifier (name)
+   * @param value - the value of the property
+   */
+   int GetProperty(const char* name, long val)
+   {
+      std::string strVal;
+      int nRet = properties_.Get(name, strVal);
+      if (nRet == DEVICE_OK)
+         val = atol(strVal.c_str());
+      return nRet;
+   }
+
+   /**
+    * Check if the property value is equal to a specific string
+    * @return true only if property exists and is eqaul to, false otherwise
+    * @param name - property identifier (name)
+    * @param value - the value to compare to
+    */
+   bool IsPropertyEqualTo(const char* name, const char* val)
+   {
+      std::string strVal;
+      int nRet = properties_.Get(name, strVal);
+      if (nRet == DEVICE_OK)
+         return strcmp(val, strVal.c_str()) == 0;
+      else
+         return false;
+   }
+
+   /**
    * Checks whether the property is read-only.
    * @param name - property identifier (name)
    * @param readOnly - read-only or not

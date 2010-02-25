@@ -47,6 +47,10 @@ const char* g_PropertyAFDevice = "AFDevice";
 const char* g_PropertyScore = "AFScore";
 const char* g_PropertyThreshold = "Threshold";
 const char* g_PropertyDelaySec = "Delay_sec";
+const char* g_PropertyOnOff = "Track";
+
+const char* g_ON = "ON";
+const char* g_OFF = "OFF";
 
 FocusMonitor::FocusMonitor() : 
    initialized_(false), afNeeded_(false)
@@ -110,6 +114,16 @@ int FocusMonitor::Initialize()
    nRet = CreateProperty(g_PropertyThreshold, "0.0", MM::Float, false);
    assert(nRet == DEVICE_OK);
 
+   nRet = CreateProperty(g_PropertyOnOff, g_ON, MM::Float, false);
+   assert(nRet == DEVICE_OK);
+
+   vector<string> vals;
+   vals.push_back(g_OFF);
+   vals.push_back(g_ON);
+   int ret = SetAllowedValues(g_PropertyOnOff, vals);
+   if (ret != DEVICE_OK)
+      return ret;
+
    // synchronize all properties
    // --------------------------
    nRet = UpdateStatus();
@@ -134,6 +148,9 @@ int FocusMonitor::Process(unsigned char* buffer, unsigned width, unsigned height
 {
    afNeeded_ = false;
 
+   if (!IsPropertyEqualTo(g_PropertyOnOff, g_ON))
+      return DEVICE_OK; // processor inactive
+
    // verify dimensions
    scorer_.SetImage(buffer, width, height, byteDepth);
    double score = scorer_.GetScore(false);
@@ -151,10 +168,8 @@ int FocusMonitor::Process(unsigned char* buffer, unsigned width, unsigned height
    // decide if we need to start af procedure
    // compare to threshold
    double threshold(0.0);
-   char val[MM::MaxStrLength];
-   ret = GetProperty(g_PropertyThreshold, val);
+   ret = GetProperty(g_PropertyThreshold, threshold);
    assert(ret == DEVICE_OK);
-   threshold = atof(val);
 
    if (score < threshold)
    {
