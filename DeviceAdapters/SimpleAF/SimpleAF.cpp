@@ -45,6 +45,7 @@ using namespace std;
 const char* g_AutoFocusDeviceName = "SimpleAF";
 const char* g_FocusMonitorDeviceName = "FocusMonitor";
 const char* g_TPFocusDeviceName = "TPFocus";
+
 const char* g_PresetPropName = "Preset";
 
 // windows DLL entry code
