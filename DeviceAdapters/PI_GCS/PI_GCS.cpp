@@ -37,6 +37,10 @@ const char* g_PI_ZStageDeviceName = "PIZStage";
 const char* g_PI_ZStageAxisName = "Axis";
 const char* g_PI_ZStageAxisLimitUm = "Limit_um";
 
+const char* g_PropertyWaitForResponse = "WaitForResponse";
+const char* g_Yes = "Yes";
+const char* g_No = "No";
+
 using namespace std;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -116,6 +120,12 @@ PIZStage::PIZStage() :
    // axis limit in um
    pAct = new CPropertyAction (this, &PIZStage::OnAxisLimit);
    CreateProperty(g_PI_ZStageAxisLimitUm, "500.0", MM::Float, false, pAct, true);
+
+   // TODO: This might not be neccessary and should be removed later, N.A. 2.26.10.
+   // determine whether to wait for response from the stage
+   //CreateProperty(g_PropertyWaitForResponse, g_Yes, MM::String, false, 0, true);
+   //AddAllowedValue(g_PropertyWaitForResponse, g_Yes);
+   //AddAllowedValue(g_PropertyWaitForResponse, g_No);
 
 }
 
@@ -441,4 +451,15 @@ bool PIZStage::ExtractValue(std::string& sMessage)
    
    sMessage.erase(0,p);
    return true;
+}
+
+bool PIZStage::waitForResponse()
+{
+   char val[MM::MaxStrLength];
+   int ret = GetProperty(g_PropertyWaitForResponse, val);
+   assert(ret == DEVICE_OK);
+   if (strcmp(val, g_Yes) == 0)
+      return true;
+   else
+      return false;
 }

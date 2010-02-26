@@ -423,21 +423,16 @@ bool PIZStage::GetValue(string& sMessage, double& pos)
 
 bool PIZStage::waitForResponse()
 {
-   char val[MM::MaxStrLength];
-   int ret = GetProperty(g_PropertyWaitForResponse, val);
-   assert(ret == DEVICE_OK);
-   if (strcmp(val, g_Yes) == 0)
-      return true;
-   else
-      return false;
+   return IsPropertyEqualTo(g_PropertyWaitForResponse, g_Yes);
 }
 
 double PIZStage::getAxisLimit()
 {
-   char val[MM::MaxStrLength];
-   int ret = GetProperty(g_PropertyMaxUm, val);
-   if(ret == DEVICE_OK)
-      return atof(val);
+   double limit;
+   int ret = GetProperty(g_PropertyMaxUm, limit);
+
+   if (ret == DEVICE_OK)
+      return limit;
    else
       return 0.0;
 }

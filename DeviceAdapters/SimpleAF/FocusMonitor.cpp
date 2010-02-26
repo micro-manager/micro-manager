@@ -48,6 +48,8 @@ const char* g_PropertyScore = "AFScore";
 const char* g_PropertyThreshold = "Threshold";
 const char* g_PropertyDelaySec = "Delay_sec";
 const char* g_PropertyOnOff = "Track";
+const char* g_PropertyCorrect = "Correct";
+
 
 const char* g_ON = "ON";
 const char* g_OFF = "OFF";
@@ -123,7 +125,13 @@ int FocusMonitor::Initialize()
    vector<string> vals;
    vals.push_back(g_OFF);
    vals.push_back(g_ON);
-   int ret = SetAllowedValues(g_PropertyOnOff, vals);
+   nRet = SetAllowedValues(g_PropertyOnOff, vals);
+   if (nRet != DEVICE_OK)
+      return nRet;
+
+   nRet = CreateProperty(g_PropertyCorrect, g_OFF, MM::String, false);
+   assert(nRet == DEVICE_OK);
+   int ret = SetAllowedValues(g_PropertyCorrect, vals);
    if (ret != DEVICE_OK)
       return ret;
 

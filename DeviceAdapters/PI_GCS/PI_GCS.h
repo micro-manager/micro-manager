@@ -74,6 +74,7 @@ private:
    bool GetValue(std::string& sMessage, long& lval);
    bool ExtractValue(std::string& sMessage);
    int GetError();
+   bool waitForResponse();
 
    std::string port_;
    std::string axisName_;
