@@ -870,6 +870,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
                 ; // Do nothing.
             }
       }
+            
       GregorianCalendar cldStart = new GregorianCalendar();
       int numSlices = useSliceSetting_ ? sliceDeltaZ_.length : 1;
       boolean abortWasRequested = false;
@@ -895,6 +896,9 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
          performAutofocus(pos, posIdx);
 
          refreshZPosition();
+         
+         // do "before frame" notification
+         core_.acqBeforeFrame();
 
          // flag that tells us whether the stage moves during channel/slice acquisition
          boolean zStageMoves;
@@ -987,9 +991,6 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
                  break;
                }
 
-
-
-
             }
          } else {
             throw new MMException("Unrecognized slice mode: " + sliceMode_);
@@ -1011,6 +1012,9 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
             core_.setPosition(zStage_, startZPosUm_);
             core_.waitForDevice(zStage_);
          }
+         
+         // do "after frame" notification
+         core_.acqAfterFrame();
 
       } catch (MMException e) {
          terminate();
