@@ -160,14 +160,17 @@ public:
   
    void GetName(char* name) const;      
    bool Busy();
-   
+
+   int AcqBeforeFrame();
+   int AcqAfterFrame();
+
    // ImageProcessor API
    // ------------------
    int Process(unsigned char* buffer, unsigned width, unsigned height, unsigned byteDepth);
 
    // action interface
    // ----------------
-   int OnAFDevice(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnCorrect(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    friend class AFThread;
 

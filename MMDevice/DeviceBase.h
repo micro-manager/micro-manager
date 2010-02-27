@@ -497,6 +497,16 @@ public:
       }
    }
 
+   // acq context api
+   // NOTE: experimental feature, do not count on these methods
+   int AcqBefore() {return DEVICE_OK;}
+   int AcqAfter() {return DEVICE_OK;}
+   int AcqBeforeFrame() {return DEVICE_OK;}
+   int AcqAfterFrame() {return DEVICE_OK;}
+   int AcqBeforeStack() {return DEVICE_OK;}
+   int AcqAfterStack() {return DEVICE_OK;}
+
+
    ////////////////////////////////////////////////////////////////////////////
    // Protected methods, for internal use by the device adapters 
    ////////////////////////////////////////////////////////////////////////////

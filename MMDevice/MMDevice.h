@@ -235,6 +235,14 @@ namespace MM {
       virtual DeviceType GetType() const = 0;
       virtual void GetName(char* name) const = 0;
       virtual void SetCallback(Core* callback) = 0;
+
+      // acq context api
+      virtual int AcqBefore() = 0;
+      virtual int AcqAfter() = 0;
+      virtual int AcqBeforeFrame() = 0;
+      virtual int AcqAfterFrame() = 0;
+      virtual int AcqBeforeStack() = 0;
+      virtual int AcqAfterStack() = 0;
    };
 
    /** 
@@ -621,6 +629,8 @@ namespace MM {
 
       // image processor API
       virtual int Process(unsigned char* buffer, unsigned width, unsigned height, unsigned byteDepth) = 0;
+
+      
    };
 
    /**

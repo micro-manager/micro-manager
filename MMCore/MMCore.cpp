@@ -4746,3 +4746,52 @@ void CMMCore::updateAllowedChannelGroups()
 }
 
 
+///////////////////////////////////////////////////////////////////////////////
+// Acqusition context methods
+// experimental implementation works only with image processor devices
+//
+void CMMCore::acqBefore() throw (CMMError)
+{
+}
+
+void CMMCore::acqAfter() throw (CMMError)
+{
+}
+
+void CMMCore::acqBeforeFrame() throw (CMMError)
+{
+   if (imageProcessor_)
+   {
+      int ret = imageProcessor_->AcqBeforeFrame();
+      if (ret != DEVICE_OK)
+      {
+         char name[MM::MaxStrLength];
+         imageProcessor_->GetName(name);
+         logError(name, getDeviceErrorText(ret, imageProcessor_).c_str());
+         throw CMMError(getDeviceErrorText(ret, imageProcessor_).c_str(), MMERR_DEVICE_GENERIC);
+      }
+   }
+}
+
+void CMMCore::acqAfterFrame() throw (CMMError)
+{
+   if (imageProcessor_)
+   {
+      int ret = imageProcessor_->AcqAfterFrame();
+      if (ret != DEVICE_OK)
+      {
+         char name[MM::MaxStrLength];
+         imageProcessor_->GetName(name);
+         logError(name, getDeviceErrorText(ret, imageProcessor_).c_str());
+         throw CMMError(getDeviceErrorText(ret, imageProcessor_).c_str(), MMERR_DEVICE_GENERIC);
+      }
+   }
+}
+
+void CMMCore::acqBeforeStack() throw (CMMError)
+{
+}
+
+void CMMCore::acqAfterStack() throw (CMMError)
+{
+}

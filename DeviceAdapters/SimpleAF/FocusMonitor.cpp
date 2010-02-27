@@ -129,6 +129,7 @@ int FocusMonitor::Initialize()
    if (nRet != DEVICE_OK)
       return nRet;
 
+   CPropertyAction *pAct = new CPropertyAction(this, &FocusMonitor::OnCorrect);
    nRet = CreateProperty(g_PropertyCorrect, g_OFF, MM::String, false);
    assert(nRet == DEVICE_OK);
    int ret = SetAllowedValues(g_PropertyCorrect, vals);
@@ -175,29 +176,15 @@ int FocusMonitor::Process(unsigned char* buffer, unsigned width, unsigned height
    int ret = SetProperty(g_PropertyScore, CDeviceUtils::ConvertToString(score));
    assert(ret == DEVICE_OK);
 
-   // decide if we need to start af procedure
-   // compare to threshold
-   double threshold(0.0);
-   ret = GetProperty(g_PropertyThreshold, threshold);
-   assert(ret == DEVICE_OK);
-
-   if (score < threshold)
-   {
-      double delay;
-      ret = GetProperty(g_PropertyDelaySec, delay);
-      assert(ret == DEVICE_OK);
-      delayThd_->setDelaySec(delay);
-      delayThd_->activate();
-   }
-
    return DEVICE_OK;
 }
 
-// OBSOLETE
-int FocusMonitor::OnAFDevice(MM::PropertyBase* pProp, MM::ActionType eAct)
+
+int FocusMonitor::OnCorrect(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::AfterSet)
    {
+      
    }
    else if (eAct == MM::BeforeGet)
    {
@@ -213,4 +200,24 @@ int FocusMonitor::DoAF()
       return afDev->IncrementalFocus();
    else
       return ERR_IP_NO_AF_DEVICE;
+}
+
+int FocusMonitor::AcqBeforeFrame()
+{
+   return DEVICE_OK;
+}
+
+int FocusMonitor::AcqAfterFrame()
+{
+   double score = scoreQueue_.back();
+   // decide if we need to start af procedure
+   double threshold(0.0);
+   int ret = GetProperty(g_PropertyThreshold, threshold);
+   assert(ret == DEVICE_OK);
+
+   if (score < threshold)
+   {
+      return DoAF();
+   }
+   return DEVICE_OK;
 }
