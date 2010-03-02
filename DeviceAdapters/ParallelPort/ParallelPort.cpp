@@ -275,7 +275,7 @@ int CParallelPort::OnControlRegister(MM::PropertyBase* pProp, MM::ActionType eAc
 	{
 		long pos;
 		pProp->Get(pos);
-      short buf = pos;
+      short buf = static_cast<short>(pos);
    	const short addr = 0x378 + 2; // the control register is the base port + 2
 	   Out32(addr, buf);
    }
