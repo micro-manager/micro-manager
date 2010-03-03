@@ -420,7 +420,15 @@ int CDTOLDA::Initialize()
    if (nRet != DEVICE_OK)
       return nRet;
 
-   nRet = SetPropertyLimits(g_volts, minV_, maxV_);
+   double minV(0.0);
+   nRet = GetProperty(g_PropertyMin, minV);
+   assert (nRet == DEVICE_OK);
+
+   double maxV(0.0);
+   nRet = GetProperty(g_PropertyMax, maxV);
+   assert (nRet == DEVICE_OK);
+
+   nRet = SetPropertyLimits(g_volts, minV, maxV);
    if (nRet != DEVICE_OK)
       return nRet;
 
@@ -459,6 +467,9 @@ int CDTOLDA::WriteToPort(long value)
 
 int CDTOLDA::SetVolts(double volts)
 {
+   if (volts > maxV_ || volts < minV_)
+      return DEVICE_RANGE_EXCEEDED;
+
    long value = (long) ((1L<<resolution_)/((float)maxV_ - (float)minV_) * (volts - (float)minV_));
    value = min((1L<<resolution_)-1,value);
 
@@ -470,6 +481,19 @@ int CDTOLDA::SetVolts(double volts)
          value |= 0xffffffffL << resolution_;
    }
    return WriteToPort(value);
+}
+
+int CDTOLDA::GetLimits(double& minVolts, double& maxVolts)
+{
+   int nRet = GetProperty(g_PropertyMin, minVolts);
+   if (nRet == DEVICE_OK)
+      return nRet;
+
+   nRet = GetProperty(g_PropertyMax, maxVolts);
+   if (nRet == DEVICE_OK)
+      return nRet;
+
+   return DEVICE_OK;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

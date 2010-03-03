@@ -173,15 +173,14 @@
 		<copy file="${BinRoot}/mmgr_dal_Yokogawa.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_ZeissCAN.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_ZeissCAN29.dll" todir="${InstallRoot}" />
-		<!-- Jenoptik vendor libraries (not installed with product) -->
-		<copy file="${BinRoot}/camconj.dll" todir="${InstallRoot}" />
+		<!-- Jenoptik vendor libraries (not installed with product) 
+		//<copy file="${BinRoot}/camconj.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/FireCamJ.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/MexJCam.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/ProcessLib.dll" todir="${InstallRoot}" />
 
-		<!-- Baumer Optronic vendor libraries  (not installed with product) -->
 		<copy file="${BinRoot}/FxLib.dll" todir="${InstallRoot}" />
-		<copy file="${BinRoot}/SysInfo.dll" todir="${InstallRoot}" />
+		<copy file="${BinRoot}/SysInfo.dll" todir="${InstallRoot}" /> -->
 
     <copy file="${ScriptsRoot}/sdemo1.bsh" todir="${ScriptsInstall}" />
     <copy file="${ScriptsRoot}/sdemo2.bsh" todir="${ScriptsInstall}" />
