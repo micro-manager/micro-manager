@@ -408,13 +408,6 @@ int CDTOLDA::Initialize()
 
    // Voltage
    // -----
-   char value[MM::MaxStrLength];
-   GetProperty(g_PropertyMin, value);
-   minV_ = atof(value);
-
-   GetProperty(g_PropertyMax, value);
-   maxV_ = atof(value);
-
    CPropertyAction* pAct = new CPropertyAction (this, &CDTOLDA::OnVolts);
    nRet = CreateProperty(g_volts, "0.0", MM::Float, false, pAct);
    if (nRet != DEVICE_OK)
