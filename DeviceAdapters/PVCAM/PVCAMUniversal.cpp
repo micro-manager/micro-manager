@@ -1268,6 +1268,14 @@ bool Universal::WaitForExposureDone()throw()
    const double exposure_time_safe_gap=50.0; //milliseconds 
    double exposure_time_safe = (exposure_ + exposure_time_safe_gap) * 1000.0;
 
+   // KH test
+   // sleep to avoid race condition for short exposure time.
+   long minSleep = exposure_;
+   if(10 < minSleep)
+      minSleep = 10;
+   CDeviceUtils::SleepMs(minSleep);
+   // end KH test
+
    try
    {
       int16 status;

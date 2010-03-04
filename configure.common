@@ -24,7 +24,7 @@ if test "x$GXX" = "xyes"; then
   cc_vers_all=`expr $cc_vers_major '*' 1000000 + $cc_vers_minor '*' 1000 + $cc_vers_patch`
 
   if test $cc_vers_major -lt 3; then
-    AC_MSG_ERROR([gcc >= 3.0 is needed to compile MicroManager])
+    AC_MSG_ERROR([gcc >= 3.0 is needed to compile `])
   fi
 fi 
 
@@ -116,54 +116,6 @@ if test "$IMAGEJDIR" != "no" ; then
 
 
    #----------------------------------------------------------------
-   # Find ij.jar in directory
-   #----------------------------------------------------------------
-   AC_MSG_CHECKING(for ij.jar in ImageJ directory)
-   IJJARDIR="ij.jar ImageJ.app/Contents/Resources/Java/ij.jar ../java/ij.jar"
-   for d in $IJJARDIR ; do
-      if test -r "$IJPATH/$d" ; then
-         IJJARPATH="$IJPATH/$d"
-         AC_MSG_RESULT($IJJARPATH)
-         break
-      fi
-   done
-   if test -z "$IJJARPATH"; then
-     AC_MSG_ERROR([not found, Use the without-imagej directive to build without ImageJ or install ImageJ (http://rsb.info.nih.gov/ij/ and rerun configure, possibly using the --with-imagej=path directive])
-   fi
-
-   #----------------------------------------------------------------
-   # Find beanshell.jar in ImageJ plugins directory
-   #----------------------------------------------------------------
-   AC_MSG_CHECKING(for beanshell jar file in ImageJ plugins directory)
-   if test -r "$IJPATH/plugins/bsh-2.0b4.jar" ; then
-      BSHJARPATH="$IJPATH/plugins/bsh-2.0b4.jar"
-      AC_MSG_RESULT($BSHJARPATH)
-   fi
-   if test -r "/usr/share/java/bsh.jar" ; then
-      BSHJARPATH="/usr/share/java/bsh.jar"
-      AC_MSG_RESULT($BSHJARPATH)
-   fi
-   if test "$BSHJARPATH" = "" ; then
-      AC_MSG_ERROR([not found, Use the without-imagej directove to build without ImageJ GUI, or download Beanshell (http://www.beanshell.org/download.html) and copy bsh-2.0b4.jar to $IJPATH/plugins])
-   fi
-
-   #----------------------------------------------------------------
-   # Find swingx.jar in ImageJ plugins directory
-   #----------------------------------------------------------------
-   AC_MSG_CHECKING(for swingx jar file in ImageJ plugins directory)
-   if test -r "$IJPATH/plugins/swingx-0.9.5.jar" ; then
-      SWINGXJARPATH="$IJPATH/plugins/swingx-0.9.5.jar"
-      AC_MSG_RESULT($SWINGXJARPATH)
-   fi
-   if test -r "/usr/share/java/swingx.jar" ; then
-      SWINGXJARPATH="/usr/share/java/swingx.jar"
-      AC_MSG_RESULT($SWINGXJARPATH)
-   fi
-   if test "$SWINGXJARPATH" = "" ; then
-      AC_MSG_ERROR([not found, Use the without-imagej directove to build without ImageJ GUI, or download swingx and copy to $IJPATH/plugins])
-   fi
-
-   #----------------------------------------------------------------
    # .so-directory
    #----------------------------------------------------------------
    if test -z "$DEVICEADAPTERPATH"; then
@@ -179,10 +131,8 @@ if test "$IMAGEJDIR" != "no" ; then
 
 fi
 
+
 AC_SUBST(IJPATH)
-AC_SUBST(BSHJARPATH)
-AC_SUBST(IJJARPATH)
-AC_SUBST(SWINGXJARPATH)
 AC_SUBST(DEVICEADAPTERPATH)
 AC_SUBST(JARPATH)
 

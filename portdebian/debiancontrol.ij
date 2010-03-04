@@ -4,7 +4,7 @@ Section: contrib/science
 Priority: optional
 Architecture: all
 Essential: no
-Depends: java2-runtime, bsh, micromanager, imagej (>=1.43b-1)
+Depends: java2-runtime, bsh, micromanager, imagej (>=1.43b-1), libcommons-math-java, libswing-layout-java
 Installed-Size: 1
 Maintainer: Johan Henriksson [mahogny@areta.org]
 Description: Micro-Manager provides a programmatic and user interface for research microscopes and related equipment

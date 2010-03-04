@@ -30,6 +30,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 
 import javax.swing.JButton;
@@ -110,6 +112,20 @@ public class CalibrationListDlg extends MMDialog {
                handleException(e);                                                               
             }  
          }
+      }
+
+      public int getCurrentPixelConfigRow() {
+         try {
+            String curConfig = core_.getCurrentPixelSizeConfig();
+            for (int i = 0; i < this.getRowCount(); ++i) {
+               if (this.getValueAt(i, 0).equals(curConfig)) {
+                  return i;
+               }
+            }
+         } catch (Exception ex) {
+            ReportingUtils.logError(ex);
+         }
+         return -1;
       }
 
       public boolean isCellEditable(int rowIndex, int columnIndex) {
@@ -295,6 +311,17 @@ public class CalibrationListDlg extends MMDialog {
          parentGUI_.setConfigChanged(true);
          parentGUI_.refreshGUI();
       }
+   }
+
+   public void updateCalibrations() {
+      CalTableModel ptm = (CalTableModel)calTable_.getModel();
+      calibrationList_.getCalibrationsFromCore();
+      ptm.fireTableDataChanged();
+      parentGUI_.setConfigChanged(true);
+      parentGUI_.refreshGUI();
+      int row = ptm.getCurrentPixelConfigRow();
+      calTable_.setRowSelectionInterval(row, row);
+
    }
 
    public void setParentGUI(DeviceControlGUI parent) {

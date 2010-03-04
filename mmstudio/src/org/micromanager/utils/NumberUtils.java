@@ -35,6 +35,7 @@ public class NumberUtils {
 	static {
 		// The display is supposed to use local formating (e.g., switch commas with periods in Locale.GERMANY).
 		format_ = NumberFormat.getInstance();
+      format_.setMaximumFractionDigits(4);
 
 		// The core always uses four decimal places in its double strings, and a dot for the decimal separator.
 		// This is equivalent to the US locale settings.

@@ -98,6 +98,7 @@ public class CalibrationEditor extends MMDialog {
    private JCheckBox showOtherCheckBox_;
    private Configuration initialCfg_;
    private JScrollPane scrollPane_;
+   private boolean tableEditable_ = true;
     
    public CalibrationEditor(String label, String pixelSize) {
       super();
@@ -326,7 +327,16 @@ public class CalibrationEditor extends MMDialog {
 
       return data_.applySettings(label_, presetLabelField_.getText(), presetSizeField_.getText());
    }
-   
+
+   public void editNameOnly() {
+      presetSizeField_.setEditable(false);
+      tableEditable_ = false;
+      if (data_.isEditingGroup())
+         textArea_.setText("Please choose the properties to use when defining a pixel size configuration,\nand choose a name for the current pixel size settings.");
+      else
+         textArea_.setText("Please choose a name for this pixel size configuration.");
+   }
+
    public void setCore(CMMCore core){
       data_ = new PropertyTableData(core, flags_);
       table_ = new JTable();
@@ -401,6 +411,7 @@ public class CalibrationEditor extends MMDialog {
       PropertySetting groupSignature_[];
 
       private String[] presetNames_;
+
       
       public PropertyTableData(CMMCore core, ShowFlags flags) {
          core_ = core;
@@ -608,7 +619,7 @@ public class CalibrationEditor extends MMDialog {
       
       public boolean isCellEditable(int nRow, int nCol) {
          if (nCol == 1)
-            return !propList_.get(nRow).readOnly;
+            return tableEditable_ && !propList_.get(nRow).readOnly;
          else if (nCol == 2) {
             if (!isEditingGroup())
                return false;

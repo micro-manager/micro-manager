@@ -2240,6 +2240,12 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 		calibrationListDlg_.setParentGUI(this);
 	}
 
+   public CalibrationListDlg getCalibrationListDlg() {
+      if (calibrationListDlg_ == null)
+         createCalibrationListDlg();
+      return calibrationListDlg_;
+   }
+
 	private void createScriptPanel() {
 		if (scriptPanel_ == null) {
 			scriptPanel_ = new ScriptPanel(core_, options_, this);

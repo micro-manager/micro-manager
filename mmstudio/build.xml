@@ -123,6 +123,7 @@
 		<copy file="${BinRoot}/mmgr_dal_ASIwptr.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_BaumerOptronic.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_CoherentCube.dll" todir="${InstallRoot}" />
+		<copy file="${BinRoot}/mmgr_dal_Corvus.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_Conix.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_CSUX.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_DemoCamera.dll" todir="${InstallRoot}" />
@@ -173,14 +174,6 @@
 		<copy file="${BinRoot}/mmgr_dal_Yokogawa.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_ZeissCAN.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_ZeissCAN29.dll" todir="${InstallRoot}" />
-		<!-- Jenoptik vendor libraries (not installed with product) 
-		//<copy file="${BinRoot}/camconj.dll" todir="${InstallRoot}" />
-		<copy file="${BinRoot}/FireCamJ.dll" todir="${InstallRoot}" />
-		<copy file="${BinRoot}/MexJCam.dll" todir="${InstallRoot}" />
-		<copy file="${BinRoot}/ProcessLib.dll" todir="${InstallRoot}" />
-
-		<copy file="${BinRoot}/FxLib.dll" todir="${InstallRoot}" />
-		<copy file="${BinRoot}/SysInfo.dll" todir="${InstallRoot}" /> -->
 
     <copy file="${ScriptsRoot}/sdemo1.bsh" todir="${ScriptsInstall}" />
     <copy file="${ScriptsRoot}/sdemo2.bsh" todir="${ScriptsInstall}" />

@@ -181,7 +181,7 @@ int CParallelPort::Initialize()
 		return nRet;
 
 	pAct = new CPropertyAction (this, &CParallelPort::OnStatusRegister);
-	nRet = CreateProperty("StatusRegister", "0", MM::Integer, false, pAct);
+	nRet = CreateProperty("StatusRegister", "0", MM::Integer, true, pAct);
 	if (nRet != DEVICE_OK)
 		return nRet;
 

@@ -11,6 +11,7 @@ import ij.process.ImageProcessor;
 import org.micromanager.utils.ImageUtils;
 import java.awt.geom.Point2D;
 import org.micromanager.utils.ImageUtils;
+import org.micromanager.utils.MathFunctions;
 
 String slm;
 int slmWidth;
@@ -74,7 +75,7 @@ public AffineTransform getFirstApproxTransform() {
 	mapSpot(spotMap, new Point(x,y-s));
 	mapSpot(spotMap, new Point(x-s,y));
 
-	return generateAffineTransformFromPointPairs(spotMap);
+	return MathFunctions.generateAffineTransformFromPointPairs(spotMap);
 }
 
 public AffineTransform getFinalTransform(AffineTransform firstApprox) {
@@ -92,7 +93,7 @@ public AffineTransform getFinalTransform(AffineTransform firstApprox) {
 	dmdPoint = firstApprox.transform(new Point2D.Double((double) s,(double) imgHeight-s),null);
 	mapSpot(spotMap2, dmdPoint);
 	
-	return generateAffineTransformFromPointPairs(spotMap2);
+	return MathFunctions.generateAffineTransformFromPointPairs(spotMap2);
 }
 
 update();

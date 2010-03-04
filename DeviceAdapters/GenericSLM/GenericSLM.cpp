@@ -745,14 +745,14 @@ void GenericSLM::MoveWindowToViewingMonitor(HWND wnd) {
 
 vector<HWND> GenericSLM::GetWindowList() {
    windowList_.clear();
-   EnumWindows(&GenericSLM::AddWindowToList, (long) &windowList_);
+   EnumWindows(reinterpret_cast<WNDENUMPROC>(&GenericSLM::AddWindowToList), (long) &windowList_);
    return windowList_;
 }
 
 // Only called from GetWindowList()
 BOOL CALLBACK GenericSLM::AddWindowToList(HWND wnd, long windowListAddr) {
    ((vector<HWND> *) windowListAddr)->push_back(wnd);
-   EnumChildWindows(wnd,AddWindowToList,windowListAddr);
+   EnumChildWindows(wnd,reinterpret_cast<WNDENUMPROC>(AddWindowToList),windowListAddr);
    return 1;
 }
 

@@ -136,6 +136,7 @@ MMJ_.jar:  \
 	$(srcdir)/src/org/micromanager/utils/MMScriptException.java \
 	$(srcdir)/src/org/micromanager/utils/MMSerializationException.java \
 	$(srcdir)/src/org/micromanager/utils/MMSnapshotWindow.java \
+	$(srcdir)/src/org/micromanager/utils/MathFunctions.java \
 	$(srcdir)/src/org/micromanager/utils/MemoryUtils.java \
 	$(srcdir)/src/org/micromanager/utils/NumberUtils.java \
 	$(srcdir)/src/org/micromanager/utils/PositionMode.java \
@@ -159,7 +160,7 @@ MMJ_.jar:  \
 	test -d build || mkdir build
 	rm -rf build/*
 	cp $(srcdir)/bin/plugins_mmstudio.config build/plugins.config
-	$(JAVAC) -source 1.5 -target 1.5 -sourcepath ../MMCoreJ_wrap:$(srcdir)/src:../hcs/src:. -classpath $(IJJARPATH):$(BSHJARPATH):$(SWINGXJARPATH):$(topsrcdir)/bin/MMCoreJ.jar:. $(srcdir)/src/*.java $(srcdir)/src/org/micromanager/utils/*.java -d build
+	$(JAVAC) -source 1.5 -target 1.5 -sourcepath ../MMCoreJ_wrap:$(srcdir)/src:../hcs/src:. -classpath $(IJJARPATH):$(BSHJARPATH):$(SWINGXJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):$(topsrcdir)/bin/MMCoreJ.jar:. $(srcdir)/src/*.java $(srcdir)/src/org/micromanager/utils/*.java -d build
 	cp -rf $(srcdir)/src/org/micromanager/icons build/org/micromanager
 	cp -rf $(srcdir)/src/org/micromanager/conf/*html build/org/micromanager/conf
 	## Work around bug in 'jar': jar cf MM_.jar -C bin/ bin/* does not work

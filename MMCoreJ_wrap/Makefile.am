@@ -9,7 +9,7 @@ SWIGLIB_SOURCES = MMCoreJ.i \
 	../MMCore/Error.h \
 	../MMCore/ErrorCodes.h \
 	../MMCore/MMCore.h  \
-	../MMDevice/MMDeviceConstants.h
+	../MMDevice/MMDeviceConstants.h 
 
 MMCoreJ_wrap.cxx: $(SWIGLIB_SOURCES)
 	test -d mmcorej || mkdir mmcorej

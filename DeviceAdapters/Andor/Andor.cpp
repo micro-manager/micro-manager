@@ -3358,7 +3358,7 @@ unsigned int AndorCamera::createGainProperty(AndorCapabilities * caps) {
   unsigned int retVal(DRV_SUCCESS);
   bEMGainSupported  = ((caps->ulSetFunctions & AC_SETFUNCTION_EMCCDGAIN) == AC_SETFUNCTION_EMCCDGAIN);
   
-  int state = 0;  // for setting the em gain advanced state
+  int state = 1;  // for setting the em gain advanced state
   int mode  = 0;  // for setting the em gain mode
 
   if(bEMGainSupported) {
