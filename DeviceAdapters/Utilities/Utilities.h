@@ -147,6 +147,7 @@ public:
    int OnStageMaxVolt(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnStageMinPos(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnStageMaxPos(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    std::vector<std::string> availableDAs_;

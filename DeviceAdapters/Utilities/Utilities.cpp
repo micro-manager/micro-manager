@@ -39,6 +39,9 @@ const char* g_DeviceNameDAZStage = "DA Z Stage";
 const char* g_DeviceNameAutoFocusStage = "AutoFocus Stage";
 const char* g_DeviceNameStateDeviceShutter = "State Device Shutter";
 
+const char* g_PropertyMinUm = "Stage Low Position(um)";
+const char* g_PropertyMaxUm = "Stage High Position(um)";
+
 ///////////////////////////////////////////////////////////////////////////////
 // Exported MMDevice API
 ///////////////////////////////////////////////////////////////////////////////
@@ -95,6 +98,7 @@ MultiShutter::MultiShutter() :
    // Description                                                            
    CreateProperty(MM::g_Keyword_Description, "Combines multiple physical shutters into a single ", MM::String, true);
 
+   CreateProperty(MM::g_Keyword_Description, "Combines multiple physical shutters into a single ", MM::String, true);
    for (int i = 0; i < nrPhysicalShutters_; i++) {
       usedShutters_.push_back(g_Undefined);
       physicalShutters_.push_back(0);
@@ -350,10 +354,10 @@ DAZStage::DAZStage() :
    CreateProperty("Stage High Voltage", "5", MM::Float, false, pAct, true);         
 
    pAct = new CPropertyAction (this, &DAZStage::OnStageMinPos); 
-   CreateProperty("Stage Low Position(um)", "0", MM::Float, false, pAct, true); 
+   CreateProperty(g_PropertyMinUm, "0", MM::Float, false, pAct, true); 
 
    pAct = new CPropertyAction (this, &DAZStage::OnStageMaxPos);      
-   CreateProperty("Stage High Position(um)", "200", MM::Float, false, pAct, true);         
+   CreateProperty(g_PropertyMaxUm, "200", MM::Float, false, pAct, true);         
 }  
  
 DAZStage::~DAZStage()
@@ -384,7 +388,17 @@ int DAZStage::Initialize()
    // This could lead to strange problems if multiple DA devices are loaded
    SetProperty("DA Device", defaultDA.c_str());
 
-   int ret = UpdateStatus();
+   pAct = new CPropertyAction (this, &DAZStage::OnPosition);
+   CreateProperty(MM::g_Keyword_Position, "0.0", MM::Float, false, pAct);
+   double minPos = 0.0;
+   int ret = GetProperty(g_PropertyMinUm, minPos);
+   assert(ret == DEVICE_OK);
+   double maxPos = 0.0;
+   ret = GetProperty(g_PropertyMaxUm, maxPos);
+   assert(ret == DEVICE_OK);
+   SetPropertyLimits(MM::g_Keyword_Position, minPos, maxPos);
+
+   ret = UpdateStatus();
    if (ret != DEVICE_OK)
       return ret;
 
@@ -547,7 +561,24 @@ int DAZStage::OnDADevice(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    return DEVICE_OK;
 }
-
+int DAZStage::OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      double pos;
+      int ret = GetPositionUm(pos);
+      if (ret != DEVICE_OK)
+         return ret;
+      pProp->Set(pos);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      double pos;
+      pProp->Get(pos);
+      return SetPositionUm(pos);
+   }
+   return DEVICE_OK;
+}
 int DAZStage::OnStageMinVolt(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
