@@ -107,6 +107,10 @@ private:
    bool busy_;
    double latestSharpness_;
 
+   bool disableAutoShuttering_;
+
+
+
 
 };
 
