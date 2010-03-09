@@ -37,7 +37,7 @@
 
 #include "../../MMDevice/ModuleInterface.h"
 #include "../../MMCore/Error.h"
-
+#include "boost/lexical_cast.hpp"
 
 // property names:
 // Controller
@@ -78,7 +78,8 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 // Controller implementation
 // ~~~~~~~~~~~~~~~~~~~~
 
-SimpleAutofocus::SimpleAutofocus(const char* name) : name_(name), pCore_(NULL), cropFactor_(0.2), busy_(false)
+SimpleAutofocus::SimpleAutofocus(const char* name) : name_(name), pCore_(NULL), cropFactor_(0.2), busy_(false),
+   coarseStepSize_(2.), coarseSteps_ (1), fineStepSize_ (0.1), fineSteps_ ( 5), threshold_( 0.02)
 {
 }
 
@@ -115,21 +116,18 @@ int SimpleAutofocus::Initialize()
    CPropertyAction *pAct = new CPropertyAction (this, &SimpleAutofocus::OnExposure);
    CreateProperty(MM::g_Keyword_Exposure, "10", MM::Integer, false, pAct); 
 
-   // Set the depth for coarse search
-   pAct = new CPropertyAction(this, &SimpleAutofocus::OnSearchSpanCoarse);
-   CreateProperty("FullSpan","300",MM::Float, false, pAct);
+   pAct = new CPropertyAction(this, &SimpleAutofocus::OnCoarseStepNumber);
+   CreateProperty("CoarseStep#/2","2",MM::Integer, false, pAct);
 
-   // Set the depth for fine search
-   pAct = new CPropertyAction(this, &SimpleAutofocus::OnSearchSpanFine);
-   CreateProperty("IncrementalSpan","100",MM::Float, false, pAct);
+   pAct = new CPropertyAction(this, &SimpleAutofocus::OnFineStepNumber);
+   CreateProperty("FineStep#/2","5",MM::Integer, false, pAct);
 
-   // Set the span for coarse search
    pAct = new CPropertyAction(this, &SimpleAutofocus::OnStepsizeCoarse);
-   CreateProperty("FullStep","10",MM::Float, false, pAct);
+   CreateProperty("CoarseStepSize","2.0",MM::Float, false, pAct);
 
    // Set the span for fine search
    pAct = new CPropertyAction(this, &SimpleAutofocus::OnStepSizeFine);
-   CreateProperty("IncrementalStep","3",MM::Float, false, pAct);
+   CreateProperty("FineStepSize","0.1",MM::Float, false, pAct);
 
    pAct = new CPropertyAction(this, &SimpleAutofocus::OnChannelForAutofocus);
    CreateProperty("ChannelForAutofocus", "", MM::String, false, pAct);
@@ -158,12 +156,15 @@ int SimpleAutofocus::Initialize()
 bool SimpleAutofocus::IsContinuousFocusLocked(){ 
    return locked_;} ;
 int SimpleAutofocus::FullFocus(){ 
+   this->BruteForceSearch();
    return 0;};
 int SimpleAutofocus::IncrementalFocus(){ 
-   return 0;};
-int SimpleAutofocus::GetLastFocusScore(double& score){ 
+   return -1;};
+int SimpleAutofocus::GetLastFocusScore(double& score){
+   score = this->latestSharpness_;
    return 0;};
 int SimpleAutofocus::GetCurrentFocusScore(double& score){ 
+   score = this->SharpnessAtCurrentSettings();
    return 0;};
 int SimpleAutofocus::AutoSetParameters(){ 
    return 0;};
@@ -219,12 +220,25 @@ int SimpleAutofocus::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 
  
-int SimpleAutofocus::OnSearchSpanCoarse(MM::PropertyBase* pProp, MM::ActionType eAct){ return 0;};
-int SimpleAutofocus::OnSearchSpanFine(MM::PropertyBase* pProp, MM::ActionType eAct){ return 0;};
-int SimpleAutofocus::OnStepsizeCoarse(MM::PropertyBase* pProp, MM::ActionType eAct){ return 0;};
-int SimpleAutofocus::OnStepSizeFine(MM::PropertyBase* pProp, MM::ActionType eAct){ return 0;};
-int SimpleAutofocus::OnChannelForAutofocus(MM::PropertyBase* pProp, MM::ActionType eAct){ return 0;};
-int SimpleAutofocus::OnThreshold(MM::PropertyBase* pProp, MM::ActionType eAct){ return 0;};
+int SimpleAutofocus::OnCoarseStepNumber(MM::PropertyBase* pProp, MM::ActionType eAct)
+{       
+   if (eAct == MM::BeforeGet)      
+   {
+      pProp->Set(coarseSteps_);      
+   }
+   else if (eAct == MM::AfterSet)
+   { 
+      pProp->Get(coarseSteps_);      
+   }   
+   return DEVICE_OK;
+};
+
+int SimpleAutofocus::OnFineStepNumber(MM::PropertyBase* pProp, MM::ActionType eAct){       if (eAct == MM::BeforeGet)      {         pProp->Set(fineSteps_);      }      else if (eAct == MM::AfterSet)      {         pProp->Get(fineSteps_);      }   return DEVICE_OK;};;
+int SimpleAutofocus::OnStepsizeCoarse(MM::PropertyBase* pProp, MM::ActionType eAct){       if (eAct == MM::BeforeGet)      {         pProp->Set(coarseStepSize_);      }      else if (eAct == MM::AfterSet)      {         pProp->Get(coarseStepSize_);      }   return DEVICE_OK;};;
+int SimpleAutofocus::OnStepSizeFine(MM::PropertyBase* pProp, MM::ActionType eAct){       if (eAct == MM::BeforeGet)      {         pProp->Set(fineStepSize_);      }      else if (eAct == MM::AfterSet)      {         pProp->Get(fineStepSize_);      }   return DEVICE_OK;};;
+int SimpleAutofocus::OnChannelForAutofocus(MM::PropertyBase* pProp, MM::ActionType eAct){       if (eAct == MM::BeforeGet)      {             }      else if (eAct == MM::AfterSet)      {    /*TODO!!!*/   }   return DEVICE_OK;};;
+int SimpleAutofocus::OnThreshold(MM::PropertyBase* pProp, MM::ActionType eAct){       if (eAct == MM::BeforeGet)      {         pProp->Set(threshold_);      }      else if (eAct == MM::AfterSet)      {         pProp->Get(threshold_);      }   return DEVICE_OK;};;
+
 int SimpleAutofocus::OnCropFactor(MM::PropertyBase* pProp, MM::ActionType eAct)
 { 
       if (eAct == MM::BeforeGet)
@@ -295,17 +309,18 @@ short SimpleAutofocus::findMedian(short* arr, const int lengthMinusOne)
 
 double SimpleAutofocus::SharpnessAtCurrentSettings()
 {
+   busy_ = true;
+
    	int w0 = 0, h0 = 0, d0 = 0;
-      int ret  = pCore_->GetImageDimensions(w0, h0, d0);
-
-
+      double sharpness = 0;
+      pCore_->GetImageDimensions(w0, h0, d0);
+      
       int width =  (int)(cropFactor_*w0);
       int height = (int)(cropFactor_*h0);
       int ow = (int)(((1-cropFactor_)/2)*w0);
       int oh = (int)(((1-cropFactor_)/2)*h0);
 
       short* medPix = new short[ width*height];
-      double sharpNess = 0;
       short* windo = new short[9];
 
       // copy from MM image to the working buffer
@@ -368,7 +383,7 @@ double SimpleAutofocus::SharpnessAtCurrentSettings()
             for (int l=1; l<height-1; l++)
             {
                double convolvedValue = -2.0*medPix[k-1 + width*(l-1)] - (double)medPix[k+ width*(l-1)]-(double)medPix[k-1 + width*l]+(double)medPix[k+1 + width*l]+(double)medPix[k+ width*(l+1)]+2.0*medPix[k+1+ width*(l+1)];
-               sharpNess = sharpNess + convolvedValue*convolvedValue;
+               sharpness = sharpness + convolvedValue*convolvedValue;
 
             } 
          }
@@ -379,7 +394,9 @@ double SimpleAutofocus::SharpnessAtCurrentSettings()
       }
       delete medPix;
       delete windo;
-      return sharpNess;
+      busy_ = false;
+      latestSharpness_ = sharpness;
+      return sharpness;
    }
 
 
@@ -407,3 +424,71 @@ int SimpleAutofocus::Exposure(void){
    pCore_->GetExposure(value);
    return (int)(0.5+value);
 };
+
+
+void SimpleAutofocus::BruteForceSearch()
+{
+   double curDist = 0.;
+   double baseDist = 0.;
+   double bestDist = 0.;
+   double curSh = 0. ;
+   double bestSh = 0.;
+   long t0;
+   MM::MMTime tPrev;
+   MM::MMTime tcur;
+   double curdist = Z();
+
+   baseDist = curDist - coarseStepSize_ * coarseSteps_;
+
+   // start of coarse search
+   Z(baseDist);
+   LogMessage("AF start coarse search range is  " + boost::lexical_cast<std::string,double>(baseDist) + " to " + boost::lexical_cast<std::string,double>(baseDist + coarseStepSize_*(2 * coarseSteps_)), true);
+   for (int i = 0; i < 2 * coarseSteps_ + 1; ++i)
+   {
+      tPrev = GetCurrentMMTime();
+      Z( baseDist + i * coarseStepSize_);
+      curDist = Z();
+      LogMessage("AF evaluation @ " + boost::lexical_cast<std::string,double>(curDist), true);
+      curSh = SharpnessAtCurrentSettings();
+      LogMessage("AF metric is: " + boost::lexical_cast<std::string,double>(curSh), true);
+
+      if (curSh > bestSh)
+      {
+         bestSh = curSh;
+         bestDist = curDist;
+      } else if (bestSh - curSh > threshold_ * bestSh)
+      {
+         break;
+      }
+      tcur = GetCurrentMMTime() - tPrev;
+   }
+   baseDist = bestDist - fineStepSize_ * fineSteps_;
+   Z(baseDist);
+   LogMessage("AF start fine search range is  " + boost::lexical_cast<std::string,double>(baseDist)+" to " + boost::lexical_cast<std::string,double>( baseDist+(2*fineSteps_)*fineStepSize_), true);
+//  delay_time(100);
+   bestSh = 0;
+
+   //Fine search
+   for (int i = 0; i < 2 * fineSteps_ + 1; i++)
+   {
+      tPrev = GetCurrentMMTime();
+      Z( baseDist + i * fineStepSize_);
+      curDist = Z();
+      LogMessage("AF evaluation @ " + boost::lexical_cast<std::string,double>(curDist), true);
+      curSh = SharpnessAtCurrentSettings();
+      LogMessage("AF metric is: " + boost::lexical_cast<std::string,double>(curSh), true);
+
+      if (curSh > bestSh)
+      {
+         bestSh = curSh;
+         bestDist = curDist;
+      } else if (bestSh - curSh > threshold_ * bestSh)
+      {
+         break;
+      }
+      tcur = GetCurrentMMTime() - tPrev;
+   }
+  LogMessage("AF best position is " + boost::lexical_cast<std::string,double>(bestDist), true);
+
+   Z(bestDist);
+}

@@ -32,13 +32,6 @@
 #include <vector>
 
 
-   double SIZE_FIRST = 2;//
-   int NUM_FIRST = 1; // +/- #of snapshot
-    double SIZE_SECOND = 0.2;
-    int NUM_SECOND = 5;
-   double THRES = 0.02;
-   double CROP_SIZE = 0.2; 
-
 
 class SimpleAutofocus : public CAutoFocusBase<SimpleAutofocus>
 {
@@ -77,12 +70,13 @@ public:
    void Z(const double value__);
    double Z(void);
    
+   void BruteForceSearch();
    
    // action interface
    // ---------------
    int OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct); 
-   int OnSearchSpanCoarse(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnSearchSpanFine(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnCoarseStepNumber(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnFineStepNumber(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnStepsizeCoarse(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnStepSizeFine(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnChannelForAutofocus(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -92,6 +86,15 @@ public:
 
 
 private:
+
+   // parameters for the Pakpoom Subsoontorn & Hernan Garcia brute force search
+
+   double coarseStepSize_;
+   long coarseSteps_; // +/- #of snapshot
+   double fineStepSize_;
+   long fineSteps_;
+   double threshold_;
+
    bool continuousFocusing_;
    bool locked_;
    std::string name_;
@@ -102,6 +105,7 @@ private:
    MM::Core* pCore_;
    double cropFactor_;
    bool busy_;
+   double latestSharpness_;
 
 
 };
