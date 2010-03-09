@@ -43,7 +43,7 @@
 // Controller
 const char* g_ControllerName = "SimpleAutofocus";
 
-const bool messageDebug = false;
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Exported MMDevice API
@@ -79,7 +79,7 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 // ~~~~~~~~~~~~~~~~~~~~
 
 SimpleAutofocus::SimpleAutofocus(const char* name) : name_(name), pCore_(NULL), cropFactor_(0.2), busy_(false),
-   coarseStepSize_(1.), coarseSteps_ (2), fineStepSize_ (0.3), fineSteps_ ( 5), threshold_( 0.05), disableAutoShuttering_(true)
+   coarseStepSize_(2.), coarseSteps_ (1), fineStepSize_ (0.1), fineSteps_ ( 5), threshold_( 0.02)
 {
 }
 
@@ -259,7 +259,10 @@ int SimpleAutofocus::OnSharpnessScore(MM::PropertyBase* pProp, MM::ActionType eA
    {
       if (eAct == MM::BeforeGet)
       {
-         pProp->Set(latestSharpness_);
+         // retrieve value from the camera via the core
+         double v;
+         v = SharpnessAtCurrentSettings();
+         pProp->Set(v);
       }
       else if (eAct == MM::AfterSet)
       {
@@ -353,7 +356,37 @@ double SimpleAutofocus::SharpnessAtCurrentSettings()
 
       if( NULL !=pShort)
       {
-            
+
+         // calculate the standard deviation & mean
+
+         long nPts = 0;
+         double mean = 0;
+         double M2 = 0;
+         double delta;
+
+         // one-pass algorithm for mean and std from Welford / Knuth
+
+         for (int i=0; i<width; i++)
+         {
+            for (int j=0; j<height; j++)
+            {
+               ++nPts;
+               long value = pShort[ow+i+ width*(oh+j)];
+               delta = value - mean;
+               mean = mean + delta/nPts;
+               M2 = M2 + delta*(value - mean); // # This expression uses the new value of mean
+            } 
+         }
+
+         double normalizedStandardDeviation;
+         double variance_n = M2/nPts;
+         double variance = M2/(nPts - 1);
+         normalizedStandardDeviation = pow(variance,0.5)/mean;
+
+         LogMessage("npts " + boost::lexical_cast<std::string,long>(nPts) + " mean " +  boost::lexical_cast<std::string,double>(mean) + " nrmlzd std " +  boost::lexical_cast<std::string,double>(normalizedStandardDeviation) );
+         
+
+           
          // ToDO -- eliminate copy above.
 
          /*Apply 3x3 median filter to reduce shot noise*/
@@ -425,6 +458,7 @@ int SimpleAutofocus::Exposure(void){
 
 void SimpleAutofocus::BruteForceSearch()
 {
+   double curDist = 0.;
    double baseDist = 0.;
    double bestDist = 0.;
    double curSh = 0. ;
@@ -432,44 +466,21 @@ void SimpleAutofocus::BruteForceSearch()
    long t0;
    MM::MMTime tPrev;
    MM::MMTime tcur;
-   double curDist = Z();
-
-   char value[MM::MaxStrLength];
-
-   char shutterDeviceName[MM::MaxStrLength];
-   pCore_->GetDeviceProperty(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreAutoShutter, value);
-   std::istringstream iss(value);
-   int ivalue ;
-   iss >> ivalue;
-   bool previousAutoShutterSetting = ivalue;
-   bool currentAutoShutterSetting = previousAutoShutterSetting;
-
-   // allow auto-shuttering or continuous illumination
-   if(disableAutoShuttering_ && previousAutoShutterSetting)
-   {
-      pCore_->SetDeviceProperty(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreAutoShutter, "0"); // disable auto-shutter
-      currentAutoShutterSetting = false;
-   }
-
-   if( !currentAutoShutterSetting)
-   {
-      pCore_->GetDeviceProperty(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreShutter, shutterDeviceName);
-      pCore_->SetDeviceProperty(shutterDeviceName, MM::g_Keyword_State, "1"); // open shutter
-   }
+   double curdist = Z();
 
    baseDist = curDist - coarseStepSize_ * coarseSteps_;
 
    // start of coarse search
    Z(baseDist);
-   LogMessage("AF start coarse search range is  " + boost::lexical_cast<std::string,double>(baseDist) + " to " + boost::lexical_cast<std::string,double>(baseDist + coarseStepSize_*(2 * coarseSteps_)), messageDebug);
+   LogMessage("AF start coarse search range is  " + boost::lexical_cast<std::string,double>(baseDist) + " to " + boost::lexical_cast<std::string,double>(baseDist + coarseStepSize_*(2 * coarseSteps_)), true);
    for (int i = 0; i < 2 * coarseSteps_ + 1; ++i)
    {
       tPrev = GetCurrentMMTime();
       Z( baseDist + i * coarseStepSize_);
       curDist = Z();
-      LogMessage("AF evaluation @ " + boost::lexical_cast<std::string,double>(curDist),  messageDebug);
+      LogMessage("AF evaluation @ " + boost::lexical_cast<std::string,double>(curDist), true);
       curSh = SharpnessAtCurrentSettings();
-      LogMessage("AF metric is: " + boost::lexical_cast<std::string,double>(curSh),  messageDebug);
+      LogMessage("AF metric is: " + boost::lexical_cast<std::string,double>(curSh), true);
 
       if (curSh > bestSh)
       {
@@ -483,7 +494,7 @@ void SimpleAutofocus::BruteForceSearch()
    }
    baseDist = bestDist - fineStepSize_ * fineSteps_;
    Z(baseDist);
-   LogMessage("AF start fine search range is  " + boost::lexical_cast<std::string,double>(baseDist)+" to " + boost::lexical_cast<std::string,double>( baseDist+(2*fineSteps_)*fineStepSize_),  messageDebug);
+   LogMessage("AF start fine search range is  " + boost::lexical_cast<std::string,double>(baseDist)+" to " + boost::lexical_cast<std::string,double>( baseDist+(2*fineSteps_)*fineStepSize_), true);
 //  delay_time(100);
    bestSh = 0;
 
@@ -493,9 +504,9 @@ void SimpleAutofocus::BruteForceSearch()
       tPrev = GetCurrentMMTime();
       Z( baseDist + i * fineStepSize_);
       curDist = Z();
-      LogMessage("AF evaluation @ " + boost::lexical_cast<std::string,double>(curDist),  messageDebug);
+      LogMessage("AF evaluation @ " + boost::lexical_cast<std::string,double>(curDist), true);
       curSh = SharpnessAtCurrentSettings();
-      LogMessage("AF metric is: " + boost::lexical_cast<std::string,double>(curSh),  messageDebug);
+      LogMessage("AF metric is: " + boost::lexical_cast<std::string,double>(curSh), true);
 
       if (curSh > bestSh)
       {
@@ -507,12 +518,7 @@ void SimpleAutofocus::BruteForceSearch()
       }
       tcur = GetCurrentMMTime() - tPrev;
    }
-   LogMessage("AF best position is " + boost::lexical_cast<std::string,double>(bestDist),  messageDebug);
-   if( !currentAutoShutterSetting)
-   {
-      pCore_->SetDeviceProperty(shutterDeviceName, MM::g_Keyword_State, "0"); // close
-   }
-   pCore_->SetDeviceProperty(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreAutoShutter, previousAutoShutterSetting?"1":"0"); // restore auto-shutter
+  LogMessage("AF best position is " + boost::lexical_cast<std::string,double>(bestDist), true);
 
-  Z(bestDist);
+   Z(bestDist);
 }
