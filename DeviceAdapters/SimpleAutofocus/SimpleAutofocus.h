@@ -31,6 +31,7 @@
 //#include <iostream>
 #include <vector>
 
+class SAFData;
 
 
 class SimpleAutofocus : public CAutoFocusBase<SimpleAutofocus>
@@ -117,6 +118,7 @@ private:
    long recalculate_;
    double mean_;  
    double standardDeviationOverMean_;
+   SAFData* pPoints_;
    
 
 

@@ -38,12 +38,81 @@
 #include "../../MMDevice/ModuleInterface.h"
 #include "../../MMCore/Error.h"
 #include "boost/lexical_cast.hpp"
+#include "boost/tuple/tuple.hpp"
+#include <set>
 
 // property names:
 // Controller
 const char* g_ControllerName = "SimpleAutofocus";
 
 const bool messageDebug = false;
+
+class SAFPoint
+{
+public:
+   SAFPoint( int seqNo, float z, float meanValue, float stdOverMeanScore, double hiPassScore):thePoint_( seqNo, z, meanValue,  stdOverMeanScore, hiPassScore )
+   {
+   }
+
+   SAFPoint(  boost::tuple<int,float,float,float,double> apoint) : thePoint_(apoint){}
+
+   bool operator<(const SAFPoint& that) const
+   {
+      // sort by Z position
+      return (boost::tuples::get<1>(thePoint_) < boost::tuples::get<1>(that.thePoint_));
+   }
+
+    const std::string DataRow()
+    {
+       std::ostringstream data;
+       data << boost::lexical_cast<std::string, int>( boost::tuples::get<0>(thePoint_) )<< "\t"
+          << std::setprecision(5) << boost::tuples::get<1>(thePoint_) << "\t" // Z
+          << std::setprecision(5) <<  boost::tuples::get<2>(thePoint_) << "\t" // mean
+          << std::setprecision(5) << boost::tuples::get<3>(thePoint_) << "\t"  // std / mean
+          << boost::lexical_cast<std::string, double>( boost::tuples::get<4>(thePoint_) ) ;
+       return data.str();
+    }
+
+ private:
+   boost::tuple<int,float,float,float,double> thePoint_;
+
+};
+
+class SAFData
+{
+   std::set< SAFPoint > points_;
+
+public:
+   void InsertPoint( int seqNo, float z, float meanValue,float stdOverMeanScore,  double hiPassScore)
+   {
+     // SAFPoint value(int seqNo, float z, float meanValue,  float stdOverMeanScore, double hiPassScore);
+      // VS 2008 thinks above line is a function decl!!!
+      boost::tuple<int,float,float,float,double> vals(seqNo, z, meanValue, stdOverMeanScore,  hiPassScore );
+      SAFPoint value(vals);
+      points_.insert(value);
+   }
+
+   // default dtor is ok
+
+   void Clear()
+   {
+      points_.clear();
+   }
+   const std::string Table()
+   {
+      std::ostringstream data;
+      data << "Acq#\t Z\t Mean\t  Std / Mean\t Hi Pass Score";
+      std::set< SAFPoint >::iterator ii;
+      for( ii = points_.begin(); ii!=points_.end(); ++ii)
+      {
+         data << "\n";
+         data << ii->DataRow();
+      }
+      return data.str();
+   }
+};
+
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Exported MMDevice API
@@ -80,8 +149,9 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 
 SimpleAutofocus::SimpleAutofocus(const char* name) : name_(name), pCore_(NULL), cropFactor_(0.2), busy_(false),
    coarseStepSize_(1.), coarseSteps_ (2), fineStepSize_ (0.3), fineSteps_ ( 5), threshold_( 0.05), disableAutoShuttering_(1), 
-   sizeOfTempShortBuffer_(0), pShort_(NULL),latestSharpness_(0.), recalculate_(0), mean_(0.), standardDeviationOverMean_(0.)
+   sizeOfTempShortBuffer_(0), pShort_(NULL),latestSharpness_(0.), recalculate_(0), mean_(0.), standardDeviationOverMean_(0.), pPoints_(NULL)
 {
+
 }
 
 int SimpleAutofocus::Shutdown()
@@ -92,6 +162,9 @@ return DEVICE_OK;
 
 SimpleAutofocus::~SimpleAutofocus()
 {
+   if(NULL!=pPoints_)
+      delete pPoints_;
+
    if( NULL!=pShort_)
       free(pShort_);
 
@@ -112,6 +185,11 @@ void SimpleAutofocus::GetName(char* name) const
 
 int SimpleAutofocus::Initialize()
 {
+
+   if(NULL == pPoints_)
+   {
+      pPoints_ = new SAFData();
+   }
    LogMessage("SimpleAutofocus::Initialize()");
    pCore_ = GetCoreCallback();
 
@@ -386,8 +464,8 @@ double SimpleAutofocus::SharpnessAtCurrentSettings()
 
 	   ImgBuffer image(w0,h0,d0);
       //snap an image
-      const char* pI = pCore_->GetImage();
-      const short* pSInput = reinterpret_cast<const short*>(pI);
+      const unsigned char* pI = reinterpret_cast<const unsigned char*>(pCore_->GetImage());
+      const unsigned short* pSInput = reinterpret_cast<const unsigned short*>(pI);
 
       int iindex;
       bool legalFormat = false;
@@ -398,8 +476,9 @@ double SimpleAutofocus::SharpnessAtCurrentSettings()
          legalFormat = true;
          if( sizeOfTempShortBuffer_ != sizeof(short)*w0*h0)
          {
-            if( NULL == pShort_)
+            if( NULL != pShort_)
                free(pShort_);
+            // malloc is faster than new...
             pShort_ = (short*)malloc( sizeof(short)*w0*h0);
             if( NULL!=pShort_)
             {
@@ -417,7 +496,7 @@ double SimpleAutofocus::SharpnessAtCurrentSettings()
          legalFormat = true;
          if( sizeOfTempShortBuffer_ != sizeof(short)*w0*h0)
          {
-            if( NULL == pShort_)
+            if( NULL != pShort_)
                free(pShort_);
             pShort_ = (short*)malloc( sizeof(short)*w0*h0);
             if( NULL!=pShort_)
@@ -453,18 +532,17 @@ double SimpleAutofocus::SharpnessAtCurrentSettings()
                long value = pShort_[ow+i+ width*(oh+j)];
                delta = value - mean_;
                mean_ = mean_ + delta/nPts;
-               M2 = M2 + delta*(value - mean_); // # This expression uses the new value of mean
+               M2 = M2 + delta*(value - mean_); // # This expression uses the new value of mean_
             } 
          }
 
          double variance_n = M2/nPts;
          double variance = M2/(nPts - 1);
-         standardDeviationOverMean_ = pow(variance,0.5)/mean_;
+         standardDeviationOverMean_ = 0.;
+         if( 0. != mean_)
+            standardDeviationOverMean_ = pow(variance,0.5)/mean_;
 
          LogMessage("N " + boost::lexical_cast<std::string,long>(nPts) + " mean " +  boost::lexical_cast<std::string,float>((float)mean_) + " nrmlzd std " +  boost::lexical_cast<std::string,float>((float)standardDeviationOverMean_) );
-         
-
-
 
          // ToDO -- eliminate copy above.
 
@@ -537,6 +615,9 @@ int SimpleAutofocus::Exposure(void){
 
 void SimpleAutofocus::BruteForceSearch()
 {
+
+   pPoints_->Clear();
+   int acquisitionSequenceNumber = 0;
    double baseDist = 0.;
    double bestDist = 0.;
    double curSh = 0. ;
@@ -553,7 +634,7 @@ void SimpleAutofocus::BruteForceSearch()
    std::istringstream iss(value);
    int ivalue ;
    iss >> ivalue;
-   bool previousAutoShutterSetting = ivalue;
+   bool previousAutoShutterSetting = static_cast<bool>(ivalue);
    bool currentAutoShutterSetting = previousAutoShutterSetting;
 
    // allow auto-shuttering or continuous illumination
@@ -581,6 +662,7 @@ void SimpleAutofocus::BruteForceSearch()
       curDist = Z();
       LogMessage("AF evaluation @ " + boost::lexical_cast<std::string,double>(curDist),  messageDebug);
       curSh = SharpnessAtCurrentSettings();
+      pPoints_->InsertPoint(acquisitionSequenceNumber++,(float)curDist,(float)mean_,(float)standardDeviationOverMean_,latestSharpness_);
       LogMessage("AF metric is: " + boost::lexical_cast<std::string,double>(curSh),  messageDebug);
 
       if (curSh > bestSh)
@@ -607,6 +689,7 @@ void SimpleAutofocus::BruteForceSearch()
       curDist = Z();
       LogMessage("AF evaluation @ " + boost::lexical_cast<std::string,double>(curDist),  messageDebug);
       curSh = SharpnessAtCurrentSettings();
+      pPoints_->InsertPoint(acquisitionSequenceNumber++,(float)curDist,(float)mean_,(float)standardDeviationOverMean_,latestSharpness_);
       LogMessage("AF metric is: " + boost::lexical_cast<std::string,double>(curSh),  messageDebug);
 
       if (curSh > bestSh)
@@ -620,6 +703,7 @@ void SimpleAutofocus::BruteForceSearch()
       tcur = GetCurrentMMTime() - tPrev;
    }
    LogMessage("AF best position is " + boost::lexical_cast<std::string,double>(bestDist),  messageDebug);
+   LogMessage("AF Performance Table:\n" + pPoints_->Table(), messageDebug);
    if( !currentAutoShutterSetting)
    {
       pCore_->SetDeviceProperty(shutterDeviceName, MM::g_Keyword_State, "0"); // close
