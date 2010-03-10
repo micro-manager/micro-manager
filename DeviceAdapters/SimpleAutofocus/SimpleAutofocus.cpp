@@ -395,7 +395,7 @@ double SimpleAutofocus::SharpnessAtCurrentSettings()
       switch( d0)
       {
       case 1:
-         
+         legalFormat = true;
          if( sizeOfTempShortBuffer_ != sizeof(short)*w0*h0)
          {
             if( NULL == pShort_)
@@ -403,7 +403,6 @@ double SimpleAutofocus::SharpnessAtCurrentSettings()
             pShort_ = (short*)malloc( sizeof(short)*w0*h0);
             if( NULL!=pShort_)
             {
-               legalFormat = true;
                sizeOfTempShortBuffer_ = sizeof(short)*w0*h0;
             }
          }
@@ -415,6 +414,7 @@ double SimpleAutofocus::SharpnessAtCurrentSettings()
          break;
 
       case 2:
+         legalFormat = true;
          if( sizeOfTempShortBuffer_ != sizeof(short)*w0*h0)
          {
             if( NULL == pShort_)
@@ -422,7 +422,6 @@ double SimpleAutofocus::SharpnessAtCurrentSettings()
             pShort_ = (short*)malloc( sizeof(short)*w0*h0);
             if( NULL!=pShort_)
             {
-               legalFormat = true;
                sizeOfTempShortBuffer_ = sizeof(short)*w0*h0;
             }
          }
