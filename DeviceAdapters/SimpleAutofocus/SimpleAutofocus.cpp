@@ -79,7 +79,7 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 // ~~~~~~~~~~~~~~~~~~~~
 
 SimpleAutofocus::SimpleAutofocus(const char* name) : name_(name), pCore_(NULL), cropFactor_(0.2), busy_(false),
-   coarseStepSize_(1.), coarseSteps_ (2), fineStepSize_ (0.3), fineSteps_ ( 5), threshold_( 0.05), disableAutoShuttering_(true)
+   coarseStepSize_(1.), coarseSteps_ (2), fineStepSize_ (0.3), fineSteps_ ( 5), threshold_( 0.05), disableAutoShuttering_(1), sizeOfTempShortBuffer_(0), pShort_(NULL),latestSharpness_(0.)
 {
 }
 
@@ -91,6 +91,9 @@ return DEVICE_OK;
 
 SimpleAutofocus::~SimpleAutofocus()
 {
+   if( NULL!=pShort_)
+      free(pShort_);
+
    Shutdown();
 }
 
@@ -142,6 +145,10 @@ int SimpleAutofocus::Initialize()
 
    pAct = new CPropertyAction(this, &SimpleAutofocus::OnSharpnessScore);
    CreateProperty("SharpnessScore","0.2",MM::Float, true, pAct);
+
+   pAct = new CPropertyAction(this, &SimpleAutofocus::OnDisableAutoShutter);
+   CreateProperty("DisableAutoshutter","1",MM::Integer, false, pAct);
+
 
 
    UpdateStatus();
@@ -239,6 +246,12 @@ int SimpleAutofocus::OnStepSizeFine(MM::PropertyBase* pProp, MM::ActionType eAct
 int SimpleAutofocus::OnChannelForAutofocus(MM::PropertyBase* pProp, MM::ActionType eAct){       if (eAct == MM::BeforeGet)      {             }      else if (eAct == MM::AfterSet)      {    /*TODO!!!*/   }   return DEVICE_OK;};;
 int SimpleAutofocus::OnThreshold(MM::PropertyBase* pProp, MM::ActionType eAct){       if (eAct == MM::BeforeGet)      {         pProp->Set(threshold_);      }      else if (eAct == MM::AfterSet)      {         pProp->Get(threshold_);      }   return DEVICE_OK;};;
 
+
+   
+
+
+      int SimpleAutofocus::OnDisableAutoShutter(MM::PropertyBase* pProp, MM::ActionType eAct){       if (eAct == MM::BeforeGet)      {         pProp->Set(disableAutoShuttering_);      }      else if (eAct == MM::AfterSet)      {         pProp->Get(disableAutoShuttering_);      }   return DEVICE_OK;};;
+
 int SimpleAutofocus::OnCropFactor(MM::PropertyBase* pProp, MM::ActionType eAct)
 { 
       if (eAct == MM::BeforeGet)
@@ -325,36 +338,56 @@ double SimpleAutofocus::SharpnessAtCurrentSettings()
 	   ImgBuffer image(w0,h0,d0);
       //snap an image
       const char* pI = pCore_->GetImage();
-      short* pShort = NULL;
       const short* pSInput = reinterpret_cast<const short*>(pI);
 
       int iindex;
-      // to keep it simple always copy to a new short array
+      bool legalFormat = false;
+      // to keep it simple always copy to a short array
       switch( d0)
       {
       case 1:
-         pShort = (short*)malloc( sizeof(short)*w0*h0);
+         
+         if( sizeOfTempShortBuffer_ != sizeof(short)*w0*h0)
+         {
+            if( NULL == pShort_)
+               free(pShort_);
+            pShort_ = (short*)malloc( sizeof(short)*w0*h0);
+            if( NULL!=pShort_)
+            {
+               legalFormat = true;
+               sizeOfTempShortBuffer_ = sizeof(short)*w0*h0;
+            }
+         }
+
          for(iindex = 0; iindex < w0*h0; ++iindex)
          {
-            pShort[iindex] = pI[iindex];
+            pShort_[iindex] = pI[iindex];
          }
          break;
 
       case 2:
-         pShort = (short*)malloc( sizeof(short)*w0*h0);
+         if( sizeOfTempShortBuffer_ != sizeof(short)*w0*h0)
+         {
+            if( NULL == pShort_)
+               free(pShort_);
+            pShort_ = (short*)malloc( sizeof(short)*w0*h0);
+            if( NULL!=pShort_)
+            {
+               legalFormat = true;
+               sizeOfTempShortBuffer_ = sizeof(short)*w0*h0;
+            }
+         }
          for(iindex = 0; iindex < w0*h0; ++iindex)
          {
-            pShort[iindex] = pSInput[iindex];
+            pShort_[iindex] = pSInput[iindex];
          }
          break;
       default:
          break;
       }
 
-      if( NULL !=pShort)
+      if(legalFormat)
       {
-            
-
          // calculate the standard deviation & mean
 
          long nPts = 0;
@@ -369,7 +402,7 @@ double SimpleAutofocus::SharpnessAtCurrentSettings()
             for (int j=0; j<height; j++)
             {
                ++nPts;
-               long value = pShort[ow+i+ width*(oh+j)];
+               long value = pShort_[ow+i+ width*(oh+j)];
                delta = value - mean;
                mean = mean + delta/nPts;
                M2 = M2 + delta*(value - mean); // # This expression uses the new value of mean
@@ -392,15 +425,15 @@ double SimpleAutofocus::SharpnessAtCurrentSettings()
          for (int i=0; i<width; i++){
             for (int j=0; j<height; j++){
 
-               windo[0] = pShort[ow+i-1 + width*(oh+j-1)];
-               windo[1] = pShort[ow+i+ width*(oh+j-1)];
-               windo[2] = pShort[ow+i+1+ width*(oh+j-1)];
-               windo[3] = pShort[ow+i-1+ width*(oh+j)];
-               windo[4] = pShort[ow+i+ width*(oh+j)];
-               windo[5] = pShort[ow+i+1+ width*(oh+j)];
-               windo[6] = pShort[ow+i-1+ width*(oh+j+1)];
-               windo[7] = pShort[ow+i+ width*(oh+j+1)];
-               windo[8] = pShort[ow+i+1+ width*(oh+j+1)];
+               windo[0] = pShort_[ow+i-1 + width*(oh+j-1)];
+               windo[1] = pShort_[ow+i+ width*(oh+j-1)];
+               windo[2] = pShort_[ow+i+1+ width*(oh+j-1)];
+               windo[3] = pShort_[ow+i-1+ width*(oh+j)];
+               windo[4] = pShort_[ow+i+ width*(oh+j)];
+               windo[5] = pShort_[ow+i+1+ width*(oh+j)];
+               windo[6] = pShort_[ow+i-1+ width*(oh+j+1)];
+               windo[7] = pShort_[ow+i+ width*(oh+j+1)];
+               windo[8] = pShort_[ow+i+1+ width*(oh+j+1)];
 
                medPix[i + j*width] = findMedian(windo,8);
             } 
@@ -417,7 +450,7 @@ double SimpleAutofocus::SharpnessAtCurrentSettings()
             } 
          }
 
-         free(pShort);
+         //free(pShort);
 
 
       }
@@ -477,7 +510,7 @@ void SimpleAutofocus::BruteForceSearch()
    bool currentAutoShutterSetting = previousAutoShutterSetting;
 
    // allow auto-shuttering or continuous illumination
-   if(disableAutoShuttering_ && previousAutoShutterSetting)
+   if((0!=disableAutoShuttering_) && previousAutoShutterSetting)
    {
       pCore_->SetDeviceProperty(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreAutoShutter, "0"); // disable auto-shutter
       currentAutoShutterSetting = false;

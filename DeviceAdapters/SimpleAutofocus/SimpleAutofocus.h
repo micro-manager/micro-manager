@@ -83,6 +83,7 @@ public:
    int OnThreshold(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnCropFactor(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSharpnessScore(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnDisableAutoShutter(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 
 private:
@@ -107,7 +108,9 @@ private:
    bool busy_;
    double latestSharpness_;
 
-   bool disableAutoShuttering_;
+   long disableAutoShuttering_;
+   unsigned long sizeOfTempShortBuffer_;
+   short* pShort_;
 
 
 
