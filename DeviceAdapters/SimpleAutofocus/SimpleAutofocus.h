@@ -67,7 +67,7 @@ public:
    void Exposure(const int value);
    int Exposure(void);
 
-   void Z(const double value__);
+   void Z(const double value);
    double Z(void);
    
    void BruteForceSearch();
@@ -84,7 +84,9 @@ public:
    int OnCropFactor(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSharpnessScore(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnDisableAutoShutter(MM::PropertyBase* pProp, MM::ActionType eAct);
-
+   int OnMean(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnRecalculate(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnStandardDeviationOverMean(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
 
@@ -101,7 +103,7 @@ private:
    std::string name_;
    SimpleAutofocus& operator=(SimpleAutofocus& /*rhs*/) {assert(false); return *this;};
 
-   short findMedian(short* arr__, const int leng__ );
+   short findMedian(short* arr, const int leng );
    double SharpnessAtCurrentSettings();
    MM::Core* pCore_;
    double cropFactor_;
@@ -111,6 +113,11 @@ private:
    long disableAutoShuttering_;
    unsigned long sizeOfTempShortBuffer_;
    short* pShort_;
+   // a flag to trigger recalculation
+   long recalculate_;
+   double mean_;  
+   double standardDeviationOverMean_;
+   
 
 
 

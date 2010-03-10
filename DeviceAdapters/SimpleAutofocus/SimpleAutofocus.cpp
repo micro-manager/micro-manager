@@ -79,7 +79,8 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 // ~~~~~~~~~~~~~~~~~~~~
 
 SimpleAutofocus::SimpleAutofocus(const char* name) : name_(name), pCore_(NULL), cropFactor_(0.2), busy_(false),
-   coarseStepSize_(1.), coarseSteps_ (2), fineStepSize_ (0.3), fineSteps_ ( 5), threshold_( 0.05), disableAutoShuttering_(1), sizeOfTempShortBuffer_(0), pShort_(NULL),latestSharpness_(0.)
+   coarseStepSize_(1.), coarseSteps_ (2), fineStepSize_ (0.3), fineSteps_ ( 5), threshold_( 0.05), disableAutoShuttering_(1), 
+   sizeOfTempShortBuffer_(0), pShort_(NULL),latestSharpness_(0.), recalculate_(0), mean_(0.), standardDeviationOverMean_(0.)
 {
 }
 
@@ -120,17 +121,16 @@ int SimpleAutofocus::Initialize()
    CreateProperty(MM::g_Keyword_Exposure, "10", MM::Integer, false, pAct); 
 
    pAct = new CPropertyAction(this, &SimpleAutofocus::OnCoarseStepNumber);
-   CreateProperty("CoarseStep#/2","2",MM::Integer, false, pAct);
-
-   pAct = new CPropertyAction(this, &SimpleAutofocus::OnFineStepNumber);
-   CreateProperty("FineStep#/2","5",MM::Integer, false, pAct);
+   CreateProperty("CoarseSteps from center","2",MM::Integer, false, pAct);
 
    pAct = new CPropertyAction(this, &SimpleAutofocus::OnStepsizeCoarse);
-   CreateProperty("CoarseStepSize","2.0",MM::Float, false, pAct);
+   CreateProperty("CoarseStepSize","1.0",MM::Float, false, pAct);
 
-   // Set the span for fine search
+   pAct = new CPropertyAction(this, &SimpleAutofocus::OnFineStepNumber);
+   CreateProperty("FineSteps from center","5",MM::Integer, false, pAct);
+
    pAct = new CPropertyAction(this, &SimpleAutofocus::OnStepSizeFine);
-   CreateProperty("FineStepSize","0.1",MM::Float, false, pAct);
+   CreateProperty("FineStepSize","0.3",MM::Float, false, pAct);
 
    pAct = new CPropertyAction(this, &SimpleAutofocus::OnChannelForAutofocus);
    CreateProperty("ChannelForAutofocus", "", MM::String, false, pAct);
@@ -141,14 +141,23 @@ int SimpleAutofocus::Initialize()
 
    // Set the cropping factor to speed up computation
    pAct = new CPropertyAction(this, &SimpleAutofocus::OnCropFactor);
-   CreateProperty("CropFactor","0.2",MM::Float, false, pAct);
+   CreateProperty("ROI CropFactor","0.2",MM::Float, false, pAct);
 
    pAct = new CPropertyAction(this, &SimpleAutofocus::OnSharpnessScore);
    CreateProperty("SharpnessScore","0.2",MM::Float, true, pAct);
 
+   pAct = new CPropertyAction(this, &SimpleAutofocus::OnMean);
+   CreateProperty("Mean","0",MM::Float, true, pAct);
+
    pAct = new CPropertyAction(this, &SimpleAutofocus::OnDisableAutoShutter);
    CreateProperty("DisableAutoshutter","1",MM::Integer, false, pAct);
 
+   pAct = new CPropertyAction(this, &SimpleAutofocus::OnRecalculate);
+   CreateProperty("Re-acquire&Re-calculate","0",MM::Integer, false, pAct);
+
+
+   pAct = new CPropertyAction(this, &SimpleAutofocus::OnStandardDeviationOverMean);
+   CreateProperty("StandardDeviation/Mean","0",MM::Float, false, pAct);
 
 
    UpdateStatus();
@@ -168,10 +177,10 @@ int SimpleAutofocus::FullFocus(){
 int SimpleAutofocus::IncrementalFocus(){ 
    return -1;};
 int SimpleAutofocus::GetLastFocusScore(double& score){
-   score = this->latestSharpness_;
+   score = latestSharpness_;
    return 0;};
 int SimpleAutofocus::GetCurrentFocusScore(double& score){ 
-   score = this->SharpnessAtCurrentSettings();
+   score = latestSharpness_ = SharpnessAtCurrentSettings();
    return 0;};
 int SimpleAutofocus::AutoSetParameters(){ 
    return 0;};
@@ -245,12 +254,49 @@ int SimpleAutofocus::OnStepsizeCoarse(MM::PropertyBase* pProp, MM::ActionType eA
 int SimpleAutofocus::OnStepSizeFine(MM::PropertyBase* pProp, MM::ActionType eAct){       if (eAct == MM::BeforeGet)      {         pProp->Set(fineStepSize_);      }      else if (eAct == MM::AfterSet)      {         pProp->Get(fineStepSize_);      }   return DEVICE_OK;};;
 int SimpleAutofocus::OnChannelForAutofocus(MM::PropertyBase* pProp, MM::ActionType eAct){       if (eAct == MM::BeforeGet)      {             }      else if (eAct == MM::AfterSet)      {    /*TODO!!!*/   }   return DEVICE_OK;};;
 int SimpleAutofocus::OnThreshold(MM::PropertyBase* pProp, MM::ActionType eAct){       if (eAct == MM::BeforeGet)      {         pProp->Set(threshold_);      }      else if (eAct == MM::AfterSet)      {         pProp->Get(threshold_);      }   return DEVICE_OK;};;
+int SimpleAutofocus::OnDisableAutoShutter(MM::PropertyBase* pProp, MM::ActionType eAct){       if (eAct == MM::BeforeGet)      {         pProp->Set(disableAutoShuttering_);      }      else if (eAct == MM::AfterSet)      {         pProp->Get(disableAutoShuttering_);      }   return DEVICE_OK;};;
+
+int SimpleAutofocus::OnRecalculate(MM::PropertyBase* pProp, MM::ActionType eAct)
+{ 
+      if (eAct == MM::BeforeGet)
+      {
+         pProp->Set(recalculate_);
+      }
+      else if (eAct == MM::AfterSet)
+      {
+         pProp->Get(recalculate_);
+         if( 0!= recalculate_)
+         {
+            latestSharpness_ = SharpnessAtCurrentSettings();
+            recalculate_ = 0;
+            pProp->Set(recalculate_);
+         }
+      }
+   return DEVICE_OK;
+
+};
 
 
-   
+int SimpleAutofocus::OnStandardDeviationOverMean(MM::PropertyBase* pProp, MM::ActionType eAct)
+{ 
+      if (eAct == MM::BeforeGet)
+      {
+         pProp->Set(standardDeviationOverMean_);
+      }
+      else if (eAct == MM::AfterSet)
+      {
+         pProp->Get(recalculate_);
+         if( 0!= recalculate_)
+         {
+            pProp->Set(standardDeviationOverMean_);
+         }
+      }
+   return DEVICE_OK;
+
+};
 
 
-      int SimpleAutofocus::OnDisableAutoShutter(MM::PropertyBase* pProp, MM::ActionType eAct){       if (eAct == MM::BeforeGet)      {         pProp->Set(disableAutoShuttering_);      }      else if (eAct == MM::AfterSet)      {         pProp->Get(disableAutoShuttering_);      }   return DEVICE_OK;};;
+
 
 int SimpleAutofocus::OnCropFactor(MM::PropertyBase* pProp, MM::ActionType eAct)
 { 
@@ -268,28 +314,30 @@ int SimpleAutofocus::OnCropFactor(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int SimpleAutofocus::OnSharpnessScore(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   try
+   if (eAct == MM::BeforeGet)
    {
-      if (eAct == MM::BeforeGet)
-      {
-         pProp->Set(latestSharpness_);
-      }
-      else if (eAct == MM::AfterSet)
-      {
-         // never do anything for a read-only property
-      }
+      pProp->Set(latestSharpness_);
    }
-   catch(...)
+   else if (eAct == MM::AfterSet)
    {
-      return DEVICE_ERR;
+      // never do anything for a read-only property
    }
    return DEVICE_OK;
 
-
 }
 
-
-
+int SimpleAutofocus::OnMean(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(mean_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      // never do anything for a read-only property
+   }
+   return DEVICE_OK;
+}
 
 
 
@@ -300,7 +348,8 @@ short SimpleAutofocus::findMedian(short* arr, const int lengthMinusOne)
 { 
   short tmp;
 
-   // looks like a bubble sort....
+   // n.b. this was ported from java, looks like a bubble sort....
+  // todo use qsort
    for(int i=0; i<lengthMinusOne; ++i)
    {
       for(int j=0; j<lengthMinusOne-i; ++j)
@@ -391,7 +440,7 @@ double SimpleAutofocus::SharpnessAtCurrentSettings()
          // calculate the standard deviation & mean
 
          long nPts = 0;
-         double mean = 0;
+         mean_ = 0;
          double M2 = 0;
          double delta;
 
@@ -403,18 +452,17 @@ double SimpleAutofocus::SharpnessAtCurrentSettings()
             {
                ++nPts;
                long value = pShort_[ow+i+ width*(oh+j)];
-               delta = value - mean;
-               mean = mean + delta/nPts;
-               M2 = M2 + delta*(value - mean); // # This expression uses the new value of mean
+               delta = value - mean_;
+               mean_ = mean_ + delta/nPts;
+               M2 = M2 + delta*(value - mean_); // # This expression uses the new value of mean
             } 
          }
 
-         double normalizedStandardDeviation;
          double variance_n = M2/nPts;
          double variance = M2/(nPts - 1);
-         normalizedStandardDeviation = pow(variance,0.5)/mean;
+         standardDeviationOverMean_ = pow(variance,0.5)/mean_;
 
-         LogMessage("N " + boost::lexical_cast<std::string,long>(nPts) + " mean " +  boost::lexical_cast<std::string,float>((float)mean) + " nrmlzd std " +  boost::lexical_cast<std::string,float>((float)normalizedStandardDeviation) );
+         LogMessage("N " + boost::lexical_cast<std::string,long>(nPts) + " mean " +  boost::lexical_cast<std::string,float>((float)mean_) + " nrmlzd std " +  boost::lexical_cast<std::string,float>((float)standardDeviationOverMean_) );
          
 
 
@@ -580,4 +628,5 @@ void SimpleAutofocus::BruteForceSearch()
    pCore_->SetDeviceProperty(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreAutoShutter, previousAutoShutterSetting?"1":"0"); // restore auto-shutter
 
   Z(bestDist);
+  latestSharpness_ = bestSh;
 }
