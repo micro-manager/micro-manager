@@ -85,8 +85,8 @@ class SAFData
 public:
    void InsertPoint( int seqNo, float z, float meanValue,float stdOverMeanScore,  double hiPassScore)
    {
-     // SAFPoint value(int seqNo, float z, float meanValue,  float stdOverMeanScore, double hiPassScore);
-      // VS 2008 thinks above line is a function decl!!!
+      // SAFPoint value(int seqNo, float z, float meanValue,  float stdOverMeanScore, double hiPassScore);
+      // VS 2008 thinks above line is a function decl !!!
       boost::tuple<int,float,float,float,double> vals(seqNo, z, meanValue, stdOverMeanScore,  hiPassScore );
       SAFPoint value(vals);
       points_.insert(value);
@@ -148,7 +148,7 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 // ~~~~~~~~~~~~~~~~~~~~
 
 SimpleAutofocus::SimpleAutofocus(const char* name) : name_(name), pCore_(NULL), cropFactor_(0.2), busy_(false),
-   coarseStepSize_(1.), coarseSteps_ (2), fineStepSize_ (0.3), fineSteps_ ( 5), threshold_( 0.05), disableAutoShuttering_(1), 
+   coarseStepSize_(1.), coarseSteps_ (5), fineStepSize_ (0.3), fineSteps_ ( 5), threshold_( 0.1), disableAutoShuttering_(1), 
    sizeOfTempShortBuffer_(0), pShort_(NULL),latestSharpness_(0.), recalculate_(0), mean_(0.), standardDeviationOverMean_(0.), pPoints_(NULL)
 {
 
@@ -199,7 +199,7 @@ int SimpleAutofocus::Initialize()
    CreateProperty(MM::g_Keyword_Exposure, "10", MM::Integer, false, pAct); 
 
    pAct = new CPropertyAction(this, &SimpleAutofocus::OnCoarseStepNumber);
-   CreateProperty("CoarseSteps from center","2",MM::Integer, false, pAct);
+   CreateProperty("CoarseSteps from center","5",MM::Integer, false, pAct);
 
    pAct = new CPropertyAction(this, &SimpleAutofocus::OnStepsizeCoarse);
    CreateProperty("CoarseStepSize","1.0",MM::Float, false, pAct);
@@ -215,14 +215,14 @@ int SimpleAutofocus::Initialize()
 
    // Set the sharpness threshold
    pAct = new CPropertyAction(this, &SimpleAutofocus::OnThreshold);
-   CreateProperty("Threshold","0.05",MM::Float, false, pAct);
+   CreateProperty("Threshold","0.1",MM::Float, false, pAct);
 
    // Set the cropping factor to speed up computation
    pAct = new CPropertyAction(this, &SimpleAutofocus::OnCropFactor);
    CreateProperty("ROI CropFactor","0.2",MM::Float, false, pAct);
 
    pAct = new CPropertyAction(this, &SimpleAutofocus::OnSharpnessScore);
-   CreateProperty("SharpnessScore","0.2",MM::Float, true, pAct);
+   CreateProperty("SharpnessScore","0.0",MM::Float, true, pAct);
 
    pAct = new CPropertyAction(this, &SimpleAutofocus::OnMean);
    CreateProperty("Mean","0",MM::Float, true, pAct);
@@ -357,20 +357,15 @@ int SimpleAutofocus::OnRecalculate(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int SimpleAutofocus::OnStandardDeviationOverMean(MM::PropertyBase* pProp, MM::ActionType eAct)
 { 
-      if (eAct == MM::BeforeGet)
-      {
-         pProp->Set(standardDeviationOverMean_);
-      }
-      else if (eAct == MM::AfterSet)
-      {
-         pProp->Get(recalculate_);
-         if( 0!= recalculate_)
-         {
-            pProp->Set(standardDeviationOverMean_);
-         }
-      }
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(standardDeviationOverMean_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      // never do anything for a read-only property
+   }
    return DEVICE_OK;
-
 };
 
 
@@ -378,14 +373,14 @@ int SimpleAutofocus::OnStandardDeviationOverMean(MM::PropertyBase* pProp, MM::Ac
 
 int SimpleAutofocus::OnCropFactor(MM::PropertyBase* pProp, MM::ActionType eAct)
 { 
-      if (eAct == MM::BeforeGet)
-      {
-         pProp->Set(cropFactor_);
-      }
-      else if (eAct == MM::AfterSet)
-      {
-         pProp->Get(cropFactor_);
-      }
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(cropFactor_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(cropFactor_);
+   }
    return DEVICE_OK;
 
 };
@@ -660,10 +655,12 @@ void SimpleAutofocus::BruteForceSearch()
       tPrev = GetCurrentMMTime();
       Z( baseDist + i * coarseStepSize_);
       curDist = Z();
-      LogMessage("AF evaluation @ " + boost::lexical_cast<std::string,double>(curDist),  messageDebug);
+      std::ostringstream progressMessage;
+      progressMessage << "\nAF evaluation @ " + boost::lexical_cast<std::string,double>(curDist);
       curSh = SharpnessAtCurrentSettings();
       pPoints_->InsertPoint(acquisitionSequenceNumber++,(float)curDist,(float)mean_,(float)standardDeviationOverMean_,latestSharpness_);
-      LogMessage("AF metric is: " + boost::lexical_cast<std::string,double>(curSh),  messageDebug);
+      progressMessage <<  " AF metric is: " + boost::lexical_cast<std::string,double>(curSh);
+      LogMessage( progressMessage.str(),  messageDebug);
 
       if (curSh > bestSh)
       {
@@ -678,8 +675,6 @@ void SimpleAutofocus::BruteForceSearch()
    baseDist = bestDist - fineStepSize_ * fineSteps_;
    Z(baseDist);
    LogMessage("AF start fine search range is  " + boost::lexical_cast<std::string,double>(baseDist)+" to " + boost::lexical_cast<std::string,double>( baseDist+(2*fineSteps_)*fineStepSize_),  messageDebug);
-//  delay_time(100);
-   bestSh = 0;
 
    //Fine search
    for (int i = 0; i < 2 * fineSteps_ + 1; i++)
@@ -687,10 +682,12 @@ void SimpleAutofocus::BruteForceSearch()
       tPrev = GetCurrentMMTime();
       Z( baseDist + i * fineStepSize_);
       curDist = Z();
-      LogMessage("AF evaluation @ " + boost::lexical_cast<std::string,double>(curDist),  messageDebug);
+      std::ostringstream progressMessage;
+      progressMessage << "\nAF evaluation @ " + boost::lexical_cast<std::string,double>(curDist);
       curSh = SharpnessAtCurrentSettings();
       pPoints_->InsertPoint(acquisitionSequenceNumber++,(float)curDist,(float)mean_,(float)standardDeviationOverMean_,latestSharpness_);
-      LogMessage("AF metric is: " + boost::lexical_cast<std::string,double>(curSh),  messageDebug);
+      progressMessage <<  " AF metric is: " + boost::lexical_cast<std::string,double>(curSh);
+      LogMessage( progressMessage.str(),  messageDebug);
 
       if (curSh > bestSh)
       {
