@@ -75,6 +75,8 @@
 
 #include "../MMDevice/DeviceThreads.h"
 
+#include "MMAcquisition.h"
+
 #ifndef _WINDOWS
 // Needed on Unix for getcwd() and gethostname()
 #include <pwd.h>
@@ -4794,4 +4796,12 @@ void CMMCore::acqBeforeStack() throw (CMMError)
 
 void CMMCore::acqAfterStack() throw (CMMError)
 {
+}
+
+
+void CMMCore::runAcquisitionEngineTest() throw (CMMError)
+{
+   CORE_LOG("runAcquisitionEngineTest()");
+   MMAcquisitionEngine * engine = new MMAcquisitionEngine(this);
+   engine->runTest();
 }

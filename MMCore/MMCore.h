@@ -382,6 +382,9 @@ public:
    //@ }
 
 
+   // >>>> TEST >>>>>>>>>>>>>>>>>>>>>>..
+   void runAcquisitionEngineTest() throw (CMMError);
+
    /** @name "  "
     */
    //@ {
@@ -452,6 +455,7 @@ private:
 
    MMThreadLock* pPostedErrorsLock_;
    mutable std::vector<std::pair< int, std::string> > postedErrors_;
+
 
 };
 

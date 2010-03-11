@@ -251,6 +251,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\MMAcquisition.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\MMCore.cpp"
 				>
 			</File>
@@ -310,6 +314,10 @@
 			</File>
 			<File
 				RelativePath=".\IMMLogger.h"
+				>
+			</File>
+			<File
+				RelativePath=".\MMAcquisition.h"
 				>
 			</File>
 			<File

@@ -24,6 +24,10 @@
 //
 // CVS:           $Id$
 //
+
+#ifndef _CORECALLBACK_H_
+#define _CORECALLBACK_H_
+
 #ifdef WIN32
 #pragma warning (disable : 4312 4244)
 #endif
@@ -222,3 +226,4 @@ private:
    CMMCore* core_;
 };
 
+#endif // _CORECALLBACK_H_
