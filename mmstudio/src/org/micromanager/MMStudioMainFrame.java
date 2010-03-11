@@ -1970,7 +1970,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 		return core_;
 	}
 
-	protected void saveConfigPresets() {
+	public void saveConfigPresets() {
 		MicroscopeModel model = new MicroscopeModel();
 		try {
 			model.loadFromFile(sysConfigFile_);

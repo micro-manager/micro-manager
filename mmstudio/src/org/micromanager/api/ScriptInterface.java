@@ -276,6 +276,12 @@ public interface ScriptInterface {
    public String installPlugin(String className);
    
    /**
+    * Save current configuration
+    */
+   public void saveConfigPresets();
+
+   
+   /**
     * Deprecated. Use installPlugin(String className) instead.
     */
    public String installPlugin(String className, String menuName); 
