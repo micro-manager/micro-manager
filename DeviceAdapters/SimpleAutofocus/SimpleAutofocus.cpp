@@ -65,11 +65,11 @@ public:
     const std::string DataRow()
     {
        std::ostringstream data;
-       data << boost::lexical_cast<std::string, int>( boost::tuples::get<0>(thePoint_) )<< "\t"
+       data << std::setw(3) << boost::lexical_cast<std::string, int>( boost::tuples::get<0>(thePoint_) )<< "\t"
           << std::setprecision(5) << boost::tuples::get<1>(thePoint_) << "\t" // Z
           << std::setprecision(5) <<  boost::tuples::get<2>(thePoint_) << "\t" // mean
-          << std::setprecision(5) << boost::tuples::get<3>(thePoint_) << "\t"  // std / mean
-          << boost::lexical_cast<std::string, double>( boost::tuples::get<4>(thePoint_) ) ;
+          << std::setprecision(6) << std::setiosflags(std::ios::scientific) << boost::tuples::get<3>(thePoint_) <<  std::resetiosflags(std::ios::scientific) << "\t"  // std / mean
+          << std::setprecision(6) <<  std::setiosflags(std::ios::scientific) << boost::tuples::get<4>(thePoint_) << std::resetiosflags(std::ios::scientific) ;
        return data.str();
     }
 
@@ -149,7 +149,8 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 
 SimpleAutofocus::SimpleAutofocus(const char* name) : name_(name), pCore_(NULL), cropFactor_(0.2), busy_(false),
    coarseStepSize_(1.), coarseSteps_ (5), fineStepSize_ (0.3), fineSteps_ ( 5), threshold_( 0.1), disableAutoShuttering_(1), 
-   sizeOfTempShortBuffer_(0), pShort_(NULL),latestSharpness_(0.), recalculate_(0), mean_(0.), standardDeviationOverMean_(0.), pPoints_(NULL)
+   sizeOfTempShortBuffer_(0), pShort_(NULL),latestSharpness_(0.), recalculate_(0), mean_(0.), standardDeviationOverMean_(0.), 
+   pPoints_(NULL), pSmoothedIm_(NULL), sizeOfSmoothedIm_(0)
 {
 
 }
@@ -167,6 +168,9 @@ SimpleAutofocus::~SimpleAutofocus()
 
    if( NULL!=pShort_)
       free(pShort_);
+
+   if(NULL!=pSmoothedIm_)
+      free(pSmoothedIm_);
 
    Shutdown();
 }
@@ -442,6 +446,7 @@ short SimpleAutofocus::findMedian(short* arr, const int lengthMinusOne)
 double SimpleAutofocus::SharpnessAtCurrentSettings()
 {
    busy_ = true;
+   short windo[9];
 
    	int w0 = 0, h0 = 0, d0 = 0;
       double sharpness = 0;
@@ -451,9 +456,23 @@ double SimpleAutofocus::SharpnessAtCurrentSettings()
       int height = (int)(cropFactor_*h0);
       int ow = (int)(((1-cropFactor_)/2)*w0);
       int oh = (int)(((1-cropFactor_)/2)*h0);
+      
+      const unsigned long thisSize = sizeof(*pSmoothedIm_)*width*height;
 
-      short* medPix = new short[ width*height];
-      short* windo = new short[9];
+      if( thisSize != sizeOfSmoothedIm_)
+      {
+         if(NULL!=pSmoothedIm_)
+           free(pSmoothedIm_);
+         // malloc is faster than new...
+         pSmoothedIm_ = (float*)malloc(thisSize);
+         if(NULL!=pSmoothedIm_)
+         {
+            sizeOfSmoothedIm_ = thisSize;
+         }
+         else // todo throw out of here...
+            return sharpness;
+      }
+
 
       // copy from MM image to the working buffer
 
@@ -534,8 +553,13 @@ double SimpleAutofocus::SharpnessAtCurrentSettings()
          double variance_n = M2/nPts;
          double variance = M2/(nPts - 1);
          standardDeviationOverMean_ = 0.;
+         double meanScaling = 1.;
          if( 0. != mean_)
+         {
             standardDeviationOverMean_ = pow(variance,0.5)/mean_;
+            meanScaling = 1./mean_;
+         }
+
 
          LogMessage("N " + boost::lexical_cast<std::string,long>(nPts) + " mean " +  boost::lexical_cast<std::string,float>((float)mean_) + " nrmlzd std " +  boost::lexical_cast<std::string,float>((float)standardDeviationOverMean_) );
 
@@ -555,7 +579,7 @@ double SimpleAutofocus::SharpnessAtCurrentSettings()
                windo[7] = pShort_[ow+i+ width*(oh+j+1)];
                windo[8] = pShort_[ow+i+1+ width*(oh+j+1)];
 
-               medPix[i + j*width] = findMedian(windo,8);
+               pSmoothedIm_[i + j*width] = (float)((double)findMedian(windo,8)*meanScaling);
             } 
          }
 
@@ -564,7 +588,7 @@ double SimpleAutofocus::SharpnessAtCurrentSettings()
          for (int k=1; k<width-1; k++){
             for (int l=1; l<height-1; l++)
             {
-               double convolvedValue = -2.0*medPix[k-1 + width*(l-1)] - (double)medPix[k+ width*(l-1)]-(double)medPix[k-1 + width*l]+(double)medPix[k+1 + width*l]+(double)medPix[k+ width*(l+1)]+2.0*medPix[k+1+ width*(l+1)];
+               double convolvedValue = -2.0*pSmoothedIm_[k-1 + width*(l-1)] - pSmoothedIm_[k+ width*(l-1)]-pSmoothedIm_[k-1 + width*l]+pSmoothedIm_[k+1 + width*l]+pSmoothedIm_[k+ width*(l+1)]+2.0*pSmoothedIm_[k+1+ width*(l+1)];
                sharpness = sharpness + convolvedValue*convolvedValue;
 
             } 
@@ -572,10 +596,9 @@ double SimpleAutofocus::SharpnessAtCurrentSettings()
 
          //free(pShort);
 
-
       }
-      delete medPix;
-      delete windo;
+     // delete medPix;
+      //delete windo;
       busy_ = false;
       latestSharpness_ = sharpness;
       return sharpness;

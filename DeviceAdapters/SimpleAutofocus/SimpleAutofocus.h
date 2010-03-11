@@ -113,6 +113,10 @@ private:
 
    long disableAutoShuttering_;
    unsigned long sizeOfTempShortBuffer_;
+
+   float* pSmoothedIm_;
+   unsigned long sizeOfSmoothedIm_;
+
    short* pShort_;
    // a flag to trigger recalculation
    long recalculate_;
