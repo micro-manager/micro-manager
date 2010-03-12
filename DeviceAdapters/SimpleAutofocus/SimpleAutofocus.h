@@ -73,7 +73,7 @@ public:
    void Z(const double value);
    double Z(void);
    
-   void BruteForceSearch();
+   int BruteForceSearch();
    
    // action interface
    // ---------------
@@ -85,7 +85,7 @@ public:
    int OnThreshold(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnCropFactor(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSharpnessScore(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnDisableAutoShutter(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnEnableAutoShutter(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnMean(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnRecalculate(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnStandardDeviationOverMean(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -114,7 +114,7 @@ private:
    bool busy_;
    double latestSharpness_;
 
-   long disableAutoShuttering_;
+   long enableAutoShuttering_;
    unsigned long sizeOfTempShortBuffer_;
 
    float* pSmoothedIm_;

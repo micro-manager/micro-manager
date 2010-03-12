@@ -149,7 +149,7 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 // ~~~~~~~~~~~~~~~~~~~~
 
 SimpleAutofocus::SimpleAutofocus(const char* name) : name_(name), pCore_(NULL), cropFactor_(0.2), busy_(false),
-   coarseStepSize_(1.), coarseSteps_ (5), fineStepSize_ (0.3), fineSteps_ ( 5), threshold_( 0.1), disableAutoShuttering_(1), 
+   coarseStepSize_(1.), coarseSteps_ (5), fineStepSize_ (0.3), fineSteps_ ( 5), threshold_( 0.1), enableAutoShuttering_(1), 
    sizeOfTempShortBuffer_(0), pShort_(NULL),latestSharpness_(0.), recalculate_(0), mean_(0.), standardDeviationOverMean_(0.), 
    pPoints_(NULL), pSmoothedIm_(NULL), sizeOfSmoothedIm_(0), offset_(0.)
 {
@@ -299,8 +299,8 @@ int SimpleAutofocus::Initialize()
    pAct = new CPropertyAction(this, &SimpleAutofocus::OnMean);
    CreateProperty("Mean","0",MM::Float, true, pAct);
 
-   pAct = new CPropertyAction(this, &SimpleAutofocus::OnDisableAutoShutter);
-   CreateProperty("DisableAutoshutter","1",MM::Integer, false, pAct);
+   pAct = new CPropertyAction(this, &SimpleAutofocus::OnEnableAutoShutter);
+   CreateProperty("EnableAutoshutter","0",MM::Integer, false, pAct);
 
    pAct = new CPropertyAction(this, &SimpleAutofocus::OnRecalculate);
    CreateProperty("Re-acquire&Re-calculate","0",MM::Integer, false, pAct);
@@ -325,8 +325,8 @@ int SimpleAutofocus::Initialize()
 bool SimpleAutofocus::IsContinuousFocusLocked(){ 
    return locked_;} ;
 int SimpleAutofocus::FullFocus(){ 
-   this->BruteForceSearch();
-   return 0;};
+   return this->BruteForceSearch();
+   };
 int SimpleAutofocus::IncrementalFocus(){ 
    return -1;};
 int SimpleAutofocus::GetLastFocusScore(double& score){
@@ -408,7 +408,7 @@ int SimpleAutofocus::OnFineStepNumber(MM::PropertyBase* pProp, MM::ActionType eA
 int SimpleAutofocus::OnStepsizeCoarse(MM::PropertyBase* pProp, MM::ActionType eAct){       if (eAct == MM::BeforeGet)      {         pProp->Set(coarseStepSize_);      }      else if (eAct == MM::AfterSet)      {         pProp->Get(coarseStepSize_);      }   return DEVICE_OK;};;
 int SimpleAutofocus::OnStepSizeFine(MM::PropertyBase* pProp, MM::ActionType eAct){       if (eAct == MM::BeforeGet)      {         pProp->Set(fineStepSize_);      }      else if (eAct == MM::AfterSet)      {         pProp->Get(fineStepSize_);      }   return DEVICE_OK;};;
 int SimpleAutofocus::OnThreshold(MM::PropertyBase* pProp, MM::ActionType eAct){       if (eAct == MM::BeforeGet)      {         pProp->Set(threshold_);      }      else if (eAct == MM::AfterSet)      {         pProp->Get(threshold_);      }   return DEVICE_OK;};;
-int SimpleAutofocus::OnDisableAutoShutter(MM::PropertyBase* pProp, MM::ActionType eAct){       if (eAct == MM::BeforeGet)      {         pProp->Set(disableAutoShuttering_);      }      else if (eAct == MM::AfterSet)      {         pProp->Get(disableAutoShuttering_);      }   return DEVICE_OK;};;
+int SimpleAutofocus::OnEnableAutoShutter(MM::PropertyBase* pProp, MM::ActionType eAct){       if (eAct == MM::BeforeGet)      {         pProp->Set(enableAutoShuttering_);      }      else if (eAct == MM::AfterSet)      {         pProp->Get(enableAutoShuttering_);      }   return DEVICE_OK;};;
 
 int SimpleAutofocus::OnRecalculate(MM::PropertyBase* pProp, MM::ActionType eAct)
 { 
@@ -462,6 +462,16 @@ int SimpleAutofocus::OnChannel(MM::PropertyBase* pProp, MM::ActionType eAct)
    else if (eAct == MM::AfterSet)
    {
       pProp->Get(selectedChannelConfig_);
+      if ( 0 < selectedChannelConfig_.length())
+      {
+         char value[MM::MaxStrLength];
+         std::string coreChannelGroup;
+         if( DEVICE_OK == pCore_->GetDeviceProperty(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreChannelGroup, value))
+            coreChannelGroup = std::string(value);
+         int ret = pCore_->SetConfig(coreChannelGroup.c_str(),selectedChannelConfig_.c_str());
+	      if(ret != DEVICE_OK)
+		      return ret;
+      }
    }
    return DEVICE_OK;
 };
@@ -755,7 +765,7 @@ int SimpleAutofocus::Exposure(void){
 };
 
 
-void SimpleAutofocus::BruteForceSearch()
+int SimpleAutofocus::BruteForceSearch()
 {
 
    pPoints_->Clear();
@@ -776,7 +786,7 @@ void SimpleAutofocus::BruteForceSearch()
 
    int ret = pCore_->SetConfig(coreChannelGroup.c_str(),selectedChannelConfig_.c_str());
 	if(ret != DEVICE_OK)
-		return;
+		return ret;
 
    char shutterDeviceName[MM::MaxStrLength];
    pCore_->GetDeviceProperty(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreAutoShutter, value);
@@ -787,7 +797,7 @@ void SimpleAutofocus::BruteForceSearch()
    bool currentAutoShutterSetting = previousAutoShutterSetting;
 
    // allow auto-shuttering or continuous illumination
-   if((0!=disableAutoShuttering_) && previousAutoShutterSetting)
+   if((0==enableAutoShuttering_) && previousAutoShutterSetting)
    {
       pCore_->SetDeviceProperty(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreAutoShutter, "0"); // disable auto-shutter
       currentAutoShutterSetting = false;
@@ -863,4 +873,5 @@ void SimpleAutofocus::BruteForceSearch()
 
   Z(bestDist);
   latestSharpness_ = bestSh;
+  return DEVICE_OK;
 }
