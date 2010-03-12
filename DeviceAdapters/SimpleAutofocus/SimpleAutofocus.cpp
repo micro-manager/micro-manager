@@ -457,6 +457,21 @@ int SimpleAutofocus::OnChannel(MM::PropertyBase* pProp, MM::ActionType eAct)
       std::vector<std::string>::iterator isThere = std::find(possibleChannels_.begin(),possibleChannels_.end(), selectedChannelConfig_);
       if( possibleChannels_.end() == isThere)
          selectedChannelConfig_ = "";
+
+      //todo - triple check that this doesn't wipe out AF channel selections!!
+      if( selectedChannelConfig_.length() < 1) // no channel is selected for AF
+      {
+         // get the channel selected for the mainframe
+         char value[MM::MaxStrLength];
+         std::string coreChannelGroup;
+         if( DEVICE_OK == pCore_->GetDeviceProperty(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreChannelGroup, value))
+            coreChannelGroup = std::string(value);
+         if( 0 < coreChannelGroup.length() )
+         {
+            pCore_->GetCurrentConfig(coreChannelGroup.c_str(),MM::MaxStrLength,value);
+            selectedChannelConfig_ = std::string(value);
+         }
+      }
       pProp->Set(selectedChannelConfig_.c_str());
    }
    else if (eAct == MM::AfterSet)
