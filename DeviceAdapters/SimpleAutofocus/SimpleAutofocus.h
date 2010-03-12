@@ -89,7 +89,7 @@ public:
    int OnMean(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnRecalculate(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnStandardDeviationOverMean(MM::PropertyBase* pProp, MM::ActionType eAct);
- //  int OnChannel(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnChannel(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    double offset_; // TODO - need to know what this is.
@@ -128,7 +128,8 @@ private:
    SAFData* pPoints_;
 
    std::string selectedChannelConfig_;
-   const std::vector<std::string> RefreshChannelsToSelect(void);
+   std::vector<std::string> possibleChannels_;
+   void RefreshChannelsToSelect(void);
    
 
 

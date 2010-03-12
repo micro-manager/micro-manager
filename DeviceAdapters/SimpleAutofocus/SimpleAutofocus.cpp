@@ -188,8 +188,44 @@ void SimpleAutofocus::GetName(char* name) const
 }
 
 
-// channels are not available during initialization....
 
+
+
+
+// channels are not available during initialization....
+void SimpleAutofocus::RefreshChannelsToSelect(void)
+{
+   std::vector<std::string> channelConfigs;
+   std::vector<std::string> cf2;
+
+   char value[MM::MaxStrLength];
+   std::string coreChannelGroup;
+   
+   if( DEVICE_OK == pCore_->GetDeviceProperty(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreChannelGroup, value))
+      coreChannelGroup = std::string(value);
+
+   if(  0 < coreChannelGroup.length())
+   {
+      LogMessage(" Core channel group is : " + coreChannelGroup, true);
+      // this list of 'configs' is called 'presets' in the main UI
+      if ( DEVICE_OK != pCore_->GetChannelConfigs(channelConfigs))
+            LogMessage(" error retrieving channel configs! " , false);
+      cf2 = channelConfigs;
+   }
+   cf2.push_back("");
+
+   std::ostringstream os;
+   os<<" channels in " << coreChannelGroup << ": ";
+   std::vector<std::string>::iterator jj;
+   for(jj = channelConfigs.begin(); jj != channelConfigs.end(); ++jj)
+   {
+      if( channelConfigs.begin() != jj)
+         os << ", ";
+      os << *jj;
+   }
+   LogMessage(os.str(), true);
+   possibleChannels_ = cf2;
+}
 
 //const std::vector<std::string> SimpleAutofocus::RefreshChannelsToSelect(void)
 //{
@@ -273,14 +309,12 @@ int SimpleAutofocus::Initialize()
    pAct = new CPropertyAction(this, &SimpleAutofocus::OnStandardDeviationOverMean);
    CreateProperty("StandardDeviation/Mean","0",MM::Float, false, pAct);
 
-   //pAct = new CPropertyAction(this, &SimpleAutofocus::OnChannel);
-   //selectedChannelConfig_ = "";
-   //CreateProperty("Channel",selectedChannelConfig_.c_str(),MM::String, false, pAct);
-   //std::vector<std::string> possibleChannels = RefreshChannelsToSelect();
-   //SetAllowedValues("Channel", possibleChannels);
-
+   pAct = new CPropertyAction(this, &SimpleAutofocus::OnChannel);
+   CreateProperty("Channel","",MM::String, false, pAct);
+   AddAllowedValue("Channel","");
+   AddAllowedValue("Channel","...");
+   selectedChannelConfig_ = "";
    UpdateStatus();
-
 
    return DEVICE_OK;
 }
@@ -410,6 +444,27 @@ int SimpleAutofocus::OnStandardDeviationOverMean(MM::PropertyBase* pProp, MM::Ac
    return DEVICE_OK;
 };
 
+
+
+int SimpleAutofocus::OnChannel(MM::PropertyBase* pProp, MM::ActionType eAct)
+{ 
+   if (eAct == MM::BeforeGet)
+   {
+      
+      RefreshChannelsToSelect();
+      SetAllowedValues("Channel", possibleChannels_);
+
+      std::vector<std::string>::iterator isThere = std::find(possibleChannels_.begin(),possibleChannels_.end(), selectedChannelConfig_);
+      if( possibleChannels_.end() == isThere)
+         selectedChannelConfig_ = "";
+      pProp->Set(selectedChannelConfig_.c_str());
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(selectedChannelConfig_);
+   }
+   return DEVICE_OK;
+};
 
 
 //int SimpleAutofocus::OnChannel(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -715,7 +770,13 @@ void SimpleAutofocus::BruteForceSearch()
 
    char value[MM::MaxStrLength];
 
-   // TODO: user can always surreptitiously change the 'channel group' without our knowing it!
+   std::string coreChannelGroup;
+   if( DEVICE_OK == pCore_->GetDeviceProperty(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreChannelGroup, value))
+      coreChannelGroup = std::string(value);
+
+   int ret = pCore_->SetConfig(coreChannelGroup.c_str(),selectedChannelConfig_.c_str());
+	if(ret != DEVICE_OK)
+		return;
 
    char shutterDeviceName[MM::MaxStrLength];
    pCore_->GetDeviceProperty(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreAutoShutter, value);
