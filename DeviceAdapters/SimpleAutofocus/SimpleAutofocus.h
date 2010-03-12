@@ -31,6 +31,8 @@
 //#include <iostream>
 #include <vector>
 
+
+// data for AF performance report table
 class SAFData;
 
 
@@ -80,7 +82,6 @@ public:
    int OnFineStepNumber(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnStepsizeCoarse(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnStepSizeFine(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnChannelForAutofocus(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnThreshold(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnCropFactor(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSharpnessScore(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -88,8 +89,10 @@ public:
    int OnMean(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnRecalculate(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnStandardDeviationOverMean(MM::PropertyBase* pProp, MM::ActionType eAct);
+ //  int OnChannel(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
+   double offset_; // TODO - need to know what this is.
 
    // parameters for the Pakpoom Subsoontorn & Hernan Garcia brute force search
 
@@ -123,6 +126,9 @@ private:
    double mean_;  
    double standardDeviationOverMean_;
    SAFData* pPoints_;
+
+   std::string selectedChannelConfig_;
+   const std::vector<std::string> RefreshChannelsToSelect(void);
    
 
 

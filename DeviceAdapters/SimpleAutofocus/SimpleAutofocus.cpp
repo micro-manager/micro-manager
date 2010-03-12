@@ -34,6 +34,7 @@
 #include <string>
 #include <math.h>
 #include <sstream>
+#include <algorithm>
 
 #include "../../MMDevice/ModuleInterface.h"
 #include "../../MMCore/Error.h"
@@ -150,7 +151,7 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 SimpleAutofocus::SimpleAutofocus(const char* name) : name_(name), pCore_(NULL), cropFactor_(0.2), busy_(false),
    coarseStepSize_(1.), coarseSteps_ (5), fineStepSize_ (0.3), fineSteps_ ( 5), threshold_( 0.1), disableAutoShuttering_(1), 
    sizeOfTempShortBuffer_(0), pShort_(NULL),latestSharpness_(0.), recalculate_(0), mean_(0.), standardDeviationOverMean_(0.), 
-   pPoints_(NULL), pSmoothedIm_(NULL), sizeOfSmoothedIm_(0)
+   pPoints_(NULL), pSmoothedIm_(NULL), sizeOfSmoothedIm_(0), offset_(0.)
 {
 
 }
@@ -187,6 +188,40 @@ void SimpleAutofocus::GetName(char* name) const
 }
 
 
+// channels are not available during initialization....
+
+
+//const std::vector<std::string> SimpleAutofocus::RefreshChannelsToSelect(void)
+//{
+//   std::vector<std::string> channelConfigs;
+//
+//   char value[MM::MaxStrLength];
+//   std::string coreChannelGroup;
+//   
+//   if( DEVICE_OK == pCore_->GetDeviceProperty(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreChannelGroup, value))
+//   {
+//      coreChannelGroup = std::string(value);
+//   }
+//   LogMessage(" Core channel group is : " + coreChannelGroup, true);
+//
+//
+//   // this list of 'configs' is called 'presets' in the main UI
+//   if ( DEVICE_OK != pCore_->GetChannelConfigs(channelConfigs))
+//   {
+//         LogMessage(" error retrieving channel configs! " , false);
+//   }
+//   std::vector<std::string> cf2 = channelConfigs;
+//
+//   cf2.push_back("");
+//
+//   assert( cf2.size() == channelConfigs.size()+1);
+//
+//   return cf2;
+//   
+//
+//}
+
+
 int SimpleAutofocus::Initialize()
 {
 
@@ -214,9 +249,6 @@ int SimpleAutofocus::Initialize()
    pAct = new CPropertyAction(this, &SimpleAutofocus::OnStepSizeFine);
    CreateProperty("FineStepSize","0.3",MM::Float, false, pAct);
 
-   pAct = new CPropertyAction(this, &SimpleAutofocus::OnChannelForAutofocus);
-   CreateProperty("ChannelForAutofocus", "", MM::String, false, pAct);
-
    // Set the sharpness threshold
    pAct = new CPropertyAction(this, &SimpleAutofocus::OnThreshold);
    CreateProperty("Threshold","0.1",MM::Float, false, pAct);
@@ -241,6 +273,11 @@ int SimpleAutofocus::Initialize()
    pAct = new CPropertyAction(this, &SimpleAutofocus::OnStandardDeviationOverMean);
    CreateProperty("StandardDeviation/Mean","0",MM::Float, false, pAct);
 
+   //pAct = new CPropertyAction(this, &SimpleAutofocus::OnChannel);
+   //selectedChannelConfig_ = "";
+   //CreateProperty("Channel",selectedChannelConfig_.c_str(),MM::String, false, pAct);
+   //std::vector<std::string> possibleChannels = RefreshChannelsToSelect();
+   //SetAllowedValues("Channel", possibleChannels);
 
    UpdateStatus();
 
@@ -267,8 +304,10 @@ int SimpleAutofocus::GetCurrentFocusScore(double& score){
 int SimpleAutofocus::AutoSetParameters(){ 
    return 0;};
 int SimpleAutofocus::GetOffset(double &offset){ 
+   offset = offset_;
    return 0;};
 int SimpleAutofocus::SetOffset(double offset){ 
+   offset_ = offset;
    return 0;};
 
 
@@ -306,7 +345,7 @@ int SimpleAutofocus::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    catch(CMMError& e)
    {
-
+      return e.getCode();
 
    }
    catch(...)
@@ -334,7 +373,6 @@ int SimpleAutofocus::OnCoarseStepNumber(MM::PropertyBase* pProp, MM::ActionType 
 int SimpleAutofocus::OnFineStepNumber(MM::PropertyBase* pProp, MM::ActionType eAct){       if (eAct == MM::BeforeGet)      {         pProp->Set(fineSteps_);      }      else if (eAct == MM::AfterSet)      {         pProp->Get(fineSteps_);      }   return DEVICE_OK;};;
 int SimpleAutofocus::OnStepsizeCoarse(MM::PropertyBase* pProp, MM::ActionType eAct){       if (eAct == MM::BeforeGet)      {         pProp->Set(coarseStepSize_);      }      else if (eAct == MM::AfterSet)      {         pProp->Get(coarseStepSize_);      }   return DEVICE_OK;};;
 int SimpleAutofocus::OnStepSizeFine(MM::PropertyBase* pProp, MM::ActionType eAct){       if (eAct == MM::BeforeGet)      {         pProp->Set(fineStepSize_);      }      else if (eAct == MM::AfterSet)      {         pProp->Get(fineStepSize_);      }   return DEVICE_OK;};;
-int SimpleAutofocus::OnChannelForAutofocus(MM::PropertyBase* pProp, MM::ActionType eAct){       if (eAct == MM::BeforeGet)      {             }      else if (eAct == MM::AfterSet)      {    /*TODO!!!*/   }   return DEVICE_OK;};;
 int SimpleAutofocus::OnThreshold(MM::PropertyBase* pProp, MM::ActionType eAct){       if (eAct == MM::BeforeGet)      {         pProp->Set(threshold_);      }      else if (eAct == MM::AfterSet)      {         pProp->Get(threshold_);      }   return DEVICE_OK;};;
 int SimpleAutofocus::OnDisableAutoShutter(MM::PropertyBase* pProp, MM::ActionType eAct){       if (eAct == MM::BeforeGet)      {         pProp->Set(disableAutoShuttering_);      }      else if (eAct == MM::AfterSet)      {         pProp->Get(disableAutoShuttering_);      }   return DEVICE_OK;};;
 
@@ -371,6 +409,37 @@ int SimpleAutofocus::OnStandardDeviationOverMean(MM::PropertyBase* pProp, MM::Ac
    }
    return DEVICE_OK;
 };
+
+
+
+//int SimpleAutofocus::OnChannel(MM::PropertyBase* pProp, MM::ActionType eAct)
+//{ 
+//   if (eAct == MM::BeforeGet)
+//   {
+//      // user can always surreptitiously change the 'channel group' without our knowing it!
+//      /*const ? */ std::vector<std::string> possible = this->RefreshChannelsToSelect();
+//      ClearAllowedValues("Channel");
+//      SetAllowedValues("Channel", possible);
+//      std::vector<std::string>::iterator isThere = std::find(possible.begin(),possible.end(), selectedChannelConfig_);
+//      if( possible.end() == isThere)
+//         selectedChannelConfig_ = "";
+//      pProp->Set(selectedChannelConfig_.c_str());
+//   }
+//   else if (eAct == MM::AfterSet)
+//   {
+//      char value[MM::MaxStrLength];
+//
+//      pProp->Get(selectedChannelConfig_);
+//      if( 0 < selectedChannelConfig_.length())
+//      {
+//         // need to find the 'channel group' so we can set the channel...  
+//         pCore_->GetDeviceProperty(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreChannelGroup, value);
+//         pCore_->SetConfig(value, selectedChannelConfig_.c_str());
+//      }
+//   }
+//   return DEVICE_OK;
+//};
+
 
 
 
@@ -550,7 +619,7 @@ double SimpleAutofocus::SharpnessAtCurrentSettings()
             } 
          }
 
-         double variance_n = M2/nPts;
+         //double variance_n = M2/nPts;
          double variance = M2/(nPts - 1);
          standardDeviationOverMean_ = 0.;
          double meanScaling = 1.;
@@ -640,12 +709,13 @@ void SimpleAutofocus::BruteForceSearch()
    double bestDist = 0.;
    double curSh = 0. ;
    double bestSh = 0.;
-   long t0;
    MM::MMTime tPrev;
    MM::MMTime tcur;
    double curDist = Z();
 
    char value[MM::MaxStrLength];
+
+   // TODO: user can always surreptitiously change the 'channel group' without our knowing it!
 
    char shutterDeviceName[MM::MaxStrLength];
    pCore_->GetDeviceProperty(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreAutoShutter, value);
