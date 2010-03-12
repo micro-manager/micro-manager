@@ -95,6 +95,7 @@ CoherentCube::CoherentCube(const char* name) :
 	powerSetpointToken_("SP"),
 	powerReadbackToken_("P"),
 	CDRHToken_("CDRH"),  // if this is on, laser delays 5 SEC before turning on
+   CWToken_("CW"),
 	laserOnToken_("L"),
 	TECServoToken_("T"),
 	headSerialNoToken_("HID"),
@@ -109,7 +110,7 @@ CoherentCube::CoherentCube(const char* name) :
    assert(strlen(name) < (unsigned int) MM::MaxStrLength);
 
    InitializeDefaultErrorMessages();
-
+   SetErrorText(ERR_DEVICE_NOT_FOUND, "No answer received.  Is the Coherent Cube connected to this serial port?");
    // create pre-initialization properties
    // ------------------------------------
 
@@ -166,7 +167,8 @@ int CoherentCube::Initialize()
 	//disable echo from the controller
 	msg << "E" << "=" << 0;
    Send(msg.str());
-   ReceiveOneLine();
+   if (ReceiveOneLine() != DEVICE_OK)
+      return ERR_DEVICE_NOT_FOUND;
 
 
 	//disable command prompt from controller
@@ -240,25 +242,30 @@ void CoherentCube::GeneratePropertyState()
 void CoherentCube::GeneratePowerProperties()
 {
    string powerName;
-   CPropertyActionEx* pAct; 
 
 	// Power Setpoint
-   pAct = new CPropertyActionEx(this, &CoherentCube::OnPowerSetpoint, 0);
+   CPropertyActionEx* pActEx = new CPropertyActionEx(this, &CoherentCube::OnPowerSetpoint, 0);
    powerName = g_Keyword_PowerSetpoint;
-   CreateProperty(powerName.c_str(), "0", MM::Float, false, pAct);
+   CreateProperty(powerName.c_str(), "0", MM::Float, false, pActEx);
 	
 	// Power Setpoint
-   pAct = new CPropertyActionEx(this, &CoherentCube::OnPowerReadback, 0);
+   pActEx = new CPropertyActionEx(this, &CoherentCube::OnPowerReadback, 0);
    powerName = g_Keyword_PowerReadback;
-   CreateProperty(powerName.c_str(), "0", MM::Float, true, pAct);
+   CreateProperty(powerName.c_str(), "0", MM::Float, true, pActEx);
 
 	// External Laser Power Control ( if EXT = 1, then an 'analogue' trigger line will control power on
-   pAct = new CPropertyActionEx(this, &CoherentCube::OnExternalLaserPowerControl, 0);
+   CPropertyAction* pAct = new CPropertyAction(this, &CoherentCube::OnExternalLaserPowerControl);
    powerName = "ExternalLaserPowerControl";
 	CreateProperty(powerName.c_str(), "0", MM::Integer, false, pAct);
 	AddAllowedValue("ExternalLaserPowerControl", "0");
    AddAllowedValue("ExternalLaserPowerControl", "1");
   
+   // CW (1) or pulsed (0) mode 
+   pAct = new CPropertyAction(this, &CoherentCube::OnCWMode);
+   powerName = "CWMode";
+	CreateProperty(powerName.c_str(), "0", MM::Integer, false, pAct);
+	AddAllowedValue(powerName.c_str(), "0");
+   AddAllowedValue(powerName.c_str(), "1");
 }
 
 
@@ -479,7 +486,7 @@ int CoherentCube::OnMaximumLaserPower(MM::PropertyBase* pProp, MM::ActionType eA
    return HandleErrors();
 }
 
-int CoherentCube::OnExternalLaserPowerControl(MM::PropertyBase* pProp, MM::ActionType eAct, long)
+int CoherentCube::OnExternalLaserPowerControl(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 
    long externalLaserPowerControl;
@@ -499,7 +506,24 @@ int CoherentCube::OnExternalLaserPowerControl(MM::PropertyBase* pProp, MM::Actio
    return HandleErrors();
 }
 
-
+int CoherentCube::OnCWMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   long CWMode;
+   if (eAct == MM::BeforeGet)
+   {
+	   string ans = this->queryLaser(CWToken_);
+      CWMode = atol(ans.c_str());
+      pProp->Set(CWMode);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(CWMode);
+	   std::ostringstream atoken;
+	   atoken << CWMode;
+	   this->setLaser( CWToken_, atoken.str());
+   }
+   return HandleErrors();
+}
 
 int CoherentCube::OnWaveLength(MM::PropertyBase* pProp, MM::ActionType eAct /* , long */)
 {
@@ -608,14 +632,17 @@ void CoherentCube::Send(string cmd)
 }
 
 
-void CoherentCube::ReceiveOneLine()
+int CoherentCube::ReceiveOneLine()
 {
    buf_string_ = "";
-   GetSerialAnswer(port_.c_str(), line_feed, buf_string_);
+   int ret = GetSerialAnswer(port_.c_str(), line_feed, buf_string_);
+   if (ret != DEVICE_OK)
+      return ret;
 	std::ostringstream messs;
 	messs << "CoherentCube::ReceiveOneLine " << buf_string_;
 	LogMessage( messs.str().c_str());
 
+   return DEVICE_OK;
 }
 
 void CoherentCube::Purge()

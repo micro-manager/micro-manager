@@ -4,6 +4,7 @@ import mmcorej.CMMCore;
 
 import org.micromanager.api.MMPlugin;
 import org.micromanager.api.ScriptInterface;
+import org.micromanager.utils.ReportingUtils;
 
 public class SurveyorPlugin implements MMPlugin {
 
@@ -47,7 +48,10 @@ public class SurveyorPlugin implements MMPlugin {
 	}
 
 	public void show() {
-		// TODO Auto-generated method stub
+      ReportingUtils.showMessage("Warning: the Surveyor plugin can move the XY-stage\n" +
+              "long distances. Please be careful not to pan far from the slide\n" +
+              "and make sure the objectives don't hit any other hardware.\n" +
+              "Use at your own risk! ");
 		hub_ = new Hub(app_);
 	}
 	

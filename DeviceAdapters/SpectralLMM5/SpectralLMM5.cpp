@@ -161,6 +161,9 @@ int LMM5Hub::Initialize()
    pAct = new CPropertyAction(this, &LMM5Hub::OnTriggerOutExposureTime);
    CreateProperty("TriggerExpTime(0.1ms)", "", MM::Integer, false, pAct);
 
+   unsigned char dummy[5];
+   if (DEVICE_OK != g_Interface->GetTriggerOutConfig(*this, *GetCoreCallback(), dummy))
+      g_Interface->setReadWriteSame(true);
 
    ret = UpdateStatus();
    if (DEVICE_OK != ret)

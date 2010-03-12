@@ -18,22 +18,29 @@ del \Projects\micromanager\Install\Output\MMSetup_.exe
 del \Projects\micromanager\Install\Output\MMSetup_%mmversion%_%YYYYMMDD%.exe
 
 ECHO Building Java components...
-cd mmStudio\src
+pushd mmStudio\src
 call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile ../build.xml cleanMMStudio compileMMStudio buildMMStudio buildMMReader
-cd ..\..
+popd
 
-cd autofocus
+pushd autofocus
 call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml cleanAutofocus compileAutofocus buildAutofocus 
-cd ..
+popd
 
-cd plugins\Tracker 
+
+pushd plugins\Tracker 
 call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml cleanMMTracking compileMMTracking buildMMTracking 
-cd ..\..
+popd
+
+pushd plugins\PixelCalibrator 
+call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml cleanMMPixelCalibrator compileMMPixelCalibrator buildMMPixelCalibrator
+popd
+
 
 set DEVICELISTBUILDER=1
-cd mmStudio\src
+pushd  mmStudio\src
 call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile ../build.xml install makeDeviceList packInstaller
 set DEVICELISTBUILDER=""
+popd
 
 
 pushd \Projects\micromanager\Install\Output

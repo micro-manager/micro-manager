@@ -1,35 +1,39 @@
-<!-- Ant makefile for the Micro-Manager Tracking plugins  -->
+<!-- Ant makefile for the Micro-Manager Surveyor plugin  -->
 <!-- This file assumes Micro-Manager project tree structure -->
 
 <project name="MMSurveyor" default="buildMMSurveyor">
 
 	<!-- Specify the system path to the ImageJ root directory -->
-	<property name="ImageJPath" value="C:/Program Files/ImageJ"/>
-	<property name="InstallRoot" value="C:/projects/micromanager/Install/micro-manager"/>
+	<property name="InstallRoot" value="../../Install/micro-manager"/>
 
 	<!-- Do not modify from this point on -->
-	<property name="MMPluginDir" value="${ImageJPath}/plugins/Micro-Manager"/>
-	<property name="IJ" value="../../classext/ij.jar"/>
+	<property name="MMPluginDir" value="../../bin/plugins/Micro-Manager"/>
 	<property name="MMCoreJ" value="../../bin/MMCoreJ.jar"/>
-	<property name="MMPluginDir-inst" value="${InstallRoot}/plugins/Micro-Manager"/>
+	<property name="MMPluginsDir-inst" value="${InstallRoot}/mmplugins"/>
 	<property name="BinRoot" value="../../bin"/>
+
+	<property name="IJ" value="../../classext/ij.jar"/>
+	<property name="beanshell" value="../../classext/bsh-2.0b4.jar"/>
+	<property name="swinglayout" value="../../classext/swing-layout-1.0.4.jar"/>
+	<property name="commonsmath" value="../../classext/commons-math-2.0.jar"/>
+	<property name="swingx" value="../../classext/swingx-0.9.5.jar"/>
+	<property name="pixelcalibrator" value="../PixelCalibrator/PixelCalibrator.jar"/>
 
 	<path id="project.MMPlugins.path">
 		<pathelement location="${MMPluginDir}"/>
 	</path>
 
-	<path id="project.run.path">
-		<pathelement location="${MMPluginDir}/MMJ_.jar"/>
-		<pathelement location="${MMPluginDir}/MMCoreJ.jar"/>
-		<pathelement location="${MMPluginDir}/bsh-2.0b4.jar"/>
-		<pathelement location="${IJ}"/>
-	</path>
-
 	<path id="project.class.path">
+		<pathelement location="${MMCoreJ}" />
+		<pathelement location="${MMPluginDir}/MMJ_.jar"/>
+
 		<pathelement location="${IJ}" />
 		<pathelement location="${beanshell}" />
-		<pathelement location="${MMCoreJ}" />
-	   <pathelement location="${MMPluginDir}/MMJ_.jar"/>
+		<pathelement location="${swinglayout}" />
+		<pathelement location="${commonsmath}" />
+		<pathelement location="${swingx}" />
+		<pathelement location="${pixelcalibrator}" />
+
 	</path>
 
 	<target name="compileMMSurveyor" description="Compile Surveyor plugin.">
@@ -37,20 +41,19 @@
 		<javac srcdir="./src" destdir="./build" optimize="on" source="1.5" target="1.5" debug="on">
 			<classpath refid="project.class.path" />
 		</javac>
+		<copy todir="./build/">
+			<fileset dir="./src/" includes="**/*.form" />
+		</copy>
 	</target>
 
 	<target name="buildMMSurveyor" description="Build Surveyor.jar">
-
 		<jar jarfile="Surveyor.jar" basedir="build" />
-		
-		<mkdir dir="${MMPluginDir}" />
-		<copy file="Surveyor.jar" todir="${MMPluginDir-inst}" />
-      <copy file="Surveyor.jar" todir="${BinRoot}" />
+		<copy file="Surveyor.jar" todir="${MMPluginsDir-inst}" />
 	</target>
 	
 	<target name="cleanMMSurveyor" description="Delete the Surveyor build files.">
 		<delete dir="build" />
-		<delete file="MMSurveyor.jar" />
+		<delete file="Surveyor.jar" />
 	</target>
 	
 </project>

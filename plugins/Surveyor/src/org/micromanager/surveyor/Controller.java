@@ -11,6 +11,7 @@ import java.awt.geom.Point2D;
 
 
 import mmcorej.CMMCore;
+import org.micromanager.utils.MathFunctions;
 import org.micromanager.utils.ReportingUtils;
 
 public class Controller {
@@ -42,7 +43,7 @@ public class Controller {
     public synchronized Dimension getCurrentRoiDimensions() {
         Rectangle currentRoi = hardware_.getROI();
         double currentPixelSize = hardware_.getCurrentPixelSize();
-        double roiScalingFactor = currentPixelSize / surveyorPixelSize_;
+        double roiScalingFactor = currentPixelSize / MathFunctions.getScalingFactor(mapToStageTransform_);
 
         int width = (int) (currentRoi.width * roiScalingFactor);
         int height = (int) (currentRoi.height * roiScalingFactor);
@@ -81,6 +82,10 @@ public class Controller {
         specifyMapRelativeToStage(hardware_.getXYStagePosition(), angle, pixelSize);
     }
 
+    public synchronized void specifyMapRelativeToStage(AffineTransform transform) {
+       mapToStageTransform_ = (AffineTransform) transform.clone();
+    }
+    
     public synchronized void specifyMapRelativeToStage(Point2D.Double mapOriginOnStage, double angle, double pixelSize) {
         mapOriginOnStage_ = mapOriginOnStage;
         angle_ = angle;
@@ -101,7 +106,12 @@ public class Controller {
 
     public void setMapOriginToCurrentStagePosition() {
         mapOriginOnStage_ = hardware_.getXYStagePosition();
-        this.update();
+        double [] matrix = new double[6];
+        mapToStageTransform_.getMatrix(matrix);
+        matrix[4] = mapOriginOnStage_.x;
+        matrix[5] = mapOriginOnStage_.y;
+        mapToStageTransform_ = new AffineTransform(matrix);
+        //this.update();
     }
 
     public Point2D.Double mapToStage(Point pixel) {
@@ -170,7 +180,7 @@ public class Controller {
         xOffset_ = x;
         yOffset_ = y;
         zOffset_ = z;
-        update();
+        //update();
         //ReportingUtils.showMessage("setOffsets to "+xOffset_+","+yOffset_);
 
     }

@@ -102,6 +102,10 @@ public class RoiManager extends ij.plugin.frame.RoiManager{
 
 	}
 
+   public void setHub(Hub hub) {
+      hub_ = hub;
+   }
+
     public ArrayList<Point> getFrameCentersInRoi(ArrayList<Point> acqTraj, Roi acqRoiOnMap, Dimension frameDimensions) {
         ArrayList<Point> minAcqTraj = new ArrayList<Point>();
         for (Point pt : acqTraj) {
@@ -129,7 +133,7 @@ public class RoiManager extends ij.plugin.frame.RoiManager{
         }
 
         int mosaicWidth = nx*smallWidth + overlap_;
-        int mosaicHeight = nx*smallHeight + overlap_;
+        int mosaicHeight = ny*smallHeight + overlap_;
 
         int extraWidth = mosaicWidth - acqRect.width;
         int extraHeight = mosaicHeight - acqRect.height;

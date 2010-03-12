@@ -82,8 +82,9 @@ int g_TubelensTurret = 36;
 int g_BasePortSlider = 38;
 int g_SidePortTurret = 39;
 int g_LampMirror = 51;
-// This one I made up so that we can use TurretBusy to check whether the shutter is busy
-//int g_Shutter = 99;
+
+// Property names
+const char* g_Keyword_LoadSample = "Load Position";
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -2613,6 +2614,16 @@ int FocusStage::Initialize()
    if (ret != DEVICE_OK)
       return ret;
 
+   // Working position
+   std::vector<std::string> allowedValues;
+   allowedValues.push_back("0");
+   allowedValues.push_back("1");
+   CPropertyAction* pActLoadSample = new CPropertyAction(this, &FocusStage::OnLoadSample);
+   ret = CreateProperty(g_Keyword_LoadSample, "0", MM::Integer,false, pActLoadSample);
+   SetAllowedValues(g_Keyword_LoadSample, allowedValues);
+   if (ret != DEVICE_OK)
+      return ret;
+
    // Update lower and upper limits.  These values are cached, so if they change during a session, the adapter will need to be re-initialized
    ret = GetUpperLimit();
    if (ret != DEVICE_OK)
@@ -2849,6 +2860,54 @@ int FocusStage::OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
       int ret = SetPositionUm(pos);
       if (ret != DEVICE_OK)
          return ret;
+   }
+
+   return DEVICE_OK;
+}
+
+
+/*
+ * Set stage in load sample mode
+ */
+int FocusStage::OnLoadSample(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+//1: up
+//0: down. but can also return 4.
+
+   if (eAct == MM::BeforeGet)
+   {
+     const char* cmd = "FPZw";
+     int ret = g_hub.ExecuteCommand(*this, *GetCoreCallback(),  cmd);
+     if (ret != DEVICE_OK)
+        return ret;
+
+     string response;
+     ret = g_hub.GetAnswer(*this, *GetCoreCallback(), response);
+     if (ret != DEVICE_OK)
+        return ret;
+
+     if (response.substr(0,2) == "PF") 
+     {
+        long state = strtol(response.substr(2).c_str(), NULL, 10);
+        state=state==0 || state==4;
+        pProp->Set(state);
+     }
+     else
+        return ERR_UNEXPECTED_ANSWER;
+
+     return DEVICE_OK;
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      long state;
+      pProp->Get(state);
+
+     ostringstream cmd;
+     cmd << "FPZW" << (!state);
+     int ret = g_hub.ExecuteCommand(*this, *GetCoreCallback(),  cmd.str().c_str());
+     if (ret != DEVICE_OK)
+        return ret;
+     return DEVICE_OK;
    }
 
    return DEVICE_OK;

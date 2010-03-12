@@ -41,6 +41,7 @@
 #include "../../MMDevice/DeviceUtils.h"
 //#include "../Utilities/CodeUtility.h"
 #include <sstream>
+#include <iostream>
 
 // Controller
 const char* g_ControllerName = "AndorLaserCombiner";
@@ -128,7 +129,7 @@ public:
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName(g_ControllerName, "AndorLaserCombiner Laser");
+   AddAvailableDeviceName(g_ControllerName, "AndorLaserCombiner");
    
 }
 
@@ -191,7 +192,7 @@ AndorLaserCombiner::AndorLaserCombiner(const char* name) :
    CreateProperty(MM::g_Keyword_Name, name_.c_str(), MM::String, true);
 
    // Description
-   CreateProperty(MM::g_Keyword_Description, "AndorLaserCombiner Laser", MM::String, true);
+   CreateProperty(MM::g_Keyword_Description, "AndorLaserCombinerLaser", MM::String, true);
 
 
    EnableDelay(); // signals that the delay setting will be used
@@ -200,7 +201,7 @@ AndorLaserCombiner::AndorLaserCombiner(const char* name) :
 
 AndorLaserCombiner::~AndorLaserCombiner()
 {
-	//delete pDevImpl;
+	delete pImpl_;
    Shutdown();
 }
 
@@ -301,41 +302,39 @@ void AndorLaserCombiner::GenerateALCProperties()
 		// set the limits as interrogated from the laser controller.
 		SetPropertyLimits(buildname.str().c_str(), 0., fullScale);  // milliWatts
 
-		buildname.clear();
+		buildname.str("");
 		buildname << "MaximumLaserPower" << il;
 		pAct = new CPropertyActionEx(this, &AndorLaserCombiner::OnMaximumLaserPower, il );
 		stmp << fullScale;
 		CreateProperty(buildname.str().c_str(), stmp.str().c_str(), MM::Float, true, pAct);
 
 		// readbacks
-		buildname.clear();
+		buildname.str("");
 		pAct = new CPropertyActionEx(this, &AndorLaserCombiner::OnPowerReadback, il);
 		buildname <<  g_Keyword_PowerReadback << il;
 		CreateProperty(buildname.str().c_str(), "0", MM::Float, true, pAct);
 
 	}
-
 	// piezo properties:
 	CPropertyAction* pA = new CPropertyAction(this, &AndorLaserCombiner::OnPiezoRange);
-	stmp.clear();
+	stmp.str("");
 	stmp << PiezoRange();
 	CreateProperty("PiezoRange",  stmp.str().c_str(),  MM::Float, false, pA);
 
 	pA = new CPropertyAction(this, &AndorLaserCombiner::OnPiezoPosition);
-	stmp.clear();
+	stmp.str("");
 	stmp << PiezoPosition();
-	CreateProperty("PiezoPosition",  stmp.str().c_str(),  MM::Float, false, pA);
-
+ 	CreateProperty("PiezoPosition",  stmp.str().c_str(),  MM::Float, false, pA);
 
 	pA = new CPropertyAction(this, &AndorLaserCombiner::OnDIN);
-	stmp.clear();
+	stmp.str("");
 	stmp << std::hex << (unsigned short)DIN();
 	CreateProperty("DIN",  stmp.str().c_str(),  MM::String, true, pA);
 
 	pA = new CPropertyAction(this, &AndorLaserCombiner::OnDOUT);
-	stmp.clear();
+	stmp.str("");
 	stmp << std::hex << (unsigned short)DOUT_;
-	CreateProperty("DOUT",  stmp.str().c_str(),  MM::String, true, pA);
+	CreateProperty("DOUT",  stmp.str().c_str(),  MM::String, false, pA);
 }
 
 
@@ -346,12 +345,12 @@ void AndorLaserCombiner::GenerateReadOnlyIDProperties()
 	// 1 based index
 	for( int il = 1; il < nLasers_+1; ++il)
 	{
-		buildname.clear();
+		buildname.str("");
 		buildname << "Hours"  << il;
 		pAct = new CPropertyActionEx(this, &AndorLaserCombiner::OnHours, il);
 		CreateProperty(buildname.str().c_str(), "", MM::String, true, pAct);
 
-		buildname.clear();
+		buildname.str("");
 		buildname << "Wavelength"  << il;
 		pAct = new CPropertyActionEx(this, &AndorLaserCombiner::OnWaveLength, il);
 		CreateProperty(buildname.str().c_str(), "", MM::Float, true, pAct);
@@ -611,46 +610,46 @@ int AndorLaserCombiner::Fire(double deltaT)
 
 
 
-int AndorLaserCombiner::Wavelength(const int laserIndex__)
+int AndorLaserCombiner::Wavelength(const int laserIndex_a)
 {
 	int wval = 0;
-	pImpl_->pALC_REVLaser_->GetWavelength(laserIndex__, &wval);
+	pImpl_->pALC_REVLaser_->GetWavelength(laserIndex_a, &wval);
 	return wval;
 }
 
-int AndorLaserCombiner::PowerFullScale(const int laserIndex__)
+int AndorLaserCombiner::PowerFullScale(const int laserIndex_a)
 {
 	int val = 0;
-	pImpl_->pALC_REVLaser_->GetPower(laserIndex__, &val);
+	pImpl_->pALC_REVLaser_->GetPower(laserIndex_a, &val);
 	return val;
 }
 
 
-float AndorLaserCombiner::PowerReadback(const int laserIndex__)
+float AndorLaserCombiner::PowerReadback(const int laserIndex_a)
 {
 	double val = 0.;
-	pImpl_->pALC_REVLaser_->GetCurrentPower(laserIndex__, &val);
+	pImpl_->pALC_REVLaser_->GetCurrentPower(laserIndex_a, &val);
 	return (float) val;
 }
 
 
-float AndorLaserCombiner::PowerSetpoint(const int laserIndex__)
+float AndorLaserCombiner::PowerSetpoint(const int laserIndex_a)
 {
-	return powerSetPoint_[laserIndex__];
+	return powerSetPoint_[laserIndex_a];
 
 }
 
-void  AndorLaserCombiner::PowerSetpoint(const int laserIndex__, const float val__)
+void  AndorLaserCombiner::PowerSetpoint(const int laserIndex_a, const float val_a)
 {
-	powerSetPoint_[laserIndex__] = val__;
+	powerSetPoint_[laserIndex_a] = val_a;
 }
 
 
 
-bool AndorLaserCombiner::Ready(const int laserIndex__)
+bool AndorLaserCombiner::Ready(const int laserIndex_a)
 {
 	TLaserState state = ALC_NOT_AVAILABLE;
-	bool ret =	pImpl_->pALC_REVLaser_->GetLaserState(laserIndex__, &state);
+	bool ret =	pImpl_->pALC_REVLaser_->GetLaserState(laserIndex_a, &state);
 	return ret && ( ALC_READY == state);	
 }
 

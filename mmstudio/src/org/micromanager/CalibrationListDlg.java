@@ -320,8 +320,8 @@ public class CalibrationListDlg extends MMDialog {
       parentGUI_.setConfigChanged(true);
       parentGUI_.refreshGUI();
       int row = ptm.getCurrentPixelConfigRow();
-      calTable_.setRowSelectionInterval(row, row);
-
+      if (row >= 0)
+          calTable_.setRowSelectionInterval(row, row);
    }
 
    public void setParentGUI(DeviceControlGUI parent) {

@@ -10,12 +10,11 @@ import org.micromanager.utils.ReportingUtils;
 public class Image5DMosaic extends Image5D {
 
     private CMMCore mmc;
-    private Controller controller_;
+
     
     public Image5DMosaic(String acqName_, int type, int width, int height,
-            int size, int numSlices, int actualFrames, boolean b, Controller controller) {
+            int size, int numSlices, int actualFrames, boolean b) {
         super(acqName_, type, width, height, size, numSlices, actualFrames, b);
-        controller_ = controller;
     }
 
 
@@ -54,9 +53,6 @@ public class Image5DMosaic extends Image5D {
         }
     }
 
-    Controller getController() {
-        return controller_;
-    }
 }
 // To get the image to appear, use:
 // i5d.updateImageAndDraw();

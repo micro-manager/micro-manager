@@ -7,15 +7,15 @@ package org.micromanager.pixelcalibrator;
 
 import ij.IJ;
 import ij.ImagePlus;
+import ij.gui.ImageWindow;
 import ij.process.FHT;
 import ij.process.FloatProcessor;
 import ij.process.ImageProcessor;
 import java.awt.Point;
+import java.awt.Rectangle;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.Hashtable;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import mmcorej.CMMCore;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.api.ScriptInterface;
@@ -39,6 +39,15 @@ public class CalibrationThread extends Thread {
 
    int progress_ = 0;
    private final PixelCalibratorPlugin plugin_;
+   ImageWindow liveWin_;
+   private ImageProcessor referenceImage_;
+
+   double x;
+   double y;
+   int w;
+   int h;
+   int w_small;
+   int h_small;
 
    CalibrationThread(ScriptInterface app, PixelCalibratorPlugin plugin) {
       app_ = (MMStudioMainFrame) app;
@@ -102,7 +111,9 @@ public class CalibrationThread extends Thread {
             core_.snapImage();
             Object pix = core_.getImage();
             app_.displayImage(pix);
-            app_.getLiveWin().setTitle("Calibrating...");
+            if (liveWin_ == null)
+               liveWin_ = MMStudioMainFrame.getLiveWin();
+            liveWin_.setTitle("Calibrating...");
             return ImageUtils.makeProcessor(core_,pix);
          } catch (Exception ex) {
             ReportingUtils.logError(ex);
@@ -117,11 +128,12 @@ public class CalibrationThread extends Thread {
          if (CalibrationThread.interrupted())
             throw new InterruptedException();
          ImageProcessor snap = (ImageProcessor) snapImageAt(x1,y1,sim);
-         ImageProcessor foundImage = getSubImage(snap,(int) ((w-w_small)/2),(int) ((h-h_small)/2),w_small,h_small);
+         Rectangle guessRect = new Rectangle((int) ((w-w_small)/2-d.x),(int) ((h-h_small)/2-d.y),w_small,h_small);
+         ImageProcessor foundImage = getSubImage(snap,guessRect.x, guessRect.y, guessRect.width, guessRect.height);
+         liveWin_.getImagePlus().setRoi(guessRect);
          //new ImagePlus("found at "+dx+","+dy,foundImage).show();
-         ImageProcessor simulatedImage = getSubImage(baseImage,(int) (d.x-w_small/2+w/2),(int) (d.y-h_small/2+h/2),w_small,h_small);
          //new ImagePlus("simulated at "+dx+","+dy,simulatedImage).show();
-         Point2D.Double dChange = measureDisplacement(simulatedImage, foundImage, display);
+         Point2D.Double dChange = measureDisplacement(referenceImage_, foundImage, display);
          return new Point2D.Double(d.x + dChange.x,d.y + dChange.y);
    }
 
@@ -165,13 +177,7 @@ public class CalibrationThread extends Thread {
       return 1 << ((int) Math.floor(Math.log(x)/Math.log(2)));
    }
 
-   double x;
-   double y;
-   ImageProcessor baseImage;
-   int w;
-   int h;
-   int w_small;
-   int h_small;
+
 
    AffineTransform getFirstApprox(boolean sim) throws InterruptedException {
       if (sim && theSlide == null) {
@@ -195,13 +201,14 @@ public class CalibrationThread extends Thread {
       }
 
       // First find the smallest detectable displacement.
-      baseImage = snapImageAt(x,y,sim);
+      ImageProcessor baseImage = snapImageAt(x,y,sim);
 
       w = baseImage.getWidth();
       h = baseImage.getHeight();
       w_small = smallestPowerOf2LessThanOrEqualTo(w/4);
       h_small = smallestPowerOf2LessThanOrEqualTo(h/4);
 
+      referenceImage_ = getSubImage(baseImage,(int) (-w_small/2+w/2),(int) (-h_small/2+h/2),w_small,h_small);
 
       pointPairs_.clear();
       pointPairs_.put(new Point2D.Double(0.,0.),new Point2D.Double(x,y));
@@ -265,7 +272,8 @@ public class CalibrationThread extends Thread {
             ReportingUtils.logMessage(secondApprox.toString());
          app_.setXYStagePosition(xy0.x, xy0.y);
          app_.snapSingleImage();
-         app_.getLiveWin().setTitle("Calibrating...done.");
+         liveWin_.setTitle("Calibrating...done.");
+         liveWin_.getImagePlus().killRoi();
          return secondApprox;
    }
 

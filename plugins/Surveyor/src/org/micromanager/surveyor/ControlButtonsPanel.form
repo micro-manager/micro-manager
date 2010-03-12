@@ -50,7 +50,8 @@
               <Component id="snapButton" min="-2" pref="66" max="-2" attributes="1"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="jComboBox1" min="-2" max="-2" attributes="0"/>
-              <EmptySpace max="32767" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+              <Component id="clearROIsButton" pref="85" max="32767" attributes="1"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -65,6 +66,7 @@
                   <Component id="configureButton" alignment="3" min="-2" pref="30" max="-2" attributes="0"/>
                   <Component id="snapButton" alignment="3" min="-2" pref="30" max="-2" attributes="0"/>
                   <Component id="jComboBox1" alignment="3" min="-2" pref="27" max="-2" attributes="0"/>
+                  <Component id="clearROIsButton" alignment="3" min="-2" pref="30" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="32767" attributes="0"/>
           </Group>
@@ -170,6 +172,16 @@
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jComboBox1ActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JButton" name="clearROIsButton">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Clear ROIs"/>
+        <Property name="toolTipText" type="java.lang.String" value="Snap an image at the current location"/>
+        <Property name="focusable" type="boolean" value="false"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="clearROIsButtonActionPerformed"/>
       </Events>
     </Component>
   </SubComponents>

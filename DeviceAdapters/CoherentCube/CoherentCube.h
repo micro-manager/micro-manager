@@ -35,6 +35,7 @@ using namespace std;
 // Error codes
 //
 #define ERR_PORT_CHANGE_FORBIDDEN    10004
+#define ERR_DEVICE_NOT_FOUND         10005
 
 
 class CoherentCube : public CShutterBase<CoherentCube>
@@ -138,8 +139,8 @@ public:
    int OnReceivedData(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
 
-	int OnExternalLaserPowerControl(MM::PropertyBase* pProp, MM::ActionType eAct, long);
-
+	int OnExternalLaserPowerControl(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnCWMode(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 	// some important read-only properties
 	int OnHeadID(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -170,6 +171,7 @@ private:
 	const std::string powerSetpointToken_;
 	const std::string powerReadbackToken_;
 	const std::string CDRHToken_;  // if this is on, laser delays 5 SEC before turning on
+   const std::string CWToken_;
 	const std::string laserOnToken_;
 	const std::string TECServoToken_;
 	const std::string headSerialNoToken_;
@@ -213,7 +215,7 @@ private:
    void StripString(string& StringToModify);
 	// todo -- can move these to the implementation
    void Send(string cmd);
-   void ReceiveOneLine();
+   int ReceiveOneLine();
    void Purge();
    int HandleErrors();
    

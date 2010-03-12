@@ -28,7 +28,7 @@ public class MosaicContigs extends ArrayList<MosaicContigs.Contig> {
 
 	public class Contig extends ArrayList<MultiStagePosition> {
 		private static final long serialVersionUID = 1L;
-		}
+   }
 	
 	boolean areContiguous(MultiStagePosition pos1, MultiStagePosition pos2) {
 		if (! pos1.getDefaultXYStage().contentEquals(pos2.getDefaultXYStage()))

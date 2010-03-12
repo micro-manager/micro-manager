@@ -144,6 +144,7 @@ singleFrameModeReady_(false),
 use_pl_exp_check_status_(true),
 imageCounter_(0),
 sequenceModeReady_(false)
+
 {
    InitializeDefaultErrorMessages();
 
@@ -1319,6 +1320,8 @@ const unsigned char* Universal::GetImageBuffer()
    int16 status;
    uns32 not_needed;
 
+
+
    if(!snappingSingleFrame_)
    {
       LogMMMessage(__LINE__, "Warning: GetImageBuffer called before SnapImage()");
@@ -1329,7 +1332,7 @@ const unsigned char* Universal::GetImageBuffer()
    void* pixBuffer = const_cast<unsigned char*> (img_.GetPixels());
    MM::MMTime start = GetCurrentMMTime();
    MM::MMTime maxDuration = (GetExposure() + 5000) * 1000;
-   bool timeout = false;
+	bool timeout = false;
    // Check status, timeout when this takes exposure time + 5 seconds
    while(pl_exp_check_status(hPVCAM_, &status, &not_needed) && 
       (status != READOUT_COMPLETE && status != READOUT_FAILED) && !timeout) {
@@ -1339,6 +1342,7 @@ const unsigned char* Universal::GetImageBuffer()
    MM::MMTime end = GetCurrentMMTime();
    // Log duration of readout in debug mode
    LogTimeDiff(start, end, "Readout took: ", true);
+
 
    // Error handling
    if (timeout)

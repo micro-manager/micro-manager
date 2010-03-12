@@ -111,10 +111,11 @@ public class Canvas extends ImageCanvas {
             return;
         }
 
-
         Rectangle bounds = win.getBounds();
         int width;
         int height;
+
+        Rectangle oldSrcRect = (Rectangle) this.getSrcRect().clone();
 
         if (!win.isFullscreen()) {
             Insets insets = win.getInsets();
@@ -131,8 +132,10 @@ public class Canvas extends ImageCanvas {
 
         setDrawingSize(width, height);
         setDimensions(width, height);
-        display_.pan(srcRect, true);
-        //getParent().doLayout();
+
+        Rectangle panRect = new Rectangle(oldSrcRect.x - (srcRect.width - oldSrcRect.width)/2, oldSrcRect.y - (srcRect.height - oldSrcRect.height)/2, width, height);
+        display_.pan(panRect, true);
+        getParent().doLayout();
 
     }
 

@@ -32,9 +32,11 @@ public:
    int SetTriggerOutConfig(MM::Device& device, MM::Core& core, unsigned char * config);
    int GetTriggerOutConfig(MM::Device& device, MM::Core& core, unsigned char *);
    int GetNrLines() { return nrLines_;}
+   void setReadWriteSame(bool setting) { readWriteSame_ = setting; }
 
    const static int maxLines_ = 8;
    availableLines* getAvailableLaserLines() { return laserLines_;}
+
 
 private:
    availableLines laserLines_[maxLines_];
@@ -44,7 +46,7 @@ private:
    uint8_t lineSwitch_;
    MM::PortType portType_;
    int nrLines_;
-
+   bool readWriteSame_;
 };
 #endif  // _SPECTRALLMM5INTERFACE_H_
 

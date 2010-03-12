@@ -387,6 +387,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 			startupScriptFile_ = "";
 		}
 
+      ReportingUtils.SetContainingFrame(gui_);
       // set the location for app preferences
       mainPrefs_ = Preferences.userNodeForPackage(this.getClass());
       systemPrefs_ = mainPrefs_;

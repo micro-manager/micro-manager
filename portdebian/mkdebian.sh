@@ -31,8 +31,8 @@ cat portdebian/debiancontrol.port | sed "s/ARCH/$ARCH/" | sed "s/VERSION/$VERSIO
 
 ##### Programs
 mkdir -p $ROOTBIN/usr/bin/
-cp Test_Serial/mm_testserial ModuleTest/mm_moduletest Test_MMCore/mm_testCore $ROOTBIN/usr/bin/
-strip $ROOTBIN/usr/bin/*
+#cp Test_Serial/mm_testserial ModuleTest/mm_moduletest Test_MMCore/mm_testCore $ROOTBIN/usr/bin/
+#strip $ROOTBIN/usr/bin/*
 
 
 ##### JAR-files

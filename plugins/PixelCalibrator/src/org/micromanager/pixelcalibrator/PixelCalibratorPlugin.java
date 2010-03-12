@@ -1,6 +1,7 @@
 package org.micromanager.pixelcalibrator;
 
 import java.awt.geom.AffineTransform;
+import java.util.prefs.Preferences;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
@@ -11,6 +12,7 @@ import org.micromanager.CalibrationListDlg;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.api.MMPlugin;
 import org.micromanager.api.ScriptInterface;
+import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
 
@@ -121,10 +123,15 @@ public class PixelCalibratorPlugin implements MMPlugin {
          calDialog.updateCalibrations();
          calDialog.setVisible(true);
 
-         final JOptionPane optionPane = new JOptionPane(
-                 JOptionPane.QUESTION_MESSAGE,
-                 JOptionPane.YES_NO_OPTION);
 
+         Preferences prefs = Preferences.userNodeForPackage(MMStudioMainFrame.class);
+         
+         try {
+            JavaUtils.putObjectInPrefs(prefs, "affine_transform_" + core_.getCurrentPixelSizeConfig(), result);
+         } catch (Exception ex) {
+            ReportingUtils.logError(ex);
+         }
+         
          int response = JOptionPane.showConfirmDialog(null,
                  "<html>The Pixel Calibrator plugin has measured a pixel size of " + pixelSize + " &#956;m.<br>" + "Do you wish to store this value in your pixel calibration settings?</html>",
                  "Pixel calibration succeeded!",
@@ -161,7 +168,12 @@ public class PixelCalibratorPlugin implements MMPlugin {
       SwingUtilities.invokeLater(new Runnable() {
 
          public void run() {
+            try {
+            if (dialog_ != null)
             dialog_.updateStatus(calibrationThread_.isAlive(), progress);
+            } catch (NullPointerException e) {
+               // Do nothing.
+            }
          }
       });
 

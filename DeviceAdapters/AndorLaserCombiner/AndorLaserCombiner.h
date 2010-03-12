@@ -48,9 +48,9 @@ public:
 
 	// power setting limits:
 	double minlp(){ return minlp_;};
-	void minlp(double v__) { minlp_= v__;};
+	void minlp(double v_a) { minlp_= v_a;};
 	double maxlp(){ return maxlp_;};
-	void maxlp(double v__) { maxlp_= v__;};
+	void maxlp(double v_a) { maxlp_= v_a;};
    AndorLaserCombiner(const char* name);
    ~AndorLaserCombiner();
   
@@ -90,14 +90,14 @@ public:
    int Fire(double deltaT);
 
 
-	int Wavelength(const int laserIndex__);
-	int PowerFullScale(const int laserIndex__);
-	bool Ready(const int laserIndex__);
-	float PowerReadback(const int laserIndex__);
+	int Wavelength(const int laserIndex_a);
+	int PowerFullScale(const int laserIndex_a);
+	bool Ready(const int laserIndex_a);
+	float PowerReadback(const int laserIndex_a);
 
 	// setpoint in milliwatts
-	float PowerSetpoint(const int laserIndex__);
-	void PowerSetpoint( const int laserIndex__, const float);
+	float PowerSetpoint(const int laserIndex_a);
+	void PowerSetpoint( const int laserIndex_a, const float);
 
 	
 
@@ -138,7 +138,8 @@ private:
 
 	// todo -- can move these to the implementation
    int HandleErrors();
-   AndorLaserCombiner& operator=(AndorLaserCombiner& /*rhs*/) {assert(false); return *this;}
+   AndorLaserCombiner& operator=(AndorLaserCombiner& /*rhs*/) {
+      assert(false); return *this;}
 
 	// implementation
 	ALCImpl* pImpl_;

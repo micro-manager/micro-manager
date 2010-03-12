@@ -30,7 +30,8 @@
 
 SpectralLMM5Interface::SpectralLMM5Interface(std::string port, MM::PortType portType) :
    laserLinesDetected_ (false),
-   nrLines_ (5)
+   nrLines_ (5),
+   readWriteSame_(false)
 {
    port_ = port;
    portType_ = portType;
@@ -273,7 +274,10 @@ int SpectralLMM5Interface::GetExposureConfig(MM::Device& device, MM::Core& core,
 {
    const unsigned long bufLen = 1;
    unsigned char buf[bufLen];
-   buf[0]=0x027;
+   if (readWriteSame_)
+      buf[0]=0x021;
+   else
+      buf[0]=0x027;
    const unsigned long answerLen = 70;
    unsigned char answer[answerLen];
    unsigned long read;
@@ -302,7 +306,7 @@ int SpectralLMM5Interface::SetTriggerOutConfig(MM::Device& device, MM::Core& cor
    buf[0]=0x23;
    memcpy(buf + 1, config, 4);
 
-   const unsigned long answerLen = 1;
+   const unsigned long answerLen = 10;//1; Why does 1 cause a runtime exception? 'Stack around the variable "answer" was corrupted.'
    unsigned char answer[answerLen];
    printf ("Set Trigger Out \n");
    int ret = ExecuteCommand(device, core, buf, bufLen, answer, answerLen, read);
@@ -320,8 +324,11 @@ int SpectralLMM5Interface::GetTriggerOutConfig(MM::Device& device, MM::Core& cor
 {
    const unsigned long bufLen = 1;
    unsigned char buf[bufLen];
-   buf[0]=0x026;
-   const unsigned long answerLen = 6;
+   if (readWriteSame_)
+      buf[0]=0x023;
+   else
+      buf[0]=0x026;
+   const unsigned long answerLen = 10;//6;
    unsigned char answer[answerLen];
    unsigned long read;
    printf ("Detecting Trigger out Config: \n");
@@ -330,7 +337,7 @@ int SpectralLMM5Interface::GetTriggerOutConfig(MM::Device& device, MM::Core& cor
       return ret;
  
    // See if the controller acknowledged our command
-   if (answer[0] != 0x26)
+   if (answer[0] != 0x23)
       return ERR_UNEXPECTED_ANSWER;
 
    memcpy(config, answer + 1, 4);

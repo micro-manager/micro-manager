@@ -1954,7 +1954,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
       // apply z-offsets
       // GregorianCalendar cldAcq = new GregorianCalendar();
       double exposureMs = cs.exposure_;
-      Object img;
+      Object img = null;
       double zAbsolutePos = z;
 
       try {
@@ -1980,7 +1980,14 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
              }
          }
 
-         img = snapAndRetrieve();
+         try{
+             img = snapAndRetrieve();
+         }
+         catch( Exception e1)
+         {
+             ReportingUtils.logError(e1);
+             ReportingUtils.displayNonBlockingMessage("acquisition snapAndRetrieve failed: " + e1.getMessage());
+         }
 
          if (originalAutoShutterSetting_ == true && core_.getAutoShutter() == false && shutterIsOpen_ == true) {
              if (sliceMode_ == SliceMode.SLICES_FIRST && !keepShutterOpenForChannels_ && sliceIdx == (numSlices-1)) {
@@ -2293,6 +2300,18 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
 
    public synchronized void setPause(boolean state) {
       pause_ = state;
+      // Reflect pausing state in image title
+      String stateInTitle = " (paused) ";
+      if (!pause_)
+         stateInTitle = " (started) ";
+      Date enddate = GregorianCalendar.getInstance().getTime();
+      for (int i = 0; i < i5dWin_.length; i++) {
+         if (useMultiplePositions_ && (well_ != null)) {
+            i5dWin_[i].setTitle(well_.getLabel() + fileSeparator_ + posList_.getPosition(i).getLabel() + stateInTitle + enddate);
+         } else if (acqData_[i] != null) {
+            i5dWin_[i].setTitle(acqData_[i].getName() + stateInTitle + enddate);
+         }
+      }
    }
 
    public synchronized boolean isPaused() {

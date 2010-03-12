@@ -116,6 +116,10 @@ public class MathFunctions {
       return transform;
    }
 
+   public static double getScalingFactor(AffineTransform transform) {
+      return Math.sqrt(Math.abs(transform.getDeterminant()));
+   }
+
    public static void runAffineTest() {
 
       Map<Point2D.Double, Point2D.Double> pointPairs = new HashMap<Point2D.Double, Point2D.Double>();

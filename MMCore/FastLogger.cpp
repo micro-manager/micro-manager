@@ -598,7 +598,6 @@ bool FastLogger::Open(const std::string specifiedFile)
 		if(NULL == plogFile_g)
 		{
 			plogFile_g = new std::ofstream();
-         std::cout << "created new log ofstream" << std::endl;
 		}
 		if (!plogFile_g->is_open())
 		{
@@ -606,7 +605,6 @@ bool FastLogger::Open(const std::string specifiedFile)
          
          if(logFileName_.length() < 1) // if log file path has not yet been specified:
          {
-            std::cout << "setting log file to  " << specifiedFile.c_str()  << std::endl;
             logFileName_ = specifiedFile;
          }
 
@@ -625,13 +623,12 @@ bool FastLogger::Open(const std::string specifiedFile)
 #endif
             logFileName_ = homePath + specifiedFile;
 				plogFile_g->open(logFileName_.c_str(), ios_base::app);
-            std::cout << "2nd attempt to open  " << logFileName_.c_str() << (plogFile_g->is_open()?" OK":" FAILED")  << std::endl;
          }
 
 		}
       else
       {
-         std::cout << "log file " << logFileName_.c_str() << " was open already" << std::endl;
+         ;//std::cout << "log file " << logFileName_.c_str() << " was open already" << std::endl;
       }
 
       bRet = plogFile_g->is_open();

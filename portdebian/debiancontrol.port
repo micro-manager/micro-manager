@@ -4,7 +4,7 @@ Section: contrib/science
 Priority: optional
 Architecture: ARCH
 Essential: no
-Depends: java2-runtime, bsh, libboost1.38-dev, libusb-dev, libswingx-java, libdc1394-22
+Depends: java2-runtime, bsh, libboost1.38-dev, libusb-0.1-4, libswingx-java, libdc1394-22, libv4l-0
 Installed-Size: 8
 Maintainer: Johan Henriksson [mahogny@areta.org]
 Description: Micro-Manager provides a programmatic and user interface for research microscopes and related equipment

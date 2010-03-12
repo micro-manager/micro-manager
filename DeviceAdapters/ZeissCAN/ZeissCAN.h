@@ -478,6 +478,7 @@ public:
    // action interface
    // ----------------
    int OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnLoadSample(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    int GetFocusFirmwareVersion();
