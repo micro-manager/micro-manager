@@ -13,6 +13,10 @@ public:
    double zReference;
    MM::MMTime lastWakeTime;
 
+   Channel currentChannel;
+   double currentSlice;
+   MultiAxisPosition currentPosition;
+
    MMAcquisitionState(CMMCore * _core, CoreCallback * _coreCallback)
    {
          core = _core;
@@ -36,17 +40,17 @@ private:
    MM::MMTime interval_;
    
 public:
-   TimeTask(MMAcquisitionState * state, double millisecondsToSleepAfterLastWake)
+   TimeTask(MMAcquisitionState * state, double msBetweenFrames)
    {
       type = TIME;
       state_ = state;
-      interval_ = 1000 * millisecondsToSleepAfterLastWake;
+      interval_ = 1000 * msBetweenFrames;
    }
 
    void run() {
       if (state_->lastWakeTime > 0)
       {
-         MM::MMTime sleepTime = state_->lastWakeTime + MM::MMTime(interval_) - state_->coreCallback->GetCurrentMMTime();
+         MM::MMTime sleepTime = (state_->lastWakeTime + interval_) - state_->coreCallback->GetCurrentMMTime();
          if (sleepTime > MM::MMTime(0,0))
             state_->coreCallback->Sleep(NULL, sleepTime.getMsec());
          ++(state_->frameCount);
@@ -96,6 +100,8 @@ public:
          state_->core->setXYPosition(it2->first.c_str(),xy.first,xy.second);
       } 
       printf("set position\n");
+
+      state_->currentPosition = *pos_;
    }
 
 };
@@ -125,6 +131,7 @@ public:
    void run() {
       state_->coreCallback->SetFocusPosition(pos_);
       printf("set slice\n");
+      state_->currentSlice = pos_;
    }
 };
 
@@ -152,6 +159,7 @@ public:
          state_->coreCallback->SetExposure(channel_->exposure);
          state_->coreCallback->SetConfig(channel_->group.c_str(), channel_->name.c_str());
          printf("set channel\n");
+         state_->currentChannel = * channel_;
       }
    }
 };
@@ -304,7 +312,7 @@ TaskVector MMAcquisitionSequencer::generateTaskVector()
    PositionTask* posTask2 = new PositionTask(state, pos2);
    positionVector.push_back(posTask2);
 
-   TimeTask * timeTask = new TimeTask(state, 1000);
+   TimeTask * timeTask = new TimeTask(state, 6000);
 
    TaskVector timeVector(10, timeTask);
 

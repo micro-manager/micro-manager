@@ -34,6 +34,8 @@ public:
    bool useZStack;
    int skipFrames;
 
+   Channel() { }
+
    Channel(std::string _group, std::string _name, double _exposure,
       double _zOffset = 0.0, bool _useZStack = true, int _skipFrames = 0)
    {
