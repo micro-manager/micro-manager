@@ -1,89 +1,99 @@
 #include "MMAcquisition.h"
 
+////////////////////////
+// MMAcquisitionState //
+////////////////////////
+
+class MMAcquisitionState {
+public:
+   CMMCore * core;
+   CoreCallback * coreCallback;
+
+   int frameCount;
+   double zReference;
+   MM::MMTime lastWakeTime;
+
+   MMAcquisitionState(CMMCore * _core, CoreCallback * _coreCallback)
+   {
+         core = _core;
+         coreCallback = _coreCallback;
+         frameCount = 0;
+         lastWakeTime = -1;
+
+   }
+};
 
 
-/////////////////
-// SleeperTask //
-/////////////////
+//////////////
+// TimeTask //
+//////////////
 
-class SleeperTask:public MMRunnable
+class TimeTask:public MMRunnable
 {
 
 private:
-   CoreCallback* coreCallback_;
+   MMAcquisitionState * state_;
    MM::MMTime interval_;
-   static MM::MMTime lastWakeTime_;
    
 public:
-   SleeperTask(CoreCallback* coreCallback, double millisecondsToSleepAfterLastWake)
+   TimeTask(MMAcquisitionState * state, double millisecondsToSleepAfterLastWake)
    {
-      coreCallback_ = coreCallback;
+      type = TIME;
+      state_ = state;
       interval_ = 1000 * millisecondsToSleepAfterLastWake;
    }
 
    void run() {
-      if (lastWakeTime_ > 0)
+      if (state_->lastWakeTime > 0)
       {
-         MM::MMTime sleepTime = SleeperTask::lastWakeTime_ + interval_ - coreCallback_->GetCurrentMMTime();
-         coreCallback_->Sleep(NULL, sleepTime.getMsec());
+         MM::MMTime sleepTime = state_->lastWakeTime + MM::MMTime(interval_) - state_->coreCallback->GetCurrentMMTime();
+         if (sleepTime > MM::MMTime(0,0))
+            state_->coreCallback->Sleep(NULL, sleepTime.getMsec());
+         ++(state_->frameCount);
+         printf("sleep\n");
       }
 
-      SleeperTask::lastWakeTime_ = coreCallback_->GetCurrentMMTime();
-      printf("sleep\n");
+      state_->lastWakeTime = state_->coreCallback->GetCurrentMMTime();
+
    }
 
-   static void reset() {
-      SleeperTask::lastWakeTime_ = -1;
-   }
 };
 
-MM::MMTime SleeperTask::lastWakeTime_;
-//void SleeperTask::reset();
 
 
+//////////////////
+// PositionTask //
+//////////////////
 
-///////////////////////
-// MultiPositionTask //
-///////////////////////
 
-
-class MultiPositionTask:public MMRunnable
+class PositionTask:public MMRunnable
 {
 private:
-   CMMCore* core_;
-   std::map<std::string,double> singleAxisPositions_;
-   std::map<std::string,pair<double,double>> doubleAxisPositions_;
+   MMAcquisitionState * state_;
+   MultiAxisPosition * pos_;
 
 public:
-   MultiPositionTask(CMMCore* core)
+   PositionTask(MMAcquisitionState * state, MultiAxisPosition * pos)
    {
-      core_ = core;
-   }
-
-   void AddOneSingleAxisPosition(string name, double pos)
-   {
-      singleAxisPositions_[name] = pos;
-   }
-
-   void AddDoubleAxisPosition(string name, double posX, double posY)
-   {
-      doubleAxisPositions_[name] = pair<double,double>(posX,posY);
+      type = POSITION;
+      state_ = state;
+      pos_ = pos;
    }
 
    void run() {
       std::map<std::string,double>::iterator it1;
 
-      for(it1 = singleAxisPositions_.begin(); it1 != singleAxisPositions_.end(); ++it1)
+      for(it1 = pos_->singleAxisPositions.begin(); it1 != pos_->singleAxisPositions.end(); ++it1)
       {
-         core_->setPosition(it1->first.c_str(), it1->second);
+         state_->core->setPosition(it1->first.c_str(), it1->second);
       } 
 
       std::map<std::string,pair<double,double>>::iterator it2;
 
-      for(it2 = doubleAxisPositions_.begin(); it2 != doubleAxisPositions_.end(); ++it2)
+      for(it2 = pos_->doubleAxisPositions.begin(); it2 != pos_->doubleAxisPositions.end(); ++it2)
       {
          pair<double,double> xy = it2->second;
-         core_->setXYPosition(it2->first.c_str(),xy.first,xy.second);
+         state_->core->setXYPosition(it2->first.c_str(),xy.first,xy.second);
       } 
       printf("set position\n");
    }
@@ -100,19 +110,20 @@ public:
 class SliceTask:public MMRunnable
 {
 private:
-   CoreCallback* coreCallback_;
+   MMAcquisitionState * state_;
    double pos_;
 
 public:
-   SliceTask(CoreCallback* coreCallback, double pos)
+   SliceTask(MMAcquisitionState * state, double pos)
    {
-      coreCallback_ = coreCallback;
+      type = SLICE;
+      state_ = state;
       pos_ = pos;
 
    }
 
    void run() {
-      coreCallback_->SetFocusPosition(pos_);
+      state_->coreCallback->SetFocusPosition(pos_);
       printf("set slice\n");
    }
 };
@@ -124,21 +135,24 @@ public:
 class ChannelTask:public MMRunnable
 {
 private:
-   CoreCallback* coreCallback_;
-   string channelGroup_;
-   string channelName_;
+   MMAcquisitionState* state_;
+   Channel * channel_;
 
 public:
-   ChannelTask(CoreCallback* coreCallback, std::string channelGroup, std::string channelName)
+   ChannelTask(MMAcquisitionState * state, Channel * channel)
    {
-      coreCallback_ = coreCallback;
-      channelGroup_ = channelGroup;
-      channelName_ = channelName;
+      type = CHANNEL;
+      state_ = state;
+      channel_ = channel;
    }
 
    void run() {
-      coreCallback_->SetConfig(channelGroup_.c_str(), channelName_.c_str());
-      printf("set channel\n");
+      if (0==(state_->frameCount % (1 + channel_->skipFrames)))
+      {
+         state_->coreCallback->SetExposure(channel_->exposure);
+         state_->coreCallback->SetConfig(channel_->group.c_str(), channel_->name.c_str());
+         printf("set channel\n");
+      }
    }
 };
 
@@ -150,47 +164,55 @@ public:
 class AutofocusTask:public MMRunnable
 {
 private:
-   CMMCore* core_;
+   MMAcquisitionState* state_;
+   int skipFrames_;
 
 public:
-   AutofocusTask(CMMCore* core)
+   AutofocusTask(MMAcquisitionState * state, int skipFrames)
    {
-      core_ = core;
+      type = AUTOFOCUS;
+      state_ = state;
+      skipFrames_ = skipFrames;
    }
 
    void run() {
-      core_->fullFocus();
-      printf("fullFocus()");
+      if (0==(state_->frameCount % (1 + skipFrames_)))
+      {
+         state_->core->fullFocus();
+         printf("fullFocus()");
+      }
    }
 };
 
 
-//////////////////////
-// ImageGrabberTask //
-//////////////////////
+///////////////
+// ImageTask //
+///////////////
 
-class ImageGrabberTask:public MMRunnable
+class ImageTask:public MMRunnable
 {
 
 private:
-   CMMCore * core_;
-   CoreCallback* coreCallback_;
+   MMAcquisitionState * state_;
 
 public:
-   ImageGrabberTask(CMMCore * core, CoreCallback* coreCallback)
+   ImageTask(MMAcquisitionState * state)
    {
-      core_ = core;
-      coreCallback_ = coreCallback;
+      state_ = state;
+      type = IMAGE;
    }
 
    void run() {
-      const char * img = coreCallback_->GetImage();
+
+      const char * img = state_->coreCallback->GetImage();
       int w,h,d;
-      coreCallback_->GetImageDimensions(w, h, d);
-      coreCallback_->InsertImage(NULL, (const unsigned char *) img, w, h, d);
+      state_->coreCallback->GetImageDimensions(w, h, d);
+      state_->coreCallback->InsertImage(NULL, (const unsigned char *) img, w, h, d);
       printf("Grabbed image.\n");
    }
 };
+
+
 
 
 /////////////////////////
@@ -207,7 +229,7 @@ void MMAcquisitionRunner::Run()
 {
    for (unsigned int i=0;i<tasks_.size();++i)
    {
-      printf("Task %d started.\n", i);
+      printf("Task #%d started, type %d\n", i, tasks_[i]->type);
       tasks_[i]->run();
    }
 }
@@ -254,32 +276,47 @@ TaskVector MMAcquisitionSequencer::generateTaskVector()
    //TaskVector sliceVector;
    //TaskVector positionVector;
    //TaskVector timeVector;
-   TaskVector allTasks;
 
-   ImageGrabberTask * imageGrabberTask = new ImageGrabberTask(core_, coreCallback_);
-   SleeperTask * sleeperTask = new SleeperTask(coreCallback_, 1000);
-   SleeperTask::reset();
+   MMAcquisitionState * state = new MMAcquisitionState(core_, coreCallback_);
 
-   allTasks.push_back(imageGrabberTask);
+
+   ImageTask * imageTask = new ImageTask(state);
 
    TaskVector channelVector;
-   channelVector.push_back(new ChannelTask(coreCallback_, "Channel","DAPI"));
-   channelVector.push_back(new ChannelTask(coreCallback_, "Channel","FITC"));
+   Channel * channel1 = new Channel("Channel","DAPI",100);
+   Channel * channel2 = new Channel("Channel","FITC",150);
+   channelVector.push_back(new ChannelTask(state, channel1)); 
+   channelVector.push_back(new ChannelTask(state, channel2));
 
    TaskVector sliceVector;
-   sliceVector.push_back(new SliceTask(coreCallback_, 0.));
-   sliceVector.push_back(new SliceTask(coreCallback_, 1.));
+   sliceVector.push_back(new SliceTask(state, 0.));
+   sliceVector.push_back(new SliceTask(state, 1.));
 
-   TaskVector multiPositionVector;
-   MultiPositionTask* posTask1 = new MultiPositionTask(core_);
-   posTask1->AddDoubleAxisPosition("XY",1,3);
-   multiPositionVector.push_back(posTask1);
-   MultiPositionTask* posTask2 = new MultiPositionTask(core_);
-   posTask2->AddDoubleAxisPosition("XY",4,5);
-   posTask2->AddOneSingleAxisPosition("Z",1);
-   multiPositionVector.push_back(posTask2);
+   TaskVector positionVector;
+   MultiAxisPosition * pos1 = new MultiAxisPosition();
+   pos1->AddDoubleAxisPosition("XY",1,3);
+   PositionTask* posTask1 = new PositionTask(state, pos1);
+   positionVector.push_back(posTask1);
 
-   TaskVector timeVector(10, sleeperTask);
+   MultiAxisPosition * pos2 = new MultiAxisPosition();
+   pos2->AddDoubleAxisPosition("XY",4,5);
+   pos2->AddOneSingleAxisPosition("Z",1);
+   PositionTask* posTask2 = new PositionTask(state, pos2);
+   positionVector.push_back(posTask2);
+
+   TimeTask * timeTask = new TimeTask(state, 1000);
+
+   TaskVector timeVector(10, timeTask);
+
+   return generateMDASequence(imageTask, timeVector, positionVector, channelVector, sliceVector);
+}
+
+TaskVector MMAcquisitionSequencer::generateMDASequence(MMRunnable * imageTask,
+   TaskVector timeVector, TaskVector positionVector, TaskVector channelVector, TaskVector sliceVector)
+{  
+   TaskVector allTasks;
+
+   allTasks.push_back(imageTask);
 
    if (acquisitionSettings_.channelsFirst)
    {
@@ -292,13 +329,14 @@ TaskVector MMAcquisitionSequencer::generateTaskVector()
 
    if (acquisitionSettings_.positionsFirst)
    {
-      allTasks = NestTasks(multiPositionVector, allTasks);
+      allTasks = NestTasks(positionVector, allTasks);
       allTasks = NestTasks(timeVector, allTasks);
    } else {
       allTasks = NestTasks(timeVector, allTasks);
-      allTasks = NestTasks(multiPositionVector, allTasks);
+      allTasks = NestTasks(positionVector, allTasks);
    }
-
+   
+   printf("allTasks.size() = %d",allTasks.size());
    return allTasks;
 }
 

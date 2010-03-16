@@ -6,18 +6,44 @@
 
 #include "MMRunnable.h"
 
-class MultiAxisPosition : std::map<std::string, double>
+class MultiAxisPosition
 {
+public:
+   std::map<std::string,double> singleAxisPositions;
+   std::map<std::string,pair<double,double>> doubleAxisPositions;
 
+   void AddOneSingleAxisPosition(string name, double pos)
+   {
+      singleAxisPositions[name] = pos;
+   }
+
+   void AddDoubleAxisPosition(string name, double posX, double posY)
+   {
+      doubleAxisPositions[name] = pair<double,double>(posX,posY);
+   }
 };
 
-struct Channel
+class Channel
 {
+
+public:
+   std::string group;
    std::string name;
    double exposure;
    double zOffset;
    bool useZStack;
    int skipFrames;
+
+   Channel(std::string _group, std::string _name, double _exposure,
+      double _zOffset = 0.0, bool _useZStack = true, int _skipFrames = 0)
+   {
+      group = _group;
+      name = _name;
+      exposure = _exposure;
+      zOffset = _zOffset;
+      useZStack = _useZStack;
+      skipFrames = _skipFrames;
+   }
 };
 
 typedef void (*voidFunc)();
@@ -83,6 +109,9 @@ private:
 public:
    MMAcquisitionSequencer(CMMCore * core, CoreCallback * coreCallback, AcquisitionSettings acquisitionSettings);
    TaskVector generateTaskVector();
+   TaskVector generateMDASequence(MMRunnable * imageTask,
+      TaskVector timeVector, TaskVector positionVector,
+      TaskVector channelVector, TaskVector sliceVector);
    void setAcquisitionSettings(AcquisitionSettings settings);
 
 };
