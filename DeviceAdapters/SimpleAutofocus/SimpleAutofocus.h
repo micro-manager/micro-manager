@@ -23,9 +23,9 @@
 #ifndef _SIMPLEAUTOFOCUS_H_
 #define _SIMPLEAUTOFOCUS_H_
 
-# include "../../MMDevice/MMDevice.h"
-# include "../../MMDevice/DeviceBase.h"
-# include "../../MMDevice/ImgBuffer.h"
+#include "../../MMDevice/MMDevice.h"
+#include "../../MMDevice/DeviceBase.h"
+#include "../../MMDevice/ImgBuffer.h"
 
 #include <string>
 //#include <iostream>
@@ -34,6 +34,9 @@
 
 // data for AF performance report table
 class SAFData;
+
+// a solver
+class Brent;
 
 
 class SimpleAutofocus : public CAutoFocusBase<SimpleAutofocus>
@@ -74,6 +77,7 @@ public:
    double Z(void);
    
    int BruteForceSearch();
+   int BrentSearch();
    
    // action interface
    // ---------------
@@ -90,6 +94,11 @@ public:
    int OnRecalculate(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnStandardDeviationOverMean(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnChannel(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSearchAlgorithm(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+   // Brent method want a point to a function to MINIMIZE
+   static double AntiSharpness_s(const double zpos);
+   static double zPos_s;
 
 private:
    double offset_; // TODO - need to know what this is.
@@ -108,7 +117,7 @@ private:
    SimpleAutofocus& operator=(SimpleAutofocus& /*rhs*/) {assert(false); return *this;};
 
    short findMedian(short* arr, const int leng );
-   double SharpnessAtCurrentSettings();
+   double SharpnessAtZ(const double zvalue);
    MM::Core* pCore_;
    double cropFactor_;
    bool busy_;
@@ -126,10 +135,12 @@ private:
    double mean_;  
    double standardDeviationOverMean_;
    SAFData* pPoints_;
+   Brent* pBrent_;
 
    std::string selectedChannelConfig_;
    std::vector<std::string> possibleChannels_;
    void RefreshChannelsToSelect(void);
+   std::string searchAlgorithm_;
    
 
 
