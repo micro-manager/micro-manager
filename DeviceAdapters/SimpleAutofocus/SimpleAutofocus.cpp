@@ -1416,7 +1416,7 @@ int SimpleAutofocus::OnSearchAlgorithm(MM::PropertyBase* pProp, MM::ActionType e
    }
    else if (eAct == MM::AfterSet)
    {
-      pProp->Get(selectedChannelConfig_);
+      pProp->Get(searchAlgorithm_);
    }
    return DEVICE_OK;
 }
