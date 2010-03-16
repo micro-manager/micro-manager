@@ -75,12 +75,13 @@ public:
 class MMAcquisitionSequencer
 {
 private:
+   CMMCore * core_;
    CoreCallback * coreCallback_;
    AcquisitionSettings acquisitionSettings_;
-   TaskVector generateSlicesAndChannelsLoop();
+   TaskVector NestTasks(TaskVector outerTasks, TaskVector innerTasks);
 
 public:
-   MMAcquisitionSequencer(CoreCallback * coreCallback);
+   MMAcquisitionSequencer(CMMCore * core, CoreCallback * coreCallback, AcquisitionSettings acquisitionSettings);
    TaskVector generateTaskVector();
    void setAcquisitionSettings(AcquisitionSettings settings);
 

@@ -328,6 +328,7 @@ int CoreCallback::SetFocusPosition(double pos)
    return DEVICE_CORE_FOCUS_STAGE_UNDEF;
 }
 
+
 int CoreCallback::MoveFocus(double velocity)
 {
     /*ACE_Guard<ACE_Mutex>*/  MMThreadGuard guard(CMMCore::deviceLock_);
