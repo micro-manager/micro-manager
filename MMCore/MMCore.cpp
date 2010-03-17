@@ -4798,10 +4798,16 @@ void CMMCore::acqAfterStack() throw (CMMError)
 {
 }
 
+MMAcquisitionEngine * engine_;
 
 void CMMCore::runAcquisitionEngineTest() throw (CMMError)
 {
    CORE_LOG("runAcquisitionEngineTest()");
-   MMAcquisitionEngine * engine = new MMAcquisitionEngine(this);
-   engine->runTest();
+   engine_ = new MMAcquisitionEngine(this);
+   engine_->runTest();
+}
+
+bool CMMCore::acquisitionIsFinished() throw (CMMError)
+{
+   return engine_->isFinished();
 }

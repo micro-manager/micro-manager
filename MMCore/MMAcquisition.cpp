@@ -230,34 +230,48 @@ public:
 
 void MMAcquisitionRunner::Start()
 {
-   Run();
+   stopRequested_ = false;
+   pauseRequested_ = false;
+   finished_ = false;
+
+   activate();
 }
 
 void MMAcquisitionRunner::Run()
 {
    for (unsigned int i=0;i<tasks_.size();++i)
    {
+      if (stopRequested_)
+         break;
       printf("Task #%d started, type %d\n", i, tasks_[i]->type);
       tasks_[i]->run();
    }
+   finished_ = true;
+}
+
+bool MMAcquisitionRunner::IsFinished()
+{
+   return finished_;
 }
 
 void MMAcquisitionRunner::Stop()
 {
+   stopRequested_ = true;
 }
 
 void MMAcquisitionRunner::Pause()
 {
+   pauseRequested_ = true;
 }
 
 void MMAcquisitionRunner::Resume()
 {
+   pauseRequested_ = false;
 }
 
 void MMAcquisitionRunner::Step()
 {
 }
-
 
 void MMAcquisitionRunner::SetTasks(TaskVector tasks)
 {
@@ -344,7 +358,7 @@ TaskVector MMAcquisitionSequencer::generateMDASequence(MMRunnable * imageTask,
       allTasks = NestTasks(positionVector, allTasks);
    }
    
-   printf("allTasks.size() = %d",allTasks.size());
+   printf("allTasks.size() = %d", allTasks.size());
    return allTasks;
 }
 
@@ -381,12 +395,14 @@ void MMAcquisitionEngine::runTest()
    acquisitionSettings.channelsFirst = true;
 
    core_->logMessage("running acquisition engine test...");
-   sequencer_ = new MMAcquisitionSequencer(core_, coreCallback_, acquisitionSettings);
-   TaskVector taskVector = sequencer_->generateTaskVector();
-   delete sequencer_;
+   MMAcquisitionSequencer sequencer(core_, coreCallback_, acquisitionSettings);
+   TaskVector taskVector = sequencer.generateTaskVector();
 
-   runner_ = new MMAcquisitionRunner();
-   runner_->SetTasks(taskVector);
-   runner_->Start();
-   delete runner_;
+   runner_.SetTasks(taskVector);
+   runner_.Start();
+}
+
+bool MMAcquisitionEngine::isFinished()
+{
+   return runner_.IsFinished();
 }

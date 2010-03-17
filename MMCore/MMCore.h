@@ -384,6 +384,7 @@ public:
 
    // >>>> TEST >>>>>>>>>>>>>>>>>>>>>>..
    void runAcquisitionEngineTest() throw (CMMError);
+   bool acquisitionIsFinished() throw (CMMError);
 
    /** @name "  "
     */

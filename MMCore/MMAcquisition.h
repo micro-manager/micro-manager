@@ -5,6 +5,9 @@
 #include "CoreCallback.h"
 
 #include "MMRunnable.h"
+//#include "DeviceThreads.h"
+
+
 
 class MultiAxisPosition
 {
@@ -82,20 +85,26 @@ struct AcquisitionSettings
 };
 
 
-class MMAcquisitionRunner
+class MMAcquisitionRunner:MMDeviceThreadBase
 {
 private:
    TaskVector tasks_;
-   void Run();
+   bool pauseRequested_;
+   bool stopRequested_;
+   bool finished_;
+
+   int svc() { Run(); return 0; }
 
 public:
+   ~MMAcquisitionRunner() {}
+
+   void Run();
    void Start();
    void Stop();
    void Pause();
    void Resume();
    void Step();
-
-
+   bool IsFinished();
 
    void SetTasks(TaskVector tasks);
 };
@@ -123,8 +132,7 @@ class MMAcquisitionEngine
 private:
    CMMCore * core_;
    CoreCallback * coreCallback_;
-   MMAcquisitionSequencer * sequencer_;
-   MMAcquisitionRunner * runner_;
+   MMAcquisitionRunner runner_;
 
 public:
    MMAcquisitionEngine(CMMCore * core) { 
@@ -132,4 +140,5 @@ public:
       coreCallback_ = new CoreCallback(core);
    }
    void runTest();
+   bool isFinished();
 };
