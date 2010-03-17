@@ -249,6 +249,19 @@ const unsigned char* CircularBuffer::GetNextImage()
    return 0;
 }
 
+/*const unsigned char* CircularBuffer::GetNextImage(Metadata& md)
+{
+   MMThreadGuard guard(g_bufferLock);
+
+   if (saveIndex_ < insertIndex_)
+   {
+      const unsigned char* pBuf = frameArray_[(saveIndex_) % frameArray_.size()].GetPixels(0, 0);
+      saveIndex_++;
+      return pBuf;
+   }
+   return 0;
+}*/
+
 const ImgBuffer* CircularBuffer::GetNextImageBuffer(unsigned channel, unsigned slice)
 {
    /*ACE_Guard<ACE_Mutex>*/  MMThreadGuard guard(g_bufferLock);

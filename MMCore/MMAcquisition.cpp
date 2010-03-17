@@ -1,4 +1,5 @@
 #include "MMAcquisition.h"
+#include "../MMDevice/ImageMetadata.h"
 
 ////////////////////////
 // MMAcquisitionState //
@@ -8,6 +9,7 @@ class MMAcquisitionState {
 public:
    CMMCore * core;
    CoreCallback * coreCallback;
+   AcquisitionSettings acquisitionSettings;
 
    int frameCount;
    double zReference;
@@ -16,6 +18,8 @@ public:
    Channel currentChannel;
    double currentSlice;
    MultiAxisPosition currentPosition;
+
+   Metadata metadata;
 
    MMAcquisitionState(CMMCore * _core, CoreCallback * _coreCallback)
    {
@@ -38,13 +42,15 @@ class TimeTask:public MMRunnable
 private:
    MMAcquisitionState * state_;
    MM::MMTime interval_;
+   int frameIndex_;
    
 public:
-   TimeTask(MMAcquisitionState * state, double msBetweenFrames)
+   TimeTask(MMAcquisitionState * state, int frameIndex)
    {
       type = TIME;
       state_ = state;
-      interval_ = 1000 * msBetweenFrames;
+      frameIndex_ = frameIndex;
+      interval_ = MM::MMTime(1000*state_->acquisitionSettings.timeSeries[frameIndex]);
    }
 
    void run() {
@@ -58,7 +64,7 @@ public:
       }
 
       state_->lastWakeTime = state_->coreCallback->GetCurrentMMTime();
-
+      state_->metadata.frameIndex = frameIndex_;
    }
 
 };
@@ -75,13 +81,15 @@ class PositionTask:public MMRunnable
 private:
    MMAcquisitionState * state_;
    MultiAxisPosition * pos_;
+   int positionIndex_;
 
 public:
-   PositionTask(MMAcquisitionState * state, MultiAxisPosition * pos)
+   PositionTask(MMAcquisitionState * state, int positionIndex)
    {
       type = POSITION;
       state_ = state;
-      pos_ = pos;
+      pos_ = &(state_->acquisitionSettings.positionList[positionIndex]);
+      positionIndex_ = positionIndex;
    }
 
    void run() {
@@ -102,6 +110,7 @@ public:
       printf("set position\n");
 
       state_->currentPosition = *pos_;
+      state_->metadata.positionIndex = positionIndex_;
    }
 
 };
@@ -118,20 +127,22 @@ class SliceTask:public MMRunnable
 private:
    MMAcquisitionState * state_;
    double pos_;
+   int sliceIndex_;
 
 public:
-   SliceTask(MMAcquisitionState * state, double pos)
+   SliceTask(MMAcquisitionState * state, int sliceIndex)
    {
       type = SLICE;
       state_ = state;
-      pos_ = pos;
-
+      pos_ = state_->acquisitionSettings.zStack[sliceIndex];
+      sliceIndex_ = sliceIndex;
    }
 
    void run() {
       state_->coreCallback->SetFocusPosition(pos_);
       printf("set slice\n");
       state_->currentSlice = pos_;
+      state_->metadata.sliceIndex = sliceIndex_;
    }
 };
 
@@ -144,13 +155,14 @@ class ChannelTask:public MMRunnable
 private:
    MMAcquisitionState* state_;
    Channel * channel_;
-
+   int channelIndex_;
 public:
-   ChannelTask(MMAcquisitionState * state, Channel * channel)
+   ChannelTask(MMAcquisitionState * state, int channelIndex)
    {
       type = CHANNEL;
       state_ = state;
-      channel_ = channel;
+      channel_ = &(state_->acquisitionSettings.channelList[channelIndex]);
+      channelIndex_ = channelIndex;
    }
 
    void run() {
@@ -160,6 +172,7 @@ public:
          state_->coreCallback->SetConfig(channel_->group.c_str(), channel_->name.c_str());
          printf("set channel\n");
          state_->currentChannel = * channel_;
+         state_->metadata.channelIndex = channelIndex_;
       }
    }
 };
@@ -300,35 +313,52 @@ TaskVector MMAcquisitionSequencer::generateTaskVector()
    //TaskVector timeVector;
 
    MMAcquisitionState * state = new MMAcquisitionState(core_, coreCallback_);
-
+   AcquisitionSettings acquisitionSettings;
 
    ImageTask * imageTask = new ImageTask(state);
+   
+   Channel channel1("Channel","DAPI",100);
+   Channel channel2("Channel","FITC",200);
+
+   acquisitionSettings.channelList.push_back(channel1); 
+   acquisitionSettings.channelList.push_back(channel2); 
+
+   acquisitionSettings.zStack.push_back(0.);
+   acquisitionSettings.zStack.push_back(1.);
+
+   MultiAxisPosition pos1;
+   pos1.AddDoubleAxisPosition("XY",1,3);
+   MultiAxisPosition pos2;
+   pos2.AddDoubleAxisPosition("XY",4,5);
+   pos2.AddOneSingleAxisPosition("Z",1);
+   acquisitionSettings.positionList.push_back(pos1);
+   acquisitionSettings.positionList.push_back(pos2);
+
+   for(unsigned i=0;i<10;++i)
+      acquisitionSettings.timeSeries.push_back(6000.);
+
+   // Constructing the TaskVectors:
+
+   
+   state->acquisitionSettings = acquisitionSettings;
 
    TaskVector channelVector;
-   Channel * channel1 = new Channel("Channel","DAPI",100);
-   Channel * channel2 = new Channel("Channel","FITC",150);
-   channelVector.push_back(new ChannelTask(state, channel1)); 
-   channelVector.push_back(new ChannelTask(state, channel2));
+   for(unsigned i=0;i<acquisitionSettings.channelList.size();++i)
+      channelVector.push_back(new ChannelTask(state, i));
 
    TaskVector sliceVector;
-   sliceVector.push_back(new SliceTask(state, 0.));
-   sliceVector.push_back(new SliceTask(state, 1.));
+   for(unsigned i=0;i<acquisitionSettings.zStack.size();++i)
+      sliceVector.push_back(new SliceTask(state, i));
 
    TaskVector positionVector;
-   MultiAxisPosition * pos1 = new MultiAxisPosition();
-   pos1->AddDoubleAxisPosition("XY",1,3);
-   PositionTask* posTask1 = new PositionTask(state, pos1);
-   positionVector.push_back(posTask1);
+   for(unsigned i=0;i<acquisitionSettings.positionList.size();++i)
+      positionVector.push_back(new PositionTask(state, i));
 
-   MultiAxisPosition * pos2 = new MultiAxisPosition();
-   pos2->AddDoubleAxisPosition("XY",4,5);
-   pos2->AddOneSingleAxisPosition("Z",1);
-   PositionTask* posTask2 = new PositionTask(state, pos2);
-   positionVector.push_back(posTask2);
+   TaskVector timeVector;
+   for(unsigned i=0;i<acquisitionSettings.timeSeries.size();++i)
+      timeVector.push_back(new TimeTask(state, i));
 
-   TimeTask * timeTask = new TimeTask(state, 6000);
 
-   TaskVector timeVector(10, timeTask);
 
    return generateMDASequence(imageTask, timeVector, positionVector, channelVector, sliceVector);
 }

@@ -428,6 +428,8 @@ public:
       return os.str();
    }
 
+   int sliceIndex, positionIndex, channelIndex, frameIndex;
+
 private:
    MetadataTag* FindTag(const char* key) const
    {
