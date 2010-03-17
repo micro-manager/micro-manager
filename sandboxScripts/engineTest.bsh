@@ -1,0 +1,60 @@
+import org.micromanager.image5d.*;
+import mmcorej.Metadata;
+
+i5dVector = new ArrayList();
+
+addImage5D(String title) {
+	i5d = new Image5D(title, 0, 512, 512, 1, 1, 1, true);
+	i5dVector.add(i5d);
+	i5d.show();
+}
+
+updateImage5Ds(Metadata m) {
+	if (m.positionIndex == i5dVector.size())
+		addImage5D("MDA pos "+m.positionIndex);
+	i5d = i5dVector.get(m.positionIndex);
+	if (m.channelIndex == i5d.getNChannels())
+		i5d.expandDimension(2, i5d.getNChannels() + 1, true); 
+	if (m.sliceIndex == i5d.getNSlices())
+		i5d.expandDimension(3, i5d.getNSlices() + 1, true);
+	if (m.frameIndex == i5d.getNFrames())
+		i5d.expandDimension(4, i5d.getNFrames() + 1, true);
+}
+
+displayImage(Object img, Metadata m) {
+	updateImage5Ds(m);
+	i5d = i5dVector.get(m.positionIndex);
+	i5d.setPixels(img, 1+md.channelIndex, 1+md.sliceIndex, 1+md.frameIndex);
+	if (i5d.getCurrentPosition()[4] == i5d.getNFrames()-2)
+		i5d.setCurrentPosition(4, i5d.getNFrames()-1);
+	i5d.updateImage();
+}
+
+update();
+
+mmc.setCircularBufferMemoryFootprint(1000);
+t1 = System.currentTimeMillis();
+mmc.runAcquisitionEngineTest();
+md = new Metadata();
+
+mmc.logMessage("done.");
+imgCount = 0;
+
+do {
+
+	while (mmc.getRemainingImageCount() > 0) {
+	   imgCount++;
+		img = mmc.popNextImageMD(0,0,md);
+		displayImage(img,md);
+		print("time=" + md.frameIndex + 
+          ", position=" + md.positionIndex +
+          ", channel=" + md.channelIndex + 
+          ", slice=" + md.sliceIndex);
+	}
+	
+	mmc.sleep(30);
+} while (!mmc.acquisitionIsFinished() || mmc.getRemainingImageCount() > 0);
+
+t2 = System.currentTimeMillis();
+print(imgCount + " images in " + (t2 - t1) + " ms.");
+
