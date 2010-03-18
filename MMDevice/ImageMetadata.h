@@ -253,7 +253,7 @@ class Metadata
 {
 public:
 
-   Metadata() {}
+   Metadata():sliceIndex(0),frameIndex(0),channelIndex(0),positionIndex(0) {}
 
    ~Metadata()
    {
@@ -312,6 +312,11 @@ public:
       {
          SetTag(*it->second);
       }
+
+      sliceIndex = rhs.sliceIndex;
+      positionIndex = rhs.positionIndex;
+      frameIndex = rhs.frameIndex;
+      channelIndex = rhs.channelIndex;
 
       return *this;
    }

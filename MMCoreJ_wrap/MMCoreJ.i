@@ -51,6 +51,7 @@
 // long GetImageBufferSize()
 //
 
+
 %typemap(jni) unsigned char*        "jbyteArray"
 %typemap(jtype) unsigned char*      "byte[]"
 %typemap(jstype) unsigned char*     "byte[]"

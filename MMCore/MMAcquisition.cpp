@@ -104,7 +104,7 @@ public:
 
       for(it2 = pos_->doubleAxisPositions.begin(); it2 != pos_->doubleAxisPositions.end(); ++it2)
       {
-         pair<double,double> xy = it2->second;
+         point2D xy = it2->second;
          state_->core->setXYPosition(it2->first.c_str(),xy.first,xy.second);
       } 
       printf("set position\n");
@@ -228,7 +228,7 @@ public:
       const char * img = state_->coreCallback->GetImage();
       int w,h,d;
       state_->coreCallback->GetImageDimensions(w, h, d);
-      state_->coreCallback->InsertImage(NULL, (const unsigned char *) img, w, h, d);
+      state_->coreCallback->InsertImage(NULL, (const unsigned char *) img, w, h, d, &(state_->metadata));
       printf("Grabbed image.\n");
    }
 };
@@ -319,12 +319,14 @@ TaskVector MMAcquisitionSequencer::generateTaskVector()
    
    Channel channel1("Channel","DAPI",100);
    Channel channel2("Channel","FITC",200);
+   Channel channel3("Channel","Cy3",150);
 
    acquisitionSettings.channelList.push_back(channel1); 
    acquisitionSettings.channelList.push_back(channel2); 
 
    acquisitionSettings.zStack.push_back(0.);
    acquisitionSettings.zStack.push_back(1.);
+   acquisitionSettings.zStack.push_back(2.);
 
    MultiAxisPosition pos1;
    pos1.AddDoubleAxisPosition("XY",1,3);
@@ -334,7 +336,7 @@ TaskVector MMAcquisitionSequencer::generateTaskVector()
    acquisitionSettings.positionList.push_back(pos1);
    acquisitionSettings.positionList.push_back(pos2);
 
-   for(unsigned i=0;i<10;++i)
+   for(unsigned i=0;i<5;++i)
       acquisitionSettings.timeSeries.push_back(6000.);
 
    // Constructing the TaskVectors:
