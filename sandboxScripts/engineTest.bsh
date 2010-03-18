@@ -24,7 +24,7 @@ updateImage5Ds(Metadata m) {
 displayImage(Object img, Metadata m) {
 	updateImage5Ds(m);
 	i5d = i5dVector.get(m.positionIndex);
-	i5d.setPixels(img, 1+md.channelIndex, 1+md.sliceIndex, 1+md.frameIndex);
+	i5d.setPixels(img, 1+m.channelIndex, 1+m.sliceIndex, 1+m.frameIndex);
 	if (i5d.getCurrentPosition()[4] == i5d.getNFrames()-2)
 		i5d.setCurrentPosition(4, i5d.getNFrames()-1);
 	i5d.updateImage();
