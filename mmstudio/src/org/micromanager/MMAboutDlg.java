@@ -76,7 +76,7 @@ public class MMAboutDlg extends JDialog {
 
       final JLabel micromanageLabel = new JLabel();
       micromanageLabel.setFont(new Font("", Font.BOLD, 16));
-      micromanageLabel.setText("Micro-Manager 1.3");
+      micromanageLabel.setText("Micro-Manager 1.4");
       micromanageLabel.setBounds(44, 11, 176, 23);
       getContentPane().add(micromanageLabel);
 
