@@ -93,7 +93,7 @@ Source: micro-manager\mmgr_dal_QCam.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_ScionCam.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Sensicam.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_SerialManager.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_SimpleAF.dll; DestDir: {app}; Flags: ignoreversion
+Source: micro-manager\mmgr_dal_SimpleAutofocus.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_SpectralLMM5.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_SpotCamera.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_SutterLambda.dll; DestDir: {app}; Flags: ignoreversion

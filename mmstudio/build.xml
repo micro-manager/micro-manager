@@ -161,7 +161,7 @@
 		<copy file="${BinRoot}/mmgr_dal_ScionCam.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_Sensicam.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_SerialManager.dll" todir="${InstallRoot}" />
-		<copy file="${BinRoot}/mmgr_dal_SimpleAF.dll" todir="${InstallRoot}" />
+		<copy file="${BinRoot}/mmgr_dal_SimpleAutofocus.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_SpectralLMM5.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_SpotCamera.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_SutterLambda.dll" todir="${InstallRoot}" />

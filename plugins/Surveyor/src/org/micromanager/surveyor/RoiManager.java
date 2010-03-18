@@ -185,19 +185,37 @@ public class RoiManager extends ij.plugin.frame.RoiManager{
 	
 	void addRoiTrajectoryToPositionList(ArrayList<Point> acqTraj, int roiNumber, PositionList posList) {
 		String xystage = mmc.getXYStageDevice();
-		String zstage = mmc.getFocusDevice();
+		//String zstage = mmc.getFocusDevice();
+      ArrayList<Point2D.Double> subPositions = new ArrayList<Point2D.Double>();
 
-		int tileCount = 0;
-		for (Point acqPt:acqTraj) {
-			tileCount++;
-            Point mapPt = surveyorCoords_.offScreenClickToMap(acqPt);
+
+      int left = Integer.MAX_VALUE;
+      int right = Integer.MIN_VALUE;
+      int top = Integer.MAX_VALUE;
+      int bottom = Integer.MIN_VALUE;
+      for (Point acqPt:acqTraj) {
+         Point mapPt = surveyorCoords_.offScreenClickToMap(acqPt);
 			Point2D.Double stagePos = controller_.mapToStage(mapPt);
             //System.out.println("acqPt: "+acqPt + "computed stagePos: "+stagePos);
-			MultiStagePosition msp = new MultiStagePosition(xystage, stagePos.x, stagePos.y, zstage, 0);
-			msp.setLabel("roi"+roiNumber+"."+tileCount);
-			posList.addPosition(msp);
+         subPositions.add(stagePos);
+         left = Math.min(mapPt.x, left);
+         right = Math.max(mapPt.x, right);
+         top = Math.min(mapPt.y, top);
+         bottom = Math.max(mapPt.y, bottom);
 		}
-		try {
+
+      Dimension tileDims = controller_.getTileDimensions();
+      Point2D.Double centerStagePos = controller_.mapToStage(new Point((left + right)/2, (top + bottom) /2));
+      Rectangle bounds = new Rectangle(left, top, right - left + tileDims.width, bottom - top + tileDims.height);
+
+      MultiStagePositionMosaic msp = new MultiStagePositionMosaic(xystage, centerStagePos.x, centerStagePos.y);
+      msp.subPositions = subPositions;
+      msp.setLabel("roi"+roiNumber);
+      msp.bounds = bounds;
+      
+      posList.addPosition(msp);
+
+      try {
 			app_.setPositionList(posList);
 		} catch (MMScriptException e) {
 			ReportingUtils.logError(e);

@@ -87,11 +87,6 @@ import org.micromanager.utils.SliceMode;
  */
 public class MMAcquisitionEngineMT implements AcquisitionEngine {
 
-
-
-
-
-
    // Class to hold some image metadata.  Start to refactor out some parts of Image5D
    private class ImageData {
 
@@ -102,6 +97,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
       //public double pixelAspect_;
    }
    // persistent properties (app settings) 
+
    private Preferences prefs_;
    protected Image5D img5d_[];
    protected Image5DWindow i5dWin_[];
@@ -110,11 +106,11 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
    private String rootName_;
    private int xWindowPos = 100;
    private int yWindowPos = 100;
-   private boolean singleFrame_ = false;
+   protected boolean singleFrame_ = false;
    private boolean singleWindow_ = false;
    private Timer acqTimer_;
    private AcqFrameTask acqTask_;
-   private AcquisitionData acqData_[];
+   protected AcquisitionData acqData_[];
    private MultiFieldThread multiFieldThread_;
    private double pixelSize_um_;
    private double pixelAspect_;
@@ -137,7 +133,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
    protected String zStage_;
    protected ArrayList<ChannelSpec> channels_;
    protected ArrayList<ChannelSpec> requestedChannels_;
-   double[] sliceDeltaZ_;
+   protected double[] sliceDeltaZ_;
    double bottomZPos_;
    double topZPos_;
    double deltaZ_;
@@ -153,7 +149,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
    // physical dimensions which should be uniform for the entire acquisition
    protected long imgWidth_ = 0;
    protected long imgHeight_ = 0;
-   private long imgDepth_ = 0;
+   protected long imgDepth_ = 0;
    protected boolean useMultiplePositions_;
    protected int posMode_ = PositionMode.TIME_LAPSE;
    int sliceMode_ = SliceMode.CHANNELS_FIRST;
@@ -171,7 +167,6 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
    private boolean shutterIsOpen_ = false;
    private String lastImageFilePath_;
    private boolean abortRequest_;
-
 
    /**
     * Timer task routine triggered at each frame. 
@@ -1606,7 +1601,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
       return useMultiplePositions_;
    }
 
-   private void wipeImage5D(Image5D image5D) {
+   protected void wipeImage5D(Image5D image5D) {
 
       Object emptyPixels = image5D.createEmptyPixels();
       int nc = image5D.getNChannels();
@@ -1664,6 +1659,14 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
       return strGroups.toArray(new String[0]);
    }
 
+   protected long getImageWidth() {
+      return core_.getImageWidth();
+   }
+
+   protected long getImageHeight() {
+      return core_.getImageHeight();
+   }
+
    /**
     * Creates and configures the Image5d and associated window based
     * on the acquisition protocol.
@@ -1671,8 +1674,8 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
     * @throws Exception
     */
    protected void setupImage5d(int posIndex) throws MMException {
-      imgWidth_ = core_.getImageWidth();
-      imgHeight_ = core_.getImageHeight();
+      imgWidth_ = getImageWidth();
+      imgHeight_ = getImageHeight();
       imgDepth_ = core_.getBytesPerPixel();
       pixelSize_um_ = core_.getPixelSizeUm();
       pixelAspect_ = 1.0; // TODO: obtain from core
@@ -1725,7 +1728,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
       for (int i = 0; i < n; i++) {
          int actualFrames = singleFrame_ ? 1 : numFrames_;
          boolean newWindow = false;
-         if (!(useMultiplePositions_ && posMode_ == PositionMode.MULTI_FIELD) || posIndex == 0) {
+         if (!(useMultiplePositions_ && posMode_ == PositionMode.MULTI_FIELD /* Time first */) || posIndex == 0 || img5d_[i].getWidth() != getImageWidth() || img5d_[i].getHeight() != getImageHeight()) {
             if (posMode_ == PositionMode.MULTI_FIELD) {
                if (img5d_[i] == null || img5d_[i].getType() != type || img5d_[i].getWidth() != imgWidth_ || img5d_[i].getHeight() != imgHeight_
                        || img5d_[i].getNSlices() != numSlices || img5d_[i].getNFrames() != actualFrames || img5d_[i].getNChannels() != channels_.size()
@@ -1744,8 +1747,8 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
          }
 
          imgData_[i] = new ImageData();
-         imgData_[i].imgWidth_ = core_.getImageWidth();
-         imgData_[i].imgHeight_ = core_.getImageHeight();
+         imgData_[i].imgWidth_ = getImageWidth();
+         imgData_[i].imgHeight_ = getImageHeight();
          imgData_[i].imgDepth_ = core_.getBytesPerPixel();
          //imgData_[i].pixelSize_um_ = core_.getPixelSizeUm();
          //imgData_[i].pixelAspect_ = 1.0;
@@ -1929,7 +1932,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
     * @param numSlices - Total number of (z) slices
     * @param posIndexNormalized - ???
     */
-   private void executeProtocolBody(ChannelSpec cs, double z, int sliceIdx,
+   protected void executeProtocolBody(ChannelSpec cs, double z, int sliceIdx,
            int channelIdx, int posIdx, int numSlices, int posIndexNormalized) throws MMException, IOException, JSONException, MMAcqDataException {
       shutterIsOpen_ = false;
       try {
@@ -2009,8 +2012,8 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
          throw new MMException(e.getMessage());
       }
 
-      long width = core_.getImageWidth();
-      long height = core_.getImageHeight();
+      long width = getImageWidth();
+      long height = getImageHeight();
       long depth = core_.getBytesPerPixel();
 
       // processing for the first image in the entire sequence
@@ -2235,7 +2238,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
       }
    }
 
-   private Object snapAndRetrieve() throws Exception {
+   protected Object snapAndRetrieve() throws Exception {
       Object img;
       // snap and retrieve pixels
       core_.snapImage();

@@ -109,6 +109,14 @@ else
    AC_MSG_RESULT([not found])
 fi
 
+# Video4linux
+AC_MSG_CHECKING(for Video4linux2)
+AM_CONDITIONAL([BUILD_V4L2],[test -f "/usr/include/libv4l2.h"])
+if test -f "/usr/include/libv4l2.h"; then
+   AC_MSG_RESULT([found])
+else
+   AC_MSG_RESULT([not found])
+fi
 
 # ITC on linux 
 AC_MSG_CHECKING(for ITC)
@@ -208,5 +216,5 @@ AC_SUBST(MMPREFIX)
 AC_HEADER_STDC
 AC_CHECK_FUNCS([memset])
 
-AC_CONFIG_FILES(Makefile ITC18/Makefile AAAOTF/Makefile AOTF/Makefile Andor/Makefile Arduino/Makefile ASIFW1000/Makefile ASIStage/Makefile ASIWPTR/Makefile Cobolt/Makefile CoherentCube/Makefile Corvus/Makefile DTOpenLayer/Makefile DemoCamera/Makefile DemoRGBCamera/Makefile DemoStreamingCamera/Makefile SerialManager/Makefile SerialManagerUNIX/Makefile SimpleAF/Makefile USBManager/Makefile LeicaDMI/Makefile LeicaDMR/Makefile Ludl/Makefile LudlLow/Makefile ZeissCAN/Makefile ZeissCAN29/Makefile Vincent/Makefile Conix/Makefile K8055/Makefile K8061/Makefile NIDAQ/Makefile Hamamatsu/Makefile PVCAM/Makefile Neos/Makefile Nikon/Makefile NikonTE2000/Makefile ParallelPort/Makefile Pecon/Makefile PrecisExcite/Makefile ScionCam/Makefile Sensicam/Makefile SpectralLMM5/Makefile Spot/Makefile SutterLambda/Makefile ThorlabsDCxxxx/Makefile ThorlabsFilterWheel/Makefile ThorlabsSC10/Makefile Prior/Makefile PI/Makefile PI_GCS/Makefile Utilities/Makefile dc1394/Makefile QCam/Makefile Yokogawa/Makefile)
+AC_CONFIG_FILES(Makefile ITC18/Makefile AAAOTF/Makefile AOTF/Makefile Andor/Makefile Arduino/Makefile ASIFW1000/Makefile ASIStage/Makefile ASIWPTR/Makefile Cobolt/Makefile CoherentCube/Makefile Conix/Makefile Corvus/Makefile DTOpenLayer/Makefile DemoCamera/Makefile DemoRGBCamera/Makefile DemoStreamingCamera/Makefile SerialManager/Makefile SerialManagerUNIX/Makefile SimpleAutofocus/Makefile USBManager/Makefile LeicaDMI/Makefile LeicaDMR/Makefile Ludl/Makefile LudlLow/Makefile ZeissCAN/Makefile ZeissCAN29/Makefile Video4Linux/Makefile Vincent/Makefile K8055/Makefile K8061/Makefile NIDAQ/Makefile Hamamatsu/Makefile PVCAM/Makefile Neos/Makefile Nikon/Makefile NikonTE2000/Makefile ParallelPort/Makefile Pecon/Makefile PrecisExcite/Makefile ScionCam/Makefile Sensicam/Makefile SpectralLMM5/Makefile Spot/Makefile SutterLambda/Makefile ThorlabsDCxxxx/Makefile ThorlabsFilterWheel/Makefile ThorlabsSC10/Makefile Prior/Makefile PI/Makefile PI_GCS/Makefile Utilities/Makefile dc1394/Makefile QCam/Makefile Yokogawa/Makefile)
 AC_OUTPUT

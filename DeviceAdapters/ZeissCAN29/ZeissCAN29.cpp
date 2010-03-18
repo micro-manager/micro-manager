@@ -144,7 +144,8 @@ const char* g_COperationMode = "Operation Mode";
 const char* g_CExternalShutter = "Shutter";
 const char* g_focusMethod = "Focus Method";
 const char* g_focusThisPosition = "Measure";
-const char* g_focusLastPosition = "Apply";
+const char* g_focusLastPosition = "Last Position";
+const char* g_focusApplyPosition = "Apply";
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -1906,6 +1907,7 @@ int DefiniteFocus::Initialize()
       return ret;
    AddAllowedValue(g_focusMethod, g_focusThisPosition);
    AddAllowedValue(g_focusMethod, g_focusLastPosition);
+   AddAllowedValue(g_focusMethod, g_focusApplyPosition);
 
    return DEVICE_OK;
 }
@@ -2230,6 +2232,8 @@ int DefiniteFocus::FullFocus()
    LogMessage("DOING FULL FOCUS NOW!!!");
    if (focusMethod_ == g_focusThisPosition)
       StabilizeThisPosition(0);
+   else if (focusMethod_ == g_focusLastPosition)
+      StabilizeLastPosition();
    else {
       if (currentOffset_.length_ != 0) {
          StabilizeThisPosition(currentOffset_);
@@ -2238,7 +2242,6 @@ int DefiniteFocus::FullFocus()
             return ret;
          currentOffset_.length_ = 0;
       } 
-      //  StabilizeLastPosition();
    }
    return WaitForBusy();
 }

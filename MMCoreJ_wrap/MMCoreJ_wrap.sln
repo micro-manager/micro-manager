@@ -185,6 +185,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Marzhauser", "..\DeviceAdap
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Corvus", "..\DeviceAdapters\Corvus\Corvus.vcproj", "{2B522528-9660-4B78-8E2A-BC296C9BC0C0}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SimpleAutofocus", "..\DeviceAdapters\SimpleAutofocus\SimpleAutoFocus.vcproj", "{AF83E7A0-34A5-4304-8D88-148D933EAFAF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -443,6 +445,10 @@ Global
 		{2B522528-9660-4B78-8E2A-BC296C9BC0C0}.Debug|Win32.Build.0 = Debug|Win32
 		{2B522528-9660-4B78-8E2A-BC296C9BC0C0}.Release|Win32.ActiveCfg = Release|Win32
 		{2B522528-9660-4B78-8E2A-BC296C9BC0C0}.Release|Win32.Build.0 = Release|Win32
+		{AF83E7A0-34A5-4304-8D88-148D933EAFAF}.Debug|Win32.ActiveCfg = Debug|Win32
+		{AF83E7A0-34A5-4304-8D88-148D933EAFAF}.Debug|Win32.Build.0 = Debug|Win32
+		{AF83E7A0-34A5-4304-8D88-148D933EAFAF}.Release|Win32.ActiveCfg = Release|Win32
+		{AF83E7A0-34A5-4304-8D88-148D933EAFAF}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

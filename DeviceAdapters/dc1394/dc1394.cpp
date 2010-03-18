@@ -451,14 +451,14 @@ int Cdc1394::OnFeature(MM::PropertyBase* pProp, MM::ActionType eAct, uint32_t &v
       else if ( (tmp >= valueMin) && (tmp <= valueMax) )
          value = (uint32_t) tmp;
       err = dc1394_feature_set_value(camera, feature, value);
-      logMsg_.clear();
+      logMsg_.str("");
       logMsg_ << "Settings feature " << feature << " to " << value <<  " result: " << err;
       LogMessage(logMsg_.str().c_str(), true);
    }
    else if (eAct == MM::BeforeGet)
    {
       err = dc1394_feature_get_value(camera, feature, &value);
-      logMsg_.clear();
+      logMsg_.str("");
       logMsg_ << "Getting feature " << feature << ".  It is now " << value << " err: " << err;
       LogMessage (logMsg_.str().c_str(), true);
       tmp = (long)  value;
@@ -527,12 +527,12 @@ int Cdc1394::Initialize()
    CPropertyAction *pAct = new CPropertyAction (this, &Cdc1394::OnMode);
    mode = modes.modes[0];
    
-   logMsg_.clear();
+   logMsg_.str("");
    logMsg_ << "Camera vendor/model is: " << camera->vendor << "/" << camera->model;
    LogMessage (logMsg_.str().c_str(), true);
 
-   logMsg_.clear();
-   logMsg_ << "Camera vendor id is: " << camera->vendor_id << ", " <<camera->model_id;
+   logMsg_.str("");
+   logMsg_ << "Camera vendor/model id is: " << camera->vendor_id << "/" <<camera->model_id;
    LogMessage (logMsg_.str().c_str(), true);
 
    // TODO once we can set the interlacing up externally
@@ -544,7 +544,7 @@ int Cdc1394::Initialize()
 			 !strncmp("Guppy F038",camera->model,10) ||
 			 !strncmp("Guppy F044",camera->model,10) ) {
 	   avtInterlaced=true;
-      logMsg_.clear();
+      logMsg_.str("");
 	   logMsg_ << "Camera is Guppy interlaced series, setting interlace = true";
 	   LogMessage (logMsg_.str().c_str(), true);
    }
@@ -553,7 +553,6 @@ int Cdc1394::Initialize()
    nRet = CreateProperty(g_Keyword_Modes, videoModeMap[mode].c_str(), MM::String, false, pAct);
    printf ("nRet: %d\n", nRet);
    assert(nRet == DEVICE_OK);
-   printf ("Still here\n");
    vector<string> modeValues;
    for (unsigned int i=0; i<modes.num; i++) {
       string tmp = videoModeMap[ modes.modes[i] ];
@@ -591,7 +590,7 @@ int Cdc1394::Initialize()
    }
 
    
-   // exposure, not implemented (yet)
+   // exposure
    pAct = new CPropertyAction (this, &Cdc1394::OnExposure);
    nRet = CreateProperty(MM::g_Keyword_Exposure, "10.0", MM::Float, false, pAct);
    assert(nRet == DEVICE_OK);
@@ -650,11 +649,11 @@ int Cdc1394::Initialize()
 
              // TODO: Check that this feature is read-out capable
              err = dc1394_feature_get_value(camera, DC1394_FEATURE_BRIGHTNESS, &brightness);
-             logMsg_.clear();
+             logMsg_.str("");
              logMsg_ << "Brightness " <<  brightness;
              LogMessage (logMsg_.str().c_str(), false);
              err = dc1394_feature_get_boundaries(camera, DC1394_FEATURE_BRIGHTNESS, &brightnessMin, &brightnessMax);
-             logMsg_.clear();
+             logMsg_.str("");
              logMsg_ << "Brightness Min: " << brightnessMin  << " Max: " << brightnessMax;
              LogMessage (logMsg_.str().c_str(), false);
 
@@ -673,11 +672,11 @@ int Cdc1394::Initialize()
              SetManual(DC1394_FEATURE_GAIN);
 
              err = dc1394_feature_get_value(camera, DC1394_FEATURE_GAIN, &gain);
-             logMsg_.clear();
+             logMsg_.str("");
              logMsg_ << "Gain: "<<  gain;
              LogMessage (logMsg_.str().c_str(), false);
              err = dc1394_feature_get_boundaries(camera, DC1394_FEATURE_GAIN, &gainMin, &gainMax);
-             logMsg_.clear();
+             logMsg_.str("");
              logMsg_ << "Gain Min: " << gainMin << " Max: " << gainMax;
              LogMessage (logMsg_.str().c_str(), false);
              char tmp[10];
@@ -696,11 +695,11 @@ int Cdc1394::Initialize()
 
              // TODO: when shutter has absolute control, couple it to exposure time
              err = dc1394_feature_get_value(camera, DC1394_FEATURE_SHUTTER, &shutter);
-             logMsg_.clear();
+             logMsg_.str("");
              logMsg_ << "Shutter: " << shutter;
              LogMessage (logMsg_.str().c_str(), false);
              err = dc1394_feature_get_boundaries(camera, DC1394_FEATURE_SHUTTER, &shutterMin, &shutterMax);
-             logMsg_.clear();
+             logMsg_.str("");
              logMsg_ << "Shutter Min: " << shutterMin << " Max: " << shutterMax;
              LogMessage (logMsg_.str().c_str(), false);
              char tmp[10];
@@ -715,10 +714,12 @@ int Cdc1394::Initialize()
              dc1394bool_t absolute;
              absoluteShutterControl=false;
              err = dc1394_feature_has_absolute_control(camera, DC1394_FEATURE_SHUTTER, &absolute);
-             if(absolute==DC1394_TRUE) absoluteShutterControl=true;
+             if(absolute==DC1394_TRUE) {
+                absoluteShutterControl=true;
+             }
 
              if(!absoluteShutterControl && camera->vendor_id==AVT_VENDOR_ID){
-                logMsg_.clear();
+                logMsg_.str("");
                 logMsg_ << "Checking AVT absolute shutter\n";
                 LogMessage (logMsg_.str().c_str(), false);
                 // for AVT cameras, check if we have access to the extended shutter mode
@@ -726,9 +727,12 @@ int Cdc1394::Initialize()
                 err=dc1394_avt_get_extented_shutter(camera,&timebase_id);
                 if(err==DC1394_SUCCESS) absoluteShutterControl=true;
              }
+             logMsg_.str("");
              if(absoluteShutterControl){
-                logMsg_.clear();
-                logMsg_ << "Absolute shutter\n";
+                logMsg_ << "Absolute shutter";
+                LogMessage (logMsg_.str().c_str(), false);                
+             } else { 
+                logMsg_ << " No absolute shutter";
                 LogMessage (logMsg_.str().c_str(), false);                
              }
           }
@@ -1093,7 +1097,7 @@ int Cdc1394::SetROI(unsigned uX, unsigned uY, unsigned uXSize, unsigned uYSize)
 			 LogMessage ("SetROI: Failed to stop capture\n");
 		 StopTransmission();
 		
-       logMsg_.clear();
+       logMsg_.str("");
 		 logMsg_ << "SetROI: Aout to set to  " << uX << "," << uY << "," << uXSize << "," << uYSize ;
 		LogMessage (logMsg_.str().c_str(), true);
 		
@@ -1101,7 +1105,7 @@ int Cdc1394::SetROI(unsigned uX, unsigned uY, unsigned uXSize, unsigned uYSize)
 					(dc1394color_coding_t) DC1394_COLOR_CODING_MONO8 /*color_coding*/,
 					(int) DC1394_USE_MAX_AVAIL /*bytes_per_packet*/, uX, uY, uXSize, uYSize);
 		if (errval!=DC1394_SUCCESS) {
-         logMsg_.clear();
+         logMsg_.str("");
 			logMsg_ << "SetROI: libdc1394 error message " <<  errval;
 			LogMessage (logMsg_.str().c_str(), true);
 			return ERR_SET_F7_ROI_FAILED;
@@ -1152,11 +1156,11 @@ int Cdc1394::ResizeImageBuffer()
    err = dc1394_video_set_mode(camera,mode);
    if (err != DC1394_SUCCESS)
       return ERR_SET_MODE_FAILED;
-   logMsg_.clear();
+   logMsg_.str("");
    logMsg_ << "Mode set to " <<  mode;
    LogMessage (logMsg_.str().c_str(), true);
 
-   logMsg_.clear();
+   logMsg_.str("");
    // GJ: check whether the chosen mode is a format 7 mode
    if(mode>=DC1394_VIDEO_MODE_FORMAT7_MIN && mode<=DC1394_VIDEO_MODE_FORMAT7_MAX) {
 	   logMsg_ << "Format_7: Skipping setting of framerate";
@@ -1208,11 +1212,11 @@ int Cdc1394::ResizeImageBuffer()
       }
       i++;
    }
-   logMsg_.clear();
+   logMsg_.str("");
    logMsg_ << "tried " << i << " times";
    LogMessage (logMsg_.str().c_str(), true);
    if (i==10) {
-      logMsg_.clear();
+      logMsg_.str("");
       logMsg_ << "PROBLEM!!!:: Failed to capture";
       LogMessage (logMsg_.str().c_str(), false);
       // Camera is in a bad state.  Try to rescue what we can:
@@ -1220,7 +1224,7 @@ int Cdc1394::ResizeImageBuffer()
       m_bInitialized = false;
       // If/when we get here, try starting the camera again, probably hopeless
       int nRet = GetCamera();
-      logMsg_.clear();
+      logMsg_.str("");
       logMsg_ <<"Tried restarting the camera, Result: " <<  nRet;
       LogMessage (logMsg_.str().c_str(), false);
       if (nRet == DEVICE_OK && triedCaptureCount <= 5)
@@ -1243,7 +1247,7 @@ int Cdc1394::ResizeImageBuffer()
    img_.Resize(width, height, bytesPerPixel);
 
 
-   logMsg_.clear();
+   logMsg_.str("");
    logMsg_ << "Everything OK in ResizeImageBuffer";
    LogMessage (logMsg_.str().c_str(), true);
    
@@ -1301,7 +1305,7 @@ int Cdc1394::StopTransmission()
          return ERR_GET_TRANSMISSION_FAILED;
       i++;
    }
-   logMsg_.clear();
+   logMsg_.str("");
    logMsg_ <<  "Waited for " << i << "cycles for transmission to stop"; 
    LogMessage (logMsg_.str().c_str(), true);
    if (i == 50)                                                
@@ -1341,7 +1345,7 @@ int Cdc1394::SetUpFrameRates()
 		// GJ Format_7: no specific framerate so just bail out early
 		// framerate = 0;
 		// TODO - delete list of frame rates?
-      logMsg_.clear();
+      logMsg_.str("");
 		logMsg_ << "SetUpFrameRates: Returning early because mode is format 7 (no defined framerate)";
 		LogMessage (logMsg_.str().c_str(), true);
 		// What should I return now?
@@ -1373,7 +1377,7 @@ int Cdc1394::SetUpFrameRates()
          rateValues.push_back(tmp);
    }   
    int nRet = SetAllowedValues(g_Keyword_FrameRates, rateValues);
-   logMsg_.clear();
+   logMsg_.str("");
    logMsg_ << "FrameRate: Changed list of allowed values";
    LogMessage (logMsg_.str().c_str(), true);
    return nRet;
@@ -1464,7 +1468,7 @@ int Cdc1394::StartSequenceAcquisition(long numImages, double interval_ms, bool s
    if (acquiring_)
       return ERR_BUSY_ACQUIRING;
 
-   logMsg_.clear();
+   logMsg_.str("");
    logMsg_ << "Started sequence acquisition: " << numImages << " at " << interval_ms << " ms" << endl;
    LogMessage(logMsg_.str().c_str());
 
@@ -1478,7 +1482,7 @@ int Cdc1394::StartSequenceAcquisition(long numImages, double interval_ms, bool s
 
    err = dc1394_video_set_multi_shot(camera, numImages, DC1394_ON);
    if (err != DC1394_SUCCESS) {
-      logMsg_.clear();
+      logMsg_.str("");
       logMsg_ << "Unable to start multi-shot" << endl;
       LogMessage(logMsg_.str().c_str());
    }
@@ -1524,7 +1528,7 @@ int Cdc1394::StartSequenceAcquisition(double interval_ms)
    if (acquiring_)
       return ERR_BUSY_ACQUIRING;
 
-   logMsg_.clear();
+   logMsg_.str("");
    logMsg_ << "Starting continuous sequence acquisition: at " << interval_ms << " ms" << endl;
    LogMessage(logMsg_.str().c_str());
 
@@ -1585,7 +1589,7 @@ int Cdc1394::StopSequenceAcquisition()
    if (multi_shot_) {
       err = dc1394_video_set_multi_shot(camera, 0, DC1394_OFF);
       if (err != DC1394_SUCCESS) {
-         logMsg_.clear();
+         logMsg_.str("");
          logMsg_ << "Unable to stop multi-shot" << endl;
          LogMessage(logMsg_.str().c_str());
       }
@@ -1690,7 +1694,7 @@ int AcqSequenceThread::svc(void)
       if(err!=DC1394_SUCCESS)
       {
          std::ostringstream logMsg;
-         logMsg.clear();
+         logMsg.str("");
          logMsg<< "Failed to enqueue image" <<imageCounter<< endl;
          camera_->LogMessage(logMsg.str().c_str());
 

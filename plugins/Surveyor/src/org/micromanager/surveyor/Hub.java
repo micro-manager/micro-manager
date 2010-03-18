@@ -5,6 +5,8 @@ import ij.process.ImageProcessor;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Point;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
@@ -49,7 +51,7 @@ public class Hub {
    private double angle_;
    private double pixelSize_;
    private final Preferences prefs_;
-   private final ScriptInterface app_;
+   private final MMStudioMainFrame app_;
    private RoiManager roiManager_;
    private String surveyPixelSizeConfig_ = "";
    private String navigatePixelSizeConfig_ = "";
@@ -62,7 +64,7 @@ public class Hub {
     * Hub constructor.
     */
    public Hub(ScriptInterface app) {
-      app_ = app;
+      app_ = (MMStudioMainFrame) app;
       Hub.appRef_ = app;
       core_ = app_.getMMCore();
       prefs_ = Preferences.systemNodeForPackage(this.getClass());
@@ -286,36 +288,11 @@ public class Hub {
       display_.update();
    }
 
-   public void setStageAngle(double angle) {
-      angle_ = angle;
-      prefs_.putDouble(angleKey, getAngle());
-      controller_.setAngle(getAngle());
-   }
-
-   public void setPixelSize(double pixelSize) {
-      controller_.setPixelSize(pixelSize);
-      prefs_.putDouble(pixelSizeKey, getPixelSize());
-   }
-
    public void writeOffsets() {
    }
 
    void showConfig() {
       configDialog_.setVisible(true);
-   }
-
-   /**
-    * @return the angle_
-    */
-   public double getAngle() {
-      return angle_;
-   }
-
-   /**
-    * @return the pixelSize_
-    */
-   public double getPixelSize() {
-      return pixelSize_;
    }
 
    void deployRoiManager() {
@@ -357,9 +334,10 @@ public class Hub {
    void acquireMosaics() {
       roiManager_.updateMappings();
 
-      MMAcquisitionEngineMTMosaic eng = new MMAcquisitionEngineMTMosaic(controller_, coords_, app_);
+      MMAcquisitionEngineMTMosaic eng = new MMAcquisitionEngineMTMosaic(this);
       eng.setCore(core_, ((MMStudioMainFrame) app_).getAutofocusManager());
       eng.setRoiManager(roiManager_);
+      eng.setParentGUI((DeviceControlGUI) app_);
       if (mosaicDlg_ == null) {
          mosaicDlg_ = new AcqControlDlgMosaic(eng, app_);
       } else {
@@ -546,12 +524,24 @@ public class Hub {
          positionsPanel_.setSelected(true);
          listButton_.setVisible(false);
          JLabel surveyorRoiLabel = new JLabel("(Each Surveyor ROI makes one mosaic.)");
+         
          surveyorRoiLabel.setFont(new Font("Arial", Font.PLAIN, 10));
-         surveyorRoiLabel.setBounds(15, 18, 200, 19);
+         surveyorRoiLabel.setBounds(15, 23, 200, 19);
          positionsPanel_.add(surveyorRoiLabel);
+         positionsPanel_.removeActionListeners();
+         positionsPanel_.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+               ReportingUtils.showMessage("To acquire mosaics, you must use multiple positions.\n\n" +
+                     "To use the standard Multi-Dimensional Acquisition, click the Multi-D Acq. button\n" +
+                     "on the main Micro-Manager window.");
+               positionsPanel_.setSelected(true);
+            }
+         });
+         
          setTitle(this.getTitle() + " (Surveyor Mosaics)");
-         posModeCombo_.setSelectedIndex(1);
+         displayModeCombo_.removeItemAt(2); // Remove the single window option.
          setVisible(true);
+
       }
    }
 
@@ -644,6 +634,7 @@ public class Hub {
 
       public void run() {
          while (stopTileGrabberThread_ == false) {
+
             if (modeMgr_.getMode() == ModeManager.SURVEY) {
                ArrayList<Point> missingTiles = findMissingTiles();
                if (missingTiles.size() > 0) {
@@ -708,6 +699,8 @@ public class Hub {
          Point mapPosition = coords_.tileToMap(tileIndex);
 
          if (!cache_.hasImage(tileIndex)) {
+            if (app_.getLiveMode())
+               app_.enableLiveMode(false);
             final ImageProcessor img = controller_.grabImageAtMapPosition(mapPosition);
             cache_.addImage(tileIndex, img);
          }

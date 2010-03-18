@@ -144,7 +144,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
     private int zVals_ = 0;
     private JButton setBottomButton_;
     private JButton setTopButton_;
-    private JComboBox displayModeCombo_;
+    protected JComboBox displayModeCombo_;
     private DeviceControlGUI gui_;
     private GUIColors guiColors_;
     private NumberFormat numberFormat_;
@@ -1854,7 +1854,11 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
 
         channelGroupCombo_.setSelectedItem(acqEng_.getChannelGroup());
         sliceModeCombo_.setSelectedIndex(acqEng_.getSliceMode());
-        displayModeCombo_.setSelectedIndex(acqEng_.getDisplayMode());
+        try {
+           displayModeCombo_.setSelectedIndex(acqEng_.getDisplayMode());
+        } catch (IllegalArgumentException e) {
+           displayModeCombo_.setSelectedIndex(0);
+        }
         if (framesPanel_.isSelected() && positionsPanel_.isSelected())
             posModeCombo_.setSelectedIndex(acqEng_.getPositionMode());
         else
@@ -2105,6 +2109,11 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
 
         public void addActionListener(ActionListener actionListener) {
             checkBox.addActionListener(actionListener);
+        }
+
+        public void removeActionListeners() {
+           for (ActionListener l:checkBox.getActionListeners())
+              checkBox.removeActionListener(l);
         }
 
 

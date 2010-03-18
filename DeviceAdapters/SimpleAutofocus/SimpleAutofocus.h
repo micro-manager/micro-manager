@@ -30,13 +30,12 @@
 #include <string>
 //#include <iostream>
 #include <vector>
+#include <math.h>
 
 
 // data for AF performance report table
 class SAFData;
 
-// a solver
-class Brent;
 
 
 class SimpleAutofocus : public CAutoFocusBase<SimpleAutofocus>
@@ -81,7 +80,11 @@ public:
    
    // action interface
    // ---------------
+
+   // these two properties are used only if non-0
    int OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct); 
+   int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct); 
+
    int OnCoarseStepNumber(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFineStepNumber(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnStepsizeCoarse(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -96,15 +99,11 @@ public:
    int OnChannel(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSearchAlgorithm(MM::PropertyBase* pProp, MM::ActionType eAct);
 
-   // Brent method want a point to a function to MINIMIZE
-   static double AntiSharpness_s(const double zpos);
-   static double zPos_s;
 
 private:
    double offset_; // TODO - need to know what this is.
 
    // parameters for the Pakpoom Subsoontorn & Hernan Garcia brute force search
-
    double coarseStepSize_;
    long coarseSteps_; // +/- #of snapshot
    double fineStepSize_;
@@ -118,6 +117,7 @@ private:
 
    short findMedian(short* arr, const int leng );
    double SharpnessAtZ(const double zvalue);
+   double DoubleFunctionOfDouble(const double zvalue);
    MM::Core* pCore_;
    double cropFactor_;
    bool busy_;
@@ -135,15 +135,27 @@ private:
    double mean_;  
    double standardDeviationOverMean_;
    SAFData* pPoints_;
-   Brent* pBrent_;
-
    std::string selectedChannelConfig_;
    std::vector<std::string> possibleChannels_;
    void RefreshChannelsToSelect(void);
    std::string searchAlgorithm_;
+   int acquisitionSequenceNumber_;
+
+   double exposureForAutofocusAcquisition_;
+   long binningForAutofocusAcquisition_; // over-ride the camera setting if this is non-0
+
+
+   //std::multiset<float> mins_;
+   //std::mulitset<float> maxs_;
+   //const int nExtrema_ = 5;
    
+   float min1_;
+   float min2_;
+   float max1_;
+   float max2_;
 
-
+   // this defines member functions that operate on evaluator DoubleFunctionOfDouble
+#include "../../Util/Brent.h"
 
 
 };

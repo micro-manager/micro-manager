@@ -31,6 +31,7 @@
 #include "../../MMDevice/ModuleInterface.h"
 #include "../../MMCore/Error.h"
 #include <sstream>
+#include <algorithm>
 using namespace std;
 const int CDemoCamera::imageSize_;
 const double CDemoCamera::nominalPixelSizeUm_ = 1.0;
@@ -350,6 +351,31 @@ int CDemoCamera::Initialize()
    if (nRet != DEVICE_OK)
       return nRet;
 
+#if 0
+   // query channels
+   std::vector<std::string> channelConfigs;
+   char value[MM::MaxStrLength];
+   std::string coreChannelGroup;
+   if( DEVICE_OK ==GetCoreCallback()->GetDeviceProperty(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreChannelGroup, value))
+      coreChannelGroup = std::string(value);
+   if(  0 < coreChannelGroup.length())
+   {
+      LogMessage(" Core channel group is : " + coreChannelGroup, true);
+      // this list of 'configs' is called 'presets' in the main UI
+      if ( DEVICE_OK !=GetCoreCallback()->GetChannelConfigs(channelConfigs))
+            LogMessage(" error retrieving channel configs! " , false);
+   }
+   std::ostringstream os;
+   os<<" channels in " << coreChannelGroup << ":";
+   std::vector<std::string>::iterator jj;
+   for(jj = channelConfigs.begin(); jj != channelConfigs.end(); ++jj)
+   {
+      os << " " << *jj;
+   }
+   LogMessage(os.str(), true);
+#endif
+
+
    // setup the buffer
    // ----------------
    nRet = ResizeImageBuffer();
@@ -401,6 +427,34 @@ int CDemoCamera::SnapImage()
 	      if( 0 == rand()%223 )
             GetCoreCallback()->PostError( std::make_pair(MMERR_CameraNotAvailable, std::string("Simulated 'not available' error in the DemoCamera!")));
    }
+
+#if 0
+
+   // query channels
+   std::vector<std::string> channelConfigs;
+   char value[MM::MaxStrLength];
+   std::string coreChannelGroup;
+   if( DEVICE_OK ==GetCoreCallback()->GetDeviceProperty(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreChannelGroup, value))
+      coreChannelGroup = std::string(value);
+   if(  0 < coreChannelGroup.length())
+   {
+      LogMessage(" Core channel group is : " + coreChannelGroup, true);
+      // this list of 'configs' is called 'presets' in the main UI
+      if ( DEVICE_OK !=GetCoreCallback()->GetChannelConfigs(channelConfigs))
+            LogMessage(" error retrieving channel configs! " , false);
+   }
+   std::ostringstream os;
+   os<<" channels in " << coreChannelGroup << ":";
+   std::vector<std::string>::iterator jj;
+   for(jj = channelConfigs.begin(); jj != channelConfigs.end(); ++jj)
+   {
+      os << " " << *jj;
+   }
+   LogMessage(os.str(), true);
+
+
+#endif
+
 
    return DEVICE_OK;
 }
