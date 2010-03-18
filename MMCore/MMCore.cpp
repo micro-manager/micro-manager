@@ -4800,11 +4800,11 @@ void CMMCore::acqAfterStack() throw (CMMError)
 
 MMAcquisitionEngine * engine_;
 
-void CMMCore::runAcquisitionEngineTest() throw (CMMError)
+void CMMCore::runAcquisitionEngineTest(AcquisitionSettings acquisitionSettings) throw (CMMError)
 {
    CORE_LOG("runAcquisitionEngineTest()");
    engine_ = new MMAcquisitionEngine(this);
-   engine_->runTest();
+   engine_->runTest(acquisitionSettings);
 }
 
 bool CMMCore::acquisitionIsFinished() throw (CMMError)

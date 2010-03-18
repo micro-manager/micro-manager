@@ -3,6 +3,12 @@
 #include <string>
 
 
+
+#ifndef ACQUISITION_TYPES_H
+#define ACQUISITION_TYPES_H
+
+using namespace std;
+
 class MMRunnable
 {
 public:
@@ -16,30 +22,30 @@ public:
 };
 
 
-typedef std::pair<double, double> point2D;
+typedef pair<double, double> point2D;
 
 class MultiAxisPosition
 {
 public:
-   std::map<std::string,double> singleAxisPositions;
-   std::map<std::string,point2D> doubleAxisPositions;
+   map<string,double> singleAxisPositions;
+   map<string,point2D> doubleAxisPositions;
 
-   void AddOneSingleAxisPosition(std::string name, double pos)
+   void AddSingleAxisPosition(string name, double pos)
    {
       singleAxisPositions[name] = pos;
    }
 
-   void AddDoubleAxisPosition(std::string name, double posX, double posY)
+   void AddDoubleAxisPosition(string name, double posX, double posY)
    {
       doubleAxisPositions[name] = point2D(posX,posY);
    }
 
-   void GetSingleAxisPosition(std::string name, double& pos)
+   void GetSingleAxisPosition(string name, double& pos)
    {
       pos = singleAxisPositions[name];
    }
 
-   void GetDoubleAxisPosition(std::string name, double& posX, double& posY)
+   void GetDoubleAxisPosition(string name, double& posX, double& posY)
    {
       posX = doubleAxisPositions[name].first;
       posY = doubleAxisPositions[name].second;
@@ -50,8 +56,8 @@ class Channel
 {
 
 public:
-   std::string group;
-   std::string name;
+   string group;
+   string name;
    double exposure;
    double zOffset;
    bool useZStack;
@@ -59,7 +65,7 @@ public:
 
    Channel() { }
 
-   Channel(std::string _group, std::string _name, double _exposure,
+   Channel(string _group, string _name, double _exposure,
       double _zOffset = 0.0, bool _useZStack = true, int _skipFrames = 0)
    {
       group = _group;
@@ -72,12 +78,12 @@ public:
 };
 
 typedef void (*voidFunc)();
-typedef std::vector<MMRunnable *> TaskVector;
+typedef vector<MMRunnable *> TaskVector;
 
-typedef std::vector<double> ZStack;
-typedef std::vector<double> TimeSeries;
-typedef std::vector<MultiAxisPosition> PositionList;
-typedef std::vector<Channel> ChannelList;
+typedef vector<double> ZStack;
+typedef vector<double> TimeSeries;
+typedef vector<MultiAxisPosition> PositionList;
+typedef vector<Channel> ChannelList;
 
 struct AcquisitionSettings
 {
@@ -98,8 +104,10 @@ struct AcquisitionSettings
    ChannelList channelList;
 
    bool useAutofocus;
-   std::string autofocusDevice;
+   string autofocusDevice;
 
    bool saveImages;
 
 };
+
+#endif // ACQUISITION_TYPES_H

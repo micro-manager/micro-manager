@@ -403,10 +403,12 @@ namespace std {
 
     %template(CharVector)   vector<char>;
     %template(LongVector)   vector<long>;
+    %template(DoubleVector) vector<double>;
     %template(StrVector)    vector<string>;
     %template(pair_ss)      pair<string, string>;
     %template(StrMap)       map<string, string>;
-
+    %template(MultiAxisPositionVector) vector<MultiAxisPosition>;
+    %template(ChannelVector) vector<Channel>;
 }
 
 %typemap(javaimports) MMRunnable %{

@@ -64,6 +64,6 @@ public:
       core_ = core;
       coreCallback_ = new CoreCallback(core);
    }
-   void runTest();
+   void runTest(AcquisitionSettings acquisitionSettings);
    bool isFinished();
 };

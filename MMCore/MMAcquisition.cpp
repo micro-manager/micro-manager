@@ -93,14 +93,14 @@ public:
    }
 
    void run() {
-      std::map<std::string,double>::iterator it1;
+      map<string,double>::iterator it1;
 
       for(it1 = pos_->singleAxisPositions.begin(); it1 != pos_->singleAxisPositions.end(); ++it1)
       {
          state_->core->setPosition(it1->first.c_str(), it1->second);
       } 
 
-      std::map<std::string,pair<double,double>>::iterator it2;
+      map<string,pair<double,double>>::iterator it2;
 
       for(it2 = pos_->doubleAxisPositions.begin(); it2 != pos_->doubleAxisPositions.end(); ++it2)
       {
@@ -311,11 +311,11 @@ TaskVector MMAcquisitionSequencer::generateTaskVector()
    //TaskVector sliceVector;
    //TaskVector positionVector;
    //TaskVector timeVector;
+/*
 
-   MMAcquisitionState * state = new MMAcquisitionState(core_, coreCallback_);
    AcquisitionSettings acquisitionSettings;
 
-   ImageTask * imageTask = new ImageTask(state);
+
    
    Channel channel1("Channel","DAPI",100);
    Channel channel2("Channel","FITC",200);
@@ -338,29 +338,30 @@ TaskVector MMAcquisitionSequencer::generateTaskVector()
 
    for(unsigned i=0;i<5;++i)
       acquisitionSettings.timeSeries.push_back(6000.);
+*/
 
    // Constructing the TaskVectors:
 
-   
-   state->acquisitionSettings = acquisitionSettings;
+   MMAcquisitionState * state = new MMAcquisitionState(core_, coreCallback_);
+   ImageTask * imageTask = new ImageTask(state);
+
+   state->acquisitionSettings = acquisitionSettings_;
 
    TaskVector channelVector;
-   for(unsigned i=0;i<acquisitionSettings.channelList.size();++i)
+   for(unsigned i=0;i<acquisitionSettings_.channelList.size();++i)
       channelVector.push_back(new ChannelTask(state, i));
 
    TaskVector sliceVector;
-   for(unsigned i=0;i<acquisitionSettings.zStack.size();++i)
+   for(unsigned i=0;i<acquisitionSettings_.zStack.size();++i)
       sliceVector.push_back(new SliceTask(state, i));
 
    TaskVector positionVector;
-   for(unsigned i=0;i<acquisitionSettings.positionList.size();++i)
+   for(unsigned i=0;i<acquisitionSettings_.positionList.size();++i)
       positionVector.push_back(new PositionTask(state, i));
 
    TaskVector timeVector;
-   for(unsigned i=0;i<acquisitionSettings.timeSeries.size();++i)
+   for(unsigned i=0;i<acquisitionSettings_.timeSeries.size();++i)
       timeVector.push_back(new TimeTask(state, i));
-
-
 
    return generateMDASequence(imageTask, timeVector, positionVector, channelVector, sliceVector);
 }
@@ -420,9 +421,8 @@ void MMAcquisitionSequencer::setAcquisitionSettings(AcquisitionSettings acquisit
 // MMAcquisitionEngine //
 /////////////////////////
 
-void MMAcquisitionEngine::runTest()
+void MMAcquisitionEngine::runTest(AcquisitionSettings acquisitionSettings)
 {
-   AcquisitionSettings acquisitionSettings;
    acquisitionSettings.positionsFirst = true;
    acquisitionSettings.channelsFirst = true;
 
