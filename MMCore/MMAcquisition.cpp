@@ -306,42 +306,6 @@ MMAcquisitionSequencer::MMAcquisitionSequencer(CMMCore * core, CoreCallback * co
 
 TaskVector MMAcquisitionSequencer::generateTaskVector()
 {
-   //TaskVector snapVector;
-   //TaskVector channelVector;
-   //TaskVector sliceVector;
-   //TaskVector positionVector;
-   //TaskVector timeVector;
-/*
-
-   AcquisitionSettings acquisitionSettings;
-
-
-   
-   Channel channel1("Channel","DAPI",100);
-   Channel channel2("Channel","FITC",200);
-   Channel channel3("Channel","Cy3",150);
-
-   acquisitionSettings.channelList.push_back(channel1); 
-   acquisitionSettings.channelList.push_back(channel2); 
-
-   acquisitionSettings.zStack.push_back(0.);
-   acquisitionSettings.zStack.push_back(1.);
-   acquisitionSettings.zStack.push_back(2.);
-
-   MultiAxisPosition pos1;
-   pos1.AddDoubleAxisPosition("XY",1,3);
-   MultiAxisPosition pos2;
-   pos2.AddDoubleAxisPosition("XY",4,5);
-   pos2.AddOneSingleAxisPosition("Z",1);
-   acquisitionSettings.positionList.push_back(pos1);
-   acquisitionSettings.positionList.push_back(pos2);
-
-   for(unsigned i=0;i<5;++i)
-      acquisitionSettings.timeSeries.push_back(6000.);
-*/
-
-   // Constructing the TaskVectors:
-
    MMAcquisitionState * state = new MMAcquisitionState(core_, coreCallback_);
    ImageTask * imageTask = new ImageTask(state);
 
@@ -398,6 +362,9 @@ TaskVector MMAcquisitionSequencer::generateMDASequence(MMRunnable * imageTask,
 TaskVector MMAcquisitionSequencer::NestTasks(TaskVector outerTasks, TaskVector innerTasks)
 {
    TaskVector nestedTasks;
+
+   if (outerTasks.size() == 0)
+      return innerTasks;
 
    for(TaskVector::iterator it = outerTasks.begin(); it < outerTasks.end(); ++it)
    {

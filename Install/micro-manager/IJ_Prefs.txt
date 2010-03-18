@@ -1,5 +1,5 @@
-#ImageJ 1.42p Preferences
-#Tue Oct 20 16:05:29 PDT 2009
+#ImageJ 1.43j Preferences
+#Thu Mar 04 09:56:56 PST 2010
 menu.size=14
 fps=7.0
 new.type=0
@@ -10,11 +10,11 @@ gel.options=2
 div-by-zero=Infinity
 pp.options=1
 raw.type=0
-ij.y=227
+ij.y=350
 roicolor=\#FFFF00
-ij.x=266
+ij.x=815
 noise.sd=25.0
-prefs.options=0
+prefs.options=16384
 new.slices=1
 raw.width=512
 new.height=400

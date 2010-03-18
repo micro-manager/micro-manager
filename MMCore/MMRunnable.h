@@ -91,16 +91,9 @@ struct AcquisitionSettings
    bool positionsFirst;
    bool channelsFirst;
    
-   bool useTime;
    TimeSeries timeSeries;
-
-   bool usePositions;
    PositionList positionList;
-
-   bool useZStack;
    ZStack zStack;
-
-   bool useChannels;
    ChannelList channelList;
 
    bool useAutofocus;
