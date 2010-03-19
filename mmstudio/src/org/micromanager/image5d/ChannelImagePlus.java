@@ -39,6 +39,8 @@ public class ChannelImagePlus extends ImagePlus {
                     return(""+IJ.d2s(cValue) + " ("+v+")");
             case GRAY32:
                 return("" + Float.intBitsToFloat(v));
+            case 4:
+			return("" + v);
             default: return("");
         }
     }

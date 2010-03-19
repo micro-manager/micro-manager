@@ -417,6 +417,8 @@ public class AcquisitionData {
          ijType_ = ImagePlus.GRAY8;
       else if (imgDepth_ == 2)
          ijType_ = ImagePlus.GRAY16;
+      else if( 4 == imgDepth_)
+         ijType_ = ImagePlus.COLOR_RGB;
       else
          throw new MMAcqDataException("Unsupported pixel depth: " + imgDepth_);
 

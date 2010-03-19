@@ -122,6 +122,8 @@ public class MMAcquisition {
          type = ImagePlus.GRAY8;
       else if (depth_ == 2)
          type = ImagePlus.GRAY16;
+      else if (4 ==depth_)
+         type = ImagePlus.COLOR_RGB;
       else {
          depth_ = 0;
          throw new MMScriptException("Unsupported pixel depth");

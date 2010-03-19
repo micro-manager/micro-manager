@@ -266,8 +266,8 @@ public class Image5D extends ImagePlus {
 	public void setStack(String title, ImageStack stack) {
       ReportingUtils.logMessage("setStack called");
 		// Exception, if dimensions or data type don't match. 
-		if (stack.getProcessor(1) instanceof ColorProcessor)
-			throw new IllegalArgumentException("Cannot accept RGB stack for Image5D.");
+		//if (stack.getProcessor(1) instanceof ColorProcessor)
+		//	throw new IllegalArgumentException("Cannot accept RGB stack for Image5D.");
 		if (isInitialized) {
 			if(!stack.getProcessor(1).getClass().equals(this.getProcessor().getClass())) 
 				throw new IllegalArgumentException("Stack type does not match current Image5D type.");
@@ -1043,6 +1043,9 @@ public class Image5D extends ImagePlus {
 				case GRAY32:
 					dummyImage = new float[imageSize];
 					break;
+            case 4:
+               dummyImage = new int[imageSize];
+               break;
 			}
 		}
 		
@@ -1067,6 +1070,10 @@ public class Image5D extends ImagePlus {
 						break;
 					case GRAY32:
 						newImageStack.addSlice("", new float[imageSize]);
+                  break;
+               case 4:
+                     newImageStack.addSlice("", new int[imageSize]);
+                     break;
 					}
 				}
 			} else {			
@@ -1411,6 +1418,9 @@ public class Image5D extends ImagePlus {
 			case GRAY32:
 				ip = (ImageProcessor) new FloatProcessor(dimensionSizes[0], dimensionSizes[1]);
 				break;
+         case 4:
+            ip = (ImageProcessor) new ColorProcessor(dimensionSizes[0], dimensionSizes[1]);
+            break;
 			default:
 				ip = null;
 				throw new IllegalArgumentException("Invalid data type.");
