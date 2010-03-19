@@ -681,6 +681,9 @@ public class Image5DWindow extends StackWindow {
          s += "32-bit grayscale";
          size *= 4;
          break;
+      case ImagePlus.COLOR_RGB:
+         s += "8-bit RGBA";
+         size *= 4;
       }
       if (size>=10000)    	
          s += "; " + (int)Math.round(size/1024.0) + "MB";

@@ -30,6 +30,8 @@ import java.awt.Rectangle;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.awt.image.ColorModel;
+import java.awt.image.DirectColorModel;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -37,8 +39,6 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
@@ -1774,9 +1774,11 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
             ChannelCalibration chcal = new ChannelCalibration();
             chcal.setLabel(channels_.get(j).config_);
             img5d_[i].setChannelCalibration(j + 1, chcal);
-
+            if( ImagePlus.COLOR_RGB == type)
+               img5d_[i].setChannelColorModel(j + 1, new DirectColorModel(32, 0xFF0000, 0xFF00, 0xFF));
+            else
             // set color
-            img5d_[i].setChannelColorModel(j + 1, ChannelDisplayProperties.createModelFromColor(channels_.get(j).color_));
+               img5d_[i].setChannelColorModel(j + 1, ChannelDisplayProperties.createModelFromColor(channels_.get(j).color_));
          }
 
          // pop-up 5d image window

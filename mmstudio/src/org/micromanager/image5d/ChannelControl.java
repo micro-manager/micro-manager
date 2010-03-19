@@ -733,7 +733,7 @@ public class ChannelControl extends Panel implements ItemListener,
 	        
 	        ColorModel currentLUT = i5d.getChannelDisplayProperties(cColorChooser.cControl.currentChannel).getColorModel();
 	        if (!(currentLUT instanceof IndexColorModel)) 
-	            throw new IllegalArgumentException("Color Model has to be IndexColorModel.");
+	            return ; //throw new IllegalArgumentException("Color Model has to be IndexColorModel.");
 	        
 	        ((IndexColorModel)currentLUT).getRGBs(rgb);
 	        

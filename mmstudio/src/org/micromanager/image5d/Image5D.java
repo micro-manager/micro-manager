@@ -626,8 +626,8 @@ public class Image5D extends ImagePlus {
 	 */
 	public void setChannelColorModel(int channel, ColorModel model) {
 		checkChannel(channel);
-		if (! (model instanceof IndexColorModel)) 
-			throw new IllegalArgumentException("Only accepting IndexColorModels");
+//		if (! (model instanceof IndexColorModel))
+//			throw new IllegalArgumentException("Only accepting IndexColorModels");
         storeChannelProperties(channel);
 		chDisplayProps[channel-1].setColorModel(model);
 		restoreChannelProperties(channel);
