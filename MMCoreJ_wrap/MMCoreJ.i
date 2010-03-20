@@ -1,4 +1,4 @@
-/////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
 // FILE:          MMCoreJ.i
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     MMCoreJ
@@ -35,8 +35,8 @@
 %include "typemaps.i"
 
 // output arguments
-%apply double &OUTPUT { double &x };
-%apply double &OUTPUT { double &y };
+%apply double &OUTPUT { double &x_stage };
+%apply double &OUTPUT { double &y_stage };
 %apply int &OUTPUT { int &x };
 %apply int &OUTPUT { int &y };
 %apply int &OUTPUT { int &xSize };
@@ -409,6 +409,11 @@ namespace std {
     %template(StrMap)       map<string, string>;
     %template(MultiAxisPositionVector) vector<MultiAxisPosition>;
     %template(ChannelVector) vector<Channel>;
+
+    
+
+
+
 }
 
 %typemap(javaimports) MMRunnable %{
@@ -423,3 +428,5 @@ import java.lang.Runnable;
 %include "../MMDevice/ImageMetadata.h"
 %include "../MMCore/MMEventCallback.h"
 %include "../MMCore/MMRunnable.h"
+
+

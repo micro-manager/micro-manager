@@ -335,7 +335,7 @@ public:
    void setRelativePosition(const char* deviceLabel, double d) throw (CMMError);
    void setXYPosition(const char* deviceLabel, double x, double y) throw (CMMError);
    void setRelativeXYPosition(const char* deviceLabel, double dx, double dy) throw (CMMError);
-   void getXYPosition(const char* deviceLabel, double &x, double &y) throw (CMMError);
+   void getXYPosition(const char* deviceLabel, double &x_stage, double &y_stage) throw (CMMError);
    double getXPosition(const char* deviceLabel) throw (CMMError);
    double getYPosition(const char* deviceLabel) throw (CMMError);
    void stop(const char* deviceLabel) throw (CMMError);

@@ -10,6 +10,7 @@ libMMCore_a_SOURCES = MMCore.cpp MMCore.h \
    PluginManager.h PluginManager.cpp \
 	IMLogger.h \
 	FastLogger.h FastLogger.cpp \
+	MMAcquisition.h MMAcquisition.cpp \
 	../MMDevice/MMDevice.h ../MMDevice/MMDeviceConstants.h \
 	../MMDevice/ModuleInterface.h
 ##libMMCore_a_LIBADD = $(LIBACE)

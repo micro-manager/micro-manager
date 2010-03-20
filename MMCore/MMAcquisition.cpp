@@ -100,7 +100,7 @@ public:
          state_->core->setPosition(it1->first.c_str(), it1->second);
       } 
 
-      map<string,pair<double,double>>::iterator it2;
+      map<string,pair<double,double> >::iterator it2;
 
       for(it2 = pos_->doubleAxisPositions.begin(); it2 != pos_->doubleAxisPositions.end(); ++it2)
       {
