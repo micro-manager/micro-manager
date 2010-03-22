@@ -4811,3 +4811,31 @@ bool CMMCore::acquisitionIsFinished() throw (CMMError)
 {
    return engine_->isFinished();
 }
+
+
+#ifdef WIN32
+#include "ddraw.h"
+
+IDirectDraw * ddObject = NULL;
+typedef HRESULT(WINAPI * DIRECTDRAWCREATE) (GUID *, LPDIRECTDRAW *, IUnknown *);
+DIRECTDRAWCREATE ddcreate;
+
+void CMMCore::WaitForScreenRefresh()
+{
+   if (ddObject == NULL)
+   {
+      HINSTANCE hLibDDraw = LoadLibrary(TEXT("ddraw.dll"));
+      ddcreate = (DIRECTDRAWCREATE) GetProcAddress(hLibDDraw, "DirectDrawCreate");
+
+      if (ddcreate) {
+          HRESULT hr = ddcreate(NULL, &ddObject, NULL);
+
+      }
+   }
+   ddObject->WaitForVerticalBlank(DDWAITVB_BLOCKBEGIN, NULL);
+}
+
+#else
+void CMMCore::WaitForScreenRefresh() {}
+#endif //WIN32
+

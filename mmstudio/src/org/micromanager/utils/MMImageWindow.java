@@ -53,6 +53,7 @@ import mmcorej.CMMCore;
 import org.micromanager.MMStudioMainFrame;
 
 import com.swtdesigner.SwingResourceManager;
+import java.awt.Graphics;
 import java.awt.Toolkit;
 
 /**
@@ -423,7 +424,7 @@ public class MMImageWindow extends ImageWindow {
 
 
 			updateHistogram();
-			ip.updateAndDraw();
+			tearFreeUpdate();
 
 			// update coordinate and pixel info in imageJ by simulating mouse
 			// move
@@ -525,5 +526,11 @@ public class MMImageWindow extends ImageWindow {
         ImagePlus imgp = getImagePlus();
         if (imgp != null)
             imgp.setTitle(title_);
+    }
+
+     public void tearFreeUpdate() {
+       Graphics g = this.getCanvas().getGraphics();
+       core_.WaitForScreenRefresh();
+       this.getCanvas().paint(g);
     }
 }
