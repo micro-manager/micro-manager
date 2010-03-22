@@ -30,6 +30,18 @@ maxFinderCode = """
 	return_val = results;
 			
 """
+			
+gaussianFunctionCode = """
+	double _2sigma = 2*pow(p(4),2);
+	
+	for (int i=0;i<nx;++i)
+		for(int j=0;j<ny;++j)
+			result(i,j) = p(0) + p(1)*exp(-(pow(i-p(2),2) + pow(j-p(3),2))/_2sigma);
+
+"""
+
+
+
 
 def findMax(pixels):
 	nx,ny = pixels.shape
@@ -55,7 +67,11 @@ def findNextMolecule():
 	
 	
 def gaussianFunction(p, xp, yp):
-	return p[0] + p[1]*exp(-((xp-p[2])**2 + (yp-p[3])**2)/(2*p[4]**2))
+	nx, ny = xp.shape
+	result = zeros((nx,ny))
+	weave.inline(gaussianFunctionCode, ('p', 'nx', 'ny', 'result'), 
+		type_converters=weave.converters.blitz)
+	return result
 	
 def residualFunction(p, xp, yp, patch):
 	return (gaussianFunction(p, xp, yp) - patch).flatten()
