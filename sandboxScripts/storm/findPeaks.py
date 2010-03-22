@@ -2,8 +2,11 @@ from scipy.ndimage import measurements
 import time
 from scipy import weave
 from scipy.optimize import minpack
+from numpy import linalg
 
-hw = 4
+useNLLS = False
+
+hw = 3
 
 maxFinderCode = """
 	#include <limits.h>
@@ -44,9 +47,12 @@ gaussianFunctionCode = """
 
 
 def findMax(pixels):
+	tA = time.time()
 	nx,ny = pixels.shape
-	return weave.inline(maxFinderCode,('pixels','nx','ny'), 
+	result = weave.inline(maxFinderCode,('pixels','nx','ny'), 
 		type_converters=weave.converters.blitz)
+	#print(time.time()-tA)
+	return result
 
 def findNextMolecule():
 	t3 = time.time()
@@ -60,7 +66,11 @@ def findNextMolecule():
 		#print "exceeds threshold"
 		patch = imgTemp[(-hw+xm):(hw+1+xm),(-hw+ym):(hw+1+ym)]
 		if len(patch) > 0:
-			params = fitGaussian(xp,yp,patch)
+			if useNLLS:
+				params = fitGaussianNLLS(xp,yp,patch)
+			else:
+				params = fitGaussianLLS(xp,yp,patch)
+			#print(params)
 			imgTemp[-hw+xm:hw+1+xm,-hw+ym:hw+1+ym] -= gaussianFunction(params, xp, yp)
 			return params[2]+xm-hw, params[3]+ym-hw
 	return None
@@ -76,7 +86,7 @@ def gaussianFunction(p, xp, yp):
 def residualFunction(p, xp, yp, patch):
 	return (gaussianFunction(p, xp, yp) - patch).flatten()
 
-def fitGaussian(xp,yp,patch):
+def fitGaussianNLLS(xp,yp,patch):
 	paramsGuess = array([0,patch[hw,hw],hw,hw,1])
 	tA = time.time()
 	(paramsOut, cov, infodict, msg, ier) = minpack.leastsq(residualFunction,paramsGuess,(xp,yp,patch), full_output=1, ftol = .1, xtol = .1)
@@ -86,7 +96,19 @@ def fitGaussian(xp,yp,patch):
 	return paramsOut
 	
 
-
+def fitGaussianLLS(xp,yp,patch):
+	#print(patch)
+	tA = time.time()
+	n = len(xp.flatten())
+	A = vstack((xp.flatten(),yp.flatten(),log(patch.flatten()),ones((1,n)))).transpose()
+	B = (xp.flatten()**2 + yp.flatten()**2).transpose()
+	#print A
+	#print B
+	a = linalg.lstsq(A,B)[0]
+	result = array((0.0, exp(-(a[3]+a[0]**2/4+a[1]**2/4)/a[2]), a[0]/2, a[1]/2, sqrt(-a[2]/2)))
+	#print(time.time()-tA)
+	return result
+	
 threshold = 250
 
 xp,yp = mgrid[0:(2*hw+1),0:(2*hw+1)]
@@ -107,7 +129,7 @@ while True:
 		break
 t2 = time.time()
 n = len(molList)
-print("%f s per frame" % (t2-t1,))
+print("%f s per molecule" % ((t2-t1)/N,))
 
 fakeMolList = sort(zip(x0s, y0s),0)
 detectedMolList = sort(molList,0)

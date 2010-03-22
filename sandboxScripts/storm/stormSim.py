@@ -9,7 +9,7 @@ A0 = 1000.
 sigma = 1.5
 N = 20.
 
-img = zeros((w,h),uint16)
+img = zeros((w,h),int16)
 [x,y] = mgrid[0:512,0:512]
 
 x0s = w*random(N)
