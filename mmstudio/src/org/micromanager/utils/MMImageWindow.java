@@ -530,7 +530,7 @@ public class MMImageWindow extends ImageWindow {
 
      public void tearFreeUpdate() {
        Graphics g = this.getCanvas().getGraphics();
-       core_.WaitForScreenRefresh();
+       //core_.WaitForScreenRefresh();
        this.getCanvas().paint(g);
     }
 }
