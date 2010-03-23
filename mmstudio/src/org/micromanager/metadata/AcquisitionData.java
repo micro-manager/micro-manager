@@ -37,6 +37,7 @@ import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 import ij.process.ShortProcessor;
+import ij.process.ColorProcessor;
 
 import java.awt.Color;
 import java.io.BufferedReader;
@@ -1549,7 +1550,7 @@ public class AcquisitionData {
          images_.put(frameKey, ip);
       } else {
          // save pixels to disk
-         saveImageFile(basePath_ + "/" + fname, img, (int)imgWidth_, (int)imgHeight_);
+         boolean success = saveImageFile(basePath_ + "/" + fname, img, (int)imgWidth_, (int)imgHeight_);
          try {
             lastImageFilePath_ = new File(basePath_ + "/" + fname).getCanonicalPath();
          } catch (IOException ex) {
@@ -1623,7 +1624,10 @@ public class AcquisitionData {
          ip = new ShortProcessor(width, height);
          ip.setPixels((short[])img);
       }
-      else
+      else if (img instanceof int[]){
+         ip= new ColorProcessor( width, height);
+         ip.setPixels((int[])img);
+      }else
          return false;
 
       ImagePlus imp = new ImagePlus(fname, ip);
