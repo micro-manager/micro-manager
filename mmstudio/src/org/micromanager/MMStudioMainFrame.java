@@ -28,8 +28,6 @@ import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
 import ij.WindowManager;
-import ij.gui.ImageCanvas;
-import ij.gui.ImageWindow;
 import ij.gui.Line;
 import ij.gui.Roi;
 import ij.process.ImageProcessor;
@@ -140,8 +138,11 @@ import bsh.EvalError;
 import bsh.Interpreter;
 
 import com.swtdesigner.SwingResourceManager;
+import ij.gui.ImageCanvas;
+import ij.gui.ImageWindow;
 import java.awt.Cursor;
 import java.awt.Graphics;
+import java.awt.image.DirectColorModel;
 import org.micromanager.utils.ReportingUtils;
 
 /*
@@ -2064,12 +2065,14 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 						chcal.setLabel(names[i]);
 						img5d.setChannelCalibration(i + 1, chcal);
 
-						// set color
-						img5d.setChannelColorModel(i + 1,
+                  if(img5d.getBytesPerPixel() == 4){
+                     img5d.setChannelColorModel(i + 1, new DirectColorModel(32, 0xFF0000, 0xFF00, 0xFF));
+                  }
+                  else
+                     img5d.setChannelColorModel(i + 1,
 								ChannelDisplayProperties
 								.createModelFromColor(colors[i]));
 					}
-
 
 				// set pixels
 				int singleImageCounter = 0;

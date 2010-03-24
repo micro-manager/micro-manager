@@ -1783,6 +1783,7 @@ public class AcquisitionData {
    }
    
    private ImageProcessor createCompatibleIJImageProcessor(Object img) throws MMAcqDataException {
+      // this is for the single image acquisition window
       ImageProcessor ip = null;
       if (img instanceof byte[]) {
          ip = new ByteProcessor(imgWidth_, imgHeight_);
@@ -1791,6 +1792,8 @@ public class AcquisitionData {
       else if (img instanceof short[]) {
          ip = new ShortProcessor(imgWidth_, imgHeight_);
          ip.setPixels((short[])img);
+      } else if(img instanceof int[]){
+         ip = new ColorProcessor(imgWidth_,imgHeight_);
       }
       
       if (ip == null)

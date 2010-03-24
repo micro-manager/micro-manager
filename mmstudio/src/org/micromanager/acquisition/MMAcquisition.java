@@ -1,8 +1,10 @@
 package org.micromanager.acquisition;
 
 import ij.ImagePlus;
+import ij.process.ColorProcessor;
 
 import java.awt.Color;
+import java.awt.image.DirectColorModel;
 
 import org.json.JSONObject;
 import org.micromanager.image5d.ChannelCalibration;
@@ -149,7 +151,12 @@ public class MMAcquisition {
 
       // set-up colors, contrast and channel names
       for (int i=0; i<numChannels_; i++) {
-         img5d.setChannelColorModel(i+1, ChannelDisplayProperties.createModelFromColor(colors[i]));
+         //N.B. this call to setChannelColorModel is very soon over-written inside setChannelColor
+         if(img5d.getProcessor(i+1) instanceof ColorProcessor)
+             img5d.setChannelColorModel(i + 1, new DirectColorModel(32, 0xFF0000, 0xFF00, 0xFF));
+         else{
+            img5d.setChannelColorModel(i+1, ChannelDisplayProperties.createModelFromColor(colors[i]));
+         }
          ChannelCalibration chcal = img5d.getChannelCalibration(i+1);
          chcal.setLabel(names[i]);
          img5d.setChannelCalibration(i+1, chcal);
@@ -230,7 +237,10 @@ public class MMAcquisition {
       try {
          acqData_.setChannelColor(channel, rgb);
          if (imgWin_ != null) {
-            imgWin_.getImage5D().setChannelColorModel(channel+1, ChannelDisplayProperties.createModelFromColor(new Color(rgb))); 
+            if( imgWin_.getImage5D().getProcessor(channel+1)instanceof ColorProcessor ){
+                imgWin_.getImage5D().setChannelColorModel(channel+ 1, new DirectColorModel(32, 0xFF0000, 0xFF00, 0xFF));
+            }else
+               imgWin_.getImage5D().setChannelColorModel(channel+1, ChannelDisplayProperties.createModelFromColor(new Color(rgb)));
          }
       } catch (MMAcqDataException e) {
          throw new MMScriptException(e);

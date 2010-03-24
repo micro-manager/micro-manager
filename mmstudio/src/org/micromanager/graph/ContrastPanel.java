@@ -562,7 +562,10 @@ public class ContrastPanel extends JPanel implements ImageController, PropertyCh
       setLutGamma(gamma_);
 		updateSliders();
 
-		image_.updateAndDraw();
+		//image_.updateAndDraw();
+      //imageJ uses the following:
+
+      image_.updateChannelAndDraw();
 	}
 
 	private void updateSliders(boolean force, int min, int max) {

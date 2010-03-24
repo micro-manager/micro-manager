@@ -203,6 +203,7 @@ public class Image5D extends ImagePlus {
         chDisplayProps = new ChannelDisplayProperties[nChannels];
         for (int i=0; i<nChannels; i++) {
             chDisplayProps[i] = new ChannelDisplayProperties();
+
             chDisplayProps[i].setColorModel(ip.getColorModel());
             chDisplayProps[i].setMinValue(ip.getMin());
             chDisplayProps[i].setMaxValue(ip.getMax());
@@ -218,7 +219,10 @@ public class Image5D extends ImagePlus {
         for (int i=0; i<nChannels; ++i){             
             newChannelIPs[i] = createProcessorFromDims(getType(), new int[] {width, height, 1, 1, 1});
             newChannelIPs[i].setPixels(imageStack.getPixels(getCurrentSliceOffset()+i));
-            newChannelIPs[i].setColorModel(chDisplayProps[i].getColorModel());
+            if (newChannelIPs[i] instanceof ColorProcessor)
+               newChannelIPs[i].setColor(Color.black);
+            else
+               newChannelIPs[i].setColorModel(chDisplayProps[i].getColorModel());
             newChannelIPs[i].setThreshold(chDisplayProps[i].getMinThreshold(), 
                     chDisplayProps[i].getMaxThreshold(), ImageProcessor.NO_LUT_UPDATE);
             newChannelIPs[i].setMinAndMax(chDisplayProps[i].getMinValue(), 
@@ -1420,6 +1424,7 @@ public class Image5D extends ImagePlus {
 				break;
          case 4:
             ip = (ImageProcessor) new ColorProcessor(dimensionSizes[0], dimensionSizes[1]);
+            ip.setMinAndMax(0.,255.);
             break;
 			default:
 				ip = null;

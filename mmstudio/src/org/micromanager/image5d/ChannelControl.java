@@ -3,6 +3,7 @@ package org.micromanager.image5d;
 import ij.IJ;
 import ij.ImageJ;
 import ij.plugin.LUT_Editor;
+import ij.process.ColorProcessor;
 
 import java.awt.BorderLayout;
 import java.awt.Button;
@@ -230,12 +231,19 @@ public class ChannelControl extends Panel implements ItemListener,
 	}
 
 	public void itemStateChanged(ItemEvent e) {
+      int mode = 0;
+      if( i5d.getProcessor(i5d.getCurrentChannel()) instanceof ColorProcessor)
+      {
+         mode = ONE_CHANNEL_COLOR;
+         displayChoice.select(ONE_CHANNEL_COLOR);
+      }else{
+
 		if (e.getSource() == displayChoice) {
-			int mode = displayChoice.getSelectedIndex();
+			 mode = displayChoice.getSelectedIndex();
 			if (mode==displayMode) {
 				return;
 			} 
-						
+      }
 			i5d.setDisplayMode(mode);
 			updateChannelSelector();	
 		}

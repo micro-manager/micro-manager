@@ -2,6 +2,7 @@ package org.micromanager.fastacq;
 
 import ij.ImageStack;
 import ij.process.ByteProcessor;
+import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 
@@ -103,6 +104,8 @@ public class DiskStreamingThread extends Thread {
          ip = new ByteProcessor((int)core_.getImageWidth(), (int)core_.getImageHeight());
       } else if (byteDepth == 2) {
          ip = new ShortProcessor((int)core_.getImageWidth(), (int)core_.getImageHeight());
+      }else if( 3 <  byteDepth){
+         ip = new ColorProcessor((int)core_.getImageWidth(), (int)core_.getImageHeight());
       }
       else if (byteDepth == 0) {
          return;

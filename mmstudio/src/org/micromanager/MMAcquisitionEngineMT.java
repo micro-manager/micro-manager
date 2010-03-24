@@ -21,6 +21,7 @@ import ij.ImagePlus;
 import ij.io.FileSaver;
 import ij.measure.Calibration;
 import ij.process.ByteProcessor;
+import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 import ij.process.ShortProcessor;
@@ -30,7 +31,6 @@ import java.awt.Rectangle;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
-import java.awt.image.ColorModel;
 import java.awt.image.DirectColorModel;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -1155,6 +1155,10 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
       } else if (img instanceof short[]) {
          ip = new ShortProcessor(width, height);
          ip.setPixels((short[]) img);
+      }else if (img instanceof int[]){
+         ip = new ColorProcessor(width, height);
+         ip.setPixels((int[])img);
+
       } else {
          return false;
       }
@@ -1775,6 +1779,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
             chcal.setLabel(channels_.get(j).config_);
             img5d_[i].setChannelCalibration(j + 1, chcal);
             if( ImagePlus.COLOR_RGB == type)
+               //todo image channel could have a different type!!!
                img5d_[i].setChannelColorModel(j + 1, new DirectColorModel(32, 0xFF0000, 0xFF00, 0xFF));
             else
             // set color
@@ -2225,8 +2230,13 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
 
             ChannelSpec sp = channels_.get(channelIdx);
             ImageStatistics stats = img5d_[posIndexNormalized].getStatistics(); // get uncalibrated stats
+            if( 4==img5d_[channelIdx].getBytesPerPixel()){
+               // For RGB, need to set min to 0 so image will display correctly in Playback Panel
+               sp.min_ = 0.;
+            }else{
             if (stats.min < sp.min_) {
                sp.min_ = stats.min;
+            }
             }
             if (stats.max > sp.max_) {
                sp.max_ = stats.max;
