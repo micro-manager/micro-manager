@@ -339,11 +339,11 @@ TaskVector MMAcquisitionSequencer::generateMDASequence(MMRunnable * imageTask,
 
    if (acquisitionSettings_.channelsFirst)
    {
-      allTasks = NestTasks(sliceVector, allTasks);
       allTasks = NestTasks(channelVector, allTasks);
+      allTasks = NestTasks(sliceVector, allTasks);
    } else {
-      allTasks = NestTasks(channelVector, allTasks);
       allTasks = NestTasks(sliceVector, allTasks);
+      allTasks = NestTasks(channelVector, allTasks);
    }
 
    if (acquisitionSettings_.positionsFirst)
@@ -390,9 +390,6 @@ void MMAcquisitionSequencer::setAcquisitionSettings(AcquisitionSettings acquisit
 
 void MMAcquisitionEngine::runTest(AcquisitionSettings acquisitionSettings)
 {
-   acquisitionSettings.positionsFirst = true;
-   acquisitionSettings.channelsFirst = true;
-
    core_->logMessage("running acquisition engine test...");
    MMAcquisitionSequencer sequencer(core_, coreCallback_, acquisitionSettings);
    TaskVector taskVector = sequencer.generateTaskVector();

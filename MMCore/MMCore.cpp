@@ -4798,7 +4798,7 @@ void CMMCore::acqAfterStack() throw (CMMError)
 {
 }
 
-MMAcquisitionEngine * engine_;
+MMAcquisitionEngine * engine_ = NULL;
 
 void CMMCore::runAcquisitionEngineTest(AcquisitionSettings acquisitionSettings) throw (CMMError)
 {
@@ -4809,7 +4809,10 @@ void CMMCore::runAcquisitionEngineTest(AcquisitionSettings acquisitionSettings) 
 
 bool CMMCore::acquisitionIsFinished() throw (CMMError)
 {
-   return engine_->isFinished();
+   if (engine_ != NULL)
+      return engine_->isFinished();
+   else
+      return true;
 }
 
 

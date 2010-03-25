@@ -85,9 +85,10 @@ typedef vector<double> TimeSeries;
 typedef vector<MultiAxisPosition> PositionList;
 typedef vector<Channel> ChannelList;
 
-struct AcquisitionSettings
+class AcquisitionSettings
 {
 
+public:
    bool positionsFirst;
    bool channelsFirst;
    
@@ -100,6 +101,14 @@ struct AcquisitionSettings
    string autofocusDevice;
 
    bool saveImages;
+
+   AcquisitionSettings():
+      positionsFirst(true),
+      channelsFirst(true),
+      useAutofocus(false),
+      saveImages(false),
+      autofocusDevice("")
+   {}
 
 };
 
