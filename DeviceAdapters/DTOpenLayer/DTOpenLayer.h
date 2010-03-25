@@ -37,6 +37,7 @@
 #define ERR_WRITE_FAILED 103
 #define ERR_CLOSE_FAILED 104
 #define ERR_BOARD_NOT_FOUND 105
+#define DEVICE_RANGE_EXCEEDED 106
 
 class CDTOLShutter : public CShutterBase<CDTOLShutter>  
 {
@@ -117,7 +118,7 @@ public:
    int GetGateOpen(bool& open) {open = gateOpen_; return DEVICE_OK;}
    int SetSignal(double volts);
    int GetSignal(double& /*volts*/) {return DEVICE_UNSUPPORTED_COMMAND;}
-   int GetLimits(double& minVolts, double& maxVolts) {minVolts = minV_; maxVolts = maxV_; return DEVICE_OK;}
+   int GetLimits(double& minVolts, double& maxVolts);
 
    // action interface
    // ----------------
@@ -129,8 +130,6 @@ private:
 
    bool initialized_;
    bool busy_;
-   double minV_;
-   double maxV_;
    double volts_;
    double gatedVolts_;
    unsigned int encoding_;
@@ -138,6 +137,8 @@ private:
    unsigned channel_;
    std::string name_;
    bool gateOpen_;
+   double minV_;
+   double maxV_;
 };
 
 #endif //_DTOPENLAYER_H_
