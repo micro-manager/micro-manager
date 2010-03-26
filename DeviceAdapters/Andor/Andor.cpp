@@ -2573,7 +2573,7 @@ int AndorCamera::OnFrameTransfer(MM::PropertyBase* pProp, MM::ActionType eAct)
           iterLast = mapAmps.end();
           vAvailAmps.clear();
           for(iter = mapAmps.begin(); iter != iterLast; ++iter) {
-            unsigned int status = 0;//IsAmplifierAvailable(iter->second);
+            unsigned int status = IsAmplifierAvailable(iter->second);
             if(status == DRV_SUCCESS) {
               vAvailAmps.push_back(iter->first);
             }
@@ -2802,7 +2802,7 @@ int AndorCamera::OnADChannel(MM::PropertyBase* pProp, MM::ActionType eAct)
           iterLast = mapAmps.end();
           vAvailAmps.clear();
           for(iter = mapAmps.begin(); iter != iterLast; ++iter) {
-            unsigned int status = 0;//IsAmplifierAvailable(iter->second);
+            unsigned int status = IsAmplifierAvailable(iter->second);
             if(status == DRV_SUCCESS) {
               vAvailAmps.push_back(iter->first);
             }
