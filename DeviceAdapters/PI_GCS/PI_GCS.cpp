@@ -240,7 +240,7 @@ int PIZStage::SetPositionUm(double pos)
    if (ret != DEVICE_OK)
       return ret;
 
-   CDeviceUtils::SleepMs(15);
+   CDeviceUtils::SleepMs(20);
    // block/wait for acknowledge, or until we time out;
    return GetError();
 }
