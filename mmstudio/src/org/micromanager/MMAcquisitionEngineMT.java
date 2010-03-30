@@ -1995,8 +1995,13 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
          }
          catch( Exception e1)
          {
+            try    {
              ReportingUtils.logError(e1);
              ReportingUtils.displayNonBlockingMessage("acquisition snapAndRetrieve failed: " + e1.getMessage());
+            }  catch( Throwable t ){
+               System.out.println("error attempting to display error: " + e1.getLocalizedMessage() );
+            }
+
          }
 
          if (originalAutoShutterSetting_ == true && core_.getAutoShutter() == false && shutterIsOpen_ == true) {
@@ -2230,7 +2235,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
 
             ChannelSpec sp = channels_.get(channelIdx);
             ImageStatistics stats = img5d_[posIndexNormalized].getStatistics(); // get uncalibrated stats
-            if( 4==img5d_[channelIdx].getBytesPerPixel()){
+            if( 4==img5d_[posIndexNormalized].getBytesPerPixel()){
                // For RGB, need to set min to 0 so image will display correctly in Playback Panel
                sp.min_ = 0.;
             }else{
