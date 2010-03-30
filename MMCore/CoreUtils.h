@@ -30,8 +30,9 @@
 //#include "ace/Log_Msg.h"
 
 //#include "../../3rdparty/boost/boost/date_time/posix_time/posix_time.hpp"
+#pragma warning(push, 0)
 #include "boost/date_time/posix_time/posix_time.hpp"
-
+#pragma warning(pop)
 
 #define CORE_LOG_PREFIX "LOG(%P, %t:): "
 
