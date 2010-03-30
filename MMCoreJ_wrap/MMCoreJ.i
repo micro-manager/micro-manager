@@ -178,6 +178,25 @@
 
       $result = data;
    }
+   else if ((arg1)->getBytesPerPixel() == 8)
+   {
+      // create a new int[] object in Java
+      jintArray data = JCALL1(NewIntArray, jenv, lSize * numComponents *2);
+      if (data == 0)
+      {
+         jclass excep = jenv->FindClass("java/lang/Exception");
+		 if (excep)
+			jenv->ThrowNew(excep, "The system ran out of memory!");
+		$result = 0;
+		return $result;
+	  }
+	  
+      // copy pixels from the image buffer
+      JCALL4(SetIntArrayRegion, jenv, data, 0, lSize*2, (jint*)result);
+
+      $result = data;
+   }
+
    else
    {
       // don't know how to map
