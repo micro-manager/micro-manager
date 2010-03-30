@@ -30,10 +30,10 @@
 #include <math.h>
 #include "../../MMDevice/ModuleInterface.h"
 #include "../../MMCore/Error.h"
+#include <boost/math/constants/constants.hpp>
 #include <sstream>
 #include <algorithm>
 using namespace std;
-const int CDemoCamera::imageSize_;
 const double CDemoCamera::nominalPixelSizeUm_ = 1.0;
 double g_IntensityFactor_ = 1.0;
 
@@ -196,7 +196,10 @@ CDemoCamera::CDemoCamera() :
    bitDepth_(8),
    roiX_(0),
    roiY_(0),
-   errorSimulation_(false)
+   errorSimulation_(false),
+	binSize_(1),
+	cameraCCDXSize_(512),
+	cameraCCDYSize_(512)
 {
    // call the base class method to set-up default error codes/messages
    InitializeDefaultErrorMessages();
@@ -279,8 +282,7 @@ int CDemoCamera::Initialize()
    pixelTypeValues.push_back(g_PixelType_8bit);
    pixelTypeValues.push_back(g_PixelType_16bit); 
 	pixelTypeValues.push_back(g_PixelType_32bitRGB);
-	// no support in GUI yet 
-	//pixelTypeValues.push_back(g_PixelType_64bitRGB);
+	pixelTypeValues.push_back(g_PixelType_64bitRGB);
 
    nRet = SetAllowedValues(MM::g_Keyword_PixelType, pixelTypeValues);
    if (nRet != DEVICE_OK)
@@ -302,7 +304,7 @@ int CDemoCamera::Initialize()
       return nRet;
 
    // exposure
-   nRet = CreateProperty(MM::g_Keyword_Exposure, "100.0", MM::Float, false);
+   nRet = CreateProperty(MM::g_Keyword_Exposure, "10.0", MM::Float, false);
    assert(nRet == DEVICE_OK);
    SetPropertyLimits(MM::g_Keyword_Exposure, 0, 10000);
 
@@ -344,6 +346,12 @@ int CDemoCamera::Initialize()
    AddAllowedValue("ErrorSimulation", "0");
    AddAllowedValue("ErrorSimulation", "1");
    assert(nRet == DEVICE_OK);
+
+	// CCD size of the camera we are modeling
+   pAct = new CPropertyAction (this, &CDemoCamera::OnCameraCCDXSize);
+   CreateProperty("OnCameraCCDXSize", "512", MM::Integer, false, pAct);
+   pAct = new CPropertyAction (this, &CDemoCamera::OnCameraCCDYSize);
+   CreateProperty("OnCameraCCDYSize", "512", MM::Integer, false, pAct);
 
    // synchronize all properties
    // --------------------------
@@ -625,9 +633,9 @@ int CDemoCamera::GetBinning() const
 * Sets binning factor.
 * Required by the MM::Camera API.
 */
-int CDemoCamera::SetBinning(int binFactor)
+int CDemoCamera::SetBinning(int binF)
 {
-   return SetProperty(MM::g_Keyword_Binning, CDeviceUtils::ConvertToString(binFactor));
+   return SetProperty(MM::g_Keyword_Binning, CDeviceUtils::ConvertToString(binF));
 }
 
 int CDemoCamera::SetAllowedBinning() 
@@ -683,29 +691,20 @@ int CDemoCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 
          // the user just set the new value for the property, so we have to
          // apply this value to the 'hardware'.
+			long oldBin = binSize_;
          long binFactor;
          pProp->Get(binFactor);
-         const long imageSize(512);
-
-         if (binFactor > 0 && binFactor < 10)
-         {
-            img_.Resize(imageSize/binFactor, imageSize/binFactor);
-            ret=DEVICE_OK;
-         }
-         else
-         {
-            // on failure reset default binning of 1
-            img_.Resize(imageSize, imageSize);
-            pProp->Set(1L);
-            ret = ERR_UNKNOWN_MODE;
-         }
+			if(( oldBin != binFactor) && (binFactor > 0 && binFactor < 10))
+			{
+				img_.Resize(cameraCCDXSize_/binFactor, cameraCCDYSize_/binFactor);
+				binSize_ = binFactor;
+				ret=DEVICE_OK;
+			}
       }break;
    case MM::BeforeGet:
       {
-         // the user is requesting the current value for the property, so
-         // either ask the 'hardware' or let the system return the value
-         // cached in the property.
          ret=DEVICE_OK;
+			pProp->Set(binSize_);
       }break;
    }
    return ret; 
@@ -859,8 +858,6 @@ int CDemoCamera::OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct)
 			{
 				bytesPerPixel = 8;
 			}
-			
-
 			img_.Resize(img_.Width(), img_.Height(), bytesPerPixel);
 
       } break;
@@ -939,6 +936,53 @@ int CDemoCamera::OnScanMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 }
 
 
+
+
+int CDemoCamera::OnCameraCCDXSize(MM::PropertyBase* pProp , MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+		pProp->Set(cameraCCDXSize_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      long value;
+      pProp->Get(value);
+		if ( (value < 16) || (33000 < value))
+			return DEVICE_ERR;  // invalid image size
+		if( value != cameraCCDXSize_)
+		{
+			cameraCCDXSize_ = value;
+			img_.Resize(cameraCCDXSize_/binSize_, cameraCCDYSize_/binSize_);
+		}
+   }
+	return DEVICE_OK;
+
+}
+
+int CDemoCamera::OnCameraCCDYSize(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+		pProp->Set(cameraCCDYSize_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      long value;
+      pProp->Get(value);
+		if ( (value < 16) || (33000 < value))
+			return DEVICE_ERR;  // invalid image size
+		if( value != cameraCCDYSize_)
+		{
+			cameraCCDYSize_ = value;
+			img_.Resize(cameraCCDXSize_/binSize_, cameraCCDYSize_/binSize_);
+		}
+   }
+	return DEVICE_OK;
+
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////
 // Private CDemoCamera methods
 ///////////////////////////////////////////////////////////////////////////////
@@ -949,20 +993,36 @@ int CDemoCamera::OnScanMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 int CDemoCamera::ResizeImageBuffer()
 {
    char buf[MM::MaxStrLength];
-   int ret = GetProperty(MM::g_Keyword_Binning, buf);
+   //int ret = GetProperty(MM::g_Keyword_Binning, buf);
+   //if (ret != DEVICE_OK)
+   //   return ret;
+   //binSize_ = atol(buf);
+
+   int ret = GetProperty(MM::g_Keyword_PixelType, buf);
    if (ret != DEVICE_OK)
       return ret;
-   long binSize = atol(buf);
 
-   ret = GetProperty(MM::g_Keyword_PixelType, buf);
-   if (ret != DEVICE_OK)
-      return ret;
+	std::string pixelType(buf);
+	int byteDepth = 0;
 
-   int byteDepth = 1;
-   if (strcmp(buf, g_PixelType_16bit) == 0)
+   if (pixelType.compare(g_PixelType_8bit) == 0)
+   {
+      byteDepth = 1;
+   }
+   else if (pixelType.compare(g_PixelType_16bit) == 0)
+   {
       byteDepth = 2;
+   }
+	else if ( pixelType.compare(g_PixelType_32bitRGB) == 0)
+	{
+      byteDepth = 4;
+	}
+	else if ( pixelType.compare(g_PixelType_64bitRGB) == 0)
+	{
+      byteDepth = 8;
+	}
 
-   img_.Resize(imageSize_/binSize, imageSize_/binSize, byteDepth);
+   img_.Resize(cameraCCDXSize_/binSize_, cameraCCDYSize_/binSize_, byteDepth);
    return DEVICE_OK;
 }
 
@@ -979,7 +1039,7 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
 	if (img.Height() == 0 || img.Width() == 0 || img.Depth() == 0)
       return;
 
-   const double cPi = 3.14;
+   const double cPi = boost::math::constants::pi<double>();
    long lPeriod = img.Width()/2;
    static double dPhase = 0.0;
    double dLinePhase = 0.0;
@@ -1037,8 +1097,11 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
          dLinePhase += cLinePhaseInc;
       }
 	}
+
+	// generate an RGB image with bitDepth_ bits in each color
 	else if (pixelType.compare(g_PixelType_64bitRGB) == 0)
 	{
+		double maxPixelValue = (1<<(bitDepth_))-1;
       double pedestal = 127 * exp / 100.0;
       unsigned long long * pBuf = (unsigned long long*) img.GetPixelsRW();
       for (j=0; j<img.Height(); j++)
@@ -1046,9 +1109,9 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
          for (k=0; k<img.Width(); k++)
          {
             long lIndex = img.Width()*j + k;
-            unsigned long long value0 = (unsigned char) min(255.0, (pedestal + dAmp * sin(dPhase + dLinePhase + (2.0 * cPi * k) / lPeriod)));
-            unsigned long long value1 = (unsigned char) min(255.0, (pedestal + dAmp * sin(dPhase + dLinePhase*2 + (2.0 * cPi * k) / lPeriod)));
-            unsigned long long value2 = (unsigned char) min(255.0, (pedestal + dAmp * sin(dPhase + dLinePhase*4 + (2.0 * cPi * k) / lPeriod)));
+            unsigned long long value0 = (unsigned char) min(maxPixelValue, (pedestal + dAmp * sin(dPhase + dLinePhase + (2.0 * cPi * k) / lPeriod)));
+            unsigned long long value1 = (unsigned char) min(maxPixelValue, (pedestal + dAmp * sin(dPhase + dLinePhase*2 + (2.0 * cPi * k) / lPeriod)));
+            unsigned long long value2 = (unsigned char) min(maxPixelValue, (pedestal + dAmp * sin(dPhase + dLinePhase*4 + (2.0 * cPi * k) / lPeriod)));
             unsigned long long tval = value0+(value1<<16)+(value2<<32);
          *(pBuf + lIndex) = tval;
 			}

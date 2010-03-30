@@ -77,7 +77,7 @@ public:
    double GetNominalPixelSizeUm() const {return nominalPixelSizeUm_;}
    double GetPixelSizeUm() const {return nominalPixelSizeUm_ * GetBinning();}
    int GetBinning() const;
-   int SetBinning(int binSize);
+   int SetBinning(int bS);
 
    // action interface
    // ----------------
@@ -91,10 +91,11 @@ public:
    int OnReadoutTime(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnScanMode(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnErrorSimulation(MM::PropertyBase* , MM::ActionType );
+   int OnCameraCCDXSize(MM::PropertyBase* , MM::ActionType );
+   int OnCameraCCDYSize(MM::PropertyBase* , MM::ActionType );
 
 private:
    int SetAllowedBinning();
-   static const int imageSize_=512;
    static const double nominalPixelSizeUm_;
 
    ImgBuffer img_;
@@ -106,6 +107,9 @@ private:
    unsigned roiX_;
    unsigned roiY_;
    bool errorSimulation_;
+	long binSize_;
+	long cameraCCDXSize_;
+	long cameraCCDYSize_;
 
    void GenerateSyntheticImage(ImgBuffer& img, double exp);
    int ResizeImageBuffer();
