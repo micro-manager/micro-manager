@@ -32,7 +32,7 @@
    #define snprintf _snprintf 
 #endif
 
-#include "SimpleAF.h"
+#include "SimpleAutofocus.h"
 #include "../../MMDevice/ModuleInterface.h"
 #include <string>
 #include <cmath>
@@ -163,8 +163,8 @@ int FocusMonitor::Process(unsigned char* buffer, unsigned width, unsigned height
       return DEVICE_OK; // processor inactive
 
    // verify dimensions
-   scorer_.SetImage(buffer, width, height, byteDepth);
-   double score = scorer_.GetScore(false);
+  // scorer_.SetImage(buffer, width, height, byteDepth);
+   double score = 0.0; // scorer_.GetScore(false);
 
    // keep size constant
    if (scoreQueue_.size() == QUEUE_SIZE)

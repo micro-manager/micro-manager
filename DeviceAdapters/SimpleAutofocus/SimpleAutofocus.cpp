@@ -58,6 +58,8 @@
 // property names:
 // Controller
 const char* g_ControllerName = "SimpleAutofocus";
+const char* g_FocusMonitorDeviceName = "FocusMonitor";
+const char* g_TPFocusDeviceName = "TPFocus";
 
 const bool messageDebug = false;
 
@@ -141,6 +143,8 @@ public:
 MODULE_API void InitializeModuleData()
 {
    AddAvailableDeviceName(g_ControllerName, "SimpleAutofocus Finder");
+   AddAvailableDeviceName(g_FocusMonitorDeviceName, "Focus score monitor - 100XImaging Inc.");
+   AddAvailableDeviceName(g_TPFocusDeviceName, "Three point focus - 100XImaging Inc.");
    
 }
 
@@ -154,6 +158,16 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
       // create Controller
       SimpleAutofocus* pSimpleAutofocus = new SimpleAutofocus(g_ControllerName);
       return pSimpleAutofocus;
+   }
+   if (strcmp(deviceName, g_FocusMonitorDeviceName) == 0)
+   {
+      // create autoFocus
+      return new FocusMonitor();
+   }
+   if (strcmp(deviceName, g_TPFocusDeviceName) == 0)
+   {
+      // create autoFocus
+      return new ThreePointAF();
    }
 
    return 0;

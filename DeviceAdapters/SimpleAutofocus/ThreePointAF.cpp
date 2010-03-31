@@ -32,8 +32,8 @@
    #define snprintf _snprintf 
 #endif
 
-#include "SimpleAF.h"
-#include "ModuleInterface.h"
+#include "SimpleAutofocus.h"
+#include "../../MMDevice/ModuleInterface.h"
 #include <cmath>
 #include <sstream>
 
