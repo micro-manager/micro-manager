@@ -652,6 +652,13 @@ public class ContrastPanel extends JPanel implements ImageController, PropertyCh
 		if (cs8bit_ == null || cs16bit_ == null)
 			return;
 
+      int theType = image_.getType();
+      if(ImagePlus.COLOR_RGB ==theType)
+      {
+         image_.getProcessor().reset();
+         image_.getProcessor().snapshot();
+      }
+
 		if (image_.getProcessor() != null) {
 			// record settings
 			if (image_.getProcessor() instanceof ShortProcessor) {
