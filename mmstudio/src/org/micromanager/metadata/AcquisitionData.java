@@ -34,10 +34,10 @@ import ij.io.FileSaver;
 import ij.io.Opener;
 import ij.measure.Calibration;
 import ij.process.ByteProcessor;
+import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 import ij.process.ShortProcessor;
-import ij.process.ColorProcessor;
 
 import java.awt.Color;
 import java.io.BufferedReader;
@@ -53,14 +53,12 @@ import java.util.GregorianCalendar;
 import java.util.Hashtable;
 import java.util.Iterator;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.micromanager.utils.ReportingUtils;
 
 import com.quirkware.guid.PlatformIndependentGuidGen;
-import org.micromanager.utils.ReportingUtils;
 
 /**
  * Encapsulation of the acquisition data files.
