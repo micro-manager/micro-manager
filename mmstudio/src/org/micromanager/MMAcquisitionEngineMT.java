@@ -195,7 +195,10 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
 
          if (useMultiplePositions_ && posMode_ == PositionMode.TIME_LAPSE) {
             for (int i = 0; i < posList_.getNumberOfPositions(); i++) {
-               acquireOneFrame(i);
+               if (isRunning())
+                  acquireOneFrame(i);
+               else
+                  break;
             }
          } else {
             acquireOneFrame(posCount_);
