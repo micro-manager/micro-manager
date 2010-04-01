@@ -1,0 +1,19 @@
+import org.micromanager.image5d.*;
+import ij.*;
+
+nSlices = 5;
+nChannels = 2;
+nFrames = 1000;
+
+acqPath = "/Users/arthur/virtualStack/virtualStackTest3_0";
+
+virtualStack = new VirtualStack(512,512,null,acqPath);
+acqDir = new File(acqPath);
+File[] files = acqDir.listFiles();
+for (file:files) {
+	if (file.getName().endsWith(".tif"))
+		virtualStack.addSlice(file.getName());
+}
+
+img5d = new Image5D("virtualStackTest", virtualStack, nChannels,nSlices,nFrames);
+img5d.show();
