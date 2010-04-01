@@ -4,7 +4,7 @@ from scipy import weave
 from scipy.optimize import minpack
 from numpy import linalg
 
-useNLLS = False
+useNLLS = True
 
 hw = 3
 
@@ -109,7 +109,7 @@ def fitGaussianLLS(xp,yp,patch):
 	#print(time.time()-tA)
 	return result
 	
-threshold = 250
+threshold = 1200
 
 xp,yp = mgrid[0:(2*hw+1),0:(2*hw+1)]
 
@@ -129,8 +129,8 @@ while True:
 		break
 t2 = time.time()
 n = len(molList)
-print("%f s per molecule" % ((t2-t1)/N,))
+print("%f s per molecule" % ((t2-t1)/n,))
 
-fakeMolList = sort(zip(x0s, y0s),0)
-detectedMolList = sort(molList,0)
-print detectedMolList - fakeMolList
+#fakeMolList = sort(zip(x0s, y0s),0)
+#detectedMolList = sort(molList,0)
+#print detectedMolList - fakeMolList
