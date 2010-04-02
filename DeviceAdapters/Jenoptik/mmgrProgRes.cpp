@@ -209,6 +209,7 @@ m_TriggerIn(0)
 	SetErrorText(ERR_ACQ_TRIGGER_ABORTED, "Wait for trigger aborted by user");
 	readoutStartTime_ = GetCurrentMMTime();
 	InitializeCriticalSection (&m_CSec);
+   LogMessage("CProgRes ctor completed", true); 
 }
 
 /**
@@ -222,6 +223,7 @@ CProgRes::~CProgRes()
 {
 	ATLTRACE ("%s\n",__FUNCTION__);
 	DeleteCriticalSection (&m_CSec);
+   LogMessage("CProgRes dtor completed", true); 
 }
 
 /**
@@ -266,11 +268,13 @@ int CProgRes::Initialize()
 		return DEVICE_OK;
 
 	// Load SDK
+   LogMessage("CProgRes attempt LoadMexDLL", true); 
 	status = LoadMexDLL(0, NULL, "mmgr_dal_ProgRes.dll", FALSE);
 	if (status == 0)
 		return DEVICE_ERR;
 
 	// Init both FireWire and USB cameras
+   LogMessage("CProgRes attempt mexInit2", true); 
 	status = mexInit2(NULL,0UL,(unsigned long)(mex_firewire_cameras | mex_usb_cameras | mex_usb_heartbeat_off), NULL);
 	if (status != NOERR)
 	{
@@ -634,7 +638,7 @@ unsigned int CProgRes::GetNumberOfChannels() const
 int CProgRes::GetChannelName(unsigned int channel, char* name)
 {
 	ATLTRACE ("%s\n",__FUNCTION__);
-   int ret=DEVICE_ERR;
+    int ret = DEVICE_OK;
    if(channel == 0)
    {
       CDeviceUtils::CopyLimitedString(name, g_ChannelName);
@@ -962,7 +966,7 @@ int CProgRes::SetBinning(int binFactor)
 
 int CProgRes::SetPixelTypesValues(){
 	ATLTRACE ("%s\n",__FUNCTION__);
-   int ret = DEVICE_ERR;
+   int ret = DEVICE_OK;
    vector<string> pixelTypeValues;
    if(color_)
    {
@@ -986,7 +990,7 @@ int CProgRes::SetPixelTypesValues(){
 int CProgRes::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	ATLTRACE ("%s\n",__FUNCTION__);
-	int ret = DEVICE_ERR;
+	 int ret = DEVICE_OK;
 	pProp;
 
 	switch(eAct)
@@ -1007,7 +1011,7 @@ int CProgRes::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 int CProgRes::OnSnapUseBlackRef(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	ATLTRACE ("%s\n",__FUNCTION__);
-   int ret = DEVICE_ERR;
+   int ret = DEVICE_OK;
    switch(eAct)
    {
    case MM::AfterSet:
@@ -1032,7 +1036,7 @@ int CProgRes::OnSnapUseBlackRef(MM::PropertyBase* pProp, MM::ActionType eAct)
 int CProgRes::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	ATLTRACE ("%s\n",__FUNCTION__);
-	int ret = DEVICE_ERR;
+	 int ret = DEVICE_OK;
    switch(eAct)
    {
    case MM::AfterSet:
@@ -1102,7 +1106,7 @@ int CProgRes::OnReadoutTime(MM::PropertyBase* pProp, MM::ActionType eAct)
 int CProgRes::OnColorMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	ATLTRACE ("%s\n",__FUNCTION__);
-   int ret = DEVICE_ERR;
+   int ret = DEVICE_OK;
 
    if (eAct == MM::AfterSet)
    {
@@ -1147,7 +1151,7 @@ int CProgRes::OnColorMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 int CProgRes::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	ATLTRACE ("%s\n",__FUNCTION__);
-   int ret = DEVICE_ERR;
+   int ret = DEVICE_OK;
 
    if (eAct == MM::AfterSet)
    {
@@ -1175,7 +1179,7 @@ int CProgRes::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
 int CProgRes::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	ATLTRACE ("%s\n",__FUNCTION__);
-	int ret = DEVICE_ERR;
+	 int ret = DEVICE_OK;
 
 	if (eAct == MM::AfterSet)
 	{
@@ -1225,7 +1229,7 @@ int CProgRes::OnAcqMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 int CProgRes::OnGammaEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	ATLTRACE ("%s\n",__FUNCTION__);
-	int ret = DEVICE_ERR;
+	 int ret = DEVICE_OK;
 
 	if (eAct == MM::AfterSet)
 	{
@@ -1252,7 +1256,7 @@ int CProgRes::OnGammaEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 int CProgRes::OnGammaValue(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	ATLTRACE ("%s\n",__FUNCTION__);
-	int ret = DEVICE_ERR;
+	 int ret = DEVICE_OK;
 
 	if (eAct == MM::AfterSet)
 	{
@@ -1282,7 +1286,7 @@ int CProgRes::OnGammaValue(MM::PropertyBase* pProp, MM::ActionType eAct)
 int CProgRes::OnWBRed(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	ATLTRACE ("%s\n",__FUNCTION__);
-	int ret = DEVICE_ERR;
+	 int ret = DEVICE_OK;
 
 	if (eAct == MM::AfterSet)
 	{
@@ -1306,7 +1310,7 @@ int CProgRes::OnWBRed(MM::PropertyBase* pProp, MM::ActionType eAct)
 int CProgRes::OnWBGreen(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	ATLTRACE ("%s\n",__FUNCTION__);
-	int ret = DEVICE_ERR;
+	 int ret = DEVICE_OK;
 
 	if (eAct == MM::AfterSet)
 	{
@@ -1330,7 +1334,7 @@ int CProgRes::OnWBGreen(MM::PropertyBase* pProp, MM::ActionType eAct)
 int CProgRes::OnWBBlue(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	ATLTRACE ("%s\n",__FUNCTION__);
-	int ret = DEVICE_ERR;
+	 int ret = DEVICE_OK;
 
 	if (eAct == MM::AfterSet)
 	{
@@ -1358,7 +1362,7 @@ int CProgRes::OnWBBlue(MM::PropertyBase* pProp, MM::ActionType eAct)
 int CProgRes::OnFocusState(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	ATLTRACE ("%s\n",__FUNCTION__);
-	int ret = DEVICE_ERR;
+	 int ret = DEVICE_OK;
 
 	if (eAct == MM::AfterSet)
 	{
@@ -1388,7 +1392,7 @@ int CProgRes::OnFocusState(MM::PropertyBase* pProp, MM::ActionType eAct)
 int CProgRes::OnFocusRed(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	ATLTRACE ("%s\n",__FUNCTION__);
-	int ret = DEVICE_ERR;
+	 int ret = DEVICE_OK;
 
 	if (eAct == MM::AfterSet)
 	{
@@ -1415,7 +1419,7 @@ int CProgRes::OnFocusRed(MM::PropertyBase* pProp, MM::ActionType eAct)
 int CProgRes::OnFocusGreen(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	ATLTRACE ("%s\n",__FUNCTION__);
-	int ret = DEVICE_ERR;
+	 int ret = DEVICE_OK;
 
 	if (eAct == MM::AfterSet)
 	{
@@ -1442,7 +1446,7 @@ int CProgRes::OnFocusGreen(MM::PropertyBase* pProp, MM::ActionType eAct)
 int CProgRes::OnFocusBlue(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	ATLTRACE ("%s\n",__FUNCTION__);
-	int ret = DEVICE_ERR;
+	 int ret = DEVICE_OK;
 
 	if (eAct == MM::AfterSet)
 	{
@@ -1469,7 +1473,7 @@ int CProgRes::OnFocusBlue(MM::PropertyBase* pProp, MM::ActionType eAct)
 int CProgRes::OnFocusValue(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	ATLTRACE ("%s\n",__FUNCTION__);
-	int ret = DEVICE_ERR;
+	 int ret = DEVICE_OK;
 	if (eAct == MM::BeforeGet)
 	{
 		pProp->Set(m_FocusValue);
@@ -1485,7 +1489,7 @@ int CProgRes::OnFocusValue(MM::PropertyBase* pProp, MM::ActionType eAct)
 int CProgRes::OnEqualizerEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	ATLTRACE ("%s\n",__FUNCTION__);
-	int ret = DEVICE_ERR;
+	 int ret = DEVICE_OK;
 
 	if (eAct == MM::AfterSet)
 	{
@@ -1512,7 +1516,7 @@ int CProgRes::OnEqualizerEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 int CProgRes::OnEqualizerLimit(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	ATLTRACE ("%s\n",__FUNCTION__);
-	int ret = DEVICE_ERR;
+	 int ret = DEVICE_OK;
 
 	if (eAct == MM::AfterSet)
 	{
@@ -1542,7 +1546,7 @@ int CProgRes::OnEqualizerLimit(MM::PropertyBase* pProp, MM::ActionType eAct)
 int CProgRes::OnSaturationMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	ATLTRACE ("%s\n",__FUNCTION__);
-	int ret = DEVICE_ERR;
+	 int ret = DEVICE_OK;
 
 	if (eAct == MM::AfterSet)
 	{
@@ -1569,7 +1573,7 @@ int CProgRes::OnSaturationMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 int CProgRes::OnSaturationValue(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	ATLTRACE ("%s\n",__FUNCTION__);
-	int ret = DEVICE_ERR;
+	 int ret = DEVICE_OK;
 
 	if (eAct == MM::AfterSet)
 	{
@@ -1599,7 +1603,7 @@ int CProgRes::OnSaturationValue(MM::PropertyBase* pProp, MM::ActionType eAct)
 int CProgRes::OnCameraCooling(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	ATLTRACE ("%s\n",__FUNCTION__);
-	int ret = DEVICE_ERR;
+	 int ret = DEVICE_OK;
 
 	if (eAct == MM::AfterSet)
 	{
@@ -1629,7 +1633,7 @@ int CProgRes::OnCameraCooling(MM::PropertyBase* pProp, MM::ActionType eAct)
 int CProgRes::OnTriggerInEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	ATLTRACE ("%s\n",__FUNCTION__);
-	int ret = DEVICE_ERR;
+	 int ret = DEVICE_OK;
 
 	if (eAct == MM::AfterSet)
 	{
@@ -1680,7 +1684,7 @@ int CProgRes::OnTriggerInEnable(MM::PropertyBase* pProp, MM::ActionType eAct)
 int CProgRes::OnTriggerOutOnStartExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	ATLTRACE ("%s\n",__FUNCTION__);
-	int ret = DEVICE_ERR;
+	 int ret = DEVICE_OK;
 
 	if (eAct == MM::AfterSet)
 	{
@@ -1721,7 +1725,7 @@ int CProgRes::OnTriggerOutOnStartExposure(MM::PropertyBase* pProp, MM::ActionTyp
 int CProgRes::OnTriggerOutOnEndExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	ATLTRACE ("%s\n",__FUNCTION__);
-	int ret = DEVICE_ERR;
+	 int ret = DEVICE_OK;
 
 	if (eAct == MM::AfterSet)
 	{
@@ -1761,7 +1765,7 @@ int CProgRes::OnTriggerOutOnEndExposure(MM::PropertyBase* pProp, MM::ActionType 
 int CProgRes::OnTriggerOutOnEndTransfer(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	ATLTRACE ("%s\n",__FUNCTION__);
-	int ret = DEVICE_ERR;
+	 int ret = DEVICE_OK;
 
 	if (eAct == MM::AfterSet)
 	{
@@ -1802,7 +1806,7 @@ int CProgRes::OnTriggerOutOnEndTransfer(MM::PropertyBase* pProp, MM::ActionType 
 int CProgRes::OnTriggerOutLevel(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	ATLTRACE ("%s\n",__FUNCTION__);
-	int ret = DEVICE_ERR;
+	 int ret = DEVICE_OK;
 
 	if (eAct == MM::AfterSet)
 	{

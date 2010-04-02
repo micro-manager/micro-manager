@@ -435,7 +435,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\3rdparty\Jenoptik\sdk\MexExlImplement.c"
+				RelativePath=".\MexExlImplement.c"
 				>
 			</File>
 			<File
