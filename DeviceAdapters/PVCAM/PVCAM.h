@@ -99,6 +99,8 @@ typedef struct
    TMap enumMap;
 } SParam;
 
+class AcqSequenceThread;
+
 /*Class used by post processing, a list of these elements is built up one for each post processing function so the call back function 
    in CPropertyActionEx can get to information about that particular feature in the call back function*/
 class PProc 
@@ -191,13 +193,15 @@ public:
    int OnTemperature(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTemperatureSetPoint(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnUniversalProperty(MM::PropertyBase* pProp, MM::ActionType eAct, long index);
-#ifdef WIN32  //This is only compiled for Windows at the moment
+#ifdef WIN32 //This is only compiled for Windows and Mac at the moment
    int OnResetPostProcProperties(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPostProcProperties(MM::PropertyBase* pProp, MM::ActionType eAct, long index);
    int OnActGainProperties(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnReadNoiseProperties(MM::PropertyBase* pProp, MM::ActionType eAct);
-	int OnSetBias(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSetBias(MM::PropertyBase* pProp, MM::ActionType eAct);
 #endif
+   int OnTriggerMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnTriggerTimeOut(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    // Thread-safe param access:
    rs_bool PlSetParamSafe(int16 hcam, uns32 param_id, void_ptr param_value);
@@ -210,6 +214,7 @@ public:
                                      uns32 length);
    rs_bool PlEnumStrLengthSafe(int16 hcam, uns32 param_id, uns32 index,
                                       uns32_ptr length);
+   bool IsCapturing();
 
 protected:
 #ifndef linux
@@ -217,6 +222,7 @@ protected:
    void OnThreadExiting() throw();
 #endif
    int PushImage();
+   int PushImage2(void* pixBuffer);
 
 private:
    rgn_type newRegion;
@@ -241,48 +247,78 @@ private:
    int ResumeSequence();
    bool WaitForExposureDone() throw();
    int LaunchSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow);
+   MM::MMTime GetCurrentTime() { return GetCurrentMMTime();}
 
    // Utility logging functions
    int16 LogCamError(int lineNr, std::string message="", bool debug=false) throw();
    int LogMMError(int errCode, int lineNr, std::string message="", bool debug=false) const throw();
    void LogMMMessage(int lineNr, std::string message="", bool debug=true) const throw();
 
-   bool restart_;
-   int16 bitDepth_;
+   bool             restart_;
+   int16            bitDepth_;
    int x_, y_, width_, height_, xBin_, yBin_, bin_;
-   ROI roi_;
-   bool initialized_;
-   bool busy_;
-   long numImages_;
-   short hPVCAM_; // handle to the driver
-   static unsigned refCount_;
-   static bool PVCAM_initialized_;
-   ImgBuffer img_;
-   rs_bool gainAvailable_;
-   double exposure_;
-   unsigned binSize_;
-   bool bufferOK_;
-   MM::MMTime startTime_;
-   long imageCounter_;
+   ROI              roi_;
+   bool             initialized_;
+   bool             busy_;
+   long             numImages_;
+   long             imageCounter_;
+   long             curImageCnt_;
+   short            hPVCAM_; // handle to the driver
+   static unsigned  refCount_;
+   static bool      PVCAM_initialized_;
+   ImgBuffer        img_;
+   rs_bool          gainAvailable_;
+   double           exposure_;
+   unsigned         binSize_;
+   bool             bufferOK_;
+   MM::MMTime       startTime_;
 
    std::map<std::string, int> portMap_;
    std::map<std::string, int> rateMap_;
 
-   short cameraId_;
-   std::string name_;
-   std::string chipName_;
-   uns32 nrPorts_;
-   unsigned short* circBuffer_;
-   unsigned long bufferSize_; // circular buffer size
-   bool stopOnOverflow_;
-   MMThreadLock imgLock_;
-   bool snappingSingleFrame_;
-   MMThreadLock snappingSingleFrame_Lock_;
-   bool singleFrameModeReady_;
-   MMThreadLock singleFrameModeReady_Lock_;
-   bool use_pl_exp_check_status_;
-   bool sequenceModeReady_;
+   short            cameraId_;
+   std::string      name_;
+   std::string      chipName_;
+   uns32            nrPorts_;
+   unsigned short*  circBuffer_;
+   unsigned long    bufferSize_; // circular buffer size
+   bool             stopOnOverflow_;
+   MMThreadLock     imgLock_;
+   bool             snappingSingleFrame_;
+   MMThreadLock     snappingSingleFrame_Lock_;
+   bool             singleFrameModeReady_;
+   MMThreadLock     singleFrameModeReady_Lock_;
+   bool             sequenceModeReady_;
+   unsigned short * nxtFrame_;
+   long             circFrameSize_;
+   long             timeOutBase;
 
+   friend class AcqSequenceThread;
+   AcqSequenceThread*   uniAcqThd_;             // Pointer to the sequencing thread
+
+};
+
+/*
+ * Acquisition thread
+ */
+class AcqSequenceThread : public MMDeviceThreadBase
+{
+   public:
+      AcqSequenceThread(Universal* camera) : 
+         stop_(false), acquiring_(false), camera_(camera) {}
+      ~AcqSequenceThread() {}
+      int svc (void);
+
+      void Stop() {stop_ = true;}
+      bool getStop() {return stop_;}
+      bool IsAcquiring()  {return acquiring_;}
+      void SetAcquire(bool val)  {acquiring_ = val;}
+      void Start() {stop_ = false; activate();}
+    
+   private:
+      bool stop_;
+      bool acquiring_;
+      Universal* camera_;
 };
 
 #endif //_PVCAM_H_
