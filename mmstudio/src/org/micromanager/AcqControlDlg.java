@@ -1612,7 +1612,8 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
     protected void loadAcqSettingsFromFile() {
         JFileChooser fc = new JFileChooser();
         fc.addChoosableFileFilter(new AcqFileFilter());
-        acqDir_ = prefs_.get(ACQ_FILE_DIR, null);
+        if (null != prefs_)
+           acqDir_ = prefs_.get(ACQ_FILE_DIR, null);
 
         if (acqDir_ != null) {
             fc.setCurrentDirectory(new File(acqDir_));

@@ -512,6 +512,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          }
       };
 
+
       liveModeTimer_ = new Timer((int) liveModeInterval_, liveModeTimerHandler);
       liveModeTimer_.stop();
 

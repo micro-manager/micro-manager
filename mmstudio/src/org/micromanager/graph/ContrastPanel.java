@@ -559,6 +559,12 @@ public class ContrastPanel extends JPanel implements ImageController, PropertyCh
       //varField_.setText(Double.toString(Double.valueOf(twoDForm_.format(stats.stdDev))));
       varField_.setText(NumberUtils.doubleToDisplayString(stats.stdDev));
 
+      if (min_ == max_)
+         if (min_ == 0)
+            max_ += 1;
+         else
+            min_ -= 1;
+
       setLutGamma(gamma_);
 		updateSliders();
 
@@ -626,7 +632,15 @@ public class ContrastPanel extends JPanel implements ImageController, PropertyCh
 
 		ImageStatistics stats = image_.getStatistics();
 
-      updateSliders(true, (int) stats.min, (int) stats.max);
+      int min = (int) stats.min;
+      int max = (int) stats.max;
+      if (min == max)
+         if (min == 0)
+            max += 1;
+         else
+            min -= 1;
+
+      updateSliders(true, min, max);
 
 		image_.updateAndDraw();
 	}

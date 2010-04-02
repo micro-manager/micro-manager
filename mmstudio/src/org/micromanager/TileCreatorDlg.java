@@ -29,8 +29,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.text.ParseException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 
 import javax.swing.JButton;
@@ -40,6 +38,7 @@ import javax.swing.JTextField;
 
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
+import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
 
 import org.micromanager.metadata.ImageKey;
@@ -368,8 +367,49 @@ public class TileCreatorDlg extends MMDialog {
       } catch (Exception e) {
          //handleError(e.getMessage());
       }
-      double tileSizeXUm = pixSizeUm * core_.getImageWidth() - overlapUm;
-      double tileSizeYUm = pixSizeUm * core_.getImageHeight() - overlapUm;
+      boolean correction, transposeXY, mirrorX, mirrorY;
+      String camera = core_.getCameraDevice();
+      if (camera == null) {
+         JOptionPane.showMessageDialog(null, "This function does not work without a camera");
+         return;
+      }
+
+      try{
+      String tmp = core_.getProperty(camera, "TransposeCorrection");
+      if (tmp.equals("0"))
+         correction = false;
+      else
+         correction = true;
+      tmp = core_.getProperty(camera, MMCoreJ.getG_Keyword_Transpose_MirrorX());
+      if (tmp.equals("0"))
+         mirrorX = false;
+      else
+         mirrorX = true;
+      tmp = core_.getProperty(camera, MMCoreJ.getG_Keyword_Transpose_MirrorY());
+      if (tmp.equals("0"))
+         mirrorY = false;
+      else
+         mirrorY = true;
+      tmp = core_.getProperty(camera, MMCoreJ.getG_Keyword_Transpose_SwapXY());
+      if (tmp.equals("0"))
+         transposeXY = false;
+      else
+         transposeXY = true;
+      } catch(Exception exc) {
+	         ReportingUtils.showError(exc);
+	         return;
+	      }
+
+      double tmpXUm = pixSizeUm * core_.getImageWidth() - overlapUm;
+      double tmpYUm = pixSizeUm * core_.getImageHeight() - overlapUm;
+      double tileSizeXUm = tmpXUm;
+      double tileSizeYUm = tmpYUm ;
+	      // if camera does not correct image orientation, we'll correct for it here:
+	   if (!correction) {
+	         // Order: swapxy, then mirror axis
+	         if (transposeXY) {tileSizeXUm = tmpYUm; tileSizeYUm = tmpXUm;}
+	      }
+
       int overlapPix = (int) Math.floor(overlapUm/pixSizeUm);
 
       // Make sure at least two corners were set
@@ -419,6 +459,7 @@ public class TileCreatorDlg extends MMDialog {
       int nrImagesX = (int) Math.floor ( (maxX - minX) / tileSizeXUm ) + 2;
       int nrImagesY = (int) Math.floor ( (maxY - minY) / tileSizeYUm ) + 2;
 
+      // todo handle mirrorX mirrorY
       for (int y=0; y< nrImagesY; y++) {
          for (int x=0; x<nrImagesX; x++) {
             // on even rows go left to right, on odd rows right to left
@@ -463,11 +504,9 @@ public class TileCreatorDlg extends MMDialog {
       labelRight_.setText("");
       labelBottom_.setText("");
       labelLeft_.setText("");
-        try {
-            pixelSizeField_.setText(NumberUtils.doubleStringCoreToDisplay(core_.getPixelSizeUm()));
-        } catch (ParseException ex) {
-            ReportingUtils.logError(ex);
-        }
+      double pxsz = core_.getPixelSizeUm();
+      pixelSizeField_.setText(NumberUtils.doubleToDisplayString(pxsz));
+
       overlapField_.setText("0");
    }
    

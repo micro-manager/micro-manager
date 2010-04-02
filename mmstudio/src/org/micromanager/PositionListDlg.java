@@ -530,20 +530,9 @@ public class PositionListDlg extends MMDialog implements MouseListener {
       springLayout.putConstraint(SpringLayout.EAST, removeButton, 0, SpringLayout.EAST, markButton);
       springLayout.putConstraint(SpringLayout.WEST, removeButton, 0, SpringLayout.WEST, markButton);
 
-      final JButton removeAllButton = new JButton();
-      removeAllButton.setFont(new Font("Arial", Font.PLAIN, 10));
-      removeAllButton.addActionListener(new ActionListener() {
-         public void actionPerformed(ActionEvent arg0) {
-            clearAllPositions();
-         }
-      });
-      removeAllButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/delete.png"));
-      removeAllButton.setText("Remove All");
-      getContentPane().add(removeAllButton);
-      springLayout.putConstraint(SpringLayout.NORTH, removeAllButton, northConstraint, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.SOUTH, removeAllButton, northConstraint+=buttonHeight, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.EAST, removeAllButton, 0, SpringLayout.EAST, markButton);
-      springLayout.putConstraint(SpringLayout.WEST, removeAllButton, 0, SpringLayout.WEST, markButton);
+
+
+
 
       final JButton setOriginButton = new JButton();
       setOriginButton.setFont(new Font("Arial", Font.PLAIN, 10));
@@ -552,11 +541,7 @@ public class PositionListDlg extends MMDialog implements MouseListener {
             calibrate(); //setOrigin();
          }
       });
-      
-      
-
-      
-      
+       
       setOriginButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/empty.png"));
       setOriginButton.setText("Calibrate");
       getContentPane().add(setOriginButton);
@@ -564,6 +549,28 @@ public class PositionListDlg extends MMDialog implements MouseListener {
       springLayout.putConstraint(SpringLayout.SOUTH, setOriginButton, northConstraint+=buttonHeight, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.EAST, setOriginButton, 0, SpringLayout.EAST, markButton);
       springLayout.putConstraint(SpringLayout.WEST, setOriginButton, 0, SpringLayout.WEST, markButton);
+
+
+
+
+
+
+      final JButton removeAllButton = new JButton();
+      removeAllButton.setFont(new Font("Arial", Font.PLAIN, 10));
+      removeAllButton.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent arg0) {
+            clearAllPositions();
+         }
+      });
+      removeAllButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/delete.png"));
+      removeAllButton.setText("Clear All");
+      getContentPane().add(removeAllButton);
+      springLayout.putConstraint(SpringLayout.NORTH, removeAllButton, northConstraint, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.SOUTH, removeAllButton, northConstraint+=buttonHeight, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.EAST, removeAllButton, 0, SpringLayout.EAST, markButton);
+      springLayout.putConstraint(SpringLayout.WEST, removeAllButton, 0, SpringLayout.WEST, markButton);
+
+  
 
       final JButton closeButton = new JButton();
       closeButton.setFont(new Font("Arial", Font.PLAIN, 10));
