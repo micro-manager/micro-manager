@@ -358,13 +358,19 @@ void FastLogger::Log(IMMLogger::priority p, const char* format, ...)throw()
 
 		va_start (argp, format);
 		// build the string specfied by the variable argument list
-		char buffer[MaxBuf];
+
+		typedef struct 
+			{
+				char buffer[MaxBuf];
+		} BigBuffer;
+		std::auto_ptr<BigBuffer> pB (new BigBuffer);
+		//char buffer[MaxBuf];
 		int flen = strlen(format);
 
 		// N.B. this loop increments the string iterator in two diffent conditions!
 		for (int i = 0; format[i] != 0; ++i)
 		{
-			buffer[0] = 0;
+			pB->buffer[0] = 0;
 			
 			if ('%' == format[i] ) // we found a printf format element
 			{
@@ -381,12 +387,12 @@ void FastLogger::Log(IMMLogger::priority p, const char* format, ...)throw()
 
 					case 'd':
 						n = va_arg(argp, int);
-						snprintf(buffer, MaxBuf, "%d", n);
+						snprintf(pB->buffer, MaxBuf, "%d", n);
 						break;
 
 					case 'f':
 						f = static_cast<float>(va_arg(argp, double));
-						snprintf(buffer, MaxBuf,"%f", f);
+						snprintf(pB->buffer, MaxBuf,"%f", f);
 						break;
 
 					case 'c':
@@ -395,12 +401,12 @@ void FastLogger::Log(IMMLogger::priority p, const char* format, ...)throw()
 #else
 						c = va_arg(argp, int);
 #endif
-						snprintf(buffer, MaxBuf, "%c", c);
+						snprintf(pB->buffer, MaxBuf, "%c", c);
 						break;
 
 					case 's':
 						s = va_arg(argp, char *);
-						snprintf(buffer, MaxBuf, "%s", s );
+						snprintf(pB->buffer, MaxBuf, "%s", s );
 						break;
 
 					case '.':   // width  (assume it's a floating point) TODO - other uses of width field
@@ -415,7 +421,7 @@ void FastLogger::Log(IMMLogger::priority p, const char* format, ...)throw()
 								newformat += 'f';
 								i += 2;
 							}
-							snprintf( buffer, MaxBuf, newformat.c_str(), f);
+							snprintf( pB->buffer, MaxBuf, newformat.c_str(), f);
 						}
 						break;
 
@@ -423,15 +429,15 @@ void FastLogger::Log(IMMLogger::priority p, const char* format, ...)throw()
 					case 't':
 					case 'D':
 					case 'P':
-						snprintf(buffer, 2, "%s", "%");
-						workingString += std::string(buffer);
-						snprintf(buffer, 2, "%c", curc);
+						snprintf(pB->buffer, 2, "%s", "%");
+						workingString += std::string(pB->buffer);
+						snprintf(pB->buffer, 2, "%c", curc);
 						break;
 
 					default:
 					break;
 				}
-				workingString += std::string(buffer);
+				workingString += std::string(pB->buffer);
 			}
 			else
 			{
@@ -448,7 +454,7 @@ void FastLogger::Log(IMMLogger::priority p, const char* format, ...)throw()
 
 		workingString = formatPrefix + workingString;
 		// the string specified on the argument list can also have the ACE %D tokens inside it
-		//workingString += std::string(buffer);
+		//workingString += std::string(pB->buffer);
 		
 		///put the three replacements into a loop!
 		// replace all %D with Date/Time
