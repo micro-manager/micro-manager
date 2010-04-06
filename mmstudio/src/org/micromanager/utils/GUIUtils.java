@@ -27,13 +27,17 @@ import ij.process.ImageStatistics;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.GraphicsEnvironment;
+import java.awt.Point;
 import java.awt.event.ActionListener;
 
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.util.prefs.Preferences;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JComboBox;
+import javax.swing.JFrame;
 
 import javax.swing.JTable;
 import org.micromanager.image5d.ChannelCalibration;
@@ -48,6 +52,8 @@ import org.micromanager.metadata.MMAcqDataException;
 
 
 public class GUIUtils {
+   private static String DIALOG_POSITION = "dialogPosition";
+
    public static void setComboSelection(JComboBox cb, String sel){
       ActionListener[] listeners = cb.getActionListeners();
       for (int i=0; i<listeners.length; i++)            
@@ -198,4 +204,19 @@ public class GUIUtils {
             }
         });
     }
+
+    public static void recallPosition(JFrame win) {
+      Preferences prefs = Preferences.userNodeForPackage(win.getClass());
+      Point dialogPosition = (Point) JavaUtils.getObjectFromPrefs(prefs, DIALOG_POSITION,null);
+      if (dialogPosition == null) {
+         Dimension screenDims = JavaUtils.getScreenDimensions();
+         dialogPosition = new Point((screenDims.width - win.getWidth()) / 2, (screenDims.height - win.getHeight()) / 2);
+      }
+      win.setLocation(dialogPosition);
+   }
+
+   public static void storePosition(JFrame win) {
+      Preferences prefs = Preferences.userNodeForPackage(win.getClass());
+      JavaUtils.putObjectInPrefs(prefs, DIALOG_POSITION, win.getLocation());
+   }
 }

@@ -320,6 +320,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       }
    }
 
+   public ImageWindow getImageWin() {
+      return imageWin_;
+   }
+
    /**
     * Callback to update GUI when a change happens in the MMCore.
     */

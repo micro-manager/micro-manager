@@ -23,6 +23,7 @@
 //
 package org.micromanager.api;
 
+import ij.gui.ImageWindow;
 import java.awt.Color;
 import java.awt.geom.Point2D;
 
@@ -279,6 +280,8 @@ public interface ScriptInterface {
     * Save current configuration
     */
    public void saveConfigPresets();
+
+   public ImageWindow getImageWin();
 
    
    /**
