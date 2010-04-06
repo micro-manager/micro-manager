@@ -14,6 +14,7 @@ package org.micromanager.pixelcalibrator;
 import java.awt.Dimension;
 import java.awt.Point;
 import java.util.prefs.Preferences;
+import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.JavaUtils;
 
 /**
@@ -22,22 +23,15 @@ import org.micromanager.utils.JavaUtils;
  */
 public class PixelCalibratorDialog extends javax.swing.JFrame {
    private PixelCalibratorPlugin plugin_;
-   private final Preferences prefs_;
-   private String DIALOG_POSITION = "dialogPosition";
+
 
     /** Creates new form PixelCalibratorDialog */
    PixelCalibratorDialog(PixelCalibratorPlugin plugin) {
       plugin_ = plugin;
       initComponents();
-      prefs_ = Preferences.userNodeForPackage(this.getClass());
-      Point dialogPosition = (Point) JavaUtils.getObjectFromPrefs(prefs_, DIALOG_POSITION,null);
-      if (dialogPosition==null) {
-         Dimension screenDims = JavaUtils.getScreenDimensions();
-         dialogPosition = new Point((screenDims.width - this.getWidth())/2, (screenDims.height - this.getHeight())/2);
-      }
-      this.setLocation(dialogPosition);
-
+      GUIUtils.recallPosition(this);
    }
+
 
     /** This method is called from within the constructor to
      * initialize the form.
@@ -126,7 +120,7 @@ public class PixelCalibratorDialog extends javax.swing.JFrame {
     }//GEN-LAST:event_startButtonActionPerformed
 
     private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
-       JavaUtils.putObjectInPrefs(prefs_, DIALOG_POSITION, this.getLocation());
+       GUIUtils.storePosition(this);
        plugin_.dispose();
     }//GEN-LAST:event_formWindowClosing
 
@@ -154,7 +148,7 @@ public class PixelCalibratorDialog extends javax.swing.JFrame {
     // End of variables declaration//GEN-END:variables
 
    public void dispose() {
-      JavaUtils.putObjectInPrefs(prefs_, DIALOG_POSITION, this.getLocation());
+      GUIUtils.storePosition(this);
       super.dispose();
    }
    
