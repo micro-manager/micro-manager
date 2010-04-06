@@ -73,7 +73,7 @@ public class Hub {
       pixelSize_ = core_.getPixelSizeUm();
 
 
-      int width = 900;
+      int width = 950;
       int height = 600;
 
       applyVendorSpecificSettings();

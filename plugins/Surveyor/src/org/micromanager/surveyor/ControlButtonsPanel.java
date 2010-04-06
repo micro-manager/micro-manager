@@ -14,6 +14,7 @@ package org.micromanager.surveyor;
 import ij.IJ;
 import ij.gui.Toolbar;
 import java.awt.Color;
+import javax.swing.JLabel;
 import org.micromanager.surveyor.Hub.ModeManager;
 
 /**
@@ -26,6 +27,8 @@ public class ControlButtonsPanel extends javax.swing.JPanel {
 
     public ControlButtonsPanel(Display display) {
         initComponents();
+        //toolComboBox.add(new JLabel("test"), -1);
+        //toolComboBox.validate();
         display_ = display;
     }
 
@@ -44,7 +47,7 @@ public class ControlButtonsPanel extends javax.swing.JPanel {
       configureButton = new javax.swing.JButton();
       mosaicButton = new javax.swing.JButton();
       snapButton = new javax.swing.JButton();
-      jComboBox1 = new javax.swing.JComboBox();
+      toolComboBox = new javax.swing.JComboBox();
       clearROIsButton = new javax.swing.JButton();
 
       setBackground(new java.awt.Color(255, 255, 255));
@@ -118,10 +121,10 @@ public class ControlButtonsPanel extends javax.swing.JPanel {
          }
       });
 
-      jComboBox1.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Hand", "Points", "Rectangle", "Polygon", "Freehand" }));
-      jComboBox1.addActionListener(new java.awt.event.ActionListener() {
+      toolComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Hand", "Points", "Rectangle", "Polygon", "Freehand" }));
+      toolComboBox.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            jComboBox1ActionPerformed(evt);
+            toolComboBoxActionPerformed(evt);
          }
       });
 
@@ -151,9 +154,9 @@ public class ControlButtonsPanel extends javax.swing.JPanel {
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
             .add(snapButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 66, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-            .add(jComboBox1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+            .add(toolComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-            .add(clearROIsButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 85, Short.MAX_VALUE))
+            .add(clearROIsButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 85, Short.MAX_VALUE))
       );
       layout.setVerticalGroup(
          layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -165,7 +168,7 @@ public class ControlButtonsPanel extends javax.swing.JPanel {
                .add(fullScreenButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 30, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                .add(configureButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 30, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                .add(snapButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 30, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-               .add(jComboBox1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 27, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+               .add(toolComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 27, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                .add(clearROIsButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 30, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
             .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
       );
@@ -203,8 +206,8 @@ public class ControlButtonsPanel extends javax.swing.JPanel {
         display_.snap();
     }//GEN-LAST:event_snapButtonActionPerformed
 
-    private void jComboBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox1ActionPerformed
-        String cmd = jComboBox1.getSelectedItem().toString();
+    private void toolComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_toolComboBoxActionPerformed
+        String cmd = toolComboBox.getSelectedItem().toString();
         if(cmd.equals("Hand"))
            IJ.setTool(Toolbar.HAND);
         if(cmd.equals("Rectangle"))
@@ -217,7 +220,7 @@ public class ControlButtonsPanel extends javax.swing.JPanel {
            IJ.setTool(Toolbar.FREEROI);
 
         
-}//GEN-LAST:event_jComboBox1ActionPerformed
+}//GEN-LAST:event_toolComboBoxActionPerformed
 
     private void clearROIsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearROIsButtonActionPerformed
        display_.clearRois();
@@ -229,10 +232,10 @@ public class ControlButtonsPanel extends javax.swing.JPanel {
    private javax.swing.JButton configureButton;
    private javax.swing.JButton explorerButton;
    private javax.swing.JButton fullScreenButton;
-   private javax.swing.JComboBox jComboBox1;
    private javax.swing.JButton mosaicButton;
    private javax.swing.JButton navigatorButton;
    private javax.swing.JButton snapButton;
+   private javax.swing.JComboBox toolComboBox;
    // End of variables declaration//GEN-END:variables
 
     void updateControls() {

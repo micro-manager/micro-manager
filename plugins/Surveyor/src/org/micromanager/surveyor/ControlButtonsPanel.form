@@ -49,7 +49,7 @@
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
               <Component id="snapButton" min="-2" pref="66" max="-2" attributes="1"/>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="jComboBox1" min="-2" max="-2" attributes="0"/>
+              <Component id="toolComboBox" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="clearROIsButton" pref="85" max="32767" attributes="1"/>
           </Group>
@@ -65,7 +65,7 @@
                   <Component id="fullScreenButton" alignment="3" min="-2" pref="30" max="-2" attributes="0"/>
                   <Component id="configureButton" alignment="3" min="-2" pref="30" max="-2" attributes="0"/>
                   <Component id="snapButton" alignment="3" min="-2" pref="30" max="-2" attributes="0"/>
-                  <Component id="jComboBox1" alignment="3" min="-2" pref="27" max="-2" attributes="0"/>
+                  <Component id="toolComboBox" alignment="3" min="-2" pref="27" max="-2" attributes="0"/>
                   <Component id="clearROIsButton" alignment="3" min="-2" pref="30" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="32767" attributes="0"/>
@@ -158,7 +158,7 @@
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="snapButtonActionPerformed"/>
       </Events>
     </Component>
-    <Component class="javax.swing.JComboBox" name="jComboBox1">
+    <Component class="javax.swing.JComboBox" name="toolComboBox">
       <Properties>
         <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
           <StringArray count="5">
@@ -171,7 +171,7 @@
         </Property>
       </Properties>
       <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jComboBox1ActionPerformed"/>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="toolComboBoxActionPerformed"/>
       </Events>
     </Component>
     <Component class="javax.swing.JButton" name="clearROIsButton">
