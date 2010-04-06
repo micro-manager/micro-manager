@@ -319,13 +319,17 @@ void FastLogger::TimeStamp(IMMLogger::priority level)throw()
    }
 };
 
+const int MaxBuf = 32767;
 
-
+typedef struct 
+	{
+		char buffer[MaxBuf];
+} BigBuffer;
 
 
 void FastLogger::Log(IMMLogger::priority p, const char* format, ...)throw()
 {
-	const int MaxBuf = 32767;
+
 #ifdef _WINDOWS
 	// let snprintf be OK
 #pragma warning (disable:4996)  
@@ -359,11 +363,8 @@ void FastLogger::Log(IMMLogger::priority p, const char* format, ...)throw()
 		va_start (argp, format);
 		// build the string specfied by the variable argument list
 
-		typedef struct 
-			{
-				char buffer[MaxBuf];
-		} BigBuffer;
-		std::auto_ptr<BigBuffer> pB (new BigBuffer);
+
+		std::auto_ptr<BigBuffer> pB (new BigBuffer());
 		//char buffer[MaxBuf];
 		int flen = strlen(format);
 
