@@ -36,6 +36,7 @@
 const char* g_OpticalSectioningUtility = "OpticalSectioningUtility";
 const char* g_CameraProperty = "Camera";
 const char * g_SLMProperty = "SLM";
+const char * g_StripeWidth = "StripeWidth";
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -71,7 +72,8 @@ OpticalSectioningUtility::OpticalSectioningUtility():
 physicalCamera_(0),
 slm_(0),
 physicalCameraName_(""),
-slmName_("")
+slmName_(""),
+lambda_(60)
 
 {
    
@@ -108,6 +110,12 @@ int OpticalSectioningUtility::Initialize()
    for (iter = availableSLMs.begin(); iter != availableSLMs.end(); iter++ ) {
       AddAllowedValue(g_SLMProperty,(*iter).c_str());
    }
+
+   CPropertyAction* pAct3 = new CPropertyAction (this, &OpticalSectioningUtility::OnStripeWidth);
+   CreateProperty(g_StripeWidth,"10",MM::Integer, false, pAct3);
+
+   SetPropertyLimits(g_StripeWidth,6,300);
+
    return DEVICE_OK;
 }
 
@@ -255,7 +263,18 @@ int OpticalSectioningUtility::SetBinning(int bS)
    return physicalCamera_->SetBinning(bS);
 }
 
-
+int OpticalSectioningUtility::OnStripeWidth(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {  
+      pProp->Set(lambda_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(lambda_);
+   }
+   return DEVICE_OK;
+}
 
 int OpticalSectioningUtility::OnPhysicalCamera(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
@@ -327,12 +346,12 @@ int OpticalSectioningUtility::SetupSLMImages()
 
    int slmWidth = slm_->GetWidth();
    int slmHeight = slm_->GetHeight();
-   double lambda = 50.;
 
    const long imgArraySize = slmWidth*slmHeight;
    slmImages_.push_back(new unsigned char[imgArraySize]);
    slmImages_.push_back(new unsigned char[imgArraySize]);
    slmImages_.push_back(new unsigned char[imgArraySize]);
+   double lambda = (double) lambda_;
 
    for(int x=0;x<slmWidth;++x)
    {

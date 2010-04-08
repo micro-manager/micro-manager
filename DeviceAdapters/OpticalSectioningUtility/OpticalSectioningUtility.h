@@ -61,6 +61,7 @@ public:
 private:
    int OnPhysicalCamera(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSLM(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnStripeWidth(MM::PropertyBase* pProp, MM::ActionType eAct);
    int SetupSLMImages();
    void acquireOneFrame(int frameIndex, unsigned short * rawpix, long numPixels);
 
@@ -72,6 +73,7 @@ private:
    std::vector<unsigned char *> slmImages_;
    unsigned short * outPixels_;
    long numPixels_;
+   long lambda_;
 };
 
 
