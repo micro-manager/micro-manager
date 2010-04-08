@@ -18,27 +18,37 @@ PixelCalibrator.jar:  \
 	## Work around bug in 'jar': jar cf MM_.jar -C bin/ bin/* does not work
 	cd build && jar cf ../PixelCalibrator.jar * 
 
-
 Surveyor.jar:  \
 	$(srcdir)/Surveyor/src/org/micromanager/surveyor/*.java \
 	$(srcdir)/Surveyor/src/org/micromanager/surveyor/*.form
 	test -d build || mkdir build
 	rm -rf build/*
-	$(JAVAC) -source 1.5 -target 1.5 -sourcepath $(srcdir):. -classpath $(srcdir)/PixelCalibrator.jar:$(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):../bin/MMCoreJ.jar:../mmstudio/MMJ_.jar:. $(srcdir)/Surveyor/src/org/micromanager/surveyor/*.java -d build
+	$(JAVAC) -source 1.5 -target 1.5 -sourcepath $(srcdir):. -classpath PixelCalibrator.jar:$(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):../bin/MMCoreJ.jar:../mmstudio/MMJ_.jar:. $(srcdir)/Surveyor/src/org/micromanager/surveyor/*.java -d build
 	## Work around bug in 'jar': jar cf MM_.jar -C bin/ bin/* does not work
 	cd build && jar cf ../Surveyor.jar * 
 
-all: MMTracker_.jar PixelCalibrator.jar Surveyor.jar
+Projector.jar:  \
+	$(srcdir)/Projector/src/org/micromanager/projector/*.java \
+	$(srcdir)/Projector/src/org/micromanager/projector/*.form
+	test -d build || mkdir build
+	rm -rf build/*
+	$(JAVAC) -source 1.5 -target 1.5 -sourcepath $(srcdir):. -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):../bin/MMCoreJ.jar:../mmstudio/MMJ_.jar:. $(srcdir)/Projector/src/org/micromanager/projector/*.java -d build
+	## Work around bug in 'jar': jar cf MM_.jar -C bin/ bin/* does not work
+	cd build && jar cf ../Projector.jar * 
+
+all: MMTracker_.jar PixelCalibrator.jar Surveyor.jar Projector.jar
 
 install: 
 	test -d $(IJPATH)/mmplugins || mkdir $(IJPATH)/mmplugins
 	cp MMTracker_.jar $(IJPATH)/mmplugins
 	cp PixelCalibrator.jar $(IJPATH)/mmplugins
 	cp Surveyor.jar $(IJPATH)/mmplugins
-
+	cp Projector.jar $(IJPATH)/mmplugins
+	
 clean:
 	test -f MMTracker_.jar && rm MMTracker_.jar || echo "MMTracker_.jar not found"
 	test -f PixelCalibrator.jar && rm PixelCalibrator.jar || echo "PixelCalibrator.jar not found"
 	test -f Surveyor.jar && rm Surveyor.jar || echo "Surveyor.jar not found"
-
+	test -f Projector.jar && rm Projector.jar || echo "Projector.jar not found"
+	
 EXTRA_DIST = src build.xml
