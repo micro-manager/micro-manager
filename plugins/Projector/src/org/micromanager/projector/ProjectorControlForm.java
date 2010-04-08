@@ -79,19 +79,18 @@ public class ProjectorControlForm extends javax.swing.JFrame {
       getContentPane().setLayout(layout);
       layout.setHorizontalGroup(
          layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-         .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-            .addContainerGap(189, Short.MAX_VALUE)
+         .add(layout.createSequentialGroup()
+            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+               .add(layout.createSequentialGroup()
+                  .add(onButton)
+                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                  .add(offButton))
+               .add(layout.createSequentialGroup()
+                  .addContainerGap()
+                  .add(setRoiButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 108, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 47, Short.MAX_VALUE)
             .add(calibrateButton)
-            .addContainerGap())
-         .add(layout.createSequentialGroup()
-            .add(onButton)
-            .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-            .add(offButton)
-            .addContainerGap(156, Short.MAX_VALUE))
-         .add(layout.createSequentialGroup()
-            .addContainerGap()
-            .add(setRoiButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 108, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-            .addContainerGap(181, Short.MAX_VALUE))
+            .add(9, 9, 9))
       );
       layout.setVerticalGroup(
          layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -100,10 +99,10 @@ public class ProjectorControlForm extends javax.swing.JFrame {
                .add(onButton)
                .add(offButton))
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-            .add(setRoiButton)
-            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 100, Short.MAX_VALUE)
-            .add(calibrateButton)
-            .addContainerGap())
+            .add(setRoiButton))
+         .add(layout.createSequentialGroup()
+            .addContainerGap()
+            .add(calibrateButton))
       );
 
       pack();
