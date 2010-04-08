@@ -21,6 +21,8 @@
 #include "OpticalSectioningUtility.h"
 #include "../../MMDevice/ModuleInterface.h"
 #include "../../MMDevice/MMDevice.h"
+#include <math.h>
+
 #define PI 3.1415926535897932384626433832795028841971693993751058209749445923078164062862089986280348253421170679
 
 #ifdef WIN32
@@ -123,22 +125,58 @@ void OpticalSectioningUtility::GetName(char* name) const
 
 int OpticalSectioningUtility::SnapImage()
 {
-   slm_->SetImage(slmImages_[0]);
-   slm_->DisplayImage();
-   physicalCamera_->SnapImage();
-   slm_->SetImage(slmImages_[1]);
-   slm_->DisplayImage();
-   physicalCamera_->SnapImage();
-   slm_->SetImage(slmImages_[2]);
-   slm_->DisplayImage();
-   physicalCamera_->SnapImage();
+   std::vector<unsigned short *> raw;
+
+   long w = physicalCamera_->GetImageWidth();
+   long h = physicalCamera_->GetImageHeight();
+   long numPixels = w * h;
+   unsigned short * pixels;
+
+   for (int i=0;i<3;++i)
+   {
+      pixels = new unsigned short[numPixels];
+      acquireOneFrame(i, pixels, numPixels);
+      raw.push_back(pixels);
+   }
+
    slm_->SetPixelsTo(0);
+
+   if (numPixels_ != numPixels)
+   {
+      outPixels_ = new unsigned short[numPixels];
+      numPixels_ = numPixels;
+   }
+
+   float d01, d12, d20;
+
+   for (long j = 0; j<numPixels; ++j) {
+      d01 = (float) (raw[0][j] - raw[1][j]);
+      d12 = (float) (raw[1][j] - raw[2][j]);
+      d20 = (float) (raw[2][j] - raw[0][j]);
+      outPixels_[j] = (unsigned short) sqrt(d01*d01 + d12*d12 + d20*d20);
+   }
+   
+   for (int i=0;i<3;++i)
+      delete raw[i];
+
    return DEVICE_OK;
+}
+
+void OpticalSectioningUtility::acquireOneFrame(int frameIndex, unsigned short * pixels, long numPixels)
+{
+   slm_->SetImage(slmImages_[frameIndex]);
+   slm_->DisplayImage();
+   physicalCamera_->SnapImage();
+
+   long bpp = physicalCamera_->GetImageBytesPerPixel();
+   if (bpp == 2)
+      memcpy(pixels, physicalCamera_->GetImageBuffer(), numPixels*2);
+
 }
 
 const unsigned char* OpticalSectioningUtility::GetImageBuffer()
 {
-   return physicalCamera_->GetImageBuffer();
+   return (unsigned char *) outPixels_;
 }
 
 unsigned OpticalSectioningUtility::GetImageWidth() const
@@ -276,9 +314,9 @@ int OpticalSectioningUtility::OnSLM(MM::PropertyBase* pProp, MM::ActionType eAct
       }
    }
 
-   int ret = SetupSLMImages();
+   SetupSLMImages();
    
-   return ret;
+   return DEVICE_OK;
 }
 
 int OpticalSectioningUtility::SetupSLMImages()
@@ -296,9 +334,9 @@ int OpticalSectioningUtility::SetupSLMImages()
    slmImages_.push_back(new unsigned char[imgArraySize]);
    slmImages_.push_back(new unsigned char[imgArraySize]);
 
-   for(int x=0;x<slmWidth;x++)
+   for(int x=0;x<slmWidth;++x)
    {
-      for(int y=0;y<slmHeight;y++)
+      for(int y=0;y<slmHeight;++y)
       {
          slmImages_[0][x + slmWidth*y] = (unsigned char) (255*0.5*(1 + cos(2.*PI*(x/lambda + 0./3.))));
          slmImages_[1][x + slmWidth*y] = (unsigned char) (255*0.5*(1 + cos(2.*PI*(x/lambda + 1./3.))));
