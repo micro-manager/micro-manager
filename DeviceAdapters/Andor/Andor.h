@@ -71,8 +71,6 @@ class AndorCamera : public CCameraBase<AndorCamera>
 public:
    friend class AcqSequenceThread;
    static AndorCamera* GetInstance();
-   unsigned DeReference(); // jizhen 05.16.2007
-   static void ReleaseInstance(AndorCamera*); // jizhen 05.16.2007
 
    ~AndorCamera();
    
@@ -199,6 +197,7 @@ private:
    long ReadoutTime_, KeepCleanTime_;
 
    long GetReadoutTime();
+   void SwitchAndorDriverToThisCamera() const;
 
 // kdb 2/27/2009
 #ifdef WIN32
@@ -262,7 +261,7 @@ private:
 	   SOFTWARE
    };
 
-   at_32 CurrentCameraID_;
+   at_32 myCameraID_;
    at_32 NumberOfAvailableCameras_;
    at_32 NumberOfWorkableCameras_;
    std::vector<std::string> cameraName_;
