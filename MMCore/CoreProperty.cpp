@@ -78,7 +78,11 @@ void CorePropertyCollection::Set(const char* propName, const char* value)
       throw CMMError(propName, core_->getCoreErrorText(MMERR_InvalidCoreProperty).c_str(), MMERR_InvalidCoreProperty);
 
    if (!it->second.IsAllowed(value) || it->second.IsReadOnly())
-      throw CMMError(propName, core_->getCoreErrorText(MMERR_InvalidCoreValue).c_str(), MMERR_InvalidCoreValue);
+   {
+      std::stringstream msg;
+      msg << "Attempted to set \"Core-" << propName << "\" to \"" << value << "\".";
+      throw CMMError(msg.str().c_str(), core_->getCoreErrorText(MMERR_InvalidCoreValue).c_str(), MMERR_InvalidCoreValue);
+   }
 
    // execute property set command
    //
