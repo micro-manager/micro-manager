@@ -208,7 +208,7 @@ public:
     * @param name - property identifier (name)
     * @param value - the value to compare to
     */
-   bool IsPropertyEqualTo(const char* name, const char* val)
+   bool IsPropertyEqualTo(const char* name, const char* val) const
    {
       std::string strVal;
       int nRet = properties_.Get(name, strVal);
