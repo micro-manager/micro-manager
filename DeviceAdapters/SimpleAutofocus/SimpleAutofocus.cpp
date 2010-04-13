@@ -691,33 +691,6 @@ int SimpleAutofocus::OnMean(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-
-
-
-
-// computational utilities
-short SimpleAutofocus::findMedian(short* arr, const int lengthMinusOne)
-{ 
-  short tmp;
-
-   // n.b. this was ported from java, looks like a bubble sort....
-  // todo use qsort
-   for(int i=0; i<lengthMinusOne; ++i)
-   {
-      for(int j=0; j<lengthMinusOne-i; ++j)
-      {
-         if (arr[j+1]<arr[j])
-         {
-            tmp = arr[j];
-            arr[j]=arr[j+1];
-            arr[j+1]=tmp;
-         }
-      }
-   }
-   return arr[lengthMinusOne/2 +1];
-}
-
-
 double SimpleAutofocus::SharpnessAtZ(const double z)
 {
    busy_ = true;
@@ -898,7 +871,7 @@ double SimpleAutofocus::SharpnessAtZ(const double z)
                //windo[7] = pShort_[ow+i+ width*(oh+j+1)];
                //windo[8] = pShort_[ow+i+1+ width*(oh+j+1)];
                // to reduce effect of bleaching on the high-pass sharpness measurement, i use the image normalized by the mean - KH.
-               theValue = (float)((double)findMedian(windo,8)*meanScaling);
+               theValue = (float)((double)FindMedian(windo,8)*meanScaling);
 
                pSmoothedIm_[i + j*width] = theValue;
    

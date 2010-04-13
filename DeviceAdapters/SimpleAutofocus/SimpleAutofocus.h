@@ -39,7 +39,9 @@
 // data for AF performance report table
 class SAFData;
 
-
+// computational utility functions
+short FindMedian(short* arr, const int lengthMinusOne);
+double GetScore(short* img, int w0, int h0, double cropFactor);
 
 class SimpleAutofocus : public CAutoFocusBase<SimpleAutofocus>
 {
@@ -118,7 +120,6 @@ private:
    std::string name_;
    SimpleAutofocus& operator=(SimpleAutofocus& /*rhs*/) {assert(false); return *this;};
 
-   short findMedian(short* arr, const int leng );
    double SharpnessAtZ(const double zvalue);
    double DoubleFunctionOfDouble(const double zvalue);
    MM::Core* pCore_;
