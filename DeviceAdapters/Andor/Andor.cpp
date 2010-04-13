@@ -3209,7 +3209,6 @@ int AndorCamera::GetListOfAvailableCameras()
    int AndorCamera::StopCameraAcquisition()
    {
       SwitchAndorDriverToThisCamera();
-      SwitchAndorDriverToThisCamera();
 
       if (!sequenceRunning_)
          return DEVICE_OK;
