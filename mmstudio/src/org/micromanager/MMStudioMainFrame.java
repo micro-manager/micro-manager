@@ -43,6 +43,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 
 import javax.swing.JButton;
@@ -137,6 +139,8 @@ import ij.gui.ImageWindow;
 import java.awt.Cursor;
 import java.awt.Graphics;
 import java.awt.image.DirectColorModel;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import org.micromanager.utils.ReportingUtils;
 
 /*
@@ -2126,6 +2130,38 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       saveConfigButton_.setEnabled(changed);
    }
 
+   private File runAcquisitionBrowser() {
+      if (System.getProperty("os.name").indexOf("Mac OS X") != -1) {
+         Runtime run = Runtime.getRuntime();
+         Process pr;
+         try {
+            pr = run.exec("./fileBrowserStandalone "+openAcqDirectory_);
+            pr.waitFor();
+            BufferedReader buf = new BufferedReader(new InputStreamReader(pr.getInputStream()));
+            String filename = buf.readLine();
+            if (filename.length()>0) {
+               return new File(filename);
+            } else {
+               return null;
+            }
+         } catch (Exception ex) {
+            ReportingUtils.logError("ex");
+            return null;
+         }
+      } else {
+         JFileChooser fc = new JFileChooser();
+         fc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+         fc.setSelectedFile(new File(openAcqDirectory_));
+         int retVal = fc.showOpenDialog(this);
+         if (retVal == JFileChooser.APPROVE_OPTION) {
+            return fc.getSelectedFile();
+         } else {
+            return null;
+         }
+      }
+
+   }
+
    /**
     * Open an existing acquisition directory and build image5d window.
     *
@@ -2134,12 +2170,9 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
       // choose the directory
       // --------------------
-      JFileChooser fc = new JFileChooser();
-      fc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
-      fc.setSelectedFile(new File(openAcqDirectory_));
-      int retVal = fc.showOpenDialog(this);
-      if (retVal == JFileChooser.APPROVE_OPTION) {
-         File f = fc.getSelectedFile();
+      File f = runAcquisitionBrowser();
+      
+      if (f != null) {
          if (f.isDirectory()) {
             openAcqDirectory_ = f.getAbsolutePath();
          } else {
