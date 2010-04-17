@@ -100,6 +100,9 @@ const char* g_CameraInformation = "1. Camera Information : | Type | Model | Seri
 AndorCamera* AndorCamera::instance_ = 0;
 unsigned int AndorCamera::refCount_ = 0;
 
+// global Andor driver thread lock
+MMThreadLock g_AndorDriverLock;
+
 // kdb 2/27/2009
 #ifdef WIN32
 // Windows dll entry routine
@@ -258,7 +261,7 @@ sequencePaused_(0)
 
 AndorCamera::~AndorCamera()
 {
-   SwitchAndorDriverToThisCamera();
+   DriverGuard dg(this);
    delete seqThread_;
 
 
@@ -1271,7 +1274,7 @@ int AndorCamera::GetListOfAvailableCameras()
    */
    int AndorCamera::Shutdown()
    {
-      SwitchAndorDriverToThisCamera();
+      DriverGuard dg(this);
 
       if (initialized_)
       {
@@ -1313,7 +1316,7 @@ int AndorCamera::GetListOfAvailableCameras()
 
    int AndorCamera::PrepareSnap()
    {
-      SwitchAndorDriverToThisCamera();
+      DriverGuard dg(this);
 
       int ret;
       if (initialized_ && !sequenceRunning_ && !sequencePaused_) {
@@ -1347,7 +1350,7 @@ int AndorCamera::GetListOfAvailableCameras()
    */
    int AndorCamera::SnapImage()
    {
-      SwitchAndorDriverToThisCamera();
+      DriverGuard dg(this);
 
       if (sequenceRunning_)   // If we are in the middle of a SequenceAcquisition
          return ERR_BUSY_ACQUIRING;
@@ -1374,7 +1377,7 @@ int AndorCamera::GetListOfAvailableCameras()
 
    const unsigned char* AndorCamera::GetImageBuffer()
    {
-      SwitchAndorDriverToThisCamera();
+      DriverGuard dg(this);
 
       if (IsAcquiring())
          WaitForAcquisition();
@@ -1473,7 +1476,7 @@ int AndorCamera::GetListOfAvailableCameras()
    */
    int AndorCamera::SetROI(unsigned uX, unsigned uY, unsigned uXSize, unsigned uYSize)
    {
-      SwitchAndorDriverToThisCamera();
+      DriverGuard dg(this);
 
       if (Busy())
          return ERR_BUSY_ACQUIRING;
@@ -1522,7 +1525,7 @@ int AndorCamera::GetListOfAvailableCameras()
 
    unsigned AndorCamera::GetBitDepth() const
    {
-      SwitchAndorDriverToThisCamera();
+      DriverGuard dg(this);
 
       int depth;
       // TODO: channel 0 hardwired ???
@@ -1556,7 +1559,7 @@ int AndorCamera::GetListOfAvailableCameras()
 
    int AndorCamera::ClearROI()
    {
-      SwitchAndorDriverToThisCamera();
+      DriverGuard dg(this);
 
       if (sequenceRunning_)
          return ERR_BUSY_ACQUIRING;
@@ -1616,7 +1619,7 @@ int AndorCamera::GetListOfAvailableCameras()
    */
    int AndorCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
-      SwitchAndorDriverToThisCamera();
+      DriverGuard dg(this);
       if (eAct == MM::AfterSet)
       {
          if (sequenceRunning_)
@@ -1675,7 +1678,7 @@ int AndorCamera::GetListOfAvailableCameras()
    */
    int AndorCamera::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
-      SwitchAndorDriverToThisCamera();
+      DriverGuard dg(this);
       // exposure property is stored in milliseconds,
       // while the driver returns the value in seconds
       if (eAct == MM::BeforeGet)
@@ -1735,7 +1738,7 @@ int AndorCamera::GetListOfAvailableCameras()
    */
    int AndorCamera::OnReadoutMode(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
-      SwitchAndorDriverToThisCamera();
+      DriverGuard dg(this);
       if (eAct == MM::AfterSet)
       {
          bool acquiring = sequenceRunning_;
@@ -1795,7 +1798,7 @@ int AndorCamera::GetListOfAvailableCameras()
    */
    int AndorCamera::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
-      SwitchAndorDriverToThisCamera();
+      DriverGuard dg(this);
       if (eAct == MM::AfterSet)
       {
          long gain;
@@ -1846,7 +1849,7 @@ int AndorCamera::GetListOfAvailableCameras()
    */
    int AndorCamera::OnEMSwitch(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
-      SwitchAndorDriverToThisCamera();
+      DriverGuard dg(this);
       if (eAct == MM::AfterSet)
       {
          std::string EMSwitch;
@@ -1910,7 +1913,7 @@ int AndorCamera::GetListOfAvailableCameras()
    */
    int AndorCamera::OnSelectTrigger(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
-      SwitchAndorDriverToThisCamera();
+      DriverGuard dg(this);
       if (eAct == MM::AfterSet)
       {
          bool acquiring = sequenceRunning_;
@@ -1964,7 +1967,7 @@ int AndorCamera::GetListOfAvailableCameras()
    */
    int AndorCamera::OnPreAmpGain(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
-      SwitchAndorDriverToThisCamera();
+      DriverGuard dg(this);
       if (eAct == MM::AfterSet)
       {
          bool acquiring = sequenceRunning_;
@@ -2011,7 +2014,7 @@ int AndorCamera::GetListOfAvailableCameras()
    */
    int AndorCamera::OnVCVoltage(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
-      SwitchAndorDriverToThisCamera();
+      DriverGuard dg(this);
       if (eAct == MM::AfterSet)
       {
          bool acquiring = sequenceRunning_;
@@ -2057,7 +2060,7 @@ int AndorCamera::GetListOfAvailableCameras()
    */
    int AndorCamera::OnBaselineClamp(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
-      SwitchAndorDriverToThisCamera();
+      DriverGuard dg(this);
       if (eAct == MM::AfterSet)
       {
          bool acquiring = sequenceRunning_;
@@ -2109,7 +2112,7 @@ int AndorCamera::GetListOfAvailableCameras()
    */
    int AndorCamera::OnVSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
-      SwitchAndorDriverToThisCamera();
+      DriverGuard dg(this);
       if (eAct == MM::AfterSet)
       {
          bool acquiring = sequenceRunning_;
@@ -2157,7 +2160,7 @@ int AndorCamera::GetListOfAvailableCameras()
    */
    int AndorCamera::OnTemperature(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
-      SwitchAndorDriverToThisCamera();
+      DriverGuard dg(this);
       if (eAct == MM::AfterSet)
       {
 
@@ -2199,7 +2202,7 @@ int AndorCamera::GetListOfAvailableCameras()
    */
    int AndorCamera::OnTemperatureSetPoint(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
-      SwitchAndorDriverToThisCamera();
+      DriverGuard dg(this);
       if (eAct == MM::AfterSet)
       {
          bool acquiring = sequenceRunning_;
@@ -2248,7 +2251,7 @@ int AndorCamera::GetListOfAvailableCameras()
    */
    int AndorCamera::OnCooler(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
-      SwitchAndorDriverToThisCamera();
+      DriverGuard dg(this);
       if (eAct == MM::AfterSet)
       {
          bool acquiring = sequenceRunning_;
@@ -2299,7 +2302,7 @@ int AndorCamera::GetListOfAvailableCameras()
    */
    int AndorCamera::OnFanMode(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
-      SwitchAndorDriverToThisCamera();
+      DriverGuard dg(this);
       if (eAct == MM::AfterSet)
       {
          bool acquiring = sequenceRunning_;
@@ -2347,7 +2350,7 @@ int AndorCamera::GetListOfAvailableCameras()
 
    int AndorCamera::OnInternalShutter(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
-      SwitchAndorDriverToThisCamera();
+      DriverGuard dg(this);
       if (eAct == MM::AfterSet)
       {
          bool acquiring = sequenceRunning_;
@@ -2412,7 +2415,7 @@ int AndorCamera::GetListOfAvailableCameras()
    //daigang 24-may-2007
    void AndorCamera::UpdateEMGainRange()
    {
-      SwitchAndorDriverToThisCamera();
+      DriverGuard dg(this);
       //added to use RTA
       SetToIdle();
 
@@ -2524,7 +2527,7 @@ int AndorCamera::GetListOfAvailableCameras()
    */
    int AndorCamera::OnFrameTransfer(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
-      SwitchAndorDriverToThisCamera();
+      DriverGuard dg(this);
       if (eAct == MM::AfterSet)
       {
          bool acquiring = sequenceRunning_;
@@ -2652,7 +2655,7 @@ int AndorCamera::GetListOfAvailableCameras()
    */
    bool AndorCamera::IsAcquiring()
    {
-      SwitchAndorDriverToThisCamera();
+      DriverGuard dg(this);
       if(!initialized_)
          return 0;
 
@@ -2684,7 +2687,7 @@ int AndorCamera::GetListOfAvailableCameras()
    */
    int AndorCamera::OnOutputAmplifier(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
-      SwitchAndorDriverToThisCamera();
+      DriverGuard dg(this);
       if (eAct == MM::AfterSet)
       {
          bool acquiring = sequenceRunning_;
@@ -2735,7 +2738,7 @@ int AndorCamera::GetListOfAvailableCameras()
    */
    int AndorCamera::OnADChannel(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
-      SwitchAndorDriverToThisCamera();
+      DriverGuard dg(this);
       if (eAct == MM::AfterSet)
       {
          bool acquiring = sequenceRunning_;
@@ -2921,21 +2924,26 @@ int AndorCamera::GetListOfAvailableCameras()
       // kdb
       long timePrev = GetTickCount(), imageWait = 0;
       //end of kdb   
-      ret = GetAcquisitionProgress(&acc, &seriesInit);
-      std::ostringstream os;
-      os << "GetAcquisitionProgress returned: " << acc << " and: " << seriesInit;
-      printf ("%s\n", os.str().c_str());
-      os.str("");
+		std::ostringstream os;
 
-      if (ret != DRV_SUCCESS)
       {
-         camera_->StopCameraAcquisition();
-         os << "Error in GetAcquisitionProgress: " << ret;
-         printf("%s\n", os.str().c_str());
-         //core_->LogMessage(camera_, os.str().c_str(), true);
-         return ret;
-      }
+         DriverGuard dg(camera_);
+		  ret = GetAcquisitionProgress(&acc, &seriesInit);
 
+		  os << "GetAcquisitionProgress returned: " << acc << " and: " << seriesInit;
+		  printf ("%s\n", os.str().c_str());
+		  os.str("");
+
+		  if (ret != DRV_SUCCESS)
+		  {
+			 camera_->StopCameraAcquisition();
+			 os << "Error in GetAcquisitionProgress: " << ret;
+			 printf("%s\n", os.str().c_str());
+			 //core_->LogMessage(camera_, os.str().c_str(), true);
+			 return ret;
+		  }
+      }
+	  
       /*
       float fExposure, fAccumTime, fKineticTime;
       printf ("Before GetAcquisition timings\n");
@@ -2957,7 +2965,10 @@ int AndorCamera::GetListOfAvailableCameras()
       // wait for frames to start coming in
       do
       {
-         ret = GetAcquisitionProgress(&acc, &series);
+         {
+            DriverGuard dg(camera_);
+            ret = GetAcquisitionProgress(&acc, &series);
+         }
          if (ret != DRV_SUCCESS)
          {
             camera_->StopCameraAcquisition();
@@ -2966,6 +2977,7 @@ int AndorCamera::GetListOfAvailableCameras()
             os.str("");
             return ret;
          }
+
          // kdb 2/27/2009
 #ifdef WIN32
          Sleep(waitTime_);
@@ -2983,8 +2995,13 @@ int AndorCamera::GetListOfAvailableCameras()
       // endof kdb
       do
       {
-         //GetStatus(&status);
-         ret = GetAcquisitionProgress(&acc, &series);
+
+         {
+            DriverGuard dg(camera_);
+            //GetStatus(&status);
+            ret = GetAcquisitionProgress(&acc, &series);
+         }
+
          if (ret == DRV_SUCCESS)
          {
             if (series > seriesPrev)
@@ -3034,6 +3051,7 @@ int AndorCamera::GetListOfAvailableCameras()
       if (ret != DRV_SUCCESS && series != 0)
       {
          camera_->StopCameraAcquisition();
+
          os << "Error: " << ret;
          printf("%s\n", os.str().c_str());
          os.str("");
@@ -3064,7 +3082,7 @@ int AndorCamera::GetListOfAvailableCameras()
    */
    int AndorCamera::StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow)
    {
-      SwitchAndorDriverToThisCamera();
+      DriverGuard dg(this);
       if (sequenceRunning_)
          return ERR_BUSY_ACQUIRING;
 
@@ -3208,16 +3226,17 @@ int AndorCamera::GetListOfAvailableCameras()
    */
    int AndorCamera::StopCameraAcquisition()
    {
-      SwitchAndorDriverToThisCamera();
+      {
+         DriverGuard dg(this);
+         if (!sequenceRunning_)
+            return DEVICE_OK;
 
-      if (!sequenceRunning_)
-         return DEVICE_OK;
+         LogMessage("Stopped sequence acquisition");
+         AbortAcquisition();
+         sequenceRunning_ = false;
 
-      LogMessage("Stopped sequence acquisition");
-      AbortAcquisition();
-      sequenceRunning_ = false;
-
-      UpdateSnapTriggerMode();
+         UpdateSnapTriggerMode();
+      }
 
       MM::Core* cb = GetCoreCallback();
       if (cb)
@@ -3239,10 +3258,12 @@ int AndorCamera::GetListOfAvailableCameras()
 
    int AndorCamera::StopSequenceAcquisition(bool temporary)
    {
-      SwitchAndorDriverToThisCamera();
-      sequencePaused_ = temporary;
+      {
+         DriverGuard dg(this);
+         sequencePaused_ = temporary;
+         StopCameraAcquisition();
+      }
 
-      StopCameraAcquisition();
       seqThread_->Stop();
       seqThread_->wait();
 
@@ -3262,14 +3283,18 @@ int AndorCamera::GetListOfAvailableCameras()
    */
    int AndorCamera::PushImage()
    {
-      unsigned ret;
-      // get the top most image from the driver
-      if (stopOnOverflow_)
-         ret = GetOldestImage16((WORD*)fullFrameBuffer_, roi_.xSize/binSize_ * roi_.ySize/binSize_);
-      else
-         ret = GetMostRecentImage16((WORD*)fullFrameBuffer_, roi_.xSize/binSize_ * roi_.ySize/binSize_);
-      if (ret != DRV_SUCCESS)
-         return (int)ret;
+      {
+         DriverGuard dg(this);
+         unsigned ret;
+         // get the top most image from the driver
+         if (stopOnOverflow_)
+            ret = GetOldestImage16((WORD*)fullFrameBuffer_, roi_.xSize/binSize_ * roi_.ySize/binSize_);
+         else
+            ret = GetMostRecentImage16((WORD*)fullFrameBuffer_, roi_.xSize/binSize_ * roi_.ySize/binSize_);
+         if (ret != DRV_SUCCESS)
+            return (int)ret;
+
+      }
 
       // process image
       MM::ImageProcessor* ip = GetCoreCallback()->GetImageProcessor(this);
@@ -3299,12 +3324,13 @@ int AndorCamera::GetListOfAvailableCameras()
    }
 
    std::string AndorCamera::getCameraType() {
-      SwitchAndorDriverToThisCamera();
       std::string retVal("");
       AndorCapabilities caps;
-
-      caps.ulSize = sizeof(AndorCapabilities);
-      GetCapabilities(&caps);
+      {
+         DriverGuard dg(this);
+         caps.ulSize = sizeof(AndorCapabilities);
+         GetCapabilities(&caps);
+      }
 
       unsigned long camType = caps.ulCameraType;
       switch(camType) {
@@ -3366,11 +3392,12 @@ int AndorCamera::GetListOfAvailableCameras()
         retVal = "Unknown";
         break;
       }
+
       return retVal;
    }
 
    unsigned int AndorCamera::createGainProperty(AndorCapabilities * caps) {
-      SwitchAndorDriverToThisCamera();
+      DriverGuard dg(this);
       unsigned int retVal(DRV_SUCCESS);
       bEMGainSupported  = ((caps->ulSetFunctions & AC_SETFUNCTION_EMCCDGAIN) == AC_SETFUNCTION_EMCCDGAIN);
 
@@ -3428,11 +3455,12 @@ int AndorCamera::GetListOfAvailableCameras()
          AddAllowedValue(g_EMGain, "On");      
          AddAllowedValue(g_EMGain, "Off");
       }
+      
       return retVal;
    }
 
    unsigned int AndorCamera::createTriggerProperty(AndorCapabilities * caps) {
-      SwitchAndorDriverToThisCamera();
+      DriverGuard dg(this);
       vTriggerModes.clear();  
       unsigned int retVal = DRV_SUCCESS;
       if(caps->ulTriggerModes & AC_TRIGGERMODE_CONTINUOUS)
@@ -3486,6 +3514,7 @@ int AndorCamera::GetListOfAvailableCameras()
       assert(nRet == DEVICE_OK);
       nRet = SetProperty("Trigger", strCurrentTriggerMode_.c_str());
       assert(nRet == DEVICE_OK);
+      
 
       return retVal;
    }
@@ -3493,7 +3522,7 @@ int AndorCamera::GetListOfAvailableCameras()
 
    unsigned int AndorCamera::UpdateSnapTriggerMode()
    {
-      SwitchAndorDriverToThisCamera();
+      DriverGuard dg(this);
       int ret;
       if(iCurrentTriggerMode_ == SOFTWARE)
       {
@@ -3525,15 +3554,23 @@ int AndorCamera::GetListOfAvailableCameras()
       return ret;
    }
 
-   void AndorCamera::SwitchAndorDriverToThisCamera() const
+
+
+   DriverGuard::DriverGuard(const AndorCamera * cam)
    {
-      if (NumberOfWorkableCameras_ > 1)
+      g_AndorDriverLock.Lock();
+      if (cam->GetNumberOfWorkableCameras() > 1)
       {
          long currentCamera;
          GetCurrentCamera(&currentCamera);
-         if (currentCamera != myCameraID_)
+         if (currentCamera != cam->GetMyCameraID())
          {
-            SetCurrentCamera(myCameraID_);
+            SetCurrentCamera(cam->GetMyCameraID());
          }
       }
+   }
+
+   DriverGuard::~DriverGuard()
+   {
+      g_AndorDriverLock.Unlock();
    }

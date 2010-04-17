@@ -153,6 +153,9 @@ public:
 
    //static void ReleaseInstance(AndorCamera * AndorCamera);
 
+    int GetNumberOfWorkableCameras() const { return NumberOfWorkableCameras_; } 
+    int GetMyCameraID() const { return myCameraID_; } 
+
 private:
    AndorCamera();
    int ResizeImageBuffer();
@@ -197,7 +200,6 @@ private:
    long ReadoutTime_, KeepCleanTime_;
 
    long GetReadoutTime();
-   void SwitchAndorDriverToThisCamera() const;
 
 // kdb 2/27/2009
 #ifdef WIN32
@@ -349,7 +351,12 @@ private:
 };
 
 
+class DriverGuard
+{
+public:
+   DriverGuard(const AndorCamera * cam);
+   ~DriverGuard();
 
-
+};
 
 #endif //_ANDOR_H_
