@@ -18,6 +18,10 @@ del \Projects\micromanager\Install\Output\MMSetup_.exe
 del \Projects\micromanager\Install\Output\MMSetup_%mmversion%_%YYYYMMDD%.exe
 
 ECHO Building Java components...
+pushd NativeGUI
+call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml cleanNativeGUI buildNativeGUI installNativeGUI
+popd
+
 pushd mmStudio\src
 call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile ../build.xml cleanMMStudio compileMMStudio buildMMStudio buildMMReader
 popd

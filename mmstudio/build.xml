@@ -25,6 +25,7 @@
 	<property name="MMCoreJ" value="../bin/MMCoreJ.jar"/>
 	<property name="MMPluginDir-inst" value="${InstallRoot}/plugins/Micro-Manager"/>
 	<property name="BinRoot" value="../bin"/>
+	<property name="NativeGUI" value="../NativeGUI/NativeGUI.jar"/>
 
 	<path id="project.MMPlugins.path">
 		<pathelement location="${MMPluginDir}"/>
@@ -48,6 +49,7 @@
 		<pathelement location="${swing_layout}" />
 		<pathelement location="${commons_math}" />
 		<pathelement location="${MMPluginDir}/MMJ_.jar"/>
+		<pathelement location="${NativeGUI}" />
 	</path>
 
 	<target name="compileMMStudio" description="Compile MM Studio.">

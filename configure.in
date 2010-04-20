@@ -112,6 +112,7 @@ if test "$IMAGEJDIR" != "no" ; then
 fi
 
 
+
 AC_SUBST(CLASSEXT)
 AC_SUBST(BSHJARPATH)
 AC_SUBST(SWINGXJARPATH)
@@ -254,4 +255,4 @@ if test -z "${BUILD_SECRETDEVICEADAPTERS}" ; then
 fi
 
 AC_CONFIG_SUBDIRS(DeviceAdapters)
-AC_OUTPUT(Makefile MMCore/Makefile MMCoreJ_wrap/Makefile Test_Programs/Makefile mmstudio/Makefile plugins/Makefile scripts/Makefile autofocus/Makefile MMDevice/Makefile bin/Makefile classext/Makefile MMCorePy_wrap/Makefile)
+AC_OUTPUT(Makefile MMCore/Makefile MMCoreJ_wrap/Makefile NativeGUI/Makefile Test_Programs/Makefile mmstudio/Makefile plugins/Makefile scripts/Makefile autofocus/Makefile MMDevice/Makefile bin/Makefile classext/Makefile MMCorePy_wrap/Makefile)

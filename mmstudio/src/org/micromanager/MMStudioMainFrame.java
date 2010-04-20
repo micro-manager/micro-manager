@@ -129,6 +129,7 @@ import org.micromanager.utils.ProgressBar;
 import org.micromanager.utils.TextUtils;
 import org.micromanager.utils.WaitDialog;
 
+
 import bsh.EvalError;
 import bsh.Interpreter;
 
@@ -141,6 +142,7 @@ import java.awt.Graphics;
 import java.awt.image.DirectColorModel;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import org.micromanager.nativegui.NativeGUI;
 import org.micromanager.utils.ReportingUtils;
 
 /*
@@ -2131,35 +2133,17 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
 
    private File runAcquisitionBrowser() {
-      if (System.getProperty("os.name").indexOf("Mac OS X") != -1) {
-         Runtime run = Runtime.getRuntime();
-         Process pr;
          try {
-            pr = run.exec("./fileBrowserStandalone "+openAcqDirectory_);
-            pr.waitFor();
-            BufferedReader buf = new BufferedReader(new InputStreamReader(pr.getInputStream()));
-            String filename = buf.readLine();
+            String filename = NativeGUI.runMDABrowser(openAcqDirectory_);
             if (filename.length()>0) {
                return new File(filename);
             } else {
                return null;
             }
          } catch (Exception ex) {
-            ReportingUtils.logError("ex");
+            ReportingUtils.logError(ex);
             return null;
          }
-      } else {
-         JFileChooser fc = new JFileChooser();
-         fc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
-         fc.setSelectedFile(new File(openAcqDirectory_));
-         int retVal = fc.showOpenDialog(this);
-         if (retVal == JFileChooser.APPROVE_OPTION) {
-            return fc.getSelectedFile();
-         } else {
-            return null;
-         }
-      }
-
    }
 
    /**
