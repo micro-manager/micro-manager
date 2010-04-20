@@ -568,10 +568,7 @@ public class ContrastPanel extends JPanel implements ImageController, PropertyCh
       setLutGamma(gamma_);
 		updateSliders();
 
-		//image_.updateAndDraw();
-      //imageJ uses the following:
-
-      image_.updateChannelAndDraw();
+		image_.updateAndDraw();
 	}
 
 	private void updateSliders(boolean force, int min, int max) {
@@ -665,13 +662,6 @@ public class ContrastPanel extends JPanel implements ImageController, PropertyCh
 		histogramPanel_.repaint();
 		if (cs8bit_ == null || cs16bit_ == null)
 			return;
-
-      int theType = image_.getType();
-      if(ImagePlus.COLOR_RGB ==theType)
-      {
-         //image_.getProcessor().reset();
-         //image_.getProcessor().snapshot();
-      }
 
 		if (image_.getProcessor() != null) {
 			// record settings
