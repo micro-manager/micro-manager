@@ -6,6 +6,7 @@
             <name>mm</name>
             <source-roots>
                 <root id="src.dir" name="../../../mmstudio/src"/>
+                <root id="src.src.dir"/>
             </source-roots>
             <test-roots/>
         </data>
