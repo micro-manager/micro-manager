@@ -27,6 +27,8 @@ install:
   ifeq ($(OSNAME),Darwin)
 	cp NativeGUI.jar $(DESTDIR)$(JARPATH)
 	cp libNativeGUI.jnilib $(DESTDIR)$(DEVICEADAPTERPATH)
+  else
+	cp NativeGUI.jar $(DESTDIR)$(JARPATH)
   endif
 
 clean:
