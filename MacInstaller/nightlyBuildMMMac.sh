@@ -83,7 +83,7 @@ sed -i -e "s/\"1.3.*\"/\"$VERSION\"/"  mmstudio/src/org/micromanager/MMStudioMai
 
 autoreconf || exit
 MACOSX_DEPLOYMENT_TARGET=10.4
-./configure --with-imagej=$PPC --enable-python --enable-arch=ppc CXX="g++ -V 4.0.1" CXXFLAGS="-g -O2 -mmacosx-version-min=10.4 -isysroot /Developer/SDKs/MacOSX10.4u.sdk -arch ppc" --disable-dependency-tracking || exit
+./configure --with-imagej=$PPC --enable-python --enable-arch=ppc CXX="g++-4.0" CXXFLAGS="-g -O2 -mmacosx-version-min=10.4 -isysroot /Developer/SDKs/MacOSX10.4u.sdk -arch ppc" --disable-dependency-tracking || exit
 make || exit
 make install || exit
 
@@ -91,7 +91,7 @@ make install || exit
 cd $RI386
 autoreconf || exit
 MACOSX_DEPLOYMENT_TARGET=10.4
-./configure --with-imagej=$I386 --enable-arch=i386 CXX="g++ -V 4.0.1" CXXFLAGS="-g -O2 -mmacosx-version-min=10.4 -isysroot /Developer/SDKs/MacOSX10.4u.sdk -arch i386" --disable-dependency-tracking || exit
+./configure --with-imagej=$I386 --enable-arch=i386 CXX="g++-4.0" CXXFLAGS="-g -O2 -mmacosx-version-min=10.4 -isysroot /Developer/SDKs/MacOSX10.4u.sdk -arch i386" --disable-dependency-tracking || exit
 make || exit
 make install || exit
 
@@ -99,12 +99,13 @@ make install || exit
 cd $RX86_64
 autoreconf || exit
 export MACOSX_DEPLOYMENT_TARGET=10.5
-./configure --with-imagej=$X86_64 --enable-arch=x86_64 CXX="g++ -V 4.2.1" CXXFLAGS="-g -O2 -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk -arch x86_64" --disable-dependency-tracking || exit
+./configure --with-imagej=$X86_64 --enable-arch=x86_64 CXX="g++-4.2" CXXFLAGS="-g -O2 -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk -arch x86_64" --disable-dependency-tracking || exit
 make || exit
 make install || exit
 
 # Use lipo to make Universal Binaries
 lipo -create $PPC/libMMCoreJ_wrap.jnilib $I386/libMMCoreJ_wrap.jnilib $X86_64/libMMCoreJ_wrap.jnilib -o $TARGET/libMMCoreJ_wrap.jnilib
+lipo -create $PPC/libNativeGUI.jnilib $I386/libNativeGUI.jnilib $X86_64/libNativeGUI.jnilib -o $TARGET/libNativeGUI.jnilib
 #strip -X -S $TARGET/libMMCoreJ_wrap.jnilib
 cd $PPC
 FILES=libmmgr*

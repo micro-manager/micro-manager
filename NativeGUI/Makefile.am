@@ -11,7 +11,7 @@ NativeGUITARGETS = \
 $(NativeGUITARGETS): $(NativeGUISOURCES)
   ifeq ($(OSNAME),Darwin)
 	$(SWIG) -c++ -java -module NativeGUI -package org.micromanager.nativegui -outdir . NativeGUI.i
-	g++ -dynamiclib NativeGUIMac.mm NativeGUI_wrap.cxx -o libNativeGUI.jnilib $(JAVAINC) NativeGUI.h -framework Cocoa
+	$(CXX) $(CXXFLAGS) -dynamiclib NativeGUIMac.mm NativeGUI_wrap.cxx -o libNativeGUI.jnilib $(JAVAINC) NativeGUI.h -framework Cocoa
 	$(JAVAC) NativeGUI.java NativeGUIJNI.java -d .
 	$(JAR) cf NativeGUI.jar org
   else
