@@ -19,6 +19,7 @@ import javax.swing.SwingUtilities;
 
 import mmcorej.CMMCore;
 
+import mmcorej.DeviceType;
 import mmcorej.StrVector;
 import org.micromanager.AcqControlDlg;
 import org.micromanager.MMStudioMainFrame;
@@ -450,8 +451,14 @@ public class Hub {
          core_.setPixelSizeConfig(pixelConfig);
          core_.waitForSystem();
          setOffsets(pixelConfig);
+         boolean pfsPresent = false;
          try {
             if (core_.hasProperty("PFS-Offset", "Position")) {
+               pfsPresent = true;
+            }
+         } catch (Exception e) { }
+         try {
+            if (pfsPresent) {
                if (pixelConfig.equals(surveyPixelSizeConfig_)) {
                   core_.setProperty("PFS-Offset", "Position", "2.824");
                } else {
