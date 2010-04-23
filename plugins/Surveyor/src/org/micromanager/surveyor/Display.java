@@ -28,6 +28,7 @@ public class Display {
     private boolean currentlyPanning_ = false;
     private RoiManager roiManager_;
     private Coordinates coords_;
+   private boolean contrastAutoAdjusted_ = false;
 
 	public Display(Hub hub, int imageType, int width, int height) {
 		hub_ = hub;
@@ -131,8 +132,12 @@ public class Display {
 		ImageStatistics stats = imgp_.getStatistics();
       double displayRange = imgp_.getDisplayRangeMax()-imgp_.getDisplayRangeMin();
       double actualRange = stats.max - stats.min;
-		if ((displayRange < 5) || (displayRange/actualRange < 0.6667) || (displayRange/actualRange > 1.5))
-			imgp_.setDisplayRange(stats.min, stats.max);
+      if (! contrastAutoAdjusted_) // Only do this once.
+         if ((displayRange < 5) || (displayRange/actualRange < 0.6667) || (displayRange/actualRange > 1.5)) {
+            imgp_.setDisplayRange(stats.min, stats.max);
+            contrastAutoAdjusted_ = true;
+         }
+
 	}
 
 	public void show() {
