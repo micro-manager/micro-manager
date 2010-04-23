@@ -32,11 +32,11 @@ install:
   endif
 
 clean:
-	rm org/micromanager/nativegui/*.class
-	rm NativeGUI.java
-	rm NativeGUIJNI.java
-	rm *.cxx
-	rm libNativeGUI.jnilib
-	rm NativeGUI.jar
+	rm org/micromanager/nativegui/*.class || echo "OK"
+	rm NativeGUI.java || echo "OK"
+	rm NativeGUIJNI.java || echo "OK"
+	rm *.cxx || echo "OK"
+	rm libNativeGUI.jnilib || echo "OK"
+	rm NativeGUI.jar || echo "OK"
 
 
