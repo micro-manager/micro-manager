@@ -97,7 +97,7 @@ make install || exit
 
 # build x86_64
 cd $RX86_64
-../mmUnixBuild.sh || exit
+./mmUnixBuild.sh || exit
 export MACOSX_DEPLOYMENT_TARGET=10.5
 ./configure --with-imagej=$X86_64 --enable-arch=x86_64 CXX="g++-4.2" CXXFLAGS="-g -O2 -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk -arch x86_64" --disable-dependency-tracking || exit
 make || exit
