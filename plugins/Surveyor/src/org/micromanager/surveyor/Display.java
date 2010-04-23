@@ -129,7 +129,9 @@ public class Display {
 	public void updateAndDraw() {
 		imgp_.updateAndDraw();
 		ImageStatistics stats = imgp_.getStatistics();
-		if (imgp_.getDisplayRangeMax()-imgp_.getDisplayRangeMin() < 5)
+      double displayRange = imgp_.getDisplayRangeMax()-imgp_.getDisplayRangeMin();
+      double actualRange = stats.max - stats.min;
+		if ((displayRange < 5) || (displayRange/actualRange < 0.6667) || (displayRange/actualRange > 1.5))
 			imgp_.setDisplayRange(stats.min, stats.max);
 	}
 
