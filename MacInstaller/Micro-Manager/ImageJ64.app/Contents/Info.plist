@@ -48,7 +48,7 @@
 			<string>ppc</string>
 		</array>
 		<key>ClassPath</key>
-      <string>$APP_PACKAGE/../ij.jar:$APP_PACKAGE/../quaqua-filechooser-only.jar:/System/Library/Java/Extensions/QTJava.zip</string>
+      <string>$APP_PACKAGE/../ij.jar:/System/Library/Java/Extensions/QTJava.zip</string>
 		<key>JVMVersion</key>
 		<string>1.5+</string>
 		<key>MainClass</key>
