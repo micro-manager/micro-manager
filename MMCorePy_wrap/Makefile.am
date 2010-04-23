@@ -42,9 +42,9 @@ install:
 	cp MMCoreWrapDemo.py $(DEVICEADAPTERPATH)
 
 clean:
-	rm MMCorePy_wrap.cxx
-	rm MMCorePy.py
-	rm _MMCorePy.so
-	rm -rf build
-	rm -f *.so
+	rm MMCorePy_wrap.cxx || echo "Not found, no problem"
+	rm MMCorePy.py || echo "Not found, no problem"
+	rm _MMCorePy.so || echo "Not found, no problem"
+	rm -rf build || echo "Not found, no problem"
+	rm -f *.so || echo "Not found, no problem"
 
