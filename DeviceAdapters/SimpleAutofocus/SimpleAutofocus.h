@@ -48,9 +48,9 @@ class SimpleAutofocus : public CAutoFocusBase<SimpleAutofocus>
 public:
    SimpleAutofocus(const char *pName);
    virtual ~SimpleAutofocus();
-   bool SimpleAutofocus::Busy();
-   void SimpleAutofocus::GetName(char* name) const;
-   int SimpleAutofocus::Initialize();
+   bool Busy();
+   void GetName(char* name) const;
+   int Initialize();
    int Shutdown();
 
    // AutoFocus API
