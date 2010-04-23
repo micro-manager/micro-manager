@@ -6,11 +6,10 @@ REPOSITORY=`pwd`/..
 BUILDDIR=/Users/MM/MMBuild
 
 
-
-TARGET=$BUILDDIR/Micro-Manager1.3
-PPC=$BUILDDIR/Micro-Manager1.3-ppc
-I386=$BUILDDIR/Micro-Manager1.3-i386
-X86_64=$BUILDDIR/Micro-Manager1.3-x86_64
+TARGET=$BUILDDIR/Micro-Manager1.4
+PPC=$BUILDDIR/Micro-Manager1.4-ppc
+I386=$BUILDDIR/Micro-Manager1.4-i386
+X86_64=$BUILDDIR/Micro-Manager1.4-x86_64
 
 test -d $BUILDDIR && rm -rf $BUILDDIR
 mkdir $BUILDDIR
@@ -52,7 +51,7 @@ cd $REPOSITORY
 # set version variable and change version in java source code to include build date stamp
 VERSION=`cat version.txt`
 echo $VERSION
-sed -i -e "s/\"1.3.*\"/\"$VERSION\"/"  mmstudio/src/org/micromanager/MMStudioMainFrame.java || exit
+sed -i -e "s/\"1.4.*\"/\"$VERSION\"/"  mmstudio/src/org/micromanager/MMStudioMainFrame.java || exit
 
 # build PPC
 MACOSX_DEPLOYMENT_TARGET=10.4

@@ -1,28 +1,28 @@
 # This script builds binaries for three architectures (ppc, i386, and x86_64)
 # from three repositories (which should be checked out already).
 # It assumes the following directory structure:
-# $REPOSITORYROOT - micro-manager1.3
-#                 - micro-manager1.3-ppc
-#                 - micro-manager1.3-i386
-#                 - micro-manager1.3-x86_64
+# $REPOSITORYROOT - micro-manager1.4
+#                 - micro-manager1.4-ppc
+#                 - micro-manager1.4-i386
+#                 - micro-manager1.4-x86_64
 # contents of $BUILDDIR will be removed!!!
 
 REPOSITORYROOT=/Users/MM/svn
 BUILDDIR=/Users/MM/MMBuild
-UPLOADPLACE=valelab.ucsf.edu:/home/MM/public_html/nightlyBuilds/1.3/Mac/
+UPLOADPLACE=valelab.ucsf.edu:/home/MM/public_html/nightlyBuilds/1.4/Mac/
 
 # No edits should be needed below this line
 
-TARGET=$BUILDDIR/Micro-Manager1.3
+TARGET=$BUILDDIR/Micro-Manager1.4
 
-PPC=$BUILDDIR/Micro-Manager1.3-ppc
-I386=$BUILDDIR/Micro-Manager1.3-i386
-X86_64=$BUILDDIR/Micro-Manager1.3-x86_64
+PPC=$BUILDDIR/Micro-Manager1.4-ppc
+I386=$BUILDDIR/Micro-Manager1.4-i386
+X86_64=$BUILDDIR/Micro-Manager1.4-x86_64
 
-REPOSITORY=$REPOSITORYROOT/micromanager1.3
-RPPC=$REPOSITORYROOT/micromanager1.3-ppc
-RI386=$REPOSITORYROOT/micromanager1.3-i386
-RX86_64=$REPOSITORYROOT/micromanager1.3-x86_64
+REPOSITORY=$REPOSITORYROOT/micromanager1.4
+RPPC=$REPOSITORYROOT/micromanager1.4-ppc
+RI386=$REPOSITORYROOT/micromanager1.4-i386
+RX86_64=$REPOSITORYROOT/micromanager1.4-x86_64
 
 test -d $BUILDDIR && rm -rf $BUILDDIR
 mkdir $BUILDDIR
@@ -78,7 +78,7 @@ VERSION=`cat version.txt`
 #daily build
 VERSION=$VERSION-`date "+%Y%m%d"`
 echo $VERSION
-sed -i -e "s/\"1.3.*\"/\"$VERSION\"/"  mmstudio/src/org/micromanager/MMStudioMainFrame.java || exit
+sed -i -e "s/\"1.4.*\"/\"$VERSION\"/"  mmstudio/src/org/micromanager/MMStudioMainFrame.java || exit
 
 
 autoreconf || exit

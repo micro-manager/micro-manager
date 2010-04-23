@@ -2,6 +2,7 @@
 # enable error handling
 set -e
 
+
 # bootstrap autotools
 aclocal -I m4
 libtoolize --force
@@ -13,3 +14,12 @@ libtoolize --force
 automake --foreign --add-missing
 autoconf
 cd ..
+if [ -d SecretDeviceAdapters ]; then
+   cd SecretDeviceAdapters
+   aclocal 
+   libtoolize --force
+   automake --foreign --add-missing
+   autoconf
+   cd ..
+fi
+
