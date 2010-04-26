@@ -162,9 +162,13 @@ int FocusMonitor::Process(unsigned char* buffer, unsigned width, unsigned height
    if (!IsPropertyEqualTo(g_PropertyOnOff, g_ON))
       return DEVICE_OK; // processor inactive
 
-   // verify dimensions
-  // scorer_.SetImage(buffer, width, height, byteDepth);
-   double score = 0.0; // scorer_.GetScore(false);
+   MM::AutoFocus* afDev = GetCoreCallback()->GetAutoFocus(this);
+
+   double score(0.0);
+   if (afDev)
+      return afDev->GetCurrentFocusScore(score);
+   else
+      return ERR_IP_NO_AF_DEVICE;
 
    // keep size constant
    if (scoreQueue_.size() == QUEUE_SIZE)
