@@ -3,9 +3,9 @@
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   Serial port device adapter, Windows only
+// DESCRIPTION:   Serial port device adapter
 //
-// COPYRIGHT:     University of California, San Francisco, 2006
+// COPYRIGHT:     University of California, San Francisco, 2010
 // LICENSE:       This file is distributed under the BSD license.
 //                License text is included with the source distribution.
 //
@@ -17,10 +17,8 @@
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-// NOTE:          Windows specific implementation uses CSerial classes by Ramon Klein
-//                http://home.ict.nl/~ramklein/Projects/Serial.html 
-//                
-// AUTHOR:        Nenad Amodaj, nenad@amodaj.com, 10/21/2005
+// AUTHOR:        Nenad Amodaj - Mark I - use CSerial class
+//                Karl Hoover - Mark II - use boost, also simplify handling of terminators
 //
 // CVS:           $Id$
 //
@@ -32,12 +30,22 @@
 #endif
 
 #include "../../MMDevice/ModuleInterface.h"
+#include "../../MMDevice/DeviceUtils.h"
 #include "SerialManager.h"
-#include "serial.h"
 #include <sstream>
 #include <cstdio>
 
-using namespace std;
+#include <deque> 
+#include <iostream> 
+#include <boost/bind.hpp> 
+#include <boost/asio.hpp> 
+#include <boost/asio/serial_port.hpp> 
+#include <boost/thread.hpp> 
+#include <boost/lexical_cast.hpp> 
+#include <boost/date_time/posix_time/posix_time_types.hpp> 
+#include <conio.h>
+
+MMThreadLock readBufferLock_;
 
 SerialManager g_serialManager;
 
@@ -90,6 +98,41 @@ const char* g_Parity_Space = "Space";
    }
 #endif
 
+
+const std::vector<std::string> availableSerialPorts(void)
+{
+   std::vector<std::string> serialPorts;
+#ifdef WIN32
+   char allDeviceNames[100000];
+
+   // on Windows the serial ports are devices that begin with "COM"
+   int ret = QueryDosDevice( 0, allDeviceNames, 100000);
+   if( 0!= ret)
+   {
+      for( int ii = 0; ii < ret; ++ii)
+      {
+         if ( 0 == allDeviceNames[ii])
+            allDeviceNames[ii] = ' ';
+      }
+      std::string all(allDeviceNames, ret);
+      std::vector<std::string> tokens;
+      CDeviceUtils::Tokenize(all, tokens, " ");
+      for( std::vector<std::string>::iterator jj = tokens.begin(); jj != tokens.end(); ++jj)
+      {
+         if( 0 == jj->substr(0,3).compare("COM"))
+            serialPorts.push_back(*jj);
+      }
+      
+   }
+#else
+//todo UNIX:
+#endif
+
+   return serialPorts;
+}
+
+
+
 ///////////////////////////////////////////////////////////////////////////////
 // Exported MMDevice API
 ///////////////////////////////////////////////////////////////////////////////
@@ -104,16 +147,9 @@ MODULE_API void InitializeModuleData()
    time_t timeout = 15;
    bool stale = seconds - g_PortListLastUpdated > timeout ? true : false;
 
-   if (g_PortList.size() == 0 || stale) {
-      char portName[16];
-      char portNameWinAPI[16];
-      for (int i=1; i<=256; i++) {
-         sprintf(portName, "COM%d", i);
-         sprintf(portNameWinAPI, "\\\\.\\%s",portName);
-         if (CSerial::EPortAvailable == CSerial::CheckPort(portNameWinAPI)){
-            g_PortList.push_back(portName);
-         }
-      }
+   if (g_PortList.size() == 0 || stale) 
+   {
+      g_PortList = availableSerialPorts();
       g_PortListLastUpdated = time(NULL);
    }
 
@@ -134,13 +170,17 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
    g_serialManager.DestroyPort(pDevice);
 }
 
+// serial device implementation class
+#include "AsioClient.h"
+
+
 ///////////////////////////////////////////////////////////////////////////////
 // SerialManager
 ///////////////////////////////////////////////////////////////////////////////
 
 SerialManager::~SerialManager()
 {
-   vector<SerialPort*>::iterator i;
+   std::vector<SerialPort*>::iterator i;
    for (i=ports_.begin(); i!=ports_.end(); i++)
       delete *i;
 }
@@ -148,13 +188,14 @@ SerialManager::~SerialManager()
 MM::Device* SerialManager::CreatePort(const char* portName)
 {
    // check if the port already exists
-   vector<SerialPort*>::iterator i;
+   std::vector<SerialPort*>::iterator i;
    for (i=ports_.begin(); i!=ports_.end(); i++)
    {
       char name[MM::MaxStrLength];
       (*i)->GetName(name);
       if (strcmp(name, portName) == 0)
       {
+          (*i)->LogMessage(("adding reference to Port " + std::string(portName)).c_str() , true);
          (*i)->AddReference();
          return *i;
       }
@@ -162,31 +203,30 @@ MM::Device* SerialManager::CreatePort(const char* portName)
 
    // no such port found, so try to create a new one
    SerialPort* pPort = new SerialPort(portName);
-//   if (pPort->Open(portName) == DEVICE_OK)
-//   {
-      // open port succeeded, so add it to the list
-      ports_.push_back(pPort);
-      pPort->AddReference();
-      return pPort;
-//   }
+   pPort->LogMessage(("created new Port " + std::string(portName)).c_str() , true);
+   ports_.push_back(pPort);
+   pPort->AddReference();
+   pPort->LogMessage(("adding reference to Port " + std::string(portName)).c_str() , true);
+   return pPort;
 
-   // open port failed
-//   delete pPort;
-//   return 0;
 }
 
 void SerialManager::DestroyPort(MM::Device* port)
 {
-   vector<SerialPort*>::iterator i;
+   std::vector<SerialPort*>::iterator i;
    for (i=ports_.begin(); i!=ports_.end(); i++)
    {
       if (*i == port)
       {
+         char theName[MM::MaxStrLength];
+         (*i)->GetName(theName);
+         //(*i)->LogMessage("Removing reference to Port " + std::string(theName) , true);
          (*i)->RemoveReference();
 
          // really destroy only if there are no references pointing to the port
          if ((*i)->OKToDelete())
          {
+            //(*i)->LogMessage("deleting Port " + std::string(theName)) , true);
             delete *i;
             ports_.erase(i);
          }
@@ -197,7 +237,9 @@ void SerialManager::DestroyPort(MM::Device* port)
 
 SerialPort::SerialPort(const char* portName) :
    refCount_(0),
-   port_(0),
+   pService_(0),
+   pPort_(0),
+   pThread_(0),
    busy_(false),
    initialized_(false),
    portTimeoutMs_(2000.0),
@@ -207,12 +249,9 @@ SerialPort::SerialPort(const char* portName) :
    parity_(g_Parity_None)
 {
    MMThreadGuard g(portLock_);
-   port_ = new CSerial();
+   charsFoundBeyondTerminator_.clear();
 
    portName_ = portName;
-   portNameWinAPI_ = "\\\\.\\";
-   portNameWinAPI_ += portName;
-
 
    InitializeDefaultErrorMessages();
 
@@ -222,7 +261,7 @@ SerialPort::SerialPort(const char* portName) :
    assert(ret == DEVICE_OK);
 
    // Description
-   ret = CreateProperty(MM::g_Keyword_Description, "Serial port driver (Win32)", MM::String, true);
+   ret = CreateProperty(MM::g_Keyword_Description, "Serial port driver (boost:asio)", MM::String, true);
    assert(ret == DEVICE_OK);
 
    // baud
@@ -230,17 +269,17 @@ SerialPort::SerialPort(const char* portName) :
    ret = CreateProperty(MM::g_Keyword_BaudRate, g_Baud_9600, MM::String, false, pActBaud, true);
    assert(DEVICE_OK == ret);
 
-   AddAllowedValue(MM::g_Keyword_BaudRate, g_Baud_110, (long)CSerial::EBaud110);
-   AddAllowedValue(MM::g_Keyword_BaudRate, g_Baud_300, (long)CSerial::EBaud300);
-   AddAllowedValue(MM::g_Keyword_BaudRate, g_Baud_600, (long)CSerial::EBaud600);
-   AddAllowedValue(MM::g_Keyword_BaudRate, g_Baud_1200, (long)CSerial::EBaud1200);
-   AddAllowedValue(MM::g_Keyword_BaudRate, g_Baud_2400, (long)CSerial::EBaud2400);
-   AddAllowedValue(MM::g_Keyword_BaudRate, g_Baud_4800, (long)CSerial::EBaud4800);
-   AddAllowedValue(MM::g_Keyword_BaudRate, g_Baud_9600, (long)CSerial::EBaud9600);
-   AddAllowedValue(MM::g_Keyword_BaudRate, g_Baud_14400, (long)CSerial::EBaud14400);
-   AddAllowedValue(MM::g_Keyword_BaudRate, g_Baud_19200, (long)CSerial::EBaud19200);
-   AddAllowedValue(MM::g_Keyword_BaudRate, g_Baud_57600, (long)CSerial::EBaud57600);
-   AddAllowedValue(MM::g_Keyword_BaudRate, g_Baud_115200, (long)CSerial::EBaud115200);
+   AddAllowedValue(MM::g_Keyword_BaudRate, g_Baud_110, (long)110);
+   AddAllowedValue(MM::g_Keyword_BaudRate, g_Baud_300, (long)300);
+   AddAllowedValue(MM::g_Keyword_BaudRate, g_Baud_600, (long)600);
+   AddAllowedValue(MM::g_Keyword_BaudRate, g_Baud_1200, (long)1200);
+   AddAllowedValue(MM::g_Keyword_BaudRate, g_Baud_2400, (long)2400);
+   AddAllowedValue(MM::g_Keyword_BaudRate, g_Baud_4800, (long)4800);
+   AddAllowedValue(MM::g_Keyword_BaudRate, g_Baud_9600, (long)9600);
+   AddAllowedValue(MM::g_Keyword_BaudRate, g_Baud_14400, (long)14400);
+   AddAllowedValue(MM::g_Keyword_BaudRate, g_Baud_19200, (long)19200);
+   AddAllowedValue(MM::g_Keyword_BaudRate, g_Baud_57600, (long)57600);
+   AddAllowedValue(MM::g_Keyword_BaudRate, g_Baud_115200, (long)115200);
 
    // data bits
    ret = CreateProperty(MM::g_Keyword_DataBits, "8", MM::String, true);
@@ -251,28 +290,26 @@ SerialPort::SerialPort(const char* portName) :
    ret = CreateProperty(MM::g_Keyword_StopBits, g_StopBits_1, MM::String, false, pActStopBits, true);
    assert(ret == DEVICE_OK);
 
-   AddAllowedValue(MM::g_Keyword_StopBits, g_StopBits_1, (long)CSerial::EStop1);
-   AddAllowedValue(MM::g_Keyword_StopBits, g_StopBits_1_5, (long)CSerial::EStop1_5);
-   AddAllowedValue(MM::g_Keyword_StopBits, g_StopBits_2, (long)CSerial::EStop2);
+   AddAllowedValue(MM::g_Keyword_StopBits, g_StopBits_1, (long)boost::asio::serial_port_base::stop_bits::one);
+   AddAllowedValue(MM::g_Keyword_StopBits, g_StopBits_1_5, (long)boost::asio::serial_port_base::stop_bits::onepointfive);
+   AddAllowedValue(MM::g_Keyword_StopBits, g_StopBits_2, (long)boost::asio::serial_port_base::stop_bits::two);
 
    // parity
    CPropertyAction* pActParity = new CPropertyAction (this, &SerialPort::OnParity);
    ret = CreateProperty(MM::g_Keyword_Parity, g_Parity_None, MM::String, false, pActParity, true);
    assert(ret == DEVICE_OK);
 
-   AddAllowedValue(MM::g_Keyword_Parity, g_Parity_None, (long)CSerial::EParNone);
-   AddAllowedValue(MM::g_Keyword_Parity, g_Parity_Odd, (long)CSerial::EParOdd);
-   AddAllowedValue(MM::g_Keyword_Parity, g_Parity_Even, (long)CSerial::EParEven);
-   AddAllowedValue(MM::g_Keyword_Parity, g_Parity_Mark, (long)CSerial::EParMark);
-   AddAllowedValue(MM::g_Keyword_Parity, g_Parity_Space, (long)CSerial::EParSpace);
+   AddAllowedValue(MM::g_Keyword_Parity, g_Parity_None, (long)boost::asio::serial_port_base::parity::none);
+   AddAllowedValue(MM::g_Keyword_Parity, g_Parity_Odd, (long)boost::asio::serial_port_base::parity::odd);
+   AddAllowedValue(MM::g_Keyword_Parity, g_Parity_Even, (long)boost::asio::serial_port_base::parity::even);
 
    // handshaking
    CPropertyAction* pActHandshaking = new CPropertyAction (this, &SerialPort::OnHandshaking);
    ret = CreateProperty(MM::g_Keyword_Handshaking, "Off", MM::String, false, pActHandshaking, true);
    assert(ret == DEVICE_OK);
-   AddAllowedValue(MM::g_Keyword_Handshaking, g_Handshaking_Off, (long)CSerial::EHandshakeOff);
-   AddAllowedValue(MM::g_Keyword_Handshaking, g_Handshaking_Hardware, (long)CSerial::EHandshakeHardware);
-   AddAllowedValue(MM::g_Keyword_Handshaking, g_Handshaking_Software, (long)CSerial::EHandshakeSoftware);
+   AddAllowedValue(MM::g_Keyword_Handshaking, g_Handshaking_Off, (long)boost::asio::serial_port_base::flow_control::none);
+   AddAllowedValue(MM::g_Keyword_Handshaking, g_Handshaking_Hardware, (long)boost::asio::serial_port_base::flow_control::hardware);
+   AddAllowedValue(MM::g_Keyword_Handshaking, g_Handshaking_Software, (long)boost::asio::serial_port_base::flow_control::software);
 
    // answer timeout
    CPropertyAction* pActTimeout = new CPropertyAction (this, &SerialPort::OnTimeout);
@@ -284,50 +321,31 @@ SerialPort::SerialPort(const char* portName) :
    ret = CreateProperty("DelayBetweenCharsMs", "0", MM::Float, false, pActTD, true);
    assert(ret == DEVICE_OK);                                                 
 
-   // ret = UpdateStatus();
-   // assert(ret == DEVICE_OK);
 }
 
 SerialPort::~SerialPort()
 {
    MMThreadGuard g(portLock_);
    Shutdown();
-   delete port_;
+   delete pPort_;
+   delete pThread_;
+   delete pService_;
 }
 
 int SerialPort::Open()
 {
-   MMThreadGuard g(portLock_);
-   assert(port_);
-
-   long lastError;
-   lastError = port_->Open(portNameWinAPI_.c_str(), 0, 0, false);
-	if (lastError != ERROR_SUCCESS)
-		return ERR_OPEN_FAILED;
-
-   ostringstream logMsg;
-   logMsg << "Serial port " << portName_ << " opened." << endl; 
-   this->LogMessage(logMsg.str().c_str());
 
    return DEVICE_OK;
 }
 
 int SerialPort::Initialize()
 {
-   MMThreadGuard g(portLock_);
-
-   assert(port_);
-
-   // verify callbacks are supported and refuse to continue if not
+   // verify callbacks are supported
    if (!IsCallbackRegistered())
       return DEVICE_NO_CALLBACK_REGISTERED;
 
-   int ret = Open();
-   if (ret != DEVICE_OK)
-      return ret;
-
    long sb;
-   ret = GetPropertyData(MM::g_Keyword_StopBits, stopBits_.c_str(), sb);
+   int ret = GetPropertyData(MM::g_Keyword_StopBits, stopBits_.c_str(), sb);
    assert(ret == DEVICE_OK);
 
    long parity;
@@ -337,18 +355,37 @@ int SerialPort::Initialize()
    ret = GetCurrentPropertyData(MM::g_Keyword_BaudRate, baud);
    assert(ret == DEVICE_OK);
 
-   long lastError = port_->Setup((CSerial::EBaudrate)baud, CSerial::EData8, (CSerial::EParity)parity, (CSerial::EStopBits)sb);
-	if (lastError != ERROR_SUCCESS)
-		return ERR_SETUP_FAILED;
-
-   // set-up handshaking
    long handshake;
    ret = GetCurrentPropertyData(MM::g_Keyword_Handshaking, handshake);
    assert(ret == DEVICE_OK);
 
-   lastError = port_->SetupHandshaking((CSerial::EHandshake)handshake);
-	if (lastError != ERROR_SUCCESS)
-		return ERR_HANDSHAKE_SETUP_FAILED;
+   pService_ = new boost::asio::io_service();
+
+   MMThreadGuard g2(portLock_);
+   try
+   {
+      pPort_ = new AsioClient (*pService_, boost::lexical_cast<unsigned int>(baud), this->portName_,
+          boost::asio::serial_port_base::flow_control::type(handshake),
+          boost::asio::serial_port_base::parity::type(parity),
+          boost::asio::serial_port_base::stop_bits::type(sb),
+          this
+            ); 
+   }
+   catch( std::exception& what)
+   {
+      LogMessage(what.what(),false);
+      return DEVICE_ERR;
+   }
+
+   try
+   {
+      pThread_ = new boost::thread(boost::bind(&boost::asio::io_service::run, pService_)); 
+   }
+   catch(std::exception& what)
+   {
+      LogMessage(what.what(), false);
+      return DEVICE_ERR;
+   }
 
    ret = UpdateStatus();
    if (ret != DEVICE_OK)
@@ -360,14 +397,26 @@ int SerialPort::Initialize()
 
 int SerialPort::Shutdown()
 {
-   if (port_->IsOpen())
-      port_->Close();
-   initialized_ = false;
+   //std::ostringstream logMsg;
+   //logMsg << "shutting down Serial port " << portName_  << std::endl; 
+   //LogMessage(logMsg.str().c_str());
 
-   ostringstream logMsg;
-   logMsg << "Serial port " << portName_ << " closed." << endl; 
-   this->LogMessage(logMsg.str().c_str());
-   
+   do
+   {
+      MMThreadGuard g(portLock_);
+      if( 0 != pPort_)
+      {
+         CDeviceUtils::SleepMs(100);
+         pPort_->Close();
+      }
+   }while(bfalse_s);
+   if( 0 != pThread_)
+   {
+      CDeviceUtils::SleepMs(100);
+      pThread_->join();
+   }
+   initialized_ = false;
+ 
    return DEVICE_OK;
 }
   
@@ -376,77 +425,49 @@ void SerialPort::GetName(char* pszName) const
    CDeviceUtils::CopyLimitedString(pszName, portName_.c_str());
 }
 
+std::string SerialPort::Name(void) const
+{
+   char value[MM::MaxStrLength];
+   value[0] = 0;
+   GetName(value);
+   return std::string(value);
+}
 
 int SerialPort::SetCommand(const char* command, const char* term)
 {
-   string sendText(command);
-
+   bool bfalse = false;
+   std::string sendText(command);
    if (term != 0)
       sendText += term;
 
-   // send characters one by one to accomodate for slow devices
+   // send characters one by one to accomodate slow devices
    unsigned long written = 0;
-   long lastError;
-
-/*   MM::MMTime beginWriteTime;
-   MM::MMTime beginWriteTime0 = GetCurrentMMTime();
-   MM::MMTime totalWriteTime[32];
-   */
 
    if (transmitCharWaitMs_==0)
    {
       MMThreadGuard g(portLock_);
-      lastError = port_->Write(sendText.c_str(), sendText.length(), (DWORD *) &written);
-      if (lastError != ERROR_SUCCESS)
+      for( std::string::iterator jj = sendText.begin(); jj != sendText.end(); ++jj)
       {
-         LogMessage("TRANSMIT_FAILED error occured!");
-	      return ERR_TRANSMIT_FAILED;
+         pPort_->WriteOneCharacter(*jj);
+         ++written;
       }
    }
    else
    {
-      for (unsigned i=0; i<sendText.length(); i++)
+      for( std::string::iterator jj = sendText.begin(); jj != sendText.end(); ++jj)
       {
-         
-         unsigned long one = 0;
-
-
          const MM::MMTime maxTime (5, 0);
          MM::MMTime startTime (GetCurrentMMTime());
-         int retryCounter = 0;
          do
          {
             MMThreadGuard g(portLock_);
-            lastError = port_->Write(sendText.c_str() + written, 1, &one);
-            Sleep((DWORD)transmitCharWaitMs_);         
-            if (retryCounter > 0)
-               LogMessage("Retrying serial Write command!");
-            retryCounter++;
-         }
-         while (lastError != ERROR_SUCCESS && ((GetCurrentMMTime() - startTime) < maxTime));
-         
-	      if (lastError != ERROR_SUCCESS)
-         {
-            LogMessage("TRANSMIT_FAILED error occured!");
-		      return ERR_TRANSMIT_FAILED;
-         }
-         
-         assert (one == 1);
-         written++;
-         
+            pPort_->WriteOneCharacter(*jj);
+         }while(bfalse);
+         Sleep((DWORD)transmitCharWaitMs_);         
+         ++written;
       }
    }
-
-//   MM::MMTime totalWriteTimeAll = GetCurrentMMTime()-beginWriteTime0;
-   
-
-   
-
-   assert(written == sendText.length());
-   ostringstream logMsg;                                                     
-   logMsg << "Serial port " << portName_ << " wrote: " << sendText;
-   this->LogMessage(logMsg.str().c_str(), true);
-
+   LogMessage( (std::string("SetCommand -> ") + sendText.substr(0,written)).c_str(), true);
    return DEVICE_OK;
 }
 
@@ -457,99 +478,87 @@ int SerialPort::GetAnswer(char* answer, unsigned bufLen, const char* term)
       LogMessage("BUFFER_OVERRUN error occured!");
       return ERR_BUFFER_OVERRUN;
    }
+   std::ostringstream logMsg;
+   unsigned long nCharactersRead(0);
+   std::vector<char> theData;
+   memset(answer,0,bufLen);
+   bool dataAlreadyAvailable = false;
 
-   ostringstream logMsg;
-   unsigned long read(0);
-   unsigned long totalRead(0);
-   char* bufPtr = answer;
-   //long lastError = port_->Read(bufPtr, bufLen, &read, 0, (DWORD)portTimeoutMs_);
-
-   long lastError;
-   const MM::MMTime maxTime (5, 0);
-   MM::MMTime retryStart (GetCurrentMMTime());
-   int retryCounter = 0;
-   do
+   // load the remainder from the last packet into the buffer.
+   for( std::vector<char>::iterator cby = charsFoundBeyondTerminator_.begin(); cby != charsFoundBeyondTerminator_.end(); ++cby)
    {
-      MMThreadGuard g(portLock_);
-      lastError = port_->Read(bufPtr, 1 /*bufLen*/, &read);
-      if (retryCounter > 0)
-         LogMessage("Retrying serial Read command!\n");
-      retryCounter++;
+      answer[nCharactersRead++] = *cby;
    }
-   while (lastError != ERROR_SUCCESS && ((GetCurrentMMTime() - retryStart) < maxTime));
+   charsFoundBeyondTerminator_.clear();
+   if( 0 < nCharactersRead)
+      dataAlreadyAvailable = true;
 
-	if (lastError != ERROR_SUCCESS)
-   {
-      answer[0] = '\0';
-      LogMessage("RECEIVE_FAILED error occured!");
-		return ERR_RECEIVE_FAILED;
-   }
 
-   // append zero
-   bufPtr[read] = '\0';
+   CDeviceUtils::SleepMs(0.5 + transmitCharWaitMs_);
 
-   bufPtr += read;
-   totalRead += read;
-
-   if (term == 0)
-      return DEVICE_OK; // not term specified
-
-   // check for terminating sequence
-   char* termPos = strstr(answer, term);
-   if (termPos != 0)
-   {
-      *termPos = '\0';
-      logMsg << " Port: " << portName_ << "." << "Read: " << answer;       
-      LogMessage(logMsg.str().c_str(), true);
-      return DEVICE_OK;
-   }
-
-   // wait a little more for the proper termination sequence
    MM::MMTime startTime = GetCurrentMMTime();
    MM::MMTime answerTimeout(answerTimeoutMs_ * 1000.0);
+   int retryCounter = 0;
    while ((GetCurrentMMTime() - startTime)  < answerTimeout)
    {
-      if (bufLen <= totalRead)
-      {
-         answer[bufLen-1] = '\0';
-         LogMessage("BUFFER_OVERRUN error occured!");
-         return ERR_BUFFER_OVERRUN;
-      }
-
-      read = 0;
-      retryCounter = 0;
-      retryStart = GetCurrentMMTime();
-      do
+      int nRead = 0;
+      do  // just a scope for the thread guard
       {
          MMThreadGuard g(portLock_);
-         lastError = port_->Read(bufPtr , /*bufLen-totalRead*/1, &read);
-         if (retryCounter > 0)
-            LogMessage("Retrying serial Read command!\n");
+         //if (retryCounter > 2)
+         //   LogMessage("Retrying serial Read command!\n", true);
+         theData = pPort_->ReadData();
+         nRead = theData.size();
+         if( 0 < nRead)
+            LogBinaryMessage(true, theData, true);
+
+      }
+      while ( bfalse_s );
+
+      if( 0 == nRead && (!dataAlreadyAvailable) )
+      {
+         CDeviceUtils::SleepMs(0.5 + transmitCharWaitMs_);
          retryCounter++;
       }
-      while (lastError != ERROR_SUCCESS && (GetCurrentMMTime() - retryStart) < maxTime);
+      else
+      {  // append these characters onto the received message
+         for( int offset = 0; offset < nRead; ++offset)
+            answer[nCharactersRead + offset] = theData.at(offset);
+         nCharactersRead += nRead;
+         if (bufLen <= nCharactersRead)
+         {
+            answer[bufLen-1] = '\0';
+            LogMessage("BUFFER_OVERRUN error occured!");
+            return ERR_BUFFER_OVERRUN;
+         }
+         else
+         {
+            answer[nCharactersRead] = '\0';
+         }
 
-      if (lastError != ERROR_SUCCESS)
-      {
-         answer[totalRead] = '\0';
-         LogMessage("RECEIVE_FAILED error occured!");
-		   return ERR_RECEIVE_FAILED;
-      }
-
-      bufPtr[read] = '\0';
-      bufPtr += read;
-      totalRead += read;
-      termPos = strstr(answer, term);
-      if (termPos != 0)
-      {
-         *termPos = '\0';
-         logMsg << " Port: " << portName_ << "." << "Read: " << answer;       
-         this->LogMessage(logMsg.str().c_str(), true);
-         MM::MMTime totalTime = GetCurrentMMTime() - startTime;
-         return DEVICE_OK;
+         if (term == 0 )
+         {
+            return DEVICE_OK; // no termintor specified
+         }
+         else
+         {
+            // check for terminating sequence
+            char* termPos = strstr(answer, term);
+            if (termPos != 0)
+            {
+               // there may be characters in the buffer beyond the terminator !!
+               for( char* pbeyond = termPos+strlen(term)+1; pbeyond < (answer + nCharactersRead); ++ pbeyond)
+               {
+                  charsFoundBeyondTerminator_.push_back(*pbeyond);
+                  *pbeyond = '\0';
+               }
+               *termPos = '\0';
+               MM::MMTime totalTime = GetCurrentMMTime() - startTime;
+               return DEVICE_OK;
+            }
+         }
       }
    }
-
 
    LogMessage("TERM_TIMEOUT error occured!");
    return ERR_TERM_TIMEOUT;
@@ -558,70 +567,53 @@ int SerialPort::GetAnswer(char* answer, unsigned bufLen, const char* term)
 int SerialPort::Write(const unsigned char* buf, unsigned long bufLen)
 {
    // send characters one by one to accomodate for slow devices
-   ostringstream logMsg;
-   logMsg << "Serial TX: ";
+   std::ostringstream logMsg;
    for (unsigned i=0; i<bufLen; i++)
    {
       MMThreadGuard g(portLock_);
-      unsigned long written = 0;
-      long lastError = port_->Write(buf + i, 1, &written);
-      Sleep((DWORD)transmitCharWaitMs_);
-	   if (lastError != ERROR_SUCCESS || written != 1)
-      {
-         LogMessage("TRANSMIT_FAILED error occured!");
-		   return ERR_TRANSMIT_FAILED;      
-      }
+      pPort_->WriteOneCharacter(*(buf + i));
+      CDeviceUtils::SleepMs((unsigned long)(0.5+transmitCharWaitMs_));
       logMsg << (int) *(buf + i) << " ";
    }
-   
-   logMsg << endl;
-   LogMessage(logMsg.str().c_str(), true);
+   if( 0 < bufLen)
+      LogBinaryMessage(false, buf, bufLen, true);
 
    return DEVICE_OK;
 }
  
 int SerialPort::Read(unsigned char* buf, unsigned long bufLen, unsigned long& charsRead)
 {
+   int r = DEVICE_OK;
    // fill the buffer with zeros
    memset(buf, 0, bufLen);
-   ostringstream logMsg;
-   logMsg << "Serial RX: ";
 
    charsRead = 0;
    MMThreadGuard g(portLock_);
-   long lastError = port_->Read(buf, bufLen, &charsRead);
-	if (lastError != ERROR_SUCCESS)
+   std::vector<char> d = pPort_->ReadData();
+   if( 0<d.size())
+      LogBinaryMessage(true, d, true);
+   if( bufLen < d.size())
    {
-      LogMessage("RECEIVE_FAILED error occured!");
-		return ERR_RECEIVE_FAILED;
+      LogMessage("BUFFER_OVERRUN error occured!");
+      r = ERR_BUFFER_OVERRUN;
    }
+   charsRead = d.size();
+   unsigned int oi = 0;
+   for( std::vector<char>::iterator ii = d.begin(); (oi < bufLen)&&(ii!=d.end()); ++oi, ++ii)
+   {
+      buf[oi] = (unsigned char)(*ii);
+   }
+   charsRead = oi;
 
-   //for (unsigned long i=0; i<charsRead; i++)
-   //   if (buf[i]==10)
-   //      logMsg << "\\n";
-   //   else
-   //      logMsg << buf[i];
 
-   //logMsg << " [";
-
-   //for (unsigned long i=0; i<charsRead; i++)
-   //   logMsg << (int) *(buf + i) << " ";
-
-   //logMsg << "]" << endl;
-
-   //if (charsRead > 0)
-   //   LogMessage(logMsg.str().c_str(), true);
-
-   return DEVICE_OK;
+   return r;
 }
 
 int SerialPort::Purge()
 {
    MMThreadGuard g(portLock_);
-   long lastError = port_->Purge();
-	if (lastError != ERROR_SUCCESS)
-		return ERR_PURGE_FAILED;
-   
+   charsFoundBeyondTerminator_.clear();
+   pPort_->Purge();
    return DEVICE_OK;
 }
 
@@ -729,3 +721,42 @@ int SerialPort::OnDelayBetweenCharsMs(MM::PropertyBase* pProp, MM::ActionType eA
    return DEVICE_OK;
 }
 
+void SerialPort::LogBinaryMessage( const bool isInput, const unsigned char*const pdata, const int length, bool debugOnly)
+{
+   std::vector<unsigned char> tmpString;
+   for( const unsigned char* p = pdata; p < pdata+length; ++ p)
+   {
+      tmpString.push_back(*p);
+   }
+   LogBinaryMessage(isInput, tmpString, debugOnly);
+}
+
+void SerialPort::LogBinaryMessage( const bool isInput, const std::vector<char>& data, bool debugOnly)
+{
+   std::vector<unsigned char> tmpString;
+   for( std::vector<char>::const_iterator p = data.begin(); p != data.end(); ++ p)
+   {
+      tmpString.push_back((unsigned char)*p);
+   }
+   LogBinaryMessage(isInput, tmpString, debugOnly);
+}
+
+#define DECIMALREPRESENTATIONOFCONTROLCHARACTERS 1
+void SerialPort::LogBinaryMessage( const bool isInput, const std::vector<unsigned char>& data, bool debugOnly)
+{
+   std::string messs;
+   // input or output
+   messs += (isInput ? "<- " : "-> ");
+   for( std::vector<unsigned char>::const_iterator ii = data.begin(); ii != data.end(); ++ii)
+   {
+#ifndef DECIMALREPRESENTATIONOFCONTROLCHARACTERS
+      // caret representation:
+            messs +=   ( 31 < *ii) ? boost::lexical_cast<std::string, unsigned char>(*ii) : 
+         ("^" + boost::lexical_cast<std::string, unsigned char>(64+*ii));
+#else
+      messs +=   ( 31 < *ii)    ?  boost::lexical_cast<std::string, unsigned char>(*ii) : 
+         ("<" + boost::lexical_cast<std::string, unsigned short>((unsigned short)*ii) + ">");
+#endif
+   }
+   LogMessage(messs.c_str(),debugOnly);
+}

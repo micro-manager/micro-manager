@@ -5,7 +5,7 @@
 //-----------------------------------------------------------------------------
 // DESCRIPTION:   serial port device adapter 
 //                
-// AUTHOR:        Nenad Amodaj, nenad@amodaj.com, 10/21/2005
+// AUTHOR:        
 //
 // COPYRIGHT:     University of California, San Francisco, 2006
 // LICENSE:       This file is distributed under the BSD license.
@@ -21,13 +21,23 @@
 // CVS:           $Id$
 //
 
-#ifndef _PARALLELPORT_H_
-#define _PARALLELPORT_H_
+#ifndef _SERIALMANAGER_H_
+#define _SERIALMANAGER_H_
 
 #include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/DeviceBase.h"
 #include <string>
 #include <map>
+
+#include <boost/thread.hpp> 
+
+#include <boost/bind.hpp> 
+#include <boost/asio.hpp> 
+#include <boost/asio/serial_port.hpp> 
+#include <boost/thread.hpp> 
+#include <boost/lexical_cast.hpp> 
+
+
 
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
@@ -43,7 +53,7 @@
 #define ERR_PURGE_FAILED 108
 #define ERR_PORT_CHANGE_FORBIDDEN 109
 
-class CSerial;
+class AsioClient;
 
 //////////////////////////////////////////////////////////////////////////////
 // Implementation of the MMDevice and MMStateDevice interfaces
@@ -69,6 +79,18 @@ public:
    int Read(unsigned char* buf, unsigned long bufLen, unsigned long& charsRead);
    MM::PortType GetPortType() const {return MM::SerialPort;}    
    int Purge();
+
+   std::string Name(void) const;
+
+   void LogMessage(const char *const p, bool debugOnly = false)
+	{
+      CSerialBase<SerialPort>::LogMessage(std::string(p), debugOnly);
+	};
+
+   void LogBinaryMessage( const bool isInput, const unsigned char*const pdata, const int length, bool debugOnly = false);
+   void LogBinaryMessage( const bool isInput, const std::vector<unsigned char>& data, bool debugOnly = false);
+   void LogBinaryMessage( const bool isInput, const std::vector<char>& data, bool debugOnly = false);
+
    
    // action interface
    // ----------------
@@ -85,9 +107,9 @@ public:
    void RemoveReference() {refCount_--;}
    bool OKToDelete() {return refCount_ < 1;}
 
+
 private:
    std::string portName_;
-   std::string portNameWinAPI_;
 
    bool initialized_;
    bool busy_;
@@ -95,7 +117,6 @@ private:
    // thread locking for the port 
    MMThreadLock portLock_;
 
-   CSerial* port_;
    double portTimeoutMs_;
    double answerTimeoutMs_;
    int refCount_;
@@ -104,6 +125,13 @@ private:
 
    std::string stopBits_;
    std::string parity_;
+
+   // create these guys in the order of declaration
+   boost::asio::io_service* pService_;
+   AsioClient* pPort_;
+   // the worker thread
+   boost::thread* pThread_;
+   std::vector<char> charsFoundBeyondTerminator_;
 
 
 
@@ -123,4 +151,4 @@ private:
 };
 
 
-#endif //_PARALLELPORT_H_
+#endif //_SERIALMANAGER_H_
