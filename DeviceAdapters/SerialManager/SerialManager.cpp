@@ -463,7 +463,7 @@ int SerialPort::SetCommand(const char* command, const char* term)
             MMThreadGuard g(portLock_);
             pPort_->WriteOneCharacter(*jj);
          }while(bfalse);
-         CDeviceUtils::SleepMs(transmitCharWaitMs_);         
+         CDeviceUtils::SleepMs((long)(0.5+transmitCharWaitMs_));         
          ++written;
       }
    }
@@ -482,7 +482,7 @@ int SerialPort::GetAnswer(char* answer, unsigned bufLen, const char* term)
    unsigned long nCharactersRead(0);
    std::vector<char> theData;
    memset(answer,0,bufLen);
-   bool dataAlreadyAvailable = false;
+   bool dataAlreadyAvailableOnFirstIteration = false;
 
    // load the remainder from the last packet into the buffer.
    for( std::vector<char>::iterator cby = charsFoundBeyondTerminator_.begin(); cby != charsFoundBeyondTerminator_.end(); ++cby)
@@ -491,22 +491,32 @@ int SerialPort::GetAnswer(char* answer, unsigned bufLen, const char* term)
    }
    charsFoundBeyondTerminator_.clear();
    if( 0 < nCharactersRead)
-      dataAlreadyAvailable = true;
+      dataAlreadyAvailableOnFirstIteration = true;
 
-
-   CDeviceUtils::SleepMs(0.5 + transmitCharWaitMs_);
+   CDeviceUtils::SleepMs((long)(0.5 + transmitCharWaitMs_));
 
    MM::MMTime startTime = GetCurrentMMTime();
+   MM::MMTime retryWarnTime(0);
    MM::MMTime answerTimeout(answerTimeoutMs_ * 1000.0);
+   // warn of retries every 200 ms.
+   MM::MMTime retryWarnInterval(0, 200000);
    int retryCounter = 0;
    while ((GetCurrentMMTime() - startTime)  < answerTimeout)
    {
+      if (retryCounter > 2)
+      {
+         MM::MMTime tNow = GetCurrentMMTime();
+         if ( retryWarnInterval < tNow - retryWarnTime)
+         {
+            retryWarnTime = tNow;
+            LogMessage((std::string("GetAnswer # retries = ") + 
+               boost::lexical_cast<std::string,int>(retryCounter) + "\n").c_str(), true);
+         }
+      }
       int nRead = 0;
       do  // just a scope for the thread guard
       {
          MMThreadGuard g(portLock_);
-         //if (retryCounter > 2)
-         //   LogMessage("Retrying serial Read command!\n", true);
          theData = pPort_->ReadData();
          nRead = theData.size();
          if( 0 < nRead)
@@ -515,13 +525,14 @@ int SerialPort::GetAnswer(char* answer, unsigned bufLen, const char* term)
       }
       while ( bfalse_s );
 
-      if( 0 == nRead && (!dataAlreadyAvailable) )
+      if( 0 == nRead && (!dataAlreadyAvailableOnFirstIteration) )
       {
-         CDeviceUtils::SleepMs(0.5 + transmitCharWaitMs_);
+         CDeviceUtils::SleepMs((long)(0.5 + transmitCharWaitMs_));
          retryCounter++;
       }
       else
       {  // append these characters onto the received message
+         dataAlreadyAvailableOnFirstIteration = false;  // afterwards, we want to increment the retry counter
          for( int offset = 0; offset < nRead; ++offset)
             answer[nCharactersRead + offset] = theData.at(offset);
          nCharactersRead += nRead;
