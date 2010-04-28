@@ -36,9 +36,53 @@ const int MaxLasers = 10;
 // Error codes
 //
 class ALCImpl;
+class AndorLaserCombiner;
+
+class PiezoStage : public CStageBase<PiezoStage>
+{
+   friend class AndorLaserCombiner;
+public:
+
+   PiezoStage( const char* name);
+   ~PiezoStage();
+
+   // Stage API
+   // ---------
+   int SetPositionUm(double pos);
+   int GetPositionUm(double& pos);
+   int SetPositionSteps(long steps);
+   int GetPositionSteps(long& steps);
+   int SetOrigin();
+   int GetLimits(double& min, double& max);
+
+   int SetRelativePositionUm(double);
+
+   void GetName(char* Name) const;
+   int Initialize();
+   int Shutdown();
+   bool Busy();
+
+   int OnPiezoRange(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnPiezoPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+
+private:
+   // implementation
+	ALCImpl* pImpl_;
+
+   std::string name_;
+	float PiezoRange(void);
+	void PiezoRange(const float);
+	float PiezoPosition(void);
+	void PiezoPosition(const float);
+
+
+};
+
 
 class AndorLaserCombiner : public CShutterBase<AndorLaserCombiner>
 {
+   friend class PiezoStage;
 private:
 	double minlp_;
 	double maxlp_;
@@ -51,7 +95,7 @@ public:
 	void minlp(double v_a) { minlp_= v_a;};
 	double maxlp(){ return maxlp_;};
 	void maxlp(double v_a) { maxlp_= v_a;};
-   AndorLaserCombiner(const char* name);
+   AndorLaserCombiner( const char* name);
    ~AndorLaserCombiner();
   
    // MMDevice API
@@ -69,20 +113,23 @@ public:
 	int OnPowerReadback(MM::PropertyBase* pProp, MM::ActionType eAct, long index);
    int OnConnectionType(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnReceivedData(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 	// some important read-only properties
 	int OnHours(MM::PropertyBase* pProp, MM::ActionType eAct, long index);
 	int OnMaximumLaserPower(MM::PropertyBase* pProp, MM::ActionType eAct, long index);
 	int OnWaveLength(MM::PropertyBase* pProp, MM::ActionType eAct, long index);
+   int OnLaserState(MM::PropertyBase* , MM::ActionType , long );
 
 
 	//ALC mechanics
-   int OnPiezoRange(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnPiezoPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnDIN(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnDOUT(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnNLasers(MM::PropertyBase* , MM::ActionType );
 
+
+
+   int OnMultiPortUnitPresent(MM::PropertyBase* , MM::ActionType );
+   int OnLaserPort(MM::PropertyBase* , MM::ActionType );
 
    // Shutter API
    int SetOpen(bool open = true);
@@ -96,44 +143,22 @@ public:
 	float PowerReadback(const int laserIndex_a);
 
 	// setpoint in milliwatts
-	float PowerSetpoint(const int laserIndex_a);
-	void PowerSetpoint( const int laserIndex_a, const float);
+	int PowerSetpoint(const int laserIndex_a);
+	void PowerSetpoint( const int laserIndex_a, const int);
 
-	
-
-	float PiezoRange(void);
-	void PiezoRange(const float);
-	float PiezoPosition(void);
-	void PiezoPosition(const float);
 	unsigned char DIN(void);
 	void DOUT(const unsigned char);
-
-
-
 private:
-
-  // double powerSetpoint_;
-//	double powerReadback_;
-   long state_;
    int error_;
-
    bool initialized_;
    std::string name_;
-
-
    unsigned char buf_[1000];
-
    long armState_;
-
    bool busy_;
    double answerTimeoutMs_;
-
-
    MM::MMTime changedTime_;
-
    void GenerateALCProperties();
-   void GeneratePropertyState();
-
+ 
 	void GenerateReadOnlyIDProperties();
 
 	// todo -- can move these to the implementation
@@ -145,9 +170,11 @@ private:
 	ALCImpl* pImpl_;
 	int nLasers_;
 	// 1 based array
-	float powerSetPoint_[MaxLasers+1];
+	int powerSetPoint_[MaxLasers+1];
 	bool openRequest_;
 	unsigned char DOUT_;
+   bool multiPortUnitPresent_;
+   unsigned char laserPort_;  // first two bits of DOUT (0 or 1 or 2) IFF multiPortUnitPresent_
 
 };
 

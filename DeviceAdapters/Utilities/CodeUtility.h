@@ -2,24 +2,19 @@
 #define CODEUTILITY_H
 #include <string>
 #include <iostream>
+#include <math.h>
+
 
 class CodeUtility
 {
 public:
 
-static void DebugOutput( const std::string& __message);
-static bool StringToBool( const std::string& value__);
+static void DebugOutput( const std::string& message);
+static bool StringToBool( const std::string& value);
 
 static inline long nint( double value )
 { 
-	if( value < 0. ) 
-	{
-		return static_cast<long>(-0.5 + value);
-	}
-	else
-	{
-		return static_cast<long>(0.5 + value);
-	}
+   return floor( 0.5 + value);
 };
 
 

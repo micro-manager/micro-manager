@@ -7,14 +7,14 @@
 // Conix adapter
 //                
 // AUTHOR: Nico Stuurman, 02/27/2006
-//         Trevor Osborn (ConixXYStage), trevor@conixresearch.com, 02/10/2010
+//         Trevor Osborn (ConixXYStage, ConixZStage), trevor@conixresearch.com, 04/21/2010
 //
 // Based on Ludl controller adpater by Nenad Amodaj
-//
+// Includes some code from Nikon Z Stage adapter by Nenad Amodaj
 
 #ifdef WIN32
 #include <windows.h>
-#define snprintf _snprintf 
+#define snprintf _snprintf
 #endif
 
 #include "Conix.h"
@@ -27,6 +27,7 @@
 
 const char* g_ConixQuadFilterName = "ConixQuadFilter";
 const char* g_ConixXYStageName = "ConixXYStage";
+const char* g_ConixZStageName = "ConixZStage";
 
 using namespace std;
 
@@ -39,7 +40,10 @@ MODULE_API void InitializeModuleData()
 {
 	AddAvailableDeviceName(g_ConixQuadFilterName,"External Filter Cube Switcher");
 	AddAvailableDeviceName(g_ConixXYStageName, "Conix XY stage");
+	AddAvailableDeviceName(g_ConixZStageName, "Conix Z stage");
 }
+
+
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
 {
@@ -51,17 +55,23 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
 		QuadFluor* pQF = new QuadFluor();
 		return pQF;
 	} else if (strcmp(deviceName, g_ConixXYStageName) == 0) {
-		// create stage
-		return new ConixXYStage();
+		return new ConixXYStage(); // create XY stage
+	} else if (strcmp(deviceName, g_ConixZStageName) == 0) {
+		return new ConixZStage(); // create Z stage
 	}
 
 	return 0;
 }
 
+
+
 MODULE_API void DeleteDevice(MM::Device* pDevice)
 {
    delete pDevice;
 }
+
+
+
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -91,15 +101,21 @@ QuadFluor::QuadFluor() :
 
 }
 
+
+
 QuadFluor::~QuadFluor()
 {
    Shutdown();
 }
 
+
+
 void QuadFluor::GetName(char* Name) const
 {
    CDeviceUtils::CopyLimitedString(Name, g_ConixQuadFilterName);
 }
+
+
 
 int QuadFluor::Initialize()
 {
@@ -143,6 +159,8 @@ int QuadFluor::Initialize()
    return DEVICE_OK;
 }
 
+
+
 int QuadFluor::Shutdown()
 {
    if (initialized_)
@@ -184,6 +202,7 @@ bool QuadFluor::Busy()
 }
 
 
+
 int QuadFluor::ExecuteCommand(const string& cmd)
 {
 
@@ -220,6 +239,8 @@ int QuadFluor::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+
+
 int QuadFluor::GetPosition(int& position) 
 {
    const char* command="Quad ";
@@ -253,6 +274,7 @@ int QuadFluor::GetPosition(int& position)
 }
 
 
+
 int QuadFluor::SetPosition(int position)
 {
    ostringstream command;
@@ -284,7 +306,6 @@ int QuadFluor::SetPosition(int position)
 
 
 
-
 // Needs to be worked on (a lot)
 int QuadFluor::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
@@ -307,6 +328,7 @@ int QuadFluor::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 }
 
 
+
 int QuadFluor::OnCommand(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
@@ -326,12 +348,15 @@ printf ("%s\n","Outof OnCommand");
 
 
 
+
+
 ///////////////////////////////////////////////////////////////////////////////
 // ConixXYStage implementation
 // ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ConixXYStage::ConixXYStage() : 
 CXYStageBase<ConixXYStage>(),
+port_("Undefined"),
 stepSize_um_(0.015),
 posX_um_(0.0),
 posY_um_(0.0),
@@ -359,16 +384,19 @@ upperLimit_(20000.0)
 }
 
 
+
 ConixXYStage::~ConixXYStage()
 {
 	Shutdown();
 }
 
 
+
 void ConixXYStage::GetName(char* Name) const
 {
 	CDeviceUtils::CopyLimitedString(Name, g_ConixXYStageName);
 }
+
 
 
 int ConixXYStage::Initialize()
@@ -389,6 +417,7 @@ int ConixXYStage::Initialize()
 }
 
 
+
 int ConixXYStage::Shutdown()
 {
 	if (initialized_) {
@@ -396,6 +425,7 @@ int ConixXYStage::Shutdown()
 	}
 	return DEVICE_OK;
 }
+
 
 
 bool ConixXYStage::Busy()
@@ -433,6 +463,7 @@ bool ConixXYStage::Busy()
 }
 
 
+
 int ConixXYStage::GetPositionUm(double& x, double& y)
 {
 	while (Busy());  // make sure stage is not busy
@@ -468,6 +499,7 @@ int ConixXYStage::GetPositionUm(double& x, double& y)
 	is >> code;
 	return code;
 }
+
 
 
 int ConixXYStage::SetPositionUm(double x, double y)
@@ -510,6 +542,7 @@ int ConixXYStage::SetPositionUm(double x, double y)
 }
 
 
+
 int ConixXYStage::Home()
 {
 	while (Busy());  // make sure stage is not busy
@@ -542,6 +575,7 @@ int ConixXYStage::Home()
 	is >> code;
 	return code;
 }
+
 
 
 int ConixXYStage::Stop()
@@ -578,6 +612,7 @@ int ConixXYStage::Stop()
 }
 
 
+
 int ConixXYStage::SetOrigin()
 {
 	while (Busy());  // make sure stage is not busy
@@ -607,6 +642,7 @@ int ConixXYStage::SetOrigin()
 	}
 	return DEVICE_SERIAL_COMMAND_FAILED;
 }
+
 
 
 int ConixXYStage::SetComUnits(std::string unit_type /*= "UM"*/)
@@ -657,6 +693,512 @@ int ConixXYStage::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
 			return ERR_PORT_CHANGE_FORBIDDEN;
 		}
 		pProp->Get(port_);
+	}
+
+	return DEVICE_OK;
+}
+
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+// ConixZStage implementation
+// ~~~~~~~~~~~~~~~~~~~~~~~~~
+
+ConixZStage::ConixZStage() : 
+CStageBase<ConixZStage>(),
+port_("Undefined"),
+stepSize_um_(0.1),
+posZ_um_(0.0),
+busy_(false),
+initialized_(false),
+lowerLimit_(0.0),
+upperLimit_(20000.0)
+{
+	InitializeDefaultErrorMessages();
+
+	m_ControllerType = UNKNOWN_CONTROLLER;
+
+	// set property list
+	// -----------------
+
+	// Name
+	CreateProperty(MM::g_Keyword_Name, g_ConixZStageName, MM::String, true);
+	
+	// Description
+	CreateProperty(MM::g_Keyword_Description, "Conix Z stage driver", MM::String, true);
+
+	// Port
+	CPropertyAction* pAct = new CPropertyAction (this, &ConixZStage::OnPort);
+	CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
+
+	UpdateStatus();
+}
+
+
+
+ConixZStage::~ConixZStage()
+{
+	Shutdown();
+}
+
+
+
+void ConixZStage::GetName(char* Name) const
+{
+	CDeviceUtils::CopyLimitedString(Name, g_ConixZStageName);
+}
+
+
+
+int ConixZStage::Initialize()
+{
+	if (initialized_) {
+		return DEVICE_OK;
+	}
+
+	// check which controller we are using
+	// cmd WHO
+	int ret = SendSerialCommand(port_.c_str(), "WHO", "\r");
+	if (ret != DEVICE_OK) {
+		return ret;
+	}
+
+	string resp;
+	ret = GetSerialAnswer(port_.c_str(), "\r", resp);
+	if (ret != DEVICE_OK) {
+		return ret;
+	}
+	if (resp.length() < 1) {
+		return DEVICE_SERIAL_COMMAND_FAILED;
+	}
+
+	istringstream is(resp);
+	string outcome;
+	is >> outcome;
+
+	if (outcome.compare(":A") == 0) {
+		if ((resp.find("XYZ") != string::npos) || (resp.find("xyz") != string::npos)) {
+			m_ControllerType = CONIX_XYZ_CONTROLLER;
+		} else {
+			m_ControllerType = CONIX_RFA_CONTROLLER;
+		}
+	} else {
+		return DEVICE_SERIAL_COMMAND_FAILED;
+	}
+
+
+	if (m_ControllerType == CONIX_XYZ_CONTROLLER) {
+		// set the stage to use microns
+		int ret = SetComUnits();
+		if (ret != DEVICE_OK) {
+			return ret;
+		}
+	}else if (m_ControllerType == CONIX_RFA_CONTROLLER) {
+		int ret = GetPositionSteps(curSteps_);
+		if (ret != DEVICE_OK) {
+			return ret;
+		}
+		// StepSize
+		CPropertyAction* pAct = new CPropertyAction (this, &ConixZStage::OnStepSizeUm);
+		CreateProperty("StepSizeUm", "0.1", MM::Float, false, pAct);
+		stepSize_um_ = 0.1;
+	}
+
+	initialized_ = true;
+
+	return DEVICE_OK;
+}
+
+
+
+int ConixZStage::Shutdown()
+{
+	if (initialized_) {
+		initialized_ = false;
+	}
+	return DEVICE_OK;
+}
+
+
+
+bool ConixZStage::Busy()
+{
+	if (m_ControllerType == CONIX_XYZ_CONTROLLER) {
+		unsigned char response[2];
+		unsigned long charsRead;
+		MM::MMTime timeout(0, 1000000); // wait for 1sec
+		MM::MMTime start_time = GetCurrentMMTime();
+		MM::MMTime elapsed_time;
+
+		// cmd STATUS (the shortcut is /)
+		int ret = SendSerialCommand(port_.c_str(), "/", "\r");
+		if (ret != DEVICE_OK) {
+			// we have to return false if a serial command fails to
+			// prevent infinite looping
+			return false;
+		}
+
+		// read the response from the status command, it responds with a
+		// single character (no CR at the end) so I'm using ReadFromComPort
+		// instead of GetSerialAnswer.
+		response[0] = '\0';
+
+		while (response[0] != 'B' && response[0] != 'N' && (elapsed_time < timeout)) {
+			ReadFromComPort(port_.c_str(), response, 1, charsRead);
+			elapsed_time = (GetCurrentMMTime() - start_time);
+		}
+		if (response[0] == 'B') {
+			// only return true if the stage tells us it's busy...
+			return true;
+		}
+		// ...otherwise it is either not busy or not connected,
+		// in both cases we want to return false
+		return false;
+	}
+	return false; // if using the RFA controller all commands block so it can't be busy
+}
+
+
+
+int ConixZStage::GetPositionUm(double& z)
+{
+	if (m_ControllerType == CONIX_XYZ_CONTROLLER) {
+		while (Busy());  // make sure stage is not busy
+
+		// cmd WHERE Z (the shortcut is W)
+		int ret = SendSerialCommand(port_.c_str(), "W Z", "\r");
+		if (ret != DEVICE_OK) {
+			return ret;
+		}
+
+		string resp;
+		ret = GetSerialAnswer(port_.c_str(), "\r", resp);
+		if (ret != DEVICE_OK) {
+			return ret;
+		}
+		if (resp.length() < 1) {
+			return DEVICE_SERIAL_COMMAND_FAILED;
+		}
+
+		istringstream is(resp);
+		string outcome;
+		is >> outcome;
+
+		// this command seems to want DECIMAL OFF
+		if (outcome.compare(":A") == 0) {
+			is >> z;
+			return DEVICE_OK; // success!
+		}
+
+		// return the error code
+		int code;
+		is >> code;
+		return code;
+	} else if (m_ControllerType == CONIX_RFA_CONTROLLER) {
+	   long steps;
+	   int ret = GetPositionSteps(steps);
+	   if (ret != DEVICE_OK) {
+		  return ret;
+	   }
+	   z = steps * stepSize_um_;
+	   return DEVICE_OK;
+	}
+
+	return DEVICE_UNSUPPORTED_COMMAND;
+}
+
+
+
+int ConixZStage::GetPositionSteps(long& steps)
+{
+	if (m_ControllerType != CONIX_RFA_CONTROLLER) {
+		return DEVICE_UNSUPPORTED_COMMAND;
+	}
+
+	const char* command="WZ";
+
+	// send command
+	int ret = SendSerialCommand(port_.c_str(), command, "\r");
+	if (ret != DEVICE_OK) {
+		return ret;
+	}
+
+	// block/wait for acknowledge, or until we time out;
+	string answer;
+	ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+	if (ret != DEVICE_OK) {
+		return ret;
+	}
+
+	if (answer.length() > 2 && answer.substr(0, 2).compare(":N") == 0) {
+		int errNo = atoi(answer.substr(2).c_str());
+		return ERR_OFFSET + errNo;
+	} else if (answer.length() > 2 && answer.substr(0, 2).compare(":A") == 0) {
+		steps = atol(answer.substr(2).c_str());
+		curSteps_ = steps;
+		return DEVICE_OK;
+	}
+
+	return ERR_UNRECOGNIZED_ANSWER;
+}
+
+
+
+int ConixZStage::SetPositionUm(double z)
+{
+	if (m_ControllerType == CONIX_XYZ_CONTROLLER) {
+		ostringstream cmd;
+
+		// cmd MOVE Z=z (shortcut is M Zz)
+		cmd << "M Z" << z;
+
+		while (Busy());  // make sure stage is not busy
+
+		int ret = SendSerialCommand(port_.c_str(), cmd.str().c_str(), "\r");
+		if (ret != DEVICE_OK) {
+			return ret;
+		}
+
+		string resp;
+		ret = GetSerialAnswer(port_.c_str(), "\r", resp);
+		if (ret != DEVICE_OK) {
+			return ret;
+		}
+		if (resp.length() < 1) {
+			return DEVICE_SERIAL_COMMAND_FAILED;
+		}
+
+		istringstream is(resp);
+		string outcome;
+		is >> outcome;
+
+		if (outcome.compare(":A") == 0) { // command recieved correctly
+			posZ_um_ = z;
+			return DEVICE_OK; // success!
+		}
+
+		// return the error code
+		int code;
+		is >> code;
+		return code;
+	} else if (m_ControllerType == CONIX_RFA_CONTROLLER) {
+		long steps = (long) (z / stepSize_um_ + 0.5);
+		return SetPositionSteps(steps);
+	}
+
+	return DEVICE_UNSUPPORTED_COMMAND;
+}
+
+
+
+int ConixZStage::SetPositionSteps(long pos)
+{
+	if (m_ControllerType != CONIX_RFA_CONTROLLER) {
+		return DEVICE_UNSUPPORTED_COMMAND;
+	}
+
+	ostringstream command;
+	command << "MZ " << pos;
+
+	// send command
+	int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+	if (ret != DEVICE_OK) {
+		return ret;
+	}
+
+	// block/wait for acknowledge, or until we time out;
+	string answer;
+	ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+	if (ret != DEVICE_OK) {
+		return ret;
+	}
+
+	if (answer.substr(0, 2).compare(":A") == 0) {
+		curSteps_ = pos;
+		return DEVICE_OK;
+	} else if (answer.length() > 2 && answer.substr(0, 2).compare(":N") == 0) {
+		int errNo = atoi(answer.substr(2).c_str());
+		return ERR_OFFSET + errNo;
+	}
+
+	return ERR_UNRECOGNIZED_ANSWER;
+}
+
+
+
+int ConixZStage::Home()
+{
+	while (Busy());  // make sure stage is not busy
+
+	// cmd HOME Z (shortcut ! Z)
+	int ret = SendSerialCommand(port_.c_str(), "! Z", "\r");
+	if (ret != DEVICE_OK) {
+		return ret;
+	}
+
+	string resp;
+	ret = GetSerialAnswer(port_.c_str(), "\r", resp);
+	if (ret != DEVICE_OK) {
+		return ret;
+	}
+	if (resp.length() < 1) {
+		return DEVICE_SERIAL_COMMAND_FAILED;
+	}
+
+	istringstream is(resp);
+	string outcome;
+	is >> outcome;
+
+	if (outcome.compare(":A") == 0) { // command was received correctly
+		return DEVICE_OK; // success!
+	}
+
+	// return the error code
+	int code;
+	is >> code;
+	return code;
+}
+
+
+
+int ConixZStage::Stop()
+{
+	// cmd HALT (shortcut \)
+	int ret = SendSerialCommand(port_.c_str(), "\\", "\r");
+	if (ret != DEVICE_OK) {
+		return ret;
+	}
+
+	string resp;
+	ret = GetSerialAnswer(port_.c_str(), "\r", resp);
+	if (ret != DEVICE_OK) {
+		return ret;
+	}
+	if (resp.length() < 1) {
+		return DEVICE_SERIAL_COMMAND_FAILED;
+	}
+
+	istringstream is(resp);
+	string outcome;
+	is >> outcome;
+
+	if (outcome.compare(":A") == 0) {
+		return DEVICE_OK; // success!
+	} else if (outcome.compare(":N-21") == 0) {
+		return DEVICE_OK; // halt called while stage is in motion,
+	}	                  // not sure what to return
+
+	// return the error code
+	int code;
+	is >> code;
+	return code;
+}
+
+
+
+int ConixZStage::SetOrigin()
+{
+	if (m_ControllerType == CONIX_XYZ_CONTROLLER) {
+		while (Busy());  // make sure stage is not busy
+
+		// cmd HERE Z0 (shortcut H Z0)
+		int ret = SendSerialCommand(port_.c_str(), "H Z0", "\r");
+		if (ret != DEVICE_OK) {
+			return ret;
+		}
+
+		string resp;
+		ret = GetSerialAnswer(port_.c_str(), "\r", resp);
+		if (ret != DEVICE_OK) {
+			return ret;
+		}
+		if (resp.length() < 1) {
+			return DEVICE_SERIAL_COMMAND_FAILED;
+		}
+
+		istringstream is(resp);
+		string outcome;
+		is >> outcome;
+
+		if (outcome.compare(":A") == 0) {
+		  return DEVICE_OK; // success!
+		  // FIXME return SetAdapterOrigin?
+		}
+		return DEVICE_SERIAL_COMMAND_FAILED;
+	} else if (m_ControllerType == CONIX_RFA_CONTROLLER) {
+		return DEVICE_UNSUPPORTED_COMMAND;
+	}
+	return DEVICE_UNSUPPORTED_COMMAND;
+}
+
+
+
+int ConixZStage::SetComUnits(std::string unit_type /*= "UM"*/)
+{
+	if (m_ControllerType == CONIX_XYZ_CONTROLLER) {
+		while (Busy());  // make sure stage is not busy
+
+		// make stage use microns if default value is used
+		// cmd COMUNITS UM
+		string command = "COMUNITS " + unit_type;
+		int ret = SendSerialCommand(port_.c_str(), command.c_str(), "\r");
+		if (ret != DEVICE_OK) {
+			return ret;
+		}
+
+		string resp;
+		ret = GetSerialAnswer(port_.c_str(), "\r", resp);
+		if (ret != DEVICE_OK) {
+			return ret;
+		}
+		if (resp.length() < 1) {
+			return DEVICE_SERIAL_COMMAND_FAILED;
+		}
+
+		istringstream is(resp);
+		string outcome;
+		is >> outcome;
+
+		if (outcome.compare(":A") == 0) {
+			return DEVICE_OK; // success!
+		}
+		return DEVICE_SERIAL_COMMAND_FAILED;
+	}
+	return DEVICE_UNSUPPORTED_COMMAND;
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Action handlers
+///////////////////////////////////////////////////////////////////////////////
+
+int ConixZStage::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	if (eAct == MM::BeforeGet) {
+		pProp->Set(port_.c_str());
+	} else if (eAct == MM::AfterSet) {
+		if (initialized_) {
+			// revert
+			pProp->Set(port_.c_str());
+			return ERR_PORT_CHANGE_FORBIDDEN;
+		}
+		pProp->Get(port_);
+	}
+
+	return DEVICE_OK;
+}
+
+
+
+int ConixZStage::OnStepSizeUm(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	if (eAct == MM::BeforeGet) {
+		pProp->Set(stepSize_um_);
+	} else if (eAct == MM::AfterSet) {
+		pProp->Get(stepSize_um_);
 	}
 
 	return DEVICE_OK;

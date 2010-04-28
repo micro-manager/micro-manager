@@ -43,11 +43,12 @@
    #define snprintf _snprintf 
 #endif
 
-#include "Corvus.h"
+#include <stdio.h>
 #include <string>
+#include <sstream>
+#include "Corvus.h"
 //#include <math.h>
 #include "../../MMDevice/ModuleInterface.h"
-#include <sstream>
 
 
 const char* g_ControllerName    = "ITK Corvus Controller";

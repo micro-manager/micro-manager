@@ -183,6 +183,7 @@ private:
    bool snapInProgress_;
    bool sequenceRunning_;
    long imageCounter_;
+   MM::MMTime startTime_;
    long imageTimeOut_ms_;
    long sequenceLength_;
    bool stopOnOverflow_;

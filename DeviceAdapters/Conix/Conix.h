@@ -7,7 +7,7 @@
 // Conix adapter
 //                
 // AUTHOR: Nico Stuurman, 02/27/2006
-//		   Trevor Osborn (ConixXYStage), trevor@conixresearch.com, 02/10/2010
+//		   Trevor Osborn (ConixXYStage, ConixZStage), trevor@conixresearch.com, 04/21/2010
 //         
 
 #ifndef _CONIX_H_
@@ -21,12 +21,22 @@
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
 //
-#define ERR_UNKNOWN_COMMAND          10002
-#define ERR_UNKNOWN_POSITION         10003
-#define ERR_HALT_COMMAND             10004
-#define ERR_UNRECOGNIZED_ANSWER      10005
-#define ERR_PORT_CHANGE_FORBIDDEN    10006
-#define ERR_OFFSET                   11000
+#define ERR_UNKNOWN_COMMAND         10002
+#define ERR_UNKNOWN_POSITION        10003
+#define ERR_HALT_COMMAND            10004
+#define ERR_UNRECOGNIZED_ANSWER     10005
+#define ERR_PORT_CHANGE_FORBIDDEN   10006
+#define ERR_OFFSET                  11000
+
+enum ConixControllerType {UNKNOWN_CONTROLLER = 0, CONIX_XYZ_CONTROLLER, CONIX_RFA_CONTROLLER};
+
+
+
+
+//////////////////////////////////////////////////////////////////////////////
+// QuadFluor class
+//
+//////////////////////////////////////////////////////////////////////////////
 
 class QuadFluor : public CStateDeviceBase<QuadFluor>
 {
@@ -146,5 +156,69 @@ private:
 };
 
 
+
+//////////////////////////////////////////////////////////////////////////////
+// ConixZStage class
+//
+//////////////////////////////////////////////////////////////////////////////
+
+class ConixZStage : public CStageBase<ConixZStage>
+{
+public:
+	ConixZStage();
+	~ConixZStage();
+
+	bool Busy();
+	void GetName(char* pszName) const;
+
+	int Initialize();
+	int Shutdown();
+	 
+	// Stage API
+	int SetPositionUm(double z);
+	int GetPositionUm(double& z);
+	double GetStepSize() {return stepSize_um_;}
+	int SetPositionSteps(long z);
+	int GetPositionSteps(long& z);
+	int Home();
+	int Stop();
+	int SetOrigin();
+	int SetAdapterOriginUm(double z) {posZ_um_ = z; return DEVICE_OK;}
+	int GetLimits(double& lower, double& upper)
+	{
+		return DEVICE_UNSUPPORTED_COMMAND;
+	}
+	int GetLimitsUm(double& zMin, double& zMax)
+	{
+		return DEVICE_UNSUPPORTED_COMMAND;
+	}
+
+	int GetStepLimits(long& /*Min*/, long& /*Max*/)
+	{
+		return DEVICE_UNSUPPORTED_COMMAND;
+	}
+	double GetStepSizeZUm() {return stepSize_um_;}
+	int Move(double /*vz*/) {return DEVICE_OK;} // ok
+
+	// action interface
+	// ----------------
+	int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
+	int OnStepSizeUm(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+private:
+	int SetComUnits(std::string unit_type = "UM");
+	
+	// MMCore name of serial port
+	std::string port_;
+
+	double stepSize_um_;
+	double posZ_um_;
+	long curSteps_;
+	double lowerLimit_;
+	double upperLimit_;
+	ConixControllerType m_ControllerType;
+	bool busy_;
+	bool initialized_;
+};
 
 #endif //_CONIX_H_

@@ -658,15 +658,15 @@ bool Shutter::SetShutterPosition(bool state)
 
 bool Shutter::Busy()
 {
-   return ControllerBusy();
-   /*
+   if (ControllerBusy())
+      return true;
+
    MM::MMTime interval = GetCurrentMMTime() - changedTime_;
    MM::MMTime delay(GetDelayMs()*1000.0);
    if (interval < delay )
       return true;
-   else
-      return false;
-   */
+
+   return false;
 }
 
 bool Shutter::ControllerBusy()

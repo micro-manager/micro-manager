@@ -2717,6 +2717,9 @@ int FocusStage::SetPositionSteps(long steps)
    // it is a hex number from 800000 .. 7FFFFF, where everything larger than 800000 is a negative number!?
    // We can speed up communication by skipping leading 0s, but that makes the following more complicated:
    char tmp[98];
+   // convert the steps into a twos-complement 6bit number
+   if (steps<0)
+      steps = steps+0xffffff+1;
    snprintf(tmp, 9, "%08lX", steps);
    string tmp2 = tmp;
    ostringstream cmd;

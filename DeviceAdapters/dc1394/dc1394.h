@@ -53,6 +53,7 @@
 #define ERR_NOT_IMPLEMENTED 128
 #define ERR_BUSY_ACQUIRING 129
 #define ERR_DC1394 130
+#define ERR_CAPTURE_TIMEOUT 131
 
 // From Guppy Tech Manual there is:
 // 00 0A 47 …. Node_Vendor_Id
@@ -104,12 +105,13 @@ public:
    int OnFrameRate(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnScanMode(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnReadoutTime(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnTimeout(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnGain(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnGamma(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnShutter(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTemperature(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnExternalTrigger(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    // high-speed interface
    int StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow);
@@ -127,8 +129,9 @@ private:
    bool IsFeatureSupported(int featureId);
    int SetUpFrameRates();
    int StopTransmission();
-   void setVideoModeMap();
-   void setFrameRateMap();
+   void SetVideoModeMap();
+   void SetFrameRateMap();
+   bool Timeout(MM::MMTime startTime);
    int OnFeature(MM::PropertyBase* pProp, MM::ActionType eAct, uint32_t &value, int valueMin, int valueMax, dc1394feature_t feature);
    //int AddFeature(dc1394feature_t feature, const char* label, int(Cdc1394::*fpt)(PropertyBase* pProp, ActionType eAct) , uint32_t  &value, uint32_t &valueMin, uint32_t &valueMax);
    void rgb8ToMono8(uint8_t* dest, uint8_t* src, uint32_t width, uint32_t height); 
@@ -140,33 +143,35 @@ private:
    
    bool InArray(dc1394framerate_t *array, int size, uint32_t num);
    void GetBytesPerPixel();
+   double X700Shutter2Exposure(int shutter) const;
+   int X700Exposure2Shutter(double exposure);
 
    // video mode information
-   std::map<dc1394video_mode_t, std::string> videoModeMap;
+   std::map<dc1394video_mode_t, std::string> videoModeMap_;
    typedef std::map<dc1394video_mode_t, std::string>::value_type videoModeMapType;
    // FrameRate information
-   std::map<dc1394framerate_t, std::string> frameRateMap;
+   std::map<dc1394framerate_t, std::string> frameRateMap_;
    typedef std::map<dc1394framerate_t, std::string>::value_type frameRateMapType;
 
-   //dc1394camera_t **cameras;                                             
-   dc1394camera_t *camera;
-   dc1394error_t err;                                                         
-   dc1394video_frame_t *frame;                                               
-   dc1394video_modes_t modes;                                               
+   dc1394camera_t *camera_;
+   dc1394error_t err_;
+   dc1394video_frame_t *frame_;
+   dc1394video_modes_t modes_;
    // current mode
-   dc1394video_mode_t mode;                                               
+   dc1394video_mode_t mode_;
    // GJ keep track of whether the camera is interlaced
-   bool avtInterlaced;
+   bool avtInterlaced_;
+   bool isSonyXCDX700_;
    // GJ will store whether we have absolute shutter control
    // (using a float value in seconds)
-   bool absoluteShutterControl;
+   bool absoluteShutterControl_;
    
-   dc1394color_coding_t colorCoding;
-   dc1394featureset_t features;
-   dc1394feature_info_t featureInfo;
-   dc1394framerates_t framerates;
-   dc1394framerate_t framerate;
-   uint32_t numCameras, width, height, depth;
+   dc1394color_coding_t colorCoding_;
+   dc1394featureset_t features_;
+   dc1394feature_info_t featureInfo_;
+   dc1394framerates_t framerates_;
+   dc1394framerate_t framerate_;
+   uint32_t numCameras, width, height, depth_;
    uint32_t brightness, brightnessMin, brightnessMax;
    uint32_t gain, gainMin, gainMax;
    uint32_t shutter, shutterMin, shutterMax;
@@ -179,11 +184,12 @@ private:
    bool m_bBusy;
    bool snapInProgress_;
    bool frameRatePropDefined_;
-   int dmaBufferSize, triedCaptureCount, bytesPerPixel, integrateFrameNumber;
+   int dmaBufferSize_, triedCaptureCount_, bytesPerPixel_, integrateFrameNumber_;
    int maxNrIntegration;
    long lnBin_;
-   //char logMsg_[256];
    std::ostringstream logMsg_;
+   MM::MMTime longestWait_;
+   bool dequeued_; // indicates whether or not the current frame is dequeued_
    
    // For Burst Mode
    bool stopOnOverflow_;

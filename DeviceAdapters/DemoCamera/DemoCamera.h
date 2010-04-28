@@ -74,6 +74,7 @@ public:
    int SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize); 
    int GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize); 
    int ClearROI();
+   int PrepareSequenceAcqusition() {return DEVICE_OK;}
    double GetNominalPixelSizeUm() const {return nominalPixelSizeUm_;}
    double GetPixelSizeUm() const {return nominalPixelSizeUm_ * GetBinning();}
    int GetBinning() const;
@@ -81,8 +82,8 @@ public:
 
    // action interface
    // ----------------
-	// floating point read-only property for testing
-	int OnTestProperty(MM::PropertyBase* pProp, MM::ActionType eAct);
+	// floating point read-only properties for testing
+	int OnTestProperty(MM::PropertyBase* pProp, MM::ActionType eAct, long);
 
 
    int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -113,6 +114,8 @@ private:
 
    void GenerateSyntheticImage(ImgBuffer& img, double exp);
    int ResizeImageBuffer();
+
+	double testProperty_[10];
 };
 
 

@@ -33,6 +33,9 @@
 #include <boost/math/constants/constants.hpp>
 #include <sstream>
 #include <algorithm>
+
+#include "boost/lexical_cast.hpp"
+
 using namespace std;
 const double CDemoCamera::nominalPixelSizeUm_ = 1.0;
 double g_IntensityFactor_ = 1.0;
@@ -308,8 +311,16 @@ int CDemoCamera::Initialize()
    assert(nRet == DEVICE_OK);
    SetPropertyLimits(MM::g_Keyword_Exposure, 0, 10000);
 
-	pAct = new CPropertyAction (this, &CDemoCamera::OnTestProperty);
-   nRet = CreateProperty("TestProperty", "0.", MM::Float, true, pAct);
+	CPropertyActionEx *pActX = 0;
+	// create an extended (i.e. array) properties 1 through 4
+	
+	for(int ij = 1; ij < 5;++ij)
+	{
+		std::string propName = "TestProperty" + boost::lexical_cast<std::string,int>(ij);
+		pActX = new CPropertyActionEx(this, &CDemoCamera::OnTestProperty, ij);
+		nRet = CreateProperty(propName.c_str(), "0.", MM::Float, false, pActX);
+		SetPropertyLimits(propName.c_str(), ij, ij + 1);
+	}
 	
 	
 	// scan mode
@@ -660,16 +671,16 @@ int CDemoCamera::SetAllowedBinning()
 * this Read Only property will update whenever any property is modified
 */
 
-int CDemoCamera::OnTestProperty(MM::PropertyBase* pProp, MM::ActionType eAct)
+int CDemoCamera::OnTestProperty(MM::PropertyBase* pProp, MM::ActionType eAct, long indexx)
 {
-
    if (eAct == MM::BeforeGet)
    {
-      pProp->Set(100.*(double)rand()/(double)RAND_MAX);
+		testProperty_[indexx] = indexx + (double)rand()/(double)RAND_MAX;
+      pProp->Set(testProperty_[indexx]);
    }
    else if (eAct == MM::AfterSet)
    {
-			// never do anything!!
+      pProp->Get(testProperty_[indexx]);
    }
 	return DEVICE_OK;
 

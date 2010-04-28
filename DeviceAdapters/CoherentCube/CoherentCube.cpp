@@ -624,7 +624,7 @@ void CoherentCube::Send(string cmd)
 
 	std::ostringstream messs;
 	messs << "CoherentCube::Send           " << cmd;
-	LogMessage( messs.str().c_str());
+	LogMessage( messs.str().c_str(), true);
 
    int ret = SendSerialCommand(port_.c_str(), cmd.c_str(), carriage_return);
    if (ret!=DEVICE_OK)
@@ -640,7 +640,7 @@ int CoherentCube::ReceiveOneLine()
       return ret;
 	std::ostringstream messs;
 	messs << "CoherentCube::ReceiveOneLine " << buf_string_;
-	LogMessage( messs.str().c_str());
+	LogMessage( messs.str().c_str(), true);
 
    return DEVICE_OK;
 }
