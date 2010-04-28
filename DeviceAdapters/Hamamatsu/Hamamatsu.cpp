@@ -24,7 +24,7 @@
 // AUTHOR:        Nenad Amodaj, nenad@amodaj.com, 08/24/2005, contributions by Nico Stuurman
 // NOTES:    
 //
-// CVS:           $Id$
+// CVS:           $Id: Hamamatsu.cpp 3879 2010-01-30 00:36:36Z nico $
 
 
 #ifdef WIN32

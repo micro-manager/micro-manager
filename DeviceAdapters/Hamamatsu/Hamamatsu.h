@@ -25,7 +25,7 @@
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.  
 // AUTHOR:        Nenad Amodaj, nenad@amodaj.com, 08/24/2005, contributions by Nico Stuurman
 //
-// CVS:           $Id$
+// CVS:           $Id: Hamamatsu.h 3048 2009-10-03 21:33:02Z nico $
 //
 #ifndef _HAMAMATSU_H_
 #define _HAMAMATSU_H_
