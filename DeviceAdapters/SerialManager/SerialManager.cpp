@@ -43,7 +43,7 @@
 #include <boost/thread.hpp> 
 #include <boost/lexical_cast.hpp> 
 #include <boost/date_time/posix_time/posix_time_types.hpp> 
-#include <conio.h>
+// #include <conio.h>
 
 MMThreadLock readBufferLock_;
 
@@ -463,7 +463,7 @@ int SerialPort::SetCommand(const char* command, const char* term)
             MMThreadGuard g(portLock_);
             pPort_->WriteOneCharacter(*jj);
          }while(bfalse);
-         Sleep((DWORD)transmitCharWaitMs_);         
+         CDeviceUtils::SleepMs(transmitCharWaitMs_);         
          ++written;
       }
    }
