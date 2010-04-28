@@ -39,12 +39,6 @@
 #ifndef ASIOCLIENT_H
 #define ASIOCLIENT_H
 
-// improvement: the locks can be member variables.
-
-MMThreadLock readBufferLock_s;
-MMThreadLock writeBufferLock_;
-MMThreadLock serviceLock_s;
-MMThreadLock implementationLock_s;
 bool bfalse_s = false;
 
 class AsioClient 
@@ -62,7 +56,7 @@ public:
    { 
       do // just a scope for the guard
       {
-         MMThreadGuard g(implementationLock_s);
+         MMThreadGuard g(implementationLock_);
          if (! serialPortImplementation_.is_open()) 
          { 
             pPort->LogMessage( "Failed to open serial port" );
@@ -85,7 +79,7 @@ public:
 #ifdef STANDALONETEST
       std::cerr << " -> " << msg << std::endl;
 #endif
-      MMThreadGuard g(serviceLock_s);
+      MMThreadGuard g(serviceLock_);
       io_service_.post(boost::bind(&AsioClient::DoWrite, this, msg)); 
    } 
 
@@ -93,7 +87,7 @@ public:
    { 
       if(active_)
       {
-         MMThreadGuard g(serviceLock_s);
+         MMThreadGuard g(serviceLock_);
          io_service_.post(boost::bind(&AsioClient::DoClose, this, boost::system::error_code())); 
       }
    } 
@@ -106,12 +100,12 @@ public:
    void Purge(void)
    {
       // clear read and write buffers;
-      std::auto_ptr<MMThreadGuard> apg( new MMThreadGuard(readBufferLock_s));
+      std::auto_ptr<MMThreadGuard> apg( new MMThreadGuard(readBufferLock_));
       data_read_.clear();
       MMThreadGuard *pg = apg.release();
       delete pg;
 
-//      MMThreadGuard g(writeBufferLock_);
+      MMThreadGuard g(writeBufferLock_);
       write_msgs_.clear(); // buffered write data 
    }
    // get the current contents of the dequeue
@@ -119,7 +113,7 @@ public:
    std::vector<char> ReadData(void)
    {
       std::vector<char> retVal;
-      MMThreadGuard g(readBufferLock_s);
+      MMThreadGuard g(readBufferLock_);
       if( 0 < data_read_.size())
       {
          std::copy( data_read_.begin(), data_read_.end(), std::inserter(retVal, retVal.begin()));
@@ -132,7 +126,7 @@ public:
    bool ReadOneCharacter(char& msg)
    {
       bool retval = false;
-      MMThreadGuard g(readBufferLock_s);
+      MMThreadGuard g(readBufferLock_);
       if( 0 < data_read_.size())
       {
          retval = true;
@@ -146,7 +140,7 @@ private:
    static const int max_read_length = 512; // maximum amount of data to read in one operation 
    void ReadStart(void) 
    { // Start an asynchronous read and call ReadComplete when it completes or fails 
-      MMThreadGuard g(implementationLock_s);
+      MMThreadGuard g(implementationLock_);
       serialPortImplementation_.async_read_some(boost::asio::buffer(read_msg_, max_read_length), 
          boost::bind(&AsioClient::ReadComplete, 
          this, 
@@ -161,7 +155,7 @@ private:
 
          do  // just a scope for the guard...
          {
-            MMThreadGuard g(readBufferLock_s);
+            MMThreadGuard g(readBufferLock_);
             for(unsigned int ib = 0; ib < bytes_transferred; ++ib)
             {
                data_read_.push_back(read_msg_[ib]);
@@ -179,14 +173,14 @@ private:
 
    void DoWrite(const char msg) 
    { // callback to handle write call from outside this class 
-      //      std::auto_ptr<MMThreadGuard> apwg( new MMThreadGuard(writeBufferLock_));
-      MMThreadGuard wg(writeBufferLock_);
+      std::auto_ptr<MMThreadGuard> apwg( new MMThreadGuard(writeBufferLock_));
+      //////MMThreadGuard wg(writeBufferLock_);
       bool write_in_progress = !write_msgs_.empty(); // is there anything currently being written? 
       write_msgs_.push_back(msg); // store in write buffer 
 
       // unlock the thread guard here
-//      MMThreadGuard* pg = apwg.release();
-//      delete pg;
+      MMThreadGuard* pg = apwg.release();
+      delete pg;
 
       if (!write_in_progress) // if nothing is currently being written, then start 
          WriteStart(); 
@@ -194,7 +188,7 @@ private:
 
    void WriteStart(void) 
    { // Start an asynchronous write and call WriteComplete when it completes or fails 
-//      MMThreadGuard g(writeBufferLock_);
+      MMThreadGuard g(writeBufferLock_);
       boost::asio::async_write(serialPortImplementation_, 
          boost::asio::buffer(&write_msgs_.front(), 1), 
          boost::bind(&AsioClient::WriteComplete, 
@@ -206,15 +200,16 @@ private:
    { // the asynchronous read operation has now completed or failed and returned an error 
       if (!error) 
       { // write completed, so send next write data 
-//         std::auto_ptr<MMThreadGuard> apwg( new MMThreadGuard(writeBufferLock_));
-         MMThreadGuard wg(writeBufferLock_);
+         std::auto_ptr<MMThreadGuard> apwg( new MMThreadGuard(writeBufferLock_));
+//////         MMThreadGuard wg(writeBufferLock_);
          if ( 0 < write_msgs_.size())
             write_msgs_.pop_front(); // remove the completed data 
          bool anythingThere = !write_msgs_.empty();
 
          // unlock the thread guard here
-//         MMThreadGuard* pg = apwg.release();
-//         delete pg;
+         MMThreadGuard* pg = apwg.release();
+         delete pg;
+
          if (anythingThere) // if there is anthing left to be written 
             WriteStart(); // then start sending the next item in the buffer 
       } 
@@ -251,6 +246,13 @@ private:
    std::deque<char> write_msgs_; // buffered write data 
    std::deque<char> data_read_;
    SerialPort* pSerialPortAdapter_;
+
+
+   MMThreadLock readBufferLock_;
+   MMThreadLock writeBufferLock_;
+   MMThreadLock serviceLock_;
+   MMThreadLock implementationLock_;
+
 
 }; 
 
