@@ -501,6 +501,7 @@ int SerialPort::GetAnswer(char* answer, unsigned bufLen, const char* term)
    // warn of retries every 200 ms.
    MM::MMTime retryWarnInterval(0, 200000);
    int retryCounter = 0;
+   int retryCounterDisplayedInLog = 0;
    while ((GetCurrentMMTime() - startTime)  < answerTimeout)
    {
       if (retryCounter > 2)
@@ -510,7 +511,8 @@ int SerialPort::GetAnswer(char* answer, unsigned bufLen, const char* term)
          {
             retryWarnTime = tNow;
             LogMessage((std::string("GetAnswer # retries = ") + 
-               boost::lexical_cast<std::string,int>(retryCounter) + "\n").c_str(), true);
+               boost::lexical_cast<std::string,int>(retryCounter)).c_str(), true);
+            retryCounterDisplayedInLog = retryCounter;
          }
       }
       int nRead = 0;
@@ -549,6 +551,9 @@ int SerialPort::GetAnswer(char* answer, unsigned bufLen, const char* term)
 
          if (term == 0 )
          {
+            if( retryCounterDisplayedInLog < retryCounter )
+               LogMessage((std::string("GetAnswer # retries = ") + 
+                  boost::lexical_cast<std::string,int>(retryCounter)).c_str(), true);
             return DEVICE_OK; // no termintor specified
          }
          else
@@ -565,6 +570,9 @@ int SerialPort::GetAnswer(char* answer, unsigned bufLen, const char* term)
                }
                *termPos = '\0';
                MM::MMTime totalTime = GetCurrentMMTime() - startTime;
+               if( retryCounterDisplayedInLog < retryCounter )
+                  LogMessage((std::string("GetAnswer # retries = ") + 
+                     boost::lexical_cast<std::string,int>(retryCounter)).c_str(), true);
                return DEVICE_OK;
             }
          }
