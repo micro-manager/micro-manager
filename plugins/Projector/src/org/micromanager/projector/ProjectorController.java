@@ -14,6 +14,8 @@ import java.awt.image.BufferedImage;
 import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
 import java.awt.Color;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.micromanager.utils.ReportingUtils;
 import ij.process.ImageProcessor;
 import java.awt.Point;
@@ -37,6 +39,7 @@ public class ProjectorController {
    private int slmHeight;
    private double diameter;
    private AffineTransform trans;
+   private boolean imageOn_ = false;
 
    public ProjectorController(ScriptInterface app) {
       gui = app;
@@ -170,6 +173,8 @@ public class ProjectorController {
             ByteProcessor procSLM = new ByteProcessor(imgSLM);
             try {
                mmc.setSLMImage(slm, (byte[]) procSLM.getPixels());
+               if (imageOn_)
+                  mmc.displaySLMImage(slm);
             } catch (Exception ex) {
                ReportingUtils.showError(ex);          
             }
@@ -185,14 +190,29 @@ public class ProjectorController {
    public void turnOff() {
       try {
          mmc.setSLMPixelsTo(slm, (byte) 0);
+         imageOn_ = false;
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
       }
    }
 
-   void turnOn() {
+   public void turnOn() {
       try {
-         mmc.displaySLMImage(slm);
+         if (imageOn_ == false) {
+            mmc.displaySLMImage(slm);
+            imageOn_ = true;
+         }
+      } catch (Exception ex) {
+         ReportingUtils.showError(ex);
+      }
+   }
+
+   void activateAllPixels() {
+      try {
+         mmc.setSLMPixelsTo(slm, (short) 255);
+         if (imageOn_ == true) {
+            mmc.displaySLMImage(slm);
+         }
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
       }
