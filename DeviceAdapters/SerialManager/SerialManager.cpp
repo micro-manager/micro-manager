@@ -29,6 +29,20 @@
    #define snprintf _snprintf 
 #endif
 
+#ifdef __APPLE__    
+#include <CoreFoundation/CoreFoundation.h>
+#include <IOKit/IOKitLib.h>
+#include <IOKit/serial/IOSerialKeys.h>
+#if defined(MAC_OS_X_VERSION_10_3) && (MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_3)
+   #include <IOKit/serial/ioss.h>
+#endif
+#include <IOKit/IOBSD.h>
+#endif
+
+#ifdef linux
+#include <dirent.h>
+#endif
+
 #include "../../MMDevice/ModuleInterface.h"
 #include "../../MMDevice/DeviceUtils.h"
 #include "SerialManager.h"
@@ -101,7 +115,7 @@ const char* g_Parity_Space = "Space";
 
 const std::vector<std::string> availableSerialPorts(void)
 {
-   std::vector<std::string> serialPorts;
+   std::vector<std::string> availablePorts;
 #ifdef WIN32
    char allDeviceNames[100000];
 
@@ -120,15 +134,96 @@ const std::vector<std::string> availableSerialPorts(void)
       for( std::vector<std::string>::iterator jj = tokens.begin(); jj != tokens.end(); ++jj)
       {
          if( 0 == jj->substr(0,3).compare("COM"))
-            serialPorts.push_back(*jj);
+            availeblePorts.push_back(*jj);
       }
       
    }
-#else
-//todo UNIX:
-#endif
+#endif // WIN32
+#ifdef linux 
+   // Look for /dev files with correct signature in their name                   
+   DIR* pdir = opendir("/dev");                                                  
+   struct dirent *pent;                                                          
+   if (pdir) {                                                                   
+      while (pent = readdir(pdir)) {                                             
+         if ( (strstr(pent->d_name, "ttyS") != 0) || (strstr(pent->d_name, "ttyUSB") != 0) )  {
+            string p = ("/dev/");                                                
+            p.append(pent->d_name);                                              
+            if (portAccessible(p.c_str()))                                       
+               availablePorts.push_back(p.c_str());                              
+         }                                                                       
+      }                                                                          
+   }                                                                             
+#endif // linux 
+#ifdef __APPLE__                                                                 
+   // port discovery code for Darwin/Mac OS X                                    
+   // Derived from Apple's examples at: http://developer.apple.com/samplecode/SerialPortSample/SerialPortSample.html
+   io_iterator_t   serialPortIterator;                                           
+   char            bsdPath[256];                                                 
+   kern_return_t       kernResult;                                               
+   CFMutableDictionaryRef classesToMatch;                                        
+                                                                                 
+   // Serial devices are instances of class IOSerialBSDClient                    
+   classesToMatch = IOServiceMatching(kIOSerialBSDServiceValue);                 
+   if (classesToMatch == NULL) {                                                 
+       printf("IOServiceMatching returned a NULL dictionary.\n");                
+   } else {                                                                      
+       CFDictionarySetValue(classesToMatch,                                      
+                           CFSTR(kIOSerialBSDTypeKey),                           
+                           CFSTR(kIOSerialBSDAllTypes));                         
+   }                                                                             
+   kernResult = IOServiceGetMatchingServices(kIOMasterPortDefault, classesToMatch, &serialPortIterator);
+   if (KERN_SUCCESS != kernResult) {                                             
+      printf("IOServiceGetMatchingServices returned %d\n", kernResult);          
+   }                                                                             
+                                                                                 
+   // Given an iterator across a set of modems, return the BSD path to the first one.
+   // If no modems are found the path name is set to an empty string.            
+   io_object_t      modemService;                                                
+   Boolean       modemFound = false;                                             
+                                                                                 
+    // Initialize the returned path                                              
+    *bsdPath = '\0';                                                             
+    // Iterate across all modems found.                                          
+    while ( (modemService = IOIteratorNext(serialPortIterator)) ) {              
+       CFTypeRef bsdPathAsCFString;                                              
+       // Get the device's path (/dev/tty.xxxxx).                                
+       bsdPathAsCFString = IORegistryEntryCreateCFProperty(modemService,         
+                                                           CFSTR(kIODialinDeviceKey),          
+                                                           kCFAllocatorDefault,  
+                                                           0);                   
+      if (bsdPathAsCFString) {                                                   
+         // printf("Found one");                                                    
+         Boolean result;                                                        
+         // Convert the path from a CFString to a C (NUL-terminated) string for use           
+         // with the POSIX open() call.                                         
+         result = CFStringGetCString( (const __CFString*) bsdPathAsCFString,    
+                                      bsdPath,                                   
+                                      sizeof(bsdPath),                           
+                                      kCFStringEncodingUTF8);                    
+                                                                                 
+         CFRelease(bsdPathAsCFString);                                          
+         // printf("%s\n", bsdPath);                                                
+                                                                                 
+          // add the name to our vector<string> only when this is not a dialup port
+         std::string rresult (bsdPath);                                              
+         std::string::size_type loc = rresult.find("DialupNetwork", 0);              
+         if (result && (loc == std::string::npos)) {                                 
+             // if (portAccessible(bsdPath))  {                                     
+                // printf("Port was opened\n");                                     
+                availablePorts.push_back(bsdPath);                               
+             // }                                                                   
+             modemFound = true;                                                  
+             kernResult = KERN_SUCCESS;                                          
+          }                                                                      
+       }
+    } 
 
-   return serialPorts;
+    // Release the io_service_t now that we are done with it.                    
+    (void) IOObjectRelease(modemService);                                        
+
+#endif // __APPLE
+
+   return availablePorts;
 }
 
 
