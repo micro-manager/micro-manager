@@ -3312,6 +3312,9 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          } finally {
             waitDlg.closeDialog();
          }
+      } else {
+         if (startupScriptFile_.length() > 0)
+            ReportingUtils.logMessage("Startup script file ("+startupScriptFile_+") not present.");
       }
    }
 
