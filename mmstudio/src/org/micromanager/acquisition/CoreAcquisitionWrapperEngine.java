@@ -404,12 +404,50 @@ public class CoreAcquisitionWrapperEngine implements AcquisitionEngine {
       comment_ = text;
    }
 
-   public boolean addChannel(String name, double exp, double offset, ContrastSettings s8, ContrastSettings s16, int skip, Color c) {
-      throw new UnsupportedOperationException("Not supported yet.");
+   /**
+    * Add new channel if the current state of the hardware permits.
+    *
+    * @param config - configuration name
+    * @param exp
+    * @param doZOffst
+    * @param zOffset
+    * @param c8
+    * @param c16
+    * @param c
+    * @return - true if successful
+    */
+   public boolean addChannel(String config, double exp, Boolean doZStack, double zOffset, ContrastSettings c8, ContrastSettings c16, int skip, Color c) {
+      if (isConfigAvailable(config)) {
+         ChannelSpec channel = new ChannelSpec();
+         channel.config_ = config;
+         channel.exposure_ = exp;
+         channel.doZStack_ = doZStack;
+         channel.zOffset_ = zOffset;
+         channel.contrast8_ = c8;
+         channel.contrast16_ = c16;
+         channel.color_ = c;
+         channel.skipFactorFrame_ = skip;
+         requestedChannels_.add(channel);
+         return true;
+      } else {
+         return false;
+      }
    }
 
-   public boolean addChannel(String name, double exp, Boolean doZStack, double offset, ContrastSettings s8, ContrastSettings s16, int skip, Color c) {
-      throw new UnsupportedOperationException("Not supported yet.");
+   /**
+    * Add new channel if the current state of the hardware permits.
+    *
+    * @param config - configuration name
+    * @param exp
+    * @param zOffset
+    * @param c8
+    * @param c16
+    * @param c
+    * @return - true if successful
+    * @deprecated
+    */
+   public boolean addChannel(String config, double exp, double zOffset, ContrastSettings c8, ContrastSettings c16, int skip, Color c) {
+      return addChannel(config, exp, true, zOffset, c8, c16, skip, c);
    }
 
    public void setSaveFiles(boolean selected) {

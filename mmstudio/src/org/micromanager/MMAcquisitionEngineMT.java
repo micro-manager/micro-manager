@@ -2006,7 +2006,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
             }
 
          }
-
+         try {
          if (originalAutoShutterSetting_ == true && core_.getAutoShutter() == false && shutterIsOpen_ == true) {
              if (sliceMode_ == SliceMode.SLICES_FIRST && !keepShutterOpenForChannels_ && sliceIdx == (numSlices-1)) {
                  setShutterOpen(false);
@@ -2014,6 +2014,9 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
              if (sliceMode_ == SliceMode.CHANNELS_FIRST && !keepShutterOpenForStack_ && channelIdx == channels_.size()-1) {
                  setShutterOpen(false);
              }
+         }
+         } catch (Exception e) {
+            ReportingUtils.logError(e);
          }
 
          if (img != null && singleWindow_) {

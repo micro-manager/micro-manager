@@ -5,8 +5,7 @@
 package org.micromanager.acquisition;
 
 import java.util.ArrayList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
 import mmcorej.Metadata;
 import org.micromanager.image5d.Image5D;
@@ -29,19 +28,25 @@ public class AcquisitionDisplay extends Thread {
 
    public void run() {
       long t1 = System.currentTimeMillis();
-      Metadata md = new Metadata();
       try {
          do {
             while (core_.getRemainingImageCount() > 0) {
                imgCount_++;
-               Object img;
-               try {
-                  img = core_.popNextImageMD(0, 0, md);
-                  displayImage(img, md);
-                  ReportingUtils.logMessage("time=" + md.getFrameIndex() + ", position=" + md.getPositionIndex() + ", channel=" + md.getChannelIndex() + ", slice=" + md.getSliceIndex());
-               } catch (Exception ex) {
-                  ReportingUtils.logError(ex);
-               }
+
+               SwingUtilities.invokeLater(new Runnable() {
+                  public void run() {
+                     try {
+                        Metadata mdCopy = new Metadata();
+                        Object img = core_.popNextImageMD(0, 0, mdCopy);
+                        displayImage(img, mdCopy);
+                        ReportingUtils.logMessage("time=" + mdCopy.getFrameIndex() + ", position=" +
+                                mdCopy.getPositionIndex() + ", channel=" + mdCopy.getChannelIndex() +
+                                ", slice=" + mdCopy.getSliceIndex());
+                     } catch (Exception ex) {
+                        ReportingUtils.logError(ex);
+                     }
+                  }
+               });
             }
             core_.sleep(30);
          } while (!core_.acquisitionIsFinished() || core_.getRemainingImageCount() > 0);

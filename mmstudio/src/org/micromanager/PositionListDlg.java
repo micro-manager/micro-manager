@@ -559,7 +559,9 @@ public class PositionListDlg extends MMDialog implements MouseListener {
       removeAllButton.setFont(new Font("Arial", Font.PLAIN, 10));
       removeAllButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
-            clearAllPositions();
+            int ret = JOptionPane.showConfirmDialog(null, "Are you sure you want to erase\nall positions from the position list?", "Clear all positions?", JOptionPane.YES_NO_OPTION);
+            if (ret == JOptionPane.YES_OPTION)
+               clearAllPositions();
          }
       });
       removeAllButton.setIcon(SwingResourceManager.getIcon(PositionListDlg.class, "icons/delete.png"));
