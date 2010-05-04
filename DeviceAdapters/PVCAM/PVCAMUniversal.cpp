@@ -752,13 +752,6 @@ int Universal::Initialize()
    LogMessage("PVCAM VERSION: " + ver.str());
    assert(nRet == DEVICE_OK);
 
-   int16 numCameras;
-   pl_cam_get_total(&numCameras);
-
-
-
-   LogMessage(
-
    // find camera
    if (!pl_cam_get_name(cameraId_, name))
    {
