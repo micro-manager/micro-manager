@@ -59,6 +59,10 @@ import org.json.JSONObject;
 import org.micromanager.utils.ReportingUtils;
 
 import com.quirkware.guid.PlatformIndependentGuidGen;
+import ij.io.FileInfo;
+import ij.io.FileOpener;
+import ij.io.TiffDecoder;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  * Encapsulation of the acquisition data files.
@@ -1264,17 +1268,21 @@ public class AcquisitionData {
                throw new MMAcqDataException(e);
             }
 
-            ImagePlus imp;
+            ImagePlus imp = null;
             try {
-               Opener opener = new Opener();
-               imp = opener.openTiff(basePath_ + "/", fileName);
+               TiffDecoder td = new TiffDecoder(basePath_, fileName);
+               try {
+                  FileInfo[] info = td.getTiffInfo();
+                  FileOpener opener = new FileOpener(info[0]);
+                  imp = opener.open(false);
+               } catch (IOException e) {
+                  return null;
+               }
+
             } catch (OutOfMemoryError e) {
                throw new MMAcqDataException("Out of Memory...");
             }
-            if (imp == null) {
-               throw new MMAcqDataException("Unable to open file " + fileName);
-            }
-
+            
             return imp.getProcessor().getPixels();
          }
       }
