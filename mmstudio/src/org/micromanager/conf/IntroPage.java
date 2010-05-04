@@ -102,7 +102,7 @@ public class IntroPage extends PagePanel {
          }
       });
       browseButton_.setText("Browse...");
-      browseButton_.setBounds(440, 82, 48, 23);
+      browseButton_.setBounds(440, 82, 100, 23);
       add(browseButton_);
       
       createNewRadioButton_.setSelected(true);

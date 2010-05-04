@@ -24,6 +24,8 @@
 
 package org.micromanager.conf;
 
+import java.awt.Dialog;
+import java.awt.Frame;
 import java.util.prefs.Preferences;
 
 import javax.swing.JOptionPane;
@@ -43,6 +45,7 @@ public abstract class PagePanel extends JPanel{
    protected String title_;
    protected String helpText_;
    protected String helpFileName_;
+   protected Dialog parent_;
    
    protected static final String CFG_PATH = "cfg_path";
    
@@ -82,6 +85,10 @@ public abstract class PagePanel extends JPanel{
       
    public String getHelpFileName() {
       return helpFileName_;
+   }
+
+   public void setParentDialog(Dialog p) {
+      this.parent_ = p;
    }
 
    public abstract boolean enterPage(boolean next);

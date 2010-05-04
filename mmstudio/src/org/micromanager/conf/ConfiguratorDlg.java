@@ -171,6 +171,7 @@ public class ConfiguratorDlg extends JDialog {
          pages_[i].loadSettings();
          pages_[i].setBounds(r);
          pages_[i].setTitle("Step " + (i+1) + " of " + pages_.length + ": " + pages_[i].getTitle());
+         pages_[i].setParentDialog(this);
       }
       setPage(0);
 

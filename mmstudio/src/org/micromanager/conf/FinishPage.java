@@ -25,9 +25,11 @@
 package org.micromanager.conf;
 
 import java.awt.Color;
+import java.awt.FileDialog;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import java.io.FilenameFilter;
 import java.util.prefs.Preferences;
 
 import javax.swing.JButton;
@@ -49,6 +51,7 @@ public class FinishPage extends PagePanel {
    private JTextArea logArea_;
    private JButton browseButton_;
    private JTextField fileNameField_;
+   private boolean overwrite_ = false;
    /**
     * Create the panel
     */
@@ -61,7 +64,7 @@ public class FinishPage extends PagePanel {
 
       final JLabel configurationWillBeLabel = new JLabel();
       configurationWillBeLabel.setText("Configuration file:");
-      configurationWillBeLabel.setBounds(14, 11, 93, 21);
+      configurationWillBeLabel.setBounds(14, 11, 123, 21);
       add(configurationWillBeLabel);
 
       fileNameField_ = new JTextField();
@@ -71,10 +74,11 @@ public class FinishPage extends PagePanel {
       browseButton_ = new JButton();
       browseButton_.addActionListener(new ActionListener() {
          public void actionPerformed(final ActionEvent e) {
+            browseConfigurationFile();
          }
       });
       browseButton_.setText("Browse...");
-      browseButton_.setBounds(443, 31, 48, 23);
+      browseButton_.setBounds(443, 31, 100, 23);
       add(browseButton_);
 
       final JButton saveAndTestButton = new JButton();
@@ -118,6 +122,30 @@ public class FinishPage extends PagePanel {
       // TODO Auto-generated method stub
       
    }
+
+   private void browseConfigurationFile() {
+      FileDialog fileDialog = new FileDialog(this.parent_, "Create a configuration file", FileDialog.SAVE);
+      fileDialog.setFilenameFilter(new FilenameFilter() {
+         public boolean accept(File dir, String name) {
+            return name.endsWith(".cfg");
+         }
+      });
+      fileDialog.setVisible(true);
+         if (fileDialog.getFile() != null) {
+         File f = new File(fileDialog.getDirectory(), fileDialog.getFile());
+         setFilePath(f);
+         overwrite_ = true;
+      }
+      fileDialog.dispose();
+   }
+
+   private void setFilePath(File f) {
+      String absolutePath = f.getAbsolutePath();
+      if (!absolutePath.endsWith(".cfg")) {
+         absolutePath += ".cfg";
+      }
+      fileNameField_.setText(absolutePath);
+   }
    
    private void saveAndTest() {
       try {
@@ -125,9 +153,9 @@ public class FinishPage extends PagePanel {
          GUIUtils.preventDisplayAdapterChangeExceptions();
          
          File f = new File(fileNameField_.getText());
-         if( f.exists() ) { 
+         if( f.exists() && !overwrite_) {
             int sel = JOptionPane.showConfirmDialog(this,
-                     "Overwrite " + f.getName(),
+                     "Overwrite " + f.getName() + "?",
                      "File Save",
                      JOptionPane.YES_NO_OPTION);
             if (sel == JOptionPane.NO_OPTION) {
@@ -135,7 +163,7 @@ public class FinishPage extends PagePanel {
                return;
             }
          }
-         fileNameField_.setText(f.getAbsolutePath());
+         setFilePath(f);
          model_.removeInvalidConfigurations();
          model_.saveToFile(fileNameField_.getText());
          core_.loadSystemConfiguration(model_.getFileName());
