@@ -44,8 +44,6 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.Vector;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
@@ -99,7 +97,6 @@ import org.micromanager.utils.PositionMode;
 import org.micromanager.utils.SliceMode;
 
 import com.swtdesigner.SwingResourceManager;
-import java.awt.Dimension;
 import org.micromanager.acquisition.ComponentTitledBorder;
 import org.micromanager.utils.ReportingUtils;
 
@@ -1899,7 +1896,14 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
             acqEng_.setSlices(NumberUtils.displayStringToDouble(zBottom_.getText()), NumberUtils.displayStringToDouble(zTop_.getText()), zStep, zVals_ == 0 ? false : true);
             acqEng_.enableZSliceSetting(slicesPanel_.isSelected());
             acqEng_.enableMultiPosition(positionsPanel_.isSelected());
+            if( channelsPanel_.isSelected())
+            {
             acqEng_.setSliceMode(((SliceMode) sliceModeCombo_.getSelectedItem()).getID());
+            }
+            else if(slicesPanel_.isSelected())
+            {
+               acqEng_.setSliceMode(SliceMode.SLICES_FIRST);
+            }
             acqEng_.setDisplayMode(((DisplayMode) displayModeCombo_.getSelectedItem()).getID());
             acqEng_.setPositionMode(posModeCombo_.getSelectedIndex());
             acqEng_.enableChannelsSetting(channelsPanel_.isSelected());
