@@ -737,6 +737,10 @@ int Universal::Initialize()
    if (!pl_pvcam_get_ver(&version))
       return LogCamError(__LINE__);
 
+   int16 numCameras;
+   if (!pl_cam_get_total(&numCameras))
+      return LogCamError(__LINE__);
+
    uns16 major, minor, trivial;
    major = version; major = major >> 8; major = major & 0xFF;
    minor = version; minor = minor >> 4; minor = minor & 0xF;
@@ -744,8 +748,16 @@ int Universal::Initialize()
    stringstream ver;
    ver << major << "." << minor << "." << trivial;
    nRet = CreateProperty("PVCAM Version", ver.str().c_str(),  MM::String, true);
+   ver << ". Number of cameras detected: " << numCameras;
    LogMessage("PVCAM VERSION: " + ver.str());
    assert(nRet == DEVICE_OK);
+
+   int16 numCameras;
+   pl_cam_get_total(&numCameras);
+
+
+
+   LogMessage(
 
    // find camera
    if (!pl_cam_get_name(cameraId_, name))
