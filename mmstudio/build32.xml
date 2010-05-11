@@ -8,12 +8,12 @@
 
 	<!-- Specify the system path to the ImageJ root directory -->
 	<property name="ImageJPath" value="/Program Files/ImageJ"/>
-	<property name="InstallRoot" value="../Install/micro-manager"/>
+	<property name="InstallRoot" value="../Install32/micro-manager"/>
 	<property name="NativeRoot" value="../MMCoreJ_wrap"/>
         <property name="ScriptsRoot" value="../scripts"/>
-        <property name="ScriptsInstall" value="../Install/micro-manager/scripts"/>
+        <property name="ScriptsInstall" value="../Install32/micro-manager/scripts"/>
         <property name="DriversRoot" value="../drivers"/>
-        <property name="DriversInstall" value="../Install/micro-manager/drivers"/>
+        <property name="DriversInstall" value="../Install32/micro-manager/drivers"/>
 
 	<!-- Do not modify from this point on -->
 	<property name="MMPluginDir" value="${ImageJPath}/plugins/Micro-Manager"/>
@@ -22,9 +22,9 @@
 	<property name="swingx" value="../classext/swingx-0.9.5.jar"/>
 	<property name="swing_layout" value="../classext/swing-layout-1.0.4.jar"/>
 	<property name="commons_math" value="../classext/commons-math-2.0.jar"/>
-	<property name="MMCoreJ" value="../bin/MMCoreJ.jar"/>
+	<property name="MMCoreJ" value="../bin32/MMCoreJ.jar"/>
 	<property name="MMPluginDir-inst" value="${InstallRoot}/plugins/Micro-Manager"/>
-	<property name="BinRoot" value="../bin"/>
+	<property name="BinRoot" value="../bin32"/>
 	<property name="NativeGUI" value="../NativeGUI/NativeGUI.jar"/>
 
 	<path id="project.MMPlugins.path">
@@ -113,7 +113,6 @@
 		<copy file="${commons_math}" todir="${MMPluginDir-inst}" />
 		<copy file="${BinRoot}/MMCoreJ_wrap.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/MMConfig_demo.cfg" todir="${InstallRoot}" />
-		<copy file="${BinRoot}/MMConfig_demoRGB.cfg" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_ABSCamera.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_AOTF.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_Apogee.dll" todir="${InstallRoot}" />
@@ -129,7 +128,6 @@
 		<copy file="${BinRoot}/mmgr_dal_Conix.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_CSUX.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_DemoCamera.dll" todir="${InstallRoot}" />
-		<copy file="${BinRoot}/mmgr_dal_DemoRGBCamera.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_DemoStreamingCamera.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_DLP4000.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_DTOpenLayer.dll" todir="${InstallRoot}" />
@@ -220,7 +218,7 @@
 
 	<target name="packInstaller" description="Create installation package">
 		<exec dir="${InstallRoot}" executable="/projects/3rdparty/Inno_Setup_5/iscc.exe">
-			<arg line="/F${InstallerName} ../MM-ImageJ-Install.iss"/>
+			<arg line="/F${InstallerName} ../MM-ImageJ-Install32.iss"/>
 		</exec>
 	</target>
 
