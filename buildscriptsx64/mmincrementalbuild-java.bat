@@ -23,7 +23,7 @@ call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml buildNativ
 popd
 
 cd \projects\micromanager\mmStudio\src
-call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile ../build.xml compileMMStudio buildMMStudio buildMMReader
+call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile ../build64.xml compileMMStudio buildMMStudio buildMMReader
 cd ..\..
 
 cd autofocus
@@ -31,23 +31,23 @@ call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml compileAut
 cd ..
 
 cd plugins\Tracker 
-call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml  compileMMTracking buildMMTracking 
+call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build64.xml  compileMMTracking buildMMTracking 
 cd ..\..
 
 pushd plugins\PixelCalibrator 
-call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml compileMMPixelCalibrator buildMMPixelCalibrator
+call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build64.xml compileMMPixelCalibrator buildMMPixelCalibrator
 popd
 
 set DEVICELISTBUILDER=1
 cd mmStudio\src
-call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile ../build.xml install makeDeviceList packInstaller
+call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile ../build64.xml install makeDeviceList packInstaller
 set DEVICELISTBUILDER=""
 
-pushd \Projects\micromanager\Install\Output
-rename MMSetup_.exe  MMSetup_%mmversion%_%YYYYMMDD%.exe
+pushd \Projects\micromanager\Install64\Output
+rename MMSetup_.exe  MMSetupx64_%mmversion%_%YYYYMMDD%.exe
 popd
 
-\Projects\micromanager\Install\Output\MMSetup_%mmversion%_%YYYYMMDD%.exe  /silent
+REM   WON'T WORK ON BUILD MACHINE \Projects\micromanager\Install64\Output\MMSetup_%mmversion%_%YYYYMMDD%.exe  /silent
 
 ECHO "Done installing"
 EXIT /B
