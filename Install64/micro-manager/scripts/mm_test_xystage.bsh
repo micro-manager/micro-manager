@@ -1,0 +1,54 @@
+// Micro-Manager, UCSF, 2009
+// Arthur Edelstein, arthuredelstein@gmail.com
+// XY-stage adapter tests
+// (!) Warning: Make sure stage will not collide with objectives or other components!
+
+
+print("\n XY-stage tests --------------------------------------------------------------------------");
+
+print("\n Getting current stage:");
+xystage = testCmd("mmc.getXYStageDevice();");
+
+print ("\n Moving stage in a 1-micron square:");
+testCmd("mmc.getXPosition(\"" + xystage + "\");");
+testCmd("mmc.getYPosition(\"" + xystage + "\");");
+pos = testCmd("gui.getXYStagePosition();");
+
+pos.x+=1;
+testCmd("gui.setXYStagePosition(" + pos.x + "," + pos.y + ");");
+pos = testCmd("gui.getXYStagePosition();");
+
+pos.y+=1;
+testCmd("gui.setXYStagePosition(" + pos.x + "," + pos.y + ");");
+pos = testCmd("gui.getXYStagePosition();");
+
+pos.x-=1;
+testCmd("gui.setXYStagePosition(" + pos.x + "," + pos.y + ");");
+pos = testCmd("gui.getXYStagePosition();");
+
+pos.y-=1;
+testCmd("gui.setXYStagePosition(" + pos.x + "," + pos.y + ");");
+pos = testCmd("gui.getXYStagePosition();");
+
+print("\n Moving again and taking images.");
+testCmd("gui.snapSingleImage()");
+
+pos.x+=1;
+testCmd("gui.setXYStagePosition(" + pos.x + "," + pos.y + ");");
+pos = testCmd("gui.getXYStagePosition();");
+testCmd("gui.snapSingleImage()");
+
+pos.y+=1;
+testCmd("gui.setXYStagePosition(" + pos.x + "," + pos.y + ");");
+pos = testCmd("gui.getXYStagePosition();");
+testCmd("gui.snapSingleImage()");
+
+pos.x-=1;
+testCmd("gui.setXYStagePosition(" + pos.x + "," + pos.y + ");");
+pos = testCmd("gui.getXYStagePosition();");
+testCmd("gui.snapSingleImage()");
+
+pos.y-=1;
+testCmd("gui.setXYStagePosition(" + pos.x + "," + pos.y + ");");
+pos = testCmd("gui.getXYStagePosition();");
+testCmd("gui.snapSingleImage()");

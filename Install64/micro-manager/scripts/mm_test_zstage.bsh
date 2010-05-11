@@ -1,0 +1,35 @@
+// Micro-Manager, UCSF, 2009
+// Arthur Edelstein, arthuredelstein@gmail.com
+// Z-stage adapter tests
+// (!) Warning: Make sure stage will not collide with objectives or other components!
+
+print("\n Z-stage tests --------------------------------------------------------------------------");
+
+print("\n Getting current stage:");
+zstage = testCmd("mmc.getFocusDevice();");
+
+print ("\n Moving stage forward and back 1 micron:");
+z = testCmd("mmc.getPosition(\"" + zstage + "\");");
+
+z+=1;
+
+testCmd("mmc.setPosition(\"" + zstage + "\"," + z + ");");
+z = testCmd("mmc.getPosition(\"" + zstage + "\");");
+
+z-=1;
+
+testCmd("mmc.setPosition(\"" + zstage + "\"," + z + ");");
+z = testCmd("mmc.getPosition(\"" + zstage + "\");");
+
+print ("\n Moving stage back and forth again and taking images:");
+z+=1;
+testCmd("gui.snapSingleImage()");
+testCmd("mmc.setPosition(\"" + zstage + "\"," + z + ");");
+z = testCmd("mmc.getPosition(\"" + zstage + "\");");
+
+z-=1;
+testCmd("gui.snapSingleImage()");
+testCmd("mmc.setPosition(\"" + zstage + "\"," + z + ");");
+z = testCmd("mmc.getPosition(\"" + zstage + "\");");
+
+testCmd("gui.snapSingleImage()");

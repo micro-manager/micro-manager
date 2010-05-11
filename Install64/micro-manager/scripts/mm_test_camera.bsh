@@ -1,0 +1,113 @@
+// Micro-Manager, UCSF, 2009
+// Arthur Edelstein, arthuredelstein@gmail.com
+// Camera adapter tests
+
+print("\n Camera tests --------------------------------------------------------------------------");
+
+testCmd("mmc.getCameraDevice();");
+
+print("\n Test snapping time from gui:");
+for (i=0;i<10;i++)
+	testCmd("gui.snapSingleImage();");
+
+print("\n Test snapping time from core:");
+for (i=0;i<10;i++)
+	testCmd("mmc.snapImage();");
+
+print("\n Test getting image core (bound to fail):");
+for (i=0;i<10;i++)
+	testCmd("mmc.getImage();");
+
+
+print("\n Test image return:");
+for (i=0;i<10;i++) {
+   testCmd("mmc.snapImage();");
+   testCmd("mmc.getImage();");
+}
+
+
+
+print("\n Image dimensions: ");
+testCmd("mmc.getImageWidth();");
+testCmd("mmc.getImageHeight();");
+
+print("\n Test getting and setting ROIs:");
+
+roi = testCmd("getROI();");
+print("   ROI: "+roi[0]+","+roi[1]+","+roi[2]+","+roi[3]);
+
+testCmd("mmc.setROI("+(roi[0]+roi[2]/4)+","+(roi[1]+roi[3]/4)+","+roi[2]/2+","+roi[3]/2+");");
+roi = testCmd("getROI()");
+print("   ROI: "+roi[0]+","+roi[1]+","+roi[2]+","+roi[3]);
+testCmd("gui.snapSingleImage();");
+
+testCmd("mmc.clearROI();");
+testCmd("getROI();");
+print("   ROI: "+roi[0]+","+roi[1]+","+roi[2]+","+roi[3]);
+testCmd("gui.snapSingleImage();");
+
+print("\n Exposure:");
+
+exposure = testCmd("mmc.getExposure();");
+testCmd("mmc.setExposure("+exposure*10+");");
+exposure = testCmd("mmc.getExposure();");
+testCmd("mmc.setExposure("+exposure/10+");");
+exposure = testCmd("mmc.getExposure();");
+
+int [] exposures = {0,1,2,4,8,16,32,64,128,256,512,1024};
+
+for(i=0;i<=10;i++) {
+	testCmd("mmc.setExposure("+exposures[i]+");");
+	testCmd("mmc.snapImage();");
+   img = testCmd("mmc.getImage();");
+   testCmd("gui.displayImage(img);");
+}
+
+testCmd("mmc.setExposure(exposure);");
+
+print("\n Camera properties");
+testCmd("mmc.getBytesPerPixel()");
+testCmd("mmc.getImageBitDepth()");
+testCmd("mmc.getNumberOfChannels()");
+
+print("\n Image Buffer Size");
+testCmd("mmc.getImageBufferSize();");
+
+print("\n Limited Sequence Acquisition");
+testCmd("mmc.startSequenceAcquisition(100,100,false);");
+print("  while(isSequenceRunning()) { take images }"); 
+
+int frameCount=0;
+while(mmc.isSequenceRunning() || mmc.getRemainingImageCount() > 0) {
+	if (frameCount<=5)
+		numRemaining = testCmd("mmc.getRemainingImageCount();");
+	else
+		numRemaining = mmc.getRemainingImageCount();
+
+	if (numRemaining > 0) {
+		if (frameCount<=5) {
+			img = testCmd("mmc.popNextImage();");
+			testCmd("gui.displayImage(img);");
+		} else {
+			img = mmc.popNextImage();
+			gui.displayImage(img);
+		}
+		frameCount++;
+	}
+}
+
+testCmd("mmc.stopSequenceAcquisition();");
+
+testCmd("mmc.getLastImage();");
+
+print("\n Burst Acquisition");
+testCmd("gui.runBurstAcquisition();");
+
+
+print("\n Live mode");
+testCmd("gui.enableLiveMode(true);");
+testCmd("mmc.sleep(10000);");
+testCmd("gui.enableLiveMode(false);");
+
+
+

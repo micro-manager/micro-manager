@@ -1,0 +1,23 @@
+// Example of camera test
+
+core = mmc;  
+core.unloadAllDevices();       
+core.loadDevice("Camera", "DemoCamera", "DCam");
+core.initializeDevice("Camera");
+
+core.setExposure(50);
+core.snapImage();
+			
+if (core.getBytesPerPixel() == 1) {
+   // 8-bit grayscale pixels
+   byte[] img = (byte[])core.getImage();
+   gui.message("Image snapped, " + img.length + " pixels total, 8 bits each.");
+   gui.message("Pixel [0,0] value = " + img[0]);
+} else if (core.getBytesPerPixel() == 2){
+   // 16-bit grayscale pixels
+   short[] img = (short[])core.getImage();
+   gui.message("Image snapped, " + img.length + " pixels total, 16 bits each.");
+   gui.message("Pixel [0,0] value = " + img[0]);             
+} else {
+   gui.message("Dont' know how to handle images with " + core.getBytesPerPixel() + " byte pixels.");             
+}

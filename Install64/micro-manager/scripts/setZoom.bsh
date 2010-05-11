@@ -1,0 +1,16 @@
+import ij.IJ;
+import ij.ImagePlus;
+import ij.ImageWindow;
+import ij.ImageCanvas;
+import java.awt.Dimension;
+
+zoomLevel = 0.2;
+
+win = IJ.getImage().getWindow();
+newWidth = (int) (zoomLevel * win.getImagePlus().getWidth());
+newHeight = (int) (zoomLevel * win.getImagePlus().getHeight());
+newSize = new Dimension(newWidth, newHeight);
+win.getCanvas().setDrawingSize(newWidth, newHeight);
+win.getCanvas().setMagnification(zoomLevel);
+win.pack();
+win.toFront();

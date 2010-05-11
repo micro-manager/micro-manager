@@ -1,0 +1,8 @@
+mmc.setExposure(100); // ms
+mmc.snapImage();
+img = mmc.getImage();
+width = mmc.getImageWidth();
+height = mmc.getImageHeight();
+byteDepth = mmc.getBytesPerPixel();
+gui.message("Image snapped: w=" + width + ", h=" + height + ", " + byteDepth + " byte(s) per pixel");
+gui.message("Image size: " + img.length + " pixels");

@@ -1,0 +1,31 @@
+// Micro-Manager, UCSF, 2009
+// Arthur Edelstein, arthuredelstein@gmail.com
+// Shutter adapter tests
+
+print("\n Shutter tests --------------------------------------------------------------------------");
+
+print("\n Name of shutter");
+shutter = testCmd("mmc.getShutterDevice();");
+
+print("\n Open and close");
+for (i=0;i<10;i++) {
+	isOpen = testCmd("mmc.getShutterOpen();");
+	testCmd("mmc.setShutterOpen("+!isOpen+");");
+	testCmd("mmc.deviceBusy(\""+shutter+"\");");
+	testCmd("mmc.waitForDevice(\""+shutter+"\");");
+	}
+
+print("\n Auto shutter with snapping");
+
+testCmd("mmc.setShutterOpen(false);");
+testCmd("mmc.setExposure(1);");
+
+for (i=0;i<10;i++) {
+	testCmd("mmc.getShutterOpen();");
+	testCmd("mmc.setAutoShutter(false);");
+	testCmd("gui.snapSingleImage();");
+	testCmd("mmc.getShutterOpen();");
+	testCmd("mmc.setAutoShutter(true);");
+	testCmd("gui.snapSingleImage();");
+	testCmd("mmc.getShutterOpen();");	
+	}

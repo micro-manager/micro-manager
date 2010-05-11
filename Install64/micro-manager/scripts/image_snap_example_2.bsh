@@ -1,0 +1,11 @@
+gui.message("Displaying image");
+
+// adjust the binning first (optional)
+cameraName = mmc.getCameraDevice();
+mmc.setProperty(cameraName, "Binning", "1");
+
+// update will automatically snap a new image and display it
+gui.updateImage();
+
+// caveat: the image window must be already open in the GUI (press "Snap Image" at least once)
+// before running this script

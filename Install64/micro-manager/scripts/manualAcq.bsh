@@ -1,0 +1,53 @@
+// Script for manual acquisition
+// Nenad Amodaj, Feb 2008, Nico Stuurman, April 2008
+
+import org.micromanager.api.AcquisitionOptions;
+import java.lang.System;
+import ij.gui.GenericDialog;
+
+// clear all previous acquisitions
+gui.closeAllAcquisitions();
+gui.clearMessageWindow();
+
+// file locations
+acqName = "test-acq-col";
+rootDirName = "C:/acquisitionData";
+
+// parameters
+numFrames = 3;
+String[] channels = {"DAPI", "FITC", "Rhodamine"};
+Color[] colors = {Color.BLUE, Color.GREEN, Color.RED};
+int[] exposures = {100, 30, 110};
+numSlices = 1;
+intervalMs = 2000;
+channelGroup = "Channel";
+
+// create acquisition and set options
+gui.openAcquisition(acqName, rootDirName, numFrames, channels.length, numSlices);
+for (int i=0; i<colors.length; i++)
+   gui.setChannelColor(acqName, i, colors[i]);
+for (int i=0; i<channels.length; i++)
+   gui.setChannelName(acqName, i, channels[i]);
+
+for (int i=0; i<numFrames; i++) {
+   for (int j=0; j<channels.length; j++) {
+      now = System.currentTimeMillis();
+      GenericDialog dlg = new GenericDialog("Manual Acquisition", null);
+      dlg.addMessage("Move filters for channel " + channels[j] + " in Place");
+      dlg.showDialog();
+      if (dlg.wasCanceled())
+         return false;
+      gui.message("Acquiring frame " + i + ", channel " + channels[j] + ".");
+      mmc.setExposure(exposures[j]);
+      mmc.setConfig(channelGroup, channels[j]);
+      mmc.waitForConfig(channelGroup, channels[j]);
+      gui.snapAndAddImage(acqName, i, j, 0);
+   }
+   
+   // set channel contrast based on the first frame
+   if (i==0) {
+      gui.setContrastBasedOnFrame(acqName, i, 0);
+   }
+   itTook = System.currentTimeMillis() - now;
+   gui.sleep(intervalMs - itTook);
+}

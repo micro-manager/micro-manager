@@ -1,0 +1,30 @@
+// Example of creating and testing configurations thorugh scripts
+
+mmc.defineConfig("Channel", "FITC", "Emission", "State", "2");
+mmc.defineConfig("Channel", "FITC", "Excitation", "State", "3");
+mmc.defineConfig("Channel", "FITC", "Dichroic", "State", "1");
+
+mmc.defineConfig("Channel", "DAPI", "Emission", "State", "1");
+mmc.defineConfig("Channel", "DAPI", "Excitation", "State", "2");
+mmc.defineConfig("Channel", "DAPI", "Dichroic", "State", "0");
+
+mmc.defineConfig("Channel", "Rhodamine", "Emission", "State", "3");
+mmc.defineConfig("Channel", "Rhodamine", "Excitation", "State", "4");
+mmc.defineConfig("Channel", "Rhodamine", "Dichroic", "State", "2");
+
+mmc.defineConfig("Camera", "LowRes", "Camera", "Binning", "4");
+mmc.defineConfig("Camera", "LowRes", "Camera", "PixelType", "8bit");
+mmc.defineConfig("Camera", "MedRes", "Camera", "Binning", "2");
+mmc.defineConfig("Camera", "MedRes", "Camera", "PixelType", "8bit");
+mmc.defineConfig("Camera", "HiRes", "Camera", "Binning", "1");
+mmc.defineConfig("Camera", "HiRes", "Camera", "PixelType", "16bit");
+mmc.defineConfig("Focus", "Low", "Z", "Position", "0");
+mmc.defineConfig("Focus", "Lo-Mag Start", "Z", "Position", "2000");
+
+mmc.setConfig("Channel", "DAPI");
+mmc.setConfig("Camera", "MedRes");
+
+
+gui.message(mmc.getCurrentConfig("Channel"));
+gui.message(mmc.getCurrentConfig("Camera"));
+gui.initializeGUI();

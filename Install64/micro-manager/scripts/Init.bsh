@@ -1,0 +1,75 @@
+// An example of how to configure the sytem programmatically,
+// i.e. without using configurationf files
+// The GUI changes will not be visible automatically. You need to manually
+// run command Rebuild GUI or Refresh GUI (Tools menu)
+
+console.clearOutput();
+library="DemoCamera";
+
+// reset previous configuration if any
+mmc.unloadAllDevices();
+
+// load devices
+mmc.loadDevice("Camera", "DemoCamera", "DCam");
+mmc.loadDevice("AOTF", "ParallelPort", "LPT1");
+mmc.loadDevice("Emission", library, "DWheel");
+mmc.loadDevice("Excitation", library, "DWheel");
+mmc.loadDevice("Dichroic", library, "DWheel");
+mmc.loadDevice("Objective", library, "DObjective");
+mmc.loadDevice("X", library, "DStage");
+mmc.loadDevice("Y", library, "DStage");
+mmc.loadDevice("Z", library, "DStage"); 
+
+// initialize the entire system
+console.message("\nINITIALIZING...");
+mmc.initializeAllDevices();
+
+// set labels for state devices
+mmc.defineStateLabel("AOTF", 10, "980nm");
+mmc.defineStateLabel("AOTF", 11, "760nm");
+
+// emission filter
+mmc.defineStateLabel("Emission", 0, "Chroma-D460");
+mmc.defineStateLabel("Emission", 1, "Chroma-HQ620");
+mmc.defineStateLabel("Emission", 2, "Chroma-HQ535");
+mmc.defineStateLabel("Emission", 3, "Chroma-HQ700");
+
+// excitation filter
+mmc.defineStateLabel("Excitation", 2, "Chroma-D360");
+mmc.defineStateLabel("Excitation", 3, "Chroma-HQ480");
+mmc.defineStateLabel("Excitation", 4, "Chroma-HQ570");
+mmc.defineStateLabel("Excitation", 5, "Chroma-HQ620");
+
+// excitation dichroic
+mmc.defineStateLabel("Dichroic", 0, "400DCLP");
+mmc.defineStateLabel("Dichroic", 1, "Q505LP");
+mmc.defineStateLabel("Dichroic", 2, "Q585LP");
+
+// objective
+mmc.defineStateLabel("Objective", 1, "Nikon 10X S Fluor");
+mmc.defineStateLabel("Objective", 3, "Nikon 20X Plan Fluor ELWD");
+mmc.defineStateLabel("Objective", 5, "Zeiss 4X Plan Apo");
+
+// define settings
+mmc.defineConfig("Channel", "FITC", "Emission", "State", "2");
+mmc.defineConfig("Channel", "FITC", "Excitation", "State", "3");
+mmc.defineConfig("Channel", "FITC", "Dichroic", "State", "1");
+
+mmc.defineConfig("Channel", "DAPI", "Emission", "State", "1");
+mmc.defineConfig("Channel", "DAPI", "Excitation", "State", "2");
+mmc.defineConfig("Channel", "DAPI", "Dichroic", "State", "0");
+
+mmc.defineConfig("Channel", "Rhodamine", "Emission", "State", "3");
+mmc.defineConfig("Channel", "Rhodamine", "Excitation", "State", "4");
+mmc.defineConfig("Channel", "Rhodamine", "Dichroic", "State", "2");
+
+// set initial imaging mode
+console.message("\nCONFIGURING...");
+mmc.setProperty("Camera", "Exposure", "55");
+mmc.setProperty("Objective", "Label", "Nikon 10X S Fluor");
+mmc.setConfig("Channel", "DAPI");
+
+console.message("Current channel configuration: " + mmc.getCurrentConfig("Channel"));
+
+// configuration finished
+console.message("Done");

@@ -1,0 +1,39 @@
+// Arthur Edelstein, Micro-Manager, UCSF, 2009
+// This script demonstrates the use of color SLMs (Spatial Light Modulators).
+
+import ij.IJ;
+imgp1 = IJ.openImage("http://valelab.ucsf.edu/~arthur/images/testRGB.tif");
+pix1 = imgp1.getProcessor().getPixels();
+
+imgp2 = IJ.openImage("http://valelab.ucsf.edu/~arthur/images/testRGB2.tif");
+pix2 = imgp2.getProcessor().getPixels();
+
+slms = mmc.getLoadedDevicesOfType(mmc.getDeviceType(mmc.getSLMDevice()));
+int n = slms.size();
+
+pix1 = new ArrayList();
+pix2 = new ArrayList();
+
+for (j=0;j<n;++j) {
+	slm = slms.get(j);
+	pix1.add(imgp1.getProcessor().resize((int) mmc.getSLMWidth(slm), (int) mmc.getSLMHeight(slm)).getPixels());
+	pix2.add(imgp2.getProcessor().resize((int) mmc.getSLMWidth(slm), (int) mmc.getSLMHeight(slm)).getPixels());
+}
+
+imgp1.close();
+imgp2.close();
+
+for (i=0;i<30;++i) {
+	for (j=0;j<n;++j) {
+		slm = slms.get(j);
+		mmc.setSLMImage(slm,pix1.get(j));
+		mmc.displaySLMImage(slm);
+	}
+	mmc.sleep(50);
+	for (j=0;j<n;++j) {
+		slm = slms.get(j);
+		mmc.setSLMImage(slm,pix2.get(j));
+		mmc.displaySLMImage(slm);
+	}
+	mmc.sleep(50);
+}

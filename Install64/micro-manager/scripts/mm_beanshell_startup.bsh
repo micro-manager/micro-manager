@@ -1,0 +1,66 @@
+// BeanShell startup script for Micro-Manager.
+// This script runs when the beanshell interpreter is started in the Scripting Panel
+// Arthur Edelstein, UCSF, 2009
+
+
+class dummyClassToForceBeanshellToUseAHashtableInItsNamespaceMethodsList {;} 
+
+setAccessibility(true);
+
+clear(String objName) {
+	ns = this.caller.namespace;
+	if (ns.variables.containsKey(objName))
+		ns.variables.remove(objName);
+	if (ns.methods.containsKey(objName))
+		ns.methods.remove(objName);
+}
+
+// The global update() method removes old cached method definitions.
+
+void update() {
+	// Use the caller's namespace:
+	update(this.caller.namespace);	
+}
+
+void update(bsh.NameSpace ns) {
+	// Go through all methods in the namespace:
+	for (meth:ns.methods.keys())
+		update(meth.toString(),ns);
+}
+
+void update(String x) {
+	// Use the caller's namespace:
+	update(x,this.caller.namespace);
+}
+
+void update(String x, bsh.NameSpace ns) {
+	methIncarnations = ns.methods.get(x);
+
+	// We only need to look at vectors of multiple method definitions.
+	// Sometimes there is a single definition stored as a bsh.BshMethod, rather than a Vector.
+	if (methIncarnations instanceof Vector) {
+		// Make a vector of method strings, e.g., "computeSquare( float )"
+		methodStrings = new Vector();
+		// Go through all versions of this method and add its method string to our vector
+		for (methIncarnation : methIncarnations)
+			methodStrings.add(methIncarnation.toString());
+	
+		// Now delete duplicate methods with the same method string (i.e., the same signature):
+		int ndeleted = 0;
+		for (int i=0;i<methodStrings.size();i++) {
+			// If we aren't looking at the last (most recent) version of the method:
+			if (i != methodStrings.lastIndexOf(methodStrings.get(i))) {
+				// Delete the method:
+				methIncarnations.remove(i-ndeleted);
+				ndeleted++; // Adjust index for deletion
+			}
+		}
+	}
+}
+
+run_unit_tests () {
+	sourceRelative("mm_test_all.bsh");
+}
+
+sourceRelative("mm_load_docs.bsh"); // Generates command "doc(object);"
+sourceRelative("mm_inspector.bsh"); // Generates command "inspect(object);"

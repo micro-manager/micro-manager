@@ -1,0 +1,45 @@
+// ---------------------------------------------------
+// Live processing demo
+// ---------------------------------------------------
+
+import ij.process.*; 
+gui.clearMessageWindow();
+gui.message("Live processing demo");
+
+// set exposure
+// ------------
+mmc.setExposure(50.0);
+gui.refreshGUI();
+
+// acquire image from the camera
+// -----------------------------
+gui.snapSingleImage();
+
+// get info on the acquired image
+// ------------------------------
+x = gui.getImageWidth();
+y = gui.getImageHeight();
+d = gui.getImageDepth();
+gui.message("Image dimensions: " + x + " X " + y + " X " + d);
+
+// create stand-alone image processor
+// ----------------------------------
+if (d == 8)
+   ip = new ByteProcessor(x, y);
+else if (d==16)
+   ip = new ShortProcessor(x, y);
+else {
+   gui.message("Don't know how to handle " + d + " bit images");
+}
+
+// add some noise
+// --------------
+noiseLevel = 50;
+if (d>8)
+   noiseLevel = 3000;
+ip.setPixels(gui.getPixels());
+ip.noise(noiseLevel);
+
+// display processed image
+// -----------------------
+//gui.setPixels(ip.getPixels());

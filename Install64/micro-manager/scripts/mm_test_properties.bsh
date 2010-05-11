@@ -1,0 +1,28 @@
+// Micro-Manager, UCSF, 2009
+// Arthur Edelstein, arthuredelstein@gmail.com
+// Device property tests
+
+
+//Sets and gets properties for devices:
+testProperty(deviceName, propName) {
+	propValue = testCmd("mmc.getProperty(\""+deviceName+"\",\""+propName+"\");");
+	if (! mmc.isPropertyReadOnly(deviceName,propName)) {
+		testCmd("mmc.setProperty(\""+deviceName+"\",\""+propName+"\",\""+propValue+"\");");
+		testCmd("mmc.getProperty(\""+deviceName+"\",\""+propName+"\");");
+	}
+}
+
+update();
+
+print("Get and set (to same value) all device properties");
+devs = testCmd("mmc.getLoadedDevices();");
+for (int i=0;i<devs.size();i++) {
+	deviceName = devs.get(i);
+	props = testCmd("mmc.getDevicePropertyNames(\""+deviceName+"\");");
+	for (int j=0;j<props.size();j++) {
+		testProperty(deviceName,props.get(j));
+	}
+}
+
+
+
