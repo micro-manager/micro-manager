@@ -760,12 +760,7 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
       if (core_ == null) {
          return new String[0];
       }
-      StrVector vcfgs = core_.getAvailableConfigs(cameraGroup_);
-      String cfgs[] = new String[(int) vcfgs.size()];
-      for (int i = 0; i < cfgs.length; i++) {
-         cfgs[i] = vcfgs.get(i);
-      }
-      return cfgs;
+      return core_.getAvailableConfigs(cameraGroup_).toArray();
    }
 
    public int getNumFrames() {
