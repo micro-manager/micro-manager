@@ -558,8 +558,8 @@ void FastLogger::ReportLogFailure()throw()
 
 #define CORE_DEBUG_PREFIX_T "DBG(%D, %P, %t:) "
 #define CORE_LOG_PREFIX_T "LOG(%D, %P, %t:): "
-#define CORE_DEBUG_PREFIX "DBG(%P, t:%t:) "
-#define CORE_LOG_PREFIX "LOG(%P, %t:): "
+#define CORE_DEBUG_PREFIX "DBG(%D, %P, t:%t:) "
+#define CORE_LOG_PREFIX "LOG(%D, %P, %t:): "
 
 const char * FastLogger::GetFormatPrefix(Fast_Log_Priorities p)
 {
