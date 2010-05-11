@@ -27,7 +27,7 @@ call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile ../build64.xml compi
 cd ..\..
 
 cd autofocus
-call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml compileAutofocus buildAutofocus 
+call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build64.xml compileAutofocus buildAutofocus 
 cd ..
 
 cd plugins\Tracker 
