@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE preferences SYSTEM "http://java.sun.com/dtd/preferences.dtd">
+<preferences EXTERNAL_XML_VERSION="1.0">
+  <root type="user">
+    <map/>
+    <node name="org">
+      <map/>
+      <node name="micromanager">
+        <map/>
+        <node name="AcquistionSettings">
+          <map>
+            <entry key="acqNumframes" value="1"/>
+            <entry key="acqInterval" value="100.0"/>
+            <entry key="acqTimeInit" value="0"/>
+            <entry key="acqZbottom" value="0.0"/>
+            <entry key="acqZtop" value="0.0"/>
+            <entry key="acqZstep" value="1.0"/>
+            <entry key="enableSliceSettings" value="false"/>
+            <entry key="enableMultiPosition" value="true"/>
+            <entry key="acqZValues" value="0"/>
+            <entry key="acqSaveFiles" value="true"/>
+            <entry key="singleFrame" value="false"/>
+            <entry key="acqDirName" value="plate_test"/>
+            <entry key="acqRootName" value="/AcquisitionData"/>
+            <entry key="sliceMode" value="0"/>
+            <entry key="positionMode" value="0"/>
+            <entry key="autofocus_enabled" value="false"/>
+            <entry key="acqChannelGroup" value="Channel"/>
+            <entry key="acqNumchannels" value="2"/>
+            <entry key="acqChannelName0" value="Cy5"/>
+            <entry key="acqChannelExp0" value="10.0"/>
+            <entry key="acqChannelZOffset0" value="0.0"/>
+            <entry key="acqChannel8ContrastMin0" value="0.0"/>
+            <entry key="acqChannel8ContrastMax0" value="255.0"/>
+            <entry key="acqChannel16ContrastMin0" value="0.0"/>
+            <entry key="acqChannel16ContrastMax0" value="65535.0"/>
+            <entry key="acqChannelColorR0" value="255"/>
+            <entry key="acqChannelColorG0" value="153"/>
+            <entry key="acqChannelColorB0" value="153"/>
+            <entry key="acqSkip0" value="0"/>
+            <entry key="acqChannelName1" value="FITC"/>
+            <entry key="acqChannelExp1" value="100.0"/>
+            <entry key="acqChannelZOffset1" value="0.0"/>
+            <entry key="acqChannel8ContrastMin1" value="0.0"/>
+            <entry key="acqChannel8ContrastMax1" value="255.0"/>
+            <entry key="acqChannel16ContrastMin1" value="0.0"/>
+            <entry key="acqChannel16ContrastMax1" value="65535.0"/>
+            <entry key="acqChannelColorR1" value="51"/>
+            <entry key="acqChannelColorG1" value="51"/>
+            <entry key="acqChannelColorB1" value="255"/>
+            <entry key="acqSkip1" value="0"/>
+          </map>
+        </node>
+      </node>
+    </node>
+  </root>
+</preferences>
