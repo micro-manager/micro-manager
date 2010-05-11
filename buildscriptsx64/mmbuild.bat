@@ -1,12 +1,16 @@
 ECHO building native libraries...
-cd "\Program Files\Microsoft Visual Studio 9.0\VC\"
+pushd
+cd "\Program Files (x86)\Microsoft Visual Studio 9.0\VC\"
 call vcvarsall.bat
+popd
  
+pushd
 cd "\projects\micromanager\"
-devenv /REBUILD Release .\MMCore\MMCore.vcproj
+devenv /BUILD "Release|x64" .\MMCore\MMCore.vcproj
 if "%1" == "withpython" call mmbuild-python.bat
-devenv /REBUILD Release .\MMCoreJ_wrap\MMCoreJ_wrap.sln
+devenv /BUILD "Release|x64" .\MMCoreJ_wrap\MMCoreJ_wrap.sln
+popd
 
-buildscripts\mmbuild-java.bat
+buildscriptsx64\mmbuild-java.bat
 EXIT /B
 
