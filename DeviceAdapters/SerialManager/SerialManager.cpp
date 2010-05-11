@@ -134,7 +134,7 @@ const std::vector<std::string> availableSerialPorts(void)
       for( std::vector<std::string>::iterator jj = tokens.begin(); jj != tokens.end(); ++jj)
       {
          if( 0 == jj->substr(0,3).compare("COM"))
-            availeblePorts.push_back(*jj);
+            availablePorts.push_back(*jj);
       }
       
    }

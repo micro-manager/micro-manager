@@ -76,6 +76,11 @@ public:
 
    void WriteOneCharacter(const char msg) // pass the write data to the DoWrite function via the io service in the other thread 
    { 
+	   int cz = sizeof(msg);
+	   if( 1!=cz)
+	   {
+		   return;
+	   }
 #ifdef STANDALONETEST
       std::cerr << " -> " << msg << std::endl;
 #endif
