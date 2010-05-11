@@ -1,0 +1,182 @@
+<!-- Ant makefile for the Micro-Manager for Windows distribution -->
+<!-- This file assumes Micro-Manager project tree structure      -->
+
+<project name="MMJ" default="buildMMStudio">
+
+	<!-- Specify version in the installer name -->
+	<property name="InstallerName" value="MMSetup_"/>
+
+	<!-- Specify the system path to the ImageJ root directory -->
+	<property name="ImageJPath" value="/Program Files/ImageJ"/>
+	<property name="InstallRoot" value="../Install64/micro-manager"/>
+	<property name="NativeRoot" value="../MMCoreJ_wrap"/>
+        <property name="ScriptsRoot" value="../scripts"/>
+        <property name="ScriptsInstall" value="../Install64/micro-manager/scripts"/>
+        <property name="DriversRoot" value="../drivers"/>
+        <property name="DriversInstall" value="../Install64/micro-manager/drivers"/>
+
+	<!-- Do not modify from this point on -->
+	<property name="MMPluginDir" value="${ImageJPath}/plugins/Micro-Manager"/>
+	<property name="IJ" value="../classext/ij.jar"/>
+	<property name="beanshell" value="../classext/bsh-2.0b4.jar"/>
+	<property name="swingx" value="../classext/swingx-0.9.5.jar"/>
+	<property name="swing_layout" value="../classext/swing-layout-1.0.4.jar"/>
+	<property name="commons_math" value="../classext/commons-math-2.0.jar"/>
+	<property name="MMCoreJ" value="../bin64/MMCoreJ.jar"/>
+	<property name="MMPluginDir-inst" value="${InstallRoot}/plugins/Micro-Manager"/>
+	<property name="BinRoot" value="../bin64"/>
+	<property name="NativeGUI" value="../NativeGUI/NativeGUI.jar"/>
+
+	<path id="project.MMPlugins.path">
+		<pathelement location="${MMPluginDir}"/>
+	</path>
+
+	<path id="project.run.path">
+		<pathelement location="${MMPluginDir}/MMJ_.jar"/>
+		<pathelement location="${MMPluginDir}/MMCoreJ.jar"/>
+		<pathelement location="${MMPluginDir}/bsh-2.0b4.jar"/>
+		<pathelement location="${MMPluginDir}/swingx-0.9.5.jar"/>
+		<pathelement location="${MMPluginDir}/swing-layout-1.0.4.jar"/>
+    	<pathelement location="${MMPluginDir}/commons-math-2.0.jar"/>
+		<pathelement location="${IJ}"/>
+	</path>
+
+	<path id="project.class.path">
+		<pathelement location="${IJ}" />
+		<pathelement location="${beanshell}" />
+		<pathelement location="${swingx}" />
+		<pathelement location="${MMCoreJ}" />
+		<pathelement location="${swing_layout}" />
+		<pathelement location="${commons_math}" />
+		<pathelement location="${MMPluginDir}/MMJ_.jar"/>
+		<pathelement location="${NativeGUI}" />
+	</path>
+
+	<target name="compileMMStudio" description="Compile MM Studio.">
+		<mkdir dir="build" />
+		<javac srcdir="./src" destdir="./build" sourcepath="./src/org/micromanager/utils/AutofocusBase.java" optimize="on" source="1.5" target="1.5" debug="on">
+			
+			<classpath refid="project.class.path" />
+			<!-- <compilerarg value="-Xlint"/> -->
+		</javac>
+		<copy file="./src/org/micromanager/icons/splash.gif" todir="./build/org/micromanager/icons" />
+		<copy todir="./build/org/micromanager/icons">
+			<fileset dir="./src/org/micromanager/icons" casesensitive="no">
+				<include name="**/*.png"/>
+				<include name="**/*.gif"/>
+			</fileset>
+		</copy>
+		<copy todir="./build/org/micromanager/conf">
+			<fileset dir="./src/org/micromanager/conf" casesensitive="no">
+				<include name="**/*.html"/>
+			</fileset>
+		</copy>
+	</target>
+
+	<target name="buildMMStudio" description="Build MMJ_.jar">
+
+		<copy file="./bin/plugins_mmstudio.config" tofile="./build/plugins.config"  overwrite="true" verbose="true" />
+		<jar jarfile="MMJ_.jar" basedir="build" manifest="./src/MANIFEST.MF" />
+
+		<mkdir dir="${MMPluginDir}" />
+		<copy file="MMJ_.jar" todir="${MMPluginDir}" />
+		<copy file="${beanshell}" todir="${MMPluginDir}" />
+		<copy file="${swingx}" todir="${MMPluginDir}" />
+		<copy file="${MMCoreJ}" todir="${MMPluginDir}" />
+		<copy file="${swing_layout}" todir="${MMPluginDir}" />
+		<copy file="${commons_math}" todir="${MMPluginDir}" />		
+	</target>
+
+	<target name="buildMMReader" description="Build MMReader_.jar">
+
+		<copy file="./bin/plugins_reader.config" tofile="./build/plugins.config" overwrite="true" verbose="true"/>
+		<jar jarfile="MMReader_.jar" basedir="build" manifest="./src/MANIFEST.MF" />
+
+	</target>
+
+	<target name="cleanMMStudio" description="Delete the MMStudio build files.">
+		<delete dir="build" />
+		<delete file="MMJ_.jar" />
+		<delete file="MMReader_.jar" />
+	</target>
+	
+
+	<target name="install" description="Create installation image">
+		<copy file="${ImageJPath}/ImageJ.exe" todir="${InstallRoot}" />
+		<copy file="${IJ}" todir="${InstallRoot}" />
+		<copy file="MMJ_.jar" todir="${MMPluginDir-inst}" />
+		<copy file="MMJ_.jar" todir="${BinRoot}/plugins/Micro-Manager" />
+		<copy file="${beanshell}" todir="${MMPluginDir-inst}" />
+		<copy file="${swingx}" todir="${MMPluginDir-inst}" />
+		<copy file="${MMCoreJ}" todir="${MMPluginDir-inst}" />		
+		<copy file="${swing_layout}" todir="${MMPluginDir-inst}" />
+		<copy file="${commons_math}" todir="${MMPluginDir-inst}" />
+		<copy file="${BinRoot}/MMCoreJ_wrap.dll" todir="${InstallRoot}" />
+		<copy file="${BinRoot}/MMConfig_demo.cfg" todir="${InstallRoot}" />
+		<copy file="${BinRoot}/mmgr_dal_Apogee.dll" todir="${InstallRoot}" />
+		<copy file="${BinRoot}/mmgr_dal_Arduino.dll" todir="${InstallRoot}" />
+		<copy file="${BinRoot}/mmgr_dal_DemoCamera.dll" todir="${InstallRoot}" />
+		<copy file="${BinRoot}/mmgr_dal_DemoStreamingCamera.dll" todir="${InstallRoot}" />
+		<copy file="${BinRoot}/mmgr_dal_DLP4000.dll" todir="${InstallRoot}" />
+		<copy file="${BinRoot}/mmgr_dal_Hamamatsu.dll" todir="${InstallRoot}" />
+		<copy file="${BinRoot}/mmgr_dal_K8055.dll" todir="${InstallRoot}" />
+		<copy file="${BinRoot}/mmgr_dal_K8061.dll" todir="${InstallRoot}" />
+		<copy file="${BinRoot}/mmgr_dal_LeicaDMI.dll" todir="${InstallRoot}" />
+		<copy file="${BinRoot}/mmgr_dal_Ludl.dll" todir="${InstallRoot}" />
+		<copy file="${BinRoot}/mmgr_dal_Nikon.dll" todir="${InstallRoot}" />
+		<copy file="${BinRoot}/mmgr_dal_NikonTI.dll" todir="${InstallRoot}" />
+		<copy file="${BinRoot}/mmgr_dal_ParallelPort.dll" todir="${InstallRoot}" />
+		<copy file="${BinRoot}/mmgr_dal_SerialManager.dll" todir="${InstallRoot}" />
+		<copy file="${BinRoot}/mmgr_dal_SimpleAutofocus.dll" todir="${InstallRoot}" />
+		<copy file="${BinRoot}/mmgr_dal_SutterLambda.dll" todir="${InstallRoot}" />
+		<copy file="${BinRoot}/mmgr_dal_Vincent.dll" todir="${InstallRoot}" />
+		<copy file="${BinRoot}/mmgr_dal_ZeissCAN.dll" todir="${InstallRoot}" />
+
+    <copy file="${ScriptsRoot}/sdemo1.bsh" todir="${ScriptsInstall}" />
+    <copy file="${ScriptsRoot}/sdemo2.bsh" todir="${ScriptsInstall}" />
+    <copy file="${ScriptsRoot}/setZoom.bsh" todir="${ScriptsInstall}" />
+    <copy file="${ScriptsRoot}/camera_test.bsh" todir="${ScriptsInstall}" />
+    <copy file="${ScriptsRoot}/image_snap_example.bsh" todir="${ScriptsInstall}" />
+    <copy file="${ScriptsRoot}/image_snap_example_2.bsh" todir="${ScriptsInstall}" />
+    <copy file="${ScriptsRoot}/live_demo.bsh" todir="${ScriptsInstall}" />
+    <copy file="${ScriptsRoot}/manualAcq.bsh" todir="${ScriptsInstall}" />
+    <copy file="${ScriptsRoot}/Init.bsh" todir="${ScriptsInstall}" />
+    <copy file="${ScriptsRoot}/config_test.bsh" todir="${ScriptsInstall}" />
+    <copy file="${ScriptsRoot}/AutoExpose.bsh" todir="${ScriptsInstall}" />
+    <copy file="${ScriptsRoot}/slm_demo.bsh" todir="${ScriptsInstall}" /> 
+    <copy file="${ScriptsRoot}/mm_beanshell_startup.bsh" todir="${ScriptsInstall}" />
+    <copy file="${ScriptsRoot}/mm_load_docs.bsh" todir="${ScriptsInstall}" />
+    <copy file="${ScriptsRoot}/mm_inspector.bsh" todir="${ScriptsInstall}" />     
+    <copy file="${ScriptsRoot}/mm_test_all.bsh" todir="${ScriptsInstall}" />
+    <copy file="${ScriptsRoot}/mm_test_camera.bsh" todir="${ScriptsInstall}" />
+    <copy file="${ScriptsRoot}/mm_test_properties.bsh" todir="${ScriptsInstall}" />
+    <copy file="${ScriptsRoot}/mm_test_shutter.bsh" todir="${ScriptsInstall}" />
+    <copy file="${ScriptsRoot}/mm_test_xystage.bsh" todir="${ScriptsInstall}" />
+    <copy file="${ScriptsRoot}/mm_test_zstage.bsh" todir="${ScriptsInstall}" />
+    <copy file="${DriversRoot}/K8055_libusb.inf" todir="${DriversInstall}" />
+    <copy file="${DriversRoot}/K8055_libusb.cat" todir="${DriversInstall}" />
+    <copy file="${DriversRoot}/K8061_libusb.inf" todir="${DriversInstall}" />
+    <copy file="${DriversRoot}/K8061_libusb.cat" todir="${DriversInstall}" />
+    <copy file="${DriversRoot}/NikonAZ100.inf" todir="${DriversInstall}" />
+    <copy file="${DriversRoot}/NikonAZ100.cat" todir="${DriversInstall}" />
+    <copy file="${DriversRoot}/libusb0.dll" todir="${DriversInstall}" />
+    <copy file="${DriversRoot}/libusb0.dll" todir="${InstallRoot}" />
+    <copy file="${DriversRoot}/libusb0.sys" todir="${DriversInstall}" />
+
+	</target>
+
+
+	<target name="makeDeviceList" description="Run DeviceListBuilder to generate MMDeviceList.txt">
+		<exec dir="${InstallRoot}" executable="java">
+			<arg line="-cp plugins\Micro-Manager\MMJ_.jar;plugins\Micro-Manager\MMCoreJ.jar DeviceListBuilder "/>
+		</exec>
+		<copy file="${InstallRoot}/MMDeviceList.txt" todir="${BinRoot}" />
+	</target>
+
+	<target name="packInstaller" description="Create installation package">
+		<exec dir="${InstallRoot}" executable="/projects/3rdparty/Inno_Setup_5/iscc.exe">
+			<arg line="/F${InstallerName} ../MM-ImageJ-Install64.iss"/>
+		</exec>
+	</target>
+
+</project>
