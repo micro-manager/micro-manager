@@ -18,40 +18,36 @@ del \Projects\micromanager\Install\Output\MMSetup_.exe
 del \Projects\micromanager\Install\Output\MMSetup_%mmversion%_%YYYYMMDD%.exe
 
 ECHO Building Java components...
-pushd NativeGUI
-call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml cleanNativeGUI buildNativeGUI installNativeGUI
-popd
-
 pushd mmStudio\src
-call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile ../build.xml cleanMMStudio compileMMStudio buildMMStudio buildMMReader
+call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile ../build32.xml cleanMMStudio compileMMStudio buildMMStudio buildMMReader
 popd
 
 pushd autofocus
-call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml cleanAutofocus compileAutofocus buildAutofocus 
+call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build32.xml cleanAutofocus compileAutofocus buildAutofocus 
 popd
 
 
 pushd plugins\Tracker 
-call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml cleanMMTracking compileMMTracking buildMMTracking 
+call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build32.xml cleanMMTracking compileMMTracking buildMMTracking 
 popd
 
 pushd plugins\PixelCalibrator 
-call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml cleanMMPixelCalibrator compileMMPixelCalibrator buildMMPixelCalibrator
+call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build32.xml cleanMMPixelCalibrator compileMMPixelCalibrator buildMMPixelCalibrator
 popd
 
 
 set DEVICELISTBUILDER=1
 pushd  mmStudio\src
-call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile ../build.xml install makeDeviceList packInstaller
+call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile ../build32.xml install makeDeviceList packInstaller
 set DEVICELISTBUILDER=""
 popd
 
 
-pushd \Projects\micromanager\Install\Output
+pushd \Projects\micromanager\Install32\Output
 rename MMSetup_.exe  MMSetup_%mmversion%_%YYYYMMDD%.exe
 popd
 
-\Projects\micromanager\Install\Output\MMSetup_%mmversion%_%YYYYMMDD%.exe  /silent
+\Projects\micromanager\Install32\Output\MMSetup_%mmversion%_%YYYYMMDD%.exe  /silent
 
 ECHO "Done"
 EXIT /B
