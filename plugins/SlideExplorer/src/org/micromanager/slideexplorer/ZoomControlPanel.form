@@ -37,7 +37,7 @@
               <Component id="zoomOutButton" min="-2" pref="60" max="-2" attributes="1"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="zoomInButton" min="-2" pref="60" max="-2" attributes="1"/>
-              <EmptySpace pref="330" max="32767" attributes="0"/>
+              <EmptySpace pref="341" max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>

@@ -79,7 +79,7 @@ public class Window extends ImageWindow {
     public void positionControls() {
         Rectangle winBounds = this.getBounds();
         zcp_.setBounds(winBounds.width-150,winBounds.height-37,150,32);
-        cbp_.setBounds(0,winBounds.height-37,750, 32);
+        cbp_.setBounds(0,winBounds.height-37,785, 32);
     }
 
     public void paint(Graphics g) {
@@ -174,77 +174,83 @@ public class Window extends ImageWindow {
 
 	}
 
-	public void unfullscreen() {
-		if (fullscreen_) {
-			// Add back title bar, etc.
-			setVisible(false);
-			dispose();
+   public void unfullscreen() {
+      if (fullscreen_) {
+         // Add back title bar, etc.
+         setVisible(false);
+         dispose();
 
-                        setBackground(Color.white);
-                        zcp_.setBackground(Color.white);
-                        cbp_.setBackground(Color.white);
+         setBackground(Color.white);
+         zcp_.setBackground(Color.white);
+         cbp_.setBackground(Color.white);
 
-                        setUndecorated(false);
-			setVisible(true);
+         setUndecorated(false);
+         setVisible(true);
 
-			setBounds(unmaximizedBounds_);
+         setBounds(unmaximizedBounds_);
 
-			fullscreen_ = false;
-			cvs_.fitToWindow();
-			this.toFront();
-			this.requestFocus();
-            positionControls();
+         fullscreen_ = false;
+         cvs_.fitToWindow();
+         this.toFront();
+         this.requestFocus();
+         positionControls();
 
-            cbp_.updateControls();
-		}
-	}
+         cbp_.updateControls();
+      }
+   }
 
 	
 	public void fullscreen() {
-		if (! fullscreen_) {
-			fullscreen_ = true;
-			
-			// Remove title bar, etc.
-			setVisible(false);
-			dispose();
-			setUndecorated(true);
-	
-			setBackground(Color.black);
-                        zcp_.setBackground(Color.black);
-                        cbp_.setBackground(Color.black);
+      if (!fullscreen_) {
+         fullscreen_ = true;
 
-			GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-			GraphicsDevice[] devices = ge.getScreenDevices();
-			
-			int chosenDeviceIndex = -1;
-			int maxArea = 0;
-			int area;
-                        Rectangle maximizedBounds = null;
+         // Remove title bar, etc.
+         setVisible(false);
+         dispose();
+         setUndecorated(true);
 
-			for (int i=0; i<devices.length; ++i) {
-                            GraphicsConfiguration config = devices[i].getDefaultConfiguration();
-                            Rectangle configBounds = config.getBounds();
-                            area = getOverlappingArea(configBounds, unmaximizedBounds_);
-                            if (area>maxArea) {
-                                chosenDeviceIndex = i;
-                                maxArea = area;
-                                maximizedBounds = configBounds;
-                            }
+         setBackground(Color.black);
+         zcp_.setBackground(Color.black);
+         cbp_.setBackground(Color.black);
 
-			}
+         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+         GraphicsDevice[] devices = ge.getScreenDevices();
 
-                        if (maximizedBounds != null)
-                            setBounds(maximizedBounds);
+         int chosenDeviceIndex = -1;
+         int maxArea = 0;
+         int area;
+         Rectangle maximizedBounds = null;
 
-			setVisible(true);
-			
-			cvs_.fitToWindow();
+         for (int i = 0; i < devices.length; ++i) {
+            GraphicsConfiguration config = devices[i].getDefaultConfiguration();
+            Rectangle configBounds = config.getBounds();
+            area = getOverlappingArea(configBounds, unmaximizedBounds_);
+            if (area > maxArea) {
+               chosenDeviceIndex = i;
+               maxArea = area;
+               maximizedBounds = configBounds;
+            }
 
-            cbp_.updateControls();
-			this.requestFocus();
-		}
+         }
 
-	}
+         if (maximizedBounds != null) {
+            setBounds(maximizedBounds);
+         }
+
+         if (! System.getProperty("os.name").contains("Windows")) {
+            devices[chosenDeviceIndex].setFullScreenWindow(this);
+         }
+
+         setVisible(true);
+         cbp_.updateControls();
+
+         cvs_.fitToWindow();
+
+         cbp_.updateControls();
+         this.requestFocus();
+      }
+
+   }
 
 	
 	/** Overrides super.windClosing(WindowEvent e) to make sure that if user hits Ctrl-W,

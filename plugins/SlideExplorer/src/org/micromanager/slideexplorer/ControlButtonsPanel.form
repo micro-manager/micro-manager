@@ -51,7 +51,8 @@
               <EmptySpace max="-2" attributes="0"/>
               <Component id="jComboBox1" min="-2" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="clearROIsButton" pref="85" max="32767" attributes="1"/>
+              <Component id="clearROIsButton" min="-2" pref="95" max="-2" attributes="1"/>
+              <EmptySpace pref="89" max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -76,8 +77,8 @@
   <SubComponents>
     <Component class="javax.swing.JButton" name="navigatorButton">
       <Properties>
-        <Property name="text" type="java.lang.String" value="Navigator"/>
-        <Property name="toolTipText" type="java.lang.String" value="In navigator mode, you can move the stage by double-clicking on the slide map."/>
+        <Property name="text" type="java.lang.String" value="Navigate"/>
+        <Property name="toolTipText" type="java.lang.String" value="In Navigate mode, you can move the stage by double-clicking on the slide map."/>
         <Property name="focusable" type="boolean" value="false"/>
         <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
           <Dimension value="[65, 23]"/>
@@ -95,8 +96,8 @@
     </Component>
     <Component class="javax.swing.JButton" name="explorerButton">
       <Properties>
-        <Property name="text" type="java.lang.String" value="Explorer"/>
-        <Property name="toolTipText" type="java.lang.String" value="In explorer mode, the slide map will be acquired as you zoom and pan."/>
+        <Property name="text" type="java.lang.String" value="Explore"/>
+        <Property name="toolTipText" type="java.lang.String" value="In Explore mode, the slide map will be acquired as you zoom and pan."/>
         <Property name="doubleBuffered" type="boolean" value="true"/>
         <Property name="focusable" type="boolean" value="false"/>
         <Property name="margin" type="java.awt.Insets" editor="org.netbeans.beaninfo.editors.InsetsEditor">
@@ -131,17 +132,20 @@
     <Component class="javax.swing.JButton" name="configureButton">
       <Properties>
         <Property name="text" type="java.lang.String" value="Configure..."/>
-        <Property name="toolTipText" type="java.lang.String" value="Configure the surveyor"/>
+        <Property name="toolTipText" type="java.lang.String" value="Configure the slide explorer"/>
         <Property name="focusable" type="boolean" value="false"/>
       </Properties>
+      <AccessibilityProperties>
+        <Property name="AccessibleContext.accessibleDescription" type="java.lang.String" value="Configure the slide explorer"/>
+      </AccessibilityProperties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="configureButtonActionPerformed"/>
       </Events>
     </Component>
     <Component class="javax.swing.JButton" name="mosaicButton">
       <Properties>
-        <Property name="text" type="java.lang.String" value="Mosaic"/>
-        <Property name="toolTipText" type="java.lang.String" value="Use mosaic mode to acquire 5D images of one or more ROIs."/>
+        <Property name="text" type="java.lang.String" value="5D Acq"/>
+        <Property name="toolTipText" type="java.lang.String" value="Acquire tiled 5D images of one or more ROIs."/>
         <Property name="focusable" type="boolean" value="false"/>
       </Properties>
       <Events>
@@ -169,6 +173,7 @@
             <StringItem index="4" value="Freehand"/>
           </StringArray>
         </Property>
+        <Property name="toolTipText" type="java.lang.String" value="Choose the Hand tool for Panning and the other tools for drawing ROIs to create 5D Mosaics."/>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jComboBox1ActionPerformed"/>

@@ -36,7 +36,7 @@ public class Display {
 
         type_ = imageType;
 		proc_ = ImageUtils.makeProcessor(imageType, width, height);
-		imgp_ = new ImagePlus("SlideExplorer",proc_);
+		imgp_ = new ImagePlus("Slide Explorer",proc_);
 		cvs_ = new Canvas(this, imgp_);
 
 		

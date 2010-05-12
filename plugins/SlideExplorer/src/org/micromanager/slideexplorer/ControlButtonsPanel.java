@@ -54,8 +54,8 @@ public class ControlButtonsPanel extends javax.swing.JPanel {
       setMinimumSize(new java.awt.Dimension(0, 29));
       setPreferredSize(new java.awt.Dimension(600, 30));
 
-      navigatorButton.setText("Navigator");
-      navigatorButton.setToolTipText("In navigator mode, you can move the stage by double-clicking on the slide map.");
+      navigatorButton.setText("Navigate");
+      navigatorButton.setToolTipText("In Navigate mode, you can move the stage by double-clicking on the slide map.");
       navigatorButton.setFocusable(false);
       navigatorButton.setMaximumSize(new java.awt.Dimension(65, 23));
       navigatorButton.setMinimumSize(new java.awt.Dimension(65, 23));
@@ -66,8 +66,8 @@ public class ControlButtonsPanel extends javax.swing.JPanel {
          }
       });
 
-      explorerButton.setText("Explorer");
-      explorerButton.setToolTipText("In explorer mode, the slide map will be acquired as you zoom and pan.");
+      explorerButton.setText("Explore");
+      explorerButton.setToolTipText("In Explore mode, the slide map will be acquired as you zoom and pan.");
       explorerButton.setDoubleBuffered(true);
       explorerButton.setFocusable(false);
       explorerButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
@@ -92,7 +92,7 @@ public class ControlButtonsPanel extends javax.swing.JPanel {
       });
 
       configureButton.setText("Configure...");
-      configureButton.setToolTipText("Configure the slideexplorer");
+      configureButton.setToolTipText("Configure the slide explorer");
       configureButton.setFocusable(false);
       configureButton.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -100,8 +100,8 @@ public class ControlButtonsPanel extends javax.swing.JPanel {
          }
       });
 
-      mosaicButton.setText("Mosaic");
-      mosaicButton.setToolTipText("Use mosaic mode to acquire 5D images of one or more ROIs.");
+      mosaicButton.setText("5D Acq");
+      mosaicButton.setToolTipText("Acquire tiled 5D images of one or more ROIs.");
       mosaicButton.setFocusable(false);
       mosaicButton.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -119,6 +119,7 @@ public class ControlButtonsPanel extends javax.swing.JPanel {
       });
 
       jComboBox1.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Hand", "Points", "Rectangle", "Polygon", "Freehand" }));
+      jComboBox1.setToolTipText("Choose the Hand tool for Panning and the other tools for drawing ROIs to create 5D Mosaics.");
       jComboBox1.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             jComboBox1ActionPerformed(evt);
@@ -153,7 +154,8 @@ public class ControlButtonsPanel extends javax.swing.JPanel {
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
             .add(jComboBox1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-            .add(clearROIsButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 85, Short.MAX_VALUE))
+            .add(clearROIsButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 95, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+            .addContainerGap(89, Short.MAX_VALUE))
       );
       layout.setVerticalGroup(
          layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -169,6 +171,8 @@ public class ControlButtonsPanel extends javax.swing.JPanel {
                .add(clearROIsButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 30, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
             .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
       );
+
+      configureButton.getAccessibleContext().setAccessibleDescription("Configure the slide explorer");
    }// </editor-fold>//GEN-END:initComponents
 
     private void navigatorButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_navigatorButtonActionPerformed
@@ -235,9 +239,12 @@ public class ControlButtonsPanel extends javax.swing.JPanel {
    private javax.swing.JButton snapButton;
    // End of variables declaration//GEN-END:variables
 
+
     void updateControls() {
 
         fullScreenButton.setSelected(display_.getWindow().isFullscreen());
+
+        snapButton.setEnabled(!display_.getWindow().isFullscreen() || System.getProperty("os.name").contains("Windows"));
 
         switch (display_.getMode()) {
             case ModeManager.SURVEY:
