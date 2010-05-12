@@ -1,4 +1,4 @@
-package org.micromanager.surveyor;
+package org.micromanager.slideexplorer;
 
 import mmcorej.CMMCore;
 
@@ -6,9 +6,9 @@ import org.micromanager.api.MMPlugin;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.ReportingUtils;
 
-public class SurveyorPlugin implements MMPlugin {
+public class SlideExplorerPlugin implements MMPlugin {
 
-	public static String menuName = "Surveyor";
+	public static String menuName = "Slide Explorer";
 	private CMMCore core_;
 	private Hub hub_;
     private ScriptInterface app_;
@@ -48,7 +48,7 @@ public class SurveyorPlugin implements MMPlugin {
 	}
 
 	public void show() {
-      ReportingUtils.showMessage("Warning: the Surveyor plugin can move the XY-stage\n" +
+      ReportingUtils.showMessage("Warning: the Slide Explorer plugin can move the XY-stage\n" +
               "long distances. Please be careful not to pan far from the slide\n" +
               "and make sure the objectives don't hit any other hardware.\n" +
               "Use at your own risk! ");

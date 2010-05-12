@@ -1,4 +1,4 @@
-package org.micromanager.surveyor;
+package org.micromanager.slideexplorer;
 
 import ij.gui.Roi;
 import ij.gui.ShapeRoi;
@@ -12,7 +12,7 @@ import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.ReportingUtils;
 
 /*
- * The Coordinates class is a centralized location for most Surveyor coordinate
+ * The Coordinates class is a centralized location for most SlideExplorer coordinate
  * mappings.
  * 
  * The "Map" is an integer coordinate system in units of single pixels. The tiled camera images' pixels correspond directly to the Map's coordinates.
@@ -24,7 +24,7 @@ import org.micromanager.utils.ReportingUtils;
  * Map <--> OffScreen
  * Tile <--> MultiTile
  * 
- * See org.micromanager.surveyor.Controller for converting between map and stage coordinates.
+ * See org.micromanager.slideexplorer.Controller for converting between map and stage coordinates.
  */
 public class Coordinates {
 

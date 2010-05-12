@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.micromanager.surveyor;
+package org.micromanager.slideexplorer;
 
 import java.awt.Point;
 import java.awt.Rectangle;

@@ -1,4 +1,4 @@
-package org.micromanager.surveyor;
+package org.micromanager.slideexplorer;
 
 import ij.process.ImageProcessor;
 
@@ -20,9 +20,9 @@ public class Controller {
     protected Point2D.Double mapOriginOnStage_;
     protected double angle_;
     protected boolean flip_;
-    protected double surveyorPixelSize_;
+    protected double slideexplorerPixelSize_;
     protected Hardware hardware_;
-    protected Rectangle surveyorROI_;
+    protected Rectangle slideexplorerROI_;
     protected int trimx = 8;
     protected int trimy = 8;
     private double xOffset_ = 0;
@@ -32,12 +32,12 @@ public class Controller {
 
     public Controller(CMMCore core) {
         hardware_ = new Hardware(core);
-        surveyorROI_ = hardware_.getROI();
+        slideexplorerROI_ = hardware_.getROI();
     }
 
     public synchronized Dimension getTileDimensions() {
-        return new Dimension((int) ((surveyorROI_.width - trimx) / 2) * 2,
-                (int) ((surveyorROI_.height - trimy) / 2) * 2);
+        return new Dimension((int) ((slideexplorerROI_.width - trimx) / 2) * 2,
+                (int) ((slideexplorerROI_.height - trimy) / 2) * 2);
     }
 
     public synchronized Dimension getCurrentRoiDimensions() {
@@ -89,7 +89,7 @@ public class Controller {
     public synchronized void specifyMapRelativeToStage(Point2D.Double mapOriginOnStage, double angle, double pixelSize) {
         mapOriginOnStage_ = mapOriginOnStage;
         angle_ = angle;
-        surveyorPixelSize_ = pixelSize;
+        slideexplorerPixelSize_ = pixelSize;
 
         mapToStageTransform_ = new AffineTransform();
         mapToStageTransform_.translate(mapOriginOnStage_.x, mapOriginOnStage_.y);
@@ -155,14 +155,14 @@ public class Controller {
      * @return the pixelSize_
      */
     public double getPixelSize() {
-        return surveyorPixelSize_;
+        return slideexplorerPixelSize_;
     }
 
     /**
      * @param pixelSize_ the pixelSize_ to set
      */
     public void setPixelSize(double pixelSize) {
-        surveyorPixelSize_ = pixelSize;
+        slideexplorerPixelSize_ = pixelSize;
         update();
     }
 
@@ -186,6 +186,6 @@ public class Controller {
     }
 
     private void update() {
-        this.specifyMapRelativeToStage(mapOriginOnStage_, angle_, surveyorPixelSize_);
+        this.specifyMapRelativeToStage(mapOriginOnStage_, angle_, slideexplorerPixelSize_);
     }
 }

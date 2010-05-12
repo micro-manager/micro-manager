@@ -1,4 +1,4 @@
-package org.micromanager.surveyor;
+package org.micromanager.slideexplorer;
 
 import ij.process.ImageProcessor;
 import mmcorej.CMMCore;

@@ -1,4 +1,4 @@
-package org.micromanager.surveyor;
+package org.micromanager.slideexplorer;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -11,7 +11,7 @@ import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Rectangle;
 
-import org.micromanager.surveyor.Hub.ModeManager;
+import org.micromanager.slideexplorer.Hub.ModeManager;
 import org.micromanager.utils.ImageUtils;
 
 public class Display {
@@ -28,7 +28,7 @@ public class Display {
     private boolean currentlyPanning_ = false;
     private RoiManager roiManager_;
     private Coordinates coords_;
-   private boolean contrastAutoAdjusted_ = false;
+	private boolean contrastAutoAdjusted_ = false;
 
 	public Display(Hub hub, int imageType, int width, int height) {
 		hub_ = hub;
@@ -36,7 +36,7 @@ public class Display {
 
         type_ = imageType;
 		proc_ = ImageUtils.makeProcessor(imageType, width, height);
-		imgp_ = new ImagePlus("Surveyor",proc_);
+		imgp_ = new ImagePlus("SlideExplorer",proc_);
 		cvs_ = new Canvas(this, imgp_);
 
 		
@@ -94,7 +94,7 @@ public class Display {
                 ImageProcessor newProc = ImageUtils.makeProcessor(imgp_.getType(), 3*w, 3*h);
                 newProc.insert(proc_, -dx, -dy);
                 proc_ = newProc;
-                imgp_.setProcessor("Surveyor", proc_);
+                imgp_.setProcessor("SlideExplorer", proc_);
                 hub_.panBy(-dx, -dy);
                 updateDimensions();
                 imgp_.setProcessor(imgp_.getTitle(), proc_);
@@ -132,12 +132,11 @@ public class Display {
 		ImageStatistics stats = imgp_.getStatistics();
       double displayRange = imgp_.getDisplayRangeMax()-imgp_.getDisplayRangeMin();
       double actualRange = stats.max - stats.min;
-      if (! contrastAutoAdjusted_) // Only do this once.
+	if (! contrastAutoAdjusted_) // Only do this once.
          if ((displayRange < 5) || (displayRange/actualRange < 0.6667) || (displayRange/actualRange > 1.5)) {
             imgp_.setDisplayRange(stats.min, stats.max);
             contrastAutoAdjusted_ = true;
          }
-
 	}
 
 	public void show() {
@@ -179,8 +178,8 @@ public class Display {
 		
 	}
 
-    public void pauseSurveyor() {
-        hub_.pauseSurveyor();
+    public void pauseSlideExplorer() {
+        hub_.pauseSlideExplorer();
     }
 
 	public void hideRoi() {

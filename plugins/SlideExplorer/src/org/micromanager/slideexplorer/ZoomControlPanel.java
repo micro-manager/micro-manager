@@ -9,7 +9,7 @@
  * Created on Nov 19, 2009, 3:28:20 PM
  */
 
-package org.micromanager.surveyor;
+package org.micromanager.slideexplorer;
 
 import java.awt.Graphics;
 import java.awt.Point;

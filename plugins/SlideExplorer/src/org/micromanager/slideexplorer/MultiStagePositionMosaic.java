@@ -3,7 +3,7 @@
  * and open the template in the editor.
  */
 
-package org.micromanager.surveyor;
+package org.micromanager.slideexplorer;
 
 import java.awt.Rectangle;
 import java.util.ArrayList;

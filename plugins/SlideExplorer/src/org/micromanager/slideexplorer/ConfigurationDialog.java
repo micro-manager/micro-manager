@@ -9,13 +9,13 @@
  * Created on Nov 12, 2009, 12:14:10 PM
  */
 
-package org.micromanager.surveyor;
+package org.micromanager.slideexplorer;
 
 import java.text.ParseException;
 import javax.swing.JTextField;
 import javax.swing.table.AbstractTableModel;
 import mmcorej.CMMCore;
-import org.micromanager.surveyor.Hub.OffsetsRow;
+import org.micromanager.slideexplorer.Hub.OffsetsRow;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
 
@@ -56,7 +56,7 @@ public class ConfigurationDialog extends javax.swing.JFrame {
       navigationOffsetsTable = new javax.swing.JTable();
       jLabel1 = new javax.swing.JLabel();
 
-      setTitle("Surveyor Configuration");
+      setTitle("SlideExplorer Configuration");
       setResizable(false);
       addWindowFocusListener(new java.awt.event.WindowFocusListener() {
          public void windowGainedFocus(java.awt.event.WindowEvent evt) {

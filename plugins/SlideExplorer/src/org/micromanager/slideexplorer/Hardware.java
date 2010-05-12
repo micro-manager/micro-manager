@@ -1,4 +1,4 @@
-package org.micromanager.surveyor;
+package org.micromanager.slideexplorer;
 
 import java.awt.Rectangle;
 import java.awt.geom.Point2D;

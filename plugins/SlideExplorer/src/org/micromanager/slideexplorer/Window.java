@@ -1,4 +1,4 @@
-package org.micromanager.surveyor;
+package org.micromanager.slideexplorer;
 
 import ij.IJ;
 import ij.ImagePlus;
@@ -79,7 +79,7 @@ public class Window extends ImageWindow {
     public void positionControls() {
         Rectangle winBounds = this.getBounds();
         zcp_.setBounds(winBounds.width-150,winBounds.height-37,150,32);
-        cbp_.setBounds(0,winBounds.height-37,800, 32);
+        cbp_.setBounds(0,winBounds.height-37,750, 32);
     }
 
     public void paint(Graphics g) {
@@ -248,7 +248,7 @@ public class Window extends ImageWindow {
 
 	
 	/** Overrides super.windClosing(WindowEvent e) to make sure that if user hits Ctrl-W,
-	 * the surveyor stops and cleans the cache.
+	 * the slideexplorer stops and cleans the cache.
 	 */
 	public void windowClosing(WindowEvent e) {
 		super.windowClosing(e);
@@ -256,7 +256,7 @@ public class Window extends ImageWindow {
 	}
 
 	/** Overrides super.close() to make sure that if user hits Ctrl-W,
-	 * the surveyor stops and cleans the cache.
+	 * the slideexplorer stops and cleans the cache.
 	 */
 	public boolean close() {
 		display_.shutdown();

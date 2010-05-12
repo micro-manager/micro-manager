@@ -1,4 +1,4 @@
-package org.micromanager.surveyor;
+package org.micromanager.slideexplorer;
 
 import ij.process.ImageProcessor;
 
@@ -19,7 +19,6 @@ import javax.swing.SwingUtilities;
 
 import mmcorej.CMMCore;
 
-import mmcorej.DeviceType;
 import mmcorej.StrVector;
 import org.micromanager.AcqControlDlg;
 import org.micromanager.MMStudioMainFrame;
@@ -74,7 +73,7 @@ public class Hub {
       pixelSize_ = core_.getPixelSizeUm();
 
 
-      int width = 950;
+      int width = 900;
       int height = 600;
 
       applyVendorSpecificSettings();
@@ -284,8 +283,8 @@ public class Hub {
       display_.update();
    }
 
-   public void pauseSurveyor() {
-      tgt_.pauseSurveyor();
+   public void pauseSlideExplorer() {
+      tgt_.pauseSlideExplorer();
       display_.update();
    }
 
@@ -451,14 +450,8 @@ public class Hub {
          core_.setPixelSizeConfig(pixelConfig);
          core_.waitForSystem();
          setOffsets(pixelConfig);
-         boolean pfsPresent = false;
-         try {
+         /*try {
             if (core_.hasProperty("PFS-Offset", "Position")) {
-               pfsPresent = true;
-            }
-         } catch (Exception e) { }
-         try {
-            if (pfsPresent) {
                if (pixelConfig.equals(surveyPixelSizeConfig_)) {
                   core_.setProperty("PFS-Offset", "Position", "2.824");
                } else {
@@ -467,7 +460,7 @@ public class Hub {
             }
          } catch (Exception ex) {
             ReportingUtils.logError(ex);
-         }
+         }*/
          turnOnContinuousAutofocus();
 
       } catch (Exception ex) {
@@ -530,11 +523,11 @@ public class Hub {
          //multiPosCheckBox_.setVisible(false);
          positionsPanel_.setSelected(true);
          listButton_.setVisible(false);
-         JLabel surveyorRoiLabel = new JLabel("(Each Surveyor ROI makes one mosaic.)");
+         JLabel slideexplorerRoiLabel = new JLabel("(Each SlideExplorer ROI makes one mosaic.)");
          
-         surveyorRoiLabel.setFont(new Font("Arial", Font.PLAIN, 10));
-         surveyorRoiLabel.setBounds(15, 23, 200, 19);
-         positionsPanel_.add(surveyorRoiLabel);
+         slideexplorerRoiLabel.setFont(new Font("Arial", Font.PLAIN, 10));
+         slideexplorerRoiLabel.setBounds(15, 23, 200, 19);
+         positionsPanel_.add(slideexplorerRoiLabel);
          positionsPanel_.removeActionListeners();
          positionsPanel_.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -545,7 +538,7 @@ public class Hub {
             }
          });
          
-         setTitle(this.getTitle() + " (Surveyor Mosaics)");
+         setTitle(this.getTitle() + " (SlideExplorer Mosaics)");
          displayModeCombo_.removeItemAt(2); // Remove the single window option.
          setVisible(true);
 
@@ -636,7 +629,7 @@ public class Hub {
       double tol_;
 
       public TileGrabberThread() {
-         setName("Surveyor hardware thread");
+         setName("SlideExplorer hardware thread");
       }
 
       public void run() {
@@ -693,7 +686,7 @@ public class Hub {
          updateView();
       }
 
-      public void pauseSurveyor() {
+      public void pauseSlideExplorer() {
          applyNavigationSystemSettings();
          modeMgr_.setMode(ModeManager.NAVIGATE);
          updateView();

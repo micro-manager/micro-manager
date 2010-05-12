@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:           SurveyorRoiManager.java
+//FILE:           SlideExplorerRoiManager.java
 //PROJECT:        Micro-Manager
 //SUBSYSTEM:      Micro-Manager Plugin
 //-----------------------------------------------------------------------------
@@ -20,7 +20,7 @@
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 ///////////////////////////////////////////////////////////////////////////////
 
-package org.micromanager.surveyor;
+package org.micromanager.slideexplorer;
 
 
 import java.awt.Dimension;
@@ -38,7 +38,7 @@ import mmcorej.CMMCore;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.navigation.PositionList;
 import org.micromanager.navigation.MultiStagePosition;
-//import org.micromanager.surveyor.Surveyor.CoordinateMap;
+//import org.micromanager.slideexplorer.SlideExplorer.CoordinateMap;
 import org.micromanager.utils.MMScriptException;
 
 import ij.gui.Roi;
@@ -64,7 +64,7 @@ public class RoiManager extends ij.plugin.frame.RoiManager{
 	private CMMCore mmc;
 
 	//private CoordinateMap mosaicCoords_;
-	private Coordinates surveyorCoords_;
+	private Coordinates slideexplorerCoords_;
 	private ScriptInterface app_;
 	private Hub hub_;
     private Controller controller_;
@@ -81,7 +81,7 @@ public class RoiManager extends ij.plugin.frame.RoiManager{
 
         updateMappings();
 
-		//mosaicCoords_ = surveyorCoords_.clone();
+		//mosaicCoords_ = slideexplorerCoords_.clone();
 		//mosaicCoords_.setMag(1.0);
 
 		overlap_ = 8;
@@ -158,7 +158,7 @@ public class RoiManager extends ij.plugin.frame.RoiManager{
     public void updateMappings() {
         controller_ = hub_.getController();
         tileDimensions_ = hub_.getTileDimensions();
-        surveyorCoords_ = hub_.getCoordinates();
+        slideexplorerCoords_ = hub_.getCoordinates();
     }
 
     public static RoiManager getInstance() {
@@ -166,7 +166,7 @@ public class RoiManager extends ij.plugin.frame.RoiManager{
     }
 
     public ArrayList<Point> generateRoiTrajectory(Roi acqRoiOffScreen) {
-        Rectangle frameRect = surveyorCoords_.offScreenToRoiRect(new Point(0,0));
+        Rectangle frameRect = slideexplorerCoords_.offScreenToRoiRect(new Point(0,0));
         Dimension frameDimensions = new Dimension(frameRect.width, frameRect.height);
 		Rectangle acqRect = acqRoiOffScreen.getBoundingRect();
         System.out.println("acqRect: "+acqRect);
@@ -194,7 +194,7 @@ public class RoiManager extends ij.plugin.frame.RoiManager{
       int top = Integer.MAX_VALUE;
       int bottom = Integer.MIN_VALUE;
       for (Point acqPt:acqTraj) {
-         Point mapPt = surveyorCoords_.offScreenClickToMap(acqPt);
+         Point mapPt = slideexplorerCoords_.offScreenClickToMap(acqPt);
 			Point2D.Double stagePos = controller_.mapToStage(mapPt);
             //System.out.println("acqPt: "+acqPt + "computed stagePos: "+stagePos);
          subPositions.add(stagePos);
@@ -226,7 +226,7 @@ public class RoiManager extends ij.plugin.frame.RoiManager{
 	void scanRoiTrajectory(ArrayList<Point> acqTraj) {
 		for (Point acqPt:acqTraj) {
 			Point2D.Double stagePos = coords_.offScreenToStage(acqPt);
-			surveyor_.stageGo(stagePos);
+			slideexplorer_.stageGo(stagePos);
 			String xystage = mmc.getXYStageDevice();
 			while(mmc.deviceBusy(xystage));
 			updateMap(true);
@@ -242,7 +242,7 @@ public class RoiManager extends ij.plugin.frame.RoiManager{
 
 		for (Roi acqRoi:acqRois) {
 			roiCount++;
-            //Roi mapRoi = surveyorCoords_.roiOffScreenToMap(acqRoi);
+            //Roi mapRoi = slideexplorerCoords_.roiOffScreenToMap(acqRoi);
             //if (mapRoi != null) {
                 //System.out.println("mapRoi: "+mapRoi.getBoundingRect());
                 ArrayList<Point> traj = generateRoiTrajectory(acqRoi);
@@ -273,7 +273,7 @@ public class RoiManager extends ij.plugin.frame.RoiManager{
         }
 
         public void scaleToMap() {
-            int factor = 1 << -surveyorCoords_.zoomLevel_;
+            int factor = 1 << -slideexplorerCoords_.zoomLevel_;
             Shape originalShape = getShape();
             AffineTransform at = new AffineTransform();
             at.scale(factor, factor);
