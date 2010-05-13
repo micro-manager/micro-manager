@@ -3,16 +3,35 @@
 #include "CoreCallback.h"
 
 #include "MMRunnable.h"
-//#include "DeviceThreads.h"
+#include "../MMDevice/DeviceBase.h"
 
 
 
+//////////////////
+// ImageRequest //
+//////////////////
+
+class ImageRequest {
+public:
+	MM::MMTime waitTime;
+   double exposure;
+	MultiAxisPosition multiAxisPosition;
+	Channel channel;
+	double slicePosition;
+	bool runAutofocus;
+};
 
 
-class MMAcquisitionRunner:MMDeviceThreadBase
+
+/////////////////////////
+// MMAcquisitionEngine //
+/////////////////////////
+
+class MMAcquisitionEngine:MMDeviceThreadBase
 {
 private:
    TaskVector tasks_;
+
    bool pauseRequested_;
    bool stopRequested_;
    bool finished_;
@@ -20,7 +39,15 @@ private:
    int svc() { Run(); return 0; }
 
 public:
-   ~MMAcquisitionRunner() {}
+   MM::MMTime lastWakeTime_;
+   CMMCore * core_;
+   CoreCallback * coreCallback_;
+
+   MMAcquisitionEngine(CMMCore * core)
+   {
+      core_ = core;
+      coreCallback_ = new CoreCallback(core);
+   }
 
    void Run();
    void Start();
@@ -31,39 +58,31 @@ public:
    bool IsFinished();
 
    void SetTasks(TaskVector tasks);
+
+   void GenerateSequence(AcquisitionSettings acquisitionSettings);
+   void GenerateSlicesAndChannelsSubsequence(AcquisitionSettings acquisitionSettings, ImageRequest request);
+   //MMRunnable * createImageTask();
+
+
 };
 
 
-class MMAcquisitionSequencer
+class ImageTask:public MMRunnable
 {
+
 private:
-   CMMCore * core_;
-   CoreCallback * coreCallback_;
-   AcquisitionSettings acquisitionSettings_;
-   TaskVector NestTasks(TaskVector outerTasks, TaskVector innerTasks);
+   MMAcquisitionEngine * eng_;
+   ImageRequest imageRequest_;
+
+   void updatePosition();
+   void updateSlice();
+   void updateChannel();
+   void wait();
+   void autofocus();
+   void acquireImage();
 
 public:
-   MMAcquisitionSequencer(CMMCore * core, CoreCallback * coreCallback, AcquisitionSettings acquisitionSettings);
-   TaskVector generateTaskVector();
-   TaskVector generateMDASequence(MMRunnable * imageTask,
-      TaskVector timeVector, TaskVector positionVector,
-      TaskVector channelVector, TaskVector sliceVector);
-   void setAcquisitionSettings(AcquisitionSettings settings);
+   ImageTask(MMAcquisitionEngine * eng, ImageRequest imageRequest);
+   void run();
 
-};
-
-class MMAcquisitionEngine
-{
-private:
-   CMMCore * core_;
-   CoreCallback * coreCallback_;
-   MMAcquisitionRunner runner_;
-
-public:
-   MMAcquisitionEngine(CMMCore * core) { 
-      core_ = core;
-      coreCallback_ = new CoreCallback(core);
-   }
-   void runTest(AcquisitionSettings acquisitionSettings);
-   bool isFinished();
 };

@@ -4804,13 +4804,14 @@ void CMMCore::runAcquisitionEngineTest(AcquisitionSettings acquisitionSettings) 
 {
    CORE_LOG("runAcquisitionEngineTest()");
    engine_ = new MMAcquisitionEngine(this);
-   engine_->runTest(acquisitionSettings);
+	engine_->GenerateSequence(acquisitionSettings);
+   engine_->Start();
 }
 
 bool CMMCore::acquisitionIsFinished() throw (CMMError)
 {
    if (engine_ != NULL)
-      return engine_->isFinished();
+      return engine_->IsFinished();
    else
       return true;
 }

@@ -1,237 +1,86 @@
 #include "MMAcquisition.h"
 #include "../MMDevice/ImageMetadata.h"
+#include "boost/foreach.hpp"
 
-////////////////////////
-// MMAcquisitionState //
-////////////////////////
+///////////////////////////////////
+// MMAquisitionEngine::ImageTask //
+///////////////////////////////////
 
-class MMAcquisitionState {
-public:
-   CMMCore * core;
-   CoreCallback * coreCallback;
-   AcquisitionSettings acquisitionSettings;
-
-   int frameCount;
-   double zReference;
-   MM::MMTime lastWakeTime;
-
-   Channel currentChannel;
-   double currentSlice;
-   MultiAxisPosition currentPosition;
-
-   Metadata metadata;
-
-   MMAcquisitionState(CMMCore * _core, CoreCallback * _coreCallback)
-   {
-         core = _core;
-         coreCallback = _coreCallback;
-         frameCount = 0;
-         lastWakeTime = -1;
-
-   }
-};
-
-
-//////////////
-// TimeTask //
-//////////////
-
-class TimeTask:public MMRunnable
+ImageTask::ImageTask(MMAcquisitionEngine * eng, ImageRequest imageRequest)
 {
+	eng_ = eng;
+	imageRequest_ = imageRequest;
+	type = IMAGE;
+}
 
-private:
-   MMAcquisitionState * state_;
-   MM::MMTime interval_;
-   int frameIndex_;
-   
-public:
-   TimeTask(MMAcquisitionState * state, int frameIndex)
-   {
-      type = TIME;
-      state_ = state;
-      frameIndex_ = frameIndex;
-      interval_ = MM::MMTime(1000*state_->acquisitionSettings.timeSeries[frameIndex]);
-   }
-
-   void run() {
-      if (state_->lastWakeTime > 0)
-      {
-         MM::MMTime sleepTime = (state_->lastWakeTime + interval_) - state_->coreCallback->GetCurrentMMTime();
-         if (sleepTime > MM::MMTime(0,0))
-            state_->coreCallback->Sleep(NULL, sleepTime.getMsec());
-         ++(state_->frameCount);
-         printf("sleep\n");
-      }
-
-      state_->lastWakeTime = state_->coreCallback->GetCurrentMMTime();
-      state_->metadata.frameIndex = frameIndex_;
-   }
-
-};
-
-
-
-//////////////////
-// PositionTask //
-//////////////////
-
-
-class PositionTask:public MMRunnable
+void ImageTask::run()
 {
-private:
-   MMAcquisitionState * state_;
-   MultiAxisPosition * pos_;
-   int positionIndex_;
+	updatePosition();
+	updateSlice();
+	updateChannel();
+	wait();
+	autofocus();
+	acquireImage();
+}
 
-public:
-   PositionTask(MMAcquisitionState * state, int positionIndex)
-   {
-      type = POSITION;
-      state_ = state;
-      pos_ = &(state_->acquisitionSettings.positionList[positionIndex]);
-      positionIndex_ = positionIndex;
-   }
-
-   void run() {
-      map<string,double>::iterator it1;
-
-      for(it1 = pos_->singleAxisPositions.begin(); it1 != pos_->singleAxisPositions.end(); ++it1)
-      {
-         state_->core->setPosition(it1->first.c_str(), it1->second);
-      } 
-
-      map<string,pair<double,double> >::iterator it2;
-
-      for(it2 = pos_->doubleAxisPositions.begin(); it2 != pos_->doubleAxisPositions.end(); ++it2)
-      {
-         point2D xy = it2->second;
-         state_->core->setXYPosition(it2->first.c_str(),xy.first,xy.second);
-      } 
-      printf("set position\n");
-
-      state_->currentPosition = *pos_;
-      state_->metadata.positionIndex = positionIndex_;
-   }
-
-};
-
-
-
-
-///////////////
-// SliceTask //
-///////////////
-
-class SliceTask:public MMRunnable
+void ImageTask::updateSlice()
 {
-private:
-   MMAcquisitionState * state_;
-   double pos_;
-   int sliceIndex_;
+	eng_->coreCallback_->SetFocusPosition(imageRequest_.slicePosition);
+	printf("slice set\n");
+}
 
-public:
-   SliceTask(MMAcquisitionState * state, int sliceIndex)
-   {
-      type = SLICE;
-      state_ = state;
-      pos_ = state_->acquisitionSettings.zStack[sliceIndex];
-      sliceIndex_ = sliceIndex;
-   }
-
-   void run() {
-      state_->coreCallback->SetFocusPosition(pos_);
-      printf("set slice\n");
-      state_->currentSlice = pos_;
-      state_->metadata.sliceIndex = sliceIndex_;
-   }
-};
-
-/////////////////
-// ChannelTask //
-/////////////////
-
-class ChannelTask:public MMRunnable
+void ImageTask::updatePosition()
 {
-private:
-   MMAcquisitionState* state_;
-   Channel * channel_;
-   int channelIndex_;
-public:
-   ChannelTask(MMAcquisitionState * state, int channelIndex)
-   {
-      type = CHANNEL;
-      state_ = state;
-      channel_ = &(state_->acquisitionSettings.channelList[channelIndex]);
-      channelIndex_ = channelIndex;
-   }
+	map<string, double>::iterator it1;
 
-   void run() {
-      if (0==(state_->frameCount % (1 + channel_->skipFrames)))
-      {
-         state_->coreCallback->SetExposure(channel_->exposure);
-         state_->coreCallback->SetConfig(channel_->group.c_str(), channel_->name.c_str());
-         printf("set channel\n");
-         state_->currentChannel = * channel_;
-         state_->metadata.channelIndex = channelIndex_;
-      }
-   }
-};
+	MultiAxisPosition pos = imageRequest_.multiAxisPosition;
+	for (it1 = pos.singleAxisPositions.begin(); it1 != pos.singleAxisPositions.end(); ++it1)
+	{
+		eng_->core_->setPosition(it1->first.c_str(), it1->second);
+	}
 
+	map<string, pair<double, double> >::iterator it2;
 
-/////////////////
-// AutofocusTask //
-/////////////////
+	for (pos.doubleAxisPositions.begin(); it2 != pos.doubleAxisPositions.end(); ++it2)
+	{
+		point2D xy = it2->second;
+		eng_->core_->setXYPosition(it2->first.c_str(), xy.first, xy.second);
+	}
+	printf("position set\n");
+}
 
-class AutofocusTask:public MMRunnable
-{
-private:
-   MMAcquisitionState* state_;
-   int skipFrames_;
+void ImageTask::updateChannel() {
+	eng_->coreCallback_->SetExposure(imageRequest_.channel.exposure);
+	eng_->coreCallback_->SetConfig(imageRequest_.channel.group.c_str(), imageRequest_.channel.name.c_str());
+	printf("channel set\n");
+}
 
-public:
-   AutofocusTask(MMAcquisitionState * state, int skipFrames)
-   {
-      type = AUTOFOCUS;
-      state_ = state;
-      skipFrames_ = skipFrames;
-   }
+void ImageTask::wait() {
+	if (eng_->lastWakeTime_ > 0)
+	{
+		MM::MMTime sleepTime = (eng_->lastWakeTime_ + imageRequest_.waitTime) - eng_->coreCallback_->GetCurrentMMTime();
+		if (sleepTime > MM::MMTime(0, 0))
+			eng_->coreCallback_->Sleep(NULL, sleepTime.getMsec());
+		printf("waited\n");
+	}
 
-   void run() {
-      if (0==(state_->frameCount % (1 + skipFrames_)))
-      {
-         state_->core->fullFocus();
-         printf("fullFocus()");
-      }
-   }
-};
+	eng_->lastWakeTime_ = eng_->coreCallback_->GetCurrentMMTime();
+}
 
+void ImageTask::autofocus() {
+	if (imageRequest_.runAutofocus)
+		eng_->core_->fullFocus();
+}
 
-///////////////
-// ImageTask //
-///////////////
+void ImageTask::acquireImage() {
+	int w, h, d;
+	const char * img = eng_->coreCallback_->GetImage();
 
-class ImageTask:public MMRunnable
-{
+	eng_->coreCallback_->GetImageDimensions(w, h, d);
+	eng_->coreCallback_->InsertImage(NULL, (const unsigned char *) img, w, h, d);
+	printf("Grabbed image.\n");
+}
 
-private:
-   MMAcquisitionState * state_;
-
-public:
-   ImageTask(MMAcquisitionState * state)
-   {
-      state_ = state;
-      type = IMAGE;
-   }
-
-   void run() {
-
-      const char * img = state_->coreCallback->GetImage();
-      int w,h,d;
-      state_->coreCallback->GetImageDimensions(w, h, d);
-      state_->coreCallback->InsertImage(NULL, (const unsigned char *) img, w, h, d, &(state_->metadata));
-      printf("Grabbed image.\n");
-   }
-};
 
 
 
@@ -240,165 +89,100 @@ public:
 // MMAcquisitionRunner //
 /////////////////////////
 
+void MMAcquisitionEngine::Start() {
+	stopRequested_ = false;
+	pauseRequested_ = false;
+	finished_ = false;
 
-void MMAcquisitionRunner::Start()
+	activate();
+}
+
+void MMAcquisitionEngine::Run() {
+	for (unsigned int i = 0; i < tasks_.size(); ++i) {
+		if (stopRequested_)
+			break;
+		printf("Task #%d started, type %d\n", i, tasks_[i]->type);
+		tasks_[i]->run();
+	}
+	finished_ = true;
+}
+
+bool MMAcquisitionEngine::IsFinished() {
+	return finished_;
+}
+
+void MMAcquisitionEngine::Stop() {
+	stopRequested_ = true;
+}
+
+void MMAcquisitionEngine::Pause() {
+	pauseRequested_ = true;
+}
+
+void MMAcquisitionEngine::Resume() {
+	pauseRequested_ = false;
+}
+
+void MMAcquisitionEngine::Step() {
+}
+
+void MMAcquisitionEngine::SetTasks(TaskVector tasks) {
+	tasks_ = tasks;
+}
+
+void MMAcquisitionEngine::GenerateSequence(AcquisitionSettings acquisitionSettings)
 {
-   stopRequested_ = false;
-   pauseRequested_ = false;
-   finished_ = false;
 
-   activate();
+	ImageRequest imageRequest;
+   imageRequest.runAutofocus = acquisitionSettings.useAutofocus;
+   double waitTime_ms;
+
+	if (acquisitionSettings.positionsFirst)
+	{
+		BOOST_FOREACH(waitTime_ms, acquisitionSettings.timeSeries)
+		{
+			imageRequest.waitTime = MM::MMTime(waitTime_ms * 1000);
+			BOOST_FOREACH(imageRequest.multiAxisPosition, acquisitionSettings.positionList)
+			{
+				GenerateSlicesAndChannelsSubsequence(acquisitionSettings, imageRequest);
+			}
+		}
+
+	}
+	else
+	{
+		BOOST_FOREACH(imageRequest.multiAxisPosition, acquisitionSettings.positionList)
+		{
+			BOOST_FOREACH(waitTime_ms, acquisitionSettings.timeSeries)
+			{
+				imageRequest.waitTime = MM::MMTime(waitTime_ms * 1000);
+				GenerateSlicesAndChannelsSubsequence(acquisitionSettings, imageRequest);
+			}
+		}
+	}
 }
 
-void MMAcquisitionRunner::Run()
+void MMAcquisitionEngine::GenerateSlicesAndChannelsSubsequence(AcquisitionSettings acquisitionSettings, ImageRequest imageRequest)
 {
-   for (unsigned int i=0;i<tasks_.size();++i)
-   {
-      if (stopRequested_)
-         break;
-      printf("Task #%d started, type %d\n", i, tasks_[i]->type);
-      tasks_[i]->run();
-   }
-   finished_ = true;
+	if (acquisitionSettings.channelsFirst)
+	{
+		BOOST_FOREACH(imageRequest.slicePosition, acquisitionSettings.zStack)
+		{
+			BOOST_FOREACH(imageRequest.channel, acquisitionSettings.channelList)
+			{
+				tasks_.push_back(new ImageTask(this, imageRequest));
+			}
+		}
+	}
+	else
+	{
+		BOOST_FOREACH(imageRequest.channel, acquisitionSettings.channelList)
+		{
+			BOOST_FOREACH(imageRequest.slicePosition, acquisitionSettings.zStack)
+			{
+				tasks_.push_back(new ImageTask(this, imageRequest));
+			}
+		}
+	}
 }
 
-bool MMAcquisitionRunner::IsFinished()
-{
-   return finished_;
-}
-
-void MMAcquisitionRunner::Stop()
-{
-   stopRequested_ = true;
-}
-
-void MMAcquisitionRunner::Pause()
-{
-   pauseRequested_ = true;
-}
-
-void MMAcquisitionRunner::Resume()
-{
-   pauseRequested_ = false;
-}
-
-void MMAcquisitionRunner::Step()
-{
-}
-
-void MMAcquisitionRunner::SetTasks(TaskVector tasks)
-{
-   tasks_ = tasks;
-}
-
-
-////////////////////////////
-// MMAcquisitionSequencer //
-////////////////////////////
-
-
-MMAcquisitionSequencer::MMAcquisitionSequencer(CMMCore * core, CoreCallback * coreCallback, AcquisitionSettings acquisitionSettings)
-{
-   core_ = core;
-   coreCallback_ = coreCallback;
-   acquisitionSettings_ = acquisitionSettings;
-}
-
-TaskVector MMAcquisitionSequencer::generateTaskVector()
-{
-   MMAcquisitionState * state = new MMAcquisitionState(core_, coreCallback_);
-   ImageTask * imageTask = new ImageTask(state);
-
-   state->acquisitionSettings = acquisitionSettings_;
-
-   TaskVector channelVector;
-   for(unsigned i=0;i<acquisitionSettings_.channelList.size();++i)
-      channelVector.push_back(new ChannelTask(state, i));
-
-   TaskVector sliceVector;
-   for(unsigned i=0;i<acquisitionSettings_.zStack.size();++i)
-      sliceVector.push_back(new SliceTask(state, i));
-
-   TaskVector positionVector;
-   for(unsigned i=0;i<acquisitionSettings_.positionList.size();++i)
-      positionVector.push_back(new PositionTask(state, i));
-
-   TaskVector timeVector;
-   for(unsigned i=0;i<acquisitionSettings_.timeSeries.size();++i)
-      timeVector.push_back(new TimeTask(state, i));
-
-   return generateMDASequence(imageTask, timeVector, positionVector, channelVector, sliceVector);
-}
-
-TaskVector MMAcquisitionSequencer::generateMDASequence(MMRunnable * imageTask,
-   TaskVector timeVector, TaskVector positionVector, TaskVector channelVector, TaskVector sliceVector)
-{  
-   TaskVector allTasks;
-
-   allTasks.push_back(imageTask);
-
-   if (acquisitionSettings_.channelsFirst)
-   {
-      allTasks = NestTasks(channelVector, allTasks);
-      allTasks = NestTasks(sliceVector, allTasks);
-   } else {
-      allTasks = NestTasks(sliceVector, allTasks);
-      allTasks = NestTasks(channelVector, allTasks);
-   }
-
-   if (acquisitionSettings_.positionsFirst)
-   {
-      allTasks = NestTasks(positionVector, allTasks);
-      allTasks = NestTasks(timeVector, allTasks);
-   } else {
-      allTasks = NestTasks(timeVector, allTasks);
-      allTasks = NestTasks(positionVector, allTasks);
-   }
-   
-   printf("allTasks.size() = %d", allTasks.size());
-   return allTasks;
-}
-
-TaskVector MMAcquisitionSequencer::NestTasks(TaskVector outerTasks, TaskVector innerTasks)
-{
-   TaskVector nestedTasks;
-
-   if (outerTasks.size() == 0)
-      return innerTasks;
-
-   for(TaskVector::iterator it = outerTasks.begin(); it < outerTasks.end(); ++it)
-   {
-      // Append next element of outerTasks.
-      nestedTasks.push_back(*it);
-
-      // Append all elements of innerTasks.
-      nestedTasks.insert(nestedTasks.end(),innerTasks.begin(),innerTasks.end());
-   }
-
-   return nestedTasks;
-}
-
-
-void MMAcquisitionSequencer::setAcquisitionSettings(AcquisitionSettings acquisitionSettings)
-{
-   acquisitionSettings_ = acquisitionSettings;
-}
-
-/////////////////////////
-// MMAcquisitionEngine //
-/////////////////////////
-
-void MMAcquisitionEngine::runTest(AcquisitionSettings acquisitionSettings)
-{
-   core_->logMessage("running acquisition engine test...");
-   MMAcquisitionSequencer sequencer(core_, coreCallback_, acquisitionSettings);
-   TaskVector taskVector = sequencer.generateTaskVector();
-
-   runner_.SetTasks(taskVector);
-   runner_.Start();
-}
-
-bool MMAcquisitionEngine::isFinished()
-{
-   return runner_.IsFinished();
-}
