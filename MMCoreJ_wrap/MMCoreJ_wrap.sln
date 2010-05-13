@@ -193,6 +193,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Hamamatsu", "..\SecretDevic
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SerialManager", "..\DeviceAdapters\SerialManager\SerialManager.vcproj", "{2EF7ACDC-F742-4CB6-B301-A242F52BE5C3}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PrincetonInstruments", "..\DeviceAdapters\PrincetonInstruments\PrincetonInstruments.vcproj", "{A28DEB4E-E645-4990-A91D-4A7FF6762240}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TIScamera", "..\DeviceAdapters\TISCam\TIScamera.vcproj", "{205D835F-D939-4E0D-9516-061AB141480F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -711,6 +715,22 @@ Global
 		{2EF7ACDC-F742-4CB6-B301-A242F52BE5C3}.Release|Win32.Build.0 = Release|Win32
 		{2EF7ACDC-F742-4CB6-B301-A242F52BE5C3}.Release|x64.ActiveCfg = Release|x64
 		{2EF7ACDC-F742-4CB6-B301-A242F52BE5C3}.Release|x64.Build.0 = Release|x64
+		{A28DEB4E-E645-4990-A91D-4A7FF6762240}.Debug|Win32.ActiveCfg = Debug|Win32
+		{A28DEB4E-E645-4990-A91D-4A7FF6762240}.Debug|Win32.Build.0 = Debug|Win32
+		{A28DEB4E-E645-4990-A91D-4A7FF6762240}.Debug|x64.ActiveCfg = Debug|x64
+		{A28DEB4E-E645-4990-A91D-4A7FF6762240}.Debug|x64.Build.0 = Debug|x64
+		{A28DEB4E-E645-4990-A91D-4A7FF6762240}.Release|Win32.ActiveCfg = Release|Win32
+		{A28DEB4E-E645-4990-A91D-4A7FF6762240}.Release|Win32.Build.0 = Release|Win32
+		{A28DEB4E-E645-4990-A91D-4A7FF6762240}.Release|x64.ActiveCfg = Release|x64
+		{A28DEB4E-E645-4990-A91D-4A7FF6762240}.Release|x64.Build.0 = Release|x64
+		{205D835F-D939-4E0D-9516-061AB141480F}.Debug|Win32.ActiveCfg = Debug|Win32
+		{205D835F-D939-4E0D-9516-061AB141480F}.Debug|Win32.Build.0 = Debug|Win32
+		{205D835F-D939-4E0D-9516-061AB141480F}.Debug|x64.ActiveCfg = Debug|x64
+		{205D835F-D939-4E0D-9516-061AB141480F}.Debug|x64.Build.0 = Debug|x64
+		{205D835F-D939-4E0D-9516-061AB141480F}.Release|Win32.ActiveCfg = Release|Win32
+		{205D835F-D939-4E0D-9516-061AB141480F}.Release|Win32.Build.0 = Release|Win32
+		{205D835F-D939-4E0D-9516-061AB141480F}.Release|x64.ActiveCfg = Release|x64
+		{205D835F-D939-4E0D-9516-061AB141480F}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
