@@ -38,6 +38,11 @@ pushd plugins\PixelCalibrator
 call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build32.xml compileMMPixelCalibrator buildMMPixelCalibrator
 popd
 
+pushd plugins\SlideExplorer
+call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml cleanMMSlideExplorer compileMMSlideExplorer buildMMSlideExplorer
+popd
+
+
 set DEVICELISTBUILDER=1
 cd mmStudio\src
 call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile ../build32.xml install makeDeviceList packInstaller
