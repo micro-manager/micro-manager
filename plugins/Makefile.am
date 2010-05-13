@@ -27,14 +27,13 @@ SlideExplorer.jar:  \
 	## Work around bug in 'jar': jar cf MM_.jar -C bin/ bin/* does not work
 	cd build && jar cf ../SlideExplorer.jar * 
 
-all: MMTracker_.jar PixelCalibrator.jar SlideExplorer.jar Projector.jar
+all: MMTracker_.jar PixelCalibrator.jar SlideExplorer.jar
 
 install: 
 	test -d $(IJPATH)/mmplugins || mkdir $(IJPATH)/mmplugins
 	cp MMTracker_.jar $(IJPATH)/mmplugins
 	cp PixelCalibrator.jar $(IJPATH)/mmplugins
 	cp SlideExplorer.jar $(IJPATH)/mmplugins
-	cp Projector.jar $(IJPATH)/mmplugins
 	
 clean:
 	test -f MMTracker_.jar && rm MMTracker_.jar || echo "MMTracker_.jar not found"
