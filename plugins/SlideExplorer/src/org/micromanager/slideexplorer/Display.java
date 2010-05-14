@@ -11,8 +11,11 @@ import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Rectangle;
 
+import org.micromanager.MMStudioMainFrame;
 import org.micromanager.slideexplorer.Hub.ModeManager;
+import org.micromanager.utils.ContrastSettings;
 import org.micromanager.utils.ImageUtils;
+import org.micromanager.utils.ReportingUtils;
 
 public class Display {
 
@@ -23,7 +26,7 @@ public class Display {
 	private Hub hub_;
 	private double displayRangeMin_;
 	private double displayRangeMax_;
-    private int type_;
+        private int type_;
 	private int imgCount_ = 0;
     private boolean currentlyPanning_ = false;
     private RoiManager roiManager_;
@@ -34,16 +37,17 @@ public class Display {
 		hub_ = hub;
 		IJ.setTool("hand");
 
-        type_ = imageType;
+                type_ = imageType;
 		proc_ = ImageUtils.makeProcessor(imageType, width, height);
 		imgp_ = new ImagePlus("Slide Explorer",proc_);
-		cvs_ = new Canvas(this, imgp_);
 
+		cvs_ = new Canvas(this, imgp_);
 		
 		win_ = new Window(imgp_, (ImageCanvas) cvs_, this);
 		imgCount_=0;
 		win_.setVisible(true);
-	}
+
+        }
 	
     public void setCoords(Coordinates coords) {
         coords_ = coords;
@@ -94,7 +98,7 @@ public class Display {
                 ImageProcessor newProc = ImageUtils.makeProcessor(imgp_.getType(), 3*w, 3*h);
                 newProc.insert(proc_, -dx, -dy);
                 proc_ = newProc;
-                imgp_.setProcessor("SlideExplorer", proc_);
+                imgp_.setProcessor("Slide Explorer", proc_);
                 hub_.panBy(-dx, -dy);
                 updateDimensions();
                 imgp_.setProcessor(imgp_.getTitle(), proc_);
@@ -129,14 +133,14 @@ public class Display {
 	
 	public void updateAndDraw() {
 		imgp_.updateAndDraw();
-		ImageStatistics stats = imgp_.getStatistics();
+		/*ImageStatistics stats = imgp_.getStatistics();
       double displayRange = imgp_.getDisplayRangeMax()-imgp_.getDisplayRangeMin();
       double actualRange = stats.max - stats.min;
 	if (! contrastAutoAdjusted_) // Only do this once.
          if ((displayRange < 5) || (displayRange/actualRange < 0.6667) || (displayRange/actualRange > 1.5)) {
             imgp_.setDisplayRange(stats.min, stats.max);
             contrastAutoAdjusted_ = true;
-         }
+         }*/
 	}
 
 	public void show() {
@@ -189,6 +193,12 @@ public class Display {
     public void fillWithBlack() {
         proc_ = ImageUtils.makeProcessor(type_, imgp_.getWidth(), imgp_.getHeight());
         imgp_.setProcessor(imgp_.getTitle(), proc_);
+        try {
+        ContrastSettings contrastSettings = ((MMStudioMainFrame) hub_.getApp()).getContrastSettings();
+        imgp_.setDisplayRange(contrastSettings.min, contrastSettings.max);
+        } catch (Exception e) {
+            ReportingUtils.logError(e);
+        }
     }
 
     void showConfig() {

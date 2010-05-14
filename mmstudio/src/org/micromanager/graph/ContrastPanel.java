@@ -688,19 +688,25 @@ public class ContrastPanel extends JPanel implements ImageController, PropertyCh
 		applyContrastSettings(cs8bit_, cs16bit_);
 	};
 
-	public void applyContrastSettings(ContrastSettings contrast8,
+        public void applyContrastSettings(ContrastSettings contrast8,
 			ContrastSettings contrast16) {
-		if (image_ == null)
+            applyContrastSettings(image_, contrast8, contrast16);
+        
+        }
+
+	public void applyContrastSettings(ImagePlus img, ContrastSettings contrast8,
+			ContrastSettings contrast16) {
+		if (img == null)
 			return;
 
-		if (image_.getProcessor() instanceof ShortProcessor) {
-			image_.getProcessor().setMinAndMax(contrast16.min, contrast16.max);
+		if (img.getProcessor() instanceof ShortProcessor) {
+			img.getProcessor().setMinAndMax(contrast16.min, contrast16.max);
 		} else {
-			image_.getProcessor().setMinAndMax(contrast8.min, contrast8.max);
+			img.getProcessor().setMinAndMax(contrast8.min, contrast8.max);
 		}
 		updateSliders();
 
-		image_.updateAndDraw();
+		img.updateAndDraw();
 	}
 
 	public void setContrastStretch(boolean stretch) {
@@ -710,5 +716,12 @@ public class ContrastPanel extends JPanel implements ImageController, PropertyCh
 	public boolean isContrastStretch() {
 		return stretchCheckBox_.isSelected();
 	}
+
+        public ContrastSettings getContrastSettings() {
+            if (image_.getProcessor() instanceof ShortProcessor)
+                return cs16bit_;
+            else
+                return cs8bit_;
+        }
 
 }
