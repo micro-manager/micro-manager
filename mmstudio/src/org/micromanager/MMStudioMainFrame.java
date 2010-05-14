@@ -3268,8 +3268,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
 
    public ContrastSettings getContrastSettings() {
-      // TODO Auto-generated method stub
-      return null;
+	return contrastPanel_.getContrastSettings();
    }
 
    public boolean is16bit() {
