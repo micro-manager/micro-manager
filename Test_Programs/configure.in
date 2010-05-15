@@ -20,5 +20,5 @@ AC_C_INLINE
 AC_HEADER_STDC
 AC_CHECK_FUNCS([memset])
 
-AC_CONFIG_FILES(Makefile Test_MMCore/Makefile)
+AC_CONFIG_FILES(Makefile Test_MMCore/Makefile ModuleTest/Makefile)
 AC_OUTPUT

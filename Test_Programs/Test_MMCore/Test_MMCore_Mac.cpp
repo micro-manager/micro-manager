@@ -11,8 +11,8 @@
 //
 
 
-#include "../MMCore/MMCore.h"
-#include "../MMCore/Configuration.h"
+#include "../../MMCore/MMCore.h"
+#include "../../MMCore/Configuration.h"
 #ifdef WIN32
 #include <windows.h>
 #endif

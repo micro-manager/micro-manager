@@ -1,1 +1,1 @@
-SUBDIRS =  Test_MMCore
+SUBDIRS =  Test_MMCore ModuleTest
