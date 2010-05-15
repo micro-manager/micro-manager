@@ -13,6 +13,5 @@ libMMCore_a_SOURCES = MMCore.cpp MMCore.h \
 	MMAcquisition.h MMAcquisition.cpp \
 	../MMDevice/MMDevice.h ../MMDevice/MMDeviceConstants.h \
 	../MMDevice/ModuleInterface.h
-##libMMCore_a_LIBADD = $(LIBACE)
 
 EXTRA_DIST = license.txt MMCore_vc8.vcproj MMCore.vcproj

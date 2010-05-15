@@ -4677,31 +4677,6 @@ MM::Device* CMMCore::getDevice(const char* label) const throw (CMMError)
    }
 }
 
-template <class T>
-T* CMMCore::getSpecificDevice(const char* deviceLabel) const throw (CMMError)
-{
-   MM::Device* pDevice;
-   T* pSpecDev = 0;
-   try {
-      pDevice = pluginManager_.GetDevice(deviceLabel);
-      // The most appropriate thing to do here is to use
-      // pSpecDev = dynamic_cast<T*>(pDevice). But, we can't use dynamic_cast beacuse
-      // GCC linker on Linux does not interpret RTTI properly across the DLL boundary.
-      // Instead we'll check the type through the Type identifier and use static_cast.
-      if (pDevice->GetType() != T::Type)
-         throw CMMError(deviceLabel, MMERR_InvalidSpecificDevice);
-
-      pSpecDev = static_cast<T*>(pDevice);
-
-   } catch (CMMError& err) {
-      err.setCoreMsg(getCoreErrorText(err.getCode()).c_str());
-      throw;
-   } catch (...) {
-      throw CMMError(getCoreErrorText(MMERR_UnhandledException).c_str(), MMERR_UnhandledException);
-   }
-
-   return pSpecDev;
-}
 
 void CMMCore::initializeLogging()
 {
