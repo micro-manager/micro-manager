@@ -6,7 +6,7 @@ MMJAVACODE = MMCoreJ_wrap NativeGUI mmstudio autofocus plugins scripts classext
 endif
 
 if BUILD_APP
-APP = MMCore $(MMJAVACODE)
+APP = MMCore $(MMJAVACODE) Test_Programs
 endif
 
 if BUILD_PYTHON
