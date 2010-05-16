@@ -27,15 +27,14 @@
 #include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/DeviceBase.h"
 #include <string>
-#include <map>
-
-#include <boost/thread.hpp> 
+// #include <map>
+// #include <vector>
 
 #include <boost/bind.hpp> 
 #include <boost/asio.hpp> 
 #include <boost/asio/serial_port.hpp> 
 #include <boost/thread.hpp> 
-#include <boost/lexical_cast.hpp> 
+// #include <boost/lexical_cast.hpp> 
 
 
 
@@ -101,8 +100,6 @@ public:
    int OnTimeout(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnDelayBetweenCharsMs(MM::PropertyBase* pProp, MM::ActionType eAct);
 
-   int Open();
-   void Close();
    void AddReference() {refCount_++;}
    void RemoveReference() {refCount_--;}
    bool OKToDelete() {return refCount_ < 1;}
@@ -150,5 +147,12 @@ private:
    std::vector<SerialPort*> ports_;
 };
 
+class SerialPortLister
+{
+   public:                                                                   
+      // returns list of serial ports that can be opened
+      static void ListPorts(std::vector<std::string> &availablePorts);
+      static bool portAccessible(const char*  portName);                     
+};
 
 #endif //_SERIALMANAGER_H_

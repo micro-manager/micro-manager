@@ -57,9 +57,12 @@
 #include <boost/thread.hpp> 
 #include <boost/lexical_cast.hpp> 
 #include <boost/date_time/posix_time/posix_time_types.hpp> 
-// #include <conio.h>
 
-MMThreadLock readBufferLock_;
+// serial device implementation class
+#include "AsioClient.h"
+
+
+MMThreadLock g_portLock;
 
 SerialManager g_serialManager;
 
@@ -112,10 +115,32 @@ const char* g_Parity_Space = "Space";
    }
 #endif
 
-
-const std::vector<std::string> availableSerialPorts(void)
+/*
+ * Tests whether given serial port can be used by opening it
+ */
+bool SerialPortLister::portAccessible(const char* portName)
 {
-   std::vector<std::string> availablePorts;
+   MMThreadGuard g2(g_portLock);
+   try
+   {
+      boost::asio::io_service service;
+      boost::asio::serial_port sp(service, portName);
+
+      if (sp.is_open()) {
+         sp.close();
+         return true;
+      }
+   }
+   catch( std::exception& what)
+   {
+      return false;
+   }
+
+   return false;                                                             
+}
+
+void SerialPortLister::ListPorts(std::vector<std::string> &availablePorts)
+{
 #ifdef WIN32
    char allDeviceNames[100000];
 
@@ -179,42 +204,38 @@ const std::vector<std::string> availableSerialPorts(void)
    // Given an iterator across a set of modems, return the BSD path to the first one.
    // If no modems are found the path name is set to an empty string.            
    io_object_t      modemService;                                                
-   Boolean       modemFound = false;                                             
-                                                                                 
-    // Initialize the returned path                                              
-    *bsdPath = '\0';                                                             
-    // Iterate across all modems found.                                          
-    while ( (modemService = IOIteratorNext(serialPortIterator)) ) {              
+   
+   // Initialize the returned path                                              
+   *bsdPath = '\0';                                                             
+   // Iterate across all modems found.                                          
+   while ( (modemService = IOIteratorNext(serialPortIterator)) ) {              
        CFTypeRef bsdPathAsCFString;                                              
        // Get the device's path (/dev/tty.xxxxx).                                
        bsdPathAsCFString = IORegistryEntryCreateCFProperty(modemService,         
                                                            CFSTR(kIODialinDeviceKey),          
                                                            kCFAllocatorDefault,  
                                                            0);                   
-      if (bsdPathAsCFString) {                                                   
-         // printf("Found one");                                                    
-         Boolean result;                                                        
-         // Convert the path from a CFString to a C (NUL-terminated) string for use           
-         // with the POSIX open() call.                                         
-         result = CFStringGetCString( (const __CFString*) bsdPathAsCFString,    
-                                      bsdPath,                                   
-                                      sizeof(bsdPath),                           
-                                      kCFStringEncodingUTF8);                    
-                                                                                 
-         CFRelease(bsdPathAsCFString);                                          
-         // printf("%s\n", bsdPath);                                                
-                                                                                 
-          // add the name to our vector<string> only when this is not a dialup port
-         std::string rresult (bsdPath);                                              
-         std::string::size_type loc = rresult.find("DialupNetwork", 0);              
-         if (result && (loc == std::string::npos)) {                                 
-             // if (portAccessible(bsdPath))  {                                     
-                // printf("Port was opened\n");                                     
-                availablePorts.push_back(bsdPath);                               
-             // }                                                                   
-             modemFound = true;                                                  
-             kernResult = KERN_SUCCESS;                                          
-          }                                                                      
+      if (bsdPathAsCFString) {
+          Boolean result;                                                        
+          // Convert the path from a CFString to a C (NUL-terminated) string for use           
+          // with the POSIX open() call.                                         
+          result = CFStringGetCString( (const __CFString*) bsdPathAsCFString,    
+                                         bsdPath,                                   
+                                         sizeof(bsdPath),                           
+                                         kCFStringEncodingUTF8);                    
+                                                                                    
+          CFRelease(bsdPathAsCFString);                                          
+          printf("%s\n", bsdPath);                                                
+                                                                                    
+           // add the name to our vector<string> only when this is not a dialup port
+          std::string rresult (bsdPath);                                              
+          std::string::size_type loc = rresult.find("DialupNetwork", 0);              
+          if (result && (loc == std::string::npos)) {                                 
+              if (portAccessible(bsdPath))  {                                     
+                  availablePorts.push_back(bsdPath);                               
+              }                                                                   
+              kernResult = KERN_SUCCESS;                                          
+           }
        }
     } 
 
@@ -222,8 +243,6 @@ const std::vector<std::string> availableSerialPorts(void)
     (void) IOObjectRelease(modemService);                                        
 
 #endif // __APPLE
-
-   return availablePorts;
 }
 
 
@@ -242,9 +261,9 @@ MODULE_API void InitializeModuleData()
    time_t timeout = 15;
    bool stale = seconds - g_PortListLastUpdated > timeout ? true : false;
 
-   if (g_PortList.size() == 0 || stale) 
+   if (g_PortList.size() == 0 || stale)
    {
-      g_PortList = availableSerialPorts();
+      SerialPortLister::ListPorts(g_PortList); 
       g_PortListLastUpdated = time(NULL);
    }
 
@@ -265,8 +284,6 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
    g_serialManager.DestroyPort(pDevice);
 }
 
-// serial device implementation class
-#include "AsioClient.h"
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -420,18 +437,13 @@ SerialPort::SerialPort(const char* portName) :
 
 SerialPort::~SerialPort()
 {
-   MMThreadGuard g(portLock_);
    Shutdown();
+   MMThreadGuard g(portLock_);
    delete pPort_;
    delete pThread_;
    delete pService_;
 }
 
-int SerialPort::Open()
-{
-
-   return DEVICE_OK;
-}
 
 int SerialPort::Initialize()
 {
