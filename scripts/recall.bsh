@@ -1,0 +1,26 @@
+ig = "Recall";
+if (gui.acquisitionExists(ig))
+   gui.closeAcquisition(ig);
+
+int remaining = mmc.getRemainingImageCount();
+
+if (remaining < 1) {
+   gui.message ("No images in buffer");
+   return 0;
+}
+
+gui.openAcquisition(ig, "tmp", mmc.getRemainingImageCount(), 1, 1, true);
+
+long width = mmc.getImageWidth();
+long height = mmc.getImageHeight();
+long depth = mmc.getBytesPerPixel();
+
+gui.initializeAcquisition(ig, (int) width,(int) height, (int) depth);
+
+
+gui.addImage(ig, mmc.popNextImage(), 0, 0, 0);
+gui.setContrastBasedOnFrame(ig, 0, 0);
+
+for (int i=0; i < remaining-1; i++) {
+	gui.addImage(ig, mmc.popNextImage(), i, 0, 0);
+}
