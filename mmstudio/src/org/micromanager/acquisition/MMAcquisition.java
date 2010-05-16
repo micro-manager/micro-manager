@@ -138,7 +138,7 @@ public class MMAcquisition {
          if (colors == null) {
             colors = new Color[numChannels_];
             for (int i=0; i<numChannels_; i++)
-               colors[i] = Color.GRAY;
+               colors[i] = Color.WHITE;
          }
          names = acqData_.getChannelNames();
       } catch (MMAcqDataException e) {
@@ -163,7 +163,7 @@ public class MMAcquisition {
       }
       
       if (numChannels_ == 1)
-         img5d.setDisplayMode(ChannelControl.ONE_CHANNEL_COLOR);
+         img5d.setDisplayMode(ChannelControl.ONE_CHANNEL_GRAY);
       else
          img5d.setDisplayMode(ChannelControl.OVERLAY);
 
