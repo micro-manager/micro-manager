@@ -3699,6 +3699,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       acq.initialize();
    }
 
+   public Boolean acquisitionExists(String name) {
+      return acqMgr_.acquisitionExists(name);
+   }
+
    public void closeAcquisition(String name) throws MMScriptException {
       acqMgr_.closeAcquisition(name);
 

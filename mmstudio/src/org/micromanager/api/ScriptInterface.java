@@ -86,6 +86,11 @@ public interface ScriptInterface {
    public void initializeAcquisition(String name, int width, int height, int depth) throws MMScriptException;
    
    /**
+    * Checks whether an acquisition already exists
+    */
+   public Boolean acquisitionExists(String name);
+
+   /**
     * Closes the acquisition.
     * After this command metadata is complete and all the references to this data set are cleaned-up
     * @throws MMScriptException 
