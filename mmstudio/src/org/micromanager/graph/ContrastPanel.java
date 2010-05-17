@@ -627,20 +627,27 @@ public class ContrastPanel extends JPanel implements ImageController, PropertyCh
 			return;
       }
 
-		ImageStatistics stats = image_.getStatistics();
+      // protect against an 'Unhandled Exception' inside getStatistics
+      if ( null != image_.getProcessor()){
+         ImageStatistics stats = image_.getStatistics();
 
-      int min = (int) stats.min;
-      int max = (int) stats.max;
-      if (min == max)
-         if (min == 0)
-            max += 1;
-         else
-            min -= 1;
+         int min = (int) stats.min;
+         int max = (int) stats.max;
+         if (min == max)
+            if (min == 0)
+               max += 1;
+            else
+               min -= 1;
 
-      updateSliders(true, min, max);
+         updateSliders(true, min, max);
+      }
+      else{
+         ReportingUtils.logError("Internal error: ImageProcessor is null");
+      }
 
 		image_.updateAndDraw();
 	}
+
 
 	private void setFullScale() {
 		if (image_ == null)
