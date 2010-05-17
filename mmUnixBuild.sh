@@ -14,6 +14,12 @@ libtoolize --force
 automake --foreign --add-missing
 autoconf
 cd ..
+cd Test_Programs
+aclocal 
+libtoolize --force
+automake --foreign --add-missing
+autoconf
+cd ..
 if [ -d SecretDeviceAdapters ]; then
    cd SecretDeviceAdapters
    aclocal 
