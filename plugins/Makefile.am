@@ -27,13 +27,22 @@ SlideExplorer.jar:  \
 	## Work around bug in 'jar': jar cf MM_.jar -C bin/ bin/* does not work
 	cd build && jar cf ../SlideExplorer.jar * 
 
-all: MMTracker_.jar PixelCalibrator.jar SlideExplorer.jar
+RecallPlugin.jar:  \
+	$(srcdir)/Recall/src/org/micromanager/recall/*.java
+	test -d build || mkdir build
+	rm -rf build/*
+	$(JAVAC) -source 1.5 -target 1.5 -sourcepath $(srcdir):. -classpath $(srcdir)/RecallPlugin.jar:$(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):../bin/MMCoreJ.jar:../mmstudio/MMJ_.jar:. $(srcdir)/Recall/src/org/micromanager/recall/*.java -d build
+	## Work around bug in 'jar': jar cf MM_.jar -C bin/ bin/* does not work
+	cd build && jar cf ../RecallPlugin.jar * 
+
+all: MMTracker_.jar PixelCalibrator.jar SlideExplorer.jar RecallPlugin.jar
 
 install: 
 	test -d $(IJPATH)/mmplugins || mkdir $(IJPATH)/mmplugins
 	cp MMTracker_.jar $(IJPATH)/mmplugins
 	cp PixelCalibrator.jar $(IJPATH)/mmplugins
 	cp SlideExplorer.jar $(IJPATH)/mmplugins
+	cp RecallPlugin.jar $(IJPATH)/mmplugins
 	
 clean:
 	test -f MMTracker_.jar && rm MMTracker_.jar || echo "MMTracker_.jar not found"
