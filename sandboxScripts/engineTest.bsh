@@ -1,7 +1,7 @@
 import org.micromanager.acquisition.*;
 import org.micromanager.*;
 
-
+setAccessibility(true);
 aw = new CoreAcquisitionWrapperEngine();
 aw.setCore(mmc,null);
 dlg = new AcqControlDlg(aw, gui.mainPrefs_, gui);

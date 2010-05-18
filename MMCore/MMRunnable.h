@@ -27,8 +27,10 @@ typedef pair<double, double> point2D;
 class MultiAxisPosition
 {
 public:
+   string name;
    map<string,double> singleAxisPositions;
    map<string,point2D> doubleAxisPositions;
+
 
    void AddSingleAxisPosition(string name, double pos)
    {
@@ -49,6 +51,11 @@ public:
    {
       posX = doubleAxisPositions[name].first;
       posY = doubleAxisPositions[name].second;
+   }
+
+   string GetName()
+   {
+	   return name;
    }
 };
 

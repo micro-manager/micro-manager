@@ -21,6 +21,7 @@ void ImageTask::run()
 	wait();
 	autofocus();
 	acquireImage();
+
 }
 
 void ImageTask::updateSlice()
@@ -41,7 +42,7 @@ void ImageTask::updatePosition()
 
 	map<string, pair<double, double> >::iterator it2;
 
-	for (pos.doubleAxisPositions.begin(); it2 != pos.doubleAxisPositions.end(); ++it2)
+	for (it2 = pos.doubleAxisPositions.begin(); it2 != pos.doubleAxisPositions.end(); ++it2)
 	{
 		point2D xy = it2->second;
 		eng_->core_->setXYPosition(it2->first.c_str(), xy.first, xy.second);
@@ -74,10 +75,17 @@ void ImageTask::autofocus() {
 
 void ImageTask::acquireImage() {
 	int w, h, d;
-	const char * img = eng_->coreCallback_->GetImage();
+	const char * img = eng_->coreCallback_->GetImage(); // Snaps and retrieves image.
+
+	MetadataSingleTag tag;
+	tag.SetDevice("AcqusitionEngine");
+	tag.SetName("RequestedPosition");
+	tag.SetValue(imageRequest_.multiAxisPosition.GetName().c_str());
+	Metadata md;
+	md.SetTag(tag);
 
 	eng_->coreCallback_->GetImageDimensions(w, h, d);
-	eng_->coreCallback_->InsertImage(NULL, (const unsigned char *) img, w, h, d);
+	eng_->coreCallback_->InsertImage(NULL, (const unsigned char *) img, w, h, d, &md);
 	printf("Grabbed image.\n");
 }
 

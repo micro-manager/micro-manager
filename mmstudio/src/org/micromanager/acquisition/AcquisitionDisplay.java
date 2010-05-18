@@ -41,14 +41,14 @@ public class AcquisitionDisplay extends Thread {
                         displayImage(img, mdCopy);
                         ReportingUtils.logMessage("time=" + mdCopy.getFrameIndex() + ", position=" +
                                 mdCopy.getPositionIndex() + ", channel=" + mdCopy.getChannelIndex() +
-                                ", slice=" + mdCopy.getSliceIndex());
+                                ", slice=" + mdCopy.getSliceIndex() + mdCopy.GetSingleTag("RequestedPosition"));
                      } catch (Exception ex) {
                         ReportingUtils.logError(ex);
                      }
                   }
                });
             }
-            core_.sleep(30);
+            Thread.sleep(30);
          } while (!core_.acquisitionIsFinished() || core_.getRemainingImageCount() > 0);
       } catch (Exception ex2) {
          ReportingUtils.logError(ex2);

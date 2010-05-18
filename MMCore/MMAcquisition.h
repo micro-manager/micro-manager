@@ -14,7 +14,7 @@
 class ImageRequest {
 public:
 	MM::MMTime waitTime;
-   double exposure;
+    double exposure;
 	MultiAxisPosition multiAxisPosition;
 	Channel channel;
 	double slicePosition;
