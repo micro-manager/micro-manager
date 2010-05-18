@@ -9,16 +9,16 @@ libtoolize --force
 automake --foreign --add-missing
 autoconf -I m4
 cd DeviceAdapters
-aclocal 
+aclocal -I ../m4
 libtoolize --force
 automake --foreign --add-missing
-autoconf
+autoconf -I ../m4
 cd ..
 cd Test_Programs
-aclocal 
+aclocal -I ../m4
 libtoolize --force
 automake --foreign --add-missing
-autoconf
+autoconf -I ../m4
 cd ..
 if [ -d SecretDeviceAdapters ]; then
    cd SecretDeviceAdapters
