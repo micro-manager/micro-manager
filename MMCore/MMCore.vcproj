@@ -71,7 +71,7 @@
 			<Tool
 				Name="VCLibrarianTool"
 				OutputFile="$(OutDir)/MMCore.lib"
-				AdditionalLibraryDirectories="..\..\3rdparty\boost\stage\lib"
+				AdditionalLibraryDirectories="..\..\3rdparty\boost\stage_$(PlatformName)\lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -143,7 +143,7 @@
 			<Tool
 				Name="VCLibrarianTool"
 				OutputFile="$(OutDir)/MMCore.lib"
-				AdditionalLibraryDirectories="..\..\3rdparty\boost\stage\lib"
+				AdditionalLibraryDirectories="..\..\3rdparty\boost\stage_$(PlatformName)\lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -211,7 +211,7 @@
 			<Tool
 				Name="VCLibrarianTool"
 				OutputFile="$(OutDir)/MMCore.lib"
-				AdditionalLibraryDirectories="..\..\3rdparty\boost\stage\lib"
+				AdditionalLibraryDirectories="..\..\3rdparty\boost\stage_$(PlatformName)\lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -280,7 +280,7 @@
 			<Tool
 				Name="VCLibrarianTool"
 				OutputFile="$(OutDir)/MMCore.lib"
-				AdditionalLibraryDirectories="..\..\3rdparty\boost\stage\lib"
+				AdditionalLibraryDirectories="..\..\3rdparty\boost\stage_$(PlatformName)\lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -336,6 +336,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalLibraryDirectories="..\..\3rdparty\boost\stage_$(PlatformName)\lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -397,6 +398,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalLibraryDirectories="..\..\3rdparty\boost\stage_$(PlatformName)\lib"
 				TargetMachine="17"
 			/>
 			<Tool

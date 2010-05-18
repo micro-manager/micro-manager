@@ -7,8 +7,8 @@ popd
 
 pushd "\projects\micromanager\"
 devenv /BUILD "Release|x64" .\MMCore\MMCore.vcproj
-if "%1" == "withpython" call buildscripts\mmincrementalbuild-python.bat
-devenv /BUILD "Release|x64" .\MMCoreJ_wrap\MMCoreJ_wrap64.sln
+if "%1" == "withpython" call buildscriptsx64\mmincrementalbuild-python.bat
+devenv /BUILD "Release|x64" .\MMCoreJ_wrap\MMCoreJ_wrap_x64.sln
 popd
 
 

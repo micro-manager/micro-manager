@@ -17,31 +17,37 @@ rem remove any installer package with exactly the same name as the current outpu
 del \Projects\micromanager\Install\Output\MMSetup_.exe 
 del \Projects\micromanager\Install\Output\MMSetup_%mmversion%_%YYYYMMDD%.exe
 
-ECHO incremental build of Java components...
+ECHO building NativeGUI
 pushd NativeGUI
 call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml buildNativeGUI installNativeGUI
 popd
 
+
+ECHO building mmStudio
 cd \projects\micromanager\mmStudio\src
 call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile ../build64.xml compileMMStudio buildMMStudio buildMMReader
 cd ..\..
 
+ECHO building autofocus
 cd autofocus
 call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build64.xml compileAutofocus buildAutofocus 
 cd ..
 
+echo building tracker
 cd plugins\Tracker 
 call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build64.xml  compileMMTracking buildMMTracking 
 cd ..\..
 
+echo building pixelcalibrator
 pushd plugins\PixelCalibrator 
 call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build64.xml compileMMPixelCalibrator buildMMPixelCalibrator
 popd
 
-set DEVICELISTBUILDER=1
-cd mmStudio\src
-call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile ../build64.xml install makeDeviceList packInstaller
-set DEVICELISTBUILDER=""
+rem echo building device list
+rem set DEVICELISTBUILDER=1
+rem cd mmStudio\src
+rem call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile ../build64.xml install makeDeviceList packInstaller
+rem set DEVICELISTBUILDER=""
 
 pushd \Projects\micromanager\Install64\Output
 rename MMSetup_.exe  MMSetupx64_%mmversion%_%YYYYMMDD%.exe
