@@ -41,7 +41,8 @@ public class AcquisitionDisplay extends Thread {
                         displayImage(img, mdCopy);
                         ReportingUtils.logMessage("time=" + mdCopy.getFrameIndex() + ", position=" +
                                 mdCopy.getPositionIndex() + ", channel=" + mdCopy.getChannelIndex() +
-                                ", slice=" + mdCopy.getSliceIndex() + mdCopy.GetSingleTag("RequestedPosition"));
+                                ", slice=" + mdCopy.getSliceIndex()
+                                + ", remaining images =" + core_.getRemainingImageCount());
                      } catch (Exception ex) {
                         ReportingUtils.logError(ex);
                      }

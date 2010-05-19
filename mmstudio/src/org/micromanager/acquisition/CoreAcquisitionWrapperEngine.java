@@ -82,7 +82,7 @@ public class CoreAcquisitionWrapperEngine implements AcquisitionEngine {
 
    public void acquire() throws MMException, MMAcqDataException {
       try {
-         core_.setCircularBufferMemoryFootprint(1000);
+         core_.setCircularBufferMemoryFootprint(32);
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
