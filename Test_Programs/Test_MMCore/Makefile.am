@@ -5,6 +5,7 @@ mm_testCore_LDADD = ../../MMCore/libMMCore.a ../../MMDevice/.libs/libMMDevice.a 
 
 EXTRA_DIST = Test_MMCore.vcproj Test_MMCore.sln Test_MMCore.cpp
 
-#install:
+install:
+	echo "Nothing to do"
 #	cp mm_testCore $(IJPATH)/mm_testCore
 
