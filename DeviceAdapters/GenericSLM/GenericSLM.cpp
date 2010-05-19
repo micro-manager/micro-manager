@@ -310,7 +310,23 @@ BITMAPINFO * GenericSLM::createBitmapInfo()
 
 
 void GenericSLM::BlitBitmap() {
+   WaitForScreenRefresh();
    BitBlt(windc_, 0, 0, GetWidth(), GetHeight(), memdc_, 0, 0, colorInvert_ ? NOTSRCCOPY : SRCCOPY);   
+}
+
+void GenericSLM::WaitForScreenRefresh()
+{
+   if (ddObject_ == NULL)
+   {
+      HINSTANCE hLibDDraw = LoadLibrary(TEXT("ddraw.dll"));
+      DIRECTDRAWCREATE ddcreate = (DIRECTDRAWCREATE) GetProcAddress(hLibDDraw, "DirectDrawCreate");
+
+      if (ddcreate) {
+          /*HRESULT hr =*/ ddcreate(NULL, &ddObject_, NULL);
+
+      }
+   }
+   ddObject_->WaitForVerticalBlank(DDWAITVB_BLOCKBEGIN, NULL);
 }
 
 

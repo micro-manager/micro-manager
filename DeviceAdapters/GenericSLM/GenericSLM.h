@@ -23,6 +23,7 @@
 #ifndef _GENERICSLM_H_
 #define _GENERICSLM_H_
 
+#include "ddraw.h"
 #include "WinStuff.h"
 #include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/DeviceBase.h"
@@ -155,6 +156,9 @@ private:
 
    void BlitBitmap();
 
+   void WaitForScreenRefresh();
+   IDirectDraw * ddObject_;
+
    WinClass * winClass_;
 
    POINT GetCoordsOfLeftmostMonitor();
@@ -173,6 +177,7 @@ private:
 
 
 
+typedef HRESULT(WINAPI * DIRECTDRAWCREATE) (GUID *, LPDIRECTDRAW *, IUnknown *);
 
 
 #endif // _GENERICSLM_H_
