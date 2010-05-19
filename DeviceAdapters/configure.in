@@ -11,6 +11,10 @@ AC_PROG_LIBTOOL
 
 m4_include([../configure.common])
 
+# TODO: Following should decide whether adapters depending on BOOST get build
+AX_BOOST_BASE([1.40.0])
+AX_BOOST_THREAD
+AX_BOOST_ASIO
 
 # Checks for header files.
 
