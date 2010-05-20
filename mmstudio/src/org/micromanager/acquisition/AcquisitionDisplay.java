@@ -32,22 +32,17 @@ public class AcquisitionDisplay extends Thread {
          do {
             while (core_.getRemainingImageCount() > 0) {
                imgCount_++;
-
-               SwingUtilities.invokeLater(new Runnable() {
-                  public void run() {
-                     try {
-                        Metadata mdCopy = new Metadata();
-                        Object img = core_.popNextImageMD(0, 0, mdCopy);
-                        displayImage(img, mdCopy);
-                        ReportingUtils.logMessage("time=" + mdCopy.getFrameIndex() + ", position=" +
-                                mdCopy.getPositionIndex() + ", channel=" + mdCopy.getChannelIndex() +
-                                ", slice=" + mdCopy.getSliceIndex()
-                                + ", remaining images =" + core_.getRemainingImageCount());
-                     } catch (Exception ex) {
-                        ReportingUtils.logError(ex);
-                     }
-                  }
-               });
+               try {
+                  Metadata mdCopy = new Metadata();
+                  Object img = core_.popNextImageMD(0, 0, mdCopy);
+                  displayImage(img, mdCopy);
+                  ReportingUtils.logMessage("time=" + mdCopy.getFrameIndex() + ", position=" +
+                          mdCopy.getPositionIndex() + ", channel=" + mdCopy.getChannelIndex() +
+                          ", slice=" + mdCopy.getSliceIndex()
+                          + ", remaining images =" + core_.getRemainingImageCount());
+               } catch (Exception ex) {
+                  ReportingUtils.logError(ex);
+               }
             }
             Thread.sleep(30);
          } while (!core_.acquisitionIsFinished() || core_.getRemainingImageCount() > 0);
