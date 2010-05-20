@@ -10,6 +10,8 @@ AC_PROG_LIBTOOL
 
 m4_include([../configure.common])
 
+AX_BOOST_BASE
+AX_BOOST_DATE_TIME
 
 # Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_STDBOOL
