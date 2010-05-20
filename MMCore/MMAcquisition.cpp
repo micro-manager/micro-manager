@@ -173,10 +173,10 @@ void MMAcquisitionEngine::GenerateSlicesAndChannelsSubsequence(AcquisitionSettin
 {
    if (acquisitionSettings.channelsFirst)
    {
-      for(imageRequest.sliceIndex; imageRequest.sliceIndex < acquisitionSettings.zStack.size(); ++imageRequest.sliceIndex)
+      for(imageRequest.sliceIndex = 0; imageRequest.sliceIndex < acquisitionSettings.zStack.size(); ++imageRequest.sliceIndex)
       {
          imageRequest.slicePosition = acquisitionSettings.zStack[imageRequest.sliceIndex];
-         for(imageRequest.channelIndex; imageRequest.channelIndex < acquisitionSettings.channelList.size(); ++imageRequest.channelIndex)			
+         for(imageRequest.channelIndex = 0; imageRequest.channelIndex < acquisitionSettings.channelList.size(); ++imageRequest.channelIndex)			
          {
             imageRequest.channel = acquisitionSettings.channelList[imageRequest.channelIndex];
             tasks_.push_back(new ImageTask(this, imageRequest));
@@ -185,10 +185,10 @@ void MMAcquisitionEngine::GenerateSlicesAndChannelsSubsequence(AcquisitionSettin
    }
    else
    {
-      for(imageRequest.channelIndex; imageRequest.channelIndex < acquisitionSettings.channelList.size(); ++imageRequest.channelIndex)			
+      for(imageRequest.channelIndex = 0; imageRequest.channelIndex < acquisitionSettings.channelList.size(); ++imageRequest.channelIndex)			
       {
          imageRequest.channel = acquisitionSettings.channelList[imageRequest.channelIndex];
-         for(imageRequest.sliceIndex; imageRequest.sliceIndex < acquisitionSettings.zStack.size(); ++imageRequest.sliceIndex)
+         for(imageRequest.sliceIndex = 0; imageRequest.sliceIndex < acquisitionSettings.zStack.size(); ++imageRequest.sliceIndex)
          {
             imageRequest.slicePosition = acquisitionSettings.zStack[imageRequest.sliceIndex];
             tasks_.push_back(new ImageTask(this, imageRequest));
