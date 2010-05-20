@@ -9,6 +9,7 @@ import ij.macro.Interpreter;
 import ij.measure.Calibration;
 
 import java.awt.Color;
+import java.awt.FileDialog;
 import java.awt.Graphics;
 import java.awt.Insets;
 import java.awt.Scrollbar;
@@ -444,26 +445,25 @@ public class Image5DWindow extends StackWindow {
         }
 
         // choose output directory
-        JFileChooser fc = new JFileChooser();
-        fc.setSelectedFile(new File(rootDir_ + "/" + i5d.getTitle()));
         boolean saveFile = true;
         File f;
 
         do {
-            saveFile = true;
-            int retVal = fc.showSaveDialog(this);
-            if (retVal == JFileChooser.APPROVE_OPTION) {
-                f = fc.getSelectedFile();
-                rootDir_ = new File(f.getPath()).getParent();
-                // check if file already exists
-                if (f.exists()) {
-                    JOptionPane.showMessageDialog(this,
-                            f.getName() + " already exists. Existing data can not be overwritten.");
-                    saveFile = false;
-                }
-            } else {
-                return;
-            }
+           saveFile = true;
+           FileDialog fc = new FileDialog(this, "Save Image5D", java.awt.FileDialog.SAVE);
+           fc.setDirectory(rootDir_);
+           fc.setFile(i5d.getTitle());
+           fc.setVisible(true);
+           if (fc.getFile() == null)
+              return;
+           rootDir_ = fc.getDirectory();
+           f = new File(rootDir_, fc.getFile());
+           // check if file already exists
+           if (f.exists()) {
+               JOptionPane.showMessageDialog(this,
+                       f.getName() + " already exists. Existing data can not be overwritten.");
+               saveFile = false;
+           }
         } while (saveFile == false);
 
         final ProgressBar progressBar = new ProgressBar("Saving File...", 0, acqData_.getNumberOfFrames());
