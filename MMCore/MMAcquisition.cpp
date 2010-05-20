@@ -77,12 +77,11 @@ void ImageTask::acquireImage() {
 	int w, h, d;
 	const char * img = eng_->coreCallback_->GetImage(); // Snaps and retrieves image.
 
-	MetadataSingleTag tag;
-	tag.SetDevice("AcqusitionEngine");
-	tag.SetName("RequestedPosition");
-	tag.SetValue(imageRequest_.multiAxisPosition.GetName().c_str());
 	Metadata md;
-	md.SetTag(tag);
+   md.sliceIndex = imageRequest_.sliceIndex;
+   md.channelIndex = imageRequest_.channelIndex;
+   md.positionIndex = imageRequest_.positionIndex;
+   md.frameIndex = imageRequest_.timeIndex;
 
 	eng_->coreCallback_->GetImageDimensions(w, h, d);
 	eng_->coreCallback_->InsertImage(NULL, (const unsigned char *) img, w, h, d, &md);
@@ -141,56 +140,60 @@ void MMAcquisitionEngine::SetTasks(TaskVector tasks) {
 void MMAcquisitionEngine::GenerateSequence(AcquisitionSettings acquisitionSettings)
 {
 
-	ImageRequest imageRequest;
+   ImageRequest imageRequest;
    imageRequest.runAutofocus = acquisitionSettings.useAutofocus;
-   double waitTime_ms;
 
-	if (acquisitionSettings.positionsFirst)
-	{
-		BOOST_FOREACH(waitTime_ms, acquisitionSettings.timeSeries)
-		{
-			imageRequest.waitTime = MM::MMTime(waitTime_ms * 1000);
-			BOOST_FOREACH(imageRequest.multiAxisPosition, acquisitionSettings.positionList)
-			{
-				GenerateSlicesAndChannelsSubsequence(acquisitionSettings, imageRequest);
-			}
-		}
-
-	}
-	else
-	{
-		BOOST_FOREACH(imageRequest.multiAxisPosition, acquisitionSettings.positionList)
-		{
-			BOOST_FOREACH(waitTime_ms, acquisitionSettings.timeSeries)
-			{
-				imageRequest.waitTime = MM::MMTime(waitTime_ms * 1000);
-				GenerateSlicesAndChannelsSubsequence(acquisitionSettings, imageRequest);
-			}
-		}
-	}
+   if (acquisitionSettings.positionsFirst)
+   {
+      for(imageRequest.timeIndex = 0; imageRequest.timeIndex < acquisitionSettings.timeSeries.size(); ++imageRequest.timeIndex)
+      {
+         imageRequest.waitTime = MM::MMTime(acquisitionSettings.timeSeries[imageRequest.timeIndex] * 1000);
+         for(imageRequest.positionIndex = 0; imageRequest.positionIndex < acquisitionSettings.positionList.size(); ++imageRequest.positionIndex)
+         {
+            imageRequest.multiAxisPosition = acquisitionSettings.positionList[imageRequest.positionIndex];
+            GenerateSlicesAndChannelsSubsequence(acquisitionSettings, imageRequest);
+         }
+      }
+   }
+   else
+   {
+      for(imageRequest.positionIndex = 0; imageRequest.positionIndex < acquisitionSettings.positionList.size(); ++imageRequest.positionIndex)
+      {
+         imageRequest.multiAxisPosition = acquisitionSettings.positionList[imageRequest.positionIndex];
+         for(imageRequest.timeIndex = 0; imageRequest.timeIndex < acquisitionSettings.timeSeries.size(); ++imageRequest.timeIndex)
+         {
+            imageRequest.waitTime = MM::MMTime(acquisitionSettings.timeSeries[imageRequest.timeIndex] * 1000);
+            GenerateSlicesAndChannelsSubsequence(acquisitionSettings, imageRequest);
+         }
+      }
+   }
 }
 
 void MMAcquisitionEngine::GenerateSlicesAndChannelsSubsequence(AcquisitionSettings acquisitionSettings, ImageRequest imageRequest)
 {
-	if (acquisitionSettings.channelsFirst)
-	{
-		BOOST_FOREACH(imageRequest.slicePosition, acquisitionSettings.zStack)
-		{
-			BOOST_FOREACH(imageRequest.channel, acquisitionSettings.channelList)
-			{
-				tasks_.push_back(new ImageTask(this, imageRequest));
-			}
-		}
-	}
-	else
-	{
-		BOOST_FOREACH(imageRequest.channel, acquisitionSettings.channelList)
-		{
-			BOOST_FOREACH(imageRequest.slicePosition, acquisitionSettings.zStack)
-			{
-				tasks_.push_back(new ImageTask(this, imageRequest));
-			}
-		}
-	}
+   if (acquisitionSettings.channelsFirst)
+   {
+      for(imageRequest.sliceIndex; imageRequest.sliceIndex < acquisitionSettings.zStack.size(); ++imageRequest.sliceIndex)
+      {
+         imageRequest.slicePosition = acquisitionSettings.zStack[imageRequest.sliceIndex];
+         for(imageRequest.channelIndex; imageRequest.channelIndex < acquisitionSettings.channelList.size(); ++imageRequest.channelIndex)			
+         {
+            imageRequest.channel = acquisitionSettings.channelList[imageRequest.channelIndex];
+            tasks_.push_back(new ImageTask(this, imageRequest));
+         }
+      }
+   }
+   else
+   {
+      for(imageRequest.channelIndex; imageRequest.channelIndex < acquisitionSettings.channelList.size(); ++imageRequest.channelIndex)			
+      {
+         imageRequest.channel = acquisitionSettings.channelList[imageRequest.channelIndex];
+         for(imageRequest.sliceIndex; imageRequest.sliceIndex < acquisitionSettings.zStack.size(); ++imageRequest.sliceIndex)
+         {
+            imageRequest.slicePosition = acquisitionSettings.zStack[imageRequest.sliceIndex];
+            tasks_.push_back(new ImageTask(this, imageRequest));
+         }
+      }
+   }
 }
 

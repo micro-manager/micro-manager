@@ -14,11 +14,26 @@
 class ImageRequest {
 public:
 	MM::MMTime waitTime;
-    double exposure;
+   double exposure;
 	MultiAxisPosition multiAxisPosition;
 	Channel channel;
 	double slicePosition;
 	bool runAutofocus;
+
+   unsigned int sourceIndex;
+   unsigned int positionIndex;
+   unsigned int timeIndex;
+   unsigned int sliceIndex;
+   unsigned int channelIndex;
+
+   ImageRequest():
+   sourceIndex(0),
+      positionIndex(0),
+      timeIndex(0),
+      sliceIndex(0),
+      channelIndex(0) {
+
+   }
 };
 
 
@@ -84,5 +99,4 @@ private:
 public:
    ImageTask(MMAcquisitionEngine * eng, ImageRequest imageRequest);
    void run();
-
 };
