@@ -6,6 +6,8 @@
  * To use, run the script, then type:
  *  mL_.aim(x, y);
  * with x and y being the x and y coordinates that you want the position to move to
+ * To enter coordinates in microns, use the following instead:
+ *  mL_.aimUm(x, y);
  * 
  * When needed, stop the script usings:
  *  mL_.stop();
@@ -51,6 +53,16 @@ public class MyListener implements MouseListener,
 		public aim(int x, int y) {
 			aimX_ = x;
 			aimY_ = y;
+		}
+
+		public aimUm(double x, double y) {
+	      double pixSizeUm = core_.getPixelSizeUm();
+	      if (! (pixSizeUm > 0.0)) {
+	         JOptionPane.showMessageDialog(null, "Please provide pixel size calibration data before using this function");
+	         return;
+	      }
+		aimX_ = (int) (x / pixSizeUm);
+		aimY_ = (int) (y / pixSizeUm);
 		}
 
 	   public void start () {
@@ -182,10 +194,10 @@ public class MyListener implements MouseListener,
 		         return;
 		      }
 
-
-gui.message("Moving the stage: " + mXUm + " " + mYUm);
-
+				gui.message("Moving the stage: " + mXUm + " " + mYUm);
 		   } 
+
+
 	   // Mouse listener implementation
 	   public void mousePressed(MouseEvent e) {
 	      // Get the starting coordinate for the dragging
