@@ -26,10 +26,21 @@ void ImageTask::run()
 
 void ImageTask::updateSlice()
 {
+   double chanZOffset = 0;
+   double sliceZ;
+
+   if (imageRequest_.channelIndex > -1)
+      chanZOffset = imageRequest_.channel.zOffset;
+
    if (imageRequest_.sliceIndex > -1)
+      sliceZ = imageRequest_.slicePosition;
+   else
+      eng_->coreCallback_->GetFocusPosition(sliceZ);
+
+   if ((imageRequest_.sliceIndex > -1) || (chanZOffset != 0))
    {
-      eng_->coreCallback_->SetFocusPosition(imageRequest_.slicePosition);
-      printf("slice set\n");
+      eng_->coreCallback_->SetFocusPosition(sliceZ + chanZOffset);
+      printf("z position set\n");
    }
 }
 
@@ -149,7 +160,6 @@ void MMAcquisitionEngine::SetTasks(TaskVector tasks) {
 
 void MMAcquisitionEngine::GenerateSequence(AcquisitionSettings acquisitionSettings)
 {
-
    ImageRequest imageRequest;
    imageRequest.runAutofocus = acquisitionSettings.useAutofocus;
 
@@ -177,7 +187,7 @@ void MMAcquisitionEngine::GenerateSequence(AcquisitionSettings acquisitionSettin
          GenerateSlicesAndChannelsSubsequence(acquisitionSettings, imageRequest);
       }
    }
-   else
+   else // times and positions are both specified
    {
       if (acquisitionSettings.positionsFirst)
       {
@@ -191,7 +201,7 @@ void MMAcquisitionEngine::GenerateSequence(AcquisitionSettings acquisitionSettin
             }
          }
       }
-      else
+      else // time first
       {
          for(imageRequest.positionIndex = 0; imageRequest.positionIndex < acquisitionSettings.positionList.size(); ++imageRequest.positionIndex)
          {
@@ -208,6 +218,9 @@ void MMAcquisitionEngine::GenerateSequence(AcquisitionSettings acquisitionSettin
 
 void MMAcquisitionEngine::GenerateSlicesAndChannelsSubsequence(AcquisitionSettings acquisitionSettings, ImageRequest imageRequest)
 {
+   imageRequest.runAutofocus = (acquisitionSettings.useAutofocus // &&
+      && (0 == (imageRequest.timeIndex % (1 + acquisitionSettings.autofocusSkipFrames))));
+
    if (acquisitionSettings.zStack.size() == 0 && acquisitionSettings.channelList.size() == 0)
    {
       imageRequest.sliceIndex = -1;
@@ -220,7 +233,8 @@ void MMAcquisitionEngine::GenerateSlicesAndChannelsSubsequence(AcquisitionSettin
       for(imageRequest.channelIndex = 0; imageRequest.channelIndex < acquisitionSettings.channelList.size(); ++imageRequest.channelIndex)			
       {
          imageRequest.channel = acquisitionSettings.channelList[imageRequest.channelIndex];
-         tasks_.push_back(new ImageTask(this, imageRequest));
+         if (0 == (imageRequest.timeIndex % (imageRequest.channel.skipFrames + 1)))
+            tasks_.push_back(new ImageTask(this, imageRequest));
       }
    }
    else if (acquisitionSettings.channelList.size() == 0)
@@ -232,7 +246,7 @@ void MMAcquisitionEngine::GenerateSlicesAndChannelsSubsequence(AcquisitionSettin
          tasks_.push_back(new ImageTask(this, imageRequest));
       }
    }
-   else
+   else // slices and channels are both specified
    {
       if (acquisitionSettings.channelsFirst)
       {
@@ -242,19 +256,29 @@ void MMAcquisitionEngine::GenerateSlicesAndChannelsSubsequence(AcquisitionSettin
             for(imageRequest.channelIndex = 0; imageRequest.channelIndex < acquisitionSettings.channelList.size(); ++imageRequest.channelIndex)			
             {
                imageRequest.channel = acquisitionSettings.channelList[imageRequest.channelIndex];
-               tasks_.push_back(new ImageTask(this, imageRequest));
+               if (imageRequest.channel.useZStack || (imageRequest.sliceIndex == (acquisitionSettings.zStack.size()-1)/2))
+               {
+                  if (0 == (imageRequest.timeIndex % (imageRequest.channel.skipFrames + 1)))
+                     tasks_.push_back(new ImageTask(this, imageRequest));
+               }
             }
          }
       }
-      else
+      else // slices first
       {
          for(imageRequest.channelIndex = 0; imageRequest.channelIndex < acquisitionSettings.channelList.size(); ++imageRequest.channelIndex)			
          {
-            imageRequest.channel = acquisitionSettings.channelList[imageRequest.channelIndex];
-            for(imageRequest.sliceIndex = 0; imageRequest.sliceIndex < acquisitionSettings.zStack.size(); ++imageRequest.sliceIndex)
+            if (0 == (imageRequest.timeIndex % (imageRequest.channel.skipFrames + 1)))
             {
-               imageRequest.slicePosition = acquisitionSettings.zStack[imageRequest.sliceIndex];
-               tasks_.push_back(new ImageTask(this, imageRequest));
+               imageRequest.channel = acquisitionSettings.channelList[imageRequest.channelIndex];
+               for(imageRequest.sliceIndex = 0; imageRequest.sliceIndex < acquisitionSettings.zStack.size(); ++imageRequest.sliceIndex)
+               {
+                  if (imageRequest.channel.useZStack || (imageRequest.sliceIndex == (acquisitionSettings.zStack.size()-1)/2))
+                  {
+                     imageRequest.slicePosition = acquisitionSettings.zStack[imageRequest.sliceIndex];
+                     tasks_.push_back(new ImageTask(this, imageRequest));
+                  }
+               }
             }
          }
       }

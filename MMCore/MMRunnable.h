@@ -106,6 +106,7 @@ public:
 
    bool useAutofocus;
    string autofocusDevice;
+   int autofocusSkipFrames;
 
    bool saveImages;
 

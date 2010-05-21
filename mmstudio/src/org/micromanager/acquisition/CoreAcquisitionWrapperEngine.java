@@ -154,6 +154,9 @@ public class CoreAcquisitionWrapperEngine implements AcquisitionEngine {
       acquisitionSettings.setPositionsFirst(positionMode_ == PositionMode.TIME_LAPSE);
       acquisitionSettings.setChannelsFirst(sliceMode_ == SliceMode.CHANNELS_FIRST);
 
+      acquisitionSettings.setUseAutofocus(useAutoFocus_);
+      acquisitionSettings.setAutofocusSkipFrames(afSkipInterval_);
+      
       return acquisitionSettings;
    }
 
