@@ -109,6 +109,8 @@ public:
    int autofocusSkipFrames;
 
    bool saveImages;
+   bool keepShutterOpenSlices;
+   bool keepShutterOpenChannels;
 
    AcquisitionSettings():
       positionsFirst(true),

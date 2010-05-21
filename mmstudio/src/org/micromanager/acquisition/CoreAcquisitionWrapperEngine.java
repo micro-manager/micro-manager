@@ -156,6 +156,9 @@ public class CoreAcquisitionWrapperEngine implements AcquisitionEngine {
 
       acquisitionSettings.setUseAutofocus(useAutoFocus_);
       acquisitionSettings.setAutofocusSkipFrames(afSkipInterval_);
+
+      acquisitionSettings.setKeepShutterOpenChannels(keepShutterOpenForChannels_);
+      acquisitionSettings.setKeepShutterOpenSlices(keepShutterOpenForStack_);
       
       return acquisitionSettings;
    }

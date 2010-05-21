@@ -15,6 +15,7 @@ ImageTask::ImageTask(MMAcquisitionEngine * eng, ImageRequest imageRequest)
 
 void ImageTask::run()
 {
+   closeShutterIfNeeded();
    updatePosition();
    updateSlice();
    updateChannel();
@@ -22,6 +23,12 @@ void ImageTask::run()
    autofocus();
    acquireImage();
 
+}
+
+void ImageTask::closeShutterIfNeeded()
+{
+   if (imageRequest_.closeShutter)
+      eng_->core_->setShutterOpen(false);
 }
 
 void ImageTask::updateSlice()
@@ -98,6 +105,7 @@ void ImageTask::autofocus() {
 
 void ImageTask::acquireImage() {
    int w, h, d;
+   eng_->core_->setShutterOpen(true);
    const char * img = eng_->coreCallback_->GetImage(); // Snaps and retrieves image.
 
    Metadata md;
@@ -126,12 +134,17 @@ void MMAcquisitionEngine::Start() {
 }
 
 void MMAcquisitionEngine::Run() {
+   bool initialAutoshutter = core_->getAutoShutter();
+
    for (unsigned int i = 0; i < tasks_.size(); ++i) {
       if (stopRequested_)
          break;
       printf("Task #%d started, type %d\n", i, tasks_[i]->type);
       tasks_[i]->run();
    }
+
+   core_->setAutoShutter(initialAutoshutter);
+
    finished_ = true;
 }
 
@@ -162,6 +175,7 @@ void MMAcquisitionEngine::GenerateSequence(AcquisitionSettings acquisitionSettin
 {
    ImageRequest imageRequest;
    imageRequest.runAutofocus = acquisitionSettings.useAutofocus;
+   imageRequest.closeShutter = true;
 
    if (acquisitionSettings.positionList.size() == 0 && acquisitionSettings.timeSeries.size() == 0)
    { 
@@ -232,6 +246,8 @@ void MMAcquisitionEngine::GenerateSlicesAndChannelsSubsequence(AcquisitionSettin
       imageRequest.sliceIndex = -1;
       for(imageRequest.channelIndex = 0; imageRequest.channelIndex < acquisitionSettings.channelList.size(); ++imageRequest.channelIndex)			
       {
+         if (acquisitionSettings.keepShutterOpenChannels && imageRequest.channelIndex > 0)
+            imageRequest.closeShutter = false;
          imageRequest.channel = acquisitionSettings.channelList[imageRequest.channelIndex];
          if (0 == (imageRequest.timeIndex % (imageRequest.channel.skipFrames + 1)))
             tasks_.push_back(new ImageTask(this, imageRequest));
@@ -242,6 +258,8 @@ void MMAcquisitionEngine::GenerateSlicesAndChannelsSubsequence(AcquisitionSettin
       imageRequest.channelIndex = -1;
       for(imageRequest.sliceIndex = 0; imageRequest.sliceIndex < acquisitionSettings.zStack.size(); ++imageRequest.sliceIndex)
       {
+         if (acquisitionSettings.keepShutterOpenSlices && imageRequest.sliceIndex > 0)
+            imageRequest.closeShutter = false;
          imageRequest.slicePosition = acquisitionSettings.zStack[imageRequest.sliceIndex];
          tasks_.push_back(new ImageTask(this, imageRequest));
       }
@@ -255,6 +273,10 @@ void MMAcquisitionEngine::GenerateSlicesAndChannelsSubsequence(AcquisitionSettin
             imageRequest.slicePosition = acquisitionSettings.zStack[imageRequest.sliceIndex];
             for(imageRequest.channelIndex = 0; imageRequest.channelIndex < acquisitionSettings.channelList.size(); ++imageRequest.channelIndex)			
             {
+               if (acquisitionSettings.keepShutterOpenSlices && imageRequest.sliceIndex > 0 && imageRequest.channel.useZStack)
+                  imageRequest.closeShutter = false;
+               if (acquisitionSettings.keepShutterOpenChannels && imageRequest.channelIndex > 0)
+                  imageRequest.closeShutter = false;
                imageRequest.channel = acquisitionSettings.channelList[imageRequest.channelIndex];
                if (imageRequest.channel.useZStack || (imageRequest.sliceIndex == (acquisitionSettings.zStack.size()-1)/2))
                {
@@ -270,11 +292,15 @@ void MMAcquisitionEngine::GenerateSlicesAndChannelsSubsequence(AcquisitionSettin
          {
             if (0 == (imageRequest.timeIndex % (imageRequest.channel.skipFrames + 1)))
             {
+               if (acquisitionSettings.keepShutterOpenChannels && imageRequest.channelIndex > 0)
+                  imageRequest.closeShutter = false;
                imageRequest.channel = acquisitionSettings.channelList[imageRequest.channelIndex];
                for(imageRequest.sliceIndex = 0; imageRequest.sliceIndex < acquisitionSettings.zStack.size(); ++imageRequest.sliceIndex)
                {
                   if (imageRequest.channel.useZStack || (imageRequest.sliceIndex == (acquisitionSettings.zStack.size()-1)/2))
                   {
+                     if (acquisitionSettings.keepShutterOpenSlices && imageRequest.sliceIndex > 0 && imageRequest.channel.useZStack)
+                        imageRequest.closeShutter = false;
                      imageRequest.slicePosition = acquisitionSettings.zStack[imageRequest.sliceIndex];
                      tasks_.push_back(new ImageTask(this, imageRequest));
                   }

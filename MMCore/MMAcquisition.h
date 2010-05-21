@@ -26,6 +26,8 @@ public:
    int sliceIndex;
    int channelIndex;
 
+   bool closeShutter;
+
    ImageRequest():
    sourceIndex(0),
       positionIndex(0),
@@ -95,6 +97,7 @@ private:
    void wait();
    void autofocus();
    void acquireImage();
+   void closeShutterIfNeeded();
 
 public:
    ImageTask(MMAcquisitionEngine * eng, ImageRequest imageRequest);
