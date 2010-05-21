@@ -30,6 +30,8 @@
 #endif
 
 #ifdef __APPLE__    
+
+#define BOOST_ASIO_DISABLE_KQUEUE  // suggested to fix "Operation not supported" on OS X
 #include <CoreFoundation/CoreFoundation.h>
 #include <IOKit/IOKitLib.h>
 #include <IOKit/serial/IOSerialKeys.h>
