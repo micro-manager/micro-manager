@@ -43,14 +43,10 @@ Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.MFC\mfcm90.dll
 Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.MFC\mfcm90u.dll ; DestDir: {app}; Flags: ignoreversion
 Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.ATL\atl90.dll ; DestDir: {app}; Flags: ignoreversion
 
-Source: micro-manager\ATMCD32D.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\CamUsb_API.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\inpout32.dll; DestDir: {app}; Flags: ignoreversion
+Source: micro-manager\inpoutx64.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\libusb0.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\MMCoreJ_wrap.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\usb_main.bin; DestDir: {app}; Flags: ignoreversion
 
-Source: micro-manager\mmgr_dal_AndorLaserCombiner.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Apogee.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Arduino.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_ASIFW1000.dll; DestDir: {app}; Flags: ignoreversion
@@ -74,16 +70,13 @@ Source: micro-manager\mmgr_dal_Neos.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Nikon.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_NikonAZ100.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_NikonTE2000.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_NikonTI.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Olympus.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_ParallelPort.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Pecon.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_PI.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_PI_GCS.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_Piper.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_PrecisExcite.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Prior.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_ProgRes.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_SerialManager.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_SimpleAutofocus.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_SpectralLMM5.dll; DestDir: {app}; Flags: ignoreversion

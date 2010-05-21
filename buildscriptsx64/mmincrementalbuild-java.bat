@@ -49,6 +49,13 @@ rem cd mmStudio\src
 rem call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile ../build64.xml install makeDeviceList packInstaller
 rem set DEVICELISTBUILDER=""
 
+echo building installation package
+cd mmStudio\src
+call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile ../build64.xml install packInstaller
+
+
+
+
 pushd \Projects\micromanager\Install64\Output
 rename MMSetup_.exe  MMSetupx64_%mmversion%_%YYYYMMDD%.exe
 popd
