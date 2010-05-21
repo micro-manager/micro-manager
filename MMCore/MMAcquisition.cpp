@@ -102,8 +102,6 @@ void ImageTask::acquireImage() {
 
 
 
-
-
 /////////////////////////
 // MMAcquisitionRunner //
 /////////////////////////

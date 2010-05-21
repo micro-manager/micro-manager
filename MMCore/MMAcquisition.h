@@ -13,12 +13,12 @@
 
 class ImageRequest {
 public:
-	MM::MMTime waitTime;
+   MM::MMTime waitTime;
    double exposure;
-	MultiAxisPosition multiAxisPosition;
-	Channel channel;
-	double slicePosition;
-	bool runAutofocus;
+   MultiAxisPosition multiAxisPosition;
+   Channel channel;
+   double slicePosition;
+   bool runAutofocus;
 
    int sourceIndex;
    int positionIndex;
