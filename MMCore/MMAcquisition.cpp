@@ -92,7 +92,7 @@ void ImageTask::wait() {
 }
 
 void ImageTask::autofocus() {
-   if (imageRequest_.runAutofocus)
+   if (imageRequest_.runAutofocus && imageRequest_.channelIndex == 0 && imageRequest_.positionIndex == 0)
       eng_->core_->fullFocus();
 }
 
