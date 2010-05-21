@@ -59,16 +59,27 @@ public:
         // MMThreadGuard g(implementationLock_);
          if (! serialPortImplementation_.is_open()) 
          { 
-            pPort->LogMessage( "Failed to open serial port" );
+            pSerialPortAdapter_->LogMessage( "Failed to open serial port" , false);
             return; 
          } 
          boost::asio::serial_port_base::baud_rate baud_option(baud); 
-         serialPortImplementation_.set_option(baud_option); // set the baud rate after the port has been opened 
+         boost::system::error_code anError;
+         serialPortImplementation_.set_option(baud_option, anError); // set the baud rate after the port has been opened 
+         if( !!anError)
+            pSerialPortAdapter_->LogMessage(("error setting baud in AsioClient(): "+boost::lexical_cast<std::string,int>(anError.value()) + " " + anError.message()).c_str(), false);
 
-         serialPortImplementation_.set_option(  boost::asio::serial_port_base::flow_control(flow) ); 
-         serialPortImplementation_.set_option( boost::asio::serial_port_base::parity(parity)); 
-         serialPortImplementation_.set_option( boost::asio::serial_port_base::stop_bits(stopBits) ); 
-         serialPortImplementation_.set_option( boost::asio::serial_port_base::character_size( 8 ) ); 
+         serialPortImplementation_.set_option(  boost::asio::serial_port_base::flow_control(flow) , anError ); 
+         if( !!anError)
+            pSerialPortAdapter_->LogMessage(("error setting flow_control in AsioClient(): "+boost::lexical_cast<std::string,int>(anError.value()) + " " + anError.message()).c_str(), false);
+         serialPortImplementation_.set_option( boost::asio::serial_port_base::parity(parity), anError); 
+         if( !!anError)
+            pSerialPortAdapter_->LogMessage(("error setting parity in AsioClient(): "+boost::lexical_cast<std::string,int>(anError.value()) + " " + anError.message()).c_str(), false);
+         serialPortImplementation_.set_option( boost::asio::serial_port_base::stop_bits(stopBits), anError ); 
+         if( !!anError)
+            pSerialPortAdapter_->LogMessage(("error setting stop_bits in AsioClient(): "+boost::lexical_cast<std::string,int>(anError.value()) + " " + anError.message()).c_str(), false);
+         serialPortImplementation_.set_option( boost::asio::serial_port_base::character_size( 8 ), anError ); 
+         if( !!anError)
+            pSerialPortAdapter_->LogMessage(("error setting character_size in AsioClient(): "+boost::lexical_cast<std::string,int>(anError.value()) + " " + anError.message()).c_str(), false);
       }while(bfalse_s);
 
       ReadStart(); 
