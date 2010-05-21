@@ -133,6 +133,7 @@ bool SerialPortLister::portAccessible(const char* portName)
    }
    catch( std::exception& what)
    {
+      std::cerr << std::endl << "in portAccessible, exception encountered: " << what.what() << std::endl;
       return false;
    }
 

@@ -56,7 +56,7 @@ public:
    { 
       do // just a scope for the guard
       {
-         MMThreadGuard g(implementationLock_);
+        // MMThreadGuard g(implementationLock_);
          if (! serialPortImplementation_.is_open()) 
          { 
             pPort->LogMessage( "Failed to open serial port" );
@@ -145,7 +145,7 @@ private:
    static const int max_read_length = 512; // maximum amount of data to read in one operation 
    void ReadStart(void) 
    { // Start an asynchronous read and call ReadComplete when it completes or fails 
-      MMThreadGuard g(implementationLock_);
+     // MMThreadGuard g(implementationLock_);
       serialPortImplementation_.async_read_some(boost::asio::buffer(read_msg_, max_read_length), 
          boost::bind(&AsioClient::ReadComplete, 
          this, 
@@ -171,7 +171,7 @@ private:
       } 
       else 
       {
-         pSerialPortAdapter_->LogMessage("error in ReadComplete: ", false);
+         pSerialPortAdapter_->LogMessage(("error in ReadComplete: "+boost::lexical_cast<std::string,int>(error.value()) + " " + error.message()).c_str(), false);
          DoClose(error); 
       }
    } 
@@ -256,7 +256,7 @@ private:
    MMThreadLock readBufferLock_;
    MMThreadLock writeBufferLock_;
    MMThreadLock serviceLock_;
-   MMThreadLock implementationLock_;
+   //MMThreadLock implementationLock_;
 
 
 }; 
