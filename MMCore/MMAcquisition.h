@@ -20,11 +20,11 @@ public:
 	double slicePosition;
 	bool runAutofocus;
 
-   unsigned int sourceIndex;
-   unsigned int positionIndex;
-   unsigned int timeIndex;
-   unsigned int sliceIndex;
-   unsigned int channelIndex;
+   int sourceIndex;
+   int positionIndex;
+   int timeIndex;
+   int sliceIndex;
+   int channelIndex;
 
    ImageRequest():
    sourceIndex(0),
