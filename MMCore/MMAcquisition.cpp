@@ -15,7 +15,6 @@ ImageTask::ImageTask(MMAcquisitionEngine * eng, ImageRequest imageRequest)
 
 void ImageTask::run()
 {
-   closeShutterIfNeeded();
    updatePosition();
    updateSlice();
    updateChannel();
@@ -25,11 +24,6 @@ void ImageTask::run()
 
 }
 
-void ImageTask::closeShutterIfNeeded()
-{
-   if (imageRequest_.closeShutter)
-      eng_->core_->setShutterOpen(false);
-}
 
 void ImageTask::updateSlice()
 {
@@ -47,7 +41,7 @@ void ImageTask::updateSlice()
    if ((imageRequest_.sliceIndex > -1) || (chanZOffset != 0))
    {
       eng_->coreCallback_->SetFocusPosition(sliceZ + chanZOffset);
-      printf("z position set\n");
+      eng_->core_->logMessage("z position set\n");
    }
 }
 
@@ -70,7 +64,7 @@ void ImageTask::updatePosition()
          point2D xy = it2->second;
          eng_->core_->setXYPosition(it2->first.c_str(), xy.first, xy.second);
       }
-      printf("position set\n");
+      eng_->core_->logMessage("position set\n");
    }
 }
 
@@ -79,7 +73,7 @@ void ImageTask::updateChannel() {
    {
       eng_->coreCallback_->SetExposure(imageRequest_.channel.exposure);
       eng_->coreCallback_->SetConfig(imageRequest_.channel.group.c_str(), imageRequest_.channel.name.c_str());
-      printf("channel set\n");
+      eng_->core_->logMessage("channel set\n");
    }
 }
 
@@ -91,7 +85,7 @@ void ImageTask::wait() {
          MM::MMTime sleepTime = (eng_->lastWakeTime_ + imageRequest_.waitTime) - eng_->coreCallback_->GetCurrentMMTime();
          if (sleepTime > MM::MMTime(0, 0))
             eng_->coreCallback_->Sleep(NULL, sleepTime.getMsec());
-         printf("waited\n");
+         eng_->core_->logMessage("waited\n");
       }
 
       eng_->lastWakeTime_ = eng_->coreCallback_->GetCurrentMMTime();
@@ -105,8 +99,23 @@ void ImageTask::autofocus() {
 
 void ImageTask::acquireImage() {
    int w, h, d;
-   eng_->core_->setShutterOpen(true);
-   const char * img = eng_->coreCallback_->GetImage(); // Snaps and retrieves image.
+
+   if (! eng_->core_->getShutterOpen())
+   {
+      eng_->core_->setShutterOpen(true);
+      eng_->core_->logMessage("opened shutter");
+   }
+   eng_->core_->snapImage();
+   eng_->core_->logMessage("snapped image");
+
+   if (imageRequest_.closeShutter)
+   {
+      eng_->core_->setShutterOpen(false);
+      eng_->core_->logMessage("closed shutter");
+   }
+
+   void * img = eng_->core_->getImage(); // Snaps and retrieves image.
+   eng_->core_->logMessage("retrieved image");
 
    Metadata md;
    md.sliceIndex = max(0,imageRequest_.sliceIndex);
@@ -116,7 +125,7 @@ void ImageTask::acquireImage() {
 
    eng_->coreCallback_->GetImageDimensions(w, h, d);
    eng_->coreCallback_->InsertImage(NULL, (const unsigned char *) img, w, h, d, &md);
-   printf("Grabbed image.\n");
+   eng_->core_->logMessage("Grabbed image.\n");
 }
 
 
@@ -135,11 +144,14 @@ void MMAcquisitionEngine::Start() {
 
 void MMAcquisitionEngine::Run() {
    bool initialAutoshutter = core_->getAutoShutter();
+   core_->setAutoShutter(false);
 
    for (unsigned int i = 0; i < tasks_.size(); ++i) {
       if (stopRequested_)
          break;
-      printf("Task #%d started, type %d\n", i, tasks_[i]->type);
+      stringstream msg;
+      msg << "Task " << i << " started, type " << tasks_[i]->type << ".";
+      core_->logMessage(msg.str().c_str());
       tasks_[i]->run();
    }
 
@@ -212,6 +224,7 @@ void MMAcquisitionEngine::GenerateSequence(AcquisitionSettings acquisitionSettin
             {
                imageRequest.multiAxisPosition = acquisitionSettings.positionList[imageRequest.positionIndex];
                GenerateSlicesAndChannelsSubsequence(acquisitionSettings, imageRequest);
+               imageRequest.waitTime = 0;
             }
          }
       }
@@ -228,6 +241,8 @@ void MMAcquisitionEngine::GenerateSequence(AcquisitionSettings acquisitionSettin
          }
       }
    }
+
+   ControlShutterStates(acquisitionSettings);
 }
 
 void MMAcquisitionEngine::GenerateSlicesAndChannelsSubsequence(AcquisitionSettings acquisitionSettings, ImageRequest imageRequest)
@@ -246,11 +261,12 @@ void MMAcquisitionEngine::GenerateSlicesAndChannelsSubsequence(AcquisitionSettin
       imageRequest.sliceIndex = -1;
       for(imageRequest.channelIndex = 0; imageRequest.channelIndex < acquisitionSettings.channelList.size(); ++imageRequest.channelIndex)			
       {
-         if (acquisitionSettings.keepShutterOpenChannels && imageRequest.channelIndex > 0)
-            imageRequest.closeShutter = false;
          imageRequest.channel = acquisitionSettings.channelList[imageRequest.channelIndex];
          if (0 == (imageRequest.timeIndex % (imageRequest.channel.skipFrames + 1)))
+         {
             tasks_.push_back(new ImageTask(this, imageRequest));
+            imageRequest.waitTime = 0;
+         }
       }
    }
    else if (acquisitionSettings.channelList.size() == 0)
@@ -258,10 +274,9 @@ void MMAcquisitionEngine::GenerateSlicesAndChannelsSubsequence(AcquisitionSettin
       imageRequest.channelIndex = -1;
       for(imageRequest.sliceIndex = 0; imageRequest.sliceIndex < acquisitionSettings.zStack.size(); ++imageRequest.sliceIndex)
       {
-         if (acquisitionSettings.keepShutterOpenSlices && imageRequest.sliceIndex > 0)
-            imageRequest.closeShutter = false;
          imageRequest.slicePosition = acquisitionSettings.zStack[imageRequest.sliceIndex];
          tasks_.push_back(new ImageTask(this, imageRequest));
+         imageRequest.waitTime = 0;
       }
    }
    else // slices and channels are both specified
@@ -273,15 +288,14 @@ void MMAcquisitionEngine::GenerateSlicesAndChannelsSubsequence(AcquisitionSettin
             imageRequest.slicePosition = acquisitionSettings.zStack[imageRequest.sliceIndex];
             for(imageRequest.channelIndex = 0; imageRequest.channelIndex < acquisitionSettings.channelList.size(); ++imageRequest.channelIndex)			
             {
-               if (acquisitionSettings.keepShutterOpenSlices && imageRequest.sliceIndex > 0 && imageRequest.channel.useZStack)
-                  imageRequest.closeShutter = false;
-               if (acquisitionSettings.keepShutterOpenChannels && imageRequest.channelIndex > 0)
-                  imageRequest.closeShutter = false;
                imageRequest.channel = acquisitionSettings.channelList[imageRequest.channelIndex];
                if (imageRequest.channel.useZStack || (imageRequest.sliceIndex == (acquisitionSettings.zStack.size()-1)/2))
                {
                   if (0 == (imageRequest.timeIndex % (imageRequest.channel.skipFrames + 1)))
+                  {
                      tasks_.push_back(new ImageTask(this, imageRequest));
+                     imageRequest.waitTime = 0;
+                  }
                }
             }
          }
@@ -290,23 +304,65 @@ void MMAcquisitionEngine::GenerateSlicesAndChannelsSubsequence(AcquisitionSettin
       {
          for(imageRequest.channelIndex = 0; imageRequest.channelIndex < acquisitionSettings.channelList.size(); ++imageRequest.channelIndex)			
          {
+            imageRequest.channel = acquisitionSettings.channelList[imageRequest.channelIndex];
             if (0 == (imageRequest.timeIndex % (imageRequest.channel.skipFrames + 1)))
             {
-               if (acquisitionSettings.keepShutterOpenChannels && imageRequest.channelIndex > 0)
-                  imageRequest.closeShutter = false;
-               imageRequest.channel = acquisitionSettings.channelList[imageRequest.channelIndex];
                for(imageRequest.sliceIndex = 0; imageRequest.sliceIndex < acquisitionSettings.zStack.size(); ++imageRequest.sliceIndex)
                {
                   if (imageRequest.channel.useZStack || (imageRequest.sliceIndex == (acquisitionSettings.zStack.size()-1)/2))
                   {
-                     if (acquisitionSettings.keepShutterOpenSlices && imageRequest.sliceIndex > 0 && imageRequest.channel.useZStack)
-                        imageRequest.closeShutter = false;
                      imageRequest.slicePosition = acquisitionSettings.zStack[imageRequest.sliceIndex];
                      tasks_.push_back(new ImageTask(this, imageRequest));
+                     imageRequest.waitTime = 0;
                   }
                }
             }
          }
+      }
+   }
+}
+
+
+void MMAcquisitionEngine::ControlShutterStates(AcquisitionSettings acquisitionSettings)
+{
+   if (!acquisitionSettings.keepShutterOpenChannels && !acquisitionSettings.keepShutterOpenSlices)
+      return;
+
+   ImageRequest * pImageRequest = 0;
+   ImageRequest * pLastImageRequest = 0;
+
+   BOOST_FOREACH(MMRunnable * task, tasks_)
+   {
+      if (task->type == MMRunnable::IMAGE)
+      {
+         pImageRequest = &(((ImageTask *) task)->imageRequest_);
+         if (pLastImageRequest != 0)
+         {
+            if (pImageRequest->timeIndex == pLastImageRequest->timeIndex
+               && pImageRequest->positionIndex == pLastImageRequest->positionIndex)
+            {
+               if (acquisitionSettings.keepShutterOpenChannels
+                  && !acquisitionSettings.keepShutterOpenSlices)
+               {
+                  if (pImageRequest->sliceIndex == pLastImageRequest->sliceIndex)
+                     pLastImageRequest->closeShutter = false;
+               }
+
+               if (acquisitionSettings.keepShutterOpenSlices
+                  && !acquisitionSettings.keepShutterOpenChannels)
+               {
+                  if (pImageRequest->channelIndex == pLastImageRequest->channelIndex)
+                     pLastImageRequest->closeShutter = false;
+               }
+
+               if (acquisitionSettings.keepShutterOpenSlices
+                  && acquisitionSettings.keepShutterOpenChannels)
+               {
+                  pLastImageRequest->closeShutter = false;
+               }
+            }
+         }
+         pLastImageRequest = pImageRequest;
       }
    }
 }

@@ -78,6 +78,7 @@ public:
 
    void GenerateSequence(AcquisitionSettings acquisitionSettings);
    void GenerateSlicesAndChannelsSubsequence(AcquisitionSettings acquisitionSettings, ImageRequest request);
+   void ControlShutterStates(AcquisitionSettings acquisitionSettings);
    //MMRunnable * createImageTask();
 
 
@@ -89,7 +90,6 @@ class ImageTask:public MMRunnable
 
 private:
    MMAcquisitionEngine * eng_;
-   ImageRequest imageRequest_;
 
    void updatePosition();
    void updateSlice();
@@ -97,9 +97,9 @@ private:
    void wait();
    void autofocus();
    void acquireImage();
-   void closeShutterIfNeeded();
 
 public:
+   ImageRequest imageRequest_;
    ImageTask(MMAcquisitionEngine * eng, ImageRequest imageRequest);
    void run();
 };
