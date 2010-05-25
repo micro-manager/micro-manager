@@ -4783,7 +4783,7 @@ void CMMCore::runAcquisitionEngineTest(AcquisitionSettings acquisitionSettings) 
    engine_->Start();
 }
 
-void CMMCore::stopAcquisitionEngine()
+void CMMCore::stopAcquisitionEngine() throw (CMMError)
 {
    engine_->Stop();
 }
