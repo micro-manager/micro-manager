@@ -1825,7 +1825,12 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
          // There is a threading issue, setting this too early will lead to exceptions in Java 
          // Note that OVERLAY mode is much slower than others, so show a single channel in a fast mode
          if (channels_.size() == 1) {
+
+            if(  ImagePlus.COLOR_RGB == type){
+               img5d_[i].setDisplayMode(ChannelControl.RGB);
+            }else{
             img5d_[i].setDisplayMode(ChannelControl.ONE_CHANNEL_COLOR);
+            }
          } else {
             img5d_[i].setDisplayMode(ChannelControl.OVERLAY);
          }

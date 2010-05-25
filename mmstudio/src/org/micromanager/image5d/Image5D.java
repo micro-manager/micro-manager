@@ -119,7 +119,7 @@ public class Image5D extends ImagePlus {
 	byte[][] channelCMGreens;
 	byte[][] channelCMBlues;
 	
-	protected int displayMode; //  ChannelControl.ONE_CHANNEL_GRAY, ONE_CHANNEL_COLOR, or OVERLAY
+	protected int displayMode; //  ChannelControl.ONE_CHANNEL_GRAY, ONE_CHANNEL_COLOR, OVERLAY or RGB
 	protected boolean displayAllGray;	
 	// grayColorModel is initialized to an 8-bit grayscale ImdexColorModel in the constructor.
 	// It is used for every channel in every instance of Image5D.  
@@ -216,11 +216,14 @@ public class Image5D extends ImagePlus {
         // Create channel ImageProcessor and ImagePlus Arrays
         ImageProcessor[] newChannelIPs = new ImageProcessor[nChannels];
         channelImps = new ChannelImagePlus[nChannels];
+        boolean isColor = false;
         for (int i=0; i<nChannels; ++i){             
             newChannelIPs[i] = createProcessorFromDims(getType(), new int[] {width, height, 1, 1, 1});
             newChannelIPs[i].setPixels(imageStack.getPixels(getCurrentSliceOffset()+i));
-            if (newChannelIPs[i] instanceof ColorProcessor)
+            if (newChannelIPs[i] instanceof ColorProcessor){
                newChannelIPs[i].setColor(Color.black);
+               isColor = true;
+            }
             else
                newChannelIPs[i].setColorModel(chDisplayProps[i].getColorModel());
             newChannelIPs[i].setThreshold(chDisplayProps[i].getMinThreshold(), 
@@ -234,12 +237,15 @@ public class Image5D extends ImagePlus {
         displayMode = ChannelControl.ONE_CHANNEL_COLOR;
         displayAllGray = false;
         //displayGrayInTiles = false;
-        
-        grayColorModel = ChannelDisplayProperties.createModelFromColor(Color.white);
-        
-        imageStack.setColorModel(grayColorModel);
-        
-        setCalibration(super.getCalibration());
+        if (isColor){
+           displayMode = ChannelControl.RGB;
+           imageStack.setColorModel(new DirectColorModel(32, 0xFF0000, 0xFF00, 0xFF));
+        }
+        else{
+           grayColorModel = ChannelDisplayProperties.createModelFromColor(Color.white);
+           imageStack.setColorModel(grayColorModel);
+        }
+         setCalibration(super.getCalibration());
         
         isInitialized = true;
     }
@@ -702,7 +708,7 @@ public class Image5D extends ImagePlus {
     }
     
     /** Sets the displayMode of the Image5D to one of 
-     * ChannelControl.ONE_CHANNEL_GRAY, ONE_CHANNEL_COLOR or OVERLAY
+     * ChannelControl.ONE_CHANNEL_GRAY, ONE_CHANNEL_COLOR  OVERLAY or RGB
      * and updates the ChannelControl of the Image5DWindow. 
      * This is the method to be called from external code, not the one in ChannelControl.*/
     public void setDisplayMode(int displayMode) {
@@ -716,7 +722,7 @@ public class Image5D extends ImagePlus {
         this.displayMode = displayMode;
         if (displayMode == ChannelControl.ONE_CHANNEL_GRAY) {
             displayAllGray = true;
-        } else if ((displayMode == ChannelControl.ONE_CHANNEL_COLOR) ||
+        } else if (   (displayMode ==ChannelControl.RGB)  ||  (displayMode == ChannelControl.ONE_CHANNEL_COLOR) ||
                 (displayMode == ChannelControl.OVERLAY)) {
             displayAllGray = false;
         }
@@ -725,9 +731,9 @@ public class Image5D extends ImagePlus {
 			restoreChannelProperties(i);	
 		}    
         
-        Image5DWindow win = (Image5DWindow)getWindow();
-        if (win!=null) {
-            win.getChannelControl().setDisplayMode(displayMode);
+        Image5DWindow wind = (Image5DWindow)getWindow();
+        if (wind!=null) {
+            wind.getChannelControl().setDisplayMode(displayMode);
         }
         
 		updateImageAndDraw();
@@ -808,7 +814,7 @@ public class Image5D extends ImagePlus {
 			displayMode = ((Image5DWindow)win).getDisplayMode();
 
 
-		if ((displayMode == ChannelControl.ONE_CHANNEL_GRAY) || 
+		if ( ( displayMode == ChannelControl.RGB) || (displayMode == ChannelControl.ONE_CHANNEL_GRAY) ||
 				(displayMode == ChannelControl.ONE_CHANNEL_COLOR)) {
          
 			img = ip.createImage();

@@ -24,13 +24,13 @@
 import ij.IJ;
 import ij.Prefs;
 import ij.plugin.PlugIn;
+import ij.process.ColorProcessor;
 import ij.process.ImageStatistics;
 
 import java.awt.Color;
 import java.io.File;
 
 import javax.swing.JFileChooser;
-import javax.swing.JOptionPane;
 
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.image5d.ChannelCalibration;
@@ -172,10 +172,16 @@ public class MMImage5DReaderPlugin_ implements PlugIn {
             progressBar = null;
             // pop-up 5d image window
             Image5DWindow i5dWin = new Image5DWindow(img5d);
-            if (ad.getNumberOfChannels()==1)
-               img5d.setDisplayMode(ChannelControl.ONE_CHANNEL_COLOR);
-            else
+            if (ad.getNumberOfChannels() == 1) {
+               int modee = ChannelControl.ONE_CHANNEL_COLOR;
+               if( null != img5d){
+                  if( img5d.getProcessor() instanceof ColorProcessor )
+                     modee = ChannelControl.RGB;
+               }
+               img5d.setDisplayMode(modee);
+             } else {
                img5d.setDisplayMode(ChannelControl.OVERLAY);
+             }
 
             // i5dWin.setAcquitionEngine(engine_);
             i5dWin.setAcquisitionData(ad);

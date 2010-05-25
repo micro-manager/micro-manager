@@ -43,8 +43,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 
 import javax.swing.JButton;
@@ -137,11 +135,10 @@ import com.swtdesigner.SwingResourceManager;
 import ij.VirtualStack;
 import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
+import ij.process.ColorProcessor;
 import java.awt.Cursor;
 import java.awt.Graphics;
 import java.awt.image.DirectColorModel;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import org.micromanager.nativegui.NativeGUI;
 import org.micromanager.utils.ReportingUtils;
 
@@ -151,7 +148,7 @@ import org.micromanager.utils.ReportingUtils;
 public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, ScriptInterface {
 
    private static final String MICRO_MANAGER_TITLE = "Micro-Manager 1.4";
-   private static final String VERSION = "1.4.0  20100518";
+   private static final String VERSION = "1.4.0 ";
    private static final long serialVersionUID = 3556500289598574541L;
    private static final String MAIN_FRAME_X = "x";
    private static final String MAIN_FRAME_Y = "y";
@@ -275,7 +272,12 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       Image5DWindow i5dWin = new Image5DWindow(img5d);
       i5dWin.setBackground(guiColors_.background.get(options_.displayBackground));
       if (ad.getNumberOfChannels() == 1) {
-         img5d.setDisplayMode(ChannelControl.ONE_CHANNEL_COLOR);
+         int modee = ChannelControl.ONE_CHANNEL_COLOR;
+         if( null != img5d){
+            if( img5d.getProcessor() instanceof ColorProcessor )
+               modee = ChannelControl.RGB;
+         }
+         img5d.setDisplayMode(modee);
       } else {
          img5d.setDisplayMode(ChannelControl.OVERLAY);
       }

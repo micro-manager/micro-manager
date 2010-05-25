@@ -70,7 +70,8 @@ public class ChannelControl extends Panel implements ItemListener,
 	public static final int ONE_CHANNEL_GRAY = 0;
 	public static final int ONE_CHANNEL_COLOR = 1;
 	public static final int OVERLAY = 2;
-    public static final String[] displayModes = {"gray", "color", "ovl"};
+   public static final int RGB = 3;
+   public static final String[] displayModes = {"gray", "color", "ovl", "RGB"};
 
 	public static final String BUTTON_ACTIVATE_COLOR_CHOOSER = "Color";
 	public static final String BUTTON_DEACTIVATE_COLOR_CHOOSER = "Color";
@@ -107,6 +108,7 @@ public class ChannelControl extends Panel implements ItemListener,
 		displayChoice.add(displayModes[ONE_CHANNEL_GRAY]);
 		displayChoice.add(displayModes[ONE_CHANNEL_COLOR]);
 		displayChoice.add(displayModes[OVERLAY]);
+      displayChoice.add(displayModes[RGB]);
 
 		displayChoice.select(OVERLAY);
 		displayMode = OVERLAY;
@@ -234,8 +236,8 @@ public class ChannelControl extends Panel implements ItemListener,
       int mode = 0;
       if( i5d.getProcessor(i5d.getCurrentChannel()) instanceof ColorProcessor)
       {
-         mode = ONE_CHANNEL_COLOR;
-         displayChoice.select(ONE_CHANNEL_COLOR);
+         mode = RGB;
+         displayChoice.select(RGB);
       }else{
 
 		if (e.getSource() == displayChoice) {
@@ -275,7 +277,16 @@ public class ChannelControl extends Panel implements ItemListener,
 			colorButton.setEnabled(true);
 			addChannelSelectorOverlay();	
 			displayMode = mode;
-			
+
+      } else if (mode == RGB) {
+			if (colorChooserDisplayed) {
+				remove(cColorChooser);
+				colorButton.setLabel(BUTTON_ACTIVATE_COLOR_CHOOSER);
+				colorChooserDisplayed = false;
+			}
+			colorButton.setEnabled(false);
+			displayMode = mode;
+
 		} else {
 		    throw new IllegalArgumentException("Unknown display mode: "+ mode);
 		}

@@ -23,6 +23,7 @@
 
 package org.micromanager.utils;
 
+import ij.process.ColorProcessor;
 import ij.process.ImageStatistics;
 
 import java.awt.Color;
@@ -155,10 +156,16 @@ public class GUIUtils {
 
          // pop-up 5d image window
          Image5DWindow i5dWin = new Image5DWindow(img5d);
-         if (ad.getNumberOfChannels()==1)
-            img5d.setDisplayMode(ChannelControl.ONE_CHANNEL_COLOR);
-         else
+         if (ad.getNumberOfChannels() == 1) {
+            int modee = ChannelControl.ONE_CHANNEL_COLOR;
+            if( null != img5d){
+               if( img5d.getProcessor() instanceof ColorProcessor )
+                  modee = ChannelControl.RGB;
+            }
+            img5d.setDisplayMode(modee);
+         } else {
             img5d.setDisplayMode(ChannelControl.OVERLAY);
+         }
 
          i5dWin.setAcquisitionData(ad);
          img5d.changes = false;
