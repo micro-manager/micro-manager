@@ -15,10 +15,14 @@ ImageTask::ImageTask(MMAcquisitionEngine * eng, ImageRequest imageRequest)
 
 void ImageTask::run()
 {
-   updatePosition();
-   updateSlice();
-   updateChannel();
-   wait();
+   if (!eng_->StopHasBeenRequested())
+      updatePosition();
+   if (!eng_->StopHasBeenRequested())
+      updateSlice();
+   if (!eng_->StopHasBeenRequested())
+      updateChannel();
+   if (!eng_->StopHasBeenRequested())
+      wait();
    if (!eng_->StopHasBeenRequested())
       autofocus();
    if (!eng_->StopHasBeenRequested())
