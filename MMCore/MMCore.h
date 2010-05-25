@@ -417,6 +417,7 @@ public:
 
    // >>>> TEST >>>>>>>>>>>>>>>>>>>>>>..
    void runAcquisitionEngineTest(AcquisitionSettings acquisitionSettings) throw (CMMError);
+   void stopAcquisitionEngine() throw (CMMError);
    bool acquisitionIsFinished() throw (CMMError);
 
    /** @name "  "

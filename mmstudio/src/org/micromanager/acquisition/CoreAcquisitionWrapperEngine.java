@@ -6,6 +6,8 @@ package org.micromanager.acquisition;
 
 import java.awt.Color;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import mmcorej.AcquisitionSettings;
 import mmcorej.CMMCore;
@@ -172,11 +174,15 @@ public class CoreAcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    public void stop(boolean interrupted) {
-      throw new UnsupportedOperationException("Not supported yet.");
+      try {
+         core_.stopAcquisitionEngine();
+      } catch (Exception ex) {
+         ReportingUtils.showError("Acquisition engine stop request failed");
+      }
    }
 
    public void abortRequest() {
-      throw new UnsupportedOperationException("Not supported yet.");
+      stop(true);
    }
 
 
