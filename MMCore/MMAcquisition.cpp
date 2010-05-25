@@ -224,7 +224,7 @@ void MMAcquisitionEngine::GenerateSequence(AcquisitionSettings acquisitionSettin
             {
                imageRequest.multiAxisPosition = acquisitionSettings.positionList[imageRequest.positionIndex];
                GenerateSlicesAndChannelsSubsequence(acquisitionSettings, imageRequest);
-               imageRequest.waitTime = 0;
+               imageRequest.waitTime = 0; // Only wait at the first position.
             }
          }
       }
@@ -265,7 +265,7 @@ void MMAcquisitionEngine::GenerateSlicesAndChannelsSubsequence(AcquisitionSettin
          if (0 == (imageRequest.timeIndex % (imageRequest.channel.skipFrames + 1)))
          {
             tasks_.push_back(new ImageTask(this, imageRequest));
-            imageRequest.waitTime = 0;
+            imageRequest.waitTime = 0; // Only wait at the first slice.
          }
       }
    }
@@ -276,7 +276,7 @@ void MMAcquisitionEngine::GenerateSlicesAndChannelsSubsequence(AcquisitionSettin
       {
          imageRequest.slicePosition = acquisitionSettings.zStack[imageRequest.sliceIndex];
          tasks_.push_back(new ImageTask(this, imageRequest));
-         imageRequest.waitTime = 0;
+         imageRequest.waitTime = 0; // Only wait at the first channel.
       }
    }
    else // slices and channels are both specified
@@ -294,7 +294,7 @@ void MMAcquisitionEngine::GenerateSlicesAndChannelsSubsequence(AcquisitionSettin
                   if (0 == (imageRequest.timeIndex % (imageRequest.channel.skipFrames + 1)))
                   {
                      tasks_.push_back(new ImageTask(this, imageRequest));
-                     imageRequest.waitTime = 0;
+                     imageRequest.waitTime = 0; // Only wait at the first slice and channel.
                   }
                }
             }
@@ -313,7 +313,7 @@ void MMAcquisitionEngine::GenerateSlicesAndChannelsSubsequence(AcquisitionSettin
                   {
                      imageRequest.slicePosition = acquisitionSettings.zStack[imageRequest.sliceIndex];
                      tasks_.push_back(new ImageTask(this, imageRequest));
-                     imageRequest.waitTime = 0;
+                     imageRequest.waitTime = 0; // Only wait at the first  slice and channel.
                   }
                }
             }
