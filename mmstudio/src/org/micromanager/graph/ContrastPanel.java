@@ -724,11 +724,15 @@ public class ContrastPanel extends JPanel implements ImageController, PropertyCh
 		return stretchCheckBox_.isSelected();
 	}
 
-        public ContrastSettings getContrastSettings() {
-            if (image_.getProcessor() instanceof ShortProcessor)
-                return cs16bit_;
-            else
-                return cs8bit_;
-        }
+      public ContrastSettings getContrastSettings() {
+          ContrastSettings ret = cs8bit_;
+          if( null != image_) {
+             if (image_.getProcessor() instanceof ShortProcessor)
+                ret = cs16bit_;
+             else
+                ret = cs8bit_;
+          }
+          return ret;
+       }
 
 }
