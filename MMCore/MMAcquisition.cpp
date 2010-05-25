@@ -19,9 +19,11 @@ void ImageTask::run()
    updateSlice();
    updateChannel();
    wait();
-   autofocus();
-   acquireImage();
-
+   if (!eng_->StopHasBeenRequested())
+      autofocus();
+   if (!eng_->StopHasBeenRequested())
+      acquireImage();
+   
 }
 
 
@@ -80,13 +82,15 @@ void ImageTask::updateChannel() {
 void ImageTask::wait() {
    if (imageRequest_.timeIndex > -1)
    {
-      if (eng_->lastWakeTime_ > 0)
+      while (!eng_->StopHasBeenRequested() && eng_->lastWakeTime_ > 0)
       {
-         MM::MMTime sleepTime = (eng_->lastWakeTime_ + imageRequest_.waitTime) - eng_->coreCallback_->GetCurrentMMTime();
+         MM::MMTime sleepTime = min(MM::MMTime(10000),(eng_->lastWakeTime_ + imageRequest_.waitTime) - eng_->coreCallback_->GetCurrentMMTime());
          if (sleepTime > MM::MMTime(0, 0))
             eng_->coreCallback_->Sleep(NULL, sleepTime.getMsec());
-         eng_->core_->logMessage("waited\n");
+         else
+            break;
       }
+      eng_->core_->logMessage("wait finished\n");
 
       eng_->lastWakeTime_ = eng_->coreCallback_->GetCurrentMMTime();
    }
@@ -177,6 +181,11 @@ void MMAcquisitionEngine::Resume() {
 }
 
 void MMAcquisitionEngine::Step() {
+}
+
+bool MMAcquisitionEngine::StopHasBeenRequested()
+{
+   return stopRequested_;
 }
 
 void MMAcquisitionEngine::SetTasks(TaskVector tasks) {

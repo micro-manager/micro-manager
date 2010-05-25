@@ -72,6 +72,7 @@ public:
    void Pause();
    void Resume();
    void Step();
+   bool StopHasBeenRequested();
    bool IsFinished();
 
    void SetTasks(TaskVector tasks);
