@@ -4,7 +4,7 @@
 
 #include "MMRunnable.h"
 #include "../MMDevice/DeviceBase.h"
-
+#include "MMImageSaver.h"
 
 
 //////////////////
@@ -59,11 +59,13 @@ public:
    MM::MMTime lastWakeTime_;
    CMMCore * core_;
    CoreCallback * coreCallback_;
+   MMImageSaver * saver_;
 
    MMAcquisitionEngine(CMMCore * core)
    {
       core_ = core;
       coreCallback_ = new CoreCallback(core);
+      saver_ = new MMImageSaver(core);
    }
 
    void Run();
@@ -104,3 +106,4 @@ public:
    ImageTask(MMAcquisitionEngine * eng, ImageRequest imageRequest);
    void run();
 };
+

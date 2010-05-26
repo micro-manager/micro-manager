@@ -2,6 +2,7 @@
 #include "../MMDevice/ImageMetadata.h"
 #include "boost/foreach.hpp"
 
+
 ///////////////////////////////////
 // MMAquisitionEngine::ImageTask //
 ///////////////////////////////////
@@ -74,7 +75,8 @@ void ImageTask::updatePosition()
    }
 }
 
-void ImageTask::updateChannel() {
+void ImageTask::updateChannel()
+{
    if (imageRequest_.channelIndex > -1)
    {
       eng_->coreCallback_->SetExposure(imageRequest_.channel.exposure);
@@ -83,7 +85,8 @@ void ImageTask::updateChannel() {
    }
 }
 
-void ImageTask::wait() {
+void ImageTask::wait()
+{
    if (imageRequest_.timeIndex > -1)
    {
       while (!eng_->StopHasBeenRequested() && eng_->lastWakeTime_ > 0)
@@ -100,12 +103,14 @@ void ImageTask::wait() {
    }
 }
 
-void ImageTask::autofocus() {
+void ImageTask::autofocus()
+{
    if (imageRequest_.runAutofocus && imageRequest_.channelIndex == 0 && imageRequest_.positionIndex == 0)
       eng_->core_->fullFocus();
 }
 
-void ImageTask::acquireImage() {
+void ImageTask::acquireImage()
+{
    int w, h, d;
 
    if (! eng_->core_->getShutterOpen())
@@ -142,17 +147,22 @@ void ImageTask::acquireImage() {
 // MMAcquisitionRunner //
 /////////////////////////
 
-void MMAcquisitionEngine::Start() {
+void MMAcquisitionEngine::Start()
+{
    stopRequested_ = false;
    pauseRequested_ = false;
    finished_ = false;
 
    activate();
+
+   saver_->Start();
 }
 
-void MMAcquisitionEngine::Run() {
+void MMAcquisitionEngine::Run()
+{
    bool initialAutoshutter = core_->getAutoShutter();
    core_->setAutoShutter(false);
+
 
    for (unsigned int i = 0; i < tasks_.size(); ++i) {
       if (stopRequested_)
@@ -166,25 +176,31 @@ void MMAcquisitionEngine::Run() {
    core_->setAutoShutter(initialAutoshutter);
 
    finished_ = true;
+
 }
 
-bool MMAcquisitionEngine::IsFinished() {
+bool MMAcquisitionEngine::IsFinished()
+{
    return finished_;
 }
 
-void MMAcquisitionEngine::Stop() {
+void MMAcquisitionEngine::Stop()
+{
    stopRequested_ = true;
 }
 
-void MMAcquisitionEngine::Pause() {
+void MMAcquisitionEngine::Pause()
+{
    pauseRequested_ = true;
 }
 
-void MMAcquisitionEngine::Resume() {
+void MMAcquisitionEngine::Resume()
+{
    pauseRequested_ = false;
 }
 
-void MMAcquisitionEngine::Step() {
+void MMAcquisitionEngine::Step()
+{
 }
 
 bool MMAcquisitionEngine::StopHasBeenRequested()
@@ -379,3 +395,4 @@ void MMAcquisitionEngine::ControlShutterStates(AcquisitionSettings acquisitionSe
       }
    }
 }
+
