@@ -17,6 +17,7 @@
 //CVS:          $Id: MMAcquisitionEngine.java 38 2007-04-03 01:26:31Z nenad $
 package org.micromanager;
 
+import ij.IJ;
 import ij.ImagePlus;
 import ij.io.FileSaver;
 import ij.measure.Calibration;
@@ -1321,8 +1322,12 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
             Date enddate = GregorianCalendar.getInstance().getTime();
             if (useMultiplePositions_ && (well_ != null)) {
                i5dWin_[i].setTitle(well_.getLabel() + fileSeparator_ + posList_.getPosition(i).getLabel() + " (finished) " + enddate);
+               Object ca =  IJ.runPlugIn("ij.plugin.frame.ContrastAdjuster", "");
+               i5dWin_[i].getImagePlus().changes = true;
             } else if (acqData_[i] != null) {
                i5dWin_[i].setTitle(acqData_[i].getName() + " (finished) " + enddate);
+               Object ca =  IJ.runPlugIn("ij.plugin.frame.ContrastAdjuster", "");
+               i5dWin_[i].getImagePlus().changes = true;
             }
 
             if (acqData_.length > i && acqData_[i] != null) {
