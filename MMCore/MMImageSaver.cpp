@@ -40,7 +40,7 @@ void MMImageSaver::WriteNextImage(string filestem)
    tiffFileName << setfill('0');
    tiffFileName << filestem << "_" 
       << setw(10) << md.frameIndex << "_" 
-      << setw(1) << md.frameData << "_" 
+      << setw(1) << md.channelIndex << "_" 
       << setw(3) << md.sliceIndex 
       << ".tif";
    TIFF * tif = TIFFOpen(tiffFileName.str().c_str(),"w");
