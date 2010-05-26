@@ -17,7 +17,7 @@ void MMImageSaver::Run()
          string filestem("img");
          WriteNextImage(filestem);
       }
-      Sleep(30);
+      core_->sleep(30);
    } while (!core_->acquisitionIsFinished() || core_->getRemainingImageCount() > 0);
 }
 
