@@ -10,6 +10,7 @@ SWIGLIB_SOURCES = MMCoreJ.i \
 	../MMCore/ErrorCodes.h \
 	../MMCore/MMCore.h  \
         ../MMCore/MMAcquisition.h \
+	../MMCore/MMImageSaver.h \
 	../MMDevice/MMDeviceConstants.h 
 
 MMCoreJ_wrap.cxx: $(SWIGLIB_SOURCES)
@@ -32,7 +33,8 @@ libMMCoreJ_wrap_la_SOURCES = $(SWIGLIB_SOURCES) \
 	$(top_srcdir)/MMCore/FastLogger.cpp \
 	$(top_srcdir)/MMCore/MMCore.cpp \
 	$(top_srcdir)/MMCore/PluginManager.cpp \
-	$(top_srcdir)/MMCore/MMAcquisition.cpp
+	$(top_srcdir)/MMCore/MMAcquisition.cpp \
+	$(top_srcdir)/MMCore/MMImageSaver.cpp
  
 libMMCoreJ_wrap_la_LDFLAGS = -Wl, -module -ldl $(BOOST_LDFLAGS) #not sure if Boost linking is needed
 
