@@ -36,7 +36,8 @@ libMMCoreJ_wrap_la_SOURCES = $(SWIGLIB_SOURCES) \
 	$(top_srcdir)/MMCore/MMAcquisition.cpp \
 	$(top_srcdir)/MMCore/MMImageSaver.cpp
  
-libMMCoreJ_wrap_la_LDFLAGS = -Wl, -module -ldl $(BOOST_LDFLAGS) #not sure if Boost linking is needed
+#not sure if Boost and libtifflinking are needed
+libMMCoreJ_wrap_la_LDFLAGS = -Wl, -module -ldl $(BOOST_LDFLAGS) /usr/local/lib/libtiff.a
 
 $(srcdir)/MMCoreJ.jar:  MMCoreJ_wrap.cxx \
 	libMMCoreJ_wrap.la
