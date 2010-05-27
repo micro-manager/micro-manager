@@ -38,6 +38,8 @@ import javax.swing.JToggleButton;
 import org.micromanager.image5d.Image5DWindow;
 
 import com.swtdesigner.SwingResourceManager;
+import ij.process.ColorProcessor;
+import ij.process.ImageProcessor;
 
 /**
  * Add-on panel for the modified Image5D class.
@@ -48,6 +50,8 @@ public class PlaybackPanel extends Panel {
    private JTextField framesField_;
    private Image5DWindow wnd_;
    private JLabel elapsedLabel_;
+
+   private JButton contrastAdjustButtonRef;
    
    /**
     * Create the panel
@@ -138,14 +142,17 @@ public class PlaybackPanel extends Panel {
       contrastButton_.setIcon(SwingResourceManager.getIcon(PlaybackPanel.class, "/org/micromanager/icons/contrast.png"));
       contrastButton_.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent e) {
-            IJ.runPlugIn("ij.plugin.frame.ContrastAdjuster", "");
-            wnd_.getImagePlus().changes = true;
+            if(!( wnd_.getImagePlus().getProcessor() instanceof ColorProcessor )){
+               // the contrast adjuster damages color images as of IJ 1.44a
+               IJ.runPlugIn("ij.plugin.frame.ContrastAdjuster", "");
+               wnd_.getImagePlus().changes = true;
+            }
           }
       });
       contrastButton_.setToolTipText("Contrast settings dialog");
       contrastButton_.setBounds(164, 5, 37, 24);
       add(contrastButton_);
-
+      contrastAdjustButtonRef = contrastButton_;
       
       if (! snap) {
 	      final JToggleButton togglePauseButton_ = new JToggleButton();
@@ -181,4 +188,16 @@ public class PlaybackPanel extends Panel {
    public void setImageInfo(String txt) {
       elapsedLabel_.setText(txt);
    }
+
+   // modify behavior of panel dependent upon image processor
+   public void setImageProcessor( ImageProcessor p ){
+      if (! (null == p)) {
+         boolean enableContrastAdjuster = true;
+         if( p instanceof ColorProcessor){
+            enableContrastAdjuster = false;
+         }
+         contrastAdjustButtonRef.enableInputMethods(enableContrastAdjuster);
+      }
+   }
+
 }

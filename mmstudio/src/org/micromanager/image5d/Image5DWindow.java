@@ -5,7 +5,6 @@ import ij.ImageJ;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.StackWindow;
-import ij.macro.Interpreter;
 import ij.measure.Calibration;
 
 import java.awt.Color;
@@ -21,11 +20,8 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.ColorModel;
 import java.io.File;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 
-import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.Timer;
 
@@ -702,6 +698,11 @@ public class Image5DWindow extends StackWindow {
 
       if (pb_ != null && acqData_ != null)
          pb_.setImageInfo(ImageKey.getImageInfo(acqData_, i5d.getCurrentFrame()-1, i5d.getCurrentChannel()-1, i5d.getCurrentSlice()-1));
+      try{
+         pb_.setImageProcessor(imp.getProcessor());
+      }
+      catch( Exception e){
+      }
    }
    
    public void run() {

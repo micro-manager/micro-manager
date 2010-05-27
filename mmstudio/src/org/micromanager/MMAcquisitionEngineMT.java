@@ -21,6 +21,7 @@ import ij.IJ;
 import ij.ImagePlus;
 import ij.io.FileSaver;
 import ij.measure.Calibration;
+import ij.plugin.frame.PlugInFrame;
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
@@ -1322,12 +1323,20 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
             Date enddate = GregorianCalendar.getInstance().getTime();
             if (useMultiplePositions_ && (well_ != null)) {
                i5dWin_[i].setTitle(well_.getLabel() + fileSeparator_ + posList_.getPosition(i).getLabel() + " (finished) " + enddate);
-               Object ca =  IJ.runPlugIn("ij.plugin.frame.ContrastAdjuster", "");
+              // todo figure out exactly what inside ContrastAdjuster.setup and ContrastAdjuster.setupNewImage (presumably getSnapshotPixels) is needed here
+
+              Object  ca =  IJ.runPlugIn("ij.plugin.frame.ContrastAdjuster", "");
                i5dWin_[i].getImagePlus().changes = true;
+               if(ca instanceof PlugInFrame ) {
+                  ((PlugInFrame)ca).close(); //
+               }
             } else if (acqData_[i] != null) {
                i5dWin_[i].setTitle(acqData_[i].getName() + " (finished) " + enddate);
-               Object ca =  IJ.runPlugIn("ij.plugin.frame.ContrastAdjuster", "");
+              Object  ca =  IJ.runPlugIn("ij.plugin.frame.ContrastAdjuster", "");
                i5dWin_[i].getImagePlus().changes = true;
+               if(ca instanceof PlugInFrame ) {
+                  ((PlugInFrame)ca).close();
+               }
             }
 
             if (acqData_.length > i && acqData_[i] != null) {
