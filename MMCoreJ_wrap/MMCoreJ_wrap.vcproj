@@ -70,7 +70,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="mmcored.lib ..\MMCore\libtiff\libtiff.lib"
+				AdditionalDependencies="mmcored.lib ..\..\3rdpartypublic\libtiff\libtiff\libtiff.lib"
 				ShowProgress="0"
 				OutputFile="$(OutDir)/MMCoreJ_wrap.dll"
 				LinkIncremental="2"

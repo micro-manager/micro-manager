@@ -29,6 +29,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
+				CommandLine="cd ..\..\3rdpartypublic\libtiff\&#x0D;&#x0A;nmake /f makefile.vc"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -46,7 +47,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/D &quot;_CRT_SECURE_NO_WARNINGS&quot;"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../3rdparty;../../3rdparty/boost;../../3rdparty\boost\boost;&quot;..\..\3rdparty\Microsoft\VisualC++\include&quot;"
+				AdditionalIncludeDirectories="../../3rdpartypublic/libtiff/libtiff;../../3rdparty;../../3rdparty/boost;../../3rdparty\boost\boost;&quot;..\..\3rdparty\Microsoft\VisualC++\include&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;_WINDOWS"
 				MinimalRebuild="true"
 				ExceptionHandling="2"
@@ -71,7 +72,7 @@
 			<Tool
 				Name="VCLibrarianTool"
 				OutputFile="$(OutDir)/MMCore.lib"
-				AdditionalLibraryDirectories="&quot;..\..\3rdparty\boost\stage_$(PlatformName)\lib&quot;;.\libtiff"
+				AdditionalLibraryDirectories="&quot;..\..\3rdparty\boost\stage_$(PlatformName)\lib&quot;;E:\projects\3rdpartypublic\libtiff\libtiff"
 			/>
 			<Tool
 				Name="VCALinkTool"

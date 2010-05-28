@@ -1,5 +1,5 @@
 #include "MMImageSaver.h"
-#include "libtiff/tiffio.h"
+#include "tiffio.h"
 #include "../MMDevice/ImageMetadata.h"
 #include <iostream>
 #include <iomanip>
