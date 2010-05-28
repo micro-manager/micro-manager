@@ -11,7 +11,7 @@ PPC=$BUILDDIR/Micro-Manager1.4-ppc
 I386=$BUILDDIR/Micro-Manager1.4-i386
 X86_64=$BUILDDIR/Micro-Manager1.4-x86_64
 
-test -d $BUILDDIR && rm -rf $BUILDDIR
+test -d $BUILDDIR && rm -rf $TARGET*
 mkdir $BUILDDIR
 
 cd $REPOSITORY

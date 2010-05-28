@@ -24,7 +24,7 @@ RPPC=$REPOSITORYROOT/micromanager1.4-ppc
 RI386=$REPOSITORYROOT/micromanager1.4-i386
 RX86_64=$REPOSITORYROOT/micromanager1.4-x86_64
 
-test -d $BUILDDIR && rm -rf $BUILDDIR
+test -d $BUILDDIR && rm -rf $TARGET*
 mkdir $BUILDDIR
 
 cd $REPOSITORY
