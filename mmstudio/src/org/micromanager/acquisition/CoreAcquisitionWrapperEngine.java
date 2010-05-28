@@ -97,8 +97,8 @@ public class CoreAcquisitionWrapperEngine implements AcquisitionEngine {
          ReportingUtils.showError(ex);
       }
 
-      display_ = new AcquisitionDisplay(core_);
-      display_.start();
+      //display_ = new AcquisitionDisplay(core_);
+      //display_.start();
    }
 
    private AcquisitionSettings generateAcquisitionSettings() {

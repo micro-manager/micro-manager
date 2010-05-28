@@ -36,6 +36,7 @@ void MMImageSaver::WriteNextImage(string filestem)
    Metadata md;
    void * img = core_->popNextImageMD(0,0,md);
    
+   /*
    stringstream debugString;
    unsigned char * imgChars = (unsigned char *) img;
    debugString << "four bytes of image: " 
@@ -45,6 +46,7 @@ void MMImageSaver::WriteNextImage(string filestem)
       << (unsigned int) imgChars[4*512*256 + 3];
 
    core_->logMessage(debugString.str().c_str());
+   */
 
    int width = core_->getImageWidth();
    int height = core_->getImageHeight();
