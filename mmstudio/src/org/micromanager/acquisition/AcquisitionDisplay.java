@@ -36,10 +36,10 @@ public class AcquisitionDisplay extends Thread {
                   Metadata mdCopy = new Metadata();
                   Object img = core_.popNextImageMD(0, 0, mdCopy);
                   displayImage(img, mdCopy);
-                  ReportingUtils.logMessage("time=" + mdCopy.getFrameIndex() + ", position=" +
-                          mdCopy.getPositionIndex() + ", channel=" + mdCopy.getChannelIndex() +
-                          ", slice=" + mdCopy.getSliceIndex()
-                          + ", remaining images =" + core_.getRemainingImageCount());
+              //    ReportingUtils.logMessage("time=" + mdCopy.getFrameData("Frame") + ", position=" +
+              //            mdCopy.getPositionIndex() + ", channel=" + mdCopy.getChannelIndex() +
+              //            ", slice=" + mdCopy.getSliceIndex()
+              //            + ", remaining images =" + core_.getRemainingImageCount());
                } catch (Exception ex) {
                   ReportingUtils.logError(ex);
                }
@@ -55,26 +55,26 @@ public class AcquisitionDisplay extends Thread {
    }
 
    private void displayImage(Object img, Metadata m) {
-      updateImage5Ds(m);
-      Image5D i5d = i5dVector_.get(m.getPositionIndex());
-      i5d.setPixels(img, 1 + m.getChannelIndex(), 1 + m.getSliceIndex(), 1 + m.getFrameIndex());
+      int posIndex = getMetadataIndex(m,"Position");
+      int channelIndex = getMetadataIndex(m,"ChannelIndex");
+      int sliceIndex = getMetadataIndex(m,"Slice");
+      int frameIndex = getMetadataIndex(m,"Frame");
+      updateImage5Ds(posIndex, channelIndex, sliceIndex, frameIndex);
+      
+      Image5D i5d = i5dVector_.get(posIndex);
+      i5d.setPixels(img, 1 + channelIndex, 1 +sliceIndex, 1 + frameIndex);
       if (i5d.getCurrentPosition()[4] == i5d.getNFrames() - 2) {
          i5d.setCurrentPosition(4, i5d.getNFrames() - 1);
       }
       if (i5d.getCurrentPosition()[4] == i5d.getNFrames() - 1) {
-         i5d.setCurrentPosition(2,  m.getChannelIndex());
-         i5d.setCurrentPosition(3,  m.getSliceIndex());
+         i5d.setCurrentPosition(2, channelIndex);
+         i5d.setCurrentPosition(3,  sliceIndex);
       }
       
       i5d.updateImage();
    }
 
-   private void updateImage5Ds(Metadata m) {
-      int posIndex = getMetadataIndex(m,"Position");
-      int channelIndex = getMetadataIndex(m,"ChannelIndex");
-      int sliceIndex = getMetadataIndex(m,"Slice");
-      int frameIndex = getMetadataIndex(m,"Frame");
-
+   private void updateImage5Ds(int posIndex, int channelIndex, int sliceIndex, int frameIndex) {
       if (posIndex == i5dVector_.size()) {
          addImage5D("MDA pos " + posIndex);
       }
