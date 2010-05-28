@@ -80,6 +80,7 @@ void ImageTask::updateChannel()
    if (imageRequest_.channelIndex > -1)
    {
       eng_->coreCallback_->SetExposure(imageRequest_.channel.exposure);
+      imageRequest_.exposure = imageRequest_.channel.exposure;
       eng_->coreCallback_->SetConfig(imageRequest_.channel.group.c_str(), imageRequest_.channel.name.c_str());
       eng_->core_->logMessage("channel set\n");
    }
@@ -131,10 +132,11 @@ void ImageTask::acquireImage()
    eng_->core_->logMessage("retrieved image");
 
    Metadata md;
-   md.sliceIndex = max(0,imageRequest_.sliceIndex);
-   md.channelIndex = max(0,imageRequest_.channelIndex);
-   md.positionIndex = max(0,imageRequest_.positionIndex);
-   md.frameIndex = max(0,imageRequest_.timeIndex);
+   md.frameData["Slice"] = CDeviceUtils::ConvertToString(max(0,imageRequest_.sliceIndex));
+   md.frameData["Channel"] = imageRequest_.channel.name;
+   md.frameData["ChannelIndex"] = CDeviceUtils::ConvertToString(max(0,imageRequest_.channelIndex));
+   md.frameData["Frame"] = CDeviceUtils::ConvertToString(max(0,imageRequest_.timeIndex));
+   md.frameData["Exposure-ms"] = CDeviceUtils::ConvertToString(imageRequest_.exposure);
 
    eng_->coreCallback_->GetImageDimensions(w, h, d);
    eng_->coreCallback_->InsertImage(NULL, (const unsigned char *) img, w, h, d, &md);

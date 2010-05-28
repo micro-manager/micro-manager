@@ -253,7 +253,7 @@ class Metadata
 {
 public:
 
-   Metadata():sliceIndex(0),frameIndex(0),channelIndex(0),positionIndex(0) {}
+   Metadata() {}
 
    ~Metadata()
    {
@@ -313,10 +313,7 @@ public:
          SetTag(*it->second);
       }
 
-      sliceIndex = rhs.sliceIndex;
-      positionIndex = rhs.positionIndex;
-      frameIndex = rhs.frameIndex;
-      channelIndex = rhs.channelIndex;
+      frameData = rhs.frameData;
 
       return *this;
    }
@@ -433,7 +430,7 @@ public:
       return os.str();
    }
 
-   int sliceIndex, positionIndex, channelIndex, frameIndex;
+   std::map<std::string,std::string> frameData;
 
 private:
    MetadataTag* FindTag(const char* key) const

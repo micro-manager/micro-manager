@@ -3,6 +3,7 @@
 #include "../MMDevice/ImageMetadata.h"
 #include <iostream>
 #include <iomanip>
+#include "boost/foreach.hpp"
 //#include "boost/property_tree/ptree.hpp"
 
 
@@ -23,10 +24,17 @@ void MMImageSaver::Run()
       }
       core_->sleep(30);
    } while (!core_->acquisitionIsFinished() || core_->getRemainingImageCount() > 0);
+
+   metadataStream_.seekp(-3,ios::end);
+   metadataStream_ << endl << "}" << endl;
+   metadataStream_.close();
 }
 
 void MMImageSaver::Start()
 {
+   metadataStream_.open("metadata.txt");
+   metadataStream_ << "{" << endl;
+
    activate();
 }
 
@@ -36,31 +44,43 @@ void MMImageSaver::WriteNextImage(string filestem)
    Metadata md;
    void * img = core_->popNextImageMD(0,0,md);
    
-   /*
-   stringstream debugString;
-   unsigned char * imgChars = (unsigned char *) img;
-   debugString << "four bytes of image: " 
-      << (unsigned int) imgChars[4*512*256 + 0] << "," 
-      << (unsigned int) imgChars[4*512*256 + 1] << "," 
-      << (unsigned int) imgChars[4*512*256 + 2] << "," 
-      << (unsigned int) imgChars[4*512*256 + 3];
-
-   core_->logMessage(debugString.str().c_str());
-   */
-
    int width = core_->getImageWidth();
    int height = core_->getImageHeight();
    int depth = core_->getBytesPerPixel();
 
+   string filename = CreateFileName(filestem, md);
+   WriteImage(filename, img, width, height, depth, md);
+   WriteMetadata(md);
+}
+
+string MMImageSaver::CreateFileName(string filestem, Metadata md)
+{
    stringstream tiffFileName;
    tiffFileName << setfill('0');
    tiffFileName << filestem << "_" 
-      << setw(10) << md.frameIndex << "_" 
-      << setw(1) << md.channelIndex << "_" 
-      << setw(3) << md.sliceIndex 
+      << setw(9) << atoi(md.frameData["Frame"].c_str()) << "_" 
+      << md.frameData["Channel"].c_str() << "_" 
+      << setw(3) << atoi(md.frameData["Slice"].c_str())
       << ".tif";
+   return tiffFileName.str();
+}
 
-   WriteImage(tiffFileName.str(), img, width, height, depth, md);
+void MMImageSaver::WriteMetadata(Metadata md)
+{
+   metadataStream_ << "\t\"FrameKey-" << atoi(md.frameData["Frame"].c_str())
+      << "-" << atoi(md.frameData["ChannelIndex"].c_str())
+      << "-" << atoi(md.frameData["Slice"].c_str())
+      << "\": {" << endl;
+   
+   pair<string, string> p;
+   BOOST_FOREACH(p, md.frameData)
+   {
+      metadataStream_ << "\t\t\"" << p.first << "\": \"" << p.second << "\"," << endl;
+   }
+
+   metadataStream_.seekp(-3, ios::end);
+   metadataStream_ << endl << "\t}," << endl;
+   metadataStream_.flush();
 }
 
 void MMImageSaver::WriteImage(string filename, void * img, int width, int height, int depth, Metadata md)
