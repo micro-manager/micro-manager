@@ -70,20 +70,29 @@ public class AcquisitionDisplay extends Thread {
    }
 
    private void updateImage5Ds(Metadata m) {
-      if (m.getPositionIndex() == i5dVector_.size()) {
-         addImage5D("MDA pos " + m.getPositionIndex());
+      int posIndex = getMetadataIndex(m,"Position");
+      int channelIndex = getMetadataIndex(m,"ChannelIndex");
+      int sliceIndex = getMetadataIndex(m,"Slice");
+      int frameIndex = getMetadataIndex(m,"Frame");
+
+      if (posIndex == i5dVector_.size()) {
+         addImage5D("MDA pos " + posIndex);
       }
 
-      Image5D i5d = i5dVector_.get(m.getPositionIndex());
-      if (m.getChannelIndex() >= i5d.getNChannels()) {
-         i5d.expandDimension(2, m.getChannelIndex() + 1, true);
+      Image5D i5d = i5dVector_.get(posIndex);
+      if (channelIndex >= i5d.getNChannels()) {
+         i5d.expandDimension(2, channelIndex + 1, true);
       }
-      if (m.getSliceIndex() >= i5d.getNSlices()) {
-         i5d.expandDimension(3, m.getSliceIndex() + 1, true);
+      if (sliceIndex >= i5d.getNSlices()) {
+         i5d.expandDimension(3, sliceIndex + 1, true);
       }
-      if (m.getFrameIndex() >= i5d.getNFrames()) {
-         i5d.expandDimension(4, m.getFrameIndex() + 1, true);
+      if (frameIndex >= i5d.getNFrames()) {
+         i5d.expandDimension(4, frameIndex + 1, true);
       }
+   }
+
+   private int getMetadataIndex(Metadata m, String key) {
+      return Integer.getInteger(m.getFrameData(key));
    }
 
    private void addImage5D(String title) {

@@ -430,6 +430,12 @@ public:
       return os.str();
    }
 
+
+   std::string getFrameData(std::string key)
+   {
+      return frameData[key];
+   }
+
    std::map<std::string,std::string> frameData;
 
 private:
