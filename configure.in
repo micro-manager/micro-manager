@@ -131,6 +131,27 @@ else
    #---------------------------------------------------
    AX_BOOST_BASE(1.2)
 
+   AC_MSG_CHECKING(for libtiff)
+
+AC_FIND_FILE([tiff.h], [/usr/include /usr/local/$ARCH/include], TIFFINCDIR)
+
+   if test x$TIFFINCDIR = xNO; then 
+      AC_MSG_RESULT([not found])                                 
+      exit 1
+   else                                                          
+      AC_CHECK_HEADERS([$TIFFINCDIR/tiff.h])                       
+      if test -z "$LIBTIFF" ; then
+         AC_FIND_FILE([libtiff.a], [/usr/lib /usr/lib64 /usr/local/$ARCH/lib], TIFFLIBDIR)
+         if test x$TIFFLIBDIR = xNO; then
+            AC_MSG_RESULT([libtiff not found])                       
+            exit 1
+         else                                                    
+            AC_MSG_RESULT([libtiff.a found])                      
+            LIBTIFF="$TIFFLIBDIR/libtiff.a"                         
+         fi                                                      
+      fi                                                         
+   fi                                                            
+   AC_SUBST(LIBTIFF)                                              
 
    # Check for Swig.
    AC_CHECK_PROGS(SWIG, swig)
