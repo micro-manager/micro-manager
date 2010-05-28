@@ -46,8 +46,7 @@ public class CalibrationThread extends Thread {
    double y;
    int w;
    int h;
-   int w_small;
-   int h_small;
+   int side_small;
 
    CalibrationThread(ScriptInterface app, PixelCalibratorPlugin plugin) {
       app_ = (MMStudioMainFrame) app;
@@ -128,7 +127,7 @@ public class CalibrationThread extends Thread {
          if (CalibrationThread.interrupted())
             throw new InterruptedException();
          ImageProcessor snap = (ImageProcessor) snapImageAt(x1,y1,sim);
-         Rectangle guessRect = new Rectangle((int) ((w-w_small)/2-d.x),(int) ((h-h_small)/2-d.y),w_small,h_small);
+         Rectangle guessRect = new Rectangle((int) ((w-side_small)/2-d.x),(int) ((h-side_small)/2-d.y),side_small,side_small);
          ImageProcessor foundImage = getSubImage(snap,guessRect.x, guessRect.y, guessRect.width, guessRect.height);
          liveWin_.getImagePlus().setRoi(guessRect);
          //new ImagePlus("found at "+dx+","+dy,foundImage).show();
@@ -150,7 +149,7 @@ public class CalibrationThread extends Thread {
       for (int i=0;i<25;i++) {
 
          core_.logMessage(dx+","+dy+","+d);
-         if ((2*d.x+w_small/2)>=w/2 || (2*d.y+h_small/2)>=h/2 || (2*d.x-w_small/2)<-(w/2) || (2*d.y-h_small/2)<-(h/2))
+         if ((2*d.x+side_small/2)>=w/2 || (2*d.y+side_small/2)>=h/2 || (2*d.x-side_small/2)<-(w/2) || (2*d.y-side_small/2)<-(h/2))
             break;
 
          dx = dx*2;
@@ -205,10 +204,11 @@ public class CalibrationThread extends Thread {
 
       w = baseImage.getWidth();
       h = baseImage.getHeight();
-      w_small = smallestPowerOf2LessThanOrEqualTo(w/4);
-      h_small = smallestPowerOf2LessThanOrEqualTo(h/4);
+      int w_small = smallestPowerOf2LessThanOrEqualTo(w/4);
+      int h_small = smallestPowerOf2LessThanOrEqualTo(h/4);
+      side_small = Math.min(w_small, h_small);
 
-      referenceImage_ = getSubImage(baseImage,(int) (-w_small/2+w/2),(int) (-h_small/2+h/2),w_small,h_small);
+      referenceImage_ = getSubImage(baseImage,(int) (-side_small/2+w/2),(int) (-side_small/2+h/2),side_small,side_small);
 
       pointPairs_.clear();
       pointPairs_.put(new Point2D.Double(0.,0.),new Point2D.Double(x,y));
@@ -235,8 +235,8 @@ public class CalibrationThread extends Thread {
    AffineTransform getSecondApprox(AffineTransform firstApprox, boolean sim) throws InterruptedException {
       pointPairs_.clear();
       Point2D.Double s1 = new Point2D.Double();
-      int ax = w/2 - w_small/2;
-      int ay = h/2 - h_small/2;
+      int ax = w/2 - side_small/2;
+      int ay = h/2 - side_small/2;
 
       Point c1 = new Point(-ax,-ay);
       measureCorner(firstApprox, c1, sim);
