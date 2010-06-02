@@ -112,6 +112,9 @@ public:
    bool keepShutterOpenSlices;
    bool keepShutterOpenChannels;
 
+   string root;
+   string prefix;
+
    AcquisitionSettings():
       positionsFirst(true),
       channelsFirst(true),

@@ -1,11 +1,14 @@
 
+#ifndef MMACQUISITION_H
+#define MMACQUISITION_H
 
 #include "CoreCallback.h"
 
 #include "MMRunnable.h"
 #include "../MMDevice/DeviceBase.h"
-#include "MMImageSaver.h"
 
+
+typedef map<string, string> PropertyMap;
 
 //////////////////
 // ImageRequest //
@@ -54,20 +57,20 @@ private:
    bool finished_;
 
    int svc() { Run(); return 0; }
-
+   map<string, string> initialPropertyMap_;
+   
 public:
    MM::MMTime lastWakeTime_;
    CMMCore * core_;
    CoreCallback * coreCallback_;
-   MMImageSaver * saver_;
 
    MMAcquisitionEngine(CMMCore * core)
    {
       core_ = core;
       coreCallback_ = new CoreCallback(core);
-      saver_ = new MMImageSaver(core);
    }
 
+   void Prepare(AcquisitionSettings acquisitionSettings);
    void Run();
    void Start();
    void Stop();
@@ -78,6 +81,10 @@ public:
    bool IsFinished();
 
    void SetTasks(TaskVector tasks);
+
+   map<string, string> GetCurrentPropertyMap();
+   void ApplyDiffPropertyMap(map<string, string> & dest);
+   map<string, string> GetInitPropertyMap();
 
    void GenerateSequence(AcquisitionSettings acquisitionSettings);
    void GenerateSlicesAndChannelsSubsequence(AcquisitionSettings acquisitionSettings, ImageRequest request);
@@ -107,3 +114,4 @@ public:
    void run();
 };
 
+#endif

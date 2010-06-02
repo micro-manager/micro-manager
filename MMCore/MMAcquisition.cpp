@@ -136,7 +136,9 @@ void ImageTask::acquireImage()
    md.frameData["Channel"] = imageRequest_.channel.name;
    md.frameData["ChannelIndex"] = CDeviceUtils::ConvertToString(max(0,imageRequest_.channelIndex));
    md.frameData["Frame"] = CDeviceUtils::ConvertToString(max(0,imageRequest_.timeIndex));
-   md.frameData["Exposure-ms"] = CDeviceUtils::ConvertToString(imageRequest_.exposure);
+   md.frameData["ExposureMs"] = CDeviceUtils::ConvertToString(imageRequest_.exposure);
+
+	eng_->ApplyDiffPropertyMap(md.frameData);
 
    eng_->coreCallback_->GetImageDimensions(w, h, d);
    eng_->coreCallback_->InsertImage(NULL, (const unsigned char *) img, w, h, d, &md);
@@ -145,9 +147,47 @@ void ImageTask::acquireImage()
 
 
 
+
 /////////////////////////
-// MMAcquisitionRunner //
+// MMAcquisitionEngine //
 /////////////////////////
+
+void MMAcquisitionEngine::Prepare(AcquisitionSettings acquisitionSettings)
+{
+	GenerateSequence(acquisitionSettings);
+}
+
+map<string, string> MMAcquisitionEngine::GetCurrentPropertyMap()
+{
+	Configuration config = core_->getSystemStateCache();
+	map<string, string> frameData;
+	for (long i=0;i<config.size();i++)
+	{
+		PropertySetting setting = config.getSetting(i);
+		frameData[setting.getDeviceLabel() + "-" + setting.getPropertyName()] = setting.getPropertyValue();;
+	}
+	return frameData;
+}
+
+void MMAcquisitionEngine::ApplyDiffPropertyMap(map<string, string> &dest)
+{
+	map<string, string> curMap = GetCurrentPropertyMap();
+
+	pair<string, string> curProp;
+
+	BOOST_FOREACH(curProp, curMap)
+	{
+		//if (curProp.first.compare("Dichroic-Label") == 0)
+		cout << curProp.first << ": " << curProp.second << endl;
+		if (initialPropertyMap_[curProp.first] != curProp.second)
+			dest[curProp.first] = curProp.second;
+	}
+}
+
+map<string, string> MMAcquisitionEngine::GetInitPropertyMap()
+{
+	return initialPropertyMap_;
+}
 
 void MMAcquisitionEngine::Start()
 {
@@ -155,9 +195,10 @@ void MMAcquisitionEngine::Start()
    pauseRequested_ = false;
    finished_ = false;
 
+	initialPropertyMap_ = GetCurrentPropertyMap();
+
    activate();
 
-   saver_->Start();
 }
 
 void MMAcquisitionEngine::Run()

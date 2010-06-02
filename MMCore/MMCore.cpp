@@ -76,6 +76,7 @@
 #include "../MMDevice/DeviceThreads.h"
 
 #include "MMAcquisition.h"
+#include "MMImageSaver.h"
 
 #ifndef _WINDOWS
 // Needed on Unix for getcwd() and gethostname()
@@ -4774,13 +4775,20 @@ void CMMCore::acqAfterStack() throw (CMMError)
 }
 
 MMAcquisitionEngine * engine_ = NULL;
+MMImageSaver * saver_ = NULL;
 
 void CMMCore::runAcquisitionEngineTest(AcquisitionSettings acquisitionSettings) throw (CMMError)
 {
    CORE_LOG("runAcquisitionEngineTest()");
    engine_ = new MMAcquisitionEngine(this);
-	engine_->GenerateSequence(acquisitionSettings);
+	engine_->Prepare(acquisitionSettings);
+	saver_ = new MMImageSaver(this, engine_);
+	if (acquisitionSettings.saveImages)
+	{
+		saver_->SetPaths(acquisitionSettings.root, acquisitionSettings.prefix);
+	}
    engine_->Start();
+	saver_->Start();
 }
 
 void CMMCore::stopAcquisitionEngine() throw (CMMError)

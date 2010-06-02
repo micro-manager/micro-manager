@@ -4,14 +4,23 @@
 #include <iostream>
 #include <iomanip>
 #include "boost/foreach.hpp"
+#include "boost/algorithm/string.hpp"
 //#include "boost/property_tree/ptree.hpp"
 
 
 
-MMImageSaver::MMImageSaver(CMMCore * core)
+MMImageSaver::MMImageSaver(CMMCore * core, MMAcquisitionEngine * eng)
 {
-   core_ = core; 
+   core_ = core;
+	eng_ = eng;
    buffer_ = new unsigned char[0];
+}
+
+void MMImageSaver::SetPaths(string root, string prefix)
+{
+	root_ = root;
+	prefix_ = prefix;
+
 }
 
 void MMImageSaver::Run()
@@ -19,21 +28,52 @@ void MMImageSaver::Run()
    do {
       while (core_->getRemainingImageCount() > 0)
       {
-         string filestem("img");
-         WriteNextImage(filestem);
+         WriteNextImage(root_+"/img");
       }
       core_->sleep(30);
    } while (!core_->acquisitionIsFinished() || core_->getRemainingImageCount() > 0);
 
-   metadataStream_.seekp(-3,ios::end);
+
    metadataStream_ << endl << "}" << endl;
    metadataStream_.close();
 }
 
+
+#include <sys/stat.h>
+#ifdef WIN32
+	#include <direct.h>
+#endif
+
+void MMImageSaver::CreateDirectory(string path)
+{
+	if (! DirectoryExists(path))
+	{
+	#ifdef WIN32
+		mkdir(path.c_str());
+	#else
+		mkdir(path.c_str(), 0777);
+	#endif
+	}
+}
+
+bool MMImageSaver::DirectoryExists(string path)
+{
+	struct stat stFileInfo;
+	return (stat(path.c_str(), &stFileInfo) == 0);
+}
+
 void MMImageSaver::Start()
 {
-   metadataStream_.open("metadata.txt");
+	CreateDirectory(root_);
+	cout << "root_ = " << root_ << endl;
+   metadataStream_.open((root_+"/metadata.txt").c_str());
    metadataStream_ << "{" << endl;
+
+	firstElement_ = true;
+
+	Metadata md;
+	md.frameData = eng_->GetInitPropertyMap();
+	WriteMetadata(md, "SystemState");
 
    activate();
 }
@@ -50,7 +90,13 @@ void MMImageSaver::WriteNextImage(string filestem)
 
    string filename = CreateFileName(filestem, md);
    WriteImage(filename, img, width, height, depth, md);
-   WriteMetadata(md);
+
+	stringstream title;
+	title << "FrameKey-" << atoi(md.frameData["Frame"].c_str())
+      << "-" << atoi(md.frameData["ChannelIndex"].c_str())
+      << "-" << atoi(md.frameData["Slice"].c_str());
+	
+   WriteMetadata(md, title.str());
 }
 
 string MMImageSaver::CreateFileName(string filestem, Metadata md)
@@ -62,25 +108,33 @@ string MMImageSaver::CreateFileName(string filestem, Metadata md)
       << md.frameData["Channel"].c_str() << "_" 
       << setw(3) << atoi(md.frameData["Slice"].c_str())
       << ".tif";
+	md.frameData["FileName"] = tiffFileName.str();
    return tiffFileName.str();
 }
 
-void MMImageSaver::WriteMetadata(Metadata md)
+void MMImageSaver::WriteMetadata(Metadata md, string title)
 {
-   metadataStream_ << "\t\"FrameKey-" << atoi(md.frameData["Frame"].c_str())
-      << "-" << atoi(md.frameData["ChannelIndex"].c_str())
-      << "-" << atoi(md.frameData["Slice"].c_str())
-      << "\": {" << endl;
+	if (! firstElement_)
+	{
+		metadataStream_ << "," << endl;
+	}
+
+   metadataStream_ << "\t\"" << title << "\": {" << endl;
    
    pair<string, string> p;
+	bool firstItem = true;
+
    BOOST_FOREACH(p, md.frameData)
    {
-      metadataStream_ << "\t\t\"" << p.first << "\": \"" << p.second << "\"," << endl;
+		if (! firstItem)
+			metadataStream_ << "," << endl;
+      metadataStream_ << "\t\t\"" << p.first << "\": \"" << p.second << "\"";
+		firstItem = false;
    }
 
-   metadataStream_.seekp(-3, ios::end);
-   metadataStream_ << endl << "\t}," << endl;
+   metadataStream_ << endl << "\t}";
    metadataStream_.flush();
+	firstElement_ = false;
 }
 
 void MMImageSaver::WriteImage(string filename, void * img, int width, int height, int depth, Metadata md)
