@@ -193,7 +193,7 @@ public:
    int OnTemperature(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTemperatureSetPoint(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnUniversalProperty(MM::PropertyBase* pProp, MM::ActionType eAct, long index);
-#ifdef WIN32 //This is only compiled for Windows and Mac at the moment
+#ifdef WIN32 //This is only compiled for Windowsat the moment
    int OnResetPostProcProperties(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPostProcProperties(MM::PropertyBase* pProp, MM::ActionType eAct, long index);
    int OnActGainProperties(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -255,6 +255,7 @@ private:
    void LogMMMessage(int lineNr, std::string message="", bool debug=true) const throw();
 
    bool             restart_;
+   int              suspended_;
    int16            bitDepth_;
    int x_, y_, width_, height_, xBin_, yBin_, bin_;
    ROI              roi_;
