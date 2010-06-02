@@ -161,7 +161,11 @@ public class CoreAcquisitionWrapperEngine implements AcquisitionEngine {
 
       acquisitionSettings.setKeepShutterOpenChannels(keepShutterOpenForChannels_);
       acquisitionSettings.setKeepShutterOpenSlices(keepShutterOpenForStack_);
-      
+
+      acquisitionSettings.setSaveImages(saveFiles_);
+      acquisitionSettings.setRoot(rootName_);
+      acquisitionSettings.setPrefix(dirName_);
+
       return acquisitionSettings;
    }
 
