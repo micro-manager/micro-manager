@@ -81,7 +81,10 @@ void ImageTask::updateChannel()
    {
       eng_->coreCallback_->SetExposure(imageRequest_.channel.exposure);
       imageRequest_.exposure = imageRequest_.channel.exposure;
-      eng_->coreCallback_->SetConfig(imageRequest_.channel.group.c_str(), imageRequest_.channel.name.c_str());
+	  string chanGroup = imageRequest_.channel.group;
+	  if (chanGroup.size() == 0)
+		  chanGroup = eng_->core_->getChannelGroup();
+      eng_->coreCallback_->SetConfig(chanGroup.c_str(), imageRequest_.channel.name.c_str());
       eng_->core_->logMessage("channel set\n");
    }
 }
