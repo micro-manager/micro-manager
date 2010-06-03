@@ -35,6 +35,9 @@
 #include <algorithm>
 
 #include "boost/lexical_cast.hpp"
+#include "WriteCompactTiffRGB.h"
+
+
 
 using namespace std;
 const double CDemoCamera::nominalPixelSizeUm_ = 1.0;
@@ -1057,6 +1060,15 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
    const double dAmp = exp;
    const double cLinePhaseInc = 2.0 * cPi / 4.0 / img.Height();
 
+   static bool debugRGB = false;
+#ifdef TIFFDEMO
+	debugRGB = true;
+#endif
+   static  unsigned char* pDebug  = NULL;
+   static unsigned long dbgBufferSize = 0;
+   static long iseq = 1;
+
+ 
 
 	// bitDepth_ is 8, 10, 12, 16 i.e. it is depth per component
    long maxValue = 1 << bitDepth_;
@@ -1095,18 +1107,67 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
 	{
       double pedestal = 127 * exp / 100.0;
       unsigned int * pBuf = (unsigned int*) img.GetPixelsRW();
-      for (j=0; j<img.Height(); j++)
+
+      unsigned char* pTmpBuffer = NULL;
+
+      if(debugRGB)
       {
+         const unsigned long bfsize = img.Height() * img.Width() * 3;
+         if(  bfsize != dbgBufferSize)
+         {
+            if (NULL != pDebug)
+            {
+               free(pDebug);
+               pDebug = NULL;
+            }
+            pDebug = (unsigned char*)malloc( bfsize);
+            if( NULL != pDebug)
+            {
+               dbgBufferSize = bfsize;
+            }
+         }
+      }
+
+      pTmpBuffer = pDebug;
+      unsigned char* pTmp2 = pTmpBuffer;
+      memset( pTmpBuffer, 0, img.Height() * img.Width() * 3);
+
+      for (j=0; j<img.Width(); j++)
+      {
+         unsigned char theBytes[4];
          for (k=0; k<img.Width(); k++)
          {
             long lIndex = img.Width()*j + k;
-            unsigned int value0 = (unsigned char) min(255.0, (pedestal + dAmp * sin(dPhase + dLinePhase + (2.0 * cPi * k) / lPeriod)));
-            unsigned int value1 = (unsigned char) min(255.0, (pedestal + dAmp * sin(dPhase + dLinePhase*2 + (2.0 * cPi * k) / lPeriod)));
-            unsigned int value2 = (unsigned char) min(255.0, (pedestal + dAmp * sin(dPhase + dLinePhase*4 + (2.0 * cPi * k) / lPeriod)));
-            *(pBuf + lIndex) = value0+(value1<<8)+(value2<<16);
+            unsigned char value0 =   (unsigned char) min(255.0, (pedestal + dAmp * sin(dPhase + dLinePhase + (2.0 * cPi * k) / lPeriod)));
+            theBytes[0] = value0;
+            if( NULL != pTmpBuffer)
+               pTmp2[2] = value0;
+            unsigned char value1 =   (unsigned char) min(255.0, (pedestal + dAmp * sin(dPhase + dLinePhase*2 + (2.0 * cPi * k) / lPeriod)));
+            theBytes[1] = value1;
+            if( NULL != pTmpBuffer)
+               pTmp2[1] = value1;
+            unsigned char value2 = (unsigned char) min(255.0, (pedestal + dAmp * sin(dPhase + dLinePhase*4 + (2.0 * cPi * k) / lPeriod)));
+            theBytes[2] = value2;
+            if( NULL != pTmpBuffer){
+               pTmp2[0] = value2;
+               pTmp2+=3;
+            }
+            theBytes[3] = 0;
+            unsigned long tvalue = *(unsigned long*)(&theBytes[0]);
+            *(pBuf + lIndex) =  tvalue ;  //value0+(value1<<8)+(value2<<16);
          }
          dLinePhase += cLinePhaseInc;
       }
+
+
+      // ImageJ's AWT images are loaded with a Direct Color processor which expects BGRA, that's why we swapped the Blue and Red components in the generator above.
+      if(NULL != pTmpBuffer)
+      {
+         // write the compact debug image...
+         int status = writeCompactTiffRGB( img.Width(), img.Height(), pTmpBuffer, ("democamera"+boost::lexical_cast<std::string,int>(iseq++)+".tiff").c_str());
+			status = status;
+      }
+
 	}
 
 	// generate an RGB image with bitDepth_ bits in each color

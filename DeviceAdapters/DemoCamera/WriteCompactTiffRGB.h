@@ -1,4 +1,3 @@
-// k.h.
 
 #include "stdio.h"
 #include "math.h"
@@ -7,8 +6,15 @@
 #include "memory.h"
 #endif
 
+// very simple utility to write a tiff image, currently constrained to be
+// a compact array of BGR pixels, each triple being 24 bits in length
+// k.h
+// can be useful to intercept stream of pixels directly from camera
 
-// from 
+int writeCompactTiffRGB( const int /* width */, const int /* height*/ , const unsigned char* /* address of array of BGR bytes*/, const char* const /* the output filename*/ );
+
+
+// from somewhere
 unsigned int htoi (const char *ptr)
 {
 unsigned int value = 0;
@@ -76,6 +82,7 @@ int writeCompactTiffRGB( const int nx, const int ny, const unsigned char* pdata,
 		putc((offset & 0x000000ff),fptr);
 
 		size_t wereWritten = fwrite( pdata, sizeof( *pdata), nx*ny*3, fptr);
+		wereWritten = wereWritten; // avoid a compile warning....
 
 		/* Write the footer */
 		WriteHexString(fptr,"000e");  /* The number of directory entries (14) */
@@ -204,8 +211,8 @@ void GenerateRGBTestImage( const int nx, const int ny, const char color, unsigne
 
          double r = sqrt((double)( (nx-i)*(nx-i) + (ny-j)*(ny-j)));
 
-         char value = (int)(0.5 + 255. * r * irmax );
-         char red, green, blue;
+         unsigned char value = (unsigned char)(0.5 + 255. * r * irmax );
+         unsigned char red, green, blue;
          red = 0;
          green = 0;
          blue = 0;

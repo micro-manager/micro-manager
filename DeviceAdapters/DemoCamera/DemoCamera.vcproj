@@ -492,6 +492,10 @@
 				RelativePath="..\..\MMDevice\Property.h"
 				>
 			</File>
+			<File
+				RelativePath=".\WriteCompactTiffRGB.h"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Resource Files"
