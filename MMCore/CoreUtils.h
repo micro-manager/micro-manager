@@ -26,12 +26,18 @@
 #pragma once
 
 #include "../MMDevice/MMDevice.h"
-//#include "ace/High_Res_Timer.h"
-//#include "ace/Log_Msg.h"
 
-//#include "../../3rdparty/boost/boost/date_time/posix_time/posix_time.hpp"
+// suppress hideous boost warnings
+#ifdef WIN32
+#pragma warning( push )
+#pragma warning( disable : 4244 )
+#endif
+
 #include "boost/date_time/posix_time/posix_time.hpp"
 
+#ifdef WIN32
+#pragma warning( pop )
+#endif
 
 //#define CORE_LOG_PREFIX "LOG(%P, %t:): "
 
