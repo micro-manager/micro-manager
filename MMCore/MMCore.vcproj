@@ -29,7 +29,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				CommandLine="cd ..\..\3rdpartypublic\libtiff\&#x0D;&#x0A;nmake /f makefile.vc&#x0D;&#x0A;cd ..\..\micromanager\MMCore\"
+				CommandLine="cd ..\..\3rdpartypublic\libtiff\&#x0D;&#x0A;nmake /f makefile.vc&#x0D;&#x0A;cd ..\..\micromanager\MMCore\&#x0D;&#x0A;"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -124,7 +124,7 @@
 				MinimalRebuild="true"
 				ExceptionHandling="2"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="1"
+				RuntimeLibrary="3"
 				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="4"
@@ -192,7 +192,7 @@
 				AdditionalIncludeDirectories="../../3rdpartypublic/libtiff/libtiff;../../3rdpartypublic/boost;../../3rdpartypublic\boost\boost;&quot;..\..\3rdparty\Microsoft\VisualC++\include&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;_WINDOWS"
 				ExceptionHandling="2"
-				RuntimeLibrary="0"
+				RuntimeLibrary="2"
 				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="4"
@@ -261,7 +261,7 @@
 				AdditionalIncludeDirectories="../../3rdpartypublic/libtiff/libtiff;../../3rdpartypublic/boost;../../3rdpartypublic\boost\boost;&quot;..\..\3rdparty\Microsoft\VisualC++\include&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;_WINDOWS"
 				ExceptionHandling="2"
-				RuntimeLibrary="0"
+				RuntimeLibrary="2"
 				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="4"
