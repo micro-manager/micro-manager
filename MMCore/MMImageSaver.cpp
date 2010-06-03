@@ -89,6 +89,7 @@ void MMImageSaver::WriteNextImage(string filestem)
    int depth = core_->getBytesPerPixel();
 
    string filename = CreateFileName(filestem, md);
+   md.frameData["FileName"] = filename;
    WriteImage(filename, img, width, height, depth, md);
 
 	stringstream title;
