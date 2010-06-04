@@ -88,7 +88,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\lib&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; ..\lib\$(TargetName)d.lib&#x0D;&#x0A;"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\lib_$(PlatformName)&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; ..\lib_$(PlatformName)\$(TargetName)d.lib&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -160,7 +160,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\lib&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; ..\lib\$(TargetName)d.lib&#x0D;&#x0A;"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\lib_$(PlatformName)&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; ..\lib_$(PlatformName)\$(TargetName)d.lib&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -228,7 +228,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\lib&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; ..\lib\$(TargetName)r.lib&#x0D;&#x0A;"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\lib_$(PlatformName)&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; ..\lib_$(PlatformName)\$(TargetName)r.lib&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -297,7 +297,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\lib&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; ..\lib\$(TargetName)r.lib&#x0D;&#x0A;"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\lib_$(PlatformName)&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; ..\lib_$(PlatformName)\$(TargetName)r.lib&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration

@@ -8,12 +8,12 @@
 
 	<!-- Specify the system path to the ImageJ root directory -->
 	<property name="ImageJPath" value="/Program Files/ImageJ"/>
-	<property name="InstallRoot" value="../Install64/micro-manager"/>
+	<property name="InstallRoot" value="../Install_x64/micro-manager"/>
 	<property name="NativeRoot" value="../MMCoreJ_wrap"/>
         <property name="ScriptsRoot" value="../scripts"/>
-        <property name="ScriptsInstall" value="../Install64/micro-manager/scripts"/>
+        <property name="ScriptsInstall" value="../Install_x64/micro-manager/scripts"/>
         <property name="DriversRoot" value="../drivers"/>
-        <property name="DriversInstall" value="../Install64/micro-manager/drivers"/>
+        <property name="DriversInstall" value="../Install_x64/micro-manager/drivers"/>
 
 	<!-- Do not modify from this point on -->
 	<property name="MMPluginDir" value="${ImageJPath}/plugins/Micro-Manager"/>
@@ -22,9 +22,9 @@
 	<property name="swingx" value="../classext/swingx-0.9.5.jar"/>
 	<property name="swing_layout" value="../classext/swing-layout-1.0.4.jar"/>
 	<property name="commons_math" value="../classext/commons-math-2.0.jar"/>
-	<property name="MMCoreJ" value="../bin64/MMCoreJ.jar"/>
+	<property name="MMCoreJ" value="../bin_x64/MMCoreJ.jar"/>
 	<property name="MMPluginDir-inst" value="${InstallRoot}/plugins/Micro-Manager"/>
-	<property name="BinRoot" value="../bin64"/>
+	<property name="BinRoot" value="../bin_x64"/>
 	<property name="NativeGUI" value="../NativeGUI/NativeGUI.jar"/>
 
 	<path id="project.MMPlugins.path">

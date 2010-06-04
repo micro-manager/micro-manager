@@ -42,7 +42,7 @@
 				Name="VCMIDLTool"/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy $(TargetPath) ..\bin"/>
+				CommandLine="copy $(TargetPath) ..\bin_$(PlatformName)"/>
 			<Tool
 				Name="VCPreBuildEventTool"/>
 			<Tool

@@ -56,11 +56,11 @@ call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile ../build64.xml insta
 
 
 
-pushd \Projects\micromanager\Install64\Output
+pushd \Projects\micromanager\Install_x64\Output
 rename MMSetup_.exe  MMSetupx64_%mmversion%_%YYYYMMDD%.exe
 popd
 
-REM   WON'T WORK ON BUILD MACHINE \Projects\micromanager\Install64\Output\MMSetup_%mmversion%_%YYYYMMDD%.exe  /silent
+REM   WON'T WORK ON BUILD MACHINE \Projects\micromanager\Install_x64\Output\MMSetup_%mmversion%_%YYYYMMDD%.exe  /silent
 
 ECHO "Done installing"
 EXIT /B

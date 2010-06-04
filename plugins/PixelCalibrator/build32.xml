@@ -4,13 +4,13 @@
 <project name="MMPixelCalibrator" default="buildMMPixelCalibrator">
 
 	<!-- Specify the system path to the ImageJ root directory -->
-	<property name="InstallRoot" value="../../Install32/micro-manager"/>
+	<property name="InstallRoot" value="../../Install_Win32/micro-manager"/>
 
 	<!-- Do not modify from this point on -->
-	<property name="MMPluginDir" value="../../bin32/plugins/Micro-Manager"/>
-	<property name="MMCoreJ" value="../../bin32/MMCoreJ.jar"/>
+	<property name="MMPluginDir" value="../../bin_Win32/plugins/Micro-Manager"/>
+	<property name="MMCoreJ" value="../../bin_Win32/MMCoreJ.jar"/>
 	<property name="MMPluginsDir-inst" value="${InstallRoot}/mmplugins"/>
-	<property name="BinRoot" value="../../bin32"/>
+	<property name="BinRoot" value="../../bin_Win32"/>
 
 	<property name="IJ" value="../../classext/ij.jar"/>
 	<property name="beanshell" value="../../classext/bsh-2.0b4.jar"/>

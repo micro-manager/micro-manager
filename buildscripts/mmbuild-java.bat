@@ -22,6 +22,9 @@ pushd mmStudio\src
 call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile ../build32.xml cleanMMStudio compileMMStudio buildMMStudio buildMMReader
 popd
 
+rem haven't got to the bottom of this yet, but Pixel Calibrator and Slide Explorer need this jar file there....
+copy \projects\micromanager\bin_Win32\plugins\Micro-Manager\MMJ_.jar \projects\micromanager\bin_Win32\
+
 pushd autofocus
 call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build32.xml cleanAutofocus compileAutofocus buildAutofocus 
 popd
@@ -47,11 +50,11 @@ set DEVICELISTBUILDER=""
 popd
 
 
-pushd \Projects\micromanager\Install32\Output
+pushd \Projects\micromanager\Install_Win32\Output
 rename MMSetup_.exe  MMSetup_%mmversion%_%YYYYMMDD%.exe
 popd
 
-\Projects\micromanager\Install32\Output\MMSetup_%mmversion%_%YYYYMMDD%.exe  /silent
+\Projects\micromanager\Install_Win32\Output\MMSetup_%mmversion%_%YYYYMMDD%.exe  /silent
 
 ECHO "Done"
 EXIT /B

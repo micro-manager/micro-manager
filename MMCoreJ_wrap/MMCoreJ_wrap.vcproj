@@ -74,7 +74,7 @@
 				ShowProgress="0"
 				OutputFile="$(OutDir)/MMCoreJ_wrap.dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib;..\lib;"
+				AdditionalLibraryDirectories="&quot;..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;;&quot;..\lib_$(PlatformName)&quot;"
 				IgnoreAllDefaultLibraries="false"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/MMCoreJ_wrap.pdb"
@@ -104,7 +104,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\bin32&#x0D;&#x0A;del mmcorej\*.class&#x0D;&#x0A;&quot;%JAVA_HOME%\bin\javac&quot; -source 5 mmcorej\*.java&#x0D;&#x0A;&quot;%JAVA_HOME%\bin\jar&quot; cvf MMCoreJ.jar mmcorej\*.class&#x0D;&#x0A;copy *.jar ..\bin32&#x0D;&#x0A;copy *.jar \&quot;Program Files&quot;\ImageJ\plugins\Micro-Manager&#x0D;&#x0A;copy ..\bin32\*.dll  \&quot;Program Files&quot;\ImageJ&#x0D;&#x0A;"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\bin_$(PlatformName)&#x0D;&#x0A;del mmcorej\*.class&#x0D;&#x0A;&quot;%JAVA_HOME%\bin\javac&quot; -source 5 mmcorej\*.java&#x0D;&#x0A;&quot;%JAVA_HOME%\bin\jar&quot; cvf MMCoreJ.jar mmcorej\*.class&#x0D;&#x0A;copy *.jar ..\bin_$(PlatformName)&#x0D;&#x0A;copy *.jar \&quot;Program Files&quot;\ImageJ\plugins\Micro-Manager&#x0D;&#x0A;copy ..\bin_$(PlatformName)\*.dll  \&quot;Program Files&quot;\ImageJ&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -163,7 +163,7 @@
 				ShowProgress="0"
 				OutputFile="$(OutDir)/MMCoreJ_wrap.dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib;..\lib;"
+				AdditionalLibraryDirectories="&quot;..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;;&quot;..\lib_$(PlatformName)&quot;"
 				IgnoreAllDefaultLibraries="false"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/MMCoreJ_wrap.pdb"
@@ -193,7 +193,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\bin64&#x0D;&#x0A;del mmcorej\*.class&#x0D;&#x0A;&quot;%JAVA_HOME%\bin\javac&quot; -source 5 mmcorej\*.java&#x0D;&#x0A;&quot;%JAVA_HOME%\bin\jar&quot; cvf MMCoreJ.jar mmcorej\*.class&#x0D;&#x0A;copy *.jar ..\bin64&#x0D;&#x0A;copy *.jar \&quot;Program Files&quot;\ImageJ\plugins\Micro-Manager&#x0D;&#x0A;copy ..\bin64\*.dll  \&quot;Program Files&quot;\ImageJ&#x0D;&#x0A;"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\bin_$(PlatformName)&#x0D;&#x0A;del mmcorej\*.class&#x0D;&#x0A;&quot;%JAVA_HOME%\bin\javac&quot; -source 5 mmcorej\*.java&#x0D;&#x0A;&quot;%JAVA_HOME%\bin\jar&quot; cvf MMCoreJ.jar mmcorej\*.class&#x0D;&#x0A;copy *.jar ..\bin_$(PlatformName)&#x0D;&#x0A;copy *.jar \&quot;Program Files&quot;\ImageJ\plugins\Micro-Manager&#x0D;&#x0A;copy ..\bin_$(PlatformName)\*.dll  \&quot;Program Files&quot;\ImageJ&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -247,7 +247,7 @@
 				AdditionalDependencies="mmcorer.lib ..\..\3rdpartypublic\libtiff\libtiff\libtiff.lib"
 				OutputFile="$(OutDir)/MMCoreJ_wrap.dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib;..\lib;"
+				AdditionalLibraryDirectories="&quot;..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;;&quot;..\lib_$(PlatformName)&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -277,7 +277,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\bin32&#x0D;&#x0A;del mmcorej\*.class&#x0D;&#x0A;&quot;%JAVA_HOME%\bin\javac&quot; -source 5 mmcorej\*.java&#x0D;&#x0A;&quot;%JAVA_HOME%\bin\jar&quot; cvf MMCoreJ.jar mmcorej\*.class&#x0D;&#x0A;copy *.jar ..\bin32&#x0D;&#x0A;copy *.jar \&quot;Program Files&quot;\ImageJ\plugins\Micro-Manager&#x0D;&#x0A;copy ..\bin32\*.dll  \&quot;Program Files&quot;\ImageJ&#x0D;&#x0A;"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\bin_$(PlatformName)&#x0D;&#x0A;del mmcorej\*.class&#x0D;&#x0A;&quot;%JAVA_HOME%\bin\javac&quot; -source 5 mmcorej\*.java&#x0D;&#x0A;&quot;%JAVA_HOME%\bin\jar&quot; cvf MMCoreJ.jar mmcorej\*.class&#x0D;&#x0A;copy *.jar ..\bin_$(PlatformName)&#x0D;&#x0A;copy *.jar \&quot;Program Files&quot;\ImageJ\plugins\Micro-Manager&#x0D;&#x0A;copy ..\bin_$(PlatformName)\*.dll  \&quot;Program Files&quot;\ImageJ&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -332,7 +332,7 @@
 				AdditionalDependencies="mmcorer.lib"
 				OutputFile="$(OutDir)/MMCoreJ_wrap.dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib;..\lib;"
+				AdditionalLibraryDirectories="&quot;..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;;&quot;..\lib_$(PlatformName)&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -362,7 +362,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\bin64&#x0D;&#x0A;del mmcorej\*.class&#x0D;&#x0A;&quot;%JAVA_HOME%\bin\javac&quot; -source 5 mmcorej\*.java&#x0D;&#x0A;&quot;%JAVA_HOME%\bin\jar&quot; cvf MMCoreJ.jar mmcorej\*.class&#x0D;&#x0A;copy *.jar ..\bin64&#x0D;&#x0A;copy *.jar \&quot;Program Files&quot;\ImageJ\plugins\Micro-Manager&#x0D;&#x0A;copy ..\bin64\*.dll  \&quot;Program Files&quot;\ImageJ&#x0D;&#x0A;"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\bin_$(PlatformName)&#x0D;&#x0A;del mmcorej\*.class&#x0D;&#x0A;&quot;%JAVA_HOME%\bin\javac&quot; -source 5 mmcorej\*.java&#x0D;&#x0A;&quot;%JAVA_HOME%\bin\jar&quot; cvf MMCoreJ.jar mmcorej\*.class&#x0D;&#x0A;copy *.jar ..\bin_$(PlatformName)&#x0D;&#x0A;copy *.jar \&quot;Program Files&quot;\ImageJ\plugins\Micro-Manager&#x0D;&#x0A;copy ..\bin_$(PlatformName)\*.dll  \&quot;Program Files&quot;\ImageJ&#x0D;&#x0A;"
 			/>
 		</Configuration>
 	</Configurations>

@@ -5,16 +5,16 @@
 
 	<!-- Specify the system path to the ImageJ root directory -->
    <property name="ImageJPath" value="/Program Files/ImageJ"/>
-	<property name="InstallRoot" value="../Install64/micro-manager"/>
+	<property name="InstallRoot" value="../Install_x64/micro-manager"/>
 
 	<!-- Do not modify from this point on -->
 	<property name="MMPluginDir" value="${ImageJPath}/plugins/Micro-Manager"/>
 	<property name="IJ" value="../classext/ij.jar"/>
 	<property name="beanshell" value="../classext/bsh-2.0b4.jar"/>
-	<property name="MMCoreJ" value="../bin64/MMCoreJ.jar"/>
+	<property name="MMCoreJ" value="../bin_x64/MMCoreJ.jar"/>
 	<property name="mmautofocus-inst" value="${InstallRoot}/mmautofocus"/>
 	<property name="mmautofocus" value="$(ImageJPath}/mmautofocus"/>
-	<property name="Runtime" value="../bin64"/>
+	<property name="Runtime" value="../bin_x64"/>
 
 	<path id="project.MMPlugins.path">
 		<pathelement location="${MMPluginDir}"/>

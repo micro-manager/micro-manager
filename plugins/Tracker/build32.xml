@@ -5,17 +5,17 @@
 
 	<!-- Specify the system path to the ImageJ root directory -->
 	<property name="ImageJPath" value="C:/Program Files/ImageJ"/>
-	<property name="InstallRoot" value="C:/projects/micromanager/Install32/micro-manager"/>
+	<property name="InstallRoot" value="C:/projects/micromanager/Install_Win32/micro-manager"/>
 
 	<!-- Do not modify from this point on -->
 	<property name="MMPluginDir" value="${ImageJPath}/plugins/Micro-Manager"/>
 	<property name="mmplugins" value="${ImageJPath}/mmplugins"/>
 	<property name="mmautofocus" value="${ImageJPath}/mmautofocus"/>
 	<property name="IJ" value="../../classext/ij.jar"/>
-	<property name="MMCoreJ" value="../../bin32/MMCoreJ.jar"/>
+	<property name="MMCoreJ" value="../../bin_Win32/MMCoreJ.jar"/>
 	<property name="MMPluginDir-inst" value="${InstallRoot}/plugins/Micro-Manager"/>
 	<property name="mmplugins-inst" value="${InstallRoot}/mmplugins"/>
-	<property name="BinRoot" value="../../bin32"/>
+	<property name="BinRoot" value="../../bin_Win32"/>
 
 	<path id="project.MMPlugins.path">
 		<pathelement location="${MMPluginDir}"/>

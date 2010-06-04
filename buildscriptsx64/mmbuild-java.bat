@@ -43,11 +43,11 @@ set DEVICELISTBUILDER=""
 popd
 
 
-pushd \Projects\micromanager\Install64\Output
+pushd \Projects\micromanager\Install_x64\Output
 rename MMSetup_.exe  MMSetup_%mmversion%_%YYYYMMDD%.exe
 popd
 
-\Projects\micromanager\Install64\Output\MMSetup_%mmversion%_%YYYYMMDD%.exe  /silent
+\Projects\micromanager\Install_x64\Output\MMSetup_%mmversion%_%YYYYMMDD%.exe  /silent
 
 ECHO "Done"
 EXIT /B
