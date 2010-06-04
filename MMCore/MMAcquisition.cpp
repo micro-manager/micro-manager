@@ -268,10 +268,10 @@ void MMAcquisitionEngine::GenerateSequence(AcquisitionSettings acquisitionSettin
    imageRequest.useTime = (acquisitionSettings.timeSeries.size() > 0);
    imageRequest.useSlice = (acquisitionSettings.zStack.size() > 0);
 
-   int numPositions = max(1, acquisitionSettings.positionList.size());
-   int numFrames = max(1, acquisitionSettings.timeSeries.size());
-   int numChannels = max(1, acquisitionSettings.channelList.size());
-   int numSlices = max(1, acquisitionSettings.channelList.size());
+   int numPositions = max(1, (int) acquisitionSettings.positionList.size());
+   int numFrames = max(1, (int) acquisitionSettings.timeSeries.size());
+   int numChannels = max(1, (int) acquisitionSettings.channelList.size());
+   int numSlices = max(1, (int) acquisitionSettings.channelList.size());
    int numImages = numPositions * numFrames * numChannels * numSlices;
 
    for (int imageIndex = 0; imageIndex < numImages; ++imageIndex)
