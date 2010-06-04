@@ -318,7 +318,8 @@ void MMAcquisitionEngine::GenerateSequence(AcquisitionSettings acquisitionSettin
          if (!lastImageRequest.skipImage)
             tasks_.push_back(new ImageTask(this, lastImageRequest));
       }
-
-      lastImageRequest = imageRequest;
+      
+      if (imageIndex == 0 || !imageRequest.skipImage);
+         lastImageRequest = imageRequest;
    }
 }
