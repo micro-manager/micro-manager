@@ -4782,13 +4782,14 @@ void CMMCore::runAcquisitionEngineTest(AcquisitionSettings acquisitionSettings) 
    CORE_LOG("runAcquisitionEngineTest()");
    engine_ = new MMAcquisitionEngine(this);
 	engine_->Prepare(acquisitionSettings);
-	saver_ = new MMImageSaver(this, engine_);
+   engine_->Start();
+
 	if (acquisitionSettings.saveImages)
 	{
-		saver_->SetPaths(acquisitionSettings.root, acquisitionSettings.prefix);
-	}
-   engine_->Start();
-	saver_->Start();
+      saver_ = new MMImageSaver(this, engine_);
+      saver_->SetPaths(acquisitionSettings.root, acquisitionSettings.prefix);
+   	saver_->Start();
+   }
 }
 
 void CMMCore::stopAcquisitionEngine() throw (CMMError)

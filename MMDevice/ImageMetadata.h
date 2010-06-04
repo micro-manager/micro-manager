@@ -111,7 +111,7 @@ public:
    inline  MetadataSingleTag* ToSingleTag() {
       const MetadataTag *p = this;
       return const_cast<MetadataSingleTag*>(p->ToSingleTag());
-   }
+     }
    inline  MetadataArrayTag* ToArrayTag() {
       const MetadataTag *p = this;
       return const_cast<MetadataArrayTag*>(p->ToArrayTag());

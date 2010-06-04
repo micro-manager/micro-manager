@@ -97,8 +97,9 @@ public class CoreAcquisitionWrapperEngine implements AcquisitionEngine {
          ReportingUtils.showError(ex);
       }
 
-      //display_ = new AcquisitionDisplay(core_);
-      //display_.start();
+      display_ = new AcquisitionDisplay(core_);
+      display_.setRamOnly(!saveFiles_);
+      display_.start();
    }
 
    private AcquisitionSettings generateAcquisitionSettings() {
@@ -467,7 +468,7 @@ public class CoreAcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    public void setSaveFiles(boolean selected) {
-      saveFiles_ = true;
+      saveFiles_ = selected;
    }
 
    public boolean getSaveFiles() {

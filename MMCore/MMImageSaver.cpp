@@ -25,6 +25,17 @@ void MMImageSaver::SetPaths(string root, string prefix)
 
 void MMImageSaver::Run()
 {
+   CreateDirectory(root_);
+	cout << "root_ = " << root_ << endl;
+   metadataStream_.open((root_+"/metadata.txt").c_str());
+   metadataStream_ << "{" << endl;
+
+	firstElement_ = true;
+
+	Metadata md;
+	md.frameData = eng_->GetInitPropertyMap();
+	WriteMetadata(md, "SystemState");
+
    do {
       while (core_->getRemainingImageCount() > 0)
       {
@@ -64,17 +75,6 @@ bool MMImageSaver::DirectoryExists(string path)
 
 void MMImageSaver::Start()
 {
-	CreateDirectory(root_);
-	cout << "root_ = " << root_ << endl;
-   metadataStream_.open((root_+"/metadata.txt").c_str());
-   metadataStream_ << "{" << endl;
-
-	firstElement_ = true;
-
-	Metadata md;
-	md.frameData = eng_->GetInitPropertyMap();
-	WriteMetadata(md, "SystemState");
-
    activate();
 }
 
@@ -140,9 +140,7 @@ void MMImageSaver::WriteMetadata(Metadata md, string title)
 
 void MMImageSaver::WriteImage(string filename, void * img, int width, int height, int depth, Metadata md)
 {
-
    TIFF * tif = TIFFOpen(filename.c_str(),"w");
-
 
    if (tif != NULL)
    {
