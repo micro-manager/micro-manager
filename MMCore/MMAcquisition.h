@@ -35,6 +35,7 @@ public:
    bool useChannel;
 
    bool closeShutter;
+   bool skipImage;
 
    ImageRequest():
    sourceIndex(0),
