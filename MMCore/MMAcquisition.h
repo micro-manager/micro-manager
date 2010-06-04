@@ -29,6 +29,11 @@ public:
    int sliceIndex;
    int channelIndex;
 
+   bool usePosition;
+   bool useTime;
+   bool useSlice;
+   bool useChannel;
+
    bool closeShutter;
 
    ImageRequest():
@@ -87,8 +92,10 @@ public:
    map<string, string> GetInitPropertyMap();
 
    void GenerateSequence(AcquisitionSettings acquisitionSettings);
+   void GenerateSequence2(AcquisitionSettings acquisitionSettings);
    void GenerateSlicesAndChannelsSubsequence(AcquisitionSettings acquisitionSettings, ImageRequest request);
    void ControlShutterStates(AcquisitionSettings acquisitionSettings);
+   vector<int> GenerateIndices(int n);
    //MMRunnable * createImageTask();
 
 
