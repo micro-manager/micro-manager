@@ -248,6 +248,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private JMenuBar menuBar_;
    private ConfigPadButtonPanel configPadButtonPanel_;
    private boolean virtual_ = false;
+   private final JMenu switchConfigurationMenu_;
 
    private void applyChannelSettingsTo5D(AcquisitionData ad, Image5D img5d) throws MMAcqDataException {
       Color[] colors = ad.getChannelColors();
@@ -330,6 +331,24 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    public ImageWindow getImageWin() {
       return imageWin_;
+   }
+
+   private void updateSwitchConfigurationMenu() {
+      switchConfigurationMenu_.removeAll();
+      for (final String configFile : MRUConfigFiles_) {
+         if (! configFile.equals(sysConfigFile_)) {
+            JMenuItem configMenuItem = new JMenuItem();
+            configMenuItem.setText(configFile);
+            configMenuItem.addActionListener(new ActionListener() {
+               String theConfigFile = configFile;
+               public void actionPerformed(ActionEvent e) {
+                  sysConfigFile_ = theConfigFile;
+                  loadSystemConfiguration();
+               }
+            });
+            switchConfigurationMenu_.add(configMenuItem);
+         }
+      }
    }
 
    /**
@@ -1060,6 +1079,17 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
       toolsMenu.add(centerAndDragMenuItem_);
 
+      final JMenuItem calibrationMenuItem = new JMenuItem();
+      toolsMenu.add(calibrationMenuItem);
+      calibrationMenuItem.addActionListener(new ActionListener() {
+
+         public void actionPerformed(ActionEvent e) {
+            createCalibrationListDlg();
+         }
+      });
+      calibrationMenuItem.setText("Pixel Size Calibration...");
+      toolsMenu.add(calibrationMenuItem);
+
       toolsMenu.addSeparator();
 
       final JMenuItem configuratorMenuItem = new JMenuItem();
@@ -1105,17 +1135,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       configuratorMenuItem.setText("Hardware Configuration Wizard...");
       toolsMenu.add(configuratorMenuItem);
 
-      final JMenuItem calibrationMenuItem = new JMenuItem();
-      toolsMenu.add(calibrationMenuItem);
-      calibrationMenuItem.addActionListener(new ActionListener() {
-
-         public void actionPerformed(ActionEvent e) {
-            createCalibrationListDlg();
-         }
-      });
-      calibrationMenuItem.setText("Pixel Size Calibration...");
-      toolsMenu.add(calibrationMenuItem);
-
       final JMenuItem loadSystemConfigMenuItem = new JMenuItem();
       toolsMenu.add(loadSystemConfigMenuItem);
       loadSystemConfigMenuItem.addActionListener(new ActionListener() {
@@ -1126,6 +1145,18 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          }
       });
       loadSystemConfigMenuItem.setText("Load Hardware Configuration...");
+
+      switchConfigurationMenu_ = new JMenu();
+      for (int i=0; i<5; i++)
+      {
+         JMenuItem configItem = new JMenuItem();
+         configItem.setText(Integer.toString(i));
+         switchConfigurationMenu_.add(configItem);
+         
+      }
+
+      switchConfigurationMenu_.setText("Switch Hardware Configuration");
+      toolsMenu.add(switchConfigurationMenu_);
 
       final JMenuItem saveConfigurationPresetsMenuItem = new JMenuItem();
       saveConfigurationPresetsMenuItem.addActionListener(new ActionListener() {
@@ -1138,8 +1169,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       saveConfigurationPresetsMenuItem.setText("Save Configuration Settings...");
       toolsMenu.add(saveConfigurationPresetsMenuItem);
 
-      final JMenuItem optionsMenuItem = new JMenuItem();
+      toolsMenu.addSeparator();
+
       final MMStudioMainFrame thisInstance = this;
+      final JMenuItem optionsMenuItem = new JMenuItem();
       optionsMenuItem.addActionListener(new ActionListener() {
 
          public void actionPerformed(final ActionEvent e) {
@@ -1410,35 +1443,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                engine_.setParentGUI(parent);
             }
 
-            // load configuration from the file
-            sysConfigFile_ = mainPrefs_.get(SYSTEM_CONFIG_FILE,
-                  sysConfigFile_);
-            // startupScriptFile_ = mainPrefs_.get(STARTUP_SCRIPT_FILE,
-            // startupScriptFile_);
-            MRUConfigFiles_ = new ArrayList<String>();
-            for (Integer icfg = 0; icfg < maxMRUCfgs_; ++icfg) {
-               String value = "";
-               value = mainPrefs_.get(CFGFILE_ENTRY_BASE + icfg.toString(), value);
-               if (0 < value.length()) {
-                  File ruFile = new File(value);
-                  if (ruFile.exists()) {
-                     if (!MRUConfigFiles_.contains(value)) {
-                        MRUConfigFiles_.add(value);
-                     }
-                  }
-               }
-            }
+            loadMRUConfigFiles();
 
-            // initialize MRU list from old persistant data containing only SYSTEM_CONFIG_FILE
-            if (0 < sysConfigFile_.length()) {
-               if (!MRUConfigFiles_.contains(sysConfigFile_)) {
-                  // in case persistant data is inconsistent
-                  if (maxMRUCfgs_ <= MRUConfigFiles_.size()) {
-                     MRUConfigFiles_.remove(maxMRUCfgs_ - 1);
-                  }
-                  MRUConfigFiles_.add(0, sysConfigFile_);
-               }
-            }
             if (!options_.doNotAskForConfigFile) {
                MMIntroDlg introDlg = new MMIntroDlg(VERSION, MRUConfigFiles_);
                introDlg.setConfigFile(sysConfigFile_);
@@ -1446,30 +1452,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                introDlg.setVisible(true);
                sysConfigFile_ = introDlg.getConfigFile();
             }
-            //save the just-selected configfile in the preferences
-            if (0 < sysConfigFile_.length()) {
-
-               if (MRUConfigFiles_.contains(sysConfigFile_)) {
-                  MRUConfigFiles_.remove(sysConfigFile_);
-
-               }
-               if (maxMRUCfgs_ <= MRUConfigFiles_.size()) {
-                  MRUConfigFiles_.remove(maxMRUCfgs_ - 1);
-               }
-               // put the selected config file at the top of the list
-               MRUConfigFiles_.add(0, sysConfigFile_);
-               // save the MRU list to the preferences
-
-               for (Integer icfg = 0; icfg < MRUConfigFiles_.size(); ++icfg) {
-                  String value = "";
-                  if (null != MRUConfigFiles_.get(icfg)) {
-                     value = MRUConfigFiles_.get(icfg).toString();
-                  }
-                  mainPrefs_.put(CFGFILE_ENTRY_BASE + icfg.toString(), value);
-
-               }
-            }
-
+            saveMRUConfigFiles();
 
             // startupScriptFile_ = introDlg.getScriptFile();
             mainPrefs_.put(SYSTEM_CONFIG_FILE, sysConfigFile_);
@@ -1516,6 +1499,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                }
             }
          }
+
+        
       });
 
       final JButton setRoiButton = new JButton();
@@ -3337,6 +3322,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
     * Loads sytem configuration from the cfg file.
     */
    private void loadSystemConfiguration() {
+      saveMRUConfigFiles();
+
       final WaitDialog waitDlg = new WaitDialog(
             "Loading system configuration, please wait...");
 
@@ -3362,6 +3349,57 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       waitDlg.closeDialog();
       this.setEnabled(true);
       this.initializeGUI();
+
+      updateSwitchConfigurationMenu();
+   }
+
+   private void saveMRUConfigFiles() {
+      if (0 < sysConfigFile_.length()) {
+         if (MRUConfigFiles_.contains(sysConfigFile_)) {
+            MRUConfigFiles_.remove(sysConfigFile_);
+         }
+         if (maxMRUCfgs_ <= MRUConfigFiles_.size()) {
+            MRUConfigFiles_.remove(maxMRUCfgs_ - 1);
+         }
+         MRUConfigFiles_.add(0, sysConfigFile_);
+         // save the MRU list to the preferences
+         for (Integer icfg = 0; icfg < MRUConfigFiles_.size(); ++icfg) {
+            String value = "";
+            if (null != MRUConfigFiles_.get(icfg)) {
+               value = MRUConfigFiles_.get(icfg).toString();
+            }
+            mainPrefs_.put(CFGFILE_ENTRY_BASE + icfg.toString(), value);
+         }
+      }
+   }
+
+   private void loadMRUConfigFiles() {
+      sysConfigFile_ = mainPrefs_.get(SYSTEM_CONFIG_FILE, sysConfigFile_);
+      // startupScriptFile_ = mainPrefs_.get(STARTUP_SCRIPT_FILE,
+      // startupScriptFile_);
+      MRUConfigFiles_ = new ArrayList<String>();
+      for (Integer icfg = 0; icfg < maxMRUCfgs_; ++icfg) {
+         String value = "";
+         value = mainPrefs_.get(CFGFILE_ENTRY_BASE + icfg.toString(), value);
+         if (0 < value.length()) {
+            File ruFile = new File(value);
+            if (ruFile.exists()) {
+               if (!MRUConfigFiles_.contains(value)) {
+                  MRUConfigFiles_.add(value);
+               }
+            }
+         }
+      }
+      // initialize MRU list from old persistant data containing only SYSTEM_CONFIG_FILE
+      if (0 < sysConfigFile_.length()) {
+         if (!MRUConfigFiles_.contains(sysConfigFile_)) {
+            // in case persistant data is inconsistent
+            if (maxMRUCfgs_ <= MRUConfigFiles_.size()) {
+               MRUConfigFiles_.remove(maxMRUCfgs_ - 1);
+            }
+            MRUConfigFiles_.add(0, sysConfigFile_);
+         }
+      }
    }
 
    /**
@@ -4351,5 +4389,7 @@ class BooleanLock extends Object {
 
       return (value == state);
    }
+
+
 }
 
