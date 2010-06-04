@@ -96,6 +96,7 @@ public:
    void GenerateSlicesAndChannelsSubsequence(AcquisitionSettings acquisitionSettings, ImageRequest request);
    void ControlShutterStates(AcquisitionSettings acquisitionSettings);
    vector<int> GenerateIndices(int n);
+   void GenerateIndices(AcquisitionSettings acquisitionSettings, int imageIndex, ImageRequest & imageRequest, int & numImages);
    //MMRunnable * createImageTask();
 
 
