@@ -1128,9 +1128,11 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
          }
       }
 
+		// only perform the debug operations if pTmpbuffer is not 0
       pTmpBuffer = pDebug;
       unsigned char* pTmp2 = pTmpBuffer;
-      memset( pTmpBuffer, 0, img.Height() * img.Width() * 3);
+      if( NULL!= pTmpBuffer)
+			memset( pTmpBuffer, 0, img.Height() * img.Width() * 3);
 
       for (j=0; j<img.Width(); j++)
       {
