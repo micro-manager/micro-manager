@@ -344,6 +344,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                public void actionPerformed(ActionEvent e) {
                   sysConfigFile_ = theConfigFile;
                   loadSystemConfiguration();
+                  mainPrefs_.put(SYSTEM_CONFIG_FILE, sysConfigFile_);
                }
             });
             switchConfigurationMenu_.add(configMenuItem);
