@@ -123,6 +123,7 @@ public:
 
 private:
    bool initialized_;
+   MM::MMTime changedTime_;
    long pos_;
    std::string name_;
    unsigned numPos_; 

@@ -157,7 +157,10 @@ int CSU22Hub::SetFilterSetPosition(MM::Device& device, MM::Core& core, int filte
    os << command <<  filter << dichroic << filter;
 
    // send command
-   return ExecuteCommand(device, core, os.str().c_str());
+   int ret = ExecuteCommand(device, core, os.str().c_str());
+   if (ret != DEVICE_OK)
+      return ret;
+   return GetAcknowledgment(device,core);
 }
 
 //TODO: Implement

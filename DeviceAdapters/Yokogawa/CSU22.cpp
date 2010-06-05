@@ -320,12 +320,14 @@ int NDFilter::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 ///////////////////////////////////////////////////////////////////////////////
 FilterSet::FilterSet () :
    initialized_ (false),
+   changedTime_(0),
    pos_ (1),
    name_ (g_CSU22FilterSet),
    numPos_ (5)
 {
    InitializeDefaultErrorMessages();
 
+   EnableDelay();
    // Todo: Add custom messages
 }
 
@@ -342,7 +344,6 @@ void FilterSet::GetName(char* name) const
 
 int FilterSet::Initialize()
 {
-   printf("Initializing Filter\n");
    // Name
    int ret = CreateProperty(MM::g_Keyword_Name, name_.c_str(), MM::String, true);
    if (DEVICE_OK != ret)
@@ -365,7 +366,6 @@ int FilterSet::Initialize()
    AddAllowedValue(MM::g_Keyword_State, "3");
    AddAllowedValue(MM::g_Keyword_State, "4");
 
-   printf("Filter State Labels\n");
    // Label                                                                  
    pAct = new CPropertyAction (this, &CStateBase::OnLabel);                  
    ret = CreateProperty(MM::g_Keyword_Label, "Undefined", MM::String, false, pAct);        
@@ -383,6 +383,7 @@ int FilterSet::Initialize()
    if (ret != DEVICE_OK) 
       return ret; 
 
+   changedTime_ = GetCurrentMMTime();
    initialized_ = true;
 
    return DEVICE_OK;
@@ -391,7 +392,11 @@ int FilterSet::Initialize()
 
 bool FilterSet::Busy()
 {
-   // Who knows?
+   MM::MMTime interval = GetCurrentMMTime() - changedTime_;
+  
+   if (interval < (1000.0 * GetDelayMs() ))
+       return true;
+
    return false;
 }
 
@@ -443,6 +448,7 @@ int FilterSet::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
       int ret = g_hub.SetFilterSetPosition(*this, *GetCoreCallback(), filter, dichroic);
       if (ret == DEVICE_OK) {
          pos_ = pos;
+         changedTime_ = GetCurrentMMTime();
          return DEVICE_OK;
       }
       else
