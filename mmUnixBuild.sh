@@ -4,6 +4,7 @@ set -e
 
 
 # bootstrap autotools
+mkdir SecretDeviceAdapters || echo "SecretDeviceAdapters present"
 aclocal -I m4
 libtoolize --force
 automake --foreign --add-missing
@@ -20,7 +21,7 @@ libtoolize --force
 automake --foreign --add-missing
 autoconf -I ../m4
 cd ..
-if [ -d SecretDeviceAdapters ]; then
+if test -r "SecretDeviceAdapters/configure.in" ;  then
    cd SecretDeviceAdapters
    aclocal 
    libtoolize --force
@@ -28,4 +29,3 @@ if [ -d SecretDeviceAdapters ]; then
    autoconf
    cd ..
 fi
-
