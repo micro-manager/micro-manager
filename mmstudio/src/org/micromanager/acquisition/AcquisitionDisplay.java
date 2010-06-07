@@ -14,91 +14,21 @@ import org.micromanager.utils.ReportingUtils;
  *
  * @author arthur
  */
-public class AcquisitionDisplay extends Thread {
+public abstract class AcquisitionDisplay extends Thread {
 
-   private final CMMCore core_;
-   private int imgCount_;
-   ArrayList<Image5D> i5dVector_;
-   boolean ramOnly_ = false;
+   protected final CMMCore core_;
+   protected int imgCount_;
+   protected   ArrayList<Image5D> i5dVector_;
 
    AcquisitionDisplay(CMMCore core) {
       core_ = core;
       i5dVector_ = new ArrayList<Image5D>();
    }
 
-   public void setRamOnly(boolean ramOnly) {
-      ramOnly_ = ramOnly;
-   }
+   public abstract void run();
+   
 
-   public void run() {
-      if (ramOnly_) {
-         runInRam();
-      } else {
-         runFromDisk();
-      }
-   }
-
-   public void runFromDisk() {
-      try {
-         Metadata mdCopy = new Metadata();
-         Metadata lastMD;
-         int images;
-         int lastImages = -1;
-         while (true) {
-            images = core_.getRemainingImageCount();
-            if (lastImages == -1 || (images - lastImages) == 0) {
-               lastImages = images;
-               Thread.sleep(30);
-            } else {
-               break;
-            }
-         }
-
-         do  {
-            lastMD = mdCopy;
-            Object img = core_.getLastImageMD(0, 0, mdCopy);
-            if (sameFrame(lastMD, mdCopy)) {
-               Thread.sleep(30);
-            } else {
-               displayImage(img, mdCopy);
-            }
-         } while (!core_.acquisitionIsFinished());
-      } catch (Exception ex) {
-         ReportingUtils.logError(ex);
-         ex.printStackTrace();
-      }
-
-   }
-
-   public void runInRam() {
-      long t1 = System.currentTimeMillis();
-      try {
-         do {
-            while (core_.getRemainingImageCount() > 0) {
-               imgCount_++;
-               try {
-                  Metadata mdCopy = new Metadata();
-                  Object img = core_.popNextImageMD(0, 0, mdCopy);
-                  displayImage(img, mdCopy);
-                  //    ReportingUtils.logMessage("time=" + mdCopy.getFrameData("Frame") + ", position=" +
-                  //            mdCopy.getPositionIndex() + ", channel=" + mdCopy.getChannelIndex() +
-                  //            ", slice=" + mdCopy.getSliceIndex()
-                  //            + ", remaining images =" + core_.getRemainingImageCount());
-               } catch (Exception ex) {
-                  ReportingUtils.logError(ex);
-               }
-            }
-            Thread.sleep(30);
-         } while (!core_.acquisitionIsFinished() || core_.getRemainingImageCount() > 0);
-      } catch (Exception ex2) {
-         ReportingUtils.logError(ex2);
-      }
-
-      long t2 = System.currentTimeMillis();
-      ReportingUtils.logMessage(imgCount_ + " images in " + (t2 - t1) + " ms.");
-   }
-
-   private void displayImage(Object img, Metadata m) {
+   protected void displayImage(Object img, Metadata m) {
       int posIndex = getMetadataIndex(m, "Position");
       int channelIndex = getMetadataIndex(m, "ChannelIndex");
       int sliceIndex = getMetadataIndex(m, "Slice");
@@ -164,7 +94,7 @@ public class AcquisitionDisplay extends Thread {
       i5d.show();
    }
 
-   private boolean sameFrame(Metadata lastMD, Metadata mdCopy) {
+   protected boolean sameFrame(Metadata lastMD, Metadata mdCopy) {
       if (lastMD == null || mdCopy == null) {
          return false;
       }
