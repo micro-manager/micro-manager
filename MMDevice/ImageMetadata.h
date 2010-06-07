@@ -108,14 +108,14 @@ public:
     */
    virtual const MetadataArrayTag*  ToArrayTag()  const { return 0; }
 
-   inline  MetadataSingleTag* ToSingleTag() {
-      const MetadataTag *p = this;
-      return const_cast<MetadataSingleTag*>(p->ToSingleTag());
-     }
-   inline  MetadataArrayTag* ToArrayTag() {
-      const MetadataTag *p = this;
-      return const_cast<MetadataArrayTag*>(p->ToArrayTag());
-   }
+   //inline  MetadataSingleTag* ToSingleTag() {
+   //   const MetadataTag *p = this;
+   //   return const_cast<MetadataSingleTag*>(p->ToSingleTag());
+   //  }
+   //inline  MetadataArrayTag* ToArrayTag() {
+   //   const MetadataTag *p = this;
+   //   return const_cast<MetadataArrayTag*>(p->ToArrayTag());
+   //}
 
    virtual MetadataTag* Clone() = 0;
    virtual std::string Serialize() = 0;
@@ -135,7 +135,7 @@ public:
       MetadataTag(name, device, readOnly) {}
    ~MetadataSingleTag() {}
 
-   const std::string& GetValue() {return value_;}
+   const std::string& GetValue() const {return value_;}
    void SetValue(const char* val) {value_ = val;}
 
    virtual const MetadataSingleTag* ToSingleTag() const { return this; }
@@ -199,7 +199,7 @@ public:
       return values_[idx];
    }
 
-   size_t GetSize() {return values_.size();}
+   size_t GetSize() const {return values_.size();}
 
    MetadataTag* Clone()
    {
@@ -279,14 +279,14 @@ public:
    MetadataSingleTag GetSingleTag(const char* key) const throw (MetadataKeyError)
    {
       MetadataTag* tag = FindTag(key);
-      MetadataSingleTag* stag = tag->ToSingleTag();
+      const MetadataSingleTag* stag = tag->ToSingleTag();
       return *stag;
    }
 
    MetadataArrayTag GetArrayTag(const char* key) const throw (MetadataKeyError)
    {
       MetadataTag* tag = FindTag(key);
-      MetadataArrayTag* atag = tag->ToArrayTag();
+      const MetadataArrayTag* atag = tag->ToArrayTag();
       return *atag;
    }
 
@@ -335,12 +335,13 @@ public:
 
          if (id.compare("s") == 0)
          {
-            MetadataSingleTag* st = it->second->ToSingleTag();
-            os << st->GetValue() << std::endl;
+            const MetadataSingleTag* st = it->second->ToSingleTag();
+				std::string  s1 = st->GetValue();
+            os << s1 << std::endl;
          }
          else
          {
-            MetadataArrayTag* at = it->second->ToArrayTag();
+            const MetadataArrayTag* at = it->second->ToArrayTag();
 
             os << (long) at->GetSize() << std::endl;
             for (size_t i=0; i<at->GetSize(); i++)
