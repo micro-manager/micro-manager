@@ -1382,10 +1382,32 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
     }
 
     public void close() {
-        saveSettings();
-        saveAcqSettings();
-        dispose();
-        gui_.makeActive();
+        try {
+            saveSettings();
+        }
+        catch( Throwable t){
+            ReportingUtils.logError(t, "in saveSettings");
+        }
+        try {
+            saveAcqSettings();
+        }
+        catch( Throwable t){
+            ReportingUtils.logError(t, "in saveAcqSettings");
+        }
+        try{
+            dispose();
+        }
+        catch( Throwable t){
+            ReportingUtils.logError(t, "in dispose");
+        }
+        if( null!= gui_){
+            try{
+                gui_.makeActive();
+            }
+            catch( Throwable t){
+                ReportingUtils.logError(t, "in makeActive");
+            }
+        }
     }
 
     public void updateGroupsCombo() {
