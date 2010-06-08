@@ -3068,12 +3068,18 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          }
       }
       liveModeTimer_.stop();
-      if (imageWin_ != null) {
-         imageWin_.close();
-         imageWin_.dispose();
-         imageWin_ = null;
-      }
 
+
+      try{
+          if (imageWin_ != null) {
+             imageWin_.close();
+             imageWin_.dispose();
+             imageWin_ = null;
+          }
+      }
+      catch( Throwable t){
+            ReportingUtils.logError(t, "closing ImageWin_");
+        }
 
       if (profileWin_ != null) {
          profileWin_.dispose();
@@ -3086,6 +3092,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       if (propertyBrowser_ != null) {
          propertyBrowser_.dispose();
       }
+
 
       if (acqControlWin_ != null) {
          acqControlWin_.close();
