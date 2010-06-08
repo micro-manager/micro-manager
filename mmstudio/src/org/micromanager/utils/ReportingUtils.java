@@ -47,7 +47,9 @@ public class ReportingUtils {
 
     public static void logError(Throwable e, String msg) {
         if (e != null) {
-            logMessage(msg + "\n" + e.getMessage() + " in " + Thread.currentThread() + "\n" +getStackTraceAsString(e));
+            String stackTrace = getStackTraceAsString(e);
+            logMessage(msg + "\n" + e.toString() + " in " +
+                Thread.currentThread().toString() + "\n" + stackTrace + "\n");
         } else {
             logMessage("Error: "+msg);
         }
@@ -85,10 +87,12 @@ public class ReportingUtils {
     }
 
     private static String getStackTraceAsString(Throwable aThrowable) {
-        final StringWriter result = new StringWriter();
-        final PrintWriter printWriter = new PrintWriter(result);
-        aThrowable.printStackTrace(printWriter);
-        return result.toString();
+       String result = "";
+        for (StackTraceElement line:aThrowable.getStackTrace())
+        {
+           result += "  at " + line.toString() + "\n";
+        }
+        return result;
     }
 
     public static void showError(ActionEvent e) {
