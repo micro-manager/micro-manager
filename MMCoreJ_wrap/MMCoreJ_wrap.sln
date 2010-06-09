@@ -137,6 +137,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PrincetonInstruments", "..\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TIScamera", "..\DeviceAdapters\TISCam\TIScamera.vcproj", "{205D835F-D939-4E0D-9516-061AB141480F}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LaserCombiner", "..\DeviceAdapters\LaserCombiner\LaserCombiner.vcproj", "{CF60E682-EF19-4FDD-8060-DE80256C827C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -671,6 +673,12 @@ Global
 		{205D835F-D939-4E0D-9516-061AB141480F}.Release|Win32.Build.0 = Release|Win32
 		{205D835F-D939-4E0D-9516-061AB141480F}.Release|x64.ActiveCfg = Release|x64
 		{205D835F-D939-4E0D-9516-061AB141480F}.Release|x64.Build.0 = Release|x64
+		{CF60E682-EF19-4FDD-8060-DE80256C827C}.Debug|Win32.ActiveCfg = Debug|Win32
+		{CF60E682-EF19-4FDD-8060-DE80256C827C}.Debug|Win32.Build.0 = Debug|Win32
+		{CF60E682-EF19-4FDD-8060-DE80256C827C}.Debug|x64.ActiveCfg = Debug|Win32
+		{CF60E682-EF19-4FDD-8060-DE80256C827C}.Release|Win32.ActiveCfg = Release|Win32
+		{CF60E682-EF19-4FDD-8060-DE80256C827C}.Release|Win32.Build.0 = Release|Win32
+		{CF60E682-EF19-4FDD-8060-DE80256C827C}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
