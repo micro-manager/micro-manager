@@ -173,6 +173,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
+				CommandLine="cd ..\..\3rdpartypublic\libtiff\&#x0D;&#x0A;nmake /f makefile.vc&#x0D;&#x0A;cd ..\..\micromanager\MMCore\&#x0D;&#x0A;"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -308,6 +309,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
+				CommandLine="cd ..\..\3rdpartypublic\libtiff\&#x0D;&#x0A;nmake /f makefile.vc&#x0D;&#x0A;cd ..\..\micromanager\MMCore\&#x0D;&#x0A;"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
