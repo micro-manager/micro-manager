@@ -63,6 +63,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="MicroDrive.lib"
+				OutputFile="$(OutDir)\mmgr_dal_MCL_MicroDrive.dll"
 				GenerateDebugInformation="true"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -138,6 +139,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="MicroDrive.lib"
+				OutputFile="$(OutDir)\mmgr_dal_MCL_MicroDrive.dll"
 				GenerateDebugInformation="true"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
