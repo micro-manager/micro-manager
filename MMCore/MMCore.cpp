@@ -217,39 +217,47 @@ CMMCore::CMMCore() :
 			// Camera device
 			CoreProperty propCamera;
 			properties_->Add(MM::g_Keyword_CoreCamera, propCamera);
+         properties_->AddAllowedValue(MM::g_Keyword_CoreCamera, "");
 
 			// Shutter device
 			CoreProperty propShutter;
 			properties_->Add(MM::g_Keyword_CoreShutter, propShutter);
-	      
+         properties_->AddAllowedValue(MM::g_Keyword_CoreShutter, "");
+
 			// Focus device
 			CoreProperty propFocus;
 			properties_->Add(MM::g_Keyword_CoreFocus, propFocus);
+         properties_->AddAllowedValue(MM::g_Keyword_CoreFocus, "");
 
 			// XYStage device
 			CoreProperty propXYStage;
 			properties_->Add(MM::g_Keyword_CoreXYStage, propXYStage);
+         properties_->AddAllowedValue(MM::g_Keyword_CoreXYStage, "");
 
 			// Auto-focus device
 			CoreProperty propAutoFocus;
 			properties_->Add(MM::g_Keyword_CoreAutoFocus, propAutoFocus);
+         properties_->AddAllowedValue(MM::g_Keyword_CoreAutoFocus, "");
 
 			// Processor device
 			CoreProperty propImageProc;
 			properties_->Add(MM::g_Keyword_CoreImageProcessor, propImageProc);
+         properties_->AddAllowedValue(MM::g_Keyword_CoreImageProcessor, "");
 
 			// SLM device
 			CoreProperty propSLM;
 			properties_->Add(MM::g_Keyword_CoreSLM, propSLM);
+         properties_->AddAllowedValue(MM::g_Keyword_CoreSLM, "");
+
+			// channel group
+			CoreProperty propChannelGroup;
+			properties_->Add(MM::g_Keyword_CoreChannelGroup, propChannelGroup);
+			properties_->AddAllowedValue(MM::g_Keyword_CoreChannelGroup, "");
 
 			// Time after which we give up on checking the Busy flag status
 			CoreProperty propBusyTimeoutMs;
 			properties_->Add(MM::g_Keyword_CoreTimeoutMs, propBusyTimeoutMs);
 
-			// channel group
-			CoreProperty propChannelGroup;
-			properties_->Add(MM::g_Keyword_CoreChannelGroup, propChannelGroup);
-			
          properties_->Refresh();
 		}
 		catch(CMMError& err)
@@ -764,7 +772,10 @@ void CMMCore::initializeAllDevices() throw (CMMError)
 
       CORE_LOG1("Device %s initialized.\n", devices[i].c_str());
    }
+}
 
+void CMMCore::updateCoreProperties() throw (CMMError)
+{
    // Camera device
    vector<string> cameras = getLoadedDevicesOfType(MM::CameraDevice);
    cameras.push_back(""); // add empty value
@@ -836,6 +847,32 @@ void CMMCore::initializeDevice(const char* label) throw (CMMError)
       throw CMMError(getDeviceErrorText(nRet, pDevice).c_str(), MMERR_DEVICE_GENERIC);
    }
    
+   MM::DeviceType type = pDevice->GetType();
+   switch(type) {
+      case MM::CameraDevice:
+         properties_->AddAllowedValue(MM::g_Keyword_CoreCamera, label);
+         break;
+      case MM::ShutterDevice:
+         properties_->AddAllowedValue(MM::g_Keyword_CoreShutter, label);
+         break;
+      case MM::StageDevice:
+         properties_->AddAllowedValue(MM::g_Keyword_CoreFocus, label);
+         break;
+      case MM::XYStageDevice:
+         properties_->AddAllowedValue(MM::g_Keyword_CoreXYStage, label);
+         break;
+      case MM::AutoFocusDevice:
+         properties_->AddAllowedValue(MM::g_Keyword_CoreAutoFocus, label);
+         break;
+      case MM::ImageProcessorDevice:
+         properties_->AddAllowedValue(MM::g_Keyword_CoreImageProcessor, label);
+         break;
+      case MM::SLMDevice:
+         properties_->AddAllowedValue(MM::g_Keyword_CoreSLM, label);
+         break;
+   }
+   properties_->Refresh();
+
    CORE_LOG1("Device %s initialized.\n", label);
 }
 

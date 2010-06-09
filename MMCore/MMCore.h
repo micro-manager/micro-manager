@@ -112,6 +112,7 @@ public:
    void unloadAllDevices() throw (CMMError);
    void initializeAllDevices() throw (CMMError);
    void initializeDevice(const char* label) throw (CMMError);
+   void updateCoreProperties() throw (CMMError);
    void reset() throw (CMMError);
    void clearLog();
    void initializeLogging();
