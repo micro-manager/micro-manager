@@ -410,8 +410,14 @@ public class MMImageWindow extends ImageWindow {
 	}
 
 	public void newImage(Object img) {
+            boolean deepColor = false;
+            long  imageWindowBytes = getImageWindowByteLength();
+            long imageDataBytes = imageByteLenth(img) ;
       //TODO: add error handling
-		if (getImageWindowByteLength() != imageByteLenth(img)) {
+		if ( imageWindowBytes != imageDataBytes) {
+                    if( imageDataBytes/2 == imageWindowBytes)
+                        deepColor = true;
+                    else
 			throw (new RuntimeException("Image bytelenth does not much"));
 		}
 		ImagePlus ip = getImagePlus();
