@@ -847,6 +847,8 @@ void CMMCore::initializeDevice(const char* label) throw (CMMError)
       throw CMMError(getDeviceErrorText(nRet, pDevice).c_str(), MMERR_DEVICE_GENERIC);
    }
    
+
+   /*
    MM::DeviceType type = pDevice->GetType();
    switch(type) {
       case MM::CameraDevice:
@@ -872,6 +874,8 @@ void CMMCore::initializeDevice(const char* label) throw (CMMError)
          break;
    }
    properties_->Refresh();
+   */
+   updateCoreProperties();
 
    CORE_LOG1("Device %s initialized.\n", label);
 }
