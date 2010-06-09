@@ -2,10 +2,12 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="/projects/micromanager1.3/classext/ij.jar"/>
-	<classpathentry kind="lib" path="/projects/micromanager1.3/classext/bsh-2.0b4.jar"/>
-	<classpathentry kind="lib" path="/projects/micromanager1.3/classext/swingx-0.9.5.jar"/>
-	<classpathentry kind="lib" path="/projects/micromanager1.3/MMCoreJ_wrap/MMCoreJ.jar"/>
-	<classpathentry kind="lib" path="/projects/micromanager1.3/mmstudio/MMJ_.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/mmstudio"/>
+	<classpathentry kind="lib" path="C:/projects/3rdpartypublic/classext/swingx-0.9.5.jar"/>
+	<classpathentry kind="lib" path="C:/projects/3rdpartypublic/classext/commons-math-2.0.jar"/>
+	<classpathentry kind="lib" path="C:/projects/3rdpartypublic/classext/ij.jar"/>
+	<classpathentry kind="lib" path="C:/projects/3rdpartypublic/classext/swing-layout-1.0.4.jar"/>
+	<classpathentry kind="lib" path="C:/projects/micromanager2/bin_Win32/MMCoreJ.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/PixelCalibrator"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
