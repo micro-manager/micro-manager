@@ -772,6 +772,8 @@ void CMMCore::initializeAllDevices() throw (CMMError)
 
       CORE_LOG1("Device %s initialized.\n", devices[i].c_str());
    }
+
+   updateCoreProperties();
 }
 
 void CMMCore::updateCoreProperties() throw (CMMError)
@@ -847,34 +849,6 @@ void CMMCore::initializeDevice(const char* label) throw (CMMError)
       throw CMMError(getDeviceErrorText(nRet, pDevice).c_str(), MMERR_DEVICE_GENERIC);
    }
    
-
-   /*
-   MM::DeviceType type = pDevice->GetType();
-   switch(type) {
-      case MM::CameraDevice:
-         properties_->AddAllowedValue(MM::g_Keyword_CoreCamera, label);
-         break;
-      case MM::ShutterDevice:
-         properties_->AddAllowedValue(MM::g_Keyword_CoreShutter, label);
-         break;
-      case MM::StageDevice:
-         properties_->AddAllowedValue(MM::g_Keyword_CoreFocus, label);
-         break;
-      case MM::XYStageDevice:
-         properties_->AddAllowedValue(MM::g_Keyword_CoreXYStage, label);
-         break;
-      case MM::AutoFocusDevice:
-         properties_->AddAllowedValue(MM::g_Keyword_CoreAutoFocus, label);
-         break;
-      case MM::ImageProcessorDevice:
-         properties_->AddAllowedValue(MM::g_Keyword_CoreImageProcessor, label);
-         break;
-      case MM::SLMDevice:
-         properties_->AddAllowedValue(MM::g_Keyword_CoreSLM, label);
-         break;
-   }
-   properties_->Refresh();
-   */
    updateCoreProperties();
 
    CORE_LOG1("Device %s initialized.\n", label);
