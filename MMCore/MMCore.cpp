@@ -4790,10 +4790,14 @@ void CMMCore::acqAfterStack() throw (CMMError)
 }
 
 MMAcquisitionEngine * engine_ = NULL;
+// TEMP WORK-AROUND FOR MISSING x64 LIBTIFF
+#ifndef _M_X64
 MMImageSaver * saver_ = NULL;
+#endif
 
 void CMMCore::runAcquisitionEngineTest(AcquisitionSettings acquisitionSettings) throw (CMMError)
 {
+
    CORE_LOG("runAcquisitionEngineTest()");
    engine_ = new MMAcquisitionEngine(this);
 	engine_->Prepare(acquisitionSettings);
@@ -4801,9 +4805,14 @@ void CMMCore::runAcquisitionEngineTest(AcquisitionSettings acquisitionSettings) 
 
 	if (acquisitionSettings.saveImages)
 	{
+// TEMP WORK-AROUND FOR MISSING x64 LIBTIFF
+#ifdef _M_X64
+#pragma message(" N.B. x64 build does not have a LIBTIFF library yet!!")
+#else
       saver_ = new MMImageSaver(this, engine_);
       saver_->SetPaths(acquisitionSettings.root, acquisitionSettings.prefix);
    	saver_->Start();
+#endif
    }
 }
 
