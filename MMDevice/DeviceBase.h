@@ -920,6 +920,8 @@ public:
       return DEVICE_OK;
    }
 
+   virtual unsigned GetNumberOfChannels() const {return 1;}
+
    virtual const unsigned int* GetImageBufferAsRGB32()
    {
       return 0;

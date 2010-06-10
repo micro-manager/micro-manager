@@ -254,7 +254,7 @@ public:
    unsigned getBytesPerPixel() const;
    unsigned getImageBitDepth() const;
    unsigned getNumberOfComponents() const;
-   std::vector<std::string> getChannelNames() const;
+   unsigned getNumberOfCameraChannels() const;
    long getImageBufferSize() const;
    void assignImageSynchro(const char* deviceLabel) throw (CMMError);
    void removeImageSynchro(const char* label) throw (CMMError);

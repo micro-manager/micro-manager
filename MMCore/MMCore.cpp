@@ -2677,8 +2677,8 @@ unsigned CMMCore::getImageBitDepth() const
 }
 
 /**
- * Returns the number of instantenuous channels the default camera is returning.
- * For example color camera will return 3 channels on each snap.
+ * Returns the number of components the default camera is returning.
+ * For example color camera will return 4 components (RGBA) on each snap.
  */
 unsigned CMMCore::getNumberOfComponents() const
 {
@@ -2688,21 +2688,16 @@ unsigned CMMCore::getNumberOfComponents() const
    return 0;
 }
 
-std::vector<std::string> CMMCore::getChannelNames() const
+/**
+ * Returns the number of simultaneous channels the default camera is returning.
+ */
+unsigned CMMCore::getNumberOfCameraChannels() const
 {
-   vector<string> channelNames;
    if (camera_)
-   {
-      for (unsigned i=0; i<camera_->GetNumberOfComponents(); i++)
-      {
-         char name[MM::MaxStrLength];
-         camera_->GetComponentName(i, name);
-         channelNames.push_back(name);
-      }
-   }
-   return channelNames;
-}
+      return camera_->GetNumberOfChannels();
 
+   return 0;
+}
 
 /**
  * Sets the current exposure setting of the camera in milliseconds.

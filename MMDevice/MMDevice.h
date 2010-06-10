@@ -286,14 +286,20 @@ namespace MM {
        */
       virtual const unsigned int* GetImageBufferAsRGB32() = 0;
       /**
-       * Returns the number of channels in this image.  This is '1' for grayscale cameras,
+       * Returns the number of components in this image.  This is '1' for grayscale cameras,
        * and '4' for RGB cameras.
        */
       virtual unsigned GetNumberOfComponents() const = 0;
       /**
-       * Returns the name for each channel 
+       * Returns the name for each component 
        */
       virtual int GetComponentName(unsigned channel, char* name) = 0;
+
+      /**
+       * Returns the number of simultaneous channels that camera is capaable of
+       */
+      virtual int unsigned GetNumberOfChannels() const = 0;
+
       /**
        * Returns the size in bytes of the image buffer.
        * Required by the MM::Camera API.
