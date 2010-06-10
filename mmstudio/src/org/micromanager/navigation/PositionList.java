@@ -45,7 +45,7 @@ public class PositionList {
    private ArrayList<MultiStagePosition> positions_;
    private final static String ID = "Micro-Manager XY-position list";
    private final static String ID_KEY = "ID";
-   private final static int VERSION = 2;
+   private final static int VERSION = 3;
    private final static String VERSION_KEY = "VERSION";
    private final static String LABEL_KEY = "LABEL";
    private final static String DEVICE_KEY = "DEVICE";
@@ -58,6 +58,8 @@ public class PositionList {
    private final static String GRID_ROW_KEY = "GRID_ROW";
    private final static String GRID_COL_KEY = "GRID_COL";
    private final static String PROPERTIES_KEY = "PROPERTIES";
+   private final static String DEFAULT_XY_STAGE = "DEFAULT_XY_STAGE";
+   private final static String DEFAULT_Z_STAGE = "DEFAULT_Z_STAGE";
    
    public final static String AF_KEY = "AUTOFOCUS";
    public final static String AF_VALUE_FULL = "full";
@@ -219,7 +221,8 @@ public class PositionList {
             mspData.put(LABEL_KEY, positions_.get(i).getLabel());
             mspData.put(GRID_ROW_KEY, msp.getGridRow());
             mspData.put(GRID_COL_KEY, msp.getGridColumn());
-
+            mspData.put(DEFAULT_XY_STAGE, msp.getDefaultXYStage());
+            mspData.put(DEFAULT_Z_STAGE, msp.getDefaultZStage());
             JSONArray devicePosData = new JSONArray();            
             // iterate on devices
             for (int j=0; j<msp.size(); j++) {
@@ -272,7 +275,11 @@ public class PositionList {
             msp.setLabel(mspData.getString(LABEL_KEY));
             if (version >= 2)
                msp.setGridCoordinates(mspData.getInt(GRID_ROW_KEY), mspData.getInt(GRID_COL_KEY));
-            
+            if (version >= 3) {
+               msp.setDefaultXYStage(mspData.getString(DEFAULT_XY_STAGE));
+               msp.setDefaultZStage(mspData.getString(DEFAULT_Z_STAGE));               
+            }
+
             JSONArray devicePosData = mspData.getJSONArray(DEVARRAY_KEY);
             for (int j=0; j < devicePosData.length(); j++) {
                JSONObject stage = devicePosData.getJSONObject(j);
