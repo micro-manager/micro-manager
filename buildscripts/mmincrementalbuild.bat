@@ -1,7 +1,7 @@
 ECHO building native libraries...
 
 rem cd "\Program Files (x86)\Microsoft Visual Studio 9.0\VC\"
-pushd "\Program Files \Microsoft Visual Studio 9.0\VC\"
+pushd "c:\Program Files \Microsoft Visual Studio 9.0\VC\"
 call vcvarsall.bat
 popd 
 
