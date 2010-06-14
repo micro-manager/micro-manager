@@ -33,20 +33,24 @@ Name: eng; MessagesFile: compiler:Default.isl
 Name: desktopicon; Description: {cm:CreateDesktopIcon}; GroupDescription: {cm:AdditionalIcons}; Flags: unchecked
 
 [Files]
+;Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.CRT\msvcm90.dll ; DestDir: {app}; Flags: ignoreversion
+;Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.CRT\msvcp90.dll ; DestDir: {app}; Flags: ignoreversion
+;Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.CRT\msvcr90.dll ; DestDir: {app}; Flags: ignoreversion
+;Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.MFC\mfc90.dll ; DestDir: {app}; Flags: ignoreversion
+;Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.MFC\mfc90u.dll ; DestDir: {app}; Flags: ignoreversion
+;Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.MFC\mfcm90.dll ; DestDir: {app}; Flags: ignoreversion
+;Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.MFC\mfcm90u.dll ; DestDir: {app}; Flags: ignoreversion
+;Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.ATL\atl90.dll ; DestDir: {app}; Flags: ignoreversion
+
+
+
 ; device libraries
-Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.CRT\msvcm90.dll ; DestDir: {app}; Flags: ignoreversion
-Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.CRT\msvcp90.dll ; DestDir: {app}; Flags: ignoreversion
-Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.CRT\msvcr90.dll ; DestDir: {app}; Flags: ignoreversion
-Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.MFC\mfc90.dll ; DestDir: {app}; Flags: ignoreversion
-Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.MFC\mfc90u.dll ; DestDir: {app}; Flags: ignoreversion
-Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.MFC\mfcm90.dll ; DestDir: {app}; Flags: ignoreversion
-Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.MFC\mfcm90u.dll ; DestDir: {app}; Flags: ignoreversion
-Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.ATL\atl90.dll ; DestDir: {app}; Flags: ignoreversion
 
 Source: micro-manager\inpoutx64.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\libusb0.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\MMCoreJ_wrap.dll; DestDir: {app}; Flags: ignoreversion
 
+Source: micro-manager\mmgr_dal_AndorLaserCombiner.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Apogee.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Arduino.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_ASIFW1000.dll; DestDir: {app}; Flags: ignoreversion
@@ -70,6 +74,7 @@ Source: micro-manager\mmgr_dal_Neos.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Nikon.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_NikonAZ100.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_NikonTE2000.dll; DestDir: {app}; Flags: ignoreversion
+Source: micro-manager\mmgr_dal_NikonTI.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Olympus.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_ParallelPort.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Pecon.dll; DestDir: {app}; Flags: ignoreversion
@@ -84,14 +89,13 @@ Source: micro-manager\mmgr_dal_SpotCamera.dll; DestDir: {app}; Flags: ignorevers
 Source: micro-manager\mmgr_dal_SutterLambda.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_ThorlabsFilterWheel.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_ThorlabsSC10.dll; DestDir: {app}; Flags: ignoreversion
+Source: micro-manager\mmgr_dal_TIScam.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_TwainCamera.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_USBManager.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Utilities.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Vincent.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Yokogawa.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_ZeissCAN.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_ZeissCAN29.dll; DestDir: {app}; Flags: ignoreversion
-
 
 ; python wrapper
 Source: micro-manager\_MMCorePy.pyd; DestDir: {app}; Flags: ignoreversion skipifsourcedoesntexist
@@ -106,10 +110,10 @@ Source: ..\scripts\*; DestDir: {app}\scripts; Flags: ignoreversion
 
 ; configuration files
 Source: micro-manager\MMConfig_demo.cfg; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\MMDeviceList.txt; DestDir: {app}; Flags: ignoreversion
+;Source: micro-manager\MMDeviceList.txt; DestDir: {app}; Flags: ignoreversion
 
 ; ImageJ files
-Source: micro-manager\ImageJ.exe; DestDir: {app}; Flags: ignoreversion
+;Source: micro-manager\ImageJ.exe; DestDir: {app}; Flags: ignoreversion
 ;Source: micro-manager\ImageJ.cfg; DestDir: {app}; Flags: onlyifdoesntexist
 Source: ..\classext\ij.jar; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\IJ_Prefs.txt; DestDir: {app}; Flags: onlyifdoesntexist
