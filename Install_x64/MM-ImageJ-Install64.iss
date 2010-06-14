@@ -62,6 +62,7 @@ Source: micro-manager\mmgr_dal_Corvus.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_CSUX.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_DemoCamera.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_DemoStreamingCamera.dll; DestDir: {app}; Flags: ignoreversion
+Source: micro-manager\mmgr_dal_DLP4000.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_GenericSLM.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Hamamatsu.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_K8055.dll; DestDir: {app}; Flags: ignoreversion
@@ -91,12 +92,12 @@ Source: micro-manager\mmgr_dal_ThorlabsFilterWheel.dll; DestDir: {app}; Flags: i
 Source: micro-manager\mmgr_dal_ThorlabsSC10.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_TIScam.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_TwainCamera.dll; DestDir: {app}; Flags: ignoreversion
+Source: micro-manager\mmgr_dal_USBManager.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Utilities.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Vincent.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Yokogawa.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_ZeissCAN.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_ZeissCAN29.dll; DestDir: {app}; Flags: ignoreversion
-
 ; python wrapper
 Source: micro-manager\_MMCorePy.pyd; DestDir: {app}; Flags: ignoreversion skipifsourcedoesntexist
 Source: micro-manager\MMCorePy.py; DestDir: {app}; Flags: ignoreversion skipifsourcedoesntexist
@@ -119,7 +120,7 @@ Source: ..\classext\ij.jar; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\IJ_Prefs.txt; DestDir: {app}; Flags: onlyifdoesntexist
 Source: micro-manager\macros\*; DestDir: {app}\macros; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: micro-manager\plugins\*; DestDir: {app}\plugins; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: micro-manager\mmplugins\*; DestDir: {app}\mmplugins; Flags: ignoreversion recursesubdirs createallsubdirs
+;Source: micro-manager\mmplugins\*; DestDir: {app}\mmplugins; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: micro-manager\mmautofocus\*; DestDir: {app}\mmautofocus; Flags: ignoreversion recursesubdirs createallsubdirs
 
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
