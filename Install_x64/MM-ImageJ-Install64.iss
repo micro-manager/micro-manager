@@ -114,7 +114,10 @@ Source: micro-manager\MMConfig_demo.cfg; DestDir: {app}; Flags: ignoreversion
 ;Source: micro-manager\MMDeviceList.txt; DestDir: {app}; Flags: ignoreversion
 
 ; ImageJ files
-;Source: micro-manager\ImageJ.exe; DestDir: {app}; Flags: ignoreversion
+Source: micro-manager\ImageJ.exe; DestDir: {app}; Flags: ignoreversion
+Source: micro-manager\LaunchMicroManager.bat; DestDir: {app}; Flags: ignoreversion
+
+
 ;Source: micro-manager\ImageJ.cfg; DestDir: {app}; Flags: onlyifdoesntexist
 Source: ..\classext\ij.jar; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\IJ_Prefs.txt; DestDir: {app}; Flags: onlyifdoesntexist
@@ -131,4 +134,4 @@ Name: {group}\{cm:UninstallProgram,Micro-Manager-1.4}; Filename: {uninstallexe}
 Name: {commondesktop}\Micro-Manager 1.4; Filename: {app}\ImageJ.exe; Tasks: desktopicon; WorkingDir: {app}; IconIndex: 0
 
 [Run]
-Filename: {app}\ImageJ.exe; Description: {cm:LaunchProgram,Micro-Manager-1.4}; Flags: nowait postinstall
+Filename: {app}\LaunchMicroManager.bat; Description: {cm:LaunchProgram,Micro-Manager-1.4}; Flags: nowait postinstall

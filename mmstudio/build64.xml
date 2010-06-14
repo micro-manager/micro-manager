@@ -112,23 +112,56 @@
 		<copy file="${swing_layout}" todir="${MMPluginDir-inst}" />
 		<copy file="${commons_math}" todir="${MMPluginDir-inst}" />
 		<copy file="${BinRoot}/MMCoreJ_wrap.dll" todir="${InstallRoot}" />
+		<copy file="${BinRoot}/LaunchMicroManager.bat" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/MMConfig_demo.cfg" todir="${InstallRoot}" />
-		<copy file="${BinRoot}/mmgr_dal_Apogee.dll" todir="${InstallRoot}" />
-		<copy file="${BinRoot}/mmgr_dal_Arduino.dll" todir="${InstallRoot}" />
-		<copy file="${BinRoot}/mmgr_dal_DemoCamera.dll" todir="${InstallRoot}" />
-		<copy file="${BinRoot}/mmgr_dal_DemoStreamingCamera.dll" todir="${InstallRoot}" />
-		<copy file="${BinRoot}/mmgr_dal_Hamamatsu.dll" todir="${InstallRoot}" />
-		<copy file="${BinRoot}/mmgr_dal_K8055.dll" todir="${InstallRoot}" />
-		<copy file="${BinRoot}/mmgr_dal_K8061.dll" todir="${InstallRoot}" />
-		<copy file="${BinRoot}/mmgr_dal_LeicaDMI.dll" todir="${InstallRoot}" />
-		<copy file="${BinRoot}/mmgr_dal_Ludl.dll" todir="${InstallRoot}" />
-		<copy file="${BinRoot}/mmgr_dal_Nikon.dll" todir="${InstallRoot}" />
-		<copy file="${BinRoot}/mmgr_dal_ParallelPort.dll" todir="${InstallRoot}" />
-		<copy file="${BinRoot}/mmgr_dal_SerialManager.dll" todir="${InstallRoot}" />
-		<copy file="${BinRoot}/mmgr_dal_SimpleAutofocus.dll" todir="${InstallRoot}" />
-		<copy file="${BinRoot}/mmgr_dal_SutterLambda.dll" todir="${InstallRoot}" />
-		<copy file="${BinRoot}/mmgr_dal_Vincent.dll" todir="${InstallRoot}" />
-		<copy file="${BinRoot}/mmgr_dal_ZeissCAN.dll" todir="${InstallRoot}" />
+<copy file="${BinRoot}/mmgr_dal_AndorLaserCombiner.dll" todir="${InstallRoot}" />
+<copy file="${BinRoot}/mmgr_dal_Apogee.dll" todir="${InstallRoot}" />
+<copy file="${BinRoot}/mmgr_dal_Arduino.dll" todir="${InstallRoot}" />
+<copy file="${BinRoot}/mmgr_dal_ASIFW1000.dll" todir="${InstallRoot}" />
+<copy file="${BinRoot}/mmgr_dal_ASIStage.dll" todir="${InstallRoot}" />
+<copy file="${BinRoot}/mmgr_dal_ASIwptr.dll" todir="${InstallRoot}" />
+<copy file="${BinRoot}/mmgr_dal_CoherentCube.dll" todir="${InstallRoot}" />
+<copy file="${BinRoot}/mmgr_dal_Conix.dll" todir="${InstallRoot}" />
+<copy file="${BinRoot}/mmgr_dal_Corvus.dll" todir="${InstallRoot}" />
+<copy file="${BinRoot}/mmgr_dal_CSUX.dll" todir="${InstallRoot}" />
+<copy file="${BinRoot}/mmgr_dal_DemoCamera.dll" todir="${InstallRoot}" />
+<copy file="${BinRoot}/mmgr_dal_DemoStreamingCamera.dll" todir="${InstallRoot}" />
+<copy file="${BinRoot}/mmgr_dal_DLP4000.dll" todir="${InstallRoot}" />
+<copy file="${BinRoot}/mmgr_dal_GenericSLM.dll" todir="${InstallRoot}" />
+<copy file="${BinRoot}/mmgr_dal_Hamamatsu.dll" todir="${InstallRoot}" />
+<copy file="${BinRoot}/mmgr_dal_K8055.dll" todir="${InstallRoot}" />
+<copy file="${BinRoot}/mmgr_dal_K8061.dll" todir="${InstallRoot}" />
+<copy file="${BinRoot}/mmgr_dal_LeicaDMI.dll" todir="${InstallRoot}" />
+<copy file="${BinRoot}/mmgr_dal_LeicaDMR.dll" todir="${InstallRoot}" />
+<copy file="${BinRoot}/mmgr_dal_Ludl.dll" todir="${InstallRoot}" />
+<copy file="${BinRoot}/mmgr_dal_Marzhauser.dll" todir="${InstallRoot}" />
+<copy file="${BinRoot}/mmgr_dal_Neos.dll" todir="${InstallRoot}" />
+<copy file="${BinRoot}/mmgr_dal_Nikon.dll" todir="${InstallRoot}" />
+<copy file="${BinRoot}/mmgr_dal_NikonAZ100.dll" todir="${InstallRoot}" />
+<copy file="${BinRoot}/mmgr_dal_NikonTE2000.dll" todir="${InstallRoot}" />
+<copy file="${BinRoot}/mmgr_dal_NikonTI.dll" todir="${InstallRoot}" />
+<copy file="${BinRoot}/mmgr_dal_Olympus.dll" todir="${InstallRoot}" />
+<copy file="${BinRoot}/mmgr_dal_ParallelPort.dll" todir="${InstallRoot}" />
+<copy file="${BinRoot}/mmgr_dal_Pecon.dll" todir="${InstallRoot}" />
+<copy file="${BinRoot}/mmgr_dal_PI.dll" todir="${InstallRoot}" />
+<copy file="${BinRoot}/mmgr_dal_PI_GCS.dll" todir="${InstallRoot}" />
+<copy file="${BinRoot}/mmgr_dal_PrecisExcite.dll" todir="${InstallRoot}" />
+<copy file="${BinRoot}/mmgr_dal_Prior.dll" todir="${InstallRoot}" />
+<copy file="${BinRoot}/mmgr_dal_SerialManager.dll" todir="${InstallRoot}" />
+<copy file="${BinRoot}/mmgr_dal_SimpleAutofocus.dll" todir="${InstallRoot}" />
+<copy file="${BinRoot}/mmgr_dal_SpectralLMM5.dll" todir="${InstallRoot}" />
+<copy file="${BinRoot}/mmgr_dal_SpotCamera.dll" todir="${InstallRoot}" />
+<copy file="${BinRoot}/mmgr_dal_SutterLambda.dll" todir="${InstallRoot}" />
+<copy file="${BinRoot}/mmgr_dal_ThorlabsFilterWheel.dll" todir="${InstallRoot}" />
+<copy file="${BinRoot}/mmgr_dal_ThorlabsSC10.dll" todir="${InstallRoot}" />
+<copy file="${BinRoot}/mmgr_dal_TIScam.dll" todir="${InstallRoot}" />
+<copy file="${BinRoot}/mmgr_dal_TwainCamera.dll" todir="${InstallRoot}" />
+<copy file="${BinRoot}/mmgr_dal_USBManager.dll" todir="${InstallRoot}" />
+<copy file="${BinRoot}/mmgr_dal_Utilities.dll" todir="${InstallRoot}" />
+<copy file="${BinRoot}/mmgr_dal_Vincent.dll" todir="${InstallRoot}" />
+<copy file="${BinRoot}/mmgr_dal_Yokogawa.dll" todir="${InstallRoot}" />
+<copy file="${BinRoot}/mmgr_dal_ZeissCAN.dll" todir="${InstallRoot}" />
+<copy file="${BinRoot}/mmgr_dal_ZeissCAN29.dll" todir="${InstallRoot}" />
 
     <copy file="${ScriptsRoot}/sdemo1.bsh" todir="${ScriptsInstall}" />
     <copy file="${ScriptsRoot}/sdemo2.bsh" todir="${ScriptsInstall}" />
