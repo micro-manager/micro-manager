@@ -177,6 +177,8 @@ public:
    */
    virtual void SystemLog(std::string format)throw() = 0;
 
+   virtual void LogContents(char**  /*ppContents*/, unsigned long& /*len*/) = 0;
+   virtual std::string LogPath(void) = 0;
 
 };
 

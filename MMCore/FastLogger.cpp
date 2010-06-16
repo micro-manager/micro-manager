@@ -644,3 +644,45 @@ bool FastLogger::Open(const std::string specifiedFile)
    return bRet;
 
 }
+
+
+void FastLogger::LogContents(char**  ppContents, unsigned long& len)
+{
+	std::string ret;
+   std::ifstream::pos_type pos;
+   pos = 0;
+   
+   *ppContents = 0;
+   MMThreadGuard guard(logFileLock_g);
+   if (plogFile_g->is_open())
+	{
+		plogFile_g->close();
+   }
+	// open to read, and position at the end of the file
+   std::ifstream ifile( logFileName_.c_str(), ios::in|ios::binary|ios::ate);
+   if (ifile.is_open())
+   {
+      pos = ifile.tellg();
+      *ppContents = new char [pos];
+      if( 0 != *ppContents)
+      {
+         ifile.seekg (0, ios::beg);
+         ifile.read (*ppContents, pos);
+         ifile.close();
+      }
+   }
+
+	// re-open for logging
+	plogFile_g->open(logFileName_.c_str(), ios_base::app);
+
+   len = pos;
+   return;
+
+}
+
+
+std::string FastLogger::LogPath(void)
+{
+   return logFileName_;
+
+}
