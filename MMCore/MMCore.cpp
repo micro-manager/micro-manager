@@ -78,6 +78,8 @@
 #include "MMAcquisition.h"
 #include "MMImageSaver.h"
 
+#include "Compressor.h"
+
 #ifndef _WINDOWS
 // Needed on Unix for getcwd() and gethostname()
 #include <pwd.h>
@@ -4720,6 +4722,40 @@ string CMMCore::getDeviceName(MM::Device* pDev)
    return name;
 }
 
+
+std::string CMMCore::saveLogArchive(void)
+{
+   char* pLogContents = 0;
+   unsigned long logLength = 0;
+   IMMLogger::Instance()->LogContents(&pLogContents, logLength);
+   if( 0 == pLogContents) // file reading failed
+   {
+      pLogContents = new char[] = "MMCore was not able to read the log file!";
+      logLength = strlen(pLogContents);
+   }
+
+   char* pCompressedContents = 0;
+   unsigned long compressedLength = 0;
+
+   // prepare a gz archive
+   CompressData(pLogContents, logLength, &pCompressedContents, compressedLength);
+   // finished with the log contents
+   delete [] pLogContents;
+   pLogContents = 0;
+
+   std::string payLoadPath = IMMLogger::Instance()->LogPath() + ".gz";
+
+   std::ofstream ofile( payLoadPath.c_str(), ios::out|ios::binary);
+   if (ofile.is_open())
+   {
+      ofile.write( pCompressedContents, compressedLength);
+   }
+   // finished with the compressed contents
+   free(pCompressedContents);
+
+   return payLoadPath;
+
+}
 void CMMCore::updateAllowedChannelGroups()
 {
    std::vector<std::string> groups = getAvailableConfigGroups();

@@ -122,6 +122,9 @@ public:
    std::string getUserId() const;
    std::string getHostName() const;
    void logMessage(const char* msg);
+   // this creates an archive of the current log contents and returns the path created
+   std::string saveLogArchive(void);
+
    std::string getVersionInfo() const;
    std::string getAPIVersionInfo() const;
    Configuration getSystemState() const;
