@@ -127,6 +127,12 @@ public:
    void Log(IMMLogger::priority p, const char*, ...)throw();
    void SystemLog(std::string format)throw();
 
+   // read the current log into memory ( for automated trouble report )
+   // since the log file can be extremely large, pass back exactly the buffer that was read
+   // CALLER IS RESPONSIBLE FOR delete[] of the array!!
+   void LogContents(char** /* ppContents */, unsigned long& /*len*/);
+   std::string LogPath(void);
+
 	unsigned long flags(void) const { return fast_log_flags_;};
 	void set_flags( unsigned long bits__) { fast_log_flags_ |= bits__;};
 	void clr_flags( unsigned long bits__) { fast_log_flags_ &=(~bits__);};
