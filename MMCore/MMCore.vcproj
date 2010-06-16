@@ -47,7 +47,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/D &quot;_CRT_SECURE_NO_WARNINGS&quot;"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../3rdpartypublic/libtiff/libtiff;../../3rdpartypublic/boost;../../3rdpartypublic\boost\boost;&quot;..\..\3rdparty\Microsoft\VisualC++\include&quot;"
+				AdditionalIncludeDirectories="../../3rdpartypublic/libtiff/libtiff;../../3rdpartypublic/boost;../../3rdpartypublic\boost\boost;&quot;..\..\3rdparty\Microsoft\VisualC++\include&quot;;../../3rdpartypublic/zlib"
 				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;_WINDOWS"
 				MinimalRebuild="true"
 				ExceptionHandling="2"
@@ -71,8 +71,9 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
+				AdditionalDependencies="zlib.lib"
 				OutputFile="$(OutDir)/MMCore.lib"
-				AdditionalLibraryDirectories="&quot;..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;;..\..\3rdpartypublic\libtiff\libtiff"
+				AdditionalLibraryDirectories="..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib;..\..\3rdpartypublic\libtiff\libtiff;..\..\3rdpartypublic\zlib\bin_$(PlatformName)"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -119,7 +120,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/D &quot;_CRT_SECURE_NO_WARNINGS&quot;"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../3rdpartypublic/libtiff/libtiff;../../3rdpartypublic/boost;../../3rdpartypublic\boost\boost;&quot;..\..\3rdparty\Microsoft\VisualC++\include&quot;"
+				AdditionalIncludeDirectories="../../3rdpartypublic/libtiff/libtiff;../../3rdpartypublic/boost;../../3rdpartypublic\boost\boost;&quot;..\..\3rdparty\Microsoft\VisualC++\include&quot;;../../3rdpartypublic/zlib"
 				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;_WINDOWS"
 				MinimalRebuild="true"
 				ExceptionHandling="2"
@@ -143,8 +144,9 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
+				AdditionalDependencies="zlib.lib"
 				OutputFile="$(OutDir)/MMCore.lib"
-				AdditionalLibraryDirectories="&quot;..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;;..\..\3rdpartypublic\libtiff\libtiff"
+				AdditionalLibraryDirectories="..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib;..\..\3rdpartypublic\libtiff\libtiff;..\..\3rdpartypublic\zlib\bin_$(PlatformName)"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -190,7 +192,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/D &quot;_CRT_SECURE_NO_WARNINGS&quot;"
-				AdditionalIncludeDirectories="../../3rdpartypublic/libtiff/libtiff;../../3rdpartypublic/boost;../../3rdpartypublic\boost\boost;&quot;..\..\3rdparty\Microsoft\VisualC++\include&quot;"
+				AdditionalIncludeDirectories="../../3rdpartypublic/libtiff/libtiff;../../3rdpartypublic/boost;../../3rdpartypublic\boost\boost;&quot;..\..\3rdparty\Microsoft\VisualC++\include&quot;;../../3rdpartypublic/zlib"
 				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;_WINDOWS"
 				ExceptionHandling="2"
 				RuntimeLibrary="2"
@@ -212,8 +214,9 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
+				AdditionalDependencies="zlib.lib"
 				OutputFile="$(OutDir)/MMCore.lib"
-				AdditionalLibraryDirectories="..\..\3rdparty\boost\stage_$(PlatformName)\lib"
+				AdditionalLibraryDirectories="..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib;..\..\3rdpartypublic\libtiff\libtiff;..\..\3rdpartypublic\zlib\bin_$(PlatformName)"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -259,7 +262,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/D &quot;_CRT_SECURE_NO_WARNINGS&quot;"
-				AdditionalIncludeDirectories="../../3rdpartypublic/libtiff/libtiff;../../3rdpartypublic/boost;../../3rdpartypublic\boost\boost;&quot;..\..\3rdparty\Microsoft\VisualC++\include&quot;"
+				AdditionalIncludeDirectories="../../3rdpartypublic/libtiff/libtiff;../../3rdpartypublic/boost;../../3rdpartypublic\boost\boost;&quot;..\..\3rdparty\Microsoft\VisualC++\include&quot;;../../3rdpartypublic/zlib"
 				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;_WINDOWS"
 				ExceptionHandling="2"
 				RuntimeLibrary="2"
@@ -281,8 +284,9 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
+				AdditionalDependencies="zlib.lib"
 				OutputFile="$(OutDir)/MMCore.lib"
-				AdditionalLibraryDirectories="..\..\3rdparty\boost\stage_$(PlatformName)\lib"
+				AdditionalLibraryDirectories="..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib;..\..\3rdpartypublic\libtiff\libtiff;..\..\3rdpartypublic\zlib\bin_$(PlatformName)"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -326,7 +330,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/D &quot;_CRT_SECURE_NO_WARNINGS&quot;"
-				AdditionalIncludeDirectories="../../3rdpartypublic/libtiff/libtiff;../../3rdpartypublic/boost;../../3rdpartypublic\boost\boost;&quot;..\..\3rdparty\Microsoft\VisualC++\include&quot;"
+				AdditionalIncludeDirectories="../../3rdpartypublic/libtiff/libtiff;../../3rdpartypublic/boost;../../3rdpartypublic\boost\boost;&quot;..\..\3rdparty\Microsoft\VisualC++\include&quot;;../../3rdpartypublic/zlib"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -388,7 +392,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/D &quot;_CRT_SECURE_NO_WARNINGS&quot;"
-				AdditionalIncludeDirectories="../../3rdpartypublic/libtiff/libtiff;../../3rdpartypublic/boost;../../3rdpartypublic\boost\boost;&quot;..\..\3rdparty\Microsoft\VisualC++\include&quot;"
+				AdditionalIncludeDirectories="../../3rdpartypublic/libtiff/libtiff;../../3rdpartypublic/boost;../../3rdpartypublic\boost\boost;&quot;..\..\3rdparty\Microsoft\VisualC++\include&quot;;../../3rdpartypublic/zlib"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -440,6 +444,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Compressor.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Configuration.cpp"
 				>
 			</File>
@@ -487,6 +495,10 @@
 			>
 			<File
 				RelativePath=".\CircularBuffer.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Compressor.h"
 				>
 			</File>
 			<File
