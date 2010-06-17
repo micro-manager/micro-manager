@@ -5,8 +5,10 @@
 
 package org.micromanager.acquisition;
 
+import mmcorej.AcquisitionSettings;
 import mmcorej.CMMCore;
 import mmcorej.Metadata;
+import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -16,8 +18,8 @@ import org.micromanager.utils.ReportingUtils;
 public class AcquisitionDisplayFromDisk extends AcquisitionDisplay {
    AcquisitionVirtualStack virtualStack_;
    
-   AcquisitionDisplayFromDisk(CMMCore core) {
-      super(core);
+   AcquisitionDisplayFromDisk(ScriptInterface app, CMMCore core, AcquisitionSettings acqSettings) {
+      super(app, core, acqSettings);
    }
 
    public void run() {
@@ -45,9 +47,10 @@ public class AcquisitionDisplayFromDisk extends AcquisitionDisplay {
                super.displayImage(img, mdCopy);
             }
          } while (!core_.acquisitionIsFinished());
+
+         cleanup();
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
-         ex.printStackTrace();
       }
 
    }

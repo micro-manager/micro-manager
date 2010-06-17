@@ -242,7 +242,8 @@ public class Image5DWindow extends StackWindow {
       // Suppress the animation selector from StackWindow
       try {
          Component animationSelector = (Component) JavaUtils.getRestrictedFieldValue(this, StackWindow.class, "animationSelector");
-         animationSelector.setVisible(false);
+         if (animationSelector != null)
+            animationSelector.setVisible(false);
       } catch (NoSuchFieldException ex) {
          ReportingUtils.logError(ex);
       }

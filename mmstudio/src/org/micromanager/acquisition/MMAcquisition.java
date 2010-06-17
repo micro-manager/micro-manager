@@ -184,6 +184,10 @@ public class MMAcquisition {
       // update display
       if (imgWin_ != null && show_) {
          Image5D i5d = imgWin_.getImage5D();
+
+         if (frame >= i5d.getNFrames()) {
+            i5d.expandDimension(4, frame + 1, true);
+         }
          i5d.setPixels(pixels, channel+1, slice+1, frame+1);
          i5d.setCurrentPosition(0, 0, channel, slice, frame);
          imgWin_.setAcquisitionData(acqData_);

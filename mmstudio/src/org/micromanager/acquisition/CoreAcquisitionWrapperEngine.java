@@ -98,9 +98,9 @@ public class CoreAcquisitionWrapperEngine implements AcquisitionEngine {
       }
 
       if (saveFiles_)
-         display_ = new AcquisitionDisplayFromDisk(core_);
+         display_ = new AcquisitionDisplayFromDisk(gui_, core_, acquisitionSettings);
       else
-         display_ = new AcquisitionDisplayInRam(core_);
+         display_ = new AcquisitionDisplayInRam(gui_, core_, acquisitionSettings);
 
       display_.start();
    }

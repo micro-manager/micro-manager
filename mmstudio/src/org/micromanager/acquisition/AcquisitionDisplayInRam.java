@@ -5,8 +5,10 @@
 
 package org.micromanager.acquisition;
 
+import mmcorej.AcquisitionSettings;
 import mmcorej.CMMCore;
 import mmcorej.Metadata;
+import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -14,9 +16,11 @@ import org.micromanager.utils.ReportingUtils;
  * @author arthur
  */
 public class AcquisitionDisplayInRam extends AcquisitionDisplay {
-   AcquisitionDisplayInRam(CMMCore core) {
-      super(core);
+
+   AcquisitionDisplayInRam(ScriptInterface app, CMMCore core, AcquisitionSettings acqSettings) {
+      super(app, core, acqSettings);
    }
+
 
    
    public void run() {
@@ -45,6 +49,8 @@ public class AcquisitionDisplayInRam extends AcquisitionDisplay {
 
       long t2 = System.currentTimeMillis();
       ReportingUtils.logMessage(imgCount_ + " images in " + (t2 - t1) + " ms.");
+
+      cleanup();
    }
 
 }
