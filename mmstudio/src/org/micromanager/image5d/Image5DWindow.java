@@ -8,6 +8,7 @@ import ij.gui.StackWindow;
 import ij.measure.Calibration;
 
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.FileDialog;
 import java.awt.Graphics;
 import java.awt.Insets;
@@ -20,6 +21,8 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.ColorModel;
 import java.io.File;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 
 import javax.swing.JOptionPane;
@@ -38,6 +41,7 @@ import org.micromanager.utils.ProgressBar;
 import org.micromanager.utils.ReportingUtils;
 
 import org.json.JSONObject;
+import org.micromanager.utils.JavaUtils;
 
 /*
  * Created on 28.03.2005
@@ -235,7 +239,13 @@ public class Image5DWindow extends StackWindow {
       
       sliceSelector = Scrollbars[3];
 
-      
+      // Suppress the animation selector from StackWindow
+      try {
+         Component animationSelector = (Component) JavaUtils.getRestrictedFieldValue(this, StackWindow.class, "animationSelector");
+         animationSelector.setVisible(false);
+      } catch (NoSuchFieldException ex) {
+         ReportingUtils.logError(ex);
+      }
       pack();
       isInitialized = true;	
       
