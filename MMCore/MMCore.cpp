@@ -4741,7 +4741,7 @@ std::string CMMCore::saveLogArchive(void)
    unsigned long compressedLength = 0;
 
    // prepare a gz archive
-   CompressData(pLogContents, logLength, &pCompressedContents, compressedLength);
+   Compressor::CompressData(pLogContents, logLength, &pCompressedContents, compressedLength);
    // finished with the log contents
    delete [] pLogContents;
    pLogContents = 0;
@@ -4758,6 +4758,7 @@ std::string CMMCore::saveLogArchive(void)
    if( 0 != pCompressedContents)
     free(pCompressedContents);
 
+   CORE_LOG("prepared log archive...");
    return payLoadPath;
 
 }

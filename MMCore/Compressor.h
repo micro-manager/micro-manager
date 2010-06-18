@@ -9,7 +9,12 @@
 #define LZWBUFFERSIZE 262144
 #define GZIPOPTION 16
 // use the zlib lzw library to compress the stream of data
-int CompressData(char* pSource, unsigned long sourceLength, char** ppDestination, unsigned long& destinationLength)
+
+class Compressor
+{
+public:
+
+static int CompressData(char* pSource, unsigned long sourceLength, char** ppDestination, unsigned long& destinationLength)
 {
    int ret;
    unsigned long totalOut = 0;
@@ -54,5 +59,6 @@ int CompressData(char* pSource, unsigned long sourceLength, char** ppDestination
    return ret;
 
 
+};
 };
 #endif // COMPRESSOR_H
