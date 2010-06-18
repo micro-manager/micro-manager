@@ -158,9 +158,8 @@ void MMAcquisitionEngine::ApplyDiffPropertyMap(map<string, string> &dest) {
 
    pair<string, string> curProp;
 
-   BOOST_FOREACH(curProp, curMap) {
-      //if (curProp.first.compare("Dichroic-Label") == 0)
-      cout << curProp.first << ": " << curProp.second << endl;
+   BOOST_FOREACH(curProp, curMap)
+   {
       if (initialPropertyMap_[curProp.first] != curProp.second)
          dest[curProp.first] = curProp.second;
    }
