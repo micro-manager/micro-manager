@@ -5,10 +5,12 @@
 
 package org.micromanager.acquisition;
 
+import java.util.ArrayList;
 import mmcorej.AcquisitionSettings;
 import mmcorej.CMMCore;
 import mmcorej.Metadata;
 import org.micromanager.api.ScriptInterface;
+import org.micromanager.utils.ChannelSpec;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -17,8 +19,8 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class AcquisitionDisplayInRam extends AcquisitionDisplay {
 
-   AcquisitionDisplayInRam(ScriptInterface app, CMMCore core, AcquisitionSettings acqSettings) {
-      super(app, core, acqSettings);
+   AcquisitionDisplayInRam(ScriptInterface app, CMMCore core, AcquisitionSettings acqSettings, ArrayList<ChannelSpec> channels) {
+      super(app, core, acqSettings, channels);
    }
 
 

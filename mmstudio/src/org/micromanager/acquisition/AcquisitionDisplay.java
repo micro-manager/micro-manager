@@ -11,6 +11,7 @@ import mmcorej.CMMCore;
 import mmcorej.Metadata;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.image5d.Image5D;
+import org.micromanager.utils.ChannelSpec;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 
@@ -24,22 +25,34 @@ public abstract class AcquisitionDisplay extends Thread {
    protected int imgCount_;
    protected   ArrayList<Image5D> i5dVector_;
    private final ScriptInterface gui_;
+   AcquisitionSettings acqSettings_;
 
-   AcquisitionDisplay(ScriptInterface gui, CMMCore core, AcquisitionSettings acqSettings) {
+   AcquisitionDisplay(ScriptInterface gui, CMMCore core, AcquisitionSettings acqSettings, ArrayList<ChannelSpec> channels) {
       gui_ = gui;
       core_ = core;
       i5dVector_ = new ArrayList<Image5D>();
-
+      acqSettings_ = acqSettings;
+      
+      int nPositions = Math.max(1, (int) acqSettings.getPositionList().size());
       int nTimes = Math.max(1, (int) acqSettings.getTimeSeries().size());
       int nChannels = Math.max(1, (int) acqSettings.getChannelList().size());
       int nSlices = Math.max(1, (int) acqSettings.getZStack().size());
 
 
-      try {
-         gui_.openAcquisition("x", acqSettings.getRoot(), 1, nChannels, nSlices);
-         gui_.initializeAcquisition("x", 512, 512, 1);
-      } catch (MMScriptException ex) {
-         ReportingUtils.logError(ex);
+      for (int posIndex = 0; posIndex < nPositions; ++posIndex) {
+         String posName = acqSettings_.getPositionList().get(posIndex).getName();
+         try {
+            gui_.openAcquisition(posName, acqSettings.getRoot(), 1, nChannels, nSlices);
+            for (int i=0; i<channels.size(); ++i) {
+               gui_.setChannelColor(posName, i, channels.get(i).color_);
+               gui_.setChannelName(posName, i, channels.get(i).config_);
+            }
+            gui_.initializeAcquisition(posName, 512, 512, 1);
+
+
+         } catch (MMScriptException ex) {
+            ReportingUtils.logError(ex);
+         }
       }
    }
 
@@ -53,7 +66,8 @@ public abstract class AcquisitionDisplay extends Thread {
       int frameIndex = getMetadataIndex(m, "Frame");
 
       try {
-         gui_.addImage("x", img, frameIndex, channelIndex, sliceIndex);
+         String posName = acqSettings_.getPositionList().get(posIndex).getName();
+         gui_.addImage(posName, img, frameIndex, channelIndex, sliceIndex);
       } catch (MMScriptException ex) {
          ReportingUtils.logError(ex);
       }
@@ -95,7 +109,7 @@ public abstract class AcquisitionDisplay extends Thread {
 
    protected void cleanup() {
       try {
-         gui_.closeAcquisition("x");
+         gui_.closeAllAcquisitions();
       } catch (Exception e) {
          ReportingUtils.logError(e);
       }

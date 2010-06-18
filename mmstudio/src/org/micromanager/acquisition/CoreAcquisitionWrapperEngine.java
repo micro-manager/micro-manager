@@ -98,9 +98,9 @@ public class CoreAcquisitionWrapperEngine implements AcquisitionEngine {
       }
 
       if (saveFiles_)
-         display_ = new AcquisitionDisplayFromDisk(gui_, core_, acquisitionSettings);
+         display_ = new AcquisitionDisplayFromDisk(gui_, core_, acquisitionSettings, channels_);
       else
-         display_ = new AcquisitionDisplayInRam(gui_, core_, acquisitionSettings);
+         display_ = new AcquisitionDisplayInRam(gui_, core_, acquisitionSettings, channels_);
 
       display_.start();
    }
@@ -145,6 +145,7 @@ public class CoreAcquisitionWrapperEngine implements AcquisitionEngine {
       if (useMultiPosition_) {
          for(MultiStagePosition guiPos:posList_.getPositions()) {
             MultiAxisPosition corePos = new MultiAxisPosition();
+            corePos.setName(guiPos.getLabel());
             for(int i=0;i<guiPos.size();++i) {
                stagePos = guiPos.get(i);
                if (stagePos.numAxes == 2)

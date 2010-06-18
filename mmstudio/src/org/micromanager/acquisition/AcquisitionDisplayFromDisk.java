@@ -5,10 +5,13 @@
 
 package org.micromanager.acquisition;
 
+import java.util.ArrayList;
 import mmcorej.AcquisitionSettings;
 import mmcorej.CMMCore;
 import mmcorej.Metadata;
+import org.micromanager.MMStudioMainFrame;
 import org.micromanager.api.ScriptInterface;
+import org.micromanager.utils.ChannelSpec;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -18,8 +21,8 @@ import org.micromanager.utils.ReportingUtils;
 public class AcquisitionDisplayFromDisk extends AcquisitionDisplay {
    AcquisitionVirtualStack virtualStack_;
    
-   AcquisitionDisplayFromDisk(ScriptInterface app, CMMCore core, AcquisitionSettings acqSettings) {
-      super(app, core, acqSettings);
+   AcquisitionDisplayFromDisk(ScriptInterface app, CMMCore core, AcquisitionSettings acqSettings, ArrayList<ChannelSpec> channels) {
+      super(app, core, acqSettings, channels);
    }
 
    public void run() {
