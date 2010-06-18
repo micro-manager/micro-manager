@@ -1,13 +1,58 @@
-// 0 is sucess, non-0 is an error
-// CALLER MUST free ppDestination
-//  source is an arbitrary buffer, <sourceLength> in length
-// destination will contain an LZW - compressed data stream <destinationLength> in length pre-pended with a
-// .gz header
-
-#ifndef _COMPRESSOR_H_
-#define _COMPRESSOR_H_
-
-int CompressData(char* /*pSource*/, unsigned long /*sourceLength*/, char** /*ppDestination*/, unsigned long& /*destinationLength*/);
+#ifndef COMPRESSOR_H
+#define COMPRESSOR_H
+#include "zlib.h"
+#include "memory.h"
+#include "stdlib.h"
 
 
-#endif
+
+#define LZWBUFFERSIZE 262144
+#define GZIPOPTION 16
+// use the zlib lzw library to compress the stream of data
+int CompressData(char* pSource, unsigned long sourceLength, char** ppDestination, unsigned long& destinationLength)
+{
+   int ret;
+   unsigned long totalOut = 0;
+   unsigned long bytesPutOut;
+   z_stream strm;
+
+   *ppDestination = 0;
+   unsigned char outBuffer[LZWBUFFERSIZE];
+   /* allocate deflate state */
+   strm.zalloc = Z_NULL;
+   strm.zfree = Z_NULL;
+   strm.opaque = Z_NULL;
+
+   // create an gz - formatted archive in memory.
+   ret = deflateInit2(&strm, Z_DEFAULT_COMPRESSION, Z_DEFLATED, 15+GZIPOPTION, 9, Z_DEFAULT_STRATEGY );
+   if (ret != Z_OK)
+      return ret;
+       
+   strm.avail_in = sourceLength;
+   strm.next_in = (unsigned char*)pSource;
+
+   /* run deflate() on input until output buffer not full, finish
+   compression if all of source has been read in */
+   do 
+   {
+      strm.avail_out = LZWBUFFERSIZE;
+      strm.next_out = outBuffer;
+      ret = deflate(&strm, Z_FINISH);    /* no bad return value */
+      //assert(ret != Z_STREAM_ERROR);  /* state not clobbered */
+      bytesPutOut = LZWBUFFERSIZE - strm.avail_out;
+      unsigned long outOffset = totalOut;
+      totalOut += bytesPutOut;
+      *ppDestination = (char*)realloc(*ppDestination, totalOut);
+      memcpy((*ppDestination) + outOffset, outBuffer, bytesPutOut);
+
+     } while ( 0 == strm.avail_out );
+
+   /* clean up and return */
+   (void)deflateEnd(&strm);
+
+   destinationLength = totalOut;
+   return ret;
+
+
+};
+#endif // COMPRESSOR_H

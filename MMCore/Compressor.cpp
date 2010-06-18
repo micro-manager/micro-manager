@@ -1,12 +1,14 @@
-#include "zlib.h"
-#include "Compressor.h"
-#include "memory.h"
-#include "stdlib.h"
+//#include "zlib.h"
+//#include "Compressor.h"
+//#include "memory.h"
+//#include "stdlib.h"
+
+#if 0
 
 #define LZWBUFFERSIZE 262144
 #define GZIPOPTION 16
 // use the zlib lzw library to compress the stream of data
-int CompressData(char* pSource, unsigned long sourceLength, char** ppDestination, unsigned long& destinationLength)
+int Compressor::CompressData(char* pSource, unsigned long sourceLength, char** ppDestination, unsigned long& destinationLength)
 {
    int ret;
    unsigned long totalOut = 0;
@@ -51,4 +53,4 @@ int CompressData(char* pSource, unsigned long sourceLength, char** ppDestination
    return ret;
 
 }
-
+#endif

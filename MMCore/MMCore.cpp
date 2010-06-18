@@ -1,4 +1,4 @@
-///////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
 // FILE:          MMCore.cpp
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     MMCore
@@ -4730,8 +4730,11 @@ std::string CMMCore::saveLogArchive(void)
    IMMLogger::Instance()->LogContents(&pLogContents, logLength);
    if( 0 == pLogContents) // file reading failed
    {
-      pLogContents = new char[] = "MMCore was not able to read the log file!";
-      logLength = strlen(pLogContents);
+      char* pWarning =
+       "MMCore was not able to read the log file!";
+      logLength = strlen(pWarning);
+      pLogContents = new char[logLength];
+      strcpy( pLogContents, pWarning);
    }
 
    char* pCompressedContents = 0;
@@ -4748,10 +4751,12 @@ std::string CMMCore::saveLogArchive(void)
    std::ofstream ofile( payLoadPath.c_str(), ios::out|ios::binary);
    if (ofile.is_open())
    {
+     if( 0!=pCompressedContents)
       ofile.write( pCompressedContents, compressedLength);
    }
    // finished with the compressed contents
-   free(pCompressedContents);
+   if( 0 != pCompressedContents)
+    free(pCompressedContents);
 
    return payLoadPath;
 

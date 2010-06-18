@@ -10,6 +10,7 @@ libMMCore_a_SOURCES = MMCore.cpp MMCore.h \
    PluginManager.h PluginManager.cpp \
 	IMLogger.h \
 	FastLogger.h FastLogger.cpp \
+        Compressor.h Compressor.cpp \
 	MMAcquisition.h MMAcquisition.cpp \
 	MMImageSaver.h MMImageSaver.cpp \
 	../MMDevice/MMDevice.h ../MMDevice/MMDeviceConstants.h \
