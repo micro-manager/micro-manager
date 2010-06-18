@@ -97,10 +97,7 @@ public class CoreAcquisitionWrapperEngine implements AcquisitionEngine {
          ReportingUtils.showError(ex);
       }
 
-      if (saveFiles_)
-         display_ = new AcquisitionDisplayFromDisk(gui_, core_, acquisitionSettings, channels_);
-      else
-         display_ = new AcquisitionDisplayInRam(gui_, core_, acquisitionSettings, channels_);
+      display_ = new AcquisitionDisplay(gui_, core_, acquisitionSettings, channels_);
 
       display_.start();
    }

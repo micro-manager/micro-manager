@@ -18,7 +18,7 @@ import org.micromanager.utils.ReportingUtils;
  *
  * @author arthur
  */
-public abstract class AcquisitionDisplay extends Thread {
+public class AcquisitionDisplay extends Thread {
 
    protected final CMMCore core_;
    protected int imgCount_;
@@ -64,7 +64,36 @@ public abstract class AcquisitionDisplay extends Thread {
       return posName;
    }
 
-   public abstract void run();
+
+   public void run() {
+      long t1 = System.currentTimeMillis();
+      try {
+         do {
+            while (core_.getRemainingImageCount() > 0) {
+               ++imgCount_;
+               try {
+                  Metadata mdCopy = new Metadata();
+                  Object img = core_.popNextImageMD(0, 0, mdCopy);
+                  displayImage(img, mdCopy);
+                  //    ReportingUtils.logMessage("time=" + mdCopy.getFrameData("Frame") + ", position=" +
+                  //            mdCopy.getPositionIndex() + ", channel=" + mdCopy.getChannelIndex() +
+                  //            ", slice=" + mdCopy.getSliceIndex()
+                  //            + ", remaining images =" + core_.getRemainingImageCount());
+               } catch (Exception ex) {
+                  ReportingUtils.logError(ex);
+               }
+            }
+            Thread.sleep(30);
+         } while (!core_.acquisitionIsFinished() || core_.getRemainingImageCount() > 0);
+      } catch (Exception ex2) {
+         ReportingUtils.logError(ex2);
+      }
+
+      long t2 = System.currentTimeMillis();
+      ReportingUtils.logMessage(imgCount_ + " images in " + (t2 - t1) + " ms.");
+
+      cleanup();
+   }
    
 
    protected void displayImage(Object img, Metadata m) {
@@ -75,6 +104,9 @@ public abstract class AcquisitionDisplay extends Thread {
 
       try {
          gui_.addImage(getPosName(posIndex), img, frameIndex, channelIndex, sliceIndex);
+         for (String key : m.getFrameKeys()) {
+            gui_.setImageProperty(getPosName(posIndex), frameIndex, channelIndex, sliceIndex, key, m.getFrameData(key));
+         }
       } catch (MMScriptException ex) {
          ReportingUtils.logError(ex);
       }
