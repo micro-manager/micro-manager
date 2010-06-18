@@ -10,7 +10,6 @@ import mmcorej.AcquisitionSettings;
 import mmcorej.CMMCore;
 import mmcorej.Metadata;
 import org.micromanager.api.ScriptInterface;
-import org.micromanager.image5d.Image5D;
 import org.micromanager.utils.ChannelSpec;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
@@ -23,14 +22,12 @@ public abstract class AcquisitionDisplay extends Thread {
 
    protected final CMMCore core_;
    protected int imgCount_;
-   protected   ArrayList<Image5D> i5dVector_;
    private final ScriptInterface gui_;
    AcquisitionSettings acqSettings_;
 
    AcquisitionDisplay(ScriptInterface gui, CMMCore core, AcquisitionSettings acqSettings, ArrayList<ChannelSpec> channels) {
       gui_ = gui;
       core_ = core;
-      i5dVector_ = new ArrayList<Image5D>();
       acqSettings_ = acqSettings;
       
       int nPositions = Math.max(1, (int) acqSettings.getPositionList().size());
@@ -38,9 +35,10 @@ public abstract class AcquisitionDisplay extends Thread {
       int nChannels = Math.max(1, (int) acqSettings.getChannelList().size());
       int nSlices = Math.max(1, (int) acqSettings.getZStack().size());
 
-
+      String posName;
       for (int posIndex = 0; posIndex < nPositions; ++posIndex) {
-         String posName = acqSettings_.getPositionList().get(posIndex).getName();
+         posName = getPosName(posIndex);
+
          try {
             gui_.openAcquisition(posName, acqSettings.getRoot(), 1, nChannels, nSlices);
             for (int i=0; i<channels.size(); ++i) {
@@ -56,6 +54,16 @@ public abstract class AcquisitionDisplay extends Thread {
       }
    }
 
+   private String getPosName(int posIndex) {
+      String posName;
+      if (acqSettings_.getPositionList().isEmpty()) {
+         posName = "acq";
+      } else {
+         posName = acqSettings_.getPositionList().get(posIndex).getName();
+      }
+      return posName;
+   }
+
    public abstract void run();
    
 
@@ -66,8 +74,7 @@ public abstract class AcquisitionDisplay extends Thread {
       int frameIndex = getMetadataIndex(m, "Frame");
 
       try {
-         String posName = acqSettings_.getPositionList().get(posIndex).getName();
-         gui_.addImage(posName, img, frameIndex, channelIndex, sliceIndex);
+         gui_.addImage(getPosName(posIndex), img, frameIndex, channelIndex, sliceIndex);
       } catch (MMScriptException ex) {
          ReportingUtils.logError(ex);
       }
