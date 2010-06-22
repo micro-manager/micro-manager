@@ -4,7 +4,6 @@
  */
 package org.micromanager.acquisition;
 
-import java.awt.Color;
 import java.util.ArrayList;
 import mmcorej.AcquisitionSettings;
 import mmcorej.CMMCore;
@@ -64,7 +63,6 @@ public class AcquisitionDisplay extends Thread {
       return posName;
    }
 
-
    public void run() {
       long t1 = System.currentTimeMillis();
       try {
@@ -95,7 +93,6 @@ public class AcquisitionDisplay extends Thread {
       cleanup();
    }
    
-
    protected void displayImage(Object img, Metadata m) {
       int posIndex = getMetadataIndex(m, "Position");
       int channelIndex = getMetadataIndex(m, "ChannelIndex");
@@ -132,7 +129,6 @@ public class AcquisitionDisplay extends Thread {
          return -1;
       }
    }
-
 
    protected boolean sameFrame(Metadata lastMD, Metadata mdCopy) {
       if (lastMD == null || mdCopy == null) {
