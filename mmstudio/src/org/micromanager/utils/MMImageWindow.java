@@ -42,7 +42,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.ColorModel;
-import java.util.logging.Level;
 import java.util.prefs.Preferences;
 
 import javax.swing.AbstractButton;
@@ -54,7 +53,9 @@ import org.micromanager.MMStudioMainFrame;
 
 import com.swtdesigner.SwingResourceManager;
 import java.awt.Graphics;
-import java.awt.Toolkit;
+import org.micromanager.image5d.ChannelDisplayProperties;
+import org.micromanager.image5d.Image5D;
+import org.micromanager.image5d.Image5DWindow;
 
 /**
  * ImageJ compatible image window. Derived from the original ImageJ class.
@@ -409,38 +410,87 @@ public class MMImageWindow extends ImageWindow {
 		return ret;
 	}
 
-	public void newImage(Object img) {
-            boolean deepColor = false;
-            long  imageWindowBytes = getImageWindowByteLength();
-            long imageDataBytes = imageByteLenth(img) ;
-      //TODO: add error handling
-		if ( imageWindowBytes != imageDataBytes) {
-                    if( imageDataBytes/2 == imageWindowBytes)
-                        deepColor = true;
-                    else
-			throw (new RuntimeException("Image bytelenth does not much"));
-		}
-		ImagePlus ip = getImagePlus();
-		if(null != ip) {
-			ip.setTitle(title_);
-			ImageProcessor ipr = ip.getProcessor();
-			if(null != ipr) {
-				ipr.setPixels(img);
-         }
+    public void newImage(Object img) {
+        boolean deepColor = false;
+        long imageWindowBytes = getImageWindowByteLength();
+        long imageDataBytes = imageByteLenth(img);
+        //TODO: add error handling
+        if (imageWindowBytes != imageDataBytes) {
+            if (imageDataBytes / 2 == imageWindowBytes) {
+                deepColor = true;
+            } else {
+                throw (new RuntimeException("Image bytelenth does not much"));
+            }
+        }
 
 
-			updateHistogram();
-			tearFreeUpdate();
 
-			// update coordinate and pixel info in imageJ by simulating mouse
-			// move
-			ImageCanvas ic = getCanvas();
-			if(null != ic) {
-				Point pt = ic.getCursorLoc();
-				ip.mouseMoved(pt.x, pt.y);
-			}
-		}
-	}
+        ImagePlus ip = getImagePlus();
+        ImageProcessor ipr = ip.getProcessor();
+
+        if (null != ip) {
+            if(!deepColor){
+                ip.setTitle(title_);
+                if (null != ipr) {
+                    ipr.setPixels(img);
+                }
+            }
+            else  { // convert to stack
+                int width = ipr.getWidth();
+                int height = ipr.getHeight();
+                Image5D img5d = new Image5D(title_, ImagePlus.GRAY16, width, height, 3, 1, 1, false);
+
+                short [] R = new short[width * height];
+                short [] G = new short[width * height];
+                short [] B = new short[width * height];
+                imp.setSlice(1);
+
+                // kludge to display 64 bit color....
+                // needs some work
+                int [] pixels = (int[])img;
+
+                int ij;
+                int ii = 0;
+                for( ij = 0; ij < width*height; ++ij)                {
+                        B[ij] = (short)(pixels[ii]&0xffff);
+                        G[ij] = (short)(pixels[ii++]>>16);
+                        R[ij] = (short)(pixels[ii++]&0xffff);
+                }
+                //((ColorProcessor) imp.getProcessor()).getRGB(R, G, B);
+                img5d.setCurrentPosition(0, 0, 0, 1, 1);
+                img5d.setPixels(R);
+                img5d.setCurrentPosition(0, 0, 1, 1, 1);
+                img5d.setPixels(G);
+                img5d.setCurrentPosition(0, 0, 2, 1, 1);
+                img5d.setPixels(B);
+                img5d.getChannelCalibration(1).setLabel("Red");
+                img5d.getChannelCalibration(2).setLabel("Green");
+                img5d.getChannelCalibration(3).setLabel("Blue");
+                img5d.setChannelColorModel(1, ChannelDisplayProperties.createModelFromColor(Color.red));
+                img5d.setChannelColorModel(2, ChannelDisplayProperties.createModelFromColor(Color.green));
+                img5d.setChannelColorModel(3, ChannelDisplayProperties.createModelFromColor(Color.blue));
+
+
+                img5d.setCurrentPosition(0, 0, 0, 0, 0);
+                img5d.setCalibration(imp.getCalibration().copy());
+
+                new Image5DWindow(img5d);
+
+            }
+
+
+            updateHistogram();
+            tearFreeUpdate();
+
+            // update coordinate and pixel info in imageJ by simulating mouse
+            // move
+            ImageCanvas ic = getCanvas();
+            if (null != ic) {
+                Point pt = ic.getCursorLoc();
+                ip.mouseMoved(pt.x, pt.y);
+            }
+        }
+    }
 
 	public void newImageWithStatusLine(Object img, String statusLine) {
       //TODO: add error handling
