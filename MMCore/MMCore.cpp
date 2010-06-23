@@ -1860,6 +1860,7 @@ void* CMMCore::popNextImageMD(unsigned channel, unsigned slice, Metadata& md) th
       throw CMMError(getCoreErrorText(MMERR_CircularBufferEmpty).c_str(), MMERR_CircularBufferEmpty);
 }
 
+
 /**
  * Reserve memory for the circular buffer.
  */
@@ -4837,9 +4838,8 @@ void CMMCore::runAcquisitionEngineTest(AcquisitionSettings acquisitionSettings) 
 
    CORE_LOG("runAcquisitionEngineTest()");
    engine_ = new MMAcquisitionEngine(this);
-	engine_->Prepare(acquisitionSettings);
-   engine_->Start();
-
+   engine_->Start(acquisitionSettings);
+/*
 	if (acquisitionSettings.saveImages)
 	{
 // TEMP WORK-AROUND FOR MISSING x64 LIBTIFF
@@ -4851,6 +4851,7 @@ void CMMCore::runAcquisitionEngineTest(AcquisitionSettings acquisitionSettings) 
    	saver_->Start();
 #endif
    }
+   */
 }
 
 void CMMCore::stopAcquisitionEngine() throw (CMMError)
@@ -4864,6 +4865,14 @@ bool CMMCore::acquisitionIsFinished() throw (CMMError)
       return engine_->IsFinished();
    else
       return true;
+}
+
+Metadata CMMCore::getAcquisitionInitialMetadata() throw (CMMError) 
+{
+   if (engine_ != NULL)
+      return engine_->GetInitMetadata();
+   else
+      throw CMMError("No acquisition engine available", 1);
 }
 
 

@@ -3,6 +3,7 @@ import org.micromanager.*;
 
 setAccessibility(true);
 aw = new CoreAcquisitionWrapperEngine();
+aw.setParentGUI(gui);
 aw.setCore(mmc,null);
 dlg = new AcqControlDlg(aw, gui.mainPrefs_, gui);
 aw.setPositionList(acq.posList_);

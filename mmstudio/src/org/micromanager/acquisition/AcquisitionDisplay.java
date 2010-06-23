@@ -73,7 +73,7 @@ public class AcquisitionDisplay extends Thread {
                   Metadata mdCopy = new Metadata();
                   Object img = core_.popNextImageMD(0, 0, mdCopy);
                   displayImage(img, mdCopy);
-                  //    ReportingUtils.logMessage("time=" + mdCopy.getFrameData("Frame") + ", position=" +
+                  //    ReportingUtils.logMessage("time=" + mdCopy.getFrame() + ", position=" +
                   //            mdCopy.getPositionIndex() + ", channel=" + mdCopy.getChannelIndex() +
                   //            ", slice=" + mdCopy.getSliceIndex()
                   //            + ", remaining images =" + core_.getRemainingImageCount());
@@ -94,15 +94,15 @@ public class AcquisitionDisplay extends Thread {
    }
    
    protected void displayImage(Object img, Metadata m) {
-      int posIndex = getMetadataIndex(m, "Position");
+      int posIndex = m.getPositionIndex();
       int channelIndex = getMetadataIndex(m, "ChannelIndex");
-      int sliceIndex = getMetadataIndex(m, "Slice");
-      int frameIndex = getMetadataIndex(m, "Frame");
+      int sliceIndex = m.getSlice();
+      int frameIndex = m.getFrame();
 
       try {
          gui_.addImage(getPosName(posIndex), img, frameIndex, channelIndex, sliceIndex);
          for (String key : m.getFrameKeys()) {
-            gui_.setImageProperty(getPosName(posIndex), frameIndex, channelIndex, sliceIndex, key, m.getFrameData(key));
+            gui_.setImageProperty(getPosName(posIndex), frameIndex, channelIndex, sliceIndex, key, m.get(key));
          }
       } catch (MMScriptException ex) {
          ReportingUtils.logError(ex);
@@ -111,7 +111,7 @@ public class AcquisitionDisplay extends Thread {
 
    private int getMetadataIndex(Metadata m, String key) {
       if (m.getFrameData().has_key(key)) {
-         String val = m.getFrameData(key);
+         String val = m.get(key);
          if (val == null || val.length() == 0)
             return -1;
          else

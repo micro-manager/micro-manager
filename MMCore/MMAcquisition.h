@@ -58,9 +58,11 @@ class MMAcquisitionEngine:MMDeviceThreadBase
 private:
    TaskVector tasks_;
 
+   bool started_;
    bool pauseRequested_;
    bool stopRequested_;
    bool finished_;
+   double defaultExposure_;
 
    int svc() { Run(); return 0; }
    map<string, string> initialPropertyMap_;
@@ -74,11 +76,11 @@ public:
    {
       core_ = core;
       coreCallback_ = new CoreCallback(core);
+      started_ = false;
    }
 
-   void Prepare(AcquisitionSettings acquisitionSettings);
    void Run();
-   void Start();
+   void Start(AcquisitionSettings acquisitionSettings);
    void Stop();
    void Pause();
    void Resume();
@@ -91,6 +93,7 @@ public:
    map<string, string> GetCurrentPropertyMap();
    void ApplyDiffPropertyMap(map<string, string> & dest);
    map<string, string> GetInitPropertyMap();
+   Metadata GetInitMetadata();
 
    void GenerateSequence(AcquisitionSettings acquisitionSettings);
    void GenerateSequence2(AcquisitionSettings acquisitionSettings);

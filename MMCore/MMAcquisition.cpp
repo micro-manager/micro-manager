@@ -127,6 +127,11 @@ void ImageTask::acquireImage() {
    eng_->ApplyDiffPropertyMap(md.frameData);
 
    eng_->coreCallback_->GetImageDimensions(w, h, d);
+   
+   md.frameData["Width"] = CDeviceUtils::ConvertToString(w);
+   md.frameData["Height"] = CDeviceUtils::ConvertToString(h);
+   md.frameData["Depth"] = CDeviceUtils::ConvertToString(d);
+
    eng_->coreCallback_->InsertImage(NULL, (const unsigned char *) img, w, h, d, &md);
    eng_->core_->logMessage("Grabbed image.\n");
 }
@@ -138,9 +143,6 @@ void ImageTask::acquireImage() {
 // MMAcquisitionEngine //
 /////////////////////////
 
-void MMAcquisitionEngine::Prepare(AcquisitionSettings acquisitionSettings) {
-   GenerateSequence(acquisitionSettings);
-}
 
 map<string, string> MMAcquisitionEngine::GetCurrentPropertyMap() {
    Configuration config = core_->getSystemStateCache();
@@ -148,7 +150,6 @@ map<string, string> MMAcquisitionEngine::GetCurrentPropertyMap() {
    for (unsigned long i = 0; i < config.size(); i++) {
       PropertySetting setting = config.getSetting(i);
       frameData[setting.getDeviceLabel() + "-" + setting.getPropertyName()] = setting.getPropertyValue();
-      ;
    }
    return frameData;
 }
@@ -169,7 +170,21 @@ map<string, string> MMAcquisitionEngine::GetInitPropertyMap() {
    return initialPropertyMap_;
 }
 
-void MMAcquisitionEngine::Start() {
+Metadata MMAcquisitionEngine::GetInitMetadata() {
+   while (!started_)
+      coreCallback_->Sleep(NULL, 1);
+
+   Metadata md;
+   md.frameData = initialPropertyMap_;
+   return md;
+}
+
+
+void MMAcquisitionEngine::Start(AcquisitionSettings acquisitionSettings) {
+   defaultExposure_ = core_->getExposure();
+
+   GenerateSequence(acquisitionSettings);
+
    stopRequested_ = false;
    pauseRequested_ = false;
    finished_ = false;
@@ -177,6 +192,7 @@ void MMAcquisitionEngine::Start() {
    initialPropertyMap_ = GetCurrentPropertyMap();
 
    activate();
+   started_ = true;
 
 }
 
@@ -234,6 +250,8 @@ void MMAcquisitionEngine::GenerateSequence(AcquisitionSettings acquisitionSettin
    imageRequest.useTime = (acquisitionSettings.timeSeries.size() > 0);
    imageRequest.useChannel = (acquisitionSettings.channelList.size() > 0);
    imageRequest.useSlice = (acquisitionSettings.zStack.size() > 0);
+
+   imageRequest.exposure = defaultExposure_;
 
    int numPositions = max(1, (int) acquisitionSettings.positionList.size());
    int numFrames = max(1, (int) acquisitionSettings.timeSeries.size());

@@ -419,6 +419,8 @@ namespace std {
 		}
 		
 	%}
+	
+   
 
     %template(CharVector)   vector<char>;
     %template(LongVector)   vector<long>;
@@ -429,7 +431,7 @@ namespace std {
     %template(MultiAxisPositionVector) vector<MultiAxisPosition>;
     %template(ChannelVector) vector<Channel>;
 
-    
+
 
 
 

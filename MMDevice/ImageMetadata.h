@@ -33,6 +33,7 @@
 #include <vector>
 #include <map>
 #include <sstream>
+#include "boost/foreach.hpp"
 
 ///////////////////////////////////////////////////////////////////////////////
 // MetadataError
@@ -432,9 +433,65 @@ public:
    }
 
 
-   std::string getFrameData(std::string key)
+   std::string get(std::string key)
    {
       return frameData[key];
+   }
+
+   void put(std::string key, std::string value)
+   {
+      frameData[key] = value;
+   }
+
+   std::vector<std::string> getFrameKeys()
+   {
+      std::pair<std::string,std::string> p;
+      std::vector<std::string> keys;
+      BOOST_FOREACH(p,frameData)
+      {
+         keys.push_back(p.first);
+      }
+      return keys;
+   }
+
+   int getIntProperty(char * key)
+   {
+      return atoi(frameData[key].c_str());
+   }
+
+   int getWidth()
+   {
+      return getIntProperty("Width");
+   }
+
+   int getHeight()
+   {
+      return getIntProperty("Height");
+   }
+
+   int getFrame()
+   {
+      return getIntProperty("Frame");
+   }
+
+   int getSlice()
+   {
+      return getIntProperty("Slice");
+   }
+
+   int getPositionIndex()
+   {
+      return getIntProperty("Position");
+   }
+
+   int getChannelIndex()
+   {
+      return getIntProperty("ChannelIndex");
+   }
+
+   std::string getChannel()
+   {
+      return frameData["Channel"];
    }
 
    std::map<std::string,std::string> frameData;
