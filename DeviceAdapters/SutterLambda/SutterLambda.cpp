@@ -47,7 +47,7 @@ const char* g_SoftMode = "Soft";
 
 using namespace std;
 
-bool g_Busy = false;
+std::map<std::string, bool> g_Busy;
 const double g_busyTimeoutMs = 500;
 int g_DG4Position = 0;
 bool g_DG4State = false;
@@ -178,20 +178,20 @@ void Wheel::GetName(char* name) const
  */
 bool Wheel::Busy()
 {
-   if (!g_Busy)
+   if (!g_Busy[port_])
       return false;
 
    char answer = 0;
    unsigned long read;
    if (DEVICE_OK != ReadFromComPort(port_.c_str(), (unsigned char*)&answer, 1, read))
-      g_Busy = false; // can't read from the port
+      g_Busy[port_] = false; // can't read from the port
    else
    {
       if (answer == 13) // CR
-         g_Busy = false;
+         g_Busy[port_] = false;
    }
 
-   return g_Busy;
+   return g_Busy[port_];
 }
 
 int Wheel::Initialize()
@@ -340,7 +340,7 @@ bool Wheel::SetWheelPosition(unsigned pos)
 
    // if everything is OK declare we are busy
    if (ret)
-      g_Busy = true;
+      g_Busy[port_] = true;
 
    return ret;
 }
@@ -465,13 +465,13 @@ int Wheel::OnBusy(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
-      pProp->Set(g_Busy ? 1L : 0L);
+      pProp->Set(g_Busy[port_] ? 1L : 0L);
    }
    else if (eAct == MM::AfterSet)
    {
       long b;
       pProp->Get(b);
-      g_Busy = !(b==0);
+      g_Busy[port_] = !(b==0);
    }
 
    return DEVICE_OK;
@@ -631,6 +631,9 @@ bool Shutter::SetShutterPosition(bool state)
    msg[1] = 13; // CR
 
    // send command
+   if (DEVICE_OK != PurgeComPort(port_.c_str()))
+	   return false;
+
    if (DEVICE_OK != WriteToComPort(port_.c_str(), msg, 1))
       return false;
 
@@ -642,49 +645,73 @@ bool Shutter::SetShutterPosition(bool state)
    unsigned long read;
    startTime = GetCurrentMMTime();
 
-   bool ret = false;
    do {
       if (DEVICE_OK != ReadFromComPort(port_.c_str(), &answer, 1, read))
          return false;
+      if (answer == 13)
+         return true;
       if (answer == command)
-         ret = true;
+      {
+         g_Busy[port_] = true;
+         return true;
+      }
    }
-   while(!ret && (GetCurrentMMTime() - startTime) < (answerTimeoutMs_ * 1000.0) );
-
-   g_Busy = true;
-
-   return ret;
+   while((GetCurrentMMTime() - startTime) < (answerTimeoutMs_ * 1000.0) );
+   
+   g_Busy[port_] = true;
+   return true;
 }
 
 bool Shutter::Busy()
 {
+   LogMessage("Busy 5");
    if (ControllerBusy())
       return true;
 
-   MM::MMTime interval = GetCurrentMMTime() - changedTime_;
-   MM::MMTime delay(GetDelayMs()*1000.0);
-   if (interval < delay )
-      return true;
+   LogMessage("Busy 6");
 
+   if (GetDelayMs() > 0.0) {
+      LogMessage("Busy 7");
+      MM::MMTime interval = GetCurrentMMTime() - changedTime_;
+      MM::MMTime delay(GetDelayMs()*1000.0);
+      if (interval < delay ) {
+         LogMessage("Busy 8");
+         return true;
+      }
+   }
+   
+   LogMessage("Busy 9");
    return false;
 }
 
 bool Shutter::ControllerBusy()
 {
-   if (!g_Busy)
+   LogMessage("Busy 0");
+   if (!g_Busy[port_])
       return false;
+   LogMessage("Busy 1");
 
    unsigned char answer = 0;
    unsigned long read;
    if (DEVICE_OK != ReadFromComPort(port_.c_str(), &answer, 1, read))
-      g_Busy = false; // can't read from the port
+   {
+      g_Busy[port_] = false; // can't read from the port
+      LogMessage("Busy 2");
+   }
    else
    {
-      if (answer == 13) // CR
-         g_Busy = false;
+      char x[100];
+      sprintf(x, "numChars = %ld, charVal = %d", read, answer);
+      LogMessage(x);
+      if (answer == 13) { // CR
+         g_Busy[port_] = false;
+         LogMessage("Busy 3A");
+      }
+      LogMessage("Busy 3");
    }
+   LogMessage("Busy 4");
 
-   return g_Busy;
+   return g_Busy[port_];
 }
 
 bool Shutter::SetShutterMode(const char* mode)
@@ -1238,13 +1265,13 @@ int DG4Wheel::OnBusy(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
-      pProp->Set(g_Busy ? 1L : 0L);
+      pProp->Set(g_Busy[port_] ? 1L : 0L);
    }
    else if (eAct == MM::AfterSet)
    {
       long b;
       pProp->Get(b);
-      g_Busy = !(b==0);
+      g_Busy[port_] = !(b==0);
    }
 
    return DEVICE_OK;
