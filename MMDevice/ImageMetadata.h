@@ -443,6 +443,11 @@ public:
       frameData[key] = value;
    }
 
+   bool has(std::string key)
+   {
+      return (frameData.end() != frameData.find(key));
+   }
+
    std::vector<std::string> getFrameKeys()
    {
       std::pair<std::string,std::string> p;
@@ -482,6 +487,14 @@ public:
    int getPositionIndex()
    {
       return getIntProperty("Position");
+   }
+
+   std::string getPositionName()
+   {
+      if (has("PositionName"))
+         return get("PositionName");
+      else
+         return "";
    }
 
    int getChannelIndex()

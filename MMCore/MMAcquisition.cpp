@@ -123,6 +123,8 @@ void ImageTask::acquireImage() {
    md.frameData["ChannelIndex"] = CDeviceUtils::ConvertToString(max(0, imageRequest_.channelIndex));
    md.frameData["Frame"] = CDeviceUtils::ConvertToString(max(0, imageRequest_.timeIndex));
    md.frameData["ExposureMs"] = CDeviceUtils::ConvertToString(imageRequest_.exposure);
+   if (imageRequest_.usePosition)
+      md.frameData["PositionName"] = imageRequest_.multiAxisPosition.name;
 
    eng_->ApplyDiffPropertyMap(md.frameData);
 

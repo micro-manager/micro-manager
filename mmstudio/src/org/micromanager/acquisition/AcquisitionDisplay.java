@@ -134,11 +134,11 @@ public class AcquisitionDisplay extends Thread {
       if (lastMD == null || mdCopy == null) {
          return false;
       }
-      boolean same = true;
-      same = same && (getMetadataIndex(lastMD, "Position") == getMetadataIndex(mdCopy, "Position"));
-      same = same && (getMetadataIndex(lastMD, "ChannelIndex") == getMetadataIndex(mdCopy, "ChannelIndex"));
-      same = same && (getMetadataIndex(lastMD, "Slice") == getMetadataIndex(mdCopy, "Slice"));
-      same = same && (getMetadataIndex(lastMD, "Frame") == getMetadataIndex(mdCopy, "Frame"));
+      boolean same =
+            (getMetadataIndex(lastMD, "Position") == getMetadataIndex(mdCopy, "Position"))
+         && (getMetadataIndex(lastMD, "ChannelIndex") == getMetadataIndex(mdCopy, "ChannelIndex"))
+         && (getMetadataIndex(lastMD, "Slice") == getMetadataIndex(mdCopy, "Slice"))
+         && (getMetadataIndex(lastMD, "Frame") == getMetadataIndex(mdCopy, "Frame"));
       return same;
    }
 

@@ -253,5 +253,15 @@ public class JavaUtils {
       Rectangle bounds = gs[0].getDefaultConfiguration().getBounds();
       return new Dimension(bounds.width, bounds.height);
    }
+
+   public static File createDirectory(String dirPath) throws Exception {
+      File dir = new File(dirPath);
+      if (!dir.exists()) {
+         if (!dir.mkdirs()) {
+            throw new Exception("Unable to create directory.");
+         }
+      }
+      return dir;
+   }
 }
 
