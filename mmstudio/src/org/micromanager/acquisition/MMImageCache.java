@@ -22,6 +22,7 @@ import org.micromanager.utils.ReportingUtils;
  *
  * @author arthur
  */
+
 public class MMImageCache {
 
    private boolean firstElement_;
@@ -34,7 +35,7 @@ public class MMImageCache {
       try {
          JavaUtils.createDirectory(dir_);
          metadataStream_ = new BufferedWriter(new FileWriter(dir_ + "/metadata.txt"));
-         metadataStream_.write("{\n");
+         metadataStream_.write("{" + "\r\n");
          firstElement_ = true;
       } catch (Exception e) {
          ReportingUtils.showError(e);
@@ -49,7 +50,7 @@ public class MMImageCache {
 
    public void cleanup() {
       try {
-         metadataStream_.write("\n}\n");
+         metadataStream_.write("\r\n}\r\n");
          metadataStream_.close();
       } catch (IOException ex) {
          ReportingUtils.logError(ex);
@@ -59,9 +60,9 @@ public class MMImageCache {
    public void writeMetadata(Metadata md, String title) {
       try {
          if (!firstElement_) {
-            metadataStream_.write(",\n");
+            metadataStream_.write(",\r\n");
          }
-         metadataStream_.write("\t\"" + title + "\": {\n");
+         metadataStream_.write("\t\"" + title + "\": {\r\n");
 
          StrVector keys = md.getFrameKeys();
          long n = keys.size();
@@ -69,9 +70,9 @@ public class MMImageCache {
          for (int i = 0; i < n; ++i) {
             metadataStream_.write("\t\t\"" + keys.get(i) + "\": \"" + md.get(keys.get(i)) + "\"");
             if (i < (n - 1)) {
-               metadataStream_.write(",\n");
+               metadataStream_.write(",\r\n");
             } else {
-               metadataStream_.write("\n");
+               metadataStream_.write("\r\n");
             }
          }
 

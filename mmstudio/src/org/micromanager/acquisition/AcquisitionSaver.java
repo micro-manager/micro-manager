@@ -29,6 +29,7 @@ public class AcquisitionSaver extends Thread {
          imageCaches_ = new HashMap<String, MMImageCache>();
          String root = acqSettings_.getRoot();
          String prefix = acqSettings_.getPrefix();
+         String acqPath = createAcqPath(root, prefix);
 
          do {
             while (core_.getRemainingImageCount() > 0) {
@@ -40,10 +41,12 @@ public class AcquisitionSaver extends Thread {
                   if (imageCaches_.containsKey(posName)) {
                      currentImageCache_ = imageCaches_.get(posName);
                   } else {
-                     String cachePath = createFilePath(root, prefix, posName);
+                     String cachePath = createPositionPath(acqPath, posName);
                      currentImageCache_ = new MMImageCache(cachePath);
+                     imageCaches_.put(posName, currentImageCache_);
                      currentImageCache_.writeMetadata(initMD, "SystemState");
                   }
+                  currentImageCache_.writeImage(img, md);
                } catch (Exception ex) {
                   ReportingUtils.showError(ex);
                }
@@ -53,6 +56,13 @@ public class AcquisitionSaver extends Thread {
       } catch (Exception e) {
          ReportingUtils.showError(e);
       }
+      cleanup();
+   }
+
+   public void cleanup() {
+      for (MMImageCache imageCache:imageCaches_.values())
+         imageCache.cleanup();
+      imageCaches_.clear();
    }
 
    AcquisitionSaver(CMMCore core, AcquisitionSettings acqSettings) {
@@ -60,21 +70,34 @@ public class AcquisitionSaver extends Thread {
       acqSettings_ = acqSettings;
    }
 
-   private String createFilePath(String root, String prefix, String positionName) throws Exception {
+   private String createAcqPath(String root, String prefix) throws Exception {
       File rootDir = JavaUtils.createDirectory(root);
       int curIndex = getCurrentMaxDirIndex(rootDir, prefix + "_");
 
       File acqDir = null;
-      if (positionName.length() == 0) {
-         acqDir = JavaUtils.createDirectory(root + "/" + prefix + "_" + (1 + curIndex));
-      }
-      if (acqDir == null)
+      acqDir = JavaUtils.createDirectory(root + "/" + prefix + "_" + (1 + curIndex));
+
+      if (acqDir != null) {
+         return acqDir.getAbsolutePath();
+      } else {
          return "";
-      
-      if (positionName.length() > 0) {
-         acqDir = JavaUtils.createDirectory(acqDir.getAbsolutePath() + "/" + positionName);
       }
-      return acqDir.getAbsolutePath();
+   }
+
+   private String createPositionPath(String acqPath, String position) throws Exception {
+
+      File acqDir = null;
+      if (position.length() == 0) {
+         return acqPath;
+      }
+
+      acqDir = JavaUtils.createDirectory(acqPath + "/" + position);
+
+      if (acqDir != null) {
+         return acqDir.getAbsolutePath();
+      } else {
+         return "";
+      }
    }
 
    private int getCurrentMaxDirIndex(File rootDir, String prefix) throws NumberFormatException {
@@ -92,7 +115,5 @@ public class AcquisitionSaver extends Thread {
       }
       return maxNumber;
    }
-
-
 }
 
