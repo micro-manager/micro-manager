@@ -52,10 +52,10 @@ import mmcorej.CMMCore;
 import org.micromanager.MMStudioMainFrame;
 
 import com.swtdesigner.SwingResourceManager;
+import ij.CompositeImage;
+import ij.ImageStack;
 import java.awt.Graphics;
 import org.micromanager.image5d.ChannelDisplayProperties;
-import org.micromanager.image5d.Image5D;
-import org.micromanager.image5d.Image5DWindow;
 
 /**
  * ImageJ compatible image window. Derived from the original ImageJ class.
@@ -438,43 +438,50 @@ public class MMImageWindow extends ImageWindow {
             else  { // convert to stack
                 int width = ipr.getWidth();
                 int height = ipr.getHeight();
-                Image5D img5d = new Image5D(title_, ImagePlus.GRAY16, width, height, 3, 1, 1, false);
+                //Image5D img5d = new Image5D(title_, ImagePlus.GRAY16, width, height, 3, 1, 1, false);
+
+                ImagePlus iplus = new ImagePlus( );
+                ImageProcessor imageProcessor = new ShortProcessor(width, height);
+        		ImageStack is = new ImageStack(imageProcessor.getWidth(), imageProcessor.getHeight(), imageProcessor.getColorModel());
+
 
                 short [] R = new short[width * height];
                 short [] G = new short[width * height];
                 short [] B = new short[width * height];
-                imp.setSlice(1);
 
-                // kludge to display 64 bit color....
-                // needs some work
+ 
+                // display 64 bit color images as a composite.
+              
                 int [] pixels = (int[])img;
 
-                int ij;
                 int ii = 0;
-                for( ij = 0; ij < width*height; ++ij)                {
+                for(int ij = 0; ij < width*height; ++ij)                {
                         B[ij] = (short)(pixels[ii]&0xffff);
                         G[ij] = (short)(pixels[ii++]>>16);
                         R[ij] = (short)(pixels[ii++]&0xffff);
                 }
-                //((ColorProcessor) imp.getProcessor()).getRGB(R, G, B);
-                img5d.setCurrentPosition(0, 0, 0, 1, 1);
-                img5d.setPixels(R);
-                img5d.setCurrentPosition(0, 0, 1, 1, 1);
-                img5d.setPixels(G);
-                img5d.setCurrentPosition(0, 0, 2, 1, 1);
-                img5d.setPixels(B);
-                img5d.getChannelCalibration(1).setLabel("Red");
-                img5d.getChannelCalibration(2).setLabel("Green");
-                img5d.getChannelCalibration(3).setLabel("Blue");
-                img5d.setChannelColorModel(1, ChannelDisplayProperties.createModelFromColor(Color.red));
-                img5d.setChannelColorModel(2, ChannelDisplayProperties.createModelFromColor(Color.green));
-                img5d.setChannelColorModel(3, ChannelDisplayProperties.createModelFromColor(Color.blue));
 
 
-                img5d.setCurrentPosition(0, 0, 0, 0, 0);
-                img5d.setCalibration(imp.getCalibration().copy());
+                imageProcessor.setPixels(R);
+                imageProcessor.setColorModel(ChannelDisplayProperties.createModelFromColor(Color.red));
+                is.addSlice("Red", imageProcessor);
 
-                new Image5DWindow(img5d);
+                imageProcessor.setPixels(G);
+                imageProcessor.setColorModel(ChannelDisplayProperties.createModelFromColor(Color.green));
+                is.addSlice("Green", imageProcessor);
+
+                iplus.setPosition(3,1,1);
+                imageProcessor.setPixels(B);
+                imageProcessor.setColorModel(ChannelDisplayProperties.createModelFromColor(Color.blue));
+                is.addSlice("Blue", imageProcessor);
+
+                iplus.setStack(is);
+
+                ImagePlus imp2 = new CompositeImage(iplus, CompositeImage.COMPOSITE);
+                iplus.hide();
+			    imp2.show();
+
+ 
 
             }
 
