@@ -23,11 +23,13 @@ public class AcquisitionDisplay extends Thread {
    protected int imgCount_;
    private final ScriptInterface gui_;
    AcquisitionSettings acqSettings_;
+   private boolean diskCached_ = false;
 
-   AcquisitionDisplay(ScriptInterface gui, CMMCore core, AcquisitionSettings acqSettings, ArrayList<ChannelSpec> channels) {
+   AcquisitionDisplay(ScriptInterface gui, CMMCore core, AcquisitionSettings acqSettings, ArrayList<ChannelSpec> channels, boolean diskCached) {
       gui_ = gui;
       core_ = core;
       acqSettings_ = acqSettings;
+      diskCached_ = diskCached;
       
       int nPositions = Math.max(1, (int) acqSettings.getPositionList().size());
       int nTimes = Math.max(1, (int) acqSettings.getTimeSeries().size());
@@ -39,7 +41,7 @@ public class AcquisitionDisplay extends Thread {
          posName = getPosName(posIndex);
 
          try {
-            gui_.openAcquisition(posName, acqSettings.getRoot(), 1, nChannels, nSlices);
+            gui_.openAcquisition(posName, acqSettings.getRoot(), nTimes, nChannels, nSlices);
             for (int i=0; i<channels.size(); ++i) {
                gui_.setChannelColor(posName, i, channels.get(i).color_);
                gui_.setChannelName(posName, i, channels.get(i).config_);
@@ -65,13 +67,19 @@ public class AcquisitionDisplay extends Thread {
 
    public void run() {
       long t1 = System.currentTimeMillis();
+      Object img;
       try {
          do {
             while (core_.getRemainingImageCount() > 0) {
                ++imgCount_;
                try {
                   Metadata mdCopy = new Metadata();
-                  Object img = core_.popNextImageMD(0, 0, mdCopy);
+                  if (! diskCached_) {
+                     img = core_.popNextImageMD(0, 0, mdCopy);
+                  } else {
+                     img = core_.getLastImageMD(0, 0, mdCopy);
+                     Thread.sleep(10);
+                  }
                   displayImage(img, mdCopy);
                   //    ReportingUtils.logMessage("time=" + mdCopy.getFrame() + ", position=" +
                   //            mdCopy.getPositionIndex() + ", channel=" + mdCopy.getChannelIndex() +

@@ -19,14 +19,15 @@ import org.micromanager.utils.ReportingUtils;
 public class AcquisitionSaver extends Thread {
 
    private final CMMCore core_;
-   HashMap<String, MMImageCache> imageCaches_;
-   MMImageCache currentImageCache_;
+   HashMap<String, MMImageWriter> imageWriters_;
+
+   MMImageWriter currentImageWriter_;
    AcquisitionSettings acqSettings_;
 
    public void run() {
       try {
          Metadata initMD = core_.getAcquisitionInitialMetadata();
-         imageCaches_ = new HashMap<String, MMImageCache>();
+         imageWriters_ = new HashMap<String, MMImageWriter>();
          String root = acqSettings_.getRoot();
          String prefix = acqSettings_.getPrefix();
          String acqPath = createAcqPath(root, prefix);
@@ -38,15 +39,15 @@ public class AcquisitionSaver extends Thread {
                   Object img = core_.popNextImageMD(0, 0, md);
                   String posName = md.getPositionName();
 
-                  if (imageCaches_.containsKey(posName)) {
-                     currentImageCache_ = imageCaches_.get(posName);
+                  if (imageWriters_.containsKey(posName)) {
+                     currentImageWriter_ = imageWriters_.get(posName);
                   } else {
                      String cachePath = createPositionPath(acqPath, posName);
-                     currentImageCache_ = new MMImageCache(cachePath);
-                     imageCaches_.put(posName, currentImageCache_);
-                     currentImageCache_.writeMetadata(initMD, "SystemState");
+                     currentImageWriter_ = new MMImageWriter(cachePath);
+                     imageWriters_.put(posName, currentImageWriter_);
+                     currentImageWriter_.writeMetadata(initMD, "SystemState");
                   }
-                  currentImageCache_.writeImage(img, md);
+                  currentImageWriter_.writeImage(img, md);
                } catch (Exception ex) {
                   ReportingUtils.showError(ex);
                }
@@ -60,9 +61,9 @@ public class AcquisitionSaver extends Thread {
    }
 
    public void cleanup() {
-      for (MMImageCache imageCache:imageCaches_.values())
+      for (MMImageWriter imageCache:imageWriters_.values())
          imageCache.cleanup();
-      imageCaches_.clear();
+      imageWriters_.clear();
    }
 
    AcquisitionSaver(CMMCore core, AcquisitionSettings acqSettings) {

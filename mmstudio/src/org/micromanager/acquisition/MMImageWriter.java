@@ -10,7 +10,6 @@ import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import java.io.BufferedWriter;
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import mmcorej.Metadata;
@@ -23,13 +22,13 @@ import org.micromanager.utils.ReportingUtils;
  * @author arthur
  */
 
-public class MMImageCache {
+public class MMImageWriter {
 
    private boolean firstElement_;
    private BufferedWriter metadataStream_;
    private final String dir_;
 
-   MMImageCache(String dir) {
+   MMImageWriter(String dir) {
       dir_ = dir;
 
       try {
