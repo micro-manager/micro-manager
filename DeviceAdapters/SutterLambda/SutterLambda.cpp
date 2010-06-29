@@ -664,39 +664,30 @@ bool Shutter::SetShutterPosition(bool state)
 
 bool Shutter::Busy()
 {
-   LogMessage("Busy 5");
    if (ControllerBusy())
       return true;
 
-   LogMessage("Busy 6");
-
    if (GetDelayMs() > 0.0) {
-      LogMessage("Busy 7");
       MM::MMTime interval = GetCurrentMMTime() - changedTime_;
       MM::MMTime delay(GetDelayMs()*1000.0);
       if (interval < delay ) {
-         LogMessage("Busy 8");
          return true;
       }
    }
    
-   LogMessage("Busy 9");
    return false;
 }
 
 bool Shutter::ControllerBusy()
 {
-   LogMessage("Busy 0");
    if (!g_Busy[port_])
       return false;
-   LogMessage("Busy 1");
 
    unsigned char answer = 0;
    unsigned long read;
    if (DEVICE_OK != ReadFromComPort(port_.c_str(), &answer, 1, read))
    {
       g_Busy[port_] = false; // can't read from the port
-      LogMessage("Busy 2");
    }
    else
    {
@@ -705,11 +696,8 @@ bool Shutter::ControllerBusy()
       LogMessage(x);
       if (answer == 13) { // CR
          g_Busy[port_] = false;
-         LogMessage("Busy 3A");
       }
-      LogMessage("Busy 3");
    }
-   LogMessage("Busy 4");
 
    return g_Busy[port_];
 }
