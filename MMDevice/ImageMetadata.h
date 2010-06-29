@@ -459,7 +459,7 @@ public:
       return keys;
    }
 
-   int getIntProperty(char * key)
+   int getIntProperty(const char * key)
    {
       return atoi(frameData[key].c_str());
    }

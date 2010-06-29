@@ -4731,8 +4731,8 @@ std::string CMMCore::saveLogArchive(void)
    IMMLogger::Instance()->LogContents(&pLogContents, logLength);
    if( 0 == pLogContents) // file reading failed
    {
-      char* pWarning =
-       "MMCore was not able to read the log file!";
+      const char* pWarning =
+         "MMCore was not able to read the log file!";
       logLength = strlen(pWarning);
       pLogContents = new char[logLength];
       strcpy( pLogContents, pWarning);

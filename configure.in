@@ -126,15 +126,17 @@ if test "x$with_core" = xno; then
    AC_MSG_RESULT([no]);
 else
    AC_MSG_RESULT([yes])
+
    #---------------------------------------------------
    # Check for BOOST
    #---------------------------------------------------
    AX_BOOST_BASE(1.2)
 
+   #---------------------------------------------------
+   # Check for LIBTIFF
+   #---------------------------------------------------
    AC_MSG_CHECKING(for libtiff)
-
    AC_FIND_FILE([tiff.h], [/usr/include /usr/local/$ARCH/include], TIFFINCDIR)
-
    if test x$TIFFINCDIR = xNO; then 
       AC_MSG_RESULT([not found])                                 
       exit 1
@@ -153,36 +155,33 @@ else
    fi                                                            
    AC_SUBST(LIBTIFF)                                              
 
+   #---------------------------------------------------
+   # Check for ZLIB
+   #---------------------------------------------------
    AC_MSG_CHECKING(for zlib)
-
-   AC_FIND_FILE([zlib.h], [/usr/include /usr/local/$ARCH/include], ZLIBINCDIR)
-
-   if test x$ZLIBINCDIR = xNO; then 
-      AC_MSG_RESULT([not found])                                 
+   AC_FIND_FILE([zlib.h], [/usr/local/$ARCH/include /usr/include], ZLIBINCDIR)
+   if test x$ZLIBINCDIR = xNO; then
+      AC_MSG_RESULT([not found]) 
       exit 1
-   else                                                          
-      AC_CHECK_HEADERS([$ZLIBINCDIR/zlib.h])                       
+   else 
+      AC_CHECK_HEADERS([$ZLIBINCDIR/zlib.h])
       if test -z "$LIBZLIB" ; then
-         AC_FIND_FILE([zlib.a], [/usr/lib /usr/lib64 /usr/local/$ARCH/lib], ZLIBLIBDIR)
+         AC_FIND_FILE([libz.a], [/usr/local/$ARCH/lib /usr/lib /usr/lib64], ZLIBLIBDIR)
          if test x$ZLIBLIBDIR = xNO; then
-            AC_MSG_RESULT([zlib not found])                       
-            exit 1
-         else                                                    
-            AC_MSG_RESULT([zlib.a found])                      
-            LIBZLIB="$ZLIBLIBDIR/zlib.a"                         
-         fi                                                      
-      fi                                                         
-   fi                                                            
-   AC_SUBST(LIBZLIB)                                              
+            AC_MSG_RESULT([zlib not found])
+            exit 
+         else
+            AC_MSG_RESULT([zlib.a found])
+            LIBZLIB="$ZLIBLIBDIR/libz.a"
+         fi 
+      fi 
+   fi 
+   AC_SUBST(LIBZLIB) 
 
 
-
-
-
-
-
-
-   # Check for Swig.
+   #---------------------------------------------------
+   # Check for SWIG
+   #---------------------------------------------------
    AC_CHECK_PROGS(SWIG, swig)
    if test "$SWIG" = "" ; then
       AC_MSG_ERROR([not found, swig is needed to build this application.  Please download (http://www.swig.org/download.html) and install])
