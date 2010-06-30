@@ -166,10 +166,10 @@ else
    else 
       AC_CHECK_HEADERS([$ZLIBINCDIR/zlib.h])
       if test -z "$LIBZLIB" ; then
-         AC_FIND_FILE([libz.a], [/usr/local/$ARCH/lib /usr/lib /usr/lib64], ZLIBLIBDIR)
+         AC_FIND_FILE([libz.a], [/usr/local/$ARCH/lib /usr/local/lib /usr/lib /usr/lib64], ZLIBLIBDIR)
          if test x$ZLIBLIBDIR = xNO; then
             AC_MSG_RESULT([zlib not found])
-            exit 
+            exit 1
          else
             AC_MSG_RESULT([zlib.a found])
             LIBZLIB="$ZLIBLIBDIR/libz.a"
