@@ -1,0 +1,16 @@
+import org.micromanager.MMStudioMainFrame;
+import java.awt.geom.AffineTransform;
+import org.micromanager.utils.JavaUtils;
+import java.util.prefs.Preferences;
+
+Preferences prefs = Preferences.userNodeForPackage(MMStudioMainFrame.class);
+transform = new AffineTransform();
+  
+try {
+     JavaUtils.putObjectInPrefs(prefs, "affine_transform_" + mmc.getCurrentPixelSizeConfig(), transform);
+} catch (Exception ex) {
+     ReportingUtils.logError(ex);
+}
+
+storedTransform = JavaUtils.getObjectFromPrefs(prefs, "affine_transform_" + mmc.getCurrentPixelSizeConfig(), null);
+print("stored: " + storedTransform);
