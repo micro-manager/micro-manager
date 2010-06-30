@@ -66,9 +66,16 @@ if test x$DC1394INCDIR = xNO; then
 else
    AC_CHECK_HEADERS([$DC1394INCDIR/dc1394/dc1394.h])
    if test -z "$LIBDC1394" ; then
+      # prefer static library, fall back to dynamic lib
       AC_FIND_FILE([libdc1394.a], [/usr/lib /usr/lib64 /usr/local/$ARCH/lib], DC1394LIBDIR)
       if test x$DC1394LIBDIR = xNO; then
-         AC_MSG_RESULT([libdc1394 not found])
+         AC_FIND_FILE([libdc1394.so], [/usr/lib /usr/lib64 /usr/local/$ARCH/lib], DC1394LIBDIR)
+         if test x$DC1394LIBDIR = xNO; then
+            AC_MSG_RESULT([libdc1394 not found])
+         else
+            AC_MSG_RESULT([libdc1394.so found])
+            LIBDC1394="$DC1394LIBDIR/libdc1394.so"
+         fi
       else
          AC_MSG_RESULT([libdc1394.a found])
          LIBDC1394="$DC1394LIBDIR/libdc1394.a"
@@ -87,10 +94,19 @@ else
    AC_MSG_RESULT([not found])
 fi
 
-# Andor on linux 
-AC_MSG_CHECKING(for Andor)
+# Andor cameras on linux 
+AC_MSG_CHECKING(for Andor cameras)
 AM_CONDITIONAL([BUILD_ANDOR],[test -f "/usr/local/include/atmcdLXd.h"])
 if test -f "/usr/local/include/atmcdLXd.h" ; then
+   AC_MSG_RESULT([found])
+else
+   AC_MSG_RESULT([not found])
+fi
+
+# Andor laser combiner on linux 
+AC_MSG_CHECKING(for Andor laser combiner)
+AM_CONDITIONAL([BUILD_ANDORLASERCOMBINER],[test -f "/usr/local/include/ALC_REV.h"])
+if test -f "/usr/local/include/ALC_REV.h" ; then
    AC_MSG_RESULT([found])
 else
    AC_MSG_RESULT([not found])
@@ -212,5 +228,5 @@ AC_SUBST(MMPREFIX)
 AC_HEADER_STDC
 AC_CHECK_FUNCS([memset])
 
-AC_CONFIG_FILES(Makefile ITC18/Makefile AAAOTF/Makefile AOTF/Makefile Andor/Makefile Arduino/Makefile ASIFW1000/Makefile ASIStage/Makefile ASIWPTR/Makefile Cobolt/Makefile CoherentCube/Makefile Conix/Makefile Corvus/Makefile DTOpenLayer/Makefile DemoCamera/Makefile DemoStreamingCamera/Makefile SerialManager/Makefile SimpleAutofocus/Makefile USBManager/Makefile LeicaDMI/Makefile LeicaDMR/Makefile Ludl/Makefile LudlLow/Makefile ZeissCAN/Makefile ZeissCAN29/Makefile Video4Linux/Makefile Vincent/Makefile K8055/Makefile K8061/Makefile MaestroServo/Makefile NIDAQ/Makefile PVCAM/Makefile Neos/Makefile Nikon/Makefile NikonTE2000/Makefile ParallelPort/Makefile Pecon/Makefile PrecisExcite/Makefile ScionCam/Makefile Sensicam/Makefile SpectralLMM5/Makefile Spot/Makefile SutterLambda/Makefile ThorlabsDCxxxx/Makefile ThorlabsFilterWheel/Makefile ThorlabsSC10/Makefile Prior/Makefile PI/Makefile PI_GCS/Makefile Utilities/Makefile dc1394/Makefile QCam/Makefile Yokogawa/Makefile)
+AC_CONFIG_FILES(Makefile AAAOTF/Makefile AOTF/Makefile Andor/Makefile AndorLaserCombiner/Makefile Arduino/Makefile ASIFW1000/Makefile ASIStage/Makefile ASIWPTR/Makefile Cobolt/Makefile CoherentCube/Makefile Conix/Makefile Corvus/Makefile DTOpenLayer/Makefile DemoCamera/Makefile DemoStreamingCamera/Makefile ITC18/Makefile SerialManager/Makefile SimpleAutofocus/Makefile USBManager/Makefile LeicaDMI/Makefile LeicaDMR/Makefile Ludl/Makefile LudlLow/Makefile ZeissCAN/Makefile ZeissCAN29/Makefile Video4Linux/Makefile Vincent/Makefile K8055/Makefile K8061/Makefile MaestroServo/Makefile NIDAQ/Makefile PVCAM/Makefile Neos/Makefile Nikon/Makefile NikonTE2000/Makefile ParallelPort/Makefile Pecon/Makefile PrecisExcite/Makefile ScionCam/Makefile Sensicam/Makefile SpectralLMM5/Makefile Spot/Makefile SutterLambda/Makefile ThorlabsDCxxxx/Makefile ThorlabsFilterWheel/Makefile ThorlabsSC10/Makefile Prior/Makefile PI/Makefile PI_GCS/Makefile Utilities/Makefile dc1394/Makefile QCam/Makefile Yokogawa/Makefile)
 AC_OUTPUT
