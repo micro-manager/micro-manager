@@ -149,7 +149,13 @@ else
    if test -z "$LIBUSB" ; then
       AC_FIND_FILE([libusb.a], [/usr/lib /usr/lib64 /usr/local/$ARCH/lib], USBLIBDIR)
       if test x$USBLIBDIR = xNO; then
-         AC_MSG_RESULT([lib not found])
+         AC_FIND_FILE([libusb.so], [/usr/lib /usr/lib64 /usr/local/$ARCH/lib], USBLIBDIR)
+         if test x$USBLIBDIR = xNO; then
+             AC_MSG_RESULT([lib not found])
+         else
+             AC_MSG_RESULT([libusb.so found])
+             LIBUSB="$USBLIBDIR/libusb.so"
+         fi
       else
          AC_MSG_RESULT([libusb.a found])
          LIBUSB="$USBLIBDIR/libusb.a"
