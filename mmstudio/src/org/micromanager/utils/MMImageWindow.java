@@ -42,6 +42,9 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.ColorModel;
+import java.lang.reflect.InvocationTargetException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 
 import javax.swing.AbstractButton;
@@ -55,6 +58,7 @@ import com.swtdesigner.SwingResourceManager;
 import ij.CompositeImage;
 import ij.ImageStack;
 import java.awt.Graphics;
+import java.lang.reflect.Method;
 import org.micromanager.image5d.ChannelDisplayProperties;
 
 /**
@@ -478,16 +482,32 @@ public class MMImageWindow extends ImageWindow {
                 iplus.setStack(is);
 
                 ImagePlus imp2 = new CompositeImage(iplus, CompositeImage.COMPOSITE);
-                iplus.hide();
-			    imp2.show();
+
+                //set the Window's image to the composite image
+                // note: only the 'first' channel pixel values appear in the ImageJ window when we mouse around
+                setImage(imp2);
+
+
+                /* this throws an error in ij 1.44d12
+                try {
+                    org.micromanager.utils.JavaUtils.invokeRestrictedMethod(this, this.getClass().getSuperclass(), "setImagePlus", imp2, ImagePlus.class);
+                } catch (Exception ex) {
+                    ReportingUtils.showError(ex);
+
+                }
+                 *
+                 * */
+
+
+
 
  
 
             }
 
 
-            updateHistogram();
-            tearFreeUpdate();
+           updateHistogram();
+           tearFreeUpdate();
 
             // update coordinate and pixel info in imageJ by simulating mouse
             // move
