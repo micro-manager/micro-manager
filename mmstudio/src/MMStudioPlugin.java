@@ -48,7 +48,7 @@ public class MMStudioPlugin implements PlugIn, CommandListener {
     
    @SuppressWarnings("unchecked")
    public void run(String arg) {
-      if (!IJ.versionLessThan("1.43j")){
+      if (!IJ.versionLessThan("1.44d")){
          Executer.addCommandListener(this);
       }
 
