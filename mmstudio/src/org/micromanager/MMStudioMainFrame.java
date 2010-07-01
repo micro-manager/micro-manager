@@ -3072,7 +3072,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
       try{
           if (imageWin_ != null) {
-             imageWin_.close();
+             if (!imageWin_.isClosed())
+                imageWin_.close();
              imageWin_.dispose();
              imageWin_ = null;
           }
