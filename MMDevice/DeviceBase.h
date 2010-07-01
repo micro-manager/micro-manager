@@ -396,8 +396,13 @@ public:
          return DEVICE_INVALID_PROPERTY;
       if (pProp->SetLimits(low, high))
          return DEVICE_OK;
-      else
+      else {
+         std::ostringstream os;
+         os << "Device adapter requests invalid values ( " << low << ", ";
+         os << high << ") for property: " << name;
+         LogMessage(os.str().c_str(), false); 
          return DEVICE_INVALID_PROPERTY_LIMTS;
+      }
    }
 
    /**
