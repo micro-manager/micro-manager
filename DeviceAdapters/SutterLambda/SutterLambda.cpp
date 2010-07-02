@@ -310,6 +310,9 @@ bool Wheel::SetWheelPosition(unsigned pos)
    msg[1] = command;
   // msg[2] = 13; // CR
 
+   if (DEVICE_OK != PurgeComPort(port_.c_str()))
+      return false;
+
    // send command
    if (id_==0 || id_==1)
    {
@@ -330,11 +333,20 @@ bool Wheel::SetWheelPosition(unsigned pos)
    startTime = GetClockTicksUs();
 
    bool ret = false;
+   int CRcount = 0;
    do {
       if (DEVICE_OK != ReadFromComPort(port_.c_str(), &answer, 1, read))
          return false;
       if (answer == command)
          ret = true;
+	  if (answer == 13) // CR
+		  ++CRcount;
+	  if (CRcount == 2)
+	  {
+		 // Two CRs have been received, so cmd is done.
+	     g_Busy[port_] = false;
+		 return true;
+	  }
    }
    while(!ret && (GetClockTicksUs() - startTime) / 1000.0 < answerTimeoutMs_);
 
