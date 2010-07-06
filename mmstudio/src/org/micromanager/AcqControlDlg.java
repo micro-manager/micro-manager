@@ -416,8 +416,8 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
         public int rowDown(int rowIdx) {
             if (rowIdx >= 0 && rowIdx < channels_.size() - 1) {
                 ChannelSpec channel = channels_.get(rowIdx);
-                channels_.add(rowIdx + 2, channel);
                 channels_.remove(rowIdx);
+                channels_.add(rowIdx + 1, channel);
                 return rowIdx + 1;
             }
             return rowIdx;
@@ -426,8 +426,8 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
         public int rowUp(int rowIdx) {
             if (rowIdx >= 1 && rowIdx < channels_.size()) {
                 ChannelSpec channel = channels_.get(rowIdx);
+                channels_.remove(rowIdx);
                 channels_.add(rowIdx - 1, channel);
-                channels_.remove(rowIdx + 1);
                 return rowIdx - 1;
             }
             return rowIdx;
@@ -1077,10 +1077,9 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
         addButton.addActionListener(new ActionListener() {
 
             public void actionPerformed(ActionEvent e) {
+                applySettings();
                 model_.addNewChannel();
                 model_.fireTableStructureChanged();
-                // update summary
-                applySettings();
             }
         });
         addButton.setText("New");
@@ -1093,11 +1092,15 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
         removeButton.addActionListener(new ActionListener() {
 
             public void actionPerformed(ActionEvent e) {
-                ChannelTableModel model = (ChannelTableModel) channelTable_.getModel();
-                model.removeChannel(channelTable_.getSelectedRow());
-                model.fireTableStructureChanged();
-                // update summary
-                applySettings();
+               int sel = channelTable_.getSelectedRow();
+               if (sel > -1) {
+                  applySettings();
+                  model_.removeChannel(sel);
+                  model_.fireTableStructureChanged();
+                  if (channelTable_.getRowCount() > sel) {
+                     channelTable_.setRowSelectionInterval(sel,sel);
+                  }
+               }
             }
         });
         removeButton.setText("Remove");
@@ -1112,10 +1115,11 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
             public void actionPerformed(ActionEvent e) {
                 int sel = channelTable_.getSelectedRow();
                 if (sel > -1) {
+                    applySettings();
                     int newSel = model_.rowUp(sel);
                     model_.fireTableStructureChanged();
                     channelTable_.setRowSelectionInterval(newSel, newSel);
-                    applySettings();
+                    //applySettings();
                 }
             }
         });
@@ -1131,10 +1135,11 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
             public void actionPerformed(ActionEvent e) {
                 int sel = channelTable_.getSelectedRow();
                 if (sel > -1) {
+                    applySettings();
                     int newSel = model_.rowDown(sel);
                     model_.fireTableStructureChanged();
                     channelTable_.setRowSelectionInterval(newSel, newSel);
-                    applySettings();
+                    //applySettings();
                 }
             }
         });
