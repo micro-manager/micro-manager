@@ -384,12 +384,28 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
 
         public void addNewChannel() {
             ChannelSpec channel = new ChannelSpec();
+            channel.config_ = "";
             if (acqEng_.getChannelConfigs().length > 0) {
-                channel.config_ = acqEng_.getChannelConfigs()[0];
-                channel.color_ = new Color(colorPrefs_.getInt("Color_" + acqEng_.getChannelGroup() + "_" + channel.config_, Color.white.getRGB()));
-                channels_.add(channel);
+                for (String config : acqEng_.getChannelConfigs()) {
+                   boolean unique = true;
+                   for (ChannelSpec chan:channels_) {
+                     if (config.contentEquals(chan.config_))
+                        unique = false;
+                   }
+                   if (unique) {
+                      channel.config_ = config;
+                      break;
+                   }
+                }
+                if (channel.config_.length() == 0) {
+                   ReportingUtils.showMessage("No more channels are available\nin this channel group.");
+                } else {
+                  channel.color_ = new Color(colorPrefs_.getInt("Color_" + acqEng_.getChannelGroup() + "_" + channel.config_, Color.white.getRGB()));
+                  channels_.add(channel);
+                }
             }
         }
+
 
         public void removeChannel(int chIndex) {
             if (chIndex >= 0 && chIndex < channels_.size()) {
