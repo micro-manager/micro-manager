@@ -47,7 +47,22 @@ public class MMImageCache {
       }
    }
 
+   public void cleanup() {
+      try {
+         metadataStream_.write("\r\n}\r\n");
+         metadataStream_.close();
+      } catch (IOException ex) {
+         ReportingUtils.logError(ex);
+      }
+   }
+
    public String putImage(Object img, Metadata md) {
+      return putImage(new MMImageBuffer(img, md));
+   }
+
+   public String putImage(MMImageBuffer imgBuf) {
+      Metadata md = imgBuf.md;
+      Object img = imgBuf.img;
       String tiffFileName = createFileName(md);
       saveImageFile(img, md, dir_, tiffFileName);
       writeFrameMetadata(md, tiffFileName);
@@ -62,7 +77,7 @@ public class MMImageCache {
          }
       }
 
-      ImagePlus imp = new Opener().openImage(filename);
+      ImagePlus imp = new Opener().openImage(dir_ + "/" + filename);
       Object img = imp.getProcessor().getPixels();
       Metadata md = null;
       MMImageBuffer imgBuf = new MMImageBuffer(filename, img, md);
@@ -82,12 +97,22 @@ public class MMImageCache {
       cacheImage(imgBuf);
    }
 
-   public void cleanup() {
-      try {
-         metadataStream_.write("\r\n}\r\n");
-         metadataStream_.close();
-      } catch (IOException ex) {
-         ReportingUtils.logError(ex);
+   private void saveImageFile(Object img, Metadata md, String path, String tiffFileName) {
+      ImageProcessor ip = null;
+      int width = md.getWidth();
+      int height = md.getHeight();
+      if (img instanceof byte[]) {
+         ip = new ByteProcessor(width, height);
+         ip.setPixels((byte[]) img);
+      } else if (img instanceof short[]) {
+         ip = new ShortProcessor(width, height);
+         ip.setPixels((short[]) img);
+      }
+
+      if (ip != null) {
+         ImagePlus imp = new ImagePlus(path + "/" + tiffFileName, ip);
+         FileSaver fs = new FileSaver(imp);
+         fs.saveAsTiff(path + "/" + tiffFileName);
       }
    }
 
@@ -115,25 +140,6 @@ public class MMImageCache {
          firstElement_ = false;
       } catch (Exception e) {
          ReportingUtils.logError(e);
-      }
-   }
-
-   private void saveImageFile(Object img, Metadata md, String path, String tiffFileName) {
-      ImageProcessor ip = null;
-      int width = md.getWidth();
-      int height = md.getHeight();
-      if (img instanceof byte[]) {
-         ip = new ByteProcessor(width, height);
-         ip.setPixels((byte[]) img);
-      } else if (img instanceof short[]) {
-         ip = new ShortProcessor(width, height);
-         ip.setPixels((short[]) img);
-      }
-
-      if (ip != null) {
-         ImagePlus imp = new ImagePlus(path + "/" + tiffFileName, ip);
-         FileSaver fs = new FileSaver(imp);
-         fs.saveAsTiff(path + "/" + tiffFileName);
       }
    }
 

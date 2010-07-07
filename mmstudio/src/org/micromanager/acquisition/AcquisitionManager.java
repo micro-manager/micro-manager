@@ -5,6 +5,7 @@ import java.util.Hashtable;
 
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.utils.MMScriptException;
+import org.micromanager.acquisition.MMVirtualAcquisition;
 
 public class AcquisitionManager {
    Hashtable<String, AcquisitionInterface> acqs_;

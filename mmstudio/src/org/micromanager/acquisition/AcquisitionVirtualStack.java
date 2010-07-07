@@ -37,7 +37,7 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
 
    public Object getPixels(int flatIndex) {
       if (!filenames_.containsKey(flatIndex))
-         return new byte[width_][height_];
+         return new byte[width_*height_];
       else
          return imageCache_.getImage(filenames_.get(flatIndex)).img;
    }
@@ -48,5 +48,10 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
 
    public int getSize() {
       return nSlices_;
+   }
+
+ 
+   void insertImage(int index, MMImageBuffer imgBuf) {
+      filenames_.put(index, imageCache_.putImage(imgBuf));
    }
 }

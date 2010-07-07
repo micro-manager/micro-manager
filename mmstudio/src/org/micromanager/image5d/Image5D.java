@@ -126,6 +126,7 @@ public class Image5D extends ImagePlus {
 	static IndexColorModel grayColorModel;
 	
 	static final String outOfRange = "Argument out of range: ";
+   private boolean virtual_;
 
 	/**
 	 * @param title
@@ -168,7 +169,12 @@ public class Image5D extends ImagePlus {
 	public Image5D(String title, ImageStack stack) {	
       this (title, stack, 1, 1, stack.getSize());
    }
-		
+
+   public Image5D(String title, ImageStack stack, int nChannels, int nSlices, int nFrames, boolean virtual) {
+      this(title, stack, nChannels, nSlices, nFrames);
+      virtual_ = virtual;
+   }
+
     /**
      * Makes an Image5D from an ImageStack and dimension sizes.
      * All other constructors of Image5D eventually call this one. So changes that apply to all 
@@ -407,14 +413,14 @@ public class Image5D extends ImagePlus {
 		int oldChannel = currentPosition[colorDimension];
 		int newChannel = position[colorDimension];
 		boolean channelChanged = (oldChannel != newChannel);
-		boolean stackChanged = channelChanged | (currentPosition[4] != position[4]);
+		boolean stackChanged = channelChanged || (currentPosition[4] != position[4]);
 
 		for(int i=0; i<nDimensions; i++) {
 			currentPosition[i] = position[i];
 		}
 				
 		// Change Stack if necessary
-		if (stackChanged) {
+		if (stackChanged && !virtual_) {
 			ImageStack newStack = new ImageStack(width, height, chDisplayProps[position[colorDimension]].getColorModel());
 			int offs = getCurrentStackOffset();
 			int incr = getCurrentStackIncrement();
@@ -429,9 +435,10 @@ public class Image5D extends ImagePlus {
 		}
 
 		// Update channelIPs
-		channelIPs[currentPosition[2]] = getProcessor();
+      if (!virtual_)
+   		channelIPs[currentPosition[2]] = getProcessor();
 		for (int i=0; i<getNChannels(); ++i) {
-			if(i!=currentPosition[2]) {
+			if(i!=currentPosition[2] || virtual_) {
 				channelIPs[i].setPixels(imageStack.getPixels(getCurrentSliceOffset()+i));
 			}
 		}
