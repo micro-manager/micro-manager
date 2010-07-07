@@ -6,12 +6,14 @@ package org.micromanager.acquisition;
 
 import ij.ImagePlus;
 import ij.io.FileSaver;
+import ij.io.Opener;
 import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import mmcorej.Metadata;
 import mmcorej.StrVector;
 import org.micromanager.utils.JavaUtils;
@@ -22,13 +24,16 @@ import org.micromanager.utils.ReportingUtils;
  * @author arthur
  */
 
-public class MMImageWriter {
+public class MMImageCache {
 
    private boolean firstElement_;
    private BufferedWriter metadataStream_;
    private final String dir_;
+   private ConcurrentLinkedQueue<MMImageBuffer> imgBufQueue_;
+   private int imgBufQueueSize_ = 50;
 
-   MMImageWriter(String dir) {
+   
+   MMImageCache(String dir) {
       dir_ = dir;
 
       try {
@@ -36,15 +41,45 @@ public class MMImageWriter {
          metadataStream_ = new BufferedWriter(new FileWriter(dir_ + "/metadata.txt"));
          metadataStream_.write("{" + "\r\n");
          firstElement_ = true;
+         imgBufQueue_ = new ConcurrentLinkedQueue<MMImageBuffer>();
       } catch (Exception e) {
          ReportingUtils.showError(e);
       }
    }
 
-   public void writeImage(Object img, Metadata md) {
+   public String putImage(Object img, Metadata md) {
       String tiffFileName = createFileName(md);
       saveImageFile(img, md, dir_, tiffFileName);
       writeFrameMetadata(md, tiffFileName);
+      cacheImage(tiffFileName, img, md);
+      return tiffFileName;
+   }
+
+   public MMImageBuffer getImage(String filename) {
+      for (MMImageBuffer imgBuf:imgBufQueue_) {
+         if (imgBuf.filename.equals(filename)) {
+            return imgBuf;
+         }
+      }
+
+      ImagePlus imp = new Opener().openImage(filename);
+      Object img = imp.getProcessor().getPixels();
+      Metadata md = null;
+      MMImageBuffer imgBuf = new MMImageBuffer(filename, img, md);
+      cacheImage(imgBuf);
+      return imgBuf;
+   }
+
+   private void cacheImage(MMImageBuffer imgBuf) {
+      imgBufQueue_.add(imgBuf);
+      if (imgBufQueue_.size() > imgBufQueueSize_) { // If the queue is full,
+         imgBufQueue_.poll();                       // remove the oldest image.
+      }
+   }
+
+   private void cacheImage(String filename, Object img, Metadata md) {
+      MMImageBuffer imgBuf = new MMImageBuffer(filename, img, md);
+      cacheImage(imgBuf);
    }
 
    public void cleanup() {

@@ -19,15 +19,15 @@ import org.micromanager.utils.ReportingUtils;
 public class AcquisitionSaver extends Thread {
 
    private final CMMCore core_;
-   HashMap<String, MMImageWriter> imageWriters_;
+   HashMap<String, MMImageCache> imageWriters_;
 
-   MMImageWriter currentImageWriter_;
+   MMImageCache currentImageWriter_;
    AcquisitionSettings acqSettings_;
 
    public void run() {
       try {
          Metadata initMD = core_.getAcquisitionInitialMetadata();
-         imageWriters_ = new HashMap<String, MMImageWriter>();
+         imageWriters_ = new HashMap<String, MMImageCache>();
          String root = acqSettings_.getRoot();
          String prefix = acqSettings_.getPrefix();
          String acqPath = createAcqPath(root, prefix);
@@ -43,11 +43,11 @@ public class AcquisitionSaver extends Thread {
                      currentImageWriter_ = imageWriters_.get(posName);
                   } else {
                      String cachePath = createPositionPath(acqPath, posName);
-                     currentImageWriter_ = new MMImageWriter(cachePath);
+                     currentImageWriter_ = new MMImageCache(cachePath);
                      imageWriters_.put(posName, currentImageWriter_);
                      currentImageWriter_.writeMetadata(initMD, "SystemState");
                   }
-                  currentImageWriter_.writeImage(img, md);
+                  currentImageWriter_.putImage(img, md);
                } catch (Exception ex) {
                   ReportingUtils.showError(ex);
                }
@@ -61,7 +61,7 @@ public class AcquisitionSaver extends Thread {
    }
 
    public void cleanup() {
-      for (MMImageWriter imageCache:imageWriters_.values())
+      for (MMImageCache imageCache:imageWriters_.values())
          imageCache.cleanup();
       imageWriters_.clear();
    }

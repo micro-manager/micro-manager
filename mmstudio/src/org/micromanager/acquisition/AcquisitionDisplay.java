@@ -10,7 +10,6 @@ import mmcorej.CMMCore;
 import mmcorej.Metadata;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.ChannelSpec;
-import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -41,15 +40,16 @@ public class AcquisitionDisplay extends Thread {
          posName = getPosName(posIndex);
 
          try {
-            gui_.openAcquisition(posName, acqSettings.getRoot(), nTimes, nChannels, nSlices);
+            gui_.openAcquisition(posName, acqSettings.getRoot(), nTimes, nChannels, nSlices, true, diskCached_);
             for (int i=0; i<channels.size(); ++i) {
                gui_.setChannelColor(posName, i, channels.get(i).color_);
                gui_.setChannelName(posName, i, channels.get(i).config_);
+               gui.setAcquisitionProperties(posName, core_.getAcquisitionInitialMetadata());
             }
             gui_.initializeAcquisition(posName, 512, 512, 1);
 
 
-         } catch (MMScriptException ex) {
+         } catch (Exception ex) {
             ReportingUtils.logError(ex);
          }
       }
@@ -74,13 +74,15 @@ public class AcquisitionDisplay extends Thread {
                ++imgCount_;
                try {
                   Metadata mdCopy = new Metadata();
-                  if (! diskCached_) {
+                  if (true /*! diskCached_*/) {
                      img = core_.popNextImageMD(0, 0, mdCopy);
                   } else {
                      img = core_.getLastImageMD(0, 0, mdCopy);
                      Thread.sleep(10);
                   }
-                  displayImage(img, mdCopy);
+                  MMImageBuffer imgBuf = new MMImageBuffer(img, mdCopy);
+
+                  displayImage(imgBuf);
                   //    ReportingUtils.logMessage("time=" + mdCopy.getFrame() + ", position=" +
                   //            mdCopy.getPositionIndex() + ", channel=" + mdCopy.getChannelIndex() +
                   //            ", slice=" + mdCopy.getSliceIndex()
@@ -101,22 +103,6 @@ public class AcquisitionDisplay extends Thread {
       cleanup();
    }
    
-   protected void displayImage(Object img, Metadata m) {
-      int posIndex = m.getPositionIndex();
-      int channelIndex = getMetadataIndex(m, "ChannelIndex");
-      int sliceIndex = m.getSlice();
-      int frameIndex = m.getFrame();
-
-      try {
-         gui_.addImage(getPosName(posIndex), img, frameIndex, channelIndex, sliceIndex);
-         for (String key : m.getFrameKeys()) {
-            gui_.setImageProperty(getPosName(posIndex), frameIndex, channelIndex, sliceIndex, key, m.get(key));
-         }
-      } catch (MMScriptException ex) {
-         ReportingUtils.logError(ex);
-      }
-   }
-
    private int getMetadataIndex(Metadata m, String key) {
       if (m.getFrameData().has_key(key)) {
          String val = m.get(key);
@@ -153,6 +139,18 @@ public class AcquisitionDisplay extends Thread {
    protected void cleanup() {
       try {
          gui_.closeAllAcquisitions();
+      } catch (Exception e) {
+         ReportingUtils.logError(e);
+      }
+   }
+
+   private void displayImage(MMImageBuffer imgBuf) {
+
+      Metadata m = imgBuf.md;
+      int posIndex = m.getPositionIndex();
+
+      try {
+         gui_.addImage(getPosName(posIndex), imgBuf);
       } catch (Exception e) {
          ReportingUtils.logError(e);
       }

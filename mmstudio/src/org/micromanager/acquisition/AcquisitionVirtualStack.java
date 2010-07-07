@@ -4,9 +4,10 @@
  */
 package org.micromanager.acquisition;
 
+import ij.process.ByteProcessor;
 import ij.process.ImageProcessor;
 import java.awt.image.ColorModel;
-import java.util.Map;
+import java.util.HashMap;
 import org.micromanager.utils.ImageUtils;
 
 /**
@@ -15,40 +16,37 @@ import org.micromanager.utils.ImageUtils;
  */
 public class AcquisitionVirtualStack extends ij.VirtualStack {
 
-   private Map<Integer, ImageProcessor> ramImages_;
-   protected int width_, height_, type_;
+   private MMImageCache imageCache_;
+   private HashMap<Integer,String> filenames_ = new HashMap();
 
-   public AcquisitionVirtualStack(int width, int height, ColorModel cm, String path)
+   protected int width_, height_, type_;
+   private final int nSlices_;
+
+   public AcquisitionVirtualStack(int width, int height, ColorModel cm, String path, MMImageCache imageCache, int nSlices)
    {
       super(width, height, cm, path);
+      imageCache_ = imageCache;
       width_ = width;
       height_ = height;
+      nSlices_ = nSlices;
    }
 
    public void setType(int type) {
       type_ = type;
    }
 
-   public void addSlice(int sliceIndex, Object pixels) {
-      ramImages_.put(sliceIndex, ImageUtils.makeProcessor(type_, width_, height_, pixels));
+   public Object getPixels(int flatIndex) {
+      if (!filenames_.containsKey(flatIndex))
+         return new byte[width_][height_];
+      else
+         return imageCache_.getImage(filenames_.get(flatIndex)).img;
    }
 
-   public void clearCachedImages() {
-      ramImages_.clear();
+   public ImageProcessor getProcessor(int flatIndex) {
+      return new ByteProcessor(width_, height_);
    }
 
-   public ImageProcessor getProcessor(int n) {
-      // If in RAM, return from RAM. Otherwise read from disk and return.
-      if (ramImages_.containsKey(n)) {
-         return (ramImages_.get(n));
-      } else {
-         return super.getProcessor(n);
-      }
-   }
-
-   /** Sets the bit depth (8, 16, 24 or 32). */
-   public void setBitDepth(int bitDepth) {
-      super.setBitDepth(bitDepth);
-      type_ = ImageUtils.BppToImageType(8 * bitDepth);
+   public int getSize() {
+      return nSlices_;
    }
 }

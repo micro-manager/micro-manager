@@ -5,6 +5,7 @@ import ij.process.ColorProcessor;
 
 import java.awt.Color;
 import java.awt.image.DirectColorModel;
+import mmcorej.Metadata;
 
 import org.json.JSONObject;
 import org.micromanager.image5d.ChannelCalibration;
@@ -19,7 +20,7 @@ import org.micromanager.metadata.SummaryKeys;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 
-public class MMAcquisition {
+public class MMAcquisition implements AcquisitionInterface {
    protected int numFrames_;
    private int numChannels_;
    private int numSlices_;
@@ -329,6 +330,18 @@ public class MMAcquisition {
    
    public boolean hasActiveImage5D() {
 	   return ! (this.imgWin_ == null);
+   }
+
+   public void insertImage(MMImageBuffer imgBuf) throws MMScriptException {
+      throw new UnsupportedOperationException("Not supported yet.");
+   }
+
+   public void setSummaryProperties(Metadata md) throws MMScriptException {
+      throw new UnsupportedOperationException("Not supported yet.");
+   }
+
+   public boolean windowClosed() {
+      return imgWin_.isClosed();
    }
 
 }

@@ -74,7 +74,6 @@ import mmcorej.StrVector;
 
 import org.json.JSONObject;
 import org.micromanager.acquisition.AcquisitionManager;
-import org.micromanager.acquisition.MMAcquisition;
 import org.micromanager.acquisition.MMAcquisitionSnap;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.Autofocus;
@@ -139,6 +138,8 @@ import ij.process.ColorProcessor;
 import java.awt.Cursor;
 import java.awt.Graphics;
 import java.awt.image.DirectColorModel;
+import org.micromanager.acquisition.AcquisitionInterface;
+import org.micromanager.acquisition.MMImageBuffer;
 import org.micromanager.nativegui.NativeGUI;
 import org.micromanager.utils.ReportingUtils;
 
@@ -3714,21 +3715,27 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    public void openAcquisition(String name, String rootDir, int nrFrames,
          int nrChannels, int nrSlices) throws MMScriptException {
       acqMgr_.openAcquisition(name, rootDir);
-      MMAcquisition acq = acqMgr_.getAcquisition(name);
+      AcquisitionInterface acq = acqMgr_.getAcquisition(name);
       acq.setDimensions(nrFrames, nrChannels, nrSlices);
    }
 
    public void openAcquisition(String name, String rootDir, int nrFrames,
          int nrChannels, int nrSlices, boolean show)
          throws MMScriptException {
-      acqMgr_.openAcquisition(name, rootDir, show);
-      MMAcquisition acq = acqMgr_.getAcquisition(name);
+      this.openAcquisition(name, rootDir, nrFrames, nrChannels, nrSlices, show, false);
+   }
+
+   public void openAcquisition(String name, String rootDir, int nrFrames,
+         int nrChannels, int nrSlices, boolean show, boolean virtual)
+         throws MMScriptException {
+      acqMgr_.openAcquisition(name, rootDir, show, virtual);
+      AcquisitionInterface acq = acqMgr_.getAcquisition(name);
       acq.setDimensions(nrFrames, nrChannels, nrSlices);
    }
 
    private void openAcquisitionSnap(String name, String rootDir, boolean show)
          throws MMScriptException {
-      MMAcquisition acq = acqMgr_.openAcquisitionSnap(name, rootDir, this,
+      AcquisitionInterface acq = acqMgr_.openAcquisitionSnap(name, rootDir, this,
             show);
       acq.setDimensions(0, 1, 1);
       try {
@@ -3743,7 +3750,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    public void initializeAcquisition(String name, int width, int height,
          int depth) throws MMScriptException {
-      MMAcquisition acq = acqMgr_.getAcquisition(name);
+      AcquisitionInterface acq = acqMgr_.getAcquisition(name);
       acq.setImagePhysicalDimensions(width, height, depth);
       acq.initialize();
    }
@@ -3771,13 +3778,17 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    public void setAcquisitionProperty(String acqName, String propertyName,
          String value) throws MMScriptException {
-      MMAcquisition acq = acqMgr_.getAcquisition(acqName);
+      AcquisitionInterface acq = acqMgr_.getAcquisition(acqName);
       acq.setProperty(propertyName, value);
+   }
+
+   public void setAcquisitionProperties(String acqName, Metadata md) throws MMScriptException {
+      acqMgr_.getAcquisition(acqName).setSummaryProperties(md);
    }
 
    public void setImageProperty(String acqName, int frame, int channel,
          int slice, String propName, String value) throws MMScriptException {
-      MMAcquisition acq = acqMgr_.getAcquisition(acqName);
+      AcquisitionInterface acq = acqMgr_.getAcquisition(acqName);
       acq.setProperty(frame, channel, slice, propName, value);
    }
 
@@ -3800,7 +3811,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             }
          }
 
-         MMAcquisition acq = acqMgr_.getAcquisition(name);
+         AcquisitionInterface acq = acqMgr_.getAcquisition(name);
 
          long width = core_.getImageWidth();
          long height = core_.getImageHeight();
@@ -3898,8 +3909,12 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    public void addImage(String name, Object img, int frame, int channel,
          int slice) throws MMScriptException {
-      MMAcquisition acq = acqMgr_.getAcquisition(name);
+      AcquisitionInterface acq = acqMgr_.getAcquisition(name);
       acq.insertImage(img, frame, channel, slice);
+   }
+
+   public void addImage(String name, MMImageBuffer imgBuf) throws MMScriptException {
+      acqMgr_.getAcquisition(name).insertImage(imgBuf);
    }
 
    public void closeAllAcquisitions() {
@@ -3948,26 +3963,26 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    public void setChannelContrast(String title, int channel, int min, int max)
          throws MMScriptException {
-      MMAcquisition acq = acqMgr_.getAcquisition(title);
+      AcquisitionInterface acq = acqMgr_.getAcquisition(title);
       acq.setChannelContrast(channel, min, max);
    }
 
    public void setChannelName(String title, int channel, String name)
          throws MMScriptException {
-      MMAcquisition acq = acqMgr_.getAcquisition(title);
+      AcquisitionInterface acq = acqMgr_.getAcquisition(title);
       acq.setChannelName(channel, name);
 
    }
 
    public void setChannelColor(String title, int channel, Color color)
          throws MMScriptException {
-      MMAcquisition acq = acqMgr_.getAcquisition(title);
+      AcquisitionInterface acq = acqMgr_.getAcquisition(title);
       acq.setChannelColor(channel, color.getRGB());
    }
 
    public void setContrastBasedOnFrame(String title, int frame, int slice)
          throws MMScriptException {
-      MMAcquisition acq = acqMgr_.getAcquisition(title);
+      AcquisitionInterface acq = acqMgr_.getAcquisition(title);
       acq.setContrastBasedOnFrame(frame, slice);
    }
 

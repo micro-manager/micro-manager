@@ -7,10 +7,10 @@ import org.micromanager.MMStudioMainFrame;
 import org.micromanager.utils.MMScriptException;
 
 public class AcquisitionManager {
-   Hashtable<String, MMAcquisition> acqs_;
+   Hashtable<String, AcquisitionInterface> acqs_;
    
    public AcquisitionManager() {
-      acqs_ = new Hashtable<String, MMAcquisition>();
+      acqs_ = new Hashtable<String, AcquisitionInterface>();
    }
    
    public void openAcquisition(String name, String rootDir) throws MMScriptException {
@@ -28,13 +28,21 @@ public class AcquisitionManager {
 	   }
    
    public void openAcquisition(String name, String rootDir, boolean show) throws MMScriptException {
-      if (acquisitionExists(name))
+      this.openAcquisition(name, rootDir, show, false);
+   }
+
+   public void openAcquisition(String name, String rootDir, boolean show, boolean virtual) throws MMScriptException {
+      if (acquisitionExists(name)) {
          throw new MMScriptException("The name is in use");
-      else
-         acqs_.put(name, new MMAcquisition(name, rootDir, show));
+      } else {
+         if (!virtual)
+            acqs_.put(name, new MMAcquisition(name, rootDir, show));
+         else
+            acqs_.put(name, new MMVirtualAcquisition(name, rootDir));
+      }
    }
    
-   public MMAcquisition openAcquisitionSnap(String name, String rootDir, MMStudioMainFrame gui_, boolean show) throws MMScriptException {
+   public AcquisitionInterface openAcquisitionSnap(String name, String rootDir, MMStudioMainFrame gui_, boolean show) throws MMScriptException {
       MMAcquisition acq = new MMAcquisitionSnap(name, rootDir, gui_, show);
       acqs_.put(name, acq);
       return acq;
@@ -64,13 +72,13 @@ public class AcquisitionManager {
    
    public boolean hasActiveImage5D(String name) throws MMScriptException {
 	   if (acquisitionExists(name)) {
-		   return ! getAcquisition(name).imgWin_.isClosed();
+		   return ! getAcquisition(name).windowClosed();
 	   } else
 		   return false;
 			   
    }
       
-   public MMAcquisition getAcquisition(String name) throws MMScriptException {
+   public AcquisitionInterface getAcquisition(String name) throws MMScriptException {
       if (acquisitionExists(name))
          return acqs_.get(name);
       else
@@ -78,7 +86,7 @@ public class AcquisitionManager {
    }
 
    public void closeAll() {
-      for (Enumeration<MMAcquisition> e=acqs_.elements(); e.hasMoreElements(); )
+      for (Enumeration<AcquisitionInterface> e=acqs_.elements(); e.hasMoreElements(); )
          e.nextElement().close();
       
       acqs_.clear();

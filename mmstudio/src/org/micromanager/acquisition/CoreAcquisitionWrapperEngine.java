@@ -97,11 +97,7 @@ public class CoreAcquisitionWrapperEngine implements AcquisitionEngine {
          ReportingUtils.showError(ex);
       }
 
-      if (saveFiles_)
-      {
-         AcquisitionSaver saver_ = new AcquisitionSaver(core_, acquisitionSettings);
-         saver_.start();
-      }
+
       display_ = new AcquisitionDisplay(gui_, core_, acquisitionSettings, channels_, saveFiles_);
       display_.start();
    }

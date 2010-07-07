@@ -28,6 +28,8 @@ import java.awt.Color;
 import java.awt.geom.Point2D;
 
 import mmcorej.CMMCore;
+import mmcorej.Metadata;
+import org.micromanager.acquisition.MMImageBuffer;
 
 import org.micromanager.metadata.WellAcquisitionData;
 import org.micromanager.navigation.PositionList;
@@ -83,6 +85,9 @@ public interface ScriptInterface {
    
    public void openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices, boolean show) throws MMScriptException;
 
+   public void openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices, boolean show, boolean virtual) throws MMScriptException;
+
+
    public void initializeAcquisition(String name, int width, int height, int depth) throws MMScriptException;
    
    /**
@@ -112,12 +117,22 @@ public interface ScriptInterface {
     * Inserts image into the acquisition handle
     */
    public void addImage(String name, Object img, int frame, int channel, int z) throws MMScriptException;
-   
+
+   /**
+    * Inserts image into the acquisition handle
+    */
+   public void addImage(String name, MMImageBuffer imgBuf) throws MMScriptException;
+
    /**
     * Sets custom property attached to the acquisition summary
     */
    public void setAcquisitionProperty(String acqName, String propertyName, String value) throws MMScriptException;
-   
+
+   /**
+    * Sets custom property attached to the acquisition summary
+    */
+   public void setAcquisitionProperties(String acqName, Metadata md) throws MMScriptException;
+
    /**
     * Sets property attached to an individual image
     */
