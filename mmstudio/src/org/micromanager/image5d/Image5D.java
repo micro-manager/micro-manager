@@ -1462,5 +1462,9 @@ public class Image5D extends ImagePlus {
         return stack;
     }
 
+   public boolean isVirtual() {
+      return virtual_;
+   }
+
 }
 	

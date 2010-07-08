@@ -21,6 +21,7 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
 
    protected int width_, height_, type_;
    private final int nSlices_;
+   private final String path_;
 
    public AcquisitionVirtualStack(int width, int height, ColorModel cm, String path, MMImageCache imageCache, int nSlices)
    {
@@ -29,8 +30,13 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
       width_ = width;
       height_ = height;
       nSlices_ = nSlices;
+      path_ = path;
    }
 
+   public String getPath() {
+      return path_;
+   }
+   
    public void setType(int type) {
       type_ = type;
    }

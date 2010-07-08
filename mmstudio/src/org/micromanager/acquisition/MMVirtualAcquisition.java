@@ -136,12 +136,13 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
    public void insertImage(Object pixels, int frame, int channel, int slice) throws MMScriptException {
       throw new UnsupportedOperationException("Not supported yet.");
    }
+   
 
    public void insertImage(MMImageBuffer imgBuf) throws MMScriptException {
       int index = numChannels_ * numSlices_ * imgBuf.md.getFrame() + numChannels_ * imgBuf.md.getSlice() + imgBuf.md.getChannelIndex() + 1;
       virtualStack_.insertImage(index, imgBuf);
       if (img5d_ == null) {
-         img5d_ = new Image5D(name_, virtualStack_, numChannels_, numSlices_, numFrames_, true);
+         img5d_ = new Image5D(dir_, virtualStack_, numChannels_, numSlices_, numFrames_, true);
          imgWin_ = new Image5DWindow(img5d_);
          if (numChannels_ == 1) {
             img5d_.setDisplayMode(ChannelControl.ONE_CHANNEL_GRAY);

@@ -33,8 +33,8 @@ public class MMImageCache {
    private int imgBufQueueSize_ = 50;
 
    
-   MMImageCache(String dir) {
-      dir_ = dir;
+   MMImageCache(String pathOnDisk) {
+      dir_ = pathOnDisk;
 
       try {
          JavaUtils.createDirectory(dir_);

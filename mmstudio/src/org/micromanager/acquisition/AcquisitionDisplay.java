@@ -4,12 +4,16 @@
  */
 package org.micromanager.acquisition;
 
+import java.io.File;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import mmcorej.AcquisitionSettings;
 import mmcorej.CMMCore;
 import mmcorej.Metadata;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.ChannelSpec;
+import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -29,36 +33,39 @@ public class AcquisitionDisplay extends Thread {
       core_ = core;
       acqSettings_ = acqSettings;
       diskCached_ = diskCached;
-      
+
       int nPositions = Math.max(1, (int) acqSettings.getPositionList().size());
       int nTimes = Math.max(1, (int) acqSettings.getTimeSeries().size());
       int nChannels = Math.max(1, (int) acqSettings.getChannelList().size());
       int nSlices = Math.max(1, (int) acqSettings.getZStack().size());
 
-      String posName;
-      for (int posIndex = 0; posIndex < nPositions; ++posIndex) {
-         posName = getPosName(posIndex);
+      String acqPath;
+      try {
+         acqPath = createAcqPath(acqSettings.getRoot(), acqSettings.getPrefix());
 
-         try {
-            gui_.openAcquisition(posName, acqSettings.getRoot(), nTimes, nChannels, nSlices, true, diskCached_);
-            for (int i=0; i<channels.size(); ++i) {
+         String posName;
+         for (int posIndex = 0; posIndex < nPositions; ++posIndex) {
+            posName = getPosName(posIndex);
+
+            String fullPath = createPositionPath(acqPath, posName);
+            gui_.openAcquisition(posName, fullPath, nTimes, nChannels, nSlices, true, diskCached_);
+            for (int i = 0; i < channels.size(); ++i) {
                gui_.setChannelColor(posName, i, channels.get(i).color_);
                gui_.setChannelName(posName, i, channels.get(i).config_);
                gui.setAcquisitionProperties(posName, core_.getAcquisitionInitialMetadata());
             }
             gui_.initializeAcquisition(posName, 512, 512, 1);
 
-
-         } catch (Exception ex) {
-            ReportingUtils.logError(ex);
          }
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
       }
    }
 
    private String getPosName(int posIndex) {
       String posName;
       if (acqSettings_.getPositionList().isEmpty()) {
-         posName = "acq";
+         posName = "";
       } else {
          posName = acqSettings_.getPositionList().get(posIndex).getName();
       }
@@ -102,23 +109,24 @@ public class AcquisitionDisplay extends Thread {
 
       cleanup();
    }
-   
+
    private int getMetadataIndex(Metadata m, String key) {
       if (m.getFrameData().has_key(key)) {
          String val = m.get(key);
-         if (val == null || val.length() == 0)
+         if (val == null || val.length() == 0) {
             return -1;
-         else
+         } else {
             System.out.println("frameData[\"" + key + "\"] = \"" + val + "\"");
-            int result;
-            try {
-               result = Integer.parseInt(val);
-            } catch (Exception e) {
-               e.printStackTrace();
-               System.out.println("error. now val = \"" + val + "\"");
-               result = -1;
-            }
-            return result;
+         }
+         int result;
+         try {
+            result = Integer.parseInt(val);
+         } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("error. now val = \"" + val + "\"");
+            result = -1;
+         }
+         return result;
       } else {
          return -1;
       }
@@ -129,10 +137,10 @@ public class AcquisitionDisplay extends Thread {
          return false;
       }
       boolean same =
-            (getMetadataIndex(lastMD, "Position") == getMetadataIndex(mdCopy, "Position"))
-         && (getMetadataIndex(lastMD, "ChannelIndex") == getMetadataIndex(mdCopy, "ChannelIndex"))
-         && (getMetadataIndex(lastMD, "Slice") == getMetadataIndex(mdCopy, "Slice"))
-         && (getMetadataIndex(lastMD, "Frame") == getMetadataIndex(mdCopy, "Frame"));
+              (getMetadataIndex(lastMD, "Position") == getMetadataIndex(mdCopy, "Position"))
+              && (getMetadataIndex(lastMD, "ChannelIndex") == getMetadataIndex(mdCopy, "ChannelIndex"))
+              && (getMetadataIndex(lastMD, "Slice") == getMetadataIndex(mdCopy, "Slice"))
+              && (getMetadataIndex(lastMD, "Frame") == getMetadataIndex(mdCopy, "Frame"));
       return same;
    }
 
@@ -154,5 +162,54 @@ public class AcquisitionDisplay extends Thread {
       } catch (Exception e) {
          ReportingUtils.logError(e);
       }
+   }
+
+   private String createAcqPath(String root, String prefix) throws Exception {
+      File rootDir = JavaUtils.createDirectory(root);
+      int curIndex = getCurrentMaxDirIndex(rootDir, prefix + "_");
+
+      File acqDir = null;
+      acqDir = JavaUtils.createDirectory(root + "/" + prefix + "_" + (1 + curIndex));
+
+      if (acqDir != null) {
+         return acqDir.getAbsolutePath();
+      } else {
+         return "";
+      }
+   }
+
+   private String createPositionPath(String acqPath, String position) throws Exception {
+      if (position.length() == 0) {
+         return acqPath;
+      }
+
+      File acqDir = null;
+      if (position.length() == 0) {
+         return acqPath;
+      }
+
+      acqDir = JavaUtils.createDirectory(acqPath + "/" + position);
+
+      if (acqDir != null) {
+         return acqDir.getAbsolutePath();
+      } else {
+         return "";
+      }
+   }
+
+   private int getCurrentMaxDirIndex(File rootDir, String prefix) throws NumberFormatException {
+      int maxNumber = 0;
+      int number;
+      String theName;
+      for (File acqDir : rootDir.listFiles()) {
+         theName = acqDir.getName();
+         if (theName.startsWith(prefix)) {
+            number = Integer.parseInt(theName.substring(prefix.length()));
+            if (number >= maxNumber) {
+               maxNumber = number;
+            }
+         }
+      }
+      return maxNumber;
    }
 }
