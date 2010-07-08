@@ -518,9 +518,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             }
             try {
                Object img;
-               // ToDo: implement color and multi-channel camera support
-               // use core_.getLastImage()
-               long channels = core_.getNumberOfComponents();
                if (!liveModeFullyStarted_) {
                   if (core_.getRemainingImageCount() > 0) {
                      liveModeFullyStarted_ = true;
@@ -528,11 +525,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                }
 
                if (liveModeFullyStarted_) {
-                  if (channels == 1) {
                      img = core_.getLastImage();
-                  } else {
-                     img = core_.getRGB32Image();
-                  }
                   if (img != img_) {
                      img_ = img;
                      displayImage(img_);
@@ -2655,15 +2648,9 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             }
          }
 
-         long channels = core_.getNumberOfComponents();
-
          core_.snapImage();
          Object img;
-         if (channels == 1) {
-            img = core_.getImage();
-         } else {
-            img = core_.getRGB32Image();
-         }
+         img = core_.getImage();
 
          if (imageWin_.windowNeedsResizing()) {
             createImageWindow();
@@ -3803,12 +3790,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             core_.getLastImageMD(0, 0, md);
          } else {
             core_.snapImage();
-            long channels = core_.getNumberOfComponents();
-            if (channels == 1) {
-               img = core_.getImage();
-            } else {
-               img = core_.getRGB32Image();
-            }
+            img = core_.getImage();
          }
 
          AcquisitionInterface acq = acqMgr_.getAcquisition(name);
