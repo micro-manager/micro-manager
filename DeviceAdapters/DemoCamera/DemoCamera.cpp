@@ -205,7 +205,8 @@ CDemoCamera::CDemoCamera() :
    errorSimulation_(false),
 	binSize_(1),
 	cameraCCDXSize_(512),
-	cameraCCDYSize_(512)
+	cameraCCDYSize_(512),
+   nComponents_(1)
 {
    // call the base class method to set-up default error codes/messages
    InitializeDefaultErrorMessages();
@@ -742,28 +743,33 @@ int CDemoCamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
 
          if (pixelType.compare(g_PixelType_8bit) == 0)
          {
+            nComponents_ = 1;
             img_.Resize(img_.Width(), img_.Height(), 1);
             bitDepth_ = 8;
             ret=DEVICE_OK;
          }
          else if (pixelType.compare(g_PixelType_16bit) == 0)
          {
+            nComponents_ = 1;
             img_.Resize(img_.Width(), img_.Height(), 2);
             ret=DEVICE_OK;
          }
 			else if ( pixelType.compare(g_PixelType_32bitRGB) == 0)
 			{
+            nComponents_ = 4;
             img_.Resize(img_.Width(), img_.Height(), 4);
             ret=DEVICE_OK;
 			}
 			else if ( pixelType.compare(g_PixelType_64bitRGB) == 0)
 			{
+            nComponents_ = 4;
             img_.Resize(img_.Width(), img_.Height(), 8);
             ret=DEVICE_OK;
 			}
          else
          {
             // on error switch to default pixel type
+            nComponents_ = 1;
             img_.Resize(img_.Width(), img_.Height(), 1);
             pProp->Set(g_PixelType_8bit);
             ret = ERR_UNKNOWN_MODE;

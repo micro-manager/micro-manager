@@ -80,6 +80,8 @@ public:
    int GetBinning() const;
    int SetBinning(int bS);
 
+   unsigned  GetNumberOfComponents() const { return nComponents_;};
+
    // action interface
    // ----------------
 	// floating point read-only properties for testing
@@ -116,6 +118,10 @@ private:
    int ResizeImageBuffer();
 
 	double testProperty_[10];
+
+   // 1 or 4 
+   int nComponents_;
+
 };
 
 
