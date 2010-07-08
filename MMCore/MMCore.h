@@ -250,7 +250,6 @@ public:
    void setExposure(double exp) throw (CMMError);
    double getExposure() const throw (CMMError);
    void* getImage() const throw (CMMError);
-   unsigned int* getRGB32Image() const throw (CMMError);
    void snapImage() throw (CMMError);
    unsigned getImageWidth() const;
    unsigned getImageHeight() const;

@@ -1549,31 +1549,6 @@ void* CMMCore::getImage() const throw (CMMError)
    }
 }
 
-/**
- * Exposes the internal image buffer as RGB pixels.
- *
- * Designed specifically for the SWIG wrapping for Java and scripting languages.
- * @return a pointer to the internal image buffer.
- */
-unsigned int* CMMCore::getRGB32Image() const throw (CMMError)
-{
-   if (!camera_)
-      throw CMMError(getCoreErrorText(MMERR_CameraNotAvailable).c_str(), MMERR_CameraNotAvailable);
-   else
-   {
-      unsigned int* pBuf(0);
-      try {
-         pBuf = const_cast<unsigned int*> (camera_->GetImageBufferAsRGB32());
-      } catch (...) {
-         throw CMMError(getCoreErrorText(MMERR_UnhandledException).c_str(), MMERR_UnhandledException);
-      }
-
-      if (pBuf != 0)
-         return pBuf;
-      else
-         throw CMMError(getCoreErrorText(MMERR_CameraBufferReadFailed).c_str(), MMERR_CameraBufferReadFailed);
-   }
-}
 
 /**
  * Returns the size of the internal image buffer.
