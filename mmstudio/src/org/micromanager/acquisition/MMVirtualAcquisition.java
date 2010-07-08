@@ -9,7 +9,6 @@ import ij.ImagePlus;
 import ij.process.ColorProcessor;
 import java.awt.Color;
 import java.awt.image.DirectColorModel;
-import java.util.HashMap;
 import mmcorej.Metadata;
 import org.json.JSONObject;
 import org.micromanager.image5d.ChannelCalibration;
@@ -128,40 +127,8 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
          throw new MMScriptException("Unsupported pixel depth");
       }
 
-      Color colors[];
-      String names[];
-      /*try {
-         acqData_.getChannelColors();
-         if (colors == null) {
-            colors = new Color[numChannels_];
-            for (int i=0; i<numChannels_; i++)
-               colors[i] = Color.WHITE;
-         }
-         names = acqData_.getChannelNames();
-      } catch (MMAcqDataException e) {
-         throw new MMScriptException(e);
-      }*/
-
       imageCache_ = new MMImageCache(dir_);
       virtualStack_ = new AcquisitionVirtualStack(width_, height_, null, dir_, imageCache_, numChannels_ * numSlices_ * numFrames_);
-
-      /*
-      // set-up colors, contrast and channel names
-      for (int i=0; i<numChannels_; i++) {
-         //N.B. this call to setChannelColorModel is very soon over-written inside setChannelColor
-         if(img5d.getProcessor(i+1) instanceof ColorProcessor)
-             img5d.setChannelColorModel(i + 1, new DirectColorModel(32, 0xFF0000, 0xFF00, 0xFF));
-         else{
-            img5d.setChannelColorModel(i+1, ChannelDisplayProperties.createModelFromColor(colors[i]));
-         }
-         ChannelCalibration chcal = img5d.getChannelCalibration(i+1);
-         chcal.setLabel(names[i]);
-         img5d.setChannelCalibration(i+1, chcal);
-      }
-       */
-
-
-
 
       initialized_ = true;
    }
@@ -197,13 +164,14 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
             img5d_.setChannelCalibration(channel+1, chcal);
          }
       }
-      img5d_.setCurrentPosition(0, 0, imgBuf.md.getChannelIndex(), imgBuf.md.getSlice(), imgBuf.md.getFrame());
+      if ((img5d_.getCurrentFrame() - 1) > (imgBuf.md.getFrame() - 2)) {
+         img5d_.setCurrentPosition(0, 0, imgBuf.md.getChannelIndex(), imgBuf.md.getSlice(), imgBuf.md.getFrame());
+      }
       img5d_.updateAndRepaintWindow();
    }
 
    public void setChannelColor(int channel, int rgb) throws MMScriptException {
       displaySettings_[channel].put("ChannelColor", String.format("%d", rgb));
-
    }
 
    public void setChannelContrast(int channel, int min, int max) throws MMScriptException {
@@ -222,8 +190,6 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
    public void setContrastBasedOnFrame(int frame, int slice) throws MMScriptException {
       throw new UnsupportedOperationException("Not supported yet.");
    }
-
-
 
    public void setProperty(String propertyName, String value) throws MMScriptException {
       throw new UnsupportedOperationException("Not supported yet.");

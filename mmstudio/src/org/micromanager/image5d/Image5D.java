@@ -430,6 +430,7 @@ public class Image5D extends ImagePlus {
 			// Avoid messing up of image window (5D) by superclass, which doesn't know about 5D.
 			ImageWindow tempWin = win;
 			win = null;
+         if (!virtual_)
 				super.setStack(null, newStack);
 			win = tempWin;			
 		}
