@@ -136,15 +136,15 @@ public class MMSnapshotWindow extends Image5DWindow {
 		int width_ = (int) core_.getImageWidth();
 		int height_ = (int) core_.getImageHeight();
 		long byteDepth = core_.getBytesPerPixel();
-		long channels = core_.getNumberOfComponents();
-		if (byteDepth == 1 && channels == 1) {
+		long components = core_.getNumberOfComponents();
+		if (byteDepth == 1 && components == 1) {
 			type = ImagePlus.GRAY8;
 			ip = new ByteProcessor(width_, height_);
 			if (contrastSettings8_.getRange() == 0.0)
 				ip.setMinAndMax(0, 255);
 			else
 				ip.setMinAndMax(contrastSettings8_.min, contrastSettings8_.max);
-		} else if (byteDepth == 2 && channels == 1) {
+		} else if (byteDepth == 2 && components == 1) {
 			type = ImagePlus.GRAY16;
 			ip = new ShortProcessor(width_, height_);
 			if (contrastSettings16_.getRange() == 0.0)
@@ -154,15 +154,14 @@ public class MMSnapshotWindow extends Image5DWindow {
 						contrastSettings16_.max);
 		} else if (byteDepth == 0) {
 			throw (new Exception(logError("Imaging device not initialized")));
-		} else if (byteDepth == 1 && channels == 4) {
+		} else if (byteDepth == 1 && components == 4) {
 			// assuming RGB32 format
 			ip = new ColorProcessor(width_, height_);
 			if (contrastSettings8_.getRange() == 0.0)
 				ip.setMinAndMax(0, 255);
 			else
 				ip.setMinAndMax(contrastSettings8_.min, contrastSettings8_.max);
-		} else if ( 2 == byteDepth && 4 == channels){
-			// 'channels' == 4 means RGB --      todo channels here should be 'components'
+		} else if ( 2 == byteDepth && 4 == components){
 			ip = new ColorProcessor(width_, height_);
 			// todo get ADC bit depth from camera, 
 			int bitdepth = 12;
@@ -170,7 +169,7 @@ public class MMSnapshotWindow extends Image5DWindow {
 
 		} else{
 			String message = "Unsupported pixel depth: "
-					+ core_.getBytesPerPixel() + " byte(s) and " + channels
+					+ core_.getBytesPerPixel() + " byte(s) and " + components
 					+ " channel(s).";
 			throw (new Exception(logError(message)));
 		}

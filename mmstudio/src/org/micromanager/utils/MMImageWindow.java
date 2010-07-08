@@ -163,34 +163,34 @@ public class MMImageWindow extends ImageWindow {
 	   core_ = core;
 		ImageProcessor ip = null;
 		long byteDepth = core_.getBytesPerPixel();
-		long channels = core_.getNumberOfComponents();
+		long components = core_.getNumberOfComponents();
 		int width = (int) core_.getImageWidth();
 		int height = (int) core_.getImageHeight();
 		if (byteDepth == 0) {
 			throw (new Exception(logError("Imaging device not initialized")));
 		}
-		if (byteDepth == 1 && channels == 1) {
+		if (byteDepth == 1 && components == 1) {
 			ip = new ByteProcessor(width, height);
 			if (contrastSettings8_.getRange() == 0.0)
 				ip.setMinAndMax(0, 255);
 			else
 				ip.setMinAndMax(contrastSettings8_.min, contrastSettings8_.max);
-		} else if (byteDepth == 2 && channels == 1) {
+		} else if (byteDepth == 2 && components == 1) {
 			ip = new ShortProcessor(width, height);
 			if (contrastSettings16_.getRange() == 0.0)
 				ip.setMinAndMax(0, 65535);
 			else
 				ip.setMinAndMax(contrastSettings16_.min,
 						contrastSettings16_.max);
-		} else if (byteDepth == 4 && channels == 1) {
-			// assuming RGB32 format
+		} else if (byteDepth == 4 && components == 4) {
+			// RGB32 format
 			ip = new ColorProcessor(width, height);
 			if (contrastSettings8_.getRange() == 0.0)
 				ip.setMinAndMax(0, 255);
 			else
 				ip.setMinAndMax(contrastSettings8_.min, contrastSettings8_.max);
-		} else if (byteDepth == 8 && channels == 1) {
-			// assuming RGB32 format
+		} else if (byteDepth == 8 && components == 4) {
+			// RGB64 format
 			ip = new ColorProcessor(width, height);
 			if (contrastSettings8_.getRange() == 0.0){
 				// todo get ADC bit depth from camera, 
@@ -199,14 +199,14 @@ public class MMImageWindow extends ImageWindow {
 			}
 			else
 				ip.setMinAndMax(contrastSettings8_.min, contrastSettings8_.max);
-		}else if (byteDepth == 1 && channels == 4) {
-			// assuming RGB32 format
+		}else if (byteDepth == 1 && components == 4) {
+			// Note: unify cameras to return byteDepth per x,y pixel, not per x,y,component
 			ip = new ColorProcessor(width, height);
 			if (contrastSettings8_.getRange() == 0.0)
 				ip.setMinAndMax(0, 255);
 			else
 				ip.setMinAndMax(contrastSettings8_.min, contrastSettings8_.max);
-		}else if (byteDepth == 2 && channels == 4) {
+		}else if (byteDepth == 2 && components == 4) {
 			// assuming RGB32 format
 			ip = new ColorProcessor(width, height);
 			//todo get actual dynamic range from camera
@@ -218,7 +218,7 @@ public class MMImageWindow extends ImageWindow {
 				ip.setMinAndMax(contrastSettings8_.min, contrastSettings8_.max);
 		}else {
 			String message = "Unsupported pixel depth: "
-					+ core_.getBytesPerPixel() + " byte(s) and " + channels
+					+ core_.getBytesPerPixel() + " byte(s) and " + components
 					+ " channel(s).";
 			throw (new Exception(logError(message)));
 		}
@@ -376,12 +376,13 @@ public class MMImageWindow extends ImageWindow {
 		ImageProcessor ip = getImagePlus().getProcessor();
 		int w = ip.getWidth();
 		int h = ip.getHeight();
-		int bitDepth = getImagePlus().getBitDepth();
+		int imPlusBitDepth = getImagePlus().getBitDepth();
 		// ImageWindow returns bitdepth 24 when Image processor type is Color
-		bitDepth = bitDepth == 24 ? 32 : bitDepth;
-		return  w * h * bitDepth / 8;
+		imPlusBitDepth = imPlusBitDepth == 24 ? 32 : imPlusBitDepth;
+		return  w * h * imPlusBitDepth / 8;
 	}
 
+    // this returns the length of the raw data array
 	public long imageByteLenth(Object pixels) throws IllegalArgumentException {
 		int byteLength = 0;
 		if (pixels instanceof byte[]) {
@@ -394,40 +395,44 @@ public class MMImageWindow extends ImageWindow {
 			int bytePixels[] = (int[]) pixels;
 			byteLength = bytePixels.length * 4;
 		} else
-			throw (new IllegalArgumentException("Image bytelenth does not much"));
+			throw (new IllegalArgumentException("Unsupported pixel data type."));
 		return byteLength;
 	}
 
 	public boolean windowNeedsResizing() {
-		long channels = core_.getNumberOfComponents();
 		ImageProcessor ip = getImagePlus().getProcessor();
 		int w = ip.getWidth();
 		int h = ip.getHeight();
-		int bitDepth = getImagePlus().getBitDepth();
+		int imPlusBitDepth = getImagePlus().getBitDepth();
 		
 		// ImageWindow returns bitdepth 24 when Image processor type is Color
-		bitDepth = bitDepth == 24 ? 32 : bitDepth;
+        if( 24 == imPlusBitDepth){
+            imPlusBitDepth = 32;
+        }
+
+   		long components = core_.getNumberOfComponents();
+        
+        // retrieve the image storage size per pixel,
+        // 1 for 8 bit gray, 2 for 16 bit gray, 4 for 32 bit RGB, 8 for 64 bit RGB
+        long coreTotalByteDepth = core_.getBytesPerPixel();
 
 		// warn the user if image dimensions do not match the current window
 		boolean ret = w != core_.getImageWidth() || h != core_.getImageHeight()
-				|| bitDepth != core_.getBytesPerPixel() * 8 * channels;
+				|| imPlusBitDepth != coreTotalByteDepth * 8;
 		return ret;
 	}
 
     public void newImage(Object img) {
-        boolean deepColor = false;
-        long imageWindowBytes = getImageWindowByteLength();
-        long imageDataBytes = imageByteLenth(img);
-        //TODO: add error handling
-        if (imageWindowBytes != imageDataBytes) {
-            if (imageDataBytes / 2 == imageWindowBytes) {
-                deepColor = true;
-            } else {
-                throw (new RuntimeException("Image bytelenth does not much"));
-            }
-        }
+        
+        long ibd = core_.getImageBitDepth();
+        long bpp = core_.getBytesPerPixel();
+        long noc = core_.getNumberOfComponents();
+        long ncc = core_.getNumberOfCameraChannels();
 
 
+
+        // flag to check for 64 bit color
+        boolean deepColor = (1 < noc) && (4 < bpp);
 
         ImagePlus ip = getImagePlus();
         ImageProcessor ipr = ip.getProcessor();
