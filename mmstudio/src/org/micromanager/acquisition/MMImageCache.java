@@ -79,7 +79,7 @@ public class MMImageCache {
 
       ImagePlus imp = new Opener().openImage(dir_ + "/" + filename);
       Object img = imp.getProcessor().getPixels();
-      Metadata md = null;
+      Metadata md = yamlToMetadata((String) imp.getProperty("Info"));
       MMImageBuffer imgBuf = new MMImageBuffer(filename, img, md);
       cacheImage(imgBuf);
       return imgBuf;
@@ -111,6 +111,7 @@ public class MMImageCache {
 
       if (ip != null) {
          ImagePlus imp = new ImagePlus(path + "/" + tiffFileName, ip);
+         imp.setProperty("Info", metadataToYaml(md));
          FileSaver fs = new FileSaver(imp);
          fs.saveAsTiff(path + "/" + tiffFileName);
       }
@@ -159,4 +160,23 @@ public class MMImageCache {
               + String.format("%03d", md.getSlice())
               + ".tif";
    }
+
+   private static String metadataToYaml(Metadata md) {
+      String yaml = "";
+      for (String key:md.getFrameKeys()) {
+         yaml += key + ": " +md.get(key) + "\r\n";
+      }
+      return yaml;
+   }
+
+   private static Metadata yamlToMetadata(String yaml) {
+      Metadata md = new Metadata();
+      String [] lines = yaml.split("\r\n");
+      for (String line:lines) {
+         String [] parts = line.split(": ");
+         md.put(parts[0], parts[1]);
+      }
+      return md;
+   }
+
 }
