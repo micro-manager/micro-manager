@@ -1,3 +1,5 @@
+package org.micromanager.recall;
+
 import mmcorej.CMMCore;
 import org.micromanager.api.MMPlugin;
 import org.micromanager.api.ScriptInterface;
@@ -7,7 +9,7 @@ import org.micromanager.utils.MMScriptException;
 
 
 public class RecallPlugin implements MMPlugin {
-   public static String menuName = "Recall";
+   public static String menuName = "Live Recall";
    private CMMCore core_;
    private MMStudioMainFrame gui_;
 
