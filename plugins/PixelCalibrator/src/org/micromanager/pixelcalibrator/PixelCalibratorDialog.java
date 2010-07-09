@@ -88,11 +88,11 @@ public class PixelCalibratorDialog extends javax.swing.JFrame {
                .add(startButton))
             .add(18, 18, 18)
             .add(calibrationProgressBar, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 190, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-            .add(17, 17, 17))
+            .add(44, 44, 44))
          .add(layout.createSequentialGroup()
             .addContainerGap()
             .add(explanationLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 363, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-            .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addContainerGap(31, Short.MAX_VALUE))
       );
       layout.setVerticalGroup(
          layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -109,7 +109,7 @@ public class PixelCalibratorDialog extends javax.swing.JFrame {
       );
 
       java.awt.Dimension screenSize = java.awt.Toolkit.getDefaultToolkit().getScreenSize();
-      setBounds((screenSize.width-387)/2, (screenSize.height-316)/2, 387, 316);
+      setBounds((screenSize.width-414)/2, (screenSize.height-316)/2, 414, 316);
    }// </editor-fold>//GEN-END:initComponents
 
     private void stopButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_stopButtonActionPerformed
