@@ -31,9 +31,6 @@
 #include "CoreCallback.h"
 #include "CircularBuffer.h"
 #include "../MMDevice/DeviceUtils.h"
-//#include <ace/Mutex.h>
-//#include <ace/Guard_T.h>
-
 #include "../MMDevice/DeviceThreads.h"
 #include "boost/date_time/posix_time/posix_time.hpp"
 

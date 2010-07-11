@@ -39,7 +39,6 @@
 #pragma warning( pop )
 #endif
 
-//#define CORE_LOG_PREFIX "LOG(%P, %t:): "
 
 ///////////////////////////////////////////////////////////////////////////////
 // Utility classes
@@ -52,8 +51,8 @@ class TimeoutMs
 	
 
 public:
-	// ASSUME boost::posix_time::time_duration contructor TAKES microseconds !!!!!!!!!!!!!!!!!
-	TimeoutMs(double intervalMs):interval_(0,0,0,static_cast<boost::posix_time::time_duration::fractional_seconds_type>(0.5+intervalMs*1000.)), startTime_(boost::posix_time::microsec_clock::local_time() )
+   // ASSUME boost::posix_time::time_duration contructor TAKES microseconds !!!!!!!!!!!!!!!!!
+   TimeoutMs(double intervalMs):interval_(0,0,0,static_cast<boost::posix_time::time_duration::fractional_seconds_type>(0.5+intervalMs*1000.)), startTime_(boost::posix_time::microsec_clock::local_time() )
    {
    }
    ~TimeoutMs()
@@ -88,32 +87,20 @@ public:
 		boost::posix_time::time_duration delta = boost::posix_time::microsec_clock::local_time() - startTime_;
 
 		return (double)delta.total_microseconds() ;
-		//MM::MMTime mt0((long)(delta.ticks()/time_duration::rep_type::res_adjust()), (long) (1000000L*delta.fractional_seconds())/delta.ticks_per_second()   );
- 		//return mt0.getMsec() + mt0.getUsec()/1000.;
-		//return (double)( (long long)(delta.ticks()/time_duration::rep_type::res_adjust())*1000L + (long long)(delta.fractional_seconds()/1000L)) ;
    }
 
 private:
-	// ?
- //  TimerMs(const TimeoutMs&) {}
-  // const TimerMs& operator=(const TimeoutMs&) {return *this;}
-
     boost::posix_time::ptime startTime_;
 };
 
 //NB we are starting the 'epoch' on 2000 01 01
 inline MM::MMTime GetMMTimeNow()
 {
-	using namespace boost::posix_time;
-	using namespace boost::gregorian;
-	boost::posix_time::ptime t0 = boost::posix_time::microsec_clock::local_time();
-	ptime timet_start(date(2000,1,1)); 
-	time_duration diff = t0 - timet_start; 
-	return MM::MMTime( (double) diff.total_microseconds());
-
-
-   //struct timeval t;
-   //gettimeofday(&t,NULL);
-   //return MM::MMTime(t.tv_sec, t.tv_usec);
+   using namespace boost::posix_time;
+   using namespace boost::gregorian;
+   boost::posix_time::ptime t0 = boost::posix_time::microsec_clock::local_time();
+   ptime timet_start(date(2000,1,1)); 
+   time_duration diff = t0 - timet_start; 
+   return MM::MMTime( (double) diff.total_microseconds());
 }
 

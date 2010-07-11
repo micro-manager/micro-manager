@@ -28,23 +28,6 @@
 #ifndef _CORECALLBACK_H_
 #define _CORECALLBACK_H_
 
-#ifdef WIN32
-#pragma warning (disable : 4312 4244)
-#endif
-
-//#include <ace/OS.h>
-//#include <ace/High_Res_Timer.h>
-//#include <ace/Log_Msg.h>
-
-
-#ifdef WIN32
-#pragma warning (default : 4312 4244)
-#endif
-
-//#ifdef __APPLE__
-//#include <sys/time.h>
-//#endif
-
 #include "IMMLogger.h"
 #include "CoreUtils.h"
 #include "MMCore.h"
