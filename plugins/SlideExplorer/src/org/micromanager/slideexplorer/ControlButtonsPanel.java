@@ -15,6 +15,7 @@ import ij.IJ;
 import ij.gui.Toolbar;
 import java.awt.Color;
 import org.micromanager.slideexplorer.Hub.ModeManager;
+import org.micromanager.utils.JavaUtils;
 
 /**
  *
@@ -244,7 +245,7 @@ public class ControlButtonsPanel extends javax.swing.JPanel {
 
         fullScreenButton.setSelected(display_.getWindow().isFullscreen());
 
-        snapButton.setEnabled(!display_.getWindow().isFullscreen() || System.getProperty("os.name").contains("Windows"));
+        snapButton.setEnabled(!display_.getWindow().isFullscreen() || JavaUtils.isWindows());
 
         switch (display_.getMode()) {
             case ModeManager.SURVEY:

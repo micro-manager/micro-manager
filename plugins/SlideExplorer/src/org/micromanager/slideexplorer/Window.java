@@ -19,6 +19,7 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowEvent;
+import org.micromanager.utils.JavaUtils;
 
 
 
@@ -237,7 +238,7 @@ public class Window extends ImageWindow {
             setBounds(maximizedBounds);
          }
 
-         if (! System.getProperty("os.name").contains("Windows")) {
+         if (! JavaUtils.isWindows()) {
             devices[chosenDeviceIndex].setFullScreenWindow(this);
          }
 
