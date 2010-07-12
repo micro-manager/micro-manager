@@ -22,8 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import java.util.prefs.BackingStoreException;
 
@@ -265,27 +263,21 @@ public class JavaUtils {
    }
 
    public static boolean isWindows(){
-
 		String os = System.getProperty("os.name").toLowerCase();
 		//windows
 	    return (os.indexOf( "win" ) >= 0);
-
 	}
 
 	public static boolean isMac(){
-
 		String os = System.getProperty("os.name").toLowerCase();
 		//Mac
 	    return (os.indexOf( "mac" ) >= 0);
-
 	}
 
 	public static boolean isUnix(){
-
 		String os = System.getProperty("os.name").toLowerCase();
 		//linux or unix
 	    return (os.indexOf( "nix") >=0 || os.indexOf( "nux") >=0);
-
 	}
 }
 
