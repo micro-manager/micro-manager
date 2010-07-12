@@ -1,0 +1,8 @@
+import ij.*;
+import org.micromanager.acquisition.*;
+
+String path = "/Users/arthur/Programs/ImageJ/aa12/zzqsdf_11/";
+imageCache = new MMImageCache(path);
+stack = new AcquisitionVirtualStack(512,512,null, path, imageCache);
+imgp = new ImagePlus("test", stack);
+//new CompositeImage(imgp);
