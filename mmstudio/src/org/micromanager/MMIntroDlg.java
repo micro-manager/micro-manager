@@ -50,6 +50,7 @@ import javax.swing.BorderFactory;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.border.EtchedBorder;
+import org.micromanager.utils.JavaUtils;
 
 /**
  * Splash screen and introduction dialog. 
@@ -115,7 +116,7 @@ public class MMIntroDlg extends JDialog {
          }
       });
       okButton.setText("OK");
-      if (System.getProperty("os.name").indexOf("Mac OS X") != -1)
+      if (JavaUtils.isMac())
          okButton.setBounds(150, 497, 81, 24);
       else
          okButton.setBounds(150, 492, 81, 24);

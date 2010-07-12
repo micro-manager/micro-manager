@@ -38,6 +38,7 @@ import org.micromanager.image5d.Image5D;
 import org.micromanager.image5d.Make_Montage;
 import org.micromanager.image5d.Z_Project;
 import org.micromanager.utils.AutofocusManager;
+import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -54,7 +55,7 @@ public class MMStudioPlugin implements PlugIn, CommandListener {
 
       try {
          // create and display control panel frame
-         if (System.getProperty("os.name").indexOf("Mac OS X") != -1) {
+         if (JavaUtils.isMac()) {
             System.setProperty("apple.laf.useScreenMenuBar", "true");
             // on the Mac, try using a native file opener when it is present
             try {

@@ -181,7 +181,7 @@ public class GUIUtils {
     */
    public static void preventDisplayAdapterChangeExceptions() {
 	   try {
-		   if (System.getProperty("os.name").contains("Windows")) { // Check that we are in windows.
+		   if (JavaUtils.isWindows()) { // Check that we are in windows.
 			   //Dynamically load sun.awt.Win32GraphicsEnvironment, because it seems to be missing from
 			   //the Mac OS X JVM.
 			   ClassLoader cl = ClassLoader.getSystemClassLoader ();
