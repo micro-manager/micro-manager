@@ -38,9 +38,6 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
    private Image5D img5d_;
    private Metadata [] displaySettings_;
    private AcquisitionVirtualStack virtualStack_;
-   private boolean usingChannels_;
-   private boolean usingSlices_;
-   private boolean usingFrames_;
    
    public MMVirtualAcquisition(String name, String dir) {
       name_ = name;
@@ -50,7 +47,6 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
    public void setDimensions(int frames, int channels, int slices) throws MMScriptException {
       if (initialized_)
          throw new MMScriptException("Can't change dimensions - the acquisition is already initialized");
-
       numFrames_ = frames;
       numChannels_ = channels;
       numSlices_ = slices;
@@ -140,10 +136,7 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
    public void insertImage(Object pixels, int frame, int channel, int slice) throws MMScriptException {
       throw new UnsupportedOperationException("Not supported yet.");
    }
-
-   public void finishWriting() {
-      virtualStack_.finishWriting();
-   }
+   
 
    public void insertImage(MMImageBuffer imgBuf) throws MMScriptException {
       int index = numChannels_ * numSlices_ * imgBuf.md.getFrame() + numChannels_ * imgBuf.md.getSlice() + imgBuf.md.getChannelIndex() + 1;
@@ -158,16 +151,7 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
          }
 
          for (int channel = 0; channel < numChannels_; ++channel) {
-            int rgb;
-            String chanColor = "";
-            if (displaySettings_.length > 0) {
-               chanColor = displaySettings_[channel].get("ChannelColor");
-            }
-            if (chanColor.length() > 0) {
-               rgb = Integer.parseInt(displaySettings_[channel].get("ChannelColor"));
-            } else {
-               rgb = 0xFFFFFF;
-            }
+            int rgb = Integer.parseInt(displaySettings_[channel].get("ChannelColor"));
             if (imgWin_ != null) {
                if (imgWin_.getImage5D().getProcessor(channel + 1) instanceof ColorProcessor) {
                   imgWin_.getImage5D().setChannelColorModel(channel + 1, new DirectColorModel(32, 0xFF0000, 0xFF00, 0xFF));
@@ -177,10 +161,8 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
             }
 
             ChannelCalibration chcal = img5d_.getChannelCalibration(channel+1);
-            if (displaySettings_.length > 0) {
-               chcal.setLabel(displaySettings_[channel].get("ChannelName"));
-               img5d_.setChannelCalibration(channel+1, chcal);
-            }
+            chcal.setLabel(displaySettings_[channel].get("ChannelName"));
+            img5d_.setChannelCalibration(channel+1, chcal);
          }
       }
       if ((img5d_.getCurrentFrame() - 1) > (imgBuf.md.getFrame() - 2)) {

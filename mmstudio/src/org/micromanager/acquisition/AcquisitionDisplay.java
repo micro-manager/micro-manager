@@ -49,7 +49,6 @@ public class AcquisitionDisplay extends Thread {
 
             String fullPath = createPositionPath(acqPath, posName);
             gui_.openAcquisition(posName, fullPath, nTimes, nChannels, nSlices, true, diskCached_);
-            if (acqSettings.getChannelList().size() > 0)
             for (int i = 0; i < channels.size(); ++i) {
                gui_.setChannelColor(posName, i, channels.get(i).color_);
                gui_.setChannelName(posName, i, channels.get(i).config_);

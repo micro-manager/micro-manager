@@ -102,11 +102,9 @@ public class StatePresetCellEditor extends AbstractCellEditor implements TableCe
            // test that first character of every possible value is a numeral
            // if so, show user the list sorted by the numeric prefix
            for (int k = 0; k < item_.allowed.length; k++) {
-              if (item_.allowed[k].length() > 0) {
-                 if (!Character.isDigit(item_.allowed[k].charAt(0))) {
-                   allNumeric2 = false;
-                   break;
-                 }
+              if (!Character.isDigit(item_.allowed[k].charAt(0))) {
+                allNumeric2 = false;
+                break;
               }
            }
            if (allNumeric2) {

@@ -1013,7 +1013,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       });
       xyListMenuItem.setIcon(SwingResourceManager.getIcon(
             MMStudioMainFrame.class, "icons/application_view_list.png"));
-      xyListMenuItem.setText("Stage-position List...");
+      xyListMenuItem.setText("XY List...");
       toolsMenu.add(xyListMenuItem);
 
       final JMenuItem acquisitionMenuItem = new JMenuItem();

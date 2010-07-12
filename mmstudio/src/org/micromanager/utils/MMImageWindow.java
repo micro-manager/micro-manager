@@ -490,7 +490,7 @@ public class MMImageWindow extends ImageWindow {
 
                 //set the Window's image to the composite image
                 // note: only the 'first' channel pixel values appear in the ImageJ window when we mouse around
-                imp2.setWindow(this);
+                setImage(imp2);
 
 
                 /* this throws an error in ij 1.44d12
