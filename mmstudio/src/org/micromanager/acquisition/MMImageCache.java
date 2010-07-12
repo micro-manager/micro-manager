@@ -66,7 +66,7 @@ public class MMImageCache {
       String tiffFileName = createFileName(md);
       saveImageFile(img, md, dir_, tiffFileName);
       writeFrameMetadata(md, tiffFileName);
-      cacheImage(tiffFileName, img, md);
+      putImageInRAM(tiffFileName, img, md);
       return tiffFileName;
    }
 
@@ -81,20 +81,20 @@ public class MMImageCache {
       Object img = imp.getProcessor().getPixels();
       Metadata md = yamlToMetadata((String) imp.getProperty("Info"));
       MMImageBuffer imgBuf = new MMImageBuffer(filename, img, md);
-      cacheImage(imgBuf);
+      putImageInRAM(imgBuf);
       return imgBuf;
    }
 
-   private void cacheImage(MMImageBuffer imgBuf) {
+   private void putImageInRAM(MMImageBuffer imgBuf) {
       imgBufQueue_.add(imgBuf);
       if (imgBufQueue_.size() > imgBufQueueSize_) { // If the queue is full,
          imgBufQueue_.poll();                       // remove the oldest image.
       }
    }
 
-   private void cacheImage(String filename, Object img, Metadata md) {
+   private void putImageInRAM(String filename, Object img, Metadata md) {
       MMImageBuffer imgBuf = new MMImageBuffer(filename, img, md);
-      cacheImage(imgBuf);
+      putImageInRAM(imgBuf);
    }
 
    private void saveImageFile(Object img, Metadata md, String path, String tiffFileName) {
@@ -174,7 +174,8 @@ public class MMImageCache {
       String [] lines = yaml.split("\r\n");
       for (String line:lines) {
          String [] parts = line.split(": ");
-         md.put(parts[0], parts[1]);
+         if (parts.length == 2)
+            md.put(parts[0], parts[1]);
       }
       return md;
    }

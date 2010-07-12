@@ -173,7 +173,7 @@ public class PlaybackPanel extends Panel {
                   if (JavaUtils.isWindows())
                      Runtime.getRuntime().exec("Explorer /n,/select," + dir);
                   else if (JavaUtils.isMac())
-                     Runtime.getRuntime().exec("open " + dir + "/..");
+                     Runtime.getRuntime().exec("open " + dir);
                } catch (IOException ex) {
                   ReportingUtils.logError(ex);
                }
