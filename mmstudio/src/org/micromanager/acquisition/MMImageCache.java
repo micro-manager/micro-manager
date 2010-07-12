@@ -66,7 +66,7 @@ public class MMImageCache {
       String tiffFileName = createFileName(md);
       saveImageFile(img, md, dir_, tiffFileName);
       writeFrameMetadata(md, tiffFileName);
-      cacheImage(tiffFileName, img, md);
+      putImageInRAM(tiffFileName, img, md);
       return tiffFileName;
    }
 
@@ -92,7 +92,7 @@ public class MMImageCache {
       }
    }
 
-   private void cacheImage(String filename, Object img, Metadata md) {
+   private void putImageInRAM(String filename, Object img, Metadata md) {
       MMImageBuffer imgBuf = new MMImageBuffer(filename, img, md);
       cacheImage(imgBuf);
    }
@@ -174,7 +174,8 @@ public class MMImageCache {
       String [] lines = yaml.split("\r\n");
       for (String line:lines) {
          String [] parts = line.split(": ");
-         md.put(parts[0], parts[1]);
+         if (parts.length == 2)
+           md.put(parts[0], parts[1]);
       }
       return md;
    }
