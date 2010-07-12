@@ -444,10 +444,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Compressor.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\Configuration.cpp"
 				>
 			</File>
