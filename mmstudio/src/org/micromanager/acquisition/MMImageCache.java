@@ -77,7 +77,7 @@ public class MMImageCache {
          }
       }
 
-      ImagePlus imp = new Opener().openImage(dir_ + "/" + filename);
+      ImagePlus imp = new Opener().openImage(filename);
       Object img = imp.getProcessor().getPixels();
       Metadata md = yamlToMetadata((String) imp.getProperty("Info"));
       MMImageBuffer imgBuf = new MMImageBuffer(filename, img, md);
