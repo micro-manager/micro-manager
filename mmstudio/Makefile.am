@@ -179,7 +179,7 @@ all: MMJ_.jar MMReader_.jar
 install: 
 	test -d $(DESTDIR)$(IJPATH)/plugins/Micro-Manager || mkdir -p $(DESTDIR)$(IJPATH)/plugins/Micro-Manager
 	cp MMJ_.jar $(DESTDIR)$(IJPATH)/plugins/Micro-Manager
-        cp ../../3rdpartypublic/ij.jar $(DESTDIR)$(IJPATH)
+	cp ../../3rdpartypublic/ij.jar $(DESTDIR)$(IJPATH)
 	cp ../../3rdpartypublic/swingx-0.9.5.jar $(DESTDIR)$(IJPATH)/plugins/
 	cp ../../3rdpartypublic/bsh-2.0b4.jar $(DESTDIR)$(IJPATH)/plugins/
 	cp ../../3rdpartypublic/swing-layout-1.0.4.jar $(DESTDIR)$(IJPATH)/plugins/
