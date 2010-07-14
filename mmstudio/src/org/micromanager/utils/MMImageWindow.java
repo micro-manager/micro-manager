@@ -42,9 +42,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.ColorModel;
-import java.lang.reflect.InvocationTargetException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 
 import javax.swing.AbstractButton;
@@ -58,7 +55,6 @@ import com.swtdesigner.SwingResourceManager;
 import ij.CompositeImage;
 import ij.ImageStack;
 import java.awt.Graphics;
-import java.lang.reflect.Method;
 import org.micromanager.image5d.ChannelDisplayProperties;
 
 /**
