@@ -18,7 +18,7 @@
 //
 // AUTHOR:        Karl Hoover, karl.hoover@ucsf.edu, 2009 11 11
 // 
-// CVS:           $Id:$
+// CVS:           $Id$
 
 
 
@@ -396,6 +396,16 @@ void FastLogger::Log(IMMLogger::priority p, const char* format, ...)throw()
 						snprintf(pB->buffer, MaxBuf,"%f", f);
 						break;
 
+               case 'e':
+						f = static_cast<float>(va_arg(argp, double));
+						snprintf(pB->buffer, MaxBuf,"%e", f);
+						break;
+
+               case 'g':
+						f = static_cast<float>(va_arg(argp, double));
+						snprintf(pB->buffer, MaxBuf,"%g", f);
+						break;
+
 					case 'c':
 #ifdef _WINDOWS
 						c = va_arg(argp, char);
@@ -645,7 +655,6 @@ bool FastLogger::Open(const std::string specifiedFile)
 
 }
 
-
 void FastLogger::LogContents(char**  ppContents, unsigned long& len)
 {
 	std::string ret;
@@ -686,3 +695,4 @@ std::string FastLogger::LogPath(void)
    return logFileName_;
 
 }
+
