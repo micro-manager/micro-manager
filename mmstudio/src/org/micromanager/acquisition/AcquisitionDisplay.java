@@ -6,8 +6,6 @@ package org.micromanager.acquisition;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import mmcorej.AcquisitionSettings;
 import mmcorej.CMMCore;
 import mmcorej.Metadata;

@@ -7,6 +7,7 @@ package org.micromanager.acquisition;
 
 import ij.CompositeImage;
 import ij.ImagePlus;
+import ij.gui.ImageWindow;
 import mmcorej.Metadata;
 import org.json.JSONObject;
 import org.micromanager.metadata.AcquisitionData;
@@ -144,18 +145,17 @@ public class MMVirtualAcquisition2 implements AcquisitionInterface {
             imgp.setOpenAsHyperStack(true);
          }
          hyperImage_.show();
+         ImageWindow win = hyperImage_.getWindow();
+         win.add(new ViewerControls());
+         win.pack();
+
       } else {
-      // This allows me to convert between the flat virtual stack index and the compositeImage channel, slice, frame:
+         // Convert between the flat virtual stack index and the compositeImage channel, slice, frame:
          int index = hyperImage_.getStackIndex(1+taggedImg.md.getChannelIndex(), 1+taggedImg.md.getSlice(), 1+taggedImg.md.getFrame());
          virtualStack_.insertImage(index, taggedImg);
       }
       if (numChannels_ > 1) {
-         try {
-            JavaUtils.invokeRestrictedMethod(hyperImage_, CompositeImage.class, "updateChannels");
-         } catch (Exception e) {
-            ReportingUtils.logError(e);
-         }
-         //((CompositeImage) hyperImage_).updateChannels();
+         ((CompositeImage) hyperImage_).setChannelsUpdated();
       }
       if ((hyperImage_.getFrame() - 1) > (taggedImg.md.getFrame() - 2)) {
          hyperImage_.setPosition(1+taggedImg.md.getChannelIndex(), 1+taggedImg.md.getSlice(), 1+taggedImg.md.getFrame());
