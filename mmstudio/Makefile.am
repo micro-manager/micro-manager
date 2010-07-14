@@ -32,7 +32,7 @@ MMJ_.jar:  \
 	$(srcdir)/src/org/micromanager/acquisition/CoreAcquisitionWrapperEngine.java \
 	$(srcdir)/src/org/micromanager/api/Autofocus.java \
 	$(srcdir)/src/org/micromanager/api/AcquisitionEngine.java \
-        $(srcdir)/src/org/micromanager/api/DeviceControlGUI.java \
+	$(srcdir)/src/org/micromanager/api/DeviceControlGUI.java \
 	$(srcdir)/src/org/micromanager/api/MMPropertyTableModel.java \
 	$(srcdir)/src/org/micromanager/api/ScriptInterface.java \
 	$(srcdir)/src/org/micromanager/conf/*.html \
