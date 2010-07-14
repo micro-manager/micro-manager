@@ -29,7 +29,7 @@ import java.awt.geom.Point2D;
 
 import mmcorej.CMMCore;
 import mmcorej.Metadata;
-import org.micromanager.acquisition.MMImageBuffer;
+import org.micromanager.acquisition.TaggedImage;
 
 import org.micromanager.metadata.WellAcquisitionData;
 import org.micromanager.navigation.PositionList;
@@ -121,7 +121,7 @@ public interface ScriptInterface {
    /**
     * Inserts image into the acquisition handle
     */
-   public void addImage(String name, MMImageBuffer imgBuf) throws MMScriptException;
+   public void addImage(String name, TaggedImage taggedImg) throws MMScriptException;
 
    /**
     * Sets custom property attached to the acquisition summary

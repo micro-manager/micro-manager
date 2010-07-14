@@ -138,9 +138,9 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
    }
    
 
-   public void insertImage(MMImageBuffer imgBuf) throws MMScriptException {
-      int index = numChannels_ * numSlices_ * imgBuf.md.getFrame() + numChannels_ * imgBuf.md.getSlice() + imgBuf.md.getChannelIndex() + 1;
-      virtualStack_.insertImage(index, imgBuf);
+   public void insertImage(TaggedImage taggedImg) throws MMScriptException {
+      int index = numChannels_ * numSlices_ * taggedImg.md.getFrame() + numChannels_ * taggedImg.md.getSlice() + taggedImg.md.getChannelIndex() + 1;
+      virtualStack_.insertImage(index, taggedImg);
       if (img5d_ == null) {
          img5d_ = new Image5D(dir_, virtualStack_, numChannels_, numSlices_, numFrames_, true);
          imgWin_ = new Image5DWindow(img5d_);
@@ -165,8 +165,8 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
             img5d_.setChannelCalibration(channel+1, chcal);
          }
       }
-      if ((img5d_.getCurrentFrame() - 1) > (imgBuf.md.getFrame() - 2)) {
-         img5d_.setCurrentPosition(0, 0, imgBuf.md.getChannelIndex(), imgBuf.md.getSlice(), imgBuf.md.getFrame());
+      if ((img5d_.getCurrentFrame() - 1) > (taggedImg.md.getFrame() - 2)) {
+         img5d_.setCurrentPosition(0, 0, taggedImg.md.getChannelIndex(), taggedImg.md.getSlice(), taggedImg.md.getFrame());
       }
       img5d_.updateAndRepaintWindow();
    }

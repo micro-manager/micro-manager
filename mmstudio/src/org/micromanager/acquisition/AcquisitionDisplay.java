@@ -90,9 +90,9 @@ public class AcquisitionDisplay extends Thread {
                      img = core_.getLastImageMD(0, 0, mdCopy);
                      Thread.sleep(10);
                   }
-                  MMImageBuffer imgBuf = new MMImageBuffer(img, mdCopy);
+                  TaggedImage taggedImg = new TaggedImage(img, mdCopy);
 
-                  displayImage(imgBuf);
+                  displayImage(taggedImg);
                   //    ReportingUtils.logMessage("time=" + mdCopy.getFrame() + ", position=" +
                   //            mdCopy.getPositionIndex() + ", channel=" + mdCopy.getChannelIndex() +
                   //            ", slice=" + mdCopy.getSliceIndex()
@@ -155,13 +155,13 @@ public class AcquisitionDisplay extends Thread {
       }
    }
 
-   private void displayImage(MMImageBuffer imgBuf) {
+   private void displayImage(TaggedImage taggedImg) {
 
-      Metadata m = imgBuf.md;
+      Metadata m = taggedImg.md;
       int posIndex = m.getPositionIndex();
 
       try {
-         gui_.addImage(getPosName(posIndex), imgBuf);
+         gui_.addImage(getPosName(posIndex), taggedImg);
       } catch (Exception e) {
          ReportingUtils.logError(e);
       }

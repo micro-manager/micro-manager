@@ -139,7 +139,7 @@ import java.awt.Cursor;
 import java.awt.Graphics;
 import java.awt.image.DirectColorModel;
 import org.micromanager.acquisition.AcquisitionInterface;
-import org.micromanager.acquisition.MMImageBuffer;
+import org.micromanager.acquisition.TaggedImage;
 import org.micromanager.nativegui.NativeGUI;
 import org.micromanager.utils.ReportingUtils;
 
@@ -3895,8 +3895,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       acq.insertImage(img, frame, channel, slice);
    }
 
-   public void addImage(String name, MMImageBuffer imgBuf) throws MMScriptException {
-      acqMgr_.getAcquisition(name).insertImage(imgBuf);
+   public void addImage(String name, TaggedImage taggedImg) throws MMScriptException {
+      acqMgr_.getAcquisition(name).insertImage(taggedImg);
    }
 
    public void closeAllAcquisitions() {

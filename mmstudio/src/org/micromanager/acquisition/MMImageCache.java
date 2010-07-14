@@ -28,8 +28,8 @@ public class MMImageCache {
    private boolean firstElement_;
    private BufferedWriter metadataStream_;
    private final String dir_;
-   private ConcurrentLinkedQueue<MMImageBuffer> imgBufQueue_;
-   private int imgBufQueueSize_ = 50;
+   private ConcurrentLinkedQueue<TaggedImage> taggedImgQueue_;
+   private int taggedImgQueueSize_ = 50;
    private boolean newDataSet_;
    
    MMImageCache(String pathOnDisk, boolean newDataSet) {
@@ -41,7 +41,7 @@ public class MMImageCache {
             openNewDataSet();
          else
             openOldDataSet();
-         imgBufQueue_ = new ConcurrentLinkedQueue<MMImageBuffer>();
+         taggedImgQueue_ = new ConcurrentLinkedQueue<TaggedImage>();
       } catch (Exception e) {
          ReportingUtils.showError(e);
       }
@@ -68,12 +68,12 @@ public class MMImageCache {
    }
 
    public String putImage(Object img, Metadata md) {
-      return putImage(new MMImageBuffer(img, md));
+      return putImage(new TaggedImage(img, md));
    }
 
-   public String putImage(MMImageBuffer imgBuf) {
-      Metadata md = imgBuf.md;
-      Object img = imgBuf.img;
+   public String putImage(TaggedImage taggedImg) {
+      Metadata md = taggedImg.md;
+      Object img = taggedImg.img;
       String tiffFileName = createFileName(md);
       saveImageFile(img, md, dir_, tiffFileName);
       writeFrameMetadata(md, tiffFileName);
@@ -81,10 +81,10 @@ public class MMImageCache {
       return tiffFileName;
    }
 
-   public MMImageBuffer getImage(String filename) {
-      for (MMImageBuffer imgBuf:imgBufQueue_) {
-         if (imgBuf.filename.equals(filename)) {
-            return imgBuf;
+   public TaggedImage getImage(String filename) {
+      for (TaggedImage taggedImg:taggedImgQueue_) {
+         if (taggedImg.filename.equals(filename)) {
+            return taggedImg;
          }
       }
 
@@ -93,21 +93,21 @@ public class MMImageCache {
          System.out.println(filename);
       Object img = imp.getProcessor().getPixels();
       Metadata md = yamlToMetadata((String) imp.getProperty("Info"));
-      MMImageBuffer imgBuf = new MMImageBuffer(filename, img, md);
-      cacheImage(imgBuf);
-      return imgBuf;
+      TaggedImage taggedImg = new TaggedImage(filename, img, md);
+      cacheImage(taggedImg);
+      return taggedImg;
    }
 
-   private void cacheImage(MMImageBuffer imgBuf) {
-      imgBufQueue_.add(imgBuf);
-      if (imgBufQueue_.size() > imgBufQueueSize_) { // If the queue is full,
-         imgBufQueue_.poll();                       // remove the oldest image.
+   private void cacheImage(TaggedImage taggedImg) {
+      taggedImgQueue_.add(taggedImg);
+      if (taggedImgQueue_.size() > taggedImgQueueSize_) { // If the queue is full,
+         taggedImgQueue_.poll();                       // remove the oldest image.
       }
    }
 
    private void putImageInRAM(String filename, Object img, Metadata md) {
-      MMImageBuffer imgBuf = new MMImageBuffer(filename, img, md);
-      cacheImage(imgBuf);
+      TaggedImage taggedImg = new TaggedImage(filename, img, md);
+      cacheImage(taggedImg);
    }
 
    private void saveImageFile(Object img, Metadata md, String path, String tiffFileName) {

@@ -132,9 +132,9 @@ public class MMVirtualAcquisition2 implements AcquisitionInterface {
    }
    
 
-   public void insertImage(MMImageBuffer imgBuf) throws MMScriptException {
+   public void insertImage(TaggedImage taggedImg) throws MMScriptException {
       if (hyperImage_ == null) {
-         virtualStack_.insertImage(1,imgBuf);
+         virtualStack_.insertImage(1,taggedImg);
          ImagePlus imgp = new ImagePlus("test", virtualStack_);
          imgp.setDimensions(numChannels_, numSlices_, numFrames_);
          if (numChannels_ > 1) {
@@ -146,8 +146,8 @@ public class MMVirtualAcquisition2 implements AcquisitionInterface {
          hyperImage_.show();
       } else {
       // This allows me to convert between the flat virtual stack index and the compositeImage channel, slice, frame:
-         int index = hyperImage_.getStackIndex(1+imgBuf.md.getChannelIndex(), 1+imgBuf.md.getSlice(), 1+imgBuf.md.getFrame());
-         virtualStack_.insertImage(index, imgBuf);
+         int index = hyperImage_.getStackIndex(1+taggedImg.md.getChannelIndex(), 1+taggedImg.md.getSlice(), 1+taggedImg.md.getFrame());
+         virtualStack_.insertImage(index, taggedImg);
       }
       if (numChannels_ > 1) {
          try {
@@ -157,8 +157,8 @@ public class MMVirtualAcquisition2 implements AcquisitionInterface {
          }
          //((CompositeImage) hyperImage_).updateChannels();
       }
-      if ((hyperImage_.getFrame() - 1) > (imgBuf.md.getFrame() - 2)) {
-         hyperImage_.setPosition(1+imgBuf.md.getChannelIndex(), 1+imgBuf.md.getSlice(), 1+imgBuf.md.getFrame());
+      if ((hyperImage_.getFrame() - 1) > (taggedImg.md.getFrame() - 2)) {
+         hyperImage_.setPosition(1+taggedImg.md.getChannelIndex(), 1+taggedImg.md.getSlice(), 1+taggedImg.md.getFrame());
       }
    }
 

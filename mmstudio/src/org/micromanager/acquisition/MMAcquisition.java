@@ -332,7 +332,7 @@ public class MMAcquisition implements AcquisitionInterface {
 	   return ! (this.imgWin_ == null);
    }
 
-   public void insertImage(MMImageBuffer imgBuf) throws MMScriptException {
+   public void insertImage(TaggedImage taggedImg) throws MMScriptException {
       throw new UnsupportedOperationException("Not supported yet.");
    }
 

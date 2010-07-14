@@ -44,7 +44,7 @@ public interface AcquisitionInterface {
 
    void insertImage(Object pixels, int frame, int channel, int slice) throws MMScriptException;
 
-   void insertImage(MMImageBuffer imgBuf) throws MMScriptException;
+   void insertImage(TaggedImage taggedImg) throws MMScriptException;
 
    boolean isInitialized();
 

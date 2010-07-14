@@ -78,8 +78,8 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
    }
 
  
-   void insertImage(int index, MMImageBuffer imgBuf) {
-      filenames_.put(index, imageCache_.putImage(imgBuf));
+   void insertImage(int index, TaggedImage taggedImg) {
+      filenames_.put(index, imageCache_.putImage(taggedImg));
    }
 
    public String getSliceLabel(int n) {
