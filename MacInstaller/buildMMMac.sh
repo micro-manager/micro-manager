@@ -5,7 +5,7 @@
 REPOSITORY=`pwd`/..
 BUILDDIR=/Users/MM/MMBuild
 
-
+CLASSEXT=$REPOSITORY/../3rdpartypublic/$CLASSEXT
 TARGET=$BUILDDIR/Micro-Manager1.4
 PPC=$BUILDDIR/Micro-Manager1.4-ppc
 I386=$BUILDDIR/Micro-Manager1.4-i386
@@ -21,29 +21,29 @@ svn update
 cd $REPOSITORY
 
 cp -r MacInstaller/Micro-Manager $TARGET
-cp classext/ij.jar $TARGET
-cp classext/bsh-2.0b4.jar $TARGET/plugins/
-cp classext/swingx-0.9.5.jar $TARGET/plugins/
-cp classext/swing-layout-1.0.4.jar $TARGET/plugins/
-cp classext/commons-math-2.0.jar $TARGET/plugins/
+cp $CLASSEXT/ij.jar $TARGET
+cp $CLASSEXT/bsh-2.0b4.jar $TARGET/plugins/
+cp $CLASSEXT/swingx-0.9.5.jar $TARGET/plugins/
+cp $CLASSEXT/swing-layout-1.0.4.jar $TARGET/plugins/
+cp $CLASSEXT/commons-math-2.0.jar $TARGET/plugins/
 cp -r MacInstaller/Micro-Manager $PPC
-cp classext/ij.jar $PPC
-cp classext/bsh-2.0b4.jar $PPC/plugins/
-cp classext/swingx-0.9.5.jar $PPC/plugins/
-cp classext/swing-layout-1.0.4.jar $PPC/plugins/
-cp classext/commons-math-2.0.jar $PPC/plugins/
+cp $CLASSEXT/ij.jar $PPC
+cp $CLASSEXT/bsh-2.0b4.jar $PPC/plugins/
+cp $CLASSEXT/swingx-0.9.5.jar $PPC/plugins/
+cp $CLASSEXT/swing-layout-1.0.4.jar $PPC/plugins/
+cp $CLASSEXT/commons-math-2.0.jar $PPC/plugins/
 cp -r MacInstaller/Micro-Manager $I386
-cp classext/ij.jar $I386
-cp classext/bsh-2.0b4.jar $I386/plugins/
-cp classext/swingx-0.9.5.jar $I386/plugins/
-cp classext/swing-layout-1.0.4.jar $I386/plugins/
-cp classext/commons-math-2.0.jar $I386/plugins/
+cp $CLASSEXT/ij.jar $I386
+cp $CLASSEXT/bsh-2.0b4.jar $I386/plugins/
+cp $CLASSEXT/swingx-0.9.5.jar $I386/plugins/
+cp $CLASSEXT/swing-layout-1.0.4.jar $I386/plugins/
+cp $CLASSEXT/commons-math-2.0.jar $I386/plugins/
 cp -r MacInstaller/Micro-Manager $X86_64
-cp classext/ij.jar $X86_64
-cp classext/bsh-2.0b4.jar $X86_64/plugins/
-cp classext/swingx-0.9.5.jar $X86_64/plugins/
-cp classext/swing-layout-1.0.4.jar $X86_64/plugins/
-cp classext/commons-math-2.0.jar $X86_64/plugins/
+cp $CLASSEXT/ij.jar $X86_64
+cp $CLASSEXT/bsh-2.0b4.jar $X86_64/plugins/
+cp $CLASSEXT/swingx-0.9.5.jar $X86_64/plugins/
+cp $CLASSEXT/swing-layout-1.0.4.jar $X86_64/plugins/
+cp $CLASSEXT/commons-math-2.0.jar $X86_64/plugins/
 
 ./mmUnixBuild.sh || exit
 cd $REPOSITORY

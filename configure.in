@@ -66,7 +66,7 @@ if test "$IMAGEJDIR" != "no" ; then
    #----------------------------------------------------------------
    # Set the CLASSEXT location
    #----------------------------------------------------------------
-   CLASSEXT=$PWD"/classext"
+   CLASSEXT=$PWD"/../3rdpartypublic/classext"
    echo "CLASSEXT="$CLASSEXT
 
    #----------------------------------------------------------------
@@ -304,4 +304,4 @@ if test -z "${BUILD_SECRETDEVICEADAPTERS}" ; then
 fi
 
 AC_CONFIG_SUBDIRS(DeviceAdapters Test_Programs)
-AC_OUTPUT(Makefile MMCore/Makefile MMCoreJ_wrap/Makefile NativeGUI/Makefile mmstudio/Makefile plugins/Makefile scripts/Makefile autofocus/Makefile MMDevice/Makefile classext/Makefile MMCorePy_wrap/Makefile)
+AC_OUTPUT(Makefile MMCore/Makefile MMCoreJ_wrap/Makefile NativeGUI/Makefile mmstudio/Makefile plugins/Makefile scripts/Makefile autofocus/Makefile MMDevice/Makefile  MMCorePy_wrap/Makefile)

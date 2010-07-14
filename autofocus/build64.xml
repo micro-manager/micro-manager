@@ -9,8 +9,8 @@
 
 	<!-- Do not modify from this point on -->
 	<property name="MMPluginDir" value="${ImageJPath}/plugins/Micro-Manager"/>
-	<property name="IJ" value="../classext/ij.jar"/>
-	<property name="beanshell" value="../classext/bsh-2.0b4.jar"/>
+	<property name="IJ" value="../../3rdpartypublic/classext/ij.jar"/>
+	<property name="beanshell" value="../../3rdpartypublic/classext/bsh-2.0b4.jar"/>
 	<property name="MMCoreJ" value="../bin_x64/MMCoreJ.jar"/>
 	<property name="mmautofocus-inst" value="${InstallRoot}/mmautofocus"/>
 	<property name="mmautofocus" value="$(ImageJPath}/mmautofocus"/>

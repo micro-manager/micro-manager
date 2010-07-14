@@ -38,7 +38,7 @@ mkdir -p $ROOTBIN/usr/bin/
 ##### JAR-files
 mkdir -p $ROOTPORT/usr/share/java/
 cp MMCoreJ_wrap/MMCoreJ.jar $ROOTPORT/usr/share/java/
-	#####classext/bsh-2.0b4.jar classext/syntax.jar classext/ij.jar #assume these are available
+	#####../3rdpartypublic/classext/bsh-2.0b4.jar ../3rdpartypublic/classext/syntax.jar ../3rdpartypublic/classext/ij.jar #assume these are available
 
 ##### Core
 mkdir -p $ROOTBIN/usr/lib/micro-manager/

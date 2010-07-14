@@ -119,7 +119,7 @@ Source: micro-manager\LaunchMicroManager.bat; DestDir: {app}; Flags: ignoreversi
 
 
 ;Source: micro-manager\ImageJ.cfg; DestDir: {app}; Flags: onlyifdoesntexist
-Source: ..\classext\ij.jar; DestDir: {app}; Flags: ignoreversion
+Source: ..\..\3rdpartypublic\classext\ij.jar; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\IJ_Prefs.txt; DestDir: {app}; Flags: onlyifdoesntexist
 Source: micro-manager\macros\*; DestDir: {app}\macros; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: micro-manager\plugins\*; DestDir: {app}\plugins; Flags: ignoreversion recursesubdirs createallsubdirs
