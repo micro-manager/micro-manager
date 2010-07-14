@@ -72,6 +72,8 @@
 #include <sstream>
 #include <algorithm>
 #include <vector>
+#include <ostream>
+#include <strstream>
 
 #include "../MMDevice/DeviceThreads.h"
 
@@ -984,7 +986,10 @@ void CMMCore::waitForDevice(MM::Device* pDev) throw (CMMError)
       if (timeout.expired())
       {
          string label = pluginManager_.GetDeviceLabel(*pDev);
-         logError(label.c_str(), "wait() timed out", __FILE__, __LINE__);
+         // it would help to know what the timeout duration is, wouldn't it?
+         std::ostrstream mez;
+         mez << "wait() timed out after " << timeoutMs_ << " ms. ";
+         logError(label.c_str(), mez.str(), __FILE__, __LINE__);
          throw CMMError(label.c_str(), getCoreErrorText(MMERR_DevicePollingTimeout).c_str(), MMERR_DevicePollingTimeout);
       }
 
@@ -1092,6 +1097,7 @@ void CMMCore::setPosition(const char* label, double position) throw (CMMError)
 	 MMThreadGuard guard(deviceLock_);
 
    MM::Stage* pStage = getSpecificDevice<MM::Stage>(label);
+   CORE_DEBUG2("attempt to set %s  to %.5g um\n", label, position);
    int ret = pStage->SetPositionUm(position);
    if (ret != DEVICE_OK)
    {
@@ -1100,7 +1106,7 @@ void CMMCore::setPosition(const char* label, double position) throw (CMMError)
       logError(name, getDeviceErrorText(ret, pStage).c_str());
       throw CMMError(getDeviceErrorText(ret, pStage).c_str(), MMERR_DEVICE_GENERIC);
    }
-   CORE_DEBUG2("%s set to %.5g um\n", label, position);
+
 }
 
 /**
@@ -1114,6 +1120,8 @@ void CMMCore::setRelativePosition(const char* label, double d) throw (CMMError)
 	 MMThreadGuard guard(deviceLock_);
 
    MM::Stage* pStage = getSpecificDevice<MM::Stage>(label);
+   CORE_DEBUG2("attempt to move %s relative %.5g um\n", label, d);
+
    int ret = pStage->SetRelativePositionUm(d);
    if (ret != DEVICE_OK)
    {
@@ -1122,7 +1130,6 @@ void CMMCore::setRelativePosition(const char* label, double d) throw (CMMError)
       logError(name, getDeviceErrorText(ret, pStage).c_str());
       throw CMMError(getDeviceErrorText(ret, pStage).c_str(), MMERR_DEVICE_GENERIC);
    }
-   CORE_DEBUG2("%s moved relative %.5g um\n", label, d);
 }
 
 /**
@@ -1180,6 +1187,7 @@ void CMMCore::setRelativeXYPosition(const char* deviceName, double dx, double dy
 {
    //ACE_Guard<ACE_Mutex> guard(deviceLock_);
 	 MMThreadGuard guard(deviceLock_);
+   CORE_DEBUG3("Attempt relative move of %s to %g ,  %g um\n", deviceName, dx, dy);
 
    MM::XYStage* pXYStage = getSpecificDevice<MM::XYStage>(deviceName);
    int ret = pXYStage->SetRelativePositionUm(dx, dy);
@@ -1190,7 +1198,6 @@ void CMMCore::setRelativeXYPosition(const char* deviceName, double dx, double dy
       logError(name, getDeviceErrorText(ret, pXYStage).c_str());
       throw CMMError(getDeviceErrorText(ret, pXYStage).c_str(), MMERR_DEVICE_GENERIC);
    }
-   CORE_DEBUG3("%s moved relative %g.3 %g.3 um\n", deviceName, dx, dy);
 }
 
 /**
