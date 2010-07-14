@@ -25,29 +25,40 @@ import org.micromanager.utils.ReportingUtils;
  */
 
 public class MMImageCache {
-
    private boolean firstElement_;
    private BufferedWriter metadataStream_;
    private final String dir_;
    private ConcurrentLinkedQueue<MMImageBuffer> imgBufQueue_;
    private int imgBufQueueSize_ = 50;
-
+   private boolean newDataSet_;
    
-   MMImageCache(String pathOnDisk) {
+   MMImageCache(String pathOnDisk, boolean newDataSet) {
       dir_ = pathOnDisk;
-
+      newDataSet_ = newDataSet;
+      
       try {
-         JavaUtils.createDirectory(dir_);
-         metadataStream_ = new BufferedWriter(new FileWriter(dir_ + "/metadata.txt"));
-         metadataStream_.write("{" + "\r\n");
-         firstElement_ = true;
+         if (newDataSet_)
+            openNewDataSet();
+         else
+            openOldDataSet();
          imgBufQueue_ = new ConcurrentLinkedQueue<MMImageBuffer>();
       } catch (Exception e) {
          ReportingUtils.showError(e);
       }
    }
 
+   private void openNewDataSet() throws Exception, IOException {
+      JavaUtils.createDirectory(dir_);
+      firstElement_ = true;
+      metadataStream_ = new BufferedWriter(new FileWriter(dir_ + "/metadata.txt"));
+      metadataStream_.write("{" + "\r\n");
+   }
+
    public void cleanup() {
+      closeMetadataStream();
+   }
+
+   private void closeMetadataStream() {
       try {
          metadataStream_.write("\r\n}\r\n");
          metadataStream_.close();
@@ -77,7 +88,9 @@ public class MMImageCache {
          }
       }
 
-      ImagePlus imp = new Opener().openImage(filename);
+      ImagePlus imp = new Opener().openImage(dir_ + "/" + filename);
+      if (imp == null)
+         System.out.println(filename);
       Object img = imp.getProcessor().getPixels();
       Metadata md = yamlToMetadata((String) imp.getProperty("Info"));
       MMImageBuffer imgBuf = new MMImageBuffer(filename, img, md);
@@ -178,6 +191,10 @@ public class MMImageCache {
            md.put(parts[0], parts[1]);
       }
       return md;
+   }
+
+   private void openOldDataSet() {
+      throw new UnsupportedOperationException("Not yet implemented");
    }
 
 }

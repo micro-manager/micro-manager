@@ -38,6 +38,7 @@ public class AcquisitionDisplay extends Thread {
       int nTimes = Math.max(1, (int) acqSettings.getTimeSeries().size());
       int nChannels = Math.max(1, (int) acqSettings.getChannelList().size());
       int nSlices = Math.max(1, (int) acqSettings.getZStack().size());
+      boolean usingChannels = acqSettings.getChannelList().size() > 0;
 
       String acqPath;
       try {
@@ -49,11 +50,13 @@ public class AcquisitionDisplay extends Thread {
 
             String fullPath = createPositionPath(acqPath, posName);
             gui_.openAcquisition(posName, fullPath, nTimes, nChannels, nSlices, true, diskCached_);
-            for (int i = 0; i < channels.size(); ++i) {
-               gui_.setChannelColor(posName, i, channels.get(i).color_);
-               gui_.setChannelName(posName, i, channels.get(i).config_);
-               gui.setAcquisitionProperties(posName, core_.getAcquisitionInitialMetadata());
+            if (usingChannels) {
+               for (int i = 0; i < channels.size(); ++i) {
+                  gui_.setChannelColor(posName, i, channels.get(i).color_);
+                  gui_.setChannelName(posName, i, channels.get(i).config_);
+               }
             }
+            gui_.setAcquisitionProperties(posName, core_.getAcquisitionInitialMetadata());
             gui_.initializeAcquisition(posName, 512, 512, 1);
 
          }

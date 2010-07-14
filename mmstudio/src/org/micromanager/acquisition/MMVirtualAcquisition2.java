@@ -5,25 +5,20 @@
 
 package org.micromanager.acquisition;
 
+import ij.CompositeImage;
 import ij.ImagePlus;
-import ij.process.ColorProcessor;
-import java.awt.Color;
-import java.awt.image.DirectColorModel;
 import mmcorej.Metadata;
 import org.json.JSONObject;
-import org.micromanager.image5d.ChannelCalibration;
-import org.micromanager.image5d.ChannelControl;
-import org.micromanager.image5d.ChannelDisplayProperties;
-import org.micromanager.image5d.Image5D;
-import org.micromanager.image5d.Image5DWindow;
 import org.micromanager.metadata.AcquisitionData;
+import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MMScriptException;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  *
  * @author arthur
  */
-public class MMVirtualAcquisition implements AcquisitionInterface {
+public class MMVirtualAcquisition2 implements AcquisitionInterface {
    private final String dir_;
    private final String name_;
    MMImageCache imageCache_;
@@ -34,12 +29,11 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
    private int numSlices_;
    private int width_;
    private boolean initialized_;
-   private Image5DWindow imgWin_;
-   private Image5D img5d_;
+   private ImagePlus hyperImage_;
    private Metadata [] displaySettings_;
    private AcquisitionVirtualStack virtualStack_;
    
-   public MMVirtualAcquisition(String name, String dir) {
+   public MMVirtualAcquisition2(String name, String dir) {
       name_ = name;
       dir_ = dir;
    }
@@ -90,7 +84,7 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
    }
 
    public void close() {
-      imgWin_ = null;
+      //compositeImage_.hide();
       initialized_ = false;
    }
 
@@ -139,36 +133,33 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
    
 
    public void insertImage(MMImageBuffer imgBuf) throws MMScriptException {
-      int index = numChannels_ * numSlices_ * imgBuf.md.getFrame() + numChannels_ * imgBuf.md.getSlice() + imgBuf.md.getChannelIndex() + 1;
-      virtualStack_.insertImage(index, imgBuf);
-      if (img5d_ == null) {
-         img5d_ = new Image5D(dir_, virtualStack_, numChannels_, numSlices_, numFrames_, true);
-         imgWin_ = new Image5DWindow(img5d_);
-         if (numChannels_ == 1) {
-            img5d_.setDisplayMode(ChannelControl.ONE_CHANNEL_GRAY);
+      if (hyperImage_ == null) {
+         virtualStack_.insertImage(1,imgBuf);
+         ImagePlus imgp = new ImagePlus("test", virtualStack_);
+         imgp.setDimensions(numChannels_, numSlices_, numFrames_);
+         if (numChannels_ > 1) {
+            hyperImage_ = new CompositeImage(imgp, CompositeImage.COMPOSITE);
          } else {
-            img5d_.setDisplayMode(ChannelControl.OVERLAY);
+            hyperImage_ = imgp;
+            imgp.setOpenAsHyperStack(true);
          }
-
-         for (int channel = 0; channel < numChannels_; ++channel) {
-            int rgb = Integer.parseInt(displaySettings_[channel].get("ChannelColor"));
-            if (imgWin_ != null) {
-               if (imgWin_.getImage5D().getProcessor(channel + 1) instanceof ColorProcessor) {
-                  imgWin_.getImage5D().setChannelColorModel(channel + 1, new DirectColorModel(32, 0xFF0000, 0xFF00, 0xFF));
-               } else {
-                  imgWin_.getImage5D().setChannelColorModel(channel + 1, ChannelDisplayProperties.createModelFromColor(new Color(rgb)));
-               }
-            }
-
-            ChannelCalibration chcal = img5d_.getChannelCalibration(channel+1);
-            chcal.setLabel(displaySettings_[channel].get("ChannelName"));
-            img5d_.setChannelCalibration(channel+1, chcal);
+         hyperImage_.show();
+      } else {
+      // This allows me to convert between the flat virtual stack index and the compositeImage channel, slice, frame:
+         int index = hyperImage_.getStackIndex(1+imgBuf.md.getChannelIndex(), 1+imgBuf.md.getSlice(), 1+imgBuf.md.getFrame());
+         virtualStack_.insertImage(index, imgBuf);
+      }
+      if (numChannels_ > 1) {
+         try {
+            JavaUtils.invokeRestrictedMethod(hyperImage_, CompositeImage.class, "updateChannels");
+         } catch (Exception e) {
+            ReportingUtils.logError(e);
          }
+         //((CompositeImage) hyperImage_).updateChannels();
       }
-      if ((img5d_.getCurrentFrame() - 1) > (imgBuf.md.getFrame() - 2)) {
-         img5d_.setCurrentPosition(0, 0, imgBuf.md.getChannelIndex(), imgBuf.md.getSlice(), imgBuf.md.getFrame());
+      if ((hyperImage_.getFrame() - 1) > (imgBuf.md.getFrame() - 2)) {
+         hyperImage_.setPosition(1+imgBuf.md.getChannelIndex(), 1+imgBuf.md.getSlice(), 1+imgBuf.md.getFrame());
       }
-      img5d_.updateAndRepaintWindow();
    }
 
    public void setChannelColor(int channel, int rgb) throws MMScriptException {

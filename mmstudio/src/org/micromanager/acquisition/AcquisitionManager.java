@@ -5,7 +5,7 @@ import java.util.Hashtable;
 
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.utils.MMScriptException;
-import org.micromanager.acquisition.MMVirtualAcquisition;
+import org.micromanager.acquisition.MMVirtualAcquisition2;
 
 public class AcquisitionManager {
    Hashtable<String, AcquisitionInterface> acqs_;
@@ -39,7 +39,7 @@ public class AcquisitionManager {
          if (!virtual)
             acqs_.put(name, new MMAcquisition(name, rootDir, show));
          else
-            acqs_.put(name, new MMVirtualAcquisition(name, rootDir));
+            acqs_.put(name, new MMVirtualAcquisition2(name, rootDir));
       }
    }
    
