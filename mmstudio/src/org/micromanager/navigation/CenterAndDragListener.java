@@ -166,8 +166,8 @@ public class CenterAndDragListener implements MouseListener, MouseMotionListener
             return;
          }
 
-         // Report change to GUI
-         gui_.updateXYPosRelative(mXUm, mYUm);
+         // refresh GUI x,y
+         gui_.updateXYStagePosition();
       } 
 
 
