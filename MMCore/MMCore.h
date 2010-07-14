@@ -67,8 +67,6 @@
 #include "Error.h"
 #include "ErrorCodes.h"
 
-//class ACE_Mutex;
-
 #include "../MMDevice/DeviceThreads.h"
 
 #include "MMRunnable.h"
@@ -443,7 +441,7 @@ private:
    char* pathBuf_; // cached version of current working directoy
 
    MM::Camera* camera_;
-	bool everSnapped_;
+   bool everSnapped_;
    MM::Shutter* shutter_;
    MM::Stage* focusStage_;
    MM::XYStage* xyStage_;
