@@ -35,6 +35,8 @@
 #include "ModuleInterface.h"
 #include "DeviceThreads.h"
 #include "../MMCore/Error.h"
+#include <math.h>
+
 #include <assert.h>
 
 #include <string>
@@ -75,6 +77,10 @@ const char* const g_Msg_DEVICE_NOT_CONNECTED="Unable to communicate with the dev
 * derived class do not override DeviceBase methods, but rather take advantage
 * of using them to simplify development of specific drivers.
 */
+inline long nint( double value )
+{ 
+   return (long)floor( 0.5 + value);
+};
 
 template <class T, class U>
 class CDeviceBase : public T
@@ -1192,13 +1198,13 @@ public:
       long ySteps = 0;
 
       if (mirrorX)
-         xSteps = originXSteps_ - (long) (x / this->GetStepSizeXUm() + 0.5);
+         xSteps = originXSteps_ - nint (x / this->GetStepSizeXUm());
       else
-         xSteps = originXSteps_ + (long) (x / this->GetStepSizeXUm() + 0.5);
+         xSteps = originXSteps_ + nint (x / this->GetStepSizeXUm());
       if (mirrorY)
-         ySteps = originYSteps_ - (long) (y / this->GetStepSizeYUm() + 0.5);
+         ySteps = originYSteps_ - nint (y / this->GetStepSizeYUm());
       else
-         ySteps = originYSteps_ + (long) (y / this->GetStepSizeYUm() + 0.5);
+         ySteps = originYSteps_ + nint (y / this->GetStepSizeYUm());
 
       return this->SetPositionSteps(xSteps, ySteps);
    }
@@ -1216,7 +1222,7 @@ public:
       if (mirrorY)
          dy = -dy;
 
-      return SetRelativePositionSteps((long)(dx / this->GetStepSizeXUm() + 0.5), (long)(dy / this->GetStepSizeYUm()));
+      return SetRelativePositionSteps(nint(dx / this->GetStepSizeXUm()), nint(dy / this->GetStepSizeYUm()));
    }
 
    /**
@@ -1234,13 +1240,13 @@ public:
          return ret;                                 
 
       if (mirrorX)
-         originXSteps_ = xStep + (long)(x / this->GetStepSizeXUm() + 0.5);
+         originXSteps_ = xStep + nint(x / this->GetStepSizeXUm());
       else
-         originXSteps_ = xStep - (long)(x / this->GetStepSizeXUm() + 0.5);
+         originXSteps_ = xStep - nint(x / this->GetStepSizeXUm());
       if (mirrorY)
-         originYSteps_ = yStep + (long)(y / this->GetStepSizeYUm() + 0.5);
+         originYSteps_ = yStep + nint(y / this->GetStepSizeYUm());
       else
-         originYSteps_ = yStep - (long)(y / this->GetStepSizeYUm() + 0.5);
+         originYSteps_ = yStep - nint(y / this->GetStepSizeYUm());
 
       return DEVICE_OK;                                                         
    }                                                                            
