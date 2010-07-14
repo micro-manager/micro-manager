@@ -5,8 +5,8 @@
 //-----------------------------------------------------------------------------
 // DESCRIPTION:   pco camera module
 //                
-// AUTHOR:        Franz Reitner, Franz.Reitner@pco.de, 26/01/2009
-// COPYRIGHT:     PCO AG, Kelheim, 2009
+// AUTHOR:        Franz Reitner, Franz.Reitner@pco.de, 11/01/2010
+// COPYRIGHT:     PCO AG, Kelheim, 2010
 // LICENSE:       This file is distributed under the BSD license.
 //                License text is included with the source distribution.
 //
@@ -43,6 +43,7 @@ CPCOCam* CPCOCam::m_pInstance = 0;
 const char* g_PixelType_8bit = "8bit";
 const char* g_PixelType_16bit = "16bit";
 const char* g_PixelType_RGB32bit = "RGB 32bit";
+
 
 #ifdef WIN32
 /////////////////////////////////////////////////////////////////////////////
@@ -86,25 +87,25 @@ CPCOMicroManagerApp theApp;
 ///////////////////////////////////////////////////////////////////////////////
 MODULE_API void InitializeModuleData()
 {
-   AddAvailableDeviceName("pco_camera", "PCO generic camera adapter");
+  AddAvailableDeviceName("pco_camera", "PCO generic camera adapter");
 }
 
 MODULE_API void DeleteDevice(MM::Device* pDevice)
 {
-   delete pDevice;
+  delete pDevice;
 }
 
 MODULE_API MM::Device* CreateDevice(const char* pszDeviceName)
 {
-   if (pszDeviceName == 0)
-      return 0;
+  if (pszDeviceName == 0)
+    return 0;
 
-   string strName(pszDeviceName);
+  string strName(pszDeviceName);
    
-   if (strName == "pco_camera")
-      return CPCOCam::GetInstance();
+  if (strName == "pco_camera")
+    return CPCOCam::GetInstance();
    
-   return 0;
+  return 0;
 }
 
 
@@ -112,47 +113,48 @@ MODULE_API MM::Device* CreateDevice(const char* pszDeviceName)
 // CPCOCam constructor/destructor
 
 CPCOCam::CPCOCam() :
-   CCameraBase<CPCOCam> (),
-   sequenceRunning_(false),
-   m_bInitialized(false),
-   m_bBusy(false),
-   m_dExposure(0.0),
-   sthd_(0), 
-   stopOnOverflow_(false),
-   pixelDepth_(2),
-   pictime_(0.0)
+  CCameraBase<CPCOCam> (),
+  sequenceRunning_(false),
+  m_bInitialized(false),
+  m_bBusy(false),
+  m_dExposure(0.0),
+  sthd_(0),
+  stopOnOverflow_(false),
+  pixelDepth_(2),
+  pictime_(0.0)
 {
-   // initialize the array of camera settings
-   m_nBoard = 0;
-   m_nCameraType = 0;
-   m_pszTimes[0] = 0;
-   m_nSubMode = 0;
-   m_nMode = 0;
-   m_nTrig = 0;
-   m_nRoiXMax = 0;
-   m_nRoiXMin = 0;
-   m_nRoiYMax = 0;
-   m_nRoiYMin = 0;
-   m_nHBin = 0;
-   m_nVBin = 0;
-   m_iGain = 0;
-   m_iOffset = 0;
-   m_uiFlags = 0;
-   m_nCCDType = 0; // read-only
-   m_bufnr = -1;
-   m_pCamera = NULL;
-   m_nTimesLen = MMSENSICAM_MAX_STRLEN;
-   m_pCamera = new CCamera();
-   m_bDemoMode = FALSE;
+  // initialize the array of camera settings
+  m_nBoard = 0;
+  m_nCameraType = 0;
+  m_pszTimes[0] = 0;
+  m_nSubMode = 0;
+  m_nMode = 0;
+  m_nTrig = 0;
+  m_nRoiXMax = 0;
+  m_nRoiXMin = 0;
+  m_nRoiYMax = 0;
+  m_nRoiYMin = 0;
+  m_nHBin = 0;
+  m_nVBin = 0;
+  m_iGain = 0;
+  m_iEMGain = 1;
+  m_iOffset = 0;
+  m_uiFlags = 0;
+  m_nCCDType = 0; // read-only
+  m_bufnr = -1;
+  m_pCamera = NULL;
+  m_nTimesLen = MMSENSICAM_MAX_STRLEN;
+  m_pCamera = new CCamera();
+  m_bDemoMode = FALSE;
 
-      // DemoMode (pre-initialization property)
-   CPropertyAction* pAct = new CPropertyAction (this, &CPCOCam::OnDemoMode);
-   CreateProperty("DemoMode", "Off", MM::String, false, pAct, true);
-   AddAllowedValue("DemoMode","Off",0);
-   AddAllowedValue("DemoMode","On",1);
+  // DemoMode (pre-initialization property)
+  CPropertyAction* pAct = new CPropertyAction (this, &CPCOCam::OnDemoMode);
+  CreateProperty("DemoMode", "Off", MM::String, false, pAct, true);
+  AddAllowedValue("DemoMode","Off",0);
+  AddAllowedValue("DemoMode","On",1);
 
-   InitializeDefaultErrorMessages();
-   sthd_ = new SequenceThread(this);
+  InitializeDefaultErrorMessages();
+  sthd_ = new SequenceThread(this);
 }
 
 CPCOCam::~CPCOCam()
@@ -169,64 +171,64 @@ CPCOCam::~CPCOCam()
 // Camera type
 int CPCOCam::OnCameraType(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   if (eAct == MM::BeforeGet)
-   {
-     pProp->Set(m_pCamera->szCamName);
-   }
-   return DEVICE_OK;
+  if (eAct == MM::BeforeGet)
+  {
+    pProp->Set(m_pCamera->szCamName);
+  }
+  return DEVICE_OK;
 }
 
 // CCD type
 int CPCOCam::OnCCDType(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   if (eAct == MM::BeforeGet)
-   {
-     pProp->Set("pco CCD");
-
-   }
-   return DEVICE_OK;
+  if (eAct == MM::BeforeGet)
+  {
+    pProp->Set("pco CCD");
+  }
+  return DEVICE_OK;
 }
 
 int CPCOCam::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   if (eAct == MM::BeforeGet)
-      pProp->Set(m_dExposure);
-   else if (eAct == MM::AfterSet)
-   {
-     int nErr = 0;
-     double dhelp;
-     pProp->Get(dhelp);
-     if(dhelp != m_dExposure)
-     {
-       m_dExposure = dhelp;
-       if(m_pCamera->iCamClass == 2)
-         sprintf(m_pszTimes, "%f", m_dExposure / 1000.0); 
-       else
-         sprintf(m_pszTimes, "0,%d,-1,-1", (int)m_dExposure); 
-       nErr = SetupCamera();
-     }
+  if (eAct == MM::BeforeGet)
+    pProp->Set(m_dExposure);
+  else if (eAct == MM::AfterSet)
+  {
+    int nErr = 0;
+    double dhelp;
+    pProp->Get(dhelp);
+    if(dhelp != m_dExposure)
+    {
+      m_dExposure = dhelp;
+      if(m_pCamera->iCamClass == 2)
+        sprintf(m_pszTimes, "%f", m_dExposure / 1000.0);
+      else
+        sprintf(m_pszTimes, "0,%d,-1,-1", (int)m_dExposure);
+      nErr = SetupCamera();
+    }
 	    
-     if (nErr != 0)
-		   return nErr;
-   }
-   return DEVICE_OK;
+    if (nErr != 0)
+      return nErr;
+  }
+  return DEVICE_OK;
 }
 
 int CPCOCam::OnDemoMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   if (eAct == MM::BeforeGet) {
-      if(m_bDemoMode)
-         pProp->Set("Off");
-   }
-   else if (eAct == MM::AfterSet)
-   {
-      string tmp;
-      long demoModeTmp;
-      pProp->Get(tmp);
-      ((MM::Property *) pProp)->GetData(tmp.c_str(), demoModeTmp);
-      m_bDemoMode = (demoModeTmp == 1);
-   }
-   return DEVICE_OK;
+  if (eAct == MM::BeforeGet)
+  {
+    if(m_bDemoMode)
+      pProp->Set("Off");
+  }
+  else if (eAct == MM::AfterSet)
+  {
+    string tmp;
+    long demoModeTmp;
+    pProp->Get(tmp);
+    ((MM::Property *) pProp)->GetData(tmp.c_str(), demoModeTmp);
+    m_bDemoMode = (demoModeTmp == 1);
+  }
+  return DEVICE_OK;
 }
 
 // Binning
@@ -297,6 +299,7 @@ int CPCOCam::SetupCamera()
 {
   unsigned int uiMode;
   int nErr;
+  int istopresult;
 
   if(m_bDemoMode)
   {
@@ -305,7 +308,7 @@ int CPCOCam::SetupCamera()
       return nErr;
     return DEVICE_OK;
   }
-  nErr = m_pCamera->StopCam();
+  nErr = m_pCamera->StopCam(&istopresult);
   if (nErr != 0)
     return nErr;
 
@@ -334,42 +337,64 @@ int CPCOCam::SetupCamera()
 // Pixel type
 int CPCOCam::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   if (eAct == MM::AfterSet)
-   {
-      string pixType;
-      pProp->Get(pixType);
-      if (pixType.compare(g_PixelType_16bit) == 0)
-         pixelDepth_ = 2;
-      else if (pixType.compare(g_PixelType_8bit) == 0)
-         pixelDepth_ = 1;
-      else if (pixType.compare(g_PixelType_RGB32bit) == 0)
-         pixelDepth_ = 4;
-      else
-      {
-         return DEVICE_INTERNAL_INCONSISTENCY;
-      }
-      return ResizeImageBuffer();
-   }
-   else if (eAct == MM::BeforeGet)
-   {
-      if (pixelDepth_ == 1)
-         pProp->Set(g_PixelType_8bit);
-      else if (pixelDepth_ == 2)
-         pProp->Set(g_PixelType_16bit);
-      else if (pixelDepth_ == 4)
-         pProp->Set(g_PixelType_RGB32bit);
-      else
-      {
-         return DEVICE_INTERNAL_INCONSISTENCY;
-      }
-   }
-   return DEVICE_OK;
+  if (eAct == MM::AfterSet)
+  {
+    string pixType;
+    pProp->Get(pixType);
+    if (pixType.compare(g_PixelType_16bit) == 0)
+      pixelDepth_ = 2;
+    else if (pixType.compare(g_PixelType_8bit) == 0)
+      pixelDepth_ = 1;
+    else if (pixType.compare(g_PixelType_RGB32bit) == 0)
+      pixelDepth_ = 4;
+    else
+    {
+      return DEVICE_INTERNAL_INCONSISTENCY;
+    }
+    return ResizeImageBuffer();
+  }
+  else if (eAct == MM::BeforeGet)
+  {
+    if (pixelDepth_ == 1)
+      pProp->Set(g_PixelType_8bit);
+    else if (pixelDepth_ == 2)
+      pProp->Set(g_PixelType_16bit);
+    else if (pixelDepth_ == 4)
+      pProp->Set(g_PixelType_RGB32bit);
+    else
+    {
+      return DEVICE_INTERNAL_INCONSISTENCY;
+    }
+  }
+  return DEVICE_OK;
 }
 
 int CPCOCam::OnGain(MM::PropertyBase* /*pProp*/, MM::ActionType /*eAct*/)
 {
-   // ntohing to do  - just use the default value
-   return DEVICE_OK;
+  // nothing to do  - just use the default value
+  return DEVICE_OK;
+}
+
+int CPCOCam::OnEMGain(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+  if (eAct == MM::BeforeGet)
+    pProp->Set((long)m_iEMGain);
+  else if (eAct == MM::AfterSet)
+  {
+    int nErr = 0;
+    long ihelp;
+    pProp->Get(ihelp);
+    if(ihelp != m_iEMGain)
+    {
+      m_iEMGain = ihelp;
+      sprintf(m_pszTimes, "0,%d,-1,-1\r\nmg%d", (int)m_dExposure, m_iEMGain);
+      nErr = SetupCamera();
+    }
+	    
+    if (nErr != 0)
+      return nErr;
+  }
+  return DEVICE_OK;
 }
 
 
@@ -380,264 +405,275 @@ int CPCOCam::OnGain(MM::PropertyBase* /*pProp*/, MM::ActionType /*eAct*/)
 
 int CPCOCam::Initialize()
 {
-   // setup PCO camera
-   // ----------------
+  // setup PCO camera
+  // ----------------
 
-   // Name
-   int nRet = CreateProperty("Name", "pco camera", MM::String, true);
-   if (nRet != DEVICE_OK)
-      return nRet;
+  // Name
+  int nRet = CreateProperty("Name", "pco camera", MM::String, true);
+  if (nRet != DEVICE_OK)
+    return nRet;
 
-   // Description
-   nRet = CreateProperty("Description", "pco generic driver module", MM::String, true);
-   if (nRet != DEVICE_OK)
-      return nRet;
+  // Description
+  nRet = CreateProperty("Description", "pco generic driver module", MM::String, true);
+  if (nRet != DEVICE_OK)
+    return nRet;
 
-   CPropertyAction* pAct;
-   // Initialize the camera
-   int nErr;
+  CPropertyAction* pAct;
+  // Initialize the camera
+  int nErr;
+ 
+  InitLib(MMIJ, NULL, 0, NULL);
 
-   InitLib(MMIJ, NULL, 0, NULL);
-
-   if (! m_bDemoMode)
-   {
-      nErr = m_pCamera->PreInitSC2(0, 0, 0);
-      if(nErr != PCO_NOERROR)
-        nErr = m_pCamera->PreInitSen(0, 0, 0);
-      if(nErr != PCO_NOERROR)
-        nErr = m_pCamera->PreInitPcCam(0, 0, 0);
-      if(nErr != PCO_NOERROR)
-      {
-         return DEVICE_NOT_CONNECTED;
-      }
-   }
-   else
-   {
-      m_pCamera->SetDemoMode(TRUE, 1280, 1024, FALSE, FALSE,
-                       12, 0);
+  if (! m_bDemoMode)
+  {
+    nErr = m_pCamera->PreInitSC2(0, 0, 0);
+    if(nErr != PCO_NOERROR)
       nErr = m_pCamera->PreInitSen(0, 0, 0);
-      sprintf_s(m_pCamera->szCamName, 20, "SensiCam demo");
+    if(nErr != PCO_NOERROR)
+      nErr = m_pCamera->PreInitPcCam(0, 0, 0);
+    if(nErr != PCO_NOERROR)
+    {
+      return DEVICE_NOT_CONNECTED;
+    }
+  }
+  else
+  {
+    m_pCamera->SetDemoMode(TRUE, 1280, 1024, FALSE, FALSE, 12, 0);
+    nErr = m_pCamera->PreInitSen(0, 0, 0);
+    sprintf_s(m_pCamera->szCamName, 20, "SensiCam demo");
 
-      if (nErr != 0)
-         return DEVICE_ERR;
-   }
+    if (nErr != 0)
+      return DEVICE_ERR;
+  }
 
-   if(!m_bDemoMode)
-   {
-     try
-     {
-       nErr = m_pCamera->Init(FALSE);
-     }
-     catch(...)
-     {
-       delete(m_pCamera);
-       SetErrorText(DEVICE_LOCALLY_DEFINED_ERROR, "PCO_Camera's \"Convert dll\" missing. Please copy pcocnv.dll to MM directory!");
-       return DEVICE_LOCALLY_DEFINED_ERROR;
-     }
-   }
-   if (nErr != 0)
-      return nErr;
+  if(!m_bDemoMode)
+  {
+    try
+    {
+      LogMessage("pco_generic. Try to Init!");
+      nErr = m_pCamera->Init(FALSE);
+    }
+    catch(...)
+    {
+      LogMessage("pco_generic. Failed to Init! Try catch error...Mr.Pco! What have you done??");
+      delete(m_pCamera);
+      SetErrorText(DEVICE_LOCALLY_DEFINED_ERROR, "PCO_Camera's \"Convert dll\" missing. Please copy pco_conv.dll to MM directory!");
+      return DEVICE_LOCALLY_DEFINED_ERROR;
+    }
+  }
+  if (nErr != 0)
+  {
+    WriteLog("pco_generic. Error %x in Init!", nErr);
+    return nErr;
+  }
+  // camera type (read-only)
+  pAct = new CPropertyAction (this, &CPCOCam::OnCameraType);
+  nRet = CreateProperty("CameraType", "", MM::String, true, pAct);
+  if (nRet != DEVICE_OK)
+    return nRet;
+  UpdateProperty("CameraType");
 
-   // camera type (read-only)
-   pAct = new CPropertyAction (this, &CPCOCam::OnCameraType);
-   nRet = CreateProperty("CameraType", "", MM::String, true, pAct);
-   if (nRet != DEVICE_OK)
-      return nRet;
-   UpdateProperty("CameraType");
+  m_nTimesLen = MMSENSICAM_MAX_STRLEN;
+  m_dExposure = 10;
+  m_nCameraType = m_pCamera->GetCamType();
+  m_nCCDType = m_pCamera->GetCCDType();
+  if(m_bDemoMode)
+    m_nCameraType = 7;
 
-   m_nTimesLen = MMSENSICAM_MAX_STRLEN;
-   m_dExposure = 10;
-   m_nCameraType = m_pCamera->GetCamType();
-   if(m_bDemoMode)
-     m_nCameraType = 7;
+  if(m_pCamera->iCamClass == 3)
+  {
+    m_nHBin = m_nVBin = 1;
+    m_nMode = 0;//M_LONG;
+    m_nSubMode = 0;//NORMALLONG;
+    m_nTrig = 0;
+    snprintf(m_pszTimes, m_nTimesLen, "0,%.0f,-1,-1", m_dExposure);
+  }
+  if(m_pCamera->iCamClass == 2)
+  {
+    m_nHBin = m_nVBin = 0;
+    m_nMode = 0x20000;//M_LONG;
+    m_nSubMode = 0;//NORMALLONG;
+    m_nTrig = 0;
+    sprintf(m_pszTimes, "%f", m_dExposure / 1000.0);
+  }
+  if(m_pCamera->iCamClass == 1)
+  {
+    m_nHBin = m_nVBin = 1;
+    switch(m_nCameraType)
+    {
+      case 1: // Fast Shutter
+        m_nMode = 1;//M_FAST;
+        m_nSubMode = 0;//NORMALFAST;
+        m_nTrig = 0;
+        //1ms exposure time
+        m_dExposure = 1;
+        snprintf(m_pszTimes, m_nTimesLen, "0,%.0f,-1,-1", m_dExposure * 1.0e06);
+      break;
 
-   if(m_pCamera->iCamClass == 3)
-   {
-     m_nHBin = m_nVBin = 1;
-     m_nMode = 0;//M_LONG;
-     m_nSubMode = 0;//NORMALLONG;
-     m_nTrig = 0;
-     snprintf(m_pszTimes, m_nTimesLen, "0,%.0f,-1,-1", m_dExposure);
-   }
-   if(m_pCamera->iCamClass == 2)
-   {
-     m_nHBin = m_nVBin = 0;
-     m_nMode = 0x20000;//M_LONG;
-     m_nSubMode = 0;//NORMALLONG;
-     m_nTrig = 0;
-     sprintf(m_pszTimes, "%f", m_dExposure / 1000.0); 
-   }
-   if(m_pCamera->iCamClass == 1)
-   {
-     m_nHBin = m_nVBin = 1;
-     switch(m_nCameraType)
-     {
-        case 1:
-           // Fast Shutter
-           m_nMode = 1;//M_FAST;
-           m_nSubMode = 0;//NORMALFAST;
-           m_nTrig = 0;
-           //1ms exposure time
-           m_dExposure = 1;
-           snprintf(m_pszTimes, m_nTimesLen, "0,%.0f,-1,-1", m_dExposure * 1.0e06);
-        break;
+      case 2:
+      case 7:
+        // Long exposure 2; Long exposure QE 7
+        m_nMode = 0;//M_LONG;
+        m_nSubMode = 0;//NORMALLONG;
+        m_nTrig = 0;
+        //10ms exposure time
 
-        case 2:
-        case 7:
-           // Long exposure 2; Long exposure QE 7
-           m_nMode = 0;//M_LONG;
-           m_nSubMode = 0;//NORMALLONG;
-           m_nTrig = 0;
-           //10ms exposure time
-           snprintf(m_pszTimes, m_nTimesLen, "0,%.0f,-1,-1", m_dExposure);
-        break;
+        if(m_nCCDType == 0x21)
+          snprintf(m_pszTimes, m_nTimesLen, "0,%.0f,-1,-1\r\nmg%d", m_dExposure, m_iEMGain);
+        else
+          snprintf(m_pszTimes, m_nTimesLen, "0,%.0f,-1,-1", m_dExposure);
+      break;
 
-        case 3:
-           // Long exposure OEM
-           m_nMode = 0;//M_LONG;
-           m_nSubMode = 0;//NORMALLONG;
-           m_nTrig = 0;
-           //10ms exposure time
-           snprintf(m_pszTimes, m_nTimesLen, "0,%.0f,-1,-1", m_dExposure);
-        break;
+      case 3:
+      // Long exposure OEM
+        m_nMode = 0;//M_LONG;
+        m_nSubMode = 0;//NORMALLONG;
+        m_nTrig = 0;
+        //10ms exposure time
+        snprintf(m_pszTimes, m_nTimesLen, "0,%.0f,-1,-1", m_dExposure);
+      break;
 
-        case 8://FASTEXPQE
-           m_nMode = 0;//M_LONG;
-           m_nSubMode = 0;//NORMALLONG;
-           m_nTrig = 0;
-           //10ms exposure time
-           snprintf(m_pszTimes, m_nTimesLen, "0,%.0f,-1,-1", m_dExposure);
-        break;
+      case 8://FASTEXPQE
+        m_nMode = 0;//M_LONG;
+        m_nSubMode = 0;//NORMALLONG;
+        m_nTrig = 0;
+        //10ms exposure time
+        snprintf(m_pszTimes, m_nTimesLen, "0,%.0f,-1,-1", m_dExposure);
+      break;
         
-        default:
-           // invalid type
-           //CLOSEBOARD(&m_hCamera);
-           return ERR_UNKNOWN_CAMERA_TYPE;
-        break;
-     }
-   }
-   int imode, isubmode;
+      default:
+        // invalid type
+        return ERR_UNKNOWN_CAMERA_TYPE;
+      break;
+    }
+  }
+  int imode, isubmode;
 
-   imode = m_nMode;
-   isubmode = m_nSubMode;
-   // CCD type (read-only)
-   pAct = new CPropertyAction (this, &CPCOCam::OnCCDType);
-   nRet = CreateProperty("CCDType", "", MM::String, true, pAct);
-   if (nRet != DEVICE_OK)
-      return nRet;
-   UpdateProperty("CCDType");
+  imode = m_nMode;
+  isubmode = m_nSubMode;
+  // CCD type (read-only)
+  pAct = new CPropertyAction (this, &CPCOCam::OnCCDType);
+  nRet = CreateProperty("CCDType", "", MM::String, true, pAct);
+  if (nRet != DEVICE_OK)
+    return nRet;
+  UpdateProperty("CCDType");
 
-   // Binning
-   pAct = new CPropertyAction (this, &CPCOCam::OnBinning);
-   nRet = CreateProperty(MM::g_Keyword_Binning, "1", MM::Integer, false, pAct);
-   if (nRet != DEVICE_OK)
-      return nRet;
+  // Binning
+  pAct = new CPropertyAction (this, &CPCOCam::OnBinning);
+  nRet = CreateProperty(MM::g_Keyword_Binning, "1", MM::Integer, false, pAct);
+  if (nRet != DEVICE_OK)
+    return nRet;
 
-   vector<string> binValues;
-   binValues.push_back("1");
-   if(m_pCamera->iCamClass == 1)
-   {
-     binValues.push_back("2");
-     binValues.push_back("4");
-     binValues.push_back("8");
-   }
-   if(m_pCamera->iCamClass == 2)
-   {
-     binValues.push_back("2");
-   }
-   if(m_pCamera->iCamClass == 3)
-   {
-     int mode, trig, roix1, roix2, roiy1, roiy2, hbin, vbin, size, gain, offset;
-     unsigned int flags;
-     char table[400];
+  vector<string> binValues;
+  binValues.push_back("1");
+  if(m_pCamera->iCamClass == 1)
+  {
+    binValues.push_back("2");
+    binValues.push_back("4");
+    binValues.push_back("8");
+  }
+  if(m_pCamera->iCamClass == 2)
+  {
+    binValues.push_back("2");
+  }
+  if(m_pCamera->iCamClass == 3)
+  {
+    int mode, trig, roix1, roix2, roiy1, roiy2, hbin, vbin, size, gain, offset;
+    unsigned int flags;
+    char table[400];
 
-     mode = 0; trig = 0; roix1 = 1; roix2 = 1000;
-     roiy1 = 1; roiy2 = 960; size = 0; gain = 0; offset = 0; flags = 0;
-     sprintf_s(table, 400, "0, 10, -1, -1");
+    mode = 0; trig = 0; roix1 = 1; roix2 = 1000;
+    roiy1 = 1; roiy2 = 960; size = 0; gain = 0; offset = 0; flags = 0;
+    sprintf_s(table, 400, "0, 10, -1, -1");
 
-     hbin = vbin = 2;
-     m_pCamera->testcoc(&mode, &trig, &roix1, &roix2, &roiy1, &roiy2,
-       &hbin, &vbin, table, &size, &gain, &offset, &flags);
-     if((hbin == 2) && (vbin == 2))
-       binValues.push_back("2");
+    hbin = vbin = 2;
+    m_pCamera->testcoc(&mode, &trig, &roix1, &roix2, &roiy1, &roiy2,
+      &hbin, &vbin, table, &size, &gain, &offset, &flags);
+    if((hbin == 2) && (vbin == 2))
+      binValues.push_back("2");
 
-     hbin = vbin = 4;
-     m_pCamera->testcoc(&mode, &trig, &roix1, &roix2, &roiy1, &roiy2,
-       &hbin, &vbin, table, &size, &gain, &offset, &flags);
-     if((hbin == 4) && (vbin == 4))
-       binValues.push_back("4");
+    hbin = vbin = 4;
+    m_pCamera->testcoc(&mode, &trig, &roix1, &roix2, &roiy1, &roiy2,
+      &hbin, &vbin, table, &size, &gain, &offset, &flags);
+    if((hbin == 4) && (vbin == 4))
+      binValues.push_back("4");
 
-     hbin = vbin = 8;
-     m_pCamera->testcoc(&mode, &trig, &roix1, &roix2, &roiy1, &roiy2,
-       &hbin, &vbin, table, &size, &gain, &offset, &flags);
-     if((hbin == 8) && (vbin == 8))
-       binValues.push_back("8");
-   }
+    hbin = vbin = 8;
+    m_pCamera->testcoc(&mode, &trig, &roix1, &roix2, &roiy1, &roiy2,
+      &hbin, &vbin, table, &size, &gain, &offset, &flags);
+    if((hbin == 8) && (vbin == 8))
+      binValues.push_back("8");
+  }
 
-   nRet = SetAllowedValues(MM::g_Keyword_Binning, binValues);
-   if (nRet != DEVICE_OK)
-      return nRet;
+  nRet = SetAllowedValues(MM::g_Keyword_Binning, binValues);
+  if (nRet != DEVICE_OK)
+    return nRet;
 
-   m_nRoiXMin = m_nRoiYMin = 1;
-   m_pCamera->GetMaximumROI(&m_nRoiXMax, &m_nRoiYMax);
-   if(m_bDemoMode)
-   {
-     m_nRoiXMax = 1280;
-     m_nRoiYMax = 1024;
-   }
+  m_nRoiXMin = m_nRoiYMin = 1;
+  m_pCamera->GetMaximumROI(&m_nRoiXMax, &m_nRoiYMax);
+  if(m_bDemoMode)
+  {
+    m_nRoiXMax = 1280;
+    m_nRoiYMax = 1024;
+  }
 
-   // establish full frame limits
-   roiXMaxFull_ = m_nRoiXMax;
-   roiYMaxFull_ = m_nRoiYMax;
+  // establish full frame limits
+  roiXMaxFull_ = m_nRoiXMax;
+  roiYMaxFull_ = m_nRoiYMax;
 
-   // Pixel type
-   pAct = new CPropertyAction (this, &CPCOCam::OnPixelType);
-   nRet = CreateProperty(MM::g_Keyword_PixelType, g_PixelType_16bit, MM::String, false, pAct);
-   if (nRet != DEVICE_OK)
-      return nRet;
+  // Pixel type
+  pAct = new CPropertyAction (this, &CPCOCam::OnPixelType);
+  nRet = CreateProperty(MM::g_Keyword_PixelType, g_PixelType_16bit, MM::String, false, pAct);
+  if (nRet != DEVICE_OK)
+    return nRet;
 
-   vector<string> pixTypes;
-   pixTypes.push_back(g_PixelType_16bit);
-   pixTypes.push_back(g_PixelType_8bit);
+  vector<string> pixTypes;
+  pixTypes.push_back(g_PixelType_16bit);
+  pixTypes.push_back(g_PixelType_8bit);
 
 // FRE / 09.02.09
 // This is beta state up to now and will work with versions >=30
 #if DEVICE_INTERFACE_VERSION >= 30
 
-     if(m_pCamera->GetCCDCol())
-       pixTypes.push_back(g_PixelType_RGB32bit);
+  if(m_pCamera->GetCCDCol(0))
+    pixTypes.push_back(g_PixelType_RGB32bit);
 #endif
-   nRet = SetAllowedValues(MM::g_Keyword_PixelType, pixTypes);
-   if (nRet != DEVICE_OK)
+  nRet = SetAllowedValues(MM::g_Keyword_PixelType, pixTypes);
+  if (nRet != DEVICE_OK)
+    return nRet;
+
+  // EMGain
+  if((m_nCCDType == 0x21) ||  // TI EM 285
+     (m_nCCDType == 0x27))
+  {
+    pAct = new CPropertyAction (this, &CPCOCam::OnEMGain);
+    nRet = CreateProperty(MM::g_Keyword_EMGain, "1", MM::Integer, false, pAct);
+    if (nRet != DEVICE_OK)
       return nRet;
-
-/* Actually there is no gain.
-// Gain
-   pAct = new CPropertyAction (this, &CPCOCam::OnGain);
-   nRet = CreateProperty(MM::g_Keyword_Gain, "1", MM::Integer, false, pAct);
-   if (nRet != DEVICE_OK)
+    nRet = SetPropertyLimits(MM::g_Keyword_EMGain, 1.0, 9.0);
+    if (nRet != DEVICE_OK)
       return nRet;
-*/
-   // Exposure
-   pAct = new CPropertyAction (this, &CPCOCam::OnExposure);
-   nRet = CreateProperty(MM::g_Keyword_Exposure, "10", MM::Float, false, pAct);
-   if (nRet != DEVICE_OK)
-      return nRet;
+  }
+  // Exposure
+  pAct = new CPropertyAction (this, &CPCOCam::OnExposure);
+  nRet = CreateProperty(MM::g_Keyword_Exposure, "10", MM::Float, false, pAct);
+  if (nRet != DEVICE_OK)
+    return nRet;
 
-   //test if SET_COC gets right values 
-   if(m_pCamera->iCamClass == 1)
-     m_nMode = imode + (isubmode << 16);
-   else
-     m_nMode = imode;
-   m_nSubMode = isubmode;
-   nErr = SetupCamera();
-   if (nErr != DEVICE_OK)
-	   return nErr;
-   m_bInitialized = true;
+  //test if SET_COC gets right values
+  if(m_pCamera->iCamClass == 1)
+    m_nMode = imode + (isubmode << 16);
+  else
+    m_nMode = imode;
+  m_nSubMode = isubmode;
+  nErr = SetupCamera();
+  if (nErr != DEVICE_OK)
+    return nErr;
+  m_bInitialized = true;
 
-   // set additional properties as read-only for now
+  // set additional properties as read-only for now
 
-   return DEVICE_OK;
+  return DEVICE_OK;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -647,17 +683,17 @@ int CPCOCam::Initialize()
 
 int CPCOCam::Shutdown()
 {
+  int istopresult = 0;
   m_bInitialized = false;
 
   if(m_pCamera != NULL)
   {
     if(!m_bDemoMode)
-      m_pCamera->StopCam();
+      m_pCamera->StopCam(&istopresult);
     m_pCamera->CloseCam();
     delete(m_pCamera);
     m_pCamera = NULL;
   }
-//todo  CLOSEBOARD(&m_hCamera);
   return DEVICE_OK;
 }
 
@@ -669,8 +705,6 @@ int CPCOCam::Shutdown()
 
 int CPCOCam::SnapImage()
 {
-	// >>> set COC, change later to more efficient exposure settings
-//  struct cam_values val;
   int nErr;
 
   if(m_bDemoMode)
@@ -683,6 +717,7 @@ int CPCOCam::SnapImage()
    
   return DEVICE_OK;
 }
+
 /**
 * Returns the number of physical channels in the image.
 */
@@ -705,32 +740,32 @@ unsigned  CPCOCam::GetImageBytesPerPixel() const
 
 unsigned CPCOCam::GetBitDepth() const
 {
-   if (img_.Depth() == 1)
-      return 8;
-   else if (img_.Depth() == 2)
-   {
-     return m_pCamera->GetBitsPerPixel();
-   }
-   else if (img_.Depth() == 4)
-   {
-     return 32;
-   }
-   else
-   {
-      return 0; // should not happen
-   }
+  if (img_.Depth() == 1)
+    return 8;
+  else if (img_.Depth() == 2)
+  {
+    return m_pCamera->GetBitsPerPixel();
+  }
+  else if (img_.Depth() == 4)
+  {
+    return 32;
+  }
+  else
+  {
+    return 0; // should not happen
+  }
 }
 
 int CPCOCam::GetBinning () const
 {
-   return m_nHBin;
+  return m_nHBin;
 }
 
 int CPCOCam::SetBinning (int binSize) 
 {
-   ostringstream os;                                                         
-   os << binSize;
-   return SetProperty(MM::g_Keyword_Binning, os.str().c_str());                                                                                     
+  ostringstream os;
+  os << binSize;
+  return SetProperty(MM::g_Keyword_Binning, os.str().c_str());
 }
 
 /**
@@ -738,7 +773,7 @@ int CPCOCam::SetBinning (int binSize)
 */
 const unsigned int* CPCOCam::GetImageBufferAsRGB32()
 {
-   return (unsigned int*) GetImageBuffer();
+  return (unsigned int*) GetImageBuffer();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -748,14 +783,16 @@ const unsigned int* CPCOCam::GetImageBufferAsRGB32()
 
 const unsigned char* CPCOCam::GetImageBuffer()
 {
-	int nErr = 0, iw, ih;
+  int nErr = 0, iw, ih;
 
   m_pic = m_pCamera->GetPic12(NULL);
 
-	if (img_.Depth() == 2) {
-		memcpy((void*) const_cast<unsigned char*>(img_.GetPixels()), (const void*)m_pic, img_.Width() * img_.Height() * 2); 
-	}
-	else if (img_.Depth() == 1) {
+  if (img_.Depth() == 2)
+  {
+    memcpy((void*) const_cast<unsigned char*>(img_.GetPixels()), (const void*)m_pic, img_.Width() * img_.Height() * 2);
+  }
+  else if (img_.Depth() == 1)
+  {
     unsigned char *pchar;
     unsigned short *ppic;
     iw = img_.Width();
@@ -776,10 +813,11 @@ const unsigned char* CPCOCam::GetImageBuffer()
         *pchar++ = (unsigned char) ival;
       }
     }
-	}
-	else if (img_.Depth() == 4) {
+  }
+  else if (img_.Depth() == 4)
+  {
     m_pCamera->SetConvertBWCol(FALSE, TRUE);
-    m_pCamera->SetFlip(TRUE);
+    m_pCamera->SetViewMode(TRUE, FALSE, FALSE, FALSE);//SetFlip(TRUE);
     m_pCamera->Convert();
     iw = img_.Width();
     ih = img_.Height();
@@ -806,10 +844,10 @@ const unsigned char* CPCOCam::GetImageBuffer()
     }
   }
 
-   if (nErr != 0)
-      return 0;
+  if (nErr != 0)
+    return 0;
 
-   return img_.GetPixels();
+  return img_.GetPixels();
 }
 
 int CPCOCam::SetROI(unsigned uX, unsigned uY, unsigned uXSize, unsigned uYSize)
@@ -887,36 +925,36 @@ int CPCOCam::GetROI(unsigned& uX, unsigned& uY, unsigned& uXSize, unsigned& uYSi
 
 int CPCOCam::ClearROI()
 {
-   int nErr;
+  int nErr;
    
   if(m_bDemoMode)
     return DEVICE_OK;
 
-   m_nRoiXMin = 1;
-   m_nRoiYMin = 1;
-   m_nRoiXMax = roiXMaxFull_;
-   m_nRoiYMax = roiYMaxFull_;
-   nErr = SetupCamera();
+  m_nRoiXMin = 1;
+  m_nRoiYMin = 1;
+  m_nRoiXMax = roiXMaxFull_;
+  m_nRoiYMax = roiYMaxFull_;
+  nErr = SetupCamera();
 
-   if(nErr != 0)
-	   return nErr;
+  if(nErr != 0)
+    return nErr;
    
-   // Liisa: read the current ROI to the variables to be used in SnapImage
-   // Although the values set by SET_COC are correct here, it goes wrong somewhere later
-   // and in SnapImage the old ROI is used
-   nErr = m_pCamera->getsettings(&m_nMode, &m_nTrig, &m_nRoiXMin, &m_nRoiXMax, &m_nRoiYMin, &m_nRoiYMax,
-		&m_nHBin, &m_nVBin, m_pszTimes, &m_iGain, &m_iOffset, &m_uiFlags);
-   // end Liisa
+  // Liisa: read the current ROI to the variables to be used in SnapImage
+  // Although the values set by SET_COC are correct here, it goes wrong somewhere later
+  // and in SnapImage the old ROI is used
+  nErr = m_pCamera->getsettings(&m_nMode, &m_nTrig, &m_nRoiXMin, &m_nRoiXMax, &m_nRoiYMin, &m_nRoiYMax,
+                                &m_nHBin, &m_nVBin, m_pszTimes, &m_iGain, &m_iOffset, &m_uiFlags);
+  // end Liisa
 
-   if(nErr != 0)
-	   return nErr;
+  if(nErr != 0)
+    return nErr;
 
-   nErr = ResizeImageBuffer();
+  nErr = ResizeImageBuffer();
    
-	if (nErr != 0)
-		return nErr;
+  if (nErr != 0)
+    return nErr;
 
-	return DEVICE_OK;
+  return DEVICE_OK;
 }
 
 void CPCOCam::SetExposure(double dExp)
@@ -926,11 +964,11 @@ void CPCOCam::SetExposure(double dExp)
 
 int CPCOCam::ResizeImageBuffer()
 {
-	// get image size
-	int nWidth = 1, nHeight = 1;
+  // get image size
+  int nWidth = 1, nHeight = 1;
   int as;
 
-	int nErr;
+  int nErr;
   if(m_bDemoMode)
   {
     nWidth = 1280;
@@ -941,42 +979,46 @@ int CPCOCam::ResizeImageBuffer()
     nErr = m_pCamera->getccdsize(&as, &nWidth, &nHeight);
     nWidth = m_pCamera->GetXRes();
     nHeight = m_pCamera->GetYRes();
-	  if (nErr != 0)
-	  {
-  //    CLOSEBOARD(&m_hCamera);
-		  return nErr;
-	  }
+    if (nErr != 0)
+    {
+      return nErr;
+    }
     m_pCamera->ReloadSize();
   }
 
-	if(!(pixelDepth_ == 1 || pixelDepth_ == 2 || pixelDepth_ == 4))
+  if(!(pixelDepth_ == 1 || pixelDepth_ == 2 || pixelDepth_ == 4))
     return -1;
-	img_.Resize(nWidth, nHeight, pixelDepth_);
+  img_.Resize(nWidth, nHeight, pixelDepth_);
 
-	return DEVICE_OK;
+  return DEVICE_OK;
+}
+
+int CPCOCam::PrepareSequenceAcqusition()
+{
+  return DEVICE_OK;
 }
 
 int CPCOCam::StartSequenceAcquisition(long numImages, double /*interval_ms*/, bool stopOnOverflow)
 {
-   if (Busy() || sequenceRunning_)
-      return DEVICE_CAMERA_BUSY_ACQUIRING;
+  if (Busy() || sequenceRunning_)
+    return DEVICE_CAMERA_BUSY_ACQUIRING;
 
-   int ret = GetCoreCallback()->PrepareForAcq(this);
-   if (ret != DEVICE_OK)
-      return ret;
-   sequenceRunning_ = true;
-   sthd_->SetLength(numImages);
-   sthd_->Start();
-   stopOnOverflow_ = stopOnOverflow;
-   return DEVICE_OK;
+  int ret = GetCoreCallback()->PrepareForAcq(this);
+  if (ret != DEVICE_OK)
+    return ret;
+  sequenceRunning_ = true;
+  sthd_->SetLength(numImages);
+  sthd_->Start();
+  stopOnOverflow_ = stopOnOverflow;
+  return DEVICE_OK;
 }
 
 int CPCOCam::StopSequenceAcquisition()
 {
-   sthd_->Stop();
-   sthd_->wait();
-   sequenceRunning_ = false;
-   return DEVICE_OK;
+  sthd_->Stop();
+  sthd_->wait();
+  sequenceRunning_ = false;
+  return DEVICE_OK;
 }
 
 int CPCOCam::StoppedByThread()
@@ -987,49 +1029,60 @@ int CPCOCam::StoppedByThread()
 
 bool CPCOCam::IsCapturing()
 {
-   return sequenceRunning_;
+  return sequenceRunning_;
 }
 
 int CPCOCam::InsertImage()
 {
-   const unsigned char* img = GetImageBuffer();
-   if (img == 0) 
-      return ERR_TIMEOUT;
+  const unsigned char* img = GetImageBuffer();
+  if (img == 0)
+    return ERR_TIMEOUT;
 
-   int ret = GetCoreCallback()->InsertImage(this, img, GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel());
-   if (!stopOnOverflow_ && ret == DEVICE_BUFFER_OVERFLOW)
-   {
-      // do not stop on overflow - just reset the buffer
-      GetCoreCallback()->ClearImageBuffer(this);
-      return GetCoreCallback()->InsertImage(this, img, GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel());
-   } else
-      return ret;
+  int ret = GetCoreCallback()->InsertImage(this, img, GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel());
+  if (!stopOnOverflow_ && ret == DEVICE_BUFFER_OVERFLOW)
+  {
+    // do not stop on overflow - just reset the buffer
+    GetCoreCallback()->ClearImageBuffer(this);
+    return GetCoreCallback()->InsertImage(this, img, GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel());
+  } else
+    return ret;
 }
 
 
 int CPCOCam::SequenceThread::svc()
 {
-   long count(0);
-   int err = 0;
-   while (!stop_ && count < numImages_)
-   {
-      int ret = camera_->SnapImage();
-      if (ret != DEVICE_OK)
-      {
-        err = 1;
-        break;
-      }
+  long count(0);
+  int err = 0;
+  while (!stop_ && count < numImages_)
+  {
+    int ret = camera_->SnapImage();
+    if (ret != DEVICE_OK)
+    {
+      err = 1;
+      break;
+    }
 
-      ret = camera_->InsertImage();
-      if (ret != DEVICE_OK)
-      {
-        err = 1;
-        break;
-      }
-      CDeviceUtils::SleepMs(20);
-      count++;
-   }
+    ret = camera_->InsertImage();
+    if (ret != DEVICE_OK)
+    {
+      err = 1;
+      break;
+    }
+    CDeviceUtils::SleepMs(20);
+    count++;
+  }
 
-   camera_->StoppedByThread();
-   return err;
+  camera_->StoppedByThread();
+  return err;
+}
+
+void CPCOCam::WriteLog(char* message, int nErr)
+{
+  char szmes[300];
+
+  if(nErr != 0)
+    sprintf(szmes, "Error %x! %s", nErr, message);
+  else
+    sprintf(szmes, "%s", message);
+  LogMessage(szmes);
 }

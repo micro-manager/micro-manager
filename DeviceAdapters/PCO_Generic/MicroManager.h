@@ -31,6 +31,13 @@
 #include <string>
 #include <map>
 
+#if !defined KAMLIBVERSION
+#error Missing current pco 3rdparty library v224 (in camera.h). Please copy pco lib into 3rdparty folder. See pco_generic.zip in DeviceAdapters/pco_generic.
+#endif
+#if KAMLIBVERSION < 224
+#error Old pco library found (< v224 in camera.h). Please update your pco lib in 3rdparty folder. See pco_generic.zip in DeviceAdapters/pco_generic.
+#endif
+
 #define MMSENSICAM_MAX_STRLEN    400
 #define ERR_UNKNOWN_CAMERA_TYPE  11
 #define ERR_TIMEOUT              12
@@ -75,6 +82,7 @@ public:
    
    void GetName(char* pszName) const {CDeviceUtils::CopyLimitedString(pszName, "Sensicam");}
    bool Busy() {return m_bBusy;}
+   void WriteLog(char *message, int err);
    
    // MMCamera API
    int SnapImage();
@@ -93,6 +101,7 @@ public:
    int SetROI(unsigned uX, unsigned uY, unsigned uXSize, unsigned uYSize); 
    int GetROI(unsigned& uX, unsigned& uY, unsigned& uXSize, unsigned& uYSize); 
    int ClearROI();
+   int PrepareSequenceAcqusition();
    int StartSequenceAcquisition(long numImages, double /*interval_ms*/, bool stopOnOverflow);
    int StopSequenceAcquisition();
    int StoppedByThread();
@@ -106,8 +115,8 @@ public:
    int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnGain(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnEMGain(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnDemoMode(MM::PropertyBase* pProp, MM::ActionType eAct);
-
  
    /*
    int OnMode(CPropertyBase* pProp, ActionType eAct);
@@ -190,6 +199,7 @@ private:
    int roiXMaxFull_;
    int roiYMaxFull_;
    int m_iGain;
+   int m_iEMGain;
    int m_iOffset;
    unsigned int m_uiFlags;
 };

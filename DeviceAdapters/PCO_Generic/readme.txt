@@ -3,7 +3,7 @@
 -------------------------------------------------------------------
 
 README FOR SOFTWARE/VERSION:  
-pco_generic device adapter for Micro Manager 1.00
+pco_generic device adapter for Micro Manager
 
 FOR PCO PRODUCT/VERSION:
 pco.camera, PixelFly, SensiCam
@@ -18,10 +18,13 @@ files in pco_generic.zip (library and header files) to the following folder:
 <somewhere>..\3rdparty\pco\windows.
 
 Please copy the following files into the MicroManager folder:
-  pcocnv.dll
+  pco_cnv.dll, pco_cdlg.dll
 
-In case you've got a pco.camera series you'll have to copy the interface
-files to the MicroManager folder.
+With a PixelFly or SensiCam you're ready to go.
+
+In case you've got a pco.camera (e.g. pco.1200hs, pco.1600...) series you'll
+have to copy the interface files to the MicroManager folder.
+
 These files are needed for all interfaces:
   sc2_cam.dll
 
@@ -36,11 +39,7 @@ Additionally for the National Cameralink interface:
 All files mentioned above can be found either in the CamWare folder, or the sdk.
 
 VERSION HISTORY:
-Version 1.00
-- Initial version
-
-KNOWN BUGS:
-- none; (Who can say...?)
+see SVN repository.
 
 
  PCO AG
