@@ -151,7 +151,7 @@ public:
          MM_THREAD_GUARD_UNLOCK(&lock_);
          return MM_WAIT_OK;
       }
-      
+      //printf("Begin wait...\n");
       int err = 0;
       if (msTimeout == MM_TIMEOUT_INFINITE) {
          // wait indefinitely
@@ -160,12 +160,25 @@ public:
          // determine the endtime
 			const long US_PER_MS = 1000;
 			const long NS_PER_US = 1000;
-			MM::MMTime mmtTimeout(msTimeout * US_PER_MS);
-			MM::MMTime mmtEndTime = mmtTimeout + GetMMTimeNow();
+
+			timeval startTime;
+			gettimeofday(&startTime, 0L);
+
          timespec endtime;
-			endtime.tv_sec = mmtEndTime.sec_;
-			endtime.tv_nsec = mmtEndTime.uSec_ * NS_PER_US;
-         err = pthread_cond_timedwait(&event_, &lock_, &endtime);
+         long msTimeoutS = msTimeout / 1000;
+         long msTimeoutNS = (msTimeout % 1000) * 1000000;
+			endtime.tv_sec = startTime.tv_sec + msTimeoutS;
+			endtime.tv_nsec = startTime.tv_usec * NS_PER_US + msTimeoutNS;
+			long overflowS = endtime.tv_nsec / 1000000000L;
+			endtime.tv_sec += overflowS;
+         endtime.tv_nsec %= 1000000000L;
+         
+			//printf("msTimeout = %ld\n",msTimeout);
+			//printf("startTime: %ld s, %ld us\n",startTime.tv_sec,startTime.tv_usec);
+			//printf("endtime: %ld s, %ld ns\n",endtime.tv_sec, endtime.tv_nsec);
+			err = pthread_cond_timedwait(&event_, &lock_, &endtime);
+         //printf("err: %ld\n",err);
+         //printf("afterwardsTime: %ld s, %ld us\n",GetMMTimeNow().sec_,GetMMTimeNow().uSec_);
       }
       int result;
       if (err == 0) { // success
