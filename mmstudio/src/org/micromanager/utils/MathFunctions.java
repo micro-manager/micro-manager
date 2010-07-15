@@ -45,7 +45,7 @@ public class MathFunctions {
 
    /*
     * Creates an AffineTransform object that maps a source planar coordinate system to
-    * a destination planar coordinate system. 
+    * a destination planar coordinate system. At least three point pairs are needed.
     * 
     * @pointPairs is a Map of points measured in the two coordinates systems (srcPt->destPt)
     */
@@ -78,7 +78,7 @@ public class MathFunctions {
 
    /*
     * Creates an AffineTransform object that maps a source planar coordinate system to
-    * a destination planar coordinate system.
+    * a destination planar coordinate system. At least three point pairs are needed.
     *
     * Throws an Exception if the mean square deviation of transformed
     * points exceeds the specified tolerances.
