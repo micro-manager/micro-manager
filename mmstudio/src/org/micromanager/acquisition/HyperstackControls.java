@@ -37,47 +37,78 @@ public class HyperstackControls extends java.awt.Panel {
       contrastButton = new javax.swing.JButton();
       saveButton = new javax.swing.JButton();
 
-      setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
-
+      metadataButton.setBackground(new java.awt.Color(255, 255, 255));
       metadataButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/application_view_list.png"))); // NOI18N
       metadataButton.setToolTipText("View acquisition metadata");
       metadataButton.setFocusable(false);
       metadataButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+      metadataButton.setMaximumSize(new java.awt.Dimension(30, 25));
+      metadataButton.setMinimumSize(new java.awt.Dimension(30, 25));
+      metadataButton.setPreferredSize(new java.awt.Dimension(30, 25));
       metadataButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-      add(metadataButton, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 0, -1, -1));
 
+      showFolderButton.setBackground(new java.awt.Color(255, 255, 255));
       showFolderButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/folder.png"))); // NOI18N
       showFolderButton.setToolTipText("Show containing folder");
       showFolderButton.setFocusable(false);
       showFolderButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-      showFolderButton.setMaximumSize(new java.awt.Dimension(28, 20));
-      showFolderButton.setMinimumSize(new java.awt.Dimension(28, 20));
+      showFolderButton.setMaximumSize(new java.awt.Dimension(30, 25));
+      showFolderButton.setMinimumSize(new java.awt.Dimension(30, 25));
+      showFolderButton.setPreferredSize(new java.awt.Dimension(30, 25));
       showFolderButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
       showFolderButton.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             showFolderButtonActionPerformed(evt);
          }
       });
-      add(showFolderButton, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, -1, -1));
 
+      contrastButton.setBackground(new java.awt.Color(255, 255, 255));
       contrastButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/contrast.png"))); // NOI18N
       contrastButton.setToolTipText("Adjust brightness and contrast");
       contrastButton.setFocusable(false);
       contrastButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+      contrastButton.setMaximumSize(new java.awt.Dimension(30, 25));
+      contrastButton.setMinimumSize(new java.awt.Dimension(30, 25));
+      contrastButton.setPreferredSize(new java.awt.Dimension(30, 25));
       contrastButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
       contrastButton.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             contrastButtonActionPerformed(evt);
          }
       });
-      add(contrastButton, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 0, -1, -1));
 
+      saveButton.setBackground(new java.awt.Color(255, 255, 255));
       saveButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/disk.png"))); // NOI18N
       saveButton.setToolTipText("Save as...");
       saveButton.setFocusable(false);
       saveButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+      saveButton.setMaximumSize(new java.awt.Dimension(30, 25));
+      saveButton.setMinimumSize(new java.awt.Dimension(30, 25));
+      saveButton.setPreferredSize(new java.awt.Dimension(30, 25));
       saveButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-      add(saveButton, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 0, -1, -1));
+
+      org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
+      this.setLayout(layout);
+      layout.setHorizontalGroup(
+         layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+         .add(showFolderButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+         .add(layout.createSequentialGroup()
+            .add(100, 100, 100)
+            .add(contrastButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+         .add(layout.createSequentialGroup()
+            .add(30, 30, 30)
+            .add(saveButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+         .add(layout.createSequentialGroup()
+            .add(70, 70, 70)
+            .add(metadataButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+      );
+      layout.setVerticalGroup(
+         layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+         .add(showFolderButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+         .add(contrastButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+         .add(saveButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+         .add(metadataButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+      );
    }// </editor-fold>//GEN-END:initComponents
 
    private void showFolderButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showFolderButtonActionPerformed
