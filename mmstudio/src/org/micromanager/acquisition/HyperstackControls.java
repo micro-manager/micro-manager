@@ -42,9 +42,9 @@ public class HyperstackControls extends java.awt.Panel {
       metadataButton.setToolTipText("View acquisition metadata");
       metadataButton.setFocusable(false);
       metadataButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-      metadataButton.setMaximumSize(new java.awt.Dimension(30, 25));
-      metadataButton.setMinimumSize(new java.awt.Dimension(30, 25));
-      metadataButton.setPreferredSize(new java.awt.Dimension(30, 25));
+      metadataButton.setMaximumSize(new java.awt.Dimension(30, 28));
+      metadataButton.setMinimumSize(new java.awt.Dimension(30, 28));
+      metadataButton.setPreferredSize(new java.awt.Dimension(30, 28));
       metadataButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
 
       showFolderButton.setBackground(new java.awt.Color(255, 255, 255));
@@ -52,9 +52,9 @@ public class HyperstackControls extends java.awt.Panel {
       showFolderButton.setToolTipText("Show containing folder");
       showFolderButton.setFocusable(false);
       showFolderButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-      showFolderButton.setMaximumSize(new java.awt.Dimension(30, 25));
-      showFolderButton.setMinimumSize(new java.awt.Dimension(30, 25));
-      showFolderButton.setPreferredSize(new java.awt.Dimension(30, 25));
+      showFolderButton.setMaximumSize(new java.awt.Dimension(30, 28));
+      showFolderButton.setMinimumSize(new java.awt.Dimension(30, 28));
+      showFolderButton.setPreferredSize(new java.awt.Dimension(30, 28));
       showFolderButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
       showFolderButton.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -67,9 +67,9 @@ public class HyperstackControls extends java.awt.Panel {
       contrastButton.setToolTipText("Adjust brightness and contrast");
       contrastButton.setFocusable(false);
       contrastButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-      contrastButton.setMaximumSize(new java.awt.Dimension(30, 25));
-      contrastButton.setMinimumSize(new java.awt.Dimension(30, 25));
-      contrastButton.setPreferredSize(new java.awt.Dimension(30, 25));
+      contrastButton.setMaximumSize(new java.awt.Dimension(30, 28));
+      contrastButton.setMinimumSize(new java.awt.Dimension(30, 28));
+      contrastButton.setPreferredSize(new java.awt.Dimension(30, 28));
       contrastButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
       contrastButton.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -82,9 +82,9 @@ public class HyperstackControls extends java.awt.Panel {
       saveButton.setToolTipText("Save as...");
       saveButton.setFocusable(false);
       saveButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-      saveButton.setMaximumSize(new java.awt.Dimension(30, 25));
-      saveButton.setMinimumSize(new java.awt.Dimension(30, 25));
-      saveButton.setPreferredSize(new java.awt.Dimension(30, 25));
+      saveButton.setMaximumSize(new java.awt.Dimension(30, 28));
+      saveButton.setMinimumSize(new java.awt.Dimension(30, 28));
+      saveButton.setPreferredSize(new java.awt.Dimension(30, 28));
       saveButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
 
       org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
