@@ -146,9 +146,10 @@ public class MMVirtualAcquisition2 implements AcquisitionInterface {
          }
          hyperImage_.show();
          ImageWindow win = hyperImage_.getWindow();
-         win.add(new ViewerControls());
-         win.pack();
+         HyperstackControls hc = new HyperstackControls();
 
+         win.add(hc);
+         win.pack();
       } else {
          // Convert between the flat virtual stack index and the compositeImage channel, slice, frame:
          int index = hyperImage_.getStackIndex(1+taggedImg.md.getChannelIndex(), 1+taggedImg.md.getSlice(), 1+taggedImg.md.getFrame());
