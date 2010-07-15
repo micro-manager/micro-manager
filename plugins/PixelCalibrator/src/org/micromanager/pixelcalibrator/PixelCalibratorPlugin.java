@@ -18,7 +18,7 @@ import org.micromanager.utils.ReportingUtils;
 
 public class PixelCalibratorPlugin implements MMPlugin {
 
-   public static String menuName = "Pixel Calibrator (BETA)";
+   public static String menuName = "Pixel Calibrator";
    private CMMCore core_;
    private MMStudioMainFrame app_;
    private CalibrationThread calibrationThread_;
