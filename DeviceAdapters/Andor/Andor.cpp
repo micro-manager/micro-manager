@@ -1875,11 +1875,11 @@ int AndorCamera::GetListOfAvailableCameras()
          unsigned ret = DRV_SUCCESS;
          if (EMSwitch == "On") {
             ret = SetEMCCDGain((int)currentGain_);
-            UpdateEMGainRange();
+            // Don't change EMGain property limits here -- causes errors.
             EMSwitch_ = true;
          } else {
             ret = SetEMCCDGain(0);
-            ret = SetPropertyLimits(g_EMGainValue, 0, 0);
+            // Don't change EMGain property limits here -- causes errors.
             EMSwitch_ = false;
 
          }
