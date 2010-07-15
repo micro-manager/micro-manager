@@ -15,18 +15,24 @@ m4_include([configure.common])
 
 AM_CONDITIONAL(BUILD_WITH_JAVA, test "$IMAGEJDIR" != "no")
 if test "$IMAGEJDIR" != "no" ; then
+
+   #----------------------------------------------------------------
+   # Set the CLASSEXT location
+   #----------------------------------------------------------------
+   CLASSEXT=$PWD"/../3rdpartypublic/classext"
+   echo "CLASSEXT="$CLASSEXT
+
    #----------------------------------------------------------------
    # Find ij.jar in directory
    #----------------------------------------------------------------
-   AC_MSG_CHECKING(for ij.jar in ImageJ directory)
-   IJJARDIR="ij.jar ImageJ.app/Contents/Resources/Java/ij.jar ../java/ij.jar"
-   for d in $IJJARDIR ; do
-      if test -r "$IJPATH/$d" ; then
-         IJJARPATH="$IJPATH/$d"
-         AC_MSG_RESULT($IJJARPATH)
-         break
-      fi
-   done
+   AC_MSG_CHECKING(for ij.jar)
+   IJJARDIR="$CLASSEXT/ij.jar"
+   echo "IJJARDDIR="$IJJARDIR
+   if test -r "$IJJARDIR" ; then
+      IJJARPATH="$IJJARDIR"
+      AC_MSG_RESULT($IJJARPATH)
+   fi
+
    if test -z "$IJJARPATH"; then
      AC_MSG_ERROR([not found, Use the without-imagej directive to build without ImageJ or install ImageJ (http://rsb.info.nih.gov/ij/ and rerun configure, possibly using the --with-imagej=path directive])
    fi
@@ -63,12 +69,6 @@ if test "$IMAGEJDIR" != "no" ; then
       AC_MSG_ERROR([not found, Use the without-imagej directive to build without ImageJ GUI, or download swingx and copy to $IJPATH/plugins])
    fi
    
-   #----------------------------------------------------------------
-   # Set the CLASSEXT location
-   #----------------------------------------------------------------
-   CLASSEXT=$PWD"/../3rdpartypublic/classext"
-   echo "CLASSEXT="$CLASSEXT
-
    #----------------------------------------------------------------
    # Find commons-math-2.0.jar in ImageJ plugins directory
    #----------------------------------------------------------------
