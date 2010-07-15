@@ -11,6 +11,8 @@
 
 package org.micromanager.acquisition;
 
+import ij.IJ;
+
 /**
  *
  * @author arthur
@@ -38,31 +40,53 @@ public class HyperstackControls extends java.awt.Panel {
       setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
       metadataButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/application_view_list.png"))); // NOI18N
+      metadataButton.setToolTipText("View acquisition metadata");
       metadataButton.setFocusable(false);
       metadataButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
       metadataButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
       add(metadataButton, new org.netbeans.lib.awtextra.AbsoluteConstraints(70, 0, -1, -1));
 
       showFolderButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/folder.png"))); // NOI18N
+      showFolderButton.setToolTipText("Show containing folder");
       showFolderButton.setFocusable(false);
       showFolderButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
       showFolderButton.setMaximumSize(new java.awt.Dimension(28, 20));
       showFolderButton.setMinimumSize(new java.awt.Dimension(28, 20));
       showFolderButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+      showFolderButton.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            showFolderButtonActionPerformed(evt);
+         }
+      });
       add(showFolderButton, new org.netbeans.lib.awtextra.AbsoluteConstraints(0, 0, -1, -1));
 
       contrastButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/contrast.png"))); // NOI18N
+      contrastButton.setToolTipText("Adjust brightness and contrast");
       contrastButton.setFocusable(false);
       contrastButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
       contrastButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+      contrastButton.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            contrastButtonActionPerformed(evt);
+         }
+      });
       add(contrastButton, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 0, -1, -1));
 
       saveButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/disk.png"))); // NOI18N
+      saveButton.setToolTipText("Save as...");
       saveButton.setFocusable(false);
       saveButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
       saveButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
       add(saveButton, new org.netbeans.lib.awtextra.AbsoluteConstraints(30, 0, -1, -1));
    }// </editor-fold>//GEN-END:initComponents
+
+   private void showFolderButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showFolderButtonActionPerformed
+      // TODO add your handling code here:
+   }//GEN-LAST:event_showFolderButtonActionPerformed
+
+   private void contrastButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_contrastButtonActionPerformed
+      IJ.runPlugIn("ij.plugin.frame.ContrastAdjuster", "");
+   }//GEN-LAST:event_contrastButtonActionPerformed
 
 
    // Variables declaration - do not modify//GEN-BEGIN:variables
