@@ -2348,6 +2348,21 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       updateStaticInfoFromCache();
    }
 
+   public void updateXYStagePosition(){
+
+      double x[] = new double[1];
+      double y[] = new double[1];
+      try {
+         if (xyStageLabel_.length() > 0) 
+            core_.getXYPosition(xyStageLabel_, x, y);
+      } catch (Exception e) {
+          ReportingUtils.showError(e);
+      }
+
+      staticInfo_.x_ = x[0];
+      staticInfo_.y_ = y[0];
+      updateStaticInfoFromCache();
+   }
    private void updateStaticInfo() {
       double zPos = 0.0;
       double x[] = new double[1];
