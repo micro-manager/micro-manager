@@ -179,11 +179,11 @@ all: MMJ_.jar MMReader_.jar
 install: 
 	test -d $(DESTDIR)$(IJPATH)/plugins/Micro-Manager || mkdir -p $(DESTDIR)$(IJPATH)/plugins/Micro-Manager
 	cp MMJ_.jar $(DESTDIR)$(IJPATH)/plugins/Micro-Manager
-	cp ../../3rdpartypublic/ij.jar $(DESTDIR)$(IJPATH)
-	cp ../../3rdpartypublic/swingx-0.9.5.jar $(DESTDIR)$(IJPATH)/plugins/
-	cp ../../3rdpartypublic/bsh-2.0b4.jar $(DESTDIR)$(IJPATH)/plugins/
-	cp ../../3rdpartypublic/swing-layout-1.0.4.jar $(DESTDIR)$(IJPATH)/plugins/
-	cp ../../3rdpartypublic/commons-math-2.0.jar $(DESTDIR)$(IJPATH)/plugins/
+	cp $(IJJARPATH) $(DESTDIR)$(IJPATH)
+	cp $(SWINGXJARPATH) $(DESTDIR)$(IJPATH)/plugins/
+	cp $(BSHJARPATH) $(DESTDIR)$(IJPATH)/plugins/
+	cp $(COMMONSMATHJARPATH) $(DESTDIR)$(IJPATH)/plugins/
+	cp $(SWINGLAYOUTJARPATH) $(DESTDIR)$(IJPATH)/plugins/
 
 clean:
 	test -e MMJ_.jar && rm MMJ_.jar || echo "MMJ_.jar not found"

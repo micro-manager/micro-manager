@@ -41,8 +41,8 @@ if test "$IMAGEJDIR" != "no" ; then
    # Find beanshell.jar in ImageJ plugins directory
    #----------------------------------------------------------------
    AC_MSG_CHECKING(for beanshell jar file in ImageJ plugins directory)
-   if test -r "$IJPATH/plugins/bsh-2.0b4.jar" ; then
-      BSHJARPATH="$IJPATH/plugins/bsh-2.0b4.jar"
+   if test -r "$CLASSEXT/bsh-2.0b4.jar" ; then
+      BSHJARPATH="$CLASSEXT/bsh-2.0b4.jar"
       AC_MSG_RESULT($BSHJARPATH)
    fi
    if test -r "/usr/share/java/bsh.jar" ; then
@@ -57,8 +57,8 @@ if test "$IMAGEJDIR" != "no" ; then
    # Find swingx.jar in ImageJ plugins directory
    #----------------------------------------------------------------
    AC_MSG_CHECKING(for swingx jar file in ImageJ plugins directory)
-   if test -r "$IJPATH/plugins/swingx-0.9.5.jar" ; then
-      SWINGXJARPATH="$IJPATH/plugins/swingx-0.9.5.jar"
+   if test -r "$CLASSEXT/swingx-0.9.5.jar" ; then
+      SWINGXJARPATH="$CLASSEXT/swingx-0.9.5.jar"
       AC_MSG_RESULT($SWINGXJARPATH)
    fi
    if test -r "/usr/share/java/swingx.jar" ; then
@@ -74,8 +74,8 @@ if test "$IMAGEJDIR" != "no" ; then
    #----------------------------------------------------------------
 
    AC_MSG_CHECKING(for apache commons math jar file)
-   if test -r "$IJPATH/plugins/commons-math-2.0.jar" ; then
-      COMMONSMATHJARPATH="$IJPATH/plugins/commons-math-2.0.jar"
+   if test -r "$CLASSEXT/commons-math-2.0.jar" ; then
+      COMMONSMATHJARPATH="$CLASSEXT/plugins/commons-math-2.0.jar"
       AC_MSG_RESULT($COMMONSMATHJARPATH)
    fi
    if test -r "/usr/share/java/commons-math-2.0.jar" ; then
@@ -94,8 +94,8 @@ if test "$IMAGEJDIR" != "no" ; then
    # Find swing-layout-1.0.4.jar in ImageJ plugins directory
    #----------------------------------------------------------------
    AC_MSG_CHECKING(for swing-layout jar file)
-   if test -r "$IJPATH/plugins/swing-layout-1.0.4.jar" ; then
-      SWINGLAYOUTJARPATH="$IJPATH/plugins/swing-layout-1.0.4.jar"
+   if test -r "$CLASSEXT/swing-layout-1.0.4.jar" ; then
+      SWINGLAYOUTJARPATH="$CLASSEXT/swing-layout-1.0.4.jar"
       AC_MSG_RESULT($SWINGLAYOUTJARPATH)
    fi
    if test -r "/usr/share/java/swing-layout-1.0.4.jar" ; then
