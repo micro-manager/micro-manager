@@ -9,11 +9,13 @@ package activeobjectproxytest;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
+
 
 /**
  *
@@ -30,7 +32,7 @@ public class ActiveObject implements InvocationHandler {
       Class [] interfaces = objClass.getInterfaces();
       if (interfaces.length == 0)
          interfaces = new Class [] {objClass};
-      return java.lang.reflect.Proxy.newProxyInstance(
+      return Proxy.newProxyInstance(
               objClass.getClassLoader(),
               interfaces,
               new ActiveObject(obj));

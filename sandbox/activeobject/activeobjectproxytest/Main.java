@@ -81,7 +81,7 @@ public class Main {
 
    }
 
-   public static class Ping {
+   public static class Ping implements PingService {
       private PingService partner;
 
       public void setPartner(PingService partner) {
