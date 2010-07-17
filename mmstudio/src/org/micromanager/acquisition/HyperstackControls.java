@@ -18,10 +18,12 @@ import ij.IJ;
  * @author arthur
  */
 public class HyperstackControls extends java.awt.Panel {
+   private final MMVirtualAcquisition2 acq_;
 
     /** Creates new form HyperstackControls */
-    public HyperstackControls() {
+    public HyperstackControls(MMVirtualAcquisition2 acq) {
         initComponents();
+        acq_ = acq;
     }
 
     /** This method is called from within the constructor to
@@ -46,6 +48,11 @@ public class HyperstackControls extends java.awt.Panel {
       metadataButton.setMinimumSize(new java.awt.Dimension(30, 28));
       metadataButton.setPreferredSize(new java.awt.Dimension(30, 28));
       metadataButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
+      metadataButton.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            metadataButtonActionPerformed(evt);
+         }
+      });
 
       showFolderButton.setBackground(new java.awt.Color(255, 255, 255));
       showFolderButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/folder.png"))); // NOI18N
@@ -118,6 +125,11 @@ public class HyperstackControls extends java.awt.Panel {
    private void contrastButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_contrastButtonActionPerformed
       IJ.runPlugIn("ij.plugin.frame.ContrastAdjuster", "");
    }//GEN-LAST:event_contrastButtonActionPerformed
+
+   private void metadataButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_metadataButtonActionPerformed
+      MetadataViewer mv = new MetadataViewer(acq_);
+      mv.setVisible(true);
+   }//GEN-LAST:event_metadataButtonActionPerformed
 
 
    // Variables declaration - do not modify//GEN-BEGIN:variables

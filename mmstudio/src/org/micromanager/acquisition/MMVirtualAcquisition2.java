@@ -146,7 +146,7 @@ public class MMVirtualAcquisition2 implements AcquisitionInterface {
          }
          hyperImage_.show();
          ImageWindow win = hyperImage_.getWindow();
-         HyperstackControls hc = new HyperstackControls();
+         HyperstackControls hc = new HyperstackControls(this);
 
          win.add(hc);
          win.pack();
@@ -161,6 +161,7 @@ public class MMVirtualAcquisition2 implements AcquisitionInterface {
       if ((hyperImage_.getFrame() - 1) > (taggedImg.md.getFrame() - 2)) {
          hyperImage_.setPosition(1+taggedImg.md.getChannelIndex(), 1+taggedImg.md.getSlice(), 1+taggedImg.md.getFrame());
       }
+
    }
 
    public void setChannelColor(int channel, int rgb) throws MMScriptException {
@@ -174,6 +175,18 @@ public class MMVirtualAcquisition2 implements AcquisitionInterface {
 
    public void setChannelName(int channel, String name) throws MMScriptException {
       displaySettings_[channel].put("ChannelName", name);
+   }
+
+   public Metadata getCurrentMetadata() {
+      int index = getCurrentFlatIndex();
+      return virtualStack_.getTaggedImage(index).md;
+   }
+
+   private int getCurrentFlatIndex() {
+      int frame = hyperImage_.getFrame();
+      int channel = hyperImage_.getChannel();
+      int slice = hyperImage_.getSlice();
+      return hyperImage_.getStackIndex(channel, slice, frame);
    }
 
    public void setComment(String comment) throws MMScriptException {

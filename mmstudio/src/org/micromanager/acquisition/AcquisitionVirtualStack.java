@@ -73,6 +73,10 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
       return new ByteProcessor(width_, height_, (byte []) getPixels(flatIndex), null);
    }
 
+   public TaggedImage getTaggedImage(int flatIndex) {
+      return imageCache_.getImage(filenames_.get(flatIndex));
+   }
+
    public int getSize() {
       return nSlices_;
    }
