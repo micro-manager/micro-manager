@@ -107,7 +107,7 @@ public class MetadataViewer extends javax.swing.JFrame {
 
 
       Vector<Vector<String>> tv = new Vector<Vector<String>>();
-      Vector<String> colNames = model.getColumnName(0);
+//      Vector<String> colNames = model.getColumnName(0);
       int i = 0;
       for (String key:md.getFrameKeys()) {
          Vector<String> rv = new Vector<String>();
@@ -115,7 +115,7 @@ public class MetadataViewer extends javax.swing.JFrame {
          rv.add(md.get(key));
          tv.add(rv);
       }
-      model.setDataVector(tv, )
+    //  model.setDataVector(tv, )
 
     }
 
