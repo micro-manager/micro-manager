@@ -17,7 +17,15 @@ public class Main {
     */
    public static void main(String[] args) {
 
-         AddService addService = (AddService) ActiveObject.newInstance(new Adder());
+         Adder adder = (Adder) ActiveObject.newInstance(Adder.class);
+
+         Double sum = new Double(0);
+         for (int j=0;j<100;++j) {
+            sum += adder.getRandNumber();
+         }
+         System.out.println(sum);
+
+
          AddResultsCallback callback = new AddResultsCallback() {
          Integer x = new Integer(1);
 
@@ -26,77 +34,57 @@ public class Main {
             }
          };
          long startTime = System.currentTimeMillis();
-         for (int i = 0; i < 60; i++) {
-            addService.add(2 * i, 3 * i, callback);
-         }
+         for (int i=0;i<10;++i)
+            adder.add(2 * i, 3 * i, callback);
          long elapsed = System.currentTimeMillis() - startTime;
          System.out.println("All calls finished: " + elapsed + " ms elapsed");
 
-         PingService ping1 = (PingService) ActiveObject.newInstance(new Ping());
-         PingService ping2 = (PingService) ActiveObject.newInstance(new Ping());
+        Ping ping1 = (Ping) ActiveObject.newInstance(Ping.class);
+         Ping ping2 = (Ping) ActiveObject.newInstance(Ping.class);
          ping1.setPartner(ping2);
          ping2.setPartner(ping1);
-      try {
-         Thread.sleep(1000);
-      } catch (InterruptedException ex) {
-         Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-      }
+         
+         
+         Sleep(1000);
          ping1.run();
-      try {
-         Thread.sleep(10000);
-      } catch (InterruptedException ex) {
-         Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
-      }
+         Sleep(1000);
          ping1._stop();
          ping2._stop();
    }
 
-   private static interface AddService {
 
-      public void add(int x, int y, AddResultsCallback callback);
-   }
-
-   private static interface AddResultsCallback {
+   public static interface AddResultsCallback {
 
       public void addResultsComputed(int x, int y, int sum);
    }
 
-   public static class Adder implements AddService {
+   public static class Adder {
 
       public void add(int x, int y, AddResultsCallback callback) {
          int sum = x + y;
-         try {
-            Thread.sleep(1000);
-         } catch (InterruptedException e) {
-         }
+         Sleep(1000);
          callback.addResultsComputed(x, y, sum);
       }
+
+      public Double getRandNumber() {
+         Sleep(1000);
+         return new Double(Math.random());
+      }
+      
    }
 
 
-   public interface PingService {
-      public void setPartner(PingService partner);
-      public void run();
-      public void _stop();
+   public static class Ping {
+      private Ping partner;
 
-   }
-
-   public static class Ping implements PingService {
-      private PingService partner;
-
-      public void setPartner(PingService partner) {
+      public void setPartner(Ping partner) {
          this.partner = partner;
       }
       
       public void run() {
          System.out.println("Ping! " + Thread.currentThread());
          partner.run();
-         try {
-            Thread.sleep((int) (Math.random()*1000));
-         } catch (InterruptedException ex) {
-
-         }
-
+         Sleep((int) (Math.random()*1000));
       }
 
       public void _stop() {
@@ -104,5 +92,11 @@ public class Main {
       }
    }
 
+   public static void Sleep(int timeMs) {
+      try {
+         Thread.sleep(timeMs);
+      } catch (InterruptedException ex) {
+      }
+   }
 
 }

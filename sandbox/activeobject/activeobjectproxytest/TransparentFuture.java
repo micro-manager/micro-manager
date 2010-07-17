@@ -1,13 +1,14 @@
 package activeobjectproxytest;
 
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.util.concurrent.Future;
+import net.sf.cglib.proxy.Enhancer;
+import net.sf.cglib.proxy.InterfaceMaker;
+import net.sf.cglib.proxy.InvocationHandler;
+import net.sf.cglib.proxy.MethodInterceptor;
+import net.sf.cglib.proxy.MethodProxy;
+import net.sf.cglib.proxy.Proxy;
 
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 /**
  *
  * @author arthur
@@ -16,18 +17,20 @@ public class TransparentFuture implements InvocationHandler {
    Future future_;
 
    public static Object newInstance(Future future, Class objClass) {
-      return java.lang.reflect.Proxy.newProxyInstance(
-              objClass.getClassLoader(),
-              objClass.getInterfaces(),
-              new TransparentFuture(future));
+      InterfaceMaker interfaceMaker = new InterfaceMaker();
+      interfaceMaker.add(objClass);
+      Class theFakeInterface = interfaceMaker.create();
+      System.out.println("hi");
+      return Proxy.newProxyInstance(objClass.getClassLoader(), new Class [] {theFakeInterface}, new TransparentFuture(future));
+      
    }
 
-   private TransparentFuture(Future future) {
+   public TransparentFuture(Future future) {
       future_ = future;
    }
 
-   public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+   public Object invoke(Object o, Method method, Object[] os) throws Throwable {
       Object obj = future_.get();
-      return method.invoke(obj, args);
+      return method.invoke(obj, os);
    }
 }
