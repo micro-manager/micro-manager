@@ -185,9 +185,6 @@ AC_C_INLINE
 # On the Mac we need some frameworks that can be in the way on Linux
 case $host in 
    *apple-darwin*)
-      AC_MSG_CHECKING(dcam linker flags)
-      DCAMFRAMEWORKS="-framework dcamapi"
-      AC_MSG_RESULT($DCAMFRAMEWORKS)
       AC_MSG_CHECKING(pvcam linker flags)
       PVCAMFRAMEWORKS="-framework PVCAM"
       AC_MSG_RESULT($PVCAMFRAMEWORKS)
@@ -203,7 +200,6 @@ case $host in
       PVCAMFRAMEWORKS="-lpvcam"
       ;;
 esac
-AC_SUBST(DCAMFRAMEWORKS)
 AC_SUBST(PVCAMFRAMEWORKS)
 AC_SUBST(SPOTFRAMEWORKS)
 AC_SUBST(SERIALFRAMEWORKS)
