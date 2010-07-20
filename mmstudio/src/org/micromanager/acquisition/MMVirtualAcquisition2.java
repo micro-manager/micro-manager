@@ -8,6 +8,9 @@ package org.micromanager.acquisition;
 import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.gui.ImageWindow;
+import ij.process.ImageProcessor;
+import ij.process.ImageStatistics;
+import java.awt.Color;
 import java.io.IOException;
 import mmcorej.Metadata;
 import org.json.JSONObject;
@@ -145,6 +148,7 @@ public class MMVirtualAcquisition2 implements AcquisitionInterface {
             hyperImage_ = imgp;
             imgp.setOpenAsHyperStack(true);
          }
+         updateChannelColors();
          hyperImage_.show();
          ImageWindow win = hyperImage_.getWindow();
          HyperstackControls hc = new HyperstackControls(this);
@@ -155,13 +159,22 @@ public class MMVirtualAcquisition2 implements AcquisitionInterface {
          int index = hyperImage_.getStackIndex(1+taggedImg.md.getChannelIndex(), 1+taggedImg.md.getSlice(), 1+taggedImg.md.getFrame());
          virtualStack_.insertImage(index, taggedImg);
       }
+
       if (numChannels_ > 1) {
          ((CompositeImage) hyperImage_).setChannelsUpdated();
+      }
+
+      if (hyperImage_.getFrame() == 1) {
+         int middleSlice = 1 + hyperImage_.getNSlices()/2;
+         if (hyperImage_.getSlice() == middleSlice) {
+            ImageStatistics stat = hyperImage_.getStatistics();
+            hyperImage_.setDisplayRange(stat.min, stat.max);
+            hyperImage_.updateAndDraw();
+         }
       }
       if ((hyperImage_.getFrame() - 1) > (taggedImg.md.getFrame() - 2)) {
          hyperImage_.setPosition(1+taggedImg.md.getChannelIndex(), 1+taggedImg.md.getSlice(), 1+taggedImg.md.getFrame());
       }
-
    }
 
    public void setChannelColor(int channel, int rgb) throws MMScriptException {
@@ -232,6 +245,15 @@ public class MMVirtualAcquisition2 implements AcquisitionInterface {
          } catch (IOException ex) {
             ReportingUtils.logError(ex);
          }
+      }
+   }
+
+   private void updateChannelColors() {
+      CompositeImage compositeImage = (CompositeImage) hyperImage_;
+      for (int channel=0; channel<compositeImage.getNChannels(); ++channel) {
+         int color = Integer.parseInt(displaySettings_[channel].get("ChannelColor"));
+         Color col = new Color(color);
+         compositeImage.setChannelLut(compositeImage.createLutFromColor(col),1+channel);
       }
    }
 
