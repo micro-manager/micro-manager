@@ -119,7 +119,7 @@ public class HyperstackControls extends java.awt.Panel {
    }// </editor-fold>//GEN-END:initComponents
 
    private void showFolderButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showFolderButtonActionPerformed
-      // TODO add your handling code here:
+      acq_.showFolder();
    }//GEN-LAST:event_showFolderButtonActionPerformed
 
    private void contrastButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_contrastButtonActionPerformed

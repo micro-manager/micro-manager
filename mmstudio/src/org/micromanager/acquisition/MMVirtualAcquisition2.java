@@ -8,6 +8,7 @@ package org.micromanager.acquisition;
 import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.gui.ImageWindow;
+import java.io.IOException;
 import mmcorej.Metadata;
 import org.json.JSONObject;
 import org.micromanager.metadata.AcquisitionData;
@@ -136,7 +137,7 @@ public class MMVirtualAcquisition2 implements AcquisitionInterface {
    public void insertImage(TaggedImage taggedImg) throws MMScriptException {
       if (hyperImage_ == null) {
          virtualStack_.insertImage(1,taggedImg);
-         ImagePlus imgp = new ImagePlus("test", virtualStack_);
+         ImagePlus imgp = new ImagePlus(dir_, virtualStack_);
          imgp.setDimensions(numChannels_, numSlices_, numFrames_);
          if (numChannels_ > 1) {
             hyperImage_ = new CompositeImage(imgp, CompositeImage.COMPOSITE);
@@ -147,7 +148,6 @@ public class MMVirtualAcquisition2 implements AcquisitionInterface {
          hyperImage_.show();
          ImageWindow win = hyperImage_.getWindow();
          HyperstackControls hc = new HyperstackControls(this);
-
          win.add(hc);
          win.pack();
       } else {
@@ -183,10 +183,11 @@ public class MMVirtualAcquisition2 implements AcquisitionInterface {
    }
 
    private int getCurrentFlatIndex() {
-      int frame = hyperImage_.getFrame();
-      int channel = hyperImage_.getChannel();
-      int slice = hyperImage_.getSlice();
-      return hyperImage_.getStackIndex(channel, slice, frame);
+      return hyperImage_.getCurrentSlice();
+   }
+
+   public ImagePlus getImagePlus() {
+      return hyperImage_;
    }
 
    public void setComment(String comment) throws MMScriptException {
@@ -219,6 +220,19 @@ public class MMVirtualAcquisition2 implements AcquisitionInterface {
 
    public boolean windowClosed() {
       return false;
+   }
+
+   void showFolder() {
+      if (dir_.length() != 0) {
+         try {
+            if (JavaUtils.isWindows())
+               Runtime.getRuntime().exec("Explorer /n,/select," + dir_);
+            else if (JavaUtils.isMac())
+               Runtime.getRuntime().exec("open " + dir_);
+         } catch (IOException ex) {
+            ReportingUtils.logError(ex);
+         }
+      }
    }
 
 }

@@ -11,9 +11,11 @@
 
 package org.micromanager.acquisition;
 
+import ij.ImageListener;
+import ij.ImagePlus;
 import java.util.Vector;
+import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableModel;
 import mmcorej.Metadata;
 import mmcorej.StrMap;
 
@@ -21,13 +23,19 @@ import mmcorej.StrMap;
  *
  * @author arthur
  */
-public class MetadataViewer extends javax.swing.JFrame {
-   private final MMVirtualAcquisition2 acq_;
+public class MetadataViewer extends javax.swing.JFrame implements ImageListener {
+   private MMVirtualAcquisition2 acq_;
+   private final MetadataTableModel model_;
 
     /** Creates new form MetadataViewer */
     public MetadataViewer(MMVirtualAcquisition2 acq) {
         initComponents();
         acq_ = acq;
+        model_ = new MetadataTableModel();
+
+        ImagePlus.addImageListener(this);
+        update(ij.IJ.getImage());
+        jTable1.setModel(model_);
     }
 
     /** This method is called from within the constructor to
@@ -67,6 +75,8 @@ public class MetadataViewer extends javax.swing.JFrame {
             return canEdit [columnIndex];
          }
       });
+      jTable1.setDebugGraphicsOptions(javax.swing.DebugGraphics.NONE_OPTION);
+      jTable1.setDoubleBuffered(true);
       jScrollPane1.setViewportView(jTable1);
 
       org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
@@ -100,28 +110,67 @@ public class MetadataViewer extends javax.swing.JFrame {
         });
     }
 
-    public void update() {
-      Metadata md = acq_.getCurrentMetadata();
-      StrMap data = md.getFrameData();
-      DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
-
-
-      Vector<Vector<String>> tv = new Vector<Vector<String>>();
-//      Vector<String> colNames = model.getColumnName(0);
-      int i = 0;
-      for (String key:md.getFrameKeys()) {
-         Vector<String> rv = new Vector<String>();
-         rv.add(key);
-         rv.add(md.get(key));
-         tv.add(rv);
+    class MetadataTableModel extends AbstractTableModel {
+      Vector<Vector<String>> data_;
+      MetadataTableModel() {
+         data_ = new Vector<Vector<String>>();
       }
-    //  model.setDataVector(tv, )
+      public int getRowCount() {
+         return data_.size();
+      }
 
+      public void addRow(Vector<String> rowData) {
+         data_.add(rowData);
+      }
+
+      public int getColumnCount() {
+         return 2;
+      }
+
+      public Object getValueAt(int rowIndex, int columnIndex) {
+         return data_.get(rowIndex).get(columnIndex);
+      }
+
+      public void clear() {
+         data_.clear();
+      }
+
+    }
+
+    public void update(ImagePlus imp) {
+      AcquisitionVirtualStack stack = (AcquisitionVirtualStack) imp.getStack();
+      int slice = imp.getCurrentSlice();
+      Metadata md = stack.getTaggedImage(slice).md;
+      StrMap data = md.getFrameData();
+
+
+      model_.clear();
+      for (String key:md.getFrameKeys()) {
+         Vector<String> rowData = new Vector<String>();
+         rowData.add(key);
+         rowData.add(data.get(key));
+         model_.addRow(rowData);
+      }
+      
+      model_.fireTableDataChanged();
+      jTable1.repaint();
     }
 
    // Variables declaration - do not modify//GEN-BEGIN:variables
    private javax.swing.JScrollPane jScrollPane1;
    private javax.swing.JTable jTable1;
    // End of variables declaration//GEN-END:variables
+
+   public void imageOpened(ImagePlus imp) {
+      update(imp);
+   }
+
+   public void imageClosed(ImagePlus imp) {
+      this.dispose();
+   }
+
+   public void imageUpdated(ImagePlus imp) {
+      update(imp);
+   }
 
 }
