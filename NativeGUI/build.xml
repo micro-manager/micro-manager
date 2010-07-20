@@ -15,10 +15,8 @@
 
 	<target name="buildNativeGUI" description="Compile NativeGUI.">
 		<copy file="NativeGUIstub.java" tofile="NativeGUI.java" />
-		<copy file="QuitHandlerStub.java" tofile="QuitHandler.java" />
 		<javac srcdir="." destdir="." optimize="on" source="1.5" target="1.5" debug="on">
 			<include name="NativeGUI.java"/>
-			<include name="QuitHandler.java"/>
 		</javac>
 		<jar destfile="NativeGUI.jar" basedir="." includes="org/**" />	
 		<mkdir dir="${MMPluginDir}" />
@@ -27,7 +25,6 @@
 
 	<target name="cleanNativeGUI" description="Delete the NativeGUI build files.">
 		<delete file="NativeGUI.java" />
-		<delete file="QuitHandler.java" />
 		<delete file="NativeGUI.jar"/>
 		<delete file="org/micromanager/nativegui/NativeGUI.class"/>
 	</target>

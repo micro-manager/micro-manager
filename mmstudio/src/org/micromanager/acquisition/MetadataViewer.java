@@ -17,6 +17,8 @@ import ij.WindowManager;
 import ij.gui.ImageWindow;
 import java.awt.AWTEvent;
 import java.awt.event.AWTEventListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.Vector;
 import javax.swing.table.AbstractTableModel;
 import mmcorej.Metadata;
