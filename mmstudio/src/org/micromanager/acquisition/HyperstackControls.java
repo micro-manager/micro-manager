@@ -127,8 +127,7 @@ public class HyperstackControls extends java.awt.Panel {
    }//GEN-LAST:event_contrastButtonActionPerformed
 
    private void metadataButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_metadataButtonActionPerformed
-      MetadataViewer mv = new MetadataViewer(acq_);
-      mv.setVisible(true);
+      MetadataViewer.showMetadataViewer();
    }//GEN-LAST:event_metadataButtonActionPerformed
 
 
