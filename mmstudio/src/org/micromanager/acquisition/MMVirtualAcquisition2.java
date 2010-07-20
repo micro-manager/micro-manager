@@ -8,7 +8,6 @@ package org.micromanager.acquisition;
 import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.gui.ImageWindow;
-import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 import java.awt.Color;
 import java.io.IOException;
@@ -249,11 +248,13 @@ public class MMVirtualAcquisition2 implements AcquisitionInterface {
    }
 
    private void updateChannelColors() {
-      CompositeImage compositeImage = (CompositeImage) hyperImage_;
-      for (int channel=0; channel<compositeImage.getNChannels(); ++channel) {
-         int color = Integer.parseInt(displaySettings_[channel].get("ChannelColor"));
-         Color col = new Color(color);
-         compositeImage.setChannelLut(compositeImage.createLutFromColor(col),1+channel);
+      if (hyperImage_ instanceof CompositeImage) {
+         CompositeImage compositeImage = (CompositeImage) hyperImage_;
+         for (int channel=0; channel<compositeImage.getNChannels(); ++channel) {
+            int color = Integer.parseInt(displaySettings_[channel].get("ChannelColor"));
+            Color col = new Color(color);
+            compositeImage.setChannelLut(compositeImage.createLutFromColor(col),1+channel);
+         }
       }
    }
 
