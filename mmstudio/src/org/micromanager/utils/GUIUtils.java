@@ -37,6 +37,10 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
+import java.lang.reflect.Method;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JComboBox;
@@ -51,6 +55,7 @@ import org.micromanager.image5d.Image5DWindow;
 import org.micromanager.metadata.AcquisitionData;
 import org.micromanager.metadata.DisplaySettings;
 import org.micromanager.metadata.MMAcqDataException;
+import org.micromanager.nativegui.QuitHandler;
 
 
 
@@ -223,12 +228,15 @@ public class GUIUtils {
       }
       win.setLocation(dialogPosition);
 
-      win.addWindowListener(new WindowAdapter() {
+      WindowAdapter windowAdapter = new WindowAdapter() {
          @Override
          public void windowClosing(WindowEvent e) {
             storePosition(win);
          }
-      });
+      };
+
+      win.addWindowListener(windowAdapter);
+      QuitHandler.registerWindowListener(windowAdapter);
    }
 
    private static void storePosition(JFrame win) {
