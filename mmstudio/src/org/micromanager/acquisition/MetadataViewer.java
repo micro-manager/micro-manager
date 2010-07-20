@@ -135,7 +135,15 @@ public class MetadataViewer extends javax.swing.JFrame
       }
 
       public Object getValueAt(int rowIndex, int columnIndex) {
-         return data_.get(rowIndex).get(columnIndex);
+         if (data_.size() > rowIndex) {
+            Vector<String> row = data_.get(rowIndex);
+            if (row.size() > columnIndex)
+               return data_.get(rowIndex).get(columnIndex);
+            else
+               return "";
+         } else {
+            return "";
+         }
       }
 
       public void clear() {
