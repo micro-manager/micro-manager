@@ -121,7 +121,6 @@ public class PixelCalibratorDialog extends javax.swing.JFrame {
     }//GEN-LAST:event_startButtonActionPerformed
 
     private void formWindowClosing(java.awt.event.WindowEvent evt) {//GEN-FIRST:event_formWindowClosing
-       GUIUtils.storePosition(this);
        plugin_.dispose();
     }//GEN-LAST:event_formWindowClosing
 
@@ -149,7 +148,6 @@ public class PixelCalibratorDialog extends javax.swing.JFrame {
    // End of variables declaration//GEN-END:variables
 
    public void dispose() {
-      GUIUtils.storePosition(this);
       super.dispose();
    }
    

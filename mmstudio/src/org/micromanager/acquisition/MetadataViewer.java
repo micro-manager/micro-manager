@@ -17,10 +17,13 @@ import ij.WindowManager;
 import ij.gui.ImageWindow;
 import java.awt.AWTEvent;
 import java.awt.event.AWTEventListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.Vector;
 import javax.swing.table.AbstractTableModel;
 import mmcorej.Metadata;
 import mmcorej.StrMap;
+import org.micromanager.utils.GUIUtils;
 
 /**
  *
@@ -48,6 +51,7 @@ public class MetadataViewer extends javax.swing.JFrame
    public static MetadataViewer showMetadataViewer() {
       if (singletonViewer_ == null) {
          singletonViewer_ = new MetadataViewer();
+         GUIUtils.recallPosition(singletonViewer_);
       }
       singletonViewer_.setVisible(true);
       return singletonViewer_;
@@ -227,4 +231,5 @@ public class MetadataViewer extends javax.swing.JFrame
          update(imgp);
       }
    }
+
 }

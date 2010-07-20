@@ -12,7 +12,6 @@ import mmcorej.Metadata;
  * @author arthur
  */
 public class TaggedImage {
-
    public Object img;
    public Metadata md;
    String filename;

@@ -35,6 +35,8 @@ import java.awt.event.ActionListener;
 
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.prefs.Preferences;
 import javax.swing.DefaultCellEditor;
 import javax.swing.JComboBox;
@@ -212,17 +214,24 @@ public class GUIUtils {
         });
     }
 
-    public static void recallPosition(JFrame win) {
+   public static void recallPosition(final JFrame win) {
       Preferences prefs = Preferences.userNodeForPackage(win.getClass());
-      Point dialogPosition = (Point) JavaUtils.getObjectFromPrefs(prefs, DIALOG_POSITION,null);
+      Point dialogPosition = (Point) JavaUtils.getObjectFromPrefs(prefs, DIALOG_POSITION, null);
       if (dialogPosition == null) {
          Dimension screenDims = JavaUtils.getScreenDimensions();
          dialogPosition = new Point((screenDims.width - win.getWidth()) / 2, (screenDims.height - win.getHeight()) / 2);
       }
       win.setLocation(dialogPosition);
+
+      win.addWindowListener(new WindowAdapter() {
+         @Override
+         public void windowClosing(WindowEvent e) {
+            storePosition(win);
+         }
+      });
    }
 
-   public static void storePosition(JFrame win) {
+   private static void storePosition(JFrame win) {
       Preferences prefs = Preferences.userNodeForPackage(win.getClass());
       JavaUtils.putObjectInPrefs(prefs, DIALOG_POSITION, win.getLocation());
    }
