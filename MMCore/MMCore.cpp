@@ -1594,7 +1594,7 @@ void CMMCore::startSequenceAcquisition(long numImages, double intervalMs, bool s
 
 		try
 		{
-			if (!cbuf_->Initialize(camera_->GetNumberOfComponents(), 1, camera_->GetImageWidth(), camera_->GetImageHeight(), camera_->GetImageBytesPerPixel()))
+			if (!cbuf_->Initialize(camera_->GetNumberOfChannels(), 1, camera_->GetImageWidth(), camera_->GetImageHeight(), camera_->GetImageBytesPerPixel()))
 			{
 				logError(getDeviceName(camera_).c_str(), getCoreErrorText(MMERR_CircularBufferFailedToInitialize).c_str());
 				throw CMMError(getCoreErrorText(MMERR_CircularBufferFailedToInitialize).c_str(), MMERR_CircularBufferFailedToInitialize);
@@ -1667,7 +1667,7 @@ void CMMCore::intializeCircularBuffer() throw (CMMError)
 {
    if (camera_)
    {
-      if (!cbuf_->Initialize(camera_->GetNumberOfComponents(), 1, camera_->GetImageWidth(), camera_->GetImageHeight(), camera_->GetImageBytesPerPixel()))
+      if (!cbuf_->Initialize(camera_->GetNumberOfChannels(), 1, camera_->GetImageWidth(), camera_->GetImageHeight(), camera_->GetImageBytesPerPixel()))
       {
          logError(getDeviceName(camera_).c_str(), getCoreErrorText(MMERR_CircularBufferFailedToInitialize).c_str());
          throw CMMError(getCoreErrorText(MMERR_CircularBufferFailedToInitialize).c_str(), MMERR_CircularBufferFailedToInitialize);
@@ -1713,7 +1713,7 @@ void CMMCore::startContinuousSequenceAcquisition(double intervalMs) throw (CMMEr
             ,MMERR_NotAllowedDuringSequenceAcquisition);
       }
 
-      if (!cbuf_->Initialize(camera_->GetNumberOfComponents(), 1, camera_->GetImageWidth(), camera_->GetImageHeight(), camera_->GetImageBytesPerPixel()))
+      if (!cbuf_->Initialize(camera_->GetNumberOfChannels(), 1, camera_->GetImageWidth(), camera_->GetImageHeight(), camera_->GetImageBytesPerPixel()))
       {
          logError(getDeviceName(camera_).c_str(), getCoreErrorText(MMERR_CircularBufferFailedToInitialize).c_str());
          throw CMMError(getCoreErrorText(MMERR_CircularBufferFailedToInitialize).c_str(), MMERR_CircularBufferFailedToInitialize);
@@ -1868,7 +1868,7 @@ void CMMCore::setCircularBufferMemoryFootprint(unsigned sizeMB) throw (CMMError)
 		// attempt to initialize based on the current camera settings
 		if (camera_)
 		{
-			if (!cbuf_->Initialize(camera_->GetNumberOfComponents(), 1, camera_->GetImageWidth(), camera_->GetImageHeight(), camera_->GetImageBytesPerPixel()))
+			if (!cbuf_->Initialize(camera_->GetNumberOfChannels(), 1, camera_->GetImageWidth(), camera_->GetImageHeight(), camera_->GetImageBytesPerPixel()))
 				throw CMMError(getCoreErrorText(MMERR_CircularBufferFailedToInitialize).c_str(), MMERR_CircularBufferFailedToInitialize);
 		}
 
