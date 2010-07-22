@@ -61,15 +61,21 @@ AC_SUBST(LINKFORSHARED)
 #---------------------------------------------------
 # Platform dependent flags
 #---------------------------------------------------
+LIBEXTA="a"
+LIBEXTB="so"
 case $host in
    *-*-linux*)
    LPTHREAD="-lpthread"
    DEVICEADAPTERPATH="/usr/lib/micro-manager"
    JARPATH="/usr/share/java"
+   LIBEXTA="so"
+   LIBEXTB="a"
    ;;
 esac
 AC_MSG_RESULT($LPTHREAD)
 AC_SUBST(LPTHREAD)
+AC_SUBST(LIBEXTA)
+AC_SUBST(LIBEXTB)
 
 # Specify architecture when building Universal Binaries on Mac
 AC_ARG_ENABLE([arch], [AS_HELP_STRING([--enable-arch=arch],[Mac OS X only: ppc, i386, or x86_64])], [ARCH=$enableval], [ARCH=])

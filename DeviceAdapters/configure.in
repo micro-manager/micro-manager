@@ -67,18 +67,18 @@ else
    AC_CHECK_HEADERS([$DC1394INCDIR/dc1394/dc1394.h])
    if test -z "$LIBDC1394" ; then
       # prefer static library, fall back to dynamic lib
-      AC_FIND_FILE([libdc1394.a], [/usr/lib /usr/lib64 /usr/local/$ARCH/lib], DC1394LIBDIR)
+      AC_FIND_FILE([libdc1394.$LIBEXTA], [/usr/lib /usr/lib64 /usr/local/$ARCH/lib], DC1394LIBDIR)
       if test x$DC1394LIBDIR = xNO; then
-         AC_FIND_FILE([libdc1394.so], [/usr/lib /usr/lib64 /usr/local/$ARCH/lib], DC1394LIBDIR)
+         AC_FIND_FILE([libdc1394.$LIBEXTB], [/usr/lib /usr/lib64 /usr/local/$ARCH/lib], DC1394LIBDIR)
          if test x$DC1394LIBDIR = xNO; then
             AC_MSG_RESULT([libdc1394 not found])
          else
-            AC_MSG_RESULT([libdc1394.so found])
-            LIBDC1394="$DC1394LIBDIR/libdc1394.so"
+            AC_MSG_RESULT([libdc1394.$LIBEXTB found])
+            LIBDC1394="$DC1394LIBDIR/libdc1394.$LIBEXTB"
          fi
       else
-         AC_MSG_RESULT([libdc1394.a found])
-         LIBDC1394="$DC1394LIBDIR/libdc1394.a"
+         AC_MSG_RESULT([libdc1394.$LIBEXTA found])
+         LIBDC1394="$DC1394LIBDIR/libdc1394.$LIBEXTA"
       fi
    fi
 fi
@@ -147,18 +147,18 @@ if test x$USBINCDIR = xNO; then
 else
    AC_CHECK_HEADERS([$USBINCDIR/usb.h])
    if test -z "$LIBUSB" ; then
-      AC_FIND_FILE([libusb.a], [/usr/lib /usr/lib64 /usr/local/$ARCH/lib], USBLIBDIR)
+      AC_FIND_FILE([libusb.$LIBEXTA], [/usr/lib /usr/lib64 /usr/local/$ARCH/lib], USBLIBDIR)
       if test x$USBLIBDIR = xNO; then
-         AC_FIND_FILE([libusb.so], [/usr/lib /usr/lib64 /usr/local/$ARCH/lib], USBLIBDIR)
+         AC_FIND_FILE([libusb.$LIBEXTB], [/usr/lib /usr/lib64 /usr/local/$ARCH/lib], USBLIBDIR)
          if test x$USBLIBDIR = xNO; then
              AC_MSG_RESULT([lib not found])
          else
-             AC_MSG_RESULT([libusb.so found])
-             LIBUSB="$USBLIBDIR/libusb.so"
+             AC_MSG_RESULT([libusb.$LIBEXTB found])
+             LIBUSB="$USBLIBDIR/libusb.$LIBEXTB"
          fi
       else
-         AC_MSG_RESULT([libusb.a found])
-         LIBUSB="$USBLIBDIR/libusb.a"
+         AC_MSG_RESULT([libusb.$LIBEXTA found])
+         LIBUSB="$USBLIBDIR/libusb.$LIBEXTA"
       fi
    fi
 fi
