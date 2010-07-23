@@ -2688,8 +2688,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    public boolean displayImage(Object pixels) {
       try {
          if (!isImageWindowOpen()
-               || imageWin_.getImageWindowByteLength()
-               != imageWin_.imageByteLenth(pixels)
+                 ||
+                 imageWin_.windowNeedsResizing()
+//               || imageWin_.getImageWindowByteLength()
+  //             != imageWin_.imageByteLenth(pixels)
                && creatingImageWindow_.isFalse()) {
             createImageWindow();
          }
@@ -2708,8 +2710,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    public boolean displayImageWithStatusLine(Object pixels, String statusLine) {
       try {
          if (!isImageWindowOpen()
-               || imageWin_.getImageWindowByteLength()
-               != imageWin_.imageByteLenth(pixels)
+               || 
+               imageWin_.windowNeedsResizing()
+//               imageWin_.getImageWindowByteLength()
+ //              != imageWin_.imageByteLenth(pixels)
                && creatingImageWindow_.isFalse()) {
             createImageWindow();
          }
