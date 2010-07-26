@@ -85,6 +85,7 @@ autoreconf || exit
 MACOSX_DEPLOYMENT_TARGET=10.4
 ./configure --with-imagej=$PPC --enable-python --enable-arch=ppc CXX="g++ -V 4.0.1" CXXFLAGS="-g -O2 -mmacosx-version-min=10.4 -isysroot /Developer/SDKs/MacOSX10.4u.sdk -arch ppc" --disable-dependency-tracking || exit
 make clean || exit
+make clean || exit
 make || exit
 make install || exit
 
@@ -94,6 +95,7 @@ autoreconf || exit
 MACOSX_DEPLOYMENT_TARGET=10.4
 ./configure --with-imagej=$I386 --enable-arch=i386 CXX="g++ -V 4.0.1" CXXFLAGS="-g -O2 -mmacosx-version-min=10.4 -isysroot /Developer/SDKs/MacOSX10.4u.sdk -arch i386" --disable-dependency-tracking || exit
 make clean || exit
+make clean || exit
 make || exit
 make install || exit
 
@@ -102,6 +104,7 @@ cd $RX86_64
 autoreconf || exit
 export MACOSX_DEPLOYMENT_TARGET=10.5
 ./configure --with-imagej=$X86_64 --enable-arch=x86_64 CXX="g++ -V 4.2.1" CXXFLAGS="-g -O2 -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk -arch x86_64" --disable-dependency-tracking || exit
+make clean || exit
 make clean || exit
 make || exit
 make install || exit
