@@ -4,12 +4,13 @@
  */
 package org.micromanager.acquisition;
 
-import ij.process.ByteProcessor;
+import ij.ImagePlus;
 import ij.process.ImageProcessor;
 import java.awt.image.ColorModel;
 import java.io.File;
 import java.io.FileFilter;
 import java.util.HashMap;
+import mmcorej.Metadata;
 import org.micromanager.utils.ImageUtils;
 
 /**
@@ -24,6 +25,7 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
    protected int width_, height_, type_;
    private int nSlices_;
    private String path_;
+   private ImagePlus imagePlus_;
 
    public AcquisitionVirtualStack(int width, int height, ColorModel cm, String path, MMImageCache imageCache, int nSlices)
    {
@@ -53,6 +55,10 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
       }
    }
 
+   public void setImagePlus(ImagePlus imagePlus) {
+      imagePlus_ = imagePlus;
+   }
+
    public String getPath() {
       return path_;
    }
@@ -63,27 +69,34 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
 
    public Object getPixels(int flatIndex) {
       if (!filenames_.containsKey(flatIndex))
-         return new byte[width_*height_];
+         return ImageUtils.makeProcessor(type_, width_, height_).getPixels();
       else {
          return imageCache_.getImage(filenames_.get(flatIndex)).img;
       }
    }
 
    public ImageProcessor getProcessor(int flatIndex) {
-      return new ByteProcessor(width_, height_, (byte []) getPixels(flatIndex), null);
+      return ImageUtils.makeProcessor(type_, width_, height_, getPixels(flatIndex));
    }
 
    public TaggedImage getTaggedImage(int flatIndex) {
-      return imageCache_.getImage(filenames_.get(flatIndex));
+      if (filenames_.containsKey(flatIndex))
+         return imageCache_.getImage(filenames_.get(flatIndex));
+      else
+         return null;
    }
 
    public int getSize() {
       return nSlices_;
    }
 
- 
-   void insertImage(int index, TaggedImage taggedImg) {
-      filenames_.put(index, imageCache_.putImage(taggedImg));
+   void insertImage(int flatIndex, TaggedImage taggedImg) {
+      filenames_.put(flatIndex, imageCache_.putImage(taggedImg));
+   }
+
+   void insertImage(TaggedImage taggedImg) {
+      int flatIndex = getFlatIndex(taggedImg.md);
+      insertImage(flatIndex, taggedImg);
    }
 
    public String getSliceLabel(int n) {
@@ -92,7 +105,22 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
       } else {
          return "";
       }
+   }
 
+   public void rememberImage(Metadata md) {
+      int flatIndex = getFlatIndex(md);
+      String filename = md.get("Filename");
+      filenames_.put(flatIndex, filename);
+   }
+
+   private int getFlatIndex(Metadata md) {
+      int slice = md.getIntProperty("Slice");
+      int frame = md.getIntProperty("Frame");
+      int channel = md.getIntProperty("ChannelIndex");
+      if (imagePlus_ == null && slice == 0 && frame == 0 && channel == 0)
+         return 1;
+      else
+         return imagePlus_.getStackIndex(1+channel, 1+slice, 1+frame);
    }
 
 }

@@ -70,6 +70,8 @@ public interface AcquisitionInterface {
 
    void setSummaryProperties(Metadata md) throws MMScriptException;
 
+   void setSystemState(Metadata md) throws MMScriptException;
+
    void setSystemState(int frame, int channel, int slice, JSONObject state) throws MMScriptException;
 
    boolean windowClosed();

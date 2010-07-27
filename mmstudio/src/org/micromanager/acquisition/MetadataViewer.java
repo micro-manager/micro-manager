@@ -138,7 +138,7 @@ public class MetadataViewer extends javax.swing.JFrame
          return 2;
       }
 
-      public Object getValueAt(int rowIndex, int columnIndex) {
+      public synchronized Object getValueAt(int rowIndex, int columnIndex) {
          if (data_.size() > rowIndex) {
             Vector<String> row = data_.get(rowIndex);
             if (row.size() > columnIndex)
@@ -159,7 +159,7 @@ public class MetadataViewer extends javax.swing.JFrame
          return columnNames_[colIndex];
       }
 
-      public void setMetadata(Metadata md) {
+      public synchronized void setMetadata(Metadata md) {
          clear();
          if (md != null) {
             StrMap data = md.getFrameData();
@@ -183,8 +183,13 @@ public class MetadataViewer extends javax.swing.JFrame
             if (stack instanceof AcquisitionVirtualStack) {
                AcquisitionVirtualStack vstack = (AcquisitionVirtualStack) imp.getStack();
                int slice = imp.getCurrentSlice();
-               Metadata md = vstack.getTaggedImage(slice).md;
-               model_.setMetadata(md);
+               TaggedImage taggedImg = vstack.getTaggedImage(slice);
+               if (taggedImg == null) {
+                  model_.setMetadata(null);
+               } else {
+                  Metadata md = vstack.getTaggedImage(slice).md;
+                  model_.setMetadata(md);
+               }
             } else {
                model_.setMetadata(null);
             }

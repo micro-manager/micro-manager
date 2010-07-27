@@ -5,7 +5,7 @@ import java.util.Hashtable;
 
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.utils.MMScriptException;
-import org.micromanager.acquisition.MMVirtualAcquisition2;
+import org.micromanager.acquisition.MMVirtualAcquisition;
 
 public class AcquisitionManager {
    Hashtable<String, AcquisitionInterface> acqs_;
@@ -17,8 +17,12 @@ public class AcquisitionManager {
    public void openAcquisition(String name, String rootDir) throws MMScriptException {
       if (acquisitionExists(name))
          throw new MMScriptException("The name is in use");
-      else
-         acqs_.put(name, new MMAcquisition(name, rootDir));
+      else {
+         MMVirtualAcquisition virtAcq = new MMVirtualAcquisition(name, rootDir, false);
+         acqs_.put(name, virtAcq);
+         virtAcq.initialize();
+             virtAcq.show();
+      }
    }
 
    public void openAcquisitionSnap(String name, String rootDir) throws MMScriptException {
@@ -39,7 +43,7 @@ public class AcquisitionManager {
          if (!virtual)
             acqs_.put(name, new MMAcquisition(name, rootDir, show));
          else
-            acqs_.put(name, new MMVirtualAcquisition2(name, rootDir));
+            acqs_.put(name, new MMVirtualAcquisition(name, rootDir, true));
       }
    }
    

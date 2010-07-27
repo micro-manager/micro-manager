@@ -128,11 +128,10 @@ public interface ScriptInterface {
     */
    public void setAcquisitionProperty(String acqName, String propertyName, String value) throws MMScriptException;
 
-   /**
-    * Sets custom property attached to the acquisition summary
-    */
-   public void setAcquisitionProperties(String acqName, Metadata md) throws MMScriptException;
+   public void setAcquisitionSystemState(String acqName, Metadata md) throws MMScriptException;
 
+   public void setAcquisitionSummary(String acqName, Metadata md) throws MMScriptException;
+   
    /**
     * Sets property attached to an individual image
     */

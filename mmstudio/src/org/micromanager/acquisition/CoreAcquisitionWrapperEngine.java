@@ -62,7 +62,7 @@ public class CoreAcquisitionWrapperEngine implements AcquisitionEngine {
    private DoubleVector timeSeries_;
    private int numFrames_;
    private double interval_;
-   private AcquisitionDisplay display_;
+   private AcquisitionDisplayThread display_;
    private double minZStepUm_;
    private String comment_;
    private boolean saveFiles_;
@@ -98,7 +98,7 @@ public class CoreAcquisitionWrapperEngine implements AcquisitionEngine {
       }
 
 
-      display_ = new AcquisitionDisplay(gui_, core_, acquisitionSettings, channels_, saveFiles_);
+      display_ = new AcquisitionDisplayThread(gui_, core_, acquisitionSettings, channels_, saveFiles_);
       display_.start();
    }
 
@@ -191,9 +191,8 @@ public class CoreAcquisitionWrapperEngine implements AcquisitionEngine {
       stop(true);
    }
 
-
    public void shutdown() {
-      throw new UnsupportedOperationException("Not supported yet.");
+      stop(true);
    }
 
    public void setPause(boolean state) {

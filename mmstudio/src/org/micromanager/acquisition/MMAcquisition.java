@@ -344,5 +344,9 @@ public class MMAcquisition implements AcquisitionInterface {
       return imgWin_.isClosed();
    }
 
+   public void setSystemState(Metadata md) throws MMScriptException {
+      throw new UnsupportedOperationException("Not supported yet.");
+   }
+
 }
 

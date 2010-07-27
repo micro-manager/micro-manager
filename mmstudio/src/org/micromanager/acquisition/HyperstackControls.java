@@ -18,10 +18,10 @@ import ij.IJ;
  * @author arthur
  */
 public class HyperstackControls extends java.awt.Panel {
-   private final MMVirtualAcquisition2 acq_;
+   private final MMVirtualAcquisition acq_;
 
     /** Creates new form HyperstackControls */
-    public HyperstackControls(MMVirtualAcquisition2 acq) {
+    public HyperstackControls(MMVirtualAcquisition acq) {
         initComponents();
         acq_ = acq;
     }

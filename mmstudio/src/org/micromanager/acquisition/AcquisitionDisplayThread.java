@@ -18,25 +18,29 @@ import org.micromanager.utils.ReportingUtils;
  *
  * @author arthur
  */
-public class AcquisitionDisplay extends Thread {
+public class AcquisitionDisplayThread extends Thread {
 
    protected final CMMCore core_;
    protected int imgCount_;
    private final ScriptInterface gui_;
    AcquisitionSettings acqSettings_;
    private boolean diskCached_ = false;
+   private ArrayList<String> acqNames_ = new ArrayList<String>();
 
-   AcquisitionDisplay(ScriptInterface gui, CMMCore core, AcquisitionSettings acqSettings, ArrayList<ChannelSpec> channels, boolean diskCached) {
+   AcquisitionDisplayThread(ScriptInterface gui, CMMCore core, AcquisitionSettings acqSettings, ArrayList<ChannelSpec> channels, boolean diskCached) {
       gui_ = gui;
       core_ = core;
       acqSettings_ = acqSettings;
       diskCached_ = diskCached;
+
 
       int nPositions = Math.max(1, (int) acqSettings.getPositionList().size());
       int nTimes = Math.max(1, (int) acqSettings.getTimeSeries().size());
       int nChannels = Math.max(1, (int) acqSettings.getChannelList().size());
       int nSlices = Math.max(1, (int) acqSettings.getZStack().size());
       boolean usingChannels = acqSettings.getChannelList().size() > 0;
+
+
 
       String acqPath;
       try {
@@ -45,18 +49,19 @@ public class AcquisitionDisplay extends Thread {
          String posName;
          for (int posIndex = 0; posIndex < nPositions; ++posIndex) {
             posName = getPosName(posIndex);
-
             String fullPath = createPositionPath(acqPath, posName);
-            gui_.openAcquisition(posName, fullPath, nTimes, nChannels, nSlices, true, diskCached_);
+            String acqName = fullPath + "/" + posName;
+            acqNames_.add(acqName);
+            gui_.openAcquisition(acqName, fullPath, nTimes, nChannels, nSlices, true, diskCached_);
             if (usingChannels) {
                for (int i = 0; i < channels.size(); ++i) {
-                  gui_.setChannelColor(posName, i, channels.get(i).color_);
-                  gui_.setChannelName(posName, i, channels.get(i).config_);
+                  gui_.setChannelColor(acqName, i, channels.get(i).color_);
+                  gui_.setChannelName(acqName, i, channels.get(i).config_);
                }
             }
-            gui_.setAcquisitionProperties(posName, core_.getAcquisitionInitialMetadata());
-            gui_.initializeAcquisition(posName, 512, 512, 1);
-
+            
+            gui_.setAcquisitionSystemState(acqName, core_.getAcquisitionInitialMetadata());
+            gui_.initializeAcquisition(acqName, (int) core_.getImageWidth(), (int) core_.getImageHeight(), (int) core_.getBytesPerPixel());
          }
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
@@ -159,7 +164,7 @@ public class AcquisitionDisplay extends Thread {
       int posIndex = m.getPositionIndex();
 
       try {
-         gui_.addImage(getPosName(posIndex), taggedImg);
+         gui_.addImage(acqNames_.get(posIndex), taggedImg);
       } catch (Exception e) {
          ReportingUtils.logError(e);
       }

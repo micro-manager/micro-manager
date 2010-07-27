@@ -122,7 +122,6 @@ import org.micromanager.utils.MMException;
 import org.micromanager.utils.MMImageWindow;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.NumberUtils;
-import org.micromanager.utils.ProgressBar;
 import org.micromanager.utils.TextUtils;
 import org.micromanager.utils.WaitDialog;
 
@@ -131,7 +130,6 @@ import bsh.EvalError;
 import bsh.Interpreter;
 
 import com.swtdesigner.SwingResourceManager;
-import ij.VirtualStack;
 import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
 import ij.process.ColorProcessor;
@@ -139,6 +137,7 @@ import java.awt.Cursor;
 import java.awt.Graphics;
 import java.awt.image.DirectColorModel;
 import org.micromanager.acquisition.AcquisitionInterface;
+import org.micromanager.acquisition.CoreAcquisitionWrapperEngine;
 import org.micromanager.acquisition.TaggedImage;
 import org.micromanager.nativegui.NativeGUI;
 import org.micromanager.utils.ReportingUtils;
@@ -792,7 +791,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             }.start();
          }
       });
-      openMenuItem.setText("Open Acquisition Data as Image5D......");
+      openMenuItem.setText("Open Acquisition Data...");
       fileMenu.add(openMenuItem);
 
       fileMenu.addSeparator();
@@ -1420,7 +1419,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             shutterLabel_ = new String("");
             zStageLabel_ = new String("");
             xyStageLabel_ = new String("");
-            engine_ = new MMAcquisitionEngineMT();
+            engine_ = new CoreAcquisitionWrapperEngine();
 
             // register callback for MMCore notifications, this is a global
             // to avoid garbage collection
@@ -2137,7 +2136,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       // choose the directory
       // --------------------
       File f = runAcquisitionBrowser();
-      
+
       if (f != null) {
          if (f.isDirectory()) {
             openAcqDirectory_ = f.getAbsolutePath();
@@ -2145,91 +2144,14 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             openAcqDirectory_ = f.getParent();
          }
 
-         ProgressBar progressBar = new ProgressBar("Opening File...", 0, 1);
-
-         AcquisitionData ad = new AcquisitionData();
+         String rootDir = new File(openAcqDirectory_).getAbsolutePath();
+         String name = new File(openAcqDirectory_).getName();
          try {
-            // attempt to open metafile
-            ad.load(openAcqDirectory_);
-            progressBar.setRange(0, ad.getNumberOfChannels()
-                  * ad.getNumberOfFrames() * ad.getNumberOfSlices());
-            Image5D img5d = null;
-            if (!virtual_) {
-               // create image 5d
-               img5d = new Image5D(openAcqDirectory_, ad.getImageJType(), ad.getImageWidth(), ad.getImageHeight(), ad.getNumberOfChannels(), ad.getNumberOfSlices(), ad.getNumberOfFrames(), false);
-
-               img5d.setCalibration(ad.ijCal());
-               applyChannelSettingsTo5D(ad, img5d);
-
-               // set pixels
-               int singleImageCounter = 0;
-               for (int i = 0; i < ad.getNumberOfFrames(); i++) {
-                  for (int j = 0; j < ad.getNumberOfChannels(); j++) {
-                     for (int k = 0; k < ad.getNumberOfSlices(); k++) {
-                        ++singleImageCounter;
-                        img5d.setCurrentPosition(0, 0, j, k, i);
-                        // read the file
-
-                        // insert pixels into the 5d image
-                        Object img = ad.getPixels(i, j, k);
-                        if (img != null) {
-                           img5d.setPixels(img);
-                           set5DDisplaySettingsForChannels(k, i, ad, j, img5d);
-                        } else {
-                           // gap detected, let's try to fill in by using
-                           // the most recent channel data
-                           // NOTE: we assume that the gap is only in the
-                           // frame or slice dimension
-                           // we don't know how to deal with channel gaps
-                           if (i > 0) {
-                              Object previousImg = img5d.getPixels(j + 1,
-                                    k + 1, i);
-                              if (previousImg != null) {
-                                 img5d.setPixels(previousImg, j + 1,
-                                       k + 1, i + 1);
-                              }
-                           }
-                           if (k > 0) {
-                              Object previousImg = img5d.getPixels(j + 1,
-                                    k, i + 1);
-                              if (previousImg != null) {
-                                 img5d.setPixels(previousImg, j + 1,
-                                       k + 1, i + 1);
-                              }
-                           }
-                        }
-                     }
-                  }
-
-                  progressBar.setProgress(singleImageCounter);
-                  progressBar.repaint();
-               }
-            } else {
-               VirtualStack virtualStack = new VirtualStack(ad.getImageWidth(),
-                     ad.getImageHeight(), null, ad.getBasePath());
-               for (int i = 0; i < ad.getNumberOfFrames(); i++) {
-                  for (int j = 0; j < ad.getNumberOfChannels(); j++) {
-                     for (int k = 0; k < ad.getNumberOfSlices(); k++) {
-                        virtualStack.addSlice(ad.getImageFileName(i, j, k));
-                     }
-                  }
-               }
-               img5d = new Image5D(openAcqDirectory_,virtualStack,
-                     ad.getNumberOfChannels(),ad.getNumberOfSlices(),
-                     ad.getNumberOfFrames());
-
-               img5d.setCalibration(ad.ijCal());
-               applyChannelSettingsTo5D(ad, img5d);
-            }
-            popUpImage5DWindow(img5d, ad);
-         } catch (MMAcqDataException e) {
-            ReportingUtils.showError(e);
-         } finally {
-            if (progressBar != null) {
-               progressBar.setVisible(false);
-               progressBar = null;
-            }
+            openAcquisition(name, rootDir);
+         } catch (MMScriptException ex) {
+            ReportingUtils.showError(ex);
          }
+         
       }
    }
 
@@ -3718,6 +3640,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       }
    }
 
+   public void openAcquisition(String name, String rootDir) throws MMScriptException {
+      acqMgr_.openAcquisition(name, rootDir);
+   }
+
    public void openAcquisition(String name, String rootDir, int nrFrames,
          int nrChannels, int nrSlices) throws MMScriptException {
       acqMgr_.openAcquisition(name, rootDir);
@@ -3788,7 +3714,11 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       acq.setProperty(propertyName, value);
    }
 
-   public void setAcquisitionProperties(String acqName, Metadata md) throws MMScriptException {
+   public void setAcquisitionSystemState(String acqName, Metadata md) throws MMScriptException {
+      acqMgr_.getAcquisition(acqName).setSystemState(md);
+   }
+
+   public void setAcquisitionSummary(String acqName, Metadata md) throws MMScriptException {
       acqMgr_.getAcquisition(acqName).setSummaryProperties(md);
    }
 
