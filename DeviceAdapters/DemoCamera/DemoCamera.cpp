@@ -495,9 +495,8 @@ int CDemoCamera::SnapImage()
 */
 const unsigned char* CDemoCamera::GetImageBuffer()
 {
-   MM::MMTime curTime = GetCurrentMMTime();
    MM::MMTime readoutTime(readoutUs_);
-   while (readoutTime > (curTime - readoutStartTime_)) {}
+   while (readoutTime > (GetCurrentMMTime() - readoutStartTime_)) {}
    return img_.GetPixels();
 }
 
