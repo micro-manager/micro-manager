@@ -703,9 +703,11 @@ bool Shutter::ControllerBusy()
    }
    else
    {
+#ifdef CONTROLLERBUSYDEBUG
       char x[100];
       sprintf(x, "numChars = %ld, charVal = %d", read, answer);
       LogMessage(x);
+#endif
       if (answer == 13) { // CR
          g_Busy[port_] = false;
       }
