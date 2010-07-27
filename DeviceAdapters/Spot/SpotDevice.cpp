@@ -1037,17 +1037,19 @@ char* SpotDevice::GetNextSequentialImage(unsigned int& imheight, unsigned int& i
 	do{ // just a scope to delete this lock
 		MMThreadGuard guard(imageReadyFlagLock_s);
 		nloops = 0;
-		int maxdelayloop = (int)(.5+ExposureTime()) + approxTransferTime + 5;
+      // rough estimate of milliseconds to wait for the image
+		int maxdelayloop = (int)(.5+ExposureTime()) + approxTransferTime + 200;
 		maxdelayloop /= 8;
 		if( maxdelayloop < 1) maxdelayloop = 1;
 
 		while(!imageReady_s)
 		{
-
 			if ( maxdelayloop < nloops++)
 			{
-				CodeUtility::DebugOutput(" invalid acquistion sequence - image readout request before sequence start\n");
-				throw SpotBad("  invalid acquistion sequence - image readout request before sequence start  ");
+            std::ostringstream stringStreamMessage;
+      		double elapsed = pMMCamera_->GetCurrentMMTime().getMsec() - time0;
+            stringStreamMessage << " invalid acquistion sequence - waited " << (float)elapsed << " ms for image ready";
+            throw SpotBad(stringStreamMessage.str().c_str());
 			}
 			CDeviceUtils::SleepMs(10);
 		}

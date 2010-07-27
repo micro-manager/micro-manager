@@ -1578,6 +1578,9 @@ int SpotCamera::OnCamera(MM::PropertyBase* pProp, MM::ActionType eAct)
 			if( deviceName_ == ii->second)
 			{
 				pImplementation_->SelectedCameraIndex((const short)(ii->first));
+            std::ostringstream stringStreamMessage;
+            stringStreamMessage << "select Spot Camera " << deviceName_;
+            LogMessage(stringStreamMessage.str(), true);
 				break;
 			}
 		}
@@ -1592,6 +1595,9 @@ int SpotCamera::OnCamera(MM::PropertyBase* pProp, MM::ActionType eAct)
 			if( selCam == ii->first)
 			{
 				deviceName_ = ii->second;
+            std::ostringstream stringStreamMessage;
+            stringStreamMessage << "select Spot Camera " << deviceName_;
+            LogMessage(stringStreamMessage.str(), true);
 				break;
 			}
 		}
