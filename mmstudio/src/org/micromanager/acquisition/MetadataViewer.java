@@ -66,10 +66,50 @@ public class MetadataViewer extends javax.swing.JFrame
    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
    private void initComponents() {
 
+      jScrollPane2 = new javax.swing.JScrollPane();
+      jTextArea1 = new javax.swing.JTextArea();
+      jTabbedPane1 = new javax.swing.JTabbedPane();
+      jScrollPane1 = new javax.swing.JScrollPane();
+      jTable1 = new javax.swing.JTable();
+      jPanel1 = new javax.swing.JPanel();
       metadataTableScrollPane = new javax.swing.JScrollPane();
       metadataTable = new javax.swing.JTable();
+      jCheckBox1 = new javax.swing.JCheckBox();
+      jScrollPane3 = new javax.swing.JScrollPane();
+      jTextArea2 = new javax.swing.JTextArea();
 
-      setTitle("Metadata");
+      jTextArea1.setColumns(20);
+      jTextArea1.setRows(5);
+      jScrollPane2.setViewportView(jTextArea1);
+
+      setTitle("Metadata and Notes");
+
+      jTabbedPane1.setFocusable(false);
+
+      jTable1.setModel(new javax.swing.table.DefaultTableModel(
+         new Object [][] {
+            {null, null},
+            {null, null},
+            {null, null},
+            {null, null}
+         },
+         new String [] {
+            "Property", "Value"
+         }
+      ) {
+         boolean[] canEdit = new boolean [] {
+            false, false
+         };
+
+         public boolean isCellEditable(int rowIndex, int columnIndex) {
+            return canEdit [columnIndex];
+         }
+      });
+      jScrollPane1.setViewportView(jTable1);
+
+      jTabbedPane1.addTab("Acquisition Summary", jScrollPane1);
+
+      jPanel1.setOpaque(false);
 
       metadataTable.setModel(new javax.swing.table.DefaultTableModel(
          new Object [][] {
@@ -98,20 +138,49 @@ public class MetadataViewer extends javax.swing.JFrame
       metadataTable.setDoubleBuffered(true);
       metadataTableScrollPane.setViewportView(metadataTable);
 
+      jCheckBox1.setText("Show unchanging properties");
+
+      org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
+      jPanel1.setLayout(jPanel1Layout);
+      jPanel1Layout.setHorizontalGroup(
+         jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+         .add(jPanel1Layout.createSequentialGroup()
+            .add(jCheckBox1)
+            .addContainerGap(114, Short.MAX_VALUE))
+         .add(metadataTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 325, Short.MAX_VALUE)
+      );
+      jPanel1Layout.setVerticalGroup(
+         jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+         .add(jPanel1Layout.createSequentialGroup()
+            .add(jCheckBox1)
+            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+            .add(metadataTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 231, Short.MAX_VALUE))
+      );
+
+      jTabbedPane1.addTab("Image", jPanel1);
+
+      jTextArea2.setColumns(20);
+      jTextArea2.setLineWrap(true);
+      jTextArea2.setRows(5);
+      jTextArea2.setWrapStyleWord(true);
+      jScrollPane3.setViewportView(jTextArea2);
+
+      jTabbedPane1.addTab("Notes", jScrollPane3);
+
       org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
       getContentPane().setLayout(layout);
       layout.setHorizontalGroup(
          layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(layout.createSequentialGroup()
             .addContainerGap()
-            .add(metadataTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 261, Short.MAX_VALUE)
+            .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 346, Short.MAX_VALUE)
             .addContainerGap())
       );
       layout.setVerticalGroup(
          layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-         .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+         .add(layout.createSequentialGroup()
             .addContainerGap()
-            .add(metadataTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 444, Short.MAX_VALUE)
+            .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 305, Short.MAX_VALUE)
             .addContainerGap())
       );
 
@@ -205,6 +274,15 @@ public class MetadataViewer extends javax.swing.JFrame
    }
 
    // Variables declaration - do not modify//GEN-BEGIN:variables
+   private javax.swing.JCheckBox jCheckBox1;
+   private javax.swing.JPanel jPanel1;
+   private javax.swing.JScrollPane jScrollPane1;
+   private javax.swing.JScrollPane jScrollPane2;
+   private javax.swing.JScrollPane jScrollPane3;
+   private javax.swing.JTabbedPane jTabbedPane1;
+   private javax.swing.JTable jTable1;
+   private javax.swing.JTextArea jTextArea1;
+   private javax.swing.JTextArea jTextArea2;
    private javax.swing.JTable metadataTable;
    private javax.swing.JScrollPane metadataTableScrollPane;
    // End of variables declaration//GEN-END:variables
