@@ -174,6 +174,8 @@ public:
    int GetProperty(const char* name, char* value) const
    {
       std::string strVal;
+      // additional information for reporting invalid properties.
+      SetMorePropertyErrorInfo(name);
       int nRet = properties_.Get(name, strVal);
       if (nRet == DEVICE_OK)
          CDeviceUtils::CopyLimitedString(value, strVal.c_str());
@@ -234,6 +236,8 @@ public:
       MM::Property* pProp = properties_.Find(name);
       if (!pProp)
       {
+         // additional information for reporting invalid properties.
+         SetMorePropertyErrorInfo(name);
          return DEVICE_INVALID_PROPERTY;
       }
       readOnly = pProp->GetReadOnly();
@@ -251,6 +255,8 @@ public:
       MM::Property* pProp = properties_.Find(name);
       if (!pProp)
       {
+         // additional information for reporting invalid properties.
+         SetMorePropertyErrorInfo(name);
          return DEVICE_INVALID_PROPERTY;
       }
       preInit = pProp->GetInitStatus();
@@ -263,6 +269,8 @@ public:
       MM::Property* pProp = properties_.Find(name);
       if (!pProp)
       {
+         // additional information for reporting invalid properties.
+         SetMorePropertyErrorInfo(name);
          return DEVICE_INVALID_PROPERTY;
       }
       hasLimits = pProp->HasLimits();
@@ -274,6 +282,8 @@ public:
       MM::Property* pProp = properties_.Find(name);
       if (!pProp)
       {
+         // additional information for reporting invalid properties.
+         SetMorePropertyErrorInfo(name);
          return DEVICE_INVALID_PROPERTY;
       }
       lowLimit = pProp->GetLowerLimit();
@@ -285,6 +295,8 @@ public:
       MM::Property* pProp = properties_.Find(name);
       if (!pProp)
       {
+         // additional information for reporting invalid properties.
+         SetMorePropertyErrorInfo(name);
          return DEVICE_INVALID_PROPERTY;
       }
       hiLimit = pProp->GetUpperLimit();
@@ -327,7 +339,14 @@ public:
    */
    int SetProperty(const char* name, const char* value)
    {
-      return properties_.Set(name, value);
+      int ret = properties_.Set(name, value);
+      if( DEVICE_OK != ret)
+      {
+         // additional information for reporting invalid properties.
+         SetMorePropertyErrorInfo(name);
+
+      }
+      return ret;
    }
 
    /**
@@ -399,7 +418,10 @@ public:
    {
       MM::Property* pProp = properties_.Find(name);
       if (!pProp)
+      {
+         SetMorePropertyErrorInfo(name);
          return DEVICE_INVALID_PROPERTY;
+      }
       if (pProp->SetLimits(low, high))
          return DEVICE_OK;
       else {
@@ -448,7 +470,12 @@ public:
    */
    int GetPropertyData(const char* name, const char* value, long& data)
    {
-      return properties_.GetPropertyData(name, value, data);
+      int ret = properties_.GetPropertyData(name, value, data);
+      if( DEVICE_OK != ret)
+        // additional information for reporting invalid properties.
+         SetMorePropertyErrorInfo(name);
+
+      return ret;
    }
 
    /**
@@ -456,7 +483,12 @@ public:
    */
    int GetCurrentPropertyData(const char* name, long& data)
    {
-      return properties_.GetCurrentPropertyData(name, data);
+      int ret = properties_.GetCurrentPropertyData(name, data);
+      if( DEVICE_OK != ret)
+        // additional information for reporting invalid properties.
+         SetMorePropertyErrorInfo(name);
+
+      return ret;
    }
 
    /**
@@ -502,8 +534,16 @@ public:
       }
       else
       {
+         std::ostringstream stringStreamMessage;
+         stringStreamMessage << it->second.c_str();
+         // add the additional 'property' error info.
+         if( 2<=errorCode && errorCode<=5 )
+         {
+            stringStreamMessage << ": " << GetMorePropertyErrorInfo();
+         }
+         SetMorePropertyErrorInfo("");
          // native message
-         CDeviceUtils::CopyLimitedString(text, it->second.c_str());
+         CDeviceUtils::CopyLimitedString(text, stringStreamMessage.str().c_str());
          return true; // mesage found
       }
    }
@@ -538,6 +578,15 @@ protected:
       messages_[errorCode] = text;
    }
 
+   const char* GetMorePropertyErrorInfo(void) const
+   {
+      return morePropertyErrorInfo_.c_str();
+   }
+
+   void SetMorePropertyErrorInfo( const char* ptext) const
+   {
+      morePropertyErrorInfo_ = ptext;
+   }
    /**
    * Output the specified text message to the log stream.
    * @param msg - message text
@@ -831,6 +880,8 @@ private:
    double delayMs_;
    bool usesDelay_;
    MM::Core* callback_;
+   // specific information about the errant property, etc.
+   mutable std::string morePropertyErrorInfo_;
 };
 
 /**
