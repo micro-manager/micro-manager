@@ -141,7 +141,7 @@ int LCDA::Initialize()
    }
    
    char version[64];
-   int ret = LaserBoardVersion(version);
+   int ret = LaserBoardFirmwareVersion(version);
    if (ret != NO_ERR)
       return ret;
    
@@ -296,7 +296,9 @@ int LCShutter::Initialize()
    if (ret != DEVICE_OK)
       return ret;
 
-   ret = LaserBoardGetBlank(&blank_);
+   int result;
+   ret = LaserBoardGetBlank(&result);
+   blank_ = result != 0;
    if (ret != DEVICE_OK)
       return ret;
 
@@ -492,11 +494,11 @@ int LCShutter::OnExternalControl(MM::PropertyBase* pProp, MM::ActionType eAct)
 {   
    if (eAct == MM::BeforeGet) 
    {
-      bool external;
+      int external;
       int ret = LaserBoardGetExternalControl(&external);
       if (ret != DEVICE_OK)
          return ret;
-      if (external)
+      if (external != 0)
          pProp->Set("On");
       else
          pProp->Set("Off");
@@ -519,11 +521,11 @@ int LCShutter::OnSync(MM::PropertyBase* pProp, MM::ActionType eAct)
 {   
    if (eAct == MM::BeforeGet) 
    {
-      bool sync;
+      int sync;
       int ret = LaserBoardGetSync(&sync);
       if (ret != DEVICE_OK)
          return ret;
-      if (sync)
+      if (sync != 0)
          pProp->Set("On");
       else
          pProp->Set("Off");
