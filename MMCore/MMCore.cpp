@@ -492,6 +492,10 @@ Configuration CMMCore::getSystemState() const
  */
 Configuration CMMCore::getSystemStateCache() const
 {
+   // track some events in the debug log to track down timing / locking issues
+   CORE_DEBUG("getSystemStateCache");
+
+
    return stateCache_;
 }
 
@@ -501,6 +505,10 @@ Configuration CMMCore::getSystemStateCache() const
  */
 Configuration CMMCore::getConfigState(const char* group, const char* config) const throw (CMMError)
 {
+   // track some events in the debug log to track down timing / locking issues
+   CORE_DEBUG("getConfigState");
+
+
    Configuration cfgData = getConfigData(group, config);
    Configuration state;
    for (size_t i=0; i < cfgData.size(); i++)
@@ -520,6 +528,11 @@ Configuration CMMCore::getConfigState(const char* group, const char* config) con
  */
 Configuration CMMCore::getConfigGroupState(const char* group) const throw (CMMError)
 {
+
+   // track some events in the debug log to track down timing / locking issues
+   CORE_DEBUG("getConfigGroupState");
+
+
    vector<string> configs = configGroups_->GetAvailableConfigs(group);
    Configuration state;
    for (size_t i=0; i<configs.size(); i++) {
@@ -894,6 +907,13 @@ MM::DeviceType CMMCore::getDeviceType(const char* label) throw (CMMError)
  */
 double CMMCore::getDeviceDelayMs(const char* label) const throw (CMMError)
 {
+
+   // track some events in the debug log to track down timing / locking issues
+   std::ostringstream stringStreamMessage;
+   stringStreamMessage << "getDeviceDelayMs for " << label;
+   CORE_DEBUG( stringStreamMessage.str().c_str() );
+
+
    if (strcmp(label, MM::g_Keyword_CoreDevice) == 0)
    {
       return 0.0;
@@ -1063,6 +1083,10 @@ void CMMCore::waitForDeviceType(MM::DeviceType devType) throw (CMMError)
  */
 void CMMCore::waitForConfig(const char* group, const char* configName) throw (CMMError)
 {
+
+   // track some events in the debug log to track down timing / locking issues
+   CORE_DEBUG("waitForConfig");
+
    Configuration cfg = getConfigData(group, configName);
    try {
       for(size_t i=0; i<cfg.size(); i++)
@@ -1078,6 +1102,9 @@ void CMMCore::waitForConfig(const char* group, const char* configName) throw (CM
  */
 void CMMCore::waitForImageSynchro() throw (CMMError)
 {
+   // track some events in the debug log to track down timing / locking issues
+   CORE_DEBUG("waitForImageSynchro");
+
    for (size_t i=0; i<imageSynchro_.size(); i++)
    {
       // poll the device until it stops...
@@ -1460,6 +1487,9 @@ void CMMCore::setAutoShutter(bool state)
  */
 bool CMMCore::getAutoShutter()
 {
+   // track some events in the debug log to track down timing / locking issues
+   CORE_DEBUG("getAutoShutter");
+
    return autoShutter_;
 }
 
@@ -1470,6 +1500,8 @@ void CMMCore::setShutterOpen(bool state) throw (CMMError)
 {
    if (shutter_)
    {
+      // track some events in the debug log to track down timing / locking issues
+      CORE_DEBUG("setShutterOpen");
       int ret = shutter_->SetOpen(state);
       if (ret != DEVICE_OK)
       {
@@ -1494,6 +1526,8 @@ bool CMMCore::getShutterOpen() throw (CMMError)
    bool state = true; // default open
    if (shutter_)
    {
+      // track some events in the debug log to track down timing / locking issues
+      CORE_DEBUG("getShutterOpen");
       int ret = shutter_->GetOpen(state);
       if (ret != DEVICE_OK)
       {
@@ -2129,6 +2163,9 @@ void CMMCore::setChannelGroup(const char* chGroup) throw (CMMError)
  */
 string CMMCore::getChannelGroup()
 {
+   // track some events in the debug log to track down timing / locking issues
+   CORE_DEBUG("getChannelGroup");
+   
    return channelGroup_;
 }
 
@@ -3051,6 +3088,10 @@ std::vector<string> CMMCore::getAvailableConfigurations() const
  */
 string CMMCore::getConfiguration() const
 {
+   // track some events in the debug log to track down timing / locking issues
+   CORE_DEBUG("getConfiguration");
+
+
    // Here we find all configurations that "fit" the current state of the system
    // but return only the first one.
    // Still not sure how to treat multiple configurations fitting the system state -
@@ -3082,6 +3123,11 @@ string CMMCore::getConfiguration() const
  */
 Configuration CMMCore::getConfigurationData(const char* configName) const throw (CMMError)
 {
+
+   // track some events in the debug log to track down timing / locking issues
+   CORE_DEBUG("getConfigurationData");
+
+
    CConfigMap::const_iterator it = configs_.find(configName);
    if (it == configs_.end())
       throw CMMError(configName, getCoreErrorText(MMERR_NoConfiguration).c_str(), MMERR_NoConfiguration);
@@ -3152,6 +3198,9 @@ void CMMCore::renameConfigGroup(const char* oldGroupName, const char* newGroupNa
  */
 void CMMCore::defineConfig(const char* groupName, const char* configName) throw (CMMError)
 {
+   // track some events in the debug log to track down timing / locking issues
+   CORE_DEBUG("defineConfig");
+
    if (strcspn(configName, "/\\*!'") != strlen(configName))
       throw CMMError(configName, getCoreErrorText(MMERR_BadConfigName).c_str(), MMERR_BadConfigName);
    configGroups_->Define(groupName, configName);
@@ -3175,6 +3224,10 @@ void CMMCore::defineConfig(const char* groupName, const char* configName) throw 
  */
 void CMMCore::defineConfig(const char* groupName, const char* configName, const char* deviceLabel, const char* propName, const char* value) throw (CMMError)
 {
+
+   // track some events in the debug log to track down timing / locking issues
+   CORE_DEBUG("defineConfig");
+
    if (strcspn(configName, "/\\*!'") != strlen(configName))
       throw CMMError(configName, getCoreErrorText(MMERR_BadConfigName).c_str(), MMERR_BadConfigName);
    configGroups_->Define(groupName, configName, deviceLabel, propName, value);
@@ -3351,6 +3404,9 @@ void CMMCore::deleteConfig(const char* groupName, const char* configName, const 
  */
 vector<string> CMMCore::getAvailableConfigs(const char* group) const
 {
+   // track some events in the debug log to track down timing / locking issues
+   CORE_DEBUG("getAvailableConfigs");
+
    return configGroups_->GetAvailableConfigs(group);
 }
 
@@ -3360,6 +3416,9 @@ vector<string> CMMCore::getAvailableConfigs(const char* group) const
  */
 vector<string> CMMCore::getAvailableConfigGroups() const
 {
+   // track some events in the debug log to track down timing / locking issues
+   CORE_DEBUG("getAvailableConfigGroups");
+
    return configGroups_->GetAvailableGroups();
 }
 
@@ -3383,6 +3442,8 @@ vector<string> CMMCore::getAvailablePixelSizeConfigs() const
  */
 string CMMCore::getCurrentConfig(const char* groupName) const throw (CMMError)
 {
+
+
    string empty("");
    vector<string> cfgs = configGroups_->GetAvailableConfigs(groupName);
    if (cfgs.empty())
@@ -3408,6 +3469,11 @@ string CMMCore::getCurrentConfig(const char* groupName) const throw (CMMError)
  */
 Configuration CMMCore::getConfigData(const char* groupName, const char* configName) const throw (CMMError)
 {
+
+   // track some events in the debug log to track down timing / locking issues
+   CORE_DEBUG("getConfigData");
+
+
    Configuration* pCfg = configGroups_->Find(groupName, configName);
    if (!pCfg)
    {
@@ -3585,6 +3651,12 @@ double CMMCore::getMagnificationFactor() const
  */
 bool CMMCore::isConfigDefined(const char* groupName, const char* configName)
 {
+   // track some events in the debug log to track down timing / locking issues
+   std::ostringstream stringStreamMessage;
+   stringStreamMessage << "isConfigDefined group " << groupName << " cfg " << configName;
+   CORE_DEBUG(stringStreamMessage.str().c_str() );
+
+
    return  configGroups_->Find(groupName, configName) != 0;
 }
 /**
@@ -3594,6 +3666,11 @@ bool CMMCore::isConfigDefined(const char* groupName, const char* configName)
  */
 bool CMMCore::isGroupDefined(const char* groupName)
 {
+   // track some events in the debug log to track down timing / locking issues
+   std::ostringstream stringStreamMessage;
+   stringStreamMessage << "isGroupDefined  " << groupName ;
+   CORE_DEBUG(stringStreamMessage.str().c_str() );
+
    return  configGroups_->isDefined(groupName);
 }
 
@@ -3627,6 +3704,10 @@ void CMMCore::definePropertyBlock(const char* blockName, const char* propertyNam
  */
 std::vector<std::string> CMMCore::getAvailablePropertyBlocks() const
 {
+   // track some events in the debug log to track down timing / locking issues
+   CORE_DEBUG( "getAvailablePropertyBlocks" );
+
+
    vector<string> blkList;
    CPropBlockMap::const_iterator it = propBlocks_.begin();
    while(it != propBlocks_.end())
@@ -4560,6 +4641,8 @@ double CMMCore::getAutoFocusOffset() throw (CMMError)
 
 bool CMMCore::isConfigurationCurrent(const Configuration& config) const
 {
+
+
   // getConfigState(   
 
    // to dermine whether the current state of the system matches our configuration
@@ -4773,6 +4856,11 @@ void CMMCore::acqAfter() throw (CMMError)
 
 void CMMCore::acqBeforeFrame() throw (CMMError)
 {
+
+   // track some events in the debug log to track down timing / locking issues
+   CORE_DEBUG("acqBeforeFrame");
+
+
    if (imageProcessor_)
    {
       int ret = imageProcessor_->AcqBeforeFrame();
@@ -4788,6 +4876,9 @@ void CMMCore::acqBeforeFrame() throw (CMMError)
 
 void CMMCore::acqAfterFrame() throw (CMMError)
 {
+   // track some events in the debug log to track down timing / locking issues
+   CORE_DEBUG("acqAfterFrame");
+
    if (imageProcessor_)
    {
       int ret = imageProcessor_->AcqAfterFrame();
