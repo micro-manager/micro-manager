@@ -14,7 +14,7 @@ static bool StringToBool( const std::string& value);
 
 static inline long nint( double value )
 { 
-   return floor( 0.5 + value);
+   return (long)floor( 0.5 + value);
 };
 
 
