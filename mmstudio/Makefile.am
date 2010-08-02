@@ -28,7 +28,6 @@ MMJ_.jar:  \
 	$(srcdir)/src/org/micromanager/license.txt \
 	$(srcdir)/src/org/micromanager/acquisition/MMAcquisition.java \
 	$(srcdir)/src/org/micromanager/acquisition/AcquisitionManager.java \
-	$(srcdir)/src/org/micromanager/acquisition/AcquisitionDisplay.java \
 	$(srcdir)/src/org/micromanager/acquisition/CoreAcquisitionWrapperEngine.java \
 	$(srcdir)/src/org/micromanager/api/Autofocus.java \
 	$(srcdir)/src/org/micromanager/api/AcquisitionEngine.java \
