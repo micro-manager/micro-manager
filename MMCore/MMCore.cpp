@@ -4571,7 +4571,7 @@ void CMMCore::fullFocus() throw (CMMError)
 }
 
 /**
- * Performs incremental focusl for the one-shot focusing device.
+ * Performs incremental focus for the one-shot focusing device.
  */
 void CMMCore::incrementalFocus() throw (CMMError)
 {
