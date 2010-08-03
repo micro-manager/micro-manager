@@ -191,6 +191,7 @@ currentGain_(-1),
 ReadoutTime_(50),
 ADChannelIndex_(0),
 sequenceRunning_(false),
+startTime_(0),
 imageCounter_(0),  
 imageTimeOut_ms_(10000),
 sequenceLength_(0),
@@ -225,7 +226,6 @@ sequencePaused_(0)
    // -----------------------------
 
    // Driver location property removed.  atmcd32d.dll should be in the working directory
-   // kdb 2/27/2009
    hAndorDll = 0;
    fpGetKeepCleanTime = 0;
    fpGetReadOutTime = 0;
@@ -253,7 +253,6 @@ sequencePaused_(0)
    // this needs to be initialized for Linux, or ::Initialize() will not return
    driverDir_ = "/usr/local/etc/andor/";
 #endif
-   // end of kdb
 
    GetListOfAvailableCameras();
 
@@ -276,7 +275,7 @@ AndorCamera::~AndorCamera()
 
 
       if (initialized_ && mb_canSetTemp) {
-         CoolerOFF();  //Daigang 24-may-2007 turn off the cooler at shutdown
+         CoolerOFF();  //turn off the cooler at shutdown
       }
 
       if (initialized_) {
@@ -285,12 +284,10 @@ AndorCamera::~AndorCamera()
       // clear the instance pointer
       instance_ = 0;
    }
-   // kdb 2/27/2009
+
 #ifndef WIN32
    if (hAndorDll) dlclose(hAndorDll);
 #endif
-   // end of kdb
-
 }
 
 AndorCamera* AndorCamera::GetInstance()
@@ -353,8 +350,15 @@ int AndorCamera::GetListOfAvailableCameras()
             }
             else {
                anStr = chars;
-
             }
+
+            // mm can't deal with commas!!
+		    size_t ifind = anStr.find(",");
+		    while(std::string::npos != ifind)
+		    {
+			    anStr.replace(ifind,1,"~");
+			    ifind =  anStr.find(",");
+		    }
             int id;
             ret = GetCameraSerialNumber(&id);
             if( ret!=DRV_SUCCESS ) {
@@ -494,41 +498,17 @@ int AndorCamera::GetListOfAvailableCameras()
 
       if(myCameraID_ == -1)
       {
-         //ret = GetListOfAvailableCameras();
-         //if (ret != DRV_SUCCESS)
-         //   return ret;
          ret = 0;
          for(int i = 0; i < NumberOfWorkableCameras_; ++i) {
             myCameraID_ = cameraID_[i];
             ret = SetCurrentCamera(myCameraID_);
             if (ret == DRV_SUCCESS)
                ret = ::Initialize(const_cast<char*>(driverDir_.c_str()));
-            /*
-            if (ret == DRV_SUCCESS) {
-            if(HasProperty("Camera")) {
-            int placeholder = 0;
-            }
-            break;
-            }
-            */
          }
 
          if(ret != DRV_SUCCESS) {
             return ret;
          }
-         /*
-         if(NumberOfAvailableCameras_>1 && NumberOfWorkableCameras_>=1)
-         {
-
-         myCameraID_=cameraID_[0];
-         ret = SetCurrentCamera(myCameraID_);
-         if (ret != DRV_SUCCESS)
-         return ret;
-         ret = ::Initialize(const_cast<char*>(driverDir_.c_str()));
-         if (ret != DRV_SUCCESS)
-         return ret;
-         }
-         */
       }
       else
       {
@@ -827,8 +807,6 @@ int AndorCamera::GetListOfAvailableCameras()
       nRet = SetProperty(MM::g_Keyword_ReadoutMode,readoutModes_[0].c_str());
       HSSpeedIdx_ = 0;
 
-
-      //Daigang 24-may-2007
       // Pre-Amp-Gain
       int numPreAmpGain;
       ret = GetNumberPreAmpGains(&numPreAmpGain);
@@ -866,8 +844,6 @@ int AndorCamera::GetListOfAvailableCameras()
          if (ret != DRV_SUCCESS)
             return ret;
       }
-      //eof Daigang
-
 
       // Vertical Shift Speed
       int numVSpeed;
@@ -967,7 +943,6 @@ int AndorCamera::GetListOfAvailableCameras()
 
 
       // camera temperature
-      // jizhen 05.08.2007
       // temperature range
       std::string strTips("");
       int minTemp, maxTemp;
@@ -1055,31 +1030,29 @@ int AndorCamera::GetListOfAvailableCameras()
             nRet = CreateProperty("CoolerMode", g_CoolerMode_FanOffAtShutdown, MM::String, false, pAct); 
          }
          assert(nRet == DEVICE_OK);
-         AddAllowedValue(/*Daigang 24-may-2007 "Cooler" */"CoolerMode", g_CoolerMode_FanOffAtShutdown);//"0");  //Daigang 24-may-2007
-         AddAllowedValue(/*Daigang 24-may-2007 "Cooler" */"CoolerMode", g_CoolerMode_FanOnAtShutdown);//"1");  //Daigang 24-may-2007
+         AddAllowedValue(/*Daigang 24-may-2007 "Cooler" */"CoolerMode", g_CoolerMode_FanOffAtShutdown);
+         AddAllowedValue(/*Daigang 24-may-2007 "Cooler" */"CoolerMode", g_CoolerMode_FanOnAtShutdown);
          nRet = SetProperty("CoolerMode", g_CoolerMode_FanOffAtShutdown);
          assert(nRet == DEVICE_OK);
 
       }
 
-      //jizhen 05.16.2007
       // Fan
       if(mb_canUseFan) {
          if(!HasProperty("FanMode"))
          {
             pAct = new CPropertyAction (this, &AndorCamera::OnFanMode);
-            nRet = CreateProperty("FanMode", /*Daigang 24-may-2007 "0" */g_FanMode_Full, /*Daigang 24-may-2007 MM::Integer */MM::String, false, pAct); 
+            nRet = CreateProperty("FanMode", g_FanMode_Full, MM::String, false, pAct); 
          }
          assert(nRet == DEVICE_OK);
-         AddAllowedValue("FanMode", g_FanMode_Full);// "0"); // high  //Daigang 24-may-2007
+         AddAllowedValue("FanMode", g_FanMode_Full);
          if((caps.ulFeatures&AC_FEATURES_MIDFANCONTROL)==AC_FEATURES_MIDFANCONTROL) {
-            AddAllowedValue("FanMode", g_FanMode_Low);//"1"); // low  //Daigang 24-may-2007
+            AddAllowedValue("FanMode", g_FanMode_Low);
          }
-         AddAllowedValue("FanMode", g_FanMode_Off);//"2"); // off  //Daigang 24-may-2007
+         AddAllowedValue("FanMode", g_FanMode_Off);
          nRet = SetProperty("FanMode", g_FanMode_Full);
          assert(nRet == DEVICE_OK);
       }
-      // eof jizhen
 
       // frame transfer mode
       if(((caps.ulAcqModes & AC_ACQMODE_FRAMETRANSFER) == AC_ACQMODE_FRAMETRANSFER)
@@ -3144,9 +3117,7 @@ int AndorCamera::GetListOfAvailableCameras()
       }
       LogMessage("Set Kinetic cycle time", true);
 
-      // kdb
       at_32 size;
-      // endof kdb
       ret = GetSizeOfCircularBuffer(&size);
       if (ret != DRV_SUCCESS)
       {
@@ -3206,6 +3177,7 @@ int AndorCamera::GetListOfAvailableCameras()
       }
 
       LogMessage("Starting acquisition in the camera", true);
+      startTime_ = GetCurrentMMTime();
       ret = ::StartAcquisition();
       seqThread_->Start();
 
@@ -3305,11 +3277,31 @@ int AndorCamera::GetListOfAvailableCameras()
             return ret;
       }
 
+      // create metadata
+      char label[MM::MaxStrLength];
+      this->GetLabel(label);
+
+      MM::MMTime timestamp = this->GetCurrentMMTime();
+      Metadata md;
+
+      MetadataSingleTag mstStartTime(MM::g_Keyword_Metadata_StartTime, label, true);
+      mstStartTime.SetValue(CDeviceUtils::ConvertToString(startTime_.getMsec()));
+      md.SetTag(mstStartTime);
+
+      MetadataSingleTag mst(MM::g_Keyword_Elapsed_Time_ms, label, true);
+      mst.SetValue(CDeviceUtils::ConvertToString(timestamp.getMsec()));
+      md.SetTag(mst);
+
+      MetadataSingleTag mstCount(MM::g_Keyword_Metadata_ImageNumber, label, true);
+      mstCount.SetValue(CDeviceUtils::ConvertToString(imageCounter_));      
+      md.SetTag(mstCount);
+
       // This method inserts new image in the circular buffer (residing in MMCore)
       int retCode = GetCoreCallback()->InsertImage(this, (unsigned char*) fullFrameBuffer_,
          GetImageWidth(),
          GetImageHeight(),
-         GetImageBytesPerPixel());
+         GetImageBytesPerPixel(),
+         &md);
 
       if (!stopOnOverflow_ && retCode == DEVICE_BUFFER_OVERFLOW)
       {
@@ -3318,7 +3310,8 @@ int AndorCamera::GetListOfAvailableCameras()
          return GetCoreCallback()->InsertImage(this, (unsigned char*) fullFrameBuffer_,
             GetImageWidth(),
             GetImageHeight(),
-            GetImageBytesPerPixel());
+            GetImageBytesPerPixel(),
+            &md);
       } else
          return DEVICE_OK;
    }
@@ -3561,7 +3554,8 @@ int AndorCamera::GetListOfAvailableCameras()
       g_AndorDriverLock.Lock();
       if (cam->GetNumberOfWorkableCameras() > 1)
       {
-         long currentCamera;
+	// must be defined as 32bit in order to compile on 64bit systems since GetCurrentCamera only takes 32bit -kdb		
+         at_32 currentCamera;
          GetCurrentCamera(&currentCamera);
          if (currentCamera != cam->GetMyCameraID())
          {
