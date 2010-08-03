@@ -1,4 +1,5 @@
  //////////////////////////////////////////////////////////////////////////////
+ //int ReadNBytes(int n, unsignbed char* answer);
 // FILE:          Arduino.h
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
@@ -192,6 +193,9 @@ public:
    int OnAnalogInput(MM::PropertyBase* pProp, MM::ActionType eAct, long channel);
 
 private:
+   int ReadNBytes(int n, unsigned char* answer);
+   char pins_[MM::MaxStrLength];
+   int pin_;
    bool initialized_;
    std::string name_;
 };

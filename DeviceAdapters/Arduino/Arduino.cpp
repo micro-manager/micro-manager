@@ -33,8 +33,9 @@ const char* g_DeviceNameArduinoInput = "Arduino-Input";
 unsigned g_switchState = 0;
 unsigned g_shutterState = 0;
 std::string g_port;
-std::string g_version;
-const std::string g_MMVersion = "1";
+int g_version;
+const int g_Min_MMVersion = 1;
+const int g_Max_MMVersion = 2;
 bool g_portAvailable = false;
 bool g_invertedLogic = false;
 bool g_triggerMode = false;
@@ -77,12 +78,11 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
    {
       return new CArduinoDA();
    }
-   /*
    else if (strcmp(deviceName, g_DeviceNameArduinoInput) == 0)
    {
       return new CArduinoInput;
    }
-   */
+
 
 
    return 0;
@@ -105,8 +105,10 @@ initialized_ (false)
    SetErrorText(ERR_PORT_OPEN_FAILED, "Failed opening Arduino USB device");
    SetErrorText(ERR_BOARD_NOT_FOUND, "Did not find an Arduino board with the correct firmware.  Is the Arduino board connected to this serial port?");
    SetErrorText(ERR_NO_PORT_SET, "Hub Device not found.  The Arduino Hub device is needed to create this device");
-   std::string errorText = "The firmware version on the Arduino is not compatible with this adapter.  Please use firmware version " + g_MMVersion;
-   SetErrorText(ERR_VERSION_MISMATCH, errorText.c_str());
+   std::ostringstream errorText;
+   errorText << "The firmware version on the Arduino is not compatible with this adapter.  Please use firmware version ";
+   errorText <<  g_Min_MMVersion << " to " << g_Max_MMVersion;
+   SetErrorText(ERR_VERSION_MISMATCH, errorText.str().c_str());
 
    CPropertyAction* pAct = new CPropertyAction(this, &CArduinoHub::OnPort);
    CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
@@ -166,16 +168,19 @@ int CArduinoHub::Initialize()
    if (ret != DEVICE_OK)
       return ret;
 
-   ret = GetSerialAnswer(g_port.c_str(), "\r\n", g_version);
+   std::string ans;
+   ret = GetSerialAnswer(g_port.c_str(), "\r\n", ans);
    if (ret != DEVICE_OK) {
          return ret;
    }
+   std::istringstream is(ans);
+   is >> g_version;
 
-   if (g_version != g_MMVersion)
+   if (g_version < g_Min_MMVersion || g_version > g_Max_MMVersion)
       return ERR_VERSION_MISMATCH;
 
    CPropertyAction* pAct = new CPropertyAction(this, &CArduinoHub::OnVersion);
-   CreateProperty("Version", g_version.c_str(), MM::String, true, pAct);
+   CreateProperty("Version", ans.c_str(), MM::Integer, true, pAct);
 
    ret = UpdateStatus();
    if (ret != DEVICE_OK)
@@ -209,7 +214,7 @@ int CArduinoHub::OnVersion(MM::PropertyBase* pProp, MM::ActionType pAct)
 {
    if (pAct == MM::BeforeGet)
    {
-      pProp->Set(g_version.c_str());
+      pProp->Set((long)g_version);
    }
    return DEVICE_OK;
 }
@@ -1350,13 +1355,25 @@ int CArduinoShutter::OnOnOff(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 
 /*
- * Reads digital and analogue input from Velleman board
- * Mainly to test read functions in USBManager
+ * Arduino input.  Can either be for all pins (0-6)
+ * or for an individual pin only
  */
 
 CArduinoInput::CArduinoInput() :
-name_(g_DeviceNameArduinoInput)
+   pin_(0),
+   name_(g_DeviceNameArduinoInput)
 {
+   std::string errorText = "To use the Input function you need firmware version 2 or higher";
+   SetErrorText(ERR_VERSION_MISMATCH, errorText.c_str());
+
+   CreateProperty("Pin", "All", MM::String, false, 0, true);
+   AddAllowedValue("Pin", "All");
+   AddAllowedValue("Pin", "0");
+   AddAllowedValue("Pin", "1");
+   AddAllowedValue("Pin", "2");
+   AddAllowedValue("Pin", "3");
+   AddAllowedValue("Pin", "4");
+   AddAllowedValue("Pin", "5");
 }
 
 CArduinoInput::~CArduinoInput()
@@ -1376,27 +1393,38 @@ int CArduinoInput::Initialize()
       return ERR_NO_PORT_SET;
    }
 
+   if (g_version < 2)
+      return ERR_VERSION_MISMATCH;
+
    // Name
    int ret = CreateProperty(MM::g_Keyword_Name, name_.c_str(), MM::String, true);
    if (DEVICE_OK != ret)
       return ret;
 
-   // Description
-   ret = CreateProperty(MM::g_Keyword_Description, "Arduino input", MM::String, true);
-   if (DEVICE_OK != ret)
+   ret = GetProperty("Pin", pins_);
+   if (ret != DEVICE_OK)
       return ret;
+   if (strcmp("All", pins_) != 0)
+      pin_ = atoi(pins_); 
 
    // Digital Input
    CPropertyAction* pAct = new CPropertyAction (this, &CArduinoInput::OnDigitalInput);
-   ret = CreateProperty("Digital Input", "0", MM::Integer, true, pAct);
+   ret = CreateProperty("DigitalInput", "0", MM::Integer, true, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
-   for (long i=1; i <=8; i++) 
+   int start = 0;
+   int end = 5;
+   if (strcmp("All", pins_) != 0) {
+      start = pin_;
+      end = pin_;
+   }
+
+   for (long i=start; i <=end; i++) 
    {
       CPropertyActionEx *pExAct = new CPropertyActionEx(this, &CArduinoInput::OnAnalogInput, i);
       std::ostringstream os;
-      os << "Analogue Input A" << i;
+      os << "AnalogInput" << i;
       ret = CreateProperty(os.str().c_str(), "0.0", MM::Float, true, pExAct);
       if (ret != DEVICE_OK)
          return ret;
@@ -1426,35 +1454,79 @@ bool CArduinoInput::Busy()
 // Action handlers
 ///////////////////////////////////////////////////////////////////////////////
 
-int CArduinoInput::OnDigitalInput(MM::PropertyBase* /* pProp */, MM::ActionType eAct)
+int CArduinoInput::OnDigitalInput(MM::PropertyBase*  pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
-      /*
-      unsigned char result;
-      int ret =  g_ArduinoInterface.ReadAllDigital(*this, *GetCoreCallback(), result);
+      unsigned char command[1];
+      command[0] = 40;
+
+      int ret = WriteToComPort(g_port.c_str(), (const unsigned char*) command, 1);
       if (ret != DEVICE_OK)
          return ret;
-      pProp->Set((long)result);
-      */
+
+      unsigned char answer[2];
+      ret = ReadNBytes(2, answer);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      if (answer[0] != 40)
+         return ERR_COMMUNICATION;
+
+      if (strcmp("All", pins_) != 0) {
+         answer[1] = answer[1] >> pin_;
+         answer[1] &= answer[1] & 1;
+      }
+
+      pProp->Set((long)answer[1]);
    }
 
    return DEVICE_OK;
 }
 
-int CArduinoInput::OnAnalogInput(MM::PropertyBase* /* pProp */, MM::ActionType eAct, long /* channel*/ )
+int CArduinoInput::OnAnalogInput(MM::PropertyBase* pProp, MM::ActionType eAct, long  channel )
 {
    if (eAct == MM::BeforeGet)
    {
-      /*
-      long result;
-      int ret = g_ArduinoInterface.ReadAnalogChannel(*this, *GetCoreCallback(), (unsigned char) channel, result);
+      unsigned char command[2];
+      command[0] = 41;
+      command[1] = (unsigned char) channel;
+
+      int ret = WriteToComPort(g_port.c_str(), (const unsigned char*) command, 2);
       if (ret != DEVICE_OK)
          return ret;
 
-      pProp->Set(result);
-      */
+      unsigned char answer[4];
+      ret = ReadNBytes(4, answer);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      if (answer[0] != 41)
+         return ERR_COMMUNICATION;
+      if (answer[1] != channel)
+         return ERR_COMMUNICATION;
+
+      int tmp = answer[2];
+      tmp = tmp << 8;
+      tmp = tmp | answer[3];
+
+      pProp->Set((long) tmp);
    }
+   return DEVICE_OK;
+}
+
+int CArduinoInput::ReadNBytes(int n, unsigned char* answer)
+{
+   MM::MMTime startTime = GetCurrentMMTime();
+   unsigned long bytesRead = 0;
+   while ((bytesRead < n) && ( (GetCurrentMMTime() - startTime).getMsec() < 500)) {
+      unsigned long bR;
+      int ret = ReadFromComPort(g_port.c_str(), answer + bytesRead, n - bytesRead, bR);
+      if (ret != DEVICE_OK)
+         return ret;
+      bytesRead += bR;
+   }
+
    return DEVICE_OK;
 }
 
