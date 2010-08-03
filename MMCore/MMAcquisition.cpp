@@ -101,14 +101,14 @@ void ImageTask::autofocus() {
 void ImageTask::acquireImage() {
    int w, h, d;
 
-   if (!eng_->core_->getShutterOpen()) {
+   if (eng_->core_->getAutoShutter() && !eng_->core_->getShutterOpen()) {
       eng_->core_->setShutterOpen(true);
       eng_->core_->logMessage("opened shutter");
    }
    eng_->core_->snapImage();
    eng_->core_->logMessage("snapped image");
 
-   if (imageRequest_.closeShutter) {
+   if (eng_->core_->getAutoShutter() && imageRequest_.closeShutter) {
       eng_->core_->setShutterOpen(false);
       eng_->core_->logMessage("closed shutter");
    }
