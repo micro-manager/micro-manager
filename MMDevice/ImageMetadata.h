@@ -443,6 +443,13 @@ public:
       frameData[key] = value;
    }
 
+   void put(std::string key, long value)
+   {
+      char valueStr[256];
+      sprintf_s(valueStr,"%d",value);
+      frameData[key] = valueStr;
+   }
+
    bool has(std::string key)
    {
       return (frameData.end() != frameData.find(key));
@@ -522,5 +529,15 @@ private:
    std::map<std::string, MetadataTag*> tags_;
    typedef std::map<std::string, MetadataTag*>::const_iterator TagIterator;
 };
+
+typedef void* TaggedImagePixels;
+
+
+typedef struct
+{
+   TaggedImagePixels pixels;
+   std::map<std::string,std::string> metadata;
+} TaggedImage;
+
 
 #endif //_IMAGE_METADATA_H_
