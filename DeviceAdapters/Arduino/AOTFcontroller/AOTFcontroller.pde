@@ -145,6 +145,7 @@
    
    // Set analogue pins as input:
    DDRC = DDRC & B11000000;
+   // Turn on build-in pull-up resistors
    PORTC = PORTC | B00111111;
    
    digitalWrite(latchPin, HIGH);   
@@ -356,6 +357,25 @@
               Serial.print(pin, BYTE);
               Serial.print(highByte(val), BYTE);
               Serial.print(lowByte(val), BYTE);
+           }
+         }
+         break;
+         
+       case 42:
+         if (waitForSerial(timeOut_)) {
+           int pin = Serial.read();
+           if (waitForSerial(timeOut_)) {
+             int state = Serial.read();
+             Serial.print(42, BYTE);
+             Serial.print(pin, BYTE);
+             if (state == 0) {
+                digitalWrite(14+pin, LOW);
+                Serial.print(0, BYTE);
+             }
+             if (state == 1) {
+                digitalWrite(14+pin, HIGH);
+                Serial.print(1, BYTE);
+             }
            }
          }
          break;

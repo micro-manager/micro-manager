@@ -194,7 +194,10 @@ public:
 
 private:
    int ReadNBytes(int n, unsigned char* answer);
+   int SetPullUp(int pin, int state);
+
    char pins_[MM::MaxStrLength];
+   char pullUp_[MM::MaxStrLength];
    int pin_;
    bool initialized_;
    std::string name_;

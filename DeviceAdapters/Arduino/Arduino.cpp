@@ -1374,6 +1374,10 @@ CArduinoInput::CArduinoInput() :
    AddAllowedValue("Pin", "3");
    AddAllowedValue("Pin", "4");
    AddAllowedValue("Pin", "5");
+
+   CreateProperty("Pull-Up-Resistor", "On", MM::String, false, 0, true);
+   AddAllowedValue("Pull-Up-Resistor", "On");
+   AddAllowedValue("Pull-Up-Resistor", "Off");
 }
 
 CArduinoInput::~CArduinoInput()
@@ -1407,6 +1411,10 @@ int CArduinoInput::Initialize()
    if (strcmp("All", pins_) != 0)
       pin_ = atoi(pins_); 
 
+   ret = GetProperty("Pull-Up-Resistor", pullUp_);
+   if (ret != DEVICE_OK)
+      return ret;
+ 
    // Digital Input
    CPropertyAction* pAct = new CPropertyAction (this, &CArduinoInput::OnDigitalInput);
    ret = CreateProperty("DigitalInput", "0", MM::Integer, true, pAct);
@@ -1428,6 +1436,13 @@ int CArduinoInput::Initialize()
       ret = CreateProperty(os.str().c_str(), "0.0", MM::Float, true, pExAct);
       if (ret != DEVICE_OK)
          return ret;
+      // set pull up resistor state for this pin
+      if (strcmp("On", pullUp_) == 0) {
+         SetPullUp(i, 1);
+      } else {
+         SetPullUp(i, 0);
+      }
+
    }
 
    ret = UpdateStatus();
@@ -1514,6 +1529,33 @@ int CArduinoInput::OnAnalogInput(MM::PropertyBase* pProp, MM::ActionType eAct, l
    }
    return DEVICE_OK;
 }
+
+int CArduinoInput::SetPullUp(int pin, int state)
+{
+
+   int l = 3;
+   unsigned char command[l];
+   command[0] = 42;
+   command[1] = (unsigned char) pin;
+   command[2] = (unsigned char) state;
+
+   int ret = WriteToComPort(g_port.c_str(), (const unsigned char*) command, l);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   unsigned char answer[3];
+   ret = ReadNBytes(3, answer);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if (answer[0] != 42)
+      return ERR_COMMUNICATION;
+   if (answer[1] != pin)
+      return ERR_COMMUNICATION;
+
+   return DEVICE_OK;
+}
+
 
 int CArduinoInput::ReadNBytes(int n, unsigned char* answer)
 {
