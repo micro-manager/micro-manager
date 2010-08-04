@@ -168,11 +168,13 @@ bool CircularBuffer::InsertMultiChannel(const unsigned char* pixArray, unsigned 
          if (!pImg)
             return false;
 
+         Metadata md;
+
          if (pMd)
          {
             // TODO: the same metadata is inserted for each channel ???
             // Perhaps we need to add specific tags to each channel
-            pImg->SetMetadata(*pMd);
+            md = *pMd;
          }
          else
          {
@@ -182,8 +184,22 @@ bool CircularBuffer::InsertMultiChannel(const unsigned char* pixArray, unsigned 
             MetadataSingleTag mst(MM::g_Keyword_Elapsed_Time_ms, "Buffer", true);
             mst.SetValue(CDeviceUtils::ConvertToString(timestamp.getMsec()));
             md.SetTag(mst);
-            pImg->SetMetadata(md);
          }
+
+         md.put("Width",width);
+         md.put("Height",height);
+         if (byteDepth == 1)
+            md.put("PixelType","GRAY8");
+         else if (byteDepth == 2)
+            md.put("PixelType","GRAY16");
+         else if (byteDepth == 4)
+            md.put("PixelType","RGB32");
+         else if (byteDepth == 8)
+            md.put("PixelType","RGB64");
+         else
+            md.put("PixelType","Unknown");
+
+         pImg->SetMetadata(md);
          pImg->SetPixels(pixArray + i*singleChannelSize);
       }
 
