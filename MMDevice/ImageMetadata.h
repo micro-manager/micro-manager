@@ -530,14 +530,4 @@ private:
    typedef std::map<std::string, MetadataTag*>::const_iterator TagIterator;
 };
 
-typedef void* TaggedImagePixels;
-
-
-typedef struct
-{
-   TaggedImagePixels pixels;
-   std::map<std::string,std::string> metadata;
-} TaggedImage;
-
-
 #endif //_IMAGE_METADATA_H_
