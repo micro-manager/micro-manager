@@ -193,7 +193,7 @@ public:
    int OnAnalogInput(MM::PropertyBase* pProp, MM::ActionType eAct, long channel);
 
 private:
-   int ReadNBytes(int n, unsigned char* answer);
+   int ReadNBytes(unsigned int n, unsigned char* answer);
    int SetPullUp(int pin, int state);
 
    char pins_[MM::MaxStrLength];

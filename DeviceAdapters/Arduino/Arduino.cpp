@@ -1533,13 +1533,13 @@ int CArduinoInput::OnAnalogInput(MM::PropertyBase* pProp, MM::ActionType eAct, l
 int CArduinoInput::SetPullUp(int pin, int state)
 {
 
-   int l = 3;
-   unsigned char command[l];
+   const int nrChrs = 3;
+   unsigned char command[nrChrs];
    command[0] = 42;
    command[1] = (unsigned char) pin;
    command[2] = (unsigned char) state;
 
-   int ret = WriteToComPort(g_port.c_str(), (const unsigned char*) command, l);
+   int ret = WriteToComPort(g_port.c_str(), (const unsigned char*) command, nrChrs);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -1557,7 +1557,7 @@ int CArduinoInput::SetPullUp(int pin, int state)
 }
 
 
-int CArduinoInput::ReadNBytes(int n, unsigned char* answer)
+int CArduinoInput::ReadNBytes(unsigned int n, unsigned char* answer)
 {
    MM::MMTime startTime = GetCurrentMMTime();
    unsigned long bytesRead = 0;
