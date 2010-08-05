@@ -445,9 +445,9 @@ public:
 
    void put(std::string key, long value)
    {
-      char valueStr[256];
-      sprintf_s(valueStr,"%d",value);
-      frameData[key] = valueStr;
+      std::stringstream os;
+      os << value;
+      frameData[key] = os.str();
    }
 
    bool has(std::string key)
