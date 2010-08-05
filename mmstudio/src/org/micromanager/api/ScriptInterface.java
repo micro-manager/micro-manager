@@ -29,7 +29,6 @@ import java.awt.geom.Point2D;
 import java.util.Map;
 
 import mmcorej.CMMCore;
-import mmcorej.Metadata;
 import mmcorej.TaggedImage;
 
 import org.micromanager.metadata.WellAcquisitionData;

@@ -9,7 +9,6 @@ import java.util.ArrayList;
 import java.util.Map;
 import mmcorej.AcquisitionSettings;
 import mmcorej.CMMCore;
-import mmcorej.Metadata;
 import mmcorej.TaggedImage;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.ChannelSpec;
@@ -117,40 +116,6 @@ public class AcquisitionDisplayThread extends Thread {
       ReportingUtils.logMessage(imgCount_ + " images in " + (t2 - t1) + " ms.");
 
       cleanup();
-   }
-
-   private int getMetadataIndex(Metadata m, String key) {
-      if (m.getFrameData().has_key(key)) {
-         String val = m.get(key);
-         if (val == null || val.length() == 0) {
-            return -1;
-         } else {
-            System.out.println("frameData[\"" + key + "\"] = \"" + val + "\"");
-         }
-         int result;
-         try {
-            result = Integer.parseInt(val);
-         } catch (Exception e) {
-            e.printStackTrace();
-            System.out.println("error. now val = \"" + val + "\"");
-            result = -1;
-         }
-         return result;
-      } else {
-         return -1;
-      }
-   }
-
-   protected boolean sameFrame(Metadata lastMD, Metadata mdCopy) {
-      if (lastMD == null || mdCopy == null) {
-         return false;
-      }
-      boolean same =
-              (getMetadataIndex(lastMD, "Position") == getMetadataIndex(mdCopy, "Position"))
-              && (getMetadataIndex(lastMD, "ChannelIndex") == getMetadataIndex(mdCopy, "ChannelIndex"))
-              && (getMetadataIndex(lastMD, "Slice") == getMetadataIndex(mdCopy, "Slice"))
-              && (getMetadataIndex(lastMD, "Frame") == getMetadataIndex(mdCopy, "Frame"));
-      return same;
    }
 
    protected void cleanup() {

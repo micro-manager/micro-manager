@@ -6,7 +6,6 @@
 package org.micromanager.acquisition;
 
 import java.util.Map;
-import mmcorej.Metadata;
 import mmcorej.TaggedImage;
 import org.json.JSONObject;
 import org.micromanager.metadata.AcquisitionData;

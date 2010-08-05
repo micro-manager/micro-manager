@@ -6,7 +6,6 @@ import ij.process.ColorProcessor;
 import java.awt.Color;
 import java.awt.image.DirectColorModel;
 import java.util.Map;
-import mmcorej.Metadata;
 import mmcorej.TaggedImage;
 
 import org.json.JSONObject;
