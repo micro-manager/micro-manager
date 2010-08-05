@@ -8,9 +8,6 @@ import java.awt.Color;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import mmcorej.Metadata;
 import mmcorej.TaggedImage;
 import org.json.JSONObject;
 import org.micromanager.metadata.AcquisitionData;
@@ -155,7 +152,7 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       if (!newData_) {
          try {
             summaryMetadata_ = imageFileManager_.getSummaryMetadata();
-            width_ = MDUtils.getWidth(systemMetadata_);
+            width_ = MDUtils.getWidth(summaryMetadata_);
             height_ = MDUtils.getHeight(summaryMetadata_);
             pixelType_ = MDUtils.getPixelType(summaryMetadata_);
             numSlices_ = MDUtils.getInt(summaryMetadata_, "Slices");
@@ -281,10 +278,6 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
    public void setRootDirectory(String dir) throws MMScriptException {
       throw new UnsupportedOperationException("Not supported yet.");
    }
-/*
-   public void setSummaryProperties(Map<String,String> md) throws MMScriptException {
-      summaryMetadata_ = md;
-   }*/
 
    public void setSystemProperties(Map<String,String> md) throws MMScriptException {
       systemMetadata_ = md;
@@ -324,7 +317,6 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
          }
       }
    }
-
 
    public void setSummaryProperties(Map<String,String> md) {
       summaryMetadata_ = md;
