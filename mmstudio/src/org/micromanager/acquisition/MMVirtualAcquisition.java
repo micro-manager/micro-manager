@@ -6,10 +6,16 @@ import ij.gui.ImageWindow;
 import ij.process.ImageStatistics;
 import java.awt.Color;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import mmcorej.Metadata;
+import mmcorej.TaggedImage;
 import org.json.JSONObject;
 import org.micromanager.metadata.AcquisitionData;
 import org.micromanager.utils.JavaUtils;
+import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
@@ -31,13 +37,13 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
    private int width_;
    private boolean initialized_;
    private ImagePlus hyperImage_;
-   private Metadata[] displaySettings_;
+   private Map<String,String>[] displaySettings_;
    private AcquisitionVirtualStack virtualStack_;
-   private int type_;
+   private String pixelType_;
    private ImageFileManagerInterface imageFileManager_;
-   private Metadata summaryMetadata_ = null;
+   private Map<String,String> summaryMetadata_ = null;
    private final boolean newData_;
-   private Metadata systemMetadata_ = null;
+   private Map<String,String> systemMetadata_ = null;
 
    public MMVirtualAcquisition(String name, String dir, boolean newData) {
       name_ = name;
@@ -50,40 +56,43 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
          throw new MMScriptException("Can't change dimensions - the acquisition is already initialized");
       }
       if (summaryMetadata_ == null) {
-         summaryMetadata_ = new Metadata();
+         summaryMetadata_ = new HashMap<String,String>();
       }
       numFrames_ = frames;
       numChannels_ = channels;
       numSlices_ = slices;
-      displaySettings_ = new Metadata[channels];
+      displaySettings_ = new Map[channels];
       for (int i = 0; i < channels; ++i) {
-         displaySettings_[i] = new Metadata();
+         displaySettings_[i] = new HashMap<String,String>();
       }
 
-      summaryMetadata_.put("Channels", NumberUtils.intToCoreString(numChannels_));
-      summaryMetadata_.put("Slices", NumberUtils.intToCoreString(numSlices_));
-      summaryMetadata_.put("Frames", NumberUtils.intToCoreString(numFrames_));
+      MDUtils.put(summaryMetadata_,"Channels",numChannels_);
+      MDUtils.put(summaryMetadata_,"Slices",numSlices_);
+      MDUtils.put(summaryMetadata_,"Frames",numFrames_);
    }
 
    public void setImagePhysicalDimensions(int width, int height, int depth) throws MMScriptException {
       width_ = width;
       height_ = height;
       depth_ = depth;
+      int type = 0;
 
-      if (depth_ == 1) {
-         type_ = ImagePlus.GRAY8;
-      } else if (depth_ == 2) {
-         type_ = ImagePlus.GRAY16;
-      } else if (4 == depth_) {
-         type_ = ImagePlus.COLOR_RGB;
-      } else {
-         depth_ = 0;
-         throw new MMScriptException("Unsupported pixel depth");
-      }
+      if (depth_ == 1)
+         type = ImagePlus.GRAY8;
+      if (depth_ == 2)
+         type = ImagePlus.GRAY16;
+      if (depth_ == 4)
+         type = ImagePlus.GRAY8;
+      if (depth_ == 8)
+         type = 64;
 
       summaryMetadata_.put("Width", NumberUtils.intToCoreString(width_));
       summaryMetadata_.put("Height", NumberUtils.intToCoreString(height_));
-      summaryMetadata_.put("Type", NumberUtils.intToCoreString(type_));
+      try {
+         MDUtils.setImageType(summaryMetadata_, type);
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
+      }
    }
 
    public int getChannels() {
@@ -144,16 +153,24 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       imageFileManager_ = new DefaultImageFileManager(dir_, newData_, summaryMetadata_, systemMetadata_);
       imageCache_ = new MMImageCache(imageFileManager_);
       if (!newData_) {
-         summaryMetadata_ = imageFileManager_.getSummaryMetadata();
-         width_ = summaryMetadata_.getIntProperty("Width");
-         height_ = summaryMetadata_.getIntProperty("Height");
-         type_ = summaryMetadata_.getIntProperty("Type");
-         numSlices_ = summaryMetadata_.getIntProperty("Slices");
-         numFrames_ = summaryMetadata_.getIntProperty("Frames");
-         numChannels_ = summaryMetadata_.getIntProperty("Channels");
+         try {
+            summaryMetadata_ = imageFileManager_.getSummaryMetadata();
+            width_ = MDUtils.getWidth(systemMetadata_);
+            height_ = MDUtils.getHeight(summaryMetadata_);
+            pixelType_ = MDUtils.getPixelType(summaryMetadata_);
+            numSlices_ = MDUtils.getInt(summaryMetadata_, "Slices");
+            numFrames_ = MDUtils.getInt(summaryMetadata_, "Frames");
+            numChannels_ = MDUtils.getInt(summaryMetadata_, "Channels");
+         } catch (Exception ex) {
+            ReportingUtils.logError(ex);
+         }
       }
       virtualStack_ = new AcquisitionVirtualStack(width_, height_, null, dir_, imageCache_, numChannels_ * numSlices_ * numFrames_);
-      virtualStack_.setType(type_);
+      try {
+         virtualStack_.setType(MDUtils.getImageType(summaryMetadata_));
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
+      }
       initialized_ = true;
    }
 
@@ -167,7 +184,8 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       if (hyperImage_ == null) {
          show();
       }
-
+      Map<String,String> md = taggedImg.md;
+      
       if (numChannels_ > 1) {
          ((CompositeImage) hyperImage_).setChannelsUpdated();
       }
@@ -180,8 +198,13 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
             hyperImage_.updateAndDraw();
          }
       }
-      if ((hyperImage_.getFrame() - 1) > (taggedImg.md.getFrame() - 2)) {
-         hyperImage_.setPosition(1 + taggedImg.md.getChannelIndex(), 1 + taggedImg.md.getSlice(), 1 + taggedImg.md.getFrame());
+
+      try {
+         if ((hyperImage_.getFrame() - 1) > (MDUtils.getFrame(md) - 2)) {
+            hyperImage_.setPosition(1 + MDUtils.getChannelIndex(md), 1 + MDUtils.getSlice(md), 1 + MDUtils.getFrame(md));
+         }
+      } catch (Exception e) {
+         ReportingUtils.logError(e);
       }
    }
 
@@ -205,7 +228,7 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       win.pack();
 
       if (!newData_) {
-         for (Metadata md:imageFileManager_.getImageMetadata()) {
+         for (Map<String,String> md:imageFileManager_.getImageMetadata()) {
             virtualStack_.rememberImage(md);
          }
          ((CompositeImage) hyperImage_).setChannelsUpdated();
@@ -226,7 +249,7 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       displaySettings_[channel].put("ChannelName", name);
    }
 
-   public Metadata getCurrentMetadata() {
+   public Map<String,String> getCurrentMetadata() {
       int index = getCurrentFlatIndex();
       return virtualStack_.getTaggedImage(index).md;
    }
@@ -258,12 +281,12 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
    public void setRootDirectory(String dir) throws MMScriptException {
       throw new UnsupportedOperationException("Not supported yet.");
    }
-
-   public void setSummaryProperties(Metadata md) throws MMScriptException {
+/*
+   public void setSummaryProperties(Map<String,String> md) throws MMScriptException {
       summaryMetadata_ = md;
-   }
+   }*/
 
-   public void setSystemProperties(Metadata md) throws MMScriptException {
+   public void setSystemProperties(Map<String,String> md) throws MMScriptException {
       systemMetadata_ = md;
    }
 
@@ -302,7 +325,12 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       }
    }
 
-   public void setSystemState(Metadata md) throws MMScriptException {
+
+   public void setSummaryProperties(Map<String,String> md) {
+      summaryMetadata_ = md;
+   }
+
+   public void setSystemState(Map<String,String> md) {
       systemMetadata_ = md;
    }
 }

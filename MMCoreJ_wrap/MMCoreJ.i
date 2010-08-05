@@ -325,6 +325,41 @@
 //%typemap(javabase) MetadataKeyError "java.lang.Exception"
 //%typemap(javabase) MetadataIndexError "java.lang.Exception"
 
+%typemap(javaimports) CMMCore %{
+	import java.util.Map;
+	import java.util.HashMap;
+%}
+
+%typemap(javacode) CMMCore %{
+	private Map<String,String> metadataToMap(Metadata md) {
+		Map<String,String> mdMap = new HashMap<String,String>();
+		for (String key:md.getFrameKeys())
+			mdMap.put(key,md.get(key));	
+		return mdMap;
+	}
+	
+	private TaggedImage createTaggedImage(Object pixels, Metadata md) {
+		return new TaggedImage(pixels, metadataToMap(md));	
+	}
+	
+	public TaggedImage getLastTaggedImage() throws java.lang.Exception {
+		Metadata md = new Metadata();
+		Object pixels = getLastImageMD(md);
+		return createTaggedImage(pixels, md);
+	}
+	
+	public TaggedImage popNextTaggedImage() throws java.lang.Exception {
+		Metadata md = new Metadata();
+		Object pixels = popNextImageMD(md);
+		return createTaggedImage(pixels, md);
+	}
+	
+	public Map<String,String> getAcquisitionMetadataMap() throws java.lang.Exception {
+		return metadataToMap(getAcquisitionInitialMetadata());
+	}
+%}
+
+
 %typemap(javacode) CMMError %{
    public String getMessage() {
       return getMsg();

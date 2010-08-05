@@ -6,7 +6,8 @@
 package org.micromanager.acquisition;
 
 import java.util.ArrayList;
-import mmcorej.Metadata;
+import java.util.Map;
+import mmcorej.TaggedImage;
 import org.micromanager.utils.MMException;
 
 /**
@@ -17,9 +18,9 @@ public interface ImageFileManagerInterface {
    public String writeImage(TaggedImage taggedImage) throws MMException;
    public TaggedImage readImage(String filename);
    public void finishWriting();
-   public void setSummaryMetadata(Metadata md);
-   public Metadata getSummaryMetadata();
-   public void setSystemMetadata(Metadata md);
-   public Metadata getSystemMetadata();
-   public ArrayList<Metadata> getImageMetadata();
+   public void setSummaryMetadata(Map<String,String> md);
+   public Map<String,String> getSummaryMetadata();
+   public void setSystemMetadata(Map<String,String> md);
+   public Map<String,String> getSystemMetadata();
+   public ArrayList<Map<String,String>> getImageMetadata();
 }

@@ -19,10 +19,12 @@ import java.awt.AWTEvent;
 import java.awt.event.AWTEventListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.Map;
 import java.util.Vector;
 import javax.swing.table.AbstractTableModel;
 import mmcorej.Metadata;
 import mmcorej.StrMap;
+import mmcorej.TaggedImage;
 import org.micromanager.utils.GUIUtils;
 
 /**
@@ -228,14 +230,13 @@ public class MetadataViewer extends javax.swing.JFrame
          return columnNames_[colIndex];
       }
 
-      public synchronized void setMetadata(Metadata md) {
+      public synchronized void setMetadata(Map<String,String> md) {
          clear();
          if (md != null) {
-            StrMap data = md.getFrameData();
-            for (String key : md.getFrameKeys()) {
+            for (String key : md.keySet()) {
                Vector<String> rowData = new Vector<String>();
                rowData.add(key);
-               rowData.add(data.get(key));
+               rowData.add(md.get(key));
                addRow(rowData);
             }
          }
@@ -256,7 +257,7 @@ public class MetadataViewer extends javax.swing.JFrame
                if (taggedImg == null) {
                   model_.setMetadata(null);
                } else {
-                  Metadata md = vstack.getTaggedImage(slice).md;
+                  Map<String,String> md = vstack.getTaggedImage(slice).md;
                   model_.setMetadata(md);
                }
             } else {

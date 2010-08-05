@@ -5,7 +5,9 @@
 
 package org.micromanager.acquisition;
 
+import java.util.Map;
 import mmcorej.Metadata;
+import mmcorej.TaggedImage;
 import org.json.JSONObject;
 import org.micromanager.metadata.AcquisitionData;
 import org.micromanager.utils.MMScriptException;
@@ -68,9 +70,9 @@ public interface AcquisitionInterface {
 
    void setRootDirectory(String dir) throws MMScriptException;
 
-   void setSummaryProperties(Metadata md) throws MMScriptException;
+   void setSummaryProperties(Map<String,String> md) throws MMScriptException;
 
-   void setSystemState(Metadata md) throws MMScriptException;
+   void setSystemState(Map<String,String> md) throws MMScriptException;
 
    void setSystemState(int frame, int channel, int slice, JSONObject state) throws MMScriptException;
 

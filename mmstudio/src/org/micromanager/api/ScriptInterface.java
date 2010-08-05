@@ -26,10 +26,11 @@ package org.micromanager.api;
 import ij.gui.ImageWindow;
 import java.awt.Color;
 import java.awt.geom.Point2D;
+import java.util.Map;
 
 import mmcorej.CMMCore;
 import mmcorej.Metadata;
-import org.micromanager.acquisition.TaggedImage;
+import mmcorej.TaggedImage;
 
 import org.micromanager.metadata.WellAcquisitionData;
 import org.micromanager.navigation.PositionList;
@@ -128,9 +129,9 @@ public interface ScriptInterface {
     */
    public void setAcquisitionProperty(String acqName, String propertyName, String value) throws MMScriptException;
 
-   public void setAcquisitionSystemState(String acqName, Metadata md) throws MMScriptException;
+   public void setAcquisitionSystemState(String acqName, Map<String,String> md) throws MMScriptException;
 
-   public void setAcquisitionSummary(String acqName, Metadata md) throws MMScriptException;
+   public void setAcquisitionSummary(String acqName, Map<String,String> md) throws MMScriptException;
    
    /**
     * Sets property attached to an individual image

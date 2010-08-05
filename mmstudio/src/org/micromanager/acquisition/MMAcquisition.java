@@ -5,7 +5,9 @@ import ij.process.ColorProcessor;
 
 import java.awt.Color;
 import java.awt.image.DirectColorModel;
+import java.util.Map;
 import mmcorej.Metadata;
+import mmcorej.TaggedImage;
 
 import org.json.JSONObject;
 import org.micromanager.image5d.ChannelCalibration;
@@ -336,7 +338,7 @@ public class MMAcquisition implements AcquisitionInterface {
       throw new UnsupportedOperationException("Not supported yet.");
    }
 
-   public void setSummaryProperties(Metadata md) throws MMScriptException {
+   public void setSummaryProperties(Map<String,String> md) throws MMScriptException {
       throw new UnsupportedOperationException("Not supported yet.");
    }
 
@@ -344,7 +346,7 @@ public class MMAcquisition implements AcquisitionInterface {
       return imgWin_.isClosed();
    }
 
-   public void setSystemState(Metadata md) throws MMScriptException {
+   public void setSystemState(Map<String,String> md) throws MMScriptException {
       throw new UnsupportedOperationException("Not supported yet.");
    }
 

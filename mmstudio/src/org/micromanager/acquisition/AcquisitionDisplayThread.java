@@ -6,12 +6,15 @@ package org.micromanager.acquisition;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Map;
 import mmcorej.AcquisitionSettings;
 import mmcorej.CMMCore;
 import mmcorej.Metadata;
+import mmcorej.TaggedImage;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.ChannelSpec;
 import org.micromanager.utils.JavaUtils;
+import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -60,7 +63,7 @@ public class AcquisitionDisplayThread extends Thread {
                }
             }
             
-            gui_.setAcquisitionSystemState(acqName, core_.getAcquisitionInitialMetadata());
+            gui_.setAcquisitionSystemState(acqName, core_.getAcquisitionMetadataMap());
             gui_.initializeAcquisition(acqName, (int) core_.getImageWidth(), (int) core_.getImageHeight(), (int) core_.getBytesPerPixel());
          }
       } catch (Exception ex) {
@@ -86,14 +89,14 @@ public class AcquisitionDisplayThread extends Thread {
             while (core_.getRemainingImageCount() > 0) {
                ++imgCount_;
                try {
-                  Metadata mdCopy = new Metadata();
+                  TaggedImage taggedImg;
                   if (true /*! diskCached_*/) {
-                     img = core_.popNextImageMD(0, 0, mdCopy);
+                     taggedImg = core_.popNextTaggedImage();
                   } else {
-                     img = core_.getLastImageMD(0, 0, mdCopy);
+                     taggedImg = core_.getLastTaggedImage();
                      Thread.sleep(10);
                   }
-                  TaggedImage taggedImg = new TaggedImage(img, mdCopy);
+                  //TaggedImage taggedImg = new TaggedImage(img, mdCopy);
 
                   displayImage(taggedImg);
                   //    ReportingUtils.logMessage("time=" + mdCopy.getFrame() + ", position=" +
@@ -160,10 +163,9 @@ public class AcquisitionDisplayThread extends Thread {
 
    private void displayImage(TaggedImage taggedImg) {
 
-      Metadata m = taggedImg.md;
-      int posIndex = m.getPositionIndex();
-
+      Map<String,String> m = taggedImg.md;
       try {
+         int posIndex = MDUtils.getPositionIndex(m);
          gui_.addImage(acqNames_.get(posIndex), taggedImg);
       } catch (Exception e) {
          ReportingUtils.logError(e);

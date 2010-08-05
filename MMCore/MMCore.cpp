@@ -1851,6 +1851,11 @@ void* CMMCore::getLastImageMD(unsigned channel, unsigned slice, Metadata& md) co
       throw CMMError(getCoreErrorText(MMERR_CircularBufferEmpty).c_str(), MMERR_CircularBufferEmpty);
 }
 
+void* CMMCore::getLastImageMD(Metadata& md) const throw (CMMError)
+{
+   return getLastImageMD(0, 0, md);
+}
+
 /**
  * Gets and removes the next image from the circular buffer.
  * Returns 0 if the buffer is empty.
@@ -1874,6 +1879,11 @@ void* CMMCore::popNextImageMD(unsigned channel, unsigned slice, Metadata& md) th
    }
    else
       throw CMMError(getCoreErrorText(MMERR_CircularBufferEmpty).c_str(), MMERR_CircularBufferEmpty);
+}
+
+void* CMMCore::popNextImageMD(Metadata& md) throw (CMMError)
+{
+   return popNextImageMD(0, 0, md);
 }
 
 

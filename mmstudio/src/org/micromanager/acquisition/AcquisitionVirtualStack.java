@@ -10,8 +10,11 @@ import java.awt.image.ColorModel;
 import java.io.File;
 import java.io.FileFilter;
 import java.util.HashMap;
-import mmcorej.Metadata;
+import java.util.Map;
+import mmcorej.TaggedImage;
 import org.micromanager.utils.ImageUtils;
+import org.micromanager.utils.MDUtils;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  *
@@ -71,7 +74,7 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
       if (!filenames_.containsKey(flatIndex))
          return ImageUtils.makeProcessor(type_, width_, height_).getPixels();
       else {
-         return imageCache_.getImage(filenames_.get(flatIndex)).img;
+         return imageCache_.getImage(filenames_.get(flatIndex)).pix;
       }
    }
 
@@ -107,20 +110,26 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
       }
    }
 
-   public void rememberImage(Metadata md) {
+   public void rememberImage(Map<String,String> md) {
       int flatIndex = getFlatIndex(md);
       String filename = md.get("Filename");
       filenames_.put(flatIndex, filename);
    }
 
-   private int getFlatIndex(Metadata md) {
-      int slice = md.getIntProperty("Slice");
-      int frame = md.getIntProperty("Frame");
-      int channel = md.getIntProperty("ChannelIndex");
-      if (imagePlus_ == null && slice == 0 && frame == 0 && channel == 0)
-         return 1;
-      else
-         return imagePlus_.getStackIndex(1+channel, 1+slice, 1+frame);
+   private int getFlatIndex(Map<String,String> md) {
+      try {
+         int slice = MDUtils.getSlice(md);
+         int frame = MDUtils.getFrame(md);
+         int channel = MDUtils.getChannelIndex(md);
+         if (imagePlus_ == null && slice == 0 && frame == 0 && channel == 0) {
+            return 1;
+         } else {
+            return imagePlus_.getStackIndex(1 + channel, 1 + slice, 1 + frame);
+         }
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
+         return 0;
+      }
    }
 
 }

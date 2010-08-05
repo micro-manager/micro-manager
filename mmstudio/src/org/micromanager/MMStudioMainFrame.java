@@ -136,9 +136,10 @@ import ij.process.ColorProcessor;
 import java.awt.Cursor;
 import java.awt.Graphics;
 import java.awt.image.DirectColorModel;
+import java.util.Map;
+import mmcorej.TaggedImage;
 import org.micromanager.acquisition.AcquisitionInterface;
 import org.micromanager.acquisition.CoreAcquisitionWrapperEngine;
-import org.micromanager.acquisition.TaggedImage;
 import org.micromanager.nativegui.NativeGUI;
 import org.micromanager.utils.ReportingUtils;
 
@@ -3714,11 +3715,11 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       acq.setProperty(propertyName, value);
    }
 
-   public void setAcquisitionSystemState(String acqName, Metadata md) throws MMScriptException {
+   public void setAcquisitionSystemState(String acqName, Map<String,String> md) throws MMScriptException {
       acqMgr_.getAcquisition(acqName).setSystemState(md);
    }
 
-   public void setAcquisitionSummary(String acqName, Metadata md) throws MMScriptException {
+   public void setAcquisitionSummary(String acqName, Map<String,String> md) throws MMScriptException {
       acqMgr_.getAcquisition(acqName).setSummaryProperties(md);
    }
 

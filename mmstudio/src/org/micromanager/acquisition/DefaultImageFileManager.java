@@ -14,12 +14,19 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import mmcorej.Metadata;
 import mmcorej.StrVector;
+import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.utils.JavaUtils;
+import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMException;
 import org.micromanager.utils.ReportingUtils;
 import org.micromanager.utils.TextUtils;
@@ -34,16 +41,16 @@ public class DefaultImageFileManager implements ImageFileManagerInterface {
    private boolean firstElement_;
    private BufferedWriter metadataStream_;
    private boolean newDataSet_;
-   private Metadata summaryMetadata_;
-   private Metadata systemMetadata_;
-   private ArrayList<Metadata> imageMetadata_;
+   private Map<String,String> summaryMetadata_;
+   private Map<String,String> systemMetadata_;
+   private ArrayList<Map<String,String>> imageMetadata_;
 
    DefaultImageFileManager(String dir) {
       this(dir, false, null, null);
    }
 
    DefaultImageFileManager(String dir, boolean newDataSet,
-           Metadata summaryMetadata, Metadata systemMetadata) {
+           Map<String,String> summaryMetadata, Map<String,String> systemMetadata) {
       summaryMetadata_ = summaryMetadata;
       systemMetadata_ = systemMetadata;
       dir_ = dir;
@@ -64,9 +71,10 @@ public class DefaultImageFileManager implements ImageFileManagerInterface {
       if (newDataSet_ == false) {
          throw new MMException("This ImageFileManager is read-only.");
       }
-      Metadata md = taggedImg.md;
-      Object img = taggedImg.img;
+      Map<String,String> md = taggedImg.md;
+      Object img = taggedImg.pix;
       String tiffFileName = createFileName(md);
+      MDUtils.setFileName(md, tiffFileName);
       saveImageFile(img, md, dir_, tiffFileName);
       writeFrameMetadata(md, tiffFileName);
       return tiffFileName;
@@ -77,34 +85,39 @@ public class DefaultImageFileManager implements ImageFileManagerInterface {
       if (imp != null) {
          ImageProcessor proc = imp.getProcessor();
          Object img = proc.getPixels();
-         Metadata md = yamlToMetadata((String) imp.getProperty("Info"));
-         TaggedImage taggedImg = new TaggedImage(filename, img, md);
+         Map<String,String> md = yamlToMetadata((String) imp.getProperty("Info"));
+         TaggedImage taggedImg = new TaggedImage(img, md);
          return taggedImg;
       } else {
          return null;
       }
    }
 
-   private String createFileName(Metadata md) {
-      return "img_"
-              + String.format("%09d", md.getFrame())
-              + "_"
-              + md.getChannel()
-              + "_"
-              + String.format("%03d", md.getSlice())
-              + ".tif";
+   private String createFileName(Map<String,String> md) {
+      try {
+         return "img_"
+                 + String.format("%09d", MDUtils.getFrame(md))
+                 + "_"
+                 + MDUtils.getChannelName(md)
+                 + "_"
+                 + String.format("%03d", MDUtils.getSlice(md))
+                 + ".tif";
+      } catch (Exception e) {
+         ReportingUtils.logError(e);
+         return "";
+      }
    }
 
-   private static String metadataToYaml(Metadata md) {
+   private static String metadataToYaml(Map<String,String> md) {
       String yaml = "";
-      for (String key : md.getFrameKeys()) {
+      for (String key : md.keySet()) {
          yaml += key + ": " + md.get(key) + "\r\n";
       }
       return yaml;
    }
 
-   private static Metadata yamlToMetadata(String yaml) {
-      Metadata md = new Metadata();
+   private static Map<String,String> yamlToMetadata(String yaml) {
+      Map<String,String> md = new HashMap<String,String>();
       String[] lines = yaml.split("\r\n");
       for (String line : lines) {
          String[] parts = line.split(": ");
@@ -115,26 +128,29 @@ public class DefaultImageFileManager implements ImageFileManagerInterface {
       return md;
    }
 
-   private void writeFrameMetadata(Metadata md, String fileName) {
-      String title = "FrameKey-" + md.getFrame()
-              + "-" + md.getChannelIndex() + "-" + md.getSlice();
-      md.put("Filename", fileName);
-      writeMetadata(md, title);
+   private void writeFrameMetadata(Map<String,String> md, String fileName) {
+      try {
+         String title = "FrameKey-" + MDUtils.getFrame(md) + "-" + MDUtils.getChannelName(md) + "-" + MDUtils.getSlice(md);
+         md.put("Filename", fileName);
+         writeMetadata(md, title);
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
+      }
    }
 
-   private void writeMetadata(Metadata md, String title) {
+   private void writeMetadata(Map<String,String> md, String title) {
       try {
          if (!firstElement_) {
             metadataStream_.write(",\r\n");
          }
          metadataStream_.write("\t\"" + title + "\": {\r\n");
-
-         StrVector keys = md.getFrameKeys();
+         Set<String> keys = md.keySet();
          long n = keys.size();
-
-         for (int i = 0; i < n; ++i) {
-            metadataStream_.write("\t\t\"" + keys.get(i) + "\": \"" + md.get(keys.get(i)) + "\"");
-            if (i < (n - 1)) {
+         int i=0;
+         for (String key:keys) {
+            ++i;
+            metadataStream_.write("\t\t\"" + key + "\": \"" + md.get(key) + "\"");
+            if (i < n) {
                metadataStream_.write(",\r\n");
             } else {
                metadataStream_.write("\r\n");
@@ -149,23 +165,26 @@ public class DefaultImageFileManager implements ImageFileManagerInterface {
       }
    }
 
-   private void saveImageFile(Object img, Metadata md, String path, String tiffFileName) {
-      ImageProcessor ip = null;
-      int width = md.getWidth();
-      int height = md.getHeight();
-      if (img instanceof byte[]) {
-         ip = new ByteProcessor(width, height);
-         ip.setPixels((byte[]) img);
-      } else if (img instanceof short[]) {
-         ip = new ShortProcessor(width, height);
-         ip.setPixels((short[]) img);
-      }
-
-      if (ip != null) {
-         ImagePlus imp = new ImagePlus(path + "/" + tiffFileName, ip);
-         imp.setProperty("Info", metadataToYaml(md));
-         FileSaver fs = new FileSaver(imp);
-         fs.saveAsTiff(path + "/" + tiffFileName);
+   private void saveImageFile(Object img, Map<String,String> md, String path, String tiffFileName) {
+      try {
+         ImageProcessor ip = null;
+         int width = MDUtils.getWidth(md);
+         int height = MDUtils.getHeight(md);
+         if (img instanceof byte[]) {
+            ip = new ByteProcessor(width, height);
+            ip.setPixels((byte[]) img);
+         } else if (img instanceof short[]) {
+            ip = new ShortProcessor(width, height);
+            ip.setPixels((short[]) img);
+         }
+         if (ip != null) {
+            ImagePlus imp = new ImagePlus(path + "/" + tiffFileName, ip);
+            imp.setProperty("Info", metadataToYaml(md));
+            FileSaver fs = new FileSaver(imp);
+            fs.saveAsTiff(path + "/" + tiffFileName);
+         }
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
       }
    }
 
@@ -200,7 +219,7 @@ public class DefaultImageFileManager implements ImageFileManagerInterface {
          try {
             summaryMetadata_ = jsonToMetadata(data.getJSONObject("Summary"));
             systemMetadata_ = jsonToMetadata(data.getJSONObject("SystemState"));
-            imageMetadata_ = new ArrayList<Metadata>();
+            imageMetadata_ = new ArrayList<Map<String,String>>();
             for (String key:makeJsonIterableKeys(data)) {
                JSONObject chunk = data.getJSONObject(key);
                if (key.startsWith("FrameKey")) {
@@ -221,8 +240,8 @@ public class DefaultImageFileManager implements ImageFileManagerInterface {
          };
    }
 
-   private Metadata jsonToMetadata(final JSONObject data) {
-      Metadata md = new Metadata();
+   private Map<String,String> jsonToMetadata(final JSONObject data) {
+      Map<String,String> md = new HashMap<String,String>();
       try {
          Iterable<String> keys = makeJsonIterableKeys(data);
          for (String key:keys) {
@@ -257,26 +276,26 @@ public class DefaultImageFileManager implements ImageFileManagerInterface {
    /**
     * @return the summaryMetadata_
     */
-   public Metadata getSummaryMetadata() {
+   public Map<String,String> getSummaryMetadata() {
       return summaryMetadata_;
    }
 
    /**
     * @param summaryMetadata the summaryMetadata to set
     */
-   public void setSummaryMetadata(Metadata summaryMetadata) {
+   public void setSummaryMetadata(Map<String,String> summaryMetadata) {
       this.summaryMetadata_ = summaryMetadata;
    }
 
-   public void setSystemMetadata(Metadata md) {
+   public void setSystemMetadata(Map<String,String> md) {
       systemMetadata_ = md;
    }
 
-   public Metadata getSystemMetadata() {
+   public Map<String,String> getSystemMetadata() {
       return systemMetadata_;
    }
 
-   public ArrayList<Metadata> getImageMetadata() {
+   public ArrayList<Map<String,String>> getImageMetadata() {
       return imageMetadata_;
    }
 

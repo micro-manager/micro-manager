@@ -4,8 +4,10 @@
  */
 package org.micromanager.acquisition;
 
+import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import mmcorej.Metadata;
+import mmcorej.TaggedImage;
+import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -26,7 +28,7 @@ public class MMImageCache {
 
 
 
-   public String putImage(Object img, Metadata md) {
+   public String putImage(Object img, Map<String,String> md) {
       return putImage(new TaggedImage(img, md));
    }
 
@@ -42,7 +44,7 @@ public class MMImageCache {
 
    public TaggedImage getImage(String filename) {
       for (TaggedImage taggedImg:taggedImgQueue_) {
-         if (taggedImg.filename.equals(filename)) {
+         if (MDUtils.getFileName(taggedImg.md).contentEquals(filename)) {
             return taggedImg;
          }
       }
