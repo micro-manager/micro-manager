@@ -79,7 +79,7 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       if (depth_ == 2)
          type = ImagePlus.GRAY16;
       if (depth_ == 4)
-         type = ImagePlus.GRAY8;
+         type = ImagePlus.COLOR_RGB;
       if (depth_ == 8)
          type = 64;
 

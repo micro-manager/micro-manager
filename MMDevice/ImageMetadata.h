@@ -438,17 +438,15 @@ public:
       return frameData[key];
    }
 
-   void put(std::string key, std::string value)
-   {
-      frameData[key] = value;
-   }
-
-   void put(std::string key, long value)
+   template <class anytype>
+   void put(std::string key, anytype value)
    {
       std::stringstream os;
       os << value;
       frameData[key] = os.str();
    }
+
+
 
    bool has(std::string key)
    {

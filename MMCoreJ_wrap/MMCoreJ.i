@@ -121,12 +121,12 @@
 %typemap(out) void*
 {
    long lSize = (arg1)->getImageWidth() * (arg1)->getImageHeight();
-   unsigned numComponents = (arg1)->getNumberOfComponents();
+   //unsigned numComponents = (arg1)->getNumberOfComponents();
    
    if ((arg1)->getBytesPerPixel() == 1)
    {
       // create a new byte[] object in Java
-      jbyteArray data = JCALL1(NewByteArray, jenv, lSize * numComponents);
+      jbyteArray data = JCALL1(NewByteArray, jenv, lSize);
       if (data == 0)
       {
          jclass excep = jenv->FindClass("java/lang/Exception");
@@ -145,7 +145,7 @@
    else if ((arg1)->getBytesPerPixel() == 2)
    {
       // create a new short[] object in Java
-      jshortArray data = JCALL1(NewShortArray, jenv, lSize * numComponents);
+      jshortArray data = JCALL1(NewShortArray, jenv, lSize);
       if (data == 0)
       {
          jclass excep = jenv->FindClass("java/lang/Exception");
@@ -163,7 +163,7 @@
    else if ((arg1)->getBytesPerPixel() == 4)
    {
       // create a new int[] object in Java
-      jintArray data = JCALL1(NewIntArray, jenv, lSize * numComponents);
+      jintArray data = JCALL1(NewIntArray, jenv, lSize);
       if (data == 0)
       {
          jclass excep = jenv->FindClass("java/lang/Exception");
@@ -181,7 +181,7 @@
    else if ((arg1)->getBytesPerPixel() == 8)
    {
       // create a new int[] object in Java
-      jintArray data = JCALL1(NewIntArray, jenv, lSize * numComponents *2);
+      jintArray data = JCALL1(NewIntArray, jenv, lSize * 2);
       if (data == 0)
       {
          jclass excep = jenv->FindClass("java/lang/Exception");
