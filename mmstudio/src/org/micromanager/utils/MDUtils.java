@@ -7,6 +7,7 @@ package org.micromanager.utils;
 
 import ij.ImagePlus;
 import java.text.ParseException;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -14,6 +15,10 @@ import java.util.Map;
  * @author arthur
  */
 public class MDUtils {
+   public static Map<String,String> copy(Map<String,String> map) {
+      return new HashMap(map);
+   }
+   
    public static int getInt(Map<String,String> map, String key) throws Exception {
       try {
          return NumberUtils.coreStringToInt(map.get(key));
