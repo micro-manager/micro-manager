@@ -74,7 +74,7 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
       if (!filenames_.containsKey(flatIndex))
          return ImageUtils.makeProcessor(type_, width_, height_).getPixels();
       else {
-         return imageCache_.getImage(filenames_.get(flatIndex)).pix;
+         return getTaggedImage(flatIndex).pix;
       }
    }
 

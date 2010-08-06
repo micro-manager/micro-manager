@@ -92,18 +92,33 @@ public class MDUtils {
       }
    }
 
-   public static int getImageType(Map<String, String> map) throws Exception {
+   public static int getSingleChannelType(Map<String, String> map) throws Exception {
       String pixelType = getPixelType(map);
       if (pixelType.contentEquals("GRAY8"))
            return ImagePlus.GRAY8;
       else if (pixelType.contentEquals("GRAY16"))
            return ImagePlus.GRAY16;
       else if (pixelType.contentEquals("RGB32"))
-           return ImagePlus.COLOR_RGB;
+           return ImagePlus.GRAY8;
       else if (pixelType.contentEquals("RGB64"))
-           return 64;
+           return ImagePlus.GRAY16;
       else {
-         throw new Exception("Depth not recognized!");
+         throw new Exception("Pixel type not recognized!");
+      }
+   }
+
+   public static int getNumberOfComponents(Map<String, String> map) throws Exception {
+      String pixelType = getPixelType(map);
+      if (pixelType.contentEquals("GRAY8"))
+           return 1;
+      else if (pixelType.contentEquals("GRAY16"))
+           return 1;
+      else if (pixelType.contentEquals("RGB32"))
+           return 3;
+      else if (pixelType.contentEquals("RGB64"))
+           return 3;
+      else {
+         throw new Exception("Pixel type not recognized!");
       }
    }
 }

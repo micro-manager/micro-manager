@@ -32,6 +32,7 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
    private int height_;
    private int numSlices_;
    private int width_;
+   private int numComponents_;
    private boolean initialized_;
    private ImagePlus hyperImage_;
    private Map<String,String>[] displaySettings_;
@@ -158,13 +159,14 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
             numSlices_ = MDUtils.getInt(summaryMetadata_, "Slices");
             numFrames_ = MDUtils.getInt(summaryMetadata_, "Frames");
             numChannels_ = MDUtils.getInt(summaryMetadata_, "Channels");
+            numComponents_ = MDUtils.getNumberOfComponents(summaryMetadata_);
          } catch (Exception ex) {
             ReportingUtils.logError(ex);
          }
       }
-      virtualStack_ = new AcquisitionVirtualStack(width_, height_, null, dir_, imageCache_, numChannels_ * numSlices_ * numFrames_);
+      virtualStack_ = new AcquisitionVirtualStack(width_, height_, null, dir_, imageCache_, numChannels_ * numSlices_ * numFrames_ * numComponents_);
       try {
-         virtualStack_.setType(MDUtils.getImageType(summaryMetadata_));
+         virtualStack_.setType(MDUtils.getSingleChannelType(summaryMetadata_));
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
@@ -206,8 +208,6 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
    }
 
    public void show() {
-
-      
       ImagePlus imgp = new ImagePlus(dir_, virtualStack_);
       virtualStack_.setImagePlus(imgp);
       imgp.setDimensions(numChannels_, numSlices_, numFrames_);

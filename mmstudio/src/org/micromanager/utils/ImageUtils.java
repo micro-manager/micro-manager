@@ -205,4 +205,14 @@ public class ImageUtils {
       }
       return imax;
    }
+
+   public byte[] RGB32singleChannelFromPixels(int [] pixels, int channel) {
+      byte[] newPixels = new byte[pixels.length];
+      int bitShift = 2*channel;
+      int mask = (0xff << (2*bitShift));
+      for (int i=0;i<pixels.length;++i) {
+         newPixels[i] = (byte) ((mask & pixels[i]) >> 2*bitShift);
+      }
+      return newPixels;
+   }
 }
