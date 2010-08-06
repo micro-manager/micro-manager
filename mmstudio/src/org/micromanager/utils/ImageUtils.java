@@ -206,7 +206,7 @@ public class ImageUtils {
       return imax;
    }
 
-   public byte[] RGB32singleChannelFromPixels(int [] pixels, int channel) {
+   public static byte[] RGB32singleChannelFromPixels(int [] pixels, int channel) {
       byte[] newPixels = new byte[pixels.length];
       int bitShift = 2*channel;
       int mask = (0xff << (2*bitShift));
@@ -216,7 +216,7 @@ public class ImageUtils {
       return newPixels;
    }
 
-   public short[] RGB64singleChannelFromPixels(int [] pixels, int channel) {
+   public static short[] RGB64singleChannelFromPixels(int [] pixels, int channel) {
        short [] newPixels = new short[pixels.length/2];
        int i=0;
        if (channel == 1) { // even pixels, first half
