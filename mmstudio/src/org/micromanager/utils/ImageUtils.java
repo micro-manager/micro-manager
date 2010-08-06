@@ -206,28 +206,33 @@ public class ImageUtils {
       return imax;
    }
 
-   public static byte[] RGB32singleChannelFromPixels(int [] pixels, int channel) {
+   /*
+    * channel should be 0, 1 or 2.
+    */
+   public static byte[] singleChannelFromRGB32(int[] pixels, int channel) {
       byte[] newPixels = new byte[pixels.length];
-      int bitShift = 2*channel;
-      int mask = (0xff << (2*bitShift));
+      int bitShift = 8*channel;
       for (int i=0;i<pixels.length;++i) {
-         newPixels[i] = (byte) ((mask & pixels[i]) >> 2*bitShift);
+         newPixels[i] = (byte) (0xff & (pixels[i] >> bitShift));
       }
       return newPixels;
    }
 
-   public static short[] RGB64singleChannelFromPixels(int [] pixels, int channel) {
+   /*
+    * channel should be 0, 1 or 2.
+    */
+   public static short[] singleChannelFromRGB64(int[] pixels, int channel) {
        short [] newPixels = new short[pixels.length/2];
        int i=0;
-       if (channel == 1) { // even pixels, first half
+       if (channel == 0) { // even pixels, first half
           for (int j=0; j<newPixels.length; j+=2) {
              newPixels[i++] = (short) (pixels[j] & 0xffff);
           }
-       } else if (channel == 2) { // even pixels, second half
+       } else if (channel == 1) { // even pixels, second half
           for (int j=0; j<newPixels.length; j+=2) {
              newPixels[i++] = (short) (pixels[j] >> 16);
           }
-       } else if (channel == 3) { // odd pixels, first half
+       } else if (channel == 2) { // odd pixels, first half
           for (int j=1; j<newPixels.length; j+=2) {
              newPixels[i++] = (short) (pixels[j] & 0xffff);
           }
