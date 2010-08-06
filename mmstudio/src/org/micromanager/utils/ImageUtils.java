@@ -215,4 +215,26 @@ public class ImageUtils {
       }
       return newPixels;
    }
+
+   public short[] RGB64singleChannelFromPixels(int [] pixels, int channel) {
+       short [] newPixels = new short[pixels.length/2];
+       int i=0;
+       if (channel == 1) { // even pixels, first half
+          for (int j=0; j<newPixels.length; j+=2) {
+             newPixels[i++] = (short) (pixels[j] & 0xffff);
+          }
+       } else if (channel == 2) { // even pixels, second half
+          for (int j=0; j<newPixels.length; j+=2) {
+             newPixels[i++] = (short) (pixels[j] >> 16);
+          }
+       } else if (channel == 3) { // odd pixels, first half
+          for (int j=1; j<newPixels.length; j+=2) {
+             newPixels[i++] = (short) (pixels[j] & 0xffff);
+          }
+       } else {
+          newPixels = null;
+       }
+       return newPixels;
+   }
+
 }
