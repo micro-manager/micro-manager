@@ -210,6 +210,9 @@ public class ImageUtils {
     * channel should be 0, 1 or 2.
     */
    public static byte[] singleChannelFromRGB32(int[] pixels, int channel) {
+      if (channel != 0 || channel != 1 || channel != 2)
+         return null;
+      
       byte[] newPixels = new byte[pixels.length];
       int bitShift = 8*channel;
       for (int i=0;i<pixels.length;++i) {
