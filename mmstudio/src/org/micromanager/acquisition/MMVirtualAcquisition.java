@@ -22,7 +22,6 @@ import org.micromanager.utils.ReportingUtils;
  * @author arthur
  */
 public class MMVirtualAcquisition implements AcquisitionInterface {
-
    private final String dir_;
    private final String name_;
    MMImageCache imageCache_;
@@ -32,7 +31,7 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
    private int height_;
    private int numSlices_;
    private int width_;
-   private int numComponents_;
+   private int numComponents_ = 1;
    private boolean initialized_;
    private ImagePlus hyperImage_;
    private Map<String,String>[] displaySettings_;
@@ -83,6 +82,10 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
          type = ImagePlus.COLOR_RGB;
       if (depth_ == 8)
          type = 64;
+      if ((depth_ == 1) || (depth_ == 2))
+         numComponents_ = 1;
+      else if ((depth_ == 4 || depth_ == 8))
+         numComponents_ = 3;
 
       summaryMetadata_.put("Width", NumberUtils.intToCoreString(width_));
       summaryMetadata_.put("Height", NumberUtils.intToCoreString(height_));
