@@ -154,9 +154,10 @@ public:
    // notification handlers
    int OnStatusChanged(const MM::Device* /* caller */);
    int OnPropertiesChanged(const MM::Device* /* caller */);
+   int OnStagePositionChanged(const MM::Device* device, double pos);
+   int OnXYStagePositionChanged(const MM::Device* device, double xpos, double ypos);
    int OnFinished(const MM::Device* /* caller */);
 
-   int OnCoordinateUpdate(const MM::Device* /* caller */);
 
    std::vector<std::pair< int, std::string> > PostedErrors(void);
    void PostError(const std::pair< int, std::string>& );

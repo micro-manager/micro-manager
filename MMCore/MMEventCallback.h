@@ -35,10 +35,14 @@ public:
       std::cout << "onPropertiesChanged()" << std:: endl; 
    }
 
-   // allow quick update of X,Y,Z etc.
-   virtual void onCoordinateUpdate()
+   virtual void onStagePositionChanged(char* name, double pos)
    {
-      std::cout << "onCoordinateUpdate()\n"; 
+      std::cout << "onStagePositionChanged()" << name << " " << pos  << "\n"; 
+   }
+
+   virtual void onXYStagePositionChanged(char* name, double xpos, double ypos)
+   {
+      std::cout << "onXYStagePositionChanged()" << name << " " << xpos  << " " <<  ypos << "\n"; 
    }
 
 };

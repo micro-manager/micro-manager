@@ -779,8 +779,8 @@ namespace MM {
       virtual int OnStatusChanged(const Device* caller) = 0;
       virtual int OnFinished(const Device* caller) = 0;
       virtual int OnPropertiesChanged(const Device* caller) = 0;
-
-      virtual int OnCoordinateUpdate(const Device* caller) = 0;
+      virtual int OnStagePositionChanged(const Device* caller, double pos) = 0;
+      virtual int OnXYStagePositionChanged(const Device* caller, double xPos, double yPos) = 0;
 
       virtual unsigned long GetClockTicksUs(const Device* caller) = 0;
       virtual MM::MMTime GetCurrentMMTime() = 0;

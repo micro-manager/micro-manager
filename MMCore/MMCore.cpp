@@ -4939,7 +4939,8 @@ void CMMCore::runAcquisitionEngineTest(AcquisitionSettings acquisitionSettings) 
 
 void CMMCore::stopAcquisitionEngine() throw (CMMError)
 {
-   engine_->Stop();
+   if (engine_ != NULL)
+      engine_->Stop();
 }
 
 bool CMMCore::acquisitionIsFinished() throw (CMMError)

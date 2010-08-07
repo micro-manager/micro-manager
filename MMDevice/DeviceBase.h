@@ -796,14 +796,22 @@ protected:
       return DEVICE_NO_CALLBACK_REGISTERED;
    }
 
-   /* an instrument actual value, such as an X,Y,Z coordinate, which ought to be updated
-   * rapidly in the UI, has changed - percolate notification to UI
+   /* 
+    * Signals that the stage has arrived at a new position
    */
-
-   int OnCoordinateUpdate()
+   int OnStagePositionChanged(double pos)
    {
       if (callback_)
-         return callback_->OnCoordinateUpdate(this);
+         return callback_->OnStagePositionChanged(this, pos);
+      return DEVICE_NO_CALLBACK_REGISTERED;
+   }
+
+   /* 
+   */
+   int OnXYStagePositionChanged(double xPos, double yPos)
+   {
+      if (callback_)
+         return callback_->OnXYStagePositionChanged(this, xPos, yPos);
       return DEVICE_NO_CALLBACK_REGISTERED;
    }
 

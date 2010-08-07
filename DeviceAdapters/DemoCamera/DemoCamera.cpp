@@ -1780,8 +1780,7 @@ int CDemoStage::SetPositionUm(double pos)
 {
    pos_um_ = pos; 
    SetIntensityFactor(pos);
-
-   return DEVICE_OK;
+   return OnStagePositionChanged(pos_um_);
 }
 
 void CDemoStage::SetIntensityFactor(double pos)

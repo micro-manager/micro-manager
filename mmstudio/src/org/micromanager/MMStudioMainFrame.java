@@ -375,9 +375,16 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          }
       }
 
-      public void onCoordinateUpdate() { /* todo */
-
+      public void onXYStagePositionChanged(String deviceName, double xPos, double yPos) {
+         if (deviceName.equals(xyStageLabel_))
+            updateXYPos(xPos, yPos);
       }
+
+      public void onStagePositionChanged(String deviceName, double pos) {
+         if (deviceName.equals(zStageLabel_))
+            updateZPos(pos);
+      }
+
    }
 
    private class PluginItem {
@@ -2256,6 +2263,19 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       }
 
       labelImageDimensions_.setText(dimText);
+   }
+
+   public void updateXYPos(double x, double y) {
+      staticInfo_.x_ = x;
+      staticInfo_.y_ = y;
+
+      updateStaticInfoFromCache();
+   }
+
+   public void updateZPos(double z) {
+      staticInfo_.zPos_ = z;
+
+      updateStaticInfoFromCache();
    }
 
    public void updateXYPosRelative(double x, double y) {

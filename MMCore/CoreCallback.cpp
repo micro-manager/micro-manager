@@ -145,18 +145,35 @@ int CoreCallback::OnPropertiesChanged(const MM::Device* /* caller */)
    return DEVICE_OK;
 }
 
-
 /**
- * Handler for the coordinate update event from the device.
+ * Handler for Stage position update
  */
-int CoreCallback::OnCoordinateUpdate(const MM::Device* /* caller */)
+int CoreCallback::OnStagePositionChanged(const MM::Device* device, double pos)
 {
-   if (core_->externalCallback_)
-      core_->externalCallback_->onCoordinateUpdate();
+   if (core_->externalCallback_) {
+      char label[MM::MaxStrLength];
+      device->GetLabel(label);
+      core_->externalCallback_->onStagePositionChanged(label, pos);
+   }
 
    return DEVICE_OK;
 }
-   
+
+/**
+ * Handler for XYStage position update
+ */
+int CoreCallback::OnXYStagePositionChanged(const MM::Device* device, double xPos, double yPos)
+{
+   if (core_->externalCallback_) {
+      char label[MM::MaxStrLength];
+      device->GetLabel(label);
+      core_->externalCallback_->onXYStagePositionChanged(label, xPos, yPos);
+   }
+
+   return DEVICE_OK;
+}
+
+ 
 /**
  * Handler for the operation finished event from the device.
  */

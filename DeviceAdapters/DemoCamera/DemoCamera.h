@@ -272,7 +272,11 @@ public:
    int SetPositionUm(double pos);
    int GetPositionUm(double& pos) {pos = pos_um_; LogMessage("Reporting position", true); return DEVICE_OK;}
    double GetStepSize() {return stepSize_um_;}
-   int SetPositionSteps(long steps) {pos_um_ = steps * stepSize_um_; return DEVICE_OK;}
+   int SetPositionSteps(long steps) 
+   {
+      pos_um_ = steps * stepSize_um_; 
+      return  OnStagePositionChanged(pos_um_);
+   }
    int GetPositionSteps(long& steps) {steps = (long)(pos_um_ / stepSize_um_); return DEVICE_OK;}
    int SetOrigin() {return DEVICE_OK;}
    int GetLimits(double& lower, double& upper)
@@ -317,15 +321,20 @@ public:
    // XYStage API
    /* Note that only the Set/Get PositionStep functions are implemented in the adapter
     * It is best not to override the Set/Get PositionUm functions in DeviceBase.h, since
-    * those implement corrections based on whether or not X and Y directionality should be mirrored
-    * and based on a user defined origin
+    * those implement corrections based on whether or not X and Y directionality should be 
+    * mirrored and based on a user defined origin
     */
+
    // This must be correct or the conversions between steps and Um will go wrong
    virtual double GetStepSize() {return stepSize_um_;}
    virtual int SetPositionSteps(long x, long y)
    {
       posX_um_ = x * stepSize_um_;
       posY_um_ = y * stepSize_um_;
+      int ret = OnXYStagePositionChanged(posX_um_, posY_um_);
+      if (ret != DEVICE_OK)
+         return ret;
+
       return DEVICE_OK;
    }
    virtual int GetPositionSteps(long& x, long& y)
@@ -343,11 +352,14 @@ public:
    } 
    virtual int Home() {return DEVICE_OK;}
    virtual int Stop() {return DEVICE_OK;}
-   // This sets the 0,0 position of the adapter to the current position.  If possible, the stage controller itself
-   // should also be set to 0, 0
-   // Note that this differs form the function SetAdapterOrigin(), which sets the coordinate system used by the adapter
-   // to values different from the system used by the stage controller
-   virtual int SetOrigin() {return DEVICE_OK;}//jizhen 4/12/2007
+
+   /* This sets the 0,0 position of the adapter to the current position.  
+    * If possible, the stage controller itself should also be set to 0,0
+    * Note that this differs form the function SetAdapterOrigin(), which 
+    * sets the coordinate system used by the adapter
+    * to values different from the system used by the stage controller
+    */
+   virtual int SetOrigin() {return DEVICE_OK;}
    virtual int GetLimits(double& lower, double& upper)
    {
       lower = lowerLimit_;
