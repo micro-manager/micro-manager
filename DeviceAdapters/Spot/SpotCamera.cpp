@@ -261,6 +261,14 @@ int SpotCamera::Initialize()
 		double maxExposureTime; // max. allowed exposure time
 		
 		pImplementation_->ExposureLimits( minExposureTime, maxExposureTime);
+      if( maxExposureTime < 0.)
+      {
+         std::ostringstream oStringStream;
+         oStringStream <<"Spot API returned invalid maxExposureTime: " << maxExposureTime << " this has been changed to 100000.";
+         LogMessage(oStringStream.str().c_str(), false);
+         maxExposureTime = 100000.;
+
+      }
 		SetPropertyLimits( MM::g_Keyword_Exposure, minExposureTime, maxExposureTime ); // set limits 
 
 		// create "actual" gain property 
