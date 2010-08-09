@@ -198,14 +198,18 @@ public:
    // ----------------
    int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFocus(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnWaitAfterLock(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    int GetFocusState(std::string& focusState);
    int SetFocusState(std::string focusState);
+   int WaitForAcknowledgement();
+
    bool initialized_;
    bool justCalibrated_;
    std::string port_;
    std::string focusState_;
+   long waitAfterLock_;
 };
 
 

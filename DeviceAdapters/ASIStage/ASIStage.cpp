@@ -1788,14 +1788,16 @@ int ZStage::OnAxis(MM::PropertyBase* pProp, MM::ActionType eAct)
 // CRIF reflection-based autofocussing unit (Nico, May 2007)
 ////
 CRIF::CRIF() :
-initialized_(false), 
-justCalibrated_(false),
-port_("Undefined")
+   initialized_(false), 
+   justCalibrated_(false),
+   port_("Undefined"),
+   waitAfterLock_(3000)
 {
    InitializeDefaultErrorMessages();
 
    SetErrorText(ERR_NOT_CALIBRATED, "CRIF is not calibrated.  Try focusing close to a coverslip and selecting 'Calibrate'");
    SetErrorText(ERR_UNRECOGNIZED_ANSWER, "The ASI controller said something incomprehensible");
+   SetErrorText(ERR_NOT_LOCKED, "The CRIF failed to lock");
 
    // create pre-initialization properties
    // ------------------------------------
@@ -1833,12 +1835,10 @@ int CRIF::Initialize()
    AddAllowedValue(g_CRIFState, g_CRIF_B);
    AddAllowedValue(g_CRIFState, g_CRIF_k);
    AddAllowedValue(g_CRIFState, g_CRIF_K);
-   //AddAllowedValue(g_CRIFState, g_CRIF_E);
    AddAllowedValue(g_CRIFState, g_CRIF_O);
 
-   int ret = UpdateStatus();
-   if (ret != DEVICE_OK)
-      return ret;
+   pAct = new CPropertyAction(this, &CRIF::OnWaitAfterLock);
+   CreateProperty("Wait ms after Lock", "3000", MM::Integer, false, pAct);
 
    initialized_ = true;
    return DEVICE_OK;
@@ -1911,7 +1911,7 @@ int CRIF::GetFocusState(std::string& focusState)
          focusState = g_CRIF_B;
          break;
       case 'k': 
-         focusState = g_CRIF_K;
+         focusState = g_CRIF_k;
          break;
       case 'K': 
          focusState = g_CRIF_K;
@@ -1936,13 +1936,15 @@ int CRIF::SetFocusState(std::string focusState)
    if (ret != DEVICE_OK)
       return ret;
 
-   if (focusState == g_CRIF_I)
+   if (focusState == g_CRIF_I || focusState == g_CRIF_O)
    {
       // Unlock and switch off laser:
       ret = SetContinuousFocusing(false);
       if (ret != DEVICE_OK)
          return ret;
    }
+
+   /*
    else if (focusState == g_CRIF_O) // we want the laser off and discard calibration (start anew)
    {
       if (currentState == g_CRIF_K)
@@ -1958,6 +1960,9 @@ int CRIF::SetFocusState(std::string focusState)
          int ret = SendSerialCommand(port_.c_str(), command, "\r");
          if (ret != DEVICE_OK)
             return ret;
+         ret = WaitForAcknowledgement();
+         if (ret != DEVICE_OK)
+            return ret;
       }
       if (currentState == g_CRIF_L) // we need to advance the state once more.  Wait a bit for calibration to finish)
       {
@@ -1966,8 +1971,12 @@ int CRIF::SetFocusState(std::string focusState)
          int ret = SendSerialCommand(port_.c_str(), command, "\r");
          if (ret != DEVICE_OK)
             return ret;
+         ret = WaitForAcknowledgement();
+         if (ret != DEVICE_OK)
+            return ret;
       }
    }
+   */
 
    else if (focusState == g_CRIF_L)
    {
@@ -1978,30 +1987,63 @@ int CRIF::SetFocusState(std::string focusState)
          int ret = SendSerialCommand(port_.c_str(), command, "\r");
          if (ret != DEVICE_OK)
             return ret;
+         ret = WaitForAcknowledgement();
+         if (ret != DEVICE_OK)
+            return ret;
       }
    }
-   else if ( (focusState == g_CRIF_Cal) || (focusState == g_CRIF_G) || (focusState == g_CRIF_B)) // looks like we want to calibrate the CRIF
+
+   else if (focusState == g_CRIF_Cal) 
    {
       const char* command = "LK Z";
-      if (currentState == g_CRIF_I) // Idle, first switch on laser
+      if (currentState == g_CRIF_B || currentState == g_CRIF_O)
       {
-         // send command twice, wait a bit in between
          ret = SendSerialCommand(port_.c_str(), command, "\r");
          if (ret != DEVICE_OK)
             return ret;
-         CDeviceUtils::SleepMs(10); // ms
-         int ret = SendSerialCommand(port_.c_str(), command, "\r");
+         ret = WaitForAcknowledgement();
+         if (ret != DEVICE_OK)
+            return ret;
+         ret = GetFocusState(currentState);
+         if (ret != DEVICE_OK)
+            return ret;
+      }  
+      if (currentState == g_CRIF_I) // Idle, first switch on laser
+      {
+         ret = SendSerialCommand(port_.c_str(), command, "\r");
+         if (ret != DEVICE_OK)
+            return ret;
+         ret = WaitForAcknowledgement();
+         if (ret != DEVICE_OK)
+            return ret;
+         ret = GetFocusState(currentState);
          if (ret != DEVICE_OK)
             return ret;
       }
-      else if (currentState == g_CRIF_L)
+      if (currentState == g_CRIF_L)
       {
          int ret = SendSerialCommand(port_.c_str(), command, "\r");
          if (ret != DEVICE_OK)
             return ret;
+         ret = WaitForAcknowledgement();
+         if (ret != DEVICE_OK)
+            return ret;
       }
+
+      // now wait for the lock to occur
+      MM::MMTime startTime = GetCurrentMMTime();
+      MM::MMTime wait(3,0);
+      bool cont = false;
+      std::string finalState;
+      do {
+         CDeviceUtils::SleepMs(250);
+         GetFocusState(finalState);
+         cont = (startTime - GetCurrentMMTime()) < wait;
+      } while ( finalState != g_CRIF_G && finalState != g_CRIF_B && cont);
+
       justCalibrated_ = true; // we need this to know whether this is the first time we lock
    }
+
    else if ( (focusState == g_CRIF_K) || (focusState == g_CRIF_k) )
    {
       // only try a lock when we are good
@@ -2017,6 +2059,7 @@ int CRIF::SetFocusState(std::string focusState)
          return ERR_NOT_CALIBRATED;
       }
    }
+
    return DEVICE_OK;
 }
 
@@ -2089,12 +2132,27 @@ int CRIF::GetContinuousFocusing(bool& state)
 
 int CRIF::FullFocus()
 {
-   return SetContinuousFocusing(true);
+   int ret = SetContinuousFocusing(true);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   MM::MMTime startTime = GetCurrentMMTime();
+   MM::MMTime wait(3, 0);
+   while (!IsContinuousFocusLocked() && ( (GetCurrentMMTime() - startTime) < wait) ) {
+      CDeviceUtils::SleepMs(25);
+   }
+
+   CDeviceUtils::SleepMs(waitAfterLock_);
+
+   if (!IsContinuousFocusLocked())
+      return ERR_NOT_LOCKED;
+   
+   return SetContinuousFocusing(false);
 }
 
 int CRIF::IncrementalFocus()
 {
-   return SetContinuousFocusing(true);
+   return FullFocus();
 }
 
 int CRIF::GetLastFocusScore(double& score)
@@ -2103,14 +2161,6 @@ int CRIF::GetLastFocusScore(double& score)
    ClearPort(*this, *GetCoreCallback(), port_.c_str()); 
 
    score = 0;
-   // This might be useful in locked and unlocked mode..
-   /*
-   bool locked;
-   int ret = GetContinuousFocusing(locked);
-   if (!locked)
-      return ERR_NOT_LOCKED;
-      */
-
    const char* command = "LOCK Y?"; // Requests present value of the PSD signal as shown on LCD panel
    // send command
    int ret = SendSerialCommand(port_.c_str(), command, "\r");
@@ -2124,6 +2174,20 @@ int CRIF::GetLastFocusScore(double& score)
 
    score = atof (answer.substr(2).c_str());
    if (score == 0)
+      return ERR_UNRECOGNIZED_ANSWER;
+
+   return DEVICE_OK;
+}
+
+int CRIF::WaitForAcknowledgement()
+{  
+   string answer;
+   int ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+   if (ret != DEVICE_OK)
+      return ERR_UNRECOGNIZED_ANSWER;
+
+   // The controller only acknowledges receipt of the command
+   if (answer.substr(0,2) != ":A")
       return ERR_UNRECOGNIZED_ANSWER;
 
    return DEVICE_OK;
@@ -2175,6 +2239,24 @@ int CRIF::OnFocus(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+int CRIF::OnWaitAfterLock(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(waitAfterLock_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(waitAfterLock_);
+   }
+
+   return DEVICE_OK;
+}
+
+
+/**
+ *
+ */
 
 AZ100Turret::AZ100Turret() :
    numPos_(4),
