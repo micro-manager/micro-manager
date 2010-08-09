@@ -683,18 +683,14 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
          message = "Save script?";
       int result = JOptionPane.showConfirmDialog(this,
             message,
-            APP_NAME, JOptionPane.YES_NO_CANCEL_OPTION,
+            APP_NAME, JOptionPane.YES_NO_OPTION,
             JOptionPane.INFORMATION_MESSAGE);
       switch (result) {
          case JOptionPane.YES_OPTION:
             saveScript();
-            return true;
          case JOptionPane.NO_OPTION:
             // avoid prompting again:
             scriptPaneSaved_ = true;
-            return true;
-         case JOptionPane.CANCEL_OPTION:                                        
-            return false;                                                       
       }                                                                      
 
       return true;                                                           
@@ -938,7 +934,6 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
          fc.setSelectedFile(new File(scriptListFile));
       }
 
-      // int retval = fc.showOpenDialog(this);
       int retval = fc.showOpenDialog(this);
       File curFile;
       if (retval == JFileChooser.APPROVE_OPTION) {
@@ -1007,11 +1002,9 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
          immediatePane_.setText("");
    }
 
-   public void closePanel() {
+   public  void closePanel() {
       if (!promptToSave()) 
          return;
- //     if (messageWindow_ != null)
- //        messageWindow_.closeWindow();
       savePosition();
       saveScriptsToPrefs();
       dispose();

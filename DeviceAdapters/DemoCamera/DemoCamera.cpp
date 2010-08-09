@@ -714,6 +714,9 @@ int CDemoCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 				binSize_ = binFactor;
 				ret=DEVICE_OK;
 			}
+         std::ostringstream os;
+         os << binSize_;
+         OnPropertyChanged("Binning", os.str().c_str());
       }break;
    case MM::BeforeGet:
       {

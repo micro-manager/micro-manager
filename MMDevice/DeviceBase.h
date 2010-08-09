@@ -796,6 +796,13 @@ protected:
       return DEVICE_NO_CALLBACK_REGISTERED;
    }
 
+   int OnPropertyChanged(const char* propName, const char* propValue)
+   {
+      if (callback_)
+         return callback_->OnPropertyChanged(this, propName, propValue);
+      return DEVICE_NO_CALLBACK_REGISTERED;
+   }
+
    /* 
     * Signals that the stage has arrived at a new position
    */
@@ -807,11 +814,30 @@ protected:
    }
 
    /* 
+    * Signals that the stage finished a relative movement
+   */
+   int OnStagePositionChangedRelative(double pos)
+   {
+      if (callback_)
+         return callback_->OnStagePositionChangedRelative(this, pos);
+      return DEVICE_NO_CALLBACK_REGISTERED;
+   }
+
+   /* 
    */
    int OnXYStagePositionChanged(double xPos, double yPos)
    {
       if (callback_)
          return callback_->OnXYStagePositionChanged(this, xPos, yPos);
+      return DEVICE_NO_CALLBACK_REGISTERED;
+   }
+
+   /* 
+   */
+   int OnXYStagePositionChangedRelative(double xPos, double yPos)
+   {
+      if (callback_)
+         return callback_->OnXYStagePositionChangedRelative(this, xPos, yPos);
       return DEVICE_NO_CALLBACK_REGISTERED;
    }
 

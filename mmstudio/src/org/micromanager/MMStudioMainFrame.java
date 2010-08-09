@@ -375,14 +375,29 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          }
       }
 
-      public void onXYStagePositionChanged(String deviceName, double xPos, double yPos) {
-         if (deviceName.equals(xyStageLabel_))
-            updateXYPos(xPos, yPos);
+      public void onPropertyChanged(String deviceName, String propName, String propValue) {
+         core_.logMessage("Notification for Device: " + deviceName + " Property: " +
+               propName + " changed to value: " + propValue);
       }
 
       public void onStagePositionChanged(String deviceName, double pos) {
          if (deviceName.equals(zStageLabel_))
             updateZPos(pos);
+      }
+
+      public void onStagePositionChangedRelative(String deviceName, double pos) {
+         if (deviceName.equals(zStageLabel_))
+            updateZPosRelative(pos);
+      }
+
+      public void onXYStagePositionChanged(String deviceName, double xPos, double yPos) {
+         if (deviceName.equals(xyStageLabel_))
+            updateXYPos(xPos, yPos);
+      }
+
+      public void onXYStagePositionChangedRelative(String deviceName, double xPos, double yPos) {
+         if (deviceName.equals(xyStageLabel_))
+            updateXYPosRelative(xPos, yPos);
       }
 
    }

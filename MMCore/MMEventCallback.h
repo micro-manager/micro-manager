@@ -35,14 +35,32 @@ public:
       std::cout << "onPropertiesChanged()" << std:: endl; 
    }
 
+   virtual void onPropertyChanged(char* name, const char* propName, const char* propValue)
+   {
+      std::cout << "onPropertyChanged()" << name << " " << propName << " " << propValue;
+      std::cout << std:: endl; 
+   }
+
    virtual void onStagePositionChanged(char* name, double pos)
    {
       std::cout << "onStagePositionChanged()" << name << " " << pos  << "\n"; 
    }
 
+   virtual void onStagePositionChangedRelative(char* name, double pos)
+   {
+      std::cout << "onStagePositionChangedRelative()" << name << " " << pos  << "\n"; 
+   }
+
    virtual void onXYStagePositionChanged(char* name, double xpos, double ypos)
    {
-      std::cout << "onXYStagePositionChanged()" << name << " " << xpos  << " " <<  ypos << "\n"; 
+      std::cout << "onXYStagePositionChanged()" << name << " " << xpos;
+      std::cout << " " <<  ypos << "\n"; 
+   }
+
+   virtual void onXYStagePositionChangedRelative(char* name, double xpos, double ypos)
+   {
+      std::cout << "onXYStagePositionChangedRelative()" << name << " " << xpos;
+      std::cout << " " <<  ypos << "\n"; 
    }
 
 };
