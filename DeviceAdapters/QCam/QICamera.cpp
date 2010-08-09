@@ -53,18 +53,21 @@ using namespace std;
 #ifdef DEBUG_ERRORS
     #define REPORT_QERR(inErr)                  LogError("QCamera Error ", inErr, __FILE__, __LINE__);
     #define REPORT_QERR2(msg,inErr)             LogError(msg, inErr, __FILE__, __LINE__);
-    #define QCAM_REPORT_QERR(pCam,inErr)        pCam->LogError("QCamera Error ", inErr, __FILE__, __LINE__);
+    #define QCam_REPORT_QERR(pCam,inErr)        pCam->LogError("QCamera Error ", inErr, __FILE__, __LINE__);
     #define REPORT_MMERR(inErr)                 LogError("Metamorph Error ", inErr, __FILE__, __LINE__);
     #define REPORT_MMERR3(inErr,location,line)  LogError("Metamorph Error ", inErr, location, line);
-    #define QCAM_REPORT_MMERR(pCam,inErr)       pCam->LogError("Metamorph Error ", inErr, __FILE__, __LINE__);
+    #define QCam_REPORT_MMERR(pCam,inErr)       pCam->LogError("Metamorph Error ", inErr, __FILE__, __LINE__);
 #else
     #define REPORT_QERR(inErr)
     #define REPORT_QERR2(msg,inErr)
-    #define QCAM_REPORT_QERR(pCam,inErr) 
+    #define QCam_REPORT_QERR(pCam,inErr) 
     #define REPORT_MMERR(inErr)
     #define REPORT_MMERR3(inErr,location,line)
-    #define QCAM_REPORT_MMERR(pCam,inErr)
+    #define QCam_REPORT_MMERR(pCam,inErr)
 #endif
+
+
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Class static variables
@@ -73,6 +76,9 @@ using namespace std;
 // camera device name
 const char* g_CameraDeviceName = "QCamera";
 
+
+string Yes("Yes");
+string No("No");    
 ///////////////////////////////////////////////////////////////////////////////
 // Windows DLL Entry Point
 //
@@ -139,6 +145,10 @@ void ConvertReadoutSpeedToString(QCam_qcReadoutSpeed inSpeed, char *outString)
         readoutSpeed = 40.0;
         break;
 
+    case qcReadout30M:
+        readoutSpeed = 30.0;
+        break;
+
     case qcReadout24M:
         readoutSpeed = 24.0;
         break;
@@ -188,6 +198,8 @@ void ConvertReadoutSpeedToEnum(const char *inSpeed, QCam_qcReadoutSpeed *outSpee
         *outSpeed = qcReadout48M;
     } else if (dequals(value, 40.0, eps)) {
         *outSpeed = qcReadout40M;
+    } else if (dequals(value, 30.0, eps)){
+      *outSpeed = qcReadout30M;
     } else if (dequals(value, 24.0, eps)) {
         *outSpeed = qcReadout24M;
     } else if (dequals(value, 20.0, eps)) {
@@ -320,7 +332,7 @@ QICamera::QICamera()
 ,m_softwareTrigger(false)
 {
     START_METHOD("QICamera::QICamera");
-
+    try{
     m_sthd = new QISequenceThread(this);
 
     // call the base class method to set-up default error codes/messages
@@ -330,8 +342,12 @@ QICamera::QICamera()
     SetErrorText(ERR_NO_CAMERAS_FOUND, "No cameras found.  Please connect a QImaging camera and turn it on");
     SetErrorText(ERR_BUSY_ACQUIRING,   "QImaging camera is already acquiring images.");
     SetErrorText(ERR_SOFTWARE_TRIGGER_FAILED, "QImaging camera is not in software trigger mode.");
-
+    } catch(...) {
+        LogMessage("QICamera: Exception in constructor", false);
+    }
 }
+
+
 
 /**
 * QICamera destructor.
@@ -344,12 +360,8 @@ QICamera::~QICamera()
 {
     START_METHOD("QICamera::~QICamera");
 
-    try {
-        if (m_isInitialized)
-            Shutdown();
-    } catch(...) {
-        LogMessage("QICamera: Exception in destructor", false);
-    }
+    if (m_isInitialized)
+        Shutdown();
 }
 
 /**
@@ -381,11 +393,13 @@ int QICamera::Initialize()
     QCam_CamListItem			cameraList[1];
     unsigned long				numOfCameras;
     char						cameraStr[CAMERA_STRING_LENGTH];
+    char						cameraName[CAMERA_STRING_LENGTH];
     unsigned short				major, minor, build;
     char						qcamVersionStr[256];
     char						cameraIDStr[256];
     unsigned long				ccdType;
     unsigned long				cameraType;
+    int                         nRet;
 
     START_METHOD("QICamera::Initialize");
 
@@ -393,6 +407,8 @@ int QICamera::Initialize()
     if (m_isInitialized == true) {
         return DEVICE_OK;
     }
+
+
 
     // try releasing the driver first
     QCam_ReleaseDriver();
@@ -423,14 +439,58 @@ int QICamera::Initialize()
             throw DEVICE_ERR;
         }
 
-        // read the camera settings
-        m_settings.size = sizeof(m_settings);
-        err = QCam_ReadDefaultSettings(m_camera, &m_settings);
+        // get the QCam version number
+        err = QCam_LibVersion(&major, &minor, &build);
         if (err != qerrSuccess) {
             REPORT_QERR(err);
             throw DEVICE_ERR;
         }
 
+        sprintf(qcamVersionStr, "QCam %u.%u.%u", major, minor, build);
+        m_nDriverBuild = major * 100 + minor * 10 + build;
+
+        nRet = CreateProperty(MM::g_Keyword_Description, qcamVersionStr, MM::String, true);
+        if (DEVICE_OK != nRet) {
+            throw nRet;
+        }
+
+#ifdef WIN32
+        // read the camera settings
+        m_settings = malloc(sizeof(QCam_SettingsEx));
+        err = QCam_CreateCameraSettingsStruct((QCam_SettingsEx *)m_settings);
+        if (err == qerrNotSupported) {
+            return DEVICE_NOT_SUPPORTED;
+        } else if (err != qerrSuccess) {
+            REPORT_QERR(err);
+            return DEVICE_ERR;
+        }
+
+        err = QCam_InitializeCameraSettings(m_camera, (QCam_SettingsEx *)m_settings);
+        if (err == qerrNotSupported) {
+            return DEVICE_NOT_SUPPORTED;
+        } else if (err != qerrSuccess) {
+            REPORT_QERR(err);
+            return DEVICE_ERR;
+        }
+
+        err = QCam_ReadSettingsFromCam(m_camera, (QCam_Settings *)m_settings);
+        if (err == qerrNotSupported) {
+            return DEVICE_NOT_SUPPORTED;
+        } else if (err != qerrSuccess) {
+            REPORT_QERR(err);
+            return DEVICE_ERR;
+        }
+        
+#else
+            m_settings = malloc(sizeof(QCam_Settings));
+            ((QCam_Settings*)m_settings)->size = sizeof(QCam_Settings);
+            err = QCam_ReadDefaultSettings(m_camera, (QCam_Settings*)m_settings);
+            if (err != qerrSuccess) {
+                REPORT_QERR(err);
+                throw DEVICE_ERR;
+            }
+
+#endif
         // only mono cameras are supported in the uManager 1.0 release
         err = QCam_GetInfo(m_camera, qinfCcdType, &ccdType);
         if (err != qerrSuccess) {
@@ -445,16 +505,16 @@ int QICamera::Initialize()
         }
 
         // turn post processing on
-        /*err = QCam_SetParam(&m_settings, qprmDoPostProcessing, true);
+        /*err = QCam_SetParam((QCam_Settings *)m_settings, qprmDoPostProcessing, true);
         CHECK_ERROR(err);
 
-        err = QCam_SetParam(&m_settings, qprmPostProcessBayerAlgorithm, qcBayerInterpAvg4);
+        err = QCam_SetParam((QCam_Settings *)m_settings, qprmPostProcessBayerAlgorithm, qcBayerInterpAvg4);
         CHECK_ERROR(err);
 
-        err = QCam_SetParam(&m_settings, qprmPostProcessImageFormat, qfmtRgb24);
+        err = QCam_SetParam((QCam_Settings *)m_settings, qprmPostProcessImageFormat, qfmtRgb24);
         CHECK_ERROR(err);
 
-        err = QCam_SendSettingsToCam(m_camera, &m_settings);
+        err = QCam_SendSettingsToCam(m_camera, (QCam_Settings *)m_settings);
         CHECK_ERROR(err);*/
 
 
@@ -462,23 +522,7 @@ int QICamera::Initialize()
         // -----------------
 
         // NAME
-        int nRet = CreateProperty(MM::g_Keyword_Name, g_CameraDeviceName, MM::String, true);
-        if (DEVICE_OK != nRet) {
-            throw nRet;
-        }
-
-        // DESCRIPTION
-
-        // get the QCam version number
-        err = QCam_LibVersion(&major, &minor, &build);
-        if (err != qerrSuccess) {
-            REPORT_QERR(err);
-            throw DEVICE_ERR;
-        }
-
-        sprintf(qcamVersionStr, "QCam %u.%u.%u", major, minor, build);
-
-        nRet = CreateProperty(MM::g_Keyword_Description, qcamVersionStr, MM::String, true);
+        nRet = CreateProperty(MM::g_Keyword_Name, g_CameraDeviceName, MM::String, true);
         if (DEVICE_OK != nRet) {
             throw nRet;
         }
@@ -560,6 +604,12 @@ int QICamera::Initialize()
                 strcpy(cameraStr, "Go 21");
                 break;
 
+#ifdef WIN32
+ 
+            case qcCameraEXiBlue:
+                strcpy(cameraStr, "EXi Blue");
+                break;
+#endif
                 /*		case qcCameraRoleraOne:
                 strcpy(cameraStr, "Rolera One");
                 break;
@@ -571,11 +621,12 @@ int QICamera::Initialize()
             }
         }
 
+        strcpy(cameraName, cameraStr);
         nRet = CreateProperty(MM::g_Keyword_CameraName, cameraStr, MM::String, true);
         if (nRet != DEVICE_OK) {
             throw nRet;
         }
-
+        
         // CAMERA ID
 
         // get the camera serial string
@@ -609,12 +660,13 @@ int QICamera::Initialize()
             throw nRet;
         }
 
-        // GAIN
-        nRet = SetupGain();
-        if (nRet != DEVICE_OK && nRet != DEVICE_NOT_SUPPORTED) {
-            throw nRet;
+        if (strcmp(cameraName, "Rolera EMC2") != 0) {
+           //  GAIN
+            nRet = SetupGain();
+            if (nRet != DEVICE_OK && nRet != DEVICE_NOT_SUPPORTED) {
+                throw nRet;
+            }
         }
-
         // OFFSET
         nRet = SetupOffset();
         if (nRet != DEVICE_OK && nRet != DEVICE_NOT_SUPPORTED) {
@@ -652,17 +704,44 @@ int QICamera::Initialize()
             throw nRet;
         }
 
+#ifdef WIN32
+       //if we have easy em gain then create em gain differently then if only em gain
+        unsigned long				isEMGainAvailable;					
+        nRet = QCam_GetInfo(m_camera, qinfEasyEmModeSupported, &isEMGainAvailable);
+        if (nRet == DEVICE_OK)
+        {
+            if (1 == isEMGainAvailable)
+            {
+                // EASY AND EM GAIN
+                nRet = SetupEMAndEasyEMGain();
+                if (nRet != DEVICE_OK && nRet != DEVICE_NOT_SUPPORTED) {
+                    throw nRet;
+                }
+            }
+            else 
+            {
+                // EM GAIN
+                nRet = SetupEMGain();
+                if (nRet != DEVICE_OK && nRet != DEVICE_NOT_SUPPORTED) {
+                    throw nRet;
+                }
+            }
+        }
+#else
         // EM GAIN
         nRet = SetupEMGain();
         if (nRet != DEVICE_OK && nRet != DEVICE_NOT_SUPPORTED) {
             throw nRet;
         }
-
-        // IT GAIN
-        nRet = SetupITGain();
+#endif
+       // IT GAIN
+       if (strcmp(cameraStr, "Rolera EMC2") != 0) {
+         nRet = SetupITGain();
         if (nRet != DEVICE_OK && nRet != DEVICE_NOT_SUPPORTED) {
             throw nRet;
         }
+       }
+
 
         // TRIGGER MODE
         nRet = SetupTriggerType();
@@ -754,7 +833,9 @@ int QICamera::Shutdown()
     if (err != qerrSuccess) {
         returnValue = DEVICE_ERR;
     }
-
+#ifdef WIN32
+    QCam_ReleaseCameraSettingsStruct((QCam_SettingsEx *)m_settings);
+#endif
     // release the driver
     QCam_ReleaseDriver();
 
@@ -793,7 +874,7 @@ int QICamera::SetupExposure()
 
     START_METHOD("QICamera::SetupExposure");
 
-    err = QCam_GetParam64(&m_settings, qprm64Exposure, &exposure);
+    err = QCam_GetParam64((QCam_Settings *)m_settings, qprm64Exposure, &exposure);
     if (err == qerrNotSupported) {
         return DEVICE_NOT_SUPPORTED;
     } else if (err != qerrSuccess) {
@@ -802,7 +883,7 @@ int QICamera::SetupExposure()
     }
 
     // get the min value
-    err = QCam_GetParam64Min(&m_settings, qprm64Exposure, &exposureMin);
+    err = QCam_GetParam64Min((QCam_Settings *)m_settings, qprm64Exposure, &exposureMin);
     if (err == qerrNotSupported) {
         minMaxSupport = false;
     } else if (err != qerrSuccess) {
@@ -811,7 +892,7 @@ int QICamera::SetupExposure()
     }
 
     // get the max value
-    err = QCam_GetParam64Max(&m_settings, qprm64Exposure, &exposureMax);
+    err = QCam_GetParam64Max((QCam_Settings *)m_settings, qprm64Exposure, &exposureMax);
     if (err == qerrNotSupported) {
         minMaxSupport = false;
     } else if (err != qerrSuccess) {
@@ -875,11 +956,11 @@ int QICamera::SetupBinning()
 
     START_METHOD("QICamera::SetupBinning");
 
-    err = QCam_GetParamSparseTable(&m_settings, qprmBinning, binningTable, &binningTableSize);
+    err = QCam_GetParamSparseTable((QCam_Settings *)m_settings, qprmBinning, binningTable, &binningTableSize);
 
     // if symmetrical binning is not available, try just vertical
     if (err == qerrNotSupported) {
-        err = QCam_GetParamSparseTable(&m_settings, qprmVerticalBinning, binningTable, &binningTableSize);
+        err = QCam_GetParamSparseTable((QCam_Settings *)m_settings, qprmVerticalBinning, binningTable, &binningTableSize);
     }
     if (err == qerrNotSupported) {
         return DEVICE_NOT_SUPPORTED;
@@ -932,7 +1013,7 @@ int QICamera::SetupGain()
     START_METHOD("QICamera::SetupGain");
 
     // convert the normalized gain into a float
-    err = QCam_GetParam(&m_settings, qprmNormalizedGain, &gain);
+    err = QCam_GetParam((QCam_Settings *)m_settings, qprmNormalizedGain, &gain);
     if (err == qerrNotSupported) {
         return DEVICE_NOT_SUPPORTED;
     } else if (err != qerrSuccess) {
@@ -941,7 +1022,7 @@ int QICamera::SetupGain()
     }
 
     // get the min value
-    err = QCam_GetParamMin(&m_settings, qprmNormalizedGain, &gainMin);
+    err = QCam_GetParamMin((QCam_Settings *)m_settings, qprmNormalizedGain, &gainMin);
     if (err == qerrNotSupported) {
         minMaxSupport = false;
     } else if (err != qerrSuccess) {
@@ -950,7 +1031,7 @@ int QICamera::SetupGain()
     }
 
     // get the max value
-    err = QCam_GetParamMax(&m_settings, qprmNormalizedGain, &gainMax);
+    err = QCam_GetParamMax((QCam_Settings *)m_settings, qprmNormalizedGain, &gainMax);
     if (err == qerrNotSupported) {
         minMaxSupport = false;
     } else if (err != qerrSuccess) {
@@ -1008,14 +1089,14 @@ int QICamera::SetupOffset()
     CPropertyAction				*propertyAction;
     char						tempStr[256];
     signed long					offset, offsetMin, offsetMax;
-    QCam_Err					err;
+    QCam_Err			        err;
     int							nRet;
     bool                     minMaxSupport = true;
 
     START_METHOD("QICamera::SetupOffset");
 
     // convert the normalized gain into a float
-    err = QCam_GetParamS32(&m_settings, qprmS32AbsoluteOffset, &offset);
+    err = QCam_GetParamS32((QCam_Settings *)m_settings, qprmS32AbsoluteOffset, &offset);
     if (err == qerrNotSupported) {
         return DEVICE_NOT_SUPPORTED;
     } else if (err != qerrSuccess) {
@@ -1024,7 +1105,7 @@ int QICamera::SetupOffset()
     }
 
     // get the min/max
-    err = QCam_GetParamS32Min(&m_settings, qprmS32AbsoluteOffset, &offsetMin);
+    err = QCam_GetParamS32Min((QCam_Settings *)m_settings, qprmS32AbsoluteOffset, &offsetMin);
     if (err == qerrNotSupported) {
         minMaxSupport = false;
     } else if (err != qerrSuccess) {
@@ -1032,7 +1113,7 @@ int QICamera::SetupOffset()
         return DEVICE_ERR;
     }
 
-    err = QCam_GetParamS32Max(&m_settings, qprmS32AbsoluteOffset, &offsetMax);
+    err = QCam_GetParamS32Max((QCam_Settings *)m_settings, qprmS32AbsoluteOffset, &offsetMax);
     if (err == qerrNotSupported) {
         minMaxSupport = false;
     } else if (err != qerrSuccess) {
@@ -1112,7 +1193,7 @@ int QICamera::SetupReadoutSpeed()
 
     // Each readout port may have a different readout speed range. We first need
     // to aggregate all possible readout speed ranges for all possible readout ports.
-    err = QCam_GetParam(&m_settings, qprmReadoutPort, &oldReadoutPort);
+    err = QCam_GetParam((QCam_Settings *)m_settings, qprmReadoutPort, &oldReadoutPort);
     if (!(err == qerrSuccess || err == qerrNotSupported)) {
         REPORT_QERR(err);
         return DEVICE_ERR;
@@ -1120,19 +1201,19 @@ int QICamera::SetupReadoutSpeed()
 
     for (iPort = 0; iPort < portTableSize; iPort++) {
         // fake setting the readout port
-        err = QCam_SetParam(&m_settings, qprmReadoutPort, portTable[iPort]);
+        err = QCam_SetParam((QCam_Settings *)m_settings, qprmReadoutPort, portTable[iPort]);
         if (!(err == qerrSuccess || err == qerrNotSupported)) {
             REPORT_QERR(err);
             return DEVICE_ERR;
         }
-        err = QCam_PreflightSettings(m_camera, &m_settings);
+        err = QCam_PreflightSettings(m_camera, (QCam_Settings *)m_settings);
         if (!(err == qerrSuccess || err == qerrNotSupported)) {
             REPORT_QERR(err);
             return DEVICE_ERR;
         }
 
         // retrieve and add the possible readout speeds for this port
-        err = QCam_GetParamSparseTable(&m_settings, qprmReadoutSpeed, readoutTable, &readoutTableSize);
+        err = QCam_GetParamSparseTable((QCam_Settings *)m_settings, qprmReadoutSpeed, readoutTable, &readoutTableSize);
         if (err == qerrNotSupported) {
             return DEVICE_NOT_SUPPORTED;
         } else if (err != qerrSuccess) {
@@ -1157,12 +1238,12 @@ int QICamera::SetupReadoutSpeed()
     }
 
     // restore old readout port
-    err = QCam_SetParam(&m_settings, qprmReadoutPort, oldReadoutPort);
+    err = QCam_SetParam((QCam_Settings *)m_settings, qprmReadoutPort, oldReadoutPort);
     if (!(err == qerrSuccess || err == qerrNotSupported)) {
         REPORT_QERR(err);
         return DEVICE_ERR;
     }
-    err = QCam_PreflightSettings(m_camera, &m_settings);
+    err = QCam_PreflightSettings(m_camera, (QCam_Settings *)m_settings);
     if (!(err == qerrSuccess || err == qerrNotSupported)) {
         REPORT_QERR(err);
         return DEVICE_ERR;
@@ -1172,7 +1253,7 @@ int QICamera::SetupReadoutSpeed()
     std::sort(readoutValues.begin(), readoutValues.end(), ReadoutSpeedStringSortPredicate);
 
     // create the default speed string
-    err = QCam_GetParam(&m_settings, qprmReadoutSpeed, &defaultSpeedEnum);
+    err = QCam_GetParam((QCam_Settings *)m_settings, qprmReadoutSpeed, &defaultSpeedEnum);
     if (err != qerrSuccess) {
         REPORT_QERR(err);
         return DEVICE_ERR;
@@ -1222,7 +1303,7 @@ int QICamera::SetupReadoutPort()
 
     START_METHOD("QICamera::SetupReadoutPort");
 
-    err = QCam_GetParamSparseTable(&m_settings, qprmReadoutPort, readoutTable, &readoutTableSize);
+    err = QCam_GetParamSparseTable((QCam_Settings *)m_settings, qprmReadoutPort, readoutTable, &readoutTableSize);
     if (err == qerrNotSupported) {
         return DEVICE_NOT_SUPPORTED;
     } else if (err != qerrSuccess) {
@@ -1240,7 +1321,7 @@ int QICamera::SetupReadoutPort()
     }
 
     // create the default speed string
-    err = QCam_GetParam(&m_settings, qprmReadoutPort, &defaultPortEnum);
+    err = QCam_GetParam((QCam_Settings *)m_settings, qprmReadoutPort, &defaultPortEnum);
     if (err != qerrSuccess) {
         REPORT_QERR(err);
         return DEVICE_ERR;
@@ -1300,7 +1381,7 @@ int QICamera::SetupBitDepth()
     // get the allowed image formats. Not all cameras support 8bit mode
     mono8allowed = false;
     mono16allowed = false;
-    err = QCam_GetParamSparseTable(&m_settings, qprmImageFormat, formatTable, &formatTableSize);
+    err = QCam_GetParamSparseTable((QCam_Settings *)m_settings, qprmImageFormat, formatTable, &formatTableSize);
     if (err == qerrSuccess) {
         // Go through the availabe image formats and look for monochrome versions
         for (counter = 0; counter < formatTableSize; counter++) {
@@ -1320,7 +1401,7 @@ int QICamera::SetupBitDepth()
     }
 
     // get the current bit depth
-    err = QCam_GetParam(&m_settings, qprmImageFormat, &imageFormat);
+    err = QCam_GetParam((QCam_Settings *)m_settings, qprmImageFormat, &imageFormat);
     if (err != qerrSuccess) {
         REPORT_QERR(err);
         return DEVICE_ERR;
@@ -1434,7 +1515,7 @@ int QICamera::SetupRegulatedCooling()
         return DEVICE_NOT_SUPPORTED;
     }
     // get the min cooling temp available
-    err = QCam_GetParamS32Min(&m_settings, qprmS32RegulatedCoolingTemp, &minCoolingTemp);
+    err = QCam_GetParamS32Min((QCam_Settings *)m_settings, qprmS32RegulatedCoolingTemp, &minCoolingTemp);
     if (err == qerrNotSupported) {
         minMaxSupport = false;
     } else if (err != qerrSuccess) {
@@ -1443,7 +1524,7 @@ int QICamera::SetupRegulatedCooling()
     }
 
     // get the max cooling temp available
-    err = QCam_GetParamS32Max(&m_settings, qprmS32RegulatedCoolingTemp, &maxCoolingTemp);
+    err = QCam_GetParamS32Max((QCam_Settings *)m_settings, qprmS32RegulatedCoolingTemp, &maxCoolingTemp);
     if (err == qerrNotSupported) {
         minMaxSupport = false;
     } else if (err != qerrSuccess) {
@@ -1451,13 +1532,29 @@ int QICamera::SetupRegulatedCooling()
         return DEVICE_ERR;
     }
 
-    // create the actual temperature property
-    propertyAction = new CPropertyAction (this, &QICamera::OnRegulatedCooling);
-    nRet = CreateProperty(MM::g_Keyword_CCDTemperature, "0", MM::Integer, false, propertyAction);
-    if (nRet != DEVICE_OK) {
-        REPORT_MMERR(nRet);
-        return nRet;
+
+    if (maxCoolingTemp == minCoolingTemp)
+    {
+        minMaxSupport = false;
+         // create the actual temperature property
+        propertyAction = new CPropertyAction (this, &QICamera::OnRegulatedCooling);
+        nRet = CreateProperty(MM::g_Keyword_CCDTemperature, "0", MM::Integer, true);
+        if (nRet != DEVICE_OK) {
+            REPORT_MMERR(nRet);
+            return nRet;
+        }
+   }
+    else 
+    {
+        // create the actual temperature property
+        propertyAction = new CPropertyAction (this, &QICamera::OnRegulatedCooling);
+        nRet = CreateProperty(MM::g_Keyword_CCDTemperature, "0", MM::Integer, false, propertyAction);
+        if (nRet != DEVICE_OK) {
+            REPORT_MMERR(nRet);
+            return nRet;
+        }
     }
+
 
     if (minMaxSupport) {
         // create a min temperature property
@@ -1518,7 +1615,7 @@ int QICamera::SetupEMGain()
     }
 
     // get the min value
-    err = QCam_GetParamMin(&m_settings, qprmEMGain, &emGainMin);
+    err = QCam_GetParamMin((QCam_Settings *)m_settings, qprmEMGain, &emGainMin);
     if (err == qerrNotSupported) {
         minMaxSupport = false;
     } else if (err != qerrSuccess) {
@@ -1527,7 +1624,7 @@ int QICamera::SetupEMGain()
     }
 
     // get the max value
-    err = QCam_GetParamMax(&m_settings, qprmEMGain, &emGainMax);
+    err = QCam_GetParamMax((QCam_Settings *)m_settings, qprmEMGain, &emGainMax);
     if (err == qerrNotSupported) {
         minMaxSupport = false;
     } else if (err != qerrSuccess) {
@@ -1535,8 +1632,7 @@ int QICamera::SetupEMGain()
         return DEVICE_ERR;
     }
 
-    // convert the em gain into a float
-    err = QCam_GetParam(&m_settings, qprmEMGain, &emGain);
+    err = QCam_GetParam((QCam_Settings *)m_settings, qprmEMGain, &emGain);
     if (err != qerrSuccess) {
         REPORT_QERR(err);
         return DEVICE_ERR;
@@ -1604,7 +1700,7 @@ int QICamera::SetupITGain()
     }
 
     // get the min value
-    err = QCam_GetParam64Min(&m_settings, qprm64NormIntensGain, &itGainMin);
+    err = QCam_GetParam64Min((QCam_Settings *)m_settings, qprm64NormIntensGain, &itGainMin);
     if (err == qerrNotSupported) {
         minMaxSupport = false;
     } else if (err != qerrSuccess) {
@@ -1613,7 +1709,7 @@ int QICamera::SetupITGain()
     }
 
     // get the max value
-    err = QCam_GetParam64Max(&m_settings, qprm64NormIntensGain, &itGainMax);
+    err = QCam_GetParam64Max((QCam_Settings *)m_settings, qprm64NormIntensGain, &itGainMax);
     if (err == qerrNotSupported) {
         minMaxSupport = false;
     } else if (err != qerrSuccess) {
@@ -1622,7 +1718,7 @@ int QICamera::SetupITGain()
     }
 
     // convert the intensifier gain into a float
-    err = QCam_GetParam64(&m_settings, qprm64NormIntensGain, &itGain);
+    err = QCam_GetParam64((QCam_Settings *)m_settings, qprm64NormIntensGain, &itGain);
     if (err != qerrSuccess) {
         REPORT_QERR(err);
         return DEVICE_ERR;
@@ -1669,6 +1765,129 @@ int QICamera::SetupITGain()
 }
 
 /**
+ * Initialize the EMGain (electron multiplier gain)
+ * property with allowed values
+ */
+int QICamera::SetupEMAndEasyEMGain()
+{
+    CPropertyActionEx				*propertyAction;
+    char						tempStr[256];
+    unsigned long				emGain, emGainMin, emGainMax;
+    QCam_Err					err;
+    int							nRet;
+    unsigned long				isEMGainAvailable, easyGainAsLong;					
+    bool                     minMaxSupport = true;
+
+    START_METHOD("QICamera::SetupEMAndEasyEMGain");
+
+    // first check if the camera supports EM gain
+    err = QCam_GetInfo(m_camera, qinfEMGain, &isEMGainAvailable);
+    if (err == qerrNotSupported) {
+        return DEVICE_NOT_SUPPORTED;
+    } else if (err != qerrSuccess) {
+        REPORT_QERR(err);
+        return DEVICE_ERR;
+    }
+
+    if (isEMGainAvailable == 0) {
+        return DEVICE_NOT_SUPPORTED;
+    }
+
+    // get the min value
+    err = QCam_GetParamMin((QCam_Settings *)m_settings, qprmEMGain, &emGainMin);
+    if (err == qerrNotSupported) {
+        minMaxSupport = false;
+    } else if (err != qerrSuccess) {
+        REPORT_QERR(err);
+        return DEVICE_ERR;
+    }
+
+    // get the max value
+    err = QCam_GetParamMax((QCam_Settings *)m_settings, qprmEMGain, &emGainMax);
+    if (err == qerrNotSupported) {
+        minMaxSupport = false;
+    } else if (err != qerrSuccess) {
+        REPORT_QERR(err);
+        return DEVICE_ERR;
+    }
+
+    // convert the em gain into a float
+    err = QCam_GetParam((QCam_Settings *)m_settings, qprmEMGain, &emGain);
+    if (err != qerrSuccess) {
+        REPORT_QERR(err);
+        return DEVICE_ERR;
+    }
+
+#ifdef WIN32
+
+    sprintf(tempStr, "%lu", emGain);
+
+    propertyAction = new CPropertyActionEx (this, &QICamera::OnEasyEMGain, 1);
+    nRet = CreateProperty("Easy EM Gain", tempStr, MM::Integer, false, propertyAction);
+    if (nRet != DEVICE_OK) {
+        REPORT_MMERR(nRet);
+        return nRet;
+    }
+
+    if (minMaxSupport) {
+        // create the min property
+        sprintf(tempStr, "%lu", emGainMin);
+        nRet = CreateProperty(g_Keyword_EMGain_Min, tempStr, MM::Integer, true);
+        if (nRet != DEVICE_OK) {
+            REPORT_MMERR(nRet);
+            return nRet;
+        }
+
+        // create the max property
+        sprintf(tempStr, "%lu", emGainMax);
+        nRet = CreateProperty(g_Keyword_EMGain_Max, tempStr, MM::Integer, true);
+        if (nRet != DEVICE_OK) {
+            REPORT_MMERR(nRet);
+            return nRet;
+        }
+
+        nRet = SetPropertyLimits("Easy EM Gain", emGainMin, emGainMax);
+        if (nRet != DEVICE_OK) {
+            REPORT_MMERR(nRet);
+            return nRet;
+        }
+
+    }
+
+    string	easyGain;
+    easyGainAsLong = 0;
+    err = QCam_GetParam((QCam_Settings *)m_settings, qprmEasyEmMode, &easyGainAsLong);
+
+    if (easyGainAsLong == 1){
+	    
+        easyGain = Yes.c_str();
+
+        if (DEVICE_OK != SetEasyEMGain(easyGainAsLong)){
+            return DEVICE_ERR;
+        }
+    }
+    else {
+	    easyGain = No.c_str();
+    }
+
+    propertyAction = new CPropertyActionEx (this, &QICamera::OnEasyEMGain,0);
+    nRet = CreateProperty("Easy EM Enabled", easyGain.c_str(), MM::String, false, propertyAction);
+    if (nRet != DEVICE_OK) {
+        REPORT_MMERR(nRet);
+        return nRet;
+    }
+
+    vector<std::string> resetValues;
+    resetValues.push_back(Yes.c_str());
+    resetValues.push_back(No.c_str());
+    SetAllowedValues("Easy EM Enabled", resetValues);
+
+#endif
+
+    return DEVICE_OK;
+}
+
+/**
  * Allocate the circular frame buffer structures. 
  */
 int QICamera::SetupFrames()
@@ -1709,7 +1928,7 @@ int QICamera::SetupTriggerType()
 
     START_METHOD("QICamera::TriggerType");
 
-    err = QCam_GetParamSparseTable(&m_settings, qprmTriggerType, typeTable, &typeTableSize);
+    err = QCam_GetParamSparseTable((QCam_Settings *)m_settings, qprmTriggerType, typeTable, &typeTableSize);
     if (err == qerrNotSupported) {
         return DEVICE_NOT_SUPPORTED;
     } else if (err != qerrSuccess) {
@@ -1727,13 +1946,13 @@ int QICamera::SetupTriggerType()
     }
 
     // Startup in Freerun trigger mode
-	err = QCam_SetParam(&m_settings, qprmTriggerType, qcTriggerFreerun);
+	err = QCam_SetParam((QCam_Settings *)m_settings, qprmTriggerType, qcTriggerFreerun);
     if (err != qerrSuccess) {
         REPORT_QERR(err);
         return DEVICE_ERR;
     }
 
-    nRet = SendSettingsToCamera(&m_settings);
+    nRet = SendSettingsToCamera((QCam_Settings *)m_settings);
     if (nRet != DEVICE_OK) {
         REPORT_MMERR(nRet);
         return DEVICE_ERR;
@@ -1775,7 +1994,7 @@ int QICamera::SetupTriggerDelay()
 
     START_METHOD("QICamera::SetupTriggerDelay");
 
-    err = QCam_GetParam(&m_settings, qprmTriggerDelay, &delay);
+    err = QCam_GetParam((QCam_Settings *)m_settings, qprmTriggerDelay, &delay);
     if (err == qerrNotSupported) {
         return DEVICE_NOT_SUPPORTED;
     } else if (err != qerrSuccess) {
@@ -1784,7 +2003,7 @@ int QICamera::SetupTriggerDelay()
     }
 
     // get the min value
-    err = QCam_GetParamMin(&m_settings, qprmTriggerDelay, &delayMin);
+    err = QCam_GetParamMin((QCam_Settings *)m_settings, qprmTriggerDelay, &delayMin);
     if (err == qerrNotSupported) {
         minMaxSupport = false;
     } else if (err != qerrSuccess) {
@@ -1793,7 +2012,7 @@ int QICamera::SetupTriggerDelay()
     }
 
     // get the max value
-    err = QCam_GetParamMax(&m_settings, qprmTriggerDelay, &delayMax);
+    err = QCam_GetParamMax((QCam_Settings *)m_settings, qprmTriggerDelay, &delayMax);
     if (err == qerrNotSupported) {
         minMaxSupport = false;
     } else if (err != qerrSuccess) {
@@ -2053,30 +2272,30 @@ int QICamera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
     }
 
     // set the roi
-    err = QCam_SetParam(&m_settings, qprmRoiX, x);
+    err = QCam_SetParam((QCam_Settings *)m_settings, qprmRoiX, x);
     if (err != qerrSuccess) {
         REPORT_QERR(err);
         return DEVICE_ERR;
     }
-    err = QCam_SetParam(&m_settings, qprmRoiY, y);
+    err = QCam_SetParam((QCam_Settings *)m_settings, qprmRoiY, y);
     if (err != qerrSuccess) {
         REPORT_QERR(err);
         return DEVICE_ERR;
     }
 
-    err = QCam_SetParam(&m_settings, qprmRoiWidth, xSize);
+    err = QCam_SetParam((QCam_Settings *)m_settings, qprmRoiWidth, xSize);
     if (err != qerrSuccess) {
         REPORT_QERR(err);
         return DEVICE_ERR;
     }
-    err = QCam_SetParam(&m_settings, qprmRoiHeight, ySize);
+    err = QCam_SetParam((QCam_Settings *)m_settings, qprmRoiHeight, ySize);
     if (err != qerrSuccess) {
         REPORT_QERR(err);
         return DEVICE_ERR;
     }
 
     // commit it
-    int nRet = SendSettingsToCamera(&m_settings);
+    int nRet = SendSettingsToCamera((QCam_Settings *)m_settings);
     if (nRet != DEVICE_OK) {
         REPORT_MMERR(nRet);
         return DEVICE_ERR;
@@ -2100,22 +2319,22 @@ int QICamera::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize)
     START_METHOD("QICamera::GetROI");
 
     // get the roi
-    err = QCam_GetParam(&m_settings, qprmRoiX, &roiX);
+    err = QCam_GetParam((QCam_Settings *)m_settings, qprmRoiX, &roiX);
     if (err != qerrSuccess) {
         REPORT_QERR(err);
         return DEVICE_ERR;
     }
-    err = QCam_GetParam(&m_settings, qprmRoiY, &roiY);
+    err = QCam_GetParam((QCam_Settings *)m_settings, qprmRoiY, &roiY);
     if (err != qerrSuccess) {
         REPORT_QERR(err);
         return DEVICE_ERR;
     }
-    err = QCam_GetParam(&m_settings, qprmRoiWidth, &roiWidth);
+    err = QCam_GetParam((QCam_Settings *)m_settings, qprmRoiWidth, &roiWidth);
     if (err != qerrSuccess) {
         REPORT_QERR(err);
         return DEVICE_ERR;
     }
-    err = QCam_GetParam(&m_settings, qprmRoiHeight, &roiHeight);
+    err = QCam_GetParam((QCam_Settings *)m_settings, qprmRoiHeight, &roiHeight);
     if (err != qerrSuccess) {
         REPORT_QERR(err);
         return DEVICE_ERR;
@@ -2156,29 +2375,29 @@ int QICamera::ClearROI()
     }
 
     // reset the ROI to be full frame 
-    err = QCam_SetParam(&m_settings, qprmRoiX, 0); 
+    err = QCam_SetParam((QCam_Settings *)m_settings, qprmRoiX, 0); 
     if (err != qerrSuccess) {
         REPORT_QERR(err);
         return DEVICE_ERR;
     }
-    err = QCam_SetParam(&m_settings, qprmRoiY, 0); 
+    err = QCam_SetParam((QCam_Settings *)m_settings, qprmRoiY, 0); 
     if (err != qerrSuccess) {
         REPORT_QERR(err);
         return DEVICE_ERR;
     }
-    err = QCam_SetParam(&m_settings, qprmRoiWidth, maxWidth); 
+    err = QCam_SetParam((QCam_Settings *)m_settings, qprmRoiWidth, maxWidth); 
     if (err != qerrSuccess) {
         REPORT_QERR(err);
         return DEVICE_ERR;
     }
-    err = QCam_SetParam(&m_settings, qprmRoiHeight, maxHeight); 
+    err = QCam_SetParam((QCam_Settings *)m_settings, qprmRoiHeight, maxHeight); 
     if (err != qerrSuccess) {
         REPORT_QERR(err);
         return DEVICE_ERR;
     }
 
     // commit it
-    int nRet = SendSettingsToCamera(&m_settings);
+    int nRet = SendSettingsToCamera((QCam_Settings *)m_settings);
     if (nRet != DEVICE_OK) {
         REPORT_MMERR(nRet);
         return DEVICE_ERR;
@@ -2200,7 +2419,7 @@ double QICamera::GetExposure() const
     START_METHOD("QICamera::GetExposure");
 
     // get it
-    err = QCam_GetParam64(&m_settings, qprm64Exposure, &exposureAsLongLong);
+    err = QCam_GetParam64((QCam_Settings *)m_settings, qprm64Exposure, &exposureAsLongLong);
     if (err != qerrSuccess) {
         REPORT_QERR(err);
         return DEVICE_ERR;
@@ -2262,9 +2481,12 @@ int QICamera::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
     QCam_Err				err;
 
     START_ONPROPERTY("QICamera::OnExposure", eAct);
+    ostringstream txt;
+    txt << "Entered QICamera::OnExposure";
 
     // see if the user wants to get or set the property
     if (eAct == MM::AfterSet) {	
+      txt<<" AfterSet ";
         bool wasCapturing = IsCapturing();
         if (wasCapturing)
             StopSequenceAcquisition();
@@ -2274,25 +2496,27 @@ int QICamera::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
         exposureAsLongLong = (unsigned long long) (exposure * 1000000.0);
 
         // set it
-        err = QCam_SetParam64(&m_settings, qprm64Exposure, exposureAsLongLong);
+        err = QCam_SetParam64((QCam_Settings *)m_settings, qprm64Exposure, exposureAsLongLong);
         if (err != qerrSuccess) {
             REPORT_QERR(err);
             return DEVICE_ERR;
         }
 
-        int nRet = SendSettingsToCamera(&m_settings);
+        int nRet = SendSettingsToCamera((QCam_Settings *)m_settings);
         if (nRet != DEVICE_OK) {
             REPORT_MMERR(nRet);
             return DEVICE_ERR;
         }
         m_dExposure = exposure;
 
+      txt<<exposure;
         if (wasCapturing)
             RestartSequenceAcquisition();
 
     } else if (eAct == MM::BeforeGet) {
         // get it
-        err = QCam_GetParam64(&m_settings, qprm64Exposure, &exposureAsLongLong);
+      txt<<" BeforeGet ";
+       err = QCam_GetParam64((QCam_Settings *)m_settings, qprm64Exposure, &exposureAsLongLong);
         if (err != qerrSuccess) {
             REPORT_QERR(err);
             return DEVICE_ERR;
@@ -2301,9 +2525,10 @@ int QICamera::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
         // convert it to milliseconds
         exposure = exposureAsLongLong / 1000000.0;
         pProp->Set(exposure);
+      txt<<exposure;
     }
 
-    return DEVICE_OK; 
+   return DEVICE_OK; 
 }
 
 /**
@@ -2325,10 +2550,10 @@ int QICamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
         pProp->Get(binningMode);
 
         // set it (try symmetrical binning first)
-        err = QCam_SetParam(&m_settings, qprmBinning, binningMode);
+        err = QCam_SetParam((QCam_Settings *)m_settings, qprmBinning, binningMode);
         if (err == qerrNotSupported) {
             // try just vertical
-            err = QCam_SetParam(&m_settings, qprmVerticalBinning, binningMode);
+            err = QCam_SetParam((QCam_Settings *)m_settings, qprmVerticalBinning, binningMode);
         }
         if (err != qerrSuccess) {
             REPORT_QERR(err);
@@ -2347,10 +2572,10 @@ int QICamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 
     } else if (eAct == MM::BeforeGet) {
         // get it
-        err = QCam_GetParam(&m_settings, qprmBinning, (unsigned long*)&binningMode);
+        err = QCam_GetParam((QCam_Settings *)m_settings, qprmBinning, (unsigned long*)&binningMode);
         if (err == qerrNotSupported) {
             // try just vertical
-            err = QCam_GetParam(&m_settings, qprmVerticalBinning, (unsigned long*)&binningMode);
+            err = QCam_GetParam((QCam_Settings *)m_settings, qprmVerticalBinning, (unsigned long*)&binningMode);
         }
         if (err != qerrSuccess) {
             REPORT_QERR(err);
@@ -2371,7 +2596,6 @@ int QICamera::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
     double				gain;
     unsigned long		gainAsLong;
     QCam_Err				err;
-
     START_ONPROPERTY("QICamera::OnGain", eAct);
 
     // see if the user wants to get or set the property
@@ -2386,14 +2610,14 @@ int QICamera::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
         gainAsLong = (unsigned long) (gain * 1000000.0f);
 
         // set it
-        err = QCam_SetParam(&m_settings, qprmNormalizedGain, gainAsLong);
+        err = QCam_SetParam((QCam_Settings *)m_settings, qprmNormalizedGain, gainAsLong);
         if (err != qerrSuccess) {
             REPORT_QERR(err);
             return DEVICE_ERR;
         }
 
         // commit it
-        int nRet = SendSettingsToCamera(&m_settings);
+        int nRet = SendSettingsToCamera((QCam_Settings *)m_settings);
         if (nRet != DEVICE_OK) {
             REPORT_MMERR(nRet);
             return DEVICE_ERR;
@@ -2404,7 +2628,7 @@ int QICamera::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
 
     } else if (eAct == MM::BeforeGet) {
         // get it
-        err = QCam_GetParam(&m_settings, qprmNormalizedGain, &gainAsLong);
+        err = QCam_GetParam((QCam_Settings *)m_settings, qprmNormalizedGain, &gainAsLong);
         if (err != qerrSuccess) {
             REPORT_QERR(err);
             return DEVICE_ERR;
@@ -2437,14 +2661,14 @@ int QICamera::OnOffset(MM::PropertyBase* pProp, MM::ActionType eAct)
         pProp->Get(offset);
 
         // set it
-        err = QCam_SetParamS32(&m_settings, qprmS32AbsoluteOffset, offset);
+        err = QCam_SetParamS32((QCam_Settings *)m_settings, qprmS32AbsoluteOffset, offset);
         if (err != qerrSuccess) {
             REPORT_QERR(err);
             return DEVICE_ERR;
         }
 
         // commit it
-        int nRet = SendSettingsToCamera(&m_settings);
+        int nRet = SendSettingsToCamera((QCam_Settings *)m_settings);
         if (nRet != DEVICE_OK) {
             REPORT_MMERR(nRet);
             return DEVICE_ERR;
@@ -2455,7 +2679,7 @@ int QICamera::OnOffset(MM::PropertyBase* pProp, MM::ActionType eAct)
 
     } else if (eAct == MM::BeforeGet) {
         // get it
-        err = QCam_GetParamS32(&m_settings, qprmS32AbsoluteOffset, &offset);
+        err = QCam_GetParamS32((QCam_Settings *)m_settings, qprmS32AbsoluteOffset, &offset);
         if (err != qerrSuccess) {
             REPORT_QERR(err);
             return DEVICE_ERR;
@@ -2491,19 +2715,48 @@ int QICamera::OnReadoutSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
         ConvertReadoutSpeedToEnum(readoutSpeedStr.c_str(), &readoutSpeedEnum);
 
         // set it
-        err = QCam_SetParam(&m_settings, qprmReadoutSpeed, readoutSpeedEnum);
+        err = QCam_SetParam((QCam_Settings *)m_settings, qprmReadoutSpeed, readoutSpeedEnum);
         if (err != qerrSuccess) {
             REPORT_QERR(err);
             return DEVICE_ERR;
         }
 
         // commit it
-        int nRet = SendSettingsToCamera(&m_settings);
+        int nRet = SendSettingsToCamera((QCam_Settings *)m_settings);
         if (nRet != DEVICE_OK) {
             REPORT_MMERR(nRet);
             return DEVICE_ERR;
         }
 
+#ifdef WIN32
+
+        unsigned long isEMGainAvailable = 0;
+
+        err = QCam_GetInfo(m_camera, qinfEasyEmModeSupported, &isEMGainAvailable);
+        if (err != qerrSuccess) {
+            REPORT_QERR(err);
+            return DEVICE_ERR;
+        } 
+
+        if (1 == isEMGainAvailable)
+        {
+            unsigned long easyGainAsLong = 0;
+            err = QCam_GetParam((QCam_Settings *)m_settings, qprmEasyEmMode, &easyGainAsLong);
+            if (err != qerrSuccess) {
+                REPORT_QERR(err);
+                return DEVICE_ERR;
+            }
+
+            if (easyGainAsLong == 1)
+            {
+                nRet = SetEasyEMGain(easyGainAsLong);
+                if (nRet != DEVICE_OK) {
+                    return DEVICE_ERR;
+                }
+            }
+        }
+        
+#endif
         // Because we set more allowed values than possible, we need to retrieve the readout
         // speed from the camera to check
         UpdateProperty(MM::g_Keyword_ReadoutTime);
@@ -2513,7 +2766,8 @@ int QICamera::OnReadoutSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
 
     } else if (eAct == MM::BeforeGet) {
         // get it
-        err = QCam_GetParam(&m_settings, qprmReadoutSpeed, (unsigned long*)&readoutSpeedEnum);
+
+        err = QCam_GetParam((QCam_Settings *)m_settings, qprmReadoutSpeed, (unsigned long*)&readoutSpeedEnum);
         if (err != qerrSuccess) {
             REPORT_QERR(err);
             return DEVICE_ERR;
@@ -2551,14 +2805,14 @@ int QICamera::OnReadoutPort(MM::PropertyBase* pProp, MM::ActionType eAct)
         ConvertReadoutPortToEnum(readoutPortStr.c_str(), &readoutPortEnum);
 
         // set it
-        err = QCam_SetParam(&m_settings, qprmReadoutPort, readoutPortEnum);
+        err = QCam_SetParam((QCam_Settings *)m_settings, qprmReadoutPort, readoutPortEnum);
         if (err != qerrSuccess) {
             REPORT_QERR(err);
             return DEVICE_ERR;
         }
 
         // commit it
-        int nRet = SendSettingsToCamera(&m_settings);
+        int nRet = SendSettingsToCamera((QCam_Settings *)m_settings);
         if (nRet != DEVICE_OK) {
             REPORT_MMERR(nRet);
             return DEVICE_ERR;
@@ -2572,7 +2826,7 @@ int QICamera::OnReadoutPort(MM::PropertyBase* pProp, MM::ActionType eAct)
 
     } else if (eAct == MM::BeforeGet) {
         // get it
-        err = QCam_GetParam(&m_settings, qprmReadoutPort, (unsigned long*)&readoutPortEnum);
+        err = QCam_GetParam((QCam_Settings *)m_settings, qprmReadoutPort, (unsigned long*)&readoutPortEnum);
         if (err != qerrSuccess) {
             REPORT_QERR(err);
             return DEVICE_ERR;
@@ -2613,14 +2867,14 @@ int QICamera::OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct)
         // set it
         if (bitDepth == 8) {
             // 8 bit
-            err = QCam_SetParam(&m_settings, qprmImageFormat, qfmtMono8);
+            err = QCam_SetParam((QCam_Settings *)m_settings, qprmImageFormat, qfmtMono8);
             if (err != qerrSuccess) {
                 REPORT_QERR(err);
                 return DEVICE_ERR;
             }
         } else {
             // 16 bit
-            err = QCam_SetParam(&m_settings, qprmImageFormat, qfmtMono16);
+            err = QCam_SetParam((QCam_Settings *)m_settings, qprmImageFormat, qfmtMono16);
             if (err != qerrSuccess) {
                 REPORT_QERR(err);
                 return DEVICE_ERR;
@@ -2628,14 +2882,14 @@ int QICamera::OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct)
         }
 
         // commit it
-        int nRet = SendSettingsToCamera(&m_settings);
+        int nRet = SendSettingsToCamera((QCam_Settings *)m_settings);
         if (nRet != DEVICE_OK) {
             REPORT_MMERR(nRet);
             return DEVICE_ERR;
         }
 
         unsigned long imageFormat;
-        err = QCam_GetParam(&m_settings, qprmImageFormat, &imageFormat);
+        err = QCam_GetParam((QCam_Settings *)m_settings, qprmImageFormat, &imageFormat);
 
         // update cached value
         m_bitDepth = QCam_is16bit(imageFormat) ? 2 : 1;
@@ -2648,7 +2902,7 @@ int QICamera::OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct)
 
     } else if (eAct == MM::BeforeGet) {
         // get it
-        err = QCam_GetParam(&m_settings, qprmImageFormat, &imageFormat);
+        err = QCam_GetParam((QCam_Settings *)m_settings, qprmImageFormat, &imageFormat);
         if (err != qerrSuccess) {
             REPORT_QERR(err);
             return DEVICE_ERR;
@@ -2696,14 +2950,14 @@ int QICamera::OnCooler(MM::PropertyBase* pProp, MM::ActionType eAct)
         }
 
         // set it
-        err = QCam_SetParam(&m_settings, qprmCoolerActive, value);
+        err = QCam_SetParam((QCam_Settings *)m_settings, qprmCoolerActive, value);
         if (err != qerrSuccess) {
             REPORT_QERR(err);
             return DEVICE_ERR;
         }
 
         // commit it
-        int nRet = SendSettingsToCamera(&m_settings);
+        int nRet = SendSettingsToCamera((QCam_Settings *)m_settings);
         if (nRet != DEVICE_OK) {
             REPORT_MMERR(nRet);
             return DEVICE_ERR;
@@ -2714,7 +2968,7 @@ int QICamera::OnCooler(MM::PropertyBase* pProp, MM::ActionType eAct)
 
     } else if (eAct == MM::BeforeGet) {
         // get it
-        err = QCam_GetParam(&m_settings, qprmCoolerActive, &value);
+        err = QCam_GetParam((QCam_Settings *)m_settings, qprmCoolerActive, &value);
         if (err != qerrSuccess) {
             REPORT_QERR(err);
             return DEVICE_ERR;
@@ -2756,14 +3010,14 @@ int QICamera::OnRegulatedCooling(MM::PropertyBase* pProp, MM::ActionType eAct)
         coolingTemp = atoi(tempString.c_str());
 
         // set it
-        err = QCam_SetParamS32(&m_settings, qprmS32RegulatedCoolingTemp, coolingTemp);
+        err = QCam_SetParamS32((QCam_Settings *)m_settings, qprmS32RegulatedCoolingTemp, coolingTemp);
         if (err != qerrSuccess) {
             REPORT_QERR(err);
             return DEVICE_ERR;
         }
 
         // commit it
-        int nRet = SendSettingsToCamera(&m_settings);
+        int nRet = SendSettingsToCamera((QCam_Settings *)m_settings);
         if (nRet != DEVICE_OK) {
             REPORT_MMERR(nRet);
             return DEVICE_ERR;
@@ -2774,7 +3028,7 @@ int QICamera::OnRegulatedCooling(MM::PropertyBase* pProp, MM::ActionType eAct)
 
     } else if (eAct == MM::BeforeGet) {
         // get it
-        err = QCam_GetParamS32(&m_settings, qprmS32RegulatedCoolingTemp, &coolingTemp);
+        err = QCam_GetParamS32((QCam_Settings *)m_settings, qprmS32RegulatedCoolingTemp, &coolingTemp);
         if (err != qerrSuccess) {
             REPORT_QERR(err);
             return DEVICE_ERR;
@@ -2797,7 +3051,6 @@ int QICamera::OnEMGain(MM::PropertyBase* pProp, MM::ActionType eAct)
     double					emGain;
     unsigned long			emGainAsLong;
     QCam_Err				err;
-
     START_ONPROPERTY("QICamera::OnEMGain", eAct);
 
     // see if the user wants to get or set the property
@@ -2810,16 +3063,16 @@ int QICamera::OnEMGain(MM::PropertyBase* pProp, MM::ActionType eAct)
 
         // convert the exposure to the real normalized gain value
         emGainAsLong = (unsigned long) (emGain);// * 1000000.0f);
-
+ 
         // set it
-        err = QCam_SetParam(&m_settings, qprmEMGain, emGainAsLong);
+        err = QCam_SetParam((QCam_Settings *)m_settings, qprmEMGain, emGainAsLong);
         if (err != qerrSuccess) {
             REPORT_QERR(err);
             return DEVICE_ERR;
         }
 
         // commit it
-        int nRet = SendSettingsToCamera(&m_settings);
+        int nRet = SendSettingsToCamera((QCam_Settings *)m_settings);
         if (nRet != DEVICE_OK) {
             REPORT_MMERR(nRet);
             return DEVICE_ERR;
@@ -2830,19 +3083,169 @@ int QICamera::OnEMGain(MM::PropertyBase* pProp, MM::ActionType eAct)
         
     } else if (eAct == MM::BeforeGet) {
         // get it
-        err = QCam_GetParam(&m_settings, qprmEMGain, &emGainAsLong);
+        err = QCam_GetParam((QCam_Settings *)m_settings, qprmEMGain, &emGainAsLong);
         if (err != qerrSuccess) {
             REPORT_QERR(err);
             return DEVICE_ERR;
         }
-
-        // convert it to a more readable form
+ 
         emGain = emGainAsLong;// / 1000000.0;
         pProp->Set(emGain);
     }
 
     return DEVICE_OK; 
 }
+
+
+
+int QICamera::SetEasyEMGain(unsigned long  easyGainAsLong)
+{
+    QCam_Err				err = qerrSuccess;
+    unsigned long           emGainAsLong = 0;
+
+#ifdef WIN32
+    if (easyGainAsLong == 1)
+    {
+
+        QCam_Param emParam;
+        unsigned long uReadoutSpeed;
+
+        err = QCam_GetParam((QCam_Settings *)m_settings, qprmReadoutSpeed, &uReadoutSpeed);
+        if (err != qerrSuccess) {
+            REPORT_QERR(err);
+            return DEVICE_ERR;
+        }
+        switch (uReadoutSpeed)
+        {
+        case qcReadout10M:
+            emParam = qprmEasyEmGainValue10;
+            break;
+
+        case qcReadout20M:
+            emParam = qprmEasyEmGainValue20;
+            break;
+
+        case qcReadout40M:
+            emParam = qprmEasyEmGainValue40;
+            break;	
+        default:
+            // Just the the camera to the EMGain that it is currently set to in case 
+            // we get an invalid speed
+            emParam = qprmEMGain;
+            break;
+        }
+
+        err = QCam_GetParam((QCam_Settings *)m_settings, emParam, &emGainAsLong);
+        if (err != qerrSuccess) {
+            REPORT_QERR(err);
+            return DEVICE_ERR;
+        }
+
+        err = QCam_SetParam((QCam_Settings *)m_settings, qprmEMGain, emGainAsLong);
+        if (err != qerrSuccess) {
+            REPORT_QERR(err);
+            return DEVICE_ERR;
+        }
+    }
+#endif
+    return DEVICE_OK; 
+}
+/**
+ * Sets or gets the EMGain property
+ */
+int QICamera::OnEasyEMGain(MM::PropertyBase* pProp, MM::ActionType eAct, long index)
+{
+#ifdef WIN32
+
+    string					easyGain;
+    unsigned long			easyGainAsLong = 0;
+    QCam_Err				err;
+
+    START_ONPROPERTY("QICamera::OnEasyEMGain", eAct);
+
+
+    if (0 == index)
+    {
+		string value;
+		if (eAct == MM::AfterSet)
+		{
+           bool wasCapturing = IsCapturing();
+            if (wasCapturing)
+                StopSequenceAcquisition();
+
+            pProp->Get(easyGain);
+
+		    if (easyGain == No.c_str())
+			    easyGainAsLong = 0;
+            else
+			    easyGainAsLong = 1;
+
+		    if (easyGain == No.c_str())
+            {
+			    easyGainAsLong = 0;
+                err = QCam_SetParam((QCam_Settings *)m_settings, qprmEasyEmMode, easyGainAsLong);
+                if (err != qerrSuccess) {
+                    REPORT_QERR(err);
+                    return DEVICE_ERR;
+                }
+            }
+		    else if (easyGain == Yes.c_str())
+            {
+                START_ONPROPERTY("QICamera::OnEasyEMGain, yes", eAct);
+
+                easyGainAsLong = 1;
+                err = QCam_SetParam((QCam_Settings *)m_settings, qprmEasyEmMode, easyGainAsLong);
+                if (err != qerrSuccess) {
+                    REPORT_QERR(err);
+                    return DEVICE_ERR;
+                }
+                if (DEVICE_OK != SetEasyEMGain(easyGainAsLong)){
+                    return DEVICE_ERR;
+                }
+            }
+
+            // commit it
+            int nRet = SendSettingsToCamera((QCam_Settings *)m_settings);
+            if (nRet != DEVICE_OK) {
+                REPORT_MMERR(nRet);
+                return DEVICE_ERR;
+            }
+
+            if (wasCapturing)
+                RestartSequenceAcquisition();
+		}
+		else if (eAct == MM::BeforeGet)
+		{
+
+           err = QCam_GetParam((QCam_Settings *)m_settings, qprmEasyEmMode, &easyGainAsLong);
+            if (err != qerrSuccess) {
+                REPORT_QERR(err);
+                return DEVICE_ERR;
+            }
+
+            if (easyGainAsLong == 1){
+			    
+                easyGain = Yes.c_str();
+
+                if (DEVICE_OK != SetEasyEMGain(easyGainAsLong)){
+                    return DEVICE_ERR;
+                }
+            }
+            else {
+			    easyGain = No.c_str();
+            }
+
+            pProp->Set(easyGain.c_str());
+		}
+	}
+    else
+    {
+        OnEMGain(pProp, eAct);
+    }
+#endif
+    return DEVICE_OK; 
+}
+
 
 /**
  * Sets or gets the ITGain property
@@ -2867,14 +3270,14 @@ int QICamera::OnITGain(MM::PropertyBase* pProp, MM::ActionType eAct)
         itGainAsU64 = (unsigned long long) (itGain * 1000000.0f);
 
         // set it
-        err = QCam_SetParam64(&m_settings, qprm64NormIntensGain, itGainAsU64);
+        err = QCam_SetParam64((QCam_Settings *)m_settings, qprm64NormIntensGain, itGainAsU64);
         if (err != qerrSuccess) {
             REPORT_QERR(err);
             return DEVICE_ERR;
         }
 
         // commit it
-        int nRet = SendSettingsToCamera(&m_settings);
+        int nRet = SendSettingsToCamera((QCam_Settings *)m_settings);
         if (nRet != DEVICE_OK) {
             REPORT_MMERR(nRet);
             return DEVICE_ERR;
@@ -2885,7 +3288,7 @@ int QICamera::OnITGain(MM::PropertyBase* pProp, MM::ActionType eAct)
 
     } else if (eAct == MM::BeforeGet) {
         // get it
-        err = QCam_GetParam64(&m_settings, qprm64NormIntensGain, &itGainAsU64);
+        err = QCam_GetParam64((QCam_Settings *)m_settings, qprm64NormIntensGain, &itGainAsU64);
         if (err != qerrSuccess) {
             REPORT_QERR(err);
             return DEVICE_ERR;
@@ -2923,14 +3326,14 @@ int QICamera::OnTriggerType(MM::PropertyBase* pProp, MM::ActionType eAct)
         ConvertTriggerTypeToEnum(typeStr.c_str(), &typeEnum);
 
         // set it
-        err = QCam_SetParam(&m_settings, qprmTriggerType, typeEnum);
+        err = QCam_SetParam((QCam_Settings *)m_settings, qprmTriggerType, typeEnum);
         if (err != qerrSuccess) {
             REPORT_QERR(err);
             return DEVICE_ERR;
         }
 
         // commit it
-        int nRet = SendSettingsToCamera(&m_settings);
+        int nRet = SendSettingsToCamera((QCam_Settings *)m_settings);
         if (nRet != DEVICE_OK) {
             REPORT_MMERR(nRet);
             return DEVICE_ERR;
@@ -2944,7 +3347,7 @@ int QICamera::OnTriggerType(MM::PropertyBase* pProp, MM::ActionType eAct)
 
     } else if (eAct == MM::BeforeGet) {
         // get it
-        err = QCam_GetParam(&m_settings, qprmTriggerType, (unsigned long*)&typeEnum);
+        err = QCam_GetParam((QCam_Settings *)m_settings, qprmTriggerType, (unsigned long*)&typeEnum);
         if (err != qerrSuccess) {
             REPORT_QERR(err);
             return DEVICE_ERR;
@@ -2980,13 +3383,13 @@ int QICamera::OnTriggerDelay(MM::PropertyBase* pProp, MM::ActionType eAct)
         delayAsLong = (unsigned long) (delay * 1000000.0);
 
         // set it
-        err = QCam_SetParam(&m_settings, qprmTriggerDelay, delayAsLong);
+        err = QCam_SetParam((QCam_Settings *)m_settings, qprmTriggerDelay, delayAsLong);
         if (err != qerrSuccess) {
             REPORT_QERR(err);
             return DEVICE_ERR;
         }
 
-        int nRet = SendSettingsToCamera(&m_settings);
+        int nRet = SendSettingsToCamera((QCam_Settings *)m_settings);
         if (nRet != DEVICE_OK) {
             REPORT_MMERR(nRet);
             return DEVICE_ERR;
@@ -2997,7 +3400,7 @@ int QICamera::OnTriggerDelay(MM::PropertyBase* pProp, MM::ActionType eAct)
 
     } else if (eAct == MM::BeforeGet) {
         // get it
-        err = QCam_GetParam(&m_settings, qprmTriggerDelay, &delayAsLong);
+        err = QCam_GetParam((QCam_Settings *)m_settings, qprmTriggerDelay, &delayAsLong);
         if (err != qerrSuccess) {
             REPORT_QERR(err);
             return DEVICE_ERR;
@@ -3041,7 +3444,7 @@ int QICamera::ResizeImageBuffer()
     }
 
     // get the image format
-    err = QCam_GetParam(&m_settings, qprmImageFormat, &imageFormat);
+    err = QCam_GetParam((QCam_Settings *)m_settings, qprmImageFormat, &imageFormat);
     if (err != qerrSuccess) {
         REPORT_QERR(err);
         return DEVICE_ERR;
@@ -3051,7 +3454,7 @@ int QICamera::ResizeImageBuffer()
 
     // ## IMPORTANT (JK) ##
     // Through an agonizing several days of debugging, I found that
-    // the QCam_Frame.bufferSize parameter MUST be the exact same size 
+    // the QCam_ErrFrame.bufferSize parameter MUST be the exact same size 
     // as the  captured image. If it is LARGER than required, the 
     // QCam driver (ver 2.0.8.2) throws a memory Access Violation. 
     // Bad driver! No Biscuit.
@@ -3233,7 +3636,7 @@ int QICamera::QISequenceThread::svc()
     }
 
     // set a reasonable timeout (in msec) for waiting on frames
-    timeout = (long)(5 * m_pCam->m_dExposure + 500);
+    timeout = (long)(5 * m_pCam->m_dExposure + 50000);
 
     // start streaming images. 
     // Queue up all of the circular image buffers so we always have an image
@@ -3247,7 +3650,7 @@ int QICamera::QISequenceThread::svc()
         // wait for a new frame finish capturing
         ret = m_pCam->m_frameDoneEvent.Wait(timeout);
         if (ret != MM_WAIT_OK) {
-            QCAM_REPORT_QERR(m_pCam, ret);
+            QCam_REPORT_QERR(m_pCam, ret);
             returnError = 1;
             break;
         }
@@ -3260,7 +3663,7 @@ int QICamera::QISequenceThread::svc()
         if (iFrameBuff >= 0) {
             ret = m_pCam->InsertImage(iFrameBuff);
             if (ret != DEVICE_OK) {
-                QCAM_REPORT_MMERR(m_pCam, ret);
+                QCam_REPORT_MMERR(m_pCam, ret);
                 returnError = 1;
                 break;
             }
@@ -3273,7 +3676,7 @@ int QICamera::QISequenceThread::svc()
             if (!m_stop) {
                 ret = m_pCam->QueueFrame(iFrameBuff);
                 if (ret != DEVICE_OK) {
-                    QCAM_REPORT_MMERR(m_pCam, ret);
+                    QCam_REPORT_MMERR(m_pCam, ret);
                     returnError = 1;
                     break;
                 }
@@ -3284,13 +3687,13 @@ int QICamera::QISequenceThread::svc()
     // abort any remaining frames
     err = QCam_Abort(m_pCam->m_camera);
     if (err != qerrSuccess) {
-        QCAM_REPORT_QERR(m_pCam, err);
+        QCam_REPORT_QERR(m_pCam, err);
     }
 
     // turn off streaming
     err = QCam_SetStreaming(m_pCam->m_camera, false);
     if (err != qerrSuccess) {
-        QCAM_REPORT_QERR(m_pCam, err);
+        QCam_REPORT_QERR(m_pCam, err);
     }
 
     this->m_isRunning = false;
@@ -3348,7 +3751,7 @@ int QICamera::QueueFrame(int iFrameBuff)
 {
     QCam_Err err;
 
-#ifdef QCAM_EXPOSURE_DONE_REQUIRED
+#ifdef QCam_ErrEXPOSURE_DONE_REQUIRED
     err = QCam_QueueFrame(m_camera, m_frameBuffs[iFrameBuff], 
         FrameDoneCallback, qcCallbackDone | qcCallbackExposeDone, this, iFrameBuff);
 #else
@@ -3378,7 +3781,7 @@ void QCAMAPI FrameDoneCallback (void* userPtr, unsigned long userFrame,
     //  QCam_SetParam, QCam_GetParamMin, QCam_GetParamMax, QCam_PreflightSettings
     //  QCam_ReadDefaultSettings, QCam_ReadSettingsFromCam
     if (userPtr != NULL)  {
-#ifdef QCAM_EXPOSURE_DONE_REQUIRED
+#ifdef QCam_ErrEXPOSURE_DONE_REQUIRED
         if (flags & qcCallbackExposeDone)
             ((QICamera*)userPtr)->ExposureDone(userFrame, errcode);
 #endif
@@ -3420,7 +3823,7 @@ void QICamera::FrameDone(long frameNumber, QCam_Err errcode)
     }
 }
 
-#ifdef QCAM_EXPOSURE_DONE_REQUIRED
+#ifdef QCam_ErrEXPOSURE_DONE_REQUIRED
 /**
  * Called when the frame has finished exposing.
  * Usually called before FrameDone()

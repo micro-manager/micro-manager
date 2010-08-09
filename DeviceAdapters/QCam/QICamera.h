@@ -37,9 +37,11 @@
 #ifdef WIN32
 #include <QCamApi.h>
 #include <QCamImgfnc.h>
+#define UNUSED
 #else
 #include <QCam/QCamApi.h>
 #include <QCam/QCamImgfnc.h>
+#define UNUSED __attribute__((__unused__))
 #endif
 
 //////////////////////////////////////////////////////////////////////////////
@@ -99,6 +101,7 @@ void ConvertReadoutPortToEnum(const char *inSpeed, QCam_qcReadoutPort *outPort);
 void ConvertTriggerTypeToString(QCam_qcTriggerType inType, char *outString);
 void ConvertTriggerTypeToEnum(const char *inType, QCam_qcTriggerType *outType);
 
+
 //////////////////////////////////////////////////////////////////////////////
 // QICamera class
 //////////////////////////////////////////////////////////////////////////////
@@ -133,6 +136,7 @@ public:
     int SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize); 
     int GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize); 
     int ClearROI();
+    int SetEasyEMGain(unsigned long easyGain);
     // Sequence acquisition interface
     int StartSequenceAcquisition(double interval_ms);
     int StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow);
@@ -153,6 +157,7 @@ public:
     int OnRegulatedCooling(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnEMGain(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnITGain(MM::PropertyBase* pProp, MM::ActionType eAct);
+    int OnEasyEMGain(MM::PropertyBase* pProp, MM::ActionType eAct, long index);
     int OnTriggerType(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnTriggerDelay(MM::PropertyBase* pProp, MM::ActionType eAct);
 
@@ -207,6 +212,7 @@ private:
     int SetupRegulatedCooling();
     int SetupEMGain();
     int SetupITGain();
+    int SetupEMAndEasyEMGain();
     int SetupFrames();
     int SetupTriggerType();
     int SetupTriggerDelay();
@@ -224,7 +230,9 @@ private:
 
     bool				m_isInitialized;    // Has the camera been initialized (setup)?
     QCam_Handle			m_camera;           // handle to the camera. Used by all QCam_* functions
-    QCam_Settings		m_settings;         // Current settings. Used internally by QCam_* functions
+//    QCam_Settings		m_settings;         // Current settings. Used internally by QCam_* functions
+    void *	            m_settings;         // cast to void so we can use older and newer versions of QCam, is cast depending on version
+    int                 m_nDriverBuild;     // Current qcam driver build
     QISequenceThread*   m_sthd;             // Pointer to the sequencing thread
     bool                m_softwareTrigger;  // Is the camera in software triggering mode
     double              m_dExposure;        // Current exposure setting
@@ -243,4 +251,4 @@ private:
     MMThreadLock        m_frameDoneLock;    // Locks access to m_frameDoneBuff
 };
 
-#endif //_QICAMERA_H_
+#endif //_QICAMERA_H_                                               
