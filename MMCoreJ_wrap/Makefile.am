@@ -40,7 +40,8 @@ libMMCoreJ_wrap_la_SOURCES = $(SWIGLIB_SOURCES) \
 libMMCoreJ_wrap_la_LDFLAGS = -Wl, -module -ldl $(BOOST_LDFLAGS) $(LIBTIFF)
 
 $(srcdir)/MMCoreJ.jar:  MMCoreJ_wrap.cxx \
-	libMMCoreJ_wrap.la
+	libMMCoreJ_wrap.la \
+	TaggedImage.java
 	cp TaggedImage.java mmcorej/
 	$(JAVAC) -source 1.5 -target 1.5 mmcorej/*.java
 	$(JAR) cvf MMCoreJ.jar mmcorej/*.class

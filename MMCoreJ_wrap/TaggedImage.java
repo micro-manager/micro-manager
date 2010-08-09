@@ -8,10 +8,10 @@ import java.util.Map;
 
 public class TaggedImage {
    public Object pix;
-   public Map<String,String> md;
+   public Map<String,String> tags;
 
-   public TaggedImage(Object pix, Map<String,String> md) {
+   public TaggedImage(Object pix, Map<String,String> tags) {
       this.pix = pix;
-      this.md = md;
+      this.tags = tags;
    }
 }

@@ -186,7 +186,7 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       if (hyperImage_ == null) {
          show();
       }
-      Map<String,String> md = taggedImg.md;
+      Map<String,String> md = taggedImg.tags;
       
       if (numChannels_ > 1) {
          ((CompositeImage) hyperImage_).setChannelsUpdated();
@@ -251,7 +251,7 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
 
    public Map<String,String> getCurrentMetadata() {
       int index = getCurrentFlatIndex();
-      return virtualStack_.getTaggedImage(index).md;
+      return virtualStack_.getTaggedImage(index).tags;
    }
 
    private int getCurrentFlatIndex() {

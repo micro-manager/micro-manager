@@ -44,7 +44,7 @@ public class MMImageCache {
 
    public TaggedImage getImage(String filename) {
       for (TaggedImage taggedImg:taggedImgQueue_) {
-         if (MDUtils.getFileName(taggedImg.md).contentEquals(filename)) {
+         if (MDUtils.getFileName(taggedImg.tags).contentEquals(filename)) {
             return taggedImg;
          }
       }

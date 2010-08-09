@@ -128,7 +128,7 @@ public class AcquisitionDisplayThread extends Thread {
 
    private void displayImage(TaggedImage taggedImg) {
 
-      Map<String,String> m = taggedImg.md;
+      Map<String,String> m = taggedImg.tags;
       try {
          int posIndex = MDUtils.getPositionIndex(m);
          gui_.addImage(acqNames_.get(posIndex), taggedImg);

@@ -98,7 +98,7 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
    }
 
    void insertImage(TaggedImage taggedImg) {
-      int flatIndex = getFlatIndex(taggedImg.md);
+      int flatIndex = getFlatIndex(taggedImg.tags);
       insertImage(flatIndex, taggedImg);
    }
 

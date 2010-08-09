@@ -253,7 +253,7 @@ public class MetadataViewer extends javax.swing.JFrame
                if (taggedImg == null) {
                   model_.setMetadata(null);
                } else {
-                  Map<String,String> md = vstack.getTaggedImage(slice).md;
+                  Map<String,String> md = vstack.getTaggedImage(slice).tags;
                   model_.setMetadata(md);
                }
             } else {

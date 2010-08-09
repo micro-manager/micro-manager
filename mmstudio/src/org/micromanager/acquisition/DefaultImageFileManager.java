@@ -67,7 +67,7 @@ public class DefaultImageFileManager implements ImageFileManagerInterface {
       if (newDataSet_ == false) {
          throw new MMException("This ImageFileManager is read-only.");
       }
-      Map<String,String> md = taggedImg.md;
+      Map<String,String> md = taggedImg.tags;
       Object img = taggedImg.pix;
       String tiffFileName = createFileName(md);
       MDUtils.setFileName(md, tiffFileName);
