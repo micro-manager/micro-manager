@@ -206,11 +206,13 @@ CDemoCamera::CDemoCamera() :
 	binSize_(1),
 	cameraCCDXSize_(512),
 	cameraCCDYSize_(512),
-   nComponents_(1)
+    nComponents_(1),
+    pDemoResourceLock_(0)
 {
    // call the base class method to set-up default error codes/messages
    InitializeDefaultErrorMessages();
    readoutStartTime_ = GetCurrentMMTime();
+   pDemoResourceLock_ = new MMThreadLock();
 }
 
 /**
@@ -222,7 +224,7 @@ CDemoCamera::CDemoCamera() :
 */
 CDemoCamera::~CDemoCamera()
 {
-   // no clean-up required for this device
+   delete pDemoResourceLock_;
 }
 
 /**
@@ -404,6 +406,11 @@ int CDemoCamera::Initialize()
    nRet = ResizeImageBuffer();
    if (nRet != DEVICE_OK)
       return nRet;
+
+#ifdef TESTRESOURCELOCKING
+   TestResourceLocking(true);
+   LogMessage("TestResourceLocking OK",true);
+#endif
 
    initialized_ = true;
 
@@ -1203,7 +1210,12 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
 
    dPhase += cPi / 4.;
 }
-
+void CDemoCamera::TestResourceLocking(const bool recurse)
+{
+   MMThreadGuard g(*pDemoResourceLock_);
+   if(recurse)
+      TestResourceLocking(false);
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // CDemoFilterWheel implementation

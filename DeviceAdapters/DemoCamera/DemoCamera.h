@@ -118,10 +118,11 @@ private:
    int ResizeImageBuffer();
 
 	double testProperty_[10];
+    MMThreadLock* pDemoResourceLock_;
+    int nComponents_;
+   
 
-   // 1 or 4 
-   int nComponents_;
-
+    void TestResourceLocking(const bool);
 };
 
 
