@@ -42,7 +42,19 @@
    #define MM_THREAD_HANDLE pthread_t
    #define MM_THREAD_JOIN(thd) pthread_join(thd, NULL)
    #define MM_THREAD_GUARD pthread_mutex_t
-   #define MM_THREAD_INITIALIZE_GUARD(plock) pthread_mutex_init(plock, NULL)
+  // #define MM_THREAD_INITIALIZE_GUARD(plock) pthread_mutex_init(plock, NULL)
+
+#ifdef linux
+  #define _MUTEX_RECURSIVE PTHREAD_MUTEX_RECURSIVE_NP
+#else
+  /* OS X, ... */
+  #define _MUTEX_RECURSIVE PTHREAD_MUTEX_RECURSIVE
+#endif
+  #define MM_THREAD_INITIALIZE_GUARD(plock) \
+      { pthread_mutexattr_t a; pthread_mutexattr_init( &a ); \
+        pthread_mutexattr_settype( &a, _MUTEX_RECURSIVE ); \
+        pthread_mutex_init(plock,&a); pthread_mutexattr_destroy( &a ); \
+      }
    #define MM_THREAD_DELETE_GUARD(plock) pthread_mutex_destroy(plock)
    #define MM_THREAD_GUARD_LOCK(plock) pthread_mutex_lock(plock);
    #define MM_THREAD_GUARD_UNLOCK(plock) pthread_mutex_unlock(plock);
