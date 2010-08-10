@@ -150,10 +150,33 @@ int CoreCallback::OnPropertiesChanged(const MM::Device* /* caller */)
  */
 int CoreCallback::OnPropertyChanged(const MM::Device* device, const char* propName, const char* value)
 {
-   if (core_->externalCallback_) {
+   if (core_->externalCallback_) 
+   {
       char label[MM::MaxStrLength];
       device->GetLabel(label);
       core_->externalCallback_->onPropertyChanged(label, propName, value);
+      
+      // find all configs that contain this property and callback to indicate 
+      // that the config group changed
+      using namespace std;
+      vector<string> configGroups = core_->getAvailableConfigGroups ();
+      for (vector<string>::iterator it = configGroups.begin(); 
+            it!=configGroups.end(); ++it) 
+      {
+         vector<string> configs = core_->getAvailableConfigs((*it).c_str());
+         bool found = false;
+         for (vector<string>::iterator itc = configs.begin();
+               itc != configs.end() && !found; itc++) 
+         {
+            Configuration config = core_->getConfigData((*it).c_str(), (*itc).c_str());
+            if (config.isPropertyIncluded(label, propName)) {
+               found = true;
+               string currentConfig = core_->getCurrentConfig( (*it).c_str() );
+               // TODO: add group config callback
+               cout << "Configuration of group " << (*it).c_str() << " changed to " << currentConfig << std::endl; 
+            }
+         }
+      }
    }
 
    return DEVICE_OK;
