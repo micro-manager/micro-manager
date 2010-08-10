@@ -204,12 +204,16 @@ private:
    int GetFocusState(std::string& focusState);
    int SetFocusState(std::string focusState);
    int WaitForAcknowledgement();
+   int SetPositionUm(double pos);
+   int GetPositionUm(double& pos);
 
    bool initialized_;
    bool justCalibrated_;
    std::string port_;
+   double stepSizeUm_;
    std::string focusState_;
    long waitAfterLock_;
+   std::string axis_;
 };
 
 

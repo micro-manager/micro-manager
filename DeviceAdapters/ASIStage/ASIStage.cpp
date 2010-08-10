@@ -1791,6 +1791,8 @@ CRIF::CRIF() :
    initialized_(false), 
    justCalibrated_(false),
    port_("Undefined"),
+   axis_("Z"),
+   stepSizeUm_(0.1),
    waitAfterLock_(3000)
 {
    InitializeDefaultErrorMessages();
@@ -1811,6 +1813,7 @@ CRIF::CRIF() :
    // Port
    CPropertyAction* pAct = new CPropertyAction (this, &CRIF::OnPort);
    CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
+
 }
 
 CRIF::~CRIF()
@@ -2132,7 +2135,11 @@ int CRIF::GetContinuousFocusing(bool& state)
 
 int CRIF::FullFocus()
 {
-   int ret = SetContinuousFocusing(true);
+   double pos;
+   int ret = GetPositionUm(pos);
+   if (ret != DEVICE_OK)
+      return ret;
+   ret = SetContinuousFocusing(true);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -2144,9 +2151,12 @@ int CRIF::FullFocus()
 
    CDeviceUtils::SleepMs(waitAfterLock_);
 
-   if (!IsContinuousFocusLocked())
+   if (!IsContinuousFocusLocked()) {
+      SetContinuousFocusing(false);
+      SetPositionUm(pos);
       return ERR_NOT_LOCKED;
-   
+   }
+
    return SetContinuousFocusing(false);
 }
 
@@ -2191,6 +2201,79 @@ int CRIF::WaitForAcknowledgement()
       return ERR_UNRECOGNIZED_ANSWER;
 
    return DEVICE_OK;
+}
+
+int CRIF::SetPositionUm(double pos)
+{
+   // empty the Rx serial buffer before sending command
+   ClearPort(*this, *GetCoreCallback(), port_.c_str()); 
+
+   ostringstream command;
+   command << "M " << axis_ << "=" << pos / stepSizeUm_; // in 10th of micros
+
+   // send command
+   int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+   if (ret != DEVICE_OK)
+      return ret;
+
+   // block/wait for acknowledge, or until we time out;
+   string answer;
+   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if (answer.substr(0,2).compare(":A") == 0 || answer.substr(1,2).compare(":A") == 0)
+   {
+      return DEVICE_OK;
+   }
+   // deal with error later
+   else if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2)
+   {
+      int errNo = atoi(answer.substr(4).c_str());
+      return ERR_OFFSET + errNo;
+   }
+
+   return ERR_UNRECOGNIZED_ANSWER; 
+}
+
+int CRIF::GetPositionUm(double& pos)
+{
+   // empty the Rx serial buffer before sending command
+   ClearPort(*this, *GetCoreCallback(), port_.c_str()); 
+
+   ostringstream command;
+   command << "W " << axis_;
+
+   // send command
+   int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+   if (ret != DEVICE_OK)
+      return ret;
+
+   // block/wait for acknowledge, or until we time out;
+   string answer;
+   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if (answer.length() > 2 && answer.substr(0, 2).compare(":N") == 0)
+   {
+      int errNo = atoi(answer.substr(2).c_str());
+      return ERR_OFFSET + errNo;
+   }
+   else if (answer.length() > 0)
+   {
+      char head[64];
+      float zz;
+      char iBuf[256];
+      strcpy(iBuf,answer.c_str());
+      sscanf(iBuf, "%s %f\r\n", head, &zz);
+	  
+	   pos = zz * stepSizeUm_;
+
+      return DEVICE_OK;
+   }
+
+   return ERR_UNRECOGNIZED_ANSWER;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2254,8 +2337,9 @@ int CRIF::OnWaitAfterLock(MM::PropertyBase* pProp, MM::ActionType eAct)
 }
 
 
+
 /**
- *
+ *  AZ100 adapter 
  */
 
 AZ100Turret::AZ100Turret() :
