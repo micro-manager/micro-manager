@@ -47,6 +47,21 @@
 #include <vector>
 #include <sstream>
 
+// suppress hideous boost warnings
+#ifdef WIN32
+#pragma warning( push )
+#pragma warning( disable : 4244 )
+#endif
+
+#include "boost/date_time/posix_time/posix_time.hpp"
+
+#ifdef WIN32
+#pragma warning( pop )
+#endif
+
+
+
+
 #ifdef WIN32
    #define WIN32_LEAN_AND_MEAN
    #include <windows.h>
@@ -57,6 +72,12 @@
 
 class Metadata;
 class ImgBuffer;
+
+
+
+
+
+
 
 namespace MM {
 
@@ -173,6 +194,60 @@ namespace MM {
             }
          }
    };
+
+
+   class TimeoutMs
+   {
+   	
+
+   public:
+      // ASSUME boost::posix_time::time_duration contructor TAKES microseconds !!!!!!!!!!!!!!!!!
+      MM::TimeoutMs(double intervalMs):interval_(0,0,0,static_cast<boost::posix_time::time_duration::fractional_seconds_type>(0.5+intervalMs*1000.)), startTime_(boost::posix_time::microsec_clock::local_time() )
+      {
+      }
+      ~TimeoutMs()
+      {
+       
+      }
+      bool expired()
+      {
+         boost::posix_time::time_duration elapsed = boost::posix_time::microsec_clock::local_time() - startTime_;
+         return (interval_ < elapsed);
+      }
+
+   private:
+      MM::TimeoutMs(const MM::TimeoutMs&) {}
+      const MM::TimeoutMs& operator=(const MM::TimeoutMs&) {return *this;}
+
+      boost::posix_time::time_duration  interval_;
+	   boost::posix_time::ptime startTime_;
+   };
+
+   class TimerMs
+   {
+   public:
+	   TimerMs():startTime_(boost::posix_time::microsec_clock::local_time() )
+      {
+      }
+      ~TimerMs()
+      {
+      }
+      double elapsed()
+      {
+		   boost::posix_time::time_duration delta = boost::posix_time::microsec_clock::local_time() - startTime_;
+
+		   return (double)delta.total_microseconds() ;
+      }
+
+   private:
+       boost::posix_time::ptime startTime_;
+   };
+
+
+
+
+
+
 
    struct ImageMetadata
    {

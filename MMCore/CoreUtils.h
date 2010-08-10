@@ -46,53 +46,6 @@
 
 
 
-class TimeoutMs
-{
-	
-
-public:
-   // ASSUME boost::posix_time::time_duration contructor TAKES microseconds !!!!!!!!!!!!!!!!!
-   TimeoutMs(double intervalMs):interval_(0,0,0,static_cast<boost::posix_time::time_duration::fractional_seconds_type>(0.5+intervalMs*1000.)), startTime_(boost::posix_time::microsec_clock::local_time() )
-   {
-   }
-   ~TimeoutMs()
-   {
-    
-   }
-   bool expired()
-   {
-      boost::posix_time::time_duration elapsed = boost::posix_time::microsec_clock::local_time() - startTime_;
-      return (interval_ < elapsed);
-   }
-
-private:
-   TimeoutMs(const TimeoutMs&) {}
-   const TimeoutMs& operator=(const TimeoutMs&) {return *this;}
-
-   boost::posix_time::time_duration  interval_;
-	boost::posix_time::ptime startTime_;
-};
-
-class TimerMs
-{
-public:
-	TimerMs():startTime_(boost::posix_time::microsec_clock::local_time() )
-   {
-   }
-   ~TimerMs()
-   {
-   }
-   double elapsed()
-   {
-		boost::posix_time::time_duration delta = boost::posix_time::microsec_clock::local_time() - startTime_;
-
-		return (double)delta.total_microseconds() ;
-   }
-
-private:
-    boost::posix_time::ptime startTime_;
-};
-
 //NB we are starting the 'epoch' on 2000 01 01
 inline MM::MMTime GetMMTimeNow()
 {
