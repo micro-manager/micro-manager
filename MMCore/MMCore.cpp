@@ -43,31 +43,23 @@
 // CVS:           $Id$
 //
 
-#ifdef WIN32
-#pragma warning(disable : 4312 4244)
-#endif
 
-//#include <ace/OS.h>
-//#include <ace/High_Res_Timer.h>
-//#include <ace/Mutex.h>
-//#include <ace/Guard_T.h>
-
-#ifdef WIN32
-#pragma warning(default : 4312 4244)
-#endif
-
-#include "FastLogger.h"
-#include "CoreUtils.h"
-#include "MMCore.h"
-#include "../MMDevice/DeviceUtils.h"
-#include "../MMDevice/ModuleInterface.h"
-#include "../MMDevice/ImageMetadata.h"
+#include "CircularBuffer.h"
+#include "Compressor.h"
 #include "Configuration.h"
-#include "MMEventCallback.h"
 #include "ConfigGroup.h"
 #include "CoreCallback.h"
 #include "CoreProperty.h"
-#include "CircularBuffer.h"
+#include "CoreUtils.h"
+#include "FastLogger.h"
+#include "MMAcquisition.h"
+#include "MMCore.h"
+#include "MMEventCallback.h"
+#include "MMImageSaver.h"
+#include "../MMDevice/DeviceUtils.h"
+#include "../MMDevice/DeviceThreads.h"
+#include "../MMDevice/ModuleInterface.h"
+#include "../MMDevice/ImageMetadata.h"
 #include <assert.h>
 #include <sstream>
 #include <algorithm>
@@ -75,12 +67,6 @@
 #include <ostream>
 #include <strstream>
 
-#include "../MMDevice/DeviceThreads.h"
-
-#include "MMAcquisition.h"
-#include "MMImageSaver.h"
-
-#include "Compressor.h"
 
 #ifndef _WINDOWS
 // Needed on Unix for getcwd() and gethostname()
@@ -109,8 +95,6 @@ const int MMCore_versionMinor = 3;
 const int MMCore_versionBuild = 1;
 
 // mutex
-//ACE_Mutex CMMCore::deviceLock_;
-
 MMThreadLock CMMCore::deviceLock_;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -128,9 +112,9 @@ CMMCore::CMMCore() :
 {
    // get current working directory
 #ifdef _WINDOWS
-      pathBuf_ = _getcwd(NULL, 0);
+   pathBuf_ = _getcwd(NULL, 0);
 #else
-      pathBuf_ = getcwd(NULL,0);
+   pathBuf_ = getcwd(NULL,0);
 #endif
 
    configGroups_ = new ConfigGroupCollection();
@@ -350,16 +334,16 @@ void CMMCore::enableStderrLog(bool enable)
  */
 string CMMCore::getUserId() const
 {
-	char buf[8192];
+   char buf[8192];
 #ifndef _WINDOWS
-	struct passwd* ppw = getpwuid(geteuid());
-	strcpy( buf, ppw->pw_name);
+   struct passwd* ppw = getpwuid(geteuid());
+   strcpy( buf, ppw->pw_name);
 #else
-	DWORD bufCharCount = 8192;
-	if( !GetUserName( buf, &bufCharCount ) )
-	  buf[0] = 0;
+   DWORD bufCharCount = 8192;
+   if( !GetUserName( buf, &bufCharCount ) )
+      buf[0] = 0;
 #endif
-	return string(buf);
+   return string(buf);
 }
 
 /**
@@ -367,16 +351,15 @@ string CMMCore::getUserId() const
  */
 string CMMCore::getHostName() const
 {
-	char buf[8192];
+   char buf[8192];
 #ifndef _WINDOWS
-	gethostname(buf, 8192);
+   gethostname(buf, 8192);
 #else
-	DWORD bufCharCount = 8192;
-	if( !GetComputerName( buf, &bufCharCount ) )
-	  buf[0] = 0;
+   DWORD bufCharCount = 8192;
+   if( !GetComputerName( buf, &bufCharCount ) )
+      buf[0] = 0;
 #endif
-	return string(buf);
-
+   return string(buf);
 }
 
 /**
@@ -500,7 +483,7 @@ Configuration CMMCore::getSystemStateCache() const
 }
 
 /**
- * Returns the parital state of the system, only for the devices included in the
+ * Returns a partial state of the system, only for devices included in the
  * specified configuration.
  */
 Configuration CMMCore::getConfigState(const char* group, const char* config) const throw (CMMError)
@@ -3089,7 +3072,7 @@ std::vector<string> CMMCore::getAvailableConfigurations() const
 
 /**
  * Returns the current configuration.
- * An empty string as a valide return value, since the system state will not
+ * An empty string is a valid return value, since the system state will not
  * always correspond to any of the defined configurations.
  * Also, in general it is possible that the system state fits multiple configurations.
  * This method will return only the first maching configuration, if any.
@@ -3634,7 +3617,9 @@ double CMMCore::getPixelSizeUmByID(const char* resolutionID) throw (CMMError)
 
 /**
  * Returns the product of all Magnifiers in the system or 1.0 when none is found
- * This is used internally by GetPixelSizeUm (NS, 5/24/08)
+ * This is used internally by GetPixelSizeUm 
+ *
+ * @return products of all magnifier devices in the system or 1.0 when none is found
  */
 double CMMCore::getMagnificationFactor() const
 {
@@ -3669,6 +3654,7 @@ bool CMMCore::isConfigDefined(const char* groupName, const char* configName)
 
    return  configGroups_->Find(groupName, configName) != 0;
 }
+
 /**
  * Checks if the group already exists.
  *
@@ -3811,7 +3797,7 @@ PropertyBlock CMMCore::getData(const char* deviceLabel) const
 
    MM::State* pStateDev = static_cast<MM::State*>(pDevice);
 
-   // obatin the current state label
+   // obtain the current state label
    char pos[MM::MaxStrLength];
    int nRet = pStateDev->GetPosition(pos);
    if (nRet != DEVICE_OK)
@@ -3847,7 +3833,7 @@ void CMMCore::setSerialPortCommand(const char* name, const char* command, const 
 }
 
 /**
- * Contouously read from the serial port until the terminating sequence is encountered.
+ * Continouously read from the serial port until the terminating sequence is encountered.
  */
 std::string CMMCore::getSerialPortAnswer(const char* name, const char* term) throw (CMMError) 
 {
