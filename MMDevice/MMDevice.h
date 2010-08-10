@@ -202,7 +202,7 @@ namespace MM {
 
    public:
       // ASSUME boost::posix_time::time_duration contructor TAKES microseconds !!!!!!!!!!!!!!!!!
-      MM::TimeoutMs(double intervalMs):interval_(0,0,0,static_cast<boost::posix_time::time_duration::fractional_seconds_type>(0.5+intervalMs*1000.)), startTime_(boost::posix_time::microsec_clock::local_time() )
+      TimeoutMs(double intervalMs):interval_(0,0,0,static_cast<boost::posix_time::time_duration::fractional_seconds_type>(0.5+intervalMs*1000.)), startTime_(boost::posix_time::microsec_clock::local_time() )
       {
       }
       ~TimeoutMs()
@@ -216,8 +216,8 @@ namespace MM {
       }
 
    private:
-      MM::TimeoutMs(const MM::TimeoutMs&) {}
-      const MM::TimeoutMs& operator=(const MM::TimeoutMs&) {return *this;}
+      TimeoutMs(const MM::TimeoutMs&) {}
+      const TimeoutMs& operator=(const MM::TimeoutMs&) {return *this;}
 
       boost::posix_time::time_duration  interval_;
 	   boost::posix_time::ptime startTime_;
