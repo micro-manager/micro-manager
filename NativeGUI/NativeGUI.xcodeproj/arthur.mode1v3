@@ -197,48 +197,7 @@
 	<key>Notifications</key>
 	<array/>
 	<key>OpenEditors</key>
-	<array>
-		<dict>
-			<key>Content</key>
-			<dict>
-				<key>PBXProjectModuleGUID</key>
-				<string>8EC8CBA6117AA966009F7F76</string>
-				<key>PBXProjectModuleLabel</key>
-				<string>NativeGUIMac.mm</string>
-				<key>PBXSplitModuleInNavigatorKey</key>
-				<dict>
-					<key>Split0</key>
-					<dict>
-						<key>PBXProjectModuleGUID</key>
-						<string>8EC8CBA7117AA966009F7F76</string>
-						<key>PBXProjectModuleLabel</key>
-						<string>NativeGUIMac.mm</string>
-						<key>_historyCapacity</key>
-						<integer>0</integer>
-						<key>bookmark</key>
-						<string>8EC8CBAC117C12AB009F7F76</string>
-						<key>history</key>
-						<array>
-							<string>8EC8CBA1117AA79A009F7F76</string>
-						</array>
-					</dict>
-					<key>SplitCount</key>
-					<string>1</string>
-				</dict>
-				<key>StatusBarVisibility</key>
-				<true/>
-			</dict>
-			<key>Geometry</key>
-			<dict>
-				<key>Frame</key>
-				<string>{{0, 20}, {840, 570}}</string>
-				<key>PBXModuleWindowStatusBarHidden2</key>
-				<false/>
-				<key>RubberWindowFrame</key>
-				<string>84 199 840 611 0 0 1440 878 </string>
-			</dict>
-		</dict>
-	</array>
+	<array/>
 	<key>PerspectiveWidths</key>
 	<array>
 		<integer>-1</integer>
@@ -349,7 +308,7 @@
 								<key>PBXProjectModuleGUID</key>
 								<string>1CE0B20306471E060097A5F4</string>
 								<key>PBXProjectModuleLabel</key>
-								<string>NativeGUIMac.h</string>
+								<string>NativeGUIMac.mm</string>
 								<key>PBXSplitModuleInNavigatorKey</key>
 								<dict>
 									<key>Split0</key>
@@ -357,17 +316,12 @@
 										<key>PBXProjectModuleGUID</key>
 										<string>1CE0B20406471E060097A5F4</string>
 										<key>PBXProjectModuleLabel</key>
-										<string>NativeGUIMac.h</string>
+										<string>NativeGUIMac.mm</string>
 										<key>_historyCapacity</key>
 										<integer>0</integer>
 										<key>bookmark</key>
-										<string>8EC8CBAB117C12AB009F7F76</string>
+										<string>8EC8CBAD117F5C86009F7F76</string>
 										<key>history</key>
-										<array>
-											<string>8EC8CBA2117AA966009F7F76</string>
-											<string>8EC8CBA3117AA966009F7F76</string>
-										</array>
-										<key>prevStack</key>
 										<array>
 											<string>8EC8CBA4117AA966009F7F76</string>
 										</array>
@@ -567,7 +521,6 @@
 	<array>
 		<string>8EC8CB90117A68CD009F7F76</string>
 		<string>/projects/micromanager/NativeGUI/NativeGUI.xcodeproj</string>
-		<string>8EC8CBA6117AA966009F7F76</string>
 	</array>
 	<key>WindowString</key>
 	<string>475 314 788 504 0 0 1440 878 </string>

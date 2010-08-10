@@ -70,18 +70,8 @@
 			PBXWorkspaceStateSaveDate = 293234098;
 		};
 		perUserProjectItems = {
-			8EC8CB97117A691C009F7F76 /* PBXTextBookmark */ = 8EC8CB97117A691C009F7F76 /* PBXTextBookmark */;
-			8EC8CB98117A691C009F7F76 /* PBXTextBookmark */ = 8EC8CB98117A691C009F7F76 /* PBXTextBookmark */;
-			8EC8CBA1117AA79A009F7F76 /* PBXBookmark */ = 8EC8CBA1117AA79A009F7F76 /* PBXBookmark */;
-			8EC8CBA2117AA966009F7F76 /* PBXTextBookmark */ = 8EC8CBA2117AA966009F7F76 /* PBXTextBookmark */;
-			8EC8CBA3117AA966009F7F76 /* PBXBookmark */ = 8EC8CBA3117AA966009F7F76 /* PBXBookmark */;
 			8EC8CBA4117AA966009F7F76 /* PBXTextBookmark */ = 8EC8CBA4117AA966009F7F76 /* PBXTextBookmark */;
-			8EC8CBA5117AA966009F7F76 /* PBXTextBookmark */ = 8EC8CBA5117AA966009F7F76 /* PBXTextBookmark */;
-			8EC8CBA8117AA966009F7F76 /* PBXTextBookmark */ = 8EC8CBA8117AA966009F7F76 /* PBXTextBookmark */;
-			8EC8CBA9117AA9AA009F7F76 /* PBXTextBookmark */ = 8EC8CBA9117AA9AA009F7F76 /* PBXTextBookmark */;
-			8EC8CBAA117AA9AA009F7F76 /* PBXTextBookmark */ = 8EC8CBAA117AA9AA009F7F76 /* PBXTextBookmark */;
-			8EC8CBAB117C12AB009F7F76 /* PBXTextBookmark */ = 8EC8CBAB117C12AB009F7F76 /* PBXTextBookmark */;
-			8EC8CBAC117C12AB009F7F76 /* PBXTextBookmark */ = 8EC8CBAC117C12AB009F7F76 /* PBXTextBookmark */;
+			8EC8CBAD117F5C86009F7F76 /* PBXTextBookmark */ = 8EC8CBAD117F5C86009F7F76 /* PBXTextBookmark */;
 		};
 		sourceControlManager = 8EC8CB80117A65C0009F7F76 /* Source Control */;
 		userBuildSettings = {
@@ -108,47 +98,11 @@
 	};
 	8EC8CB84117A664F009F7F76 /* NativeGUIMac.mm */ = {
 		uiCtxt = {
-			sepNavIntBoundsRect = "{{0, 0}, {781, 616}}";
-			sepNavSelRange = "{1121, 0}";
-			sepNavVisRange = "{43, 1078}";
+			sepNavIntBoundsRect = "{{0, 0}, {726, 602}}";
+			sepNavSelRange = "{151, 0}";
+			sepNavVisRange = "{0, 561}";
 			sepNavWindowFrame = "{{84, 143}, {840, 667}}";
 		};
-	};
-	8EC8CB97117A691C009F7F76 /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		comments = "error: NativeGUIMacC.h: No such file or directory";
-		fRef = 8EC8CB84117A664F009F7F76 /* NativeGUIMac.mm */;
-		rLen = 1;
-		rLoc = 8;
-		rType = 1;
-	};
-	8EC8CB98117A691C009F7F76 /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 8EC8CB84117A664F009F7F76 /* NativeGUIMac.mm */;
-		name = "NativeGUIMac.mm: 9";
-		rLen = 0;
-		rLoc = 151;
-		rType = 0;
-		vrLen = 399;
-		vrLoc = 3;
-	};
-	8EC8CBA1117AA79A009F7F76 /* PBXBookmark */ = {
-		isa = PBXBookmark;
-		fRef = 8EC8CB84117A664F009F7F76 /* NativeGUIMac.mm */;
-	};
-	8EC8CBA2117AA966009F7F76 /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 8EC8CB84117A664F009F7F76 /* NativeGUIMac.mm */;
-		name = "NativeGUIMac.mm: 9";
-		rLen = 0;
-		rLoc = 151;
-		rType = 0;
-		vrLen = 548;
-		vrLoc = 0;
-	};
-	8EC8CBA3117AA966009F7F76 /* PBXBookmark */ = {
-		isa = PBXBookmark;
-		fRef = 8EC8CB83117A664F009F7F76 /* NativeGUIMac.h */;
 	};
 	8EC8CBA4117AA966009F7F76 /* PBXTextBookmark */ = {
 		isa = PBXTextBookmark;
@@ -160,65 +114,15 @@
 		vrLen = 548;
 		vrLoc = 0;
 	};
-	8EC8CBA5117AA966009F7F76 /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 8EC8CB83117A664F009F7F76 /* NativeGUIMac.h */;
-		name = "NativeGUIMac.h: 11";
-		rLen = 0;
-		rLoc = 178;
-		rType = 0;
-		vrLen = 223;
-		vrLoc = 0;
-	};
-	8EC8CBA8117AA966009F7F76 /* PBXTextBookmark */ = {
+	8EC8CBAD117F5C86009F7F76 /* PBXTextBookmark */ = {
 		isa = PBXTextBookmark;
 		fRef = 8EC8CB84117A664F009F7F76 /* NativeGUIMac.mm */;
-		name = "NativeGUIMac.mm: 10";
+		name = "NativeGUIMac.mm: 9";
 		rLen = 0;
-		rLoc = 178;
+		rLoc = 151;
 		rType = 0;
-		vrLen = 1092;
-		vrLoc = 20;
-	};
-	8EC8CBA9117AA9AA009F7F76 /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 8EC8CB83117A664F009F7F76 /* NativeGUIMac.h */;
-		name = "NativeGUIMac.h: 11";
-		rLen = 0;
-		rLoc = 178;
-		rType = 0;
-		vrLen = 223;
+		vrLen = 561;
 		vrLoc = 0;
-	};
-	8EC8CBAA117AA9AA009F7F76 /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 8EC8CB84117A664F009F7F76 /* NativeGUIMac.mm */;
-		name = "NativeGUIMac.mm: 10";
-		rLen = 0;
-		rLoc = 164;
-		rType = 0;
-		vrLen = 1092;
-		vrLoc = 20;
-	};
-	8EC8CBAB117C12AB009F7F76 /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 8EC8CB83117A664F009F7F76 /* NativeGUIMac.h */;
-		name = "NativeGUIMac.h: 12";
-		rLen = 0;
-		rLoc = 226;
-		rType = 0;
-		vrLen = 226;
-		vrLoc = 0;
-	};
-	8EC8CBAC117C12AB009F7F76 /* PBXTextBookmark */ = {
-		isa = PBXTextBookmark;
-		fRef = 8EC8CB84117A664F009F7F76 /* NativeGUIMac.mm */;
-		name = "NativeGUIMac.mm: 44";
-		rLen = 0;
-		rLoc = 1121;
-		rType = 0;
-		vrLen = 1078;
-		vrLoc = 43;
 	};
 	D2AAC0C605546C1D00DB518D /* NativeGUI */ = {
 		activeExec = 0;
