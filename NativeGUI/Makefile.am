@@ -1,8 +1,7 @@
 NativeGUISOURCES = \
 	NativeGUI.h \
 	NativeGUIMac.mm \
-	NativeGUI.i \
-	NativeGUIstub.java
+	NativeGUI.i
 
 NativeGUITARGETS = \
 	NativeGUI.jar \
