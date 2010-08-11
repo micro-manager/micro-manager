@@ -222,7 +222,7 @@ int Cdc1394::OnMode(MM::PropertyBase* pProp, MM::ActionType eAct)
          logMsg_.str("");
          logMsg_ << "In OnMode, bitDepth is now" << depth_;
          LogMessage(logMsg_.str().c_str(), true);
-         maxNrIntegration = pow(2,(16-depth_));
+         maxNrIntegration = 1 << (16-depth_);
          GetBytesPerPixel ();
 
          // reset the list of framerates allowed:
@@ -281,7 +281,7 @@ int Cdc1394::OnFrameRate(MM::PropertyBase* pProp, MM::ActionType eAct)
          err_ = dc1394_video_get_data_depth(camera_, &depth_);
          if (err_ != DC1394_SUCCESS)
             LogMessage ("Error establishing bit-depth\n");
-         maxNrIntegration = pow(2, (16 - depth_));
+         maxNrIntegration = 1 << (16 - depth_);
          GetBytesPerPixel ();
 
          // Restart capture
@@ -629,7 +629,7 @@ int Cdc1394::Initialize()
    logMsg_.str("");
    logMsg_ << "BitDepth is " << depth_;
    LogMessage(logMsg_.str().c_str(), true);
-   maxNrIntegration = pow(2, (16 - depth_));
+   maxNrIntegration = 1 << (16 - depth_);
    GetBytesPerPixel();
 
    // Frame integration
