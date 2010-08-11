@@ -1,0 +1,67 @@
+import java.awt.image.BufferStrategy;
+import ij.IJ;
+
+Image loadAwtImage(String url) {
+	imgp = IJ.openImage(url);
+	return imgp.getImage();
+}
+
+Window makeSLMWindow(int screenID) {
+	GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+	GraphicsDevice[] gds = ge.getScreenDevices();
+	win = new Window();
+	gds[screenID].setFullScreenWindow(win);
+	win.setVisible(true);
+	gc = gds[screenID].getDefaultConfiguration();
+	if (! gc.getBufferCapabilities().isPageFlipping())
+		print ("Warning! Page flipping not active.");
+	return win;
+}
+
+ArrayList makeCompatibleImages(Window win, Image [] loadedImgs) {
+	compatibleImgs = new ArrayList();
+	for (img:loadedImgs) {
+		Image cImg = win.createImage(win.getWidth(),win.getHeight());
+		cImg.getGraphics().drawImage(img,0,0,win.getWidth(),win.getHeight(),null);
+		compatibleImgs.add(cImg);
+	}
+	return compatibleImgs;
+}
+
+runLoop(Graphics g, int n, ArrayList cImgs) {
+	for (i=0;i<n;++i) {
+		for (img:cImgs) {
+			g.drawImage(img,0,0,null);
+			strategy.show();
+		}
+	}
+	//win.getGraphics().fillRect(0,0,img.getWidth(),img.getHeight());
+}
+
+update();
+
+n = 1000;
+screenID = 0;
+
+
+print("Creating window...");
+Image [] loadedImgs = {loadAwtImage("file:///C:/test1/image1.tif"),
+   	                    loadAwtImage("file:///C:/test1/image2.tif"),
+loadAwtImage("file:///C:/test1/image3.tif"),
+loadAwtImage("file:///C:/test1/image4.tif"),
+loadAwtImage("file:///C:/test1/image5.tif"),
+loadAwtImage("file:///C:/test1/image6.tif")};
+win = makeSLMWindow(screenID);
+win.createBufferStrategy(Math.min(4,loadedImgs.length));
+strategy = win.getBufferStrategy();
+g = strategy.getDrawGraphics();
+cImgs = makeCompatibleImages(win,loadedImgs);
+Thread.sleep(1000);
+
+t1 = System.nanoTime();
+runLoop(g, n, cImgs);
+t2 = System.nanoTime();
+dt_ms = (t2-t1)/(1000000.)/cImgs.size()/n;
+print("ms per image: " + dt_ms);
+print("fps: " + 1000./dt_ms);
+win.dispose();
