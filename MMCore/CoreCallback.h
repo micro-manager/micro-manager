@@ -162,8 +162,8 @@ public:
    int OnFinished(const MM::Device* /* caller */);
 
 
-   std::vector<std::pair< int, std::string> > PostedErrors(void);
-   void PostError(const std::pair< int, std::string>& );
+   void NextPostedError(int& /*errorCode*/, char* /*pMessage*/, int /*maxlen*/, int& /*messageLength*/);
+   void PostError(const  int, const char*);
    void ClearPostedErrors( void);
 
 

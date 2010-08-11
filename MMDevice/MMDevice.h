@@ -898,8 +898,8 @@ namespace MM {
       virtual MM::SignalIO* GetSignalIODevice(const MM::Device* caller, const char* deviceName) = 0;
 
       // asynchronous error handling
-      virtual std::vector<std::pair< int, std::string> > PostedErrors(void) = 0 ;
-      virtual void PostError( const std::pair< int, std::string>& ) = 0;
+      virtual void NextPostedError(int& /*errorCode*/, char* /*pMessage*/, int /*maxlen*/, int& /*messageLength*/) = 0;
+      virtual void PostError(const int, const char* ) = 0;
       virtual void ClearPostedErrors( void) = 0;
    
    };

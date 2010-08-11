@@ -58,6 +58,7 @@
 #include <string>
 #include <cstring>
 #include <vector>
+#include <deque>
 #include <map>
 #include <fstream>
 #include "../MMDevice/MMDeviceConstants.h"
@@ -491,7 +492,7 @@ private:
 
 
    MMThreadLock* pPostedErrorsLock_;
-   mutable std::vector<std::pair< int, std::string> > postedErrors_;
+   mutable std::deque<std::pair< int, std::string> > postedErrors_;
 
 
 };

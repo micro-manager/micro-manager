@@ -455,7 +455,10 @@ int CDemoCamera::SnapImage()
    {
 	   if( 10 < callCounter)
 	      if( 0 == rand()%223 )
-            GetCoreCallback()->PostError( std::make_pair(MMERR_CameraNotAvailable, std::string("Simulated 'not available' error in the DemoCamera!")));
+         {
+            std::string mes("Simulated 'not available' error in the DemoCamera!");
+            GetCoreCallback()->PostError( MMERR_CameraNotAvailable, mes.c_str() );
+         }
    }
 
 #if 0

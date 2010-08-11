@@ -570,15 +570,33 @@ int CoreCallback::SetDeviceProperty(const char* deviceName, const char* propName
    return DEVICE_OK;
 }
 
-std::vector<std::pair< int, std::string> > CoreCallback::PostedErrors(void)
+void CoreCallback::NextPostedError(int& errorCode, char* pMessage, int maxlen, int& messageLength)
 {
    MMThreadGuard g(*(core_->pPostedErrorsLock_));
-	return core_->postedErrors_;
+   errorCode = 0;
+   messageLength = 0;
+   if( 0 < core_->postedErrors_.size())
+   {
+      std::pair< int, std::string> nextError = core_->postedErrors_.front();
+      core_->postedErrors_.pop_front();
+      errorCode = nextError.first;
+      if( 0 != pMessage)
+      {
+         if( 0 < maxlen )
+         {
+            *pMessage = 0;
+            messageLength = min( maxlen, nextError.second.length());
+            strncpy(pMessage, nextError.second.c_str(), messageLength);
+         }
+      }
+   }
+	return ;
 }
-void CoreCallback::PostError( const std::pair< int, std::string>& theError)
+
+void CoreCallback::PostError( const int errorCode, const char* pMessage /* length */ )
 {
    MMThreadGuard g(*(core_->pPostedErrorsLock_));
-   core_->postedErrors_.push_back(theError);
+   core_->postedErrors_.push_back(std::make_pair(errorCode, std::string(pMessage)));
 }
 
 void CoreCallback::ClearPostedErrors( void)

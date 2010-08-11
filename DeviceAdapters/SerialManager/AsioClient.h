@@ -132,7 +132,7 @@ public:
       MMThreadGuard g(writeBufferLock_);
       write_msgs_.clear(); // buffered write data 
    }
-   // get the current contents of the dequeue
+   // get the current contents of the deque
    // n.b. this causes an extra copy for the return value
    std::vector<char> ReadData(void)
    {
