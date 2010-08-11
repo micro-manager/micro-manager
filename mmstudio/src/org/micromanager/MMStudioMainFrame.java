@@ -380,6 +380,12 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                propName + " changed to value: " + propValue);
       }
 
+      public void onConfigGroupChanged(String groupName, String newConfig) {
+         core_.logMessage("Notification for Group: " + groupName + " New config: " +
+               newConfig);
+         configPad_.refreshGroup(groupName, newConfig);
+      }
+
       public void onStagePositionChanged(String deviceName, double pos) {
          if (deviceName.equals(zStageLabel_))
             updateZPos(pos);

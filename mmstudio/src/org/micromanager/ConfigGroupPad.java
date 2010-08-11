@@ -44,11 +44,6 @@ import org.micromanager.api.DeviceControlGUI;
 import org.micromanager.utils.*;
 
 
-/**/
-
-
-
-
 
 /**
  * Preset panel.
@@ -63,14 +58,9 @@ public class ConfigGroupPad extends JScrollPane{
    private ArrayList<ChannelSpec> channels_;
    Preferences prefs_;
    private String COLUMN_WIDTH = "group_col_width";
-   //private MMStudioMainFrame gui_;
    public PresetEditor presetEditor_ = null;
    public String groupName_ = "";
 
-
-   //public void setGUI(MMStudioMainFrame gui) {
-	//   gui_ = gui;
-   //}
    
    public ConfigGroupPad() {
       super();
@@ -87,9 +77,7 @@ public class ConfigGroupPad extends JScrollPane{
       table_ = new JTable();
       table_.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       table_.setAutoCreateColumnsFromModel(false);
-      //table_.setCellSelectionEnabled(true);
       table_.setRowSelectionAllowed(true);
-      //table_.setColumnSelectionAllowed(false);
       setViewportView(table_);
       
       data_ = new StateTableData(core);
@@ -102,7 +90,6 @@ public class ConfigGroupPad extends JScrollPane{
       int colWidth = prefs_.getInt(COLUMN_WIDTH , 0);
       if (colWidth > 0) {
          table_.getColumnModel().getColumn(0).setPreferredWidth(colWidth);
-         //data_.fireTableStructureChanged();
       }
    }
    
@@ -115,14 +102,21 @@ public class ConfigGroupPad extends JScrollPane{
    }
 
    public void refreshStructure() {
-	  if (data_ != null) { 
+	   if (data_ != null) { 
          data_.updateStatus();
          data_.fireTableStructureChanged();
          table_.repaint();
-	  }
+	   }
    }
 
-   
+   public void refreshGroup(String groupName, String configName) {
+      if (data_ != null) {
+         data_.refreshGroup(groupName, configName);
+         data_.fireTableStructureChanged();
+         table_.repaint();
+	   }
+   }
+
    public String getGroup() {
 	   int idx = table_.getSelectedRow();
 	   if (idx<0 || data_.getRowCount()<=0) {
@@ -146,12 +140,12 @@ public class ConfigGroupPad extends JScrollPane{
 		   return "";
 	   } else {
 		   try {
-			return data_.core_.getCurrentConfig((String) data_.getValueAt(idx, 0));
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			ReportingUtils.logError(e);
-			return null;
-		}   
+            return data_.core_.getCurrentConfig((String) data_.getValueAt(idx, 0));
+         } catch (Exception e) {
+            // TODO Auto-generated catch block
+            ReportingUtils.logError(e);
+            return null;
+         }   
 	   }
    }
 
@@ -369,29 +363,38 @@ public class ConfigGroupPad extends JScrollPane{
            }
        }
 
-      public void refreshStatus(){
 
-         try {
-            for (int i=0; i<groupList_.size(); i++){
-               StateItem item = groupList_.get(i);
-               if (item.singleProp) {
-                  item.config = core_.getProperty(item.device, item.name); 
-               } else
-                  item.config = core_.getCurrentConfig(item.group);
-            }
-         } catch (Exception e) {
-            handleException(e);
-         }
-      }
+       public void refreshStatus() {
+          try {
+             for (int i=0; i<groupList_.size(); i++){
+                StateItem item = groupList_.get(i);
+                if (item.singleProp) {
+                   item.config = core_.getProperty(item.device, item.name); 
+                } else
+                   item.config = core_.getCurrentConfig(item.group);
+             }
+          } catch (Exception e) {
+             handleException(e);
+          }
+       }
 
-      public boolean isConfigDirty() {
-         return configDirty_;
-      }
+       public void refreshGroup(String groupName, String configName) {
+          try {
+             for (int i=0; i<groupList_.size(); i++) {
+                StateItem item = groupList_.get(i);
+                if (item.group.equals(groupName))
+                   item.config = configName;
+             }
+          } catch (Exception e) {
+             handleException(e);
+          }
+       }
 
-
+       public boolean isConfigDirty() {
+          return configDirty_;
+       }
 
    }
-
 
 
 }

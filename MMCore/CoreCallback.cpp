@@ -158,6 +158,8 @@ int CoreCallback::OnPropertyChanged(const MM::Device* device, const char* propNa
       
       // find all configs that contain this property and callback to indicate 
       // that the config group changed
+      // TODO: assess whether performace is better by maintaining a map tying 
+      // property to configurations
       using namespace std;
       vector<string> configGroups = core_->getAvailableConfigGroups ();
       for (vector<string>::iterator it = configGroups.begin(); 
@@ -172,11 +174,23 @@ int CoreCallback::OnPropertyChanged(const MM::Device* device, const char* propNa
             if (config.isPropertyIncluded(label, propName)) {
                found = true;
                string currentConfig = core_->getCurrentConfig( (*it).c_str() );
-               // TODO: add group config callback
                cout << "Configuration of group " << (*it).c_str() << " changed to " << currentConfig << std::endl; 
+               return OnConfigGroupChanged((*it).c_str(), currentConfig.c_str());
             }
          }
       }
+   }
+
+   return DEVICE_OK;
+}
+
+/**
+ * Callback indicating that a configuration group has changed
+ */
+int CoreCallback::OnConfigGroupChanged(const char* groupName, const char* newConfigName)
+{
+   if (core_->externalCallback_) {
+      core_->externalCallback_->onConfigGroupChanged(groupName, newConfigName);
    }
 
    return DEVICE_OK;
@@ -585,7 +599,7 @@ void CoreCallback::NextPostedError(int& errorCode, char* pMessage, int maxlen, i
          if( 0 < maxlen )
          {
             *pMessage = 0;
-            messageLength = min( maxlen, nextError.second.length());
+            messageLength = std::min( maxlen, (int) nextError.second.length());
             strncpy(pMessage, nextError.second.c_str(), messageLength);
          }
       }

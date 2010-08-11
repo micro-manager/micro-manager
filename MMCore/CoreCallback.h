@@ -155,6 +155,7 @@ public:
    int OnStatusChanged(const MM::Device* /* caller */);
    int OnPropertiesChanged(const MM::Device* /* caller */);
    int OnPropertyChanged(const MM::Device* device, const char* propName, const char* value);
+   int OnConfigGroupChanged(const char* groupName, const char* newConfigName);
    int OnStagePositionChanged(const MM::Device* device, double pos);
    int OnStagePositionChangedRelative(const MM::Device* device, double pos);
    int OnXYStagePositionChanged(const MM::Device* device, double xpos, double ypos);

@@ -37,7 +37,13 @@ public:
 
    virtual void onPropertyChanged(char* name, const char* propName, const char* propValue)
    {
-      std::cout << "onPropertyChanged()" << name << " " << propName << " " << propValue;
+      std::cout << "onPropertyChanged() " << name << " " << propName << " " << propValue;
+      std::cout << std:: endl; 
+   }
+
+   virtual void onConfigGroupChanged(const char* groupName, const char* newConfigName)
+   {
+      std::cout << "onConfigGroupChanged() " << groupName << " " << newConfigName;
       std::cout << std:: endl; 
    }
 
