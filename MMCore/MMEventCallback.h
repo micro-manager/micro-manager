@@ -47,6 +47,11 @@ public:
       std::cout << std:: endl; 
    }
 
+   virtual void onPixelSizeChanged(const char* newPixelSizeConfig)
+   {
+      std::cout << "onPixelSizeChanged() " << newPixelSizeConfig << std::endl;
+   }
+
    virtual void onStagePositionChanged(char* name, double pos)
    {
       std::cout << "onStagePositionChanged()" << name << " " << pos  << "\n"; 
