@@ -386,6 +386,11 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          configPad_.refreshGroup(groupName, newConfig);
       }
 
+      public void onPixelSizeChanged(String newPixelSizeConfig) {
+         core_.logMessage("Notification for Pixel Size, new config: " + newPixelSizeConfig);
+         //configPad_.refreshGroup(groupName, newConfig);
+      }
+
       public void onStagePositionChanged(String deviceName, double pos) {
          if (deviceName.equals(zStageLabel_))
             updateZPos(pos);

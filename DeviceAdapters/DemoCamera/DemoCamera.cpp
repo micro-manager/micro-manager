@@ -1721,6 +1721,9 @@ int CDemoObjectiveTurret::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
          return ERR_UNKNOWN_POSITION;
       }
       position_ = pos;
+      std::ostringstream os;
+      os << position_;
+      OnPropertyChanged("State", os.str().c_str());
    }
 
    return DEVICE_OK;
