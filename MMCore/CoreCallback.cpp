@@ -186,9 +186,15 @@ int CoreCallback::OnPropertyChanged(const MM::Device* device, const char* propNa
          Configuration pixelSizeConfig = core_->getPixelSizeConfigData( (*itpsc).c_str());
          if (pixelSizeConfig.isPropertyIncluded(label, propName)) {
             found = true;
-            string currentConfig = core_->getCurrentConfig( (*itpsc).c_str() );
-            cout << "Configuration of pixelSize " << (*itpsc).c_str() << " changed to " << currentConfig << std::endl; 
-             OnPixelSizeChanged(currentConfig.c_str());
+            double pixSizeUm;
+            try {
+               pixSizeUm = core_->getPixelSizeUm();
+            }
+            catch (CMMError /* e */) {
+               pixSizeUm = 0.0;
+            }
+            cout << "Configuration of pixelSize " << (*itpsc).c_str() << " changed to Size: " << pixSizeUm <<std::endl; 
+             OnPixelSizeChanged(pixSizeUm);
          }
       }
    }
@@ -211,10 +217,10 @@ int CoreCallback::OnConfigGroupChanged(const char* groupName, const char* newCon
 /**
  * Callback indicating that Pixel Size has changed
  */
-int CoreCallback::OnPixelSizeChanged(const char* newPixelSizeConfig)
+int CoreCallback::OnPixelSizeChanged(double newPixelSizeUm)
 {
    if (core_->externalCallback_) {
-      core_->externalCallback_->onPixelSizeChanged(newPixelSizeConfig);
+      core_->externalCallback_->onPixelSizeChanged(newPixelSizeUm);
    }
 
    return DEVICE_OK;

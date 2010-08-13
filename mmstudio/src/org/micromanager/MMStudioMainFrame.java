@@ -386,9 +386,9 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          configPad_.refreshGroup(groupName, newConfig);
       }
 
-      public void onPixelSizeChanged(String newPixelSizeConfig) {
-         core_.logMessage("Notification for Pixel Size, new config: " + newPixelSizeConfig);
-         //configPad_.refreshGroup(groupName, newConfig);
+      public void onPixelSizeChanged(double newPixelSizeUm) {
+         core_.logMessage("Notification for Pixel Size, new config: " + newPixelSizeUm);
+         updatePixSizeUm (newPixelSizeUm);
       }
 
       public void onStagePositionChanged(String deviceName, double pos) {
@@ -2254,7 +2254,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       calibrationListDlg_ = new CalibrationListDlg(core_);
       calibrationListDlg_.setVisible(true);
       calibrationListDlg_.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-      // calibrationListDlg_.setCore(core_);
       calibrationListDlg_.setParentGUI(this);
    }
 
@@ -2277,6 +2276,9 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    }
 
+   /**
+    * Updates Status line in main window from cached values
+    */
    private void updateStaticInfoFromCache() {
       String dimText = "Image size: " + staticInfo_.width_ + " X " + staticInfo_.height_ + " X "
             + staticInfo_.bytesPerPixel_ + ", Intensity range: " + staticInfo_.imageBitDepth_ + " bits";
@@ -2332,6 +2334,13 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       staticInfo_.y_ = y[0];
       updateStaticInfoFromCache();
    }
+
+   private void updatePixSizeUm (double pixSizeUm) {
+      staticInfo_.pixSizeUm_ = pixSizeUm;
+
+      updateStaticInfoFromCache();
+   }
+
    private void updateStaticInfo() {
       double zPos = 0.0;
       double x[] = new double[1];
@@ -2360,39 +2369,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       updateStaticInfoFromCache();
    }
 
-   /*
-   private void updateStaticInfo() {
-   try {
-   double zPos = 0.0;
-   String dimText = "Image size: " + core_.getImageWidth() + " X "
-   + core_.getImageHeight() + " X " + core_.getBytesPerPixel()
-   + ", Intensity range: " + core_.getImageBitDepth()
-   + " bits";
-   double pixSizeUm = core_.getPixelSizeUm();
-   if (pixSizeUm > 0.0)
-   dimText += ", " + TextUtils.FMT0.format(pixSizeUm * 1000)
-   + "nm/pix";
-   else
-   dimText += ", uncalibrated";
-   if (zStageLabel_.length() > 0) {
-   zPos = core_.getPosition(zStageLabel_);
-   dimText += ", Z=" + TextUtils.FMT2.format(zPos) + "um";
-   }
-   if (xyStageLabel_.length() > 0) {
-   double x[] = new double[1];
-   double y[] = new double[1];
-   core_.getXYPosition(xyStageLabel_, x, y);
-   dimText += ", XY=(" + TextUtils.FMT2.format(x[0]) + ","
-   + TextUtils.FMT2.format(y[0]) + ")um";
-   }
-
-   labelImageDimensions_.setText(dimText);
-
-   } catch (Exception e) {
-   handleException(e);
-   }
-   }
-    */
    private void setShutterButton(boolean state) {
       if (state) {
          toggleButtonShutter_.setSelected(true);
