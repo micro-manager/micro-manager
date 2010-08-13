@@ -1225,7 +1225,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
 
         commentLabel_ = new JLabel();
         commentLabel_.setFont(new Font("Arial", Font.PLAIN, 10));
-        commentLabel_.setText("Comment");
+        commentLabel_.setText("Notes");
         commentLabel_.setBounds(10, 90, 76, 22);
         savePanel_.add(commentLabel_);
 

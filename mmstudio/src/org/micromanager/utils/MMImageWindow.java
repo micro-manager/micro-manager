@@ -77,6 +77,7 @@ public class MMImageWindow extends ImageWindow {
 	private static ContrastSettings contrastSettings16_ = new ContrastSettings();;
 	private LUTDialog contrastDlg_;
 	private ImageController contrastPanel_ = null;
+   private CompositeImage compositeImage_ = null;
 
 
 	public MMImageWindow(ImagePlus imp, CMMCore core) throws Exception {
@@ -414,110 +415,73 @@ public class MMImageWindow extends ImageWindow {
         long coreTotalByteDepth = core_.getBytesPerPixel();
 
 		// warn the user if image dimensions do not match the current window
-		boolean ret = w != core_.getImageWidth() || h != core_.getImageHeight()
-				|| (imPlusBitDepth != coreTotalByteDepth * 8 && ( 4==components && (imPlusBitDepth*4 != coreTotalByteDepth * 8))) ;
+		boolean ret = w != core_.getImageWidth() || h != core_.getImageHeight();
+			//	|| (imPlusBitDepth != coreTotalByteDepth * 8 && ( 4==components && (imPlusBitDepth*4 != coreTotalByteDepth * 8))) ;
 		return ret;
 	}
 
-    public void newImage(Object img) {
-        
-        long ibd = core_.getImageBitDepth();
-        long bpp = core_.getBytesPerPixel();
-        long noc = core_.getNumberOfComponents();
-        long ncc = core_.getNumberOfCameraChannels();
+   public void newImage(Object img) {
 
-        // flag to check for 64 bit color
-        boolean deepColor = (1 < noc) && (4 < bpp);
+      long ibd = core_.getImageBitDepth();
+      long bpp = core_.getBytesPerPixel();
+      long noc = core_.getNumberOfComponents();
+      long ncc = core_.getNumberOfCameraChannels();
 
-        ImagePlus ip = getImagePlus();
-        ImageProcessor ipr = ip.getProcessor();
+      // flag to check for color
+      boolean deepColor = (1 < noc);
 
-        ImagePlus compositeImage;
-        ImagePlus iplus;
+      ImagePlus ip = getImagePlus();
+      ImageProcessor ipr = ip.getProcessor();
 
-        
-        
-        if (null != ip) {
-            if(!deepColor){
-                ip.setTitle(title_);
-                if (null != ipr) {
-                    ipr.setPixels(img);
-                }
+      ImagePlus iplus;
+
+
+      if (null != ip) {
+         if (!deepColor) {
+            ip.setTitle(title_);
+            if (null != ipr) {
+               ipr.setPixels(img);
             }
-            else  { // convert to stack
-                int w00 = ipr.getWidth();
-                int h00 = ipr.getHeight();
-                //Image5D img5d = new Image5D(title_, ImagePlus.GRAY16, w00, h00, 3, 1, 1, false);
-
-                short [] R = new short[w00 * h00];
-                short [] G = new short[w00 * h00];
-                short [] B = new short[w00 * h00];
-
-                // display 64 bit color images as a composite.
-                int [] pixels = (int[])img;
-
-                int ii = 0;
-                for(int ij0 = 0; ij0 < w00*h00; ++ij0)                {
-                        B[ij0] = (short)(pixels[ii]&0xffff);
-                        G[ij0] = (short)(pixels[ii++]>>16);
-                        R[ij0] = (short)(pixels[ii++]&0xffff);
-                }
-
-
-                    iplus = new ImagePlus( );
-                    ImageProcessor imageProcessor = new ShortProcessor(w00, h00);
-                    ImageStack imageStack = new ImageStack(imageProcessor.getWidth(), imageProcessor.getHeight(), imageProcessor.getColorModel());
-
-                    imageProcessor.setPixels(R);
-                    imageProcessor.setColorModel(ChannelDisplayProperties.createModelFromColor(Color.red));
-                    imageStack.addSlice("Red", imageProcessor);
-
-                    imageProcessor.setPixels(G);
-                    imageProcessor.setColorModel(ChannelDisplayProperties.createModelFromColor(Color.green));
-                    imageStack.addSlice("Green", imageProcessor);
-
-                    iplus.setPosition(3,1,1);
-                    imageProcessor.setPixels(B);
-                    imageProcessor.setColorModel(ChannelDisplayProperties.createModelFromColor(Color.blue));
-                    imageStack.addSlice("Blue", imageProcessor);
-
-                    iplus.setStack(imageStack);
-
-                    compositeImage = new CompositeImage(iplus, CompositeImage.COMPOSITE);
-
-                    //set the Window's image to the composite image
-                    // note: only one channel at a time subsequently can be selected with arrow keys
-                    setImage(compositeImage);
-/*                }else{  // re-use the existing composite image!!
-
-                    ImageStack imageStack = compositeImage.getStack();
-                    ImageProcessor p = imageStack.getProcessor(1);
-                    p.setPixels(R);
-                    p = imageStack.getProcessor(2);
-                    p.setPixels(G);
-                    p = imageStack.getProcessor(3);
-                    p.setPixels(B);
-                    setImage(compositeImage);
-                    getImagePlus().updateAndDraw();
-                }
-
- */
-
+         } else { // convert to stack
+            int w = ipr.getWidth();
+            int h = ipr.getHeight();
+            //Image5D img5d = new Image5D(title_, ImagePlus.GRAY16, w00, h00, 3, 1, 1, false);
+            Object[] planes;
+            if (img instanceof byte[]) {
+               planes = ImageUtils.getColorPlanesFromRGB32((byte[]) img);
+            } else if (img instanceof short[]) {
+               planes = ImageUtils.getColorPlanesFromRGB64((short[]) img);
+            } else {
+               planes = null;
             }
 
-
-           updateHistogram();
-           tearFreeUpdate();
-
-            // update coordinate and pixel info in imageJ by simulating mouse
-            // move
-            ImageCanvas ica = getCanvas();
-            if (null != ica) {
-                Point pt = ica.getCursorLoc();
-                ip.mouseMoved(pt.x, pt.y);
+            iplus = new ImagePlus();
+            ImageStack imageStack = new ImageStack(w, h, 3);
+            for (int i=0;i<3;++i) {
+               imageStack.setPixels(planes[i], 1+i);
             }
-        }
-    }
+
+            iplus.setStack(imageStack);
+
+            compositeImage_ = new CompositeImage(iplus, CompositeImage.COMPOSITE);
+            compositeImage_.setStack(imageStack);
+//            compositeImage_.setPosition(3, 1, 1);
+            this.setImage(compositeImage_);
+         }
+
+
+         updateHistogram();
+         tearFreeUpdate();
+
+         // update coordinate and pixel info in imageJ by simulating mouse
+         // move
+         ImageCanvas ica = getCanvas();
+         if (null != ica) {
+            Point pt = ica.getCursorLoc();
+            ip.mouseMoved(pt.x, pt.y);
+         }
+      }
+   }
 
 	public void newImageWithStatusLine(Object img, String statusLine) {
       //TODO: add error handling

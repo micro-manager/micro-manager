@@ -41,7 +41,7 @@ public class HyperstackControls extends java.awt.Panel {
 
       metadataButton.setBackground(new java.awt.Color(255, 255, 255));
       metadataButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/application_view_list.png"))); // NOI18N
-      metadataButton.setToolTipText("View acquisition metadata");
+      metadataButton.setToolTipText("View metadata and notes");
       metadataButton.setFocusable(false);
       metadataButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
       metadataButton.setMaximumSize(new java.awt.Dimension(30, 28));

@@ -11,6 +11,8 @@ import java.io.File;
 import java.io.FileFilter;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import mmcorej.TaggedImage;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.MDUtils;
@@ -74,7 +76,20 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
       if (!filenames_.containsKey(flatIndex))
          return ImageUtils.makeProcessor(type_, width_, height_).getPixels();
       else {
-         return getTaggedImage(flatIndex).pix;
+         try {
+            TaggedImage image = getTaggedImage(flatIndex);
+            if (MDUtils.isGRAY(image)) {
+               return image.pix;
+            } else if (MDUtils.isRGB32(image)) {
+               return ImageUtils.singleChannelFromRGB32((byte []) image.pix, (flatIndex-1) % 3);
+            } else if (MDUtils.isRGB64(image)) {
+               return ImageUtils.singleChannelFromRGB64((short []) image.pix, (flatIndex-1) % 3);
+            }
+         } catch (Exception ex) {
+            ReportingUtils.logError(ex);
+            return null;
+         }
+         return null;
       }
    }
 
@@ -94,7 +109,17 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
    }
 
    void insertImage(int flatIndex, TaggedImage taggedImg) {
-      filenames_.put(flatIndex, imageCache_.putImage(taggedImg));
+      try {
+         String filename = imageCache_.putImage(taggedImg);
+         filenames_.put(flatIndex, filename);
+         if (MDUtils.isRGB(taggedImg)) {
+            filenames_.put(flatIndex + 1, filename);
+            filenames_.put(flatIndex + 2, filename);
+         }
+         
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
+      }
    }
 
    void insertImage(TaggedImage taggedImg) {
@@ -111,9 +136,17 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
    }
 
    public void rememberImage(Map<String,String> md) {
-      int flatIndex = getFlatIndex(md);
-      String filename = md.get("Filename");
-      filenames_.put(flatIndex, filename);
+      try {
+         int flatIndex = getFlatIndex(md);
+         String filename = md.get("Filename");
+         filenames_.put(flatIndex, filename);
+         if (MDUtils.isRGB(md)) {
+            filenames_.put(flatIndex + 1, filename);
+            filenames_.put(flatIndex + 2, filename);
+         }
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
+      }
    }
 
    private int getFlatIndex(Map<String,String> md) {

@@ -9,6 +9,7 @@ import ij.ImagePlus;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
+import mmcorej.TaggedImage;
 
 /**
  *
@@ -121,4 +122,53 @@ public class MDUtils {
          throw new Exception("Pixel type not recognized!");
       }
    }
+
+   public static boolean isGRAY8(Map<String,String> map) throws Exception {
+      return getPixelType(map).contentEquals("GRAY8");
+   }
+
+   public static boolean isGRAY16(Map<String,String> map) throws Exception {
+      return getPixelType(map).contentEquals("GRAY16");
+   }
+
+   public static boolean isRGB32(Map<String,String> map) throws Exception {
+      return getPixelType(map).contentEquals("RGB32");
+   }
+
+   public static boolean isRGB64(Map<String,String> map) throws Exception {
+      return getPixelType(map).contentEquals("RGB64");
+   }
+
+   public static boolean isGRAY8(TaggedImage img) throws Exception {
+      return isGRAY8(img.tags);
+   }
+
+   public static boolean isGRAY16(TaggedImage img) throws Exception {
+      return isGRAY16(img.tags);
+   }
+
+   public static boolean isRGB32(TaggedImage img) throws Exception {
+      return isRGB32(img.tags);
+   }
+
+   public static boolean isRGB64(TaggedImage img) throws Exception {
+      return isRGB64(img.tags);
+   }
+
+   public static boolean isGRAY(Map<String,String> map) throws Exception {
+      return (isGRAY8(map) || isGRAY16(map));
+   }
+
+   public static boolean isRGB(Map<String,String> map) throws Exception {
+      return (isRGB32(map) || isRGB64(map));
+   }
+
+   public static boolean isGRAY(TaggedImage img) throws Exception {
+      return isGRAY(img.tags);
+   }
+
+   public static boolean isRGB(TaggedImage img) throws Exception {
+      return isRGB(img.tags);
+   }
+            
 }

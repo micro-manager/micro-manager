@@ -8,6 +8,8 @@ import java.awt.Color;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import mmcorej.TaggedImage;
 import org.json.JSONObject;
 import org.micromanager.metadata.AcquisitionData;
@@ -41,6 +43,7 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
    private Map<String,String> summaryMetadata_ = null;
    private final boolean newData_;
    private Map<String,String> systemMetadata_ = null;
+   private int numGrayChannels_;
 
    public MMVirtualAcquisition(String name, String dir, boolean newData) {
       name_ = name;
@@ -167,7 +170,8 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
             ReportingUtils.logError(ex);
          }
       }
-      virtualStack_ = new AcquisitionVirtualStack(width_, height_, null, dir_, imageCache_, numChannels_ * numSlices_ * numFrames_ * numComponents_);
+      numGrayChannels_ = numComponents_ * numChannels_;
+      virtualStack_ = new AcquisitionVirtualStack(width_, height_, null, dir_, imageCache_, numGrayChannels_ * numSlices_ * numFrames_);
       try {
          virtualStack_.setType(MDUtils.getSingleChannelType(summaryMetadata_));
       } catch (Exception ex) {
@@ -195,16 +199,28 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       if (hyperImage_.getFrame() == 1) {
          int middleSlice = 1 + hyperImage_.getNSlices() / 2;
          if (hyperImage_.getSlice() == middleSlice) {
-            ImageStatistics stat = hyperImage_.getStatistics();
-            hyperImage_.setDisplayRange(stat.min, stat.max);
-            hyperImage_.updateAndDraw();
+            try {
+               ImageStatistics stat = hyperImage_.getStatistics();
+               if (MDUtils.isRGB(taggedImg)) {
+                  for (int i=1;i<=numGrayChannels_;++i) {
+                     (hyperImage_).setPosition(i,MDUtils.getFrame(taggedImg.tags), MDUtils.getFrame(taggedImg.tags));
+                     hyperImage_.setDisplayRange(stat.min, stat.max);
+                     hyperImage_.updateAndDraw();
+                  }
+               } else {
+                  hyperImage_.setDisplayRange(stat.min, stat.max);
+                  hyperImage_.updateAndDraw();
+               }
+            } catch (Exception ex) {
+               ReportingUtils.showError(ex);
+            }
          }
       }
 
       try {
-         if ((hyperImage_.getFrame() - 1) > (MDUtils.getFrame(md) - 2)) {
+        // if ((hyperImage_.getFrame() - 1) > (MDUtils.getFrame(md) - 2)) {
             hyperImage_.setPosition(1 + MDUtils.getChannelIndex(md), 1 + MDUtils.getSlice(md), 1 + MDUtils.getFrame(md));
-         }
+       //  }
       } catch (Exception e) {
          ReportingUtils.logError(e);
       }
@@ -213,14 +229,15 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
    public void show() {
       ImagePlus imgp = new ImagePlus(dir_, virtualStack_);
       virtualStack_.setImagePlus(imgp);
-      imgp.setDimensions(numChannels_, numSlices_, numFrames_);
-      if (numChannels_ > 1) {
+      imgp.setDimensions(numGrayChannels_, numSlices_, numFrames_);
+      if (numGrayChannels_ > 1) {
          hyperImage_ = new CompositeImage(imgp, CompositeImage.COMPOSITE);
       } else {
          hyperImage_ = imgp;
          imgp.setOpenAsHyperStack(true);
       }
-      updateChannelColors();
+      if (numGrayChannels_ == numChannels_)
+         updateChannelColors();
       hyperImage_.show();
       ImageWindow win = hyperImage_.getWindow();
       HyperstackControls hc = new HyperstackControls(this);

@@ -23,6 +23,7 @@
 //
 package org.micromanager.graph;
 
+import ij.CompositeImage;
 import ij.ImagePlus;
 
 import ij.process.ColorProcessor;
@@ -412,6 +413,22 @@ public class ContrastPanel extends JPanel implements ImageController, PropertyCh
 	       modeComboBox_.setSelectedIndex(0); 
        } 
    }
+
+   public void setSingleProcessorGamma(double gamma_, ImageProcessor ip, int colIndex) {
+      double maxValue = 255.0;
+      byte[] r = new byte[256];
+      byte[] g = new byte[256];
+      byte[] b = new byte[256];
+      for (int i = 0; i < 256; i++) {
+         double val = Math.pow((double) i / maxValue, gamma_) * (double) maxValue;
+         r[i] = (byte) ((colIndex == 0 || colIndex == 1) ? val : 0);
+         g[i] = (byte) ((colIndex == 0 || colIndex == 2) ? val : 0);
+         b[i] = (byte) ((colIndex == 0 || colIndex == 3) ? val : 0);
+      }
+      LUT lut = new LUT(8, 256, r, g, b);
+      ip.setColorModel(lut);
+      image_.updateAndDraw();
+   }
 	 
 	private void setIntensityMode(int mode) {
 		switch (mode) {
@@ -489,20 +506,15 @@ public class ContrastPanel extends JPanel implements ImageController, PropertyCh
           return;
        //if (!ip.isDefaultLut())  // funny, does not work
        //   return;
-       ImageProcessor ip = image_.getProcessor();
-       double maxValue = 255.0;
-       byte[] r = new byte[256];
-       byte[] g = new byte[256];
-       byte[] b = new byte[256];
-       for (int i=0; i<256; i++) {
-           double val =  Math.pow((double) i/maxValue, gamma_) * (double)maxValue;
-           r[i] = (byte) val;
-           g[i] = (byte) val;
-           b[i] = (byte) val;
+       if (!(image_ instanceof CompositeImage)) {
+          ImageProcessor ip = image_.getProcessor();
+              setSingleProcessorGamma(gamma_, ip, 0);
+       } else {
+          for (int i=1;i<=3;++i) {
+             ImageProcessor ip = ((CompositeImage) image_).getProcessor(i);
+             setSingleProcessorGamma(gamma_, ip,  i);
+          }
        }
-       LUT lut = new LUT(8, 256, r, g, b);
-       ip.setColorModel(lut);
-       image_.updateAndDraw();
    }
 
 
@@ -706,15 +718,30 @@ public class ContrastPanel extends JPanel implements ImageController, PropertyCh
 		if (img == null)
 			return;
 
-		if (img.getProcessor() instanceof ShortProcessor) {
-			img.getProcessor().setMinAndMax(contrast16.min, contrast16.max);
-		} else {
-			img.getProcessor().setMinAndMax(contrast8.min, contrast8.max);
-		}
+      if (!(img instanceof CompositeImage)) {
+         applyContrastSettings(img.getProcessor(),
+                 contrast8, contrast16);
+      } else {
+         for (int i=1;i<=3;++i) {
+            ImageProcessor proc = ((CompositeImage) img).getProcessor(i);
+            applyContrastSettings(proc,
+                 contrast8, contrast16);
+         }
+      }
 		updateSliders();
 
 		img.updateAndDraw();
 	}
+
+   public void applyContrastSettings(ImageProcessor proc,
+           ContrastSettings contrast8, ContrastSettings contrast16) {
+        if (proc instanceof ShortProcessor) {
+            proc.setMinAndMax(contrast16.min, contrast16.max);
+         } else {
+            proc.setMinAndMax(contrast8.min, contrast8.max);
+         }
+
+   }
 
 	public void setContrastStretch(boolean stretch) {
 		stretchCheckBox_.setSelected(stretch);

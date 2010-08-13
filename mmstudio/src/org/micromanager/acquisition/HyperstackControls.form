@@ -49,7 +49,7 @@
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
           <Image iconType="3" name="/org/micromanager/icons/application_view_list.png"/>
         </Property>
-        <Property name="toolTipText" type="java.lang.String" value="View acquisition metadata"/>
+        <Property name="toolTipText" type="java.lang.String" value="View metadata and notes"/>
         <Property name="focusable" type="boolean" value="false"/>
         <Property name="horizontalTextPosition" type="int" value="0"/>
         <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">

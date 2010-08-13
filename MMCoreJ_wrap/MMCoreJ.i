@@ -121,7 +121,6 @@
 %typemap(out) void*
 {
    long lSize = (arg1)->getImageWidth() * (arg1)->getImageHeight();
-   //unsigned numComponents = (arg1)->getNumberOfComponents();
    
    if ((arg1)->getBytesPerPixel() == 1)
    {
@@ -162,26 +161,27 @@
    }
    else if ((arg1)->getBytesPerPixel() == 4)
    {
-      // create a new int[] object in Java
-      jintArray data = JCALL1(NewIntArray, jenv, lSize);
+      // create a new byte[] object in Java
+      jbyteArray data = JCALL1(NewByteArray, jenv, lSize * 4);
       if (data == 0)
       {
          jclass excep = jenv->FindClass("java/lang/Exception");
 		 if (excep)
 			jenv->ThrowNew(excep, "The system ran out of memory!");
+
 		$result = 0;
 		return $result;
 	  }
-	  
+   
       // copy pixels from the image buffer
-      JCALL4(SetIntArrayRegion, jenv, data, 0, lSize, (jint*)result);
+      JCALL4(SetByteArrayRegion, jenv, data, 0, lSize * 4, (jbyte*)result);
 
       $result = data;
    }
    else if ((arg1)->getBytesPerPixel() == 8)
    {
-      // create a new int[] object in Java
-      jintArray data = JCALL1(NewIntArray, jenv, lSize * 2);
+      // create a new short[] object in Java
+      jshortArray data = JCALL1(NewShortArray, jenv, lSize * 4);
       if (data == 0)
       {
          jclass excep = jenv->FindClass("java/lang/Exception");
@@ -190,9 +190,9 @@
 		$result = 0;
 		return $result;
 	  }
-	  
+  
       // copy pixels from the image buffer
-      JCALL4(SetIntArrayRegion, jenv, data, 0, lSize*2, (jint*)result);
+      JCALL4(SetShortArrayRegion, jenv, data, 0, lSize * 4, (jshort*)result);
 
       $result = data;
    }

@@ -4,10 +4,13 @@
  */
 package org.micromanager.acquisition;
 
+import ij.CompositeImage;
 import ij.ImagePlus;
+import ij.ImageStack;
 import ij.io.FileSaver;
 import ij.io.Opener;
 import ij.process.ByteProcessor;
+import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import java.io.BufferedWriter;
@@ -21,6 +24,7 @@ import java.util.Set;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMException;
@@ -79,11 +83,33 @@ public class DefaultImageFileManager implements ImageFileManagerInterface {
    public TaggedImage readImage(String filename) {
       ImagePlus imp = new Opener().openImage(dir_ + "/" + filename);
       if (imp != null) {
-         ImageProcessor proc = imp.getProcessor();
-         Object img = proc.getPixels();
-         Map<String,String> md = yamlToMetadata((String) imp.getProperty("Info"));
-         TaggedImage taggedImg = new TaggedImage(img, md);
-         return taggedImg;
+         try {
+            ImageProcessor proc = imp.getProcessor();
+            Map<String, String> md = yamlToMetadata((String) imp.getProperty("Info"));
+            String pixelType = MDUtils.getPixelType(md);
+            Object img;
+            if (pixelType.contentEquals("GRAY8") || pixelType.contentEquals("GRAY16")) {
+               img = proc.getPixels();
+            } else if (pixelType.contentEquals("RGB32")) {
+               img = proc.getPixels();
+               img = ImageUtils.convertRGB32IntToBytes((int []) img);
+            } else if (pixelType.contentEquals("RGB64")) {
+               ImageStack stack = ((CompositeImage) imp).getStack();
+               short [] r = (short []) stack.getProcessor(1).getPixels();
+               short [] g = (short []) stack.getProcessor(2).getPixels();
+               short [] b = (short []) stack.getProcessor(3).getPixels();
+               short [][] planes = {r,g,b};
+               img = ImageUtils.getRGB64PixelsFromColorPlanes(planes);
+            } else {
+               return null;
+            }  
+
+            TaggedImage taggedImg = new TaggedImage(img, md);
+            return taggedImg;
+         } catch (Exception ex) {
+            ReportingUtils.logError(ex);
+            return null;
+         }
       } else {
          return null;
       }
@@ -162,26 +188,54 @@ public class DefaultImageFileManager implements ImageFileManagerInterface {
    }
 
    private void saveImageFile(Object img, Map<String,String> md, String path, String tiffFileName) {
+      ImagePlus imp;
       try {
          ImageProcessor ip = null;
          int width = MDUtils.getWidth(md);
          int height = MDUtils.getHeight(md);
-         if (img instanceof byte[]) {
+         String pixelType = MDUtils.getPixelType(md);
+         if (pixelType.equals("GRAY8")) {
             ip = new ByteProcessor(width, height);
             ip.setPixels((byte[]) img);
-         } else if (img instanceof short[]) {
+            saveImageProcessor(ip, md, path, tiffFileName);
+         } else if (pixelType.equals("GRAY16")) {
             ip = new ShortProcessor(width, height);
             ip.setPixels((short[]) img);
-         }
-         if (ip != null) {
-            ImagePlus imp = new ImagePlus(path + "/" + tiffFileName, ip);
-            imp.setProperty("Info", metadataToYaml(md));
-            FileSaver fs = new FileSaver(imp);
-            fs.saveAsTiff(path + "/" + tiffFileName);
+            saveImageProcessor(ip, md, path, tiffFileName);
+         } else if (pixelType.equals("RGB32")) {
+            byte[][] planes = ImageUtils.getColorPlanesFromRGB32((byte []) img);
+            ColorProcessor cp = new ColorProcessor(width, height);
+            cp.setRGB(planes[0],planes[1],planes[2]);
+            saveImageProcessor(cp, md, path, tiffFileName);
+         } else if (pixelType.equals("RGB64")) {
+            short[][] planes = ImageUtils.getColorPlanesFromRGB64((short []) img);
+            ImageStack stack = new ImageStack(width, height);
+				stack.addSlice("Red", planes[0]);
+				stack.addSlice("Green", planes[1]);
+				stack.addSlice("Blue", planes[2]);
+        		imp = new ImagePlus(path + "/" + tiffFileName, stack);
+        		imp.setDimensions(3, 1, 1);
+            imp = new CompositeImage(imp, CompositeImage.COLOR);
+            saveImagePlus(imp, md, path, tiffFileName);
          }
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
+   }
+
+
+   private void saveImageProcessor(ImageProcessor ip, Map<String,String> md, String path, String tiffFileName) {
+      if (ip != null) {
+         ImagePlus imp = new ImagePlus(path + "/" + tiffFileName, ip);
+         saveImagePlus(imp, md, path, tiffFileName);
+      }
+   }
+
+
+   public void saveImagePlus(ImagePlus imp, Map<String, String> md, String path, String tiffFileName) {
+      imp.setProperty("Info", metadataToYaml(md));
+      FileSaver fs = new FileSaver(imp);
+      fs.saveAsTiff(path + "/" + tiffFileName);
    }
 
    private void openNewDataSet() throws Exception, IOException {

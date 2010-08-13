@@ -206,43 +206,104 @@ public class ImageUtils {
       return imax;
    }
 
-   /*
-    * channel should be 0, 1 or 2.
-    */
-   public static byte[] singleChannelFromRGB32(int[] pixels, int channel) {
-      if (channel != 0 || channel != 1 || channel != 2)
-         return null;
-      
-      byte[] newPixels = new byte[pixels.length];
-      int bitShift = 8*channel;
-      for (int i=0;i<pixels.length;++i) {
-         newPixels[i] = (byte) (0xff & (pixels[i] >> bitShift));
+   public static byte[] convertRGB32IntToBytes(int [] pixels) {
+      byte[] bytes = new byte[pixels.length*4];
+      int j = 0;
+      for (int i = 0; i<pixels.length;++i) {
+         bytes[j++] = (byte) (pixels[i] & 0xff);
+         bytes[j++] = (byte) ((pixels[i] >> 8) & 0xff);
+         bytes[j++] = (byte) ((pixels[i] >> 16) & 0xff);
+         bytes[j++] = 0;
       }
-      return newPixels;
+      return bytes;
+   }
+
+   public static byte[] getRGB32PixelsFromColorPanes(byte[][] planes) {
+      int j=0;
+      byte[] pixels = new byte[planes.length * 4];
+      for (int i=0;i<planes.length;++i) {
+         pixels[j++] = planes[0][i];
+         pixels[j++] = planes[1][i];
+         pixels[j++] = planes[2][i];
+         pixels[j++] = 0; // Empty A byte.
+      }
+      return pixels;
+   }
+
+   public static short[] getRGB64PixelsFromColorPlanes(short[][] planes) {
+      int j=-1;
+      short[] pixels = new short[planes[0].length * 4];
+      for (int i=0;i<planes[0].length;++i) {
+         pixels[++j] = planes[0][i];
+         pixels[++j] = planes[1][i];
+         pixels[++j] = planes[2][i];
+         pixels[++j] = 0; // Empty A (two bytes).
+      }
+      return pixels;
+   }
+
+   public static byte[][] getColorPlanesFromRGB32(byte[] pixels) {
+       byte [] r = new byte[pixels.length/4];
+       byte [] g = new byte[pixels.length/4];
+       byte [] b = new byte[pixels.length/4];
+
+       int j=0;
+       for (int i=0;i<pixels.length/4;++i) {
+          r[i] = pixels[j++];
+          g[i] = pixels[j++];
+          b[i] = pixels[j++];
+          j++; // skip "A" byte.
+       }
+       
+       byte[][] planes = {r,g,b};
+       return planes;
+   }
+
+    public static short[][] getColorPlanesFromRGB64(short[] pixels) {
+       short [] r = new short[pixels.length/4];
+       short [] g = new short[pixels.length/4];
+       short [] b = new short[pixels.length/4];
+
+       int j=0;
+       for (int i=0;i<pixels.length/4;++i) {
+          r[i] = pixels[j++];
+          g[i] = pixels[j++];
+          b[i] = pixels[j++];
+          j++; // skip "A" (two bytes).
+       }
+
+       short[][] planes = {r,g,b};
+       return planes;
+   }
+
+
+   /*
+    * channel should be 0, 1 or 2.
+    */
+   public static byte[] singleChannelFromRGB32(byte[] pixels, int channel) {
+      if (channel != 0 && channel != 1 && channel != 2)
+         return null;
+
+      byte [] p = new byte[pixels.length/4];
+
+      for (int i=0;i<p.length;++i) {
+         p[i] = pixels[channel + 4*i];
+      }
+      return p;
    }
 
    /*
     * channel should be 0, 1 or 2.
     */
-   public static short[] singleChannelFromRGB64(int[] pixels, int channel) {
-       short [] newPixels = new short[pixels.length/2];
-       int i=0;
-       if (channel == 0) { // even pixels, first half
-          for (int j=0; j<newPixels.length; j+=2) {
-             newPixels[i++] = (short) (pixels[j] & 0xffff);
-          }
-       } else if (channel == 1) { // even pixels, second half
-          for (int j=0; j<newPixels.length; j+=2) {
-             newPixels[i++] = (short) (pixels[j] >> 16);
-          }
-       } else if (channel == 2) { // odd pixels, first half
-          for (int j=1; j<newPixels.length; j+=2) {
-             newPixels[i++] = (short) (pixels[j] & 0xffff);
-          }
-       } else {
-          newPixels = null;
-       }
-       return newPixels;
-   }
+   public static short[] singleChannelFromRGB64(short[] pixels, int channel) {
+      if (channel != 0 && channel != 1 && channel != 2)
+         return null;
 
+      short [] p = new short[pixels.length/4];
+
+      for (int i=0;i<p.length;++i) {
+         p[i] = pixels[channel + 4*i];
+      }
+      return p;
+   }
 }
