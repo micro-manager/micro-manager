@@ -3,18 +3,19 @@
 //PROJECT:       Micro-Manager
 //SUBSYSTEM:     mmstudio
 //-----------------------------------------------------------------------------
-//AUTHOR:       Nenad Amodaj, nenad@amodaj.com, Jul 18, 2005
-//COPYRIGHT:    University of California, San Francisco, 2006
-//100X Imaging Inc, www.100ximaging.com, 2008
-//LICENSE:      This file is distributed under the BSD license.
-//License text is included with the source distribution.
-//This file is distributed in the hope that it will be useful,
-//but WITHOUT ANY WARRANTY; without even the implied warranty
-//of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-//IN NO EVENT SHALL THE COPYRIGHT OWNER OR
-//CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-//INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+//AUTHOR:        Nenad Amodaj, nenad@amodaj.com, Jul 18, 2005
+//COPYRIGHT:     University of California, San Francisco, 2006
+//               100X Imaging Inc, www.100ximaging.com, 2008
+//LICENSE:       This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //CVS:          $Id$
+//
 package org.micromanager;
 
 import ij.IJ;
@@ -1473,15 +1474,12 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             if (!options_.doNotAskForConfigFile) {
                MMIntroDlg introDlg = new MMIntroDlg(VERSION, MRUConfigFiles_);
                introDlg.setConfigFile(sysConfigFile_);
-               // introDlg.setScriptFile(startupScriptFile_);
                introDlg.setVisible(true);
                sysConfigFile_ = introDlg.getConfigFile();
             }
             saveMRUConfigFiles();
 
-            // startupScriptFile_ = introDlg.getScriptFile();
             mainPrefs_.put(SYSTEM_CONFIG_FILE, sysConfigFile_);
-            // mainPrefs_.put(STARTUP_SCRIPT_FILE, startupScriptFile_);
 
             paint(MMStudioMainFrame.this.getGraphics());
 
@@ -1490,8 +1488,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             posList_ = new PositionList();
             engine_.setPositionList(posList_);
 
-            // TODO: If there is an error loading the config file, make sure
-            // we prompt next time at startup
             loadSystemConfiguration();
 
             executeStartupScript();
