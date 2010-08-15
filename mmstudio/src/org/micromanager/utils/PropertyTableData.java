@@ -55,8 +55,6 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
 		PropertyValueColumn_ = PropertyValueColumn;
 		PropertyUsedColumn_ = PropertyUsedColumn;
       parentComponent_ = parentComponent;
-		//initialize(flags_, groupName, presetName);
-
 	}
 
 	public ArrayList<PropertyItem> getProperties() {
@@ -114,13 +112,11 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
 	}
 
 	public int getColumnCount() {
-		// if (isEditingGroup())
 		return columnNames_.length;
 	}
 
 	public boolean isEditingGroup() {
 		return true;
-		// return groupSignature_.length == 0;
 	}
 
 	public PropertyItem getPropertyItem(int row) {
@@ -135,8 +131,6 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
 		else if (col == PropertyValueColumn_)
 			return item.value;
 		else if (col == PropertyUsedColumn_) {
-			//JCheckBox cb = new JCheckBox();
-			//cb.setSelected(item.confInclude);
 			return new Boolean(item.confInclude);
 		}
 

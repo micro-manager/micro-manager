@@ -75,7 +75,6 @@ public class PropertyEditor extends MMFrame {
    
    private JTable table_;
    private PropertyEditorTableData data_;
-   private JCheckBox showReadonlyCheckBox_;
    private ShowFlags flags_;
    
    private static final String PREF_SHOW_READONLY = "show_readonly";
@@ -84,6 +83,7 @@ public class PropertyEditor extends MMFrame {
    private JCheckBox showStagesCheckBox_;
    private JCheckBox showStateDevicesCheckBox_;
    private JCheckBox showOtherCheckBox_;
+   private JCheckBox showReadonlyCheckBox_;
    private JScrollPane scrollPane_;
    private MMStudioMainFrame gui_;
    

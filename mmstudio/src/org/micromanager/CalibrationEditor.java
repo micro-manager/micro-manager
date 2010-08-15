@@ -23,6 +23,7 @@
 
 package org.micromanager;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
@@ -69,6 +70,7 @@ import org.micromanager.utils.ReportingUtils;
 import org.micromanager.utils.ShowFlags;
 import org.micromanager.utils.SliderPanel;
 import org.micromanager.utils.SortFunctionObjects;
+
 /**
  * Dialog based GUI component for generic editing of device properties.
  * Represents the entire system state as a list of triplets:
@@ -96,6 +98,7 @@ public class CalibrationEditor extends MMDialog {
    private JCheckBox showStagesCheckBox_;
    private JCheckBox showStateDevicesCheckBox_;
    private JCheckBox showOtherCheckBox_;
+   private JCheckBox showReadonlyCheckBox_;
    private Configuration initialCfg_;
    private JScrollPane scrollPane_;
    private boolean tableEditable_ = true;
@@ -224,28 +227,46 @@ public class CalibrationEditor extends MMDialog {
       springLayout.putConstraint(SpringLayout.WEST, showOtherCheckBox_, 10, SpringLayout.WEST, getContentPane());
       springLayout.putConstraint(SpringLayout.NORTH, showOtherCheckBox_, 95, SpringLayout.NORTH, getContentPane());
 
+      boolean showShowReadonlyCheckBox_ = true;
+      if (showShowReadonlyCheckBox_) {
+         showReadonlyCheckBox_ = new JCheckBox();
+         showReadonlyCheckBox_.setFont(new Font("Arial", Font.PLAIN, 10));
+         showReadonlyCheckBox_.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+               // show/hide read-only properties
+               data_.setShowReadonly(showReadonlyCheckBox_.isSelected());
+               data_.updateStatus();
+             }
+         });
+         showReadonlyCheckBox_.setText("Show read-only properties");
+         getContentPane().add(showReadonlyCheckBox_);
+         springLayout.putConstraint(SpringLayout.WEST, showReadonlyCheckBox_, 190, SpringLayout.WEST, getContentPane());
+         springLayout.putConstraint(SpringLayout.NORTH, showReadonlyCheckBox_, 0, SpringLayout.NORTH, showOtherCheckBox_);
+         // springLayout_.putConstraint(SpringLayout.SOUTH, showReadonlyCheckBox_, 70, SpringLayout.NORTH, getContentPane());
+      }
+
       final JLabel presetLabel = new JLabel();
       presetLabel.setText("Label: ");
       presetLabel.setFont(new Font("", Font.PLAIN, 10));
       getContentPane().add(presetLabel);
       springLayout.putConstraint(SpringLayout.EAST, presetLabel, 340, SpringLayout.WEST, getContentPane());
       springLayout.putConstraint(SpringLayout.WEST, presetLabel, 190, SpringLayout.WEST, getContentPane());
-      springLayout.putConstraint(SpringLayout.SOUTH, presetLabel, 41, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, presetLabel, 30, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.SOUTH, presetLabel, 26, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, presetLabel, 15, SpringLayout.NORTH, getContentPane());
 
       presetLabelField_ = new JTextField(label_);
       getContentPane().add(presetLabelField_);
       springLayout.putConstraint(SpringLayout.EAST, presetLabelField_, 340, SpringLayout.WEST, getContentPane());
       springLayout.putConstraint(SpringLayout.WEST, presetLabelField_, 190, SpringLayout.WEST, getContentPane());
-      springLayout.putConstraint(SpringLayout.SOUTH, presetLabelField_, 61, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, presetLabelField_, 42, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.SOUTH, presetLabelField_, 46, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, presetLabelField_, 27, SpringLayout.NORTH, getContentPane());
 
       final JLabel presetSizeLabel = new JLabel();
       presetSizeLabel.setFont(new Font("", Font.PLAIN, 10));
       presetSizeLabel.setText("Pixel Size (um/pixel):");
       getContentPane().add(presetSizeLabel);
-      springLayout.putConstraint(SpringLayout.SOUTH, presetSizeLabel, 85, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, presetSizeLabel, 71, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.SOUTH, presetSizeLabel, 70, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, presetSizeLabel, 56, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.EAST, presetSizeLabel, 340, SpringLayout.WEST, getContentPane());
       springLayout.putConstraint(SpringLayout.WEST, presetSizeLabel, 190, SpringLayout.WEST, getContentPane());
 
@@ -253,8 +274,10 @@ public class CalibrationEditor extends MMDialog {
       getContentPane().add(presetSizeField_);
       springLayout.putConstraint(SpringLayout.EAST, presetSizeField_, 340, SpringLayout.WEST, getContentPane());
       springLayout.putConstraint(SpringLayout.WEST, presetSizeField_, 190, SpringLayout.WEST, getContentPane());
-      springLayout.putConstraint(SpringLayout.SOUTH, presetSizeField_, 105, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, presetSizeField_, 86, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.SOUTH, presetSizeField_, 90, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, presetSizeField_, 71, SpringLayout.NORTH, getContentPane());
+
+
 
       final JButton okButton = new JButton();
       okButton.addActionListener(new ActionListener() {
@@ -353,11 +376,9 @@ public class CalibrationEditor extends MMDialog {
          }
       }
  
-
-      
       PropertyCellEditor cellEditor = new PropertyCellEditor();
       PropertyCellRenderer renderer = new PropertyCellRenderer();
-     
+
       for (int k=0; k < data_.getColumnCount(); k++) {
          TableColumn column = new TableColumn(k, 200, renderer, cellEditor);
          table_.addColumn(column);
@@ -369,18 +390,21 @@ public class CalibrationEditor extends MMDialog {
       showStateDevicesCheckBox_.setSelected(flags_.state_);
       showOtherCheckBox_.setSelected(flags_.other_);
       
-      data_.updateFlags();
-      data_.updateStatus();
-      
       if (!data_.isEditingGroup()) {
          getContentPane().remove(showCamerasCheckBox_);
          getContentPane().remove(showStagesCheckBox_);
          getContentPane().remove(showShuttersCheckBox_);
          getContentPane().remove(showStateDevicesCheckBox_);
          getContentPane().remove(showOtherCheckBox_);
+         getContentPane().remove(showReadonlyCheckBox_);
+         data_.setShowReadonly(true);
          textArea_.setText("Choose values for the properties contained in this calibration.\n" +
          "Available properties are determined by the first preset defined for this group");
       }
+
+      data_.updateFlags();
+      data_.updateStatus();
+      
   }
    
    public void setParentGUI(DeviceControlGUI parent) {
@@ -409,6 +433,7 @@ public class CalibrationEditor extends MMDialog {
       private CMMCore core_ = null;
       Configuration groupData_[];
       PropertySetting groupSignature_[];
+      private boolean showReadonly_ = false;
 
       private String[] presetNames_;
 
@@ -444,6 +469,10 @@ public class CalibrationEditor extends MMDialog {
          return null;
       }
       
+      public void setShowReadonly(boolean showReadonly) {
+         showReadonly_ = showReadonly;
+      }
+
       public boolean applySettings(String oldLabel, String newLabel, String pixelSize) {
          // If Label was changed, delete the old one
          if (! oldLabel.equals(newLabel)) {
@@ -609,7 +638,6 @@ public class CalibrationEditor extends MMDialog {
             }
          }  else if (col == 2)  {
             item.confInclude = ((Boolean)value).booleanValue();
-             // fireTableCellUpdated(row, col);
          }
       }
       
@@ -710,10 +738,6 @@ public class CalibrationEditor extends MMDialog {
                      item.name = properties.get(j);
                      item.value = core_.getProperty(devices.get(i), properties.get(j));
                      item.readOnly = core_.isPropertyReadOnly(devices.get(i), properties.get(j));
-                     // Hack to make Camera Binning invisible:
-                     if ((dtype == DeviceType.CameraDevice) && (item.name.equals("Binning"))) {
-                        item.readOnly = true;
-                     }
 
                      item.preInit = core_.isPropertyPreInit(devices.get(i), properties.get(j));
                      item.hasRange = core_.hasPropertyLimits(devices.get(i), properties.get(j));
@@ -750,7 +774,7 @@ public class CalibrationEditor extends MMDialog {
                     		 Arrays.sort(item.allowed);
                      }                     
                      
-                     if (!item.readOnly && !item.preInit) {
+                     if (!item.preInit && (!item.readOnly || showReadonly_)) {
                         if(initialCfg_.isPropertyIncluded(item.device, item.name)){
                            item.confInclude = true;
                         } else {
@@ -758,9 +782,11 @@ public class CalibrationEditor extends MMDialog {
                         }
                         
                         if (isMatchingSignature(item)) {
-                           propList_.add(item);
-                           if (!isEditingGroup())
-                              item.confInclude = true;
+                           if ( ! ((dtype == DeviceType.CameraDevice) && (item.name.equals("Binning"))) ) {
+                              propList_.add(item);
+                              if (!isEditingGroup())
+                                 item.confInclude = true;
+                           }
                         }
                      }
                   }
@@ -973,13 +999,19 @@ public class CalibrationEditor extends MMDialog {
          
          JLabel lab = new JLabel();
          lab.setHorizontalAlignment(JLabel.LEFT);
+         lab.setOpaque(true);
+         if (item_.readOnly) {
+            lab.setBackground(Color.LIGHT_GRAY);
+         } else {
+            lab.setBackground(Color.WHITE);
+         }
          
          if (hasFocus) {
             // this cell is the anchor and the table has the focus
          }
          
          Component comp;
-         
+
          if (colIndex == 0) {
             lab.setText((String)value);
             comp = lab;
