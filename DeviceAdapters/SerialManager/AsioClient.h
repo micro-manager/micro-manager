@@ -190,7 +190,8 @@ private:
       } 
       else 
       {
-         pSerialPortAdapter_->LogMessage(("error in ReadComplete: "+boost::lexical_cast<std::string,int>(error.value()) + " " + error.message()).c_str(), false);
+         // this is a normal situtation when closing the port before communication has started
+         //pSerialPortAdapter_->LogMessage(("error in ReadComplete: "+boost::lexical_cast<std::string,int>(error.value()) + " " + error.message()).c_str(), false);
          DoClose(error); 
       }
    } 
@@ -254,7 +255,8 @@ private:
       }
       else 
       {
-         pSerialPortAdapter_->LogMessage("Error: Connection did not succeed", false);
+         // this is a normal condition when shutting down port before communication started
+         //pSerialPortAdapter_->LogMessage("Error: Connection did not succeed", false);
       }
 
       if(active_)
