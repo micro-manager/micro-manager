@@ -33,6 +33,7 @@ const char* g_DeviceNameArduinoInput = "Arduino-Input";
 unsigned g_switchState = 0;
 unsigned g_shutterState = 0;
 std::string g_port;
+MMThreadLock g_lock;
 int g_version;
 const int g_Min_MMVersion = 1;
 const int g_Max_MMVersion = 2;
@@ -144,6 +145,8 @@ int CArduinoHub::Initialize()
 
    // The first second or so after opening the serial port, the Arduino is waiting for firmwareupgrades.  Simply sleep 1 second.
    CDeviceUtils::SleepMs(2000);
+
+   MMThreadGuard myLock(g_lock);
 
    // Check that we have a controller:
    PurgeComPort(g_port.c_str());
@@ -428,6 +431,8 @@ int CArduinoSwitch::Shutdown()
 
 int CArduinoSwitch::WriteToPort(long value)
 {
+   MMThreadGuard myLock(g_lock);
+
    value = 63 & value;
    if (g_invertedLogic)
       value = ~value;
@@ -488,6 +493,8 @@ int CArduinoSwitch::OnSetPattern(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet)
    {
+      MMThreadGuard myLock(g_lock);
+
       std::string tmp;
       pProp->Get(tmp);
       if (tmp == " ")
@@ -608,6 +615,8 @@ int CArduinoSwitch::OnPatternsUsed(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet)
    {
+      MMThreadGuard myLock(g_lock);
+
       long pos;
       pProp->Get(pos);
 
@@ -648,6 +657,8 @@ int CArduinoSwitch::OnSkipTriggers(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet)
    {
+      MMThreadGuard myLock(g_lock);
+
       long prop;
       pProp->Get(prop);
 
@@ -689,6 +700,8 @@ int CArduinoSwitch::OnStartTrigger(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet)
    {
+      MMThreadGuard myLock(g_lock);
+
       std::string prop;
       pProp->Get(prop);
 
@@ -751,6 +764,8 @@ int CArduinoSwitch::OnStartTimedOutput(MM::PropertyBase* pProp, MM::ActionType e
    }
    else if (eAct == MM::AfterSet)
    {
+      MMThreadGuard myLock(g_lock);
+
       std::string prop;
       pProp->Get(prop);
 
@@ -814,6 +829,8 @@ int CArduinoSwitch::OnBlanking(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    else if (eAct == MM::AfterSet)
    {
+      MMThreadGuard myLock(g_lock);
+
       std::string prop;
       pProp->Get(prop);
 
@@ -875,6 +892,8 @@ int CArduinoSwitch::OnBlankingTriggerDirection(MM::PropertyBase* pProp, MM::Acti
    }
    else if (eAct == MM::AfterSet)
    {
+      MMThreadGuard myLock(g_lock);
+
       std::string direction;
       pProp->Get(direction);
 
@@ -930,6 +949,8 @@ int CArduinoSwitch::OnRepeatTimedPattern(MM::PropertyBase* pProp, MM::ActionType
    }
    else if (eAct == MM::AfterSet)
    {
+      MMThreadGuard myLock(g_lock);
+
       long prop;
       pProp->Get(prop);
 
@@ -1056,6 +1077,8 @@ int CArduinoDA::Shutdown()
 
 int CArduinoDA::WriteToPort(unsigned long value)
 {
+   MMThreadGuard myLock(g_lock);
+
    PurgeComPort(g_port.c_str());
 
    unsigned char command[4];
@@ -1117,13 +1140,11 @@ int CArduinoDA::SetGateOpen(bool open)
       gateOpen_ = true;
       gatedVolts_ = volts_;
       return WriteSignal(volts_);
-   } else {
-      gateOpen_ = false;
-      gatedVolts_ = 0;
-      return WriteSignal(0.0);
-   }
+   } 
+   gateOpen_ = false;
+   gatedVolts_ = 0;
+   return WriteSignal(0.0);
 
-   // return DEVICE_OK;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1294,6 +1315,8 @@ int CArduinoShutter::Fire(double /*deltaT*/)
 
 int CArduinoShutter::WriteToPort(long value)
 {
+   MMThreadGuard myLock(g_lock);
+
    value = 63 & value;
    if (g_invertedLogic)
       value = ~value;
@@ -1468,7 +1491,7 @@ bool CArduinoInput::Busy()
 
 int CArduinoInput::GetDigitalInput(long* state)
 {
-   MMThreadGuard myLock(lock_);
+   MMThreadGuard myLock(g_lock);
 
    unsigned char command[1];
    command[0] = 40;
@@ -1526,6 +1549,8 @@ int CArduinoInput::OnAnalogInput(MM::PropertyBase* pProp, MM::ActionType eAct, l
 {
    if (eAct == MM::BeforeGet)
    {
+      MMThreadGuard myLock(g_lock);
+
       unsigned char command[2];
       command[0] = 41;
       command[1] = (unsigned char) channel;
@@ -1555,6 +1580,7 @@ int CArduinoInput::OnAnalogInput(MM::PropertyBase* pProp, MM::ActionType eAct, l
 
 int CArduinoInput::SetPullUp(int pin, int state)
 {
+   MMThreadGuard myLock(g_lock);
 
    const int nrChrs = 3;
    unsigned char command[nrChrs];
