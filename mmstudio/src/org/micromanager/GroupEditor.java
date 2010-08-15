@@ -2,14 +2,14 @@ package org.micromanager;
 
 import java.util.Arrays;
 
-import org.micromanager.utils.PropertyItem;
-import org.micromanager.utils.PropertyTableData;
-//import org.micromanager.utils.*;
 
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.PropertyType;
 import mmcorej.StrVector;
+
+import org.micromanager.utils.PropertyItem;
+import org.micromanager.utils.PropertyTableData;
 import org.micromanager.utils.ReportingUtils;
 import org.micromanager.utils.SortFunctionObjects;
 
@@ -37,12 +37,12 @@ public class GroupEditor extends ConfigDialog {
 		data_ = new PropertyTableData(core_,groupName_,presetName_,2,1, this);
 		initializeData();
 		data_.setColumnNames("Property Name","Use in Group?","Current Property Value");
+      showShowReadonlyCheckBox_ = true;
 		initialize();
-
 	}
 	
-	public void okChosen() {
-		String newName = nameField_.getText();
+   public void okChosen() {
+      String newName = nameField_.getText();
 	
 		if (writeGroup(initName_,newName)) {
 			groupName_ = newName;

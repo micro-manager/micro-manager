@@ -1,5 +1,3 @@
-
-
 ///////////////////////////////////////////////////////////////////////////////
 //FILE:          PresetEditor.java
 //PROJECT:       Micro-Manager
@@ -38,6 +36,7 @@ import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
 import javax.swing.InputMap;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -83,6 +82,8 @@ public class ConfigDialog extends MMDialog {
 
 	private SpringLayout springLayout_;
 	private JTextArea textArea_;
+   private JCheckBox showReadonlyCheckBox_;
+   protected boolean showShowReadonlyCheckBox_ = false;
 	protected JTextField nameField_;
 	private JLabel nameFieldLabel_;
 
@@ -136,7 +137,6 @@ public class ConfigDialog extends MMDialog {
 		nameField_.requestFocus();
 		setFocusable(true);
 		update();
-
 	}
 	
 	
@@ -175,7 +175,6 @@ public class ConfigDialog extends MMDialog {
 	public void initializeData() {
 		data_.setGUI(gui_);
 		data_.setShowUnused(showUnused_);
-
 	}
 
 	protected void initializeWidgets() {
@@ -190,6 +189,25 @@ public class ConfigDialog extends MMDialog {
 		springLayout_.putConstraint(SpringLayout.WEST, textArea_, 5, SpringLayout.WEST, getContentPane());
 		springLayout_.putConstraint(SpringLayout.SOUTH, textArea_, 37, SpringLayout.NORTH, getContentPane());
 		springLayout_.putConstraint(SpringLayout.NORTH, textArea_, 5, SpringLayout.NORTH, getContentPane());
+
+      if (showShowReadonlyCheckBox_) {
+         showReadonlyCheckBox_ = new JCheckBox();
+         showReadonlyCheckBox_.setFont(new Font("Arial", Font.PLAIN, 10));
+         showReadonlyCheckBox_.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+               // show/hide read-only properties
+               data_.setShowReadOnly(showReadonlyCheckBox_.isSelected());
+               data_.update();
+               data_.fireTableStructureChanged();
+             }
+         });
+         showReadonlyCheckBox_.setText("Show read-only properties");
+         getContentPane().add(showReadonlyCheckBox_);
+         springLayout_.putConstraint(SpringLayout.EAST, showReadonlyCheckBox_, 250, SpringLayout.WEST, getContentPane());
+         springLayout_.putConstraint(SpringLayout.WEST, showReadonlyCheckBox_, 5, SpringLayout.WEST, getContentPane());
+         springLayout_.putConstraint(SpringLayout.NORTH, showReadonlyCheckBox_, 45, SpringLayout.NORTH, getContentPane());
+         springLayout_.putConstraint(SpringLayout.SOUTH, showReadonlyCheckBox_, 70, SpringLayout.NORTH, getContentPane());
+      }
 
 		nameField_ = new JTextField();
 		nameField_.setText(initName_);
@@ -264,8 +282,6 @@ public class ConfigDialog extends MMDialog {
 	}
 
 	public void initializePropertyTable() {
-
-
         scrollPane_ = new JScrollPane();
         scrollPane_.setFont(new Font("Arial", Font.PLAIN, 10));
         scrollPane_.setBorder(new BevelBorder(BevelBorder.LOWERED));

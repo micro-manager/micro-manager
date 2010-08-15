@@ -28,6 +28,7 @@ public class PresetEditor extends ConfigDialog {
 		data_ = new PropertyTableData(core_,groupName_,presetName_,1,2, this);
 		initializeData();
 		data_.setColumnNames("Property Name","Preset Value","");
+      data_.setShowReadOnly(true);
 		initialize();
 
 	}

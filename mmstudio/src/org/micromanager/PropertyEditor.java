@@ -281,64 +281,61 @@ public class PropertyEditor extends MMFrame {
         data_.setShowReadOnly(showReadonlyCheckBox_.isSelected());
     }
    
- public class PropertyEditorTableData extends PropertyTableData {
-		public PropertyEditorTableData(CMMCore core, String groupName, String presetName,
-			int PropertyValueColumn, int PropertyUsedColumn, Component parentComponent) {
-		super(core, groupName, presetName, PropertyValueColumn, PropertyUsedColumn, parentComponent);
-		// TODO Auto-generated constructor stub
-	}
+    public class PropertyEditorTableData extends PropertyTableData {
+      public PropertyEditorTableData(CMMCore core, String groupName, String presetName,
+	     	int PropertyValueColumn, int PropertyUsedColumn, Component parentComponent) {
+
+         super(core, groupName, presetName, PropertyValueColumn, PropertyUsedColumn, parentComponent);
+	   }
 	
-	private static final long serialVersionUID = 1L;
+      private static final long serialVersionUID = 1L;
 
-	public void setValueAt(Object value, int row, int col) {
-		PropertyItem item = propListVisible_.get(row);
-		ReportingUtils.logMessage("Setting value " + value + " at row " + row);
-		if (col == PropertyValueColumn_) {
-			setValueInCore(item,value);
-		}
-		refresh();
-		gui_.refreshGUI();
-		fireTableCellUpdated(row, col);
-	}
-	
-	public void update(ShowFlags flags, String groupName, String presetName) {  
-		try {
-			StrVector devices = core_.getLoadedDevices();
-			propList_.clear();
+      public void setValueAt(Object value, int row, int col) {
+         PropertyItem item = propListVisible_.get(row);
+         ReportingUtils.logMessage("Setting value " + value + " at row " + row);
+         if (col == PropertyValueColumn_) {
+            setValueInCore(item,value);
+         }
+         refresh();
+         gui_.refreshGUI();
+         fireTableCellUpdated(row, col);
+      }
+      
+      public void update(ShowFlags flags, String groupName, String presetName) {  
+         try {
+            StrVector devices = core_.getLoadedDevices();
+            propList_.clear();
 
 
-			gui_.suspendLiveMode();
-			for (int i=0; i<devices.size(); i++) { 
-            if (data_.showDevice(flags, devices.get(i))) {
-               StrVector properties = core_.getDevicePropertyNames(devices.get(i));
-               for (int j=0; j<properties.size(); j++){
-                  PropertyItem item = new PropertyItem();
-                  item.readFromCore(core_, devices.get(i), properties.get(j));
+            gui_.suspendLiveMode();
+            for (int i=0; i<devices.size(); i++) { 
+               if (data_.showDevice(flags, devices.get(i))) {
+                  StrVector properties = core_.getDevicePropertyNames(devices.get(i));
+                  for (int j=0; j<properties.size(); j++){
+                     PropertyItem item = new PropertyItem();
+                     item.readFromCore(core_, devices.get(i), properties.get(j));
 
-                  if ((!item.readOnly || showReadOnly_) && !item.preInit) {
-                     propList_.add(item);
+                     if ((!item.readOnly || showReadOnly_) && !item.preInit) {
+                        propList_.add(item);
+                     }
                   }
                }
-				}
-			}
+            }
 
-			updateRowVisibility(flags); 
+            updateRowVisibility(flags); 
 
-			gui_.resumeLiveMode();
-		} catch (Exception e) {
-			handleException(e);
-		}
-		this.fireTableStructureChanged();
+            gui_.resumeLiveMode();
+         } catch (Exception e) {
+            handleException(e);
+         }
+         this.fireTableStructureChanged();
 
-	}
- }
+      }
+   }
 
- 
  
    private void handleException (Exception e) {
 	   ReportingUtils.showError(e);
-      //String errText = "Exception occurred: " + e.getMessage();
-      //JOptionPane.showMessageDialog(this, errText);
    }
    
 }

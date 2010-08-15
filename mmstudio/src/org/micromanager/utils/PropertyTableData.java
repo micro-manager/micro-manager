@@ -32,7 +32,7 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
 	public ShowFlags flags_;
 	public MMStudioMainFrame gui_;
 	public boolean showUnused_;
-	public boolean showReadOnly_;
+	protected boolean showReadOnly_;
 	String[] columnNames_ = new String[3];
 
 

@@ -1443,7 +1443,7 @@ int CArduinoInput::Initialize()
  
    // Digital Input
    CPropertyAction* pAct = new CPropertyAction (this, &CArduinoInput::OnDigitalInput);
-   ret = CreateProperty("DigitalInput", "0", MM::Integer, false, pAct);
+   ret = CreateProperty("DigitalInput", "0", MM::Integer, true, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
