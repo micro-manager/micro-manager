@@ -193,8 +193,7 @@ int CoreCallback::OnPropertyChanged(const MM::Device* device, const char* propNa
             catch (CMMError /* e */) {
                pixSizeUm = 0.0;
             }
-            cout << "Configuration of pixelSize " << (*itpsc).c_str() << " changed to Size: " << pixSizeUm <<std::endl; 
-             OnPixelSizeChanged(pixSizeUm);
+            OnPixelSizeChanged(pixSizeUm);
          }
       }
    }

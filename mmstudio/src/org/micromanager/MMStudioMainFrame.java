@@ -381,13 +381,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       }
 
       public void onConfigGroupChanged(String groupName, String newConfig) {
-         core_.logMessage("Notification for Group: " + groupName + " New config: " +
-               newConfig);
          configPad_.refreshGroup(groupName, newConfig);
       }
 
       public void onPixelSizeChanged(double newPixelSizeUm) {
-         core_.logMessage("Notification for Pixel Size, new config: " + newPixelSizeUm);
          updatePixSizeUm (newPixelSizeUm);
       }
 
