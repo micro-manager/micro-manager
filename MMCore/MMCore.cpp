@@ -673,8 +673,6 @@ void CMMCore::unloadAllDevices() throw (CMMError)
       imageSynchro_.clear();
       
 
-
-
       // clear configurations
       CConfigMap::const_iterator it;
       for (it = configs_.begin(); it != configs_.end(); it++)
@@ -971,9 +969,8 @@ void CMMCore::waitForDevice(MM::Device* pDev) throw (CMMError)
       if (timeout.expired())
       {
          string label = pluginManager_.GetDeviceLabel(*pDev);
-         // it would help to know what the timeout duration is, wouldn't it?
          std::ostrstream mez;
-         mez << "wait() timed out after " << timeoutMs_ << " ms. ";
+         mez << "wait timed out after " << timeoutMs_ << " ms. ";
          logError(label.c_str(), mez.str(), __FILE__, __LINE__);
          throw CMMError(label.c_str(), getCoreErrorText(MMERR_DevicePollingTimeout).c_str(), MMERR_DevicePollingTimeout);
       }

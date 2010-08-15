@@ -35,6 +35,7 @@
 #define ERR_NO_PORT_SET 108
 #define ERR_VERSION_MISMATCH 109
 
+class ArduinoInputMonitorThread;
 
 class CArduinoHub : public CGenericBase<CArduinoHub>  
 {
@@ -192,14 +193,41 @@ public:
    int OnDigitalInput(MM::PropertyBase* pPropt, MM::ActionType eAct);
    int OnAnalogInput(MM::PropertyBase* pProp, MM::ActionType eAct, long channel);
 
+   int GetDigitalInput(long* state);
+   int ReportStateChange(long newState);
+
 private:
    int ReadNBytes(unsigned int n, unsigned char* answer);
    int SetPullUp(int pin, int state);
 
+   MMThreadLock lock_;
+   ArduinoInputMonitorThread* mThread_;
    char pins_[MM::MaxStrLength];
    char pullUp_[MM::MaxStrLength];
    int pin_;
    bool initialized_;
    std::string name_;
 };
+
+class ArduinoInputMonitorThread : public MMDeviceThreadBase
+{
+   public:
+      ArduinoInputMonitorThread(CArduinoInput& aInput, bool debug);
+     ~ArduinoInputMonitorThread();
+      int svc();
+      int open (void*) { return 0;}
+      int close(unsigned long) {return 0;}
+
+      void Start();
+      void Stop() {stop_ = true;}
+
+   private:
+      MM_THREAD_HANDLE thread_;
+      CArduinoInput& aInput_;
+      long state_;
+      bool debug_;
+      bool stop_;
+};
+
+
 #endif //_Arduino_H_

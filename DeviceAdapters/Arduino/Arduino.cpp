@@ -1360,6 +1360,7 @@ int CArduinoShutter::OnOnOff(MM::PropertyBase* pProp, MM::ActionType eAct)
  */
 
 CArduinoInput::CArduinoInput() :
+   mThread_(0),
    pin_(0),
    name_(g_DeviceNameArduinoInput)
 {
@@ -1387,6 +1388,8 @@ CArduinoInput::~CArduinoInput()
 
 int CArduinoInput::Shutdown()
 {
+   if (initialized_)
+      delete(mThread_);
    initialized_ = false;
    return DEVICE_OK;
 }
@@ -1417,7 +1420,7 @@ int CArduinoInput::Initialize()
  
    // Digital Input
    CPropertyAction* pAct = new CPropertyAction (this, &CArduinoInput::OnDigitalInput);
-   ret = CreateProperty("DigitalInput", "0", MM::Integer, true, pAct);
+   ret = CreateProperty("DigitalInput", "0", MM::Integer, false, pAct);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -1445,9 +1448,8 @@ int CArduinoInput::Initialize()
 
    }
 
-   ret = UpdateStatus();
-   if (ret != DEVICE_OK)
-      return ret;
+   mThread_ = new ArduinoInputMonitorThread(*this, true);
+   mThread_->Start();
 
    initialized_ = true;
 
@@ -1464,6 +1466,42 @@ bool CArduinoInput::Busy()
    return false;
 }
 
+int CArduinoInput::GetDigitalInput(long* state)
+{
+   MMThreadGuard myLock(lock_);
+
+   unsigned char command[1];
+   command[0] = 40;
+
+   int ret = WriteToComPort(g_port.c_str(), (const unsigned char*) command, 1);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   unsigned char answer[2];
+   ret = ReadNBytes(2, answer);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if (answer[0] != 40)
+      return ERR_COMMUNICATION;
+
+   if (strcmp("All", pins_) != 0) {
+      answer[1] = answer[1] >> pin_;
+      answer[1] &= answer[1] & 1;
+   }
+   
+   *state = (long) answer[1];
+
+   return DEVICE_OK;
+}
+
+int CArduinoInput::ReportStateChange(long newState)
+{
+   std::ostringstream os;
+   os << newState;
+   return OnPropertyChanged("DigitalInput", os.str().c_str());
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Action handlers
@@ -1473,27 +1511,12 @@ int CArduinoInput::OnDigitalInput(MM::PropertyBase*  pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
-      unsigned char command[1];
-      command[0] = 40;
-
-      int ret = WriteToComPort(g_port.c_str(), (const unsigned char*) command, 1);
+      long state;
+      int ret = GetDigitalInput(&state);
       if (ret != DEVICE_OK)
          return ret;
 
-      unsigned char answer[2];
-      ret = ReadNBytes(2, answer);
-      if (ret != DEVICE_OK)
-         return ret;
-
-      if (answer[0] != 40)
-         return ERR_COMMUNICATION;
-
-      if (strcmp("All", pins_) != 0) {
-         answer[1] = answer[1] >> pin_;
-         answer[1] &= answer[1] & 1;
-      }
-
-      pProp->Set((long)answer[1]);
+      pProp->Set(state);
    }
 
    return DEVICE_OK;
@@ -1570,5 +1593,41 @@ int CArduinoInput::ReadNBytes(unsigned int n, unsigned char* answer)
    }
 
    return DEVICE_OK;
+}
+
+ArduinoInputMonitorThread::ArduinoInputMonitorThread(CArduinoInput& aInput, bool debug) :
+   state_(0),
+   aInput_(aInput),
+   debug_(debug)
+{
+};
+
+ArduinoInputMonitorThread::~ArduinoInputMonitorThread()
+{
+   Stop();
+   wait();
+}
+
+int ArduinoInputMonitorThread::svc() 
+{
+   while (!stop_)
+   {
+      long state;
+      aInput_.GetDigitalInput(&state);
+      if (state != state_) 
+      {
+         aInput_.ReportStateChange(state);
+         state_ = state;
+      }
+      CDeviceUtils::SleepMs(500);
+   }
+   return DEVICE_OK;
+}
+
+
+void ArduinoInputMonitorThread::Start()
+{
+   stop_ = false;
+   activate();
 }
 

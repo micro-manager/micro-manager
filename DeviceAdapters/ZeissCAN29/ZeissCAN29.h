@@ -506,7 +506,6 @@ class ZeissMonitoringThread : public MMDeviceThreadBase
 
       void Start();
       void Stop() {stop_ = true;}
-      //void wait() {MM_THREAD_JOIN(thread_);}
 
    private:
       ZeissDeviceInfo * deviceInfo_;
