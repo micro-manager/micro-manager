@@ -4,6 +4,7 @@
 	Version="9.00"
 	Name="PI"
 	ProjectGUID="{3FCCE846-C82F-437A-A9B9-6ABDA34403AE}"
+	RootNamespace="PI"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="131072"
 	>
@@ -44,6 +45,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
+				AdditionalIncludeDirectories="../../../3rdpartypublic/boost"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;MODULE_EXPORTS"
 				MinimalRebuild="true"
 				ExceptionHandling="2"
@@ -69,6 +71,7 @@
 				Name="VCLinkerTool"
 				OutputFile="$(OutDir)/mmgr_dal_PI.dll"
 				LinkIncremental="2"
+				AdditionalLibraryDirectories="..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/PI.pdb"
 				SubSystem="2"
@@ -126,6 +129,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
+				AdditionalIncludeDirectories="../../../3rdpartypublic/boost"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;MODULE_EXPORTS"
 				MinimalRebuild="true"
 				ExceptionHandling="2"
@@ -151,6 +155,7 @@
 				Name="VCLinkerTool"
 				OutputFile="$(OutDir)/mmgr_dal_PI.dll"
 				LinkIncremental="2"
+				AdditionalLibraryDirectories="..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/PI.pdb"
 				SubSystem="2"
@@ -206,6 +211,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalIncludeDirectories="../../../3rdpartypublic/boost"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;MODULE_EXPORTS"
 				ExceptionHandling="2"
 				RuntimeLibrary="0"
@@ -229,6 +235,7 @@
 				Name="VCLinkerTool"
 				OutputFile="$(OutDir)/mmgr_dal_PI.dll"
 				LinkIncremental="1"
+				AdditionalLibraryDirectories="..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -286,6 +293,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalIncludeDirectories="../../../3rdpartypublic/boost"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;MODULE_EXPORTS"
 				ExceptionHandling="2"
 				RuntimeLibrary="0"
@@ -309,6 +317,7 @@
 				Name="VCLinkerTool"
 				OutputFile="$(OutDir)/mmgr_dal_PI.dll"
 				LinkIncremental="1"
+				AdditionalLibraryDirectories="..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"

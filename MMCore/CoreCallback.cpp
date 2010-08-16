@@ -628,7 +628,11 @@ void CoreCallback::NextPostedError(int& errorCode, char* pMessage, int maxlen, i
          if( 0 < maxlen )
          {
             *pMessage = 0;
+#ifdef _WINDOWS
+            messageLength = min( maxlen, (int) nextError.second.length());
+#else
             messageLength = std::min( maxlen, (int) nextError.second.length());
+#endif
             strncpy(pMessage, nextError.second.c_str(), messageLength);
          }
       }

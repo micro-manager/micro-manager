@@ -4,6 +4,7 @@
 	Version="9.00"
 	Name="ParallelPort"
 	ProjectGUID="{1FCA5DD9-57F4-45A4-9141-8AE392E2AFE8}"
+	RootNamespace="ParallelPort"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="131072"
 	>
@@ -44,6 +45,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
+				AdditionalIncludeDirectories="../../../3rdpartypublic/boost"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				MinimalRebuild="true"
 				ExceptionHandling="2"
@@ -70,7 +72,7 @@
 				AdditionalDependencies="inpout32.lib"
 				OutputFile="$(OutDir)/mmgr_dal_ParallelPort.dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="..\..\..\3rdparty\inpout32\lib"
+				AdditionalLibraryDirectories="..\..\..\3rdparty\inpout32\lib;..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/ParallelPort.pdb"
 				SubSystem="2"
@@ -129,6 +131,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
+				AdditionalIncludeDirectories="../../../3rdpartypublic/boost"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				MinimalRebuild="true"
 				ExceptionHandling="2"
@@ -155,7 +158,7 @@
 				AdditionalDependencies="inpoutx64.lib"
 				OutputFile="$(OutDir)/mmgr_dal_ParallelPort.dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="..\..\..\3rdparty\inpoutx64\lib"
+				AdditionalLibraryDirectories="..\..\..\3rdparty\inpoutx64\lib;..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/ParallelPort.pdb"
 				SubSystem="2"
@@ -212,6 +215,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalIncludeDirectories="../../../3rdpartypublic/boost"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				ExceptionHandling="2"
 				RuntimeLibrary="0"
@@ -236,7 +240,7 @@
 				AdditionalDependencies="inpout32.lib"
 				OutputFile="$(OutDir)/mmgr_dal_ParallelPort.dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\..\3rdparty\inpout32\lib"
+				AdditionalLibraryDirectories="..\..\..\3rdparty\inpout32\lib;..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -295,6 +299,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalIncludeDirectories="../../../3rdpartypublic/boost"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				ExceptionHandling="2"
 				RuntimeLibrary="0"
@@ -319,7 +324,7 @@
 				AdditionalDependencies="inpoutx64.lib"
 				OutputFile="$(OutDir)/mmgr_dal_ParallelPort.dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\..\3rdparty\inpoutx64\lib"
+				AdditionalLibraryDirectories="..\..\..\3rdparty\inpoutx64\lib;..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"

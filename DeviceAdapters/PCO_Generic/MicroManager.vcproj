@@ -75,94 +75,10 @@
 				ShowProgress="0"
 				OutputFile="$(OutDir)/mmgr_dal_PCO_Camera.dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib&quot;;..\..\..\3rdparty\PCO\Windows\pco_generic"
+				AdditionalLibraryDirectories="&quot;..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;;&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib&quot;;..\..\..\3rdparty\PCO\Windows\pco_generic"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/pco_camera.pdb"
 				SubSystem="2"
-				RandomizedBaseAddress="1"
-				DataExecutionPrevention="0"
-				ImportLibrary="$(OutDir)/mmgr_dal_pco_camera.lib"
-				TargetMachine="1"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\bin_$(PlatformName)"
-			/>
-		</Configuration>
-		<Configuration
-			Name="Release|Win32"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
-			ConfigurationType="2"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
-			UseOfMFC="1"
-			CharacterSet="2"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\include&quot;"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS;_LIGHT"
-				ExceptionHandling="2"
-				RuntimeLibrary="0"
-				RuntimeTypeInfo="true"
-				UsePrecompiledHeader="0"
-				WarningLevel="4"
-				Detect64BitPortabilityProblems="false"
-				DebugInformationFormat="3"
-				DisableSpecificWarnings="4290"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLinkerTool"
-				AdditionalDependencies="version.lib  nafxcw.lib ..\..\..\3rdparty\Pco\windows\pco_generic\Kamlib.lib"
-				OutputFile="$(OutDir)/mmgr_dal_PCO_Camera.dll"
-				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib&quot;;..\..\..\3rdparty\PCO\Windows\pco_generic"
-				GenerateDebugInformation="true"
-				SubSystem="2"
-				OptimizeReferences="2"
-				EnableCOMDATFolding="2"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
 				ImportLibrary="$(OutDir)/mmgr_dal_pco_camera.lib"
@@ -221,7 +137,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\include&quot;"
+				AdditionalIncludeDirectories="&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\include&quot;;..\..\..\3rdpartypublic\boost"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS;_LIGHT"
 				MinimalRebuild="true"
 				ExceptionHandling="2"
@@ -249,7 +165,7 @@
 				ShowProgress="0"
 				OutputFile="$(OutDir)/mmgr_dal_PCO_Camera.dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib&quot;;..\..\..\3rdparty\PCO\Windows\pco_generic"
+				AdditionalLibraryDirectories="&quot;..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;;&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib&quot;;..\..\..\3rdparty\PCO\Windows\pco_generic"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/pco_camera.pdb"
 				SubSystem="2"
@@ -257,6 +173,90 @@
 				DataExecutionPrevention="0"
 				ImportLibrary="$(OutDir)/mmgr_dal_pco_camera.lib"
 				TargetMachine="17"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCManifestTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCAppVerifierTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\bin_$(PlatformName)"
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release|Win32"
+			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			ConfigurationType="2"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			UseOfMFC="1"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				AdditionalIncludeDirectories="&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\include&quot;;..\..\..\3rdpartypublic\boost"
+				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS;_LIGHT"
+				ExceptionHandling="2"
+				RuntimeLibrary="0"
+				RuntimeTypeInfo="true"
+				UsePrecompiledHeader="0"
+				WarningLevel="4"
+				Detect64BitPortabilityProblems="false"
+				DebugInformationFormat="3"
+				DisableSpecificWarnings="4290"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLinkerTool"
+				AdditionalDependencies="version.lib  nafxcw.lib ..\..\..\3rdparty\Pco\windows\pco_generic\Kamlib.lib"
+				OutputFile="$(OutDir)/mmgr_dal_PCO_Camera.dll"
+				LinkIncremental="1"
+				AdditionalLibraryDirectories="&quot;..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;;&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib&quot;;..\..\..\3rdparty\PCO\Windows\pco_generic"
+				GenerateDebugInformation="true"
+				SubSystem="2"
+				OptimizeReferences="2"
+				EnableCOMDATFolding="2"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
+				ImportLibrary="$(OutDir)/mmgr_dal_pco_camera.lib"
+				TargetMachine="1"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -309,7 +309,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\include&quot;"
+				AdditionalIncludeDirectories="&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\include&quot;;..\..\..\3rdpartypublic\boost"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS;_LIGHT"
 				ExceptionHandling="2"
 				RuntimeLibrary="0"
@@ -334,7 +334,7 @@
 				AdditionalDependencies="version.lib  nafxcw.lib ..\..\..\3rdparty\Pco\windows\pco_generic\Kamlib.lib"
 				OutputFile="$(OutDir)/mmgr_dal_PCO_Camera.dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib&quot;;..\..\..\3rdparty\PCO\Windows\pco_generic"
+				AdditionalLibraryDirectories="&quot;..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;;&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib&quot;;..\..\..\3rdparty\PCO\Windows\pco_generic"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"

@@ -4,6 +4,7 @@
 	Version="9.00"
 	Name="ASIFW1000"
 	ProjectGUID="{E69C9F0E-2608-4EAD-9AB1-75E8DEF7E053}"
+	RootNamespace="ASIFW1000"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="131072"
 	>
@@ -44,7 +45,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\3rdparty\ACE_wrappers"
+				AdditionalIncludeDirectories="../../../3rdpartypublic/boost"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				MinimalRebuild="true"
 				ExceptionHandling="2"
@@ -70,6 +71,7 @@
 				Name="VCLinkerTool"
 				OutputFile="$(OutDir)/mmgr_dal_ASIFW1000.dll"
 				LinkIncremental="2"
+				AdditionalLibraryDirectories="..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/ASIFW1000.pdb"
 				SubSystem="2"
@@ -128,7 +130,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\3rdparty\ACE_wrappers"
+				AdditionalIncludeDirectories="../../../3rdpartypublic/boost"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				MinimalRebuild="true"
 				ExceptionHandling="2"
@@ -154,6 +156,7 @@
 				Name="VCLinkerTool"
 				OutputFile="$(OutDir)/mmgr_dal_ASIFW1000.dll"
 				LinkIncremental="2"
+				AdditionalLibraryDirectories="..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/ASIFW1000.pdb"
 				SubSystem="2"
@@ -210,6 +213,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalIncludeDirectories="../../../3rdpartypublic/boost"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				ExceptionHandling="2"
 				RuntimeLibrary="0"
@@ -233,6 +237,7 @@
 				Name="VCLinkerTool"
 				OutputFile="$(OutDir)/mmgr_dal_ASIFW1000.dll"
 				LinkIncremental="1"
+				AdditionalLibraryDirectories="..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -291,6 +296,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalIncludeDirectories="../../../3rdpartypublic/boost"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				ExceptionHandling="2"
 				RuntimeLibrary="0"
@@ -314,6 +320,7 @@
 				Name="VCLinkerTool"
 				OutputFile="$(OutDir)/mmgr_dal_ASIFW1000.dll"
 				LinkIncremental="1"
+				AdditionalLibraryDirectories="..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"

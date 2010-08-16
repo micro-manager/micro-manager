@@ -4,6 +4,8 @@
 static HINSTANCE hInstDLL=NULL;
 static int globalindex=0;
 #include "MexExl.h"
+#pragma warning(disable: 4100)  // bunch of nonsense
+#pragma warning(disable: 4054)  // bunch of nonsense
 
 static const wchar_t* szMexDLL[]=
 {

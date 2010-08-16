@@ -45,6 +45,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
+				AdditionalIncludeDirectories="../../../3rdpartypublic/boost"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -69,6 +70,7 @@
 				AdditionalDependencies="sfwlib.lib sfwcore.lib"
 				OutputFile="$(OutDir)/mmgr_dal_ScionCam.dll"
 				LinkIncremental="2"
+				AdditionalLibraryDirectories="../../../3rdparty/RoperScientific/Windows/PvCam/SDK/Libs;..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/ScionCamera.pdb"
 				SubSystem="2"
@@ -127,6 +129,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
+				AdditionalIncludeDirectories="../../../3rdpartypublic/boost"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -151,6 +154,7 @@
 				AdditionalDependencies="sfwlib.lib sfwcore.lib"
 				OutputFile="$(OutDir)/mmgr_dal_ScionCam.dll"
 				LinkIncremental="2"
+				AdditionalLibraryDirectories="../../../3rdparty/RoperScientific/Windows/PvCam/SDK/Libs;..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/ScionCamera.pdb"
 				SubSystem="2"
@@ -207,6 +211,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalIncludeDirectories="../../../3rdpartypublic/boost"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				RuntimeLibrary="0"
 				RuntimeTypeInfo="true"
@@ -229,6 +234,7 @@
 				AdditionalDependencies="sfwlib.lib sfwcore.lib"
 				OutputFile="$(OutDir)/mmgr_dal_ScionCam.dll"
 				LinkIncremental="1"
+				AdditionalLibraryDirectories="../../../3rdparty/RoperScientific/Windows/PvCam/SDK/Libs;..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -287,6 +293,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
+				AdditionalIncludeDirectories="../../../3rdpartypublic/boost"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				RuntimeLibrary="0"
 				RuntimeTypeInfo="true"
@@ -309,6 +316,7 @@
 				AdditionalDependencies="sfwlib.lib sfwcore.lib"
 				OutputFile="$(OutDir)/mmgr_dal_ScionCam.dll"
 				LinkIncremental="1"
+				AdditionalLibraryDirectories="../../../3rdparty/RoperScientific/Windows/PvCam/SDK/Libs;..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
