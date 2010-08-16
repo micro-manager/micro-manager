@@ -516,6 +516,7 @@ int SerialPort::Shutdown()
       MMThreadGuard g(portLock_);
       if( 0 != pPort_)
       {
+         pPort_->ShutDownInProgress(true);
          CDeviceUtils::SleepMs(100);
          pPort_->Close();
       }

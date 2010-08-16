@@ -52,7 +52,8 @@ public:
       : active_(true), 
       io_service_(io_service), 
       serialPortImplementation_(io_service, device),
-      pSerialPortAdapter_(pPort)
+      pSerialPortAdapter_(pPort),
+      shutDownInProgress_(false)
    { 
       do // just a scope for the guard
       {
@@ -160,6 +161,9 @@ public:
       return retval;
    }
 
+   void ShutDownInProgress(const bool v){ shutDownInProgress_ = v;};
+
+
 private: 
    static const int max_read_length = 512; // maximum amount of data to read in one operation 
    void ReadStart(void) 
@@ -190,8 +194,9 @@ private:
       } 
       else 
       {
-         // this is a normal situtation when closing the port before communication has started
-         //pSerialPortAdapter_->LogMessage(("error in ReadComplete: "+boost::lexical_cast<std::string,int>(error.value()) + " " + error.message()).c_str(), false);
+         // this is a normal situtation when closing the port 
+         if( ! shutDownInProgress_)
+            pSerialPortAdapter_->LogMessage(("error in ReadComplete: "+boost::lexical_cast<std::string,int>(error.value()) + " " + error.message()).c_str(), false);
          DoClose(error); 
       }
    } 
@@ -255,14 +260,16 @@ private:
       }
       else 
       {
-         // this is a normal condition when shutting down port before communication started
-         //pSerialPortAdapter_->LogMessage("Error: Connection did not succeed", false);
+         // this is a normal condition when shutting down port 
+         if( ! shutDownInProgress_)
+            pSerialPortAdapter_->LogMessage("Error: Connection did not succeed", false);
       }
 
       if(active_)
          serialPortImplementation_.close(); 
       active_ = false; 
    } 
+
 
 private: 
    bool active_; // remains true while this object is still operating 
@@ -278,6 +285,7 @@ private:
    MMThreadLock writeBufferLock_;
    MMThreadLock serviceLock_;
    //MMThreadLock implementationLock_;
+   bool shutDownInProgress_;
 
 
 }; 
