@@ -1279,7 +1279,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
       configPad_ = new ConfigGroupPad();
 
-      // configPad_.setDisplayStyle(options_.displayBackground, guiColors_);
       configPad_.setFont(new Font("", Font.PLAIN, 10));
       getContentPane().add(configPad_);
       springLayout_.putConstraint(SpringLayout.EAST, configPad_, -4,
@@ -1488,7 +1487,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             posList_ = new PositionList();
             engine_.setPositionList(posList_);
 
-            loadSystemConfiguration();
+            // if an error occurred during config loading, 
+            // do not display more errors than needed
+            if (!loadSystemConfiguration())
+               ReportingUtils.showErrorOn(false);
 
             executeStartupScript();
             loadPlugins();
@@ -1519,6 +1521,9 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                   ReportingUtils.showError(e1);
                }
             }
+            
+            // switch error reporting back on
+            ReportingUtils.showErrorOn(true);
          }
 
         
@@ -3258,24 +3263,12 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       }
    }
 
-   /*
-   private void waitForErrorToPass() {
-   boolean passed = false;
-   while(!passed) {
-   try {
-   JFrame testWin = new JFrame("test");
-   testWin.setVisible(true);
-   passed = true;
-   } catch (ArrayIndexOutOfBoundsException e) {
-   ReportingUtils.logMessage("testWin failed!!!!");
-   }
-   }
-   }
-    */
    /**
     * Loads sytem configuration from the cfg file.
     */
-   private void loadSystemConfiguration() {
+   private boolean loadSystemConfiguration() {
+      boolean result = true;
+
       saveMRUConfigFiles();
 
       final WaitDialog waitDlg = new WaitDialog(
@@ -3287,24 +3280,23 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
       try {
          if (sysConfigFile_.length() > 0) {
-            // remember the selected file name
             GUIUtils.preventDisplayAdapterChangeExceptions();
             core_.waitForSystem();
             core_.loadSystemConfiguration(sysConfigFile_);
             GUIUtils.preventDisplayAdapterChangeExceptions();
-            //waitForErrorToPass();
+            waitDlg.closeDialog();
          }
       } catch (final Exception err) {
-         // handleException(err);
-         // handle long error messages
          GUIUtils.preventDisplayAdapterChangeExceptions();
+         waitDlg.closeDialog();
          ReportingUtils.showError(err);
+         result = false;
       }
-      waitDlg.closeDialog();
       this.setEnabled(true);
       this.initializeGUI();
 
       updateSwitchConfigurationMenu();
+      return result;
    }
 
    private void saveMRUConfigFiles() {

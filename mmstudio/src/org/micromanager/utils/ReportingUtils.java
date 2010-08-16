@@ -1,18 +1,42 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+///////////////////////////////////////////////////////////////////////////////
+//FILE:          ReportingUtils.java
+//PROJECT:       Micro-Manager
+//SUBSYSTEM:     mmstudio
+//-----------------------------------------------------------------------------
+//
+// AUTHOR:       Arthur Edelstein, June 2009
+//
+// COPYRIGHT:    University of California, San Francisco, 2009
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+
 package org.micromanager.utils;
 
 import java.awt.event.ActionEvent;
+
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
+
 import java.util.Calendar;
+
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
+import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
+
 import mmcorej.CMMCore;
 
 /**
@@ -23,6 +47,7 @@ public class ReportingUtils {
 
    private static CMMCore core_ = null;
    private static JFrame owningFrame_;
+   private static boolean show_ = true;
 
    public static void SetContainingFrame(JFrame f) {
       owningFrame_ = f;
@@ -30,6 +55,10 @@ public class ReportingUtils {
 
    public static void setCore(CMMCore core) {
       core_ = core;
+   }
+
+   public static void showErrorOn(boolean show) {
+      show_ = show;
    }
 
    public static void logMessage(String msg) {
@@ -64,18 +93,36 @@ public class ReportingUtils {
 
    public static void showError(Throwable e, String msg) {
       logError(e, msg);
+
+      if (!show_)
+         return;
+
+      String fullMsg;
       if (e != null && e.getMessage() != null) {
-         JOptionPane.showMessageDialog(null, "Error: " + msg + "\n" + e.getMessage());
+         fullMsg = "Error: " + msg + "\n" + e.getMessage();
       } else if (msg.length() > 0) {
-         JOptionPane.showMessageDialog(null, "Error: " + msg);
+         fullMsg =  "Error: " + msg;
       } else if (msg.length() > 0) {
-         JOptionPane.showMessageDialog(null, "Error: " + msg);
+         fullMsg = "Error: " + msg;
       } else if (e != null) {
-         JOptionPane.showMessageDialog(null, "Error: " + e.getStackTrace()[0]);
+         fullMsg = "Error: " + e.getStackTrace()[0];
       } else {
-         JOptionPane.showMessageDialog(null, "Unknown error (please check CoreLog.txt file for more information)");
+         fullMsg = "Unknown error (please check CoreLog.txt file for more information)";
       }
-   }
+
+      int maxNrLines = 30;
+      String test[] = fullMsg.split("\n");
+      if (test.length < maxNrLines) {
+         JOptionPane.showMessageDialog(null, fullMsg, "Micro-Manager Error", JOptionPane.ERROR_MESSAGE);
+      } else {
+         JTextArea area = new JTextArea(fullMsg);
+         area.setRows(maxNrLines);
+         area.setColumns(50);
+         area.setLineWrap(true);
+         JScrollPane pane = new JScrollPane(area);
+         JOptionPane.showMessageDialog(null, pane, "Micro-Manager Error", JOptionPane.ERROR_MESSAGE);
+      }
+}
 
    public static void showError(Throwable e) {
       showError(e, "");
