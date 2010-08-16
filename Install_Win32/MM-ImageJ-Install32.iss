@@ -12,6 +12,7 @@ DefaultDirName=C:/Program Files/Micro-Manager-1.4
 DefaultGroupName=Micro-Manager-1.4
 OutputBaseFilename=MMSetup_
 Compression=lzma
+PrivilegesRequired=admin
 SolidCompression=true
 VersionInfoVersion=1.4
 VersionInfoCompany=(c)University of California San Francisco
@@ -130,7 +131,7 @@ Source: micro-manager\MMDeviceList.txt; DestDir: {app}; Flags: ignoreversion
 
 ; ImageJ files
 Source: micro-manager\ImageJ.exe; DestDir: {app}; Flags: ignoreversion
-;Source: micro-manager\ImageJ.cfg; DestDir: {app}; Flags: onlyifdoesntexist
+Source: micro-manager\ImageJ.cfg; DestDir: {app}; Flags: onlyifdoesntexist;  Permissions: users-modify
 Source: ..\..\3rdpartypublic\classext\ij.jar; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\IJ_Prefs.txt; DestDir: {app}; Flags: onlyifdoesntexist
 Source: micro-manager\macros\*; DestDir: {app}\macros; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -139,6 +140,12 @@ Source: micro-manager\mmplugins\*; DestDir: {app}\mmplugins; Flags: ignoreversio
 Source: micro-manager\mmautofocus\*; DestDir: {app}\mmautofocus; Flags: ignoreversion recursesubdirs createallsubdirs
 
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
+
+[DIRS]
+Name: {app}\macros; Permissions: users-modify
+Name: {app}\plugins; Permissions: users-modify
+Name: {app}\mmplugins; Permissions: users-modify
+Name: {app}\mmautofocus; Permissions: users-modify
 
 [Icons]
 Name: {group}\Micro-Manager-1.4; Filename: {app}\ImageJ.exe; WorkingDir: {app}
