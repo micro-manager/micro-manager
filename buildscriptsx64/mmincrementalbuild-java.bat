@@ -17,11 +17,6 @@ rem remove any installer package with exactly the same name as the current outpu
 del \Projects\micromanager\Install_x64\Output\MMSetup_.exe 
 del \Projects\micromanager\Install_x64\Output\MMSetupx64_%mmversion%_%YYYYMMDD%.exe
 
-ECHO building NativeGUI
-pushd NativeGUI
-call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml buildNativeGUI installNativeGUI
-popd
-
 
 ECHO building mmStudio
 cd \projects\micromanager\mmStudio\src

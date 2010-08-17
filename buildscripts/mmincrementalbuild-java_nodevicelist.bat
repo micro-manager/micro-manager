@@ -15,10 +15,6 @@ popd
 
 ECHO incremental build of Java components...
 
-pushd NativeGUI
-call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml buildNativeGUI installNativeGUI
-popd
-
 cd \projects\micromanager1.3\mmStudio\src
 call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile ../build.xml compileMMStudio buildMMStudio buildMMReader
 cd ..\..

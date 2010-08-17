@@ -76,7 +76,6 @@ make install || exit
 
 # Use lipo to make Universal Binaries
 lipo -create $PPC/libMMCoreJ_wrap.jnilib $I386/libMMCoreJ_wrap.jnilib $X86_64/libMMCoreJ_wrap.jnilib -o $TARGET/libMMCoreJ_wrap.jnilib
-lipo -create $PPC/libNativeGUI.jnilib $I386/libNativeGUI.jnilib $X86_64/libNativeGUI.jnilib -o $TARGET/libNativeGUI.jnilib
 #strip -X -S $TARGET/libMMCoreJ_wrap.jnilib
 cd $PPC
 FILES=libmmgr*
