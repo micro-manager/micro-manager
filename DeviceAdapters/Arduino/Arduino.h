@@ -220,6 +220,8 @@ class ArduinoInputMonitorThread : public MMDeviceThreadBase
 
       void Start();
       void Stop() {stop_ = true;}
+      ArduinoInputMonitorThread & operator=( const ArduinoInputMonitorThread & ) {}
+
 
    private:
       MM_THREAD_HANDLE thread_;
