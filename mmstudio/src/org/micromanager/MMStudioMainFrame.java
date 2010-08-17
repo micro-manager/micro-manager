@@ -135,13 +135,13 @@ import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
 import ij.process.ColorProcessor;
 import java.awt.Cursor;
+import java.awt.FileDialog;
 import java.awt.Graphics;
 import java.awt.image.DirectColorModel;
 import java.util.Map;
 import mmcorej.TaggedImage;
 import org.micromanager.acquisition.AcquisitionInterface;
 import org.micromanager.acquisition.CoreAcquisitionWrapperEngine;
-import org.micromanager.nativegui.NativeGUI;
 import org.micromanager.utils.ReportingUtils;
 
 /*
@@ -2146,17 +2146,14 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
 
    private File runAcquisitionBrowser() {
-         try {
-            String filename = NativeGUI.runMDABrowser(openAcqDirectory_);
-            if (filename.length()>0) {
-               return new File(filename);
-            } else {
-               return null;
-            }
-         } catch (Exception ex) {
-            ReportingUtils.logError(ex);
-            return null;
-         }
+         if (JavaUtils.isMac())
+            System.setProperty("apple.awt.fileDialogForDirectories", "true");
+         FileDialog fd = new FileDialog(this);
+         fd.setVisible(true);
+         if (JavaUtils.isMac())
+            System.setProperty("apple.awt.fileDialogForDirectories", "false");
+         File selectedFile = new File(fd.getDirectory() + "/" + fd.getFile());
+         return selectedFile;
    }
 
    /**

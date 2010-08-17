@@ -26,7 +26,7 @@ if test "$IMAGEJDIR" != "no" ; then
    # Find ij.jar in directory
    #----------------------------------------------------------------
    AC_MSG_CHECKING(for ij.jar)
-   IJJARDIR="$CLASSEXT/ij.jar"
+   IJJARDIR="$CLASSEXT/ij/ij.jar"
    echo "IJJARDDIR="$IJJARDIR
    if test -r "$IJJARDIR" ; then
       IJJARPATH="$IJJARDIR"
@@ -223,6 +223,7 @@ if test -z "$JAVAINCDIR"; then
   esac                                                                       
 fi  
 
+
 JAVAINC=""                                                                   
 for d in $JAVAINCDIR ; do                                                    
   if test -r "$d/jni.h" ; then 
@@ -304,4 +305,4 @@ if test -z "${BUILD_SECRETDEVICEADAPTERS}" ; then
 fi
 
 AC_CONFIG_SUBDIRS(DeviceAdapters Test_Programs)
-AC_OUTPUT(Makefile MMCore/Makefile MMCoreJ_wrap/Makefile NativeGUI/Makefile mmstudio/Makefile plugins/Makefile scripts/Makefile autofocus/Makefile MMDevice/Makefile  MMCorePy_wrap/Makefile)
+AC_OUTPUT(Makefile MMCore/Makefile MMCoreJ_wrap/Makefile mmstudio/Makefile plugins/Makefile scripts/Makefile autofocus/Makefile MMDevice/Makefile  MMCorePy_wrap/Makefile)
