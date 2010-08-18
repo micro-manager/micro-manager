@@ -2146,13 +2146,21 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
 
    private File runAcquisitionBrowser() {
-         if (JavaUtils.isMac())
+         File selectedFile = null;
+         if (JavaUtils.isMac()) {
             System.setProperty("apple.awt.fileDialogForDirectories", "true");
-         FileDialog fd = new FileDialog(this);
-         fd.setVisible(true);
-         if (JavaUtils.isMac())
+            FileDialog fd = new FileDialog(this);
+            fd.setVisible(true);
             System.setProperty("apple.awt.fileDialogForDirectories", "false");
-         File selectedFile = new File(fd.getDirectory() + "/" + fd.getFile());
+            selectedFile = new File(fd.getDirectory() + "/" + fd.getFile());
+         } else {
+            JFileChooser fc = new JFileChooser();
+            fc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+            int returnVal = fc.showOpenDialog(this);
+            if (returnVal == JFileChooser.APPROVE_OPTION) {
+               selectedFile = fc.getSelectedFile();
+            }
+         }
          return selectedFile;
    }
 
