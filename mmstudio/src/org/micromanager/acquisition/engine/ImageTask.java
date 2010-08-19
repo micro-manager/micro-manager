@@ -4,11 +4,12 @@
  */
 package org.micromanager.acquisition.engine;
 
-import com.google.gson.Gson;
+import java.util.HashMap;
+import java.util.Map;
 import mmcorej.CMMCore;
 import org.micromanager.navigation.MultiStagePosition;
 import org.micromanager.navigation.StagePosition;
-import org.micromanager.utils.JavaUtils;
+import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -50,12 +51,12 @@ public class ImageTask implements Runnable {
          try {
             core_.setExposure(imageRequest_.Channel.exposure_);
             imageRequest_.exposure = imageRequest_.Channel.exposure_;
-            String chanGroup = imageRequest_.Channel.name_;
+            String chanGroup = imageRequest_.Channel.config_;
             if (chanGroup.length() == 0) {
                chanGroup = core_.getChannelGroup();
             }
-            core_.setConfig(chanGroup, imageRequest_.Channel.config_);
-            core_.logMessage("channel set");
+            core_.setConfig(chanGroup, imageRequest_.Channel.name_);
+            core_.logMessage("channel set\n");
          } catch (Exception ex) {
             ReportingUtils.logError(ex, "Channel setting failed.");
          }
@@ -110,12 +111,16 @@ public class ImageTask implements Runnable {
          while (!eng_.stopHasBeenRequested() && eng_.lastWakeTime_ > 0) {
             double sleepTime = (eng_.lastWakeTime_ + imageRequest_.WaitTime) - (System.nanoTime() / 1000000);
             if (sleepTime > 0) {
-               JavaUtils.sleep((int) sleepTime);
+               try {
+                  Thread.sleep((int) sleepTime);
+               } catch (InterruptedException ex) {
+                  ReportingUtils.logError(ex);
+               }
             } else {
                break;
             }
          }
-         core_.logMessage("wait finished");
+         core_.logMessage("wait finished\n");
 
          eng_.lastWakeTime_ = (System.nanoTime() / 1000000);
       }
@@ -132,9 +137,8 @@ public class ImageTask implements Runnable {
    }
 
    void acquireImage() {
-      Gson gson = new Gson();
-      String jsonMetadata = gson.toJson(imageRequest_);
-    /*  Map<String, String> md = new HashMap<String, String>();
+
+      Map<String, String> md = new HashMap<String, String>();
       MDUtils.put(md, "SliceIndex", imageRequest_.SliceIndex);
       MDUtils.put(md, "ChannelName", imageRequest_.Channel.name_);
       MDUtils.put(md, "PositionIndex", imageRequest_.PositionIndex);
@@ -143,14 +147,14 @@ public class ImageTask implements Runnable {
       MDUtils.put(md, "ExposureMs", imageRequest_.exposure);
       if (imageRequest_.UsePosition) {
          MDUtils.put(md, "PositionName", imageRequest_.Position.getLabel());
-      }*/
+      }
 
       try {
          if (core_.getAutoShutter() && !core_.getShutterOpen()) {
             core_.setShutterOpen(true);
             core_.logMessage("opened shutter");
          }
-         core_.snapImage(); //Should be: core_.snapImage(jsonMetadata);
+         core_.snapImage(); //Should be: core_.snapImage(md);
          core_.logMessage("snapped image");
 
          if (core_.getAutoShutter() && imageRequest_.CloseShutter) {
