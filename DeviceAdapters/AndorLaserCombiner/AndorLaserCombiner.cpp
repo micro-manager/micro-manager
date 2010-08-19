@@ -136,7 +136,7 @@ public:
 };
 
 
-// this is shared between the ACL and the Piezo stage
+// this is shared between the ALC and the Piezo stage
 static ALCImpl* pImplInstance_s;
 MMThreadLock ImplLock_s;
 
