@@ -22,19 +22,12 @@ public class SequenceGenerator {
 
    public static ArrayList<ImageRequest> generateSequence(SequenceSettings settings, double exposure) {
       ArrayList<ImageRequest> imageRequestList = new ArrayList<ImageRequest>();
-      ImageRequest imageRequest = new ImageRequest();
+
       ImageRequest lastImageRequest = new ImageRequest();
 
       boolean skipImage;
       boolean skipLastImage = true;
-
-      imageRequest.UsePosition = (settings.positions.size() > 0);
-      imageRequest.UseFrame = (settings.numFrames > 0);
-      imageRequest.UseChannel = (settings.channels.size() > 0);
-      imageRequest.UseSlice = (settings.slices.size() > 0);
-
-      imageRequest.exposure = exposure;
-      
+     
       int numPositions = Math.max(1, (int) settings.positions.size());
       int numFrames = Math.max(1, (int) settings.numFrames);
       int numChannels = Math.max(1, (int) settings.channels.size());
@@ -42,6 +35,14 @@ public class SequenceGenerator {
       int numImages = numPositions * numFrames * numChannels * numSlices;
 
       for (int imageIndex = 0; imageIndex < (1 + numImages); ++imageIndex) {
+         ImageRequest imageRequest = new ImageRequest();
+         imageRequest.UsePosition = (settings.positions.size() > 0);
+         imageRequest.UseFrame = (settings.numFrames > 0);
+         imageRequest.UseChannel = (settings.channels.size() > 0);
+         imageRequest.UseSlice = (settings.slices.size() > 0);
+
+         imageRequest.exposure = exposure;
+
          skipImage = false;
          imageRequest.CloseShutter = true;
 
