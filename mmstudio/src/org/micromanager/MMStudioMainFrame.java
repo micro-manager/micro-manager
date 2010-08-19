@@ -3292,6 +3292,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             core_.loadSystemConfiguration(sysConfigFile_);
             GUIUtils.preventDisplayAdapterChangeExceptions();
             waitDlg.closeDialog();
+         } else {
+             waitDlg.closeDialog();
          }
       } catch (final Exception err) {
          GUIUtils.preventDisplayAdapterChangeExceptions();
