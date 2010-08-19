@@ -152,6 +152,7 @@ int CoreCallback::OnPropertyChanged(const MM::Device* device, const char* propNa
 {
    if (core_->externalCallback_) 
    {
+      MMThreadGuard g(*pValueChangeLock_);
       char label[MM::MaxStrLength];
       device->GetLabel(label);
       core_->externalCallback_->onPropertyChanged(label, propName, value);

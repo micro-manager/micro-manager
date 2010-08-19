@@ -44,8 +44,12 @@ using namespace std;
 class CoreCallback : public MM::Core
 {
 public:
-   CoreCallback(CMMCore* c) : core_(c) {assert(core_);}
-   ~CoreCallback() {}
+   CoreCallback(CMMCore* c) : core_(c), pValueChangeLock_(NULL) 
+   {
+      assert(core_);
+      pValueChangeLock_ = new MMThreadLock();
+   }
+   ~CoreCallback() { delete pValueChangeLock_; }
 
    int GetDeviceProperty(const char* deviceName, const char* propName, char* value);
    int SetDeviceProperty(const char* deviceName, const char* propName, const char* value);
@@ -213,6 +217,8 @@ public:
 
 private:
    CMMCore* core_;
+   MMThreadLock* pValueChangeLock_;
+
 };
 
 #endif // _CORECALLBACK_H_
