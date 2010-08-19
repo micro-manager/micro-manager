@@ -76,6 +76,14 @@ public class MDUtils {
       map.put(key, NumberUtils.intToCoreString(value));
    }
 
+   public static void put(Map<String, String> map, String key, String value) {
+      map.put(key, value);
+   }
+
+   public static void put(Map<String, String> map, String key, double value) {
+      map.put(key, NumberUtils.doubleToCoreString(value));
+   }
+
    public static void setImageType(Map<String, String> map, int type) throws Exception {
       switch (type) {
          case ImagePlus.GRAY8:
@@ -170,5 +178,5 @@ public class MDUtils {
    public static boolean isRGB(TaggedImage img) throws Exception {
       return isRGB(img.tags);
    }
-            
+
 }
