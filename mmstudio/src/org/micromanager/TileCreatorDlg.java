@@ -61,6 +61,7 @@ public class TileCreatorDlg extends MMDialog {
    private final JLabel labelTop_ = new JLabel();
    private final JLabel labelRight_ = new JLabel();
    private final JLabel labelBottom_ = new JLabel();
+   private int prefix_ = 0;
 
    /**
     * Create the dialog
@@ -459,6 +460,9 @@ public class TileCreatorDlg extends MMDialog {
       int nrImagesX = (int) Math.floor ( (maxX - minX) / tileSizeXUm ) + 2;
       int nrImagesY = (int) Math.floor ( (maxY - minY) / tileSizeYUm ) + 2;
 
+      // Increment prefix for these positions
+      prefix_ += 1;
+
       // todo handle mirrorX mirrorY
       for (int y=0; y< nrImagesY; y++) {
          for (int x=0; x<nrImagesX; x++) {
@@ -487,7 +491,7 @@ public class TileCreatorDlg extends MMDialog {
             msp.setProperty("OverlapUm", NumberUtils.doubleToCoreString(overlapUm));
             msp.setProperty("OverlapPixels", NumberUtils.intToCoreString(overlapPix));
             // Add to position list
-            positionListDlg_.addPosition(msp, ImageKey.generatePosLabel("Pos", tmpX, y));
+            positionListDlg_.addPosition(msp, ImageKey.generatePosLabel(prefix_ + "-Pos", tmpX, y));
          }
       }
 
