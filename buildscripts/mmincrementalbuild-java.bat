@@ -15,7 +15,7 @@ popd
 
 rem remove any installer package with exactly the same name as the current output
 del \Projects\micromanager\Install\Output\MMSetup_.exe 
-del \Projects\micromanager\Install\Output\MMSetup_%mmversion%_%YYYYMMDD%.exe
+del \Projects\micromanager\Install\Output\MMSetupx86_%mmversion%_%YYYYMMDD%.exe
 
 ECHO incremental build of Java components...
 
