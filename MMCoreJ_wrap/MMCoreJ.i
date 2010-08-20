@@ -26,7 +26,6 @@
 
 %module (directors="1") MMCoreJ
 %feature("director") MMEventCallback;
-%feature("director") MMRunnable::run;
 
 %include std_string.i
 %include std_vector.i
@@ -354,9 +353,6 @@
 		return createTaggedImage(pixels, md);
 	}
 	
-//	public Map<String,String> getAcquisitionMetadataMap() throws java.lang.Exception {
-//		return metadataToMap(getAcquisitionInitialMetadata());
-//	}
 %}
 
 
@@ -399,7 +395,6 @@
 #include "../MMDevice/ImageMetadata.h"
 #include "../MMCore/MMEventCallback.h"
 #include "../MMCore/MMCore.h"
-#include "../MMCore/MMRunnable.h"
 %}
 
 
@@ -463,8 +458,6 @@ namespace std {
     %template(StrVector)    vector<string>;
     %template(pair_ss)      pair<string, string>;
     %template(StrMap)       map<string, string>;
-    %template(MultiAxisPositionVector) vector<MultiAxisPosition>;
-    %template(ChannelVector) vector<Channel>;
 
 
 
@@ -472,10 +465,6 @@ namespace std {
 
 }
 
-%typemap(javaimports) MMRunnable %{
-import java.lang.Runnable;
-%}
-%typemap(javainterfaces) MMRunnable %{Runnable%}
 
 %include "../MMDevice/MMDeviceConstants.h"
 %include "../MMCore/Error.h"
@@ -483,6 +472,5 @@ import java.lang.Runnable;
 %include "../MMCore/MMCore.h"
 %include "../MMDevice/ImageMetadata.h"
 %include "../MMCore/MMEventCallback.h"
-%include "../MMCore/MMRunnable.h"
 
 

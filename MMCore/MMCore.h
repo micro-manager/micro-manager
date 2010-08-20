@@ -70,8 +70,6 @@
 
 #include "../MMDevice/DeviceThreads.h"
 
-#include "MMRunnable.h"
-
 // forward declarations
 class CircularBuffer;
 class Configuration;
@@ -412,10 +410,6 @@ public:
 }  
 
    // >>>> TEST >>>>>>>>>>>>>>>>>>>>>>..
-   //void runAcquisitionEngineTest(AcquisitionSettings acquisitionSettings) throw (CMMError);
-   //void stopAcquisitionEngine() throw (CMMError);
-   //bool acquisitionIsFinished() throw (CMMError);
-   //Metadata getAcquisitionInitialMetadata() throw (CMMError);
 
    /** @name "  "
     */

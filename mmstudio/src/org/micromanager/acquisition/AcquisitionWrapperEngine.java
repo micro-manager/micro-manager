@@ -73,7 +73,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private String cameraConfig_;
    private Preferences prefs_;
    private ArrayList<ChannelSpec> requestedChannels_ = new ArrayList<ChannelSpec>();
-   private Engine eng;
+   private Engine eng = null;
 
 
 
@@ -180,17 +180,14 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 //// State Queries /////////////////////////////////////////////////////
 
    public boolean isAcquisitionRunning() {
-      try {
-         return !core_.acquisitionIsFinished();
-      } catch (Exception ex) {
-         ReportingUtils.logError(ex);
+      if (eng != null)
+         return eng.isFinished();
+      else
          return false;
-      }
    }
 
    public boolean isMultiFieldRunning() {
-      return false;
-      //throw new UnsupportedOperationException("Not supported yet.");
+      throw new UnsupportedOperationException("Not supported yet.");
    }
 
 

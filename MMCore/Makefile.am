@@ -11,8 +11,6 @@ libMMCore_a_SOURCES = MMCore.cpp MMCore.h \
 	IMLogger.h \
 	FastLogger.h FastLogger.cpp \
         Compressor.h \
-	MMAcquisition.h MMAcquisition.cpp \
-	MMImageSaver.h MMImageSaver.cpp \
 	../MMDevice/MMDevice.h ../MMDevice/MMDeviceConstants.h \
 	../MMDevice/ModuleInterface.h
 
