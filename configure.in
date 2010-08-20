@@ -26,7 +26,7 @@ if test "$IMAGEJDIR" != "no" ; then
    # Find ij.jar in directory
    #----------------------------------------------------------------
    AC_MSG_CHECKING(for ij.jar)
-   IJJARDIR="$CLASSEXT/ij/ij.jar"
+   IJJARDIR="$CLASSEXT/ij.jar"
    echo "IJJARDDIR="$IJJARDIR
    if test -r "$IJJARDIR" ; then
       IJJARPATH="$IJJARDIR"
