@@ -373,14 +373,6 @@ public:
    unsigned getSLMBytesPerPixel(const char* deviceLabel) const;
    //@ }
 
-   /** @name Display control
-    *
-    */
-
-   //@ {
-   void WaitForScreenRefresh();
-   //@ }
-
    /** @name Acquisition context API
     * NOTE: experimental feature
     * API notifying core of acquisition context events
