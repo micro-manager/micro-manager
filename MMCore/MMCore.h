@@ -412,10 +412,10 @@ public:
 }  
 
    // >>>> TEST >>>>>>>>>>>>>>>>>>>>>>..
-   void runAcquisitionEngineTest(AcquisitionSettings acquisitionSettings) throw (CMMError);
-   void stopAcquisitionEngine() throw (CMMError);
-   bool acquisitionIsFinished() throw (CMMError);
-   Metadata getAcquisitionInitialMetadata() throw (CMMError);
+   //void runAcquisitionEngineTest(AcquisitionSettings acquisitionSettings) throw (CMMError);
+   //void stopAcquisitionEngine() throw (CMMError);
+   //bool acquisitionIsFinished() throw (CMMError);
+   //Metadata getAcquisitionInitialMetadata() throw (CMMError);
 
    /** @name "  "
     */
