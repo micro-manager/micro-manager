@@ -6,27 +6,22 @@ package org.micromanager.acquisition;
 
 import java.awt.Color;
 import java.util.ArrayList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.Arrays;
 import java.util.prefs.Preferences;
-import mmcorej.AcquisitionSettings;
 import mmcorej.CMMCore;
-import mmcorej.Channel;
-import mmcorej.ChannelVector;
 import mmcorej.Configuration;
 import mmcorej.DoubleVector;
-import mmcorej.MultiAxisPosition;
-import mmcorej.MultiAxisPositionVector;
 import mmcorej.PropertySetting;
 import mmcorej.StrVector;
 import org.micromanager.MMStudioMainFrame;
+import org.micromanager.acquisition.engine.Engine;
+import org.micromanager.acquisition.engine.SequenceSettings;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.DeviceControlGUI;
 import org.micromanager.metadata.MMAcqDataException;
 import org.micromanager.metadata.WellAcquisitionData;
 import org.micromanager.navigation.MultiStagePosition;
 import org.micromanager.navigation.PositionList;
-import org.micromanager.navigation.StagePosition;
 import org.micromanager.utils.AutofocusManager;
 import org.micromanager.utils.ChannelSpec;
 import org.micromanager.utils.ContrastSettings;
@@ -40,7 +35,7 @@ import org.micromanager.utils.SliceMode;
  *
  * @author arthur
  */
-public class CoreAcquisitionWrapperEngine implements AcquisitionEngine {
+public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    private CMMCore core_;
    private MMStudioMainFrame gui_;
@@ -78,6 +73,7 @@ public class CoreAcquisitionWrapperEngine implements AcquisitionEngine {
    private String cameraConfig_;
    private Preferences prefs_;
    private ArrayList<ChannelSpec> requestedChannels_ = new ArrayList<ChannelSpec>();
+   private Engine eng;
 
 
 
@@ -88,85 +84,66 @@ public class CoreAcquisitionWrapperEngine implements AcquisitionEngine {
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
+
+      TaggedImageQueue engineToDisplayQueue = new TaggedImageQueue();
+
+      SequenceSettings acquisitionSettings = generateSequenceSettings();
+      eng = new Engine(core_, engineToDisplayQueue);
+      eng.setupStandardSequence(acquisitionSettings);
+      eng.start();
       
-      AcquisitionSettings acquisitionSettings = generateAcquisitionSettings();
-
-      try {
-         core_.runAcquisitionEngineTest(acquisitionSettings);
-      } catch (Exception ex) {
-         ReportingUtils.showError(ex);
-      }
-
-
-      display_ = new AcquisitionDisplayThread(gui_, core_, acquisitionSettings, channels_, saveFiles_);
+      display_ = new AcquisitionDisplayThread(gui_, core_, engineToDisplayQueue,
+              acquisitionSettings, channels_, saveFiles_);
       display_.start();
    }
 
-   private AcquisitionSettings generateAcquisitionSettings() {
-      AcquisitionSettings acquisitionSettings = new AcquisitionSettings();
+   private SequenceSettings generateSequenceSettings() {
+      SequenceSettings acquisitionSettings = new SequenceSettings();
 
       // Frames
       if (useFrames_) {
-         DoubleVector timeSeries = new DoubleVector();
-         for (int i = 0; i < numFrames_; ++i) {
-            timeSeries.add(interval_);
-         }
-         acquisitionSettings.setTimeSeries(timeSeries);
+         acquisitionSettings.numFrames = numFrames_;
+         acquisitionSettings.intervalMs = interval_;
+      } else {
+         acquisitionSettings.numFrames = 0;
       }
 
       // Slices
+
+      ArrayList<Double> slices = new ArrayList<Double>();
       if (useSlices_) {
-         DoubleVector slices = new DoubleVector();
          for (double z = sliceZBottomUm_; z<= sliceZTopUm_; z+=sliceZStepUm_) {
             slices.add(z);
          }
-         acquisitionSettings.setZStack(slices);
       }
+      acquisitionSettings.slices = slices;
+      
 
       // Channels
-      if (useChannels_) {
-         ChannelVector channelVector = new ChannelVector();
-         for (ChannelSpec guiChan:channels_) {
-            Channel coreChan = new Channel(guiChan.name_, guiChan.config_,
-                    guiChan.exposure_, guiChan.zOffset_,
-                    guiChan.doZStack_, guiChan.skipFactorFrame_);
 
-            channelVector.add(coreChan);
-         }
-         acquisitionSettings.setChannelList(channelVector);
-      }
+      acquisitionSettings.channels = new ArrayList<ChannelSpec>();
+      if (this.useChannels_)
+         acquisitionSettings.channels = channels_;
 
       // Positions
-      StagePosition stagePos;
-      MultiAxisPositionVector corePosVector = new MultiAxisPositionVector();
-      if (useMultiPosition_) {
-         for(MultiStagePosition guiPos:posList_.getPositions()) {
-            MultiAxisPosition corePos = new MultiAxisPosition();
-            corePos.setName(guiPos.getLabel());
-            for(int i=0;i<guiPos.size();++i) {
-               stagePos = guiPos.get(i);
-               if (stagePos.numAxes == 2)
-                  corePos.AddDoubleAxisPosition(stagePos.stageName, stagePos.x, stagePos.y);
-               else if (stagePos.numAxes == 1)
-                  corePos.AddSingleAxisPosition(stagePos.stageName, stagePos.z);
-            }
-            corePosVector.add(corePos);
-         }
-         acquisitionSettings.setPositionList(corePosVector);
-      }
+      acquisitionSettings.positions = new ArrayList<MultiStagePosition>();
+      if (this.useMultiPosition_)
+         acquisitionSettings.positions.addAll(Arrays.asList(posList_.getPositions()));
 
-      acquisitionSettings.setPositionsFirst(positionMode_ == PositionMode.TIME_LAPSE);
-      acquisitionSettings.setChannelsFirst(sliceMode_ == SliceMode.CHANNELS_FIRST);
+      // Other
 
-      acquisitionSettings.setUseAutofocus(useAutoFocus_);
-      acquisitionSettings.setAutofocusSkipFrames(afSkipInterval_);
+      acquisitionSettings.timeFirst = !(positionMode_ == PositionMode.TIME_LAPSE);
+      acquisitionSettings.slicesFirst = !(sliceMode_ == SliceMode.CHANNELS_FIRST);
 
-      acquisitionSettings.setKeepShutterOpenChannels(keepShutterOpenForChannels_);
-      acquisitionSettings.setKeepShutterOpenSlices(keepShutterOpenForStack_);
+      acquisitionSettings.useAutofocus = useAutoFocus_;
+      acquisitionSettings.skipAutofocusCount = afSkipInterval_;
 
-      acquisitionSettings.setSaveImages(saveFiles_);
-      acquisitionSettings.setRoot(rootName_);
-      acquisitionSettings.setPrefix(dirName_);
+      acquisitionSettings.keepShutterOpenChannels = keepShutterOpenForChannels_;
+      acquisitionSettings.keepShutterOpenSlices = keepShutterOpenForStack_;
+
+      acquisitionSettings.save = saveFiles_;
+      acquisitionSettings.root = rootName_;
+      acquisitionSettings.prefix = dirName_;
 
       return acquisitionSettings;
    }
@@ -181,7 +158,7 @@ public class CoreAcquisitionWrapperEngine implements AcquisitionEngine {
 
    public void stop(boolean interrupted) {
       try {
-         core_.stopAcquisitionEngine();
+         eng.stop();
       } catch (Exception ex) {
          ReportingUtils.showError("Acquisition engine stop request failed");
       }

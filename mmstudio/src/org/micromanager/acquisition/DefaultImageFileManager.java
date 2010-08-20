@@ -118,11 +118,11 @@ public class DefaultImageFileManager implements ImageFileManagerInterface {
    private String createFileName(Map<String,String> md) {
       try {
          return "img_"
-                 + String.format("%09d", MDUtils.getFrame(md))
+                 + String.format("%09d", MDUtils.getFrameIndex(md))
                  + "_"
                  + MDUtils.getChannelName(md)
                  + "_"
-                 + String.format("%03d", MDUtils.getSlice(md))
+                 + String.format("%03d", MDUtils.getSliceIndex(md))
                  + ".tif";
       } catch (Exception e) {
          ReportingUtils.logError(e);
@@ -152,7 +152,7 @@ public class DefaultImageFileManager implements ImageFileManagerInterface {
 
    private void writeFrameMetadata(Map<String,String> md, String fileName) {
       try {
-         String title = "FrameKey-" + MDUtils.getFrame(md) + "-" + MDUtils.getChannelName(md) + "-" + MDUtils.getSlice(md);
+         String title = "FrameKey-" + MDUtils.getFrameIndex(md) + "-" + MDUtils.getChannelName(md) + "-" + MDUtils.getSliceIndex(md);
          md.put("Filename", fileName);
          writeMetadata(md, title);
       } catch (Exception ex) {

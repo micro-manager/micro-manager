@@ -29,7 +29,7 @@ public class MDUtils {
    }
 
    public static int getPositionIndex(Map<String,String> map) throws Exception {
-      return getInt(map, "Position");
+      return getInt(map, "PositionIndex");
    }
 
    public static int getWidth(Map<String,String> map) throws Exception {
@@ -40,16 +40,16 @@ public class MDUtils {
       return getInt(map, "Height");
    }
 
-   public static int getSlice(Map<String,String> map) throws Exception {
-      return getInt(map, "Slice");
+   public static int getSliceIndex(Map<String,String> map) throws Exception {
+      return getInt(map, "SliceIndex");
    }
 
    public static int getChannelIndex(Map<String,String> map) throws Exception {
       return getInt(map, "ChannelIndex");
    }
 
-   public static int getFrame(Map<String,String> map) throws Exception {
-      return getInt(map, "Frame");
+   public static int getFrameIndex(Map<String,String> map) throws Exception {
+      return getInt(map, "FrameIndex");
    }
 
    public static String getPositionName(Map<String,String> map) throws Exception {
@@ -57,7 +57,7 @@ public class MDUtils {
    }
 
    public static String getChannelName(Map<String,String> map) throws Exception {
-      return map.get("Channel");
+      return map.get("ChannelName");
    }
 
    public static String getFileName(Map<String, String> map) {

@@ -151,8 +151,8 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
 
    private int getFlatIndex(Map<String,String> md) {
       try {
-         int slice = MDUtils.getSlice(md);
-         int frame = MDUtils.getFrame(md);
+         int slice = MDUtils.getSliceIndex(md);
+         int frame = MDUtils.getFrameIndex(md);
          int channel = MDUtils.getChannelIndex(md);
          if (imagePlus_ == null && slice == 0 && frame == 0 && channel == 0) {
             return 1;

@@ -141,7 +141,7 @@ import java.awt.image.DirectColorModel;
 import java.util.Map;
 import mmcorej.TaggedImage;
 import org.micromanager.acquisition.AcquisitionInterface;
-import org.micromanager.acquisition.CoreAcquisitionWrapperEngine;
+import org.micromanager.acquisition.AcquisitionWrapperEngine;
 import org.micromanager.utils.ReportingUtils;
 
 /*
@@ -1450,7 +1450,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             shutterLabel_ = new String("");
             zStageLabel_ = new String("");
             xyStageLabel_ = new String("");
-            engine_ = new CoreAcquisitionWrapperEngine();
+            engine_ = new AcquisitionWrapperEngine();
 
             // register callback for MMCore notifications, this is a global
             // to avoid garbage collection

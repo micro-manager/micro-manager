@@ -6,10 +6,14 @@ package org.micromanager.acquisition;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
-import mmcorej.AcquisitionSettings;
+import java.util.concurrent.TimeUnit;
 import mmcorej.CMMCore;
+import mmcorej.Configuration;
+import mmcorej.PropertySetting;
 import mmcorej.TaggedImage;
+import org.micromanager.acquisition.engine.SequenceSettings;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.ChannelSpec;
 import org.micromanager.utils.JavaUtils;
@@ -25,28 +29,29 @@ public class AcquisitionDisplayThread extends Thread {
    protected final CMMCore core_;
    protected int imgCount_;
    private final ScriptInterface gui_;
-   AcquisitionSettings acqSettings_;
+   SequenceSettings acqSettings_;
    private boolean diskCached_ = false;
    private ArrayList<String> acqNames_ = new ArrayList<String>();
+   private TaggedImageQueue imageProducingQueue_;
 
-   AcquisitionDisplayThread(ScriptInterface gui, CMMCore core, AcquisitionSettings acqSettings, ArrayList<ChannelSpec> channels, boolean diskCached) {
+   AcquisitionDisplayThread(ScriptInterface gui, CMMCore core,
+           TaggedImageQueue imageProducingQueue, SequenceSettings acqSettings,
+           ArrayList<ChannelSpec> channels, boolean diskCached) {
       gui_ = gui;
       core_ = core;
       acqSettings_ = acqSettings;
       diskCached_ = diskCached;
+      imageProducingQueue_ = imageProducingQueue;
 
-
-      int nPositions = Math.max(1, (int) acqSettings.getPositionList().size());
-      int nTimes = Math.max(1, (int) acqSettings.getTimeSeries().size());
-      int nChannels = Math.max(1, (int) acqSettings.getChannelList().size());
-      int nSlices = Math.max(1, (int) acqSettings.getZStack().size());
-      boolean usingChannels = acqSettings.getChannelList().size() > 0;
-
-
+      int nPositions = Math.max(1, (int) acqSettings.positions.size());
+      int nTimes = Math.max(1, (int) acqSettings.numFrames);
+      int nChannels = Math.max(1, (int) acqSettings.channels.size());
+      int nSlices = Math.max(1, (int) acqSettings.slices.size());
+      boolean usingChannels = acqSettings.channels.size() > 0;
 
       String acqPath;
       try {
-         acqPath = createAcqPath(acqSettings.getRoot(), acqSettings.getPrefix());
+         acqPath = createAcqPath(acqSettings.root, acqSettings.prefix);
 
          String posName;
          for (int posIndex = 0; posIndex < nPositions; ++posIndex) {
@@ -61,8 +66,20 @@ public class AcquisitionDisplayThread extends Thread {
                   gui_.setChannelName(acqName, i, channels.get(i).config_);
                }
             }
-            
-            gui_.setAcquisitionSystemState(acqName, core_.getAcquisitionMetadataMap());
+
+            Configuration configuration = core_.getSystemState();
+            Map<String, String> systemMetadata = new HashMap<String, String>();
+            for (long i = 0; i < configuration.size(); ++i) {
+               try {
+                  PropertySetting setting = configuration.getSetting(i);
+                  systemMetadata.put(setting.getDeviceLabel() + "-"
+                          + setting.getPropertyName(), setting.getPropertyValue());
+               } catch (Exception ex) {
+                  ReportingUtils.logError(ex);
+               }
+            }
+
+            gui_.setAcquisitionSystemState(acqName, systemMetadata);
             gui_.initializeAcquisition(acqName, (int) core_.getImageWidth(), (int) core_.getImageHeight(), (int) core_.getBytesPerPixel());
          }
       } catch (Exception ex) {
@@ -72,42 +89,28 @@ public class AcquisitionDisplayThread extends Thread {
 
    private String getPosName(int posIndex) {
       String posName;
-      if (acqSettings_.getPositionList().isEmpty()) {
+      if (acqSettings_.positions.isEmpty()) {
          posName = "";
       } else {
-         posName = acqSettings_.getPositionList().get(posIndex).getName();
+         posName = acqSettings_.positions.get(posIndex).getLabel();
       }
       return posName;
    }
 
    public void run() {
       long t1 = System.currentTimeMillis();
-      Object img;
-      try {
-         do {
-            while (core_.getRemainingImageCount() > 0) {
-               ++imgCount_;
-               try {
-                  TaggedImage taggedImg;
-                  if (true /*! diskCached_*/) {
-                     taggedImg = core_.popNextTaggedImage();
-                  } else {
-                     taggedImg = core_.getLastTaggedImage();
-                     Thread.sleep(10);
-                  }
-                  //TaggedImage taggedImg = new TaggedImage(img, mdCopy);
 
-                  displayImage(taggedImg);
-                  //    ReportingUtils.logMessage("time=" + mdCopy.getFrame() + ", position=" +
-                  //            mdCopy.getPositionIndex() + ", channel=" + mdCopy.getChannelIndex() +
-                  //            ", slice=" + mdCopy.getSliceIndex()
-                  //            + ", remaining images =" + core_.getRemainingImageCount());
-               } catch (Exception ex) {
-                  ReportingUtils.logError(ex);
+
+      try {
+         while (true) {
+            TaggedImage image = imageProducingQueue_.poll(1, TimeUnit.SECONDS);
+            if (image != null) {
+               displayImage(image);
+               if (TaggedImageQueue.isPoison(image)) {
+                  break;
                }
             }
-            Thread.sleep(30);
-         } while (!core_.acquisitionIsFinished() || core_.getRemainingImageCount() > 0);
+         }
       } catch (Exception ex2) {
          ReportingUtils.logError(ex2);
       }
@@ -128,7 +131,7 @@ public class AcquisitionDisplayThread extends Thread {
 
    private void displayImage(TaggedImage taggedImg) {
 
-      Map<String,String> m = taggedImg.tags;
+      Map<String, String> m = taggedImg.tags;
       try {
          int posIndex = MDUtils.getPositionIndex(m);
          gui_.addImage(acqNames_.get(posIndex), taggedImg);

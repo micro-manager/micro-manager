@@ -7,8 +7,10 @@ package org.micromanager.acquisition.engine;
 import java.util.HashMap;
 import java.util.Map;
 import mmcorej.CMMCore;
+import mmcorej.TaggedImage;
 import org.micromanager.navigation.MultiStagePosition;
 import org.micromanager.navigation.StagePosition;
+import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;
 
@@ -26,6 +28,10 @@ public class ImageTask implements Runnable {
       eng_ = eng;
       core_ = eng.core_;
       imageRequest_ = imageRequest;
+   }
+
+   private void log(String msg) {
+      ReportingUtils.logMessage("ImageTask: " + msg);
    }
 
    public void run() {
@@ -51,12 +57,12 @@ public class ImageTask implements Runnable {
          try {
             core_.setExposure(imageRequest_.Channel.exposure_);
             imageRequest_.exposure = imageRequest_.Channel.exposure_;
-            String chanGroup = imageRequest_.Channel.config_;
+            String chanGroup = imageRequest_.Channel.name_;
             if (chanGroup.length() == 0) {
                chanGroup = core_.getChannelGroup();
             }
-            core_.setConfig(chanGroup, imageRequest_.Channel.name_);
-            core_.logMessage("channel set\n");
+            core_.setConfig(chanGroup, imageRequest_.Channel.config_);
+            log("channel set");
          } catch (Exception ex) {
             ReportingUtils.logError(ex, "Channel setting failed.");
          }
@@ -97,7 +103,7 @@ public class ImageTask implements Runnable {
                } else if (sp.numAxes == 2) {
                   core_.setXYPosition(sp.stageName, sp.x, sp.y);
                }
-               core_.logMessage("position set\n");
+               log("position set\n");
             }
          }
          updateSlice(zPosition);
@@ -111,16 +117,12 @@ public class ImageTask implements Runnable {
          while (!eng_.stopHasBeenRequested() && eng_.lastWakeTime_ > 0) {
             double sleepTime = (eng_.lastWakeTime_ + imageRequest_.WaitTime) - (System.nanoTime() / 1000000);
             if (sleepTime > 0) {
-               try {
-                  Thread.sleep((int) sleepTime);
-               } catch (InterruptedException ex) {
-                  ReportingUtils.logError(ex);
-               }
+               JavaUtils.sleep((int) sleepTime);
             } else {
                break;
             }
          }
-         core_.logMessage("wait finished\n");
+         log("wait finished");
 
          eng_.lastWakeTime_ = (System.nanoTime() / 1000000);
       }
@@ -137,31 +139,38 @@ public class ImageTask implements Runnable {
    }
 
    void acquireImage() {
-
+      //Gson gson = new Gson();
+      //String jsonMetadata = gson.toJson(imageRequest_);
       Map<String, String> md = new HashMap<String, String>();
       MDUtils.put(md, "SliceIndex", imageRequest_.SliceIndex);
-      MDUtils.put(md, "ChannelName", imageRequest_.Channel.name_);
+      if (imageRequest_.UseChannel)
+         MDUtils.put(md, "ChannelName", imageRequest_.Channel.config_);
       MDUtils.put(md, "PositionIndex", imageRequest_.PositionIndex);
       MDUtils.put(md, "ChannelIndex", imageRequest_.ChannelIndex);
-      MDUtils.put(md, "Frame", imageRequest_.FrameIndex);
+      MDUtils.put(md, "FrameIndex", imageRequest_.FrameIndex);
       MDUtils.put(md, "ExposureMs", imageRequest_.exposure);
       if (imageRequest_.UsePosition) {
          MDUtils.put(md, "PositionName", imageRequest_.Position.getLabel());
       }
+      MDUtils.put(md, "PixelType", "GRAY8");
 
       try {
-         if (core_.getAutoShutter() && !core_.getShutterOpen()) {
+         if (eng_.autoShutterSelected_ && !core_.getShutterOpen()) {
             core_.setShutterOpen(true);
-            core_.logMessage("opened shutter");
+            log("opened shutter");
          }
-         core_.snapImage(); //Should be: core_.snapImage(md);
-         core_.logMessage("snapped image");
+         core_.snapImage(); //Should be: core_.snapImage(jsonMetadata);
+         log("snapped image");
 
-         if (core_.getAutoShutter() && imageRequest_.CloseShutter) {
+         if (eng_.autoShutterSelected_ && imageRequest_.CloseShutter) {
             core_.setShutterOpen(false);
-            core_.logMessage("closed shutter");
+            log("closed shutter");
          }
 
+         Object pixels = core_.getImage();
+         TaggedImage taggedImage = new TaggedImage(pixels, md);
+         eng_.imageReceivingQueue_.add(taggedImage);
+         
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }

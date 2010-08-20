@@ -26,4 +26,7 @@ public class SequenceSettings {
    public boolean keepShutterOpenChannels;
    public boolean useAutofocus;
    public int skipAutofocusCount;
+   public boolean save;
+   public String root;
+   public String prefix;
 }
