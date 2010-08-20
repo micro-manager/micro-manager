@@ -93,79 +93,6 @@
 			/>
 		</Configuration>
 		<Configuration
-			Name="Debug|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
-			ConfigurationType="4"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
-			CharacterSet="0"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-				TargetEnvironment="3"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				AdditionalOptions="/D &quot;_CRT_SECURE_NO_WARNINGS&quot;"
-				Optimization="0"
-				AdditionalIncludeDirectories="../../3rdpartypublic/libtiff/libtiff;../../3rdpartypublic/boost;../../3rdpartypublic\boost\boost;&quot;..\..\3rdparty\Microsoft\VisualC++\include&quot;;../../3rdpartypublic/zlib"
-				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;_WINDOWS"
-				MinimalRebuild="true"
-				ExceptionHandling="2"
-				BasicRuntimeChecks="3"
-				RuntimeLibrary="3"
-				RuntimeTypeInfo="true"
-				UsePrecompiledHeader="0"
-				WarningLevel="4"
-				Detect64BitPortabilityProblems="false"
-				DebugInformationFormat="3"
-				DisableSpecificWarnings="4290"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLibrarianTool"
-				AdditionalDependencies="zlib.lib"
-				OutputFile="$(OutDir)/MMCore.lib"
-				AdditionalLibraryDirectories="..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib;..\..\3rdpartypublic\libtiff\libtiff;..\..\3rdpartypublic\zlib\bin_$(PlatformName)"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\lib_$(PlatformName)&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; ..\lib_$(PlatformName)\$(TargetName)d.lib&#x0D;&#x0A;"
-			/>
-		</Configuration>
-		<Configuration
 			Name="Release|Win32"
 			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
@@ -188,76 +115,6 @@
 			/>
 			<Tool
 				Name="VCMIDLTool"
-			/>
-			<Tool
-				Name="VCCLCompilerTool"
-				AdditionalOptions="/D &quot;_CRT_SECURE_NO_WARNINGS&quot;"
-				AdditionalIncludeDirectories="../../3rdpartypublic/libtiff/libtiff;../../3rdpartypublic/boost;../../3rdpartypublic\boost\boost;&quot;..\..\3rdparty\Microsoft\VisualC++\include&quot;;../../3rdpartypublic/zlib"
-				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;_WINDOWS"
-				ExceptionHandling="2"
-				RuntimeLibrary="2"
-				RuntimeTypeInfo="true"
-				UsePrecompiledHeader="0"
-				WarningLevel="4"
-				Detect64BitPortabilityProblems="false"
-				DebugInformationFormat="3"
-				DisableSpecificWarnings="4290"
-			/>
-			<Tool
-				Name="VCManagedResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCResourceCompilerTool"
-			/>
-			<Tool
-				Name="VCPreLinkEventTool"
-			/>
-			<Tool
-				Name="VCLibrarianTool"
-				AdditionalDependencies="zlib.lib"
-				OutputFile="$(OutDir)/MMCore.lib"
-				AdditionalLibraryDirectories="..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib;..\..\3rdpartypublic\libtiff\libtiff;..\..\3rdpartypublic\zlib\bin_$(PlatformName)"
-			/>
-			<Tool
-				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCXDCMakeTool"
-			/>
-			<Tool
-				Name="VCBscMakeTool"
-			/>
-			<Tool
-				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\lib_$(PlatformName)&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; ..\lib_$(PlatformName)\$(TargetName)r.lib&#x0D;&#x0A;"
-			/>
-		</Configuration>
-		<Configuration
-			Name="Release|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
-			ConfigurationType="4"
-			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
-			CharacterSet="2"
-			>
-			<Tool
-				Name="VCPreBuildEventTool"
-			/>
-			<Tool
-				Name="VCCustomBuildTool"
-			/>
-			<Tool
-				Name="VCXMLDataGeneratorTool"
-			/>
-			<Tool
-				Name="VCWebServiceProxyGeneratorTool"
-			/>
-			<Tool
-				Name="VCMIDLTool"
-				TargetEnvironment="3"
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
@@ -368,6 +225,149 @@
 			/>
 		</Configuration>
 		<Configuration
+			Name="Debug|x64"
+			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			ConfigurationType="4"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			CharacterSet="0"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				TargetEnvironment="3"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				AdditionalOptions="/D &quot;_CRT_SECURE_NO_WARNINGS&quot;"
+				Optimization="0"
+				AdditionalIncludeDirectories="../../3rdpartypublic/libtiff/libtiff;../../3rdpartypublic/boost;../../3rdpartypublic\boost\boost;&quot;..\..\3rdparty\Microsoft\VisualC++\include&quot;;../../3rdpartypublic/zlib"
+				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;_WINDOWS"
+				MinimalRebuild="true"
+				ExceptionHandling="2"
+				BasicRuntimeChecks="3"
+				RuntimeLibrary="3"
+				RuntimeTypeInfo="true"
+				UsePrecompiledHeader="0"
+				WarningLevel="4"
+				Detect64BitPortabilityProblems="false"
+				DebugInformationFormat="3"
+				DisableSpecificWarnings="4290"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLibrarianTool"
+				AdditionalDependencies="zlib.lib"
+				OutputFile="$(OutDir)/MMCore.lib"
+				AdditionalLibraryDirectories="..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib;..\..\3rdpartypublic\libtiff\libtiff;..\..\3rdpartypublic\zlib\bin_$(PlatformName)"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\lib_$(PlatformName)&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; ..\lib_$(PlatformName)\$(TargetName)d.lib&#x0D;&#x0A;"
+			/>
+		</Configuration>
+		<Configuration
+			Name="Release|x64"
+			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			ConfigurationType="4"
+			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
+			CharacterSet="2"
+			>
+			<Tool
+				Name="VCPreBuildEventTool"
+			/>
+			<Tool
+				Name="VCCustomBuildTool"
+			/>
+			<Tool
+				Name="VCXMLDataGeneratorTool"
+			/>
+			<Tool
+				Name="VCWebServiceProxyGeneratorTool"
+			/>
+			<Tool
+				Name="VCMIDLTool"
+				TargetEnvironment="3"
+			/>
+			<Tool
+				Name="VCCLCompilerTool"
+				AdditionalOptions="/D &quot;_CRT_SECURE_NO_WARNINGS&quot;"
+				AdditionalIncludeDirectories="../../3rdpartypublic/libtiff/libtiff;../../3rdpartypublic/boost;../../3rdpartypublic\boost\boost;&quot;..\..\3rdparty\Microsoft\VisualC++\include&quot;;../../3rdpartypublic/zlib"
+				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;_WINDOWS"
+				ExceptionHandling="2"
+				RuntimeLibrary="2"
+				RuntimeTypeInfo="true"
+				UsePrecompiledHeader="0"
+				WarningLevel="4"
+				Detect64BitPortabilityProblems="false"
+				DebugInformationFormat="3"
+				DisableSpecificWarnings="4290"
+			/>
+			<Tool
+				Name="VCManagedResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCResourceCompilerTool"
+			/>
+			<Tool
+				Name="VCPreLinkEventTool"
+			/>
+			<Tool
+				Name="VCLibrarianTool"
+				AdditionalDependencies="zlib.lib"
+				OutputFile="$(OutDir)/MMCore.lib"
+				AdditionalLibraryDirectories="..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib;..\..\3rdpartypublic\libtiff\libtiff;..\..\3rdpartypublic\zlib\bin_$(PlatformName)"
+			/>
+			<Tool
+				Name="VCALinkTool"
+			/>
+			<Tool
+				Name="VCXDCMakeTool"
+			/>
+			<Tool
+				Name="VCBscMakeTool"
+			/>
+			<Tool
+				Name="VCFxCopTool"
+			/>
+			<Tool
+				Name="VCPostBuildEventTool"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\lib_$(PlatformName)&#x0D;&#x0A;copy &quot;$(TargetPath)&quot; ..\lib_$(PlatformName)\$(TargetName)r.lib&#x0D;&#x0A;"
+			/>
+		</Configuration>
+		<Configuration
 			Name="Quick|x64"
 			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
@@ -468,15 +468,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\MMAcquisition.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\MMCore.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\MMImageSaver.cpp"
 				>
 			</File>
 			<File
@@ -542,10 +534,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\MMAcquisition.h"
-				>
-			</File>
-			<File
 				RelativePath=".\MMCore.h"
 				>
 			</File>
@@ -555,10 +543,6 @@
 			</File>
 			<File
 				RelativePath=".\MMEventCallback.h"
-				>
-			</File>
-			<File
-				RelativePath=".\MMImageSaver.h"
 				>
 			</File>
 			<File
