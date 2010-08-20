@@ -181,7 +181,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    public boolean isAcquisitionRunning() {
       if (eng != null)
-         return eng.isFinished();
+         return eng.isRunning();
       else
          return false;
    }

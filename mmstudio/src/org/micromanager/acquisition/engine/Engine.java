@@ -23,7 +23,7 @@ public class Engine {
    public double lastWakeTime_;
    ArrayList<Runnable> taskSequence_;
    private boolean stopRequested_ = false;
-   private boolean isFinished_ = false;
+   private boolean isRunning_ = false;
    private Lock pauseLock = new ReentrantLock();
    public boolean autoShutterSelected_;
    public TaggedImageQueue imageReceivingQueue_;
@@ -43,7 +43,7 @@ public class Engine {
    }
 
    public synchronized void start() {
-      setFinished(false);
+      setRunning(true);
 
       new Thread() {
          @Override
@@ -59,10 +59,12 @@ public class Engine {
                   } finally {
                      pauseLock.unlock();
                   }
+               } else {
+                  break;
                }
             }
             core_.setAutoShutter(autoShutterSelected_);
-            Engine.this.isFinished_ = true;
+            setRunning(false);
             try {
                imageReceivingQueue_.put(TaggedImageQueue.POISON);
             } catch (InterruptedException ex) {
@@ -88,11 +90,11 @@ public class Engine {
       return stopRequested_;
    }
 
-   public synchronized boolean isFinished() {
-      return isFinished_;
+   public synchronized boolean isRunning() {
+      return isRunning_;
    }
 
-   private synchronized void setFinished(boolean state) {
-      isFinished_ = state;
+   private synchronized void setRunning(boolean state) {
+      isRunning_ = state;
    }
 }
