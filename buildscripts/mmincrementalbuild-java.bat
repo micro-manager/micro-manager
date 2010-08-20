@@ -14,7 +14,9 @@ sed -i "s/\"1\.4.*/\"%mmversion%\";/"  MMStudioMainFrame.java
 popd
 
 rem remove any installer package with exactly the same name as the current output
+echo trying to delete \Projects\micromanager\Install\Output\MMSetup_.exe 
 del \Projects\micromanager\Install\Output\MMSetup_.exe 
+echo trying to delete \Projects\micromanager\Install\Output\MMSetupx86_%mmversion%_%YYYYMMDD%.exe
 del \Projects\micromanager\Install\Output\MMSetupx86_%mmversion%_%YYYYMMDD%.exe
 
 ECHO incremental build of Java components...
