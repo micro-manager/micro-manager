@@ -153,6 +153,8 @@ public class ImageTask implements Runnable {
          MDUtils.put(md, "PositionName", imageRequest_.Position.getLabel());
       }
       MDUtils.put(md, "PixelType", "GRAY8");
+      MDUtils.put(md, "Width", core_.getImageWidth());
+      MDUtils.put(md, "Height", core_.getImageHeight());
 
       try {
          if (eng_.autoShutterSelected_ && !core_.getShutterOpen()) {
