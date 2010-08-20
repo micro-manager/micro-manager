@@ -354,9 +354,9 @@
 		return createTaggedImage(pixels, md);
 	}
 	
-	public Map<String,String> getAcquisitionMetadataMap() throws java.lang.Exception {
+//	public Map<String,String> getAcquisitionMetadataMap() throws java.lang.Exception {
 //		return metadataToMap(getAcquisitionInitialMetadata());
-	}
+//	}
 %}
 
 
