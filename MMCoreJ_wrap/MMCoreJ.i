@@ -355,7 +355,7 @@
 	}
 	
 	public Map<String,String> getAcquisitionMetadataMap() throws java.lang.Exception {
-		return metadataToMap(getAcquisitionInitialMetadata());
+//		return metadataToMap(getAcquisitionInitialMetadata());
 	}
 %}
 
