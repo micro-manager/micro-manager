@@ -9,7 +9,7 @@ import org.micromanager.utils.MMScriptException;
 
 
 public class RecallPlugin implements MMPlugin {
-   public static String menuName = "Live Recall";
+   public static String menuName = "Live Replay";
    private CMMCore core_;
    private MMStudioMainFrame gui_;
 
@@ -24,7 +24,7 @@ public class RecallPlugin implements MMPlugin {
 
    public void show() {
       try {
-         String ig = "Recall";
+         String ig = "Live Replay";
          if (gui_.acquisitionExists(ig))
             gui_.closeAcquisition(ig);
 
