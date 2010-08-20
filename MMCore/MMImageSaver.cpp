@@ -42,7 +42,7 @@ void MMImageSaver::Run()
          WriteNextImage(root_+"/img");
       }
       core_->sleep(30);
-   } while (!core_->acquisitionIsFinished() || core_->getRemainingImageCount() > 0);
+   } while (/*!core_->acquisitionIsFinished() || */core_->getRemainingImageCount() > 0);
 
 
    metadataStream_ << endl << "}" << endl;
