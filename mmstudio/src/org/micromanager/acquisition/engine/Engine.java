@@ -7,8 +7,6 @@ package org.micromanager.acquisition.engine;
 import java.util.ArrayList;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import mmcorej.CMMCore;
 import org.micromanager.acquisition.TaggedImageQueue;
 import org.micromanager.utils.ReportingUtils;

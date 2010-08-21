@@ -125,7 +125,6 @@ public class ActiveObject implements InvocationHandler {
    }
 
    private class Invokable implements Callable<Object> {
-
       public Method method;
       public Object[] args;
 
