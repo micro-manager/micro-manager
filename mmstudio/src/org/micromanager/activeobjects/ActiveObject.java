@@ -38,9 +38,7 @@ public class ActiveObject implements InvocationHandler {
       Class objClass = obj.getClass();
       Class[] interfaces = objClass.getInterfaces();
       if (interfaces.length == 0) {
-         interfaces = new Class[]{objClass}; //,
-         //   ActiveObject.Stoppable.class,
-         //   ActiveObject.Pausable.class};
+         interfaces = new Class[]{objClass};
       }
       return Proxy.newProxyInstance(
               objClass.getClassLoader(),
