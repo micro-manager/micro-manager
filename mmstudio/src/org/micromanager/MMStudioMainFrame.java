@@ -3962,6 +3962,27 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       return result;
    }
 
+
+   public void setStagePosition(double z) throws MMScriptException {
+      try {
+         core_.setPosition(core_.getFocusDevice(),z);
+         core_.waitForDevice(core_.getFocusDevice());
+      } catch (Exception e) {
+         throw new MMScriptException(e.getMessage());
+      }
+   }
+
+   public void setRelativeStagePosition(double z) throws MMScriptException {
+      try {
+         cb_.onStagePositionChangedRelative(core_.getFocusDevice(), z);
+         core_.setRelativePosition(core_.getFocusDevice(), z);
+         core_.waitForDevice(core_.getFocusDevice());
+      } catch (Exception e) {
+         throw new MMScriptException(e.getMessage());
+      }
+   }
+
+
    public void setXYStagePosition(double x, double y) throws MMScriptException {
       try {
          core_.setXYPosition(core_.getXYStageDevice(), x, y);
@@ -3969,7 +3990,16 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       } catch (Exception e) {
          throw new MMScriptException(e.getMessage());
       }
+   }
 
+      public void setRelativeXYStagePosition(double x, double y) throws MMScriptException {
+      try {
+         cb_.onXYStagePositionChangedRelative(core_.getXYStageDevice(), x, y);
+         core_.setRelativeXYPosition(core_.getXYStageDevice(), x, y);
+         core_.waitForDevice(core_.getXYStageDevice());
+      } catch (Exception e) {
+         throw new MMScriptException(e.getMessage());
+      }
    }
 
    public Point2D.Double getXYStagePosition() throws MMScriptException {

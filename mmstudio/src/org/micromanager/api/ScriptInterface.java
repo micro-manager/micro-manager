@@ -272,14 +272,35 @@ public interface ScriptInterface {
     * Returns a point in device coordinates in microns.
     */
    public Point2D.Double getXYStagePosition()  throws MMScriptException;
-   
+
+    /**
+    * Move default Focus (Z) and block until done
+    * @param z
+    * @throws MMScriptException
+    */
+   public void setStagePosition(double z) throws MMScriptException;
+
+   /**
+    * Move default Focus (Z) relative to current position and block until done
+    * @param z
+    * @throws MMScriptException
+    */
+   public void setRelativeStagePosition(double z) throws MMScriptException;
+
    /**
     * Move default XY stage and block until done.
     * @param x - coordinate in um
     * @param y - coordinate in um
     */
    public void setXYStagePosition(double x, double y)  throws MMScriptException ;
-   
+
+    /**
+    * Move default XY stage relative to current position and block until done.
+    * @param x - coordinate in um
+    * @param y - coordinate in um
+    */
+   public void setRelativeXYStagePosition(double x, double y)  throws MMScriptException ;
+
    /**
     * Open empty image acquisition window
     * @throws MMScriptException

@@ -3,19 +3,20 @@ package org.micromanager.stagecontrol;
 import mmcorej.CMMCore;
 import org.micromanager.api.MMPlugin;
 import org.micromanager.api.ScriptInterface;
-import org.micromanager.MMStudioMainFrame;
-import org.micromanager.utils.MMScriptException;
-
 
 
 public class StageControl implements MMPlugin {
    public static String menuName = "Stage Control";
    private CMMCore core_;
-   private MMStudioMainFrame gui_;
+   private ScriptInterface gui_;
+   private StageControlFrame myFrame_;
 
    public void setApp(ScriptInterface app) {
-      gui_ = (MMStudioMainFrame) app;                                        
-      core_ = app.getMMCore();                                               
+      gui_ = app;                                        
+      core_ = app.getMMCore();
+      if (myFrame_ == null)
+         myFrame_ = new StageControlFrame(gui_);
+      myFrame_.setVisible(true);
    }
 
    public void dispose() {
