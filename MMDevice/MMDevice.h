@@ -34,7 +34,7 @@
 // Header version
 // If any of the class declarations changes, the interface version
 // must be incremented
-#define DEVICE_INTERFACE_VERSION 34
+#define DEVICE_INTERFACE_VERSION 35
 ///////////////////////////////////////////////////////////////////////////////
 
 #pragma once
@@ -445,13 +445,22 @@ namespace MM {
        * Resets the Region of Interest to full frame.
        */
       virtual int ClearROI() = 0;
-
       /**
        * Starts continuous acquisition.
        */
       virtual int StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow) = 0;
+      /**
+       * Starts Sequence Acquisition with given interval.  
+       * Most camera adapters will ignore this number
+       * */
       virtual int StartSequenceAcquisition(double interval_ms) = 0;
+      /**
+       * Stops an ongoing sequence acquisition
+       */
       virtual int StopSequenceAcquisition() = 0;
+      /**
+       * Sets up the camera so that Sequence acquisition can start without delay
+       */
       virtual int PrepareSequenceAcqusition() = 0;
       /**
        * Flag to indicate whether Sequence Acquisition is currently running.
@@ -477,6 +486,10 @@ namespace MM {
       // Shutter API
       virtual int SetOpen(bool open = true) = 0;
       virtual int GetOpen(bool& open) = 0;
+      /**
+       * Opens the shutter for the given duration, then closes it again.
+       * Currently not implemented in any shutter adapters
+       */
       virtual int Fire(double deltaT) = 0;
    };
 
@@ -832,7 +845,7 @@ namespace MM {
 
    /**
     * Callback API to the core control module.
-    * Devices use this abstract interface to use services of the control client.
+    * Devices use this abstract interface to use Core services
     */
    class Core
    {
@@ -854,11 +867,22 @@ namespace MM {
       virtual int OnStatusChanged(const Device* caller) = 0;
       virtual int OnFinished(const Device* caller) = 0;
       virtual int OnPropertiesChanged(const Device* caller) = 0;
+      /**
+       * Callback to signal the UI that a property changed
+       * The Core will check if groups or pixel size changed as a consequence of 
+       * the change of this property and inform the UI
+       */
       virtual int OnPropertyChanged(const Device* caller, const char* propName, const char* propValue) = 0;
+      /**
+       * If the stage is aware that it has reached a new position, it should call
+       * this callback to signal the UI
+       */
       virtual int OnStagePositionChanged(const Device* caller, double pos) = 0;
-      virtual int OnStagePositionChangedRelative(const Device* caller, double pos) = 0;
+      /**
+       * If an XY stage is aware that it has reached a new position, it should call
+       * this callback to signal the UI
+       */
       virtual int OnXYStagePositionChanged(const Device* caller, double xPos, double yPos) = 0;
-      virtual int OnXYStagePositionChangedRelative(const Device* caller, double xPos, double yPos) = 0;
 
       virtual unsigned long GetClockTicksUs(const Device* caller) = 0;
       virtual MM::MMTime GetCurrentMMTime() = 0;
@@ -905,8 +929,4 @@ namespace MM {
    };
 
 } // namespace MM
-
-//usage: int ret = INVOKE_CALLBACK(AcqFinished(...))
-# define INVOKE_CALLBACK(callback) \
-   GetCoreCallback()?GetCoreCallback()->callback:DEVICE_OK;
 

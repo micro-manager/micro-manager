@@ -814,30 +814,11 @@ protected:
    }
 
    /* 
-    * Signals that the stage finished a relative movement
-   */
-   int OnStagePositionChangedRelative(double pos)
-   {
-      if (callback_)
-         return callback_->OnStagePositionChangedRelative(this, pos);
-      return DEVICE_NO_CALLBACK_REGISTERED;
-   }
-
-   /* 
    */
    int OnXYStagePositionChanged(double xPos, double yPos)
    {
       if (callback_)
          return callback_->OnXYStagePositionChanged(this, xPos, yPos);
-      return DEVICE_NO_CALLBACK_REGISTERED;
-   }
-
-   /* 
-   */
-   int OnXYStagePositionChangedRelative(double xPos, double yPos)
-   {
-      if (callback_)
-         return callback_->OnXYStagePositionChangedRelative(this, xPos, yPos);
       return DEVICE_NO_CALLBACK_REGISTERED;
    }
 
@@ -1096,7 +1077,7 @@ protected:
       try
       {
          LogMessage(g_Msg_SEQUENCE_ACQUISITION_THREAD_EXITING);
-         INVOKE_CALLBACK(AcqFinished(this, 0));
+         GetCoreCallback()?GetCoreCallback()->AcqFinished(this,0):DEVICE_OK;
       }
 
 		catch( CMMError& e){
