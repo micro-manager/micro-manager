@@ -152,7 +152,14 @@ public class ImageTask implements Runnable {
       if (imageRequest_.UsePosition) {
          MDUtils.put(md, "PositionName", imageRequest_.Position.getLabel());
       }
-      MDUtils.put(md, "PixelType", "GRAY8");
+
+      long bits = core_.getBytesPerPixel() * 8;
+      String lbl = "";
+      if (core_.getNumberOfComponents() == 1)
+         lbl = "GRAY";
+      else if(core_.getNumberOfComponents() == 4)
+         lbl = "RGB";
+      MDUtils.put(md, "PixelType", lbl + bits);
       MDUtils.put(md, "Width", core_.getImageWidth());
       MDUtils.put(md, "Height", core_.getImageHeight());
 
