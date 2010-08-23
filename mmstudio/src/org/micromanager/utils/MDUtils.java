@@ -9,6 +9,8 @@ import ij.ImagePlus;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
+import mmcorej.Configuration;
+import mmcorej.PropertySetting;
 import mmcorej.TaggedImage;
 
 /**
@@ -29,47 +31,47 @@ public class MDUtils {
    }
 
    public static int getPositionIndex(Map<String,String> map) throws Exception {
-      return getInt(map, "PositionIndex");
+      return getInt(map, "Acquisition-PositionIndex");
    }
 
    public static int getWidth(Map<String,String> map) throws Exception {
-      return getInt(map, "Width");
+      return getInt(map, "Image-Width");
    }
 
    public static int getHeight(Map<String,String> map) throws Exception {
-      return getInt(map, "Height");
+      return getInt(map, "Image-Height");
    }
 
    public static int getSliceIndex(Map<String,String> map) throws Exception {
-      return getInt(map, "SliceIndex");
+      return getInt(map, "Acquisition-SliceIndex");
    }
 
    public static int getChannelIndex(Map<String,String> map) throws Exception {
-      return getInt(map, "ChannelIndex");
+      return getInt(map, "Acquisition-ChannelIndex");
    }
 
    public static int getFrameIndex(Map<String,String> map) throws Exception {
-      return getInt(map, "FrameIndex");
+      return getInt(map, "Acquisition-FrameIndex");
    }
 
    public static String getPositionName(Map<String,String> map) throws Exception {
-      return map.get("PositionName");
+      return map.get("Acquisition-PositionName");
    }
 
    public static String getChannelName(Map<String,String> map) throws Exception {
-      return map.get("ChannelName");
+      return map.get("Acquisition-ChannelName");
    }
 
    public static String getFileName(Map<String, String> map) {
-      return map.get("FileName");
+      return map.get("Acquisition-FileName");
    }
 
    public static void setFileName(Map<String, String> map, String filename) {
-      map.put("FileName", filename);
+      map.put("Acquisition-FileName", filename);
    }
 
    public static String getPixelType(Map<String, String> map)  throws Exception {
-      return map.get("PixelType");
+      return map.get("Image-PixelType");
    }
 
    public static void put(Map<String, String> map, String key, int value) {
@@ -177,6 +179,16 @@ public class MDUtils {
 
    public static boolean isRGB(TaggedImage img) throws Exception {
       return isRGB(img.tags);
+   }
+
+   public static void addConfiguration(Map<String, String> md, Configuration config) throws Exception {
+      PropertySetting setting;
+      for (int i = 0; i < config.size(); ++i) {
+         setting = config.getSetting(i);
+         String key = setting.getDeviceLabel() + "-" + setting.getPropertyName();
+         String value = setting.getPropertyValue();
+         MDUtils.put(md, key, value);
+      }
    }
 
 }

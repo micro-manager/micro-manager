@@ -25,6 +25,7 @@ public class Engine {
    private Lock pauseLock = new ReentrantLock();
    public boolean autoShutterSelected_;
    public TaggedImageQueue imageReceivingQueue_;
+   private long startTimeNs_;
 
    public Engine(CMMCore core, TaggedImageQueue imageReceivingQueue) {
       core_ = core;
@@ -40,12 +41,17 @@ public class Engine {
       }
    }
 
+   public synchronized long getStartTimeNs() {
+      return startTimeNs_;
+   }
+   
    public synchronized void start() {
       setRunning(true);
 
       new Thread() {
          @Override
          public void run() {
+            startTimeNs_ = System.nanoTime();
             autoShutterSelected_ = core_.getAutoShutter();
             core_.setAutoShutter(false);
             stopRequested_ = false;

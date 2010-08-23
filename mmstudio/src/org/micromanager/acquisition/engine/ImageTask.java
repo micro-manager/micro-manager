@@ -7,6 +7,7 @@ package org.micromanager.acquisition.engine;
 import java.util.HashMap;
 import java.util.Map;
 import mmcorej.CMMCore;
+import mmcorej.Configuration;
 import mmcorej.TaggedImage;
 import org.micromanager.navigation.MultiStagePosition;
 import org.micromanager.navigation.StagePosition;
@@ -29,6 +30,7 @@ public class ImageTask implements Runnable {
       core_ = eng.core_;
       imageRequest_ = imageRequest;
    }
+
 
    private void log(String msg) {
       ReportingUtils.logMessage("ImageTask: " + msg);
@@ -142,15 +144,15 @@ public class ImageTask implements Runnable {
       //Gson gson = new Gson();
       //String jsonMetadata = gson.toJson(imageRequest_);
       Map<String, String> md = new HashMap<String, String>();
-      MDUtils.put(md, "SliceIndex", imageRequest_.SliceIndex);
+      MDUtils.put(md, "Acquisition-SliceIndex", imageRequest_.SliceIndex);
       if (imageRequest_.UseChannel)
-         MDUtils.put(md, "ChannelName", imageRequest_.Channel.config_);
-      MDUtils.put(md, "PositionIndex", imageRequest_.PositionIndex);
-      MDUtils.put(md, "ChannelIndex", imageRequest_.ChannelIndex);
-      MDUtils.put(md, "FrameIndex", imageRequest_.FrameIndex);
-      MDUtils.put(md, "ExposureMs", imageRequest_.exposure);
+         MDUtils.put(md, "Acquisition-ChannelName", imageRequest_.Channel.config_);
+      MDUtils.put(md, "Acquisition-PositionIndex", imageRequest_.PositionIndex);
+      MDUtils.put(md, "Acquisition-ChannelIndex", imageRequest_.ChannelIndex);
+      MDUtils.put(md, "Acquisition-FrameIndex", imageRequest_.FrameIndex);
+      MDUtils.put(md, "Acquisition-ExposureMs", imageRequest_.exposure);
       if (imageRequest_.UsePosition) {
-         MDUtils.put(md, "PositionName", imageRequest_.Position.getLabel());
+         MDUtils.put(md, "Acquisition-PositionName", imageRequest_.Position.getLabel());
       }
 
       long bits = core_.getBytesPerPixel() * 8;
@@ -159,9 +161,11 @@ public class ImageTask implements Runnable {
          lbl = "GRAY";
       else if(core_.getNumberOfComponents() == 4)
          lbl = "RGB";
-      MDUtils.put(md, "PixelType", lbl + bits);
-      MDUtils.put(md, "Width", core_.getImageWidth());
-      MDUtils.put(md, "Height", core_.getImageHeight());
+      MDUtils.put(md, "Image-PixelType", lbl + bits);
+      MDUtils.put(md, "Image-Width", core_.getImageWidth());
+      MDUtils.put(md, "Image-Height", core_.getImageHeight());
+      long dTime = System.nanoTime() - eng_.getStartTimeNs();
+      MDUtils.put(md, "Acquisition-Time", ((double) dTime) / 1e9);
 
       try {
          if (eng_.autoShutterSelected_ && !core_.getShutterOpen()) {
@@ -177,7 +181,10 @@ public class ImageTask implements Runnable {
          }
 
          Object pixels = core_.getImage();
+         Configuration config = core_.getSystemStateCache();
+         MDUtils.addConfiguration(md, config);
          TaggedImage taggedImage = new TaggedImage(pixels, md);
+
          eng_.imageReceivingQueue_.add(taggedImage);
          
       } catch (Exception ex) {
