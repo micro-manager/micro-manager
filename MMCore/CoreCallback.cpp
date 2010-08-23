@@ -241,20 +241,6 @@ int CoreCallback::OnStagePositionChanged(const MM::Device* device, double pos)
 }
 
 /**
- * Handler for relative Stage position update
- */
-int CoreCallback::OnStagePositionChangedRelative(const MM::Device* device, double pos)
-{
-   if (core_->externalCallback_) {
-      char label[MM::MaxStrLength];
-      device->GetLabel(label);
-      core_->externalCallback_->onStagePositionChangedRelative(label, pos);
-   }
-
-   return DEVICE_OK;
-}
-
-/**
  * Handler for XYStage position update
  */
 int CoreCallback::OnXYStagePositionChanged(const MM::Device* device, double xPos, double yPos)
@@ -268,20 +254,6 @@ int CoreCallback::OnXYStagePositionChanged(const MM::Device* device, double xPos
    return DEVICE_OK;
 }
 
-/**
- * Handler for relative XYStage position update
- */
-int CoreCallback::OnXYStagePositionChangedRelative(const MM::Device* device, double xPos, double yPos)
-{
-   if (core_->externalCallback_) {
-      char label[MM::MaxStrLength];
-      device->GetLabel(label);
-      core_->externalCallback_->onXYStagePositionChangedRelative(label, xPos, yPos);
-   }
-
-   return DEVICE_OK;
-}
- 
 /**
  * Handler for the operation finished event from the device.
  */

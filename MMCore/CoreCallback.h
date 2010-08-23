@@ -162,9 +162,7 @@ public:
    int OnConfigGroupChanged(const char* groupName, const char* newConfigName);
    int OnPixelSizeChanged(double newPixelSizeUm);
    int OnStagePositionChanged(const MM::Device* device, double pos);
-   int OnStagePositionChangedRelative(const MM::Device* device, double pos);
    int OnXYStagePositionChanged(const MM::Device* device, double xpos, double ypos);
-   int OnXYStagePositionChangedRelative(const MM::Device* device, double xpos, double ypos);
    int OnFinished(const MM::Device* /* caller */);
 
 
