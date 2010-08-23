@@ -47,6 +47,7 @@
 // CDemoCamera class
 // Simulation of the Camera device
 //////////////////////////////////////////////////////////////////////////////
+class DemoWorkerThread;
 class CDemoCamera : public CCameraBase<CDemoCamera>  
 {
 public:
@@ -86,6 +87,7 @@ public:
    // ----------------
 	// floating point read-only properties for testing
 	int OnTestProperty(MM::PropertyBase* pProp, MM::ActionType eAct, long);
+   void RefreshTestProperty(long);
 
 
    int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -96,6 +98,10 @@ public:
    int OnErrorSimulation(MM::PropertyBase* , MM::ActionType );
    int OnCameraCCDXSize(MM::PropertyBase* , MM::ActionType );
    int OnCameraCCDYSize(MM::PropertyBase* , MM::ActionType );
+   int OnPropertyRefreshSimulation(MM::PropertyBase* , MM::ActionType );
+
+   bool SimulatePropertyRefresh(void) {return simulatePropertyRefresh_;};
+   MM::MMTime CurrentTime(void) { return GetCurrentMMTime(); };
 
 private:
    int SetAllowedBinning();
@@ -118,11 +124,11 @@ private:
    int ResizeImageBuffer();
 
 	double testProperty_[10];
-    MMThreadLock* pDemoResourceLock_;
-    int nComponents_;
-   
-
-    void TestResourceLocking(const bool);
+   MMThreadLock* pDemoResourceLock_;
+   int nComponents_;
+   void TestResourceLocking(const bool);
+	DemoWorkerThread* pDemoWorkerThread_;
+   bool simulatePropertyRefresh_;
 };
 
 

@@ -180,6 +180,84 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
    delete pDevice;
 }
 
+//DemoWorkerThread definition
+
+
+class DemoWorkerThread : public MMDeviceThreadBase
+{
+public:
+   DemoWorkerThread(CDemoCamera* pCamera) : stop_(false), pCamera_(pCamera){ };
+   ~DemoWorkerThread(){};
+   int svc (void);
+   void Stop() {stop_ = true;}
+   void Start() {stop_ = false; activate();}
+private:
+   CDemoCamera* pCamera_;
+   bool stop_;
+   MM::MMTime refreshTime_;
+
+   void LLogMessage( const char*const pM_a, const bool debugOnly_a = false); // log a message to the mm device
+   void LLogMessage( const std::string m_a, const bool debugOnly_a = false); // log a message to the mm device
+};
+
+void DemoWorkerThread::LLogMessage(const std::string message, const bool debugOnly)
+{
+   LLogMessage(message.c_str(), debugOnly);
+}
+
+
+void DemoWorkerThread::LLogMessage(const char* pMessage, const bool debugOnly)
+{
+   if( NULL != pCamera_)
+   {
+      pCamera_->LogMessage(pMessage, debugOnly);
+   }
+}
+
+
+
+int DemoWorkerThread::svc(void)
+{
+   //bool bfalse = false;
+   bool btrue = true;
+
+   refreshTime_ = pCamera_->CurrentTime();
+   // loop in this working thread until the camera is shutdown.
+   do
+   {
+      // in a real adapter we load the vendor's library on such a thread
+      if(stop_)
+      {
+         LLogMessage( "stop request in worker thread", true);
+         wait();
+         break;
+      }
+      if( pCamera_->SimulatePropertyRefresh())
+      {
+         // new values for the test properties
+         MM::MMTime ttime = pCamera_->CurrentTime();
+
+         MM::MMTime   delt = ttime-refreshTime_;
+         if( 5500 < delt.getMsec() )
+         {
+         	for(int ij = 1; ij < 5;++ij)
+            {
+               pCamera_->RefreshTestProperty(ij);
+            }
+            refreshTime_ = ttime;
+         }
+      }
+      CDeviceUtils::SleepMs(10);
+   }while(btrue);
+   LLogMessage( "CCamera acquisition thread is exiting... ", true);
+   return 0;
+}
+
+
+
+
+
+
 ///////////////////////////////////////////////////////////////////////////////
 // CDemoCamera implementation
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -206,8 +284,10 @@ CDemoCamera::CDemoCamera() :
 	binSize_(1),
 	cameraCCDXSize_(512),
 	cameraCCDYSize_(512),
-    nComponents_(1),
-    pDemoResourceLock_(0)
+   nComponents_(1),
+   pDemoResourceLock_(0),
+   pDemoWorkerThread_(0),
+   simulatePropertyRefresh_(false)
 {
    // call the base class method to set-up default error codes/messages
    InitializeDefaultErrorMessages();
@@ -224,6 +304,10 @@ CDemoCamera::CDemoCamera() :
 */
 CDemoCamera::~CDemoCamera()
 {
+   simulatePropertyRefresh_ = false;
+   pDemoWorkerThread_->Stop();
+   CDeviceUtils::SleepMs(30);
+   delete pDemoWorkerThread_;
    delete pDemoResourceLock_;
 }
 
@@ -370,6 +454,9 @@ int CDemoCamera::Initialize()
    pAct = new CPropertyAction (this, &CDemoCamera::OnCameraCCDYSize);
    CreateProperty("OnCameraCCDYSize", "512", MM::Integer, false, pAct);
 
+   pAct = new CPropertyAction (this, &CDemoCamera::OnPropertyRefreshSimulation);
+   CreateProperty("PropertyRefreshSimulation", "0", MM::Integer, false, pAct);
+
    // synchronize all properties
    // --------------------------
    nRet = UpdateStatus();
@@ -406,6 +493,10 @@ int CDemoCamera::Initialize()
    nRet = ResizeImageBuffer();
    if (nRet != DEVICE_OK)
       return nRet;
+
+   pDemoWorkerThread_ = new DemoWorkerThread(this);
+   pDemoWorkerThread_->Start();
+
 
 #ifdef TESTRESOURCELOCKING
    TestResourceLocking(true);
@@ -688,7 +779,6 @@ int CDemoCamera::OnTestProperty(MM::PropertyBase* pProp, MM::ActionType eAct, lo
 {
    if (eAct == MM::BeforeGet)
    {
-		testProperty_[indexx] = indexx + (double)rand()/(double)RAND_MAX;
       pProp->Set(testProperty_[indexx]);
    }
    else if (eAct == MM::AfterSet)
@@ -699,6 +789,27 @@ int CDemoCamera::OnTestProperty(MM::PropertyBase* pProp, MM::ActionType eAct, lo
 
 }
 
+void CDemoCamera::RefreshTestProperty(long indexx)
+{
+   testProperty_[indexx] = indexx + (double)rand()/(double)RAND_MAX;
+}
+
+int CDemoCamera::OnPropertyRefreshSimulation(MM::PropertyBase* pProp , MM::ActionType eAct )
+{
+   long lval;
+   if (eAct == MM::AfterSet)
+   {
+      pProp->Get(lval);
+      simulatePropertyRefresh_ = (1 == lval);
+   }
+   else if (eAct == MM::BeforeGet)
+   {
+      lval = (simulatePropertyRefresh_?1:0);
+      pProp->Set(lval);
+   }
+
+   return DEVICE_OK;
+}
 
 /**
 * Handles "Binning" property.
