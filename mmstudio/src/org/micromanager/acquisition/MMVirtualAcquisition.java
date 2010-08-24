@@ -356,4 +356,8 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
          }
       }
    }
+
+   double getPlaybackFPS() {
+      return Animator.getFrameRate();
+   }
 }

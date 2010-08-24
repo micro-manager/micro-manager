@@ -13,8 +13,6 @@ package org.micromanager.acquisition;
 
 import ij.IJ;
 import java.text.ParseException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.micromanager.utils.NumberUtils;
 
 /**
@@ -28,6 +26,7 @@ public class HyperstackControls extends java.awt.Panel {
     public HyperstackControls(MMVirtualAcquisition acq) {
         initComponents();
         acq_ = acq;
+        fpsField.setText(NumberUtils.doubleToDisplayString(acq_.getPlaybackFPS()));
     }
 
     /** This method is called from within the constructor to
@@ -44,6 +43,8 @@ public class HyperstackControls extends java.awt.Panel {
       saveButton = new javax.swing.JButton();
       fpsField = new javax.swing.JTextField();
       fpsLabel = new javax.swing.JLabel();
+
+      setPreferredSize(new java.awt.Dimension(300, 30));
 
       metadataButton.setBackground(new java.awt.Color(255, 255, 255));
       metadataButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/application_view_list.png"))); // NOI18N
