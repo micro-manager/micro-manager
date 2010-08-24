@@ -142,6 +142,7 @@ import java.awt.Cursor;
 import java.awt.FileDialog;
 import java.awt.Graphics;
 import java.awt.image.DirectColorModel;
+import java.util.Collections;
 import java.util.Map;
 import mmcorej.TaggedImage;
 import org.micromanager.acquisition.AcquisitionInterface;
@@ -198,7 +199,9 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private CalibrationListDlg calibrationListDlg_;
    private AcqControlDlg acqControlWin_;
    private ArrayList<PluginItem> plugins_;
-   private Vector<MMListenerInterface> MMListeners_ = new Vector();
+   private List<MMListenerInterface> MMListeners_
+           = (List<MMListenerInterface>)
+           Collections.synchronizedList(new ArrayList<MMListenerInterface>());
    private AutofocusManager afMgr_;
    private final static String DEFAULT_CONFIG_FILE_NAME = "MMConfig_demo.cfg";
    private ArrayList<String> MRUConfigFiles_;
@@ -366,7 +369,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    public void addMMListener(MMListenerInterface newL) {
       if (MMListeners_.contains(newL))
          return;
-      MMListeners_.addElement(newL);
+      MMListeners_.add(newL);
    }
 
    /**
@@ -395,9 +398,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          } else {
             updateGUI(true);
             // update all registered listeners
-            Vector vtemp = (Vector)MMListeners_.clone();
-            for (int i=0; i<vtemp.size(); i++) {
-               MMListenerInterface mmIntf = (MMListenerInterface)vtemp.elementAt(i);
+            for (MMListenerInterface mmIntf:MMListeners_) {
                mmIntf.propertiesChangedAlert();
             }
             core_.logMessage("Notification from MMCore!");
@@ -409,9 +410,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          core_.logMessage("Notification for Device: " + deviceName + " Property: " +
                propName + " changed to value: " + propValue);
          // update all registered listeners
-         Vector vtemp = (Vector)MMListeners_.clone();
-         for (int i=0; i<vtemp.size(); i++) {
-            MMListenerInterface mmIntf = (MMListenerInterface)vtemp.elementAt(i);
+         for (MMListenerInterface mmIntf:MMListeners_) {
             mmIntf.propertyChangedAlert(deviceName, propName, propValue);
          }
       }

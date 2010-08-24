@@ -16,6 +16,7 @@ import mmcorej.StrVector;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.acquisition.engine.Engine;
 import org.micromanager.acquisition.engine.SequenceSettings;
+import org.micromanager.acquisition.engine.TaggedImageProcessor;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.DeviceControlGUI;
 import org.micromanager.metadata.MMAcqDataException;
@@ -74,7 +75,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private Preferences prefs_;
    private ArrayList<ChannelSpec> requestedChannels_ = new ArrayList<ChannelSpec>();
    private Engine eng = null;
-
+   private ArrayList<TaggedImageProcessor> taggedImageProcessors_;
 
 
 
@@ -85,16 +86,26 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
          ReportingUtils.logError(ex);
       }
 
-      TaggedImageQueue engineToDisplayQueue = new TaggedImageQueue();
+      TaggedImageQueue engineToProcessorsChannel = new TaggedImageQueue();
+      TaggedImageQueue processorsToDisplayChannel = new TaggedImageQueue();
 
       SequenceSettings acquisitionSettings = generateSequenceSettings();
-      eng = new Engine(core_, engineToDisplayQueue);
+      eng = new Engine(core_, engineToProcessorsChannel);
       eng.setupStandardSequence(acquisitionSettings);
       eng.start();
       
-      display_ = new AcquisitionDisplayThread(gui_, core_, engineToDisplayQueue,
+      display_ = new AcquisitionDisplayThread(gui_, core_, processorsToDisplayChannel,
               acquisitionSettings, channels_, saveFiles_);
       display_.start();
+   }
+
+
+   public void addProcessor(TaggedImageProcessor taggedImageProcessor) {
+      taggedImageProcessors_.add(taggedImageProcessor);
+   }
+
+   public void removeProcessor(TaggedImageProcessor taggedImageProcessor) {
+      taggedImageProcessors_.remove(taggedImageProcessor);
    }
 
    private SequenceSettings generateSequenceSettings() {

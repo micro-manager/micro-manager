@@ -34,7 +34,7 @@ public class ActiveObject implements InvocationHandler {
       new WorkerThread().start();
    }
 
-   public static Object newInstance(Activatable obj) {
+   public static Object newInstance(Object obj) {
       Class objClass = obj.getClass();
       Class[] interfaces = objClass.getInterfaces();
       if (interfaces.length == 0) {
