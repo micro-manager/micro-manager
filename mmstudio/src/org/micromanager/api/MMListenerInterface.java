@@ -25,5 +25,9 @@ package org.micromanager.api;
 public interface MMListenerInterface{
    public void propertiesChangedAlert();
    public void propertyChangedAlert(String device, String property, String value);
+   public void configGroupChangedAlert(String groupName, String newConfig);
+   public void pixelSizeChangedAlert(double newPixelSizeUm);
+   public void stagePositionChangedAlert(String deviceName, double pos);
+   public void xyStagePositionChanged(String deviceName, double xPos, double yPos);
 }
 
