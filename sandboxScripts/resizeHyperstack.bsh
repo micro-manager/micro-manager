@@ -9,13 +9,36 @@ void updateFrames(ImagePlus x, int nFrames) {
    // Private:
 	ts = w.tSelector;
 
-	// As instance of my stack class:
+	// An instance of my stack class (OK):
 	s.nSlices_ = (s.nSlices_ / x.nFrames) * nFrames; // my stack
 	
    // Private:
    x.nFrames = nFrames;
 
-   // Public (OK):
+   // Public:
+	ts.setMaximum(nFrames + 1);
+}
+
+void updateDimensions(ImagePlus x, int nChannels, int nSlices, int nFrames) {
+	s = x.getStack();
+	w = x.getWindow();
+
+   // Private:
+	cs = w.cSelector;
+	zs = w.zSelector;
+	ts = w.tSelector;
+
+	// An instance of my stack class (OK):
+	s.nSlices_ = nChannels * nSlices * nFrames; // my stack
+	
+   // Private:
+	x.nChannels = nChannels;
+	x.nSlices = nSlices;
+   x.nFrames = nFrames;
+
+   // Public:
+	cs.setMaximum(nChannels + 1);
+	zs.setMaximum(nSlices + 1);
 	ts.setMaximum(nFrames + 1);
 }
 
