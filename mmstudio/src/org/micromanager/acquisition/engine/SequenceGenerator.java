@@ -41,6 +41,8 @@ public class SequenceGenerator {
          imageRequest.UseChannel = (settings.channels.size() > 0);
          imageRequest.UseSlice = (settings.slices.size() > 0);
 
+         imageRequest.relativeZSlices = settings.relativeZSlice;
+         imageRequest.zReference = settings.zReference;
          imageRequest.exposure = exposure;
 
          skipImage = false;

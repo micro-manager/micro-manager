@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import mmcorej.CMMCore;
+import mmcorej.Configuration;
 import org.micromanager.acquisition.TaggedImageQueue;
 import org.micromanager.utils.ReportingUtils;
 
@@ -26,6 +27,7 @@ public class Engine {
    public boolean autoShutterSelected_;
    public TaggedImageQueue imageReceivingQueue_;
    private long startTimeNs_;
+   private Engine this_;
 
    public Engine(CMMCore core, TaggedImageQueue imageReceivingQueue) {
       core_ = core;
@@ -47,13 +49,16 @@ public class Engine {
    
    public synchronized void start() {
       setRunning(true);
+      this_ = this;
 
       new Thread() {
          @Override
          public void run() {
             startTimeNs_ = System.nanoTime();
             autoShutterSelected_ = core_.getAutoShutter();
+            CoreState originalState = getCoreState();
             core_.setAutoShutter(false);
+            
             stopRequested_ = false;
             for (Runnable task : taskSequence_) {
                if (!stopHasBeenRequested()) {
@@ -68,6 +73,9 @@ public class Engine {
                }
             }
             core_.setAutoShutter(autoShutterSelected_);
+
+            this_.setCoreState(originalState);
+
             setRunning(false);
             try {
                imageReceivingQueue_.put(TaggedImageQueue.POISON);
@@ -76,6 +84,36 @@ public class Engine {
             }
          }
       }.start();
+   }
+
+
+   public class CoreState {
+      Configuration systemState;
+      double zPosition = 0;
+      boolean zSaved = false;
+   }
+
+   public CoreState getCoreState() {
+      CoreState state = new CoreState();
+      state.systemState = core_.getSystemStateCache();
+      try {
+        state.zPosition = core_.getPosition(core_.getFocusDevice());
+        state.zSaved = true;
+      } catch (Exception ex) {
+        state.zSaved = false;
+        ReportingUtils.logError(ex);
+      }
+      return state;
+   }
+
+   public void setCoreState(CoreState state) {
+      core_.setSystemState(state.systemState);
+      if (state.zSaved)
+         try {
+         core_.setPosition(core_.getFocusDevice(), state.zPosition);
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
+      }
    }
 
    public synchronized void pause() {

@@ -7,6 +7,8 @@ package org.micromanager.acquisition;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
@@ -77,6 +79,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private ArrayList<ChannelSpec> requestedChannels_ = new ArrayList<ChannelSpec>();
    private Engine eng = null;
    private ArrayList<TaggedImageProcessor> taggedImageProcessors_;
+   private boolean absoluteZ_;
 
 
 
@@ -127,13 +130,23 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
       ArrayList<Double> slices = new ArrayList<Double>();
       if (useSlices_) {
-         for (double z = sliceZBottomUm_; z<= sliceZTopUm_; z+=sliceZStepUm_) {
-            slices.add(z);
+         if (sliceZTopUm_ > sliceZBottomUm_) {
+            for (double z = sliceZBottomUm_; z <= sliceZTopUm_; z += sliceZStepUm_) {
+               slices.add(z);
+            }
+         } else {
+            for (double z = sliceZBottomUm_; z >= sliceZTopUm_; z -= sliceZStepUm_) {
+               slices.add(z);
+            }
          }
       }
       acquisitionSettings.slices = slices;
-      
-
+      acquisitionSettings.relativeZSlice = !this.absoluteZ_;
+      try {
+         acquisitionSettings.zReference = core_.getPosition(core_.getFocusDevice());
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
+      }
       // Channels
 
       acquisitionSettings.channels = new ArrayList<ChannelSpec>();
@@ -328,7 +341,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       sliceZBottomUm_ = bottom;
       sliceZTopUm_ = top;
       sliceZStepUm_ = step;
-      useSlices_ = b;
+      absoluteZ_ = b;
    }
 
    public boolean isFramesSettingEnabled() {

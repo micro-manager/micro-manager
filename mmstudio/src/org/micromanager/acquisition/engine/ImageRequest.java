@@ -29,4 +29,5 @@ public class ImageRequest {
    boolean UsePosition;
    boolean UseFrame;
    boolean relativeZSlices;
+   double zReference;
 }

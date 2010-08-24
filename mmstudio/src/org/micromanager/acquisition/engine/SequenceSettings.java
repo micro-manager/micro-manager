@@ -29,4 +29,5 @@ public class SequenceSettings {
    public boolean save;
    public String root;
    public String prefix;
+   public double zReference;
 }

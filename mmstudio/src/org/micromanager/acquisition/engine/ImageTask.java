@@ -75,6 +75,7 @@ public class ImageTask implements Runnable {
       if (imageRequest_.UseSlice) {
          if (imageRequest_.relativeZSlices) {
             zPosition += imageRequest_.SlicePosition;
+            System.out.println(zPosition);
          } else {
             zPosition = imageRequest_.SlicePosition;
          }
@@ -89,7 +90,7 @@ public class ImageTask implements Runnable {
 
    void updatePositionAndSlice() {
       try {
-         double zPosition = core_.getPosition(core_.getFocusDevice());
+         double zPosition = imageRequest_.zReference;
          if (imageRequest_.UsePosition) {
             MultiStagePosition msp = imageRequest_.Position;
             for (int i = 0; i < msp.size(); ++i) {
