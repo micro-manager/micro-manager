@@ -373,7 +373,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
     * Allows MMListeners to remove themselves
     */
    public void removeMMListener(MMListenerInterface oldL) {
-      if (MMListeners_.contains(oldL))
+      if (!MMListeners_.contains(oldL))
          return;
       MMListeners_.remove(oldL);
    }
