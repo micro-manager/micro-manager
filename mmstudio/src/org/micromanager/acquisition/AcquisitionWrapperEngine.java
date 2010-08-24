@@ -94,7 +94,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       eng.setupStandardSequence(acquisitionSettings);
       eng.start();
       
-      display_ = new AcquisitionDisplayThread(gui_, core_, processorsToDisplayChannel,
+      display_ = new AcquisitionDisplayThread(gui_, core_, engineToProcessorsChannel,
               acquisitionSettings, channels_, saveFiles_);
       display_.start();
    }
