@@ -15,6 +15,7 @@ import mmcorej.PropertySetting;
 import mmcorej.StrVector;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.acquisition.engine.Engine;
+import org.micromanager.acquisition.engine.ProcessorStack;
 import org.micromanager.acquisition.engine.SequenceSettings;
 import org.micromanager.acquisition.engine.TaggedImageProcessor;
 import org.micromanager.api.AcquisitionEngine;
@@ -87,14 +88,17 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       }
 
       TaggedImageQueue engineToProcessorsChannel = new TaggedImageQueue();
-      TaggedImageQueue processorsToDisplayChannel = new TaggedImageQueue();
 
       SequenceSettings acquisitionSettings = generateSequenceSettings();
       eng = new Engine(core_, engineToProcessorsChannel);
       eng.setupStandardSequence(acquisitionSettings);
       eng.start();
       
-      display_ = new AcquisitionDisplayThread(gui_, core_, engineToProcessorsChannel,
+      ProcessorStack processorStack = new ProcessorStack(engineToProcessorsChannel,
+              taggedImageProcessors_);
+      TaggedImageQueue processorsToDisplayChannel = processorStack.getOutputChannel();
+      
+      display_ = new AcquisitionDisplayThread(gui_, core_, processorsToDisplayChannel,
               acquisitionSettings, channels_, saveFiles_);
       display_.start();
    }

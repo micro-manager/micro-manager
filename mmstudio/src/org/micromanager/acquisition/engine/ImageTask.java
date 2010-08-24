@@ -154,6 +154,7 @@ public class ImageTask implements Runnable {
       if (imageRequest_.UsePosition) {
          MDUtils.put(md, "Acquisition-PositionName", imageRequest_.Position.getLabel());
       }
+      MDUtils.put(md, "Acquisition-SlicePosition", imageRequest_.SlicePosition);
 
       long bits = core_.getBytesPerPixel() * 8;
       String lbl = "";

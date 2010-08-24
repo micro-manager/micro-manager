@@ -76,4 +76,5 @@ public interface AcquisitionInterface {
    void setSystemState(int frame, int channel, int slice, JSONObject state) throws MMScriptException;
 
    boolean windowClosed();
+
 }

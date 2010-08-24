@@ -54,6 +54,7 @@ import mmcorej.StrVector;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.micromanager.acquisition.engine.TaggedImageProcessor;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.DeviceControlGUI;
 import org.micromanager.image5d.ChannelCalibration;
@@ -88,6 +89,14 @@ import org.micromanager.utils.SliceMode;
  * metadata in JSON format.
  */
 public class MMAcquisitionEngineMT implements AcquisitionEngine {
+
+   public void addProcessor(TaggedImageProcessor processor) {
+      throw new UnsupportedOperationException("Not supported yet.");
+   }
+
+   public void removeProcessor(TaggedImageProcessor processor) {
+      throw new UnsupportedOperationException("Not supported yet.");
+   }
 
    // Class to hold some image metadata.  Start to refactor out some parts of Image5D
    private class ImageData {
