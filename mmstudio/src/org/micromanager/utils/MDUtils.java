@@ -89,16 +89,16 @@ public class MDUtils {
    public static void setImageType(Map<String, String> map, int type) throws Exception {
       switch (type) {
          case ImagePlus.GRAY8:
-            map.put("PixelType", "GRAY8");
+            map.put("Image-PixelType", "GRAY8");
          break;
          case ImagePlus.GRAY16:
-            map.put("PixelType", "GRAY16");
+            map.put("Image-PixelType", "GRAY16");
          break;
          case ImagePlus.COLOR_RGB:
-            map.put("PixelType", "RGB32");
+            map.put("Image-PixelType", "RGB32");
          break;
          case 64:
-            map.put("PixelType", "RGB64");
+            map.put("Image-PixelType", "RGB64");
          break;
       }
    }

@@ -90,8 +90,8 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       else if ((depth_ == 4 || depth_ == 8))
          numComponents_ = 3;
 
-      summaryMetadata_.put("Width", NumberUtils.intToCoreString(width_));
-      summaryMetadata_.put("Height", NumberUtils.intToCoreString(height_));
+      summaryMetadata_.put("Image-Width", NumberUtils.intToCoreString(width_));
+      summaryMetadata_.put("Image-Height", NumberUtils.intToCoreString(height_));
       try {
          MDUtils.setImageType(summaryMetadata_, type);
       } catch (Exception ex) {
