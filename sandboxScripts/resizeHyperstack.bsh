@@ -1,0 +1,24 @@
+import ij.IJ;
+import ij.ImagePlus;
+
+
+void updateFrames(ImagePlus x, int nFrames) {
+	s = x.getStack();
+	w = x.getWindow();
+
+   // Private:
+	ts = w.tSelector;
+
+	// As instance of my stack class:
+	s.nSlices_ = (s.nSlices_ / x.nFrames) * nFrames; // my stack
+	
+   // Private:
+   x.nFrames = nFrames;
+
+   // Public (OK):
+	ts.setMaximum(nFrames + 1);
+}
+
+update();
+
+x = IJ.getImage();
