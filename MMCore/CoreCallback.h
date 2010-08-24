@@ -208,9 +208,13 @@ public:
    }
 
 
-   std::vector<std::string> GetLoadedDevicesOfType(const MM::Device* /* caller */, MM::DeviceType devType)
+   void GetLoadedDeviceOfType(const MM::Device* /* caller */, MM::DeviceType devType,  char* deviceName, const unsigned int deviceIterator)
    {
-      return core_->getLoadedDevicesOfType(devType);
+      deviceName[0] = 0;
+      std::vector<std::string> v = core_->getLoadedDevicesOfType(devType);
+      if( deviceIterator < v.size())
+         strncpy( deviceName, v.at(deviceIterator).c_str(), MM::MaxStrLength);
+      return;
    }
 
 private:

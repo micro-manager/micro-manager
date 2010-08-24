@@ -693,9 +693,7 @@ protected:
       deviceName[0] = 0;
       if (callback_)
       {
-         std::vector<std::string> v = callback_->GetLoadedDevicesOfType(this, devType);
-         if( deviceIterator < v.size())
-            strncpy( deviceName, v.at(deviceIterator).c_str(), MM::MaxStrLength);
+         callback_->GetLoadedDeviceOfType( this, devType, deviceName, deviceIterator);
       }
    }
    
