@@ -1,7 +1,7 @@
 <!-- Ant makefile for the Micro-Manager Projector plugin  -->
 <!-- This file assumes Micro-Manager project tree structure -->
 
-<project name="MMProjector" default="buildMMProjector">
+<project name="MMProjector" default="build">
 
 	<!-- Specify the system path to the ImageJ root directory -->
 	<property name="InstallRoot" value="../../Install/micro-manager"/>
@@ -36,7 +36,7 @@
 
 	</path>
 
-	<target name="compileMMProjector" description="Compile Projector plugin.">
+	<target name="compile" description="Compile Projector plugin.">
 		<mkdir dir="build" />
 		<javac srcdir="./src" destdir="./build" optimize="on" source="1.5" target="1.5" debug="on">
 			<classpath refid="project.class.path" />
@@ -46,12 +46,12 @@
 		</copy>
 	</target>
 
-	<target name="buildMMProjector" description="Build projector.jar">
+	<target name="build" description="Build projector.jar">
 		<jar jarfile="projector.jar" basedir="build" />
 		<copy file="projector.jar" todir="${MMPluginsDir-inst}" />
 	</target>
 	
-	<target name="cleanMMProjector" description="Delete the Projector build files.">
+	<target name="clean" description="Delete the Projector build files.">
 		<delete dir="build" />
 		<delete file="projector.jar" />
 	</target>
