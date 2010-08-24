@@ -17,7 +17,12 @@ import ij.WindowManager;
 import ij.gui.ImageWindow;
 import java.awt.AWTEvent;
 import java.awt.event.AWTEventListener;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Vector;
 import javax.swing.table.AbstractTableModel;
 import mmcorej.TaggedImage;
@@ -229,10 +234,13 @@ public class MetadataViewer extends javax.swing.JFrame
       public synchronized void setMetadata(Map<String,String> md) {
          clear();
          if (md != null) {
-            for (String key : md.keySet()) {
+            Object[] keys = (Object[]) md.keySet().toArray();
+            Arrays.sort(keys);
+
+            for (Object key : keys) {
                Vector<String> rowData = new Vector<String>();
-               rowData.add(key);
-               rowData.add(md.get(key));
+               rowData.add((String) key);
+               rowData.add(md.get((String) key));
                addRow(rowData);
             }
          }

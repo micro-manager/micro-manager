@@ -50,7 +50,8 @@ public class MMImageCache {
       }
 
       TaggedImage taggedImg = imageFileManager_.readImage(filename);
-      cacheImage(taggedImg);
+      if (taggedImg != null)
+         cacheImage(taggedImg);
       return taggedImg;
    }
 
