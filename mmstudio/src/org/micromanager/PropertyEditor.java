@@ -46,9 +46,12 @@ import javax.swing.SpringLayout;
 import javax.swing.border.BevelBorder;
 import javax.swing.table.TableColumn;
 
+import com.swtdesigner.SwingResourceManager;
+
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
 
+import org.micromanager.api.MMListenerInterface;
 import org.micromanager.utils.MMFrame;
 import org.micromanager.utils.PropertyValueCellEditor;
 import org.micromanager.utils.PropertyValueCellRenderer;
@@ -56,7 +59,6 @@ import org.micromanager.utils.PropertyItem;
 import org.micromanager.utils.PropertyTableData;
 import org.micromanager.utils.ShowFlags;
 
-import com.swtdesigner.SwingResourceManager;
 import org.micromanager.utils.PropertyNameCellRenderer;
 import org.micromanager.utils.PropertyUsageCellEditor;
 import org.micromanager.utils.PropertyUsageCellRenderer;
@@ -69,7 +71,7 @@ import org.micromanager.utils.ReportingUtils;
  *
  * aka the "Device/Property Browser"
  */
-public class PropertyEditor extends MMFrame {
+public class PropertyEditor extends MMFrame implements MMListenerInterface {
    private SpringLayout springLayout;
    private static final long serialVersionUID = 1507097881635431043L;
    
@@ -89,7 +91,7 @@ public class PropertyEditor extends MMFrame {
    
    public void setGui(MMStudioMainFrame gui) {
 	   gui_ = gui;
-	   
+      gui_.addMMListener(this);
    }
    
    public PropertyEditor() {
@@ -245,6 +247,14 @@ public class PropertyEditor extends MMFrame {
       springLayout.putConstraint(SpringLayout.NORTH, scrollPane_, 5, SpringLayout.SOUTH, showOtherCheckBox_);
    }
    
+   public void propertiesChangedAlert() {
+      refresh();
+   }
+
+   public void propertyChangedAlert(String device, String property, String value) {
+      data_.update(device, property, value);
+   }
+
    protected void refresh() {
 	   data_.gui_ = gui_;
 	   data_.flags_ = flags_;
@@ -299,6 +309,15 @@ public class PropertyEditor extends MMFrame {
          refresh();
          gui_.refreshGUI();
          fireTableCellUpdated(row, col);
+      }
+
+      public void update (String device, String propName, String newValue) {
+         PropertyItem item = getItem(device, propName);
+         if (item != null) {
+            item.value = newValue;
+            // Better to call fireTableCellUpdated(row, col)???
+            fireTableDataChanged();
+         }
       }
       
       public void update(ShowFlags flags, String groupName, String presetName) {  

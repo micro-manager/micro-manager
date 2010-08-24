@@ -40,11 +40,14 @@ import java.awt.event.FocusEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.Point2D;
+
 import java.io.File;
 import java.io.IOException;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.prefs.Preferences;
+import java.util.Vector;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -81,6 +84,7 @@ import org.micromanager.api.Autofocus;
 import org.micromanager.api.DeviceControlGUI;
 import org.micromanager.api.MMPlugin;
 import org.micromanager.api.ScriptInterface;
+import org.micromanager.api.MMListenerInterface;
 import org.micromanager.conf.ConfiguratorDlg;
 import org.micromanager.conf.MMConfigFileException;
 import org.micromanager.conf.MicroscopeModel;
@@ -194,6 +198,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private CalibrationListDlg calibrationListDlg_;
    private AcqControlDlg acqControlWin_;
    private ArrayList<PluginItem> plugins_;
+   private Vector<MMListenerInterface> MMListeners_ = new Vector();
    private AutofocusManager afMgr_;
    private final static String DEFAULT_CONFIG_FILE_NAME = "MMConfig_demo.cfg";
    private ArrayList<String> MRUConfigFiles_;
@@ -247,6 +252,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private MMStudioMainFrame gui_;
    // Callback
    private CoreEventCallback cb_;
+
    private JMenuBar menuBar_;
    private ConfigPadButtonPanel configPadButtonPanel_;
    private boolean virtual_ = false;
@@ -355,6 +361,24 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
 
    /**
+    * Allows MMListeners to register themselves
+    */
+   public void addMMListener(MMListenerInterface newL) {
+      if (MMListeners_.contains(newL))
+         return;
+      MMListeners_.addElement(newL);
+   }
+
+   /**
+    * Allows MMListeners to remove themselves
+    */
+   public void removeMMListener(MMListenerInterface oldL) {
+      if (MMListeners_.contains(oldL))
+         return;
+      MMListeners_.remove(oldL);
+   }
+
+   /**
     * Callback to update GUI when a change happens in the MMCore.
     */
    public class CoreEventCallback extends MMEventCallback {
@@ -369,8 +393,11 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             core_.logMessage("Notification from MMCore ignored because acquistion is running!");
          } else {
             updateGUI(true);
-            if (propertyBrowser_ != null) {
-               propertyBrowser_.updateStatus();
+            // update all registered listeners
+            Vector vtemp = (Vector)MMListeners_.clone();
+            for (int i=0; i<vtemp.size(); i++) {
+               MMListenerInterface mmIntf = (MMListenerInterface)vtemp.elementAt(i);
+               mmIntf.propertiesChangedAlert();
             }
             core_.logMessage("Notification from MMCore!");
          }
@@ -379,6 +406,12 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       public void onPropertyChanged(String deviceName, String propName, String propValue) {
          core_.logMessage("Notification for Device: " + deviceName + " Property: " +
                propName + " changed to value: " + propValue);
+         // update all registered listeners
+         Vector vtemp = (Vector)MMListeners_.clone();
+         for (int i=0; i<vtemp.size(); i++) {
+            MMListenerInterface mmIntf = (MMListenerInterface)vtemp.elementAt(i);
+            mmIntf.propertyChangedAlert(deviceName, propName, propValue);
+         }
       }
 
       public void onConfigGroupChanged(String groupName, String newConfig) {
