@@ -3,6 +3,7 @@ package org.micromanager.acquisition;
 import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.gui.ImageWindow;
+import ij.plugin.Animator;
 import ij.process.ImageStatistics;
 import java.awt.Color;
 import java.io.IOException;
@@ -344,5 +345,15 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
 
    public void setSystemState(Map<String,String> md) {
       systemMetadata_ = md;
+   }
+
+   void setPlaybackFPS(double fps) {
+      if (hyperImage_ != null) {
+         try {
+            JavaUtils.setRestrictedFieldValue(null, Animator.class, "animationRate", (double) fps);
+         } catch (NoSuchFieldException ex) {
+            ReportingUtils.showError(ex);
+         }
+      }
    }
 }

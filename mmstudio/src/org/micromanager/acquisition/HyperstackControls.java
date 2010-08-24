@@ -12,6 +12,10 @@
 package org.micromanager.acquisition;
 
 import ij.IJ;
+import java.text.ParseException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.micromanager.utils.NumberUtils;
 
 /**
  *
@@ -38,6 +42,8 @@ public class HyperstackControls extends java.awt.Panel {
       showFolderButton = new javax.swing.JButton();
       contrastButton = new javax.swing.JButton();
       saveButton = new javax.swing.JButton();
+      fpsField = new javax.swing.JTextField();
+      fpsLabel = new javax.swing.JLabel();
 
       metadataButton.setBackground(new java.awt.Color(255, 255, 255));
       metadataButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/application_view_list.png"))); // NOI18N
@@ -94,27 +100,48 @@ public class HyperstackControls extends java.awt.Panel {
       saveButton.setPreferredSize(new java.awt.Dimension(30, 28));
       saveButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
 
+      fpsField.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            fpsFieldActionPerformed(evt);
+         }
+      });
+
+      fpsLabel.setText("playback fps:");
+
       org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
       this.setLayout(layout);
       layout.setHorizontalGroup(
          layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-         .add(showFolderButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
          .add(layout.createSequentialGroup()
-            .add(100, 100, 100)
-            .add(contrastButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-         .add(layout.createSequentialGroup()
-            .add(30, 30, 30)
-            .add(saveButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-         .add(layout.createSequentialGroup()
-            .add(70, 70, 70)
-            .add(metadataButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+               .add(showFolderButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+               .add(layout.createSequentialGroup()
+                  .add(100, 100, 100)
+                  .add(contrastButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+               .add(layout.createSequentialGroup()
+                  .add(30, 30, 30)
+                  .add(saveButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+               .add(layout.createSequentialGroup()
+                  .add(70, 70, 70)
+                  .add(metadataButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .add(fpsLabel)
+            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+            .add(fpsField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 34, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+            .add(170, 170, 170))
       );
       layout.setVerticalGroup(
          layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-         .add(showFolderButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-         .add(contrastButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-         .add(saveButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-         .add(metadataButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+         .add(layout.createSequentialGroup()
+            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+               .add(showFolderButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+               .add(contrastButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+               .add(saveButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+               .add(metadataButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+               .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                  .add(fpsLabel)
+                  .add(fpsField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+            .addContainerGap())
       );
    }// </editor-fold>//GEN-END:initComponents
 
@@ -130,9 +157,18 @@ public class HyperstackControls extends java.awt.Panel {
       MetadataViewer.showMetadataViewer();
    }//GEN-LAST:event_metadataButtonActionPerformed
 
+   private void fpsFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fpsFieldActionPerformed
+      try {
+         double fps = NumberUtils.displayStringToDouble(fpsField.getText());
+         acq_.setPlaybackFPS(fps);
+      } catch (ParseException ex) {}
+   }//GEN-LAST:event_fpsFieldActionPerformed
+
 
    // Variables declaration - do not modify//GEN-BEGIN:variables
    private javax.swing.JButton contrastButton;
+   private javax.swing.JTextField fpsField;
+   private javax.swing.JLabel fpsLabel;
    private javax.swing.JButton metadataButton;
    private javax.swing.JButton saveButton;
    private javax.swing.JButton showFolderButton;
