@@ -2,39 +2,39 @@ import ij.IJ;
 import ij.ImagePlus;
 
 
-void updateFrames(ImagePlus x, int nFrames) {
-	s = x.getStack();
-	w = x.getWindow();
+void updateFrames(ImagePlus imgp, int nFrames) {
+   stack = imgp.getStack();
+   win = imgp.getWindow();
 
    // Private:
-	ts = w.tSelector;
+   ts = win.tSelector;
 
-	// An instance of my stack class (OK):
-	s.nSlices_ = (s.nSlices_ / x.nFrames) * nFrames; // my stack
+	// An instance of AcquisitionVirtualStack (OK):
+	stack.nSlices_ = (stack.nSlices_ / imgp.nFrames) * nFrames; // my stack
 	
    // Private:
-   x.nFrames = nFrames;
+   imgp.nFrames = nFrames;
 
    // Public:
 	ts.setMaximum(nFrames + 1);
 }
 
-void updateDimensions(ImagePlus x, int nChannels, int nSlices, int nFrames) {
-	s = x.getStack();
-	w = x.getWindow();
+void updateDimensions(ImagePlus imgp, int nChannels, int nSlices, int nFrames) {
+	stack = imgp.getStack();
+	win = imgp.getWindow();
 
    // Private:
-	cs = w.cSelector;
-	zs = w.zSelector;
-	ts = w.tSelector;
+	cs = win.cSelector;
+	zs = win.zSelector;
+	ts = win.tSelector;
 
-	// An instance of my stack class (OK):
-	s.nSlices_ = nChannels * nSlices * nFrames; // my stack
+	// An instance of my AcquisitionVirtualStack (OK):
+	stack.nSlices_ = nChannels * nSlices * nFrames; // my stack
 	
    // Private:
-	x.nChannels = nChannels;
-	x.nSlices = nSlices;
-   x.nFrames = nFrames;
+	imgp.nChannels = nChannels;
+	imgp.nSlices = nSlices;
+   imgp.nFrames = nFrames;
 
    // Public:
 	cs.setMaximum(nChannels + 1);
@@ -44,4 +44,3 @@ void updateDimensions(ImagePlus x, int nChannels, int nSlices, int nFrames) {
 
 update();
 
-x = IJ.getImage();
