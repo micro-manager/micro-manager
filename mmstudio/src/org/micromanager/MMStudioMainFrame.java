@@ -47,7 +47,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.prefs.Preferences;
-import java.util.Vector;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -1804,33 +1803,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             SpringLayout.WEST, getContentPane());
       springLayout_.putConstraint(SpringLayout.WEST, buttonAutofocusTools_, 226,
             SpringLayout.WEST, getContentPane());
-      /*
-      final JButton editPreset_ = new JButton();
-      editPreset_.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent arg0) {
-      if (configPad_.editPreset()) {
-      configChanged_ = true;
-      updateGUI(true);
-      setConfigSaveButtonStatus(configChanged_);
-      }
-      }
-      });
-      editPreset_.setToolTipText("Edit selected preset");
-      editPreset_.setText("Edit");
-      getContentPane().add(editPreset_);
-
-      springLayout_.putConstraint(SpringLayout.SOUTH, editPreset_, 20,
-      SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.NORTH, editPreset_, 2,
-      SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.EAST, editPreset_, -85,
-      SpringLayout.EAST, getContentPane());
-      springLayout_.putConstraint(SpringLayout.WEST, editPreset_, -160,
-      SpringLayout.EAST, getContentPane());
-
-
-       */
-
 
       saveConfigButton_ = new JButton();
       saveConfigButton_.addActionListener(new ActionListener() {
@@ -1851,27 +1823,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             SpringLayout.EAST, getContentPane());
       springLayout_.putConstraint(SpringLayout.WEST, saveConfigButton_, -80,
             SpringLayout.EAST, getContentPane());
-
-      /*
-       * final JButton xyListButton_ = new JButton();
-       * xyListButton_.setIcon(SwingResourceManager.getIcon(
-       * MMStudioMainFrame.class, "icons/application_view_list.png"));
-       * xyListButton_.addActionListener(new ActionListener() { public void
-       * actionPerformed(ActionEvent arg0) { showXYPositionList(); } });
-       * xyListButton_
-       * .setToolTipText("Refresh all GUI controls directly from the hardware"
-       * ); xyListButton_.setFont(new Font("Arial", Font.PLAIN, 10));
-       * xyListButton_.setText("XY List");
-       * getContentPane().add(xyListButton_);
-       * springLayout_.putConstraint(SpringLayout.EAST, xyListButton_, 95,
-       * SpringLayout.WEST, getContentPane());
-       * springLayout_.putConstraint(SpringLayout.WEST, xyListButton_, 7,
-       * SpringLayout.WEST, getContentPane());
-       * springLayout_.putConstraint(SpringLayout.SOUTH, xyListButton_, 135,
-       * SpringLayout.NORTH, getContentPane());
-       * springLayout_.putConstraint(SpringLayout.NORTH, xyListButton_, 114,
-       * SpringLayout.NORTH, getContentPane());
-       */
    }
 
    private void handleException(Exception e, String msg) {
@@ -1926,7 +1877,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
 
    public void updateHistogram() {
-      // !!! ImagePlus imp = WindowManager.getCurrentImage();
       if (isImageWindowOpen()) {
          ImagePlus imp = imageWin_.getImagePlus();
 
@@ -1934,7 +1884,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             contrastPanel_.setContrastSettings(MMImageWindow.getContrastSettings8(), MMImageWindow.getContrastSettings16());
             contrastPanel_.update();
          }
-
       }
    }
 

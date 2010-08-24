@@ -52,6 +52,7 @@ import mmcorej.CMMCore;
 import mmcorej.StrVector;
 
 import org.micromanager.api.MMListenerInterface;
+import org.micromanager.api.MMListenerAdapter;
 import org.micromanager.utils.MMFrame;
 import org.micromanager.utils.PropertyValueCellEditor;
 import org.micromanager.utils.PropertyValueCellRenderer;
@@ -60,8 +61,6 @@ import org.micromanager.utils.PropertyTableData;
 import org.micromanager.utils.ShowFlags;
 
 import org.micromanager.utils.PropertyNameCellRenderer;
-import org.micromanager.utils.PropertyUsageCellEditor;
-import org.micromanager.utils.PropertyUsageCellRenderer;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -71,7 +70,7 @@ import org.micromanager.utils.ReportingUtils;
  *
  * aka the "Device/Property Browser"
  */
-public class PropertyEditor extends MMFrame implements MMListenerInterface {
+public class PropertyEditor extends MMFrame{
    private SpringLayout springLayout;
    private static final long serialVersionUID = 1507097881635431043L;
    
@@ -88,12 +87,28 @@ public class PropertyEditor extends MMFrame implements MMListenerInterface {
    private JCheckBox showReadonlyCheckBox_;
    private JScrollPane scrollPane_;
    private MMStudioMainFrame gui_;
-   
+
+   public class myMMListener extends MMListenerAdapter {
+        @Override
+       public void propertiesChangedAlert() {
+         refresh();
+      }
+
+        @Override
+      public void propertyChangedAlert(String device, String property, String value) {
+        data_.update(device, property, value);
+     }
+   }
+
+   private myMMListener myMMListener_ = new myMMListener();
+
    public void setGui(MMStudioMainFrame gui) {
 	   gui_ = gui;
-      gui_.addMMListener(this);
+      gui_.addMMListener(myMMListener_);
    }
-   
+
+
+
    public PropertyEditor() {
       super();
       Preferences root = Preferences.userNodeForPackage(this.getClass());
@@ -247,13 +262,7 @@ public class PropertyEditor extends MMFrame implements MMListenerInterface {
       springLayout.putConstraint(SpringLayout.NORTH, scrollPane_, 5, SpringLayout.SOUTH, showOtherCheckBox_);
    }
    
-   public void propertiesChangedAlert() {
-      refresh();
-   }
 
-   public void propertyChangedAlert(String device, String property, String value) {
-      data_.update(device, property, value);
-   }
 
    protected void refresh() {
 	   data_.gui_ = gui_;
