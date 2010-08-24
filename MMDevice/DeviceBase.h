@@ -685,13 +685,20 @@ protected:
    /**
    * Returns a vector with strings listing the devices of the requested types
    */
-   std::vector<std::string> GetLoadedDevicesOfType(MM::DeviceType devType)
+   // Microsoft compiler has trouble generating code to transport stl objects across DLL boundary
+   // so we use char*. Other compilers could conceivably have similar trouble, if for example,
+   // a dynamic library is linked with a different CRT than its client.
+   void GetLoadedDeviceOfType(MM::DeviceType devType, char* deviceName, const unsigned int deviceIterator )
    {
+      deviceName[0] = 0;
       if (callback_)
-         return callback_->GetLoadedDevicesOfType(this, devType);
-      std::vector<std::string> tmp;
-      return tmp;
+      {
+         std::vector<std::string> v = callback_->GetLoadedDevicesOfType(this, devType);
+         if( deviceIterator < v.size())
+            strncpy( deviceName, v.at(deviceIterator).c_str(), MM::MaxStrLength);
+      }
    }
+   
 
    /**
    * Sends an aray of bytes to the com port.

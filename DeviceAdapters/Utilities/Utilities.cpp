@@ -117,10 +117,23 @@ void MultiShutter::GetName(char* Name) const
                                                                              
 int MultiShutter::Initialize() 
 {
-  // get list with available Shutters.   
-  // TODO: this is a initialization parameter, which makes it harder for the end-user to set up!
+   // get list with available Shutters.   
+   // TODO: this is a initialization parameter, which makes it harder for the end-user to set up!
    std::vector<std::string> availableShutters;
-   availableShutters = GetLoadedDevicesOfType(MM::ShutterDevice);
+   availableShutters.clear();
+   char deviceName[MM::MaxStrLength];
+   unsigned int deviceIterator = 0;
+   for(;;)
+   {
+      GetLoadedDeviceOfType(MM::ShutterDevice, deviceName, deviceIterator++);
+      if( 0 < strlen(deviceName))
+      {
+         availableShutters.push_back(std::string(deviceName));
+      }
+      else
+         break;
+   }
+
    availableShutters_.push_back(g_Undefined);
    std::vector<std::string>::iterator iter;
    for (iter = availableShutters.begin(); iter != availableShutters.end(); iter++ ) {
@@ -239,8 +252,23 @@ void DAShutter::GetName(char* Name) const
                                                                              
 int DAShutter::Initialize() 
 {
-  // get list with available DA devices.   TODO: this is a initialization parameter, which makes it harder for the end-user to set up!
-   availableDAs_ = GetLoadedDevicesOfType(MM::SignalIODevice);
+   // get list with available DA devices.
+   // TODO: this is a initialization parameter, which makes it harder for the end-user to set up!
+   availableDAs_.clear();
+   char deviceName[MM::MaxStrLength];
+   unsigned int deviceIterator = 0;
+   for(;;)
+   {
+      GetLoadedDeviceOfType(MM::SignalIODevice, deviceName, deviceIterator++);
+      if( 0 < strlen(deviceName))
+      {
+         availableDAs_.push_back(std::string(deviceName));
+      }
+      else
+         break;
+   }
+
+
 
    CPropertyAction* pAct = new CPropertyAction (this, &DAShutter::OnDADevice);      
    std::string defaultDA = "Undefined";
@@ -371,8 +399,23 @@ void DAZStage::GetName(char* Name) const
                                                                              
 int DAZStage::Initialize() 
 {
-  // get list with available DA devices.   TODO: this is a initialization parameter, which makes it harder for the end-user to set up!
-   availableDAs_ = GetLoadedDevicesOfType(MM::SignalIODevice);
+   // get list with available DA devices.  
+   // TODO: this is a initialization parameter, which makes it harder for the end-user to set up!
+   char deviceName[MM::MaxStrLength];
+   availableDAs_.clear();
+   unsigned int deviceIterator = 0;
+   for(;;)
+   {
+      GetLoadedDeviceOfType(MM::SignalIODevice, deviceName, deviceIterator++);
+      if( 0 < strlen(deviceName))
+      {
+         availableDAs_.push_back(std::string(deviceName));
+      }
+      else
+         break;
+   }
+
+
 
    CPropertyAction* pAct = new CPropertyAction (this, &DAZStage::OnDADevice);      
    std::string defaultDA = "Undefined";
@@ -679,8 +722,23 @@ void AutoFocusStage::GetName(char* Name) const
                                                                              
 int AutoFocusStage::Initialize() 
 {
-  // get list with available AutoFocus devices.   TODO: this is a initialization parameter, which makes it harder for the end-user to set up!
-   availableAutoFocusDevices_ = GetLoadedDevicesOfType(MM::AutoFocusDevice);
+   // get list with available AutoFocus devices.
+   // TODO: this is a initialization parameter, which makes it harder for the end-user to set up!
+   char deviceName[MM::MaxStrLength];
+   unsigned int deviceIterator = 0;
+   for(;;)
+   {
+      GetLoadedDeviceOfType(MM::AutoFocusDevice, deviceName, deviceIterator++);
+      if( 0 < strlen(deviceName))
+      {
+         availableAutoFocusDevices_.push_back(std::string(deviceName));
+      }
+      else
+         break;
+   }
+
+
+
 
    CPropertyAction* pAct = new CPropertyAction (this, &AutoFocusStage::OnAutoFocusDevice);      
    std::string defaultAutoFocus = "Undefined";
@@ -848,8 +906,24 @@ void StateDeviceShutter::GetName(char* Name) const
                                                                              
 int StateDeviceShutter::Initialize() 
 {
-  // get list with available DA devices. 
-   availableStateDevices_ = GetLoadedDevicesOfType(MM::StateDevice);
+   // get list with available DA devices. 
+   char deviceName[MM::MaxStrLength];
+   unsigned int deviceIterator = 0;
+   for(;;)
+   {
+      GetLoadedDeviceOfType(MM::StateDevice, deviceName, deviceIterator++);
+      if( 0 < strlen(deviceName))
+      {
+         availableStateDevices_.push_back(std::string(deviceName));
+      }
+      else
+         break;
+   }
+
+
+
+
+
    std::vector<std::string>::iterator it;
    it = availableStateDevices_.begin();
    availableStateDevices_.insert(it, g_NoDevice);

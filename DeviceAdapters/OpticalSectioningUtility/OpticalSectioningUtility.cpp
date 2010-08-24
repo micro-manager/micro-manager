@@ -90,8 +90,20 @@ int OpticalSectioningUtility::Initialize()
 
    InitializeDefaultErrorMessages();
 
-
-   std::vector<std::string> availableCameras = GetLoadedDevicesOfType(MM::CameraDevice);
+   std::vector<std::string> availableCameras ;
+   availableCameras.clear();
+   char deviceName[MM::MaxStrLength];
+   unsigned int deviceIterator = 0;
+   for(;;)
+   {
+      GetLoadedDeviceOfType(MM::CameraDevice, deviceName, deviceIterator++);
+      if( 0 < strlen(deviceName))
+      {
+         availableCameras.push_back(std::string(deviceName));
+      }
+      else
+         break;
+   }
 
    CPropertyAction* pAct1 = new CPropertyAction (this, &OpticalSectioningUtility::OnPhysicalCamera);
    CreateProperty(g_CameraProperty,"",MM::String, false, pAct1);
@@ -101,7 +113,20 @@ int OpticalSectioningUtility::Initialize()
       AddAllowedValue(g_CameraProperty,(*iter).c_str());
    }
 
-   std::vector<std::string> availableSLMs = GetLoadedDevicesOfType(MM::SLMDevice);
+   std::vector<std::string> availableSLMs;
+   availableSLMs.clear();
+   deviceIterator = 0;
+   for(;;)
+   {
+      GetLoadedDeviceOfType(MM::SLMDevice, deviceName, deviceIterator++);
+      if( 0 < strlen(deviceName))
+      {
+         availableSLMs.push_back(std::string(deviceName));
+      }
+      else
+         break;
+   }
+
 
    CPropertyAction* pAct2 = new CPropertyAction (this, &OpticalSectioningUtility::OnSLM);
    CreateProperty(g_SLMProperty,"",MM::String, false, pAct2);

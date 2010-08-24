@@ -2364,8 +2364,20 @@ int DFOffsetStage::Initialize()
    if ((status & 1) != 1)
       return ERR_MODULE_NOT_FOUND;
 
-  // get list with available AutoFocus devices.   TODO: this is a initialization parameter, which makes it harder for the end-user to set up!
-   availableAutoFocusDevices_ = GetLoadedDevicesOfType(MM::AutoFocusDevice);
+   // get list with available AutoFocus devices.   
+   //TODO: this is a initialization parameter, which makes it harder for the end-user to set up!
+   char deviceName[MM::MaxStrLength];
+   int deviceIterator = 0;
+   for(;;)
+   {
+      GetLoadedDeviceOfType(MM::AutoFocusDevice, deviceName, deviceIterator++);
+      if( 0 < strlen(deviceName))
+      {
+         availableAutoFocusDevices_.push_back(std::string(deviceName));
+      }
+      else
+         break;
+   }
 
    CPropertyAction* pAct = new CPropertyAction (this, &DFOffsetStage::OnAutoFocusDevice);      
    std::string defaultAutoFocus = "Undefined";
