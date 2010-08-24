@@ -294,19 +294,19 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       i5dWin.setAcquisitionData(ad);
       i5dWin.setAcqSavePath(openAcqDirectory_);
       i5dWin.addWindowListener(new WindowAdapter() {
-
+         @Override
          public void windowGainedFocus(WindowEvent e) {
             updateHistogram();
          }
       });
       i5dWin.addWindowListener(new WindowAdapter() {
-
+         @Override
          public void windowGainedFocus(WindowEvent e) {
             updateHistogram();
          }
       });
       i5dWin.addWindowListener(new WindowAdapter() {
-
+         @Override
          public void windowActivated(WindowEvent e) {
             updateHistogram();
          }
@@ -387,6 +387,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          super();
       }
 
+      @Override
       public void onPropertiesChanged() {
          // TODO: remove test once acquisition engine is fully multithreaded
          if (engine_ != null && engine_.isAcquisitionRunning()) {
@@ -403,6 +404,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          }
       }
 
+      @Override
       public void onPropertyChanged(String deviceName, String propName, String propValue) {
          core_.logMessage("Notification for Device: " + deviceName + " Property: " +
                propName + " changed to value: " + propValue);
@@ -414,29 +416,35 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          }
       }
 
+      @Override
       public void onConfigGroupChanged(String groupName, String newConfig) {
          configPad_.refreshGroup(groupName, newConfig);
       }
 
+      @Override
       public void onPixelSizeChanged(double newPixelSizeUm) {
          updatePixSizeUm (newPixelSizeUm);
       }
 
+      @Override
       public void onStagePositionChanged(String deviceName, double pos) {
          if (deviceName.equals(zStageLabel_))
             updateZPos(pos);
       }
 
+      @Override
       public void onStagePositionChangedRelative(String deviceName, double pos) {
          if (deviceName.equals(zStageLabel_))
             updateZPosRelative(pos);
       }
 
+      @Override
       public void onXYStagePositionChanged(String deviceName, double xPos, double yPos) {
          if (deviceName.equals(xyStageLabel_))
             updateXYPos(xPos, yPos);
       }
 
+      @Override
       public void onXYStagePositionChangedRelative(String deviceName, double xPos, double yPos) {
          if (deviceName.equals(xyStageLabel_))
             updateXYPosRelative(xPos, yPos);
@@ -680,7 +688,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
       textFieldExp_ = new JTextField();
       textFieldExp_.addFocusListener(new FocusAdapter() {
-
+         @Override
          public void focusLost(FocusEvent fe) {
             setExposure();
          }
@@ -849,7 +857,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
          public void actionPerformed(final ActionEvent e) {
             new Thread() {
-
+               @Override
                public void run() {
                   openAcquisitionData();
                }
@@ -1461,11 +1469,13 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       // add window listeners
       addWindowListener(new WindowAdapter() {
 
+         @Override
          public void windowClosing(WindowEvent e) {
             running_ = false;
             closeSequence();
          }
 
+         @Override
          public void windowOpened(WindowEvent e) {
             // -------------------
             // initialize hardware
@@ -3476,7 +3486,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    public void setBackgroundStyle(String backgroundType) {
       setBackground(guiColors_.background.get((options_.displayBackground)));
       paint(MMStudioMainFrame.this.getGraphics());
-      // configPad_.setDisplayStyle(options_.displayBackground, guiColors_);
       if (acqControlWin_ != null) {
          acqControlWin_.setBackgroundStyle(options_.displayBackground);
       }
@@ -3564,7 +3573,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             throw new MMScriptException("Script interrupted by the user!");
          }
       }
-
    }
 
    public void startBurstAcquisition() throws MMScriptException {
@@ -3727,7 +3735,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       } catch (Exception e) {
          ReportingUtils.showError(e);
       }
-
    }
 
    public void initializeAcquisition(String name, int width, int height,
@@ -3743,7 +3750,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    public void closeAcquisition(String name) throws MMScriptException {
       acqMgr_.closeAcquisition(name);
-
    }
 
    public void closeAcquisitionImage5D(String title) throws MMScriptException {
