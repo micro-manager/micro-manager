@@ -129,6 +129,7 @@ public class SplitView extends MMDialog
       loadPosition(100, 100);
 
       setBackground(guiColors_.background.get(options_.displayBackground));
+      parent_.addMMBackgroundListener(this);
 
       SpringLayout sp = new SpringLayout();
       getContentPane().setLayout(sp);

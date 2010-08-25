@@ -59,6 +59,7 @@ import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 import mmcorej.StrVector;
 
+import org.micromanager.api.DeviceControlGUI;
 import org.micromanager.navigation.MultiStagePosition;
 import org.micromanager.navigation.PositionList;
 import org.micromanager.navigation.StagePosition;
@@ -67,15 +68,6 @@ import org.micromanager.utils.MMDialog;
 
 import com.swtdesigner.SwingResourceManager;
 import org.micromanager.utils.ReportingUtils;
-
-
- 
- 
-
-
-
-
-
 
 
 public class PositionListDlg extends MMDialog implements MouseListener {
@@ -90,6 +82,7 @@ public class PositionListDlg extends MMDialog implements MouseListener {
    private JTable axisTable_;
    private SpringLayout springLayout;
    private CMMCore core_;
+   private DeviceControlGUI dGUI_;
    private MMOptions opts_;
    private Preferences prefs_;
    private TileCreatorDlg tileCreatorDlg_;
@@ -336,7 +329,8 @@ public class PositionListDlg extends MMDialog implements MouseListener {
    /**
     * Create the dialog
     */
-   public PositionListDlg(CMMCore core, PositionList posList, MMOptions opts) {
+   public PositionListDlg(CMMCore core, DeviceControlGUI dGUI, 
+                           PositionList posList, MMOptions opts) {
       super();
       addWindowListener(new WindowAdapter() {
          public void windowClosing(WindowEvent arg0) {
@@ -344,6 +338,7 @@ public class PositionListDlg extends MMDialog implements MouseListener {
          }
       });
       core_ = core;
+      dGUI_ = dGUI;
       opts_ = opts;
       guiColors_ = new GUIColors();
       setTitle("Stage-position List");
@@ -357,6 +352,9 @@ public class PositionListDlg extends MMDialog implements MouseListener {
 
       Rectangle r = getBounds();
       loadPosition(r.x, r.y, r.width, r.height);
+
+      setBackground(dGUI_.getBackgroundColor());
+      dGUI_.addMMBackgroundListener(this);
 
       final JScrollPane scrollPane = new JScrollPane();
       getContentPane().add(scrollPane);
@@ -952,6 +950,7 @@ public void addPosition(MultiStagePosition msp, String label) {
    protected void showCreateTileDlg() {
       if (tileCreatorDlg_ == null) {
          tileCreatorDlg_ = new TileCreatorDlg(core_, opts_, this);
+         dGUI_.addMMBackgroundListener(tileCreatorDlg_);
       }
       tileCreatorDlg_.setBackground(guiColors_.background.get(opts_.displayBackground));
       tileCreatorDlg_.setVisible(true);

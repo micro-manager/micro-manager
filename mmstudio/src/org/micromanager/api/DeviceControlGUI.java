@@ -23,6 +23,9 @@
 //
 package org.micromanager.api;
 
+import java.awt.Color;
+import java.awt.Component;
+
 import org.micromanager.navigation.PositionList;
 import org.micromanager.utils.AutofocusManager;
 import org.micromanager.utils.ContrastSettings;
@@ -45,6 +48,17 @@ public interface DeviceControlGUI {
    public void enableLiveMode(boolean enable);
    public void setBackgroundStyle(String backgroundType); 
    public String getBackgroundStyle();
+   public Color getBackgroundColor();
+   /**
+    * Lets Components register themselves so that their background can be  
+    * manipulated by the Micro-Manager UI
+    */
+   public void addMMBackgroundListener(Component frame);
+   /**
+    * Lets Components remove themselves from the list whose background gets
+    * changed by the Micro-Manager UI
+    */
+   public void removeMMBackgroundListener(Component frame);
    public void setConfigChanged(boolean status);
    public void refreshGUI();
    public void applyContrastSettings(ContrastSettings contrast8_, ContrastSettings contrast16_);
@@ -56,6 +70,7 @@ public interface DeviceControlGUI {
     */
    public void makeActive();
    
+
    // acquisition control
    public void startBurstAcquisition() throws MMScriptException;
    public void runBurstAcquisition() throws MMScriptException;

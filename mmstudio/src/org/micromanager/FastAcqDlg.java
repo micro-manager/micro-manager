@@ -131,6 +131,8 @@ public class FastAcqDlg extends JDialog implements GUIStatus {
       
       setTitle("Burst acquisition");
       setBackground(guiColors_.background.get(parentGUI_.getBackgroundStyle()));
+      parentGUI_.addMMBackgroundListener(this);
+      
       setResizable(false);
       getContentPane().setLayout(null);
       //

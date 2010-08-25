@@ -139,7 +139,6 @@ public class GraphFrame extends MMFrame {
 
       panel_ = new GraphPanel();
       panel_.setBorder(new LineBorder(Color.black, 1, false));
-      //panel.setBackground(Color.WHITE);
       getContentPane().add(panel_);
       springLayout.putConstraint(SpringLayout.SOUTH, panel_, -9, SpringLayout.SOUTH, getContentPane());
       springLayout.putConstraint(SpringLayout.EAST, panel_, -9, SpringLayout.EAST, getContentPane());

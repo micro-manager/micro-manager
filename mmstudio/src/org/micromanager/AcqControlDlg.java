@@ -770,7 +770,6 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
         acqEng_ = acqEng;
 
         getContentPane().setLayout(null);
-        //getContentPane().setFocusTraversalPolicyProvider(true);
         setResizable(false);
         setTitle("Multi-dimensional Acquisition");
         setBackground(guiColors_.background.get(gui_.getBackgroundStyle()));

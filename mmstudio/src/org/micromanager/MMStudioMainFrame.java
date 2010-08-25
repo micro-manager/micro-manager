@@ -29,6 +29,7 @@ import ij.process.ImageStatistics;
 import ij.process.ShortProcessor;
 
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
@@ -201,9 +202,9 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private List<MMListenerInterface> MMListeners_
            = (List<MMListenerInterface>)
            Collections.synchronizedList(new ArrayList<MMListenerInterface>());
-   private List<JFrame> MMFrames_
-           = (List<JFrame>)
-           Collections.synchronizedList(new ArrayList<JFrame>());
+   private List<Component> MMFrames_
+           = (List<Component>)
+           Collections.synchronizedList(new ArrayList<Component>());
    private AutofocusManager afMgr_;
    private final static String DEFAULT_CONFIG_FILE_NAME = "MMConfig_demo.cfg";
    private ArrayList<String> MRUConfigFiles_;
@@ -387,7 +388,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
     * Lets JComponents register themselves so that their background can be
     * manipulated
     */
-   public void addMMBackgroundListener(JFrame comp) {
+   public void addMMBackgroundListener(Component comp) {
       if (MMFrames_.contains(comp))
          return;
       MMFrames_.add(comp);
@@ -397,7 +398,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
     * Lets JComponents remove themselves from the list whose background gets
     * changes
     */
-   public void removeMMBackgroundListener(JFrame comp) {
+   public void removeMMBackgroundListener(Component comp) {
       if (!MMFrames_.contains(comp))
          return;
       MMFrames_.remove(comp);
@@ -1564,6 +1565,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             // This window needs to be created in order to properly set the "ChannelGroup"
             // based on the Multi-D parameters
             acqControlWin_ = new AcqControlDlg(engine_, mainPrefs_, MMStudioMainFrame.this);
+            addMMBackgroundListener(acqControlWin_);
 
             configPad_.setCore(core_);
             if (parent != null) {
@@ -1934,6 +1936,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       profileWin_.setAutoScale();
       profileWin_.setTitle("Live line profile");
       profileWin_.setBackground(guiColors_.background.get((options_.displayBackground)));
+      addMMBackgroundListener(profileWin_);
       profileWin_.setVisible(true);
    }
 
@@ -2063,6 +2066,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       }
       creatingImageWindow_.setValue(true);
       MMImageWindow win = imageWin_;
+      removeMMBackgroundListener(imageWin_);
       imageWin_ = null;
       try {
          if (win != null) {
@@ -2076,6 +2080,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          core_.logMessage("createImageWin1");
 
          win.setBackground(guiColors_.background.get((options_.displayBackground)));
+         addMMBackgroundListener(win);
          setIJCal(win);
 
          // listeners
@@ -2290,6 +2295,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          scriptPanel_.insertScriptingObject(SCRIPT_ACQENG_OBJECT, engine_);
          scriptPanel_.setParentGUI(this);
          scriptPanel_.setBackground(guiColors_.background.get((options_.displayBackground)));
+         addMMBackgroundListener(scriptPanel_);
+
       }
       scriptPanel_.setVisible(true);
 
@@ -3054,19 +3061,22 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
         }
 
       if (profileWin_ != null) {
+         removeMMBackgroundListener(profileWin_);
          profileWin_.dispose();
       }
 
       if (scriptPanel_ != null) {
+         removeMMBackgroundListener(scriptPanel_);
          scriptPanel_.closePanel();
       }
 
       if (propertyBrowser_ != null) {
+         removeMMBackgroundListener(propertyBrowser_);
          propertyBrowser_.dispose();
       }
 
-
       if (acqControlWin_ != null) {
+         removeMMBackgroundListener(acqControlWin_);
          acqControlWin_.close();
       }
 
@@ -3384,7 +3394,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          }
 
          acqControlWin_.setVisible(true);
-         //acqControlWin_.updateGUIContents();
 
          // TODO: this call causes a strange exception the first time the
          // dialog is created
@@ -3434,8 +3443,9 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
     */
    public void showXYPositionList() {
       if (posListDlg_ == null) {
-         posListDlg_ = new PositionListDlg(core_, posList_, options_);
-         posListDlg_.setBackground(guiColors_.background.get((options_.displayBackground)));
+         posListDlg_ = new PositionListDlg(core_, this, posList_, options_);
+         //posListDlg_.setBackground(guiColors_.background.get((options_.displayBackground)));
+         //addMMBackgroundListener(posListDlg_);
       }
       posListDlg_.setVisible(true);
    }
@@ -3461,35 +3471,14 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
 
    /*
-    * Changes background color of this window
+    * Changes background color of this window and all other MM windows
     */
    public void setBackgroundStyle(String backgroundType) {
       setBackground(guiColors_.background.get((options_.displayBackground)));
       paint(MMStudioMainFrame.this.getGraphics());
-      if (acqControlWin_ != null) {
-         acqControlWin_.setBackgroundStyle(options_.displayBackground);
-      }
-      if (profileWin_ != null) {
-         profileWin_.setBackground(guiColors_.background.get((options_.displayBackground)));
-      }
-      if (posListDlg_ != null) {
-         posListDlg_.setBackground(guiColors_.background.get((options_.displayBackground)));
-      }
-      if (imageWin_ != null) {
-         imageWin_.setBackground(guiColors_.background.get((options_.displayBackground)));
-      }
-      if (fastAcqWin_ != null) {
-         fastAcqWin_.setBackground(guiColors_.background.get((options_.displayBackground)));
-      }
-      if (scriptPanel_ != null) {
-         scriptPanel_.setBackground(guiColors_.background.get((options_.displayBackground)));
-      }
-      if (splitView_ != null) {
-         splitView_.setBackground(guiColors_.background.get((options_.displayBackground)));
-      }
       
-      // sets background of all registered JComponents
-      for (JFrame comp:MMFrames_) {
+      // sets background of all registered Components
+      for (Component comp:MMFrames_) {
          if (comp != null)
             comp.setBackground(guiColors_.background.get((options_.displayBackground)));
        }
@@ -3572,6 +3561,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       testForAbortRequests();
       if (fastAcqWin_ == null) {
          fastAcqWin_ = new FastAcqDlg(core_, this);
+         addMMBackgroundListener(fastAcqWin_);
       }
       fastAcqWin_.setVisible(true);
       fastAcqWin_.start();

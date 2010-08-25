@@ -19,16 +19,14 @@
 //               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-// CVS:          $Id: DeviceControlGUI.java 869 2008-02-02 00:15:51Z nenad $
-//
+
 package org.micromanager.api;
 
 import ij.gui.ImageWindow;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.geom.Point2D;
 import java.util.Map;
-
-import javax.swing.JFrame;
 
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
@@ -423,16 +421,16 @@ public interface ScriptInterface {
    public void removeMMListener(MMListenerInterface oldL);
 
    /**
-    * Lets JComponents register themselves so that their background can be
+    * Lets Components register themselves so that their background can be
     * manipulated by the Micro-Manager UI
     */
-   public void addMMBackgroundListener(JFrame frame);
+   public void addMMBackgroundListener(Component frame);
 
    /**
-    * Lets JComponents remove themselves from the list whose background gets
+    * Lets Components remove themselves from the list whose background gets
     * changed by the Micro-Manager UI
     */
-   public void removeMMBackgroundListener(JFrame frame);
+   public void removeMMBackgroundListener(Component frame);
 
    /**
     * Returns the current color of the main window so that it can be used in
