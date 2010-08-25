@@ -18,7 +18,7 @@ public class AcquisitionManager {
       if (acquisitionExists(name))
          throw new MMScriptException("The name is in use");
       else {
-         MMVirtualAcquisition virtAcq = new MMVirtualAcquisition(name, rootDir, false);
+         MMVirtualAcquisition virtAcq = new MMVirtualAcquisition(name, rootDir, false, true);
          acqs_.put(name, virtAcq);
          virtAcq.initialize();
              virtAcq.show();
@@ -40,10 +40,7 @@ public class AcquisitionManager {
       if (acquisitionExists(name)) {
          throw new MMScriptException("The name is in use");
       } else {
-         if (!virtual)
-            acqs_.put(name, new MMAcquisition(name, rootDir, show));
-         else
-            acqs_.put(name, new MMVirtualAcquisition(name, rootDir, true));
+        acqs_.put(name, new MMVirtualAcquisition(name, rootDir, true, virtual));
       }
    }
    

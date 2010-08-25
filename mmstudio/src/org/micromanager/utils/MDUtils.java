@@ -30,6 +30,10 @@ public class MDUtils {
       }
    }
 
+   public static void putInt(Map<String,String> map, String key, int val) throws Exception {
+      map.put(key, NumberUtils.intToDisplayString(val));
+   }
+
    public static int getPositionIndex(Map<String,String> map) throws Exception {
       return getInt(map, "Acquisition-PositionIndex");
    }
@@ -40,6 +44,14 @@ public class MDUtils {
 
    public static int getHeight(Map<String,String> map) throws Exception {
       return getInt(map, "Image-Height");
+   }
+
+   public static void setWidth(Map<String,String> map, int width) throws Exception {
+      putInt(map, "Image-Width", width);
+   }
+
+   public static void setHeight(Map<String,String> map, int height) throws Exception {
+      putInt(map, "Image-Height", height);
    }
 
    public static int getSliceIndex(Map<String,String> map) throws Exception {

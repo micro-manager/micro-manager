@@ -164,8 +164,12 @@ public class ImageTask implements Runnable {
       else if(core_.getNumberOfComponents() == 4)
          lbl = "RGB";
       MDUtils.put(md, "Image-PixelType", lbl + bits);
-      MDUtils.put(md, "Image-Width", core_.getImageWidth());
-      MDUtils.put(md, "Image-Height", core_.getImageHeight());
+      try {
+         MDUtils.setWidth(md, (int) core_.getImageWidth());
+         MDUtils.setHeight(md, (int) core_.getImageHeight());
+      } catch (Exception e) {
+         ReportingUtils.logError(e);
+      }
       long dTime = System.nanoTime() - eng_.getStartTimeNs();
       MDUtils.put(md, "Acquisition-Time", ((double) dTime) / 1e9);
 

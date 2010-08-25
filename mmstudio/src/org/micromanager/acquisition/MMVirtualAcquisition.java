@@ -9,8 +9,6 @@ import java.awt.Color;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import mmcorej.TaggedImage;
 import org.json.JSONObject;
 import org.micromanager.metadata.AcquisitionData;
@@ -40,16 +38,18 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
    private Map<String,String>[] displaySettings_;
    private AcquisitionVirtualStack virtualStack_;
    private String pixelType_;
-   private ImageFileManagerInterface imageFileManager_;
+   private ImageFileManagerInterface imageFileManager_ = null;
    private Map<String,String> summaryMetadata_ = null;
    private final boolean newData_;
    private Map<String,String> systemMetadata_ = null;
    private int numGrayChannels_;
+   private final boolean diskCached_;
 
-   public MMVirtualAcquisition(String name, String dir, boolean newData) {
+   MMVirtualAcquisition(String name, String dir, boolean newData, boolean virtual) {
       name_ = name;
       dir_ = dir;
       newData_ = newData;
+      diskCached_ = virtual;
    }
 
    public void setDimensions(int frames, int channels, int slices) throws MMScriptException {
@@ -91,9 +91,9 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       else if ((depth_ == 4 || depth_ == 8))
          numComponents_ = 3;
 
-      summaryMetadata_.put("Image-Width", NumberUtils.intToCoreString(width_));
-      summaryMetadata_.put("Image-Height", NumberUtils.intToCoreString(height_));
       try {
+         MDUtils.setWidth(summaryMetadata_, width);
+         MDUtils.setHeight(summaryMetadata_, height);
          MDUtils.setImageType(summaryMetadata_, type);
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
@@ -155,7 +155,9 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
    }
 
    public void initialize() throws MMScriptException {
-      imageFileManager_ = new DefaultImageFileManager(dir_, newData_, summaryMetadata_, systemMetadata_);
+      if (diskCached_)
+         imageFileManager_ = new DefaultImageFileManager(dir_, newData_,
+                 summaryMetadata_, systemMetadata_);
       imageCache_ = new MMImageCache(imageFileManager_);
       if (!newData_) {
          try {
@@ -172,7 +174,8 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
          }
       }
       numGrayChannels_ = numComponents_ * numChannels_;
-      virtualStack_ = new AcquisitionVirtualStack(width_, height_, null, dir_, imageCache_, numGrayChannels_ * numSlices_ * numFrames_);
+      virtualStack_ = new AcquisitionVirtualStack(width_, height_, null,
+              imageCache_, numGrayChannels_ * numSlices_ * numFrames_);
       try {
          virtualStack_.setType(MDUtils.getSingleChannelType(summaryMetadata_));
       } catch (Exception ex) {
@@ -181,7 +184,8 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       initialized_ = true;
    }
 
-   public void insertImage(Object pixels, int frame, int channel, int slice) throws MMScriptException {
+   public void insertImage(Object pixels, int frame, int channel, int slice)
+           throws MMScriptException {
       throw new UnsupportedOperationException("Not supported yet.");
    }
 

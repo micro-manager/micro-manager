@@ -80,6 +80,8 @@ public class MetadataViewer extends javax.swing.JFrame
       metadataTableScrollPane = new javax.swing.JScrollPane();
       metadataTable = new javax.swing.JTable();
       jCheckBox1 = new javax.swing.JCheckBox();
+      jButton1 = new javax.swing.JButton();
+      jButton2 = new javax.swing.JButton();
 
       jTextArea1.setColumns(20);
       jTextArea1.setRows(5);
@@ -157,33 +159,46 @@ public class MetadataViewer extends javax.swing.JFrame
          ImageLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(ImageLayout.createSequentialGroup()
             .add(jCheckBox1)
-            .addContainerGap(114, Short.MAX_VALUE))
-         .add(metadataTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 325, Short.MAX_VALUE)
+            .addContainerGap(56, Short.MAX_VALUE))
+         .add(metadataTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 267, Short.MAX_VALUE)
       );
       ImageLayout.setVerticalGroup(
          ImageLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(ImageLayout.createSequentialGroup()
             .add(jCheckBox1)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-            .add(metadataTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 231, Short.MAX_VALUE))
+            .add(metadataTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 208, Short.MAX_VALUE))
       );
 
       jTabbedPane1.addTab("Image", Image);
+
+      jButton1.setText("Save");
+
+      jButton2.setText("Close");
 
       org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
       getContentPane().setLayout(layout);
       layout.setHorizontalGroup(
          layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(layout.createSequentialGroup()
-            .addContainerGap()
-            .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 346, Short.MAX_VALUE)
+            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+               .add(layout.createSequentialGroup()
+                  .add(jButton1)
+                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                  .add(jButton2))
+               .add(layout.createSequentialGroup()
+                  .add(13, 13, 13)
+                  .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 288, Short.MAX_VALUE)))
             .addContainerGap())
       );
       layout.setVerticalGroup(
          layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(layout.createSequentialGroup()
-            .addContainerGap()
-            .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 305, Short.MAX_VALUE)
+            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+               .add(jButton1)
+               .add(jButton2))
+            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+            .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 282, Short.MAX_VALUE)
             .addContainerGap())
       );
 
@@ -282,6 +297,8 @@ public class MetadataViewer extends javax.swing.JFrame
    private javax.swing.JScrollPane Comments;
    private javax.swing.JPanel Image;
    private javax.swing.JScrollPane Summary;
+   private javax.swing.JButton jButton1;
+   private javax.swing.JButton jButton2;
    private javax.swing.JCheckBox jCheckBox1;
    private javax.swing.JScrollPane jScrollPane2;
    private javax.swing.JTabbedPane jTabbedPane1;

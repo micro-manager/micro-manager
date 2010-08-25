@@ -7,8 +7,6 @@ package org.micromanager.acquisition;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
@@ -40,7 +38,6 @@ import org.micromanager.utils.SliceMode;
  * @author arthur
  */
 public class AcquisitionWrapperEngine implements AcquisitionEngine {
-
    private CMMCore core_;
    private MMStudioMainFrame gui_;
    private PositionList posList_ = new PositionList();

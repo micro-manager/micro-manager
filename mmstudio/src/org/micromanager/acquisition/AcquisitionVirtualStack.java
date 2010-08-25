@@ -11,8 +11,6 @@ import java.io.File;
 import java.io.FileFilter;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import mmcorej.TaggedImage;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.MDUtils;
@@ -26,24 +24,24 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
 
    private MMImageCache imageCache_;
    private HashMap<Integer,String> filenames_ = new HashMap();
-
+   private HashMap<Integer,Integer> serialNos_ = new HashMap();
+   
    protected int width_, height_, type_;
    private int nSlices_;
-   private String path_;
    private ImagePlus imagePlus_;
 
-   public AcquisitionVirtualStack(int width, int height, ColorModel cm, String path, MMImageCache imageCache, int nSlices)
+   public AcquisitionVirtualStack(int width, int height, ColorModel cm, MMImageCache imageCache, int nSlices)
    {
-      super(width, height, cm, path);
+      super(width, height, cm, "");
       imageCache_ = imageCache;
       width_ = width;
       height_ = height;
       nSlices_ = nSlices;
-      path_ = path;
    }
 
-   public AcquisitionVirtualStack(int width, int height, ColorModel cm, String path, MMImageCache imageCache) {
-      this(width, height, cm, path, imageCache, 0);
+   /*
+   public AcquisitionVirtualStack(int width, int height, ColorModel cm, MMImageCache imageCache) {
+      this(width, height, cm, "", imageCache, 0);
       final File dir = new File(path);
       FileFilter filter = new FileFilter() {
          public boolean accept(File pathname) {
@@ -58,15 +56,12 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
          filenames_.put(i, file.getAbsolutePath());
          ++i;
       }
-   }
+   }*/
 
    public void setImagePlus(ImagePlus imagePlus) {
       imagePlus_ = imagePlus;
    }
 
-   public String getPath() {
-      return path_;
-   }
    
    public void setType(int type) {
       type_ = type;
