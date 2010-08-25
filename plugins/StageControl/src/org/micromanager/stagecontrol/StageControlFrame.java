@@ -72,6 +72,9 @@ public class StageControlFrame extends javax.swing.JFrame {
 
        setLocation(frameXPos_, frameYPos_);
 
+       setBackground(gui_.getBackgroundColor());
+       gui_.addMMBackgroundListener(this);
+
        jTextField1.setText(nf_.format(smallMovement_));
        jTextField2.setText(nf_.format(mediumMovement_));
        jTextField3.setText(nf_.format(largeMovement_));
