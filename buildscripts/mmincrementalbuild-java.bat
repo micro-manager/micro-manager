@@ -32,34 +32,33 @@ cd autofocus
 call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build32.xml compileAutofocus buildAutofocus 
 cd ..
 
-cd plugins\Tracker 
-call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build32.xml  compile build 
-cd ..\..
-
-pushd plugins\PixelCalibrator 
-call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build32.xml compileMMPixelCalibrator buildMMPixelCalibrator
-popd
-
-pushd plugins\SlideExplorer
-call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml cleanMMSlideExplorer compileMMSlideExplorer buildMMSlideExplorer
-popd
-
-pushd plugins\StageControl
-call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml clean compile build
-popd
-
-pushd plugins\Projector
-call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml clean compile build
-popd
-
-pushd plugins\Recall
-call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml clean compile build
-popd
-
 pushd plugins\Bleach
 call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml compile build
 popd
 
+pushd plugins\PixelCalibrator 
+call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml compileMMPixelCalibrator buildMMPixelCalibrator
+popd
+
+pushd plugins\Projector
+call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml compile build
+popd
+
+pushd plugins\Recall
+call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml compile build
+popd
+
+pushd plugins\SlideExplorer
+call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml compileMMSlideExplorer buildMMSlideExplorer
+popd
+
+pushd plugins\StageControl
+call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml compile build
+popd
+
+pushd plugins\Tracker 
+call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml compile build 
+popd
 
 
 set DEVICELISTBUILDER=1
