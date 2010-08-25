@@ -50,6 +50,8 @@ public interface AcquisitionEngine {
    
    // initialization
    public void setCore(CMMCore core_, AutofocusManager afMgr);
+
+   
    public void setPositionList(PositionList posList);
    public void setParentGUI(DeviceControlGUI parent);
 
@@ -216,16 +218,53 @@ public interface AcquisitionEngine {
    public void keepShutterOpenForChannels(boolean open);
 
    /**
-    * Returns flag indicating whether to override autoshutter behavior during channel acquisition 
+    * Returns flag indicating whether to override autoshutter behavior
+    * during channel acquisition
     */
    public boolean isShutterOpenForChannels();
 
+   /**
+    * Sets a flag that signals whether a Z-stack will be acquired
+    * @param boolean1 - acquires Z-stack when true
+    */
    public void enableZSliceSetting(boolean boolean1);
+
+   /**
+    * Sets a flag that signals whether multiple positions will be acquired
+    * @param selected - acquires at multiple stage positions when true
+    */
    public void enableMultiPosition(boolean selected);
+
+   /**
+    * Returns true when multiple positions will be acquired
+    * @return whether or not acquisition will be executed at multiple stage
+    * positions
+    */
    public boolean isMultiPositionEnabled();
+
+   /**
+    * Access to the channels used in this acquisition
+    * @return - Channels used in this acquisition
+    */
    public ArrayList<ChannelSpec> getChannels();
+
+   /**
+    * Setss the channels to be used in this acquistion
+    * @param channels
+    */
    public void setChannels(ArrayList<ChannelSpec> channels);
+
+   /**
+    * Returns path to the location where the acquisitions will be stored on
+    * disk
+    * @return path to the storage place on disk
+    */
    public String getRootName();
+
+   /**
+    *
+    * @param absolutePath
+    */
    public void setRootName(String absolutePath);
    public void setCameraConfig(String config);
    public void setDirName(String text);
@@ -233,8 +272,11 @@ public interface AcquisitionEngine {
    /**
     * @deprecated
     */
-   public boolean addChannel(String name, double exp, double offset, ContrastSettings s8, ContrastSettings s16, int skip, Color c);
-   public boolean addChannel(String name, double exp, Boolean doZStack, double offset, ContrastSettings s8, ContrastSettings s16, int skip, Color c);
+   public boolean addChannel(String name, double exp, double offset, 
+           ContrastSettings s8, ContrastSettings s16, int skip, Color c);
+
+   public boolean addChannel(String name, double exp, Boolean doZStack,
+           double offset, ContrastSettings s8, ContrastSettings s16, int skip, Color c);
    public void setSaveFiles(boolean selected);
    public boolean getSaveFiles();
    public void setDisplayMode(int mode);

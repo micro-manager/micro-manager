@@ -311,10 +311,6 @@ public interface ScriptInterface {
    
    public void setXYOrigin(double x, double y) throws MMScriptException;
    
-   /**
-    * Install a plugin class from the class path.
-    */
-   public String installPlugin(String className);
    
    /**
     * Save current configuration
@@ -323,31 +319,93 @@ public interface ScriptInterface {
 
    public ImageWindow getImageWin();
 
+   /**
+   * Installs a plugin class from the class path.
+   */
+   public String installPlugin(String className);
    
    /**
     * Deprecated. Use installPlugin(String className) instead.
     */
    public String installPlugin(String className, String menuName); 
-   
+
+   /**
+   * Installs an autofocus plugin class from the class path.
+   */
    public String installAutofocusPlugin(String className);
-   
+
+   /**
+    * Provides access to the Core and its functionality
+    */
    public CMMCore getMMCore();
-   
+
+   /**
+    * Currently active autofocus device (can be either a Java or C++ coded device)
+    * @return currently active autofocus device
+    */
    public Autofocus getAutofocus();
-   
+
+   /**
+    * Shows the dialog with options for the currenyl active autofocus device
+    */
    public void showAutofocusDialog();
-   
+
+   /**
+    * The acquisition engine carries out the MDA acquistion
+    * You can get access to its functionality through this function
+    * @return acquisition engine
+    */
    public AcquisitionEngine getAcquisitionEngine();
 
 
+   /**
+    * Adds a message to the Micro-Manager log (found in Corelogtxt)
+    * @param msg - message to be added to the log
+    */
    public void logMessage(String msg);
+
+   /**
+    * Shows a message in the UI
+    * @param msg - message to be shown
+    */
    public void showMessage(String msg);
 
+   /**
+    * Writes the stacktrace and a message to the Micro-Manager log (Corelog.txt)
+    * @param e - Java exception to be logged
+    * @param msg - message to be shown
+    */
    public void logError(Exception e, String msg);
+
+   /**
+    * Writes a stacktrace to the Micro-Manager log
+    * @param e - Java exception to be logged
+    */
    public void logError(Exception e);
+
+   /**
+    * Writes an error to the Micro-Manager log (sane as logMessage)
+    * @param msg - message to be logged
+    */
    public void logError(String msg);
 
+   /**
+    * Shows an error including stacktrace in the UI and logs to the Micro-
+    * Manager log
+    * @param e - Java excpetion to be shown and logged
+    * @param msg - Error message to be shown and logged
+    */
    public void showError(Exception e, String msg);
+
+   /**
+    * Shows and logs a Java exception
+    * @param e - Java excpetion to be shown and logged
+    */
    public void showError(Exception e);
+
+   /**
+    * Shows an error message in the UI and logs to the Micro-Manager log
+    * @param msg - error message to be shown and logged
+    */
    public void showError(String msg);
 }
