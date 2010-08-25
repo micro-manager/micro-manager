@@ -535,7 +535,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       if (!useFrames_) {
          numFrames = 1;
       }
-      int numSlices = useSlices_ ? (int) (1 + (sliceZTopUm_-sliceZBottomUm_)/sliceZStepUm_) : 1;
+      int numSlices = useSlices_ ? (int) (1 + Math.abs(sliceZTopUm_-sliceZBottomUm_)/sliceZStepUm_) : 1;
       if (!useSlices_) {
          numSlices = 1;
       }
