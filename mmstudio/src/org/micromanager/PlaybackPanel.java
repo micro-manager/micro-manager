@@ -161,30 +161,6 @@ public class PlaybackPanel extends Panel {
       add(contrastButton_);
       contrastAdjustButtonRef = contrastButton_;
 
-      final JButton showFolderButton = new JButton();
-      showFolderButton.setIcon(SwingResourceManager.getIcon(PlaybackPanel.class, "/org/micromanager/icons/folder.png"));
-      showFolderButton.addActionListener(new ActionListener() {
-
-         public void actionPerformed(ActionEvent e) {
-            ImageStack stack = wnd_.getImage5D().getImageStack();
-            if (stack instanceof AcquisitionVirtualStack) {
-               String dir = ((AcquisitionVirtualStack) stack).getPath();
-               try {
-                  if (JavaUtils.isWindows())
-                     Runtime.getRuntime().exec("Explorer /n,/select," + dir);
-                  else if (JavaUtils.isMac())
-                     Runtime.getRuntime().exec("open " + dir);
-               } catch (IOException ex) {
-                  ReportingUtils.logError(ex);
-               }
-            }
-         }
-
-      });
-      showFolderButton.setBounds(360, 5, 37, 24);
-      showFolderButton.setToolTipText("Show location of saved acquisition images.");
-      add(showFolderButton);
-
       if (! snap) {
 	      final JToggleButton togglePauseButton_ = new JToggleButton();
 	      togglePauseButton_.setIcon(SwingResourceManager.getIcon(PlaybackPanel.class, "/org/micromanager/icons/control_pause.png"));
