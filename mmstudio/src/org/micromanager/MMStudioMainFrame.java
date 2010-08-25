@@ -3444,8 +3444,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    public void showXYPositionList() {
       if (posListDlg_ == null) {
          posListDlg_ = new PositionListDlg(core_, this, posList_, options_);
-         //posListDlg_.setBackground(guiColors_.background.get((options_.displayBackground)));
-         //addMMBackgroundListener(posListDlg_);
       }
       posListDlg_.setVisible(true);
    }
