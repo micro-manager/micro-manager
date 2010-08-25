@@ -101,9 +101,14 @@ public class HyperstackControls extends java.awt.Panel {
       saveButton.setPreferredSize(new java.awt.Dimension(30, 28));
       saveButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
 
-      fpsField.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            fpsFieldActionPerformed(evt);
+      fpsField.addFocusListener(new java.awt.event.FocusAdapter() {
+         public void focusLost(java.awt.event.FocusEvent evt) {
+            fpsFieldFocusLost(evt);
+         }
+      });
+      fpsField.addKeyListener(new java.awt.event.KeyAdapter() {
+         public void keyReleased(java.awt.event.KeyEvent evt) {
+            fpsFieldKeyReleased(evt);
          }
       });
 
@@ -158,13 +163,20 @@ public class HyperstackControls extends java.awt.Panel {
       MetadataViewer.showMetadataViewer();
    }//GEN-LAST:event_metadataButtonActionPerformed
 
-   private void fpsFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fpsFieldActionPerformed
+   private void fpsFieldFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_fpsFieldFocusLost
+      updateFPS();
+   }//GEN-LAST:event_fpsFieldFocusLost
+
+   private void fpsFieldKeyReleased(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_fpsFieldKeyReleased
+      updateFPS();
+   }//GEN-LAST:event_fpsFieldKeyReleased
+
+   private void updateFPS() {
       try {
          double fps = NumberUtils.displayStringToDouble(fpsField.getText());
          acq_.setPlaybackFPS(fps);
       } catch (ParseException ex) {}
-   }//GEN-LAST:event_fpsFieldActionPerformed
-
+   }
 
    // Variables declaration - do not modify//GEN-BEGIN:variables
    private javax.swing.JButton contrastButton;

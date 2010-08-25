@@ -167,7 +167,8 @@
     </Component>
     <Component class="javax.swing.JTextField" name="fpsField">
       <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="fpsFieldActionPerformed"/>
+        <EventHandler event="focusLost" listener="java.awt.event.FocusListener" parameters="java.awt.event.FocusEvent" handler="fpsFieldFocusLost"/>
+        <EventHandler event="keyReleased" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="fpsFieldKeyReleased"/>
       </Events>
     </Component>
     <Component class="javax.swing.JLabel" name="fpsLabel">
