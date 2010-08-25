@@ -1,56 +1,58 @@
 <!-- Ant makefile for the Micro-Manager Bleach plugin  -->
 <!-- This file assumes Micro-Manager project tree structure -->
 
-<project name="MMBleach" default="buildMMBleach">
+<project name="Bleach" default="build">
 
 	<!-- Specify the system path to the ImageJ root directory -->
-	<property name="ImageJPath" value="/Program Files/ImageJ"/>
-	<property name="InstallRoot" value="/projects/MicroManage/Install/micro-manager-1.1"/>
+	<property name="InstallRoot" value="../../Install_Win32/micro-manager"/>
 
 	<!-- Do not modify from this point on -->
-	<property name="MMPluginDir" value="${ImageJPath}/plugins/Micro-Manager"/>
-	<property name="IJ" value="../../../3rdpartypublic/classext/ij.jar"/>
-	<property name="beanshell" value="../../../3rdpartypublic/classext/bsh-2.0b4.jar"/>
-	<property name="MMCoreJ" value="../bin/MMCoreJ.jar"/>
-	<property name="MMPluginDir-inst" value="${InstallRoot}/plugins/Micro-Manager"/>
-	<property name="BinRoot" value="../bin"/>
+	<property name="MMPluginDir" value="../../mmstudio"/>
+	<property name="MMCoreJ" value="../../bin_Win32/MMCoreJ.jar"/>
+	<property name="MMPluginsDir-inst" value="${InstallRoot}/mmplugins"/>
+	<property name="BinRoot" value="../../bin_Win32"/>
+        <property name="classext" value="../../../3rdpartypublic/classext"/>
+
+        <property name="IJ" value="${classext}/ij.jar"/>
+        <property name="beanshell" value="${classext}/bsh-2.0b4.jar"/>
+        <property name="swinglayout" value="${classext}/swing-layout-1.0.4.jar"/>
+        <property name="commonsmath" value="${classext}/commons-math-2.0.jar"/>
+        <property name="swingx" value="${classext}/swingx-0.9.5.jar"/>
 
 	<path id="project.MMPlugins.path">
 		<pathelement location="${MMPluginDir}"/>
 	</path>
 
-	<path id="project.run.path">
-		<pathelement location="${MMPluginDir}/MMJ_.jar"/>
-		<pathelement location="${MMPluginDir}/MMCoreJ.jar"/>
-		<pathelement location="${MMPluginDir}/bsh-2.0b4.jar"/>
-		<pathelement location="${IJ}"/>
-	</path>
-
 	<path id="project.class.path">
+		<pathelement location="${MMCoreJ}" />
+		<pathelement location="${MMPluginDir}/MMJ_.jar"/>
+
 		<pathelement location="${IJ}" />
 		<pathelement location="${beanshell}" />
-		<pathelement location="${MMCoreJ}" />
-	   <pathelement location="${MMPluginDir}/MMJ_.jar"/>
+		<pathelement location="${swinglayout}" />
+		<pathelement location="${commonsmath}" />
+		<pathelement location="${swingx}" />
+
 	</path>
 
-	<target name="compileMMBleach" description="Compile MM Bleach plugin.">
+	<target name="compile" description="Compile Bleach plugin.">
 		<mkdir dir="build" />
-		<javac srcdir="./src" destdir="./build" optimize="on" source="1.4" debug="off">
+		<javac srcdir="./src" destdir="./build" optimize="on" source="1.5" target="1.5" debug="on">
 			<classpath refid="project.class.path" />
 		</javac>
+		<copy todir="./build/">
+			<fileset dir="./src/" includes="**/*.form" />
+		</copy>
 	</target>
 
-	<target name="buildMMBleach" description="Build MMBleach_.jar">
-
-		<jar jarfile="MMBleach_.jar" basedir="build" />
-		
-		<mkdir dir="${MMPluginDir}" />
-		<copy file="MMBleach_.jar" todir="${MMPluginDir}" />
+	<target name="build" description="Build Bleach.jar">
+		<jar jarfile="Bleach.jar" basedir="build" />
+		<copy file="Bleach.jar" todir="${MMPluginsDir-inst}" />
 	</target>
 	
-	<target name="cleanMMBleach" description="Delete the MMBleach build files.">
-		<delete dir="bin" />
-		<delete file="MMBleach_.jar" />
+	<target name="clean" description="Delete the Bleach build files.">
+		<delete dir="build" />
+		<delete file="Bleach.jar" />
 	</target>
 	
 </project>

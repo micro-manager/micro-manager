@@ -33,7 +33,7 @@ call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build32.xml compileA
 cd ..
 
 cd plugins\Tracker 
-call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build32.xml  compileMMTracking buildMMTracking 
+call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build32.xml  compile build 
 cd ..\..
 
 pushd plugins\PixelCalibrator 
@@ -43,6 +43,23 @@ popd
 pushd plugins\SlideExplorer
 call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml cleanMMSlideExplorer compileMMSlideExplorer buildMMSlideExplorer
 popd
+
+pushd plugins\StageControl
+call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml clean compile build
+popd
+
+pushd plugins\Projector
+call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml clean compile build
+popd
+
+pushd plugins\Recall
+call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml clean compile build
+popd
+
+pushd plugins\Bleach
+call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml compile build
+popd
+
 
 
 set DEVICELISTBUILDER=1
