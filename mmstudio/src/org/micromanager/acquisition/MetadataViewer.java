@@ -72,14 +72,14 @@ public class MetadataViewer extends javax.swing.JFrame
       jScrollPane2 = new javax.swing.JScrollPane();
       jTextArea1 = new javax.swing.JTextArea();
       jTabbedPane1 = new javax.swing.JTabbedPane();
-      jScrollPane1 = new javax.swing.JScrollPane();
+      Comments = new javax.swing.JScrollPane();
+      jTextArea2 = new javax.swing.JTextArea();
+      Summary = new javax.swing.JScrollPane();
       jTable1 = new javax.swing.JTable();
-      jPanel1 = new javax.swing.JPanel();
+      Image = new javax.swing.JPanel();
       metadataTableScrollPane = new javax.swing.JScrollPane();
       metadataTable = new javax.swing.JTable();
       jCheckBox1 = new javax.swing.JCheckBox();
-      jScrollPane3 = new javax.swing.JScrollPane();
-      jTextArea2 = new javax.swing.JTextArea();
 
       jTextArea1.setColumns(20);
       jTextArea1.setRows(5);
@@ -88,6 +88,14 @@ public class MetadataViewer extends javax.swing.JFrame
       setTitle("Metadata and Notes");
 
       jTabbedPane1.setFocusable(false);
+
+      jTextArea2.setColumns(20);
+      jTextArea2.setLineWrap(true);
+      jTextArea2.setRows(5);
+      jTextArea2.setWrapStyleWord(true);
+      Comments.setViewportView(jTextArea2);
+
+      jTabbedPane1.addTab("Comments", Comments);
 
       jTable1.setModel(new javax.swing.table.DefaultTableModel(
          new Object [][] {
@@ -108,11 +116,11 @@ public class MetadataViewer extends javax.swing.JFrame
             return canEdit [columnIndex];
          }
       });
-      jScrollPane1.setViewportView(jTable1);
+      Summary.setViewportView(jTable1);
 
-      jTabbedPane1.addTab("Acquisition Summary", jScrollPane1);
+      jTabbedPane1.addTab("Summary", Summary);
 
-      jPanel1.setOpaque(false);
+      Image.setOpaque(false);
 
       metadataTable.setModel(new javax.swing.table.DefaultTableModel(
          new Object [][] {
@@ -143,32 +151,24 @@ public class MetadataViewer extends javax.swing.JFrame
 
       jCheckBox1.setText("Show unchanging properties");
 
-      org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
-      jPanel1.setLayout(jPanel1Layout);
-      jPanel1Layout.setHorizontalGroup(
-         jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-         .add(jPanel1Layout.createSequentialGroup()
+      org.jdesktop.layout.GroupLayout ImageLayout = new org.jdesktop.layout.GroupLayout(Image);
+      Image.setLayout(ImageLayout);
+      ImageLayout.setHorizontalGroup(
+         ImageLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+         .add(ImageLayout.createSequentialGroup()
             .add(jCheckBox1)
             .addContainerGap(114, Short.MAX_VALUE))
          .add(metadataTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 325, Short.MAX_VALUE)
       );
-      jPanel1Layout.setVerticalGroup(
-         jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-         .add(jPanel1Layout.createSequentialGroup()
+      ImageLayout.setVerticalGroup(
+         ImageLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+         .add(ImageLayout.createSequentialGroup()
             .add(jCheckBox1)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
             .add(metadataTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 231, Short.MAX_VALUE))
       );
 
-      jTabbedPane1.addTab("Image", jPanel1);
-
-      jTextArea2.setColumns(20);
-      jTextArea2.setLineWrap(true);
-      jTextArea2.setRows(5);
-      jTextArea2.setWrapStyleWord(true);
-      jScrollPane3.setViewportView(jTextArea2);
-
-      jTabbedPane1.addTab("Notes", jScrollPane3);
+      jTabbedPane1.addTab("Image", Image);
 
       org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
       getContentPane().setLayout(layout);
@@ -279,11 +279,11 @@ public class MetadataViewer extends javax.swing.JFrame
    }
 
    // Variables declaration - do not modify//GEN-BEGIN:variables
+   private javax.swing.JScrollPane Comments;
+   private javax.swing.JPanel Image;
+   private javax.swing.JScrollPane Summary;
    private javax.swing.JCheckBox jCheckBox1;
-   private javax.swing.JPanel jPanel1;
-   private javax.swing.JScrollPane jScrollPane1;
    private javax.swing.JScrollPane jScrollPane2;
-   private javax.swing.JScrollPane jScrollPane3;
    private javax.swing.JTabbedPane jTabbedPane1;
    private javax.swing.JTable jTable1;
    private javax.swing.JTextArea jTextArea1;

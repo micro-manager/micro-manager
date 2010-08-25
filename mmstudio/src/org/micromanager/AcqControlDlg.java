@@ -1225,7 +1225,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
 
         commentLabel_ = new JLabel();
         commentLabel_.setFont(new Font("Arial", Font.PLAIN, 10));
-        commentLabel_.setText("Notes");
+        commentLabel_.setText("Comments");
         commentLabel_.setBounds(10, 90, 76, 22);
         savePanel_.add(commentLabel_);
 
@@ -1486,11 +1486,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
 
         nameField_.setText(acqPrefs_.get(ACQ_DIR_NAME, "Untitled"));
         String os_name = System.getProperty("os.name", "");
-        if (os_name.startsWith("Window")) {
-            rootField_.setText(acqPrefs_.get(ACQ_ROOT_NAME, "C:/AcquisitionData"));
-        } else {
-            rootField_.setText(acqPrefs_.get(ACQ_ROOT_NAME, "AcquisitionData"));
-        }
+        rootField_.setText(acqPrefs_.get(ACQ_ROOT_NAME, System.getProperty("user.home") + "/AcquisitionData"));
 
         acqEng_.setSliceMode(acqPrefs_.getInt(ACQ_SLICE_MODE, acqEng_.getSliceMode()));
         acqEng_.setDisplayMode(acqPrefs_.getInt(ACQ_DISPLAY_MODE, acqEng_.getDisplayMode()));
