@@ -76,7 +76,6 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private String zStage_;
    private String cameraConfig_;
    private Preferences prefs_;
-   private ArrayList<ChannelSpec> requestedChannels_ = new ArrayList<ChannelSpec>();
    private Engine eng = null;
    private ArrayList<TaggedImageProcessor> taggedImageProcessors_;
    private boolean absoluteZ_;
@@ -447,7 +446,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
          channel.contrast16_ = c16;
          channel.color_ = c;
          channel.skipFactorFrame_ = skip;
-         requestedChannels_.add(channel);
+         channels_.add(channel);
          return true;
       } else {
          return false;
