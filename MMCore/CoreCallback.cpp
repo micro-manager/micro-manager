@@ -538,18 +538,22 @@ int CoreCallback::GetCurrentConfig(const char* group, int bufLen, char* name)
    return DEVICE_OK;
 }
 
-int CoreCallback::GetChannelConfigs(std::vector<std::string>& configs)
+int CoreCallback::GetChannelConfig(char* channelConfigName, const unsigned int channelConfigIterator)
 {
+   if (0 == channelConfigName)
+      return DEVICE_CORE_CHANNEL_PRESETS_FAILED;
    try 
    {
+      channelConfigName[0] = 0;
+
       vector<string> cfgs = core_->getAvailableConfigs(core_->getChannelGroup().c_str());
-      configs.clear();
-      for(unsigned i=0; i<cfgs.size(); i++)
-         configs.push_back(cfgs[i].c_str());
+      if( channelConfigIterator < cfgs.size())
+      {
+         strncpy( channelConfigName, cfgs.at(channelConfigIterator).c_str(), MM::MaxStrLength);
+      }
    }
    catch (...)
    {
-      // TODO: log
       return DEVICE_CORE_CHANNEL_PRESETS_FAILED;
    }
 

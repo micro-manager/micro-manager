@@ -326,6 +326,7 @@ public:
    std::vector<std::string> GetAvailableGroups() const
    {
       std::vector<std::string> groupList;
+      groupList.clear();
       std::map<std::string, ConfigGroup>::const_iterator it = groups_.begin();
       while(it != groups_.end())
          groupList.push_back(it++->first);
@@ -339,6 +340,7 @@ public:
    std::vector<std::string> GetAvailableConfigs(const char* groupName) const
    {
       std::vector<std::string> confList;
+      confList.clear();
       std::map<std::string, ConfigGroup>::const_iterator it = groups_.find(groupName);
       if (it != groups_.end())
       {

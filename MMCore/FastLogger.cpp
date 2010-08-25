@@ -626,7 +626,7 @@ bool FastLogger::Open(const std::string specifiedFile)
          }
 
          // first try to open the specified file without any assumption about the path
-	 plogFile_g->open(logFileName_.c_str(), ios_base::app);
+	      plogFile_g->open(logFileName_.c_str(), ios_base::app);
          //std::cout << "first attempt to open  " << logFileName_.c_str() << (plogFile_g->is_open()?" OK":" FAILED")  << std::endl;
 
          // if the open failed, assume that this is because the ordinary user does not have write access to the application / program directory

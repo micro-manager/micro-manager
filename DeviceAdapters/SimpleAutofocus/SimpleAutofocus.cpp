@@ -229,11 +229,25 @@ void SimpleAutofocus::GetName(char* name) const
 // channels are not available during initialization....
 void SimpleAutofocus::RefreshChannelsToSelect(void)
 {
+   std::string  channelList;
+   possibleChannels_.clear();
+   char channelConfigName[MM::MaxStrLength];
+   unsigned int channelConfigIterator = 0;
+   for(;;)
+   {
+      pCore_->GetChannelConfig(channelConfigName, channelConfigIterator++);
+      if( 0 < strlen(channelConfigName))
+      {
+         std::string n = std::string(channelConfigName);
+         possibleChannels_.push_back(n);
+         if( 0 < channelList.length() )
+            channelList+=",";
+         channelList += n;
+      }
+      else
+         break;
+   }
 
-   static std::vector<std::string>*  pchannelConfigs;
-
-
-   std::vector<std::string> cf2;
 
    char value[MM::MaxStrLength];
    std::string coreChannelGroup;
@@ -241,34 +255,16 @@ void SimpleAutofocus::RefreshChannelsToSelect(void)
    if( DEVICE_OK == pCore_->GetDeviceProperty(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreChannelGroup, value))
       coreChannelGroup = std::string(value);
 
-  
-   if(  0 < coreChannelGroup.length())
-   {
-    //todo -- this is an M.L. !!
-	  pchannelConfigs = new std::vector<std::string>;
- 	  assert(NULL!=pchannelConfigs);
-      // this list of 'configs' is called 'presets' in the main UI
-      if ( DEVICE_OK != pCore_->GetChannelConfigs(*pchannelConfigs))
-            LogMessage(" error retrieving channel configs! " , false);
-	  assert(NULL!=pchannelConfigs);
-      cf2 = *pchannelConfigs;
-   }
-   cf2.push_back("");
 
-   std::ostringstream os;
-   os<<" channels in " << coreChannelGroup << ": ";
-   if(NULL!=pchannelConfigs)
-   {
-   std::vector<std::string>::iterator jj;
-   for(jj = pchannelConfigs->begin(); jj != pchannelConfigs->end(); ++jj)
-   {
-      if( pchannelConfigs->begin() != jj)
-         os << ", ";
-      os << *jj;
-   }
-   }
-   LogMessage(os.str(), true);
-   possibleChannels_ = cf2;
+   std::ostringstream oMessage;
+   oMessage << "in RefreshChannelsToSelect in group " << coreChannelGroup <<" channels available are: " << channelList;
+
+   LogMessage(oMessage.str().c_str(),true);
+
+
+
+
+
 }
 
 
@@ -410,7 +406,7 @@ int SimpleAutofocus::FullFocus()
    std::istringstream iss(value);
    int ivalue ;
    iss >> ivalue;
-   bool previousAutoShutterSetting = static_cast<bool>(ivalue);
+   bool previousAutoShutterSetting = (0==ivalue?false:true);
    bool currentAutoShutterSetting = previousAutoShutterSetting;
 
    // allow auto-shuttering or continuous illumination

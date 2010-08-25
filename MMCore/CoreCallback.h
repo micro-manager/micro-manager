@@ -153,7 +153,7 @@ public:
    int GetExposure(double& expMs);
    int SetConfig(const char* group, const char* name);
    int GetCurrentConfig(const char* group, int bufLen, char* name);
-   int GetChannelConfigs(std::vector<std::string>& groups);
+   int GetChannelConfig(char* channelConfigName, const unsigned int channelConfigIterator);
 
    // notification handlers
    int OnStatusChanged(const MM::Device* /* caller */);

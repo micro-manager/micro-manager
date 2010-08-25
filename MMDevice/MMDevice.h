@@ -912,7 +912,8 @@ namespace MM {
       virtual int GetExposure(double& expMs) = 0;
       virtual int SetConfig(const char* group, const char* name) = 0;
       virtual int GetCurrentConfig(const char* group, int bufLen, char* name) = 0;
-      virtual int GetChannelConfigs(std::vector<std::string>& groups) = 0;
+      virtual int GetChannelConfig(char* channelConfigName, const unsigned int channelConfigIterator) = 0;
+
 
       // direct access to specific device types
       virtual MM::ImageProcessor* GetImageProcessor(const MM::Device* caller) = 0;

@@ -463,30 +463,6 @@ int CDemoCamera::Initialize()
    if (nRet != DEVICE_OK)
       return nRet;
 
-#if 0
-   // query channels
-   std::vector<std::string> channelConfigs;
-   char value[MM::MaxStrLength];
-   std::string coreChannelGroup;
-   if( DEVICE_OK ==GetCoreCallback()->GetDeviceProperty(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreChannelGroup, value))
-      coreChannelGroup = std::string(value);
-   if(  0 < coreChannelGroup.length())
-   {
-      LogMessage(" Core channel group is : " + coreChannelGroup, true);
-      // this list of 'configs' is called 'presets' in the main UI
-      if ( DEVICE_OK !=GetCoreCallback()->GetChannelConfigs(channelConfigs))
-            LogMessage(" error retrieving channel configs! " , false);
-   }
-   std::ostringstream os;
-   os<<" channels in " << coreChannelGroup << ":";
-   std::vector<std::string>::iterator jj;
-   for(jj = channelConfigs.begin(); jj != channelConfigs.end(); ++jj)
-   {
-      os << " " << *jj;
-   }
-   LogMessage(os.str(), true);
-#endif
-
 
    // setup the buffer
    // ----------------
@@ -552,32 +528,6 @@ int CDemoCamera::SnapImage()
          }
    }
 
-#if 0
-
-   // query channels
-   std::vector<std::string> channelConfigs;
-   char value[MM::MaxStrLength];
-   std::string coreChannelGroup;
-   if( DEVICE_OK ==GetCoreCallback()->GetDeviceProperty(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreChannelGroup, value))
-      coreChannelGroup = std::string(value);
-   if(  0 < coreChannelGroup.length())
-   {
-      LogMessage(" Core channel group is : " + coreChannelGroup, true);
-      // this list of 'configs' is called 'presets' in the main UI
-      if ( DEVICE_OK !=GetCoreCallback()->GetChannelConfigs(channelConfigs))
-            LogMessage(" error retrieving channel configs! " , false);
-   }
-   std::ostringstream os;
-   os<<" channels in " << coreChannelGroup << ":";
-   std::vector<std::string>::iterator jj;
-   for(jj = channelConfigs.begin(); jj != channelConfigs.end(); ++jj)
-   {
-      os << " " << *jj;
-   }
-   LogMessage(os.str(), true);
-
-
-#endif
 
 
    return DEVICE_OK;

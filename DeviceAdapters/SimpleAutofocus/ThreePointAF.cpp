@@ -154,10 +154,21 @@ int ThreePointAF::OnFocusChannel(MM::PropertyBase *pProp, MM::ActionType eAct)
    else if(eAct == MM::BeforeGet)
    {
       std::vector<std::string> presets;
-      int ret = GetCoreCallback()->GetChannelConfigs(presets);
-      if (ret != DEVICE_OK)
-         return ret;
-      
+      presets.clear();
+
+      char channelConfigName[MM::MaxStrLength];
+      unsigned int channelConfigIterator = 0;
+      for(;;)
+      {
+         GetCoreCallback()->GetChannelConfig(channelConfigName, channelConfigIterator++);
+         if( 0 < strlen(channelConfigName))
+         {
+            presets.push_back( std::string(channelConfigName));
+         }
+         else
+            break;
+      }
+
       presets.push_back("");
       SetAllowedValues(g_PropertyChannel, presets);
    }
