@@ -28,6 +28,8 @@ import java.awt.Color;
 import java.awt.geom.Point2D;
 import java.util.Map;
 
+import javax.swing.JFrame;
+
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 
@@ -408,4 +410,34 @@ public interface ScriptInterface {
     * @param msg - error message to be shown and logged
     */
    public void showError(String msg);
+
+   /**
+    * Allows MMListeners to register themselves so that they will receive
+    * alerts as defined in the MMListenerInterface
+    */
+   public void addMMListener(MMListenerInterface newL);
+
+   /**
+    * Allows MMListeners to remove themselves
+    */
+   public void removeMMListener(MMListenerInterface oldL);
+
+   /**
+    * Lets JComponents register themselves so that their background can be
+    * manipulated by the Micro-Manager UI
+    */
+   public void addMMBackgroundListener(JFrame frame);
+
+   /**
+    * Lets JComponents remove themselves from the list whose background gets
+    * changed by the Micro-Manager UI
+    */
+   public void removeMMBackgroundListener(JFrame frame);
+
+   /**
+    * Returns the current color of the main window so that it can be used in
+    * derived windows/plugins as well
+    * @return
+    */
+   public Color getBackgroundColor();
 }

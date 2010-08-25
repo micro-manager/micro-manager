@@ -44,6 +44,7 @@ import org.micromanager.utils.MMException;
  */
 public interface AcquisitionEngine {
    
+
    public static final String cameraGroup_ = "Camera";
    public static final DecimalFormat FMT2 = new DecimalFormat("#0.00");
    public static final String DEFAULT_ROOT_NAME = "C:/AcquisitionData";

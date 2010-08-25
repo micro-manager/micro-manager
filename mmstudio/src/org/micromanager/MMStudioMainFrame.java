@@ -201,6 +201,9 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private List<MMListenerInterface> MMListeners_
            = (List<MMListenerInterface>)
            Collections.synchronizedList(new ArrayList<MMListenerInterface>());
+   private List<JFrame> MMFrames_
+           = (List<JFrame>)
+           Collections.synchronizedList(new ArrayList<JFrame>());
    private AutofocusManager afMgr_;
    private final static String DEFAULT_CONFIG_FILE_NAME = "MMConfig_demo.cfg";
    private ArrayList<String> MRUConfigFiles_;
@@ -378,6 +381,26 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       if (!MMListeners_.contains(oldL))
          return;
       MMListeners_.remove(oldL);
+   }
+
+   /**
+    * Lets JComponents register themselves so that their background can be
+    * manipulated
+    */
+   public void addMMBackgroundListener(JFrame comp) {
+      if (MMFrames_.contains(comp))
+         return;
+      MMFrames_.add(comp);
+   }
+
+   /**
+    * Lets JComponents remove themselves from the list whose background gets
+    * changes
+    */
+   public void removeMMBackgroundListener(JFrame comp) {
+      if (!MMFrames_.contains(comp))
+         return;
+      MMFrames_.remove(comp);
    }
 
    /**
@@ -3428,6 +3451,15 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       setConfigSaveButtonStatus(configChanged_);
    }
 
+
+   /**
+    * Returns the current background color
+    * @return
+    */
+   public Color getBackgroundColor() {
+      return guiColors_.background.get((options_.displayBackground));
+   }
+
    /*
     * Changes background color of this window
     */
@@ -3455,6 +3487,12 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       if (splitView_ != null) {
          splitView_.setBackground(guiColors_.background.get((options_.displayBackground)));
       }
+      
+      // sets background of all registered JComponents
+      for (JFrame comp:MMFrames_) {
+         if (comp != null)
+            comp.setBackground(guiColors_.background.get((options_.displayBackground)));
+       }
    }
 
    public String getBackgroundStyle() {
