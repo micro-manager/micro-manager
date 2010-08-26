@@ -21,6 +21,7 @@ public class MMImageCache {
    private int taggedImgQueueSize_ = 50;
    private final ImageFileManagerInterface imageFileManager_;
    private String comment_ = "";
+   private Map<String, String> tags_;
    
    MMImageCache(ImageFileManagerInterface imageFileManager) {
       imageFileManager_ = imageFileManager;
@@ -74,6 +75,15 @@ public class MMImageCache {
          comment_ = imageFileManager_.getComment();
       return comment_;
    }
+   
+   public Map<String,String> getAcquisitionMetadata() {
+      return tags_;
+   }
+
+   public void setAcquisitionMetadata(Map<String,String> tags) {
+      tags_ = tags;
+   }
+
 
 
 }

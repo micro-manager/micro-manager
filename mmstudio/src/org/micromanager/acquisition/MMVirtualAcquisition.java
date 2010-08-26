@@ -280,7 +280,7 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
          updateChannelColors();
       hyperImage_.show();
       ImageWindow win = hyperImage_.getWindow();
-      HyperstackControls hc = new HyperstackControls(this);
+      HyperstackControls hc = new HyperstackControls(this, win);
       win.add(hc);
       hyperImage_.addImageListener(hc);
       win.pack();

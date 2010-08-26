@@ -33,7 +33,8 @@ public class MetadataViewer extends javax.swing.JFrame
         implements ImageListener, AWTEventListener {
 
    private static MetadataViewer singletonViewer_ = null;
-   private final MetadataTableModel model_;
+   private final MetadataTableModel imageMetadataModel_;
+   private final MetadataTableModel summaryMetadataModel_;
    private ImageWindow currentWindow_;
    private final String [] columnNames_ = {"Property","Value"};
    private MMImageCache cache_;
@@ -41,11 +42,15 @@ public class MetadataViewer extends javax.swing.JFrame
    /** Creates new form MetadataViewer */
    public MetadataViewer() {
       initComponents();
-      model_ = new MetadataTableModel();
+      imageMetadataModel_ = new MetadataTableModel();
+      summaryMetadataModel_ = new MetadataTableModel();
 
       ImagePlus.addImageListener(this);
       update(ij.IJ.getImage());
-      metadataTable.setModel(model_);
+      imageMetadataTable.setModel(imageMetadataModel_);
+      summaryMetadataTable.setModel(summaryMetadataModel_);
+
+      GUIUtils.recallPosition(this);
       this.getToolkit().addAWTEventListener(this, AWTEvent.WINDOW_FOCUS_EVENT_MASK);
    }
 
@@ -73,10 +78,10 @@ public class MetadataViewer extends javax.swing.JFrame
       Comments = new javax.swing.JScrollPane();
       commentsTextArea = new javax.swing.JTextArea();
       Summary = new javax.swing.JScrollPane();
-      jTable1 = new javax.swing.JTable();
+      summaryMetadataTable = new javax.swing.JTable();
       Image = new javax.swing.JPanel();
       metadataTableScrollPane = new javax.swing.JScrollPane();
-      metadataTable = new javax.swing.JTable();
+      imageMetadataTable = new javax.swing.JTable();
       jCheckBox1 = new javax.swing.JCheckBox();
       saveButton = new javax.swing.JButton();
       closeButton = new javax.swing.JButton();
@@ -97,7 +102,7 @@ public class MetadataViewer extends javax.swing.JFrame
 
       tabbedPane.addTab("Comments", Comments);
 
-      jTable1.setModel(new javax.swing.table.DefaultTableModel(
+      summaryMetadataTable.setModel(new javax.swing.table.DefaultTableModel(
          new Object [][] {
             {null, null},
             {null, null},
@@ -116,13 +121,13 @@ public class MetadataViewer extends javax.swing.JFrame
             return canEdit [columnIndex];
          }
       });
-      Summary.setViewportView(jTable1);
+      Summary.setViewportView(summaryMetadataTable);
 
       tabbedPane.addTab("Summary", Summary);
 
       Image.setOpaque(false);
 
-      metadataTable.setModel(new javax.swing.table.DefaultTableModel(
+      imageMetadataTable.setModel(new javax.swing.table.DefaultTableModel(
          new Object [][] {
 
          },
@@ -145,9 +150,9 @@ public class MetadataViewer extends javax.swing.JFrame
             return canEdit [columnIndex];
          }
       });
-      metadataTable.setDebugGraphicsOptions(javax.swing.DebugGraphics.NONE_OPTION);
-      metadataTable.setDoubleBuffered(true);
-      metadataTableScrollPane.setViewportView(metadataTable);
+      imageMetadataTable.setDebugGraphicsOptions(javax.swing.DebugGraphics.NONE_OPTION);
+      imageMetadataTable.setDoubleBuffered(true);
+      metadataTableScrollPane.setViewportView(imageMetadataTable);
 
       jCheckBox1.setText("Show unchanging properties");
 
@@ -293,28 +298,24 @@ public class MetadataViewer extends javax.swing.JFrame
    public void update(ImagePlus imp) {
       if (this.isVisible()) {
          if (imp == null) {
-            model_.setMetadata(null);
+            imageMetadataModel_.setMetadata(null);
             commentsTextArea.setText(null);
          } else {
             AcquisitionVirtualStack stack = getAcquisitionStack(imp);
-            cache_ = stack.getCache();
             if (stack != null) {
                int slice = imp.getCurrentSlice();
                TaggedImage taggedImg = stack.getTaggedImage(slice);
                if (taggedImg == null) {
-                  model_.setMetadata(null);
+                  imageMetadataModel_.setMetadata(null);
                } else {
                   Map<String,String> md = stack.getTaggedImage(slice).tags;
-                  model_.setMetadata(md);
+                  imageMetadataModel_.setMetadata(md);
                }
             } else {
-               model_.setMetadata(null);
+               imageMetadataModel_.setMetadata(null);
             }
 
-            if (cache_ != null)
-               commentsTextArea.setText(cache_.getComment());
-            else
-               commentsTextArea.setText(null);
+
          }
       }
    }
@@ -332,13 +333,13 @@ public class MetadataViewer extends javax.swing.JFrame
    private javax.swing.JScrollPane Summary;
    private javax.swing.JButton closeButton;
    private javax.swing.JTextArea commentsTextArea;
+   private javax.swing.JTable imageMetadataTable;
    private javax.swing.JCheckBox jCheckBox1;
    private javax.swing.JScrollPane jScrollPane2;
-   private javax.swing.JTable jTable1;
    private javax.swing.JTextArea jTextArea1;
-   private javax.swing.JTable metadataTable;
    private javax.swing.JScrollPane metadataTableScrollPane;
    private javax.swing.JButton saveButton;
+   private javax.swing.JTable summaryMetadataTable;
    private javax.swing.JTabbedPane tabbedPane;
    // End of variables declaration//GEN-END:variables
 
@@ -360,14 +361,36 @@ public class MetadataViewer extends javax.swing.JFrame
       update(imp);
    }
 
+   private MMImageCache getCache(ImagePlus imgp) {
+      AcquisitionVirtualStack stack = getAcquisitionStack(imgp);
+      if (stack != null)
+         return stack.getCache();
+      else
+         return null;
+   }
+
 
    //Implements AWTEventListener
    public void eventDispatched(AWTEvent event) {
       ImageWindow currentWindow = WindowManager.getCurrentWindow();
+      Map<String, String> md = null;
       if (currentWindow_ != currentWindow) {
          ImagePlus imgp = currentWindow.getImagePlus();
+         cache_ = getCache(imgp);
+
+         if (cache_ != null) {
+            commentsTextArea.setText(cache_.getComment());
+            md = cache_.getAcquisitionMetadata();
+            summaryMetadataModel_.setMetadata(md);
+
+         }  else {
+            commentsTextArea.setText(null);
+         }
+
          update(imgp);
+         
       }
    }
+   
 
 }

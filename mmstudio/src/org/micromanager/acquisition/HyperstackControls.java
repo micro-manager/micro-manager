@@ -15,10 +15,8 @@ import ij.IJ;
 import ij.ImageListener;
 import ij.ImagePlus;
 import ij.ImageStack;
+import ij.gui.ImageWindow;
 import java.text.ParseException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.swing.Icon;
 import mmcorej.TaggedImage;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
@@ -29,11 +27,13 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class HyperstackControls extends java.awt.Panel implements ImageListener {
    private final MMVirtualAcquisition acq_;
+   private final ImageWindow win_;
 
     /** Creates new form HyperstackControls */
-    public HyperstackControls(MMVirtualAcquisition acq) {
+    public HyperstackControls(MMVirtualAcquisition acq, ImageWindow win) {
         initComponents();
         acq_ = acq;
+        win_ = win;
         fpsField.setText(NumberUtils.doubleToDisplayString(acq_.getPlaybackFPS()));
     }
 
@@ -253,19 +253,20 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
    public void imageClosed(ImagePlus ip) {}
 
    public void imageUpdated(ImagePlus imp) {
-
-      ImageStack stack = imp.getStack();
-      if (stack instanceof AcquisitionVirtualStack) {
-         AcquisitionVirtualStack vstack = (AcquisitionVirtualStack) imp.getStack();
-         int slice = imp.getCurrentSlice();
-         TaggedImage taggedImg = vstack.getTaggedImage(slice);
-         try {
-            String time = NumberUtils.doubleStringCoreToDisplay(taggedImg.tags.get("Acquisition-TimeMs"));
-            String channelName = taggedImg.tags.get("Acquisition-ChannelName");
-            String pixelSize = NumberUtils.doubleStringCoreToDisplay(taggedImg.tags.get("Acquisition-PixelSizeUm"));
-            statusLineLabel.setText("<html>" + time + " s, " + channelName + ", " + pixelSize + " &#181;m/px</html>");
-         } catch (Exception ex) {
-            ReportingUtils.logError(ex);
+      if (imp == win_.getImagePlus()) {
+         ImageStack stack = imp.getStack();
+         if (stack instanceof AcquisitionVirtualStack) {
+            AcquisitionVirtualStack vstack = (AcquisitionVirtualStack) imp.getStack();
+            int slice = imp.getCurrentSlice();
+            TaggedImage taggedImg = vstack.getTaggedImage(slice);
+            try {
+               String time = NumberUtils.doubleStringCoreToDisplay(taggedImg.tags.get("Acquisition-TimeMs"));
+               String channelName = taggedImg.tags.get("Acquisition-ChannelName");
+               String pixelSize = NumberUtils.doubleStringCoreToDisplay(taggedImg.tags.get("Acquisition-PixelSizeUm"));
+               statusLineLabel.setText("<html>" + time + " s, " + channelName + ", " + pixelSize + " &#181;m/px</html>");
+            } catch (Exception ex) {
+               ReportingUtils.logError(ex);
+            }
          }
       }
 
