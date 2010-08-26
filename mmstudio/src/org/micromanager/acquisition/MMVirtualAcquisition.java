@@ -238,12 +238,12 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       }
    }
 
-   void pause() {
+   boolean pause() {
       if (eng_.isPaused())
          eng_.setPause(false);
       else
          eng_.setPause(true);
-
+      return (eng_.isPaused());
    }
 
    void abort() {

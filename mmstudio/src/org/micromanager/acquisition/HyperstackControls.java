@@ -18,6 +18,7 @@ import ij.ImageStack;
 import java.text.ParseException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.Icon;
 import mmcorej.TaggedImage;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
@@ -50,9 +51,9 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
       saveButton = new javax.swing.JButton();
       fpsField = new javax.swing.JTextField();
       fpsLabel = new javax.swing.JLabel();
-      pauseButton = new javax.swing.JButton();
       abortButton = new javax.swing.JButton();
       statusLineLabel = new javax.swing.JLabel();
+      jToggleButton1 = new javax.swing.JToggleButton();
 
       setPreferredSize(new java.awt.Dimension(512, 30));
 
@@ -64,6 +65,7 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
       metadataButton.setMaximumSize(new java.awt.Dimension(30, 28));
       metadataButton.setMinimumSize(new java.awt.Dimension(30, 28));
       metadataButton.setPreferredSize(new java.awt.Dimension(30, 28));
+      metadataButton.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/resultset_next.png"))); // NOI18N
       metadataButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
       metadataButton.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -125,21 +127,6 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
 
       fpsLabel.setText("playback fps:");
 
-      pauseButton.setBackground(new java.awt.Color(255, 255, 255));
-      pauseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/control_pause.png"))); // NOI18N
-      pauseButton.setToolTipText("Pause acquisition");
-      pauseButton.setFocusable(false);
-      pauseButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-      pauseButton.setMaximumSize(new java.awt.Dimension(30, 28));
-      pauseButton.setMinimumSize(new java.awt.Dimension(30, 28));
-      pauseButton.setPreferredSize(new java.awt.Dimension(30, 28));
-      pauseButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-      pauseButton.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            pauseButtonActionPerformed(evt);
-         }
-      });
-
       abortButton.setBackground(new java.awt.Color(255, 255, 255));
       abortButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/cancel.png"))); // NOI18N
       abortButton.setToolTipText("Stop acquisition");
@@ -157,6 +144,19 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
 
       statusLineLabel.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
 
+      jToggleButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/control_pause.png"))); // NOI18N
+      jToggleButton1.setMargin(new java.awt.Insets(0, 0, 0, 0));
+      jToggleButton1.setMaximumSize(new java.awt.Dimension(30, 28));
+      jToggleButton1.setMinimumSize(new java.awt.Dimension(30, 28));
+      jToggleButton1.setPreferredSize(new java.awt.Dimension(30, 28));
+      jToggleButton1.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/resultset_next.png"))); // NOI18N
+      jToggleButton1.setSelectedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/resultset_next.png"))); // NOI18N
+      jToggleButton1.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            jToggleButton1ActionPerformed(evt);
+         }
+      });
+
       org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
       this.setLayout(layout);
       layout.setHorizontalGroup(
@@ -169,31 +169,35 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
                   .add(saveButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
             .add(abortButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-            .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-            .add(pauseButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+            .add(0, 0, 0)
+            .add(jToggleButton1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+            .add(3, 3, 3)
             .add(metadataButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
             .add(contrastButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+            .add(11, 11, 11)
             .add(fpsLabel)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
             .add(fpsField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 34, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-            .add(statusLineLabel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 181, Short.MAX_VALUE))
+            .add(statusLineLabel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 165, Short.MAX_VALUE)
+            .addContainerGap())
       );
       layout.setVerticalGroup(
          layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-         .add(showFolderButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-         .add(saveButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-         .add(abortButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-         .add(pauseButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-         .add(metadataButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-         .add(contrastButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-            .add(fpsField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-            .add(fpsLabel)
-            .add(statusLineLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 28, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+         .add(layout.createSequentialGroup()
+            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+               .add(showFolderButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+               .add(saveButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+               .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                  .add(fpsField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                  .add(fpsLabel)
+                  .add(statusLineLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 28, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+               .add(abortButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+               .add(jToggleButton1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+               .add(metadataButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+               .add(contrastButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+            .addContainerGap())
       );
    }// </editor-fold>//GEN-END:initComponents
 
@@ -217,13 +221,13 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
       updateFPS();
    }//GEN-LAST:event_fpsFieldKeyReleased
 
-   private void pauseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pauseButtonActionPerformed
-      acq_.pause();
-   }//GEN-LAST:event_pauseButtonActionPerformed
-
    private void abortButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_abortButtonActionPerformed
       acq_.abort();
    }//GEN-LAST:event_abortButtonActionPerformed
+
+   private void jToggleButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton1ActionPerformed
+      boolean newPauseState = acq_.pause();
+}//GEN-LAST:event_jToggleButton1ActionPerformed
 
    private void updateFPS() {
       try {
@@ -237,8 +241,8 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
    private javax.swing.JButton contrastButton;
    private javax.swing.JTextField fpsField;
    private javax.swing.JLabel fpsLabel;
+   private javax.swing.JToggleButton jToggleButton1;
    private javax.swing.JButton metadataButton;
-   private javax.swing.JButton pauseButton;
    private javax.swing.JButton saveButton;
    private javax.swing.JButton showFolderButton;
    private javax.swing.JLabel statusLineLabel;
