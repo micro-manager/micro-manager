@@ -144,6 +144,7 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
       statusLineLabel.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
 
       jToggleButton1.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/control_pause.png"))); // NOI18N
+      jToggleButton1.setToolTipText("Pause acquisition");
       jToggleButton1.setMargin(new java.awt.Insets(0, 0, 0, 0));
       jToggleButton1.setMaximumSize(new java.awt.Dimension(30, 28));
       jToggleButton1.setMinimumSize(new java.awt.Dimension(30, 28));

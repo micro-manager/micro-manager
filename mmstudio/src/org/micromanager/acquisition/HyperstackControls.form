@@ -222,6 +222,7 @@
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
           <Image iconType="3" name="/org/micromanager/icons/control_pause.png"/>
         </Property>
+        <Property name="toolTipText" type="java.lang.String" value="Pause acquisition"/>
         <Property name="margin" type="java.awt.Insets" editor="org.netbeans.beaninfo.editors.InsetsEditor">
           <Insets value="[0, 0, 0, 0]"/>
         </Property>
