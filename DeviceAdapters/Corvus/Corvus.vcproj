@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
@@ -73,7 +73,7 @@
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile="$(OutDir)/Marzhausewr.pdb"
+				ProgramDatabaseFile="$(OutDir)/Corvus.pdb"
 				SubSystem="2"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
@@ -157,7 +157,7 @@
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile="$(OutDir)/Marzhausewr.pdb"
+				ProgramDatabaseFile="$(OutDir)/Corvus.pdb"
 				SubSystem="2"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
