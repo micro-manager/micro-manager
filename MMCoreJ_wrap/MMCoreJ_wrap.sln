@@ -139,6 +139,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TIScamera", "..\DeviceAdapt
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LaserCombiner", "..\DeviceAdapters\LaserCombiner\LaserCombiner.vcproj", "{CF60E682-EF19-4FDD-8060-DE80256C827C}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AAAOTF", "..\DeviceAdapters\AAAOTF\AAAOTF.vcproj", "{2B522528-9660-4B78-8E2A-000000AAA03F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -679,6 +681,14 @@ Global
 		{CF60E682-EF19-4FDD-8060-DE80256C827C}.Release|Win32.ActiveCfg = Release|Win32
 		{CF60E682-EF19-4FDD-8060-DE80256C827C}.Release|Win32.Build.0 = Release|Win32
 		{CF60E682-EF19-4FDD-8060-DE80256C827C}.Release|x64.ActiveCfg = Release|Win32
+		{2B522528-9660-4B78-8E2A-000000AAA03F}.Debug|Win32.ActiveCfg = Debug|Win32
+		{2B522528-9660-4B78-8E2A-000000AAA03F}.Debug|Win32.Build.0 = Debug|Win32
+		{2B522528-9660-4B78-8E2A-000000AAA03F}.Debug|x64.ActiveCfg = Debug|x64
+		{2B522528-9660-4B78-8E2A-000000AAA03F}.Debug|x64.Build.0 = Debug|x64
+		{2B522528-9660-4B78-8E2A-000000AAA03F}.Release|Win32.ActiveCfg = Release|Win32
+		{2B522528-9660-4B78-8E2A-000000AAA03F}.Release|Win32.Build.0 = Release|Win32
+		{2B522528-9660-4B78-8E2A-000000AAA03F}.Release|x64.ActiveCfg = Release|x64
+		{2B522528-9660-4B78-8E2A-000000AAA03F}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
