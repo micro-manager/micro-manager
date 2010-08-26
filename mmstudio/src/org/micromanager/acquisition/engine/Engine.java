@@ -5,13 +5,9 @@
 package org.micromanager.acquisition.engine;
 
 import java.util.ArrayList;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import mmcorej.CMMCore;
-import mmcorej.Configuration;
 import org.micromanager.acquisition.TaggedImageQueue;
+import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -25,13 +21,12 @@ public class Engine {
    ArrayList<Runnable> taskSequence_;
    private boolean stopRequested_ = false;
    private boolean isRunning_ = false;
-   private Lock pauseLock = new ReentrantLock();
    public boolean autoShutterSelected_;
    public TaggedImageQueue imageReceivingQueue_;
    private long startTimeNs_;
    private Engine this_;
    private SequenceSettings settings_;
-
+   private boolean isPaused_ = false;
    public Engine(CMMCore core, TaggedImageQueue imageReceivingQueue) {
       core_ = core;
       imageReceivingQueue_ = imageReceivingQueue;
@@ -74,13 +69,11 @@ public class Engine {
 
             stopRequested_ = false;
             for (Runnable task : taskSequence_) {
-               if (!stopHasBeenRequested()) {
-                  pauseLock.lock();
-                  try {
-                     task.run();
-                  } finally {
-                     pauseLock.unlock();
-                  }
+               while (isPaused() && !stopHasBeenRequested()) {
+                  JavaUtils.sleep(10);
+               }
+               if (!stopHasBeenRequested() && !isPaused()) {
+                  task.run();
                } else {
                   break;
                }
@@ -106,13 +99,16 @@ public class Engine {
       }.start();
    }
 
+   private synchronized boolean isPaused() {
+      return isPaused_;
+   }
 
    public synchronized void pause() {
-      pauseLock.lock();
+      isPaused_ = true;
    }
 
    public synchronized void resume() {
-      pauseLock.unlock();
+      isPaused_ = false;
    }
 
    public synchronized void stop() {

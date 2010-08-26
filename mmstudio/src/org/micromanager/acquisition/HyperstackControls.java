@@ -12,14 +12,21 @@
 package org.micromanager.acquisition;
 
 import ij.IJ;
+import ij.ImageListener;
+import ij.ImagePlus;
+import ij.ImageStack;
 import java.text.ParseException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import mmcorej.TaggedImage;
 import org.micromanager.utils.NumberUtils;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  *
  * @author arthur
  */
-public class HyperstackControls extends java.awt.Panel {
+public class HyperstackControls extends java.awt.Panel implements ImageListener {
    private final MMVirtualAcquisition acq_;
 
     /** Creates new form HyperstackControls */
@@ -45,12 +52,13 @@ public class HyperstackControls extends java.awt.Panel {
       fpsLabel = new javax.swing.JLabel();
       pauseButton = new javax.swing.JButton();
       abortButton = new javax.swing.JButton();
+      statusLineLabel = new javax.swing.JLabel();
 
-      setPreferredSize(new java.awt.Dimension(300, 30));
+      setPreferredSize(new java.awt.Dimension(512, 30));
 
       metadataButton.setBackground(new java.awt.Color(255, 255, 255));
       metadataButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/application_view_list.png"))); // NOI18N
-      metadataButton.setToolTipText("View metadata and notes");
+      metadataButton.setToolTipText("View metadata and edit comments");
       metadataButton.setFocusable(false);
       metadataButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
       metadataButton.setMaximumSize(new java.awt.Dimension(30, 28));
@@ -103,6 +111,7 @@ public class HyperstackControls extends java.awt.Panel {
       saveButton.setPreferredSize(new java.awt.Dimension(30, 28));
       saveButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
 
+      fpsField.setToolTipText("Set the speed at which the acquisition is played back.");
       fpsField.addFocusListener(new java.awt.event.FocusAdapter() {
          public void focusLost(java.awt.event.FocusEvent evt) {
             fpsFieldFocusLost(evt);
@@ -118,7 +127,7 @@ public class HyperstackControls extends java.awt.Panel {
 
       pauseButton.setBackground(new java.awt.Color(255, 255, 255));
       pauseButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/control_pause.png"))); // NOI18N
-      pauseButton.setToolTipText("View metadata and notes");
+      pauseButton.setToolTipText("Pause acquisition");
       pauseButton.setFocusable(false);
       pauseButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
       pauseButton.setMaximumSize(new java.awt.Dimension(30, 28));
@@ -133,7 +142,7 @@ public class HyperstackControls extends java.awt.Panel {
 
       abortButton.setBackground(new java.awt.Color(255, 255, 255));
       abortButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/cancel.png"))); // NOI18N
-      abortButton.setToolTipText("View metadata and notes");
+      abortButton.setToolTipText("Stop acquisition");
       abortButton.setFocusable(false);
       abortButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
       abortButton.setMaximumSize(new java.awt.Dimension(30, 28));
@@ -145,6 +154,8 @@ public class HyperstackControls extends java.awt.Panel {
             abortButtonActionPerformed(evt);
          }
       });
+
+      statusLineLabel.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
 
       org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
       this.setLayout(layout);
@@ -168,7 +179,8 @@ public class HyperstackControls extends java.awt.Panel {
             .add(fpsLabel)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
             .add(fpsField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 34, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-            .addContainerGap(137, Short.MAX_VALUE))
+            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+            .add(statusLineLabel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 181, Short.MAX_VALUE))
       );
       layout.setVerticalGroup(
          layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -180,7 +192,8 @@ public class HyperstackControls extends java.awt.Panel {
          .add(contrastButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
          .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
             .add(fpsField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-            .add(fpsLabel))
+            .add(fpsLabel)
+            .add(statusLineLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 28, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
       );
    }// </editor-fold>//GEN-END:initComponents
 
@@ -228,6 +241,30 @@ public class HyperstackControls extends java.awt.Panel {
    private javax.swing.JButton pauseButton;
    private javax.swing.JButton saveButton;
    private javax.swing.JButton showFolderButton;
+   private javax.swing.JLabel statusLineLabel;
    // End of variables declaration//GEN-END:variables
+
+   public void imageOpened(ImagePlus ip) {}
+
+   public void imageClosed(ImagePlus ip) {}
+
+   public void imageUpdated(ImagePlus imp) {
+
+      ImageStack stack = imp.getStack();
+      if (stack instanceof AcquisitionVirtualStack) {
+         AcquisitionVirtualStack vstack = (AcquisitionVirtualStack) imp.getStack();
+         int slice = imp.getCurrentSlice();
+         TaggedImage taggedImg = vstack.getTaggedImage(slice);
+         try {
+            String time = NumberUtils.doubleStringCoreToDisplay(taggedImg.tags.get("Acquisition-TimeMs"));
+            String channelName = taggedImg.tags.get("Acquisition-ChannelName");
+            String pixelSize = NumberUtils.doubleStringCoreToDisplay(taggedImg.tags.get("Image-PixelSizeUm"));
+            statusLineLabel.setText("<html>" + time + " s, " + channelName + ", " + pixelSize + " &#181;m/px</html>");
+         } catch (Exception ex) {
+            ReportingUtils.logError(ex);
+         }
+      }
+
+   }
 
 }

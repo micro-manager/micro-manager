@@ -151,7 +151,7 @@ public class ImageTask implements Runnable {
       MDUtils.put(md, "Acquisition-PositionIndex", imageRequest_.PositionIndex);
       MDUtils.put(md, "Acquisition-ChannelIndex", imageRequest_.ChannelIndex);
       MDUtils.put(md, "Acquisition-FrameIndex", imageRequest_.FrameIndex);
-      MDUtils.put(md, "Acquisition-ExposureMs", imageRequest_.exposure);
+
       if (imageRequest_.UsePosition) {
          MDUtils.put(md, "Acquisition-PositionName", imageRequest_.Position.getLabel());
       }
@@ -163,6 +163,7 @@ public class ImageTask implements Runnable {
          lbl = "GRAY";
       else if(core_.getNumberOfComponents() == 4)
          lbl = "RGB";
+      MDUtils.put(md, "Image-ExposureMs", imageRequest_.exposure);
       MDUtils.put(md, "Image-PixelType", lbl + bits);
       try {
          MDUtils.setWidth(md, (int) core_.getImageWidth());
@@ -170,8 +171,9 @@ public class ImageTask implements Runnable {
       } catch (Exception e) {
          ReportingUtils.logError(e);
       }
+      MDUtils.put(md, "Image-PixelSizeUm", core_.getPixelSizeUm());
       long dTime = System.nanoTime() - eng_.getStartTimeNs();
-      MDUtils.put(md, "Acquisition-Time", ((double) dTime) / 1e9);
+      MDUtils.put(md, "Acquisition-TimeMs", ((double) dTime) / 1e9);
 
       try {
          if (eng_.autoShutterSelected_ && !core_.getShutterOpen()) {

@@ -254,6 +254,7 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       eng_ = eng;
    }
 
+
    private class ImagePlusExpandable extends ImagePlus {
 
       private ImagePlusExpandable(String dir_, AcquisitionVirtualStack virtualStack_) {
@@ -281,6 +282,7 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       ImageWindow win = hyperImage_.getWindow();
       HyperstackControls hc = new HyperstackControls(this);
       win.add(hc);
+      hyperImage_.addImageListener(hc);
       win.pack();
 
       if (!newData_) {
