@@ -39,24 +39,6 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
       nSlices_ = nSlices;
    }
 
-   /*
-   public AcquisitionVirtualStack(int width, int height, ColorModel cm, MMImageCache imageCache) {
-      this(width, height, cm, "", imageCache, 0);
-      final File dir = new File(path);
-      FileFilter filter = new FileFilter() {
-         public boolean accept(File pathname) {
-            String filePath = pathname.getAbsolutePath();
-            return (filePath.endsWith(".tiff") || filePath.endsWith(".tif"));
-         }
-      };
-      final File[] files = dir.listFiles(filter);
-      nSlices_ = files.length;
-      int i = 1;
-      for (File file : files) {
-         filenames_.put(i, file.getAbsolutePath());
-         ++i;
-      }
-   }*/
 
    public void setImagePlus(ImagePlus imagePlus) {
       imagePlus_ = imagePlus;

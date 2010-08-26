@@ -15,7 +15,6 @@ import org.micromanager.metadata.AcquisitionData;
 import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
-import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -203,23 +202,29 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
 
       if (hyperImage_.getFrame() == 1) {
          int middleSlice = 1 + hyperImage_.getNSlices() / 2;
-         if (hyperImage_.getSlice() == middleSlice) {
-            try {
-               ImageStatistics stat = hyperImage_.getStatistics();
-               if (MDUtils.isRGB(taggedImg)) {
-                  for (int i=1;i<=numGrayChannels_;++i) {
-                     (hyperImage_).setPosition(i,MDUtils.getFrameIndex(taggedImg.tags), MDUtils.getFrameIndex(taggedImg.tags));
-                     hyperImage_.setDisplayRange(stat.min, stat.max);
-                     hyperImage_.updateAndDraw();
-                  }
-               } else {
-                  hyperImage_.setDisplayRange(stat.min, stat.max);
+
+         try {
+            ImageStatistics stat = hyperImage_.getStatistics();
+            if (MDUtils.isRGB(taggedImg)) {
+               for (int i=1;i<=numGrayChannels_;++i) {
+                  (hyperImage_).setPosition(i,MDUtils.getFrameIndex(taggedImg.tags), MDUtils.getFrameIndex(taggedImg.tags));
+                  hyperImage_.setDisplayRange(stat.min,stat.max);
                   hyperImage_.updateAndDraw();
                }
-            } catch (Exception ex) {
-               ReportingUtils.showError(ex);
+            } else {
+                  double min = hyperImage_.getDisplayRangeMin();
+                  double max = hyperImage_.getDisplayRangeMax();
+                  if (hyperImage_.getSlice() == 0) {
+                     min = Double.MAX_VALUE;
+                     max = Double.MAX_VALUE;
+                  }
+               hyperImage_.setDisplayRange(Math.min(min,stat.min), Math.max(max,stat.max));
+               hyperImage_.updateAndDraw();
             }
+         } catch (Exception ex) {
+            ReportingUtils.showError(ex);
          }
+         
       }
 
       try {

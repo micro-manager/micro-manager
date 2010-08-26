@@ -5,7 +5,6 @@
 package org.micromanager.acquisition;
 
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import mmcorej.TaggedImage;
 import org.micromanager.utils.MDUtils;
@@ -21,7 +20,6 @@ public class MMImageCache {
    private ConcurrentLinkedQueue<TaggedImage> taggedImgQueue_;
    private int taggedImgQueueSize_ = 50;
    private final ImageFileManagerInterface imageFileManager_;
-   private long serialNo = 0;
    
    MMImageCache(ImageFileManagerInterface imageFileManager) {
       imageFileManager_ = imageFileManager;
@@ -34,11 +32,11 @@ public class MMImageCache {
 
    public String putImage(TaggedImage taggedImg) {
       try {
-      cacheImage(taggedImg);
-      if (imageFileManager_ != null)
-         return imageFileManager_.writeImage(taggedImg);
-      else
-         return UUID.randomUUID().toString();
+         cacheImage(taggedImg);
+         if (imageFileManager_ != null)
+            return imageFileManager_.writeImage(taggedImg);
+         else
+            return MDUtils.getFileName(taggedImg.tags);
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
          return "";
@@ -60,7 +58,7 @@ public class MMImageCache {
    
    private void cacheImage(TaggedImage taggedImg) {
       taggedImgQueue_.add(taggedImg);
-      if (taggedImgQueue_.size() > taggedImgQueueSize_) { // If the queue is full,
+      if (imageFileManager_ != null && taggedImgQueue_.size() > taggedImgQueueSize_) { // If the queue is full,
          taggedImgQueue_.poll();                       // remove the oldest image.
       }
    }
