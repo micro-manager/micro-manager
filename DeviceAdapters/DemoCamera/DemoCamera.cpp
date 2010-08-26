@@ -776,7 +776,6 @@ int CDemoCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 
          // the user just set the new value for the property, so we have to
          // apply this value to the 'hardware'.
-			long oldBin = binSize_;
          long binFactor;
          pProp->Get(binFactor);
 			if(binFactor > 0 && binFactor < 10)
