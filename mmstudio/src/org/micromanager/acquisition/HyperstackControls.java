@@ -65,7 +65,6 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
       metadataButton.setMaximumSize(new java.awt.Dimension(30, 28));
       metadataButton.setMinimumSize(new java.awt.Dimension(30, 28));
       metadataButton.setPreferredSize(new java.awt.Dimension(30, 28));
-      metadataButton.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/resultset_next.png"))); // NOI18N
       metadataButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
       metadataButton.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
