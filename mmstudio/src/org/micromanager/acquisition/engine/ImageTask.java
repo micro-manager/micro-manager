@@ -163,7 +163,9 @@ public class ImageTask implements Runnable {
          lbl = "GRAY";
       else if(core_.getNumberOfComponents() == 4)
          lbl = "RGB";
-      MDUtils.put(md, "Image-ExposureMs", imageRequest_.exposure);
+      MDUtils.put(md, "Acquisition-ExposureMs", imageRequest_.exposure);
+      MDUtils.put(md, "Acquisition-PixelSizeUm", core_.getPixelSizeUm());
+      
       MDUtils.put(md, "Image-PixelType", lbl + bits);
       try {
          MDUtils.setWidth(md, (int) core_.getImageWidth());
@@ -171,7 +173,7 @@ public class ImageTask implements Runnable {
       } catch (Exception e) {
          ReportingUtils.logError(e);
       }
-      MDUtils.put(md, "Image-PixelSizeUm", core_.getPixelSizeUm());
+
       long dTime = System.nanoTime() - eng_.getStartTimeNs();
       MDUtils.put(md, "Acquisition-TimeMs", ((double) dTime) / 1e9);
 
