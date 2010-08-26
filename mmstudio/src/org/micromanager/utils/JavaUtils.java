@@ -4,10 +4,14 @@ import java.awt.Dimension;
 import java.awt.GraphicsDevice;
 import java.awt.GraphicsEnvironment;
 import java.awt.Rectangle;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -287,5 +291,56 @@ public class JavaUtils {
          ReportingUtils.logError(ex);
       }
    }
-}
 
+   public static void writeTextFile(String filepath, String text) {
+      BufferedWriter writer = null;
+      try {
+         writer = new BufferedWriter(new FileWriter(filepath));
+         writer.write(text);
+      } catch (IOException ex) {
+         ReportingUtils.logError(ex);
+      } finally {
+         if (writer != null) {
+            try {
+               writer.close();
+            } catch (IOException ex) {
+               ReportingUtils.logError(ex);
+            }
+         }
+      }
+   }
+
+   static public String readTextFile(String filepath) {
+      File f = new File(filepath);
+      if (!f.exists()) {
+         return null;
+      }
+
+      StringBuilder contents = new StringBuilder();
+
+      try {
+         //use buffering, reading one line at a time
+         //FileReader always assumes default encoding is OK!
+         BufferedReader input = new BufferedReader(new FileReader(filepath));
+         try {
+            String line = null; //not declared within while loop
+        /*
+             * readLine is a bit quirky :
+             * it returns the content of a line MINUS the newline.
+             * it returns null only for the END of the stream.
+             * it returns an empty String if two newlines appear in a row.
+             */
+            while ((line = input.readLine()) != null) {
+               contents.append(line);
+               contents.append(System.getProperty("line.separator"));
+            }
+         } finally {
+            input.close();
+         }
+      } catch (IOException ex) {
+         ReportingUtils.logError(ex);
+      }
+
+      return contents.toString();
+   }
+}

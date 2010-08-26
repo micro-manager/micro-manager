@@ -5,6 +5,7 @@
 
 package org.micromanager.acquisition.engine;
 
+import org.micromanager.api.TaggedImageProcessor;
 import java.util.List;
 import org.micromanager.acquisition.TaggedImageQueue;
 

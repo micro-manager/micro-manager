@@ -141,4 +141,14 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
       }
    }
 
+
+
+   void setComment(String text) {
+      imageCache_.setComment(text);
+   }
+
+   MMImageCache getCache() {
+      return this.imageCache_;
+   }
+
 }

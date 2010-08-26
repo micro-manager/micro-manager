@@ -23,4 +23,6 @@ public interface ImageFileManagerInterface {
    public void setSystemMetadata(Map<String,String> md);
    public Map<String,String> getSystemMetadata();
    public ArrayList<Map<String,String>> getImageMetadata();
+   public void setComment(String text);
+   public String getComment();
 }

@@ -13,7 +13,10 @@ import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -21,6 +24,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -347,6 +352,14 @@ public class DefaultImageFileManager implements ImageFileManagerInterface {
 
    public ArrayList<Map<String,String>> getImageMetadata() {
       return imageMetadata_;
+   }
+
+   public void setComment(String text) {
+      JavaUtils.writeTextFile(dir_ + "/Comments.txt", text);
+   }
+
+   public String getComment() {
+      return JavaUtils.readTextFile(dir_ + "/Comments.txt");
    }
 
 }

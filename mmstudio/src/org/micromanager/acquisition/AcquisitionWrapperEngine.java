@@ -17,7 +17,7 @@ import org.micromanager.MMStudioMainFrame;
 import org.micromanager.acquisition.engine.Engine;
 import org.micromanager.acquisition.engine.ProcessorStack;
 import org.micromanager.acquisition.engine.SequenceSettings;
-import org.micromanager.acquisition.engine.TaggedImageProcessor;
+import org.micromanager.api.TaggedImageProcessor;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.DeviceControlGUI;
 import org.micromanager.metadata.MMAcqDataException;

@@ -54,7 +54,7 @@ import mmcorej.StrVector;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.acquisition.engine.TaggedImageProcessor;
+import org.micromanager.api.TaggedImageProcessor;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.DeviceControlGUI;
 import org.micromanager.image5d.ChannelCalibration;

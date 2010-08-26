@@ -29,7 +29,6 @@ import java.util.ArrayList;
 import java.util.prefs.Preferences;
 
 import mmcorej.CMMCore;
-import org.micromanager.acquisition.engine.TaggedImageProcessor;
 
 import org.micromanager.metadata.MMAcqDataException;
 import org.micromanager.metadata.WellAcquisitionData;

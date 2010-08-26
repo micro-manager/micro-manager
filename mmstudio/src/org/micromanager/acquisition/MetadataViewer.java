@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Vector;
 import javax.swing.table.AbstractTableModel;
 import mmcorej.TaggedImage;
+import org.micromanager.acquisition.MMImageCache;
 import org.micromanager.utils.GUIUtils;
 
 /**
@@ -35,6 +36,7 @@ public class MetadataViewer extends javax.swing.JFrame
    private final MetadataTableModel model_;
    private ImageWindow currentWindow_;
    private final String [] columnNames_ = {"Property","Value"};
+   private MMImageCache cache_;
    
    /** Creates new form MetadataViewer */
    public MetadataViewer() {
@@ -67,17 +69,17 @@ public class MetadataViewer extends javax.swing.JFrame
 
       jScrollPane2 = new javax.swing.JScrollPane();
       jTextArea1 = new javax.swing.JTextArea();
-      jTabbedPane1 = new javax.swing.JTabbedPane();
+      tabbedPane = new javax.swing.JTabbedPane();
       Comments = new javax.swing.JScrollPane();
-      jTextArea2 = new javax.swing.JTextArea();
+      commentsTextArea = new javax.swing.JTextArea();
       Summary = new javax.swing.JScrollPane();
       jTable1 = new javax.swing.JTable();
       Image = new javax.swing.JPanel();
       metadataTableScrollPane = new javax.swing.JScrollPane();
       metadataTable = new javax.swing.JTable();
       jCheckBox1 = new javax.swing.JCheckBox();
-      jButton1 = new javax.swing.JButton();
-      jButton2 = new javax.swing.JButton();
+      saveButton = new javax.swing.JButton();
+      closeButton = new javax.swing.JButton();
 
       jTextArea1.setColumns(20);
       jTextArea1.setRows(5);
@@ -85,15 +87,15 @@ public class MetadataViewer extends javax.swing.JFrame
 
       setTitle("Metadata and Notes");
 
-      jTabbedPane1.setFocusable(false);
+      tabbedPane.setFocusable(false);
 
-      jTextArea2.setColumns(20);
-      jTextArea2.setLineWrap(true);
-      jTextArea2.setRows(5);
-      jTextArea2.setWrapStyleWord(true);
-      Comments.setViewportView(jTextArea2);
+      commentsTextArea.setColumns(20);
+      commentsTextArea.setLineWrap(true);
+      commentsTextArea.setRows(5);
+      commentsTextArea.setWrapStyleWord(true);
+      Comments.setViewportView(commentsTextArea);
 
-      jTabbedPane1.addTab("Comments", Comments);
+      tabbedPane.addTab("Comments", Comments);
 
       jTable1.setModel(new javax.swing.table.DefaultTableModel(
          new Object [][] {
@@ -116,7 +118,7 @@ public class MetadataViewer extends javax.swing.JFrame
       });
       Summary.setViewportView(jTable1);
 
-      jTabbedPane1.addTab("Summary", Summary);
+      tabbedPane.addTab("Summary", Summary);
 
       Image.setOpaque(false);
 
@@ -155,22 +157,32 @@ public class MetadataViewer extends javax.swing.JFrame
          ImageLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(ImageLayout.createSequentialGroup()
             .add(jCheckBox1)
-            .addContainerGap(56, Short.MAX_VALUE))
-         .add(metadataTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 267, Short.MAX_VALUE)
+            .addContainerGap(32, Short.MAX_VALUE))
+         .add(metadataTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 243, Short.MAX_VALUE)
       );
       ImageLayout.setVerticalGroup(
          ImageLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(ImageLayout.createSequentialGroup()
             .add(jCheckBox1)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-            .add(metadataTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 208, Short.MAX_VALUE))
+            .add(metadataTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 56, Short.MAX_VALUE))
       );
 
-      jTabbedPane1.addTab("Image", Image);
+      tabbedPane.addTab("Image", Image);
 
-      jButton1.setText("Save");
+      saveButton.setText("Save");
+      saveButton.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            saveButtonActionPerformed(evt);
+         }
+      });
 
-      jButton2.setText("Close");
+      closeButton.setText("Close");
+      closeButton.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            closeButtonActionPerformed(evt);
+         }
+      });
 
       org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
       getContentPane().setLayout(layout);
@@ -178,28 +190,38 @@ public class MetadataViewer extends javax.swing.JFrame
          layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(layout.createSequentialGroup()
             .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-               .add(layout.createSequentialGroup()
-                  .add(jButton1)
+               .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+                  .addContainerGap()
+                  .add(saveButton)
                   .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                  .add(jButton2))
+                  .add(closeButton))
                .add(layout.createSequentialGroup()
                   .add(13, 13, 13)
-                  .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 288, Short.MAX_VALUE)))
+                  .add(tabbedPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 264, Short.MAX_VALUE)))
             .addContainerGap())
       );
       layout.setVerticalGroup(
          layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(layout.createSequentialGroup()
             .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-               .add(jButton1)
-               .add(jButton2))
+               .add(closeButton)
+               .add(saveButton))
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-            .add(jTabbedPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 282, Short.MAX_VALUE)
+            .add(tabbedPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 130, Short.MAX_VALUE)
             .addContainerGap())
       );
 
       pack();
    }// </editor-fold>//GEN-END:initComponents
+
+   private void saveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveButtonActionPerformed
+      String text = commentsTextArea.getText();
+      cache_.setComment(text);
+   }//GEN-LAST:event_saveButtonActionPerformed
+
+   private void closeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_closeButtonActionPerformed
+      this.setVisible(false);
+   }//GEN-LAST:event_closeButtonActionPerformed
 
    class MetadataTableModel extends AbstractTableModel {
 
@@ -259,25 +281,40 @@ public class MetadataViewer extends javax.swing.JFrame
       }
    }
 
+   private AcquisitionVirtualStack getAcquisitionStack(ImagePlus imp) {
+      ImageStack stack = imp.getStack();
+      if (stack instanceof AcquisitionVirtualStack) {
+         return (AcquisitionVirtualStack) stack;
+      } else {
+         return null;
+      }
+   }
+
    public void update(ImagePlus imp) {
       if (this.isVisible()) {
          if (imp == null) {
             model_.setMetadata(null);
+            commentsTextArea.setText(null);
          } else {
-            ImageStack stack = imp.getStack();
-            if (stack instanceof AcquisitionVirtualStack) {
-               AcquisitionVirtualStack vstack = (AcquisitionVirtualStack) imp.getStack();
+            AcquisitionVirtualStack stack = getAcquisitionStack(imp);
+            cache_ = stack.getCache();
+            if (stack != null) {
                int slice = imp.getCurrentSlice();
-               TaggedImage taggedImg = vstack.getTaggedImage(slice);
+               TaggedImage taggedImg = stack.getTaggedImage(slice);
                if (taggedImg == null) {
                   model_.setMetadata(null);
                } else {
-                  Map<String,String> md = vstack.getTaggedImage(slice).tags;
+                  Map<String,String> md = stack.getTaggedImage(slice).tags;
                   model_.setMetadata(md);
                }
             } else {
                model_.setMetadata(null);
             }
+
+            if (cache_ != null)
+               commentsTextArea.setText(cache_.getComment());
+            else
+               commentsTextArea.setText(null);
          }
       }
    }
@@ -293,16 +330,16 @@ public class MetadataViewer extends javax.swing.JFrame
    private javax.swing.JScrollPane Comments;
    private javax.swing.JPanel Image;
    private javax.swing.JScrollPane Summary;
-   private javax.swing.JButton jButton1;
-   private javax.swing.JButton jButton2;
+   private javax.swing.JButton closeButton;
+   private javax.swing.JTextArea commentsTextArea;
    private javax.swing.JCheckBox jCheckBox1;
    private javax.swing.JScrollPane jScrollPane2;
-   private javax.swing.JTabbedPane jTabbedPane1;
    private javax.swing.JTable jTable1;
    private javax.swing.JTextArea jTextArea1;
-   private javax.swing.JTextArea jTextArea2;
    private javax.swing.JTable metadataTable;
    private javax.swing.JScrollPane metadataTableScrollPane;
+   private javax.swing.JButton saveButton;
+   private javax.swing.JTabbedPane tabbedPane;
    // End of variables declaration//GEN-END:variables
 
 

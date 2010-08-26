@@ -20,6 +20,7 @@ public class MMImageCache {
    private ConcurrentLinkedQueue<TaggedImage> taggedImgQueue_;
    private int taggedImgQueueSize_ = 50;
    private final ImageFileManagerInterface imageFileManager_;
+   private String comment_ = "";
    
    MMImageCache(ImageFileManagerInterface imageFileManager) {
       imageFileManager_ = imageFileManager;
@@ -61,6 +62,17 @@ public class MMImageCache {
       if (imageFileManager_ != null && taggedImgQueue_.size() > taggedImgQueueSize_) { // If the queue is full,
          taggedImgQueue_.poll();                       // remove the oldest image.
       }
+   }
+
+   void setComment(String text) {
+      imageFileManager_.setComment(text);
+      comment_ = text;
+   }
+
+   String getComment() {
+      if (comment_ != null && comment_.contentEquals(""))
+         comment_ = imageFileManager_.getComment();
+      return comment_;
    }
 
 
