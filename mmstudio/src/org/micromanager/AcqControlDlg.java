@@ -154,8 +154,8 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
     private JCheckBox chanKeepShutterOpenCheckBox_;
 
     // persistent properties (app settings)
-    private static final String ACQ_CONTROL_X = "x";
-    private static final String ACQ_CONTROL_Y = "y";
+    private static final String ACQ_CONTROL_X = "acq_x";
+    private static final String ACQ_CONTROL_Y = "acq_y";
     private static final String ACQ_FILE_DIR = "dir";
     private static final String ACQ_INTERVAL = "acqInterval";
     private static final String ACQ_TIME_UNIT = "acqTimeInit";
