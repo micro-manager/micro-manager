@@ -8,6 +8,7 @@ package org.micromanager.acquisition;
 import java.util.Map;
 import mmcorej.TaggedImage;
 import org.json.JSONObject;
+import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.metadata.AcquisitionData;
 import org.micromanager.utils.MMScriptException;
 
@@ -76,5 +77,7 @@ public interface AcquisitionInterface {
    void setSystemState(int frame, int channel, int slice, JSONObject state) throws MMScriptException;
 
    boolean windowClosed();
+
+   public void setEngine(AcquisitionEngine eng);
 
 }

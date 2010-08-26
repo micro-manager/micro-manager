@@ -73,7 +73,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private String zStage_;
    private String cameraConfig_;
    private Preferences prefs_;
-   private Engine eng = null;
+   private Engine eng_ = null;
    private ArrayList<TaggedImageProcessor> taggedImageProcessors_;
    private boolean absoluteZ_;
 
@@ -89,16 +89,16 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       TaggedImageQueue engineToProcessorsChannel = new TaggedImageQueue();
 
       SequenceSettings acquisitionSettings = generateSequenceSettings();
-      eng = new Engine(core_, engineToProcessorsChannel);
-      eng.setupStandardSequence(acquisitionSettings);
-      eng.start();
+      eng_ = new Engine(core_, engineToProcessorsChannel);
+      eng_.setupStandardSequence(acquisitionSettings);
+      eng_.start();
       
       ProcessorStack processorStack = new ProcessorStack(engineToProcessorsChannel,
               taggedImageProcessors_);
       TaggedImageQueue processorsToDisplayChannel = processorStack.getOutputChannel();
       
       display_ = new AcquisitionDisplayThread(gui_, core_, processorsToDisplayChannel,
-              acquisitionSettings, channels_, saveFiles_);
+              acquisitionSettings, channels_, saveFiles_, this);
       display_.start();
    }
 
@@ -182,8 +182,8 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    public void stop(boolean interrupted) {
       try {
-         if (eng!=null)
-            eng.stop();
+         if (eng_!=null)
+            eng_.stop();
       } catch (Exception ex) {
          ReportingUtils.showError("Acquisition engine stop request failed");
       }
@@ -198,15 +198,21 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    public void setPause(boolean state) {
-      throw new UnsupportedOperationException("Not supported yet.");
+      if (state) {
+         eng_.pause();
+         isPaused_ = true;
+      } else {
+         eng_.resume();
+         isPaused_ = false;
+      }
    }
 
 
 //// State Queries /////////////////////////////////////////////////////
 
    public boolean isAcquisitionRunning() {
-      if (eng != null)
-         return eng.isRunning();
+      if (eng_ != null)
+         return eng_.isRunning();
       else
          return false;
    }

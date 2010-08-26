@@ -9,6 +9,7 @@ import java.util.Map;
 import mmcorej.TaggedImage;
 
 import org.json.JSONObject;
+import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.image5d.ChannelCalibration;
 import org.micromanager.image5d.ChannelControl;
 import org.micromanager.image5d.ChannelDisplayProperties;
@@ -346,6 +347,10 @@ public class MMAcquisition implements AcquisitionInterface {
    }
 
    public void setSystemState(Map<String,String> md) throws MMScriptException {
+      throw new UnsupportedOperationException("Not supported yet.");
+   }
+
+   public void setEngine(AcquisitionEngine eng) {
       throw new UnsupportedOperationException("Not supported yet.");
    }
 

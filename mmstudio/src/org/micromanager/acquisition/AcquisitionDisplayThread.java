@@ -13,7 +13,9 @@ import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.PropertySetting;
 import mmcorej.TaggedImage;
+import org.micromanager.MMStudioMainFrame;
 import org.micromanager.acquisition.engine.SequenceSettings;
+import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.utils.ChannelSpec;
 import org.micromanager.utils.JavaUtils;
@@ -36,7 +38,7 @@ public class AcquisitionDisplayThread extends Thread {
 
    AcquisitionDisplayThread(ScriptInterface gui, CMMCore core,
            TaggedImageQueue imageProducingQueue, SequenceSettings acqSettings,
-           ArrayList<ChannelSpec> channels, boolean diskCached) {
+           ArrayList<ChannelSpec> channels, boolean diskCached, AcquisitionEngine eng) {
       gui_ = gui;
       core_ = core;
       acqSettings_ = acqSettings;
@@ -60,6 +62,7 @@ public class AcquisitionDisplayThread extends Thread {
             String acqName = fullPath + "/" + posName;
             acqNames_.add(acqName);
             gui_.openAcquisition(acqName, fullPath, nTimes, nChannels, nSlices, true, diskCached_);
+            gui_.setAcquisitionEngine(acqName, eng);
             if (usingChannels) {
                for (int i = 0; i < channels.size(); ++i) {
                   gui_.setChannelColor(acqName, i, channels.get(i).color_);
@@ -86,6 +89,7 @@ public class AcquisitionDisplayThread extends Thread {
          ReportingUtils.logError(ex);
       }
    }
+
 
    private String getPosName(int posIndex) {
       String posName;

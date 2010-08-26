@@ -8,7 +8,6 @@ import ij.ImagePlus;
 import ij.process.ImageProcessor;
 import java.awt.image.ColorModel;
 import java.io.File;
-import java.io.FileFilter;
 import java.util.HashMap;
 import java.util.Map;
 import mmcorej.TaggedImage;

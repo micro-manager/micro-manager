@@ -404,6 +404,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       MMFrames_.remove(comp);
    }
 
+   public void setAcquisitionEngine(String acqName, AcquisitionEngine eng) {
+      this.acqMgr_.setAcquisitionEngine(acqName, eng);
+   }
+
    /**
     * Callback to update GUI when a change happens in the MMCore.
     */

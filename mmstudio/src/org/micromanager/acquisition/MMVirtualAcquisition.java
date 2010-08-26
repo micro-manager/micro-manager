@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 import mmcorej.TaggedImage;
 import org.json.JSONObject;
+import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.metadata.AcquisitionData;
 import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MDUtils;
@@ -43,6 +44,7 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
    private Map<String,String> systemMetadata_ = null;
    private int numGrayChannels_;
    private final boolean diskCached_;
+   private AcquisitionEngine eng_;
 
    MMVirtualAcquisition(String name, String dir, boolean newData, boolean virtual) {
       name_ = name;
@@ -236,8 +238,35 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       }
    }
 
+   void pause() {
+      if (eng_.isPaused())
+         eng_.setPause(false);
+      else
+         eng_.setPause(true);
+
+   }
+
+   void abort() {
+      eng_.abortRequest();
+   }
+
+   public void setEngine(AcquisitionEngine eng) {
+      eng_ = eng;
+   }
+
+   private class ImagePlusExpandable extends ImagePlus {
+
+      private ImagePlusExpandable(String dir_, AcquisitionVirtualStack virtualStack_) {
+         super(dir_, virtualStack_);
+      }
+
+      public void expandFrames(int n) {
+         this.nFrames = n;
+      }
+   }
+
    public void show() {
-      ImagePlus imgp = new ImagePlus(dir_, virtualStack_);
+      ImagePlus imgp = new ImagePlusExpandable(dir_, virtualStack_);
       virtualStack_.setImagePlus(imgp);
       imgp.setDimensions(numGrayChannels_, numSlices_, numFrames_);
       if (numGrayChannels_ > 1) {

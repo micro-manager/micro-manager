@@ -6,6 +6,7 @@ import java.util.Hashtable;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.acquisition.MMVirtualAcquisition;
+import org.micromanager.api.AcquisitionEngine;
 
 public class AcquisitionManager {
    Hashtable<String, AcquisitionInterface> acqs_;
@@ -50,7 +51,9 @@ public class AcquisitionManager {
       return acq;
    }
   
-  
+   public void setAcquisitionEngine(String name, AcquisitionEngine eng) {
+      acqs_.get(name).setEngine(eng);
+   }
    
    public void closeAcquisition(String name) throws MMScriptException {
       if (!acqs_.containsKey(name))

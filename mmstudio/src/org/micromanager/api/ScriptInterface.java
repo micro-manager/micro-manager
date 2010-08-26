@@ -438,4 +438,7 @@ public interface ScriptInterface {
     * @return
     */
    public Color getBackgroundColor();
+
+   public void setAcquisitionEngine(String acqName, AcquisitionEngine eng);
+
 }
