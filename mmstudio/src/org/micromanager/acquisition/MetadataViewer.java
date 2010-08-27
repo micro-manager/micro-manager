@@ -19,6 +19,7 @@ import java.awt.AWTEvent;
 import java.awt.event.AWTEventListener;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
 import javax.swing.table.AbstractTableModel;
@@ -39,7 +40,7 @@ public class MetadataViewer extends javax.swing.JFrame
    private ImageWindow currentWindow_;
    private final String [] columnNames_ = {"Property","Value"};
    private MMImageCache cache_;
-   private boolean showUnchangingKeys;
+   private boolean showUnchangingKeys_;
 
    
    /** Creates new form MetadataViewer */
@@ -236,7 +237,7 @@ public class MetadataViewer extends javax.swing.JFrame
    }//GEN-LAST:event_closeButtonActionPerformed
 
    private void showUnchangingPropertiesCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showUnchangingPropertiesCheckboxActionPerformed
-      showUnchangingKeys = showUnchangingPropertiesCheckbox.isSelected();
+      showUnchangingKeys_ = showUnchangingPropertiesCheckbox.isSelected();
       update(ij.IJ.getImage());
    }//GEN-LAST:event_showUnchangingPropertiesCheckboxActionPerformed
 
@@ -288,16 +289,24 @@ public class MetadataViewer extends javax.swing.JFrame
             Arrays.sort(keys);
 
             for (Object key : keys) {
-               if (showUnchangingKeys || cache_.getChangingKeys().contains(key)) {
-                  Vector<String> rowData = new Vector<String>();
-                  rowData.add((String) key);
-                  rowData.add(md.get((String) key));
-                  addRow(rowData);
-               }
+               Vector<String> rowData = new Vector<String>();
+               rowData.add((String) key);
+               rowData.add(md.get((String) key));
+               addRow(rowData);
             }
          }
          fireTableDataChanged();
       }
+   }
+   
+   private Map<String,String> selectChangingTags(Map<String,String> md) {
+      Map<String,String> mdChanging = new HashMap<String,String>();
+      for (String key:md.keySet()) {
+         if (cache_.getChangingKeys().contains(key)) {
+            mdChanging.put(key, md.get(key));
+         }
+      }
+      return mdChanging;
    }
 
    private AcquisitionVirtualStack getAcquisitionStack(ImagePlus imp) {
@@ -323,6 +332,8 @@ public class MetadataViewer extends javax.swing.JFrame
                   imageMetadataModel_.setMetadata(null);
                } else {
                   Map<String,String> md = stack.getTaggedImage(slice).tags;
+                  if (!showUnchangingKeys_)
+                     md = selectChangingTags(md);
                   imageMetadataModel_.setMetadata(md);
                }
             } else {
