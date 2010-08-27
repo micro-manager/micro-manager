@@ -19,7 +19,7 @@ public abstract class TaggedImageProcessor extends Thread {
    private TaggedImageQueue output_;
    private boolean stopRequested_ = false;
 
-   public abstract void process();
+   protected abstract void process();
    /*    The "Identity" process method:
     * {
     *    produce(poll());
