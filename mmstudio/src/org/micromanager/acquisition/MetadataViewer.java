@@ -50,7 +50,6 @@ public class MetadataViewer extends javax.swing.JFrame
       imageMetadataTable.setModel(imageMetadataModel_);
       summaryMetadataTable.setModel(summaryMetadataModel_);
 
-      GUIUtils.recallPosition(this);
       this.getToolkit().addAWTEventListener(this, AWTEvent.WINDOW_FOCUS_EVENT_MASK);
    }
 
