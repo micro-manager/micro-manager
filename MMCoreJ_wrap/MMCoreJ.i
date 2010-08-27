@@ -327,11 +327,12 @@
 %typemap(javaimports) CMMCore %{
 	import java.util.Map;
 	import java.util.HashMap;
+	import java.util.Collections;
 %}
 
 %typemap(javacode) CMMCore %{
 	private Map<String,String> metadataToMap(Metadata md) {
-		Map<String,String> mdMap = new HashMap<String,String>();
+		Map<String,String> mdMap = Collections.synchronizedMap(new HashMap<String,String>());
 		for (String key:md.getFrameKeys())
 			mdMap.put(key,md.get(key));	
 		return mdMap;

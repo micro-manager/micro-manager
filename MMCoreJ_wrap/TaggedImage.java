@@ -7,7 +7,7 @@ import java.util.Map;
  */
 
 public class TaggedImage {
-   public Object pix;
+   public final Object pix;
    public Map<String,String> tags;
 
    public TaggedImage(Object pix, Map<String,String> tags) {
