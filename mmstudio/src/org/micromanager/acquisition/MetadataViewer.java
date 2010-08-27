@@ -17,6 +17,7 @@ import ij.WindowManager;
 import ij.gui.ImageWindow;
 import java.awt.AWTEvent;
 import java.awt.event.AWTEventListener;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Vector;
@@ -38,6 +39,8 @@ public class MetadataViewer extends javax.swing.JFrame
    private ImageWindow currentWindow_;
    private final String [] columnNames_ = {"Property","Value"};
    private MMImageCache cache_;
+   private boolean showUnchangingKeys;
+
    
    /** Creates new form MetadataViewer */
    public MetadataViewer() {
@@ -81,7 +84,7 @@ public class MetadataViewer extends javax.swing.JFrame
       Image = new javax.swing.JPanel();
       metadataTableScrollPane = new javax.swing.JScrollPane();
       imageMetadataTable = new javax.swing.JTable();
-      jCheckBox1 = new javax.swing.JCheckBox();
+      showUnchangingPropertiesCheckbox = new javax.swing.JCheckBox();
       saveButton = new javax.swing.JButton();
       closeButton = new javax.swing.JButton();
 
@@ -153,21 +156,26 @@ public class MetadataViewer extends javax.swing.JFrame
       imageMetadataTable.setDoubleBuffered(true);
       metadataTableScrollPane.setViewportView(imageMetadataTable);
 
-      jCheckBox1.setText("Show unchanging properties");
+      showUnchangingPropertiesCheckbox.setText("Show unchanging properties");
+      showUnchangingPropertiesCheckbox.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            showUnchangingPropertiesCheckboxActionPerformed(evt);
+         }
+      });
 
       org.jdesktop.layout.GroupLayout ImageLayout = new org.jdesktop.layout.GroupLayout(Image);
       Image.setLayout(ImageLayout);
       ImageLayout.setHorizontalGroup(
          ImageLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(ImageLayout.createSequentialGroup()
-            .add(jCheckBox1)
-            .addContainerGap(32, Short.MAX_VALUE))
+            .add(showUnchangingPropertiesCheckbox)
+            .addContainerGap(74, Short.MAX_VALUE))
          .add(metadataTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 243, Short.MAX_VALUE)
       );
       ImageLayout.setVerticalGroup(
          ImageLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(ImageLayout.createSequentialGroup()
-            .add(jCheckBox1)
+            .add(showUnchangingPropertiesCheckbox)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
             .add(metadataTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 56, Short.MAX_VALUE))
       );
@@ -227,6 +235,11 @@ public class MetadataViewer extends javax.swing.JFrame
       this.setVisible(false);
    }//GEN-LAST:event_closeButtonActionPerformed
 
+   private void showUnchangingPropertiesCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showUnchangingPropertiesCheckboxActionPerformed
+      showUnchangingKeys = showUnchangingPropertiesCheckbox.isSelected();
+      update(ij.IJ.getImage());
+   }//GEN-LAST:event_showUnchangingPropertiesCheckboxActionPerformed
+
    class MetadataTableModel extends AbstractTableModel {
 
       Vector<Vector<String>> data_;
@@ -275,10 +288,12 @@ public class MetadataViewer extends javax.swing.JFrame
             Arrays.sort(keys);
 
             for (Object key : keys) {
-               Vector<String> rowData = new Vector<String>();
-               rowData.add((String) key);
-               rowData.add(md.get((String) key));
-               addRow(rowData);
+               if (showUnchangingKeys || cache_.getChangingKeys().contains(key)) {
+                  Vector<String> rowData = new Vector<String>();
+                  rowData.add((String) key);
+                  rowData.add(md.get((String) key));
+                  addRow(rowData);
+               }
             }
          }
          fireTableDataChanged();
@@ -333,11 +348,11 @@ public class MetadataViewer extends javax.swing.JFrame
    private javax.swing.JButton closeButton;
    private javax.swing.JTextArea commentsTextArea;
    private javax.swing.JTable imageMetadataTable;
-   private javax.swing.JCheckBox jCheckBox1;
    private javax.swing.JScrollPane jScrollPane2;
    private javax.swing.JTextArea jTextArea1;
    private javax.swing.JScrollPane metadataTableScrollPane;
    private javax.swing.JButton saveButton;
+   private javax.swing.JCheckBox showUnchangingPropertiesCheckbox;
    private javax.swing.JTable summaryMetadataTable;
    private javax.swing.JTabbedPane tabbedPane;
    // End of variables declaration//GEN-END:variables

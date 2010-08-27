@@ -4,6 +4,7 @@
  */
 package org.micromanager.acquisition;
 
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import mmcorej.TaggedImage;
@@ -22,10 +23,13 @@ public class MMImageCache {
    private final ImageFileManagerInterface imageFileManager_;
    private String comment_ = "";
    private Map<String, String> tags_;
+   private ArrayList<String> changingKeys_;
+   private Map<String, String> firstTags_;
    
    MMImageCache(ImageFileManagerInterface imageFileManager) {
       imageFileManager_ = imageFileManager;
       taggedImgQueue_ = new ConcurrentLinkedQueue<TaggedImage>();
+      changingKeys_ = new ArrayList<String>();
    }
 
    public String putImage(Object img, Map<String,String> md) {
@@ -60,6 +64,15 @@ public class MMImageCache {
    
    private void cacheImage(TaggedImage taggedImg) {
       taggedImgQueue_.add(taggedImg);
+      if (firstTags_ == null) {
+         firstTags_ = taggedImg.tags;
+      } else {
+         for (String key:taggedImg.tags.keySet()) {
+            if (! firstTags_.get(key).contentEquals(taggedImg.tags.get(key)))
+               changingKeys_.add(key);
+         }
+      }
+
       if (imageFileManager_ != null && taggedImgQueue_.size() > taggedImgQueueSize_) { // If the queue is full,
          taggedImgQueue_.poll();                       // remove the oldest image.
       }
@@ -84,6 +97,8 @@ public class MMImageCache {
       tags_ = tags;
    }
 
-
+   public ArrayList<String> getChangingKeys() {
+      return changingKeys_;
+   }
 
 }

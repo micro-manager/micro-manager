@@ -263,7 +263,7 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
                String time = NumberUtils.doubleStringCoreToDisplay(taggedImg.tags.get("Acquisition-TimeMs"));
                String channelName = taggedImg.tags.get("Acquisition-ChannelName");
                String pixelSize = NumberUtils.doubleStringCoreToDisplay(taggedImg.tags.get("Acquisition-PixelSizeUm"));
-               statusLineLabel.setText("<html>" + time + " s, " + channelName + ", " + pixelSize + " &#181;m/px</html>");
+               statusLineLabel.setText("<html>" + time + " s, " + pixelSize + " &#181;m/px</html>");
             } catch (Exception ex) {
                ReportingUtils.logError(ex);
             }

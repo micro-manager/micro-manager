@@ -6,6 +6,7 @@ package org.micromanager.acquisition;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -83,6 +84,7 @@ public class AcquisitionDisplayThread extends Thread {
             }
 
             gui_.setAcquisitionSystemState(acqName, systemMetadata);
+            gui_.setAcquisitionSummary(acqName, makeMetadataFromAcqSettings(acqSettings));
             gui_.initializeAcquisition(acqName, (int) core_.getImageWidth(), (int) core_.getImageHeight(), (int) core_.getBytesPerPixel());
          }
       } catch (Exception ex) {
@@ -90,6 +92,15 @@ public class AcquisitionDisplayThread extends Thread {
       }
    }
 
+   private Map<String,String> makeMetadataFromAcqSettings(SequenceSettings acqSettings) {
+      Map md = Collections.synchronizedMap(new HashMap<String, String>());
+      md.put("Acquisition-KeepShutterOpenChannels",acqSettings.keepShutterOpenChannels);
+      md.put("Acquisition-KeepShutterOpenSlices", acqSettings.keepShutterOpenSlices);
+      md.put("Acquisition-IntervalMs", acqSettings.intervalMs);
+      md.put("Acquisition-SlicesFirst", acqSettings.slicesFirst);
+      md.put("Acquisition-TimeFirst", acqSettings.timeFirst);
+      return md;
+   }
 
    private String getPosName(int posIndex) {
       String posName;

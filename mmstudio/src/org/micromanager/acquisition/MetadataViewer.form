@@ -155,8 +155,8 @@
             <DimensionLayout dim="0">
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" attributes="0">
-                      <Component id="jCheckBox1" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="32" max="32767" attributes="0"/>
+                      <Component id="showUnchangingPropertiesCheckbox" min="-2" max="-2" attributes="0"/>
+                      <EmptySpace pref="74" max="32767" attributes="0"/>
                   </Group>
                   <Component id="metadataTableScrollPane" alignment="0" pref="243" max="32767" attributes="0"/>
               </Group>
@@ -164,7 +164,7 @@
             <DimensionLayout dim="1">
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="0" attributes="0">
-                      <Component id="jCheckBox1" min="-2" max="-2" attributes="0"/>
+                      <Component id="showUnchangingPropertiesCheckbox" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
                       <Component id="metadataTableScrollPane" pref="56" max="32767" attributes="0"/>
                   </Group>
@@ -210,10 +210,13 @@
                 </Component>
               </SubComponents>
             </Container>
-            <Component class="javax.swing.JCheckBox" name="jCheckBox1">
+            <Component class="javax.swing.JCheckBox" name="showUnchangingPropertiesCheckbox">
               <Properties>
                 <Property name="text" type="java.lang.String" value="Show unchanging properties"/>
               </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="showUnchangingPropertiesCheckboxActionPerformed"/>
+              </Events>
             </Component>
           </SubComponents>
         </Container>

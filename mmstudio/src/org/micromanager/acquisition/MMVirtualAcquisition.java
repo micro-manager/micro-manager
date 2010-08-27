@@ -174,6 +174,7 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
             ReportingUtils.logError(ex);
          }
       }
+      imageCache_.setAcquisitionMetadata(summaryMetadata_);
       numGrayChannels_ = numComponents_ * numChannels_;
       virtualStack_ = new AcquisitionVirtualStack(width_, height_, null,
               imageCache_, numGrayChannels_ * numSlices_ * numFrames_);
@@ -193,9 +194,12 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
    public void insertImage(TaggedImage taggedImg) throws MMScriptException {
 
       virtualStack_.insertImage(taggedImg);
+
       if (hyperImage_ == null) {
          show();
       }
+      hyperImage_.getWindow().setTitle(dir_);
+      
       Map<String,String> md = taggedImg.tags;
       
       if (numChannels_ > 1) {
