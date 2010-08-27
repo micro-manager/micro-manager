@@ -90,7 +90,7 @@ public class MetadataViewer extends javax.swing.JFrame
       jTextArea1.setRows(5);
       jScrollPane2.setViewportView(jTextArea1);
 
-      setTitle("Metadata and Notes");
+      setTitle("Metadata and Comments");
 
       tabbedPane.setFocusable(false);
 
