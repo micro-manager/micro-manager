@@ -20,6 +20,10 @@ public abstract class TaggedImageAnalyzer extends TaggedImageProcessor {
       analyze(taggedImage);
    }
 
+   /*
+    * Override this method to analyze images as they arrive.
+    * 
+    */
    protected abstract void analyze(TaggedImage taggedImage);
 
 }
