@@ -249,7 +249,7 @@ public class DefaultImageFileManager implements ImageFileManagerInterface {
       metadataStream_ = new BufferedWriter(new FileWriter(dir_ + "/metadata.txt"));
       metadataStream_.write("{" + "\r\n");
       writeMetadata(getSummaryMetadata(), "Summary");
-      writeMetadata(getSystemMetadata(), "SystemState");
+      //writeMetadata(getSystemMetadata(), "SystemState");
    }
 
    public void finishWriting() {
@@ -273,7 +273,11 @@ public class DefaultImageFileManager implements ImageFileManagerInterface {
       if (data != null) {
          try {
             summaryMetadata_ = jsonToMetadata(data.getJSONObject("Summary"));
-            systemMetadata_ = jsonToMetadata(data.getJSONObject("SystemState"));
+            /*try {
+               systemMetadata_ = jsonToMetadata(data.getJSONObject("SystemState"));
+            } catch (Throwable ex) {
+               ReportingUtils.logError(ex);
+            }*/
             imageMetadata_ = new ArrayList<Map<String,String>>();
             for (String key:makeJsonIterableKeys(data)) {
                JSONObject chunk = data.getJSONObject(key);

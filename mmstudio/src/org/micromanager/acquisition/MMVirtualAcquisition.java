@@ -68,9 +68,9 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
          displaySettings_[i] = new HashMap<String,String>();
       }
 
-      MDUtils.put(summaryMetadata_,"Channels",numChannels_);
-      MDUtils.put(summaryMetadata_,"Slices",numSlices_);
-      MDUtils.put(summaryMetadata_,"Frames",numFrames_);
+      MDUtils.put(summaryMetadata_,"Acquisition-Channels",numChannels_);
+      MDUtils.put(summaryMetadata_,"Acquisition-Slices",numSlices_);
+      MDUtils.put(summaryMetadata_,"Acquisition-Frames",numFrames_);
    }
 
    public void setImagePhysicalDimensions(int width, int height, int depth) throws MMScriptException {
@@ -166,9 +166,9 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
             width_ = MDUtils.getWidth(summaryMetadata_);
             height_ = MDUtils.getHeight(summaryMetadata_);
             pixelType_ = MDUtils.getPixelType(summaryMetadata_);
-            numSlices_ = MDUtils.getInt(summaryMetadata_, "Slices");
-            numFrames_ = MDUtils.getInt(summaryMetadata_, "Frames");
-            numChannels_ = MDUtils.getInt(summaryMetadata_, "Channels");
+            numSlices_ = MDUtils.getInt(summaryMetadata_, "Acquisition-Slices");
+            numFrames_ = MDUtils.getInt(summaryMetadata_, "Acquisition-Frames");
+            numChannels_ = MDUtils.getInt(summaryMetadata_, "Acquisition-Channels");
             numComponents_ = MDUtils.getNumberOfComponents(summaryMetadata_);
          } catch (Exception ex) {
             ReportingUtils.logError(ex);
@@ -384,7 +384,7 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
    }
 
    public void setSummaryProperties(Map<String,String> md) {
-      summaryMetadata_ = md;
+      summaryMetadata_.putAll(md);
    }
 
    public void setSystemState(Map<String,String> md) {

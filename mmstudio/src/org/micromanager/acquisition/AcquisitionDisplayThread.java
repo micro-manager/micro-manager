@@ -94,11 +94,11 @@ public class AcquisitionDisplayThread extends Thread {
 
    private Map<String,String> makeMetadataFromAcqSettings(SequenceSettings acqSettings) {
       Map md = Collections.synchronizedMap(new HashMap<String, String>());
-      md.put("Acquisition-KeepShutterOpenChannels",acqSettings.keepShutterOpenChannels);
-      md.put("Acquisition-KeepShutterOpenSlices", acqSettings.keepShutterOpenSlices);
-      md.put("Acquisition-IntervalMs", acqSettings.intervalMs);
-      md.put("Acquisition-SlicesFirst", acqSettings.slicesFirst);
-      md.put("Acquisition-TimeFirst", acqSettings.timeFirst);
+      //md.put("Acquisition-KeepShutterOpenChannels",acqSettings.keepShutterOpenChannels);
+      //md.put("Acquisition-KeepShutterOpenSlices", acqSettings.keepShutterOpenSlices);
+      //md.put("Acquisition-IntervalMs", acqSettings.intervalMs);
+      //md.put("Acquisition-SlicesFirst", acqSettings.slicesFirst + "");
+      //md.put("Acquisition-TimeFirst", acqSettings.timeFirst + "");
       return md;
    }
 
