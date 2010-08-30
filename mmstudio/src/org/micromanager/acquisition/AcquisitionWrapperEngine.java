@@ -8,6 +8,7 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.prefs.Preferences;
+import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.DoubleVector;
@@ -190,7 +191,16 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    public void abortRequest() {
-      stop(true);
+      if (isAcquisitionRunning()) {
+         int result = JOptionPane.showConfirmDialog(null,
+                 "Abort current acquisition task ?",
+                 "Micro-Manager", JOptionPane.YES_NO_OPTION,
+                 JOptionPane.INFORMATION_MESSAGE);
+
+         if (result == JOptionPane.YES_OPTION) {
+            stop(true);
+         }
+      }
    }
 
    public void shutdown() {

@@ -6,6 +6,8 @@ package org.micromanager.acquisition.engine;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.TaggedImage;
@@ -85,6 +87,7 @@ public class ImageTask implements Runnable {
          zPosition += imageRequest_.Channel.zOffset_;
       }
 
+      imageRequest_.zPosition = zPosition;
       core_.setPosition(core_.getFocusDevice(), zPosition);
    }
 
@@ -165,6 +168,12 @@ public class ImageTask implements Runnable {
          lbl = "RGB";
       MDUtils.put(md, "Acquisition-ExposureMs", imageRequest_.exposure);
       MDUtils.put(md, "Acquisition-PixelSizeUm", core_.getPixelSizeUm());
+      try {
+         MDUtils.put(md, "Acquisition-ZPositionUm", core_.getPosition(core_.getFocusDevice()));
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
+         MDUtils.put(md, "Acquisition-ZPositionUm", "");
+      }
       
       MDUtils.put(md, "Image-PixelType", lbl + bits);
       try {
