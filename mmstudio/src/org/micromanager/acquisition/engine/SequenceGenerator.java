@@ -4,6 +4,7 @@
  */
 package org.micromanager.acquisition.engine;
 
+import org.micromanager.api.EngineTask;
 import java.util.ArrayList;
 
 /**
