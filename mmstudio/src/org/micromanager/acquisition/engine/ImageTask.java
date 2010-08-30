@@ -6,14 +6,11 @@ package org.micromanager.acquisition.engine;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.TaggedImage;
 import org.micromanager.navigation.MultiStagePosition;
 import org.micromanager.navigation.StagePosition;
-import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;
 
@@ -21,16 +18,18 @@ import org.micromanager.utils.ReportingUtils;
  *
  * @author arthur
  */
-public class ImageTask implements Runnable {
+public class ImageTask implements EngineTask {
 
    private final ImageRequest imageRequest_;
    private final Engine eng_;
    private final CMMCore core_;
+   private boolean stopRequested_;
 
    ImageTask(Engine eng, ImageRequest imageRequest) {
       eng_ = eng;
       core_ = eng.core_;
       imageRequest_ = imageRequest;
+      stopRequested_ = false;
    }
 
 
@@ -39,19 +38,19 @@ public class ImageTask implements Runnable {
    }
 
    public void run() {
-      if (!eng_.stopHasBeenRequested()) {
+      if (!stopRequested_) {
          updatePositionAndSlice();
       }
-      if (!eng_.stopHasBeenRequested()) {
+      if (!stopRequested_) {
          updateChannel();
       }
-      if (!eng_.stopHasBeenRequested()) {
+      if (!stopRequested_) {
          sleep();
       }
-      if (!eng_.stopHasBeenRequested()) {
+      if (!stopRequested_) {
          autofocus();
       }
-      if (!eng_.stopHasBeenRequested()) {
+      if (!stopRequested_) {
          acquireImage();
       }
    }
@@ -118,12 +117,16 @@ public class ImageTask implements Runnable {
       }
    }
 
-   public void sleep() {
+   public synchronized void sleep() {
       if (imageRequest_.UseFrame) {
-         while (!eng_.stopHasBeenRequested() && eng_.lastWakeTime_ > 0) {
+         while (!stopRequested_ && eng_.lastWakeTime_ > 0) {
             double sleepTime = (eng_.lastWakeTime_ + imageRequest_.WaitTime) - (System.nanoTime() / 1000000);
             if (sleepTime > 0) {
-               JavaUtils.sleep((int) sleepTime);
+               try {
+                  wait((long) sleepTime);
+               } catch (InterruptedException ex) {
+                  ReportingUtils.logError(ex);
+               }
             } else {
                break;
             }
@@ -209,5 +212,10 @@ public class ImageTask implements Runnable {
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
+   }
+
+   public synchronized void requestStop() {
+      stopRequested_ = true;
+      notify();
    }
 }

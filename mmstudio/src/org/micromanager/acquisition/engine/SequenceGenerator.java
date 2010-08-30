@@ -12,8 +12,8 @@ import java.util.ArrayList;
  */
 public class SequenceGenerator {
 
-   public static ArrayList<Runnable> makeTaskSequence(Engine eng, ArrayList<ImageRequest> requestSequence) {
-      ArrayList<Runnable> imageTaskSequence = new ArrayList<Runnable>();
+   public static ArrayList<EngineTask> makeTaskSequence(Engine eng, ArrayList<ImageRequest> requestSequence) {
+      ArrayList<EngineTask> imageTaskSequence = new ArrayList<EngineTask>();
       for (ImageRequest imageRequest:requestSequence) {
          imageTaskSequence.add(new ImageTask(eng, imageRequest));
       }

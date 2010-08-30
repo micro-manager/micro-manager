@@ -18,7 +18,7 @@ public class Engine {
 
    CMMCore core_ = null;
    public double lastWakeTime_;
-   ArrayList<Runnable> taskSequence_;
+   ArrayList<EngineTask> taskSequence_;
    private boolean stopRequested_ = false;
    private boolean isRunning_ = false;
    public boolean autoShutterSelected_;
@@ -27,6 +27,8 @@ public class Engine {
    private Engine this_;
    private SequenceSettings settings_;
    private boolean isPaused_ = false;
+   private EngineTask currentTask_;
+
    public Engine(CMMCore core, TaggedImageQueue imageReceivingQueue) {
       core_ = core;
       imageReceivingQueue_ = imageReceivingQueue;
@@ -68,11 +70,12 @@ public class Engine {
             }
 
             stopRequested_ = false;
-            for (Runnable task : taskSequence_) {
+            for (EngineTask task : taskSequence_) {
                while (isPaused() && !stopHasBeenRequested()) {
                   JavaUtils.sleep(10);
                }
                if (!stopHasBeenRequested() && !isPaused()) {
+                  setCurrentTask(task);
                   task.run();
                } else {
                   break;
@@ -96,7 +99,13 @@ public class Engine {
                ReportingUtils.showError(ex);
             }
          }
+
+
       }.start();
+   }
+
+   private void setCurrentTask(EngineTask task) {
+      currentTask_ = task;
    }
 
    private synchronized boolean isPaused() {
@@ -113,6 +122,7 @@ public class Engine {
 
    public synchronized void stop() {
       stopRequested_ = true;
+      currentTask_.requestStop();
    }
 
    public synchronized boolean stopHasBeenRequested() {
