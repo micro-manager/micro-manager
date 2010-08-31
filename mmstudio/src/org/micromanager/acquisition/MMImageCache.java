@@ -68,7 +68,7 @@ public class MMImageCache {
          firstTags_ = taggedImg.tags;
       } else {
          for (String key:taggedImg.tags.keySet()) {
-            if (firstTags_.containsKey(key) && ! firstTags_.get(key).contentEquals(taggedImg.tags.get(key)))
+            if (!firstTags_.containsKey(key) || !firstTags_.get(key).contentEquals(taggedImg.tags.get(key)))
                changingKeys_.add(key);
          }
       }
