@@ -4,8 +4,6 @@
  */
 package org.micromanager.acquisition.engine;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.micromanager.api.EngineTask;
 import java.util.HashMap;
 import java.util.Map;
@@ -16,7 +14,6 @@ import mmcorej.TaggedImage;
 import org.micromanager.navigation.MultiStagePosition;
 import org.micromanager.navigation.StagePosition;
 import org.micromanager.utils.MDUtils;
-import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -30,7 +27,6 @@ public class ImageTask implements EngineTask {
    private final CMMCore core_;
    private boolean stopRequested_;
    private boolean pauseRequested_;
-   private ReentrantLock pauseLock_;
 
    ImageTask(Engine eng, ImageRequest imageRequest) {
       eng_ = eng;
