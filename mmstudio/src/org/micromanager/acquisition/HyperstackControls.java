@@ -288,7 +288,7 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
                               }
                            }
                         };
-                        timer.schedule(task, 0, 100);
+                        timer.schedule(task, 2000, 100);
                      }
                   }
                }
