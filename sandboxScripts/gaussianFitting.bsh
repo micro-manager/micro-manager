@@ -1,0 +1,89 @@
+import org.apache.commons.math.analysis.*;
+import org.apache.commons.math.optimization.direct.NelderMead;
+import org.apache.commons.math.optimization.direct.MultiDirectional;
+import org.apache.commons.math.optimization;
+import org.apache.commons.math.optimization.GoalType;
+
+
+import java.lang.math;
+
+import ij.ImagePlus;
+import ij.process.ImageProcessor;
+import ij.IJ;
+
+
+class GaussianResidual implements MultivariateRealFunction {
+       short[] data_;
+       int nx_;
+       int ny_;
+       int count_ = 0;
+
+ void setImage(short[] data, int width, int height) {
+               data_ = data;
+               nx_ = width;
+               ny_ = height;
+       }
+
+       public double value(double[] params) {
+               gui.message("Count: " + count_);
+               count_++;
+               double residual = 0.0;
+               for (int i = 0; i < nx_; i++) {
+                       for (int j = 0; j < ny_; j++) {
+                               residual += sqr(gaussian(params, i, j) - data_[(i*nx_) + j]);
+                       }
+               }
+for (int i=0; i< params.length; i++)
+       gui.message(" " + i + " " + params[i]);
+gui.message("Residual: " + residual);
+               return residual;
+       }
+
+       public double sqr(double val) {
+               return val*val;
+       }
+
+ double gaussian(double[] params, int x, int y) {
+
+               /* Gaussian function of the form:
+                * A * (1/pi) exp(-((x-xc)^2/(2 sigx^2)+(y-yc)^2/(2 sigy^2)))+b
+                * A = params[0]  (total intensity)
+                * xc = params[1]
+                * yc = params[2]
+                * b = params[3]  (background)
+                * sigx = params[4]
+                * sigy = [params[5]
+                */
+               if (params.length < 6) {
+                       // Problem, what do we do???
+                       MMScriptException e;
+                       e.message = "Params for Gaussian function has too few values";
+                       throw (e);
+               }
+
+               double res = params[0] * (1 / Math.PI);
+               double factor = sqr(x - params[1]) / (2* sqr(params[4]));
+               factor += sqr(y - params[2]) / (2 * sqr(params[5]));
+               res = res * Math.pow(Math.E, -factor) + params[3];
+       }
+}
+
+
+unset("gs");
+GaussianResidual gs = new GaussianResidual();
+unset("nm");
+NelderMead nm = new NelderMead();
+
+ImagePlus siPlus = IJ.getImage();
+ImageProcessor siProc = siPlus.getProcessor();
+gs.setImage(siProc.getPixels(), siProc.getWidth(), siProc.getHeight());
+
+double[] params = {50000.0, 5.0, 4.9, 900.0, 1.0, 1.2};
+
+nm.setMaxIterations(200);
+nm.optimize(gs, GoalType.MINIMIZE, params);
+
+for (int i=0; i< params.length; i++)
+       gui.message(" " + i + " " + params[i]);
+
+update();
