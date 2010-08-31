@@ -74,18 +74,18 @@ unset("gs");
 GaussianResidual gs = new GaussianResidual();
 unset("nm");
 NelderMead nm = new NelderMead();
-SimpleScalarValueChecker convergedChecker = new SimpleScalarValueChecker(1e-7,-1);
+SimpleScalarValueChecker convergedChecker = new SimpleScalarValueChecker(1e-6,-1);
 
 ImagePlus siPlus = IJ.getImage();
 ImageProcessor siProc = siPlus.getProcessor();
 gs.setImage(siProc.getPixels(), siProc.getWidth(), siProc.getHeight());
 
-double[] params0 = {12000.0, 6.0, 6.0, 2.0, 300.0};
+double[] params0 = {16000.0, 8.0, 8.0, 1.0, 850.0};
 double[] steps = new double[5];
 String [] paramNames = {"A", "x_c", "y_c", "sigma", "b"};
 
 for (i=0;i<params0.length;++i)
-	steps[i] = params0[i]*0.5;
+	steps[i] = params0[i]*0.3;
 
 nm.setStartConfiguration(steps);
 nm.setConvergenceChecker(convergedChecker);
