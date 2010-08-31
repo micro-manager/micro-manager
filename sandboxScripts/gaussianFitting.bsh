@@ -3,6 +3,7 @@ import org.apache.commons.math.optimization.direct.NelderMead;
 import org.apache.commons.math.optimization.direct.MultiDirectional;
 import org.apache.commons.math.optimization;
 import org.apache.commons.math.optimization.GoalType;
+import org.apache.commons.math.optimization.SimpleScalarValueChecker;
 
 
 import java.lang.math;
@@ -18,14 +19,14 @@ class GaussianResidual implements MultivariateRealFunction {
        int ny_;
        int count_ = 0;
 
- void setImage(short[] data, int width, int height) {
+       void setImage(short[] data, int width, int height) {
                data_ = data;
                nx_ = width;
                ny_ = height;
        }
 
        public double value(double[] params) {
-               gui.message("Count: " + count_);
+               print("Count: " + count_);
                count_++;
                double residual = 0.0;
                for (int i = 0; i < nx_; i++) {
@@ -33,38 +34,38 @@ class GaussianResidual implements MultivariateRealFunction {
                                residual += sqr(gaussian(params, i, j) - data_[(i*nx_) + j]);
                        }
                }
-for (int i=0; i< params.length; i++)
-       gui.message(" " + i + " " + params[i]);
-gui.message("Residual: " + residual);
-               return residual;
-       }
+			for (int i=0; i< params.length; i++)
+      		print(" " + paramNames[i] + ": " + params[i]);
 
-       public double sqr(double val) {
-               return val*val;
-       }
+			print("Residual: " + residual);
+         return residual;
+      }
 
- double gaussian(double[] params, int x, int y) {
+      public double sqr(double val) {
+         return val*val;
+      }
+
+		double gaussian(double[] params, int x, int y) {
 
                /* Gaussian function of the form:
-                * A * (1/pi) exp(-((x-xc)^2/(2 sigx^2)+(y-yc)^2/(2 sigy^2)))+b
+                * A *  exp(-((x-xc)^2+(y-yc)^2)/(2 sigy^2))+b
                 * A = params[0]  (total intensity)
                 * xc = params[1]
                 * yc = params[2]
-                * b = params[3]  (background)
-                * sigx = params[4]
-                * sigy = [params[5]
+                * sig = params[3]
+                * b = params[4]  (background)
                 */
-               if (params.length < 6) {
+
+               if (params.length < 5) {
                        // Problem, what do we do???
                        MMScriptException e;
                        e.message = "Params for Gaussian function has too few values";
                        throw (e);
                }
 
-               double res = params[0] * (1 / Math.PI);
-               double factor = sqr(x - params[1]) / (2* sqr(params[4]));
-               factor += sqr(y - params[2]) / (2 * sqr(params[5]));
-               res = res * Math.pow(Math.E, -factor) + params[3];
+               double exponent = (sqr(x - params[1])  + sqr(y - params[2])) / (2 * sqr(params[3]));
+               double res = params[0] * Math.exp(-exponent) + params[4];
+					return res;
        }
 }
 
@@ -73,17 +74,32 @@ unset("gs");
 GaussianResidual gs = new GaussianResidual();
 unset("nm");
 NelderMead nm = new NelderMead();
+SimpleScalarValueChecker convergedChecker = new SimpleScalarValueChecker(1e-7,-1);
 
 ImagePlus siPlus = IJ.getImage();
 ImageProcessor siProc = siPlus.getProcessor();
 gs.setImage(siProc.getPixels(), siProc.getWidth(), siProc.getHeight());
 
-double[] params = {50000.0, 5.0, 4.9, 900.0, 1.0, 1.2};
+double[] params0 = {12000.0, 6.0, 6.0, 2.0, 300.0};
+double[] steps = new double[5];
+String [] paramNames = {"A", "x_c", "y_c", "sigma", "b"};
+
+for (i=0;i<params0.length;++i)
+	steps[i] = params0[i]*0.5;
+
+nm.setStartConfiguration(steps);
+nm.setConvergenceChecker(convergedChecker);
 
 nm.setMaxIterations(200);
-nm.optimize(gs, GoalType.MINIMIZE, params);
+result = nm.optimize(gs, GoalType.MINIMIZE, params0);
 
-for (int i=0; i< params.length; i++)
-       gui.message(" " + i + " " + params[i]);
+paramsOut = result.getPoint();
+
+print("\n\nFinal result:");
+for (int i=0; i<paramsOut.length; i++)
+       print(" " + paramNames[i] + ": " + paramsOut[i]);
+
+Anormalized = paramsOut[0] * (2 * Math.PI * paramsOut[3] * paramsOut[3]);
+print("Amplitude normalized: " + Anormalized);
 
 update();
