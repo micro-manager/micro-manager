@@ -4718,7 +4718,7 @@ std::string CMMCore::saveLogArchive(void)
    {
       const char* pWarning =
          "MMCore was not able to read the log file!";
-      logLength = strlen(pWarning);
+      logLength = static_cast<unsigned long>(strlen(pWarning));
       pLogContents = new char[logLength];
       strcpy( pLogContents, pWarning);
    }

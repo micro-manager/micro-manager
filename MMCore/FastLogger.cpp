@@ -366,10 +366,10 @@ void FastLogger::Log(IMMLogger::priority p, const char* format, ...)throw()
 
 		std::auto_ptr<BigBuffer> pB (new BigBuffer());
 		//char buffer[MaxBuf];
-		int flen = strlen(format);
+		unsigned int flen = (unsigned int)strlen(format);
 
 		// N.B. this loop increments the string iterator in two diffent conditions!
-		for (int i = 0; format[i] != 0; ++i)
+		for (unsigned int i = 0; format[i] != 0; ++i)
 		{
 			pB->buffer[0] = 0;
 			
@@ -684,7 +684,7 @@ void FastLogger::LogContents(char**  ppContents, unsigned long& len)
 	// re-open for logging
 	plogFile_g->open(logFileName_.c_str(), ios_base::app);
 
-   len = pos;
+   len = static_cast<unsigned long>(pos);
    return;
 
 }
