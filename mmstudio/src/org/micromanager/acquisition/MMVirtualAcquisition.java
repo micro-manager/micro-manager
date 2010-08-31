@@ -6,6 +6,7 @@ import ij.gui.ImageWindow;
 import ij.plugin.Animator;
 import ij.process.ImageStatistics;
 import java.awt.Color;
+import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -191,6 +192,28 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       throw new UnsupportedOperationException("Not supported yet.");
    }
 
+   private void updateTitle() {
+      String status = "";
+      if (newData_) {
+         if (acquisitionIsRunning()) {
+            if (!abortRequested()) {
+               if (isPaused()) {
+                  status = "Paused";
+               } else {
+                  status = "Running";
+               }
+            } else {
+               status = "Interrupted";
+            }
+         } else {
+            status = "Finished";
+         }
+      } else {
+         status = "On disk";
+      }
+      hyperImage_.getWindow().setTitle(new File(dir_).getName() + " (" + status + ")");
+   }
+
    public void insertImage(TaggedImage taggedImg) throws MMScriptException {
 
       virtualStack_.insertImage(taggedImg);
@@ -198,8 +221,8 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       if (hyperImage_ == null) {
          show();
       }
-      hyperImage_.getWindow().setTitle(dir_);
-      
+
+      updateTitle();
       Map<String,String> md = taggedImg.tags;
       
       if (numChannels_ > 1) {
@@ -247,11 +270,13 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
          eng_.setPause(false);
       else
          eng_.setPause(true);
+      updateTitle();
       return (eng_.isPaused());
    }
 
    void abort() {
       eng_.abortRequest();
+      updateTitle();
    }
 
    public void setEngine(AcquisitionEngine eng) {
@@ -260,6 +285,14 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
 
    public boolean acquisitionIsRunning() {
       return eng_.isAcquisitionRunning();
+   }
+
+   public boolean abortRequested() {
+      return eng_.abortRequested();
+   }
+
+   private boolean isPaused() {
+      return eng_.isPaused();
    }
 
    private class ImagePlusExpandable extends ImagePlus {
@@ -299,6 +332,7 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
          ((CompositeImage) hyperImage_).setChannelsUpdated();
          hyperImage_.updateAndDraw();
       }
+      updateTitle();
    }
 
    public void setChannelColor(int channel, int rgb) throws MMScriptException {

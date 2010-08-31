@@ -202,6 +202,10 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
          }
       }
    }
+   
+   public boolean abortRequested() {
+      return eng_.stopHasBeenRequested();
+   }
 
    public void shutdown() {
       stop(true);

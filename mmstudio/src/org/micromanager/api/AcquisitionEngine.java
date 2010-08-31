@@ -306,4 +306,6 @@ public interface AcquisitionEngine {
 
    public void addProcessor(TaggedImageProcessor processor);
    public void removeProcessor(TaggedImageProcessor processor);
+
+   public boolean abortRequested();
 }

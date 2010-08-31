@@ -49,7 +49,7 @@ public class Engine {
       return startTimeNs_;
    }
    
-   public synchronized void start() {
+   public void start() {
       setRunning(true);
       this_ = this;
 
