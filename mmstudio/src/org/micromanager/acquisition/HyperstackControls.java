@@ -19,6 +19,8 @@ import ij.gui.ImageWindow;
 import java.text.ParseException;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import mmcorej.TaggedImage;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.NumberUtils;
@@ -259,19 +261,27 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
       statusLineLabel.setText(text);
    }
 
+   private void updateStatusLine(TaggedImage taggedImg) {
+      try {
+         String time = NumberUtils.doubleStringCoreToDisplay(taggedImg.tags.get("Acquisition-TimeMs"));
+         String channelName = taggedImg.tags.get("Acquisition-ChannelName");
+         String zPosition = taggedImg.tags.get("Acquisition-ZPositionUm");
+         String pixelSize = NumberUtils.doubleStringCoreToDisplay(taggedImg.tags.get("Acquisition-PixelSizeUm"));
+         setStatusLabel("<html>" + time + " s, " + "z: " + zPosition + " &#181;m" + "</html>");
+      } catch (ParseException ex) {
+         ReportingUtils.logError(ex);
+      }
+   }
+
    public void imageUpdated(ImagePlus imp) {
       if (imp == win_.getImagePlus()) {
          ImageStack stack = imp.getStack();
          if (stack instanceof AcquisitionVirtualStack) {
             AcquisitionVirtualStack vstack = (AcquisitionVirtualStack) imp.getStack();
             int slice = imp.getCurrentSlice();
-            TaggedImage taggedImg = vstack.getTaggedImage(slice);
+            final TaggedImage taggedImg = vstack.getTaggedImage(slice);
+            updateStatusLine(taggedImg);
             try {
-               String time = NumberUtils.doubleStringCoreToDisplay(taggedImg.tags.get("Acquisition-TimeMs"));
-               String channelName = taggedImg.tags.get("Acquisition-ChannelName");
-               String zPosition = taggedImg.tags.get("Acquisition-ZPositionUm");
-               String pixelSize = NumberUtils.doubleStringCoreToDisplay(taggedImg.tags.get("Acquisition-PixelSizeUm"));
-               setStatusLabel("<html>" + time + " s, " + "z: " + zPosition + " &#181;m" + "</html>");
                if (acq_.acquisitionIsRunning()) {
                   if (taggedImg.tags.containsKey("Acquisition-NextImageTimeMs"))  {
                      final long nextImageTime = MDUtils.getLong(taggedImg.tags, "Acquisition-NextImageTimeMs");
@@ -281,10 +291,11 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
 
                            public void run() {
                               double timeRemainingS = (nextImageTime - System.nanoTime() / 1000000) / 1000;
-                              if (timeRemainingS > 0) {
+                              if (timeRemainingS > 0 && acq_.acquisitionIsRunning()) {
                                  setStatusLabel("Next image: " + NumberUtils.doubleToDisplayString(timeRemainingS) + " s");
                               } else {
                                  timer.cancel();
+                                 updateStatusLine(taggedImg);
                               }
                            }
                         };
