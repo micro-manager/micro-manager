@@ -1,4 +1,5 @@
 package org.micromanager.pixelcalibrator;
+import org.apache.commons.math.util.MathUtils;
 
 import java.awt.geom.AffineTransform;
 import java.util.prefs.Preferences;
@@ -6,7 +7,6 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
 
-import org.apache.commons.math.util.MathUtils;
 import org.micromanager.CalibrationEditor;
 import org.micromanager.CalibrationListDlg;
 import org.micromanager.MMStudioMainFrame;

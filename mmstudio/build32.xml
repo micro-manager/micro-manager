@@ -1,7 +1,7 @@
 <!-- Ant makefile for the Micro-Manager for Windows distribution -->
 <!-- This file assumes Micro-Manager project tree structure      -->
 
-<project name="MMJ" default="buildMMStudio">
+<project name="MMJ" default="build">
 
 	<!-- Specify version in the installer name -->
 	<property name="InstallerName" value="MMSetup_"/>
@@ -50,7 +50,7 @@
 		<pathelement location="${MMPluginDir}/MMJ_.jar"/>
 	</path>
 
-	<target name="compileMMStudio" description="Compile MM Studio.">
+	<target name="compile" description="Compile MM Studio.">
 		<mkdir dir="build" />
 		<javac srcdir="./src" destdir="./build" sourcepath="./src/org/micromanager/utils/AutofocusBase.java" optimize="on" source="1.5" target="1.5" debug="on">
 			
@@ -71,7 +71,7 @@
 		</copy>
 	</target>
 
-	<target name="buildMMStudio" description="Build MMJ_.jar">
+	<target name="build" description="Build MMJ_.jar">
 
 		<copy file="./bin/plugins_mmstudio.config" tofile="./build/plugins.config"  overwrite="true" verbose="true" />
 		<jar jarfile="MMJ_.jar" basedir="build" manifest="./src/MANIFEST.MF" />
@@ -92,7 +92,7 @@
 
 	</target>
 
-	<target name="cleanMMStudio" description="Delete the MMStudio build files.">
+	<target name="clean" description="Delete the MMStudio build files.">
 		<delete dir="build" />
 		<delete file="MMJ_.jar" />
 		<delete file="MMReader_.jar" />

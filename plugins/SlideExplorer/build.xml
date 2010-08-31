@@ -1,7 +1,7 @@
 <!-- Ant makefile for the Micro-Manager SlideExplorer plugin  -->
 <!-- This file assumes Micro-Manager project tree structure -->
 
-<project name="MMSlideExplorer" default="buildMMSlideExplorer">
+<project name="MMSlideExplorer" default="build">
 
 	<!-- Specify the system path to the ImageJ root directory -->
 	<property name="InstallRoot" value="../../Install_win32/micro-manager"/>
@@ -38,7 +38,7 @@
 
 	</path>
 
-	<target name="compileMMSlideExplorer" description="Compile SlideExplorer plugin.">
+	<target name="compile" description="Compile SlideExplorer plugin.">
 		<mkdir dir="build" />
 		<javac srcdir="./src" destdir="./build" optimize="on" source="1.5" target="1.5" debug="on">
 			<classpath refid="project.class.path" />
@@ -48,7 +48,7 @@
 		</copy>
 	</target>
 
-	<target name="buildMMSlideExplorer" description="Build SlideExplorer.jar">
+	<target name="build" description="Build SlideExplorer.jar">
 		<jar jarfile="SlideExplorer.jar" basedir="build" />
 		<copy file="SlideExplorer.jar" todir="${MMPluginsDir-inst}" />
 	</target>

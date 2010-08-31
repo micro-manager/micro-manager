@@ -1,7 +1,7 @@
 <!-- Ant makefile for the Micro-Manager Autofocus plugin  -->
 <!-- This file assumes Micro-Manager project tree structure -->
 
-<project name="Autofocus" default="buildAutofocus">
+<project name="Autofocus" default="build">
 
 	<!-- Specify the system path to the ImageJ root directory -->
    <property name="ImageJPath" value="/Program Files/ImageJ"/>
@@ -34,7 +34,7 @@
 	   <pathelement location="${MMPluginDir}/MMJ_.jar"/>
 	</path>
 
-	<target name="compileAutofocus" description="Compile MM Autofocus plugins.">
+	<target name="compile" description="Compile MM Autofocus plugins.">
 		<mkdir dir="build" />
 		<mkdir dir="buildTB" />
 		<mkdir dir="buildDuo" />
@@ -56,7 +56,7 @@
 
 	</target>
 
-	<target name="buildAutofocus" description="Build MMAutofocus.jar">
+	<target name="build" description="Build MMAutofocus.jar">
 
 		<jar jarfile="MMAutofocus.jar" basedir="build" />
 		
@@ -84,7 +84,7 @@
 		<copy file="MMAutofocusDuo.jar" todir="${mmautofocus-inst}/" />
 	</target>
 	
-	<target name="cleanAutofocus" description="Delete the MMAutofocus build files.">
+	<target name="clean" description="Delete the MMAutofocus build files.">
 		<delete dir="build" />
 		<delete file="MMAutofocus.jar" />
 		<delete dir="buildTB" />

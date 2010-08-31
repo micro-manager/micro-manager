@@ -1,7 +1,7 @@
 <!-- Ant makefile for the Micro-Manager for Windows distribution -->
 <!-- This file assumes Micro-Manager project tree structure      -->
 
-<project name="MMJ" default="buildMMStudio">
+<project name="MMJ" default="build">
 
 	<!-- Specify version in the installer name -->
 	<property name="InstallerName" value="MMSetup_"/>
@@ -17,7 +17,7 @@
 
 	<!-- Do not modify from this point on -->
 	<property name="MMPluginDir" value="${ImageJPath}/plugins/Micro-Manager"/>
-	<property name="IJ" value="../../3rdpartypublic/classext/ij/ij.jar"/>
+	<property name="IJ" value="../../3rdpartypublic/classext/ij.jar"/>
 	<property name="beanshell" value="../../3rdpartypublic/classext/bsh-2.0b4.jar"/>
 	<property name="swingx" value="../../3rdpartypublic/classext/swingx-0.9.5.jar"/>
 	<property name="swing_layout" value="../../3rdpartypublic/classext/swing-layout-1.0.4.jar"/>
@@ -50,7 +50,7 @@
 		<pathelement location="${MMPluginDir}/MMJ_.jar"/>
 	</path>
 
-	<target name="compileMMStudio" description="Compile MM Studio.">
+	<target name="compile" description="Compile MM Studio.">
 		<mkdir dir="build" />
 		<javac srcdir="./src" destdir="./build" sourcepath="./src/org/micromanager/utils/AutofocusBase.java" optimize="on" source="1.5" target="1.5" debug="on">
 			
@@ -71,7 +71,7 @@
 		</copy>
 	</target>
 
-	<target name="buildMMStudio" description="Build MMJ_.jar">
+	<target name="build" description="Build MMJ_.jar">
 
 		<copy file="./bin/plugins_mmstudio.config" tofile="./build/plugins.config"  overwrite="true" verbose="true" />
 		<jar jarfile="MMJ_.jar" basedir="build" manifest="./src/MANIFEST.MF" />
@@ -92,7 +92,7 @@
 
 	</target>
 
-	<target name="cleanMMStudio" description="Delete the MMStudio build files.">
+	<target name="clean" description="Delete the MMStudio build files.">
 		<delete dir="build" />
 		<delete file="MMJ_.jar" />
 		<delete file="MMReader_.jar" />
@@ -112,6 +112,7 @@
 		<copy file="${BinRoot}/MMCoreJ_wrap.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/LaunchMicroManager.bat" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/MMConfig_demo.cfg" todir="${InstallRoot}" />
+		<copy file="${BinRoot}/mmgr_dal_AAAOTF.dll" todir="${InstallRoot}" />
 <copy file="${BinRoot}/mmgr_dal_AndorLaserCombiner.dll" todir="${InstallRoot}" />
 <copy file="${BinRoot}/mmgr_dal_Apogee.dll" todir="${InstallRoot}" />
 <copy file="${BinRoot}/mmgr_dal_Arduino.dll" todir="${InstallRoot}" />
@@ -124,7 +125,6 @@
 <copy file="${BinRoot}/mmgr_dal_CSUX.dll" todir="${InstallRoot}" />
 <copy file="${BinRoot}/mmgr_dal_DemoCamera.dll" todir="${InstallRoot}" />
 <copy file="${BinRoot}/mmgr_dal_DemoStreamingCamera.dll" todir="${InstallRoot}" />
-<copy file="${BinRoot}/mmgr_dal_DLP4000.dll" todir="${InstallRoot}" />
 <copy file="${BinRoot}/mmgr_dal_GenericSLM.dll" todir="${InstallRoot}" />
 <copy file="${BinRoot}/mmgr_dal_Hamamatsu.dll" todir="${InstallRoot}" />
 <copy file="${BinRoot}/mmgr_dal_K8055.dll" todir="${InstallRoot}" />
@@ -199,7 +199,7 @@
 		<exec dir="${InstallRoot}" executable="java">
 			<arg line="-cp plugins\Micro-Manager\MMJ_.jar;plugins\Micro-Manager\MMCoreJ.jar DeviceListBuilder "/>
 		</exec>
-		<copy file="${InstallRoot}/MMDeviceList.txt" todir="${BinRoot}" />
+	<!--	<copy file="${InstallRoot}/MMDeviceList.txt" todir="${BinRoot}" /> -->
 	</target>
 
 	<target name="packInstaller" description="Create installation package">
