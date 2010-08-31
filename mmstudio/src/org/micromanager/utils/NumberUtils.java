@@ -67,9 +67,13 @@ public class NumberUtils {
 	
     // Core string methods
 	
-	public static String intToCoreString(int number) {
+	public static String intToCoreString(long number) {
 		return coreIntegerFormat_.format(number);
 	}
+
+   public static String longToCoreString(long number) {
+      return coreIntegerFormat_.format(number);
+   }
 
 	public static String doubleToCoreString(double number) {
 		return coreDoubleFormat_.format(number);
@@ -77,6 +81,10 @@ public class NumberUtils {
 
 	public static int coreStringToInt(Object numberString) throws ParseException {
 		return coreIntegerFormat_.parse((String) numberString).intValue();
+	}
+
+   public static long coreStringToLong(Object numberString) throws ParseException {
+		return coreIntegerFormat_.parse((String) numberString).longValue();
 	}
 
 	public static double coreStringToDouble(Object numberString) throws ParseException {
@@ -101,5 +109,7 @@ public class NumberUtils {
 	public static String intStringCoreToDisplay(Object numberInt) throws ParseException {
 		return intToDisplayString(coreStringToInt(numberInt));
 	}
+
+
 
 }

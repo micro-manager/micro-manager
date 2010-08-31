@@ -31,4 +31,5 @@ public class ImageRequest {
    boolean relativeZSlices;
    double zReference;
    double zPosition;
+   double NextWaitTime = 0;
 }

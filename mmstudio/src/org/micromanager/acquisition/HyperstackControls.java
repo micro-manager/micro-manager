@@ -17,7 +17,10 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.gui.ImageWindow;
 import java.text.ParseException;
+import java.util.Timer;
+import java.util.TimerTask;
 import mmcorej.TaggedImage;
+import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
 
@@ -28,7 +31,7 @@ import org.micromanager.utils.ReportingUtils;
 public class HyperstackControls extends java.awt.Panel implements ImageListener {
    private final MMVirtualAcquisition acq_;
    private final ImageWindow win_;
-
+   
     /** Creates new form HyperstackControls */
     public HyperstackControls(MMVirtualAcquisition acq, ImageWindow win) {
         initComponents();
@@ -252,6 +255,10 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
 
    public void imageClosed(ImagePlus ip) {}
 
+   public synchronized void setStatusLabel(String text) {
+      statusLineLabel.setText(text);
+   }
+
    public void imageUpdated(ImagePlus imp) {
       if (imp == win_.getImagePlus()) {
          ImageStack stack = imp.getStack();
@@ -264,7 +271,28 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
                String channelName = taggedImg.tags.get("Acquisition-ChannelName");
                String zPosition = taggedImg.tags.get("Acquisition-ZPositionUm");
                String pixelSize = NumberUtils.doubleStringCoreToDisplay(taggedImg.tags.get("Acquisition-PixelSizeUm"));
-               statusLineLabel.setText("<html>" + time + " s, " + "z: " + zPosition + " &#181;m" + "</html>");
+               setStatusLabel("<html>" + time + " s, " + "z: " + zPosition + " &#181;m" + "</html>");
+               if (acq_.acquisitionIsRunning()) {
+                  if (taggedImg.tags.containsKey("Acquisition-NextImageTimeMs"))  {
+                     final long nextImageTime = MDUtils.getLong(taggedImg.tags, "Acquisition-NextImageTimeMs");
+                     if (System.nanoTime() / 1000000 < nextImageTime) {
+                        final Timer timer = new Timer();
+                        TimerTask task = new TimerTask() {
+
+                           public void run() {
+                              double timeRemainingS = (nextImageTime - System.nanoTime() / 1000000) / 1000;
+                              if (timeRemainingS > 0) {
+                                 setStatusLabel("Next image: " + NumberUtils.doubleToDisplayString(timeRemainingS) + " s");
+                              } else {
+                                 timer.cancel();
+                              }
+                           }
+                        };
+                        timer.schedule(task, 0, 100);
+                     }
+                  }
+               }
+               
             } catch (Exception ex) {
                ReportingUtils.logError(ex);
             }

@@ -13,6 +13,7 @@ import mmcorej.TaggedImage;
 import org.micromanager.navigation.MultiStagePosition;
 import org.micromanager.navigation.StagePosition;
 import org.micromanager.utils.MDUtils;
+import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -32,7 +33,6 @@ public class ImageTask implements EngineTask {
       imageRequest_ = imageRequest;
       stopRequested_ = false;
    }
-
 
    private void log(String msg) {
       ReportingUtils.logMessage("ImageTask: " + msg);
@@ -153,8 +153,9 @@ public class ImageTask implements EngineTask {
       //String jsonMetadata = gson.toJson(imageRequest_);
       Map<String, String> md = new HashMap<String, String>();
       MDUtils.put(md, "Acquisition-SliceIndex", imageRequest_.SliceIndex);
-      if (imageRequest_.UseChannel)
+      if (imageRequest_.UseChannel) {
          MDUtils.put(md, "Acquisition-ChannelName", imageRequest_.Channel.config_);
+      }
       MDUtils.put(md, "Acquisition-PositionIndex", imageRequest_.PositionIndex);
       MDUtils.put(md, "Acquisition-ChannelIndex", imageRequest_.ChannelIndex);
       MDUtils.put(md, "Acquisition-FrameIndex", imageRequest_.FrameIndex);
@@ -166,10 +167,11 @@ public class ImageTask implements EngineTask {
 
       long bits = core_.getBytesPerPixel() * 8;
       String lbl = "";
-      if (core_.getNumberOfComponents() == 1)
+      if (core_.getNumberOfComponents() == 1) {
          lbl = "GRAY";
-      else if(core_.getNumberOfComponents() == 4)
+      } else if (core_.getNumberOfComponents() == 4) {
          lbl = "RGB";
+      }
       MDUtils.put(md, "Acquisition-ExposureMs", imageRequest_.exposure);
       MDUtils.put(md, "Acquisition-PixelSizeUm", core_.getPixelSizeUm());
       try {
@@ -178,7 +180,7 @@ public class ImageTask implements EngineTask {
          ReportingUtils.logError(ex);
          MDUtils.put(md, "Acquisition-ZPositionUm", "");
       }
-      
+
       MDUtils.put(md, "Image-PixelType", lbl + bits);
       try {
          MDUtils.setWidth(md, (int) core_.getImageWidth());
@@ -206,10 +208,14 @@ public class ImageTask implements EngineTask {
          Object pixels = core_.getImage();
          Configuration config = core_.getSystemStateCache();
          MDUtils.addConfiguration(md, config);
+         if (imageRequest_.NextWaitTime > 0) {
+            long nextImageTimeMs = (long) (imageRequest_.NextWaitTime + eng_.lastWakeTime_);
+            MDUtils.put(md, "Acquisition-NextImageTimeMs", nextImageTimeMs);
+         }
          TaggedImage taggedImage = new TaggedImage(pixels, md);
 
          eng_.imageReceivingQueue_.add(taggedImage);
-         
+
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }

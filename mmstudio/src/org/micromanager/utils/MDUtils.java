@@ -29,6 +29,14 @@ public class MDUtils {
          throw new Exception("Can't find a " + key + " property.");
       }
    }
+   
+   public static long getLong(Map<String,String> map, String key) throws Exception {
+      try {
+         return NumberUtils.coreStringToLong(map.get(key));
+      } catch (ParseException ex) {
+         throw new Exception("Can't find a " + key + " property.");
+      }
+   }
 
    public static void putInt(Map<String,String> map, String key, int val) throws Exception {
       map.put(key, NumberUtils.intToDisplayString(val));
@@ -84,6 +92,10 @@ public class MDUtils {
 
    public static String getPixelType(Map<String, String> map)  throws Exception {
       return map.get("Image-PixelType");
+   }
+
+   public static void put(Map<String, String> map, String key, long value) {
+      map.put(key, NumberUtils.longToCoreString(value));
    }
 
    public static void put(Map<String, String> map, String key, int value) {

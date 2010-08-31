@@ -122,6 +122,8 @@ public class SequenceGenerator {
                }
             }
 
+            if (imageRequest.WaitTime > 0)
+               lastImageRequest.NextWaitTime = imageRequest.WaitTime;
             if (!skipLastImage) {
                imageRequestList.add(lastImageRequest);
             }

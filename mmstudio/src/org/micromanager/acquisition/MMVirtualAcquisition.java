@@ -258,6 +258,9 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       eng_ = eng;
    }
 
+   public boolean acquisitionIsRunning() {
+      return eng_.isAcquisitionRunning();
+   }
 
    private class ImagePlusExpandable extends ImagePlus {
 
