@@ -36,6 +36,7 @@ pushd plugins\Bleach
 call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml compile build
 popd
 
+echo building pixelcalibrator
 pushd plugins\PixelCalibrator 
 call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml compileMMPixelCalibrator buildMMPixelCalibrator
 popd
