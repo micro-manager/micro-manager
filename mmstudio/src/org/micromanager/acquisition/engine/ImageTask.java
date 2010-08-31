@@ -7,7 +7,6 @@ package org.micromanager.acquisition.engine;
 import org.micromanager.api.EngineTask;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.locks.ReentrantLock;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.TaggedImage;
