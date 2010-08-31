@@ -11,4 +11,6 @@ package org.micromanager.api;
  */
 public interface EngineTask extends Runnable {
    public void requestStop();
+   public void requestPause();
+   public void requestResume();
 }

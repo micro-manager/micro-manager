@@ -4,9 +4,12 @@
  */
 package org.micromanager.acquisition.engine;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.micromanager.api.EngineTask;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.locks.ReentrantLock;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.TaggedImage;
@@ -26,6 +29,8 @@ public class ImageTask implements EngineTask {
    private final Engine eng_;
    private final CMMCore core_;
    private boolean stopRequested_;
+   private boolean pauseRequested_;
+   private ReentrantLock pauseLock_;
 
    ImageTask(Engine eng, ImageRequest imageRequest) {
       eng_ = eng;
@@ -39,19 +44,19 @@ public class ImageTask implements EngineTask {
    }
 
    public void run() {
-      if (!stopRequested_) {
+      if (!isStopRequested()) {
          updatePositionAndSlice();
       }
-      if (!stopRequested_) {
+      if (!isStopRequested()) {
          updateChannel();
       }
-      if (!stopRequested_) {
+      if (!isStopRequested()) {
          sleep();
       }
-      if (!stopRequested_) {
+      if (!isStopRequested()) {
          autofocus();
       }
-      if (!stopRequested_) {
+      if (!isStopRequested()) {
          acquireImage();
       }
    }
@@ -151,6 +156,7 @@ public class ImageTask implements EngineTask {
    void acquireImage() {
       //Gson gson = new Gson();
       //String jsonMetadata = gson.toJson(imageRequest_);
+      waitDuringPause();
       Map<String, String> md = new HashMap<String, String>();
       MDUtils.put(md, "Acquisition-SliceIndex", imageRequest_.SliceIndex);
       if (imageRequest_.UseChannel) {
@@ -224,5 +230,33 @@ public class ImageTask implements EngineTask {
    public synchronized void requestStop() {
       stopRequested_ = true;
       notify();
+   }
+
+   public synchronized void requestPause() {
+      pauseRequested_ = true;
+   }
+
+   public synchronized void requestResume() {
+      pauseRequested_ = false;
+      this.notify();
+   }
+
+   private synchronized boolean isPauseRequested() {
+      return pauseRequested_;
+   }
+
+   private synchronized void waitDuringPause() {
+      try {
+         if (isPauseRequested()) {
+            wait();
+         }
+      } catch (InterruptedException ex) {
+         ReportingUtils.logError(ex);
+      }
+
+   }
+
+   private synchronized boolean isStopRequested() {
+      return stopRequested_;
    }
 }
