@@ -134,7 +134,8 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
    public void close() {
       //compositeImage_.hide();
       initialized_ = false;
-      imageFileManager_.finishWriting();
+      if (imageFileManager_ != null)
+         imageFileManager_.finishWriting();
    }
 
    public void closeImage5D() {
