@@ -60,7 +60,7 @@ copy .\MMCorePy_wrap\MMCoreWrapDemo.py .\Install_x64\micro-manager
 
 echo building Java wrapper with command:
 echo devenv /%buildswitch% "Release|x64" .\MMCoreJ_wrap\MMCoreJ_wrap_x64.sln
-devenv /%buildswitch% "Release|x64" .\MMCoreJ_wrap\MMCoreJ_wrap.sln
+devenv /%buildswitch% "Release|x64" .\MMCoreJ_wrap\MMCoreJ_wrap_x64.sln
 
 
 echo Update the version number in MMStudioMainFrame
