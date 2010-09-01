@@ -213,6 +213,8 @@ public class ImageTask implements EngineTask {
             long nextImageTimeMs = (long) (imageRequest_.NextWaitTime + eng_.lastWakeTime_);
             MDUtils.put(md, "Acquisition-NextImageTimeMs", nextImageTimeMs);
          }
+         MDUtils.addRandomUUID(md);
+         
          TaggedImage taggedImage = new TaggedImage(pixels, md);
 
          eng_.imageReceivingQueue_.add(taggedImage);

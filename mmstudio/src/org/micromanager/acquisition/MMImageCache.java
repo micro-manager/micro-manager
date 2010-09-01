@@ -6,6 +6,7 @@ package org.micromanager.acquisition;
 
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import mmcorej.TaggedImage;
 import org.micromanager.utils.MDUtils;
@@ -32,30 +33,30 @@ public class MMImageCache {
       changingKeys_ = new ArrayList<String>();
    }
 
-   public String putImage(Object img, Map<String,String> md) {
+   public UUID putImage(Object img, Map<String,String> md) {
       return putImage(new TaggedImage(img, md));
    }
 
-   public String putImage(TaggedImage taggedImg) {
+   public UUID putImage(TaggedImage taggedImg) {
       try {
          cacheImage(taggedImg);
          if (imageFileManager_ != null)
             return imageFileManager_.writeImage(taggedImg);
          else
-            return MDUtils.getFileName(taggedImg.tags);
+            return MDUtils.getUUID(taggedImg.tags);
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
-         return "";
+         return null;
       }
    }
 
-   public TaggedImage getImage(String filename) {
+   public TaggedImage getImage(UUID uuid) {
       for (TaggedImage taggedImg:taggedImgQueue_) {
-         if (MDUtils.getFileName(taggedImg.tags).contentEquals(filename)) {
+         if (MDUtils.getUUID(taggedImg.tags).equals(uuid)) {
             return taggedImg;
          }
       }
-      TaggedImage taggedImg = imageFileManager_.readImage(filename);
+      TaggedImage taggedImg = imageFileManager_.readImage(uuid);
       if (taggedImg != null)
          cacheImage(taggedImg);
       return taggedImg;
@@ -79,7 +80,9 @@ public class MMImageCache {
    }
 
    void setComment(String text) {
-      imageFileManager_.setComment(text);
+      if (imageFileManager_ != null) {
+         imageFileManager_.setComment(text);
+      }
       comment_ = text;
    }
 
@@ -100,5 +103,7 @@ public class MMImageCache {
    public ArrayList<String> getChangingKeys() {
       return changingKeys_;
    }
+
+
 
 }

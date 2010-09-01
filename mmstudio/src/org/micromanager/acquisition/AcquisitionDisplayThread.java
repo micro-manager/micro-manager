@@ -29,6 +29,14 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class AcquisitionDisplayThread extends Thread {
 
+
+   private static int untitledID_ = 0;
+
+   private static String getUniqueUntitledName() {
+      ++untitledID_;
+      return "Untitled" + untitledID_;
+   }
+
    protected final CMMCore core_;
    protected int imgCount_;
    private final ScriptInterface gui_;
@@ -36,7 +44,7 @@ public class AcquisitionDisplayThread extends Thread {
    private boolean diskCached_ = false;
    private ArrayList<String> acqNames_ = new ArrayList<String>();
    private TaggedImageQueue imageProducingQueue_;
-
+   
    AcquisitionDisplayThread(ScriptInterface gui, CMMCore core,
            TaggedImageQueue imageProducingQueue, SequenceSettings acqSettings,
            ArrayList<ChannelSpec> channels, boolean diskCached, AcquisitionEngine eng) {
@@ -54,8 +62,10 @@ public class AcquisitionDisplayThread extends Thread {
 
       String acqPath;
       try {
-         acqPath = createAcqPath(acqSettings.root, acqSettings.prefix);
-
+         if (diskCached_)
+            acqPath = createAcqPath(acqSettings.root, acqSettings.prefix);
+         else
+            acqPath = getUniqueUntitledName();
          String posName;
          for (int posIndex = 0; posIndex < nPositions; ++posIndex) {
             posName = getPosName(posIndex);

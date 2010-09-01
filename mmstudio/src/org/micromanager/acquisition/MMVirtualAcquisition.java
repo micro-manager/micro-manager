@@ -47,6 +47,7 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
    private final boolean diskCached_;
    private AcquisitionEngine eng_;
 
+
    MMVirtualAcquisition(String name, String dir, boolean newData, boolean virtual) {
       name_ = name;
       dir_ = dir;

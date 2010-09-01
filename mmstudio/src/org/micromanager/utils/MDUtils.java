@@ -9,6 +9,7 @@ import ij.ImagePlus;
 import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import mmcorej.Configuration;
 import mmcorej.PropertySetting;
 import mmcorej.TaggedImage;
@@ -108,6 +109,18 @@ public class MDUtils {
 
    public static void put(Map<String, String> map, String key, double value) {
       map.put(key, NumberUtils.doubleToCoreString(value));
+   }
+
+   public static void addRandomUUID(Map<String,String> map) throws Exception {
+      UUID uuid = UUID.randomUUID();
+      map.put("UUID", uuid.toString());
+   }
+
+   public static UUID getUUID(Map<String,String> map) {
+      if (map.containsKey("UUID"))
+         return UUID.fromString(map.get("UUID"));
+      else
+         return null;
    }
 
    public static void setImageType(Map<String, String> map, int type) throws Exception {

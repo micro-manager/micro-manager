@@ -7,6 +7,7 @@ package org.micromanager.acquisition;
 
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.UUID;
 import mmcorej.TaggedImage;
 import org.micromanager.utils.MMException;
 
@@ -15,8 +16,8 @@ import org.micromanager.utils.MMException;
  * @author arthur
  */
 public interface ImageFileManagerInterface {
-   public String writeImage(TaggedImage taggedImage) throws MMException;
-   public TaggedImage readImage(String filename);
+   public UUID writeImage(TaggedImage taggedImage) throws MMException;
+   public TaggedImage readImage(UUID uuid);
    public void finishWriting();
    public void setSummaryMetadata(Map<String,String> md);
    public Map<String,String> getSummaryMetadata();

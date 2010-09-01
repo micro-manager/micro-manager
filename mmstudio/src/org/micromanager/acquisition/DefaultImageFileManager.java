@@ -13,10 +13,7 @@ import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -24,8 +21,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.UUID;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -49,6 +45,7 @@ public class DefaultImageFileManager implements ImageFileManagerInterface {
    private Map<String,String> summaryMetadata_;
    private Map<String,String> systemMetadata_;
    private ArrayList<Map<String,String>> imageMetadata_;
+   private HashMap <UUID,String> filenameTable_;
 
    DefaultImageFileManager(String dir) {
       this(dir, false, null, null);
@@ -60,6 +57,7 @@ public class DefaultImageFileManager implements ImageFileManagerInterface {
       systemMetadata_ = systemMetadata;
       dir_ = dir;
       newDataSet_ = newDataSet;
+      filenameTable_ = new HashMap<UUID,String>();
 
       try {
          if (newDataSet_) {
@@ -72,7 +70,7 @@ public class DefaultImageFileManager implements ImageFileManagerInterface {
       }
    }
 
-   public String writeImage(TaggedImage taggedImg) throws MMException {
+   public UUID writeImage(TaggedImage taggedImg) throws MMException {
       if (newDataSet_ == false) {
          throw new MMException("This ImageFileManager is read-only.");
       }
@@ -82,11 +80,13 @@ public class DefaultImageFileManager implements ImageFileManagerInterface {
       MDUtils.setFileName(md, tiffFileName);
       saveImageFile(img, md, dir_, tiffFileName);
       writeFrameMetadata(md, tiffFileName);
-      return tiffFileName;
+      UUID uuid = MDUtils.getUUID(md);
+      filenameTable_.put(uuid, tiffFileName);
+      return MDUtils.getUUID(md);
    }
 
-   public TaggedImage readImage(String filename) {
-      ImagePlus imp = new Opener().openImage(dir_ + "/" + filename);
+   public TaggedImage readImage(UUID uuid) {
+      ImagePlus imp = new Opener().openImage(dir_ + "/" + filenameTable_.get(uuid));
       if (imp != null) {
          try {
             ImageProcessor proc = imp.getProcessor();
