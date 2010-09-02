@@ -23,33 +23,22 @@
 //
 package org.micromanager.conf;
 
-import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.FocusAdapter;
-import java.awt.event.FocusEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
-import java.util.EventObject;
 import java.util.prefs.Preferences;
 
-import javax.swing.AbstractCellEditor;
-import javax.swing.CellEditor;
-import javax.swing.DefaultCellEditor;
 import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-import javax.swing.JTextField;
 import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
-import javax.swing.event.CellEditorListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 
-import javax.swing.table.TableCellEditor;
-import javax.swing.table.TableModel;
 import mmcorej.MMCoreJ;
 import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.PropertyItem;
