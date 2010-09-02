@@ -479,6 +479,79 @@ int CDemoCamera::Initialize()
    LogMessage("TestResourceLocking OK",true);
 #endif
 
+#if 0
+   // compiler performance benchmark for transcendental math:
+   // code emitted by VS 2008 c++ optimized for speed, on an Athlon 7750 2.71 GHz runs at about 38 nanoseconds per image point
+   MM::MMTime t0 = CurrentTime();
+
+   char anImage[16384];  // 128^2
+   // perform a trancendental math operation on each point of 100 images 128x28
+   int nloops =100;
+   double sf = 1./64.;
+   for (int ii = 0; ii< nloops; ++ii)
+   {
+      unsigned long itc = 0;
+      for(int ix = 0; ix < 128; ++ix)
+      {
+         double xx = (ix - 64)*sf;
+         for(int iy = 0; iy < 128; ++iy)
+         {
+            double yy = (iy - 64)*sf;
+            anImage[itc] = (char)( 100. * exp (xx*xx + yy*yy)); 
+            ++itc;
+         }
+      }
+   }
+   t0 = CurrentTime() - t0;
+   long int globalIterator =  nloops*128*128;
+
+   std::ostringstream message;
+   message << globalIterator << " exp evals: " << t0.getMsec() << " ms, i.e. " << 1000000.*t0.getMsec()/(double)globalIterator<< " nanosec. per point";
+   LogMessage(message.str().c_str(), true);
+
+   // java equivalent
+   // run with -server on same equipment as above
+   // speed is about 80 nanoseconds per image point
+
+ /*    begin java equivalent */
+/*       long t0 = System.currentTimeMillis();
+
+
+       byte[] anImage = new byte[16384];// 128^2
+       // perform a trancendental math operation on each point of 100 images 128x128
+       double sf = 1./64.;
+       int nloops = 1000;
+       for (int ii = 0; ii< nloops; ++ii)
+       {
+          int itc = 0;
+          for(int ix = 0; ix < 128; ++ix)
+          {
+             double xx = (ix - 64)*sf;
+             for(int iy = 0; iy < 128; ++iy)
+             {
+                 double yy = (iy - 64)*sf;
+                 double v = Math.exp(xx*xx + yy*yy);
+                 anImage[itc] = (byte)v;
+                ++itc;
+             }
+          }
+       }
+       t0 = System.currentTimeMillis() - t0;
+       int globalIterator =  nloops*128*128;
+
+       System.out.print(globalIterator);
+       System.out.print("exp calcs took");
+       System.out.print(t0);
+       System.out.print(" ms ");
+       double x = 1000000.*(double)t0/(double)globalIterator;
+       System.out.print(x);
+       System.out.print("nanoseconds per point");
+       */
+/*       end java equivalent math performance benchmark */    
+
+
+#endif
+
    initialized_ = true;
 
    // initialize image buffer

@@ -70,7 +70,7 @@ const char* const g_Msg_SEQUENCE_ACQUISITION_THREAD_EXITING="Sequence thread exi
 const char* const g_Msg_DEVICE_CAMERA_BUSY_ACQUIRING="Camera is busy acquiring images.  Stop camera activity before changing this property";
 const char* const g_Msg_DEVICE_CAN_NOT_SET_PROPERTY="The device can not set this property at this moment";
 const char* const g_Msg_DEVICE_NOT_CONNECTED="Unable to communicate with the device.";
-
+const char* const g_Msg_DEVICE_COMM_HUB_MISSING="Restart Hardware Configuration from the beginning, and define the communication hub or microscope device for this equipment!";
 /**
 * Implements functionality common to all devices.
 * Typically used as the base class for actual device adapters. In general,
@@ -612,6 +612,23 @@ protected:
    }
 
    /**
+   * Output the  text message of specified code to the log stream.
+   * @param errorCode - error code
+   * @param debugOnly - if true the meassage will be sent only in the log-debug mode
+   */
+   int LogMessageCode(const int errorCode, bool debugOnly = false) const
+   {
+      if (callback_)
+      {
+         char text[MM::MaxStrLength];
+         GetErrorText(errorCode, text);
+         return callback_->LogMessage(this, text, debugOnly);
+      }
+      return DEVICE_NO_CALLBACK_REGISTERED;
+   }
+
+
+   /**
    * Outputs time difference between two time stamps.
    * Handy for hardware profiling
    * @param start - Time stamp for start of Process 
@@ -668,6 +685,7 @@ protected:
       SetErrorText(DEVICE_CAN_NOT_SET_PROPERTY, g_Msg_DEVICE_CAN_NOT_SET_PROPERTY);
       SetErrorText(DEVICE_LOCALLY_DEFINED_ERROR, "t.b.d.");
       SetErrorText(DEVICE_NOT_CONNECTED, g_Msg_DEVICE_NOT_CONNECTED);
+      SetErrorText(DEVICE_COMM_HUB_MISSING, g_Msg_DEVICE_COMM_HUB_MISSING);
    }
 
    /**
