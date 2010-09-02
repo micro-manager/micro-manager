@@ -53,6 +53,8 @@
 
 #include <deque> 
 #include <iostream> 
+
+
 #include <boost/bind.hpp> 
 #include <boost/asio.hpp> 
 #include <boost/asio/serial_port.hpp> 
@@ -60,11 +62,10 @@
 #include <boost/lexical_cast.hpp> 
 #include <boost/date_time/posix_time/posix_time_types.hpp> 
 
+
 // serial device implementation class
 #include "AsioClient.h"
 
-
-MMThreadLock g_portLock;
 
 SerialManager g_serialManager;
 
@@ -122,7 +123,6 @@ const char* g_Parity_Space = "Space";
  */
 bool SerialPortLister::portAccessible(const char* portName)
 {
-   MMThreadGuard g2(g_portLock);
    try
    {
       boost::asio::io_service service;

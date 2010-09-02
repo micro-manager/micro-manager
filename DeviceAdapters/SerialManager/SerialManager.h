@@ -27,15 +27,21 @@
 #include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/DeviceBase.h"
 #include <string>
-// #include <map>
-// #include <vector>
+
+#ifdef WIN32
+// suppress an incomprehensible warning from inside boost future.
+#pragma warning( push )
+#pragma warning( disable : 4512 )
+#endif
 
 #include <boost/bind.hpp> 
 #include <boost/asio.hpp> 
 #include <boost/asio/serial_port.hpp> 
 #include <boost/thread.hpp> 
-// #include <boost/lexical_cast.hpp> 
 
+#ifdef WIN32
+#pragma warning( pop )
+#endif
 
 
 //////////////////////////////////////////////////////////////////////////////
