@@ -43,8 +43,6 @@ public class GaussianFit_ implements PlugIn {
        }
 
        public double value(double[] params) {
-   //               print("Count: " + count_);
-   //               count_++;
           double residual = 0.0;
           for (int i = 0; i < nx_; i++) {
              for (int j = 0; j < ny_; j++) {
@@ -96,12 +94,54 @@ public class GaussianFit_ implements PlugIn {
 
 		GaussianResidual gs = new GaussianResidual();
 		NelderMead nm = new NelderMead();
-		SimpleScalarValueChecker convergedChecker = new SimpleScalarValueChecker(1e-6,-1);
+		SimpleScalarValueChecker convergedChecker = new SimpleScalarValueChecker(1e-5,-1);
 
+      // for now, take the active ImageJ image (this should be an image of a difraction limited spot
 		ImagePlus siPlus = IJ.getImage();
 		ImageProcessor siProc = siPlus.getProcessor();
+      short[] imagePixels = (short[])siProc.getPixels();
 		gs.setImage((short[])siProc.getPixels(), siProc.getWidth(), siProc.getHeight());
 
+      // Hard code estimate for sigma:
+      params0_[3] = 1.115;
+
+      // estimate background by averaging pixels at the edge
+      double bg = 0.0;
+      int n = 0;
+      int lastRowOffset = (siProc.getHeight() - 1) * siProc.getWidth();
+      for (int i =0; i < siProc.getWidth(); i++) {
+         bg += imagePixels[i];
+         bg += imagePixels[i + lastRowOffset];
+         n += 2;
+      }
+      for (int i = 1; i < siProc.getHeight() - 1; i++) {
+         bg += imagePixels[i * siProc.getWidth()];
+         bg += imagePixels[(i + 1) *siProc.getWidth() - 1];
+         n += 2;
+      }
+      params0_[4] = bg / n;
+
+      // estimate signal by subtracting background from total intensity 
+      double ti = 0.0;
+      double mt = 0.0;
+      for (int i = 0; i < siProc.getHeight() * siProc.getWidth(); i++) {
+         mt += imagePixels[i];
+      }
+      ti = mt - ( (bg / n) * siProc.getHeight() * siProc.getWidth());
+      params0_[0] = ti / (2 * Math.PI * params0_[3] * params0_[3]);
+      print("Total signal: " + ti + "Estimate: " + params0_[0]);
+
+      // estimate center of mass
+      double mx = 0.0;
+      double my = 0.0;
+      for (int i = 0; i < siProc.getHeight() * siProc.getWidth(); i++) {
+         mx += imagePixels[i] * (i % siProc.getWidth() );
+         my += imagePixels[i] * (Math.floor (i / siProc.getWidth()));
+      }
+      params0_[1] = mx/mt;
+      params0_[2] = my/mt;
+
+      // set step size during estimate
 		for (int i=0;i<params0_.length;++i)
 			steps_[i] = params0_[i]*0.3;
 
@@ -115,7 +155,8 @@ public class GaussianFit_ implements PlugIn {
 			paramsOut = result.getPoint();
 		} catch (Exception e) {}
 
-
+		long endTime = System.currentTimeMillis(); 
+		long took = endTime - startTime;
 
 		print("\n\nFinal result:");
 		for (int i=0; i<paramsOut.length; i++)
@@ -124,8 +165,6 @@ public class GaussianFit_ implements PlugIn {
 		double anormalized = paramsOut[0] * (2 * Math.PI * paramsOut[3] * paramsOut[3]);
 		print("Amplitude normalized: " + anormalized);
 
-		long endTime = System.currentTimeMillis(); 
-		long took = endTime - startTime;
 
 		print("Calculation took: " + took + " milli seconds"); 
 
