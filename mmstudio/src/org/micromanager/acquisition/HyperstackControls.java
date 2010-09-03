@@ -269,12 +269,14 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
    }
 
    private void updateStatusLine(TaggedImage taggedImg) {
-      try {
-         String time = NumberUtils.doubleStringCoreToDisplay(taggedImg.tags.get("Acquisition-TimeMs"));
-         String zPosition = taggedImg.tags.get("Acquisition-ZPositionUm");
-         setStatusLabel("<html>" + time + " s, " + "z: " + zPosition + " &#181;m" + "</html>");
-      } catch (ParseException ex) {
-         ReportingUtils.logError(ex);
+      if (taggedImg != null) {
+         try {
+            String time = NumberUtils.doubleStringCoreToDisplay(taggedImg.tags.get("Acquisition-TimeMs"));
+            String zPosition = taggedImg.tags.get("Acquisition-ZPositionUm");
+            setStatusLabel("<html>" + time + " s, " + "z: " + zPosition + " &#181;m" + "</html>");
+         } catch (ParseException ex) {
+            ReportingUtils.logError(ex);
+         }
       }
    }
 
