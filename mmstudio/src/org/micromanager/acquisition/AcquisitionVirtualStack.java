@@ -7,12 +7,8 @@ package org.micromanager.acquisition;
 import ij.ImagePlus;
 import ij.process.ImageProcessor;
 import java.awt.image.ColorModel;
-import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import mmcorej.TaggedImage;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.MDUtils;
@@ -25,7 +21,7 @@ import org.micromanager.utils.ReportingUtils;
 public class AcquisitionVirtualStack extends ij.VirtualStack {
 
    private MMImageCache imageCache_;
-   private HashMap<Integer,UUID> uuids_ = new HashMap();
+   private HashMap<Integer,String> labels_ = new HashMap();
    
    protected int width_, height_, type_;
    private int nSlices_;
@@ -51,9 +47,9 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
    }
 
    public Object getPixels(int flatIndex) {
-      if (!uuids_.containsKey(flatIndex))
+      if (!labels_.containsKey(flatIndex)) {
          return ImageUtils.makeProcessor(type_, width_, height_).getPixels();
-      else {
+      } else {
          try {
             TaggedImage image = getTaggedImage(flatIndex);
             if (MDUtils.isGRAY(image)) {
@@ -76,8 +72,8 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
    }
 
    public TaggedImage getTaggedImage(int flatIndex) {
-      if (uuids_.containsKey(flatIndex))
-         return imageCache_.getImage(uuids_.get(flatIndex));
+      if (labels_.containsKey(flatIndex))
+         return imageCache_.getImage(labels_.get(flatIndex));
       else
          return null;
    }
@@ -88,11 +84,11 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
 
    void insertImage(int flatIndex, TaggedImage taggedImg) {
       try {
-         UUID uuid = imageCache_.putImage(taggedImg);
-         uuids_.put(flatIndex, uuid);
+         String label = imageCache_.putImage(taggedImg);
+         labels_.put(flatIndex, label);
          if (MDUtils.isRGB(taggedImg)) {
-            uuids_.put(flatIndex + 1, uuid);
-            uuids_.put(flatIndex + 2, uuid);
+            labels_.put(flatIndex + 1, label);
+            labels_.put(flatIndex + 2, label);
          }
          
       } catch (Exception ex) {
@@ -106,8 +102,8 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
    }
 
    public String getSliceLabel(int n) {
-      if (uuids_.containsKey(n)) {
-         Map<String,String> md = imageCache_.getImage(uuids_.get(n)).tags;
+      if (labels_.containsKey(n)) {
+         Map<String,String> md = imageCache_.getImage(labels_.get(n)).tags;
          try {
             return MDUtils.getChannelName(md) + ", " + md.get("Acquisition-ZPositionUm") + " um(z), " + md.get("Acquisition-TimeMs") + " s";
          } catch (Exception ex) {
@@ -121,11 +117,11 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
    public void rememberImage(Map<String,String> md) {
       try {
          int flatIndex = getFlatIndex(md);
-         UUID uuid = MDUtils.getUUID(md);
-         uuids_.put(flatIndex, uuid);
+         String label = MDUtils.getLabel(md);
+         labels_.put(flatIndex, label);
          if (MDUtils.isRGB(md)) {
-            uuids_.put(flatIndex + 1, uuid);
-            uuids_.put(flatIndex + 2, uuid);
+            labels_.put(flatIndex + 1, label);
+            labels_.put(flatIndex + 2, label);
          }
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
@@ -147,8 +143,6 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
          return 0;
       }
    }
-
-   
 
    MMImageCache getCache() {
       return this.imageCache_;

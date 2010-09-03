@@ -21,7 +21,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -43,9 +42,8 @@ public class DefaultImageFileManager implements ImageFileManagerInterface {
    private BufferedWriter metadataStream_;
    private boolean newDataSet_;
    private Map<String,String> summaryMetadata_;
-   private Map<String,String> systemMetadata_;
    private ArrayList<Map<String,String>> imageMetadata_;
-   private HashMap <UUID,String> filenameTable_;
+   private HashMap <String,String> filenameTable_;
 
    DefaultImageFileManager(String dir) {
       this(dir, false, null, null);
@@ -54,10 +52,9 @@ public class DefaultImageFileManager implements ImageFileManagerInterface {
    DefaultImageFileManager(String dir, boolean newDataSet,
            Map<String,String> summaryMetadata, Map<String,String> systemMetadata) {
       summaryMetadata_ = summaryMetadata;
-      systemMetadata_ = systemMetadata;
       dir_ = dir;
       newDataSet_ = newDataSet;
-      filenameTable_ = new HashMap<UUID,String>();
+      filenameTable_ = new HashMap<String,String>();
 
       try {
          if (newDataSet_) {
@@ -70,7 +67,7 @@ public class DefaultImageFileManager implements ImageFileManagerInterface {
       }
    }
 
-   public UUID writeImage(TaggedImage taggedImg) throws MMException {
+   public String writeImage(TaggedImage taggedImg) throws MMException {
       if (newDataSet_ == false) {
          throw new MMException("This ImageFileManager is read-only.");
       }
@@ -80,13 +77,13 @@ public class DefaultImageFileManager implements ImageFileManagerInterface {
       MDUtils.setFileName(md, tiffFileName);
       saveImageFile(img, md, dir_, tiffFileName);
       writeFrameMetadata(md, tiffFileName);
-      UUID uuid = MDUtils.getUUID(md);
-      filenameTable_.put(uuid, tiffFileName);
-      return MDUtils.getUUID(md);
+      String label = MDUtils.getLabel(md);
+      filenameTable_.put(label, tiffFileName);
+      return MDUtils.getLabel(md);
    }
 
-   public TaggedImage readImage(UUID uuid) {
-      ImagePlus imp = new Opener().openImage(dir_ + "/" + filenameTable_.get(uuid));
+   public TaggedImage readImage(String label) {
+      ImagePlus imp = new Opener().openImage(dir_ + "/" + filenameTable_.get(label));
       if (imp != null) {
          try {
             ImageProcessor proc = imp.getProcessor();
@@ -122,13 +119,7 @@ public class DefaultImageFileManager implements ImageFileManagerInterface {
 
    private String createFileName(Map<String,String> md) {
       try {
-         return "img_"
-                 + String.format("%09d", MDUtils.getFrameIndex(md))
-                 + "_"
-                 + MDUtils.getChannelName(md)
-                 + "_"
-                 + String.format("%03d", MDUtils.getSliceIndex(md))
-                 + ".tif";
+         return "img_" + MDUtils.getLabel(md) + ".tif";
       } catch (Exception e) {
          ReportingUtils.logError(e);
          return "";
@@ -273,16 +264,13 @@ public class DefaultImageFileManager implements ImageFileManagerInterface {
       if (data != null) {
          try {
             summaryMetadata_ = jsonToMetadata(data.getJSONObject("Summary"));
-            /*try {
-               systemMetadata_ = jsonToMetadata(data.getJSONObject("SystemState"));
-            } catch (Throwable ex) {
-               ReportingUtils.logError(ex);
-            }*/
             imageMetadata_ = new ArrayList<Map<String,String>>();
             for (String key:makeJsonIterableKeys(data)) {
                JSONObject chunk = data.getJSONObject(key);
                if (key.startsWith("FrameKey")) {
-                  imageMetadata_.add(jsonToMetadata(chunk));
+                  Map<String,String> md = jsonToMetadata(chunk);
+                  filenameTable_.put(MDUtils.getLabel(md), MDUtils.getFileName(md));
+                  imageMetadata_.add(md);
                }
             }
          } catch (JSONException ex) {
@@ -344,14 +332,6 @@ public class DefaultImageFileManager implements ImageFileManagerInterface {
     */
    public void setSummaryMetadata(Map<String,String> summaryMetadata) {
       this.summaryMetadata_ = summaryMetadata;
-   }
-
-   public void setSystemMetadata(Map<String,String> md) {
-      systemMetadata_ = md;
-   }
-
-   public Map<String,String> getSystemMetadata() {
-      return systemMetadata_;
    }
 
    public ArrayList<Map<String,String>> getImageMetadata() {

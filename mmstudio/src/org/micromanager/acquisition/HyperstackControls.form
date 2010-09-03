@@ -32,7 +32,7 @@
               <EmptySpace min="-2" max="-2" attributes="0"/>
               <Component id="abortButton" min="-2" max="-2" attributes="0"/>
               <EmptySpace min="-2" pref="0" max="-2" attributes="0"/>
-              <Component id="jToggleButton1" min="-2" max="-2" attributes="0"/>
+              <Component id="pauseAndResumeToggleButton" min="-2" max="-2" attributes="0"/>
               <EmptySpace min="-2" pref="3" max="-2" attributes="0"/>
               <Component id="metadataButton" min="-2" max="-2" attributes="0"/>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
@@ -42,7 +42,7 @@
               <EmptySpace max="-2" attributes="0"/>
               <Component id="fpsField" min="-2" pref="34" max="-2" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="statusLineLabel" pref="165" max="32767" attributes="0"/>
+              <Component id="statusLineLabel" pref="166" max="32767" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
       </Group>
@@ -59,7 +59,7 @@
                       <Component id="statusLineLabel" alignment="3" min="-2" pref="28" max="-2" attributes="0"/>
                   </Group>
                   <Component id="abortButton" alignment="0" min="-2" max="-2" attributes="0"/>
-                  <Component id="jToggleButton1" alignment="0" min="-2" max="-2" attributes="0"/>
+                  <Component id="pauseAndResumeToggleButton" alignment="0" min="-2" max="-2" attributes="0"/>
                   <Component id="metadataButton" alignment="0" min="-2" max="-2" attributes="0"/>
                   <Component id="contrastButton" alignment="0" min="-2" max="-2" attributes="0"/>
               </Group>
@@ -169,6 +169,9 @@
         </Property>
         <Property name="verticalTextPosition" type="int" value="3"/>
       </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="saveButtonActionPerformed"/>
+      </Events>
     </Component>
     <Component class="javax.swing.JTextField" name="fpsField">
       <Properties>
@@ -217,7 +220,7 @@
         </Property>
       </Properties>
     </Component>
-    <Component class="javax.swing.JToggleButton" name="jToggleButton1">
+    <Component class="javax.swing.JToggleButton" name="pauseAndResumeToggleButton">
       <Properties>
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
           <Image iconType="3" name="/org/micromanager/icons/control_pause.png"/>
@@ -243,7 +246,7 @@
         </Property>
       </Properties>
       <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jToggleButton1ActionPerformed"/>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="pauseAndResumeToggleButtonActionPerformed"/>
       </Events>
     </Component>
   </SubComponents>

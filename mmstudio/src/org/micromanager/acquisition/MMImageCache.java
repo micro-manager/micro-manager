@@ -5,11 +5,14 @@
 package org.micromanager.acquisition;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
-import java.util.UUID;
+import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import mmcorej.TaggedImage;
 import org.micromanager.utils.MDUtils;
+import org.micromanager.utils.MMException;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -19,52 +22,103 @@ import org.micromanager.utils.ReportingUtils;
 
 public class MMImageCache {
 
-   private ConcurrentLinkedQueue<TaggedImage> taggedImgQueue_;
-   private int taggedImgQueueSize_ = 50;
-   private final ImageFileManagerInterface imageFileManager_;
+   private final int taggedImgQueueSize_ = 50;
+   private ImageFileManagerInterface imageFileManager_;
    private String comment_ = "";
    private Map<String, String> tags_;
    private ArrayList<String> changingKeys_;
    private Map<String, String> firstTags_;
+   private final ImageCollection coll_;
+
    
    MMImageCache(ImageFileManagerInterface imageFileManager) {
       imageFileManager_ = imageFileManager;
-      taggedImgQueue_ = new ConcurrentLinkedQueue<TaggedImage>();
       changingKeys_ = new ArrayList<String>();
+      coll_ = new ImageCollection();
    }
 
-   public UUID putImage(Object img, Map<String,String> md) {
+   private class ImageCollection {
+      private ConcurrentLinkedQueue<String> LabelQueue_;
+      private Set<String> LabelSet_;
+      private HashMap<String, TaggedImage> taggedImgTable_;;
+
+      public ImageCollection() {
+         LabelQueue_ = new ConcurrentLinkedQueue<String>();
+         taggedImgTable_ = new HashMap<String, TaggedImage>();
+         LabelSet_ = new HashSet<String>();
+      }  
+      
+      public void add(TaggedImage taggedImage) {
+         String label = MDUtils.getLabel(taggedImage.tags);
+         taggedImgTable_.put(label, taggedImage);
+         LabelQueue_.add(label);
+         if (imageFileManager_ != null && LabelQueue_.size() > taggedImgQueueSize_)
+            dropOne();
+         LabelSet_.add(label);
+      }
+      
+      public void dropOne() {
+         String label = LabelQueue_.poll();
+         taggedImgTable_.remove(label);
+      }
+
+      public TaggedImage get(String label) {
+         LabelQueue_.remove(label);
+         LabelQueue_.add(label);
+         return taggedImgTable_.get(label);
+      }
+
+      public Set<String> getLabelSet() {
+         return LabelSet_;
+      }
+
+   }
+
+   public void saveAs(ImageFileManagerInterface newImageFileManager) {
+      if (newImageFileManager == null) {
+         return;
+      }
+      for (String label:coll_.getLabelSet()) {
+         try {
+            newImageFileManager.writeImage(getImage(label));
+         } catch (MMException ex) {
+            ReportingUtils.logError(ex);
+         }
+      }
+      imageFileManager_ = newImageFileManager;
+   }
+
+   public String putImage(Object img, Map<String,String> md) {
       return putImage(new TaggedImage(img, md));
    }
 
-   public UUID putImage(TaggedImage taggedImg) {
+   public String putImage(TaggedImage taggedImg) {
       try {
          cacheImage(taggedImg);
          if (imageFileManager_ != null)
             return imageFileManager_.writeImage(taggedImg);
          else
-            return MDUtils.getUUID(taggedImg.tags);
+            return MDUtils.getLabel(taggedImg.tags);
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
          return null;
       }
    }
 
-   public TaggedImage getImage(UUID uuid) {
-      for (TaggedImage taggedImg:taggedImgQueue_) {
-         if (MDUtils.getUUID(taggedImg.tags).equals(uuid)) {
-            return taggedImg;
+   public TaggedImage getImage(String label) {
+      TaggedImage taggedImg = coll_.get(label);
+      if (taggedImg == null) {
+         taggedImg = imageFileManager_.readImage(label);
+         if (taggedImg != null) {
+            cacheImage(taggedImg);
          }
       }
-      TaggedImage taggedImg = imageFileManager_.readImage(uuid);
-      if (taggedImg != null)
-         cacheImage(taggedImg);
       return taggedImg;
    }
 
    
    private void cacheImage(TaggedImage taggedImg) {
-      taggedImgQueue_.add(taggedImg);
+      coll_.add(taggedImg);
       if (firstTags_ == null) {
          firstTags_ = taggedImg.tags;
       } else {
@@ -72,10 +126,6 @@ public class MMImageCache {
             if (!firstTags_.containsKey(key) || !firstTags_.get(key).contentEquals(taggedImg.tags.get(key)))
                changingKeys_.add(key);
          }
-      }
-
-      if (imageFileManager_ != null && taggedImgQueue_.size() > taggedImgQueueSize_) { // If the queue is full,
-         taggedImgQueue_.poll();                       // remove the oldest image.
       }
    }
 
@@ -87,7 +137,7 @@ public class MMImageCache {
    }
 
    String getComment() {
-      if (comment_ != null && comment_.contentEquals(""))
+      if (imageFileManager_ != null && comment_ != null && comment_.contentEquals(""))
          comment_ = imageFileManager_.getComment();
       return comment_;
    }

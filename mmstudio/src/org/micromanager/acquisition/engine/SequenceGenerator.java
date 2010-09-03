@@ -4,52 +4,63 @@
  */
 package org.micromanager.acquisition.engine;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.micromanager.api.EngineTask;
-import java.util.ArrayList;
+import java.util.concurrent.LinkedBlockingQueue;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  *
  * @author arthur
  */
-public class SequenceGenerator {
+public class SequenceGenerator extends Thread {
 
-   public static ArrayList<EngineTask> makeTaskSequence(Engine eng, ArrayList<ImageRequest> requestSequence) {
-      ArrayList<EngineTask> imageTaskSequence = new ArrayList<EngineTask>();
-      for (ImageRequest imageRequest:requestSequence) {
-         imageTaskSequence.add(new ImageTask(eng, imageRequest));
-      }
-      return imageTaskSequence;
+   private LinkedBlockingQueue<EngineTask> engineTaskSequence_;
+   private double exposure_;
+   private SequenceSettings sequence_;
+   private Engine eng_;
+
+   public SequenceGenerator() {
+      engineTaskSequence_ = new LinkedBlockingQueue<EngineTask>(100);
    }
 
-   public static ArrayList<ImageRequest> generateSequence(SequenceSettings settings, double exposure) {
-      ArrayList<ImageRequest> imageRequestList = new ArrayList<ImageRequest>();
+   public LinkedBlockingQueue<EngineTask> generateSequence(Engine eng, SequenceSettings settings, double exposure) {
+      this.sequence_ = settings;
+      this.exposure_ = exposure;
+      this.eng_ = eng;
+      start();
+      return engineTaskSequence_;
+   }
 
+   @Override
+   public void run() {
       ImageRequest lastImageRequest = new ImageRequest();
 
       boolean skipImage;
       boolean skipLastImage = true;
-     
-      int numPositions = Math.max(1, (int) settings.positions.size());
-      int numFrames = Math.max(1, (int) settings.numFrames);
-      int numChannels = Math.max(1, (int) settings.channels.size());
-      int numSlices = Math.max(1, (int) settings.slices.size());
+
+      int numPositions = Math.max(1, (int) sequence_.positions.size());
+      int numFrames = Math.max(1, (int) sequence_.numFrames);
+      int numChannels = Math.max(1, (int) sequence_.channels.size());
+      int numSlices = Math.max(1, (int) sequence_.slices.size());
       int numImages = numPositions * numFrames * numChannels * numSlices;
 
       for (int imageIndex = 0; imageIndex < (1 + numImages); ++imageIndex) {
          ImageRequest imageRequest = new ImageRequest();
-         imageRequest.UsePosition = (settings.positions.size() > 0);
-         imageRequest.UseFrame = (settings.numFrames > 0);
-         imageRequest.UseChannel = (settings.channels.size() > 0);
-         imageRequest.UseSlice = (settings.slices.size() > 0);
+         imageRequest.UsePosition = (sequence_.positions.size() > 0);
+         imageRequest.UseFrame = (sequence_.numFrames > 0);
+         imageRequest.UseChannel = (sequence_.channels.size() > 0);
+         imageRequest.UseSlice = (sequence_.slices.size() > 0);
 
-         imageRequest.relativeZSlices = settings.relativeZSlice;
-         imageRequest.zReference = settings.zReference;
-         imageRequest.exposure = exposure;
+         imageRequest.relativeZSlices = sequence_.relativeZSlice;
+         imageRequest.zReference = sequence_.zReference;
+         imageRequest.exposure = exposure_;
 
          skipImage = false;
          imageRequest.CloseShutter = true;
 
-         if (settings.slicesFirst) {
+         if (sequence_.slicesFirst) {
             imageRequest.SliceIndex = imageIndex % numSlices;
             imageRequest.ChannelIndex = (imageIndex / numSlices) % numChannels;
          } else { // channels first
@@ -57,7 +68,7 @@ public class SequenceGenerator {
             imageRequest.SliceIndex = (imageIndex / numChannels) % numSlices;
          }
 
-         if (settings.timeFirst) {
+         if (sequence_.timeFirst) {
             imageRequest.FrameIndex = (imageIndex / (numChannels * numSlices)) % numFrames;
             imageRequest.PositionIndex = (imageIndex / (numChannels * numSlices * numFrames)) % numPositions;
          } else { // time first
@@ -67,65 +78,66 @@ public class SequenceGenerator {
 
          if (imageRequest.UseFrame && imageRequest.FrameIndex > 0 && imageRequest.PositionIndex <= 0 // &&
                  && imageRequest.ChannelIndex <= 0 && imageRequest.SliceIndex <= 0) {
-            imageRequest.WaitTime = settings.intervalMs;
+            imageRequest.WaitTime = sequence_.intervalMs;
          } else {
             imageRequest.WaitTime = 0;
          }
 
          if (imageRequest.UsePosition) {
-            imageRequest.Position = settings.positions.get(imageRequest.PositionIndex);
+            imageRequest.Position = sequence_.positions.get(imageRequest.PositionIndex);
          }
 
          if (imageRequest.UseSlice) {
-            imageRequest.SlicePosition = settings.slices.get(imageRequest.SliceIndex);
+            imageRequest.SlicePosition = sequence_.slices.get(imageRequest.SliceIndex);
          }
 
          if (imageRequest.UseChannel) {
-            imageRequest.Channel = settings.channels.get(imageRequest.ChannelIndex);
+            imageRequest.Channel = sequence_.channels.get(imageRequest.ChannelIndex);
             if (0 != (imageRequest.FrameIndex % (imageRequest.Channel.skipFactorFrame_ + 1))) {
                skipImage = true;
             }
          }
 
          if (imageRequest.UseChannel && imageRequest.UseSlice) {
-            if (!imageRequest.Channel.doZStack_ && (imageRequest.SliceIndex != (settings.slices.size() - 1) / 2)) {
+            if (!imageRequest.Channel.doZStack_ && (imageRequest.SliceIndex != (sequence_.slices.size() - 1) / 2)) {
                skipImage = true;
             }
          }
 
-         imageRequest.AutoFocus = settings.useAutofocus;
+         imageRequest.AutoFocus = sequence_.useAutofocus;
          if (imageRequest.UseFrame) {
             imageRequest.AutoFocus = imageRequest.AutoFocus
-                    && (0 == (imageRequest.FrameIndex % (1 + settings.skipAutofocusCount)));
+                    && (0 == (imageRequest.FrameIndex % (1 + sequence_.skipAutofocusCount)));
          }
 
          if (imageIndex > 0) {
             if (imageRequest.FrameIndex == lastImageRequest.FrameIndex
                     && imageRequest.PositionIndex == lastImageRequest.PositionIndex) {
-               if (settings.keepShutterOpenChannels
-                       && !settings.keepShutterOpenSlices) {
+               if (sequence_.keepShutterOpenChannels
+                       && !sequence_.keepShutterOpenSlices) {
                   if (imageRequest.SliceIndex == lastImageRequest.SliceIndex) {
                      lastImageRequest.CloseShutter = false;
                   }
                }
 
-               if (settings.keepShutterOpenSlices
-                       && !settings.keepShutterOpenChannels) {
+               if (sequence_.keepShutterOpenSlices
+                       && !sequence_.keepShutterOpenChannels) {
                   if (imageRequest.ChannelIndex == lastImageRequest.ChannelIndex) {
                      lastImageRequest.CloseShutter = false;
                   }
                }
 
-               if (settings.keepShutterOpenSlices
-                       && settings.keepShutterOpenChannels) {
+               if (sequence_.keepShutterOpenSlices
+                       && sequence_.keepShutterOpenChannels) {
                   lastImageRequest.CloseShutter = false;
                }
             }
 
-            if (imageRequest.WaitTime > 0)
+            if (imageRequest.WaitTime > 0) {
                lastImageRequest.NextWaitTime = imageRequest.WaitTime;
+            }
             if (!skipLastImage) {
-               imageRequestList.add(lastImageRequest);
+               putTask(new ImageTask(eng_, lastImageRequest));
             }
          }
 
@@ -134,9 +146,14 @@ public class SequenceGenerator {
          }
          skipLastImage = skipImage;
       }
-      
-      imageRequestList.get(imageRequestList.size()-1).CloseShutter = true;
-      return imageRequestList;
+      putTask(new StopTask());
    }
-   
+
+   private void putTask(EngineTask task) {
+      try {
+         engineTaskSequence_.put(task);
+      } catch (InterruptedException ex) {
+         ReportingUtils.logError(ex);
+      }
+   }
 }

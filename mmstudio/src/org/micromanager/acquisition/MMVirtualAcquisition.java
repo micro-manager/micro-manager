@@ -6,10 +6,17 @@ import ij.gui.ImageWindow;
 import ij.plugin.Animator;
 import ij.process.ImageStatistics;
 import java.awt.Color;
+import java.awt.FileDialog;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
+import java.awt.event.WindowStateListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import javax.swing.JFileChooser;
+import javax.swing.JFrame;
 import mmcorej.TaggedImage;
 import org.json.JSONObject;
 import org.micromanager.api.AcquisitionEngine;
@@ -24,8 +31,8 @@ import org.micromanager.utils.ReportingUtils;
  * @author arthur
  */
 public class MMVirtualAcquisition implements AcquisitionInterface {
-   private final String dir_;
-   private final String name_;
+   private String dir_;
+   private String name_;
    MMImageCache imageCache_;
    private int numChannels_;
    private int depth_;
@@ -41,12 +48,13 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
    private String pixelType_;
    private ImageFileManagerInterface imageFileManager_ = null;
    private Map<String,String> summaryMetadata_ = null;
-   private final boolean newData_;
+   private boolean newData_;
    private Map<String,String> systemMetadata_ = null;
    private int numGrayChannels_;
-   private final boolean diskCached_;
+   private boolean diskCached_;
    private AcquisitionEngine eng_;
-
+   private HyperstackControls hc_;
+   private String status;
 
    MMVirtualAcquisition(String name, String dir, boolean newData, boolean virtual) {
       name_ = name;
@@ -194,8 +202,7 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       throw new UnsupportedOperationException("Not supported yet.");
    }
 
-   private void updateTitle() {
-      String status = "";
+   private void updateWindow() {
       if (newData_) {
          if (acquisitionIsRunning()) {
             if (!abortRequested()) {
@@ -206,13 +213,18 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
                }
             } else {
                status = "Interrupted";
+               hc_.disableAcquisitionControls();
             }
          } else {
-            status = "Finished";
+            if (!status.contentEquals("Interrupted"))
+               status = "Finished";
+            hc_.disableAcquisitionControls();
          }
       } else {
          status = "On disk";
+         hc_.disableAcquisitionControls();
       }
+      hc_.enableShowFolderButton(diskCached_);
       hyperImage_.getWindow().setTitle(new File(dir_).getName() + " (" + status + ")");
    }
 
@@ -224,7 +236,7 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
          show();
       }
 
-      updateTitle();
+      updateWindow();
       Map<String,String> md = taggedImg.tags;
       
       if (numChannels_ > 1) {
@@ -272,13 +284,13 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
          eng_.setPause(false);
       else
          eng_.setPause(true);
-      updateTitle();
+      updateWindow();
       return (eng_.isPaused());
    }
 
    void abort() {
       eng_.abortRequest();
-      updateTitle();
+      updateWindow();
    }
 
    public void setEngine(AcquisitionEngine eng) {
@@ -295,6 +307,36 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
 
    private boolean isPaused() {
       return eng_.isPaused();
+   }
+
+   void saveAs() {
+      String prefix;
+      String root;
+      for (;;) {
+         final JFileChooser fc = new JFileChooser(new File(dir_).getParent());
+         fc.setDialogTitle("Please choose a location for the data set.");
+         fc.showSaveDialog(hyperImage_.getWindow());
+         File f = fc.getSelectedFile();
+         if (f == null) // Canceled.
+            return;
+         prefix = f.getName();
+         root = new File(f.getParent()).getAbsolutePath();
+         if (f.exists()) {
+            ReportingUtils.showMessage(prefix + " already exists! Please choose another name.");
+         } else {
+            break;
+         }
+      }
+
+      DefaultImageFileManager newFileManager = new DefaultImageFileManager(root + "/" + prefix, true,
+                 summaryMetadata_, systemMetadata_);
+      imageCache_.saveAs(newFileManager);
+      imageFileManager_ = newFileManager;
+      diskCached_ = true;
+      dir_ = root + "/" + prefix;
+      name_ = prefix;
+      newData_ = false;
+      updateWindow();
    }
 
    private class ImagePlusExpandable extends ImagePlus {
@@ -321,10 +363,24 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       if (numGrayChannels_ == numChannels_)
          updateChannelColors();
       hyperImage_.show();
-      ImageWindow win = hyperImage_.getWindow();
-      HyperstackControls hc = new HyperstackControls(this, win);
-      win.add(hc);
-      hyperImage_.addImageListener(hc);
+      final ImageWindow win = hyperImage_.getWindow();
+      hc_ = new HyperstackControls(this, win);
+      win.add(hc_);
+      ImagePlus.addImageListener(hc_);
+      for (WindowListener l:win.getWindowListeners())
+         win.removeWindowListener(l);
+      
+      win.addWindowListener(new WindowAdapter() {
+         @Override
+         public void windowClosing(WindowEvent e) {
+            imageCache_ = null;
+            virtualStack_ = null;
+            imageFileManager_ = null;
+            win.close();
+            hyperImage_ = null;
+         }
+      });
+      
       win.pack();
 
       if (!newData_) {
@@ -334,7 +390,7 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
          ((CompositeImage) hyperImage_).setChannelsUpdated();
          hyperImage_.updateAndDraw();
       }
-      updateTitle();
+      updateWindow();
    }
 
    public void setChannelColor(int channel, int rgb) throws MMScriptException {
@@ -443,4 +499,5 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
    double getPlaybackFPS() {
       return Animator.getFrameRate();
    }
+
 }
