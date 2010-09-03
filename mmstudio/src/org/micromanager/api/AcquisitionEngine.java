@@ -94,7 +94,7 @@ public interface AcquisitionEngine {
    /**
     * Request immediate abort of current task
     */
-   public void abortRequest();
+   public boolean abortRequest();
 
    /**
     * Signals that a running acquisition is done.

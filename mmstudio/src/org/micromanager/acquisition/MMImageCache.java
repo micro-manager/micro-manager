@@ -52,8 +52,9 @@ public class MMImageCache {
          String label = MDUtils.getLabel(taggedImage.tags);
          taggedImgTable_.put(label, taggedImage);
          LabelQueue_.add(label);
-         if (imageFileManager_ != null && LabelQueue_.size() > taggedImgQueueSize_)
-            dropOne();
+         if (imageFileManager_ != null)
+            for(int i=0;i<(LabelQueue_.size() - taggedImgQueueSize_);++i)
+               dropOne();
          LabelSet_.add(label);
       }
       
@@ -80,12 +81,14 @@ public class MMImageCache {
       }
       for (String label:coll_.getLabelSet()) {
          try {
+            System.out.println(label);
             newImageFileManager.writeImage(getImage(label));
          } catch (MMException ex) {
             ReportingUtils.logError(ex);
          }
       }
       imageFileManager_ = newImageFileManager;
+
    }
 
    public String putImage(Object img, Map<String,String> md) {

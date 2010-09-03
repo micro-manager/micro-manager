@@ -190,7 +190,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       }
    }
 
-   public void abortRequest() {
+   public boolean abortRequest() {
       if (isAcquisitionRunning()) {
          int result = JOptionPane.showConfirmDialog(null,
                  "Abort current acquisition task ?",
@@ -199,8 +199,10 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
          if (result == JOptionPane.YES_OPTION) {
             stop(true);
+            return true;
          }
       }
+      return false;
    }
    
    public boolean abortRequested() {

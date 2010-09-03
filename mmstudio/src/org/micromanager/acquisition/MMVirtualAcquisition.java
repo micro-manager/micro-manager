@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import mmcorej.TaggedImage;
 import org.json.JSONObject;
 import org.micromanager.api.AcquisitionEngine;
@@ -288,9 +289,13 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       return (eng_.isPaused());
    }
 
-   void abort() {
-      eng_.abortRequest();
-      updateWindow();
+   boolean abort() {
+      if (eng_ != null)
+         if (eng_.abortRequest()) {
+            updateWindow();
+            return true;
+         }
+      return false;
    }
 
    public void setEngine(AcquisitionEngine eng) {
@@ -309,7 +314,7 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       return eng_.isPaused();
    }
 
-   void saveAs() {
+   boolean saveAs() {
       String prefix;
       String root;
       for (;;) {
@@ -318,7 +323,7 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
          fc.showSaveDialog(hyperImage_.getWindow());
          File f = fc.getSelectedFile();
          if (f == null) // Canceled.
-            return;
+            return false;
          prefix = f.getName();
          root = new File(f.getParent()).getAbsolutePath();
          if (f.exists()) {
@@ -337,6 +342,7 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       name_ = prefix;
       newData_ = false;
       updateWindow();
+      return true;
    }
 
    private class ImagePlusExpandable extends ImagePlus {
@@ -373,6 +379,23 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       win.addWindowListener(new WindowAdapter() {
          @Override
          public void windowClosing(WindowEvent e) {
+            if (eng_ != null && eng_.isAcquisitionRunning()) {
+               if (!abort())
+                  return;
+            }
+
+            if (diskCached_ == false) {
+               int result = JOptionPane.showConfirmDialog(win,
+                       "This data set has not yet been saved.\n"
+                       + " Do you want to save it?",
+                       "Closing image...",
+                       JOptionPane.YES_NO_CANCEL_OPTION);
+               if (result == JOptionPane.CANCEL_OPTION)
+                  return;
+               else if (result == JOptionPane.YES_OPTION)
+                  if (! saveAs())
+                     return;
+            }
             imageCache_ = null;
             virtualStack_ = null;
             imageFileManager_ = null;

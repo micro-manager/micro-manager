@@ -2426,7 +2426,8 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
         return lastImageFilePath_;
     }
 
-    public void abortRequest(){
+    public boolean abortRequest(){
       abortRequest_= true;
+      return true;
     }
 }
