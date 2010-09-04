@@ -28,6 +28,7 @@ import org.micromanager.navigation.PositionList;
 import org.micromanager.utils.AutofocusManager;
 import org.micromanager.utils.ChannelSpec;
 import org.micromanager.utils.ContrastSettings;
+import org.micromanager.utils.DisplayMode;
 import org.micromanager.utils.MMException;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.PositionMode;
@@ -99,7 +100,8 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       TaggedImageQueue processorsToDisplayChannel = processorStack.getOutputChannel();
       
       display_ = new AcquisitionDisplayThread(gui_, core_, processorsToDisplayChannel,
-              acquisitionSettings, channels_, saveFiles_, this);
+              acquisitionSettings, channels_, saveFiles_, this, this.useSingleWindow_);
+      
       display_.start();
    }
 
@@ -498,6 +500,10 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    public void setDisplayMode(int mode) {
       displayMode_ = mode;
+      if (displayMode_ == DisplayMode.SINGLE_WINDOW)
+         useSingleWindow_ = true;
+      else
+         useSingleWindow_ = false;
    }
 
    public int getSliceMode() {

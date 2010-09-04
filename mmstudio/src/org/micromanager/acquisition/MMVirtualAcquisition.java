@@ -55,7 +55,7 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
    private boolean diskCached_;
    private AcquisitionEngine eng_;
    private HyperstackControls hc_;
-   private String status;
+   private String status_ = "";
 
    MMVirtualAcquisition(String name, String dir, boolean newData, boolean virtual) {
       name_ = name;
@@ -208,25 +208,25 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
          if (acquisitionIsRunning()) {
             if (!abortRequested()) {
                if (isPaused()) {
-                  status = "Paused";
+                  status_ = "Paused";
                } else {
-                  status = "Running";
+                  status_ = "Running";
                }
             } else {
-               status = "Interrupted";
+               status_ = "Interrupted";
                hc_.disableAcquisitionControls();
             }
          } else {
-            if (!status.contentEquals("Interrupted"))
-               status = "Finished";
+            if (!status_.contentEquals("Interrupted"))
+               status_ = "Finished";
             hc_.disableAcquisitionControls();
          }
       } else {
-         status = "On disk";
+         status_ = "On disk";
          hc_.disableAcquisitionControls();
       }
       hc_.enableShowFolderButton(diskCached_);
-      hyperImage_.getWindow().setTitle(new File(dir_).getName() + " (" + status + ")");
+      hyperImage_.getWindow().setTitle(new File(dir_).getName() + " (" + status_ + ")");
    }
 
    public void insertImage(TaggedImage taggedImg) throws MMScriptException {

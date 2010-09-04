@@ -44,12 +44,16 @@ public class AcquisitionDisplayThread extends Thread {
    private boolean diskCached_ = false;
    private ArrayList<String> acqNames_ = new ArrayList<String>();
    private TaggedImageQueue imageProducingQueue_;
+   private boolean singleWindow_;
+
    
    AcquisitionDisplayThread(ScriptInterface gui, CMMCore core,
            TaggedImageQueue imageProducingQueue, SequenceSettings acqSettings,
-           ArrayList<ChannelSpec> channels, boolean diskCached, AcquisitionEngine eng) {
+           ArrayList<ChannelSpec> channels, boolean diskCached, AcquisitionEngine eng,
+           boolean singleWindow) {
       gui_ = gui;
       core_ = core;
+      singleWindow_ = singleWindow;
       acqSettings_ = acqSettings;
       diskCached_ = diskCached;
       imageProducingQueue_ = imageProducingQueue;
@@ -59,46 +63,48 @@ public class AcquisitionDisplayThread extends Thread {
       int nChannels = Math.max(1, (int) acqSettings.channels.size());
       int nSlices = Math.max(1, (int) acqSettings.slices.size());
       boolean usingChannels = acqSettings.channels.size() > 0;
-
-      String acqPath;
-      try {
-         if (diskCached_)
-            acqPath = createAcqPath(acqSettings.root, acqSettings.prefix);
-         else
-            acqPath = getUniqueUntitledName();
-         String posName;
-         for (int posIndex = 0; posIndex < nPositions; ++posIndex) {
-            posName = getPosName(posIndex);
-            String fullPath = createPositionPath(acqPath, posName);
-            String acqName = fullPath + "/" + posName;
-            acqNames_.add(acqName);
-            gui_.openAcquisition(acqName, fullPath, nTimes, nChannels, nSlices, true, diskCached_);
-            gui_.setAcquisitionEngine(acqName, eng);
-            if (usingChannels) {
-               for (int i = 0; i < channels.size(); ++i) {
-                  gui_.setChannelColor(acqName, i, channels.get(i).color_);
-                  gui_.setChannelName(acqName, i, channels.get(i).config_);
-               }
+      if (!singleWindow_) {
+         String acqPath;
+         try {
+            if (diskCached_) {
+               acqPath = createAcqPath(acqSettings.root, acqSettings.prefix);
+            } else {
+               acqPath = getUniqueUntitledName();
             }
-
-            Configuration configuration = core_.getSystemState();
-            Map<String, String> systemMetadata = new HashMap<String, String>();
-            for (long i = 0; i < configuration.size(); ++i) {
-               try {
-                  PropertySetting setting = configuration.getSetting(i);
-                  systemMetadata.put(setting.getDeviceLabel() + "-"
-                          + setting.getPropertyName(), setting.getPropertyValue());
-               } catch (Exception ex) {
-                  ReportingUtils.logError(ex);
+            String posName;
+            for (int posIndex = 0; posIndex < nPositions; ++posIndex) {
+               posName = getPosName(posIndex);
+               String fullPath = createPositionPath(acqPath, posName);
+               String acqName = fullPath + "/" + posName;
+               acqNames_.add(acqName);
+               gui_.openAcquisition(acqName, fullPath, nTimes, nChannels, nSlices, true, diskCached_);
+               gui_.setAcquisitionEngine(acqName, eng);
+               if (usingChannels) {
+                  for (int i = 0; i < channels.size(); ++i) {
+                     gui_.setChannelColor(acqName, i, channels.get(i).color_);
+                     gui_.setChannelName(acqName, i, channels.get(i).config_);
+                  }
                }
-            }
 
-            gui_.setAcquisitionSystemState(acqName, systemMetadata);
-            gui_.setAcquisitionSummary(acqName, makeMetadataFromAcqSettings(acqSettings));
-            gui_.initializeAcquisition(acqName, (int) core_.getImageWidth(), (int) core_.getImageHeight(), (int) core_.getBytesPerPixel());
+               Configuration configuration = core_.getSystemState();
+               Map<String, String> systemMetadata = new HashMap<String, String>();
+               for (long i = 0; i < configuration.size(); ++i) {
+                  try {
+                     PropertySetting setting = configuration.getSetting(i);
+                     systemMetadata.put(setting.getDeviceLabel() + "-"
+                             + setting.getPropertyName(), setting.getPropertyValue());
+                  } catch (Exception ex) {
+                     ReportingUtils.logError(ex);
+                  }
+               }
+
+               gui_.setAcquisitionSystemState(acqName, systemMetadata);
+               gui_.setAcquisitionSummary(acqName, makeMetadataFromAcqSettings(acqSettings));
+               gui_.initializeAcquisition(acqName, (int) core_.getImageWidth(), (int) core_.getImageHeight(), (int) core_.getBytesPerPixel());
+            }
+         } catch (Exception ex) {
+            ReportingUtils.logError(ex);
          }
-      } catch (Exception ex) {
-         ReportingUtils.logError(ex);
       }
    }
 
@@ -130,10 +136,10 @@ public class AcquisitionDisplayThread extends Thread {
          while (true) {
             TaggedImage image = imageProducingQueue_.poll(1, TimeUnit.SECONDS);
             if (image != null) {
-               displayImage(image);
                if (TaggedImageQueue.isPoison(image)) {
                   break;
                }
+               displayImage(image);
             }
          }
       } catch (Exception ex2) {
@@ -156,12 +162,17 @@ public class AcquisitionDisplayThread extends Thread {
 
    private void displayImage(TaggedImage taggedImg) {
 
-      Map<String, String> m = taggedImg.tags;
-      try {
-         int posIndex = MDUtils.getPositionIndex(m);
-         gui_.addImage(acqNames_.get(posIndex), taggedImg);
-      } catch (Exception e) {
-         ReportingUtils.logError(e);
+      if (singleWindow_) {
+         if (taggedImg.pix != null)
+            gui_.displayImage(taggedImg.pix);
+      }  else {
+         Map<String, String> m = taggedImg.tags;
+         try {
+            int posIndex = MDUtils.getPositionIndex(m);
+            gui_.addImage(acqNames_.get(posIndex), taggedImg);
+         } catch (Exception e) {
+            ReportingUtils.logError(e);
+         }
       }
    }
 
