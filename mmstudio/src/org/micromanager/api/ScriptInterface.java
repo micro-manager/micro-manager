@@ -441,4 +441,6 @@ public interface ScriptInterface {
 
    public void setAcquisitionEngine(String acqName, AcquisitionEngine eng);
 
+   public boolean displayImage(Object pix);
+
 }
