@@ -110,7 +110,7 @@ public class GraphData {
          y = 0.0;
       return new Point2D.Float((float)x, (float)y);
    }
-      
+
    public void setData(double xVals[], double yVals[]) {
       xVals_ = xVals;
       yVals_ = yVals;

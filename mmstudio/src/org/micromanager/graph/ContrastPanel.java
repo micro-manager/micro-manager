@@ -31,18 +31,16 @@ import ij.process.ImageStatistics;
 import ij.process.ImageProcessor;
 import ij.process.LUT;
 import ij.process.ShortProcessor;
+import ij.process.ByteProcessor;
 
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeEvent;
 
-import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.ParseException;
 
@@ -415,6 +413,9 @@ public class ContrastPanel extends JPanel implements ImageController, PropertyCh
    }
 
    public void setSingleProcessorGamma(double gamma_, ImageProcessor ip, int colIndex) {
+      if (ip == null)
+         return;
+
       double maxValue = 255.0;
       byte[] r = new byte[256];
       byte[] g = new byte[256];
@@ -492,20 +493,20 @@ public class ContrastPanel extends JPanel implements ImageController, PropertyCh
       }
       sliderGamma_.setValue(gammaSliderCalculator_.gammaToSlider(gamma_));
       setLutGamma(gamma_);
+      updateCursors();
    }
 
    private void setLutGamma(double gamma_) {
        if (image_ == null)
           return;
 
-       if (gamma_ == 1)
-           return;
+       //if (gamma_ == 1)
+       //    return;
        
        // TODO: deal with color images
        if (image_.getProcessor() instanceof ColorProcessor)
           return;
-       //if (!ip.isDefaultLut())  // funny, does not work
-       //   return;
+
        if (!(image_ instanceof CompositeImage)) {
           ImageProcessor ip = image_.getProcessor();
               setSingleProcessorGamma(gamma_, ip, 0);
@@ -559,6 +560,7 @@ public class ContrastPanel extends JPanel implements ImageController, PropertyCh
 			setAutoScale();
 
 		histogramData_.setData(histogram);
+      histogramPanel_.setGamma(gammaSliderCalculator_.gammaToSlider(gamma_));
 		histogramPanel_.setData(histogramData_);
 		histogramPanel_.setAutoScale();
 
@@ -677,7 +679,8 @@ public class ContrastPanel extends JPanel implements ImageController, PropertyCh
 			return;
 
 		histogramPanel_.setCursors(sliderLow_.getValue() / binSize_,
-				sliderHigh_.getValue() / binSize_);
+				sliderHigh_.getValue() / binSize_,
+            gammaSliderCalculator_.gammaToSlider(gamma_));
 		histogramPanel_.repaint();
 		if (cs8bit_ == null || cs16bit_ == null)
 			return;
@@ -707,11 +710,10 @@ public class ContrastPanel extends JPanel implements ImageController, PropertyCh
 		applyContrastSettings(cs8bit_, cs16bit_);
 	};
 
-        public void applyContrastSettings(ContrastSettings contrast8,
-			ContrastSettings contrast16) {
-            applyContrastSettings(image_, contrast8, contrast16);
-        
-        }
+   public void applyContrastSettings(ContrastSettings contrast8,
+           ContrastSettings contrast16) {
+      applyContrastSettings(image_, contrast8, contrast16);  
+   }
 
 	public void applyContrastSettings(ImagePlus img, ContrastSettings contrast8,
 			ContrastSettings contrast16) {
@@ -735,11 +737,14 @@ public class ContrastPanel extends JPanel implements ImageController, PropertyCh
 
    public void applyContrastSettings(ImageProcessor proc,
            ContrastSettings contrast8, ContrastSettings contrast16) {
-        if (proc instanceof ShortProcessor) {
-            proc.setMinAndMax(contrast16.min, contrast16.max);
-         } else {
-            proc.setMinAndMax(contrast8.min, contrast8.max);
-         }
+      if (proc == null)
+         return;
+
+     if (proc instanceof ShortProcessor) {
+        proc.setMinAndMax(contrast16.min, contrast16.max);
+     } else if (proc instanceof ByteProcessor) {
+        proc.setMinAndMax(contrast8.min, contrast8.max);
+     }
 
    }
 
@@ -751,15 +756,15 @@ public class ContrastPanel extends JPanel implements ImageController, PropertyCh
 		return stretchCheckBox_.isSelected();
 	}
 
-      public ContrastSettings getContrastSettings() {
-          ContrastSettings ret = cs8bit_;
-          if( null != image_) {
-             if (image_.getProcessor() instanceof ShortProcessor)
-                ret = cs16bit_;
-             else
-                ret = cs8bit_;
-          }
-          return ret;
-       }
+   public ContrastSettings getContrastSettings() {
+      ContrastSettings ret = cs8bit_;
+      if( null != image_) {
+         if (image_.getProcessor() instanceof ShortProcessor)
+            ret = cs16bit_;
+         else
+            ret = cs8bit_;
+      }
+      return ret;
+   }
 
 }

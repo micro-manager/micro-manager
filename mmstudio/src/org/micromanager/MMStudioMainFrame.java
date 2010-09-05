@@ -444,7 +444,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
       @Override
       public void onConfigGroupChanged(String groupName, String newConfig) {
-         configPad_.refreshGroup(groupName, newConfig);
+         try {
+            configPad_.refreshGroup(groupName, newConfig);
+         } catch (Exception e) {
+         }
       }
 
       @Override

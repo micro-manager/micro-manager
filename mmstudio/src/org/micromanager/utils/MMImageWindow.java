@@ -55,7 +55,6 @@ import com.swtdesigner.SwingResourceManager;
 import ij.CompositeImage;
 import ij.ImageStack;
 import java.awt.Graphics;
-import org.micromanager.image5d.ChannelDisplayProperties;
 
 /**
  * ImageJ compatible image window. Derived from the original ImageJ class.
@@ -271,11 +270,13 @@ public class MMImageWindow extends ImageWindow {
 
 		// add window listeners
 		addWindowListener(new WindowAdapter() {
+         @Override
 			public void windowClosing(WindowEvent e) {
 				saveAttributes();
 			}
 		});
 		addWindowListener(new WindowAdapter() {
+         @Override
 			public void windowClosed(WindowEvent e) {
             if (closed)
                return;
@@ -287,18 +288,21 @@ public class MMImageWindow extends ImageWindow {
 		});
 
 		addWindowListener(new WindowAdapter() {
+         @Override
 			public void windowOpened(WindowEvent e) {
 				getCanvas().requestFocus();
 			}
 		});
 
 		addWindowListener(new WindowAdapter() {
+         @Override
 			public void windowGainedFocus(WindowEvent e) {
 				// updateHistogram();
 			}
 		});
 
 		addWindowListener(new WindowAdapter() {
+         @Override
 			public void windowActivated(WindowEvent e) {
 				// updateHistogram();
 			}
@@ -340,6 +344,7 @@ public class MMImageWindow extends ImageWindow {
 
 	}
 
+   @Override
 	public void windowOpened(WindowEvent e) {
 		getCanvas().requestFocus();
 	}
@@ -402,21 +407,23 @@ public class MMImageWindow extends ImageWindow {
 		int w = ip.getWidth();
 		int h = ip.getHeight();
 		int imPlusBitDepth = getImagePlus().getBitDepth();
+      int nrChannels = getImagePlus().getNChannels();
 		
 		// ImageWindow returns bitdepth 24 when Image processor type is Color
-        if( 24 == imPlusBitDepth){
-            imPlusBitDepth = 32;
-        }
+      if( nrChannels == 3){
+         nrChannels = 4;
+      }
 
-   		long components = core_.getNumberOfComponents();
+      long components = core_.getNumberOfComponents();
         
-        // retrieve the image storage size per pixel,
-        // 1 for 8 bit gray, 2 for 16 bit gray, 4 for 32 bit RGB, 8 for 64 bit RGB
-        long coreTotalByteDepth = core_.getBytesPerPixel();
+      // retrieve the image storage size per pixel,
+      // 1 for 8 bit gray, 2 for 16 bit gray, 4 for 32 bit RGB, 8 for 64 bit RGB
+      long coreTotalByteDepth = core_.getBytesPerPixel();
 
 		// warn the user if image dimensions do not match the current window
-		boolean ret = w != core_.getImageWidth() || h != core_.getImageHeight();
-			//	|| (imPlusBitDepth != coreTotalByteDepth * 8 && ( 4==components && (imPlusBitDepth*4 != coreTotalByteDepth * 8))) ;
+		boolean ret = (w != core_.getImageWidth()) || (h != core_.getImageHeight())
+				|| ( (imPlusBitDepth * nrChannels) != coreTotalByteDepth * 8);
+
 		return ret;
 	}
 
@@ -435,7 +442,6 @@ public class MMImageWindow extends ImageWindow {
 
       ImagePlus iplus;
 
-
       if (null != ip) {
          if (!deepColor) {
             ip.setTitle(title_);
@@ -445,7 +451,7 @@ public class MMImageWindow extends ImageWindow {
          } else { // convert to stack
             int w = ipr.getWidth();
             int h = ipr.getHeight();
-            //Image5D img5d = new Image5D(title_, ImagePlus.GRAY16, w00, h00, 3, 1, 1, false);
+
             Object[] planes;
             if (img instanceof byte[]) {
                planes = ImageUtils.getColorPlanesFromRGB32((byte[]) img);
@@ -465,7 +471,6 @@ public class MMImageWindow extends ImageWindow {
 
             compositeImage_ = new CompositeImage(iplus, CompositeImage.COMPOSITE);
             compositeImage_.setStack(imageStack);
-//            compositeImage_.setPosition(3, 1, 1);
             this.setImage(compositeImage_);
          }
 
@@ -562,7 +567,8 @@ public class MMImageWindow extends ImageWindow {
 		}
 		return ret;
 	}
-	
+
+   @Override
     public void windowClosing(WindowEvent e) {
     	gui_.enableLiveMode(false);
     	super.windowClosing(e);
