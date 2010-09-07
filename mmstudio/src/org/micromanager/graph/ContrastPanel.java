@@ -25,6 +25,7 @@ package org.micromanager.graph;
 
 import ij.CompositeImage;
 import ij.ImagePlus;
+import ij.gui.ImageWindow;
 
 import ij.process.ColorProcessor;
 import ij.process.ImageStatistics;
@@ -55,8 +56,10 @@ import javax.swing.JSlider;
 import javax.swing.SpringLayout;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import org.micromanager.api.ImageFocusListener;
 
 import org.micromanager.utils.ContrastSettings;
+import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.GammaSliderCalculator;
 import org.micromanager.utils.ImageController;
 import org.micromanager.utils.ReportingUtils;
@@ -66,7 +69,8 @@ import org.micromanager.utils.NumberUtils;
  * Slider and histogram panel for adjusting contrast and brightness.
  * 
  */
-public class ContrastPanel extends JPanel implements ImageController, PropertyChangeListener {
+public class ContrastPanel extends JPanel implements ImageController,
+        PropertyChangeListener, ImageFocusListener {
 	private static final long serialVersionUID = 1L;
 	private JComboBox modeComboBox_;
 	private HistogramPanel histogramPanel_;
@@ -391,6 +395,8 @@ public class ContrastPanel extends JPanel implements ImageController, PropertyCh
 				SpringLayout.WEST, this);
 		springLayout.putConstraint(SpringLayout.WEST, logHistCheckBox_, 1,
 				SpringLayout.WEST, this);
+
+      GUIUtils.registerImageFocusListener(this);
 	}
 
    public void setPixelBitDepth(int depth, boolean forceDepth) 
@@ -765,6 +771,14 @@ public class ContrastPanel extends JPanel implements ImageController, PropertyCh
             ret = cs8bit_;
       }
       return ret;
+   }
+
+   public void focusReceived(ImageWindow focusedWindow) {
+      ImagePlus imgp = focusedWindow.getImagePlus();
+      double min = imgp.getDisplayRangeMin();
+      double max = imgp.getDisplayRangeMax();
+      setImagePlus(imgp, new ContrastSettings(min, max), new ContrastSettings(min, max));
+      update();
    }
 
 }
