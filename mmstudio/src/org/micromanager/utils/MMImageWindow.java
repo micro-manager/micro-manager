@@ -72,10 +72,6 @@ public class MMImageWindow extends ImageWindow {
 	private static MMStudioMainFrame gui_ = null;
 
 	private Panel buttonPanel_;
-	private static ContrastSettings contrastSettings8_ = new ContrastSettings();
-	private static ContrastSettings contrastSettings16_ = new ContrastSettings();;
-	private LUTDialog contrastDlg_;
-	private ImageController contrastPanel_ = null;
    private CompositeImage compositeImage_ = null;
 
 
@@ -88,7 +84,6 @@ public class MMImageWindow extends ImageWindow {
 	public MMImageWindow(CMMCore core, ImageController contrastPanel)
 			throws Exception {
 		super(createImagePlus(core_ = core, title_));
-		contrastPanel_ = contrastPanel;
 		core_ = core;
 		Initialize();
 	}
@@ -96,7 +91,6 @@ public class MMImageWindow extends ImageWindow {
 	public MMImageWindow(CMMCore core, MMStudioMainFrame gui,
 			ImageController contrastPanel) throws Exception {
 		super(createImagePlus(core_ = core, title_));
-		contrastPanel_ = contrastPanel;
 		gui_ = gui;
 		core_ = core;
 		Initialize();
@@ -105,38 +99,8 @@ public class MMImageWindow extends ImageWindow {
 	public MMImageWindow(CMMCore core, ImageController contrastPanel,
 			String wndTitle) throws Exception {
 		super(createImagePlus(core_ = core, title_ = wndTitle));
-		contrastPanel_ = contrastPanel;
 		core_ = core;
 		Initialize();
-	}
-
-	public static void setContrastSettings(ContrastSettings s8,
-			ContrastSettings s16) {
-		contrastSettings8_ = s8;
-		contrastSettings16_ = s16;
-	}
-
-	public static void setContrastSettings8(ContrastSettings s8) {
-		contrastSettings16_ = s8;
-	}
-
-	public static void setContrastSetting16(ContrastSettings s16) {
-		contrastSettings16_ = s16;
-	}
-
-	public ContrastSettings getCurrentContrastSettings() {
-		if (getImagePlus().getBitDepth() == 8)
-			return contrastSettings8_;
-		else
-			return contrastSettings16_;
-	}
-
-	public static ContrastSettings getContrastSettings8() {
-		return contrastSettings8_;
-	}
-
-	public static ContrastSettings getContrastSettings16() {
-		return contrastSettings16_;
 	}
 
 	public void loadPosition(int x, int y) {
@@ -168,51 +132,21 @@ public class MMImageWindow extends ImageWindow {
 		}
 		if (byteDepth == 1 && components == 1) {
 			ip = new ByteProcessor(width, height);
-			if (contrastSettings8_.getRange() == 0.0)
-				ip.setMinAndMax(0, 255);
-			else
-				ip.setMinAndMax(contrastSettings8_.min, contrastSettings8_.max);
 		} else if (byteDepth == 2 && components == 1) {
 			ip = new ShortProcessor(width, height);
-			if (contrastSettings16_.getRange() == 0.0)
-				ip.setMinAndMax(0, 65535);
-			else
-				ip.setMinAndMax(contrastSettings16_.min,
-						contrastSettings16_.max);
 		} else if (byteDepth == 4 && components == 4) {
 			// RGB32 format
 			ip = new ColorProcessor(width, height);
-			if (contrastSettings8_.getRange() == 0.0)
-				ip.setMinAndMax(0, 255);
-			else
-				ip.setMinAndMax(contrastSettings8_.min, contrastSettings8_.max);
 		} else if (byteDepth == 8 && components == 4) {
 			// RGB64 format
 			ip = new ColorProcessor(width, height);
-			if (contrastSettings8_.getRange() == 0.0){
-				// todo get ADC bit depth from camera, 
-				int bitdepth = 12;
-				ip.setMinAndMax(0, (1<<(bitdepth-1))-1);
-			}
-			else
-				ip.setMinAndMax(contrastSettings8_.min, contrastSettings8_.max);
 		}else if (byteDepth == 1 && components == 4) {
 			// Note: unify cameras to return byteDepth per x,y pixel, not per x,y,component
 			ip = new ColorProcessor(width, height);
-			if (contrastSettings8_.getRange() == 0.0)
-				ip.setMinAndMax(0, 255);
-			else
-				ip.setMinAndMax(contrastSettings8_.min, contrastSettings8_.max);
 		}else if (byteDepth == 2 && components == 4) {
 			// assuming RGB32 format
 			ip = new ColorProcessor(width, height);
 			//todo get actual dynamic range from camera
-			if (contrastSettings8_.getRange() == 0.0){
-				// todo get ADC bit depth from camera, 
-				int bitdepth = 12;
-				ip.setMinAndMax(0, (1<<(bitdepth-1))-1);
-			}else
-				ip.setMinAndMax(contrastSettings8_.min, contrastSettings8_.max);
 		}else {
 			String message = "Unsupported pixel depth: "
 					+ core_.getBytesPerPixel() + " byte(s) and " + components
@@ -280,10 +214,6 @@ public class MMImageWindow extends ImageWindow {
 			public void windowClosed(WindowEvent e) {
             if (closed)
                return;
-				if (contrastPanel_ != null) {
-					contrastPanel_.setImagePlus(null, null, null);
-            }
-
 			}
 		});
 
@@ -314,8 +244,6 @@ public class MMImageWindow extends ImageWindow {
 	}
 
 	public void saveAttributes() {
-		if (contrastDlg_ != null)
-			contrastDlg_.dispose();
 		try {
 			savePosition();
 			// ToDo: implement winAccesslock_;
@@ -366,13 +294,6 @@ public class MMImageWindow extends ImageWindow {
 	private static String logError(String message) {
 		core_.logMessage("MMImageWindow:" + message);
 		return message;
-	}
-
-	protected void updateHistogram() {
-		if (contrastPanel_ != null) {
-			contrastPanel_.setImagePlus(getImagePlus(), contrastSettings8_,
-					contrastSettings16_);
-		}
 	}
 
 	public long getImageWindowByteLength() {
@@ -474,8 +395,6 @@ public class MMImageWindow extends ImageWindow {
             this.setImage(compositeImage_);
          }
 
-
-         updateHistogram();
          tearFreeUpdate();
 
          // update coordinate and pixel info in imageJ by simulating mouse
@@ -502,8 +421,6 @@ public class MMImageWindow extends ImageWindow {
 			}
 			// ip.updateAndDraw();
  
-			updateHistogram();
-
 			// update coordinate and pixel info in imageJ by simulating mouse
 			// move
 			ImageCanvas ic = getCanvas();
@@ -584,6 +501,6 @@ public class MMImageWindow extends ImageWindow {
      public void tearFreeUpdate() {
        Graphics g = this.getCanvas().getGraphics();
        //core_.WaitForScreenRefresh();
-       this.getCanvas().paint(g);
+       this.getImagePlus().updateAndDraw();
     }
 }

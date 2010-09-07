@@ -299,24 +299,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       i5dWin.setAcquitionEngine(engine_);
       i5dWin.setAcquisitionData(ad);
       i5dWin.setAcqSavePath(openAcqDirectory_);
-      i5dWin.addWindowListener(new WindowAdapter() {
-         @Override
-         public void windowGainedFocus(WindowEvent e) {
-            updateHistogram();
-         }
-      });
-      i5dWin.addWindowListener(new WindowAdapter() {
-         @Override
-         public void windowGainedFocus(WindowEvent e) {
-            updateHistogram();
-         }
-      });
-      i5dWin.addWindowListener(new WindowAdapter() {
-         @Override
-         public void windowActivated(WindowEvent e) {
-            updateHistogram();
-         }
-      });
+
       img5d.changes = false;
    }
 
@@ -653,14 +636,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       int width = mainPrefs_.getInt(MAIN_FRAME_WIDTH, 580);
       int height = mainPrefs_.getInt(MAIN_FRAME_HEIGHT, 451);
       boolean stretch = mainPrefs_.getBoolean(MAIN_STRETCH_CONTRAST, true);
-
-      ContrastSettings s8 = new ContrastSettings(mainPrefs_.getDouble(
-            CONTRAST_SETTINGS_8_MIN, 0.0), mainPrefs_.getDouble(
-            CONTRAST_SETTINGS_8_MAX, 0.0));
-      ContrastSettings s16 = new ContrastSettings(mainPrefs_.getDouble(
-            CONTRAST_SETTINGS_16_MIN, 0.0), mainPrefs_.getDouble(
-            CONTRAST_SETTINGS_16_MAX, 0.0));
-      MMImageWindow.setContrastSettings(s8, s16);
 
       openAcqDirectory_ = mainPrefs_.get(OPEN_ACQ_DIR, "");
 
@@ -1908,17 +1883,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       this.setTitle("System: " + sysConfigFile_);
    }
 
-   public void updateHistogram() {
-      if (isImageWindowOpen()) {
-         ImagePlus imp = imageWin_.getImagePlus();
-
-         if (imp != null) {
-            contrastPanel_.setContrastSettings(MMImageWindow.getContrastSettings8(), MMImageWindow.getContrastSettings16());
-            contrastPanel_.update();
-         }
-      }
-   }
-
    private void updateLineProfile() {
       if (!isImageWindowOpen() || profileWin_ == null
             || !profileWin_.isShowing()) {
@@ -2078,10 +2042,14 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       try {
          if (win != null) {
             win.saveAttributes();
-            WindowManager.removeWindow(imageWin_);
+        //    WindowManager.removeWindow(win);
+
+           //    win.close();
+
             win.dispose();
             win = null;
          }
+
          win = new MMImageWindow(core_, this, contrastPanel_);
 
          core_.logMessage("createImageWin1");
@@ -2498,10 +2466,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       return ret;
    }
 
-   public void updateImageGUI() {
-      updateHistogram();
-   }
-
    boolean IsLiveModeOn() {
       return liveModeTimer_ != null && liveModeTimer_.isRunning();
    }
@@ -2673,7 +2637,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                && creatingImageWindow_.isFalse()) {
             createImageWindow();
          }
-
 
          imageWin_.newImage(pixels);
          updateLineProfile();
@@ -3118,10 +3081,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       mainPrefs_.putInt(MAIN_FRAME_WIDTH, r.width);
       mainPrefs_.putInt(MAIN_FRAME_HEIGHT, r.height);
 
-      mainPrefs_.putDouble(CONTRAST_SETTINGS_8_MIN, MMImageWindow.getContrastSettings8().min);
-      mainPrefs_.putDouble(CONTRAST_SETTINGS_8_MAX, MMImageWindow.getContrastSettings8().max);
-      mainPrefs_.putDouble(CONTRAST_SETTINGS_16_MIN, MMImageWindow.getContrastSettings16().min);
-      mainPrefs_.putDouble(CONTRAST_SETTINGS_16_MAX, MMImageWindow.getContrastSettings16().max);
       mainPrefs_.putBoolean(MAIN_STRETCH_CONTRAST, contrastPanel_.isContrastStretch());
 
       mainPrefs_.put(OPEN_ACQ_DIR, openAcqDirectory_);
@@ -3252,7 +3211,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
 
    public ContrastSettings getContrastSettings() {
-	return contrastPanel_.getContrastSettings();
+      return contrastPanel_.getContrastSettings();
    }
 
    public boolean is16bit() {
