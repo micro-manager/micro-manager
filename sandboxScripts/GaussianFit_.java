@@ -25,6 +25,10 @@ public class GaussianFit_ implements PlugIn {
 	double[] steps_ = new double[5];
 	String [] paramNames_ = {"A", "x_c", "y_c", "sigma", "b"};
 
+   GaussianResidual gs_;
+   NelderMead nm_;
+   SimpleScalarValueChecker convergedChecker_;;
+
 	private void print(String myText) {
 		ij.IJ.log(myText);
 	}
@@ -88,19 +92,11 @@ public class GaussianFit_ implements PlugIn {
 
 
 
-	public void run(String arg) {
+	public double[] doGaussianFit (ImagePlus siPlus) {
 
-		long startTime = System.currentTimeMillis();
-
-		GaussianResidual gs = new GaussianResidual();
-		NelderMead nm = new NelderMead();
-		SimpleScalarValueChecker convergedChecker = new SimpleScalarValueChecker(1e-5,-1);
-
-      // for now, take the active ImageJ image (this should be an image of a difraction limited spot
-		ImagePlus siPlus = IJ.getImage();
 		ImageProcessor siProc = siPlus.getProcessor();
       short[] imagePixels = (short[])siProc.getPixels();
-		gs.setImage((short[])siProc.getPixels(), siProc.getWidth(), siProc.getHeight());
+		gs_.setImage((short[])siProc.getPixels(), siProc.getWidth(), siProc.getHeight());
 
       // Hard code estimate for sigma:
       params0_[3] = 1.115;
@@ -129,7 +125,7 @@ public class GaussianFit_ implements PlugIn {
       }
       ti = mt - ( (bg / n) * siProc.getHeight() * siProc.getWidth());
       params0_[0] = ti / (2 * Math.PI * params0_[3] * params0_[3]);
-      print("Total signal: " + ti + "Estimate: " + params0_[0]);
+      // print("Total signal: " + ti + "Estimate: " + params0_[0]);
 
       // estimate center of mass
       double mx = 0.0;
@@ -145,20 +141,36 @@ public class GaussianFit_ implements PlugIn {
 		for (int i=0;i<params0_.length;++i)
 			steps_[i] = params0_[i]*0.3;
 
-		nm.setStartConfiguration(steps_);
-		nm.setConvergenceChecker(convergedChecker);
+		nm_.setStartConfiguration(steps_);
+		nm_.setConvergenceChecker(convergedChecker_);
 
-		nm.setMaxIterations(200);
+		nm_.setMaxIterations(200);
 		double[] paramsOut = {0.0};
 		try {
-			RealPointValuePair result = nm.optimize(gs, GoalType.MINIMIZE, params0_);
+			RealPointValuePair result = nm_.optimize(gs_, GoalType.MINIMIZE, params0_);
 			paramsOut = result.getPoint();
 		} catch (Exception e) {}
 
-		long endTime = System.currentTimeMillis(); 
-		long took = endTime - startTime;
+      return paramsOut;
+	}
 
-		print("\n\nFinal result:");
+	public void run(String arg) {
+
+		gs_ = new GaussianResidual();
+		nm_ = new NelderMead();
+		convergedChecker_ = new SimpleScalarValueChecker(1e-5,-1);
+
+      // for now, take the active ImageJ image (this should be an image of a difraction limited spot
+		ImagePlus siPlus = IJ.getImage();
+
+		long startTime = System.nanoTime();
+
+      double[] paramsOut = doGaussianFit(siPlus);
+
+		long endTime = System.nanoTime(); 
+		double took = (endTime - startTime) / 1E6;
+
+		print("\n\nResult:");
 		for (int i=0; i<paramsOut.length; i++)
        		print(" " + paramNames_[i] + ": " + paramsOut[i]);
 
@@ -167,7 +179,5 @@ public class GaussianFit_ implements PlugIn {
 
 
 		print("Calculation took: " + took + " milli seconds"); 
-
-	}
-
+   }
 }
