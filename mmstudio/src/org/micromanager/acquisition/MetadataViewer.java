@@ -303,8 +303,10 @@ public class MetadataViewer extends javax.swing.JFrame
    private Map<String,String> selectChangingTags(Map<String,String> md) {
       Map<String,String> mdChanging = new HashMap<String,String>();
       for (String key:md.keySet()) {
-         if (cache_.getChangingKeys().contains(key)) {
-            mdChanging.put(key, md.get(key));
+         if (cache_ != null) {
+            if (cache_.getChangingKeys().contains(key)) {
+               mdChanging.put(key, md.get(key));
+            }
          }
       }
       return mdChanging;
