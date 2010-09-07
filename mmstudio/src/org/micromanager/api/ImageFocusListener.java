@@ -8,8 +8,8 @@ package org.micromanager.api;
 import ij.gui.ImageWindow;
 
 /**
- *
- * @author arthur
+ * To use register your implementation of ImageFocusListener,
+ * call GUIUtils.registerImageFocusListener(ImageFocusListener l);
  */
 public interface ImageFocusListener {
    public void focusReceived(ImageWindow focusedWindow);
