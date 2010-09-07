@@ -222,9 +222,9 @@ public class ImageUtils {
       int j=0;
       byte[] pixels = new byte[planes.length * 4];
       for (int i=0;i<planes.length;++i) {
-         pixels[j++] = planes[0][i];
-         pixels[j++] = planes[1][i];
-         pixels[j++] = planes[2][i];
+         pixels[j++] = planes[2][i]; //B
+         pixels[j++] = planes[1][i]; //G
+         pixels[j++] = planes[0][i]; //R
          pixels[j++] = 0; // Empty A byte.
       }
       return pixels;
@@ -234,9 +234,9 @@ public class ImageUtils {
       int j=-1;
       short[] pixels = new short[planes[0].length * 4];
       for (int i=0;i<planes[0].length;++i) {
-         pixels[++j] = planes[0][i];
-         pixels[++j] = planes[1][i];
-         pixels[++j] = planes[2][i];
+         pixels[++j] = planes[2][i]; //B
+         pixels[++j] = planes[1][i]; //G
+         pixels[++j] = planes[0][i]; //R
          pixels[++j] = 0; // Empty A (two bytes).
       }
       return pixels;
@@ -249,9 +249,9 @@ public class ImageUtils {
 
        int j=0;
        for (int i=0;i<pixels.length/4;++i) {
-          r[i] = pixels[j++];
-          g[i] = pixels[j++];
           b[i] = pixels[j++];
+          g[i] = pixels[j++];
+          r[i] = pixels[j++];
           j++; // skip "A" byte.
        }
        
@@ -259,16 +259,16 @@ public class ImageUtils {
        return planes;
    }
 
-    public static short[][] getColorPlanesFromRGB64(short[] pixels) {
+   public static short[][] getColorPlanesFromRGB64(short[] pixels) {
        short [] r = new short[pixels.length/4];
        short [] g = new short[pixels.length/4];
        short [] b = new short[pixels.length/4];
 
        int j=0;
        for (int i=0;i<pixels.length/4;++i) {
-          r[i] = pixels[j++];
-          g[i] = pixels[j++];
           b[i] = pixels[j++];
+          g[i] = pixels[j++];
+          r[i] = pixels[j++];
           j++; // skip "A" (two bytes).
        }
 
@@ -287,7 +287,7 @@ public class ImageUtils {
       byte [] p = new byte[pixels.length/4];
 
       for (int i=0;i<p.length;++i) {
-         p[i] = pixels[channel + 4*i];
+         p[i] = pixels[(2-channel) + 4*i]; //B,G,R
       }
       return p;
    }
@@ -302,7 +302,7 @@ public class ImageUtils {
       short [] p = new short[pixels.length/4];
 
       for (int i=0;i<p.length;++i) {
-         p[i] = pixels[channel + 4*i];
+         p[i] = pixels[(2-channel) + 4*i]; // B,G,R
       }
       return p;
    }
