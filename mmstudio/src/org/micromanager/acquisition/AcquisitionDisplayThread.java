@@ -216,10 +216,13 @@ public class AcquisitionDisplayThread extends Thread {
       for (File acqDir : rootDir.listFiles()) {
          theName = acqDir.getName();
          if (theName.startsWith(prefix)) {
-            number = Integer.parseInt(theName.substring(prefix.length()));
-            if (number >= maxNumber) {
-               maxNumber = number;
-            }
+            try {
+               number = Integer.parseInt(theName.substring(prefix.length()));
+               if (number >= maxNumber) {
+                  maxNumber = number;
+               }
+            } catch (NumberFormatException e) {
+            } // Do nothing.
          }
       }
       return maxNumber;
