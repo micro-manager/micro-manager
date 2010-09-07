@@ -23,14 +23,18 @@
 
 package org.micromanager.utils;
 
+import ij.gui.ImageWindow;
 import ij.process.ColorProcessor;
 import ij.process.ImageStatistics;
+import java.awt.AWTEvent;
 
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GraphicsEnvironment;
 import java.awt.Point;
+import java.awt.Toolkit;
+import java.awt.event.AWTEventListener;
 import java.awt.event.ActionListener;
 
 import java.awt.event.FocusAdapter;
@@ -43,6 +47,7 @@ import javax.swing.JComboBox;
 import javax.swing.JFrame;
 
 import javax.swing.JTable;
+import org.micromanager.api.ImageFocusListener;
 import org.micromanager.image5d.ChannelCalibration;
 import org.micromanager.image5d.ChannelControl;
 import org.micromanager.image5d.ChannelDisplayProperties;
@@ -234,5 +239,23 @@ public class GUIUtils {
    private static void storePosition(JFrame win) {
       Preferences prefs = Preferences.userNodeForPackage(win.getClass());
       JavaUtils.putObjectInPrefs(prefs, DIALOG_POSITION, win.getLocation());
+   }
+
+   public static void registerImageFocusListener(final ImageFocusListener listener) {
+      AWTEventListener awtEventListener = new AWTEventListener() {
+         public void eventDispatched(AWTEvent event) {
+            if (event instanceof WindowEvent) {
+               if (0 != (event.getID() & WindowEvent.WINDOW_GAINED_FOCUS)) {
+                  if (event.getSource() instanceof ImageWindow) {
+                     ImageWindow focusedWindow = (ImageWindow) event.getSource();
+                     listener.focusReceived(focusedWindow);
+                  }
+               }
+            }
+         }
+      };
+
+      Toolkit.getDefaultToolkit().addAWTEventListener(awtEventListener,
+              AWTEvent.WINDOW_FOCUS_EVENT_MASK);
    }
 }

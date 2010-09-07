@@ -16,15 +16,16 @@ import ij.ImageStack;
 import ij.WindowManager;
 import ij.gui.ImageWindow;
 import java.awt.AWTEvent;
+import java.awt.Window;
 import java.awt.event.AWTEventListener;
-import java.util.ArrayList;
+import java.awt.event.WindowEvent;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
 import javax.swing.table.AbstractTableModel;
 import mmcorej.TaggedImage;
-import org.micromanager.acquisition.MMImageCache;
+import org.micromanager.api.ImageFocusListener;
 import org.micromanager.utils.GUIUtils;
 
 /**
@@ -32,12 +33,12 @@ import org.micromanager.utils.GUIUtils;
  * @author arthur
  */
 public class MetadataViewer extends javax.swing.JFrame
-        implements ImageListener, AWTEventListener {
+        implements ImageListener, ImageFocusListener {
 
    private static MetadataViewer singletonViewer_ = null;
    private final MetadataTableModel imageMetadataModel_;
    private final MetadataTableModel summaryMetadataModel_;
-   private ImageWindow currentWindow_;
+   private ImageWindow currentWindow_ = null;
    private final String [] columnNames_ = {"Property","Value"};
    private MMImageCache cache_;
    private boolean showUnchangingKeys_;
@@ -54,7 +55,7 @@ public class MetadataViewer extends javax.swing.JFrame
       imageMetadataTable.setModel(imageMetadataModel_);
       summaryMetadataTable.setModel(summaryMetadataModel_);
 
-      this.getToolkit().addAWTEventListener(this, AWTEvent.WINDOW_FOCUS_EVENT_MASK);
+      GUIUtils.registerImageFocusListener(this);
    }
 
    public static MetadataViewer showMetadataViewer() {
@@ -348,8 +349,6 @@ public class MetadataViewer extends javax.swing.JFrame
    @Override
    public void setVisible(boolean visible) {
       super.setVisible(visible);
-      if (visible)
-         eventDispatched(null);
    }
 
    // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -394,28 +393,23 @@ public class MetadataViewer extends javax.swing.JFrame
          return null;
    }
 
-
    //Implements AWTEventListener
-   public void eventDispatched(AWTEvent event) {
-      ImageWindow currentWindow = WindowManager.getCurrentWindow();
-      Map<String, String> md = null;
-      if (currentWindow_ != currentWindow) {
-         ImagePlus imgp = currentWindow.getImagePlus();
+   public void focusReceived(ImageWindow focusedWindow) {
+      if (currentWindow_ != focusedWindow) {
+         ImagePlus imgp = focusedWindow.getImagePlus();
          cache_ = getCache(imgp);
 
          if (cache_ != null) {
             commentsTextArea.setText(cache_.getComment());
-            md = cache_.getAcquisitionMetadata();
+            Map<String,String> md = cache_.getAcquisitionMetadata();
             summaryMetadataModel_.setMetadata(md);
-
-         }  else {
+         } else {
             commentsTextArea.setText(null);
          }
 
+         currentWindow_ = focusedWindow;
+
          update(imgp);
-         
       }
    }
-   
-
 }

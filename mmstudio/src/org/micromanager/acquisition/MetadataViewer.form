@@ -156,7 +156,7 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" attributes="0">
                       <Component id="showUnchangingPropertiesCheckbox" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="74" max="32767" attributes="0"/>
+                      <EmptySpace pref="32" max="32767" attributes="0"/>
                   </Group>
                   <Component id="metadataTableScrollPane" alignment="0" pref="243" max="32767" attributes="0"/>
               </Group>
