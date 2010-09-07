@@ -25,6 +25,7 @@
 package org.micromanager.conf;
 
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -35,11 +36,17 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.InputStream;
 import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.FileReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLConnection;
+import java.net.URLEncoder;
 import java.util.prefs.Preferences;
 
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JEditorPane;
 import javax.swing.JFileChooser;
@@ -51,7 +58,6 @@ import javax.swing.border.LineBorder;
 
 import mmcorej.CMMCore;
 
-import org.micromanager.conf.ConfiguratorDlg;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -73,6 +79,8 @@ public class ConfiguratorDlg extends JDialog {
    private JLabel titleLabel_;
    private JEditorPane helpTextPane_;
    private String defaultPath_;
+   private JCheckBox sendCheck_;
+   private boolean sendConfig_;
 
 
    /**
@@ -102,7 +110,21 @@ public class ConfiguratorDlg extends JDialog {
       getContentPane().setLayout(null);
       setTitle("Hardware Configuration Wizard");
       setBounds(50, 100, 602, 529);
-      
+
+      sendCheck_ = new JCheckBox();
+      sendCheck_.setBounds(5, 462, 275, 23);
+      sendCheck_.setFont(new Font("", Font.PLAIN, 10));
+      sendCheck_.setSelected(true);
+      sendConfig_ = true;
+      sendCheck_.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent arg0) {
+             sendConfig_ = sendCheck_.isSelected();
+         }
+      });
+      sendCheck_.setText("Send configuration to Micro-manager.org");
+     // they didn't like it yet getContentPane().add(sendCheck_);
+
+
       final JScrollPane scrollPane = new JScrollPane();
       scrollPane.setBounds(9, 320, 578, 136);
       getContentPane().add(scrollPane);
@@ -296,6 +318,42 @@ public class ConfiguratorDlg extends JDialog {
          microModel_.saveToFile(f.getAbsolutePath());
       } catch (MMConfigFileException e) {
          JOptionPane.showMessageDialog(this, e.getMessage());           
+      }
+      if( sendConfig_){
+          try{
+              URL url;
+            URLConnection   urlConn;
+            DataOutputStream    postOut;
+            DataInputStream     input;
+            FileReader fr;
+              InputStream is;
+              String regText = "http://valelab.ucsf.edu/micro-manager-configsaver.php";
+              url = new URL(regText);
+              urlConn = url.openConnection();
+              urlConn.setDoInput(true);
+              urlConn.setDoOutput(true);
+              urlConn.setUseCaches(false);
+              is = url.openStream();
+              fr = new FileReader(f);
+              char[] contents =  new char[60000];
+              int length = fr.read(contents, 0, 60000);
+              fr.close();
+              String toSend = URLEncoder.encode(new String(contents),  "UTF-8");
+              postOut = new DataOutputStream (urlConn.getOutputStream ());
+              postOut.writeBytes(toSend);
+
+
+              } catch (java.net.UnknownHostException e) {
+                 ReportingUtils.logError(e, "config save");
+              } catch (MalformedURLException e) {
+                 ReportingUtils.logError(e);
+              } catch (IOException e) {
+                 ReportingUtils.logError(e);
+              } catch (SecurityException e){
+                 ReportingUtils.logError(e,"");
+              } catch (Exception e) {
+                 ReportingUtils.logError(e);
+              }
       }
    }
 
