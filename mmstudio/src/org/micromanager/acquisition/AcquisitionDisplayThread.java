@@ -14,7 +14,6 @@ import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.PropertySetting;
 import mmcorej.TaggedImage;
-import org.micromanager.MMStudioMainFrame;
 import org.micromanager.acquisition.engine.SequenceSettings;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.ScriptInterface;
@@ -28,8 +27,6 @@ import org.micromanager.utils.ReportingUtils;
  * @author arthur
  */
 public class AcquisitionDisplayThread extends Thread {
-
-
    private static int untitledID_ = 0;
 
    private static String getUniqueUntitledName() {
