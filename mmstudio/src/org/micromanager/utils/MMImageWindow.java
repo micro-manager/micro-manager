@@ -81,23 +81,21 @@ public class MMImageWindow extends ImageWindow {
 		Initialize();
 	}
 
-	public MMImageWindow(CMMCore core, ImageController contrastPanel)
+	public MMImageWindow(CMMCore core)
 			throws Exception {
 		super(createImagePlus(core_ = core, title_));
 		core_ = core;
 		Initialize();
 	}
 
-	public MMImageWindow(CMMCore core, MMStudioMainFrame gui,
-			ImageController contrastPanel) throws Exception {
+	public MMImageWindow(CMMCore core, MMStudioMainFrame gui) throws Exception {
 		super(createImagePlus(core_ = core, title_));
 		gui_ = gui;
 		core_ = core;
 		Initialize();
 	}
 
-	public MMImageWindow(CMMCore core, ImageController contrastPanel,
-			String wndTitle) throws Exception {
+	public MMImageWindow(CMMCore core, String wndTitle) throws Exception {
 		super(createImagePlus(core_ = core, title_ = wndTitle));
 		core_ = core;
 		Initialize();

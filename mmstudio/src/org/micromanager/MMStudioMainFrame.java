@@ -2050,7 +2050,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             win = null;
          }
 
-         win = new MMImageWindow(core_, this, contrastPanel_);
+         win = new MMImageWindow(core_, this);
 
          core_.logMessage("createImageWin1");
 
