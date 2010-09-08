@@ -127,7 +127,7 @@ private:
    MMThreadLock* pDemoResourceLock_;
    int nComponents_;
    void TestResourceLocking(const bool);
-	DemoWorkerThread* pDemoWorkerThread_;
+   DemoWorkerThread* pDemoWorkerThread_;
    bool simulatePropertyRefresh_;
 };
 

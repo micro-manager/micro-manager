@@ -179,7 +179,7 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 {
    delete pDevice;
 }
-
+#if 0
 //DemoWorkerThread definition
 
 
@@ -254,7 +254,7 @@ int DemoWorkerThread::svc(void)
 }
 
 
-
+#endif
 
 
 
@@ -286,7 +286,9 @@ CDemoCamera::CDemoCamera() :
 	cameraCCDYSize_(512),
    nComponents_(1),
    pDemoResourceLock_(0),
+#if 0
    pDemoWorkerThread_(0),
+#endif
    simulatePropertyRefresh_(false)
 {
    // call the base class method to set-up default error codes/messages
@@ -305,9 +307,11 @@ CDemoCamera::CDemoCamera() :
 CDemoCamera::~CDemoCamera()
 {
    simulatePropertyRefresh_ = false;
+#if 0
    pDemoWorkerThread_->Stop();
    CDeviceUtils::SleepMs(30);
    delete pDemoWorkerThread_;
+#endif
    delete pDemoResourceLock_;
 }
 
@@ -469,10 +473,10 @@ int CDemoCamera::Initialize()
    nRet = ResizeImageBuffer();
    if (nRet != DEVICE_OK)
       return nRet;
-
+#if 0
    pDemoWorkerThread_ = new DemoWorkerThread(this);
    pDemoWorkerThread_->Start();
-
+#endif
 
 #ifdef TESTRESOURCELOCKING
    TestResourceLocking(true);
