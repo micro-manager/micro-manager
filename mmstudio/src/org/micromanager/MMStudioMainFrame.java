@@ -391,6 +391,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       this.acqMgr_.setAcquisitionEngine(acqName, eng);
    }
 
+   public void updateContrast(ImagePlus iplus) {
+      contrastPanel_.updateContrast(iplus);
+   }
+
    /**
     * Callback to update GUI when a change happens in the MMCore.
     */

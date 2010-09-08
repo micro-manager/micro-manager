@@ -359,7 +359,7 @@ public class MMImageWindow extends ImageWindow {
       ImagePlus ip = getImagePlus();
       ImageProcessor ipr = ip.getProcessor();
 
-      ImagePlus iplus;
+      ImagePlus iplus = null;
 
       if (null != ip) {
          if (!deepColor) {
@@ -392,6 +392,9 @@ public class MMImageWindow extends ImageWindow {
             compositeImage_.setStack(imageStack);
             this.setImage(compositeImage_);
          }
+
+         if (ip != null)
+            gui_.updateContrast(ip);
 
          tearFreeUpdate();
 

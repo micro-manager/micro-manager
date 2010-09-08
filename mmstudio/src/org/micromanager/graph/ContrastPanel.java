@@ -104,7 +104,7 @@ public class ContrastPanel extends JPanel implements ImageController,
 	private JCheckBox logHistCheckBox_;
    private boolean imageUpdated_;
    private boolean liveWindow_;
-   private boolean liveStretchMode_;
+   private boolean liveStretchMode_ = true;
 
 	/**
 	 * Create the panel
@@ -341,6 +341,8 @@ public class ContrastPanel extends JPanel implements ImageController,
 			public void stateChanged(ChangeEvent ce) {
             if (stretchCheckBox_.isSelected())
                setAutoScale();
+            else
+               liveStretchMode_ = false;
 				sliderLow_.setEnabled(!stretchCheckBox_.isSelected());
 				sliderHigh_.setEnabled(!stretchCheckBox_.isSelected());
 			};
@@ -800,12 +802,12 @@ public class ContrastPanel extends JPanel implements ImageController,
       updateStretchBox();
 
 
-//      ImageProcessor proc = imgp.getChannelProcessor();
+//    ImageProcessor proc = imgp.getChannelProcessor();
       double min = imgp.getDisplayRangeMin();
       double max = imgp.getDisplayRangeMax();
         setImagePlus(imgp, new ContrastSettings(min, max), new ContrastSettings(min, max));
               imageUpdated(imgp);
-//      update();
+//    update();
    }
 
    public void imageOpened(ImagePlus ip) {
@@ -827,6 +829,14 @@ public class ContrastPanel extends JPanel implements ImageController,
          setContrastSettings(new ContrastSettings(min, max), new ContrastSettings(min, max));
          updateSliders(true, (int) ip.getDisplayRangeMin(), (int) ip.getDisplayRangeMax());
          imageUpdated_ = false;
+      }
+   }
+
+   public void updateContrast(ImagePlus ip) {
+      if (stretchCheckBox_.isSelected()) {
+         double min = ip.getDisplayRangeMin();
+         double max = ip.getDisplayRangeMax();
+         setImagePlus(ip, new ContrastSettings(min, max), new ContrastSettings(min, max));
       }
    }
 

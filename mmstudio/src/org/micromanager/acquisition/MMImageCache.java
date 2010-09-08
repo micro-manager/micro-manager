@@ -28,13 +28,14 @@ public class MMImageCache {
    private Map<String, String> tags_;
    private ArrayList<String> changingKeys_;
    private Map<String, String> firstTags_;
-   private final ImageCollection coll_;
+   private static ImageCollection coll_ = null;
 
    
    MMImageCache(ImageFileManagerInterface imageFileManager) {
       imageFileManager_ = imageFileManager;
       changingKeys_ = new ArrayList<String>();
-      coll_ = new ImageCollection();
+      if (coll_ == null)
+         coll_ = new ImageCollection();
    }
 
    private class ImageCollection {
