@@ -446,8 +446,12 @@ public class ContrastPanel extends JPanel implements ImageController,
    }
 
    public void updateHistogram() {
-      if (image_ != null) {
-         int[] rawHistogram = image_.getProcessor().getHistogram();
+      updateHistogram(image_);
+   }
+
+   public void updateHistogram(ImagePlus image) {
+      if (image != null) {
+         int[] rawHistogram = image.getProcessor().getHistogram();
          if (histogramData_ == null) {
             histogramData_ = new GraphData();
          } // 256 bins
@@ -463,10 +467,10 @@ public class ContrastPanel extends JPanel implements ImageController,
          }
          // work around what is apparently a bug in ImageJ
          if (total == 0) {
-            if (image_.getProcessor().getMin() == 0) {
-               histogram[0] = image_.getWidth() * image_.getHeight();
+            if (image.getProcessor().getMin() == 0) {
+               histogram[0] = image.getWidth() * image.getHeight();
             } else {
-               histogram[limit - 1] = image_.getWidth() * image_.getHeight();
+               histogram[limit - 1] = image.getWidth() * image.getHeight();
             }
          }
          if (logScale_) {
@@ -479,7 +483,7 @@ public class ContrastPanel extends JPanel implements ImageController,
          histogramPanel_.setGamma(gammaSliderCalculator_.gammaToSlider(gamma_));
          histogramPanel_.setData(histogramData_);
          histogramPanel_.setAutoScale();
-         ImageStatistics stats = image_.getStatistics();
+         ImageStatistics stats = image.getStatistics();
          maxField_.setText(NumberUtils.intToDisplayString((int) stats.max));
          max_ = stats.max;
          minField_.setText(NumberUtils.intToDisplayString((int) stats.min));
@@ -833,6 +837,7 @@ public class ContrastPanel extends JPanel implements ImageController,
    }
 
    public void updateContrast(ImagePlus ip) {
+      updateHistogram(ip);
       if (stretchCheckBox_.isSelected()) {
          double min = ip.getDisplayRangeMin();
          double max = ip.getDisplayRangeMax();
