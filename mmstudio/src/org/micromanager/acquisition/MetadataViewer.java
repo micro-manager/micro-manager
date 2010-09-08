@@ -51,11 +51,11 @@ public class MetadataViewer extends javax.swing.JFrame
       summaryMetadataModel_ = new MetadataTableModel();
 
       ImagePlus.addImageListener(this);
+      GUIUtils.registerImageFocusListener(this);
+      
       update(ij.IJ.getImage());
       imageMetadataTable.setModel(imageMetadataModel_);
       summaryMetadataTable.setModel(summaryMetadataModel_);
-
-      GUIUtils.registerImageFocusListener(this);
    }
 
    public static MetadataViewer showMetadataViewer() {

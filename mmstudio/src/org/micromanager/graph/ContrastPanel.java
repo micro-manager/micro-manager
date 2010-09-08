@@ -24,6 +24,7 @@
 package org.micromanager.graph;
 
 import ij.CompositeImage;
+import ij.ImageListener;
 import ij.ImagePlus;
 import ij.gui.ImageWindow;
 
@@ -62,6 +63,7 @@ import org.micromanager.utils.ContrastSettings;
 import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.GammaSliderCalculator;
 import org.micromanager.utils.ImageController;
+import org.micromanager.utils.MMImageWindow;
 import org.micromanager.utils.ReportingUtils;
 import org.micromanager.utils.NumberUtils;
 
@@ -70,7 +72,7 @@ import org.micromanager.utils.NumberUtils;
  * 
  */
 public class ContrastPanel extends JPanel implements ImageController,
-        PropertyChangeListener, ImageFocusListener {
+        PropertyChangeListener, ImageFocusListener, ImageListener {
 	private static final long serialVersionUID = 1L;
 	private JComboBox modeComboBox_;
 	private HistogramPanel histogramPanel_;
@@ -100,6 +102,9 @@ public class ContrastPanel extends JPanel implements ImageController,
 	private JCheckBox stretchCheckBox_;
 	private boolean logScale_ = false;
 	private JCheckBox logHistCheckBox_;
+   private boolean imageUpdated_;
+   private boolean liveWindow_;
+   private boolean liveStretchMode_;
 
 	/**
 	 * Create the panel
@@ -396,6 +401,7 @@ public class ContrastPanel extends JPanel implements ImageController,
 		springLayout.putConstraint(SpringLayout.WEST, logHistCheckBox_, 1,
 				SpringLayout.WEST, this);
 
+      ImagePlus.addImageListener(this);
       GUIUtils.registerImageFocusListener(this);
 	}
 
@@ -435,6 +441,59 @@ public class ContrastPanel extends JPanel implements ImageController,
       LUT lut = new LUT(8, 256, r, g, b);
       ip.setColorModel(lut);
       image_.updateAndDraw();
+   }
+
+   public void updateHistogram() {
+      if (image_ != null) {
+         int[] rawHistogram = image_.getProcessor().getHistogram();
+         if (histogramData_ == null) {
+            histogramData_ = new GraphData();
+         } // 256 bins
+         int[] histogram = new int[HIST_BINS];
+         int limit = Math.min(rawHistogram.length / binSize_, HIST_BINS);
+         int total = 0;
+         for (int i = 0; i < limit; i++) {
+            histogram[i] = 0;
+            for (int j = 0; j < binSize_; j++) {
+               histogram[i] += rawHistogram[i * binSize_ + j];
+            }
+            total += histogram[i];
+         }
+         // work around what is apparently a bug in ImageJ
+         if (total == 0) {
+            if (image_.getProcessor().getMin() == 0) {
+               histogram[0] = image_.getWidth() * image_.getHeight();
+            } else {
+               histogram[limit - 1] = image_.getWidth() * image_.getHeight();
+            }
+         }
+         if (logScale_) {
+            for (int i = 0; i < histogram.length; i++) {
+               histogram[i] = histogram[i] > 0 ? (int) (1000 * Math.log(histogram[i])) : 0;
+            }
+         }
+
+         histogramData_.setData(histogram);
+         histogramPanel_.setGamma(gammaSliderCalculator_.gammaToSlider(gamma_));
+         histogramPanel_.setData(histogramData_);
+         histogramPanel_.setAutoScale();
+         ImageStatistics stats = image_.getStatistics();
+         maxField_.setText(NumberUtils.intToDisplayString((int) stats.max));
+         max_ = stats.max;
+         minField_.setText(NumberUtils.intToDisplayString((int) stats.min));
+         min_ = stats.min;
+         avgField_.setText(NumberUtils.intToDisplayString((int) stats.mean));
+         //varField_.setText(Double.toString(Double.valueOf(twoDForm_.format(stats.stdDev))));
+         varField_.setText(NumberUtils.doubleToDisplayString(stats.stdDev));
+         if (min_ == max_) {
+            if (min_ == 0) {
+               max_ += 1;
+            } else {
+               min_ -= 1;
+            }
+         }
+         histogramPanel_.repaint();
+      }
    }
 	 
 	private void setIntensityMode(int mode) {
@@ -526,69 +585,17 @@ public class ContrastPanel extends JPanel implements ImageController,
 
 
 	public void update() {
-		// calculate histogram
-		if (image_ == null || image_.getProcessor() == null)
-			return;
-		int rawHistogram[] = image_.getProcessor().getHistogram();
-		if (histogramData_ == null)
-			histogramData_ = new GraphData();
-
-		// preprocess histogram to conform to the current mode and to use only
-		// 256 bins
-		int histogram[] = new int[HIST_BINS];
-		int limit = Math.min(rawHistogram.length / binSize_, HIST_BINS);
-
-      int total = 0;
-		for (int i = 0; i < limit; i++) {
-			histogram[i] = 0;
-			for (int j = 0; j < binSize_; j++) {
-				histogram[i] += rawHistogram[i * binSize_ + j];
-			}
-         total += histogram[i];
-		}
-
-      // work around what is apparently a bug in ImageJ
-      if (total == 0) {
-         if (image_.getProcessor().getMin() == 0)
-            histogram[0] = image_.getWidth() * image_.getHeight();
-         else
-            histogram[limit-1] = image_.getWidth() * image_.getHeight();
+      // calculate histogram
+      if (image_ == null || image_.getProcessor() == null)
+         return;
+      if (stretchCheckBox_.isSelected()) {
+         setAutoScale();
       }
-       
-		// log scale
-		if (logScale_) {
-			for (int i = 0; i < histogram.length; i++)
-				histogram[i] = histogram[i] > 0 ? (int) (1000 * Math
-						.log(histogram[i])) : 0;
-		}
-
-		if (stretchCheckBox_.isSelected())
-			setAutoScale();
-
-		histogramData_.setData(histogram);
-      histogramPanel_.setGamma(gammaSliderCalculator_.gammaToSlider(gamma_));
-		histogramPanel_.setData(histogramData_);
-		histogramPanel_.setAutoScale();
-
-      ImageStatistics stats = image_.getStatistics();
-      maxField_.setText(NumberUtils.intToDisplayString((int)stats.max));
-      max_ = stats.max;
-      minField_.setText(NumberUtils.intToDisplayString((int)stats.min));
-      min_ = stats.min;
-      avgField_.setText(NumberUtils.intToDisplayString((int)stats.mean));
-      //varField_.setText(Double.toString(Double.valueOf(twoDForm_.format(stats.stdDev))));
-      varField_.setText(NumberUtils.doubleToDisplayString(stats.stdDev));
-
-      if (min_ == max_)
-         if (min_ == 0)
-            max_ += 1;
-         else
-            min_ -= 1;
-
+      updateHistogram();
       setLutGamma(gamma_);
-		updateSliders();
+      updateSliders();
 
-		image_.updateAndDraw();
+      image_.updateAndDraw();
 	}
 
 	private void updateSliders(boolean force, int min, int max) {
@@ -646,6 +653,8 @@ public class ContrastPanel extends JPanel implements ImageController,
 		if (image_ == null) {
 			return;
       }
+
+      liveStretchMode_ = true;
 
       // protect against an 'Unhandled Exception' inside getStatistics
       if ( null != image_.getProcessor()){
@@ -773,12 +782,52 @@ public class ContrastPanel extends JPanel implements ImageController,
       return ret;
    }
 
+   private void updateStretchBox() {
+      if (liveWindow_) {
+         stretchCheckBox_.setEnabled(true);
+         stretchCheckBox_.setSelected(liveStretchMode_);
+      } else {
+         stretchCheckBox_.setEnabled(false);
+         stretchCheckBox_.setSelected(false);
+      }
+   }
+
    public void focusReceived(ImageWindow focusedWindow) {
       ImagePlus imgp = focusedWindow.getImagePlus();
+      liveWindow_ = (focusedWindow instanceof MMImageWindow);
+      if (!liveWindow_)
+         return;
+      updateStretchBox();
+
+
+//      ImageProcessor proc = imgp.getChannelProcessor();
       double min = imgp.getDisplayRangeMin();
       double max = imgp.getDisplayRangeMax();
-      setImagePlus(imgp, new ContrastSettings(min, max), new ContrastSettings(min, max));
+        setImagePlus(imgp, new ContrastSettings(min, max), new ContrastSettings(min, max));
+              imageUpdated(imgp);
+//      update();
+   }
+
+   public void imageOpened(ImagePlus ip) {
       update();
+   }
+
+   public void imageClosed(ImagePlus ip) {
+      update();
+   }
+
+   public void imageUpdated(ImagePlus ip) {
+      if (liveWindow_ && !imageUpdated_) {
+         System.out.println("imagedUpdated()");
+         System.out.println(ip.getDisplayRangeMax());
+         imageUpdated_ = true;
+         updateHistogram();
+         double min = ip.getDisplayRangeMin();
+         double max = ip.getDisplayRangeMax();
+         setContrastSettings(new ContrastSettings(min, max), new ContrastSettings(min, max));
+         updateSliders(true, (int) ip.getDisplayRangeMin(), (int) ip.getDisplayRangeMax());
+         imageUpdated_ = false;
+      }
    }
 
 }

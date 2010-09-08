@@ -248,7 +248,9 @@ public class GUIUtils {
                if (0 != (event.getID() & WindowEvent.WINDOW_GAINED_FOCUS)) {
                   if (event.getSource() instanceof ImageWindow) {
                      ImageWindow focusedWindow = (ImageWindow) event.getSource();
-                     listener.focusReceived(focusedWindow);
+                     if (focusedWindow.isVisible()) {
+                        listener.focusReceived(focusedWindow);
+                     }
                   }
                }
             }
