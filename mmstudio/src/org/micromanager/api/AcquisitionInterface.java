@@ -3,7 +3,7 @@
  * and open the template in the editor.
  */
 
-package org.micromanager.acquisition;
+package org.micromanager.api;
 
 import java.util.Map;
 import mmcorej.TaggedImage;

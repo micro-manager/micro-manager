@@ -10,6 +10,8 @@ import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import mmcorej.Configuration;
 import mmcorej.PropertySetting;
 import mmcorej.TaggedImage;
@@ -228,31 +230,38 @@ public class MDUtils {
       }
    }
 
-   public static String getLabel(Map<String, String> md) {
-      if (md.containsKey("Acquisition-Label"))
-         return md.get("Acquisition-Label");
-      else
-         return generateLabel(md);
-   }
 
-   public static String generateLabel(Map<String, String> md) {
+   public static String getLabel(Map<String, String> md) {
       try {
-         String label =
-                 String.format("%09d", getFrameIndex(md))
-                 + "_"
-                 + MDUtils.getChannelName(md)
-                 + "_"
-                 + String.format("%03d", getSliceIndex(md));
-         MDUtils.setLabel(md, label);
-         return label;
-      } catch (Exception e) {
-         ReportingUtils.logError(e);
+         return generateLabel(getChannelIndex(md),
+                              getSliceIndex(md),
+                              getFrameIndex(md));
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
          return null;
       }
    }
 
-   public static String setLabel(Map<String, String> md, String label) {
-      return md.put("Acquisition-Label", label);
+   public static String generateLabel(int channel, int slice, int frame) {
+      return NumberUtils.intToCoreString(channel) + "_"
+             + NumberUtils.intToCoreString(slice) + "_"
+             + NumberUtils.intToCoreString(frame);
+   }
+
+   public static int[] getIndices(String label) {
+      try {
+         int[] indice = new int[3];
+         String[] chunks = label.split("_");
+         int i = 0;
+         for (String chunk : chunks) {
+            indice[i] = NumberUtils.coreStringToInt(chunk);
+            ++i;
+         }
+         return indice;
+      } catch (Exception e) {
+         ReportingUtils.logError(e);
+         return null;
+      }
    }
 
 }

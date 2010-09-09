@@ -3,9 +3,8 @@
  * and open the template in the editor.
  */
 
-package org.micromanager.acquisition;
+package org.micromanager.api;
 
-import java.util.ArrayList;
 import java.util.Map;
 import mmcorej.TaggedImage;
 import org.micromanager.utils.MMException;
@@ -14,13 +13,12 @@ import org.micromanager.utils.MMException;
  *
  * @author arthur
  */
-public interface ImageFileManagerInterface {
-   public String writeImage(TaggedImage taggedImage) throws MMException;
-   public TaggedImage readImage(String label);
-   public void finishWriting();
+public interface TaggedImageStorage {
+   public TaggedImage getImage(int channelIndex, int sliceIndex, int frameIndex);
+   public String putImage(TaggedImage taggedImage) throws MMException;
+   public void finished();
    public void setSummaryMetadata(Map<String,String> md);
    public Map<String,String> getSummaryMetadata();
-   public ArrayList<Map<String,String>> getImageMetadata();
    public void setComment(String text);
    public String getComment();
 }

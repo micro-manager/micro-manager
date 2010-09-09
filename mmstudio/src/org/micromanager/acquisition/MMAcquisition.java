@@ -1,5 +1,6 @@
 package org.micromanager.acquisition;
 
+import org.micromanager.api.AcquisitionInterface;
 import ij.ImagePlus;
 import ij.process.ColorProcessor;
 

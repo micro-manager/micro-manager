@@ -10,8 +10,10 @@ import java.awt.image.ColorModel;
 import java.util.HashMap;
 import java.util.Map;
 import mmcorej.TaggedImage;
+import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.MDUtils;
+import org.micromanager.utils.MMException;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -20,8 +22,7 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class AcquisitionVirtualStack extends ij.VirtualStack {
 
-   private MMImageCache imageCache_;
-   private HashMap<Integer,String> labels_ = new HashMap();
+   private TaggedImageStorage imageCache_;
    
    protected int width_, height_, type_;
    private int nSlices_;
@@ -47,24 +48,22 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
    }
 
    public Object getPixels(int flatIndex) {
-      if (!labels_.containsKey(flatIndex)) {
-         return ImageUtils.makeProcessor(type_, width_, height_).getPixels();
-      } else {
-         try {
-            TaggedImage image = getTaggedImage(flatIndex);
-            if (MDUtils.isGRAY(image)) {
-               return image.pix;
-            } else if (MDUtils.isRGB32(image)) {
-               return ImageUtils.singleChannelFromRGB32((byte []) image.pix, (flatIndex-1) % 3);
-            } else if (MDUtils.isRGB64(image)) {
-               return ImageUtils.singleChannelFromRGB64((short []) image.pix, (flatIndex-1) % 3);
-            }
-         } catch (Exception ex) {
-            ReportingUtils.logError(ex);
-            return null;
+      try {
+         TaggedImage image = getTaggedImage(flatIndex);
+         if (image == null)
+            return ImageUtils.makeProcessor(type_, width_, height_).getPixels();
+         if (MDUtils.isGRAY(image)) {
+            return image.pix;
+         } else if (MDUtils.isRGB32(image)) {
+            return ImageUtils.singleChannelFromRGB32((byte []) image.pix, (flatIndex-1) % 3);
+         } else if (MDUtils.isRGB64(image)) {
+            return ImageUtils.singleChannelFromRGB64((short []) image.pix, (flatIndex-1) % 3);
          }
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
          return null;
       }
+      return null;
    }
 
    public ImageProcessor getProcessor(int flatIndex) {
@@ -72,67 +71,32 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
    }
 
    public TaggedImage getTaggedImage(int flatIndex) {
-      if (labels_.containsKey(flatIndex))
-         return imageCache_.getImage(labels_.get(flatIndex));
-      else
+      try {
+         int[] pos = imagePlus_.convertIndexToPosition(flatIndex);
+         return imageCache_.getImage(pos[0] - 1, pos[1] - 1, pos[2] - 1); // chan, slice, frame
+      } catch (Exception e) {
          return null;
+      }
    }
 
+   @Override
    public int getSize() {
       return nSlices_;
    }
 
-   void insertImage(int flatIndex, TaggedImage taggedImg) {
+   public void insertImage(TaggedImage taggedImg) {
       try {
-         String label = imageCache_.putImage(taggedImg);
-         labels_.put(flatIndex, label);
-         if (MDUtils.isRGB(taggedImg)) {
-            labels_.put(flatIndex + 1, label);
-            labels_.put(flatIndex + 2, label);
-         }
-         
-      } catch (Exception ex) {
-         ReportingUtils.logError(ex);
-      }
-   }
-
-   void insertImage(TaggedImage taggedImg) {
-      int flatIndex = getFlatIndex(taggedImg.tags);
-      insertImage(flatIndex, taggedImg);
-   }
-
-   public String getSliceLabel(int n) {
-      if (labels_.containsKey(n)) {
-         Map<String,String> md = imageCache_.getImage(labels_.get(n)).tags;
-         try {
-            return MDUtils.getChannelName(md) + ", " + md.get("Acquisition-ZPositionUm") + " um(z), " + md.get("Acquisition-TimeMs") + " s";
-         } catch (Exception ex) {
-            return "";
-         }
-      } else {
-         return "";
-      }
-   }
-
-   public void rememberImage(Map<String,String> md) {
-      try {
-         int flatIndex = getFlatIndex(md);
-         String label = MDUtils.getLabel(md);
-         labels_.put(flatIndex, label);
-         if (MDUtils.isRGB(md)) {
-            labels_.put(flatIndex + 1, label);
-            labels_.put(flatIndex + 2, label);
-         }
-      } catch (Exception ex) {
-         ReportingUtils.logError(ex);
+         imageCache_.putImage(taggedImg);
+      } catch (MMException e) {
+         ReportingUtils.logError(e);
       }
    }
 
    private int getFlatIndex(Map<String,String> md) {
       try {
+         int channel = MDUtils.getChannelIndex(md);
          int slice = MDUtils.getSliceIndex(md);
          int frame = MDUtils.getFrameIndex(md);
-         int channel = MDUtils.getChannelIndex(md);
          if (imagePlus_ == null && slice == 0 && frame == 0 && channel == 0) {
             return 1;
          } else {
@@ -145,7 +109,21 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
    }
 
    MMImageCache getCache() {
-      return this.imageCache_;
+      return (MMImageCache) this.imageCache_;
+   }
+
+
+   public String getSliceLabel(int n) {
+      TaggedImage img = getTaggedImage(n);
+      if (img == null)
+         return "";
+      Map<String,String> md = img.tags;
+      try {
+         return md.get("Acquisition-PixelSizeUm") + " um/px";
+         //return MDUtils.getChannelName(md) + ", " + md.get("Acquisition-ZPositionUm") + " um(z), " + md.get("Acquisition-TimeMs") + " s";
+      } catch (Exception ex) {
+         return "";
+      }
    }
 
 }

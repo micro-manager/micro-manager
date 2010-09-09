@@ -15,10 +15,6 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
 import ij.gui.ImageWindow;
-import java.awt.AWTEvent;
-import java.awt.Window;
-import java.awt.event.AWTEventListener;
-import java.awt.event.WindowEvent;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -300,11 +296,11 @@ public class MetadataViewer extends javax.swing.JFrame
       }
    }
    
-   private Map<String,String> selectChangingTags(Map<String,String> md) {
-      Map<String,String> mdChanging = new HashMap<String,String>();
-      for (String key:md.keySet()) {
-         if (cache_ != null) {
-            if (cache_.getChangingKeys().contains(key)) {
+   private Map<String, String> selectChangingTags(Map<String, String> md) {
+      Map<String, String> mdChanging = new HashMap<String, String>();
+      if (cache_ != null) {
+         for (String key : cache_.getChangingKeys()) {
+            if (md.containsKey(key)) {
                mdChanging.put(key, md.get(key));
             }
          }
@@ -403,7 +399,7 @@ public class MetadataViewer extends javax.swing.JFrame
 
          if (cache_ != null) {
             commentsTextArea.setText(cache_.getComment());
-            Map<String,String> md = cache_.getAcquisitionMetadata();
+            Map<String,String> md = cache_.getSummaryMetadata();
             summaryMetadataModel_.setMetadata(md);
          } else {
             commentsTextArea.setText(null);

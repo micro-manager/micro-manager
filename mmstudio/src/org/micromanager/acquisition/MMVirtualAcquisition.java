@@ -1,5 +1,7 @@
 package org.micromanager.acquisition;
 
+import org.micromanager.api.AcquisitionInterface;
+import org.micromanager.api.TaggedImageStorage;
 import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.gui.ImageWindow;
@@ -47,7 +49,7 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
    private Map<String,String>[] displaySettings_;
    private AcquisitionVirtualStack virtualStack_;
    private String pixelType_;
-   private ImageFileManagerInterface imageFileManager_ = null;
+   private TaggedImageStorage imageFileManager_ = null;
    private Map<String,String> summaryMetadata_ = null;
    private boolean newData_;
    private Map<String,String> systemMetadata_ = null;
@@ -144,7 +146,7 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       //compositeImage_.hide();
       initialized_ = false;
       if (imageFileManager_ != null)
-         imageFileManager_.finishWriting();
+         imageFileManager_.finished();
    }
 
    public void closeImage5D() {
@@ -169,8 +171,10 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
 
    public void initialize() throws MMScriptException {
       if (diskCached_)
-         imageFileManager_ = new DefaultImageFileManager(dir_, newData_,
-                 summaryMetadata_, systemMetadata_);
+         imageFileManager_ = new TaggedImageStorageDiskDefault(dir_, newData_,
+                 summaryMetadata_);
+      else
+         imageFileManager_ = new TaggedImageStorageRam(summaryMetadata_);
       imageCache_ = new MMImageCache(imageFileManager_);
       if (!newData_) {
          try {
@@ -186,7 +190,7 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
             ReportingUtils.logError(ex);
          }
       }
-      imageCache_.setAcquisitionMetadata(summaryMetadata_);
+      imageCache_.setSummaryMetadata(summaryMetadata_);
       numGrayChannels_ = numComponents_ * numChannels_;
       virtualStack_ = new AcquisitionVirtualStack(width_, height_, null,
               imageCache_, numGrayChannels_ * numSlices_ * numFrames_);
@@ -303,15 +307,24 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
    }
 
    public boolean acquisitionIsRunning() {
-      return eng_.isAcquisitionRunning();
+      if (eng_ != null)
+         return eng_.isAcquisitionRunning();
+      else
+         return false;
    }
 
    public boolean abortRequested() {
-      return eng_.abortRequested();
+      if (eng_ != null)
+         return eng_.abortRequested();
+      else
+         return false;
    }
 
    private boolean isPaused() {
-      return eng_.isPaused();
+      if (eng_ != null)
+         return eng_.isPaused();
+      else
+         return false;
    }
 
    boolean saveAs() {
@@ -333,8 +346,8 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
          }
       }
 
-      DefaultImageFileManager newFileManager = new DefaultImageFileManager(root + "/" + prefix, true,
-                 summaryMetadata_, systemMetadata_);
+      TaggedImageStorageDiskDefault newFileManager = new TaggedImageStorageDiskDefault(root + "/" + prefix, true,
+                 summaryMetadata_);
       imageCache_.saveAs(newFileManager);
       imageFileManager_ = newFileManager;
       diskCached_ = true;
@@ -345,19 +358,9 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       return true;
    }
 
-   private class ImagePlusExpandable extends ImagePlus {
-
-      private ImagePlusExpandable(String dir_, AcquisitionVirtualStack virtualStack_) {
-         super(dir_, virtualStack_);
-      }
-
-      public void expandFrames(int n) {
-         this.nFrames = n;
-      }
-   }
 
    public void show() {
-      ImagePlus imgp = new ImagePlusExpandable(dir_, virtualStack_);
+      ImagePlus imgp = new MMImagePlus(dir_, virtualStack_);
       virtualStack_.setImagePlus(imgp);
       imgp.setDimensions(numGrayChannels_, numSlices_, numFrames_);
       if (numGrayChannels_ > 1) {
@@ -407,9 +410,6 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       win.pack();
 
       if (!newData_) {
-         for (Map<String,String> md:imageFileManager_.getImageMetadata()) {
-            virtualStack_.rememberImage(md);
-         }
          ((CompositeImage) hyperImage_).setChannelsUpdated();
          hyperImage_.updateAndDraw();
       }

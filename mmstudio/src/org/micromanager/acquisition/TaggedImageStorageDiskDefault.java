@@ -4,6 +4,7 @@
  */
 package org.micromanager.acquisition;
 
+import org.micromanager.api.TaggedImageStorage;
 import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -16,7 +17,6 @@ import ij.process.ShortProcessor;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -35,22 +35,21 @@ import org.micromanager.utils.TextUtils;
  *
  * @author arthur
  */
-public class DefaultImageFileManager implements ImageFileManagerInterface {
+public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
 
    private final String dir_;
    private boolean firstElement_;
    private BufferedWriter metadataStream_;
    private boolean newDataSet_;
    private Map<String,String> summaryMetadata_;
-   private ArrayList<Map<String,String>> imageMetadata_;
    private HashMap <String,String> filenameTable_;
 
-   DefaultImageFileManager(String dir) {
-      this(dir, false, null, null);
+   TaggedImageStorageDiskDefault(String dir) {
+      this(dir, false, null);
    }
 
-   DefaultImageFileManager(String dir, boolean newDataSet,
-           Map<String,String> summaryMetadata, Map<String,String> systemMetadata) {
+   TaggedImageStorageDiskDefault(String dir, boolean newDataSet,
+           Map<String,String> summaryMetadata) {
       summaryMetadata_ = summaryMetadata;
       dir_ = dir;
       newDataSet_ = newDataSet;
@@ -67,11 +66,11 @@ public class DefaultImageFileManager implements ImageFileManagerInterface {
       }
    }
 
-   public String writeImage(TaggedImage taggedImg) throws MMException {
+   public String putImage(TaggedImage taggedImg) throws MMException {
       if (newDataSet_ == false) {
          throw new MMException("This ImageFileManager is read-only.");
       }
-      Map<String,String> md = taggedImg.tags;
+      Map<String, String> md = taggedImg.tags;
       Object img = taggedImg.pix;
       String tiffFileName = createFileName(md);
       MDUtils.setFileName(md, tiffFileName);
@@ -82,7 +81,8 @@ public class DefaultImageFileManager implements ImageFileManagerInterface {
       return MDUtils.getLabel(md);
    }
 
-   public TaggedImage readImage(String label) {
+   public TaggedImage getImage(int channel, int slice, int frame) {
+      String label = MDUtils.generateLabel(channel, slice, frame);
       ImagePlus imp = new Opener().openImage(dir_ + "/" + filenameTable_.get(label));
       if (imp != null) {
          try {
@@ -119,7 +119,10 @@ public class DefaultImageFileManager implements ImageFileManagerInterface {
 
    private String createFileName(Map<String,String> md) {
       try {
-         return "img_" + MDUtils.getLabel(md) + ".tif";
+         return String.format("img_%09d_%s_%03d.tif",
+                 MDUtils.getFrameIndex(md),
+                 MDUtils.getChannelName(md),
+                 MDUtils.getSliceIndex(md));
       } catch (Exception e) {
          ReportingUtils.logError(e);
          return "";
@@ -243,7 +246,7 @@ public class DefaultImageFileManager implements ImageFileManagerInterface {
       //writeMetadata(getSystemMetadata(), "SystemState");
    }
 
-   public void finishWriting() {
+   public void finished() {
       closeMetadataStream();
       newDataSet_ = false;
    }
@@ -264,13 +267,11 @@ public class DefaultImageFileManager implements ImageFileManagerInterface {
       if (data != null) {
          try {
             summaryMetadata_ = jsonToMetadata(data.getJSONObject("Summary"));
-            imageMetadata_ = new ArrayList<Map<String,String>>();
             for (String key:makeJsonIterableKeys(data)) {
                JSONObject chunk = data.getJSONObject(key);
                if (key.startsWith("FrameKey")) {
                   Map<String,String> md = jsonToMetadata(chunk);
                   filenameTable_.put(MDUtils.getLabel(md), MDUtils.getFileName(md));
-                  imageMetadata_.add(md);
                }
             }
          } catch (JSONException ex) {
@@ -334,10 +335,6 @@ public class DefaultImageFileManager implements ImageFileManagerInterface {
       this.summaryMetadata_ = summaryMetadata;
    }
 
-   public ArrayList<Map<String,String>> getImageMetadata() {
-      return imageMetadata_;
-   }
-
    public void setComment(String text) {
       JavaUtils.writeTextFile(dir_ + "/Comments.txt", text);
    }
@@ -345,5 +342,6 @@ public class DefaultImageFileManager implements ImageFileManagerInterface {
    public String getComment() {
       return JavaUtils.readTextFile(dir_ + "/Comments.txt");
    }
+
 
 }

@@ -1,5 +1,6 @@
 package org.micromanager.acquisition;
 
+import org.micromanager.api.AcquisitionInterface;
 import java.util.Enumeration;
 import java.util.Hashtable;
 

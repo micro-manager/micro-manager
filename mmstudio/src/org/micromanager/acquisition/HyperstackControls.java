@@ -19,6 +19,8 @@ import ij.gui.ImageWindow;
 import java.text.ParseException;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import mmcorej.TaggedImage;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.NumberUtils;
@@ -149,7 +151,8 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
          }
       });
 
-      statusLineLabel.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+      statusLineLabel.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+      statusLineLabel.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
 
       pauseAndResumeToggleButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/control_pause.png"))); // NOI18N
       pauseAndResumeToggleButton.setToolTipText("Pause acquisition");
@@ -273,7 +276,13 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
          try {
             String time = NumberUtils.doubleStringCoreToDisplay(taggedImg.tags.get("Acquisition-TimeMs"));
             String zPosition = taggedImg.tags.get("Acquisition-ZPositionUm");
-            setStatusLabel("<html>" + time + " s, " + "z: " + zPosition + " &#181;m" + "</html>");
+            String chan;
+            try {
+               chan = MDUtils.getChannelName(taggedImg.tags);
+            } catch (Exception ex) {
+               chan = "";
+            }
+            setStatusLabel(String.format("<html>%s&nbsp;s,&nbsp;%s,&nbsp;z:&nbsp;%s&nbsp;&#181;m</html>",time,chan,zPosition));
          } catch (ParseException ex) {
             ReportingUtils.logError(ex);
          }

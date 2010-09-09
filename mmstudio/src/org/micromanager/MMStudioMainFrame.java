@@ -145,7 +145,7 @@ import java.awt.image.DirectColorModel;
 import java.util.Collections;
 import java.util.Map;
 import mmcorej.TaggedImage;
-import org.micromanager.acquisition.AcquisitionInterface;
+import org.micromanager.api.AcquisitionInterface;
 import org.micromanager.acquisition.AcquisitionWrapperEngine;
 import org.micromanager.utils.ReportingUtils;
 
