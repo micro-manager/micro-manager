@@ -210,8 +210,8 @@ public class ImageTask implements EngineTask {
          Configuration config = core_.getSystemStateCache();
          MDUtils.addConfiguration(md, config);
          if (imageRequest_.NextWaitTime > 0) {
-            long nextImageTimeMs = (long) (imageRequest_.NextWaitTime + eng_.lastWakeTime_);
-            MDUtils.put(md, "Acquisition-NextImageTimeMs", nextImageTimeMs);
+            long nextFrameTimeMs = (long) (imageRequest_.NextWaitTime + eng_.lastWakeTime_);
+            MDUtils.put(md, "Acquisition-NextFrameTimeMs", nextFrameTimeMs);
          }
          MDUtils.addRandomUUID(md);
          TaggedImage taggedImage = new TaggedImage(pixels, md);

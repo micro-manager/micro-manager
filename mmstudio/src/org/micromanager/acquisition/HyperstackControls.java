@@ -299,7 +299,7 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
             updateStatusLine(taggedImg);
             try {
                if (acq_.acquisitionIsRunning()) {
-                  if (taggedImg.tags.containsKey("Acquisition-NextImageTimeMs"))  {
+                  if (taggedImg.tags.containsKey("Acquisition-NextFrameTimeMs"))  {
                      final long nextImageTime = MDUtils.getLong(taggedImg.tags, "Acquisition-NextImageTimeMs");
                      if (System.nanoTime() / 1000000 < nextImageTime) {
                         final Timer timer = new Timer();
