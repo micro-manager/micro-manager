@@ -79,7 +79,9 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private ArrayList<TaggedImageProcessor> taggedImageProcessors_;
    private boolean absoluteZ_;
 
-
+   public AcquisitionWrapperEngine() {
+      taggedImageProcessors_ = new ArrayList<TaggedImageProcessor>();
+   }
 
    public void acquire() throws MMException, MMAcqDataException {
       try {
