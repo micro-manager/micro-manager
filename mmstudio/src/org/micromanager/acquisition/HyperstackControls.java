@@ -308,7 +308,7 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
                            public void run() {
                               double timeRemainingS = (nextImageTime - System.nanoTime() / 1000000) / 1000;
                               if (timeRemainingS > 0 && acq_.acquisitionIsRunning()) {
-                                 setStatusLabel("Next image: " + NumberUtils.doubleToDisplayString(1+timeRemainingS) + " s");
+                                 setStatusLabel("Next frame: " + NumberUtils.doubleToDisplayString(1+timeRemainingS) + " s");
                               } else {
                                  timer.cancel();
                                  updateStatusLine(taggedImg);
