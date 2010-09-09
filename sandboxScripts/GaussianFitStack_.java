@@ -1,6 +1,7 @@
 import ij.*;
 import ij.process.*;
 import ij.gui.*;
+import ij.gui.Roi;
 import ij.plugin.*;
 import ij.plugin.frame.*;
 import ij.plugin.filter.MaximumFinder;
@@ -18,6 +19,7 @@ import org.apache.commons.math.optimization.GoalType;
 import org.apache.commons.math.optimization.SimpleScalarValueChecker;
 
 
+import java.util.Vector;
 import java.awt.*;
 import java.lang.Math;
 
@@ -94,9 +96,8 @@ public class GaussianFitStack_ implements PlugIn {
 
 
 
-	public double[] doGaussianFit (ImagePlus siPlus) {
+	public double[] doGaussianFit (ImageProcessor siProc) {
 
-		ImageProcessor siProc = siPlus.getProcessor();
       short[] imagePixels = (short[])siProc.getPixels();
 		gs_.setImage((short[])siProc.getPixels(), siProc.getWidth(), siProc.getHeight());
 
@@ -156,11 +157,34 @@ public class GaussianFitStack_ implements PlugIn {
       return paramsOut;
 	}
 
+   public class SpotPoint {
+      int x;
+      int y;
+
+      public SpotPoint(int xc, int yc) {
+         x = xc;
+         y = yc;
+      }
+
+      public int getX() {
+         return x;
+      }
+
+      public int getY() {
+         return y;
+      }
+   }
+
+
 	public void run(String arg) {
 
 		gs_ = new GaussianResidual();
 		nm_ = new NelderMead();
 		convergedChecker_ = new SimpleScalarValueChecker(1e-5,-1);
+
+      // List with spot positions found through the Find Maxima command
+      Vector<Vector<SpotPoint>> spotList = new Vector<Vector<SpotPoint>>();
+      Vector<SpotPoint> frameSpotList;
 
       // for now, take the active ImageJ image
 		ImagePlus siPlus = IJ.getImage();
@@ -168,11 +192,10 @@ public class GaussianFitStack_ implements PlugIn {
 		long startTime = System.nanoTime();
 
       // first find local maxima
-      MaximumFinder maxFinder = new MaximumFinder();
-      IJ.log("Stack has: " + siPlus.getStackSize() + " images");
+      // MaximumFinder maxFinder = new MaximumFinder();
       for (int i= 1; i <= siPlus.getStackSize(); i++ ) {
+         frameSpotList = new Vector<SpotPoint>();
          siPlus.setSlice(i);
-         IJ.log ("Processing image: " + i);
          IJ.run("Find Maxima...", "noise=500 output=List");
          // maxFinder.findMaxima(siPlus.getStack().getProcessor(i), 500.0, ImageProcessor.NO_THRESHOLD, MaximumFinder.LIST, false, false); 
 
@@ -181,26 +204,52 @@ public class GaussianFitStack_ implements PlugIn {
          for (int j=0; j < rt.getCounter(); j++) {
             int x = (int) rt.getValueAsDouble(0, j);
             int y = (int) rt.getValueAsDouble(1, j);
-            IJ.log(" " + j + " " + x + " " + y);
+            SpotPoint thisSpot = new SpotPoint(x, y);
+            frameSpotList.add(thisSpot);
          }
+         spotList.add(frameSpotList);
       }
 
-    /* 
 
-      double[] paramsOut = doGaussianFit(siPlus);
+      int halfSize = 8;
+      int i =0;
+      int spotCount = 0;
+
+      ResultsTable rt = new ResultsTable();
+      rt.reset();
+
+      for (Vector<SpotPoint> frameList : spotList) {
+         int j = 0;
+         for (SpotPoint mySpot : frameList) {
+            // IJ.log (i + " " + j + " " + mySpot.getX() + " " + mySpot.getY());
+            Roi spotRoi = new Roi (mySpot.getX() - halfSize, mySpot.getY() - halfSize, 2 * halfSize, 2 * halfSize);
+            siPlus.setSlice(i + 1);
+            siPlus.setRoi(spotRoi);
+            ImageProcessor ip = siPlus.getProcessor().crop();
+            double[] paramsOut = doGaussianFit(ip);
+
+            if (paramsOut.length >= 4) {
+               rt.incrementCounter();
+               double anormalized = paramsOut[0] * (2 * Math.PI * paramsOut[3] * paramsOut[3]);
+               rt.addValue("Frame", i+1);
+               rt.addValue("Spot", j);
+               rt.addValue("Intensity", anormalized);
+               rt.addValue("Background", paramsOut[4]);
+               rt.addValue("X", paramsOut[1] - halfSize + mySpot.getX());
+               rt.addValue("Y", paramsOut[2] - halfSize + mySpot.getY());
+               rt.addValue("Sigma", paramsOut[3]);
+            }
+
+            spotCount++;
+            j++;
+         }
+         i++;
+         rt.show("Gaussian Fit Result");
+      }
 
 		long endTime = System.nanoTime(); 
 		double took = (endTime - startTime) / 1E6;
 
-		print("\n\nResult:");
-		for (int i=0; i<paramsOut.length; i++)
-       		print(" " + paramNames_[i] + ": " + paramsOut[i]);
-
-		double anormalized = paramsOut[0] * (2 * Math.PI * paramsOut[3] * paramsOut[3]);
-		print("Amplitude normalized: " + anormalized);
-
-
-		print("Calculation took: " + took + " milli seconds"); 
-      */
+      print ("Analyzed " + spotCount + " spots in " + took + " milliseconds");
    }
 }
