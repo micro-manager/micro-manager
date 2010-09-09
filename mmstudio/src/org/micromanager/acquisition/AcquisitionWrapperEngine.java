@@ -98,6 +98,9 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       ProcessorStack processorStack = new ProcessorStack(engineToProcessorsChannel,
               taggedImageProcessors_);
       TaggedImageQueue processorsToDisplayChannel = processorStack.getOutputChannel();
+      for (TaggedImageProcessor taggedImageProcessor:taggedImageProcessors_) {
+         taggedImageProcessor.start();
+      }
       
       display_ = new AcquisitionDisplayThread(gui_, core_, processorsToDisplayChannel,
               acquisitionSettings, channels_, saveFiles_, this, this.useSingleWindow_);
