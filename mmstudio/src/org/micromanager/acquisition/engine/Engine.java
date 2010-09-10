@@ -132,7 +132,9 @@ public class Engine {
       this_ = this;
 
       Thread engineThread = new EngineThread();
-      engineThread.setPriority(Thread.MAX_PRIORITY); //We want high-performance.
+      //We want high performance:
+      //if (Runtime.getRuntime().availableProcessors() > 1)
+      engineThread.setPriority(Thread.MAX_PRIORITY);
       engineThread.start();
    }
 
