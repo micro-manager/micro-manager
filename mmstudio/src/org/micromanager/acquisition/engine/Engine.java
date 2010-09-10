@@ -52,85 +52,88 @@ public class Engine {
    public synchronized long getStartTimeNs() {
       return startTimeNs_;
    }
-   
-   public void start() {
-      setRunning(true);
-      this_ = this;
 
-      new Thread() {
-         @Override
-         public void run() {
-            startTimeNs_ = System.nanoTime();
-            autoShutterSelected_ = core_.getAutoShutter();
+   private class EngineThread extends Thread {
 
-            boolean shutterWasOpen = false;
-            core_.setAutoShutter(false);
+      @Override
+      public void run() {
+         startTimeNs_ = System.nanoTime();
+         autoShutterSelected_ = core_.getAutoShutter();
+
+         boolean shutterWasOpen = false;
+         core_.setAutoShutter(false);
+         try {
+            shutterWasOpen = core_.getShutterOpen();
+         } catch (Exception ex) {
+            ReportingUtils.logError(ex);
+         }
+         double originalZ = Double.MIN_VALUE;
+         if (settings_.slices.size() > 0) {
             try {
-               shutterWasOpen = core_.getShutterOpen();
+               originalZ = core_.getPosition(core_.getFocusDevice());
             } catch (Exception ex) {
-               ReportingUtils.logError(ex);
-            }
-            double originalZ = Double.MIN_VALUE;
-            if (settings_.slices.size() > 0) {
-               try {
-                  originalZ = core_.getPosition(core_.getFocusDevice());
-               } catch (Exception ex) {
-                  ReportingUtils.showError(ex);
-               }
-            }
-
-            stopRequested_ = false;
-            EngineTask task = null;
-            for (;;) {
-
-               do {
-                  try {
-                     task = taskQueue_.poll(30, TimeUnit.MILLISECONDS);
-                  } catch (InterruptedException ex) {
-                     ReportingUtils.logError(ex);
-                     task = null;
-                  }
-               } while (task == null && !stopHasBeenRequested());
-
-               while (isPaused() && !stopHasBeenRequested()) {
-                  JavaUtils.sleep(10);
-               }
-
-               if (task instanceof StopTask || stopHasBeenRequested()) {
-                  break;
-               } else {
-                  setCurrentTask(task);
-                  task.run();
-               }
-            
-            }
-            
-            try {
-               core_.setShutterOpen(shutterWasOpen);
-            } catch (Exception ex) {
-               ReportingUtils.logError(ex);
-            }
-            core_.setAutoShutter(autoShutterSelected_);
-
-            if (settings_.slices.size() > 0 && originalZ != Double.MIN_VALUE) {
-               try {
-                  core_.setPosition(core_.getFocusDevice(), originalZ);
-               } catch (Exception ex) {
-                  ReportingUtils.logError(ex);
-               }
-            }
-
-
-            setRunning(false);
-            try {
-               imageReceivingQueue_.put(TaggedImageQueue.POISON);
-            } catch (InterruptedException ex) {
                ReportingUtils.showError(ex);
             }
          }
 
+         stopRequested_ = false;
+         EngineTask task = null;
+         for (;;) {
 
-      }.start();
+            do {
+               try {
+                  task = taskQueue_.poll(30, TimeUnit.MILLISECONDS);
+               } catch (InterruptedException ex) {
+                  ReportingUtils.logError(ex);
+                  task = null;
+               }
+            } while (task == null && !stopHasBeenRequested());
+
+            while (isPaused() && !stopHasBeenRequested()) {
+               JavaUtils.sleep(10);
+            }
+
+            if (task instanceof StopTask || stopHasBeenRequested()) {
+               break;
+            } else {
+               setCurrentTask(task);
+               task.run();
+            }
+
+         }
+
+         try {
+            core_.setShutterOpen(shutterWasOpen);
+         } catch (Exception ex) {
+            ReportingUtils.logError(ex);
+         }
+         core_.setAutoShutter(autoShutterSelected_);
+
+         if (settings_.slices.size() > 0 && originalZ != Double.MIN_VALUE) {
+            try {
+               core_.setPosition(core_.getFocusDevice(), originalZ);
+            } catch (Exception ex) {
+               ReportingUtils.logError(ex);
+            }
+         }
+
+
+         setRunning(false);
+         try {
+            imageReceivingQueue_.put(TaggedImageQueue.POISON);
+         } catch (InterruptedException ex) {
+            ReportingUtils.showError(ex);
+         }
+      }
+   }
+
+   public void start() {
+      setRunning(true);
+      this_ = this;
+
+      Thread engineThread = new EngineThread();
+      engineThread.setPriority(Thread.MAX_PRIORITY); //We want high-performance.
+      engineThread.start();
    }
 
    private void setCurrentTask(EngineTask task) {
