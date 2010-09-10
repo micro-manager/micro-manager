@@ -100,6 +100,7 @@ public class MMImageCache implements TaggedImageStorage {
             ReportingUtils.logError(ex);
          }
       }
+      newImageFileManager.setComment(this.getComment());
       newImageFileManager.finished();
       imageFileManager_ = newImageFileManager;
    }
@@ -140,14 +141,14 @@ public class MMImageCache implements TaggedImageStorage {
    }
 
    public void setComment(String text) {
-      if (imageFileManager_ != null) {
+      if (comment_==null || !comment_.contentEquals(text)) {
          imageFileManager_.setComment(text);
+         comment_ = text;
       }
-      comment_ = text;
    }
 
    public String getComment() {
-      if (imageFileManager_ != null && comment_ != null && comment_.contentEquals("")) {
+      if (comment_ == null || comment_.contentEquals("")) {
          comment_ = imageFileManager_.getComment();
       }
       return comment_;

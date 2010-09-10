@@ -83,8 +83,6 @@ public class MetadataViewer extends javax.swing.JFrame
       metadataTableScrollPane = new javax.swing.JScrollPane();
       imageMetadataTable = new javax.swing.JTable();
       showUnchangingPropertiesCheckbox = new javax.swing.JCheckBox();
-      saveButton = new javax.swing.JButton();
-      closeButton = new javax.swing.JButton();
 
       jTextArea1.setColumns(20);
       jTextArea1.setRows(5);
@@ -98,6 +96,11 @@ public class MetadataViewer extends javax.swing.JFrame
       commentsTextArea.setLineWrap(true);
       commentsTextArea.setRows(5);
       commentsTextArea.setWrapStyleWord(true);
+      commentsTextArea.addFocusListener(new java.awt.event.FocusAdapter() {
+         public void focusLost(java.awt.event.FocusEvent evt) {
+            commentsTextAreaFocusLost(evt);
+         }
+      });
       Comments.setViewportView(commentsTextArea);
 
       tabbedPane.addTab("Comments", Comments);
@@ -167,76 +170,47 @@ public class MetadataViewer extends javax.swing.JFrame
          ImageLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(ImageLayout.createSequentialGroup()
             .add(showUnchangingPropertiesCheckbox)
-            .addContainerGap(74, Short.MAX_VALUE))
-         .add(metadataTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 243, Short.MAX_VALUE)
+            .addContainerGap(36, Short.MAX_VALUE))
+         .add(metadataTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 247, Short.MAX_VALUE)
       );
       ImageLayout.setVerticalGroup(
          ImageLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(ImageLayout.createSequentialGroup()
             .add(showUnchangingPropertiesCheckbox)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-            .add(metadataTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 56, Short.MAX_VALUE))
+            .add(metadataTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 79, Short.MAX_VALUE))
       );
 
       tabbedPane.addTab("Image", Image);
-
-      saveButton.setText("Save");
-      saveButton.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            saveButtonActionPerformed(evt);
-         }
-      });
-
-      closeButton.setText("Close");
-      closeButton.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            closeButtonActionPerformed(evt);
-         }
-      });
 
       org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
       getContentPane().setLayout(layout);
       layout.setHorizontalGroup(
          layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(layout.createSequentialGroup()
-            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-               .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-                  .addContainerGap()
-                  .add(saveButton)
-                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                  .add(closeButton))
-               .add(layout.createSequentialGroup()
-                  .add(13, 13, 13)
-                  .add(tabbedPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 264, Short.MAX_VALUE)))
+            .addContainerGap()
+            .add(tabbedPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 268, Short.MAX_VALUE)
             .addContainerGap())
       );
       layout.setVerticalGroup(
          layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-         .add(layout.createSequentialGroup()
-            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-               .add(closeButton)
-               .add(saveButton))
-            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-            .add(tabbedPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 130, Short.MAX_VALUE)
+         .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+            .addContainerGap()
+            .add(tabbedPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 153, Short.MAX_VALUE)
             .addContainerGap())
       );
 
       pack();
    }// </editor-fold>//GEN-END:initComponents
 
-   private void saveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveButtonActionPerformed
-      String text = commentsTextArea.getText();
-      cache_.setComment(text);
-   }//GEN-LAST:event_saveButtonActionPerformed
-
-   private void closeButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_closeButtonActionPerformed
-      this.setVisible(false);
-   }//GEN-LAST:event_closeButtonActionPerformed
-
    private void showUnchangingPropertiesCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showUnchangingPropertiesCheckboxActionPerformed
       showUnchangingKeys_ = showUnchangingPropertiesCheckbox.isSelected();
       update(ij.IJ.getImage());
    }//GEN-LAST:event_showUnchangingPropertiesCheckboxActionPerformed
+
+   private void commentsTextAreaFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_commentsTextAreaFocusLost
+      cache_.setComment(commentsTextArea.getText());
+   }//GEN-LAST:event_commentsTextAreaFocusLost
 
    class MetadataTableModel extends AbstractTableModel {
 
@@ -353,13 +327,11 @@ public class MetadataViewer extends javax.swing.JFrame
    private javax.swing.JScrollPane Comments;
    private javax.swing.JPanel Image;
    private javax.swing.JScrollPane Summary;
-   private javax.swing.JButton closeButton;
    private javax.swing.JTextArea commentsTextArea;
    private javax.swing.JTable imageMetadataTable;
    private javax.swing.JScrollPane jScrollPane2;
    private javax.swing.JTextArea jTextArea1;
    private javax.swing.JScrollPane metadataTableScrollPane;
-   private javax.swing.JButton saveButton;
    private javax.swing.JCheckBox showUnchangingPropertiesCheckbox;
    private javax.swing.JTable summaryMetadataTable;
    private javax.swing.JTabbedPane tabbedPane;
