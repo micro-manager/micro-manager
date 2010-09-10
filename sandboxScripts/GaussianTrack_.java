@@ -1,10 +1,10 @@
 import ij.*;
 import ij.process.*;
 import ij.gui.*;
-import java.awt.*;
 import ij.plugin.*;
 import ij.plugin.frame.*;
 import ij.measure.ResultsTable;
+import ij.text.*;
 
 import org.apache.commons.math.analysis.*;
 import org.apache.commons.math.FunctionEvaluationException;
@@ -17,6 +17,9 @@ import org.apache.commons.math.optimization.SimpleScalarValueChecker;
 
 import java.lang.Math;
 import java.awt.Rectangle;
+import java.awt.*;
+import java.awt.event.KeyListener;
+import java.awt.event.KeyEvent;
 
 import ij.ImagePlus;
 import ij.process.ImageProcessor;
@@ -36,32 +39,26 @@ public class GaussianTrack_ implements PlugIn {
 	}
 
    public class GaussianResidual implements MultivariateRealFunction {
-       short[] data_;
-       int nx_;
-       int ny_;
-       int count_ = 0;
+      short[] data_;
+      int nx_;
+      int ny_;
+      int count_ = 0;
 
 
-       public void setImage(short[] data, int width, int height) {
+      public void setImage(short[] data, int width, int height) {
           data_ = data;
           nx_ = width;
           ny_ = height;
-       }
+      }
 
-       public double value(double[] params) {
+      public double value(double[] params) {
           double residual = 0.0;
           for (int i = 0; i < nx_; i++) {
              for (int j = 0; j < ny_; j++) {
                 residual += sqr(gaussian(params, i, j) - data_[(i*nx_) + j]);
              }
           }
-   /*
-         for (int i=0; i< params.length; i++)
-                  print(" " + paramNames_[i] + ": " + params[i]);
-
-         print("Residual: " + residual);
-   */
-         return residual;
+          return residual;
       }
 
       public double sqr(double val) {
@@ -93,6 +90,30 @@ public class GaussianTrack_ implements PlugIn {
    }
 
 
+   public class MyK implements KeyListener{
+      ImagePlus siPlus_;
+      ResultsTable res_;
+      TextPanel tp_;
+      int hBS_;
+      public MyK(ImagePlus siPlus, ResultsTable res, TextPanel tp, int halfBoxSize) {
+         siPlus_ = siPlus;
+         res_ = res;
+         tp_ = tp;
+         hBS_ = halfBoxSize;
+      }
+      public void keyPressed(KeyEvent e) {
+         int key = e.getKeyCode();
+         int row = tp_.getSelectionStart();
+         int frame = (int) res_.getValue("Frame", row);
+         int x = (int)res_.getValue("X", row);
+         int y = (int) res_.getValue("Y", row);
+         siPlus_.setSlice(row);
+         siPlus_.setRoi(new Roi(x - hBS_ , y - hBS_, 2 * hBS_, 2 * hBS_));
+     };
+      public void keyReleased(KeyEvent e) {};
+      public void keyTyped(KeyEvent e) {};
+
+   }
 
 	public double[] doGaussianFit (ImageProcessor siProc) {
 
@@ -200,7 +221,6 @@ IJ.log ("X: " + xc + " Y: " + yc);
             xc = (int)rtS.getValueAsDouble(0, 0);
             yc = (int) rtS.getValueAsDouble(1, 0);
          }
-             
          
          double[]paramsOut = doGaussianFit(ip);
          if (paramsOut.length >= 4) {                                         
@@ -215,6 +235,9 @@ IJ.log ("X: " + xc + " Y: " + yc);
             rt.addValue("X", paramsOut[1] - halfSize + xc);     
             rt.addValue("Y", paramsOut[2] - halfSize + yc);     
             rt.addValue("Sigma", paramsOut[3]);                            
+            rt.addValue("XMax", xc);
+            rt.addValue("YMax", yc);
+            // rt.addValue("Residual", gs_.value(paramsOut));
             if (report) {                                                     
                IJ.log (i + " " + xc + " " + paramsOut[1] + " " + halfSize);
                IJ.log (xc + " ");
@@ -223,6 +246,17 @@ IJ.log ("X: " + xc + " Y: " + yc);
       }
 
       rt.show("Gaussian Fit Tracking Result:");
+
+      // Attach listener to TextPanel
+      TextPanel tp;
+      Frame frame = WindowManager.getFrame("Gaussian Fit Tracking Result:");
+      TextWindow win;
+      if (frame!=null && frame instanceof TextWindow) {
+         win = (TextWindow)frame;
+         tp = win.getTextPanel();
+         MyK myk = new MyK(siPlus, rt, tp, halfSize);
+         tp.addKeyListener(myk);
+      }
 
       long endTime = System.nanoTime();
 		double took = (endTime - startTime) / 1E6;
