@@ -486,8 +486,8 @@ int ZeissScope::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
          g_hub.initialized_ = true;
          initialized_ = true;
       }
+      GetCoreCallback()->SetDeviceProperty(port_.c_str(), "AnswerTimeout", "2000.0");
    }
-   GetCoreCallback()->SetDeviceProperty(port_.c_str(), "AnswerTimeout", "2000.0");
 
    return DEVICE_OK;
 }
