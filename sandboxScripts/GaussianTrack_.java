@@ -10,6 +10,9 @@ import org.apache.commons.math.analysis.*;
 import org.apache.commons.math.FunctionEvaluationException;
 import org.apache.commons.math.optimization.direct.NelderMead;
 import org.apache.commons.math.optimization.direct.MultiDirectional;
+import org.apache.commons.math.optimization.fitting.ParametricRealFunction;
+import org.apache.commons.math.optimization.fitting.CurveFitter;
+import org.apache.commons.math.optimization.general.LevenbergMarquardtOptimizer;
 import org.apache.commons.math.optimization.RealPointValuePair;
 import org.apache.commons.math.optimization.GoalType;
 import org.apache.commons.math.optimization.SimpleScalarValueChecker;
@@ -18,6 +21,7 @@ import org.apache.commons.math.optimization.SimpleScalarValueChecker;
 import java.lang.Math;
 import java.awt.Rectangle;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.KeyEvent;
 
@@ -89,7 +93,30 @@ public class GaussianTrack_ implements PlugIn {
       }
    }
 
+   /**
+    * Implements function of the form: y = ax + b
+    */
+   public class LinearFunction implements ParametricRealFunction {
+      public double[] gradient(double x, double[] parameters) {
+         print("Parameters length: " + parameters.length);
+         double[] result = new double[parameters.length];
+         result[0] = parameters[0];
+         result[1] = 0;
+         return result;
+      };
+      public double value(double x, double[] parameters) {
+         return parameters[0] * x + parameters[1];
+      }
+   }
 
+   /**
+    * KeyListener class for ResultsTable
+    * When user selected a line in the ResulsTable and presses a key,
+    * the corresponding image will move to the correct slice and draw the ROI
+    * that was used to calculate the Gaussian fit
+    * Works only in conjunction with appropriate column names
+    * Up and down keys also work as expected
+    */
    public class MyK implements KeyListener{
       ImagePlus siPlus_;
       ResultsTable res_;
@@ -104,11 +131,24 @@ public class GaussianTrack_ implements PlugIn {
       public void keyPressed(KeyEvent e) {
          int key = e.getKeyCode();
          int row = tp_.getSelectionStart();
-         int frame = (int) res_.getValue("Frame", row);
-         int x = (int)res_.getValue("X", row);
-         int y = (int) res_.getValue("Y", row);
-         siPlus_.setSlice(row);
-         siPlus_.setRoi(new Roi(x - hBS_ , y - hBS_, 2 * hBS_, 2 * hBS_));
+         if (key == KeyEvent.VK_DOWN) {
+            if (row > 0) {
+               row--;
+               tp_.setSelection(row, row);
+            }
+         } else if (key == KeyEvent.VK_UP) {
+            if  (row < tp_.getLineCount() - 1) {
+               row++;
+               tp_.setSelection(row, row);
+            }
+         }
+         if (row >= 0 && row < tp_.getLineCount()) {
+            int frame = (int) res_.getValue("Frame", row);
+            int x = (int)res_.getValue("XMax", row);
+            int y = (int) res_.getValue("YMax", row);
+            siPlus_.setSlice(frame);
+            siPlus_.setRoi(new Roi(x - hBS_ , y - hBS_, 2 * hBS_, 2 * hBS_));
+         }
      };
       public void keyReleased(KeyEvent e) {};
       public void keyTyped(KeyEvent e) {};
@@ -178,9 +218,13 @@ public class GaussianTrack_ implements PlugIn {
 
 	public void run(String arg) {
 
+      // objects used in Gaussian fitting
 		gs_ = new GaussianResidual();
 		nm_ = new NelderMead();
 		convergedChecker_ = new SimpleScalarValueChecker(1e-5,-1);
+
+      // curvefitter used to find the line this spot is walking on
+      CurveFitter cf_ = new CurveFitter(new LevenbergMarquardtOptimizer());
 
       // Filters for results of Gaussian fit
       double intMin = 100;
@@ -208,8 +252,7 @@ public class GaussianTrack_ implements PlugIn {
 
 		long startTime = System.nanoTime();
 
-      for (int i = sliceN; i < siPlus.getNSlices(); i++) {
-IJ.log ("X: " + xc + " Y: " + yc);
+      for (int i = sliceN; i <= siPlus.getNSlices(); i++) {
          Roi spotRoi = new Roi(xc - halfSize, yc - halfSize, 2 * halfSize, 2*halfSize);
          siPlus.setSlice(i);
          siPlus.setRoi(spotRoi);
@@ -237,10 +280,12 @@ IJ.log ("X: " + xc + " Y: " + yc);
             rt.addValue("Sigma", paramsOut[3]);                            
             rt.addValue("XMax", xc);
             rt.addValue("YMax", yc);
+            cf_.addObservedPoint(anormalized, paramsOut[1] - halfSize + xc, paramsOut[2] - halfSize + yc);
+
             // rt.addValue("Residual", gs_.value(paramsOut));
             if (report) {                                                     
-               IJ.log (i + " " + xc + " " + paramsOut[1] + " " + halfSize);
-               IJ.log (xc + " ");
+               // IJ.log (i + " " + xc + " " + paramsOut[1] + " " + halfSize);
+               // IJ.log (xc + " ");
             } 
          }  
       }
@@ -262,5 +307,18 @@ IJ.log ("X: " + xc + " Y: " + yc);
 		double took = (endTime - startTime) / 1E6;
 
 		print("Calculation took: " + took + " milli seconds"); 
+
+      double[] guess = {-1.1, 467.5};
+
+      try {
+         double[] result = cf_.fit(new LinearFunction(), guess);
+         print ("Results is of size: " + result.length);
+         print ("Slope: " + result[0] + " Offset: " + result[1]);
+      } catch (Exception e) {
+         print(e.getMessage());
+         e.printStackTrace();
+
+      }
+
    }
 }
