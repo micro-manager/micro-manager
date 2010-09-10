@@ -197,7 +197,6 @@ public class GUIUtils {
 			   GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
 			   //Send notification that display may have changed, so that display count is updated.
 			   envClass.getDeclaredMethod("displayChanged").invoke(envClass.cast(ge));
-			   ReportingUtils.logMessage("preventDisplayAdapterChangeExceptions() called.");
 		   }
 	   } catch (Exception e) {
            ReportingUtils.logError(e);

@@ -364,6 +364,15 @@ int Hub::OnPort(MM::PropertyBase* pProp, MM::ActionType pAct)
          return ERR_PORT_CHANGE_FORBIDDEN;
       }
       pProp->Get(port_);
+
+      // device specific default communication parameters
+      GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_BaudRate, "9600" );
+      GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_StopBits, "2");
+      GetCoreCallback()->SetDeviceProperty(port_.c_str(), "AnswerTimeout", "2000.0");
+      GetCoreCallback()->SetDeviceProperty(port_.c_str(), "DelayBetweenCharsMs", "11.0");
+
+
+
    }
    return DEVICE_OK;
 }

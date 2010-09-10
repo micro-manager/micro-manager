@@ -362,6 +362,7 @@ int CoherentCube::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
 
       pProp->Get(port_);
    }
+   GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_BaudRate, "19200" );
 
    return HandleErrors();
 }

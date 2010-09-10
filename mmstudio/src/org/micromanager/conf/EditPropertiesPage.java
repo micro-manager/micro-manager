@@ -38,7 +38,6 @@ import org.micromanager.utils.GUIUtils;
 import mmcorej.MMCoreJ;
 import org.micromanager.utils.PropertyItem;
 import org.micromanager.utils.PropertyNameCellRenderer;
-import org.micromanager.utils.PropertyNameCellRenderer;
 import org.micromanager.utils.PropertyValueCellEditor;
 import org.micromanager.utils.PropertyValueCellRenderer;
 
@@ -92,6 +91,7 @@ public class EditPropertiesPage extends PagePanel {
       }
 
       tm.fireTableStructureChanged();
+      tm.fireTableDataChanged();
       propTable_.repaint();
    }
    
@@ -100,10 +100,11 @@ public class EditPropertiesPage extends PagePanel {
       
       // create an array of allowed ports
       ArrayList<Device> ports = new ArrayList<Device>();
+      model_.removeDuplicateComPorts();
       Device avPorts[] = model_.getAvailableSerialPorts();
-      for(int i=0; i<avPorts.length; i++)
-         if (model_.isPortInUse(avPorts[i]))
-            ports.add(avPorts[i]);
+      for(int ip=0; ip<avPorts.length; ++ip)
+         if (model_.isPortInUse(avPorts[ip]))
+            ports.add(avPorts[ip]);
       
       // identify "port" properties and assign available com ports declared for use
       Device devices[] = model_.getDevices();
@@ -129,14 +130,18 @@ public class EditPropertiesPage extends PagePanel {
    public boolean exitPage(boolean toNextPage) {
       try {
          if (toNextPage) {
-             // create an array of allowed port names
-             ArrayList<String> ports = new ArrayList<String>();
-             Device avPorts[] = model_.getAvailableSerialPorts();
-             for(int i=0; i<avPorts.length; i++)
-                if (model_.isPortInUse(avPorts[i]))
-                   ports.add(avPorts[i].getAdapterName());
+         // create an array of allowed port names
+            ArrayList<String> ports = new ArrayList<String>();
+            Device avPorts[] = model_.getAvailableSerialPorts();
+            for(int ip=0; ip<avPorts.length; ++ip)
+                if (model_.isPortInUse(avPorts[ip]))
+                   ports.add(avPorts[ip].getAdapterName());
+
+             // clear all the 'use' flags
+            for( Device p : avPorts)
+                model_.useSerialPort(p, false);
              
-            // apply the properties
+            // apply the properties and mark the serial ports that are really in use
             PropertyTableModel ptm = (PropertyTableModel)propTable_.getModel();
             for (int i=0; i<ptm.getRowCount(); i++) {
                Setting s = ptm.getSetting(i);
@@ -145,7 +150,12 @@ public class EditPropertiesPage extends PagePanel {
             	   if (!ports.contains(s.propertyValue_)) {
             		  JOptionPane.showMessageDialog(null, "Please select a valid serial port for " + s.deviceName_);
             		  return false;
-            	   }
+            	   }else{
+                     for(int j=0; j<avPorts.length; ++j){
+                        if( 0==s.propertyValue_.compareTo(avPorts[j].getAdapterName()))
+                           model_.useSerialPort(avPorts[j], true);
+                     }
+                  }
                }
                core_.setProperty(s.deviceName_, s.propertyName_, s.propertyValue_);
                Device dev = model_.findDevice(s.deviceName_);
@@ -156,10 +166,7 @@ public class EditPropertiesPage extends PagePanel {
                model_.setDeviceSetupProperty(s.deviceName_, s.propertyName_, s.propertyValue_);
             }
             
-            // initialize the entire system
-            core_.initializeAllDevices();
-            GUIUtils.preventDisplayAdapterChangeExceptions();
-            model_.loadDeviceDataFromHardware(core_);
+
          } else {
             core_.unloadAllDevices();
             GUIUtils.preventDisplayAdapterChangeExceptions();
@@ -183,4 +190,9 @@ public class EditPropertiesPage extends PagePanel {
    public void saveSettings() {
       
    }
+
+   public JTable GetPropertyTable()   {
+      return propTable_;
+   }
+
 }

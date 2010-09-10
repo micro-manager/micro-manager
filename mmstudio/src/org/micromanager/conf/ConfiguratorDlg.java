@@ -82,7 +82,6 @@ public class ConfiguratorDlg extends JDialog {
    private JCheckBox sendCheck_;
    private boolean sendConfig_;
 
-
    /**
     * Create the application
     */
@@ -167,17 +166,18 @@ public class ConfiguratorDlg extends JDialog {
       
       // add page panels
       pages_ = new PagePanel[9];
-      pages_[0] = new IntroPage(prefs_);
-      pages_[1] = new ComPortsPage(prefs_);
-      pages_[2] = new DevicesPage(prefs_);
-      pages_[3] = new EditPropertiesPage(prefs_);
-      pages_[4] = new RolesPage(prefs_);
-      pages_[5] = new DelayPage(prefs_);
-      pages_[6] = new SynchroPage(prefs_);
-      pages_[7] = new LabelsPage(prefs_);
-      //pages_[8] = new PresetsPage(prefs_);
-      pages_[8] = new FinishPage(prefs_);
-            
+
+      int pageNumber = 0;
+      pages_[pageNumber++] = new IntroPage(prefs_);
+      pages_[pageNumber++] = new DevicesPage(prefs_);
+      pages_[pageNumber++] = new EditPropertiesPage(prefs_);
+      pages_[pageNumber++] = new ComPortsPage(prefs_);
+      pages_[pageNumber++] = new RolesPage(prefs_);
+      pages_[pageNumber++] = new DelayPage(prefs_);
+      pages_[pageNumber++] = new SynchroPage(prefs_);
+      pages_[pageNumber++] = new LabelsPage(prefs_);
+      pages_[pageNumber++] = new FinishPage(prefs_);
+
       microModel_ = new MicroscopeModel();
       microModel_.loadAvailableDeviceList(core_);
       microModel_.setFileName(defaultPath_);
@@ -379,5 +379,6 @@ public class ConfiguratorDlg extends JDialog {
            }
 
    
-   
+
+
 }

@@ -216,20 +216,27 @@ public class DevicesPage extends PagePanel {
          try {
             StrVector ld = core_.getLoadedDevices();
             
-            // shutdown the system
-            if (ld.size() > 1)
-               core_.unloadAllDevices();
             
-            // load com ports
+            // first load com ports
             Device ports[] = model_.getAvailableSerialPorts();
+
+           // allow the user to first associate the COM port with the device,
+            // later we will clear the 'use' flag after we determine we don't need the serial port
+            for( Device p : ports)
+                model_.useSerialPort(p, true);
+
+            
             for (int i=0; i<ports.length; i++) {
                if (model_.isPortInUse(ports[i])) {
                    core_.loadDevice(ports[i].getName(), ports[i].getLibrary(), ports[i].getAdapterName());
-                   Device d = model_.findSerialPort(ports[i].getName());
-                   for (int j=0; j<d.getNumberOfSetupProperties(); j++) {
-                       PropertyItem prop = d.getSetupProperty(j);
-                       core_.setProperty(d.getName(), prop.name, prop.value);
-                    }
+
+                   // defer this until after serial ports are associated with devices.
+
+//                   Device d = model_.findSerialPort(ports[i].getName());
+//                   for (int j=0; j<d.getNumberOfSetupProperties(); j++) {
+//                       PropertyItem prop = d.getSetupProperty(j);
+//                       core_.setProperty(d.getName(), prop.name, prop.value);
+//                    }
                }
             }
                
