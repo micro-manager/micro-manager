@@ -42,7 +42,7 @@ public class MDUtils {
    }
 
    public static void putInt(Map<String,String> map, String key, int val) throws Exception {
-      map.put(key, NumberUtils.intToDisplayString(val));
+      map.put(key, NumberUtils.intToCoreString(val));
    }
 
    public static int getPositionIndex(Map<String,String> map) throws Exception {
