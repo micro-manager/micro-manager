@@ -827,7 +827,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
         timeUnitCombo_.addActionListener(new ActionListener() {
 
             public void actionPerformed(final ActionEvent e) {
-                interval_.setText(NumberUtils.doubleToDisplayString(convertMsToTime(acqEng_.getFrameIntervalMs(), timeUnitCombo_.getSelectedIndex())));
+                //interval_.setText(NumberUtils.doubleToDisplayString(convertMsToTime(acqEng_.getFrameIntervalMs(), timeUnitCombo_.getSelectedIndex())));
             }
         });
         timeUnitCombo_.setModel(new DefaultComboBoxModel(new String[]{"ms", "s", "min"}));
