@@ -54,7 +54,7 @@ public class GaussianFitStack_ implements PlugIn {
           double residual = 0.0;
           for (int i = 0; i < nx_; i++) {
              for (int j = 0; j < ny_; j++) {
-                residual += sqr(gaussian(params, i, j) - data_[(i*nx_) + j]);
+                residual += sqr(gaussian(params, i, j) - data_[(j*nx_) + i]);
              }
           }
    /*
@@ -178,17 +178,6 @@ public class GaussianFitStack_ implements PlugIn {
 
 	public void run(String arg) {
 
-      // variables, will need to be set in a dialog eventually
-      // SpotFinder (Find Maxima) variables:
-      int noiseTolerance = 500;
-
-      // Filters for results of Gaussian fit
-      double intMin = 100;
-      double intMax = 1E7;
-      double sigmaMin = 0.8;
-      double sigmaMax = 1.8;
-      
-
 		gs_ = new GaussianResidual();
 		nm_ = new NelderMead();
 		convergedChecker_ = new SimpleScalarValueChecker(1e-5,-1);
@@ -197,22 +186,17 @@ public class GaussianFitStack_ implements PlugIn {
       Vector<Vector<SpotPoint>> spotList = new Vector<Vector<SpotPoint>>();
       Vector<SpotPoint> frameSpotList;
 
-      // work on the active ImageJ image
+      // for now, take the active ImageJ image
 		ImagePlus siPlus = IJ.getImage();
-
-      // Remember Roi and slice nr so that we can set them back after processing
-      Roi originalRoi = siPlus.getRoi();
-      int sliceNr = siPlus.getSlice();
 
 		long startTime = System.nanoTime();
 
       // first find local maxima
-      // Can not call MaximumFinder directly since it does not display results in Result window
       // MaximumFinder maxFinder = new MaximumFinder();
       for (int i= 1; i <= siPlus.getStackSize(); i++ ) {
          frameSpotList = new Vector<SpotPoint>();
          siPlus.setSlice(i);
-         IJ.run("Find Maxima...", "noise=" + noiseTolerance + " output=List");
+         IJ.run("Find Maxima...", "noise=500 output=List");
          // maxFinder.findMaxima(siPlus.getStack().getProcessor(i), 500.0, ImageProcessor.NO_THRESHOLD, MaximumFinder.LIST, false, false); 
 
          ResultsTable rt = ResultsTable.getResultsTable();
@@ -237,6 +221,7 @@ public class GaussianFitStack_ implements PlugIn {
       for (Vector<SpotPoint> frameList : spotList) {
          int j = 0;
          for (SpotPoint mySpot : frameList) {
+            // IJ.log (i + " " + j + " " + mySpot.getX() + " " + mySpot.getY());
             Roi spotRoi = new Roi (mySpot.getX() - halfSize, mySpot.getY() - halfSize, 2 * halfSize, 2 * halfSize);
             siPlus.setSlice(i + 1);
             siPlus.setRoi(spotRoi);
@@ -244,23 +229,19 @@ public class GaussianFitStack_ implements PlugIn {
             double[] paramsOut = doGaussianFit(ip);
 
             if (paramsOut.length >= 4) {
+               rt.incrementCounter();
                double anormalized = paramsOut[0] * (2 * Math.PI * paramsOut[3] * paramsOut[3]);
-               boolean report = anormalized > intMin && anormalized < intMax &&
-                                 paramsOut[3] > sigmaMin && paramsOut[3] < sigmaMax;
-               if (report) {
-                  rt.incrementCounter();
-                  rt.addValue("Frame", i+1);
-                  rt.addValue("Spot", j);
-                  rt.addValue("Intensity", anormalized);
-                  rt.addValue("Background", paramsOut[4]);
-                  rt.addValue("X", paramsOut[1] - halfSize + mySpot.getX());
-                  rt.addValue("Y", paramsOut[2] - halfSize + mySpot.getY());
-                  rt.addValue("Sigma", paramsOut[3]);
-                  j++;
-               }
+               rt.addValue("Frame", i+1);
+               rt.addValue("Spot", j);
+               rt.addValue("Intensity", anormalized);
+               rt.addValue("Background", paramsOut[4]);
+               rt.addValue("X", paramsOut[1] - halfSize + mySpot.getX());
+               rt.addValue("Y", paramsOut[2] - halfSize + mySpot.getY());
+               rt.addValue("Sigma", paramsOut[3]);
             }
 
             spotCount++;
+            j++;
          }
          i++;
       }
@@ -268,10 +249,6 @@ public class GaussianFitStack_ implements PlugIn {
 
 		long endTime = System.nanoTime(); 
 		double took = (endTime - startTime) / 1E6;
-
-      // Put image back in its original state:
-      siPlus.setSlice(sliceNr);
-      siPlus.setRoi(originalRoi);
 
       print ("Analyzed " + spotCount + " spots in " + took + " milliseconds");
    }

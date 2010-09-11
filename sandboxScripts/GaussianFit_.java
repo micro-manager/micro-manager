@@ -26,8 +26,8 @@ public class GaussianFit_ implements PlugIn {
 	String [] paramNames_ = {"A", "x_c", "y_c", "sigma", "b"};
 
    GaussianResidual gs_;
-   NelderMead nm_;
-   SimpleScalarValueChecker convergedChecker_;;
+	NelderMead nm_;
+	SimpleScalarValueChecker convergedChecker_;
 
 	private void print(String myText) {
 		ij.IJ.log(myText);
@@ -39,50 +39,43 @@ public class GaussianFit_ implements PlugIn {
        int ny_;
        int count_ = 0;
 
-
        public void setImage(short[] data, int width, int height) {
-          data_ = data;
-          nx_ = width;
-          ny_ = height;
+           data_ = data;
+           nx_ = width;
+           ny_ = height;
        }
 
        public double value(double[] params) {
-          double residual = 0.0;
-          for (int i = 0; i < nx_; i++) {
-             for (int j = 0; j < ny_; j++) {
-                residual += sqr(gaussian(params, i, j) - data_[(i*nx_) + j]);
-             }
+           double residual = 0.0;
+           for (int i = 0; i < nx_; i++) {
+               for (int j = 0; j < ny_; j++) {
+                    residual += sqr(gaussian(params, i, j) - data_[(j*nx_) + i]);
+               }
+           }
+           return residual;
+       }
+
+       public double sqr(double val) {
+           return val*val;
+       }
+
+       public double gaussian(double[] params, int x, int y) {
+
+         /* Gaussian function of the form:
+          * A *  exp(-((x-xc)^2+(y-yc)^2)/(2 sigy^2))+b
+          * A = params[0]  (total intensity)
+          * xc = params[1]
+          * yc = params[2]
+          * sig = params[3]
+          * b = params[4]  (background)
+          */
+
+          if (params.length < 5) {
+                  // Problem, what do we do???
+                  //MMScriptException e;
+                  //e.message = "Params for Gaussian function has too few values";
+                  //throw (e);
           }
-   /*
-         for (int i=0; i< params.length; i++)
-                  print(" " + paramNames_[i] + ": " + params[i]);
-
-         print("Residual: " + residual);
-   */
-         return residual;
-      }
-
-      public double sqr(double val) {
-         return val*val;
-      }
-
-      public double gaussian(double[] params, int x, int y) {
-
-                  /* Gaussian function of the form:
-                   * A *  exp(-((x-xc)^2+(y-yc)^2)/(2 sigy^2))+b
-                   * A = params[0]  (total intensity)
-                   * xc = params[1]
-                   * yc = params[2]
-                   * sig = params[3]
-                   * b = params[4]  (background)
-                   */
-
-         if (params.length < 5) {
-                          // Problem, what do we do???
-                          //MMScriptException e;
-                          //e.message = "Params for Gaussian function has too few values";
-                          //throw (e);
-         }
 
          double exponent = (sqr(x - params[1])  + sqr(y - params[2])) / (2 * sqr(params[3]));
          double res = params[0] * Math.exp(-exponent) + params[4];
@@ -90,13 +83,14 @@ public class GaussianFit_ implements PlugIn {
       }
    }
 
+    /**
+    * Performs Gaussian Fit on a given ImageProcessor
+    * Estimates initial values for the fit and send of to Apache fitting code
+    */
+    public double[] doGaussianFit (ImageProcessor siProc) {
 
-
-	public double[] doGaussianFit (ImagePlus siPlus) {
-
-		ImageProcessor siProc = siPlus.getProcessor();
       short[] imagePixels = (short[])siProc.getPixels();
-		gs_.setImage((short[])siProc.getPixels(), siProc.getWidth(), siProc.getHeight());
+      gs_.setImage((short[])siProc.getPixels(), siProc.getWidth(), siProc.getHeight());
 
       // Hard code estimate for sigma:
       params0_[3] = 1.115;
@@ -131,11 +125,15 @@ public class GaussianFit_ implements PlugIn {
       double mx = 0.0;
       double my = 0.0;
       for (int i = 0; i < siProc.getHeight() * siProc.getWidth(); i++) {
-         mx += imagePixels[i] * (i % siProc.getWidth() );
-         my += imagePixels[i] * (Math.floor (i / siProc.getWidth()));
+         //mx += (imagePixels[i] - params0_[4]) * (i % siProc.getWidth() );
+         //my += (imagePixels[i] - params0_[4]) * (Math.floor (i / siProc.getWidth()));
+         mx += imagePixels[i]  * (i % siProc.getWidth() );
+         my += imagePixels[i]  * (Math.floor (i / siProc.getWidth()));
       }
       params0_[1] = mx/mt;
       params0_[2] = my/mt;
+
+      print("Centroid: " + mx/mt + " " + my/mt);
 
       // set step size during estimate
 		for (int i=0;i<params0_.length;++i)
@@ -154,30 +152,52 @@ public class GaussianFit_ implements PlugIn {
       return paramsOut;
 	}
 
+
 	public void run(String arg) {
+
+		long startTime = System.currentTimeMillis();
 
 		gs_ = new GaussianResidual();
 		nm_ = new NelderMead();
-		convergedChecker_ = new SimpleScalarValueChecker(1e-5,-1);
+		convergedChecker_ = new SimpleScalarValueChecker(1e-6,-1);
 
-      // for now, take the active ImageJ image (this should be an image of a difraction limited spot
 		ImagePlus siPlus = IJ.getImage();
+		ImageProcessor siProc = siPlus.getProcessor().crop();
 
-		long startTime = System.nanoTime();
+      double[]paramsOut = doGaussianFit(siProc);
+      /*
+		gs.setImage((short[])siProc.getPixels(), siProc.getWidth(), siProc.getHeight());
 
-      double[] paramsOut = doGaussianFit(siPlus);
+		for (int i=0;i<params0_.length;++i)
+			steps_[i] = params0_[i]*0.3;
 
-		long endTime = System.nanoTime(); 
-		double took = (endTime - startTime) / 1E6;
+		nm.setStartConfiguration(steps_);
+		nm.setConvergenceChecker(convergedChecker);
 
-		print("\n\nResult:");
+		nm.setMaxIterations(200);
+		double[] paramsOut = {0.0};
+		try {
+			RealPointValuePair result = nm.optimize(gs, GoalType.MINIMIZE, params0_);
+			paramsOut = result.getPoint();
+		} catch (Exception e) {}
+      */
+
+
+
+		print("\n\nFinal result:");
 		for (int i=0; i<paramsOut.length; i++)
        		print(" " + paramNames_[i] + ": " + paramsOut[i]);
 
-		double anormalized = paramsOut[0] * (2 * Math.PI * paramsOut[3] * paramsOut[3]);
-		print("Amplitude normalized: " + anormalized);
+      if (paramsOut.length > 3) {
+         double anormalized = paramsOut[0] * (2 * Math.PI * paramsOut[3] * paramsOut[3]);
+         print("Amplitude normalized: " + anormalized);
+      }
 
+		long endTime = System.currentTimeMillis(); 
+		long took = endTime - startTime;
 
 		print("Calculation took: " + took + " milli seconds"); 
-   }
+
+	}
+
 }

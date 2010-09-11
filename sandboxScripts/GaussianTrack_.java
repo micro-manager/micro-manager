@@ -1,5 +1,4 @@
 import ij.*;
-//import ij.process.*;
 import ij.gui.*;
 import ij.plugin.*;
 import ij.plugin.frame.*;
@@ -68,7 +67,7 @@ public class GaussianTrack_ implements PlugIn {
           double residual = 0.0;
           for (int i = 0; i < nx_; i++) {
              for (int j = 0; j < ny_; j++) {
-                residual += sqr(gaussian(params, i, j) - data_[(i*nx_) + j]);
+                residual += sqr(gaussian(params, i, j) - data_[(j*nx_) + i]);
              }
           }
           return residual;
@@ -80,14 +79,14 @@ public class GaussianTrack_ implements PlugIn {
 
       public double gaussian(double[] params, int x, int y) {
 
-                  /* Gaussian function of the form:
-                   * A *  exp(-((x-xc)^2+(y-yc)^2)/(2 sigy^2))+b
-                   * A = params[0]  (total intensity)
-                   * xc = params[1]
-                   * yc = params[2]
-                   * sig = params[3]
-                   * b = params[4]  (background)
-                   */
+         /* Gaussian function of the form:
+          * A *  exp(-((x-xc)^2+(y-yc)^2)/(2 sigy^2))+b
+          * A = params[0]  (total intensity)
+          * xc = params[1]
+          * yc = params[2]
+          * sig = params[3]
+          * b = params[4]  (background)
+          */
 
          if (params.length < 5) {
                           // Problem, what do we do???
@@ -256,6 +255,8 @@ public class GaussianTrack_ implements PlugIn {
       params0_[1] = mx/mt;
       params0_[2] = my/mt;
 
+      print("Centroid: " + mx/mt + " " + my/mt);
+
       // set step size during estimate
 		for (int i=0;i<params0_.length;++i)
 			steps_[i] = params0_[i]*0.3;
@@ -287,7 +288,7 @@ public class GaussianTrack_ implements PlugIn {
       double sigmaMax = 2.1;
 
       // half the size of the box used for Gaussian fitting in pixels
-      int halfSize = 5;
+      int halfSize = 6;
 
       // initial setting for Maximum Finder
       int noiseTolerance = 100;
@@ -313,17 +314,23 @@ public class GaussianTrack_ implements PlugIn {
 
       Vector<Point2D.Double> xyPoints = new Vector<Point2D.Double>();
       for (int i = sliceN; i <= siPlus.getNSlices(); i++) {
+         // Search in next slice in same Roi for local maximum
          Roi spotRoi = new Roi(xc - halfSize, yc - halfSize, 2 * halfSize, 2*halfSize);
          siPlus.setSlice(i);
          siPlus.setRoi(spotRoi);
-         ImageProcessor ip = siPlus.getProcessor().crop();
 
+         // Find maximum in Roi
          IJ.run("Find Maxima...", "noise=" + noiseTolerance + " output=List");
          ResultsTable rtS = ResultsTable.getResultsTable();
          if (rtS.getCounter() >=1) {
             xc = (int) rtS.getValueAsDouble(0, 0);
             yc = (int) rtS.getValueAsDouble(1, 0);
          }
+
+         // Set Roi for fitting centered around maximum
+         spotRoi = new Roi(xc - halfSize, yc - halfSize, 2 * halfSize, 2*halfSize);
+         siPlus.setRoi(spotRoi);
+         ImageProcessor ip = siPlus.getProcessor().crop();
          
          double[]paramsOut = doGaussianFit(ip);
          if (paramsOut.length >= 4) {                                         
