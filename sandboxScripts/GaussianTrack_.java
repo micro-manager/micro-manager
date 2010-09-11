@@ -1,13 +1,20 @@
 import ij.*;
-import ij.process.*;
+//import ij.process.*;
 import ij.gui.*;
 import ij.plugin.*;
 import ij.plugin.frame.*;
 import ij.measure.ResultsTable;
 import ij.text.*;
+import ij.ImagePlus;
+import ij.process.ImageProcessor;
+import ij.IJ;
 
 import org.apache.commons.math.analysis.*;
 import org.apache.commons.math.FunctionEvaluationException;
+import org.apache.commons.math.linear.Array2DRowRealMatrix;
+import org.apache.commons.math.linear.BlockRealMatrix;
+import org.apache.commons.math.linear.RealMatrix;
+import org.apache.commons.math.linear.QRDecompositionImpl;
 import org.apache.commons.math.optimization.direct.NelderMead;
 import org.apache.commons.math.optimization.direct.MultiDirectional;
 import org.apache.commons.math.optimization.fitting.ParametricRealFunction;
@@ -17,17 +24,19 @@ import org.apache.commons.math.optimization.RealPointValuePair;
 import org.apache.commons.math.optimization.GoalType;
 import org.apache.commons.math.optimization.SimpleScalarValueChecker;
 
-
 import java.lang.Math;
 import java.awt.Rectangle;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.KeyEvent;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Point2D;
+import java.awt.geom.Point2D.Double;
+import java.util.Vector;
 
-import ij.ImagePlus;
-import ij.process.ImageProcessor;
-import ij.IJ;
+
+
 
 public class GaussianTrack_ implements PlugIn {
 	double[] params0_ = {16000.0, 5.0, 5.0, 1.0, 850.0};
@@ -94,19 +103,56 @@ public class GaussianTrack_ implements PlugIn {
    }
 
    /**
-    * Implements function of the form: y = ax + b
+    * Linear Regression to find the best line between a set of points
+    * returns an array where [0] = slope and [1] = offset
+    * Input: arrays with x and y data points
     */
-   public class LinearFunction implements ParametricRealFunction {
-      public double[] gradient(double x, double[] parameters) {
-         print("Parameters length: " + parameters.length);
-         double[] result = new double[parameters.length];
-         result[0] = parameters[0];
-         result[1] = 0;
-         return result;
-      };
-      public double value(double x, double[] parameters) {
-         return parameters[0] * x + parameters[1];
+   public double[] fitLine(Vector<Point2D.Double> xyPoints) {
+      double[][] xWithOne = new double[xyPoints.size()][2];
+      double[][] yWithOne = new double[xyPoints.size()][2];
+      for (int i =0; i< xyPoints.size(); i++) {
+         xWithOne[i][0] = xyPoints.get(i).getX();
+         xWithOne[i][1] = 1;
+         yWithOne[i][0] = xyPoints.get(i).getY();
+         yWithOne[i][1] = 1;
       }
+
+      Array2DRowRealMatrix xM = new Array2DRowRealMatrix(xWithOne);
+      Array2DRowRealMatrix yM = new Array2DRowRealMatrix(yWithOne);
+
+      QRDecompositionImpl qX = new QRDecompositionImpl(xM);
+      BlockRealMatrix mX = (BlockRealMatrix) qX.getSolver().solve(yM);
+
+      RealMatrix theY = xM.multiply(mX);
+      double ansX = theY.subtract(yM).getColumnVector(0).getNorm();
+      print ("Answer X: " + ansX);
+
+      QRDecompositionImpl qY = new QRDecompositionImpl(yM);
+      BlockRealMatrix mY = (BlockRealMatrix) qY.getSolver().solve(xM);
+
+      RealMatrix theX = yM.multiply(mY);
+      double ansY = theX.subtract(xM).getColumnVector(0).getNorm();
+      print ("Answer Y: " + ansY);
+
+      double[][] res = mX.getData();
+      double[] ret = new double[2];
+      ret[0] = res[0][0];
+      ret[1] = res[1][0];
+
+      if (ansY < ansX) {
+         res = mY.getData();
+         ret[0] = 1 / res[0][0];
+         ret[1] = - res[1][0]/res[0][0];
+      }
+
+      return ret;
+   }
+
+   public AffineTransform computeAffineTransform(double a, double b) {
+      AffineTransform T = new AffineTransform();
+      T.rotate(-Math.atan(a));
+      T.translate(0, -b);
+      return T;
    }
 
    /**
@@ -120,12 +166,14 @@ public class GaussianTrack_ implements PlugIn {
    public class MyK implements KeyListener{
       ImagePlus siPlus_;
       ResultsTable res_;
+      TextWindow win_;
       TextPanel tp_;
       int hBS_;
-      public MyK(ImagePlus siPlus, ResultsTable res, TextPanel tp, int halfBoxSize) {
+      public MyK(ImagePlus siPlus, ResultsTable res, TextWindow win, int halfBoxSize) {
          siPlus_ = siPlus;
          res_ = res;
-         tp_ = tp;
+         win_ = win;
+         tp_ = win.getTextPanel();
          hBS_ = halfBoxSize;
       }
       public void keyPressed(KeyEvent e) {
@@ -143,6 +191,9 @@ public class GaussianTrack_ implements PlugIn {
             }
          }
          if (row >= 0 && row < tp_.getLineCount()) {
+            // These two lines ensure that the Image Window is visible, but do cause flicker
+            siPlus_.getWindow().toFront();
+            win_.toFront();
             int frame = (int) res_.getValue("Frame", row);
             int x = (int)res_.getValue("XMax", row);
             int y = (int) res_.getValue("YMax", row);
@@ -152,9 +203,13 @@ public class GaussianTrack_ implements PlugIn {
      };
       public void keyReleased(KeyEvent e) {};
       public void keyTyped(KeyEvent e) {};
-
    }
 
+
+   /**
+    * Performs Gaussian Fit on a given ImageProcessor
+    * Estimates initial values for the fit and send of to Apache fitting code
+    */
 	public double[] doGaussianFit (ImageProcessor siProc) {
 
       short[] imagePixels = (short[])siProc.getPixels();
@@ -193,8 +248,10 @@ public class GaussianTrack_ implements PlugIn {
       double mx = 0.0;
       double my = 0.0;
       for (int i = 0; i < siProc.getHeight() * siProc.getWidth(); i++) {
-         mx += imagePixels[i] * (i % siProc.getWidth() );
-         my += imagePixels[i] * (Math.floor (i / siProc.getWidth()));
+         //mx += (imagePixels[i] - params0_[4]) * (i % siProc.getWidth() );
+         //my += (imagePixels[i] - params0_[4]) * (Math.floor (i / siProc.getWidth()));
+         mx += imagePixels[i]  * (i % siProc.getWidth() );
+         my += imagePixels[i]  * (Math.floor (i / siProc.getWidth()));
       }
       params0_[1] = mx/mt;
       params0_[2] = my/mt;
@@ -223,14 +280,14 @@ public class GaussianTrack_ implements PlugIn {
 		nm_ = new NelderMead();
 		convergedChecker_ = new SimpleScalarValueChecker(1e-5,-1);
 
-      // curvefitter used to find the line this spot is walking on
-      CurveFitter cf_ = new CurveFitter(new LevenbergMarquardtOptimizer());
-
       // Filters for results of Gaussian fit
       double intMin = 100;
       double intMax = 1E7;
       double sigmaMin = 0.8;
       double sigmaMax = 2.1;
+
+      // half the size of the box used for Gaussian fitting in pixels
+      int halfSize = 5;
 
       // initial setting for Maximum Finder
       int noiseTolerance = 100;
@@ -239,6 +296,10 @@ public class GaussianTrack_ implements PlugIn {
 		ImagePlus siPlus = IJ.getImage();
 
       Roi originalRoi = siPlus.getRoi();
+      if (null == originalRoi) { 
+         IJ.error("Please draw a Roi around the spot you want to track");
+         return;
+      }
       int sliceN = siPlus.getSlice();
 
       ResultsTable rt = new ResultsTable();
@@ -247,11 +308,10 @@ public class GaussianTrack_ implements PlugIn {
       int xc = (int) (rect.getX() + 0.5 * rect.getWidth());
       int yc = (int) (rect.getY() + 0.5 * rect.getHeight());
 
-      // half the size of the box used for Gaussian fitting in pixels
-      int halfSize = 7;
 
 		long startTime = System.nanoTime();
 
+      Vector<Point2D.Double> xyPoints = new Vector<Point2D.Double>();
       for (int i = sliceN; i <= siPlus.getNSlices(); i++) {
          Roi spotRoi = new Roi(xc - halfSize, yc - halfSize, 2 * halfSize, 2*halfSize);
          siPlus.setSlice(i);
@@ -261,13 +321,16 @@ public class GaussianTrack_ implements PlugIn {
          IJ.run("Find Maxima...", "noise=" + noiseTolerance + " output=List");
          ResultsTable rtS = ResultsTable.getResultsTable();
          if (rtS.getCounter() >=1) {
-            xc = (int)rtS.getValueAsDouble(0, 0);
+            xc = (int) rtS.getValueAsDouble(0, 0);
             yc = (int) rtS.getValueAsDouble(1, 0);
          }
          
          double[]paramsOut = doGaussianFit(ip);
          if (paramsOut.length >= 4) {                                         
             double anormalized = paramsOut[0] * (2 * Math.PI * paramsOut[3] * paramsOut[3]);
+            double x = paramsOut[1] - halfSize + xc;
+            double y = paramsOut[2] - halfSize + yc;
+            xyPoints.add(new Point2D.Double(x, y));
             boolean report = anormalized > intMin && anormalized < intMax &&  
                               paramsOut[3] > sigmaMin && paramsOut[3] < sigmaMax;
 
@@ -275,12 +338,11 @@ public class GaussianTrack_ implements PlugIn {
             rt.addValue("Frame", i);                                     
             rt.addValue("Intensity", anormalized);                         
             rt.addValue("Background", paramsOut[4]);                       
-            rt.addValue("X", paramsOut[1] - halfSize + xc);     
-            rt.addValue("Y", paramsOut[2] - halfSize + yc);     
+            rt.addValue("X", x);     
+            rt.addValue("Y", y);     
             rt.addValue("Sigma", paramsOut[3]);                            
             rt.addValue("XMax", xc);
             rt.addValue("YMax", yc);
-            cf_.addObservedPoint(anormalized, paramsOut[1] - halfSize + xc, paramsOut[2] - halfSize + yc);
 
             // rt.addValue("Residual", gs_.value(paramsOut));
             if (report) {                                                     
@@ -299,7 +361,7 @@ public class GaussianTrack_ implements PlugIn {
       if (frame!=null && frame instanceof TextWindow) {
          win = (TextWindow)frame;
          tp = win.getTextPanel();
-         MyK myk = new MyK(siPlus, rt, tp, halfSize);
+         MyK myk = new MyK(siPlus, rt, win, halfSize);
          tp.addKeyListener(myk);
       }
 
@@ -308,6 +370,24 @@ public class GaussianTrack_ implements PlugIn {
 
 		print("Calculation took: " + took + " milli seconds"); 
 
+      double[] line = fitLine(xyPoints);
+
+      print(line[0] + " " + line[1]);
+
+      AffineTransform T = computeAffineTransform(line[0], line[1]);
+
+      Vector<Point2D.Double> xyCorrPoints = new Vector<Point2D.Double>();
+      for (int i = 0; i < xyPoints.size(); i++) {
+         Point2D.Double pt = new Point2D.Double();
+         xyCorrPoints.add((Point2D.Double)T.transform(xyPoints.get(i), pt));
+         print(pt.getX() + "\t" + pt.getY());
+      }
+
+
+
+
+
+      /*
       double[] guess = {-1.1, 467.5};
 
       try {
@@ -319,6 +399,7 @@ public class GaussianTrack_ implements PlugIn {
          e.printStackTrace();
 
       }
+      */
 
    }
 }
