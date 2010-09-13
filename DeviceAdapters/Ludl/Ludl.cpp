@@ -205,7 +205,6 @@ Hub::Hub() :
    // Port:
    CPropertyAction* pAct = new CPropertyAction(this, &Hub::OnPort);
    CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
-
 }
 
 Hub::~Hub()
@@ -223,6 +222,47 @@ bool Hub::Busy()
    return false;
 }
 
+int Hub::QueryVersion(std::string& version)
+{
+   int returnStatus = DEVICE_OK;
+   // Version of the controller:
+
+   const char* cm = "VER";
+   returnStatus = SendSerialCommand(port_.c_str(), cm, "\r");
+   if (returnStatus != DEVICE_OK) 
+      return returnStatus;
+
+   // Read out result
+   returnStatus = GetSerialAnswer(port_.c_str(), "\n", version);
+   if (returnStatus != DEVICE_OK) 
+      return returnStatus;
+   if (version.length() < 2) {
+      // if we get no answer, try setting the controller to high command level and retry
+      returnStatus = changeCommandLevel(*this,  *GetCoreCallback(), g_CommandLevelHigh);
+      if (returnStatus != DEVICE_OK)
+         return returnStatus;
+   }
+   if (version.length() < 2 || version[1] == 'N') {
+      // try getting version again (TODO: refactor this!)
+      // Version of the controller:
+      const char* cm = "VER";
+      returnStatus = SendSerialCommand(port_.c_str(), cm, "\r");
+      if (returnStatus != DEVICE_OK) 
+         return returnStatus;
+
+      returnStatus = GetSerialAnswer(port_.c_str(), "\n", version);
+      if (returnStatus != DEVICE_OK) 
+         return returnStatus;
+      if (version.length() < 2) {
+         // no answer, 
+         return ERR_NO_ANSWER;
+      }
+   }
+   return returnStatus;
+}
+
+
+
 int Hub::Initialize()
 {
    clearPort(*this, *GetCoreCallback(), port_.c_str());
@@ -238,38 +278,10 @@ int Hub::Initialize()
       return ret;
 
    // Version of the controller:
-   const char* cm = "VER";
-   ret = SendSerialCommand(port_.c_str(), cm, "\r");
-   if (ret != DEVICE_OK) 
+   std::string result;
+   ret = QueryVersion(result);
+   if( DEVICE_OK != ret)
       return ret;
-
-   // Read out result
-   string result;
-   ret = GetSerialAnswer(port_.c_str(), "\n", result);
-   if (ret != DEVICE_OK) 
-      return ret;
-   if (result.length() < 2) {
-      // if we get no answer, try setting the controller to high command level and retry
-      ret = changeCommandLevel(*this,  *GetCoreCallback(), g_CommandLevelHigh);
-      if (ret != DEVICE_OK)
-         return ret;
-   }
-   if (result.length() < 2 || result[1] == 'N') {
-      // try getting version again (TODO: refactor this!)
-      // Version of the controller:
-      const char* cm = "VER";
-      ret = SendSerialCommand(port_.c_str(), cm, "\r");
-      if (ret != DEVICE_OK) 
-         return ret;
-
-      ret = GetSerialAnswer(port_.c_str(), "\n", result);
-      if (ret != DEVICE_OK) 
-         return ret;
-      if (result.length() < 2) {
-         // no answer, 
-         return ERR_NO_ANSWER;
-      }
-   }
 
    // Create read-only property with version info
    ret = CreateProperty(g_Ludl_Version, result.c_str(), MM::String, true);

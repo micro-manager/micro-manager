@@ -100,6 +100,9 @@ class Hub : public CGenericBase<Hub>
       int OnTransmissionDelay (MM::PropertyBase* pProp, MM::ActionType eAct);
 
    private:
+
+      int QueryVersion(std::string& version);
+
       // Command exchange with MMCore
       std::string command_;
       int transmissionDelay_;
