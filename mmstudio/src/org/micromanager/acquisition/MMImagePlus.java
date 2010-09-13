@@ -6,12 +6,14 @@
 package org.micromanager.acquisition;
 
 import ij.ImagePlus;
+import ij.gui.ScrollbarWithLabel;
 
 /**
  *
  * @author arthur
  */
 public class MMImagePlus extends ImagePlus {
+   private ScrollbarWithLabel pSelector;
 
    public MMImagePlus(String dir_, AcquisitionVirtualStack virtualStack_) {
       super(dir_, virtualStack_);
@@ -34,5 +36,10 @@ public class MMImagePlus extends ImagePlus {
       this.nSlices = nSlices;
       this.nFrames = nFrames;
    }
+
+
+
 }
+
+  
 

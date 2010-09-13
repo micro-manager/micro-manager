@@ -1,14 +1,18 @@
 package org.micromanager.acquisition;
 
+import java.awt.event.AdjustmentEvent;
 import org.micromanager.api.AcquisitionInterface;
 import org.micromanager.api.TaggedImageStorage;
 import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.gui.ImageWindow;
+import ij.gui.ScrollbarWithLabel;
+import ij.gui.StackWindow;
 import ij.plugin.Animator;
 import ij.process.ImageStatistics;
 import java.awt.Color;
 import java.awt.FileDialog;
+import java.awt.event.AdjustmentListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
@@ -58,6 +62,7 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
    private AcquisitionEngine eng_;
    private HyperstackControls hc_;
    private String status_ = "";
+   private ScrollbarWithLabel pSelector;
 
    MMVirtualAcquisition(String name, String dir, boolean newData, boolean virtual) {
       name_ = name;
@@ -284,6 +289,10 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       }
    }
 
+   public void setPosition(int p) {
+      System.out.println("position chosen: " + p);
+   }
+
    boolean pause() {
       if (eng_.isPaused())
          eng_.setPause(false);
@@ -373,6 +382,8 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
          updateChannelColors();
       hyperImage_.show();
       final ImageWindow win = hyperImage_.getWindow();
+      ScrollbarWithLabel pSelector = createPositionScrollbar(10);
+      win.add(pSelector);
       hc_ = new HyperstackControls(this, win);
       win.add(hc_);
       ImagePlus.addImageListener(hc_);
@@ -416,6 +427,21 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       updateWindow();
    }
 
+   public ScrollbarWithLabel createPositionScrollbar(int nPositions) {
+			pSelector = new ScrollbarWithLabel(null, 1, 1, 1, nPositions+1, 'p');
+			//if (ij!=null) cSelector.addKeyListener(ij);
+			pSelector.setFocusable(false); // prevents scroll bar from blinking on Windows
+			pSelector.setUnitIncrement(1);
+			pSelector.setBlockIncrement(1);
+			pSelector.addAdjustmentListener(new AdjustmentListener() {
+            public void adjustmentValueChanged(AdjustmentEvent e) {
+               setPosition(pSelector.getValue());
+            }
+         });
+         return pSelector;
+   }
+
+   
    public void setChannelColor(int channel, int rgb) throws MMScriptException {
       displaySettings_[channel].put("ChannelColor", String.format("%d", rgb));
    }
