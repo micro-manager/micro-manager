@@ -70,6 +70,7 @@ Source: micro-manager\mmgr_dal_K8061.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_LeicaDMI.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_LeicaDMR.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Ludl.dll; DestDir: {app}; Flags: ignoreversion
+Source: micro-manager\mmgr_dal_MaestroServo.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Marzhauser.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Neos.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Nikon.dll; DestDir: {app}; Flags: ignoreversion

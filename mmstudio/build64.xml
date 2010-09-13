@@ -132,6 +132,7 @@
 <copy file="${BinRoot}/mmgr_dal_LeicaDMI.dll" todir="${InstallRoot}" />
 <copy file="${BinRoot}/mmgr_dal_LeicaDMR.dll" todir="${InstallRoot}" />
 <copy file="${BinRoot}/mmgr_dal_Ludl.dll" todir="${InstallRoot}" />
+		<copy file="${BinRoot}/mmgr_dal_MaestroServo.dll" todir="${InstallRoot}" />
 <copy file="${BinRoot}/mmgr_dal_Marzhauser.dll" todir="${InstallRoot}" />
 <copy file="${BinRoot}/mmgr_dal_Neos.dll" todir="${InstallRoot}" />
 <copy file="${BinRoot}/mmgr_dal_Nikon.dll" todir="${InstallRoot}" />

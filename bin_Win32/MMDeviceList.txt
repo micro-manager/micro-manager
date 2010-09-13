@@ -1,6 +1,8 @@
+AAAOTF,AAAOTF,AAAOTF,3
 ABSCamera,ABSCam,No ABS camera device connected!,2
 Andor,Andor,Generic Andor Camera Adapter,2
 AndorLaserCombiner,AndorLaserCombiner,AndorLaserCombiner,3
+AndorLaserCombiner,PiezoStage,PiezoStage,5
 AOTF,AOTF-Switch,TLL digital out AOTF wavelength selector,4
 AOTF,AOTF-Shutter,TTL digital out AOTF shutter,3
 Apogee,ApogeeCamera,Apogee Alta camera adapter,2
@@ -8,7 +10,7 @@ Arduino,Arduino-Hub,Hub,8
 Arduino,Arduino-Switch,Switch,4
 Arduino,Arduino-Shutter,Shutter,3
 Arduino,Arduino-DAC,DA,13
-Arduino,Arduino-Input,Input,1
+Arduino,Arduino-Input,Input,8
 ASIFW1000,ASIFWController,ASIFW1000 Controller,8
 ASIFW1000,ASIFilterWheel,ASI FilterWheel,4
 ASIFW1000,ASIShutter,ASI Shutter,3
@@ -21,6 +23,7 @@ BaumerOptronic,BaumerOptronic,Baumer Optronic driver for Leica Cameras,2
 CoherentCube,CoherentCube,CoherentCube Laser,3
 Conix,ConixQuadFilter,External Filter Cube Switcher,4
 Conix,ConixXYStage,Conix XY stage,6
+Conix,ConixZStage,Conix Z stage,5
 Corvus,ITK Corvus Controller,ITK Corvus Controller,8
 Corvus,XY Stage,XY Stage,6
 Corvus,Z Axis,Z Axis,5
@@ -40,8 +43,6 @@ DemoCamera,DAutoFocus,Demo auto focus,9
 DemoCamera,DShutter,Demo shutter,3
 DemoCamera,D-DA,Demo DA,13
 DemoCamera,DOptovar,Demo Optovar,14
-DemoRGBCamera,DRGBCam,Demo streaming camera,2
-DemoRGBCamera,RGBSignalGenerator,Demo signal generator: real-time signal output,11
 DemoStreamingCamera,DStreamCam,Demo streaming camera,2
 DemoStreamingCamera,DNoiseProcessor,Demo processor: adds noise to images in real time,11
 DemoStreamingCamera,DSignalGenerator,Demo signal generator: real-time signal output,11
@@ -191,6 +192,8 @@ QCam,QCamera,QImaging universal camera adapter,2
 ScionCam,ScionCam,Scion 1394 Camera,2
 Sensicam,Sensicam,PCO Sensicam camera adapter,2
 SimpleAutofocus,SimpleAutofocus,SimpleAutofocus Finder,9
+SimpleAutofocus,FocusMonitor,Focus score monitor - 100XImaging Inc.,11
+SimpleAutofocus,TPFocus,Three point focus - 100XImaging Inc.,9
 SpectralLMM5,LMM5-Hub,Description N/A,8
 SpectralLMM5,LMM5-Shutter,Description N/A,3
 SpotCamera,Spot,SpotCam,2
