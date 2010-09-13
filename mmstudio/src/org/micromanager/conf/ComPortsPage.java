@@ -192,8 +192,11 @@ public class ComPortsPage extends PagePanel {
             ArrayList<String> ds = portUse.get(ports[i].getAdapterName());
             String value = ports[i].getAdapterName();
             if (null != ds) {
+               // if any devices use this serial port, put that name on the button rather than the serial port name
+               value = "";
                for (String s : ds) {
-                  value += " ";
+                  if( ! value.isEmpty())
+                     value += " ";
                   value += s;
                }
             }
