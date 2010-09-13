@@ -6,6 +6,7 @@ import ij.plugin.*;
 import ij.plugin.frame.*;
 import ij.plugin.filter.MaximumFinder;
 import ij.ImagePlus;
+import ij.text.*;
 import ij.process.ImageProcessor;
 import ij.IJ;
 import ij.measure.ResultsTable;
@@ -20,6 +21,11 @@ import org.apache.commons.math.optimization.SimpleScalarValueChecker;
 
 
 import java.util.Vector;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.KeyEvent;
 import java.awt.*;
 import java.lang.Math;
 
@@ -38,31 +44,25 @@ public class GaussianFitStack_ implements PlugIn {
 	}
 
    public class GaussianResidual implements MultivariateRealFunction {
-       short[] data_;
-       int nx_;
-       int ny_;
-       int count_ = 0;
+      short[] data_;
+      int nx_;
+      int ny_;
+      int count_ = 0;
 
 
-       public void setImage(short[] data, int width, int height) {
-          data_ = data;
-          nx_ = width;
-          ny_ = height;
-       }
+      public void setImage(short[] data, int width, int height) {
+         data_ = data;
+         nx_ = width;
+         ny_ = height;
+      }
 
-       public double value(double[] params) {
-          double residual = 0.0;
-          for (int i = 0; i < nx_; i++) {
-             for (int j = 0; j < ny_; j++) {
-                residual += sqr(gaussian(params, i, j) - data_[(j*nx_) + i]);
-             }
-          }
-   /*
-         for (int i=0; i< params.length; i++)
-                  print(" " + paramNames_[i] + ": " + params[i]);
-
-         print("Residual: " + residual);
-   */
+      public double value(double[] params) {
+         double residual = 0.0;
+         for (int i = 0; i < nx_; i++) {
+            for (int j = 0; j < ny_; j++) {
+               residual += sqr(gaussian(params, i, j) - data_[(j*nx_) + i]);
+            }
+         }
          return residual;
       }
 
@@ -176,6 +176,70 @@ public class GaussianFitStack_ implements PlugIn {
    }
 
 
+   /**
+    * KeyListener and MouseListenerclass for ResultsTable
+    * When user selected a line in the ResulsTable and presses a key,
+    * the corresponding image will move to the correct slice and draw the ROI
+    * that was used to calculate the Gaussian fit
+    * Works only in conjunction with appropriate column names
+    * Up and down keys also work as expected
+    */
+   public class MyK implements KeyListener, MouseListener{
+      ImagePlus siPlus_;
+      ResultsTable res_;
+      TextWindow win_;
+      TextPanel tp_;
+      int hBS_;
+      public MyK(ImagePlus siPlus, ResultsTable res, TextWindow win, int halfBoxSize) {
+         siPlus_ = siPlus;
+         res_ = res;
+         win_ = win;
+         tp_ = win.getTextPanel();
+         hBS_ = halfBoxSize;
+      }
+      public void keyPressed(KeyEvent e) {
+         int key = e.getKeyCode();
+         int row = tp_.getSelectionStart();
+         if (key == KeyEvent.VK_DOWN) {
+            if (row > 0) {
+               row--;
+               tp_.setSelection(row, row);
+            }
+         } else if (key == KeyEvent.VK_UP) {
+            if  (row < tp_.getLineCount() - 1) {
+               row++;
+               tp_.setSelection(row, row);
+            }
+         }
+         update();
+      }
+      public void keyReleased(KeyEvent e) {}
+      public void keyTyped(KeyEvent e) {}
+
+      public void mouseReleased(MouseEvent e) {
+         update();
+      }
+      public void mousePressed(MouseEvent e) {}
+      public void mouseClicked(MouseEvent e) {}
+      public void mouseEntered(MouseEvent e) {};
+      public void mouseExited(MouseEvent e) {};
+      private void update() {
+         int row = tp_.getSelectionStart();
+         if (row >= 0 && row < tp_.getLineCount()) {
+            if (siPlus_ != IJ.getImage()) {
+               siPlus_.getWindow().toFront();
+               win_.toFront();
+
+            }
+            int frame = (int) res_.getValue("Frame", row);
+            int x = (int)res_.getValue("X", row);
+            int y = (int) res_.getValue("Y", row);
+            siPlus_.setSlice(frame);
+            siPlus_.setRoi(new Roi(x - hBS_ , y - hBS_, 2 * hBS_, 2 * hBS_));
+         }
+      }
+   }
+
 	public void run(String arg) {
 
 		gs_ = new GaussianResidual();
@@ -186,7 +250,7 @@ public class GaussianFitStack_ implements PlugIn {
       Vector<Vector<SpotPoint>> spotList = new Vector<Vector<SpotPoint>>();
       Vector<SpotPoint> frameSpotList;
 
-      // for now, take the active ImageJ image
+      // take the active ImageJ image
 		ImagePlus siPlus = IJ.getImage();
 
 		long startTime = System.nanoTime();
@@ -245,7 +309,19 @@ public class GaussianFitStack_ implements PlugIn {
          }
          i++;
       }
-      rt.show("Gaussian Fit Result");
+      String rtTitle = "Gaussian Fit Result for " + siPlus.getWindow().getTitle();
+      rt.show(rtTitle);
+      // Attach listener to TextPanel
+      TextPanel tp;
+      Frame frame = WindowManager.getFrame(rtTitle);
+      TextWindow win;
+      if (frame!=null && frame instanceof TextWindow) {
+         win = (TextWindow)frame;
+         tp = win.getTextPanel();
+         MyK myk = new MyK(siPlus, rt, win, halfSize);
+         tp.addKeyListener(myk);
+         tp.addMouseListener(myk);
+      }
 
 		long endTime = System.nanoTime(); 
 		double took = (endTime - startTime) / 1E6;
