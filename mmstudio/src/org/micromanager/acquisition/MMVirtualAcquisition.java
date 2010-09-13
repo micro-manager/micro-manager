@@ -1,6 +1,8 @@
 package org.micromanager.acquisition;
 
 import java.awt.event.AdjustmentEvent;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.micromanager.api.AcquisitionInterface;
 import org.micromanager.api.TaggedImageStorage;
 import ij.CompositeImage;
@@ -19,6 +21,7 @@ import java.awt.event.WindowListener;
 import java.awt.event.WindowStateListener;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import javax.swing.JFileChooser;
@@ -51,9 +54,8 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
    private boolean initialized_;
    private ImagePlus hyperImage_;
    private Map<String,String>[] displaySettings_;
-   private AcquisitionVirtualStack virtualStack_;
+   private ArrayList<AcquisitionVirtualStack> virtualStacks_;
    private String pixelType_;
-   private TaggedImageStorage imageFileManager_ = null;
    private Map<String,String> summaryMetadata_ = null;
    private boolean newData_;
    private Map<String,String> systemMetadata_ = null;
@@ -63,6 +65,8 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
    private HyperstackControls hc_;
    private String status_ = "";
    private ScrollbarWithLabel pSelector;
+   private boolean multiPosition_ = false;
+   private int numPositions_;
 
    MMVirtualAcquisition(String name, String dir, boolean newData, boolean virtual) {
       name_ = name;
@@ -71,7 +75,7 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       diskCached_ = virtual;
    }
 
-   public void setDimensions(int frames, int channels, int slices) throws MMScriptException {
+   public void setDimensions(int frames, int channels, int slices, int positions) throws MMScriptException {
       if (initialized_) {
          throw new MMScriptException("Can't change dimensions - the acquisition is already initialized");
       }
@@ -81,6 +85,7 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       numFrames_ = frames;
       numChannels_ = channels;
       numSlices_ = slices;
+      numPositions_ = Math.max(positions,1);
       displaySettings_ = new Map[channels];
       for (int i = 0; i < channels; ++i) {
          displaySettings_[i] = new HashMap<String,String>();
@@ -150,8 +155,8 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
    public void close() {
       //compositeImage_.hide();
       initialized_ = false;
-      if (imageFileManager_ != null)
-         imageFileManager_.finished();
+      if (imageCache_ != null)
+         imageCache_.finished();
    }
 
    public void closeImage5D() {
@@ -175,15 +180,9 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
    }
 
    public void initialize() throws MMScriptException {
-      if (diskCached_)
-         imageFileManager_ = new TaggedImageStorageDiskDefault(dir_, newData_,
-                 summaryMetadata_);
-      else
-         imageFileManager_ = new TaggedImageStorageRam(summaryMetadata_);
-      imageCache_ = new MMImageCache(imageFileManager_);
       if (!newData_) {
          try {
-            summaryMetadata_ = imageFileManager_.getSummaryMetadata();
+            summaryMetadata_ = imageCache_.getSummaryMetadata();
             width_ = MDUtils.getWidth(summaryMetadata_);
             height_ = MDUtils.getHeight(summaryMetadata_);
             pixelType_ = MDUtils.getPixelType(summaryMetadata_);
@@ -197,12 +196,17 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       }
       imageCache_.setSummaryMetadata(summaryMetadata_);
       numGrayChannels_ = numComponents_ * numChannels_;
-      virtualStack_ = new AcquisitionVirtualStack(width_, height_, null,
-              imageCache_, numGrayChannels_ * numSlices_ * numFrames_);
-      try {
-         virtualStack_.setType(MDUtils.getSingleChannelType(summaryMetadata_));
-      } catch (Exception ex) {
-         ReportingUtils.logError(ex);
+      AcquisitionVirtualStack virtualStack;
+      virtualStacks_ = new ArrayList<AcquisitionVirtualStack>();
+      for (int pos=0;pos<numPositions_;++pos) {
+         virtualStack = new AcquisitionVirtualStack(width_, height_, null, 
+                 imageCache_, numGrayChannels_ * numSlices_ * numFrames_, pos);
+         try {
+            virtualStack.setType(MDUtils.getSingleChannelType(summaryMetadata_));
+            virtualStacks_.add(virtualStack);
+         } catch (Exception ex) {
+            ReportingUtils.logError(ex);
+         }
       }
       initialized_ = true;
    }
@@ -210,6 +214,16 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
    public void insertImage(Object pixels, int frame, int channel, int slice)
            throws MMScriptException {
       throw new UnsupportedOperationException("Not supported yet.");
+   }
+
+   private int getPositionIndex(TaggedImage taggedImg) throws Exception {
+      int pos;
+      if (numPositions_ > 1) {
+         pos = MDUtils.getPositionIndex(taggedImg.tags);
+      } else {
+         pos = 0;
+      }
+      return pos;
    }
 
    private void updateWindow() {
@@ -240,57 +254,67 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
 
    public void insertImage(TaggedImage taggedImg) throws MMScriptException {
 
-      virtualStack_.insertImage(taggedImg);
-
-      if (hyperImage_ == null) {
-         show();
-      }
-
-      updateWindow();
-      Map<String,String> md = taggedImg.tags;
-      
-      if (numChannels_ > 1) {
-         ((CompositeImage) hyperImage_).setChannelsUpdated();
-      }
-
-      if (hyperImage_.getFrame() == 1) {
-         int middleSlice = 1 + hyperImage_.getNSlices() / 2;
-
-         try {
-            ImageStatistics stat = hyperImage_.getStatistics();
-            if (MDUtils.isRGB(taggedImg)) {
-               for (int i=1;i<=numGrayChannels_;++i) {
-                  (hyperImage_).setPosition(i,MDUtils.getFrameIndex(taggedImg.tags), MDUtils.getFrameIndex(taggedImg.tags));
-                  hyperImage_.setDisplayRange(stat.min,stat.max);
-                  hyperImage_.updateAndDraw();
-               }
-            } else {
+      try {
+         int pos = getPositionIndex(taggedImg);
+         virtualStacks_.get(pos).insertImage(taggedImg);
+         if (hyperImage_ == null) {
+            show(pos);
+         }
+         updateWindow();
+         Map<String, String> md = taggedImg.tags;
+         if (numChannels_ > 1) {
+            ((CompositeImage) hyperImage_).setChannelsUpdated();
+         }
+         if (hyperImage_.getFrame() == 1) {
+            int middleSlice = 1 + hyperImage_.getNSlices() / 2;
+            try {
+               ImageStatistics stat = hyperImage_.getStatistics();
+               if (MDUtils.isRGB(taggedImg)) {
+                  for (int i = 1; i <= numGrayChannels_; ++i) {
+                     (hyperImage_).setPosition(i, MDUtils.getFrameIndex(taggedImg.tags), MDUtils.getFrameIndex(taggedImg.tags));
+                     hyperImage_.setDisplayRange(stat.min, stat.max);
+                     hyperImage_.updateAndDraw();
+                  }
+               } else {
                   double min = hyperImage_.getDisplayRangeMin();
                   double max = hyperImage_.getDisplayRangeMax();
                   if (hyperImage_.getSlice() == 0) {
                      min = Double.MAX_VALUE;
                      max = Double.MAX_VALUE;
                   }
-               hyperImage_.setDisplayRange(Math.min(min,stat.min), Math.max(max,stat.max));
-               hyperImage_.updateAndDraw();
+                  hyperImage_.setDisplayRange(Math.min(min, stat.min), Math.max(max, stat.max));
+                  hyperImage_.updateAndDraw();
+               }
+            } catch (Exception ex) {
+               ReportingUtils.showError(ex);
             }
-         } catch (Exception ex) {
-            ReportingUtils.showError(ex);
          }
-         
-      }
-
-      try {
-        // if ((hyperImage_.getFrame() - 1) > (MDUtils.getFrame(md) - 2)) {
+         try {
+            // if ((hyperImage_.getFrame() - 1) > (MDUtils.getFrame(md) - 2)) {
+            
+            pSelector.setValue(1 + pos);
             hyperImage_.setPosition(1 + MDUtils.getChannelIndex(md), 1 + MDUtils.getSliceIndex(md), 1 + MDUtils.getFrameIndex(md));
-       //  }
-      } catch (Exception e) {
-         ReportingUtils.logError(e);
+            //  }
+         } catch (Exception e) {
+            ReportingUtils.logError(e);
+         }
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
       }
    }
 
    public void setPosition(int p) {
+      System.out.println("setPosition("+p+")");
+      double min = hyperImage_.getDisplayRangeMin();
+      double max = hyperImage_.getDisplayRangeMax();
       System.out.println("position chosen: " + p);
+      hyperImage_.setStack(virtualStacks_.get(p-1));
+      hyperImage_.setDisplayRange(min, max);
+      virtualStacks_.get(p-1).setImagePlus(hyperImage_);
+      if (numChannels_ > 1) {
+         ((CompositeImage) hyperImage_).setChannelsUpdated();
+      }
+      hyperImage_.updateAndDraw();
    }
 
    boolean pause() {
@@ -358,7 +382,6 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       TaggedImageStorageDiskDefault newFileManager = new TaggedImageStorageDiskDefault(root + "/" + prefix, true,
                  summaryMetadata_);
       imageCache_.saveAs(newFileManager);
-      imageFileManager_ = newFileManager;
       diskCached_ = true;
       dir_ = root + "/" + prefix;
       name_ = prefix;
@@ -368,9 +391,11 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
    }
 
 
-   public void show() {
-      ImagePlus imgp = new MMImagePlus(dir_, virtualStack_);
-      virtualStack_.setImagePlus(imgp);
+   public void show(int position) {
+      ImagePlus imgp = new MMImagePlus(dir_, virtualStacks_.get(position));
+      for (AcquisitionVirtualStack virtualStack:virtualStacks_) {
+         virtualStack.setImagePlus(imgp);
+      }
       imgp.setDimensions(numGrayChannels_, numSlices_, numFrames_);
       if (numGrayChannels_ > 1) {
          hyperImage_ = new CompositeImage(imgp, CompositeImage.COMPOSITE);
@@ -382,8 +407,11 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
          updateChannelColors();
       hyperImage_.show();
       final ImageWindow win = hyperImage_.getWindow();
-      ScrollbarWithLabel pSelector = createPositionScrollbar(10);
-      win.add(pSelector);
+
+      ScrollbarWithLabel pSelector = createPositionScrollbar(numPositions_);
+      if (numPositions_ > 1) {
+         win.add(pSelector);
+      }
       hc_ = new HyperstackControls(this, win);
       win.add(hc_);
       ImagePlus.addImageListener(hc_);
@@ -411,8 +439,7 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
                      return;
             }
             imageCache_ = null;
-            virtualStack_ = null;
-            imageFileManager_ = null;
+            virtualStacks_ = null;
             win.close();
             hyperImage_ = null;
          }
@@ -428,7 +455,12 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
    }
 
    public ScrollbarWithLabel createPositionScrollbar(int nPositions) {
-			pSelector = new ScrollbarWithLabel(null, 1, 1, 1, nPositions+1, 'p');
+			pSelector = new ScrollbarWithLabel(null, 1, 1, 1, nPositions+1, 'p') {
+            public void setValue(int v) {
+               super.setValue(v);
+               setPosition(v);
+            }
+         };
 			//if (ij!=null) cSelector.addKeyListener(ij);
 			pSelector.setFocusable(false); // prevents scroll bar from blinking on Windows
 			pSelector.setUnitIncrement(1);
@@ -457,7 +489,8 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
 
    public Map<String,String> getCurrentMetadata() {
       int index = getCurrentFlatIndex();
-      return virtualStack_.getTaggedImage(index).tags;
+      int posIndex = pSelector.getValue() - 1;
+      return virtualStacks_.get(posIndex).getTaggedImage(index).tags;
    }
 
    private int getCurrentFlatIndex() {
@@ -547,6 +580,10 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
 
    double getPlaybackFPS() {
       return Animator.getFrameRate();
+   }
+
+   public void setCache(MMImageCache imageCache) {
+      imageCache_ = imageCache;
    }
 
 }

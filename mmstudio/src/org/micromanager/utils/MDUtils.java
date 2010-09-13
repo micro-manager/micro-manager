@@ -235,29 +235,31 @@ public class MDUtils {
       try {
          return generateLabel(getChannelIndex(md),
                               getSliceIndex(md),
-                              getFrameIndex(md));
+                              getFrameIndex(md),
+                              getPositionIndex(md));
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
          return null;
       }
    }
 
-   public static String generateLabel(int channel, int slice, int frame) {
+   public static String generateLabel(int channel, int slice, int frame, int position) {
       return NumberUtils.intToCoreString(channel) + "_"
              + NumberUtils.intToCoreString(slice) + "_"
-             + NumberUtils.intToCoreString(frame);
+             + NumberUtils.intToCoreString(frame) + "_"
+             + NumberUtils.intToCoreString(position);
    }
 
    public static int[] getIndices(String label) {
       try {
-         int[] indice = new int[3];
+         int[] indices = new int[4];
          String[] chunks = label.split("_");
          int i = 0;
          for (String chunk : chunks) {
-            indice[i] = NumberUtils.coreStringToInt(chunk);
+            indices[i] = NumberUtils.coreStringToInt(chunk);
             ++i;
          }
-         return indice;
+         return indices;
       } catch (Exception e) {
          ReportingUtils.logError(e);
          return null;

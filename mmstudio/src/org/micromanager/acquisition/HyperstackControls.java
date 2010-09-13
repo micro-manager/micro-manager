@@ -293,13 +293,14 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
       if (imp == win_.getImagePlus()) {
          ImageStack stack = imp.getStack();
          if (stack instanceof AcquisitionVirtualStack) {
+            System.out.println(imp.getStack().hashCode());
             AcquisitionVirtualStack vstack = (AcquisitionVirtualStack) imp.getStack();
             int slice = imp.getCurrentSlice();
             final TaggedImage taggedImg = vstack.getTaggedImage(slice);
             updateStatusLine(taggedImg);
             try {
                if (acq_.acquisitionIsRunning()) {
-                  if (taggedImg.tags.containsKey("Acquisition-NextFrameTimeMs"))  {
+                  if (taggedImg != null && taggedImg.tags.containsKey("Acquisition-NextFrameTimeMs"))  {
                      final long nextImageTime = MDUtils.getLong(taggedImg.tags, "Acquisition-NextFrameTimeMs");
                      if (System.nanoTime() / 1000000 < nextImageTime) {
                         final Timer timer = new Timer();

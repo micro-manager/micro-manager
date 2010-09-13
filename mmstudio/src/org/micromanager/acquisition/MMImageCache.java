@@ -95,7 +95,7 @@ public class MMImageCache implements TaggedImageStorage {
       for (String label : coll_.getLabels(this)) {
          int pos[] = MDUtils.getIndices(label);
          try {
-            newImageFileManager.putImage(getImage(pos[0], pos[1], pos[2]));
+            newImageFileManager.putImage(getImage(pos[0], pos[1], pos[2], pos[3]));
          } catch (MMException ex) {
             ReportingUtils.logError(ex);
          }
@@ -116,11 +116,11 @@ public class MMImageCache implements TaggedImageStorage {
       }
    }
 
-   public TaggedImage getImage(int channel, int slice, int frame) {
-      String label = MDUtils.generateLabel(channel, slice, frame);
+   public TaggedImage getImage(int channel, int slice, int frame, int position) {
+      String label = MDUtils.generateLabel(channel, slice, frame, position);
       TaggedImage taggedImg = coll_.get(this, label);
       if (taggedImg == null) {
-         taggedImg = imageFileManager_.getImage(channel, slice, frame);
+         taggedImg = imageFileManager_.getImage(channel, slice, frame, position);
          if (taggedImg != null) {
             checkForChangingTags(taggedImg);
          }

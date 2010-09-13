@@ -30,6 +30,7 @@ import java.util.Map;
 
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
+import org.micromanager.acquisition.MMImageCache;
 
 import org.micromanager.metadata.WellAcquisitionData;
 import org.micromanager.navigation.PositionList;
@@ -76,13 +77,26 @@ public interface ScriptInterface {
     * @throws MMScriptException 
     */
    public void openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices) throws MMScriptException;
-   
+
+   /**
+    * Opens a new acquisition context with explicit image physical parameters.
+    * This command will determine the recorded date and time of the acquisition.
+    * All relative (elapsed) time stamps will be determined with respect to this time.
+    * @throws MMScriptException
+    */
+   public void openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices, int nrPositions) throws MMScriptException;
+
+
    /**
     * Opens a new acquisition context with explicit image physical parameters.
     * Makes it possible to run acquisition without displaying a window
     * @throws MMScriptException 
     */
-   
+
+   public void openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices, int nrPositions, boolean show) throws MMScriptException;
+
+   public void openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices, int nrPositions, boolean show, boolean virtual) throws MMScriptException;
+
    public void openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices, boolean show) throws MMScriptException;
 
    public void openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices, boolean show, boolean virtual) throws MMScriptException;
@@ -442,5 +456,7 @@ public interface ScriptInterface {
    public void setAcquisitionEngine(String acqName, AcquisitionEngine eng);
 
    public boolean displayImage(Object pix);
+
+   public void setAcquisitionCache(String acqName, MMImageCache imageCache);
 
 }

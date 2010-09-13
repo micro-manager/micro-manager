@@ -4,6 +4,8 @@
  */
 package org.micromanager.acquisition;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.micromanager.api.TaggedImageStorage;
 import ij.CompositeImage;
 import ij.ImagePlus;
@@ -73,6 +75,16 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       Map<String, String> md = taggedImg.tags;
       Object img = taggedImg.pix;
       String tiffFileName = createFileName(md);
+      String posName;
+      try {
+         posName = MDUtils.getPositionName(md);
+         JavaUtils.createDirectory(dir_ + "/" + posName);
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
+         posName = "null";
+      }
+
+      tiffFileName = posName + "/" + tiffFileName;
       MDUtils.setFileName(md, tiffFileName);
       saveImageFile(img, md, dir_, tiffFileName);
       writeFrameMetadata(md, tiffFileName);
@@ -81,8 +93,8 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       return MDUtils.getLabel(md);
    }
 
-   public TaggedImage getImage(int channel, int slice, int frame) {
-      String label = MDUtils.generateLabel(channel, slice, frame);
+   public TaggedImage getImage(int channel, int slice, int frame, int position) {
+      String label = MDUtils.generateLabel(channel, slice, frame, position);
       ImagePlus imp = new Opener().openImage(dir_ + "/" + filenameTable_.get(label));
       if (imp != null) {
          try {

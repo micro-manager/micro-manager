@@ -17,6 +17,7 @@ import mmcorej.TaggedImage;
 import org.micromanager.acquisition.engine.SequenceSettings;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.ScriptInterface;
+import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.utils.ChannelSpec;
 import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MDUtils;
@@ -42,8 +43,8 @@ public class AcquisitionDisplayThread extends Thread {
    private ArrayList<String> acqNames_ = new ArrayList<String>();
    private TaggedImageQueue imageProducingQueue_;
    private boolean singleWindow_;
+   private MMImageCache imageCache_ = null;
 
-   
    AcquisitionDisplayThread(ScriptInterface gui, CMMCore core,
            TaggedImageQueue imageProducingQueue, SequenceSettings acqSettings,
            ArrayList<ChannelSpec> channels, boolean diskCached, AcquisitionEngine eng,
@@ -60,58 +61,57 @@ public class AcquisitionDisplayThread extends Thread {
       int nChannels = Math.max(1, (int) acqSettings.channels.size());
       int nSlices = Math.max(1, (int) acqSettings.slices.size());
       boolean usingChannels = acqSettings.channels.size() > 0;
-      if (!singleWindow_) {
-         String acqPath;
-         try {
-            if (diskCached_) {
-               acqPath = createAcqPath(acqSettings.root, acqSettings.prefix);
-            } else {
-               acqPath = getUniqueUntitledName();
-            }
-            String posName;
-            for (int posIndex = 0; posIndex < nPositions; ++posIndex) {
-               posName = getPosName(posIndex);
-               String fullPath = createPositionPath(acqPath, posName);
-               String acqName = fullPath + "/" + posName;
-               acqNames_.add(acqName);
-               gui_.openAcquisition(acqName, fullPath, nTimes, nChannels, nSlices, true, diskCached_);
-               gui_.setAcquisitionEngine(acqName, eng);
-               if (usingChannels) {
-                  for (int i = 0; i < channels.size(); ++i) {
-                     gui_.setChannelColor(acqName, i, channels.get(i).color_);
-                     gui_.setChannelName(acqName, i, channels.get(i).config_);
-                  }
-               }
-
-               Configuration configuration = core_.getSystemState();
-               Map<String, String> systemMetadata = new HashMap<String, String>();
-               for (long i = 0; i < configuration.size(); ++i) {
-                  try {
-                     PropertySetting setting = configuration.getSetting(i);
-                     systemMetadata.put(setting.getDeviceLabel() + "-"
-                             + setting.getPropertyName(), setting.getPropertyValue());
-                  } catch (Exception ex) {
-                     ReportingUtils.logError(ex);
-                  }
-               }
-
-               gui_.setAcquisitionSystemState(acqName, systemMetadata);
-               gui_.setAcquisitionSummary(acqName, makeMetadataFromAcqSettings(acqSettings));
-               gui_.initializeAcquisition(acqName, (int) core_.getImageWidth(), (int) core_.getImageHeight(), (int) core_.getBytesPerPixel());
-            }
-         } catch (Exception ex) {
-            ReportingUtils.logError(ex);
+      String acqPath;
+      try {
+         if (diskCached_) {
+            acqPath = createAcqPath(acqSettings.root, acqSettings.prefix);
+         } else {
+            acqPath = getUniqueUntitledName();
          }
+         String posName;
+         
+        // for (int posIndex = 0; posIndex < nPositions; ++posIndex) {
+            posName = getPosName(0);
+            String fullPath = createPositionPath(acqPath, "");
+            String acqName = fullPath + "/" + "";
+            acqNames_.add(acqName);
+            gui_.openAcquisition(acqName, fullPath, nTimes, nChannels, nSlices, nPositions, true, diskCached_);
+            gui_.setAcquisitionEngine(acqName, eng);
+            if (usingChannels) {
+               for (int i = 0; i < channels.size(); ++i) {
+                  gui_.setChannelColor(acqName, i, channels.get(i).color_);
+                  gui_.setChannelName(acqName, i, channels.get(i).config_);
+               }
+            }
+
+            Map<String, String> summaryMetadata = makeMetadataFromAcqSettings(acqSettings);
+            TaggedImageStorage imageFileManager;
+            if (diskCached_) {
+               imageFileManager = new TaggedImageStorageDiskDefault(acqName, true, summaryMetadata);
+            } else {
+               imageFileManager = new TaggedImageStorageRam(summaryMetadata);
+            }
+            imageCache_ = new MMImageCache(imageFileManager);
+            gui_.setAcquisitionCache(acqName, imageCache_);
+            //gui_.setAcquisitionSummary(acqName, summaryMetadata);
+            gui_.initializeAcquisition(acqName, (int) core_.getImageWidth(), (int) core_.getImageHeight(), (int) core_.getBytesPerPixel());
+         //}
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
       }
+
    }
 
    private Map<String,String> makeMetadataFromAcqSettings(SequenceSettings acqSettings) {
       Map md = Collections.synchronizedMap(new HashMap<String, String>());
-      //md.put("Acquisition-KeepShutterOpenChannels",acqSettings.keepShutterOpenChannels);
-      //md.put("Acquisition-KeepShutterOpenSlices", acqSettings.keepShutterOpenSlices);
-      //md.put("Acquisition-IntervalMs", acqSettings.intervalMs);
-      //md.put("Acquisition-SlicesFirst", acqSettings.slicesFirst + "");
-      //md.put("Acquisition-TimeFirst", acqSettings.timeFirst + "");
+      md.put("Acquisition-KeepShutterOpenChannels",acqSettings.keepShutterOpenChannels + "");
+      md.put("Acquisition-KeepShutterOpenSlices", acqSettings.keepShutterOpenSlices + "");
+      MDUtils.put(md,"Acquisition-IntervalMs", acqSettings.intervalMs);
+      md.put("Acquisition-SlicesFirst", acqSettings.slicesFirst + "");
+      md.put("Acquisition-TimeFirst", acqSettings.timeFirst + "");
+      MDUtils.put(md,"Acquisition-NSlices",acqSettings.slices.size());
+      MDUtils.put(md,"Acquisition-NFrames",acqSettings.numFrames);
+      MDUtils.put(md,"Acquisition-NChannels",acqSettings.channels.size());
       return md;
    }
 
@@ -160,13 +160,15 @@ public class AcquisitionDisplayThread extends Thread {
    private void displayImage(TaggedImage taggedImg) {
 
       if (singleWindow_) {
-         if (taggedImg.pix != null)
+         if (taggedImg.pix != null) {
             gui_.displayImage(taggedImg.pix);
+            imageCache_.putImage(taggedImg);
+         }
       }  else {
          Map<String, String> m = taggedImg.tags;
          try {
             int posIndex = MDUtils.getPositionIndex(m);
-            gui_.addImage(acqNames_.get(posIndex), taggedImg);
+            gui_.addImage(acqNames_.get(0), taggedImg);
          } catch (Exception e) {
             ReportingUtils.logError(e);
          }

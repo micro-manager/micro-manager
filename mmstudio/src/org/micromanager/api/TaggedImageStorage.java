@@ -14,7 +14,8 @@ import org.micromanager.utils.MMException;
  * @author arthur
  */
 public interface TaggedImageStorage {
-   public TaggedImage getImage(int channelIndex, int sliceIndex, int frameIndex);
+   public TaggedImage getImage(int channelIndex, int sliceIndex,
+                               int frameIndex, int positionIndex);
    public String putImage(TaggedImage taggedImage) throws MMException;
    public void finished();
    public void setSummaryMetadata(Map<String,String> md);

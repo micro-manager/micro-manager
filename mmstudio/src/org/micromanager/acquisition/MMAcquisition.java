@@ -355,5 +355,13 @@ public class MMAcquisition implements AcquisitionInterface {
       throw new UnsupportedOperationException("Not supported yet.");
    }
 
+   public void setCache(MMImageCache imageCache) {
+      throw new UnsupportedOperationException("Not supported yet.");
+   }
+
+   public void setDimensions(int frames, int channels, int slices, int positions) throws MMScriptException {
+      throw new UnsupportedOperationException("Not supported yet.");
+   }
+
 }
 

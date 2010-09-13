@@ -8,6 +8,7 @@ package org.micromanager.api;
 import java.util.Map;
 import mmcorej.TaggedImage;
 import org.json.JSONObject;
+import org.micromanager.acquisition.MMImageCache;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.metadata.AcquisitionData;
 import org.micromanager.utils.MMScriptException;
@@ -60,7 +61,7 @@ public interface AcquisitionInterface {
 
    void setContrastBasedOnFrame(int frame, int slice) throws MMScriptException;
 
-   void setDimensions(int frames, int channels, int slices) throws MMScriptException;
+   void setDimensions(int frames, int channels, int slices, int positions) throws MMScriptException;
 
    void setImagePhysicalDimensions(int width, int height, int depth) throws MMScriptException;
 
@@ -79,5 +80,7 @@ public interface AcquisitionInterface {
    boolean windowClosed();
 
    public void setEngine(AcquisitionEngine eng);
+
+   public void setCache(MMImageCache imageCache);
 
 }

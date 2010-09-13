@@ -23,7 +23,7 @@ public class AcquisitionManager {
          MMVirtualAcquisition virtAcq = new MMVirtualAcquisition(name, rootDir, false, true);
          acqs_.put(name, virtAcq);
          virtAcq.initialize();
-             virtAcq.show();
+             virtAcq.show(0);
       }
    }
 
@@ -96,6 +96,10 @@ public class AcquisitionManager {
          e.nextElement().close();
       
       acqs_.clear();
+   }
+
+   public void setAcquisitionCache(String acqName, MMImageCache imageCache) {
+      acqs_.get(acqName).setCache(imageCache);
    }
 
 }

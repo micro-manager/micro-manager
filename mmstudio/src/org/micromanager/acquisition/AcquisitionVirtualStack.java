@@ -27,14 +27,16 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
    protected int width_, height_, type_;
    private int nSlices_;
    private ImagePlus imagePlus_;
+   private final int positionIndex_;
 
-   public AcquisitionVirtualStack(int width, int height, ColorModel cm, MMImageCache imageCache, int nSlices)
+   public AcquisitionVirtualStack(int width, int height, ColorModel cm, MMImageCache imageCache, int nSlices, int posIndex)
    {
       super(width, height, cm, "");
       imageCache_ = imageCache;
       width_ = width;
       height_ = height;
       nSlices_ = nSlices;
+      positionIndex_ = posIndex;
    }
 
 
@@ -73,7 +75,7 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
    public TaggedImage getTaggedImage(int flatIndex) {
       try {
          int[] pos = imagePlus_.convertIndexToPosition(flatIndex);
-         return imageCache_.getImage(pos[0] - 1, pos[1] - 1, pos[2] - 1); // chan, slice, frame
+         return imageCache_.getImage(pos[0] - 1, pos[1] - 1, pos[2] - 1, positionIndex_); // chan, slice, frame
       } catch (Exception e) {
          return null;
       }

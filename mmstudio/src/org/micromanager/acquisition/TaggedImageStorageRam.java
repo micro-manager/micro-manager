@@ -34,8 +34,8 @@ public class TaggedImageStorageRam implements TaggedImageStorage {
       return label;
    }
 
-   public TaggedImage getImage(int channel, int slice, int frame) {
-      return imageMap_.get(MDUtils.generateLabel(channel, slice, frame));
+   public TaggedImage getImage(int channel, int slice, int frame, int position) {
+      return imageMap_.get(MDUtils.generateLabel(channel, slice, frame, position));
    }
 
    public void finished() {

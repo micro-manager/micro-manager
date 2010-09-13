@@ -77,7 +77,8 @@ public class OldImageFileManager implements TaggedImageStorage {
       throw new UnsupportedOperationException("Not supported yet.");
    }
 
-   public TaggedImage getImage(int channelIndex, int sliceIndex, int frameIndex) {
+   public TaggedImage getImage(int channelIndex, int sliceIndex,
+                               int frameIndex, int positionIndex) {
       throw new UnsupportedOperationException("Not supported yet.");
    }
 

@@ -79,6 +79,7 @@ import mmcorej.StrVector;
 import org.json.JSONObject;
 import org.micromanager.acquisition.AcquisitionManager;
 import org.micromanager.acquisition.MMAcquisitionSnap;
+import org.micromanager.acquisition.MMImageCache;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.Autofocus;
 import org.micromanager.api.DeviceControlGUI;
@@ -393,6 +394,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    public void updateContrast(ImagePlus iplus) {
       contrastPanel_.updateContrast(iplus);
+   }
+
+   public void setAcquisitionCache(String acqName, MMImageCache imageCache) {
+      this.acqMgr_.setAcquisitionCache(acqName, imageCache);
    }
 
    /**
@@ -3647,31 +3652,49 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
 
    public void openAcquisition(String name, String rootDir, int nrFrames,
-         int nrChannels, int nrSlices) throws MMScriptException {
+         int nrChannels, int nrSlices, int nrPositions) throws MMScriptException {
       acqMgr_.openAcquisition(name, rootDir);
       AcquisitionInterface acq = acqMgr_.getAcquisition(name);
-      acq.setDimensions(nrFrames, nrChannels, nrSlices);
+      acq.setDimensions(nrFrames, nrChannels, nrSlices, nrPositions);
    }
+
+   public void openAcquisition(String name, String rootDir, int nrFrames,
+         int nrChannels, int nrSlices) throws MMScriptException {
+      openAcquisition(name, rootDir, nrFrames, nrChannels, nrSlices, 0);
+   }
+   
+   public void openAcquisition(String name, String rootDir, int nrFrames,
+         int nrChannels, int nrSlices, int nrPositions, boolean show)
+         throws MMScriptException {
+      this.openAcquisition(name, rootDir, nrFrames, nrChannels, nrSlices, nrPositions, show, false);
+   }
+
 
    public void openAcquisition(String name, String rootDir, int nrFrames,
          int nrChannels, int nrSlices, boolean show)
          throws MMScriptException {
-      this.openAcquisition(name, rootDir, nrFrames, nrChannels, nrSlices, show, false);
+      this.openAcquisition(name, rootDir, nrFrames, nrChannels, nrSlices, 0, show, false);
+   }   
+
+   public void openAcquisition(String name, String rootDir, int nrFrames,
+         int nrChannels, int nrSlices, int nrPositions, boolean show, boolean virtual)
+         throws MMScriptException {
+      acqMgr_.openAcquisition(name, rootDir, show, virtual);
+      AcquisitionInterface acq = acqMgr_.getAcquisition(name);
+      acq.setDimensions(nrFrames, nrChannels, nrSlices, nrPositions);
    }
 
    public void openAcquisition(String name, String rootDir, int nrFrames,
          int nrChannels, int nrSlices, boolean show, boolean virtual)
          throws MMScriptException {
-      acqMgr_.openAcquisition(name, rootDir, show, virtual);
-      AcquisitionInterface acq = acqMgr_.getAcquisition(name);
-      acq.setDimensions(nrFrames, nrChannels, nrSlices);
+      this.openAcquisition(name, rootDir, nrFrames, nrChannels, nrSlices, 0, show, virtual);
    }
 
    private void openAcquisitionSnap(String name, String rootDir, boolean show)
          throws MMScriptException {
       AcquisitionInterface acq = acqMgr_.openAcquisitionSnap(name, rootDir, this,
             show);
-      acq.setDimensions(0, 1, 1);
+      acq.setDimensions(0, 1, 1, 1);
       try {
          // acq.getAcqData().setPixelSizeUm(core_.getPixelSizeUm());
          acq.setProperty(SummaryKeys.IMAGE_PIXEL_SIZE_UM, String.valueOf(core_.getPixelSizeUm()));
