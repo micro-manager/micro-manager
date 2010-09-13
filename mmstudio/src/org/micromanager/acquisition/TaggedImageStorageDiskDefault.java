@@ -348,7 +348,8 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
    }
 
    public void setComment(String text) {
-      JavaUtils.writeTextFile(dir_ + "/Comments.txt", text);
+      if (text.length() > 0)
+         JavaUtils.writeTextFile(dir_ + "/Comments.txt", text);
    }
 
    public String getComment() {
