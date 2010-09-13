@@ -1,3 +1,21 @@
+import java.awt.*;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.KeyEvent;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Point2D;
+import java.awt.geom.Point2D.Double;
+import java.awt.FlowLayout;
+import java.awt.Rectangle;
+import java.lang.Math;
+import java.util.Vector;
+
+import javax.swing.JFrame;
+import javax.swing.JMenuBar;
+import javax.swing.JPanel;
+
 import ij.*;
 import ij.gui.*;
 import ij.plugin.*;
@@ -23,16 +41,26 @@ import org.apache.commons.math.optimization.RealPointValuePair;
 import org.apache.commons.math.optimization.GoalType;
 import org.apache.commons.math.optimization.SimpleScalarValueChecker;
 
-import java.lang.Math;
-import java.awt.Rectangle;
-import java.awt.*;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.KeyEvent;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.Point2D;
-import java.awt.geom.Point2D.Double;
-import java.util.Vector;
+// For plotting with JChart2
+import info.monitorenter.gui.chart.Chart2D;
+import info.monitorenter.gui.chart.ZoomableChart;
+import info.monitorenter.gui.chart.controls.LayoutFactory; 
+import info.monitorenter.gui.chart.IAxis.AxisTitle;
+import info.monitorenter.gui.chart.ITrace2D;
+import info.monitorenter.gui.chart.traces.Trace2DSimple;
+import info.monitorenter.gui.chart.views.ChartPanel;
+import info.monitorenter.gui.chart.traces.painters.TracePainterDisc;
+import info.monitorenter.gui.chart.traces.painters.TracePainterLine;
+
+// For plotting with JFreeChart
+/*
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartPanel;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
+*/
 
 
 
@@ -91,8 +119,7 @@ public class GaussianTrack_ implements PlugIn {
          if (params.length < 5) {
                           // Problem, what do we do???
                           //MMScriptException e;
-                          //e.message = "Params for Gaussian function has too few values";
-                          //throw (e);
+                          //e.message = "Params for Gaussian function has too few values"; //throw (e);
          }
 
          double exponent = (sqr(x - params[1])  + sqr(y - params[2])) / (2 * sqr(params[3]));
@@ -155,14 +182,14 @@ public class GaussianTrack_ implements PlugIn {
    }
 
    /**
-    * KeyListener class for ResultsTable
+    * KeyListener and MouseListenerclass for ResultsTable
     * When user selected a line in the ResulsTable and presses a key,
     * the corresponding image will move to the correct slice and draw the ROI
     * that was used to calculate the Gaussian fit
     * Works only in conjunction with appropriate column names
     * Up and down keys also work as expected
     */
-   public class MyK implements KeyListener{
+   public class MyK implements KeyListener, MouseListener{
       ImagePlus siPlus_;
       ResultsTable res_;
       TextWindow win_;
@@ -189,19 +216,34 @@ public class GaussianTrack_ implements PlugIn {
                tp_.setSelection(row, row);
             }
          }
+         update();
+      }
+      public void keyReleased(KeyEvent e) {}
+      public void keyTyped(KeyEvent e) {}
+
+      public void mouseReleased(MouseEvent e) {
+         update();
+      }
+      public void mousePressed(MouseEvent e) {}
+      public void mouseClicked(MouseEvent e) {}
+      public void mouseEntered(MouseEvent e) {};
+      public void mouseExited(MouseEvent e) {};
+      private void update() {
+         int row = tp_.getSelectionStart();
          if (row >= 0 && row < tp_.getLineCount()) {
-            // These two lines ensure that the Image Window is visible, but do cause flicker
-            siPlus_.getWindow().toFront();
-            win_.toFront();
+            if (siPlus_ != IJ.getImage()) {
+               siPlus_.getWindow().toFront();
+               win_.toFront();
+
+            }
             int frame = (int) res_.getValue("Frame", row);
             int x = (int)res_.getValue("XMax", row);
             int y = (int) res_.getValue("YMax", row);
             siPlus_.setSlice(frame);
             siPlus_.setRoi(new Roi(x - hBS_ , y - hBS_, 2 * hBS_, 2 * hBS_));
          }
-     };
-      public void keyReleased(KeyEvent e) {};
-      public void keyTyped(KeyEvent e) {};
+      }
+
    }
 
 
@@ -338,6 +380,7 @@ public class GaussianTrack_ implements PlugIn {
             double x = paramsOut[1] - halfSize + xc;
             double y = paramsOut[2] - halfSize + yc;
             xyPoints.add(new Point2D.Double(x, y));
+            // TOOD: quality control
             boolean report = anormalized > intMin && anormalized < intMax &&  
                               paramsOut[3] > sigmaMin && paramsOut[3] < sigmaMax;
 
@@ -359,23 +402,25 @@ public class GaussianTrack_ implements PlugIn {
          }  
       }
 
-      rt.show("Gaussian Fit Tracking Result:");
+      long endTime = System.nanoTime();
+		double took = (endTime - startTime) / 1E6;
+
+		print("Calculation took: " + took + " milli seconds"); 
+
+      String rtTitle = "Gaussian Fit Tracking Result for " + siPlus.getWindow().getTitle();
+      rt.show(rtTitle);
 
       // Attach listener to TextPanel
       TextPanel tp;
-      Frame frame = WindowManager.getFrame("Gaussian Fit Tracking Result:");
+      Frame frame = WindowManager.getFrame(rtTitle);
       TextWindow win;
       if (frame!=null && frame instanceof TextWindow) {
          win = (TextWindow)frame;
          tp = win.getTextPanel();
          MyK myk = new MyK(siPlus, rt, win, halfSize);
          tp.addKeyListener(myk);
+         tp.addMouseListener(myk);
       }
-
-      long endTime = System.nanoTime();
-		double took = (endTime - startTime) / 1E6;
-
-		print("Calculation took: " + took + " milli seconds"); 
 
       double[] line = fitLine(xyPoints);
 
@@ -384,29 +429,103 @@ public class GaussianTrack_ implements PlugIn {
       AffineTransform T = computeAffineTransform(line[0], line[1]);
 
       Vector<Point2D.Double> xyCorrPoints = new Vector<Point2D.Double>();
+      // XYSeries xData = new XYSeries("On Track");
+      // XYSeries yData = new XYSeries("Off Track");
       for (int i = 0; i < xyPoints.size(); i++) {
          Point2D.Double pt = new Point2D.Double();
          xyCorrPoints.add((Point2D.Double)T.transform(xyPoints.get(i), pt));
+         // xData.add(i, pt.getX());
+         // yData.add(i, pt.getY());
          print(pt.getX() + "\t" + pt.getY());
       }
+      /**
+       * JFreeChart code
+      // Create the graph
+      XYSeriesCollection dataset = new XYSeriesCollection();
+      dataset.addSeries(xData);
+      JFreeChart chart = ChartFactory.createScatterPlot("On axis movement", // Title
+                "Time (interval)", // x-axis Label
+                "Distance (pixels)", // y-axis Label
+                dataset, // Dataset
+                PlotOrientation.VERTICAL, // Plot Orientation
+                true, // Show Legend
+                true, // Use tooltips
+                false // Configure chart to generate URLs?
+            );
 
-
-
-
-
-      /*
-      double[] guess = {-1.1, 467.5};
-
-      try {
-         double[] result = cf_.fit(new LinearFunction(), guess);
-         print ("Results is of size: " + result.length);
-         print ("Slope: " + result[0] + " Offset: " + result[1]);
-      } catch (Exception e) {
-         print(e.getMessage());
-         e.printStackTrace();
-
-      }
+      JFrame graphFrame = new JFrame();
+      ChartPanel cPanel = new ChartPanel(chart);
+      graphFrame.getContentPane().add(cPanel);
+      graphFrame.getContentPane().setLayout(new FlowLayout());
+      graphFrame.setSize(800, 1000);
+      graphFrame.setVisible(true);
       */
 
+      /* 
+      * Chart On-Axis Movement with JChart2
+      */
+      ZoomableChart chart = new ZoomableChart();
+      chart.getAxisY().setPaintGrid(true);
+      chart.getAxisX().setAxisTitle(new AxisTitle("Time - #"));
+      chart.getAxisY().setAxisTitle(new AxisTitle("Movement (pixels)"));
+
+      // Create an ITrace: 
+      ITrace2D trace = new Trace2DSimple(); 
+      trace.setTracePainter(new TracePainterDisc());
+      ITrace2D traceLine = new Trace2DSimple();
+      traceLine.setTracePainter(new TracePainterLine());
+      chart.addTrace(trace);
+      chart.addTrace(traceLine);
+
+      LayoutFactory factory = LayoutFactory.getInstance();
+      ChartPanel chartpanel = new ChartPanel(chart);
+
+      for (int i = 0; i < xyPoints.size(); i++) {
+         trace.addPoint(i, xyCorrPoints.get(i).getX());
+         traceLine.addPoint(i, xyCorrPoints.get(i).getX());
+      }
+
+      // Make it visible:
+      JFrame graphFrameX = new JFrame("On Axis Movement");
+      // add the chart to the frame: 
+      graphFrameX.getContentPane().add(chart);
+      graphFrameX.setSize(400,300);
+      graphFrameX.setLocation(30, 30);
+      graphFrameX.setJMenuBar(factory.createChartMenuBar(chartpanel, false));
+      graphFrameX.setVisible(true);
+      
+
+      /* 
+      * Chart Off-Axis Movement with JChart2
+      */
+      ZoomableChart chartY = new ZoomableChart();
+      chartY.getAxisY().setPaintGrid(true);
+      chartY.getAxisX().setAxisTitle(new AxisTitle("Time - #"));
+      chartY.getAxisY().setAxisTitle(new AxisTitle("Movement (pixels)"));
+
+      // Create an ITrace: 
+      ITrace2D traceY = new Trace2DSimple(); 
+      traceY.setTracePainter(new TracePainterDisc());
+      ITrace2D traceYLine = new Trace2DSimple();
+      traceYLine.setTracePainter(new TracePainterLine());
+      chartY.addTrace(traceY);
+      chartY.addTrace(traceYLine);
+
+      ChartPanel chartpanelY = new ChartPanel(chartY);
+
+      for (int i = 0; i < xyPoints.size(); i++) {
+         traceY.addPoint(i, xyCorrPoints.get(i).getY());
+         traceYLine.addPoint(i, xyCorrPoints.get(i).getY());
+      }
+
+      // Make it visible:
+      JFrame graphFrameY = new JFrame("Off Axis Movement");
+      // add the chart to the frame: 
+      graphFrameY.getContentPane().add(chartY);
+      graphFrameY.setSize(400,300);
+      graphFrameY.setLocation(430, 30);
+      graphFrameY.setJMenuBar(factory.createChartMenuBar(chartpanelY, false));
+      graphFrameY.setVisible(true);
    }
+
 }
