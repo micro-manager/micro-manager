@@ -4,6 +4,8 @@ import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Point2D.Double;
@@ -29,7 +31,9 @@ import ij.IJ;
 import org.apache.commons.math.analysis.*;
 import org.apache.commons.math.FunctionEvaluationException;
 import org.apache.commons.math.linear.Array2DRowRealMatrix;
+import org.apache.commons.math.linear.ArrayRealVector;
 import org.apache.commons.math.linear.BlockRealMatrix;
+import org.apache.commons.math.linear.SingularValueDecompositionImpl;
 import org.apache.commons.math.linear.RealMatrix;
 import org.apache.commons.math.linear.QRDecompositionImpl;
 import org.apache.commons.math.optimization.direct.NelderMead;
@@ -40,8 +44,10 @@ import org.apache.commons.math.optimization.general.LevenbergMarquardtOptimizer;
 import org.apache.commons.math.optimization.RealPointValuePair;
 import org.apache.commons.math.optimization.GoalType;
 import org.apache.commons.math.optimization.SimpleScalarValueChecker;
+import org.apache.commons.math.stat.StatUtils;
 
 // For plotting with JChart2
+/*
 import info.monitorenter.gui.chart.Chart2D;
 import info.monitorenter.gui.chart.ZoomableChart;
 import info.monitorenter.gui.chart.controls.LayoutFactory; 
@@ -51,16 +57,16 @@ import info.monitorenter.gui.chart.traces.Trace2DSimple;
 import info.monitorenter.gui.chart.views.ChartPanel;
 import info.monitorenter.gui.chart.traces.painters.TracePainterDisc;
 import info.monitorenter.gui.chart.traces.painters.TracePainterLine;
+*/
 
 // For plotting with JFreeChart
-/*
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartFrame;
 import org.jfree.chart.ChartPanel;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
-*/
 
 
 
@@ -73,6 +79,9 @@ public class GaussianTrack_ implements PlugIn {
    GaussianResidual gs_;
    NelderMead nm_;
    SimpleScalarValueChecker convergedChecker_;;
+
+   static final String XCOLNAME = "X";
+   static final String YCOLNAME = "Y";
 
 	private void print(String myText) {
 		ij.IJ.log(myText);
@@ -128,11 +137,46 @@ public class GaussianTrack_ implements PlugIn {
       }
    }
 
+
+   /**
+    * Rotates a set of XY data points such that the direcion of largest
+    * variance is a line around the X-axis.  Equivalent to total least square
+    * analysis - which finds the best fit line perpendicular to the data points
+    */
+   public Vector<Point2D.Double> pcaRotate(Vector<Point2D.Double> xyPoints) {
+      double[][] data = new double[2][xyPoints.size()];
+      for (int i =0; i< xyPoints.size(); i++) {
+         data[0][i] = xyPoints.get(i).getX();
+         data[1][i] = xyPoints.get(i).getY();
+      }
+      double meanX = StatUtils.mean(data[0]);
+      double meanY = StatUtils.mean(data[1]);
+      for (int i = 0; i< data[0].length; i++) {
+         data[0][i] = data[0][i] - meanX;
+         data[1][i] = data[1][i] - meanY;
+      }
+
+      Array2DRowRealMatrix dataM = new Array2DRowRealMatrix(data);
+
+      SingularValueDecompositionImpl sVD = new SingularValueDecompositionImpl(dataM);
+      RealMatrix output = sVD.getUT().multiply(dataM);
+
+      Vector<Point2D.Double> result = new Vector<Point2D.Double>();
+      for (int i = 0; i < output.getColumnDimension(); i++) {
+         result.add(new Point2D.Double(output.getEntry(0,i), output.getEntry(1,i)));
+      }
+
+      return result;
+   }
+
+
+
    /**
     * Linear Regression to find the best line between a set of points
     * returns an array where [0] = slope and [1] = offset
     * Input: arrays with x and y data points
-    */
+    * Not used anymore
+    *
    public double[] fitLine(Vector<Point2D.Double> xyPoints) {
       double[][] xWithOne = new double[xyPoints.size()][2];
       double[][] yWithOne = new double[xyPoints.size()][2];
@@ -180,6 +224,7 @@ public class GaussianTrack_ implements PlugIn {
       T.translate(0, -b);
       return T;
    }
+   */
 
    /**
     * KeyListener and MouseListenerclass for ResultsTable
@@ -205,12 +250,12 @@ public class GaussianTrack_ implements PlugIn {
       public void keyPressed(KeyEvent e) {
          int key = e.getKeyCode();
          int row = tp_.getSelectionStart();
-         if (key == KeyEvent.VK_DOWN) {
+         if (key == KeyEvent.VK_J) {
             if (row > 0) {
                row--;
                tp_.setSelection(row, row);
             }
-         } else if (key == KeyEvent.VK_UP) {
+         } else if (key == KeyEvent.VK_K) {
             if  (row < tp_.getLineCount() - 1) {
                row++;
                tp_.setSelection(row, row);
@@ -332,6 +377,14 @@ public class GaussianTrack_ implements PlugIn {
       // half the size of the box used for Gaussian fitting in pixels
       int halfSize = 6;
 
+      // Needed to calculate # of photons and estimate error
+      double photonConversionFactor = 10.41;
+      double gain = 50;
+      double pixelSize = 107; // nm/pixel
+
+      // derived from above values:
+      double cPCF = photonConversionFactor / gain;
+
       // initial setting for Maximum Finder
       int noiseTolerance = 100;
 
@@ -377,20 +430,21 @@ public class GaussianTrack_ implements PlugIn {
          double[]paramsOut = doGaussianFit(ip);
          if (paramsOut.length >= 4) {                                         
             double anormalized = paramsOut[0] * (2 * Math.PI * paramsOut[3] * paramsOut[3]);
-            double x = paramsOut[1] - halfSize + xc;
-            double y = paramsOut[2] - halfSize + yc;
+            double x = (paramsOut[1] - halfSize + xc) * pixelSize;
+            double y = (paramsOut[2] - halfSize + yc) * pixelSize;
             xyPoints.add(new Point2D.Double(x, y));
             // TOOD: quality control
             boolean report = anormalized > intMin && anormalized < intMax &&  
                               paramsOut[3] > sigmaMin && paramsOut[3] < sigmaMax;
 
-            rt.incrementCounter();                                         
-            rt.addValue("Frame", i);                                     
-            rt.addValue("Intensity", anormalized);                         
-            rt.addValue("Background", paramsOut[4]);                       
-            rt.addValue("X", x);     
-            rt.addValue("Y", y);     
-            rt.addValue("Sigma", paramsOut[3]);                            
+            rt.incrementCounter();
+            rt.addValue("Frame", i);
+            rt.addValue("Intensity (#p)", anormalized * cPCF);
+            rt.addValue("Background", paramsOut[4]);
+            rt.addValue(XCOLNAME, x);
+            rt.addValue(YCOLNAME, y);
+            rt.addValue("S (nm)", paramsOut[3] * pixelSize);
+
             rt.addValue("XMax", xc);
             rt.addValue("YMax", yc);
 
@@ -422,24 +476,25 @@ public class GaussianTrack_ implements PlugIn {
          tp.addMouseListener(myk);
       }
 
+      Vector<Point2D.Double> xyCorrPoints = pcaRotate(xyPoints);
+
+      /*
       double[] line = fitLine(xyPoints);
-
       print(line[0] + " " + line[1]);
-
       AffineTransform T = computeAffineTransform(line[0], line[1]);
-
       Vector<Point2D.Double> xyCorrPoints = new Vector<Point2D.Double>();
-      // XYSeries xData = new XYSeries("On Track");
-      // XYSeries yData = new XYSeries("Off Track");
+      */
+       XYSeries xData = new XYSeries("On Track");
+       XYSeries yData = new XYSeries("Off Track");
       for (int i = 0; i < xyPoints.size(); i++) {
-         Point2D.Double pt = new Point2D.Double();
-         xyCorrPoints.add((Point2D.Double)T.transform(xyPoints.get(i), pt));
-         // xData.add(i, pt.getX());
-         // yData.add(i, pt.getY());
-         print(pt.getX() + "\t" + pt.getY());
+         //Point2D.Double pt = new Point2D.Double();
+         //xyCorrPoints.add((Point2D.Double)T.transform(xyPoints.get(i), pt));
+          xData.add(i, xyCorrPoints.get(i).getX());
+          yData.add(i, xyCorrPoints.get(i).getY());
+         //print(pt.getX() + "\t" + pt.getY());
       }
-      /**
-       * JFreeChart code
+
+      // JFreeChart code
       // Create the graph
       XYSeriesCollection dataset = new XYSeriesCollection();
       dataset.addSeries(xData);
@@ -453,21 +508,24 @@ public class GaussianTrack_ implements PlugIn {
                 false // Configure chart to generate URLs?
             );
 
+      ChartFrame graphFrame = new ChartFrame("On Axis Movememt", chart);
+      /*
       JFrame graphFrame = new JFrame();
       ChartPanel cPanel = new ChartPanel(chart);
       graphFrame.getContentPane().add(cPanel);
       graphFrame.getContentPane().setLayout(new FlowLayout());
       graphFrame.setSize(800, 1000);
-      graphFrame.setVisible(true);
       */
+      graphFrame.pack();
+      graphFrame.setVisible(true);
 
       /* 
       * Chart On-Axis Movement with JChart2
-      */
+      *
       ZoomableChart chart = new ZoomableChart();
       chart.getAxisY().setPaintGrid(true);
       chart.getAxisX().setAxisTitle(new AxisTitle("Time - #"));
-      chart.getAxisY().setAxisTitle(new AxisTitle("Movement (pixels)"));
+      chart.getAxisY().setAxisTitle(new AxisTitle("Movement (nm)"));
 
       // Create an ITrace: 
       ITrace2D trace = new Trace2DSimple(); 
@@ -486,22 +544,30 @@ public class GaussianTrack_ implements PlugIn {
       }
 
       // Make it visible:
-      JFrame graphFrameX = new JFrame("On Axis Movement");
+      final JFrame graphFrameX = new JFrame("On Axis Movement");
       // add the chart to the frame: 
       graphFrameX.getContentPane().add(chart);
       graphFrameX.setSize(400,300);
       graphFrameX.setLocation(30, 30);
       graphFrameX.setJMenuBar(factory.createChartMenuBar(chartpanel, false));
+      graphFrameX.addWindowListener(
+         new WindowAdapter(){
+            public void windowClosing(WindowEvent e){
+               graphFrameX.removeWindowListener(this);
+               graphFrameX.dispose();
+          }
+        }
+      );
       graphFrameX.setVisible(true);
       
 
-      /* 
+      * 
       * Chart Off-Axis Movement with JChart2
-      */
+      *
       ZoomableChart chartY = new ZoomableChart();
       chartY.getAxisY().setPaintGrid(true);
       chartY.getAxisX().setAxisTitle(new AxisTitle("Time - #"));
-      chartY.getAxisY().setAxisTitle(new AxisTitle("Movement (pixels)"));
+      chartY.getAxisY().setAxisTitle(new AxisTitle("Movement (nm)"));
 
       // Create an ITrace: 
       ITrace2D traceY = new Trace2DSimple(); 
@@ -519,13 +585,22 @@ public class GaussianTrack_ implements PlugIn {
       }
 
       // Make it visible:
-      JFrame graphFrameY = new JFrame("Off Axis Movement");
+      final JFrame graphFrameY = new JFrame("Off Axis Movement");
       // add the chart to the frame: 
       graphFrameY.getContentPane().add(chartY);
       graphFrameY.setSize(400,300);
       graphFrameY.setLocation(430, 30);
       graphFrameY.setJMenuBar(factory.createChartMenuBar(chartpanelY, false));
+      graphFrameY.addWindowListener(
+         new WindowAdapter(){
+            public void windowClosing(WindowEvent e){
+               graphFrameY.removeWindowListener(this);
+               graphFrameY.dispose();
+            }
+         }
+      );
       graphFrameY.setVisible(true);
+      */
    }
 
 }
