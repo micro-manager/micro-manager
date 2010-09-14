@@ -24,7 +24,7 @@ public class MMImageCache implements TaggedImageStorage {
    private final int taggedImgQueueSize_ = 50;
    private TaggedImageStorage imageFileManager_;
    private String comment_ = "";
-   private Map<String, String> tags_;
+   private Map<String, String> summaryMetadata_;
    private Set<String> changingKeys_;
    private Map<String, String> firstTags_;
    private static ImageCollection coll_;
@@ -155,11 +155,11 @@ public class MMImageCache implements TaggedImageStorage {
    }
 
    public Map<String, String> getSummaryMetadata() {
-      return tags_;
+      return imageFileManager_.getSummaryMetadata();
    }
 
    public void setSummaryMetadata(Map<String, String> tags) {
-      tags_ = tags;
+      imageFileManager_.setSummaryMetadata(tags);
    }
 
    public Set<String> getChangingKeys() {

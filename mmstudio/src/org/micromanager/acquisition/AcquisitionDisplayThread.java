@@ -11,8 +11,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import mmcorej.CMMCore;
-import mmcorej.Configuration;
-import mmcorej.PropertySetting;
 import mmcorej.TaggedImage;
 import org.micromanager.acquisition.engine.SequenceSettings;
 import org.micromanager.api.AcquisitionEngine;
@@ -84,12 +82,12 @@ public class AcquisitionDisplayThread extends Thread {
                }
             }
 
-            Map<String, String> summaryMetadata = makeMetadataFromAcqSettings(acqSettings);
+            //Map<String, String> summaryMetadata = makeMetadataFromAcqSettings(acqSettings);
             TaggedImageStorage imageFileManager;
             if (diskCached_) {
-               imageFileManager = new TaggedImageStorageDiskDefault(acqName, true, summaryMetadata);
+               imageFileManager = new TaggedImageStorageDiskDefault(acqName, true, null);
             } else {
-               imageFileManager = new TaggedImageStorageRam(summaryMetadata);
+               imageFileManager = new TaggedImageStorageRam(null);
             }
             imageCache_ = new MMImageCache(imageFileManager);
             gui_.setAcquisitionCache(acqName, imageCache_);
@@ -99,7 +97,6 @@ public class AcquisitionDisplayThread extends Thread {
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
-
    }
 
    private Map<String,String> makeMetadataFromAcqSettings(SequenceSettings acqSettings) {
@@ -109,9 +106,10 @@ public class AcquisitionDisplayThread extends Thread {
       MDUtils.put(md,"Acquisition-IntervalMs", acqSettings.intervalMs);
       md.put("Acquisition-SlicesFirst", acqSettings.slicesFirst + "");
       md.put("Acquisition-TimeFirst", acqSettings.timeFirst + "");
-      MDUtils.put(md,"Acquisition-NSlices",acqSettings.slices.size());
-      MDUtils.put(md,"Acquisition-NFrames",acqSettings.numFrames);
-      MDUtils.put(md,"Acquisition-NChannels",acqSettings.channels.size());
+      MDUtils.put(md,"Acquisition-Slices",acqSettings.slices.size());
+      MDUtils.put(md,"Acquisition-Frames",acqSettings.numFrames);
+      MDUtils.put(md,"Acquisition-Channels",acqSettings.channels.size());
+      MDUtils.put(md,"Acquisition-Positions",acqSettings.positions.size());
       return md;
    }
 

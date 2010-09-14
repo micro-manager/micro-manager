@@ -45,6 +45,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
    private boolean newDataSet_;
    private Map<String,String> summaryMetadata_;
    private HashMap <String,String> filenameTable_;
+   private boolean dataSetOpened_;
 
    TaggedImageStorageDiskDefault(String dir) {
       this(dir, false, null);
@@ -56,11 +57,10 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       dir_ = dir;
       newDataSet_ = newDataSet;
       filenameTable_ = new HashMap<String,String>();
+      dataSetOpened_ = false;
 
       try {
-         if (newDataSet_) {
-            openNewDataSet();
-         } else {
+         if (!newDataSet_) {
             openExistingDataSet();
          }
       } catch (Exception e) {
@@ -72,6 +72,14 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       if (newDataSet_ == false) {
          throw new MMException("This ImageFileManager is read-only.");
       }
+      if (!dataSetOpened_) {
+         try {
+            openNewDataSet();
+         } catch (Exception ex) {
+            ReportingUtils.logError(ex);
+         }
+      }
+
       Map<String, String> md = taggedImg.tags;
       Object img = taggedImg.pix;
       String tiffFileName = createFileName(md);
@@ -163,7 +171,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
 
    private void writeFrameMetadata(Map<String,String> md, String fileName) {
       try {
-         String title = "FrameKey-" + MDUtils.getFrameIndex(md) + "-" + MDUtils.getChannelName(md) + "-" + MDUtils.getSliceIndex(md);
+         String title = "FrameKey-" + MDUtils.getPositionName(md) + "-" + MDUtils.getFrameIndex(md) + "-" + MDUtils.getChannelName(md) + "-" + MDUtils.getSliceIndex(md);
          md.put("Filename", fileName);
          writeMetadata(md, title);
       } catch (Exception ex) {
@@ -256,6 +264,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       metadataStream_.write("{" + "\r\n");
       writeMetadata(getSummaryMetadata(), "Summary");
       //writeMetadata(getSystemMetadata(), "SystemState");
+      dataSetOpened_ = true;
    }
 
    public void finished() {
@@ -349,11 +358,11 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
 
    public void setComment(String text) {
       if (text.length() > 0)
-         JavaUtils.writeTextFile(dir_ + "/Comments.txt", text);
+         JavaUtils.writeTextFile(dir_ + "/comments.txt", text);
    }
 
    public String getComment() {
-      return JavaUtils.readTextFile(dir_ + "/Comments.txt");
+      return JavaUtils.readTextFile(dir_ + "/comments.txt");
    }
 
 

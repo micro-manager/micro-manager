@@ -1,31 +1,24 @@
 package org.micromanager.acquisition;
 
 import java.awt.event.AdjustmentEvent;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.micromanager.api.AcquisitionInterface;
-import org.micromanager.api.TaggedImageStorage;
 import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.gui.ImageWindow;
 import ij.gui.ScrollbarWithLabel;
-import ij.gui.StackWindow;
 import ij.plugin.Animator;
 import ij.process.ImageStatistics;
 import java.awt.Color;
-import java.awt.FileDialog;
 import java.awt.event.AdjustmentListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
-import java.awt.event.WindowStateListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import javax.swing.JFileChooser;
-import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import mmcorej.TaggedImage;
 import org.json.JSONObject;
@@ -94,6 +87,7 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       MDUtils.put(summaryMetadata_,"Acquisition-Channels",numChannels_);
       MDUtils.put(summaryMetadata_,"Acquisition-Slices",numSlices_);
       MDUtils.put(summaryMetadata_,"Acquisition-Frames",numFrames_);
+      MDUtils.put(summaryMetadata_,"Acquisition-Positions",numPositions_);
    }
 
    public void setImagePhysicalDimensions(int width, int height, int depth) throws MMScriptException {
@@ -189,6 +183,7 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
             numSlices_ = MDUtils.getInt(summaryMetadata_, "Acquisition-Slices");
             numFrames_ = MDUtils.getInt(summaryMetadata_, "Acquisition-Frames");
             numChannels_ = MDUtils.getInt(summaryMetadata_, "Acquisition-Channels");
+            numPositions_ = MDUtils.getInt(summaryMetadata_, "Acquisition-Positions");
             numComponents_ = MDUtils.getNumberOfComponents(summaryMetadata_);
          } catch (Exception ex) {
             ReportingUtils.logError(ex);
@@ -304,10 +299,8 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
    }
 
    public void setPosition(int p) {
-      System.out.println("setPosition("+p+")");
       double min = hyperImage_.getDisplayRangeMin();
       double max = hyperImage_.getDisplayRangeMax();
-      System.out.println("position chosen: " + p);
       hyperImage_.setStack(virtualStacks_.get(p-1));
       hyperImage_.setDisplayRange(min, max);
       virtualStacks_.get(p-1).setImagePlus(hyperImage_);
@@ -468,6 +461,7 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
 			pSelector.addAdjustmentListener(new AdjustmentListener() {
             public void adjustmentValueChanged(AdjustmentEvent e) {
                setPosition(pSelector.getValue());
+               ReportingUtils.logMessage(""+pSelector.getValue());
             }
          });
          return pSelector;
