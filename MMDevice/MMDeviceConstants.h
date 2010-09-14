@@ -231,6 +231,14 @@ namespace MM {
       StatusChanged
    };
 
+   // Device discovery
+   enum DeviceDiscoveryStatus{
+      Unimplemented = -2, // so we know explicitly whether any communication was attempted
+      Misconfigured = -1, // device properties are inconsistent, for example serial port or slot id is empty
+      CanNotCommunicate = 0, // properties are valid, but communication failed
+      CanCommunicate = 1  // communication was successful
+   };
+
 } // namespace MM
 
 #endif //_MMDEVICE_CONSTANTS_H_

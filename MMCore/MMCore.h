@@ -384,6 +384,23 @@ public:
    void acqAfterStack() throw (CMMError);
    //@ }
 
+   // device discovery
+   MM::DeviceDiscoveryStatus getDeviceDiscoveryStatus(char* deviceName)
+   {
+      MM::DeviceDiscoveryStatus result = MM::Unimplemented; 
+      try
+      {
+         MM::Device* pDevice  = pluginManager_.GetDevice(deviceName);
+         result = pDevice->GetDeviceDiscoveryStatus();
+      }
+      catch(...)
+      {
+
+      }
+
+      return result;
+   }
+
    template <class T>
    T* getSpecificDevice(const char* deviceLabel) const throw (CMMError)
 {
@@ -408,6 +425,9 @@ public:
                                                                              
    return pSpecDev;                                                          
 }  
+
+
+
 
    // >>>> TEST >>>>>>>>>>>>>>>>>>>>>>..
 

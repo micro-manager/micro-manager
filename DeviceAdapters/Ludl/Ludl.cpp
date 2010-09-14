@@ -223,6 +223,49 @@ bool Hub::Busy()
    return false;
 }
 
+MM::DeviceDiscoveryStatus Hub::GetDeviceDiscoveryStatus(void)
+{
+   // all conditions must be satisfied...
+   MM::DeviceDiscoveryStatus result = MM::Misconfigured;
+   try
+   {
+      std::string transformed = port_;
+      for( std::string::iterator its = transformed.begin(); its != transformed.end(); ++its)
+      {
+         *its = (char)std::tolower(*its);
+      }
+      if( 0< transformed.length() &&  0 != transformed.compare("undefined")  && 0 != transformed.compare("unknown") )
+      {
+         result = MM::CanNotCommunicate;
+         // device specific default communication parameters
+         GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_BaudRate, "9600" );
+         GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_StopBits, "2");
+         GetCoreCallback()->SetDeviceProperty(port_.c_str(), "AnswerTimeout", "2000.0");
+         GetCoreCallback()->SetDeviceProperty(port_.c_str(), "DelayBetweenCharsMs", "11.0");
+         MM::Device* pS = GetCoreCallback()->GetDevice(this, port_.c_str());
+         pS->Initialize();
+         std::string v;
+         int qvStatus = this->QueryVersion(v);
+         LogMessage(std::string("version : ")+v, true);
+         if( DEVICE_OK != qvStatus )
+         {
+            LogMessageCode(qvStatus,true);
+         }
+         else
+         {
+            // to succeed must reach here....
+            result = MM::CanCommunicate;
+         }
+         pS->Shutdown();
+      }
+   }
+   catch(...)
+   {
+      LogMessage("Exception in GetDeviceDiscoveryStatus!",false);
+   }
+   return result;
+}
+
 int Hub::QueryVersion(std::string& version)
 {
    int returnStatus = DEVICE_OK;
@@ -377,33 +420,6 @@ int Hub::OnPort(MM::PropertyBase* pProp, MM::ActionType pAct)
          return ERR_PORT_CHANGE_FORBIDDEN;
       }
       pProp->Get(port_);
-
-      std::string transformed = port_;
-      for( std::string::iterator its = transformed.begin(); its != transformed.end(); ++its)
-      {
-         *its = (char)std::tolower(*its);
-      }
-      if( 0 != transformed.compare("undefined")  && 0 != transformed.compare("unknown") )
-      {
-         // device specific default communication parameters
-         GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_BaudRate, "9600" );
-         GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_StopBits, "2");
-         GetCoreCallback()->SetDeviceProperty(port_.c_str(), "AnswerTimeout", "2000.0");
-         GetCoreCallback()->SetDeviceProperty(port_.c_str(), "DelayBetweenCharsMs", "11.0");
-         MM::Device* pS = GetCoreCallback()->GetDevice(this,port_.c_str());
-         pS->Initialize();
-         std::string v;
-         int qvStatus = this->QueryVersion(v);
-         if( DEVICE_OK != qvStatus )
-         {
-            pProp->Set("Undefined");
-            port_ = "Undefined";
-            this->LogMessageCode(qvStatus);
-         }
-         pS->Shutdown();
-         LogMessage(std::string("version : ")+v, true);
-      }
-
    }
    return DEVICE_OK;
 }

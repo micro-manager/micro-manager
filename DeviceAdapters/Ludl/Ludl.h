@@ -99,6 +99,9 @@ class Hub : public CGenericBase<Hub>
       int OnReset (MM::PropertyBase* pProp, MM::ActionType eAct);
       int OnTransmissionDelay (MM::PropertyBase* pProp, MM::ActionType eAct);
 
+      // device discovery
+      MM::DeviceDiscoveryStatus GetDeviceDiscoveryStatus(void);
+
    private:
 
       int QueryVersion(std::string& version);

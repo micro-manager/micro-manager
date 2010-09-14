@@ -318,6 +318,9 @@ namespace MM {
       virtual int AcqAfterFrame() = 0;
       virtual int AcqBeforeStack() = 0;
       virtual int AcqAfterStack() = 0;
+
+      //device discovery API
+      virtual MM::DeviceDiscoveryStatus GetDeviceDiscoveryStatus(void) = 0;
    };
 
    /** 

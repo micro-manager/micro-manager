@@ -557,6 +557,11 @@ public:
    int AcqBeforeStack() {return DEVICE_OK;}
    int AcqAfterStack() {return DEVICE_OK;}
 
+   // device discovery
+   MM::DeviceDiscoveryStatus GetDeviceDiscoveryStatus(void){ 
+      return  MM::Unimplemented;
+   };
+
 
    ////////////////////////////////////////////////////////////////////////////
    // Protected methods, for internal use by the device adapters 

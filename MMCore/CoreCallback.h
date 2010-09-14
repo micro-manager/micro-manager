@@ -207,7 +207,6 @@ public:
       }
    }
 
-
    void GetLoadedDeviceOfType(const MM::Device* /* caller */, MM::DeviceType devType,  char* deviceName, const unsigned int deviceIterator)
    {
       deviceName[0] = 0;
@@ -216,6 +215,26 @@ public:
          strncpy( deviceName, v.at(deviceIterator).c_str(), MM::MaxStrLength);
       return;
    }
+
+   // device discovery  -- todo do we need this on the callback??
+   MM::DeviceDiscoveryStatus GetDeviceDiscoveryStatus(const MM::Device* /*pCaller*/, char* deviceName)
+   {
+      MM::DeviceDiscoveryStatus result = MM::Unimplemented; 
+      try
+      {
+         MM::Device* pDevice = core_->getDevice(deviceName);
+         if ( 0 != pDevice)
+            result = pDevice->GetDeviceDiscoveryStatus();
+      }
+      catch (...)
+      {
+         // trap all exceptions
+      }
+
+      return result;
+   }
+
+
 
 private:
    CMMCore* core_;
