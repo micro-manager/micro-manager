@@ -60,6 +60,7 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
    private ScrollbarWithLabel pSelector;
    private boolean multiPosition_ = false;
    private int numPositions_;
+   private int curPosition_ = -1;
 
    MMVirtualAcquisition(String name, String dir, boolean newData, boolean virtual) {
       name_ = name;
@@ -299,15 +300,18 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
    }
 
    public void setPosition(int p) {
-      double min = hyperImage_.getDisplayRangeMin();
-      double max = hyperImage_.getDisplayRangeMax();
-      hyperImage_.setStack(virtualStacks_.get(p-1));
-      hyperImage_.setDisplayRange(min, max);
-      virtualStacks_.get(p-1).setImagePlus(hyperImage_);
-      if (numChannels_ > 1) {
-         ((CompositeImage) hyperImage_).setChannelsUpdated();
+      if (curPosition_ != p) {
+         double min = hyperImage_.getDisplayRangeMin();
+         double max = hyperImage_.getDisplayRangeMax();
+         hyperImage_.setStack(virtualStacks_.get(p-1));
+         hyperImage_.setDisplayRange(min, max);
+         virtualStacks_.get(p-1).setImagePlus(hyperImage_);
+         if (numChannels_ > 1) {
+            ((CompositeImage) hyperImage_).setChannelsUpdated();
+         }
+         hyperImage_.updateAndDraw();
+         curPosition_ = p;
       }
-      hyperImage_.updateAndDraw();
    }
 
    boolean pause() {
@@ -450,8 +454,10 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
    public ScrollbarWithLabel createPositionScrollbar(int nPositions) {
 			pSelector = new ScrollbarWithLabel(null, 1, 1, 1, nPositions+1, 'p') {
             public void setValue(int v) {
-               super.setValue(v);
-               setPosition(v);
+               if (this.getValue() != v) {
+                  super.setValue(v);
+                  setPosition(v);
+               }
             }
          };
 			//if (ij!=null) cSelector.addKeyListener(ij);
