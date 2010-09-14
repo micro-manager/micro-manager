@@ -35,6 +35,7 @@
 #include "../../MMDevice/ModuleInterface.h"
 #include "../../MMDevice/DeviceBase.h"
 #include "../../MMDevice/DeviceUtils.h"
+
 #include <cstdio>
 #include <math.h>
 
@@ -377,13 +378,28 @@ int Hub::OnPort(MM::PropertyBase* pProp, MM::ActionType pAct)
       }
       pProp->Get(port_);
 
-      // device specific default communication parameters
-      GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_BaudRate, "9600" );
-      GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_StopBits, "2");
-      GetCoreCallback()->SetDeviceProperty(port_.c_str(), "AnswerTimeout", "2000.0");
-      GetCoreCallback()->SetDeviceProperty(port_.c_str(), "DelayBetweenCharsMs", "11.0");
-
-
+      std::string transformed = port_;
+      std::transform(transformed.begin(), transformed.end(), transformed.begin(), tolower);
+      if( 0 != transformed.compare("undefined")  && 0 != transformed.compare("unknown") )
+      {
+         // device specific default communication parameters
+         GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_BaudRate, "9600" );
+         GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_StopBits, "2");
+         GetCoreCallback()->SetDeviceProperty(port_.c_str(), "AnswerTimeout", "2000.0");
+         GetCoreCallback()->SetDeviceProperty(port_.c_str(), "DelayBetweenCharsMs", "11.0");
+         MM::Device* pS = GetCoreCallback()->GetDevice(this,port_.c_str());
+         pS->Initialize();
+         std::string v;
+         int qvStatus = this->QueryVersion(v);
+         if( DEVICE_OK != qvStatus )
+         {
+            pProp->Set("Undefined");
+            port_ = "Undefined";
+            this->LogMessageCode(qvStatus);
+         }
+         pS->Shutdown();
+         LogMessage(std::string("version : ")+v, true);
+      }
 
    }
    return DEVICE_OK;

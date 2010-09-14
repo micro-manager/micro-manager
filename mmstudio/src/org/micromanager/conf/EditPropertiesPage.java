@@ -114,13 +114,45 @@ public class EditPropertiesPage extends PagePanel {
             if (p.name.compareTo(MMCoreJ.getG_Keyword_Port()) == 0) {
             	if (ports.size() == 0) {
             		// no ports available, tell user and return
-            		JOptionPane.showMessageDialog(null, "First select a serial port in step 2 of the wizard");
+            		JOptionPane.showMessageDialog(null, "No serial communication ports were found in your computer!");
             		return false;
             	}
                String allowed[] = new String[ports.size()];
-               for (int k=0; k<ports.size(); k++)
+               int nPortsFoundCommunicating = 0;
+               String portsFoundCommunicating[] = new String[ports.size()];
+               boolean anyPortsWereInvalidated = false;
+               for (int k=0; k<ports.size(); k++){
+                  // for each physical serial port, preliminarily attempt communication
+                  // some devices adapters are able to respond before initialization
+                  // generally only one of the serial ports should succede.
+                  // currently this uses the OnPort property interface,therefor
+                  // we only know that the device communicating if it invalidated some other port selection value
+                  try{
+                     core_.setProperty(devices[i].getName(), p.name, ports.get(k).getName());
+                     String newValue = core_.getProperty(devices[i].getName(), p.name);
+                     if( 0 == newValue.compareTo(ports.get(k).getName())){
+                        portsFoundCommunicating[nPortsFoundCommunicating++] = ports.get(k).getName();
+                     }
+                     else{
+                        anyPortsWereInvalidated = true;
+                        // the device adapter attempted communication with the equipment and failed
+                        // and has there set the property to Undefined
+                     }
+                  }catch(Exception e){
+                  }
                   allowed[k] = ports.get(k).getName();
-               p.allowed = allowed;
+               }
+               if(anyPortsWereInvalidated &&  0 < nPortsFoundCommunicating ){
+                  // at least one port has this type of device connected, so only show these ports in the selection list
+                  String newAllowed[] = new String[nPortsFoundCommunicating];
+                  for(int ia = 0; ia < nPortsFoundCommunicating; ++ia){
+                     newAllowed[ia] = portsFoundCommunicating[ia];
+                  }
+                  p.allowed = newAllowed;
+                  p.value = newAllowed[0];
+               }else{
+                  p.allowed = allowed;
+               }
             }
          }
       }
