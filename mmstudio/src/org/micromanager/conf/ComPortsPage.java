@@ -195,7 +195,7 @@ public class ComPortsPage extends PagePanel {
                // if any devices use this serial port, put that name on the button rather than the serial port name
                value = "";
                for (String s : ds) {
-                  if( ! value.isEmpty())
+                  if( 0 < value.length() )
                      value += " ";
                   value += s;
                }
