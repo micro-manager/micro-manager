@@ -379,7 +379,10 @@ int Hub::OnPort(MM::PropertyBase* pProp, MM::ActionType pAct)
       pProp->Get(port_);
 
       std::string transformed = port_;
-      std::transform(transformed.begin(), transformed.end(), transformed.begin(), tolower);
+      for( std::string::iterator its = transformed.begin(); its != transformed.end(); ++its)
+      {
+         *its = (char)std::tolower(*its);
+      }
       if( 0 != transformed.compare("undefined")  && 0 != transformed.compare("unknown") )
       {
          // device specific default communication parameters
