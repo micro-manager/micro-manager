@@ -26,12 +26,14 @@ public class ImageTask implements EngineTask {
    private final CMMCore core_;
    private boolean stopRequested_;
    private boolean pauseRequested_;
+   private final HashMap<String, String> md;
 
    ImageTask(Engine eng, ImageRequest imageRequest) {
       eng_ = eng;
       core_ = eng.core_;
       imageRequest_ = imageRequest;
       stopRequested_ = false;
+      md = new HashMap<String, String>();
    }
 
    private void log(String msg) {
@@ -104,10 +106,13 @@ public class ImageTask implements EngineTask {
                      zPosition = sp.z;
                   } else {
                      core_.setPosition(sp.stageName, sp.z);
+                     MDUtils.put(md,"Acquisition-"+sp.stageName+"RequestedZPosition", sp.z);
                   }
 
                } else if (sp.numAxes == 2) {
                   core_.setXYPosition(sp.stageName, sp.x, sp.y);
+                  MDUtils.put(md,"Acquisition-"+sp.stageName+"RequestedXPosition", sp.x);
+                  MDUtils.put(md,"Acquisition-"+sp.stageName+"RequestedYPosition", sp.y);
                }
                log("position set\n");
             }
@@ -129,6 +134,9 @@ public class ImageTask implements EngineTask {
                   ReportingUtils.logError(ex);
                }
             } else {
+               if (imageRequest_.WaitTime > 0) {
+                  MDUtils.put(md, "Acquisition-TimingState", "Lagging");
+               }
                break;
             }
          }
@@ -139,12 +147,17 @@ public class ImageTask implements EngineTask {
    }
 
    public void autofocus() {
+      String afResult = "Acquisition-AutofocusResult";
       if (imageRequest_.AutoFocus && imageRequest_.ChannelIndex == 0 && imageRequest_.PositionIndex == 0) {
          try {
             core_.fullFocus();
+            MDUtils.put(md, afResult, "Success");
          } catch (Exception ex) {
             ReportingUtils.logError(ex);
+            MDUtils.put(md,"Acquisition-AutofocusResult","Failure");
          }
+      } else {
+         MDUtils.put(md, afResult, "Not requested");
       }
    }
 
@@ -152,7 +165,6 @@ public class ImageTask implements EngineTask {
       //Gson gson = new Gson();
       //String jsonMetadata = gson.toJson(imageRequest_);
       waitDuringPause();
-      Map<String, String> md = new HashMap<String, String>();
       MDUtils.put(md, "Acquisition-SliceIndex", imageRequest_.SliceIndex);
       if (imageRequest_.UseChannel) {
          MDUtils.put(md, "Acquisition-ChannelName", imageRequest_.Channel.config_);
@@ -207,6 +219,7 @@ public class ImageTask implements EngineTask {
          }
 
          Object pixels = core_.getImage();
+         MDUtils.put(md, "Acquisition-Source",core_.getCameraDevice());
          Configuration config = core_.getSystemStateCache();
          MDUtils.addConfiguration(md, config);
          if (imageRequest_.NextWaitTime > 0) {
