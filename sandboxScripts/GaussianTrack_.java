@@ -9,6 +9,8 @@ import java.awt.event.WindowEvent;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Point2D.Double;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Ellipse2D.Float;
 import java.awt.FlowLayout;
 import java.awt.Rectangle;
 import java.lang.Math;
@@ -61,6 +63,8 @@ import info.monitorenter.gui.chart.traces.painters.TracePainterLine;
 
 // For plotting with JFreeChart
 import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartFrame;
@@ -226,6 +230,42 @@ public class GaussianTrack_ implements PlugIn {
    }
    */
 
+
+   /**
+    * Create a frame with a plot of the data given in XYSeries
+    */
+   public void plotData(String title, XYSeries data, int xLocation, int yLocation) {
+      // JFreeChart code
+      XYSeriesCollection dataset = new XYSeriesCollection();
+      dataset.addSeries(data);
+      JFreeChart chart = ChartFactory.createScatterPlot(title, // Title
+                "Time (interval)", // x-axis Label
+                "Distance (nm)", // y-axis Label
+                dataset, // Dataset
+                PlotOrientation.VERTICAL, // Plot Orientation
+                false, // Show Legend
+                true, // Use tooltips
+                false // Configure chart to generate URLs?
+            );
+      XYPlot plot = (XYPlot) chart.getPlot();
+      plot.setBackgroundPaint(Color.white);
+      plot.setRangeGridlinePaint(Color.lightGray);
+      XYLineAndShapeRenderer renderer = (XYLineAndShapeRenderer) plot.getRenderer();
+      renderer.setBaseShapesVisible(true);
+      renderer.setSeriesPaint(0, Color.black);
+      renderer.setSeriesFillPaint(0, Color.white);
+      renderer.setSeriesLinesVisible(0, true);
+      Shape circle = new Ellipse2D.Float(-2.0f, -2.0f, 4.0f, 4.0f);
+      renderer.setSeriesShape(0, circle, false);
+      renderer.setUseFillPaint(true);
+
+      ChartFrame graphFrame = new ChartFrame(title, chart);
+      graphFrame.getChartPanel().setMouseWheelEnabled(true);
+      graphFrame.pack();
+      graphFrame.setLocation(xLocation, yLocation);
+      graphFrame.setVisible(true);
+   }
+
    /**
     * KeyListener and MouseListenerclass for ResultsTable
     * When user selected a line in the ResulsTable and presses a key,
@@ -279,7 +319,6 @@ public class GaussianTrack_ implements PlugIn {
             if (siPlus_ != IJ.getImage()) {
                siPlus_.getWindow().toFront();
                win_.toFront();
-
             }
             int frame = (int) res_.getValue("Frame", row);
             int x = (int)res_.getValue("XMax", row);
@@ -319,6 +358,7 @@ public class GaussianTrack_ implements PlugIn {
          n += 2;
       }
       params0_[4] = bg / n;
+
 
       // estimate signal by subtracting background from total intensity 
       double ti = 0.0;
@@ -439,20 +479,21 @@ public class GaussianTrack_ implements PlugIn {
 
             rt.incrementCounter();
             rt.addValue("Frame", i);
-            rt.addValue("Intensity (#p)", anormalized * cPCF);
+            double N = anormalized * cPCF;
+            rt.addValue("Intensity (#p)", N);
             rt.addValue("Background", paramsOut[4]);
             rt.addValue(XCOLNAME, x);
             rt.addValue(YCOLNAME, y);
+            double s = paramsOut[3] * pixelSize;
             rt.addValue("S (nm)", paramsOut[3] * pixelSize);
+            // calculate error using formular from Thomson et al (2002)
+            // (dx)2 = (s*s + (a*a/12)) / N + (8*pi*s*s*s*s * b*b) / (a*a*N*N)
+            double error = (s*s + (pixelSize * pixelSize)/12) / N;
+            rt.addValue ("sigma", error);
 
             rt.addValue("XMax", xc);
             rt.addValue("YMax", yc);
 
-            // rt.addValue("Residual", gs_.value(paramsOut));
-            if (report) {                                                     
-               // IJ.log (i + " " + xc + " " + paramsOut[1] + " " + halfSize);
-               // IJ.log (xc + " ");
-            } 
          }  
       }
 
@@ -460,6 +501,14 @@ public class GaussianTrack_ implements PlugIn {
 		double took = (endTime - startTime) / 1E6;
 
 		print("Calculation took: " + took + " milli seconds"); 
+
+      siPlus.setSlice(sliceN);
+      siPlus.setRoi(originalRoi);
+
+      if (rt.getCounter() <= 1) {
+         IJ.error("Not enough data points");
+         return;
+      }
 
       String rtTitle = "Gaussian Fit Tracking Result for " + siPlus.getWindow().getTitle();
       rt.show(rtTitle);
@@ -478,46 +527,16 @@ public class GaussianTrack_ implements PlugIn {
 
       Vector<Point2D.Double> xyCorrPoints = pcaRotate(xyPoints);
 
-      /*
-      double[] line = fitLine(xyPoints);
-      print(line[0] + " " + line[1]);
-      AffineTransform T = computeAffineTransform(line[0], line[1]);
-      Vector<Point2D.Double> xyCorrPoints = new Vector<Point2D.Double>();
-      */
-       XYSeries xData = new XYSeries("On Track");
-       XYSeries yData = new XYSeries("Off Track");
+      XYSeries xData = new XYSeries("On Track");
+      XYSeries yData = new XYSeries("Off Track");
       for (int i = 0; i < xyPoints.size(); i++) {
-         //Point2D.Double pt = new Point2D.Double();
-         //xyCorrPoints.add((Point2D.Double)T.transform(xyPoints.get(i), pt));
           xData.add(i, xyCorrPoints.get(i).getX());
           yData.add(i, xyCorrPoints.get(i).getY());
-         //print(pt.getX() + "\t" + pt.getY());
       }
 
-      // JFreeChart code
-      // Create the graph
-      XYSeriesCollection dataset = new XYSeriesCollection();
-      dataset.addSeries(xData);
-      JFreeChart chart = ChartFactory.createScatterPlot("On axis movement", // Title
-                "Time (interval)", // x-axis Label
-                "Distance (pixels)", // y-axis Label
-                dataset, // Dataset
-                PlotOrientation.VERTICAL, // Plot Orientation
-                true, // Show Legend
-                true, // Use tooltips
-                false // Configure chart to generate URLs?
-            );
+      plotData("On-Axis", xData, 0, 0);
+      plotData("Off-Axis", yData, 500, 0);
 
-      ChartFrame graphFrame = new ChartFrame("On Axis Movememt", chart);
-      /*
-      JFrame graphFrame = new JFrame();
-      ChartPanel cPanel = new ChartPanel(chart);
-      graphFrame.getContentPane().add(cPanel);
-      graphFrame.getContentPane().setLayout(new FlowLayout());
-      graphFrame.setSize(800, 1000);
-      */
-      graphFrame.pack();
-      graphFrame.setVisible(true);
 
       /* 
       * Chart On-Axis Movement with JChart2
