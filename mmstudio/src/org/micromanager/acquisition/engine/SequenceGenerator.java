@@ -4,8 +4,6 @@
  */
 package org.micromanager.acquisition.engine;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.micromanager.api.EngineTask;
 import java.util.concurrent.LinkedBlockingQueue;
 import org.micromanager.utils.ReportingUtils;

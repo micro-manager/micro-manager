@@ -156,8 +156,6 @@ public class ImageTask implements EngineTask {
             ReportingUtils.logError(ex);
             MDUtils.put(md,"Acquisition-AutofocusResult","Failure");
          }
-      } else {
-         MDUtils.put(md, afResult, "Not requested");
       }
    }
 
