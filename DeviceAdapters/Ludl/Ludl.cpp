@@ -240,7 +240,7 @@ MM::DeviceDiscoveryStatus Hub::GetDeviceDiscoveryStatus(void)
          // device specific default communication parameters
          GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_BaudRate, "9600" );
          GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_StopBits, "2");
-         GetCoreCallback()->SetDeviceProperty(port_.c_str(), "AnswerTimeout", "2000.0");
+         GetCoreCallback()->SetDeviceProperty(port_.c_str(), "AnswerTimeout", "150.0");
          GetCoreCallback()->SetDeviceProperty(port_.c_str(), "DelayBetweenCharsMs", "11.0");
          MM::Device* pS = GetCoreCallback()->GetDevice(this, port_.c_str());
          pS->Initialize();
@@ -257,6 +257,7 @@ MM::DeviceDiscoveryStatus Hub::GetDeviceDiscoveryStatus(void)
             result = MM::CanCommunicate;
          }
          pS->Shutdown();
+         GetCoreCallback()->SetDeviceProperty(port_.c_str(), "AnswerTimeout", "2000.0");
       }
    }
    catch(...)
