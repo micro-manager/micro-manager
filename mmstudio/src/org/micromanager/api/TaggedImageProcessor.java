@@ -6,6 +6,9 @@
 package org.micromanager.api;
 
 import java.util.Collection;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import mmcorej.TaggedImage;
 import org.micromanager.acquisition.TaggedImageQueue;
 import org.micromanager.utils.ReportingUtils;
@@ -47,7 +50,17 @@ public abstract class TaggedImageProcessor extends Thread {
    }
 
    protected TaggedImage poll() {
-      return input_.poll();
+      while (!stopRequested()) {
+         try {
+            TaggedImage image = input_.poll(100, TimeUnit.MILLISECONDS);
+            if (image != null) {
+               return image;
+            }
+         } catch (InterruptedException ex) {
+            ReportingUtils.logError(ex);
+         }
+      }
+      return TaggedImageQueue.POISON;
    }
 
    protected void drainTo(Collection<TaggedImage> taggedImages) {
