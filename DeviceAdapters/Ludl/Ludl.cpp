@@ -302,6 +302,12 @@ int Hub::QueryVersion(std::string& version)
          return ERR_NO_ANSWER;
       }
    }
+
+   // there is still a :A in the buffer that we should read away:
+   std::string ignoreThis;
+   (void)GetSerialAnswer(port_.c_str(), "\n", ignoreThis);
+   // When the controller answers with :N -1, ignore
+
    return returnStatus;
 }
 
@@ -331,12 +337,6 @@ int Hub::Initialize()
    ret = CreateProperty(g_Ludl_Version, result.c_str(), MM::String, true);
    if (ret != DEVICE_OK) 
       return ret;
-
-   // there is still a :A in the buffer that we should read away:
-   ret = GetSerialAnswer(port_.c_str(), "\n", result);
-   // When the controller answers with :N -1, ignore
-   //if (ret != DEVICE_OK) 
-   //   return ret;
 
    // Interface to a hard reset of the controller
    CPropertyAction* pAct = new CPropertyAction(this, &Hub::OnReset);
