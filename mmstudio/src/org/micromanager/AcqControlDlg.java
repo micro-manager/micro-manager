@@ -1175,7 +1175,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
         displayMode_.setFont(new Font("Arial", Font.PLAIN, 10));
         displayMode_.setText("Display");
         displayMode_.setBounds(150, 15, 49, 21);
-        savePanel_.add(displayMode_);
+        //savePanel_.add(displayMode_);
 
         displayModeCombo_ = new JComboBox();
         displayModeCombo_.setFont(new Font("", Font.PLAIN, 10));
@@ -1184,18 +1184,18 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
         displayModeCombo_.addItem(new DisplayMode(DisplayMode.LAST_FRAME));
         displayModeCombo_.addItem(new DisplayMode(DisplayMode.SINGLE_WINDOW));
         displayModeCombo_.setEnabled(false);
-        savePanel_.add(displayModeCombo_);
+        //savePanel_.add(displayModeCombo_);
 
 
         rootLabel_ = new JLabel();
         rootLabel_.setFont(new Font("Arial", Font.PLAIN, 10));
         rootLabel_.setText("Directory root");
-        rootLabel_.setBounds(10, 40, 72, 22);
+        rootLabel_.setBounds(10, 30, 72, 22);
         savePanel_.add(rootLabel_);
 
         rootField_ = new JTextField();
         rootField_.setFont(new Font("Arial", Font.PLAIN, 10));
-        rootField_.setBounds(90, 40, 354, 22);
+        rootField_.setBounds(90, 30, 354, 22);
         savePanel_.add(rootField_);
 
         browseRootButton_ = new JButton();
@@ -1208,28 +1208,28 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
         browseRootButton_.setMargin(new Insets(2, 5, 2, 5));
         browseRootButton_.setFont(new Font("Dialog", Font.PLAIN, 10));
         browseRootButton_.setText("...");
-        browseRootButton_.setBounds(445, 40, 47, 24);
+        browseRootButton_.setBounds(445, 30, 47, 24);
         savePanel_.add(browseRootButton_);
 
         namePrefixLabel_ = new JLabel();
         namePrefixLabel_.setFont(new Font("Arial", Font.PLAIN, 10));
         namePrefixLabel_.setText("Name prefix");
-        namePrefixLabel_.setBounds(10, 65, 76, 22);
+        namePrefixLabel_.setBounds(10, 55, 76, 22);
         savePanel_.add(namePrefixLabel_);
 
         nameField_ = new JTextField();
         nameField_.setFont(new Font("Arial", Font.PLAIN, 10));
-        nameField_.setBounds(90, 65, 354, 22);
+        nameField_.setBounds(90, 55, 354, 22);
         savePanel_.add(nameField_);
 
         commentLabel_ = new JLabel();
         commentLabel_.setFont(new Font("Arial", Font.PLAIN, 10));
         commentLabel_.setText("Comments");
-        commentLabel_.setBounds(10, 90, 76, 22);
+        commentLabel_.setBounds(10, 80, 76, 22);
         savePanel_.add(commentLabel_);
 
         JScrollPane commentScrollPane = new JScrollPane();
-        commentScrollPane.setBounds(90, 90, 354, 62);
+        commentScrollPane.setBounds(90, 80, 354, 72);
         savePanel_.add(commentScrollPane);
 
         commentTextArea_ = new JTextArea();
