@@ -232,11 +232,11 @@ namespace MM {
    };
 
    // Device discovery
-   enum DeviceDiscoveryStatus{
-      Unimplemented = -2, // so we know explicitly whether any communication was attempted
-      Misconfigured = -1, // device properties are inconsistent, for example serial port or slot id is empty
-      CanNotCommunicate = 0, // properties are valid, but communication failed
-      CanCommunicate = 1  // communication was successful
+   enum DeviceDetectionStatus{
+      Unimplemented = -2,    // -- there is as yet no mechanism to programmatically detect the device
+      Misconfigured = -1,    // -- some information needed to communicate with the device is invalid
+      CanNotCommunicate = 0, // -- communication attributes are valid, but the device does not respond
+      CanCommunicate = 1     // -- communication verified
    };
 
 } // namespace MM

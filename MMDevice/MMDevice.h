@@ -320,7 +320,7 @@ namespace MM {
       virtual int AcqAfterStack() = 0;
 
       //device discovery API
-      virtual MM::DeviceDiscoveryStatus GetDeviceDiscoveryStatus(void) = 0;
+      virtual MM::DeviceDetectionStatus DetectDevice(void) = 0;
    };
 
    /** 

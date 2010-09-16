@@ -35,7 +35,7 @@ import javax.swing.table.TableColumn;
 import org.micromanager.utils.GUIUtils;
 
 import mmcorej.MMCoreJ;
-import mmcorej.DeviceDiscoveryStatus;
+import mmcorej.DeviceDetectionStatus;
 import org.micromanager.utils.PropertyItem;
 import org.micromanager.utils.PropertyNameCellRenderer;
 import org.micromanager.utils.PropertyValueCellEditor;
@@ -128,11 +128,11 @@ public class EditPropertiesPage extends PagePanel {
 
 							//todo - need a way to mark the port as 'allocated' if it already communicates with a device.
 							core_.setProperty(devices[i].getName(), p.name, ports.get(k).getName());
-							DeviceDiscoveryStatus st = core_.getDeviceDiscoveryStatus(devices[i].getName());
+							DeviceDetectionStatus st = core_.detectDevice(devices[i].getName());
 
-							if (DeviceDiscoveryStatus.CanCommunicate == st) {
+							if (DeviceDetectionStatus.CanCommunicate == st) {
 								portsFoundCommunicating.add(ports.get(k).getName());
-							} else if (DeviceDiscoveryStatus.Misconfigured != st) {
+							} else if (DeviceDetectionStatus.Misconfigured != st) {
 								portsOtherwiseCorrectlyConfigured.add(ports.get(k).getName());
 							}
 						} catch (Exception e) {

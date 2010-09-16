@@ -100,7 +100,7 @@ class Hub : public CGenericBase<Hub>
       int OnTransmissionDelay (MM::PropertyBase* pProp, MM::ActionType eAct);
 
       // device discovery
-      MM::DeviceDiscoveryStatus GetDeviceDiscoveryStatus(void);
+      MM::DeviceDetectionStatus DetectDevice(void);
 
    private:
 

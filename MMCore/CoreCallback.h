@@ -217,14 +217,14 @@ public:
    }
 
    // device discovery  -- todo do we need this on the callback??
-   MM::DeviceDiscoveryStatus GetDeviceDiscoveryStatus(const MM::Device* /*pCaller*/, char* deviceName)
+   MM::DeviceDetectionStatus DetectDevice(const MM::Device* /*pCaller*/, char* deviceName)
    {
-      MM::DeviceDiscoveryStatus result = MM::Unimplemented; 
+      MM::DeviceDetectionStatus result = MM::Unimplemented; 
       try
       {
          MM::Device* pDevice = core_->getDevice(deviceName);
          if ( 0 != pDevice)
-            result = pDevice->GetDeviceDiscoveryStatus();
+            result = pDevice->DetectDevice();
       }
       catch (...)
       {

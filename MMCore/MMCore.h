@@ -385,13 +385,13 @@ public:
    //@ }
 
    // device discovery
-   MM::DeviceDiscoveryStatus getDeviceDiscoveryStatus(char* deviceName)
+   MM::DeviceDetectionStatus detectDevice(char* deviceName)
    {
-      MM::DeviceDiscoveryStatus result = MM::Unimplemented; 
+      MM::DeviceDetectionStatus result = MM::Unimplemented; 
       try
       {
          MM::Device* pDevice  = pluginManager_.GetDevice(deviceName);
-         result = pDevice->GetDeviceDiscoveryStatus();
+         result = pDevice->DetectDevice();
       }
       catch(...)
       {

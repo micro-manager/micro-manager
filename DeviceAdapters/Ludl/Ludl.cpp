@@ -223,10 +223,10 @@ bool Hub::Busy()
    return false;
 }
 
-MM::DeviceDiscoveryStatus Hub::GetDeviceDiscoveryStatus(void)
+MM::DeviceDetectionStatus Hub::DetectDevice(void)
 {
    // all conditions must be satisfied...
-   MM::DeviceDiscoveryStatus result = MM::Misconfigured;
+   MM::DeviceDetectionStatus result = MM::Misconfigured;
    try
    {
       std::string transformed = port_;
@@ -262,7 +262,7 @@ MM::DeviceDiscoveryStatus Hub::GetDeviceDiscoveryStatus(void)
    }
    catch(...)
    {
-      LogMessage("Exception in GetDeviceDiscoveryStatus!",false);
+      LogMessage("Exception in DetectDevice!",false);
    }
    return result;
 }

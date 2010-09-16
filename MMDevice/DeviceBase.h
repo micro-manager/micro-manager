@@ -558,7 +558,7 @@ public:
    int AcqAfterStack() {return DEVICE_OK;}
 
    // device discovery
-   MM::DeviceDiscoveryStatus GetDeviceDiscoveryStatus(void){ 
+   MM::DeviceDetectionStatus DetectDevice(void){ 
       return  MM::Unimplemented;
    };
 
