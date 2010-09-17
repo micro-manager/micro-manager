@@ -150,7 +150,7 @@ public class ImageTask implements EngineTask {
       String afResult = "Acquisition-AutofocusResult";
       if (imageRequest_.AutoFocus && imageRequest_.ChannelIndex == 0 && imageRequest_.PositionIndex == 0) {
          try {
-            core_.fullFocus();
+            eng_.getAutofocusManager().getDevice().fullFocus();
             MDUtils.put(md, afResult, "Success");
          } catch (Exception ex) {
             ReportingUtils.logError(ex);

@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 import mmcorej.CMMCore;
 import org.micromanager.acquisition.TaggedImageQueue;
+import org.micromanager.utils.AutofocusManager;
 import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.ReportingUtils;
 
@@ -33,10 +34,12 @@ public class Engine {
    private boolean isPaused_ = false;
    private EngineTask currentTask_;
    private LinkedBlockingQueue<EngineTask> taskQueue_;
+   private final AutofocusManager afMgr_;
 
-   public Engine(CMMCore core, TaggedImageQueue imageReceivingQueue) {
+   public Engine(CMMCore core, AutofocusManager afMgr, TaggedImageQueue imageReceivingQueue) {
       core_ = core;
       imageReceivingQueue_ = imageReceivingQueue;
+      afMgr_ = afMgr;
    }
 
    public void setupStandardSequence(SequenceSettings settings) {
@@ -171,5 +174,9 @@ public class Engine {
 
    private synchronized void setRunning(boolean state) {
       isRunning_ = state;
+   }
+
+   public AutofocusManager getAutofocusManager() {
+      return afMgr_;
    }
 }

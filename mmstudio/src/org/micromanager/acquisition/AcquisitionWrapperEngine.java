@@ -93,7 +93,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       TaggedImageQueue engineToProcessorsChannel = new TaggedImageQueue();
 
       SequenceSettings acquisitionSettings = generateSequenceSettings();
-      eng_ = new Engine(core_, engineToProcessorsChannel);
+      eng_ = new Engine(core_, gui_.getAutofocusManager(), engineToProcessorsChannel);
       eng_.setupStandardSequence(acquisitionSettings);
       eng_.start();
       
