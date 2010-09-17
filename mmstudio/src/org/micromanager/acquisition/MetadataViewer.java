@@ -126,6 +126,7 @@ public class MetadataViewer extends javax.swing.JFrame
       jPanel1.setLayout(new java.awt.GridLayout());
 
       OverlayButton.setText("Overlay");
+      OverlayButton.setFocusable(false);
       OverlayButton.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             OverlayButtonActionPerformed(evt);
@@ -134,6 +135,7 @@ public class MetadataViewer extends javax.swing.JFrame
       jPanel1.add(OverlayButton);
 
       ColorButton.setText("Color");
+      ColorButton.setFocusable(false);
       ColorButton.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             ColorButtonActionPerformed(evt);
@@ -142,6 +144,7 @@ public class MetadataViewer extends javax.swing.JFrame
       jPanel1.add(ColorButton);
 
       GrayButton.setText("Gray");
+      GrayButton.setFocusable(false);
       GrayButton.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             GrayButtonActionPerformed(evt);

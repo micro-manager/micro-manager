@@ -6,13 +6,12 @@ import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.gui.ImageWindow;
 import ij.gui.ScrollbarWithLabel;
+import ij.gui.StackWindow;
 import ij.plugin.Animator;
 import ij.process.ImageStatistics;
 import java.awt.Color;
 import java.awt.event.AdjustmentListener;
-import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.event.WindowListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -402,45 +401,56 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       }
       if (numGrayChannels_ == numChannels_)
          updateChannelColors();
-      hyperImage_.show();
-      final ImageWindow win = hyperImage_.getWindow();
 
+      // final ImageWindow win = hyperImage_.getWindow();
+      final ImageWindow win = new StackWindow(hyperImage_) {
+
+         public void windowClosing(WindowEvent e) {
+            if (eng_ != null && eng_.isAcquisitionRunning()) {
+               if (!abort()) {
+                  return;
+               }
+            }
+
+            if (diskCached_ == false) {
+               int result = JOptionPane.showConfirmDialog(this,
+                       "This data set has not yet been saved.\n"
+                       + "Do you want to save it?",
+                       "Closing image...",
+                       JOptionPane.YES_NO_CANCEL_OPTION);
+               if (result == JOptionPane.CANCEL_OPTION) {
+                  return;
+               } else if (result == JOptionPane.YES_OPTION) {
+                  if (!saveAs()) {
+                     return;
+                  }
+               }
+            }
+            imageCache_ = null;
+            virtualStacks_ = null;
+            close();
+            hyperImage_ = null;
+
+
+            super.windowClosing(e);
+         }
+
+         public void windowActivated(WindowEvent e) {
+            if (!isClosed()) {
+               super.windowActivated(e);
+            }
+         }
+      };
+      
+      hyperImage_.show();
       ScrollbarWithLabel pSelector = createPositionScrollbar(numPositions_);
       if (numPositions_ > 1) {
          win.add(pSelector);
       }
+
       hc_ = new HyperstackControls(this, win);
       win.add(hc_);
       ImagePlus.addImageListener(hc_);
-      for (WindowListener l:win.getWindowListeners())
-         win.removeWindowListener(l);
-      
-      win.addWindowListener(new WindowAdapter() {
-         @Override
-         public void windowClosing(WindowEvent e) {
-            if (eng_ != null && eng_.isAcquisitionRunning()) {
-               if (!abort())
-                  return;
-            }
-
-            if (diskCached_ == false) {
-               int result = JOptionPane.showConfirmDialog(win,
-                       "This data set has not yet been saved.\n"
-                       + " Do you want to save it?",
-                       "Closing image...",
-                       JOptionPane.YES_NO_CANCEL_OPTION);
-               if (result == JOptionPane.CANCEL_OPTION)
-                  return;
-               else if (result == JOptionPane.YES_OPTION)
-                  if (! saveAs())
-                     return;
-            }
-            imageCache_ = null;
-            virtualStacks_ = null;
-            win.close();
-            hyperImage_ = null;
-         }
-      });
       
       win.pack();
 
@@ -449,6 +459,7 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
          hyperImage_.updateAndDraw();
       }
       updateWindow();
+      System.out.println("1. focusListeners: " + win.getFocusListeners().length);
    }
 
    public ScrollbarWithLabel createPositionScrollbar(int nPositions) {

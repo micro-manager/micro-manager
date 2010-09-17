@@ -365,5 +365,13 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       return JavaUtils.readTextFile(dir_ + "/comments.txt");
    }
 
+   public void setDisplaySettings(Map<String, String> settings) {
+      throw new UnsupportedOperationException("Not supported yet.");
+   }
+
+   public Map<String, String> getDisplaySettings() {
+      throw new UnsupportedOperationException("Not supported yet.");
+   }
+
 
 }

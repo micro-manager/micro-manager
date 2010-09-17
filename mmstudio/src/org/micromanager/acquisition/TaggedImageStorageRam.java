@@ -58,4 +58,12 @@ public class TaggedImageStorageRam implements TaggedImageStorage {
       return comment_;
    }
 
+   public void setDisplaySettings(Map<String, String> settings) {
+      throw new UnsupportedOperationException("Not supported yet.");
+   }
+
+   public Map<String, String> getDisplaySettings() {
+      throw new UnsupportedOperationException("Not supported yet.");
+   }
+
 }

@@ -22,4 +22,6 @@ public interface TaggedImageStorage {
    public Map<String,String> getSummaryMetadata();
    public void setComment(String text);
    public String getComment();
+   public void setDisplaySettings(Map<String,String> settings);
+   public Map<String,String> getDisplaySettings();
 }

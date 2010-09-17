@@ -41,6 +41,14 @@ public class MMImageCache implements TaggedImageStorage {
       imageFileManager_.finished();
    }
 
+   public void setDisplaySettings(Map<String, String> settings) {
+      throw new UnsupportedOperationException("Not supported yet.");
+   }
+
+   public Map<String, String> getDisplaySettings() {
+      throw new UnsupportedOperationException("Not supported yet.");
+   }
+
    private class ImageCollection {
 
       private ConcurrentLinkedQueue<String> LabelQueue_;

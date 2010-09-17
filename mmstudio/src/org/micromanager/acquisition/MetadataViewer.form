@@ -118,6 +118,7 @@
                 <Component class="javax.swing.JToggleButton" name="OverlayButton">
                   <Properties>
                     <Property name="text" type="java.lang.String" value="Overlay"/>
+                    <Property name="focusable" type="boolean" value="false"/>
                   </Properties>
                   <Events>
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="OverlayButtonActionPerformed"/>
@@ -126,6 +127,7 @@
                 <Component class="javax.swing.JToggleButton" name="ColorButton">
                   <Properties>
                     <Property name="text" type="java.lang.String" value="Color"/>
+                    <Property name="focusable" type="boolean" value="false"/>
                   </Properties>
                   <Events>
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="ColorButtonActionPerformed"/>
@@ -134,6 +136,7 @@
                 <Component class="javax.swing.JToggleButton" name="GrayButton">
                   <Properties>
                     <Property name="text" type="java.lang.String" value="Gray"/>
+                    <Property name="focusable" type="boolean" value="false"/>
                   </Properties>
                   <Events>
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="GrayButtonActionPerformed"/>

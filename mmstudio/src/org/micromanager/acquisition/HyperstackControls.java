@@ -135,6 +135,7 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
       });
 
       fpsLabel.setText("playback fps:");
+      fpsLabel.setFocusable(false);
 
       abortButton.setBackground(new java.awt.Color(255, 255, 255));
       abortButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/cancel.png"))); // NOI18N
@@ -151,11 +152,12 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
          }
       });
 
-      statusLineLabel.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+      statusLineLabel.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       statusLineLabel.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
 
       pauseAndResumeToggleButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/control_pause.png"))); // NOI18N
       pauseAndResumeToggleButton.setToolTipText("Pause acquisition");
+      pauseAndResumeToggleButton.setFocusable(false);
       pauseAndResumeToggleButton.setMargin(new java.awt.Insets(0, 0, 0, 0));
       pauseAndResumeToggleButton.setMaximumSize(new java.awt.Dimension(30, 28));
       pauseAndResumeToggleButton.setMinimumSize(new java.awt.Dimension(30, 28));

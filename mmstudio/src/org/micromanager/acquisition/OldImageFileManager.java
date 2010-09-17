@@ -82,5 +82,13 @@ public class OldImageFileManager implements TaggedImageStorage {
       throw new UnsupportedOperationException("Not supported yet.");
    }
 
+   public void setDisplaySettings(Map<String, String> settings) {
+      throw new UnsupportedOperationException("Not supported yet.");
+   }
+
+   public Map<String, String> getDisplaySettings() {
+      throw new UnsupportedOperationException("Not supported yet.");
+   }
+
 
 }
