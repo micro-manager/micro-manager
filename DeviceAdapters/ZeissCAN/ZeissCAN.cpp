@@ -441,8 +441,7 @@ int ZeissTurret::GetPresence(MM::Device& device, MM::Core& core,  int turretNr, 
 // ZeissScope
 //
 ZeissScope::ZeissScope() :
-   initialized_(false),
-   port_("Undefined"),                                                       
+   initialized_(false),                                                     
    answerTimeoutMs_(1000)
 {
    InitializeDefaultErrorMessages();
@@ -486,7 +485,6 @@ int ZeissScope::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
          g_hub.initialized_ = true;
          initialized_ = true;
       }
-      GetCoreCallback()->SetDeviceProperty(port_.c_str(), "AnswerTimeout", "2000.0");
    }
 
    return DEVICE_OK;
@@ -524,6 +522,69 @@ void ZeissScope::GetName (char* Name) const
 bool ZeissScope::Busy() 
 {
    return false;
+}
+
+MM::DeviceDetectionStatus ZeissScope::DetectDevice(void)
+{
+   // all conditions must be satisfied...
+   MM::DeviceDetectionStatus result = MM::Misconfigured;
+   try
+   {
+      std::string transformed = g_hub.port_;//\port_;
+      for( std::string::iterator its = transformed.begin(); its != transformed.end(); ++its)
+      {
+         *its = (char)std::tolower(*its);
+      }
+      // ensure we’ve been provided with a valid serial port device name
+      if( 0< transformed.length() &&  0 != transformed.compare("undefined")  && 0 != transformed.compare("unknown") )
+      {
+         // the port property seems correct, so give it a try
+         result = MM::CanNotCommunicate;
+         // device specific default communication parameters
+         GetCoreCallback()->SetDeviceProperty(g_hub.port_.c_str(), MM::g_Keyword_BaudRate, "9600" );
+         GetCoreCallback()->SetDeviceProperty(g_hub.port_.c_str(), MM::g_Keyword_StopBits, "1");
+         GetCoreCallback()->SetDeviceProperty(g_hub.port_.c_str(), MM::g_Keyword_Handshaking, "Off");
+         
+         // we can speed up detection with shorter answer timeout here
+         GetCoreCallback()->SetDeviceProperty(g_hub.port_.c_str(), "AnswerTimeout", "500.0");
+         GetCoreCallback()->SetDeviceProperty(g_hub.port_.c_str(), "DelayBetweenCharsMs", "0.0");
+         MM::Device* pS = GetCoreCallback()->GetDevice(this, g_hub.port_.c_str());
+
+         std::vector<std::string> handShakeSettings;
+         handShakeSettings.push_back("Off");
+         handShakeSettings.push_back("Hardware");
+
+         for( std::vector<std::string>::iterator shakeSetIterator = handShakeSettings.begin();  
+            shakeSetIterator != handShakeSettings.end(); 
+            ++shakeSetIterator)
+         {
+            pS->Initialize();
+            std::string v;
+            // GetVersion is also used during initialization
+            int gvStatus = g_hub.GetVersion(*this, *GetCoreCallback(), v);
+            if( DEVICE_OK != gvStatus )
+            {
+               LogMessageCode(gvStatus,true);
+            }
+            else
+            {
+               // to succeed must reach here....
+               result = MM::CanCommunicate;
+            }
+            LogMessage(std::string("version : ")+v, true);
+            pS->Shutdown();
+            // quit when we find the setting that works
+            if( MM::CanCommunicate == result)
+               break;
+         }
+         GetCoreCallback()->SetDeviceProperty(g_hub.port_.c_str(), "AnswerTimeout", "2000.0");
+      }
+   }
+   catch(...)
+   {
+      LogMessage("Exception in DetectDevice!",false);
+   }
+   return result;
 }
 
 

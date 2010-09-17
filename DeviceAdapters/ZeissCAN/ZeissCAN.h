@@ -112,9 +112,13 @@ class ZeissScope : public CGenericBase<ZeissScope>
       // ----------------                                                       
       int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct); 
 
+      // device detection
+      MM::DeviceDetectionStatus DetectDevice(void);
+
+
    private:
       bool initialized_;
-      std::string port_;
+      //std::string port_;
       double answerTimeoutMs_;
 };
 
