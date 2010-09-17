@@ -19,8 +19,6 @@ import ij.gui.ImageWindow;
 import java.text.ParseException;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import mmcorej.TaggedImage;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.NumberUtils;

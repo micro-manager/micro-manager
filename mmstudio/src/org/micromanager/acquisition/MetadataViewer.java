@@ -123,7 +123,7 @@ public class MetadataViewer extends javax.swing.JFrame
       ChannelsTableScrollPane.setViewportView(ChannelsTable);
       ChannelsTable.getColumnModel().getSelectionModel().setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
 
-      jPanel1.setLayout(new java.awt.GridLayout());
+      jPanel1.setLayout(new java.awt.GridLayout(1, 0));
 
       OverlayButton.setText("Overlay");
       OverlayButton.setFocusable(false);
@@ -156,15 +156,15 @@ public class MetadataViewer extends javax.swing.JFrame
       ChannelsTablePanel.setLayout(ChannelsTablePanelLayout);
       ChannelsTablePanelLayout.setHorizontalGroup(
          ChannelsTablePanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-         .add(jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 667, Short.MAX_VALUE)
-         .add(org.jdesktop.layout.GroupLayout.TRAILING, ChannelsTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 667, Short.MAX_VALUE)
+         .add(jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 403, Short.MAX_VALUE)
+         .add(org.jdesktop.layout.GroupLayout.TRAILING, ChannelsTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 403, Short.MAX_VALUE)
       );
       ChannelsTablePanelLayout.setVerticalGroup(
          ChannelsTablePanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(ChannelsTablePanelLayout.createSequentialGroup()
             .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-            .add(ChannelsTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 411, Short.MAX_VALUE))
+            .add(ChannelsTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 319, Short.MAX_VALUE))
       );
 
       tabbedPane.addTab("Display", ChannelsTablePanel);
@@ -247,15 +247,15 @@ public class MetadataViewer extends javax.swing.JFrame
          ImageLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(ImageLayout.createSequentialGroup()
             .add(showUnchangingPropertiesCheckbox)
-            .addContainerGap(456, Short.MAX_VALUE))
-         .add(metadataTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 667, Short.MAX_VALUE)
+            .addContainerGap(192, Short.MAX_VALUE))
+         .add(metadataTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 403, Short.MAX_VALUE)
       );
       ImageLayout.setVerticalGroup(
          ImageLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(ImageLayout.createSequentialGroup()
             .add(showUnchangingPropertiesCheckbox)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-            .add(metadataTableScrollPane))
+            .add(metadataTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 328, Short.MAX_VALUE))
       );
 
       tabbedPane.addTab("Image", Image);
@@ -289,10 +289,6 @@ public class MetadataViewer extends javax.swing.JFrame
       cache_.setComment(commentsTextArea.getText());
    }//GEN-LAST:event_commentsTextAreaFocusLost
 
-   private void OverlayButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_OverlayButtonActionPerformed
-      setDisplayState(CompositeImage.COMPOSITE);
-   }//GEN-LAST:event_OverlayButtonActionPerformed
-
    private void ColorButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ColorButtonActionPerformed
       setDisplayState(CompositeImage.COLOR);
    }//GEN-LAST:event_ColorButtonActionPerformed
@@ -300,6 +296,10 @@ public class MetadataViewer extends javax.swing.JFrame
    private void GrayButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_GrayButtonActionPerformed
       setDisplayState(CompositeImage.GRAYSCALE);
    }//GEN-LAST:event_GrayButtonActionPerformed
+
+   private void OverlayButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_OverlayButtonActionPerformed
+      setDisplayState(CompositeImage.COMPOSITE);
+}//GEN-LAST:event_OverlayButtonActionPerformed
 
 
    private CompositeImage getCurrentCompositeImage() {

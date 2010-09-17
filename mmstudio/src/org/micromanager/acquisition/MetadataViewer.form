@@ -76,8 +76,8 @@
           <Layout>
             <DimensionLayout dim="0">
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="jPanel1" alignment="0" pref="667" max="32767" attributes="0"/>
-                  <Component id="ChannelsTableScrollPane" alignment="1" pref="667" max="32767" attributes="0"/>
+                  <Component id="jPanel1" alignment="0" pref="403" max="32767" attributes="0"/>
+                  <Component id="ChannelsTableScrollPane" alignment="1" pref="403" max="32767" attributes="0"/>
               </Group>
             </DimensionLayout>
             <DimensionLayout dim="1">
@@ -85,7 +85,7 @@
                   <Group type="102" alignment="0" attributes="0">
                       <Component id="jPanel1" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="ChannelsTableScrollPane" pref="411" max="32767" attributes="0"/>
+                      <Component id="ChannelsTableScrollPane" pref="319" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -227,9 +227,9 @@
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" attributes="0">
                       <Component id="showUnchangingPropertiesCheckbox" min="-2" max="-2" attributes="0"/>
-                      <EmptySpace pref="456" max="32767" attributes="0"/>
+                      <EmptySpace pref="192" max="32767" attributes="0"/>
                   </Group>
-                  <Component id="metadataTableScrollPane" alignment="0" pref="667" max="32767" attributes="0"/>
+                  <Component id="metadataTableScrollPane" alignment="0" pref="403" max="32767" attributes="0"/>
               </Group>
             </DimensionLayout>
             <DimensionLayout dim="1">
@@ -237,7 +237,7 @@
                   <Group type="102" alignment="0" attributes="0">
                       <Component id="showUnchangingPropertiesCheckbox" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="metadataTableScrollPane" max="32767" attributes="0"/>
+                      <Component id="metadataTableScrollPane" pref="328" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>

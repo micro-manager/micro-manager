@@ -266,6 +266,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
         private ArrayList<ChannelSpec> channels_;
         private AcquisitionEngine acqEng_;
         public final String[] COLUMN_NAMES = new String[]{
+            "Use?",
             "Configuration",
             "Exposure",
             "Z-offset",
@@ -298,16 +299,18 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
         public Object getValueAt(int rowIndex, int columnIndex) {
             if (channels_ != null && rowIndex < channels_.size()) {
                 if (columnIndex == 0) {
-                    return channels_.get(rowIndex).config_;
+                    return new Boolean(channels_.get(rowIndex).useChannel_);
                 } else if (columnIndex == 1) {
-                    return new Double(channels_.get(rowIndex).exposure_);
+                    return channels_.get(rowIndex).config_;
                 } else if (columnIndex == 2) {
-                    return new Double(channels_.get(rowIndex).zOffset_);
+                    return new Double(channels_.get(rowIndex).exposure_);
                 } else if (columnIndex == 3) {
-                    return new Boolean(channels_.get(rowIndex).doZStack_);
+                    return new Double(channels_.get(rowIndex).zOffset_);
                 } else if (columnIndex == 4) {
-                    return new Integer(channels_.get(rowIndex).skipFactorFrame_);
+                    return new Boolean(channels_.get(rowIndex).doZStack_);
                 } else if (columnIndex == 5) {
+                    return new Integer(channels_.get(rowIndex).skipFactorFrame_);
+                } else if (columnIndex == 6) {
                     return channels_.get(rowIndex).color_;
                 }
             }
@@ -324,18 +327,19 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
             }
 
             ChannelSpec channel = channels_.get(row);
-
             if (col == 0) {
-                channel.config_ = value.toString();
+                channel.useChannel_ = ((Boolean) value).booleanValue();
             } else if (col == 1) {
-                channel.exposure_ = ((Double) value).doubleValue();
+                channel.config_ = value.toString();
             } else if (col == 2) {
-                channel.zOffset_ = ((Double) value).doubleValue();
+                channel.exposure_ = ((Double) value).doubleValue();
             } else if (col == 3) {
-                channel.doZStack_ = (Boolean) value;
+                channel.zOffset_ = ((Double) value).doubleValue();
             } else if (col == 4) {
-                channel.skipFactorFrame_ = ((Integer) value).intValue();
+                channel.doZStack_ = (Boolean) value;
             } else if (col == 5) {
+                channel.skipFactorFrame_ = ((Integer) value).intValue();
+            } else if (col == 6) {
                 channel.color_ = (Color) value;
             }
 
@@ -344,7 +348,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
         }
 
         public boolean isCellEditable(int nRow, int nCol) {
-            if (nCol == 3) {
+            if (nCol == 4) {
                 if (!acqEng_.isZSliceSettingEnabled()) {
                     return false;
                 }
@@ -368,7 +372,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
             }
             ChannelSpec channel = channels_.get(row);
             TableModel model = (TableModel) e.getSource();
-            if (col == 5) {
+            if (col == 6) {
                 Color color = (Color) model.getValueAt(row, col);
                 colorPrefs_.putInt("Color_" + acqEng_.getChannelGroup() + "_" + channel.config_, color.getRGB());
             }
@@ -501,18 +505,21 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
             // Configure the component with the specified value
             editRow_ = rowIndex;
             editCol_ = colIndex;
-            if (colIndex == 1 || colIndex == 2) {
+            if (colIndex == 0) {
+               checkBox_.setSelected((Boolean) value);
+               return checkBox_;
+            } else if (colIndex == 2 || colIndex == 3) {
                 // exposure and z offset
                 text_.setText(((Double) value).toString());
                 return text_;
-            } else if (colIndex == 3) {
+            } else if (colIndex == 4) {
                 checkBox_.setSelected((Boolean) value);
                 return checkBox_;
-            } else if (colIndex == 4) {
+            } else if (colIndex == 5) {
                 // skip
                 text_.setText(((Integer) value).toString());
                 return text_;
-            } else if (colIndex == 0) {
+            } else if (colIndex == 1) {
                 // channel
                 combo_.removeAllItems();
 
@@ -553,16 +560,18 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
             // TODO: if content of column does not match type we get an exception
             try {
                 if (editCol_ == 0) {
+                   return checkBox_.isSelected();
+                } else if (editCol_ == 1) {
                     // As a side effect, change to the color of the new channel
                     channel_.color_ = new Color(colorPrefs_.getInt("Color_" + acqEng_.getChannelGroup() + "_" + combo_.getSelectedItem(), Color.white.getRGB()));
                     return combo_.getSelectedItem();
-                } else if (editCol_ == 1 || editCol_ == 2) {
+                } else if (editCol_ == 2 || editCol_ == 3) {
                     return new Double(NumberUtils.displayStringToDouble(text_.getText()));
-                } else if (editCol_ == 3) {
-                    return new Boolean(checkBox_.isSelected());
                 } else if (editCol_ == 4) {
-                    return new Integer(NumberUtils.displayStringToInt(text_.getText()));
+                    return new Boolean(checkBox_.isSelected());
                 } else if (editCol_ == 5) {
+                    return new Integer(NumberUtils.displayStringToInt(text_.getText()));
+                } else if (editCol_ == 6) {
                     Color c = colorLabel_.getBackground();
                     return c;
                 } else {
@@ -594,11 +603,12 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
 
         public Component getTableCellRendererComponent(JTable table, Object value,
                 boolean isSelected, boolean hasFocus, int rowIndex, int colIndex) {
-            this.setEnabled(table.isEnabled());
-            
+           
             ChannelTableModel model = (ChannelTableModel) table.getModel();
             ArrayList<ChannelSpec> channels = model.getChannels();
             ChannelSpec channel = channels.get(rowIndex);
+            this.setEnabled(table.isEnabled() /*&&
+                    ((Boolean) model.getValueAt(rowIndex, 0) || colIndex == 0)*/);
 
             if (hasFocus) {
                 // this cell is the anchor and the table has the focus
@@ -608,12 +618,24 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
 
             setOpaque(false);
             if (colIndex == 0) {
-                setText(channel.config_);
+               JCheckBox check = new JCheckBox("", channel.useChannel_);
+               check.setEnabled(table.isEnabled());
+               check.setOpaque(true);
+                if (isSelected) {
+                    check.setBackground(table.getSelectionBackground());
+                    check.setOpaque(true);
+                } else {
+                    check.setOpaque(false);
+                    check.setBackground(table.getBackground());
+                }
+               return check;
             } else if (colIndex == 1) {
-                setText(NumberUtils.doubleToDisplayString(channel.exposure_));
+                setText(channel.config_);
             } else if (colIndex == 2) {
-                setText(NumberUtils.doubleToDisplayString(channel.zOffset_));
+                setText(NumberUtils.doubleToDisplayString(channel.exposure_));
             } else if (colIndex == 3) {
+                setText(NumberUtils.doubleToDisplayString(channel.zOffset_));
+            } else if (colIndex == 4) {
                 JCheckBox check = new JCheckBox("", channel.doZStack_);
                 check.setEnabled(acqEng_.isZSliceSettingEnabled() && table.isEnabled());
                 if (isSelected) {
@@ -624,9 +646,9 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
                     check.setBackground(table.getBackground());
                 }
                 return check;
-            } else if (colIndex == 4) {
-                setText(Integer.toString(channel.skipFactorFrame_));
             } else if (colIndex == 5) {
+                setText(Integer.toString(channel.skipFactorFrame_));
+            } else if (colIndex == 6) {
                 setText("");
                 setBackground(channel.color_);
                 setOpaque(true);
@@ -1522,7 +1544,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
         }
 
         // Restore Column Width and Column order
-        int columnCount = 6;
+        int columnCount = 7;
         columnWidth_ = new int[columnCount];
         columnOrder_ = new int[columnCount];
         for (int k = 0; k < columnCount; k++) {

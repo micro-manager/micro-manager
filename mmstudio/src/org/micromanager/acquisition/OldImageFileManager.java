@@ -12,7 +12,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
 import mmcorej.TaggedImage;
-import org.micromanager.utils.MMException;
 import org.micromanager.utils.ReportingUtils;
 
 /**

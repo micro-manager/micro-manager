@@ -105,7 +105,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       }
       
       display_ = new AcquisitionDisplayThread(gui_, core_, processorsToDisplayChannel,
-              acquisitionSettings, channels_, saveFiles_, this, this.useSingleWindow_);
+              acquisitionSettings, acquisitionSettings.channels, saveFiles_, this, this.useSingleWindow_);
       
       display_.start();
    }
@@ -154,8 +154,11 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       // Channels
 
       acquisitionSettings.channels = new ArrayList<ChannelSpec>();
-      if (this.useChannels_)
-         acquisitionSettings.channels = channels_;
+      if (this.useChannels_) {
+         for (ChannelSpec channel:channels_)
+            if (channel.useChannel_)
+               acquisitionSettings.channels.add(channel);
+      }
 
       // Positions
       acquisitionSettings.positions = new ArrayList<MultiStagePosition>();
@@ -576,8 +579,15 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       if (!useMultiPosition_) {
          numPositions = 1;
       }
-      int numChannels = channels_.size();
-      if (!useChannels_) {
+
+
+      int numChannels = 0;
+      if (useChannels_) {
+         for (ChannelSpec channel:channels_)
+            if (channel.useChannel_)
+               ++numChannels;
+         }
+      else {
          numChannels = 1;
       }
 
