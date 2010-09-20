@@ -305,6 +305,9 @@ CScionCamera::CScionCamera() :
    stream_mode(0),
    restart_stream(0),
    exposure_delay_enabled(0),
+   frame_period_28mhz(1),
+   frame_period_14mhz(1),
+   frame_period_7mhz(1),
    d_gain(0.0),
    d_max_gain(0.0),
    d_min_gain(0.0),
@@ -400,6 +403,9 @@ CScionCamera::CScionCamera(unsigned int camera_id) :
    stream_mode(0),
    restart_stream(0),
    exposure_delay_enabled(0),
+   frame_period_28mhz(1),
+   frame_period_14mhz(1),
+   frame_period_7mhz(1),
    d_gain(0.0),
    d_max_gain(0.0),
    d_min_gain(0.0),
@@ -637,6 +643,25 @@ else
 	image_width = max_width;
 	image_height = max_height;
 	}
+
+if(max_width == 1600)
+{
+   frame_period_28mhz = 92;
+   frame_period_14mhz = 183;
+   frame_period_7mhz = 367;
+}
+else if(max_width == 1024)
+{
+   frame_period_28mhz = 38;
+   frame_period_14mhz = 75;
+   frame_period_7mhz = 150;
+}
+else
+{
+   frame_period_28mhz = 67;
+   frame_period_14mhz = 133;
+   frame_period_7mhz = 266;
+}
 
 
 //

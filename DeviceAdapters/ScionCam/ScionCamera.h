@@ -264,6 +264,10 @@ private:
 
 	long			exposure_delay_enabled;	// 1 = exposure delay active
 
+	long			frame_period_28mhz;		// frame time @28mhz clock rate
+	long			frame_period_14mhz;		// frame time @14mhz clock rate
+	long			frame_period_7mhz;		// frame time @7mhz clock rate
+
 	double			d_gain;					// gain
 	double			d_max_gain;				// max allowed gain value
 	double			d_min_gain;				// min allowed gain value
