@@ -34,6 +34,10 @@ public class SequenceGenerator extends Thread {
    @Override
    public void run() {
       ImageRequest lastImageRequest = new ImageRequest();
+      lastImageRequest.PositionIndex = -1;
+      lastImageRequest.SliceIndex = -1;
+      lastImageRequest.ChannelIndex = -1;
+      lastImageRequest.FrameIndex = -1;
 
       boolean skipImage;
       boolean skipLastImage = true;
@@ -102,7 +106,10 @@ public class SequenceGenerator extends Thread {
             }
          }
 
-         imageRequest.AutoFocus = sequence_.useAutofocus;
+         imageRequest.AutoFocus = sequence_.useAutofocus &&
+                 ((lastImageRequest.FrameIndex != imageRequest.FrameIndex)
+                  || (lastImageRequest.PositionIndex != imageRequest.PositionIndex));
+
          if (imageRequest.UseFrame) {
             imageRequest.AutoFocus = imageRequest.AutoFocus
                     && (0 == (imageRequest.FrameIndex % (1 + sequence_.skipAutofocusCount)));

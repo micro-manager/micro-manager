@@ -5,10 +5,7 @@
 package org.micromanager.acquisition.engine;
 
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.micromanager.api.EngineTask;
-import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 import mmcorej.CMMCore;
 import org.micromanager.acquisition.TaggedImageQueue;
