@@ -313,7 +313,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				CommandLine="pushd ..\..\3rdpartypublic\libtiff\&#x0D;&#x0A;cd&#x0D;&#x0A;nmake /f makefile.vc&#x0D;&#x0A;popd&#x0D;&#x0A;cd&#x0D;&#x0A;"
+				CommandLine=""
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -330,7 +330,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/D &quot;_CRT_SECURE_NO_WARNINGS&quot;"
-				AdditionalIncludeDirectories="../../3rdpartypublic/libtiff/libtiff;../../3rdpartypublic/boost;../../3rdpartypublic\boost\boost;&quot;..\..\3rdparty\Microsoft\VisualC++\include&quot;;../../3rdpartypublic/zlib"
+				AdditionalIncludeDirectories="../../3rdpartypublic/boost;../../3rdpartypublic\boost\boost;&quot;..\..\3rdparty\Microsoft\VisualC++\include&quot;;../../3rdpartypublic/zlib"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -392,7 +392,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/D &quot;_CRT_SECURE_NO_WARNINGS&quot;"
-				AdditionalIncludeDirectories="../../3rdpartypublic/libtiff/libtiff;../../3rdpartypublic/boost;../../3rdpartypublic\boost\boost;&quot;..\..\3rdparty\Microsoft\VisualC++\include&quot;;../../3rdpartypublic/zlib"
+				AdditionalIncludeDirectories="../../3rdpartypublic/boost;../../3rdpartypublic\boost\boost;&quot;..\..\3rdparty\Microsoft\VisualC++\include&quot;;../../3rdpartypublic/zlib"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
