@@ -124,7 +124,7 @@
 		<copy file="${BinRoot}/mmgr_dal_BaumerOptronic.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_CoherentCube.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_Conix.dll" todir="${InstallRoot}" />
-	<copy file="${BinRoot}/mmgr_dal_Corvus.dll" todir="${InstallRoot}" />
+		<copy file="${BinRoot}/mmgr_dal_Corvus.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_CSUX.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_DemoCamera.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_DemoStreamingCamera.dll" todir="${InstallRoot}" />
@@ -139,8 +139,9 @@
 		<copy file="${BinRoot}/mmgr_dal_Ludl.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_MaestroServo.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_Marzhauser.dll" todir="${InstallRoot}" />
-    <copy file="${BinRoot}/mmgr_dal_MCL_MicroDrive.dll" todir="${InstallRoot}" />
+                <copy file="${BinRoot}/mmgr_dal_MCL_MicroDrive.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_MCL_NanoDrive.dll" todir="${InstallRoot}" />
+                <copy file="${BinRoot}/mmgr_dal_MT20.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_Neos.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_Nikon.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_NikonAZ100.dll" todir="${InstallRoot}" />
@@ -155,8 +156,8 @@
 		<copy file="${BinRoot}/mmgr_dal_Piper.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_PrecisExcite.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_Prior.dll" todir="${InstallRoot}" />
-    <copy file="${BinRoot}/mmgr_dal_ProgRes.dll" todir="${InstallRoot}" />
-    <copy file="${BinRoot}/mmgr_dal_PVCAM.dll" todir="${InstallRoot}" />
+    		<copy file="${BinRoot}/mmgr_dal_ProgRes.dll" todir="${InstallRoot}" />
+    		<copy file="${BinRoot}/mmgr_dal_PVCAM.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_QCam.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_ScionCam.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_Sensicam.dll" todir="${InstallRoot}" />
