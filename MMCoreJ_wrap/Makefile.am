@@ -32,8 +32,8 @@ libMMCoreJ_wrap_la_SOURCES = $(SWIGLIB_SOURCES) \
 	$(top_srcdir)/MMCore/MMCore.cpp \
 	$(top_srcdir)/MMCore/PluginManager.cpp
  
-#not sure if Boost and libtifflinking are needed
-libMMCoreJ_wrap_la_LDFLAGS = -Wl, -module -ldl $(BOOST_LDFLAGS) $(LIBTIFF)
+#not sure if Boost linking is needed
+libMMCoreJ_wrap_la_LDFLAGS = -Wl, -module -ldl $(BOOST_LDFLAGS)
 
 $(srcdir)/MMCoreJ.jar:  MMCoreJ_wrap.cxx \
 	libMMCoreJ_wrap.la \
