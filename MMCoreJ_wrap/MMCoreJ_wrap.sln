@@ -1,5 +1,5 @@
 Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual C++ Express 2008
+# Visual Studio 2008
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MMCore", "..\MMCore\MMCore.vcproj", "{36571628-728C-4ACD-A47F-503BA91C5D43}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MMCoreJ_wrap", "MMCoreJ_wrap.vcproj", "{EFA68887-8A97-49D7-BAB4-768E15A4E597}"
@@ -142,6 +142,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MaestroServo", "..\DeviceAdapters\MaestroServo\MaestroServo.vcproj", "{19B83E51-446A-41DC-8899-ED2D59680000}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Hamamatsu", "..\SecretDeviceAdapters\Hamamatsu\Hamamatsu.vcproj", "{E0369FA6-1D4C-4FF7-AF9E-FC7B6FA07B1D}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MT20", "..\DeviceAdapters\MT20\MT20.vcproj", "{E5ABCDE7-03F1-4683-98C3-8F5F79E1A473}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -697,6 +699,14 @@ Global
 		{E0369FA6-1D4C-4FF7-AF9E-FC7B6FA07B1D}.Release|Win32.ActiveCfg = Release|Win32
 		{E0369FA6-1D4C-4FF7-AF9E-FC7B6FA07B1D}.Release|Win32.Build.0 = Release|Win32
 		{E0369FA6-1D4C-4FF7-AF9E-FC7B6FA07B1D}.Release|x64.ActiveCfg = Release|Win32
+		{E5ABCDE7-03F1-4683-98C3-8F5F79E1A473}.Debug|Win32.ActiveCfg = Debug|Win32
+		{E5ABCDE7-03F1-4683-98C3-8F5F79E1A473}.Debug|Win32.Build.0 = Debug|Win32
+		{E5ABCDE7-03F1-4683-98C3-8F5F79E1A473}.Debug|x64.ActiveCfg = Debug|x64
+		{E5ABCDE7-03F1-4683-98C3-8F5F79E1A473}.Debug|x64.Build.0 = Debug|x64
+		{E5ABCDE7-03F1-4683-98C3-8F5F79E1A473}.Release|Win32.ActiveCfg = Release|Win32
+		{E5ABCDE7-03F1-4683-98C3-8F5F79E1A473}.Release|Win32.Build.0 = Release|Win32
+		{E5ABCDE7-03F1-4683-98C3-8F5F79E1A473}.Release|x64.ActiveCfg = Release|x64
+		{E5ABCDE7-03F1-4683-98C3-8F5F79E1A473}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
