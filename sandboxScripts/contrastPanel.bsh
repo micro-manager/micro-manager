@@ -1,0 +1,53 @@
+import ij.IJ;
+import java.awt.image.*;
+import java.awt.geom.*;
+
+BufferedImage createBlankRGBBufferedImage(int width, int height) {
+	bi = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+   g1 = bi.createGraphics();
+	g1.setColor(Color.white);
+	g1.fillRect(0,0,width,height);
+   return bi;
+}
+
+
+if (! (f instanceof JFrame && f.isVisible())) {
+	f = new JFrame();
+	f.setBounds(100,100,600,300);
+	p = new JPanel();
+	f.add(p);
+	//f.pack();
+	f.setVisible(true);
+	displayGraphics = p.getGraphics();
+   p.repaint();
+}
+
+imgp = IJ.getImage();
+proc = imgp.getProcessor();
+n = imgp.getCurrentSlice();
+s = imgp.getStack();
+h = s.getProcessor(n).getHistogram();
+int hmax = 0;
+for (i=0;i<h.length;++i) {
+   hmax = Math.max(hmax,h[i]);
+}
+
+plotBuffer = createBlankRGBBufferedImage(255,255);
+plotGraphics = plotBuffer.createGraphics();
+plotGraphics.setColor(Color.blue);
+for (i=0;i<h.length;++i) {
+	y = 250*h[i]/hmax;
+   plotGraphics.drawLine(i,0,i,y);
+}
+
+at = new AffineTransform(1,0,0,-1,0,255);
+resultBuffer = createBlankRGBBufferedImage(255,255);
+atop = new AffineTransformOp(at,AffineTransformOp.TYPE_BILINEAR);
+atop.filter(plotBuffer,resultBuffer);
+
+resultGraphics = resultBuffer.createGraphics();
+resultGraphics.setColor(Color.black);
+resultGraphics.drawLine(0,0,100,100);
+displayGraphics.drawImage(resultBuffer,null,null);
+
+
