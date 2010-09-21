@@ -2,18 +2,34 @@ import ij.IJ;
 import java.awt.image.*;
 import java.awt.geom.*;
 
-BufferedImage createBlankRGBBufferedImage(int width, int height) {
+BufferedImage createBlankRGBBufferedImage(int width, int height, Color color) {
 	bi = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
    g1 = bi.createGraphics();
-	g1.setColor(Color.white);
+	g1.setColor(color);
 	g1.fillRect(0,0,width,height);
    return bi;
+}
+
+void drawPlotBuffer(BufferedImage plotBuffer, int [] h, Color color) {
+	plotGraphics = plotBuffer.createGraphics();
+	plotGraphics.setColor(color);
+	for (i=0;i<h.length;++i) {
+		y = plotBuffer.height*h[i]/hmax;
+   	plotGraphics.drawLine(i,0,i,y);
+	}
+}
+
+public void drawTriangle(Graphics g, int x, int y) {
+	int s = 8;
+	int[] xs = {x,x-s,x+s};
+	int[] ys = {y,y+s,y+s};
+   g.fillPolygon(xs,ys,3);
 }
 
 
 if (! (f instanceof JFrame && f.isVisible())) {
 	f = new JFrame();
-	f.setBounds(100,100,600,300);
+	f.setBounds(100,100,900,900);
 	p = new JPanel();
 	f.add(p);
 	//f.pack();
@@ -32,22 +48,21 @@ for (i=0;i<h.length;++i) {
    hmax = Math.max(hmax,h[i]);
 }
 
-plotBuffer = createBlankRGBBufferedImage(255,255);
-plotGraphics = plotBuffer.createGraphics();
-plotGraphics.setColor(Color.blue);
-for (i=0;i<h.length;++i) {
-	y = 250*h[i]/hmax;
-   plotGraphics.drawLine(i,0,i,y);
-}
+plotBuffer = createBlankRGBBufferedImage(252,255,Color.white);
+drawPlotBuffer(plotBuffer,h,Color.magenta);
 
-at = new AffineTransform(1,0,0,-1,0,255);
-resultBuffer = createBlankRGBBufferedImage(255,255);
+int margin=10;
+resultBuffer = createBlankRGBBufferedImage(600,600,Color.white);
+double wScale = ((double) resultBuffer.width-2*margin)/plotBuffer.width;
+double hScale = ((double) resultBuffer.height-2*margin)/plotBuffer.height;
+at = new AffineTransform(wScale,0,0,-hScale,margin,resultBuffer.height - margin);
 atop = new AffineTransformOp(at,AffineTransformOp.TYPE_BILINEAR);
 atop.filter(plotBuffer,resultBuffer);
 
 resultGraphics = resultBuffer.createGraphics();
 resultGraphics.setColor(Color.black);
-resultGraphics.drawLine(0,0,100,100);
+drawTriangle(resultGraphics,150,300);
+resultGraphics.drawRect(margin,margin,resultBuffer.width-2*margin,resultBuffer.height-2*margin);
 displayGraphics.drawImage(resultBuffer,null,null);
 
 
