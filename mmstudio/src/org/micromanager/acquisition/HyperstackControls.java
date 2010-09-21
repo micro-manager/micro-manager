@@ -150,7 +150,8 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
          }
       });
 
-      statusLineLabel.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+      statusLineLabel.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+      statusLineLabel.setVerticalAlignment(javax.swing.SwingConstants.TOP);
       statusLineLabel.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
 
       pauseAndResumeToggleButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/control_pause.png"))); // NOI18N
@@ -191,8 +192,8 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
             .add(fpsField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 34, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-            .add(statusLineLabel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 166, Short.MAX_VALUE)
-            .addContainerGap())
+            .add(statusLineLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 303, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+            .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
       );
       layout.setVerticalGroup(
          layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -276,13 +277,15 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
          try {
             String time = NumberUtils.doubleStringCoreToDisplay(taggedImg.tags.get("Acquisition-TimeMs"));
             String zPosition = taggedImg.tags.get("Acquisition-ZPositionUm");
+            String xyPosition = taggedImg.tags.get("Acquisition-PositionName");
             String chan;
             try {
                chan = MDUtils.getChannelName(taggedImg.tags);
             } catch (Exception ex) {
                chan = "";
             }
-            setStatusLabel(String.format("<html>%s&nbsp;s,&nbsp;%s,&nbsp;z:&nbsp;%s&nbsp;&#181;m</html>",time,chan,zPosition));
+            setStatusLabel(String.format("<html>%s, %s&nbsp;s, "
+                    + "z:&nbsp;%s&nbsp;&#181;m, %s</html>",xyPosition,time,zPosition,chan));
          } catch (ParseException ex) {
             ReportingUtils.logError(ex);
          }
