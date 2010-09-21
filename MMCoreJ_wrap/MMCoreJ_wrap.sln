@@ -145,6 +145,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Hamamatsu", "..\SecretDevic
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MT20", "..\DeviceAdapters\MT20\MT20.vcproj", "{E5ABCDE7-03F1-4683-98C3-8F5F79E1A473}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FreeSerialPort", "..\DeviceAdapters\FreeSerialPort\FreeSerialPort.vcproj", "{F7EE5E71-A1B0-7DF7-EE5E-71A1B07DF7EE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -707,6 +709,14 @@ Global
 		{E5ABCDE7-03F1-4683-98C3-8F5F79E1A473}.Release|Win32.Build.0 = Release|Win32
 		{E5ABCDE7-03F1-4683-98C3-8F5F79E1A473}.Release|x64.ActiveCfg = Release|x64
 		{E5ABCDE7-03F1-4683-98C3-8F5F79E1A473}.Release|x64.Build.0 = Release|x64
+		{F7EE5E71-A1B0-7DF7-EE5E-71A1B07DF7EE}.Debug|Win32.ActiveCfg = Debug|Win32
+		{F7EE5E71-A1B0-7DF7-EE5E-71A1B07DF7EE}.Debug|Win32.Build.0 = Debug|Win32
+		{F7EE5E71-A1B0-7DF7-EE5E-71A1B07DF7EE}.Debug|x64.ActiveCfg = Debug|x64
+		{F7EE5E71-A1B0-7DF7-EE5E-71A1B07DF7EE}.Debug|x64.Build.0 = Debug|x64
+		{F7EE5E71-A1B0-7DF7-EE5E-71A1B07DF7EE}.Release|Win32.ActiveCfg = Release|Win32
+		{F7EE5E71-A1B0-7DF7-EE5E-71A1B07DF7EE}.Release|Win32.Build.0 = Release|Win32
+		{F7EE5E71-A1B0-7DF7-EE5E-71A1B07DF7EE}.Release|x64.ActiveCfg = Release|x64
+		{F7EE5E71-A1B0-7DF7-EE5E-71A1B07DF7EE}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
