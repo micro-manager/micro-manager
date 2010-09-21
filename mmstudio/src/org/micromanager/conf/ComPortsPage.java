@@ -156,6 +156,13 @@ public class ComPortsPage extends PagePanel {
    }
 
    public boolean enterPage(boolean next) {
+		if( next){
+			try{
+			core_.unloadAllDevices();
+			}
+			catch(Exception u){
+			}
+		}
       model_.removeDuplicateComPorts();
       Device ports[] = model_.getAvailableSerialPorts();
 

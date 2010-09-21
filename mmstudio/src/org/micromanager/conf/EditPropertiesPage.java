@@ -100,11 +100,31 @@ public class EditPropertiesPage extends PagePanel {
 		ArrayList<Device> ports = new ArrayList<Device>();
 		model_.removeDuplicateComPorts();
 		Device avPorts[] = model_.getAvailableSerialPorts();
+
+
+		for( Device p : avPorts)
+			 model_.useSerialPort(p, true);
+
+
+		String portsInModel = new String("Serial ports available in configuration: ");
+
 		for (int ip = 0; ip < avPorts.length; ++ip) {
 			if (model_.isPortInUse(avPorts[ip])) {
 				ports.add(avPorts[ip]);
 			}
 		}
+
+		for( Device p1: ports){
+			if( 0 < portsInModel.length())
+				portsInModel += " ";
+			portsInModel += p1.getName();
+		}
+
+		System.out.print(  portsInModel);
+
+
+
+
 		Device devices[] = model_.getDevices();
 		for (int i = 0; i < devices.length; i++) {
 			for (int j = 0; j < devices[i].getNumberOfProperties(); j++) {
