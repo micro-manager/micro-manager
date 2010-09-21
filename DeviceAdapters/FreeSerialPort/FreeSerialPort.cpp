@@ -89,7 +89,7 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 // FreeSerialPort implementation
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-FreeSerialPort::FreeSerialPort() : busy_(false)
+FreeSerialPort::FreeSerialPort() : busy_(false), initialized_(false), detailedLog_(true)
 {
 	InitializeDefaultErrorMessages();
 
@@ -175,6 +175,10 @@ int FreeSerialPort::Initialize()
    // response string
    pAct = new CPropertyAction (this, &FreeSerialPort::OnResponse);
    (void)CreateProperty("Response", "", MM::String, true, pAct);
+
+   // show port setting in browser
+   pAct = new CPropertyAction (this, &FreeSerialPort::OnShowPort);
+   CreateProperty("ShowPort", port_.c_str(), MM::String, true, pAct);
 
 	initialized_ = true;
 	return DEVICE_OK;
@@ -377,4 +381,19 @@ int FreeSerialPort::OnResponse(MM::PropertyBase* pProp, MM::ActionType eAct)
    return ret;
 }
 
+
+// let user see port setting in browswer
+int FreeSerialPort::OnShowPort(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   int ret = DEVICE_OK;
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(port_.c_str() );
+   }
+   else if (eAct == MM::AfterSet)
+   {
+   }
+
+   return ret;
+}
 

@@ -67,6 +67,10 @@ public:
    int OnResponse(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnResponseTerminator(MM::PropertyBase* pProp, MM::ActionType eAct);
 
+   // reflect the pre-initialization property so user can see it
+   int OnShowPort(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+
 private:
    FreeSerialPort& operator=(FreeSerialPort& /*rhs*/) {assert(false); return *this;}
 
@@ -77,9 +81,6 @@ private:
    std::string commandTerminator_; // terminator to append to to sent string
    std::string response_;
    std::string responseTerminator_; // response terminator
-
-   void Purge();
-   int HandleErrors();
 
    bool initialized_;
    bool busy_;
