@@ -130,6 +130,7 @@
 		<copy file="${BinRoot}/mmgr_dal_DemoStreamingCamera.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_DLP4000.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_DTOpenLayer.dll" todir="${InstallRoot}" />
+		<copy file="${BinRoot}/mmgr_dal_FreeSerialPort.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_GenericSLM.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_Hamamatsu.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_K8055.dll" todir="${InstallRoot}" />
