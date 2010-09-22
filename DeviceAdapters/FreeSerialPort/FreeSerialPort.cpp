@@ -235,7 +235,7 @@ int FreeSerialPort::OnCommunicationSetting(MM::PropertyBase* pProp, MM::ActionTy
       // get the serial device
       MM::Device* pS = GetCoreCallback()->GetDevice(this, port_.c_str());
       pS->Shutdown();
-      long np = communicationSettings_.size();
+      size_t np = communicationSettings_.size();
       for(int ip = 0; ip < np; ++ip)
       {
         if( indexx == ip)
