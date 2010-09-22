@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="LaserCombiner"
+	Name="AgilentLaserCombiner"
 	ProjectGUID="{CF60E682-EF19-4FDD-8060-DE80256C827C}"
-	RootNamespace="LaserCombiner"
+	RootNamespace="AgilentLaserCombiner"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="131072"
 	>
@@ -239,7 +239,7 @@
 				LinkTimeCodeGeneration="0"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary="$(OutDir)/mmgr_dal_LaserCombiner.lib"
+				ImportLibrary="$(OutDir)/mmgr_dal_AgilentLaserCombiner.lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -323,7 +323,7 @@
 				LinkTimeCodeGeneration="0"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary="$(OutDir)/mmgr_dal_LaserCombiner.lib"
+				ImportLibrary="$(OutDir)/mmgr_dal_AgilentLaserCombiner.lib"
 				TargetMachine="17"
 			/>
 			<Tool
@@ -363,7 +363,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\LaserCombiner.cpp"
+				RelativePath=".\AgilentLaserCombiner.cpp"
 				>
 			</File>
 			<File
@@ -393,7 +393,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\LaserCombiner.h"
+				RelativePath=".\AgilentLaserCombiner.h"
 				>
 			</File>
 			<File

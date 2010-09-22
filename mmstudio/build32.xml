@@ -114,6 +114,7 @@
 		<copy file="${BinRoot}/mmgr_dal_AAAOTF.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_ABSCamera.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_AOTF.dll" todir="${InstallRoot}" />
+		<copy file="${BinRoot}/mmgr_dal_AgilentLaserCombiner.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_Apogee.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_Andor.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_AndorLaserCombiner.dll" todir="${InstallRoot}" />

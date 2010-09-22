@@ -1,15 +1,15 @@
 ///////////////////////////////////////////////////////////////////////////////
-// FILE:          LaserCombiner.h
+// FILE:          AgilentLaserCombiner.h
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   Adapter for Agilent LaserCombiner
+// DESCRIPTION:   Adapter for Agilent AgilentLaserCombiner
 // COPYRIGHT:     100xImaging, Inc, 2010
 //
 //
 
-#ifndef _LASERCOMBINER_H_
-#define _LASERCOMBINER_H_
+#ifndef _AGILENTLASERCOMBINER_H_
+#define _AGILENTLASERCOMBINER_H_
 
 #include "../../MMDevice/DeviceBase.h"
 #include <string>
@@ -107,4 +107,4 @@ private:
    bool gateOpen_;
 };
 
-#endif //_LASERCOMBINER_H_
+#endif //_AGILENTLASERCOMBINER_H_

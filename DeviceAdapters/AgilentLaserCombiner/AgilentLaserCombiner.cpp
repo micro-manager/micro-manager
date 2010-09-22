@@ -1,9 +1,9 @@
 ///////////////////////////////////////////////////////////////////////////////
-// FILE:          LaserCombiner.cpp
+// FILE:          AgilentLaserCombiner.cpp
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   Agilent LaserCombiner adapter 
+// DESCRIPTION:   Agilent AgilentLaserCombiner adapter 
 // COPYRIGHT:     100xImaging, Inc. 2010
 //
 //
@@ -16,7 +16,7 @@
    #define snprintf _snprintf 
 #endif
 
-#include "LaserCombiner.h"
+#include "AgilentLaserCombiner.h"
 #include "LaserCombinerSDK.h"
 #include "ErrorCodes.h"
 #include "../../MMDevice/ModuleInterface.h"
