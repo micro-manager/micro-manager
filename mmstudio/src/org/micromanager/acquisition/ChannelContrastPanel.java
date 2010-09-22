@@ -4,11 +4,15 @@
  */
 package org.micromanager.acquisition;
 
-import ij.IJ;
-import java.awt.image.*;
-import java.awt.geom.*;
-import java.awt.event.*;
-import java.awt.*;
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
+import java.awt.geom.AffineTransform;
+import java.awt.image.AffineTransformOp;
+import java.awt.image.BufferedImage;
 import javax.swing.JPanel;
 
 /**
@@ -19,7 +23,6 @@ public class ChannelContrastPanel extends JPanel {
 
    BufferedImage resultBuffer;
    private Graphics2D resultGraphics;
-   private Graphics displayGraphics;
    BufferedImage scaledPlotBuffer;
    BufferedImage plotBuffer;
    int xmin, xmax, ymin, ymax;
@@ -74,11 +77,17 @@ public class ChannelContrastPanel extends JPanel {
    private int[] hist;
    private int w_;
    private int h_;
+   private int pixelMax_;
+   private ContrastListener contrastListener_;
 
 
 
 
    void redrawLUTHandles() {
+      if (contrastListener_ != null) {
+         double scale = pixelMax_ / ((double) resultBuffer.getWidth() - 2*margin);
+         contrastListener_.contrastChanged((int) ((xmin-margin) * scale), (int) ((xmax-margin)*scale));
+      }
       resultGraphics.drawImage(scaledPlotBuffer, null, null);
       resultGraphics.setColor(Color.black);
       drawLUTHandles(resultGraphics, xmin, xmax, ymin, ymax);
@@ -217,6 +226,7 @@ public class ChannelContrastPanel extends JPanel {
    }
 
    public void setHistogram(int[] h) {
+      pixelMax_ = h.length;
       hist = compressHistogram(h);
       updateScaledPlot();
    }
@@ -226,15 +236,8 @@ public class ChannelContrastPanel extends JPanel {
       updateScaledPlot();
    }
 
-
-
-
-
-
-
-
-
-
-
+   public void setContrastListener(ContrastListener contrastListener) {
+      contrastListener_ = contrastListener;
+   }
 
 }
