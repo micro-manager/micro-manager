@@ -318,50 +318,82 @@ std::string FreeSerialPort::TokenizeControlCharacters(const std::string v ) cons
    return messs;
 }
 
-std::string FreeSerialPort::DetokenizeControlCharacters(const std::string v ) const
+std::string FreeSerialPort::DetokenizeControlCharacters(const std::string v0 ) const
 {
    // the string input from the GUI can contain escaped control characters, currently these are always preceded with \ (0x5C)
-   // and always assumed to be decimal
+   // and always assumed to be decimal or C style
    // to do ::::  the control character escape character and code basis can be properties as well!
 
-   std::vector<std::string> tokens;
-   CDeviceUtils::Tokenize(v, tokens, "\\");
    std::string detokenized;
+   std::string v = v0;
 
-   for( std::vector<std::string>::iterator jj = tokens.begin(); jj != tokens.end(); ++jj)
+   for( std::string::iterator jj = v.begin(); jj != v.end(); ++jj)
    {
-      std::string thisControlCharacter;
-      std::string::iterator ii = jj->begin();
-      // take any decimal digits after the escape and convert to a control character
-      for( ;; )
+      bool breakNow = false;
+      if( '\\' == *jj )
       {
-         bool breakNow = false;
-         while(0x2F < *ii && *ii < 0x3A )
+         // the next 1 to 3 characters might be converted into a control character
+         ++jj;
+         if( v.end() == jj)
          {
-            thisControlCharacter.push_back(*ii++);
-            if( ii == jj->end())
+            // there was an escape at the very end of the input string so output it literally
+            detokenized.push_back('\\');
+            break;
+         }
+         const std::string::iterator nextAfterEscape = jj;
+         std::string thisControlCharacter;
+         // take any decimal digits immediately after the escape character and convert to a control character 
+         while(0x2F < *jj && *jj < 0x3A )
+         {
+            thisControlCharacter.push_back(*jj++);
+            if( v.end() == jj)
             {
                breakNow = true;
                break;
             }
          }
+         int code = -1;
          if ( 0 < thisControlCharacter.length())
          {
             std::istringstream tmp(thisControlCharacter);
-            int code = 0;
             tmp >> code;
-            detokenized.push_back((char)code);
          }
-         if( breakNow)
-            break;
-         detokenized.push_back(*ii++);
-         if( ii == jj->end())
+         // otherwise, if we are still at the first character after the escape,
+         // possibly treat the next character like a 'C' control character
+         if( nextAfterEscape == jj)
          {
-            break;
+            switch( *jj)
+            {
+            case 'r':
+               ++jj;
+               code = 13; // CR
+               break;
+            case 'n':
+               ++jj;
+               code = 10; // NL
+               break;
+            case 't':
+               ++jj;
+               code = 8; // TAB
+               break;
+            case '\\':
+               ++jj;
+               code = '\\';
+               break;
+            default:
+               code = '\\'; // the '\' wasn't really an escape character....
+               break;
+            }
+            if( v.end() == jj)
+               breakNow = true;
          }
+         if( -1 < code)
+            detokenized.push_back((char)code);
       }
+      if( breakNow)
+         break;
+      detokenized.push_back(*jj);
    }
-
    return detokenized;
 
 }
