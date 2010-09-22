@@ -19,7 +19,7 @@ public class ChannelContrastPanel extends JPanel {
 
    BufferedImage resultBuffer;
    private Graphics2D resultGraphics;
-   private Graphics2D displayGraphics;
+   private Graphics displayGraphics;
    BufferedImage scaledPlotBuffer;
    BufferedImage plotBuffer;
    int xmin, xmax, ymin, ymax;
@@ -27,6 +27,7 @@ public class ChannelContrastPanel extends JPanel {
    int margin=10;
    int xl;
    int xr;
+   private Color channelColor;
 
    static BufferedImage createBlankRGBBufferedImage(int width, int height, Color color) {
       BufferedImage bi = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
@@ -37,15 +38,17 @@ public class ChannelContrastPanel extends JPanel {
    }
 
    static void drawPlot(BufferedImage bi, int[] h, Color color) {
-      int hmax = 0;
-      for (int i = 0; i < h.length; ++i) {
-         hmax = Math.max(hmax, h[i]);
-      }
-      Graphics2D g = bi.createGraphics();
-      g.setColor(color);
-      for (int i = 0; i < h.length; ++i) {
-         int y = bi.getHeight() * h[i] / hmax;
-         g.drawLine(i, 0, i, y);
+      if (h != null) {
+         int hmax = 0;
+         for (int i = 0; i < h.length; ++i) {
+            hmax = Math.max(hmax, h[i]);
+         }
+         Graphics2D g = bi.createGraphics();
+         g.setColor(color);
+         for (int i = 0; i < h.length; ++i) {
+            int y = bi.getHeight() * h[i] / hmax;
+            g.drawLine(i, 0, i, y);
+         }
       }
    }
 
@@ -68,6 +71,10 @@ public class ChannelContrastPanel extends JPanel {
       drawTriangle(g, xmin, ymin, false, Color.black);
       drawTriangle(g, xmax, ymax, true, Color.white);
    }
+   private int[] hist;
+   private int w_;
+   private int h_;
+
 
 
 
@@ -76,7 +83,7 @@ public class ChannelContrastPanel extends JPanel {
       resultGraphics.setColor(Color.black);
       drawLUTHandles(resultGraphics, xmin, xmax, ymin, ymax);
       resultGraphics.drawRect(margin, margin, resultBuffer.getWidth() - 2 * margin, resultBuffer.getHeight() - 2 * margin);
-      displayGraphics.drawImage(resultBuffer, null, null);
+      this.getGraphics().drawImage(resultBuffer,0,0,null);
    }
 
    void updateLUTHandles(int xclick) {
@@ -153,20 +160,8 @@ public class ChannelContrastPanel extends JPanel {
    }
 
    ChannelContrastPanel() {
+      super();
       plotBuffer = createBlankRGBBufferedImage(256, 100, Color.white);
-      scaledPlotBuffer = createBlankRGBBufferedImage(this.getWidth(), this.getHeight(), Color.white);
-      resultBuffer = createBlankRGBBufferedImage(this.getWidth(), this.getHeight(), Color.white);
-      resultGraphics = resultBuffer.createGraphics();
-      currentHandle = 0;
-
-      int xmin = margin;
-      int xmax = resultBuffer.getWidth() - margin;
-      int ymin = resultBuffer.getHeight() - margin;
-      int ymax = margin;
-
-      xl = margin;
-      xr = resultBuffer.getWidth() - margin;
-
       addMouseListener(new MouseAdapter() {
 
          public void mousePressed(MouseEvent e) {
@@ -187,8 +182,48 @@ public class ChannelContrastPanel extends JPanel {
       });
    }
 
+   @Override
+   public void setBounds(int x, int y, int w, int h) {
+      if (w_ != w || h_ != h) {
+         w_ = w;
+         h_ = h;
+         super.setBounds(x,y,w,h);
+
+         scaledPlotBuffer = createBlankRGBBufferedImage(this.getWidth(), this.getHeight(), Color.white);
+         resultBuffer = createBlankRGBBufferedImage(this.getWidth(), this.getHeight(), Color.white);
+         resultGraphics = resultBuffer.createGraphics();
+         currentHandle = 0;
+
+         xmin = margin;
+         xmax = resultBuffer.getWidth() - margin;
+         ymin = resultBuffer.getHeight() - margin;
+         ymax = margin;
+
+         xl = margin;
+         xr = resultBuffer.getWidth() - margin;
+      }
+      updateScaledPlot();
+
+   }
+
+   @Override
+   public void paint(Graphics g) {
+      redrawLUTHandles();
+   }
+
+   private void updateScaledPlot() {
+      renderScaledPlot(plotBuffer, scaledPlotBuffer, hist, channelColor);   
+      repaint();
+   }
+
    public void setHistogram(int[] h) {
-      renderScaledPlot(plotBuffer, scaledPlotBuffer, compressHistogram(h), Color.blue);
+      hist = compressHistogram(h);
+      updateScaledPlot();
+   }
+
+   public void setColor(Color color) {
+      channelColor = color;
+      updateScaledPlot();
    }
 
 
