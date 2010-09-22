@@ -1,187 +1,25 @@
 import ij.IJ;
-import java.awt.image.*;
-import java.awt.geom.*;
-import java.awt.event.*;
-import java.awt.*;
+import org.micromanager.acquisition.*;
 
-BufferedImage createBlankRGBBufferedImage(int width, int height, Color color) {
-	bi = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-   g1 = bi.createGraphics();
-	g1.setColor(color);
-	g1.fillRect(0,0,width,height);
-   return bi;
-}
+cp = new ChannelContrastPanel();
+f = new JFrame();
+f.setBounds(100,100,500,500);
+f.add(cp);
+f.show();
 
-void drawPlot(BufferedImage bi, int[] h, Color color) {
-	int hmax = 0;
-	for (int i=0;i<h.length;++i) {
-	   hmax = Math.max(hmax,h[i]);
-	}
-	g = bi.createGraphics();
-	g.setColor(color);
-	for (i=0;i<h.length;++i) {
-		y = bi.height*h[i]/hmax;
-   	g.drawLine(i,0,i,y);
-	}
-}
-
-void drawTriangle(Graphics g, int x, int y, boolean flip, Color color) {
-	int s = 8;
-	if (flip)
-		s = -s;
-	int[] xs = {x,x-s,x+s};
-	int[] ys = {y,y+s,y+s};
-	g.setColor(color);
-   g.fillPolygon(xs,ys,3);
-	g.setColor(Color.black);
-	g.drawPolygon(xs,ys,3);
-}
-
-void drawLUTHandles(Graphics g, xmin, xmax, ymin, ymax) {
-	g.setColor(Color.black);
-	g.drawLine(xmin,ymin,xmax,ymax);
-	drawTriangle(g,xmin,ymin,false,Color.black);
-	drawTriangle(g,xmax,ymax,true,Color.white);
-}
-
-
-
-void redrawLUTHandles() {
-	resultGraphics.drawImage(scaledPlotBuffer,null,null);
-	resultGraphics.setColor(Color.black);
-	drawLUTHandles(resultGraphics, xmin,xmax,ymin,ymax);
-	resultGraphics.drawRect(margin,margin,resultBuffer.width-2*margin,resultBuffer.height-2*margin);
-	displayGraphics.drawImage(resultBuffer,null,null);
-}
-
-
-
-void updateLUTHandles(int xclick) {
-	if (currentHandle == 0)
-		return;	
-	x = clipVal(xclick,xl,xr);
-	if (currentHandle == 1) {
-		xmin = x;
-		if (xmin > xmax)
-			xmax = xmin;
-		redrawLUTHandles();
-	} else if (currentHandle == 2) {
-		xmax = x;
-		if (xmin > xmax)
-			xmin = xmax;
-		redrawLUTHandles();
-	}
-}
-
-int getMargin(int y) {
-	if (y < ymin+10 && y > ymin) {
-		return 1;
-	} else if (y < ymax && y > ymax-8) {
-		return 2;
-	} else {
-		return 0;
-	}
-}
-
-int getLUTHandle(int x, int y) {
-	if (x > xmin-8 && x < xmin + 8 && y < ymin+8 && y > ymin) {
-		return 1;
-	} else if (x > xmax-8 && x < xmax + 8 && y < ymax && y > ymax-8) {
-		return 2;
-	} else {
-		return 0;
-	}
-}
-
-int clipVal(int v, int min, int max) {
-	return Math.max(min, Math.min(v,max));
-}
-
-int [] compressHistogram(int [] h) {
-	if (h.length == 256)
-		return h;
-	if (h.length == 256*256) {
-		int [] h2 = new int[256];
-		int j = 0;
-		for (i=0;i<256;++i) {
-			h2[i] += h[j];
-			++j;
-		}
-		return h2;
-	}
-}
-
-void rescalePlot(plotBuffer, scaledPlotBuffer, int w, int h, int margin) {
-	double wScale = ((double) w-2*margin)/plotBuffer.width;
-	double hScale = ((double) h-2*margin)/plotBuffer.height;
-	at = new AffineTransform(wScale,0,0,-hScale,margin,h - margin);
-	atop = new AffineTransformOp(at,AffineTransformOp.TYPE_BILINEAR);
-	atop.filter(plotBuffer,scaledPlotBuffer);
-}
-
-void renderScaledPlot(plotBuffer, scaledPlotBuffer, int [] h, Color color) {
-	drawPlot(plotBuffer,h, color);
-	rescalePlot(plotBuffer,scaledPlotBuffer,scaledPlotBuffer.width,scaledPlotBuffer.height,margin);
-}
-
-update();
-
-if (! (f instanceof JFrame && f.isVisible())) {
-	f = new JFrame();
-	f.setBounds(100,100,900,900);
-	p = new Panel();
-	f.add(p);
-	//f.pack();
-	f.setVisible(true);
-	displayGraphics = p.getGraphics();
-   p.repaint();
-}
-
-
+mmc.setExposure(100);
+mmc.waitForDevice(mmc.getCameraDevice());
+gui.snapSingleImage();
 imgp = IJ.getImage();
-proc = imgp.getProcessor();
-n = imgp.getCurrentSlice();
-s = imgp.getStack();
-h = s.getProcessor(n).getHistogram();
-int margin=10;
 
-plotBuffer = createBlankRGBBufferedImage(256,100,Color.white);
-scaledPlotBuffer = createBlankRGBBufferedImage(p.getWidth(), p.getHeight(), Color.white);
-
-renderScaledPlot(plotBuffer, scaledPlotBuffer, compressHistogram(h), Color.blue);
-
-resultBuffer = createBlankRGBBufferedImage(p.getWidth(),p.getHeight(),Color.white);
-int xmin = margin;
-int xmax = resultBuffer.width-margin;
-int ymin = resultBuffer.height-margin;
-int ymax = margin;
-xl = margin;
-xr = resultBuffer.width - margin;
-resultGraphics = resultBuffer.createGraphics();
-
-redrawLUTHandles();
-
-int currentHandle = 0;
-
-for (ml:p.getMouseListeners()) {
-	p.removeMouseListener(ml);
-}
-
-p.addMouseListener(new MouseAdapter() {
-	public void mousePressed(MouseEvent e) {
-		currentHandle = getMargin(e.getY());
-		updateLUTHandles(e.getX());
-	}
-
-	public void mouseReleased(MouseEvent e) {
-		currentHandle = 0;
-	}
-});
-
-p.addMouseMotionListener(new MouseMotionAdapter() {
-	public void mouseDragged(MouseEvent e) {
-		updateLUTHandles(e.getX());
-	}
-
-});
-
+h = imgp.getProcessor().getHistogram();
+cp.setHistogram(h);
+cp.setColor(Color.blue);
+cl = new ContrastListener() {
+	public void contrastChanged(int min, int max)
+		{
+      imgp.setDisplayRange(min,max);
+		imgp.updateAndDraw();
+		}
+};
+cp.setContrastListener(cl);
