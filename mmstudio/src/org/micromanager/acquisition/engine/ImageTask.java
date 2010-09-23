@@ -148,11 +148,16 @@ public class ImageTask implements EngineTask {
 
    public void autofocus() {
       String afResult = "Acquisition-AutofocusResult";
+      StagePosition sp;
       if (imageRequest_.AutoFocus) {
          try {
             eng_.getAutofocusManager().getDevice().fullFocus();
             MDUtils.put(md, afResult, "Success");
-            // adjust MultiStagePosition here
+            if (imageRequest_.UsePosition) {
+               sp = imageRequest_.Position.get(core_.getFocusDevice());
+               if (sp != null)
+                  sp.z = core_.getPosition(core_.getFocusDevice());
+            }
          } catch (Exception ex) {
             ReportingUtils.logError(ex);
             MDUtils.put(md,"Acquisition-AutofocusResult","Failure");
