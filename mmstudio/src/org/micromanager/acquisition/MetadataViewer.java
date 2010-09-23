@@ -17,24 +17,14 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
 import ij.gui.ImageWindow;
-import java.awt.Color;
-import java.awt.Component;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
-import javax.swing.JLabel;
-import javax.swing.JTable;
-import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableModel;
 import mmcorej.TaggedImage;
 import org.micromanager.api.ImageFocusListener;
 import org.micromanager.utils.GUIUtils;
-import org.micromanager.utils.MDUtils;
-import org.micromanager.utils.ReportingUtils;
 
 /**
  *
@@ -51,7 +41,7 @@ public class MetadataViewer extends javax.swing.JFrame
    private final String [] columnNames_ = {"Property","Value"};
    private MMImageCache cache_;
    private boolean showUnchangingKeys_;
-   private ChannelsModel channelsModel_;
+
 
    
    /** Creates new form MetadataViewer */
@@ -66,10 +56,6 @@ public class MetadataViewer extends javax.swing.JFrame
       imageMetadataTable.setModel(imageMetadataModel_);
       summaryMetadataTable.setModel(summaryMetadataModel_);
 
-      channelsModel_ = new ChannelsModel();
-      ChannelsTable.setModel(channelsModel_);
-      ColorCellRenderer colorRenderer = new ColorCellRenderer();
-      ChannelsTable.setDefaultRenderer(Color.class, colorRenderer);
       setDisplayState(CompositeImage.COMPOSITE);
    }
 
@@ -93,12 +79,11 @@ public class MetadataViewer extends javax.swing.JFrame
 
       tabbedPane = new javax.swing.JTabbedPane();
       ChannelsTablePanel = new javax.swing.JPanel();
-      ChannelsTableScrollPane = new javax.swing.JScrollPane();
-      ChannelsTable = new javax.swing.JTable();
       DisplayModeButtonPanel = new javax.swing.JPanel();
       OverlayButton = new javax.swing.JToggleButton();
       ColorButton = new javax.swing.JToggleButton();
       GrayButton = new javax.swing.JToggleButton();
+      jScrollPane1 = new javax.swing.JScrollPane();
       summarySplitPane = new javax.swing.JSplitPane();
       summaryCommentsPane = new javax.swing.JPanel();
       summaryCommentsLabel = new javax.swing.JLabel();
@@ -120,11 +105,6 @@ public class MetadataViewer extends javax.swing.JFrame
       setTitle("Metadata and Comments");
 
       tabbedPane.setFocusable(false);
-
-      ChannelsTable.setColumnSelectionAllowed(true);
-      ChannelsTable.getTableHeader().setReorderingAllowed(false);
-      ChannelsTableScrollPane.setViewportView(ChannelsTable);
-      ChannelsTable.getColumnModel().getSelectionModel().setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
 
       DisplayModeButtonPanel.setLayout(new java.awt.GridLayout(1, 0));
 
@@ -160,14 +140,14 @@ public class MetadataViewer extends javax.swing.JFrame
       ChannelsTablePanelLayout.setHorizontalGroup(
          ChannelsTablePanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(DisplayModeButtonPanel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 538, Short.MAX_VALUE)
-         .add(org.jdesktop.layout.GroupLayout.TRAILING, ChannelsTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 538, Short.MAX_VALUE)
+         .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 538, Short.MAX_VALUE)
       );
       ChannelsTablePanelLayout.setVerticalGroup(
          ChannelsTablePanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(ChannelsTablePanelLayout.createSequentialGroup()
             .add(DisplayModeButtonPanel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-            .add(ChannelsTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 383, Short.MAX_VALUE))
+            .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 383, Short.MAX_VALUE))
       );
 
       tabbedPane.addTab("Display", ChannelsTablePanel);
@@ -340,11 +320,11 @@ public class MetadataViewer extends javax.swing.JFrame
          imageMetadataScrollPaneLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(imageMetadataScrollPaneLayout.createSequentialGroup()
             .add(showUnchangingPropertiesCheckbox)
-            .addContainerGap(288, Short.MAX_VALUE))
+            .addContainerGap(188, Short.MAX_VALUE))
          .add(imageMetadataScrollPaneLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(imageMetadataScrollPaneLayout.createSequentialGroup()
                .add(30, 30, 30)
-               .add(imageMetadataTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 281, Short.MAX_VALUE)))
+               .add(imageMetadataTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 181, Short.MAX_VALUE)))
       );
 
       imageSplitPanel.setRightComponent(imageMetadataScrollPane);
@@ -521,9 +501,7 @@ public class MetadataViewer extends javax.swing.JFrame
    }
 
    // Variables declaration - do not modify//GEN-BEGIN:variables
-   private javax.swing.JTable ChannelsTable;
    private javax.swing.JPanel ChannelsTablePanel;
-   private javax.swing.JScrollPane ChannelsTableScrollPane;
    private javax.swing.JToggleButton ColorButton;
    private javax.swing.JPanel DisplayModeButtonPanel;
    private javax.swing.JToggleButton GrayButton;
@@ -535,6 +513,7 @@ public class MetadataViewer extends javax.swing.JFrame
    private javax.swing.JTable imageMetadataTable;
    private javax.swing.JScrollPane imageMetadataTableScrollPane;
    private javax.swing.JSplitPane imageSplitPanel;
+   private javax.swing.JScrollPane jScrollPane1;
    private javax.swing.JCheckBox showUnchangingPropertiesCheckbox;
    private javax.swing.JLabel summaryCommentsLabel;
    private javax.swing.JPanel summaryCommentsPane;
@@ -579,12 +558,10 @@ public class MetadataViewer extends javax.swing.JFrame
     * or the sliders have moved.
     */
    public void update(ImagePlus imp) {
-      ChannelSpec channelSpec;
       if (this.isVisible()) {
          if (imp == null) {
             imageMetadataModel_.setMetadata(null);
             summaryCommentsTextArea.setText(null);
-            channelsModel_.clear();
          } else {
             AcquisitionVirtualStack stack = getAcquisitionStack(imp);
             if (stack != null) {
@@ -600,14 +577,6 @@ public class MetadataViewer extends javax.swing.JFrame
                }
                if (imp instanceof CompositeImage) {
                   CompositeImage cimp = (CompositeImage) imp;
-                  channelSpec = new ChannelSpec();
-                  try {
-                     channelSpec.name = MDUtils.getChannelName(taggedImg.tags);
-                  } catch (Exception ex) {
-                     ReportingUtils.logError(ex);
-                  }
-                  channelSpec.show = true;
-                  channelSpec.color = cimp.getChannelColor();
                }
             } else {
                imageMetadataModel_.setMetadata(null);
@@ -642,74 +611,4 @@ public class MetadataViewer extends javax.swing.JFrame
       }
    }
 
-   private class ChannelSpec {
-      String name;
-      int index;
-      Color color;
-      Boolean show;
-   }
-
-   private class ChannelsModel extends ArrayList<ChannelSpec> implements TableModel {
-      String [] columnNames = {"Show?", "Channel", "Color"};
-      private ChannelSpec channelSpec;
-      public int getRowCount() {
-         return size();
-      }
-
-      public int getColumnCount() {
-         return 3;
-      }
-
-      public String getColumnName(int columnIndex) {
-         return columnNames[columnIndex];
-      }
-
-      public Class<?> getColumnClass(int columnIndex) {
-         return getValueAt(0, columnIndex).getClass();
-      }
-
-      public boolean isCellEditable(int rowIndex, int columnIndex) {
-         return (columnIndex == 0 || columnIndex == 2);
-      }
-
-      public Object getValueAt(int rowIndex, int columnIndex) {
-         channelSpec = get(rowIndex);
-         if (rowIndex == 0) {
-            return channelSpec.show;
-         } else if (rowIndex == 1) {
-            return channelSpec.name;
-         } else if (rowIndex == 2) {
-            return channelSpec.color;
-         } else {
-            return null;
-         }
-      }
-
-      public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-         throw new UnsupportedOperationException("Not supported yet.");
-      }
-
-      public void addTableModelListener(TableModelListener l) {
-         //throw new UnsupportedOperationException("Not supported yet.");
-      }
-
-      public void removeTableModelListener(TableModelListener l) {
-         //throw new UnsupportedOperationException("Not supported yet.");
-      }
-      
-   }
-
-
-   private class ColorCellRenderer implements TableCellRenderer {
-      private final JLabel colorLabel_;
-      ColorCellRenderer() {
-         colorLabel_ = new JLabel();
-         colorLabel_.setOpaque(true);
-      }
-
-      public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-         colorLabel_.setBackground((Color) value);
-         return colorLabel_;
-      }
-   }
 }

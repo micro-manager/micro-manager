@@ -28,6 +28,7 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Paint;
+import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Stroke;
 import java.awt.geom.GeneralPath;
@@ -58,6 +59,9 @@ public class GraphPanel extends JPanel {
    float cursorHiPos_;
    double gamma_;
    
+   private boolean fillTrace_ = false;
+   private Color traceColor_ = Color.black;
+   
    public GraphPanel() {
       data_ = new GraphData();
       setAutoBounds();
@@ -73,7 +77,12 @@ public class GraphPanel extends JPanel {
    public void setGamma(double gamma) {
       gamma_ = gamma;
    }
-   
+
+   public void setTraceStyle(boolean fillTrace, Color color) {
+      fillTrace_ = fillTrace;
+      traceColor_ = color;
+   }
+ 
    public void setAutoBounds(){
       bounds_ = data_.getBounds();
       AdjustCursors();
@@ -124,6 +133,9 @@ public class GraphPanel extends JPanel {
     * @param box
     */
    private void drawGraph(Graphics2D g, Rectangle box) {
+      Color oldColor = g.getColor();
+      g.setColor(traceColor_);
+
        if (data_.getSize() < 2)
          return;
       
@@ -155,8 +167,13 @@ public class GraphPanel extends JPanel {
          pt = getDevicePoint(data_.getPoint(i), box, xUnit, yUnit);
          trace.lineTo(pt.x, pt.y);
       }
-      
-      g.draw(trace);
+
+      if (fillTrace_)
+         g.fill(trace);
+      else
+         g.draw(trace);
+
+      g.setColor(oldColor);
    }
    
    public void drawCursor(Graphics2D g, Rectangle box, float xPos) {
@@ -173,6 +190,14 @@ public class GraphPanel extends JPanel {
       ptDev.x = Math.max(Math.min(ptDev.x, (float)box.x + box.width), (float)box.x);
       ptDev.y = Math.max(Math.min(ptDev.y, (float)box.y + box.height), (float)box.y);
       return ptDev;
+   }
+
+   public Point2D.Float getPositionPoint(int x, int y) {
+      Rectangle box = getBox();
+      Point2D.Float posPt = new Point2D.Float(
+              (float) (((x - box.x) / (float) box.width) * (bounds_.xMax - bounds_.xMin)),
+              (float) ((((box.y + box.height) - y) / (float) box.height) * (bounds_.yMax - bounds_.yMin)));
+      return posPt;
    }
    
    /**
@@ -240,6 +265,15 @@ public class GraphPanel extends JPanel {
       g.setStroke(oldStroke);
    }
 
+   public Rectangle getBox() {
+      Rectangle box = getBounds();
+      box.x = (int)xMargin_;
+      box.y = (int)yMargin_;
+      box.height -= 2*yMargin_;
+      box.width -= 2*xMargin_;
+      return box;
+   }
+
    @Override
    public void paintComponent(Graphics g) {
       
@@ -247,13 +281,8 @@ public class GraphPanel extends JPanel {
       Graphics2D  g2d = (Graphics2D) g;
       
       // get drawing rectangle
-      Rectangle box = getBounds();
- 
-      box.x = (int)xMargin_;
-      box.y = (int)yMargin_;
-      box.height -= 2*yMargin_;
-      box.width -= 2*xMargin_;
-      
+      Rectangle box = getBox();
+       
       // save current settings
       Color oldColor = g2d.getColor();      
       Paint oldPaint = g2d.getPaint();

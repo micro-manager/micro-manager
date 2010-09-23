@@ -29,9 +29,13 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.Stroke;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.QuadCurve2D;
+import java.util.ArrayList;
 
 
 import org.micromanager.utils.ReportingUtils;
@@ -44,10 +48,15 @@ public class HistogramPanel extends GraphPanel {
    // default histogram bins
    private int xMin_ = 0;
    private int xMax_ = 255;
-   
+   private int currentHandle;
+   private ArrayList<CursorListener> cursorListeners_;
+
    public HistogramPanel() {
       super();
+      cursorListeners_ = new ArrayList<CursorListener>();
+      setupMouseListeners();
    }
+
    
    private void updateBounds(){
 //      GraphData.Bounds bounds = getGraphBounds();
@@ -166,6 +175,31 @@ public class HistogramPanel extends GraphPanel {
               ptDevGamma.y, ptDevTop.x, ptDevTop.y));
       g.setColor(oldColor);
       g.setStroke(oldStroke);
+
+      drawLUTHandles(g, (int) ptDevBottom.x, (int) ptDevBottom.y,
+              (int) ptDevTop.x, (int) ptDevTop.y);
+   }
+
+   static void drawLUTHandles(Graphics2D g, int xmin, int ymin, int xmax, int ymax) {
+      drawTriangle(g, xmin, ymin, false, Color.black);
+      drawTriangle(g, xmax, ymax, true, Color.white);
+   }
+
+
+   static void drawTriangle(Graphics2D g, int x, int y, boolean flip, Color color) {
+      int s = 7;
+      if (flip) {
+         s = -s;
+      }
+      int[] xs = {x, x - s, x + s};
+      int[] ys = {y, y + s, y + s};
+      Stroke oldStroke = g.getStroke();
+      g.setStroke(new BasicStroke(1));
+      g.setColor(color);
+      g.fillPolygon(xs, ys, 3);
+      g.setColor(Color.black);
+      g.drawPolygon(xs, ys, 3);
+      g.setStroke(oldStroke);
    }
 
    public void refresh() {
@@ -183,5 +217,91 @@ public class HistogramPanel extends GraphPanel {
       setBounds(bounds);
       repaint();
    }
+
+   public interface CursorListener {
+      public void onLeftCursor(double pos);
+      public void onRightCursor(double pos);
+   }
+
+   public void addCursorListener(CursorListener cursorListener) {
+      cursorListeners_.add(cursorListener);
+   }
+
+   public void removeCursorListeners(CursorListener cursorListener) {
+      cursorListeners_.remove(cursorListener);
+   }
+
+   public CursorListener[] getCursorListeners() {
+      return (CursorListener[]) cursorListeners_.toArray();
+   }
+
+   private void notifyCursorLeft(double pos) {
+      for (CursorListener cursorListener:cursorListeners_) {
+         cursorListener.onLeftCursor(pos);
+      }
+   }
+
+   private void notifyCursorRight(double pos) {
+      for (CursorListener cursorListener:cursorListeners_) {
+         cursorListener.onRightCursor(pos);
+      }
+   }
    
+   private void setupMouseListeners() {
+      addMouseListener(new MouseAdapter() {
+         public void mousePressed(MouseEvent e) {
+            currentHandle = getLUTMargin(e.getY());
+            int x = e.getX();
+            int y = e.getY();
+            System.out.println(x+","+y);
+            if (currentHandle != 0) {
+               Point2D.Float pt = getPositionPoint(x,y);
+               if (currentHandle == 1)
+                  notifyCursorLeft(pt.x);
+               if (currentHandle == 2)
+                  notifyCursorRight(pt.x);
+            }
+         }
+
+         public void mouseReleased(MouseEvent e) {
+            currentHandle = 0;
+         }
+      });
+
+      addMouseMotionListener(new MouseMotionAdapter() {
+         public void mouseDragged(MouseEvent e) {
+            if (currentHandle == 0)
+               return;
+            Point2D.Float pt = getPositionPoint(e.getX(),e.getY());
+            if (currentHandle == 1)
+               notifyCursorLeft(pt.x);
+            if (currentHandle == 2)
+               notifyCursorRight(pt.x);
+         }
+      });
+   }
+
+
+   static int clipVal(int v, int min, int max) {
+      return Math.max(min, Math.min(v, max));
+   }
+
+
+   int getLUTMargin(int y) {
+      Rectangle box = getBox();
+      //int xmin = box.x;
+      //int xmax = box.x + box.width;
+      int ymin = box.y + box.height;
+      int ymax = box.y;
+
+      if (y < ymin + 10 && y >= ymin) {
+         return 1;
+      } else if (y <= ymax && y > ymax - 10) {
+         return 2;
+      } else {
+         return 0;
+      }
+   }
+
+
 }

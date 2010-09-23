@@ -7,6 +7,7 @@ package org.micromanager.acquisition;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
@@ -50,7 +51,9 @@ public class ChannelContrastPanel extends JPanel {
          g.setColor(color);
          for (int i = 0; i < h.length; ++i) {
             int y = bi.getHeight() * h[i] / hmax;
-            g.drawLine(i, 0, i, y);
+            if (y>0) {
+               g.drawLine(i, 0, i, y);
+            }
          }
       }
    }
@@ -116,9 +119,9 @@ public class ChannelContrastPanel extends JPanel {
    }
 
    int getMargin(int y) {
-      if (y < ymin + 10 && y > ymin) {
+      if (y < ymin + 10 && y >= (ymin-2)) {
          return 1;
-      } else if (y < ymax && y > ymax - 8) {
+      } else if (y <= (ymax + 2) && y > ymax - 10) {
          return 2;
       } else {
          return 0;
@@ -126,9 +129,9 @@ public class ChannelContrastPanel extends JPanel {
    }
 
    int getLUTHandle(int x, int y) {
-      if (x > xmin - 8 && x < xmin + 8 && y < ymin + 8 && y > ymin) {
+      if (x > xmin - 8 && x < xmin + 8 && y < ymin + 10 && y >= (ymin - 2)) {
          return 1;
-      } else if (x > xmax - 8 && x < xmax + 8 && y < ymax && y > ymax - 8) {
+      } else if (x > xmax - 8 && x < xmax + 8 && y <= (ymax + 2) && y > ymax - 10) {
          return 2;
       } else {
          return 0;
@@ -191,6 +194,16 @@ public class ChannelContrastPanel extends JPanel {
       });
    }
 
+   @Override
+   public void setBounds(Rectangle r) {
+      setBounds(r.x, r.y, r.width, r.height);
+   }
+
+   @Override
+   public void setSize(int w, int h) {
+      setBounds(this.getX(), this.getY(), w, h);
+   }
+   
    @Override
    public void setBounds(int x, int y, int w, int h) {
       if (w_ != w || h_ != h) {

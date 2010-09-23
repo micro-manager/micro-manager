@@ -34,6 +34,7 @@ import ij.process.ImageProcessor;
 import ij.process.LUT;
 import ij.process.ShortProcessor;
 import ij.process.ByteProcessor;
+import java.awt.Color;
 
 import java.awt.Dimension;
 import java.awt.Font;
@@ -58,6 +59,7 @@ import javax.swing.SpringLayout;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import org.micromanager.api.ImageFocusListener;
+import org.micromanager.graph.HistogramPanel.CursorListener;
 
 import org.micromanager.utils.ContrastSettings;
 import org.micromanager.utils.GUIUtils;
@@ -72,7 +74,8 @@ import org.micromanager.utils.NumberUtils;
  * 
  */
 public class ContrastPanel extends JPanel implements ImageController,
-        PropertyChangeListener, ImageFocusListener, ImageListener {
+        PropertyChangeListener, ImageFocusListener, ImageListener,
+         CursorListener {
 	private static final long serialVersionUID = 1L;
 	private JComboBox modeComboBox_;
 	private HistogramPanel histogramPanel_;
@@ -83,8 +86,6 @@ public class ContrastPanel extends JPanel implements ImageController,
 	private SpringLayout springLayout;
 	private ImagePlus image_;
 	private GraphData histogramData_;
-	private JSlider sliderLow_;
-	private JSlider sliderHigh_;
    private JSlider sliderGamma_;
    private GammaSliderCalculator gammaSliderCalculator_;
    private JFormattedTextField gammaValue_;
@@ -105,6 +106,8 @@ public class ContrastPanel extends JPanel implements ImageController,
    private boolean imageUpdated_;
    private boolean liveWindow_;
    private boolean liveStretchMode_ = true;
+   private double lutMin_;
+   private double lutMax_;
 
 	/**
 	 * Create the panel
@@ -242,28 +245,6 @@ public class ContrastPanel extends JPanel implements ImageController,
       springLayout.putConstraint(SpringLayout.SOUTH, varField_, 126, SpringLayout.NORTH, this);
       springLayout.putConstraint(SpringLayout.NORTH, varField_, 112, SpringLayout.NORTH, this);
 
-		sliderLow_ = new JSlider();
-		sliderLow_.addChangeListener(new ChangeListener() {
-			public void stateChanged(final ChangeEvent e) {
-				onSliderMove();
-			}
-		});
-		sliderLow_.setToolTipText("Minimum display level");
-		add(sliderLow_);
-
-		sliderHigh_ = new JSlider();
-		sliderHigh_.addChangeListener(new ChangeListener() {
-			public void stateChanged(final ChangeEvent e) {
-				onSliderMove();
-			}
-		});
-		sliderHigh_.setToolTipText("Maximum display level");
-		add(sliderHigh_);
-		springLayout.putConstraint(SpringLayout.EAST, sliderHigh_, -1,
-				SpringLayout.EAST, this);
-		springLayout.putConstraint(SpringLayout.WEST, sliderHigh_, 0,
-				SpringLayout.WEST, sliderLow_);
-
       final int gammaLow = 0;
       final int gammaHigh = 100;
       gammaSliderCalculator_ = new GammaSliderCalculator(gammaLow, gammaHigh);
@@ -280,8 +261,8 @@ public class ContrastPanel extends JPanel implements ImageController,
 		add(sliderGamma_);
 		springLayout.putConstraint(SpringLayout.EAST, sliderGamma_, -1,
 				SpringLayout.EAST, this);
-		springLayout.putConstraint(SpringLayout.WEST, sliderGamma_, 0,
-				SpringLayout.WEST, sliderLow_);
+		springLayout.putConstraint(SpringLayout.WEST, sliderGamma_, -200,
+				SpringLayout.WEST, this);
 
       JLabel gammaLabel = new JLabel();
       gammaLabel.setFont(new Font("Arial", Font.PLAIN, 10));
@@ -303,22 +284,19 @@ public class ContrastPanel extends JPanel implements ImageController,
 				SpringLayout.WEST, this);
 
 		histogramPanel_ = new HistogramPanel();
-		histogramPanel_.setMargins(1, 1);
+		histogramPanel_.setMargins(6, 10);
+      histogramPanel_.setTraceStyle(true, new Color(50,50,50));
 		histogramPanel_.setTextVisible(false);
 		histogramPanel_.setGridVisible(false);
+
+      histogramPanel_.addCursorListener(this);
+
 		add(histogramPanel_);
 		springLayout.putConstraint(SpringLayout.EAST, histogramPanel_, -5,
 				SpringLayout.EAST, this);
 		springLayout.putConstraint(SpringLayout.WEST, histogramPanel_, 100,
 				SpringLayout.WEST, this);
-		springLayout.putConstraint(SpringLayout.SOUTH, sliderLow_, 29,
-				SpringLayout.SOUTH, histogramPanel_);
-		springLayout.putConstraint(SpringLayout.NORTH, sliderLow_, 4,
-				SpringLayout.SOUTH, histogramPanel_);
-		springLayout.putConstraint(SpringLayout.SOUTH, sliderHigh_, 53,
-				SpringLayout.SOUTH, histogramPanel_);
-		springLayout.putConstraint(SpringLayout.NORTH, sliderHigh_, 28,
-				SpringLayout.SOUTH, histogramPanel_);
+
 		springLayout.putConstraint(SpringLayout.SOUTH, sliderGamma_, 77,
 				SpringLayout.SOUTH, histogramPanel_);
 		springLayout.putConstraint(SpringLayout.SOUTH, gammaValue_, 0,
@@ -339,19 +317,17 @@ public class ContrastPanel extends JPanel implements ImageController,
 		stretchCheckBox_.setText("Auto-stretch");
 		stretchCheckBox_.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent ce) {
-            if (stretchCheckBox_.isSelected())
+            if (stretchCheckBox_.isSelected()) {
+               liveStretchMode_ = true;
                setAutoScale();
-            else
+
+            } else {
                liveStretchMode_ = false;
-				sliderLow_.setEnabled(!stretchCheckBox_.isSelected());
-				sliderHigh_.setEnabled(!stretchCheckBox_.isSelected());
+            }
 			};
 		});
 		add(stretchCheckBox_);
-		springLayout.putConstraint(SpringLayout.EAST, sliderLow_, -1,
-				SpringLayout.EAST, this);
-		springLayout.putConstraint(SpringLayout.WEST, sliderLow_, 0,
-				SpringLayout.EAST, stretchCheckBox_);
+
 		springLayout.putConstraint(SpringLayout.EAST, stretchCheckBox_, -2,
 				SpringLayout.WEST, histogramPanel_);
 		springLayout.putConstraint(SpringLayout.WEST, stretchCheckBox_, 1,
@@ -527,23 +503,8 @@ public class ContrastPanel extends JPanel implements ImageController,
 	}
 
 	protected void onSliderMove() {
-		int min = sliderLow_.getValue();
-		int max = sliderHigh_.getValue();
-
 		// correct slider relative positions if necessary
-      if (min >= max) {
-         if (sliderHigh_.getValueIsAdjusting() && max > 0)
-            min = max - 1;
-         else 
-            if (max < maxIntensity_)
-               max += 1;
-
-         sliderHigh_.setValue(max);
-         sliderLow_.setValue(min);
-      }
-
 		updateCursors();
-
       applyContrastSettings();
 	}
 
@@ -597,50 +558,13 @@ public class ContrastPanel extends JPanel implements ImageController,
       if (stretchCheckBox_.isSelected()) {
          setAutoScale();
       }
+      
       updateHistogram();
       setLutGamma(gamma_);
-      updateSliders();
 
       image_.updateAndDraw();
 	}
 
-	private void updateSliders(boolean force, int min, int max) {
-
-		// set sliders without activating them.
-		ChangeListener[] l1 = sliderLow_.getChangeListeners();
-		ChangeListener[] l2 = sliderHigh_.getChangeListeners();
-		
-		for (ChangeListener l:l1)
-			sliderLow_.removeChangeListener(l);
-		for (ChangeListener l:l2)
-			sliderHigh_.removeChangeListener(l);		
-
-		sliderLow_.setMinimum(0);
-		sliderLow_.setMaximum(maxIntensity_);
-      if (!sliderLow_.isEnabled() || force)
-         sliderLow_.setValue(min);
-
-		sliderHigh_.setMinimum(0);
-		sliderHigh_.setMaximum(maxIntensity_);
-      if (!sliderHigh_.isEnabled() || force) {
-         sliderHigh_.setValue(max);
-      }
-
-		for (ChangeListener l:l1)
-			sliderLow_.addChangeListener(l);
-		for (ChangeListener l:l2)
-			sliderHigh_.addChangeListener(l);
-		
-		updateCursors();
-	}
-
-   private void updateSliders(boolean force) {
-      updateSliders(force, Math.max((int)min_, 0), Math.min((int)max_, maxIntensity_));
-   }
-
-   private void updateSliders() {
-      updateSliders(false);
-   }
 
 	// override from ImageController
 	public void setImagePlus(ImagePlus ip, ContrastSettings cs8bit,
@@ -660,7 +584,7 @@ public class ContrastPanel extends JPanel implements ImageController,
 			return;
       }
 
-      liveStretchMode_ = true;
+//      liveStretchMode_ = true;
 
       // protect against an 'Unhandled Exception' inside getStatistics
       if ( null != image_.getProcessor()){
@@ -674,12 +598,14 @@ public class ContrastPanel extends JPanel implements ImageController,
             else
                min -= 1;
 
-         updateSliders(true, min, max);
-      }
-      else{
+         lutMin_ = min;
+         lutMax_ = max;
+      } else {
          ReportingUtils.logError("Internal error: ImageProcessor is null");
       }
 
+
+      updateCursors();
 		image_.updateAndDraw();
 	}
 
@@ -689,9 +615,10 @@ public class ContrastPanel extends JPanel implements ImageController,
 			return;
 
       image_.getProcessor().setMinAndMax(0, maxIntensity_);
-
-		updateSliders(true, 0, maxIntensity_);
-
+      lutMin_ = 0;
+      lutMax_ = 255;
+      updateCursors();
+      
 		image_.updateAndDraw();
 	}
 
@@ -699,8 +626,8 @@ public class ContrastPanel extends JPanel implements ImageController,
 		if (image_ == null)
 			return;
 
-		histogramPanel_.setCursors(sliderLow_.getValue() / binSize_,
-				sliderHigh_.getValue() / binSize_,
+		histogramPanel_.setCursors(lutMin_ / binSize_,
+				lutMax_ / binSize_,
             gammaSliderCalculator_.gammaToSlider(gamma_));
 		histogramPanel_.repaint();
 		if (cs8bit_ == null || cs16bit_ == null)
@@ -709,12 +636,12 @@ public class ContrastPanel extends JPanel implements ImageController,
 		if (image_.getProcessor() != null) {
 			// record settings
 			if (image_.getProcessor() instanceof ShortProcessor) {
-				cs16bit_.min = sliderLow_.getValue();
-				cs16bit_.max = sliderHigh_.getValue();
+				cs16bit_.min = lutMin_;
+				cs16bit_.max = lutMax_;
             image_.getProcessor().setMinAndMax(cs16bit_.min, cs16bit_.max);
 			} else {
-				cs8bit_.min = sliderLow_.getValue();
-				cs8bit_.max = sliderHigh_.getValue();
+				cs8bit_.min = lutMin_;
+				cs8bit_.max = lutMax_;
             image_.getProcessor().setMinAndMax(cs8bit_.min, cs8bit_.max);
 			}
 		}
@@ -751,9 +678,8 @@ public class ContrastPanel extends JPanel implements ImageController,
                  contrast8, contrast16);
          }
       }
-		updateSliders();
 
-		img.updateAndDraw();
+      img.updateAndDraw();
 	}
 
    public void applyContrastSettings(ImageProcessor proc,
@@ -827,11 +753,16 @@ public class ContrastPanel extends JPanel implements ImageController,
          System.out.println("imagedUpdated()");
          System.out.println(ip.getDisplayRangeMax());
          imageUpdated_ = true;
-         updateHistogram();
+
          double min = ip.getDisplayRangeMin();
          double max = ip.getDisplayRangeMax();
          setContrastSettings(new ContrastSettings(min, max), new ContrastSettings(min, max));
-         updateSliders(true, (int) ip.getDisplayRangeMin(), (int) ip.getDisplayRangeMax());
+         if (liveStretchMode_) {
+            lutMin_ = ip.getDisplayRangeMin();
+            lutMax_ = ip.getDisplayRangeMax();
+         }
+
+         updateHistogram();
          imageUpdated_ = false;
       }
    }
@@ -843,6 +774,28 @@ public class ContrastPanel extends JPanel implements ImageController,
          double max = ip.getDisplayRangeMax();
          setImagePlus(ip, new ContrastSettings(min, max), new ContrastSettings(min, max));
       }
+   }
+
+   public void onLeftCursor(double pos) {
+      if (liveStretchMode_)
+         return;
+
+      lutMin_ = Math.max(0, pos) * binSize_;
+      if (lutMax_ < lutMin_)
+         lutMax_ = lutMin_;
+      updateCursors();
+      applyContrastSettings();
+   }
+
+   public void onRightCursor(double pos) {
+      if (liveStretchMode_)
+         return;
+      
+      lutMax_ = Math.min(255, pos) * binSize_;
+      if (lutMin_ > lutMax_)
+         lutMin_ = lutMax_;
+      updateCursors();
+      applyContrastSettings();
    }
 
 }
