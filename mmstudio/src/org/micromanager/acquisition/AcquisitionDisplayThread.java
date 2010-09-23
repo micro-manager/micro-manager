@@ -90,6 +90,7 @@ public class AcquisitionDisplayThread extends Thread {
                imageFileManager = new TaggedImageStorageRam(null);
             }
             imageCache_ = new MMImageCache(imageFileManager);
+            imageCache_.setComment(acqSettings.comment);
             gui_.setAcquisitionCache(acqName, imageCache_);
             //gui_.setAcquisitionSummary(acqName, summaryMetadata);
             gui_.initializeAcquisition(acqName, (int) core_.getImageWidth(), (int) core_.getImageHeight(), (int) core_.getBytesPerPixel());

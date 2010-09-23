@@ -30,4 +30,5 @@ public class SequenceSettings {
    public String root;
    public String prefix;
    public double zReference;
+   public String comment;
 }

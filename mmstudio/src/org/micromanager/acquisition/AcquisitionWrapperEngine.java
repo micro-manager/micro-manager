@@ -179,7 +179,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       acquisitionSettings.save = saveFiles_;
       acquisitionSettings.root = rootName_;
       acquisitionSettings.prefix = dirName_;
-
+      acquisitionSettings.comment = comment_;
       return acquisitionSettings;
    }
 
