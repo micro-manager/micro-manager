@@ -750,13 +750,8 @@ public class ContrastPanel extends JPanel implements ImageController,
 
    public void imageUpdated(ImagePlus ip) {
       if (liveWindow_ && !imageUpdated_) {
-         System.out.println("imagedUpdated()");
-         System.out.println(ip.getDisplayRangeMax());
          imageUpdated_ = true;
 
-         //double min = ip.getDisplayRangeMin();
-         //double max = ip.getDisplayRangeMax();
-         //setContrastSettings(new ContrastSettings(min, max), new ContrastSettings(min, max));
          double beforeMin = lutMin_;
          double beforeMax = lutMax_;
 
@@ -765,9 +760,7 @@ public class ContrastPanel extends JPanel implements ImageController,
 
          }
 
-         if (lutMin_ != beforeMin || lutMax_ != beforeMax) {
-            updateCursors();
-         }
+         updateCursors();
          //updateHistogram();
          //image_.updateAndDraw();
          imageUpdated_ = false;
