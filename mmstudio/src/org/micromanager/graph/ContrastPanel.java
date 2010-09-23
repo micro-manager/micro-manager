@@ -762,6 +762,7 @@ public class ContrastPanel extends JPanel implements ImageController,
             lutMax_ = ip.getDisplayRangeMax();
          }
 
+         updateCursors();
          updateHistogram();
          imageUpdated_ = false;
       }
