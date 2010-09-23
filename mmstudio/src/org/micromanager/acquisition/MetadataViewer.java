@@ -353,7 +353,9 @@ public class MetadataViewer extends javax.swing.JFrame
 }//GEN-LAST:event_showUnchangingPropertiesCheckboxActionPerformed
 
    private void summaryCommentsTextAreaFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_summaryCommentsTextAreaFocusLost
-      cache_.setComment(summaryCommentsTextArea.getText());
+      if (cache_ != null) {
+         cache_.setComment(summaryCommentsTextArea.getText());
+      }
    }//GEN-LAST:event_summaryCommentsTextAreaFocusLost
 
    private void summaryCommentsTextArea1FocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_summaryCommentsTextArea1FocusLost
