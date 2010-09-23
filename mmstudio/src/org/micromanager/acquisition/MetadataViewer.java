@@ -79,11 +79,10 @@ public class MetadataViewer extends javax.swing.JFrame
 
       tabbedPane = new javax.swing.JTabbedPane();
       ChannelsTablePanel = new javax.swing.JPanel();
-      DisplayModeButtonPanel = new javax.swing.JPanel();
-      OverlayButton = new javax.swing.JToggleButton();
-      ColorButton = new javax.swing.JToggleButton();
-      GrayButton = new javax.swing.JToggleButton();
       jScrollPane1 = new javax.swing.JScrollPane();
+      jPanel1 = new javax.swing.JPanel();
+      displayModeCombo = new javax.swing.JComboBox();
+      jLabel1 = new javax.swing.JLabel();
       summarySplitPane = new javax.swing.JSplitPane();
       summaryCommentsPane = new javax.swing.JPanel();
       summaryCommentsLabel = new javax.swing.JLabel();
@@ -106,51 +105,48 @@ public class MetadataViewer extends javax.swing.JFrame
 
       tabbedPane.setFocusable(false);
 
-      DisplayModeButtonPanel.setLayout(new java.awt.GridLayout(1, 0));
-
-      OverlayButton.setText("Overlay");
-      OverlayButton.setFocusable(false);
-      OverlayButton.addActionListener(new java.awt.event.ActionListener() {
+      displayModeCombo.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Composite", "Color", "Grayscale" }));
+      displayModeCombo.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            OverlayButtonActionPerformed(evt);
+            displayModeComboActionPerformed(evt);
          }
       });
-      DisplayModeButtonPanel.add(OverlayButton);
 
-      ColorButton.setText("Color");
-      ColorButton.setFocusable(false);
-      ColorButton.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            ColorButtonActionPerformed(evt);
-         }
-      });
-      DisplayModeButtonPanel.add(ColorButton);
+      jLabel1.setText("Display mode:");
 
-      GrayButton.setText("Gray");
-      GrayButton.setFocusable(false);
-      GrayButton.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            GrayButtonActionPerformed(evt);
-         }
-      });
-      DisplayModeButtonPanel.add(GrayButton);
+      org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
+      jPanel1.setLayout(jPanel1Layout);
+      jPanel1Layout.setHorizontalGroup(
+         jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+         .add(jPanel1Layout.createSequentialGroup()
+            .add(jLabel1)
+            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+            .add(displayModeCombo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 134, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+            .addContainerGap(309, Short.MAX_VALUE))
+      );
+      jPanel1Layout.setVerticalGroup(
+         jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+         .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+            .add(jLabel1)
+            .add(displayModeCombo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+      );
 
       org.jdesktop.layout.GroupLayout ChannelsTablePanelLayout = new org.jdesktop.layout.GroupLayout(ChannelsTablePanel);
       ChannelsTablePanel.setLayout(ChannelsTablePanelLayout);
       ChannelsTablePanelLayout.setHorizontalGroup(
          ChannelsTablePanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-         .add(DisplayModeButtonPanel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 538, Short.MAX_VALUE)
-         .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 538, Short.MAX_VALUE)
+         .add(jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+         .add(org.jdesktop.layout.GroupLayout.TRAILING, jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 538, Short.MAX_VALUE)
       );
       ChannelsTablePanelLayout.setVerticalGroup(
          ChannelsTablePanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(ChannelsTablePanelLayout.createSequentialGroup()
-            .add(DisplayModeButtonPanel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+            .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-            .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 383, Short.MAX_VALUE))
+            .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 385, Short.MAX_VALUE))
       );
 
-      tabbedPane.addTab("Display", ChannelsTablePanel);
+      tabbedPane.addTab("Channels", ChannelsTablePanel);
 
       summarySplitPane.setBorder(null);
       summarySplitPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
@@ -356,18 +352,6 @@ public class MetadataViewer extends javax.swing.JFrame
       update(ij.IJ.getImage());
 }//GEN-LAST:event_showUnchangingPropertiesCheckboxActionPerformed
 
-   private void GrayButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_GrayButtonActionPerformed
-      setDisplayState(CompositeImage.GRAYSCALE);
-}//GEN-LAST:event_GrayButtonActionPerformed
-
-   private void ColorButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ColorButtonActionPerformed
-      setDisplayState(CompositeImage.COLOR);
-}//GEN-LAST:event_ColorButtonActionPerformed
-
-   private void OverlayButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_OverlayButtonActionPerformed
-      setDisplayState(CompositeImage.COMPOSITE);
-}//GEN-LAST:event_OverlayButtonActionPerformed
-
    private void summaryCommentsTextAreaFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_summaryCommentsTextAreaFocusLost
       cache_.setComment(summaryCommentsTextArea.getText());
    }//GEN-LAST:event_summaryCommentsTextAreaFocusLost
@@ -375,6 +359,10 @@ public class MetadataViewer extends javax.swing.JFrame
    private void summaryCommentsTextArea1FocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_summaryCommentsTextArea1FocusLost
       // TODO add your handling code here:
    }//GEN-LAST:event_summaryCommentsTextArea1FocusLost
+
+   private void displayModeComboActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_displayModeComboActionPerformed
+      setDisplayState(displayModeCombo.getSelectedIndex()+1);
+   }//GEN-LAST:event_displayModeComboActionPerformed
 
 
    private CompositeImage getCurrentCompositeImage() {
@@ -392,32 +380,10 @@ public class MetadataViewer extends javax.swing.JFrame
          CompositeImage ci = (CompositeImage) imgp;
          ci.setMode(state);
          ci.updateAndDraw();
-         updateStateButtons();
-      }
-   }
-
-   private void updateStateButtons() {
-      CompositeImage ci = getCurrentCompositeImage();
-      if (ci != null) {
-         int displayState = ci.getMode();
-         OverlayButton.setSelected(displayState == CompositeImage.COMPOSITE);
-         ColorButton.setSelected(displayState == CompositeImage.COLOR);
-         GrayButton.setSelected(displayState == CompositeImage.GRAYSCALE);
-         OverlayButton.setEnabled(true);
-         ColorButton.setEnabled(true);
-         GrayButton.setEnabled(true);
-      } else {
-         OverlayButton.setSelected(false);
-         ColorButton.setSelected(false);
-         GrayButton.setSelected(false);
-         OverlayButton.setEnabled(false);
-         ColorButton.setEnabled(false);
-         GrayButton.setEnabled(false);
       }
    }
 
    class MetadataTableModel extends AbstractTableModel {
-
       Vector<Vector<String>> data_;
 
       MetadataTableModel() {
@@ -502,10 +468,7 @@ public class MetadataViewer extends javax.swing.JFrame
 
    // Variables declaration - do not modify//GEN-BEGIN:variables
    private javax.swing.JPanel ChannelsTablePanel;
-   private javax.swing.JToggleButton ColorButton;
-   private javax.swing.JPanel DisplayModeButtonPanel;
-   private javax.swing.JToggleButton GrayButton;
-   private javax.swing.JToggleButton OverlayButton;
+   private javax.swing.JComboBox displayModeCombo;
    private javax.swing.JLabel imageCommentsLabel;
    private javax.swing.JPanel imageCommentsPanel;
    private javax.swing.JScrollPane imageCommentsScrollPane;
@@ -513,6 +476,8 @@ public class MetadataViewer extends javax.swing.JFrame
    private javax.swing.JTable imageMetadataTable;
    private javax.swing.JScrollPane imageMetadataTableScrollPane;
    private javax.swing.JSplitPane imageSplitPanel;
+   private javax.swing.JLabel jLabel1;
+   private javax.swing.JPanel jPanel1;
    private javax.swing.JScrollPane jScrollPane1;
    private javax.swing.JCheckBox showUnchangingPropertiesCheckbox;
    private javax.swing.JLabel summaryCommentsLabel;
@@ -577,6 +542,7 @@ public class MetadataViewer extends javax.swing.JFrame
                }
                if (imp instanceof CompositeImage) {
                   CompositeImage cimp = (CompositeImage) imp;
+                  displayModeCombo.setSelectedIndex(cimp.getMode()-1);
                }
             } else {
                imageMetadataModel_.setMetadata(null);
@@ -606,7 +572,7 @@ public class MetadataViewer extends javax.swing.JFrame
 
          currentWindow_ = focusedWindow;
 
-         updateStateButtons();
+
          update(imgp);
       }
    }
