@@ -133,6 +133,7 @@ public class HistogramPanel extends GraphPanel {
     * correct. Gamma is expressed as a number between 0 and 100 (slider position)
     */
    public void drawMapping(Graphics2D g, Rectangle box, float xStart, float xEnd, double gamma) {
+
          // set scaling
       float xUnit = 1.0f;
       float yUnit = 1.0f;
@@ -146,7 +147,7 @@ public class HistogramPanel extends GraphPanel {
          }
       }
 
-      if (bounds_.getRangeX() <= 0.0 || bounds_.getRangeY() <= 0.0) {
+      if (bounds_.getRangeX() <= 0.0 || bounds_.getRangeY() <= 1.e-10) {
          ReportingUtils.logMessage("Out of range " + bounds_.getRangeX() + ", " + bounds_.getRangeY());
          return; // invalid range data
       }
