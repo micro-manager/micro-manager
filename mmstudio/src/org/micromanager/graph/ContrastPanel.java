@@ -261,7 +261,7 @@ public class ContrastPanel extends JPanel implements ImageController,
 		add(sliderGamma_);
 		springLayout.putConstraint(SpringLayout.EAST, sliderGamma_, -1,
 				SpringLayout.EAST, this);
-		springLayout.putConstraint(SpringLayout.WEST, sliderGamma_, -200,
+		springLayout.putConstraint(SpringLayout.WEST, sliderGamma_, 100,
 				SpringLayout.WEST, this);
 
       JLabel gammaLabel = new JLabel();
@@ -284,7 +284,7 @@ public class ContrastPanel extends JPanel implements ImageController,
 				SpringLayout.WEST, this);
 
 		histogramPanel_ = new HistogramPanel();
-		histogramPanel_.setMargins(6, 10);
+		histogramPanel_.setMargins(8, 10);
       histogramPanel_.setTraceStyle(true, new Color(50,50,50));
 		histogramPanel_.setTextVisible(false);
 		histogramPanel_.setGridVisible(false);
@@ -297,7 +297,7 @@ public class ContrastPanel extends JPanel implements ImageController,
 		springLayout.putConstraint(SpringLayout.WEST, histogramPanel_, 100,
 				SpringLayout.WEST, this);
 
-		springLayout.putConstraint(SpringLayout.SOUTH, sliderGamma_, 77,
+		springLayout.putConstraint(SpringLayout.SOUTH, sliderGamma_, 35,
 				SpringLayout.SOUTH, histogramPanel_);
 		springLayout.putConstraint(SpringLayout.SOUTH, gammaValue_, 0,
 				SpringLayout.SOUTH, sliderGamma_);
@@ -307,7 +307,7 @@ public class ContrastPanel extends JPanel implements ImageController,
 				SpringLayout.SOUTH, sliderGamma_);
 		springLayout.putConstraint(SpringLayout.NORTH, gammaLabel, 0,
 				SpringLayout.NORTH, sliderGamma_);
-		springLayout.putConstraint(SpringLayout.SOUTH, histogramPanel_, -81,
+		springLayout.putConstraint(SpringLayout.SOUTH, histogramPanel_, -40,
 				SpringLayout.SOUTH, this);
 		springLayout.putConstraint(SpringLayout.NORTH, histogramPanel_, 0,
 				SpringLayout.NORTH, fullScaleButton_);
