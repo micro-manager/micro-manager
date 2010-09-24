@@ -86,7 +86,6 @@ public class ContrastPanel extends JPanel implements ImageController,
 	private SpringLayout springLayout;
 	private ImagePlus image_;
 	private GraphData histogramData_;
-   private JSlider sliderGamma_;
    private GammaSliderCalculator gammaSliderCalculator_;
    private JFormattedTextField gammaValue_;
    private NumberFormat numberFormat_;
@@ -249,39 +248,28 @@ public class ContrastPanel extends JPanel implements ImageController,
       final int gammaHigh = 100;
       gammaSliderCalculator_ = new GammaSliderCalculator(gammaLow, gammaHigh);
 
-		sliderGamma_ = new JSlider();
-		sliderGamma_.addChangeListener(new ChangeListener() {
-			public void stateChanged(final ChangeEvent e) {
-				onGammaSliderMove();
-			}
-		});
-		sliderGamma_.setToolTipText("Gamma");
-		sliderGamma_.setMinimum(gammaLow);
-		sliderGamma_.setMaximum(gammaHigh);
-		add(sliderGamma_);
-		springLayout.putConstraint(SpringLayout.EAST, sliderGamma_, -1,
-				SpringLayout.EAST, this);
-		springLayout.putConstraint(SpringLayout.WEST, sliderGamma_, 100,
-				SpringLayout.WEST, this);
-
       JLabel gammaLabel = new JLabel();
       gammaLabel.setFont(new Font("Arial", Font.PLAIN, 10));
-      gammaLabel.setPreferredSize(new Dimension(40, 15));
+      gammaLabel.setPreferredSize(new Dimension(40, 20));
       gammaLabel.setText("Gamma");
       add(gammaLabel);
 		springLayout.putConstraint(SpringLayout.WEST, gammaLabel, 5,
 				SpringLayout.WEST, this);
+      springLayout.putConstraint(SpringLayout.NORTH, gammaLabel, 195,
+				SpringLayout.NORTH, this);
 
       gammaValue_ = new JFormattedTextField(numberFormat_);
       gammaValue_.setFont(new Font("Arial", Font.PLAIN, 10));
       gammaValue_.setValue(gamma_);
       gammaValue_.addPropertyChangeListener("value", this);
-      gammaValue_.setPreferredSize(new Dimension(35, 15));
+      gammaValue_.setPreferredSize(new Dimension(35, 20));
       add(gammaValue_);
 		springLayout.putConstraint(SpringLayout.WEST, gammaValue_, 45,
 				SpringLayout.WEST, this);
 		springLayout.putConstraint(SpringLayout.EAST, gammaValue_, 95,
 				SpringLayout.WEST, this);
+  		springLayout.putConstraint(SpringLayout.NORTH, gammaValue_, 0,
+				SpringLayout.NORTH, gammaLabel);
 
 		histogramPanel_ = new HistogramPanel();
 		histogramPanel_.setMargins(8, 10);
@@ -297,17 +285,7 @@ public class ContrastPanel extends JPanel implements ImageController,
 		springLayout.putConstraint(SpringLayout.WEST, histogramPanel_, 100,
 				SpringLayout.WEST, this);
 
-		springLayout.putConstraint(SpringLayout.SOUTH, sliderGamma_, 35,
-				SpringLayout.SOUTH, histogramPanel_);
-		springLayout.putConstraint(SpringLayout.SOUTH, gammaValue_, 0,
-				SpringLayout.SOUTH, sliderGamma_);
-		springLayout.putConstraint(SpringLayout.NORTH, gammaValue_, 0,
-				SpringLayout.NORTH, sliderGamma_);
-		springLayout.putConstraint(SpringLayout.SOUTH, gammaLabel, 0,
-				SpringLayout.SOUTH, sliderGamma_);
-		springLayout.putConstraint(SpringLayout.NORTH, gammaLabel, 0,
-				SpringLayout.NORTH, sliderGamma_);
-		springLayout.putConstraint(SpringLayout.SOUTH, histogramPanel_, -40,
+		springLayout.putConstraint(SpringLayout.SOUTH, histogramPanel_, -6,
 				SpringLayout.SOUTH, this);
 		springLayout.putConstraint(SpringLayout.NORTH, histogramPanel_, 0,
 				SpringLayout.NORTH, fullScaleButton_);
@@ -508,13 +486,6 @@ public class ContrastPanel extends JPanel implements ImageController,
       applyContrastSettings();
 	}
 
-	protected void onGammaSliderMove() {
-		gamma_ = gammaSliderCalculator_.sliderToGamma(sliderGamma_.getValue());
-      if (gammaValue_ != null) {
-         // gamma_ = Double.valueOf(numberFormat_.format(gamma_));
-         gammaValue_.setValue(gamma_);
-      }
-	}
 
    // only used for Gamma
    public void propertyChange(PropertyChangeEvent e) {
@@ -523,7 +494,6 @@ public class ContrastPanel extends JPanel implements ImageController,
       } catch (ParseException p) {
          ReportingUtils.logError(p, "ContrastPanel, Function propertyChange");
       }
-      sliderGamma_.setValue(gammaSliderCalculator_.gammaToSlider(gamma_));
       setLutGamma(gamma_);
       updateCursors();
    }
@@ -796,6 +766,18 @@ public class ContrastPanel extends JPanel implements ImageController,
          lutMin_ = lutMax_;
       updateCursors();
       applyContrastSettings();
+   }
+
+   public void onGammaCurve(double gamma) {
+      if (gamma != 0) {
+         if (gamma > 0.9 & gamma < 1.1)
+            gamma_ = 1;
+         else
+            gamma_ = gamma;
+         gammaValue_.setValue(gamma_);
+         updateCursors();
+         applyContrastSettings();
+      }
    }
 
 }

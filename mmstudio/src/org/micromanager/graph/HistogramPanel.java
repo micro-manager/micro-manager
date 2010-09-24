@@ -36,6 +36,7 @@ import java.awt.event.MouseMotionAdapter;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
+import java.awt.geom.Point2D.Float;
 import java.awt.geom.QuadCurve2D;
 import java.util.ArrayList;
 
@@ -52,13 +53,33 @@ public class HistogramPanel extends GraphPanel {
    private int xMax_ = 255;
    private int currentHandle;
    private ArrayList<CursorListener> cursorListeners_;
-
+   private Float ptDevBottom_;
+   private Float ptDevTop_;
+   
    public HistogramPanel() {
       super();
       cursorListeners_ = new ArrayList<CursorListener>();
       setupMouseListeners();
    }
 
+   private GeneralPath generateGammaCurvePath(Float ptDevTop, Float ptDevBottom, double gamma) {
+      double xn, yn;
+      int X;
+      int Y;
+      int w = (int) (ptDevTop.x - ptDevBottom.x) + 1;
+      int h = (int) (ptDevBottom.y - ptDevTop.y) + 1;
+      GeneralPath path = new GeneralPath();
+      path.moveTo(ptDevBottom.x, ptDevBottom.y);
+      for (int x = 0; x < w; x += 3) {
+         xn = (double) x / (double) w;
+         yn = Math.pow(xn, gamma);
+         X = x + (int) ptDevBottom.x;
+         Y = (int) ((1 - yn) * h + ptDevTop.y);
+         path.lineTo(X, Y);
+      }
+      path.lineTo(ptDevTop.x, ptDevTop.y);
+      return path;
+   }
    
    private void updateBounds(){
 //      GraphData.Bounds bounds = getGraphBounds();
@@ -158,25 +179,10 @@ public class HistogramPanel extends GraphPanel {
       yUnit = (float) (box.height / bounds_.getRangeY());
 
       Point2D.Float ptPosBottom = new Point2D.Float(xStart, (float)bounds_.yMin);
-      Point2D.Float ptDevBottom = getDevicePoint(ptPosBottom, box, xUnit, yUnit);
+      ptDevBottom_ = getDevicePoint(ptPosBottom, box, xUnit, yUnit);
       Point2D.Float ptPosTop = new Point2D.Float(xEnd, (float)bounds_.yMax);
-      Point2D.Float ptDevTop = getDevicePoint(ptPosTop, box, xUnit, yUnit);
-
-
-      double xn,yn;
-      int X,Y;
-      int w = (int) (ptDevTop.x - ptDevBottom.x) + 1;
-      int h = (int) (ptDevBottom.y - ptDevTop.y) + 1;
-      GeneralPath path = new GeneralPath();
-      path.moveTo(ptDevBottom.x, ptDevBottom.y);
-      for (int x = 0; x<w; x+=4) {
-         xn = (double) x / (double) w;
-         yn = Math.pow(xn, gamma);
-         X = x + (int) ptDevBottom.x;
-         Y = (int) ((1 - yn) * h + ptDevTop.y);
-         path.lineTo(X, Y);
-      }
-      path.lineTo(ptDevTop.x, ptDevTop.y);
+      ptDevTop_ = getDevicePoint(ptPosTop, box, xUnit, yUnit);
+      GeneralPath path = generateGammaCurvePath(ptDevTop_, ptDevBottom_, gamma);
 
       Color oldColor = g.getColor();
       Stroke oldStroke = g.getStroke();
@@ -188,8 +194,8 @@ public class HistogramPanel extends GraphPanel {
       g.setColor(oldColor);
       g.setStroke(oldStroke);
 
-      drawLUTHandles(g, (int) ptDevBottom.x, (int) ptDevBottom.y,
-              (int) ptDevTop.x, (int) ptDevTop.y);
+      drawLUTHandles(g, (int) ptDevBottom_.x, (int) ptDevBottom_.y,
+              (int) ptDevTop_.x, (int) ptDevTop_.y);
    }
 
    static void drawLUTHandles(Graphics2D g, int xmin, int ymin, int xmax, int ymax) {
@@ -233,6 +239,7 @@ public class HistogramPanel extends GraphPanel {
    public interface CursorListener {
       public void onLeftCursor(double pos);
       public void onRightCursor(double pos);
+      public void onGammaCurve(double gamma);
    }
 
    public void addCursorListener(CursorListener cursorListener) {
@@ -258,22 +265,35 @@ public class HistogramPanel extends GraphPanel {
          cursorListener.onRightCursor(pos);
       }
    }
-   
+
+   private void notifyGammaMouse(double gamma) {
+      for (CursorListener cursorListener:cursorListeners_) {
+         cursorListener.onGammaCurve(gamma);
+      }
+   }
+
    private void setupMouseListeners() {
       addMouseListener(new MouseAdapter() {
          public void mousePressed(MouseEvent e) {
-            currentHandle = getLUTMargin(e.getY());
+            currentHandle = getClickBand(e.getY());
             int x = e.getX();
             int y = e.getY();
-            System.out.println(x+","+y);
             if (currentHandle != 0) {
                Point2D.Float pt = getPositionPoint(x,y);
                if (currentHandle == 1)
                   notifyCursorLeft(pt.x);
                if (currentHandle == 2)
                   notifyCursorRight(pt.x);
+               if (currentHandle == 3) {
+                  double gamma = getGammaFromMousePosition(x,y);
+                  if (Math.abs((gamma_ - gamma)/gamma_) < 0.2) {
+                     notifyGammaMouse(getGammaFromMousePosition(x, y));
+                     currentHandle = 4;
+                  }
+               }
             }
          }
+
 
          public void mouseReleased(MouseEvent e) {
             currentHandle = 0;
@@ -289,17 +309,32 @@ public class HistogramPanel extends GraphPanel {
                notifyCursorLeft(pt.x);
             if (currentHandle == 2)
                notifyCursorRight(pt.x);
+            if (currentHandle == 4)
+               notifyGammaMouse(getGammaFromMousePosition(e.getX(), e.getY()));
          }
       });
    }
 
+      private double getGammaFromMousePosition(int x, int y) {
+         double width = ptDevTop_.x - ptDevBottom_.x;
+         double height = ptDevBottom_.y - ptDevTop_.y;
+         double xn = (x - ptDevBottom_.x) / width;
+         double yn = (ptDevBottom_.y - y) / height;
+         double gammaClick;
+         if (xn > 0.05 && xn < 0.95 && yn > 0.05 && yn < 0.95) {
+            gammaClick = Math.log(yn) / Math.log(xn);
+         } else {
+            gammaClick = 0;
+         }
+         return gammaClick;
+      }
 
    static int clipVal(int v, int min, int max) {
       return Math.max(min, Math.min(v, max));
    }
 
 
-   int getLUTMargin(int y) {
+   int getClickBand(int y) {
       Rectangle box = getBox();
       //int xmin = box.x;
       //int xmax = box.x + box.width;
@@ -310,6 +345,8 @@ public class HistogramPanel extends GraphPanel {
          return 1;
       } else if (y <= ymax && y > ymax - 10) {
          return 2;
+      } else if (y > ymax && y < ymin) {
+         return 3;
       } else {
          return 0;
       }
