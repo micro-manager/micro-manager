@@ -27,11 +27,13 @@ package org.micromanager.graph;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.Stroke;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
+import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.QuadCurve2D;
@@ -159,21 +161,30 @@ public class HistogramPanel extends GraphPanel {
       Point2D.Float ptDevBottom = getDevicePoint(ptPosBottom, box, xUnit, yUnit);
       Point2D.Float ptPosTop = new Point2D.Float(xEnd, (float)bounds_.yMax);
       Point2D.Float ptDevTop = getDevicePoint(ptPosTop, box, xUnit, yUnit);
-      Point2D.Float ptPosGamma = new Point2D.Float(
-              (float)(gamma_ / 100.0) * (xEnd - xStart) + xStart,
-              (float)( (1 - (gamma_ / 100.0)) * (bounds_.yMax - bounds_.yMin) +
-              bounds_.yMin) );
-      Point2D.Float ptDevGamma = getDevicePoint(ptPosGamma, box, xUnit, yUnit);
+
+
+      double xn,yn;
+      int X,Y;
+      int w = (int) (ptDevTop.x - ptDevBottom.x) + 1;
+      int h = (int) (ptDevBottom.y - ptDevTop.y) + 1;
+      GeneralPath path = new GeneralPath();
+      path.moveTo(ptDevBottom.x, ptDevBottom.y);
+      for (int x = 0; x<w; x+=4) {
+         xn = (double) x / (double) w;
+         yn = Math.pow(xn, gamma);
+         X = x + (int) ptDevBottom.x;
+         Y = (int) ((1 - yn) * h + ptDevTop.y);
+         path.lineTo(X, Y);
+      }
+      path.lineTo(ptDevTop.x, ptDevTop.y);
 
       Color oldColor = g.getColor();
       Stroke oldStroke = g.getStroke();
       g.setColor(Color.black);
 
-      float dash1[] = {3.0f};
       BasicStroke solid = new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER);
       g.setStroke(solid);
-      g.draw(new QuadCurve2D.Float(ptDevBottom.x, ptDevBottom.y, ptDevGamma.x,
-              ptDevGamma.y, ptDevTop.x, ptDevTop.y));
+      g.draw(path);
       g.setColor(oldColor);
       g.setStroke(oldStroke);
 

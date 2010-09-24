@@ -628,7 +628,7 @@ public class ContrastPanel extends JPanel implements ImageController,
 
 		histogramPanel_.setCursors(lutMin_ / binSize_,
 				lutMax_ / binSize_,
-            gammaSliderCalculator_.gammaToSlider(gamma_));
+            gamma_);
 		histogramPanel_.repaint();
 		if (cs8bit_ == null || cs16bit_ == null)
 			return;
