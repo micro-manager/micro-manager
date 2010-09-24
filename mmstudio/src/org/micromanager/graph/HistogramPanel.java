@@ -67,7 +67,7 @@ public class HistogramPanel extends GraphPanel {
       int X;
       int Y;
       int w = (int) (ptDevTop.x - ptDevBottom.x) + 1;
-      int h = (int) (ptDevBottom.y - ptDevTop.y) + 1;
+      int h = (int) (ptDevBottom.y - ptDevTop.y);
       GeneralPath path = new GeneralPath();
       path.moveTo(ptDevBottom.x, ptDevBottom.y);
       for (int x = 0; x < w; x += 3) {
@@ -182,6 +182,7 @@ public class HistogramPanel extends GraphPanel {
       ptDevBottom_ = getDevicePoint(ptPosBottom, box, xUnit, yUnit);
       Point2D.Float ptPosTop = new Point2D.Float(xEnd, (float)bounds_.yMax);
       ptDevTop_ = getDevicePoint(ptPosTop, box, xUnit, yUnit);
+      
       GeneralPath path = generateGammaCurvePath(ptDevTop_, ptDevBottom_, gamma);
 
       Color oldColor = g.getColor();
