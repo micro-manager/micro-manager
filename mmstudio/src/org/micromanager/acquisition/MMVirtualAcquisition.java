@@ -261,7 +261,6 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
             ((CompositeImage) hyperImage_).setChannelsUpdated();
          }
          if (hyperImage_.getFrame() == 1) {
-            int middleSlice = 1 + hyperImage_.getNSlices() / 2;
             try {
                ImageStatistics stat = hyperImage_.getStatistics();
                if (MDUtils.isRGB(taggedImg)) {
@@ -273,9 +272,10 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
                } else {
                   double min = hyperImage_.getDisplayRangeMin();
                   double max = hyperImage_.getDisplayRangeMax();
-                  if (hyperImage_.getSlice() == 0) {
+                  System.out.println("min"+min +"max"+max);
+                  if (hyperImage_.getSlice() == 1) {
                      min = Double.MAX_VALUE;
-                     max = Double.MAX_VALUE;
+                     max = Double.MIN_VALUE;
                   }
                   hyperImage_.setDisplayRange(Math.min(min, stat.min), Math.max(max, stat.max));
                   hyperImage_.updateAndDraw();
