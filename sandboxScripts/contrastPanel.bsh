@@ -1,11 +1,8 @@
 import ij.IJ;
 import org.micromanager.acquisition.*;
 
-cp = new ChannelContrastPanel();
-f = new JFrame();
-f.setBounds(100,100,500,500);
-f.add(cp);
-f.show();
+nChannels = 4;
+Color [] colors = {Color.red, Color.green, Color.blue, Color.magenta};
 
 mmc.setExposure(100);
 mmc.waitForDevice(mmc.getCameraDevice());
@@ -13,13 +10,40 @@ gui.snapSingleImage();
 imgp = IJ.getImage();
 
 h = imgp.getProcessor().getHistogram();
-cp.setHistogram(h);
-cp.setColor(Color.blue);
-cl = new ContrastListener() {
-	public void contrastChanged(int min, int max)
-		{
-      imgp.setDisplayRange(min,max);
-		imgp.updateAndDraw();
-		}
-};
-cp.setContrastListener(cl);
+
+p = new JPanel();
+//p.setLayout(new GridLayout(nChannels,1));
+p.setPreferredSize(new Dimension(700,700));
+
+
+
+f = new JFrame();
+f.setLayout(new GridLayout(1,1));
+f.setBounds(100,100,500,500);
+f.add(p);
+f.show();
+
+/*
+ArrayList cps = new ArrayList();
+for (int i=0;i<nChannels;++i) {
+	cp = new ChannelContrastPanel();
+	cps.add(cp);
+	p.add(cp);
+	f.pack();
+	cp.setHistogram(h);
+	cp.setColor(colors[i]);
+	cl = new ContrastListener() {
+		public void contrastChanged(int min, int max)
+			{
+	      imgp.setDisplayRange(min,max);
+			imgp.updateAndDraw();
+			}
+	};
+	cp.setContrastListener(cl);
+}
+*/
+
+
+
+
+
