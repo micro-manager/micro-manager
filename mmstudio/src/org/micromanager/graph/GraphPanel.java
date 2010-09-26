@@ -159,13 +159,15 @@ public class GraphPanel extends JPanel {
       yUnit = (float) (box.height / bounds_.getRangeY());
       
       GeneralPath trace = new GeneralPath(GeneralPath.WIND_EVEN_ODD, data_.getSize() + 1);
+      // we need to start and end at y=0 to avoid strange display issues
       Point2D.Float pt = getDevicePoint(new Point2D.Float(0.0f, 0.0f), box, xUnit, yUnit);
       trace.moveTo(pt.x, pt.y);
-      
       for (int i=0; i<data_.getSize(); i++){
          pt = getDevicePoint(data_.getPoint(i), box, xUnit, yUnit);
          trace.lineTo(pt.x, pt.y);
       }
+      pt = getDevicePoint(new Point2D.Float((float)data_.getPoint(data_.getSize()-1).getX(), 0.0f), box, xUnit, yUnit);
+      trace.lineTo(pt.x, pt.y);
 
       if (fillTrace_)
          g.fill(trace);
