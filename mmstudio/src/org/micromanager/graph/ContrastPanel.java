@@ -443,7 +443,6 @@ public class ContrastPanel extends JPanel implements ImageController,
          minField_.setText(NumberUtils.intToDisplayString((int) stats.min));
          min_ = stats.min;
          avgField_.setText(NumberUtils.intToDisplayString((int) stats.mean));
-         //varField_.setText(Double.toString(Double.valueOf(twoDForm_.format(stats.stdDev))));
          varField_.setText(NumberUtils.doubleToDisplayString(stats.stdDev));
          if (min_ == max_) {
             if (min_ == 0) {

@@ -27,7 +27,6 @@ package org.micromanager.graph;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
-import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.Stroke;
 import java.awt.event.MouseAdapter;
@@ -37,7 +36,6 @@ import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.awt.geom.Point2D.Float;
-import java.awt.geom.QuadCurve2D;
 import java.util.ArrayList;
 
 
@@ -152,8 +150,7 @@ public class HistogramPanel extends GraphPanel {
    @Override
    /*
     * Draws a line showing the mapping between pixel values and display
-    * intensity on the screen.  Gamma (curved appearance) is fudged and not
-    * correct. Gamma is expressed as a number between 0 and 100 (slider position)
+    * intensity on the screen. 
     */
    public void drawMapping(Graphics2D g, Rectangle box, float xStart, float xEnd, double gamma) {
 

@@ -28,7 +28,6 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Paint;
-import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Stroke;
 import java.awt.geom.GeneralPath;
@@ -159,11 +158,11 @@ public class GraphPanel extends JPanel {
       xUnit = (float) (box.width / bounds_.getRangeX());
       yUnit = (float) (box.height / bounds_.getRangeY());
       
-      GeneralPath trace = new GeneralPath(GeneralPath.WIND_EVEN_ODD, data_.getSize());
-      Point2D.Float pt = getDevicePoint(data_.getPoint(0), box, xUnit, yUnit);
+      GeneralPath trace = new GeneralPath(GeneralPath.WIND_EVEN_ODD, data_.getSize() + 1);
+      Point2D.Float pt = getDevicePoint(new Point2D.Float(0.0f, 0.0f), box, xUnit, yUnit);
       trace.moveTo(pt.x, pt.y);
       
-      for (int i=1; i<data_.getSize(); i++){
+      for (int i=0; i<data_.getSize(); i++){
          pt = getDevicePoint(data_.getPoint(i), box, xUnit, yUnit);
          trace.lineTo(pt.x, pt.y);
       }
