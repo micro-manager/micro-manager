@@ -314,6 +314,8 @@ public class HistogramPanel extends GraphPanel {
    }
 
       private double getGammaFromMousePosition(int x, int y) {
+         if ((ptDevTop_ == null) || (ptDevBottom_ == null))
+            return 0;
          double width = ptDevTop_.x - ptDevBottom_.x;
          double height = ptDevBottom_.y - ptDevTop_.y;
          double xn = (x - ptDevBottom_.x) / width;
