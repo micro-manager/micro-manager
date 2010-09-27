@@ -79,7 +79,7 @@ public class MetadataViewer extends javax.swing.JFrame
 
       tabbedPane = new javax.swing.JTabbedPane();
       ChannelsTablePanel = new javax.swing.JPanel();
-      jScrollPane1 = new javax.swing.JScrollPane();
+      contrastScrollPane = new javax.swing.JScrollPane();
       jPanel1 = new javax.swing.JPanel();
       displayModeCombo = new javax.swing.JComboBox();
       jLabel1 = new javax.swing.JLabel();
@@ -104,6 +104,8 @@ public class MetadataViewer extends javax.swing.JFrame
       setTitle("Metadata and Comments");
 
       tabbedPane.setFocusable(false);
+
+      contrastScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
       displayModeCombo.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Composite", "Color", "Grayscale" }));
       displayModeCombo.addActionListener(new java.awt.event.ActionListener() {
@@ -136,14 +138,14 @@ public class MetadataViewer extends javax.swing.JFrame
       ChannelsTablePanelLayout.setHorizontalGroup(
          ChannelsTablePanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-         .add(org.jdesktop.layout.GroupLayout.TRAILING, jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 538, Short.MAX_VALUE)
+         .add(org.jdesktop.layout.GroupLayout.TRAILING, contrastScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 538, Short.MAX_VALUE)
       );
       ChannelsTablePanelLayout.setVerticalGroup(
          ChannelsTablePanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(ChannelsTablePanelLayout.createSequentialGroup()
             .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-            .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 385, Short.MAX_VALUE))
+            .add(contrastScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 385, Short.MAX_VALUE))
       );
 
       tabbedPane.addTab("Channels", ChannelsTablePanel);
@@ -470,6 +472,7 @@ public class MetadataViewer extends javax.swing.JFrame
 
    // Variables declaration - do not modify//GEN-BEGIN:variables
    private javax.swing.JPanel ChannelsTablePanel;
+   private javax.swing.JScrollPane contrastScrollPane;
    private javax.swing.JComboBox displayModeCombo;
    private javax.swing.JLabel imageCommentsLabel;
    private javax.swing.JPanel imageCommentsPanel;
@@ -480,7 +483,6 @@ public class MetadataViewer extends javax.swing.JFrame
    private javax.swing.JSplitPane imageSplitPanel;
    private javax.swing.JLabel jLabel1;
    private javax.swing.JPanel jPanel1;
-   private javax.swing.JScrollPane jScrollPane1;
    private javax.swing.JCheckBox showUnchangingPropertiesCheckbox;
    private javax.swing.JLabel summaryCommentsLabel;
    private javax.swing.JPanel summaryCommentsPane;
