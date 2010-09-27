@@ -32,15 +32,16 @@ getChannelColors(CompositeImage image) {
 update();
 
 mv = MetadataViewer.singletonViewer_;
-sp = mv.jScrollPane1;
+sp = mv.contrastScrollPane;
 p = new JPanel();
 hpHeight = 90;
 image = IJ.getImage();
 nChannels = image.getNChannels();
 chanColors = getChannelColors(image);
-p.setPreferredSize(new Dimension(700,nChannels * hpHeight));
+p.setPreferredSize(new Dimension(150,nChannels * hpHeight));
 sp.setViewportView(p);
-p.setLayout(null);
+layout = new SpringLayout();
+p.setLayout(layout);
 
 for (int i=0;i<nChannels;++i) {
 hp = new HistogramPanel();
@@ -86,5 +87,10 @@ int[] rawHistogram = image.getStack().getProcessor(i+1).getHistogram();
 	hp.setCursors(0,255,1.0);
 hp.setBounds(0,hpHeight*i,200,hpHeight-5);
 p.add(hp);
+layout.putConstraint(SpringLayout.WEST, hp, 80, SpringLayout.WEST, p);
+layout.putConstraint(SpringLayout.NORTH, hp, hpHeight*i, SpringLayout.NORTH, p);
+layout.putConstraint(SpringLayout.EAST, hp, 0, SpringLayout.EAST, p);
+layout.putConstraint(SpringLayout.SOUTH, hp, hpHeight*(i+1)-5,SpringLayout.NORTH, p);
+
 hp.repaint();
 }
