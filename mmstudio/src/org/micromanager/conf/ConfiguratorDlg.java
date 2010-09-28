@@ -114,14 +114,15 @@ public class ConfiguratorDlg extends JDialog {
       sendCheck_.setBounds(5, 462, 275, 23);
       sendCheck_.setFont(new Font("", Font.PLAIN, 10));
       sendCheck_.setSelected(true);
-      sendConfig_ = true;
+      sendConfig_ = false;
       sendCheck_.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
              sendConfig_ = sendCheck_.isSelected();
          }
       });
       sendCheck_.setText("Send configuration to Micro-manager.org");
-     // they didn't like it yet getContentPane().add(sendCheck_);
+     // they didn't like it yet
+		//getContentPane().add(sendCheck_);
 
 
       final JScrollPane scrollPane = new JScrollPane();
@@ -283,6 +284,75 @@ public class ConfiguratorDlg extends JDialog {
                return;
          }
       }
+      if( sendConfig_){
+          try{
+              URL url;
+            URLConnection   urlConn;
+            DataOutputStream    postOut;
+            FileReader fr;
+              InputStream is;
+
+				  // send the current user and institution per registration page.
+             // String regText = "http://valelab.ucsf.edu/micro-manager-configsaver.php";
+				  String regText = "http://valelab.ucsf.edu/~karlh/testreg.php?Name=Donald%20Duck&Institute=UCSF&email=donaldduck@ucsf.edu";
+              url = new URL(regText);
+              urlConn = url.openConnection();
+              urlConn.setDoInput(true);
+              urlConn.setDoOutput(true);
+              urlConn.setUseCaches(false);
+              is = url.openStream();
+				  String response = "response 1 from server: ";
+              DataInputStream input = new DataInputStream(urlConn.getInputStream());
+				  BufferedReader getResponse = new BufferedReader( new InputStreamReader(input));
+					String str;
+					while ((str = getResponse.readLine()) != null) {
+						response = response + str + "\n";
+					}
+					JOptionPane.showMessageDialog(null, response);
+					getResponse.close();
+
+
+					// next php script
+
+
+             // fr = new FileReader(f);
+              //char[] contents =  new char[60000];
+              //int length = fr.read(contents, 0, 60000);
+              //fr.close();
+              //String toSend = URLEncoder.encode(new String(contents),  "UTF-8");
+				  regText = "http://valelab.ucsf.edu/~karlh/testpost.php";
+              url = new URL(regText);
+              urlConn = url.openConnection();
+              urlConn.setDoInput(true);
+              urlConn.setDoOutput(true);
+              urlConn.setUseCaches(false);
+              urlConn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+              is = url.openStream();
+				  String toSend = URLEncoder.encode("action=rreeggiisstteerr",  "UTF-8");
+              postOut = new DataOutputStream (urlConn.getOutputStream ());
+              postOut.writeBytes(toSend);
+				  response = "response 2 from server: ";
+              input = new DataInputStream(urlConn.getInputStream());
+				  getResponse = new BufferedReader( new InputStreamReader(input));
+					while ((str = getResponse.readLine()) != null) {
+						response = response + str + "\n";
+					}
+					JOptionPane.showMessageDialog(null, response);
+					getResponse.close();
+
+              } catch (java.net.UnknownHostException e) {
+                 ReportingUtils.logError(e, "config posting");
+              } catch (MalformedURLException e) {
+                 ReportingUtils.logError(e);
+              } catch (IOException e) {
+                 ReportingUtils.logError(e);
+              } catch (SecurityException e){
+                 ReportingUtils.logError(e,"");
+              } catch (Exception e) {
+                 ReportingUtils.logError(e);
+              }
+      }
+
       dispose();      
    }
 
@@ -318,42 +388,6 @@ public class ConfiguratorDlg extends JDialog {
          microModel_.saveToFile(f.getAbsolutePath());
       } catch (MMConfigFileException e) {
          JOptionPane.showMessageDialog(this, e.getMessage());           
-      }
-      if( sendConfig_){
-          try{
-              URL url;
-            URLConnection   urlConn;
-            DataOutputStream    postOut;
-            DataInputStream     input;
-            FileReader fr;
-              InputStream is;
-              String regText = "http://valelab.ucsf.edu/micro-manager-configsaver.php";
-              url = new URL(regText);
-              urlConn = url.openConnection();
-              urlConn.setDoInput(true);
-              urlConn.setDoOutput(true);
-              urlConn.setUseCaches(false);
-              is = url.openStream();
-              fr = new FileReader(f);
-              char[] contents =  new char[60000];
-              int length = fr.read(contents, 0, 60000);
-              fr.close();
-              String toSend = URLEncoder.encode(new String(contents),  "UTF-8");
-              postOut = new DataOutputStream (urlConn.getOutputStream ());
-              postOut.writeBytes(toSend);
-
-
-              } catch (java.net.UnknownHostException e) {
-                 ReportingUtils.logError(e, "config save");
-              } catch (MalformedURLException e) {
-                 ReportingUtils.logError(e);
-              } catch (IOException e) {
-                 ReportingUtils.logError(e);
-              } catch (SecurityException e){
-                 ReportingUtils.logError(e,"");
-              } catch (Exception e) {
-                 ReportingUtils.logError(e);
-              }
       }
    }
 
