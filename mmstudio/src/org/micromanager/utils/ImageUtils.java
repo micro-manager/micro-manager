@@ -4,7 +4,9 @@ import ij.ImagePlus;
 import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
+import ij.process.LUT;
 import ij.process.ShortProcessor;
+import java.awt.Color;
 
 import java.awt.Point;
 
@@ -305,5 +307,29 @@ public class ImageUtils {
          p[i] = pixels[(2-channel) + 4*i]; // B,G,R
       }
       return p;
+   }
+
+   public static LUT makeLUT(Color color, int min, int max, double gamma, int nbits) {
+      int r = color.getRed();
+      int g = color.getGreen();
+      int b = color.getBlue();
+
+      int pixelRange = 1 << nbits;
+      byte [] rs = new byte[pixelRange];
+      byte [] gs = new byte[pixelRange];
+      byte [] bs = new byte[pixelRange];
+
+      int x;
+      double xn;
+      double yn;
+      for (int p=0;p<pixelRange;++p) {
+         x = MathFunctions.clip(min, p, max);
+         xn = (x-min) / (double) (max-min);
+         yn = Math.pow(xn, gamma);
+         rs[p] = (byte) (yn * r);
+         gs[p] = (byte) (yn * g);
+         bs[p] = (byte) (yn * b);
+      }
+      return new LUT(rs,gs,bs);
    }
 }

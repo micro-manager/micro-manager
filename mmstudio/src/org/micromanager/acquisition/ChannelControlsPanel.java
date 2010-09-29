@@ -49,7 +49,7 @@ public class ChannelControlsPanel extends javax.swing.JPanel {
       setPreferredSize(new java.awt.Dimension(100, 150));
       setSize(new java.awt.Dimension(100, 150));
 
-      fullButton.setFont(fullButton.getFont().deriveFont(fullButton.getFont().getSize()-2f));
+      fullButton.setFont(fullButton.getFont().deriveFont((float)9));
       fullButton.setText("Full");
       fullButton.setPreferredSize(new java.awt.Dimension(75, 30));
       fullButton.addActionListener(new java.awt.event.ActionListener() {
@@ -58,7 +58,7 @@ public class ChannelControlsPanel extends javax.swing.JPanel {
          }
       });
 
-      autoButton.setFont(autoButton.getFont().deriveFont(autoButton.getFont().getSize()-2f));
+      autoButton.setFont(autoButton.getFont().deriveFont((float)9));
       autoButton.setText("Auto");
       autoButton.setMaximumSize(new java.awt.Dimension(75, 30));
       autoButton.setMinimumSize(new java.awt.Dimension(75, 30));
@@ -86,28 +86,31 @@ public class ChannelControlsPanel extends javax.swing.JPanel {
       layout.setHorizontalGroup(
          layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(layout.createSequentialGroup()
-            .add(6, 6, 6)
-            .add(colorPickerLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 16, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-            .add(58, 58, 58)
-            .add(fullButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 40, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-         .add(channelNameCheckbox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 130, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-         .add(layout.createSequentialGroup()
-            .add(80, 80, 80)
-            .add(autoButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 40, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+            .add(channelNameCheckbox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 130, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+            .addContainerGap(68, Short.MAX_VALUE))
+         .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+            .addContainerGap(124, Short.MAX_VALUE)
+            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+               .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                  .add(fullButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 40, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                  .add(autoButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 40, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+               .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+                  .add(11, 11, 11)
+                  .add(colorPickerLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 16, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                  .add(13, 13, 13)))
+            .add(34, 34, 34))
       );
       layout.setVerticalGroup(
          layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(layout.createSequentialGroup()
-            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-               .add(layout.createSequentialGroup()
-                  .add(23, 23, 23)
-                  .add(colorPickerLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 16, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-               .add(layout.createSequentialGroup()
-                  .add(20, 20, 20)
-                  .add(fullButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-               .add(channelNameCheckbox))
-            .add(1, 1, 1)
-            .add(autoButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+            .add(channelNameCheckbox)
+            .add(0, 0, 0)
+            .add(colorPickerLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 16, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+            .add(fullButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 16, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+            .add(autoButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 16, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+            .addContainerGap(90, Short.MAX_VALUE))
       );
    }// </editor-fold>//GEN-END:initComponents
 
@@ -133,7 +136,9 @@ public class ChannelControlsPanel extends javax.swing.JPanel {
 
    private void editColor() {
 
-      Color newColor = JColorChooser.showDialog(this, "Choose a color for the " + acq_.getChannelNames()[channelIndex_] + " channel", acq_.getChannelColor(channelIndex_));
+      Color newColor = JColorChooser.showDialog(this, "Choose a color for the "
+              + acq_.getChannelNames()[channelIndex_] +
+              " channel", acq_.getChannelColor(channelIndex_+1));
 
       try {
          if (newColor != null && acq_ != null)

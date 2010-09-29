@@ -120,6 +120,14 @@ public class MathFunctions {
       return Math.sqrt(Math.abs(transform.getDeterminant()));
    }
 
+   public static double clip(double min, double val, double max) {
+      return Math.min(Math.max(min, val), max);
+   }
+
+   public static int clip(int min, int val, int max) {
+      return (int) Math.min(Math.max(min, val), max);
+   }
+
    public static void runAffineTest() {
 
       Map<Point2D.Double, Point2D.Double> pointPairs = new HashMap<Point2D.Double, Point2D.Double>();

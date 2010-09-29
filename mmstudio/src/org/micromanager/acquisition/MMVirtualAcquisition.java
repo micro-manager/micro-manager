@@ -24,6 +24,7 @@ import mmcorej.TaggedImage;
 import org.json.JSONObject;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.metadata.AcquisitionData;
+import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
@@ -224,10 +225,11 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
 
    private void setChannelColor(CompositeImage compositeImage, int channel, Color col) {
       int oldChan = compositeImage.getChannel();
-      updateChannel(channel + 1);
+      setChannelWithoutUpdate(channel + 1);
       compositeImage.setChannelLut(compositeImage.createLutFromColor(col));
-      updateChannel(oldChan);
+      setChannelWithoutUpdate(oldChan);
    }
+
 
    private void updateWindow() {
       if (newData_) {
@@ -495,7 +497,18 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
    
    public void setChannelColor(int channel, int rgb) throws MMScriptException {
       displaySettings_[channel].put("ChannelColor", String.format("%d", rgb));
-      updateChannelColors();
+      LUT lut = ImageUtils.makeLUT(new Color(rgb), 0, 255, 1, 8);
+      if (hyperImage_ instanceof CompositeImage) {
+         CompositeImage ci = (CompositeImage) hyperImage_;
+         int oldChan = ci.getChannel();
+         setChannelWithoutUpdate(channel + 1);
+         ci.setChannelColorModel(lut);
+         ci.setChannelsUpdated();
+         ci.updateAndRepaintWindow();
+         setChannelWithoutUpdate(oldChan);
+         ci.updateAndRepaintWindow();
+      }
+      //updateChannelColors();
    }
 
    public void setChannelContrast(int channel, int min, int max) throws MMScriptException {
@@ -567,11 +580,11 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       }
    }
 
-   private void updateChannel(int channel) {
+   private void setChannelWithoutUpdate(int channel) {
       int z = hyperImage_.getSlice();
       int t = hyperImage_.getFrame();
       
-      hyperImage_.updatePosition(channel, z, t);
+      hyperImage_.setPositionWithoutUpdate(channel, z, t);
 
    }
 
@@ -621,7 +634,7 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       if (! (hyperImage_ instanceof CompositeImage))
          return null;
 
-      LUT cm = hyperImage_.getLuts()[channel - 1];
+      LUT cm = hyperImage_.getLuts()[channel-1];
       if (cm==null)
          return Color.black;
       int index = cm.getMapSize() - 1;
