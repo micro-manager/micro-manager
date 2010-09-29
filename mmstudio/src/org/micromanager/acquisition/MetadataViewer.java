@@ -41,6 +41,8 @@ public class MetadataViewer extends javax.swing.JFrame
    private final String [] columnNames_ = {"Property","Value"};
    private MMImageCache cache_;
    private boolean showUnchangingKeys_;
+   private boolean updatingDisplayModeCombo_ = false;
+   private int channelIndex_;
 
 
    
@@ -102,6 +104,7 @@ public class MetadataViewer extends javax.swing.JFrame
       showUnchangingPropertiesCheckbox = new javax.swing.JCheckBox();
 
       setTitle("Metadata and Comments");
+      setMinimumSize(new java.awt.Dimension(0, 360));
 
       tabbedPane.setFocusable(false);
 
@@ -365,7 +368,9 @@ public class MetadataViewer extends javax.swing.JFrame
    }//GEN-LAST:event_summaryCommentsTextArea1FocusLost
 
    private void displayModeComboActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_displayModeComboActionPerformed
-      setDisplayState(displayModeCombo.getSelectedIndex()+1);
+      if (!updatingDisplayModeCombo_) {
+         setDisplayState(displayModeCombo.getSelectedIndex()+1);
+      }
    }//GEN-LAST:event_displayModeComboActionPerformed
 
 
@@ -546,7 +551,9 @@ public class MetadataViewer extends javax.swing.JFrame
                }
                if (imp instanceof CompositeImage) {
                   CompositeImage cimp = (CompositeImage) imp;
+                  updatingDisplayModeCombo_ = true;
                   displayModeCombo.setSelectedIndex(cimp.getMode()-1);
+                  updatingDisplayModeCombo_ = false;
                }
             } else {
                imageMetadataModel_.setMetadata(null);
@@ -580,5 +587,6 @@ public class MetadataViewer extends javax.swing.JFrame
          update(imgp);
       }
    }
+
 
 }

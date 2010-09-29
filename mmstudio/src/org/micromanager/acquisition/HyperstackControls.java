@@ -296,7 +296,6 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
       if (imp == win_.getImagePlus()) {
          ImageStack stack = imp.getStack();
          if (stack instanceof AcquisitionVirtualStack) {
-            System.out.println(imp.getStack().hashCode());
             AcquisitionVirtualStack vstack = (AcquisitionVirtualStack) imp.getStack();
             int slice = imp.getCurrentSlice();
             final TaggedImage taggedImg = vstack.getTaggedImage(slice);

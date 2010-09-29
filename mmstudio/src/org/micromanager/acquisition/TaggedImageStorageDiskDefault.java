@@ -4,8 +4,6 @@
  */
 package org.micromanager.acquisition;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.micromanager.api.TaggedImageStorage;
 import ij.CompositeImage;
 import ij.ImagePlus;

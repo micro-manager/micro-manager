@@ -1,5 +1,6 @@
 package org.micromanager.acquisition;
 
+import ij.process.LUT;
 import java.awt.event.AdjustmentEvent;
 import org.micromanager.api.AcquisitionInterface;
 import ij.CompositeImage;
@@ -195,7 +196,7 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       virtualStacks_ = new ArrayList<AcquisitionVirtualStack>();
       for (int pos=0;pos<numPositions_;++pos) {
          virtualStack = new AcquisitionVirtualStack(width_, height_, null, 
-                 imageCache_, numGrayChannels_ * numSlices_ * numFrames_, pos);
+                 imageCache_, numGrayChannels_ * numSlices_ * numFrames_, pos, this);
          try {
             virtualStack.setType(MDUtils.getSingleChannelType(summaryMetadata_));
             virtualStacks_.add(virtualStack);
@@ -219,6 +220,13 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
          pos = 0;
       }
       return pos;
+   }
+
+   private void setChannelColor(CompositeImage compositeImage, int channel, Color col) {
+      int oldChan = compositeImage.getChannel();
+      updateChannel(channel + 1);
+      compositeImage.setChannelLut(compositeImage.createLutFromColor(col));
+      updateChannel(oldChan);
    }
 
    private void updateWindow() {
@@ -487,6 +495,7 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
    
    public void setChannelColor(int channel, int rgb) throws MMScriptException {
       displaySettings_[channel].put("ChannelColor", String.format("%d", rgb));
+      updateChannelColors();
    }
 
    public void setChannelContrast(int channel, int min, int max) throws MMScriptException {
@@ -558,6 +567,14 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       }
    }
 
+   private void updateChannel(int channel) {
+      int z = hyperImage_.getSlice();
+      int t = hyperImage_.getFrame();
+      
+      hyperImage_.updatePosition(channel, z, t);
+
+   }
+
    private void updateChannelColors() {
       if (hyperImage_ instanceof CompositeImage) {
          if (displaySettings_ != null) {
@@ -565,7 +582,9 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
             for (int channel = 0; channel < compositeImage.getNChannels(); ++channel) {
                int color = Integer.parseInt(displaySettings_[channel].get("ChannelColor"));
                Color col = new Color(color);
-               compositeImage.setChannelLut(compositeImage.createLutFromColor(col), 1 + channel);
+               setChannelColor(compositeImage, channel, col);
+               //compositeImage.setChannelsUpdated();
+               //compositeImage.updateAndDraw();
             }
          }
       }
@@ -597,4 +616,78 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       imageCache_ = imageCache;
    }
 
+
+   Color getChannelColor(int channel) {
+      if (! (hyperImage_ instanceof CompositeImage))
+         return null;
+
+      LUT cm = hyperImage_.getLuts()[channel - 1];
+      if (cm==null)
+         return Color.black;
+      int index = cm.getMapSize() - 1;
+      int r = cm.getRed(index);
+      int g = cm.getGreen(index);
+      int b = cm.getBlue(index);
+      //IJ.log(index+" "+r+" "+g+" "+b);
+      if (r<100 || g<100 || b<100)
+         return new Color(r, g, b);
+      else
+         return Color.black;
+   }
+
+
+   Color[] getChannelColors() {
+      if (! (hyperImage_ instanceof CompositeImage))
+         return null;
+      
+      int nChannels = hyperImage_.getNChannels();
+      Color[] chanColors = new Color[nChannels];
+      for (int i=0;i<nChannels;++i) {
+         chanColors[i] = getChannelColor(i+1);
+      }
+      return chanColors;
+   }
+
+
+   int[] getCurrentSlices() {
+      ImagePlus image = hyperImage_;
+      int currentFlatIndex = image.getCurrentSlice();
+      int frame = image.getFrame();
+      int slice = image.getSlice();
+      int nChannels = image.getNChannels();
+      int [] indices = new int[nChannels];
+      for (int i=0;i<nChannels;++i) {
+         indices[i] = image.getStackIndex(i+1,slice,frame);
+      }
+      return indices;
+   }
+
+
+   String[] getChannelNames() {
+      if (hyperImage_ instanceof CompositeImage) {
+         AcquisitionVirtualStack stack = (AcquisitionVirtualStack) hyperImage_.getStack();
+
+         int nChannels = hyperImage_.getNChannels();
+         int[] indices = getCurrentSlices();
+         String[] chanNames = new String[nChannels];
+         for (int i=0;i<nChannels;++i) {
+            try {
+               chanNames[i] = MDUtils.getChannelName(stack.getTaggedImage(indices[i]).tags);
+            } catch (Exception ex) {
+               ReportingUtils.logError(ex);
+            }
+         }
+         return chanNames;
+      } else {
+         return null;
+      }
+   }
+
+   public void setChannelVisibility(int channelIndex, boolean visible) {
+      if (! (hyperImage_ instanceof CompositeImage))
+         return;
+      CompositeImage ci = (CompositeImage) hyperImage_;
+      ci.getActiveChannels()[channelIndex] = visible;
+      ci.updateAllChannelsAndDraw();
+   }
 }
