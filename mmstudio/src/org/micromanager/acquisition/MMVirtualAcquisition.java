@@ -196,7 +196,9 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       numGrayChannels_ = numComponents_ * numChannels_;
       AcquisitionVirtualStack virtualStack;
       virtualStacks_ = new ArrayList<AcquisitionVirtualStack>();
-      channelSettings_ = new ChannelDisplaySettings[numChannels_];
+      if (channelSettings_ == null) {
+         channelSettings_ = new ChannelDisplaySettings[numChannels_];
+      }
       for (int pos=0;pos<numPositions_;++pos) {
          virtualStack = new AcquisitionVirtualStack(width_, height_, null, 
                  imageCache_, numGrayChannels_ * numSlices_ * numFrames_, pos, this);
@@ -509,11 +511,21 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
 
    
    public void setChannelColor(int channel, int rgb) throws MMScriptException {
-      setChannelLut(channel, new Color(rgb), 0, 255, 1.0);
+      double gamma;
+      if (channelSettings_ == null)
+         gamma = 1.0;
+      else
+         gamma = channelSettings_[channel].gamma;
+      setChannelLut(channel, new Color(rgb), gamma);
+   }
+
+   public void setChannelGamma(int channel, double gamma) {
+      setChannelLut(channel, channelSettings_[channel].color, gamma);
    }
 
    public void setChannelDisplaySettings(int channel, ChannelDisplaySettings settings) {
-      setChannelLut(channel, settings.color, settings.min, settings.max, settings.gamma);
+      setChannelLut(channel, settings.color, settings.gamma);
+      setChannelDisplayRange(channel, settings.min, settings.max);
       channelSettings_[channel] = settings;
    }
 
@@ -521,24 +533,30 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       return channelSettings_[channel];
    }
 
-   public void setChannelLut(int channel, Color color, int min, int max, double gamma) {
+   public void setChannelLut(int channel, Color color, double gamma) {
       int rgb = color.getRGB();
       displaySettings_[channel].put("ChannelColor", String.format("%d", rgb));
       LUT lut = ImageUtils.makeLUT(color, gamma, 8);
       if (hyperImage_ instanceof CompositeImage) {
          CompositeImage ci = (CompositeImage) hyperImage_;
-         int oldChan = ci.getChannel();
          setChannelWithoutUpdate(channel + 1);
-
-
-         ci.updateImage();
          ci.setChannelColorModel(lut);
-
+         ci.updateAndDraw();
+         channelSettings_[channel].color = color;
+         channelSettings_[channel].gamma = gamma;
       }
-      //updateChannelColors();
    }
 
-   
+   public void setChannelDisplayRange(int channel, int min, int max) {
+      if (hyperImage_ instanceof CompositeImage) {
+         CompositeImage ci = (CompositeImage) hyperImage_;
+         setChannelWithoutUpdate(channel + 1);
+         ci.setDisplayRange(min, max);
+         ci.updateAndDraw();
+         channelSettings_[channel].min = min;
+         channelSettings_[channel].max = max;
+      }
+   }
 
    public void setChannelContrast(int channel, int min, int max) throws MMScriptException {
       displaySettings_[channel].put("ChannelContrastMin", String.format("%d", min));

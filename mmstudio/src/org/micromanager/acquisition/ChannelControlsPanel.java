@@ -27,7 +27,11 @@ public class ChannelControlsPanel extends javax.swing.JPanel {
    private final int channelIndex_;
    private final MMVirtualAcquisition acq_;
    private HistogramPanel hp;
-   private ChannelDisplaySettings channelDisplaySettings_;
+   
+   private Color color_;
+   private int min_;
+   private int max_;
+   private double gamma_;
 
    /** Creates new form ChannelControlsPanel */
    public ChannelControlsPanel(MMVirtualAcquisition acq, int channelIndex) {
@@ -166,10 +170,17 @@ public class ChannelControlsPanel extends javax.swing.JPanel {
               + " channel", acq_.getChannelColor(channelIndex_ + 1));
 
       if (newColor != null && acq_ != null) {
-         channelDisplaySettings_.color = newColor;
-         displaySettingsChanged();
+         try {
+            acq_.setChannelColor(channelIndex_, newColor.getRGB());
+         } catch (MMScriptException ex) {
+            ReportingUtils.logError(ex);
+         }
       }
       updateChannelSettings();
+   }
+
+   public ChannelDisplaySettings getChannelDisplaySettings() {
+      return acq_.getChannelDisplaySettings(channelIndex_);
    }
 
    private void updateChannelVisibility() {
@@ -186,26 +197,27 @@ public class ChannelControlsPanel extends javax.swing.JPanel {
 
       hp.addCursorListener(new CursorListener() {
 
+
          public void onLeftCursor(double pos) {
-            channelDisplaySettings_.min = (int) pos;
-            displaySettingsChanged();
+            min_ = (int) pos;
+            displayRangeChanged();
          }
 
          public void onRightCursor(double pos) {
-            channelDisplaySettings_.max = (int) pos;
-            displaySettingsChanged();
+            max_ = (int) pos;
+            displayRangeChanged();
          }
 
          public void onGammaCurve(double gamma) {
-            channelDisplaySettings_.gamma = gamma;
-            displaySettingsChanged();
+            gamma_ = gamma;
+            drawDisplaySettings();
+            acq_.setChannelGamma(channelIndex_, gamma);
          }
       });
    }
 
    public void updateChannelSettings() {
-      Color color = channelDisplaySettings_.color;
-      colorPickerLabel.setBackground(color);
+      colorPickerLabel.setBackground(color_);
 
       String name = acq_.getChannelNames()[channelIndex_];
       channelNameCheckbox.setText(name);
@@ -213,23 +225,23 @@ public class ChannelControlsPanel extends javax.swing.JPanel {
       int [] histogram = acq_.getChannelHistogram(channelIndex_);
       hp.setData(makeGraphData(histogram));
       hp.setAutoBounds();
-      hp.setTraceStyle(true, color);
+      hp.setTraceStyle(true, color_);
       hp.repaint();
    }
 
-   public void displaySettingsChanged() {
+   public void displayRangeChanged() {
       drawDisplaySettings();
-      writeDisplaySettings();
+      acq_.setChannelDisplayRange(channelIndex_,
+              min_, max_);
    }
 
    public void drawDisplaySettings() {
-      hp.setCursors(channelDisplaySettings_.min, channelDisplaySettings_.max, channelDisplaySettings_.gamma);
+      hp.setCursors(min_,
+              max_,
+              gamma_);
       hp.repaint();
    }
 
-   public void writeDisplaySettings() {
-      acq_.setChannelDisplaySettings(channelIndex_, channelDisplaySettings_);
-   }
 
    private GraphData makeGraphData(int [] rawHistogram) {
       GraphData graphData = new GraphData();
@@ -260,13 +272,17 @@ public class ChannelControlsPanel extends javax.swing.JPanel {
    }
 
    private void readDisplaySettings() {
-      channelDisplaySettings_ = acq_.getChannelDisplaySettings(channelIndex_);
+      ChannelDisplaySettings settings = acq_.getChannelDisplaySettings(channelIndex_);
+      min_ = settings.min;
+      max_ = settings.max;
+      gamma_ = settings.gamma;
+      color_ = settings.color;
    }
 
    private void setFullRange() {
-      channelDisplaySettings_.min = 0;
-      channelDisplaySettings_.max = 255;
-      displaySettingsChanged();
+      min_ = 0;
+      max_ = 255;
+      displayRangeChanged();
    }
 
    private void setAutoRange() {
@@ -283,9 +299,9 @@ public class ChannelControlsPanel extends javax.swing.JPanel {
             break;
          }
       }
-      channelDisplaySettings_.min = min;
-      channelDisplaySettings_.max = max;
-      displaySettingsChanged();
+      min_ = min;
+      max_ = max;
+      displayRangeChanged();
    }
 
 
