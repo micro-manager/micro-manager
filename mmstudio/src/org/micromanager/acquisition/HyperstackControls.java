@@ -50,7 +50,6 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
 
       metadataButton = new javax.swing.JButton();
       showFolderButton = new javax.swing.JButton();
-      contrastButton = new javax.swing.JButton();
       saveButton = new javax.swing.JButton();
       fpsField = new javax.swing.JTextField();
       fpsLabel = new javax.swing.JLabel();
@@ -87,21 +86,6 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
       showFolderButton.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             showFolderButtonActionPerformed(evt);
-         }
-      });
-
-      contrastButton.setBackground(new java.awt.Color(255, 255, 255));
-      contrastButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/contrast.png"))); // NOI18N
-      contrastButton.setToolTipText("Adjust brightness and contrast");
-      contrastButton.setFocusable(false);
-      contrastButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-      contrastButton.setMaximumSize(new java.awt.Dimension(30, 28));
-      contrastButton.setMinimumSize(new java.awt.Dimension(30, 28));
-      contrastButton.setPreferredSize(new java.awt.Dimension(30, 28));
-      contrastButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-      contrastButton.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            contrastButtonActionPerformed(evt);
          }
       });
 
@@ -185,9 +169,7 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
             .add(pauseAndResumeToggleButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
             .add(3, 3, 3)
             .add(metadataButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-            .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-            .add(contrastButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-            .add(11, 11, 11)
+            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
             .add(fpsLabel)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
             .add(fpsField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 34, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
@@ -202,13 +184,12 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
                .add(showFolderButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                .add(saveButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                  .add(fpsField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                   .add(fpsLabel)
-                  .add(statusLineLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 28, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                  .add(fpsField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                .add(abortButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                .add(pauseAndResumeToggleButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                .add(metadataButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-               .add(contrastButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+               .add(statusLineLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 28, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
             .addContainerGap())
       );
    }// </editor-fold>//GEN-END:initComponents
@@ -216,10 +197,6 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
    private void showFolderButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showFolderButtonActionPerformed
       acq_.showFolder();
    }//GEN-LAST:event_showFolderButtonActionPerformed
-
-   private void contrastButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_contrastButtonActionPerformed
-      IJ.runPlugIn("ij.plugin.frame.ContrastAdjuster", "");
-   }//GEN-LAST:event_contrastButtonActionPerformed
 
    private void metadataButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_metadataButtonActionPerformed
       MetadataViewer.showMetadataViewer();
@@ -254,7 +231,6 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
 
    // Variables declaration - do not modify//GEN-BEGIN:variables
    private javax.swing.JButton abortButton;
-   private javax.swing.JButton contrastButton;
    private javax.swing.JTextField fpsField;
    private javax.swing.JLabel fpsLabel;
    private javax.swing.JButton metadataButton;

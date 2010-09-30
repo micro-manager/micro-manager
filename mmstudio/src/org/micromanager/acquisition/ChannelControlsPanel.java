@@ -172,6 +172,7 @@ public class ChannelControlsPanel extends javax.swing.JPanel {
       if (newColor != null && acq_ != null) {
          try {
             acq_.setChannelColor(channelIndex_, newColor.getRGB());
+            color_ = newColor;
          } catch (MMScriptException ex) {
             ReportingUtils.logError(ex);
          }
@@ -210,8 +211,8 @@ public class ChannelControlsPanel extends javax.swing.JPanel {
 
          public void onGammaCurve(double gamma) {
             gamma_ = gamma;
-            drawDisplaySettings();
             acq_.setChannelGamma(channelIndex_, gamma);
+            drawDisplaySettings();
          }
       });
    }
