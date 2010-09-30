@@ -112,6 +112,11 @@ public class MetadataViewer extends javax.swing.JFrame
       setMinimumSize(new java.awt.Dimension(300, 360));
 
       tabbedPane.setFocusable(false);
+      tabbedPane.addChangeListener(new javax.swing.event.ChangeListener() {
+         public void stateChanged(javax.swing.event.ChangeEvent evt) {
+            tabbedPaneStateChanged(evt);
+         }
+      });
 
       contrastScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
@@ -378,6 +383,10 @@ public class MetadataViewer extends javax.swing.JFrame
       }
    }//GEN-LAST:event_displayModeComboActionPerformed
 
+   private void tabbedPaneStateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_tabbedPaneStateChanged
+      update(IJ.getImage());
+   }//GEN-LAST:event_tabbedPaneStateChanged
+
 
    private CompositeImage getCurrentCompositeImage() {
       ImagePlus imgp = IJ.getImage();
@@ -396,6 +405,7 @@ public class MetadataViewer extends javax.swing.JFrame
          ci.updateAndDraw();
       }
    }
+
 
    class MetadataTableModel extends AbstractTableModel {
       Vector<Vector<String>> data_;
@@ -538,40 +548,32 @@ public class MetadataViewer extends javax.swing.JFrame
     */
    public void update(ImagePlus imp) {
       if (this.isVisible()) {
+         int tabSelected = tabbedPane.getSelectedIndex();
          if (imp == null) {
             imageMetadataModel_.setMetadata(null);
             summaryCommentsTextArea.setText(null);
          } else {
-            AcquisitionVirtualStack stack = getAcquisitionStack(imp);
-            if (stack != null) {
-               int slice = imp.getCurrentSlice();
-               TaggedImage taggedImg = stack.getTaggedImage(slice);
-               if (taggedImg == null) {
-                  imageMetadataModel_.setMetadata(null);
+            if (tabSelected == 2) {
+               AcquisitionVirtualStack stack = getAcquisitionStack(imp);
+               if (stack != null) {
+                  int slice = imp.getCurrentSlice();
+                  TaggedImage taggedImg = stack.getTaggedImage(slice);
+                  if (taggedImg == null) {
+                     imageMetadataModel_.setMetadata(null);
+                  } else {
+                     Map<String,String> md = stack.getTaggedImage(slice).tags;
+                     if (!showUnchangingKeys_)
+                        md = selectChangingTags(md);
+                     imageMetadataModel_.setMetadata(md);
+                  }
                } else {
-                  Map<String,String> md = stack.getTaggedImage(slice).tags;
-                  if (!showUnchangingKeys_)
-                     md = selectChangingTags(md);
-                  imageMetadataModel_.setMetadata(md);
+                  imageMetadataModel_.setMetadata(null);
                }
+            } else if (tabSelected == 0) {
                if (imp instanceof CompositeImage) {
-                  CompositeImage cimp = (CompositeImage) imp;
-                  updatingDisplayModeCombo_ = true;
-                  displayModeCombo.setSelectedIndex(cimp.getMode()-1);
-                  updatingDisplayModeCombo_ = false;
-               }
-            } else {
-               imageMetadataModel_.setMetadata(null);
-            }
-
-            if (imp.isComposite()) {
-               MMVirtualAcquisition acq = stack.getVirtualAcquisition();
-               if (acq != acq_) {
-                  acq_ = acq;
-                  setupChannelControls(acq_);
+                  updateChannelControls();
                }
             }
-
          }
       }
    }
@@ -594,10 +596,18 @@ public class MetadataViewer extends javax.swing.JFrame
             summaryCommentsTextArea.setText(null);
          }
 
-         currentWindow_ = focusedWindow;
-
+         if (imgp instanceof CompositeImage) {
+            CompositeImage cimp = (CompositeImage) imgp;
+            updatingDisplayModeCombo_ = true;
+            displayModeCombo.setSelectedIndex(cimp.getMode()-1);
+            updatingDisplayModeCombo_ = false;
+            AcquisitionVirtualStack stack = getAcquisitionStack(imgp);
+            MMVirtualAcquisition acq = stack.getVirtualAcquisition();
+            setupChannelControls(acq_);
+         }
 
          update(imgp);
+         currentWindow_ = focusedWindow;
       }
    }
 
@@ -615,19 +625,20 @@ public class MetadataViewer extends javax.swing.JFrame
 
       for (int i=0;i<nChannels;++i) {
          ChannelControlsPanel ccp = new ChannelControlsPanel(acq, i);
-         //ccp.setPreferredSize(new Dimension(120,100));
-         //ccp.setPreferredSize(new Dimension(120,100));
 
          layout.putConstraint(SpringLayout.NORTH,ccp,hpHeight*i,SpringLayout.NORTH,p);
          layout.putConstraint(SpringLayout.EAST,ccp,0,SpringLayout.EAST,p);
-
          layout.putConstraint(SpringLayout.WEST,ccp,0,SpringLayout.WEST,p);
          layout.putConstraint(SpringLayout.SOUTH,ccp,hpHeight * (i+1),SpringLayout.NORTH,p);
-         //ccp.histogramPanelHolder.add(hp);
+
          p.add(ccp);
       }
    }
 
 
+   private void updateChannelControls(/*MMVirtualAcquisition acq*/) {
+      //int nChannels = acq.getChannels();
+
+   }
 
 }
