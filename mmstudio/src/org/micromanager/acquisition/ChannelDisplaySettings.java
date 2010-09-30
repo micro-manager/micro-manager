@@ -15,6 +15,6 @@ class ChannelDisplaySettings {
    double gamma;
    int min;
    int max;
-   int nbits;
    Color color;
+   int nbits;
 }

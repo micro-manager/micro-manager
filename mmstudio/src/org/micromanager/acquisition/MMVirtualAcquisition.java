@@ -509,11 +509,11 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
 
    
    public void setChannelColor(int channel, int rgb) throws MMScriptException {
-      setChannelAppearance(channel, new Color(rgb), 0, 255, 1.0);
+      setChannelLut(channel, new Color(rgb), 0, 255, 1.0);
    }
 
    public void setChannelDisplaySettings(int channel, ChannelDisplaySettings settings) {
-      setChannelAppearance(channel, settings.color, settings.min, settings.max, settings.gamma);
+      setChannelLut(channel, settings.color, settings.min, settings.max, settings.gamma);
       channelSettings_[channel] = settings;
    }
 
@@ -521,21 +521,24 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       return channelSettings_[channel];
    }
 
-   public void setChannelAppearance(int channel, Color color, int min, int max, double gamma) {
+   public void setChannelLut(int channel, Color color, int min, int max, double gamma) {
       int rgb = color.getRGB();
       displaySettings_[channel].put("ChannelColor", String.format("%d", rgb));
-      LUT lut = ImageUtils.makeLUT(color, min, max, gamma, 8);
+      LUT lut = ImageUtils.makeLUT(color, gamma, 8);
       if (hyperImage_ instanceof CompositeImage) {
          CompositeImage ci = (CompositeImage) hyperImage_;
          int oldChan = ci.getChannel();
          setChannelWithoutUpdate(channel + 1);
+
+
+         ci.updateImage();
          ci.setChannelColorModel(lut);
-         ci.setDisplayRange(min, max);
-         ci.setChannelsUpdated();
-         ci.updateAndRepaintWindow();
+
       }
       //updateChannelColors();
    }
+
+   
 
    public void setChannelContrast(int channel, int min, int max) throws MMScriptException {
       displaySettings_[channel].put("ChannelContrastMin", String.format("%d", min));

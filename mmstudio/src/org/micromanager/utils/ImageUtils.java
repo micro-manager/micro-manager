@@ -309,7 +309,7 @@ public class ImageUtils {
       return p;
    }
 
-   public static LUT makeLUT(Color color, int min, int max, double gamma, int nbits) {
+   public static LUT makeLUT(Color color, double gamma, int nbits) {
       int r = color.getRed();
       int g = color.getGreen();
       int b = color.getBlue();
@@ -323,8 +323,8 @@ public class ImageUtils {
       double xn;
       double yn;
       for (int p=0;p<pixelRange;++p) {
-         x = MathFunctions.clip(min, p, max);
-         xn = (x-min) / (double) (max-min);
+         x = MathFunctions.clip(0, p, pixelRange);
+         xn = x / (double) pixelRange;
          yn = Math.pow(xn, gamma);
          rs[p] = (byte) (yn * r);
          gs[p] = (byte) (yn * g);

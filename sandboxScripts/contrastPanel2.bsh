@@ -9,7 +9,7 @@ update();
 mv = MetadataViewer.singletonViewer_;
 sp = mv.contrastScrollPane;
 p = new JPanel();
-hpHeight = 90;
+hpHeight = 100;
 image = IJ.getImage();
 acq = image.getStack().getVirtualAcquisition();
 
@@ -19,70 +19,26 @@ chanNames = acq.getChannelNames();
 p.setPreferredSize(new Dimension(200,nChannels * hpHeight));
 sp.setViewportView(p);
 layout = new SpringLayout();
-
+p.setLayout(layout);
 
 for (int i=0;i<nChannels;++i) {
-	hp = new HistogramPanel();
-	hp.setMargins(8,8);
-	hp.setTraceStyle(true, chanColors[i]);
-	hp.setTextVisible(false);
-	hp.setGridVisible(false);
-
-
-	int[] rawHistogram = image.getStack().getProcessor(i+1).getHistogram();
-   if (rawHistogram != null) {
-      histogramData_ = new GraphData();
-   } // 256 bins
-
-   int[] histogram = new int[256];
-	binSize_ = 1;
-   int limit = Math.min(rawHistogram.length / binSize_, 256);
-   int total = 0;
-   for (int i = 0; i < limit; i++) {
-      histogram[i] = 0;
-      for (int j = 0; j < binSize_; j++) {
-         histogram[i] += rawHistogram[i * binSize_ + j];
-      }
-      total += histogram[i];
-   }
-        // work around what is apparently a bug in ImageJ
-   if (total == 0) {
-      if (image.getProcessor().getMin() == 0) {
-         histogram[0] = image.getWidth() * image.getHeight();
-      } else {
-         histogram[limit - 1] = image.getWidth() * image.getHeight();
-      }
-   }
-   if (false) {
-      for (int i = 0; i < histogram.length; i++) {
-         histogram[i] = histogram[i] > 0 ? (int) (1000 * Math.log(histogram[i])) : 0;
-      }
-   }
-	histogramData_.setData(histogram);
-
-   hp.setGamma(1.0);
-	hp.setData(histogramData_);
-	hp.setAutoBounds(); // Call this after setting data.
-	hp.setCursors(0,255,1.0);
-	//hp.setBounds(0,hpHeight*i,200,hpHeight-5);
-	layout.putConstraint(SpringLayout.NORTH,hp,hpHeight * i,SpringLayout.NORTH,p);
-	layout.putConstraint(SpringLayout.EAST,hp,0,SpringLayout.EAST,p);
-	hp.setPreferredSize(new Dimension(100,hpHeight - 5));
-	layout.putConstraint(SpringLayout.WEST,hp,120,SpringLayout.WEST,p);
-
+	print(i);
 	ccp = new ChannelControlsPanel(acq,i);
-	ccp.setPreferredSize(new Dimension(120,100));
+	//ccp.setPreferredSize(new Dimension(120,100));
 
 	layout.putConstraint(SpringLayout.NORTH,ccp,hpHeight*i,SpringLayout.NORTH,p);
+	layout.putConstraint(SpringLayout.EAST,ccp,0,SpringLayout.EAST,p);
+
 	layout.putConstraint(SpringLayout.WEST,ccp,0,SpringLayout.WEST,p);
-	//layout.putConstraint(SpringLayout.EAST,ccp,120,SpringLayout.WEST,p);
-	//layout.putConstraint(SpringLayout.SOUTH,ccp,hpHeight * (i+1),SpringLayout.NORTH,p);
+	layout.putConstraint(SpringLayout.SOUTH,ccp,hpHeight * (i+1),SpringLayout.NORTH,p);
 	ccp.colorPickerLabel.setBackground(chanColors[i]);
 	ccp.channelNameCheckbox.setText(chanNames[i]);
-	p.add(hp);
+	//ccp.histogramPanelHolder.add(hp);
 	p.add(ccp);
+	
+
 	
 }
 
-p.setLayout(layout);
+
 p.repaint();
