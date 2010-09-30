@@ -17,10 +17,14 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
 import ij.gui.ImageWindow;
+import java.awt.Color;
+import java.awt.Dimension;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Vector;
+import javax.swing.JPanel;
+import javax.swing.SpringLayout;
 import javax.swing.table.AbstractTableModel;
 import mmcorej.TaggedImage;
 import org.micromanager.api.ImageFocusListener;
@@ -43,6 +47,7 @@ public class MetadataViewer extends javax.swing.JFrame
    private boolean showUnchangingKeys_;
    private boolean updatingDisplayModeCombo_ = false;
    private int channelIndex_;
+   private MMVirtualAcquisition acq_;
 
 
    
@@ -559,6 +564,14 @@ public class MetadataViewer extends javax.swing.JFrame
                imageMetadataModel_.setMetadata(null);
             }
 
+            if (imp.isComposite()) {
+               MMVirtualAcquisition acq = stack.getVirtualAcquisition();
+               if (acq != acq_) {
+                  acq_ = acq;
+                  setupChannelControls(acq_);
+               }
+            }
+
          }
       }
    }
@@ -587,6 +600,34 @@ public class MetadataViewer extends javax.swing.JFrame
          update(imgp);
       }
    }
+
+   public void setupChannelControls(MMVirtualAcquisition acq) {
+      int hpHeight = 100;
+      int nChannels = acq.getChannels();
+      Color[] chanColors = acq.getChannelColors();
+      String[] chanNames = acq.getChannelNames();
+
+      JPanel p = new JPanel();
+      p.setPreferredSize(new Dimension(200,nChannels * hpHeight));
+      contrastScrollPane.setViewportView(p);
+      SpringLayout layout = new SpringLayout();
+      p.setLayout(layout);
+
+      for (int i=0;i<nChannels;++i) {
+         ChannelControlsPanel ccp = new ChannelControlsPanel(acq, i);
+         //ccp.setPreferredSize(new Dimension(120,100));
+         //ccp.setPreferredSize(new Dimension(120,100));
+
+         layout.putConstraint(SpringLayout.NORTH,ccp,hpHeight*i,SpringLayout.NORTH,p);
+         layout.putConstraint(SpringLayout.EAST,ccp,0,SpringLayout.EAST,p);
+
+         layout.putConstraint(SpringLayout.WEST,ccp,0,SpringLayout.WEST,p);
+         layout.putConstraint(SpringLayout.SOUTH,ccp,hpHeight * (i+1),SpringLayout.NORTH,p);
+         //ccp.histogramPanelHolder.add(hp);
+         p.add(ccp);
+      }
+   }
+
 
 
 }
