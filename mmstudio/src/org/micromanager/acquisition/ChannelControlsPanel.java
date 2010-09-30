@@ -16,6 +16,7 @@ import org.micromanager.graph.GraphData;
 import org.micromanager.graph.HistogramPanel;
 import org.micromanager.graph.HistogramPanel.CursorListener;
 import org.micromanager.utils.MMScriptException;
+import org.micromanager.utils.MathFunctions;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -201,17 +202,29 @@ public class ChannelControlsPanel extends javax.swing.JPanel {
 
          public void onLeftCursor(double pos) {
             min_ = (int) pos;
+            if (min_ > max_) {
+               max_ = min_;
+            }
             displayRangeChanged();
          }
 
          public void onRightCursor(double pos) {
             max_ = (int) pos;
+            if (max_ < min_) {
+               min_ = max_;
+            }
             displayRangeChanged();
          }
 
          public void onGammaCurve(double gamma) {
-            gamma_ = gamma;
-            acq_.setChannelGamma(channelIndex_, gamma);
+            if (gamma == 0)
+               return;
+            
+            if (gamma < 1.15 && gamma > 0.85)
+               gamma_ = 1.0;
+            else
+               gamma_ = MathFunctions.clip(0.05, gamma, 20);
+            acq_.setChannelGamma(channelIndex_, gamma_);
             drawDisplaySettings();
          }
       });
