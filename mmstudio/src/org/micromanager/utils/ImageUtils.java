@@ -332,4 +332,50 @@ public class ImageUtils {
       }
       return new LUT(rs,gs,bs);
    }
+
+   public class MinAndMax {
+      int min;
+      int max;
+   }
+
+   public static int getMin(final Object pixels) {
+      if (pixels instanceof byte[]) {
+         byte[] bytes = (byte []) pixels;
+         int min = Integer.MAX_VALUE;
+         for (int i=0;i<bytes.length;++i) {
+            min = Math.min(min, bytes[i]);
+         }
+         return min;
+      }
+      if (pixels instanceof short[]) {
+         short[] shorts = (short []) pixels;
+         int min = Integer.MAX_VALUE;
+         for (int i=0;i<shorts.length;++i) {
+            min = Math.min(min, shorts[i]);
+         }
+         return min;
+      }
+      return -1;
+   }
+
+   public static int getMax(final Object pixels) {
+      if (pixels instanceof byte[]) {
+         byte[] bytes = (byte []) pixels;
+         int min = Integer.MIN_VALUE;
+         for (int i=0;i<bytes.length;++i) {
+            min = Math.max(min, bytes[i]);
+         }
+         return min;
+      }
+      if (pixels instanceof short[]) {
+         short[] shorts = (short []) pixels;
+         int min = Integer.MIN_VALUE;
+         for (int i=0;i<shorts.length;++i) {
+            min = Math.max(min, shorts[i]);
+         }
+         return min;
+      }
+      return -1;
+   }
+
 }

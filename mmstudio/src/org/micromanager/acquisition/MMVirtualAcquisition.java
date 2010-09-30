@@ -285,11 +285,12 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
          }
          if (hyperImage_.getFrame() == 1) {
             try {
-               ImageStatistics stat = hyperImage_.getStatistics();
+               int pixelMin = ImageUtils.getMin(taggedImg.pix);
+               int pixelMax = ImageUtils.getMax(taggedImg.pix);
                if (MDUtils.isRGB(taggedImg)) {
                   for (int i = 1; i <= numGrayChannels_; ++i) {
                      (hyperImage_).setPosition(i, MDUtils.getFrameIndex(taggedImg.tags), MDUtils.getFrameIndex(taggedImg.tags));
-                     hyperImage_.setDisplayRange(stat.min, stat.max);
+                     hyperImage_.setDisplayRange(pixelMin, pixelMax);
                      hyperImage_.updateAndDraw();
                   }
                } else {
@@ -300,8 +301,8 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
                      min = Double.MAX_VALUE;
                      max = Double.MIN_VALUE;
                   }
-                  min = Math.min(min, stat.min);
-                  max = Math.max(max, stat.max);
+                  min = Math.min(min, pixelMin);
+                  max = Math.max(max, pixelMax);
                   hyperImage_.setDisplayRange(min, max);
                   hyperImage_.updateAndDraw();
                   int chan = MDUtils.getChannelIndex(md);
