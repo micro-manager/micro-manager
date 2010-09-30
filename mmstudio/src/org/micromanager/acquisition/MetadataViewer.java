@@ -109,7 +109,7 @@ public class MetadataViewer extends javax.swing.JFrame
       showUnchangingPropertiesCheckbox = new javax.swing.JCheckBox();
 
       setTitle("Metadata and Comments");
-      setMinimumSize(new java.awt.Dimension(0, 360));
+      setMinimumSize(new java.awt.Dimension(300, 360));
 
       tabbedPane.setFocusable(false);
 
