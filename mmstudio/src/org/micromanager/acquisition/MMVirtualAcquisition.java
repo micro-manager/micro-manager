@@ -309,7 +309,7 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
                   channelSettings_[chan].min = (int) min;
                   channelSettings_[chan].max = (int) max;
                   channelSettings_[chan].gamma = 1.0;
-                  channelSettings_[chan].color = Color.red;
+                  channelSettings_[chan].color = this.getChannelColor(chan+1);
                }
             } catch (Exception ex) {
                ReportingUtils.showError(ex);
@@ -524,15 +524,14 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
    public void setChannelAppearance(int channel, Color color, int min, int max, double gamma) {
       int rgb = color.getRGB();
       displaySettings_[channel].put("ChannelColor", String.format("%d", rgb));
-      LUT lut = ImageUtils.makeLUT(color, 0, 255, 1, 8);
+      LUT lut = ImageUtils.makeLUT(color, min, max, gamma, 8);
       if (hyperImage_ instanceof CompositeImage) {
          CompositeImage ci = (CompositeImage) hyperImage_;
          int oldChan = ci.getChannel();
          setChannelWithoutUpdate(channel + 1);
          ci.setChannelColorModel(lut);
+         ci.setDisplayRange(min, max);
          ci.setChannelsUpdated();
-         ci.updateAndRepaintWindow();
-         setChannelWithoutUpdate(oldChan);
          ci.updateAndRepaintWindow();
       }
       //updateChannelColors();

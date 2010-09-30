@@ -14,6 +14,7 @@ import java.awt.Color;
 import javax.swing.JColorChooser;
 import org.micromanager.graph.GraphData;
 import org.micromanager.graph.HistogramPanel;
+import org.micromanager.graph.HistogramPanel.CursorListener;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 
@@ -26,11 +27,7 @@ public class ChannelControlsPanel extends javax.swing.JPanel {
    private final int channelIndex_;
    private final MMVirtualAcquisition acq_;
    private HistogramPanel hp;
-   private Color color_;
-   private double gamma;
-   private int min;
-   private int max;
-   private int[] rawHistogram_;
+   private ChannelDisplaySettings channelDisplaySettings_;
 
    /** Creates new form ChannelControlsPanel */
    public ChannelControlsPanel(MMVirtualAcquisition acq, int channelIndex) {
@@ -38,8 +35,9 @@ public class ChannelControlsPanel extends javax.swing.JPanel {
       channelIndex_ = channelIndex;
       acq_ = acq;
       addHistogramPanel();
+      readDisplaySettings();
       updateChannelSettings();
-      updateContrastSettings();
+      drawDisplaySettings();
    }
 
    /** This method is called from within the constructor to
@@ -75,6 +73,11 @@ public class ChannelControlsPanel extends javax.swing.JPanel {
       autoButton.setMaximumSize(new java.awt.Dimension(75, 30));
       autoButton.setMinimumSize(new java.awt.Dimension(75, 30));
       autoButton.setPreferredSize(new java.awt.Dimension(75, 30));
+      autoButton.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            autoButtonActionPerformed(evt);
+         }
+      });
 
       colorPickerLabel.setBackground(new java.awt.Color(255, 102, 51));
       colorPickerLabel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
@@ -114,7 +117,7 @@ public class ChannelControlsPanel extends javax.swing.JPanel {
                .add(layout.createSequentialGroup()
                   .add(channelNameCheckbox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 110, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                   .add(0, 0, 0)))
-            .add(histogramPanelHolder, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 259, Short.MAX_VALUE))
+            .add(histogramPanelHolder, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 140, Short.MAX_VALUE))
       );
       layout.setVerticalGroup(
          layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -128,12 +131,12 @@ public class ChannelControlsPanel extends javax.swing.JPanel {
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
             .add(autoButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 16, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
             .addContainerGap())
-         .add(histogramPanelHolder, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 83, Short.MAX_VALUE)
+         .add(histogramPanelHolder, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 100, Short.MAX_VALUE)
       );
    }// </editor-fold>//GEN-END:initComponents
 
     private void fullButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_fullButtonActionPerformed
-       // TODO add your handling code here:
+       setFullRange();
     }//GEN-LAST:event_fullButtonActionPerformed
 
     private void colorPickerLabelMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_colorPickerLabelMouseClicked
@@ -143,6 +146,11 @@ public class ChannelControlsPanel extends javax.swing.JPanel {
     private void channelNameCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_channelNameCheckboxActionPerformed
        updateChannelVisibility();
     }//GEN-LAST:event_channelNameCheckboxActionPerformed
+
+    private void autoButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_autoButtonActionPerformed
+       setAutoRange();
+    }//GEN-LAST:event_autoButtonActionPerformed
+
    // Variables declaration - do not modify//GEN-BEGIN:variables
    private javax.swing.JButton autoButton;
    private javax.swing.JCheckBox channelNameCheckbox;
@@ -157,14 +165,11 @@ public class ChannelControlsPanel extends javax.swing.JPanel {
               + acq_.getChannelNames()[channelIndex_]
               + " channel", acq_.getChannelColor(channelIndex_ + 1));
 
-      try {
-         if (newColor != null && acq_ != null) {
-            acq_.setChannelColor(channelIndex_, newColor.getRGB());
-         }
-         updateChannelSettings();
-      } catch (MMScriptException ex) {
-         ReportingUtils.showError(ex);
+      if (newColor != null && acq_ != null) {
+         channelDisplaySettings_.color = newColor;
+         displaySettingsChanged();
       }
+      updateChannelSettings();
    }
 
    private void updateChannelVisibility() {
@@ -178,10 +183,28 @@ public class ChannelControlsPanel extends javax.swing.JPanel {
       hp.setGridVisible(false);
       hp.setCursors(0,255,1.0);
       histogramPanelHolder.add(hp);
+
+      hp.addCursorListener(new CursorListener() {
+
+         public void onLeftCursor(double pos) {
+            channelDisplaySettings_.min = (int) pos;
+            displaySettingsChanged();
+         }
+
+         public void onRightCursor(double pos) {
+            channelDisplaySettings_.max = (int) pos;
+            displaySettingsChanged();
+         }
+
+         public void onGammaCurve(double gamma) {
+            channelDisplaySettings_.gamma = gamma;
+            displaySettingsChanged();
+         }
+      });
    }
 
    public void updateChannelSettings() {
-      Color color = acq_.getChannelColors()[channelIndex_];
+      Color color = channelDisplaySettings_.color;
       colorPickerLabel.setBackground(color);
 
       String name = acq_.getChannelNames()[channelIndex_];
@@ -194,9 +217,18 @@ public class ChannelControlsPanel extends javax.swing.JPanel {
       hp.repaint();
    }
 
-   public void updateContrastSettings() {
-      ChannelDisplaySettings settings = acq_.getChannelDisplaySettings(channelIndex_);
-      hp.setCursors(settings.min, settings.max, settings.gamma);
+   public void displaySettingsChanged() {
+      drawDisplaySettings();
+      writeDisplaySettings();
+   }
+
+   public void drawDisplaySettings() {
+      hp.setCursors(channelDisplaySettings_.min, channelDisplaySettings_.max, channelDisplaySettings_.gamma);
+      hp.repaint();
+   }
+
+   public void writeDisplaySettings() {
+      acq_.setChannelDisplaySettings(channelIndex_, channelDisplaySettings_);
    }
 
    private GraphData makeGraphData(int [] rawHistogram) {
@@ -223,10 +255,39 @@ public class ChannelControlsPanel extends javax.swing.JPanel {
          }
       }
 
-
       graphData.setData(histogram);
       return graphData;
    }
+
+   private void readDisplaySettings() {
+      channelDisplaySettings_ = acq_.getChannelDisplaySettings(channelIndex_);
+   }
+
+   private void setFullRange() {
+      channelDisplaySettings_.min = 0;
+      channelDisplaySettings_.max = 255;
+      displaySettingsChanged();
+   }
+
+   private void setAutoRange() {
+      int [] histogram = acq_.getChannelHistogram(channelIndex_);
+      int min = 0;
+      int max = 0;
+      for (int i=0;i<histogram.length;++i) {
+         if (histogram[i] != 0 && min == 0) {
+            min = i;
+            max = min;
+         }
+         if (max != 0 && histogram[i] == 0) {
+            max = i-1;
+            break;
+         }
+      }
+      channelDisplaySettings_.min = min;
+      channelDisplaySettings_.max = max;
+      displaySettingsChanged();
+   }
+
 
 
 
