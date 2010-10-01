@@ -602,7 +602,7 @@ public class MetadataViewer extends javax.swing.JFrame
             displayModeCombo.setSelectedIndex(cimp.getMode()-1);
             updatingDisplayModeCombo_ = false;
             AcquisitionVirtualStack stack = getAcquisitionStack(imgp);
-            MMVirtualAcquisition acq = stack.getVirtualAcquisition();
+            acq_ = stack.getVirtualAcquisition();
             setupChannelControls(acq_);
          }
 
