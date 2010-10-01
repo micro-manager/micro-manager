@@ -322,3 +322,23 @@ int Neos::OnAmplitude(MM::PropertyBase* pProp, MM::ActionType eAct)
 
    return DEVICE_OK;
 }
+
+
+MM::DeviceDetectionStatus Neos::DetectDevice(void)
+{ 
+   // Neos does not echo commands or respond to them, so we won't implement full device detection
+   // nevertheless, at this point we can attempt to set the best-guess communication parameters
+   try
+   {
+      GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_BaudRate, "9600" );
+      GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_StopBits, "1");
+      GetCoreCallback()->SetDeviceProperty(port_.c_str(), "AnswerTimeout", "500.0");
+      GetCoreCallback()->SetDeviceProperty(port_.c_str(), "DelayBetweenCharsMs", "1.0");
+   }
+   catch(...)
+   {
+      LogMessage("Exception in DetectDevice!", false);
+   }
+
+   return  MM::Unimplemented;
+};

@@ -64,6 +64,9 @@ public:
    int OnAmplitudeMax(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnCommand(MM::PropertyBase* pProp, MM::ActionType eAct);
 
+   // automatic device setup...
+   MM::DeviceDetectionStatus DetectDevice(void);
+
 private:
    int ExecuteCommand(std::string cmd);
 

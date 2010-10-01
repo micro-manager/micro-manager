@@ -112,9 +112,8 @@
 		<copy file="${BinRoot}/MMCoreJ_wrap.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/LaunchMicroManager.bat" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/MMConfig_demo.cfg" todir="${InstallRoot}" />
-		<copy file="${BinRoot}/mmgr_dal_AAAOTF.dll" todir="${InstallRoot}" />
+<copy file="${BinRoot}/mmgr_dal_AAAOTF.dll" todir="${InstallRoot}" />
 <copy file="${BinRoot}/mmgr_dal_AndorLaserCombiner.dll" todir="${InstallRoot}" />
-<copy file="${BinRoot}/mmgr_dal_Apogee.dll" todir="${InstallRoot}" />
 <copy file="${BinRoot}/mmgr_dal_Arduino.dll" todir="${InstallRoot}" />
 <copy file="${BinRoot}/mmgr_dal_ASIFW1000.dll" todir="${InstallRoot}" />
 <copy file="${BinRoot}/mmgr_dal_ASIStage.dll" todir="${InstallRoot}" />
