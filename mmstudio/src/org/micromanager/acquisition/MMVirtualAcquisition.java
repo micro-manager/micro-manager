@@ -9,7 +9,6 @@ import ij.gui.ImageWindow;
 import ij.gui.ScrollbarWithLabel;
 import ij.gui.StackWindow;
 import ij.plugin.Animator;
-import ij.process.ImageStatistics;
 import java.awt.Color;
 import java.awt.event.AdjustmentListener;
 import java.awt.event.WindowEvent;
@@ -91,6 +90,8 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       MDUtils.put(summaryMetadata_,"Acquisition-Slices",numSlices_);
       MDUtils.put(summaryMetadata_,"Acquisition-Frames",numFrames_);
       MDUtils.put(summaryMetadata_,"Acquisition-Positions",numPositions_);
+
+      createChannelSettingsArray();
    }
 
    public void setImagePhysicalDimensions(int width, int height, int depth) throws MMScriptException {
@@ -196,9 +197,7 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       numGrayChannels_ = numComponents_ * numChannels_;
       AcquisitionVirtualStack virtualStack;
       virtualStacks_ = new ArrayList<AcquisitionVirtualStack>();
-      if (channelSettings_ == null) {
-         channelSettings_ = new ChannelDisplaySettings[numChannels_];
-      }
+      createChannelSettingsArray();
       for (int pos=0;pos<numPositions_;++pos) {
          virtualStack = new AcquisitionVirtualStack(width_, height_, null, 
                  imageCache_, numGrayChannels_ * numSlices_ * numFrames_, pos, this);
@@ -208,8 +207,24 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
          } catch (Exception ex) {
             ReportingUtils.logError(ex);
          }
+         createImagePlus(pos);
       }
+
+
       initialized_ = true;
+   }
+
+   private void createChannelSettingsArray() {
+      if (numChannels_ > 0 && channelSettings_ == null) {
+         channelSettings_ = new ChannelDisplaySettings[numChannels_];
+         for (int i = 0; i<channelSettings_.length; ++i) {
+            channelSettings_[i] = new ChannelDisplaySettings();
+            channelSettings_[i].gamma = 1.0;
+            channelSettings_[i].color = Color.black;
+            channelSettings_[i].min = 0;
+            channelSettings_[i].max = 255;
+         }
+      }
    }
 
    public void insertImage(Object pixels, int frame, int channel, int slice)
@@ -227,12 +242,6 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       return pos;
    }
 
-   private void setChannelColor(CompositeImage compositeImage, int channel, Color col) {
-      int oldChan = compositeImage.getChannel();
-      setChannelWithoutUpdate(channel + 1);
-      compositeImage.setChannelLut(compositeImage.createLutFromColor(col));
-      setChannelWithoutUpdate(oldChan);
-   }
 
 
    private void updateWindow() {
@@ -275,11 +284,8 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
             ((CompositeImage) hyperImage_).setChannelsUpdated();
          }
          try {
-            // if ((hyperImage_.getFrame() - 1) > (MDUtils.getFrame(md) - 2)) {
-
             pSelector.setValue(1 + pos);
             hyperImage_.setPosition(1 + MDUtils.getChannelIndex(md), 1 + MDUtils.getSliceIndex(md), 1 + MDUtils.getFrameIndex(md));
-            //  }
          } catch (Exception e) {
             ReportingUtils.logError(e);
          }
@@ -312,7 +318,7 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
                   channelSettings_[chan].min = (int) min;
                   channelSettings_[chan].max = (int) max;
                   channelSettings_[chan].gamma = 1.0;
-                  channelSettings_[chan].color = this.getChannelColor(chan+1);
+                  channelSettings_[chan].color = this.getChannelColor(chan);
                }
             } catch (Exception ex) {
                ReportingUtils.showError(ex);
@@ -413,7 +419,7 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
    }
 
 
-   public void show(int position) {
+   public void createImagePlus(int position) {
       ImagePlus imgp = new MMImagePlus(dir_, virtualStacks_.get(position));
       for (AcquisitionVirtualStack virtualStack:virtualStacks_) {
          virtualStack.setImagePlus(imgp);
@@ -425,8 +431,6 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
          hyperImage_ = imgp;
          imgp.setOpenAsHyperStack(true);
       }
-      if (numGrayChannels_ == numChannels_)
-         updateChannelColors();
 
       // final ImageWindow win = hyperImage_.getWindow();
       final ImageWindow win = new StackWindow(hyperImage_) {
@@ -468,7 +472,6 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
          }
       };
       
-      hyperImage_.show();
       ScrollbarWithLabel pSelector = createPositionScrollbar(numPositions_);
       if (numPositions_ > 1) {
          win.add(pSelector);
@@ -485,7 +488,10 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
          hyperImage_.updateAndDraw();
       }
       updateWindow();
-      System.out.println("1. focusListeners: " + win.getFocusListeners().length);
+   }
+
+   public void show(int position) {
+      hyperImage_.show();
    }
 
    public ScrollbarWithLabel createPositionScrollbar(int nPositions) {
@@ -537,8 +543,8 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
    public void setChannelLut(int channel, Color color, double gamma) {
       int rgb = color.getRGB();
       displaySettings_[channel].put("ChannelColor", String.format("%d", rgb));
-      LUT lut = ImageUtils.makeLUT(color, gamma, 8);
       if (hyperImage_ instanceof CompositeImage) {
+         LUT lut = ImageUtils.makeLUT(color, gamma, 8);
          CompositeImage ci = (CompositeImage) hyperImage_;
          setChannelWithoutUpdate(channel + 1);
          ci.setChannelColorModel(lut);
@@ -552,8 +558,10 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       if (hyperImage_ instanceof CompositeImage) {
          CompositeImage ci = (CompositeImage) hyperImage_;
          setChannelWithoutUpdate(channel + 1);
+         ci.updateImage();
          ci.setDisplayRange(min, max);
-         ci.updateAndDraw();
+         ci.updateImage();
+         ci.draw();
          channelSettings_[channel].min = min;
          channelSettings_[channel].max = max;
       }
@@ -636,20 +644,6 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
 
    }
 
-   private void updateChannelColors() {
-      if (hyperImage_ instanceof CompositeImage) {
-         if (displaySettings_ != null) {
-            CompositeImage compositeImage = (CompositeImage) hyperImage_;
-            for (int channel = 0; channel < compositeImage.getNChannels(); ++channel) {
-               int color = Integer.parseInt(displaySettings_[channel].get("ChannelColor"));
-               Color col = new Color(color);
-               setChannelColor(compositeImage, channel, col);
-               //compositeImage.setChannelsUpdated();
-               //compositeImage.updateAndDraw();
-            }
-         }
-      }
-   }
 
    public void setSummaryProperties(Map<String,String> md) {
       summaryMetadata_.putAll(md);
@@ -678,25 +672,6 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
    }
 
 
-   Color getChannelColor(int channel) {
-      if (! (hyperImage_ instanceof CompositeImage))
-         return null;
-
-      LUT cm = hyperImage_.getLuts()[channel-1];
-      if (cm==null)
-         return Color.black;
-      int index = cm.getMapSize() - 1;
-      int r = cm.getRed(index);
-      int g = cm.getGreen(index);
-      int b = cm.getBlue(index);
-      //IJ.log(index+" "+r+" "+g+" "+b);
-      if (r<100 || g<100 || b<100)
-         return new Color(r, g, b);
-      else
-         return Color.black;
-   }
-
-
    Color[] getChannelColors() {
       if (! (hyperImage_ instanceof CompositeImage))
          return null;
@@ -704,7 +679,7 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       int nChannels = hyperImage_.getNChannels();
       Color[] chanColors = new Color[nChannels];
       for (int i=0;i<nChannels;++i) {
-         chanColors[i] = getChannelColor(i+1);
+         chanColors[i] = getChannelColor(i);
       }
       return chanColors;
    }
@@ -754,6 +729,22 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
 
    public int[] getChannelHistogram(int channelIndex) {
       return hyperImage_.getStack().getProcessor(channelIndex+1).getHistogram();
+   }
+
+   public int getChannelMax(int channelIndex) {
+      return channelSettings_[channelIndex].max;
+   }
+
+   public int getChannelMin(int channelIndex) {
+      return channelSettings_[channelIndex].min;
+   }
+
+   public double getChannelGamma(int channelIndex) {
+      return channelSettings_[channelIndex].gamma;
+   }
+
+   public Color getChannelColor(int channelIndex) {
+      return channelSettings_[channelIndex].color;
    }
 
 }

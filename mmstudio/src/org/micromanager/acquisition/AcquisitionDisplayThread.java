@@ -75,12 +75,6 @@ public class AcquisitionDisplayThread extends Thread {
             acqNames_.add(acqName);
             gui_.openAcquisition(acqName, fullPath, nTimes, nChannels, nSlices, nPositions, true, diskCached_);
             gui_.setAcquisitionEngine(acqName, eng);
-            if (usingChannels) {
-               for (int i = 0; i < channels.size(); ++i) {
-                  gui_.setChannelColor(acqName, i, channels.get(i).color_);
-                  gui_.setChannelName(acqName, i, channels.get(i).config_);
-               }
-            }
 
             //Map<String, String> summaryMetadata = makeMetadataFromAcqSettings(acqSettings);
             TaggedImageStorage imageFileManager;
@@ -94,6 +88,12 @@ public class AcquisitionDisplayThread extends Thread {
             gui_.setAcquisitionCache(acqName, imageCache_);
             //gui_.setAcquisitionSummary(acqName, summaryMetadata);
             gui_.initializeAcquisition(acqName, (int) core_.getImageWidth(), (int) core_.getImageHeight(), (int) core_.getBytesPerPixel());
+            if (usingChannels) {
+               for (int i = 0; i < channels.size(); ++i) {
+                  gui_.setChannelColor(acqName, i, channels.get(i).color_);
+                  gui_.setChannelName(acqName, i, channels.get(i).config_);
+               }
+            }
          //}
       } catch (Exception ex) {
          ReportingUtils.logError(ex);

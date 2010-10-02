@@ -11,7 +11,7 @@ import java.awt.Color;
  *
  * @author arthur
  */
-class ChannelDisplaySettings {
+public class ChannelDisplaySettings {
    double gamma = 1.0;
    int min;
    int max;

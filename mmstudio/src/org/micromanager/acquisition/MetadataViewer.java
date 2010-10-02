@@ -19,6 +19,7 @@ import ij.WindowManager;
 import ij.gui.ImageWindow;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -46,8 +47,8 @@ public class MetadataViewer extends javax.swing.JFrame
    private MMImageCache cache_;
    private boolean showUnchangingKeys_;
    private boolean updatingDisplayModeCombo_ = false;
-   private int channelIndex_;
    private MMVirtualAcquisition acq_;
+   private ArrayList<ChannelControlPanel> ccpList_;
 
 
    
@@ -622,9 +623,10 @@ public class MetadataViewer extends javax.swing.JFrame
       contrastScrollPane.setViewportView(p);
       SpringLayout layout = new SpringLayout();
       p.setLayout(layout);
+      ccpList_ = new ArrayList<ChannelControlPanel>();
 
       for (int i=0;i<nChannels;++i) {
-         ChannelControlsPanel ccp = new ChannelControlsPanel(acq, i);
+         ChannelControlPanel ccp = new ChannelControlPanel(acq, i);
 
          layout.putConstraint(SpringLayout.NORTH,ccp,hpHeight*i,SpringLayout.NORTH,p);
          layout.putConstraint(SpringLayout.EAST,ccp,0,SpringLayout.EAST,p);
@@ -632,12 +634,15 @@ public class MetadataViewer extends javax.swing.JFrame
          layout.putConstraint(SpringLayout.SOUTH,ccp,hpHeight * (i+1),SpringLayout.NORTH,p);
 
          p.add(ccp);
+         ccpList_.add(ccp);
       }
    }
 
 
-   private void updateChannelControls(/*MMVirtualAcquisition acq*/) {
-      //int nChannels = acq.getChannels();
+   private void updateChannelControls() {
+      for (ChannelControlPanel ccp:ccpList_) {
+         ccp.updateChannelSettings();
+      }
 
    }
 
