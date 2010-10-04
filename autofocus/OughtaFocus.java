@@ -46,25 +46,29 @@ import org.micromanager.utils.ReportingUtils;
 public class OughtaFocus extends AutofocusBase implements org.micromanager.api.Autofocus {
 
    private CMMCore core_;
+   private final MMStudioMainFrame gui_;
+
    private static final String AF_DEVICE_NAME = "OughtaFocus";
    private static final String SEARCH_RANGE = "SearchRange_um";
    private static final String TOLERANCE = "Tolerance_um";
    private static final String CROP_FACTOR = "CropFactor";
    private static final String CHANNEL = "Channel";
+   private static final String EXPOSURE = "Exposure";
 
    private double searchRange = 10;
    private double tolerance = 1;
    private double cropFactor = 1;
    private String channel = "";
-   private final MMStudioMainFrame gui_;
+   private double exposure;
 
    public OughtaFocus() {
       super();
       gui_ = MMStudioPlugin.getMMStudioMainFrameInstance();
 
-      createProperty(SEARCH_RANGE, Double.toString(searchRange));
-      createProperty(TOLERANCE, Double.toString(tolerance));
-      createProperty(CROP_FACTOR, Double.toString(cropFactor));
+      createProperty(SEARCH_RANGE, NumberUtils.doubleToDisplayString(searchRange));
+      createProperty(TOLERANCE, NumberUtils.doubleToDisplayString(tolerance));
+      createProperty(CROP_FACTOR, NumberUtils.doubleToDisplayString(cropFactor));
+      createProperty(EXPOSURE, NumberUtils.doubleToDisplayString(exposure));
 
    }
 
@@ -74,6 +78,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
          tolerance = NumberUtils.displayStringToDouble(getPropertyValue(TOLERANCE));
          cropFactor = NumberUtils.displayStringToDouble(getPropertyValue(CROP_FACTOR));
          channel = getPropertyValue(CHANNEL);
+         exposure = NumberUtils.displayStringToDouble(getPropertyValue(EXPOSURE));
       } catch (MMException ex) {
          ReportingUtils.logError(ex);
       } catch (ParseException ex) {
@@ -114,11 +119,14 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
          Configuration oldState = core_.getConfigGroupState(chanGroup);
          core_.setConfig(chanGroup, channel);
          gui_.setROI(newROI);
+         double oldExposure = core_.getExposure();
+         core_.setExposure(exposure);
        
          runAutofocusAlgorithm();
 
          gui_.setROI(oldROI);
          core_.setSystemState(oldState);
+         core_.setExposure(exposure);
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
@@ -155,9 +163,11 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
 
    public double measureFocusScore(double z) {
       try {
+         System.out.println(z);
          setZPosition(z);
          core_.snapImage();
          Object img = core_.getImage();
+         gui_.displayImage(img);
          ImageProcessor proc = ImageUtils.makeProcessor(core_, img);
          ImageStatistics stats = proc.getStatistics();
          return stats.stdDev / stats.mean;
