@@ -66,20 +66,20 @@ if test x$DC1394INCDIR = xNO; then
 else
    AC_CHECK_HEADERS([$DC1394INCDIR/dc1394/dc1394.h])
    if test -z "$LIBDC1394" ; then
-      # prefer static library, fall back to dynamic lib
-      AC_FIND_FILE([libdc1394.$LIBEXTA], [/usr/lib /usr/lib64 /usr/local/$ARCH/lib], DC1394LIBDIR)
-      if test x$DC1394LIBDIR = xNO; then
-         AC_FIND_FILE([libdc1394.$LIBEXTB], [/usr/lib /usr/lib64 /usr/local/$ARCH/lib], DC1394LIBDIR)
-         if test x$DC1394LIBDIR = xNO; then
-            AC_MSG_RESULT([libdc1394 not found])
-         else
-            AC_MSG_RESULT([libdc1394.$LIBEXTB found])
-            LIBDC1394="$DC1394LIBDIR/libdc1394.$LIBEXTB"
-         fi
-      else
-         AC_MSG_RESULT([libdc1394.$LIBEXTA found])
-         LIBDC1394="$DC1394LIBDIR/libdc1394.$LIBEXTA"
-      fi
+      case $host in
+         *-*-linux*)
+            LIBDC1394 = -ldc1394
+            ;;
+         *)
+            AC_FIND_FILE([libdc1394.a], [/usr/lib /usr/lib64 /usr/local/$ARCH/lib], DC1394LIBDIR)
+            if test x$DC1394LIBDIR = xNO; then
+               AC_MSG_RESULT(["libdc1394 not found"])
+            else
+               AC_MSG_RESULT(["libdc1394.a" found])
+               LIBDC1394="$DC1394LIBDIR/libdc1394.a"
+            fi
+         ;;
+      esac
    fi
 fi
 AC_SUBST(LIBDC1394)
