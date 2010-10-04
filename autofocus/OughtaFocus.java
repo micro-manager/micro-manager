@@ -23,13 +23,18 @@
 
 import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
+import java.awt.Rectangle;
 import java.text.ParseException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import mmcorej.CMMCore;
+import mmcorej.Configuration;
 import org.apache.commons.math.FunctionEvaluationException;
 import org.apache.commons.math.analysis.UnivariateRealFunction;
 import org.apache.commons.math.optimization.GoalType;
 import org.apache.commons.math.optimization.univariate.BrentOptimizer;
+import org.micromanager.MMStudioMainFrame;
 
 import org.micromanager.metadata.AcquisitionData;
 import org.micromanager.utils.AutofocusBase;
@@ -45,24 +50,22 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
    private static final String SEARCH_RANGE = "SearchRange_um";
    private static final String TOLERANCE = "Tolerance_um";
    private static final String CROP_FACTOR = "CropFactor";
-   private static final String BINNING = "Binning";
    private static final String CHANNEL = "Channel";
 
-   private double searchRange;
-   private double tolerance;
-   private double binning;
-   private double cropFactor;
-   private String channel;
+   private double searchRange = 10;
+   private double tolerance = 1;
+   private double cropFactor = 1;
+   private String channel = "";
+   private final MMStudioMainFrame gui_;
 
    public OughtaFocus() {
       super();
+      gui_ = MMStudioPlugin.getMMStudioMainFrameInstance();
+
       createProperty(SEARCH_RANGE, Double.toString(searchRange));
       createProperty(TOLERANCE, Double.toString(tolerance));
       createProperty(CROP_FACTOR, Double.toString(cropFactor));
-      createProperty(BINNING, Double.toString(binning));
-      createProperty(CHANNEL, channel);
 
-      super.loadSettings();
    }
 
    public void applySettings() {
@@ -70,7 +73,6 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
          searchRange = NumberUtils.displayStringToDouble(getPropertyValue(SEARCH_RANGE));
          tolerance = NumberUtils.displayStringToDouble(getPropertyValue(TOLERANCE));
          cropFactor = NumberUtils.displayStringToDouble(getPropertyValue(CROP_FACTOR));
-         binning = NumberUtils.displayStringToDouble(getPropertyValue(BINNING));
          channel = getPropertyValue(CHANNEL);
       } catch (MMException ex) {
          ReportingUtils.logError(ex);
@@ -81,33 +83,64 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
 
    public void setMMCore(CMMCore core) {
       core_ = core;
+      String chanGroup = core_.getChannelGroup();
+      String curChan;
+      try {
+         curChan = core_.getCurrentConfig(chanGroup);
+         createProperty(CHANNEL, curChan,
+              core_.getAvailableConfigs(core_.getChannelGroup()).toArray());
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
+      }
+      
+      super.loadSettings();
    }
 
    public String getDeviceName() {
       return AF_DEVICE_NAME;
    }
 
+
    public double fullFocus() throws MMException {
       applySettings();
+      try {
+         Rectangle oldROI = gui_.getROI();
+         Rectangle newROI = new Rectangle();
+         newROI.width = (int) (oldROI.width * cropFactor);
+         newROI.height = (int) (oldROI.height * cropFactor);
+         newROI.x = oldROI.x + newROI.width/2;
+         newROI.y = oldROI.y + newROI.height/2;
+         String chanGroup = core_.getChannelGroup();
+         Configuration oldState = core_.getConfigGroupState(chanGroup);
+         core_.setConfig(chanGroup, channel);
+         gui_.setROI(newROI);
+       
+         runAutofocusAlgorithm();
 
+         gui_.setROI(oldROI);
+         core_.setSystemState(oldState);
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
+      }
+
+      return 0;
+   }
+
+   private void runAutofocusAlgorithm() {
       UnivariateRealFunction scoreFun = new UnivariateRealFunction() {
 
          public double value(double d) throws FunctionEvaluationException {
             return measureFocusScore(d);
          }
       };
-
       BrentOptimizer brentOptimizer = new BrentOptimizer();
       brentOptimizer.setAbsoluteAccuracy(tolerance);
       try {
          double z = core_.getPosition(core_.getFocusDevice());
-         brentOptimizer.optimize(scoreFun, GoalType.MAXIMIZE,
-                 z - searchRange/2, z  + searchRange/2);
+         brentOptimizer.optimize(scoreFun, GoalType.MAXIMIZE, z - searchRange / 2, z + searchRange / 2);
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
-         return 1;
       }
-      return 0;
    }
 
    private void setZPosition(double z) {
