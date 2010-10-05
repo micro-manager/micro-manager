@@ -36,13 +36,13 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.InputStream;
 import java.io.BufferedReader;
-import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.FileReader;
+import java.io.FileInputStream;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.URLConnection;
-import java.net.URLEncoder;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.prefs.Preferences;
 
 import javax.swing.JButton;
@@ -200,6 +200,81 @@ public class ConfiguratorDlg extends JDialog {
 
    }
 
+	public String BoundaryString() {
+		String  possibleCharacters="+-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+		int length = 60;
+
+		StringBuffer workingBuffer=new StringBuffer(length);
+		workingBuffer.append("--");
+		for (int i=0;i<length-2;i++) {
+			int ioff = (int)(0.5 + Math.random() * possibleCharacters.length());
+        workingBuffer.append(possibleCharacters.charAt(ioff));
+      }
+
+      return workingBuffer.toString();
+}
+
+
+    public void upload(URL url, List<File> files) throws Exception
+	 {
+		 final String Boundary = new String(BoundaryString());
+        HttpURLConnection anURLConnection = (HttpURLConnection) url.openConnection();
+        anURLConnection.setDoOutput(true);
+        anURLConnection.setDoInput(true);
+        anURLConnection.setUseCaches(false);
+        anURLConnection.setChunkedStreamingMode(1024);
+		  anURLConnection.setRequestMethod("POST");
+        anURLConnection.setRequestProperty("Connection", "Keep-Alive");
+        anURLConnection.setRequestProperty("Content-Type", "multipart/form-data; boundary="
+                + Boundary);
+
+        DataOutputStream httpOut = new DataOutputStream(anURLConnection.getOutputStream());
+
+        for (int i = 0; i < 1 /*files.size()*/; i++)
+        {
+            File f = files.get(i);
+            String str = Boundary + "\r\n"
+                       + "Content-Disposition: form-data;name=\"file" + i + "\";file=\"" + f.getName() + "\"\r\n"
+                       //+ "Content-Type: application/octet-stream\r\n"
+                       + "\r\n";
+
+            httpOut.write(str.getBytes());
+
+            FileInputStream uploadFileReader = new FileInputStream(f);
+            int numBytesToRead = 1024;
+            int availableBytesToRead;
+            while ((availableBytesToRead = uploadFileReader.available()) > 0)
+            {
+                byte[] bufferBytesRead;
+                bufferBytesRead = availableBytesToRead >= numBytesToRead ? new byte[numBytesToRead]
+                        : new byte[availableBytesToRead];
+                uploadFileReader.read(bufferBytesRead);
+                httpOut.write(bufferBytesRead);
+                httpOut.flush();
+            }
+            httpOut.write((Boundary + "--\r\n").getBytes());
+
+        }
+
+		  httpOut.write("--\r\n".getBytes());
+        httpOut.write((Boundary + "--\r\n").getBytes());
+
+        httpOut.flush();
+        httpOut.close();
+
+        // read & parse the response
+        InputStream is = anURLConnection.getInputStream();
+        StringBuilder response = new StringBuilder();
+        byte[] respBuffer = new byte[4096];
+        while (is.read(respBuffer) >= 0)
+        {
+            response.append(new String(respBuffer).trim());
+        }
+        is.close();
+        System.out.println(response.toString());
+    }
+
+
    private void setPage(int i) {
       // try to exit the current page
       
@@ -286,11 +361,44 @@ public class ConfiguratorDlg extends JDialog {
       }
       if( sendConfig_){
           try{
-              URL url;
+				 List<File> list = new ArrayList<File>();
+				 list.add(new File("C:\\x.cfg"));
+				 list.add(new File("C:\\x2.cfg"));
+				 URL url = new URL("http://udp022507uds.ucsf.edu/~karlhoover/upload_file.php");
+				 upload(url, list);
+
+
+				 /*
+
+
+              URL url = new URL("http://udp022507uds.ucsf.edu/~karlhoover/random_file_name.txt");
+				  HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+
+conn.disconnect();
+conn.setDoOutput(true);
+conn.setRequestMethod("PUT");
+conn.setRequestProperty( "Content-type", "text/xml" );
+conn.setRequestProperty( "Content-length", Integer.toString(7));
+OutputStream ops = conn.getOutputStream();
+PrintWriter pw = new PrintWriter(ops);
+pw.println("Hallo 123");
+pw.println("Hallo 456");
+pw.println("Hallo 813");
+pw.flush();
+pw.close();
+
+conn.setDoOutput(false);
+conn.disconnect();
+				  * */
+
+
+				  /*
             URLConnection   urlConn;
             DataOutputStream    postOut;
             FileReader fr;
               InputStream is;
+
+				  urlConn.set
 
 				  // send the current user and institution per registration page.
              // String regText = "http://valelab.ucsf.edu/micro-manager-configsaver.php";
@@ -339,13 +447,15 @@ public class ConfiguratorDlg extends JDialog {
 					}
 					JOptionPane.showMessageDialog(null, response);
 					getResponse.close();
+					*
+					* */
 
-              } catch (java.net.UnknownHostException e) {
-                 ReportingUtils.logError(e, "config posting");
-              } catch (MalformedURLException e) {
-                 ReportingUtils.logError(e);
-              } catch (IOException e) {
-                 ReportingUtils.logError(e);
+//              } catch (java.net.UnknownHostException e) {
+//                 ReportingUtils.logError(e, "config posting");
+//              } catch (MalformedURLException e) {
+//                 ReportingUtils.logError(e);
+//              } catch (IOException e) {
+//                 ReportingUtils.logError(e);
               } catch (SecurityException e){
                  ReportingUtils.logError(e,"");
               } catch (Exception e) {
