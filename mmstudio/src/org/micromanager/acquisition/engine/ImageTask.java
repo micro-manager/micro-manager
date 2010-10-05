@@ -200,7 +200,7 @@ public class ImageTask implements EngineTask {
       MDUtils.put(md, "Acquisition-ExposureMs", imageRequest_.exposure);
       MDUtils.put(md, "Acquisition-PixelSizeUm", core_.getPixelSizeUm());
       try {
-       //  MDUtils.put(md, "Acquisition-ZPositionUm", core_.getPosition(core_.getFocusDevice()));
+         MDUtils.put(md, "Acquisition-ZPositionUm", core_.getPosition(core_.getFocusDevice()));
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
          MDUtils.put(md, "Acquisition-ZPositionUm", "");
