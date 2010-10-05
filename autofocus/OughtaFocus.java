@@ -25,8 +25,6 @@ import ij.process.ImageProcessor;
 import ij.process.ImageStatistics;
 import java.awt.Rectangle;
 import java.text.ParseException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
@@ -121,18 +119,29 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
                newROI.height = (int) (oldROI.height * cropFactor);
                newROI.x = oldROI.x + newROI.width / 2;
                newROI.y = oldROI.y + newROI.height / 2;
-               String chanGroup = core_.getChannelGroup();
-               Configuration oldState = core_.getConfigGroupState(chanGroup);
-               core_.setConfig(chanGroup, channel);
-               gui_.setROI(newROI);
+               Configuration oldState = null;
+               if (! channel.isEmpty()) {
+                  String chanGroup = core_.getChannelGroup();
+                  oldState = core_.getConfigGroupState(chanGroup);
+                  core_.setConfig(chanGroup, channel);
+               }
+               //gui_.setROI(newROI);
                double oldExposure = core_.getExposure();
                core_.setExposure(exposure);
 
                runAutofocusAlgorithm();
 
-               gui_.setROI(oldROI);
-               core_.setSystemState(oldState);
+               //gui_.setROI(oldROI);
+               if (oldState != null) {
+                  core_.setSystemState(oldState);
+               }
                core_.setExposure(exposure);
+            } catch (Exception ex) {
+               ReportingUtils.logError(ex);
+            }
+            try {
+               double z = runAutofocusAlgorithm();
+               setZPosition(z);
             } catch (Exception ex) {
                ReportingUtils.logError(ex);
             }
@@ -149,7 +158,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
       return 0;
    }
 
-   private void runAutofocusAlgorithm() {
+   private double runAutofocusAlgorithm() throws Exception {
       UnivariateRealFunction scoreFun = new UnivariateRealFunction() {
 
          public double value(double d) throws FunctionEvaluationException {
@@ -158,12 +167,11 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
       };
       BrentOptimizer brentOptimizer = new BrentOptimizer();
       brentOptimizer.setAbsoluteAccuracy(tolerance);
-      try {
-         double z = core_.getPosition(core_.getFocusDevice());
-         brentOptimizer.optimize(scoreFun, GoalType.MAXIMIZE, z - searchRange / 2, z + searchRange / 2);
-      } catch (Exception ex) {
-         ReportingUtils.logError(ex);
-      }
+
+      double z = core_.getPosition(core_.getFocusDevice());
+      double zResult = brentOptimizer.optimize(scoreFun, GoalType.MAXIMIZE, z - searchRange / 2, z + searchRange / 2);
+      return zResult;
+
    }
 
    private void setZPosition(double z) {
@@ -178,8 +186,9 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
 
    public double measureFocusScore(double z) {
       try {
-         System.out.println(z);
+
          setZPosition(z);
+         core_.waitForDevice(core_.getCameraDevice());
          core_.snapImage();
          Object img = core_.getImage();
          if (show == 1) {
@@ -187,7 +196,9 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
          }
          ImageProcessor proc = ImageUtils.makeProcessor(core_, img);
          ImageStatistics stats = proc.getStatistics();
-         return stats.stdDev / stats.mean;
+         double score = stats.stdDev / stats.mean;
+                  System.out.println(z + ": "+score);
+         return score;
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
          return 0;
