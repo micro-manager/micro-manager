@@ -52,6 +52,8 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
    private static final String CHANNEL = "Channel";
    private static final String EXPOSURE = "Exposure";
    private static final String SHOW = "ShowImages";
+   private static final String SCORING_METHOD = "Maximize";
+   private final static String scoringMethods[] = {"Mean","StdDev","Edges"};
 
    private double searchRange = 10;
    private double tolerance = 1;
@@ -59,7 +61,8 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
    private String channel = "";
    private double exposure = 100;
    private int show = 0;
-
+   private String scoringMethod = "Mean";
+   
    public OughtaFocus() {
       super();
       gui_ = MMStudioPlugin.getMMStudioMainFrameInstance();
@@ -69,7 +72,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
       createProperty(CROP_FACTOR, NumberUtils.doubleToDisplayString(cropFactor));
       createProperty(EXPOSURE, NumberUtils.doubleToDisplayString(exposure));
       createProperty(SHOW, NumberUtils.intToDisplayString(show));
-
+      createProperty(SCORING_METHOD, scoringMethod, scoringMethods);
    }
 
    public void applySettings() {
@@ -80,6 +83,8 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
          channel = getPropertyValue(CHANNEL);
          exposure = NumberUtils.displayStringToDouble(getPropertyValue(EXPOSURE));
          show = NumberUtils.displayStringToInt(getPropertyValue(SHOW));
+         scoringMethod = getPropertyValue(SCORING_METHOD);
+
       } catch (MMException ex) {
          ReportingUtils.logError(ex);
       } catch (ParseException ex) {
@@ -170,8 +175,9 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
 
       double z = core_.getPosition(core_.getFocusDevice());
       double zResult = brentOptimizer.optimize(scoreFun, GoalType.MAXIMIZE, z - searchRange / 2, z + searchRange / 2);
+      ReportingUtils.logMessage("OughtaFocus Iterations: " + brentOptimizer.getIterationCount());
       return zResult;
-
+      
    }
 
    private void setZPosition(double z) {
@@ -195,10 +201,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
             gui_.displayImage(img);
          }
          ImageProcessor proc = ImageUtils.makeProcessor(core_, img);
-         ImageStatistics stats = proc.getStatistics();
-         double score = stats.stdDev / stats.mean;
-                  System.out.println(z + ": "+score);
-         return score;
+         return computeScore(proc);
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
          return 0;
@@ -227,5 +230,34 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
 
    public void focus(double coarseStep, int numCoarse, double fineStep, int numFine) throws MMException {
       throw new UnsupportedOperationException("Not supported yet.");
+   }
+
+   private double computeSharpness(ImageProcessor proc) {
+      ImageStatistics stats = proc.getStatistics();
+      double meanIntensity = proc.getStatistics().mean;
+      proc.findEdges();
+      double meanEdge = proc.getStatistics().mean;
+      return meanEdge/meanIntensity;
+   }
+
+   private double computeMean(ImageProcessor proc) {
+      return proc.getStatistics().mean;
+   }
+
+   private double computeNormalizedStdDev(ImageProcessor proc) {
+      
+      ImageStatistics stats = proc.getStatistics();
+      return stats.stdDev / stats.mean;
+   }
+
+   private double computeScore(ImageProcessor proc) {
+      if (scoringMethod.contentEquals("Mean")) {
+         return computeMean(proc);
+      } else if (scoringMethod.contentEquals("StdDev")) {
+         return computeNormalizedStdDev(proc);
+      } else if (scoringMethod.contentEquals("Edges")) {
+         return computeSharpness(proc);
+      } else
+         return 0;
    }
 }
