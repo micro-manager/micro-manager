@@ -57,10 +57,10 @@ public class ChannelControlPanel extends javax.swing.JPanel {
 
       setOpaque(false);
       setPreferredSize(new java.awt.Dimension(250, 100));
-      setSize(new java.awt.Dimension(250, 100));
 
       fullButton.setFont(fullButton.getFont().deriveFont((float)9));
       fullButton.setText("Full");
+      fullButton.setMargin(new java.awt.Insets(2, 4, 2, 4));
       fullButton.setPreferredSize(new java.awt.Dimension(75, 30));
       fullButton.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -70,6 +70,9 @@ public class ChannelControlPanel extends javax.swing.JPanel {
 
       autoButton.setFont(autoButton.getFont().deriveFont((float)9));
       autoButton.setText("Auto");
+      autoButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+      autoButton.setIconTextGap(0);
+      autoButton.setMargin(new java.awt.Insets(2, 4, 2, 4));
       autoButton.setMaximumSize(new java.awt.Dimension(75, 30));
       autoButton.setMinimumSize(new java.awt.Dimension(75, 30));
       autoButton.setPreferredSize(new java.awt.Dimension(75, 30));
@@ -97,6 +100,7 @@ public class ChannelControlPanel extends javax.swing.JPanel {
       });
 
       histogramPanelHolder.setAlignmentX(0.3F);
+      histogramPanelHolder.setPreferredSize(new java.awt.Dimension(0, 100));
       histogramPanelHolder.setLayout(new java.awt.GridLayout(1, 1));
 
       org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
@@ -104,19 +108,17 @@ public class ChannelControlPanel extends javax.swing.JPanel {
       layout.setHorizontalGroup(
          layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(layout.createSequentialGroup()
-            .add(0, 0, 0)
             .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
                .add(layout.createSequentialGroup()
-                  .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-                     .add(autoButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 40, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                     .add(layout.createSequentialGroup()
-                        .add(colorPickerLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 16, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(5, 5, 5)
-                        .add(fullButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 40, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
-                  .add(9, 9, 9))
-               .add(layout.createSequentialGroup()
                   .add(channelNameCheckbox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 110, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                  .add(0, 0, 0)))
+                  .add(0, 0, 0))
+               .add(layout.createSequentialGroup()
+                  .add(colorPickerLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                  .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                     .add(autoButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 40, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                     .add(fullButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 40, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                  .add(9, 9, 9)))
             .add(histogramPanelHolder, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 140, Short.MAX_VALUE))
       );
       layout.setVerticalGroup(
@@ -125,13 +127,14 @@ public class ChannelControlPanel extends javax.swing.JPanel {
             .add(10, 10, 10)
             .add(channelNameCheckbox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 17, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-               .add(colorPickerLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 16, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-               .add(fullButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 16, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-            .add(autoButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 16, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-            .addContainerGap())
-         .add(histogramPanelHolder, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 100, Short.MAX_VALUE)
+            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+               .add(layout.createSequentialGroup()
+                  .add(fullButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                  .add(autoButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+               .add(colorPickerLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+            .add(43, 43, 43))
+         .add(histogramPanelHolder, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 100, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
       );
    }// </editor-fold>//GEN-END:initComponents
 
@@ -232,17 +235,22 @@ public class ChannelControlPanel extends javax.swing.JPanel {
 
 
    public final void updateChannelSettings() {
-      Color color = acq_.getChannelColor(channelIndex_);
-      colorPickerLabel.setBackground(color);
+      if (acq_ != null) {
+         Color color = acq_.getChannelColor(channelIndex_);
+         colorPickerLabel.setBackground(color);
 
-      String name = acq_.getChannelNames()[channelIndex_];
-      channelNameCheckbox.setText(name);
-      
-      int [] histogram = acq_.getChannelHistogram(channelIndex_);
-      hp_.setData(makeGraphData(histogram));
-      hp_.setAutoBounds();
-      hp_.setTraceStyle(true, color);
-      drawDisplaySettings();
+         String [] names = acq_.getChannelNames();
+         if (names != null) {
+            String name = acq_.getChannelNames()[channelIndex_];
+            channelNameCheckbox.setText(name);
+         }
+
+         int [] histogram = acq_.getChannelHistogram(channelIndex_);
+         hp_.setData(makeGraphData(histogram));
+         hp_.setAutoBounds();
+         hp_.setTraceStyle(true, color);
+         drawDisplaySettings();
+      }
    }
 
    public void setDisplayRange(int min, int max) {

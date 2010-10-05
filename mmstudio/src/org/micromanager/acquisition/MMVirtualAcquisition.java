@@ -728,7 +728,7 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
    }
 
    public int[] getChannelHistogram(int channelIndex) {
-      if (!hyperImage_.isComposite())
+      if (hyperImage_ == null || !hyperImage_.isComposite())
          return null;
       return ((CompositeImage) hyperImage_).getProcessor(channelIndex+1).getHistogram();
    }
