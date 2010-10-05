@@ -87,7 +87,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
          searchRange = NumberUtils.displayStringToDouble(getPropertyValue(SEARCH_RANGE));
          tolerance = NumberUtils.displayStringToDouble(getPropertyValue(TOLERANCE));
          cropFactor = NumberUtils.displayStringToDouble(getPropertyValue(CROP_FACTOR));
-         MathFunctions.clip(0.01, cropFactor, 1.0);
+         cropFactor = MathFunctions.clip(0.01, cropFactor, 1.0);
          channel = getPropertyValue(CHANNEL);
          exposure = NumberUtils.displayStringToDouble(getPropertyValue(EXPOSURE));
          show = getPropertyValue(SHOW_IMAGES);
