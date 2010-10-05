@@ -310,9 +310,8 @@ public class ChannelControlPanel extends javax.swing.JPanel {
             min = i;
             max = min;
          }
-         if (max != 0 && histogram[i] == 0 || i == (histogram.length - 1)) {
-            max = i-1;
-            break;
+         if (histogram[i] != 0) {
+            max = i;
          }
       }
       setDisplayRange(min, max);
