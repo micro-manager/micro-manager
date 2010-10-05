@@ -103,10 +103,10 @@ public class ImageTask implements EngineTask {
                StagePosition sp = msp.get(i);
                if (sp.numAxes == 1) {
                   if (sp.stageName.equals(core_.getFocusDevice())) {
-                     zPosition = sp.z;
+                     zPosition = sp.x; // Surprisingly it should be sp.x!
                   } else {
-                     core_.setPosition(sp.stageName, sp.z);
-                     MDUtils.put(md,"Acquisition-"+sp.stageName+"RequestedZPosition", sp.z);
+                     core_.setPosition(sp.stageName, sp.x);
+                     MDUtils.put(md,"Acquisition-"+sp.stageName+"RequestedZPosition", sp.x);
                   }
 
                } else if (sp.numAxes == 2) {
@@ -156,7 +156,7 @@ public class ImageTask implements EngineTask {
             if (imageRequest_.UsePosition) {
                sp = imageRequest_.Position.get(core_.getFocusDevice());
                if (sp != null)
-                  sp.z = core_.getPosition(core_.getFocusDevice());
+                  sp.x = core_.getPosition(core_.getFocusDevice());
             }
          } catch (Exception ex) {
             ReportingUtils.logError(ex);
