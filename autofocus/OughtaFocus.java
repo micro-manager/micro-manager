@@ -5,6 +5,9 @@
 //-----------------------------------------------------------------------------
 //
 //AUTHOR:         Arthur Edelstein, October 2010
+//                Based on SimpleAutofocus by Karl Hoover
+//                and the Autofocus "H&P" plugin
+//                by Pakpoom Subsoontorn & Hernan Garcia
 //
 //COPYRIGHT:      University of California San Francisco
 //                
@@ -122,34 +125,33 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
                Rectangle newROI = new Rectangle();
                newROI.width = (int) (oldROI.width * cropFactor);
                newROI.height = (int) (oldROI.height * cropFactor);
-               newROI.x = oldROI.x + newROI.width / 2;
-               newROI.y = oldROI.y + newROI.height / 2;
+               newROI.x = oldROI.x + (oldROI.width - newROI.width) / 2;
+               newROI.y = oldROI.y + (oldROI.height - newROI.height) / 2;
+               ReportingUtils.logError("Setting ROI to: " + newROI);
                Configuration oldState = null;
                if (! channel.isEmpty()) {
                   String chanGroup = core_.getChannelGroup();
                   oldState = core_.getConfigGroupState(chanGroup);
                   core_.setConfig(chanGroup, channel);
                }
-               //gui_.setROI(newROI);
+               gui_.setROI(newROI);
+               core_.waitForDevice(core_.getCameraDevice());
                double oldExposure = core_.getExposure();
                core_.setExposure(exposure);
 
-               runAutofocusAlgorithm();
+               double z = runAutofocusAlgorithm();
 
-               //gui_.setROI(oldROI);
+               gui_.setROI(oldROI);
+               core_.waitForDevice(core_.getCameraDevice());
                if (oldState != null) {
                   core_.setSystemState(oldState);
                }
                core_.setExposure(exposure);
-            } catch (Exception ex) {
-               ReportingUtils.logError(ex);
-            }
-            try {
-               double z = runAutofocusAlgorithm();
                setZPosition(z);
             } catch (Exception ex) {
                ReportingUtils.logError(ex);
             }
+            
          }
       };
       th.start();
