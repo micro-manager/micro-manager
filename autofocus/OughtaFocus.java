@@ -122,12 +122,13 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
             applySettings();
             try {
                Rectangle oldROI = gui_.getROI();
-               Rectangle newROI = new Rectangle();
-               newROI.width = (int) (oldROI.width * cropFactor);
-               newROI.height = (int) (oldROI.height * cropFactor);
-               newROI.x = oldROI.x + (oldROI.width - newROI.width) / 2;
-               newROI.y = oldROI.y + (oldROI.height - newROI.height) / 2;
-               ReportingUtils.logError("Setting ROI to: " + newROI);
+               //ReportingUtils.logMessage("Original ROI: " + oldROI);
+               int w = (int) (oldROI.width * cropFactor);
+               int h = (int) (oldROI.height * cropFactor);
+               int x = oldROI.x + (oldROI.width - w) / 2;
+               int y = oldROI.y + (oldROI.height - h) / 2;
+               Rectangle newROI = new Rectangle(x,y,w,h);
+               //ReportingUtils.logMessage("Setting ROI to: " + newROI);
                Configuration oldState = null;
                if (! channel.isEmpty()) {
                   String chanGroup = core_.getChannelGroup();
