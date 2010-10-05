@@ -56,7 +56,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
    private static final String EXPOSURE = "Exposure";
    private static final String SHOW = "ShowImages";
    private static final String SCORING_METHOD = "Maximize";
-   private final static String scoringMethods[] = {"Mean","StdDev","Edges"};
+   private final static String scoringMethods[] = {"Edges","StdDev","Mean"};
 
    private double searchRange = 10;
    private double tolerance = 1;
@@ -64,7 +64,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
    private String channel = "";
    private double exposure = 100;
    private int show = 0;
-   private String scoringMethod = "Mean";
+   private String scoringMethod = "Edges";
    
    public OughtaFocus() {
       super();
