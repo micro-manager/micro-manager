@@ -154,7 +154,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
                if (oldState != null) {
                   core_.setSystemState(oldState);
                }
-               core_.setExposure(exposure);
+               core_.setExposure(oldExposure);
                setZPosition(z);
             } catch (Exception ex) {
                ReportingUtils.logError(ex);
