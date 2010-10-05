@@ -26,6 +26,7 @@ public class ImageTask implements EngineTask {
    private final CMMCore core_;
    private boolean stopRequested_;
    private boolean pauseRequested_;
+   boolean setZPosition_ = false;
    private final HashMap<String, String> md;
 
    ImageTask(Engine eng, ImageRequest imageRequest) {
@@ -77,20 +78,26 @@ public class ImageTask implements EngineTask {
 
    void updateSlice(double zPosition) throws Exception {
       if (imageRequest_.UseSlice) {
+         setZPosition_ = true;
          if (imageRequest_.relativeZSlices) {
             zPosition += imageRequest_.SlicePosition;
             System.out.println(zPosition);
          } else {
             zPosition = imageRequest_.SlicePosition;
          }
+      } else {
+         zPosition = core_.getPosition(core_.getFocusDevice());
       }
 
       if (imageRequest_.UseChannel) {
+         setZPosition_ = true;
          zPosition += imageRequest_.Channel.zOffset_;
       }
 
-      imageRequest_.zPosition = zPosition;
-      core_.setPosition(core_.getFocusDevice(), zPosition);
+      if (setZPosition_) {
+         imageRequest_.zPosition = zPosition;
+         core_.setPosition(core_.getFocusDevice(), zPosition);
+      }
    }
 
    void updatePositionAndSlice() {
@@ -104,6 +111,7 @@ public class ImageTask implements EngineTask {
                if (sp.numAxes == 1) {
                   if (sp.stageName.equals(core_.getFocusDevice())) {
                      zPosition = sp.x; // Surprisingly it should be sp.x!
+                     setZPosition_ = true;
                   } else {
                      core_.setPosition(sp.stageName, sp.x);
                      MDUtils.put(md,"Acquisition-"+sp.stageName+"RequestedZPosition", sp.x);
@@ -192,7 +200,7 @@ public class ImageTask implements EngineTask {
       MDUtils.put(md, "Acquisition-ExposureMs", imageRequest_.exposure);
       MDUtils.put(md, "Acquisition-PixelSizeUm", core_.getPixelSizeUm());
       try {
-         MDUtils.put(md, "Acquisition-ZPositionUm", core_.getPosition(core_.getFocusDevice()));
+       //  MDUtils.put(md, "Acquisition-ZPositionUm", core_.getPosition(core_.getFocusDevice()));
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
          MDUtils.put(md, "Acquisition-ZPositionUm", "");
@@ -210,6 +218,7 @@ public class ImageTask implements EngineTask {
       MDUtils.put(md, "Acquisition-TimeMs", ((double) dTime) / 1e9);
 
       try {
+         core_.waitForDevice(core_.getShutterDevice());
          if (eng_.autoShutterSelected_ && !core_.getShutterOpen()) {
             core_.setShutterOpen(true);
             log("opened shutter");
@@ -218,6 +227,7 @@ public class ImageTask implements EngineTask {
          log("snapped image");
 
          if (eng_.autoShutterSelected_ && imageRequest_.CloseShutter) {
+            core_.waitForDevice(core_.getShutterDevice());
             core_.setShutterOpen(false);
             log("closed shutter");
          }
