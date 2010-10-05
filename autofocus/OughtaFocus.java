@@ -41,6 +41,7 @@ import org.micromanager.metadata.AcquisitionData;
 import org.micromanager.utils.AutofocusBase;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.MMException;
+import org.micromanager.utils.MathFunctions;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
 
@@ -86,6 +87,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
          searchRange = NumberUtils.displayStringToDouble(getPropertyValue(SEARCH_RANGE));
          tolerance = NumberUtils.displayStringToDouble(getPropertyValue(TOLERANCE));
          cropFactor = NumberUtils.displayStringToDouble(getPropertyValue(CROP_FACTOR));
+         MathFunctions.clip(0.01, cropFactor, 1.0);
          channel = getPropertyValue(CHANNEL);
          exposure = NumberUtils.displayStringToDouble(getPropertyValue(EXPOSURE));
          show = getPropertyValue(SHOW_IMAGES);
