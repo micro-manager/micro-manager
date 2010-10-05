@@ -322,7 +322,7 @@ int SimpleAutofocus::Initialize()
    CreateProperty("Re-acquire&EvaluateSharpness","0",MM::Integer, false, pAct);
 
    pAct = new CPropertyAction(this, &SimpleAutofocus::OnStandardDeviationOverMean);
-   CreateProperty("StandardDeviation/Mean","0",MM::Float, false, pAct);
+   CreateProperty("StandardDeviation/Mean","0",MM::Float, true, pAct);
 
    pAct = new CPropertyAction(this, &SimpleAutofocus::OnChannel);
    CreateProperty("Channel","",MM::String, false, pAct);
