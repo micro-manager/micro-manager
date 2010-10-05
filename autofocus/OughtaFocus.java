@@ -54,8 +54,9 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
    private static final String CROP_FACTOR = "CropFactor";
    private static final String CHANNEL = "Channel";
    private static final String EXPOSURE = "Exposure";
-   private static final String SHOW = "ShowImages";
+   private static final String SHOW_IMAGES = "ShowImages";
    private static final String SCORING_METHOD = "Maximize";
+   private static final String showValues[] = {"Yes", "No"};
    private final static String scoringMethods[] = {"Edges","StdDev","Mean"};
 
    private double searchRange = 10;
@@ -63,9 +64,11 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
    private double cropFactor = 1;
    private String channel = "";
    private double exposure = 100;
-   private int show = 0;
+   private String show = "No";
    private String scoringMethod = "Edges";
-   
+
+   private boolean settingsLoaded_ = false;
+
    public OughtaFocus() {
       super();
       gui_ = MMStudioPlugin.getMMStudioMainFrameInstance();
@@ -74,7 +77,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
       createProperty(TOLERANCE, NumberUtils.doubleToDisplayString(tolerance));
       createProperty(CROP_FACTOR, NumberUtils.doubleToDisplayString(cropFactor));
       createProperty(EXPOSURE, NumberUtils.doubleToDisplayString(exposure));
-      createProperty(SHOW, NumberUtils.intToDisplayString(show));
+      createProperty(SHOW_IMAGES, show, showValues);
       createProperty(SCORING_METHOD, scoringMethod, scoringMethods);
    }
 
@@ -85,7 +88,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
          cropFactor = NumberUtils.displayStringToDouble(getPropertyValue(CROP_FACTOR));
          channel = getPropertyValue(CHANNEL);
          exposure = NumberUtils.displayStringToDouble(getPropertyValue(EXPOSURE));
-         show = NumberUtils.displayStringToInt(getPropertyValue(SHOW));
+         show = getPropertyValue(SHOW_IMAGES);
          scoringMethod = getPropertyValue(SCORING_METHOD);
 
       } catch (MMException ex) {
@@ -106,8 +109,11 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
-
-      super.loadSettings();
+      
+      if (!settingsLoaded_) {
+         super.loadSettings();
+         settingsLoaded_ = true;
+      }
    }
 
    public String getDeviceName() {
@@ -115,11 +121,10 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
    }
 
    public double fullFocus() throws MMException {
+      applySettings();
+
       Thread th = new Thread() {
-
          public void run() {
-
-            applySettings();
             try {
                Rectangle oldROI = gui_.getROI();
                //ReportingUtils.logMessage("Original ROI: " + oldROI);
@@ -156,9 +161,9 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
          }
       };
       th.start();
-      if (show == 0) {
+      if (show.contentEquals("No")) {
          try {
-         th.join();
+            th.join();
          } catch (InterruptedException ex) {
             ReportingUtils.showError(ex);
          }
@@ -200,7 +205,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
          core_.waitForDevice(core_.getCameraDevice());
          core_.snapImage();
          Object img = core_.getImage();
-         if (show == 1) {
+         if (show.contentEquals("Yes")) {
             gui_.displayImage(img);
          }
          ImageProcessor proc = ImageUtils.makeProcessor(core_, img);
