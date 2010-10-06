@@ -148,12 +148,12 @@ public class Engine {
 
    public synchronized void pause() {
       isPaused_ = true;
-      currentTask_.requestPause();
+     // currentTask_.requestPause();
    }
 
    public synchronized void resume() {
       isPaused_ = false;
-      currentTask_.requestResume();
+    //  currentTask_.requestResume();
    }
 
    public synchronized void stop() {
