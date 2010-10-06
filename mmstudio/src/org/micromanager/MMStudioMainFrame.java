@@ -623,6 +623,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                   if (img != img_) {
                      img_ = img;
                      displayImage(img_);
+                     Thread.yield();
                   }
                }
             } catch (Exception e) {
