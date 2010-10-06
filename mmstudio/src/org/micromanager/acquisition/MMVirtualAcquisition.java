@@ -207,9 +207,8 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
          } catch (Exception ex) {
             ReportingUtils.logError(ex);
          }
-         createImagePlus(pos);
       }
-
+      createImagePlus(0);
 
       initialized_ = true;
    }
