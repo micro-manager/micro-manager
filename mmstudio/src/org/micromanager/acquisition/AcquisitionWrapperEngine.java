@@ -64,13 +64,11 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private double minZStepUm_;
    private String comment_;
    private boolean saveFiles_;
-   private int displayMode_;
    private int sliceMode_;
    private int positionMode_;
    private boolean useAutoFocus_;
    private int afSkipInterval_;
-   private boolean useSingleFrame_;
-   private boolean useSingleWindow_;
+   private boolean useSingleWindow_ = false;
    private boolean isPaused_;
    private String zStage_;
    private String cameraConfig_;
@@ -507,11 +505,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    public void setDisplayMode(int mode) {
-      displayMode_ = mode;
-      if (displayMode_ == DisplayMode.SINGLE_WINDOW)
-         useSingleWindow_ = true;
-      else
-         useSingleWindow_ = false;
+      //Ignore
    }
 
    public int getSliceMode() {
@@ -519,7 +513,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    public int getDisplayMode() {
-      return displayMode_;
+      return 0;
    }
 
    public void setSliceMode(int mode) {
@@ -555,11 +549,11 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    public void setSingleFrame(boolean selected) {
-      useSingleFrame_ = selected;
+      //Ignore
    }
 
    public void setSingleWindow(boolean selected) {
-      useSingleWindow_ = selected;
+      //Ignore
    }
 
    public String installAutofocusPlugin(String className) {
