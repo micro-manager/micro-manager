@@ -420,8 +420,6 @@ public class MMImageWindow extends ImageWindow {
 			if(null != ipr){
 				ipr.setPixels(img);
 			}
-			// ip.updateAndDraw();
- 
 			// update coordinate and pixel info in imageJ by simulating mouse
 			// move
 			ImageCanvas ic = getCanvas();
@@ -441,24 +439,6 @@ public class MMImageWindow extends ImageWindow {
 	   }
 	}
 	
-//!!!	// public
-/*
-	public void newImage(Object img) {
-
-		if (getImageWindowByteLength() != imageByteLenth(img)) {
-			throw (new RuntimeException("Image bytelenth does not much"));
-		}
-		getImagePlus().getProcessor().setPixels(img);
-		getImagePlus().updateAndDraw();
-		// Graphics
-		// getCanvas().paint(getCanvas().getGraphics());
-		updateHistogram();
-		// update coordinate and pixel info in imageJ by simulating mouse
-		// move
-		Point pt = getCanvas().getCursorLoc();
-		getImagePlus().mouseMoved(pt.x, pt.y);
-	}
-*/	
 	// Set ImageJ pixel calibration
 	public void setIJCal() {
 		double pixSizeUm = core_.getPixelSizeUm();
