@@ -601,6 +601,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       ActionListener liveModeTimerHandler = new ActionListener() {
 
          public void actionPerformed(ActionEvent evt) {
+            Thread.currentThread().setPriority(3);
             if (!isImageWindowOpen()) {
                // stop live acquisition if user closed the window
                enableLiveMode(false);
