@@ -21,7 +21,6 @@
 //
 // CVS:          $Id$
 //
-
 package org.micromanager.conf;
 
 import java.awt.Color;
@@ -66,185 +65,187 @@ import org.micromanager.utils.ReportingUtils;
  * MMStudio
  */
 public class ConfiguratorDlg extends JDialog {
-   private static final long serialVersionUID = 1L;
-   private JLabel pagesLabel_;
-   private JButton backButton_;
-   private JButton nextButton_;
-   private PagePanel pages_[];
-   private int curPage_ = 0;
-   private MicroscopeModel microModel_;
-   private CMMCore core_;
-   private Preferences prefs_;
-   private static final String APP_NAME = "Configurator";
-   private JLabel titleLabel_;
-   private JEditorPane helpTextPane_;
-   private String defaultPath_;
-   private JCheckBox sendCheck_;
-   private boolean sendConfig_;
 
-   /**
-    * Create the application
-    */
-   public ConfiguratorDlg(CMMCore core, String defFile) {
-      super();
-      core_ = core;
-      defaultPath_ = defFile;
-      setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-      setModal(true);
-      initialize();
-   }
+    private static final long serialVersionUID = 1L;
+    private JLabel pagesLabel_;
+    private JButton backButton_;
+    private JButton nextButton_;
+    private PagePanel pages_[];
+    private int curPage_ = 0;
+    private MicroscopeModel microModel_;
+    private CMMCore core_;
+    private Preferences prefs_;
+    private static final String APP_NAME = "Configurator";
+    private JLabel titleLabel_;
+    private JEditorPane helpTextPane_;
+    private String defaultPath_;
+    private JCheckBox sendCheck_;
+    private boolean sendConfig_;
 
-   /**
-    * Initialize the contents of the frame
-    */
-   private void initialize() {
-      prefs_ = Preferences.userNodeForPackage(this.getClass());
-      
-      addWindowListener(new WindowAdapter() {
-         public void windowClosing(WindowEvent arg0) {
-            onCloseWindow();
-         }
-      });
-      setResizable(false);
-      getContentPane().setLayout(null);
-      setTitle("Hardware Configuration Wizard");
-      setBounds(50, 100, 602, 529);
+    /**
+     * Create the application
+     */
+    public ConfiguratorDlg(CMMCore core, String defFile) {
+        super();
+        core_ = core;
+        defaultPath_ = defFile;
+        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        setModal(true);
+        initialize();
+    }
 
-      sendCheck_ = new JCheckBox();
-      sendCheck_.setBounds(5, 462, 275, 23);
-      sendCheck_.setFont(new Font("", Font.PLAIN, 10));
-      sendCheck_.setSelected(true);
-      sendConfig_ = false;
-      sendCheck_.addActionListener(new ActionListener() {
-         public void actionPerformed(ActionEvent arg0) {
-             sendConfig_ = sendCheck_.isSelected();
-         }
-      });
-      sendCheck_.setText("Send configuration to Micro-manager.org");
-     // they didn't like it yet
-		//getContentPane().add(sendCheck_);
+    /**
+     * Initialize the contents of the frame
+     */
+    private void initialize() {
+        prefs_ = Preferences.userNodeForPackage(this.getClass());
 
+        addWindowListener(new WindowAdapter() {
 
-      final JScrollPane scrollPane = new JScrollPane();
-      scrollPane.setBounds(9, 320, 578, 136);
-      getContentPane().add(scrollPane);
+            public void windowClosing(WindowEvent arg0) {
+                onCloseWindow();
+            }
+        });
+        setResizable(false);
+        getContentPane().setLayout(null);
+        setTitle("Hardware Configuration Wizard");
+        setBounds(50, 100, 602, 529);
 
-      helpTextPane_ = new JEditorPane();
-      scrollPane.setViewportView(helpTextPane_);
-      helpTextPane_.setEditable(false);
-      //helpTextPane_.setBorder(new LineBorder(Color.black, 1, false));
+        sendCheck_ = new JCheckBox();
+        sendCheck_.setBounds(5, 462, 275, 23);
+        sendCheck_.setFont(new Font("", Font.PLAIN, 10));
+        sendCheck_.setSelected(true);
+        sendConfig_ = false;
+        sendCheck_.addActionListener(new ActionListener() {
 
-      helpTextPane_.setContentType("text/html; charset=ISO-8859-1");
-      
-      nextButton_ = new JButton();
-      nextButton_.addActionListener(new ActionListener() {
-         public void actionPerformed(ActionEvent arg0) {
-            if (curPage_ == pages_.length - 1)
-               onCloseWindow();
-            else
-               setPage(curPage_ + 1);
-         }
-      });
-      nextButton_.setText("Next >");
-      nextButton_.setBounds(494, 462, 93, 23);
-      getContentPane().add(nextButton_);
-      getRootPane().setDefaultButton(nextButton_);
+            public void actionPerformed(ActionEvent arg0) {
+                sendConfig_ = sendCheck_.isSelected();
+            }
+        });
+        sendCheck_.setText("Send configuration to Micro-manager.org");
 
-      backButton_ = new JButton();
-      backButton_.addActionListener(new ActionListener() {
-         public void actionPerformed(ActionEvent arg0) {
-            setPage(curPage_ - 1);
-         }
-      });
-      backButton_.setText("< Back");
-      backButton_.setBounds(395, 462, 93, 23);
-      getContentPane().add(backButton_);
-
-      pagesLabel_ = new JLabel();
-      pagesLabel_.setBorder(new LineBorder(Color.black, 1, false));
-      pagesLabel_.setBounds(9, 28, 578, 286);
-      getContentPane().add(pagesLabel_);
-      
-      // add page panels
-      pages_ = new PagePanel[9];
-
-      int pageNumber = 0;
-      pages_[pageNumber++] = new IntroPage(prefs_);
-      pages_[pageNumber++] = new DevicesPage(prefs_);
-      pages_[pageNumber++] = new EditPropertiesPage(prefs_);
-      pages_[pageNumber++] = new ComPortsPage(prefs_);
-      pages_[pageNumber++] = new RolesPage(prefs_);
-      pages_[pageNumber++] = new DelayPage(prefs_);
-      pages_[pageNumber++] = new SynchroPage(prefs_);
-      pages_[pageNumber++] = new LabelsPage(prefs_);
-      pages_[pageNumber++] = new FinishPage(prefs_);
-
-      microModel_ = new MicroscopeModel();
-      microModel_.loadAvailableDeviceList(core_);
-      microModel_.setFileName(defaultPath_);
-      microModel_.scanComPorts(core_);
-      Rectangle r = pagesLabel_.getBounds();
-
-      titleLabel_ = new JLabel();
-      titleLabel_.setText("Title");
-      titleLabel_.setBounds(9, 4, 578, 21);
-      getContentPane().add(titleLabel_);
-      for (int i=0; i<pages_.length; i++) {
-         pages_[i].setModel(microModel_, core_);
-         pages_[i].loadSettings();
-         pages_[i].setBounds(r);
-         pages_[i].setTitle("Step " + (i+1) + " of " + pages_.length + ": " + pages_[i].getTitle());
-         pages_[i].setParentDialog(this);
-      }
-      setPage(0);
-
-   }
-
-	public String BoundaryString() {
-		String  possibleCharacters="+-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-		int length = 60;
-
-		StringBuffer workingBuffer=new StringBuffer(length);
-		workingBuffer.append("--");
-		for (int i=0;i<length-2;i++) {
-			int ioff = (int)(0.5 + Math.random() * possibleCharacters.length());
-        workingBuffer.append(possibleCharacters.charAt(ioff));
-      }
-
-      return workingBuffer.toString();
-}
+        //getContentPane().add(sendCheck_);
 
 
-    public void upload(URL url, List<File> files) throws Exception
-	 {
-		 final String Boundary = new String(BoundaryString());
+        final JScrollPane scrollPane = new JScrollPane();
+        scrollPane.setBounds(9, 320, 578, 136);
+        getContentPane().add(scrollPane);
+
+        helpTextPane_ = new JEditorPane();
+        scrollPane.setViewportView(helpTextPane_);
+        helpTextPane_.setEditable(false);
+        //helpTextPane_.setBorder(new LineBorder(Color.black, 1, false));
+
+        helpTextPane_.setContentType("text/html; charset=ISO-8859-1");
+
+        nextButton_ = new JButton();
+        nextButton_.addActionListener(new ActionListener() {
+
+            public void actionPerformed(ActionEvent arg0) {
+                if (curPage_ == pages_.length - 1) {
+                    onCloseWindow();
+                } else {
+                    setPage(curPage_ + 1);
+                }
+            }
+        });
+        nextButton_.setText("Next >");
+        nextButton_.setBounds(494, 462, 93, 23);
+        getContentPane().add(nextButton_);
+        getRootPane().setDefaultButton(nextButton_);
+
+        backButton_ = new JButton();
+        backButton_.addActionListener(new ActionListener() {
+
+            public void actionPerformed(ActionEvent arg0) {
+                setPage(curPage_ - 1);
+            }
+        });
+        backButton_.setText("< Back");
+        backButton_.setBounds(395, 462, 93, 23);
+        getContentPane().add(backButton_);
+
+        pagesLabel_ = new JLabel();
+        pagesLabel_.setBorder(new LineBorder(Color.black, 1, false));
+        pagesLabel_.setBounds(9, 28, 578, 286);
+        getContentPane().add(pagesLabel_);
+
+        // add page panels
+        pages_ = new PagePanel[9];
+
+        int pageNumber = 0;
+        pages_[pageNumber++] = new IntroPage(prefs_);
+        pages_[pageNumber++] = new DevicesPage(prefs_);
+        pages_[pageNumber++] = new EditPropertiesPage(prefs_);
+        pages_[pageNumber++] = new ComPortsPage(prefs_);
+        pages_[pageNumber++] = new RolesPage(prefs_);
+        pages_[pageNumber++] = new DelayPage(prefs_);
+        pages_[pageNumber++] = new SynchroPage(prefs_);
+        pages_[pageNumber++] = new LabelsPage(prefs_);
+        pages_[pageNumber++] = new FinishPage(prefs_);
+
+        microModel_ = new MicroscopeModel();
+        microModel_.loadAvailableDeviceList(core_);
+        microModel_.setFileName(defaultPath_);
+        microModel_.scanComPorts(core_);
+        Rectangle r = pagesLabel_.getBounds();
+
+        titleLabel_ = new JLabel();
+        titleLabel_.setText("Title");
+        titleLabel_.setBounds(9, 4, 578, 21);
+        getContentPane().add(titleLabel_);
+        for (int i = 0; i < pages_.length; i++) {
+            pages_[i].setModel(microModel_, core_);
+            pages_[i].loadSettings();
+            pages_[i].setBounds(r);
+            pages_[i].setTitle("Step " + (i + 1) + " of " + pages_.length + ": " + pages_[i].getTitle());
+            pages_[i].setParentDialog(this);
+        }
+        setPage(0);
+
+    }
+
+    public String BoundaryString() {
+        String possibleCharacters = "+-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+        int length = 36;
+        StringBuffer workingBuffer = new StringBuffer(length);
+        String preAmble = "--Micro-ManagerReporter";
+        workingBuffer.append(preAmble);
+        length -= preAmble.length();
+        for (int i = 0; i < length; i++) {
+            int ioff = (int) (0.5 + Math.random() * possibleCharacters.length());
+            workingBuffer.append(possibleCharacters.charAt(ioff));
+        }
+
+        return workingBuffer.toString();
+    }
+
+    public void upload(URL url, List<File> files) throws Exception {
+        final String Boundary = new String(BoundaryString());
         HttpURLConnection anURLConnection = (HttpURLConnection) url.openConnection();
         anURLConnection.setDoOutput(true);
         anURLConnection.setDoInput(true);
         anURLConnection.setUseCaches(false);
         anURLConnection.setChunkedStreamingMode(1024);
-		  anURLConnection.setRequestMethod("POST");
-        anURLConnection.setRequestProperty("Connection", "Keep-Alive");
-        anURLConnection.setRequestProperty("Content-Type", "multipart/form-data; boundary="
-                + Boundary);
+        anURLConnection.setRequestMethod("POST");
+        anURLConnection.setRequestProperty("Connection", "keep-alive");
+        anURLConnection.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + Boundary);
 
         DataOutputStream httpOut = new DataOutputStream(anURLConnection.getOutputStream());
 
-        for (int i = 0; i < 1 /*files.size()*/; i++)
-        {
+        for (int i = 0; i < 1 /*files.size()*/; i++) {
             File f = files.get(i);
-            String str = Boundary + "\r\n"
-                       + "Content-Disposition: form-data;name=\"file" + i + "\";file=\"" + f.getName() + "\"\r\n"
-                       //+ "Content-Type: application/octet-stream\r\n"
-                       + "\r\n";
+            String str = "--" + Boundary + "\r\n"
+                    + "Content-Disposition: form-data; name=\"file\"; filename=\"" + f.getName() + "\"\r\n"
+                    //+ "Content-Type: application/octet-stream\r\n"
+                    + "Content-Type: text/plain\r\n\r\n";
 
             httpOut.write(str.getBytes());
 
             FileInputStream uploadFileReader = new FileInputStream(f);
             int numBytesToRead = 1024;
             int availableBytesToRead;
-            while ((availableBytesToRead = uploadFileReader.available()) > 0)
-            {
+            while ((availableBytesToRead = uploadFileReader.available()) > 0) {
                 byte[] bufferBytesRead;
                 bufferBytesRead = availableBytesToRead >= numBytesToRead ? new byte[numBytesToRead]
                         : new byte[availableBytesToRead];
@@ -252,13 +253,12 @@ public class ConfiguratorDlg extends JDialog {
                 httpOut.write(bufferBytesRead);
                 httpOut.flush();
             }
-            httpOut.write((Boundary + "--\r\n").getBytes());
 
         }
 
-		  httpOut.write("--\r\n".getBytes());
-        httpOut.write((Boundary + "--\r\n").getBytes());
 
+        httpOut.write(("\n\r\n--" + Boundary + "\r\n").getBytes());
+        httpOut.write(("Content-Disposition: form-data; name=\"submit\"\r\n\r\nSubmit\r\n--" + Boundary + "--\r\n").getBytes());
         httpOut.flush();
         httpOut.close();
 
@@ -266,263 +266,181 @@ public class ConfiguratorDlg extends JDialog {
         InputStream is = anURLConnection.getInputStream();
         StringBuilder response = new StringBuilder();
         byte[] respBuffer = new byte[4096];
-        while (is.read(respBuffer) >= 0)
-        {
+        while (is.read(respBuffer) >= 0) {
             response.append(new String(respBuffer).trim());
         }
         is.close();
         System.out.println(response.toString());
     }
 
+    private void setPage(int i) {
+        // try to exit the current page
 
-   private void setPage(int i) {
-      // try to exit the current page
-      
-      if (i > 0)
-         if (!pages_[curPage_].exitPage(curPage_ < i ? true : false))
-            return;
-      
-      int newPage = 0;
-      if (i < 0)
-         newPage = 0;
-      else if (i >= pages_.length)
-         newPage = pages_.length - 1;
-      else
-         newPage = i;
-      
-      // try to enter the new page
-      if (!pages_[newPage].enterPage(curPage_ > newPage ? true : false))
-         return;
-    
-      // everything OK so we can proceed with swapping pages
-      getContentPane().remove(pages_[curPage_]);
-      curPage_ = newPage;
-      
-      getContentPane().add(pages_[curPage_]);
-      // Java 2.0 specific, uncomment once we go for Java 2
-      //frame.getContentPane().setComponentZOrder(pages_[curPage_], 0);
-      getContentPane().repaint();
-      pages_[curPage_].refresh();
-      
-      if (curPage_ == 0)
-         backButton_.setEnabled(false);
-      else
-         backButton_.setEnabled(true);
-      
-      if (curPage_ == pages_.length-1)
-         nextButton_.setText("Exit");
-      else
-         nextButton_.setText("Next >");
-      
-      titleLabel_.setText(pages_[curPage_].getTitle());
-      
-      // By default, load plain text help
-      helpTextPane_.setContentType("text/plain");
-      helpTextPane_.setText(pages_[curPage_].getHelpText());
-      
-      // Try to load html help text
-      try {
-         File curDir = new File(".");
-         String helpFileName = pages_[curPage_].getHelpFileName();
-         if (helpFileName == null)
-            return;
-         URL htmlURL=ConfiguratorDlg.class.getResource(helpFileName);
-         String helpText=readStream(ConfiguratorDlg.class.getResourceAsStream(helpFileName));
-         helpTextPane_.setContentType("text/html; charset=ISO-8859-1");
-         helpTextPane_.setText(helpText);
-         
-      } catch (MalformedURLException e1) {
-          ReportingUtils.showError(e1);
-      } catch (IOException e) {
-          ReportingUtils.showError(e);
-      }
-   }
-   
-   private void onCloseWindow() {
-      for (int i=0; i<pages_.length; i++) {
-         pages_[i].saveSettings();
-      }
-      
-      if (microModel_.isModified()) {
-         int result = JOptionPane.showConfirmDialog(this,
-               "Save changes to the configuration file?\nIf you press YES you will get a chance to change the file name.",
-               APP_NAME, JOptionPane.YES_NO_CANCEL_OPTION,
-               JOptionPane.INFORMATION_MESSAGE);
-         
-         switch (result) {
-            case JOptionPane.YES_OPTION:
-               saveConfiguration();
-            break;
-            case JOptionPane.NO_OPTION:
-            break;
-            case JOptionPane.CANCEL_OPTION:
-               return;
-         }
-      }
-      if( sendConfig_){
-          try{
-				 List<File> list = new ArrayList<File>();
-				 list.add(new File("C:\\x.cfg"));
-				 list.add(new File("C:\\x2.cfg"));
-				 URL url = new URL("http://udp022507uds.ucsf.edu/~karlhoover/upload_file.php");
-				 upload(url, list);
-
-
-				 /*
-
-
-              URL url = new URL("http://udp022507uds.ucsf.edu/~karlhoover/random_file_name.txt");
-				  HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-
-conn.disconnect();
-conn.setDoOutput(true);
-conn.setRequestMethod("PUT");
-conn.setRequestProperty( "Content-type", "text/xml" );
-conn.setRequestProperty( "Content-length", Integer.toString(7));
-OutputStream ops = conn.getOutputStream();
-PrintWriter pw = new PrintWriter(ops);
-pw.println("Hallo 123");
-pw.println("Hallo 456");
-pw.println("Hallo 813");
-pw.flush();
-pw.close();
-
-conn.setDoOutput(false);
-conn.disconnect();
-				  * */
-
-
-				  /*
-            URLConnection   urlConn;
-            DataOutputStream    postOut;
-            FileReader fr;
-              InputStream is;
-
-				  urlConn.set
-
-				  // send the current user and institution per registration page.
-             // String regText = "http://valelab.ucsf.edu/micro-manager-configsaver.php";
-				  String regText = "http://valelab.ucsf.edu/~karlh/testreg.php?Name=Donald%20Duck&Institute=UCSF&email=donaldduck@ucsf.edu";
-              url = new URL(regText);
-              urlConn = url.openConnection();
-              urlConn.setDoInput(true);
-              urlConn.setDoOutput(true);
-              urlConn.setUseCaches(false);
-              is = url.openStream();
-				  String response = "response 1 from server: ";
-              DataInputStream input = new DataInputStream(urlConn.getInputStream());
-				  BufferedReader getResponse = new BufferedReader( new InputStreamReader(input));
-					String str;
-					while ((str = getResponse.readLine()) != null) {
-						response = response + str + "\n";
-					}
-					JOptionPane.showMessageDialog(null, response);
-					getResponse.close();
-
-
-					// next php script
-
-
-             // fr = new FileReader(f);
-              //char[] contents =  new char[60000];
-              //int length = fr.read(contents, 0, 60000);
-              //fr.close();
-              //String toSend = URLEncoder.encode(new String(contents),  "UTF-8");
-				  regText = "http://valelab.ucsf.edu/~karlh/testpost.php";
-              url = new URL(regText);
-              urlConn = url.openConnection();
-              urlConn.setDoInput(true);
-              urlConn.setDoOutput(true);
-              urlConn.setUseCaches(false);
-              urlConn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-              is = url.openStream();
-				  String toSend = URLEncoder.encode("action=rreeggiisstteerr",  "UTF-8");
-              postOut = new DataOutputStream (urlConn.getOutputStream ());
-              postOut.writeBytes(toSend);
-				  response = "response 2 from server: ";
-              input = new DataInputStream(urlConn.getInputStream());
-				  getResponse = new BufferedReader( new InputStreamReader(input));
-					while ((str = getResponse.readLine()) != null) {
-						response = response + str + "\n";
-					}
-					JOptionPane.showMessageDialog(null, response);
-					getResponse.close();
-					*
-					* */
-
-//              } catch (java.net.UnknownHostException e) {
-//                 ReportingUtils.logError(e, "config posting");
-//              } catch (MalformedURLException e) {
-//                 ReportingUtils.logError(e);
-//              } catch (IOException e) {
-//                 ReportingUtils.logError(e);
-              } catch (SecurityException e){
-                 ReportingUtils.logError(e,"");
-              } catch (Exception e) {
-                 ReportingUtils.logError(e);
-              }
-      }
-
-      dispose();      
-   }
-
-   private void saveConfiguration() {
-      JFileChooser fc = new JFileChooser();
-      boolean saveFile = true;
-      File f;
-      
-      do {         
-         fc.setSelectedFile(new File(microModel_.getFileName()));
-         int retVal = fc.showSaveDialog(this);
-         if (retVal == JFileChooser.APPROVE_OPTION) {
-            f = fc.getSelectedFile();
-            
-            // check if file already exists
-            if( f.exists() ) { 
-               int sel = JOptionPane.showConfirmDialog(this,
-                     "Overwrite " + f.getName(),
-                     "File Save",
-                     JOptionPane.YES_NO_OPTION);
-               
-               if(sel == JOptionPane.YES_OPTION)
-                  saveFile = true;
-               else
-                  saveFile = false;
+        if (i > 0) {
+            if (!pages_[curPage_].exitPage(curPage_ < i ? true : false)) {
+                return;
             }
-         } else {
-            return; 
-         }
-      } while (saveFile == false);
-      
-      try {
-         microModel_.saveToFile(f.getAbsolutePath());
-      } catch (MMConfigFileException e) {
-         JOptionPane.showMessageDialog(this, e.getMessage());           
-      }
-   }
+        }
 
-   public String getFileName() {
-      return microModel_.getFileName();
-   }   
-   
-   
-   
-   /**
-    * Read string out of stream
-    */
-   private static String readStream(InputStream is) throws IOException {
-           StringBuffer bf=new StringBuffer();
-           BufferedReader br=new BufferedReader(new InputStreamReader(is));
-           String line;
-           //Note: not exactly the original
-           while((line=br.readLine())!=null) {
-                   bf.append(line);
-                   bf.append("\n");
-                   }
-           return bf.toString();
-           }
+        int newPage = 0;
+        if (i < 0) {
+            newPage = 0;
+        } else if (i >= pages_.length) {
+            newPage = pages_.length - 1;
+        } else {
+            newPage = i;
+        }
 
-   
+        // try to enter the new page
+        if (!pages_[newPage].enterPage(curPage_ > newPage ? true : false)) {
+            return;
+        }
+
+        // everything OK so we can proceed with swapping pages
+        getContentPane().remove(pages_[curPage_]);
+        curPage_ = newPage;
+
+        getContentPane().add(pages_[curPage_]);
+        // Java 2.0 specific, uncomment once we go for Java 2
+        //frame.getContentPane().setComponentZOrder(pages_[curPage_], 0);
+        getContentPane().repaint();
+        pages_[curPage_].refresh();
+
+        if (curPage_ == 0) {
+            backButton_.setEnabled(false);
+        } else {
+            backButton_.setEnabled(true);
+        }
+
+        if (curPage_ == pages_.length - 1) {
+            nextButton_.setText("Exit");
+        } else {
+            nextButton_.setText("Next >");
+        }
+
+        titleLabel_.setText(pages_[curPage_].getTitle());
+
+        // By default, load plain text help
+        helpTextPane_.setContentType("text/plain");
+        helpTextPane_.setText(pages_[curPage_].getHelpText());
+
+        // Try to load html help text
+        try {
+            File curDir = new File(".");
+            String helpFileName = pages_[curPage_].getHelpFileName();
+            if (helpFileName == null) {
+                return;
+            }
+            URL htmlURL = ConfiguratorDlg.class.getResource(helpFileName);
+            String helpText = readStream(ConfiguratorDlg.class.getResourceAsStream(helpFileName));
+            helpTextPane_.setContentType("text/html; charset=ISO-8859-1");
+            helpTextPane_.setText(helpText);
+
+        } catch (MalformedURLException e1) {
+            ReportingUtils.showError(e1);
+        } catch (IOException e) {
+            ReportingUtils.showError(e);
+        }
+    }
+
+    private void onCloseWindow() {
+        for (int i = 0; i < pages_.length; i++) {
+            pages_[i].saveSettings();
+        }
+
+        if (microModel_.isModified()) {
+            int result = JOptionPane.showConfirmDialog(this,
+                    "Save changes to the configuration file?\nIf you press YES you will get a chance to change the file name.",
+                    APP_NAME, JOptionPane.YES_NO_CANCEL_OPTION,
+                    JOptionPane.INFORMATION_MESSAGE);
+
+            switch (result) {
+                case JOptionPane.YES_OPTION:
+                    saveConfiguration();
+                    break;
+                case JOptionPane.NO_OPTION:
+                    break;
+                case JOptionPane.CANCEL_OPTION:
+                    return;
+            }
+        }
+        if (sendConfig_) {
+            try {
+                List<File> list = new ArrayList<File>();
+                list.add(new File("/x.cfg"));
+                list.add(new File("/x2.cfg"));
+                URL url = new URL("http://localhost/~karlhoover/upload_file.php");
+                upload(url, list);
 
 
+            } catch (java.net.UnknownHostException e) {
+                ReportingUtils.logError(e, "config posting");
+            } catch (MalformedURLException e) {
+                ReportingUtils.logError(e);
+            } catch (IOException e) {
+                ReportingUtils.logError(e);
+            } catch (SecurityException e) {
+                ReportingUtils.logError(e, "");
+            } catch (Exception e) {
+                ReportingUtils.logError(e);
+            }
+        }
+
+        dispose();
+    }
+
+    private void saveConfiguration() {
+        JFileChooser fc = new JFileChooser();
+        boolean saveFile = true;
+        File f;
+
+        do {
+            fc.setSelectedFile(new File(microModel_.getFileName()));
+            int retVal = fc.showSaveDialog(this);
+            if (retVal == JFileChooser.APPROVE_OPTION) {
+                f = fc.getSelectedFile();
+
+                // check if file already exists
+                if (f.exists()) {
+                    int sel = JOptionPane.showConfirmDialog(this,
+                            "Overwrite " + f.getName(),
+                            "File Save",
+                            JOptionPane.YES_NO_OPTION);
+
+                    if (sel == JOptionPane.YES_OPTION) {
+                        saveFile = true;
+                    } else {
+                        saveFile = false;
+                    }
+                }
+            } else {
+                return;
+            }
+        } while (saveFile == false);
+
+        try {
+            microModel_.saveToFile(f.getAbsolutePath());
+        } catch (MMConfigFileException e) {
+            JOptionPane.showMessageDialog(this, e.getMessage());
+        }
+    }
+
+    public String getFileName() {
+        return microModel_.getFileName();
+    }
+
+    /**
+     * Read string out of stream
+     */
+    private static String readStream(InputStream is) throws IOException {
+        StringBuffer bf = new StringBuffer();
+        BufferedReader br = new BufferedReader(new InputStreamReader(is));
+        String line;
+        //Note: not exactly the original
+        while ((line = br.readLine()) != null) {
+            bf.append(line);
+            bf.append("\n");
+        }
+        return bf.toString();
+    }
 }
