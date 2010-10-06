@@ -69,6 +69,7 @@ public class ImageTask implements EngineTask {
                chanGroup = core_.getChannelGroup();
             }
             core_.setConfig(chanGroup, imageRequest_.Channel.config_);
+            core_.waitForConfig(chanGroup,imageRequest_.Channel.config_);
             log("channel set");
          } catch (Exception ex) {
             ReportingUtils.logError(ex, "Channel setting failed.");
@@ -114,17 +115,20 @@ public class ImageTask implements EngineTask {
                      setZPosition_ = true;
                   } else {
                      core_.setPosition(sp.stageName, sp.x);
+                     core_.waitForDevice(sp.stageName);
                      MDUtils.put(md,"Acquisition-"+sp.stageName+"RequestedZPosition", sp.x);
                   }
 
                } else if (sp.numAxes == 2) {
                   core_.setXYPosition(sp.stageName, sp.x, sp.y);
+                  core_.waitForDevice(sp.stageName);
                   MDUtils.put(md,"Acquisition-"+sp.stageName+"RequestedXPosition", sp.x);
                   MDUtils.put(md,"Acquisition-"+sp.stageName+"RequestedYPosition", sp.y);
                }
                log("position set\n");
             }
          }
+         core_.waitForDevice(core_.getFocusDevice());
          updateSlice(zPosition);
       } catch (Exception ex) {
          ReportingUtils.logError(ex, "Set position failed.");
@@ -166,6 +170,7 @@ public class ImageTask implements EngineTask {
                if (sp != null)
                   sp.x = core_.getPosition(core_.getFocusDevice());
             }
+            core_.waitForDevice(core_.getFocusDevice());
          } catch (Exception ex) {
             ReportingUtils.logError(ex);
             MDUtils.put(md,"Acquisition-AutofocusResult","Failure");
