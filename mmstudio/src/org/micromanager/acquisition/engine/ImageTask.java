@@ -6,7 +6,6 @@ package org.micromanager.acquisition.engine;
 
 import org.micromanager.api.EngineTask;
 import java.util.HashMap;
-import java.util.Map;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.TaggedImage;
@@ -28,6 +27,7 @@ public class ImageTask implements EngineTask {
    private boolean pauseRequested_;
    boolean setZPosition_ = false;
    private final HashMap<String, String> md;
+   private double zPosition_;
 
    ImageTask(Engine eng, ImageRequest imageRequest) {
       eng_ = eng;
@@ -43,16 +43,19 @@ public class ImageTask implements EngineTask {
 
    public void run() {
       if (!isStopRequested()) {
-         updatePositionAndSlice();
+         updateChannel();
       }
       if (!isStopRequested()) {
-         updateChannel();
+         updatePosition();
       }
       if (!isStopRequested()) {
          sleep();
       }
       if (!isStopRequested()) {
          autofocus();
+      }
+      if (!isStopRequested()) {
+         updateSlice();
       }
       if (!isStopRequested()) {
          acquireImage();
@@ -77,33 +80,37 @@ public class ImageTask implements EngineTask {
       }
    }
 
-   void updateSlice(double zPosition) throws Exception {
-      if (imageRequest_.UseSlice) {
-         setZPosition_ = true;
-         if (imageRequest_.relativeZSlices) {
-            zPosition += imageRequest_.SlicePosition;
-            System.out.println(zPosition);
+   void updateSlice() {
+      try {
+         if (imageRequest_.UseSlice) {
+            setZPosition_ = true;
+            if (imageRequest_.relativeZSlices) {
+               zPosition_ += imageRequest_.SlicePosition;
+               System.out.println(zPosition_);
+            } else {
+               zPosition_ = imageRequest_.SlicePosition;
+            }
          } else {
-            zPosition = imageRequest_.SlicePosition;
+            zPosition_ = core_.getPosition(core_.getFocusDevice());
          }
-      } else {
-         zPosition = core_.getPosition(core_.getFocusDevice());
-      }
 
-      if (imageRequest_.UseChannel) {
-         setZPosition_ = true;
-         zPosition += imageRequest_.Channel.zOffset_;
-      }
+         if (imageRequest_.UseChannel) {
+            setZPosition_ = true;
+            zPosition_ += imageRequest_.Channel.zOffset_;
+         }
 
-      if (setZPosition_) {
-         imageRequest_.zPosition = zPosition;
-         core_.setPosition(core_.getFocusDevice(), zPosition);
+         if (setZPosition_) {
+            imageRequest_.zPosition = zPosition_;
+            core_.setPosition(core_.getFocusDevice(), zPosition_);
+         }
+      } catch (Exception e) {
+         ReportingUtils.logError(e);
       }
    }
 
-   void updatePositionAndSlice() {
+   void updatePosition() {
       try {
-         double zPosition = imageRequest_.zReference;
+         zPosition_ = imageRequest_.zReference;
          if (imageRequest_.UsePosition) {
             MultiStagePosition msp = imageRequest_.Position;
             for (int i = 0; i < msp.size(); ++i) {
@@ -111,7 +118,7 @@ public class ImageTask implements EngineTask {
                StagePosition sp = msp.get(i);
                if (sp.numAxes == 1) {
                   if (sp.stageName.equals(core_.getFocusDevice())) {
-                     zPosition = sp.x; // Surprisingly it should be sp.x!
+                     zPosition_ = sp.x; // Surprisingly it should be sp.x!
                      setZPosition_ = true;
                   } else {
                      core_.setPosition(sp.stageName, sp.x);
@@ -129,7 +136,6 @@ public class ImageTask implements EngineTask {
             }
          }
          core_.waitForDevice(core_.getFocusDevice());
-         updateSlice(zPosition);
       } catch (Exception ex) {
          ReportingUtils.logError(ex, "Set position failed.");
       }
@@ -163,6 +169,9 @@ public class ImageTask implements EngineTask {
       StagePosition sp;
       if (imageRequest_.AutoFocus) {
          try {
+            String focusDevice = core_.getFocusDevice();
+            core_.setPosition(focusDevice, zPosition_);
+            core_.waitForDevice(focusDevice);
             eng_.getAutofocusManager().getDevice().fullFocus();
             MDUtils.put(md, afResult, "Success");
             if (imageRequest_.UsePosition) {
@@ -170,7 +179,8 @@ public class ImageTask implements EngineTask {
                if (sp != null)
                   sp.x = core_.getPosition(core_.getFocusDevice());
             }
-            core_.waitForDevice(core_.getFocusDevice());
+            zPosition_ = core_.getPosition(focusDevice);
+            core_.waitForDevice(focusDevice);
          } catch (Exception ex) {
             ReportingUtils.logError(ex);
             MDUtils.put(md,"Acquisition-AutofocusResult","Failure");
