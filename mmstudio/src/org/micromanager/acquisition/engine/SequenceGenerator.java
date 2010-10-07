@@ -26,7 +26,8 @@ public class SequenceGenerator extends Thread {
       stopRequest_.FrameIndex = -1;
    }
 
-   public LinkedBlockingQueue<ImageRequest> getOutputChannel() {
+   public LinkedBlockingQueue<ImageRequest> begin() {
+      start();
       return engineRequestSequence_;
    }
 

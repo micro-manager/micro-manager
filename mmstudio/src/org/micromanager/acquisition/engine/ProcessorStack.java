@@ -37,7 +37,8 @@ public class ProcessorStack<E> {
       output_ = right;
    }
 
-   public BlockingQueue<E> getOutputChannel() {
+   public BlockingQueue<E> begin() {
+      start();
       return output_;
    }
 

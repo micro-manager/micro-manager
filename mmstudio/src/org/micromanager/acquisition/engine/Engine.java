@@ -49,7 +49,8 @@ public class Engine {
       return startTimeNs_;
    }
 
-   public BlockingQueue<TaggedImage> getOutputChannel() {
+   public BlockingQueue<TaggedImage> begin() {
+      start();
       return imageReceivingQueue_;
    }
 
