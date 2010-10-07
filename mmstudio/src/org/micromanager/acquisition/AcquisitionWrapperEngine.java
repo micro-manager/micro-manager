@@ -89,24 +89,22 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    public void acquire() throws MMException, MMAcqDataException {
       try {
          core_.setCircularBufferMemoryFootprint(32);
-
          SequenceSettings acquisitionSettings = generateSequenceSettings();
 
-         SequenceGenerator generator = new SequenceGenerator(acquisitionSettings, core_.getExposure());
-         BlockingQueue<ImageRequest> requestQueue = generator.getOutputChannel();
-         generator.start();
+         // Setup the pipeline:
          
-         eng_ = new Engine(core_, gui_.getAutofocusManager(), requestQueue, acquisitionSettings);
-         BlockingQueue<TaggedImage> engineToProcessorsChannel = eng_.getOutputChannel();
-         eng_.start();
+         SequenceGenerator generator = new SequenceGenerator(acquisitionSettings, core_.getExposure());
+         BlockingQueue<ImageRequest> generatorOutput = generator.begin();
+         
+         eng_ = new Engine(core_, gui_.getAutofocusManager(), generatorOutput, acquisitionSettings);
+         BlockingQueue<TaggedImage> engineOutput = eng_.begin();
 
-         ProcessorStack<TaggedImage> processorStack =
-                 new ProcessorStack<TaggedImage>(engineToProcessorsChannel,
+         ProcessorStack<TaggedImage> imageProcessorStack =
+                 new ProcessorStack<TaggedImage>(engineOutput,
                  taggedImageProcessors_);
-         BlockingQueue<TaggedImage> processorsToDisplayChannel = processorStack.getOutputChannel();
-         processorStack.start();
+         BlockingQueue<TaggedImage> imageProcessorStackOutput = imageProcessorStack.begin();
 
-         display_ = new AcquisitionDisplayThread(gui_, core_, processorsToDisplayChannel,
+         display_ = new AcquisitionDisplayThread(gui_, core_, imageProcessorStackOutput,
                  acquisitionSettings, acquisitionSettings.channels, saveFiles_, this);
          display_.start();
 
