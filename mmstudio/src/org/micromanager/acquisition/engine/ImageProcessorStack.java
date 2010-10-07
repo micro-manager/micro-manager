@@ -13,11 +13,11 @@ import org.micromanager.acquisition.TaggedImageQueue;
  *
  * @author arthur
  */
-public class ProcessorStack {
+public class ImageProcessorStack {
    private final List<TaggedImageProcessor> processors_;
    private final TaggedImageQueue input_;
    private final TaggedImageQueue output_;
-   public ProcessorStack(TaggedImageQueue input,
+   public ImageProcessorStack(TaggedImageQueue input,
            List<TaggedImageProcessor> processors) {
       processors_ = processors;
       input_ = input;
