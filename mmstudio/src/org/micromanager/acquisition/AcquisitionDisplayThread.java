@@ -66,35 +66,32 @@ public class AcquisitionDisplayThread extends Thread {
          } else {
             acqPath = getUniqueUntitledName();
          }
-         String posName;
-         
-        // for (int posIndex = 0; posIndex < nPositions; ++posIndex) {
-            posName = getPosName(0);
-            String fullPath = createPositionPath(acqPath, "");
-            String acqName = fullPath + "/" + "";
-            acqNames_.add(acqName);
-            gui_.openAcquisition(acqName, fullPath, nTimes, nChannels, nSlices, nPositions, true, diskCached_);
-            gui_.setAcquisitionEngine(acqName, eng);
 
-            //Map<String, String> summaryMetadata = makeMetadataFromAcqSettings(acqSettings);
-            TaggedImageStorage imageFileManager;
-            if (diskCached_) {
-               imageFileManager = new TaggedImageStorageDiskDefault(acqName, true, null);
-            } else {
-               imageFileManager = new TaggedImageStorageRam(null);
+         String fullPath = createPositionPath(acqPath, "");
+         String acqName = fullPath + "/" + "";
+         acqNames_.add(acqName);
+         gui_.openAcquisition(acqName, fullPath, nTimes, nChannels, nSlices, nPositions, true, diskCached_);
+         gui_.setAcquisitionEngine(acqName, eng);
+
+         //Map<String, String> summaryMetadata = makeMetadataFromAcqSettings(acqSettings);
+         TaggedImageStorage imageFileManager;
+         if (diskCached_) {
+            imageFileManager = new TaggedImageStorageDiskDefault(acqName, true, null);
+         } else {
+            imageFileManager = new TaggedImageStorageRam(null);
+         }
+         imageCache_ = new MMImageCache(imageFileManager);
+         imageCache_.setComment(acqSettings.comment);
+         gui_.setAcquisitionCache(acqName, imageCache_);
+         //gui_.setAcquisitionSummary(acqName, summaryMetadata);
+         gui_.initializeAcquisition(acqName, (int) core_.getImageWidth(), (int) core_.getImageHeight(), (int) core_.getBytesPerPixel());
+         if (usingChannels) {
+            for (int i = 0; i < channels.size(); ++i) {
+               gui_.setChannelColor(acqName, i, channels.get(i).color_);
+               gui_.setChannelName(acqName, i, channels.get(i).config_);
             }
-            imageCache_ = new MMImageCache(imageFileManager);
-            imageCache_.setComment(acqSettings.comment);
-            gui_.setAcquisitionCache(acqName, imageCache_);
-            //gui_.setAcquisitionSummary(acqName, summaryMetadata);
-            gui_.initializeAcquisition(acqName, (int) core_.getImageWidth(), (int) core_.getImageHeight(), (int) core_.getBytesPerPixel());
-            if (usingChannels) {
-               for (int i = 0; i < channels.size(); ++i) {
-                  gui_.setChannelColor(acqName, i, channels.get(i).color_);
-                  gui_.setChannelName(acqName, i, channels.get(i).config_);
-               }
-            }
-         //}
+         }
+         
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
