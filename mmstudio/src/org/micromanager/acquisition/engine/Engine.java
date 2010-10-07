@@ -29,31 +29,28 @@ public class Engine {
    public boolean autoShutterSelected_;
    public BlockingQueue<TaggedImage> imageReceivingQueue_;
    private long startTimeNs_;
-   private Engine this_;
-   private SequenceSettings settings_;
+   private SequenceSettings acquisitionSettings_;
    private boolean isPaused_ = false;
    private EngineTask currentTask_;
-   private LinkedBlockingQueue<ImageRequest> requestQueue_;
+   private BlockingQueue<ImageRequest> requestQueue_;
    private final AutofocusManager afMgr_;
 
-   public Engine(CMMCore core, AutofocusManager afMgr, BlockingQueue<TaggedImage> imageReceivingQueue) {
+   public Engine(CMMCore core, AutofocusManager afMgr,
+           BlockingQueue<ImageRequest> requestQueue,
+           SequenceSettings acquisitionSettings) {
       core_ = core;
-      imageReceivingQueue_ = imageReceivingQueue;
+      imageReceivingQueue_ = new LinkedBlockingQueue<TaggedImage>();
       afMgr_ = afMgr;
-   }
-
-   public void setupStandardSequence(SequenceSettings settings) {
-      try {
-         SequenceGenerator generator = new SequenceGenerator();
-         requestQueue_ = generator.generateSequence(this, settings, core_.getExposure());
-         settings_ = settings;
-      } catch (Exception ex) {
-         ReportingUtils.showError(ex);
-      }
+      requestQueue_ = requestQueue;
+      acquisitionSettings_ = acquisitionSettings;
    }
 
    public synchronized long getStartTimeNs() {
       return startTimeNs_;
+   }
+
+   public BlockingQueue<TaggedImage> getOutputChannel() {
+      return imageReceivingQueue_;
    }
 
    private class EngineThread extends Thread {
@@ -71,7 +68,7 @@ public class Engine {
             ReportingUtils.logError(ex);
          }
          double originalZ = Double.MIN_VALUE;
-         if (settings_.slices.size() > 0) {
+         if (acquisitionSettings_.slices.size() > 0) {
             try {
                originalZ = core_.getPosition(core_.getFocusDevice());
             } catch (Exception ex) {
@@ -113,7 +110,7 @@ public class Engine {
          }
          core_.setAutoShutter(autoShutterSelected_);
 
-         if (settings_.slices.size() > 0 && originalZ != Double.MIN_VALUE) {
+         if (acquisitionSettings_.slices.size() > 0 && originalZ != Double.MIN_VALUE) {
             try {
                core_.setPosition(core_.getFocusDevice(), originalZ);
             } catch (Exception ex) {
@@ -133,7 +130,6 @@ public class Engine {
 
    public void start() {
       setRunning(true);
-      this_ = this;
 
       Thread engineThread = new EngineThread();
       //We want high performance:

@@ -20,7 +20,9 @@ import mmcorej.StrVector;
 import mmcorej.TaggedImage;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.acquisition.engine.Engine;
+import org.micromanager.acquisition.engine.ImageRequest;
 import org.micromanager.acquisition.engine.ProcessorStack;
+import org.micromanager.acquisition.engine.SequenceGenerator;
 import org.micromanager.acquisition.engine.SequenceSettings;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.DataProcessor;
@@ -78,6 +80,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private Preferences prefs_;
    private Engine eng_ = null;
    private List<DataProcessor<TaggedImage>> taggedImageProcessors_;
+   private List<DataProcessor<ImageRequest>> imageRequestProcessors_;
    private boolean absoluteZ_;
 
    public AcquisitionWrapperEngine() {
@@ -87,28 +90,30 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    public void acquire() throws MMException, MMAcqDataException {
       try {
          core_.setCircularBufferMemoryFootprint(32);
+
+         SequenceSettings acquisitionSettings = generateSequenceSettings();
+
+         SequenceGenerator generator = new SequenceGenerator(acquisitionSettings, core_.getExposure());
+         BlockingQueue<ImageRequest> requestQueue = generator.getOutputChannel();
+         generator.start();
+         
+         eng_ = new Engine(core_, gui_.getAutofocusManager(), requestQueue, acquisitionSettings);
+         BlockingQueue<TaggedImage> engineToProcessorsChannel = eng_.getOutputChannel();
+         eng_.start();
+
+         ProcessorStack<TaggedImage> processorStack =
+                 new ProcessorStack<TaggedImage>(engineToProcessorsChannel,
+                 taggedImageProcessors_);
+         BlockingQueue<TaggedImage> processorsToDisplayChannel = processorStack.getOutputChannel();
+         processorStack.start();
+
+         display_ = new AcquisitionDisplayThread(gui_, core_, processorsToDisplayChannel,
+                 acquisitionSettings, acquisitionSettings.channels, saveFiles_, this, this.useSingleWindow_);
+         display_.start();
+
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
-
-      BlockingQueue<TaggedImage> engineToProcessorsChannel = new LinkedBlockingQueue<TaggedImage>();
-
-      SequenceSettings acquisitionSettings = generateSequenceSettings();
-      eng_ = new Engine(core_, gui_.getAutofocusManager(), engineToProcessorsChannel);
-      eng_.setupStandardSequence(acquisitionSettings);
-      eng_.start();
-      
-      ProcessorStack<TaggedImage> processorStack = new ProcessorStack<TaggedImage>(engineToProcessorsChannel,
-              taggedImageProcessors_);
-      BlockingQueue<TaggedImage> processorsToDisplayChannel = processorStack.getOutputChannel();
-      for (DataProcessor<TaggedImage> taggedImageProcessor:taggedImageProcessors_) {
-         taggedImageProcessor.start();
-      }
-      
-      display_ = new AcquisitionDisplayThread(gui_, core_, processorsToDisplayChannel,
-              acquisitionSettings, acquisitionSettings.channels, saveFiles_, this, this.useSingleWindow_);
-      
-      display_.start();
    }
 
 

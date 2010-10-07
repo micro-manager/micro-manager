@@ -15,21 +15,18 @@ public class SequenceGenerator extends Thread {
 
    private LinkedBlockingQueue<ImageRequest> engineRequestSequence_;
    private double exposure_;
-   private SequenceSettings sequence_;
-   private Engine eng_;
+   private SequenceSettings sequenceSettings_;
    private ImageRequest stopRequest_ = new ImageRequest();
 
-   public SequenceGenerator() {
+   public SequenceGenerator(SequenceSettings settings, double exposure) {
       engineRequestSequence_ = new LinkedBlockingQueue<ImageRequest>(100);
       stopRequest_.stop = true;
+      sequenceSettings_ = settings;
+      exposure_ = exposure;
+      stopRequest_.FrameIndex = -1;
    }
 
-   public LinkedBlockingQueue<ImageRequest> generateSequence(Engine eng, SequenceSettings settings, double exposure) {
-      this.sequence_ = settings;
-      this.exposure_ = exposure;
-      this.eng_ = eng;
-      stopRequest_.FrameIndex = -1;
-      start();
+   public LinkedBlockingQueue<ImageRequest> getOutputChannel() {
       return engineRequestSequence_;
    }
 
@@ -44,27 +41,27 @@ public class SequenceGenerator extends Thread {
       boolean skipImage;
       boolean skipLastImage = true;
 
-      int numPositions = Math.max(1, (int) sequence_.positions.size());
-      int numFrames = Math.max(1, (int) sequence_.numFrames);
-      int numChannels = Math.max(1, (int) sequence_.channels.size());
-      int numSlices = Math.max(1, (int) sequence_.slices.size());
+      int numPositions = Math.max(1, (int) sequenceSettings_.positions.size());
+      int numFrames = Math.max(1, (int) sequenceSettings_.numFrames);
+      int numChannels = Math.max(1, (int) sequenceSettings_.channels.size());
+      int numSlices = Math.max(1, (int) sequenceSettings_.slices.size());
       int numImages = numPositions * numFrames * numChannels * numSlices;
 
       for (int imageIndex = 0; imageIndex < (1 + numImages); ++imageIndex) {
          ImageRequest imageRequest = new ImageRequest();
-         imageRequest.UsePosition = (sequence_.positions.size() > 0);
-         imageRequest.UseFrame = (sequence_.numFrames > 0);
-         imageRequest.UseChannel = (sequence_.channels.size() > 0);
-         imageRequest.UseSlice = (sequence_.slices.size() > 0);
+         imageRequest.UsePosition = (sequenceSettings_.positions.size() > 0);
+         imageRequest.UseFrame = (sequenceSettings_.numFrames > 0);
+         imageRequest.UseChannel = (sequenceSettings_.channels.size() > 0);
+         imageRequest.UseSlice = (sequenceSettings_.slices.size() > 0);
 
-         imageRequest.relativeZSlices = sequence_.relativeZSlice;
-         imageRequest.zReference = sequence_.zReference;
+         imageRequest.relativeZSlices = sequenceSettings_.relativeZSlice;
+         imageRequest.zReference = sequenceSettings_.zReference;
          imageRequest.exposure = exposure_;
 
          skipImage = false;
          imageRequest.CloseShutter = true;
 
-         if (sequence_.slicesFirst) {
+         if (sequenceSettings_.slicesFirst) {
             imageRequest.SliceIndex = imageIndex % numSlices;
             imageRequest.ChannelIndex = (imageIndex / numSlices) % numChannels;
          } else { // channels first
@@ -72,7 +69,7 @@ public class SequenceGenerator extends Thread {
             imageRequest.SliceIndex = (imageIndex / numChannels) % numSlices;
          }
 
-         if (sequence_.timeFirst) {
+         if (sequenceSettings_.timeFirst) {
             imageRequest.FrameIndex = (imageIndex / (numChannels * numSlices)) % numFrames;
             imageRequest.PositionIndex = (imageIndex / (numChannels * numSlices * numFrames)) % numPositions;
          } else { // time first
@@ -82,60 +79,60 @@ public class SequenceGenerator extends Thread {
 
          if (imageRequest.UseFrame && imageRequest.FrameIndex > 0 && imageRequest.PositionIndex <= 0 // &&
                  && imageRequest.ChannelIndex <= 0 && imageRequest.SliceIndex <= 0) {
-            imageRequest.WaitTime = sequence_.intervalMs;
+            imageRequest.WaitTime = sequenceSettings_.intervalMs;
          } else {
             imageRequest.WaitTime = 0;
          }
 
          if (imageRequest.UsePosition) {
-            imageRequest.Position = sequence_.positions.get(imageRequest.PositionIndex);
+            imageRequest.Position = sequenceSettings_.positions.get(imageRequest.PositionIndex);
          }
 
          if (imageRequest.UseSlice) {
-            imageRequest.SlicePosition = sequence_.slices.get(imageRequest.SliceIndex);
+            imageRequest.SlicePosition = sequenceSettings_.slices.get(imageRequest.SliceIndex);
          }
 
          if (imageRequest.UseChannel) {
-            imageRequest.Channel = sequence_.channels.get(imageRequest.ChannelIndex);
+            imageRequest.Channel = sequenceSettings_.channels.get(imageRequest.ChannelIndex);
             if (0 != (imageRequest.FrameIndex % (imageRequest.Channel.skipFactorFrame_ + 1))) {
                skipImage = true;
             }
          }
 
          if (imageRequest.UseChannel && imageRequest.UseSlice) {
-            if (!imageRequest.Channel.doZStack_ && (imageRequest.SliceIndex != (sequence_.slices.size() - 1) / 2)) {
+            if (!imageRequest.Channel.doZStack_ && (imageRequest.SliceIndex != (sequenceSettings_.slices.size() - 1) / 2)) {
                skipImage = true;
             }
          }
 
-         imageRequest.AutoFocus = sequence_.useAutofocus &&
+         imageRequest.AutoFocus = sequenceSettings_.useAutofocus &&
                  ((lastImageRequest.FrameIndex != imageRequest.FrameIndex)
                   || (lastImageRequest.PositionIndex != imageRequest.PositionIndex));
 
          if (imageRequest.UseFrame) {
             imageRequest.AutoFocus = imageRequest.AutoFocus
-                    && (0 == (imageRequest.FrameIndex % (1 + sequence_.skipAutofocusCount)));
+                    && (0 == (imageRequest.FrameIndex % (1 + sequenceSettings_.skipAutofocusCount)));
          }
 
          if (imageIndex > 0) {
             if (imageRequest.FrameIndex == lastImageRequest.FrameIndex
                     && imageRequest.PositionIndex == lastImageRequest.PositionIndex) {
-               if (sequence_.keepShutterOpenChannels
-                       && !sequence_.keepShutterOpenSlices) {
+               if (sequenceSettings_.keepShutterOpenChannels
+                       && !sequenceSettings_.keepShutterOpenSlices) {
                   if (imageRequest.SliceIndex == lastImageRequest.SliceIndex) {
                      lastImageRequest.CloseShutter = false;
                   }
                }
 
-               if (sequence_.keepShutterOpenSlices
-                       && !sequence_.keepShutterOpenChannels) {
+               if (sequenceSettings_.keepShutterOpenSlices
+                       && !sequenceSettings_.keepShutterOpenChannels) {
                   if (imageRequest.ChannelIndex == lastImageRequest.ChannelIndex) {
                      lastImageRequest.CloseShutter = false;
                   }
                }
 
-               if (sequence_.keepShutterOpenSlices
-                       && sequence_.keepShutterOpenChannels) {
+               if (sequenceSettings_.keepShutterOpenSlices
+                       && sequenceSettings_.keepShutterOpenChannels) {
                   lastImageRequest.CloseShutter = false;
                }
             }

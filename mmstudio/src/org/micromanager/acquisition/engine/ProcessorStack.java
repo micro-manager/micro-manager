@@ -40,4 +40,10 @@ public class ProcessorStack<E> {
    public BlockingQueue<E> getOutputChannel() {
       return output_;
    }
+
+   public void start() {
+      for (DataProcessor<E> processor:processors_) {
+         processor.start();
+      }
+   }
 }
