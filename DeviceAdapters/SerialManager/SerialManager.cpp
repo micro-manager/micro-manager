@@ -363,7 +363,7 @@ SerialPort::SerialPort(const char* portName) :
    stopBits_(g_StopBits_1),
    parity_(g_Parity_None)
 {
-   MMThreadGuard g(portLock_);
+   //MMThreadGuard g(portLock_);
    charsFoundBeyondTerminator_.clear();
 
    portName_ = portName;
@@ -441,7 +441,7 @@ SerialPort::SerialPort(const char* portName) :
 SerialPort::~SerialPort()
 {
    Shutdown();
-   MMThreadGuard g(portLock_);
+   //MMThreadGuard g(portLock_);
    delete pPort_;
    delete pThread_;
    delete pService_;
@@ -471,7 +471,7 @@ int SerialPort::Initialize()
 
    pService_ = new boost::asio::io_service();
 
-   MMThreadGuard g2(portLock_);
+   //MMThreadGuard g2(portLock_);
    try
    {
       pPort_ = new AsioClient (*pService_, boost::lexical_cast<unsigned int>(baud), this->portName_,
@@ -513,7 +513,7 @@ int SerialPort::Shutdown()
 
    do
    {
-      MMThreadGuard g(portLock_);
+      //MMThreadGuard g(portLock_);
       if( 0 != pPort_)
       {
          pPort_->ShutDownInProgress(true);
@@ -554,9 +554,9 @@ int SerialPort::SetCommand(const char* command, const char* term)
    // send characters one by one to accomodate slow devices
    unsigned long written = 0;
 
-   if (transmitCharWaitMs_==0)
+   if (transmitCharWaitMs_ < 0.001)
    {
-      MMThreadGuard g(portLock_);
+      //MMThreadGuard g(portLock_);
       for( std::string::iterator jj = sendText.begin(); jj != sendText.end(); ++jj)
       {
          pPort_->WriteOneCharacter(*jj);
@@ -571,7 +571,7 @@ int SerialPort::SetCommand(const char* command, const char* term)
          MM::MMTime startTime (GetCurrentMMTime());
          do
          {
-            MMThreadGuard g(portLock_);
+            //MMThreadGuard g(portLock_);
             pPort_->WriteOneCharacter(*jj);
          }while(bfalse);
          CDeviceUtils::SleepMs((long)(0.5+transmitCharWaitMs_));         
@@ -604,7 +604,7 @@ int SerialPort::GetAnswer(char* answer, unsigned bufLen, const char* term)
    if( 0 < nCharactersRead)
       dataAlreadyAvailableOnFirstIteration = true;
 
-   CDeviceUtils::SleepMs((long)(0.5 + transmitCharWaitMs_));
+   //CDeviceUtils::SleepMs((long)(0.5 + transmitCharWaitMs_));
 
    MM::MMTime startTime = GetCurrentMMTime();
    MM::MMTime retryWarnTime(0);
@@ -629,7 +629,7 @@ int SerialPort::GetAnswer(char* answer, unsigned bufLen, const char* term)
       int nRead = 0;
       do  // just a scope for the thread guard
       {
-         MMThreadGuard g(portLock_);
+         //MMThreadGuard g(portLock_);
          theData = pPort_->ReadData();
          nRead = theData.size();
          if( 0 < nRead)
@@ -640,7 +640,7 @@ int SerialPort::GetAnswer(char* answer, unsigned bufLen, const char* term)
 
       if( 0 == nRead && (!dataAlreadyAvailableOnFirstIteration) )
       {
-         CDeviceUtils::SleepMs((long)(0.5 + transmitCharWaitMs_));
+         //CDeviceUtils::SleepMs((long)(0.5 + transmitCharWaitMs_));
          retryCounter++;
       }
       else
@@ -700,9 +700,10 @@ int SerialPort::Write(const unsigned char* buf, unsigned long bufLen)
    std::ostringstream logMsg;
    for (unsigned i=0; i<bufLen; i++)
    {
-      MMThreadGuard g(portLock_);
+      //MMThreadGuard g(portLock_);
       pPort_->WriteOneCharacter(*(buf + i));
-      CDeviceUtils::SleepMs((unsigned long)(0.5+transmitCharWaitMs_));
+      if( 0.001 < transmitCharWaitMs_)
+         CDeviceUtils::SleepMs((unsigned long)(0.5+transmitCharWaitMs_));
       logMsg << (int) *(buf + i) << " ";
    }
    if( 0 < bufLen)
@@ -718,7 +719,7 @@ int SerialPort::Read(unsigned char* buf, unsigned long bufLen, unsigned long& ch
    memset(buf, 0, bufLen);
 
    charsRead = 0;
-   MMThreadGuard g(portLock_);
+   //MMThreadGuard g(portLock_);
    std::vector<char> d = pPort_->ReadData();
    if( 0<d.size())
       LogBinaryMessage(true, d, true);
@@ -741,7 +742,7 @@ int SerialPort::Read(unsigned char* buf, unsigned long bufLen, unsigned long& ch
 
 int SerialPort::Purge()
 {
-   MMThreadGuard g(portLock_);
+   //MMThreadGuard g(portLock_);
    charsFoundBeyondTerminator_.clear();
    pPort_->Purge();
    return DEVICE_OK;

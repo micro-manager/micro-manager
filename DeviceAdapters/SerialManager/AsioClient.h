@@ -104,7 +104,7 @@ public:
 #ifdef STANDALONETEST
       std::cerr << " -> " << msg << std::endl;
 #endif
-      MMThreadGuard g(serviceLock_);
+      //MMThreadGuard g(serviceLock_);
       io_service_.post(boost::bind(&AsioClient::DoWrite, this, msg)); 
    } 
 
@@ -112,7 +112,7 @@ public:
    { 
       if(active_)
       {
-         MMThreadGuard g(serviceLock_);
+         //MMThreadGuard g(serviceLock_);
          io_service_.post(boost::bind(&AsioClient::DoClose, this, boost::system::error_code())); 
       }
    } 
