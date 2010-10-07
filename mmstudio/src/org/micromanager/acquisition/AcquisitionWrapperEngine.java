@@ -73,7 +73,6 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private int positionMode_;
    private boolean useAutoFocus_;
    private int afSkipInterval_;
-   private boolean useSingleWindow_ = false;
    private boolean isPaused_;
    private String zStage_;
    private String cameraConfig_;
@@ -108,7 +107,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
          processorStack.start();
 
          display_ = new AcquisitionDisplayThread(gui_, core_, processorsToDisplayChannel,
-                 acquisitionSettings, acquisitionSettings.channels, saveFiles_, this, this.useSingleWindow_);
+                 acquisitionSettings, acquisitionSettings.channels, saveFiles_, this);
          display_.start();
 
       } catch (Exception ex) {

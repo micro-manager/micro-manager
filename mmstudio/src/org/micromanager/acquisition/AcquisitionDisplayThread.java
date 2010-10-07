@@ -41,16 +41,13 @@ public class AcquisitionDisplayThread extends Thread {
    private boolean diskCached_ = false;
    private ArrayList<String> acqNames_ = new ArrayList<String>();
    private BlockingQueue<TaggedImage>  imageProducingQueue_;
-   private boolean singleWindow_;
    private MMImageCache imageCache_ = null;
 
    AcquisitionDisplayThread(ScriptInterface gui, CMMCore core,
            BlockingQueue<TaggedImage> imageProducingQueue, SequenceSettings acqSettings,
-           ArrayList<ChannelSpec> channels, boolean diskCached, AcquisitionEngine eng,
-           boolean singleWindow) {
+           ArrayList<ChannelSpec> channels, boolean diskCached, AcquisitionEngine eng) {
       gui_ = gui;
       core_ = core;
-      singleWindow_ = singleWindow;
       acqSettings_ = acqSettings;
       diskCached_ = diskCached;
       imageProducingQueue_ = imageProducingQueue;
@@ -155,20 +152,12 @@ public class AcquisitionDisplayThread extends Thread {
    }
 
    private void displayImage(TaggedImage taggedImg) {
-
-      if (singleWindow_) {
-         if (taggedImg.pix != null) {
-            gui_.displayImage(taggedImg.pix);
-            imageCache_.putImage(taggedImg);
-         }
-      }  else {
-         Map<String, String> m = taggedImg.tags;
-         try {
-            int posIndex = MDUtils.getPositionIndex(m);
-            gui_.addImage(acqNames_.get(0), taggedImg);
-         } catch (Exception e) {
-            ReportingUtils.logError(e);
-         }
+      Map<String, String> m = taggedImg.tags;
+      try {
+         int posIndex = MDUtils.getPositionIndex(m);
+         gui_.addImage(acqNames_.get(0), taggedImg);
+      } catch (Exception e) {
+         ReportingUtils.logError(e);
       }
    }
 
