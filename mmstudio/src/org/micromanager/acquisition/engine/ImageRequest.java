@@ -32,4 +32,5 @@ public class ImageRequest {
    double zReference;
    double zPosition;
    double NextWaitTime = 0;
+   boolean stop = false;
 }

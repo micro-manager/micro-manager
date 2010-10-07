@@ -4,7 +4,6 @@
  */
 package org.micromanager.acquisition.engine;
 
-import org.micromanager.api.EngineTask;
 import java.util.concurrent.LinkedBlockingQueue;
 import org.micromanager.utils.ReportingUtils;
 
@@ -14,21 +13,24 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class SequenceGenerator extends Thread {
 
-   private LinkedBlockingQueue<EngineTask> engineTaskSequence_;
+   private LinkedBlockingQueue<ImageRequest> engineRequestSequence_;
    private double exposure_;
    private SequenceSettings sequence_;
    private Engine eng_;
+   private ImageRequest stopRequest_ = new ImageRequest();
 
    public SequenceGenerator() {
-      engineTaskSequence_ = new LinkedBlockingQueue<EngineTask>(100);
+      engineRequestSequence_ = new LinkedBlockingQueue<ImageRequest>(100);
+      stopRequest_.stop = true;
    }
 
-   public LinkedBlockingQueue<EngineTask> generateSequence(Engine eng, SequenceSettings settings, double exposure) {
+   public LinkedBlockingQueue<ImageRequest> generateSequence(Engine eng, SequenceSettings settings, double exposure) {
       this.sequence_ = settings;
       this.exposure_ = exposure;
       this.eng_ = eng;
+      stopRequest_.FrameIndex = -1;
       start();
-      return engineTaskSequence_;
+      return engineRequestSequence_;
    }
 
    @Override
@@ -142,7 +144,7 @@ public class SequenceGenerator extends Thread {
                lastImageRequest.NextWaitTime = imageRequest.WaitTime;
             }
             if (!skipLastImage) {
-               putTask(new ImageTask(eng_, lastImageRequest));
+               putRequest(lastImageRequest);
             }
          }
 
@@ -151,12 +153,12 @@ public class SequenceGenerator extends Thread {
          }
          skipLastImage = skipImage;
       }
-      putTask(new StopTask());
+      putRequest(stopRequest_);
    }
 
-   private void putTask(EngineTask task) {
+   private void putRequest(ImageRequest request) {
       try {
-         engineTaskSequence_.put(task);
+         engineRequestSequence_.put(request);
       } catch (InterruptedException ex) {
          ReportingUtils.logError(ex);
       }

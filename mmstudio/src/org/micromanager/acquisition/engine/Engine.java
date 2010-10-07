@@ -30,7 +30,7 @@ public class Engine {
    private SequenceSettings settings_;
    private boolean isPaused_ = false;
    private EngineTask currentTask_;
-   private LinkedBlockingQueue<EngineTask> taskQueue_;
+   private LinkedBlockingQueue<ImageRequest> requestQueue_;
    private final AutofocusManager afMgr_;
 
    public Engine(CMMCore core, AutofocusManager afMgr, TaggedImageQueue imageReceivingQueue) {
@@ -42,7 +42,7 @@ public class Engine {
    public void setupStandardSequence(SequenceSettings settings) {
       try {
          SequenceGenerator generator = new SequenceGenerator();
-         taskQueue_ = generator.generateSequence(this, settings, core_.getExposure());
+         requestQueue_ = generator.generateSequence(this, settings, core_.getExposure());
          settings_ = settings;
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
@@ -77,29 +77,30 @@ public class Engine {
          }
 
          stopRequested_ = false;
+         ImageRequest request = null;
          EngineTask task = null;
-         for (;;) {
 
+         for (;;) {
             do {
                try {
-                  task = taskQueue_.poll(30, TimeUnit.MILLISECONDS);
+                  request = requestQueue_.poll(30, TimeUnit.MILLISECONDS);
                } catch (InterruptedException ex) {
                   ReportingUtils.logError(ex);
-                  task = null;
+                  request = null;
                }
-            } while (task == null && !stopHasBeenRequested());
+            } while (request == null && !stopHasBeenRequested());
 
             while (isPaused() && !stopHasBeenRequested()) {
                JavaUtils.sleep(10);
             }
 
-            if (task instanceof StopTask || stopHasBeenRequested()) {
+            if ((request.stop == true) || stopHasBeenRequested()) {
                break;
             } else {
+               task = new ImageTask(Engine.this, request);
                setCurrentTask(task);
                task.run();
             }
-
          }
 
          try {
