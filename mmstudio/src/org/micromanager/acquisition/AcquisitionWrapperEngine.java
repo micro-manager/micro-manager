@@ -91,19 +91,22 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
          core_.setCircularBufferMemoryFootprint(32);
          SequenceSettings acquisitionSettings = generateSequenceSettings();
 
-         // Setup the pipeline:
-         
+         // Setup the pipeline...
+         // ...Sequence generator...
          SequenceGenerator generator = new SequenceGenerator(acquisitionSettings, core_.getExposure());
          BlockingQueue<ImageRequest> generatorOutput = generator.begin();
-         
+
+         // ...Engine...
          eng_ = new Engine(core_, gui_.getAutofocusManager(), generatorOutput, acquisitionSettings);
          BlockingQueue<TaggedImage> engineOutput = eng_.begin();
 
+         // ...ImageProcessorStack...
          ProcessorStack<TaggedImage> imageProcessorStack =
                  new ProcessorStack<TaggedImage>(engineOutput,
                  taggedImageProcessors_);
          BlockingQueue<TaggedImage> imageProcessorStackOutput = imageProcessorStack.begin();
 
+         // ...Display and Save...
          display_ = new AcquisitionDisplayThread(gui_, core_, imageProcessorStackOutput,
                  acquisitionSettings, acquisitionSettings.channels, saveFiles_, this);
          display_.start();
