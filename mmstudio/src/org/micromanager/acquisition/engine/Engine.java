@@ -4,10 +4,13 @@
  */
 package org.micromanager.acquisition.engine;
 
+import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import org.micromanager.api.EngineTask;
 import java.util.concurrent.TimeUnit;
 import mmcorej.CMMCore;
+import mmcorej.TaggedImage;
 import org.micromanager.acquisition.TaggedImageQueue;
 import org.micromanager.utils.AutofocusManager;
 import org.micromanager.utils.JavaUtils;
@@ -24,7 +27,7 @@ public class Engine {
    private boolean stopRequested_ = false;
    private boolean isRunning_ = false;
    public boolean autoShutterSelected_;
-   public TaggedImageQueue imageReceivingQueue_;
+   public BlockingQueue<TaggedImage> imageReceivingQueue_;
    private long startTimeNs_;
    private Engine this_;
    private SequenceSettings settings_;
@@ -33,7 +36,7 @@ public class Engine {
    private LinkedBlockingQueue<ImageRequest> requestQueue_;
    private final AutofocusManager afMgr_;
 
-   public Engine(CMMCore core, AutofocusManager afMgr, TaggedImageQueue imageReceivingQueue) {
+   public Engine(CMMCore core, AutofocusManager afMgr, BlockingQueue<TaggedImage> imageReceivingQueue) {
       core_ = core;
       imageReceivingQueue_ = imageReceivingQueue;
       afMgr_ = afMgr;

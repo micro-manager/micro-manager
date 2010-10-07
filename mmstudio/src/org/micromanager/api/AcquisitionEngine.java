@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.prefs.Preferences;
 
 import mmcorej.CMMCore;
+import mmcorej.TaggedImage;
 
 import org.micromanager.metadata.MMAcqDataException;
 import org.micromanager.metadata.WellAcquisitionData;
@@ -304,8 +305,8 @@ public interface AcquisitionEngine {
    public boolean isPaused();
    public void restoreSystem();
 
-   public void addProcessor(TaggedImageProcessor processor);
-   public void removeProcessor(TaggedImageProcessor processor);
+   public void addProcessor(DataProcessor<TaggedImage> processor);
+   public void removeProcessor(DataProcessor<TaggedImage> processor);
 
    public boolean abortRequested();
 }

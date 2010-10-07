@@ -51,11 +51,12 @@ import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.PropertySetting;
 import mmcorej.StrVector;
+import mmcorej.TaggedImage;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.api.TaggedImageProcessor;
 import org.micromanager.api.AcquisitionEngine;
+import org.micromanager.api.DataProcessor;
 import org.micromanager.api.DeviceControlGUI;
 import org.micromanager.image5d.ChannelCalibration;
 import org.micromanager.image5d.ChannelControl;
@@ -90,11 +91,11 @@ import org.micromanager.utils.SliceMode;
  */
 public class MMAcquisitionEngineMT implements AcquisitionEngine {
 
-   public void addProcessor(TaggedImageProcessor processor) {
+   public void addProcessor(DataProcessor<TaggedImage> processor) {
       throw new UnsupportedOperationException("Not supported yet.");
    }
 
-   public void removeProcessor(TaggedImageProcessor processor) {
+   public void removeProcessor(DataProcessor<TaggedImage> processor) {
       throw new UnsupportedOperationException("Not supported yet.");
    }
 

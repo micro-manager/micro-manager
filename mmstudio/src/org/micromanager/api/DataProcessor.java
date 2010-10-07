@@ -6,20 +6,17 @@
 package org.micromanager.api;
 
 import java.util.Collection;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import mmcorej.TaggedImage;
-import org.micromanager.acquisition.TaggedImageQueue;
 import org.micromanager.utils.ReportingUtils;
 
 /**
  *
  * @author arthur
  */
-public abstract class TaggedImageProcessor extends Thread {
-   private TaggedImageQueue input_;
-   private TaggedImageQueue output_;
+public abstract class DataProcessor<E> extends Thread {
+   private BlockingQueue<E> input_;
+   private BlockingQueue<E> output_;
    private boolean stopRequested_ = false;
 
    protected abstract void process();
@@ -39,37 +36,37 @@ public abstract class TaggedImageProcessor extends Thread {
       stopRequested_ = true;
    }
 
-   public TaggedImageProcessor() {}
+   public DataProcessor() {}
 
-   public void setInput(TaggedImageQueue input) {
+   public void setInput(BlockingQueue<E> input) {
       input_ = input;
    }
 
-   public void setOutput(TaggedImageQueue output) {
+   public void setOutput(BlockingQueue<E> output) {
       output_ = output;
    }
 
-   protected TaggedImage poll() {
+   protected E poll() {
       while (!stopRequested()) {
          try {
-            TaggedImage image = input_.poll(100, TimeUnit.MILLISECONDS);
-            if (image != null) {
-               return image;
+            E datum = (E) input_.poll(100, TimeUnit.MILLISECONDS);
+            if (datum != null) {
+               return datum;
             }
          } catch (InterruptedException ex) {
             ReportingUtils.logError(ex);
          }
       }
-      return TaggedImageQueue.POISON;
+      return null;
    }
 
-   protected void drainTo(Collection<TaggedImage> taggedImages) {
-      input_.drainTo(taggedImages);
+   protected void drainTo(Collection<E> data) {
+      input_.drainTo(data);
    }
 
-   protected void produce(TaggedImage taggedImage) {
+   protected void produce(E datum) {
       try {
-         output_.put(taggedImage);
+         output_.put(datum);
       } catch (InterruptedException ex) {
          ReportingUtils.logError(ex);
       }
@@ -78,7 +75,5 @@ public abstract class TaggedImageProcessor extends Thread {
    protected synchronized boolean stopRequested() {
       return stopRequested_;
    }
-
-
 
 }

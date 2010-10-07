@@ -7,6 +7,9 @@ package org.micromanager.acquisition;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.prefs.Preferences;
 import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
@@ -14,12 +17,13 @@ import mmcorej.Configuration;
 import mmcorej.DoubleVector;
 import mmcorej.PropertySetting;
 import mmcorej.StrVector;
+import mmcorej.TaggedImage;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.acquisition.engine.Engine;
 import org.micromanager.acquisition.engine.ProcessorStack;
 import org.micromanager.acquisition.engine.SequenceSettings;
-import org.micromanager.api.TaggedImageProcessor;
 import org.micromanager.api.AcquisitionEngine;
+import org.micromanager.api.DataProcessor;
 import org.micromanager.api.DeviceControlGUI;
 import org.micromanager.metadata.MMAcqDataException;
 import org.micromanager.metadata.WellAcquisitionData;
@@ -28,7 +32,6 @@ import org.micromanager.navigation.PositionList;
 import org.micromanager.utils.AutofocusManager;
 import org.micromanager.utils.ChannelSpec;
 import org.micromanager.utils.ContrastSettings;
-import org.micromanager.utils.DisplayMode;
 import org.micromanager.utils.MMException;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.PositionMode;
@@ -74,11 +77,11 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private String cameraConfig_;
    private Preferences prefs_;
    private Engine eng_ = null;
-   private ArrayList<TaggedImageProcessor> taggedImageProcessors_;
+   private List<DataProcessor<TaggedImage>> taggedImageProcessors_;
    private boolean absoluteZ_;
 
    public AcquisitionWrapperEngine() {
-      taggedImageProcessors_ = new ArrayList<TaggedImageProcessor>();
+      taggedImageProcessors_ = new ArrayList<DataProcessor<TaggedImage>>();
    }
 
    public void acquire() throws MMException, MMAcqDataException {
@@ -88,17 +91,17 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
          ReportingUtils.logError(ex);
       }
 
-      TaggedImageQueue engineToProcessorsChannel = new TaggedImageQueue();
+      BlockingQueue<TaggedImage> engineToProcessorsChannel = new LinkedBlockingQueue<TaggedImage>();
 
       SequenceSettings acquisitionSettings = generateSequenceSettings();
       eng_ = new Engine(core_, gui_.getAutofocusManager(), engineToProcessorsChannel);
       eng_.setupStandardSequence(acquisitionSettings);
       eng_.start();
       
-      ProcessorStack processorStack = new ProcessorStack(engineToProcessorsChannel,
+      ProcessorStack<TaggedImage> processorStack = new ProcessorStack<TaggedImage>(engineToProcessorsChannel,
               taggedImageProcessors_);
-      TaggedImageQueue processorsToDisplayChannel = processorStack.getOutputChannel();
-      for (TaggedImageProcessor taggedImageProcessor:taggedImageProcessors_) {
+      BlockingQueue<TaggedImage> processorsToDisplayChannel = processorStack.getOutputChannel();
+      for (DataProcessor<TaggedImage> taggedImageProcessor:taggedImageProcessors_) {
          taggedImageProcessor.start();
       }
       
@@ -109,11 +112,11 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
 
-   public void addProcessor(TaggedImageProcessor taggedImageProcessor) {
+   public void addProcessor(DataProcessor<TaggedImage> taggedImageProcessor) {
       taggedImageProcessors_.add(taggedImageProcessor);
    }
 
-   public void removeProcessor(TaggedImageProcessor taggedImageProcessor) {
+   public void removeProcessor(DataProcessor<TaggedImage> taggedImageProcessor) {
       taggedImageProcessors_.remove(taggedImageProcessor);
    }
 

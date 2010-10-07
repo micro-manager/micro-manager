@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
@@ -39,12 +40,12 @@ public class AcquisitionDisplayThread extends Thread {
    SequenceSettings acqSettings_;
    private boolean diskCached_ = false;
    private ArrayList<String> acqNames_ = new ArrayList<String>();
-   private TaggedImageQueue imageProducingQueue_;
+   private BlockingQueue<TaggedImage>  imageProducingQueue_;
    private boolean singleWindow_;
    private MMImageCache imageCache_ = null;
 
    AcquisitionDisplayThread(ScriptInterface gui, CMMCore core,
-           TaggedImageQueue imageProducingQueue, SequenceSettings acqSettings,
+           BlockingQueue<TaggedImage> imageProducingQueue, SequenceSettings acqSettings,
            ArrayList<ChannelSpec> channels, boolean diskCached, AcquisitionEngine eng,
            boolean singleWindow) {
       gui_ = gui;

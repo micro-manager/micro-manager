@@ -11,7 +11,7 @@ import mmcorej.TaggedImage;
  *
  * @author arthur
  */
-public abstract class TaggedImageAnalyzer extends TaggedImageProcessor {
+public abstract class TaggedImageAnalyzer extends DataProcessor<TaggedImage> {
 
    @Override
    protected void process() {
