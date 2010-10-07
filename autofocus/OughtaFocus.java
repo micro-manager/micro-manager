@@ -137,7 +137,7 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
                Rectangle newROI = new Rectangle(x,y,w,h);
                //ReportingUtils.logMessage("Setting ROI to: " + newROI);
                Configuration oldState = null;
-               if (! channel.isEmpty()) {
+               if (channel.length() > 0) {
                   String chanGroup = core_.getChannelGroup();
                   oldState = core_.getConfigGroupState(chanGroup);
                   core_.setConfig(chanGroup, channel);
@@ -162,20 +162,17 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
             
          }
       };
-      th.start();
-      if (show.contentEquals("No")) {
-         try {
-            th.join();
-         } catch (InterruptedException ex) {
-            ReportingUtils.showError(ex);
-         }
+
+      if (show.contentEquals("Yes")) {
+         th.start(); // Run on a separate thread.
+      } else {
+         th.run(); // Run it on this thread instead.
       }
       return 0;
    }
 
    private double runAutofocusAlgorithm() throws Exception {
       UnivariateRealFunction scoreFun = new UnivariateRealFunction() {
-
          public double value(double d) throws FunctionEvaluationException {
             return measureFocusScore(d);
          }
@@ -267,7 +264,8 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
          return computeNormalizedStdDev(proc);
       } else if (scoringMethod.contentEquals("Edges")) {
          return computeSharpness(proc);
-      } else
+      } else {
          return 0;
+      }
    }
 }
