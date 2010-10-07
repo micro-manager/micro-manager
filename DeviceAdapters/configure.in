@@ -68,7 +68,7 @@ else
    if test -z "$LIBDC1394" ; then
       case $host in
          *-*-linux*)
-            LIBDC1394 ="-ldc1394"
+            LIBDC1394="-ldc1394"
             ;;
          *)
             AC_FIND_FILE([libdc1394.a], [/usr/lib /usr/lib64 /usr/local/$ARCH/lib], DC1394LIBDIR)
@@ -149,7 +149,7 @@ else
    if test -z "$LIBUSB" ; then
       case $host in
          *-*-linux*)
-            LIBUSB ="-lusb"
+            LIBUSB="-lusb"
             ;;
          *)
             AC_FIND_FILE([libusb.a], [/usr/lib /usr/lib64 /usr/local/$ARCH/lib], USBLIBDIR)
