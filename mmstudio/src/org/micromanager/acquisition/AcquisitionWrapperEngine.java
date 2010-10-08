@@ -89,7 +89,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    public void acquire() throws MMException, MMAcqDataException {
       try {
          core_.setCircularBufferMemoryFootprint(32);
-         SequenceSettings acquisitionSettings = generateSequenceSettings();
+         SequenceSettings acquisitionSettings = gatherSequenceSettings();
 
          // Setup the pipeline...
          // ...Sequence generator...
@@ -125,7 +125,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       taggedImageProcessors_.remove(taggedImageProcessor);
    }
 
-   private SequenceSettings generateSequenceSettings() {
+   private SequenceSettings gatherSequenceSettings() {
       SequenceSettings acquisitionSettings = new SequenceSettings();
 
       // Frames
