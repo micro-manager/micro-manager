@@ -640,7 +640,8 @@ int SerialPort::GetAnswer(char* answer, unsigned bufLen, const char* term)
 
       if( 0 == nRead && (!dataAlreadyAvailableOnFirstIteration) )
       {
-         //CDeviceUtils::SleepMs((long)(0.5 + transmitCharWaitMs_));
+	     //Yield to other threads:
+         CDeviceUtils::SleepMs((long)(1 /*+ transmitCharWaitMs_*/));
          retryCounter++;
       }
       else
