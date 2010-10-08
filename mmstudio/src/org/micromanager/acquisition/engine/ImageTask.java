@@ -102,6 +102,7 @@ public class ImageTask implements EngineTask {
          if (setZPosition_) {
             imageRequest_.zPosition = zPosition_;
             core_.setPosition(core_.getFocusDevice(), zPosition_);
+            core_.waitForDevice(core_.getFocusDevice());
          }
       } catch (Exception e) {
          ReportingUtils.logError(e);
