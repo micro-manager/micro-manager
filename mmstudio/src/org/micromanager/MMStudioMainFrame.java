@@ -4,7 +4,8 @@
 //SUBSYSTEM:     mmstudio
 //-----------------------------------------------------------------------------
 //AUTHOR:        Nenad Amodaj, nenad@amodaj.com, Jul 18, 2005
-//COPYRIGHT:     University of California, San Francisco, 2006
+//               Modifications by Arthur Edelstein, Nico Stuurman
+//COPYRIGHT:     University of California, San Francisco, 2006-2010
 //               100X Imaging Inc, www.100ximaging.com, 2008
 //LICENSE:       This file is distributed under the BSD license.
 //               License text is included with the source distribution.
@@ -251,12 +252,9 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private static MMImageWindow imageWin_;
    private int snapCount_ = -1;
    private boolean liveModeSuspended_;
-   private boolean liveModeFullyStarted_;
    public Font defaultScriptFont_ = null;
 
-   public static MMImageWindow getLiveWin() {
-      return imageWin_;
-   }
+
    // Our instance
    private MMStudioMainFrame gui_;
    // Callback
@@ -330,6 +328,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
 
    public ImageWindow getImageWin() {
+      return imageWin_;
+   }
+
+   public static MMImageWindow getLiveWin() {
       return imageWin_;
    }
 
@@ -600,10 +602,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       }
 
 
-
-
       liveModeTimer_ = new Timer();
-      //liveModeTimer_.stop();
 
       // load application preferences
       // NOTE: only window size and position preferences are loaded,
@@ -2449,7 +2448,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       return liveModeTimerTask_ != null && liveModeTimerTask_.isRunning();
    }
 
-         // initialize timer
+   // Timer task that displays the live image
    class LiveModeTimerTask extends TimerTask {
       public boolean running_ = false;
       private boolean cancelled_ = false;
@@ -2477,14 +2476,16 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          }
          try {
             Object img;
+            /*
             if (!liveModeFullyStarted_) {
                if (core_.getRemainingImageCount() > 0) {
                   liveModeFullyStarted_ = true;
                }
             }
+             */
 
-            if (liveModeFullyStarted_) {
-                  img = core_.getLastImage();
+            if (core_.getRemainingImageCount() > 0) {
+               img = core_.getLastImage();
                if (img != img_) {
                   img_ = img;
                   displayImage(img_);
@@ -2548,7 +2549,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
             // Do not display more often than dictated by the exposure time
             setLiveModeInterval();
-            liveModeFullyStarted_ = false;
             core_.startContinuousSequenceAcquisition(0.0);
             liveModeTimerTask_ = new LiveModeTimerTask();
             liveModeTimer_.schedule(liveModeTimerTask_, (long)0, (long) liveModeInterval_);
@@ -2597,6 +2597,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             liveRunning_ = false;
             buttonSnap_.setEnabled(true);
             autoShutterCheckBox_.setEnabled(true);
+            // TODO: add timeout so that we can not hang here
             while (liveModeTimerTask_.isRunning()); // Make sure Timer properly stops.
             // This is here to avoid crashes when changing ROI in live mode
             // with Sensicam
@@ -2615,12 +2616,12 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             }
          }
       }
-      toggleButtonLive_.setIcon(IsLiveModeOn() ? SwingResourceManager.getIcon(MMStudioMainFrame.class,
+      toggleButtonLive_.setIcon(liveRunning_ ? SwingResourceManager.getIcon(MMStudioMainFrame.class,
             "/org/micromanager/icons/cancel.png")
             : SwingResourceManager.getIcon(MMStudioMainFrame.class,
             "/org/micromanager/icons/camera_go.png"));
-      toggleButtonLive_.setSelected(IsLiveModeOn());
-      toggleButtonLive_.setText(IsLiveModeOn() ? "Stop Live" : "Live");
+      toggleButtonLive_.setSelected(liveRunning_);
+      toggleButtonLive_.setText(liveRunning_ ? "Stop Live" : "Live");
 
    }
 
@@ -2662,11 +2663,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    public boolean displayImage(Object pixels) {
       try {
-         if (!isImageWindowOpen()
-                 ||
-                 imageWin_.windowNeedsResizing()
-//               || imageWin_.getImageWindowByteLength()
-  //             != imageWin_.imageByteLenth(pixels)
+         if (!isImageWindowOpen() ||  imageWin_.windowNeedsResizing()
                && creatingImageWindow_.isFalse()) {
             createImageWindow();
          }
@@ -2683,11 +2680,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    public boolean displayImageWithStatusLine(Object pixels, String statusLine) {
       try {
-         if (!isImageWindowOpen()
-               || 
-               imageWin_.windowNeedsResizing()
-//               imageWin_.getImageWindowByteLength()
- //              != imageWin_.imageByteLenth(pixels)
+         if (!isImageWindowOpen() || imageWin_.windowNeedsResizing()
                && creatingImageWindow_.isFalse()) {
             createImageWindow();
          }
@@ -2802,13 +2795,11 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          try {
             shutters_ = core_.getLoadedDevicesOfType(DeviceType.ShutterDevice);
          } catch (Exception e) {
-            // System.println(DeviceType.ShutterDevice);
             ReportingUtils.logError(e);
          }
 
          if (shutters_ != null) {
             String items[] = new String[(int) shutters_.size()];
-            // items[0] = "";
             for (int i = 0; i < shutters_.size(); i++) {
                items[i] = shutters_.get(i);
             }
@@ -2982,7 +2973,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             contrastPanel_.setPixelBitDepth((int) bitDepth, false);
          }
 
-         if (!liveModeTimerTask_.isRunning()) {
+         if (liveModeTimerTask_ == null || !liveModeTimerTask_.isRunning()) {
             autoShutterCheckBox_.setSelected(core_.getAutoShutter());
             boolean shutterOpen = core_.getShutterOpen();
             setShutterButton(shutterOpen);
@@ -3876,8 +3867,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          // and insert into metadata
          acq.setSystemState(acq.getFrames() - 1, acq.getChannels() - 1, acq.getSlices() - 1, state);
 
-         //	if (liveRunning)
-         //		enableLiveMode(true);
 
          // closeAcquisition(acqName);
       } catch (Exception e) {
