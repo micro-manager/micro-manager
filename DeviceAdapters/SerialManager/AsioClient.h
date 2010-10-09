@@ -189,6 +189,7 @@ private:
                data_read_.push_back(read_msg_[ib]);
             }
          }while(bfalse_s);
+         CDeviceUtils::SleepMs(1);
          //std::cout.write(read_msg_, bytes_transferred); // echo to standard output 
          ReadStart(); // start waiting for another asynchronous read again 
       } 
