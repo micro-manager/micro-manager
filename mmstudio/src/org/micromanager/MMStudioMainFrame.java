@@ -48,6 +48,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.prefs.Preferences;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -65,7 +67,6 @@ import javax.swing.JToggleButton;
 import javax.swing.SpringLayout;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
-import javax.swing.Timer;
 import javax.swing.UIManager;
 import javax.swing.border.LineBorder;
 
@@ -218,6 +219,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    // Timer interval - image display interval
    private double liveModeInterval_ = 40;
    private Timer liveModeTimer_;
+   private LiveModeTimerTask liveModeTimerTask_;
    private GraphData lineProfileData_;
    private Object img_;
    // labels for standard devices
@@ -597,45 +599,11 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          }
       }
 
-      // initialize timer
-      ActionListener liveModeTimerHandler = new ActionListener() {
-
-         public void actionPerformed(ActionEvent evt) {
-            Thread.currentThread().setPriority(3);
-            if (!isImageWindowOpen()) {
-               // stop live acquisition if user closed the window
-               enableLiveMode(false);
-               return;
-            }
-            if (!isNewImageAvailable()) {
-               return;
-            }
-            try {
-               Object img;
-               if (!liveModeFullyStarted_) {
-                  if (core_.getRemainingImageCount() > 0) {
-                     liveModeFullyStarted_ = true;
-                  }
-               }
-
-               if (liveModeFullyStarted_) {
-                     img = core_.getLastImage();
-                  if (img != img_) {
-                     img_ = img;
-                     displayImage(img_);
-                     Thread.yield();
-                  }
-               }
-            } catch (Exception e) {
-               ReportingUtils.showError(e);
-               return;
-            }
-         }
-      };
 
 
-      liveModeTimer_ = new Timer((int) liveModeInterval_, liveModeTimerHandler);
-      liveModeTimer_.stop();
+
+      liveModeTimer_ = new Timer();
+      //liveModeTimer_.stop();
 
       // load application preferences
       // NOTE: only window size and position preferences are loaded,
@@ -2478,8 +2446,60 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
 
    boolean IsLiveModeOn() {
-      return liveModeTimer_ != null && liveModeTimer_.isRunning();
+      return liveModeTimerTask_ != null && liveModeTimerTask_.isRunning();
    }
+
+         // initialize timer
+   class LiveModeTimerTask extends TimerTask {
+      public boolean running_ = false;
+      private boolean cancelled_ = false;
+
+      public boolean isRunning() {
+         return running_;
+      }
+
+      @Override
+      public boolean cancel() {
+         running_ = false;
+         return super.cancel();
+      }
+
+      public void run() {
+         Thread.currentThread().setPriority(3);
+         running_ = true;
+         if (!isImageWindowOpen()) {
+            // stop live acquisition if user closed the window
+            enableLiveMode(false);
+            return;
+         }
+         if (!isNewImageAvailable()) {
+            return;
+         }
+         try {
+            Object img;
+            if (!liveModeFullyStarted_) {
+               if (core_.getRemainingImageCount() > 0) {
+                  liveModeFullyStarted_ = true;
+               }
+            }
+
+            if (liveModeFullyStarted_) {
+                  img = core_.getLastImage();
+               if (img != img_) {
+                  img_ = img;
+                  displayImage(img_);
+                  Thread.yield();
+               }
+            }
+         } catch (Exception e) {
+            ReportingUtils.showError(e);
+            return;
+         }
+
+      }
+
+
+   };
 
    public void enableLiveMode(boolean enable) {
       if (enable) {
@@ -2530,7 +2550,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             setLiveModeInterval();
             liveModeFullyStarted_ = false;
             core_.startContinuousSequenceAcquisition(0.0);
-            liveModeTimer_.start();
+            liveModeTimerTask_ = new LiveModeTimerTask();
+            liveModeTimer_.schedule(liveModeTimerTask_, (long)0, (long) liveModeInterval_);
             // Only hide the shutter checkbox if we are in autoshuttermode
             buttonSnap_.setEnabled(false);
             if (autoShutterOrg_) {
@@ -2553,7 +2574,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             return;
          }
          try {
-            liveModeTimer_.stop();
+            liveModeTimerTask_.cancel();
             core_.stopSequenceAcquisition();
 
             if (zWheelListener_ != null) {
@@ -2576,13 +2597,14 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             liveRunning_ = false;
             buttonSnap_.setEnabled(true);
             autoShutterCheckBox_.setEnabled(true);
-            while (liveModeTimer_.isRunning()); // Make sure Timer properly stops.
+            while (liveModeTimerTask_.isRunning()); // Make sure Timer properly stops.
             // This is here to avoid crashes when changing ROI in live mode
             // with Sensicam
             // Should be removed when underlying problem is dealt with
             Thread.sleep(100);
 
             imageWin_.setSubTitle("Live (stopped)");
+            liveModeTimerTask_ = null;
 
          } catch (Exception err) {
             ReportingUtils.showError(err, "Failed to disable live mode.");
@@ -2960,7 +2982,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             contrastPanel_.setPixelBitDepth((int) bitDepth, false);
          }
 
-         if (!liveModeTimer_.isRunning()) {
+         if (!liveModeTimerTask_.isRunning()) {
             autoShutterCheckBox_.setSelected(core_.getAutoShutter());
             boolean shutterOpen = core_.getShutterOpen();
             setShutterButton(shutterOpen);
@@ -3001,7 +3023,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
 
    public boolean okToAcquire() {
-      return !liveModeTimer_.isRunning();
+      return !liveModeTimerTask_.isRunning();
    }
 
    public void stopAllActivity() {
@@ -3026,7 +3048,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             saveConfigPresets();
          }
       }
-      liveModeTimer_.stop();
+      if (liveModeTimerTask_ != null)
+         liveModeTimerTask_.cancel();
 
 
       try{
@@ -4279,8 +4302,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       }
 
       liveModeInterval_ = interval;
-      liveModeTimer_.setDelay((int) liveModeInterval_);
-      liveModeTimer_.setInitialDelay(liveModeTimer_.getDelay());
+      //liveModeTimer_.setDelay((int) liveModeInterval_);
+      //liveModeTimer_.setInitialDelay(liveModeTimer_.getDelay());
    }
 
    public void logMessage(String msg) {
