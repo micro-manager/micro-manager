@@ -434,7 +434,6 @@ public class ContrastPanel extends JPanel implements ImageController,
          }
 
          histogramData_.setData(histogram);
-         histogramPanel_.setGamma(gammaSliderCalculator_.gammaToSlider(gamma_));
          histogramPanel_.setData(histogramData_);
          histogramPanel_.setAutoScale();
          ImageStatistics stats = image.getStatistics();
