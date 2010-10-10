@@ -2475,17 +2475,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             return;
          }
          try {
-            Object img;
-            /*
-            if (!liveModeFullyStarted_) {
-               if (core_.getRemainingImageCount() > 0) {
-                  liveModeFullyStarted_ = true;
-               }
-            }
-             */
-
             if (core_.getRemainingImageCount() > 0) {
-               img = core_.getLastImage();
+               Object img = core_.getLastImage();
                if (img != img_) {
                   img_ = img;
                   displayImage(img_);
