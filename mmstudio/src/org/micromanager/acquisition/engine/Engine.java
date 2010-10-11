@@ -61,10 +61,12 @@ public class Engine {
       @Override
       public void run() {
          startTimeNs_ = System.nanoTime();
-         // Make sure sequence acquisition isn't running:
+         // Make sure sequence acquisition isn't running
+         // and clear the circular buffer:
          if (core_.isSequenceRunning())
             try {
             core_.stopSequenceAcquisition();
+            core_.initializeCircularBuffer();
          } catch (Exception ex) {
             ReportingUtils.logError(ex);
          }
