@@ -285,7 +285,7 @@ public:
    double getBufferIntervalMs() const;
    bool isBufferOverflowed() const;
    void setCircularBufferMemoryFootprint(unsigned sizeMB) throw (CMMError);
-   void intializeCircularBuffer() throw (CMMError);
+   void initializeCircularBuffer() throw (CMMError);
    //@ }
 
    /** @name Auto-focusing
