@@ -242,7 +242,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private boolean configChanged_ = false;
    private StrVector shutters_ = null;
    private JButton saveConfigButton_;
-   private FastAcqDlg fastAcqWin_;
    private ScriptPanel scriptPanel_;
    private SplitView splitView_;
    private CenterAndDragListener centerAndDragListener_;
@@ -402,6 +401,26 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    public void setAcquisitionCache(String acqName, MMImageCache imageCache) {
       this.acqMgr_.setAcquisitionCache(acqName, imageCache);
+   }
+
+   public void runBurstAcquisition() throws MMScriptException {
+      throw new UnsupportedOperationException("Not supported yet.");
+   }
+
+   public void runBurstAcquisition(int nr, String name, String root) throws MMScriptException {
+      throw new UnsupportedOperationException("Not supported yet.");
+   }
+
+   public void runBurstAcquisition(int nr) throws MMScriptException {
+      throw new UnsupportedOperationException("Not supported yet.");
+   }
+
+   public void startBurstAcquisition() throws MMScriptException {
+      throw new UnsupportedOperationException("Not supported yet.");
+   }
+
+   public boolean isBurstAcquisitionRunning() throws MMScriptException {
+      throw new UnsupportedOperationException("Not supported yet.");
    }
 
    /**
@@ -1082,18 +1101,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       acquisitionMenuItem.setText("Multi-Dimensional Acquisition...");
       toolsMenu.add(acquisitionMenuItem);
 
-      final JMenuItem sequenceMenuItem = new JMenuItem();
-      sequenceMenuItem.addActionListener(new ActionListener() {
-
-         public void actionPerformed(ActionEvent e) {
-            openSequenceDialog();
-         }
-      });
-      sequenceMenuItem.setIcon(SwingResourceManager.getIcon(
-            MMStudioMainFrame.class, "icons/film_go.png"));
-      sequenceMenuItem.setText("Burst Acquisition...");
-      toolsMenu.add(sequenceMenuItem);
-
       final JMenuItem splitViewMenuItem = new JMenuItem();
       splitViewMenuItem.addActionListener(new ActionListener() {
 
@@ -1399,30 +1406,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       springLayout_.putConstraint(SpringLayout.NORTH, autoShutterCheckBox_,
             118 - 22, SpringLayout.NORTH, getContentPane());
 
-      final JButton burstButton = new JButton();
-      burstButton.setMargin(new Insets(2, 2, 2, 2));
-      burstButton.setIconTextGap(1);
-      burstButton.setIcon(SwingResourceManager.getIcon(MMStudioMainFrame.class,
-            "/org/micromanager/icons/film_go.png"));
-      burstButton.setFont(new Font("Arial", Font.PLAIN, 10));
-      burstButton.setToolTipText("Open Burst dialog for fast sequence acquisition");
-      burstButton.addActionListener(new ActionListener() {
-
-         public void actionPerformed(ActionEvent e) {
-            openSequenceDialog();
-         }
-      });
-      burstButton.setText("Burst");
-      getContentPane().add(burstButton);
-      springLayout_.putConstraint(SpringLayout.SOUTH, burstButton, 113,
-            SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.NORTH, burstButton, 92,
-            SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.EAST, burstButton, 95,
-            SpringLayout.WEST, getContentPane());
-      springLayout_.putConstraint(SpringLayout.WEST, burstButton, 7,
-            SpringLayout.WEST, getContentPane());
-
+    
       final JButton refreshButton = new JButton();
       refreshButton.setMargin(new Insets(2, 2, 2, 2));
       refreshButton.setIconTextGap(1);
@@ -1439,9 +1423,9 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       });
       refreshButton.setText("Refresh");
       getContentPane().add(refreshButton);
-      springLayout_.putConstraint(SpringLayout.SOUTH, refreshButton, 135,
+      springLayout_.putConstraint(SpringLayout.SOUTH, refreshButton, 113,
             SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.NORTH, refreshButton, 114,
+      springLayout_.putConstraint(SpringLayout.NORTH, refreshButton, 92,
             SpringLayout.NORTH, getContentPane());
       springLayout_.putConstraint(SpringLayout.EAST, refreshButton, 95,
             SpringLayout.WEST, getContentPane());
@@ -3390,20 +3374,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       }
    }
 
-   /**
-    * Opens streaming sequence acquisition dialog.
-    */
-   protected void openSequenceDialog() {
-      try {
-         if (fastAcqWin_ == null) {
-            fastAcqWin_ = new FastAcqDlg(core_, this);
-         }
-         fastAcqWin_.setVisible(true);
-      } catch (Exception exc) {
-         ReportingUtils.showError(exc,
-               "\nSequence window failed to open due to internal error.");
-      }
-   }
 
    /**
     * Opens Split View dialog.
@@ -3527,59 +3497,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          if (scriptPanel_.stopRequestPending()) {
             throw new MMScriptException("Script interrupted by the user!");
          }
-      }
-   }
-
-   public void startBurstAcquisition() throws MMScriptException {
-      testForAbortRequests();
-      if (fastAcqWin_ != null) {
-         fastAcqWin_.start();
-      }
-   }
-
-   public void runBurstAcquisition() throws MMScriptException {
-      testForAbortRequests();
-      if (fastAcqWin_ == null) {
-         fastAcqWin_ = new FastAcqDlg(core_, this);
-         addMMBackgroundListener(fastAcqWin_);
-      }
-      fastAcqWin_.setVisible(true);
-      fastAcqWin_.start();
-      try {
-         while (fastAcqWin_.isBusy()) {
-            Thread.sleep(20);
-         }
-      } catch (InterruptedException e) {
-         ReportingUtils.showError(e);
-      }
-   }
-
-   public void runBurstAcquisition(int nr, String name, String root) throws MMScriptException {
-      if (fastAcqWin_ == null) {
-         fastAcqWin_ = new FastAcqDlg(core_, this);
-      }
-      fastAcqWin_.setSequenceLength(nr);
-      fastAcqWin_.setDirRoot(root);
-      fastAcqWin_.setName(name);
-
-      runBurstAcquisition();
-   }
-
-   public void runBurstAcquisition(int nr) throws MMScriptException {
-      if (fastAcqWin_ == null) {
-         fastAcqWin_ = new FastAcqDlg(core_, this);
-      }
-      fastAcqWin_.setSequenceLength(nr);
-
-      runBurstAcquisition();
-   }
-
-   public boolean isBurstAcquisitionRunning() throws MMScriptException {
-      testForAbortRequests();
-      if (fastAcqWin_ != null) {
-         return fastAcqWin_.isBusy();
-      } else {
-         return false;
       }
    }
 
