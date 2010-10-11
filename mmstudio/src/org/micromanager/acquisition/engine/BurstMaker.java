@@ -35,7 +35,7 @@ public class BurstMaker extends DataProcessor<ImageRequest> {
          produce(lastRequest_);
       }
       lastRequest_ = thisRequest;
-      if (thisRequest.stop = true)
+      if (thisRequest.stop)
          produce(thisRequest);
    }
 
