@@ -13,24 +13,26 @@ import org.micromanager.utils.ChannelSpec;
  * @author arthur
  */
 public class ImageRequest {
-   double exposure;
-   int FrameIndex = 0;
-   double WaitTime;
-   int SliceIndex = 0;
-   double SlicePosition;
-   int PositionIndex = 0;
-   MultiStagePosition Position;
-   int ChannelIndex = 0;
-   ChannelSpec Channel;
-   boolean CloseShutter;
-   boolean AutoFocus;
-   boolean UseChannel;
-   boolean UseSlice;
-   boolean UsePosition;
-   boolean UseFrame;
-   boolean relativeZSlices;
-   double zReference;
-   double zPosition;
-   double NextWaitTime = 0;
-   boolean stop = false;
+   public double exposure;
+   public int FrameIndex = 0;
+   public double WaitTime;
+   public int SliceIndex = 0;
+   public double SlicePosition;
+   public int PositionIndex = 0;
+   public MultiStagePosition Position;
+   public int ChannelIndex = 0;
+   public ChannelSpec Channel;
+   public boolean CloseShutter;
+   public boolean AutoFocus;
+   public boolean UseChannel;
+   public boolean UseSlice;
+   public boolean UsePosition;
+   public boolean UseFrame;
+   public boolean relativeZSlices;
+   public double zReference;
+   public double zPosition;
+   public double NextWaitTime = 0;
+   public boolean stop = false;
+   public boolean startBurst = false;
+   public boolean collectBurst = false;
 }
