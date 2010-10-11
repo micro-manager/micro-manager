@@ -4,6 +4,7 @@
  */
 package org.micromanager.acquisition;
 
+import java.lang.ref.SoftReference;
 import org.micromanager.api.TaggedImageStorage;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -21,10 +22,8 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class MMImageCache implements TaggedImageStorage {
 
-   private final int taggedImgQueueSize_ = 50;
    private TaggedImageStorage imageFileManager_;
    private String comment_ = "";
-   private Map<String, String> summaryMetadata_;
    private Set<String> changingKeys_;
    private Map<String, String> firstTags_;
    private static ImageCollection coll_;
@@ -50,38 +49,28 @@ public class MMImageCache implements TaggedImageStorage {
    }
 
    private class ImageCollection {
-
       private ConcurrentLinkedQueue<String> LabelQueue_;
       private Set<String> LabelSet_;
-      private HashMap<String, TaggedImage> taggedImgTable_;
+      private HashMap<String, SoftReference> taggedImgTable_;
 
       public ImageCollection() {
          LabelQueue_ = new ConcurrentLinkedQueue<String>();
-         taggedImgTable_ = new HashMap<String, TaggedImage>();
+         taggedImgTable_ = new HashMap<String, SoftReference>();
          LabelSet_ = new HashSet<String>();
       }
 
       public void add(MMImageCache cache, TaggedImage taggedImage) {
          String label = MDUtils.getLabel(taggedImage.tags) + "/" + cache.hashCode();
-         taggedImgTable_.put(label, taggedImage);
+         taggedImgTable_.put(label, new SoftReference(taggedImage));
          LabelQueue_.add(label);
-         int n = (LabelQueue_.size() - taggedImgQueueSize_);
-         for (int i = 0; i < n; ++i) {
-            dropOne();
-         }
          LabelSet_.add(label);
-      }
-
-      private void dropOne() {
-         String label = LabelQueue_.poll();
-         taggedImgTable_.remove(label);
       }
 
       public TaggedImage get(MMImageCache cache, String label) {
          label += "/" + cache.hashCode();
          LabelQueue_.remove(label);
          LabelQueue_.add(label);
-         return taggedImgTable_.get(label);
+         return (TaggedImage) taggedImgTable_.get(label).get();
       }
 
       public Set<String> getLabels(MMImageCache cache) {
