@@ -236,6 +236,8 @@ public class ImageTask implements EngineTask {
 
       try {
          core_.waitForDevice(core_.getShutterDevice());
+         if (core_.getAutoShutter())
+            core_.setAutoShutter(false);
          if (eng_.autoShutterSelected_ && !core_.getShutterOpen()) {
             core_.setShutterOpen(true);
             log("opened shutter");
@@ -253,6 +255,8 @@ public class ImageTask implements EngineTask {
             pixels = core_.getImage();
          } else {
             if (imageRequest_.startBurstN > 0) {
+               if (eng_.autoShutterSelected_)
+                  core_.setAutoShutter(true);
                core_.startSequenceAcquisition(imageRequest_.startBurstN,
                        0, false);
                log("started a burst with " + imageRequest_.startBurstN + " images.");

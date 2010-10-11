@@ -62,7 +62,6 @@ public class Engine {
          autoShutterSelected_ = core_.getAutoShutter();
 
          boolean shutterWasOpen = false;
-         core_.setAutoShutter(false);
          try {
             shutterWasOpen = core_.getShutterOpen();
          } catch (Exception ex) {
