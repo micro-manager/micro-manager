@@ -79,16 +79,14 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private String cameraConfig_;
    private Preferences prefs_;
    private Engine eng_ = null;
-   private List<DataProcessor<TaggedImage>> taggedImageProcessors_;
-   private List<DataProcessor<ImageRequest>> imageRequestProcessors_;
+   private List<Class> taggedImageProcessors_;
+   private List<Class> imageRequestProcessors_;
    private boolean absoluteZ_;
 
    public AcquisitionWrapperEngine() {
-      imageRequestProcessors_ = new ArrayList<DataProcessor<ImageRequest>>();
-      BurstMaker burstMaker = new BurstMaker();
-      imageRequestProcessors_.add(burstMaker);
-
-      taggedImageProcessors_ = new ArrayList<DataProcessor<TaggedImage>>();
+      imageRequestProcessors_ = new ArrayList<Class>();
+      imageRequestProcessors_.add(BurstMaker.class);
+      taggedImageProcessors_ = new ArrayList<Class>();
    }
 
    public void acquire() throws MMException, MMAcqDataException {
@@ -130,11 +128,11 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
 
-   public void addProcessor(DataProcessor<TaggedImage> taggedImageProcessor) {
-      taggedImageProcessors_.add(taggedImageProcessor);
+   public void addImageProcessor(Class taggedImageProcessorClass) {
+      taggedImageProcessors_.add(taggedImageProcessorClass);
    }
 
-   public void removeProcessor(DataProcessor<TaggedImage> taggedImageProcessor) {
+   public void removeImageProcessor(Class taggedImageProcessor) {
       taggedImageProcessors_.remove(taggedImageProcessor);
    }
 

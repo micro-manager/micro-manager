@@ -11,6 +11,7 @@ import mmcorej.Configuration;
 import mmcorej.TaggedImage;
 import org.micromanager.navigation.MultiStagePosition;
 import org.micromanager.navigation.StagePosition;
+import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;
 
@@ -239,16 +240,30 @@ public class ImageTask implements EngineTask {
             core_.setShutterOpen(true);
             log("opened shutter");
          }
-         core_.snapImage(); //Should be: core_.snapImage(jsonMetadata);
-         log("snapped image");
 
-         if (eng_.autoShutterSelected_ && imageRequest_.CloseShutter) {
-            core_.waitForDevice(core_.getShutterDevice());
-            core_.setShutterOpen(false);
-            log("closed shutter");
+         Object pixels;
+         if (!imageRequest_.collectBurst) {
+            core_.snapImage(); //Should be: core_.snapImage(jsonMetadata);
+            log("snapped image");
+            if (eng_.autoShutterSelected_ && imageRequest_.CloseShutter) {
+               core_.waitForDevice(core_.getShutterDevice());
+               core_.setShutterOpen(false);
+               log("closed shutter");
+            }
+            pixels = core_.getImage();
+         } else {
+            if (imageRequest_.startBurstN > 0) {
+               core_.startSequenceAcquisition(imageRequest_.startBurstN,
+                       0, false);
+               log("started a burst with " + imageRequest_.startBurstN + " images.");
+            }
+            while (core_.getRemainingImageCount() == 0)
+               JavaUtils.sleep(5);
+            pixels = core_.popNextImage();
+            log("collected burst image");
          }
+        
 
-         Object pixels = core_.getImage();
          MDUtils.put(md_, "Acquisition-Source",core_.getCameraDevice());
          Configuration config = core_.getSystemStateCache();
          MDUtils.addConfiguration(md_, config);

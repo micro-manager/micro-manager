@@ -33,6 +33,6 @@ public class ImageRequest {
    public double zPosition;
    public double NextWaitTime = 0;
    public boolean stop = false;
-   public boolean startBurst = false;
+   public int startBurstN = 0;
    public boolean collectBurst = false;
 }

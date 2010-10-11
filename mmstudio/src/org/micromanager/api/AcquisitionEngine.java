@@ -305,8 +305,8 @@ public interface AcquisitionEngine {
    public boolean isPaused();
    public void restoreSystem();
 
-   public void addProcessor(DataProcessor<TaggedImage> processor);
-   public void removeProcessor(DataProcessor<TaggedImage> processor);
+   public void addImageProcessor(Class processor);
+   public void removeImageProcessor(Class processor);
 
    public boolean abortRequested();
 }

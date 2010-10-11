@@ -103,6 +103,14 @@ public class MMAcquisitionEngineMT implements AcquisitionEngine {
       throw new UnsupportedOperationException("Not supported yet.");
    }
 
+   public void addImageProcessor(Class processor) {
+      throw new UnsupportedOperationException("Not supported yet.");
+   }
+
+   public void removeImageProcessor(Class processor) {
+      throw new UnsupportedOperationException("Not supported yet.");
+   }
+
    // Class to hold some image metadata.  Start to refactor out some parts of Image5D
    private class ImageData {
 

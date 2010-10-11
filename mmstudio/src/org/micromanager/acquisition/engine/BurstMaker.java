@@ -5,6 +5,7 @@
 
 package org.micromanager.acquisition.engine;
 
+import java.util.LinkedList;
 import org.micromanager.api.DataProcessor;
 
 /**
@@ -12,32 +13,53 @@ import org.micromanager.api.DataProcessor;
  * @author arthur
  */
 public class BurstMaker extends DataProcessor<ImageRequest> {
-   ImageRequest lastRequest_ = null;
-   boolean currentlyInBurst_ = false;
+   private ImageRequest lastRequest_ = null;
+   private LinkedList<ImageRequest> requestBank_ = new LinkedList<ImageRequest>();
+   
    @Override
    protected void process() {
       ImageRequest thisRequest = this.poll();
       if (lastRequest_ != null) {
-         boolean burstValid
-                 = ((lastRequest_.exposure == thisRequest.exposure)
-                 && (lastRequest_.Position == thisRequest.Position)
-                 && (lastRequest_.SliceIndex  == thisRequest.SliceIndex)
-                 && (lastRequest_.ChannelIndex == thisRequest.ChannelIndex)
-                 && (thisRequest.WaitTime <= lastRequest_.exposure)
-                 && (thisRequest.AutoFocus == false));
-
-         if (burstValid) {
-            if (!currentlyInBurst_) {
-               lastRequest_.startBurst = true;
-               currentlyInBurst_ = true;
-            }
-            lastRequest_.collectBurst = true;
+         accumulateRequest(lastRequest_);
+         if (thisRequest.stop || !burstValid(lastRequest_, thisRequest)) {
+            produceRequests();
          }
-         produce(lastRequest_);
       }
       lastRequest_ = thisRequest;
-      if (thisRequest.stop)
+      
+      if (thisRequest.stop) {
          produce(thisRequest);
+         lastRequest_ = null;
+         requestStop();
+      }
+   }
+
+   private void accumulateRequest(ImageRequest request) {
+      requestBank_.add(request);
+   }
+
+   private void produceRequests() {
+      int n = requestBank_.size();
+      if (n > 1) {
+         ImageRequest firstRequest = requestBank_.getFirst();
+         firstRequest.startBurstN = n;
+      }
+      for (ImageRequest request:requestBank_) {
+         if (n > 1)
+            request.collectBurst = true;
+         produce(request);
+      }
+      requestBank_.clear();
+   }
+
+   private boolean burstValid(ImageRequest aRequest, ImageRequest nextRequest) {
+      return
+              ((aRequest.exposure == nextRequest.exposure)
+           && (aRequest.Position == nextRequest.Position)
+           && (aRequest.SliceIndex  == nextRequest.SliceIndex)
+           && (aRequest.ChannelIndex == nextRequest.ChannelIndex)
+           && (nextRequest.WaitTime <= lastRequest_.exposure)
+           && (nextRequest.AutoFocus == false));
    }
 
 }
