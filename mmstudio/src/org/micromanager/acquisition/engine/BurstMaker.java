@@ -5,7 +5,6 @@
 
 package org.micromanager.acquisition.engine;
 
-import org.micromanager.acquisition.engine.ImageRequest;
 import org.micromanager.api.DataProcessor;
 
 /**
@@ -33,11 +32,11 @@ public class BurstMaker extends DataProcessor<ImageRequest> {
             }
             lastRequest_.collectBurst = true;
          }
-         
          produce(lastRequest_);
       }
-
       lastRequest_ = thisRequest;
+      if (thisRequest.stop = true)
+         produce(thisRequest);
    }
 
 }
