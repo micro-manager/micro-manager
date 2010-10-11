@@ -7,6 +7,8 @@ package org.micromanager.acquisition.engine;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.micromanager.api.EngineTask;
 import java.util.concurrent.TimeUnit;
 import mmcorej.CMMCore;
@@ -59,6 +61,14 @@ public class Engine {
       @Override
       public void run() {
          startTimeNs_ = System.nanoTime();
+         // Make sure sequence acquisition isn't running:
+         if (core_.isSequenceRunning())
+            try {
+            core_.stopSequenceAcquisition();
+         } catch (Exception ex) {
+            ReportingUtils.logError(ex);
+         }
+         
          autoShutterSelected_ = core_.getAutoShutter();
 
          boolean shutterWasOpen = false;
