@@ -4,6 +4,7 @@
  */
 package org.micromanager.acquisition;
 
+import org.micromanager.acquisition.engine.BurstMaker;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -83,6 +84,10 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private boolean absoluteZ_;
 
    public AcquisitionWrapperEngine() {
+      imageRequestProcessors_ = new ArrayList<DataProcessor<ImageRequest>>();
+      BurstMaker burstMaker = new BurstMaker();
+      imageRequestProcessors_.add(burstMaker);
+
       taggedImageProcessors_ = new ArrayList<DataProcessor<TaggedImage>>();
    }
 
@@ -91,13 +96,21 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
          core_.setCircularBufferMemoryFootprint(32);
          SequenceSettings acquisitionSettings = gatherSequenceSettings();
 
-         // Setup the pipeline...
+         // SET UP THE PIPELINE...
+
          // ...Sequence generator...
          SequenceGenerator generator = new SequenceGenerator(acquisitionSettings, core_.getExposure());
          BlockingQueue<ImageRequest> generatorOutput = generator.begin();
 
+         // ...RequestProcessorStack...
+         ProcessorStack<ImageRequest> requestProcessorStack =
+                 new ProcessorStack<ImageRequest>(generatorOutput,
+                 imageRequestProcessors_);
+         BlockingQueue<ImageRequest> requestProcessorStackOutput = requestProcessorStack.begin();
+
          // ...Engine...
-         eng_ = new Engine(core_, gui_.getAutofocusManager(), generatorOutput, acquisitionSettings);
+         eng_ = new Engine(core_, gui_.getAutofocusManager(),
+                 requestProcessorStackOutput, acquisitionSettings);
          BlockingQueue<TaggedImage> engineOutput = eng_.begin();
 
          // ...ImageProcessorStack...

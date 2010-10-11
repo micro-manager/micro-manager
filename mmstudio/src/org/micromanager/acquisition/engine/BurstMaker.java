@@ -12,7 +12,7 @@ import org.micromanager.api.DataProcessor;
  *
  * @author arthur
  */
-class BurstMaker extends DataProcessor<ImageRequest> {
+public class BurstMaker extends DataProcessor<ImageRequest> {
    ImageRequest lastRequest_ = null;
    boolean currentlyInBurst_ = false;
    @Override
