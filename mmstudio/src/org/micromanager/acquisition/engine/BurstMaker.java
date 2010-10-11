@@ -29,6 +29,7 @@ public class BurstMaker extends DataProcessor<ImageRequest> {
          if (burstValid) {
             if (!currentlyInBurst_) {
                lastRequest_.startBurst = true;
+               currentlyInBurst_ = true;
             }
             lastRequest_.collectBurst = true;
          }
