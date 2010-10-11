@@ -9,8 +9,6 @@ MMJ_.jar:  \
 	$(srcdir)/src/org/micromanager/CalibrationEditor.java \
 	$(srcdir)/src/org/micromanager/ConfigGroupPad.java \
 	$(srcdir)/src/org/micromanager/ConfigPadButtonPanel.java \
-	$(srcdir)/src/org/micromanager/FastAcqDlg.java \
-	$(srcdir)/src/org/micromanager/GroupEditor.java \
 	$(srcdir)/src/org/micromanager/MMAboutDlg.java \
 	$(srcdir)/src/org/micromanager/MMAcquisitionEngineMT.java \
 	$(srcdir)/src/org/micromanager/MMIntroDlg.java \
@@ -59,10 +57,6 @@ MMJ_.jar:  \
 	$(srcdir)/src/org/micromanager/conf/RolesPage.java \
 	$(srcdir)/src/org/micromanager/conf/Setting.java \
 	$(srcdir)/src/org/micromanager/conf/SynchroPage.java \
-	$(srcdir)/src/org/micromanager/fastacq/DiskStreamingThread.java \
-	$(srcdir)/src/org/micromanager/fastacq/DisplayTimerTask.java \
-	$(srcdir)/src/org/micromanager/fastacq/GUIStatus.java \
-	$(srcdir)/src/org/micromanager/fastacq/StatusTimerTask.java \
 	$(srcdir)/src/org/micromanager/graph/ContrastPanel.java \
 	$(srcdir)/src/org/micromanager/graph/GraphData.java \
 	$(srcdir)/src/org/micromanager/graph/GraphFrame.java \
