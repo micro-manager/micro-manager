@@ -590,21 +590,9 @@ int SerialPort::GetAnswer(char* answer, unsigned bufLen, const char* term)
       return ERR_BUFFER_OVERRUN;
    }
    std::ostringstream logMsg;
-   unsigned long nCharactersRead(0);
-   std::vector<char> theData;
+   unsigned long answerOffset = 0;
    memset(answer,0,bufLen);
-   bool dataAlreadyAvailableOnFirstIteration = false;
-
-   // load the remainder from the last packet into the buffer.
-   for( std::vector<char>::iterator cby = charsFoundBeyondTerminator_.begin(); cby != charsFoundBeyondTerminator_.end(); ++cby)
-   {
-      answer[nCharactersRead++] = *cby;
-   }
-   charsFoundBeyondTerminator_.clear();
-   if( 0 < nCharactersRead)
-      dataAlreadyAvailableOnFirstIteration = true;
-
-   //CDeviceUtils::SleepMs((long)(0.5 + transmitCharWaitMs_));
+   char theData;
 
    MM::MMTime startTime = GetCurrentMMTime();
    MM::MMTime retryWarnTime(0);
@@ -612,85 +600,71 @@ int SerialPort::GetAnswer(char* answer, unsigned bufLen, const char* term)
    // warn of retries every 200 ms.
    MM::MMTime retryWarnInterval(0, 200000);
    int retryCounter = 0;
-   int retryCounterDisplayedInLog = 0;
    while ((GetCurrentMMTime() - startTime)  < answerTimeout)
    {
-      if (retryCounter > 2)
+      MM::MMTime tNow = GetCurrentMMTime();
+      if ( retryWarnInterval < tNow - retryWarnTime)
       {
-         MM::MMTime tNow = GetCurrentMMTime();
-         if ( retryWarnInterval < tNow - retryWarnTime)
+         retryWarnTime = tNow;
+         if( 1 < retryCounter)
          {
-            retryWarnTime = tNow;
             LogMessage((std::string("GetAnswer # retries = ") + 
-               boost::lexical_cast<std::string,int>(retryCounter)).c_str(), true);
-            retryCounterDisplayedInLog = retryCounter;
+                boost::lexical_cast<std::string,int>(retryCounter)).c_str(), true);
          }
+        retryCounter++;
       }
-      int nRead = 0;
-      do  // just a scope for the thread guard
+      bool anyRead =  pPort_->ReadOneCharacter(theData);        
+      if( anyRead )
       {
-         //MMThreadGuard g(portLock_);
-         theData = pPort_->ReadData();
-         nRead = theData.size();
-         if( 0 < nRead)
-            LogBinaryMessage(true, theData, true);
-
-      }
-      while ( bfalse_s );
-
-      if( 0 == nRead && (!dataAlreadyAvailableOnFirstIteration) )
-      {
-	     //Yield to other threads:
-         CDeviceUtils::SleepMs((long)(1 /*+ transmitCharWaitMs_*/));
-         retryCounter++;
-      }
-      else
-      {  // append these characters onto the received message
-         dataAlreadyAvailableOnFirstIteration = false;  // afterwards, we want to increment the retry counter
-         for( int offset = 0; offset < nRead; ++offset)
-            answer[nCharactersRead + offset] = theData.at(offset);
-         nCharactersRead += nRead;
-         if (bufLen <= nCharactersRead)
+         if (bufLen <= answerOffset)
          {
-            answer[bufLen-1] = '\0';
+            answer[answerOffset] = '\0';
             LogMessage("BUFFER_OVERRUN error occured!");
             return ERR_BUFFER_OVERRUN;
          }
-         else
-         {
-            answer[nCharactersRead] = '\0';
-         }
-
-         if (term == 0 )
-         {
-            if( retryCounterDisplayedInLog < retryCounter )
-               LogMessage((std::string("GetAnswer # retries = ") + 
-                  boost::lexical_cast<std::string,int>(retryCounter)).c_str(), true);
-            return DEVICE_OK; // no termintor specified
-         }
-         else
+         answer[answerOffset++] = theData;
+         // look for the terminator
+         if( 0 != term)
          {
             // check for terminating sequence
             char* termPos = strstr(answer, term);
             if (termPos != 0)
             {
-               // there may be characters in the buffer beyond the terminator !!
-               for( char* pbeyond = termPos+strlen(term)+1; pbeyond < (answer + nCharactersRead); ++ pbeyond)
+               // found the terminator!!
+               // erase the terminator from the answer;
+               for( unsigned int iterm = 1; iterm <= strlen(term); ++iterm)
                {
-                  charsFoundBeyondTerminator_.push_back(*pbeyond);
-                  *pbeyond = '\0';
+                  char *pAnswer = answer + answerOffset - iterm;
+                  if( answer <= pAnswer)
+                     pAnswer[0] =  '\0';
                }
-               *termPos = '\0';
-               MM::MMTime totalTime = GetCurrentMMTime() - startTime;
-               if( retryCounterDisplayedInLog < retryCounter )
+               if( 2 < retryCounter )
                   LogMessage((std::string("GetAnswer # retries = ") + 
                      boost::lexical_cast<std::string,int>(retryCounter)).c_str(), true);
+               LogMessage(( std::string("GetAnswer <- ") + std::string(answer)).c_str(), true);
+               return DEVICE_OK;
+            }
+         }
+         else
+         {
+            // a formatted answer without a terminator.
+            LogMessage((std::string("GetAnswer without terminator returned after ") + 
+               boost::lexical_cast<std::string,long>((long)((GetCurrentMMTime() - startTime).getMsec())) +
+               std::string("msec")).c_str(), true);
+            if( 4 < retryCounter)
+            {
+               LogMessage(( std::string("GetAnswer <- ") + std::string(answer)).c_str(), true);
                return DEVICE_OK;
             }
          }
       }
-   }
-
+      else
+      {
+         //Yield to other threads:
+         CDeviceUtils::SleepMs(1);
+         retryCounter++;
+       }
+   } // end while
    LogMessage("TERM_TIMEOUT error occured!");
    return ERR_TERM_TIMEOUT;
 }
