@@ -68,15 +68,15 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       dir_ = dir;
       newData_ = newData;
       diskCached_ = virtual;
+      summaryMetadata_ = new HashMap<String,String>();
+      MDUtils.put(summaryMetadata_, "MetadataVersion", "10");
    }
 
    public void setDimensions(int frames, int channels, int slices, int positions) throws MMScriptException {
       if (initialized_) {
          throw new MMScriptException("Can't change dimensions - the acquisition is already initialized");
       }
-      if (summaryMetadata_ == null) {
-         summaryMetadata_ = new HashMap<String,String>();
-      }
+
       numFrames_ = frames;
       numChannels_ = channels;
       numSlices_ = slices;
