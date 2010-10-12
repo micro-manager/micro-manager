@@ -447,7 +447,7 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
                        + "Do you want to save it?",
                        "Closing image...",
                        JOptionPane.YES_NO_CANCEL_OPTION);
-               if (result == JOptionPane.CANCEL_OPTION) {
+               if (result != JOptionPane.NO_OPTION) {
                   return;
                } else if (result == JOptionPane.YES_OPTION) {
                   if (!saveAs()) {
