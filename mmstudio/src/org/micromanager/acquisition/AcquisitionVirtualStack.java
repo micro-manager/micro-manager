@@ -83,6 +83,7 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
          int[] pos = imagePlus_.convertIndexToPosition(flatIndex);
          return imageCache_.getImage(pos[0] - 1, pos[1] - 1, pos[2] - 1, positionIndex_); // chan, slice, frame
       } catch (Exception e) {
+         ReportingUtils.logError(e);
          return null;
       }
    }

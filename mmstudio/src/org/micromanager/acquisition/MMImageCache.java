@@ -70,7 +70,11 @@ public class MMImageCache implements TaggedImageStorage {
          label += "/" + cache.hashCode();
          LabelQueue_.remove(label);
          LabelQueue_.add(label);
-         return (TaggedImage) taggedImgTable_.get(label).get();
+         SoftReference ref = taggedImgTable_.get(label);
+         if (ref == null)
+            return null;
+         else
+            return (TaggedImage) ref.get();
       }
 
       public Set<String> getLabels(MMImageCache cache) {

@@ -483,8 +483,10 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
       win.pack();
 
       if (!newData_) {
-         ((CompositeImage) hyperImage_).setChannelsUpdated();
-         hyperImage_.updateAndDraw();
+         if (hyperImage_.isComposite()) {
+            ((CompositeImage) hyperImage_).setChannelsUpdated();
+         }
+            hyperImage_.updateAndDraw();
       }
       updateWindow();
    }
