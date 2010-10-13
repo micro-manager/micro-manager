@@ -46,7 +46,7 @@ public class MDUtils {
    }
 
    public static int getPositionIndex(Map<String,String> map) throws Exception {
-      return getInt(map, "Acquisition-PositionIndex");
+      return getInt(map, "PositionIndex");
    }
 
    public static int getWidth(Map<String,String> map) throws Exception {
@@ -66,31 +66,31 @@ public class MDUtils {
    }
 
    public static int getSliceIndex(Map<String,String> map) throws Exception {
-      return getInt(map, "Acquisition-SliceIndex");
+      return getInt(map, "Slice");
    }
 
    public static int getChannelIndex(Map<String,String> map) throws Exception {
-      return getInt(map, "Acquisition-ChannelIndex");
+      return getInt(map, "ChannelIndex");
    }
 
    public static int getFrameIndex(Map<String,String> map) throws Exception {
-      return getInt(map, "Acquisition-FrameIndex");
+      return getInt(map, "Frame");
    }
 
    public static String getPositionName(Map<String,String> map) throws Exception {
-      return map.get("Acquisition-PositionName");
+      return map.get("PositionName");
    }
 
    public static String getChannelName(Map<String,String> map) throws Exception {
-      return map.get("Acquisition-ChannelName");
+      return map.get("Channel");
    }
 
    public static String getFileName(Map<String, String> map) {
-      return map.get("Acquisition-FileName");
+      return map.get("FileName");
    }
 
    public static void setFileName(Map<String, String> map, String filename) {
-      map.put("Acquisition-FileName", filename);
+      map.put("FileName", filename);
    }
 
    public static String getPixelType(Map<String, String> map)  throws Exception {

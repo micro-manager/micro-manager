@@ -250,9 +250,9 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
    private void updateStatusLine(TaggedImage taggedImg) {
       if (taggedImg != null) {
          try {
-            String time = NumberUtils.doubleStringCoreToDisplay(taggedImg.tags.get("Acquisition-TimeMs"));
-            String zPosition = taggedImg.tags.get("Acquisition-ZPositionUm");
-            String xyPosition = taggedImg.tags.get("Acquisition-PositionName");
+            String time = NumberUtils.doubleStringCoreToDisplay(taggedImg.tags.get("ElapsedTime-ms"));
+            String zPosition = taggedImg.tags.get("ZPositionUm");
+            String xyPosition = taggedImg.tags.get("PositionName");
             String chan;
             try {
                chan = MDUtils.getChannelName(taggedImg.tags);
@@ -277,8 +277,8 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
             updateStatusLine(taggedImg);
             try {
                if (acq_.acquisitionIsRunning()) {
-                  if (taggedImg != null && taggedImg.tags.containsKey("Acquisition-NextFrameTimeMs"))  {
-                     final long nextImageTime = MDUtils.getLong(taggedImg.tags, "Acquisition-NextFrameTimeMs");
+                  if (taggedImg != null && taggedImg.tags.containsKey("NextFrameTimeMs"))  {
+                     final long nextImageTime = MDUtils.getLong(taggedImg.tags, "NextFrameTimeMs");
                      if (System.nanoTime() / 1000000 < nextImageTime) {
                         final Timer timer = new Timer();
                         TimerTask task = new TimerTask() {

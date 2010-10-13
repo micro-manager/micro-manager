@@ -574,7 +574,7 @@ public class MMVirtualAcquisition implements AcquisitionInterface {
    }
 
    public void setChannelName(int channel, String name) throws MMScriptException {
-      displaySettings_[channel].put("ChannelName", name);
+      displaySettings_[channel].put("Channel", name);
    }
 
    public Map<String,String> getCurrentMetadata() {

@@ -4,6 +4,9 @@
  */
 package org.micromanager.acquisition.engine;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import org.micromanager.api.Autofocus;
 import org.micromanager.api.EngineTask;
 import java.util.HashMap;
 import mmcorej.CMMCore;
@@ -29,6 +32,7 @@ public class ImageTask implements EngineTask {
    boolean setZPosition_ = false;
    private final HashMap<String, String> md_;
    private double zPosition_;
+   private final SimpleDateFormat iso8601modified;
 
    ImageTask(Engine eng, ImageRequest imageRequest) {
       eng_ = eng;
@@ -36,6 +40,7 @@ public class ImageTask implements EngineTask {
       imageRequest_ = imageRequest;
       stopRequested_ = false;
       md_ = new HashMap<String, String>();
+      iso8601modified = new SimpleDateFormat("yyyy-MM-dd E HH:mm:ss Z");
    }
 
    private void log(String msg) {
@@ -167,14 +172,17 @@ public class ImageTask implements EngineTask {
    }
 
    public void autofocus() {
-      String afResult = "Acquisition-AutofocusResult";
+      String afResult = "AutofocusResult";
       StagePosition sp;
+      Autofocus afDevice;
       if (imageRequest_.AutoFocus) {
          try {
             String focusDevice = core_.getFocusDevice();
             core_.setPosition(focusDevice, zPosition_);
             core_.waitForDevice(focusDevice);
-            eng_.getAutofocusManager().getDevice().fullFocus();
+            afDevice = eng_.getAutofocusManager().getDevice();
+            afDevice.fullFocus();
+
             MDUtils.put(md_, afResult, "Success");
             if (imageRequest_.UsePosition) {
                sp = imageRequest_.Position.get(core_.getFocusDevice());
@@ -185,7 +193,7 @@ public class ImageTask implements EngineTask {
             core_.waitForDevice(focusDevice);
          } catch (Exception ex) {
             ReportingUtils.logError(ex);
-            MDUtils.put(md_,"Acquisition-AutofocusResult","Failure");
+            MDUtils.put(md_,"AutofocusResult","Failure");
          }
       }
    }
@@ -194,18 +202,18 @@ public class ImageTask implements EngineTask {
       //Gson gson = new Gson();
       //String jsonMetadata = gson.toJson(imageRequest_);
       waitDuringPause();
-      MDUtils.put(md_, "Acquisition-SliceIndex", imageRequest_.SliceIndex);
+      MDUtils.put(md_, "Slice", imageRequest_.SliceIndex);
       if (imageRequest_.UseChannel) {
-         MDUtils.put(md_, "Acquisition-ChannelName", imageRequest_.Channel.config_);
+         MDUtils.put(md_, "Channel", imageRequest_.Channel.config_);
       }
-      MDUtils.put(md_, "Acquisition-PositionIndex", imageRequest_.PositionIndex);
-      MDUtils.put(md_, "Acquisition-ChannelIndex", imageRequest_.ChannelIndex);
-      MDUtils.put(md_, "Acquisition-FrameIndex", imageRequest_.FrameIndex);
+      MDUtils.put(md_, "PositionIndex", imageRequest_.PositionIndex);
+      MDUtils.put(md_, "ChannelIndex", imageRequest_.ChannelIndex);
+      MDUtils.put(md_, "Frame", imageRequest_.FrameIndex);
 
       if (imageRequest_.UsePosition) {
-         MDUtils.put(md_, "Acquisition-PositionName", imageRequest_.Position.getLabel());
+         MDUtils.put(md_, "PositionName", imageRequest_.Position.getLabel());
       }
-      MDUtils.put(md_, "Acquisition-SlicePosition", imageRequest_.SlicePosition);
+      MDUtils.put(md_, "SlicePosition", imageRequest_.SlicePosition);
 
       long bits = core_.getBytesPerPixel() * 8;
       String lbl = "";
@@ -214,13 +222,13 @@ public class ImageTask implements EngineTask {
       } else if (core_.getNumberOfComponents() == 4) {
          lbl = "RGB";
       }
-      MDUtils.put(md_, "Acquisition-ExposureMs", imageRequest_.exposure);
-      MDUtils.put(md_, "Acquisition-PixelSizeUm", core_.getPixelSizeUm());
+      MDUtils.put(md_, "Exposure-ms", imageRequest_.exposure);
+      MDUtils.put(md_, "PixelSizeUm", core_.getPixelSizeUm());
       try {
-         MDUtils.put(md_, "Acquisition-ZPositionUm", core_.getPosition(core_.getFocusDevice()));
+         MDUtils.put(md_, "ZPositionUm", core_.getPosition(core_.getFocusDevice()));
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
-         MDUtils.put(md_, "Acquisition-ZPositionUm", "");
+         MDUtils.put(md_, "ZPositionUm", "");
       }
 
       MDUtils.put(md_, "Image-PixelType", lbl + bits);
@@ -232,7 +240,7 @@ public class ImageTask implements EngineTask {
       }
 
       long dTime = System.nanoTime() - eng_.getStartTimeNs();
-      MDUtils.put(md_, "Acquisition-TimeMs", ((double) dTime) / 1e9);
+      MDUtils.put(md_, "ElapsedTime-ms", ((double) dTime) / 1e9);
 
       try {
          core_.waitForDevice(core_.getShutterDevice());
@@ -268,14 +276,15 @@ public class ImageTask implements EngineTask {
          }
         
 
-         MDUtils.put(md_, "Acquisition-Source",core_.getCameraDevice());
+         MDUtils.put(md_, "Source",core_.getCameraDevice());
          Configuration config = core_.getSystemStateCache();
          MDUtils.addConfiguration(md_, config);
          if (imageRequest_.NextWaitTime > 0) {
             long nextFrameTimeMs = (long) (imageRequest_.NextWaitTime + eng_.lastWakeTime_);
-            MDUtils.put(md_, "Acquisition-NextFrameTimeMs", nextFrameTimeMs);
+            MDUtils.put(md_, "NextFrameTimeMs", nextFrameTimeMs);
          }
          MDUtils.addRandomUUID(md_);
+         MDUtils.put("Time", iso8601modified.format(new Date()));
          TaggedImage taggedImage = new TaggedImage(pixels, md_);
 
          eng_.imageReceivingQueue_.add(taggedImage);
