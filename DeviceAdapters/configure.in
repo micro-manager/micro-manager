@@ -157,7 +157,7 @@ else
                AC_MSG_RESULT(["libusb not found"])                           
             else                                                             
                AC_MSG_RESULT(["libusb.a" found])                             
-               LIBDC1394="$USBLIBDIR/libusb.a"                               
+               LIBUSB="$USBLIBDIR/libusb.a"                               
             fi                                                               
          ;;                                                                  
       esac                                                                   
