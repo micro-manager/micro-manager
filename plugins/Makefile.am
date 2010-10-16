@@ -43,13 +43,14 @@ StageControl.jar:  \
 	cp -r $(srcdir)/StageControl/src/org/micromanager/stagecontrol/icons build/org/micromanager/stagecontrol/
 	cd build && jar cf ../StageControl.jar * 
 
-all: MMTracker_.jar PixelCalibrator.jar RecallPlugin.jar StageControl.jar #SlideExplorer.jar
+all: MMTracker_.jar PixelCalibrator.jar RecallPlugin.jar StageControl.jar 
+##SlideExplorer.jar
 
 install: 
 	test -d $(IJPATH)/mmplugins || mkdir $(IJPATH)/mmplugins
 	cp MMTracker_.jar $(IJPATH)/mmplugins
 	cp PixelCalibrator.jar $(IJPATH)/mmplugins
-	# cp SlideExplorer.jar $(IJPATH)/mmplugins
+	## cp SlideExplorer.jar $(IJPATH)/mmplugins
 	cp RecallPlugin.jar $(IJPATH)/mmplugins
 	cp StageControl.jar $(IJPATH)/mmplugins
 	
