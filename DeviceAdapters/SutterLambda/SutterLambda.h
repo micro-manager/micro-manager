@@ -37,6 +37,8 @@
 #define ERR_PORT_CHANGE_FORBIDDEN    10004
 #define ERR_SET_POSITION_FAILED      10005
 #define ERR_UNKNOWN_SHUTTER_MODE     10006
+#define ERR_UNKNOWN_SHUTTER_ND       10007
+#define ERR_NO_ANSWER                10008
 
 class Wheel : public CStateDeviceBase<Wheel>
 {
@@ -97,20 +99,28 @@ public:
    // ----------------
    int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
-   //int OnDelay(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnND(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnControllerID(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    bool ControllerBusy();
    bool SetShutterPosition(bool state);
    bool SetShutterMode(const char* mode);
+   bool SetND(unsigned int nd);
+   int GetControllerType(std::string& type, std::string& id);
+   int GoOnLine();
+
    bool initialized_;
    const int id_;
    std::string name_;
    std:: string port_;
+   std::string controllerType_;
+   std::string controllerId_;
    double answerTimeoutMs_;
    MM::MMTime changedTime_;
    std::string curMode_;
+   unsigned int nd_;
    Shutter& operator=(Shutter& /*rhs*/) {assert(false); return *this;}
 };
 

@@ -44,6 +44,8 @@ const char* g_DG4ShutterName = "Shutter-DG4";
 const char* g_ShutterModeProperty = "Mode";
 const char* g_FastMode = "Fast";
 const char* g_SoftMode = "Soft";
+const char* g_NDMode = "ND";
+const char* g_ControllerID = "Controller Info";
 
 using namespace std;
 
@@ -497,10 +499,14 @@ Shutter::Shutter(const char* name, int id) :
    initialized_(false), 
    id_(id), 
    name_(name), 
+   nd_(1),
+   controllerType_("10-2"),
+   controllerId_(""),
    answerTimeoutMs_(200), 
    curMode_(g_FastMode)
 {
    InitializeDefaultErrorMessages();
+   SetErrorText (ERR_NO_ANSWER, "No Sutter Controller found.  Is it switched on and connected to the specified comunication port?");
 
    // create pre-initialization properties
    // ------------------------------------
@@ -516,7 +522,6 @@ Shutter::Shutter(const char* name, int id) :
    CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
 
    EnableDelay();
-   //UpdateStatus();
 }
 
 Shutter::~Shutter()
@@ -547,29 +552,43 @@ int Shutter::Initialize()
    AddAllowedValue(MM::g_Keyword_State, "0");
    AddAllowedValue(MM::g_Keyword_State, "1");
 
-   // Shutter mode
-   // ------------
-   pAct = new CPropertyAction (this, &Shutter::OnMode);
-   vector<string> modes;
-   modes.push_back(g_FastMode);
-   modes.push_back(g_SoftMode);
 
-   CreateProperty(g_ShutterModeProperty, g_FastMode, MM::String, false, pAct);
-   SetAllowedValues(g_ShutterModeProperty, modes);
+   int j=0;
+   while (GoOnLine() != DEVICE_OK && j < 4)
+      j++;
+   if (j >= 4)
+      return ERR_NO_ANSWER;
 
-   // Transfer to On Line
-   unsigned char setSerial = (unsigned char)238;
-   ret = WriteToComPort(port_.c_str(), &setSerial, 1);
-   if (DEVICE_OK != ret)
-      return ret;
-
-   // set initial values
-   SetProperty(g_ShutterModeProperty, curMode_.c_str());
-
-   ret = UpdateStatus();
+   ret = GetControllerType(controllerType_, controllerId_);
    if (ret != DEVICE_OK)
       return ret;
 
+   CreateProperty(g_ControllerID, controllerId_.c_str(), MM::String, true);
+   std::string msg = "Controller reported ID " +  controllerId_;
+   LogMessage(msg.c_str());
+
+   // Shutter mode
+   // ------------
+   if (controllerType_ == "SC" || controllerType_ == "10-3") {
+      pAct = new CPropertyAction (this, &Shutter::OnMode);
+      vector<string> modes;
+      modes.push_back(g_FastMode);
+      modes.push_back(g_SoftMode);
+      modes.push_back(g_NDMode);
+
+      CreateProperty(g_ShutterModeProperty, g_FastMode, MM::String, false, pAct);
+      SetAllowedValues(g_ShutterModeProperty, modes);
+      // set initial value
+      SetProperty(g_ShutterModeProperty, curMode_.c_str());
+
+      // Neutral Density-mode Shutter (will not work with 10-2 controller)
+      pAct = new CPropertyAction(this, &Shutter::OnND);
+      CreateProperty("NDSetting", "1", MM::Integer, false, pAct);
+      SetPropertyLimits("NDSetting", 1, 144);
+   }
+
+   if (ret != DEVICE_OK)
+      return ret;
 
    // Needed for Busy flag
    changedTime_ = GetCurrentMMTime();
@@ -638,9 +657,9 @@ bool Shutter::SetShutterPosition(bool state)
       CDeviceUtils::SleepMs(10);
    }
 
-   unsigned char msg[2];
+   unsigned char msg[1];
    msg[0] = command;
-   msg[1] = 13; // CR
+   // msg[1] = 13; // CR
 
    // send command
    if (DEVICE_OK != PurgeComPort(port_.c_str()))
@@ -718,38 +737,137 @@ bool Shutter::ControllerBusy()
 
 bool Shutter::SetShutterMode(const char* mode)
 {
-   unsigned char msg[3];
-   //msg[0] = 0;
+   int nrChars = 2;
+   unsigned char msg[nrChars];
+
+   if (strcmp(mode, g_NDMode) == 0)
+      return SetND(nd_);
 
    if (strcmp(mode, g_FastMode) == 0)
       msg[0] = 220;
    else if (strcmp(mode, g_SoftMode) == 0)
       msg[0] = 221;
+   else if (strcmp(mode, g_NDMode) == 0)
+      return SetND(nd_);
    else
       return false;
 
    msg[1] = (unsigned char)id_ + 1;
-   msg[2] = 13; // CR
+ 
+   // Shutter number is not needed for SC controller
+   if (controllerType_ == "SC")
+      nrChars = 1;
 
    // send command
-   if (DEVICE_OK != WriteToComPort(port_.c_str(), msg, 3))
+   if (DEVICE_OK != WriteToComPort(port_.c_str(), msg, nrChars))
       return false;
 
    return true;
 }
 
+bool Shutter::SetND(unsigned int nd)
+{
+   int nrchars = 3;
+   unsigned char msg[nrchars];
+
+   msg[0] = 222;
+   if (controllerType_ == "SC") {
+      msg[1] = nd;
+      nrchars = 2;
+   } else {
+      msg[1] = (unsigned char)id_ + 1;
+      msg[2] = nd;
+   }
+
+   // send command
+   if (DEVICE_OK != WriteToComPort(port_.c_str(), msg, nrchars))
+      return false;
+
+   return true;
+}
+
+int Shutter::GoOnLine() 
+{
+   // Transfer to On Line
+   unsigned char setSerial = (unsigned char)238;
+   int ret = WriteToComPort(port_.c_str(), &setSerial, 1);
+   if (DEVICE_OK != ret)
+      return ret;
+
+   unsigned char answer = 0;
+   bool responseReceived = false;
+   int unsigned long read;
+   MM::MMTime startTime = GetCurrentMMTime();
+   do {
+      if (DEVICE_OK != ReadFromComPort(port_.c_str(), &answer, 1, read))
+         return false;
+      if (answer == 238)
+         responseReceived = true;
+   }
+   while( !responseReceived && (GetCurrentMMTime() - startTime) < (answerTimeoutMs_ * 1000.0) );
+   if (!responseReceived)
+      return ERR_NO_ANSWER;
+
+   return DEVICE_OK;
+}
+int Shutter::GetControllerType(std::string& type, std::string& id) 
+{
+   PurgeComPort(port_.c_str());
+   unsigned char msg[1];
+   msg[0]  = 253;
+   // send command
+   int ret = WriteToComPort(port_.c_str(), msg, 1);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   unsigned char ans = 0;
+   bool responseReceived = false;
+   int unsigned long read;
+   MM::MMTime startTime = GetCurrentMMTime();
+   do {
+      if (DEVICE_OK != ReadFromComPort(port_.c_str(), &ans, 1, read))
+         return false;
+      if (read > 0)
+         printf("Read char: %x", ans);
+      if (ans == 253)
+         responseReceived = true;
+      CDeviceUtils::SleepMs(2);
+   }
+   while( !responseReceived && (GetCurrentMMTime() - startTime) < (answerTimeoutMs_ * 1000.0) );
+   if (!responseReceived)
+      return ERR_NO_ANSWER;
+
+   std::string answer;
+   ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+   if (ret != DEVICE_OK || answer.length() == 0 ) {
+      type = "10-2";
+      id = "10-2";
+   } else {
+      if (answer.substr(0, 2) == "SC") {
+         type = "SC";
+      } else if (answer.substr(0, 4) == "10-3") {
+         type = "10-3";
+      }
+      id = answer.substr(0, answer.length() - 2);
+   }
+
+   return DEVICE_OK;
+}
+
+
+
 ///////////////////////////////////////////////////////////////////////////////
 // Action handlers
 ///////////////////////////////////////////////////////////////////////////////
 
-int Shutter::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-   if (eAct == MM::BeforeGet)
+   int Shutter::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
-   }
-   else if (eAct == MM::AfterSet)
-   {
-      long pos;
+      if (eAct == MM::BeforeGet)
+      {
+      }
+      else if (eAct == MM::AfterSet)
+      {
+         long pos;
       pProp->Get(pos);
 
       // apply the value
@@ -780,24 +898,6 @@ int Shutter::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-/*
-int Shutter::OnDelay(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-   if (eAct == MM::BeforeGet)
-   {
-      pProp->Set(this->GetDelayMs());
-   }
-   else if (eAct == MM::AfterSet)
-   {
-      double delay;
-      pProp->Get(delay);
-      this->SetDelayMs(delay);
-   }
-
-   return DEVICE_OK;
-}
-*/
-
 int Shutter::OnMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
@@ -818,6 +918,25 @@ int Shutter::OnMode(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+int Shutter::OnND(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set((long) nd_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      string ts;
+      pProp->Get(ts);
+      std::istringstream os(ts);
+      os >> nd_;
+      if (curMode_ == g_NDMode) {
+         SetND(nd_);
+      }
+   }
+
+   return DEVICE_OK;
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // DG4 Devices
