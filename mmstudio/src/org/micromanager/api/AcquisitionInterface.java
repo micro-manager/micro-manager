@@ -71,9 +71,9 @@ public interface AcquisitionInterface {
 
    void setRootDirectory(String dir) throws MMScriptException;
 
-   void setSummaryProperties(Map<String,String> md) throws MMScriptException;
+   void setSummaryProperties(JSONObject md) throws MMScriptException;
 
-   void setSystemState(Map<String,String> md) throws MMScriptException;
+   void setSystemState(JSONObject md) throws MMScriptException;
 
    void setSystemState(int frame, int channel, int slice, JSONObject state) throws MMScriptException;
 

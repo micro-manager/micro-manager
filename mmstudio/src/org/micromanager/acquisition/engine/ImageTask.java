@@ -12,6 +12,7 @@ import java.util.HashMap;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.TaggedImage;
+import org.json.JSONObject;
 import org.micromanager.navigation.MultiStagePosition;
 import org.micromanager.navigation.StagePosition;
 import org.micromanager.utils.JavaUtils;
@@ -30,7 +31,7 @@ public class ImageTask implements EngineTask {
    private boolean stopRequested_;
    private boolean pauseRequested_;
    boolean setZPosition_ = false;
-   private final HashMap<String, String> md_;
+   private final JSONObject md_;
    private double zPosition_;
    private final SimpleDateFormat iso8601modified;
 
@@ -39,7 +40,7 @@ public class ImageTask implements EngineTask {
       core_ = eng.core_;
       imageRequest_ = imageRequest;
       stopRequested_ = false;
-      md_ = new HashMap<String, String>();
+      md_ = new JSONObject();
       iso8601modified = new SimpleDateFormat("yyyy-MM-dd E HH:mm:ss Z");
    }
 
@@ -130,14 +131,14 @@ public class ImageTask implements EngineTask {
                   } else {
                      core_.setPosition(sp.stageName, sp.x);
                      core_.waitForDevice(sp.stageName);
-                     MDUtils.put(md_,"Acquisition-"+sp.stageName+"RequestedZPosition", sp.x);
+                     md_.put("Acquisition-"+sp.stageName+"RequestedZPosition", sp.x);
                   }
 
                } else if (sp.numAxes == 2) {
                   core_.setXYPosition(sp.stageName, sp.x, sp.y);
                   core_.waitForDevice(sp.stageName);
-                  MDUtils.put(md_,"Acquisition-"+sp.stageName+"RequestedXPosition", sp.x);
-                  MDUtils.put(md_,"Acquisition-"+sp.stageName+"RequestedYPosition", sp.y);
+                  md_.put("Acquisition-"+sp.stageName+"RequestedXPosition", sp.x);
+                  md_.put("Acquisition-"+sp.stageName+"RequestedYPosition", sp.y);
                }
                log("position set\n");
             }
@@ -160,7 +161,11 @@ public class ImageTask implements EngineTask {
                }
             } else {
                if (imageRequest_.WaitTime > 0) {
-                  MDUtils.put(md_, "Acquisition-TimingState", "Lagging");
+                  try {
+                     md_.put("Acquisition-TimingState", "Lagging");
+                  } catch (Exception ex) {
+                     ReportingUtils.logError(ex);
+                  }
                }
                break;
             }
@@ -183,7 +188,7 @@ public class ImageTask implements EngineTask {
             afDevice = eng_.getAutofocusManager().getDevice();
             afDevice.fullFocus();
 
-            MDUtils.put(md_, afResult, "Success");
+            md_.put(afResult, "Success");
             if (imageRequest_.UsePosition) {
                sp = imageRequest_.Position.get(core_.getFocusDevice());
                if (sp != null)
@@ -193,7 +198,11 @@ public class ImageTask implements EngineTask {
             core_.waitForDevice(focusDevice);
          } catch (Exception ex) {
             ReportingUtils.logError(ex);
-            MDUtils.put(md_,"AutofocusResult","Failure");
+            try {
+               md_.put("AutofocusResult", "Failure");
+            } catch (Exception ex1) {
+               ReportingUtils.logError(ex1);
+            }
          }
       }
    }
@@ -202,18 +211,19 @@ public class ImageTask implements EngineTask {
       //Gson gson = new Gson();
       //String jsonMetadata = gson.toJson(imageRequest_);
       waitDuringPause();
-      MDUtils.put(md_, "Slice", imageRequest_.SliceIndex);
+      try {
+      md_.put("Slice", imageRequest_.SliceIndex);
       if (imageRequest_.UseChannel) {
-         MDUtils.put(md_, "Channel", imageRequest_.Channel.config_);
+         md_.put("Channel", imageRequest_.Channel.config_);
       }
-      MDUtils.put(md_, "PositionIndex", imageRequest_.PositionIndex);
-      MDUtils.put(md_, "ChannelIndex", imageRequest_.ChannelIndex);
-      MDUtils.put(md_, "Frame", imageRequest_.FrameIndex);
+      md_.put("PositionIndex", imageRequest_.PositionIndex);
+      md_.put("ChannelIndex", imageRequest_.ChannelIndex);
+      md_.put("Frame", imageRequest_.FrameIndex);
 
       if (imageRequest_.UsePosition) {
-         MDUtils.put(md_, "PositionName", imageRequest_.Position.getLabel());
+         md_.put("PositionName", imageRequest_.Position.getLabel());
       }
-      MDUtils.put(md_, "SlicePosition", imageRequest_.SlicePosition);
+      md_.put("SlicePosition", imageRequest_.SlicePosition);
 
       long bits = core_.getBytesPerPixel() * 8;
       String lbl = "";
@@ -222,16 +232,15 @@ public class ImageTask implements EngineTask {
       } else if (core_.getNumberOfComponents() == 4) {
          lbl = "RGB";
       }
-      MDUtils.put(md_, "Exposure-ms", imageRequest_.exposure);
-      MDUtils.put(md_, "PixelSizeUm", core_.getPixelSizeUm());
+      md_.put("Exposure-ms", imageRequest_.exposure);
+      md_.put("PixelSizeUm", core_.getPixelSizeUm());
       try {
-         MDUtils.put(md_, "ZPositionUm", core_.getPosition(core_.getFocusDevice()));
+         md_.put("ZPositionUm", core_.getPosition(core_.getFocusDevice()));
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
-         MDUtils.put(md_, "ZPositionUm", "");
       }
 
-      MDUtils.put(md_, "Image-PixelType", lbl + bits);
+      md_.put("PixelType", lbl + bits);
       try {
          MDUtils.setWidth(md_, (int) core_.getImageWidth());
          MDUtils.setHeight(md_, (int) core_.getImageHeight());
@@ -240,8 +249,10 @@ public class ImageTask implements EngineTask {
       }
 
       long dTime = System.nanoTime() - eng_.getStartTimeNs();
-      MDUtils.put(md_, "ElapsedTime-ms", ((double) dTime) / 1e9);
-
+      md_.put("ElapsedTime-ms", ((double) dTime) / 1e9);
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
+      }
       try {
          core_.waitForDevice(core_.getShutterDevice());
          if (core_.getAutoShutter())
@@ -276,19 +287,20 @@ public class ImageTask implements EngineTask {
          }
         
 
-         MDUtils.put(md_, "Source",core_.getCameraDevice());
+         md_.put("Source",core_.getCameraDevice());
          Configuration config = core_.getSystemStateCache();
          MDUtils.addConfiguration(md_, config);
          if (imageRequest_.NextWaitTime > 0) {
             long nextFrameTimeMs = (long) (imageRequest_.NextWaitTime + eng_.lastWakeTime_);
-            MDUtils.put(md_, "NextFrameTimeMs", nextFrameTimeMs);
+            md_.put("NextFrameTimeMs", nextFrameTimeMs);
          }
          MDUtils.addRandomUUID(md_);
-         MDUtils.put(md_, "Time", iso8601modified.format(new Date()));
+         md_.put("Time", iso8601modified.format(new Date()));
          TaggedImage taggedImage = new TaggedImage(pixels, md_);
 
          eng_.imageReceivingQueue_.add(taggedImage);
 
+         ReportingUtils.logMessage(md_.toString(2));
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }

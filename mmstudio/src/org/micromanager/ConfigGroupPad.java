@@ -315,7 +315,7 @@ public class ConfigGroupPad extends JScrollPane{
        public void updateStatus() {
            try {
                StrVector groups = core_.getAvailableConfigGroups();
-               HashMap<String, String> oldGroupHash = new HashMap<String, String>();
+               HashMap<String,String> oldGroupHash = new HashMap<String,String>();
                for (StateItem group : groupList_) {
                    oldGroupHash.put(group.group, group.config);
                }

@@ -5,8 +5,8 @@
 
 package org.micromanager.api;
 
-import java.util.Map;
 import mmcorej.TaggedImage;
+import org.json.JSONObject;
 import org.micromanager.utils.MMException;
 
 /**
@@ -18,10 +18,10 @@ public interface TaggedImageStorage {
                                int frameIndex, int positionIndex);
    public String putImage(TaggedImage taggedImage) throws MMException;
    public void finished();
-   public void setSummaryMetadata(Map<String,String> md);
-   public Map<String,String> getSummaryMetadata();
+   public void setSummaryMetadata(JSONObject md);
+   public JSONObject getSummaryMetadata();
    public void setComment(String text);
    public String getComment();
-   public void setDisplaySettings(Map<String,String> settings);
-   public Map<String,String> getDisplaySettings();
+   public void setDisplaySettings(JSONObject settings);
+   public JSONObject getDisplaySettings();
 }

@@ -6,7 +6,7 @@ import java.util.Hashtable;
 
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.utils.MMScriptException;
-import org.micromanager.acquisition.MMVirtualAcquisition;
+import org.micromanager.acquisition.MMVirtualAcquisitionDisplay;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.TaggedImageStorage;
 
@@ -23,8 +23,8 @@ public class AcquisitionManager {
       else {
          TaggedImageStorage imageFileManager = new TaggedImageStorageDiskDefault(rootDir);
          MMImageCache imageCache_ = new MMImageCache(imageFileManager);
-         MMVirtualAcquisition virtAcq = new MMVirtualAcquisition(name, rootDir, false, true);
-         acqs_.put(name, virtAcq);
+         MMVirtualAcquisitionDisplay virtAcq = new MMVirtualAcquisitionDisplay(rootDir, false, true);
+        // acqs_.put(name, virtAcq);
          virtAcq.setCache(imageCache_);
          virtAcq.initialize();
          virtAcq.show(0);
@@ -46,7 +46,7 @@ public class AcquisitionManager {
       if (acquisitionExists(name)) {
          throw new MMScriptException("The name is in use");
       } else {
-        acqs_.put(name, new MMVirtualAcquisition(name, rootDir, true, virtual));
+     //   acqs_.put(name, new MMVirtualAcquisitionDisplay(name, rootDir, true, virtual));
       }
    }
    

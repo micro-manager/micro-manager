@@ -19,8 +19,6 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -41,8 +39,8 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
    private boolean firstElement_;
    private BufferedWriter metadataStream_;
    private boolean newDataSet_;
-   private Map<String,String> summaryMetadata_;
-   private HashMap <String,String> filenameTable_;
+   private JSONObject summaryMetadata_;
+   private HashMap<String,String> filenameTable_;
    private boolean dataSetOpened_;
 
    TaggedImageStorageDiskDefault(String dir) {
@@ -50,7 +48,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
    }
 
    TaggedImageStorageDiskDefault(String dir, boolean newDataSet,
-           Map<String,String> summaryMetadata) {
+           JSONObject summaryMetadata) {
       summaryMetadata_ = summaryMetadata;
       dir_ = dir;
       newDataSet_ = newDataSet;
@@ -67,36 +65,39 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
    }
 
    public String putImage(TaggedImage taggedImg) throws MMException {
-      if (newDataSet_ == false) {
-         throw new MMException("This ImageFileManager is read-only.");
-      }
-      if (!dataSetOpened_) {
+      try {
+         if (newDataSet_ == false) {
+            throw new MMException("This ImageFileManager is read-only.");
+         }
+         if (!dataSetOpened_) {
+            try {
+               openNewDataSet(taggedImg);
+            } catch (Exception ex) {
+               ReportingUtils.logError(ex);
+            }
+         }
+         JSONObject md = taggedImg.tags;
+         Object img = taggedImg.pix;
+         String tiffFileName = createFileName(md);
+
          try {
-            openNewDataSet();
+            String posName = MDUtils.getPositionName(md);
+            JavaUtils.createDirectory(dir_ + "/" + posName);
+            tiffFileName = posName + "/" + tiffFileName;
          } catch (Exception ex) {
             ReportingUtils.logError(ex);
          }
-      }
 
-      Map<String, String> md = taggedImg.tags;
-      Object img = taggedImg.pix;
-      String tiffFileName = createFileName(md);
-      String posName;
-      try {
-         posName = MDUtils.getPositionName(md);
-         JavaUtils.createDirectory(dir_ + "/" + posName);
+         MDUtils.setFileName(md, tiffFileName);
+         saveImageFile(img, md, dir_, tiffFileName);
+         writeFrameMetadata(md, tiffFileName);
+         String label = MDUtils.getLabel(md);
+         filenameTable_.put(label, tiffFileName);
+         return MDUtils.getLabel(md);
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
-         posName = "null";
+         return null;
       }
-
-      tiffFileName = posName + "/" + tiffFileName;
-      MDUtils.setFileName(md, tiffFileName);
-      saveImageFile(img, md, dir_, tiffFileName);
-      writeFrameMetadata(md, tiffFileName);
-      String label = MDUtils.getLabel(md);
-      filenameTable_.put(label, tiffFileName);
-      return MDUtils.getLabel(md);
    }
 
    public TaggedImage getImage(int channel, int slice, int frame, int position) {
@@ -105,7 +106,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       if (imp != null) {
          try {
             ImageProcessor proc = imp.getProcessor();
-            Map<String, String> md = yamlToMetadata((String) imp.getProperty("Info"));
+            JSONObject md = new JSONObject((String) imp.getProperty("Info"));
             String pixelType = MDUtils.getPixelType(md);
             Object img;
             if (pixelType.contentEquals("GRAY8") || pixelType.contentEquals("GRAY16")) {
@@ -135,41 +136,41 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       }
    }
 
-   private String createFileName(Map<String,String> md) {
+   private String createFileName(JSONObject md) {
       try {
+         int frame;
+         int slice;
+         String channel;
+         try {
+            frame = MDUtils.getFrameIndex(md);
+         } catch (Exception e) {
+            frame = 0;
+         }
+         try {
+            channel = MDUtils.getChannelName(md);
+         } catch (Exception e) {
+            channel = "";
+         }
+         try {
+            slice = MDUtils.getSliceIndex(md);
+         } catch (Exception e) {
+            slice = 0;
+         }
+
+
          return String.format("img_%09d_%s_%03d.tif",
-                 MDUtils.getFrameIndex(md),
-                 MDUtils.getChannelName(md),
-                 MDUtils.getSliceIndex(md));
+                 frame,
+                 channel,
+                 slice);
       } catch (Exception e) {
          ReportingUtils.logError(e);
          return "";
       }
    }
 
-   private static String metadataToYaml(Map<String,String> md) {
-      String yaml = "";
-      for (String key : md.keySet()) {
-         yaml += key + ": " + md.get(key) + "\r\n";
-      }
-      return yaml;
-   }
-
-   private static Map<String,String> yamlToMetadata(String yaml) {
-      Map<String,String> md = new HashMap<String,String>();
-      String[] lines = yaml.split("\r\n");
-      for (String line : lines) {
-         String[] parts = line.split(": ");
-         if (parts.length == 2) {
-            md.put(parts[0], parts[1]);
-         }
-      }
-      return md;
-   }
-
-   private void writeFrameMetadata(Map<String,String> md, String fileName) {
-      try {
-         String title = "FrameKey-" + MDUtils.getPositionName(md) + "-" + MDUtils.getFrameIndex(md) + "-" + MDUtils.getChannelName(md) + "-" + MDUtils.getSliceIndex(md);
+   private void writeFrameMetadata(JSONObject md, String fileName) {
+      try {    
+         String title = "FrameKey-" + MDUtils.getFrameIndex(md) + "-" + MDUtils.getChannelIndex(md) + "-" + MDUtils.getSliceIndex(md);
          md.put("Filename", fileName);
          writeMetadata(md, title);
       } catch (Exception ex) {
@@ -177,26 +178,13 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       }
    }
 
-   private void writeMetadata(Map<String,String> md, String title) {
+   private void writeMetadata(JSONObject md, String title) {
       try {
          if (!firstElement_) {
             metadataStream_.write(",\r\n");
          }
-         metadataStream_.write("\t\"" + title + "\": {\r\n");
-         Set<String> keys = md.keySet();
-         long n = keys.size();
-         int i=0;
-         for (String key:keys) {
-            ++i;
-            metadataStream_.write("\t\t\"" + key + "\": \"" + md.get(key) + "\"");
-            if (i < n) {
-               metadataStream_.write(",\r\n");
-            } else {
-               metadataStream_.write("\r\n");
-            }
-         }
-
-         metadataStream_.write("\t}");
+         metadataStream_.write("\"" + title + "\": ");
+         metadataStream_.write(md.toString(2));
          metadataStream_.flush();
          firstElement_ = false;
       } catch (Exception e) {
@@ -204,7 +192,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       }
    }
 
-   private void saveImageFile(Object img, Map<String,String> md, String path, String tiffFileName) {
+   private void saveImageFile(Object img, JSONObject md, String path, String tiffFileName) {
       ImagePlus imp;
       try {
          ImageProcessor ip = null;
@@ -241,7 +229,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
    }
 
 
-   private void saveImageProcessor(ImageProcessor ip, Map<String,String> md, String path, String tiffFileName) {
+   private void saveImageProcessor(ImageProcessor ip, JSONObject md, String path, String tiffFileName) {
       if (ip != null) {
          ImagePlus imp = new ImagePlus(path + "/" + tiffFileName, ip);
          saveImagePlus(imp, md, path, tiffFileName);
@@ -249,19 +237,26 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
    }
 
 
-   public void saveImagePlus(ImagePlus imp, Map<String, String> md, String path, String tiffFileName) {
-      imp.setProperty("Info", metadataToYaml(md));
+   public void saveImagePlus(ImagePlus imp, JSONObject md, String path, String tiffFileName) {
+      try {
+         imp.setProperty("Info", md.toString(2));
+      } catch (JSONException ex) {
+         ReportingUtils.logError(ex);
+      }
       FileSaver fs = new FileSaver(imp);
       fs.saveAsTiff(path + "/" + tiffFileName);
    }
 
-   private void openNewDataSet() throws Exception, IOException {
+   private void openNewDataSet(TaggedImage firstImage) throws Exception, IOException {
+      String time = firstImage.tags.getString("Time");
       JavaUtils.createDirectory(dir_);
       firstElement_ = true;
       metadataStream_ = new BufferedWriter(new FileWriter(dir_ + "/metadata.txt"));
       metadataStream_.write("{" + "\r\n");
+      JSONObject summaryMetadata = getSummaryMetadata();
+      summaryMetadata.put("Time", time);
+      summaryMetadata.put("Date", time.split(" ")[0]);
       writeMetadata(getSummaryMetadata(), "Summary");
-      //writeMetadata(getSystemMetadata(), "SystemState");
       dataSetOpened_ = true;
    }
 
@@ -289,8 +284,12 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
             for (String key:makeJsonIterableKeys(data)) {
                JSONObject chunk = data.getJSONObject(key);
                if (key.startsWith("FrameKey")) {
-                  Map<String,String> md = jsonToMetadata(chunk);
-                  filenameTable_.put(MDUtils.getLabel(md), MDUtils.getFileName(md));
+                  JSONObject md = jsonToMetadata(chunk);
+                  try {
+                     filenameTable_.put(MDUtils.getLabel(md), MDUtils.getFileName(md));
+                  } catch (Exception ex) {
+                     ReportingUtils.showError(ex);
+                  }
                }
             }
          } catch (JSONException ex) {
@@ -307,8 +306,8 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
          };
    }
 
-   private Map<String,String> jsonToMetadata(final JSONObject data) {
-      Map<String,String> md = new HashMap<String,String>();
+   private JSONObject jsonToMetadata(final JSONObject data) {
+      JSONObject md = new JSONObject();
       try {
          Iterable<String> keys = makeJsonIterableKeys(data);
          for (String key:keys) {
@@ -343,19 +342,24 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
    /**
     * @return the summaryMetadata_
     */
-   public Map<String,String> getSummaryMetadata() {
+   public JSONObject getSummaryMetadata() {
       return summaryMetadata_;
    }
 
    /**
     * @param summaryMetadata the summaryMetadata to set
     */
-   public void setSummaryMetadata(Map<String,String> summaryMetadata) {
+   public void setSummaryMetadata(JSONObject summaryMetadata) {
       this.summaryMetadata_ = summaryMetadata;
    }
 
    public void setComment(String text) {
-      if (text != null && text.length() > 0)
+      try {
+         getSummaryMetadata().put("Comment", text);
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
+      }
+      if (text != null)
          JavaUtils.writeTextFile(dir_ + "/comments.txt", text);
    }
 
@@ -363,11 +367,11 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       return JavaUtils.readTextFile(dir_ + "/comments.txt");
    }
 
-   public void setDisplaySettings(Map<String, String> settings) {
+   public void setDisplaySettings(JSONObject settings) {
       throw new UnsupportedOperationException("Not supported yet.");
    }
 
-   public Map<String, String> getDisplaySettings() {
+   public JSONObject getDisplaySettings() {
       throw new UnsupportedOperationException("Not supported yet.");
    }
 

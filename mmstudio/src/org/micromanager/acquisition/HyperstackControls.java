@@ -29,11 +29,11 @@ import org.micromanager.utils.ReportingUtils;
  * @author arthur
  */
 public class HyperstackControls extends java.awt.Panel implements ImageListener {
-   private final MMVirtualAcquisition acq_;
+   private final MMVirtualAcquisitionDisplay acq_;
    private final ImageWindow win_;
    
     /** Creates new form HyperstackControls */
-    public HyperstackControls(MMVirtualAcquisition acq, ImageWindow win) {
+    public HyperstackControls(MMVirtualAcquisitionDisplay acq, ImageWindow win) {
         initComponents();
         acq_ = acq;
         win_ = win;
@@ -250,10 +250,15 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
    private void updateStatusLine(TaggedImage taggedImg) {
       if (taggedImg != null) {
          try {
-            String time = NumberUtils.doubleStringCoreToDisplay(taggedImg.tags.get("ElapsedTime-ms"));
-            String zPosition = taggedImg.tags.get("ZPositionUm");
-            String xyPosition = taggedImg.tags.get("PositionName");
-            String chan;
+            String time = NumberUtils.doubleToDisplayString(taggedImg.tags.getDouble("ElapsedTime-ms"));
+            String zPosition = NumberUtils.doubleStringCoreToDisplay(taggedImg.tags.getString("ZPositionUm"));
+            String xyPosition;
+            try {
+               xyPosition = taggedImg.tags.getString("PositionName");
+            } catch (Exception e) {
+               xyPosition = "";
+            }
+                  String chan;
             try {
                chan = MDUtils.getChannelName(taggedImg.tags);
             } catch (Exception ex) {
@@ -261,7 +266,7 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
             }
             setStatusLabel(String.format("<html>%s, %s&nbsp;s, "
                     + "z:&nbsp;%s&nbsp;&#181;m, %s</html>",xyPosition,time,zPosition,chan));
-         } catch (ParseException ex) {
+         } catch (Exception ex) {
             ReportingUtils.logError(ex);
          }
       }
@@ -277,8 +282,8 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
             updateStatusLine(taggedImg);
             try {
                if (acq_.acquisitionIsRunning()) {
-                  if (taggedImg != null && taggedImg.tags.containsKey("NextFrameTimeMs"))  {
-                     final long nextImageTime = MDUtils.getLong(taggedImg.tags, "NextFrameTimeMs");
+                  if (taggedImg != null && taggedImg.tags.has("NextFrameTimeMs"))  {
+                     final long nextImageTime = taggedImg.tags.getLong("NextFrameTimeMs");
                      if (System.nanoTime() / 1000000 < nextImageTime) {
                         final Timer timer = new Timer();
                         TimerTask task = new TimerTask() {

@@ -3661,11 +3661,11 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       acq.setProperty(propertyName, value);
    }
 
-   public void setAcquisitionSystemState(String acqName, Map<String,String> md) throws MMScriptException {
+   public void setAcquisitionSystemState(String acqName, JSONObject md) throws MMScriptException {
       acqMgr_.getAcquisition(acqName).setSystemState(md);
    }
 
-   public void setAcquisitionSummary(String acqName, Map<String,String> md) throws MMScriptException {
+   public void setAcquisitionSummary(String acqName, JSONObject md) throws MMScriptException {
       acqMgr_.getAcquisition(acqName).setSummaryProperties(md);
    }
 

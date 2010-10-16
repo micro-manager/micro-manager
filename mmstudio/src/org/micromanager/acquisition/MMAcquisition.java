@@ -339,7 +339,7 @@ public class MMAcquisition implements AcquisitionInterface {
       throw new UnsupportedOperationException("Not supported yet.");
    }
 
-   public void setSummaryProperties(Map<String,String> md) throws MMScriptException {
+   public void setSummaryProperties(JSONObject md) throws MMScriptException {
       throw new UnsupportedOperationException("Not supported yet.");
    }
 
@@ -347,7 +347,7 @@ public class MMAcquisition implements AcquisitionInterface {
       return imgWin_.isClosed();
    }
 
-   public void setSystemState(Map<String,String> md) throws MMScriptException {
+   public void setSystemState(JSONObject md) throws MMScriptException {
       throw new UnsupportedOperationException("Not supported yet.");
    }
 

@@ -6,8 +6,8 @@
 package org.micromanager.acquisition;
 
 import java.util.HashMap;
-import java.util.Map;
 import mmcorej.TaggedImage;
+import org.json.JSONObject;
 import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMException;
@@ -20,10 +20,10 @@ import org.micromanager.utils.MMException;
  */
 public class TaggedImageStorageRam implements TaggedImageStorage {
    HashMap<String, TaggedImage> imageMap_;
-   private Map<String, String> summaryMetadata_;
+   private JSONObject summaryMetadata_;
    private String comment_;
 
-   TaggedImageStorageRam(Map<String, String> summaryMetadata) {
+   TaggedImageStorageRam(JSONObject summaryMetadata) {
       imageMap_ = new HashMap<String,TaggedImage>();
       summaryMetadata_ = summaryMetadata;
    }
@@ -42,11 +42,11 @@ public class TaggedImageStorageRam implements TaggedImageStorage {
       // Do nothing.
    }
 
-   public void setSummaryMetadata(Map<String, String> md) {
+   public void setSummaryMetadata(JSONObject md) {
       summaryMetadata_ = md;
    }
 
-   public Map<String, String> getSummaryMetadata() {
+   public JSONObject getSummaryMetadata() {
       return summaryMetadata_;
    }
 
@@ -58,11 +58,11 @@ public class TaggedImageStorageRam implements TaggedImageStorage {
       return comment_;
    }
 
-   public void setDisplaySettings(Map<String, String> settings) {
+   public void setDisplaySettings(JSONObject settings) {
       throw new UnsupportedOperationException("Not supported yet.");
    }
 
-   public Map<String, String> getDisplaySettings() {
+   public JSONObject getDisplaySettings() {
       throw new UnsupportedOperationException("Not supported yet.");
    }
 

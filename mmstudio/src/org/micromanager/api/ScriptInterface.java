@@ -26,10 +26,10 @@ import ij.gui.ImageWindow;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.geom.Point2D;
-import java.util.Map;
 
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
+import org.json.JSONObject;
 import org.micromanager.acquisition.MMImageCache;
 
 import org.micromanager.metadata.WellAcquisitionData;
@@ -142,9 +142,9 @@ public interface ScriptInterface {
     */
    public void setAcquisitionProperty(String acqName, String propertyName, String value) throws MMScriptException;
 
-   public void setAcquisitionSystemState(String acqName, Map<String,String> md) throws MMScriptException;
+   public void setAcquisitionSystemState(String acqName, JSONObject md) throws MMScriptException;
 
-   public void setAcquisitionSummary(String acqName, Map<String,String> md) throws MMScriptException;
+   public void setAcquisitionSummary(String acqName, JSONObject md) throws MMScriptException;
    
    /**
     * Sets property attached to an individual image

@@ -22,14 +22,19 @@ import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Vector;
 import javax.swing.JPanel;
 import javax.swing.SpringLayout;
 import javax.swing.table.AbstractTableModel;
 import mmcorej.TaggedImage;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.micromanager.api.ImageFocusListener;
 import org.micromanager.utils.GUIUtils;
+import org.micromanager.utils.MDUtils;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  *
@@ -47,7 +52,7 @@ public class MetadataViewer extends javax.swing.JFrame
    private MMImageCache cache_;
    private boolean showUnchangingKeys_;
    private boolean updatingDisplayModeCombo_ = false;
-   private MMVirtualAcquisition acq_;
+   private MMVirtualAcquisitionDisplay acq_;
    private ArrayList<ChannelControlPanel> ccpList_;
 
 
@@ -448,16 +453,19 @@ public class MetadataViewer extends javax.swing.JFrame
          return columnNames_[colIndex];
       }
 
-      public synchronized void setMetadata(Map<String,String> md) {
+      public synchronized void setMetadata(JSONObject md) {
          clear();
          if (md != null) {
-            Object[] keys = (Object[]) md.keySet().toArray();
+            String [] keys = MDUtils.getKeys(md);
             Arrays.sort(keys);
-
-            for (Object key : keys) {
+            for (String key : keys) {
                Vector<String> rowData = new Vector<String>();
                rowData.add((String) key);
-               rowData.add(md.get((String) key));
+               try {
+                  rowData.add(md.getString(key));
+               } catch (JSONException ex) {
+                  ReportingUtils.logError(ex);
+               }
                addRow(rowData);
             }
          }
@@ -465,12 +473,16 @@ public class MetadataViewer extends javax.swing.JFrame
       }
    }
    
-   private Map<String, String> selectChangingTags(Map<String, String> md) {
-      Map<String, String> mdChanging = new HashMap<String, String>();
+   private JSONObject selectChangingTags(JSONObject md) {
+      JSONObject mdChanging = new JSONObject();
       if (cache_ != null) {
          for (String key : cache_.getChangingKeys()) {
-            if (md.containsKey(key)) {
-               mdChanging.put(key, md.get(key));
+            if (md.has(key)) {
+               try {
+                  mdChanging.put(key, md.get(key));
+               } catch (JSONException ex) {
+                  ReportingUtils.logError(ex);
+               }
             }
          }
       }
@@ -562,7 +574,7 @@ public class MetadataViewer extends javax.swing.JFrame
                   if (taggedImg == null) {
                      imageMetadataModel_.setMetadata(null);
                   } else {
-                     Map<String,String> md = stack.getTaggedImage(slice).tags;
+                     JSONObject md = stack.getTaggedImage(slice).tags;
                      if (!showUnchangingKeys_)
                         md = selectChangingTags(md);
                      imageMetadataModel_.setMetadata(md);
@@ -591,7 +603,7 @@ public class MetadataViewer extends javax.swing.JFrame
 
          if (cache_ != null) {
             summaryCommentsTextArea.setText(cache_.getComment());
-            Map<String,String> md = cache_.getSummaryMetadata();
+            JSONObject md = cache_.getSummaryMetadata();
             summaryMetadataModel_.setMetadata(md);
          } else {
             summaryCommentsTextArea.setText(null);
@@ -612,7 +624,7 @@ public class MetadataViewer extends javax.swing.JFrame
       }
    }
 
-   public void setupChannelControls(MMVirtualAcquisition acq) {
+   public synchronized void setupChannelControls(MMVirtualAcquisitionDisplay acq) {
       int hpHeight = 100;
       int nChannels = acq.getChannels();
       Color[] chanColors = acq.getChannelColors();
@@ -639,7 +651,7 @@ public class MetadataViewer extends javax.swing.JFrame
    }
 
 
-   private void updateChannelControls() {
+   private synchronized void updateChannelControls() {
       for (ChannelControlPanel ccp:ccpList_) {
          ccp.updateChannelSettings();
       }

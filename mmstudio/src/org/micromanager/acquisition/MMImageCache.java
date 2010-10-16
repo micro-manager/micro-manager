@@ -8,10 +8,12 @@ import java.lang.ref.SoftReference;
 import org.micromanager.api.TaggedImageStorage;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import mmcorej.TaggedImage;
+import org.json.JSONObject;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMException;
 import org.micromanager.utils.ReportingUtils;
@@ -25,7 +27,7 @@ public class MMImageCache implements TaggedImageStorage {
    private TaggedImageStorage imageFileManager_;
    private String comment_ = "";
    private Set<String> changingKeys_;
-   private Map<String, String> firstTags_;
+   private JSONObject firstTags_;
    private static ImageCollection coll_;
 
    MMImageCache(TaggedImageStorage imageFileManager) {
@@ -40,11 +42,11 @@ public class MMImageCache implements TaggedImageStorage {
       imageFileManager_.finished();
    }
 
-   public void setDisplaySettings(Map<String, String> settings) {
+   public void setDisplaySettings(JSONObject settings) {
       throw new UnsupportedOperationException("Not supported yet.");
    }
 
-   public Map<String, String> getDisplaySettings() {
+   public JSONObject getDisplaySettings() {
       throw new UnsupportedOperationException("Not supported yet.");
    }
 
@@ -133,9 +135,16 @@ public class MMImageCache implements TaggedImageStorage {
       if (firstTags_ == null) {
          firstTags_ = taggedImg.tags;
       } else {
-         for (String key : taggedImg.tags.keySet()) {
-            if (!firstTags_.containsKey(key) || !firstTags_.get(key).contentEquals(taggedImg.tags.get(key))) {
-               changingKeys_.add(key);
+         Iterator<String> keys = taggedImg.tags.keys();
+         while (keys.hasNext()) {
+            String key = keys.next();
+            try {
+               if (!firstTags_.has(key)
+                       || !firstTags_.getString(key).contentEquals(taggedImg.tags.getString(key))) {
+                  changingKeys_.add(key);
+               }
+            } catch (Exception e) {
+               ReportingUtils.logError(e);
             }
          }
       }
@@ -155,11 +164,11 @@ public class MMImageCache implements TaggedImageStorage {
       return comment_;
    }
 
-   public Map<String, String> getSummaryMetadata() {
+   public JSONObject getSummaryMetadata() {
       return imageFileManager_.getSummaryMetadata();
    }
 
-   public void setSummaryMetadata(Map<String, String> tags) {
+   public void setSummaryMetadata(JSONObject tags) {
       imageFileManager_.setSummaryMetadata(tags);
    }
 

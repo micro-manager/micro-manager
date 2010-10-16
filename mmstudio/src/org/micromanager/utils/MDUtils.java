@@ -7,7 +7,9 @@ package org.micromanager.utils;
 
 import ij.ImagePlus;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Level;
@@ -15,134 +17,104 @@ import java.util.logging.Logger;
 import mmcorej.Configuration;
 import mmcorej.PropertySetting;
 import mmcorej.TaggedImage;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  *
  * @author arthur
  */
 public class MDUtils {
-   public static Map<String,String> copy(Map<String,String> map) {
-      return new HashMap(map);
-   }
-   
-   public static int getInt(Map<String,String> map, String key) throws Exception {
+   public static JSONObject copy(JSONObject map) {
       try {
-         return NumberUtils.coreStringToInt(map.get(key));
-      } catch (ParseException ex) {
-         throw new Exception("Can't find a " + key + " property.");
+         return new JSONObject(map.toString());
+      } catch (JSONException e) {
+         return null;
       }
    }
    
-   public static long getLong(Map<String,String> map, String key) throws Exception {
-      try {
-         return NumberUtils.coreStringToLong(map.get(key));
-      } catch (ParseException ex) {
-         throw new Exception("Can't find a " + key + " property.");
-      }
+   public static int getPositionIndex(JSONObject map) throws Exception {
+      return map.getInt("PositionIndex");
    }
 
-   public static void putInt(Map<String,String> map, String key, int val) throws Exception {
-      map.put(key, NumberUtils.intToCoreString(val));
+   public static int getWidth(JSONObject map) throws Exception {
+      return map.getInt("Width");
    }
 
-   public static int getPositionIndex(Map<String,String> map) throws Exception {
-      return getInt(map, "PositionIndex");
+   public static int getHeight(JSONObject map) throws Exception {
+      return map.getInt("Height");
    }
 
-   public static int getWidth(Map<String,String> map) throws Exception {
-      return getInt(map, "Image-Width");
+   public static void setWidth(JSONObject map, int width) throws Exception {
+      map.put("Width", width);
    }
 
-   public static int getHeight(Map<String,String> map) throws Exception {
-      return getInt(map, "Image-Height");
+   public static void setHeight(JSONObject map, int height) throws Exception {
+      map.put("Height", height);
    }
 
-   public static void setWidth(Map<String,String> map, int width) throws Exception {
-      putInt(map, "Image-Width", width);
+   public static int getSliceIndex(JSONObject map) throws Exception {
+      return map.getInt("Slice");
    }
 
-   public static void setHeight(Map<String,String> map, int height) throws Exception {
-      putInt(map, "Image-Height", height);
+   public static int getChannelIndex(JSONObject map) throws Exception {
+      return map.getInt("ChannelIndex");
    }
 
-   public static int getSliceIndex(Map<String,String> map) throws Exception {
-      return getInt(map, "Slice");
+   public static int getFrameIndex(JSONObject map) throws Exception {
+      return map.getInt("Frame");
    }
 
-   public static int getChannelIndex(Map<String,String> map) throws Exception {
-      return getInt(map, "ChannelIndex");
+   public static String getPositionName(JSONObject map) throws Exception {
+      return map.getString("PositionName");
    }
 
-   public static int getFrameIndex(Map<String,String> map) throws Exception {
-      return getInt(map, "Frame");
+   public static String getChannelName(JSONObject map) throws Exception {
+      return map.getString("Channel");
    }
 
-   public static String getPositionName(Map<String,String> map) throws Exception {
-      return map.get("PositionName");
+   public static String getFileName(JSONObject map) throws Exception {
+      return map.getString("FileName");
    }
 
-   public static String getChannelName(Map<String,String> map) throws Exception {
-      return map.get("Channel");
-   }
-
-   public static String getFileName(Map<String, String> map) {
-      return map.get("FileName");
-   }
-
-   public static void setFileName(Map<String, String> map, String filename) {
+   public static void setFileName(JSONObject map, String filename) throws Exception {
       map.put("FileName", filename);
    }
 
-   public static String getPixelType(Map<String, String> map)  throws Exception {
-      return map.get("Image-PixelType");
+   public static String getPixelType(JSONObject map)  throws Exception {
+      return map.getString("PixelType");
    }
 
-   public static void put(Map<String, String> map, String key, long value) {
-      map.put(key, NumberUtils.longToCoreString(value));
-   }
-
-   public static void put(Map<String, String> map, String key, int value) {
-      map.put(key, NumberUtils.intToCoreString(value));
-   }
-
-   public static void put(Map<String, String> map, String key, String value) {
-      map.put(key, value);
-   }
-
-   public static void put(Map<String, String> map, String key, double value) {
-      map.put(key, NumberUtils.doubleToCoreString(value));
-   }
-
-   public static void addRandomUUID(Map<String,String> map) throws Exception {
+   public static void addRandomUUID(JSONObject map) throws Exception {
       UUID uuid = UUID.randomUUID();
       map.put("UUID", uuid.toString());
    }
 
-   public static UUID getUUID(Map<String,String> map) {
-      if (map.containsKey("UUID"))
-         return UUID.fromString(map.get("UUID"));
+   public static UUID getUUID(JSONObject map) throws Exception {
+      if (map.has("UUID"))
+         return UUID.fromString(map.getString("UUID"));
       else
          return null;
    }
 
-   public static void setImageType(Map<String, String> map, int type) throws Exception {
+   public static void setPixelType(JSONObject map, int type) throws Exception {
       switch (type) {
          case ImagePlus.GRAY8:
-            map.put("Image-PixelType", "GRAY8");
+            map.put("PixelType", "GRAY8");
          break;
          case ImagePlus.GRAY16:
-            map.put("Image-PixelType", "GRAY16");
+            map.put("PixelType", "GRAY16");
          break;
          case ImagePlus.COLOR_RGB:
-            map.put("Image-PixelType", "RGB32");
+            map.put("PixelType", "RGB32");
          break;
          case 64:
-            map.put("Image-PixelType", "RGB64");
+            map.put("PixelType", "RGB64");
          break;
       }
    }
 
-   public static int getSingleChannelType(Map<String, String> map) throws Exception {
+   public static int getSingleChannelType(JSONObject map) throws Exception {
       String pixelType = getPixelType(map);
       if (pixelType.contentEquals("GRAY8"))
            return ImagePlus.GRAY8;
@@ -157,7 +129,7 @@ public class MDUtils {
       }
    }
 
-   public static int getNumberOfComponents(Map<String, String> map) throws Exception {
+   public static int getNumberOfComponents(JSONObject map) throws Exception {
       String pixelType = getPixelType(map);
       if (pixelType.contentEquals("GRAY8"))
            return 1;
@@ -172,19 +144,19 @@ public class MDUtils {
       }
    }
 
-   public static boolean isGRAY8(Map<String,String> map) throws Exception {
+   public static boolean isGRAY8(JSONObject map) throws Exception {
       return getPixelType(map).contentEquals("GRAY8");
    }
 
-   public static boolean isGRAY16(Map<String,String> map) throws Exception {
+   public static boolean isGRAY16(JSONObject map) throws Exception {
       return getPixelType(map).contentEquals("GRAY16");
    }
 
-   public static boolean isRGB32(Map<String,String> map) throws Exception {
+   public static boolean isRGB32(JSONObject map) throws Exception {
       return getPixelType(map).contentEquals("RGB32");
    }
 
-   public static boolean isRGB64(Map<String,String> map) throws Exception {
+   public static boolean isRGB64(JSONObject map) throws Exception {
       return getPixelType(map).contentEquals("RGB64");
    }
 
@@ -204,11 +176,11 @@ public class MDUtils {
       return isRGB64(img.tags);
    }
 
-   public static boolean isGRAY(Map<String,String> map) throws Exception {
+   public static boolean isGRAY(JSONObject map) throws Exception {
       return (isGRAY8(map) || isGRAY16(map));
    }
 
-   public static boolean isRGB(Map<String,String> map) throws Exception {
+   public static boolean isRGB(JSONObject map) throws Exception {
       return (isRGB32(map) || isRGB64(map));
    }
 
@@ -220,18 +192,18 @@ public class MDUtils {
       return isRGB(img.tags);
    }
 
-   public static void addConfiguration(Map<String, String> md, Configuration config) throws Exception {
+   public static void addConfiguration(JSONObject md, Configuration config) throws Exception {
       PropertySetting setting;
       for (int i = 0; i < config.size(); ++i) {
          setting = config.getSetting(i);
          String key = setting.getDeviceLabel() + "-" + setting.getPropertyName();
          String value = setting.getPropertyValue();
-         MDUtils.put(md, key, value);
+         md.put(key, value);
       }
    }
 
 
-   public static String getLabel(Map<String, String> md) {
+   public static String getLabel(JSONObject md) {
       try {
          return generateLabel(getChannelIndex(md),
                               getSliceIndex(md),
@@ -266,4 +238,13 @@ public class MDUtils {
       }
    }
 
+   public static String[] getKeys(JSONObject md) {
+      int n = md.length();
+      String [] keyArray = new String[n];
+      Iterator<String> keys = md.keys();
+      for (int i=0; i<n; ++i) {
+         keyArray[i] = (String) keys.next();
+      }
+      return keyArray;
+   }
 }

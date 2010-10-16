@@ -65,7 +65,7 @@ public class ComPortsPage extends PagePanel {
 	// so we need to save the original settings, overwrite them before re-rendering the table and then
 	// restore them after we finish
 	private HashMap<Integer, Boolean> saveSerialPortsInUse_;
-	HashMap<String, String> devicesToTheirPort_;
+	HashMap<String,String> devicesToTheirPort_;
 
 
    public class SelectionListener implements ListSelectionListener {
@@ -122,7 +122,7 @@ public class ComPortsPage extends PagePanel {
       final JScrollPane serialDeviceScrollPane = new JScrollPane();
       serialDeviceScrollPane.setBounds(10, 44, 157, 194);
       add(serialDeviceScrollPane);
-		devicesToTheirPort_ = new HashMap<String, String>();
+		devicesToTheirPort_ = new HashMap<String,String>();
 		saveSerialPortsInUse_ = new HashMap<Integer,Boolean>();
       serialDeviceTable_ = new JTable();
 		serialDeviceTable_.setColumnSelectionAllowed(false);

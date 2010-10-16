@@ -10,12 +10,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.prefs.Preferences;
 import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
-import mmcorej.DoubleVector;
 import mmcorej.PropertySetting;
 import mmcorej.StrVector;
 import mmcorej.TaggedImage;
@@ -26,7 +24,6 @@ import org.micromanager.acquisition.engine.ProcessorStack;
 import org.micromanager.acquisition.engine.SequenceGenerator;
 import org.micromanager.acquisition.engine.SequenceSettings;
 import org.micromanager.api.AcquisitionEngine;
-import org.micromanager.api.DataProcessor;
 import org.micromanager.api.DeviceControlGUI;
 import org.micromanager.metadata.MMAcqDataException;
 import org.micromanager.metadata.WellAcquisitionData;
@@ -50,7 +47,6 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private MMStudioMainFrame gui_;
    private PositionList posList_ = new PositionList();
    private String zstage_;
-   private boolean updateLiveWin_;
    private double sliceZStepUm_;
    private double sliceZBottomUm_;
    private double sliceZTopUm_;
@@ -63,10 +59,9 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private ArrayList<ChannelSpec> channels_ = new ArrayList<ChannelSpec>();
    private String rootName_;
    private String dirName_;
-   private DoubleVector timeSeries_;
    private int numFrames_;
    private double interval_;
-   private AcquisitionDisplayThread display_;
+   private LiveAcqDisplay display_;
    private double minZStepUm_;
    private String comment_;
    private boolean saveFiles_;
@@ -75,9 +70,6 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private boolean useAutoFocus_;
    private int afSkipInterval_;
    private boolean isPaused_;
-   private String zStage_;
-   private String cameraConfig_;
-   private Preferences prefs_;
    private Engine eng_ = null;
    private List<Class> taggedImageProcessors_;
    private List<Class> imageRequestProcessors_;
@@ -118,7 +110,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
          BlockingQueue<TaggedImage> imageProcessorStackOutput = imageProcessorStack.begin();
 
          // ...Display and Save...
-         display_ = new AcquisitionDisplayThread(gui_, core_, imageProcessorStackOutput,
+         display_ = new LiveAcqDisplay(core_, imageProcessorStackOutput,
                  acquisitionSettings, acquisitionSettings.channels, saveFiles_, this);
          display_.start();
 
@@ -284,7 +276,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    public void setUpdateLiveWindow(boolean b) {
-      updateLiveWin_ = b;
+      // do nothing
    }
 
    public void setFinished() {
@@ -458,7 +450,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    public void setCameraConfig(String cfg) {
-      cameraConfig_ = cfg;
+      // do nothing
    }
 
    public void setDirName(String text) {
@@ -564,7 +556,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    public void setParameterPreferences(Preferences prefs) {
-      prefs_ = prefs;
+      // do nothing
    }
 
    public void setSingleFrame(boolean selected) {

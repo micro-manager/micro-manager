@@ -10,6 +10,7 @@ import java.awt.image.ColorModel;
 import java.util.HashMap;
 import java.util.Map;
 import mmcorej.TaggedImage;
+import org.json.JSONObject;
 import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.MDUtils;
@@ -28,11 +29,11 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
    private int nSlices_;
    private ImagePlus imagePlus_;
    private final int positionIndex_;
-   private final MMVirtualAcquisition acq_;
+   private final MMVirtualAcquisitionDisplay acq_;
 
    public AcquisitionVirtualStack(int width, int height, ColorModel cm, 
            MMImageCache imageCache, int nSlices, int posIndex,
-           MMVirtualAcquisition acq) {
+           MMVirtualAcquisitionDisplay acq) {
       super(width, height, cm, "");
       imageCache_ = imageCache;
       width_ = width;
@@ -42,7 +43,7 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
       acq_ = acq;
    }
 
-   public MMVirtualAcquisition getVirtualAcquisition() {
+   public MMVirtualAcquisitionDisplay getVirtualAcquisition() {
       return acq_;
    }
 
@@ -101,7 +102,7 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
       }
    }
 
-   private int getFlatIndex(Map<String,String> md) {
+   private int getFlatIndex(JSONObject md) {
       try {
          int channel = MDUtils.getChannelIndex(md);
          int slice = MDUtils.getSliceIndex(md);
@@ -126,7 +127,7 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
       TaggedImage img = getTaggedImage(n);
       if (img == null)
          return "";
-      Map<String,String> md = img.tags;
+      JSONObject md = img.tags;
       try {
          return md.get("Acquisition-PixelSizeUm") + " um/px";
          //return MDUtils.getChannelName(md) + ", " + md.get("Acquisition-ZPositionUm") + " um(z), " + md.get("Acquisition-TimeMs") + " s";
