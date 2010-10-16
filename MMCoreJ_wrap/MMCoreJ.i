@@ -325,17 +325,17 @@
 //%typemap(javabase) MetadataIndexError "java.lang.Exception"
 
 %typemap(javaimports) CMMCore %{
-	import java.util.Map;
-	import java.util.HashMap;
-	import java.util.Collections;
+	import org.json.JSONObject;
 %}
 
 %typemap(javacode) CMMCore %{
-	private Map<String,String> metadataToMap(Metadata md) {
-		Map<String,String> mdMap = Collections.synchronizedMap(new HashMap<String,String>());
+	private JSONObject metadataToMap(Metadata md) {
+		JSONObject tags = new JSONObject();
 		for (String key:md.getFrameKeys())
-			mdMap.put(key,md.get(key));	
-		return mdMap;
+			try {
+				tags.put(key,md.get(key));
+			} catch (Exception e) {} // Ignore	
+		return tags;
 	}
 	
 	private TaggedImage createTaggedImage(Object pixels, Metadata md) {

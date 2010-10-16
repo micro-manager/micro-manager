@@ -1,6 +1,6 @@
 package mmcorej;
 
-import java.util.Map;
+import org.json.JSONObject;
 
  /*
  * @author arthur
@@ -8,9 +8,9 @@ import java.util.Map;
 
 public class TaggedImage {
    public final Object pix;
-   public Map<String,String> tags;
+   public JSONObject tags;
 
-   public TaggedImage(Object pix, Map<String,String> tags) {
+   public TaggedImage(Object pix, JSONObject tags) {
       this.pix = pix;
       this.tags = tags;
    }
