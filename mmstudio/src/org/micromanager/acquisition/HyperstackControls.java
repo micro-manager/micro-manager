@@ -11,7 +11,6 @@
 
 package org.micromanager.acquisition;
 
-import ij.IJ;
 import ij.ImageListener;
 import ij.ImagePlus;
 import ij.ImageStack;

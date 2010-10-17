@@ -17,6 +17,7 @@ import ij.process.ShortProcessor;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Writer;
 import java.util.HashMap;
 import java.util.Iterator;
 import mmcorej.TaggedImage;
@@ -37,11 +38,11 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
 
    private final String dir_;
    private boolean firstElement_;
-   private BufferedWriter metadataStream_;
+   private HashMap<String,Writer> metadataStreams_;
    private boolean newDataSet_;
    private JSONObject summaryMetadata_;
    private HashMap<String,String> filenameTable_;
-   private boolean dataSetOpened_;
+
 
    TaggedImageStorageDiskDefault(String dir) {
       this(dir, false, null);
@@ -53,7 +54,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       dir_ = dir;
       newDataSet_ = newDataSet;
       filenameTable_ = new HashMap<String,String>();
-      dataSetOpened_ = false;
+      metadataStreams_ = new HashMap<String,Writer>();
 
       try {
          if (!newDataSet_) {
@@ -64,12 +65,24 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       }
    }
 
+   private String getPosition(TaggedImage taggedImg) {
+      return getPosition(taggedImg.tags);
+   }
+   
+   private String getPosition(JSONObject tags) {
+      try {
+         return MDUtils.getPositionName(tags);
+      } catch (Exception e) {
+         return "";
+      }
+   }
+
    public String putImage(TaggedImage taggedImg) throws MMException {
       try {
          if (newDataSet_ == false) {
             throw new MMException("This ImageFileManager is read-only.");
          }
-         if (!dataSetOpened_) {
+         if (!metadataStreams_.containsKey(getPosition(taggedImg))) {
             try {
                openNewDataSet(taggedImg);
             } catch (Exception ex) {
@@ -79,17 +92,16 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
          JSONObject md = taggedImg.tags;
          Object img = taggedImg.pix;
          String tiffFileName = createFileName(md);
-
+         String posName = "";
          try {
-            String posName = MDUtils.getPositionName(md);
+            posName = getPosition(md);
             JavaUtils.createDirectory(dir_ + "/" + posName);
-            tiffFileName = posName + "/" + tiffFileName;
          } catch (Exception ex) {
             ReportingUtils.logError(ex);
          }
 
          MDUtils.setFileName(md, tiffFileName);
-         saveImageFile(img, md, dir_, tiffFileName);
+         saveImageFile(img, md, dir_ +"/" + posName, tiffFileName);
          writeFrameMetadata(md, tiffFileName);
          String label = MDUtils.getLabel(md);
          filenameTable_.put(label, tiffFileName);
@@ -171,21 +183,22 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
    private void writeFrameMetadata(JSONObject md, String fileName) {
       try {    
          String title = "FrameKey-" + MDUtils.getFrameIndex(md) + "-" + MDUtils.getChannelIndex(md) + "-" + MDUtils.getSliceIndex(md);
-         md.put("Filename", fileName);
-         writeMetadata(md, title);
+         String pos = getPosition(md);
+         writeMetadata(pos, md, title);
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
    }
 
-   private void writeMetadata(JSONObject md, String title) {
+   private void writeMetadata(String pos, JSONObject md, String title) {
       try {
+         Writer metadataStream = metadataStreams_.get(pos);
          if (!firstElement_) {
-            metadataStream_.write(",\r\n");
+            metadataStream.write(",\r\n");
          }
-         metadataStream_.write("\"" + title + "\": ");
-         metadataStream_.write(md.toString(2));
-         metadataStream_.flush();
+         metadataStream.write("\"" + title + "\": ");
+         metadataStream.write(md.toString(2));
+         metadataStream.flush();
          firstElement_ = false;
       } catch (Exception e) {
          ReportingUtils.logError(e);
@@ -249,27 +262,30 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
 
    private void openNewDataSet(TaggedImage firstImage) throws Exception, IOException {
       String time = firstImage.tags.getString("Time");
-      JavaUtils.createDirectory(dir_);
+      String pos = getPosition(firstImage);
+      JavaUtils.createDirectory(dir_ + "/" + pos);
       firstElement_ = true;
-      metadataStream_ = new BufferedWriter(new FileWriter(dir_ + "/metadata.txt"));
-      metadataStream_.write("{" + "\r\n");
+      Writer metadataStream = new BufferedWriter(new FileWriter(dir_ + "/" + pos + "/metadata.txt"));
+      metadataStreams_.put(pos, metadataStream);
+      metadataStream.write("{" + "\r\n");
       JSONObject summaryMetadata = getSummaryMetadata();
       summaryMetadata.put("Time", time);
       summaryMetadata.put("Date", time.split(" ")[0]);
-      writeMetadata(getSummaryMetadata(), "Summary");
-      dataSetOpened_ = true;
+      writeMetadata(pos, getSummaryMetadata(), "Summary");
    }
 
    public void finished() {
-      closeMetadataStream();
+      closeMetadataStreams();
       newDataSet_ = false;
    }
 
-   private void closeMetadataStream() {
+   private void closeMetadataStreams() {
       if (newDataSet_) {
          try {
-            metadataStream_.write("\r\n}\r\n");
-            metadataStream_.close();
+            for (Writer metadataStream:metadataStreams_.values()) {
+               metadataStream.write("\r\n}\r\n");
+               metadataStream.close();
+            }
          } catch (IOException ex) {
             ReportingUtils.logError(ex);
          }
