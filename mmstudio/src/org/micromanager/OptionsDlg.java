@@ -23,6 +23,7 @@
 
 package org.micromanager;
 
+import bsh.ParseException;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
@@ -31,7 +32,21 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.text.ParseException;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.InetAddress;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.UnknownHostException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.TimeZone;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
@@ -46,9 +61,11 @@ import mmcorej.CMMCore;
 
 import org.micromanager.api.DeviceControlGUI;
 import org.micromanager.utils.GUIColors;
+import org.micromanager.utils.HttpUtils;
 import org.micromanager.utils.MMDialog;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
+import sun.misc.UUEncoder;
 
 /**
  * Options dialog for MMStudio.
@@ -134,6 +151,125 @@ public class OptionsDlg extends MMDialog {
       //springLayout.putConstraint(SpringLayout.SOUTH, clearLogFileButton, 166, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.NORTH, clearLogFileButton, 175, SpringLayout.NORTH, getContentPane());
 
+      final JButton sendLogFileButton = new JButton();
+      sendLogFileButton.setMargin(new Insets(0,0,0,0));
+      sendLogFileButton.setToolTipText("Send a compressed archive of your log file to Micro-manager.org");
+      sendLogFileButton.addActionListener(new ActionListener() {
+         public void actionPerformed(final ActionEvent e) {
+             String archPath = core_.saveLogArchive();
+             
+            try{
+                HttpUtils httpu = new HttpUtils();
+                List<File> list = new ArrayList<File>();
+                File archiveFile = new File(archPath);
+
+                // contruct a filename for the archive which is extremely
+                // likely to be unique as follows:
+                // yyyyMMddHHmm + timezone + ip address + host name + mm user + file name
+                String qualifiedArchiveFileName = "LogArchive_";
+                try {
+                    SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHHmm");
+                    qualifiedArchiveFileName += df.format(new Date());
+                    String shortTZName = TimeZone.getDefault().getDisplayName(false, TimeZone.SHORT);
+                    qualifiedArchiveFileName += shortTZName;
+                    qualifiedArchiveFileName += "_";
+                    try {
+
+                        qualifiedArchiveFileName += InetAddress.getLocalHost().getHostAddress();
+                        qualifiedArchiveFileName += "_";
+                        qualifiedArchiveFileName += InetAddress.getLocalHost().getHostName();
+                        qualifiedArchiveFileName += "_";
+
+                    } catch (UnknownHostException e2) {
+                    }
+                    qualifiedArchiveFileName += core_.getUserId();
+                    qualifiedArchiveFileName += "_";
+                } catch (Throwable t) {
+                }
+
+                // get the file name part of the path
+                qualifiedArchiveFileName += archiveFile.getName();
+                // try ensure valid and convenient UNIX file name
+                qualifiedArchiveFileName.replace(' ', '_');
+                qualifiedArchiveFileName.replace('*', '_');
+                qualifiedArchiveFileName.replace('|', '_');
+                qualifiedArchiveFileName.replace('>', '_');
+                qualifiedArchiveFileName.replace('<', '_');
+                qualifiedArchiveFileName.replace('(', '_');
+                qualifiedArchiveFileName.replace(')', '_');
+                //File fileToSend = new File(qualifiedArchiveFileName);
+                qualifiedArchiveFileName += ".uu";
+
+                //FileReader reader = new FileReader(archiveFile);
+                //FileWriter writer = new FileWriter(fileToSend);
+
+                UUEncoder uuec = new UUEncoder();
+                InputStream reader = new FileInputStream(archiveFile);
+                OutputStream writer = new FileOutputStream(qualifiedArchiveFileName);
+                uuec.encodeBuffer(reader, writer);
+
+      //} catch (IOException e) {
+      //   System.out.println(e.toString());
+      //}
+
+
+
+
+
+
+              //  int c;
+               // while (-1 != (c = reader.read())) {
+                //    writer.write(c);
+              //  }
+                reader.close();
+                writer.close();
+                File fileToSend = new File(qualifiedArchiveFileName);
+                try {
+                    // my MacBook for testing...
+                    // "http://udp022507uds.ucsf.edu/~karlhoover/upload_file.php"
+                    // to test locally on OS X put scripts in apache DocumentRoot, for example:
+                    // DocumentRoot "/Library/WebServer/Documents"
+                    // "http://localhost/upload_file.php"
+                    URL url = new URL("http://udp022507uds.ucsf.edu/~karlhoover/upload_file.php");
+
+                    List flist = new ArrayList<File>();
+                    flist.add(fileToSend);
+                    // for each of a colleciton of files to send...
+                    for (Object o0 : flist) {
+                        File f0 = (File)o0;
+                        try {
+                            httpu.upload(url, f0);
+                        } catch (java.net.UnknownHostException e2) {
+                            ReportingUtils.logError(e2, " log archive upload");
+
+                        } catch (IOException e2) {
+                            ReportingUtils.logError(e2);
+                        } catch (SecurityException e2) {
+                            ReportingUtils.logError(e2, "");
+                        } catch (Exception e2) {
+                            ReportingUtils.logError(e2);
+                        }
+                    }
+                } catch (MalformedURLException e2) {
+                    ReportingUtils.logError(e2);
+                }
+            } catch (IOException e2) {
+               ReportingUtils.showError(e2);
+          }
+       
+             
+             
+         }
+      });
+      sendLogFileButton.setFont(new Font("", Font.PLAIN, 10));
+      sendLogFileButton.setText("Send core log to Micro-manager.org");
+      sendLogFileButton.setPreferredSize(buttonSize);
+      getContentPane().add(sendLogFileButton);
+      // put send log file button to the right of clear log file button
+      springLayout.putConstraint(SpringLayout.NORTH, sendLogFileButton, 0, SpringLayout.NORTH, clearLogFileButton);
+      springLayout.putConstraint(SpringLayout.NORTH, sendLogFileButton, 0, SpringLayout.NORTH, clearLogFileButton);
+      springLayout.putConstraint(SpringLayout.WEST, clearLogFileButton, 300, SpringLayout.WEST, sendLogFileButton);
+
       final JButton clearRegistryButton = new JButton();
       clearRegistryButton.setToolTipText("Clears all persistent settings and returns to defaults");
       clearRegistryButton.addActionListener(new ActionListener() {
@@ -166,7 +302,7 @@ public class OptionsDlg extends MMDialog {
          public void actionPerformed(final ActionEvent e) {
             try {
 				opts_.circularBufferSizeMB = NumberUtils.displayStringToInt(bufSizeField_.getText());
-			} catch (ParseException e1) {
+			} catch (Exception e1) {
 				ReportingUtils.showError(e1);
 				return;
 			}
