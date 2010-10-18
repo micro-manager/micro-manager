@@ -14,6 +14,8 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import mmcorej.TaggedImage;
@@ -93,7 +95,17 @@ public class MMVirtualAcquisitionDisplay {
       AcquisitionVirtualStack virtualStack;
       virtualStacks_ = new ArrayList<AcquisitionVirtualStack>();
 
-      for (int pos = 0; pos < numPositions_; ++pos) {
+      for (int i = 0; i < numPositions_; ++i) {
+         int pos = 0;
+         if (numPositions_ == 1)
+            try {
+               pos = MDUtils.getPositionIndex(summaryMetadata_);
+            } catch (Exception ex) {
+               ReportingUtils.logError(ex);
+            }
+         else
+            pos = i;
+
          virtualStack = new AcquisitionVirtualStack(width_, height_, null,
                  imageCache_, numGrayChannels_ * numSlices_ * numFrames_, pos, this);
          try {
@@ -132,11 +144,11 @@ public class MMVirtualAcquisitionDisplay {
 
    private int getPositionIndex(TaggedImage taggedImg) throws Exception {
       int pos;
-      if (numPositions_ > 1) {
+      //if (numPositions_ > 1) {
          pos = MDUtils.getPositionIndex(taggedImg.tags);
-      } else {
-         pos = 0;
-      }
+      //} else {
+      //   pos = 0;
+      //}
       return pos;
    }
 

@@ -4,6 +4,8 @@
  */
 package org.micromanager.acquisition;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.micromanager.api.TaggedImageStorage;
 import ij.CompositeImage;
 import ij.ImagePlus;
@@ -15,12 +17,15 @@ import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.Writer;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import mmcorej.TaggedImage;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.utils.ImageUtils;
@@ -42,7 +47,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
    private boolean newDataSet_;
    private JSONObject summaryMetadata_;
    private HashMap<String,String> filenameTable_;
-
+   private HashMap<String, JSONObject> metadataTable_ = null;
 
    TaggedImageStorageDiskDefault(String dir) {
       this(dir, false, null);
@@ -55,7 +60,8 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       newDataSet_ = newDataSet;
       filenameTable_ = new HashMap<String,String>();
       metadataStreams_ = new HashMap<String,Writer>();
-
+      metadataTable_ = new HashMap<String, JSONObject>();
+      
       try {
          if (!newDataSet_) {
             openExistingDataSet();
@@ -92,19 +98,22 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
          JSONObject md = taggedImg.tags;
          Object img = taggedImg.pix;
          String tiffFileName = createFileName(md);
+         MDUtils.setFileName(md, new String(tiffFileName));
          String posName = "";
+         String fileName = tiffFileName;
          try {
             posName = getPosition(md);
             JavaUtils.createDirectory(dir_ + "/" + posName);
+            if (posName.length() > 0)
+               fileName = posName + "/" + tiffFileName;
          } catch (Exception ex) {
             ReportingUtils.logError(ex);
          }
 
-         MDUtils.setFileName(md, tiffFileName);
-         saveImageFile(img, md, dir_ +"/" + posName, tiffFileName);
-         writeFrameMetadata(md, tiffFileName);
+         saveImageFile(img, md, dir_, fileName);
+         writeFrameMetadata(md);
          String label = MDUtils.getLabel(md);
-         filenameTable_.put(label, tiffFileName);
+         filenameTable_.put(label, fileName);
          return MDUtils.getLabel(md);
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
@@ -118,25 +127,29 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       if (imp != null) {
          try {
             ImageProcessor proc = imp.getProcessor();
-            JSONObject md = new JSONObject((String) imp.getProperty("Info"));
+            JSONObject md;
+            try {
+               md = new JSONObject((String) imp.getProperty("Info"));
+            } catch (Exception e) {
+               md = metadataTable_.get(label);
+            }
             String pixelType = MDUtils.getPixelType(md);
             Object img;
             if (pixelType.contentEquals("GRAY8") || pixelType.contentEquals("GRAY16")) {
                img = proc.getPixels();
             } else if (pixelType.contentEquals("RGB32")) {
                img = proc.getPixels();
-               img = ImageUtils.convertRGB32IntToBytes((int []) img);
+               img = ImageUtils.convertRGB32IntToBytes((int[]) img);
             } else if (pixelType.contentEquals("RGB64")) {
                ImageStack stack = ((CompositeImage) imp).getStack();
-               short [] r = (short []) stack.getProcessor(1).getPixels();
-               short [] g = (short []) stack.getProcessor(2).getPixels();
-               short [] b = (short []) stack.getProcessor(3).getPixels();
-               short [][] planes = {r,g,b};
+               short[] r = (short[]) stack.getProcessor(1).getPixels();
+               short[] g = (short[]) stack.getProcessor(2).getPixels();
+               short[] b = (short[]) stack.getProcessor(3).getPixels();
+               short[][] planes = {r, g, b};
                img = ImageUtils.getRGB64PixelsFromColorPlanes(planes);
             } else {
                return null;
-            }  
-
+            }
             TaggedImage taggedImg = new TaggedImage(img, md);
             return taggedImg;
          } catch (Exception ex) {
@@ -180,7 +193,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       }
    }
 
-   private void writeFrameMetadata(JSONObject md, String fileName) {
+   private void writeFrameMetadata(JSONObject md) {
       try {    
          String title = "FrameKey-" + MDUtils.getFrameIndex(md) + "-" + MDUtils.getChannelIndex(md) + "-" + MDUtils.getSliceIndex(md);
          String pos = getPosition(md);
@@ -271,7 +284,8 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       JSONObject summaryMetadata = getSummaryMetadata();
       summaryMetadata.put("Time", time);
       summaryMetadata.put("Date", time.split(" ")[0]);
-      writeMetadata(pos, getSummaryMetadata(), "Summary");
+      summaryMetadata.put("PositionIndex", MDUtils.getPositionIndex(firstImage.tags));
+      writeMetadata(pos, summaryMetadata, "Summary");
    }
 
    public void finished() {
@@ -293,24 +307,77 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
    }
 
    private void openExistingDataSet() {
-      JSONObject data = readJsonMetadata();
-      if (data != null) {
-         try {
-            summaryMetadata_ = jsonToMetadata(data.getJSONObject("Summary"));
-            for (String key:makeJsonIterableKeys(data)) {
-               JSONObject chunk = data.getJSONObject(key);
-               if (key.startsWith("FrameKey")) {
-                  JSONObject md = jsonToMetadata(chunk);
-                  try {
-                     filenameTable_.put(MDUtils.getLabel(md), MDUtils.getFileName(md));
-                  } catch (Exception ex) {
-                     ReportingUtils.showError(ex);
+      File metadataFile = new File(dir_ + "/metadata.txt");
+      ArrayList<String> positions = new ArrayList<String>();
+      if (metadataFile.exists()) {
+         positions.add("");
+      } else {
+         for (File f : new File(dir_).listFiles()) {
+            if (f.isDirectory()) {
+               positions.add(f.getName());
+            }
+         }
+      }
+
+      for (int positionIndex = 0; positionIndex < positions.size(); ++positionIndex) {
+         String position = positions.get(positionIndex);
+         JSONObject data = readJsonMetadata(position);
+         if (data != null) {
+            try {
+               summaryMetadata_ = jsonToMetadata(data.getJSONObject("Summary"));
+               int metadataVersion = summaryMetadata_.getInt("MetadataVersion");
+               for (String key:makeJsonIterableKeys(data)) {
+                  JSONObject chunk = data.getJSONObject(key);
+                  if (key.startsWith("FrameKey")) {
+                     JSONObject md = jsonToMetadata(chunk);
+                     try {
+                        if (!md.has("ChannelIndex"))
+                           md.put("ChannelIndex", getChannelIndex(MDUtils.getChannelName(md)));
+                        if (!md.has("PositionIndex"))
+                           md.put("PositionIndex", positionIndex);
+                        if (!md.has("PixelType") && !md.has("IJType")) {
+                           md.put("PixelType", MDUtils.getPixelType(summaryMetadata_));
+                        }
+                        String fileName = MDUtils.getFileName(md);
+                        if (position.length() > 0)
+                           fileName = position + "/" + fileName;
+                        filenameTable_.put(MDUtils.getLabel(md), fileName);
+                        if (metadataVersion < 10)
+                           metadataTable_.put(MDUtils.getLabel(md), md);
+                     } catch (Exception ex) {
+                        ReportingUtils.showError(ex);
+                     }
                   }
                }
+            } catch (JSONException ex) {
+               ReportingUtils.logError(ex);
             }
+         }
+         try {
+            summaryMetadata_.put("Positions", positions.size());
          } catch (JSONException ex) {
             ReportingUtils.logError(ex);
          }
+      }
+   }
+
+   private int getChannelIndex(String channelName) {
+      try {
+         JSONArray channelNames;
+         Object tmp = getSummaryMetadata().get("ChNames");
+         if (tmp instanceof String) {
+            channelNames = new JSONArray((String) tmp);
+         } else {
+            channelNames = (JSONArray) tmp;
+         }
+         for (int i=0;i<channelNames.length();++i) {
+            if (channelNames.getString(i).contentEquals(channelName))
+               return i;
+         }
+         return 0;
+      } catch (JSONException ex) {
+         ReportingUtils.logError(ex);
+         return 0;
       }
    }
 
@@ -337,10 +404,10 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
 
    }
 
-   private JSONObject readJsonMetadata() {
+   private JSONObject readJsonMetadata(String pos) {
       try {
          String fileStr;
-         fileStr = TextUtils.readTextFile(dir_ + "/metadata.txt");
+         fileStr = TextUtils.readTextFile(dir_ + "/" + pos + "/metadata.txt");
          try {
             return new JSONObject(fileStr);
          } catch (JSONException ex) {
@@ -391,5 +458,5 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       throw new UnsupportedOperationException("Not supported yet.");
    }
 
-
+   
 }

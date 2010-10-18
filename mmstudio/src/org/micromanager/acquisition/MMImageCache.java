@@ -5,6 +5,9 @@
 package org.micromanager.acquisition;
 
 import java.lang.ref.SoftReference;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.json.JSONException;
 import org.micromanager.api.TaggedImageStorage;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -13,6 +16,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import mmcorej.TaggedImage;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMException;

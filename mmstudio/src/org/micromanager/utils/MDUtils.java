@@ -82,7 +82,23 @@ public class MDUtils {
    }
 
    public static String getPixelType(JSONObject map)  throws Exception {
-      return map.getString("PixelType");
+      try {
+         return map.getString("PixelType");
+      } catch (Exception e) {
+         try {
+            int ijType = map.getInt("IJType");
+            if (ijType == ImagePlus.GRAY8)
+               return "GRAY8";
+            else if (ijType == ImagePlus.GRAY16)
+               return "GRAY16";
+            else if (ijType == ImagePlus.COLOR_RGB)
+               return "RGB32";
+            else throw new Exception();
+            // There is no IJType for RGB64.
+         } catch (Exception e2) {
+            throw new Exception ("Can't figure out pixel type");
+         }
+      }
    }
 
    public static void addRandomUUID(JSONObject map) throws Exception {
@@ -116,16 +132,16 @@ public class MDUtils {
 
    public static int getSingleChannelType(JSONObject map) throws Exception {
       String pixelType = getPixelType(map);
-      if (pixelType.contentEquals("GRAY8"))
-           return ImagePlus.GRAY8;
-      else if (pixelType.contentEquals("GRAY16"))
-           return ImagePlus.GRAY16;
-      else if (pixelType.contentEquals("RGB32"))
-           return ImagePlus.GRAY8;
-      else if (pixelType.contentEquals("RGB64"))
-           return ImagePlus.GRAY16;
-      else {
-         throw new Exception("Pixel type not recognized!");
+      if (pixelType.contentEquals("GRAY8")) {
+         return ImagePlus.GRAY8;
+      } else if (pixelType.contentEquals("GRAY16")) {
+         return ImagePlus.GRAY16;
+      } else if (pixelType.contentEquals("RGB32")) {
+         return ImagePlus.GRAY8;
+      } else if (pixelType.contentEquals("RGB64")) {
+         return ImagePlus.GRAY16;
+      } else {
+         throw new Exception();
       }
    }
 
