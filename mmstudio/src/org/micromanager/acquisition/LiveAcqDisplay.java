@@ -231,25 +231,6 @@ public class LiveAcqDisplay extends Thread {
       }
    }
 
-   private String createPositionPath(String acqPath, String position) throws Exception {
-      if (position.length() == 0) {
-         return acqPath;
-      }
-
-      File acqDir = null;
-      if (position.length() == 0) {
-         return acqPath;
-      }
-
-      acqDir = JavaUtils.createDirectory(acqPath + "/" + position);
-
-      if (acqDir != null) {
-         return acqDir.getAbsolutePath();
-      } else {
-         return "";
-      }
-   }
-
    private int getCurrentMaxDirIndex(File rootDir, String prefix) throws NumberFormatException {
       int maxNumber = 0;
       int number;

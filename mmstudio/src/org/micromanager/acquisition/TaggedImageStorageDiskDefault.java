@@ -4,8 +4,6 @@
  */
 package org.micromanager.acquisition;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.micromanager.api.TaggedImageStorage;
 import ij.CompositeImage;
 import ij.ImagePlus;
@@ -16,6 +14,7 @@ import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
+import java.awt.Color;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -48,6 +47,8 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
    private JSONObject summaryMetadata_;
    private HashMap<String,String> filenameTable_;
    private HashMap<String, JSONObject> metadataTable_ = null;
+   private JSONObject displayAndComments_;
+   private long lastDisplaySave_;
 
    TaggedImageStorageDiskDefault(String dir) {
       this(dir, false, null);
@@ -61,6 +62,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       filenameTable_ = new HashMap<String,String>();
       metadataStreams_ = new HashMap<String,Writer>();
       metadataTable_ = new HashMap<String, JSONObject>();
+      displayAndComments_ = new JSONObject();
       
       try {
          if (!newDataSet_) {
@@ -98,7 +100,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
          JSONObject md = taggedImg.tags;
          Object img = taggedImg.pix;
          String tiffFileName = createFileName(md);
-         MDUtils.setFileName(md, new String(tiffFileName));
+         MDUtils.setFileName(md, tiffFileName);
          String posName = "";
          String fileName = tiffFileName;
          try {
@@ -285,7 +287,26 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       summaryMetadata.put("Time", time);
       summaryMetadata.put("Date", time.split(" ")[0]);
       summaryMetadata.put("PositionIndex", MDUtils.getPositionIndex(firstImage.tags));
+      getDisplaySettingsFromSummary(summaryMetadata);
       writeMetadata(pos, summaryMetadata, "Summary");
+   }
+
+   private void getDisplaySettingsFromSummary(JSONObject summaryMetadata) {
+      try {
+         JSONArray chNames = summaryMetadata.getJSONArray("ChNames");
+         JSONArray chColors = summaryMetadata.getJSONArray("ChColors");
+         JSONObject channels = new JSONObject();
+         for (int i=0;i<chNames.length();++i) {
+            String name = (String) chNames.get(i);
+            int color = chColors.getInt(i);
+            JSONObject channelObject = new JSONObject();
+            channelObject.put("Color", color);
+            displayAndComments_.put("Channels",
+                    channels.put(name, channelObject));
+         }
+      } catch (JSONException e) {
+         return;
+      }
    }
 
    public void finished() {
@@ -451,12 +472,31 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
    }
 
    public void setDisplaySettings(JSONObject settings) {
-      throw new UnsupportedOperationException("Not supported yet.");
+      displayAndComments_ = settings;
    }
 
    public JSONObject getDisplaySettings() {
-      throw new UnsupportedOperationException("Not supported yet.");
+      return displayAndComments_;
    }
 
+   private void writeDisplaySettings() {
+      File displayFile = new File(dir_ + "/" + "display_and_comments.txt");
+      try {
+         Writer displayFileWriter = new FileWriter(displayFile);
+         displayAndComments_.write(displayFileWriter);
+         displayFileWriter.close();
+         lastDisplaySave_ = System.currentTimeMillis();
+      } catch (Exception e) {
+         ReportingUtils.showError(e);
+      }
+   }
+
+   protected void finalize() throws Throwable {
+      try {
+         writeDisplaySettings();
+      } catch (Exception e) {
+         super.finalize();
+      }
+   }
    
 }

@@ -627,8 +627,6 @@ public class MetadataViewer extends javax.swing.JFrame
    public synchronized void setupChannelControls(MMVirtualAcquisitionDisplay acq) {
       int hpHeight = 100;
       int nChannels = acq.getChannels();
-      Color[] chanColors = acq.getChannelColors();
-      String[] chanNames = acq.getChannelNames();
 
       JPanel p = new JPanel();
       p.setPreferredSize(new Dimension(200,nChannels * hpHeight));

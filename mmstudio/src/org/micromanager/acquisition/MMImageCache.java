@@ -47,11 +47,11 @@ public class MMImageCache implements TaggedImageStorage {
    }
 
    public void setDisplaySettings(JSONObject settings) {
-      throw new UnsupportedOperationException("Not supported yet.");
+      imageFileManager_.setDisplaySettings(settings);
    }
 
    public JSONObject getDisplaySettings() {
-      throw new UnsupportedOperationException("Not supported yet.");
+      return imageFileManager_.getDisplaySettings();
    }
 
    private class ImageCollection {
