@@ -463,16 +463,14 @@ public class MMVirtualAcquisitionDisplay {
    }
 
    public void setChannelDisplayRange(int channel, int min, int max) {
-      if (hyperImage_ instanceof CompositeImage) {
-         CompositeImage ci = (CompositeImage) hyperImage_;
-         setChannelWithoutUpdate(channel + 1);
-         ci.updateImage();
-         ci.setDisplayRange(min, max);
-         ci.updateImage();
-         ci.draw();
-         channelSettings_[channel].min = min;
-         channelSettings_[channel].max = max;
-      }
+      setChannelWithoutUpdate(channel + 1);
+      hyperImage_.updateImage();
+      hyperImage_.setDisplayRange(min, max);
+      hyperImage_.updateImage();
+      hyperImage_.draw();
+      channelSettings_[channel].min = min;
+      channelSettings_[channel].max = max;
+
       writeChannelSettingsToCache(channel);
    }
 
@@ -584,10 +582,14 @@ public class MMVirtualAcquisitionDisplay {
    }
 
    public int[] getChannelHistogram(int channelIndex) {
-      if (hyperImage_ == null || !hyperImage_.isComposite()) {
+      if (hyperImage_ == null) {
          return null;
       }
-      return ((CompositeImage) hyperImage_).getProcessor(channelIndex + 1).getHistogram();
+      if (hyperImage_.isComposite()) {
+         return ((CompositeImage) hyperImage_).getProcessor(channelIndex + 1).getHistogram();
+      } else {
+         return hyperImage_.getProcessor().getHistogram();
+      }
    }
 
    public int getChannelMax(int channelIndex) {

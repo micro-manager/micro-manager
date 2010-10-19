@@ -17,13 +17,9 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
 import ij.gui.ImageWindow;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
 import java.util.Vector;
 import javax.swing.JPanel;
 import javax.swing.SpringLayout;
@@ -394,17 +390,12 @@ public class MetadataViewer extends javax.swing.JFrame
    }//GEN-LAST:event_tabbedPaneStateChanged
 
 
-   private CompositeImage getCurrentCompositeImage() {
-      ImagePlus imgp = IJ.getImage();
-      if (imgp instanceof CompositeImage) {
-         return (CompositeImage) imgp;
-      } else {
-         return null;
-      }
+   private ImagePlus getCurrentImage() {
+      return IJ.getImage();
    }
 
    private void setDisplayState(int state) {
-      ImagePlus imgp = IJ.getImage();
+      ImagePlus imgp = getCurrentImage();
       if (imgp instanceof CompositeImage) {
          CompositeImage ci = (CompositeImage) imgp;
          ci.setMode(state);
@@ -583,9 +574,7 @@ public class MetadataViewer extends javax.swing.JFrame
                   imageMetadataModel_.setMetadata(null);
                }
             } else if (tabSelected == 0) {
-               if (imp instanceof CompositeImage) {
-                  updateChannelControls();
-               }
+               updateChannelControls();
             }
          }
       }
@@ -614,13 +603,15 @@ public class MetadataViewer extends javax.swing.JFrame
             updatingDisplayModeCombo_ = true;
             displayModeCombo.setSelectedIndex(cimp.getMode()-1);
             updatingDisplayModeCombo_ = false;
-            AcquisitionVirtualStack stack = getAcquisitionStack(imgp);
+         }
+         AcquisitionVirtualStack stack = getAcquisitionStack(imgp);
+         if (stack != null) {
             acq_ = stack.getVirtualAcquisition();
             setupChannelControls(acq_);
-         }
 
-         update(imgp);
-         currentWindow_ = focusedWindow;
+            update(imgp);
+            currentWindow_ = focusedWindow;
+         }
       }
    }
 
