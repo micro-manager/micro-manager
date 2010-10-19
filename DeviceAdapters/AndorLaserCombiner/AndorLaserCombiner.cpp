@@ -913,7 +913,7 @@ int PiezoStage::GetPositionUm(double& pos)
 int PiezoStage::SetPositionSteps(long pos)
 {
    double dpos = pos;
-   return SetPositionUm(pos);
+   return SetPositionUm(dpos);
 }
   
 int PiezoStage::SetRelativePositionUm(double pos)
