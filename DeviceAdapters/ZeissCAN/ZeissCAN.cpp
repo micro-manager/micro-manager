@@ -39,6 +39,7 @@
 #include "../../MMDevice/ModuleInterface.h"
 #include <sstream>
 #include <algorithm>
+#include <xlocale>
 
 ZeissHub g_hub;
 ZeissTurret g_turret;
@@ -533,7 +534,7 @@ MM::DeviceDetectionStatus ZeissScope::DetectDevice(void)
       std::string transformed = g_hub.port_;//\port_;
       for( std::string::iterator its = transformed.begin(); its != transformed.end(); ++its)
       {
-         *its = (char)std::tolower(*its);
+         *its = (char)tolower(*its);
       }
       // ensure we’ve been provided with a valid serial port device name
       if( 0< transformed.length() &&  0 != transformed.compare("undefined")  && 0 != transformed.compare("unknown") )

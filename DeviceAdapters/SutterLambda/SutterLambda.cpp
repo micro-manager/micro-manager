@@ -737,8 +737,9 @@ bool Shutter::ControllerBusy()
 
 bool Shutter::SetShutterMode(const char* mode)
 {
-   int nrChars = 2;
-   unsigned char msg[nrChars];
+   const int nrCharsC = 2;
+   int nrChars = nrCharsC;
+   unsigned char msg[nrCharsC];
 
    if (strcmp(mode, g_NDMode) == 0)
       return SetND(nd_);
@@ -767,8 +768,9 @@ bool Shutter::SetShutterMode(const char* mode)
 
 bool Shutter::SetND(unsigned int nd)
 {
-   int nrchars = 3;
-   unsigned char msg[nrchars];
+   const int nrcharsC = 3;
+   int nrchars = nrcharsC;
+   unsigned char msg[nrcharsC];
 
    msg[0] = 222;
    if (controllerType_ == "SC") {

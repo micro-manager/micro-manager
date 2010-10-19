@@ -960,11 +960,11 @@ void CMMCore::waitForDevice(MM::Device* pDev) throw (CMMError)
 {
    CORE_DEBUG1("Waiting for device %s...\n", pluginManager_.GetDeviceLabel(*pDev).c_str());
 
-   MM::TimeoutMs timeout(timeoutMs_);
+   MM::TimeoutMs timeout(GetMMTimeNow().getMsec(),timeoutMs_);
 
    while (pDev->Busy())
    {
-      if (timeout.expired())
+      if (timeout.expired(GetMMTimeNow().getMsec()))
       {
          string label = pluginManager_.GetDeviceLabel(*pDev);
          std::ostrstream mez;

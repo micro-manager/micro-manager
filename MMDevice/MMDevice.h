@@ -38,27 +38,17 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 #pragma once
+#ifndef MMMMDEVICE_H
+#define MMMMDEVICE_H
 
 #include "MMDeviceConstants.h"
+#include "DeviceUtils.h"
 #include <string>
 #include <cstring>
 #include <climits>
 #include <cstdlib>
 #include <vector>
 #include <sstream>
-
-// suppress hideous boost warnings
-#ifdef WIN32
-#pragma warning( push )
-#pragma warning( disable : 4244 )
-#endif
-
-#include "boost/date_time/posix_time/posix_time.hpp"
-
-#ifdef WIN32
-#pragma warning( pop )
-#endif
-
 
 
 
@@ -201,46 +191,43 @@ namespace MM {
    	
 
    public:
-      // ASSUME boost::posix_time::time_duration contructor TAKES microseconds !!!!!!!!!!!!!!!!!
-      TimeoutMs(double intervalMs):interval_(0,0,0,static_cast<boost::posix_time::time_duration::fractional_seconds_type>(0.5+intervalMs*1000.)), startTime_(boost::posix_time::microsec_clock::local_time() )
+      // arguments:  millisecond start time, millisecond interval time
+      TimeoutMs(const double t0, const double intervalMs):interval_(intervalMs*1000.), startTime_(t0*1000. )
       {
       }
       ~TimeoutMs()
       {
        
       }
-      bool expired()
+      bool expired(const double tnow)
       {
-         boost::posix_time::time_duration elapsed = boost::posix_time::microsec_clock::local_time() - startTime_;
+         double elapsed = tnow - startTime_;
          return (interval_ < elapsed);
       }
 
    private:
       TimeoutMs(const MM::TimeoutMs&) {}
       const TimeoutMs& operator=(const MM::TimeoutMs&) {return *this;}
-
-      boost::posix_time::time_duration  interval_;
-	   boost::posix_time::ptime startTime_;
+      double interval_; // interval in microseconds
+      double startTime_; // start time in microseconds
    };
 
    class TimerMs
    {
    public:
-	   TimerMs():startTime_(boost::posix_time::microsec_clock::local_time() )
+	   TimerMs(const double t0):startTime_(t0 )
       {
       }
       ~TimerMs()
       {
       }
-      double elapsed()
+      double elapsed(const double tnow)
       {
-		   boost::posix_time::time_duration delta = boost::posix_time::microsec_clock::local_time() - startTime_;
-
-		   return (double)delta.total_microseconds() ;
+		    return tnow*1000. - startTime_;
       }
 
    private:
-       boost::posix_time::ptime startTime_;
+       double startTime_;
    };
 
 
@@ -933,4 +920,6 @@ namespace MM {
    };
 
 } // namespace MM
+
+#endif //MMMMDEVICE_H
 

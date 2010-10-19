@@ -18,8 +18,8 @@
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 // CVS:           $Id$
 //
-
 #include "DeviceUtils.h"
+#include "../MMcore/CoreUtils.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>

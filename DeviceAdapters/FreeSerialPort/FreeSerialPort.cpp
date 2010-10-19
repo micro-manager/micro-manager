@@ -31,6 +31,7 @@
 #include "../../MMDevice/ModuleInterface.h"
 #include "../../MMDevice/DeviceBase.h"
 #include "../../MMDevice/DeviceUtils.h"
+#include "boost/lexical_cast.hpp"
 
 
 using namespace std;

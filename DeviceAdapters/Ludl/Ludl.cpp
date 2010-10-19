@@ -232,7 +232,7 @@ MM::DeviceDetectionStatus Hub::DetectDevice(void)
       std::string transformed = port_;
       for( std::string::iterator its = transformed.begin(); its != transformed.end(); ++its)
       {
-         *its = (char)std::tolower(*its);
+         *its = (char)tolower(*its);
       }
       if( 0< transformed.length() &&  0 != transformed.compare("undefined")  && 0 != transformed.compare("unknown") )
       {
