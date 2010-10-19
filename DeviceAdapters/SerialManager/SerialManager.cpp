@@ -272,7 +272,15 @@ MODULE_API void InitializeModuleData()
 
    std::vector<std::string>::iterator it = g_PortList.begin();
    while (it < g_PortList.end()) {
-      AddAvailableDeviceName((*it).c_str(), "Serial communication port");
+      // KeySpan USA-49WG driver  generates a 'copy' of the first serial port
+      // named KeySerialN Of course this causes various sorts of havoc such as
+      // 'Device Busy' as we open the serial ports successively and query them.
+      // I suspect we could examine the attributes such as IRQ for each serial port
+      // and remove duplicates, but frankly I'm not sure how to do that - UNIX
+      // utility stty doesn't tell me what I need to know.   . This test
+      // works fine and let me operate the Axiovert 200M with OS X
+      if( std::string::npos == (*it).find("KeySerial"))
+           AddAvailableDeviceName((*it).c_str(), "Serial communication port");
       it++;
    }
 }
