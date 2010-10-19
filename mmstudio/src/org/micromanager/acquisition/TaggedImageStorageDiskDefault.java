@@ -300,9 +300,15 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
             JSONObject channelObject = new JSONObject();
             channelObject.put("Color", color);
             channelObject.put("Name", name);
-            displaySettings_.put("Channels",
-                    channels.put(channelObject));
+            channels.put(channelObject);
          }
+         if (chNames.length() == 0) {
+            JSONObject channelObject = new JSONObject();
+            channelObject.put("Color", 0);
+            channelObject.put("Name", "Default");
+            channels.put(channelObject);
+         }
+         displaySettings_.put("Channels", channels);
       } catch (JSONException e) {
          return;
       }
