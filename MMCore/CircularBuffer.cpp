@@ -33,27 +33,12 @@
 #include <cstdio>
 
 #ifdef WIN32
-#pragma warning (disable : 4312 4244)
-#endif
-
-//#include <ace/Mutex.h>
-//#include <ace/Guard_T.h>
-//#include "ace/High_Res_Timer.h"
-
-#ifdef WIN32
-#pragma warning (default : 4312 4244)
-#endif
-
-#ifdef WIN32
 #undef min // avoid clash with the system defined macros
 #endif
 
 const int bytesInMB = 1048576;
 const long adjustThreshold = LONG_MAX / 2;
 const int maxCBSize = 1000;    //a reasonable limit to circular buffer size
-
-// mutex
-//static ACE_Mutex g_bufferLock;
 
 static MMThreadLock g_bufferLock;
 
@@ -143,7 +128,7 @@ bool CircularBuffer::InsertImage(const unsigned char* pixArray, unsigned int wid
  */
 bool CircularBuffer::InsertMultiChannel(const unsigned char* pixArray, unsigned numChannels, unsigned width, unsigned height, unsigned byteDepth, const Metadata* pMd) throw (CMMError)
 {
-   /*ACE_Guard<ACE_Mutex>*/  MMThreadGuard guard(g_bufferLock);
+   MMThreadGuard guard(g_bufferLock);
 
    unsigned long singleChannelSize = (unsigned long)width * height * byteDepth;
    static unsigned long previousTicks = 0;
@@ -225,7 +210,7 @@ bool CircularBuffer::InsertMultiChannel(const unsigned char* pixArray, unsigned 
 
 const unsigned char* CircularBuffer::GetTopImage() const
 {
-   /*ACE_Guard<ACE_Mutex>*/  MMThreadGuard guard(g_bufferLock);
+    MMThreadGuard guard(g_bufferLock);
 
    if (frameArray_.size() == 0)
       return 0;
@@ -238,7 +223,7 @@ const unsigned char* CircularBuffer::GetTopImage() const
 
 const ImgBuffer* CircularBuffer::GetTopImageBuffer(unsigned channel, unsigned slice) const
 {
-   /*ACE_Guard<ACE_Mutex>*/  MMThreadGuard guard(g_bufferLock);
+   MMThreadGuard guard(g_bufferLock);
 
    if (frameArray_.size() == 0)
       return 0;
@@ -254,7 +239,7 @@ const ImgBuffer* CircularBuffer::GetTopImageBuffer(unsigned channel, unsigned sl
 
 const unsigned char* CircularBuffer::GetNextImage()
 {
-   /*ACE_Guard<ACE_Mutex>*/  MMThreadGuard guard(g_bufferLock);
+   MMThreadGuard guard(g_bufferLock);
 
    if (saveIndex_ < insertIndex_)
    {
@@ -265,22 +250,9 @@ const unsigned char* CircularBuffer::GetNextImage()
    return 0;
 }
 
-/*const unsigned char* CircularBuffer::GetNextImage(Metadata& md)
-{
-   MMThreadGuard guard(g_bufferLock);
-
-   if (saveIndex_ < insertIndex_)
-   {
-      const unsigned char* pBuf = frameArray_[(saveIndex_) % frameArray_.size()].GetPixels(0, 0);
-      saveIndex_++;
-      return pBuf;
-   }
-   return 0;
-}*/
-
 const ImgBuffer* CircularBuffer::GetNextImageBuffer(unsigned channel, unsigned slice)
 {
-   /*ACE_Guard<ACE_Mutex>*/  MMThreadGuard guard(g_bufferLock);
+   MMThreadGuard guard(g_bufferLock);
 
    // TODO: we may return NULL pointer if channel and slice indexes are wrong
    // this will cause problem in the SWIG - Java layer
@@ -295,26 +267,8 @@ const ImgBuffer* CircularBuffer::GetNextImageBuffer(unsigned channel, unsigned s
 
 double CircularBuffer::GetAverageIntervalMs() const
 {
-   /*ACE_Guard<ACE_Mutex>*/  MMThreadGuard guard(g_bufferLock);
+   MMThreadGuard guard(g_bufferLock);
 
-   // TODO: below is not working properly
-   //const unsigned avgSize = 10;
-
-   //if (insertIndex_ < 2 || imgArray_.size() < avgSize+2)
-   //   return 0.0;
-
-   //double sum = 0.0;
-   //int count = 0;
-   //for (unsigned i=1; i<=avgSize; i++)
-   //{
-   //   sum += ((imgArray_[(insertIndex_-i) % imgArray_.size()].elapsedTimeMs - imgArray_[(insertIndex_-i-1) % imgArray_.size()].elapsedTimeMs));
-   //   count++;
-   //}
-
-   //if (count > 0)
-   //   sum /= count;
-
-   //return (double)((long)(sum + 0.5));
    return (double)estimatedIntervalMs_;
 }
 
