@@ -24,4 +24,5 @@ public interface TaggedImageStorage {
    public String getComment();
    public void setDisplaySettings(JSONObject settings);
    public JSONObject getDisplaySettings();
+   public void close();
 }

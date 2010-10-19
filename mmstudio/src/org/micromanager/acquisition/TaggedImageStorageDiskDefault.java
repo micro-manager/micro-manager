@@ -4,6 +4,7 @@
  */
 package org.micromanager.acquisition;
 
+import java.io.FileNotFoundException;
 import org.micromanager.api.TaggedImageStorage;
 import ij.CompositeImage;
 import ij.ImagePlus;
@@ -17,8 +18,10 @@ import ij.process.ShortProcessor;
 import java.awt.Color;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.Reader;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -47,9 +50,8 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
    private JSONObject summaryMetadata_;
    private HashMap<String,String> filenameTable_;
    private HashMap<String, JSONObject> metadataTable_ = null;
-   private JSONObject displayAndComments_;
-   private long lastDisplaySave_;
-
+   private JSONObject displaySettings_;
+   
    TaggedImageStorageDiskDefault(String dir) {
       this(dir, false, null);
    }
@@ -62,7 +64,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       filenameTable_ = new HashMap<String,String>();
       metadataStreams_ = new HashMap<String,Writer>();
       metadataTable_ = new HashMap<String, JSONObject>();
-      displayAndComments_ = new JSONObject();
+      displaySettings_ = new JSONObject();
       
       try {
          if (!newDataSet_) {
@@ -295,14 +297,15 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       try {
          JSONArray chNames = summaryMetadata.getJSONArray("ChNames");
          JSONArray chColors = summaryMetadata.getJSONArray("ChColors");
-         JSONObject channels = new JSONObject();
+         JSONArray channels = new JSONArray();
          for (int i=0;i<chNames.length();++i) {
             String name = (String) chNames.get(i);
             int color = chColors.getInt(i);
             JSONObject channelObject = new JSONObject();
             channelObject.put("Color", color);
-            displayAndComments_.put("Channels",
-                    channels.put(name, channelObject));
+            channelObject.put("Name", name);
+            displaySettings_.put("Channels",
+                    channels.put(channelObject));
          }
       } catch (JSONException e) {
          return;
@@ -379,6 +382,8 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
          } catch (JSONException ex) {
             ReportingUtils.logError(ex);
          }
+         getDisplaySettingsFromSummary(summaryMetadata_);
+         readDisplaySettings();
       }
    }
 
@@ -472,30 +477,38 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
    }
 
    public void setDisplaySettings(JSONObject settings) {
-      displayAndComments_ = settings;
+      displaySettings_ = settings;
    }
 
    public JSONObject getDisplaySettings() {
-      return displayAndComments_;
+      return displaySettings_;
    }
 
    private void writeDisplaySettings() {
       File displayFile = new File(dir_ + "/" + "display_and_comments.txt");
       try {
          Writer displayFileWriter = new FileWriter(displayFile);
-         displayAndComments_.write(displayFileWriter);
+         displayFileWriter.append(displaySettings_.toString(2));
          displayFileWriter.close();
-         lastDisplaySave_ = System.currentTimeMillis();
       } catch (Exception e) {
          ReportingUtils.showError(e);
       }
    }
 
-   protected void finalize() throws Throwable {
+   private void readDisplaySettings() {
+      String path = dir_ + "/" + "display_and_comments.txt";
+      try {
+         displaySettings_ = new JSONObject(JavaUtils.readTextFile(path));
+      } catch (Exception ex) {
+         ReportingUtils.showError(ex);
+      }
+   }
+
+   public void close() {
       try {
          writeDisplaySettings();
       } catch (Exception e) {
-         super.finalize();
+         ReportingUtils.logError(e);
       }
    }
    

@@ -66,4 +66,8 @@ public class TaggedImageStorageRam implements TaggedImageStorage {
       throw new UnsupportedOperationException("Not supported yet.");
    }
 
+   public void close() {
+      // do nothing for now.
+   }
+
 }

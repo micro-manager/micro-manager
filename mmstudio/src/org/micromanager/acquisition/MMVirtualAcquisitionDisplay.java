@@ -82,9 +82,6 @@ public class MMVirtualAcquisitionDisplay {
          numChannels_ = Math.max(summaryMetadata_.getInt("Channels"), 1);
          numPositions_ = Math.max(summaryMetadata_.getInt("Positions"), 1);
          numComponents_ = MDUtils.getNumberOfComponents(summaryMetadata_);
-
-         if (numChannels_ > 1)
-            createChannelSettingsArray(summaryMetadata_);
       } catch (Exception e) {
          ReportingUtils.showError(e);
       }
@@ -113,7 +110,16 @@ public class MMVirtualAcquisitionDisplay {
             ReportingUtils.showError(ex);
          }
       }
+
+      if (channelSettings_ == null) {
+          channelSettings_ = new ChannelDisplaySettings[numChannels_];
+          for(int i=0;i<numChannels_;++i) {
+            channelSettings_[i] = new ChannelDisplaySettings();
+          }
+       }
       createImagePlus();
+
+      readChannelSettingsFromCache();
    }
 
    private void createChannelSettingsArray(JSONObject md) {
@@ -373,6 +379,7 @@ public class MMVirtualAcquisitionDisplay {
                   }
                }
             }
+            imageCache_.close();
             imageCache_ = null;
             virtualStacks_ = null;
             close();
@@ -448,10 +455,12 @@ public class MMVirtualAcquisitionDisplay {
       }
 
       setChannelLut(channel, new Color(rgb), gamma);
+      writeChannelSettingsToCache(channel);
    }
 
    public void setChannelGamma(int channel, double gamma) {
       setChannelLut(channel, channelSettings_[channel].color, gamma);
+      writeChannelSettingsToCache(channel);
    }
 
    public void setChannelDisplaySettings(int channel, ChannelDisplaySettings settings) {
@@ -487,6 +496,7 @@ public class MMVirtualAcquisitionDisplay {
          channelSettings_[channel].min = min;
          channelSettings_[channel].max = max;
       }
+      writeChannelSettingsToCache(channel);
    }
 
    public JSONObject getCurrentMetadata() {
@@ -555,19 +565,6 @@ public class MMVirtualAcquisitionDisplay {
       return Animator.getFrameRate();
    }
 
-   Color[] getChannelColors() {
-      if (!(hyperImage_ instanceof CompositeImage)) {
-         return null;
-      }
-
-      int nChannels = hyperImage_.getNChannels();
-      Color[] chanColors = new Color[nChannels];
-      for (int i = 0; i < nChannels; ++i) {
-         chanColors[i] = getChannelColor(i);
-      }
-      return chanColors;
-   }
-
    int[] getCurrentSlices() {
       ImagePlus image = hyperImage_;
       int frame = image.getFrame();
@@ -630,5 +627,39 @@ public class MMVirtualAcquisitionDisplay {
 
    public Color getChannelColor(int channelIndex) {
       return channelSettings_[channelIndex].color;
+   }
+
+   private void readChannelSettingsFromCache() {
+      try {
+         JSONArray channelsArray = imageCache_.getDisplaySettings().getJSONArray("Channels");
+         for (int i = 0; i < channelSettings_.length; ++i) {
+            try {
+               JSONObject channel = channelsArray.getJSONObject(i);
+               channelSettings_[i].color = new Color(channel.getInt("Color"));
+               channelSettings_[i].min = channel.getInt("Min");
+               channelSettings_[i].max = channel.getInt("Max");
+               channelSettings_[i].gamma = channel.getDouble("Gamma");
+               setChannelDisplaySettings(i, channelSettings_[i]);
+            } catch (JSONException ex) {
+               ReportingUtils.logError(ex);
+            }
+         }
+      } catch (JSONException ex) {
+         ReportingUtils.logError(ex);
+      }
+   }
+
+   private void writeChannelSettingsToCache(int channelIndex) {
+      try {
+         JSONObject jsonSetting = imageCache_.getDisplaySettings().getJSONArray("Channels").getJSONObject(channelIndex);
+         ChannelDisplaySettings setting = channelSettings_[channelIndex];
+         jsonSetting.put("Color", setting.color.getRGB());
+         jsonSetting.put("Gamma", setting.gamma);
+         jsonSetting.put("Min", setting.min);
+         jsonSetting.put("Max", setting.max);
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
+      }
+
    }
 }
