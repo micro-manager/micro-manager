@@ -122,37 +122,9 @@ public class MMVirtualAcquisitionDisplay {
       readChannelSettingsFromCache();
    }
 
-   private void createChannelSettingsArray(JSONObject md) {
-      JSONArray chColors = new JSONArray();
-      if (numChannels_ > 0 && channelSettings_ == null) {
-         try {
-            chColors = md.getJSONArray("ChColors");
-         } catch (JSONException ex) {
-            return;
-         }
-         channelSettings_ = new ChannelDisplaySettings[numChannels_];
-         for (int i = 0; i < channelSettings_.length; ++i) {
-            channelSettings_[i] = new ChannelDisplaySettings();
-            channelSettings_[i].gamma = 1.0;
-            try {
-               channelSettings_[i].color = new Color(chColors.getInt(i));
-            } catch (JSONException ex) {
-               ReportingUtils.showError(ex);
-               return;
-            }
-            channelSettings_[i].min = 0;
-            channelSettings_[i].max = 255;
-         }
-      }
-   }
-
    private int getPositionIndex(TaggedImage taggedImg) throws Exception {
       int pos;
-      //if (numPositions_ > 1) {
-         pos = MDUtils.getPositionIndex(taggedImg.tags);
-      //} else {
-      //   pos = 0;
-      //}
+      pos = MDUtils.getPositionIndex(taggedImg.tags);
       return pos;
    }
 
@@ -229,8 +201,13 @@ public class MMVirtualAcquisitionDisplay {
                      if (channelSettings_[chan] == null) {
                         channelSettings_[chan] = new ChannelDisplaySettings();
                      }
-                     int rgb = imageCache_.getSummaryMetadata()
-                             .getJSONArray("ChColors").getInt(chan);
+                     int rgb;
+                     try {
+                        rgb = imageCache_.getSummaryMetadata()
+                                .getJSONArray("ChColors").getInt(chan);
+                     } catch (Exception e) {
+                        rgb = 0;
+                     }
                      channelSettings_[chan].min = (int) min;
                      channelSettings_[chan].max = (int) max;
                      channelSettings_[chan].gamma = 1.0;
