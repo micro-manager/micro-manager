@@ -451,15 +451,17 @@ public class MMVirtualAcquisitionDisplay {
    }
 
    public void setChannelLut(int channel, Color color, double gamma) {
-      if (hyperImage_ instanceof CompositeImage) {
          LUT lut = ImageUtils.makeLUT(color, gamma, 8);
-         CompositeImage ci = (CompositeImage) hyperImage_;
-         setChannelWithoutUpdate(channel + 1);
-         ci.setChannelColorModel(lut);
-         ci.updateAndDraw();
+         if (hyperImage_.isComposite()) {
+            CompositeImage ci = (CompositeImage) hyperImage_;
+            setChannelWithoutUpdate(channel + 1);
+            ci.setChannelColorModel(lut);
+         } else {
+            hyperImage_.getProcessor().setColorModel(lut);
+         }
+         hyperImage_.updateAndDraw();
          channelSettings_[channel].color = color;
          channelSettings_[channel].gamma = gamma;
-      }
    }
 
    public void setChannelDisplayRange(int channel, int min, int max) {
