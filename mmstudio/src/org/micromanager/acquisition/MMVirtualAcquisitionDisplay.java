@@ -231,8 +231,8 @@ public class MMVirtualAcquisitionDisplay {
                      }
                      int rgb = imageCache_.getSummaryMetadata()
                              .getJSONArray("ChColors").getInt(chan);
-                     channelSettings_[chan].min = (int) 0;
-                     channelSettings_[chan].max = (int) 255;
+                     channelSettings_[chan].min = (int) min;
+                     channelSettings_[chan].max = (int) max;
                      channelSettings_[chan].gamma = 1.0;
                      channelSettings_[chan].color = this.getChannelColor(chan);
                      setChannelColor(chan, rgb);
