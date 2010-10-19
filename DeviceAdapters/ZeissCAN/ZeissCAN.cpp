@@ -39,7 +39,6 @@
 #include "../../MMDevice/ModuleInterface.h"
 #include <sstream>
 #include <algorithm>
-#include <xlocale>
 
 ZeissHub g_hub;
 ZeissTurret g_turret;
