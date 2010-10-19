@@ -299,8 +299,6 @@ public class ImageTask implements EngineTask {
          TaggedImage taggedImage = new TaggedImage(pixels, md_);
 
          eng_.imageReceivingQueue_.add(taggedImage);
-
-         ReportingUtils.logMessage(md_.toString(2));
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
