@@ -164,6 +164,14 @@ VideoInit(State*state)
   state->fd=open("/dev/video0",O_RDWR);
 //// this should probably be a property
 
+  if(-1==state->fd)
+    {
+    LogMessage("v4l2: ould not open the video device");
+    return false;
+    }
+
+  sleep(3); // let it settle; there is probably an ioctl for this
+
   state->buf=(struct v4l2_buffer*) malloc(sizeof(struct v4l2_buffer));
 
   struct v4l2_format format; 
@@ -172,12 +180,9 @@ VideoInit(State*state)
   format.fmt.pix.width=state->W;
   format.fmt.pix.height=state->H;
   format.fmt.pix.pixelformat=V4L2_PIX_FMT_YUYV;
-  sleep(3);
-//// why sleep? /Johan
-
   if(-1==ioctl(state->fd,VIDIOC_S_FMT,&format))
     {
-    LogMessage("v4l2 init error 1");
+    LogMessage("v4l2: could not set YUYV format");
     return false;
     }
 
@@ -196,7 +201,7 @@ VideoInit(State*state)
   state->buffers=(struct VidBuffer*)calloc(reqbuf.count,sizeof(*(state->buffers)));
   if(!state->buffers)
     {
-    LogMessage("v4l2 init error 2");
+    LogMessage("v4l2: could not allocate buffer(s)");
     return false;
     }
   unsigned int i;
@@ -209,7 +214,7 @@ VideoInit(State*state)
     buf.index=i;
     if(-1==ioctl(state->fd,VIDIOC_QUERYBUF,&buf))
       {
-      LogMessage("v4l2 init error 3");
+      LogMessage("v4l2: could not query the buffer state");
       return false;
       }
  
@@ -219,21 +224,21 @@ VideoInit(State*state)
 			  MAP_SHARED,state->fd,buf.m.offset);
     if(state->buffers[i].start==MAP_FAILED)
       {
-      LogMessage("v4l2 init error 4");
+      LogMessage("v4l2: memory map failed");
       return false;
       }
  
     if(-1==ioctl(state->fd,VIDIOC_QBUF,&buf))
       {
-      LogMessage("v4l2 init error 5");
+      LogMessage("v4l2: could not enqueue buffer");
       return false;
       }
   }
   state->buffers_count=reqbuf.count;
   int type=V4L2_BUF_TYPE_VIDEO_CAPTURE; 
-  if(-1==ioctl(state->fd,VIDIOC_STREAMON,&type));
+  if(-1==ioctl(state->fd,VIDIOC_STREAMON,&type))
     {
-    LogMessage("v4l2 init error 6");
+    LogMessage("v4l2: could not initialize stream");
     return false;
     }
   return true;
