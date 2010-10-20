@@ -184,6 +184,7 @@ install:
 clean:
 	test -e MMJ_.jar && rm MMJ_.jar || echo "MMJ_.jar not found"
 	test -e MMReader_.jar && rm MMReader_.jar || echo "MMReader_.jar not found"
+	find . -name \*.class -exec rm {} \;
 
 javadoc:
 	test -d $(srcdir)/doc || mkdir $(srcdir)/doc
