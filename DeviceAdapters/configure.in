@@ -15,6 +15,7 @@ m4_include([../configure.common])
 AX_BOOST_BASE([1.40.0])
 AX_BOOST_THREAD
 AX_BOOST_ASIO
+AX_BOOST_SYSTEM
 
 # Checks for header files.
 
