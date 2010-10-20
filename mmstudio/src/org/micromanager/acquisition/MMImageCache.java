@@ -114,6 +114,7 @@ public class MMImageCache implements TaggedImageStorage {
    public String putImage(TaggedImage taggedImg) {
       try {
          coll_.add(this, taggedImg);
+         taggedImg.tags.put("Summary",imageFileManager_.getSummaryMetadata());
          checkForChangingTags(taggedImg);
          return imageFileManager_.putImage(taggedImg);
       } catch (Exception ex) {
