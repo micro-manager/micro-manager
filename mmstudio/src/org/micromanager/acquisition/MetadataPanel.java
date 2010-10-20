@@ -90,23 +90,23 @@ public class MetadataPanel extends javax.swing.JPanel
       jPanel1 = new javax.swing.JPanel();
       displayModeCombo = new javax.swing.JComboBox();
       jLabel1 = new javax.swing.JLabel();
-      summarySplitPane = new javax.swing.JSplitPane();
-      summaryCommentsPane = new javax.swing.JPanel();
-      summaryCommentsLabel = new javax.swing.JLabel();
-      summaryCommentsScrollPane = new javax.swing.JScrollPane();
-      summaryCommentsTextArea = new javax.swing.JTextArea();
-      summaryMetadataPanel = new javax.swing.JPanel();
-      summaryMetadataScrollPane = new javax.swing.JScrollPane();
-      summaryMetadataTable = new javax.swing.JTable();
-      imageSplitPanel = new javax.swing.JSplitPane();
-      imageCommentsPanel = new javax.swing.JPanel();
-      imageCommentsLabel = new javax.swing.JLabel();
-      imageCommentsScrollPane = new javax.swing.JScrollPane();
-      summaryCommentsTextArea1 = new javax.swing.JTextArea();
+      metadataSplitPane = new javax.swing.JSplitPane();
       imageMetadataScrollPane = new javax.swing.JPanel();
       imageMetadataTableScrollPane = new javax.swing.JScrollPane();
       imageMetadataTable = new javax.swing.JTable();
       showUnchangingPropertiesCheckbox = new javax.swing.JCheckBox();
+      summaryMetadataPanel = new javax.swing.JPanel();
+      summaryMetadataScrollPane = new javax.swing.JScrollPane();
+      summaryMetadataTable = new javax.swing.JTable();
+      CommentsSplitPane = new javax.swing.JSplitPane();
+      summaryCommentsPane = new javax.swing.JPanel();
+      summaryCommentsLabel = new javax.swing.JLabel();
+      summaryCommentsScrollPane = new javax.swing.JScrollPane();
+      summaryCommentsTextArea = new javax.swing.JTextArea();
+      imageCommentsPanel = new javax.swing.JPanel();
+      imageCommentsLabel = new javax.swing.JLabel();
+      imageCommentsScrollPane = new javax.swing.JScrollPane();
+      summaryCommentsTextArea1 = new javax.swing.JTextArea();
 
       tabbedPane.setFocusable(false);
       tabbedPane.addChangeListener(new javax.swing.event.ChangeListener() {
@@ -134,7 +134,7 @@ public class MetadataPanel extends javax.swing.JPanel
             .add(jLabel1)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
             .add(displayModeCombo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 134, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-            .addContainerGap(190, Short.MAX_VALUE))
+            .addContainerGap(357, Short.MAX_VALUE))
       );
       jPanel1Layout.setVerticalGroup(
          jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -148,137 +148,20 @@ public class MetadataPanel extends javax.swing.JPanel
       ChannelsTablePanelLayout.setHorizontalGroup(
          ChannelsTablePanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-         .add(org.jdesktop.layout.GroupLayout.TRAILING, contrastScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 419, Short.MAX_VALUE)
+         .add(org.jdesktop.layout.GroupLayout.TRAILING, contrastScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 586, Short.MAX_VALUE)
       );
       ChannelsTablePanelLayout.setVerticalGroup(
          ChannelsTablePanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(ChannelsTablePanelLayout.createSequentialGroup()
             .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-            .add(contrastScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 244, Short.MAX_VALUE))
+            .add(contrastScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 264, Short.MAX_VALUE))
       );
 
       tabbedPane.addTab("Channels", ChannelsTablePanel);
 
-      summarySplitPane.setBorder(null);
-      summarySplitPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
-
-      summaryCommentsLabel.setText("Comments:");
-
-      summaryCommentsTextArea.setColumns(20);
-      summaryCommentsTextArea.setLineWrap(true);
-      summaryCommentsTextArea.setRows(1);
-      summaryCommentsTextArea.setTabSize(3);
-      summaryCommentsTextArea.setWrapStyleWord(true);
-      summaryCommentsTextArea.addFocusListener(new java.awt.event.FocusAdapter() {
-         public void focusLost(java.awt.event.FocusEvent evt) {
-            summaryCommentsTextAreaFocusLost(evt);
-         }
-      });
-      summaryCommentsScrollPane.setViewportView(summaryCommentsTextArea);
-
-      org.jdesktop.layout.GroupLayout summaryCommentsPaneLayout = new org.jdesktop.layout.GroupLayout(summaryCommentsPane);
-      summaryCommentsPane.setLayout(summaryCommentsPaneLayout);
-      summaryCommentsPaneLayout.setHorizontalGroup(
-         summaryCommentsPaneLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-         .add(summaryCommentsPaneLayout.createSequentialGroup()
-            .add(summaryCommentsLabel)
-            .addContainerGap(347, Short.MAX_VALUE))
-         .add(summaryCommentsScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 419, Short.MAX_VALUE)
-      );
-      summaryCommentsPaneLayout.setVerticalGroup(
-         summaryCommentsPaneLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-         .add(summaryCommentsPaneLayout.createSequentialGroup()
-            .add(summaryCommentsLabel)
-            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-            .add(summaryCommentsScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 23, Short.MAX_VALUE))
-      );
-
-      summarySplitPane.setLeftComponent(summaryCommentsPane);
-
-      summaryMetadataTable.setModel(new javax.swing.table.DefaultTableModel(
-         new Object [][] {
-            {null, null},
-            {null, null},
-            {null, null},
-            {null, null}
-         },
-         new String [] {
-            "Property", "Value"
-         }
-      ) {
-         boolean[] canEdit = new boolean [] {
-            false, false
-         };
-
-         public boolean isCellEditable(int rowIndex, int columnIndex) {
-            return canEdit [columnIndex];
-         }
-      });
-      summaryMetadataScrollPane.setViewportView(summaryMetadataTable);
-
-      org.jdesktop.layout.GroupLayout summaryMetadataPanelLayout = new org.jdesktop.layout.GroupLayout(summaryMetadataPanel);
-      summaryMetadataPanel.setLayout(summaryMetadataPanelLayout);
-      summaryMetadataPanelLayout.setHorizontalGroup(
-         summaryMetadataPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-         .add(0, 419, Short.MAX_VALUE)
-         .add(summaryMetadataPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(summaryMetadataScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 419, Short.MAX_VALUE))
-      );
-      summaryMetadataPanelLayout.setVerticalGroup(
-         summaryMetadataPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-         .add(0, 223, Short.MAX_VALUE)
-         .add(summaryMetadataPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, summaryMetadataScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 223, Short.MAX_VALUE))
-      );
-
-      summarySplitPane.setRightComponent(summaryMetadataPanel);
-
-      tabbedPane.addTab("Summary", summarySplitPane);
-
-      imageSplitPanel.setBorder(null);
-      imageSplitPanel.setDividerLocation(200);
-      imageSplitPanel.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
-
-      imageCommentsPanel.setPreferredSize(new java.awt.Dimension(500, 300));
-      imageCommentsPanel.setSize(new java.awt.Dimension(500, 300));
-
-      imageCommentsLabel.setText("Comments:");
-
-      summaryCommentsTextArea1.setColumns(20);
-      summaryCommentsTextArea1.setLineWrap(true);
-      summaryCommentsTextArea1.setRows(1);
-      summaryCommentsTextArea1.setTabSize(3);
-      summaryCommentsTextArea1.setWrapStyleWord(true);
-      summaryCommentsTextArea1.addFocusListener(new java.awt.event.FocusAdapter() {
-         public void focusLost(java.awt.event.FocusEvent evt) {
-            summaryCommentsTextArea1FocusLost(evt);
-         }
-      });
-      imageCommentsScrollPane.setViewportView(summaryCommentsTextArea1);
-
-      org.jdesktop.layout.GroupLayout imageCommentsPanelLayout = new org.jdesktop.layout.GroupLayout(imageCommentsPanel);
-      imageCommentsPanel.setLayout(imageCommentsPanelLayout);
-      imageCommentsPanelLayout.setHorizontalGroup(
-         imageCommentsPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-         .add(imageCommentsPanelLayout.createSequentialGroup()
-            .add(imageCommentsLabel)
-            .addContainerGap(347, Short.MAX_VALUE))
-         .add(imageCommentsPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, imageCommentsScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 419, Short.MAX_VALUE))
-      );
-      imageCommentsPanelLayout.setVerticalGroup(
-         imageCommentsPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-         .add(imageCommentsPanelLayout.createSequentialGroup()
-            .add(imageCommentsLabel)
-            .addContainerGap(184, Short.MAX_VALUE))
-         .add(imageCommentsPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, imageCommentsPanelLayout.createSequentialGroup()
-               .addContainerGap()
-               .add(imageCommentsScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 180, Short.MAX_VALUE)))
-      );
-
-      imageSplitPanel.setLeftComponent(imageCommentsPanel);
+      metadataSplitPane.setBorder(null);
+      metadataSplitPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
 
       imageMetadataTable.setModel(new javax.swing.table.DefaultTableModel(
          new Object [][] {
@@ -320,38 +203,140 @@ public class MetadataPanel extends javax.swing.JPanel
          imageMetadataScrollPaneLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(imageMetadataScrollPaneLayout.createSequentialGroup()
             .add(showUnchangingPropertiesCheckbox)
-            .addContainerGap(208, Short.MAX_VALUE))
-         .add(imageMetadataScrollPaneLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(imageMetadataTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 419, Short.MAX_VALUE))
+            .addContainerGap())
+         .add(imageMetadataTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 586, Short.MAX_VALUE)
       );
       imageMetadataScrollPaneLayout.setVerticalGroup(
          imageMetadataScrollPaneLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(imageMetadataScrollPaneLayout.createSequentialGroup()
             .add(showUnchangingPropertiesCheckbox)
-            .addContainerGap(47, Short.MAX_VALUE))
-         .add(imageMetadataScrollPaneLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(imageMetadataScrollPaneLayout.createSequentialGroup()
-               .add(30, 30, 30)
-               .add(imageMetadataTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 40, Short.MAX_VALUE)))
+            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+            .add(imageMetadataTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 235, Short.MAX_VALUE))
       );
 
-      imageSplitPanel.setRightComponent(imageMetadataScrollPane);
+      metadataSplitPane.setRightComponent(imageMetadataScrollPane);
 
-      tabbedPane.addTab("Image", imageSplitPanel);
+      summaryMetadataTable.setModel(new javax.swing.table.DefaultTableModel(
+         new Object [][] {
+            {null, null},
+            {null, null},
+            {null, null},
+            {null, null}
+         },
+         new String [] {
+            "Property", "Value"
+         }
+      ) {
+         boolean[] canEdit = new boolean [] {
+            false, false
+         };
+
+         public boolean isCellEditable(int rowIndex, int columnIndex) {
+            return canEdit [columnIndex];
+         }
+      });
+      summaryMetadataScrollPane.setViewportView(summaryMetadataTable);
+
+      org.jdesktop.layout.GroupLayout summaryMetadataPanelLayout = new org.jdesktop.layout.GroupLayout(summaryMetadataPanel);
+      summaryMetadataPanel.setLayout(summaryMetadataPanelLayout);
+      summaryMetadataPanelLayout.setHorizontalGroup(
+         summaryMetadataPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+         .add(org.jdesktop.layout.GroupLayout.TRAILING, summaryMetadataScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 586, Short.MAX_VALUE)
+      );
+      summaryMetadataPanelLayout.setVerticalGroup(
+         summaryMetadataPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+         .add(org.jdesktop.layout.GroupLayout.TRAILING, summaryMetadataScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 27, Short.MAX_VALUE)
+      );
+
+      metadataSplitPane.setLeftComponent(summaryMetadataPanel);
+
+      tabbedPane.addTab("Metadata", metadataSplitPane);
+
+      CommentsSplitPane.setBorder(null);
+      CommentsSplitPane.setDividerLocation(200);
+      CommentsSplitPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
+
+      summaryCommentsLabel.setText("Acquisition comments:");
+
+      summaryCommentsTextArea.setColumns(20);
+      summaryCommentsTextArea.setLineWrap(true);
+      summaryCommentsTextArea.setRows(1);
+      summaryCommentsTextArea.setTabSize(3);
+      summaryCommentsTextArea.setWrapStyleWord(true);
+      summaryCommentsTextArea.addFocusListener(new java.awt.event.FocusAdapter() {
+         public void focusLost(java.awt.event.FocusEvent evt) {
+            summaryCommentsTextAreaFocusLost(evt);
+         }
+      });
+      summaryCommentsScrollPane.setViewportView(summaryCommentsTextArea);
+
+      org.jdesktop.layout.GroupLayout summaryCommentsPaneLayout = new org.jdesktop.layout.GroupLayout(summaryCommentsPane);
+      summaryCommentsPane.setLayout(summaryCommentsPaneLayout);
+      summaryCommentsPaneLayout.setHorizontalGroup(
+         summaryCommentsPaneLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+         .add(summaryCommentsPaneLayout.createSequentialGroup()
+            .add(summaryCommentsLabel)
+            .addContainerGap(440, Short.MAX_VALUE))
+         .add(summaryCommentsScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 586, Short.MAX_VALUE)
+      );
+      summaryCommentsPaneLayout.setVerticalGroup(
+         summaryCommentsPaneLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+         .add(summaryCommentsPaneLayout.createSequentialGroup()
+            .add(summaryCommentsLabel)
+            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+            .add(summaryCommentsScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 131, Short.MAX_VALUE))
+      );
+
+      CommentsSplitPane.setLeftComponent(summaryCommentsPane);
+
+      imageCommentsPanel.setPreferredSize(new java.awt.Dimension(500, 300));
+
+      imageCommentsLabel.setText("Per-image comments:");
+
+      summaryCommentsTextArea1.setColumns(20);
+      summaryCommentsTextArea1.setLineWrap(true);
+      summaryCommentsTextArea1.setRows(1);
+      summaryCommentsTextArea1.setTabSize(3);
+      summaryCommentsTextArea1.setWrapStyleWord(true);
+      summaryCommentsTextArea1.addFocusListener(new java.awt.event.FocusAdapter() {
+         public void focusLost(java.awt.event.FocusEvent evt) {
+            summaryCommentsTextArea1FocusLost(evt);
+         }
+      });
+      imageCommentsScrollPane.setViewportView(summaryCommentsTextArea1);
+
+      org.jdesktop.layout.GroupLayout imageCommentsPanelLayout = new org.jdesktop.layout.GroupLayout(imageCommentsPanel);
+      imageCommentsPanel.setLayout(imageCommentsPanelLayout);
+      imageCommentsPanelLayout.setHorizontalGroup(
+         imageCommentsPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+         .add(imageCommentsPanelLayout.createSequentialGroup()
+            .add(imageCommentsLabel)
+            .addContainerGap(447, Short.MAX_VALUE))
+         .add(imageCommentsScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 586, Short.MAX_VALUE)
+      );
+      imageCommentsPanelLayout.setVerticalGroup(
+         imageCommentsPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+         .add(imageCommentsPanelLayout.createSequentialGroup()
+            .add(imageCommentsLabel)
+            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+            .add(imageCommentsScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 111, Short.MAX_VALUE))
+      );
+
+      CommentsSplitPane.setRightComponent(imageCommentsPanel);
+
+      tabbedPane.addTab("Comments", CommentsSplitPane);
 
       org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
       this.setLayout(layout);
       layout.setHorizontalGroup(
          layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-         .add(0, 466, Short.MAX_VALUE)
          .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
             .addContainerGap()
-            .add(tabbedPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 440, Short.MAX_VALUE)
+            .add(tabbedPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 581, Short.MAX_VALUE)
             .addContainerGap())
       );
       layout.setVerticalGroup(
          layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-         .add(0, 345, Short.MAX_VALUE)
          .add(layout.createSequentialGroup()
             .addContainerGap()
             .add(tabbedPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 325, Short.MAX_VALUE)
@@ -389,6 +374,7 @@ public class MetadataPanel extends javax.swing.JPanel
 
    // Variables declaration - do not modify//GEN-BEGIN:variables
    private javax.swing.JPanel ChannelsTablePanel;
+   private javax.swing.JSplitPane CommentsSplitPane;
    private javax.swing.JScrollPane contrastScrollPane;
    private javax.swing.JComboBox displayModeCombo;
    private javax.swing.JLabel imageCommentsLabel;
@@ -397,9 +383,9 @@ public class MetadataPanel extends javax.swing.JPanel
    private javax.swing.JPanel imageMetadataScrollPane;
    private javax.swing.JTable imageMetadataTable;
    private javax.swing.JScrollPane imageMetadataTableScrollPane;
-   private javax.swing.JSplitPane imageSplitPanel;
    private javax.swing.JLabel jLabel1;
    private javax.swing.JPanel jPanel1;
+   private javax.swing.JSplitPane metadataSplitPane;
    private javax.swing.JCheckBox showUnchangingPropertiesCheckbox;
    private javax.swing.JLabel summaryCommentsLabel;
    private javax.swing.JPanel summaryCommentsPane;
@@ -409,7 +395,6 @@ public class MetadataPanel extends javax.swing.JPanel
    private javax.swing.JPanel summaryMetadataPanel;
    private javax.swing.JScrollPane summaryMetadataScrollPane;
    private javax.swing.JTable summaryMetadataTable;
-   private javax.swing.JSplitPane summarySplitPane;
    private javax.swing.JTabbedPane tabbedPane;
    // End of variables declaration//GEN-END:variables
 
@@ -561,7 +546,7 @@ public class MetadataPanel extends javax.swing.JPanel
             imageMetadataModel_.setMetadata(null);
             summaryCommentsTextArea.setText(null);
          } else {
-            if (tabSelected == 2) {
+            if (tabSelected == 1) {
                AcquisitionVirtualStack stack = getAcquisitionStack(imp);
                if (stack != null) {
                   int slice = imp.getCurrentSlice();
