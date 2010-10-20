@@ -280,7 +280,7 @@ int AndorLaserCombiner::Initialize()
 		memset((void*)state, 0, 10*sizeof(state[0]));
 
 		//Andor says that lasers can take up to 90 seconds to initialize;
-      MM::TimeoutMs timerout(GetCurrentMMTime().getMsec(), 91000);
+      MM::TimeoutMs timerout(GetCurrentMMTime(), 91000);
 		int iloop  = 0;
 		bool btrue = true;
 		do
@@ -315,7 +315,7 @@ int AndorLaserCombiner::Initialize()
 				break;
 			else
 			{
-				if (timerout.expired(GetCurrentMMTime().getMsec()))
+				if (timerout.expired(GetCurrentMMTime()))
 				{
 					LogMessage(" some lasers did not respond", false);
 					break;

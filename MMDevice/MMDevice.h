@@ -188,49 +188,32 @@ namespace MM {
 
    class TimeoutMs
    {
-   	
-
    public:
-      // arguments:  millisecond start time, millisecond interval time
-      TimeoutMs(const double t0, const double intervalMs):interval_(intervalMs*1000.), startTime_(t0*1000. )
+      // arguments:  MMTime start time, millisecond interval time
+      TimeoutMs(const MMTime startTime, const unsigned long intervalMs) : 
+         startTime_(startTime), 
+         interval_(0, 1000*intervalMs)
+      {
+      }
+      TimeoutMs(const MMTime startTime, const MMTime interval) : 
+         startTime_(startTime), 
+         interval_(interval)
       {
       }
       ~TimeoutMs()
       {
-       
       }
-      bool expired(const double tnow)
+      bool expired(const MMTime tnow)
       {
-         double elapsed = tnow - startTime_;
-         return (interval_ < elapsed);
+         MMTime elapsed = tnow - startTime_;
+         return ( interval_ < elapsed );
       }
-
    private:
       TimeoutMs(const MM::TimeoutMs&) {}
       const TimeoutMs& operator=(const MM::TimeoutMs&) {return *this;}
-      double interval_; // interval in microseconds
-      double startTime_; // start time in microseconds
+      MMTime interval_; // interval in milliseconds
+      MMTime startTime_; // start time
    };
-
-   class TimerMs
-   {
-   public:
-	   TimerMs(const double t0):startTime_(t0 )
-      {
-      }
-      ~TimerMs()
-      {
-      }
-      double elapsed(const double tnow)
-      {
-		    return tnow*1000. - startTime_;
-      }
-
-   private:
-       double startTime_;
-   };
-
-
 
 
 
