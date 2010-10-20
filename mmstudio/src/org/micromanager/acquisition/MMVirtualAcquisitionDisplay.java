@@ -95,9 +95,7 @@ public class MMVirtualAcquisitionDisplay {
          if (numPositions_ == 1)
             try {
                pos = MDUtils.getPositionIndex(summaryMetadata_);
-            } catch (Exception ex) {
-               ReportingUtils.logError(ex);
-            }
+            } catch (Exception ex) { }
          else
             pos = i;
 
@@ -211,7 +209,7 @@ public class MMVirtualAcquisitionDisplay {
                      channelSettings_[chan].min = (int) min;
                      channelSettings_[chan].max = (int) max;
                      channelSettings_[chan].gamma = 1.0;
-                     channelSettings_[chan].color = this.getChannelColor(chan);
+                     channelSettings_[chan].color = new Color(rgb);
                      setChannelColor(chan, rgb);
                   }
                }
@@ -563,7 +561,11 @@ public class MMVirtualAcquisitionDisplay {
          String[] chanNames = new String[nChannels];
          for (int i = 0; i < nChannels; ++i) {
             try {
-               chanNames[i] = MDUtils.getChannelName(stack.getTaggedImage(indices[i]).tags);
+               chanNames[i] = imageCache_
+                       .getDisplaySettings()
+                       .getJSONArray("Channels")
+                       .getJSONObject(i)
+                       .getString("Name");
             } catch (Exception ex) {
                ReportingUtils.logError(ex);
             }

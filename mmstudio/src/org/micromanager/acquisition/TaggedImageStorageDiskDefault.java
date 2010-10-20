@@ -14,6 +14,7 @@ import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
+import java.awt.Color;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -304,12 +305,13 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
          }
          if (chNames.length() == 0) {
             JSONObject channelObject = new JSONObject();
-            channelObject.put("Color", 0);
+            channelObject.put("Color", Color.white.getRGB());
             channelObject.put("Name", "Default");
             channels.put(channelObject);
          }
          displaySettings_.put("Channels", channels);
       } catch (JSONException e) {
+         ReportingUtils.logError(e);
          return;
       }
    }
