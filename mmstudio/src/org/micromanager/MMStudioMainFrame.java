@@ -3100,7 +3100,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       }
 
       try {
-         core_.reset();
+         if (core_ != null)
+            core_.reset();
       } catch (Exception err) {
          ReportingUtils.showError(err);
       }
