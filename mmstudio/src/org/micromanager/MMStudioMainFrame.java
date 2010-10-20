@@ -148,8 +148,12 @@ import java.awt.image.DirectColorModel;
 import java.util.Collections;
 import java.util.Map;
 import mmcorej.TaggedImage;
+import org.micromanager.acquisition.AcquisitionVirtualStack;
 import org.micromanager.api.AcquisitionInterface;
 import org.micromanager.acquisition.AcquisitionWrapperEngine;
+import org.micromanager.acquisition.MMImagePlus;
+import org.micromanager.acquisition.MetadataPanel;
+import org.micromanager.api.ImageFocusListener;
 import org.micromanager.utils.ReportingUtils;
 
 /*
@@ -263,6 +267,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private ConfigPadButtonPanel configPadButtonPanel_;
    private boolean virtual_ = false;
    private final JMenu switchConfigurationMenu_;
+   private final MetadataPanel metadataPanel_;
 
    private void applyChannelSettingsTo5D(AcquisitionData ad, Image5D img5d) throws MMAcqDataException {
       Color[] colors = ad.getChannelColors();
@@ -1610,6 +1615,34 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             SpringLayout.EAST, getContentPane());
       springLayout_.putConstraint(SpringLayout.WEST, contrastPanel_, 7,
             SpringLayout.WEST, getContentPane());
+
+      
+      metadataPanel_ = new MetadataPanel();
+      metadataPanel_.setVisible(false);
+
+      getContentPane().add(metadataPanel_);
+      springLayout_.putConstraint(SpringLayout.SOUTH, metadataPanel_, -26,
+            SpringLayout.SOUTH, getContentPane());
+      springLayout_.putConstraint(SpringLayout.NORTH, metadataPanel_, 176,
+            SpringLayout.NORTH, getContentPane());
+      springLayout_.putConstraint(SpringLayout.EAST, metadataPanel_, -5,
+            SpringLayout.EAST, getContentPane());
+      springLayout_.putConstraint(SpringLayout.WEST, metadataPanel_, 7,
+            SpringLayout.WEST, getContentPane());
+      metadataPanel_.setBorder(new LineBorder(Color.black, 1, false));
+
+      GUIUtils.registerImageFocusListener(new ImageFocusListener() {
+         public void focusReceived(ImageWindow focusedWindow) {
+            if (focusedWindow instanceof MMImageWindow) {
+               contrastPanel_.setVisible(true);
+               metadataPanel_.setVisible(false);
+            } else if (focusedWindow.getImagePlus().getStack() instanceof AcquisitionVirtualStack) {
+               contrastPanel_.setVisible(false);
+               metadataPanel_.setVisible(true);
+            }
+         }
+      });
+
 
       final JLabel regionOfInterestLabel_1 = new JLabel();
       regionOfInterestLabel_1.setFont(new Font("Arial", Font.BOLD, 11));

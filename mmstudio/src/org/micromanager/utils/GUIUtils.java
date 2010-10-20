@@ -242,13 +242,17 @@ public class GUIUtils {
 
    public static void registerImageFocusListener(final ImageFocusListener listener) {
       AWTEventListener awtEventListener = new AWTEventListener() {
+         private ImageWindow currentImageWindow_ = null;
          public void eventDispatched(AWTEvent event) {
             if (event instanceof WindowEvent) {
                if (0 != (event.getID() & WindowEvent.WINDOW_GAINED_FOCUS)) {
                   if (event.getSource() instanceof ImageWindow) {
                      ImageWindow focusedWindow = (ImageWindow) event.getSource();
-                     if (focusedWindow.isVisible()) {
-                        listener.focusReceived(focusedWindow);
+                     if (currentImageWindow_ != focusedWindow) {
+                        if (focusedWindow.isVisible()) {
+                           listener.focusReceived(focusedWindow);
+                           currentImageWindow_ = focusedWindow;
+                        }
                      }
                   }
                }

@@ -47,7 +47,6 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
    private void initComponents() {
 
-      metadataButton = new javax.swing.JButton();
       showFolderButton = new javax.swing.JButton();
       saveButton = new javax.swing.JButton();
       fpsField = new javax.swing.JTextField();
@@ -57,21 +56,6 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
       pauseAndResumeToggleButton = new javax.swing.JToggleButton();
 
       setPreferredSize(new java.awt.Dimension(512, 30));
-
-      metadataButton.setBackground(new java.awt.Color(255, 255, 255));
-      metadataButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/application_view_list.png"))); // NOI18N
-      metadataButton.setToolTipText("View metadata and edit comments");
-      metadataButton.setFocusable(false);
-      metadataButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
-      metadataButton.setMaximumSize(new java.awt.Dimension(30, 28));
-      metadataButton.setMinimumSize(new java.awt.Dimension(30, 28));
-      metadataButton.setPreferredSize(new java.awt.Dimension(30, 28));
-      metadataButton.setVerticalTextPosition(javax.swing.SwingConstants.BOTTOM);
-      metadataButton.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            metadataButtonActionPerformed(evt);
-         }
-      });
 
       showFolderButton.setBackground(new java.awt.Color(255, 255, 255));
       showFolderButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/folder.png"))); // NOI18N
@@ -165,8 +149,6 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
             .add(abortButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
             .add(0, 0, 0)
             .add(pauseAndResumeToggleButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-            .add(3, 3, 3)
-            .add(metadataButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
             .add(fpsLabel)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -178,27 +160,22 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
       layout.setVerticalGroup(
          layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(layout.createSequentialGroup()
-            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-               .add(showFolderButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-               .add(saveButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-               .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
+               .add(org.jdesktop.layout.GroupLayout.LEADING, statusLineLabel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+               .add(org.jdesktop.layout.GroupLayout.LEADING, showFolderButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+               .add(org.jdesktop.layout.GroupLayout.LEADING, saveButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+               .add(org.jdesktop.layout.GroupLayout.LEADING, layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                   .add(fpsLabel)
                   .add(fpsField))
-               .add(abortButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-               .add(pauseAndResumeToggleButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-               .add(metadataButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-               .add(statusLineLabel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-            .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+               .add(org.jdesktop.layout.GroupLayout.LEADING, abortButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+               .add(org.jdesktop.layout.GroupLayout.LEADING, pauseAndResumeToggleButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addContainerGap(20, Short.MAX_VALUE))
       );
    }// </editor-fold>//GEN-END:initComponents
 
    private void showFolderButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showFolderButtonActionPerformed
       acq_.showFolder();
    }//GEN-LAST:event_showFolderButtonActionPerformed
-
-   private void metadataButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_metadataButtonActionPerformed
-      MetadataViewer.showMetadataViewer();
-   }//GEN-LAST:event_metadataButtonActionPerformed
 
    private void fpsFieldFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_fpsFieldFocusLost
       updateFPS();
@@ -231,7 +208,6 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
    private javax.swing.JButton abortButton;
    private javax.swing.JTextField fpsField;
    private javax.swing.JLabel fpsLabel;
-   private javax.swing.JButton metadataButton;
    private javax.swing.JToggleButton pauseAndResumeToggleButton;
    private javax.swing.JButton saveButton;
    private javax.swing.JButton showFolderButton;
