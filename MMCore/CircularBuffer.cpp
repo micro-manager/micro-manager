@@ -23,8 +23,6 @@
 //
 // AUTHOR:        Nenad Amodaj, nenad@amodaj.com, 01/05/2007
 // 
-// CVS:           $Id: PluginManager.h 2 2007-02-27 23:33:17Z nenad $
-//
 #include "CircularBuffer.h"
 #include "CoreUtils.h"
 #include "../MMDevice/DeviceUtils.h"

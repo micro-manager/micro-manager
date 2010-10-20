@@ -21,8 +21,6 @@
 //
 // AUTHOR:        Nenad Amodaj, nenad@amodaj.com, 01/05/2007
 // 
-// CVS:           $Id: PluginManager.h 2 2007-02-27 23:33:17Z nenad $
-//
 
 #if !defined(_CIRCULAR_BUFFER_)
 #define _CIRCULAR_BUFFER_
