@@ -94,7 +94,8 @@ public class ConfigGroupPad extends JScrollPane{
    }
    
    public void saveSettings() {
-      prefs_.putInt(COLUMN_WIDTH, table_.getColumnModel().getColumn(0).getWidth());
+      if (prefs_ != null)
+         prefs_.putInt(COLUMN_WIDTH, table_.getColumnModel().getColumn(0).getWidth());
    }
 
    public void setParentGUI(DeviceControlGUI parentGUI) {

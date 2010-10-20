@@ -3123,11 +3123,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       // NOTE: automatically restoring these values on startup may cause
       // problems
       mainPrefs_.put(MAIN_EXPOSURE, textFieldExp_.getText());
-      // NOTE: do not save auto shutter state
-      // mainPrefs_.putBoolean(MAIN_AUTO_SHUTTER,
-      // autoShutterCheckBox_.isSelected());
 
-      if (afMgr_.getDevice() != null) {
+      // NOTE: do not save auto shutter state
+
+      if (afMgr_ != null && afMgr_.getDevice() != null) {
          mainPrefs_.put(AUTOFOCUS_DEVICE, afMgr_.getDevice().getDeviceName());
       }
    }
