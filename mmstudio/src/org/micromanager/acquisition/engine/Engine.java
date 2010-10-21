@@ -36,6 +36,7 @@ public class Engine {
    private EngineTask currentTask_;
    private BlockingQueue<ImageRequest> requestQueue_;
    private final AutofocusManager afMgr_;
+   private double originalExposure;
 
    public Engine(CMMCore core, AutofocusManager afMgr,
            BlockingQueue<ImageRequest> requestQueue,
@@ -87,6 +88,12 @@ public class Engine {
                ReportingUtils.showError(ex);
             }
          }
+         double originalExposure = 0;
+         try {
+            originalExposure = core_.getExposure();
+         } catch (Exception ex) {
+            ReportingUtils.logError(ex);
+         }
 
          stopRequested_ = false;
          ImageRequest request = null;
@@ -128,6 +135,13 @@ public class Engine {
             } catch (Exception ex) {
                ReportingUtils.logError(ex);
             }
+         }
+
+         try {
+            if (originalExposure > 0)
+               core_.setExposure(originalExposure);
+         } catch (Exception ex) {
+            ReportingUtils.logError(ex);
          }
 
 
