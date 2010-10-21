@@ -381,7 +381,7 @@ vector<string> CMMCore::getAvailableDevices(const char* library) throw (CMMError
 {
    try
    {
-      return pluginManager_.GetAvailableDevices(library);
+      return CPluginManager::GetAvailableDevices(library);
    }
    catch (CMMError& e)
    {
@@ -396,7 +396,7 @@ vector<string> CMMCore::getAvailableDeviceDescriptions(const char* library) thro
 {
    try
    {
-      return pluginManager_.GetAvailableDeviceDescriptions(library);
+      return CPluginManager::GetAvailableDeviceDescriptions(library);
    }
    catch (CMMError& e)
    {
@@ -411,7 +411,7 @@ vector<long> CMMCore::getAvailableDeviceTypes(const char* library) throw (CMMErr
 {
    try
    {
-      return pluginManager_.GetAvailableDeviceTypes(library);
+      return CPluginManager::GetAvailableDeviceTypes(library);
    }
    catch (CMMError& e)
    {
@@ -552,27 +552,26 @@ void CMMCore::setSystemState(const Configuration& conf)
 }
 
 /**
- * Returns a list of library names available in the specified directory.
- * @param path - serach path. If zero, current working directory will be used as default. 
+ * Add a list of paths to the search path of the plugin manager.
+ *
+ * We need to make sure that the drivers discovered with getDeviceLibraries()
+ * can actually be loaded. This is only possible if we require the search
+ * path to be set in the plugin manager, and force the plugin manager respect
+ * this setting for both discovery and loading drivers.
+ *
+ * @param paths - search path.
  */
-vector<string> CMMCore::getDeviceLibraries(const char* path)
+void CMMCore::addSearchPath(const char *path)
 {
-   string searchPath;
-   if (path != 0 && strlen(path) > 0)
-      searchPath = path;
-   else
-   {
-      if (pathBuf_ == NULL)
-         CORE_DEBUG("getDeviceLibraries(): Failed to obtain current working directory.\n");
-      else
-      {
-         searchPath = pathBuf_;
-         //free(pathBuf);
-      }
-   }
+   CPluginManager::AddSearchPath(string(path));
+}
 
-   CORE_DEBUG1("Search path: %s\n", searchPath.c_str());
-   return pluginManager_.GetModules(searchPath.c_str());
+/**
+ * Returns a list of library names available in the search path.
+ */
+vector<string> CMMCore::getDeviceLibraries()
+{
+   return CPluginManager::GetModules();
 }
 
 /**

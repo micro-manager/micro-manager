@@ -41,6 +41,7 @@
 #include <assert.h>
 #include <sstream>
 #include <iostream>
+#include <fstream>
 using namespace std;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -84,8 +85,65 @@ void CPluginManager::ReleasePluginLibrary(HDEVMODULE)
 #pragma warning(default : 4189)
 #endif
 
+vector<string> CPluginManager::searchPaths_;
+
+/**
+ * Add search path.
+ *
+ * @param path the search path to be added.
+ */
+void CPluginManager::AddSearchPath(string path)
+{
+   searchPaths_.push_back(path);
+}
+
+/**
+ * Look up a file in the search paths.
+ *
+ * This returns the absolute path, if found, and the filename itself otherwise.
+ *
+ * @param filename the name of the file to look up.
+ */
+string CPluginManager::FindInSearchPath(string filename)
+{
+   // look in search paths, if there are any
+   if (searchPaths_.size() == 0)
+      return filename;
+
+   vector<string>::const_iterator it;
+   for (it = searchPaths_.begin(); it != searchPaths_.end(); it++) {
+      string path = *it;
+      #ifdef WIN32
+      path += "\\";
+      #else
+      path += "/";
+      #endif
+      path += filename;
+
+      // test whether it exists
+      ifstream in(path.c_str(), ifstream::in);
+      in.close();
+
+      if (!in.fail())
+         // we found it!
+         return path;
+   }
+
+   // not found!
+   return filename;
+}
+
 /** 
  * Loads the plugin library. Platform dependent.
+ *
+ * Since we want to have a consistent plugin discovery/loading mechanism,
+ * the search path -- if specified explicitly -- is traversed.
+ *
+ * This has to be done so that users do not have to make sure that
+ * DYLD_LIBRARY_PATH, LD_LIBRARY_PATH or PATH and java.library.path are in
+ * sync and include the correct paths (to make this the users' task violates
+ * the law of the least surprises).
+ *
  * @param name module name without extension and directory. Each platform has different conventions
  * for resolving the actual path from the library name.
  * @param funcName the name of the function
@@ -96,6 +154,7 @@ HDEVMODULE CPluginManager::LoadPluginLibrary(const char* shortName)
    // add specific name prefix
    string name(LIB_NAME_PREFIX);
    name += shortName;
+   name = FindInSearchPath(name);
 
    string errorText;
    #ifdef WIN32
@@ -386,15 +445,14 @@ vector<string> CPluginManager::GetDeviceList(MM::DeviceType type) const
 /**
  * List all modules (device libraries) in the search path.
  */
-vector<string> CPluginManager::GetModules(const char* searchPath)
+void CPluginManager::GetModules(vector<string> &modules, const char* searchPath)
 {
-   vector<string> modules;
+    int previousCount = modules.size();
+#ifdef WIN32
    string path = searchPath;
    path += "\\";
    path += LIB_NAME_PREFIX;
    path += "*.*";
-
-#ifdef WIN32
 
    // find the first dll file in the directory
    struct _finddata_t moduleFile;
@@ -424,7 +482,7 @@ vector<string> CPluginManager::GetModules(const char* searchPath)
 #endif
 
    // strip prefixes
-   for (unsigned i=0; i < modules.size(); i++)
+   for (unsigned i=previousCount; i < modules.size(); i++)
    {
       // remove prefix
       string strippedName = modules[i].substr(strlen(LIB_NAME_PREFIX));
@@ -432,6 +490,16 @@ vector<string> CPluginManager::GetModules(const char* searchPath)
       // remove suffix
       modules[i] = strippedName.substr(0, strippedName.find_first_of("."));
    }
+}
+
+vector<string> CPluginManager::GetModules()
+{
+   vector<string> modules;
+   vector<string>::const_iterator it;
+
+   for (it = searchPaths_.begin(); it != searchPaths_.end(); it++)
+      GetModules(modules, it->c_str());
+
    return modules;
 }
 

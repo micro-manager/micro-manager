@@ -63,7 +63,8 @@ public:
    std::vector<std::string> GetDeviceList(MM::DeviceType t = MM::AnyType) const;
 
    // device browsing support
-   static std::vector<std::string> GetModules(const char* searchPath);
+   static void AddSearchPath(std::string path);
+   static std::vector<std::string> GetModules();
    static std::vector<std::string> GetAvailableDevices(const char* moduleName) throw (CMMError);
    static std::vector<std::string> GetAvailableDeviceDescriptions(const char* moduleName) throw (CMMError);
    static std::vector<long> GetAvailableDeviceTypes(const char* moduleName) throw (CMMError);
@@ -74,11 +75,13 @@ public:
    void Restore(const std::string& data);
   
 private:
+   static void GetModules(std::vector<std::string> &modules, const char *path);
    static void GetSystemError(std::string& errorText);
    static void ReleasePluginLibrary(HDEVMODULE libHandle);
    static HDEVMODULE LoadPluginLibrary(const char* libName);
    static void* GetModuleFunction(HDEVMODULE hLib, const char* funcName);
    static void CheckVersion(HDEVMODULE libHandle);
+   static std::string FindInSearchPath(std::string filename);
 
    typedef std::map<std::string, HDEVMODULE> CModuleMap;
    typedef std::map<std::string, MM::Device*> CDeviceMap;
@@ -87,6 +90,8 @@ private:
    typedef std::vector<std::string>  CPersistentData;
    typedef std::map<std::string, CPersistentData> CPersistentDataMap;
    static CPersistentDataMap persistentDataMap;
+   // searchPaths_ is static so that the static methods can use them
+   static std::vector<std::string> searchPaths_;
    CDeviceMap devices_;
    DeviceArray devArray_;
 };

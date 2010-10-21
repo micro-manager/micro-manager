@@ -187,35 +187,7 @@ public class MicroscopeModel {
     * Then assemble a list with DeviceLibraries on all these paths
     */
    public static StrVector getDeviceLibraries(CMMCore core) {
-      String libPath = System.getProperty("java.library.path");
-      String pathSeparator = System.getProperty("path.separator");
-      String[] libPaths = null;
-      if (libPath != null)
-         libPaths = libPath.split(pathSeparator);
-      ArrayList<String> pathList;
-      if (libPaths != null)
-         pathList = new ArrayList<String>(Arrays.asList(libPaths));
-      else
-         pathList = new ArrayList<String>();
-      pathList.add("");
-
-      // Construct vector with libraries, but avoid adding the same library twice
-      StrVector libs = new StrVector();
-      Vector<String> tmpLibs = new Vector<String>();
-      for (String path : pathList) {
-         StrVector tmp = core.getDeviceLibraries(path);
-         if (!tmp.isEmpty()) {
-            for (int i=0; i < tmp.size(); i++) {
-               int j = tmp.get(i).lastIndexOf("/");
-               String tmpLib = tmp.get(i).substring(j+1);
-               if (! tmpLibs.contains(tmpLib)) {
-                  libs.add(tmp.get(i));
-                  tmpLibs.add(tmpLib);
-               }
-            }
-         }
-      }
-      return libs;
+      return core.getDeviceLibraries();
    }
 
    /**
