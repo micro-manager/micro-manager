@@ -1,4 +1,4 @@
-AM_CXXFLAGS = -fpermissive -fweak
+AM_CXXFLAGS = -fpermissive -fweak $(BOOST_CPPFLAGS)
 lib_LTLIBRARIES = libmmgr_dal_DemoStreamingCamera.la
 libmmgr_dal_DemoStreamingCamera_la_SOURCES = DemoStreamingCamera.cpp DemoStreamingCamera.h NoiseProcessor.cpp SignalGenerator.cpp
 libmmgr_dal_DemoStreamingCamera_la_LDFLAGS = -module 
