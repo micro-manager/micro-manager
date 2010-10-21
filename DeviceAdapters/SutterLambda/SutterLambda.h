@@ -17,6 +17,7 @@
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 // AUTHOR:        Nenad Amodaj, nenad@amodaj.com, 10/26/2005
+//                Nico Stuurman, Oct. 2010
 //
 // CVS:           $Id$
 //
@@ -39,6 +40,21 @@
 #define ERR_UNKNOWN_SHUTTER_MODE     10006
 #define ERR_UNKNOWN_SHUTTER_ND       10007
 #define ERR_NO_ANSWER                10008
+
+class SutterUtils
+{
+   public:
+      static bool ControllerBusy(MM::Device& device, MM::Core& core, 
+            std::string port, unsigned long answerTimeoutMs);
+      static int GoOnLine(MM::Device& device, MM::Core& core, 
+               std::string port, unsigned long answerTimeoutMs);
+      static int GetControllerType(MM::Device& device, MM::Core& core, 
+            std::string port, unsigned long answerTimeoutMs, std::string& type,
+            std::string& id);
+      static int GetStatus(MM::Device& device, MM::Core& core, 
+            std::string port, unsigned long answerTimeoutMs, 
+            unsigned char* status);
+};
 
 class Wheel : public CStateDeviceBase<Wheel>
 {
