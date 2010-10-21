@@ -582,7 +582,7 @@ public class MMVirtualAcquisitionDisplay {
       if (hyperImage_ == null) {
          return null;
       }
-      if (hyperImage_.isComposite()) {
+      if (hyperImage_.isComposite() && ((CompositeImage) hyperImage_).getMode() == CompositeImage.COMPOSITE) {
          return ((CompositeImage) hyperImage_).getProcessor(channelIndex + 1).getHistogram();
       } else {
          return hyperImage_.getProcessor().getHistogram();
@@ -617,7 +617,7 @@ public class MMVirtualAcquisitionDisplay {
                channelSettings_[i].gamma = channel.getDouble("Gamma");
                setChannelDisplaySettings(i, channelSettings_[i]);
             } catch (JSONException ex) {
-               ReportingUtils.logError(ex);
+               //ReportingUtils.logError(ex);
             }
          }
       } catch (JSONException ex) {
