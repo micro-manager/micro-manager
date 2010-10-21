@@ -30,11 +30,11 @@
 #include <math.h>
 #include "../../MMDevice/ModuleInterface.h"
 #include "../../MMCore/Error.h"
-#include <boost/math/constants/constants.hpp>
+//#include <boost/math/constants/constants.hpp>
 #include <sstream>
 #include <algorithm>
 
-#include "boost/lexical_cast.hpp"
+//#include "boost/lexical_cast.hpp"
 #include "WriteCompactTiffRGB.h"
 
 
@@ -410,7 +410,9 @@ int CDemoCamera::Initialize()
 	
 	for(int ij = 1; ij < 5;++ij)
 	{
-		std::string propName = "TestProperty" + boost::lexical_cast<std::string,int>(ij);
+      char ctmp[2];
+      snprintf(ctmp,2,"%d",ij);
+      std::string propName = "TestProperty" + std::string(ctmp);
 		pActX = new CPropertyActionEx(this, &CDemoCamera::OnTestProperty, ij);
 		nRet = CreateProperty(propName.c_str(), "0.", MM::Float, false, pActX);
 		SetPropertyLimits(propName.c_str(), ij, ij + 1);
@@ -1208,7 +1210,7 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
 	if (img.Height() == 0 || img.Width() == 0 || img.Depth() == 0)
       return;
 
-   const double cPi = boost::math::constants::pi<double>();
+   const double cPi = 3.14159265358979;
    long lPeriod = img.Width()/2;
    static double dPhase = 0.0;
    double dLinePhase = 0.0;
@@ -1321,7 +1323,10 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
       if(NULL != pTmpBuffer)
       {
          // write the compact debug image...
-         int status = writeCompactTiffRGB( img.Width(), img.Height(), pTmpBuffer, ("democamera"+boost::lexical_cast<std::string,int>(iseq++)+".tiff").c_str());
+         char ctmp[12];
+         snprintf(ctmp,12,"%d",iseq++);
+         int status = writeCompactTiffRGB( img.Width(), img.Height(), pTmpBuffer, ("democamera"+std::string(ctmp)).c_str()
+            );
 			status = status;
       }
 
