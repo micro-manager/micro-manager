@@ -83,7 +83,7 @@ else
    fi
 fi
 AC_SUBST(LIBDC1394)
-AM_CONDITIONAL([BUILD_DC1394], [test -f "$LIBDC1394"])
+AM_CONDITIONAL([BUILD_DC1394], [test -n "$LIBDC1394"])
 
 # and for National Instrumenst boards 
 AC_MSG_CHECKING(for NIDaQ)
