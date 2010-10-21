@@ -22,10 +22,12 @@ public class TaggedImageStorageRam implements TaggedImageStorage {
    HashMap<String, TaggedImage> imageMap_;
    private JSONObject summaryMetadata_;
    private String comment_;
+   private JSONObject displaySettings_;
 
    TaggedImageStorageRam(JSONObject summaryMetadata) {
       imageMap_ = new HashMap<String,TaggedImage>();
       summaryMetadata_ = summaryMetadata;
+      displaySettings_ = new JSONObject();
    }
 
    public String putImage(TaggedImage taggedImage) throws MMException {
@@ -58,12 +60,13 @@ public class TaggedImageStorageRam implements TaggedImageStorage {
       return comment_;
    }
 
+
    public void setDisplaySettings(JSONObject settings) {
-      throw new UnsupportedOperationException("Not supported yet.");
+      displaySettings_ = settings;
    }
 
    public JSONObject getDisplaySettings() {
-      throw new UnsupportedOperationException("Not supported yet.");
+      return displaySettings_;
    }
 
    public void close() {

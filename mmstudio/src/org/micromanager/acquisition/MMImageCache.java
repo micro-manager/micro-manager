@@ -4,6 +4,7 @@
  */
 package org.micromanager.acquisition;
 
+import java.awt.Color;
 import java.lang.ref.SoftReference;
 import org.micromanager.api.TaggedImageStorage;
 import java.util.HashMap;
@@ -12,6 +13,8 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import mmcorej.TaggedImage;
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMException;
@@ -37,6 +40,8 @@ public class MMImageCache implements TaggedImageStorage {
       }
    }
 
+
+
    public void finished() {
       imageFileManager_.finished();
    }
@@ -47,6 +52,7 @@ public class MMImageCache implements TaggedImageStorage {
 
    public JSONObject getDisplaySettings() {
       return imageFileManager_.getDisplaySettings();
+
    }
 
    public void close() {
@@ -174,7 +180,35 @@ public class MMImageCache implements TaggedImageStorage {
 
    public void setSummaryMetadata(JSONObject tags) {
       imageFileManager_.setSummaryMetadata(tags);
+      getDisplaySettingsFromSummary(tags);
    }
+
+   private void getDisplaySettingsFromSummary(JSONObject summaryMetadata) {
+      try {
+         JSONArray chNames = summaryMetadata.getJSONArray("ChNames");
+         JSONArray chColors = summaryMetadata.getJSONArray("ChColors");
+         JSONArray channels = new JSONArray();
+         for (int i=0;i<chNames.length();++i) {
+            String name = (String) chNames.get(i);
+            int color = chColors.getInt(i);
+            JSONObject channelObject = new JSONObject();
+            channelObject.put("Color", color);
+            channelObject.put("Name", name);
+            channels.put(channelObject);
+         }
+         if (chNames.length() == 0) {
+            JSONObject channelObject = new JSONObject();
+            channelObject.put("Color", Color.white.getRGB());
+            channelObject.put("Name", "Default");
+            channels.put(channelObject);
+         }
+         imageFileManager_.getDisplaySettings().put("Channels", channels);
+      } catch (JSONException e) {
+         ReportingUtils.logError(e);
+         return;
+      }
+   }
+
 
    public Set<String> getChangingKeys() {
       return changingKeys_;

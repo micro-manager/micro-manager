@@ -286,34 +286,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       summaryMetadata.put("Time", time);
       summaryMetadata.put("Date", time.split(" ")[0]);
       summaryMetadata.put("PositionIndex", MDUtils.getPositionIndex(firstImage.tags));
-      getDisplaySettingsFromSummary(summaryMetadata);
       writeMetadata(pos, summaryMetadata, "Summary");
-   }
-
-   private void getDisplaySettingsFromSummary(JSONObject summaryMetadata) {
-      try {
-         JSONArray chNames = summaryMetadata.getJSONArray("ChNames");
-         JSONArray chColors = summaryMetadata.getJSONArray("ChColors");
-         JSONArray channels = new JSONArray();
-         for (int i=0;i<chNames.length();++i) {
-            String name = (String) chNames.get(i);
-            int color = chColors.getInt(i);
-            JSONObject channelObject = new JSONObject();
-            channelObject.put("Color", color);
-            channelObject.put("Name", name);
-            channels.put(channelObject);
-         }
-         if (chNames.length() == 0) {
-            JSONObject channelObject = new JSONObject();
-            channelObject.put("Color", Color.white.getRGB());
-            channelObject.put("Name", "Default");
-            channels.put(channelObject);
-         }
-         displaySettings_.put("Channels", channels);
-      } catch (JSONException e) {
-         ReportingUtils.logError(e);
-         return;
-      }
    }
 
    public void finished() {
@@ -386,7 +359,6 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
          } catch (JSONException ex) {
             ReportingUtils.logError(ex);
          }
-         getDisplaySettingsFromSummary(summaryMetadata_);
          readDisplaySettings();
       }
    }
