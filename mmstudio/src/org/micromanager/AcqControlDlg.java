@@ -174,6 +174,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
     private static final String ACQ_CHANNELS_KEEP_SHUTTER_OPEN = "acqChannelsKeepShutterOpen";
     private static final String ACQ_STACK_KEEP_SHUTTER_OPEN = "acqStackKeepShutterOpen";
     private static final String CHANNEL_NAME_PREFIX = "acqChannelName";
+    private static final String CHANNEL_USE_PREFIX = "acqChannelUse";
     private static final String CHANNEL_EXPOSURE_PREFIX = "acqChannelExp";
     private static final String CHANNEL_ZOFFSET_PREFIX = "acqChannelZOffset";
     private static final String CHANNEL_DOZSTACK_PREFIX = "acqChannelDoZStack";
@@ -1526,6 +1527,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
         acqEng_.getChannels().clear();
         for (int i = 0; i < numChannels; i++) {
             String name = acqPrefs_.get(CHANNEL_NAME_PREFIX + i, "Undefined");
+            boolean use = acqPrefs_.getBoolean(CHANNEL_USE_PREFIX + i, true);
             double exp = acqPrefs_.getDouble(CHANNEL_EXPOSURE_PREFIX + i, 0.0);
             Boolean doZStack = acqPrefs_.getBoolean(CHANNEL_DOZSTACK_PREFIX + i, true);
             double zOffset = acqPrefs_.getDouble(CHANNEL_ZOFFSET_PREFIX + i, 0.0);
@@ -1540,7 +1542,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
             int b = acqPrefs_.getInt(CHANNEL_COLOR_B_PREFIX + i, defaultChannel.color_.getBlue());
             int skip = acqPrefs_.getInt(CHANNEL_SKIP_PREFIX + i, defaultChannel.skipFactorFrame_);
             Color c = new Color(r, g, b);
-            acqEng_.addChannel(name, exp, doZStack, zOffset, s8, s16, skip, c);
+            acqEng_.addChannel(name, exp, doZStack, zOffset, s8, s16, skip, c, use);
         }
 
         // Restore Column Width and Column order
@@ -1593,6 +1595,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
         for (int i = 0; i < channels.size(); i++) {
             ChannelSpec channel = channels.get(i);
             acqPrefs_.put(CHANNEL_NAME_PREFIX + i, channel.config_);
+            acqPrefs_.putBoolean(CHANNEL_USE_PREFIX + i, channel.useChannel_);
             acqPrefs_.putDouble(CHANNEL_EXPOSURE_PREFIX + i, channel.exposure_);
             acqPrefs_.putBoolean(CHANNEL_DOZSTACK_PREFIX + i, channel.doZStack_);
             acqPrefs_.putDouble(CHANNEL_ZOFFSET_PREFIX + i, channel.zOffset_);

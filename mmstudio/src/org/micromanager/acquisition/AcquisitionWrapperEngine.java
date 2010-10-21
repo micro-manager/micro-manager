@@ -473,10 +473,11 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
     * @param c
     * @return - true if successful
     */
-   public boolean addChannel(String config, double exp, Boolean doZStack, double zOffset, ContrastSettings c8, ContrastSettings c16, int skip, Color c) {
+   public boolean addChannel(String config, double exp, Boolean doZStack, double zOffset, ContrastSettings c8, ContrastSettings c16, int skip, Color c, boolean use) {
       if (isConfigAvailable(config)) {
          ChannelSpec channel = new ChannelSpec();
          channel.config_ = config;
+         channel.useChannel_ = use;
          channel.exposure_ = exp;
          channel.doZStack_ = doZStack;
          channel.zOffset_ = zOffset;
@@ -504,7 +505,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
     * @deprecated
     */
    public boolean addChannel(String config, double exp, double zOffset, ContrastSettings c8, ContrastSettings c16, int skip, Color c) {
-      return addChannel(config, exp, true, zOffset, c8, c16, skip, c);
+      return addChannel(config, exp, true, zOffset, c8, c16, skip, c, true);
    }
 
    public void setSaveFiles(boolean selected) {
