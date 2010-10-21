@@ -1,3 +1,4 @@
+AM_CXXFLAGS = $(BOOST_CPPFLAGS)
 noinst_LIBRARIES = libMMCore.a
 libMMCore_a_SOURCES = MMCore.cpp MMCore.h \
 	CircularBuffer.h CircularBuffer.cpp \

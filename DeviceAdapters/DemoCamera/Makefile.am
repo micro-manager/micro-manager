@@ -1,4 +1,4 @@
-AM_CXXFLAGS = -fpermissive -fweak
+AM_CXXFLAGS = -fpermissive -fweak $(BOOST_CPPFLAGS)
 lib_LTLIBRARIES = libmmgr_dal_DemoCamera.la
 libmmgr_dal_DemoCamera_la_SOURCES = DemoCamera.cpp DemoCamera.h ../../MMDevice/MMDevice.h
 libmmgr_dal_DemoCamera_la_LDFLAGS = -module 

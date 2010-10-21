@@ -1,4 +1,5 @@
 ## Process this file with automake to produce Makefile.in
+AM_CXXFLAGS = $(BOOST_CPPFLAGS)
 SWIGLIB_SOURCES = MMCoreJ.i \
 	../MMCore/CircularBuffer.h  \
 	../MMCore/ConfigGroup.h  \
