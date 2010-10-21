@@ -38,13 +38,10 @@ import org.micromanager.utils.ReportingUtils;
 public class MetadataPanel extends javax.swing.JPanel
         implements ImageListener, ImageFocusListener {
 
-
-
    private static MetadataPanel singletonViewer_ = null;
 
    private final MetadataTableModel imageMetadataModel_;
    private final MetadataTableModel summaryMetadataModel_;
-   private ImageWindow currentWindow_ = null;
    private final String [] columnNames_ = {"Property","Value"};
    private MMImageCache cache_;
    private boolean showUnchangingKeys_;
@@ -540,33 +537,32 @@ public class MetadataPanel extends javax.swing.JPanel
     * or the sliders have moved.
     */
    public void update(ImagePlus imp) {
-      if (this.isVisible()) {
-         int tabSelected = tabbedPane.getSelectedIndex();
-         if (imp == null) {
-            imageMetadataModel_.setMetadata(null);
-            summaryCommentsTextArea.setText(null);
-         } else {
-            if (tabSelected == 1) {
-               AcquisitionVirtualStack stack = getAcquisitionStack(imp);
-               if (stack != null) {
-                  int slice = imp.getCurrentSlice();
-                  TaggedImage taggedImg = stack.getTaggedImage(slice);
-                  if (taggedImg == null) {
-                     imageMetadataModel_.setMetadata(null);
-                  } else {
-                     JSONObject md = stack.getTaggedImage(slice).tags;
-                     if (!showUnchangingKeys_)
-                        md = selectChangingTags(md);
-                     imageMetadataModel_.setMetadata(md);
-                  }
-               } else {
+      int tabSelected = tabbedPane.getSelectedIndex();
+      if (imp == null) {
+         imageMetadataModel_.setMetadata(null);
+         summaryCommentsTextArea.setText(null);
+      } else {
+         if (tabSelected == 1) {
+            AcquisitionVirtualStack stack = getAcquisitionStack(imp);
+            if (stack != null) {
+               int slice = imp.getCurrentSlice();
+               TaggedImage taggedImg = stack.getTaggedImage(slice);
+               if (taggedImg == null) {
                   imageMetadataModel_.setMetadata(null);
+               } else {
+                  JSONObject md = stack.getTaggedImage(slice).tags;
+                  if (!showUnchangingKeys_)
+                     md = selectChangingTags(md);
+                  imageMetadataModel_.setMetadata(md);
                }
-            } else if (tabSelected == 0) {
-               updateChannelControls();
+            } else {
+               imageMetadataModel_.setMetadata(null);
             }
+         } else if (tabSelected == 0) {
+            updateChannelControls();
          }
       }
+      
    }
 
    //Implements AWTEventListener
@@ -575,7 +571,6 @@ public class MetadataPanel extends javax.swing.JPanel
     * in focus has changed.
     */
    public void focusReceived(ImageWindow focusedWindow) {
-      if (currentWindow_ != focusedWindow) {
          ImagePlus imgp = focusedWindow.getImagePlus();
          cache_ = getCache(imgp);
 
@@ -597,11 +592,9 @@ public class MetadataPanel extends javax.swing.JPanel
          if (stack != null) {
             acq_ = stack.getVirtualAcquisition();
             setupChannelControls(acq_);
-
             update(imgp);
-            currentWindow_ = focusedWindow;
          }
-      }
+      
    }
 
    public synchronized void setupChannelControls(MMVirtualAcquisitionDisplay acq) {
