@@ -746,7 +746,7 @@ public class ContrastPanel extends JPanel implements ImageController,
 
    public void onLeftCursor(double pos) {
       if (liveStretchMode_)
-         return;
+         stretchCheckBox_.setSelected(true);
 
       lutMin_ = Math.max(0, pos) * binSize_;
       if (lutMax_ < lutMin_)
@@ -757,7 +757,7 @@ public class ContrastPanel extends JPanel implements ImageController,
 
    public void onRightCursor(double pos) {
       if (liveStretchMode_)
-         return;
+         stretchCheckBox_.setSelected(false);
       
       lutMax_ = Math.min(255, pos) * binSize_;
       if (lutMin_ > lutMax_)
