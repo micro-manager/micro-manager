@@ -189,29 +189,22 @@ public class MMVirtualAcquisitionDisplay {
                      min = Double.MAX_VALUE;
                      max = Double.MIN_VALUE;
                   }
+                  
+                  int chan = MDUtils.getChannelIndex(md);
+
+                  if (channelSettings_[chan] == null) {
+                     channelSettings_[chan] = new ChannelDisplaySettings();
+                  }
+
+                  readChannelSettingsFromCache();
+                  setChannelColor(chan, channelSettings_[chan].color.getRGB());
                   min = Math.min(min, pixelMin);
                   max = Math.max(max, pixelMax);
+                  channelSettings_[chan].min = (int) min;
+                  channelSettings_[chan].max = (int) max;
                   hyperImage_.setDisplayRange(min, max);
                   hyperImage_.updateAndDraw();
-                  if (channelSettings_ != null) {
-                     int chan = MDUtils.getChannelIndex(md);
-
-                     if (channelSettings_[chan] == null) {
-                        channelSettings_[chan] = new ChannelDisplaySettings();
-                     }
-                     int rgb;
-                     try {
-                        rgb = imageCache_.getSummaryMetadata()
-                                .getJSONArray("ChColors").getInt(chan);
-                     } catch (Exception e) {
-                        rgb = 0;
-                     }
-                     channelSettings_[chan].min = (int) min;
-                     channelSettings_[chan].max = (int) max;
-                     channelSettings_[chan].gamma = 1.0;
-                     channelSettings_[chan].color = new Color(rgb);
-                     setChannelColor(chan, rgb);
-                  }
+                  writeChannelSettingsToCache(chan);
                }
             } catch (Exception ex) {
                ReportingUtils.showError(ex);

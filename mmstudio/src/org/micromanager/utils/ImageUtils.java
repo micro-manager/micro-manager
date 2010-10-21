@@ -338,12 +338,20 @@ public class ImageUtils {
       int max;
    }
 
+   private static int unsignedValue(byte b) {
+      return ((0x100 + b) % 0x100);
+   }
+
+   private static int unsignedValue(short s) {
+      return ((0x10000 + s) % 0x10000);
+   }
+
    public static int getMin(final Object pixels) {
       if (pixels instanceof byte[]) {
          byte[] bytes = (byte []) pixels;
          int min = Integer.MAX_VALUE;
          for (int i=0;i<bytes.length;++i) {
-            min = Math.min(min, bytes[i]);
+            min = Math.min(min, unsignedValue(bytes[i]));
          }
          return min;
       }
@@ -351,7 +359,7 @@ public class ImageUtils {
          short[] shorts = (short []) pixels;
          int min = Integer.MAX_VALUE;
          for (int i=0;i<shorts.length;++i) {
-            min = Math.min(min, shorts[i]);
+            min = Math.min(min, unsignedValue(shorts[i]));
          }
          return min;
       }
@@ -363,7 +371,7 @@ public class ImageUtils {
          byte[] bytes = (byte []) pixels;
          int min = Integer.MIN_VALUE;
          for (int i=0;i<bytes.length;++i) {
-            min = Math.max(min, bytes[i]);
+            min = Math.max(min, unsignedValue(bytes[i]));
          }
          return min;
       }
@@ -371,7 +379,7 @@ public class ImageUtils {
          short[] shorts = (short []) pixels;
          int min = Integer.MIN_VALUE;
          for (int i=0;i<shorts.length;++i) {
-            min = Math.max(min, shorts[i]);
+            min = Math.max(min, unsignedValue(shorts[i]));
          }
          return min;
       }
