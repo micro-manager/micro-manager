@@ -585,7 +585,10 @@ public class MMVirtualAcquisitionDisplay {
       if (hyperImage_.isComposite() && ((CompositeImage) hyperImage_).getMode() == CompositeImage.COMPOSITE) {
          return ((CompositeImage) hyperImage_).getProcessor(channelIndex + 1).getHistogram();
       } else {
-         return hyperImage_.getProcessor().getHistogram();
+         if (hyperImage_.getChannel() == (channelIndex + 1))
+            return hyperImage_.getProcessor().getHistogram();
+         else
+            return null;
       }
    }
 
