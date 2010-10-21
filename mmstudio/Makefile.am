@@ -23,13 +23,33 @@ MMJ_.jar:  \
 	$(srcdir)/src/org/micromanager/SplitView.java \
 	$(srcdir)/src/org/micromanager/TileCreatorDlg.java \
 	$(srcdir)/src/org/micromanager/license.txt \
+	$(srcdir)/src/org/micromanager/acquisition/AcquisitionCompositeImage.java \
 	$(srcdir)/src/org/micromanager/acquisition/AcquisitionManager.java \
 	$(srcdir)/src/org/micromanager/acquisition/AcquisitionVirtualStack.java \
+	$(srcdir)/src/org/micromanager/acquisition/ChannelControlPanel.java \
 	$(srcdir)/src/org/micromanager/acquisition/ChannelControlPanel.form \
 	$(srcdir)/src/org/micromanager/acquisition/ChannelDisplaySettings.java \
+	$(srcdir)/src/org/micromanager/acquisition/ComponentTitledBorder.java \
+	$(srcdir)/src/org/micromanager/acquisition/ContrastListener.java \
+	$(srcdir)/src/org/micromanager/acquisition/HyperstackControls.java \
+	$(srcdir)/src/org/micromanager/acquisition/LiveAcqDisplay.java \
 	$(srcdir)/src/org/micromanager/acquisition/MMAcquisition.java \
-	$(srcdir)/src/org/micromanager/acquisition/MetadataViewer.java \
+	$(srcdir)/src/org/micromanager/acquisition/MMAcquisitionSnap.java \
+	$(srcdir)/src/org/micromanager/acquisition/MMImageCache.java \
+	$(srcdir)/src/org/micromanager/acquisition/MMImagePlus.java \
 	$(srcdir)/src/org/micromanager/acquisition/MMVirtualAcquisitionDisplay.java \
+	$(srcdir)/src/org/micromanager/acquisition/MetadataPanel.java \
+	$(srcdir)/src/org/micromanager/acquisition/TaggedImageQueue.java \
+	$(srcdir)/src/org/micromanager/acquisition/TaggedImageStorageDiskDefault.java \
+	$(srcdir)/src/org/micromanager/acquisition/TaggedImageStorageRam.java \
+	$(srcdir)/src/org/micromanager/acquisition/engine/BurstMaker.java \
+	$(srcdir)/src/org/micromanager/acquisition/engine/Engine.java \
+	$(srcdir)/src/org/micromanager/acquisition/engine/ImageRequest.java \
+	$(srcdir)/src/org/micromanager/acquisition/engine/ImageTask.java \
+	$(srcdir)/src/org/micromanager/acquisition/engine/ProcessorStack.java \
+	$(srcdir)/src/org/micromanager/acquisition/engine/SequenceGenerator.java \
+	$(srcdir)/src/org/micromanager/acquisition/engine/SequenceSettings.java \
+	$(srcdir)/src/org/micromanager/acquisition/engine/StopTask.java \
 	$(srcdir)/src/org/micromanager/api/Autofocus.java \
 	$(srcdir)/src/org/micromanager/api/AcquisitionEngine.java \
 	$(srcdir)/src/org/micromanager/api/DeviceControlGUI.java \
