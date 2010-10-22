@@ -623,6 +623,9 @@ public class MetadataPanel extends javax.swing.JPanel
 
 
    private synchronized void updateChannelControls() {
+      if (ccpList_ == null)
+         return;
+      
       for (ChannelControlPanel ccp:ccpList_) {
          ccp.updateChannelSettings();
       }

@@ -127,6 +127,9 @@ public class MMVirtualAcquisitionDisplay {
    }
 
    private void updateWindow() {
+      if (hc_ == null)
+         return;
+      
       if (newData_) {
          if (acquisitionIsRunning()) {
             if (!abortRequested()) {
