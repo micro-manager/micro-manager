@@ -693,6 +693,11 @@ public class ContrastPanel extends JPanel implements ImageController,
    }
 
    public void focusReceived(ImageWindow focusedWindow) {
+      if (focusedWindow == null) {
+         histogramPanel_.repaint();
+         return;
+      }
+      
       ImagePlus imgp = focusedWindow.getImagePlus();
       liveWindow_ = (focusedWindow instanceof MMImageWindow);
       if (!liveWindow_)

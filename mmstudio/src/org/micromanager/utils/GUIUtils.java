@@ -23,6 +23,7 @@
 
 package org.micromanager.utils;
 
+import ij.WindowManager;
 import ij.gui.ImageWindow;
 import ij.process.ColorProcessor;
 import ij.process.ImageStatistics;
@@ -247,12 +248,12 @@ public class GUIUtils {
             if (event instanceof WindowEvent) {
                if (0 != (event.getID() & WindowEvent.WINDOW_GAINED_FOCUS)) {
                   if (event.getSource() instanceof ImageWindow) {
-                     ImageWindow focusedWindow = (ImageWindow) event.getSource();
+                     ImageWindow focusedWindow = WindowManager.getCurrentWindow();
                      if (currentImageWindow_ != focusedWindow) {
-                        if (focusedWindow.isVisible()) {
+                        //if (focusedWindow.isVisible() && focusedWindow instanceof ImageWindow) {
                            listener.focusReceived(focusedWindow);
                            currentImageWindow_ = focusedWindow;
-                        }
+                        //}
                      }
                   }
                }

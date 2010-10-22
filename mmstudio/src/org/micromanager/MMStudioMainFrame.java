@@ -1633,7 +1633,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
       GUIUtils.registerImageFocusListener(new ImageFocusListener() {
          public void focusReceived(ImageWindow focusedWindow) {
-            if (focusedWindow instanceof MMImageWindow) {
+            if (focusedWindow == null) {
+               contrastPanel_.setVisible(true);
+               metadataPanel_.setVisible(false);
+            } else if (focusedWindow instanceof MMImageWindow) {
                contrastPanel_.setVisible(true);
                metadataPanel_.setVisible(false);
             } else if (focusedWindow.getImagePlus().getStack() instanceof AcquisitionVirtualStack) {

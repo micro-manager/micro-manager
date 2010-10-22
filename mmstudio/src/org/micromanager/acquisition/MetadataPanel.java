@@ -571,6 +571,9 @@ public class MetadataPanel extends javax.swing.JPanel
     * in focus has changed.
     */
    public void focusReceived(ImageWindow focusedWindow) {
+      if (focusedWindow == null)
+         return;
+      
          ImagePlus imgp = focusedWindow.getImagePlus();
          cache_ = getCache(imgp);
 

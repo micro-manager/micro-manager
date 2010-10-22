@@ -132,11 +132,11 @@ public class GraphPanel extends JPanel {
     * @param box
     */
    private void drawGraph(Graphics2D g, Rectangle box) {
+      if (data_.getSize() < 2)
+         return;
+
       Color oldColor = g.getColor();
       g.setColor(traceColor_);
-
-       if (data_.getSize() < 2)
-         return;
       
       // set scaling
       float xUnit = 1.0f;
