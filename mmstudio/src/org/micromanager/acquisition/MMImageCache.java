@@ -27,7 +27,6 @@ import org.micromanager.utils.ReportingUtils;
 public class MMImageCache implements TaggedImageStorage {
 
    private TaggedImageStorage imageFileManager_;
-   private String comment_ = "";
    private Set<String> changingKeys_;
    private JSONObject firstTags_;
    private static ImageCollection coll_;
@@ -161,17 +160,32 @@ public class MMImageCache implements TaggedImageStorage {
    }
 
    public void setComment(String text) {
-      if (comment_==null || !comment_.contentEquals(text)) {
-         imageFileManager_.setComment(text);
-         comment_ = text;
+      JSONObject comments;
+      try {
+         comments = imageFileManager_.getDisplaySettings().getJSONObject("Comments");
+      } catch (JSONException ex) {
+         comments = new JSONObject();
+         try {
+            imageFileManager_.getDisplaySettings().put("Comments", comments);
+         } catch (JSONException ex1) {
+            ReportingUtils.logError(ex1);
+         }
+      }
+
+      try {
+         comments.put("Summary", text);
+      } catch (JSONException ex) {
+         ReportingUtils.logError(ex);
       }
    }
 
    public String getComment() {
-      if (comment_ == null || comment_.contentEquals("")) {
-         comment_ = imageFileManager_.getComment();
+      try {
+         return imageFileManager_.getDisplaySettings().getJSONObject("Comments").getString("Summary");
+      } catch (JSONException ex) {
+         ReportingUtils.logError(ex);
+         return "";
       }
-      return comment_;
    }
 
    public JSONObject getSummaryMetadata() {

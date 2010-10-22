@@ -348,9 +348,7 @@ public class MetadataPanel extends javax.swing.JPanel
 }//GEN-LAST:event_displayModeComboActionPerformed
 
     private void summaryCommentsTextAreaFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_summaryCommentsTextAreaFocusLost
-       if (cache_ != null) {
-          cache_.setComment(summaryCommentsTextArea.getText());
-       }
+      writeSummaryComments();
 }//GEN-LAST:event_summaryCommentsTextAreaFocusLost
 
     private void summaryCommentsTextArea1FocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_summaryCommentsTextArea1FocusLost
@@ -514,9 +512,17 @@ public class MetadataPanel extends javax.swing.JPanel
 
    //Implements ImageListener
    public void imageClosed(ImagePlus imp) {
+      writeSummaryComments();
       if (WindowManager.getCurrentWindow() == null) {
          update((ImagePlus) null);
       }
+   }
+
+   private void writeSummaryComments() {
+       MMVirtualAcquisitionDisplay acq = getMMVirtualAcquisitionDisplay();
+       if (acq != null) {
+          acq.setSummaryComment(summaryCommentsTextArea.getText());
+       }
    }
 
    //Implements ImageListener
@@ -571,33 +577,47 @@ public class MetadataPanel extends javax.swing.JPanel
     * in focus has changed.
     */
    public void focusReceived(ImageWindow focusedWindow) {
-      if (focusedWindow == null)
+      if (focusedWindow == null) {
          return;
-      
-         ImagePlus imgp = focusedWindow.getImagePlus();
-         cache_ = getCache(imgp);
+      }
 
-         if (cache_ != null) {
-            summaryCommentsTextArea.setText(cache_.getComment());
-            JSONObject md = cache_.getSummaryMetadata();
-            summaryMetadataModel_.setMetadata(md);
-         } else {
-            summaryCommentsTextArea.setText(null);
-         }
+      ImagePlus imgp = focusedWindow.getImagePlus();
+      cache_ = getCache(imgp);
+      acq_ = getMMVirtualAcquisitionDisplay();
 
-         if (imgp instanceof CompositeImage) {
-            CompositeImage cimp = (CompositeImage) imgp;
-            updatingDisplayModeCombo_ = true;
-            displayModeCombo.setSelectedIndex(cimp.getMode()-1);
-            updatingDisplayModeCombo_ = false;
-         }
-         AcquisitionVirtualStack stack = getAcquisitionStack(imgp);
+      if (acq_ != null) {
+         summaryCommentsTextArea.setText(acq_.getSummaryComment());
+         JSONObject md = cache_.getSummaryMetadata();
+         summaryMetadataModel_.setMetadata(md);
+      } else {
+         summaryCommentsTextArea.setText(null);
+      }
+
+      if (imgp instanceof CompositeImage) {
+         CompositeImage cimp = (CompositeImage) imgp;
+         updatingDisplayModeCombo_ = true;
+         displayModeCombo.setSelectedIndex(cimp.getMode() - 1);
+         updatingDisplayModeCombo_ = false;
+      }
+      if (acq_ != null) {
+         setupChannelControls(acq_);
+         update(imgp);
+      }
+
+   }
+
+   private MMVirtualAcquisitionDisplay getMMVirtualAcquisitionDisplay() {
+      ImagePlus imgp = WindowManager.getCurrentImage();
+      if (imgp == null)
+         return null;
+
+      MMVirtualAcquisitionDisplay acq;
+      AcquisitionVirtualStack stack = getAcquisitionStack(imgp);
          if (stack != null) {
-            acq_ = stack.getVirtualAcquisition();
-            setupChannelControls(acq_);
-            update(imgp);
-         }
-      
+            acq = stack.getVirtualAcquisition();
+            return acq;
+      }
+      return null;
    }
 
    public synchronized void setupChannelControls(MMVirtualAcquisitionDisplay acq) {

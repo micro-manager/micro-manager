@@ -644,4 +644,13 @@ public class MMVirtualAcquisitionDisplay {
       }
 
    }
+
+   public String getSummaryComment() {
+      return imageCache_.getComment();
+   }
+
+   public void setSummaryComment(String comment) {
+      imageCache_.setComment(comment);
+   }
+ 
 }
