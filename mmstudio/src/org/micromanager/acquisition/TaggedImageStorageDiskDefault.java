@@ -14,7 +14,6 @@ import ij.process.ByteProcessor;
 import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 import ij.process.ShortProcessor;
-import java.awt.Color;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -472,11 +471,14 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
    }
 
    private void readDisplaySettings() {
+      displaySettings_ = MDUtils.getDisplaySettingsFromSummary(summaryMetadata_);
       String path = dir_ + "/" + "display_and_comments.txt";
       try {
-         displaySettings_ = new JSONObject(JavaUtils.readTextFile(path));
+         String jsonText = JavaUtils.readTextFile(path);
+         if (jsonText != null)
+            displaySettings_ = new JSONObject(jsonText);
       } catch (Exception ex) {
-         ReportingUtils.showError(ex);
+         ReportingUtils.logError(ex);
       }
    }
 

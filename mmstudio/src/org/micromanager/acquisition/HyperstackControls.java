@@ -226,7 +226,12 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
       if (taggedImg != null) {
          try {
             String time = NumberUtils.doubleToDisplayString(taggedImg.tags.getDouble("ElapsedTime-ms"));
-            String zPosition = NumberUtils.doubleStringCoreToDisplay(taggedImg.tags.getString("ZPositionUm"));
+            String zPosition;
+            try {
+               zPosition = NumberUtils.doubleStringCoreToDisplay(taggedImg.tags.getString("ZPositionUm"));
+            } catch (Exception e) {
+               zPosition = NumberUtils.doubleStringCoreToDisplay(taggedImg.tags.getString("Z-um"));
+            }
             String xyPosition;
             try {
                xyPosition = taggedImg.tags.getString("PositionName");

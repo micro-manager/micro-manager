@@ -134,13 +134,23 @@ public class LiveAcqDisplay extends Thread {
    private void setChannelTags(SequenceSettings acqSettings, JSONObject md) {
       JSONArray channelColors = new JSONArray();
       JSONArray channelNames = new JSONArray();
+      JSONArray channelMaxes = new JSONArray();
+      JSONArray channelMins = new JSONArray();
       for (ChannelSpec channel : acqSettings.channels) {
          channelColors.put(channel.color_.getRGB());
          channelNames.put(channel.config_);
+         try {
+            channelMaxes.put(255);
+            channelMins.put(0);
+         } catch (Exception e) {
+            ReportingUtils.logError(e);
+         }
       }
       try {
          md.put("ChColors", channelColors);
          md.put("ChNames", channelNames);
+         md.put("ChContrastMax", channelMaxes);
+         md.put("ChContrastMin", channelMins);
       } catch (Exception e) {
          ReportingUtils.logError(e);
       }
