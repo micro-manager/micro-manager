@@ -69,6 +69,7 @@
 
 SerialManager g_serialManager;
 
+std::vector<std::string> g_BlackListedPorts;
 std::vector<std::string> g_PortList;
 time_t g_PortListLastUpdated = 0;
 
@@ -221,28 +222,33 @@ void SerialPortLister::ListPorts(std::vector<std::string> &availablePorts)
                                kCFAllocatorDefault,  
                                0);                   
       if (bsdPathAsCFString) {
-          Boolean result;                                                        
-          // Convert the path from a CFString to a C (NUL-terminated) string for use           
-          // with the POSIX open() call. 
-          result = CFStringGetCString( (const __CFString*) bsdPathAsCFString, 
+         Boolean result;                                                        
+         // Convert the path from a CFString to a C (NUL-terminated) string for use           
+         // with the POSIX open() call. 
+         result = CFStringGetCString( (const __CFString*) bsdPathAsCFString, 
                                          bsdPath,   
                                          sizeof(bsdPath), 
                                          kCFStringEncodingUTF8); 
 
-          CFRelease(bsdPathAsCFString);
-          printf("%s\n", bsdPath);
+         CFRelease(bsdPathAsCFString);
 
-          // add the name to our vector<string> only when this is not a dialup port
-          std::string rresult (bsdPath);
-          std::string::size_type loc = rresult.find("DialupNetwork", 0);
-          if (result && (loc == std::string::npos)) {
-              if (portAccessible(bsdPath))  {
-                  availablePorts.push_back(bsdPath);
-              }                 
-              kernResult = KERN_SUCCESS;
-           }
-       }
-    } 
+         // add the name to our vector<string> only when this is not a dialup port
+         std::string rresult (bsdPath);
+         std::string::size_type loc = rresult.find("DialupNetwork", 0);
+         if (result && (loc == std::string::npos)) {
+             bool blackListed = false;
+             std::vector<std::string>::iterator it = g_BlackListedPorts.begin();
+             while (it < g_BlackListedPorts.end()) {
+                if( bsdPath == (*it))
+                   blackListed = true;
+            }
+            if (portAccessible(bsdPath) && ! blackListed)  {
+                 availablePorts.push_back(bsdPath);
+            }                 
+            kernResult = KERN_SUCCESS;
+         }
+      }
+   } 
 
     // Release the io_service_t now that we are done with it.
     (void) IOObjectRelease(modemService);
@@ -460,6 +466,14 @@ SerialPort::~SerialPort()
 
 int SerialPort::Initialize()
 {
+   // do not initialize if this port has been blacklisted
+   std::vector<std::string>::iterator it = g_BlackListedPorts.begin();
+   while (it < g_BlackListedPorts.end()) {
+      if( portName_ == (*it))
+         return ERR_PORT_BLACKLISTED;
+      it++;
+   }
+
    // verify callbacks are supported
    if (!IsCallbackRegistered())
       return DEVICE_NO_CALLBACK_REGISTERED;
@@ -534,7 +548,10 @@ int SerialPort::Shutdown()
    if( 0 != pThread_)
    {
       CDeviceUtils::SleepMs(100);
-      pThread_->join();
+      if (!pThread_->timed_join(boost::posix_time::millisec(100) )) {
+         pThread_->detach();
+         g_BlackListedPorts.push_back(portName_);
+      }
    }
    initialized_ = false;
  
