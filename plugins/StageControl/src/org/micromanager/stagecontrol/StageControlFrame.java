@@ -335,11 +335,11 @@ public class StageControlFrame extends javax.swing.JFrame {
 
       jLabel3.setIcon(new javax.swing.ImageIcon("/Users/nico/svn/micromanager1.4/plugins/StageControl/src/org/micromanager/stagecontrol/icons/arrowhead-tr.png")); // NOI18N
 
-      jLabel4.setText("µm");
+      jLabel4.setText("\u00B5"+ "m");
 
-      jLabel5.setText("µm");
+      jLabel5.setText("\u00B5" + "m");
 
-      jLabel6.setText("µm");
+      jLabel6.setText("\u00B5" + "m");
 
       jButton13.setFont(new java.awt.Font("Arial", 0, 10)); // NOI18N
       jButton13.setText("1 pixel");
@@ -436,9 +436,9 @@ public class StageControlFrame extends javax.swing.JFrame {
          }
       });
 
-      jLabel8.setText("µm");
+      jLabel8.setText("\u00B5" + "m");
 
-      jLabel9.setText("µm");
+      jLabel9.setText("\u00B5" + "m");
 
       jLabel10.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
       jLabel10.setText("Z Stage");
