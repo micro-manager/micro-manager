@@ -119,6 +119,9 @@ public:
    int OnND(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnControllerID(MM::PropertyBase* pProp, MM::ActionType eAct);
 
+   // for device discovery:
+   MM::DeviceDetectionStatus DetectDevice(void);
+
 private:
    bool ControllerBusy();
    bool SetShutterPosition(bool state);
