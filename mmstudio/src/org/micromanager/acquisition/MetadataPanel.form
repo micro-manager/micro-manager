@@ -397,7 +397,7 @@
 
                   <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
                   <SubComponents>
-                    <Component class="javax.swing.JTextArea" name="summaryCommentsTextArea1">
+                    <Component class="javax.swing.JTextArea" name="imageCommentsTextArea">
                       <Properties>
                         <Property name="columns" type="int" value="20"/>
                         <Property name="lineWrap" type="boolean" value="true"/>
@@ -406,7 +406,7 @@
                         <Property name="wrapStyleWord" type="boolean" value="true"/>
                       </Properties>
                       <Events>
-                        <EventHandler event="focusLost" listener="java.awt.event.FocusListener" parameters="java.awt.event.FocusEvent" handler="summaryCommentsTextArea1FocusLost"/>
+                        <EventHandler event="focusLost" listener="java.awt.event.FocusListener" parameters="java.awt.event.FocusEvent" handler="imageCommentsTextAreaFocusLost"/>
                       </Events>
                     </Component>
                   </SubComponents>

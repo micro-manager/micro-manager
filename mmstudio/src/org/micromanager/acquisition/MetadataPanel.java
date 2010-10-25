@@ -105,7 +105,7 @@ public class MetadataPanel extends javax.swing.JPanel
       imageCommentsPanel = new javax.swing.JPanel();
       imageCommentsLabel = new javax.swing.JLabel();
       imageCommentsScrollPane = new javax.swing.JScrollPane();
-      summaryCommentsTextArea1 = new javax.swing.JTextArea();
+      imageCommentsTextArea = new javax.swing.JTextArea();
 
       tabbedPane.setFocusable(false);
       tabbedPane.addChangeListener(new javax.swing.event.ChangeListener() {
@@ -311,17 +311,17 @@ public class MetadataPanel extends javax.swing.JPanel
 
       imageCommentsLabel.setText("Per-image comments:");
 
-      summaryCommentsTextArea1.setColumns(20);
-      summaryCommentsTextArea1.setLineWrap(true);
-      summaryCommentsTextArea1.setRows(1);
-      summaryCommentsTextArea1.setTabSize(3);
-      summaryCommentsTextArea1.setWrapStyleWord(true);
-      summaryCommentsTextArea1.addFocusListener(new java.awt.event.FocusAdapter() {
+      imageCommentsTextArea.setColumns(20);
+      imageCommentsTextArea.setLineWrap(true);
+      imageCommentsTextArea.setRows(1);
+      imageCommentsTextArea.setTabSize(3);
+      imageCommentsTextArea.setWrapStyleWord(true);
+      imageCommentsTextArea.addFocusListener(new java.awt.event.FocusAdapter() {
          public void focusLost(java.awt.event.FocusEvent evt) {
-            summaryCommentsTextArea1FocusLost(evt);
+            imageCommentsTextAreaFocusLost(evt);
          }
       });
-      imageCommentsScrollPane.setViewportView(summaryCommentsTextArea1);
+      imageCommentsScrollPane.setViewportView(imageCommentsTextArea);
 
       org.jdesktop.layout.GroupLayout imageCommentsPanelLayout = new org.jdesktop.layout.GroupLayout(imageCommentsPanel);
       imageCommentsPanel.setLayout(imageCommentsPanelLayout);
@@ -372,9 +372,9 @@ public class MetadataPanel extends javax.swing.JPanel
       writeSummaryComments();
 }//GEN-LAST:event_summaryCommentsTextAreaFocusLost
 
-    private void summaryCommentsTextArea1FocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_summaryCommentsTextArea1FocusLost
-       // TODO add your handling code here:
-}//GEN-LAST:event_summaryCommentsTextArea1FocusLost
+    private void imageCommentsTextAreaFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_imageCommentsTextAreaFocusLost
+      writeImageComments();
+}//GEN-LAST:event_imageCommentsTextAreaFocusLost
 
     private void showUnchangingPropertiesCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showUnchangingPropertiesCheckboxActionPerformed
        showUnchangingKeys_ = showUnchangingPropertiesCheckbox.isSelected();
@@ -396,6 +396,7 @@ public class MetadataPanel extends javax.swing.JPanel
    private javax.swing.JLabel imageCommentsLabel;
    private javax.swing.JPanel imageCommentsPanel;
    private javax.swing.JScrollPane imageCommentsScrollPane;
+   private javax.swing.JTextArea imageCommentsTextArea;
    private javax.swing.JPanel imageMetadataScrollPane;
    private javax.swing.JTable imageMetadataTable;
    private javax.swing.JScrollPane imageMetadataTableScrollPane;
@@ -409,7 +410,6 @@ public class MetadataPanel extends javax.swing.JPanel
    private javax.swing.JPanel summaryCommentsPane;
    private javax.swing.JScrollPane summaryCommentsScrollPane;
    private javax.swing.JTextArea summaryCommentsTextArea;
-   private javax.swing.JTextArea summaryCommentsTextArea1;
    private javax.swing.JPanel summaryMetadataPanel;
    private javax.swing.JScrollPane summaryMetadataScrollPane;
    private javax.swing.JTable summaryMetadataTable;
@@ -548,6 +548,14 @@ public class MetadataPanel extends javax.swing.JPanel
        }
    }
 
+   private void writeImageComments() {
+       MMVirtualAcquisitionDisplay acq = getMMVirtualAcquisitionDisplay();
+       if (acq != null) {
+          acq.setImageComment(imageCommentsTextArea.getText());
+       }
+   }
+
+
    //Implements ImageListener
    public void imageUpdated(ImagePlus imp) {
       update(imp);
@@ -589,6 +597,8 @@ public class MetadataPanel extends javax.swing.JPanel
             }
          } else if (tabSelected == 0) {
             updateChannelControls();
+         } else if (tabSelected == 2) {
+            imageCommentsTextArea.setText(acq_.getImageComment());
          }
       }
       

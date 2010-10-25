@@ -652,5 +652,13 @@ public class MMVirtualAcquisitionDisplay {
    public void setSummaryComment(String comment) {
       imageCache_.setComment(comment);
    }
+
+   void setImageComment(String comment) {
+      imageCache_.setImageComment(comment, getCurrentMetadata());
+   }
+
+   String getImageComment() {
+      return imageCache_.getImageComment(getCurrentMetadata());
+   }
  
 }

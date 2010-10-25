@@ -56,6 +56,7 @@ public class MMImageCache implements TaggedImageStorage {
       imageFileManager_.close();
    }
 
+
    private class ImageCollection {
       private ConcurrentLinkedQueue<String> LabelQueue_;
       private Set<String> LabelSet_;
@@ -157,7 +158,7 @@ public class MMImageCache implements TaggedImageStorage {
       }
    }
 
-   public void setComment(String text) {
+   private JSONObject getCommentsJSONObject() {
       JSONObject comments;
       try {
          comments = imageFileManager_.getDisplaySettings().getJSONObject("Comments");
@@ -169,7 +170,11 @@ public class MMImageCache implements TaggedImageStorage {
             ReportingUtils.logError(ex1);
          }
       }
+      return comments;
+   }
 
+   public void setComment(String text) {
+      JSONObject comments = getCommentsJSONObject();
       try {
          comments.put("Summary", text);
       } catch (JSONException ex) {
@@ -177,9 +182,29 @@ public class MMImageCache implements TaggedImageStorage {
       }
    }
 
+   void setImageComment(String comment, JSONObject tags) {
+      JSONObject comments = getCommentsJSONObject();
+      String label = MDUtils.getLabel(tags);
+      try {
+         comments.put(label,comment);
+      } catch (JSONException ex) {
+         ReportingUtils.logError(ex);
+      }
+
+   }
+
+   String getImageComment(JSONObject tags) {
+      try {
+         String label = MDUtils.getLabel(tags);
+         return getCommentsJSONObject().getString(label);
+      } catch (Exception ex) {
+         return "";
+      }
+   }
+   
    public String getComment() {
       try {
-         return imageFileManager_.getDisplaySettings().getJSONObject("Comments").getString("Summary");
+         return getCommentsJSONObject().getString("Summary");
       } catch (Exception ex) {
          return "";
       }
