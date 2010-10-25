@@ -160,7 +160,6 @@ public class MetadataPanel extends javax.swing.JPanel
       tabbedPane.addTab("Channels", ChannelsTablePanel);
 
       metadataSplitPane.setBorder(null);
-      metadataSplitPane.setDividerLocation(200);
       metadataSplitPane.setOrientation(javax.swing.JSplitPane.VERTICAL_SPLIT);
 
       imageMetadataTable.setModel(new javax.swing.table.DefaultTableModel(
