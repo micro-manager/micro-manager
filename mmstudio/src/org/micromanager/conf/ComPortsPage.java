@@ -264,8 +264,30 @@ public class ComPortsPage extends PagePanel {
 			}
          if (toNextPage) {
 
-            //reloadDevices();
+            core_.unloadAllDevices();
             // apply the properties
+
+            for (int i = 0; i < ports.length; i++) {
+               if (model_.isPortInUse(ports[i])) {
+                  core_.loadDevice(ports[i].getName(), ports[i].getLibrary(), ports[i].getAdapterName());
+
+                  // serial ports are associated with devices so we can now set the COM port settings
+                  Device d = model_.findSerialPort(ports[i].getName());
+                  for (int j = 0; j < d.getNumberOfSetupProperties(); j++) {
+                     PropertyItem prop = d.getSetupProperty(j);
+                     core_.setProperty(d.getName(), prop.name, prop.value);
+                  }
+               }
+            }
+
+            // load devices
+            Device devs[] = model_.getDevices();
+            for (int i=0; i<devs.length; i++) {
+               if (!devs[i].isCore()) {
+                  core_.loadDevice(devs[i].getName(), devs[i].getLibrary(), devs[i].getAdapterName());
+               }
+            }
+
             PropertyTableModel ptm = (PropertyTableModel) portTable_.getModel();
             for (int i = 0; i < ptm.getRowCount(); i++) {
                Setting s = ptm.getSetting(i);
@@ -276,18 +298,6 @@ public class ComPortsPage extends PagePanel {
                   dev.addSetupProperty(new PropertyItem(s.propertyName_, s.propertyValue_, true));
                } else {
                   prop.value = s.propertyValue_;
-               }
-            }
-            for (int i = 0; i < ports.length; i++) {
-               if (model_.isPortInUse(ports[i])) {
-                  // core_.loadDevice(ports[i].getName(), ports[i].getLibrary(), ports[i].getAdapterName());
-
-                  // serial ports are associated with devices so we can now set the COM port settings
-                  Device d = model_.findSerialPort(ports[i].getName());
-                  for (int j = 0; j < d.getNumberOfSetupProperties(); j++) {
-                     PropertyItem prop = d.getSetupProperty(j);
-                     core_.setProperty(d.getName(), prop.name, prop.value);
-                  }
                }
             }
 
