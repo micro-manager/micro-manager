@@ -42,7 +42,6 @@ import org.micromanager.utils.PropertyItem;
 import org.micromanager.utils.PropertyNameCellRenderer;
 import org.micromanager.utils.PropertyValueCellEditor;
 import org.micromanager.utils.PropertyValueCellRenderer;
-//import org.apache.commons.collections;
 
 /**
  * Config Wizard COM ports page.
@@ -150,39 +149,39 @@ public class ComPortsPage extends PagePanel {
    }
 
    public boolean enterPage(boolean fromNextPage) {
-		if(fromNextPage){
+      if(fromNextPage){
          try {
-			core_.unloadAllDevices();
-			// this mostly duplicates the exitPage of the DevicesPage.....
-			// would be nicer to wrap this into a method of some sort but who owns it??
-			
-			// first load com ports
-			Device ports[] = model_.getAvailableSerialPorts();
+            core_.unloadAllDevices();
+            // this mostly duplicates the exitPage of the DevicesPage.....
+            // would be nicer to wrap this into a method of some sort but who owns it??
 
-		  // allow the user to first associate the COM port with the device,
-			// later we will clear the 'use' flag after we determine we don't need the serial port
-			for( Device p : ports)
-				 model_.useSerialPort(p, true);
+            // first load com ports
+            Device ports[] = model_.getAvailableSerialPorts();
 
-			for (int i=0; i<ports.length; i++) {
-				if (model_.isPortInUse(ports[i])) {
-					 core_.loadDevice(ports[i].getName(), ports[i].getLibrary(), ports[i].getAdapterName());
-				}
-			}
+            // allow the user to first associate the COM port with the device,
+            // later we will clear the 'use' flag after we determine we don't need the serial port
+            for( Device p : ports)
+               model_.useSerialPort(p, true);
 
-			// load devices
-			Device devs[] = model_.getDevices();
-			for (int i=0; i<devs.length; i++) {
-				if (!devs[i].isCore()) {
-					core_.loadDevice(devs[i].getName(), devs[i].getLibrary(), devs[i].getAdapterName());
-				}
-			}
+            for (int i=0; i<ports.length; i++) {
+               if (model_.isPortInUse(ports[i])) {
+                  core_.loadDevice(ports[i].getName(), ports[i].getLibrary(), ports[i].getAdapterName());
+               }
+            }
+
+            // load devices
+            Device devs[] = model_.getDevices();
+            for (int i=0; i<devs.length; i++) {
+               if (!devs[i].isCore()) {
+                  core_.loadDevice(devs[i].getName(), devs[i].getLibrary(), devs[i].getAdapterName());
+               }
+            }
          } catch (Exception e) {
             handleException(e);
             return false;
          }
-		}
-		portsVect_.clear();
+      }
+      portsVect_.clear();
       model_.removeDuplicateComPorts();
       Device ports[] = model_.getAvailableSerialPorts();
 
@@ -213,14 +212,14 @@ public class ComPortsPage extends PagePanel {
       }
 
       for (Integer i = 0; i < ports.length; i++) {
-			boolean inUse = model_.isPortInUse(ports[i]);
-			// save the original 'in-use' state
-			saveSerialPortsInUse_.put(i, inUse);
+         boolean inUse = model_.isPortInUse(ports[i]);
+         // save the original 'in-use' state
+         saveSerialPortsInUse_.put(i, inUse);
          if (inUse) {
             ArrayList<String> ds = portUse.get(ports[i].getAdapterName());
             String value = ports[i].getAdapterName();
-				String thisPort = new String(value);
-				String theseDevices = new String(value);
+            String thisPort = new String(value);
+            String theseDevices = new String(value);
             if (null != ds) {
                // if any devices use this serial port, put that name on the button rather than the serial port name
                value = "";
@@ -229,24 +228,23 @@ public class ComPortsPage extends PagePanel {
                      value += " ";
                   value += s;
                }
-					theseDevices = value;
+               theseDevices = value;
             }
-				// stuff for selecting the serial port via the name of the controlled devices
-				devicesToTheirPort_.put(theseDevices, thisPort);
+            // stuff for selecting the serial port via the name of the controlled devices
+            devicesToTheirPort_.put(theseDevices, thisPort);
             portsVect_.add(value);
          }
       }
 
-		// force the data model to provide display for the first serial port
-		boolean selectFirstUsedPort = true;
+      // force the data model to provide display for the first serial port
+      boolean selectFirstUsedPort = true;
       for (Integer i = 0; i < ports.length; i++) {
-			if( model_.isPortInUse(ports[i]) && selectFirstUsedPort)			{
-	         SerialDeviceTableModel ltm = (SerialDeviceTableModel)serialDeviceTable_.getModel();
-				ltm.setValue(ports[i].getAdapterName());
-				selectFirstUsedPort = false;
-			}
-		}
-
+         if( model_.isPortInUse(ports[i]) && selectFirstUsedPort) {
+            SerialDeviceTableModel ltm = (SerialDeviceTableModel)serialDeviceTable_.getModel();
+            ltm.setValue(ports[i].getAdapterName());
+            selectFirstUsedPort = false;
+         }
+      }
 
       rebuildTable();
 
@@ -256,14 +254,14 @@ public class ComPortsPage extends PagePanel {
    public boolean exitPage(boolean toNextPage) {
       try {
 
-       Device ports[] = model_.getAvailableSerialPorts();
+         Device ports[] = model_.getAvailableSerialPorts();
 
-			// restore the port in-use flags
+         // restore the port in-use flags
          for (int i = 0; i < ports.length; i++) {
 				model_.useSerialPort(i,  saveSerialPortsInUse_.get(i));
-			}
-         if (toNextPage) {
+	 }
 
+         if (toNextPage) {
             core_.unloadAllDevices();
             // apply the properties
 
@@ -285,6 +283,15 @@ public class ComPortsPage extends PagePanel {
             for (int i=0; i<devs.length; i++) {
                if (!devs[i].isCore()) {
                   core_.loadDevice(devs[i].getName(), devs[i].getLibrary(), devs[i].getAdapterName());
+               }
+            }
+
+            for(Device d : model_.getDevices()) {
+               if (!d.getName().equals("Core")) {
+                  for (int i=0; i<d.getNumberOfSetupProperties(); i++) {
+                     PropertyItem p = d.getSetupProperty(i);
+                     core_.setProperty(d.getName(), p.name, p.value);
+                  }
                }
             }
 
