@@ -290,6 +290,10 @@ public class MDUtils {
             channels.put(channelObject);
          }
          displaySettings.put("Channels", channels);
+
+         JSONObject comments = new JSONObject();
+         comments.put("Summary", summaryMetadata.getString("Comment"));
+         displaySettings.put("Comments", comments);
          return displaySettings;
       } catch (JSONException e) {
          ReportingUtils.logError(e);
