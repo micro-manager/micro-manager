@@ -23,25 +23,20 @@
 //
 package org.micromanager.conf;
 
-import java.awt.Color;
-import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Vector;
 import java.util.prefs.Preferences;
 
-import javax.swing.InputMap;
 import javax.swing.JLabel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import mmcorej.MMCoreJ;
-import mmcorej.StrVector;
 import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.PropertyItem;
 import org.micromanager.utils.PropertyNameCellRenderer;
@@ -152,17 +147,15 @@ public class ComPortsPage extends PagePanel {
 
       scrollPane.setViewportView(portTable_);
 
-      //
    }
 
-   public boolean enterPage(boolean next) {
-		if( next){
+   public boolean enterPage(boolean fromNextPage) {
+		if(fromNextPage){
          try {
 			core_.unloadAllDevices();
 			// this mostly duplicates the exitPage of the DevicesPage.....
 			// would be nicer to wrap this into a method of some sort but who owns it??
-			StrVector ld = core_.getLoadedDevices();
-
+			
 			// first load com ports
 			Device ports[] = model_.getAvailableSerialPorts();
 
@@ -243,6 +236,7 @@ public class ComPortsPage extends PagePanel {
             portsVect_.add(value);
          }
       }
+
 		// force the data model to provide display for the first serial port
 		boolean selectFirstUsedPort = true;
       for (Integer i = 0; i < ports.length; i++) {
@@ -270,7 +264,7 @@ public class ComPortsPage extends PagePanel {
 			}
          if (toNextPage) {
 
-//            reloadDevices();
+            //reloadDevices();
             // apply the properties
             PropertyTableModel ptm = (PropertyTableModel) portTable_.getModel();
             for (int i = 0; i < ptm.getRowCount(); i++) {

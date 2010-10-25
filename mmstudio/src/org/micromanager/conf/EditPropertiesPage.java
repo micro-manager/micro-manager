@@ -99,18 +99,18 @@ public class EditPropertiesPage extends PagePanel {
 		rebuildTable();
 		ArrayList<Device> ports = new ArrayList<Device>();
 		model_.removeDuplicateComPorts();
-		Device avPorts[] = model_.getAvailableSerialPorts();
+		Device availablePorts[] = model_.getAvailableSerialPorts();
 
 
-		for( Device p : avPorts)
+		for( Device p : availablePorts)
 			 model_.useSerialPort(p, true);
 
 
 		String portsInModel = new String("Serial ports available in configuration: ");
 
-		for (int ip = 0; ip < avPorts.length; ++ip) {
-			if (model_.isPortInUse(avPorts[ip])) {
-				ports.add(avPorts[ip]);
+		for (int ip = 0; ip < availablePorts.length; ++ip) {
+			if (model_.isPortInUse(availablePorts[ip])) {
+				ports.add(availablePorts[ip]);
 			}
 		}
 
@@ -120,7 +120,7 @@ public class EditPropertiesPage extends PagePanel {
 			portsInModel += p1.getName();
 		}
 
-		System.out.print(  portsInModel);
+		System.out.print(  portsInModel + "\n");
 
 
 

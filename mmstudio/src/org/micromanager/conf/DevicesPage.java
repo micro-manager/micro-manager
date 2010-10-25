@@ -36,7 +36,6 @@ import javax.swing.table.TableModel;
 
 import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
-import org.micromanager.utils.PropertyItem;
 
 /**
  * Wizard page to add or remove devices.
@@ -72,6 +71,7 @@ public class DevicesPage extends PagePanel {
       public int getColumnCount() {
          return COLUMN_NAMES.length;
       }
+      @Override
       public String getColumnName(int columnIndex) {
          return COLUMN_NAMES[columnIndex];
       }
@@ -84,6 +84,8 @@ public class DevicesPage extends PagePanel {
          else
             return devices_[rowIndex].getDescription();
       }
+
+      @Override
       public void setValueAt(Object value, int row, int col) {
          String newName = (String) value;
          String oldName = devices_[row].getName();
@@ -97,6 +99,7 @@ public class DevicesPage extends PagePanel {
          }
       }
      
+      @Override
       public boolean isCellEditable(int nRow, int nCol) {
          if(nCol == 0)
             return true;
