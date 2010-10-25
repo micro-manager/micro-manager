@@ -473,7 +473,12 @@ public class MMVirtualAcquisitionDisplay {
    public JSONObject getCurrentMetadata() {
       int index = getCurrentFlatIndex();
       int posIndex = pSelector.getValue() - 1;
-      return virtualStacks_.get(posIndex).getTaggedImage(index).tags;
+      TaggedImage image = virtualStacks_.get(posIndex).getTaggedImage(index);
+      if (image != null) {
+         return image.tags;
+      } else {
+         return null;
+      }
    }
 
    private int getCurrentFlatIndex() {

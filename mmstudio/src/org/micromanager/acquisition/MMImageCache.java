@@ -194,6 +194,8 @@ public class MMImageCache implements TaggedImageStorage {
    }
 
    String getImageComment(JSONObject tags) {
+      if (tags == null)
+         return "";
       try {
          String label = MDUtils.getLabel(tags);
          return getCommentsJSONObject().getString(label);
