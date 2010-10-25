@@ -65,6 +65,7 @@ public class LiveAcqDisplay extends Thread {
          imageCache_.setSummaryMetadata(summaryMetadata);
 
          display_ = new MMVirtualAcquisitionDisplay(acqPath, true, diskCached_);
+         display_.setEngine(eng);
          display_.setCache(imageCache_);
          display_.initialize();
       } catch (Exception ex) {
