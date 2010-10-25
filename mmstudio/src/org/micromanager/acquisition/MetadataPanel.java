@@ -598,7 +598,9 @@ public class MetadataPanel extends javax.swing.JPanel
          } else if (tabSelected == 0) {
             updateChannelControls();
          } else if (tabSelected == 2) {
-            imageCommentsTextArea.setText(acq_.getImageComment());
+            if (acq_ != null) {
+               imageCommentsTextArea.setText(acq_.getImageComment());
+            }
          }
       }
       
