@@ -220,7 +220,11 @@ public class MetadataPanel extends javax.swing.JPanel
 
       metadataSplitPane.setRightComponent(imageMetadataScrollPane);
 
-      summaryMetadataScrollPane.setMinimumSize(new java.awt.Dimension(23, 250));
+      summaryMetadataPanel.setMinimumSize(new java.awt.Dimension(0, 100));
+      summaryMetadataPanel.setPreferredSize(new java.awt.Dimension(539, 100));
+
+      summaryMetadataScrollPane.setMinimumSize(new java.awt.Dimension(0, 0));
+      summaryMetadataScrollPane.setPreferredSize(new java.awt.Dimension(454, 80));
 
       summaryMetadataTable.setModel(new javax.swing.table.DefaultTableModel(
          new Object [][] {
@@ -259,7 +263,7 @@ public class MetadataPanel extends javax.swing.JPanel
          .add(org.jdesktop.layout.GroupLayout.TRAILING, summaryMetadataPanelLayout.createSequentialGroup()
             .add(jLabel3)
             .add(4, 4, 4)
-            .add(summaryMetadataScrollPane, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 180, Short.MAX_VALUE))
+            .add(summaryMetadataScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 180, Short.MAX_VALUE))
       );
 
       metadataSplitPane.setLeftComponent(summaryMetadataPanel);
