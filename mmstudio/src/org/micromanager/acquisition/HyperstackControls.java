@@ -224,28 +224,39 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
 
    private void updateStatusLine(TaggedImage taggedImg) {
       if (taggedImg != null) {
+         String status = "";
          try {
-            String time = NumberUtils.doubleToDisplayString(taggedImg.tags.getDouble("ElapsedTime-ms"));
-            String zPosition;
-            try {
-               zPosition = NumberUtils.doubleStringCoreToDisplay(taggedImg.tags.getString("ZPositionUm"));
-            } catch (Exception e) {
-               zPosition = NumberUtils.doubleStringCoreToDisplay(taggedImg.tags.getString("Z-um"));
-            }
             String xyPosition;
             try {
                xyPosition = taggedImg.tags.getString("PositionName");
+               status += xyPosition + ", ";
             } catch (Exception e) {
-               xyPosition = "";
+               //Oh well...
             }
-                  String chan;
+            
+            String time = NumberUtils.doubleToDisplayString(taggedImg.tags.getDouble("ElapsedTime-ms"));
+            status += time + " s";
+            
+            String zPosition;
+            try {
+               zPosition = NumberUtils.doubleStringCoreToDisplay(taggedImg.tags.getString("ZPositionUm"));
+               status += ", z: " + zPosition + " um";
+            } catch (Exception e) {
+               try {
+                  zPosition = NumberUtils.doubleStringCoreToDisplay(taggedImg.tags.getString("Z-um"));
+                                 status += ", z: " + zPosition + " um";
+               } catch (Exception e1) {
+                  // Do nothing...
+               }
+            }
+            String chan;
             try {
                chan = MDUtils.getChannelName(taggedImg.tags);
+               status += ", " + chan;
             } catch (Exception ex) {
-               chan = "";
             }
-            setStatusLabel(String.format("<html>%s, %s&nbsp;s, "
-                    + "z:&nbsp;%s&nbsp;&#181;m, %s</html>",xyPosition,time,zPosition,chan));
+
+            setStatusLabel(status);
          } catch (Exception ex) {
             ReportingUtils.logError(ex);
          }
