@@ -101,7 +101,7 @@ public class ImageTask implements EngineTask {
             zPosition_ = core_.getPosition(core_.getFocusDevice());
          }
 
-         if (imageRequest_.UseChannel) {
+         if (imageRequest_.UseChannel && imageRequest_.Channel.zOffset_ != 0) {
             setZPosition_ = true;
             zPosition_ += imageRequest_.Channel.zOffset_;
          }
