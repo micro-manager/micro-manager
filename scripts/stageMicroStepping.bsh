@@ -1,0 +1,32 @@
+import org.micromanager.navigation.PositionList;
+import org.micromanager.navigation.MultiStagePosition;
+import org.micromanager.navigation.StagePosition;
+
+nrGridPoints = 20;
+distance = 0.150;
+
+PositionList pl = new PositionList();
+xy = mmc.getXYStageDevice();
+xPos = mmc.getXPosition(xy);
+yPos = mmc.getYPosition(xy);
+
+
+
+for (int i =0; i < nrGridPoints; i++) {
+	for (int j=0; j < nrGridPoints; j++) {
+		MultiStagePosition msp = new MultiStagePosition();
+		StagePosition s = new StagePosition();
+		s.stageName = xy;
+		s.numAxes = 2;
+		s.x = xPos + i * distance;
+		s.y = yPos + j * distance;
+		msp.add(s);
+		msp.setLabel("Pos-" + i + "-" + j);
+		pl.addPosition(msp);
+	}
+}
+
+gui.setPositionList(pl);
+
+		
+		
