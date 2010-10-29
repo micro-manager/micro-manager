@@ -1451,7 +1451,12 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             // -------------------
             // initialize hardware
             // -------------------
-            core_ = new CMMCore();
+            try {
+               core_ = new CMMCore();
+            } catch(UnsatisfiedLinkError ex) {
+               ReportingUtils.showError(ex, "Failed to open libMMCoreJ_wrap.jnilib");
+               return;
+            }
             ReportingUtils.setCore(core_);
 
             core_.enableDebugLog(options_.debugLogEnabled);
@@ -1460,10 +1465,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             core_.logMessage(core_.getAPIVersionInfo());
             core_.logMessage("Operating System: " + System.getProperty("os.name") + " " + System.getProperty("os.version"));
 
-            cameraLabel_ = new String("");
-            shutterLabel_ = new String("");
-            zStageLabel_ = new String("");
-            xyStageLabel_ = new String("");
+            cameraLabel_ = "";
+            shutterLabel_ = "";
+            zStageLabel_ = "";
+            xyStageLabel_ = "";
             engine_ = new AcquisitionWrapperEngine();
 
             // register callback for MMCore notifications, this is a global
@@ -3227,8 +3232,12 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
       cleanupOnClose();
       saveSettings();
-      configPad_.saveSettings();
-      options_.saveSettings();
+      try {
+         configPad_.saveSettings();
+         options_.saveSettings();
+      } catch (NullPointerException e) {
+         this.logError(e);
+      }
       dispose();
       if (!runsAsPlugin_) {
          System.exit(0);
