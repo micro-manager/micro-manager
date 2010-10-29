@@ -277,13 +277,11 @@ public class ChannelControlPanel extends javax.swing.JPanel {
       int[] histogram = new int[256];
       int binSize_ = 1;
       int limit = Math.min(rawHistogram.length / binSize_, 256);
-      int total = 0;
       for (int i = 0; i < limit; i++) {
          histogram[i] = 0;
          for (int j = 0; j < binSize_; j++) {
             histogram[i] += rawHistogram[i * binSize_ + j];
          }
-         total += histogram[i];
       }
 
       if (false) {
