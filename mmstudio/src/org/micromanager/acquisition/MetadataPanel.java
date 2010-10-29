@@ -16,6 +16,7 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.WindowManager;
 import ij.gui.ImageWindow;
+import ij.gui.StackWindow;
 import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -558,6 +559,11 @@ public class MetadataPanel extends javax.swing.JPanel
 
    //Implements ImageListener
    public void imageUpdated(ImagePlus imp) {
+      ImageWindow win = imp.getWindow();
+      if (win instanceof StackWindow) {
+         if (((StackWindow) win).getAnimate())
+            return;
+      }
       update(imp);
    }
 
