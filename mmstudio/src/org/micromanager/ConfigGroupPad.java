@@ -24,7 +24,6 @@
 package org.micromanager;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.prefs.Preferences;
 
@@ -37,7 +36,6 @@ import javax.swing.table.TableColumn;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.MMCoreJ;
-import mmcorej.PropertyType;
 import mmcorej.StrVector;
 
 import org.micromanager.api.DeviceControlGUI;
@@ -103,11 +101,11 @@ public class ConfigGroupPad extends JScrollPane{
    }
 
    public void refreshStructure() {
-	   if (data_ != null) { 
+      if (data_ != null) {
          data_.updateStatus();
          data_.fireTableStructureChanged();
          table_.repaint();
-	   }
+      }
    }
 
    public void refreshGroup(String groupName, String configName) {
@@ -115,39 +113,39 @@ public class ConfigGroupPad extends JScrollPane{
          data_.refreshGroup(groupName, configName);
          data_.fireTableStructureChanged();
          table_.repaint();
-	   }
+      }
    }
 
    public String getGroup() {
-	   int idx = table_.getSelectedRow();
-	   if (idx<0 || data_.getRowCount()<=0) {
-		   return "";
-	   } else {
-		   return (String) data_.getValueAt(idx, 0);   
-	   }
+      int idx = table_.getSelectedRow();
+      if (idx<0 || data_.getRowCount()<=0) {
+         return "";
+      } else {
+         return (String) data_.getValueAt(idx, 0);
+      }
    }
 
    public void setGroup(String groupName) {
-	   for (int i=0;i<data_.getRowCount();i++) {
-		   if(data_.getValueAt(i,0).toString().contentEquals(groupName)) {
-			   table_.setRowSelectionInterval(i,i);
-		   }
-	   }
+      for (int i=0;i<data_.getRowCount();i++) {
+         if(data_.getValueAt(i,0).toString().contentEquals(groupName)) {
+            table_.setRowSelectionInterval(i,i);
+         }
+      }
    }
    
    public String getPreset() {
-	   int idx = table_.getSelectedRow();
-	   if (idx<0 || data_.getRowCount()<=0) {
-		   return "";
-	   } else {
-		   try {
+      int idx = table_.getSelectedRow();
+      if (idx<0 || data_.getRowCount()<=0) {
+         return "";
+      } else {
+         try {
             return data_.core_.getCurrentConfig((String) data_.getValueAt(idx, 0));
          } catch (Exception e) {
             // TODO Auto-generated catch block
             ReportingUtils.logError(e);
             return null;
-         }   
-	   }
+         }
+      }
    }
 
 
