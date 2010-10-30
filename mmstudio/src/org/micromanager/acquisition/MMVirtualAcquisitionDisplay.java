@@ -117,13 +117,20 @@ public class MMVirtualAcquisitionDisplay {
        }
       createImagePlus();
 
-      readChannelSettingsFromCache();
+      readChannelSettingsFromCache(true);
    }
 
    private int getPositionIndex(TaggedImage taggedImg) throws Exception {
       int pos;
       pos = MDUtils.getPositionIndex(taggedImg.tags);
       return pos;
+   }
+
+   private void updateAndDraw() {
+      if (numChannels_ > 1) {
+         ((CompositeImage) hyperImage_).setChannelsUpdated();
+      }
+      hyperImage_.updateAndDraw();
    }
 
    private void updateWindow() {
@@ -166,9 +173,7 @@ public class MMVirtualAcquisitionDisplay {
          }
          updateWindow();
          JSONObject md = taggedImg.tags;
-         if (numChannels_ > 1) {
-            ((CompositeImage) hyperImage_).setChannelsUpdated();
-         }
+
          try {
             pSelector.setValue(1 + pos);
             hyperImage_.setPosition(1 + MDUtils.getChannelIndex(md), 1 + MDUtils.getSliceIndex(md), 1 + MDUtils.getFrameIndex(md));
@@ -183,7 +188,7 @@ public class MMVirtualAcquisitionDisplay {
                   for (int i = 1; i <= numGrayChannels_; ++i) {
                      (hyperImage_).setPosition(i, MDUtils.getFrameIndex(taggedImg.tags), MDUtils.getFrameIndex(taggedImg.tags));
                      hyperImage_.setDisplayRange(pixelMin, pixelMax);
-                     hyperImage_.updateAndDraw();
+                     updateAndDraw();
                   }
                } else {
                   double min = hyperImage_.getDisplayRangeMin();
@@ -199,14 +204,15 @@ public class MMVirtualAcquisitionDisplay {
                      channelSettings_[chan] = new ChannelDisplaySettings();
                   }
 
-                  readChannelSettingsFromCache();
+                  readChannelSettingsFromCache(false);
                   setChannelColor(chan, channelSettings_[chan].color.getRGB());
                   min = Math.min(min, pixelMin);
                   max = Math.max(max, pixelMax);
                   channelSettings_[chan].min = (int) min;
                   channelSettings_[chan].max = (int) max;
+
                   hyperImage_.setDisplayRange(min, max);
-                  hyperImage_.updateAndDraw();
+                  updateAndDraw();
                   writeChannelSettingsToCache(chan);
                }
             } catch (Exception ex) {
@@ -226,10 +232,7 @@ public class MMVirtualAcquisitionDisplay {
          hyperImage_.setStack(virtualStacks_.get(p - 1));
          hyperImage_.setDisplayRange(min, max);
          virtualStacks_.get(p - 1).setImagePlus(hyperImage_);
-         if (numChannels_ > 1) {
-            ((CompositeImage) hyperImage_).setChannelsUpdated();
-         }
-         hyperImage_.updateAndDraw();
+         updateAndDraw();
          curPosition_ = p;
       }
    }
@@ -380,10 +383,7 @@ public class MMVirtualAcquisitionDisplay {
       win.pack();
 
       if (!newData_) {
-         if (hyperImage_.isComposite()) {
-            ((CompositeImage) hyperImage_).setChannelsUpdated();
-         }
-         hyperImage_.updateAndDraw();
+         updateAndDraw();
       }
       updateWindow();
    }
@@ -453,7 +453,7 @@ public class MMVirtualAcquisitionDisplay {
          } else {
             hyperImage_.getProcessor().setColorModel(lut);
          }
-         hyperImage_.updateAndDraw();
+         updateAndDraw();
          channelSettings_[channel].color = color;
          channelSettings_[channel].gamma = gamma;
    }
@@ -462,8 +462,7 @@ public class MMVirtualAcquisitionDisplay {
       setChannelWithoutUpdate(channel + 1);
       hyperImage_.updateImage();
       hyperImage_.setDisplayRange(min, max);
-      hyperImage_.updateImage();
-      hyperImage_.draw();
+      updateAndDraw();
       channelSettings_[channel].min = min;
       channelSettings_[channel].max = max;
 
@@ -583,7 +582,7 @@ public class MMVirtualAcquisitionDisplay {
       }
       CompositeImage ci = (CompositeImage) hyperImage_;
       ci.getActiveChannels()[channelIndex] = visible;
-      ci.updateAllChannelsAndDraw();
+      updateAndDraw();
    }
 
    public int[] getChannelHistogram(int channelIndex) {
@@ -616,7 +615,7 @@ public class MMVirtualAcquisitionDisplay {
       return channelSettings_[channelIndex].color;
    }
 
-   private void readChannelSettingsFromCache() {
+   private void readChannelSettingsFromCache(boolean updateDisplay) {
       try {
          JSONArray channelsArray = imageCache_.getDisplaySettings().getJSONArray("Channels");
          for (int i = 0; i < channelSettings_.length; ++i) {
@@ -626,7 +625,8 @@ public class MMVirtualAcquisitionDisplay {
                channelSettings_[i].min = channel.getInt("Min");
                channelSettings_[i].max = channel.getInt("Max");
                channelSettings_[i].gamma = channel.getDouble("Gamma");
-               setChannelDisplaySettings(i, channelSettings_[i]);
+               if (updateDisplay)
+                  setChannelDisplaySettings(i, channelSettings_[i]);
             } catch (JSONException ex) {
                //ReportingUtils.logError(ex);
             }

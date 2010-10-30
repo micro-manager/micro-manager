@@ -10,6 +10,7 @@
  */
 package org.micromanager.acquisition;
 
+import ij.ImagePlus;
 import java.awt.Color;
 import javax.swing.JColorChooser;
 import org.micromanager.graph.GraphData;
@@ -28,6 +29,7 @@ public class ChannelControlPanel extends javax.swing.JPanel {
    private final int channelIndex_;
    private final MMVirtualAcquisitionDisplay acq_;
    private final HistogramPanel hp_;
+   private int binSize_;
    
 
    /** Creates new form ChannelControlsPanel */
@@ -191,16 +193,17 @@ public class ChannelControlPanel extends javax.swing.JPanel {
       hp.setMargins(8, 8);
       hp.setTextVisible(false);
       hp.setGridVisible(false);
-      hp.setCursors(0,255,1.0);
+      //hp.setCursors(0,255,1.0);
       histogramPanelHolder.add(hp);
-
+      updateBinSize();
+      
       hp.addCursorListener(new CursorListener() {
 
 
          public void onLeftCursor(double pos) {
             int max = acq_.getChannelMax(channelIndex_);
 
-            int min = (int) pos;
+            int min = (int) pos * binSize_;
             if (min > max) {
                max = min;
             }
@@ -210,7 +213,7 @@ public class ChannelControlPanel extends javax.swing.JPanel {
          public void onRightCursor(double pos) {
             int min = acq_.getChannelMin(channelIndex_);
 
-            int max = (int) pos;
+            int max = (int) pos * binSize_;
             if (max < min) {
                min = max;
             }
@@ -253,6 +256,22 @@ public class ChannelControlPanel extends javax.swing.JPanel {
       }
    }
 
+   private int getMaxValue() {
+         int type = acq_.getImagePlus().getType();
+         int maxValue = 0;
+         if (type == ImagePlus.GRAY8)
+            maxValue = 1 << 8;
+         if (type == ImagePlus.GRAY16)
+            maxValue = 1 << 16;
+         return maxValue;
+   }
+
+   private void updateBinSize() {
+      if (binSize_ == 0) {
+         binSize_ = getMaxValue() / 256;
+      }
+   }
+
    public void setDisplayRange(int min, int max) {
       acq_.setChannelDisplayRange(channelIndex_,
               min, max);
@@ -261,8 +280,8 @@ public class ChannelControlPanel extends javax.swing.JPanel {
 
    public final void drawDisplaySettings() {
       ChannelDisplaySettings settings = getSettings();
-      hp_.setCursors(settings.min,
-              settings.max,
+      hp_.setCursors(settings.min/binSize_,
+              settings.max/binSize_,
               settings.gamma);
       hp_.repaint();
    }
@@ -272,21 +291,16 @@ public class ChannelControlPanel extends javax.swing.JPanel {
       GraphData graphData = new GraphData();
       if (rawHistogram == null) {
          return graphData;
-      } // 256 bins
+      }
 
-      int[] histogram = new int[256];
-      int binSize_ = 1;
+      updateBinSize();
+
+      int[] histogram = new int[256]; // 256 bins
       int limit = Math.min(rawHistogram.length / binSize_, 256);
       for (int i = 0; i < limit; i++) {
          histogram[i] = 0;
          for (int j = 0; j < binSize_; j++) {
             histogram[i] += rawHistogram[i * binSize_ + j];
-         }
-      }
-
-      if (false) {
-         for (int i = 0; i < histogram.length; i++) {
-            histogram[i] = histogram[i] > 0 ? (int) (1000 * Math.log(histogram[i])) : 0;
          }
       }
 
@@ -296,7 +310,8 @@ public class ChannelControlPanel extends javax.swing.JPanel {
 
 
    private void setFullRange() {
-      setDisplayRange(0, 255);
+      int maxValue = getMaxValue();
+      setDisplayRange(0, maxValue);
    }
 
    private void setAutoRange() {
