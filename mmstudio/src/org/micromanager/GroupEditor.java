@@ -171,7 +171,8 @@ public class GroupEditor extends ConfigDialog {
                            }                        	
                         	
                             for (String allowedValue:item.allowed) {
-                                core_.defineConfig(newName, allowedValue, item.device, item.name, allowedValue);
+                               if (!allowedValue.equals(""))
+                                   core_.defineConfig(newName, allowedValue, item.device, item.name, allowedValue);
                             }
                         } else {
                             core_.defineConfig(newName,"NewPreset", item.device, item.name, item.getValueInCoreFormat());
