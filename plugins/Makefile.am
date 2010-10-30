@@ -43,7 +43,14 @@ StageControl.jar:  \
 	cp -r $(srcdir)/StageControl/src/org/micromanager/stagecontrol/icons build/org/micromanager/stagecontrol/
 	cd build && jar cf ../StageControl.jar * 
 
-all: MMTracker_.jar PixelCalibrator.jar RecallPlugin.jar StageControl.jar 
+MultiCamera.jar:  \
+	$(srcdir)/MultiCamera/src/org/micromanager/multicamera/*.java
+	test -d build || mkdir build
+	rm -rf build/*
+	$(JAVAC) -source 1.5 -target 1.5 -sourcepath $(srcdir):. -classpath $(srcdir)/MultiCamera.jar:$(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):../bin/MMCoreJ.jar:../mmstudio/MMJ_.jar:. $(srcdir)/MultiCamera/src/org/micromanager/multicamera/*.java -d build
+	cd build && jar cf ../MultiCamera.jar * 
+
+all: MMTracker_.jar PixelCalibrator.jar RecallPlugin.jar StageControl.jar MultiCamera.jar
 ##SlideExplorer.jar
 
 install: 
