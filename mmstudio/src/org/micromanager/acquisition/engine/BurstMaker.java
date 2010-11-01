@@ -52,6 +52,10 @@ public class BurstMaker extends DataProcessor<ImageRequest> {
       requestBank_.clear();
    }
 
+   private boolean onlyCamerasDifferent(ImageRequest requestA, ImageRequest requestB) {
+      return requestA.Channel.name_.contentEquals(requestB.Channel.name_);
+   }
+
    private boolean burstValid(ImageRequest aRequest, ImageRequest nextRequest) {
       return
               ((aRequest.exposure == nextRequest.exposure)
