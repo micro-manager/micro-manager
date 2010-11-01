@@ -213,7 +213,6 @@ public class MMVirtualAcquisitionDisplay {
 
                   hyperImage_.setDisplayRange(min, max);
                   writeChannelSettingsToCache(chan);
-                  //updateAndDraw();
                }
             } catch (Exception ex) {
                ReportingUtils.showError(ex);
