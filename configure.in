@@ -109,8 +109,27 @@ if test "$IMAGEJDIR" != "no" ; then
    if test "$SWINGLAYOUTJARPATH" = "" ; then
       AC_MSG_ERROR([swing-layout-1.0.4.jar not found.  It should be in the classext directory.])
    fi
+   
+   #----------------------------------------------------------------
+   # Find AbsoluteLayout.jar 
+   #----------------------------------------------------------------
+   AC_MSG_CHECKING(for AbsoluteLayout jar file)
+   if test -r "$CLASSEXT/AbsoluteLayout.jar" ; then
+      ABSOLUTEJARPATH="$CLASSEXT/AbsoluteLayout.jar"
+      AC_MSG_RESULT($ABSOLUTEJARPATH)
+   fi
+   if test -r "/usr/share/java/AbsoluteLayout.jar" ; then
+      ABSOLUTEJARPATH="/usr/share/java/AbsoluteLayout.jar"
+      AC_MSG_RESULT($ABOSLUTEJARPATH)
+   fi
+   if test -r $CLASSEXT"/AbsoluteLayout.jar" ; then
+      ABSOLUTEJARPATH=$CLASSEXT"/AbsoluteLayout.jar"
+      AC_MSG_RESULT($ABSOLUTEJARPATH)
+   fi
+   if test "$ABSOLUTEJARPATH" = "" ; then
+      AC_MSG_ERROR([AbsoluteLayout.jar not found.  It should be in the classext directory.])
+   fi
 fi
-
 
 
 AC_SUBST(CLASSEXT)
@@ -118,6 +137,7 @@ AC_SUBST(BSHJARPATH)
 AC_SUBST(SWINGXJARPATH)
 AC_SUBST(COMMONSMATHJARPATH)
 AC_SUBST(SWINGLAYOUTJARPATH)
+AC_SUBST(ABSOLUTEJARPATH)
 AC_SUBST(IJJARPATH)
 
 AC_MSG_CHECKING([whether to build the core])
