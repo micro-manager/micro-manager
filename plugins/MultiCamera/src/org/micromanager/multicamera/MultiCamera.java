@@ -17,6 +17,7 @@ public class MultiCamera implements MMPlugin {
       if (myFrame_ == null) {
          try {
             myFrame_ = new MultiCameraFrame(gui_);
+            gui_.addMMBackgroundListener(myFrame_);
          } catch (Exception e) {
             return;
          }
@@ -25,7 +26,7 @@ public class MultiCamera implements MMPlugin {
    }
 
    public void dispose() {
-      // nothing todo:
+      myFrame_.safePrefs();
    }
 
    public void show() {
