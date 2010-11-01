@@ -29,7 +29,7 @@ public class ChannelControlPanel extends javax.swing.JPanel {
    private final int channelIndex_;
    private final MMVirtualAcquisitionDisplay acq_;
    private final HistogramPanel hp_;
-   private int binSize_;
+   private double binSize_;
    
 
    /** Creates new form ChannelControlsPanel */
@@ -56,6 +56,8 @@ public class ChannelControlPanel extends javax.swing.JPanel {
       colorPickerLabel = new javax.swing.JLabel();
       channelNameCheckbox = new javax.swing.JCheckBox();
       histogramPanelHolder = new javax.swing.JPanel();
+      zoomInButton = new javax.swing.JButton();
+      zoomOutButton = new javax.swing.JButton();
 
       setOpaque(false);
       setPreferredSize(new java.awt.Dimension(250, 100));
@@ -105,6 +107,20 @@ public class ChannelControlPanel extends javax.swing.JPanel {
       histogramPanelHolder.setPreferredSize(new java.awt.Dimension(0, 100));
       histogramPanelHolder.setLayout(new java.awt.GridLayout(1, 1));
 
+      zoomInButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/plus.png"))); // NOI18N
+      zoomInButton.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            zoomInButtonActionPerformed(evt);
+         }
+      });
+
+      zoomOutButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/minus.png"))); // NOI18N
+      zoomOutButton.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            zoomOutButtonActionPerformed(evt);
+         }
+      });
+
       org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
       this.setLayout(layout);
       layout.setHorizontalGroup(
@@ -113,15 +129,19 @@ public class ChannelControlPanel extends javax.swing.JPanel {
             .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
                .add(layout.createSequentialGroup()
                   .add(channelNameCheckbox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 110, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                  .add(0, 0, 0))
+                  .add(4, 4, 4))
                .add(layout.createSequentialGroup()
                   .add(colorPickerLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                   .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                  .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                     .add(autoButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 40, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                     .add(fullButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 40, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                  .add(9, 9, 9)))
-            .add(histogramPanelHolder, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 140, Short.MAX_VALUE))
+                  .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+                     .add(fullButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 40, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                     .add(layout.createSequentialGroup()
+                        .add(zoomInButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 21, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                        .add(zoomOutButton, 0, 0, Short.MAX_VALUE))
+                     .add(autoButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 40, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                  .add(18, 18, 18)))
+            .add(histogramPanelHolder, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 136, Short.MAX_VALUE))
       );
       layout.setVerticalGroup(
          layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -135,7 +155,10 @@ public class ChannelControlPanel extends javax.swing.JPanel {
                   .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                   .add(autoButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                .add(colorPickerLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-            .add(43, 43, 43))
+            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+               .add(zoomInButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 15, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+               .add(zoomOutButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 15, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
          .add(histogramPanelHolder, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 100, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
       );
    }// </editor-fold>//GEN-END:initComponents
@@ -156,12 +179,24 @@ public class ChannelControlPanel extends javax.swing.JPanel {
        setAutoRange();
     }//GEN-LAST:event_autoButtonActionPerformed
 
+    private void zoomInButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zoomInButtonActionPerformed
+       binSize_ = Math.max(binSize_ / 2, 1./8);
+       updateChannelSettings();
+    }//GEN-LAST:event_zoomInButtonActionPerformed
+
+    private void zoomOutButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_zoomOutButtonActionPerformed
+       binSize_ = Math.min(binSize_ * 2, 256);
+       updateChannelSettings();
+    }//GEN-LAST:event_zoomOutButtonActionPerformed
+
    // Variables declaration - do not modify//GEN-BEGIN:variables
    private javax.swing.JButton autoButton;
    private javax.swing.JCheckBox channelNameCheckbox;
    private javax.swing.JLabel colorPickerLabel;
    private javax.swing.JButton fullButton;
    private javax.swing.JPanel histogramPanelHolder;
+   private javax.swing.JButton zoomInButton;
+   private javax.swing.JButton zoomOutButton;
    // End of variables declaration//GEN-END:variables
 
    private void editColor() {
@@ -203,7 +238,7 @@ public class ChannelControlPanel extends javax.swing.JPanel {
          public void onLeftCursor(double pos) {
             int max = acq_.getChannelMax(channelIndex_);
 
-            int min = (int) pos * binSize_;
+            int min = (int) (pos * binSize_);
             if (min > max) {
                max = min;
             }
@@ -213,7 +248,7 @@ public class ChannelControlPanel extends javax.swing.JPanel {
          public void onRightCursor(double pos) {
             int min = acq_.getChannelMin(channelIndex_);
 
-            int max = (int) pos * binSize_;
+            int max = (int) (pos * binSize_);
             if (max < min) {
                min = max;
             }
@@ -296,11 +331,11 @@ public class ChannelControlPanel extends javax.swing.JPanel {
       updateBinSize();
 
       int[] histogram = new int[256]; // 256 bins
-      int limit = Math.min(rawHistogram.length / binSize_, 256);
+      int limit = Math.min((int) (rawHistogram.length / binSize_), 256);
       for (int i = 0; i < limit; i++) {
          histogram[i] = 0;
          for (int j = 0; j < binSize_; j++) {
-            histogram[i] += rawHistogram[i * binSize_ + j];
+            histogram[i] += rawHistogram[(int) (i * binSize_) + j];
          }
       }
 

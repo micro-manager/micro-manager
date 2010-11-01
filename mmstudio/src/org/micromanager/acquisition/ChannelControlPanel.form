@@ -24,39 +24,48 @@
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" attributes="0">
               <Group type="103" groupAlignment="1" attributes="0">
-                  <Group type="102" alignment="1" attributes="0">
+                  <Group type="102" attributes="0">
                       <Component id="channelNameCheckbox" min="-2" pref="110" max="-2" attributes="0"/>
-                      <EmptySpace min="-2" pref="0" max="-2" attributes="0"/>
+                      <EmptySpace min="4" pref="4" max="-2" attributes="0"/>
                   </Group>
                   <Group type="102" alignment="1" attributes="0">
                       <Component id="colorPickerLabel" min="-2" pref="18" max="-2" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="autoButton" alignment="0" min="-2" pref="40" max="-2" attributes="1"/>
+                      <EmptySpace min="-2" max="-2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" max="-2" attributes="0">
                           <Component id="fullButton" alignment="0" min="-2" pref="40" max="-2" attributes="1"/>
+                          <Group type="102" alignment="0" attributes="1">
+                              <Component id="zoomInButton" min="-2" pref="21" max="-2" attributes="0"/>
+                              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+                              <Component id="zoomOutButton" min="0" pref="0" max="32767" attributes="0"/>
+                          </Group>
+                          <Component id="autoButton" alignment="0" min="-2" pref="40" max="-2" attributes="1"/>
                       </Group>
-                      <EmptySpace min="-2" pref="9" max="-2" attributes="0"/>
+                      <EmptySpace type="separate" min="-2" max="-2" attributes="0"/>
                   </Group>
               </Group>
-              <Component id="histogramPanelHolder" pref="140" max="32767" attributes="0"/>
+              <Component id="histogramPanelHolder" pref="136" max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Group type="102" alignment="0" attributes="0">
+          <Group type="102" alignment="0" attributes="1">
               <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
               <Component id="channelNameCheckbox" min="-2" pref="17" max="-2" attributes="0"/>
-              <EmptySpace max="-2" attributes="0"/>
+              <EmptySpace min="-2" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="102" attributes="0">
+                  <Group type="102" alignment="0" attributes="0">
                       <Component id="fullButton" min="-2" pref="18" max="-2" attributes="0"/>
-                      <EmptySpace max="-2" attributes="0"/>
+                      <EmptySpace min="-2" max="-2" attributes="0"/>
                       <Component id="autoButton" min="-2" pref="18" max="-2" attributes="0"/>
                   </Group>
                   <Component id="colorPickerLabel" alignment="0" min="-2" pref="18" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace min="-2" pref="43" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <Component id="zoomInButton" min="-2" pref="15" max="-2" attributes="0"/>
+                  <Component id="zoomOutButton" min="-2" pref="15" max="-2" attributes="0"/>
+              </Group>
           </Group>
           <Component id="histogramPanelHolder" alignment="0" min="-2" pref="100" max="-2" attributes="3"/>
       </Group>
@@ -147,5 +156,25 @@
         <Property name="rows" type="int" value="1"/>
       </Layout>
     </Container>
+    <Component class="javax.swing.JButton" name="zoomInButton">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/org/micromanager/icons/plus.png"/>
+        </Property>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="zoomInButtonActionPerformed"/>
+      </Events>
+    </Component>
+    <Component class="javax.swing.JButton" name="zoomOutButton">
+      <Properties>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/org/micromanager/icons/minus.png"/>
+        </Property>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="zoomOutButtonActionPerformed"/>
+      </Events>
+    </Component>
   </SubComponents>
 </Form>
