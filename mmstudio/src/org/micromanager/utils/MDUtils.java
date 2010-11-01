@@ -41,6 +41,10 @@ public class MDUtils {
       return map.getInt("Height");
    }
 
+   public static int getBinning(JSONObject map) throws Exception {
+      return map.getInt("Camera-Binning");
+   }
+
    public static void setWidth(JSONObject map, int width) throws Exception {
       map.put("Width", width);
    }
@@ -203,6 +207,7 @@ public class MDUtils {
    public static boolean isRGB(TaggedImage img) throws Exception {
       return isRGB(img.tags);
    }
+
 
    public static void addConfiguration(JSONObject md, Configuration config) throws Exception {
       PropertySetting setting;

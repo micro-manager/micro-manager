@@ -57,22 +57,34 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
    }
 
    public Object getPixels(int flatIndex) {
+      Object pixels = null;
       try {
          TaggedImage image = getTaggedImage(flatIndex);
          if (image == null)
-            return ImageUtils.makeProcessor(type_, width_, height_).getPixels();
+            pixels = ImageUtils.makeProcessor(type_, width_, height_).getPixels();
          if (MDUtils.isGRAY(image)) {
-            return image.pix;
+            pixels = image.pix;
          } else if (MDUtils.isRGB32(image)) {
-            return ImageUtils.singleChannelFromRGB32((byte []) image.pix, (flatIndex-1) % 3);
+            pixels = ImageUtils.singleChannelFromRGB32((byte []) image.pix, (flatIndex-1) % 3);
          } else if (MDUtils.isRGB64(image)) {
-            return ImageUtils.singleChannelFromRGB64((short []) image.pix, (flatIndex-1) % 3);
+            pixels = ImageUtils.singleChannelFromRGB64((short []) image.pix, (flatIndex-1) % 3);
          }
+
+         if (image != null) {
+            int binning = MDUtils.getBinning(image.tags);
+            if (binning > 1) {
+               ImageProcessor proc = ImageUtils.makeProcessor(type_,
+                       width_/binning, height_/binning, image.pix);
+               pixels = proc.resize(width_, height_).getPixels();
+            }
+         }
+
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
-         return null;
       }
-      return null;
+
+
+      return pixels;
    }
 
    public ImageProcessor getProcessor(int flatIndex) {
