@@ -8,7 +8,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import org.micromanager.api.Autofocus;
 import org.micromanager.api.EngineTask;
-import java.util.HashMap;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.TaggedImage;
@@ -273,13 +272,6 @@ public class ImageTask implements EngineTask {
             }
             pixels = core_.getImage();
          } else {
-            if (imageRequest_.startBurstN > 0) {
-               if (eng_.autoShutterSelected_)
-                  core_.setAutoShutter(true);
-               core_.startSequenceAcquisition(imageRequest_.startBurstN,
-                       0, false);
-               log("started a burst with " + imageRequest_.startBurstN + " images.");
-            }
             while (core_.getRemainingImageCount() == 0)
                JavaUtils.sleep(5);
             pixels = core_.popNextImage();

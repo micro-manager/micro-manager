@@ -116,6 +116,11 @@ public class Engine {
             if ((request.stop == true) || stopHasBeenRequested()) {
                break;
             } else {
+               if (request.startBurstN > 0) {
+                  task = new BurstTask(Engine.this, request);
+                  setCurrentTask(task);
+                  task.run();
+               }
                task = new ImageTask(Engine.this, request);
                setCurrentTask(task);
                task.run();
