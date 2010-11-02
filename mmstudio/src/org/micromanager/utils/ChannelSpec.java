@@ -41,7 +41,7 @@ public class ChannelSpec {
    public int skipFactorFrame_ = 0;
    public double min_ = 65535;
    public double max_ = 0;
-   public boolean useChannel_;
+   public boolean useChannel_ = true;
    
    public ChannelSpec(){
       contrast8_ = new ContrastSettings(0, 255);
