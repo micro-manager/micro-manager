@@ -203,14 +203,12 @@ public class MultiCameraFrame extends javax.swing.JFrame {
       setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
       setTitle("Multi-Camera Control");
       setResizable(false);
-      getContentPane().setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
 
       jLabel1.setFont(new java.awt.Font("Lucida Grande", 1, 12));
       jLabel1.setText("ROI");
       jLabel1.setMaximumSize(null);
       jLabel1.setMinimumSize(null);
       jLabel1.setPreferredSize(null);
-      getContentPane().add(jLabel1, new org.netbeans.lib.awtextra.AbsoluteConstraints(230, 20, -1, 10));
 
       jButton2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/shape_handles.png"))); // NOI18N
       jButton2.setToolTipText("Set Region of Interest");
@@ -222,7 +220,6 @@ public class MultiCameraFrame extends javax.swing.JFrame {
             jButton2ActionPerformed(evt);
          }
       });
-      getContentPane().add(jButton2, new org.netbeans.lib.awtextra.AbsoluteConstraints(230, 40, -1, 20));
 
       jButton3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/arrow_out.png"))); // NOI18N
       jButton3.setToolTipText("Set Region of Interest");
@@ -234,26 +231,22 @@ public class MultiCameraFrame extends javax.swing.JFrame {
             jButton3ActionPerformed(evt);
          }
       });
-      getContentPane().add(jButton3, new org.netbeans.lib.awtextra.AbsoluteConstraints(270, 40, -1, 20));
 
       jLabel2.setFont(new java.awt.Font("Lucida Grande", 0, 12));
       jLabel2.setText("Exposure [ms]");
-      getContentPane().add(jLabel2, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 20, -1, -1));
 
       jLabel3.setFont(new java.awt.Font("Lucida Grande", 0, 12));
       jLabel3.setText("Binning");
-      getContentPane().add(jLabel3, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 50, -1, -1));
 
-      BinningComboBox.setFont(new java.awt.Font("Lucida Grande", 0, 12)); // NOI18N
+      BinningComboBox.setFont(new java.awt.Font("Lucida Grande", 0, 12));
       BinningComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "1", "2", "4", "8" }));
       BinningComboBox.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             BinningComboBoxActionPerformed(evt);
          }
       });
-      getContentPane().add(BinningComboBox, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 40, 80, 23));
 
-      ExposureTextField.setFont(new java.awt.Font("Lucida Grande", 0, 12)); // NOI18N
+      ExposureTextField.setFont(new java.awt.Font("Lucida Grande", 0, 12));
       ExposureTextField.setText("10");
       ExposureTextField.setToolTipText("Exposure time in ms");
       ExposureTextField.addActionListener(new java.awt.event.ActionListener() {
@@ -261,75 +254,158 @@ public class MultiCameraFrame extends javax.swing.JFrame {
             ExposureTextFieldActionPerformed(evt);
          }
       });
-      getContentPane().add(ExposureTextField, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 10, 70, -1));
 
       EMGainSlider.addChangeListener(new javax.swing.event.ChangeListener() {
          public void stateChanged(javax.swing.event.ChangeEvent evt) {
             EMGainSliderStateChanged(evt);
          }
       });
-      getContentPane().add(EMGainSlider, new org.netbeans.lib.awtextra.AbsoluteConstraints(150, 100, 180, -1));
 
-      EMGainTextField.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+      EMGainTextField.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       EMGainTextField.setText("4");
       EMGainTextField.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             EMGainTextFieldActionPerformed(evt);
          }
       });
-      getContentPane().add(EMGainTextField, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 100, 49, -1));
 
-      ModeComboBox.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+      ModeComboBox.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       ModeComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "EM", "Conventional" }));
       ModeComboBox.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             ModeComboBoxActionPerformed(evt);
          }
       });
-      getContentPane().add(ModeComboBox, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 70, 105, -1));
 
-      jLabel4.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+      jLabel4.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       jLabel4.setText("EM Gain");
-      getContentPane().add(jLabel4, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 120, -1, -1));
 
-      jLabel5.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+      jLabel5.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       jLabel5.setText("Mode");
-      getContentPane().add(jLabel5, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 80, -1, -1));
 
-      jLabel6.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+      jLabel6.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       jLabel6.setText("Gain");
-      getContentPane().add(jLabel6, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 160, -1, -1));
 
-      SpeedComboBox.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+      SpeedComboBox.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       SpeedComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "1MHz", "3MHz", "5MHz", "10MHz" }));
       SpeedComboBox.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             SpeedComboBoxActionPerformed(evt);
          }
       });
-      getContentPane().add(SpeedComboBox, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 180, 105, -1));
 
-      jLabel7.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+      jLabel7.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       jLabel7.setText("Speed");
-      getContentPane().add(jLabel7, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 190, -1, -1));
 
-      jCheckBox2.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+      jCheckBox2.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       jCheckBox2.setText("Use");
       jCheckBox2.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             jCheckBox2ActionPerformed(evt);
          }
       });
-      getContentPane().add(jCheckBox2, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 120, -1, -1));
 
-      GainComboBox.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+      GainComboBox.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       GainComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "1", "2", "3", "4", "5" }));
       GainComboBox.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             GainComboBoxActionPerformed(evt);
          }
       });
-      getContentPane().add(GainComboBox, new org.netbeans.lib.awtextra.AbsoluteConstraints(100, 150, 105, -1));
+
+      org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
+      getContentPane().setLayout(layout);
+      layout.setHorizontalGroup(
+         layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+         .add(layout.createSequentialGroup()
+            .add(10, 10, 10)
+            .add(jLabel2)
+            .add(7, 7, 7)
+            .add(ExposureTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 70, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+            .add(60, 60, 60)
+            .add(jLabel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+         .add(layout.createSequentialGroup()
+            .add(10, 10, 10)
+            .add(jLabel3)
+            .add(49, 49, 49)
+            .add(BinningComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 80, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+            .add(50, 50, 50)
+            .add(jButton2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+            .add(8, 8, 8)
+            .add(jButton3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+         .add(layout.createSequentialGroup()
+            .add(10, 10, 10)
+            .add(jLabel5)
+            .add(63, 63, 63)
+            .add(ModeComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 105, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+         .add(layout.createSequentialGroup()
+            .add(10, 10, 10)
+            .add(jLabel4)
+            .add(51, 51, 51)
+            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+               .add(jCheckBox2)
+               .add(EMGainTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 49, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+            .add(EMGainSlider, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 180, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+         .add(layout.createSequentialGroup()
+            .add(10, 10, 10)
+            .add(jLabel6)
+            .add(68, 68, 68)
+            .add(GainComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 105, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+         .add(layout.createSequentialGroup()
+            .add(10, 10, 10)
+            .add(jLabel7)
+            .add(61, 61, 61)
+            .add(SpeedComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 105, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+      );
+      layout.setVerticalGroup(
+         layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+         .add(layout.createSequentialGroup()
+            .add(10, 10, 10)
+            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+               .add(layout.createSequentialGroup()
+                  .add(10, 10, 10)
+                  .add(jLabel2))
+               .add(ExposureTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+               .add(layout.createSequentialGroup()
+                  .add(10, 10, 10)
+                  .add(jLabel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 10, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+            .add(3, 3, 3)
+            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+               .add(layout.createSequentialGroup()
+                  .add(10, 10, 10)
+                  .add(jLabel3))
+               .add(BinningComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 23, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+               .add(jButton2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+               .add(jButton3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+            .add(5, 5, 5)
+            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+               .add(layout.createSequentialGroup()
+                  .add(10, 10, 10)
+                  .add(jLabel5))
+               .add(ModeComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+            .add(3, 3, 3)
+            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+               .add(layout.createSequentialGroup()
+                  .add(20, 20, 20)
+                  .add(jLabel4))
+               .add(layout.createSequentialGroup()
+                  .add(20, 20, 20)
+                  .add(jCheckBox2))
+               .add(EMGainTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+               .add(EMGainSlider, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+            .add(7, 7, 7)
+            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+               .add(layout.createSequentialGroup()
+                  .add(10, 10, 10)
+                  .add(jLabel6))
+               .add(GainComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+            .add(3, 3, 3)
+            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+               .add(layout.createSequentialGroup()
+                  .add(10, 10, 10)
+                  .add(jLabel7))
+               .add(SpeedComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+      );
 
       pack();
    }// </editor-fold>//GEN-END:initComponents
