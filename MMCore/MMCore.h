@@ -148,7 +148,7 @@ public:
     */
    //@ {
    static void addSearchPath(const char *path);
-   static std::vector<std::string> getDeviceLibraries();
+   static std::vector<std::string> getDeviceLibraries() throw (CMMError);
    std::vector<std::string> getLoadedDevices() const;
    std::vector<std::string> getLoadedDevicesOfType(MM::DeviceType devType) const;
    std::vector<std::string> getDevicePropertyNames(const char* label) const throw (CMMError);
