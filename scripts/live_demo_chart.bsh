@@ -1,0 +1,52 @@
+import ij.IJ;
+import ij.ImagePlus;
+import ij.WindowManager;
+import ij.process.ImageProcessor;
+import ij.process.ImageStatistics;
+
+
+
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.chart.plot.XYPlot;
+import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartFrame;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
+import org.jfree.data.time.Millisecond;
+import org.jfree.data.time.TimeSeries;
+import org.jfree.data.time.TimeSeriesCollection;
+
+
+// create a series that automatically discard data > 30 seconds old... 
+TimeSeries intensities = new TimeSeries("Int", Millisecond.class); 
+intensities.setMaximumItemAge(30000); 
+TimeSeriesCollection dataset = new TimeSeriesCollection(); 
+dataset.addSeries(intensities); 
+JFreeChart chart = ChartFactory.createScatterPlot("Test", // Title
+                "Time (ms)", // x-axis Label
+                "Intensity", // y-axis Label
+                dataset, // Dataset
+                PlotOrientation.VERTICAL, // Plot Orientation
+                false, // Show Legend
+                true, // Use tooltips
+                false // Configure chart to generate URLs?
+            );
+ChartFrame graphFrame = new ChartFrame("Test", chart);
+graphFrame.getChartPanel().setMouseWheelEnabled(true);
+graphFrame.pack();
+graphFrame.setVisible(true);
+ImageProcessor ip;
+
+while (true) {
+	gui.snapSingleImage();
+	img = IJ.getImage();
+	ip = img.getProcessor();
+	ImageStatistics stats = ip.getStatistics(); 
+	intensities.add(new Millisecond(), stats.mean);
+	Thread.sleep(500);	
+}
+
+
+
