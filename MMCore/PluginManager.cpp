@@ -42,6 +42,7 @@
 #include <sstream>
 #include <iostream>
 #include <fstream>
+#include <algorithm>
 using namespace std;
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -447,7 +448,7 @@ vector<string> CPluginManager::GetDeviceList(MM::DeviceType type) const
  */
 void CPluginManager::GetModules(vector<string> &modules, const char* searchPath)
 {
-    int previousCount = modules.size();
+
 #ifdef WIN32
    string path = searchPath;
    path += "\\";
@@ -460,9 +461,14 @@ void CPluginManager::GetModules(vector<string> &modules, const char* searchPath)
    hFile = _findfirst(path.c_str(), &moduleFile);
    if( hFile != -1L )
    {
-      modules.push_back(moduleFile.name);
+      // remove prefix
+      string strippedName = std::string(moduleFile.name).substr(strlen(LIB_NAME_PREFIX));
+      modules.push_back(strippedName);
       while( _findnext( hFile, &moduleFile ) == 0 )
-         modules.push_back(moduleFile.name);
+      {
+         strippedName = std::string(moduleFile.name).substr(strlen(LIB_NAME_PREFIX));
+         modules.push_back(strippedName);
+      }
 
       _findclose( hFile );
    }
@@ -474,22 +480,44 @@ void CPluginManager::GetModules(vector<string> &modules, const char* searchPath)
       while ((dirp = readdir(dp)) != NULL)
       {
          if (strncmp(dirp->d_name,LIB_NAME_PREFIX,strlen(LIB_NAME_PREFIX)) == 0 ) {
-           modules.push_back(dirp->d_name);
+           // remove prefix
+           string strippedName = std::string(dirp->d_name).substr(strlen(LIB_NAME_PREFIX));
+           modules.push_back(strippedName);
          }
       }
       closedir(dp);
    }
 #endif
 
-   // strip prefixes
-   for (unsigned i=previousCount; i < modules.size(); i++)
+   std::ostringstream duplicateLibraries;
+   if( 1 < modules.size())
    {
-      // remove prefix
-      string strippedName = modules[i].substr(strlen(LIB_NAME_PREFIX));
+      std::sort(modules.begin(), modules.end());
 
-      // remove suffix
-      modules[i] = strippedName.substr(0, strippedName.find_first_of("."));
+      std::vector<std::string>::iterator mit = modules.begin();
+      ++mit;
+      for(; mit != modules.end(); ++mit)
+      {
+         if( 0 == (*mit).compare(*(mit-1)) )
+         {
+            duplicateLibraries << searchPath << "/" << LIB_NAME_PREFIX << *mit;
+            duplicateLibraries << " ";
+         }
+
+      }
    }
+
+
+   if( 0 < duplicateLibraries.str().length())
+   {
+      std::ostringstream mes;
+      mes << "Duplicate Libraries found: " << duplicateLibraries.str() << " -  please check your path";
+      CMMError toThrow( mes.str().c_str(), DEVICE_DUPLICATE_LIBRARY);
+      throw toThrow;
+   }
+
+
+
 }
 
 vector<string> CPluginManager::GetModules()
