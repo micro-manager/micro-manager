@@ -569,7 +569,7 @@ void CMMCore::addSearchPath(const char *path)
 /**
  * Returns a list of library names available in the search path.
  */
-vector<string> CMMCore::getDeviceLibraries()
+vector<string> CMMCore::getDeviceLibraries() throw (CMMError)
 {
    return CPluginManager::GetModules();
 }
