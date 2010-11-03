@@ -71,6 +71,7 @@ const char* const g_Msg_DEVICE_CAMERA_BUSY_ACQUIRING="Camera is busy acquiring i
 const char* const g_Msg_DEVICE_CAN_NOT_SET_PROPERTY="The device can not set this property at this moment";
 const char* const g_Msg_DEVICE_NOT_CONNECTED="Unable to communicate with the device.";
 const char* const g_Msg_DEVICE_COMM_HUB_MISSING="Restart Hardware Configuration from the beginning, and define the communication hub or microscope device for this equipment!";
+const char* const g_Msg_DEVICE_DUPLICATE_LIBRARY="Duplicate Device Library Name";
 /**
 * Implements functionality common to all devices.
 * Typically used as the base class for actual device adapters. In general,
@@ -691,6 +692,7 @@ protected:
       SetErrorText(DEVICE_LOCALLY_DEFINED_ERROR, "t.b.d.");
       SetErrorText(DEVICE_NOT_CONNECTED, g_Msg_DEVICE_NOT_CONNECTED);
       SetErrorText(DEVICE_COMM_HUB_MISSING, g_Msg_DEVICE_COMM_HUB_MISSING);
+      SetErrorText(DEVICE_DUPLICATE_LIBRARY, g_Msg_DEVICE_DUPLICATE_LIBRARY);
    }
 
    /**

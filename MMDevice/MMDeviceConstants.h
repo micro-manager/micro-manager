@@ -73,6 +73,8 @@
 #define DEVICE_LOCALLY_DEFINED_ERROR   34
 #define DEVICE_NOT_CONNECTED           35
 #define DEVICE_COMM_HUB_MISSING        36
+#define DEVICE_DUPLICATE_LIBRARY       37
+
 
 
 namespace MM {
