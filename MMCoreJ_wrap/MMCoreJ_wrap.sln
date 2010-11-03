@@ -39,8 +39,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ASIFW1000", "..\DeviceAdapt
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ASIStage", "..\DeviceAdapters\ASIStage\ASIStage.vcproj", "{5D1758C4-147E-4E06-9BF3-F4DDF23B5B97}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DemoStreamingCamera", "..\DeviceAdapters\DemoStreamingCamera\DemoStreamingCamera.vcproj", "{E62C86EF-C3BD-494E-B9EF-BD53BB01F839}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Yokogawa", "..\DeviceAdapters\Yokogawa\Yokogawa.vcproj", "{ED4BAD61-62D4-4407-9A40-E0DE686F5419}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ZeissCAN", "..\DeviceAdapters\ZeissCAN\ZeissCAN.vcproj", "{E2900E6C-549B-46D2-AB40-8656280F7C53}"
@@ -291,14 +289,6 @@ Global
 		{5D1758C4-147E-4E06-9BF3-F4DDF23B5B97}.Release|Win32.Build.0 = Release|Win32
 		{5D1758C4-147E-4E06-9BF3-F4DDF23B5B97}.Release|x64.ActiveCfg = Release|x64
 		{5D1758C4-147E-4E06-9BF3-F4DDF23B5B97}.Release|x64.Build.0 = Release|x64
-		{E62C86EF-C3BD-494E-B9EF-BD53BB01F839}.Debug|Win32.ActiveCfg = Debug|Win32
-		{E62C86EF-C3BD-494E-B9EF-BD53BB01F839}.Debug|Win32.Build.0 = Debug|Win32
-		{E62C86EF-C3BD-494E-B9EF-BD53BB01F839}.Debug|x64.ActiveCfg = Debug|x64
-		{E62C86EF-C3BD-494E-B9EF-BD53BB01F839}.Debug|x64.Build.0 = Debug|x64
-		{E62C86EF-C3BD-494E-B9EF-BD53BB01F839}.Release|Win32.ActiveCfg = Release|Win32
-		{E62C86EF-C3BD-494E-B9EF-BD53BB01F839}.Release|Win32.Build.0 = Release|Win32
-		{E62C86EF-C3BD-494E-B9EF-BD53BB01F839}.Release|x64.ActiveCfg = Release|x64
-		{E62C86EF-C3BD-494E-B9EF-BD53BB01F839}.Release|x64.Build.0 = Release|x64
 		{ED4BAD61-62D4-4407-9A40-E0DE686F5419}.Debug|Win32.ActiveCfg = Debug|Win32
 		{ED4BAD61-62D4-4407-9A40-E0DE686F5419}.Debug|Win32.Build.0 = Debug|Win32
 		{ED4BAD61-62D4-4407-9A40-E0DE686F5419}.Debug|x64.ActiveCfg = Debug|x64
