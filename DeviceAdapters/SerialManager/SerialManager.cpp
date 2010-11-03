@@ -650,47 +650,48 @@ int SerialPort::GetAnswer(char* answer, unsigned bufLen, const char* term)
             return ERR_BUFFER_OVERRUN;
          }
          answer[answerOffset++] = theData;
-         // look for the terminator
-         if( 0 != term)
-         {
-            // check for terminating sequence
-            char* termPos = strstr(answer, term);
-            if (termPos != 0)
-            {
-               // found the terminator!!
-               // erase the terminator from the answer;
-               for( unsigned int iterm = 1; iterm <= strlen(term); ++iterm)
-               {
-                  char *pAnswer = answer + answerOffset - iterm;
-                  if( answer <= pAnswer)
-                     pAnswer[0] =  '\0';
-               }
-               if( 2 < retryCounter )
-                  LogMessage((std::string("GetAnswer # retries = ") + 
-                     boost::lexical_cast<std::string,int>(retryCounter)).c_str(), true);
-               LogMessage(( std::string("GetAnswer <- ") + std::string(answer)).c_str(), true);
-               return DEVICE_OK;
-            }
-         }
-         else
-         {
-            // a formatted answer without a terminator.
-            LogMessage((std::string("GetAnswer without terminator returned after ") + 
-               boost::lexical_cast<std::string,long>((long)((GetCurrentMMTime() - startTime).getMsec())) +
-               std::string("msec")).c_str(), true);
-            if( 4 < retryCounter)
-            {
-               LogMessage(( std::string("GetAnswer <- ") + std::string(answer)).c_str(), true);
-               return DEVICE_OK;
-            }
-         }
       }
       else
       {
          //Yield to other threads:
          CDeviceUtils::SleepMs(1);
-         retryCounter++;
-       }
+         ++retryCounter;
+      }
+      // look for the terminator
+      if( 0 != term)
+      {
+         // check for terminating sequence
+         char* termPos = strstr(answer, term);
+         if (termPos != 0)
+         {
+            // found the terminator!!
+            // erase the terminator from the answer;
+            for( unsigned int iterm = 1; iterm <= strlen(term); ++iterm)
+            {
+               char *pAnswer = answer + answerOffset - iterm;
+               if( answer <= pAnswer)
+                  pAnswer[0] =  '\0';
+            }
+            if( 2 < retryCounter )
+               LogMessage((std::string("GetAnswer # retries = ") + 
+                  boost::lexical_cast<std::string,int>(retryCounter)).c_str(), true);
+            LogMessage(( std::string("GetAnswer <- ") + std::string(answer)).c_str(), true);
+            return DEVICE_OK;
+         }
+      }
+      else
+      {
+         // a formatted answer without a terminator.
+         LogMessage((std::string("GetAnswer without terminator returned after ") + 
+            boost::lexical_cast<std::string,long>((long)((GetCurrentMMTime() - startTime).getMsec())) +
+            std::string("msec")).c_str(), true);
+         if( 4 < retryCounter)
+         {
+            LogMessage(( std::string("GetAnswer <- ") + std::string(answer)).c_str(), true);
+            return DEVICE_OK;
+         }
+      }
+
    } // end while
    LogMessage("TERM_TIMEOUT error occured!");
    return ERR_TERM_TIMEOUT;
