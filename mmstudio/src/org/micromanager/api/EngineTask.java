@@ -5,11 +5,14 @@
 
 package org.micromanager.api;
 
+import org.micromanager.acquisition.engine.Engine;
+
 /**
  *
  * @author arthur
  */
-public interface EngineTask extends Runnable {
+public interface EngineTask {
+   public void run(Engine eng);
    public void requestStop();
    public void requestPause();
    public void requestResume();

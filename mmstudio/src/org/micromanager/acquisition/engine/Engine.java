@@ -4,11 +4,8 @@
  */
 package org.micromanager.acquisition.engine;
 
-import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.micromanager.api.EngineTask;
 import java.util.concurrent.TimeUnit;
 import mmcorej.CMMCore;
@@ -34,17 +31,17 @@ public class Engine {
    private SequenceSettings acquisitionSettings_;
    private boolean isPaused_ = false;
    private EngineTask currentTask_;
-   private BlockingQueue<ImageRequest> requestQueue_;
+   private BlockingQueue<EngineTask> taskQueue_;
    private final AutofocusManager afMgr_;
    private double originalExposure;
 
    public Engine(CMMCore core, AutofocusManager afMgr,
-           BlockingQueue<ImageRequest> requestQueue,
+           BlockingQueue<EngineTask> requestQueue,
            SequenceSettings acquisitionSettings) {
       core_ = core;
       imageReceivingQueue_ = new LinkedBlockingQueue<TaggedImage>();
       afMgr_ = afMgr;
-      requestQueue_ = requestQueue;
+      taskQueue_ = requestQueue;
       acquisitionSettings_ = acquisitionSettings;
    }
 
@@ -96,34 +93,27 @@ public class Engine {
          }
 
          stopRequested_ = false;
-         ImageRequest request = null;
          EngineTask task = null;
 
          for (;;) {
             do {
                try {
-                  request = requestQueue_.poll(30, TimeUnit.MILLISECONDS);
+                  task = taskQueue_.poll(30, TimeUnit.MILLISECONDS);
                } catch (InterruptedException ex) {
                   ReportingUtils.logError(ex);
-                  request = null;
+                  task = null;
                }
-            } while (request == null && !stopHasBeenRequested());
+            } while (task == null && !stopHasBeenRequested());
 
             while (isPaused() && !stopHasBeenRequested()) {
                JavaUtils.sleep(10);
             }
 
-            if ((request.stop == true) || stopHasBeenRequested()) {
+            if ((task instanceof StopTask) || stopHasBeenRequested()) {
                break;
             } else {
-               if (request.startBurstN > 0) {
-                  task = new BurstTask(Engine.this, request);
-                  setCurrentTask(task);
-                  task.run();
-               }
-               task = new ImageTask(Engine.this, request);
                setCurrentTask(task);
-               task.run();
+               task.run(Engine.this);
             }
          }
 

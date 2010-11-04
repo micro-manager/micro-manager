@@ -15,5 +15,5 @@ public class StopTask implements EngineTask {
    public void requestStop() {}
    public void requestPause() {}
    public void requestResume() {}
-   public void run() {}
+   public void run(Engine eng) {}
 }

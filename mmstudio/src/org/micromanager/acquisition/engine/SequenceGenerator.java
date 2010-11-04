@@ -5,6 +5,7 @@
 package org.micromanager.acquisition.engine;
 
 import java.util.concurrent.LinkedBlockingQueue;
+import org.micromanager.api.EngineTask;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -13,20 +14,20 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class SequenceGenerator extends Thread {
 
-   private LinkedBlockingQueue<ImageRequest> engineRequestSequence_;
+   private LinkedBlockingQueue<EngineTask> engineRequestSequence_;
    private double exposure_;
    private SequenceSettings sequenceSettings_;
    private ImageRequest stopRequest_ = new ImageRequest();
 
    public SequenceGenerator(SequenceSettings settings, double exposure) {
-      engineRequestSequence_ = new LinkedBlockingQueue<ImageRequest>(100);
+      engineRequestSequence_ = new LinkedBlockingQueue<EngineTask>(100);
       stopRequest_.stop = true;
       sequenceSettings_ = settings;
       exposure_ = exposure;
       stopRequest_.FrameIndex = -1;
    }
 
-   public LinkedBlockingQueue<ImageRequest> begin() {
+   public LinkedBlockingQueue<EngineTask> begin() {
       start();
       return engineRequestSequence_;
    }
@@ -142,7 +143,7 @@ public class SequenceGenerator extends Thread {
                lastImageRequest.NextWaitTime = imageRequest.WaitTime;
             }
             if (!skipLastImage) {
-               putRequest(lastImageRequest);
+               putTask(new ImageTask(lastImageRequest));
             }
          }
 
@@ -151,10 +152,10 @@ public class SequenceGenerator extends Thread {
          }
          skipLastImage = skipImage;
       }
-      putRequest(stopRequest_);
+      putTask(new StopTask());
    }
 
-   private void putRequest(ImageRequest request) {
+   private void putTask(EngineTask request) {
       try {
          engineRequestSequence_.put(request);
       } catch (InterruptedException ex) {

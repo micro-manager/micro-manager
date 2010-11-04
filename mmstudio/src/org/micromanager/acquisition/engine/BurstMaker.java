@@ -7,63 +7,69 @@ package org.micromanager.acquisition.engine;
 
 import java.util.LinkedList;
 import org.micromanager.api.DataProcessor;
+import org.micromanager.api.EngineTask;
 
 /**
  *
  * @author arthur
  */
-public class BurstMaker extends DataProcessor<ImageRequest> {
-   private ImageRequest lastRequest_ = null;
-   private LinkedList<ImageRequest> requestBank_ = new LinkedList<ImageRequest>();
+public class BurstMaker extends DataProcessor<EngineTask> {
+   private EngineTask lastTask_ = null;
+   private LinkedList<ImageTask> requestBank_ = new LinkedList<ImageTask>();
    
    @Override
    protected void process() {
-      ImageRequest thisRequest = this.poll();
-      if (lastRequest_ != null) {
-         accumulateRequest(lastRequest_);
-         if (thisRequest.stop || !burstValid(lastRequest_, thisRequest)) {
+      EngineTask thisTask = this.poll();
+      if (lastTask_ != null) {
+         if (lastTask_ instanceof ImageTask) {
+            accumulateTask((ImageTask) lastTask_);
+         }
+         if ((thisTask instanceof StopTask) || !burstValid(lastTask_, thisTask)) {
             produceRequests();
          }
       }
-      lastRequest_ = thisRequest;
+      lastTask_ = thisTask;
       
-      if (thisRequest.stop) {
-         produce(thisRequest);
-         lastRequest_ = null;
+      if (thisTask instanceof StopTask) {
+         produce(thisTask);
+         lastTask_ = null;
          requestStop();
       }
    }
 
-   private void accumulateRequest(ImageRequest request) {
-      requestBank_.add(request);
+   private void accumulateTask(ImageTask task) {
+      requestBank_.add(task);
    }
 
    private void produceRequests() {
       int n = requestBank_.size();
       if (n > 1) {
-         ImageRequest firstRequest = requestBank_.getFirst();
-         firstRequest.startBurstN = n;
+         ImageTask firstRequest = requestBank_.getFirst();
+         firstRequest.imageRequest_.startBurstN = n;
       }
-      for (ImageRequest request:requestBank_) {
+      for (ImageTask task:requestBank_) {
          if (n > 1)
-            request.collectBurst = true;
-         produce(request);
+            task.imageRequest_.collectBurst = true;
+         produce(task);
       }
       requestBank_.clear();
    }
 
-   private boolean onlyCamerasDifferent(ImageRequest requestA, ImageRequest requestB) {
-      return requestA.Channel.name_.contentEquals(requestB.Channel.name_);
-   }
+   private boolean burstValid(EngineTask aTask, EngineTask nextTask) {
+      if (aTask instanceof ImageTask && nextTask instanceof ImageTask) {
+         ImageRequest aRequest = ((ImageTask) aTask).imageRequest_;
+         ImageRequest nextRequest = ((ImageTask) nextTask).imageRequest_;
 
-   private boolean burstValid(ImageRequest aRequest, ImageRequest nextRequest) {
-      return
-              ((aRequest.exposure == nextRequest.exposure)
+      
+          if ((aRequest.exposure == nextRequest.exposure)
            && (aRequest.Position == nextRequest.Position)
            && (aRequest.SliceIndex  == nextRequest.SliceIndex)
            && (aRequest.ChannelIndex == nextRequest.ChannelIndex)
-           && (nextRequest.WaitTime <= lastRequest_.exposure)
-           && (nextRequest.AutoFocus == false));
+           && (nextRequest.WaitTime <= aRequest.exposure)
+           && (nextRequest.AutoFocus == false))
+             return true;
+      }
+      return false;
    }
 
 }

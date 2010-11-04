@@ -20,11 +20,13 @@ import mmcorej.TaggedImage;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.acquisition.engine.Engine;
 import org.micromanager.acquisition.engine.ImageRequest;
+import org.micromanager.acquisition.engine.ImageTask;
 import org.micromanager.acquisition.engine.ProcessorStack;
 import org.micromanager.acquisition.engine.SequenceGenerator;
 import org.micromanager.acquisition.engine.SequenceSettings;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.DeviceControlGUI;
+import org.micromanager.api.EngineTask;
 import org.micromanager.metadata.MMAcqDataException;
 import org.micromanager.metadata.WellAcquisitionData;
 import org.micromanager.navigation.MultiStagePosition;
@@ -90,13 +92,13 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
          // ...Sequence generator...
          SequenceGenerator generator = new SequenceGenerator(acquisitionSettings, core_.getExposure());
-         BlockingQueue<ImageRequest> generatorOutput = generator.begin();
+         BlockingQueue<EngineTask> generatorOutput = generator.begin();
 
-         // ...RequestProcessorStack...
-         ProcessorStack<ImageRequest> requestProcessorStack =
-                 new ProcessorStack<ImageRequest>(generatorOutput,
+         // ...TaskProcessorStack...
+         ProcessorStack<EngineTask> taskProcessorStack =
+                 new ProcessorStack<EngineTask>(generatorOutput,
                  imageRequestProcessors_);
-         BlockingQueue<ImageRequest> requestProcessorStackOutput = requestProcessorStack.begin();
+         BlockingQueue<EngineTask> requestProcessorStackOutput = taskProcessorStack.begin();
 
          // ...Engine...
          eng_ = new Engine(core_, gui_.getAutofocusManager(),

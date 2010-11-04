@@ -15,13 +15,11 @@ import org.micromanager.utils.ReportingUtils;
  */
 class BurstTask implements EngineTask {
    private final ImageRequest imageRequest_;
-   private final Engine eng_;
-   private final CMMCore core_;
+   private Engine eng_;
+   private CMMCore core_;
 
-   public BurstTask(Engine eng, ImageRequest request) {
+   public BurstTask(ImageRequest request) {
       imageRequest_ = request;
-      eng_ = eng;
-      core_ = eng_.core_;
    }
 
    public void requestStop() {
@@ -36,7 +34,10 @@ class BurstTask implements EngineTask {
       // Do nothing.
    }
 
-   public void run() {
+   public void run(Engine eng) {
+      eng_ = eng;
+      core_ = eng_.core_;
+
       try {
             if (imageRequest_.startBurstN > 0) {
                if (eng_.autoShutterSelected_)

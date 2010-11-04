@@ -24,9 +24,9 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class ImageTask implements EngineTask {
 
-   private final ImageRequest imageRequest_;
-   private final Engine eng_;
-   private final CMMCore core_;
+   public final ImageRequest imageRequest_;
+   private Engine eng_;
+   private CMMCore core_;
    private boolean stopRequested_;
    private boolean pauseRequested_;
    boolean setZPosition_ = false;
@@ -34,9 +34,7 @@ public class ImageTask implements EngineTask {
    private double zPosition_;
    private final SimpleDateFormat iso8601modified;
 
-   ImageTask(Engine eng, ImageRequest imageRequest) {
-      eng_ = eng;
-      core_ = eng.core_;
+   ImageTask(ImageRequest imageRequest) {
       imageRequest_ = imageRequest;
       stopRequested_ = false;
       md_ = new JSONObject();
@@ -47,7 +45,10 @@ public class ImageTask implements EngineTask {
       ReportingUtils.logMessage("ImageTask: " + msg);
    }
 
-   public void run() {
+   public void run(Engine eng) {
+      eng_ = eng;
+      core_ = eng.core_;
+
       if (!isStopRequested()) {
          updateChannel();
       }
