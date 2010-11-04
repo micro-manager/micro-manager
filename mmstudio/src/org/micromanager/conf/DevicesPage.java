@@ -36,6 +36,7 @@ import javax.swing.table.TableModel;
 
 import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  * Wizard page to add or remove devices.
@@ -201,18 +202,25 @@ public class DevicesPage extends PagePanel {
       rebuildTable();
    }
    
-   public boolean enterPage(boolean fromNextPage) {
-      model_.removeDuplicateComPorts();
-      rebuildTable();
-      if (fromNextPage) {
-         try {
-            core_.unloadAllDevices();
-         } catch (Exception e) {
-            handleError(e.getMessage());
-         }
-      }
-      return true;
-   }
+	public boolean enterPage(boolean fromNextPage) {
+		try {
+			// double check that list of device libraries is valid before continuing.
+			core_.getDeviceLibraries();
+			model_.removeDuplicateComPorts();
+			rebuildTable();
+			if (fromNextPage) {
+				try {
+					core_.unloadAllDevices();
+				} catch (Exception e) {
+					handleError(e.getMessage());
+				}
+			}
+			return true;
+		} catch (Exception e2) {
+			ReportingUtils.showError(e2);
+		}
+		return false;
+	}
 
    public boolean exitPage(boolean toNextPage) {
       if (toNextPage) {
