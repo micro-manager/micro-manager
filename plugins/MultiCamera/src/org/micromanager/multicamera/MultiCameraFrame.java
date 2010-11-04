@@ -32,6 +32,7 @@ import mmcorej.StrVector;
 
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.api.DeviceControlGUI;
+import org.micromanager.api.MMListenerInterface;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
 
@@ -40,7 +41,7 @@ import org.micromanager.utils.ReportingUtils;
  *
  * @author Nico Stuurman
  */
-public class MultiCameraFrame extends javax.swing.JFrame {
+public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerInterface {
    private final ScriptInterface gui_;
    private final DeviceControlGUI dGui_;
    private final CMMCore core_;
@@ -56,6 +57,8 @@ public class MultiCameraFrame extends javax.swing.JFrame {
    private int EMGainMax_ = 1000;
    private String[] cameras_;
    private boolean initialized_ = false;
+
+   private static final String MIXED = "";
 
    private static final String FRAMEXPOS = "FRAMEXPOS";
    private static final String FRAMEYPOS = "FRAMEYPOS";
@@ -87,9 +90,9 @@ public class MultiCameraFrame extends javax.swing.JFrame {
        mmcorej.StrVector cameras = core_.getLoadedDevicesOfType(DeviceType.CameraDevice);
        cameras_ = cameras.toArray();
 
-       if (cameras_.length <= 1) {
-          gui_.showError("This plugin needs at least two cameras");
-          throw new IllegalArgumentException("This plugin needs at least two cameras");
+       if (cameras_.length < 1) {
+          gui_.showError("This plugin needs at least one cameras");
+          throw new IllegalArgumentException("This plugin needs at least one camera");
        }
 
        String currentCamera = core_.getCameraDevice();
@@ -100,7 +103,7 @@ public class MultiCameraFrame extends javax.swing.JFrame {
              core_.setCameraDevice(camera);
              if (imageWidth_ != core_.getImageWidth() ||
                  imageHeight_ != core_.getImageHeight()) {
-                throw new IllegalArgumentException("Plugin failed to load since the attached cameras differ in image size");
+                throw new IllegalArgumentException("This plugin only works with cameras of identical size");
              }
           }
        }
@@ -119,6 +122,7 @@ public class MultiCameraFrame extends javax.swing.JFrame {
           ModeComboBox.setEnabled(false);
        } else {
           ModeComboBox.removeAllItems();
+          ModeComboBox.addItem(MIXED);
           ModeComboBox.addItem(MODECONV16);
           ModeComboBox.addItem(MODEEM14);
           ModeComboBox.addItem(MODEEM16);
@@ -548,6 +552,16 @@ public class MultiCameraFrame extends javax.swing.JFrame {
              if (adProp.equals(AD16BIT))
                 mode = MODECONV16;
           }
+          for (String camera : cameras_) {
+             if (!camera.equals(cameras_[0])) {
+                String mP = core_.getProperty(camera, MODE);
+                String aP = core_.getProperty(camera, ADCONVERTER);
+                if (!mP.equals(modeProp))
+                   mode = MIXED;
+                if (!aP.equals(adProp))
+                   mode = MIXED;
+             }
+          }
        } catch (Exception ex) {
           ReportingUtils.showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
        }
@@ -558,8 +572,12 @@ public class MultiCameraFrame extends javax.swing.JFrame {
        // Combo box selecting readout mode (EM/standard)
        if (!initialized(false, false))
           return;
-       boolean liveRunning = dGui_.getLiveMode();
+
        Object item = ModeComboBox.getSelectedItem();
+       if (item.equals(MIXED))
+          return;
+
+       boolean liveRunning = dGui_.getLiveMode();
        String mode = item.toString();
        try {
           dGui_.enableLiveMode(false);
@@ -669,7 +687,12 @@ public class MultiCameraFrame extends javax.swing.JFrame {
        if (comboBox != null) {
           try {
              StrVector vals = core_.getAllowedPropertyValues(cameras_[0], property);
-             String[] newVals =vals.toArray();
+
+             String[] newVals = new String[(int)vals.size() + 1];
+             newVals[0] = MIXED;
+             for (int i=0; i < vals.size(); i++) {
+                newVals[i+1] = vals.get(i);
+             }
              comboBox.setModel(new DefaultComboBoxModel(newVals));
 
           } catch (Exception ex) {
@@ -684,6 +707,14 @@ public class MultiCameraFrame extends javax.swing.JFrame {
           return;
        try {
           String val = core_.getProperty(cameras_[0], property);
+          for (String camera : cameras_) {
+             if (!camera.equals(cameras_[0])) {
+                String tVal = core_.getProperty(camera, property);
+                if (!tVal.equals(val)) {
+                   comboBox.setSelectedItem(MIXED);
+                }
+             }
+          }
           comboBox.setSelectedItem(val);
        } catch (Exception ex) {
           ReportingUtils.showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
@@ -772,4 +803,21 @@ public class MultiCameraFrame extends javax.swing.JFrame {
          ReportingUtils.showError(e);
       }
    }
+
+   public void propertiesChangedAlert() {
+      UpdateItems(ModeComboBox, MODE);
+      UpdateItems(SpeedComboBox, SPEED);
+   };
+   public void propertyChangedAlert(String device, String property, String value){
+      try {
+         if (core_.getDeviceType(device).equals(DeviceType.CameraDevice)) {
+
+         }
+      } catch (Exception ex) {
+      }
+   };
+   public void configGroupChangedAlert(String groupName, String newConfig){};
+   public void pixelSizeChangedAlert(double newPixelSizeUm){};
+   public void stagePositionChangedAlert(String deviceName, double pos){};
+   public void xyStagePositionChanged(String deviceName, double xPos, double yPos){};
 }
