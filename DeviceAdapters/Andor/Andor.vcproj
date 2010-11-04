@@ -46,7 +46,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;..\..\..\3rdparty\Andor\SDK 2.87.30003.0&quot;;..\..\..\3rdpartypublic\boost"
+				AdditionalIncludeDirectories="&quot;..\..\..\3rdparty\Andor\SDK 2.88.30002.0&quot;;..\..\..\3rdpartypublic\boost"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				MinimalRebuild="true"
 				ExceptionHandling="2"
@@ -73,7 +73,7 @@
 				AdditionalDependencies="ATMCD32M.LIB"
 				OutputFile="$(OutDir)/mmgr_dal_Andor.dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\Andor\SDK 2.87.30003.0&quot;;&quot;..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;"
+				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\Andor\SDK 2.88.30002.0&quot;;&quot;..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/Andor.pdb"
 				SubSystem="2"

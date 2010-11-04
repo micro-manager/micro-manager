@@ -1391,9 +1391,8 @@ int AndorCamera::GetListOfAvailableCameras()
    */ 
    long AndorCamera::GetReadoutTime()
    {
-      // kdb
+
       at_32 ReadoutTime;
-      //end of kdb
       float fReadoutTime;
       if(fpGetReadOutTime!=0 && (iCurrentTriggerMode_ == SOFTWARE))
       {
@@ -1422,9 +1421,7 @@ int AndorCamera::GetListOfAvailableCameras()
       SetProperty(MM::g_Keyword_ActualInterval_ms, CDeviceUtils::ConvertToString(ActualInterval_ms_)); 
 
       //whenever readout needs update, keepcleantime also needs update
-      // kdb
       at_32 KeepCleanTime;
-      //end of kdb
       float fKeepCleanTime;
       if(fpGetKeepCleanTime!=0 && (iCurrentTriggerMode_ == SOFTWARE))
       {
@@ -2871,35 +2868,33 @@ int AndorCamera::GetListOfAvailableCameras()
    */
    int AcqSequenceThread::svc(void)
    {
-      // kdb
       at_32 acc;
       at_32 series(0);
       at_32 seriesInit;
-      //end of kdb
       unsigned ret;
 
       printf("Starting Andor svc\n");
-      // kdb
-      long timePrev = GetTickCount(), imageWait = 0;
-      //end of kdb   
+
+      long timePrev = GetTickCount();
+      long imageWait = 0;
 		std::ostringstream os;
 
       {
          DriverGuard dg(camera_);
-		  ret = GetAcquisitionProgress(&acc, &seriesInit);
+		   ret = GetAcquisitionProgress(&acc, &seriesInit);
 
-		  os << "GetAcquisitionProgress returned: " << acc << " and: " << seriesInit;
-		  printf ("%s\n", os.str().c_str());
-		  os.str("");
+		   os << "GetAcquisitionProgress returned: " << acc << " and: " << seriesInit;
+		   printf ("%s\n", os.str().c_str());
+		   os.str("");
 
-		  if (ret != DRV_SUCCESS)
-		  {
-			 camera_->StopCameraAcquisition();
-			 os << "Error in GetAcquisitionProgress: " << ret;
-			 printf("%s\n", os.str().c_str());
-			 //core_->LogMessage(camera_, os.str().c_str(), true);
-			 return ret;
-		  }
+		   if (ret != DRV_SUCCESS)
+		   {
+			   camera_->StopCameraAcquisition();
+			   os << "Error in GetAcquisitionProgress: " << ret;
+			   printf("%s\n", os.str().c_str());
+			   //core_->LogMessage(camera_, os.str().c_str(), true);
+			   return ret;
+		   }
       }
 	  
       /*
@@ -2936,21 +2931,16 @@ int AndorCamera::GetListOfAvailableCameras()
             return ret;
          }
 
-         // kdb 2/27/2009
-#ifdef WIN32
-         Sleep(waitTime_);
-#else 
-         usleep(waitTime_ * 1000);
-#endif
-         // endof kdb
+         CDeviceUtils::SleepMs(waitTime_);
+
       } while (series == seriesInit && !stop_);
       os << "Images appearing";
       printf("%s\n", os.str().c_str());
       os.str("");
-      // kdb
+
       at_32 seriesPrev = 0;
       at_32 frmcnt = 0;
-      // endof kdb
+
       do
       {
 
@@ -2992,18 +2982,12 @@ int AndorCamera::GetListOfAvailableCameras()
                   return 0;
                }
             }
-            // end of kdb
+            
+            CDeviceUtils::SleepMs(waitTime_);
 
-            // kdb 2/27/2009
-#ifdef WIN32
-            Sleep(waitTime_);
-#else 
-            usleep(waitTime_ * 1000);
-#endif
-            // endof kdb
          }
       }
-      //while (ret == DRV_SUCCESS && series < numImages_ && !stop_);
+
       while (ret == DRV_SUCCESS && frmcnt < numImages_ && !stop_);
 
       if (ret != DRV_SUCCESS && series != 0)
@@ -3538,15 +3522,16 @@ int AndorCamera::GetListOfAvailableCameras()
       g_AndorDriverLock.Lock();
       if (cam->GetNumberOfWorkableCameras() > 1)
       {
-	// must be defined as 32bit in order to compile on 64bit systems since GetCurrentCamera only takes 32bit -kdb		
-         //at_32 currentCamera;
-         //GetCurrentCamera(&currentCamera);
-         //if (currentCamera != cam->GetMyCameraID())
-         //{
-         int ret = SetCurrentCamera(cam->GetMyCameraID());
-         if (ret != DRV_SUCCESS)
-            printf("Error switching active camera");
-         //}
+	      // must be defined as 32bit in order to compile on 64bit systems since GetCurrentCamera 
+         // only takes 32bit -kdb		
+         at_32 currentCamera;
+         GetCurrentCamera(&currentCamera);
+         if (currentCamera != cam->GetMyCameraID())
+         {
+            int ret = SetCurrentCamera(cam->GetMyCameraID());
+            if (ret != DRV_SUCCESS)
+               printf("Error switching active camera");
+         }
       }
    }
 
