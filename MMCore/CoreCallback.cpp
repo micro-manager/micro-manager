@@ -425,7 +425,7 @@ int CoreCallback::SetFocusPosition(double pos)
 
 int CoreCallback::MoveFocus(double velocity)
 {
-    /*ACE_Guard<ACE_Mutex>*/  MMThreadGuard guard(CMMCore::deviceLock_);
+   MMThreadGuard guard(CMMCore::deviceLock_);
 
    if (core_->focusStage_)
    {
@@ -464,7 +464,7 @@ int CoreCallback::SetXYPosition(double x, double y)
 
 int CoreCallback::MoveXYStage(double vx, double vy)
 {
-   /*ACE_Guard<ACE_Mutex>*/  MMThreadGuard guard(CMMCore::deviceLock_);
+   MMThreadGuard guard(CMMCore::deviceLock_);
 
    if (core_->xyStage_)
    {
