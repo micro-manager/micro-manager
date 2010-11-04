@@ -1835,11 +1835,9 @@ int AndorCamera::GetListOfAvailableCameras()
          bool acquiring = sequenceRunning_;
          if (acquiring)
             StopSequenceAcquisition(true);
-
+  
          if (sequenceRunning_)
             return ERR_BUSY_ACQUIRING;
-
-         //pProp->Get(currentGain_);
 
          //added to use RTA
          if(!(iCurrentTriggerMode_ == SOFTWARE))
@@ -1857,9 +1855,9 @@ int AndorCamera::GetListOfAvailableCameras()
 
          }
 
-         if (initialized_) {
-            OnPropertiesChanged();
-         }
+         //if (initialized_) {
+          //  OnPropertiesChanged();
+         //}
 
          if (DRV_SUCCESS != ret)
             return (int)ret;
@@ -2385,11 +2383,10 @@ int AndorCamera::GetListOfAvailableCameras()
    }
 
 
-   //daigang 24-may-2007
+
    void AndorCamera::UpdateEMGainRange()
    {
       DriverGuard dg(this);
-      //added to use RTA
       SetToIdle();
 
       int EmCCDGainLow, EmCCDGainHigh;
@@ -2402,14 +2399,7 @@ int AndorCamera::GetListOfAvailableCameras()
       ostringstream emgHigh; 
       emgLow << EmCCDGainLow;
       emgHigh << EmCCDGainHigh;
-      /*
-      int nRet = SetProperty("EMGainRangeMin", emgLow.str().c_str());
-      if (nRet != DEVICE_OK)
-      return;
-      nRet = SetProperty("EMGainRangeMax", emgHigh.str().c_str());
-      if (nRet != DEVICE_OK)
-      return;
-      */
+
       ret = SetPropertyLimits(g_EMGainValue, EmCCDGainLow, EmCCDGainHigh);
 
       PrepareSnap();
@@ -2418,9 +2408,8 @@ int AndorCamera::GetListOfAvailableCameras()
          return;
 
    }
-   //eof Daigang
 
-   //daigang 24-may-2007
+
    /**
    * EMGain Range Max
    */
@@ -2435,7 +2424,7 @@ int AndorCamera::GetListOfAvailableCameras()
       }
       return DEVICE_OK;
    }
-   //eof Daigang
+
 
    /**
    * ActualInterval_ms
@@ -2458,7 +2447,7 @@ int AndorCamera::GetListOfAvailableCameras()
       return DEVICE_OK;
    }
 
-   //daigang 24-may-2007
+
    /**
    * EMGain Range Max
    */
@@ -2473,7 +2462,6 @@ int AndorCamera::GetListOfAvailableCameras()
       }
       return DEVICE_OK;
    }
-   //eof Daigang
 
 
    int AndorCamera::OnTimeOut(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -2837,12 +2825,9 @@ int AndorCamera::GetListOfAvailableCameras()
       return DEVICE_OK;
    }
 
-   //daigang 24-may-2007
+
    void AndorCamera::UpdateHSSpeeds()
    {
-      //Daigang 28-may-2007 added to use RTA
-      //SetToIdle();
-
       int numSpeeds;
       unsigned ret = GetNumberHSSpeeds(ADChannelIndex_, OutputAmplifierIndex_, &numSpeeds);
       if (ret != DRV_SUCCESS)
@@ -3221,7 +3206,6 @@ int AndorCamera::GetListOfAvailableCameras()
    * Stops Sequence acquisition
    * This is for external use only (if called from the sequence acquisition thread, deadlock will ensue!
    */
-
    int AndorCamera::StopSequenceAcquisition()
    {
       return StopSequenceAcquisition(false);
@@ -3555,12 +3539,14 @@ int AndorCamera::GetListOfAvailableCameras()
       if (cam->GetNumberOfWorkableCameras() > 1)
       {
 	// must be defined as 32bit in order to compile on 64bit systems since GetCurrentCamera only takes 32bit -kdb		
-         at_32 currentCamera;
-         GetCurrentCamera(&currentCamera);
-         if (currentCamera != cam->GetMyCameraID())
-         {
-            SetCurrentCamera(cam->GetMyCameraID());
-         }
+         //at_32 currentCamera;
+         //GetCurrentCamera(&currentCamera);
+         //if (currentCamera != cam->GetMyCameraID())
+         //{
+         int ret = SetCurrentCamera(cam->GetMyCameraID());
+         if (ret != DRV_SUCCESS)
+            printf("Error switching active camera");
+         //}
       }
    }
 
