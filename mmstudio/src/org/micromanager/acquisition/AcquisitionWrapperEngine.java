@@ -19,8 +19,6 @@ import mmcorej.StrVector;
 import mmcorej.TaggedImage;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.acquisition.engine.Engine;
-import org.micromanager.acquisition.engine.ImageRequest;
-import org.micromanager.acquisition.engine.ImageTask;
 import org.micromanager.acquisition.engine.ProcessorStack;
 import org.micromanager.acquisition.engine.SequenceGenerator;
 import org.micromanager.acquisition.engine.SequenceSettings;
@@ -85,7 +83,6 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    public void acquire() throws MMException, MMAcqDataException {
       try {
-         core_.setCircularBufferMemoryFootprint(32);
          SequenceSettings acquisitionSettings = gatherSequenceSettings();
 
          // SET UP THE PIPELINE...
