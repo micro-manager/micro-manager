@@ -44,8 +44,9 @@ public class BurstMaker extends DataProcessor<EngineTask> {
    private void produceRequests() {
       int n = requestBank_.size();
       if (n > 1) {
-         ImageTask firstRequest = requestBank_.getFirst();
-         firstRequest.imageRequest_.startBurstN = n;
+         ImageTask firstTask = requestBank_.getFirst();
+         firstTask.imageRequest_.startBurstN = n;
+         produce(new BurstTask(firstTask.imageRequest_));
       }
       for (ImageTask task:requestBank_) {
          if (n > 1)
@@ -59,15 +60,15 @@ public class BurstMaker extends DataProcessor<EngineTask> {
       if (aTask instanceof ImageTask && nextTask instanceof ImageTask) {
          ImageRequest aRequest = ((ImageTask) aTask).imageRequest_;
          ImageRequest nextRequest = ((ImageTask) nextTask).imageRequest_;
-
-      
-          if ((aRequest.exposure == nextRequest.exposure)
-           && (aRequest.Position == nextRequest.Position)
-           && (aRequest.SliceIndex  == nextRequest.SliceIndex)
-           && (aRequest.ChannelIndex == nextRequest.ChannelIndex)
-           && (nextRequest.WaitTime <= aRequest.exposure)
-           && (nextRequest.AutoFocus == false))
-             return true;
+         if (       (aRequest.exposure == nextRequest.exposure)
+                 && (aRequest.Position == nextRequest.Position)
+                 && (aRequest.SliceIndex == nextRequest.SliceIndex)
+                 && (aRequest.ChannelIndex == nextRequest.ChannelIndex)
+                 && (nextRequest.WaitTime <= aRequest.exposure)
+                 && (nextRequest.AutoFocus == false)            ) {
+            return true;
+         }
+         return false;
       }
       return false;
    }
