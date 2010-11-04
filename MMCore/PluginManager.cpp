@@ -501,7 +501,7 @@ void CPluginManager::GetModules(vector<string> &modules, const char* searchPath)
          if( 0 == (*mit).compare(*(mit-1)) )
          {
             duplicateLibraries << searchPath << "/" << LIB_NAME_PREFIX << *mit;
-            duplicateLibraries << " ";
+            duplicateLibraries << "\n";
          }
 
       }
@@ -511,7 +511,7 @@ void CPluginManager::GetModules(vector<string> &modules, const char* searchPath)
    if( 0 < duplicateLibraries.str().length())
    {
       std::ostringstream mes;
-      mes << "Duplicate Libraries found: " << duplicateLibraries.str() << " -  please check your path";
+      mes << "Duplicate Libraries found:\n" << duplicateLibraries.str() << " -  please check your path";
       CMMError toThrow( mes.str().c_str(), DEVICE_DUPLICATE_LIBRARY);
       throw toThrow;
    }
