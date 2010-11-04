@@ -4604,8 +4604,14 @@ bool CMMCore::isConfigurationCurrent(const Configuration& config) const
    return true;
 }
 
+/**
+ * Set all properties in a configuration
+ * Upon error, don't stop, but throw an error after processing all properties
+ */
 void CMMCore::applyConfiguration(const Configuration& config) throw (CMMError)
 {
+   std::ostringstream sall;
+   bool error = false;
    for (size_t i=0; i<config.size(); i++)
    {
       PropertySetting setting = config.getSetting(i);
@@ -4623,14 +4629,17 @@ void CMMCore::applyConfiguration(const Configuration& config) throw (CMMError)
          int ret = pDevice->SetProperty(setting.getPropertyName().c_str(), setting.getPropertyValue().c_str());
          if (ret != DEVICE_OK)
          {
+            error = true;
             std::ostringstream se;
             se << setting.getDeviceLabel().c_str() << "\n"<< getDeviceErrorText(ret, pDevice).c_str() << "(Error code: " << ret << ")";
             logError(setting.getDeviceLabel().c_str(), se.str().c_str());
-            throw CMMError(se.str().c_str(), MMERR_DEVICE_GENERIC);
+            sall << se;
          }
          stateCache_.addSetting(setting);
       }
    }
+   if (error)
+      throw CMMError(sall.str().c_str(), MMERR_DEVICE_GENERIC);
 }
 
 string CMMCore::getDeviceErrorText(int deviceCode, MM::Device* pDevice) const
