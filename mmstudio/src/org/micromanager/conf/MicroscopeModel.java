@@ -65,36 +65,41 @@ public class MicroscopeModel {
    public static boolean generateDeviceListFile() {
       CMMCore core = new CMMCore();
       core.enableDebugLog(true);
-      StrVector libs = getDeviceLibraries(core);
-      ArrayList<Device> devs = new ArrayList<Device>();
-            
-      for (int i=0; i<libs.size(); i++) {
-         try {
-            Device devList[] = Device.getLibraryContents(libs.get(i), core);
-            for (int j=0; j<devList.length; j++) {
-               devs.add(devList[j]);
+      try {
+         StrVector libs = getDeviceLibraries(core);
+         ArrayList<Device> devs = new ArrayList<Device>();
+
+         for (int i=0; i<libs.size(); i++) {
+            try {
+               Device devList[] = Device.getLibraryContents(libs.get(i), core);
+               for (int j=0; j<devList.length; j++) {
+                  devs.add(devList[j]);
+               }
+            } catch (Exception e) {
+               ReportingUtils.logError(e);
+               return false;
             }
-         } catch (Exception e) {
-            ReportingUtils.logError(e);
+         }
+
+         File f = new File(MicroscopeModel.DEVLIST_FILE_NAME);
+         try {
+            BufferedWriter out = new BufferedWriter(new FileWriter(f.getAbsolutePath()));
+            for (int i=0; i<devs.size(); i++) {
+               Device dev = devs.get(i);
+               if (!dev.isSerialPort()) {
+                  // do not output serial devices
+                  String descr = dev.getDescription().replaceAll(",", ";");
+                  out.write(dev.getLibrary() + "," + dev.getAdapterName() + "," + descr + "," + dev.getTypeAsInt());
+                  out.newLine();
+               }
+            }
+            out.close();
+         } catch (IOException e1) {
+            ReportingUtils.showError(e1, "Unable to open the output file: " + MicroscopeModel.DEVLIST_FILE_NAME);
             return false;
          }
-      }
-      
-      File f = new File(MicroscopeModel.DEVLIST_FILE_NAME);
-      try {
-         BufferedWriter out = new BufferedWriter(new FileWriter(f.getAbsolutePath()));
-         for (int i=0; i<devs.size(); i++) {
-            Device dev = devs.get(i);
-            if (!dev.isSerialPort()) {
-               // do not output serial devices
-               String descr = dev.getDescription().replaceAll(",", ";");
-               out.write(dev.getLibrary() + "," + dev.getAdapterName() + "," + descr + "," + dev.getTypeAsInt());
-               out.newLine();
-            }
-         }
-         out.close();
-      } catch (IOException e1) {
-         ReportingUtils.showError(e1, "Unable to open the output file: " + MicroscopeModel.DEVLIST_FILE_NAME);
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex, "Failed to get list of device libraries");
          return false;
       }
       
@@ -152,27 +157,31 @@ public class MicroscopeModel {
       
    public void scanComPorts(CMMCore core) {
       ArrayList<Device> ports = new ArrayList<Device>();
-      StrVector libs = getDeviceLibraries(core);
-      
-      for (int i=0; i<libs.size(); i++) {
-         if (!isLibraryAvailable(libs.get(i))) {
-            Device devs[] = new Device[0];
-            try {
-               devs = Device.getLibraryContents(libs.get(i), core);
-               for (int j=0; j<devs.length; j++) {
-                  if (devs[j].isSerialPort()) {
-                     ReportingUtils.logMessage("   " + devs[j].getAdapterName() + ", " + devs[j].getDescription());
-                     devs[j].setName(devs[j].getAdapterName());
-                     if (!ports.contains(devs[j]))
-                        ports.add(devs[j]);
+      try {
+         StrVector libs = getDeviceLibraries(core);
+
+         for (int i=0; i<libs.size(); i++) {
+            if (!isLibraryAvailable(libs.get(i))) {
+               Device devs[] = new Device[0];
+               try {
+                  devs = Device.getLibraryContents(libs.get(i), core);
+                  for (int j=0; j<devs.length; j++) {
+                     if (devs[j].isSerialPort()) {
+                        ReportingUtils.logMessage("   " + devs[j].getAdapterName() + ", " + devs[j].getDescription());
+                        devs[j].setName(devs[j].getAdapterName());
+                        if (!ports.contains(devs[j]))
+                           ports.add(devs[j]);
+                     }
                   }
+               } catch (Exception e) {
+                  ReportingUtils.logError(e, "Unable to load " + libs.get(i) + " library.");
                }
-            } catch (Exception e) {
-               ReportingUtils.logError(e, "Unable to load " + libs.get(i) + " library.");
             }
          }
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex, "Failed to acquire list of libraries");
       }
-      
+
       availableComPorts_ = new Device[ports.size()];
       comPortInUse_ = new boolean[ports.size()];
       for (int i=0; i<ports.size(); i++) {
@@ -186,8 +195,8 @@ public class MicroscopeModel {
     * Find all paths on java.library.path and add an empty (current) directory
     * Then assemble a list with DeviceLibraries on all these paths
     */
-   public static StrVector getDeviceLibraries(CMMCore core) {
-      return core.getDeviceLibraries();
+   public static StrVector getDeviceLibraries(CMMCore core) throws Exception{
+      return CMMCore.getDeviceLibraries();
    }
 
    /**
@@ -207,25 +216,29 @@ public class MicroscopeModel {
       for (int i=0; i<devsTotal.size(); i++) {
          availableDevices_[i] = devsTotal.get(i);
       }  
-         
-      StrVector libs = getDeviceLibraries(core);
+
+      try {
+         StrVector libs = getDeviceLibraries(core);
 	      
-      for (int i=0; i<libs.size(); i++) {
-         if (!isLibraryAvailable(libs.get(i))) {
-              ReportingUtils.logMessage(libs.get(i));
-		      Device devs[] = new Device[0];
-		      try {
-		          devs = Device.getLibraryContents(libs.get(i), core);
-		          for (int j=0; j<devs.length; j++) {
-			          if (!devs[j].isSerialPort()) {
-			             ReportingUtils.logMessage("   " + devs[j].getAdapterName() + ", " + devs[j].getDescription());
-			             devsTotal.add(devs[j]);
-			          }
-		         }
-		      } catch (Exception e) {
-		         ReportingUtils.logError(e,"Unable to load " + libs.get(i) + " library.");
-		      }
+         for (int i=0; i<libs.size(); i++) {
+            if (!isLibraryAvailable(libs.get(i))) {
+                 ReportingUtils.logMessage(libs.get(i));
+               Device devs[] = new Device[0];
+               try {
+                   devs = Device.getLibraryContents(libs.get(i), core);
+                   for (int j=0; j<devs.length; j++) {
+                      if (!devs[j].isSerialPort()) {
+                         ReportingUtils.logMessage("   " + devs[j].getAdapterName() + ", " + devs[j].getDescription());
+                         devsTotal.add(devs[j]);
+                      }
+                  }
+               } catch (Exception e) {
+                  ReportingUtils.logError(e,"Unable to load " + libs.get(i) + " library.");
+               }
+            }
          }
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex, "Failed to get list of Device Libraries");
       }
       
       // re-assign remaining available devices
