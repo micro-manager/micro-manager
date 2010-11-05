@@ -223,7 +223,7 @@ public class GraphPanel extends JPanel {
       
       if (bounds_.getRangeX() <= 0.0 || bounds_.getRangeY() <= 0.0)
       {
-         ReportingUtils.logMessage("Out of range " + bounds_.getRangeX() + ", " + bounds_.getRangeY());
+         //ReportingUtils.logMessage("Out of range " + bounds_.getRangeX() + ", " + bounds_.getRangeY());
          return; // invalid range data
       }
       
