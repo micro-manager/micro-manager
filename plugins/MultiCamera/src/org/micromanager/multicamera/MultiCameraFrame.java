@@ -24,7 +24,8 @@ import javax.swing.DefaultComboBoxModel;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.Roi;
-import java.util.Vector;
+import java.util.HashMap;
+import java.util.Map;
 
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
@@ -57,11 +58,11 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
    private int EMGainMin_ = 4;
    private int EMGainMax_ = 1000;
    private String[] cameras_;
-   private boolean[] selectedCameras_;
+   private HashMap<String, Boolean> selectedCameras_;
    private String activeCamera_;
    private boolean initialized_ = false;
 
-   private static final String SEPERATOR = " + ";
+   private static final String SEPERATOR = ", ";
    private static final String MIXED = "";
 
    private static final String FRAMEXPOS = "FRAMEXPOS";
@@ -81,6 +82,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
    private static final String FRAMETRANSFER = "FrameTransfer";
    // Retarded, but Andor calls this readout mode
    private static final String SPEED = "ReadoutMode";
+   private static final String TRIGGER = "TriggerMode";
 
     /** Creates new form MultiCameraFrame */
     public MultiCameraFrame(ScriptInterface gui) throws Exception {
@@ -98,7 +100,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
           gui_.showError("This plugin needs at least one cameras");
           throw new IllegalArgumentException("This plugin needs at least one camera");
        }
-       selectedCameras_ = new boolean[cameras_.length];
+       selectedCameras_ = new HashMap<String, Boolean>();
 
        String currentCamera = core_.getCameraDevice();
        imageWidth_ = core_.getImageWidth();
@@ -133,7 +135,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
 
           for (int i = 0; i < cameras_.length; i++) {
              String item = cameras_[i];
-             for (int j = 1; j< cameras_.length; j++) {
+             for (int j = i + 1; j< cameras_.length; j++) {
                 CameraSelectComboBox.addItem(item + SEPERATOR + cameras_[i+j]);
              }
           }
@@ -141,6 +143,15 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
        CameraSelectComboBox.setSelectedItem(currentCamera);
        updateCameraList();
 
+       ExposureTextField.setText(GetExposure());
+
+       BinningComboBox.removeAllItems();
+       BinningComboBox.addItem(MIXED);
+       BinningComboBox.addItem("1");
+       BinningComboBox.addItem("2");
+       BinningComboBox.addItem("4");
+       BinningComboBox.addItem("8");
+       UpdateItems(BinningComboBox, MMCoreJ.getG_Keyword_Binning());
 
        if (!core_.hasProperty(currentCamera, MODE)) {
           jLabel5.setEnabled(false);
@@ -161,7 +172,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
           jLabel4.setEnabled(false);
           EMGainTextField.setEnabled(false);
           EMGainSlider.setEnabled(false);
-          jCheckBox2.setEnabled(false);
+          EMCheckBox.setEnabled(false);
        } else {
           EMGainMin_ = (int) core_.getPropertyLowerLimit(currentCamera, EMGAIN);
           EMGainMax_ = (int) core_.getPropertyUpperLimit(currentCamera, EMGAIN);
@@ -174,12 +185,12 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
           if (core_.hasProperty(currentCamera, EMSWITCH)) {
              String val = core_.getProperty(currentCamera, EMSWITCH);
              if (val.equals("On")) {
-                jCheckBox2.setSelected(true);
+                EMCheckBox.setSelected(true);
              } else {
-                jCheckBox2.setSelected(false);
+                EMCheckBox.setSelected(false);
              }
           } else
-             jCheckBox2.setEnabled(false);
+             EMCheckBox.setEnabled(false);
        }
 
        // Pre-amp Gain
@@ -201,6 +212,13 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
           FrameTransferComboBox.setEnabled(false);
        } else {
           UpdateItems(FrameTransferComboBox, FRAMETRANSFER);
+       }
+
+       // Trigger
+       if (!core_.hasProperty(currentCamera, TRIGGER)) {
+          TriggerComboBox.setEnabled(false);
+       } else {
+          UpdateItems(TriggerComboBox, TRIGGER);
        }
 
        initialized(true, true);
@@ -230,8 +248,8 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
 
       jCheckBox1 = new javax.swing.JCheckBox();
       jLabel1 = new javax.swing.JLabel();
-      jButton2 = new javax.swing.JButton();
-      jButton3 = new javax.swing.JButton();
+      ROISetButton = new javax.swing.JButton();
+      ROIUnsetButton = new javax.swing.JButton();
       jLabel2 = new javax.swing.JLabel();
       jLabel3 = new javax.swing.JLabel();
       BinningComboBox = new javax.swing.JComboBox();
@@ -244,7 +262,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
       jLabel6 = new javax.swing.JLabel();
       SpeedComboBox = new javax.swing.JComboBox();
       jLabel7 = new javax.swing.JLabel();
-      jCheckBox2 = new javax.swing.JCheckBox();
+      EMCheckBox = new javax.swing.JCheckBox();
       GainComboBox = new javax.swing.JComboBox();
       jLabel8 = new javax.swing.JLabel();
       FrameTransferComboBox = new javax.swing.JComboBox();
@@ -262,25 +280,25 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
       jLabel1.setFont(new java.awt.Font("Lucida Grande", 1, 10)); // NOI18N
       jLabel1.setText("ROI");
 
-      jButton2.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/shape_handles.png"))); // NOI18N
-      jButton2.setToolTipText("Set Region of Interest");
-      jButton2.setMaximumSize(null);
-      jButton2.setMinimumSize(null);
-      jButton2.setPreferredSize(null);
-      jButton2.addActionListener(new java.awt.event.ActionListener() {
+      ROISetButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/shape_handles.png"))); // NOI18N
+      ROISetButton.setToolTipText("Set Region of Interest");
+      ROISetButton.setMaximumSize(null);
+      ROISetButton.setMinimumSize(null);
+      ROISetButton.setPreferredSize(null);
+      ROISetButton.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            jButton2ActionPerformed(evt);
+            ROISetButtonActionPerformed(evt);
          }
       });
 
-      jButton3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/arrow_out.png"))); // NOI18N
-      jButton3.setToolTipText("Set Region of Interest");
-      jButton3.setMaximumSize(null);
-      jButton3.setMinimumSize(null);
-      jButton3.setPreferredSize(null);
-      jButton3.addActionListener(new java.awt.event.ActionListener() {
+      ROIUnsetButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/arrow_out.png"))); // NOI18N
+      ROIUnsetButton.setToolTipText("Set Region of Interest");
+      ROIUnsetButton.setMaximumSize(null);
+      ROIUnsetButton.setMinimumSize(null);
+      ROIUnsetButton.setPreferredSize(null);
+      ROIUnsetButton.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            jButton3ActionPerformed(evt);
+            ROIUnsetButtonActionPerformed(evt);
          }
       });
 
@@ -354,11 +372,11 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
       jLabel7.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
       jLabel7.setText("Speed");
 
-      jCheckBox2.setFont(new java.awt.Font("Lucida Grande", 0, 10));
-      jCheckBox2.setText("Use");
-      jCheckBox2.addActionListener(new java.awt.event.ActionListener() {
+      EMCheckBox.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+      EMCheckBox.setText("Use");
+      EMCheckBox.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            jCheckBox2ActionPerformed(evt);
+            EMCheckBoxActionPerformed(evt);
          }
       });
 
@@ -438,7 +456,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
                      .add(TriggerComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 105, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                      .add(ModeComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 105, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                      .add(GainComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 105, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                     .add(jCheckBox2)
+                     .add(EMCheckBox)
                      .add(EMGainTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 49, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                      .add(FrameTransferComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 105, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                      .add(BinningComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 80, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
@@ -448,9 +466,9 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
                         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                            .add(jLabel1)
                            .add(layout.createSequentialGroup()
-                              .add(jButton2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                              .add(ROISetButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                               .add(8, 8, 8)
-                              .add(jButton3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))))))
+                              .add(ROIUnsetButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))))))
             .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
       );
       layout.setVerticalGroup(
@@ -484,8 +502,8 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
                   .add(jLabel10))
                .add(layout.createSequentialGroup()
                   .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                     .add(jButton2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                     .add(jButton3, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                     .add(ROISetButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                     .add(ROIUnsetButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                   .add(2, 2, 2)
                   .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                      .add(layout.createSequentialGroup()
@@ -503,7 +521,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
                         .add(GainComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                      .add(layout.createSequentialGroup()
                         .add(45, 45, 45)
-                        .add(jCheckBox2))
+                        .add(EMCheckBox))
                      .add(layout.createSequentialGroup()
                         .add(25, 25, 25)
                         .add(EMGainTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
@@ -517,13 +535,33 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
       pack();
    }// </editor-fold>//GEN-END:initComponents
 
-    private void jButton2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton2ActionPerformed
+    private void ROISetButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ROISetButtonActionPerformed
        setRoi();
-    }//GEN-LAST:event_jButton2ActionPerformed
+    }//GEN-LAST:event_ROISetButtonActionPerformed
 
-    private void jButton3ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton3ActionPerformed
+    private void ROIUnsetButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ROIUnsetButtonActionPerformed
        setRoi(new Rectangle(0,0,(int)imageWidth_, (int)imageHeight_));
-    }//GEN-LAST:event_jButton3ActionPerformed
+    }//GEN-LAST:event_ROIUnsetButtonActionPerformed
+
+    private String GetExposure() {
+       String exposure = "-1";
+       try {
+          String originalCamera = core_.getProperty("Core", "Camera");
+          for (String camera : cameras_) {
+             if (!camera.equals("") && selectedCameras_.get(camera)) {
+                core_.setProperty("Core", "Camera", camera);
+                String exp = NumberUtils.doubleToDisplayString(core_.getExposure());
+                if (exposure.equals("-1"))
+                   exposure = exp;
+                if (!exposure.equals(exp))
+                   return MIXED;
+             }
+          }
+       } catch (Exception ex) {
+          ReportingUtils.showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
+       }
+       return exposure;
+    }
 
     private void ExposureTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ExposureTextFieldActionPerformed
        boolean liveRunning = dGui_.getLiveMode();
@@ -533,8 +571,10 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
           currentCamera =  core_.getCameraDevice();
           dGui_.enableLiveMode(false);
           for(String camera: cameras_) {
-             core_.setCameraDevice(camera);
-             core_.setExposure(exposure);
+             if (!camera.equals("") && selectedCameras_.get(camera)) {
+                core_.setCameraDevice(camera);
+                core_.setExposure(exposure);
+             }
           }
           ExposureTextField.setText(NumberUtils.doubleToDisplayString(exposure));
 
@@ -546,23 +586,8 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
     }//GEN-LAST:event_ExposureTextFieldActionPerformed
 
     private void BinningComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_BinningComboBoxActionPerformed
-       if (!initialized(false, false))
-          return;
-       boolean liveRunning = dGui_.getLiveMode();
-       Object item = BinningComboBox.getSelectedItem();
-       String binning = item.toString();
-       try {
-          dGui_.enableLiveMode(false);
-          for(String camera: cameras_) {
-             if (!camera.equals("")) {
-                core_.setProperty(camera, MMCoreJ.getG_Keyword_Binning(), binning);
-             }
-          }
-          dGui_.enableLiveMode(liveRunning);
-          dGui_.updateGUI(false);
-       } catch (Exception ex) {
-          ReportingUtils.showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
-       }
+       SetComboSelection(BinningComboBox, MMCoreJ.getG_Keyword_Binning());
+       dGui_.updateGUI(false);
     }//GEN-LAST:event_BinningComboBoxActionPerformed
 
     private void EMGainTextFieldActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_EMGainTextFieldActionPerformed
@@ -580,31 +605,32 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
        }
     }//GEN-LAST:event_EMGainTextFieldActionPerformed
 
-    private void jCheckBox2ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBox2ActionPerformed
+    private void EMCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_EMCheckBoxActionPerformed
        // EM enable
        if (!initialized(false, false))
           return;
        // Should we check if live is running?
-       boolean on = jCheckBox2.isSelected();
+       boolean on = EMCheckBox.isSelected();
        String command = "Off";
        if (on)
           command = "On";
        try {
-          for (String camera: cameras_) {
-             if (!camera.equals("")) {
+          for (String camera: cameras_ ) {
+             if (!camera.equals("") && selectedCameras_.get(camera)) {
                 core_.setProperty(camera, EMSWITCH, command);
              }
           }
        } catch (Exception ex) {
           ReportingUtils.showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
        }
-    }//GEN-LAST:event_jCheckBox2ActionPerformed
+    }//GEN-LAST:event_EMCheckBoxActionPerformed
 
     private String GetMode() {
        String mode = "";
        try {
-          String modeProp = core_.getProperty(cameras_[0], MODE);
-          String adProp = core_.getProperty(cameras_[0], ADCONVERTER);
+          String fs = firstSelectedCamera();
+          String modeProp = core_.getProperty(fs, MODE);
+          String adProp = core_.getProperty(fs, ADCONVERTER);
           if (modeProp.equals(EMMODE)) {
              if (adProp.equals(AD14BIT))
                 mode = MODEEM14;
@@ -615,7 +641,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
                 mode = MODECONV16;
           }
           for (String camera : cameras_) {
-             if (!camera.equals(cameras_[0])) {
+             if (!camera.equals(fs) && selectedCameras_.get(camera)) {
                 String mP = core_.getProperty(camera, MODE);
                 String aP = core_.getProperty(camera, ADCONVERTER);
                 if (!mP.equals(modeProp))
@@ -644,7 +670,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
        try {
           dGui_.enableLiveMode(false);
           for(String camera: cameras_) {
-             if (!camera.equals("")) {
+             if (!camera.equals("") && selectedCameras_.get(camera)) {
                 if (mode.equals(MODEEM14)) {
                    core_.setProperty(camera, ADCONVERTER, AD14BIT);
                    core_.setProperty(camera, MODE, EMMODE);
@@ -673,37 +699,13 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
     }//GEN-LAST:event_EMGainSliderStateChanged
 
     private void GainComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_GainComboBoxActionPerformed
-       if (!initialized(false, false))
-          return;
-
-       boolean liveRunning = dGui_.getLiveMode();
-       try {
-          dGui_.enableLiveMode(false);
-          for (String camera: cameras_) {
-             core_.setProperty(camera, AMPGAIN, (String) GainComboBox.getSelectedItem());
-          }
-          dGui_.enableLiveMode(liveRunning);
-       } catch (Exception ex) {
-           ReportingUtils.showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
-       }
-   
+       SetComboSelection(GainComboBox, AMPGAIN);
+       dGui_.updateGUI(false);
     }//GEN-LAST:event_GainComboBoxActionPerformed
 
     private void SpeedComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SpeedComboBoxActionPerformed
-       if (!initialized(false, false))
-          return;
-
-       boolean liveRunning = dGui_.getLiveMode();
-       try {
-          dGui_.enableLiveMode(false);
-          for (String camera: cameras_) {
-             core_.setProperty(camera, SPEED, (String) SpeedComboBox.getSelectedItem());
-          }
-          dGui_.enableLiveMode(liveRunning);
-       } catch (Exception ex) {
-          ReportingUtils.showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
-       }
-
+       SetComboSelection(SpeedComboBox, SPEED);
+       dGui_.updateGUI(false);
     }//GEN-LAST:event_SpeedComboBoxActionPerformed
 
     private void EMGainSliderMouseReleased(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_EMGainSliderMouseReleased
@@ -727,36 +729,43 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
     }//GEN-LAST:event_EMGainSliderMouseReleased
 
     private void FrameTransferComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_FrameTransferComboBoxActionPerformed
+       SetComboSelection(FrameTransferComboBox, FRAMETRANSFER);
+       dGui_.updateGUI(false);
+    }//GEN-LAST:event_FrameTransferComboBoxActionPerformed
+
+    private void CameraSelectComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_CameraSelectComboBoxActionPerformed
        if (!initialized(false, false))
           return;
+       updateCameraList();
        boolean liveRunning = dGui_.getLiveMode();
        try {
           dGui_.enableLiveMode(false);
-          String val = (String) FrameTransferComboBox.getSelectedItem();
-          for (String camera: cameras_) {
-             if (!camera.equals("")) {
-                core_.setProperty(camera, FRAMETRANSFER, val);
-             }
-          }
+          core_.setProperty("Core", "Camera", firstSelectedCamera());
+          ExposureTextField.setText(GetExposure());
+          GetComboSelection(BinningComboBox, MMCoreJ.getG_Keyword_Binning());
+          GetComboSelection(ModeComboBox, MODE);
+          GetComboSelection(GainComboBox, AMPGAIN);
+          GetComboSelection(SpeedComboBox, SPEED);
+          GetComboSelection(FrameTransferComboBox, FRAMETRANSFER);
+          GetComboSelection(TriggerComboBox, TRIGGER);
           dGui_.enableLiveMode(liveRunning);
        } catch (Exception ex) {
           ReportingUtils.showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
        }
 
-    }//GEN-LAST:event_FrameTransferComboBoxActionPerformed
-
-    private void CameraSelectComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_CameraSelectComboBoxActionPerformed
-       updateCameraList();
+       dGui_.updateGUI(false);
     }//GEN-LAST:event_CameraSelectComboBoxActionPerformed
 
     private void TriggerComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_TriggerComboBoxActionPerformed
-       // TODO add your handling code here:
+      SetComboSelection(TriggerComboBox, TRIGGER);
+      dGui_.updateGUI(false);
     }//GEN-LAST:event_TriggerComboBoxActionPerformed
 
     private void UpdateItems(javax.swing.JComboBox comboBox, String property) {
        if (comboBox != null) {
           try {
-             StrVector vals = core_.getAllowedPropertyValues(cameras_[0], property);
+             String camera = firstSelectedCamera();
+             StrVector vals = core_.getAllowedPropertyValues(camera, property);
 
              String[] newVals = new String[(int)vals.size() + 1];
              newVals[0] = MIXED;
@@ -768,20 +777,22 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
           } catch (Exception ex) {
              ReportingUtils.showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
           }
-          UpdateComboSelection(comboBox, property);
+          GetComboSelection(comboBox, property);
        }
     }
 
-    private void UpdateComboSelection(javax.swing.JComboBox comboBox, String property) {
-       if (comboBox == null)
+    private void GetComboSelection(javax.swing.JComboBox comboBox, String property) {
+       if (comboBox == null || !comboBox.isEnabled())
           return;
        try {
-          String val = core_.getProperty(cameras_[0], property);
+          String fs = firstSelectedCamera();
+          String val = core_.getProperty(fs, property);
           for (String camera : cameras_) {
-             if (!camera.equals(cameras_[0])) {
+             if (!camera.equals(fs) && selectedCameras_.get(camera)) {
                 String tVal = core_.getProperty(camera, property);
                 if (!tVal.equals(val)) {
                    comboBox.setSelectedItem(MIXED);
+                   return;
                 }
              }
           }
@@ -791,21 +802,43 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
        }
     }
 
+    private void SetComboSelection(javax.swing.JComboBox comboBox, String property) {
+       if (!initialized(false, false))
+          return;
+       boolean liveRunning = dGui_.getLiveMode();
+       String val = (String) comboBox.getSelectedItem();
+       if (val.equals(MIXED)) {
+          GetComboSelection(comboBox, property);
+          return;
+       }
+       try {
+          dGui_.enableLiveMode(false);
+          for (String camera: cameras_) {
+             if (!camera.equals("") && selectedCameras_.get(camera)) {
+                core_.setProperty(camera, property, val);
+             }
+          }
+          dGui_.enableLiveMode(liveRunning);
+       } catch (Exception ex) {
+          ReportingUtils.showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
+       }
+    }
+
    // Variables declaration - do not modify//GEN-BEGIN:variables
    private javax.swing.JComboBox BinningComboBox;
    private javax.swing.JComboBox CameraSelectComboBox;
+   private javax.swing.JCheckBox EMCheckBox;
    private javax.swing.JSlider EMGainSlider;
    private javax.swing.JTextField EMGainTextField;
    private javax.swing.JTextField ExposureTextField;
    private javax.swing.JComboBox FrameTransferComboBox;
    private javax.swing.JComboBox GainComboBox;
    private javax.swing.JComboBox ModeComboBox;
+   private javax.swing.JButton ROISetButton;
+   private javax.swing.JButton ROIUnsetButton;
    private javax.swing.JComboBox SpeedComboBox;
    private javax.swing.JComboBox TriggerComboBox;
-   private javax.swing.JButton jButton2;
-   private javax.swing.JButton jButton3;
    private javax.swing.JCheckBox jCheckBox1;
-   private javax.swing.JCheckBox jCheckBox2;
    private javax.swing.JLabel jLabel1;
    private javax.swing.JLabel jLabel10;
    private javax.swing.JLabel jLabel2;
@@ -820,16 +853,23 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
 
 
    private void updateCameraList() {
+      for (String camera : cameras_) {
+         selectedCameras_.put(camera, false);
+      }
+
       String item = (String) CameraSelectComboBox.getSelectedItem();
       String[] selCameras = item.split(SEPERATOR);
-      for (int i =0; i<cameras_.length; i++) {
-         selectedCameras_[i] = false;
-         for (String selCamera : selCameras) {
-            if (selCamera.equals(cameras_[i]) ) {
-               selectedCameras_[i] = true;
-            }
-         }
+      for(String camera : selCameras) {
+         selectedCameras_.put(camera, true);
       }
+   }
+
+   private String firstSelectedCamera() throws Exception {
+      for (Map.Entry<String, Boolean> entry : selectedCameras_.entrySet()) {
+         if (entry.getValue())
+            return entry.getKey();
+      }
+      throw new Exception();
    }
 
    private void setRoi (Rectangle roi) {
@@ -839,8 +879,10 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
          currentCamera =  core_.getCameraDevice();
          dGui_.enableLiveMode(false);
          for(String camera: cameras_) {
-            core_.setCameraDevice(camera);
-            core_.setROI(roi.x, roi.y, roi.width, roi.height);
+            if (selectedCameras_.get(camera)) {
+               core_.setCameraDevice(camera);
+               core_.setROI(roi.x, roi.y, roi.width, roi.height);
+            }
          }
          core_.setCameraDevice(currentCamera);
          dGui_.enableLiveMode(liveRunning);
