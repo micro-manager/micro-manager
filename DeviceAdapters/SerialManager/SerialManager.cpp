@@ -71,6 +71,7 @@ SerialManager g_serialManager;
 
 std::vector<std::string> g_BlackListedPorts;
 std::vector<std::string> g_PortList;
+std::vector<std::string> g_HealthyPortList;
 time_t g_PortListLastUpdated = 0;
 
 const char* g_StopBits_1 = "1";
@@ -143,21 +144,32 @@ bool SerialPortLister::portAccessible(const char* portName)
    return false;                                                             
 }
 
+
+const int MaxBuf = 100000;
+typedef struct 
+	{
+		char buffer[MaxBuf];
+} B100000;
+
+
+
+
 void SerialPortLister::ListPorts(std::vector<std::string> &availablePorts)
 {
 #ifdef WIN32
-   char allDeviceNames[100000];
+
+   std::auto_ptr<B100000> allDeviceNames (new B100000());
 
    // on Windows the serial ports are devices that begin with "COM"
-   int ret = QueryDosDevice( 0, allDeviceNames, 100000);
+   int ret = QueryDosDevice( 0, allDeviceNames->buffer , 100000);
    if( 0!= ret)
    {
       for( int ii = 0; ii < ret; ++ii)
       {
-         if ( 0 == allDeviceNames[ii])
-            allDeviceNames[ii] = ' ';
+         if ( 0 == allDeviceNames->buffer[ii])
+            allDeviceNames->buffer[ii] = ' ';
       }
-      std::string all(allDeviceNames, ret);
+      std::string all(allDeviceNames->buffer, ret);
       std::vector<std::string> tokens;
       CDeviceUtils::Tokenize(all, tokens, " ");
       for( std::vector<std::string>::iterator jj = tokens.begin(); jj != tokens.end(); ++jj)
@@ -267,30 +279,65 @@ void SerialPortLister::ListPorts(std::vector<std::string> &availablePorts)
  */
 MODULE_API void InitializeModuleData()
 {
-   // Determine whether portList is fresh enough (i.e. younger than 15 seconds):
+   // Determine whether portList is fresh enough (i.e. younger than 150 seconds):
    time_t seconds = time(NULL);
-   time_t timeout = 15;
+   time_t timeout = 150;
    bool stale = seconds - g_PortListLastUpdated > timeout ? true : false;
 
    if (g_PortList.size() == 0 || stale)
    {
       SerialPortLister::ListPorts(g_PortList); 
       g_PortListLastUpdated = time(NULL);
+
+      // regenerate list of healthy ports...
+      ::g_HealthyPortList.clear();
+      // first open all the ports
+      std::vector<std::string>::iterator it = g_PortList.begin();
+      std::vector<SerialPort*> createdPorts;
+      while (it < g_PortList.end()) 
+      {
+         try
+         {
+            SerialPort* pS = dynamic_cast<SerialPort*>(g_serialManager.CreatePort(it->c_str()));
+            if( 0 != pS)
+            {
+               createdPorts.push_back(pS);
+               if( DEVICE_OK == pS->Initialize())
+               {
+                  ::g_HealthyPortList.push_back(*it);
+               }
+            }
+         }
+         catch(...)
+         {
+         }
+         ++it;
+      }
+
+      // now shut down the ports
+      std::vector<SerialPort*>::iterator cpit = createdPorts.begin();
+      while (cpit < createdPorts.end()) 
+      {
+         try  
+         {
+            if( (*cpit)->Initialized())
+            {
+              (*cpit)->Shutdown();
+            }
+            g_serialManager.DestroyPort(*cpit);
+         }
+         catch(...)
+         {
+         }
+         ++cpit;
+      }      
    }
 
-   std::vector<std::string>::iterator it = g_PortList.begin();
-   while (it < g_PortList.end()) {
-      // KeySpan USA-49WG driver  generates a 'copy' of the first serial port
-      // named KeySerialN Of course this causes various sorts of havoc such as
-      // 'Device Busy' as we open the serial ports successively and query them.
-      // I suspect we could examine the attributes such as IRQ for each serial port
-      // and remove duplicates, but frankly I'm not sure how to do that - UNIX
-      // utility stty doesn't tell me what I need to know.   . This test
-      // works fine and let me operate the Axiovert 200M with OS X
-      if( std::string::npos == (*it).find("KeySerial"))
-           AddAvailableDeviceName((*it).c_str(), "Serial communication port");
-      it++;
+   for( std::vector<std::string>::iterator sit = ::g_HealthyPortList.begin(); sit != ::g_HealthyPortList.end(); ++sit)
+   {
+      AddAvailableDeviceName((*sit).c_str(), "Serial communication port");
    }
+    
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
@@ -475,8 +522,8 @@ int SerialPort::Initialize()
    }
 
    // verify callbacks are supported
-   if (!IsCallbackRegistered())
-      return DEVICE_NO_CALLBACK_REGISTERED;
+//   if (!IsCallbackRegistered())
+//      return DEVICE_NO_CALLBACK_REGISTERED;
 
    long sb;
    int ret = GetPropertyData(MM::g_Keyword_StopBits, stopBits_.c_str(), sb);

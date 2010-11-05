@@ -27,6 +27,7 @@
 #include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/DeviceBase.h"
 #include <string>
+#include <iostream>
 
 #ifdef WIN32
 // suppress an incomprehensible warning from inside boost future.
@@ -90,7 +91,10 @@ public:
 
    void LogMessage(const char *const p, bool debugOnly = false)
 	{
-      CSerialBase<SerialPort>::LogMessage(std::string(p), debugOnly);
+      if(this->IsCallbackRegistered())
+         CSerialBase<SerialPort>::LogMessage(std::string(p), debugOnly);
+      else
+         std::cerr << p << std::endl;;
 	};
 
    void LogBinaryMessage( const bool isInput, const unsigned char*const pdata, const int length, bool debugOnly = false);
@@ -110,6 +114,9 @@ public:
    void AddReference() {refCount_++;}
    void RemoveReference() {refCount_--;}
    bool OKToDelete() {return refCount_ < 1;}
+
+
+   bool Initialized(void) { return initialized_;};
 
 
 private:
