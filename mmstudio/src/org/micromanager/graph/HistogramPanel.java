@@ -122,7 +122,7 @@ public class HistogramPanel extends GraphPanel {
       }
 
       if (bounds_.getRangeX() <= 0.0 || bounds_.getRangeY() <= 0.0) {
-         ReportingUtils.logMessage("Out of range " + bounds_.getRangeX() + ", " + bounds_.getRangeY());
+         //ReportingUtils.logMessage("Out of range " + bounds_.getRangeX() + ", " + bounds_.getRangeY());
          return; // invalid range data
       }
 
@@ -168,7 +168,7 @@ public class HistogramPanel extends GraphPanel {
       }
 
       if (bounds_.getRangeX() <= 0.0 || bounds_.getRangeY() <= 1.e-10) {
-         ReportingUtils.logMessage("Out of range " + bounds_.getRangeX() + ", " + bounds_.getRangeY());
+         //ReportingUtils.logMessage("Out of range " + bounds_.getRangeX() + ", " + bounds_.getRangeY());
          return; // invalid range data
       }
 
