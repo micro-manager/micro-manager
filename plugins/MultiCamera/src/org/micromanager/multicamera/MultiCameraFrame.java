@@ -812,6 +812,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
        updateCameraList();
        boolean liveRunning = dGui_.getLiveMode();
        try {
+          // Use the initialize flag to prevent pushing settings back to the hardware
           initialized(true, false);
           dGui_.enableLiveMode(false);
           core_.setProperty("Core", "Camera", firstSelectedCamera());
