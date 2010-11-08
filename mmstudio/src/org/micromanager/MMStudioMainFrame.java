@@ -2879,11 +2879,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                         break;
                      }
                   }
-                  // if (plugins_.get(i).plugin == null) {
-                  // hcsPlateEditor_ = new
-                  // PlateEditor(MMStudioMainFrame.this);
-                  // }
-                  // hcsPlateEditor_.setVisible(true);
                }
             });
             newMenuItem.setText(plugins_.get(i).menuItem);

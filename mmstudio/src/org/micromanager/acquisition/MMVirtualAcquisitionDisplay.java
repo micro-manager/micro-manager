@@ -136,31 +136,32 @@ public class MMVirtualAcquisitionDisplay{
    private void updateWindow() {
       if (hc_ == null)
          return;
-      
+
       if (newData_) {
          if (acquisitionIsRunning()) {
             if (!abortRequested()) {
                if (isPaused()) {
-                  status_ = "Paused";
+                  status_ = " (Paused)";
                } else {
-                  status_ = "Running";
+                  status_ = " (Running)";
                }
             } else {
-               status_ = "Interrupted";
+               status_ = " (Interrupted)";
                hc_.disableAcquisitionControls();
             }
          } else {
-            if (!status_.contentEquals("Interrupted")) {
-               status_ = "Finished";
+            if (!status_.contentEquals(" (Interrupted)")) {
+               status_ = " (Finished)";
             }
             hc_.disableAcquisitionControls();
          }
       } else {
-         status_ = "On disk";
+         if (diskCached_)
+            status_ = " (On disk)";
          hc_.disableAcquisitionControls();
       }
       hc_.enableShowFolderButton(diskCached_);
-      hyperImage_.getWindow().setTitle(new File(dir_).getName() + " (" + status_ + ")");
+      hyperImage_.getWindow().setTitle(new File(dir_).getName() +  status_);
    }
 
    public void insertImage(TaggedImage taggedImg) throws MMScriptException {
@@ -483,10 +484,14 @@ public class MMVirtualAcquisitionDisplay{
    public JSONObject getCurrentMetadata() {
       int index = getCurrentFlatIndex();
       int posIndex = pSelector.getValue() - 1;
-      TaggedImage image = virtualStacks_.get(posIndex).getTaggedImage(index);
-      if (image != null) {
-         return image.tags;
-      } else {
+      try {
+         TaggedImage image = virtualStacks_.get(posIndex).getTaggedImage(index);
+         if (image != null) {
+            return image.tags;
+         } else {
+            return null;
+         }
+      } catch (NullPointerException ex) {
          return null;
       }
    }
@@ -679,7 +684,11 @@ public class MMVirtualAcquisitionDisplay{
    }
 
    String getImageComment() {
-      return imageCache_.getImageComment(getCurrentMetadata());
+      try {
+         return imageCache_.getImageComment(getCurrentMetadata());
+      } catch (NullPointerException ex) {
+         return "";
+      }
    }
 
 }
