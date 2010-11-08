@@ -114,6 +114,9 @@ public class BeanshellEngine implements ScriptingEngine {
    }
 
    public boolean stopRequestPending() {
+      if (evalThd_.isAlive() && stop_)
+         return stop_;
+      stop_ = false;
       return stop_;
    }
    

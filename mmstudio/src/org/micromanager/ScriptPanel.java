@@ -317,8 +317,8 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
    }
 
    public void createBeanshellREPL() {
-	   // Create console and REPL interpreter:
-	   cons_ = new JConsole();
+      // Create console and REPL interpreter:
+      cons_ = new JConsole();
       if (gui_.defaultScriptFont_ != null)
          cons_.setFont(gui_.defaultScriptFont_);
       
@@ -342,9 +342,9 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
          ReportingUtils.showError(e);
       }
 	   
-	   // This command allows variables to be inspected in the command-line
-	   // (e.g., typing "x;" causes the value of x to be returned):
-	   beanshellREPLint_.setShowResults(true);
+      // This command allows variables to be inspected in the command-line
+      // (e.g., typing "x;" causes the value of x to be returned):
+      beanshellREPLint_.setShowResults(true);
 
 	   // Set up window for interpreter:
 /*	   JFrame frame = new JFrame();
