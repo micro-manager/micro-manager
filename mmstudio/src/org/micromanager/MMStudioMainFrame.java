@@ -2183,7 +2183,9 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          String rootDir = new File(openAcqDirectory_).getAbsolutePath();
          String name = new File(openAcqDirectory_).getName();
          try {
-            openAcquisition(name, rootDir);
+            if (acquisitionExists(name))
+               name = acqMgr_.getUniqueAcquisitionName(name);
+            acqMgr_.openAcquisition(name, rootDir, true, true);
          } catch (MMScriptException ex) {
             ReportingUtils.showError(ex);
          }
@@ -3620,6 +3622,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       acqMgr_.openAcquisition(name, rootDir);
    }
 
+   public void openAcquisition(String name, String rootDir, boolean show) throws MMScriptException {
+      acqMgr_.openAcquisition(name, rootDir, show);
+   }
+
    public void openAcquisition(String name, String rootDir, int nrFrames,
          int nrChannels, int nrSlices, int nrPositions) throws MMScriptException {
       acqMgr_.openAcquisition(name, rootDir);
@@ -3751,7 +3757,9 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          // Insert exposure in metadata
          acq.setProperty(frame, channel, slice, ImagePropertyKeys.EXPOSURE_MS, NumberUtils.doubleToDisplayString(core_.getExposure()));
          // Add pixel size calibration
-         double pixSizeUm = core_.getPixelSizeUm();
+
+         /*
+          double pixSizeUm = core_.getPixelSizeUm();
          if (pixSizeUm > 0) {
             acq.setProperty(frame, channel, slice, ImagePropertyKeys.X_UM, NumberUtils.doubleToDisplayString(pixSizeUm));
             acq.setProperty(frame, channel, slice, ImagePropertyKeys.Y_UM, NumberUtils.doubleToDisplayString(pixSizeUm));
@@ -3760,6 +3768,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          JSONObject state = Annotator.generateJSONMetadata(core_.getSystemStateCache());
          // and insert into metadata
          acq.setSystemState(frame, channel, slice, state);
+          */
 
 
       } catch (Exception e) {

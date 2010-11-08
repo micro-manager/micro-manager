@@ -6,9 +6,7 @@ import java.util.Hashtable;
 
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.utils.MMScriptException;
-import org.micromanager.acquisition.MMVirtualAcquisitionDisplay;
 import org.micromanager.api.AcquisitionEngine;
-import org.micromanager.api.TaggedImageStorage;
 
 public class AcquisitionManager {
    Hashtable<String, AcquisitionInterface> acqs_;
@@ -21,13 +19,8 @@ public class AcquisitionManager {
       if (acquisitionExists(name))
          throw new MMScriptException("The name is in use");
       else {
-         TaggedImageStorage imageFileManager = new TaggedImageStorageDiskDefault(rootDir);
-         MMImageCache imageCache_ = new MMImageCache(imageFileManager);
-         MMVirtualAcquisitionDisplay virtAcq = new MMVirtualAcquisitionDisplay(rootDir, false, true);
-        // acqs_.put(name, virtAcq);
-         virtAcq.setCache(imageCache_);
-         virtAcq.initialize();
-         virtAcq.show(0);
+         MMAcquisitionV2 acq = new MMAcquisitionV2(name, rootDir);
+         acqs_.put(name, acq);
       }
    }
 
@@ -42,11 +35,11 @@ public class AcquisitionManager {
       this.openAcquisition(name, rootDir, show, false);
    }
 
-   public void openAcquisition(String name, String rootDir, boolean show, boolean virtual) throws MMScriptException {
+   public void openAcquisition(String name, String rootDir, boolean show, boolean diskCached) throws MMScriptException {
       if (acquisitionExists(name)) {
          throw new MMScriptException("The name is in use");
       } else {
-     //   acqs_.put(name, new MMVirtualAcquisitionDisplay(name, rootDir, true, virtual));
+         acqs_.put(name, new MMAcquisitionV2(name, rootDir, show, diskCached));
       }
    }
    
@@ -104,6 +97,21 @@ public class AcquisitionManager {
 
    public void setAcquisitionCache(String acqName, MMImageCache imageCache) {
       acqs_.get(acqName).setCache(imageCache);
+   }
+
+   public String getUniqueAcquisitionName(String name) {
+      char seperator = '_';
+      while (acquisitionExists(name)) {
+         int lastSeperator = name.lastIndexOf(seperator);
+         if (lastSeperator == -1)
+            name += seperator + "1";
+         else {
+            Integer i = Integer.parseInt(name.substring(lastSeperator + 1));
+            i++;
+            name = name.substring(0, lastSeperator) + seperator + i;
+         }
+      }
+      return name;
    }
 
 }

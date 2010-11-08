@@ -106,6 +106,8 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
             JavaUtils.createDirectory(dir_ + "/" + posName);
             if (posName.length() > 0)
                fileName = posName + "/" + tiffFileName;
+            else
+               fileName = tiffFileName;
          } catch (Exception ex) {
             ReportingUtils.logError(ex);
          }

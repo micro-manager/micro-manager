@@ -31,7 +31,7 @@ import org.micromanager.utils.ReportingUtils;
  *
  * @author arthur
  */
-public class MMVirtualAcquisitionDisplay {
+public class MMVirtualAcquisitionDisplay{
 
    private String dir_;
    MMImageCache imageCache_;
@@ -55,10 +55,10 @@ public class MMVirtualAcquisitionDisplay {
    private int curPosition_ = -1;
    private ChannelDisplaySettings[] channelSettings_;
 
-   MMVirtualAcquisitionDisplay(String dir, boolean newData, boolean virtual) {
+   MMVirtualAcquisitionDisplay(String dir, boolean newData, boolean diskCached) {
       dir_ = dir;
       newData_ = newData;
-      diskCached_ = virtual;
+      diskCached_ = diskCached;
       summaryMetadata_ = new JSONObject();
       try {
          summaryMetadata_.put("MetadataVersion", "10");
@@ -114,7 +114,7 @@ public class MMVirtualAcquisitionDisplay {
           for (int i=0;i<numChannels_;++i) {
             channelSettings_[i] = new ChannelDisplaySettings();
           }
-       }
+      }
       createImagePlus();
 
       readChannelSettingsFromCache(true);
@@ -237,13 +237,16 @@ public class MMVirtualAcquisitionDisplay {
    }
 
    boolean pause() {
-      if (eng_.isPaused()) {
-         eng_.setPause(false);
-      } else {
-         eng_.setPause(true);
+      if (eng_ != null) {
+         if (eng_.isPaused()) {
+            eng_.setPause(false);
+         } else {
+            eng_.setPause(true);
+         }
+         updateWindow();
+         return (eng_.isPaused());
       }
-      updateWindow();
-      return (eng_.isPaused());
+      return false;
    }
 
    boolean abort() {
@@ -307,6 +310,9 @@ public class MMVirtualAcquisitionDisplay {
 
       TaggedImageStorageDiskDefault newFileManager = new TaggedImageStorageDiskDefault(root + "/" + prefix, true,
               summaryMetadata_);
+      for (int i=0; i<numChannels_; i++) {
+         writeChannelSettingsToCache(i);
+      }
       imageCache_.saveAs(newFileManager);
       diskCached_ = true;
       dir_ = root + "/" + prefix;
@@ -352,6 +358,9 @@ public class MMVirtualAcquisitionDisplay {
                   }
                }
             }
+
+            // push current display settings to cache
+
             imageCache_.close();
             imageCache_ = null;
             virtualStacks_ = null;
@@ -444,17 +453,20 @@ public class MMVirtualAcquisitionDisplay {
    }
 
    public void setChannelLut(int channel, Color color, double gamma) {
-         LUT lut = ImageUtils.makeLUT(color, gamma, 8);
-         if (hyperImage_.isComposite()) {
-            CompositeImage ci = (CompositeImage) hyperImage_;
-            setChannelWithoutUpdate(channel + 1);
-            ci.setChannelColorModel(lut);
-         } else {
-            hyperImage_.getProcessor().setColorModel(lut);
-         }
-         updateAndDraw();
-         channelSettings_[channel].color = color;
-         channelSettings_[channel].gamma = gamma;
+      // Note: both hyperImage_ and channelSettings_ can be null when this function is called
+      // null pointer exception will ensue!
+      LUT lut = ImageUtils.makeLUT(color, gamma, 8);
+      if (hyperImage_.isComposite()) {
+         CompositeImage ci = (CompositeImage) hyperImage_;
+         setChannelWithoutUpdate(channel + 1);
+         ci.setChannelColorModel(lut);
+      } else {
+         hyperImage_.getProcessor().setColorModel(lut);
+      }
+      updateAndDraw();
+
+      channelSettings_[channel].color = color;
+      channelSettings_[channel].gamma = gamma;
    }
 
    public void setChannelDisplayRange(int channel, int min, int max) {
@@ -480,7 +492,9 @@ public class MMVirtualAcquisitionDisplay {
    }
 
    private int getCurrentFlatIndex() {
-      return hyperImage_.getCurrentSlice();
+      if (hyperImage_ != null)
+         return hyperImage_.getCurrentSlice();
+      return 0;
    }
 
    public int getChannels() {
@@ -637,7 +651,10 @@ public class MMVirtualAcquisitionDisplay {
 
    private void writeChannelSettingsToCache(int channelIndex) {
       try {
-         JSONObject jsonSetting = imageCache_.getDisplaySettings().getJSONArray("Channels").getJSONObject(channelIndex);
+         JSONObject jsonSetting = imageCache_.
+                 getDisplaySettings().
+                 getJSONArray("Channels").
+                 getJSONObject(channelIndex);
          ChannelDisplaySettings setting = channelSettings_[channelIndex];
          jsonSetting.put("Color", setting.color.getRGB());
          jsonSetting.put("Gamma", setting.gamma);
@@ -664,5 +681,5 @@ public class MMVirtualAcquisitionDisplay {
    String getImageComment() {
       return imageCache_.getImageComment(getCurrentMetadata());
    }
- 
+
 }

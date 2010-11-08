@@ -7,6 +7,8 @@ package org.micromanager.utils;
 
 import ij.ImagePlus;
 import java.awt.Color;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.UUID;
 import mmcorej.Configuration;
@@ -21,6 +23,9 @@ import org.json.JSONObject;
  * @author arthur
  */
 public class MDUtils {
+   private final static SimpleDateFormat iso8601modified_ =
+           new SimpleDateFormat("yyyy-MM-dd E HH:mm:ss Z");
+
    public static JSONObject copy(JSONObject map) {
       try {
          return new JSONObject(map.toString());
@@ -314,6 +319,14 @@ public class MDUtils {
          theArray = new JSONArray(obj.getString(key));
       }
       return theArray;
+   }
+
+   public static String getTime(Date time) {
+      return iso8601modified_.format(time);
+   }
+
+   public static String getCurrentTime() {
+      return getTime(new Date());
    }
 
 }
