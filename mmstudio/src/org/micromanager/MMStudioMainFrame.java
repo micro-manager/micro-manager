@@ -2480,12 +2480,12 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       public boolean running_ = false;
       private boolean cancelled_ = false;
 
-      public boolean isRunning() {
+      public synchronized boolean isRunning() {
          return running_;
       }
 
       @Override
-      public boolean cancel() {
+      public synchronized boolean cancel() {
          running_ = false;
          return super.cancel();
       }
