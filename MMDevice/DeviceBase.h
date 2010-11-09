@@ -1055,12 +1055,16 @@ public:
 
    virtual int InsertImage()
    {
-      int ret = GetCoreCallback()->InsertImage(this, GetImageBuffer(), GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel());
+      char label[MM::MaxStrLength];
+      this->GetLabel(label);
+      Metadata md;
+      md.put("Camera", label);
+      int ret = GetCoreCallback()->InsertImage(this, GetImageBuffer(), GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel(), &md);
       if (!stopOnOverflow_ && ret == DEVICE_BUFFER_OVERFLOW)
       {
          // do not stop on overflow - just reset the buffer
          GetCoreCallback()->ClearImageBuffer(this);
-         return GetCoreCallback()->InsertImage(this, GetImageBuffer(), GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel());
+         return GetCoreCallback()->InsertImage(this, GetImageBuffer(), GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel(), &md);
       } else
          return ret;
    }

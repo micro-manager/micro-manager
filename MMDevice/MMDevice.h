@@ -43,6 +43,7 @@
 
 #include "MMDeviceConstants.h"
 #include "DeviceUtils.h"
+#include "ImageMetadata.h"
 #include <string>
 #include <cstring>
 #include <climits>
@@ -60,12 +61,7 @@
 
 #define HDEVMODULE void*
 
-class Metadata;
 class ImgBuffer;
-
-
-
-
 
 
 
