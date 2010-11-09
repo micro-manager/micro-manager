@@ -146,6 +146,7 @@ MMJ_.jar:  \
 	$(srcdir)/src/org/micromanager/utils/JavaUtils.java \
 	$(srcdir)/src/org/micromanager/utils/LUTDialog.java \
 	$(srcdir)/src/org/micromanager/utils/LargeMessageDlg.java \
+	$(srcdir)/src/org/micromanager/utils/MDUtils.java \
 	$(srcdir)/src/org/micromanager/utils/MMAutofocusException.java \
 	$(srcdir)/src/org/micromanager/utils/MMDialog.java \
 	$(srcdir)/src/org/micromanager/utils/MMException.java \

@@ -38,36 +38,52 @@ public class MDUtils {
       return map.getInt("PositionIndex");
    }
 
+   public static void setPositionIndex(JSONObject map, int positionIndex) throws Exception {
+      map.put("PositionIndex", positionIndex);
+   }
+
    public static int getWidth(JSONObject map) throws Exception {
       return map.getInt("Width");
-   }
-
-   public static int getHeight(JSONObject map) throws Exception {
-      return map.getInt("Height");
-   }
-
-   public static int getBinning(JSONObject map) throws Exception {
-      return map.getInt("Camera-Binning");
    }
 
    public static void setWidth(JSONObject map, int width) throws Exception {
       map.put("Width", width);
    }
 
+   public static int getHeight(JSONObject map) throws Exception {
+      return map.getInt("Height");
+   }
+
    public static void setHeight(JSONObject map, int height) throws Exception {
       map.put("Height", height);
+   }
+
+   public static int getBinning(JSONObject map) throws Exception {
+      return map.getInt("Camera-Binning");
    }
 
    public static int getSliceIndex(JSONObject map) throws Exception {
       return map.getInt("Slice");
    }
 
+   public static void setSliceIndex(JSONObject map, int sliceIndex) throws Exception {
+      map.put("Slice", sliceIndex);
+   }
+
    public static int getChannelIndex(JSONObject map) throws Exception {
       return map.getInt("ChannelIndex");
    }
 
+   public static void setChannelIndex(JSONObject map, int channelIndex) throws Exception {
+      map.put("ChannelIndex", channelIndex);
+   }
+
    public static int getFrameIndex(JSONObject map) throws Exception {
       return map.getInt("Frame");
+   }
+
+   public static void setFrameIndex(JSONObject map, int frameIndex) throws Exception {
+      map.put("Frame", frameIndex);
    }
 
    public static String getPositionName(JSONObject map) throws Exception {
