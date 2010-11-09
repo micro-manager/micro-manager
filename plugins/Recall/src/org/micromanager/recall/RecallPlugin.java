@@ -1,10 +1,13 @@
 package org.micromanager.recall;
 
 import mmcorej.CMMCore;
+import mmcorej.TaggedImage;
 import org.micromanager.api.MMPlugin;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.MMStudioMainFrame;
+import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
+import org.micromanager.utils.ReportingUtils;
 
 
 
@@ -31,7 +34,7 @@ public class RecallPlugin implements MMPlugin {
          int remaining = core_.getRemainingImageCount();
 
          if (remaining < 1) {
-            gui_.message ("No images in buffer");
+            ReportingUtils.showMessage("There are no Images in the Micro-Manage buffer");
             return;
          }
 
@@ -41,18 +44,37 @@ public class RecallPlugin implements MMPlugin {
          long height = core_.getImageHeight();
          long depth = core_.getBytesPerPixel();
 
+
          gui_.initializeAcquisition(ig, (int) width,(int) height, (int) depth);
 
          try {
-            gui_.addImage(ig, core_.popNextImage(), 0, 0, 0);
-            gui_.setContrastBasedOnFrame(ig, 0, 0);
+            String binning = core_.getProperty(core_.getCameraDevice(), "Binning");
+            int bin = Integer.parseInt(binning);
+            for (int i=0; i < remaining; i++) {
+               TaggedImage tImg = core_.popNextTaggedImage();
 
-            for (int i=0; i < remaining-1; i++) {
-               gui_.addImage(ig, core_.popNextImage(), i, 0, 0);
+               tImg.tags.put("Time", MDUtils.getCurrentTime());
+               tImg.tags.put("Frame", i);
+               tImg.tags.put("ChannelIndex", 0);
+               tImg.tags.put("Slice", 0);
+               tImg.tags.put("PositionIndex", 0);
+               tImg.tags.put("Width", width);
+               tImg.tags.put("Height", height);
+               MDUtils.setBinning(tImg.tags, bin);
+
+               if (depth == 1)
+                  tImg.tags.put("PixelType", "GRAY8");
+               else if (depth == 2)
+                  tImg.tags.put("PixelType", "GRAY16");
+               gui_.addImage(ig, tImg);
+               if (i == 0) {
+                  gui_.setContrastBasedOnFrame(ig, 0, 0);
+               }
             }
          } catch (Exception ex){
          }
       } catch (MMScriptException e) {
+         ReportingUtils.showError(e);
       }
 
    }

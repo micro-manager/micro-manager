@@ -56,10 +56,11 @@ all: MMTracker_.jar PixelCalibrator.jar RecallPlugin.jar StageControl.jar MultiC
 install: 
 	test -d $(IJPATH)/mmplugins || mkdir $(IJPATH)/mmplugins
 	cp MMTracker_.jar $(IJPATH)/mmplugins
-	cp PixelCalibrator.jar $(IJPATH)/mmplugins
+	## cp PixelCalibrator.jar $(IJPATH)/mmplugins
 	## cp SlideExplorer.jar $(IJPATH)/mmplugins
 	cp RecallPlugin.jar $(IJPATH)/mmplugins
 	cp StageControl.jar $(IJPATH)/mmplugins
+	cp MultiCamera.jar $(IJPATH)/mmplugins
 	
 clean:
 	test -f MMTracker_.jar && rm MMTracker_.jar || echo "MMTracker_.jar not found"
