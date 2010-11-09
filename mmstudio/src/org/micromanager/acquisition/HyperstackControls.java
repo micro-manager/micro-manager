@@ -19,6 +19,7 @@ import java.text.ParseException;
 import java.util.Timer;
 import java.util.TimerTask;
 import mmcorej.TaggedImage;
+import org.json.JSONException;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
@@ -233,9 +234,13 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
             } catch (Exception e) {
                //Oh well...
             }
-            
-            String time = NumberUtils.doubleToDisplayString(taggedImg.tags.getDouble("ElapsedTime-ms"));
-            status += time + " s";
+
+            try {
+               String time = NumberUtils.doubleToDisplayString(taggedImg.tags.getDouble("ElapsedTime-ms"));
+               status += time + " s";
+            } catch (JSONException ex) {
+               ReportingUtils.logError("MetaData did not contain ElapsedTime-ms field");
+            }
             
             String zPosition;
             try {

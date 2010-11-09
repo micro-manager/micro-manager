@@ -8,6 +8,7 @@ import ij.ImagePlus;
 import ij.process.ImageProcessor;
 import java.awt.image.ColorModel;
 import mmcorej.TaggedImage;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.utils.ImageUtils;
@@ -60,7 +61,7 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
          TaggedImage image = getTaggedImage(flatIndex);
          if (image == null)
             pixels = ImageUtils.makeProcessor(type_, width_, height_).getPixels();
-         if (MDUtils.isGRAY(image)) {
+         else if(MDUtils.isGRAY(image)) {
             pixels = image.pix;
          } else if (MDUtils.isRGB32(image)) {
             pixels = ImageUtils.singleChannelFromRGB32((byte []) image.pix, (flatIndex-1) % 3);
@@ -69,11 +70,15 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
          }
 
          if (image != null) {
-            int binning = MDUtils.getBinning(image.tags);
-            if (binning > 1) {
-               ImageProcessor proc = ImageUtils.makeProcessor(type_,
-                       width_/binning, height_/binning, image.pix);
-               pixels = proc.resize(width_, height_).getPixels();
+            try {
+               int binning = MDUtils.getBinning(image.tags);
+               if (binning > 1) {
+                  ImageProcessor proc = ImageUtils.makeProcessor(type_,
+                          width_/binning, height_/binning, image.pix);
+                  pixels = proc.resize(width_, height_).getPixels();
+               }
+            } catch (JSONException ex) {
+               ReportingUtils.logError("Tagged image did not contain Binning Info");
             }
          }
 
