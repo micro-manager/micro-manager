@@ -3612,7 +3612,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
 
    public void openAcquisition(String name, String rootDir) throws MMScriptException {
-      acqMgr_.openAcquisition(name, rootDir);
+      openAcquisition(name, rootDir, true);
    }
 
    public void openAcquisition(String name, String rootDir, boolean show) throws MMScriptException {
@@ -3621,9 +3621,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    public void openAcquisition(String name, String rootDir, int nrFrames,
          int nrChannels, int nrSlices, int nrPositions) throws MMScriptException {
-      acqMgr_.openAcquisition(name, rootDir);
-      AcquisitionInterface acq = acqMgr_.getAcquisition(name);
-      acq.setDimensions(nrFrames, nrChannels, nrSlices, nrPositions);
+      this.openAcquisition(name, rootDir, nrFrames, nrChannels, nrSlices,
+              nrPositions, true, false);
    }
 
    public void openAcquisition(String name, String rootDir, int nrFrames,
@@ -3728,6 +3727,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          if (core_.isSequenceRunning()) {
             img = core_.getLastImage();
             core_.getLastImageMD(0, 0, md);
+            //img = core_.getLastTaggedImage();
          } else {
             core_.snapImage();
             img = core_.getImage();

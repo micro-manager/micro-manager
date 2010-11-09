@@ -30,6 +30,7 @@ public class MMAcquisitionV2 implements AcquisitionInterface {
    protected int height_;
    protected int depth_ = 1;
    private boolean initialized_ = false;
+   private long startTimeMs_;
    private boolean show_ = true;
    private boolean diskCached_ = false;
 
@@ -161,6 +162,8 @@ public class MMAcquisitionV2 implements AcquisitionInterface {
             tags.put("PixelType", "GRAY8");
          else if (depth_ == 2)
             tags.put("PixelType", "GRAY16");
+         tags.put("StartTime", MDUtils.getCurrentTime());
+         startTimeMs_ = System.currentTimeMillis();
       } catch (JSONException ex) {
          Logger.getLogger(MMAcquisitionV2.class.getName()).log(Level.SEVERE, null, ex);
       }
@@ -219,12 +222,40 @@ public class MMAcquisitionV2 implements AcquisitionInterface {
          tags.put("PositionIndex", 0);
          tags.put("Width", width_);
          tags.put("Height", height_);
+         long elapsedTimeMillis = System.currentTimeMillis() - startTimeMs_;
+         tags.put("ElapsedTime-ms", elapsedTimeMillis);
          if (depth_ == 1)
             tags.put("PixelType", "GRAY8");
          else if (depth_ == 2)
             tags.put("PixelType", "GRAY16");
          TaggedImage tg = new TaggedImage(pixels,tags);
          insertImage(tg);
+      } catch (JSONException e) {
+         throw new MMScriptException(e);
+      }
+   }
+
+   public void insertTaggedImage(TaggedImage taggedImg, int frame, int channel, int slice)
+           throws MMScriptException {
+      if (!initialized_)
+         throw new MMScriptException("Acquisition data must be initialized before inserting images");
+
+      // update acq data
+      try {
+         JSONObject tags = taggedImg.tags;
+         tags.put("Time", MDUtils.getCurrentTime());
+         tags.put("Frame", frame);
+         tags.put("ChannelIndex", channel);
+         tags.put("Channel", channelNames_[channel]);
+         tags.put("Slice", slice);
+         tags.put("PositionIndex", 0);
+         //tags.put("Width", width_);
+         //tags.put("Height", height_);
+         if (depth_ == 1)
+            tags.put("PixelType", "GRAY8");
+         else if (depth_ == 2)
+            tags.put("PixelType", "GRAY16");
+         insertImage(taggedImg);
       } catch (JSONException e) {
          throw new MMScriptException(e);
       }

@@ -62,6 +62,10 @@ public class MDUtils {
       return map.getInt("Camera-Binning");
    }
 
+   public static void setBinning(JSONObject map, int binning) throws Exception {
+      map.put("Camera-Binning", binning);
+   }
+
    public static int getSliceIndex(JSONObject map) throws Exception {
       return map.getInt("Slice");
    }

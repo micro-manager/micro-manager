@@ -26,8 +26,6 @@ import java.awt.event.ActionEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 
 import java.util.Calendar;
 

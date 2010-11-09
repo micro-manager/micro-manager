@@ -237,7 +237,7 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
 
             try {
                String time = NumberUtils.doubleToDisplayString(taggedImg.tags.getDouble("ElapsedTime-ms"));
-               status += time + " s";
+               status += time + " ms";
             } catch (JSONException ex) {
                ReportingUtils.logError("MetaData did not contain ElapsedTime-ms field");
             }

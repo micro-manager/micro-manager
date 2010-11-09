@@ -57,7 +57,7 @@
                   <Component id="abortButton" alignment="0" max="32767" attributes="1"/>
                   <Component id="pauseAndResumeToggleButton" alignment="0" max="32767" attributes="1"/>
               </Group>
-              <EmptySpace pref="20" max="32767" attributes="0"/>
+              <EmptySpace max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
