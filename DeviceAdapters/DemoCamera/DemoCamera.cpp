@@ -295,6 +295,7 @@ CDemoCamera::CDemoCamera() :
    InitializeDefaultErrorMessages();
    readoutStartTime_ = GetCurrentMMTime();
    pDemoResourceLock_ = new MMThreadLock();
+   thd_ = new MySequenceThread(this);
 }
 
 /**
@@ -311,7 +312,9 @@ CDemoCamera::~CDemoCamera()
    pDemoWorkerThread_->Stop();
    CDeviceUtils::SleepMs(30);
    delete pDemoWorkerThread_;
-#endif
+# endif
+   StopSequenceAcquisition();
+   delete thd_;
    delete pDemoResourceLock_;
 }
 
@@ -793,6 +796,198 @@ int CDemoCamera::SetAllowedBinning()
       binValues.push_back("8");
    LogMessage("Setting Allowed Binning settings", true);
    return SetAllowedValues(MM::g_Keyword_Binning, binValues);
+}
+
+
+/**
+ * Required by the MM::Camera API
+ * Please implement this yourself and do not rely on the base class implementation
+ */
+int CDemoCamera::StartSequenceAcquisition(double interval) {
+   return StartSequenceAcquisition(LONG_MAX, interval, false);            
+}
+
+/**                                                                       
+* Stop and wait for the thread finished                                   
+*/                                                                        
+int CDemoCamera::StopSequenceAcquisition()                                     
+{                                                                         
+   if (!thd_->IsStopped()) {
+      thd_->Stop();                                                       
+      thd_->wait();                                                       
+   }                                                                      
+                                                                          
+   return DEVICE_OK;                                                      
+} 
+
+/**
+* Default implementation.
+*/
+int CDemoCamera::StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow)
+{
+   if (IsCapturing())
+      return DEVICE_CAMERA_BUSY_ACQUIRING;
+
+   int ret = GetCoreCallback()->PrepareForAcq(this);
+   if (ret != DEVICE_OK)
+      return ret;
+   thd_->Start(numImages,interval_ms);
+   stopOnOverflow_ = stopOnOverflow;
+   return DEVICE_OK;
+}
+
+int CDemoCamera::InsertImage()
+{
+   char label[MM::MaxStrLength];
+   this->GetLabel(label);
+   Metadata md;
+   md.put("Camera", label);
+   int ret = GetCoreCallback()->InsertImage(this, GetImageBuffer(), GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel(), &md);
+   if (!stopOnOverflow_ && ret == DEVICE_BUFFER_OVERFLOW)
+   {
+      // do not stop on overflow - just reset the buffer
+      GetCoreCallback()->ClearImageBuffer(this);
+      return GetCoreCallback()->InsertImage(this, GetImageBuffer(), GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel(), &md);
+   } else
+      return ret;
+}
+
+//Do actual capturing
+//Called from inside the thread cicle 
+int CDemoCamera::ThreadRun (void)
+{
+   int ret=DEVICE_ERR;
+   ret = SnapImage();
+   if (ret != DEVICE_OK)
+   {
+      return ret;
+   }
+   ret = InsertImage();
+   if (ret != DEVICE_OK)
+   {
+      return ret;
+   }
+   return ret;
+};
+
+bool CDemoCamera::IsCapturing() {
+   return !thd_->IsStopped();
+}
+
+/*
+class CaptureRestartHelper
+{
+   bool restart_;
+   CCameraBase* pCam_;
+public:
+   CaptureRestartHelper(CCameraBase* pCam)
+      :pCam_(pCam)
+   {
+      restart_=pCam_->IsCapturing();
+   }
+   operator bool()
+   {
+      return restart_;
+   }
+};
+*/
+
+// called from the thread function before exit 
+void CDemoCamera::OnThreadExiting() throw()
+{
+   try
+   {
+      LogMessage(g_Msg_SEQUENCE_ACQUISITION_THREAD_EXITING);
+      GetCoreCallback()?GetCoreCallback()->AcqFinished(this,0):DEVICE_OK;
+   }
+
+   catch( CMMError& e){
+      std::ostringstream oss;
+      oss << g_Msg_EXCEPTION_IN_ON_THREAD_EXITING << " " << e.getMsg() << " " << e.getCode();
+      LogMessage(oss.str().c_str(), false);
+   }
+   catch(...)
+   {
+      LogMessage(g_Msg_EXCEPTION_IN_ON_THREAD_EXITING, false);
+   }
+}
+
+MySequenceThread::MySequenceThread(CDemoCamera* pCam)
+   :intervalMs_(default_intervalMS)
+   ,numImages_(default_numImages)
+   ,imageCounter_(0)
+   ,stop_(true)
+   ,suspend_(false)
+   ,camera_(pCam)
+   ,startTime_(0)
+   ,actualDuration_(0)
+   ,lastFrameTime_(0)
+{};
+
+MySequenceThread::~MySequenceThread() {};
+
+void MySequenceThread::Stop() {
+   MMThreadGuard(this->stopLock_);
+   stop_=true;
+}
+
+void MySequenceThread::Start(long numImages, double intervalMs)
+{
+   MMThreadGuard(this->stopLock_);
+   MMThreadGuard(this->suspendLock_);
+   numImages_=numImages;
+   intervalMs_=intervalMs;
+   imageCounter_=0;
+   stop_ = false;
+   suspend_=false;
+   activate();
+   actualDuration_ = 0;
+   startTime_= camera_->GetCurrentMMTime();
+   lastFrameTime_ = 0;
+}
+
+bool MySequenceThread::IsStopped(){
+   MMThreadGuard(this->stopLock_);
+   return stop_;
+}
+
+void MySequenceThread::Suspend() {
+   MMThreadGuard(this->suspendLock_);
+   suspend_ = true;
+}
+
+bool MySequenceThread::IsSuspended() {
+   MMThreadGuard(this->suspendLock_);
+   return suspend_;
+}
+
+void MySequenceThread::Resume() {
+   MMThreadGuard(this->suspendLock_);
+   suspend_ = false;
+}
+
+int MySequenceThread::svc(void) throw()
+{
+   int ret=DEVICE_ERR;
+   try 
+   {
+      do
+      {  
+         ret=camera_->ThreadRun();
+      } while (DEVICE_OK == ret && !IsStopped() && imageCounter_++ < numImages_-1);
+      if (IsStopped())
+         camera_->LogMessage("SeqAcquisition interrupted by the user\n");
+
+   }catch( CMMError& e){
+      camera_->LogMessage(e.getMsg(), false);
+      ret = e.getCode();
+   }catch(...){
+      camera_->LogMessage(g_Msg_EXCEPTION_IN_THREAD, false);
+   }
+   stop_=true;
+   actualDuration_ = camera_->GetCurrentMMTime() - startTime_;
+   camera_->OnThreadExiting();
+   return ret;
 }
 
 

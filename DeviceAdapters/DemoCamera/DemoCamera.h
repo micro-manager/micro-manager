@@ -48,6 +48,7 @@
 // Simulation of the Camera device
 //////////////////////////////////////////////////////////////////////////////
 class DemoWorkerThread;
+class MySequenceThread;
 class CDemoCamera : public CCameraBase<CDemoCamera>  
 {
 public:
@@ -76,6 +77,13 @@ public:
    int GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize); 
    int ClearROI();
    int PrepareSequenceAcqusition() {return DEVICE_OK;}
+   int StartSequenceAcquisition(double interval);
+   int StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow);
+   int StopSequenceAcquisition();
+   int InsertImage();
+   int ThreadRun();
+   bool IsCapturing();
+   void OnThreadExiting() throw(); 
    double GetNominalPixelSizeUm() const {return nominalPixelSizeUm_;}
    double GetPixelSizeUm() const {return nominalPixelSizeUm_ * GetBinning();}
    int GetBinning() const;
@@ -108,6 +116,8 @@ private:
    static const double nominalPixelSizeUm_;
 
    ImgBuffer img_;
+   bool busy_;
+   bool stopOnOverFlow_;
    bool initialized_;
    double readoutUs_;
    MM::MMTime readoutStartTime_;
@@ -129,8 +139,43 @@ private:
    void TestResourceLocking(const bool);
    DemoWorkerThread* pDemoWorkerThread_;
    bool simulatePropertyRefresh_;
+   friend class MySequenceThread;
+   MySequenceThread * thd_;
 };
 
+class MySequenceThread : public MMDeviceThreadBase
+{
+   friend class CDemoCamera;
+   enum { default_numImages=1, default_intervalMS = 100 };
+   public:
+      MySequenceThread(CDemoCamera* pCam);
+      ~MySequenceThread();
+      void Stop();
+      void Start(long numImages, double intervalMs);
+      bool IsStopped();
+      void Suspend();
+      bool IsSuspended();
+      void Resume();
+      double GetIntervalMs(){return intervalMs_;}                               
+      void SetLength(long images) {numImages_ = images;}                        
+      long GetLength() const {return numImages_;}
+      long GetImageCounter(){return imageCounter_;}                             
+      MM::MMTime GetStartTime(){return startTime_;}                             
+      MM::MMTime GetActualDuration(){return actualDuration_;}
+   private:                                                                     
+      int svc(void) throw();
+      CDemoCamera* camera_;                                                     
+      bool stop_;                                                               
+      bool suspend_;                                                            
+      long numImages_;                                                          
+      long imageCounter_;                                                       
+      double intervalMs_;                                                       
+      MM::MMTime startTime_;                                                    
+      MM::MMTime actualDuration_;                                               
+      MM::MMTime lastFrameTime_;                                                
+      MMThreadLock stopLock_;                                                   
+      MMThreadLock suspendLock_;                                                
+}; 
 
 //////////////////////////////////////////////////////////////////////////////
 // CDemoFilterWheel class
