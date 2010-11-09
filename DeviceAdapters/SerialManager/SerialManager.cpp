@@ -71,7 +71,6 @@ SerialManager g_serialManager;
 
 std::vector<std::string> g_BlackListedPorts;
 std::vector<std::string> g_PortList;
-std::vector<std::string> g_HealthyPortList;
 time_t g_PortListLastUpdated = 0;
 
 const char* g_StopBits_1 = "1";
@@ -158,10 +157,11 @@ void SerialPortLister::ListPorts(std::vector<std::string> &availablePorts)
 {
 #ifdef WIN32
 
+   availablePorts.clear();
    std::auto_ptr<B100000> allDeviceNames (new B100000());
 
    // on Windows the serial ports are devices that begin with "COM"
-   int ret = QueryDosDevice( 0, allDeviceNames->buffer , 100000);
+   int ret = QueryDosDevice( 0, allDeviceNames->buffer, MaxBuf);
    if( 0!= ret)
    {
       for( int ii = 0; ii < ret; ++ii)
@@ -278,66 +278,26 @@ void SerialPortLister::ListPorts(std::vector<std::string> &availablePorts)
  * Caches this list in g_PortList and only queries hardware when this cache is absent or stale
  */
 MODULE_API void InitializeModuleData()
-{
-   // Determine whether portList is fresh enough (i.e. younger than 150 seconds):
+{	                                                                                                                                                          // Determine whether portList is fresh enough (i.e. younger than 15 seconds):
    time_t seconds = time(NULL);
-   time_t timeout = 150;
+   time_t timeout = 15;
    bool stale = seconds - g_PortListLastUpdated > timeout ? true : false;
 
    if (g_PortList.size() == 0 || stale)
    {
       SerialPortLister::ListPorts(g_PortList); 
       g_PortListLastUpdated = time(NULL);
-
-      // regenerate list of healthy ports...
-      ::g_HealthyPortList.clear();
-      // first open all the ports
-      std::vector<std::string>::iterator it = g_PortList.begin();
-      std::vector<SerialPort*> createdPorts;
-      while (it < g_PortList.end()) 
-      {
-         try
-         {
-            SerialPort* pS = dynamic_cast<SerialPort*>(g_serialManager.CreatePort(it->c_str()));
-            if( 0 != pS)
-            {
-               createdPorts.push_back(pS);
-               if( DEVICE_OK == pS->Initialize())
-               {
-                  ::g_HealthyPortList.push_back(*it);
-               }
-            }
-         }
-         catch(...)
-         {
-         }
-         ++it;
-      }
-
-      // now shut down the ports
-      std::vector<SerialPort*>::iterator cpit = createdPorts.begin();
-      while (cpit < createdPorts.end()) 
-      {
-         try  
-         {
-            if( (*cpit)->Initialized())
-            {
-              (*cpit)->Shutdown();
-            }
-            g_serialManager.DestroyPort(*cpit);
-         }
-         catch(...)
-         {
-         }
-         ++cpit;
-      }      
    }
 
-   for( std::vector<std::string>::iterator sit = ::g_HealthyPortList.begin(); sit != ::g_HealthyPortList.end(); ++sit)
-   {
-      AddAvailableDeviceName((*sit).c_str(), "Serial communication port");
+   std::vector<std::string>::iterator it = g_PortList.begin();
+   while (it < g_PortList.end()) {
+      /*  work-around for spurious duplicate device names on OS X
+      if( std::string::npos == (*it).find("KeySerial"))
+      */
+           AddAvailableDeviceName((*it).c_str(), "Serial communication port");
+      it++;
    }
-    
+
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
