@@ -1,28 +1,39 @@
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.micromanager.utils.MDUtils;
 
 String c1 = "Camera";
-String c2 = "DCam2";
+String c2 = "DCam";
+String acq = "2-Live";
+int nrFrames = 10;
 
 gui.closeAllAcquisitions();
-gui.openAcquisition("2-Live", "/Users/nico/AcquisitionData/2-Live", 1, 2, 1, true);
-gui.setChannelColor("2-Live", 0, Color.RED);
-gui.setChannelColor("2-Live", 1, Color.GREEN);
+gui.openAcquisition(acq, "/Users/nico/AcquisitionData/2-Live", 1, 2, 1, true);
+gui.setChannelColor(acq, 0, Color.RED);
+gui.setChannelColor(acq, 1, Color.GREEN);
 int w = mmc.getImageWidth();
 int h = mmc.getImageHeight();
 int d = mmc.getBytesPerPixel();
-gui.initializeAcquisition("2-Live", w, h, d);
-mmc.prepareSequenceAcquisition(c1);
-mmc.prepareSequenceAcquisition(c2);
-mmc.startSequenceAcquisition(c1, 200, 0, false);
-mmc.startSequenceAcquisition(c2, 200, 0, false);
+gui.initializeAcquisition(acq, w, h, d);
+// delet previous content of circulat buffer
+mmc.initializeCircularBuffer();
+//mmc.prepareSequenceAcquisition(c1);
+//mmc.prepareSequenceAcquisition(c2);
+mmc.startSequenceAcquisition(c1, nrFrames, 0, false);
+mmc.startSequenceAcquisition(c2, nrFrames, 0, false);
 while (mmc.isSequenceRunning() || mmc.getRemainingImageCount() > 0) {
-	if (mmc.getRemainingImageCount() > 0)
+	if (mmc.getRemainingImageCount() > 0) {
 		img = mmc.popNextTaggedImage();
-	JSONObject md = img.tags;
-	cName = md.get("Camera");
-	if (c1.equals(cName))
-		gui.addImage("2-Live", img.pix, 0, 0, 0);
-	else
-		gui.addImage("2-Live", img.pix, 0, 1, 0);
+		JSONObject md = img.tags;
+		MDUtils.setFrameIndex(md, 0);
+		MDUtils.setSliceIndex(md, 0);
+		MDUtils.setPositionIndex(md, 0);
+		cName = md.get("Camera");
+		if (c1.equals(cName))
+			MDUtils.setChannelIndex(md, 0);
+		else
+			MDUtils.setChannelIndex(md, 1);
+		gui.addImage(acq, img);
+
+	}
 }
