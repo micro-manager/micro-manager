@@ -35,13 +35,17 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.InputStream;
 import java.io.BufferedReader;
-import java.io.DataOutputStream;
-import java.io.FileInputStream;
-import java.net.HttpURLConnection;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.UnknownHostException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.prefs.Preferences;
 
 import javax.swing.JButton;
@@ -58,6 +62,7 @@ import javax.swing.border.LineBorder;
 import mmcorej.CMMCore;
 
 import org.micromanager.utils.ReportingUtils;
+import org.micromanager.utils.HttpUtils;
 
 /**
  * Configuration Wizard main panel.
@@ -114,7 +119,7 @@ public class ConfiguratorDlg extends JDialog {
         sendCheck_ = new JCheckBox();
         sendCheck_.setBounds(5, 462, 275, 23);
         sendCheck_.setFont(new Font("", Font.PLAIN, 10));
-        sendCheck_.setSelected(true);
+        sendCheck_.setSelected(false);
         sendConfig_ = false;
         sendCheck_.addActionListener(new ActionListener() {
 
@@ -124,7 +129,7 @@ public class ConfiguratorDlg extends JDialog {
         });
         sendCheck_.setText("Send configuration to Micro-manager.org");
 
-        //getContentPane().add(sendCheck_);
+        getContentPane().add(sendCheck_);
 
 
         final JScrollPane scrollPane = new JScrollPane();
@@ -203,74 +208,6 @@ public class ConfiguratorDlg extends JDialog {
         }
         setPage(0);
 
-    }
-
-    public String BoundaryString() {
-        String possibleCharacters = "+-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-        int length = 36;
-        StringBuffer workingBuffer = new StringBuffer(length);
-        String preAmble = "--Micro-ManagerReporter";
-        workingBuffer.append(preAmble);
-        length -= preAmble.length();
-        for (int i = 0; i < length; i++) {
-            int ioff = (int) (0.5 + Math.random() * possibleCharacters.length());
-            workingBuffer.append(possibleCharacters.charAt(ioff));
-        }
-
-        return workingBuffer.toString();
-    }
-
-    public void upload(URL url, List<File> files) throws Exception {
-        final String Boundary = new String(BoundaryString());
-        HttpURLConnection anURLConnection = (HttpURLConnection) url.openConnection();
-        anURLConnection.setDoOutput(true);
-        anURLConnection.setDoInput(true);
-        anURLConnection.setUseCaches(false);
-        anURLConnection.setChunkedStreamingMode(1024);
-        anURLConnection.setRequestMethod("POST");
-        anURLConnection.setRequestProperty("Connection", "keep-alive");
-        anURLConnection.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + Boundary);
-
-        DataOutputStream httpOut = new DataOutputStream(anURLConnection.getOutputStream());
-
-        for (int i = 0; i < 1 /*files.size()*/; i++) {
-            File f = files.get(i);
-            String str = "--" + Boundary + "\r\n"
-                    + "Content-Disposition: form-data; name=\"file\"; filename=\"" + f.getName() + "\"\r\n"
-                    //+ "Content-Type: application/octet-stream\r\n"
-                    + "Content-Type: text/plain\r\n\r\n";
-
-            httpOut.write(str.getBytes());
-
-            FileInputStream uploadFileReader = new FileInputStream(f);
-            int numBytesToRead = 1024;
-            int availableBytesToRead;
-            while ((availableBytesToRead = uploadFileReader.available()) > 0) {
-                byte[] bufferBytesRead;
-                bufferBytesRead = availableBytesToRead >= numBytesToRead ? new byte[numBytesToRead]
-                        : new byte[availableBytesToRead];
-                uploadFileReader.read(bufferBytesRead);
-                httpOut.write(bufferBytesRead);
-                httpOut.flush();
-            }
-
-        }
-
-
-        httpOut.write(("\n\r\n--" + Boundary + "\r\n").getBytes());
-        httpOut.write(("Content-Disposition: form-data; name=\"submit\"\r\n\r\nSubmit\r\n--" + Boundary + "--\r\n").getBytes());
-        httpOut.flush();
-        httpOut.close();
-
-        // read & parse the response
-        InputStream is = anURLConnection.getInputStream();
-        StringBuilder response = new StringBuilder();
-        byte[] respBuffer = new byte[4096];
-        while (is.read(respBuffer) >= 0) {
-            response.append(new String(respBuffer).trim());
-        }
-        is.close();
-        System.out.println(response.toString());
     }
 
     private void setPage(int i) {
@@ -366,26 +303,86 @@ public class ConfiguratorDlg extends JDialog {
         }
         if (sendConfig_) {
             try {
+                HttpUtils httpu = new HttpUtils();
                 List<File> list = new ArrayList<File>();
-                list.add(new File("/x.cfg"));
-                list.add(new File("/x2.cfg"));
-                URL url = new URL("http://localhost/~karlhoover/upload_file.php");
-                upload(url, list);
+                File conff = new File(this.getFileName());
 
+                // contruct a filename for the configuration file which is extremely
+                // likely to be unique as follows:
+                // yyyyMMddHHmmss + timezone + ip address + host name + mm user + file name
+                String qualifiedConfigFileName = "UserConfiguration_";
+                try {
+                    SimpleDateFormat df = new SimpleDateFormat("yyyyMMdd");
+                    qualifiedConfigFileName += df.format(new Date());
+                    String shortTZName = TimeZone.getDefault().getDisplayName(false, TimeZone.SHORT);
+                    qualifiedConfigFileName += shortTZName;
+                    qualifiedConfigFileName += "_";
+                    try {
 
-            } catch (java.net.UnknownHostException e) {
-                ReportingUtils.logError(e, "config posting");
-            } catch (MalformedURLException e) {
-                ReportingUtils.logError(e);
+                        qualifiedConfigFileName += InetAddress.getLocalHost().getHostAddress();
+                        qualifiedConfigFileName += "_";
+                        qualifiedConfigFileName += InetAddress.getLocalHost().getHostName();
+                        qualifiedConfigFileName += "_";
+
+                    } catch (UnknownHostException e) {
+                    }
+                    qualifiedConfigFileName += core_.getUserId();
+                    qualifiedConfigFileName += "_";
+                } catch (Throwable t) {
+                }
+
+                qualifiedConfigFileName += conff.getName();
+                // try ensure valid and convenient UNIX file name
+                qualifiedConfigFileName.replace(' ', '_');
+                qualifiedConfigFileName.replace('*', '_');
+                qualifiedConfigFileName.replace('|', '_');
+                qualifiedConfigFileName.replace('>', '_');
+                qualifiedConfigFileName.replace('<', '_');
+                qualifiedConfigFileName.replace('(', '_');
+                qualifiedConfigFileName.replace(')', '_');
+                File fileToSend = new File(qualifiedConfigFileName);
+
+                FileReader reader = new FileReader(conff);
+                FileWriter writer = new FileWriter(fileToSend);
+                int c;
+                while (-1 != (c = reader.read())) {
+                    writer.write(c);
+                }
+                reader.close();
+                writer.close();
+                try {
+                    // my MacBook for testing...
+                    // "http://udp022507uds.ucsf.edu/~karlhoover/upload_file.php"
+                    // to test locally on OS X put scripts in apache DocumentRoot, for example:
+                    // DocumentRoot "/Library/WebServer/Documents"
+                    // "http://localhost/upload_file.php"
+                    URL url = new URL("http://udp022507uds.ucsf.edu/~karlhoover/upload_file.php");
+
+                    List flist = new ArrayList<File>();
+                    flist.add(fileToSend);
+                    // for each of a colleciton of files to send...
+                    for (Object o0 : flist) {
+                        File f0 = (File)o0;
+                        try {
+                            httpu.upload(url, f0);
+                        } catch (java.net.UnknownHostException e) {
+                            ReportingUtils.logError(e, "config posting");
+
+                        } catch (IOException e) {
+                            ReportingUtils.logError(e);
+                        } catch (SecurityException e) {
+                            ReportingUtils.logError(e, "");
+                        } catch (Exception e) {
+                            ReportingUtils.logError(e);
+                        }
+                    }
+                } catch (MalformedURLException e) {
+                    ReportingUtils.logError(e);
+                }
             } catch (IOException e) {
-                ReportingUtils.logError(e);
-            } catch (SecurityException e) {
-                ReportingUtils.logError(e, "");
-            } catch (Exception e) {
-                ReportingUtils.logError(e);
+                ReportingUtils.showError(e);
             }
         }
-
         dispose();
     }
 
