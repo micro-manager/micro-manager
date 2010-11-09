@@ -2,14 +2,15 @@ package org.micromanager.acquisition;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.json.JSONException;
-import org.micromanager.api.AcquisitionInterface;
-
 import java.awt.Color;
-import mmcorej.TaggedImage;
-import org.json.JSONArray;
 
+import mmcorej.TaggedImage;
+
+import org.json.JSONArray;
 import org.json.JSONObject;
+import org.json.JSONException;
+
+import org.micromanager.api.AcquisitionInterface;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.image5d.Image5D;

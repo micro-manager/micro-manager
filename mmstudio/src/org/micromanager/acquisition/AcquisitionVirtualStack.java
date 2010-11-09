@@ -7,8 +7,6 @@ package org.micromanager.acquisition;
 import ij.ImagePlus;
 import ij.process.ImageProcessor;
 import java.awt.image.ColorModel;
-import java.util.HashMap;
-import java.util.Map;
 import mmcorej.TaggedImage;
 import org.json.JSONObject;
 import org.micromanager.api.TaggedImageStorage;
