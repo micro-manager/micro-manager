@@ -30,11 +30,9 @@
 #include <math.h>
 #include "../../MMDevice/ModuleInterface.h"
 #include "../../MMCore/Error.h"
-//#include <boost/math/constants/constants.hpp>
 #include <sstream>
 #include <algorithm>
 
-//#include "boost/lexical_cast.hpp"
 #include "WriteCompactTiffRGB.h"
 
 
@@ -179,84 +177,6 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 {
    delete pDevice;
 }
-#if 0
-//DemoWorkerThread definition
-
-
-class DemoWorkerThread : public MMDeviceThreadBase
-{
-public:
-   DemoWorkerThread(CDemoCamera* pCamera) : stop_(false), pCamera_(pCamera){ };
-   ~DemoWorkerThread(){};
-   int svc (void);
-   void Stop() {stop_ = true;}
-   void Start() {stop_ = false; activate();}
-private:
-   CDemoCamera* pCamera_;
-   bool stop_;
-   MM::MMTime refreshTime_;
-
-   void LLogMessage( const char*const pM_a, const bool debugOnly_a = false); // log a message to the mm device
-   void LLogMessage( const std::string m_a, const bool debugOnly_a = false); // log a message to the mm device
-};
-
-void DemoWorkerThread::LLogMessage(const std::string message, const bool debugOnly)
-{
-   LLogMessage(message.c_str(), debugOnly);
-}
-
-
-void DemoWorkerThread::LLogMessage(const char* pMessage, const bool debugOnly)
-{
-   if( NULL != pCamera_)
-   {
-      pCamera_->LogMessage(pMessage, debugOnly);
-   }
-}
-
-
-
-int DemoWorkerThread::svc(void)
-{
-   //bool bfalse = false;
-   bool btrue = true;
-
-   refreshTime_ = pCamera_->CurrentTime();
-   // loop in this working thread until the camera is shutdown.
-   do
-   {
-      // in a real adapter we load the vendor's library on such a thread
-      if(stop_)
-      {
-         LLogMessage( "stop request in worker thread", true);
-         wait();
-         break;
-      }
-      if( pCamera_->SimulatePropertyRefresh())
-      {
-         // new values for the test properties
-         MM::MMTime ttime = pCamera_->CurrentTime();
-
-         MM::MMTime   delt = ttime-refreshTime_;
-         if( 5500 < delt.getMsec() )
-         {
-         	for(int ij = 1; ij < 5;++ij)
-            {
-               pCamera_->RefreshTestProperty(ij);
-            }
-            refreshTime_ = ttime;
-         }
-      }
-      CDeviceUtils::SleepMs(10);
-   }while(btrue);
-   LLogMessage( "CCamera acquisition thread is exiting... ", true);
-   return 0;
-}
-
-
-#endif
-
-
 
 ///////////////////////////////////////////////////////////////////////////////
 // CDemoCamera implementation
@@ -285,11 +205,7 @@ CDemoCamera::CDemoCamera() :
 	cameraCCDXSize_(512),
 	cameraCCDYSize_(512),
    nComponents_(1),
-   pDemoResourceLock_(0),
-#if 0
-   pDemoWorkerThread_(0),
-#endif
-   simulatePropertyRefresh_(false)
+   pDemoResourceLock_(0)
 {
    // call the base class method to set-up default error codes/messages
    InitializeDefaultErrorMessages();
@@ -307,12 +223,6 @@ CDemoCamera::CDemoCamera() :
 */
 CDemoCamera::~CDemoCamera()
 {
-   simulatePropertyRefresh_ = false;
-#if 0
-   pDemoWorkerThread_->Stop();
-   CDeviceUtils::SleepMs(30);
-   delete pDemoWorkerThread_;
-# endif
    StopSequenceAcquisition();
    delete thd_;
    delete pDemoResourceLock_;
@@ -463,8 +373,6 @@ int CDemoCamera::Initialize()
    pAct = new CPropertyAction (this, &CDemoCamera::OnCameraCCDYSize);
    CreateProperty("OnCameraCCDYSize", "512", MM::Integer, false, pAct);
 
-   pAct = new CPropertyAction (this, &CDemoCamera::OnPropertyRefreshSimulation);
-   CreateProperty("PropertyRefreshSimulation", "0", MM::Integer, false, pAct);
 
    // synchronize all properties
    // --------------------------
@@ -478,88 +386,12 @@ int CDemoCamera::Initialize()
    nRet = ResizeImageBuffer();
    if (nRet != DEVICE_OK)
       return nRet;
-#if 0
-   pDemoWorkerThread_ = new DemoWorkerThread(this);
-   pDemoWorkerThread_->Start();
-#endif
 
 #ifdef TESTRESOURCELOCKING
    TestResourceLocking(true);
    LogMessage("TestResourceLocking OK",true);
 #endif
 
-#if 0
-   // compiler performance benchmark for transcendental math:
-   // code emitted by VS 2008 c++ optimized for speed, on an Athlon 7750 2.71 GHz runs at about 38 nanoseconds per image point
-   MM::MMTime t0 = CurrentTime();
-
-   char anImage[16384];  // 128^2
-   // perform a trancendental math operation on each point of 100 images 128x28
-   int nloops =100;
-   double sf = 1./64.;
-   for (int ii = 0; ii< nloops; ++ii)
-   {
-      unsigned long itc = 0;
-      for(int ix = 0; ix < 128; ++ix)
-      {
-         double xx = (ix - 64)*sf;
-         for(int iy = 0; iy < 128; ++iy)
-         {
-            double yy = (iy - 64)*sf;
-            anImage[itc] = (char)( 100. * exp (xx*xx + yy*yy)); 
-            ++itc;
-         }
-      }
-   }
-   t0 = CurrentTime() - t0;
-   long int globalIterator =  nloops*128*128;
-
-   std::ostringstream message;
-   message << globalIterator << " exp evals: " << t0.getMsec() << " ms, i.e. " << 1000000.*t0.getMsec()/(double)globalIterator<< " nanosec. per point";
-   LogMessage(message.str().c_str(), true);
-
-   // java equivalent
-   // run with -server on same equipment as above
-   // speed is about 80 nanoseconds per image point
-
- /*    begin java equivalent */
-/*       long t0 = System.currentTimeMillis();
-
-
-       byte[] anImage = new byte[16384];// 128^2
-       // perform a trancendental math operation on each point of 100 images 128x128
-       double sf = 1./64.;
-       int nloops = 1000;
-       for (int ii = 0; ii< nloops; ++ii)
-       {
-          int itc = 0;
-          for(int ix = 0; ix < 128; ++ix)
-          {
-             double xx = (ix - 64)*sf;
-             for(int iy = 0; iy < 128; ++iy)
-             {
-                 double yy = (iy - 64)*sf;
-                 double v = Math.exp(xx*xx + yy*yy);
-                 anImage[itc] = (byte)v;
-                ++itc;
-             }
-          }
-       }
-       t0 = System.currentTimeMillis() - t0;
-       int globalIterator =  nloops*128*128;
-
-       System.out.print(globalIterator);
-       System.out.print("exp calcs took");
-       System.out.print(t0);
-       System.out.print(" ms ");
-       double x = 1000000.*(double)t0/(double)globalIterator;
-       System.out.print(x);
-       System.out.print("nanoseconds per point");
-       */
-/*       end java equivalent math performance benchmark */    
-
-
-#endif
 
    initialized_ = true;
 
@@ -1010,22 +842,7 @@ void CDemoCamera::RefreshTestProperty(long indexx)
    testProperty_[indexx] = indexx + (double)rand()/(double)RAND_MAX;
 }
 
-int CDemoCamera::OnPropertyRefreshSimulation(MM::PropertyBase* pProp , MM::ActionType eAct )
-{
-   long lval;
-   if (eAct == MM::AfterSet)
-   {
-      pProp->Get(lval);
-      simulatePropertyRefresh_ = (1 == lval);
-   }
-   else if (eAct == MM::BeforeGet)
-   {
-      lval = (simulatePropertyRefresh_?1:0);
-      pProp->Set(lval);
-   }
 
-   return DEVICE_OK;
-}
 
 /**
 * Handles "Binning" property.

@@ -47,7 +47,7 @@
 // CDemoCamera class
 // Simulation of the Camera device
 //////////////////////////////////////////////////////////////////////////////
-class DemoWorkerThread;
+
 class MySequenceThread;
 class CDemoCamera : public CCameraBase<CDemoCamera>  
 {
@@ -106,9 +106,7 @@ public:
    int OnErrorSimulation(MM::PropertyBase* , MM::ActionType );
    int OnCameraCCDXSize(MM::PropertyBase* , MM::ActionType );
    int OnCameraCCDYSize(MM::PropertyBase* , MM::ActionType );
-   int OnPropertyRefreshSimulation(MM::PropertyBase* , MM::ActionType );
 
-   bool SimulatePropertyRefresh(void) {return simulatePropertyRefresh_;};
    MM::MMTime CurrentTime(void) { return GetCurrentMMTime(); };
 
 private:
@@ -137,8 +135,6 @@ private:
    MMThreadLock* pDemoResourceLock_;
    int nComponents_;
    void TestResourceLocking(const bool);
-   DemoWorkerThread* pDemoWorkerThread_;
-   bool simulatePropertyRefresh_;
    friend class MySequenceThread;
    MySequenceThread * thd_;
 };
