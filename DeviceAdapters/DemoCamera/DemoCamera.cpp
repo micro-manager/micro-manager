@@ -802,13 +802,14 @@ int CDemoCamera::SetAllowedBinning()
 /**
  * Required by the MM::Camera API
  * Please implement this yourself and do not rely on the base class implementation
+ * The Base class implementation is deprecated and will be removed shortly
  */
 int CDemoCamera::StartSequenceAcquisition(double interval) {
    return StartSequenceAcquisition(LONG_MAX, interval, false);            
 }
 
 /**                                                                       
-* Stop and wait for the thread finished                                   
+* Stop and wait for the Sequence thread finished                                   
 */                                                                        
 int CDemoCamera::StopSequenceAcquisition()                                     
 {                                                                         
@@ -821,7 +822,9 @@ int CDemoCamera::StopSequenceAcquisition()
 } 
 
 /**
-* Default implementation.
+* Simple implementation of Sequence Acquisition
+* A sequence acquisition should run on its own thread and transport new images
+* coming of the camera into the MMCore circular buffer.
 */
 int CDemoCamera::StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow)
 {
@@ -836,6 +839,9 @@ int CDemoCamera::StartSequenceAcquisition(long numImages, double interval_ms, bo
    return DEVICE_OK;
 }
 
+/*
+ * Inserts Image and MetaData into MMCore circular Buffer
+ */
 int CDemoCamera::InsertImage()
 {
    char label[MM::MaxStrLength];
@@ -852,8 +858,10 @@ int CDemoCamera::InsertImage()
       return ret;
 }
 
-//Do actual capturing
-//Called from inside the thread cicle 
+/*
+ * Do actual capturing
+ * Called from inside the thread  
+ */
 int CDemoCamera::ThreadRun (void)
 {
    int ret=DEVICE_ERR;
@@ -875,24 +883,8 @@ bool CDemoCamera::IsCapturing() {
 }
 
 /*
-class CaptureRestartHelper
-{
-   bool restart_;
-   CCameraBase* pCam_;
-public:
-   CaptureRestartHelper(CCameraBase* pCam)
-      :pCam_(pCam)
-   {
-      restart_=pCam_->IsCapturing();
-   }
-   operator bool()
-   {
-      return restart_;
-   }
-};
-*/
-
-// called from the thread function before exit 
+ * called from the thread function before exit 
+ */
 void CDemoCamera::OnThreadExiting() throw()
 {
    try
