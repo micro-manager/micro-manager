@@ -200,6 +200,7 @@ CDemoCamera::CDemoCamera() :
    bitDepth_(8),
    roiX_(0),
    roiY_(0),
+   sequenceStartTime_(0),
    errorSimulation_(false),
 	binSize_(1),
 	cameraCCDXSize_(512),
@@ -460,6 +461,7 @@ int CDemoCamera::SnapImage()
 */
 const unsigned char* CDemoCamera::GetImageBuffer()
 {
+   MMThreadGuard g(imgPixelsLock_);
    MM::MMTime readoutTime(readoutUs_);
    while (readoutTime > (GetCurrentMMTime() - readoutStartTime_)) {}
    return img_.GetPixels();
@@ -666,6 +668,8 @@ int CDemoCamera::StartSequenceAcquisition(long numImages, double interval_ms, bo
    int ret = GetCoreCallback()->PrepareForAcq(this);
    if (ret != DEVICE_OK)
       return ret;
+   sequenceStartTime_ = GetCurrentMMTime();
+   imageCounter_ = 0;
    thd_->Start(numImages,interval_ms);
    stopOnOverflow_ = stopOnOverflow;
    return DEVICE_OK;
@@ -676,10 +680,22 @@ int CDemoCamera::StartSequenceAcquisition(long numImages, double interval_ms, bo
  */
 int CDemoCamera::InsertImage()
 {
+   MM::MMTime timeStamp = this->GetCurrentMMTime();
    char label[MM::MaxStrLength];
    this->GetLabel(label);
+ 
+   // Important:  metadata about the image are generated here:
    Metadata md;
    md.put("Camera", label);
+   md.put(MM::g_Keyword_Metadata_StartTime, CDeviceUtils::ConvertToString(sequenceStartTime_.getMsec()));
+   md.put(MM::g_Keyword_Elapsed_Time_ms, CDeviceUtils::ConvertToString((timeStamp - sequenceStartTime_).getMsec()));
+   md.put(MM::g_Keyword_Metadata_ImageNumber, CDeviceUtils::ConvertToString(imageCounter_));
+   imageCounter_++;
+
+   char buf[MM::MaxStrLength];
+   GetProperty(MM::g_Keyword_Binning, buf);
+   md.put(MM::g_Keyword_Binning, buf);
+
    int ret = GetCoreCallback()->InsertImage(this, GetImageBuffer(), GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel(), &md);
    if (!stopOnOverflow_ && ret == DEVICE_BUFFER_OVERFLOW)
    {
@@ -1206,6 +1222,8 @@ int CDemoCamera::ResizeImageBuffer()
 */
 void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
 {
+   MMThreadGuard g(imgPixelsLock_);
+
 	//std::string pixelType;
 	char buf[MM::MaxStrLength];
    GetProperty(MM::g_Keyword_PixelType, buf);

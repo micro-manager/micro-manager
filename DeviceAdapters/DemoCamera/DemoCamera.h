@@ -49,6 +49,7 @@
 //////////////////////////////////////////////////////////////////////////////
 
 class MySequenceThread;
+
 class CDemoCamera : public CCameraBase<CDemoCamera>  
 {
 public:
@@ -123,6 +124,8 @@ private:
    int bitDepth_;
    unsigned roiX_;
    unsigned roiY_;
+   MM::MMTime sequenceStartTime_;
+   long imageCounter_;
    bool errorSimulation_;
 	long binSize_;
 	long cameraCCDXSize_;
@@ -133,6 +136,7 @@ private:
 
 	double testProperty_[10];
    MMThreadLock* pDemoResourceLock_;
+   MMThreadLock imgPixelsLock_;
    int nComponents_;
    void TestResourceLocking(const bool);
    friend class MySequenceThread;
