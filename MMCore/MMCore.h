@@ -429,14 +429,6 @@ public:
 
 
 
-
-   // >>>> TEST >>>>>>>>>>>>>>>>>>>>>>..
-
-   /** @name "  "
-    */
-   //@ {
-   
-   //@ }
 private:
    // make object non-copyable
    CMMCore(const CMMCore& /*c*/) {}
@@ -445,7 +437,6 @@ private:
    typedef std::map<std::string, Configuration*> CConfigMap;
    typedef std::map<std::string, PropertyBlock*> CPropBlockMap;
 
-   //static ACE_Mutex deviceLock_;
 	static MMThreadLock deviceLock_;
 
    char* pathBuf_; // cached version of current working directoy
