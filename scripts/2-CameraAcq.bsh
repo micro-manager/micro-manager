@@ -1,0 +1,28 @@
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+String c1 = "Camera";
+String c2 = "DCam2";
+
+gui.closeAllAcquisitions();
+gui.openAcquisition("2-Live", "/Users/nico/AcquisitionData/2-Live", 1, 2, 1, true);
+gui.setChannelColor("2-Live", 0, Color.RED);
+gui.setChannelColor("2-Live", 1, Color.GREEN);
+int w = mmc.getImageWidth();
+int h = mmc.getImageHeight();
+int d = mmc.getBytesPerPixel();
+gui.initializeAcquisition("2-Live", w, h, d);
+mmc.prepareSequenceAcquisition(c1);
+mmc.prepareSequenceAcquisition(c2);
+mmc.startSequenceAcquisition(c1, 200, 0, false);
+mmc.startSequenceAcquisition(c2, 200, 0, false);
+while (mmc.isSequenceRunning() || mmc.getRemainingImageCount() > 0) {
+	if (mmc.getRemainingImageCount() > 0)
+		img = mmc.popNextTaggedImage();
+	JSONObject md = img.tags;
+	cName = md.get("Camera");
+	if (c1.equals(cName))
+		gui.addImage("2-Live", img.pix, 0, 0, 0);
+	else
+		gui.addImage("2-Live", img.pix, 0, 1, 0);
+}
