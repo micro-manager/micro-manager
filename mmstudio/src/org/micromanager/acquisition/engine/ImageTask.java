@@ -49,7 +49,7 @@ public class ImageTask implements EngineTask {
       eng_ = eng;
       core_ = eng.core_;
 
-      if (!isStopRequested()) {
+      if (!isStopRequested() && !core_.isSequenceRunning()) {
          updateChannel();
       }
       if (!isStopRequested()) {
@@ -58,10 +58,10 @@ public class ImageTask implements EngineTask {
       if (!isStopRequested()) {
          sleep();
       }
-      if (!isStopRequested()) {
+      if (!isStopRequested() && !core_.isSequenceRunning()) {
          autofocus();
       }
-      if (!isStopRequested()) {
+      if (!isStopRequested() && !core_.isSequenceRunning()) {
          updateSlice();
       }
       if (!isStopRequested()) {
@@ -143,7 +143,9 @@ public class ImageTask implements EngineTask {
                log("position set\n");
             }
          }
-         core_.waitForDevice(core_.getFocusDevice());
+         String focusDevice = core_.getFocusDevice();
+         if (!focusDevice.equals(""))
+            core_.waitForDevice(focusDevice);
       } catch (Exception ex) {
          ReportingUtils.logError(ex, "Set position failed.");
       }
@@ -208,8 +210,6 @@ public class ImageTask implements EngineTask {
    }
 
    void acquireImage() {
-      //Gson gson = new Gson();
-      //String jsonMetadata = gson.toJson(imageRequest_);
       waitDuringPause();
       try {
       md_.put("Slice", imageRequest_.SliceIndex);
@@ -235,7 +235,9 @@ public class ImageTask implements EngineTask {
       md_.put("Exposure-ms", imageRequest_.exposure);
       md_.put("PixelSizeUm", core_.getPixelSizeUm());
       try {
-         md_.put("ZPositionUm", core_.getPosition(core_.getFocusDevice()));
+         String focusDevice = core_.getFocusDevice();
+         if (!focusDevice.equals(""))
+            md_.put("ZPositionUm", core_.getPosition(core_.getFocusDevice()));
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
@@ -254,7 +256,9 @@ public class ImageTask implements EngineTask {
          ReportingUtils.logError(ex);
       }
       try {
-         core_.waitForDevice(core_.getShutterDevice());
+         String shutterDevice = core_.getShutterDevice();
+         if (!shutterDevice.equals(""))
+            core_.waitForDevice(shutterDevice);
          if (core_.getAutoShutter())
             core_.setAutoShutter(false);
          if (eng_.autoShutterSelected_ && !core_.getShutterOpen()) {
@@ -267,7 +271,8 @@ public class ImageTask implements EngineTask {
             core_.snapImage(); //Should be: core_.snapImage(jsonMetadata);
             log("snapped image");
             if (eng_.autoShutterSelected_ && imageRequest_.CloseShutter) {
-               core_.waitForDevice(core_.getShutterDevice());
+               if (!shutterDevice.equals(""))
+                  core_.waitForDevice(shutterDevice);
                core_.setShutterOpen(false);
                log("closed shutter");
             }
