@@ -3249,8 +3249,15 @@ int AndorCamera::GetListOfAvailableCameras()
       char label[MM::MaxStrLength];
       this->GetLabel(label);
 
+
       MM::MMTime timestamp = this->GetCurrentMMTime();
       Metadata md;
+
+      md.put("Camera", label);   
+      md.put(MM::g_Keyword_Metadata_StartTime, CDeviceUtils::ConvertToString(startTime_.getMsec()));
+      md.put(MM::g_Keyword_Elapsed_Time_ms, CDeviceUtils::ConvertToString((timestamp - startTime_).getMsec()));
+      md.put(MM::g_Keyword_Metadata_ImageNumber, CDeviceUtils::ConvertToString(imageCounter_));
+
 
       MetadataSingleTag mstStartTime(MM::g_Keyword_Metadata_StartTime, label, true);
       mstStartTime.SetValue(CDeviceUtils::ConvertToString(startTime_.getMsec()));
