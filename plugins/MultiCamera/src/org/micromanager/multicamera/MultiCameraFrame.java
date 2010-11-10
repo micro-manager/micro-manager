@@ -270,6 +270,8 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
       TempButton = new javax.swing.JButton();
       TempLabel = new javax.swing.JLabel();
       ExposureButton = new javax.swing.JButton();
+      SnapButton = new javax.swing.JButton();
+      LiveButton = new javax.swing.JButton();
 
       jCheckBox1.setText("jCheckBox1");
 
@@ -418,7 +420,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
          }
       });
 
-      TempButton.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
+      TempButton.setFont(new java.awt.Font("Tahoma", 0, 10));
       TempButton.setText("Temp");
       TempButton.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -428,7 +430,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
 
       TempLabel.setText("jLabel11");
 
-      ExposureButton.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
+      ExposureButton.setFont(new java.awt.Font("Tahoma", 0, 10));
       ExposureButton.setText("Exposure [ms]");
       ExposureButton.setMargin(new java.awt.Insets(2, 5, 2, 5));
       ExposureButton.addActionListener(new java.awt.event.ActionListener() {
@@ -437,55 +439,71 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
          }
       });
 
+      SnapButton.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
+      SnapButton.setText("Snap");
+      SnapButton.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            SnapButtonActionPerformed(evt);
+         }
+      });
+
+      LiveButton.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
+      LiveButton.setText("Live");
+
       org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
       getContentPane().setLayout(layout);
       layout.setHorizontalGroup(
          layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(layout.createSequentialGroup()
-            .addContainerGap()
             .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-               .add(TempButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 63, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-               .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                  .add(jLabel9)
-                  .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                     .add(layout.createSequentialGroup()
-                        .add(ExposureButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 105, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED))
-                     .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                           .add(jLabel3)
-                           .add(jLabel5)
-                           .add(jLabel4)
-                           .add(GainLabel)
-                           .add(SpeedLabel)
-                           .add(FrameTransferLabel)
-                           .add(TriggerLabel))
-                        .add(41, 41, 41)))))
-            .add(7, 7, 7)
-            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-               .add(SpeedComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 105, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                .add(layout.createSequentialGroup()
-                  .add(50, 50, 50)
-                  .add(EMGainSlider, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 180, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-               .add(TriggerComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 105, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-               .add(ModeComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 105, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-               .add(GainComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 105, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-               .add(EMCheckBox)
-               .add(EMGainTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 49, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-               .add(FrameTransferComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 105, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-               .add(BinningComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 80, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-               .add(layout.createSequentialGroup()
-                  .add(ExposureTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 70, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                  .add(60, 60, 60)
+                  .addContainerGap()
                   .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                     .add(jLabel1)
+                     .add(TempButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 63, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                     .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                        .add(jLabel9)
+                        .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                           .add(ExposureButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 105, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                           .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+                              .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                                 .add(jLabel3)
+                                 .add(jLabel5)
+                                 .add(jLabel4)
+                                 .add(GainLabel)
+                                 .add(SpeedLabel)
+                                 .add(FrameTransferLabel)
+                                 .add(TriggerLabel))
+                              .add(41, 41, 41)))))
+                  .add(7, 7, 7)
+                  .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                     .add(SpeedComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 105, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                      .add(layout.createSequentialGroup()
-                        .add(ROISetButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(8, 8, 8)
-                        .add(ROIUnsetButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))))
-               .add(CameraSelectComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 191, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-               .add(TempLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 202, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-            .addContainerGap())
+                        .add(50, 50, 50)
+                        .add(EMGainSlider, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 180, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                     .add(TriggerComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 105, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                     .add(ModeComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 105, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                     .add(GainComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 105, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                     .add(EMCheckBox)
+                     .add(EMGainTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 49, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                     .add(FrameTransferComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 105, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                     .add(BinningComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 80, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                     .add(layout.createSequentialGroup()
+                        .add(ExposureTextField, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 70, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(60, 60, 60)
+                        .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                           .add(jLabel1)
+                           .add(layout.createSequentialGroup()
+                              .add(ROISetButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                              .add(8, 8, 8)
+                              .add(ROIUnsetButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))))
+                     .add(CameraSelectComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 191, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                     .add(TempLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 202, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)))
+               .add(layout.createSequentialGroup()
+                  .add(62, 62, 62)
+                  .add(SnapButton)
+                  .add(68, 68, 68)
+                  .add(LiveButton)))
+            .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
       );
       layout.setVerticalGroup(
          layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -549,7 +567,11 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
             .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                .add(TempButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 17, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                .add(TempLabel))
-            .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+               .add(SnapButton)
+               .add(LiveButton))
+            .addContainerGap(13, Short.MAX_VALUE))
       );
 
       pack();
@@ -876,6 +898,11 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
        dGui_.updateGUI(false);
     }//GEN-LAST:event_CameraSelectComboBoxItemStateChanged
 
+    private void SnapButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SnapButtonActionPerformed
+       if (selectedCameras_.size() == 1)
+          gui_.snapSingleImage();
+    }//GEN-LAST:event_SnapButtonActionPerformed
+
     private void UpdateTemp() {
        String tempText = "";
        try {
@@ -966,9 +993,11 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
    private javax.swing.JLabel FrameTransferLabel;
    private javax.swing.JComboBox GainComboBox;
    private javax.swing.JLabel GainLabel;
+   private javax.swing.JButton LiveButton;
    private javax.swing.JComboBox ModeComboBox;
    private javax.swing.JButton ROISetButton;
    private javax.swing.JButton ROIUnsetButton;
+   private javax.swing.JButton SnapButton;
    private javax.swing.JComboBox SpeedComboBox;
    private javax.swing.JLabel SpeedLabel;
    private javax.swing.JButton TempButton;
