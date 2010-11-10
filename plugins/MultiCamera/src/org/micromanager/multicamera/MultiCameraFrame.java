@@ -915,14 +915,19 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
           gui_.snapSingleImage();
        else if (nrSelectedCameras > 1) {
           try {
-             gui_.closeAllAcquisitions();
-             gui_.openAcquisition(ACQNAME, "", 1, nrSelectedCameras, 1, true, false);
-             gui_.setChannelColor(ACQNAME, 0, Color.RED);
-             gui_.setChannelColor(ACQNAME, 1, Color.GREEN);
+             // TODO: check that an existing acquisition has the same dimensions
+             // and can be re-used
              int w = (int) core_.getImageWidth();
              int h = (int) core_.getImageHeight();
              int d = (int) core_.getBytesPerPixel();
-             gui_.initializeAcquisition(ACQNAME, w, h, d);
+
+             if (!gui_.acquisitionExists(ACQNAME)) {
+                gui_.openAcquisition(ACQNAME, "", 1, nrSelectedCameras, 1, true, false);
+                gui_.initializeAcquisition(ACQNAME, w, h, d);
+             }
+             gui_.setChannelColor(ACQNAME, 0, Color.RED);
+             gui_.setChannelColor(ACQNAME, 1, Color.GREEN);
+
              // delete previous content of circular buffer
              core_.initializeCircularBuffer();
              for (String camera : cameras_) {
@@ -947,7 +952,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
                   }
                }
              }
-             gui_.closeAcquisition(ACQNAME);
+             //gui_.closeAcquisition(ACQNAME);
 
           } catch (Exception ex) {
                   ReportingUtils.showError(ex);
