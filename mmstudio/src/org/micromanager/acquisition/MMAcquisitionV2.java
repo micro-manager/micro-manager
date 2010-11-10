@@ -41,7 +41,6 @@ public class MMAcquisitionV2 implements AcquisitionInterface {
    protected Image5DWindow imgWin_;
    @SuppressWarnings("unused")
    private String rootDirectory_;
-   //private AcquisitionData acqData_;
    private MMVirtualAcquisitionDisplay virtAcq_;
    
    public MMAcquisitionV2(String name, String dir) {
@@ -87,15 +86,15 @@ public class MMAcquisitionV2 implements AcquisitionInterface {
    }
    
    public int getWidth() {
-	   return width_;
+      return width_;
    }
    
    public int getHeight() {
-	   return height_;
+      return height_;
    }
    
    public int getDepth() {
-	   return depth_;
+      return depth_;
    }
    
    public int getFrames() {
@@ -440,7 +439,9 @@ public class MMAcquisitionV2 implements AcquisitionInterface {
    }
 
    public boolean windowClosed() {
-      return imgWin_.isClosed();
+      if (virtAcq_ != null && ! virtAcq_.windowClosed())
+         return false;
+      return true;
    }
 
    public void setSystemState(JSONObject md) throws MMScriptException {

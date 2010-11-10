@@ -25,9 +25,9 @@ public class AcquisitionManager {
    }
 
    public void openAcquisitionSnap(String name, String rootDir) throws MMScriptException {
-	      if (acquisitionExists(name))
-	         throw new MMScriptException("The name is in use");
-	      else
+      if (acquisitionExists(name))
+	 throw new MMScriptException("The name is in use");
+      else
 	         acqs_.put(name, new MMAcquisitionSnap(name, rootDir));
 	   }
    
@@ -70,15 +70,22 @@ public class AcquisitionManager {
    }
    
    public Boolean acquisitionExists(String name) {
-	   return (acqs_.containsKey(name));
+      if (acqs_.containsKey(name)) {
+         if (acqs_.get(name).windowClosed()) {
+            acqs_.get(name).close();
+            acqs_.remove(name);
+            return false;
+         }
+         return true;
+      }
+      return false;
    }
    
    public boolean hasActiveImage5D(String name) throws MMScriptException {
-	   if (acquisitionExists(name)) {
-		   return ! getAcquisition(name).windowClosed();
-	   } else
-		   return false;
-			   
+      if (acquisitionExists(name)) {
+         return ! acqs_.get(name).windowClosed();
+      }
+      return false;
    }
       
    public AcquisitionInterface getAcquisition(String name) throws MMScriptException {

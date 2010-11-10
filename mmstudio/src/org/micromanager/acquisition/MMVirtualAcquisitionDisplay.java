@@ -45,6 +45,7 @@ public class MMVirtualAcquisitionDisplay{
    private ArrayList<AcquisitionVirtualStack> virtualStacks_;
    private JSONObject summaryMetadata_ = null;
    private boolean newData_;
+   private boolean windowClosed_ = false;
    private int numGrayChannels_;
    private boolean diskCached_;
    private AcquisitionEngine eng_;
@@ -67,7 +68,7 @@ public class MMVirtualAcquisitionDisplay{
       }
    }
 
-   public void setCache(MMImageCache imageCache) {
+     public void setCache(MMImageCache imageCache) {
       imageCache_ = imageCache;
       summaryMetadata_ = imageCache_.getSummaryMetadata();
    }
@@ -335,7 +336,6 @@ public class MMVirtualAcquisitionDisplay{
          imgp.setOpenAsHyperStack(true);
       }
 
-      // final ImageWindow win = hyperImage_.getWindow();
       final ImageWindow win = new StackWindow(hyperImage_) {
 
          public void windowClosing(WindowEvent e) {
@@ -361,8 +361,7 @@ public class MMVirtualAcquisitionDisplay{
             }
 
             // push current display settings to cache
-
-            imageCache_.close();
+            setWindowClosed(true);
             imageCache_ = null;
             virtualStacks_ = null;
             close();
@@ -518,8 +517,12 @@ public class MMVirtualAcquisitionDisplay{
       }
    }
 
-   public boolean windowClosed() {
-      return false;
+   public synchronized void setWindowClosed(boolean state) {
+      windowClosed_ = state;
+   }
+
+   public synchronized boolean windowClosed() {
+      return windowClosed_;
    }
 
    void showFolder() {
