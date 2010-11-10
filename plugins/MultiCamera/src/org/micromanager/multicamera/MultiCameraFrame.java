@@ -24,6 +24,7 @@ import javax.swing.DefaultComboBoxModel;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.Roi;
+import java.awt.Color;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -31,10 +32,13 @@ import mmcorej.CMMCore;
 import mmcorej.DeviceType;
 import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
+import mmcorej.TaggedImage;
+import org.json.JSONObject;
 
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.api.DeviceControlGUI;
 import org.micromanager.api.MMListenerInterface;
+import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
 
@@ -61,6 +65,8 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
    private HashMap<String, Boolean> selectedCameras_;
    private String activeCamera_;
    private boolean initialized_ = false;
+
+   private static final String ACQNAME = "MultiColorAcq";
 
    private static final String SEPERATOR = ", ";
    private static final String MIXED = "";
@@ -449,6 +455,11 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
 
       LiveButton.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
       LiveButton.setText("Live");
+      LiveButton.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            LiveButtonActionPerformed(evt);
+         }
+      });
 
       org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
       getContentPane().setLayout(layout);
@@ -899,9 +910,61 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
     }//GEN-LAST:event_CameraSelectComboBoxItemStateChanged
 
     private void SnapButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SnapButtonActionPerformed
-       if (selectedCameras_.size() == 1)
+       int nrSelectedCameras = nrSelectedCameras();
+       if (nrSelectedCameras == 1)
           gui_.snapSingleImage();
+       else if (nrSelectedCameras > 1) {
+          try {
+             gui_.closeAllAcquisitions();
+             gui_.openAcquisition(ACQNAME, "", 1, nrSelectedCameras, 1, true, false);
+             gui_.setChannelColor(ACQNAME, 0, Color.RED);
+             gui_.setChannelColor(ACQNAME, 1, Color.GREEN);
+             int w = (int) core_.getImageWidth();
+             int h = (int) core_.getImageHeight();
+             int d = (int) core_.getBytesPerPixel();
+             gui_.initializeAcquisition(ACQNAME, w, h, d);
+             // delete previous content of circular buffer
+             core_.initializeCircularBuffer();
+             for (String camera : cameras_) {
+                if (selectedCameras_.get(camera)) {
+                   core_.startSequenceAcquisition(camera, 1, 0, false);
+                }
+             }
+             int imgcounter = 0;
+             while (core_.isSequenceRunning() || core_.getRemainingImageCount() > 0) {
+               if (core_.getRemainingImageCount() > 0) {
+                  TaggedImage img = core_.popNextTaggedImage();
+                  if (img != null) {
+                     JSONObject md = img.tags;
+                     MDUtils.setFrameIndex(md, 0);
+                     MDUtils.setSliceIndex(md, 0);
+                     MDUtils.setPositionIndex(md, 0);
+                     String cName = (String) md.get("Camera");
+                     //if (c1.equals(cName))
+                     MDUtils.setChannelIndex(md, imgcounter);
+                     gui_.addImage(ACQNAME, img);
+                     imgcounter++;
+                  }
+               }
+             }
+             gui_.closeAcquisition(ACQNAME);
+
+          } catch (Exception ex) {
+                  ReportingUtils.showError(ex);
+               }
+       }
     }//GEN-LAST:event_SnapButtonActionPerformed
+
+    private void LiveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_LiveButtonActionPerformed
+       if (nrSelectedCameras() == 1) {
+          dGui_.enableLiveMode(!dGui_.getLiveMode());
+          if (dGui_.getLiveMode()) {
+             LiveButton.setText("Stop Live");
+          } else {
+             LiveButton.setText("Live");
+          }
+       } 
+    }//GEN-LAST:event_LiveButtonActionPerformed
 
     private void UpdateTemp() {
        String tempText = "";
@@ -1092,6 +1155,16 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
       } catch (Exception e) {
          ReportingUtils.showError(e);
       }
+   }
+
+   private int nrSelectedCameras () {
+      int nr =0;
+      for (String camera: cameras_) {
+         if (selectedCameras_.get(camera)) {
+            nr++;
+         }
+      }
+      return nr;
    }
 
    public void propertiesChangedAlert() {
