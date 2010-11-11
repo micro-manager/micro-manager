@@ -188,8 +188,9 @@ int SutterUtils::GetControllerType(MM::Device& device, MM::Core& core, std::stri
    unsigned long read;
    MM::MMTime startTime = core.GetCurrentMMTime();
    do {
-      if (DEVICE_OK != core.ReadFromSerial(&device, port.c_str(), &ans, 1, read))
-         return false;
+      ret = core.ReadFromSerial(&device, port.c_str(), &ans, 1, read);
+      if (ret != DEVICE_OK)
+         return ret;
       if (read > 0)
          printf("Read char: %x", ans);
       if (ans == 253)
@@ -708,7 +709,7 @@ int Shutter::Initialize()
 
 
    int j=0;
-   while (GoOnLine() != DEVICE_OK && j < 4)
+   while (SutterUtils::GoOnLine(*this, *GetCoreCallback(), port_, 50) != DEVICE_OK && j < 4)
       j++;
    if (j >= 4)
       return ERR_NO_ANSWER;
