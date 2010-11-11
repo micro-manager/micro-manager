@@ -108,9 +108,18 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
 
    private class LiveImagingThread extends Thread
    {
+      String lastCamera_;
+      int nrCameras_;
+
+      private LiveImagingThread(String lastCamera, int nrCameras) {
+         lastCamera_ = lastCamera;
+         nrCameras_ = nrCameras;
+      }
+
       @Override
       public void run() {
          int imgcounter = 0;
+         int cutoff = 2 * nrCameras_;
          while (core_.isSequenceRunning() && getLiveRunning()) {
             if (core_.getRemainingImageCount() > 0) {
                try {
@@ -122,11 +131,19 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
                      MDUtils.setPositionIndex(md, 0);
                      String cName = (String) md.get("Camera");
                      MDUtils.setChannelIndex(md, channelIndex_.get(cName));
-                     gui_.addImage(ACQNAME, img);
+                     if (imgcounter > cutoff) {
+                        // only update the image when we get an image from the last camera
+                        if (cName.equals(lastCamera_))
+                           gui_.addImage(ACQNAME, img, true);
+                        else
+                           gui_.addImage(ACQNAME, img, false);
+                     } else
+                        gui_.addImage(ACQNAME, img, true);
                      imgcounter++;
                   }
                } catch (Exception ex) {
                      ReportingUtils.showError(ex);
+                     return;
                }
             }
          }
@@ -1008,6 +1025,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
 
                 channelIndex_ = new HashMap<String, Integer>();
                 Integer i = 0;
+                String lastSelectedCamera = "";
                 for (String camera : cameras_) {
                    if (selectedCameras_.get(camera)) {
                       channelIndex_.put(camera, i);
@@ -1015,11 +1033,13 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
                       core_.setProperty("Core", "Camera", camera);
                       core_.prepareSequenceAcquisition(camera);
                       core_.startContinuousSequenceAcquisition(0);
+                      lastSelectedCamera = camera;
                    }
                 }
                 liveRunning_ = true;
                 LiveButton.setText("Stop Live");
-                LiveImagingThread th = new LiveImagingThread();
+                LiveImagingThread th = new LiveImagingThread(lastSelectedCamera,
+                        nrSelectedCameras);
                 th.start();
              } catch (Exception ex) {
               ReportingUtils.showError(ex);
