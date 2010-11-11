@@ -3855,6 +3855,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       acqMgr_.getAcquisition(name).insertImage(taggedImg);
    }
 
+   public void addImage(String name, TaggedImage taggedImg, boolean updateDisplay) throws MMScriptException {
+      acqMgr_.getAcquisition(name).insertImage(taggedImg, updateDisplay);
+   }
+
    public void closeAllAcquisitions() {
       acqMgr_.closeAll();
    }

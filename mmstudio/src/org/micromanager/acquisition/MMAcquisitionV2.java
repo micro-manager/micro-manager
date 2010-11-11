@@ -434,6 +434,12 @@ public class MMAcquisitionV2 implements AcquisitionInterface {
          virtAcq_.insertImage(taggedImg);
    }
 
+   public void insertImage(TaggedImage taggedImg, boolean updateDisplay) throws MMScriptException {
+      virtAcq_.imageCache_.putImage(taggedImg);
+      if (updateDisplay)
+         virtAcq_.insertImage(taggedImg);
+   }
+
    public void setSummaryProperties(JSONObject md) throws MMScriptException {
       throw new UnsupportedOperationException("Not supported yet.");
    }

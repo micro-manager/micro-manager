@@ -344,6 +344,10 @@ public class MMAcquisition implements AcquisitionInterface {
       throw new UnsupportedOperationException("Not supported yet.");
    }
 
+     public void insertImage(TaggedImage taggedImg, boolean updateDisplay) throws MMScriptException {
+      throw new UnsupportedOperationException("Not supported yet.");
+   }
+
    public void setSummaryProperties(JSONObject md) throws MMScriptException {
       throw new UnsupportedOperationException("Not supported yet.");
    }

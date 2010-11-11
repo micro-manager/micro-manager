@@ -137,6 +137,8 @@ public interface ScriptInterface {
     */
    public void addImage(String name, TaggedImage taggedImg) throws MMScriptException;
 
+   public void addImage(String name, TaggedImage taggedImg, boolean updateDisplay) throws MMScriptException;
+
    /**
      *Returns the width (in pixels) of the viewer attached to this acquisition
     */

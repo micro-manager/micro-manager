@@ -51,6 +51,8 @@ public interface AcquisitionInterface {
 
    void insertImage(TaggedImage taggedImg) throws MMScriptException;
 
+   void insertImage(TaggedImage taggedImg, boolean updateDisplay) throws MMScriptException;
+
    boolean isInitialized();
 
    void setChannelColor(int channel, int rgb) throws MMScriptException;
