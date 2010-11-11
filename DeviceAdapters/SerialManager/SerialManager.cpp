@@ -725,27 +725,34 @@ int SerialPort::Write(const unsigned char* buf, unsigned long bufLen)
 int SerialPort::Read(unsigned char* buf, unsigned long bufLen, unsigned long& charsRead)
 {
    int r = DEVICE_OK;
-   // fill the buffer with zeros
-   memset(buf, 0, bufLen);
-
-   charsRead = 0;
-   //MMThreadGuard g(portLock_);
-   std::vector<char> d = pPort_->ReadData();
-   if( 0<d.size())
-      LogBinaryMessage(true, d, true);
-   if( bufLen < d.size())
+   if( 0 < bufLen)
    {
-      LogMessage("BUFFER_OVERRUN error occured!");
+      // zero the buffer
+      memset(buf, 0, bufLen);
+      charsRead = 0;
+      
+      bool anyRead = false;
+      char theData = 0;
+      for( ;; )
+      {
+         anyRead = pPort_->ReadOneCharacter(theData); 
+         if( anyRead)
+         {
+            buf[charsRead] = (unsigned char)theData;
+            if( bufLen <= charsRead++)
+            {
+               // buffer is full
+               break;
+            }
+         }
+         else
+            break;
+      }
+      if( 0 < charsRead)
+         LogBinaryMessage(true, buf, charsRead, true);
+   }
+   else
       r = ERR_BUFFER_OVERRUN;
-   }
-   charsRead = d.size();
-   unsigned int oi = 0;
-   for( std::vector<char>::iterator ii = d.begin(); (oi < bufLen)&&(ii!=d.end()); ++oi, ++ii)
-   {
-      buf[oi] = (unsigned char)(*ii);
-   }
-   charsRead = oi;
-
 
    return r;
 }
