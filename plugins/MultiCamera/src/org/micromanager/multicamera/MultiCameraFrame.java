@@ -39,6 +39,7 @@ import org.micromanager.api.ScriptInterface;
 import org.micromanager.api.DeviceControlGUI;
 import org.micromanager.api.MMListenerInterface;
 import org.micromanager.utils.MDUtils;
+import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
 
@@ -63,6 +64,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
    private int EMGainMax_ = 1000;
    private String[] cameras_;
    private HashMap<String, Boolean> selectedCameras_;
+   private HashMap<String, Integer> channelIndex_;
    private String activeCamera_;
    private boolean initialized_ = false;
 
@@ -92,6 +94,46 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
    private static final String TRIGGER = "Trigger";
    private static final String TEMP = "CCDTemperature";
 
+   private static final Color[] COLORS = {Color.RED, Color.GREEN, Color.BLUE, Color.MAGENTA, Color.YELLOW, Color.PINK};
+
+   private boolean liveRunning_ = false;
+
+   private synchronized boolean getLiveRunning() {
+      return liveRunning_;
+   }
+
+   private synchronized void setLiveRunning(boolean state) {
+      liveRunning_ = state;
+   }
+
+   private class LiveImagingThread extends Thread
+   {
+      @Override
+      public void run() {
+         int imgcounter = 0;
+         while (core_.isSequenceRunning() && getLiveRunning()) {
+            if (core_.getRemainingImageCount() > 0) {
+               try {
+                  TaggedImage img = core_.popNextTaggedImage();
+                  if (img != null) {
+                     JSONObject md = img.tags;
+                     MDUtils.setFrameIndex(md, 0);
+                     MDUtils.setSliceIndex(md, 0);
+                     MDUtils.setPositionIndex(md, 0);
+                     String cName = (String) md.get("Camera");
+                     MDUtils.setChannelIndex(md, channelIndex_.get(cName));
+                     gui_.addImage(ACQNAME, img);
+                     imgcounter++;
+                  }
+               } catch (Exception ex) {
+                     ReportingUtils.showError(ex);
+               }
+            }
+         }
+      }
+   }
+
+   private LiveImagingThread liveImagingThread_;
 
     /** Creates new form MultiCameraFrame */
     public MultiCameraFrame(ScriptInterface gui) throws Exception {
@@ -915,21 +957,11 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
           gui_.snapSingleImage();
        else if (nrSelectedCameras > 1) {
           try {
-             // TODO: check that an existing acquisition has the same dimensions
-             // and can be re-used
-             int w = (int) core_.getImageWidth();
-             int h = (int) core_.getImageHeight();
-             int d = (int) core_.getBytesPerPixel();
 
-             if (!gui_.acquisitionExists(ACQNAME)) {
-                gui_.openAcquisition(ACQNAME, "", 1, nrSelectedCameras, 1, true, false);
-                gui_.initializeAcquisition(ACQNAME, w, h, d);
-             }
-             gui_.setChannelColor(ACQNAME, 0, Color.RED);
-             gui_.setChannelColor(ACQNAME, 1, Color.GREEN);
-
+             initializeSequence(nrSelectedCameras);
              // delete previous content of circular buffer
              core_.initializeCircularBuffer();
+
              for (String camera : cameras_) {
                 if (selectedCameras_.get(camera)) {
                    core_.startSequenceAcquisition(camera, 1, 0, false);
@@ -952,8 +984,6 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
                   }
                }
              }
-             //gui_.closeAcquisition(ACQNAME);
-
           } catch (Exception ex) {
                   ReportingUtils.showError(ex);
                }
@@ -961,14 +991,51 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
     }//GEN-LAST:event_SnapButtonActionPerformed
 
     private void LiveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_LiveButtonActionPerformed
-       if (nrSelectedCameras() == 1) {
+       int nrSelectedCameras = nrSelectedCameras();
+       if (nrSelectedCameras == 1) {
           dGui_.enableLiveMode(!dGui_.getLiveMode());
           if (dGui_.getLiveMode()) {
              LiveButton.setText("Stop Live");
           } else {
              LiveButton.setText("Live");
           }
-       } 
+       } else if (nrSelectedCameras > 1) {
+          if (!liveRunning_) {
+             try {
+                initializeSequence(nrSelectedCameras);
+                // delete previous content of circular buffer
+                core_.initializeCircularBuffer();
+
+                channelIndex_ = new HashMap<String, Integer>();
+                Integer i = 0;
+                for (String camera : cameras_) {
+                   if (selectedCameras_.get(camera)) {
+                      channelIndex_.put(camera, i);
+                      i++;
+                      core_.setProperty("Core", "Camera", camera);
+                      core_.prepareSequenceAcquisition(camera);
+                      core_.startContinuousSequenceAcquisition(0);
+                   }
+                }
+                liveRunning_ = true;
+                LiveButton.setText("Stop Live");
+                LiveImagingThread th = new LiveImagingThread();
+                th.start();
+             } catch (Exception ex) {
+              ReportingUtils.showError(ex);
+           }
+         } else {
+             for (String camera : cameras_) {
+                try {
+                  core_.stopSequenceAcquisition(camera);
+                } catch (Exception ex) {
+                   ReportingUtils.showError(ex);
+                }
+             }
+             setLiveRunning(false);
+             LiveButton.setText("Live");
+         }
+       }
     }//GEN-LAST:event_LiveButtonActionPerformed
 
     private void UpdateTemp() {
@@ -1160,6 +1227,38 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
       } catch (Exception e) {
          ReportingUtils.showError(e);
       }
+   }
+
+   private void initializeSequence(int nrSelectedCameras) throws MMScriptException {
+       int w = (int) core_.getImageWidth();
+       int h = (int) core_.getImageHeight();
+       int d = (int) core_.getBytesPerPixel();
+
+       if (gui_.acquisitionExists(ACQNAME)) {
+          if (w != gui_.getAcquisitionImageWidth(ACQNAME) ||
+              h != gui_.getAcquisitionImageHeight(ACQNAME) ||
+              d != gui_.getAcquisitionImageByteDepth(ACQNAME) )
+             gui_.closeAcquisition(ACQNAME);
+       }
+
+       if (!gui_.acquisitionExists(ACQNAME)) {
+          gui_.openAcquisition(ACQNAME, "", 1, nrSelectedCameras, 1, true, false);
+          gui_.initializeAcquisition(ACQNAME, w, h, d);
+       }
+       for (int i=0; i< nrSelectedCameras; i++) {
+          if (i < COLORS.length)
+             gui_.setChannelColor(ACQNAME, i, COLORS[i]);
+          else
+             gui_.setChannelColor(ACQNAME, i, Color.WHITE);
+       }
+
+       int i = 0;
+       for (String camera : cameras_) {
+          if (selectedCameras_.get(camera)) {
+             gui_.setChannelName(ACQNAME, i, camera);
+             i++;
+          }
+       }
    }
 
    private int nrSelectedCameras () {
