@@ -3678,6 +3678,21 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       acq.initialize();
    }
 
+   public int getAcquisitionImageWidth(String acqName) throws MMScriptException {
+      AcquisitionInterface acq = acqMgr_.getAcquisition(acqName);
+      return acq.getWidth();
+   }
+
+   public int getAcquisitionImageHeight(String acqName) throws MMScriptException{
+      AcquisitionInterface acq = acqMgr_.getAcquisition(acqName);
+      return acq.getHeight();
+   }
+
+   public int getAcquisitionImageByteDepth(String acqName) throws MMScriptException{
+      AcquisitionInterface acq = acqMgr_.getAcquisition(acqName);
+      return acq.getDepth();
+   }
+
    public Boolean acquisitionExists(String name) {
       return acqMgr_.acquisitionExists(name);
    }

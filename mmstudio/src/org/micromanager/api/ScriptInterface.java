@@ -138,6 +138,21 @@ public interface ScriptInterface {
    public void addImage(String name, TaggedImage taggedImg) throws MMScriptException;
 
    /**
+     *Returns the width (in pixels) of the viewer attached to this acquisition
+    */
+   public int getAcquisitionImageWidth(String acqName) throws MMScriptException;
+
+   /**
+    *Returns the width (in pixels) of the viewer attached to this acquisition
+    */
+   public int getAcquisitionImageHeight(String acqName) throws MMScriptException;
+
+   /**
+    *Returns the width (in pixels) of the viewer attached to this acquisition
+    */
+   public int getAcquisitionImageByteDepth(String acqName) throws MMScriptException;
+
+   /**
     * Sets custom property attached to the acquisition summary
     */
    public void setAcquisitionProperty(String acqName, String propertyName, String value) throws MMScriptException;
