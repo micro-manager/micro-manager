@@ -126,7 +126,7 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 //  SutterUtils: Static utility functions that can be used from all devices
 //////////////////////////////////////////////////////////////////////////////////
 bool SutterUtils::ControllerBusy(MM::Device& device, MM::Core& core, std::string port, 
-      unsigned long answerTimeoutMs)
+      unsigned long /* answerTimeoutMs */)
 {
    if (!g_Busy[port])
       return false;
@@ -961,7 +961,7 @@ bool Shutter::Busy()
 
 bool Shutter::ControllerBusy()
 {
-   return SutterUtils::ControllerBusy(*this, *GetCoreCallback(), port_, answerTimeoutMs_);
+   return SutterUtils::ControllerBusy(*this, *GetCoreCallback(), port_, (long) answerTimeoutMs_);
 }
 
 bool Shutter::SetShutterMode(const char* mode)
@@ -1003,11 +1003,11 @@ bool Shutter::SetND(unsigned int nd)
 
    msg[0] = 222;
    if (controllerType_ == "SC") {
-      msg[1] = nd;
+      msg[1] = (unsigned char) nd;
       nrchars = 2;
    } else {
       msg[1] = (unsigned char)id_ + 1;
-      msg[2] = nd;
+      msg[2] = (unsigned char) nd;
    }
 
    // send command
@@ -1019,12 +1019,12 @@ bool Shutter::SetND(unsigned int nd)
 
 int Shutter::GoOnLine() 
 {
-   return SutterUtils::GoOnLine(*this, *GetCoreCallback(), port_, answerTimeoutMs_);
+   return SutterUtils::GoOnLine(*this, *GetCoreCallback(), port_, (unsigned long) answerTimeoutMs_);
 }
 
 int Shutter::GetControllerType(std::string& type, std::string& id) 
 {
-   return SutterUtils::GetControllerType(*this, *GetCoreCallback(), port_, answerTimeoutMs_,
+   return SutterUtils::GetControllerType(*this, *GetCoreCallback(), port_, (unsigned long) answerTimeoutMs_,
                                           type, id);
 }
 
