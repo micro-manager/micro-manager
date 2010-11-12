@@ -739,7 +739,7 @@ int SerialPort::Read(unsigned char* buf, unsigned long bufLen, unsigned long& ch
          if( anyRead)
          {
             buf[charsRead] = (unsigned char)theData;
-            if( bufLen <= charsRead++)
+            if( bufLen <= ++charsRead)
             {
                // buffer is full
                break;
@@ -752,7 +752,7 @@ int SerialPort::Read(unsigned char* buf, unsigned long bufLen, unsigned long& ch
          }
       }
       if( 0 < charsRead)
-         LogBinaryMessage(false, buf, charsRead, true);
+         LogBinaryMessage(true, buf, charsRead, true);
    }
    else
       r = ERR_BUFFER_OVERRUN;
