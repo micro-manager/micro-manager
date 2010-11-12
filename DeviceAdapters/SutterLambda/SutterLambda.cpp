@@ -126,7 +126,7 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 //  SutterUtils: Static utility functions that can be used from all devices
 //////////////////////////////////////////////////////////////////////////////////
 bool SutterUtils::ControllerBusy(MM::Device& device, MM::Core& core, std::string port, 
-      unsigned long /* answerTimeoutMs */)
+      unsigned long answerTimeoutMs)
 {
    if (!g_Busy[port])
       return false;
@@ -188,9 +188,8 @@ int SutterUtils::GetControllerType(MM::Device& device, MM::Core& core, std::stri
    unsigned long read;
    MM::MMTime startTime = core.GetCurrentMMTime();
    do {
-      ret = core.ReadFromSerial(&device, port.c_str(), &ans, 1, read);
-      if (ret != DEVICE_OK)
-         return ret;
+      if (DEVICE_OK != core.ReadFromSerial(&device, port.c_str(), &ans, 1, read))
+         return false;
       if (read > 0)
          printf("Read char: %x", ans);
       if (ans == 253)
@@ -465,23 +464,30 @@ bool Wheel::SetWheelPosition(unsigned pos)
    unsigned char msg[2];
    msg[0] = (unsigned char)252; // used for filter C
    msg[1] = command;
-  // msg[2] = 13; // CR
+   // msg[2] = 13; // CR
 
-   if (DEVICE_OK != PurgeComPort(port_.c_str()))
-      return false;
+   PurgeComPort(port_.c_str());
+
 
    // send command
    if (id_==0 || id_==1)
    {
       // filters A and B
       if (DEVICE_OK != WriteToComPort(port_.c_str(), msg+1, 1))
+
+	  {
+		  this->LogMessage("WriteToComPort failed",false);
          return false;
+	  }
    }
    else if (id_==2)
    {
       // filter C
       if (DEVICE_OK != WriteToComPort(port_.c_str(), msg, 2))
+	  {
+    	  this->LogMessage("WriteToComPort (id 2) failed",false);
          return false;
+	  }
    }
 
    // block/wait for acknowledge, or until we time out;
@@ -489,11 +495,17 @@ bool Wheel::SetWheelPosition(unsigned pos)
    unsigned long read;
    startTime = GetClockTicksUs();
 
+   std::string completeAnswer;
+
    bool ret = false;
    int CRcount = 0;
    do {
       if (DEVICE_OK != ReadFromComPort(port_.c_str(), &answer, 1, read))
+	  {
+		  LogMessage("ReadFromComPort failed", false);
          return false;
+	  }
+	  completeAnswer.push_back(answer);
       if (answer == command)
          ret = true;
 	  if (answer == 13) // CR
@@ -509,7 +521,16 @@ bool Wheel::SetWheelPosition(unsigned pos)
 
    // if everything is OK declare we are busy
    if (ret)
+   {
       g_Busy[port_] = true;
+   }
+   else
+   {
+	   std::ostringstream m;
+	   m << "timeout reading " << port_ << " elapsed: " << answerTimeoutMs_ << " # CR chars: " << CRcount << " answer: " << completeAnswer;
+	   LogMessage( m.str().c_str(),true);
+	   ret = true;
+   }
 
    return ret;
 }
@@ -709,7 +730,7 @@ int Shutter::Initialize()
 
 
    int j=0;
-   while (SutterUtils::GoOnLine(*this, *GetCoreCallback(), port_, 50) != DEVICE_OK && j < 4)
+   while (GoOnLine() != DEVICE_OK && j < 4)
       j++;
    if (j >= 4)
       return ERR_NO_ANSWER;
@@ -911,10 +932,10 @@ bool Shutter::SetShutterPosition(bool state)
    unsigned char msg[1];
    msg[0] = command;
 
-   // send command
    if (DEVICE_OK != PurgeComPort(port_.c_str()))
 	   return false;
 
+   // send command
    if (DEVICE_OK != WriteToComPort(port_.c_str(), msg, 1))
       return false;
 
@@ -961,7 +982,7 @@ bool Shutter::Busy()
 
 bool Shutter::ControllerBusy()
 {
-   return SutterUtils::ControllerBusy(*this, *GetCoreCallback(), port_, (long) answerTimeoutMs_);
+   return SutterUtils::ControllerBusy(*this, *GetCoreCallback(), port_, answerTimeoutMs_);
 }
 
 bool Shutter::SetShutterMode(const char* mode)
@@ -1003,11 +1024,11 @@ bool Shutter::SetND(unsigned int nd)
 
    msg[0] = 222;
    if (controllerType_ == "SC") {
-      msg[1] = (unsigned char) nd;
+      msg[1] = nd;
       nrchars = 2;
    } else {
       msg[1] = (unsigned char)id_ + 1;
-      msg[2] = (unsigned char) nd;
+      msg[2] = nd;
    }
 
    // send command
@@ -1019,12 +1040,12 @@ bool Shutter::SetND(unsigned int nd)
 
 int Shutter::GoOnLine() 
 {
-   return SutterUtils::GoOnLine(*this, *GetCoreCallback(), port_, (unsigned long) answerTimeoutMs_);
+   return SutterUtils::GoOnLine(*this, *GetCoreCallback(), port_, answerTimeoutMs_);
 }
 
 int Shutter::GetControllerType(std::string& type, std::string& id) 
 {
-   return SutterUtils::GetControllerType(*this, *GetCoreCallback(), port_, (unsigned long) answerTimeoutMs_,
+   return SutterUtils::GetControllerType(*this, *GetCoreCallback(), port_, answerTimeoutMs_,
                                           type, id);
 }
 
