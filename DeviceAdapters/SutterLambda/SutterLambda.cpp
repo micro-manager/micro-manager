@@ -139,7 +139,7 @@ bool SutterUtils::ControllerBusy(MM::Device& device, MM::Core& core, std::string
    }
    else
    {
-      if (answer == 13) { // CR
+      if ((0 == read) || (answer == 13)) { // CR
          g_Busy[port] = false;
       }
    }
@@ -149,27 +149,33 @@ bool SutterUtils::ControllerBusy(MM::Device& device, MM::Core& core, std::string
 int SutterUtils::GoOnLine(MM::Device& device, MM::Core& core, 
                           std::string port, unsigned long answerTimeoutMs) 
 {
+   unsigned long timeOutMicrosecs = 1000000;
+   core.PurgeSerial(&device, port.c_str());
+   const unsigned char onLineCommand = (unsigned char)0xEE;
    // Transfer to On Line
-   unsigned char setSerial = (unsigned char)238;
-   int ret = core.WriteToSerial(&device, port.c_str(), &setSerial, 1);
+   int ret = core.WriteToSerial(&device, port.c_str(), &onLineCommand, 1);
    if (DEVICE_OK != ret)
       return ret;
 
    unsigned char answer = 0;
-   bool responseReceived = false;
    int unsigned long read;
    MM::MMTime startTime = core.GetCurrentMMTime();
    do {
-      if (DEVICE_OK != core.ReadFromSerial(&device, port.c_str(), &answer, 1, read))
-         return false;
-      if (answer == 238)
-         responseReceived = true;
+      int sstatus = core.ReadFromSerial(&device, port.c_str(), &answer, 1, read);
+      if (DEVICE_OK != sstatus)
+         return sstatus;
+      if( 0 == read)
+         CDeviceUtils::SleepMs(1);
+      else
+      {
+         if (onLineCommand == answer )
+            return DEVICE_OK;
+      }
    }
-   while( !responseReceived && (core.GetCurrentMMTime() - startTime) < (answerTimeoutMs * 1000.0) );
-   if (!responseReceived)
-      return ERR_NO_ANSWER;
+   while( (core.GetCurrentMMTime() - startTime) < (timeOutMicrosecs) );
+      
+   return ERR_NO_ANSWER;
 
-   return DEVICE_OK;
 }
 
 int SutterUtils::GetControllerType(MM::Device& device, MM::Core& core, std::string port, 
@@ -192,6 +198,8 @@ int SutterUtils::GetControllerType(MM::Device& device, MM::Core& core, std::stri
          return false;
       if (read > 0)
          printf("Read char: %x", ans);
+      else
+         return false;  // previously ReadFromSerial returned error if receive buffer was empty
       if (ans == 253)
          responseReceived = true;
       CDeviceUtils::SleepMs(2);
@@ -245,6 +253,8 @@ int SutterUtils::GetStatus(MM::Device& device, MM::Core& core,
          return false;
       if (read > 0)
          printf("Read char: %x", ans);
+      else
+         return false ; // previously ReadFromSerial returned error if receive buffer was empty
       if (ans == 204)
          responseReceived = true;
       CDeviceUtils::SleepMs(2);
@@ -729,11 +739,9 @@ int Shutter::Initialize()
    AddAllowedValue(MM::g_Keyword_State, "1");
 
 
-   int j=0;
-   while (GoOnLine() != DEVICE_OK && j < 4)
-      j++;
-   if (j >= 4)
-      return ERR_NO_ANSWER;
+   int sstatus = GoOnLine();
+   if( DEVICE_OK != sstatus)
+      return sstatus;
 
    ret = GetControllerType(controllerType_, controllerId_);
    if (ret != DEVICE_OK)
@@ -860,10 +868,8 @@ MM::DeviceDetectionStatus Shutter::DetectDevice(void)
 
          if (DEVICE_OK == pS->Initialize()) 
          {
-            int j=0;
-            while (GoOnLine() != DEVICE_OK && j < 4)
-               j++;
-            if (j<4) 
+            int status = GoOnLine();
+            if( DEVICE_OK == status)
                result = MM::CanCommunicate;
             pS->Shutdown();
          }
