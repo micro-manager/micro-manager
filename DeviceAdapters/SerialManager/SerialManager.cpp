@@ -748,7 +748,6 @@ int SerialPort::Read(unsigned char* buf, unsigned long bufLen, unsigned long& ch
          else
          {
             // no data was available
-            r = ERR_RECEIVE_FAILED;
             break;
          }
       }
