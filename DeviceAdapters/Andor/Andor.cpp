@@ -342,6 +342,7 @@ int AndorCamera::GetListOfAvailableCameras()
          }
          if( ret == DRV_SUCCESS) {
             NumberOfWorkableCameras_++;
+
             std::string anStr;
             char chars[255];
             ret = GetHeadModel(chars);
@@ -351,14 +352,14 @@ int AndorCamera::GetListOfAvailableCameras()
             else {
                anStr = chars;
             }
-
             // mm can't deal with commas!!
-		    size_t ifind = anStr.find(",");
-		    while(std::string::npos != ifind)
-		    {
-			    anStr.replace(ifind,1,"~");
-			    ifind =  anStr.find(",");
-		    }
+		      size_t ifind = anStr.find(",");
+		      while(std::string::npos != ifind)
+		      {
+			      anStr.replace(ifind,1,"~");
+			      ifind =  anStr.find(",");
+		      }
+
             int id;
             ret = GetCameraSerialNumber(&id);
             if( ret!=DRV_SUCCESS ) {
@@ -371,6 +372,7 @@ int AndorCamera::GetListOfAvailableCameras()
             vCameraType.push_back(camType);
             anStr = "| " + camType + " | " + anStr + " | " + chars + " |";
             cameraName_.push_back(anStr);
+
             cameraID_.push_back((int)CameraID);   
          }   
 
@@ -1339,8 +1341,11 @@ int AndorCamera::GetListOfAvailableCameras()
          StartAcquisition();
       }
 
-      if (iCurrentTriggerMode_ == EXTERNAL)
-         WaitForAcquisition();
+      if (iCurrentTriggerMode_ == EXTERNAL) {
+         int ret = WaitForAcquisitionByHandleTimeOut(myCameraID_, imageTimeOut_ms_);
+         if (ret != DRV_SUCCESS)
+            return ret;
+      }
       else
          CDeviceUtils::SleepMs((long) (ActualInterval_ms_ - ReadoutTime_ + 0.99)); 
 
@@ -3257,7 +3262,7 @@ int AndorCamera::GetListOfAvailableCameras()
       md.put(MM::g_Keyword_Metadata_StartTime, CDeviceUtils::ConvertToString(startTime_.getMsec()));
       md.put(MM::g_Keyword_Elapsed_Time_ms, CDeviceUtils::ConvertToString((timestamp - startTime_).getMsec()));
       md.put(MM::g_Keyword_Metadata_ImageNumber, CDeviceUtils::ConvertToString(imageCounter_));
-
+      md.put(MM::g_Keyword_Binning, binSize_);
 
       MetadataSingleTag mstStartTime(MM::g_Keyword_Metadata_StartTime, label, true);
       mstStartTime.SetValue(CDeviceUtils::ConvertToString(startTime_.getMsec()));
@@ -3270,6 +3275,8 @@ int AndorCamera::GetListOfAvailableCameras()
       MetadataSingleTag mstCount(MM::g_Keyword_Metadata_ImageNumber, label, true);
       mstCount.SetValue(CDeviceUtils::ConvertToString(imageCounter_));      
       md.SetTag(mstCount);
+
+      imageCounter_++;
 
       // This method inserts new image in the circular buffer (residing in MMCore)
       int retCode = GetCoreCallback()->InsertImage(this, (unsigned char*) fullFrameBuffer_,
@@ -3527,7 +3534,7 @@ int AndorCamera::GetListOfAvailableCameras()
    DriverGuard::DriverGuard(const AndorCamera * cam)
    {
       g_AndorDriverLock.Lock();
-      if (cam->GetNumberOfWorkableCameras() > 1)
+      if (cam != 0 && cam->GetNumberOfWorkableCameras() > 1)
       {
 	      // must be defined as 32bit in order to compile on 64bit systems since GetCurrentCamera 
          // only takes 32bit -kdb		

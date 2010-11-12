@@ -98,6 +98,10 @@ public:
    int ClearROI();
 
    // high-speed interface
+   int PrepareSequenceAcqusition()
+   { 
+      return DEVICE_OK; 
+   }
    int StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow);
    /**
    * Continuous sequence acquisition.  
@@ -110,6 +114,7 @@ public:
 
    int StopSequenceAcquisition(); // temporary=true 
    int StopSequenceAcquisition(bool temporary);
+
    bool IsCapturing(){return sequenceRunning_;};
 
    // action interface for the camera
