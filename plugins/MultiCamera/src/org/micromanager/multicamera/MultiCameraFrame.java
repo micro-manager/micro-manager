@@ -25,6 +25,7 @@ import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.Roi;
 import java.awt.Color;
+import java.awt.event.ItemEvent;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -97,6 +98,12 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
    private static final Color[] COLORS = {Color.RED, Color.GREEN, Color.BLUE, Color.MAGENTA, Color.YELLOW, Color.PINK};
 
    private boolean liveRunning_ = false;
+   private static final String GUILIVEMODE = "Gui";
+   private static final String PLUGINLIVEMODE = "Plugin";
+   private static final String NOLIVEMODE = "None";
+   private String liveMode_ = GUILIVEMODE;
+
+   private LiveImagingThread th_;
 
    private synchronized boolean getLiveRunning() {
       return liveRunning_;
@@ -123,7 +130,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
          while (core_.isSequenceRunning() && getLiveRunning()) {
             if (core_.getRemainingImageCount() > 0) {
                try {
-                  TaggedImage img = core_.popNextTaggedImage();
+                  TaggedImage img = core_.getLastTaggedImage();
                   if (img != null) {
                      JSONObject md = img.tags;
                      MDUtils.setFrameIndex(md, 0);
@@ -136,7 +143,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
                         if (cName.equals(lastCamera_))
                            gui_.addImage(ACQNAME, img, true);
                         else
-                           gui_.addImage(ACQNAME, img, false);
+                           gui_.addImage(ACQNAME, img, true);
                      } else
                         gui_.addImage(ACQNAME, img, true);
                      imgcounter++;
@@ -680,7 +687,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
     private void SetEMGain() {
        if (!initialized(false, false))
           return;
-       boolean liveRunning = dGui_.getLiveMode();
+       boolean liveRunning = GetLiveMode();
        int val = EMGainSlider.getValue();
        try {
           dGui_.enableLiveMode(false);
@@ -739,7 +746,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
     }
 
    private void SetExposure() {
-       boolean liveRunning = dGui_.getLiveMode();
+       boolean liveRunning = GetLiveMode();
        String currentCamera = "";
        try {
           double exposure = NumberUtils.displayStringToDouble(ExposureTextField.getText());
@@ -784,7 +791,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
        // EM enable
        if (!initialized(false, false))
           return;
-       boolean liveRunning = dGui_.getLiveMode();
+       boolean liveRunning = GetLiveMode();
        boolean on = EMCheckBox.isSelected();
        String command = "Off";
        if (on)
@@ -841,7 +848,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
 
 
     private void TempButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_TempButtonActionPerformed
-       boolean liveRunning = dGui_.getLiveMode();
+       boolean liveRunning = GetLiveMode();
        dGui_.enableLiveMode(false);
        UpdateTemp();
        dGui_.enableLiveMode(liveRunning);
@@ -856,12 +863,16 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
     }//GEN-LAST:event_ExposureButtonActionPerformed
 
     private void BinningComboBoxItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_BinningComboBoxItemStateChanged
+       if (! (evt.getStateChange() == ItemEvent.SELECTED) )
+          return;
        SetComboSelection(BinningComboBox, MMCoreJ.getG_Keyword_Binning());
        dGui_.updateGUI(false);
     }//GEN-LAST:event_BinningComboBoxItemStateChanged
 
     private void ModeComboBoxItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_ModeComboBoxItemStateChanged
        // Combo box selecting readout mode (EM/standard)
+       if (! (evt.getStateChange() == ItemEvent.SELECTED) )
+          return;
        if (!initialized(false, false))
           return;
 
@@ -869,7 +880,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
        if (item.equals(MIXED))
           return;
 
-       boolean liveRunning = dGui_.getLiveMode();
+       boolean liveRunning = GetLiveMode();
        String mode = item.toString();
        try {
           dGui_.enableLiveMode(false);
@@ -899,35 +910,46 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
     }//GEN-LAST:event_ModeComboBoxItemStateChanged
 
     private void GainComboBoxItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_GainComboBoxItemStateChanged
+       if (! (evt.getStateChange() == ItemEvent.SELECTED) )
+          return;
        SetComboSelection(GainComboBox, AMPGAIN);
        dGui_.updateGUI(false);
     }//GEN-LAST:event_GainComboBoxItemStateChanged
 
     private void SpeedComboBoxItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_SpeedComboBoxItemStateChanged
+       if (! (evt.getStateChange() == ItemEvent.SELECTED) )
+          return;
        SetComboSelection(SpeedComboBox, SPEED);
        dGui_.updateGUI(false);
     }//GEN-LAST:event_SpeedComboBoxItemStateChanged
 
     private void FrameTransferComboBoxItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_FrameTransferComboBoxItemStateChanged
+       if (! (evt.getStateChange() == ItemEvent.SELECTED) )
+          return;
        SetComboSelection(FrameTransferComboBox, FRAMETRANSFER);
        dGui_.updateGUI(false);
     }//GEN-LAST:event_FrameTransferComboBoxItemStateChanged
 
     private void TriggerComboBoxItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_TriggerComboBoxItemStateChanged
-      SetComboSelection(TriggerComboBox, TRIGGER);
-      dGui_.updateGUI(false);
+       if (! (evt.getStateChange() == ItemEvent.SELECTED) )
+          return;
+       SetComboSelection(TriggerComboBox, TRIGGER);
+       dGui_.updateGUI(false);
     }//GEN-LAST:event_TriggerComboBoxItemStateChanged
 
     private void CameraSelectComboBoxItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_CameraSelectComboBoxItemStateChanged
+       if (! (evt.getStateChange() == ItemEvent.SELECTED) )
+          return;
        if (!initialized(false, false))
           return;
+
+       boolean liveRunning = GetLiveMode();
+       EnableLive(false);
        updateCameraList();
-       boolean liveRunning = dGui_.getLiveMode();
        try {
           // Use the initialize flag to prevent pushing settings back to the hardware
           initialized(true, false);
           String fsCamera = firstSelectedCamera();
-          dGui_.enableLiveMode(false);
           core_.setProperty("Core", "Camera", fsCamera);
           ExposureTextField.setText(GetExposure());
           GetComboSelection(BinningComboBox, MMCoreJ.getG_Keyword_Binning());
@@ -959,8 +981,11 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
           UpdateTemp();
           initialized(true, true);
 
-
-          dGui_.enableLiveMode(liveRunning);
+          if (nrSelectedCameras() > 1)
+             liveMode_ = PLUGINLIVEMODE;
+          else
+             liveMode_ = GUILIVEMODE;
+          EnableLive(liveRunning);
        } catch (Exception ex) {
           ReportingUtils.showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
        }
@@ -973,8 +998,8 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
        if (nrSelectedCameras == 1)
           gui_.snapSingleImage();
        else if (nrSelectedCameras > 1) {
+          liveMode_ = PLUGINLIVEMODE;
           try {
-
              initializeSequence(nrSelectedCameras);
              // delete previous content of circular buffer
              core_.initializeCircularBuffer();
@@ -1002,61 +1027,77 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
                }
              }
           } catch (Exception ex) {
-                  ReportingUtils.showError(ex);
-               }
+             ReportingUtils.showError(ex);
+             EnableLive(false);
+          }
        }
     }//GEN-LAST:event_SnapButtonActionPerformed
 
     private void LiveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_LiveButtonActionPerformed
-       int nrSelectedCameras = nrSelectedCameras();
-       if (nrSelectedCameras == 1) {
-          dGui_.enableLiveMode(!dGui_.getLiveMode());
-          if (dGui_.getLiveMode()) {
-             LiveButton.setText("Stop Live");
-          } else {
-             LiveButton.setText("Live");
-          }
-       } else if (nrSelectedCameras > 1) {
-          if (!liveRunning_) {
-             try {
-                initializeSequence(nrSelectedCameras);
-                // delete previous content of circular buffer
-                core_.initializeCircularBuffer();
+       if (!GetLiveMode()) {
+          EnableLive(true);
+          LiveButton.setText("Stop Live");
+      } else {
+          EnableLive(false);
+          LiveButton.setText("Live");
+      }
+    }//GEN-LAST:event_LiveButtonActionPerformed
 
-                channelIndex_ = new HashMap<String, Integer>();
-                Integer i = 0;
-                String lastSelectedCamera = "";
-                for (String camera : cameras_) {
-                   if (selectedCameras_.get(camera)) {
-                      channelIndex_.put(camera, i);
-                      i++;
-                      core_.setProperty("Core", "Camera", camera);
-                      core_.prepareSequenceAcquisition(camera);
-                      core_.startContinuousSequenceAcquisition(0);
-                      lastSelectedCamera = camera;
-                   }
-                }
-                liveRunning_ = true;
-                LiveButton.setText("Stop Live");
-                LiveImagingThread th = new LiveImagingThread(lastSelectedCamera,
-                        nrSelectedCameras);
-                th.start();
-             } catch (Exception ex) {
-              ReportingUtils.showError(ex);
-           }
-         } else {
+    private void EnableLive(boolean start)  {
+       int nrSelectedCameras = nrSelectedCameras();
+       if (liveMode_.equals(GUILIVEMODE)) {
+           liveMode_ = GUILIVEMODE;
+           dGui_.enableLiveMode(start);
+           return;
+       }
+         
+       if (start) {
+          try {
+             liveMode_ = PLUGINLIVEMODE;
+             initializeSequence(nrSelectedCameras);
+             // delete previous content of circular buffer
+             core_.initializeCircularBuffer();
+
+             channelIndex_ = new HashMap<String, Integer>();
+             Integer i = 0;
+             String lastSelectedCamera = "";
              for (String camera : cameras_) {
-                try {
-                  core_.stopSequenceAcquisition(camera);
-                } catch (Exception ex) {
-                   ReportingUtils.showError(ex);
+                if (selectedCameras_.get(camera)) {
+                   channelIndex_.put(camera, i);
+                   i++;
+                   core_.setProperty("Core", "Camera", camera);
+                   core_.prepareSequenceAcquisition(camera);
+                   core_.startContinuousSequenceAcquisition(0);
+                   lastSelectedCamera = camera;
                 }
              }
-             setLiveRunning(false);
-             LiveButton.setText("Live");
+             liveRunning_ = true;
+             LiveImagingThread th = new LiveImagingThread(lastSelectedCamera,
+                     nrSelectedCameras);
+             th.start();
+          } catch (Exception ex) {
+             ReportingUtils.showError(ex);
+          }
+       } else  { // (start == false)
+           for (String camera : cameras_) {
+              if (selectedCameras_.get(camera)) {
+                 try {
+                    core_.stopSequenceAcquisition(camera);
+                 } catch (Exception ex) {
+                     ReportingUtils.showError(ex);
+                 }
+              }
+           }
+           setLiveRunning(false);
+         try {
+            if (th_ != null)
+               th_.join(1000);
+         } catch (Exception ex) {
+            ReportingUtils.logError(ex);
          }
        }
-    }//GEN-LAST:event_LiveButtonActionPerformed
+   }
+
 
     private void UpdateTemp() {
        String tempText = "";
@@ -1117,20 +1158,20 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
     private void SetComboSelection(javax.swing.JComboBox comboBox, String property) {
        if (!initialized(false, false))
           return;
-       boolean liveRunning = dGui_.getLiveMode();
+       boolean liveRunning = GetLiveMode();
+       EnableLive(false);
        String val = (String) comboBox.getSelectedItem();
        if (val.equals(MIXED)) {
           GetComboSelection(comboBox, property);
           return;
        }
        try {
-          dGui_.enableLiveMode(false);
           for (String camera: cameras_) {
              if (!camera.equals("") && selectedCameras_.get(camera)) {
                 core_.setProperty(camera, property, val);
              }
           }
-          dGui_.enableLiveMode(liveRunning);
+          EnableLive(liveRunning);
        } catch (Exception ex) {
           ReportingUtils.showError(ex, MultiCameraFrame.class.getName() + " encountered an error.");
        }
@@ -1189,7 +1230,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
    }
 
    private void setRoi (Rectangle roi) {
-      boolean liveRunning = dGui_.getLiveMode();
+      boolean liveRunning = GetLiveMode();
       String currentCamera = "";
       try {
          currentCamera =  core_.getCameraDevice();
@@ -1290,6 +1331,18 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
       }
       return nr;
    }
+
+   private boolean GetLiveMode() {
+      if (liveRunning_) {
+         liveMode_ = PLUGINLIVEMODE;
+         return true;
+      } else if (dGui_.getLiveMode()) {
+         liveMode_ = GUILIVEMODE;
+         return true;
+      } 
+      return false;
+   }
+
 
    public void propertiesChangedAlert() {
       UpdateItems(ModeComboBox, MODE);
