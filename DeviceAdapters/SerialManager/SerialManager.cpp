@@ -341,10 +341,10 @@ MM::Device* SerialManager::CreatePort(const char* portName)
 
    // no such port found, so try to create a new one
    SerialPort* pPort = new SerialPort(portName);
-   pPort->LogMessage(("created new Port " + std::string(portName)).c_str() , true);
+   //pPort->LogMessage(("created new Port " + std::string(portName)).c_str() , true);
    ports_.push_back(pPort);
    pPort->AddReference();
-   pPort->LogMessage(("adding reference to Port " + std::string(portName)).c_str() , true);
+   //pPort->LogMessage(("adding reference to Port " + std::string(portName)).c_str() , true);
    return pPort;
 
 }
@@ -746,10 +746,14 @@ int SerialPort::Read(unsigned char* buf, unsigned long bufLen, unsigned long& ch
             }
          }
          else
+         {
+            // no data was available
+            r = ERR_RECEIVE_FAILED;
             break;
+         }
       }
       if( 0 < charsRead)
-         LogBinaryMessage(true, buf, charsRead, true);
+         LogBinaryMessage(false, buf, charsRead, true);
    }
    else
       r = ERR_BUFFER_OVERRUN;
