@@ -194,6 +194,7 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 */
 CDemoCamera::CDemoCamera() :
    CCameraBase<CDemoCamera> (),
+   dPhase_(0),
    initialized_(false),
    readoutUs_(0.0),
    scanMode_(1),
@@ -695,6 +696,8 @@ int CDemoCamera::InsertImage()
    char buf[MM::MaxStrLength];
    GetProperty(MM::g_Keyword_Binning, buf);
    md.put(MM::g_Keyword_Binning, buf);
+
+   MMThreadGuard g(imgPixelsLock_);
 
    int ret = GetCoreCallback()->InsertImage(this, GetImageBuffer(), GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel(), &md);
    if (!stopOnOverflow_ && ret == DEVICE_BUFFER_OVERFLOW)
@@ -1234,7 +1237,6 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
 
    const double cPi = 3.14159265358979;
    long lPeriod = img.Width()/2;
-   static double dPhase = 0.0;
    double dLinePhase = 0.0;
    const double dAmp = exp;
    const double cLinePhaseInc = 2.0 * cPi / 4.0 / img.Height();
@@ -1262,7 +1264,7 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
          for (k=0; k<img.Width(); k++)
          {
             long lIndex = img.Width()*j + k;
-            *(pBuf + lIndex) = (unsigned char) (g_IntensityFactor_ * min(255.0, (pedestal + dAmp * sin(dPhase + dLinePhase + (2.0 * cPi * k) / lPeriod))));
+            *(pBuf + lIndex) = (unsigned char) (g_IntensityFactor_ * min(255.0, (pedestal + dAmp * sin(dPhase_ + dLinePhase + (2.0 * cPi * k) / lPeriod))));
          }
          dLinePhase += cLinePhaseInc;
       }         
@@ -1277,7 +1279,7 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
          for (k=0; k<img.Width(); k++)
          {
             long lIndex = img.Width()*j + k;
-            *(pBuf + lIndex) = (unsigned short) (g_IntensityFactor_ * min((double)maxValue, pedestal + dAmp16 * sin(dPhase + dLinePhase + (2.0 * cPi * k) / lPeriod)));
+            *(pBuf + lIndex) = (unsigned short) (g_IntensityFactor_ * min((double)maxValue, pedestal + dAmp16 * sin(dPhase_ + dLinePhase + (2.0 * cPi * k) / lPeriod)));
          }
          dLinePhase += cLinePhaseInc;
       }         
@@ -1319,16 +1321,17 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
          for (k=0; k<img.Width(); k++)
          {
             long lIndex = img.Width()*j + k;
-            unsigned char value0 =   (unsigned char) min(255.0, (pedestal + dAmp * sin(dPhase + dLinePhase + (2.0 * cPi * k) / lPeriod)));
+            unsigned char value0 =   (unsigned char) min(255.0, (pedestal + dAmp * sin(dPhase_ + dLinePhase + (2.0 * cPi * k) / lPeriod)));
             theBytes[0] = value0;
             if( NULL != pTmpBuffer)
                pTmp2[2] = value0;
-            unsigned char value1 =   (unsigned char) min(255.0, (pedestal + dAmp * sin(dPhase + dLinePhase*2 + (2.0 * cPi * k) / lPeriod)));
+            unsigned char value1 =   (unsigned char) min(255.0, (pedestal + dAmp * sin(dPhase_ + dLinePhase*2 + (2.0 * cPi * k) / lPeriod)));
             theBytes[1] = value1;
             if( NULL != pTmpBuffer)
                pTmp2[1] = value1;
-            unsigned char value2 = (unsigned char) min(255.0, (pedestal + dAmp * sin(dPhase + dLinePhase*4 + (2.0 * cPi * k) / lPeriod)));
+            unsigned char value2 = (unsigned char) min(255.0, (pedestal + dAmp * sin(dPhase_ + dLinePhase*4 + (2.0 * cPi * k) / lPeriod)));
             theBytes[2] = value2;
+
             if( NULL != pTmpBuffer){
                pTmp2[0] = value2;
                pTmp2+=3;
@@ -1365,9 +1368,9 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
          for (k=0; k<img.Width(); k++)
          {
             long lIndex = img.Width()*j + k;
-            unsigned long long value0 = (unsigned char) min(maxPixelValue, (pedestal + dAmp * sin(dPhase + dLinePhase + (2.0 * cPi * k) / lPeriod)));
-            unsigned long long value1 = (unsigned char) min(maxPixelValue, (pedestal + dAmp * sin(dPhase + dLinePhase*2 + (2.0 * cPi * k) / lPeriod)));
-            unsigned long long value2 = (unsigned char) min(maxPixelValue, (pedestal + dAmp * sin(dPhase + dLinePhase*4 + (2.0 * cPi * k) / lPeriod)));
+            unsigned long long value0 = (unsigned char) min(maxPixelValue, (pedestal + dAmp * sin(dPhase_ + dLinePhase + (2.0 * cPi * k) / lPeriod)));
+            unsigned long long value1 = (unsigned char) min(maxPixelValue, (pedestal + dAmp * sin(dPhase_ + dLinePhase*2 + (2.0 * cPi * k) / lPeriod)));
+            unsigned long long value2 = (unsigned char) min(maxPixelValue, (pedestal + dAmp * sin(dPhase_ + dLinePhase*4 + (2.0 * cPi * k) / lPeriod)));
             unsigned long long tval = value0+(value1<<16)+(value2<<32);
          *(pBuf + lIndex) = tval;
 			}
@@ -1375,7 +1378,7 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
       }
 	}
 
-   dPhase += cPi / 4.;
+   dPhase_ += cPi / 4.;
 }
 void CDemoCamera::TestResourceLocking(const bool recurse)
 {

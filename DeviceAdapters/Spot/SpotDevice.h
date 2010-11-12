@@ -45,7 +45,7 @@ typedef SPOT_RECT Rect;
 #define TRUE 1
 
 #define TARGET_OS_MAC 1
-#include <SpotCam/SpotCam.h>"
+#include <SpotCam/SpotCam.h>
 #endif
 #endif
 

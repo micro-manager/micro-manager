@@ -112,8 +112,12 @@ public:
 
 private:
    int SetAllowedBinning();
+   void GenerateSyntheticImage(ImgBuffer& img, double exp);
+   int ResizeImageBuffer();
+
    static const double nominalPixelSizeUm_;
 
+   double dPhase_;
    ImgBuffer img_;
    bool busy_;
    bool stopOnOverFlow_;
@@ -130,9 +134,6 @@ private:
 	long binSize_;
 	long cameraCCDXSize_;
 	long cameraCCDYSize_;
-
-   void GenerateSyntheticImage(ImgBuffer& img, double exp);
-   int ResizeImageBuffer();
 
 	double testProperty_[10];
    MMThreadLock* pDemoResourceLock_;
