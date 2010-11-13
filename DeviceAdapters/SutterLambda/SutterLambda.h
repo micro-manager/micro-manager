@@ -46,6 +46,12 @@ class SutterUtils
    public:
       static bool ControllerBusy(MM::Device& device, MM::Core& core, 
             std::string port, unsigned long answerTimeoutMs);
+
+      // single attempt to communicate with controller
+      static int AttemptGoOnLine(MM::Device& device, MM::Core& core, 
+               std::string port, unsigned long answerTimeoutMs);
+
+      // retry communication
       static int GoOnLine(MM::Device& device, MM::Core& core, 
                std::string port, unsigned long answerTimeoutMs);
       static int GetControllerType(MM::Device& device, MM::Core& core, 
@@ -123,12 +129,10 @@ public:
    MM::DeviceDetectionStatus DetectDevice(void);
 
 private:
-   bool ControllerBusy();
+   //bool ControllerBusy();
    bool SetShutterPosition(bool state);
    bool SetShutterMode(const char* mode);
    bool SetND(unsigned int nd);
-   int GetControllerType(std::string& type, std::string& id);
-   int GoOnLine();
 
    bool initialized_;
    const int id_;
