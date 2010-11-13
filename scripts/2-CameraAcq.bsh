@@ -17,33 +17,16 @@ gui.setChannelName("2-Live", 1, c2);
 int w = mmc.getImageWidth();
 int h = mmc.getImageHeight();
 int d = mmc.getBytesPerPixel();
-<<<<<<< .mine
-gui.initializeAcquisition("2-Live", w, h, d);
-//mmc.prepareSequenceAcquisition(c1);
-//mmc.prepareSequenceAcquisition(c2);
-mmc.startSequenceAcquisition(c1, 400, 0, false);
-mmc.startSequenceAcquisition(c2, 400, 0, false);
-=======
 gui.initializeAcquisition(acq, w, h, d);
-// delet previous content of circulat buffer
+// delete previous content of circulat buffer
 mmc.initializeCircularBuffer();
 //mmc.prepareSequenceAcquisition(c1);
 //mmc.prepareSequenceAcquisition(c2);
 mmc.startSequenceAcquisition(c1, nrFrames, 0, false);
 mmc.startSequenceAcquisition(c2, nrFrames, 0, false);
->>>>>>> .r5726
 while (mmc.isSequenceRunning() || mmc.getRemainingImageCount() > 0) {
 	if (mmc.getRemainingImageCount() > 0) {
 		img = mmc.popNextTaggedImage();
-<<<<<<< .mine
-		JSONObject md = img.tags;
-		cName = md.get("Camera");
-		if (c1.equals(cName))
-			gui.addImage("2-Live", img.pix, 0, 0, 0);
-		else
-			gui.addImage("2-Live", img.pix, 0, 1, 0);
-	}
-=======
 		JSONObject md = img.tags;
 		MDUtils.setFrameIndex(md, 0);
 		MDUtils.setSliceIndex(md, 0);
@@ -56,5 +39,4 @@ while (mmc.isSequenceRunning() || mmc.getRemainingImageCount() > 0) {
 		gui.addImage(acq, img);
 
 	}
->>>>>>> .r5726
 }
