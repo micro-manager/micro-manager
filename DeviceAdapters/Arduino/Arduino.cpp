@@ -1333,7 +1333,7 @@ int CArduinoShutter::WriteToPort(long value)
    MM::MMTime startTime = GetCurrentMMTime();
    unsigned long bytesRead = 0;
    unsigned char answer[1];
-   while ((bytesRead < 1) && ( (startTime - GetCurrentMMTime()).getMsec() < 250)) {
+   while ((bytesRead < 1) && ( (GetCurrentMMTime() - startTime).getMsec() < 250)) {
       ret = ReadFromComPort(g_port.c_str(), answer, 1, bytesRead);
       if (ret != DEVICE_OK)
          return ret;
