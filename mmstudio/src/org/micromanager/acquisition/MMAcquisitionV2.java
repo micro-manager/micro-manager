@@ -3,6 +3,7 @@ package org.micromanager.acquisition;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.awt.Color;
+import java.util.Iterator;
 
 import mmcorej.TaggedImage;
 
@@ -38,7 +39,7 @@ public class MMAcquisitionV2 implements AcquisitionInterface {
    private int[] channelColors_;
    private String[] channelNames_;
 
-   protected Image5DWindow imgWin_;
+   //protected Image5DWindow imgWin_;
    @SuppressWarnings("unused")
    private String rootDirectory_;
    private MMVirtualAcquisitionDisplay virtAcq_;
@@ -123,9 +124,12 @@ public class MMAcquisitionV2 implements AcquisitionInterface {
       numPositions_ = positions;
 
       channelColors_ = new int[numChannels_];
-      channelNames_ = new String[numChannels_];
       for (Integer i = 0; i<numChannels_; i++) {
          channelColors_[i] = Color.WHITE.getRGB();
+      }
+
+      channelNames_ = new String[numChannels_];
+      for (Integer i = 0; i<numChannels_; i++) {
          channelNames_[i] = i.toString();
       }
    }
@@ -213,7 +217,6 @@ public class MMAcquisitionV2 implements AcquisitionInterface {
       // update acq data
       try {
          JSONObject tags = new JSONObject();
-         tags.put("Time", MDUtils.getCurrentTime());
          tags.put("Frame", frame);
          tags.put("ChannelIndex", channel);
          tags.put("Channel", channelNames_[channel]);
@@ -221,8 +224,6 @@ public class MMAcquisitionV2 implements AcquisitionInterface {
          tags.put("PositionIndex", 0);
          tags.put("Width", width_);
          tags.put("Height", height_);
-         long elapsedTimeMillis = System.currentTimeMillis() - startTimeMs_;
-         tags.put("ElapsedTime-ms", elapsedTimeMillis);
          if (depth_ == 1)
             tags.put("PixelType", "GRAY8");
          else if (depth_ == 2)
@@ -242,10 +243,8 @@ public class MMAcquisitionV2 implements AcquisitionInterface {
       // update acq data
       try {
          JSONObject tags = taggedImg.tags;
-         tags.put("Time", MDUtils.getCurrentTime());
          tags.put("Frame", frame);
          tags.put("ChannelIndex", channel);
-         tags.put("Channel", channelNames_[channel]);
          tags.put("Slice", slice);
          tags.put("PositionIndex", 0);
          //tags.put("Width", width_);
@@ -259,10 +258,30 @@ public class MMAcquisitionV2 implements AcquisitionInterface {
          throw new MMScriptException(e);
       }
    }
+
+   public void insertImage(TaggedImage taggedImg) throws MMScriptException {
+      insertImage(taggedImg, show_);
+   }
+
+   public void insertImage(TaggedImage taggedImg, boolean updateDisplay) throws MMScriptException {
+      try {
+         int channel = taggedImg.tags.getInt("ChannelIndex");
+         taggedImg.tags.put("Channel", channelNames_[channel]);
+         long elapsedTimeMillis = System.currentTimeMillis() - startTimeMs_;
+         taggedImg.tags.put("ElapsedTime-ms", elapsedTimeMillis);
+         taggedImg.tags.put("Time", MDUtils.getCurrentTime());
+      } catch (JSONException ex) {
+         throw new MMScriptException(ex);
+      }
+      virtAcq_.imageCache_.putImage(taggedImg);
+      if (updateDisplay)
+         virtAcq_.insertImage(taggedImg);
+   }
    
    public void close() {
       if (virtAcq_.acquisitionIsRunning())
          virtAcq_.abort();
+      //virtAcq_.close();
    }
 
    public boolean isInitialized() {
@@ -270,9 +289,8 @@ public class MMAcquisitionV2 implements AcquisitionInterface {
    }
    
    public void closeImage5D() {
-      if ((imgWin_ != null) && initialized_) {
-         imgWin_.close();
-      }
+      close();
+      virtAcq_.close();
    }
 
    public void setComment(String comment) throws MMScriptException {
@@ -305,6 +323,7 @@ public class MMAcquisitionV2 implements AcquisitionInterface {
                     .getSummaryMetadata()
                     .getJSONArray("ChNames")
                     .put(channel,name);
+            channelNames_[channel] = name;
          } catch (JSONException e) {
             throw new MMScriptException("Problem setting Channel name");
          }
@@ -318,8 +337,18 @@ public class MMAcquisitionV2 implements AcquisitionInterface {
    }
 
    public void setChannelColor(int channel, int rgb) throws MMScriptException {
-       if (isInitialized())
+       if (isInitialized()) {
+          try {
           virtAcq_.setChannelColor(channel, rgb);
+          virtAcq_.imageCache_
+                    .getSummaryMetadata()
+                    .getJSONArray("ChColors")
+                    .put(channel,rgb);
+          channelColors_[channel] = rgb;
+          } catch (JSONException ex) {
+             throw new MMScriptException(ex);
+          }
+       }
        else {
          if (channelNames_ == null)
             throw new MMScriptException("Dimensions need to be set first");
@@ -348,6 +377,9 @@ public class MMAcquisitionV2 implements AcquisitionInterface {
        */
    }
 
+   /*
+    * Set a property in summary metadata
+    */
    public void setProperty(String propertyName, String value) throws MMScriptException {
       if (isInitialized()) {
          try {
@@ -362,6 +394,9 @@ public class MMAcquisitionV2 implements AcquisitionInterface {
       ;
    }
 
+   /*
+    * Get a property from the summary metadata
+    */
    public String getProperty(String propertyName) throws MMScriptException {
       if (isInitialized()) {
          try {
@@ -383,7 +418,6 @@ public class MMAcquisitionV2 implements AcquisitionInterface {
          try {
             JSONObject tags = virtAcq_.imageCache_.getImage(channel, slice, frame, 0).tags;
             tags.put(propName, value);
-            //acqData_.setImageValue(frame, channel, slice, propName, value);
          } catch (JSONException e) {
             throw new MMScriptException(e);
          }
@@ -393,55 +427,58 @@ public class MMAcquisitionV2 implements AcquisitionInterface {
    }
 
    public void setSystemState(int frame, int channel, int slice, JSONObject state) throws MMScriptException {
-      // TODO
-      /*
-      try {
-         acqData_.setSystemState(frame, channel, slice, state);
-      } catch (MMAcqDataException e) {
-         throw new MMScriptException(e);
-      }
-       *
-       */
+      if (isInitialized()) {
+         try {
+            JSONObject tags = virtAcq_.imageCache_.getImage(channel, slice, frame, 0).tags;
+            Iterator<String> iState = state.keys();
+            while (iState.hasNext()) {
+               String key = iState.next();
+               tags.put(key, state.get(key));
+            }
+         } catch (JSONException e) {
+            throw new MMScriptException(e);
+         }
+      } else
+         // TODO
+         ;
    }
    
    
    public String getProperty(int frame, int channel, int slice, String propName
 	         ) throws MMScriptException {
-      // TODO
-      /*
-	      try {
-	         return acqData_.getImageValue(frame, channel, slice, propName);
-	      } catch (MMAcqDataException e) {
-	         throw new MMScriptException(e);
-	      }
-       *
-       */
-      return "";
+      if (isInitialized()) {
+         try {
+            JSONObject tags = virtAcq_.imageCache_.getImage(channel, slice, frame, 0).tags;
+            return tags.getString(propName);
+         } catch (JSONException ex) {
+            throw new MMScriptException(ex);
+         }
+         
+      } else {}
+         return "";
 	   }
    
-   protected Image5DWindow createImage5DWindow(Image5D img5d) {
-	   return new Image5DWindow(img5d);
-	   
-   }
    
    public boolean hasActiveImage5D() {
-	   return ! (this.imgWin_ == null);
+      return virtAcq_.windowClosed();
    }
 
-   public void insertImage(TaggedImage taggedImg) throws MMScriptException {
-      virtAcq_.imageCache_.putImage(taggedImg);
-      if (show_)
-         virtAcq_.insertImage(taggedImg);
-   }
 
-   public void insertImage(TaggedImage taggedImg, boolean updateDisplay) throws MMScriptException {
-      virtAcq_.imageCache_.putImage(taggedImg);
-      if (updateDisplay)
-         virtAcq_.insertImage(taggedImg);
-   }
 
    public void setSummaryProperties(JSONObject md) throws MMScriptException {
-      throw new UnsupportedOperationException("Not supported yet.");
+      if (isInitialized()) {
+         try {
+            JSONObject tags = virtAcq_.imageCache_
+                    .getSummaryMetadata();
+            Iterator<String> iState = md.keys();
+            while (iState.hasNext()) {
+               String key = iState.next();
+               tags.put(key, md.get(key));
+            }
+         } catch (Exception ex) {
+            throw new MMScriptException (ex);
+         }
+      }
    }
 
    public boolean windowClosed() {

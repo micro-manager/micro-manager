@@ -214,6 +214,14 @@ public class MMVirtualAcquisitionDisplay{
                   channelSettings_[chan].max = (int) max;
 
                   hyperImage_.setDisplayRange(min, max);
+                  imageCache_
+                    .getSummaryMetadata()
+                    .getJSONArray("ChContrastMax")
+                    .put(chan,max);
+                  imageCache_
+                    .getSummaryMetadata()
+                    .getJSONArray("ChContrastMin")
+                    .put(chan,min);
                   writeChannelSettingsToCache(chan);
                }
             } catch (Exception ex) {
@@ -455,6 +463,8 @@ public class MMVirtualAcquisitionDisplay{
    public void setChannelLut(int channel, Color color, double gamma) {
       // Note: both hyperImage_ and channelSettings_ can be null when this function is called
       // null pointer exception will ensue!
+      if (hyperImage_ == null)
+         return;
       LUT lut = ImageUtils.makeLUT(color, gamma, 8);
       if (hyperImage_.isComposite()) {
          CompositeImage ci = (CompositeImage) hyperImage_;
@@ -470,6 +480,8 @@ public class MMVirtualAcquisitionDisplay{
    }
 
    public void setChannelDisplayRange(int channel, int min, int max) {
+      if (hyperImage_ == null)
+         return;
       setChannelWithoutUpdate(channel + 1);
       hyperImage_.updateImage();
       hyperImage_.setDisplayRange(min, max);
@@ -517,6 +529,11 @@ public class MMVirtualAcquisitionDisplay{
       }
    }
 
+   public void close() {
+      if (hyperImage_ != null)
+         hyperImage_.close();
+   }
+
    public synchronized void setWindowClosed(boolean state) {
       windowClosed_ = state;
    }
@@ -540,10 +557,12 @@ public class MMVirtualAcquisitionDisplay{
    }
 
    private void setChannelWithoutUpdate(int channel) {
-      int z = hyperImage_.getSlice();
-      int t = hyperImage_.getFrame();
+      if (hyperImage_ != null) {
+         int z = hyperImage_.getSlice();
+         int t = hyperImage_.getFrame();
 
-      hyperImage_.setPositionWithoutUpdate(channel, z, t);
+         hyperImage_.setPositionWithoutUpdate(channel, z, t);
+      }
 
    }
 
