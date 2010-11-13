@@ -36,11 +36,11 @@
                   <Group type="102" attributes="0">
                       <EmptySpace max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="TempButton" min="-2" pref="63" max="-2" attributes="0"/>
+                          <Component id="tempButton" min="-2" pref="63" max="-2" attributes="0"/>
                           <Group type="103" alignment="0" groupAlignment="0" attributes="0">
                               <Component id="jLabel9" alignment="0" min="-2" max="-2" attributes="1"/>
                               <Group type="103" alignment="1" groupAlignment="0" attributes="0">
-                                  <Component id="ExposureButton" alignment="0" min="-2" pref="105" max="-2" attributes="1"/>
+                                  <Component id="exposureButton" alignment="0" min="-2" pref="105" max="-2" attributes="1"/>
                                   <Group type="102" alignment="1" attributes="0">
                                       <Group type="103" groupAlignment="0" attributes="0">
                                           <Component id="jLabel3" min="-2" max="-2" attributes="0"/>
@@ -58,20 +58,20 @@
                       </Group>
                       <EmptySpace min="-2" pref="7" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" attributes="0">
-                          <Component id="SpeedComboBox" min="-2" pref="105" max="-2" attributes="0"/>
+                          <Component id="speedComboBox" min="-2" pref="105" max="-2" attributes="0"/>
                           <Group type="102" alignment="0" attributes="0">
                               <EmptySpace min="50" pref="50" max="50" attributes="0"/>
                               <Component id="EMGainSlider" min="-2" pref="180" max="-2" attributes="0"/>
                           </Group>
-                          <Component id="TriggerComboBox" min="-2" pref="105" max="-2" attributes="0"/>
-                          <Component id="ModeComboBox" min="-2" pref="105" max="-2" attributes="0"/>
-                          <Component id="GainComboBox" min="-2" pref="105" max="-2" attributes="0"/>
+                          <Component id="triggerComboBox" min="-2" pref="105" max="-2" attributes="0"/>
+                          <Component id="modeComboBox" min="-2" pref="105" max="-2" attributes="0"/>
+                          <Component id="gainComboBox" min="-2" pref="105" max="-2" attributes="0"/>
                           <Component id="EMCheckBox" min="-2" max="-2" attributes="0"/>
                           <Component id="EMGainTextField" min="-2" pref="49" max="-2" attributes="0"/>
-                          <Component id="FrameTransferComboBox" min="-2" pref="105" max="-2" attributes="0"/>
-                          <Component id="BinningComboBox" min="-2" pref="80" max="-2" attributes="0"/>
+                          <Component id="frameTransferComboBox" min="-2" pref="105" max="-2" attributes="0"/>
+                          <Component id="binningComboBox" min="-2" pref="80" max="-2" attributes="0"/>
                           <Group type="102" alignment="0" attributes="0">
-                              <Component id="ExposureTextField" min="-2" pref="70" max="-2" attributes="0"/>
+                              <Component id="exposureTextField" min="-2" pref="70" max="-2" attributes="0"/>
                               <EmptySpace min="-2" pref="60" max="-2" attributes="0"/>
                               <Group type="103" groupAlignment="0" attributes="0">
                                   <Component id="jLabel1" alignment="0" min="-2" max="-2" attributes="0"/>
@@ -82,15 +82,15 @@
                                   </Group>
                               </Group>
                           </Group>
-                          <Component id="CameraSelectComboBox" min="-2" pref="191" max="-2" attributes="0"/>
-                          <Component id="TempLabel" alignment="0" min="-2" pref="202" max="-2" attributes="0"/>
+                          <Component id="cameraSelectComboBox" min="-2" pref="191" max="-2" attributes="0"/>
+                          <Component id="tempLabel" alignment="0" min="-2" pref="202" max="-2" attributes="0"/>
                       </Group>
                   </Group>
                   <Group type="102" alignment="0" attributes="0">
                       <EmptySpace min="-2" pref="62" max="-2" attributes="0"/>
-                      <Component id="SnapButton" min="-2" max="-2" attributes="0"/>
+                      <Component id="snapButton" min="-2" max="-2" attributes="0"/>
                       <EmptySpace min="-2" pref="68" max="-2" attributes="0"/>
-                      <Component id="LiveButton" min="-2" max="-2" attributes="0"/>
+                      <Component id="liveButton" min="-2" max="-2" attributes="0"/>
                   </Group>
               </Group>
               <EmptySpace max="32767" attributes="0"/>
@@ -103,13 +103,13 @@
               <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
                   <Component id="jLabel9" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="CameraSelectComboBox" alignment="3" min="-2" pref="23" max="-2" attributes="0"/>
+                  <Component id="cameraSelectComboBox" alignment="3" min="-2" pref="23" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
-                  <Component id="ExposureTextField" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="exposureTextField" alignment="3" min="-2" max="-2" attributes="0"/>
                   <Component id="jLabel1" alignment="3" min="-2" pref="10" max="-2" attributes="0"/>
-                  <Component id="ExposureButton" alignment="3" min="-2" pref="20" max="-2" attributes="0"/>
+                  <Component id="exposureButton" alignment="3" min="-2" pref="20" max="-2" attributes="0"/>
               </Group>
               <EmptySpace min="-2" pref="8" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
@@ -138,7 +138,7 @@
                       <Group type="103" groupAlignment="0" attributes="0">
                           <Group type="102" alignment="0" attributes="0">
                               <EmptySpace min="90" pref="90" max="90" attributes="0"/>
-                              <Component id="SpeedComboBox" min="-2" max="-2" attributes="0"/>
+                              <Component id="speedComboBox" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <Group type="102" alignment="0" attributes="0">
                               <EmptySpace min="25" pref="25" max="25" attributes="0"/>
@@ -146,12 +146,12 @@
                           </Group>
                           <Group type="102" alignment="0" attributes="0">
                               <EmptySpace min="140" pref="140" max="140" attributes="0"/>
-                              <Component id="TriggerComboBox" min="-2" max="-2" attributes="0"/>
+                              <Component id="triggerComboBox" min="-2" max="-2" attributes="0"/>
                           </Group>
-                          <Component id="ModeComboBox" min="-2" max="-2" attributes="0"/>
+                          <Component id="modeComboBox" min="-2" max="-2" attributes="0"/>
                           <Group type="102" alignment="0" attributes="0">
                               <EmptySpace min="65" pref="65" max="65" attributes="0"/>
-                              <Component id="GainComboBox" min="-2" max="-2" attributes="0"/>
+                              <Component id="gainComboBox" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <Group type="102" alignment="0" attributes="0">
                               <EmptySpace min="45" pref="45" max="45" attributes="0"/>
@@ -163,21 +163,21 @@
                           </Group>
                           <Group type="102" alignment="0" attributes="0">
                               <EmptySpace min="115" pref="115" max="115" attributes="0"/>
-                              <Component id="FrameTransferComboBox" min="-2" max="-2" attributes="0"/>
+                              <Component id="frameTransferComboBox" min="-2" max="-2" attributes="0"/>
                           </Group>
                       </Group>
                   </Group>
-                  <Component id="BinningComboBox" min="-2" pref="23" max="-2" attributes="0"/>
+                  <Component id="binningComboBox" min="-2" pref="23" max="-2" attributes="0"/>
               </Group>
               <EmptySpace max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
-                  <Component id="TempButton" alignment="3" min="-2" pref="17" max="-2" attributes="0"/>
-                  <Component id="TempLabel" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="tempButton" alignment="3" min="-2" pref="17" max="-2" attributes="0"/>
+                  <Component id="tempLabel" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="3" attributes="0">
-                  <Component id="SnapButton" alignment="3" min="-2" max="-2" attributes="0"/>
-                  <Component id="LiveButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="snapButton" alignment="3" min="-2" max="-2" attributes="0"/>
+                  <Component id="liveButton" alignment="3" min="-2" max="-2" attributes="0"/>
               </Group>
               <EmptySpace pref="13" max="32767" attributes="0"/>
           </Group>
@@ -241,7 +241,7 @@
         <Property name="text" type="java.lang.String" value="Binning"/>
       </Properties>
     </Component>
-    <Component class="javax.swing.JComboBox" name="BinningComboBox">
+    <Component class="javax.swing.JComboBox" name="binningComboBox">
       <Properties>
         <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
           <Font name="Lucida Grande" size="10" style="0"/>
@@ -256,10 +256,10 @@
         </Property>
       </Properties>
       <Events>
-        <EventHandler event="itemStateChanged" listener="java.awt.event.ItemListener" parameters="java.awt.event.ItemEvent" handler="BinningComboBoxItemStateChanged"/>
+        <EventHandler event="itemStateChanged" listener="java.awt.event.ItemListener" parameters="java.awt.event.ItemEvent" handler="binningComboBoxItemStateChanged"/>
       </Events>
     </Component>
-    <Component class="javax.swing.JTextField" name="ExposureTextField">
+    <Component class="javax.swing.JTextField" name="exposureTextField">
       <Properties>
         <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
           <Font name="Lucida Grande" size="10" style="0"/>
@@ -268,8 +268,8 @@
         <Property name="toolTipText" type="java.lang.String" value="Exposure time in ms"/>
       </Properties>
       <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="ExposureTextFieldActionPerformed"/>
-        <EventHandler event="keyTyped" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="ExposureTextFieldKeyTyped"/>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="exposureTextFieldActionPerformed"/>
+        <EventHandler event="keyTyped" listener="java.awt.event.KeyListener" parameters="java.awt.event.KeyEvent" handler="exposureTextFieldKeyTyped"/>
       </Events>
     </Component>
     <Component class="javax.swing.JSlider" name="EMGainSlider">
@@ -288,7 +288,7 @@
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="EMGainTextFieldActionPerformed"/>
       </Events>
     </Component>
-    <Component class="javax.swing.JComboBox" name="ModeComboBox">
+    <Component class="javax.swing.JComboBox" name="modeComboBox">
       <Properties>
         <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
           <Font name="Lucida Grande" size="10" style="0"/>
@@ -301,7 +301,7 @@
         </Property>
       </Properties>
       <Events>
-        <EventHandler event="itemStateChanged" listener="java.awt.event.ItemListener" parameters="java.awt.event.ItemEvent" handler="ModeComboBoxItemStateChanged"/>
+        <EventHandler event="itemStateChanged" listener="java.awt.event.ItemListener" parameters="java.awt.event.ItemEvent" handler="modeComboBoxItemStateChanged"/>
       </Events>
     </Component>
     <Component class="javax.swing.JLabel" name="jLabel4">
@@ -328,7 +328,7 @@
         <Property name="text" type="java.lang.String" value="Gain"/>
       </Properties>
     </Component>
-    <Component class="javax.swing.JComboBox" name="SpeedComboBox">
+    <Component class="javax.swing.JComboBox" name="speedComboBox">
       <Properties>
         <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
           <Font name="Lucida Grande" size="10" style="0"/>
@@ -343,7 +343,7 @@
         </Property>
       </Properties>
       <Events>
-        <EventHandler event="itemStateChanged" listener="java.awt.event.ItemListener" parameters="java.awt.event.ItemEvent" handler="SpeedComboBoxItemStateChanged"/>
+        <EventHandler event="itemStateChanged" listener="java.awt.event.ItemListener" parameters="java.awt.event.ItemEvent" handler="speedComboBoxItemStateChanged"/>
       </Events>
     </Component>
     <Component class="javax.swing.JLabel" name="SpeedLabel">
@@ -365,7 +365,7 @@
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="EMCheckBoxActionPerformed"/>
       </Events>
     </Component>
-    <Component class="javax.swing.JComboBox" name="GainComboBox">
+    <Component class="javax.swing.JComboBox" name="gainComboBox">
       <Properties>
         <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
           <Font name="Lucida Grande" size="10" style="0"/>
@@ -381,7 +381,7 @@
         </Property>
       </Properties>
       <Events>
-        <EventHandler event="itemStateChanged" listener="java.awt.event.ItemListener" parameters="java.awt.event.ItemEvent" handler="GainComboBoxItemStateChanged"/>
+        <EventHandler event="itemStateChanged" listener="java.awt.event.ItemListener" parameters="java.awt.event.ItemEvent" handler="gainComboBoxItemStateChanged"/>
       </Events>
     </Component>
     <Component class="javax.swing.JLabel" name="FrameTransferLabel">
@@ -392,7 +392,7 @@
         <Property name="text" type="java.lang.String" value="FrameTransfer"/>
       </Properties>
     </Component>
-    <Component class="javax.swing.JComboBox" name="FrameTransferComboBox">
+    <Component class="javax.swing.JComboBox" name="frameTransferComboBox">
       <Properties>
         <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
           <Font name="Lucida Grande" size="10" style="0"/>
@@ -405,7 +405,7 @@
         </Property>
       </Properties>
       <Events>
-        <EventHandler event="itemStateChanged" listener="java.awt.event.ItemListener" parameters="java.awt.event.ItemEvent" handler="FrameTransferComboBoxItemStateChanged"/>
+        <EventHandler event="itemStateChanged" listener="java.awt.event.ItemListener" parameters="java.awt.event.ItemEvent" handler="frameTransferComboBoxItemStateChanged"/>
       </Events>
     </Component>
     <Component class="javax.swing.JLabel" name="jLabel9">
@@ -416,7 +416,7 @@
         <Property name="text" type="java.lang.String" value="Active Camera"/>
       </Properties>
     </Component>
-    <Component class="javax.swing.JComboBox" name="CameraSelectComboBox">
+    <Component class="javax.swing.JComboBox" name="cameraSelectComboBox">
       <Properties>
         <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
           <Font name="Lucida Grande" size="10" style="0"/>
@@ -431,7 +431,7 @@
         </Property>
       </Properties>
       <Events>
-        <EventHandler event="itemStateChanged" listener="java.awt.event.ItemListener" parameters="java.awt.event.ItemEvent" handler="CameraSelectComboBoxItemStateChanged"/>
+        <EventHandler event="itemStateChanged" listener="java.awt.event.ItemListener" parameters="java.awt.event.ItemEvent" handler="cameraSelectComboBoxItemStateChanged"/>
       </Events>
     </Component>
     <Component class="javax.swing.JLabel" name="TriggerLabel">
@@ -442,7 +442,7 @@
         <Property name="text" type="java.lang.String" value="Trigger"/>
       </Properties>
     </Component>
-    <Component class="javax.swing.JComboBox" name="TriggerComboBox">
+    <Component class="javax.swing.JComboBox" name="triggerComboBox">
       <Properties>
         <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
           <Font name="Lucida Grande" size="10" style="0"/>
@@ -455,10 +455,10 @@
         </Property>
       </Properties>
       <Events>
-        <EventHandler event="itemStateChanged" listener="java.awt.event.ItemListener" parameters="java.awt.event.ItemEvent" handler="TriggerComboBoxItemStateChanged"/>
+        <EventHandler event="itemStateChanged" listener="java.awt.event.ItemListener" parameters="java.awt.event.ItemEvent" handler="triggerComboBoxItemStateChanged"/>
       </Events>
     </Component>
-    <Component class="javax.swing.JButton" name="TempButton">
+    <Component class="javax.swing.JButton" name="tempButton">
       <Properties>
         <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
           <Font name="Tahoma" size="10" style="0"/>
@@ -466,15 +466,15 @@
         <Property name="text" type="java.lang.String" value="Temp"/>
       </Properties>
       <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="TempButtonActionPerformed"/>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="tempButtonActionPerformed"/>
       </Events>
     </Component>
-    <Component class="javax.swing.JLabel" name="TempLabel">
+    <Component class="javax.swing.JLabel" name="tempLabel">
       <Properties>
         <Property name="text" type="java.lang.String" value="jLabel11"/>
       </Properties>
     </Component>
-    <Component class="javax.swing.JButton" name="ExposureButton">
+    <Component class="javax.swing.JButton" name="exposureButton">
       <Properties>
         <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
           <Font name="Tahoma" size="10" style="0"/>
@@ -485,10 +485,10 @@
         </Property>
       </Properties>
       <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="ExposureButtonActionPerformed"/>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="exposureButtonActionPerformed"/>
       </Events>
     </Component>
-    <Component class="javax.swing.JButton" name="SnapButton">
+    <Component class="javax.swing.JButton" name="snapButton">
       <Properties>
         <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
           <Font name="Tahoma" size="10" style="0"/>
@@ -496,10 +496,10 @@
         <Property name="text" type="java.lang.String" value="Snap"/>
       </Properties>
       <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="SnapButtonActionPerformed"/>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="snapButtonActionPerformed"/>
       </Events>
     </Component>
-    <Component class="javax.swing.JButton" name="LiveButton">
+    <Component class="javax.swing.JButton" name="liveButton">
       <Properties>
         <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
           <Font name="Tahoma" size="10" style="0"/>
@@ -507,7 +507,7 @@
         <Property name="text" type="java.lang.String" value="Live"/>
       </Properties>
       <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="LiveButtonActionPerformed"/>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="liveButtonActionPerformed"/>
       </Events>
     </Component>
   </SubComponents>
