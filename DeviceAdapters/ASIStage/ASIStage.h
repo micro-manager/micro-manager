@@ -70,6 +70,10 @@ public:
    void GetName(char* pszName) const;
    bool Busy();
 
+   // so far, only the XYStage attempts to get the controller status on initialization, so
+   // that's where the device detection is going for now
+   MM::DeviceDetectionStatus DetectDevice(void);
+
    // XYStage API
    // -----------
   int SetPositionSteps(long x, long y);
