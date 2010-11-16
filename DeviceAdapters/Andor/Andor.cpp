@@ -99,6 +99,7 @@ const char* g_CameraInformation = "1. Camera Information : | Type | Model | Seri
 // singleton instance
 AndorCamera* AndorCamera::instance_ = 0;
 unsigned int AndorCamera::refCount_ = 0;
+bool AndorCamera::softwareTriggerUsed_ = false;
 
 // global Andor driver thread lock
 MMThreadLock g_AndorDriverLock;
@@ -217,8 +218,9 @@ sequencePaused_(0)
    SetErrorText(ERR_TRIGGER_NOT_SUPPORTED, "Trigger Not supported.");
    SetErrorText(ERR_INVALID_VSPEED, "Invalid Vertical Shift Speed.");
    SetErrorText(ERR_INVALID_PREAMPGAIN, "Invalid Pre-Amp Gain.");
-   SetErrorText(ERR_CAMERA_DOES_NOT_EXIST, "No Camera Found.  Make sure it is connected and switched on, and try again");
-   SetErrorText(DRV_NO_NEW_DATA, "No new data arrived within a reasonable time");
+   SetErrorText(ERR_CAMERA_DOES_NOT_EXIST, "No Camera Found.  Make sure it is connected and switched on, and try again.");
+   SetErrorText(DRV_NO_NEW_DATA, "No new data arrived within a reasonable time.");
+   SetErrorText(ERR_SOFTWARE_TRIGGER_IN_USE, "Only one camera can use software trigger."); 
 
    seqThread_ = new AcqSequenceThread(this);
 
@@ -1901,22 +1903,29 @@ int AndorCamera::GetListOfAvailableCameras()
          if(trigger == strCurrentTriggerMode_)
             return DEVICE_OK;
 
-         strCurrentTriggerMode_ = trigger;
-
          SetToIdle();
 
          if(trigger == "Software")
-         {
+         {  
+            if (softwareTriggerUsed_)
+               return ERR_SOFTWARE_TRIGGER_IN_USE;
             iCurrentTriggerMode_ = SOFTWARE;
+            softwareTriggerUsed_ = true;
          }
          else if(trigger == "External")
          {
             iCurrentTriggerMode_ = EXTERNAL;
+            if (strCurrentTriggerMode_ == "Software")
+               softwareTriggerUsed_ = false;
          }
          else
          {
             iCurrentTriggerMode_ = INTERNAL;
+            if (strCurrentTriggerMode_ == "Software")
+               softwareTriggerUsed_ = false;
          }
+
+         strCurrentTriggerMode_ = trigger;
 
          if (acquiring)
             StartSequenceAcquisition(sequenceLength_ - imageCounter_, intervalMs_, stopOnOverflow_);
