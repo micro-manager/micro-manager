@@ -48,11 +48,14 @@ public:
    void GetName(char* pszName) const;
    bool Busy();
 
+   MM::DeviceDetectionStatus DetectDevice(void);
+
    int OnPort(MM::PropertyBase* pPropt, MM::ActionType eAct);
    int OnLogic(MM::PropertyBase* pPropt, MM::ActionType eAct);
    int OnVersion(MM::PropertyBase* pPropt, MM::ActionType eAct);
 
 private:
+   int GetControllerVersion(int&);
    std::string port_;
    bool initialized_;
 };

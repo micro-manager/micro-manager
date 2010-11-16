@@ -136,23 +136,16 @@ bool CArduinoHub::Busy()
    return false;
 }
 
-int CArduinoHub::Initialize()
+// private and expects caller to:
+// 1. guard the port
+// 2. purge the port
+int CArduinoHub::GetControllerVersion(int& version)
 {
-   // Name
-   int ret = CreateProperty(MM::g_Keyword_Name, g_DeviceNameArduinoHub, MM::String, true);
-   if (DEVICE_OK != ret)
-      return ret;
-
-   // The first second or so after opening the serial port, the Arduino is waiting for firmwareupgrades.  Simply sleep 1 second.
-   CDeviceUtils::SleepMs(2000);
-
-   MMThreadGuard myLock(g_lock);
-
-   // Check that we have a controller:
-   PurgeComPort(g_port.c_str());
-
+   int ret = DEVICE_OK;
    unsigned char command[1];
    command[0] = 30;
+   version = 0;
+
    ret = WriteToComPort(g_port.c_str(), (const unsigned char*) command, 1);
    if (ret != DEVICE_OK)
       return ret;
@@ -177,13 +170,125 @@ int CArduinoHub::Initialize()
          return ret;
    }
    std::istringstream is(ans);
-   is >> g_version;
+   is >> version;
+
+   return ret;
+
+}
+
+MM::DeviceDetectionStatus CArduinoHub::DetectDevice(void)
+{
+   // all conditions must be satisfied...
+   MM::DeviceDetectionStatus result = MM::Misconfigured;
+   std::vector< std::string> propertiesToRestore;
+   std::map< std::string, std::string> valuesToRestore;
+
+   // gather the properties that will be restored if we don't find the device
+   propertiesToRestore.push_back(MM::g_Keyword_BaudRate);
+   propertiesToRestore.push_back(MM::g_Keyword_DataBits);
+   propertiesToRestore.push_back(MM::g_Keyword_StopBits);
+   propertiesToRestore.push_back(MM::g_Keyword_Parity);
+   propertiesToRestore.push_back(MM::g_Keyword_Handshaking);
+   propertiesToRestore.push_back("AnswerTimeout");
+   propertiesToRestore.push_back("DelayBetweenCharsMs");
+   
+   try
+   {
+      std::string portLowerCase = g_port;
+      for( std::string::iterator its = portLowerCase.begin(); its != portLowerCase.end(); ++its)
+      {
+         *its = (char)tolower(*its);
+      }
+      if( 0< portLowerCase.length() &&  0 != portLowerCase.compare("undefined")  && 0 != portLowerCase.compare("unknown") )
+      {
+         result = MM::CanNotCommunicate;
+         // record the default parameters
+         char previousValue[MM::MaxStrLength];
+         for( std::vector< std::string>::iterator sit = propertiesToRestore.begin(); sit!= propertiesToRestore.end(); ++sit)
+         {
+            GetCoreCallback()->GetDeviceProperty(g_port.c_str(),(*sit).c_str(), previousValue);
+            valuesToRestore[*sit] = std::string(previousValue);
+         }  
+         // device specific default communication parameters
+         // for Arduino Duemilanova
+         GetCoreCallback()->SetDeviceProperty(g_port.c_str(), MM::g_Keyword_Handshaking, "Off");
+         GetCoreCallback()->SetDeviceProperty(g_port.c_str(), MM::g_Keyword_BaudRate, "57600" );
+         GetCoreCallback()->SetDeviceProperty(g_port.c_str(), MM::g_Keyword_StopBits, "1");
+         // Arduino timed out in GetControllerVersion even if AnswerTimeout  = 300 ms
+         GetCoreCallback()->SetDeviceProperty(g_port.c_str(), "AnswerTimeout", "500.0");
+         GetCoreCallback()->SetDeviceProperty(g_port.c_str(), "DelayBetweenCharsMs", "0");
+         MM::Device* pS = GetCoreCallback()->GetDevice(this, g_port.c_str());
+         pS->Initialize();
+         MMThreadGuard myLock(g_lock);
+         PurgeComPort(g_port.c_str());
+         int v = 0;
+         int ret = GetControllerVersion(v);
+         // later, Initialize will explicitly check the version #
+         v = v;
+         if( DEVICE_OK != ret )
+         {
+            LogMessageCode(ret,true);
+         }
+         else
+         {
+            // to succeed must reach here....
+            result = MM::CanCommunicate;
+         }
+         pS->Shutdown();
+         // always restore the AnswerTimeout to the default
+         GetCoreCallback()->SetDeviceProperty(g_port.c_str(), "AnswerTimeout", (valuesToRestore["AnswerTimeout"]).c_str());
+
+      }
+   }
+   catch(...)
+   {
+      LogMessage("Exception in DetectDevice!",false);
+   }
+
+   // if the device is not there, restore the parameters to the original settings
+   if ( MM::CanCommunicate != result)
+   {
+
+      for( std::vector< std::string>::iterator sit = propertiesToRestore.begin(); sit!= propertiesToRestore.end(); ++sit)
+      {
+         try
+         {
+            GetCoreCallback()->SetDeviceProperty(g_port.c_str(), (*sit).c_str(), (valuesToRestore[*sit]).c_str());
+         }
+         catch(...)
+         {}
+      }
+
+   }
+   return result;
+}
+
+
+int CArduinoHub::Initialize()
+{
+   // Name
+   int ret = CreateProperty(MM::g_Keyword_Name, g_DeviceNameArduinoHub, MM::String, true);
+   if (DEVICE_OK != ret)
+      return ret;
+
+   // The first second or so after opening the serial port, the Arduino is waiting for firmwareupgrades.  Simply sleep 1 second.
+   CDeviceUtils::SleepMs(2000);
+
+   MMThreadGuard myLock(g_lock);
+
+   // Check that we have a controller:
+   PurgeComPort(g_port.c_str());
+   ret = GetControllerVersion(g_version);
+   if( DEVICE_OK != ret)
+      return ret;
 
    if (g_version < g_Min_MMVersion || g_version > g_Max_MMVersion)
       return ERR_VERSION_MISMATCH;
 
    CPropertyAction* pAct = new CPropertyAction(this, &CArduinoHub::OnVersion);
-   CreateProperty("Version", ans.c_str(), MM::Integer, true, pAct);
+   std::ostringstream sversion;
+   sversion << g_version;
+   CreateProperty("Version", sversion.str().c_str(), MM::Integer, true, pAct);
 
    ret = UpdateStatus();
    if (ret != DEVICE_OK)
