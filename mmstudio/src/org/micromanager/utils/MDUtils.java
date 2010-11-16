@@ -94,6 +94,10 @@ public class MDUtils {
       return map.getString("PositionName");
    }
 
+   public static void setPositionName(JSONObject map, String positionName) throws Exception {
+      map.put("PositionName", positionName);
+   }
+
    public static String getChannelName(JSONObject map) throws Exception {
       return map.getString("Channel");
    }

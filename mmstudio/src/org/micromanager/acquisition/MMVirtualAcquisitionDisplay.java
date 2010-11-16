@@ -8,6 +8,7 @@ import ij.gui.ImageWindow;
 import ij.gui.ScrollbarWithLabel;
 import ij.gui.StackWindow;
 import ij.plugin.Animator;
+import ij.process.ImageProcessor;
 import java.awt.Color;
 import java.awt.event.AdjustmentListener;
 import java.awt.event.WindowEvent;
@@ -630,7 +631,10 @@ public class MMVirtualAcquisitionDisplay{
          return null;
       }
       if (hyperImage_.isComposite() && ((CompositeImage) hyperImage_).getMode() == CompositeImage.COMPOSITE) {
-         return ((CompositeImage) hyperImage_).getProcessor(channelIndex + 1).getHistogram();
+         ImageProcessor ip = ((CompositeImage) hyperImage_).getProcessor(channelIndex + 1);
+         if (ip == null)
+            return null;
+         return ip.getHistogram();
       } else {
          if (hyperImage_.getChannel() == (channelIndex + 1))
             return hyperImage_.getProcessor().getHistogram();
