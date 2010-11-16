@@ -218,7 +218,7 @@ sequencePaused_(0)
    SetErrorText(ERR_INVALID_VSPEED, "Invalid Vertical Shift Speed.");
    SetErrorText(ERR_INVALID_PREAMPGAIN, "Invalid Pre-Amp Gain.");
    SetErrorText(ERR_CAMERA_DOES_NOT_EXIST, "No Camera Found.  Make sure it is connected and switched on, and try again");
-
+   SetErrorText(DRV_NO_NEW_DATA, "No new data arrived within a reasonable time");
 
    seqThread_ = new AcqSequenceThread(this);
 
@@ -3153,14 +3153,15 @@ int AndorCamera::GetListOfAvailableCameras()
       LogMessage("Starting acquisition in the camera", true);
       startTime_ = GetCurrentMMTime();
       ret = ::StartAcquisition();
-      seqThread_->Start();
-
-      sequenceRunning_ = true;
 
       if (ret != DRV_SUCCESS)
       {
          SetAcquisitionMode(1);
          return ret;
+      } else 
+      {
+         seqThread_->Start();
+         sequenceRunning_ = true;
       }
 
       return DEVICE_OK;
@@ -3275,6 +3276,10 @@ int AndorCamera::GetListOfAvailableCameras()
       MetadataSingleTag mstCount(MM::g_Keyword_Metadata_ImageNumber, label, true);
       mstCount.SetValue(CDeviceUtils::ConvertToString(imageCounter_));      
       md.SetTag(mstCount);
+
+      MetadataSingleTag mstB(MM::g_Keyword_Binning, label, true);
+      mstB.SetValue(CDeviceUtils::ConvertToString(binSize_));      
+      md.SetTag(mstB);
 
       imageCounter_++;
 
