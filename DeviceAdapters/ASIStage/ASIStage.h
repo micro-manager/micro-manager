@@ -96,6 +96,7 @@ public:
    int OnStepSizeX(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnStepSizeY(MM::PropertyBase* pProp, MM::ActionType eAct);
 
+
 private:
    int OnBacklash(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFinishError(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -144,6 +145,7 @@ public:
   
    void GetName(char* pszName) const;
    bool Busy();
+   MM::DeviceDetectionStatus DetectDevice(void);
 
    // Stage API
    // ---------
