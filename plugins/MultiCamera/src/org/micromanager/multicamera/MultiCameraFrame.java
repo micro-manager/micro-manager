@@ -1004,10 +1004,13 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
              // delete previous content of circular buffer
              core_.initializeCircularBuffer();
 
+             channelIndex_ = new HashMap<String, Integer>();
+             int i = 0;
              for (String camera : cameras_) {
                 if (selectedCameras_.get(camera)) {
+                   channelIndex_.put(camera, i);
+                   i++;
                    core_.startSequenceAcquisition(camera, 1, 0, false);
-                  //Thread.sleep(400);
                 }
              }
              int imgcounter = 0;
@@ -1020,8 +1023,8 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
                      MDUtils.setSliceIndex(md, 0);
                      MDUtils.setPositionIndex(md, 0);
                      String cName = (String) md.get("Camera");
-                     //if (c1.equals(cName))
-                     MDUtils.setChannelIndex(md, imgcounter);
+                     MDUtils.setChannelIndex(md, channelIndex_.get(cName));
+                     // MDUtils.setChannelIndex(md, imgcounter);
                      gui_.addImage(ACQNAME, img);
                      imgcounter++;
                   }
@@ -1107,7 +1110,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
           for (String camera : cameras_) {
              if ( selectedCameras_.get(camera)) {
                  if (core_.hasProperty(camera, TEMP)) {
-                    tempText += core_.getProperty(camera, TEMP) + "\u00b0" + "C";
+                    tempText += core_.getProperty(camera, TEMP) + "\u00b0" + "C   ";
                  }
              }
           }
