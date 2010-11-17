@@ -72,7 +72,7 @@
 				AdditionalDependencies="Pvcam32.lib"
 				OutputFile="$(OutDir)/mmgr_dal_PVCAM.dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="../../../3rdparty/RoperScientific/Windows/PvCam/SDK/Libs;..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib"
+				AdditionalLibraryDirectories="&quot;../../../3rdparty/RoperScientific/Windows/PvCam/SDK/Libs/$(PlatformName)&quot;;&quot;..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/PVCAM.pdb"
 				SubSystem="2"
@@ -155,9 +155,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="pvcam64.lib"
 				OutputFile="$(OutDir)/mmgr_dal_PVCAM.dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="../../../3rdparty/RoperScientific/Windows/PvCam/SDK/Libs;..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib"
+				AdditionalLibraryDirectories="&quot;../../../3rdparty/RoperScientific/Windows/PvCam/SDK/Libs/$(PlatformName)&quot;;&quot;..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/PVCAM.pdb"
 				SubSystem="2"
@@ -239,7 +240,7 @@
 				AdditionalDependencies="Pvcam32.lib"
 				OutputFile="$(OutDir)/mmgr_dal_PVCAM.dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="../../../3rdparty/RoperScientific/Windows/PvCam/SDK/Libs;..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib"
+				AdditionalLibraryDirectories="&quot;../../../3rdparty/RoperScientific/Windows/PvCam/SDK/Libs/$(PlatformName)&quot;;&quot;..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -320,9 +321,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="pvcam64.lib"
 				OutputFile="$(OutDir)/mmgr_dal_PVCAM.dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="../../../3rdparty/RoperScientific/Windows/PvCam/SDK/Libs;..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib"
+				AdditionalLibraryDirectories="&quot;../../../3rdparty/RoperScientific/Windows/PvCam/SDK/Libs/$(PlatformName)&quot;;&quot;..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
