@@ -56,6 +56,8 @@
 
 int ClearPort(MM::Device& device, MM::Core& core, std::string port);
 
+MM::DeviceDetectionStatus ASICheckSerialPort(MM::Device& device, MM::Core& core, std::string port, double ato);
+
 class XYStage : public CXYStageBase<XYStage>
 {
 public:
