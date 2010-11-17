@@ -70,19 +70,58 @@ public:
          serialPortImplementation_.set_option(baud_option, anError); // set the baud rate after the port has been opened 
          if( !!anError)
             pSerialPortAdapter_->LogMessage(("error setting baud in AsioClient(): "+boost::lexical_cast<std::string,int>(anError.value()) + " " + anError.message()).c_str(), false);
-
-         pSerialPortAdapter_->LogMessage(("Attempting to set flow of " + device + " to " + boost::lexical_cast<std::string,int>(flow)).c_str(), true);
+         
+         // lexical_cast is useless here
+         std::string sflow;
+         switch( flow)
+         {
+         case boost::asio::serial_port_base::flow_control::none:
+            sflow = "none";
+            break;
+         case boost::asio::serial_port_base::flow_control::software:
+            sflow = "software";
+            break;
+         case boost::asio::serial_port_base::flow_control::hardware:
+            sflow = "hardware";
+            break;
+         };
+         pSerialPortAdapter_->LogMessage(("Attempting to set flow of " + device + " to " + sflow).c_str(), true);
          serialPortImplementation_.set_option(  boost::asio::serial_port_base::flow_control(flow) , anError ); 
          if( !!anError)
             pSerialPortAdapter_->LogMessage(("error setting flow_control in AsioClient(): "+boost::lexical_cast<std::string,int>(anError.value()) + " " + anError.message()).c_str(), false);
 
-
-         pSerialPortAdapter_->LogMessage(("Attempting to set parity of " + device + " to " + boost::lexical_cast<std::string,int>(parity)).c_str(), true);
+         std::string sparity;
+         switch( parity)
+         {
+         case boost::asio::serial_port_base::parity::none:
+            sparity = "none";
+            break;
+         case boost::asio::serial_port_base::parity::odd:
+            sparity = "odd";
+            break;
+         case boost::asio::serial_port_base::parity::even:
+            sparity = "even";
+            break;
+         };
+         pSerialPortAdapter_->LogMessage(("Attempting to set parity of " + device + " to " + sparity).c_str(), true);
          serialPortImplementation_.set_option( boost::asio::serial_port_base::parity(parity), anError); 
          if( !!anError)
             pSerialPortAdapter_->LogMessage(("error setting parity in AsioClient(): " + boost::lexical_cast<std::string,int>(anError.value()) + " " + anError.message()).c_str(), false);
 
-         pSerialPortAdapter_->LogMessage(("Attempting to set stopBits of " + device + " to " + boost::lexical_cast<std::string,int>(stopBits)).c_str(), true);
+         std::string sstopbits;
+         switch( stopBits)
+         {
+         case boost::asio::serial_port_base::stop_bits::one:
+            sstopbits = "1";
+            break;
+         case boost::asio::serial_port_base::stop_bits::onepointfive:
+            sstopbits = "1.5";
+            break;
+         case boost::asio::serial_port_base::stop_bits::two:
+            sstopbits = "2";
+            break;
+         };      
+         pSerialPortAdapter_->LogMessage(("Attempting to set stopBits of " + device + " to " + sstopbits).c_str(), true);
          serialPortImplementation_.set_option( boost::asio::serial_port_base::stop_bits(stopBits), anError ); 
          if( !!anError)
             pSerialPortAdapter_->LogMessage(("error setting stop_bits in AsioClient(): "+boost::lexical_cast<std::string,int>(anError.value()) + " " + anError.message()).c_str(), false);
