@@ -155,9 +155,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="Pvcam64.lib"
 				OutputFile="$(OutDir)/mmgr_dal_PrincetonInstruments.dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;;../../../3rdparty/RoperScientific/Windows/PvCam/SDK/Libs"
+				AdditionalLibraryDirectories="&quot;..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;;&quot;../../../3rdparty/RoperScientific/Windows/PvCam/SDK/Libs/$(PlatformName)&quot;"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/PrincetonInstruments.pdb"
 				SubSystem="2"
@@ -320,9 +321,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="Pvcam64.lib"
 				OutputFile="$(OutDir)/mmgr_dal_PrincetonInstruments.dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;;../../../3rdparty/RoperScientific/Windows/PvCam/SDK/Libs"
+				AdditionalLibraryDirectories="&quot;..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;;&quot;../../../3rdparty/RoperScientific/Windows/PvCam/SDK/Libs/$(PlatformName)&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
