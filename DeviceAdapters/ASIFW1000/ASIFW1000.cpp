@@ -127,6 +127,106 @@ bool Hub::Busy()
    return false;
 }
 
+MM::DeviceDetectionStatus Hub::DetectDevice(void)
+{
+   // all conditions must be satisfied...
+   MM::DeviceDetectionStatus result = MM::Misconfigured;
+   std::vector< std::string> propertiesToRestore;
+   std::map< std::string, std::string> valuesToRestore;
+
+   // gather the properties that will be restored if we don't find the device
+   propertiesToRestore.push_back(MM::g_Keyword_BaudRate);
+   propertiesToRestore.push_back(MM::g_Keyword_DataBits);
+   propertiesToRestore.push_back(MM::g_Keyword_StopBits);
+   propertiesToRestore.push_back(MM::g_Keyword_Parity);
+   propertiesToRestore.push_back(MM::g_Keyword_Handshaking);
+   propertiesToRestore.push_back("AnswerTimeout");
+   propertiesToRestore.push_back("DelayBetweenCharsMs");
+   
+   try
+   {
+      std::string portLowerCase = port_;
+      for( std::string::iterator its = portLowerCase.begin(); its != portLowerCase.end(); ++its)
+      {
+         *its = (char)tolower(*its);
+      }
+      if( 0< portLowerCase.length() &&  0 != portLowerCase.compare("undefined")  && 0 != portLowerCase.compare("unknown") )
+      {
+         result = MM::CanNotCommunicate;
+         // record the default parameters
+         char previousValue[MM::MaxStrLength];
+         for( std::vector< std::string>::iterator sit = propertiesToRestore.begin(); sit!= propertiesToRestore.end(); ++sit)
+         {
+            GetCoreCallback()->GetDeviceProperty(port_.c_str(),(*sit).c_str(), previousValue);
+            valuesToRestore[*sit] = std::string(previousValue);
+         }  
+         // device specific default communication parameters
+         // for ASI FW
+         GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_Handshaking, "Off");
+         GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_StopBits, "1");
+         GetCoreCallback()->SetDeviceProperty(port_.c_str(), "AnswerTimeout", "500.0");
+         GetCoreCallback()->SetDeviceProperty(port_.c_str(), "DelayBetweenCharsMs", "0");
+         MM::Device* pS = GetCoreCallback()->GetDevice(this, port_.c_str());
+
+         std::vector< std::string> possibleBauds;
+         possibleBauds.push_back("115200");
+         possibleBauds.push_back("28800");         
+         possibleBauds.push_back("19200");
+         possibleBauds.push_back("9600");
+
+
+         for( std::vector< std::string>::iterator bit = possibleBauds.begin(); bit!= possibleBauds.end(); ++bit )
+         {
+            GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_BaudRate, (*bit).c_str() );
+            pS->Initialize();
+            PurgeComPort(port_.c_str());
+            // Version
+            char version[256];
+            int ret = g_hub.GetVersion(*this, *GetCoreCallback(), version);
+            if( DEVICE_OK != ret )
+            {
+               LogMessageCode(ret,true);
+            }
+            else
+            {
+               // to succeed must reach here....
+               result = MM::CanCommunicate;
+            }
+            pS->Shutdown();
+            if( MM::CanCommunicate == result)
+               break;
+         }
+         // always restore the AnswerTimeout to the default
+         GetCoreCallback()->SetDeviceProperty(port_.c_str(), "AnswerTimeout", (valuesToRestore["AnswerTimeout"]).c_str());
+
+      }
+   }
+   catch(...)
+   {
+      LogMessage("Exception in DetectDevice!",false);
+   }
+
+   // if the device is not there, restore the parameters to the original settings
+   if ( MM::CanCommunicate != result)
+   {
+
+      for( std::vector< std::string>::iterator sit = propertiesToRestore.begin(); sit!= propertiesToRestore.end(); ++sit)
+      {
+         try
+         {
+            GetCoreCallback()->SetDeviceProperty(port_.c_str(), (*sit).c_str(), (valuesToRestore[*sit]).c_str());
+         }
+         catch(...)
+         {}
+      }
+
+   }
+   return result;
+}
+
+
+
+
 int Hub::Initialize()
 {
    // Ensure a serial port has been set -- otherwise return an error.
