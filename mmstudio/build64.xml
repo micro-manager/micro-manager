@@ -113,6 +113,7 @@
 		<copy file="${BinRoot}/LaunchMicroManager.bat" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/MMConfig_demo.cfg" todir="${InstallRoot}" />
 <copy file="${BinRoot}/mmgr_dal_AAAOTF.dll" todir="${InstallRoot}" />
+		<copy file="${BinRoot}/mmgr_dal_Andor.dll" todir="${InstallRoot}" />
 <copy file="${BinRoot}/mmgr_dal_AndorLaserCombiner.dll" todir="${InstallRoot}" />
 <copy file="${BinRoot}/mmgr_dal_Arduino.dll" todir="${InstallRoot}" />
 <copy file="${BinRoot}/mmgr_dal_ASIFW1000.dll" todir="${InstallRoot}" />
@@ -147,6 +148,8 @@
 <copy file="${BinRoot}/mmgr_dal_PI_GCS.dll" todir="${InstallRoot}" />
 <copy file="${BinRoot}/mmgr_dal_PrecisExcite.dll" todir="${InstallRoot}" />
 <copy file="${BinRoot}/mmgr_dal_Prior.dll" todir="${InstallRoot}" />
+    <copy file="${BinRoot}/mmgr_dal_PVCAM.dll" todir="${InstallRoot}" />
+    <copy file="${BinRoot}/mmgr_dal_PrincetonInstruments.dll" todir="${InstallRoot}" />
 <copy file="${BinRoot}/mmgr_dal_SerialManager.dll" todir="${InstallRoot}" />
 <copy file="${BinRoot}/mmgr_dal_SimpleAutofocus.dll" todir="${InstallRoot}" />
 <copy file="${BinRoot}/mmgr_dal_SpectralLMM5.dll" todir="${InstallRoot}" />
