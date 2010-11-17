@@ -30,6 +30,7 @@ import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMException;
+import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 import org.micromanager.utils.TextUtils;
 
@@ -85,7 +86,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
 
    public String putImage(TaggedImage taggedImg) throws MMException {
       try {
-         if (newDataSet_ == false) {
+         if (!newDataSet_) {
             throw new MMException("This ImageFileManager is read-only.");
          }
          if (!metadataStreams_.containsKey(getPosition(taggedImg))) {
@@ -491,5 +492,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
          ReportingUtils.logError(e);
       }
    }
+
+
    
 }

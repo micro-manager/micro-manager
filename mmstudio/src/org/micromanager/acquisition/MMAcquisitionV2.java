@@ -3,6 +3,7 @@ package org.micromanager.acquisition;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.awt.Color;
+import java.io.File;
 import java.util.Iterator;
 
 import mmcorej.TaggedImage;
@@ -42,26 +43,32 @@ public class MMAcquisitionV2 implements AcquisitionInterface {
    private String rootDirectory_;
    private MMVirtualAcquisitionDisplay virtAcq_;
    
-   public MMAcquisitionV2(String name, String dir) {
+   public MMAcquisitionV2(String name, String dir) throws MMScriptException {
       this(name, dir, false, false, false);
    }
 
-   public MMAcquisitionV2(String name, String dir, boolean show) {
+   public MMAcquisitionV2(String name, String dir, boolean show) throws MMScriptException {
       this(name, dir, show, false, false);
       virtAcq_.show(0);
       show_ = show;
    }
 
-   public MMAcquisitionV2(String name, String dir, boolean show, boolean diskCached, boolean existing) {
+   public MMAcquisitionV2(String name, String dir, boolean show, 
+           boolean diskCached, boolean existing) throws MMScriptException {
       name_ = name;
       rootDirectory_ = dir;
       TaggedImageStorage imageFileManager;
-      if (diskCached) imageFileManager = new TaggedImageStorageDiskDefault(dir,
+      if (!existing) {
+         if (new File(dir).exists()) {
+            name = generateRootName(name, rootDirectory_);
+         }
+      }
+      if (diskCached) imageFileManager = new TaggedImageStorageDiskDefault(dir + "/" + name,
               !existing, new JSONObject());
       else imageFileManager = new TaggedImageStorageRam(null);
 
       MMImageCache imageCache = new MMImageCache(imageFileManager);
-      virtAcq_ = new MMVirtualAcquisitionDisplay(dir, false, diskCached);
+      virtAcq_ = new MMVirtualAcquisitionDisplay(dir + "/" + name, false, diskCached);
       virtAcq_.setCache(imageCache);
       
       if (show && diskCached && existing) {
@@ -76,6 +83,21 @@ public class MMAcquisitionV2 implements AcquisitionInterface {
       
       show_ = show;
       diskCached_ = diskCached;
+   }
+
+   static private String generateRootName(String name, String baseDir) {
+      // create new acquisition directory
+      int suffixCounter = 0;
+      String testPath;
+      File testDir;
+      String testName;
+      do {
+         testName = name + "_" + suffixCounter;
+         testPath = new String(baseDir + "/" + testName);
+         suffixCounter++;
+         testDir = new File(testPath);
+      } while (testDir.exists());
+      return testName;
    }
   
    public void setImagePhysicalDimensions(int width, int height, int depth) throws MMScriptException {   

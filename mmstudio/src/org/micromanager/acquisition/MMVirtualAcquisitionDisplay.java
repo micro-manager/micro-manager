@@ -69,7 +69,7 @@ public class MMVirtualAcquisitionDisplay{
       }
    }
 
-     public void setCache(MMImageCache imageCache) {
+   public void setCache(MMImageCache imageCache) {
       imageCache_ = imageCache;
       summaryMetadata_ = imageCache_.getSummaryMetadata();
    }
@@ -370,6 +370,8 @@ public class MMVirtualAcquisitionDisplay{
             }
 
             // push current display settings to cache
+            if (imageCache_ != null)
+               imageCache_.close();
             setWindowClosed(true);
             imageCache_ = null;
             virtualStacks_ = null;
