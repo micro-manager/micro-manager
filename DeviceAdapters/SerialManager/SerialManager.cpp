@@ -384,7 +384,8 @@ SerialPort::SerialPort(const char* portName) :
    answerTimeoutMs_(500),
    transmitCharWaitMs_(0.0),
    stopBits_(g_StopBits_1),
-   parity_(g_Parity_None)
+   parity_(g_Parity_None),
+   verbose_(true)
 {
    //MMThreadGuard g(portLock_);
    charsFoundBeyondTerminator_.clear();
@@ -457,7 +458,13 @@ SerialPort::SerialPort(const char* portName) :
    // transmission Delay                                                     
    CPropertyAction* pActTD = new CPropertyAction (this, &SerialPort::OnDelayBetweenCharsMs);
    ret = CreateProperty("DelayBetweenCharsMs", "0", MM::Float, false, pActTD, true);
-   assert(ret == DEVICE_OK);                                                 
+   assert(ret == DEVICE_OK);   
+
+   // verbose debug messages
+   pActTD = new CPropertyAction (this, &SerialPort::OnVerbose);
+   (void)CreateProperty("Verbose", (verbose_?"1":"0"), MM::Integer, false, pActTD, true);
+   AddAllowedValue("Verbose", "0");
+   AddAllowedValue("Verbose", "1");
 
 }
 
@@ -717,7 +724,10 @@ int SerialPort::Write(const unsigned char* buf, unsigned long bufLen)
       logMsg << (int) *(buf + i) << " ";
    }
    if( 0 < bufLen)
-      LogBinaryMessage(false, buf, bufLen, true);
+   {
+      if (verbose_)
+         LogBinaryMessage(false, buf, bufLen, true);
+   }
 
    return DEVICE_OK;
 }
@@ -752,7 +762,10 @@ int SerialPort::Read(unsigned char* buf, unsigned long bufLen, unsigned long& ch
          }
       }
       if( 0 < charsRead)
-         LogBinaryMessage(true, buf, charsRead, true);
+      {
+         if(verbose_)
+            LogBinaryMessage(true, buf, charsRead, true);
+      }
    }
    else
       r = ERR_BUFFER_OVERRUN;
@@ -854,6 +867,25 @@ int SerialPort::OnTimeout(MM::PropertyBase* pProp, MM::ActionType eAct)
 
    return DEVICE_OK;
 }
+
+int SerialPort::OnVerbose(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+
+   if (eAct == MM::BeforeGet)
+   {  
+      pProp->Set(verbose_?1L:0L);
+   }
+   else if (eAct == MM::AfterSet)
+   {  
+      long value;
+      pProp->Get(value);
+      verbose_ = !!value;
+   }     
+
+   return DEVICE_OK;
+
+}
+
 
 int SerialPort::OnDelayBetweenCharsMs(MM::PropertyBase* pProp, MM::ActionType eAct)
 {  

@@ -111,6 +111,8 @@ public:
    int OnTimeout(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnDelayBetweenCharsMs(MM::PropertyBase* pProp, MM::ActionType eAct);
 
+   int OnVerbose(MM::PropertyBase* pProp, MM::ActionType eAct);
+
    void AddReference() {refCount_++;}
    void RemoveReference() {refCount_--;}
    bool OKToDelete() {return refCount_ < 1;}
@@ -143,7 +145,7 @@ private:
    // the worker thread
    boost::thread* pThread_;
    std::vector<char> charsFoundBeyondTerminator_;
-
+   bool verbose_; // if false, turn off LogBinaryMessage even in Debug Log
 
 
 };
