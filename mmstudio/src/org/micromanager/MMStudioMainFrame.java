@@ -2183,7 +2183,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          try {
             if (acquisitionExists(name))
                name = acqMgr_.getUniqueAcquisitionName(name);
-            acqMgr_.openAcquisition(name, rootDir, true, true);
+            acqMgr_.openAcquisition(name, rootDir, true, true, true);
          } catch (MMScriptException ex) {
             ReportingUtils.showError(ex);
          }

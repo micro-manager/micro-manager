@@ -14,8 +14,6 @@ import org.json.JSONException;
 import org.micromanager.api.AcquisitionInterface;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.TaggedImageStorage;
-import org.micromanager.image5d.Image5D;
-import org.micromanager.image5d.Image5DWindow;
 import org.micromanager.metadata.AcquisitionData;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
@@ -45,26 +43,28 @@ public class MMAcquisitionV2 implements AcquisitionInterface {
    private MMVirtualAcquisitionDisplay virtAcq_;
    
    public MMAcquisitionV2(String name, String dir) {
-      this(name, dir, false, false);
+      this(name, dir, false, false, false);
    }
 
    public MMAcquisitionV2(String name, String dir, boolean show) {
-      this(name, dir, show, false);
+      this(name, dir, show, false, false);
       virtAcq_.show(0);
       show_ = show;
    }
 
-   public MMAcquisitionV2(String name, String dir, boolean show, boolean diskCached) {
+   public MMAcquisitionV2(String name, String dir, boolean show, boolean diskCached, boolean existing) {
       name_ = name;
       rootDirectory_ = dir;
       TaggedImageStorage imageFileManager;
-      if (diskCached) imageFileManager = new TaggedImageStorageDiskDefault(dir);
+      if (diskCached) imageFileManager = new TaggedImageStorageDiskDefault(dir,
+              !existing, new JSONObject());
       else imageFileManager = new TaggedImageStorageRam(null);
 
       MMImageCache imageCache = new MMImageCache(imageFileManager);
       virtAcq_ = new MMVirtualAcquisitionDisplay(dir, false, diskCached);
       virtAcq_.setCache(imageCache);
-      if (show && diskCached) {
+      
+      if (show && diskCached && existing) {
          try {
             virtAcq_.initialize();
             virtAcq_.show(0);
@@ -72,8 +72,8 @@ public class MMAcquisitionV2 implements AcquisitionInterface {
          } catch (MMScriptException ex) {
             ReportingUtils.showError( ex);
          }
-         
       }
+      
       show_ = show;
       diskCached_ = diskCached;
    }

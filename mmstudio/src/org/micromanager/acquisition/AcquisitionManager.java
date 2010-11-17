@@ -36,10 +36,15 @@ public class AcquisitionManager {
    }
 
    public void openAcquisition(String name, String rootDir, boolean show, boolean diskCached) throws MMScriptException {
+      this.openAcquisition(name, rootDir, show, diskCached, false);
+   }
+
+   public void openAcquisition(String name, String rootDir, boolean show,
+           boolean diskCached, boolean existing) throws MMScriptException {
       if (acquisitionExists(name)) {
          throw new MMScriptException("The name is in use");
       } else {
-         acqs_.put(name, new MMAcquisitionV2(name, rootDir, show, diskCached));
+         acqs_.put(name, new MMAcquisitionV2(name, rootDir, show, diskCached, existing));
       }
    }
    
