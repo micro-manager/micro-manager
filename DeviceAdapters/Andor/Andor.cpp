@@ -4050,7 +4050,7 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
          roi_.x = 0;
          roi_.y = 0;
 
-         unsigned aret = SetImage(1, 1, roi_.x+1, roi_.x+roi_.xSize,
+         SetImage(1, 1, roi_.x+1, roi_.x+roi_.xSize,
             roi_.y+1, roi_.y+roi_.ySize);
 
          GetReadoutTime();
@@ -4123,7 +4123,7 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
          roi_.x = 0;
          roi_.y = 0;
 
-         unsigned aret = SetImage(1, 1, roi_.x+1, roi_.x+roi_.xSize,
+         SetImage(1, 1, roi_.x+1, roi_.x+roi_.xSize,
             roi_.y+1, roi_.y+roi_.ySize);
 
          GetReadoutTime();
@@ -4192,7 +4192,7 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
          roi_.x = 0;
          roi_.y = 0;
 
-         unsigned aret = SetImage(1, 1, roi_.x+1, roi_.x+roi_.xSize,
+         SetImage(1, 1, roi_.x+1, roi_.x+roi_.xSize,
             roi_.y+1, roi_.y+roi_.ySize);
 
          GetReadoutTime();
