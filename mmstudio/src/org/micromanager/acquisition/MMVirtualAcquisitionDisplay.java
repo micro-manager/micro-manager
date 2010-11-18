@@ -516,7 +516,7 @@ public class MMVirtualAcquisitionDisplay{
       return 0;
    }
 
-   public int getChannels() {
+   public int getNumChannels() {
       return numChannels_;
    }
 

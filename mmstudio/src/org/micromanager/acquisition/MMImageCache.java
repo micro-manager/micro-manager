@@ -134,6 +134,7 @@ public class MMImageCache implements TaggedImageStorage {
          taggedImg = imageFileManager_.getImage(channel, slice, frame, position);
          if (taggedImg != null) {
             checkForChangingTags(taggedImg);
+            coll_.add(this, taggedImg);
          }
       }
       return taggedImg;
