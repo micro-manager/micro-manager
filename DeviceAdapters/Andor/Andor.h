@@ -122,7 +122,7 @@ public:
    int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnGain(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnGain(MM::PropertyBase* pProp, MM::ActionType eAct);   
    int OnEMSwitch(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnReadoutMode(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnReadoutTime(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -148,10 +148,20 @@ public:
    int OnTemperatureRangeMax(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnVCVoltage(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBaselineClamp(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnCropModeSwitch(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnCropModeWidth(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnCropModeHeight(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnActualIntervalMS(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnSelectTrigger(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTimeOut(MM::PropertyBase* pProp, MM::ActionType eAct);  // kdb July-30-2009
-   
+   int OnCountConvert(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnCountConvertWavelength(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSpuriousNoiseFilterThreshold(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSpuriousNoiseFilterDescription(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnOptAcquireMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+   void UpdateOAParams(const char*  OAModeName);
+   int OnOADescription(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 
    // custom interface for the thread
@@ -195,11 +205,21 @@ private:
    long sequenceLength_;
    bool stopOnOverflow_;
    double intervalMs_;
+   std::string countConvertMode_;
+   double countConvertWavelength_;
+   std::string spuriousNoiseFilter_;
+   double spuriousNoiseFilterThreshold_;
+   std::string spuriousNoiseFilterDescriptionStr_;
+   std::string optAcquireModeStr_;
+   std::string optAcquireDescriptionStr_;
 
    long lSnapImageCnt_;
    std::vector<std::string> PreAmpGains_;
-   long currentGain_;
+   long currentGain_;   
 
+   bool cropModeSwitch_;
+   long currentCropWidth_;
+   long currentCropHeight_;
    std::vector<std::string> VSpeeds_;
 
 
@@ -246,10 +266,12 @@ private:
    std::string driverDir_;
    int fullFrameX_;
    int fullFrameY_;
+   int tempFrameX_;
+   int tempFrameY_;
    short* fullFrameBuffer_;
    std::vector<std::string> readoutModes_;
 
-   int EmCCDGainLow_, EmCCDGainHigh_;
+   int EmCCDGainLow_, EmCCDGainHigh_;   
    int minTemp_, maxTemp_;
    //Daigang 24-may-2007
    bool ThermoSteady_;
@@ -312,6 +334,7 @@ private:
    std::string getCameraType();
    unsigned int createGainProperty(AndorCapabilities * caps);
    unsigned int createTriggerProperty(AndorCapabilities * caps);
+   unsigned int createIsolatedCropModeProperty(AndorCapabilities * caps);
 
    bool mb_canUseFan;
    bool mb_canSetTemp;

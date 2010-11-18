@@ -96,6 +96,10 @@ const char* g_EMGainValue = "Gain";
 const char* g_TimeOut = "TimeOut";
 const char* g_CameraInformation = "1. Camera Information : | Type | Model | Serial No. |";
 
+const char* g_cropMode = "Isolated Crop Mode";
+const char* g_cropModeWidth = "Isolated Crop Width";
+const char* g_cropModeHeight = "Isolated Crop Height";
+
 // singleton instance
 AndorCamera* AndorCamera::instance_ = 0;
 unsigned int AndorCamera::refCount_ = 0;
@@ -182,6 +186,8 @@ driverDir_(""),
 fullFrameBuffer_(0),
 fullFrameX_(0),
 fullFrameY_(0),
+tempFrameX_(0),
+tempFrameY_(0),
 EmCCDGainLow_(0),
 EmCCDGainHigh_(0),
 EMSwitch_(true),
@@ -203,12 +209,21 @@ maxTemp_(0),
 myCameraID_(-1),
 pImgBuffer_(0),
 currentExpMS_(0.0),
+cropModeSwitch_(false),
+currentCropWidth_(64),
+currentCropHeight_(64),
 bFrameTransfer_(0),
 stopOnOverflow_(true),
 iCurrentTriggerMode_(INTERNAL),
 strCurrentTriggerMode_(""),
 ui_swVersion(0),
-sequencePaused_(0)
+sequencePaused_(0),
+countConvertMode_(""),
+countConvertWavelength_(0.0),
+optAcquireModeStr_(""),
+optAcquireDescriptionStr_(""),
+spuriousNoiseFilter_(""),
+spuriousNoiseFilterDescriptionStr_("")
 { 
    InitializeDefaultErrorMessages();
 
@@ -680,6 +695,8 @@ int AndorCamera::GetListOfAvailableCameras()
       roi_.y = 0;
       roi_.xSize = fullFrameX_;
       roi_.ySize = fullFrameY_;
+      tempFrameX_ = fullFrameX_;
+      tempFrameY_ = fullFrameY_;
       binSize_ = 1;
       fullFrameBuffer_ = new short[fullFrameX_ * fullFrameY_];
 
@@ -1084,6 +1101,15 @@ int AndorCamera::GetListOfAvailableCameras()
             assert(nRet == DEVICE_OK);
       }
 
+      if((caps.ulAcqModes & AC_ACQMODE_FRAMETRANSFER) == AC_ACQMODE_FRAMETRANSFER) {
+         if(caps.ulSetFunctions & AC_SETFUNCTION_CROPMODE) {
+           ret = createIsolatedCropModeProperty(&caps);
+           if(ret != DRV_SUCCESS) {
+             return ret;
+           }
+         }
+      }
+
       // actual interval
       // used by the application to get information on the actual camera interval
       if(!HasProperty(MM::g_Keyword_ActualInterval_ms))
@@ -1109,8 +1135,8 @@ int AndorCamera::GetListOfAvailableCameras()
       }
       assert(nRet == DEVICE_OK);
 
-      //baseline clmap
-      if(caps.ulSetFunctions&AC_SETFUNCTION_BASELINEOFFSET) //some camera such as Luca might not support this
+   //baseline clamp
+   if(caps.ulSetFunctions&AC_SETFUNCTION_BASELINECLAMP) //some camera such as Luca might not support this
       {
          if(!HasProperty("BaselineClamp"))
          {
@@ -1126,6 +1152,148 @@ int AndorCamera::GetListOfAvailableCameras()
          nRet = SetProperty("BaselineClamp", BaselineClampValues_[0].c_str());
          BaselineClampValue_ = BaselineClampValues_[0];
          assert(nRet == DEVICE_OK);
+      }
+      // CountConvert
+      if(caps.ulFeatures&AC_FEATURES_COUNTCONVERT) //some cameras might not support this
+      {
+        if(!HasProperty("CountConvert"))
+        {
+           pAct = new CPropertyAction (this, &AndorCamera::OnCountConvert);
+           nRet = CreateProperty("CountConvert", "Counts", MM::String, false, pAct);
+           assert(nRet == DEVICE_OK);
+        }
+        else
+        {
+           nRet = SetProperty("CountConvert",  "Counts");  
+           if (nRet != DEVICE_OK)
+              return nRet;
+        }
+
+        SetProperty("CountConvert",  "Counts");
+        vector<string> CCValues;
+        CCValues.push_back("Counts");
+        CCValues.push_back("Electrons");
+        CCValues.push_back("Photons");
+        nRet = SetAllowedValues("CountConvert", CCValues);
+        
+        if (nRet != DEVICE_OK)
+           return nRet;
+      
+
+        // CountCOnvertWavelength
+        if(!HasProperty("CountConvertWavelength"))
+        {
+           pAct = new CPropertyAction (this, &AndorCamera::OnCountConvertWavelength);
+           nRet = CreateProperty("CountConvertWavelength", "0.0", MM::Float, false, pAct);
+        }
+        else
+        {
+           nRet = SetProperty("CountConvertWavelength", "0.0");
+        }
+        assert(nRet == DEVICE_OK);
+      }
+
+      // SpuriousNoiseFilter
+      if(caps.ulFeatures&AC_FEATURES_REALTIMESPURIOUSNOISEFILTER) //some cameras might not support this
+      {
+        if(!HasProperty("SpuriousNoiseFilter"))
+        {
+           pAct = new CPropertyAction (this, &AndorCamera::OnSpuriousNoiseFilter);
+           nRet = CreateProperty("SpuriousNoiseFilter", "None", MM::String, false, pAct);
+           assert(nRet == DEVICE_OK);
+        }
+        else
+        {
+           nRet = SetProperty("SpuriousNoiseFilter",  "None");  
+           if (nRet != DEVICE_OK)
+              return nRet;
+        }
+
+        SetProperty("SpuriousNoiseFilter",  "None");
+        vector<string> CCValues;
+        CCValues.push_back("None");
+        CCValues.push_back("Median");
+        CCValues.push_back("Level Above");
+        nRet = SetAllowedValues("SpuriousNoiseFilter", CCValues);
+        
+        if (nRet != DEVICE_OK)
+           return nRet;
+      
+
+        // SpuriousNoiseFilterThreshold
+        if(!HasProperty("SpuriousNoiseFilterThreshold"))
+        {
+           pAct = new CPropertyAction (this, &AndorCamera::OnSpuriousNoiseFilterThreshold);
+           nRet = CreateProperty("SpuriousNoiseFilterThreshold", "0.0", MM::Float, false, pAct);
+        }
+        else
+        {
+           nRet = SetProperty("SpuriousNoiseFilterThreshold", "0.0");
+        }
+
+         // Description
+        if (!HasProperty("SpuriousNoiseFilterDescription"))
+        {
+           pAct = new CPropertyAction (this, &AndorCamera::OnSpuriousNoiseFilterDescription);
+           nRet = CreateProperty("SpuriousNoiseFilterDescription", "Recommended Range", MM::String, true, pAct);
+        }
+
+        assert(nRet == DEVICE_OK);
+      }
+
+      //OptAcquire
+      if(caps.ulFeatures&AC_FEATURES_OPTACQUIRE) //some cameras might not support this
+      {    
+        unsigned int ui_numberOfModes = 0;
+        char * pc_acqModes;
+        vector<string> OAModeNames;  
+        unsigned int ui_retVal = ::OA_Initialize("C:\\userconfig.xml", strlen("C:\\userconfig.xml"));
+        //Get the number of available Preset modes for the current camera
+        ui_retVal = ::OA_GetNumberOfPreSetModes(&ui_numberOfModes);
+        if(ui_retVal == DRV_SUCCESS && ui_numberOfModes > 0) {
+          //Allocate enough memory to hold the list of Mode names remembering to add space for the delimiter
+          pc_acqModes = static_cast<char *>(malloc((ui_numberOfModes*MAX_PATH) + (ui_numberOfModes + 1)));
+          //Get a list of Preset mode names
+          ui_retVal = OA_GetPreSetModeNames(pc_acqModes);
+
+          if(ui_retVal == DRV_SUCCESS) {
+
+            if(!HasProperty("OptAcquireMode"))
+            {
+               pAct = new CPropertyAction (this, &AndorCamera::OnOptAcquireMode);
+               nRet = CreateProperty("OptAcquireMode", "NoMode", MM::String, false, pAct);
+               assert(nRet == DEVICE_OK);
+            }
+            else
+            {
+               nRet = SetProperty("OptAcquireMode",  "NoMode");  
+               if (nRet != DEVICE_OK)
+                  return nRet;
+            }
+      
+            SetProperty("OptAcquireMode",  "NoMode"); 
+            //Add Preset mode names to list 
+            char * pc_result = strtok( pc_acqModes, "," );
+            for(unsigned int i = 0; i < ui_numberOfModes; i++){              
+              if (NULL != pc_result) {        		
+                OAModeNames.push_back(pc_result);
+              }
+              pc_result = strtok(NULL, "," );
+            }
+          }
+          nRet = SetAllowedValues("OptAcquireMode", OAModeNames);
+          free(pc_acqModes);
+        }
+        if (nRet != DEVICE_OK)
+           return nRet;
+      
+         // Description
+        if (!HasProperty("OptAcquireMode Description"))
+        {
+           pAct = new CPropertyAction (this, &AndorCamera::OnOADescription);
+           nRet = CreateProperty("OptAcquireMode Description", "Selected OptAcquireMode Description", MM::String, true, pAct);
+        }
+        assert(nRet == DEVICE_OK);
       }
 
       //DMA parameters
@@ -1303,6 +1471,8 @@ int AndorCamera::GetListOfAvailableCameras()
 
          if(!IsAcquiring())
          {
+            SetIsolatedCropMode(0, currentCropHeight_, currentCropWidth_, 1, 1);
+            SetImage(1, 1, roi_.x+1, roi_.x+roi_.xSize, roi_.y+1, roi_.y+roi_.ySize);
             GetReadoutTime(); 
             if (iCurrentTriggerMode_ == SOFTWARE || iCurrentTriggerMode_ == EXTERNAL)
             {
@@ -1338,8 +1508,15 @@ int AndorCamera::GetListOfAvailableCameras()
          SendSoftwareTrigger();
       }
       else // INTERNAL trigger mode
-      {
+      {        
          AbortAcquisition();
+         int status = DRV_ACQUIRING;
+         int error = DRV_SUCCESS;
+         while (error == DRV_SUCCESS && status == DRV_ACQUIRING) {
+           error = GetStatus(&status); 
+         }
+         SetIsolatedCropMode(0, currentCropHeight_, currentCropWidth_, 1, 1);
+         SetImage(1, 1, roi_.x+1, roi_.x+roi_.xSize, roi_.y+1, roi_.y+roi_.ySize);
          StartAcquisition();
       }
 
@@ -2136,7 +2313,6 @@ int AndorCamera::GetListOfAvailableCameras()
       return DEVICE_OK;
    }
 
-
    /**
    * Obtain temperature in Celsius.
    */
@@ -2380,6 +2556,283 @@ int AndorCamera::GetListOfAvailableCameras()
       return DEVICE_OK;
    }
 
+   
+int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType eAct)
+   {
+      if (eAct == MM::AfterSet)
+      { 
+         bool acquiring = sequenceRunning_;
+         if (acquiring)
+            StopSequenceAcquisition(true);
+
+         if (sequenceRunning_)
+            return ERR_BUSY_ACQUIRING;
+
+         //added to use RTA
+         SetToIdle();
+
+         string spuriousNoiseFilterStr;
+         long spuriousNoiseFilter = 0;
+         pProp->Get(spuriousNoiseFilterStr);
+         
+         if(spuriousNoiseFilterStr.compare("None") == 0)
+         {
+           spuriousNoiseFilter = 0;
+           spuriousNoiseFilterDescriptionStr_ = "Recommended Range";
+         }
+         else if(spuriousNoiseFilterStr.compare("Median") == 0)
+         {
+           spuriousNoiseFilter = 1;
+           spuriousNoiseFilterDescriptionStr_ = "Recommended Range 2-10";
+         }
+         else if(spuriousNoiseFilterStr.compare("Level Above") == 0)
+         {
+           spuriousNoiseFilter = 2;
+           spuriousNoiseFilterDescriptionStr_ = "Recommended Range 10-50";
+         }
+
+         if(spuriousNoiseFilterStr == spuriousNoiseFilter_)
+            return DEVICE_OK;
+          
+         // wait for camera to finish acquiring
+         int status = DRV_IDLE;
+         unsigned int ret = GetStatus(&status);
+         while (status == DRV_ACQUIRING && ret == DRV_SUCCESS)
+            ret = GetStatus(&status);
+
+         ret = Filter_SetMode(spuriousNoiseFilter);
+          if (ret != DRV_SUCCESS)
+         {           
+            return DEVICE_CAN_NOT_SET_PROPERTY;
+         }
+        
+         pProp->Set(spuriousNoiseFilterStr.c_str());
+         spuriousNoiseFilter_ = spuriousNoiseFilterStr;
+         if (acquiring)
+            StartSequenceAcquisition(sequenceLength_ - imageCounter_, intervalMs_, stopOnOverflow_);
+         PrepareSnap();
+         
+         SetProperty("SpuriousNoiseFilterDescription", spuriousNoiseFilterDescriptionStr_.c_str());  
+      }
+      else if (eAct == MM::BeforeGet)
+      {
+         pProp->Set(spuriousNoiseFilter_.c_str());
+      }
+      return DEVICE_OK;
+   }
+
+   int AndorCamera::OnSpuriousNoiseFilterThreshold(MM::PropertyBase* pProp, MM::ActionType eAct)
+   {
+      if (eAct == MM::AfterSet)
+      {
+         bool acquiring = sequenceRunning_;
+         if (acquiring)
+            StopSequenceAcquisition(true);
+
+         if (sequenceRunning_)
+            return ERR_BUSY_ACQUIRING;
+
+         //added to use RTA
+         SetToIdle();
+
+         double spuriousNoiseFilterThreshold = 0;
+         pProp->Get(spuriousNoiseFilterThreshold);
+         
+         if(spuriousNoiseFilterThreshold == spuriousNoiseFilterThreshold_)
+            return DEVICE_OK;
+          
+         // wait for camera to finish acquiring
+         int status = DRV_IDLE;
+         unsigned int ret = GetStatus(&status);
+         while (status == DRV_ACQUIRING && ret == DRV_SUCCESS)
+            ret = GetStatus(&status);
+
+         ret  = Filter_SetThreshold(static_cast<float>(spuriousNoiseFilterThreshold));
+         if (ret != DRV_SUCCESS)
+         {           
+            return DEVICE_CAN_NOT_SET_PROPERTY;
+         }
+        
+         pProp->Set(spuriousNoiseFilterThreshold);
+         spuriousNoiseFilterThreshold_ = spuriousNoiseFilterThreshold;
+         if (acquiring)
+            StartSequenceAcquisition(sequenceLength_ - imageCounter_, intervalMs_, stopOnOverflow_);
+         PrepareSnap();
+      }
+      else if (eAct == MM::BeforeGet)
+      {
+         pProp->Set(spuriousNoiseFilterThreshold_);
+      }
+      return DEVICE_OK;
+   }  
+  
+   int AndorCamera::OnSpuriousNoiseFilterDescription(MM::PropertyBase* pProp, MM::ActionType eAct)
+   {
+      if (eAct == MM::BeforeGet)
+      {
+        pProp->Set(spuriousNoiseFilterDescriptionStr_.c_str());
+      }
+
+      return DEVICE_OK;
+   }
+
+   int AndorCamera::OnCountConvert(MM::PropertyBase* pProp, MM::ActionType eAct)
+   {
+      if (eAct == MM::AfterSet)
+      { 
+         bool acquiring = sequenceRunning_;
+         if (acquiring)
+            StopSequenceAcquisition(true);
+
+         if (sequenceRunning_)
+            return ERR_BUSY_ACQUIRING;
+
+         string countConvertModeStr;
+         long countConvertMode = 0;
+         pProp->Get(countConvertModeStr);
+         
+         if(countConvertModeStr.compare("Counts") == 0)
+         {
+           countConvertMode = 0;
+         }
+         else if(countConvertModeStr.compare("Electrons") == 0)
+         {
+           countConvertMode = 1;
+         }
+         else if(countConvertModeStr.compare("Photons") == 0)
+         {
+           countConvertMode = 2;
+         }
+         if(countConvertModeStr == countConvertMode_)
+            return DEVICE_OK;          
+
+         //added to use RTA
+         SetToIdle();
+
+         unsigned int ret = SetCountConvertMode(countConvertMode);
+          if (ret != DRV_SUCCESS)
+         {           
+            return DEVICE_CAN_NOT_SET_PROPERTY;
+         }
+        
+         pProp->Set(countConvertModeStr.c_str());
+         countConvertMode_ = countConvertModeStr;
+         if (acquiring)
+            StartSequenceAcquisition(sequenceLength_ - imageCounter_, intervalMs_, stopOnOverflow_);
+         PrepareSnap();
+      }
+      else if (eAct == MM::BeforeGet)
+      {
+         pProp->Set(countConvertMode_.c_str());
+      }
+      return DEVICE_OK;
+   }
+
+   int AndorCamera::OnCountConvertWavelength(MM::PropertyBase* pProp, MM::ActionType eAct)
+   {
+      if (eAct == MM::AfterSet)
+      {
+         bool acquiring = sequenceRunning_;
+         if (acquiring)
+            StopSequenceAcquisition(true);
+
+         if (sequenceRunning_)
+            return ERR_BUSY_ACQUIRING;
+
+         //added to use RTA
+         SetToIdle();
+
+         double countConvertWavelength = 0;
+         pProp->Get(countConvertWavelength);
+         
+         if(countConvertWavelength == countConvertWavelength_)
+            return DEVICE_OK;
+          
+         // wait for camera to finish acquiring
+         int status = DRV_IDLE;
+         unsigned int ret = GetStatus(&status);
+         while (status == DRV_ACQUIRING && ret == DRV_SUCCESS)
+            ret = GetStatus(&status);
+
+         ret  = SetCountConvertWavelength(static_cast<float>(countConvertWavelength));
+         if (ret != DRV_SUCCESS)
+         {           
+            return DEVICE_CAN_NOT_SET_PROPERTY;
+         }
+        
+         pProp->Set(countConvertWavelength);
+         countConvertWavelength_ = countConvertWavelength;
+         if (acquiring)
+            StartSequenceAcquisition(sequenceLength_ - imageCounter_, intervalMs_, stopOnOverflow_);
+         PrepareSnap();
+      }
+      else if (eAct == MM::BeforeGet)
+      {
+         pProp->Set(countConvertWavelength_);
+      }
+      return DEVICE_OK;
+   }  
+
+   int AndorCamera::OnOADescription(MM::PropertyBase* pProp, MM::ActionType eAct)
+   {
+      if (eAct == MM::BeforeGet)
+      {
+        pProp->Set(optAcquireDescriptionStr_.c_str());
+      }
+
+      return DEVICE_OK;
+   }
+
+   int AndorCamera::OnOptAcquireMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+   {
+         bool acquiring = sequenceRunning_;
+         if (acquiring)
+            StopSequenceAcquisition(true);
+
+         if (sequenceRunning_)
+            return ERR_BUSY_ACQUIRING;
+
+         //added to use RTA
+         SetToIdle();
+
+      if (eAct == MM::AfterSet)
+      {
+         string optAcquireModeStr;
+         pProp->Get(optAcquireModeStr);
+         
+         if(optAcquireModeStr == optAcquireModeStr_)
+            return DEVICE_OK;
+
+          // wait for camera to finish acquiring
+         int status = DRV_IDLE;
+         unsigned int ret = GetStatus(&status);
+         while (status == DRV_ACQUIRING && ret == DRV_SUCCESS)
+            ret = GetStatus(&status);
+
+         ret = OA_EnableMode(optAcquireModeStr.c_str());
+         if (ret != DRV_SUCCESS)
+         {           
+            return DEVICE_CAN_NOT_SET_PROPERTY;
+         }
+        
+         pProp->Set(optAcquireModeStr.c_str());
+         optAcquireModeStr_ = optAcquireModeStr;
+         if (acquiring)
+            StartSequenceAcquisition(sequenceLength_ - imageCounter_, intervalMs_, stopOnOverflow_);
+         PrepareSnap();
+         UpdateOAParams(optAcquireModeStr.c_str());
+
+      }
+      else if (eAct == MM::BeforeGet)
+      {
+         pProp->Set(optAcquireModeStr_.c_str());
+      }
+      
+      
+      return DEVICE_OK;
+   }
+   
+
    ///////////////////////////////////////////////////////////////////////////////
    // Utility methods
    ///////////////////////////////////////////////////////////////////////////////
@@ -2392,7 +2845,80 @@ int AndorCamera::GetListOfAvailableCameras()
       img_.Resize(roi_.xSize / binSize_, roi_.ySize / binSize_, bytesPerPixel);
       return DEVICE_OK;
    }
+   
+   void AndorCamera::UpdateOAParams(const char* OAModeName)
+   {
+      unsigned int ui_retVal;
+      int i_temp;
+      float f_temp;
+      char c_temp[256];
+      memset(c_temp, '\0', 256);  
 
+      ui_retVal = ::OA_GetString(OAModeName, "mode_description", &c_temp[0], 256);
+      optAcquireDescriptionStr_ = c_temp;
+      SetProperty("OptAcquireMode Description", c_temp);  
+      ui_retVal = ::OA_GetString(OAModeName, "frame_transfer", &c_temp[0], 256);
+      if (0 == stricmp(c_temp, "ON")){
+        SetProperty("FrameTransfer", "On");  
+      } 
+      else {
+        SetProperty("FrameTransfer", "Off");  
+      }
+
+      ui_retVal = ::OA_GetInt(OAModeName, "electron_multiplying_gain", &i_temp);
+      sprintf(c_temp, "%d", i_temp);
+
+      SetProperty("Gain",c_temp);  
+      ui_retVal = ::OA_GetInt(OAModeName, "readout_rate", &i_temp);
+      f_temp = static_cast<float>(i_temp);
+
+      sprintf(c_temp, "%.3f MHz", f_temp);
+
+      //check if Readout rate is valid
+      int numADChannels;
+      ui_retVal = GetNumberADChannels(&numADChannels);
+
+      for(int i = 0; i < numADChannels; ++i) {
+        char * buffer = new char[64];
+        int depth;
+        ::GetBitDepth(i, &depth);
+        sprintf(buffer, "%d. %dbit",(i+1), depth);
+
+        char speedBuf[100];
+        int numSpeeds;
+        unsigned ret = GetNumberHSSpeeds(i, OutputAmplifierIndex_, &numSpeeds);
+        for (int j=0; j<numSpeeds; j++)
+        {
+           float sp;
+           ret = GetHSSpeed(i, OutputAmplifierIndex_, j, &sp);
+           sprintf(speedBuf, "%.3f MHz", sp);
+           if(0 == stricmp(c_temp, speedBuf)){
+             SetProperty("AD_Converter", buffer);
+             SetProperty("ReadoutMode", speedBuf);
+             break;
+           }
+        }
+        delete [] buffer;
+      }
+
+      ui_retVal = ::OA_GetString(OAModeName, "output_amplifier", &c_temp[0], 256);
+      SetProperty("Output_Amplifier", c_temp);  
+
+      ui_retVal = ::OA_GetInt(OAModeName, "vertical_clock_amplitude", &i_temp);
+      if(i_temp == 0) {
+        SetProperty("VerticalClockVoltage", "Normal");
+      }
+      else {
+        sprintf(c_temp, "+%d", i_temp);
+        SetProperty("VerticalClockVoltage", c_temp);  
+      }
+      ui_retVal = ::OA_GetFloat(OAModeName, "preamplifier_gain", &f_temp);
+      sprintf(c_temp, "%.2f", f_temp);
+      SetProperty("Pre-Amp-Gain", c_temp);  
+      ui_retVal = ::OA_GetFloat(OAModeName, "shift_speed", &f_temp);
+      sprintf(c_temp, "%.2f", f_temp);
+      SetProperty("VerticalSpeed", c_temp);        
+   }
 
 
    void AndorCamera::UpdateEMGainRange()
@@ -2509,9 +3035,7 @@ int AndorCamera::GetListOfAvailableCameras()
 
          if (sequenceRunning_) {
             return ERR_BUSY_ACQUIRING;
-         }
-
-         SetToIdle();
+         }         
 
          bool bOldFTMode = bFrameTransfer_;
          string mode;
@@ -2531,15 +3055,16 @@ int AndorCamera::GetListOfAvailableCameras()
             return DEVICE_INVALID_PROPERTY_VALUE;
          }
 
+         if (bFrameTransfer_ == false){
+           SetProperty(g_cropMode, "Off");           
+         } 
+
          // wait for camera to finish acquiring
-         int status = DRV_IDLE;
-         unsigned ret = GetStatus(&status);
-         while (status == DRV_ACQUIRING && ret == DRV_SUCCESS) {
-            ret = GetStatus(&status);
-         }
+         SetToIdle();
+
          if(bOldFTMode != bFrameTransfer_) {
 
-            ret = SetFrameTransferMode(modeIdx);
+            unsigned int ret = SetFrameTransferMode(modeIdx);
             if (ret != DRV_SUCCESS) {
                return ret;
             }
@@ -2619,6 +3144,12 @@ int AndorCamera::GetListOfAvailableCameras()
       unsigned ret = AbortAcquisition();
       if (ret != DRV_SUCCESS)
          CheckError(ret);
+
+     int status = DRV_ACQUIRING;
+     int error = DRV_SUCCESS;
+     while (error == DRV_SUCCESS && status == DRV_ACQUIRING) {
+       error = GetStatus(&status); 
+     }
    }
 
 
@@ -3126,6 +3657,11 @@ int AndorCamera::GetListOfAvailableCameras()
          LogMessage(os.str().c_str(), true);
 
          ret = SetFrameTransferMode(modeIdx);
+
+         if (modeIdx == 1 && cropModeSwitch_) {
+            SetIsolatedCropMode(1, currentCropHeight_, currentCropWidth_, 1, 1);
+            cropModeSwitch_ = true;
+         }
       }
       if (ret != DRV_SUCCESS)
       {
@@ -3189,6 +3725,12 @@ int AndorCamera::GetListOfAvailableCameras()
 
          LogMessage("Stopped sequence acquisition");
          AbortAcquisition();
+         int status = DRV_ACQUIRING;
+         int error = DRV_SUCCESS;
+         while (error == DRV_SUCCESS && status == DRV_ACQUIRING) {
+           error = GetStatus(&status); 
+         }
+
          sequenceRunning_ = false;
 
          UpdateSnapTriggerMode();
@@ -3223,7 +3765,7 @@ int AndorCamera::GetListOfAvailableCameras()
       seqThread_->wait();
 
       if (!temporary)
-         PrepareSnap();
+        PrepareSnap();
 
       return DEVICE_OK;
    }
@@ -3445,8 +3987,258 @@ int AndorCamera::GetListOfAvailableCameras()
          AddAllowedValue(g_EMGain, "Off");
       }
       
-      return retVal;
+  return retVal;
+}
+
+
+   /**
+   * Set camera crop mode on/off.
+   */
+   int AndorCamera::OnCropModeSwitch(MM::PropertyBase* pProp, MM::ActionType eAct)
+   {
+      DriverGuard dg(this);
+      if (eAct == MM::AfterSet)
+      {
+         std::string Switch;
+         pProp->Get(Switch);
+         if (Switch == "Off" && !cropModeSwitch_)
+            return DEVICE_OK;
+         if (Switch == "On" && cropModeSwitch_)
+            return DEVICE_OK;
+
+         bool acquiring = sequenceRunning_;
+         if (acquiring)
+            StopSequenceAcquisition(true);
+
+         if (sequenceRunning_)
+            return ERR_BUSY_ACQUIRING;
+
+         if (Switch == "On"){
+           SetProperty("FrameTransfer", "On");           
+         } 
+
+         //added to use RTA
+         SetToIdle();
+
+         unsigned ret = DRV_SUCCESS;
+         if (Switch == "On") {
+            SetAcquisitionMode(5);
+            SetFrameTransferMode(1);
+            ret = SetIsolatedCropMode(1, currentCropHeight_, currentCropWidth_, 1, 1);
+            SetAcquisitionMode(1);
+            fullFrameX_ = currentCropWidth_;
+            fullFrameY_ = currentCropHeight_;
+            cropModeSwitch_ = true;
+         } 
+         else {
+            fullFrameX_ = tempFrameX_;
+            fullFrameY_ = tempFrameY_;
+            ret = SetIsolatedCropMode(0, currentCropHeight_, currentCropWidth_, 1, 1);
+            cropModeSwitch_ = false;
+         }
+
+         if (initialized_) {
+            OnPropertiesChanged();
+         }
+
+         if (DRV_SUCCESS != ret)
+            return (int)ret;
+
+         ROI oldRoi = roi_;
+         roi_.xSize = fullFrameX_;
+         roi_.ySize = fullFrameY_;
+         roi_.x = 0;
+         roi_.y = 0;
+
+         unsigned aret = SetImage(1, 1, roi_.x+1, roi_.x+roi_.xSize,
+            roi_.y+1, roi_.y+roi_.ySize);
+
+         GetReadoutTime();
+
+         ResizeImageBuffer();
+
+         PrepareSnap();
+      }
+      else if (eAct == MM::BeforeGet)
+      {
+         if (cropModeSwitch_)
+            pProp->Set("On");
+         else
+            pProp->Set("Off");
+      }
+      return DEVICE_OK;
    }
+
+
+   /**
+   * Set camera crop mode width.
+   */
+   int AndorCamera::OnCropModeWidth(MM::PropertyBase* pProp, MM::ActionType eAct)
+   {
+      DriverGuard dg(this);
+      if (eAct == MM::AfterSet)
+      {
+         long cropWidth;
+         pProp->Get(cropWidth);
+         if (!cropModeSwitch_) {
+            currentCropWidth_ = cropWidth;
+            return DEVICE_OK;
+         }
+         if(cropWidth == currentCropWidth_)
+            return DEVICE_OK;
+
+         bool acquiring = sequenceRunning_;
+         if (acquiring)
+            StopSequenceAcquisition(true);
+
+         if (sequenceRunning_)
+            return ERR_BUSY_ACQUIRING;
+
+         if (cropWidth < 1 ) 
+            cropWidth = 1;
+         if (cropWidth > tempFrameX_ ) 
+            cropWidth = tempFrameX_;
+         pProp->Set(cropWidth);
+
+         //added to use RTA
+         SetToIdle();
+
+         unsigned ret = DRV_SUCCESS;
+         if (cropModeSwitch_) {
+            SetAcquisitionMode(5);
+            SetFrameTransferMode(1);
+            ret = SetIsolatedCropMode(1, currentCropHeight_, cropWidth, 1, 1);
+            SetAcquisitionMode(1);
+            fullFrameX_ = currentCropWidth_;
+
+            if (DRV_SUCCESS != ret)
+              return (int)ret;
+
+            currentCropWidth_ = cropWidth;            
+         }
+
+         ROI oldRoi = roi_;
+         roi_.xSize = fullFrameX_;
+         roi_.ySize = fullFrameY_;
+         roi_.x = 0;
+         roi_.y = 0;
+
+         unsigned aret = SetImage(1, 1, roi_.x+1, roi_.x+roi_.xSize,
+            roi_.y+1, roi_.y+roi_.ySize);
+
+         GetReadoutTime();
+
+         ResizeImageBuffer();
+
+         PrepareSnap();
+      }
+      else if (eAct == MM::BeforeGet)
+      {
+         pProp->Set(currentCropWidth_);
+      }
+      return DEVICE_OK;
+   }
+
+   /**
+   * Set camera crop mode height.
+   */
+   int AndorCamera::OnCropModeHeight(MM::PropertyBase* pProp, MM::ActionType eAct)
+   {
+      DriverGuard dg(this);
+      if (eAct == MM::AfterSet)
+      {
+         long cropHeight;
+         pProp->Get(cropHeight);
+         if (!cropModeSwitch_) {
+            currentCropHeight_ = cropHeight;
+            return DEVICE_OK;
+         }
+         if(cropHeight == currentCropHeight_)
+            return DEVICE_OK;
+
+         bool acquiring = sequenceRunning_;
+         if (acquiring)
+            StopSequenceAcquisition(true);
+
+         if (sequenceRunning_)
+            return ERR_BUSY_ACQUIRING;
+
+         if (cropHeight < 1 ) 
+            cropHeight = 1;
+         if (cropHeight > tempFrameY_ ) 
+            cropHeight = tempFrameY_;
+         pProp->Set(cropHeight);
+
+         //added to use RTA
+         SetToIdle();
+
+         unsigned ret = DRV_SUCCESS;
+         if (cropModeSwitch_) {
+            SetAcquisitionMode(5);
+            SetFrameTransferMode(1);
+            ret = SetIsolatedCropMode(1, cropHeight, currentCropWidth_, 1, 1);
+            SetAcquisitionMode(1);
+            fullFrameY_ = currentCropHeight_;
+
+            if (DRV_SUCCESS != ret)
+              return (int)ret;
+
+            currentCropHeight_ = cropHeight;  
+         }
+
+         ROI oldRoi = roi_;
+         roi_.xSize = fullFrameX_;
+         roi_.ySize = fullFrameY_;
+         roi_.x = 0;
+         roi_.y = 0;
+
+         unsigned aret = SetImage(1, 1, roi_.x+1, roi_.x+roi_.xSize,
+            roi_.y+1, roi_.y+roi_.ySize);
+
+         GetReadoutTime();
+
+         ResizeImageBuffer();
+
+         PrepareSnap();
+      }
+      else if (eAct == MM::BeforeGet)
+      {
+         pProp->Set(currentCropHeight_);
+      }
+      return DEVICE_OK;
+   }
+
+unsigned int AndorCamera::createIsolatedCropModeProperty(AndorCapabilities * caps) {
+
+  DriverGuard dg(this);
+  unsigned int ret(DRV_SUCCESS);
+
+  if((caps->ulSetFunctions&AC_SETFUNCTION_CROPMODE) == AC_SETFUNCTION_CROPMODE) {
+     CPropertyAction *pAct = new CPropertyAction(this, &AndorCamera::OnCropModeSwitch);
+     int nRet = CreateProperty(g_cropMode, "Off", MM::String, false, pAct);
+     assert (nRet == DEVICE_OK);
+     AddAllowedValue(g_cropMode, "On");      
+     AddAllowedValue(g_cropMode, "Off");
+
+     if(!HasProperty(g_cropModeWidth)) {
+        CPropertyAction *pAct = new CPropertyAction(this, &AndorCamera::OnCropModeWidth);
+        int nRet = CreateProperty(g_cropModeWidth,"64", MM::Integer,false, pAct);
+        assert(nRet == DEVICE_OK);
+        nRet = SetPropertyLimits(g_cropModeWidth, 1, tempFrameX_);
+        assert(nRet == DEVICE_OK);
+     }
+
+     if(!HasProperty(g_cropModeHeight)) {
+        CPropertyAction *pAct = new CPropertyAction(this, &AndorCamera::OnCropModeHeight);
+        int nRet = CreateProperty(g_cropModeHeight,"64", MM::Integer,false, pAct);
+        assert(nRet == DEVICE_OK);
+        nRet = SetPropertyLimits(g_cropModeHeight, 1, tempFrameY_);
+        assert(nRet == DEVICE_OK);
+     }
+  }
+
+  return ret;
+}
 
    unsigned int AndorCamera::createTriggerProperty(AndorCapabilities * caps) {
       DriverGuard dg(this);
@@ -3513,6 +4305,7 @@ int AndorCamera::GetListOfAvailableCameras()
    {
       DriverGuard dg(this);
       int ret;
+
       if(iCurrentTriggerMode_ == SOFTWARE)
       {
          ret = SetTriggerMode(10);  //set software trigger. mode 0:internal, 1: ext, 6:ext start, 7:bulb, 10:software
