@@ -45,7 +45,7 @@ Name: desktopicon; Description: {cm:CreateDesktopIcon}; GroupDescription: {cm:Ad
 
 
 ; device libraries
-
+Source: micro-manager\atmcd64d.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\inpoutx64.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\libusb0.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\MMCoreJ_wrap.dll; DestDir: {app}; Flags: ignoreversion
