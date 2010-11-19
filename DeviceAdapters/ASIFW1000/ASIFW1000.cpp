@@ -205,11 +205,9 @@ MM::DeviceDetectionStatus Hub::DetectDevice(void)
    {
       LogMessage("Exception in DetectDevice!",false);
    }
-
    // if the device is not there, restore the parameters to the original settings
    if ( MM::CanCommunicate != result)
    {
-
       for( std::vector< std::string>::iterator sit = propertiesToRestore.begin(); sit!= propertiesToRestore.end(); ++sit)
       {
          try
@@ -219,7 +217,6 @@ MM::DeviceDetectionStatus Hub::DetectDevice(void)
          catch(...)
          {}
       }
-
    }
    return result;
 }
