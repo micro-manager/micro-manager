@@ -227,6 +227,18 @@ MM::DeviceDetectionStatus Hub::DetectDevice(void)
 {
    // all conditions must be satisfied...
    MM::DeviceDetectionStatus result = MM::Misconfigured;
+   std::vector< std::string> propertiesToRestore;
+   std::map< std::string, std::string> valuesToRestore;
+
+   // gather the properties that will be restored if we don't find the device
+   propertiesToRestore.push_back(MM::g_Keyword_BaudRate);
+   propertiesToRestore.push_back(MM::g_Keyword_DataBits);
+   propertiesToRestore.push_back(MM::g_Keyword_StopBits);
+   propertiesToRestore.push_back(MM::g_Keyword_Parity);
+   propertiesToRestore.push_back(MM::g_Keyword_Handshaking);
+   propertiesToRestore.push_back("AnswerTimeout");
+   propertiesToRestore.push_back("DelayBetweenCharsMs");
+
    try
    {
       std::string transformed = port_;
@@ -236,6 +248,14 @@ MM::DeviceDetectionStatus Hub::DetectDevice(void)
       }
       if( 0< transformed.length() &&  0 != transformed.compare("undefined")  && 0 != transformed.compare("unknown") )
       {
+         // record the default parameters
+         char previousValue[MM::MaxStrLength];
+         for( std::vector< std::string>::iterator sit = propertiesToRestore.begin(); sit!= propertiesToRestore.end(); ++sit)
+         {
+            GetCoreCallback()->GetDeviceProperty(port_.c_str(),(*sit).c_str(), previousValue);
+            valuesToRestore[*sit] = std::string(previousValue);
+         } 
+         // the port property seems correct, so give it a try
          result = MM::CanNotCommunicate;
          // device specific default communication parameters
          GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_BaudRate, "9600" );
@@ -263,6 +283,19 @@ MM::DeviceDetectionStatus Hub::DetectDevice(void)
    catch(...)
    {
       LogMessage("Exception in DetectDevice!",false);
+   }
+   // if the device is not there, restore the parameters to the previous settings
+   if ( MM::CanCommunicate != result)
+   {
+      for( std::vector< std::string>::iterator sit = propertiesToRestore.begin(); sit!= propertiesToRestore.end(); ++sit)
+      {
+         try
+         {
+            GetCoreCallback()->SetDeviceProperty(port_.c_str(), (*sit).c_str(), (valuesToRestore[*sit]).c_str());
+         }
+         catch(...)
+         {}
+      }
    }
    return result;
 }
