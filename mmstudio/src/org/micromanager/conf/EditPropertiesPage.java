@@ -23,8 +23,12 @@
 //
 package org.micromanager.conf;
 
+import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.prefs.Preferences;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
 
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
@@ -51,6 +55,8 @@ public class EditPropertiesPage extends PagePanel {
 	private JTable propTable_;
 	private JScrollPane scrollPane_;
 	private static final String HELP_FILE_NAME = "conf_preinit_page.html";
+
+   private boolean requestCancel_;
 
 	/**
 	 * Create the panel
@@ -96,6 +102,7 @@ public class EditPropertiesPage extends PagePanel {
 	}
 
 	public boolean enterPage(boolean fromNextPage) {
+      requestCancel_ = false;
 		rebuildTable();
 		ArrayList<Device> ports = new ArrayList<Device>();
 		model_.removeDuplicateComPorts();
@@ -124,8 +131,41 @@ public class EditPropertiesPage extends PagePanel {
 
 
 
+      JDialog dialog = new JDialog(parent_,"µManager device detection", false);
+      JLabel l = new JLabel();
+      l.setText("                                                   ");
+      l.setHorizontalAlignment(JLabel.CENTER);
+      dialog.add(l);
+
+   /*   JButton cancelButton = new JButton();
+      cancelButton.setText("Cancel");
+      cancelButton.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            requestCancel_=true;
+         }
+      });
+      dialog.add(cancelButton);*/
+
+      dialog.pack();
+      dialog.setLocationRelativeTo(this);
+      Rectangle r = new Rectangle();
+      dialog.getBounds(r);
+      r.setRect(r.getX(), r.getY(), r.getWidth()*2, r.getHeight()*2);
+      dialog.setBounds(r);
+      dialog.setAlwaysOnTop(true);
+      dialog.setResizable(false);
+
+
+
+
+
+
+      //dialog.addMouseListener(null)
+   
 
 		Device devices[] = model_.getDevices();
+      //approximate progress index
+      int pindex = 0;
 		for (int i = 0; i < devices.length; i++) {
 			for (int j = 0; j < devices[i].getNumberOfProperties(); j++) {
 				PropertyItem p = devices[i].getProperty(j);
@@ -147,8 +187,19 @@ public class EditPropertiesPage extends PagePanel {
 							// else all ports that are not flagged with 'misconfiguered' comm. status will allowed
 
 							//todo - need a way to mark the port as 'allocated' if it already communicates with a device.
+                     if (requestCancel_){
+                        requestCancel_ = false;
+                        return false;
+                     }
+
 							core_.setProperty(devices[i].getName(), p.name, ports.get(k).getName());
+                     pindex = i*ports.size() + k;
+                     dialog.setVisible(true);
+                     String m = "Attempting to detect "+devices[i].getName()+" on "+ports.get(k).getName();
+                     l.setText(m);
+                     dialog.paint(dialog.getGraphics());
 							DeviceDetectionStatus st = core_.detectDevice(devices[i].getName());
+                     
 
 							if (DeviceDetectionStatus.CanCommunicate == st) {
 								portsFoundCommunicating.add(ports.get(k).getName());
@@ -179,6 +230,8 @@ public class EditPropertiesPage extends PagePanel {
 				}
 			}
 		}
+      dialog.setVisible(false);
+
 		return true;
 	}
 

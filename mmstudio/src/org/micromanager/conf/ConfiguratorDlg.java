@@ -56,6 +56,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
+import javax.swing.ProgressMonitor;
 import javax.swing.WindowConstants;
 import javax.swing.border.LineBorder;
 
@@ -86,6 +87,7 @@ public class ConfiguratorDlg extends JDialog {
     private String defaultPath_;
     private JCheckBox sendCheck_;
     private boolean sendConfig_;
+    private ProgressMonitor progressMonitor_;
 
     /**
      * Create the application
@@ -154,6 +156,10 @@ public class ConfiguratorDlg extends JDialog {
                 }
             }
         });
+
+  
+
+
         nextButton_.setText("Next >");
         nextButton_.setBounds(494, 462, 93, 23);
         getContentPane().add(nextButton_);
@@ -227,6 +233,8 @@ public class ConfiguratorDlg extends JDialog {
         } else {
             newPage = i;
         }
+
+
 
         // try to enter the new page
         if (!pages_[newPage].enterPage(curPage_ > newPage ? true : false)) {
@@ -440,4 +448,6 @@ public class ConfiguratorDlg extends JDialog {
         }
         return bf.toString();
     }
+
+
 }
