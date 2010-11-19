@@ -133,7 +133,7 @@ public class EditPropertiesPage extends PagePanel {
 
       JDialog dialog = new JDialog(parent_,"µManager device detection", false);
       JLabel l = new JLabel();
-      l.setText("                                                   ");
+      l.setText("-----------------------------------------------------------------");
       l.setHorizontalAlignment(JLabel.CENTER);
       dialog.add(l);
 
@@ -150,7 +150,7 @@ public class EditPropertiesPage extends PagePanel {
       dialog.setLocationRelativeTo(this);
       Rectangle r = new Rectangle();
       dialog.getBounds(r);
-      r.setRect(r.getX(), r.getY(), r.getWidth()*2, r.getHeight()*2);
+      r.setRect(r.getX(), r.getY(), r.getWidth(), r.getHeight()*2);
       dialog.setBounds(r);
       dialog.setAlwaysOnTop(true);
       dialog.setResizable(false);
@@ -190,9 +190,10 @@ public class EditPropertiesPage extends PagePanel {
 
 							core_.setProperty(devices[i].getName(), p.name, ports.get(k).getName());
                      pindex = i*ports.size() + k;
-                     dialog.setVisible(true);
+
                      String specific = "Attempting to detect "+devices[i].getName()+" on "+ports.get(k).getName();
                      l.setText(specific + " .........");
+                     dialog.setVisible(true);
                      dialog.paint(dialog.getGraphics());
 							DeviceDetectionStatus st = core_.detectDevice(devices[i].getName());
                      String resultMessage = specific;
