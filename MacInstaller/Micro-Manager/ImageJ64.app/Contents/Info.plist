@@ -71,7 +71,7 @@
 			<string>true</string>
 		</dict>
 		<key>VMOptions</key>
-		<string>-Xms256m -Xmx658m</string>
+		<string>-Xms256m -Xmx658m -XX:SoftRefLRUPolicyMSPerMB=1000000</string>
 	</dict>
 </dict>
 </plist>
