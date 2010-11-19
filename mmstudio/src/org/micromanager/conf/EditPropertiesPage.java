@@ -155,11 +155,6 @@ public class EditPropertiesPage extends PagePanel {
       dialog.setAlwaysOnTop(true);
       dialog.setResizable(false);
 
-
-
-
-
-
       //dialog.addMouseListener(null)
    
 
@@ -187,6 +182,7 @@ public class EditPropertiesPage extends PagePanel {
 							// else all ports that are not flagged with 'misconfiguered' comm. status will allowed
 
 							//todo - need a way to mark the port as 'allocated' if it already communicates with a device.
+
                      if (requestCancel_){
                         requestCancel_ = false;
                         return false;
@@ -195,17 +191,25 @@ public class EditPropertiesPage extends PagePanel {
 							core_.setProperty(devices[i].getName(), p.name, ports.get(k).getName());
                      pindex = i*ports.size() + k;
                      dialog.setVisible(true);
-                     String m = "Attempting to detect "+devices[i].getName()+" on "+ports.get(k).getName();
-                     l.setText(m);
+                     String specific = "Attempting to detect "+devices[i].getName()+" on "+ports.get(k).getName();
+                     l.setText(specific + " .........");
                      dialog.paint(dialog.getGraphics());
 							DeviceDetectionStatus st = core_.detectDevice(devices[i].getName());
-                     
+                     String resultMessage = specific;
 
 							if (DeviceDetectionStatus.CanCommunicate == st) {
+                        resultMessage += " Success!!";
 								portsFoundCommunicating.add(ports.get(k).getName());
-							} else if (DeviceDetectionStatus.Misconfigured != st) {
-								portsOtherwiseCorrectlyConfigured.add(ports.get(k).getName());
+							} else{
+                        resultMessage += " not found";
+                        if (DeviceDetectionStatus.Misconfigured != st) {
+                           portsOtherwiseCorrectlyConfigured.add(ports.get(k).getName());
+                        }
 							}
+                     l.setText(resultMessage);
+                     dialog.paint(dialog.getGraphics());
+                     if (DeviceDetectionStatus.CanCommunicate == st) // let the user see the result
+                        Thread.sleep(600);
 						} catch (Exception e) {
 						}
 					}
