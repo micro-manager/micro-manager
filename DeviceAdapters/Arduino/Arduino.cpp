@@ -219,6 +219,8 @@ MM::DeviceDetectionStatus CArduinoHub::DetectDevice(void)
          GetCoreCallback()->SetDeviceProperty(g_port.c_str(), "DelayBetweenCharsMs", "0");
          MM::Device* pS = GetCoreCallback()->GetDevice(this, g_port.c_str());
          pS->Initialize();
+         // The first second or so after opening the serial port, the Arduino is waiting for firmwareupgrades.  Simply sleep 1 second.
+         CDeviceUtils::SleepMs(2000);
          MMThreadGuard myLock(g_lock);
          PurgeComPort(g_port.c_str());
          int v = 0;
