@@ -260,7 +260,7 @@ MM::DeviceDetectionStatus Hub::DetectDevice(void)
          // device specific default communication parameters
          GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_BaudRate, "9600" );
          GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_StopBits, "2");
-         GetCoreCallback()->SetDeviceProperty(port_.c_str(), "AnswerTimeout", "150.0");
+         GetCoreCallback()->SetDeviceProperty(port_.c_str(), "AnswerTimeout", "400.0");
          GetCoreCallback()->SetDeviceProperty(port_.c_str(), "DelayBetweenCharsMs", "11.0");
          MM::Device* pS = GetCoreCallback()->GetDevice(this, port_.c_str());
          pS->Initialize();
@@ -316,6 +316,8 @@ int Hub::QueryVersion(std::string& version)
       return returnStatus;
    if (version.length() < 2) {
       // if we get no answer, try setting the controller to high command level and retry
+      LogMessage("Attempt setting controller to 'high' command level",true);
+
       returnStatus = changeCommandLevel(*this,  *GetCoreCallback(), g_CommandLevelHigh);
       if (returnStatus != DEVICE_OK)
          return returnStatus;
@@ -323,6 +325,7 @@ int Hub::QueryVersion(std::string& version)
    if (version.length() < 2 || version[1] == 'N') {
       // try getting version again (TODO: refactor this!)
       // Version of the controller:
+      PurgeComPort(port_.c_str());
       const char* cm = "VER";
       returnStatus = SendSerialCommand(port_.c_str(), cm, "\r");
       if (returnStatus != DEVICE_OK) 
