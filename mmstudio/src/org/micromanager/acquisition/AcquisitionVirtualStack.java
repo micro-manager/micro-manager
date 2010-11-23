@@ -55,6 +55,7 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
       type_ = type;
    }
 
+   @Override
    public Object getPixels(int flatIndex) {
       Object pixels = null;
       try {

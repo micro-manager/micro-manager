@@ -124,7 +124,7 @@ public class MMAcquisitionV2 implements AcquisitionInterface {
       String testName;
       do {
          testName = name + "_" + suffixCounter;
-         testPath = new String(baseDir + "/" + testName);
+         testPath = baseDir + "/" + testName;
          suffixCounter++;
          testDir = new File(testPath);
       } while (testDir.exists());

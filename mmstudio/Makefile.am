@@ -54,6 +54,7 @@ MMJ_.jar:  \
 	$(srcdir)/src/org/micromanager/api/AcquisitionEngine.java \
 	$(srcdir)/src/org/micromanager/api/DeviceControlGUI.java \
 	$(srcdir)/src/org/micromanager/api/MMPropertyTableModel.java \
+	$(srcdir)/src/org/micromanager/api/MMWindow.java \
 	$(srcdir)/src/org/micromanager/api/ScriptInterface.java \
 	$(srcdir)/src/org/micromanager/conf/*.html \
 	$(srcdir)/src/org/micromanager/conf/AddDeviceDlg.java \

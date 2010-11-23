@@ -66,7 +66,9 @@ public class PreLoadDataThread implements Runnable {
                }
             }
          }
-      } catch (JSONException ex) {
+      } catch (JSONException ex ) {
+         ReportingUtils.logError(ex);
+      } catch (NullPointerException ex) {
          ReportingUtils.logError(ex);
       }
    }

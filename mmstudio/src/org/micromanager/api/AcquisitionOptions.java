@@ -9,6 +9,6 @@ public class AcquisitionOptions {
    public AcquisitionOptions() {
       saveFiles = true;
       displayLastFrameOnly = true;
-      acquisitionDirectory = new String("C:/MM_Acquisition");
+      acquisitionDirectory = "C:/MM_Acquisition";
    }
 }

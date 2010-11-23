@@ -22,6 +22,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.api.AcquisitionEngine;
+import org.micromanager.api.MMWindow;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MDUtils;
@@ -38,8 +39,9 @@ public class MMVirtualAcquisitionDisplay{
    MMImageCache imageCache_;
    private int numChannels_;
    private int numFrames_;
-   private int height_;
    private int numSlices_;
+   private int numPositions_ = 1;
+   private int height_;
    private int width_;
    private int numComponents_ = 1;
    private ImagePlus hyperImage_;
@@ -53,7 +55,7 @@ public class MMVirtualAcquisitionDisplay{
    private HyperstackControls hc_;
    private String status_ = "";
    private ScrollbarWithLabel pSelector;
-   private int numPositions_;
+
    private int curPosition_ = -1;
    private ChannelDisplaySettings[] channelSettings_;
 
@@ -347,6 +349,7 @@ public class MMVirtualAcquisitionDisplay{
 
       final ImageWindow win = new StackWindow(hyperImage_) {
 
+         @Override
          public void windowClosing(WindowEvent e) {
             if (eng_ != null && eng_.isAcquisitionRunning()) {
                if (!abort()) {
@@ -430,7 +433,7 @@ public class MMVirtualAcquisitionDisplay{
 
          public void adjustmentValueChanged(AdjustmentEvent e) {
             setPosition(pSelector.getValue());
-            ReportingUtils.logMessage("" + pSelector.getValue());
+            // ReportingUtils.logMessage("" + pSelector.getValue());
          }
       });
       return pSelector;
@@ -520,6 +523,10 @@ public class MMVirtualAcquisitionDisplay{
       return numChannels_;
    }
 
+   public int getNumPositions() {
+      return numPositions_;
+   }
+
    public ImagePlus getImagePlus() {
       return hyperImage_;
    }
@@ -579,23 +586,22 @@ public class MMVirtualAcquisitionDisplay{
       }
    }
 
-   double getPlaybackFPS() {
+   public double getPlaybackFPS() {
       return Animator.getFrameRate();
    }
 
-   int[] getCurrentSlices() {
-      ImagePlus image = hyperImage_;
-      int frame = image.getFrame();
-      int slice = image.getSlice();
-      int nChannels = image.getNChannels();
+   public int[] getCurrentSlices() {
+      int frame = hyperImage_.getFrame();
+      int slice = hyperImage_.getSlice();
+      int nChannels = hyperImage_.getNChannels();
       int[] indices = new int[nChannels];
       for (int i = 0; i < nChannels; ++i) {
-         indices[i] = image.getStackIndex(i + 1, slice, frame);
+         indices[i] = hyperImage_.getStackIndex(i + 1, slice, frame);
       }
       return indices;
    }
 
-   String[] getChannelNames() {
+   public String[] getChannelNames() {
       if (hyperImage_ instanceof CompositeImage) {
          AcquisitionVirtualStack stack = (AcquisitionVirtualStack) hyperImage_.getStack();
 
