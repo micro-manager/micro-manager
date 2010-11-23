@@ -703,7 +703,15 @@ void CMMCore::reset() throw (CMMError)
    // before unloading everything try to apply shutdown configuration
    if (isConfigDefined(MM::g_CFGGroup_System, MM::g_CFGGroup_System_Shutdown))
       this->setConfig(MM::g_CFGGroup_System, MM::g_CFGGroup_System_Shutdown);
-   waitForSystem();
+   
+   
+   // of course one reason to reset is that some device is not configured correctly,
+   // so we need to handle any exception thrown from here
+   try
+   {
+      waitForSystem();
+   }
+   catch (CMMError& ) {}
 
    // unload devices
    unloadAllDevices();
