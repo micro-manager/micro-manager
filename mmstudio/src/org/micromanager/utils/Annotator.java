@@ -65,7 +65,6 @@ public class Annotator {
       try {
          acq.setSystemState(frame, channel, slice, md);
       } catch (MMAcqDataException e) {
-         // TODO Auto-generated catch block
          ReportingUtils.logError(e);
       }
    }

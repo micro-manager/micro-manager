@@ -660,7 +660,6 @@ public class AcquisitionData {
       try {
          return metadata_.toString(3);
       } catch (JSONException e) {
-         // TODO Auto-generated catch block
          ReportingUtils.showError(e);
          return null;
       }

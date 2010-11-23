@@ -1,13 +1,9 @@
 package org.micromanager.utils;
 
 import java.util.ArrayList;
-import java.util.logging.Level;
-import java.io.StringWriter;
-import java.io.PrintWriter;
 import java.awt.Component;
 
 import javax.swing.table.AbstractTableModel;
-import javax.swing.JOptionPane;
 
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
@@ -171,10 +167,12 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
 		fireTableCellUpdated(row, col);
 	}
 
+   @Override
 	public String getColumnName(int column) {
 		return columnNames_[column];
 	}
 
+   @Override
 	public boolean isCellEditable(int nRow, int nCol) {
 		if (nCol == PropertyValueColumn_)
 			return !propListVisible_.get(nRow).readOnly;
@@ -309,7 +307,6 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
    }
 
 	public void setColumnNames(String col0, String col1, String col2) {
-		// TODO Auto-generated method stub
 		columnNames_[0] = col0;
 		columnNames_[1] = col1;
 		columnNames_[2] = col2;

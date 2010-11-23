@@ -1,8 +1,6 @@
 package org.micromanager.utils;
 
-import java.text.ParseException;
 import java.util.Arrays;
-import java.util.Comparator;
 
 import mmcorej.CMMCore;
 import mmcorej.PropertyType;
@@ -84,7 +82,6 @@ public class PropertyItem {
    }
 
    public void readFromCore(CMMCore core, String deviceName, String propertyName) {
-		// TODO Auto-generated method stub
 		device = deviceName;
 		name = propertyName;
 		try {

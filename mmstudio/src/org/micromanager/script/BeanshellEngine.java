@@ -41,8 +41,6 @@ public class BeanshellEngine implements ScriptingEngine {
             // has bugs and does not return line numbers
             String msg = e.getMessage();
             String lineNumberTxt = msg.substring(20, msg.indexOf(','));
-            // TODO: logging
-            // core_.logMessage(msg);
             gui_.displayError("Parse error: " + msg, Integer.parseInt(lineNumberTxt));
          } catch (EvalError e) {
             int lineNo = e.getErrorLineNumber(); 
