@@ -26,7 +26,6 @@ package org.micromanager.conf;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.prefs.Preferences;
-import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 
@@ -150,7 +149,7 @@ public class EditPropertiesPage extends PagePanel {
       dialog.setLocationRelativeTo(this);
       Rectangle r = new Rectangle();
       dialog.getBounds(r);
-      r.setRect(r.getX(), r.getY(), r.getWidth(), r.getHeight()*2);
+      r.setRect(r.getX(), r.getY(), r.getWidth()*2, r.getHeight()*2);
       dialog.setBounds(r);
       dialog.setAlwaysOnTop(true);
       dialog.setResizable(false);
@@ -195,7 +194,24 @@ public class EditPropertiesPage extends PagePanel {
                      l.setText(specific + " .........");
                      dialog.setVisible(true);
                      dialog.paint(dialog.getGraphics());
-							DeviceDetectionStatus st = core_.detectDevice(devices[i].getName());
+
+                     class Detector extends Thread {
+                        Detector(String deviceName){
+                           super(deviceName);
+                        }
+                        private  DeviceDetectionStatus st0;
+                        public void run(){
+                           st0 = core_.detectDevice(getName());
+                        }
+                        public  DeviceDetectionStatus getStatus(){
+                           return st0;
+                        }
+                     }
+                     Detector d0 = new Detector(devices[i].getName());
+                     d0.start();
+                     d0.join();
+                     DeviceDetectionStatus st = d0.getStatus();
+
                      String resultMessage = specific;
 
 							if (DeviceDetectionStatus.CanCommunicate == st) {
