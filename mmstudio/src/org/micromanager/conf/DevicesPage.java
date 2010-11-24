@@ -33,6 +33,7 @@ import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
+import mmcorej.CMMCore;
 
 import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
@@ -204,8 +205,8 @@ public class DevicesPage extends PagePanel {
    
 	public boolean enterPage(boolean fromNextPage) {
 		try {
-			// double check that list of device libraries is valid before continuing.
-			core_.getDeviceLibraries();
+         // double check that list of device libraries is valid before continuing.
+         CMMCore.getDeviceLibraries();
 			model_.removeDuplicateComPorts();
 			rebuildTable();
 			if (fromNextPage) {

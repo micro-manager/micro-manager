@@ -56,7 +56,6 @@ import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
-import javax.swing.ProgressMonitor;
 import javax.swing.WindowConstants;
 import javax.swing.border.LineBorder;
 
@@ -87,7 +86,6 @@ public class ConfiguratorDlg extends JDialog {
     private String defaultPath_;
     private JCheckBox sendCheck_;
     private boolean sendConfig_;
-    private ProgressMonitor progressMonitor_;
 
     /**
      * Create the application
