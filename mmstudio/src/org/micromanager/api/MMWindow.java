@@ -53,7 +53,7 @@ public class MMWindow {
    }
 
    public void setPosition(int position) throws MMScriptException {
-      if (position < 0 || position > getNumberOfPositions())
+      if (position < 0 || position >= getNumberOfPositions())
          throw new MMScriptException ("Invalid position requested");
       if (virtAcq_ != null)
          virtAcq_.setPosition(position);

@@ -241,9 +241,11 @@ public class MMVirtualAcquisitionDisplay{
       if (curPosition_ != p) {
          double min = hyperImage_.getDisplayRangeMin();
          double max = hyperImage_.getDisplayRangeMax();
-         hyperImage_.setStack(virtualStacks_.get(p - 1));
+         // TODO: figure out why position is 1-based in the code
+         // but 0-based for the end user????
+         hyperImage_.setStack(virtualStacks_.get(p));
          hyperImage_.setDisplayRange(min, max);
-         virtualStacks_.get(p - 1).setImagePlus(hyperImage_);
+         virtualStacks_.get(p).setImagePlus(hyperImage_);
          updateAndDraw();
          curPosition_ = p;
       }
@@ -415,7 +417,7 @@ public class MMVirtualAcquisitionDisplay{
    }
 
    private ScrollbarWithLabel createPositionScrollbar(int nPositions) {
-      pSelector = new ScrollbarWithLabel(null, 1, 1, 1, nPositions + 1, 'p') {
+      pSelector = new ScrollbarWithLabel(null, 1, 1, 0, nPositions, 'p') {
 
          @Override
          public void setValue(int v) {
