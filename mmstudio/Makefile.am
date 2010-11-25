@@ -34,6 +34,7 @@ MMJ_.jar:  \
 	$(srcdir)/src/org/micromanager/acquisition/HyperstackControls.java \
 	$(srcdir)/src/org/micromanager/acquisition/LiveAcqDisplay.java \
 	$(srcdir)/src/org/micromanager/acquisition/MMAcquisition.java \
+	$(srcdir)/src/org/micromanager/acquisition/MMAcquisitionV2.java \
 	$(srcdir)/src/org/micromanager/acquisition/MMAcquisitionSnap.java \
 	$(srcdir)/src/org/micromanager/acquisition/MMImageCache.java \
 	$(srcdir)/src/org/micromanager/acquisition/MMImagePlus.java \

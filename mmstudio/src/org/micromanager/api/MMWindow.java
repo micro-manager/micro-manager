@@ -18,14 +18,20 @@ import org.micromanager.utils.MMScriptException;
  */
 public class MMWindow {
    MMVirtualAcquisitionDisplay virtAcq_ = null;
+   ImagePlus imp_;
    
    public MMWindow(ImagePlus imp) {
       AcquisitionVirtualStack acqStack;
+      imp_ = imp;
       ImageStack stack = imp.getStack();
       if (stack instanceof AcquisitionVirtualStack) {
          acqStack = (AcquisitionVirtualStack) stack;
          virtAcq_ = acqStack.getVirtualAcquisition();
       }
+   }
+
+   public boolean isMMWindow() {
+      return virtAcq_ != null;
    }
    
    public int getNumberOfPositions() {
@@ -52,11 +58,27 @@ public class MMWindow {
       return virtAcq_.getImagePlus().getNFrames();
    }
 
+   /**
+    * Sets the display to the given position
+    * @param position
+    * @throws MMScriptException
+    */
    public void setPosition(int position) throws MMScriptException {
-      if (position < 0 || position >= getNumberOfPositions())
+      if (position < 1 || position > getNumberOfPositions())
          throw new MMScriptException ("Invalid position requested");
       if (virtAcq_ != null)
          virtAcq_.setPosition(position);
+   }
+
+
+   /**
+    * Returns an ImageJ ImagePlus for a given position
+    * Does not update the display
+    * @param position
+    * @return
+    */
+   public ImagePlus getImagePlus(int position) {
+      return virtAcq_.getImagePlus(position);
    }
 
    public ImageProcessor getImageProcessor(int channel, int slice, int frame, int position)

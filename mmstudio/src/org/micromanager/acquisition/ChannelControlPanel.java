@@ -278,9 +278,8 @@ public class ChannelControlPanel extends javax.swing.JPanel {
          colorPickerLabel.setBackground(color);
 
          String [] names = acq_.getChannelNames();
-         if (names != null) {
-            String name = acq_.getChannelNames()[channelIndex_];
-            channelNameCheckbox.setText(name);
+         if (names != null && channelIndex_ < names.length) {
+            channelNameCheckbox.setText(names[channelIndex_]);
          }
 
          int [] histogram = acq_.getChannelHistogram(channelIndex_);

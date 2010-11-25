@@ -90,12 +90,21 @@ public class MMAcquisitionV2 implements AcquisitionInterface {
             name = generateRootName(name, rootDirectory_);
          }
       }
-      if (diskCached) imageFileManager = new TaggedImageStorageDiskDefault(dir + "/" + name,
+      if (diskCached) {
+         String dirname = dir + File.separator + name;
+         File f = new File(dirname);
+         // this is quite stupid but a way to find out if this name was generated upstream
+         if (!f.isDirectory())
+            dirname = dirname.substring(0, dirname.length() - 2);
+
+         imageFileManager = new TaggedImageStorageDiskDefault(dirname,
               !existing, new JSONObject());
-      else imageFileManager = new TaggedImageStorageRam(null);
+      }
+      else
+         imageFileManager = new TaggedImageStorageRam(null);
 
       MMImageCache imageCache = new MMImageCache(imageFileManager);
-      virtAcq_ = new MMVirtualAcquisitionDisplay(dir + "/" + name, false, diskCached);
+      virtAcq_ = new MMVirtualAcquisitionDisplay(dir + File.separator + name, false, diskCached);
       virtAcq_.setCache(imageCache);
       
       if (show && diskCached && existing) {
@@ -124,7 +133,7 @@ public class MMAcquisitionV2 implements AcquisitionInterface {
       String testName;
       do {
          testName = name + "_" + suffixCounter;
-         testPath = baseDir + "/" + testName;
+         testPath = baseDir + File.separator + testName;
          suffixCounter++;
          testDir = new File(testPath);
       } while (testDir.exists());
@@ -263,7 +272,12 @@ public class MMAcquisitionV2 implements AcquisitionInterface {
       }
    }
 
-   public void insertImage(Object pixels, int frame, int channel, int slice) throws MMScriptException {
+   public void insertImage(Object pixels, int frame, int channel, int slice)
+           throws MMScriptException {
+      insertImage(pixels, frame, channel, slice, 0);
+   }
+
+   public void insertImage(Object pixels, int frame, int channel, int slice, int position) throws MMScriptException {
       if (!initialized_)
          throw new MMScriptException("Acquisition data must be initialized before inserting images");
             
@@ -274,7 +288,10 @@ public class MMAcquisitionV2 implements AcquisitionInterface {
          tags.put("ChannelIndex", channel);
          tags.put("Channel", channelNames_[channel]);
          tags.put("Slice", slice);
-         tags.put("PositionIndex", 0);
+         tags.put("PositionIndex", position);
+         // the following influences the format data will be saved!
+         if (numPositions_ > 1)
+            tags.put("PositionName", "Pos" + position);
          tags.put("Width", width_);
          tags.put("Height", height_);
          if (depth_ == 1)

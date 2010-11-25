@@ -54,7 +54,7 @@ public class MMVirtualAcquisitionDisplay{
    private AcquisitionEngine eng_;
    private HyperstackControls hc_;
    private String status_ = "";
-   private ScrollbarWithLabel pSelector;
+   private ScrollbarWithLabel pSelector_;
 
    private int curPosition_ = -1;
    private ChannelDisplaySettings[] channelSettings_;
@@ -180,7 +180,7 @@ public class MMVirtualAcquisitionDisplay{
          JSONObject md = taggedImg.tags;
 
          try {
-            pSelector.setValue(1 + pos);
+            pSelector_.setValue(1 + pos);
             hyperImage_.setPosition(1 + MDUtils.getChannelIndex(md), 1 + MDUtils.getSliceIndex(md), 1 + MDUtils.getFrameIndex(md));
          } catch (Exception e) {
             ReportingUtils.logError(e);
@@ -237,19 +237,25 @@ public class MMVirtualAcquisitionDisplay{
       }
    }
 
-   public void setPosition(int p) {
+   private void updatePosition(int p) {
       if (curPosition_ != p) {
          double min = hyperImage_.getDisplayRangeMin();
          double max = hyperImage_.getDisplayRangeMax();
          // TODO: figure out why position is 1-based in the code
          // but 0-based for the end user????
-         hyperImage_.setStack(virtualStacks_.get(p));
+         hyperImage_.setStack(virtualStacks_.get(p - 1));
          hyperImage_.setDisplayRange(min, max);
-         virtualStacks_.get(p).setImagePlus(hyperImage_);
+         virtualStacks_.get(p - 1).setImagePlus(hyperImage_);
          updateAndDraw();
          curPosition_ = p;
       }
    }
+
+
+   public void setPosition(int p) {
+      pSelector_.setValue(p);
+   }
+
 
    boolean pause() {
       if (eng_ != null) {
@@ -417,28 +423,28 @@ public class MMVirtualAcquisitionDisplay{
    }
 
    private ScrollbarWithLabel createPositionScrollbar(int nPositions) {
-      pSelector = new ScrollbarWithLabel(null, 1, 1, 0, nPositions, 'p') {
+      pSelector_ = new ScrollbarWithLabel(null, 1, 1, 1, nPositions + 1, 'p') {
 
          @Override
          public void setValue(int v) {
             if (this.getValue() != v) {
                super.setValue(v);
-               setPosition(v);
+               updatePosition(v);
             }
          }
       };
 
-      pSelector.setFocusable(false); // prevents scroll bar from blinking on Windows
-      pSelector.setUnitIncrement(1);
-      pSelector.setBlockIncrement(1);
-      pSelector.addAdjustmentListener(new AdjustmentListener() {
+      pSelector_.setFocusable(false); // prevents scroll bar from blinking on Windows
+      pSelector_.setUnitIncrement(1);
+      pSelector_.setBlockIncrement(1);
+      pSelector_.addAdjustmentListener(new AdjustmentListener() {
 
          public void adjustmentValueChanged(AdjustmentEvent e) {
-            setPosition(pSelector.getValue());
+            updatePosition(pSelector_.getValue());
             // ReportingUtils.logMessage("" + pSelector.getValue());
          }
       });
-      return pSelector;
+      return pSelector_;
    }
 
    public void setChannelColor(int channel, int rgb) throws MMScriptException {
@@ -502,7 +508,7 @@ public class MMVirtualAcquisitionDisplay{
 
    public JSONObject getCurrentMetadata() {
       int index = getCurrentFlatIndex();
-      int posIndex = pSelector.getValue() - 1;
+      int posIndex = pSelector_.getValue() - 1;
       try {
          TaggedImage image = virtualStacks_.get(posIndex).getTaggedImage(index);
          if (image != null) {
@@ -531,6 +537,13 @@ public class MMVirtualAcquisitionDisplay{
 
    public ImagePlus getImagePlus() {
       return hyperImage_;
+   }
+
+   public ImagePlus getImagePlus(int position) {
+      ImagePlus iP = new ImagePlus();
+      iP.setStack(virtualStacks_.get(position - 1));
+      iP.setDimensions(numChannels_, numSlices_, numFrames_);
+      return iP;
    }
 
    public void setComment(String comment) throws MMScriptException {

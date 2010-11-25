@@ -3734,7 +3734,13 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       acq.setProperty(frame, channel, slice, propName, value);
    }
 
+
    public void snapAndAddImage(String name, int frame, int channel, int slice)
+           throws MMScriptException {
+      snapAndAddImage(name, frame, channel, slice, 0);
+   }
+
+   public void snapAndAddImage(String name, int frame, int channel, int slice, int position)
          throws MMScriptException {
 
       Metadata md = new Metadata();
@@ -3762,7 +3768,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             acq.initialize();
          }
 
-         acq.insertImage(img, frame, channel, slice);
+         acq.insertImage(img, frame, channel, slice, position);
          // Insert exposure in metadata
          acq.setProperty(frame, channel, slice, ImagePropertyKeys.EXPOSURE_MS, NumberUtils.doubleToDisplayString(core_.getExposure()));
          // Add pixel size calibration

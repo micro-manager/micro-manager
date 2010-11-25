@@ -126,7 +126,19 @@ public interface ScriptInterface {
     * @throws MMScriptException 
     */
    public void snapAndAddImage(String name, int frame, int channel, int z) throws MMScriptException;
-   
+
+   /**
+    * Snaps an image with the current settings and places pixels in the specified position
+    * of the Micro-Manager Image viewer
+    * @param name
+    * @param frame
+    * @param channel
+    * @param z
+    * @param position
+    * @throws MMScriptException
+    */
+   public void snapAndAddImage(String name, int frame, int channel, int z, int position) throws MMScriptException;
+
    /**
     * Inserts image into the acquisition handle
     */

@@ -361,8 +361,8 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
          } catch (JSONException ex) {
             ReportingUtils.logError(ex);
          }
-         readDisplaySettings();
       }
+      readDisplaySettings();
    }
 
    private int getChannelIndex(String channelName) {
@@ -463,6 +463,8 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
    }
 
    private void writeDisplaySettings() {
+      if (displaySettings_ == null)
+         return;
       File displayFile = new File(dir_ + "/" + "display_and_comments.txt");
       try {
          Writer displayFileWriter = new FileWriter(displayFile);
@@ -478,8 +480,12 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       String path = dir_ + "/" + "display_and_comments.txt";
       try {
          String jsonText = JavaUtils.readTextFile(path);
-         if (jsonText != null)
-            displaySettings_ = new JSONObject(jsonText);
+         if (jsonText != null) {
+            JSONObject tmp = new JSONObject(jsonText);
+            JSONObject channels = (JSONObject) tmp.get("Channels");
+            if (channels != null)
+               displaySettings_ = tmp;
+         }
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }

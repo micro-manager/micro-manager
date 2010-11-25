@@ -201,6 +201,11 @@ public class MMAcquisition implements AcquisitionInterface {
 
    }
 
+   public void insertImage(Object pixels, int frame, int channel, int slice, int position)
+           throws MMScriptException {
+   }
+
+
    public void insertTaggedImage(TaggedImage tg, int frame, int channel, int slice)
            throws MMScriptException {
 
