@@ -143,7 +143,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
                         if (cName.equals(lastCamera_))
                            gui_.addImage(ACQNAME, img, true);
                         else
-                           gui_.addImage(ACQNAME, img, true);
+                           gui_.addImage(ACQNAME, img, false);
                      } else
                         gui_.addImage(ACQNAME, img, true);
                      imgcounter++;
@@ -1025,7 +1025,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
                      String cName = (String) md.get("Camera");
                      MDUtils.setChannelIndex(md, channelIndex_.get(cName));
                      // MDUtils.setChannelIndex(md, imgcounter);
-                     gui_.addImage(ACQNAME, img);
+                     gui_.addImage(ACQNAME, img, true);
                      imgcounter++;
                   }
                }
