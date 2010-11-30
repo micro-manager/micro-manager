@@ -95,6 +95,19 @@ public interface ScriptInterface {
 
    public void openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices, int nrPositions, boolean show) throws MMScriptException;
 
+   /**
+    * Opens a new acquisition context with explicit image physical parameters
+    * Makes it possible to save data to disk during acquisition (virtual = true)
+    * @param name
+    * @param rootDir
+    * @param nrFrames
+    * @param nrChannels
+    * @param nrSlices
+    * @param nrPositions
+    * @param show
+    * @param virtual
+    * @throws MMScriptException
+    */
    public void openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices, int nrPositions, boolean show, boolean virtual) throws MMScriptException;
 
    public void openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices, boolean show) throws MMScriptException;
