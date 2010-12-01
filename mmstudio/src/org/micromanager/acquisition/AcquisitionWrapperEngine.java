@@ -25,8 +25,6 @@ import org.micromanager.acquisition.engine.SequenceSettings;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.DeviceControlGUI;
 import org.micromanager.api.EngineTask;
-import org.micromanager.metadata.MMAcqDataException;
-import org.micromanager.metadata.WellAcquisitionData;
 import org.micromanager.navigation.MultiStagePosition;
 import org.micromanager.navigation.PositionList;
 import org.micromanager.utils.AutofocusManager;
@@ -81,7 +79,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       taggedImageProcessors_ = new ArrayList<Class>();
    }
 
-   public void acquire() throws MMException, MMAcqDataException {
+   public void acquire() throws MMException {
       try {
          SequenceSettings acquisitionSettings = gatherSequenceSettings();
 
@@ -193,11 +191,6 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
 
 //////////////////// Actions ///////////////////////////////////////////
-
-
-   public boolean acquireWellScan(WellAcquisitionData wad) throws MMException, MMAcqDataException {
-      throw new UnsupportedOperationException("Not supported yet.");
-   }
 
    public void stop(boolean interrupted) {
       try {

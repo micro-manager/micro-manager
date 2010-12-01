@@ -28,6 +28,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.util.prefs.Preferences;
 
@@ -41,7 +42,6 @@ import mmcorej.DeviceType;
 import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
 
-import org.micromanager.metadata.ImageKey;
 import org.micromanager.navigation.MultiStagePosition;
 import org.micromanager.navigation.StagePosition;
 import org.micromanager.utils.MMDialog;
@@ -62,6 +62,8 @@ public class TileCreatorDlg extends MMDialog {
    private final JLabel labelRight_ = new JLabel();
    private final JLabel labelBottom_ = new JLabel();
    private int prefix_ = 0;
+
+   private static final DecimalFormat FMT_POS = new DecimalFormat("000");
 
    /**
     * Create the dialog
@@ -491,7 +493,7 @@ public class TileCreatorDlg extends MMDialog {
             msp.setProperty("OverlapUm", NumberUtils.doubleToCoreString(overlapUm));
             msp.setProperty("OverlapPixels", NumberUtils.intToCoreString(overlapPix));
             // Add to position list
-            positionListDlg_.addPosition(msp, ImageKey.generatePosLabel(prefix_ + "-Pos", tmpX, y));
+            positionListDlg_.addPosition(msp, generatePosLabel(prefix_ + "-Pos", tmpX, y));
          }
       }
 
@@ -527,6 +529,11 @@ public class TileCreatorDlg extends MMDialog {
 
    private void handleError(String txt) {
       JOptionPane.showMessageDialog(this, txt);      
+   }
+
+   public static String generatePosLabel(String prefix, int x, int y) {
+      String name = prefix + "_" + FMT_POS.format(x) + "_" + FMT_POS.format(y);
+      return name;
    }
 
 }

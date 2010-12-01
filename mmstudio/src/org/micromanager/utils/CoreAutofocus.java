@@ -8,7 +8,7 @@ import mmcorej.MetadataSingleTag;
 import mmcorej.StrVector;
 
 import org.micromanager.api.Autofocus;
-import org.micromanager.metadata.AcquisitionData;
+import org.micromanager.acquisition.AcquisitionData;
 
 public class CoreAutofocus implements Autofocus {
 
@@ -182,42 +182,6 @@ public class CoreAutofocus implements Autofocus {
       return core_.getRemainingImageCount();
    }
 
-   public AcquisitionData getFocusingSequence() throws MMException {
-      AcquisitionData acqData = new AcquisitionData();
-      try {
-         acqData.createNew();
-         acqData.setDimensions(0, 1, 1);
-         acqData.setChannelName(0, "FocusChannel"); // TODO: get channel from
-
-         // get image parameters
-         int width = (int) core_.getImageWidth();
-         int height = (int) core_.getImageHeight();
-         long byteDepth = core_.getBytesPerPixel();
-
-         acqData.setImagePhysicalDimensions(width, height, (int) byteDepth);
-
-         int numImages = core_.getRemainingImageCount();
-         for (int i = 0; i < numImages; i++) {
-            Metadata md = new Metadata();
-            Object img = core_.popNextImageMD(0, 0, md);
-            acqData.insertImage(img, i, 0, 0);
-            StrVector keys = md.GetKeys();
-            for (int j = 0; j < keys.size(); j++) {
-               MetadataSingleTag mdst = md.GetSingleTag(keys.get(j));
-               acqData.setImageValue(i, 0, 0, keys.get(j), mdst.GetValue());
-            }
-         }
-
-         // insert summary data
-         acqData.setDimensions(numImages, 1, 1);
-         acqData.setComment("Focus stack");
-
-      } catch (Exception e) {
-         throw new MMException(e.getMessage());
-      }
-      return acqData;
-   }
-
    public String getDeviceName() {
       return devName_;
    }
@@ -255,6 +219,10 @@ public class CoreAutofocus implements Autofocus {
       } catch (Exception e) {
          throw new MMException(e.getMessage());
       }
+   }
+
+   public AcquisitionData getFocusingSequence() throws MMException {
+      throw new UnsupportedOperationException("Not supported yet.");
    }
 
 }

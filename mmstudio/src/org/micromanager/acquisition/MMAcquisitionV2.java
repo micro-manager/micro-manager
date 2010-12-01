@@ -42,7 +42,6 @@ import org.json.JSONException;
 import org.micromanager.api.AcquisitionInterface;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.TaggedImageStorage;
-import org.micromanager.metadata.AcquisitionData;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
@@ -378,7 +377,6 @@ public class MMAcquisitionV2 implements AcquisitionInterface {
    
    public AcquisitionData getAcqData() {
 	   return null;
-
    }
 
    public void setChannelName(int channel, String name) throws MMScriptException {

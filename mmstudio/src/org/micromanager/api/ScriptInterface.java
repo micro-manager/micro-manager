@@ -32,7 +32,6 @@ import mmcorej.TaggedImage;
 import org.json.JSONObject;
 import org.micromanager.acquisition.MMImageCache;
 
-import org.micromanager.metadata.WellAcquisitionData;
 import org.micromanager.navigation.PositionList;
 import org.micromanager.utils.MMScriptException;
 /**
@@ -259,14 +258,6 @@ public interface ScriptInterface {
     * @Depreciated - typo
     */
    public void runAcquisition(String name, String root) throws MMScriptException;
-
-   /**
-    * Executes Acquisition for a single well, using the plate scanning convention and data structure.
-    * Returns after Acquisition finishes.
-    * @param wad - well acquisition data objec
-    * @param incrementalAF - enable or disable incremental autofocusing between imaging sites
-    */
-   public boolean runWellScan(WellAcquisitionData wad) throws MMScriptException;
 
    /**
     * Loads setting for Acquisition Dialog from file

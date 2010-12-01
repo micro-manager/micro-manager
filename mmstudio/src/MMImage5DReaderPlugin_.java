@@ -33,14 +33,6 @@ import java.io.File;
 import javax.swing.JFileChooser;
 
 import org.micromanager.MMStudioMainFrame;
-import org.micromanager.image5d.ChannelCalibration;
-import org.micromanager.image5d.ChannelControl;
-import org.micromanager.image5d.ChannelDisplayProperties;
-import org.micromanager.image5d.Image5D;
-import org.micromanager.image5d.Image5DWindow;
-import org.micromanager.metadata.AcquisitionData;
-import org.micromanager.metadata.DisplaySettings;
-import org.micromanager.metadata.MMAcqDataException;
 import org.micromanager.utils.ProgressBar;
 import org.micromanager.utils.ReportingUtils;
 
@@ -79,7 +71,7 @@ public class MMImage5DReaderPlugin_ implements PlugIn {
 
       // choose the directory
       // --------------------
-
+/*
       System.setProperty("apple.laf.useScreenMenuBar", "true");
 
       JFileChooser fc = new JFileChooser();
@@ -196,6 +188,6 @@ public class MMImage5DReaderPlugin_ implements PlugIn {
                progressBar = null;
             }
          }        
-      }     
+      }    */
    }
 }

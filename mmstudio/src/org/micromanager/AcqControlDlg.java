@@ -83,8 +83,6 @@ import javax.swing.table.TableModel;
 
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.DeviceControlGUI;
-import org.micromanager.metadata.MMAcqDataException;
-import org.micromanager.metadata.WellAcquisitionData;
 import org.micromanager.utils.ChannelSpec;
 import org.micromanager.utils.ColorEditor;
 import org.micromanager.utils.ColorRenderer;
@@ -1783,9 +1781,6 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
                 return;
             }
             acqEng_.acquire();
-        } catch (MMAcqDataException e) {
-            ReportingUtils.showError(e);
-            return;
         } catch (MMException e) {
             ReportingUtils.showError(e);
             return;
@@ -1807,58 +1802,7 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
         } catch (MMException e) {
             ReportingUtils.showError(e);
             return;
-        } catch (MMAcqDataException e) {
-            ReportingUtils.showError(e);
-            return;
-        }
-    }
-
-    public boolean runWellScan(WellAcquisitionData wad) {
-
-        boolean result = true;
-        if (acqEng_.isAcquisitionRunning()) {
-            JOptionPane.showMessageDialog(this, "Unable to start the new acquisition task: previous acquisition still in progress.");
-            result = false;
-            return result;
-        }
-
-        try {
-            applySettings();
-            acqEng_.setSaveFiles(true);
-            result = acqEng_.acquireWellScan(wad);
-            if (result == false) {
-
-                acqEng_.stop(true);
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-                //acqEng_.setFinished();
-                return result;
-
-            }
-            // wait until acquisition is done
-            while (acqEng_.isMultiFieldRunning()) {
-                try {
-                    ReportingUtils.logMessage("DBG: Waiting in AcqWindow");
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    ReportingUtils.logError(e);
-                    return result;
-                }
-            }
-
-        } catch (MMException e) {
-            ReportingUtils.showError(e);
-            return false;
-        } catch (MMAcqDataException e) {
-            ReportingUtils.showError(e);
-            return false;
-        }
-
-        return true;
+       }
     }
 
     public boolean isAcquisitionRunning() {

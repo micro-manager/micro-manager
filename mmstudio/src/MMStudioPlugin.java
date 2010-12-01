@@ -32,11 +32,6 @@ import javax.swing.UIManager;
 import mmcorej.CMMCore;
 
 import org.micromanager.MMStudioMainFrame;
-import org.micromanager.image5d.Crop_Image5D;
-import org.micromanager.image5d.Duplicate_Image5D;
-import org.micromanager.image5d.Image5D;
-import org.micromanager.image5d.Make_Montage;
-import org.micromanager.image5d.Z_Project;
 import org.micromanager.utils.AutofocusManager;
 import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.ReportingUtils;
@@ -81,7 +76,7 @@ public class MMStudioPlugin implements PlugIn, CommandListener {
    }
     
     public String commandExecuting(String command) { 
-       if (command.equalsIgnoreCase("Quit") && frame_ != null) {
+/*       if (command.equalsIgnoreCase("Quit") && frame_ != null) {
           frame_.closeSequence();
           return command;
        } else if (command.equals("Duplicate...") && IJ.getImage() instanceof Image5D) {
@@ -100,7 +95,7 @@ public class MMStudioPlugin implements PlugIn, CommandListener {
           Make_Montage makeMontage = new Make_Montage();
           makeMontage.run("");
           return null;
-       }
+       }*/
        return command;
     }
 

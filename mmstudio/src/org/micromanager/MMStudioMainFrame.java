@@ -80,7 +80,6 @@ import mmcorej.StrVector;
 
 import org.json.JSONObject;
 import org.micromanager.acquisition.AcquisitionManager;
-import org.micromanager.acquisition.MMAcquisitionSnap;
 import org.micromanager.acquisition.MMImageCache;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.Autofocus;
@@ -94,32 +93,10 @@ import org.micromanager.conf.MicroscopeModel;
 import org.micromanager.graph.ContrastPanel;
 import org.micromanager.graph.GraphData;
 import org.micromanager.graph.GraphFrame;
-import org.micromanager.image5d.ChannelCalibration;
-import org.micromanager.image5d.ChannelControl;
-import org.micromanager.image5d.ChannelDisplayProperties;
-import org.micromanager.image5d.Crop_Image5D;
-import org.micromanager.image5d.Duplicate_Image5D;
-import org.micromanager.image5d.Image5D;
-import org.micromanager.image5d.Image5DWindow;
-import org.micromanager.image5d.Image5D_Channels_to_Stacks;
-import org.micromanager.image5d.Image5D_Stack_to_RGB;
-import org.micromanager.image5d.Image5D_Stack_to_RGB_t;
-import org.micromanager.image5d.Image5D_to_Stack;
-import org.micromanager.image5d.Image5D_to_VolumeViewer;
-import org.micromanager.image5d.Make_Montage;
-import org.micromanager.image5d.Split_Image5D;
-import org.micromanager.image5d.Z_Project;
-import org.micromanager.metadata.AcquisitionData;
-import org.micromanager.metadata.DisplaySettings;
-import org.micromanager.metadata.ImagePropertyKeys;
-import org.micromanager.metadata.MMAcqDataException;
-import org.micromanager.metadata.SummaryKeys;
-import org.micromanager.metadata.WellAcquisitionData;
 import org.micromanager.navigation.CenterAndDragListener;
 import org.micromanager.navigation.PositionList;
 import org.micromanager.navigation.XYZKeyListener;
 import org.micromanager.navigation.ZWheelListener;
-import org.micromanager.utils.Annotator;
 import org.micromanager.utils.AutofocusManager;
 import org.micromanager.utils.CfgFileFilter;
 import org.micromanager.utils.ContrastSettings;
@@ -245,7 +222,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private StrVector shutters_ = null;
    private JButton saveConfigButton_;
    private ScriptPanel scriptPanel_;
-   private SplitView splitView_;
+   //private SplitView splitView_;
    private CenterAndDragListener centerAndDragListener_;
    private ZWheelListener zWheelListener_;
    private XYZKeyListener xyzKeyListener_;
@@ -266,68 +243,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private boolean virtual_ = false;
    private final JMenu switchConfigurationMenu_;
    private final MetadataPanel metadataPanel_;
-
-   private void applyChannelSettingsTo5D(AcquisitionData ad, Image5D img5d) throws MMAcqDataException {
-      Color[] colors = ad.getChannelColors();
-      String[] names = ad.getChannelNames();
-      if (colors != null && names != null) {
-         for (int i = 0; i < ad.getNumberOfChannels(); i++) {
-            ChannelCalibration chcal = new ChannelCalibration();
-            // set channel name
-            chcal.setLabel(names[i]);
-            img5d.setChannelCalibration(i + 1, chcal);
-            if (img5d.getBytesPerPixel() == 4) {
-               img5d.setChannelColorModel(i + 1, new DirectColorModel(32, 0xFF0000, 0xFF00, 0xFF));
-            } else {
-               img5d.setChannelColorModel(i + 1, ChannelDisplayProperties.createModelFromColor(colors[i]));
-            }
-         }
-      }
-   }
-
-   private void popUpImage5DWindow(Image5D img5d, AcquisitionData ad) {
-      // pop-up 5d image window
-      Image5DWindow i5dWin = new Image5DWindow(img5d);
-      i5dWin.setBackground(guiColors_.background.get(options_.displayBackground));
-      if (ad.getNumberOfChannels() == 1) {
-         int modee = ChannelControl.ONE_CHANNEL_COLOR;
-         if( null != img5d){
-            if( img5d.getProcessor() instanceof ColorProcessor )
-               modee = ChannelControl.RGB;
-         }
-         img5d.setDisplayMode(modee);
-      } else {
-         img5d.setDisplayMode(ChannelControl.OVERLAY);
-      }
-      i5dWin.setAcquitionEngine(engine_);
-      i5dWin.setAcquisitionData(ad);
-      i5dWin.setAcqSavePath(openAcqDirectory_);
-
-      img5d.changes = false;
-   }
-
-   private void set5DDisplaySettingsForChannels(int k, int i, AcquisitionData ad, int j, Image5D img5d) throws MMAcqDataException {
-      // set display settings for channels
-      if (k == 0 && i == 0) {
-         DisplaySettings[] ds = ad.getChannelDisplaySettings();
-         if (ds != null) {
-            // display properties are recorded in
-            // metadata use them...
-            double min = ds[j].min;
-            double max = ds[j].max;
-            img5d.setChannelMinMax(j + 1, min, max);
-         } else {
-            // ...if not, autoscale channels based
-            // on the first slice of the first frame
-            ImageStatistics stats = img5d.getStatistics(); // get
-            // uncalibrated
-            // stats
-            double min = stats.min;
-            double max = stats.max;
-            img5d.setChannelMinMax(j + 1, min, max);
-         }
-      }
-   }
 
    public ImageWindow getImageWin() {
       return imageWin_;
@@ -904,7 +819,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       });
       fileMenu.add(exitMenuItem);
       exitMenuItem.setText("Exit");
-
+/*
       final JMenu image5dMenu = new JMenu();
       image5dMenu.setText("Image5D");
       menuBar_.add(image5dMenu);
@@ -1029,6 +944,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       splitImageMenuItem.setText("SplitView");
       image5dMenu.add(splitImageMenuItem);
 
+ */
+
       final JMenu toolsMenu = new JMenu();
       toolsMenu.setText("Tools");
       menuBar_.add(toolsMenu);
@@ -1104,6 +1021,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       acquisitionMenuItem.setText("Multi-Dimensional Acquisition...");
       toolsMenu.add(acquisitionMenuItem);
 
+      /*
       final JMenuItem splitViewMenuItem = new JMenuItem();
       splitViewMenuItem.addActionListener(new ActionListener() {
 
@@ -1113,7 +1031,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       });
       splitViewMenuItem.setText("Split View...");
       toolsMenu.add(splitViewMenuItem);
-
+      */
+      
       centerAndDragMenuItem_ = new JCheckBoxMenuItem();
 
       centerAndDragMenuItem_.addActionListener(new ActionListener() {
@@ -2092,6 +2011,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    public CMMCore getMMCore() {
       return core_;
    }
+
 
    public void saveConfigPresets() {
       MicroscopeModel model = new MicroscopeModel();
@@ -3415,10 +3335,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       }
    }
 
-
    /**
     * Opens Split View dialog.
     */
+  /*
    protected void splitViewDialog() {
       try {
          if (splitView_ == null) {
@@ -3430,7 +3350,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                "\nSplit View Window failed to open due to internal error.");
       }
    }
-
+*/
    /**
     * /** Opens a dialog to record stage positions
     */
@@ -3660,7 +3580,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    private void openAcquisitionSnap(String name, String rootDir, boolean show)
          throws MMScriptException {
-      AcquisitionInterface acq = acqMgr_.openAcquisitionSnap(name, rootDir, this,
+      /*
+       AcquisitionInterface acq = acqMgr_.openAcquisitionSnap(name, rootDir, this,
             show);
       acq.setDimensions(0, 1, 1, 1);
       try {
@@ -3670,6 +3591,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       } catch (Exception e) {
          ReportingUtils.showError(e);
       }
+       *
+       */
    }
 
    public void initializeAcquisition(String name, int width, int height,
@@ -3770,7 +3693,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
          acq.insertImage(img, frame, channel, slice, position);
          // Insert exposure in metadata
-         acq.setProperty(frame, channel, slice, ImagePropertyKeys.EXPOSURE_MS, NumberUtils.doubleToDisplayString(core_.getExposure()));
+//       acq.setProperty(frame, channel, slice, ImagePropertyKeys.EXPOSURE_MS, NumberUtils.doubleToDisplayString(core_.getExposure()));
          // Add pixel size calibration
 
          /*
@@ -3806,11 +3729,12 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          long width = core_.getImageWidth();
          long height = core_.getImageHeight();
          long depth = core_.getBytesPerPixel();
-         MMAcquisitionSnap acq = null;
+         //MMAcquisitionSnap acq = null;
 
          if (acqMgr_.hasActiveImage5D(acqName)) {
-            acq = (MMAcquisitionSnap) acqMgr_.getAcquisition(acqName);
-            newSnap = !acq.isCompatibleWithCameraSettings();
+           // acq = (MMAcquisitionSnap) acqMgr_.getAcquisition(acqName);
+           // newSnap = !acq.isCompatibleWithCameraSettings();
+            ;
          } else {
             newSnap = true;
          }
@@ -3829,20 +3753,20 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          setChannelColor(acqName, 0, Color.WHITE);
          setChannelName(acqName, 0, "Snap");
 
-         acq = (MMAcquisitionSnap) acqMgr_.getAcquisition(acqName);
-         acq.appendImage(img);
+//         acq = (MMAcquisitionSnap) acqMgr_.getAcquisition(acqName);
+ //        acq.appendImage(img);
          // add exposure to metadata
-         acq.setProperty(acq.getFrames() - 1, acq.getChannels() - 1, acq.getSlices() - 1, ImagePropertyKeys.EXPOSURE_MS, NumberUtils.doubleToDisplayString(core_.getExposure()));
+//         acq.setProperty(acq.getFrames() - 1, acq.getChannels() - 1, acq.getSlices() - 1, ImagePropertyKeys.EXPOSURE_MS, NumberUtils.doubleToDisplayString(core_.getExposure()));
          // Add pixel size calibration
          double pixSizeUm = core_.getPixelSizeUm();
          if (pixSizeUm > 0) {
-            acq.setProperty(acq.getFrames() - 1, acq.getChannels() - 1, acq.getSlices() - 1, ImagePropertyKeys.X_UM, NumberUtils.doubleToDisplayString(pixSizeUm));
-            acq.setProperty(acq.getFrames() - 1, acq.getChannels() - 1, acq.getSlices() - 1, ImagePropertyKeys.Y_UM, NumberUtils.doubleToDisplayString(pixSizeUm));
+//            acq.setProperty(acq.getFrames() - 1, acq.getChannels() - 1, acq.getSlices() - 1, ImagePropertyKeys.X_UM, NumberUtils.doubleToDisplayString(pixSizeUm));
+//            acq.setProperty(acq.getFrames() - 1, acq.getChannels() - 1, acq.getSlices() - 1, ImagePropertyKeys.Y_UM, NumberUtils.doubleToDisplayString(pixSizeUm));
          }
          // generate list with system state
-         JSONObject state = Annotator.generateJSONMetadata(core_.getSystemStateCache());
+//         JSONObject state = Annotator.generateJSONMetadata(core_.getSystemStateCache());
          // and insert into metadata
-         acq.setSystemState(acq.getFrames() - 1, acq.getChannels() - 1, acq.getSlices() - 1, state);
+//         acq.setSystemState(acq.getFrames() - 1, acq.getChannels() - 1, acq.getSlices() - 1, state);
 
 
          // closeAcquisition(acqName);
@@ -3934,35 +3858,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       AcquisitionInterface acq = acqMgr_.getAcquisition(title);
       acq.setContrastBasedOnFrame(frame, slice);
    }
-
-   public boolean runWellScan(WellAcquisitionData wad) throws MMScriptException {
-      System.out.println("Inside MMStudioMainFrame -- Run Well Scan");
-      boolean result = true;
-      testForAbortRequests();
-      if (acqControlWin_ == null) {
-         openAcqControlDialog();
-      }
-
-      engine_.setPositionList(posList_);
-      result = acqControlWin_.runWellScan(wad);
-
-      if (result == false) {
-         return result;
-         //throw new MMScriptException("Scanning error.");
-
-      }
-      try {
-         while (acqControlWin_.isAcquisitionRunning()) {
-            Thread.sleep(500);
-         }
-      } catch (InterruptedException e) {
-         ReportingUtils.showError(e);
-         result = false;
-         return result;
-      }
-      return result;
-   }
-
 
    public void setStagePosition(double z) throws MMScriptException {
       try {

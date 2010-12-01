@@ -28,7 +28,8 @@ public class AcquisitionManager {
       if (acquisitionExists(name))
 	 throw new MMScriptException("The name is in use");
       else
-	         acqs_.put(name, new MMAcquisitionSnap(name, rootDir));
+         ;
+//	         acqs_.put(name, new MMAcquisitionSnap(name, rootDir));
 	   }
    
    public void openAcquisition(String name, String rootDir, boolean show) throws MMScriptException {
@@ -49,9 +50,10 @@ public class AcquisitionManager {
    }
    
    public AcquisitionInterface openAcquisitionSnap(String name, String rootDir, MMStudioMainFrame gui_, boolean show) throws MMScriptException {
-      MMAcquisition acq = new MMAcquisitionSnap(name, rootDir, gui_, show);
-      acqs_.put(name, acq);
-      return acq;
+//      MMAcquisition acq = new MMAcquisitionSnap(name, rootDir, gui_, show);
+ //     acqs_.put(name, acq);
+ //     return acq;
+      return null;
    }
   
    public void setAcquisitionEngine(String name, AcquisitionEngine eng) {

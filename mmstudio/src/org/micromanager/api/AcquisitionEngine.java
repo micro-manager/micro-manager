@@ -31,8 +31,6 @@ import java.util.prefs.Preferences;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 
-import org.micromanager.metadata.MMAcqDataException;
-import org.micromanager.metadata.WellAcquisitionData;
 import org.micromanager.navigation.PositionList;
 import org.micromanager.utils.AutofocusManager;
 import org.micromanager.utils.ChannelSpec;
@@ -73,17 +71,7 @@ public interface AcquisitionEngine {
     * @throws MMException
     * @throws MMAcqDataException
     */
-   public void acquire() throws MMException, MMAcqDataException;
-
-   /**
-    * Starts acquisition of a single well, based on the current protocol, using the supplied
-    * acquisition data structure.
-    * This command is specially designed for plate scanning and will automatically re-set
-    * all appropriate parameters.
-    * @throws MMAcqDataException 
-    * @throws Exception
-    */
-   public boolean acquireWellScan(WellAcquisitionData wad) throws MMException, MMAcqDataException;
+   public void acquire() throws MMException;
 
    /**
     * Stops a running Acquisition
