@@ -80,11 +80,12 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    public void acquire() throws MMException {
+         acquire(gatherSequenceSettings());
+   }
+
+   public void acquire(SequenceSettings acquisitionSettings) {
       try {
-         SequenceSettings acquisitionSettings = gatherSequenceSettings();
-
          // SET UP THE PIPELINE...
-
          // ...Sequence generator...
          SequenceGenerator generator = new SequenceGenerator(acquisitionSettings, core_.getExposure());
          BlockingQueue<EngineTask> generatorOutput = generator.begin();
