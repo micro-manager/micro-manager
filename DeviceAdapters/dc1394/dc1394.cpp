@@ -45,6 +45,7 @@
 #include <iomanip>
 #include <math.h>
 
+#include <iostream>
 
 using namespace std;
 
@@ -616,6 +617,17 @@ int Cdc1394::Initialize()
 
    // get the current color coding mode:
    dc1394_get_color_coding_from_video_mode(camera_, mode_, &colorCoding_);
+   if ( IsColor() ) 
+   {
+	   logMsg_.str("");
+	   logMsg_ << "Found DC1394 color camera: " << colorCoding_;
+	   LogMessage(logMsg_.str().c_str(), true);
+   } else {
+	   logMsg_.str("");
+	   logMsg_ << "Found DC1394 monochrome camera: " << colorCoding_;
+	   LogMessage(logMsg_.str().c_str(), true);
+   }
+
 
    // FrameRate, this is packaged in a function since it will need to be reset whenever the video Mode changes
    nRet = SetUpFrameRates();
@@ -942,6 +954,21 @@ void Cdc1394::rgb8ToMono8(uint8_t* dest, uint8_t* src, uint32_t width, uint32_t 
    }
 }
 
+// EF: converts rgb image to Micromanager BGRA
+// It is the callers responsibility that both src and destination exist
+void Cdc1394::rgb8ToBGRA8(uint8_t* dest, uint8_t* src, uint32_t width, uint32_t height) 
+{
+	for (register uint64_t i=0, j=0; i < (width * height * 3); i+=3, j+=4 ) 
+	{
+		dest[j] = src[i+2];
+		dest[j+1] = src[i+1];
+		dest[j+2] = src[i];
+		dest[j+3] = 0;
+	}
+}
+
+
+
 // GJ: Deinterlace fields from interlaced AVT Guppy camera_s
 // See http://www.alliedvisiontec.com
 // May have general utility
@@ -1038,6 +1065,7 @@ int Cdc1394::SnapImage()
 * Process the frame and return it as a usable image in the buffer 'deistination'
 * It is the callers reponsibility to engueue the frame when done
 * It  is also the callers responsibility to provide enough memory in destination
+* EF: changed for camera returning color images if integrateFrameNumber_ == 1
 */
 int Cdc1394::ProcessImage(dc1394video_frame_t *frame, const unsigned char* destination) 
 {
@@ -1052,7 +1080,7 @@ int Cdc1394::ProcessImage(dc1394video_frame_t *frame, const unsigned char* desti
       if (integrateFrameNumber_ == 1)
       {
          uint8_t* pixBuffer = const_cast<unsigned uint8_t*> (destination);
-         rgb8ToMono8(pixBuffer, rgb_image, width, height);
+         rgb8ToBGRA8(pixBuffer, rgb_image, width, height);
       }
       // when integrating we are dealing with 16 bit images
       if (integrateFrameNumber_ > 1)
@@ -1118,7 +1146,7 @@ int Cdc1394::ProcessImage(dc1394video_frame_t *frame, const unsigned char* desti
       uint8_t* src;
       src = (uint8_t *) frame->image;
       uint8_t* pixBuffer = const_cast<unsigned uint8_t*> (destination);
-      rgb8ToMono8 (pixBuffer, src, width, height);
+      rgb8ToBGRA8 (pixBuffer, src, width, height);
    }
    
    return DEVICE_OK;
@@ -1414,6 +1442,62 @@ bool Cdc1394::IsFeatureSupported(int featureId)
    return DEVICE_OK;
 }
 
+
+// EF: determine if camera currently returns color
+bool Cdc1394::IsColor() const
+{
+	switch (colorCoding_) {
+		case DC1394_COLOR_CODING_YUV411:
+		case DC1394_COLOR_CODING_YUV422:
+		case DC1394_COLOR_CODING_YUV444:
+		case DC1394_COLOR_CODING_RGB8:
+			return true;
+			break;
+		default:
+			return false;
+			break;
+	}
+}	
+
+
+// EF: number of components
+unsigned int Cdc1394::GetNumberOfComponents() const
+{
+	return IsColor() == true && integrateFrameNumber_ == 1 ? 4 : 1;
+}
+
+
+// EF: pretty much identical to SpotCamera.cpp
+int Cdc1394::GetComponentName(unsigned channel, char* name)
+{
+	bool bColor = IsColor();
+	if (!bColor && (channel > 0))  return DEVICE_NONEXISTENT_CHANNEL;      
+	
+	switch (channel)
+	{
+		case 0:      
+			if (!bColor) 
+				CDeviceUtils::CopyLimitedString(name, "Grayscale");
+			else 
+				CDeviceUtils::CopyLimitedString(name, "B");
+			break;
+			
+		case 1:
+			CDeviceUtils::CopyLimitedString(name, "G");
+			break;
+			
+		case 2:
+			CDeviceUtils::CopyLimitedString(name, "R");
+			break;
+			
+		default:
+			return DEVICE_NONEXISTENT_CHANNEL;
+			break;
+	}
+	return DEVICE_OK;
+}
+
+
 int Cdc1394::StopTransmission()
 {
 	// GJ: first check if off
@@ -1446,7 +1530,14 @@ int Cdc1394::StopTransmission()
 void Cdc1394::GetBytesPerPixel()
 {
    if (depth_==8 && integrateFrameNumber_==1)
-      bytesPerPixel_ = 1;
+	  if (IsColor() == true)
+	  {
+		 bytesPerPixel_ = 4;
+	  }
+	  else
+	  {
+         bytesPerPixel_ = 1;
+	  }
    else if (depth_==8 && integrateFrameNumber_>1)
       bytesPerPixel_ = 2;
    else if (depth_ > 8 && depth_ <= 16)

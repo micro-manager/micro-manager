@@ -87,6 +87,8 @@ public:
    unsigned GetImageWidth() const {return img_.Width();}
    unsigned GetImageHeight() const {return img_.Height();}
    unsigned GetImageBytesPerPixel() const {return img_.Depth();} 
+   unsigned int GetNumberOfComponents() const;
+   int GetComponentName(unsigned channel, char* name);
    long GetImageBufferSize() const {return img_.Width() * img_.Height() * GetImageBytesPerPixel();}
    unsigned GetBitDepth() const;
    int GetBinning() const;
@@ -127,6 +129,7 @@ private:
    int GetCamera();
    int StartCamera();
    bool IsFeatureSupported(int featureId);
+   bool IsColor() const;
    int SetUpFrameRates();
    int StopTransmission();
    void SetVideoModeMap();
@@ -135,6 +138,7 @@ private:
    int OnFeature(MM::PropertyBase* pProp, MM::ActionType eAct, uint32_t &value, int valueMin, int valueMax, dc1394feature_t feature);
    //int AddFeature(dc1394feature_t feature, const char* label, int(Cdc1394::*fpt)(PropertyBase* pProp, ActionType eAct) , uint32_t  &value, uint32_t &valueMin, uint32_t &valueMax);
    void rgb8ToMono8(uint8_t* dest, uint8_t* src, uint32_t width, uint32_t height); 
+   void rgb8ToBGRA8(uint8_t* dest, uint8_t* src, uint32_t width, uint32_t height); 
    void rgb8AddToMono16(uint16_t* dest, uint8_t* src, uint32_t width, uint32_t height); 
    void mono8AddToMono16(uint16_t* dest, uint8_t* src, uint32_t width, uint32_t height);
 
