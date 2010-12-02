@@ -46,12 +46,6 @@ class SutterUtils
    public:
       static bool ControllerBusy(MM::Device& device, MM::Core& core, 
             std::string port, unsigned long answerTimeoutMs);
-
-      // single attempt to communicate with controller
-      static int AttemptGoOnLine(MM::Device& device, MM::Core& core, 
-               std::string port, unsigned long answerTimeoutMs);
-
-      // retry communication
       static int GoOnLine(MM::Device& device, MM::Core& core, 
                std::string port, unsigned long answerTimeoutMs);
       static int GetControllerType(MM::Device& device, MM::Core& core, 
@@ -125,14 +119,13 @@ public:
    int OnND(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnControllerID(MM::PropertyBase* pProp, MM::ActionType eAct);
 
-   // for device discovery:
-   MM::DeviceDetectionStatus DetectDevice(void);
-
 private:
-   //bool ControllerBusy();
+   bool ControllerBusy();
    bool SetShutterPosition(bool state);
    bool SetShutterMode(const char* mode);
    bool SetND(unsigned int nd);
+   int GetControllerType(std::string& type, std::string& id);
+   int GoOnLine();
 
    bool initialized_;
    const int id_;
@@ -146,6 +139,45 @@ private:
    unsigned int nd_;
    Shutter& operator=(Shutter& /*rhs*/) {assert(false); return *this;}
 };
+
+class ShutterOnTenDashTwo : public CShutterBase<ShutterOnTenDashTwo>
+{
+public:
+   ShutterOnTenDashTwo(const char* name, int id);
+   ~ShutterOnTenDashTwo();
+
+   bool Busy();
+   void GetName(char* pszName) const;
+   int Initialize();
+   int Shutdown();
+      
+   // Shutter API
+   int SetOpen(bool open = true);
+   int GetOpen(bool& open);
+   int Fire(double deltaT);
+
+   // action interface
+   // ----------------
+   int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
+   //int OnDelay(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+private:
+   bool ControllerBusy();
+   bool SetShutterPosition(bool state);
+   bool SetShutterMode(const char* mode);
+   bool initialized_;
+   const int id_;
+   std::string name_;
+   std:: string port_;
+   double answerTimeoutMs_;
+   MM::MMTime changedTime_;
+   std::string curMode_;
+   ShutterOnTenDashTwo& operator=(ShutterOnTenDashTwo& /*rhs*/) {assert(false); return *this;}
+};
+
+
 
 class DG4Wheel : public CStateDeviceBase<DG4Wheel>
 {
