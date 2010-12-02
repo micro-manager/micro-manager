@@ -50,12 +50,12 @@ MultiCamera.jar:  \
 	$(JAVAC) -source 1.5 -target 1.5 -sourcepath $(srcdir):. -classpath $(srcdir)/MultiCamera.jar:$(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):../bin/MMCoreJ.jar:../mmstudio/MMJ_.jar:. $(srcdir)/MultiCamera/src/org/micromanager/multicamera/*.java -d build
 	cd build && jar cf ../MultiCamera.jar * 
 
-all: MMTracker_.jar PixelCalibrator.jar RecallPlugin.jar StageControl.jar MultiCamera.jar
+all: PixelCalibrator.jar RecallPlugin.jar StageControl.jar MultiCamera.jar
 ##SlideExplorer.jar
 
 install: 
 	test -d $(IJPATH)/mmplugins || mkdir $(IJPATH)/mmplugins
-	cp MMTracker_.jar $(IJPATH)/mmplugins
+	## cp MMTracker_.jar $(IJPATH)/mmplugins
 	## cp PixelCalibrator.jar $(IJPATH)/mmplugins
 	## cp SlideExplorer.jar $(IJPATH)/mmplugins
 	cp RecallPlugin.jar $(IJPATH)/mmplugins
@@ -68,5 +68,7 @@ clean:
 	test -f SlideExplorer.jar && rm SlideExplorer.jar || echo "SlideExplorer.jar not found"
 	test -f Projector.jar && rm Projector.jar || echo "Projector.jar not found"
 	test -f StageControl.jar && rm StageControl.jar || echo "StageControl.jar not found"
+	test -f MultiCamera.jar && rm MultiCamera.jar || echo "MultiCamera.jar not found"
+	test -f RecallPlugin.jar && rm RecallPlugin.jar || echo "RecallPlugin.jar not found"
 	
 EXTRA_DIST = src build.xml
