@@ -27,15 +27,8 @@
 
 (def settings default-settings)
 
-(defn tails [x]
-  (loop [xi x tails []]
-    (if xi
-      (recur (next xi) (conj tails xi))
-      tails)))
-
 (defn pairs [x]
-  (for [xi (tails x)]
-    [(first xi) (second xi)]))
+  (partition 2 1 (concat x [nil])))
 
 (defn nest-loop [events dim-vals dim]
   (if dim-vals
