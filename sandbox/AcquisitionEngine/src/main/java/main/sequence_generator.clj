@@ -95,15 +95,14 @@
 
 (def test-settings
   (struct-map acq-settings
-    :frames (range 100) :positions [{:x 1 :y 2} {:x 4 :y 5}]
+    :frames (range 100) :positions [{:name "a" :x 1 :y 2} {:name "b" :x 4 :y 5}]
     :channels my-channels :slices (range 5)
     :interval 5 :slices-first false
     :keep-shutter-open-slices false :keep-shutter-open-channels true
     :use-autofocus true :autofocus-skip 3 :relative-slices true :exposure 100
     :interval-ms 1000))
 
-(def test-output (->  (make-cs-loop test-acq)
-                      (make-fp-loop test-acq)
+(def test-output (->  (make-main-loops test-acq)
                       (process-skip-z-stack test-acq)
                       (manage-shutter test-acq)
                       (process-use-autofocus test-acq)))
