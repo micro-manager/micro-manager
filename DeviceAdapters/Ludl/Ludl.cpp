@@ -260,7 +260,7 @@ MM::DeviceDetectionStatus Hub::DetectDevice(void)
          // device specific default communication parameters
          GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_BaudRate, "9600" );
          GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_StopBits, "2");
-         GetCoreCallback()->SetDeviceProperty(port_.c_str(), "AnswerTimeout", "400.0");
+         GetCoreCallback()->SetDeviceProperty(port_.c_str(), "AnswerTimeout", "600.0");
          GetCoreCallback()->SetDeviceProperty(port_.c_str(), "DelayBetweenCharsMs", "11.0");
          MM::Device* pS = GetCoreCallback()->GetDevice(this, port_.c_str());
          pS->Initialize();
@@ -303,6 +303,8 @@ MM::DeviceDetectionStatus Hub::DetectDevice(void)
 int Hub::QueryVersion(std::string& version)
 {
    int returnStatus = DEVICE_OK;
+   
+   PurgeComPort(port_.c_str());
    // Version of the controller:
 
    const char* cm = "VER";
@@ -324,8 +326,9 @@ int Hub::QueryVersion(std::string& version)
    }
    if (version.length() < 2 || version[1] == 'N') {
       // try getting version again (TODO: refactor this!)
+      PurgeComPort(port_.c_str()); 
+      
       // Version of the controller:
-      PurgeComPort(port_.c_str());
       const char* cm = "VER";
       returnStatus = SendSerialCommand(port_.c_str(), cm, "\r");
       if (returnStatus != DEVICE_OK) 
