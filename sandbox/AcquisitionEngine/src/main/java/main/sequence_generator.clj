@@ -1,31 +1,12 @@
-(ns sequence-generator
- ;(:require )
- ;(:use )
- ;(:import )
- [:gen-class]
- )
+(ns sequence-generator)
 
 (defstruct channel :name :exposure :z-offset :use-z-stack :skip-frames)
-
-(def my-channels
-  [(struct channel "Cy3" 100 0 true 0)
-   (struct channel "Cy5"  50 0 false 0)
-   (struct channel "DAPI" 50 0 true 0)])
 
 (defstruct acq-settings :frames :positions :channels :slices :slices-first
   :time-first :keep-shutter-open-slices :keep-shutter-open-channels
   :use-autofocus :autofocus-skip :relative-slices :exposure)
 
-(def default-settings
-  (struct-map acq-settings
-    :frames (range 100) :positions [{:name "a" :x 1 :y 2} {:name "b" :x 4 :y 5}]
-    :channels my-channels :slices (range 5)
-    :interval 5 :slices-first true :time-first true
-    :keep-shutter-open-slices false :keep-shutter-open-channels true
-    :use-autofocus true :autofocus-skip 3 :relative-slices true :exposure 100
-    :interval-ms 1000))
-
-(def settings default-settings)
+(declare settings)
 
 (defn pairs [x]
   (partition 2 1 (concat x [nil])))
@@ -100,8 +81,29 @@
           0
           (settings :interval-ms))))))
 
+(defn generate-acq-sequence [seq-settings]
+  (binding [settings seq-settings]
+    (-> (make-main-loops)
+      process-skip-z-stack
+      manage-shutter
+      process-use-autofocus
+      process-wait-time)))
+
 ; Testing:
 
+(def my-channels
+  [(struct channel "Cy3" 100 0 true 0)
+   (struct channel "Cy5"  50 0 false 0)
+   (struct channel "DAPI" 50 0 true 0)])
+
+(def default-settings
+  (struct-map acq-settings
+    :frames (range 100) :positions [{:name "a" :x 1 :y 2} {:name "b" :x 4 :y 5}]
+    :channels my-channels :slices (range 5)
+    :interval 5 :slices-first true :time-first true
+    :keep-shutter-open-slices false :keep-shutter-open-channels true
+    :use-autofocus true :autofocus-skip 3 :relative-slices true :exposure 100
+    :interval-ms 1000))
 
 
 (def test-settings
@@ -115,22 +117,16 @@
 
 (def null-settings
   (struct-map acq-settings
-    :frames (range 100) :positions [{:name "a" :x 1 :y 2} {:name "b" :x 4 :y 5}]
-    :channels my-channels :slices (range 5)
-    :interval 5 :slices-first true :time-first true
+    :frames (range 96)
+    :positions (range 1536)
+    :channels [(struct channel "Cy3" 100 0 true 0)
+               (struct channel "Cy5"  50 0 true 0)]
+    :slices nil
+    :interval 5 :slices-first true :time-first false
     :keep-shutter-open-slices false :keep-shutter-open-channels true
     :use-autofocus true :autofocus-skip 3 :relative-slices true :exposure 100
     :interval-ms 100))
 
-(defn generate-acq-sequence [seq-settings]
-  (binding [settings seq-settings]
-    (-> (make-main-loops)
-      process-skip-z-stack
-      manage-shutter
-      process-use-autofocus
-      process-wait-time)))
-
-
 (def result (generate-acq-sequence null-settings))
 
-(count result)
+;(count result)
