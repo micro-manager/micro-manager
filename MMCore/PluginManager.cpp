@@ -463,10 +463,12 @@ void CPluginManager::GetModules(vector<string> &modules, const char* searchPath)
    {
       // remove prefix
       string strippedName = std::string(moduleFile.name).substr(strlen(LIB_NAME_PREFIX));
+      strippedName = strippedName.substr(0, strippedName.find_first_of("."));
       modules.push_back(strippedName);
       while( _findnext( hFile, &moduleFile ) == 0 )
       {
          strippedName = std::string(moduleFile.name).substr(strlen(LIB_NAME_PREFIX));
+         strippedName = strippedName.substr(0, strippedName.find_first_of("."));
          modules.push_back(strippedName);
       }
 
