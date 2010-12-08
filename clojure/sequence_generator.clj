@@ -106,7 +106,7 @@
   (struct-map acq-settings
     :frames (range 100) :positions [{:name "a" :x 1 :y 2} {:name "b" :x 4 :y 5}]
     :channels my-channels :slices (range 5)
-    :interval 5 :slices-first true :time-first true
+    :slices-first true :time-first true
     :keep-shutter-open-slices false :keep-shutter-open-channels true
     :use-autofocus true :autofocus-skip 3 :relative-slices true :exposure 100
     :interval-ms 1000))
@@ -116,7 +116,7 @@
   (struct-map acq-settings
     :frames (range 10) :positions [{:name "a" :x 1 :y 2} {:name "b" :x 4 :y 5}]
     :channels my-channels :slices (range 5)
-    :interval 5 :slices-first true :time-first true
+    :slices-first true :time-first true
     :keep-shutter-open-slices false :keep-shutter-open-channels true
     :use-autofocus true :autofocus-skip 3 :relative-slices true :exposure 100
     :interval-ms 100))
@@ -127,8 +127,8 @@
     :positions (range 1536)
     :channels [(struct channel "Cy3" 100 0 true 0)
                (struct channel "Cy5"  50 0 true 0)]
-    :slices nil
-    :interval 5 :slices-first true :time-first false
+    :slices (range 5)
+    :slices-first true :time-first false
     :keep-shutter-open-slices false :keep-shutter-open-channels true
     :use-autofocus true :autofocus-skip 3 :relative-slices true :exposure 100
     :interval-ms 100))
