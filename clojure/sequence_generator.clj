@@ -95,6 +95,7 @@
                          (.getModifiers f) java.lang.reflect.Modifier/STATIC))]
       [(keyword (.getName f)) (.get f obj)])))
 
+
 ; Testing:
 
 (def my-channels

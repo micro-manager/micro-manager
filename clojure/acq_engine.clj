@@ -1,10 +1,7 @@
 (ns acq-engine
-  (:import MMStudioPlugin
-           [org.micromanager.navigation MultiStagePosition]))
-  
-(def gui (MMStudioPlugin/getMMStudioMainFrameInstance))
-(def mmc (.getMMCore gui))
-(def acq (.getAcquisitionEngine gui))
+  (:use [mm :only [mmc gui acq]]))
+
+; engine
 
 (defn snap-image [event auto-shutter]
   (if (and auto-shutter (. mmc getShutterOpen))
@@ -40,6 +37,10 @@
         (condp = (.numAxes sp)
           1 (. mmc setPosition stage (.x sp))
           2 (. mmc setXYPosition stage (.x sp) (.y sp)))))))
+          
+(defn run-autofocus [event]
+  (when (event :use-autofocus)
+    (.. gui getAutofocusManager getDevice fullFocus)))
           
 (defn clock-ms []
   (quot (System/nanoTime) 1000000))
