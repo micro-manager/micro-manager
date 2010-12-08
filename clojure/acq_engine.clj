@@ -5,7 +5,8 @@
 
 (defn snap-image [event auto-shutter]
   (if (and auto-shutter (. mmc getShutterOpen))
-    (. mmc setShutterOpen true))
+    (. mmc setShutterOpen true)
+    (. mmc waitForDevice (. mmc getShutterDevice)))
   (. mmc snapImage)
   (if (and auto-shutter (event :close-shutter))
      (. mmc setShutterOpen false))
@@ -53,12 +54,18 @@
       (Thread/sleep sleep-time)))
   (clock-ms))
   
+(defn wait-for-devices [event]
+  (. waitForDevice (. mmc getFocusDevice))
+  ;; more
+  )
+  
 (defn run-task [event last-wake-time]
     (update-channel event)
     (update-position event)
     (let [new-wake-time (acq-sleep event last-wake-time)]
       (run-autofocus event)
       (update-slice event)
+      (wait-for-devices event)
       (snap-image event)
       new-wake-time))
 
