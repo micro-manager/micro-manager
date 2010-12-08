@@ -52,14 +52,13 @@
       (Thread/sleep sleep-time)))
   (clock-ms))
   
-(defn run-task [event]
-  (let [last-wake-time (atom 0)]
+(defn run-task [event last-wake-time]
     (update-channel event)
     (update-position event)
-    (reset! last-wake-time
-      (acq-sleep event @last-wake-time))
-    (run-autofocus event)
-    (update-slice event)
-    (snap-image event)))
+    (let [new-wake-time (acq-sleep event last-wake-time)]
+      (run-autofocus event)
+      (update-slice event)
+      (snap-image event)
+      new-wake-time))
 
    
