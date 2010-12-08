@@ -128,6 +128,7 @@ import org.micromanager.acquisition.AcquisitionVirtualStack;
 import org.micromanager.api.AcquisitionInterface;
 import org.micromanager.acquisition.AcquisitionWrapperEngine;
 import org.micromanager.acquisition.MetadataPanel;
+import org.micromanager.acquisition.engine.SequenceSettings;
 import org.micromanager.api.ImageFocusListener;
 import org.micromanager.utils.ReportingUtils;
 
@@ -4026,7 +4027,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
 
    public void snapAndAddToImage5D(String acqName) {
-      Object img;
+     /* Object img;
       try {
          boolean liveRunning = liveRunning_;
          if (liveRunning) {
@@ -4039,7 +4040,13 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          addToSnapSeries(img, acqName);
       } catch (Exception e) {
          ReportingUtils.showError(e);
-      }
+      }*/
+
+      SequenceSettings acquisitionSettings = new SequenceSettings();
+      AcquisitionWrapperEngine eng = new AcquisitionWrapperEngine();
+      eng.setCore(core_, afMgr_);
+      eng.setParentGUI(this);
+      eng.acquire(acquisitionSettings);
    }
 
    //Returns true if there is a newer image to display that can be get from MMCore

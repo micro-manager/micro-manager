@@ -14,21 +14,21 @@ import org.micromanager.utils.ChannelSpec;
  * @author arthur
  */
 public class SequenceSettings {
-   public int numFrames;
-   public double intervalMs;
-   public ArrayList<MultiStagePosition> positions;
-   public ArrayList<ChannelSpec> channels;
-   public ArrayList<Double> slices;
-   public boolean relativeZSlice;
-   public boolean slicesFirst;
-   public boolean timeFirst;
-   public boolean keepShutterOpenSlices;
-   public boolean keepShutterOpenChannels;
-   public boolean useAutofocus;
-   public int skipAutofocusCount;
-   public boolean save;
-   public String root;
-   public String prefix;
-   public double zReference;
-   public String comment;
+   public int numFrames = 1;
+   public double intervalMs = 0;
+   public ArrayList<MultiStagePosition> positions = new ArrayList<MultiStagePosition>();
+   public ArrayList<ChannelSpec> channels = new ArrayList<ChannelSpec>();
+   public ArrayList<Double> slices = new ArrayList<Double>();
+   public boolean relativeZSlice = false;
+   public boolean slicesFirst = false;
+   public boolean timeFirst = false;
+   public boolean keepShutterOpenSlices = false;
+   public boolean keepShutterOpenChannels = false;
+   public boolean useAutofocus = false;
+   public int skipAutofocusCount = 0;
+   public boolean save = false;
+   public String root = null;
+   public String prefix = null;
+   public double zReference = 0;
+   public String comment = "";
 }

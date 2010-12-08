@@ -138,20 +138,18 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       }
 
       // Slices
-
-      ArrayList<Double> slices = new ArrayList<Double>();
       if (useSlices_) {
          if (sliceZTopUm_ > sliceZBottomUm_) {
             for (double z = sliceZBottomUm_; z <= sliceZTopUm_; z += sliceZStepUm_) {
-               slices.add(z);
+               acquisitionSettings.slices.add(z);
             }
          } else {
             for (double z = sliceZBottomUm_; z >= sliceZTopUm_; z -= sliceZStepUm_) {
-               slices.add(z);
+               acquisitionSettings.slices.add(z);
             }
          }
       }
-      acquisitionSettings.slices = slices;
+
       acquisitionSettings.relativeZSlice = !this.absoluteZ_;
       try {
          acquisitionSettings.zReference = core_.getPosition(core_.getFocusDevice());
@@ -160,7 +158,6 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       }
       // Channels
 
-      acquisitionSettings.channels = new ArrayList<ChannelSpec>();
       if (this.useChannels_) {
          for (ChannelSpec channel:channels_)
             if (channel.useChannel_)
@@ -168,7 +165,6 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       }
 
       // Positions
-      acquisitionSettings.positions = new ArrayList<MultiStagePosition>();
       if (this.useMultiPosition_)
          acquisitionSettings.positions.addAll(Arrays.asList(posList_.getPositions()));
 

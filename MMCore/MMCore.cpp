@@ -649,6 +649,63 @@ void CMMCore::loadDevice(const char* label, const char* library, const char* dev
 }
 
 /**
+ * Unloads the device from the core and adjusts all configuration data.
+ */
+void CMMCore::unloadDevice(const char* label) throw (CMMError)
+{
+   MM::Device* pDevice = getDevice(label);
+   
+   try {
+      pluginManager_.unloadDevice(pDevice);
+   
+      switch(pDevice->GetType())
+      {
+         case MM::CameraDevice:
+            camera_ = 0;
+            CORE_LOG("default camera unloaded.\n");
+         break;
+
+         case MM::StateDevice:
+            // nothing to do for now
+         break;
+
+         case MM::ShutterDevice:
+            shutter_ = 0;
+            CORE_LOG("default shutter unloaded.\n");
+         break;
+
+         case MM::XYStageDevice:
+            xyStage_ = 0;
+            CORE_LOG("default xyStage unloaded.\n");
+         break;
+
+         case MM::AutoFocusDevice:
+            autoFocus_ = 0;
+            CORE_LOG("default auto-focus unloaded.\n");
+         break;
+
+         case MM::SLMDevice:
+            slm_ = 0;
+            CORE_LOG("default SLM unloaded.\n");
+         break;
+
+         default:
+            // no action on unrecognized device
+         break;
+      }
+         
+      
+   }
+   catch (CMMError& err) {
+      // augment the error message with the core text
+      err.setCoreMsg(getCoreErrorText(err.getCode()).c_str());
+      logError("MMCore::unloadDevice", err.getMsg().c_str());
+      throw; 
+   }
+}
+
+
+/**
  * Unloads all devices from the core and resets all configuration data.
  */
 void CMMCore::unloadAllDevices() throw (CMMError)
