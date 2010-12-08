@@ -7,4 +7,4 @@
 (def acq (.getAcquisitionEngine gui))
 
 (defn get-positions []
-  (vec (.getPositions (. gui getPositionList))))
+  (vec (.. gui getPositionList getPositions)))
