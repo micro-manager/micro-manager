@@ -6,8 +6,6 @@
   :time-first :keep-shutter-open-slices :keep-shutter-open-channels
   :use-autofocus :autofocus-skip :relative-slices :exposure)
 
-(declare settings)
-
 (defn pairs [x]
   (partition 2 1 (concat x [nil])))
 
@@ -17,7 +15,7 @@
       (assoc event dim dim-val))
     events))
 
-(defn make-dimensions []
+(defn make-dimensions [settings]
   (let [{:keys [slices channels frames positions
                 slices-first time-first]} settings
         a [[slices :slice] [channels :channel]]
@@ -29,32 +27,31 @@
 (defn create-loops [dimensions]
   (reduce #(apply (partial nest-loop %1) %2) [{:task :snap}] dimensions))
 
-(defn make-main-loops []
-  (create-loops (make-dimensions)))
+(defn make-main-loops [settings]
+  (create-loops (make-dimensions settings)))
 
-(defn manage-shutter [events]
-  (for [[e1 e2] (pairs events)]
-    (assoc e1 :close-shutter
-      (if e2 (or
-               (and
-                 (not (settings :keep-shutter-open-channels))
-                 (not= (e1 :channel) (e2 :channel)))
-               (and
-                 (not (settings :keep-shutter-open-slices))
-                 (not= (e1 :slice) (e2 :slice)))
-               (not= (e1 :frame) (e2 :frame))
-               (not= (e1 :position) (e2 :position)))
-        true))))
-
-(defn process-skip-z-stack [events]
-  (let [slices (settings :slices)
-        middle-slice (nth slices (int (/ (count slices) 2)))]
+(defn process-skip-z-stack [events slices]
+  (let [middle-slice (nth slices (int (/ (count slices) 2)))]
     (filter
       #(or
          (nil? (% :channel))
          (-> % :channel :use-z-stack)
          (= middle-slice (% :slice)))
       events)))
+
+(defn manage-shutter [events keep-shutter-open-channels keep-shutter-open-slices]
+  (for [[e1 e2] (pairs events)]
+    (assoc e1 :close-shutter
+      (if e2 (or
+               (and
+                 (not keep-shutter-open-channels)
+                 (not= (e1 :channel) (e2 :channel)))
+               (and
+                 (not keep-shutter-open-slices)
+                 (not= (e1 :slice) (e2 :slice)))
+               (not= (e1 :frame) (e2 :frame))
+               (not= (e1 :position) (e2 :position)))
+        true))))
 
 (defn process-channel-skip-frames [events]
   (filter
@@ -64,30 +61,39 @@
        (not= 0 (mod (% :frame) (-> % :channel :skip-frames inc))))
     events))
 
-(defn process-use-autofocus [events]
+(defn process-use-autofocus [events use-autofocus autofocus-skip]
   (for [event events]
     (assoc event :autofocus
-      (and (settings :use-autofocus)
+      (and use-autofocus
         (or
           (nil? (event :frame))
-          (zero? (mod (event :frame) (inc (settings :autofocus-skip)))))))))
+          (zero? (mod (event :frame) (inc autofocus-skip))))))))
 
-(defn process-wait-time [events]
+(defn process-wait-time [events interval-ms]
   (cons
     (assoc (first events) :wait-time-ms 0)
     (for [[e1 e2] (pairs events) :when e2]
       (assoc e2 :wait-time-ms
         (if (= (:frame e1) (:frame e2))
           0
-          (settings :interval-ms))))))
+          interval-ms)))))
 
-(defn generate-acq-sequence [seq-settings]
-  (binding [settings seq-settings]
-    (-> (make-main-loops)
-      process-skip-z-stack
-      manage-shutter
-      process-use-autofocus
-      process-wait-time)))
+(defn generate-acq-sequence [settings]
+  (let [{:keys [slices keep-shutter-open-channels keep-shutter-open-slices
+         use-autofocus autofocus-skip interval-ms]} settings]
+    (-> (make-main-loops settings)
+      (process-skip-z-stack slices)
+      (manage-shutter keep-shutter-open-channels keep-shutter-open-slices)
+      (process-channel-skip-frames)
+      (process-use-autofocus use-autofocus autofocus-skip)
+      (process-wait-time interval-ms))))
+; Interop
+(defn data-object-to-map [obj]
+  (into {}
+    (for [f (.getFields (type obj))
+          :when (zero? (bit-and
+                         (.getModifiers f) java.lang.reflect.Modifier/STATIC))]
+      [(keyword (.getName f)) (.get f obj)])))
 
 ; Testing:
 
@@ -127,6 +133,6 @@
     :use-autofocus true :autofocus-skip 3 :relative-slices true :exposure 100
     :interval-ms 100))
 
-(def result (generate-acq-sequence null-settings))
+;(def result (generate-acq-sequence null-settings))
 
 ;(count result)
