@@ -1,6 +1,6 @@
 (ns acq-engine
   (:use [mm :only [mmc gui acq]])
-  (:import [org.micromanager.api AcquisitionEngine])
+  (:import [org.micromanager.api AcquisitionEngine]))
 
 
 ; engine
@@ -57,7 +57,7 @@
   (clock-ms))
   
 (defn wait-for-devices [event]
-  (. waitForDevice (. mmc getFocusDevice))
+  (. mmc waitForDevice (. mmc getFocusDevice))
   ;; more
   )
   
@@ -77,10 +77,11 @@
 (defn run-acquisition [params] 
   (println params))
 
-(def compute-verbose-summary [params]
+(defn compute-verbose-summary [params]
    "meh")
 
 ;; AcquisitionEngine implementation
+
 
 
 (defn create-acq-eng []
@@ -163,6 +164,8 @@
       (setZStageDevice [this focus-device] (set-param! :focus-device focus-device))
       (shutdown [this] nil)
       (stop [this interrupted] (alter current-state assoc :interrupted interrupted)))))
+
+   
 
    
 
