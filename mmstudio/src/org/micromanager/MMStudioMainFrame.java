@@ -4049,6 +4049,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       eng.acquire(acquisitionSettings);
    }
 
+   public void setAcquisitionEngine(AcquisitionEngine eng) {
+      engine_ = eng;
+   }
+   
    //Returns true if there is a newer image to display that can be get from MMCore
    //Implements "optimistic" approach: returns true even
    //if there was an error while getting the image time stamp
