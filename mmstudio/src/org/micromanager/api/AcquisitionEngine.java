@@ -170,7 +170,7 @@ public interface AcquisitionEngine {
    public void clear();
    public void setFrames(int numFrames, double interval);
    public double getMinZStepUm();
-   public void setSlices(double bottom, double top, double step, boolean b);
+   public void setSlices(double bottom, double top, double step, boolean absolute);
 
    public boolean isFramesSettingEnabled();
 
