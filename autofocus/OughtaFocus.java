@@ -37,7 +37,7 @@ import org.apache.commons.math.optimization.GoalType;
 import org.apache.commons.math.optimization.univariate.BrentOptimizer;
 import org.micromanager.MMStudioMainFrame;
 
-import org.micromanager.metadata.AcquisitionData;
+import org.micromanager.acquisition.AcquisitionData;
 import org.micromanager.utils.AutofocusBase;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.MMException;

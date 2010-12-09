@@ -39,7 +39,7 @@ import mmcorej.CMMCore;
 import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
 
-import org.micromanager.metadata.AcquisitionData;
+import org.micromanager.acquisition.AcquisitionData;
 import org.micromanager.utils.AutofocusManager;
 import org.micromanager.utils.AutofocusBase;
 import org.micromanager.utils.MMException;
