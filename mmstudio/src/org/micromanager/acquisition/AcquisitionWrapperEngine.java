@@ -80,10 +80,10 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    public void acquire() throws MMException {
-         acquire(gatherSequenceSettings());
+         runPipeline(gatherSequenceSettings());
    }
 
-   public void acquire(SequenceSettings acquisitionSettings) {
+   public void runPipeline(SequenceSettings acquisitionSettings) {
       try {
          // SET UP THE PIPELINE...
          // ...Sequence generator...
