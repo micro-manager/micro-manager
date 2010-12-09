@@ -8,6 +8,24 @@
            [java.util.prefs Preferences]))
 
 
+
+;; java interop
+(defn data-object-to-map [obj]
+  (into {}
+    (for [f (.getFields (type obj))
+          :when (zero? (bit-and
+                         (.getModifiers f) java.lang.reflect.Modifier/STATIC))]
+      [(keyword (.getName f)) (.get f obj)])))
+
+;; utils
+(defn rekey
+  ([m kold knew]
+    (-> m (dissoc kold) (assoc knew (get m kold))))
+  ([m k1old k1new & ks]
+    (reduce #(rekey %1 (first %2) (second %2))
+      m (partition 2 (conj ks k1new k1old)))))
+
+
 ; engine
 
 (defn snap-image [event auto-shutter]
@@ -85,24 +103,15 @@
 (defn run-acquisition [params] 
   (println params))
 
-(defn compute-verbose-summary [params]
-   "meh")
+(defn run-acquisition-from-settings [^SequenceSettings settings]
+  (println 
+  (rekey (data-object-to-map settings)
+    :numFrames :frames
+    :keepShutterOpenSlices :keep-shutter-open-slices
+    :keepShutterOpenChannels :keep-shutter-open-channels
+    :timeFirst :time-first
+    :slicesFirst :slices-first)))
 
-;; java interop
-(defn data-object-to-map [obj]
-  (into {}
-    (for [f (.getFields (type obj))
-          :when (zero? (bit-and
-                         (.getModifiers f) java.lang.reflect.Modifier/STATIC))]
-      [(keyword (.getName f)) (.get f obj)])))
-
-;; utils
-(defn rekey
-  ([m kold knew]
-    (-> m (dissoc kold) (assoc knew (get m kold))))
-  ([m k1old k1new & ks]
-    (reduce #(rekey %1 (first %2) (second %2))
-      m (partition 2 (conj ks k1new k1old)))))
 
 
 ;; AcquisitionEngine implementation
@@ -112,7 +121,7 @@
   (doto
     (proxy [AcquisitionWrapperEngine] []
       (runPipeline [^SequenceSettings settings]
-        (def acq-settings (data-object-to-map settings))))
+        (run-acquisition-from-settings settings)))
     (.setCore mmc (.getAutofocusManager gui))
     (.setParentGUI gui)))
 
@@ -120,6 +129,9 @@
   (.show (AcqControlDlg. eng (Preferences/userNodeForPackage (.getClass gui)) gui)))
 
 (comment
+(defn compute-verbose-summary [params]
+   "meh")
+
 (defn create-acq-eng []
   (let [params (atom {:autofocus-skip-interval 0})
        set-param! #(swap! params assoc %1 %2)
