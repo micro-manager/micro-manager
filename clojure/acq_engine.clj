@@ -1,6 +1,11 @@
 (ns acq-engine
   (:use [mm :only [mmc gui acq]])
-  (:import [org.micromanager.api AcquisitionEngine]))
+  (:import [org.micromanager AcqControlDlg]
+           [org.micromanager.api AcquisitionEngine]
+           [org.micromanager.acquisition AcquisitionWrapperEngine]
+           [org.micromanager.acquisition.engine SequenceSettings]
+           [org.micromanager.navigation MultiStagePosition]
+           [java.util.prefs Preferences]))
 
 
 ; engine
@@ -83,12 +88,40 @@
 (defn compute-verbose-summary [params]
    "meh")
 
+;; java interop
+(defn data-object-to-map [obj]
+  (into {}
+    (for [f (.getFields (type obj))
+          :when (zero? (bit-and
+                         (.getModifiers f) java.lang.reflect.Modifier/STATIC))]
+      [(keyword (.getName f)) (.get f obj)])))
+
+;; utils
+(defn rekey
+  ([m kold knew]
+    (-> m (dissoc kold) (assoc knew (get m kold))))
+  ([m k1old k1new & ks]
+    (reduce #(rekey %1 (first %2) (second %2))
+      m (partition 2 (conj ks k1new k1old)))))
+
+
 ;; AcquisitionEngine implementation
 
 
-
 (defn create-acq-eng []
-  (let [params (atom {})
+  (doto
+    (proxy [AcquisitionWrapperEngine] []
+      (runPipeline [^SequenceSettings settings]
+        (def acq-settings (data-object-to-map settings))))
+    (.setCore mmc (.getAutofocusManager gui))
+    (.setParentGUI gui)))
+
+(defn test-dialog [eng]
+  (.show (AcqControlDlg. eng (Preferences/userNodeForPackage (.getClass gui)) gui)))
+
+(comment
+(defn create-acq-eng []
+  (let [params (atom {:autofocus-skip-interval 0})
        set-param! #(swap! params assoc %1 %2)
        current-state (ref {})]
     (reify AcquisitionEngine
@@ -167,7 +200,7 @@
       (setZStageDevice [this focus-device] (set-param! :focus-device focus-device))
       (shutdown [this] nil)
       (stop [this interrupted] (alter current-state assoc :interrupted interrupted)))))
-
+)
    
 
    

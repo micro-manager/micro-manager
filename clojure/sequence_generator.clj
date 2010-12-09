@@ -87,14 +87,6 @@
       (process-channel-skip-frames)
       (process-use-autofocus use-autofocus autofocus-skip)
       (process-wait-time interval-ms))))
-; Interop
-(defn data-object-to-map [obj]
-  (into {}
-    (for [f (.getFields (type obj))
-          :when (zero? (bit-and
-                         (.getModifiers f) java.lang.reflect.Modifier/STATIC))]
-      [(keyword (.getName f)) (.get f obj)])))
-
 
 ; Testing:
 
