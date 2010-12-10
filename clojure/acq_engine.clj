@@ -6,7 +6,8 @@
            [org.micromanager.acquisition AcquisitionWrapperEngine]
            [org.micromanager.acquisition.engine SequenceSettings]
            [org.micromanager.navigation MultiStagePosition]
-           [java.util.prefs Preferences]))
+           [java.util.prefs Preferences]
+           [org.micromanager.utils ChannelSpec))
 
 ;; java interop
 (defn data-object-to-map [obj]
@@ -29,6 +30,34 @@
 (defn set-stage-position
   ([stage-dev z] (. mmc setPosition z))
   ([stage-dev x y] (. mmc setXYPosition x y)))
+
+(defn get-default-devices []
+  {:camera          (. mmc getCameraDevice)
+   :shutter         (. mmc getShutterDevice)
+   :focus           (. mmc getFocusDevice)
+   :xy-stage        (. mmc getXYStageDevice)
+   :autofocus       (. mmc getAutoFocusDevice)
+   :image-processor (. mmc getImageProcessorDevice)})
+
+(defn get-config [group config]
+  (let [data (. mmc getConfigData group config)
+        n (.size data)
+        props (map #(.getSetting data %) (range n))]
+    (for [prop props]
+      [(.getDeviceLabel prop)
+       (.getPropertyName prop)
+       (.getPropertyValue prop)])))
+
+(defn ChannelSpec-to-map [^ChannelSpec chan]
+  (-> chan (data-object-to-map)
+    (rekey
+      :config_                 :name
+      :exposure_               :exposure
+      :doZStack_               :use-z-stack
+      :skipFactorFrame_        :skip-frames
+      :useChannel_             :use-channel
+    )
+    (assoc :properties (get-config (. mmc getChannelGroup) (.config_ chan)))))
 
 ; engine
 
@@ -109,7 +138,7 @@
   (let [acq-seq (generate-acq-sequence settings)]
      (def acq-sequence acq-seq)
      (println acq-seq)))
-
+  
 (defn convert-settings [^SequenceSettings settings]
   (-> settings
     (data-object-to-map)
