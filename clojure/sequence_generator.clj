@@ -8,15 +8,12 @@
 
 (defn pairs [x]
   (partition 2 1 (concat x [nil])))
-
-(defn first-not-nil [& args]
-  (first (filter (comp not nil?) args)))
   
 (defn get-skip-frames [channel]
-  (first-not-nil (:skip-frames channel) (.skipFactorFrame_ channel)))
+  (or (:skip-frames channel) (.skipFactorFrame_ channel)))
     
 (defn get-use-z-stack [channel]
-  (first-not-nil (:use-z-stack channel) (.doZStack_ channel)))
+  (or (:use-z-stack channel) (.doZStack_ channel)))
 
 (defn make-dimensions [settings]
   (let [{:keys [slices channels frames positions
