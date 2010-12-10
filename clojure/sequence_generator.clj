@@ -10,12 +10,6 @@
 
 (defn pairs [x]
   (partition 2 1 (concat x [nil])))
-  
-(defn get-skip-frames [channel]
-  (or (:skip-frames channel) (.skipFactorFrame_ channel)))
-    
-(defn get-use-z-stack [channel]
-  (or (:use-z-stack channel) (.doZStack_ channel)))
 
 (defn make-dimensions [settings]
   (let [{:keys [slices channels frames positions
@@ -44,7 +38,7 @@
       (filter
         #(or
            (nil? (% :channel))
-           (-> % :channel get-use-z-stack)
+           (-> % :channel :use-z-stack)
            (= middle-slice (% :slice)))
         events)))
     events)
@@ -67,7 +61,7 @@
   (filter
     #(or
        (nil? (% :channel))
-       (-> % :channel get-skip-frames zero?)
+       (-> % :channel :skip-frames zero?)
        (not= 0 (mod (% :frame) (-> % :channel get-skip-frames inc))))
     events))
 
