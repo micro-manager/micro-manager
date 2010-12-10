@@ -6,6 +6,9 @@
   :time-first :keep-shutter-open-slices :keep-shutter-open-channels
   :use-autofocus :autofocus-skip :relative-slices :exposure :interval-ms)
 
+(defn pairs [x]
+  (partition 2 1 (concat x [nil])))
+
 (defn first-not-nil [& args]
   (first (filter (comp not nil?) args)))
   
@@ -15,15 +18,6 @@
 (defn get-use-z-stack [channel]
   (first-not-nil (:use-z-stack channel) (.doZStack_ channel)))
 
-(defn pairs [x]
-  (partition 2 1 (concat x [nil])))
-
-(defn nest-loop [events dim-vals dim]
-  (if (and dim-vals (pos? (count dim-vals)))
-    (for [dim-val dim-vals event events]
-      (assoc event dim dim-val))
-    events))
-
 (defn make-dimensions [settings]
   (let [{:keys [slices channels frames positions
                 slices-first time-first]} settings
@@ -32,6 +26,12 @@
         b [[frames :frame] [positions :position]]
         b (if time-first b (reverse b))]
     (concat a b)))
+    
+(defn nest-loop [events dim-vals dim]
+  (if (and dim-vals (pos? (count dim-vals)))
+    (for [dim-val dim-vals event events]
+      (assoc event dim dim-val))
+    events))
 
 (defn create-loops [dimensions]
   (reduce #(apply (partial nest-loop %1) %2) [{:task :snap}] dimensions))
