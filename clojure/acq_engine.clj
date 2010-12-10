@@ -27,6 +27,13 @@
       m (partition 2 (conj ks knew kold)))))
 
 
+; mmc utils
+
+
+(defn set-stage-position
+  ([stage-dev z] (. mmc setPosition z))
+  ([stage-dev x y] (. mmc setXYPosition x y)))
+
 ; engine
 
 (defn snap-image [event auto-shutter]
@@ -126,9 +133,6 @@
   (def orig-settings settings)
   (run-acquisition (convert-settings settings)))
 
-;; AcquisitionEngine implementation
-
-
 (defn create-acq-eng []
   (doto
     (proxy [AcquisitionWrapperEngine] []
@@ -144,6 +148,8 @@
 (comment
 (defn compute-verbose-summary [params]
    "meh")
+
+;; AcquisitionEngine implementation
 
 (defn create-acq-eng []
   (let [params (atom {:autofocus-skip-interval 0})
