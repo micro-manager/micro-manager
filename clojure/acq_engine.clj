@@ -151,7 +151,7 @@
   (def acq-settings settings)
   (let [acq-seq (generate-acq-sequence settings)]
      (def acq-sequence acq-seq)
-     (map println acq-seq)))
+     (doall (map println acq-seq))))
   
 (defn convert-settings [^SequenceSettings settings]
   (-> settings
