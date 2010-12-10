@@ -1,5 +1,6 @@
 (ns acq-engine
-  (:use [mm :only [mmc gui acq]])
+  (:use [mm :only [mmc gui acq]]
+        [sequence-generator :only [generate-acq-sequence]])
   (:import [org.micromanager AcqControlDlg]
            [org.micromanager.api AcquisitionEngine]
            [org.micromanager.acquisition AcquisitionWrapperEngine]
@@ -21,9 +22,9 @@
 (defn rekey
   ([m kold knew]
     (-> m (dissoc kold) (assoc knew (get m kold))))
-  ([m k1old k1new & ks]
-    (reduce #(rekey %1 (first %2) (second %2))
-      m (partition 2 (conj ks k1new k1old)))))
+  ([m kold knew & ks]
+    (reduce #(apply rekey %1 %2)
+      m (partition 2 (conj ks knew kold)))))
 
 
 ; engine
@@ -100,19 +101,30 @@
 (defn run-events [events]
   (doall (map run-event events)))
   
-(defn run-acquisition [params] 
-  (println params))
+(defn run-acquisition [settings] 
+  (def acq-settings settings)
+  (let [acq-seq (generate-acq-sequence settings)]
+     (def acq-sequence acq-seq)
+     (println acq-seq)))
+
+(defn convert-settings [^SequenceSettings settings]
+  (-> settings
+    (data-object-to-map)
+    (assoc :frames (range (.numFrames settings)))
+    (rekey
+      :slicesFirst             :slices-first
+      :timeFirst               :time-first
+      :keepShutterOpenSlices   :keep-shutter-open-slices
+      :keepShutterOpenChannels :keep-shutter-open-channels
+      :useAutofocus            :use-autofocus
+      :skipAutofocusCount      :autofocus-skip
+      :relativeZSlice          :relative-slices
+      :intervalMs              :interval-ms
+    )))
 
 (defn run-acquisition-from-settings [^SequenceSettings settings]
-  (println 
-  (rekey (data-object-to-map settings)
-    :numFrames :frames
-    :keepShutterOpenSlices :keep-shutter-open-slices
-    :keepShutterOpenChannels :keep-shutter-open-channels
-    :timeFirst :time-first
-    :slicesFirst :slices-first)))
-
-
+  (def orig-settings settings)
+  (run-acquisition (convert-settings settings)))
 
 ;; AcquisitionEngine implementation
 
@@ -212,7 +224,7 @@
       (setZStageDevice [this focus-device] (set-param! :focus-device focus-device))
       (shutdown [this] nil)
       (stop [this interrupted] (alter current-state assoc :interrupted interrupted)))))
-)
+);end comment
    
 
    

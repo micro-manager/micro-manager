@@ -4,13 +4,22 @@
 
 (defstruct acq-settings :frames :positions :channels :slices :slices-first
   :time-first :keep-shutter-open-slices :keep-shutter-open-channels
-  :use-autofocus :autofocus-skip :relative-slices :exposure)
+  :use-autofocus :autofocus-skip :relative-slices :exposure :interval-ms)
+
+(defn first-not-nil [& args]
+  (first (filter (comp not nil?) args)))
+  
+(defn get-skip-frames [channel]
+  (first-not-nil (:skip-frames channel) (.skipFactorFrame_ channel)))
+    
+(defn get-use-z-stack [channel]
+  (first-not-nil (:use-z-stack channel) (.doZStack_ channel)))
 
 (defn pairs [x]
   (partition 2 1 (concat x [nil])))
 
 (defn nest-loop [events dim-vals dim]
-  (if dim-vals
+  (if (and dim-vals (pos? (count dim-vals)))
     (for [dim-val dim-vals event events]
       (assoc event dim dim-val))
     events))
@@ -31,13 +40,15 @@
   (create-loops (make-dimensions settings)))
 
 (defn process-skip-z-stack [events slices]
-  (let [middle-slice (nth slices (int (/ (count slices) 2)))]
-    (filter
-      #(or
-         (nil? (% :channel))
-         (-> % :channel :use-z-stack)
-         (= middle-slice (% :slice)))
-      events)))
+  (if (pos? (count slices))
+    (let [middle-slice (nth slices (int (/ (count slices) 2)))]
+      (filter
+        #(or
+           (nil? (% :channel))
+           (-> % :channel get-use-z-stack)
+           (= middle-slice (% :slice)))
+        events)))
+  events)
 
 (defn manage-shutter [events keep-shutter-open-channels keep-shutter-open-slices]
   (for [[e1 e2] (pairs events)]
@@ -57,8 +68,8 @@
   (filter
     #(or
        (nil? (% :channel))
-       (-> % :channel :skip-frames zero?)
-       (not= 0 (mod (% :frame) (-> % :channel :skip-frames inc))))
+       (-> % :channel get-skip-frames zero?)
+       (not= 0 (mod (% :frame) (-> % :channel get-skip-frames inc))))
     events))
 
 (defn process-use-autofocus [events use-autofocus autofocus-skip]
