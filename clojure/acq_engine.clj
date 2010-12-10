@@ -8,8 +8,6 @@
            [org.micromanager.navigation MultiStagePosition]
            [java.util.prefs Preferences]))
 
-
-
 ;; java interop
 (defn data-object-to-map [obj]
   (into {}
@@ -28,8 +26,6 @@
 
 
 ; mmc utils
-
-
 (defn set-stage-position
   ([stage-dev z] (. mmc setPosition z))
   ([stage-dev x y] (. mmc setXYPosition x y)))

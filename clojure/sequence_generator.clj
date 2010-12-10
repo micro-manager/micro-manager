@@ -2,7 +2,7 @@
 
 (defstruct channel :name :exposure :z-offset :use-z-stack :skip-frames)
 
-(defstruct stage-position :stage-device :axes}
+(defstruct stage-position :stage-device :axes)
 
 (defstruct acq-settings :frames :positions :channels :slices :slices-first
   :time-first :keep-shutter-open-slices :keep-shutter-open-channels
