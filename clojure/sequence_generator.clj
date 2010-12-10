@@ -45,7 +45,7 @@
            (-> % :channel get-use-z-stack)
            (= middle-slice (% :slice)))
         events)))
-  events)
+    events)
 
 (defn manage-shutter [events keep-shutter-open-channels keep-shutter-open-slices]
   (for [[e1 e2] (pairs events)]

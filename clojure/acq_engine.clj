@@ -135,7 +135,8 @@
       (runPipeline [^SequenceSettings settings]
         (run-acquisition-from-settings settings)))
     (.setCore mmc (.getAutofocusManager gui))
-    (.setParentGUI gui)))
+    (.setParentGUI gui)
+    (.setPositionList (.getPositionList gui))))
 
 (defn test-dialog [eng]
   (.show (AcqControlDlg. eng (Preferences/userNodeForPackage (.getClass gui)) gui)))
