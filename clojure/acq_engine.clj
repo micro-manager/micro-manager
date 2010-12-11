@@ -9,7 +9,7 @@
            [java.util.prefs Preferences]
            [org.micromanager.utils ChannelSpec]))
 
-;; java interop
+;; general utils
 (defn data-object-to-map [obj]
   (into {}
     (for [f (.getFields (type obj))
@@ -17,10 +17,9 @@
                          (.getModifiers f) java.lang.reflect.Modifier/STATIC))]
       [(keyword (.getName f)) (.get f obj)])))
 
-(defmacro apply-method [& args]
+(defmacro apply-member [& args]
   `(~@(drop-last args) ~@(eval (last args))))
 
-;; utils
 (defn rekey
   ([m kold knew]
     (-> m (dissoc kold) (assoc knew (get m kold))))
@@ -28,11 +27,7 @@
     (reduce #(apply rekey %1 %2)
       m (partition 2 (conj ks knew kold)))))
 
-; mmc utils
-(defn set-stage-position
-  ([stage-dev z] (. mmc setPosition z))
-  ([stage-dev x y] (. mmc setXYPosition x y)))
-
+;; mm utils
 (defn get-default-devices []
   {:camera          (. mmc getCameraDevice)
    :shutter         (. mmc getShutterDevice)
@@ -60,7 +55,9 @@
       :doZStack_               :use-z-stack
       :skipFactorFrame_        :skip-frames
       :useChannel_             :use-channel
+      :color_                  :color
     )
+    (dissoc :name_ :contrast16_ :contrast8_ :min_ :max_)
     (assoc :properties (get-config (. mmc getChannelGroup) (.config_ chan)))))
 
 (defn MultiStagePosition-to-map [^MultiStagePosition msp]
@@ -73,7 +70,32 @@
               1 [(.x stage-pos)]
               2 [(.x stage-pos) (.y stage-pos)])])))})
 
-; engine
+;; acq-engine
+
+(defn set-stage-position
+  ([stage-dev z] (. mmc setPosition stage-dev z))
+  ([stage-dev x y] (. mmc setXYPosition stage-dev x y)))
+  
+(def device-agents
+  (let [devs (seq (. mmc getLoadedDevices))]
+    (zipmap devs (repeatedly (count devs) #(agent nil)))))
+    
+(defn create-presnap-actions [event]
+  (into {} (concat
+    (for [[axis pos] (get-in event [:position :axes])]
+      [axis #(apply set-stage-position axis pos)])
+    (for [prop (get-in event [:channel :properties])]
+      [(prop 0) #(.setProperty mmc (prop 0) (prop 1) (prop 2))]))))
+
+(defn send-device-action [dev action]
+  (send-off (device-agents dev) (fn [_] (action))))
+
+(defn run-actions [action-map]
+  (doseq [[dev action] action-map]
+    (send-device-action dev action))
+  (doseq [dev (keys action-map)]
+    (send-device-action dev #(. mmc waitForDevice dev)))
+  (apply await-for 10000 (vals device-agents)))
 
 (defn snap-image [event auto-shutter]
   (if (and auto-shutter (. mmc getShutterOpen))
@@ -157,7 +179,7 @@
   (-> settings
     (data-object-to-map)
     (assoc :frames (range (.numFrames settings))
-           :channels (map ChannelSpec-to-map (.channels settings))
+           :channels (filter :use-channel (map ChannelSpec-to-map (.channels settings)))
            :positions (map MultiStagePosition-to-map (.positions settings)))
     (rekey
       :slicesFirst             :slices-first
