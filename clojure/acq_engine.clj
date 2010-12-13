@@ -139,7 +139,7 @@
   (let [acq-seq (generate-acq-sequence settings)
         last-wake-time (atom (clock-ms))]
      (def acq-sequence acq-seq)
-     (map #(run-event % last-wake-time) acq-seq)))
+     (dorun (map #(run-event % last-wake-time) acq-seq))))
   
 (defn convert-settings [^SequenceSettings settings]
   (-> settings
