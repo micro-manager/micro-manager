@@ -36,7 +36,7 @@ public class LiveAcqDisplay extends Thread {
    private MMImageCache imageCache_ = null;
    private MMVirtualAcquisitionDisplay display_ = null;
 
-   LiveAcqDisplay(CMMCore core,
+   public LiveAcqDisplay(CMMCore core,
            BlockingQueue<TaggedImage> imageProducingQueue,
            SequenceSettings acqSettings,
            ArrayList<ChannelSpec> channels,
