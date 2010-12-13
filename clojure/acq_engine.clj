@@ -17,8 +17,8 @@
                          (.getModifiers f) java.lang.reflect.Modifier/STATIC))]
       [(keyword (.getName f)) (.get f obj)])))
 
-(defmacro apply-member [& args]
-  `(~@(drop-last args) ~@(eval (last args))))
+(defmacro apply* [& args]
+  `(~@(butlast args) ~@(eval (last args))))
 
 (defn rekey
   ([m kold knew]
@@ -85,7 +85,7 @@
     (for [[axis pos] (get-in event [:position :axes])]
       [axis #(apply set-stage-position axis pos)])
     (for [prop (get-in event [:channel :properties])]
-      [(prop 0) #(.setProperty mmc (prop 0) (prop 1) (prop 2))]))))
+      [(prop 0) #(apply* .setProperty mmc prop)]))))
 
 (defn send-device-action [dev action]
   (send-off (device-agents dev) (fn [_] (action))))
@@ -193,6 +193,7 @@
     )))
 
 (defn run-acquisition-from-settings [^SequenceSettings settings]
+  (println settings)
   (def orig-settings settings)
   (run-acquisition (convert-settings settings)))
 
