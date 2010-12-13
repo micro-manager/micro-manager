@@ -19,7 +19,6 @@
 // CVS:           $Id$
 //
 #include "DeviceUtils.h"
-#include "../MMCore/CoreUtils.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>

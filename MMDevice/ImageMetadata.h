@@ -33,7 +33,6 @@
 #include <vector>
 #include <map>
 #include <sstream>
-#include "boost/foreach.hpp"
 
 ///////////////////////////////////////////////////////////////////////////////
 // MetadataError
@@ -457,11 +456,13 @@ public:
    {
       std::pair<std::string,std::string> p;
       std::vector<std::string> keys;
+/*
       BOOST_FOREACH(p,frameData)
       {
          keys.push_back(p.first);
       }
       return keys;
+*/
    }
 
    int getIntProperty(const char * key)
