@@ -77,12 +77,12 @@
   (quot (System/nanoTime) 1000000))
 
 (defn acq-sleep [last-wake-time interval-ms]
-  (let [sleep-time (-
-                     (+ last-wake-time interval-ms)
-                     (clock-ms))]
-    (when (pos? sleep-time)
-      (Thread/sleep sleep-time)))
-  (clock-ms)) 
+  (let [current-time (clock-ms)
+        target-time (+ last-wake-time interval-ms)
+        sleep-time (- target-time current-time)]
+    (if (pos? sleep-time)
+      (do (Thread/sleep sleep-time) target-time)
+      current-time)))
  
 (def device-agents
   (let [devs (seq (. mmc getLoadedDevices))]
@@ -128,7 +128,8 @@
 (defn run-event [event last-wake-time]
   (run-actions (create-presnap-actions event))
   (await-for 10000 (device-agents (. mmc getCameraDevice)))
-  (swap! last-wake-time acq-sleep (event :wait-time-ms))
+  (when-let [wait-time-ms (event :wait-time-ms)]
+    (swap! last-wake-time acq-sleep wait-time-ms))
   (snap-image true true)
   (send-device-action (. mmc getCameraDevice)
     #(collect-image (assoc event :time (clock-ms)))))

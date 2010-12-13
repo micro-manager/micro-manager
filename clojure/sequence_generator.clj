@@ -77,10 +77,9 @@
   (cons
     (assoc (first events) :wait-time-ms 0)
     (for [[e1 e2] (pairs events) :when e2]
-      (assoc e2 :wait-time-ms
-        (if (= (:frame e1) (:frame e2))
-          0
-          interval-ms)))))
+      (if (not= (:frame e1) (:frame e2))
+        (assoc e2 :wait-time-ms interval-ms)
+        e2))))
 
 (defn generate-acq-sequence [settings]
   (let [{:keys [slices keep-shutter-open-channels keep-shutter-open-slices
