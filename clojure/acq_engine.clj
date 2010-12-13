@@ -76,9 +76,9 @@
 (defn clock-ms []
   (quot (System/nanoTime) 1000000))
 
-(defn acq-sleep [event last-wake-time]
+(defn acq-sleep [last-wake-time interval-ms]
   (let [sleep-time (-
-                     (+ last-wake-time (event :interval-ms))
+                     (+ last-wake-time interval-ms)
                      (clock-ms))]
     (when (pos? sleep-time)
       (Thread/sleep sleep-time)))
@@ -122,19 +122,23 @@
     (. mmc waitForDevice (. mmc getShutterDevice)))
 
 (defn collect-image [event]
-  (. mmc getImage))
+  (. mmc getImage)
+  (def my-event event))
   
-(defn run-event [event]
+(defn run-event [event last-wake-time]
   (run-actions (create-presnap-actions event))
   (await-for 10000 (device-agents (. mmc getCameraDevice)))
+  (swap! last-wake-time acq-sleep (event :wait-time-ms))
   (snap-image true true)
-  (send-device-action (. mmc getCameraDevice) #(collect-image event)))
+  (send-device-action (. mmc getCameraDevice)
+    #(collect-image (assoc event :time (clock-ms)))))
   
 (defn run-acquisition [settings] 
   (def acq-settings settings)
-  (let [acq-seq (generate-acq-sequence settings)]
+  (let [acq-seq (generate-acq-sequence settings)
+        last-wake-time (atom (clock-ms))]
      (def acq-sequence acq-seq)
-     (map run-event acq-seq)))
+     (map #(run-event % last-wake-time) acq-seq)))
   
 (defn convert-settings [^SequenceSettings settings]
   (-> settings
