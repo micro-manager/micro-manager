@@ -29,7 +29,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.text.DecimalFormat;
-import java.text.ParseException;
 import java.util.prefs.Preferences;
 
 import javax.swing.JButton;
@@ -74,6 +73,7 @@ public class TileCreatorDlg extends MMDialog {
       setName("tileDialog");
       getContentPane().setLayout(null);
       addWindowListener(new WindowAdapter() {
+         @Override
          public void windowClosing(WindowEvent arg0) {
             savePosition();
          }
@@ -473,12 +473,15 @@ public class TileCreatorDlg extends MMDialog {
             if ( (y & 1) == 1)
                tmpX = nrImagesX - x - 1;
             MultiStagePosition msp = new MultiStagePosition();
+
             // Add Z position
             StagePosition spZ = new StagePosition();
             spZ.stageName = core_.getFocusDevice();
             spZ.numAxes = 1;
             spZ.x = z;
-            msp.add(spZ);
+            if (positionListDlg_.useDrive(spZ.stageName))
+               msp.add(spZ);
+
             // Add XY position
             msp.setDefaultXYStage(core_.getXYStageDevice());
             msp.setDefaultZStage(core_.getFocusDevice());
@@ -488,10 +491,12 @@ public class TileCreatorDlg extends MMDialog {
             spXY.x = minX + (tmpX * tileSizeXUm);
             spXY.y = minY + (y * tileSizeYUm);
             msp.add(spXY);
+ 
             // Add 'metadata'
             msp.setGridCoordinates(y, tmpX);
             msp.setProperty("OverlapUm", NumberUtils.doubleToCoreString(overlapUm));
             msp.setProperty("OverlapPixels", NumberUtils.intToCoreString(overlapPix));
+
             // Add to position list
             positionListDlg_.addPosition(msp, generatePosLabel(prefix_ + "-Pos", tmpX, y));
          }

@@ -650,8 +650,6 @@ public class PositionListDlg extends MMDialog implements MouseListener {
 		  markButtonRef.setText("Replace");
 	  }   
    
-	 //ReportingUtils.logMessage( "new buton text should be: " + newText);
-	  //newText);
    }
 	
 
@@ -946,6 +944,9 @@ public void addPosition(MultiStagePosition msp, String label) {
          posTable_.setRowSelectionInterval(selectedRow, selectedRow);
    }
 
+   public boolean useDrive(String drive) {
+      return axisList_.use(drive);
+   }
 
    protected void showCreateTileDlg() {
       if (tileCreatorDlg_ == null) {
