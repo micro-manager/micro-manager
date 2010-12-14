@@ -128,7 +128,6 @@
 		<copy file="${BinRoot}/mmgr_dal_Corvus.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_CSUX.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_DemoCamera.dll" todir="${InstallRoot}" />
-		<copy file="${BinRoot}/mmgr_dal_DemoStreamingCamera.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_DLP4000.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_DTOpenLayer.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_FreeSerialPort.dll" todir="${InstallRoot}" />
