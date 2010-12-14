@@ -13,7 +13,7 @@
 ;               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 ;               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 ;               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-; CVS:          $Id: sequence_generator.clj 5857 2010-12-09 21:42:12Z arthur $
+; CVS:          $ $
 ;   
 
 (ns sequence-generator)
