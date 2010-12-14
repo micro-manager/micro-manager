@@ -212,6 +212,7 @@ SimpleAutofocus::~SimpleAutofocus()
 
 bool SimpleAutofocus::Busy()
 {
+     MMThreadGuard g(busyLock_);
      return busy_;
 }
 
@@ -687,11 +688,13 @@ int SimpleAutofocus::OnMean(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+
+
 double SimpleAutofocus::SharpnessAtZ(const double z)
 {
+   MMThreadGuard g(busyLock_);
    busy_ = true;
    Z(z);
-   short windo[9];
 
    min1_ = 1.e8;
    min2_ = 1.e8;
@@ -723,8 +726,11 @@ double SimpleAutofocus::SharpnessAtZ(const double z)
             sizeOfSmoothedIm_ = thisSize;
          }
          else // todo throw out of here...
-            return sharpness;
+      {
+         busy_=false;
+         return sharpness;
       }
+   }
 
 
       // copy from MM image to the working buffer
@@ -737,6 +743,8 @@ double SimpleAutofocus::SharpnessAtZ(const double z)
       int iindex;
       bool legalFormat = false;
       // to keep it simple always copy to a short array
+   if( 0 != pSInput)
+   {
       switch( d0)
       {
       case 1:
@@ -779,6 +787,7 @@ double SimpleAutofocus::SharpnessAtZ(const double z)
       default:
          break;
       }
+   }
 
       if(legalFormat)
       {
@@ -850,10 +859,11 @@ double SimpleAutofocus::SharpnessAtZ(const double z)
                   else if( h0-1 < y[ij])
                      y[ij] = h0-1;
                }
+            std::vector<short> windo;
 
                for(int ij = 0; ij < 9; ++ij)
                {
-                  windo[ij] = pShort_[ x[ij] + w0*y[ij]];
+               windo.push_back(pShort_[ x[ij] + w0*y[ij]]);
                }
 
                // N.B. this window filler as ported from java needs to have a pad guaranteed around the cropped image!!!! KH
@@ -867,7 +877,7 @@ double SimpleAutofocus::SharpnessAtZ(const double z)
                //windo[7] = pShort_[ow+i+ width*(oh+j+1)];
                //windo[8] = pShort_[ow+i+1+ width*(oh+j+1)];
                // to reduce effect of bleaching on the high-pass sharpness measurement, i use the image normalized by the mean - KH.
-               theValue = (float)((double)FindMedian(windo,8)*meanScaling);
+            theValue = (float)((double)FindMedian(windo)*meanScaling);
 
                pSmoothedIm_[i + j*width] = theValue;
    

@@ -40,7 +40,7 @@
 class SAFData;
 
 // computational utility functions
-short FindMedian(short* arr, const int lengthMinusOne);
+
 double GetScore(short* img, int w0, int h0, double cropFactor);
 
 class SimpleAutofocus : public CAutoFocusBase<SimpleAutofocus>
@@ -120,11 +120,17 @@ private:
    std::string name_;
    SimpleAutofocus& operator=(SimpleAutofocus& /*rhs*/) {assert(false); return *this;};
 
+   // N.B  (note well) this utility MODIFIES the argument, make a copy yourself if you want the original data preserved
+   template <class U> U FindMedian(std::vector<U>& values ){ 
+      std::sort(values.begin(), values.end());
+      return values[(values.size())>>1];
+   };
    double SharpnessAtZ(const double zvalue);
    double DoubleFunctionOfDouble(const double zvalue);
    MM::Core* pCore_;
    double cropFactor_;
    bool busy_;
+   MMThreadLock busyLock_;
    double latestSharpness_;
 
    long enableAutoShuttering_;
