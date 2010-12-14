@@ -163,9 +163,8 @@
       (doseq [[dev action] action-map]
         (action) (. mmc waitForDevice dev)))))
 
-(defn run-autofocus [event]
-  (when (event :autofocus)
-    (.. gui getAutofocusManager getDevice fullFocus)))
+(defn run-autofocus []
+  (.. gui getAutofocusManager getDevice fullFocus))
 
 (defn snap-image [open-before close-after]
   (if open-before
@@ -191,7 +190,8 @@
   (await-for 10000 (device-agents (. mmc getCameraDevice)))
   (when-let [wait-time-ms (event :wait-time-ms)]
     (swap! last-wake-time acq-sleep wait-time-ms))
-  (run-autofocus event)
+  (when (event :autofocus)
+    (run-autofocus))
   (snap-image true true)
   (collect-image event out-queue))
   ;(send-device-action (. mmc getCameraDevice)
