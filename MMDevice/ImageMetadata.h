@@ -456,13 +456,21 @@ public:
    {
       std::pair<std::string,std::string> p;
       std::vector<std::string> keys;
+      for( std::map<std::string,std::string>::iterator ii = frameData.begin(); ii !=frameData.end(); ++ii)
+      {
+         keys.push_back((*ii).first);
+      }
+      
 /*
       BOOST_FOREACH(p,frameData)
       {
          keys.push_back(p.first);
       }
+      */
+
+
       return keys;
-*/
+
    }
 
    int getIntProperty(const char * key)
