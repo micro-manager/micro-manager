@@ -194,6 +194,7 @@
     (proxy [AcquisitionWrapperEngine] []
       (runPipeline [^SequenceSettings settings]
         (let [out-queue (LinkedBlockingQueue.)]
+          (.start (Thread. #(run-acquisition (convert-settings settings) out-queue)))
           (.start (LiveAcqDisplay. mmc out-queue settings (.channels settings) (.save settings) this)))))
     (.setCore mmc (.getAutofocusManager gui))
     (.setParentGUI gui)
