@@ -1,0 +1,69 @@
+// Acquisition script for Long Cai
+// Nico Stuurman, Dec. 2010
+
+import org.micromanager.api.AcquisitionOptions;
+import org.micromanager.navigation.PositionList;
+import org.micromanager.navigation.MultiStagePosition;
+import org.micromanager.navigation.StagePosition;
+import java.lang.System;
+
+// clear all previous acquisitions
+gui.closeAllAcquisitions();
+gui.clearMessageWindow();
+
+// file locations
+acqName = "test-acq-col";
+rootDirName = "C:/acquisitionData";
+
+// parameters
+numRepetitions = 2;
+numFrames = 3;
+String[] channels = {"Cy5", "FITC"};
+Color[] colors = {Color.WHITE, Color.GREEN};
+int[] exposures = {100, 30};
+numSlices = 1;
+intervalFrame = 100;
+intervalRep = 5000;
+channelGroup = "Channel";
+
+
+PositionList pl = gui.getPositionList();
+String[] acqs = new String[pl.getNumberOfPositions()];
+for (int l=0; l < pl.getNumberOfPositions(); l++) {
+	acqs[l] = pl.getPosition(l).getLabel();
+	MultiStagePosition.goToPosition(pl.getPosition(l), mmc);
+
+
+	// create acquisition and set options
+	gui.openAcquisition(acqs[l], rootDirName, numFrames * numRepetitions,
+	channels.length, numSlices);
+	for (int i=0; i<colors.length; i++)
+ 		gui.setChannelColor(acqs[l], i, colors[i]);
+	for (int i=0; i<channels.length; i++)
+  	gui.setChannelName(acqs[l]	, i, channels[i]);
+
+	for (int k=0; k< numRepetitions; k++)  {
+		reStart = System.currentTimeMillis();
+		for (int j=0; j<channels.length; j++) {
+   		mmc.setExposure(exposures[j]);
+   		mmc.setConfig(channelGroup, channels[j]);
+   		mmc.waitForConfig(channelGroup, channels[j]);
+			for (int i=0; i<numFrames; i++) {
+   			now = System.currentTimeMillis();
+   			gui.message("Acquiring frame " + i + ", channel " + channels[j] +
+".");
+	 			gui.snapAndAddImage(acqs[l], (k*numFrames) + i, j, 0);
+				itTook = System.currentTimeMillis() - now;
+				if (itTook < intervalFrame)
+ 				gui.sleep(intervalFrame - itTook);
+			}
+ 		// set channel contrast based on the first frame
+ 		if (i==0 && k==0) {
+    		gui.setContrastBasedOnFrame(acqs[l], i, 0);
+ 		}
+		}
+		itTook = System.currentTimeMillis() - reStart;
+		if (itTook < intervalRep)
+ 			gui.sleep(intervalRep - itTook);
+	}
+}
