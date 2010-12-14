@@ -95,9 +95,10 @@
       "ElapsedTime-ms"      "ElapsedTime-ms"
     )
     (assoc
-      "PositionIndex" 0
+      "PositionName" (get-in event [:position :label])
       "Channel" (get-in event [:channel :name])
       "PixelType" "GRAY8"
+      "ZPositionUm" (get event :slice)
     )))  
 
 ;; acq-engine
