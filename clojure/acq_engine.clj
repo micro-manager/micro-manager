@@ -6,9 +6,9 @@
            [org.micromanager.acquisition AcquisitionWrapperEngine LiveAcqDisplay]
            [org.micromanager.acquisition.engine SequenceSettings]
            [org.micromanager.navigation MultiStagePosition StagePosition]
-           [mmcorej TaggedImage]
+           [mmcorej TaggedImage Configuration]
            [java.util.prefs Preferences]
-           [org.micromanager.utils ChannelSpec]
+           [org.micromanager.utils ChannelSpec MDUtils]
            [org.json JSONObject]
            [java.util.concurrent LinkedBlockingQueue]))
 
@@ -43,6 +43,14 @@
    :xy-stage        (. mmc getXYStageDevice)
    :autofocus       (. mmc getAutoFocusDevice)
    :image-processor (. mmc getImageProcessorDevice)})
+
+(defn map-config [^Configuration config]
+  (let [n (.size config)
+        props (map #(.getSetting config %) (range n))]
+    (into {}
+      (for [prop props]
+        [(str (.getDeviceLabel prop) "-" (.getPropertyName prop))
+         (.getPropertyValue prop)]))))
 
 (defn get-config [group config]
   (let [data (. mmc getConfigData group config)
@@ -147,13 +155,15 @@
     (. mmc setShutterOpen false))
     (. mmc waitForDevice (. mmc getShutterDevice)))
 
-(defn generate-tagged-image [img event]
-  (let [tags (JSONObject. (generate-metadata event))]
-    (TaggedImage. img tags)))
+(defn annotate-image [img event]
+  (TaggedImage. img
+    (JSONObject. (merge
+      (map-config (. mmc getSystemStateCache))
+      (generate-metadata event)
+      {"ElapsedTime-ms" (clock-ms)}))))
 
 (defn collect-image [event out-queue]
-  (println event)
-  (.add out-queue (generate-tagged-image (. mmc getImage) (assoc event "ElapsedTime-ms" (clock-ms)))))
+    (.add out-queue (annotate-image (. mmc getImage) event)))
   
 (defn run-event [event last-wake-time out-queue]
   (run-actions (create-presnap-actions event))
