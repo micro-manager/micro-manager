@@ -84,11 +84,12 @@
       :position-index       "PositionIndex"
       :slice-index          "Slice"
       :slice                "SlicePosition"
+      "ElapsedTime-ms"      "ElapsedTime-ms"
     )
-    (assoc "PositionIndex" 0
-           "Channel" (get-in event [:channel :name])
-           "PixelType" "GRAY8"
-           )))  
+    (assoc 
+      "Channel" (get-in event [:channel :name])
+      "PixelType" "GRAY8"
+    )))  
 
 ;; acq-engine
  
@@ -151,7 +152,7 @@
 
 (defn collect-image [event out-queue]
   (println event)
-  (.add out-queue (generate-tagged-image (. mmc getImage) event)))
+  (.add out-queue (generate-tagged-image (. mmc getImage) (assoc event "ElapsedTime-ms" (clock-ms)))))
   
 (defn run-event [event last-wake-time out-queue]
   (run-actions (create-presnap-actions event))
@@ -193,7 +194,6 @@
     (proxy [AcquisitionWrapperEngine] []
       (runPipeline [^SequenceSettings settings]
         (let [out-queue (LinkedBlockingQueue.)]
-          (run-acquisition (convert-settings settings) out-queue)
           (.start (LiveAcqDisplay. mmc out-queue settings (.channels settings) (.save settings) this)))))
     (.setCore mmc (.getAutofocusManager gui))
     (.setParentGUI gui)
