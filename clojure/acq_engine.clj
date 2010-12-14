@@ -13,8 +13,6 @@
 ;               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 ;               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 ;               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-; CVS:          $ $
-;   
 
 (ns acq-engine
   (:use [mm :only [mmc gui acq]]
@@ -165,6 +163,10 @@
       (doseq [[dev action] action-map]
         (action) (. mmc waitForDevice dev)))))
 
+(defn run-autofocus [event]
+  (when (event :autofocus)
+    (.. gui getAutofocusManager getDevice fullFocus)))
+
 (defn snap-image [open-before close-after]
   (if open-before
     (. mmc setShutterOpen true)
@@ -189,6 +191,7 @@
   (await-for 10000 (device-agents (. mmc getCameraDevice)))
   (when-let [wait-time-ms (event :wait-time-ms)]
     (swap! last-wake-time acq-sleep wait-time-ms))
+  (run-autofocus event)
   (snap-image true true)
   (collect-image event out-queue))
   ;(send-device-action (. mmc getCameraDevice)
