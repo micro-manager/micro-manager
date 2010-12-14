@@ -329,6 +329,7 @@ public class ImageTask implements EngineTask {
          ReportingUtils.logError(ex);
       }
 
+
    }
 
    private synchronized boolean isStopRequested() {
