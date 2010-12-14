@@ -1563,6 +1563,9 @@ int AndorCamera::GetListOfAvailableCameras()
 
       unsigned int ret = GetMostRecentImage16((WORD*)fullFrameBuffer_, array_Length);
       if(ret != DRV_SUCCESS) {
+         std::ostringstream os;
+         os << "Andor driver reports error #: " << ret;
+         LogMessage(os.str().c_str(), false);
          return 0;
       }
 
