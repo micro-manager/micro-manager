@@ -86,7 +86,8 @@
       :slice                "SlicePosition"
       "ElapsedTime-ms"      "ElapsedTime-ms"
     )
-    (assoc 
+    (assoc
+      "PositionIndex" 0
       "Channel" (get-in event [:channel :name])
       "PixelType" "GRAY8"
     )))  
