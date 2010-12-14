@@ -14,16 +14,18 @@
 (defn make-dimensions [settings]
   (let [{:keys [slices channels frames positions
                 slices-first time-first]} settings
-        a [[slices :slice] [channels :channel]]
+        a [[slices :slice :slice-index] [channels :channel :channel-index]]
         a (if slices-first a (reverse a))
-        b [[frames :frame] [positions :position]]
+        b [[frames :frame :frame-index] [positions :position :position-index]]
         b (if time-first b (reverse b))]
     (concat a b)))
-    
-(defn nest-loop [events dim-vals dim]
+        
+(defn nest-loop [events dim-vals dim dim-index-kw]
   (if (and dim-vals (pos? (count dim-vals)))
-    (for [dim-val dim-vals event events]
-      (assoc event dim dim-val))
+    (for [i (range (count dim-vals)) event events]
+      (assoc event
+        dim-index-kw i
+        dim (nth dim-vals i)))
     events))
 
 (defn create-loops [dimensions]

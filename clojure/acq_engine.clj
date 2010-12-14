@@ -3,11 +3,14 @@
         [sequence-generator :only [generate-acq-sequence]])
   (:import [org.micromanager AcqControlDlg]
            [org.micromanager.api AcquisitionEngine]
-           [org.micromanager.acquisition AcquisitionWrapperEngine]
+           [org.micromanager.acquisition AcquisitionWrapperEngine LiveAcqDisplay]
            [org.micromanager.acquisition.engine SequenceSettings]
            [org.micromanager.navigation MultiStagePosition StagePosition]
+           [mmcorej TaggedImage]
            [java.util.prefs Preferences]
-           [org.micromanager.utils ChannelSpec]))
+           [org.micromanager.utils ChannelSpec]
+           [org.json JSONObject]
+           [java.util.concurrent LinkedBlockingQueue]))
 
 ;; general utils
 (defn data-object-to-map [obj]
@@ -29,6 +32,8 @@
 
 (defn select-and-rekey [m & ks]
     (apply rekey (select-keys m (apply concat (partition 1 2 ks))) ks))
+
+(def run-devices-parallel false)
 
 ;; mm utils
 (defn get-default-devices []
@@ -71,6 +76,20 @@
               1 [(.x stage-pos)]
               2 [(.x stage-pos) (.y stage-pos)])])))})
 
+(defn generate-metadata [event]
+  (-> event
+    (select-and-rekey
+      :channel-index        "ChannelIndex"
+      :frame-index          "Frame"
+      :position-index       "PositionIndex"
+      :slice-index          "Slice"
+      :slice                "SlicePosition"
+    )
+    (assoc "PositionIndex" 0
+           "Channel" (get-in event [:channel :name])
+           "PixelType" "GRAY8"
+           )))  
+
 ;; acq-engine
  
 (defn clock-ms []
@@ -106,11 +125,16 @@
       [(prop 0) #(.setProperty mmc (prop 0) (prop 1) (prop 2))]))))
 
 (defn run-actions [action-map]
-  (doseq [[dev action] action-map]
-    (send-device-action dev action))
-  (doseq [dev (keys action-map)]
-    (send-device-action dev #(. mmc waitForDevice dev)))
-  (doall (map (partial await-for 10000) (vals device-agents))))
+  (if run-devices-parallel
+    (do
+      (doseq [[dev action] action-map]
+        (send-device-action dev action))
+      (doseq [dev (keys action-map)]
+        (send-device-action dev #(. mmc waitForDevice dev)))
+      (doall (map (partial await-for 10000) (vals device-agents))))
+    (do
+      (doseq [[dev action] action-map]
+        (action) (. mmc waitForDevice dev)))))
 
 (defn snap-image [open-before close-after]
   (if open-before
@@ -121,25 +145,30 @@
     (. mmc setShutterOpen false))
     (. mmc waitForDevice (. mmc getShutterDevice)))
 
-(defn collect-image [event]
-  (. mmc getImage)
-  (def my-event event))
+(defn generate-tagged-image [img event]
+  (let [tags (JSONObject. (generate-metadata event))]
+    (TaggedImage. img tags)))
+
+(defn collect-image [event out-queue]
+  (println event)
+  (.add out-queue (generate-tagged-image (. mmc getImage) event)))
   
-(defn run-event [event last-wake-time]
+(defn run-event [event last-wake-time out-queue]
   (run-actions (create-presnap-actions event))
   (await-for 10000 (device-agents (. mmc getCameraDevice)))
   (when-let [wait-time-ms (event :wait-time-ms)]
     (swap! last-wake-time acq-sleep wait-time-ms))
   (snap-image true true)
-  (send-device-action (. mmc getCameraDevice)
-    #(collect-image (assoc event :time (clock-ms)))))
+  (collect-image event out-queue))
+  ;(send-device-action (. mmc getCameraDevice)
+  ;  #(collect-image (assoc event :time (clock-ms)) out-queue)))
   
-(defn run-acquisition [settings] 
+(defn run-acquisition [settings out-queue] 
   (def acq-settings settings)
   (let [acq-seq (generate-acq-sequence settings)
         last-wake-time (atom (clock-ms))]
      (def acq-sequence acq-seq)
-     (dorun (map #(run-event % last-wake-time) acq-seq))))
+     (dorun (map #(run-event % last-wake-time out-queue) acq-seq))))
   
 (defn convert-settings [^SequenceSettings settings]
   (-> settings
@@ -159,16 +188,13 @@
            :channels (filter :use-channel (map ChannelSpec-to-map (.channels settings)))
            :positions (map MultiStagePosition-to-map (.positions settings)))))
 
-(defn run-acquisition-from-settings [^SequenceSettings settings]
-  (println settings)
-  (def orig-settings settings)
-  (println (run-acquisition (convert-settings settings))))
-
 (defn create-acq-eng []
   (doto
     (proxy [AcquisitionWrapperEngine] []
       (runPipeline [^SequenceSettings settings]
-        (run-acquisition-from-settings settings)))
+        (let [out-queue (LinkedBlockingQueue.)]
+          (run-acquisition (convert-settings settings) out-queue)
+          (.start (LiveAcqDisplay. mmc out-queue settings (.channels settings) (.save settings) this)))))
     (.setCore mmc (.getAutofocusManager gui))
     (.setParentGUI gui)
     (.setPositionList (.getPositionList gui))))
