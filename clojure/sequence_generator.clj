@@ -26,7 +26,7 @@
       (assoc event
         dim-index-kw i
         dim (nth dim-vals i)))
-    events))
+    (map #(assoc % dim-index-kw 0) events)))
 
 (defn create-loops [dimensions]
   (reduce #(apply (partial nest-loop %1) %2) [{:task :snap}] dimensions))
@@ -83,16 +83,6 @@
         (assoc e2 :wait-time-ms interval-ms)
         e2))))
 
-(defn fill-in-missing-indices
-  ([events index]
-    (for [event events]
-      (if (contains? event index)
-        event
-        (assoc event index 0))))
-  ([events]
-    (reduce fill-in-missing-indices events
-      [:position-index :slice-index :channel-index :frame-index])))
-
 (defn generate-acq-sequence [settings]
   (let [{:keys [slices keep-shutter-open-channels keep-shutter-open-slices
          use-autofocus autofocus-skip interval-ms]} settings]
@@ -102,7 +92,7 @@
       (process-channel-skip-frames)
       (process-use-autofocus use-autofocus autofocus-skip)
       (process-wait-time interval-ms)
-      (fill-in-missing-indices))))
+      )))
 
 ; Testing:
 
