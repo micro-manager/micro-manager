@@ -433,7 +433,15 @@ int Universal::OnReadoutPort(MM::PropertyBase* pProp, MM::ActionType eAct)
       long port;
       if (!GetLongParam_PvCam_safe(hPVCAM_, PARAM_READOUT_PORT, &port))
          return LogCamError(__LINE__);
-      std::string portName = GetPortName(port);
+      std::string portName;
+      for( std::map<std::string, int>::iterator iter = portMap_.begin(); iter != portMap_.end(); ++iter)
+      {
+         if (port  == iter->second)
+         {
+            portName = iter->first;
+            break;
+         }
+      }
 
       pProp->Set(portName.c_str());
    }
@@ -876,11 +884,19 @@ int Universal::Initialize()
       assert(nRet == DEVICE_OK);
       // Found out what ports we have
       vector<string> portValues;
-      for (uns32 i=minPort; i<nrPorts_; i++) {
-         portValues.push_back(GetPortName(i));
-         portMap_[GetPortName(i)] = i;
+      for (uns32 i=minPort; i<=maxPort; i++) {
+		  long enumValue = 0;
+		  std::string portNameValue = GetPortNameAndEnum(i,enumValue);
+        if (-1 < enumValue)
+        {
+         portValues.push_back(portNameValue);
+         portMap_[portNameValue] = enumValue;
+         std::ostringstream mes;
+         mes << "adding port # " << minPort << " enum " << enumValue << " " << portNameValue;
+         LogMessage(mes.str().c_str(),true);
+        }
       }
-      nRet = SetAllowedValues(g_ReadoutPort, portValues);
+     nRet = SetAllowedValues(g_ReadoutPort, portValues);
       if (nRet != DEVICE_OK)
          return nRet;
    }
@@ -1850,29 +1866,44 @@ int Universal::GetSpeedTable()
 }
 
 
-std::string Universal::GetPortName(long portId)
+std::string Universal::GetPortNameAndEnum(long portId, long& enumValue)
 {
-  START_METHOD("Universal::GetPortName");
    // Work around bug in PVCAM:
    if (nrPorts_ == 1) 
       return "Normal";
 
+   enumValue = -1;
    string portName;
    int32 enumIndex;
    if (!GetEnumParam_PvCam((uns32)PARAM_READOUT_PORT, (uns32)portId, portName, enumIndex))
    {
       LogMessage("Error in GetEnumParam in GetPortName");
    }
-   switch (enumIndex)
+   else
    {
-   case 0: portName = "EM"; break;
-   case 1: portName = "Normal"; break;
-   case 2: portName = "LowNoise"; break;
-   case 3: portName = "HighCap"; break;
-   default: portName = "Normal";
+      enumValue = enumIndex;
+      switch (enumIndex)
+      {
+      case 0: 
+	      portName = "EM"; 
+	      break;
+      case 1: 
+	      portName = "Normal"; 
+	      break;
+      case 2: 
+	      portName = "LowNoise"; 
+	      break;
+      case 3:
+	      portName = "HighCap"; 
+	      break;
+      default: 
+	      enumValue = 1;
+	      portName = "Normal";
+      }
    }
    return portName;
 }
+
 
 bool Universal::GetEnumParam_PvCam(uns32 pvcam_cmd, uns32 index, std::string& enumString, int32& enumIndex)
 {
