@@ -183,7 +183,7 @@
       {"ElapsedTime-ms" (clock-ms)}))))
 
 (defn collect-image [event out-queue]
-    (.add out-queue (annotate-image (. mmc getImage) event)))
+    (.put out-queue (annotate-image (. mmc getImage) event)))
   
 (defn run-event [event last-wake-time out-queue]
   (run-actions (create-presnap-actions event))
@@ -226,12 +226,16 @@
   (doto
     (proxy [AcquisitionWrapperEngine] []
       (runPipeline [^SequenceSettings settings]
-        (let [out-queue (LinkedBlockingQueue.)]
+        (def orig-settings settings)
+        (println "ss positions: " (.size (.positions settings)))
+        (println "position-count: " (.getNumberOfPositions (.getPositionList gui)))
+        (let [out-queue (LinkedBlockingQueue. 100)]
           (.start (Thread. #(run-acquisition (convert-settings settings) out-queue)))
           (.start (LiveAcqDisplay. mmc out-queue settings (.channels settings) (.save settings) this)))))
     (.setCore mmc (.getAutofocusManager gui))
     (.setParentGUI gui)
-    (.setPositionList (.getPositionList gui))))
+    (.setPositionList (.getPositionList gui))
+    ))
 
 (defn test-dialog [eng]
   (.show (AcqControlDlg. eng (Preferences/userNodeForPackage (.getClass gui)) gui)))
