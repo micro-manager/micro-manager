@@ -39,7 +39,7 @@ public class ProcessorStack<E> {
       BlockingQueue<E> right = left;
       if (processors_ != null) {
          for (DataProcessor<E> processor:processors_) {
-            right = new LinkedBlockingQueue<E>();
+            right = new LinkedBlockingQueue<E>(100);
             processor.setInput(left);
             processor.setOutput(right);
             left = right;

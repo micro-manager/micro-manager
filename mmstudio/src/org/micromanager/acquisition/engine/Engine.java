@@ -39,7 +39,7 @@ public class Engine {
            BlockingQueue<EngineTask> requestQueue,
            SequenceSettings acquisitionSettings) {
       core_ = core;
-      imageReceivingQueue_ = new LinkedBlockingQueue<TaggedImage>();
+      imageReceivingQueue_ = new LinkedBlockingQueue<TaggedImage>(100);
       afMgr_ = afMgr;
       taskQueue_ = requestQueue;
       acquisitionSettings_ = acquisitionSettings;
