@@ -296,7 +296,7 @@ public class ImageTask implements EngineTask {
          md_.put("Time", iso8601modified.format(new Date()));
          TaggedImage taggedImage = new TaggedImage(pixels, md_);
 
-         eng_.imageReceivingQueue_.add(taggedImage);
+         eng_.imageReceivingQueue_.put(taggedImage);
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
