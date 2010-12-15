@@ -2072,7 +2072,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
               selectedFile = new File(fd.getDirectory() + "/" + fd.getFile());
             }
          } else {
-            JFileChooser fc = new JFileChooser();
+            JFileChooser fc = new JFileChooser(openAcqDirectory_);
             fc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
             int returnVal = fc.showOpenDialog(this);
             if (returnVal == JFileChooser.APPROVE_OPTION) {
