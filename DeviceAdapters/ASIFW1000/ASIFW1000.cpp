@@ -24,6 +24,7 @@
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,                   
 //
 // AUTHOR:        Nico Stuurman (based on code by Nenad Amodaj), nico@cmp.ucsf.edu, April 2007
+//                automatic device detection by Karl Hoover
 //
 
 #ifdef WIN32

@@ -7,6 +7,7 @@
 // Zeiss CAN bus controller, see Zeiss CAN bus documentation
 //                
 // AUTHOR: Nico Stuurman, 1/16/2006 - 5/14/2006
+//                automatic device detection by Karl Hoover
 //
 // COPYRIGHT:     University of California, San Francisco, 2007
 // LICENSE:       This library is free software; you can redistribute it and/or

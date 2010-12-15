@@ -23,7 +23,8 @@
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.  
-// AUTOR:         Nico Stuurman, nico@cmp.ucsf.edu 5/14/2007
+// AUTHOR:         Nico Stuurman, nico@cmp.ucsf.edu 5/14/2007
+//                automatic device detection by Karl Hoover
 
 #ifndef _ZEISSCAN_H_
 #define _ZEISSCAN_H_

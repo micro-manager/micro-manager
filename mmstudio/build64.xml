@@ -135,7 +135,7 @@
 <copy file="${BinRoot}/mmgr_dal_Ludl.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_MaestroServo.dll" todir="${InstallRoot}" />
 <copy file="${BinRoot}/mmgr_dal_Marzhauser.dll" todir="${InstallRoot}" />
-<copy file="${BinRoot}/mmgr_dal_MT20.dll" todir="${InstallRoot}" />
+<!--    remove temporarily     copy file="${BinRoot}/mmgr_dal_MT20.dll" todir="${InstallRoot}" />
 <copy file="${BinRoot}/mmgr_dal_Neos.dll" todir="${InstallRoot}" />
 <copy file="${BinRoot}/mmgr_dal_Nikon.dll" todir="${InstallRoot}" />
 <copy file="${BinRoot}/mmgr_dal_NikonAZ100.dll" todir="${InstallRoot}" />

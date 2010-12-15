@@ -5,7 +5,8 @@
 //-----------------------------------------------------------------------------
 // DESCRIPTION:   Ludl device adapter.
 //                
-// AUTHOR:        Nico Stuurman, nico@cmp.ucsf.edu 4/12/2007, XYStage and ZStage by Nenad Amdoaj 
+// AUTHOR:        Nico Stuurman, nico@cmp.ucsf.edu 4/12/2007, XYStage and ZStage by Nenad Amdoaj
+//                automatic device detection by Karl Hoover
 //
 // COPYRIGHT:     University of California, San Francisco, 2007
 // LICENSE:       This library is free software; you can redistribute it and/or

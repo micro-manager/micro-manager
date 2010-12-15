@@ -10,6 +10,7 @@
 // LICENSE:       LGPL
 //
 // AUTHOR:        Nico Stuurman, nico@cmp.ucsf.edu, 11/09/2008
+//                automatic device detection by Karl Hoover
 //
 //
 
