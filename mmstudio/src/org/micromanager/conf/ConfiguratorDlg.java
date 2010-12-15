@@ -87,6 +87,9 @@ public class ConfiguratorDlg extends JDialog {
     private JCheckBox sendCheck_;
     private boolean sendConfig_;
 
+
+    private boolean showSynchroPage_;
+
     /**
      * Create the application
      */
@@ -94,6 +97,7 @@ public class ConfiguratorDlg extends JDialog {
         super();
         core_ = core;
         defaultPath_ = defFile;
+        showSynchroPage_ = false;
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
         setModal(true);
         initialize();
@@ -180,7 +184,8 @@ public class ConfiguratorDlg extends JDialog {
         getContentPane().add(pagesLabel_);
 
         // add page panels
-        pages_ = new PagePanel[9];
+
+        pages_ = new PagePanel[(showSynchroPage_?9:8)];
 
         int pageNumber = 0;
         pages_[pageNumber++] = new IntroPage(prefs_);
@@ -189,6 +194,7 @@ public class ConfiguratorDlg extends JDialog {
         pages_[pageNumber++] = new ComPortsPage(prefs_);
         pages_[pageNumber++] = new RolesPage(prefs_);
         pages_[pageNumber++] = new DelayPage(prefs_);
+        if (showSynchroPage_)
         pages_[pageNumber++] = new SynchroPage(prefs_);
         pages_[pageNumber++] = new LabelsPage(prefs_);
         pages_[pageNumber++] = new FinishPage(prefs_);
@@ -204,11 +210,16 @@ public class ConfiguratorDlg extends JDialog {
         titleLabel_.setBounds(9, 4, 578, 21);
         getContentPane().add(titleLabel_);
         for (int i = 0; i < pages_.length; i++) {
+           try{
             pages_[i].setModel(microModel_, core_);
             pages_[i].loadSettings();
             pages_[i].setBounds(r);
             pages_[i].setTitle("Step " + (i + 1) + " of " + pages_.length + ": " + pages_[i].getTitle());
             pages_[i].setParentDialog(this);
+           }
+            catch(Exception e){
+            ReportingUtils.logError(e);
+            }
         }
         setPage(0);
 
