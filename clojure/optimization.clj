@@ -17,7 +17,9 @@
 
 (defn nelder-mead-min
   "Find the minimum of multivariate function f
-  using the Nelder-Mead method."
+  using the Nelder-Mead method. f should be a
+  function of a vector of values with the same
+  length as stepsizes."
   [f stepsizes]
   (->
     (.optimize
