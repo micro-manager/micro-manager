@@ -4,6 +4,7 @@
  */
 package org.micromanager.acquisition.engine;
 
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import org.micromanager.api.EngineTask;
 import org.micromanager.utils.ReportingUtils;
@@ -14,7 +15,7 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class SequenceGenerator extends Thread {
 
-   private LinkedBlockingQueue<EngineTask> engineRequestSequence_;
+   private BlockingQueue<EngineTask> engineRequestSequence_;
    private double exposure_;
    private SequenceSettings sequenceSettings_;
    private ImageRequest stopRequest_ = new ImageRequest();
@@ -27,7 +28,7 @@ public class SequenceGenerator extends Thread {
       stopRequest_.FrameIndex = -1;
    }
 
-   public LinkedBlockingQueue<EngineTask> begin() {
+   public BlockingQueue<EngineTask> begin() {
       start();
       return engineRequestSequence_;
    }
