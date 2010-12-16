@@ -13,6 +13,10 @@ import java.util.concurrent.LinkedBlockingQueue;
  */
 public class GentleLinkedBlockingQueue<E> extends LinkedBlockingQueue<E> {
 
+   public GentleLinkedBlockingQueue() {
+      super(100);
+   }
+/*
    @Override
    public void put(E e) throws InterruptedException {
       final int n = 1000 / 5; // Timeout after 1 second.
@@ -23,5 +27,6 @@ public class GentleLinkedBlockingQueue<E> extends LinkedBlockingQueue<E> {
          JavaUtils.sleep(5);
       }
       super.put(e);
-   }
+   }*/
+
 }
