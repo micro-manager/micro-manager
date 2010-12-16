@@ -243,12 +243,6 @@ int Cdc1394::OnMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 }
 
 
-int Cdc1394::OnBrightness(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-   return OnFeature(pProp, eAct, brightness, brightnessMin, brightnessMax, DC1394_FEATURE_BRIGHTNESS);
-}
-
-
 int Cdc1394::OnFrameRate(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::AfterSet)
@@ -468,10 +462,15 @@ int Cdc1394::OnFeature(MM::PropertyBase* pProp, MM::ActionType eAct, uint32_t &v
          value = valueMax;
       else if ( (tmp >= valueMin) && (tmp <= valueMax) )
          value = (uint32_t) tmp;
+	  // First make sure we are in manual mode, otherwise changing the value has little effect 
+	  err_ = dc1394_feature_set_mode(camera_, feature, DC1394_FEATURE_MODE_MANUAL);
+	  // set to value
       err_ = dc1394_feature_set_value(camera_, feature, value);
       logMsg_.str("");
       logMsg_ << "Settings feature " << feature << " to " << value <<  " result: " << err_;
       LogMessage(logMsg_.str().c_str(), true);
+	  // we may have changed to manual
+	  OnPropertiesChanged();
    }
    else if (eAct == MM::BeforeGet)
    {
@@ -485,18 +484,137 @@ int Cdc1394::OnFeature(MM::PropertyBase* pProp, MM::ActionType eAct, uint32_t &v
    return DEVICE_OK;
 }
 
+
+int Cdc1394::OnFeatureMode(MM::PropertyBase* pProp, MM::ActionType eAct, dc1394feature_t feature)
+{
+	dc1394switch_t pwSwitch;
+	dc1394feature_mode_t mode;
+	std::string value;
+	
+	if (eAct == MM::AfterSet) // property was written -> apply value to hardware
+	{
+		pProp->Get(value);
+		if ( value == "OFF" ) {
+			err_ = dc1394_feature_set_power(camera_, feature, DC1394_OFF );
+		} else {
+			if ( value == "MANUAL" )
+				mode = DC1394_FEATURE_MODE_MANUAL;
+			else if ( value == "AUTO" )
+				mode = DC1394_FEATURE_MODE_AUTO;
+			else
+				mode = DC1394_FEATURE_MODE_ONE_PUSH_AUTO;
+			err_ = dc1394_feature_set_mode(camera_, feature, mode);
+			if ( mode == DC1394_FEATURE_MODE_ONE_PUSH_AUTO) {
+				// set to MANUAL after one push auto
+				err_ = dc1394_feature_set_mode(camera_, feature, DC1394_FEATURE_MODE_MANUAL);
+			}
+		}
+		
+		OnPropertiesChanged();
+		
+	}
+	else if (eAct == MM::BeforeGet) // property will be read -> update property with value from hardware
+	{  	
+		err_ = dc1394_feature_get_power(camera_, feature, &pwSwitch );
+		if ( pwSwitch == DC1394_OFF ) {
+			pProp->Set("OFF");
+		}
+		else {
+			dc1394_feature_get_mode(camera_, feature, &mode);
+			// write back to GUI
+			switch ( mode ) {
+				case DC1394_FEATURE_MODE_MANUAL:
+				case DC1394_FEATURE_MODE_ONE_PUSH_AUTO:
+					pProp->Set("MANUAL");
+					break;
+				case DC1394_FEATURE_MODE_AUTO:
+					pProp->Set("AUTO");
+					break;
+			}
+		}
+	}	
+	
+	return DEVICE_OK; 
+}
+
+
 //
+// Brightness
+int Cdc1394::OnBrightness(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	return OnFeature(pProp, eAct, brightness, brightnessMin, brightnessMax, DC1394_FEATURE_BRIGHTNESS);
+}
+
+
+int Cdc1394::OnBrightnessMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	return OnFeatureMode(pProp, eAct, DC1394_FEATURE_BRIGHTNESS);
+}
+
+
+// Hue
+int Cdc1394::OnHue(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	return OnFeature(pProp, eAct, brightness, brightnessMin, brightnessMax, DC1394_FEATURE_HUE);
+}
+
+
+int Cdc1394::OnHueMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	return OnFeatureMode(pProp, eAct, DC1394_FEATURE_HUE);
+}
+
+
+// Saturation
+int Cdc1394::OnSaturation(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	return OnFeature(pProp, eAct, brightness, brightnessMin, brightnessMax, DC1394_FEATURE_SATURATION);
+}
+
+
+int Cdc1394::OnSaturationMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	return OnFeatureMode(pProp, eAct, DC1394_FEATURE_SATURATION);
+}
+
+
 // Gain
 int Cdc1394::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
   return OnFeature(pProp, eAct, gain, gainMin, gainMax, DC1394_FEATURE_GAIN);
 }
 
+
+int Cdc1394::OnGainMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	return OnFeatureMode(pProp, eAct, DC1394_FEATURE_GAIN);
+}
+
 // Gamma
 int Cdc1394::OnGamma(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   return DEVICE_OK;
+   return OnFeature(pProp, eAct, gain, gainMin, gainMax, DC1394_FEATURE_GAMMA);
 }
+
+
+int Cdc1394::OnGammaMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	return OnFeatureMode(pProp, eAct, DC1394_FEATURE_GAMMA);
+}
+
+
+// Temperature
+int Cdc1394::OnTemp(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	return OnFeature(pProp, eAct, gain, gainMin, gainMax, DC1394_FEATURE_TEMPERATURE);
+}
+
+
+int Cdc1394::OnTempMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	return OnFeatureMode(pProp, eAct, DC1394_FEATURE_TEMPERATURE);
+}
+
 
 // Shutter
 int Cdc1394::OnShutter(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -507,6 +625,157 @@ int Cdc1394::OnShutter(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    return OnFeature(pProp, eAct, shutter, shutterMin, shutterMax, DC1394_FEATURE_SHUTTER);
 }
+
+
+int Cdc1394::OnShutterMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	return OnFeatureMode(pProp, eAct, DC1394_FEATURE_SHUTTER);
+}
+
+
+// Exposure
+int Cdc1394::OnExposureMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	return OnFeatureMode(pProp, eAct, DC1394_FEATURE_EXPOSURE);
+}
+
+
+// White balance
+// Derived from generic 'OnFeature'
+int Cdc1394::OnColorFeature(MM::PropertyBase* pProp, MM::ActionType eAct, uint32_t &value, int valueMin, int valueMax, colorAdjustment valueColor)
+{
+	long tmp;
+	uint32_t ub,vr;
+	uint32_t red, green, blue;
+	
+	if (eAct == MM::AfterSet)
+	{
+		pProp->Get(tmp);
+		if (tmp < valueMin)
+			value = valueMin;
+		else if (tmp > valueMax)
+			value = valueMax;
+		else if ( (tmp >= valueMin) && (tmp <= valueMax) )
+			value = (uint32_t) tmp;
+		
+		if ( valueColor == COLOR_UB || valueColor == COLOR_VR ) {
+			// Set Whitebalance
+			// Find the "other" value first
+			err_ = dc1394_feature_whitebalance_get_value(camera_, &ub, &vr);
+			std::cerr << "DC1394: Whitebalance values: ub=" << ub << ", vr=" << vr << std::endl;
+			// Make sure we are in manual mode, otherwise changing the value has little effect 
+			err_ = dc1394_feature_set_mode(camera_, DC1394_FEATURE_WHITE_BALANCE, DC1394_FEATURE_MODE_MANUAL);
+			// set to value
+			if ( valueColor == COLOR_UB )
+				ub = value;
+			else 
+				vr = value;
+			err_ = dc1394_feature_whitebalance_set_value(camera_, ub, vr);
+			std::cerr << "DC1394: Whitebalance setting to values: ub=" << ub << ", vr=" << vr << std::endl;
+			logMsg_.str("");
+			logMsg_ << "Settings whitebalance " << " to " << value <<  " result: " << err_;
+			LogMessage(logMsg_.str().c_str(), true);
+		} else {
+			// Set White Shading
+			// Find the "other" value first
+			err_ = dc1394_feature_whiteshading_get_value(camera_, &red, &green, &blue);
+			// Make sure we are in manual mode, otherwise changing the value has little effect 
+			err_ = dc1394_feature_set_mode(camera_, DC1394_FEATURE_WHITE_SHADING, DC1394_FEATURE_MODE_MANUAL);
+			switch (valueColor) {
+				case COLOR_RED:
+					red = value;;
+					break;
+				case COLOR_GREEN:
+					green = value;
+					break;
+				case COLOR_BLUE:
+					blue = value;
+					break;
+				default:
+					break;
+			}
+			err_ = dc1394_feature_whiteshading_get_value(camera_, &red, &green, &blue);
+		}
+
+		// we may have changed to manual
+		OnPropertiesChanged();
+	}
+	else if (eAct == MM::BeforeGet)
+	{
+		if ( valueColor == COLOR_UB || valueColor == COLOR_VR ) {
+			// White balance
+			err_ = dc1394_feature_whitebalance_get_value(camera_, &ub, &vr);
+			logMsg_.str("");
+			logMsg_ << "Getting whitebalance " << ".  It is now " << value << " err: " << err_;
+			LogMessage (logMsg_.str().c_str(), true);
+			tmp = (long) valueColor == COLOR_UB ? ub : vr;
+		} else {
+			// White Shading
+			err_= dc1394_feature_whiteshading_get_value(camera_, &red, &green, &blue);
+			switch (valueColor) {
+				case COLOR_RED:
+					tmp = (long) red;
+					break;
+				case COLOR_GREEN:
+					tmp = (long) green;
+					break;
+				case COLOR_BLUE:
+					tmp = (long) blue;
+					break;
+				default:
+					break;
+			}
+		}
+
+		pProp->Set(tmp);
+	}
+	return DEVICE_OK;
+}
+
+
+int Cdc1394::OnWhitebalanceMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	return OnFeatureMode(pProp, eAct, DC1394_FEATURE_WHITE_BALANCE);
+}
+
+
+int Cdc1394::OnWhitebalanceUB(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	return OnColorFeature(pProp, eAct, colub, colMin, colMax, COLOR_UB);
+}
+
+
+int Cdc1394::OnWhitebalanceVR(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	return OnColorFeature(pProp, eAct, colvr, colMin, colMax, COLOR_VR);
+}
+
+
+int Cdc1394::OnWhiteshadingMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	return OnFeatureMode(pProp, eAct, DC1394_FEATURE_WHITE_SHADING);
+}
+
+
+int Cdc1394::OnWhiteshadingRed(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	return OnColorFeature(pProp, eAct, colred, colMin, colMax, COLOR_RED);
+}
+
+
+int Cdc1394::OnWhiteshadingBlue(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	return OnColorFeature(pProp, eAct, colblue, colMin, colMax, COLOR_BLUE);
+}
+
+
+int Cdc1394::OnWhiteshadingGreen(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+	return OnColorFeature(pProp, eAct, colgreen, colMin, colMax, COLOR_GREEN);
+}
+
+
+
 
 // ExternalTrigger
 int Cdc1394::OnExternalTrigger(MM::PropertyBase* pProp, MM::ActionType eAct)
@@ -707,72 +976,28 @@ int Cdc1394::Initialize()
           const char *featureLabel = dc1394_feature_get_string(featureInfo_.id);
           if (strcmp(featureLabel, "Brightness") ==0) 
           {
-             // TODO: offer option to switch between auto, manual and one-push modes
-             SetManual(DC1394_FEATURE_BRIGHTNESS);
-
-             // TODO: Check that this feature is read-out capable
-             err_ = dc1394_feature_get_value(camera_, DC1394_FEATURE_BRIGHTNESS, &brightness);
-             logMsg_.str("");
-             logMsg_ << "Brightness " <<  brightness;
-             LogMessage (logMsg_.str().c_str(), false);
-             err_ = dc1394_feature_get_boundaries(camera_, DC1394_FEATURE_BRIGHTNESS, &brightnessMin, &brightnessMax);
-             logMsg_.str("");
-             logMsg_ << "Brightness Min: " << brightnessMin  << " Max: " << brightnessMax;
-             LogMessage (logMsg_.str().c_str(), false);
-
-             char tmp[10];
-             pAct = new CPropertyAction (this, &Cdc1394::OnBrightness);
-             sprintf(tmp,"%d",brightness);
-             nRet = CreateProperty("Brightness", tmp, MM::Integer, false, pAct);
-             assert(nRet == DEVICE_OK);
-             nRet = SetPropertyLimits("Brightness", brightnessMin, brightnessMax);
-             assert(nRet == DEVICE_OK);
-             
+			  bool hasManual = InitFeatureMode(featureInfo_, DC1394_FEATURE_BRIGHTNESS, "BrightnessSetting", &Cdc1394::OnBrightnessMode);
+			  if (hasManual)
+			  {
+				  InitFeatureManual(featureInfo_, "Brightness", brightness, brightnessMin, brightnessMax, &Cdc1394::OnBrightness);
+			  }
           } 
           else if (strcmp(featureLabel, "Gain") == 0) 
           {
-             // TODO: offer option to switch between auto, manual and one-push modes
-             SetManual(DC1394_FEATURE_GAIN);
-
-             err_ = dc1394_feature_get_value(camera_, DC1394_FEATURE_GAIN, &gain);
-             logMsg_.str("");
-             logMsg_ << "Gain: "<<  gain;
-             LogMessage (logMsg_.str().c_str(), false);
-             err_ = dc1394_feature_get_boundaries(camera_, DC1394_FEATURE_GAIN, &gainMin, &gainMax);
-             logMsg_.str("");
-             logMsg_ << "Gain Min: " << gainMin << " Max: " << gainMax;
-             LogMessage (logMsg_.str().c_str(), false);
-             char tmp[10];
-             pAct = new CPropertyAction (this, &Cdc1394::OnGain);
-             sprintf(tmp,"%d",gain);
-             nRet = CreateProperty(MM::g_Keyword_Gain, tmp, MM::Integer, false, pAct);
-             assert(nRet == DEVICE_OK);
-             nRet = SetPropertyLimits(MM::g_Keyword_Gain, gainMin, gainMax);
-             assert(nRet == DEVICE_OK);
-             
-          }
+			 bool hasManual = InitFeatureMode(featureInfo_, DC1394_FEATURE_GAIN, "GainSetting", &Cdc1394::OnGainMode);
+			 if (hasManual)
+			 {
+				  InitFeatureManual(featureInfo_, MM::g_Keyword_Gain, gain, gainMin, gainMax, &Cdc1394::OnGain);
+			 }
+		  }
           else if (strcmp(featureLabel, "Shutter") == 0) 
           {
-             // TODO: offer option to switch between auto, manual and one-push modes
-             SetManual(DC1394_FEATURE_SHUTTER);
-
-             // TODO: when shutter has absolute control, couple it to exposure time
-             err_ = dc1394_feature_get_value(camera_, DC1394_FEATURE_SHUTTER, &shutter);
-             logMsg_.str("");
-             logMsg_ << "Shutter: " << shutter;
-             LogMessage (logMsg_.str().c_str(), false);
-             err_ = dc1394_feature_get_boundaries(camera_, DC1394_FEATURE_SHUTTER, &shutterMin, &shutterMax);
-             logMsg_.str("");
-             logMsg_ << "Shutter Min: " << shutterMin << " Max: " << shutterMax;
-             LogMessage (logMsg_.str().c_str(), false);
-             char tmp[10];
-             pAct = new CPropertyAction (this, &Cdc1394::OnShutter);
-             sprintf(tmp,"%d",shutter);
-             nRet = CreateProperty("Shutter", tmp, MM::Integer, false, pAct);
-             assert(nRet == DEVICE_OK);
-             nRet = SetPropertyLimits("Shutter", shutterMin, shutterMax);
-             assert(nRet == DEVICE_OK);
-             
+			  bool hasManual = InitFeatureMode(featureInfo_, DC1394_FEATURE_GAIN, "ShutterSetting", &Cdc1394::OnShutterMode);
+			  if (hasManual)
+			  {
+				  InitFeatureManual(featureInfo_, "Shutter", shutter, shutterMin, shutterMax, &Cdc1394::OnShutter);
+			  }
+			  
              // Check if shutter has absolute control
              dc1394bool_t absolute;
              absoluteShutterControl_ = false;
@@ -801,7 +1026,8 @@ int Cdc1394::Initialize()
           }
           else if (strcmp(featureLabel, "Exposure") == 0) 
           {
-             // TODO: offer option to switch between auto, manual and one-push modes
+             // Offer option to switch between auto, manual and one-push modes
+			 InitFeatureMode(featureInfo_, DC1394_FEATURE_EXPOSURE, "ExposureSetting", &Cdc1394::OnExposureMode);
              err_ = dc1394_feature_get_value(camera_, DC1394_FEATURE_EXPOSURE, &exposure);
              err_ = dc1394_feature_get_boundaries(camera_, DC1394_FEATURE_EXPOSURE, &exposureMin, &exposureMax);
           }
@@ -840,7 +1066,108 @@ int Cdc1394::Initialize()
                 LogMessage (logMsg_.str().c_str(), false);
              }
            }
-       }
+		   // EF: addtional camera parameters to play around with
+		   else if (strcmp(featureLabel, "Gamma") == 0) 
+		   {
+			   bool hasManual = InitFeatureMode(featureInfo_, DC1394_FEATURE_GAIN, "GammaSetting", &Cdc1394::OnGammaMode);
+			   if (hasManual)
+			   {
+				   InitFeatureManual(featureInfo_, "Gamma", gamma, gammaMin, gammaMax, &Cdc1394::OnGamma);
+			   }
+		   }
+		   else if (strcmp(featureLabel, "Hue") == 0) 
+		   {
+			   bool hasManual = InitFeatureMode(featureInfo_, DC1394_FEATURE_GAIN, "HueSetting", &Cdc1394::OnHueMode);
+			   if (hasManual)
+			   {
+				   InitFeatureManual(featureInfo_, "Hue", hue, hueMin, hueMax, &Cdc1394::OnHue);
+			   }
+		   }
+		   else if (strcmp(featureLabel, "Saturation") == 0) 
+		   {
+			   bool hasManual = InitFeatureMode(featureInfo_, DC1394_FEATURE_GAIN, "SaturationSetting", &Cdc1394::OnSaturationMode);
+			   if (hasManual)
+			   {
+				   InitFeatureManual(featureInfo_, "Saturation", saturation, saturationMin, saturationMax, &Cdc1394::OnSaturation);
+			   }
+		   }
+		   else if (strcmp(featureLabel, "Temperature") == 0) 
+		   {
+			   bool hasManual = InitFeatureMode(featureInfo_, DC1394_FEATURE_GAIN, "TemperatureSetting", &Cdc1394::OnTempMode);
+			   if (hasManual)
+			   {
+				   InitFeatureManual(featureInfo_, "Temperature", temperature, temperatureMin, temperatureMax, &Cdc1394::OnTemp);
+			   }
+		   }
+		   else if (strcmp(featureLabel, "White Balance") == 0) 
+		   {
+			   bool hasManual = InitFeatureMode(featureInfo_, DC1394_FEATURE_GAIN, "WhiteBalanceSetting", &Cdc1394::OnWhitebalanceMode);
+			   
+			   if (hasManual)
+			   {
+				   // Check that this feature is read-out capable
+				   if ( featureInfo_.readout_capable )
+				   {	
+					   colub = featureInfo_.BU_value;
+					   colvr = featureInfo_.RV_value;
+				   }
+				   colMin = 0;
+				   colMax = 255;
+				   
+				   char tmp[10];
+				   pAct = new CPropertyAction (this, &Cdc1394::OnWhitebalanceUB);
+				   sprintf(tmp,"%d",colub);
+				   nRet = CreateProperty("WhitebalanceUB", tmp, MM::Integer, false, pAct);
+				   assert(nRet == DEVICE_OK);
+				   nRet = SetPropertyLimits("WhitebalanceUB", 0, 1000);
+				   assert(nRet == DEVICE_OK);
+				   pAct = new CPropertyAction (this, &Cdc1394::OnWhitebalanceVR);
+				   sprintf(tmp,"%d",colvr);
+				   nRet = CreateProperty("WhitebalanceVR", tmp, MM::Integer, false, pAct);
+				   assert(nRet == DEVICE_OK);
+				   nRet = SetPropertyLimits("WhitebalanceVR", 0, 1000);
+				   assert(nRet == DEVICE_OK);
+			   }
+		   }
+		   else if (strcmp(featureLabel, "White Shading") == 0) 
+		   {
+			   bool hasManual = InitFeatureMode(featureInfo_, DC1394_FEATURE_GAIN, "WhiteShadingSetting", &Cdc1394::OnWhiteshadingMode);
+			   
+			   if (hasManual)
+			   {
+				   // Check that this feature is read-out capable
+				   if ( featureInfo_.readout_capable )
+				   {	
+					   colred = featureInfo_.R_value;
+					   colgreen = featureInfo_.G_value;
+					   colblue = featureInfo_.B_value;
+				   }
+				   colMin = 0;
+				   colMax = 255;
+				   
+				   char tmp[10];
+				   pAct = new CPropertyAction (this, &Cdc1394::OnWhiteshadingRed);
+				   sprintf(tmp,"%d",colub);
+				   nRet = CreateProperty("WhiteshadingRed", tmp, MM::Integer, false, pAct);
+				   assert(nRet == DEVICE_OK);
+				   nRet = SetPropertyLimits("WhiteshadingRed", 0, 1000);
+				   assert(nRet == DEVICE_OK);
+				   pAct = new CPropertyAction (this, &Cdc1394::OnWhiteshadingGreen);
+				   sprintf(tmp,"%d",colub);
+				   nRet = CreateProperty("WhiteshadingGreen", tmp, MM::Integer, false, pAct);
+				   assert(nRet == DEVICE_OK);
+				   nRet = SetPropertyLimits("WhiteshadingGreen", 0, 1000);
+				   assert(nRet == DEVICE_OK);
+				   pAct = new CPropertyAction (this, &Cdc1394::OnWhiteshadingBlue);
+				   sprintf(tmp,"%d",colub);
+				   nRet = CreateProperty("WhiteshadingBlue", tmp, MM::Integer, false, pAct);
+				   assert(nRet == DEVICE_OK);
+				   nRet = SetPropertyLimits("WhiteshadingBlue", 0, 1000);
+				   assert(nRet == DEVICE_OK);
+			   }
+		   }
+		   
+	   }
    }
 
    
@@ -867,6 +1194,110 @@ int Cdc1394::Initialize()
 
    return DEVICE_OK;
 }
+
+
+bool Cdc1394::InitFeatureMode(dc1394feature_info_t &featureInfo, dc1394feature_t feature, const char *featureLabel, int (Cdc1394::*cb_onfeaturemode)(MM::PropertyBase*, MM::ActionType) )
+{
+	enum dcModes { NONE =0, OFF=1, MANUAL=2, ONE_PUSH=4, AUTO=8 };
+	dcModes modeAvail = NONE;
+	int dcModeCt = 0;
+	dc1394feature_mode_t modeDefault = DC1394_FEATURE_MODE_MANUAL;
+	
+	// First make sure the feature is switched on by default
+	if ( err_ == DC1394_SUCCESS && featureInfo.on_off_capable )
+	{
+		modeAvail |= OFF; dcModeCt++;
+		dc1394_feature_set_power(camera_, feature, DC1394_ON);
+		std::cerr << featureLabel << ": Setting power on\n";
+	}
+	// Find out what modes are available, set by default to manual, override to auto if available
+	for (int mod_no = 0; mod_no < featureInfo_.modes.num; mod_no++)  
+	{
+		switch ( featureInfo_.modes.modes[mod_no] ) {
+			case DC1394_FEATURE_MODE_MANUAL:
+				modeAvail |= MANUAL; dcModeCt++;
+				std::cerr << featureLabel << ": Found manual mode\n";
+				break;
+			case DC1394_FEATURE_MODE_AUTO:
+				modeAvail |= AUTO; dcModeCt++;
+				modeDefault = DC1394_FEATURE_MODE_AUTO;
+				std::cerr << featureLabel << ": Found auto mode\n";
+				break;
+			case DC1394_FEATURE_MODE_ONE_PUSH_AUTO:
+				modeAvail |= ONE_PUSH; dcModeCt++;
+				std::cerr << featureLabel << ": Found one-push mode\n";
+				break;
+		}
+	}
+	
+	err_ = dc1394_feature_set_mode(camera_, feature, modeDefault);
+
+	if ( dcModeCt > 1 )
+	{	
+		CPropertyAction *pAct = new CPropertyAction (this, cb_onfeaturemode);
+		if ( modeDefault == DC1394_FEATURE_MODE_MANUAL ) 
+		{
+			CreateProperty(featureLabel, "MANUAL", MM::String, false, pAct );
+		}
+		else 
+		{
+			CreateProperty(featureLabel, "AUTO", MM::String, false, pAct );
+		}
+		
+		if ( modeAvail & OFF )
+			AddAllowedValue( featureLabel, "OFF");
+		if ( modeAvail & MANUAL )
+			AddAllowedValue( featureLabel, "MANUAL");
+		if ( modeAvail & ONE_PUSH	)
+			AddAllowedValue( featureLabel, "ONE-PUSH");
+		if ( modeAvail & AUTO )
+			AddAllowedValue( featureLabel, "AUTO");			  
+	}
+	
+	if ( modeAvail & MANUAL ) {
+		return true;
+	} else {
+		return false;
+	}
+
+}	
+
+
+void Cdc1394::InitFeatureManual(dc1394feature_info_t &featureInfo, const char *featureLabel, uint32_t &value, uint32_t &valueMin, uint32_t &valueMax, int (Cdc1394::*cb_onfeature)(MM::PropertyBase*, MM::ActionType))
+{
+	int nRet;
+	
+	// Check that this feature is read-out capable
+	if ( featureInfo.readout_capable )
+	{	
+		value = featureInfo.value;
+		valueMin = featureInfo.min;
+		valueMax = featureInfo.max;
+		logMsg_.str("");
+		logMsg_ << featureLabel << " " <<  value;
+		LogMessage (logMsg_.str().c_str(), false);
+		logMsg_.str("");
+		logMsg_ << featureLabel << " Min: " << valueMin  << " Max: " << valueMax;
+		LogMessage (logMsg_.str().c_str(), false);
+	}
+	else 
+	{
+		// some sensible (?) default values
+		value = 0;
+		valueMin = 0;
+		valueMax = 1000;
+	}
+	
+	char tmp[10];
+	CPropertyAction *pAct = new CPropertyAction (this, cb_onfeature);
+	sprintf(tmp,"%d",value);
+	nRet = CreateProperty(featureLabel, tmp, MM::Integer, false, pAct);
+	assert(nRet == DEVICE_OK);
+	nRet = SetPropertyLimits(featureLabel, valueMin, valueMax);
+	assert(nRet == DEVICE_OK);
+} 
+
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Function name   : Cdc1394::Shutdown

@@ -102,6 +102,7 @@ public:
    // action interface
    int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBrightness(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnBrightnessMode(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnIntegration(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFrameRate(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -109,12 +110,29 @@ public:
    int OnScanMode(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTimeout(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnGain(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnGainMode(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnGamma(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnGammaMode(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnShutter(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnShutterMode(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTemperature(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnMode(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnExternalTrigger(MM::PropertyBase* pProp, MM::ActionType eAct);
-
+   int OnHue(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnHueMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSaturation(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSaturationMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnTemp(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnTempMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnExposureMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnWhitebalanceMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnWhitebalanceUB(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnWhitebalanceVR(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnWhiteshadingMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnWhiteshadingRed(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnWhiteshadingBlue(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnWhiteshadingGreen(MM::PropertyBase* pProp, MM::ActionType eAct);
+	
    // high-speed interface
    int StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow);
    int StartSequenceAcquisition(double interval_ms);
@@ -123,6 +141,8 @@ public:
 
 private:
    Cdc1394();
+   bool InitFeatureMode(dc1394feature_info_t &featureInfo, dc1394feature_t feature, const char *featureLabel, int (Cdc1394::*cb_onfeaturemode)(MM::PropertyBase*, MM::ActionType) );
+   void InitFeatureManual(dc1394feature_info_t &featureInfo, const char *featureLabel, uint32_t &value, uint32_t &valueMin, uint32_t &valueMax, int (Cdc1394::*cb_onfeature)(MM::PropertyBase*, MM::ActionType));
    int ResizeImageBuffer();
    int SetManual(dc1394feature_t feature);
    int ShutdownImageBuffer();
@@ -136,7 +156,8 @@ private:
    void SetFrameRateMap();
    bool Timeout(MM::MMTime startTime);
    int OnFeature(MM::PropertyBase* pProp, MM::ActionType eAct, uint32_t &value, int valueMin, int valueMax, dc1394feature_t feature);
-   //int AddFeature(dc1394feature_t feature, const char* label, int(Cdc1394::*fpt)(PropertyBase* pProp, ActionType eAct) , uint32_t  &value, uint32_t &valueMin, uint32_t &valueMax);
+   int OnFeatureMode(MM::PropertyBase* pProp, MM::ActionType eAct, dc1394feature_t feature);
+	//int AddFeature(dc1394feature_t feature, const char* label, int(Cdc1394::*fpt)(PropertyBase* pProp, ActionType eAct) , uint32_t  &value, uint32_t &valueMin, uint32_t &valueMax);
    void rgb8ToMono8(uint8_t* dest, uint8_t* src, uint32_t width, uint32_t height); 
    void rgb8ToBGRA8(uint8_t* dest, uint8_t* src, uint32_t width, uint32_t height); 
    void rgb8AddToMono16(uint16_t* dest, uint8_t* src, uint32_t width, uint32_t height); 
@@ -180,7 +201,18 @@ private:
    uint32_t gain, gainMin, gainMax;
    uint32_t shutter, shutterMin, shutterMax;
    uint32_t exposure, exposureMin, exposureMax;
-   
+   uint32_t hue, hueMin, hueMax;
+   uint32_t saturation, saturationMin, saturationMax;
+   uint32_t gamma, gammaMin, gammaMax;
+   uint32_t temperature, temperatureMin, temperatureMax;
+	
+   // for color settings
+   enum colorAdjustment { COLOR_UB, COLOR_VR, COLOR_RED, COLOR_GREEN, COLOR_BLUE };
+   int OnColorFeature(MM::PropertyBase* pProp, MM::ActionType eAct, uint32_t &value, int valueMin, int valueMax, colorAdjustment valueColor);
+   uint32_t colub, colvr;
+   uint32_t colred, colblue, colgreen;
+   uint32_t colMin, colMax;
+	
    static Cdc1394* m_pInstance;
    static unsigned refCount_;
    ImgBuffer img_;
