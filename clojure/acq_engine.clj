@@ -26,7 +26,9 @@
            [java.util.prefs Preferences]
            [org.micromanager.utils ChannelSpec MDUtils]
            [org.json JSONObject]
-           [java.util.concurrent LinkedBlockingQueue]))
+           [java.util Date]
+           [java.util.concurrent LinkedBlockingQueue]
+           [java.text SimpleDateFormat]))
 
 ;; general utils
 (defn data-object-to-map [obj]
@@ -175,12 +177,22 @@
     (. mmc setShutterOpen false))
     (. mmc waitForDevice (. mmc getShutterDevice)))
 
+(def iso8601modified (SimpleDateFormat. "yyyy-MM-dd E HH:mm:ss Z"))
+
+(defn get-current-time-str []
+  (. iso8601modified format (Date.)))
+
 (defn annotate-image [img event]
   (TaggedImage. img
     (JSONObject. (merge
       (map-config (. mmc getSystemStateCache))
       (generate-metadata event)
-      {"ElapsedTime-ms" (clock-ms)}))))
+      {"ElapsedTime-ms" (clock-ms)
+       "Time" (get-current-time-str)
+       "Width"  (. mmc getImageWidth)
+       "Height" (. mmc getImageHeight)
+       "Binning" (. mmc getProperty (. mmc getCameraDevice) "Binning")
+      }))))
 
 (defn collect-image [event out-queue]
     (.put out-queue (annotate-image (. mmc getImage) event)))
