@@ -21,7 +21,7 @@ public class SequenceGenerator extends Thread {
    private ImageRequest stopRequest_ = new ImageRequest();
 
    public SequenceGenerator(SequenceSettings settings, double exposure) {
-      engineRequestSequence_ = new GentleLinkedBlockingQueue<EngineTask>(100);
+      engineRequestSequence_ = new GentleLinkedBlockingQueue<EngineTask>();
       stopRequest_.stop = true;
       sequenceSettings_ = settings;
       exposure_ = exposure;
