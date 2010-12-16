@@ -5,13 +5,13 @@
 package org.micromanager.acquisition.engine;
 
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 import org.micromanager.api.EngineTask;
 import java.util.concurrent.TimeUnit;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.micromanager.acquisition.TaggedImageQueue;
 import org.micromanager.utils.AutofocusManager;
+import org.micromanager.utils.GentleLinkedBlockingQueue;
 import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.ReportingUtils;
 
@@ -39,7 +39,7 @@ public class Engine {
            BlockingQueue<EngineTask> requestQueue,
            SequenceSettings acquisitionSettings) {
       core_ = core;
-      imageReceivingQueue_ = new LinkedBlockingQueue<TaggedImage>(100);
+      imageReceivingQueue_ = new GentleLinkedBlockingQueue<TaggedImage>();
       afMgr_ = afMgr;
       taskQueue_ = requestQueue;
       acquisitionSettings_ = acquisitionSettings;

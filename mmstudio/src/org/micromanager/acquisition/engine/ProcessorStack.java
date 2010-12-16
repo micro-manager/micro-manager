@@ -8,8 +8,8 @@ package org.micromanager.acquisition.engine;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 import org.micromanager.api.DataProcessor;
+import org.micromanager.utils.GentleLinkedBlockingQueue;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -39,7 +39,7 @@ public class ProcessorStack<E> {
       BlockingQueue<E> right = left;
       if (processors_ != null) {
          for (DataProcessor<E> processor:processors_) {
-            right = new LinkedBlockingQueue<E>(100);
+            right = new GentleLinkedBlockingQueue<E>();
             processor.setInput(left);
             processor.setOutput(right);
             left = right;
