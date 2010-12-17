@@ -159,13 +159,13 @@
   (send-off (device-agents dev) (fn [_] (action))))
     
 (defn create-presnap-actions [event]
-  (into {} (concat
+  (concat
     (when-let [z-drive (:z-drive event)]
-      '([z-drive #(set-stage-position z-drive (:z event))]))
+      (list [z-drive #(set-stage-position z-drive (:z event))]))
     (for [[axis pos] (get-in event [:position :axes])]
       [axis #(apply set-stage-position axis pos)])
     (for [prop (get-in event [:channel :properties])]
-      [(prop 0) #(.setProperty mmc (prop 0) (prop 1) (prop 2))]))))
+      [(prop 0) #(.setProperty mmc (prop 0) (prop 1) (prop 2))])))
 
 (defn run-actions [action-map]
   (if run-devices-parallel
@@ -206,28 +206,33 @@
             (or
               (get @z-corrections z-drive)
               (get-z-stage-position z-drive)))
-          (:slice event))
-      (assoc-in [:postion :axes z-drive] nil)))
+          (:slice event)))
+      (assoc-in [:postion :axes z-drive] nil))
     event))
    
-(defn run-event [event out-queue]
-  (let [event (compute-z-position)]
-    (run-actions (create-presnap-actions event))
-    (await-for 10000 (device-agents (. mmc getCameraDevice)))
-    (when-let [wait-time-ms (event :wait-time-ms)]
-      (acq-sleep wait-time-ms))
-    (when (event :autofocus)
-      (store-z-correction (run-autofocus)))
-    (snap-image true true)
-    (collect-image event out-queue)))
-    ;(send-device-action (. mmc getCameraDevice)
-    ;  #(collect-image (assoc event :time (clock-ms)) out-queue))))
+(defn make-event-fns [event out-queue]
+  (let [event (compute-z-position event)]
+    (list
+		#(run-actions (create-presnap-actions event))
+		#(await-for 10000 (device-agents (. mmc getCameraDevice)))
+		#(when-let [wait-time-ms (event :wait-time-ms)]
+		  (acq-sleep wait-time-ms))
+		#(when (event :autofocus)
+		  (store-z-correction (run-autofocus)))
+		#(snap-image true (:close-shutter event))
+		#(collect-image event out-queue)
+    )))
   
+(defn execute [event-fns]
+  (doseq [event-fn event-fns :while (not (:stop @interrupt-requests))]
+    (while (@interrupt-requests :pause) (Thread/sleep 5))
+    (event-fn)))
+
 (defn stop-acq []
-  (alter interrupt-requests assoc :stop true))
+  (dosync (alter interrupt-requests assoc :stop true)))
   
 (defn pause-acq []
-  (alter interrupt-requests assoc :pause true))
+  (dosync (alter interrupt-requests assoc :pause true)))
   
 (defn run-acquisition [settings out-queue] 
   (def acq-settings settings)
@@ -237,7 +242,7 @@
             start-time (clock-ms)]
     (let [acq-seq (generate-acq-sequence settings)]
        (def acq-sequence acq-seq)
-       (dorun (map #(run-event % out-queue) acq-seq)))))
+       (execute (mapcat #(make-event-fns % out-queue) acq-seq)))))
   
 (defn convert-settings [^SequenceSettings settings]
   (-> settings

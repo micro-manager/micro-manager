@@ -23,7 +23,7 @@
 
 (defstruct acq-settings :frames :positions :channels :slices :slices-first
   :time-first :keep-shutter-open-slices :keep-shutter-open-channels
-  :use-autofocus :autofocus-skip :relative-slices :z-drive :exposure :interval-ms)
+  :use-autofocus :autofocus-skip :relative-slices :exposure :interval-ms)
 
 (defn pairs [x]
   (partition 2 1 (concat x [nil])))
@@ -50,6 +50,9 @@
 
 (defn make-main-loops [settings]
   (create-loops (make-dimensions settings)))
+
+(defn assign-z-drive [events]
+  (map #(assoc % :z-drive (:focus (get-default-devices))) events))
 
 (defn process-skip-z-stack [events slices]
   (if (pos? (count slices))
@@ -104,7 +107,7 @@
   (let [{:keys [slices keep-shutter-open-channels keep-shutter-open-slices
          use-autofocus autofocus-skip interval-ms]} settings]
     (-> (make-main-loops settings)
-      (map #(assoc % :z-drive (:focus (get-default-devices))))
+      (assign-z-drive)
       (process-skip-z-stack slices)
       (manage-shutter keep-shutter-open-channels keep-shutter-open-slices)
       (process-channel-skip-frames)
