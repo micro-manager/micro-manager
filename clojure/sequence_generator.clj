@@ -15,7 +15,7 @@
 ;               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
 (ns sequence-generator
-  (:use [mm :only get-default-devices]))
+  (:use [mm :only [get-default-devices]]))
 
 (defstruct channel :name :exposure :z-offset :use-z-stack :skip-frames)
 
@@ -104,7 +104,7 @@
   (let [{:keys [slices keep-shutter-open-channels keep-shutter-open-slices
          use-autofocus autofocus-skip interval-ms]} settings]
     (-> (make-main-loops settings)
-      (map #(assoc % :z-drive ((get-default-devices) :focus)))
+      (map #(assoc % :z-drive (:focus (get-default-devices))))
       (process-skip-z-stack slices)
       (manage-shutter keep-shutter-open-channels keep-shutter-open-slices)
       (process-channel-skip-frames)

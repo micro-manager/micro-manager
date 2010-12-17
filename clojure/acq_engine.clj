@@ -15,7 +15,7 @@
 ;               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
 (ns acq-engine
-  (:use [mm :only [mmc gui acq]]
+  (:use [mm :only [mmc gui acq map-config get-config get-positions get-default-devices]]
         [sequence-generator :only [generate-acq-sequence]])
   (:import [org.micromanager AcqControlDlg]
            [org.micromanager.api AcquisitionEngine]
@@ -36,8 +36,6 @@
 (def run-devices-parallel false)
 
 ;; general utils
-
-;; scgilardi at gmail
 
 (defn data-object-to-map [obj]
   (into {}
@@ -68,23 +66,6 @@
 
 (defn get-current-time-str []
   (. iso8601modified format (Date.)))
-
-(defn map-config [^Configuration config]
-  (let [n (.size config)
-        props (map #(.getSetting config %) (range n))]
-    (into {}
-      (for [prop props]
-        [(str (.getDeviceLabel prop) "-" (.getPropertyName prop))
-         (.getPropertyValue prop)]))))
-
-(defn get-config [group config]
-  (let [data (. mmc getConfigData group config)
-        n (.size data)
-        props (map #(.getSetting data %) (range n))]
-    (for [prop props]
-      [(.getDeviceLabel prop)
-       (.getPropertyName prop)
-       (.getPropertyValue prop)])))
 
 (defn ChannelSpec-to-map [^ChannelSpec chan]
   (-> chan
@@ -179,6 +160,8 @@
     
 (defn create-presnap-actions [event]
   (into {} (concat
+    (when-let [z-drive (:z-drive event)]
+      '([z-drive #(set-stage-position z-drive (:z event))]))
     (for [[axis pos] (get-in event [:position :axes])]
       [axis #(apply set-stage-position axis pos)])
     (for [prop (get-in event [:channel :properties])]
@@ -212,7 +195,7 @@
     (.put out-queue (annotate-image (. mmc getImage) event)))
   
 (defn store-z-correction [z event]
-  (alter! z-corrections assoc (get-in event [:position :label]) z))
+  (alter z-corrections assoc (get-in event [:position :label]) z))
  
 (defn compute-z-position [event]
   (if-let [z-drive (:z-drive event)]
@@ -222,10 +205,10 @@
           (+ (:slice event)
             (or
               (get @z-corrections z-drive)
-              (get-stage-position z-drive)))
+              (get-z-stage-position z-drive)))
           (:slice event))
-      (assoc-in [:postion :axes z-drive] nil))
-    event)
+      (assoc-in [:postion :axes z-drive] nil)))
+    event))
    
 (defn run-event [event out-queue]
   (let [event (compute-z-position)]
@@ -239,6 +222,12 @@
     (collect-image event out-queue)))
     ;(send-device-action (. mmc getCameraDevice)
     ;  #(collect-image (assoc event :time (clock-ms)) out-queue))))
+  
+(defn stop-acq []
+  (alter interrupt-requests assoc :stop true))
+  
+(defn pause-acq []
+  (alter interrupt-requests assoc :pause true))
   
 (defn run-acquisition [settings out-queue] 
   (def acq-settings settings)

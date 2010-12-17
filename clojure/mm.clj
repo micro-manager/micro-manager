@@ -16,14 +16,12 @@
 
 (ns mm
   (:import MMStudioPlugin
-           [org.micromanager.navigation MultiStagePosition]))
+           [org.micromanager.navigation MultiStagePosition]
+           [mmcorej Configuration]))
  
 (def gui (MMStudioPlugin/getMMStudioMainFrameInstance))
 (def mmc (.getMMCore gui))
 (def acq (.getAcquisitionEngine gui))
-
-(defn get-positions []
-  (vec (.. gui getPositionList getPositions)))
 
 (defn get-default-devices []
   {:camera          (. mmc getCameraDevice)
@@ -32,3 +30,23 @@
    :xy-stage        (. mmc getXYStageDevice)
    :autofocus       (. mmc getAutoFocusDevice)
    :image-processor (. mmc getImageProcessorDevice)})
+   
+(defn map-config [^Configuration config]
+  (let [n (.size config)
+        props (map #(.getSetting config %) (range n))]
+    (into {}
+      (for [prop props]
+        [(str (.getDeviceLabel prop) "-" (.getPropertyName prop))
+         (.getPropertyValue prop)]))))
+
+(defn get-config [group config]
+  (let [data (. mmc getConfigData group config)
+        n (.size data)
+        props (map #(.getSetting data %) (range n))]
+    (for [prop props]
+      [(.getDeviceLabel prop)
+       (.getPropertyName prop)
+       (.getPropertyValue prop)])))
+       
+(defn get-positions []
+  (vec (.. gui getPositionList getPositions)))
