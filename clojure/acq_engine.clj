@@ -217,7 +217,7 @@
 		#(await-for 10000 (device-agents (. mmc getCameraDevice)))
 		#(when-let [wait-time-ms (event :wait-time-ms)]
 		  (acq-sleep wait-time-ms))
-		#(when (event :autofocus)
+		#(when (:autofocus event)
 		  (store-z-correction (run-autofocus)))
 		#(snap-image true (:close-shutter event))
 		#(collect-image event out-queue)
@@ -225,7 +225,7 @@
   
 (defn execute [event-fns]
   (doseq [event-fn event-fns :while (not (:stop @interrupt-requests))]
-    (while (@interrupt-requests :pause) (Thread/sleep 5))
+    (while (:pause @interrupt-requests) (Thread/sleep 5))
     (event-fn)))
 
 (defn stop-acq []
