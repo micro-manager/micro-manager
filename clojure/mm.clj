@@ -24,3 +24,11 @@
 
 (defn get-positions []
   (vec (.. gui getPositionList getPositions)))
+
+(defn get-default-devices []
+  {:camera          (. mmc getCameraDevice)
+   :shutter         (. mmc getShutterDevice)
+   :focus           (. mmc getFocusDevice)
+   :xy-stage        (. mmc getXYStageDevice)
+   :autofocus       (. mmc getAutoFocusDevice)
+   :image-processor (. mmc getImageProcessorDevice)})

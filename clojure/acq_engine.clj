@@ -24,13 +24,21 @@
            [org.micromanager.navigation MultiStagePosition StagePosition]
            [mmcorej TaggedImage Configuration]
            [java.util.prefs Preferences]
-           [org.micromanager.utils ChannelSpec MDUtils]
+           [org.micromanager.utils ChannelSpec GentleLinkedBlockingQueue MDUtils]
            [org.json JSONObject]
-           [java.util Date]
+           [java.util Date UUID]
            [java.util.concurrent LinkedBlockingQueue]
-           [java.text SimpleDateFormat]))
+           [java.text SimpleDateFormat]
+           ))
+
+;; constants
+
+(def run-devices-parallel false)
 
 ;; general utils
+
+;; scgilardi at gmail
+
 (defn data-object-to-map [obj]
   (into {}
     (for [f (.getFields (type obj))
@@ -51,16 +59,15 @@
 (defn select-and-rekey [m & ks]
     (apply rekey (select-keys m (apply concat (partition 1 2 ks))) ks))
 
-(def run-devices-parallel false)
+(defn clock-ms []
+  (quot (System/nanoTime) 1000000))
 
 ;; mm utils
-(defn get-default-devices []
-  {:camera          (. mmc getCameraDevice)
-   :shutter         (. mmc getShutterDevice)
-   :focus           (. mmc getFocusDevice)
-   :xy-stage        (. mmc getXYStageDevice)
-   :autofocus       (. mmc getAutoFocusDevice)
-   :image-processor (. mmc getImageProcessorDevice)})
+
+(def iso8601modified (SimpleDateFormat. "yyyy-MM-dd E HH:mm:ss Z"))
+
+(defn get-current-time-str []
+  (. iso8601modified format (Date.)))
 
 (defn map-config [^Configuration config]
   (let [n (.size config)
@@ -93,14 +100,24 @@
     (assoc :properties (get-config (. mmc getChannelGroup) (.config_ chan)))))
 
 (defn MultiStagePosition-to-map [^MultiStagePosition msp]
-  {:label (.getLabel msp) :axes
-    (into {}
-      (for [i (range (.size msp))]
-        (let [stage-pos (.get msp i)]
-          [(.stageName stage-pos)
-            (condp = (.numAxes stage-pos)
-              1 [(.x stage-pos)]
-              2 [(.x stage-pos) (.y stage-pos)])])))})
+  {:label (.getLabel msp)
+   :axes
+      (into {}
+        (for [i (range (.size msp))]
+          (let [stage-pos (.get msp i)]
+            [(.stageName stage-pos)
+              (condp = (.numAxes stage-pos)
+                1 [(.x stage-pos)]
+                2 [(.x stage-pos) (.y stage-pos)])])))})
+
+;; globals
+
+(declare last-wake-time)
+(declare start-time)
+(declare interrupt-requests)
+(declare z-corrections)
+
+;; metadata
 
 (defn generate-metadata [event]
   (-> event
@@ -110,35 +127,49 @@
       :position-index       "PositionIndex"
       :slice-index          "Slice"
       :slice                "SlicePosition"
-      "ElapsedTime-ms"      "ElapsedTime-ms"
     )
     (assoc
       "PositionName" (get-in event [:position :label])
       "Channel" (get-in event [:channel :name])
       "PixelType" "GRAY8"
       "ZPositionUm" (get event :slice)
+      "AxisPositions" (JSONObject. (get-in event [:position :axes]))
     )))  
+    
+(defn annotate-image [img event]
+  (TaggedImage. img
+    (JSONObject. (merge
+      {"ElapsedTime-ms" (- (clock-ms) start-time)
+       "Time" (get-current-time-str)
+       "Width"  (. mmc getImageWidth)
+       "Height" (. mmc getImageHeight)
+       "Binning" (. mmc getProperty (. mmc getCameraDevice) "Binning")
+       "UUID" (UUID/randomUUID)
+      }
+      (map-config (. mmc getSystemStateCache))
+      (generate-metadata event)
+      ))))
 
 ;; acq-engine
- 
-(defn clock-ms []
-  (quot (System/nanoTime) 1000000))
 
-(defn acq-sleep [last-wake-time interval-ms]
+(defn acq-sleep [interval-ms]
   (let [current-time (clock-ms)
-        target-time (+ last-wake-time interval-ms)
+        target-time (+ @last-wake-time interval-ms)
         sleep-time (- target-time current-time)]
-    (if (pos? sleep-time)
-      (do (Thread/sleep sleep-time) target-time)
-      current-time)))
- 
+    (when (pos? sleep-time)
+      (Thread/sleep sleep-time)
+      (reset! last-wake-time target-time))))
+
 (def device-agents
   (let [devs (seq (. mmc getLoadedDevices))]
     (zipmap devs (repeatedly (count devs) #(agent nil)))))
 
+(defn get-z-stage-position [stage]
+  (. mmc getPosition stage))
+
 (defn set-stage-position
-  ([stage-dev z] (. mmc setPosition stage-dev z))
-  ([stage-dev x y] (. mmc setXYPosition stage-dev x y)))
+  ([stage-dev z] (when z (. mmc setPosition stage-dev z)))
+  ([stage-dev x y] (when (and x y) (. mmc setXYPosition stage-dev x y))))
 
 (defn set-property
   ([dev prop] (. mmc setProperty (prop 0) (prop 1) (prop 2))))
@@ -177,44 +208,47 @@
     (. mmc setShutterOpen false))
     (. mmc waitForDevice (. mmc getShutterDevice)))
 
-(def iso8601modified (SimpleDateFormat. "yyyy-MM-dd E HH:mm:ss Z"))
-
-(defn get-current-time-str []
-  (. iso8601modified format (Date.)))
-
-(defn annotate-image [img event]
-  (TaggedImage. img
-    (JSONObject. (merge
-      (map-config (. mmc getSystemStateCache))
-      (generate-metadata event)
-      {"ElapsedTime-ms" (clock-ms)
-       "Time" (get-current-time-str)
-       "Width"  (. mmc getImageWidth)
-       "Height" (. mmc getImageHeight)
-       "Binning" (. mmc getProperty (. mmc getCameraDevice) "Binning")
-      }))))
-
 (defn collect-image [event out-queue]
     (.put out-queue (annotate-image (. mmc getImage) event)))
   
-(defn run-event [event last-wake-time out-queue]
-  (run-actions (create-presnap-actions event))
-  (await-for 10000 (device-agents (. mmc getCameraDevice)))
-  (when-let [wait-time-ms (event :wait-time-ms)]
-    (swap! last-wake-time acq-sleep wait-time-ms))
-  (when (event :autofocus)
-    (run-autofocus))
-  (snap-image true true)
-  (collect-image event out-queue))
-  ;(send-device-action (. mmc getCameraDevice)
-  ;  #(collect-image (assoc event :time (clock-ms)) out-queue)))
+(defn store-z-correction [z event]
+  (alter! z-corrections assoc (get-in event [:position :label]) z))
+ 
+(defn compute-z-position [event]
+  (if-let [z-drive (:z-drive event)]
+    (-> event
+      (assoc :z
+        (if (:relative-slices event)
+          (+ (:slice event)
+            (or
+              (get @z-corrections z-drive)
+              (get-stage-position z-drive)))
+          (:slice event))
+      (assoc-in [:postion :axes z-drive] nil))
+    event)
+   
+(defn run-event [event out-queue]
+  (let [event (compute-z-position)]
+    (run-actions (create-presnap-actions event))
+    (await-for 10000 (device-agents (. mmc getCameraDevice)))
+    (when-let [wait-time-ms (event :wait-time-ms)]
+      (acq-sleep wait-time-ms))
+    (when (event :autofocus)
+      (store-z-correction (run-autofocus)))
+    (snap-image true true)
+    (collect-image event out-queue)))
+    ;(send-device-action (. mmc getCameraDevice)
+    ;  #(collect-image (assoc event :time (clock-ms)) out-queue))))
   
 (defn run-acquisition [settings out-queue] 
   (def acq-settings settings)
-  (let [acq-seq (generate-acq-sequence settings)
-        last-wake-time (atom (clock-ms))]
-     (def acq-sequence acq-seq)
-     (dorun (map #(run-event % last-wake-time out-queue) acq-seq))))
+  (binding [interrupt-requests (ref {:pause false :stop false})
+            z-corrections (ref nil)
+            last-wake-time (atom (clock-ms))
+            start-time (clock-ms)]
+    (let [acq-seq (generate-acq-sequence settings)]
+       (def acq-sequence acq-seq)
+       (dorun (map #(run-event % out-queue) acq-seq)))))
   
 (defn convert-settings [^SequenceSettings settings]
   (-> settings
@@ -241,7 +275,7 @@
         (def orig-settings settings)
         (println "ss positions: " (.size (.positions settings)))
         (println "position-count: " (.getNumberOfPositions (.getPositionList gui)))
-        (let [out-queue (LinkedBlockingQueue. 100)]
+        (let [out-queue (GentleLinkedBlockingQueue.)]
           (.start (Thread. #(run-acquisition (convert-settings settings) out-queue)))
           (.start (LiveAcqDisplay. mmc out-queue settings (.channels settings) (.save settings) this)))))
     (.setCore mmc (.getAutofocusManager gui))
@@ -252,5 +286,7 @@
 (defn test-dialog [eng]
   (.show (AcqControlDlg. eng (Preferences/userNodeForPackage (.getClass gui)) gui)))
 
+(defn run-test []
+  (test-dialog (create-acq-eng)))
 
    
