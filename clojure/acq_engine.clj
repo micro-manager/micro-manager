@@ -94,7 +94,7 @@
 ;; globals
 
 (declare last-wake-time)
-(declare start-time)
+(def start-time 0)
 (declare interrupt-requests)
 (declare z-corrections)
 
@@ -114,7 +114,7 @@
       "Channel" (get-in event [:channel :name])
       "PixelType" "GRAY8"
       "ZPositionUm" (get event :slice)
-      "AxisPositions" (JSONObject. (get-in event [:position :axes]))
+      "AxisPositions" (when-let [axes (get-in event [:position :axes])] (JSONObject. axes))
     )))  
     
 (defn annotate-image [img event]
@@ -213,13 +213,13 @@
 (defn make-event-fns [event out-queue]
   (let [event (compute-z-position event)]
     (list
-		#(run-actions (create-presnap-actions event))
-		#(await-for 10000 (device-agents (. mmc getCameraDevice)))
-		#(when-let [wait-time-ms (event :wait-time-ms)]
-		  (acq-sleep wait-time-ms))
-		#(when (:autofocus event)
-		  (store-z-correction (run-autofocus)))
-		#(snap-image true (:close-shutter event))
+	;	#(run-actions (create-presnap-actions event))
+	;	#(await-for 10000 (device-agents (. mmc getCameraDevice)))
+	;	#(when-let [wait-time-ms (event :wait-time-ms)]
+	;	  (acq-sleep wait-time-ms))
+	;	#(when (:autofocus event)
+	;	  (store-z-correction (run-autofocus)))
+	;	#(snap-image true (:close-shutter event))
 		#(collect-image event out-queue)
     )))
   
