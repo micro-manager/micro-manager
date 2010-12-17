@@ -213,13 +213,13 @@
 (defn make-event-fns [event out-queue]
   (let [event (compute-z-position event)]
     (list
-	;	#(run-actions (create-presnap-actions event))
-	;	#(await-for 10000 (device-agents (. mmc getCameraDevice)))
-	;	#(when-let [wait-time-ms (event :wait-time-ms)]
-	;	  (acq-sleep wait-time-ms))
-	;	#(when (:autofocus event)
-	;	  (store-z-correction (run-autofocus)))
-	;	#(snap-image true (:close-shutter event))
+		#(run-actions (create-presnap-actions event))
+		#(await-for 10000 (device-agents (. mmc getCameraDevice)))
+		#(when-let [wait-time-ms (event :wait-time-ms)]
+		  (acq-sleep wait-time-ms))
+		#(when (:autofocus event)
+		  (store-z-correction (run-autofocus)))
+		#(snap-image true (:close-shutter event))
 		#(collect-image event out-queue)
     )))
   
