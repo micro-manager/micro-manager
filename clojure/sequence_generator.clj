@@ -26,7 +26,10 @@
   :use-autofocus :autofocus-skip :relative-slices :exposure :interval-ms)
 
 (defn pairs [x]
-  (partition 2 1 (concat x [nil])))
+  (partition 2 1 (lazy-cat x (list nil))))
+
+(defn pairs-back [x]
+  (partition 2 1 (lazy-cat (list nil) x)))
 
 (defn make-dimensions [settings]
   (let [{:keys [slices channels frames positions
@@ -102,7 +105,15 @@
       (if (not= (:frame e1) (:frame e2))
         (assoc e2 :wait-time-ms interval-ms)
         e2))))
-
+        
+(defn burst-valid [e1 e2]
+  (and
+    (zero? (:wait-time-ms e2))
+    (every? identity
+      (map #(% e1 e2)
+        [:exposure :position :slice :channel])))
+    (not (:autofocus e2)))
+        
 (defn generate-acq-sequence [settings]
   (let [{:keys [slices keep-shutter-open-channels keep-shutter-open-slices
          use-autofocus autofocus-skip interval-ms]} settings]
