@@ -108,7 +108,7 @@
         
 (defn burst-valid [e1 e2]
   (and
-    (zero? (:wait-time-ms e2))
+    (#(or (nil? %) (zero? %)) (:wait-time-ms e2))
     (let [k [:exposure :position :slice :channel]]
       (= (select-keys e1 k) (select-keys e2 k)))
     (not (:autofocus e2))))
@@ -118,8 +118,9 @@
         ne (next events)
         [run later] (split-with #(burst-valid e1 %) ne)]
     (when e1
-      (if run
-        (lazy-cat (list (assoc e1 :task :init-burst))
+      (if (not (empty? run))
+        (lazy-cat (list (assoc e1 :task :init-burst
+                                  :burst-length (inc (count run))))
                 (map #(assoc % :task :collect-burst) run)
                 (make-bursts later))
         (lazy-cat (list e1) (make-bursts later))))))

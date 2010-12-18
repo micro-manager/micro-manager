@@ -191,8 +191,31 @@
     (. mmc setShutterOpen false))
     (. mmc waitForDevice (. mmc getShutterDevice)))
 
+(defn init-burst [length]
+  (. mmc startSequenceAcquisition length 0 false))
+
+(defn expose [event]
+  (do (condp = (:task event)
+    :snap (snap-image true (:close-shutter event))
+    :init-burst (init-burst (:burst-length event))
+    nil)))
+
+(defn collect-burst-image []
+  (while
+    (and
+      (. mmc isSequenceRunning)
+      (zero? (. mmc getRemainingImageCount))) (Thread/sleep 5))
+  (. mmc popNextImage))
+  
+(defn collect-snap-image []
+  (. mmc getImage))
+
 (defn collect-image [event out-queue]
-    (.put out-queue (annotate-image (. mmc getImage) event)))
+  (let [image (condp = (:task event)
+                :snap (collect-snap-image)
+                :init-burst (collect-burst-image)
+			    :collect-burst (collect-burst-image))]
+    (.put out-queue (annotate-image image event))))
   
 (defn store-z-correction [z event]
   (alter z-corrections assoc (get-in event [:position :label]) z))
@@ -219,7 +242,7 @@
 		  (acq-sleep wait-time-ms))
 		#(when (:autofocus event)
 		  (store-z-correction (run-autofocus)))
-		#(snap-image true (:close-shutter event))
+		#(expose event)
 		#(collect-image event out-queue)
     )))
   
