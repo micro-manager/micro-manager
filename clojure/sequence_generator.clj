@@ -109,10 +109,21 @@
 (defn burst-valid [e1 e2]
   (and
     (zero? (:wait-time-ms e2))
-    (every? identity
-      (map #(% e1 e2)
-        [:exposure :position :slice :channel])))
-    (not (:autofocus e2)))
+    (let [k [:exposure :position :slice :channel]]
+      (= (select-keys e1 k) (select-keys e2 k)))
+    (not (:autofocus e2))))
+        
+(defn make-bursts [events]
+  (let [e1 (first events)
+        ne (next events)
+        [run later] (split-with #(burst-valid e1 %) ne)]
+    (when e1
+      (if run
+        (lazy-cat (list (assoc e1 :task :init-burst))
+                (map #(assoc % :task :collect-burst) run)
+                (make-bursts later))
+        (lazy-cat (list e1) (make-bursts later))))))
+        
         
 (defn generate-acq-sequence [settings]
   (let [{:keys [slices keep-shutter-open-channels keep-shutter-open-slices
@@ -124,6 +135,7 @@
       (process-channel-skip-frames)
       (process-use-autofocus use-autofocus autofocus-skip)
       (process-wait-time interval-ms)
+      (make-bursts)
       )))
 
 ; Testing:
