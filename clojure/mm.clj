@@ -18,10 +18,13 @@
   (:import MMStudioPlugin
            [org.micromanager.navigation MultiStagePosition]
            [mmcorej Configuration]))
- 
-(def gui (MMStudioPlugin/getMMStudioMainFrameInstance))
-(def mmc (.getMMCore gui))
-(def acq (.getAcquisitionEngine gui))
+
+(declare gui)
+(declare mmc)
+
+(defn load-mm []
+  (def gui (MMStudioPlugin/getMMStudioMainFrameInstance))
+  (def mmc (.getMMCore gui)))
 
 (defn get-default-devices []
   {:camera          (. mmc getCameraDevice)

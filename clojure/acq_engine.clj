@@ -15,7 +15,7 @@
 ;               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
 (ns acq-engine
-  (:use [mm :only [mmc gui acq map-config get-config get-positions get-default-devices]]
+  (:use [mm :only [mmc gui map-config get-config get-positions get-default-devices]]
         [sequence-generator :only [generate-acq-sequence]])
   (:import [org.micromanager AcqControlDlg]
            [org.micromanager.api AcquisitionEngine]
@@ -141,9 +141,12 @@
       (Thread/sleep sleep-time)
       (reset! last-wake-time target-time))))
 
-(def device-agents
-  (let [devs (seq (. mmc getLoadedDevices))]
-    (zipmap devs (repeatedly (count devs) #(agent nil)))))
+(declare device-agents)
+
+(defn create-device-agents []
+  (def device-agents
+    (let [devs (seq (. mmc getLoadedDevices))]
+      (zipmap devs (repeatedly (count devs) #(agent nil))))))
 
 (defn get-z-stage-position [stage]
   (. mmc getPosition stage))
@@ -304,6 +307,8 @@
   (.show (AcqControlDlg. eng (Preferences/userNodeForPackage (.getClass gui)) gui)))
 
 (defn run-test []
+  (mm/load-mm)
+  (create-device-agents)
   (test-dialog (create-acq-eng)))
 
    
