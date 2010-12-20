@@ -19,7 +19,7 @@
 //
 // AUTHOR:        Karl Hoover
 //
-// CVS:           $Id: AsioClient.h 5772 2010-11-17 00:52:21Z karlh $
+// CVS:           $Id$
 //
 
 // PRE-REQUISITES: 
@@ -131,7 +131,7 @@ public:
       ReadStart(); 
    } 
 
-   bool WriteCharacters(const char* msg, int len)
+   bool WriteCharacters(const char* msg, size_t len)
    { 
       MMThreadGuard g(implementationLock_);
       return (len == boost::asio::write(  serialPortImplementation_, boost::asio::buffer(msg,len)));
