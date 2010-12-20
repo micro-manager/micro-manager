@@ -447,7 +447,9 @@ int XYStage::SetPositionUm(double x, double y)
   int ret = SendSerialCommand(port_.c_str(), "2 setdim", g_TxTerm);
   if (ret != DEVICE_OK) return ret;
   ret = SendSerialCommand(port_.c_str(), "1 1 setaxis", g_TxTerm);
+  if (ret != DEVICE_OK) return ret;
   ret = SendSerialCommand(port_.c_str(), "1 2 setaxis", g_TxTerm);
+  if (ret != DEVICE_OK) return ret;
 
    // format the command
    ostringstream cmd;
@@ -1023,6 +1025,8 @@ int ZStage::GetCommand(const string& cmd, string& response)
 
    char* pLF = 0;
    do {
+      if( bufLen - curIdx < 1)
+         return DEVICE_SERIAL_BUFFER_OVERRUN;
       if (DEVICE_OK != ReadFromComPort(port_.c_str(), reinterpret_cast<unsigned char *> (answer + curIdx), bufLen - curIdx, read))
          return DEVICE_SERIAL_COMMAND_FAILED;
       curIdx += read;
