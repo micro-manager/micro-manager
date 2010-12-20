@@ -199,8 +199,7 @@
 
 (defn init-burst [length]
   (. mmc setAutoShutter init-auto-shutter)
-  (. mmc startSequenceAcquisition length 0 false)
-  (. mmc setAutoShutter false))
+  (. mmc startSequenceAcquisition length 0 false))
 
 (defn expose [event]
   (do (condp = (:task event)
