@@ -41,7 +41,7 @@
 %apply int &OUTPUT { int &xSize };
 %apply int &OUTPUT { int &ySize };
 
-	
+
 // Java typemap
 // change deafult SWIG mapping of unsigned char* return values
 // to byte[]
@@ -115,7 +115,7 @@
 %typemap(jtype) void*      "Object"
 %typemap(jstype) void*     "Object"
 %typemap(javaout) void* {
-	return $jnicall;
+   return $jnicall;
 }
 %typemap(out) void*
 {
@@ -128,12 +128,12 @@
       if (data == 0)
       {
          jclass excep = jenv->FindClass("java/lang/Exception");
-		 if (excep)
-			jenv->ThrowNew(excep, "The system ran out of memory!");
+         if (excep)
+            jenv->ThrowNew(excep, "The system ran out of memory!");
 
-		$result = 0;
-		return $result;
-	  }
+         $result = 0;
+         return $result;
+      }
    
       // copy pixels from the image buffer
       JCALL4(SetByteArrayRegion, jenv, data, 0, lSize, (jbyte*)result);
@@ -147,11 +147,11 @@
       if (data == 0)
       {
          jclass excep = jenv->FindClass("java/lang/Exception");
-		 if (excep)
-			jenv->ThrowNew(excep, "The system ran out of memory!");
-		$result = 0;
-		return $result;
-	  }
+         if (excep)
+            jenv->ThrowNew(excep, "The system ran out of memory!");
+         $result = 0;
+         return $result;
+      }
   
       // copy pixels from the image buffer
       JCALL4(SetShortArrayRegion, jenv, data, 0, lSize, (jshort*)result);
@@ -165,12 +165,12 @@
       if (data == 0)
       {
          jclass excep = jenv->FindClass("java/lang/Exception");
-		 if (excep)
-			jenv->ThrowNew(excep, "The system ran out of memory!");
+         if (excep)
+            jenv->ThrowNew(excep, "The system ran out of memory!");
 
-		$result = 0;
-		return $result;
-	  }
+         $result = 0;
+         return $result;
+      }
    
       // copy pixels from the image buffer
       JCALL4(SetByteArrayRegion, jenv, data, 0, lSize * 4, (jbyte*)result);
@@ -184,11 +184,11 @@
       if (data == 0)
       {
          jclass excep = jenv->FindClass("java/lang/Exception");
-		 if (excep)
-			jenv->ThrowNew(excep, "The system ran out of memory!");
-		$result = 0;
-		return $result;
-	  }
+         if (excep)
+            jenv->ThrowNew(excep, "The system ran out of memory!");
+         $result = 0;
+         return $result;
+      }
   
       // copy pixels from the image buffer
       JCALL4(SetShortArrayRegion, jenv, data, 0, lSize * 4, (jshort*)result);
@@ -199,7 +199,7 @@
    else
    {
       // don't know how to map
-      // TODO: thow exception?
+      // TODO: throw exception?
       $result = 0;
    }
 }
@@ -219,7 +219,7 @@
 %typemap(jtype) unsigned int*      "Object"
 %typemap(jstype) unsigned int*     "Object"
 %typemap(javaout) unsigned int* {
-	return $jnicall;
+   return $jnicall;
 }
 %typemap(out) unsigned int*
 {
@@ -228,17 +228,17 @@
    
    if ((arg1)->getBytesPerPixel() == 1 && numComponents == 4)
    {
-	  // assuming RGB32 format
+      // assuming RGB32 format
       // create a new int[] object in Java
       jintArray data = JCALL1(NewIntArray, jenv, lSize);
       if (data == 0)
       {
          jclass excep = jenv->FindClass("java/lang/Exception");
-		 if (excep)
-			jenv->ThrowNew(excep, "The system ran out of memory!");
-		$result = 0;
-		return $result;
-	  }
+         if (excep)
+            jenv->ThrowNew(excep, "The system ran out of memory!");
+         $result = 0;
+         return $result;
+      }
   
       // copy pixels from the image buffer
       JCALL4(SetIntArrayRegion, jenv, data, 0, lSize, (jint*)result);
@@ -325,35 +325,35 @@
 //%typemap(javabase) MetadataIndexError "java.lang.Exception"
 
 %typemap(javaimports) CMMCore %{
-	import org.json.JSONObject;
+   import org.json.JSONObject;
 %}
 
 %typemap(javacode) CMMCore %{
-	private JSONObject metadataToMap(Metadata md) {
-		JSONObject tags = new JSONObject();
-		for (String key:md.getFrameKeys())
-			try {
-				tags.put(key,md.get(key));
-			} catch (Exception e) {} // Ignore	
-		return tags;
-	}
-	
-	private TaggedImage createTaggedImage(Object pixels, Metadata md) {
-		return new TaggedImage(pixels, metadataToMap(md));	
-	}
-	
-	public TaggedImage getLastTaggedImage() throws java.lang.Exception {
-		Metadata md = new Metadata();
-		Object pixels = getLastImageMD(md);
-		return createTaggedImage(pixels, md);
-	}
-	
-	public TaggedImage popNextTaggedImage() throws java.lang.Exception {
-		Metadata md = new Metadata();
-		Object pixels = popNextImageMD(md);
-		return createTaggedImage(pixels, md);
-	}
-	
+   private JSONObject metadataToMap(Metadata md) {
+      JSONObject tags = new JSONObject();
+      for (String key:md.getFrameKeys())
+         try {
+            tags.put(key,md.get(key));
+         } catch (Exception e) {} // Ignore	
+      return tags;
+    }
+
+   private TaggedImage createTaggedImage(Object pixels, Metadata md) {
+      return new TaggedImage(pixels, metadataToMap(md));	
+   }
+
+   public TaggedImage getLastTaggedImage() throws java.lang.Exception {
+      Metadata md = new Metadata();
+      Object pixels = getLastImageMD(md);
+      return createTaggedImage(pixels, md);
+   }
+   
+   public TaggedImage popNextTaggedImage() throws java.lang.Exception {
+      Metadata md = new Metadata();
+      Object pixels = popNextImageMD(md);
+     return createTaggedImage(pixels, md);
+   }
+
 %}
 
 
@@ -376,10 +376,10 @@
 %}
 
 %pragma(java) jniclassimports=%{
-	import java.io.File;
+   import java.io.File;
 
-  import java.util.ArrayList;
-  import java.util.List;
+   import java.util.ArrayList;
+   import java.util.List;
 %}
 
 %pragma(java) jniclasscode=%{
