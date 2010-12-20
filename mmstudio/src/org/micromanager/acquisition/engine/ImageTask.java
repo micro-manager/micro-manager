@@ -131,14 +131,17 @@ public class ImageTask implements EngineTask {
                   } else {
                      core_.setPosition(sp.stageName, sp.x);
                      core_.waitForDevice(sp.stageName);
-                     md_.put("Acquisition-"+sp.stageName+"RequestedZPosition", sp.x);
+                     md_.put("Acquisition-"+sp.stageName+"RequestedZPosition",
+                             sp.x);
                   }
 
                } else if (sp.numAxes == 2) {
                   core_.setXYPosition(sp.stageName, sp.x, sp.y);
                   core_.waitForDevice(sp.stageName);
-                  md_.put("Acquisition-"+sp.stageName+"RequestedXPosition", sp.x);
-                  md_.put("Acquisition-"+sp.stageName+"RequestedYPosition", sp.y);
+                  md_.put("Acquisition-"+sp.stageName+"RequestedXPosition",
+                          sp.x);
+                  md_.put("Acquisition-"+sp.stageName+"RequestedYPosition",
+                          sp.y);
                }
                log("position set\n");
             }
@@ -154,7 +157,8 @@ public class ImageTask implements EngineTask {
    public synchronized void sleep() {
       if (imageRequest_.UseFrame) {
          while (!stopRequested_ && eng_.lastWakeTime_ > 0) {
-            double sleepTime = (eng_.lastWakeTime_ + imageRequest_.WaitTime) - (System.nanoTime() / 1000000);
+            double sleepTime = (eng_.lastWakeTime_ + imageRequest_.WaitTime)
+                    - (System.nanoTime() / 1000000);
             if (sleepTime > 0) {
                try {
                   wait((long) sleepTime);
@@ -289,12 +293,14 @@ public class ImageTask implements EngineTask {
          Configuration config = core_.getSystemStateCache();
          MDUtils.addConfiguration(md_, config);
          if (imageRequest_.NextWaitTime > 0) {
-            long nextFrameTimeMs = (long) (imageRequest_.NextWaitTime + eng_.lastWakeTime_);
+            long nextFrameTimeMs = (long)
+                    (imageRequest_.NextWaitTime + eng_.lastWakeTime_);
             md_.put("NextFrameTimeMs", nextFrameTimeMs);
          }
          MDUtils.addRandomUUID(md_);
          md_.put("Time", iso8601modified.format(new Date()));
-         md_.put("Binning", core_.getProperty(core_.getCameraDevice(), "Binning"));
+         md_.put("Binning",
+                 core_.getProperty(core_.getCameraDevice(), "Binning"));
 
          TaggedImage taggedImage = new TaggedImage(pixels, md_);
          eng_.imageReceivingQueue_.put(taggedImage);
