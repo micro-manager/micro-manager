@@ -97,6 +97,7 @@
 (def start-time 0)
 (declare interrupt-requests)
 (declare z-corrections)
+(declare init-auto-shutter)
 
 ;; metadata
 
@@ -186,16 +187,20 @@
   (.. gui getAutofocusManager getDevice fullFocus))
 
 (defn snap-image [open-before close-after]
+  (. mmc setAutoShutter false)
   (if open-before
     (. mmc setShutterOpen true)
     (. mmc waitForDevice (. mmc getShutterDevice)))
   (. mmc snapImage)
   (if close-after
     (. mmc setShutterOpen false))
-    (. mmc waitForDevice (. mmc getShutterDevice)))
+    (. mmc waitForDevice (. mmc getShutterDevice))
+  (. mmc setAutoShutter init-auto-shutter))
 
 (defn init-burst [length]
-  (. mmc startSequenceAcquisition length 0 false))
+  (. mmc setAutoShutter init-auto-shutter)
+  (. mmc startSequenceAcquisition length 0 false)
+  (. mmc setAutoShutter false))
 
 (defn expose [event]
   (do (condp = (:task event)
@@ -265,10 +270,12 @@
   (binding [interrupt-requests (ref {:pause false :stop false})
             z-corrections (ref nil)
             last-wake-time (atom (clock-ms))
-            start-time (clock-ms)]
+            start-time (clock-ms)
+            init-auto-shutter (. mmc getAutoShutter)]
     (let [acq-seq (generate-acq-sequence settings)]
        (def acq-sequence acq-seq)
-       (execute (mapcat #(make-event-fns % out-queue) acq-seq)))))
+       (execute (mapcat #(make-event-fns % out-queue) acq-seq))
+       (. mmc setAutoShutter init-auto-shutter))))
   
 (defn convert-settings [^SequenceSettings settings]
   (-> settings
