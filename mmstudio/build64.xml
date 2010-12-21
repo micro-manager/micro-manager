@@ -22,6 +22,7 @@
 	<property name="swingx" value="../../3rdpartypublic/classext/swingx-0.9.5.jar"/>
 	<property name="swing_layout" value="../../3rdpartypublic/classext/swing-layout-1.0.4.jar"/>
 	<property name="commons_math" value="../../3rdpartypublic/classext/commons-math-2.0.jar"/>
+	<property name="clojure" value="../../3rdpartypublic/classext/clojure.jar"/>
 	<property name="MMCoreJ" value="../bin_x64/MMCoreJ.jar"/>
 	<property name="MMPluginDir-inst" value="${InstallRoot}/plugins/Micro-Manager"/>
 	<property name="BinRoot" value="../bin_x64"/>
@@ -36,7 +37,8 @@
 		<pathelement location="${MMPluginDir}/bsh-2.0b4.jar"/>
 		<pathelement location="${MMPluginDir}/swingx-0.9.5.jar"/>
 		<pathelement location="${MMPluginDir}/swing-layout-1.0.4.jar"/>
-    	<pathelement location="${MMPluginDir}/commons-math-2.0.jar"/>
+    <pathelement location="${MMPluginDir}/commons-math-2.0.jar"/>
+    <pathelement location="${MMPluginDir}/clojure.jar"/>
 		<pathelement location="${IJ}"/>
 	</path>
 
@@ -47,6 +49,7 @@
 		<pathelement location="${MMCoreJ}" />
 		<pathelement location="${swing_layout}" />
 		<pathelement location="${commons_math}" />
+		<pathelement location="${clojure}" />
 		<pathelement location="${MMPluginDir}/MMJ_.jar"/>
 	</path>
 
@@ -83,6 +86,7 @@
 		<copy file="${MMCoreJ}" todir="${MMPluginDir}" />
 		<copy file="${swing_layout}" todir="${MMPluginDir}" />
 		<copy file="${commons_math}" todir="${MMPluginDir}" />		
+		<copy file="${clojure}" todir="${MMPluginDir}" />	
 	</target>
 
 	<target name="buildMMReader" description="Build MMReader_.jar">
@@ -109,6 +113,7 @@
 		<copy file="${MMCoreJ}" todir="${MMPluginDir-inst}" />		
 		<copy file="${swing_layout}" todir="${MMPluginDir-inst}" />
 		<copy file="${commons_math}" todir="${MMPluginDir-inst}" />
+		<copy file="${clojure}" todir="${MMPluginDir-inst}" />
 		<copy file="${BinRoot}/MMCoreJ_wrap.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/LaunchMicroManager.bat" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/MMConfig_demo.cfg" todir="${InstallRoot}" />
