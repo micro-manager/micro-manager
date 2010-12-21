@@ -656,7 +656,6 @@ void CMMCore::unloadDevice(const char* label) throw (CMMError)
    MM::Device* pDevice = getDevice(label);
    
    try {
-      pluginManager_.UnloadDevice(pDevice);
    
       switch(pDevice->GetType())
       {
@@ -693,7 +692,8 @@ void CMMCore::unloadDevice(const char* label) throw (CMMError)
             // no action on unrecognized device
          break;
       }
-         
+      pluginManager_.UnloadDevice(pDevice);
+        
       
    }
    catch (CMMError& err) {
