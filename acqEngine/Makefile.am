@@ -1,10 +1,11 @@
-mm_clojure.jar:
-	mkdir classes
+MMAcqEngine.jar:
+	test -d classes || mkdir classes
+	rm -rf classes/*
 	cp -R src/org classes/
-	java -cp /Users/arthur/Programs/ImageJ/plugins/*:/Users/arthur/Programs/ImageJ/plugins/Micro-Manager/*:/Users/arthur/Programs/ImageJ/ij.jar:classes:./src -Dclojure.compile.path=classes -server clojure.lang.Compile org.micromanager.acq-engine
-	jar cvf mm_clojure.jar -C classes/ .
+	java -cp $(CLASSEXT)/clojure.jar:$(IJJARPATH):../mmstudio/MMJ_.jar:./src -Dclojure.compile.path=classes -server clojure.lang.Compile org.micromanager.acq-engine
+	jar cvf MMAcqEngine.jar -C classes/ .    
 
-all: mm_clojure.jar
+all: MMAcqEngine.jar
 
 install:
-	cp mm_clojure.jar $(DESTDIR)$(IJPATH)/plugins/
+	cp MMAcqEngine.jar $(DESTDIR)$(IJPATH)/plugins/Micro-Manager

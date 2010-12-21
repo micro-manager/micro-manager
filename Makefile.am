@@ -2,7 +2,7 @@ AUTOMAKE_OPTIONS = foreign
 ACLOCAL_AMFLAGS = -I m4
 
 if BUILD_WITH_JAVA
-MMJAVACODE = MMCoreJ_wrap mmstudio autofocus plugins scripts
+MMJAVACODE = MMCoreJ_wrap mmstudio acqEngine autofocus plugins scripts
 endif
 
 if BUILD_APP
