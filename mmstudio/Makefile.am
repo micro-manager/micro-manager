@@ -1,4 +1,4 @@
-## Process this file with automake to produce Makefile.in
+# Process this file with automake to produce Makefile.in
 MMJ_.jar:  \
 	$(srcdir)/src/MMStudioPlugin.java \
 	$(srcdir)/src/MANIFEST.MF \
@@ -137,7 +137,7 @@ MMJ_.jar:  \
 	test -d build || mkdir build
 	rm -rf build/*
 	cp $(srcdir)/bin/plugins_mmstudio.config build/plugins.config
-	$(JAVAC) -source 1.5 -target 1.5 -sourcepath ../MMCoreJ_wrap:$(srcdir)/src:../hcs/src:. -classpath $(IJJARPATH):$(BSHJARPATH):$(SWINGXJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):$(topsrcdir)/bin/MMCoreJ.jar:. $(srcdir)/src/*.java $(srcdir)/src/org/micromanager/utils/*.java -d build
+	$(JAVAC) -source 1.5 -target 1.5 -sourcepath ../MMCoreJ_wrap:$(srcdir)/src:../hcs/src:. -classpath $(IJJARPATH):$(BSHJARPATH):$(SWINGXJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):$(CLASSEXT)/clojure.jar:$(topsrcdir)/bin/MMCoreJ.jar:. $(srcdir)/src/*.java $(srcdir)/src/org/micromanager/utils/*.java -d build
 	cp -rf $(srcdir)/src/org/micromanager/icons build/org/micromanager
 	cp -rf $(srcdir)/src/org/micromanager/conf/*html build/org/micromanager/conf
 	## Work around bug in 'jar': jar cf MM_.jar -C bin/ bin/* does not work
@@ -155,10 +155,8 @@ install:
 	test -d $(DESTDIR)$(IJPATH)/plugins/Micro-Manager || mkdir -p $(DESTDIR)$(IJPATH)/plugins/Micro-Manager
 	cp MMJ_.jar $(DESTDIR)$(IJPATH)/plugins/Micro-Manager
 	cp $(IJJARPATH) $(DESTDIR)$(IJPATH)
-	cp $(SWINGXJARPATH) $(DESTDIR)$(IJPATH)/plugins/
-	cp $(BSHJARPATH) $(DESTDIR)$(IJPATH)/plugins/
-	cp $(COMMONSMATHJARPATH) $(DESTDIR)$(IJPATH)/plugins/
-	cp $(SWINGLAYOUTJARPATH) $(DESTDIR)$(IJPATH)/plugins/
+	cp $(CLASSEXT)/*.jar $(DESTDIR)$(IJPATH)/plugins/
+	rm $(DESTDIR)$(IJPATH)/plugins/ij.jar
 
 clean:
 	test -e MMJ_.jar && rm MMJ_.jar || echo "MMJ_.jar not found"
