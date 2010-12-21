@@ -544,21 +544,24 @@ MM::DeviceDetectionStatus ZeissScope::DetectDevice(void)
          // device specific default communication parameters
          GetCoreCallback()->SetDeviceProperty(g_hub.port_.c_str(), MM::g_Keyword_BaudRate, "9600" );
          GetCoreCallback()->SetDeviceProperty(g_hub.port_.c_str(), MM::g_Keyword_StopBits, "1");
-         GetCoreCallback()->SetDeviceProperty(g_hub.port_.c_str(), MM::g_Keyword_Handshaking, "Off");
          
          // we can speed up detection with shorter answer timeout here
          GetCoreCallback()->SetDeviceProperty(g_hub.port_.c_str(), "AnswerTimeout", "500.0");
          GetCoreCallback()->SetDeviceProperty(g_hub.port_.c_str(), "DelayBetweenCharsMs", "0.0");
-         MM::Device* pS = GetCoreCallback()->GetDevice(this, g_hub.port_.c_str());
 
          std::vector<std::string> handShakeSettings;
          handShakeSettings.push_back("Off");
-         handShakeSettings.push_back("Hardware");
+         //handShakeSettings.push_back("Hardware");  trying this without i/o partner hangs serial manager - both original windows version and boost asio verion !!!!!!
 
          for( std::vector<std::string>::iterator shakeSetIterator = handShakeSettings.begin();  
             shakeSetIterator != handShakeSettings.end(); 
             ++shakeSetIterator)
          {
+
+            GetCoreCallback()->SetDeviceProperty(g_hub.port_.c_str(), MM::g_Keyword_Handshaking, shakeSetIterator->c_str());
+
+            MM::Device* pS = GetCoreCallback()->GetDevice(this, g_hub.port_.c_str());
+
             pS->Initialize();
             std::string v;
             // GetVersion is also used during initialization
