@@ -55,7 +55,7 @@ public:
    { 
       do // just a scope for the guard
       {
-        // MMThreadGuard g(implementationLock_);
+         MMThreadGuard g(implementationLock_);
          if (! serialPortImplementation_.is_open()) 
          { 
             pSerialPortAdapter_->LogMessage( "Failed to open serial port" , false);
@@ -68,7 +68,7 @@ public:
          serialPortImplementation_.set_option(baud_option, anError); // set the baud rate after the port has been opened 
          if( !!anError)
             pSerialPortAdapter_->LogMessage(("error setting baud in AsioClient(): "+boost::lexical_cast<std::string,int>(anError.value()) + " " + anError.message()).c_str(), false);
-         
+
          // lexical_cast is useless here
          std::string sflow;
          switch( flow)
@@ -143,7 +143,7 @@ public:
       return (1 == boost::asio::write(  serialPortImplementation_, boost::asio::buffer(&msg,1)));
    } 
 
-   void Close() // call the DoClose function via the io service in the other thread 
+   void Close() // call the DoClose function via the io service
    { 
       if(active_)
       {
@@ -155,7 +155,7 @@ public:
 
    void Purge(void)
    {
-      // clear read and write buffers;
+      // clear read buffer;
       MMThreadGuard g(readBufferLock_);
       data_read_.clear();
    }
@@ -182,7 +182,7 @@ private:
    static const int max_read_length = 512; // maximum amount of data to read in one operation 
    void ReadStart(void) 
    { // Start an asynchronous read and call ReadComplete when it completes or fails 
-     MMThreadGuard g(implementationLock_);
+      MMThreadGuard g(implementationLock_);
       serialPortImplementation_.async_read_some(boost::asio::buffer(read_msg_, max_read_length), 
          boost::bind(&AsioClient::ReadComplete, 
          this, 
@@ -216,7 +216,7 @@ private:
    } 
 
 
-  
+
    void DoClose(const boost::system::error_code& error) 
    { // something has gone wrong, so close the socket & make this object inactive 
       if (error == boost::asio::error::operation_aborted) // if this call is the result of a timer cancel() 
