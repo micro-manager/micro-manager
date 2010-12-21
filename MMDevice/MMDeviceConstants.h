@@ -218,6 +218,7 @@ namespace MM {
       NoAction,
       BeforeGet,
       AfterSet,
+      AfterLoadSequence
    };
 
    enum PortType {

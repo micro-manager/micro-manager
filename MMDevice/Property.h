@@ -66,6 +66,7 @@ public:
    // Sequence
    virtual bool IsSequenceable() const = 0;
    virtual long GetSequenceMaxNrEvents() const = 0;
+   virtual void LoadSequence(std::vector<std::string> events) = 0;
 
 };
 
@@ -106,7 +107,6 @@ public:
 template <class T>
 class ActionEx : public ActionFunctor
 {
-	//typedef int (T::*PVCAMActionFP)(MM::PropertyBase*, MM::ActionType, uns32);
 private:
 	T* pObj_;
    int (T::*fpt_)(PropertyBase* pProp, ActionType eAct, long param);
@@ -194,6 +194,12 @@ public:
    void SetSequenceable(bool sequenceable);
    long GetSequenceMaxNrEvents() const {return sequenceMaxNrEvents_;}
    void SetSequenceMaxNrEvents(long maxNrEvents);
+   void LoadSequence(std::vector<std::string> events) {
+      sequenceEvents_ = events;
+      if (fpAction_)
+         fpAction_->Execute(this, AfterLoadSequence);
+   }
+   std::vector<std::string> GetSequence() {return sequenceEvents_;}
 
    // virtual API
    // ~~~~~~~~~~~
@@ -215,6 +221,7 @@ protected:
    double upperLimit_;
    long sequenceMaxNrEvents_;
    std::map<std::string, long> values_; // allowed values
+   std::vector<std::string> sequenceEvents_;
 };
 
 /**

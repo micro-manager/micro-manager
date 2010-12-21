@@ -415,8 +415,11 @@ public:
 
 
    /**
-    * Default implementation.
-    * Needs to be overriden by a device that has sequenceable properties!
+    * Loads a sequence of property values into the device
+    * This function will result in the "OnProperty" function in the device to be 
+    * called with the ActionType "AfterLoadSequence"
+    * @param name - property name
+    * @param events - sequence of property values
     */
    int LoadPropertySequence(const char* name, std::vector<std::string> events) const
    {
@@ -435,6 +438,7 @@ public:
          SetMorePropertyErrorInfo(name);
          return DEVICE_PROPERTY_NOT_SEQUENCEABLE;
       }
+      pProp->LoadSequence(events);
 
       return DEVICE_ERR_SEQUENCE_NOT_IMPLEMENTED;
    }
