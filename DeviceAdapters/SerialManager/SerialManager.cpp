@@ -144,11 +144,13 @@ bool SerialPortLister::portAccessible(const char* portName)
 }
 
 
+#ifdef WIN32
 const int MaxBuf = 100000;
 typedef struct 
 	{
 		char buffer[MaxBuf];
 } B100000;
+#endif
 
 
 
@@ -388,7 +390,6 @@ SerialPort::SerialPort(const char* portName) :
    verbose_(true)
 {
    //MMThreadGuard g(portLock_);
-   charsFoundBeyondTerminator_.clear();
 
    portName_ = portName;
 
@@ -790,7 +791,6 @@ int SerialPort::Read(unsigned char* buf, unsigned long bufLen, unsigned long& ch
 int SerialPort::Purge()
 {
    //MMThreadGuard g(portLock_);
-   charsFoundBeyondTerminator_.clear();
    pPort_->Purge();
    return DEVICE_OK;
 }

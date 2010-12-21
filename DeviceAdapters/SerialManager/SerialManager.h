@@ -144,7 +144,6 @@ private:
    AsioClient* pPort_;
    // the worker thread
    boost::thread* pThread_;
-   std::vector<char> charsFoundBeyondTerminator_;
    bool verbose_; // if false, turn off LogBinaryMessage even in Debug Log
 
 
