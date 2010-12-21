@@ -730,6 +730,8 @@ int XYStage::GetCommand(const string& cmd, string& response)
 
    char* pLF = 0;
    do {
+      if( bufLen <= curIdx )
+         return DEVICE_SERIAL_BUFFER_OVERRUN;
       if (DEVICE_OK != ReadFromComPort(port_.c_str(), reinterpret_cast<unsigned char *> (answer + curIdx), bufLen - curIdx, read))
          return DEVICE_SERIAL_COMMAND_FAILED;
       curIdx += read;
@@ -1025,7 +1027,7 @@ int ZStage::GetCommand(const string& cmd, string& response)
 
    char* pLF = 0;
    do {
-      if( bufLen - curIdx < 1)
+      if( bufLen <= curIdx )
          return DEVICE_SERIAL_BUFFER_OVERRUN;
       if (DEVICE_OK != ReadFromComPort(port_.c_str(), reinterpret_cast<unsigned char *> (answer + curIdx), bufLen - curIdx, read))
          return DEVICE_SERIAL_COMMAND_FAILED;
