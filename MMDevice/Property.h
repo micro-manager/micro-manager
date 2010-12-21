@@ -57,10 +57,16 @@ public:
    virtual bool Get(long& lVal) const = 0;
    virtual bool Get(std::string& strVal) const = 0;
 
+   // Limits
    virtual bool HasLimits() const = 0;
    virtual double GetLowerLimit() const = 0;
    virtual double GetUpperLimit() const = 0;
    virtual bool SetLimits(double lowerLimit, double upperLimit) = 0;
+
+   // Sequence
+   virtual bool IsSequenceable() const = 0;
+   virtual long GetSequenceMaxNrEvents() const = 0;
+
 };
 
 /**
@@ -115,7 +121,7 @@ public:
 };
 
 /**
- * Porperty API with most of the Property mechanism implemented.
+ * Property API with most of the Property mechanism implemented.
  */
 class Property : public PropertyBase
 {
@@ -127,6 +133,7 @@ public:
       hasData_(false),
       initStatus_(true),
       limits_(false),
+      sequenceable_(false),
       lowerLimit_(0.0),
       upperLimit_(0.0)
       {}      
@@ -183,6 +190,10 @@ public:
 
       return limits_;
    }
+   bool IsSequenceable() const {return sequenceable_;}
+   void SetSequenceable(bool sequenceable);
+   long GetSequenceMaxNrEvents() const {return sequenceMaxNrEvents_;}
+   void SetSequenceMaxNrEvents(long maxNrEvents);
 
    // virtual API
    // ~~~~~~~~~~~
@@ -199,8 +210,10 @@ protected:
    bool hasData_;
    bool initStatus_;
    bool limits_;
+   bool sequenceable_;
    double lowerLimit_;
    double upperLimit_;
+   long sequenceMaxNrEvents_;
    std::map<std::string, long> values_; // allowed values
 };
 

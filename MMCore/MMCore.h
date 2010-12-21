@@ -159,9 +159,14 @@ public:
    std::vector<std::string> getAllowedPropertyValues(const char* label, const char* propName) const throw (CMMError);
    bool isPropertyReadOnly(const char* label, const char* propName) const throw (CMMError);
    bool isPropertyPreInit(const char* label, const char* propName) const throw (CMMError);
+   bool isPropertySequenceable(const char* label, const char* propName) const throw (CMMError);
    bool hasPropertyLimits(const char* label, const char* propName) const throw (CMMError);
    double getPropertyLowerLimit(const char* label, const char* propName) const throw (CMMError);
    double getPropertyUpperLimit(const char* label, const char* propName) const throw (CMMError);
+   void startPropertySequence(const char* label, const char* propName) const throw (CMMError);
+   void stopPropertySequence(const char* label, const char* propName) const throw (CMMError);
+   long getPropertySequenceMaxLength(const char* label, const char* propName) const throw (CMMError);
+   void loadPropertySequence(const char* label, const char* propName, std::vector<std::string> eventSequence) const throw (CMMError);
    MM::PropertyType getPropertyType(const char* label, const char* propName) const throw (CMMError);
    MM::DeviceType getDeviceType(const char* label) throw (CMMError);
    bool deviceBusy(const char* deviceName) throw (CMMError);

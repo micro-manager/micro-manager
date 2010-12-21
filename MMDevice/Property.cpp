@@ -80,7 +80,17 @@ bool MM::Property::GetData(const char* value, long& data) const
    }
 }
 
- MM::Property& MM::Property::operator=(const MM::Property& rhs)
+void MM::Property::SetSequenceable(bool sequenceable)
+{
+   sequenceable_ = sequenceable;
+}
+
+void MM::Property::SetSequenceMaxNrEvents(long sequenceMaxNrEvents)
+{
+   sequenceMaxNrEvents_ = sequenceMaxNrEvents;
+}
+
+MM::Property& MM::Property::operator=(const MM::Property& rhs)
  {
     readOnly_ = rhs.readOnly_;
     values_ = rhs.values_;

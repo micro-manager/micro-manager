@@ -278,6 +278,11 @@ public:
       return DEVICE_OK;
    }
 
+   /**
+    * Provides lower limit for a property that has property limits
+    * @param name - property identifier (name)
+    * @param lowLimit - returns lower limit
+    */
    int GetPropertyLowerLimit(const char* name, double& lowLimit) const
    {
       MM::Property* pProp = properties_.Find(name);
@@ -291,6 +296,11 @@ public:
       return DEVICE_OK;
    }
 
+   /**
+    * Provides upper limit for a property that has property limits
+    * @param name - property identifier (name)
+    * @param hiLimit - returns upper limit
+    */
    int GetPropertyUpperLimit(const char* name, double& hiLimit) const
    {
       MM::Property* pProp = properties_.Find(name);
@@ -302,6 +312,131 @@ public:
       }
       hiLimit = pProp->GetUpperLimit();
       return DEVICE_OK;
+   }
+
+   /**
+   * Checks whether the property can be run in a sequence
+   * @param name - property identifier (name)
+   * @param sequenceable - sequenceable or not
+   */
+   int IsPropertySequenceable(const char* name, bool& sequenceable) const
+   {
+      MM::Property* pProp = properties_.Find(name);
+      if (!pProp)
+      {
+         // additional information for reporting invalid properties.
+         SetMorePropertyErrorInfo(name);
+         return DEVICE_INVALID_PROPERTY;
+      }
+      sequenceable = pProp->IsSequenceable();
+
+      return DEVICE_OK;
+   }
+
+   /**
+   * Provides the maximum number of events that can be executed by this sequenceable property
+   * @param name - property identifier (name)
+   * @param nrEvents - maximum number of events that can be handles by the device
+   */
+   int GetPropertySequenceMaxLength(const char* name, long& nrEvents) const
+   {
+      MM::Property* pProp = properties_.Find(name);
+      if (!pProp)
+      {
+         // additional information for reporting invalid properties.
+         SetMorePropertyErrorInfo(name);
+         return DEVICE_INVALID_PROPERTY;
+      }
+      bool sequenceable;
+      int ret = IsPropertySequenceable(name, sequenceable);
+      if (ret != DEVICE_OK)
+         return ret;
+      if (!sequenceable) {
+         SetMorePropertyErrorInfo(name);
+         return DEVICE_PROPERTY_NOT_SEQUENCEABLE;
+      }
+
+      nrEvents = pProp->GetSequenceMaxNrEvents();
+
+      return DEVICE_OK;
+   }
+   
+   /**
+    * Starts a (TTL-triggered) sequence for the given property
+    * Should be overridden by the device adapter (when a sequence is implemented)
+    * @param  name - property for which the sequence should be started
+    */
+   int StartPropertySequence(const char* name) const
+   {
+      MM::Property* pProp = properties_.Find(name);
+      if (!pProp)
+      {
+         // additional information for reporting invalid properties.
+         SetMorePropertyErrorInfo(name);
+         return DEVICE_INVALID_PROPERTY;
+      }
+      bool sequenceable;
+      int ret = IsPropertySequenceable(name, sequenceable);
+      if (ret != DEVICE_OK)
+         return ret;
+      if (!sequenceable) {
+         SetMorePropertyErrorInfo(name);
+         return DEVICE_PROPERTY_NOT_SEQUENCEABLE;
+      }
+
+      return DEVICE_ERR_SEQUENCE_NOT_IMPLEMENTED;
+   }
+
+   /**
+    * Stops a (TTL-triggered) sequence for the given property
+    * Should be overridden by the device adapter (when a sequence is implemented)
+    * @param  name - property for which the sequence should be started
+    */
+   int StopPropertySequence(const char* name) const
+   {
+      MM::Property* pProp = properties_.Find(name);
+      if (!pProp)
+      {
+         // additional information for reporting invalid properties.
+         SetMorePropertyErrorInfo(name);
+         return DEVICE_INVALID_PROPERTY;
+      }
+      bool sequenceable;
+      int ret = IsPropertySequenceable(name, sequenceable);
+      if (ret != DEVICE_OK)
+         return ret;
+      if (!sequenceable) {
+         SetMorePropertyErrorInfo(name);
+         return DEVICE_PROPERTY_NOT_SEQUENCEABLE;
+      }
+
+      return DEVICE_ERR_SEQUENCE_NOT_IMPLEMENTED;
+   }
+
+
+   /**
+    * Default implementation.
+    * Needs to be overriden by a device that has sequenceable properties!
+    */
+   int LoadPropertySequence(const char* name, std::vector<std::string> events) const
+   {
+      MM::Property* pProp = properties_.Find(name);
+      if (!pProp)
+      {
+         // additional information for reporting invalid properties.
+         SetMorePropertyErrorInfo(name);
+         return DEVICE_INVALID_PROPERTY;
+      }
+      bool sequenceable;
+      int ret = IsPropertySequenceable(name, sequenceable);
+      if (ret != DEVICE_OK)
+         return ret;
+      if (!sequenceable) {
+         SetMorePropertyErrorInfo(name);
+         return DEVICE_PROPERTY_NOT_SEQUENCEABLE;
+      }
+
+      return DEVICE_ERR_SEQUENCE_NOT_IMPLEMENTED;
    }
 
    /**

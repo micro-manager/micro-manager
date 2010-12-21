@@ -34,7 +34,7 @@
 // Header version
 // If any of the class declarations changes, the interface version
 // must be incremented
-#define DEVICE_INTERFACE_VERSION 36
+#define DEVICE_INTERFACE_VERSION 37
 ///////////////////////////////////////////////////////////////////////////////
 
 #pragma once
@@ -240,14 +240,19 @@ namespace MM {
       virtual bool HasProperty(const char* name) const = 0;
       virtual bool GetPropertyName(unsigned idx, char* name) const = 0;
       virtual int GetPropertyReadOnly(const char* name, bool& readOnly) const = 0;
+      virtual int IsPropertySequenceable(const char* name, bool& isSequenceable) const = 0;
       virtual int GetPropertyInitStatus(const char* name, bool& preInit) const = 0;
       virtual int HasPropertyLimits(const char* name, bool& hasLimits) const = 0;
       virtual int GetPropertyLowerLimit(const char* name, double& lowLimit) const = 0;
       virtual int GetPropertyUpperLimit(const char* name, double& hiLimit) const = 0;
       virtual int GetPropertyType(const char* name, MM::PropertyType& pt) const = 0;
-
       virtual unsigned GetNumberOfPropertyValues(const char* propertyName) const = 0;
       virtual bool GetPropertyValueAt(const char* propertyName, unsigned index, char* value) const = 0;
+      virtual int GetPropertySequenceMaxLength(const char* propertyName, long& nrEvents) const = 0;
+      virtual int StartPropertySequence(const char* propertyName) const = 0;
+      virtual int StopPropertySequence(const char* propertyName) const = 0;
+      virtual int LoadPropertySequence(const char* propertyName, std::vector<std::string> events) const = 0;
+
       virtual bool GetErrorText(int errorCode, char* errMessage) const = 0;
       virtual bool Busy() = 0;
       virtual double GetDelayMs() const = 0;

@@ -2608,6 +2608,8 @@ double CMMCore::getPropertyUpperLimit(const char* label, const char* propName) c
 
 /**
  * Queries device if the specific property has limits.
+ * @param label - devicename
+ * @param propName - propertyName
  */
 bool CMMCore::hasPropertyLimits(const char* label, const char* propName) const throw (CMMError)
 {
@@ -2631,6 +2633,153 @@ bool CMMCore::hasPropertyLimits(const char* label, const char* propName) const t
          throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
 
       return hasLimits;
+   }
+}
+
+/**
+ * Queries device if the specified property can be used in a sequence
+ * @param label - devicename
+ * @param propName - propertyName
+ */
+bool CMMCore::isPropertySequenceable(const char* label, const char* propName) const throw (CMMError)
+{
+   if (strcmp(label, MM::g_Keyword_CoreDevice) == 0)
+   {
+      return false;
+   }
+   else
+   {
+      MM::Device* pDevice;
+      try {
+         pDevice = pluginManager_.GetDevice(label);
+      } catch (CMMError& err) {
+         err.setCoreMsg(getCoreErrorText(err.getCode()).c_str());
+         throw;
+      }
+
+      bool isSequencable;
+      int ret = pDevice->IsPropertySequenceable(propName, isSequencable);
+      if (ret != DEVICE_OK)
+         throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
+
+      return isSequencable;
+   }
+}
+
+
+/**
+ * Queries device property for the maximum number of events that can be put in a sequence
+ * @param label - devicename
+ * @param propName - propertyName
+ */
+long CMMCore::getPropertySequenceMaxLength(const char* label, const char* propName) const throw (CMMError)
+{
+   if (strcmp(label, MM::g_Keyword_CoreDevice) == 0)
+   {
+      return 0;
+   }
+   else
+   {
+      MM::Device* pDevice;
+      try {
+         pDevice = pluginManager_.GetDevice(label);
+      } catch (CMMError& err) {
+         err.setCoreMsg(getCoreErrorText(err.getCode()).c_str());
+         throw;
+      }
+
+      long numEvents;
+      int ret = pDevice->GetPropertySequenceMaxLength(propName, numEvents);
+      if (ret != DEVICE_OK)
+         throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
+
+      return numEvents;
+   }
+}
+
+
+/**
+ * Starts an ongoing sequence of triggered events in a property of a device
+ * This should only be called for device-properties that are sequenceable
+ * @param label - deviceName
+ * @param propName - propertyName
+ */
+void CMMCore::startPropertySequence(const char* label, const char* propName) const throw (CMMError)
+{
+   if (strcmp(label, MM::g_Keyword_CoreDevice) == 0)
+   {
+      return;
+   }
+   else
+   {
+      MM::Device* pDevice;
+      try {
+         pDevice = pluginManager_.GetDevice(label);
+      } catch (CMMError& err) {
+         err.setCoreMsg(getCoreErrorText(err.getCode()).c_str());
+         throw;
+      }
+
+      int ret = pDevice->StartPropertySequence(propName);
+      if (ret != DEVICE_OK)
+         throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
+   }
+}
+
+/**
+ * Stops an ongoing sequence of triggered events in a property of a device
+ * This should only be called for device-properties that are sequenceable
+ * @param label - deviceName
+ * @param propName - propertyName
+ */
+void CMMCore::stopPropertySequence(const char* label, const char* propName) const throw (CMMError)
+{
+   if (strcmp(label, MM::g_Keyword_CoreDevice) == 0)
+   {
+      return;
+   }
+   else
+   {
+      MM::Device* pDevice;
+      try {
+         pDevice = pluginManager_.GetDevice(label);
+      } catch (CMMError& err) {
+         err.setCoreMsg(getCoreErrorText(err.getCode()).c_str());
+         throw;
+      }
+
+      int ret = pDevice->StopPropertySequence(propName);
+      if (ret != DEVICE_OK)
+         throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
+   }
+}
+
+/**
+ * Transfer a sequence of events/states/whatever to the device
+ * This should only be called for device-properties that are sequenceable
+ * @param label - deviceName
+ * @param propName - propertyName
+ * @param eventSequence - sequence of events/states that the device will execute in reponse to external triggers
+ */
+void CMMCore::loadPropertySequence(const char* label, const char* propName, std::vector<std::string> eventSequence) const throw (CMMError)
+{
+   if (strcmp(label, MM::g_Keyword_CoreDevice) == 0)
+   {
+      return;
+   }
+   else
+   {
+      MM::Device* pDevice;
+      try {
+         pDevice = pluginManager_.GetDevice(label);
+      } catch (CMMError& err) {
+         err.setCoreMsg(getCoreErrorText(err.getCode()).c_str());
+         throw;
+      }
+
+      int ret = pDevice->LoadPropertySequence(propName, eventSequence);
+      if (ret != DEVICE_OK)
+         throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
    }
 }
 
