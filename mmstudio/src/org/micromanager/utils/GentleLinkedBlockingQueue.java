@@ -20,11 +20,12 @@ public class GentleLinkedBlockingQueue<E> extends LinkedBlockingQueue<E> {
    @Override
    public void put(E e) throws InterruptedException {
       final int n = 1000 / 5; // Timeout after 1 second.
-      final long limitBytes = 5000000;
+      final long limitBytes = 20000000;
       for (int i = 0;
          (i<n) && (Runtime.getRuntime().freeMemory() < limitBytes);
          ++i) {
          JavaUtils.sleep(5);
+         System.out.println("GentleLinkedBlockingQueue sleep");
       }
       super.put(e);
    }*/

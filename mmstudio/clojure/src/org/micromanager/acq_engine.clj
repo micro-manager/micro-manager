@@ -295,6 +295,13 @@
            :channels (filter :use-channel (map ChannelSpec-to-map (.channels settings)))
            :positions (map MultiStagePosition-to-map (.positions settings)))))
 
+(defn run-pipeline [settings acq-eng]
+  (load-mm)
+  (create-device-agents)
+	(let [out-queue (GentleLinkedBlockingQueue.)]
+		(.start (Thread. #(run-acquisition (convert-settings settings) out-queue)))
+		(.start (LiveAcqDisplay. mmc out-queue settings (.channels settings) (.save settings) acq-eng))))
+
 (defn create-acq-eng []
   (doto
     (proxy [AcquisitionWrapperEngine] []
@@ -302,13 +309,10 @@
         (def orig-settings settings)
         (println "ss positions: " (.size (.positions settings)))
         (println "position-count: " (.getNumberOfPositions (.getPositionList gui)))
-        (let [out-queue (GentleLinkedBlockingQueue.)]
-          (.start (Thread. #(run-acquisition (convert-settings settings) out-queue)))
-          (.start (LiveAcqDisplay. mmc out-queue settings (.channels settings) (.save settings) this)))))
+				(run-pipeline settings this)
     (.setCore mmc (.getAutofocusManager gui))
     (.setParentGUI gui)
-    (.setPositionList (.getPositionList gui))
-    ))
+    (.setPositionList (.getPositionList gui))))))
 
 (defn test-dialog [eng]
   (.show (AcqControlDlg. eng (Preferences/userNodeForPackage (.getClass gui)) gui)))

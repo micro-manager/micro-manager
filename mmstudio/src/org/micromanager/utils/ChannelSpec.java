@@ -42,6 +42,7 @@ public class ChannelSpec {
    public double min_ = 65535;
    public double max_ = 0;
    public boolean useChannel_ = true;
+   public String camera_ = "";
    
    public ChannelSpec(){
       contrast8_ = new ContrastSettings(0, 255);

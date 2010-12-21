@@ -4,6 +4,9 @@
  */
 package org.micromanager.acquisition;
 
+import clojure.lang.RT;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.micromanager.acquisition.engine.BurstMaker;
 import java.awt.Color;
 import java.util.ArrayList;
@@ -74,13 +77,27 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private boolean absoluteZ_;
 
    public AcquisitionWrapperEngine() {
+      try {
+         RT.load("org/micromanager/acq_engine");
+      } catch (Exception ex) {
+         ReportingUtils.showError(ex);
+      }
       imageRequestProcessors_ = new ArrayList<Class>();
       imageRequestProcessors_.add(BurstMaker.class);
       taggedImageProcessors_ = new ArrayList<Class>();
    }
 
    public void acquire() throws MMException {
-         runPipeline(gatherSequenceSettings());
+      runPipeline(gatherSequenceSettings());
+   }
+
+   public void runPipeline2(SequenceSettings acquisitionSettings) {
+      try {
+         RT.var("org.micromanager.acq-engine", "run-pipeline")
+                 .invoke(acquisitionSettings, this);
+      } catch (Exception ex) {
+         ReportingUtils.showError(ex);
+      }
    }
 
    public void runPipeline(SequenceSettings acquisitionSettings) {
@@ -117,6 +134,27 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       }
    }
 
+   private void updateChannelCameras() {
+      for(ChannelSpec channel:channels_) {
+         channel.camera_ = getSource(channel);
+      }
+   }
+
+   private String getSource(ChannelSpec channel) {
+      PropertySetting setting;
+      try {
+         Configuration state = core_.getConfigGroupState(channel.config_);
+         if (state.isPropertyIncluded("Core", "Camera")) {
+            return state.getSetting("Core", "Camera").getPropertyValue();
+         } else {
+            return "";
+         }
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
+         return "";
+      }
+   }
+
 
    public void addImageProcessor(Class taggedImageProcessorClass) {
       taggedImageProcessors_.add(taggedImageProcessorClass);
@@ -128,6 +166,8 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    private SequenceSettings gatherSequenceSettings() {
       SequenceSettings acquisitionSettings = new SequenceSettings();
+
+      updateChannelCameras();
 
       // Frames
       if (useFrames_) {
