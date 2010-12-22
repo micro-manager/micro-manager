@@ -1199,7 +1199,7 @@ int Cdc1394::Initialize()
 bool Cdc1394::InitFeatureMode(dc1394feature_info_t &featureInfo, dc1394feature_t feature, const char *featureLabel, int (Cdc1394::*cb_onfeaturemode)(MM::PropertyBase*, MM::ActionType) )
 {
 	enum dcModes { NONE =0, OFF=1, MANUAL=2, ONE_PUSH=4, AUTO=8 };
-	dcModes modeAvail = NONE;
+	int modeAvail = NONE;
 	int dcModeCt = 0;
 	dc1394feature_mode_t modeDefault = DC1394_FEATURE_MODE_MANUAL;
 	
