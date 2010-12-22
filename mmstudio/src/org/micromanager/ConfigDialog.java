@@ -68,127 +68,127 @@ import org.micromanager.utils.ShowFlagsPanel;
 
 public class ConfigDialog extends MMDialog {
 
-	private static final long serialVersionUID = 5819669941239786807L;
+   private static final long serialVersionUID = 5819669941239786807L;
 
-	protected CMMCore core_;
-	protected MMStudioMainFrame gui_;
+   protected CMMCore core_;
+   protected MMStudioMainFrame gui_;
 
-	private JTable table_;
-	protected PropertyTableData data_;
-	private JScrollPane scrollPane_;
+   private JTable table_;
+   protected PropertyTableData data_;
+   private JScrollPane scrollPane_;
 
-	private ShowFlags flags_;
-	private ShowFlagsPanel showFlagsPanel_;
+   private ShowFlags flags_;
+   private ShowFlagsPanel showFlagsPanel_;
 
-	private SpringLayout springLayout_;
-	private JTextArea textArea_;
+   private SpringLayout springLayout_;
+   private JTextArea textArea_;
    private JCheckBox showReadonlyCheckBox_;
    protected boolean showShowReadonlyCheckBox_ = false;
-	protected JTextField nameField_;
-	private JLabel nameFieldLabel_;
+   protected JTextField nameField_;
+   private JLabel nameFieldLabel_;
 
-	private JButton okButton_;
-	private JButton cancelButton_;
+   private JButton okButton_;
+   private JButton cancelButton_;
 
-	protected String TITLE = "";
-	protected String instructionsText_ = "Instructions go here.";
-	protected String nameFieldLabelText_ = "GroupOrPreset Name";
-	protected String initName_ = "";
+   protected String TITLE = "";
+   protected String instructionsText_ = "Instructions go here.";
+   protected String nameFieldLabelText_ = "GroupOrPreset Name";
+   protected String initName_ = "";
 
-	protected String groupName_;
-	protected String presetName_;
+   protected String groupName_;
+   protected String presetName_;
 
-	protected Boolean showUnused_ = true;
-	protected int numColumns = 3;
+   protected Boolean showUnused_ = true;
+   protected int numColumns = 3;
 
-	protected boolean newItem_ = true;
-	protected boolean showFlagsPanelVisible = true;
+   protected boolean newItem_ = true;
+   protected boolean showFlagsPanelVisible = true;
 
-	protected int scrollPaneTop_;
+   protected int scrollPaneTop_;
 
-	public ConfigDialog(String groupName, String presetName, MMStudioMainFrame gui, CMMCore core, boolean newItem) {
-		super();
-		addWindowListener(new WindowAdapter() {
-			public void windowClosing(WindowEvent arg0) {
-				savePosition();
-			}
-		});
-		groupName_ = groupName;
-		presetName_ = presetName;
-		newItem_ = newItem;
-		gui_ = gui;
-		core_ = core;
-		springLayout_ = new SpringLayout();
-		getContentPane().setLayout(springLayout_);
-		setBounds(100, 100, 550, 600);
-	    Rectangle r = getBounds();
-	    this.loadPosition(r.x, r.y);
-	      
-		setResizable(false);
-	}
+   public ConfigDialog(String groupName, String presetName, MMStudioMainFrame gui, CMMCore core, boolean newItem) {
+      super();
+      addWindowListener(new WindowAdapter() {
+         public void windowClosing(WindowEvent arg0) {
+            savePosition();
+         }
+      });
+      groupName_ = groupName;
+      presetName_ = presetName;
+      newItem_ = newItem;
+      gui_ = gui;
+      core_ = core;
+      springLayout_ = new SpringLayout();
+      getContentPane().setLayout(springLayout_);
+      setBounds(100, 100, 550, 600);
+       Rectangle r = getBounds();
+       this.loadPosition(r.x, r.y);
+         
+      setResizable(false);
+   }
 
-	public void initialize() {
-		initializePropertyTable();
-		initializeWidgets();
-		initializeFlags();
-		setupKeys();
-		setVisible(true);
-		this.setTitle(TITLE);
-		nameField_.requestFocus();
-		setFocusable(true);
-		update();
-	}
-	
-	
-	/*
-	 * Assign ENTER and ESCAPE keystrokes to be equivalent to OK and Cancel buttons, respectively.
-	 */
-	@SuppressWarnings("serial")
-	protected void setupKeys() {
-		// Get the InputMap and ActionMap of the RootPane of this JDialog.
-		JRootPane rootPane = this.getRootPane();
-		InputMap inputMap = rootPane.getInputMap( JComponent.WHEN_IN_FOCUSED_WINDOW);
-		ActionMap actionMap = rootPane.getActionMap();
-		
-		// Setup ENTER key.
-		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "enter");
-		actionMap.put("enter", new AbstractAction()	{
-			public void actionPerformed(ActionEvent e)
-			{
-				okChosen();
-			}
-		});
+   public void initialize() {
+      initializePropertyTable();
+      initializeWidgets();
+      initializeFlags();
+      setupKeys();
+      setVisible(true);
+      this.setTitle(TITLE);
+      nameField_.requestFocus();
+      setFocusable(true);
+      update();
+   }
+   
+   
+   /*
+    * Assign ENTER and ESCAPE keystrokes to be equivalent to OK and Cancel buttons, respectively.
+    */
+   @SuppressWarnings("serial")
+   protected void setupKeys() {
+      // Get the InputMap and ActionMap of the RootPane of this JDialog.
+      JRootPane rootPane = this.getRootPane();
+      InputMap inputMap = rootPane.getInputMap( JComponent.WHEN_IN_FOCUSED_WINDOW);
+      ActionMap actionMap = rootPane.getActionMap();
+      
+      // Setup ENTER key.
+      inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "enter");
+      actionMap.put("enter", new AbstractAction()  {
+         public void actionPerformed(ActionEvent e)
+         {
+            okChosen();
+         }
+      });
 
-		// Setup ESCAPE key.
-		inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "escape");
-		actionMap.put("escape", new AbstractAction()	{
-			public void actionPerformed(ActionEvent e)
-			{
-				cancelChosen();
-			}
-		});
+      // Setup ESCAPE key.
+      inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), "escape");
+      actionMap.put("escape", new AbstractAction() {
+         public void actionPerformed(ActionEvent e)
+         {
+            cancelChosen();
+         }
+      });
 
-		// Stop table_ from consuming the ENTER keystroke and preventing it from being received by this (JDialog).
-		table_.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "none");
-	}
+      // Stop table_ from consuming the ENTER keystroke and preventing it from being received by this (JDialog).
+      table_.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "none");
+   }
 
-	public void initializeData() {
-		data_.setGUI(gui_);
-		data_.setShowUnused(showUnused_);
-	}
+   public void initializeData() {
+      data_.setGUI(gui_);
+      data_.setShowUnused(showUnused_);
+   }
 
-	protected void initializeWidgets() {
-		textArea_ = new JTextArea();
-		textArea_.setFont(new Font("Arial", Font.PLAIN, 12));
-		textArea_.setWrapStyleWord(true);
-		textArea_.setText(instructionsText_);
-		textArea_.setEditable(false);
-		textArea_.setOpaque(false);
-		getContentPane().add(textArea_);
-		springLayout_.putConstraint(SpringLayout.EAST, textArea_, 250, SpringLayout.WEST, getContentPane());
-		springLayout_.putConstraint(SpringLayout.WEST, textArea_, 5, SpringLayout.WEST, getContentPane());
-		springLayout_.putConstraint(SpringLayout.SOUTH, textArea_, 37, SpringLayout.NORTH, getContentPane());
-		springLayout_.putConstraint(SpringLayout.NORTH, textArea_, 5, SpringLayout.NORTH, getContentPane());
+   protected void initializeWidgets() {
+      textArea_ = new JTextArea();
+      textArea_.setFont(new Font("Arial", Font.PLAIN, 12));
+      textArea_.setWrapStyleWord(true);
+      textArea_.setText(instructionsText_);
+      textArea_.setEditable(false);
+      textArea_.setOpaque(false);
+      getContentPane().add(textArea_);
+      springLayout_.putConstraint(SpringLayout.EAST, textArea_, 250, SpringLayout.WEST, getContentPane());
+      springLayout_.putConstraint(SpringLayout.WEST, textArea_, 5, SpringLayout.WEST, getContentPane());
+      springLayout_.putConstraint(SpringLayout.SOUTH, textArea_, 37, SpringLayout.NORTH, getContentPane());
+      springLayout_.putConstraint(SpringLayout.NORTH, textArea_, 5, SpringLayout.NORTH, getContentPane());
 
       if (showShowReadonlyCheckBox_) {
          showReadonlyCheckBox_ = new JCheckBox();
@@ -209,79 +209,79 @@ public class ConfigDialog extends MMDialog {
          springLayout_.putConstraint(SpringLayout.SOUTH, showReadonlyCheckBox_, 70, SpringLayout.NORTH, getContentPane());
       }
 
-		nameField_ = new JTextField();
-		nameField_.setText(initName_);
-		nameField_.setEditable(true);
-		nameField_.setSelectionStart(0);
-		nameField_.setSelectionEnd(nameField_.getText().length());
-		getContentPane().add(nameField_);
-		springLayout_.putConstraint(SpringLayout.EAST, nameField_, 280, SpringLayout.WEST, getContentPane());
-		springLayout_.putConstraint(SpringLayout.WEST, nameField_, 95, SpringLayout.WEST, getContentPane());
-		springLayout_.putConstraint(SpringLayout.SOUTH, nameField_, -3, SpringLayout.NORTH, scrollPane_);
-		springLayout_.putConstraint(SpringLayout.NORTH, nameField_, -30, SpringLayout.NORTH, scrollPane_);
+      nameField_ = new JTextField();
+      nameField_.setText(initName_);
+      nameField_.setEditable(true);
+      nameField_.setSelectionStart(0);
+      nameField_.setSelectionEnd(nameField_.getText().length());
+      getContentPane().add(nameField_);
+      springLayout_.putConstraint(SpringLayout.EAST, nameField_, 280, SpringLayout.WEST, getContentPane());
+      springLayout_.putConstraint(SpringLayout.WEST, nameField_, 95, SpringLayout.WEST, getContentPane());
+      springLayout_.putConstraint(SpringLayout.SOUTH, nameField_, -3, SpringLayout.NORTH, scrollPane_);
+      springLayout_.putConstraint(SpringLayout.NORTH, nameField_, -30, SpringLayout.NORTH, scrollPane_);
 
-		nameFieldLabel_ = new JLabel();
-		nameFieldLabel_.setText(nameFieldLabelText_);
-		nameFieldLabel_.setFont(new Font("Arial",Font.BOLD,12));
-		nameFieldLabel_.setHorizontalAlignment(SwingConstants.RIGHT);
-		getContentPane().add(nameFieldLabel_);
-		springLayout_.putConstraint(SpringLayout.EAST, nameFieldLabel_, 90, SpringLayout.WEST, getContentPane());
-		springLayout_.putConstraint(SpringLayout.WEST, nameFieldLabel_, 5, SpringLayout.WEST, getContentPane());
-		springLayout_.putConstraint(SpringLayout.SOUTH, nameFieldLabel_, -3, SpringLayout.NORTH, scrollPane_);
-		springLayout_.putConstraint(SpringLayout.NORTH, nameFieldLabel_, -30, SpringLayout.NORTH, scrollPane_);
+      nameFieldLabel_ = new JLabel();
+      nameFieldLabel_.setText(nameFieldLabelText_);
+      nameFieldLabel_.setFont(new Font("Arial",Font.BOLD,12));
+      nameFieldLabel_.setHorizontalAlignment(SwingConstants.RIGHT);
+      getContentPane().add(nameFieldLabel_);
+      springLayout_.putConstraint(SpringLayout.EAST, nameFieldLabel_, 90, SpringLayout.WEST, getContentPane());
+      springLayout_.putConstraint(SpringLayout.WEST, nameFieldLabel_, 5, SpringLayout.WEST, getContentPane());
+      springLayout_.putConstraint(SpringLayout.SOUTH, nameFieldLabel_, -3, SpringLayout.NORTH, scrollPane_);
+      springLayout_.putConstraint(SpringLayout.NORTH, nameFieldLabel_, -30, SpringLayout.NORTH, scrollPane_);
 
-		okButton_ = new JButton("OK");
-		getContentPane().add(okButton_);
-		springLayout_.putConstraint(SpringLayout.EAST, okButton_, -5, SpringLayout.EAST, getContentPane());
-		springLayout_.putConstraint(SpringLayout.WEST, okButton_, -105, SpringLayout.EAST, getContentPane());
-		springLayout_.putConstraint(SpringLayout.SOUTH, okButton_, 30, SpringLayout.NORTH, getContentPane());
-		springLayout_.putConstraint(SpringLayout.NORTH, okButton_, 5, SpringLayout.NORTH, getContentPane());
-		okButton_.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				okChosen();
-			}
-		});
+      okButton_ = new JButton("OK");
+      getContentPane().add(okButton_);
+      springLayout_.putConstraint(SpringLayout.EAST, okButton_, -5, SpringLayout.EAST, getContentPane());
+      springLayout_.putConstraint(SpringLayout.WEST, okButton_, -105, SpringLayout.EAST, getContentPane());
+      springLayout_.putConstraint(SpringLayout.SOUTH, okButton_, 30, SpringLayout.NORTH, getContentPane());
+      springLayout_.putConstraint(SpringLayout.NORTH, okButton_, 5, SpringLayout.NORTH, getContentPane());
+      okButton_.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent e) {
+            okChosen();
+         }
+      });
 
 
-		cancelButton_ = new JButton("Cancel");
-		getContentPane().add(cancelButton_);
-		springLayout_.putConstraint(SpringLayout.EAST, cancelButton_, -5, SpringLayout.EAST, getContentPane());
-		springLayout_.putConstraint(SpringLayout.WEST, cancelButton_, -105, SpringLayout.EAST, getContentPane());
-		springLayout_.putConstraint(SpringLayout.SOUTH, cancelButton_, 57, SpringLayout.NORTH, getContentPane());
-		springLayout_.putConstraint(SpringLayout.NORTH, cancelButton_, 32, SpringLayout.NORTH, getContentPane());
-		cancelButton_.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				cancelChosen();
-			}
-		});
-	}
+      cancelButton_ = new JButton("Cancel");
+      getContentPane().add(cancelButton_);
+      springLayout_.putConstraint(SpringLayout.EAST, cancelButton_, -5, SpringLayout.EAST, getContentPane());
+      springLayout_.putConstraint(SpringLayout.WEST, cancelButton_, -105, SpringLayout.EAST, getContentPane());
+      springLayout_.putConstraint(SpringLayout.SOUTH, cancelButton_, 57, SpringLayout.NORTH, getContentPane());
+      springLayout_.putConstraint(SpringLayout.NORTH, cancelButton_, 32, SpringLayout.NORTH, getContentPane());
+      cancelButton_.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent e) {
+            cancelChosen();
+         }
+      });
+   }
 
-	protected void initializeFlags() {
-		flags_ = new ShowFlags();
+   protected void initializeFlags() {
+      flags_ = new ShowFlags();
 
-		if (showFlagsPanelVisible ) {
-			flags_.load(getPrefsNode());
-			Configuration cfg;
-			try {
-				if (presetName_.length()==0)
-					cfg = new Configuration();
-				else
-					cfg = core_.getConfigState(groupName_, presetName_);
-				showFlagsPanel_ = new ShowFlagsPanel(data_,flags_,core_,cfg);
-			} catch (Exception e) {
-				ReportingUtils.showError(e);
-			}
-			getContentPane().add(showFlagsPanel_);
-			springLayout_.putConstraint(SpringLayout.EAST, showFlagsPanel_, 440, SpringLayout.WEST, getContentPane());
-			springLayout_.putConstraint(SpringLayout.WEST, showFlagsPanel_, 290, SpringLayout.WEST, getContentPane());
-			springLayout_.putConstraint(SpringLayout.SOUTH, showFlagsPanel_, 135, SpringLayout.NORTH, getContentPane());
-			springLayout_.putConstraint(SpringLayout.NORTH, showFlagsPanel_, 5, SpringLayout.NORTH, getContentPane());
-		}
+      if (showFlagsPanelVisible ) {
+         flags_.load(getPrefsNode());
+         Configuration cfg;
+         try {
+            if (presetName_.length()==0)
+               cfg = new Configuration();
+            else
+               cfg = core_.getConfigState(groupName_, presetName_);
+            showFlagsPanel_ = new ShowFlagsPanel(data_,flags_,core_,cfg);
+         } catch (Exception e) {
+            ReportingUtils.showError(e);
+         }
+         getContentPane().add(showFlagsPanel_);
+         springLayout_.putConstraint(SpringLayout.EAST, showFlagsPanel_, 440, SpringLayout.WEST, getContentPane());
+         springLayout_.putConstraint(SpringLayout.WEST, showFlagsPanel_, 290, SpringLayout.WEST, getContentPane());
+         springLayout_.putConstraint(SpringLayout.SOUTH, showFlagsPanel_, 135, SpringLayout.NORTH, getContentPane());
+         springLayout_.putConstraint(SpringLayout.NORTH, showFlagsPanel_, 5, SpringLayout.NORTH, getContentPane());
+      }
 
-		data_.setFlags(flags_);
-	}
+      data_.setFlags(flags_);
+   }
 
-	public void initializePropertyTable() {
+   public void initializePropertyTable() {
         scrollPane_ = new JScrollPane();
         scrollPane_.setFont(new Font("Arial", Font.PLAIN, 10));
         scrollPane_.setBorder(new BevelBorder(BevelBorder.LOWERED));
@@ -311,29 +311,29 @@ public class ConfigDialog extends MMDialog {
             table_.addColumn(new TableColumn(1, 200, new PropertyValueCellRenderer(false), new PropertyValueCellEditor(false)));
         }
  
-	}
+   }
 
-	public void okChosen() {
-	}
+   public void okChosen() {
+   }
 
-	public void cancelChosen() {
-		this.dispose();
-	}
+   public void cancelChosen() {
+      this.dispose();
+   }
 
-	public void dispose() {
-		super.dispose();
-		savePosition();
-		gui_.refreshGUI();
-		gui_.selectConfigGroup(groupName_);
-	}
+   public void dispose() {
+      super.dispose();
+      savePosition();
+      gui_.refreshGUI();
+      gui_.selectConfigGroup(groupName_);
+   }
 
-	public void update() {
-		data_.update();
-	}
+   public void update() {
+      data_.update();
+   }
 
-	
-	public void showMessageDialog(String message) {
-		JOptionPane.showMessageDialog(this, message);
-	}
+   
+   public void showMessageDialog(String message) {
+      JOptionPane.showMessageDialog(this, message);
+   }
 
 }
