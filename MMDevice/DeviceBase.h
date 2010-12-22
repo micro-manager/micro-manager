@@ -441,7 +441,7 @@ public:
       }
 
       if (events.size() >= pProp->GetSequenceMaxSize())
-         return DEVICE_SEQUENCE_TOO_LARGE
+         return DEVICE_SEQUENCE_TOO_LARGE;
 
       return pProp->LoadSequence(events);
    }
