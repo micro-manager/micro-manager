@@ -166,7 +166,8 @@
 (defn create-presnap-actions [event]
   (concat
     (when-let [z-drive (:z-drive event)]
-      (list [z-drive #(set-stage-position z-drive (:z event))]))
+      (when-let [z (:z event)]
+        (list [z-drive #(set-stage-position z-drive z)])))
     (for [[axis pos] (get-in event [:position :axes])]
       [axis #(apply set-stage-position axis pos)])
     (for [prop (get-in event [:channel :properties])]
@@ -244,14 +245,15 @@
 (defn make-event-fns [event out-queue]
   (let [event (compute-z-position event)]
     (list
-		#(run-actions (create-presnap-actions event))
-		#(await-for 10000 (device-agents (. mmc getCameraDevice)))
-		#(when-let [wait-time-ms (event :wait-time-ms)]
-		  (acq-sleep wait-time-ms))
-		#(when (:autofocus event)
-		  (store-z-correction (run-autofocus)))
-		#(expose event)
-		#(collect-image event out-queue)
+      ;#(println event)  
+      #(run-actions (create-presnap-actions event))
+      #(await-for 10000 (device-agents (. mmc getCameraDevice)))
+      #(when-let [wait-time-ms (event :wait-time-ms)]
+        (acq-sleep wait-time-ms))
+      #(when (:autofocus event)
+        (store-z-correction (run-autofocus)))
+      #(expose event)
+      #(collect-image event out-queue)
     )))
   
 (defn execute [event-fns]
