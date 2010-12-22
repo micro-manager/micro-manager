@@ -172,8 +172,8 @@
       [axis #(apply set-stage-position axis pos)])
     (for [prop (get-in event [:channel :properties])]
       [(prop 0) #(.setProperty mmc (prop 0) (prop 1) (prop 2))])
-    (list (when-let [exposure (:exposure event)]
-      [(. mmc getCameraDevice) #(. mmc setExposure exposure)]))))
+    (when-let [exposure (:exposure event)]
+      (list [(. mmc getCameraDevice) #(. mmc setExposure exposure)]))))
 
 (defn run-actions [action-map]
   (if run-devices-parallel

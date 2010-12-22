@@ -134,7 +134,7 @@
   (let [{:keys [slices keep-shutter-open-channels keep-shutter-open-slices
          use-autofocus autofocus-skip interval-ms]} settings]
     (-> (make-main-loops settings)
-      (#(map (comp assign-z-drive assign-exposure) %))
+      ;(#(map (comp assign-z-drive assign-exposure) %))
       (process-skip-z-stack slices)
       (manage-shutter keep-shutter-open-channels keep-shutter-open-slices)
       (process-channel-skip-frames)
