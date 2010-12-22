@@ -54,8 +54,12 @@
 (defn make-main-loops [settings]
   (create-loops (make-dimensions settings)))
 
-(defn assign-z-drive [events]
-  (map #(assoc % :z-drive (:focus (get-default-devices))) events))
+(defn assign-z-drive [event]
+  (assoc event :z-drive (:focus (get-default-devices))))
+  
+(defn assign-exposure [event]
+  (if (:channel event)
+    (assoc event :exposure (get-in event [:channel :exposure]))))
 
 (defn process-skip-z-stack [events slices]
   (if (pos? (count slices))
@@ -130,7 +134,7 @@
   (let [{:keys [slices keep-shutter-open-channels keep-shutter-open-slices
          use-autofocus autofocus-skip interval-ms]} settings]
     (-> (make-main-loops settings)
-      (assign-z-drive)
+      (#(map (comp assign-z-drive assign-exposure) %))
       (process-skip-z-stack slices)
       (manage-shutter keep-shutter-open-channels keep-shutter-open-slices)
       (process-channel-skip-frames)
