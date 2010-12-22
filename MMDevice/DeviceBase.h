@@ -1812,7 +1812,45 @@ public:
          int ret = SetPosition(label.c_str());
          if (ret != DEVICE_OK)
             return ret;
+      } 
+      else if (eAct == MM::IsSequenceable)
+      {
+         assert(this->HasProperty(MM::g_Keyword_State));
+         bool sequenceable;
+         int ret = this->IsPropertySequenceable(MM::g_Keyword_State, sequenceable);
+         if (ret != DEVICE_OK)
+            return ret;
+         if (sequenceable) {
+            long nrEvents;
+            ret =  this->GetPropertySequenceMaxLength(MM::g_Keyword_State, nrEvents);
+            if (ret != DEVICE_OK)
+               return ret;
+            pProp->SetSequenceable(nrEvents);
+         }
       }
+      else if (eAct == MM::AfterLoadSequence) {
+         assert(this->HasProperty(MM::g_Keyword_State));
+         std::vector<std::string> sequence = pProp->GetSequence();
+         for (std::vector<std::string>::iterator it = sequence.begin(); it != sequence.end(); ++it) {
+            long pos;
+            int ret = GetLabelPosition((*it).c_str(), pos);
+            if (ret != DEVICE_OK)
+               return ret;
+            std::stringstream s;
+            s << pos;
+            s >> *it;
+         }
+         this->LoadPropertySequence(MM::g_Keyword_State, sequence);
+      }
+      else if (eAct == MM::StartSequence) {
+         assert(this->HasProperty(MM::g_Keyword_State));
+         return this->StartPropertySequence(MM::g_Keyword_State);
+      }
+      else if (eAct == MM::StopSequence) {
+         assert(this->HasProperty(MM::g_Keyword_State));
+         return this->StopPropertySequence(MM::g_Keyword_State);
+      }
+
       return DEVICE_OK;
    }
 
