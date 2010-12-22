@@ -41,6 +41,8 @@
 //
 #define ERR_UNKNOWN_MODE         102
 #define ERR_UNKNOWN_POSITION     103
+#define ERR_IN_SEQUENCE          104
+#define ERR_SEQUENCE_INACTIVE    105
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -260,14 +262,25 @@ public:
    bool Busy() {return busy_;}
    unsigned long GetNumberOfPositions()const {return numPos_;}
 
+
+   // Sequence related functions
+   int IsPropertySequenceable(const char* name, bool& isSequenceable);
+   int StartPropertySequence(const char* propertyName);
+   int StopPropertySequence(const char* propertyName);
+
    // action interface
    // ----------------
    int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnTrigger(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    long numPos_;
    bool busy_;
    bool initialized_;
+   bool sequenceRunning_;
+   int sequenceMaxSize_;
+   int sequenceIndex_;
+   std::vector<std::string> sequence_;
    long position_;
 };
 

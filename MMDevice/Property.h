@@ -64,9 +64,11 @@ public:
    virtual bool SetLimits(double lowerLimit, double upperLimit) = 0;
 
    // Sequence
-   virtual bool IsSequenceable() const = 0;
-   virtual long GetSequenceMaxNrEvents() const = 0;
-   virtual void LoadSequence(std::vector<std::string> events) = 0;
+   // virtual bool IsSequenceable() const = 0;
+   // virtual long GetSequenceMaxNrEvents() const = 0;
+   // virtual void LoadSequence(std::vector<std::string> events) = 0;
+   virtual void SetSequenceable(long sequenceSize) = 0;
+   virtual std::vector<std::string> GetSequence() = 0;
 
 };
 
@@ -96,7 +98,7 @@ public:
       ~Action() {}
 
    int Execute(PropertyBase* pProp, ActionType eAct)
-      {return (*pObj_.*fpt_)(pProp, eAct);};
+      { (*pObj_.*fpt_)(pProp, eAct);};
 };
 
 /** 
@@ -117,7 +119,7 @@ public:
       pObj_(pObj), fpt_(fpt), param_(data) {}; 
    ~ActionEx() {}
 	int Execute(MM::PropertyBase* pProp, MM::ActionType eAct)
-      {return (*pObj_.*fpt_)(pProp, eAct, param_);};
+      { (*pObj_.*fpt_)(pProp, eAct, param_);};
 };
 
 /**
@@ -190,16 +192,31 @@ public:
 
       return limits_;
    }
-   bool IsSequenceable() const {return sequenceable_;}
-   void SetSequenceable(bool sequenceable);
-   long GetSequenceMaxNrEvents() const {return sequenceMaxNrEvents_;}
-   void SetSequenceMaxNrEvents(long maxNrEvents);
-   void LoadSequence(std::vector<std::string> events) {
+   bool IsSequenceable() 
+   {
+      if (fpAction_)
+         fpAction_->Execute(this, MM::IsSequenceable);
+      return sequenceable_;
+   }
+   void SetSequenceable(long sequenceMaxSize);
+   long GetSequenceMaxSize() const {return sequenceMaxSize_;}
+   int LoadSequence(std::vector<std::string> events) {
       sequenceEvents_ = events;
       if (fpAction_)
-         fpAction_->Execute(this, AfterLoadSequence);
+         return fpAction_->Execute(this, AfterLoadSequence);
+      return DEVICE_OK; // Return an error instead???
    }
    std::vector<std::string> GetSequence() {return sequenceEvents_;}
+   int StartSequence() {
+      if (fpAction_)
+         return fpAction_->Execute(this, MM::StartSequence);
+      return DEVICE_OK;  // Return an error instead???
+   }
+   int StopSequence() {
+      if (fpAction_)
+         return fpAction_->Execute(this, MM::StopSequence);
+      return DEVICE_OK;  // Return an error instead???
+   }
 
    // virtual API
    // ~~~~~~~~~~~
@@ -219,7 +236,7 @@ protected:
    bool sequenceable_;
    double lowerLimit_;
    double upperLimit_;
-   long sequenceMaxNrEvents_;
+   long sequenceMaxSize_;
    std::map<std::string, long> values_; // allowed values
    std::vector<std::string> sequenceEvents_;
 };

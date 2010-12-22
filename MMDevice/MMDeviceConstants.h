@@ -75,7 +75,7 @@
 #define DEVICE_COMM_HUB_MISSING        36
 #define DEVICE_DUPLICATE_LIBRARY       37
 #define DEVICE_PROPERTY_NOT_SEQUENCEABLE 38
-#define DEVICE_ERR_SEQUENCE_NOT_IMPLEMENTED 39
+#define DEVICE_SEQUENCE_TOO_LARGE      39
 
 
 
@@ -218,7 +218,10 @@ namespace MM {
       NoAction,
       BeforeGet,
       AfterSet,
-      AfterLoadSequence
+      IsSequenceable,
+      AfterLoadSequence,
+      StartSequence,
+      StopSequence
    };
 
    enum PortType {

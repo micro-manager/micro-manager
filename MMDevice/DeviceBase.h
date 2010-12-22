@@ -356,7 +356,7 @@ public:
          return DEVICE_PROPERTY_NOT_SEQUENCEABLE;
       }
 
-      nrEvents = pProp->GetSequenceMaxNrEvents();
+      nrEvents = pProp->GetSequenceMaxSize();
 
       return DEVICE_OK;
    }
@@ -384,7 +384,7 @@ public:
          return DEVICE_PROPERTY_NOT_SEQUENCEABLE;
       }
 
-      return DEVICE_ERR_SEQUENCE_NOT_IMPLEMENTED;
+      return pProp->StartSequence();
    }
 
    /**
@@ -410,7 +410,7 @@ public:
          return DEVICE_PROPERTY_NOT_SEQUENCEABLE;
       }
 
-      return DEVICE_ERR_SEQUENCE_NOT_IMPLEMENTED;
+      return pProp->StopSequence();
    }
 
 
@@ -430,6 +430,7 @@ public:
          SetMorePropertyErrorInfo(name);
          return DEVICE_INVALID_PROPERTY;
       }
+
       bool sequenceable;
       int ret = IsPropertySequenceable(name, sequenceable);
       if (ret != DEVICE_OK)
@@ -438,9 +439,11 @@ public:
          SetMorePropertyErrorInfo(name);
          return DEVICE_PROPERTY_NOT_SEQUENCEABLE;
       }
-      pProp->LoadSequence(events);
 
-      return DEVICE_ERR_SEQUENCE_NOT_IMPLEMENTED;
+      if (events.size() >= pProp->GetSequenceMaxSize())
+         return DEVICE_SEQUENCE_TOO_LARGE
+
+      return pProp->LoadSequence(events);
    }
 
    /**

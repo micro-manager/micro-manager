@@ -2657,12 +2657,12 @@ bool CMMCore::isPropertySequenceable(const char* label, const char* propName) co
          throw;
       }
 
-      bool isSequencable;
-      int ret = pDevice->IsPropertySequenceable(propName, isSequencable);
+      bool isSequenceable;
+      int ret = pDevice->IsPropertySequenceable(propName, isSequenceable);
       if (ret != DEVICE_OK)
          throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
 
-      return isSequencable;
+      return isSequenceable;
    }
 }
 

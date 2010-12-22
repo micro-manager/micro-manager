@@ -1791,10 +1791,14 @@ int CDemoLightPath::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 CDemoObjectiveTurret::CDemoObjectiveTurret() : 
-numPos_(6), 
-busy_(false), 
-initialized_(false)
+   numPos_(6), 
+   busy_(false), 
+   initialized_(false),
+   sequenceRunning_(false),
+   sequenceMaxSize_(10)
 {
+   SetErrorText(ERR_IN_SEQUENCE, "Error occurred while executing sequence");
+   SetErrorText(ERR_SEQUENCE_INACTIVE, "Sequence triggered, but sequence is not running");
    InitializeDefaultErrorMessages();
 }
 
@@ -1850,6 +1854,12 @@ int CDemoObjectiveTurret::Initialize()
    if (ret != DEVICE_OK)
       return ret;
 
+   // Triggers to test sequence capabilities
+   pAct = new CPropertyAction (this, &CDemoObjectiveTurret::OnTrigger);
+   ret = CreateProperty("Trigger", " - ", MM::String, false, pAct);
+   AddAllowedValue("Trigger", " - ");
+   AddAllowedValue("Trigger", " + ");
+
    ret = UpdateStatus();
    if (ret != DEVICE_OK)
       return ret;
@@ -1867,6 +1877,8 @@ int CDemoObjectiveTurret::Shutdown()
    }
    return DEVICE_OK;
 }
+
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Action handlers
@@ -1895,7 +1907,56 @@ int CDemoObjectiveTurret::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
       GetPositionLabel(position_, label);
       OnPropertyChanged("Label", label);
    }
+   else if (eAct == MM::IsSequenceable) 
+   {
+      pProp->SetSequenceable(sequenceMaxSize_);
+   }
+   else if (eAct == MM::AfterLoadSequence)
+   {
+      sequence_ = pProp->GetSequence();
+      // DeviceBase.h checks that the vector is smaller than sequenceMaxSize_
+   }
+   else if (eAct == MM::StartSequence)
+   {
+      if (sequence_.size() > 0) {
+         sequenceIndex_ = 0;
+         sequenceRunning_ = true;
+      }
+   }
+   else if (eAct  == MM::StopSequence)
+   {
+      sequenceRunning_ = false;
+   }
 
+   return DEVICE_OK;
+}
+
+int CDemoObjectiveTurret::OnTrigger(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(" - ");
+   } else if (eAct == MM::AfterSet) {
+      if (!sequenceRunning_)
+         return ERR_SEQUENCE_INACTIVE;
+      std::string tr;
+      pProp->Get(tr);
+      if (tr == " + ") {
+         if (sequenceIndex_ < sequence_.size()) {
+            std::string state = sequence_[sequenceIndex_];
+            int ret = SetProperty("State", state.c_str());
+            if (ret != DEVICE_OK)
+               return ERR_IN_SEQUENCE;
+            sequenceIndex_++;
+            if (sequenceIndex_ >= sequence_.size()) {
+               sequenceIndex_ = 0;
+            }
+         } else
+         {
+            return ERR_IN_SEQUENCE;
+         }
+      }
+   }
    return DEVICE_OK;
 }
 
