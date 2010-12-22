@@ -133,7 +133,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;..\..\..\3rdparty\Andor\04-08-2009&quot;;..\..\..\3rdpartypublic\boost"
+				AdditionalIncludeDirectories="&quot;..\..\..\3rdparty\Andor\SDK 2.88.30002.0&quot;;..\..\..\3rdpartypublic\boost"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				MinimalRebuild="true"
 				ExceptionHandling="2"
@@ -217,7 +217,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="&quot;..\..\..\3rdparty\Andor\04-08-2009&quot;;..\..\..\3rdpartypublic\boost"
+				AdditionalIncludeDirectories="&quot;..\..\..\3rdparty\Andor\SDK 2.88.30002.0&quot;;..\..\..\3rdpartypublic\boost"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				ExceptionHandling="2"
 				RuntimeLibrary="0"
@@ -301,7 +301,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="&quot;..\..\..\3rdparty\Andor\04-08-2009&quot;;..\..\..\3rdpartypublic\boost"
+				AdditionalIncludeDirectories="&quot;..\..\..\3rdparty\Andor\SDK 2.88.30002.0&quot;;..\..\..\3rdpartypublic\boost"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				ExceptionHandling="2"
 				RuntimeLibrary="0"
