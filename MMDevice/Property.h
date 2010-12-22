@@ -98,7 +98,7 @@ public:
       ~Action() {}
 
    int Execute(PropertyBase* pProp, ActionType eAct)
-      { (*pObj_.*fpt_)(pProp, eAct);};
+      { (*pObj_.*fpt_)(pProp, eAct);return 0;};
 };
 
 /** 
@@ -119,7 +119,7 @@ public:
       pObj_(pObj), fpt_(fpt), param_(data) {}; 
    ~ActionEx() {}
 	int Execute(MM::PropertyBase* pProp, MM::ActionType eAct)
-      { (*pObj_.*fpt_)(pProp, eAct, param_);};
+      { (*pObj_.*fpt_)(pProp, eAct, param_);return 0;};
 };
 
 /**
