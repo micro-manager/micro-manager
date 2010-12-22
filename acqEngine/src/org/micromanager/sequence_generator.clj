@@ -59,7 +59,8 @@
   
 (defn assign-exposure [event]
   (if (:channel event)
-    (assoc event :exposure (get-in event [:channel :exposure]))))
+    (assoc event :exposure (get-in event [:channel :exposure]))
+    event))
 
 (defn process-skip-z-stack [events slices]
   (if (pos? (count slices))
@@ -134,7 +135,7 @@
   (let [{:keys [slices keep-shutter-open-channels keep-shutter-open-slices
          use-autofocus autofocus-skip interval-ms]} settings]
     (-> (make-main-loops settings)
-      ;(#(map (comp assign-z-drive assign-exposure) %))
+      (#(map (comp assign-exposure assign-z-drive) %))
       (process-skip-z-stack slices)
       (manage-shutter keep-shutter-open-channels keep-shutter-open-slices)
       (process-channel-skip-frames)
