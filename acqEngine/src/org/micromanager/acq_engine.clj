@@ -115,7 +115,7 @@
       "PositionName" (get-in event [:position :label])
       "Channel" (get-in event [:channel :name])
       "PixelType" "GRAY8"
-      "ZPositionUm" (get event :slice)
+      "ZPositionUm" (get event :z)
       "AxisPositions" (when-let [axes (get-in event [:position :axes])] (JSONObject. axes))
     )))  
     
@@ -235,13 +235,12 @@
   (if-let [z-drive (:z-drive event)]
     (-> event
       (assoc :z
-        (+ (:slice event)
-           (:z-offset event)
-           (if (:relative-slices event)
-             (or
-               (get @z-corrections z-drive)
-               (get-z-stage-position z-drive))
-             0)))
+        (if (:slice event)
+					(+ 
+					  (or (get-in event [:channel :z-offset]) 0)
+					  (or
+						  (get @z-corrections z-drive)
+						  (:slice event)))))
       (assoc-in [:postion :axes z-drive] nil))
     event))
    
@@ -300,11 +299,17 @@
            :channels (filter :use-channel (map ChannelSpec-to-map (.channels settings)))
            :positions (map MultiStagePosition-to-map (.positions settings)))))
 
+(defn set-to-absolute-slices [settings]
+  (if (and (:slices settings) (:relative-slices settings))
+    (assoc settings :slices
+      (map (partial + (. mmc getPosition (. mmc getFocusDevice))) (:slices settings)))
+    settings))
+
 (defn run-pipeline [settings acq-eng]
   (load-mm)
   (create-device-agents)
 	(let [out-queue (GentleLinkedBlockingQueue.)]
-		(.start (Thread. #(run-acquisition (convert-settings settings) out-queue)))
+		(.start (Thread. #(run-acquisition (set-to-absolute-slices (convert-settings settings)) out-queue)))
 		(.start (LiveAcqDisplay. mmc out-queue settings (.channels settings) (.save settings) acq-eng))))
 
 (defn create-acq-eng []
