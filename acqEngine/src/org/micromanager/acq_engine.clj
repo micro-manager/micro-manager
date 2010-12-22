@@ -322,8 +322,6 @@
   (.show (AcqControlDlg. eng (Preferences/userNodeForPackage (.getClass gui)) gui)))
 
 (defn run-test []
-  (load-mm)
-  (create-device-agents)
   (test-dialog (create-acq-eng)))
 
    
