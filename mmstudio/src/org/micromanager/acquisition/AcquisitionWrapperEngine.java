@@ -5,10 +5,13 @@
 package org.micromanager.acquisition;
 
 import clojure.lang.RT;
+import ij.IJ;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.micromanager.acquisition.engine.BurstMaker;
 import java.awt.Color;
+import java.io.File;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -78,24 +81,27 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    public AcquisitionWrapperEngine() {
       try {
+         Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
          RT.load("org/micromanager/acq_engine");
-      } catch (Exception ex) {
+      } catch (Throwable ex) {
+         ReportingUtils.logError(ex.getCause());
          ReportingUtils.showError(ex);
       }
+
       imageRequestProcessors_ = new ArrayList<Class>();
       imageRequestProcessors_.add(BurstMaker.class);
       taggedImageProcessors_ = new ArrayList<Class>();
    }
 
    public void acquire() throws MMException {
-      runPipeline(gatherSequenceSettings());
+      runPipeline2(gatherSequenceSettings());
    }
 
    public void runPipeline2(SequenceSettings acquisitionSettings) {
       try {
          RT.var("org.micromanager.acq-engine", "run-pipeline")
                  .invoke(acquisitionSettings, this);
-      } catch (Exception ex) {
+      } catch (Throwable ex) {
          ReportingUtils.showError(ex);
       }
    }
