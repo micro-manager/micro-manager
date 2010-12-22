@@ -168,6 +168,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PVCAM", "..\DeviceAdapters\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PrincetonInstruments", "..\DeviceAdapters\PrincetonInstruments\PrincetonInstruments.vcproj", "{A28DEB4E-E645-4990-A91D-4A7FF6762240}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ExfoXCite", "..\DeviceAdapters\ExfoXCite\ExfoXCite.vcproj", "{4B9E78C0-C365-11DF-9539-E01BDFD72085}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -662,6 +664,12 @@ Global
 		{A28DEB4E-E645-4990-A91D-4A7FF6762240}.Release|Win32.Build.0 = Release|Win32
 		{A28DEB4E-E645-4990-A91D-4A7FF6762240}.Release|x64.ActiveCfg = Release|x64
 		{A28DEB4E-E645-4990-A91D-4A7FF6762240}.Release|x64.Build.0 = Release|x64
+		{4B9E78C0-C365-11DF-9539-E01BDFD72085}.Debug|Win32.ActiveCfg = Debug|Win32
+		{4B9E78C0-C365-11DF-9539-E01BDFD72085}.Debug|Win32.Build.0 = Debug|Win32
+		{4B9E78C0-C365-11DF-9539-E01BDFD72085}.Debug|x64.ActiveCfg = Debug|Win32
+		{4B9E78C0-C365-11DF-9539-E01BDFD72085}.Release|Win32.ActiveCfg = Release|Win32
+		{4B9E78C0-C365-11DF-9539-E01BDFD72085}.Release|Win32.Build.0 = Release|Win32
+		{4B9E78C0-C365-11DF-9539-E01BDFD72085}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
