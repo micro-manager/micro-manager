@@ -235,12 +235,13 @@
   (if-let [z-drive (:z-drive event)]
     (-> event
       (assoc :z
-        (if (:relative-slices event)
-          (+ (:slice event)
-            (or
-              (get @z-corrections z-drive)
-              (get-z-stage-position z-drive)))
-          (:slice event)))
+        (+ (:slice event)
+           (:z-offset event)
+           (if (:relative-slices event)
+             (or
+               (get @z-corrections z-drive)
+               (get-z-stage-position z-drive))
+             0)))
       (assoc-in [:postion :axes z-drive] nil))
     event))
    
