@@ -13,9 +13,6 @@ endif
 if BUILD_DC1394
    DC1394 = dc1394
 endif
-if BUILD_NIDAQ
-   NIDAQ = NIDAQ
-endif
 if BUILD_ANDOR
    ANDOR = Andor
 endif
