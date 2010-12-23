@@ -59,9 +59,11 @@ public:
    virtual std::string getMsg()
    {
       std::ostringstream msg;
-      msg << "Error code: " << errCode_ << std::endl;
-      if (!specificMsg_.empty())
+      if (!specificMsg_.empty()) {
          msg << specificMsg_ << std::endl;
+      } else {
+         msg << "Error code: " << errCode_ << std::endl;
+      }
       msg << coreMsg_;
       return msg.str();
    }

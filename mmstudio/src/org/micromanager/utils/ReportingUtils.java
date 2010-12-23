@@ -96,10 +96,10 @@ public class ReportingUtils {
          return;
 
       String fullMsg;
-      if (e != null && e.getMessage() != null) {
+      if (e != null && e.getMessage() != null && msg.length() > 0) {
          fullMsg = "Error: " + msg + "\n" + e.getMessage();
-      } else if (msg.length() > 0) {
-         fullMsg =  "Error: " + msg;
+      } else if (e != null && e.getMessage() != null) {
+         fullMsg = e.getMessage();
       } else if (msg.length() > 0) {
          fullMsg = "Error: " + msg;
       } else if (e != null) {

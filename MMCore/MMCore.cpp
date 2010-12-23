@@ -2459,7 +2459,7 @@ void CMMCore::setProperty(const char* label, const char* propName,
          std::ostringstream se;
          se << getDeviceErrorText(nRet, pDevice).c_str() << "(Error code: " << nRet << ")";
          logError(label, se.str().c_str());
-         throw CMMError(label, se.str().c_str(), MMERR_DEVICE_GENERIC);
+         throw CMMError(se.str().c_str(), MMERR_DEVICE_GENERIC);
       }
       stateCache_.addSetting(PropertySetting(label, propName, propValue));
    }
@@ -4863,8 +4863,8 @@ string CMMCore::getDeviceErrorText(int deviceCode, MM::Device* pDevice) const
    {
       // device specific error
       char devName[MM::MaxStrLength];
-      pDevice->GetName(devName);
-      txt <<  devName << ". ";
+      pDevice->GetLabel(devName);
+      txt <<  "Error in device " << devName  << ": ";
 
       char text[MM::MaxStrLength];
       pDevice->GetErrorText(deviceCode, text);
