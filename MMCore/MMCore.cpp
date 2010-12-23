@@ -3494,8 +3494,8 @@ void CMMCore::setConfig(const char* groupName, const char* configName) throw (CM
    try {
       applyConfiguration(*pCfg);
    } catch (CMMError& err) {
-      err.setCoreMsg(getCoreErrorText(err.getCode()).c_str());
-      // logError("setConfig", getCoreErrorText(err.getCode()).c_str());
+      if (err.getCode() != MMERR_DEVICE_GENERIC)
+         err.setCoreMsg(getCoreErrorText(err.getCode()).c_str());
       throw;
    }
 
@@ -4845,14 +4845,14 @@ void CMMCore::applyConfiguration(const Configuration& config) throw (CMMError)
          {
             error = true;
             std::ostringstream se;
-            se << setting.getDeviceLabel().c_str() << "\n"<< getDeviceErrorText(ret, pDevice).c_str() << "(Error code: " << ret << ")";
+            se << getDeviceErrorText(ret, pDevice).c_str() << "(Error code: " << ret << ")";
             logError(setting.getDeviceLabel().c_str(), se.str().c_str());
-            sall << se;
+            sall << se.str();
          }
          stateCache_.addSetting(setting);
       }
    }
-   if (error)
+   if (error) 
       throw CMMError(sall.str().c_str(), MMERR_DEVICE_GENERIC);
 }
 
