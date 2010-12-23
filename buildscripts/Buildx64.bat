@@ -99,6 +99,10 @@ POPD
 rem haven't got to the bottom of this yet, but Pixel Calibrator and Slide Explorer need this jar file there....
 copy \projects\micromanager\bin_x64\plugins\Micro-Manager\MMJ_.jar \projects\micromanager\bin_x64\
 
+PUSHD acqEngine
+call build.bat
+POPD
+
 PUSHD autofocus
 call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build64.xml %cleantarget% compile build
 POPD
