@@ -182,7 +182,6 @@ public class ConfigGroupPad extends JScrollPane{
       }
 
       public Object getValueAt(int row, int col) {
-
          StateItem item = groupList_.get(row);
          if (col == 0)
             return item.group;
@@ -192,42 +191,18 @@ public class ConfigGroupPad extends JScrollPane{
          return null;
       }
 
-     /*
-      private class LiveModeSync
-      {
-    	  private boolean restartLive=false;  
-    	  public LiveModeSync() throws InterruptedException
-    	  {
-              if (parentGUI_ != null)
-              {
-            	  restartLive= parentGUI_.getLiveMode();
-            	  if (restartLive)
-            	  {
-            		  parentGUI_.enableLiveMode(false);
-            	  }
-              }
-    	  }
-    	  public void restartIfNecessary() throws InterruptedException
-    	  {
-              if (parentGUI_ != null)
-            	  if (restartLive)
-            	  {
-            		  parentGUI_.enableLiveMode(true);
-            	  }
-    	  }
-      }
-      */
       
+      @Override
       public void setValueAt(Object value, int row, int col) {
          StateItem item = groupList_.get(row);
          if (col == 1) {
             try {
                if (value != null && value.toString().length() > 0)
                {
-            	  boolean restartLive= parentGUI_.getLiveMode();
-            	  if (restartLive)
-            		  parentGUI_.enableLiveMode(false);
-            	  
+                 boolean restartLive = parentGUI_.getLiveMode();
+                 if (restartLive)
+                    parentGUI_.enableLiveMode(false);
+                 
                   if (item.singleProp) {
                      if (item.hasLimits && item.isInteger()) {
                         core_.setProperty(item.device, item.name, NumberUtils.intStringDisplayToCore(value));
@@ -284,7 +259,7 @@ public class ConfigGroupPad extends JScrollPane{
                      }
                   }
                   if (restartLive)
-               		  parentGUI_.enableLiveMode(true);
+                       parentGUI_.enableLiveMode(true);
                }
             } catch (Exception e) {
                handleException(e);
@@ -292,10 +267,12 @@ public class ConfigGroupPad extends JScrollPane{
          }         
       }
 
+      @Override
       public String getColumnName(int column) {
          return columnNames_[column];
       }
 
+      @Override
       public boolean isCellEditable(int nRow, int nCol) {
          if (nCol == 0)
             return false;
@@ -369,8 +346,16 @@ public class ConfigGroupPad extends JScrollPane{
                 StateItem item = groupList_.get(i);
                 if (item.singleProp) {
                    item.config = core_.getProperty(item.device, item.name); 
-                } else
+                } else {
                    item.config = core_.getCurrentConfig(item.group);
+                   // set descr to current situation so that Tooltips get updated
+                   if (item.config.length() > 0) {
+                       Configuration curCfg = core_.getConfigData(item.group, item.config);
+                       item.descr = curCfg.getVerbose();
+                   } else {
+                       item.descr = "";
+                   }
+                }
              }
           } catch (Exception e) {
              handleException(e);
