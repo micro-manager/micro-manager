@@ -361,51 +361,10 @@ public:
    int Apply(const char* Name);
 
 private:
-   /*
-   template <typename T>
-   int GetVal(const char* PropName, T &val);
-   template <typename T>
-   int SetVal(const char* PropName, const T val);
-   */
    typedef std::map<std::string, Property*> CPropArray;
    CPropArray properties_;
 };
 
-/*
-template <typename T>
-inline int CMMPropertyCollection::SetVal(const char* PropName, const T &val)
-{
-   Property* pProp = Find(PropName);
-   if (!pProp)
-      return DEVICE_INVALID_PROPERTY; // name not found
-
-   if (pProp->IsAllowed(Value))
-   {
-      pProp->Set(val);
-      return pProp->Apply();
-   }
-   else
-      return DEVICE_INVALID_PROPERTY_VALUE;
-}
-
-template <typename T>
-int CMMPropertyCollection::Get(const char* PropName, T& val) const
-{
-   Property* pProp = Find(PropName);
-   if (!pProp)
-      return DEVICE_INVALID_PROPERTY; // name not found
-
-   if (!pProp->GetCached())
-   {
-      int nRet = pProp->Update();
-      if (nRet != DEVICE_OK)
-         return nRet;
-   }
-   pProp->Get(strValue);
-   return DEVICE_OK;
-}
-*/
 
 } // namespace MM
-
 #endif //_MMPROPERTY_H_
