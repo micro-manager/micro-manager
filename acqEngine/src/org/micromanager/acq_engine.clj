@@ -99,6 +99,7 @@
 (declare interrupt-requests)
 (declare z-corrections)
 (declare init-auto-shutter)
+(declare default-z-position)
 
 ;; metadata
 
@@ -238,7 +239,7 @@
 				(+ (or (get-in event [:channel :z-offset]) 0)
 				   (or (get @z-corrections z-drive)
 				     (:slice event)
-				     (get-z-stage-position z-drive))))
+				     default-z-position)))
       (assoc-in [:postion :axes z-drive] nil))
     event))
    
@@ -273,7 +274,8 @@
             z-corrections (ref nil)
             last-wake-time (atom (clock-ms))
             start-time (clock-ms)
-            init-auto-shutter (. mmc getAutoShutter)]
+            init-auto-shutter (. mmc getAutoShutter)
+            default-z-position (get-z-position (. mmc getFocusDevice))]
     (let [acq-seq (generate-acq-sequence settings)]
        (def acq-sequence acq-seq)
        (execute (mapcat #(make-event-fns % out-queue) acq-seq))
