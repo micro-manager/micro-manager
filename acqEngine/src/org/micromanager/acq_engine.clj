@@ -235,12 +235,10 @@
   (if-let [z-drive (:z-drive event)]
     (-> event
       (assoc :z
-        (if (or (:slice event)
-                (not (zero? (get-in event [:channel :z-offset]))))
-					(+ (or (get-in event [:channel :z-offset]) 0)
-					   (or (get @z-corrections z-drive)
-						     (:slice event)
-						     (get-z-stage-position)))))
+				(+ (or (get-in event [:channel :z-offset]) 0)
+				   (or (get @z-corrections z-drive)
+				     (:slice event)
+				     (get-z-stage-position z-drive))))
       (assoc-in [:postion :axes z-drive] nil))
     event))
    
@@ -280,7 +278,7 @@
        (def acq-sequence acq-seq)
        (execute (mapcat #(make-event-fns % out-queue) acq-seq))
        (. mmc setAutoShutter init-auto-shutter))))
-  
+
 (defn convert-settings [^SequenceSettings settings]
   (-> settings
     (data-object-to-map)
