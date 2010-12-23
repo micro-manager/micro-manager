@@ -752,7 +752,7 @@ public class CalibrationEditor extends MMDialog {
          
                      // todo - no need to re-new the comparators inside the loop!
                      if ( PropertyType.Float == item.type){
-                    	   Arrays.sort(item.allowed, new SortFunctionObjects.DoubleStringComp());
+                        Arrays.sort(item.allowed, new SortFunctionObjects.DoubleStringComp());
                      }
                      else if ( PropertyType.Integer == item.type){
                         //ReportingUtils.logMessage("Sorting " + device + "."+ name);
@@ -765,13 +765,13 @@ public class CalibrationEditor extends MMDialog {
                          for (int k=0; k<item.allowed.length; k++){
                             if (item.allowed[k].equals("") || !Character.isDigit(item.allowed[k].charAt(0))){
                             allNumeric = false;
-                    			 break;
-                    		 }
-                    	 }
-                    	 if( allNumeric)
+                            break;
+                         }
+                      }
+                      if( allNumeric)
                          Arrays.sort(item.allowed, new SortFunctionObjects.NumericPrefixStringComp());
-                    	 else
-                    		 Arrays.sort(item.allowed);
+                      else
+                         Arrays.sort(item.allowed);
                      }                     
                      
                      if (!item.preInit && (!item.readOnly || showReadonly_)) {
@@ -1021,12 +1021,12 @@ public class CalibrationEditor extends MMDialog {
                if (item_.isInteger())
                    slider.setLimits((int)item_.lowerLimit, (int)item_.upperLimit);
                else
-            	   slider.setLimits(item_.lowerLimit, item_.upperLimit);               
+                  slider.setLimits(item_.lowerLimit, item_.upperLimit);               
                try {
-            	   if (item_.isFloat())
-            		   value = NumberUtils.doubleToDisplayString(Double.parseDouble((String) value));
-            	   else if (item_.isInteger())
-            		   value = NumberUtils.intToDisplayString(Integer.parseInt((String) value));
+                  if (item_.isFloat())
+                     value = NumberUtils.doubleToDisplayString(Double.parseDouble((String) value));
+                  else if (item_.isInteger())
+                     value = NumberUtils.intToDisplayString(Integer.parseInt((String) value));
                } catch (Exception e) {
                   ReportingUtils.logError(e);
                }

@@ -3718,9 +3718,9 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    public void addToSnapSeries(Object img, String acqName) {
       try {
-         //	boolean liveRunning = liveRunning_;
-         //	if (liveRunning)
-         //		enableLiveMode(false);
+         // boolean liveRunning = liveRunning_;
+         // if (liveRunning)
+         //    enableLiveMode(false);
          if (acqName == null) {
             acqName = "Snap" + snapCount_;
          }

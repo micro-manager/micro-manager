@@ -301,11 +301,11 @@ public class OptionsDlg extends MMDialog {
       okButton.addActionListener(new ActionListener() {
          public void actionPerformed(final ActionEvent e) {
             try {
-				opts_.circularBufferSizeMB = NumberUtils.displayStringToInt(bufSizeField_.getText());
-			} catch (Exception e1) {
-				ReportingUtils.showError(e1);
-				return;
-			}
+            opts_.circularBufferSizeMB = NumberUtils.displayStringToInt(bufSizeField_.getText());
+         } catch (Exception e1) {
+            ReportingUtils.showError(e1);
+            return;
+         }
             opts_.startupScript = startupScriptFile_.getText();
             savePosition();
             parent_.makeActive();

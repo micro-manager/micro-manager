@@ -399,19 +399,19 @@ public class TileCreatorDlg extends MMDialog {
       else
          transposeXY = true;
       } catch(Exception exc) {
-	         ReportingUtils.showError(exc);
-	         return;
-	      }
+            ReportingUtils.showError(exc);
+            return;
+         }
 
       double tmpXUm = pixSizeUm * core_.getImageWidth() - overlapUm;
       double tmpYUm = pixSizeUm * core_.getImageHeight() - overlapUm;
       double tileSizeXUm = tmpXUm;
       double tileSizeYUm = tmpYUm ;
-	      // if camera does not correct image orientation, we'll correct for it here:
-	   if (!correction) {
-	         // Order: swapxy, then mirror axis
-	         if (transposeXY) {tileSizeXUm = tmpYUm; tileSizeYUm = tmpXUm;}
-	      }
+         // if camera does not correct image orientation, we'll correct for it here:
+      if (!correction) {
+            // Order: swapxy, then mirror axis
+            if (transposeXY) {tileSizeXUm = tmpYUm; tileSizeYUm = tmpXUm;}
+         }
 
       int overlapPix = (int) Math.floor(overlapUm/pixSizeUm);
 

@@ -306,9 +306,9 @@ public class PositionListDlg extends MMDialog implements MouseListener {
     * Renders the first row of the position list table
     */
    public class FirstRowRenderer extends JLabel implements TableCellRenderer {
-	private static final long serialVersionUID = 1L;
+   private static final long serialVersionUID = 1L;
 
-	public FirstRowRenderer() {
+   public FirstRowRenderer() {
           setFont(new Font("Arial", Font.PLAIN, 10));
           setOpaque(true);
        }
@@ -364,9 +364,9 @@ public class PositionListDlg extends MMDialog implements MouseListener {
 
       final TableCellRenderer firstRowRenderer = new FirstRowRenderer();
       posTable_ = new JTable() {
-		private static final long serialVersionUID = -3873504142761785021L;
+      private static final long serialVersionUID = -3873504142761785021L;
 
-		public TableCellRenderer getCellRenderer(int row, int column) {
+      public TableCellRenderer getCellRenderer(int row, int column) {
             if (row == 0)
                return firstRowRenderer;
             return super.getCellRenderer(row, column);
@@ -426,18 +426,18 @@ public class PositionListDlg extends MMDialog implements MouseListener {
       springLayout.putConstraint(SpringLayout.WEST, axisPane, 10, SpringLayout.WEST, getContentPane());
 
       posTable_.addFocusListener(
-		  new java.awt.event.FocusAdapter() 
-		  {
-			  public void focusLost(java.awt.event.FocusEvent evt) 
-			  { 
-				  updateMarkButtonText();
-			  }
-			  public void focusGained(java.awt.event.FocusEvent evt) 
-			  {
-				  updateMarkButtonText();
-			  }
-		  }
-		  );
+        new java.awt.event.FocusAdapter() 
+        {
+           public void focusLost(java.awt.event.FocusEvent evt) 
+           { 
+              updateMarkButtonText();
+           }
+           public void focusGained(java.awt.event.FocusEvent evt) 
+           {
+              updateMarkButtonText();
+           }
+        }
+        );
 
       // the re-ordering buttons:
       
@@ -637,21 +637,21 @@ public class PositionListDlg extends MMDialog implements MouseListener {
 
    protected void updateMarkButtonText() 
    {
-	  //String newText;
-	  
-	  PosTableModel tm =  (PosTableModel)posTable_.getModel();
-	  MultiStagePosition msp = tm.getPositionList().getPosition(posTable_.getSelectedRow() - 1);
-	  if( null== msp)
-	  {
-		  markButtonRef.setText("Mark");
-	  }
-	  else
-	  {
-		  markButtonRef.setText("Replace");
-	  }   
+     //String newText;
+     
+     PosTableModel tm =  (PosTableModel)posTable_.getModel();
+     MultiStagePosition msp = tm.getPositionList().getPosition(posTable_.getSelectedRow() - 1);
+     if( null== msp)
+     {
+        markButtonRef.setText("Mark");
+     }
+     else
+     {
+        markButtonRef.setText("Replace");
+     }   
    
    }
-	
+   
 
 
 public void addPosition(MultiStagePosition msp, String label) {
@@ -769,49 +769,49 @@ public void addPosition(MultiStagePosition msp, String label) {
    
    protected void incrementOrderOfSelectedPosition(int direction)
    {
-	      PosTableModel ptm = (PosTableModel)posTable_.getModel();
-	      int currentRow = posTable_.getSelectedRow()-1;
-	      int newEdittingRow = -1;
-	      
-	      if( 0 <= currentRow)
-	      {
-	    	  int destinationRow = currentRow + direction;
-	    	  {
-	    		  if (0 <= destinationRow)
-	    		  {
-	    			if  ( destinationRow < posTable_.getRowCount() )
-	    			{
-	    			  PositionList pl = ptm.getPositionList(); 
-	    			  
-	    			  MultiStagePosition[] mspos =pl.getPositions();
+         PosTableModel ptm = (PosTableModel)posTable_.getModel();
+         int currentRow = posTable_.getSelectedRow()-1;
+         int newEdittingRow = -1;
+         
+         if( 0 <= currentRow)
+         {
+           int destinationRow = currentRow + direction;
+           {
+              if (0 <= destinationRow)
+              {
+               if  ( destinationRow < posTable_.getRowCount() )
+               {
+                 PositionList pl = ptm.getPositionList(); 
+                 
+                 MultiStagePosition[] mspos =pl.getPositions();
 
-	    			  MultiStagePosition tmp = mspos[currentRow];
-	    			  pl.replacePosition( currentRow, mspos[destinationRow]);//
-	    			  pl.replacePosition(destinationRow, tmp);
-	    			  ptm.setData(pl);
-	    		      if( destinationRow+1 < ptm.getRowCount() )
-	    		    	  newEdittingRow = destinationRow+1;
-	    			}
-	    			else
-	    			{
-	    				newEdittingRow = posTable_.getRowCount()-1;
-	    			}
-	    		  }
-	    		  else
-	    		  {
-	    			 newEdittingRow = 1; 
-	    		  }
-	    	  }
-	      }
-	      ptm.fireTableDataChanged();
+                 MultiStagePosition tmp = mspos[currentRow];
+                 pl.replacePosition( currentRow, mspos[destinationRow]);//
+                 pl.replacePosition(destinationRow, tmp);
+                 ptm.setData(pl);
+                  if( destinationRow+1 < ptm.getRowCount() )
+                    newEdittingRow = destinationRow+1;
+               }
+               else
+               {
+                  newEdittingRow = posTable_.getRowCount()-1;
+               }
+              }
+              else
+              {
+                newEdittingRow = 1; 
+              }
+           }
+         }
+         ptm.fireTableDataChanged();
 
-	      if(-1 < newEdittingRow)
-	      {
-	    	  posTable_.changeSelection(newEdittingRow, newEdittingRow, false, false);
-	    	  posTable_.requestFocusInWindow();
-	      }
-	      updateMarkButtonText();
-	   
+         if(-1 < newEdittingRow)
+         {
+           posTable_.changeSelection(newEdittingRow, newEdittingRow, false, false);
+           posTable_.requestFocusInWindow();
+         }
+         updateMarkButtonText();
+      
    }
    
    
@@ -1198,7 +1198,7 @@ public void addPosition(MultiStagePosition msp, String label) {
             }
 
             bt.interrupt();
-            bt=null;	        	
+            bt=null;          
 
          } catch (InterruptedException e) { ReportingUtils.logError(e); }
          catch (Exception e) {
@@ -1216,9 +1216,9 @@ public void addPosition(MultiStagePosition msp, String label) {
 //       JOptionPane.showMessageDialog(d, "parent dialog is null!"); 
 //       }
          this.d = d;
-      }	   
+      }     
       public void run() {
-         JOptionPane.showMessageDialog(d, "Going back to the original position!");		        	
+         JOptionPane.showMessageDialog(d, "Going back to the original position!");              
       }
    }      
 

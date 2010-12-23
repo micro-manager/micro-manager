@@ -26,11 +26,11 @@ public class AcquisitionManager {
 
    public void openAcquisitionSnap(String name, String rootDir) throws MMScriptException {
       if (acquisitionExists(name))
-	 throw new MMScriptException("The name is in use");
+    throw new MMScriptException("The name is in use");
       else
          ;
-//	         acqs_.put(name, new MMAcquisitionSnap(name, rootDir));
-	   }
+//          acqs_.put(name, new MMAcquisitionSnap(name, rootDir));
+      }
    
    public void openAcquisition(String name, String rootDir, boolean show) throws MMScriptException {
       this.openAcquisition(name, rootDir, show, false);

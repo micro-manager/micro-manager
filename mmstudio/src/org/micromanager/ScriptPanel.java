@@ -147,7 +147,7 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
             lastModArray_.add(f.lastModified());
          }
       }
-	  */
+     */
       
       public Boolean HasScriptAlready(File f) {
          Boolean preExisting = false;
@@ -322,18 +322,18 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
       if (gui_.defaultScriptFont_ != null)
          cons_.setFont(gui_.defaultScriptFont_);
       
-	   beanshellREPLint_ = new Interpreter(cons_);
-	   new Thread(beanshellREPLint_).start();
+      beanshellREPLint_ = new Interpreter(cons_);
+      new Thread(beanshellREPLint_).start();
 
-	   try {
-		 File f = new File("scripts/mm_beanshell_startup.bsh");
-		 if (f.exists())
-			 beanshellREPLint_.source("scripts/mm_beanshell_startup.bsh");
-	     else {
-	    	 f = new File("../scripts/mm_beanshell_startup.bsh");
-	    	 if (f.exists())
-	    		 beanshellREPLint_.source("../scripts/mm_beanshell_startup.bsh");
-	     }
+      try {
+       File f = new File("scripts/mm_beanshell_startup.bsh");
+       if (f.exists())
+          beanshellREPLint_.source("scripts/mm_beanshell_startup.bsh");
+        else {
+          f = new File("../scripts/mm_beanshell_startup.bsh");
+          if (f.exists())
+             beanshellREPLint_.source("../scripts/mm_beanshell_startup.bsh");
+        }
       } catch (FileNotFoundException e) {
          ReportingUtils.showError(e);
       } catch (IOException e) {
@@ -341,22 +341,22 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
       } catch (EvalError e) {
          ReportingUtils.showError(e);
       }
-	   
+      
       // This command allows variables to be inspected in the command-line
       // (e.g., typing "x;" causes the value of x to be returned):
       beanshellREPLint_.setShowResults(true);
 
-	   // Set up window for interpreter:
-/*	   JFrame frame = new JFrame();
-	   frame.setBounds(100,100,500,500);
-	   frame.setTitle("Beanshell Interactive Console (Micro-Manager)");
-	   frame.add(cons_);
-	   frame.setVisible(true);*/
-	   
+      // Set up window for interpreter:
+/*    JFrame frame = new JFrame();
+      frame.setBounds(100,100,500,500);
+      frame.setTitle("Beanshell Interactive Console (Micro-Manager)");
+      frame.add(cons_);
+      frame.setVisible(true);*/
+      
    }
    
    public JConsole getREPLCons() {
-	   return cons_;
+      return cons_;
    }
    
    /**
@@ -850,9 +850,9 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
     */
    @SuppressWarnings("unused")
    private void injectPane() {
-	   interp_.setInterpreter(beanshellREPLint_);
-	   runPane();
-	   interp_.resetInterpreter();
+      interp_.setInterpreter(beanshellREPLint_);
+      runPane();
+      interp_.resetInterpreter();
    }
    
    /*
@@ -1052,37 +1052,37 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
    }
 
    private void showPrompt() {
-	  String promptStr;
+     String promptStr;
       try {
-    	  promptStr = (String) beanshellREPLint_.eval("getBshPrompt();");
+        promptStr = (String) beanshellREPLint_.eval("getBshPrompt();");
       } catch (EvalError e) {
           ReportingUtils.logError(e);
-    	  promptStr = "bsh % ";
+        promptStr = "bsh % ";
       } 
-	  cons_.print("\n"+promptStr,java.awt.Color.darkGray);  
+     cons_.print("\n"+promptStr,java.awt.Color.darkGray);  
    }
    
    /**
     * Clears the content of the message window
     */
    public void clearOutput() {
-	   boolean originalAccessibility = true;
-	   try {
-		   beanshellREPLint_.eval("bsh.console.text");
-	   } catch (EvalError e) {
-		   originalAccessibility = false;
-		   try {
-			   beanshellREPLint_.eval("setAccessibility(true);");
-		   } catch (EvalError e1) {
+      boolean originalAccessibility = true;
+      try {
+         beanshellREPLint_.eval("bsh.console.text");
+      } catch (EvalError e) {
+         originalAccessibility = false;
+         try {
+            beanshellREPLint_.eval("setAccessibility(true);");
+         } catch (EvalError e1) {
                ReportingUtils.showError(e1);
-		   }
-	   }
-	   try {
-		   beanshellREPLint_.eval("bsh.console.text.setText(\"\");"
-				   + "setAccessibility("+originalAccessibility+");");
-	   } catch (EvalError e) {
+         }
+      }
+      try {
+         beanshellREPLint_.eval("bsh.console.text.setText(\"\");"
+               + "setAccessibility("+originalAccessibility+");");
+      } catch (EvalError e) {
            ReportingUtils.showError(e);
-	   }
+      }
    }
 
    public void ClearOutput() {
@@ -1199,7 +1199,7 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
       public void run() {
          if (error_)
             messageException(msg_, lineNumber_);
-         	
+            
          else
             message(msg_);
       }

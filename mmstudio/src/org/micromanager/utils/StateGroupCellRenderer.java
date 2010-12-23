@@ -31,6 +31,7 @@ public class StateGroupCellRenderer extends PropertyValueCellRenderer {
             boolean isSelected, boolean hasFocus, int rowIndex, int colIndex) {
 
         ConfigGroupPad.StateTableData data = (ConfigGroupPad.StateTableData) table.getModel();
+
         stateItem_ = data.getPropertyItem(rowIndex);
 
         Component comp;

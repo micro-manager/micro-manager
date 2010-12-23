@@ -103,7 +103,7 @@ public class PropertyEditor extends MMFrame{
    private myMMListener myMMListener_ = new myMMListener();
 
    public void setGui(MMStudioMainFrame gui) {
-	   gui_ = gui;
+      gui_ = gui;
       gui_.addMMListener(myMMListener_);
    }
 
@@ -265,9 +265,9 @@ public class PropertyEditor extends MMFrame{
 
 
    protected void refresh() {
-	   data_.gui_ = gui_;
-	   data_.flags_ = flags_;
-	   data_.showUnused_ = true;
+      data_.gui_ = gui_;
+      data_.flags_ = flags_;
+      data_.showUnused_ = true;
       data_.refresh();
    }
 
@@ -302,11 +302,11 @@ public class PropertyEditor extends MMFrame{
    
     public class PropertyEditorTableData extends PropertyTableData {
       public PropertyEditorTableData(CMMCore core, String groupName, String presetName,
-	     	int PropertyValueColumn, int PropertyUsedColumn, Component parentComponent) {
+         int PropertyValueColumn, int PropertyUsedColumn, Component parentComponent) {
 
          super(core, groupName, presetName, PropertyValueColumn, PropertyUsedColumn, parentComponent);
-	   }
-	
+      }
+   
       private static final long serialVersionUID = 1L;
 
       public void setValueAt(Object value, int row, int col) {
@@ -363,7 +363,7 @@ public class PropertyEditor extends MMFrame{
 
  
    private void handleException (Exception e) {
-	   ReportingUtils.showError(e);
+      ReportingUtils.showError(e);
    }
    
 }
