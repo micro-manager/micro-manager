@@ -275,7 +275,7 @@
             last-wake-time (atom (clock-ms))
             start-time (clock-ms)
             init-auto-shutter (. mmc getAutoShutter)
-            default-z-position (get-z-position (. mmc getFocusDevice))]
+            default-z-position (get-z-stage-position (. mmc getFocusDevice))]
     (let [acq-seq (generate-acq-sequence settings)]
        (def acq-sequence acq-seq)
        (execute (mapcat #(make-event-fns % out-queue) acq-seq))
