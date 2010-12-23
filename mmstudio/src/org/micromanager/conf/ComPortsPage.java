@@ -54,12 +54,12 @@ public class ComPortsPage extends PagePanel {
    private JTable serialDeviceTable_;
    private static final String HELP_FILE_NAME = "conf_comport_page.html";
    Vector<String> portsVect_ = new Vector<String>();
-	
-	// the model uses the 'in-use' property to decide to display the serial device settings
-	// so we need to save the original settings, overwrite them before re-rendering the table and then
-	// restore them after we finish
-	private HashMap<Integer, Boolean> saveSerialPortsInUse_;
-	HashMap<String,String> devicesToTheirPort_;
+   
+   // the model uses the 'in-use' property to decide to display the serial device settings
+   // so we need to save the original settings, overwrite them before re-rendering the table and then
+   // restore them after we finish
+   private HashMap<Integer, Boolean> saveSerialPortsInUse_;
+   HashMap<String,String> devicesToTheirPort_;
 
 
    public class SelectionListener implements ListSelectionListener {
@@ -74,24 +74,24 @@ public class ComPortsPage extends PagePanel {
          if (e.getValueIsAdjusting())
             return;
 
-			int rowSel = -1;
+         int rowSel = -1;
          ListSelectionModel lsm = (ListSelectionModel)e.getSource();
          SerialDeviceTableModel ltm = (SerialDeviceTableModel)serialDeviceTable_.getModel();
          if (lsm.isSelectionEmpty()) {
-				// nothing selected
+            // nothing selected
          } else {
-				rowSel = lsm.getMinSelectionIndex();
+            rowSel = lsm.getMinSelectionIndex();
             String deviceName = (String)table.getValueAt(rowSel, 0);
-				// this will be the name of the device which USES the serial port, so... we need to map it back to a serial port device name...
-				String spname = devicesToTheirPort_.get(deviceName);
+            // this will be the name of the device which USES the serial port, so... we need to map it back to a serial port device name...
+            String spname = devicesToTheirPort_.get(deviceName);
             ltm.setValue(spname);
          }
          ltm.fireTableStructureChanged();
-			//   this does not do quite what you would think....
-			//if( -1 < rowSel)
-			//	serialDeviceTable_.setRowSelectionInterval(rowSel, rowSel);
+         //   this does not do quite what you would think....
+         //if( -1 < rowSel)
+         // serialDeviceTable_.setRowSelectionInterval(rowSel, rowSel);
 
-			//serialDeviceTable_.getColumnModel().getColumn(0).setWidth(50);
+         //serialDeviceTable_.getColumnModel().getColumn(0).setWidth(50);
          rebuildTable();
 
       }
@@ -116,21 +116,21 @@ public class ComPortsPage extends PagePanel {
       final JScrollPane serialDeviceScrollPane = new JScrollPane();
       serialDeviceScrollPane.setBounds(10, 44, 157, 194);
       add(serialDeviceScrollPane);
-		devicesToTheirPort_ = new HashMap<String,String>();
-		saveSerialPortsInUse_ = new HashMap<Integer,Boolean>();
+      devicesToTheirPort_ = new HashMap<String,String>();
+      saveSerialPortsInUse_ = new HashMap<Integer,Boolean>();
       serialDeviceTable_ = new JTable();
-		serialDeviceTable_.setColumnSelectionAllowed(false);
-		serialDeviceTable_.setRowSelectionAllowed(true);
-		serialDeviceTable_.setModel(new SerialDeviceTableModel());
+      serialDeviceTable_.setColumnSelectionAllowed(false);
+      serialDeviceTable_.setRowSelectionAllowed(true);
+      serialDeviceTable_.setModel(new SerialDeviceTableModel());
       serialDeviceTable_.setAutoCreateColumnsFromModel(false);
 
-		serialDeviceTable_.getSelectionModel().addListSelectionListener(new SelectionListener(serialDeviceTable_));
+      serialDeviceTable_.getSelectionModel().addListSelectionListener(new SelectionListener(serialDeviceTable_));
       serialDeviceTable_.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       serialDeviceScrollPane.setViewportView(serialDeviceTable_);
 
 
 
-		// this is the table of serial port properties for the user to review and possibly modify
+      // this is the table of serial port properties for the user to review and possibly modify
       final JScrollPane scrollPane = new JScrollPane();
       scrollPane.setBounds(173, 23, 397, 215);
       add(scrollPane);
@@ -139,7 +139,7 @@ public class ComPortsPage extends PagePanel {
       portTable_.setAutoCreateColumnsFromModel(false);
       portTable_.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-		// was working okay without these attributes
+      // was working okay without these attributes
       GUIUtils.setClickCountToStartEditing(portTable_,1);
       GUIUtils.stopEditingOnLosingFocus(portTable_);
 
@@ -258,8 +258,8 @@ public class ComPortsPage extends PagePanel {
 
          // restore the port in-use flags
          for (int i = 0; i < ports.length; i++) {
-				model_.useSerialPort(i,  saveSerialPortsInUse_.get(i));
-	 }
+            model_.useSerialPort(i,  saveSerialPortsInUse_.get(i));
+    }
 
          if (toNextPage) {
             core_.unloadAllDevices();
@@ -371,19 +371,19 @@ class SerialDeviceTableModel extends AbstractTableModel {
       public final String[] COLUMN_NAMES = new String[] {
             "Serial devices"
       };
-		private String selectedPort_;
+      private String selectedPort_;
 
-		public void setValue(String value){
-			selectedPort_ = value;
+      public void setValue(String value){
+         selectedPort_ = value;
          Device ports[] = model_.getAvailableSerialPorts();
-			for (Integer i = 0; i < ports.length; i++) {
-				boolean used = false;
-				if( value.equals( ports[i].getAdapterName() ))			{
-					used = true;
-				}
-				model_.useSerialPort(i, used);
-			}
-		}
+         for (Integer i = 0; i < ports.length; i++) {
+            boolean used = false;
+            if( value.equals( ports[i].getAdapterName() ))        {
+               used = true;
+            }
+            model_.useSerialPort(i, used);
+         }
+      }
 
       public int getRowCount() {
          return portsVect_.size();
