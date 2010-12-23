@@ -38,6 +38,7 @@
 		<mkdir dir="build" />
 		<mkdir dir="buildTB" />
 		<mkdir dir="buildDuo" />
+		<mkdir dir="buildOughta" />
 		<javac srcdir="."  destdir="./build" optimize="on" source="1.5" target="1.5" debug="off">
 			<include name="*.java"/>
 			<exclude name="*TB*.java"/>
@@ -53,7 +54,11 @@
 			<include name="*Duo*.java"/>
 			<classpath refid="project.class.path" />
 		</javac>
-
+		</javac>
+		<javac srcdir="."  destdir="./buildOughta" optimize="on" source="1.5" target="1.5" debug="off">
+			<include name="*OughtaFocus*.java"/>
+			<classpath refid="project.class.path" />
+		</javac>
 	</target>
 
 	<target name="build" description="Build MMAutofocus.jar">
@@ -82,6 +87,14 @@
 		<copy file="MMAutofocusDuo.jar" todir="${mmautofocus}" />
 		<copy file="MMAutofocusDuo.jar" todir="${Runtime}" />
 		<copy file="MMAutofocusDuo.jar" todir="${mmautofocus-inst}/" />
+
+		<jar jarfile="MMOughtaFocus.jar" basedir="buildOughta" />
+		
+		<mkdir dir="${MMPluginDir}" />
+		<delete file="${MMPluginDir}/MMOughtaFocus.jar" />
+		<copy file="MMOughtaFocus.jar" todir="${mmautofocus}" />
+		<copy file="MMOughtaFocus.jar" todir="${Runtime}" />
+		<copy file="MMOughtaFocus.jar" todir="${mmautofocus-inst}/" />
 	</target>
 	
 	<target name="clean" description="Delete the MMAutofocus build files.">
@@ -91,6 +104,8 @@
 		<delete file="MMAutofocusTB.jar" />
 		<delete dir="buildDuo" />
 		<delete file="MMAutofocusDuo.jar" />
+		<delete dir="buildOughta" />
+		<delete file="MMOughtaFocus.jar" />
 
 	</target>
 	
