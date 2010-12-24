@@ -99,6 +99,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    public void runPipeline2(SequenceSettings acquisitionSettings) {
       try {
+         RT.var("org.micromanager.mm", "load-mm").invoke(gui_);
          RT.var("org.micromanager.acq-engine", "run-pipeline")
                  .invoke(acquisitionSettings, this);
       } catch (Throwable ex) {

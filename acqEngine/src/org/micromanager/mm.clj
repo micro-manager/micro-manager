@@ -22,9 +22,11 @@
 (declare gui)
 (declare mmc)
 
-(defn load-mm []
-  (def gui (MMStudioPlugin/getMMStudioMainFrameInstance))
-  (def mmc (.getMMCore gui)))
+(defn load-mm
+([gui] (def mmc (.getMMCore gui)))
+  ([]
+    (def gui (MMStudioPlugin/getMMStudioMainFrameInstance))
+    (load-mm gui)))
 
 (defn get-default-devices []
   {:camera          (. mmc getCameraDevice)

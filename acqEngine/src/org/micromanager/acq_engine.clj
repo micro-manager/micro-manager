@@ -15,8 +15,8 @@
 ;               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
 (ns org.micromanager.acq-engine
-  (:use [org.micromanager.mm :only [mmc gui map-config get-config get-positions 
-                                    get-default-devices load-mm]]
+  (:use [org.micromanager.mm :only [map-config get-config get-positions 
+                                    get-default-devices mmc gui]]
         [org.micromanager.sequence-generator :only [generate-acq-sequence]])
   (:import [org.micromanager AcqControlDlg]
            [org.micromanager.api AcquisitionEngine]
@@ -67,6 +67,9 @@
 
 (defn get-current-time-str []
   (. iso8601modified format (Date.)))
+    
+(defn get-pixel-type []
+  (str ({1 "GRAY", 4 "RGB"} (.getNumberOfComponents mmc)) (* 8 (.getBytesPerPixel mmc))))
 
 (defn ChannelSpec-to-map [^ChannelSpec chan]
   (-> chan
@@ -115,7 +118,7 @@
     (assoc
       "PositionName" (get-in event [:position :label])
       "Channel" (get-in event [:channel :name])
-      "PixelType" "GRAY8"
+      "PixelType" (get-pixel-type)
       "ZPositionUm" (get event :z)
       "AxisPositions" (when-let [axes (get-in event [:position :axes])] (JSONObject. axes))
     )))  
@@ -306,7 +309,6 @@
     settings))
 
 (defn run-pipeline [settings acq-eng]
-  (load-mm)
   (create-device-agents)
 	(let [out-queue (GentleLinkedBlockingQueue.)]
 		(.start (Thread. #(run-acquisition (set-to-absolute-slices (convert-settings settings)) out-queue)))
