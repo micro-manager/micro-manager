@@ -69,7 +69,7 @@
   (. iso8601modified format (Date.)))
     
 (defn get-pixel-type []
-  (str ({1 "GRAY", 4 "RGB"} (.getNumberOfComponents mmc)) (* 8 (.getBytesPerPixel mmc))))
+  (str ({1 "GRAY", 4 "RGB"} (int (.getNumberOfComponents mmc))) (* 8 (.getBytesPerPixel mmc))))
 
 (defn ChannelSpec-to-map [^ChannelSpec chan]
   (-> chan
