@@ -38,9 +38,6 @@
 
 ;; general utils
 
-(defn log [& x]
-  (org.micromanager.utils.ReportingUtils/logMessage (apply str x)))
-
 (defn data-object-to-map [obj]
   (into {}
     (for [f (.getFields (type obj))
@@ -72,7 +69,7 @@
   (. iso8601modified format (Date.)))
     
 (defn get-pixel-type []
-  (str ({1 "GRAY", 4 "RGB"} (int (.getNumberOfComponents mmc))) (* 8 (.getBytesPerPixel mmc))))
+  (str ({1 "GRAY", 4 "RGB"} (int (core getNumberOfComponents))) (* 8 (core getBytesPerPixel))))
 
 (defn ChannelSpec-to-map [^ChannelSpec chan]
   (-> chan
@@ -85,7 +82,7 @@
       :skipFactorFrame_        :skip-frames
       :useChannel_             :use-channel
     )
-    (assoc :properties (get-config (. mmc getChannelGroup) (.config_ chan)))))
+    (assoc :properties (get-config (core getChannelGroup) (.config_ chan)))))
 
 (defn MultiStagePosition-to-map [^MultiStagePosition msp]
   {:label (.getLabel msp)
@@ -125,13 +122,13 @@
     (JSONObject. (merge
       {"ElapsedTime-ms" (- (clock-ms) (@state :start-time))
        "Time" (get-current-time-str)
-       "Width"  (. mmc getImageWidth)
-       "Height" (. mmc getImageHeight)
+       "Width"  (core getImageWidth)
+       "Height" (core getImageHeight)
        "PixelType" (get-pixel-type)
-       "Binning" (. mmc getProperty (. mmc getCameraDevice) "Binning")
+       "Binning" (core getProperty (core getCameraDevice) "Binning")
        "UUID" (UUID/randomUUID)
       }
-      (map-config (. mmc getSystemStateCache))
+      (map-config (core getSystemStateCache))
       (generate-metadata event)
       ))))
 
@@ -149,21 +146,21 @@
 
 (defn create-device-agents []
   (def device-agents
-    (let [devs (seq (. mmc getLoadedDevices))]
+    (let [devs (seq (core getLoadedDevices))]
       (zipmap devs (repeatedly (count devs) #(agent nil))))))
 
 (defn get-z-stage-position [stage]
-  (. mmc getPosition stage))
+  (core getPosition stage))
 
 (defn set-stage-position
   ([stage-dev z] (log "setting z position to " z)
-		 (. mmc setPosition stage-dev z)
+		 (core setPosition stage-dev z)
 		 (dosync alter state assoc :last-z-position z))
   ([stage-dev x y] (log "setting x,y position to " x "," y)
-                   (when (and x y) (. mmc setXYPosition stage-dev x y))))
+                   (when (and x y) (core setXYPosition stage-dev x y))))
 
 (defn set-property
-  ([dev prop] (. mmc setProperty (prop 0) (prop 1) (prop 2))))
+  ([dev prop] (core setProperty (prop 0) (prop 1) (prop 2))))
   
 (defn send-device-action [dev action]
   (send-off (device-agents dev) (fn [_] (action))))
@@ -177,9 +174,9 @@
     (for [[axis pos] (get-in event [:position :axes])]
       [axis #(apply set-stage-position axis pos)])
     (for [prop (get-in event [:channel :properties])]
-      [(prop 0) #(.setProperty mmc (prop 0) (prop 1) (prop 2))])
+      [(prop 0) #(core setProperty (prop 0) (prop 1) (prop 2))])
     (when-let [exposure (:exposure event)]
-      (list [(. mmc getCameraDevice) #(. mmc setExposure exposure)]))))
+      (list [(core getCameraDevice) #(core setExposure exposure)]))))
 
 (defn run-actions [action-map]
   (if run-devices-parallel
@@ -187,29 +184,29 @@
       (doseq [[dev action] action-map]
         (send-device-action dev action))
       (doseq [dev (keys action-map)]
-        (send-device-action dev #(. mmc waitForDevice dev)))
+        (send-device-action dev #(core waitForDevice dev)))
       (doall (map (partial await-for 10000) (vals device-agents))))
     (do
       (doseq [[dev action] action-map]
-        (action) (. mmc waitForDevice dev)))))
+        (action) (core waitForDevice dev)))))
 
 (defn run-autofocus []
   (.. gui getAutofocusManager getDevice fullFocus))
 
 (defn snap-image [open-before close-after]
-  (. mmc setAutoShutter false)
+  (core setAutoShutter false)
   (if open-before
-    (. mmc setShutterOpen true)
-    (. mmc waitForDevice (. mmc getShutterDevice)))
-  (. mmc snapImage)
+    (core setShutterOpen true)
+    (core waitForDevice (core getShutterDevice)))
+  (core snapImage)
   (if close-after
-    (. mmc setShutterOpen false))
-    (. mmc waitForDevice (. mmc getShutterDevice))
-  (. mmc setAutoShutter (@state :init-auto-shutter)))
+    (core setShutterOpen false))
+    (core waitForDevice (core getShutterDevice))
+  (core setAutoShutter (@state :init-auto-shutter)))
 
 (defn init-burst [length]
-  (. mmc setAutoShutter (@state :init-auto-shutter))
-  (. mmc startSequenceAcquisition length 0 false))
+  (core setAutoShutter (@state :init-auto-shutter))
+  (core startSequenceAcquisition length 0 false))
 
 (defn expose [event]
   (do (condp = (:task event)
@@ -220,12 +217,12 @@
 (defn collect-burst-image []
   (while
     (and
-      (. mmc isSequenceRunning)
-      (zero? (. mmc getRemainingImageCount))) (Thread/sleep 5))
-  (. mmc popNextImage))
+      (core isSequenceRunning)
+      (zero? (core getRemainingImageCount))) (Thread/sleep 5))
+  (core popNextImage))
   
 (defn collect-snap-image []
-  (. mmc getImage))
+  (core getImage))
 
 (defn collect-image [event out-queue]
   (let [image (condp = (:task event)
@@ -253,7 +250,7 @@
     (list
       ;#(println event)  
       #(run-actions (create-presnap-actions event))
-      #(await-for 10000 (device-agents (. mmc getCameraDevice)))
+      #(await-for 10000 (device-agents (core getCameraDevice)))
       #(when-let [wait-time-ms (event :wait-time-ms)]
         (acq-sleep wait-time-ms))
       #(when (:autofocus event)
@@ -279,14 +276,14 @@
     [state (ref {:interrupt-requests {:pause false :stop false}
                  :z-corrections nil
                  :last-wake-time (clock-ms)
-		 :start-time (clock-ms)
-		 :init-auto-shutter (. mmc getAutoShutter)
-                 :last-z-position (get-z-stage-position (. mmc getFocusDevice))})]
+                 :start-time (clock-ms)
+                 :init-auto-shutter (core getAutoShutter)
+                 :last-z-position (get-z-stage-position (core getFocusDevice))})]
     (let [acq-seq (generate-acq-sequence settings)]
        (def acq-sequence acq-seq)
        (def last-state state)
        (execute (mapcat #(make-event-fns % out-queue) acq-seq))
-       (. mmc setAutoShutter (@state :init-auto-shutter)))))
+       (core setAutoShutter (@state :init-auto-shutter)))))
 
 (defn convert-settings [^SequenceSettings settings]
   (-> settings
@@ -309,7 +306,7 @@
 (defn set-to-absolute-slices [settings]
   (if (and (:slices settings) (:relative-slices settings))
     (assoc settings :slices
-      (map (partial + (. mmc getPosition (. mmc getFocusDevice))) (:slices settings)))
+      (map (partial + (core getPosition (core getFocusDevice))) (:slices settings)))
     settings))
 
 (defn run-pipeline [settings acq-eng]

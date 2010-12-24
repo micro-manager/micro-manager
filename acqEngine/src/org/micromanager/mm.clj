@@ -23,10 +23,23 @@
 (declare mmc)
 
 (defn load-mm
-([gui] (def mmc (.getMMCore gui)))
-  ([]
-    (def gui (MMStudioPlugin/getMMStudioMainFrameInstance))
-    (load-mm gui)))
+	([gui] (def mmc (.getMMCore gui)))
+	([]
+		(def gui (MMStudioPlugin/getMMStudioMainFrameInstance))
+		(load-mm gui)))
+    
+(defn log [& x]
+  (org.micromanager.utils.ReportingUtils/logMessage (apply str x)))
+
+(defmacro log-cmd [expr]
+  `(let [result# ~expr]
+     (if (nil? result#)
+       (log '~expr " -> nil")
+       (log '~expr " -> " result#))
+     result#))
+
+(defmacro core [& args]
+  `(log-cmd (. mmc ~@args)))
 
 (defn get-default-devices []
   {:camera          (. mmc getCameraDevice)
