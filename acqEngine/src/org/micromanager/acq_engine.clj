@@ -16,7 +16,7 @@
 
 (ns org.micromanager.acq-engine
   (:use [org.micromanager.mm :only [map-config get-config get-positions 
-                                    get-default-devices mmc gui]]
+                                    get-default-devices core log mmc gui]]
         [org.micromanager.sequence-generator :only [generate-acq-sequence]])
   (:import [org.micromanager AcqControlDlg]
            [org.micromanager.api AcquisitionEngine]
