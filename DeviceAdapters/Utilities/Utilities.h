@@ -149,6 +149,13 @@ public:
    int OnStageMaxPos(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
 
+   // Sequence functions
+   int IsStageSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
+   int GetStageSequenceMaxLength(long& nrEvents) const  {nrEvents = 0; return DEVICE_OK;}
+   int StartStageSequence() const {return DEVICE_OK;}
+   int StopStageSequence() const {return DEVICE_OK;}
+   int LoadStageSequence(std::vector<double> positions) const {return DEVICE_OK;}
+
 private:
    std::vector<std::string> availableDAs_;
    std::string DADeviceName_;
@@ -194,6 +201,13 @@ public:
    // action interface
    // ----------------
    int OnAutoFocusDevice(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+   // Sequence functions
+   int IsStageSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
+   int GetStageSequenceMaxLength(long& nrEvents) const  {nrEvents = 0; return DEVICE_OK;}
+   int StartStageSequence() const {return DEVICE_OK;}
+   int StopStageSequence() const {return DEVICE_OK;}
+   int LoadStageSequence(std::vector<double> positions) const {return DEVICE_OK;}
 
 private:
    std::vector<std::string> availableAutoFocusDevices_;

@@ -164,6 +164,13 @@ public:
    int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnAxis(MM::PropertyBase* pProp, MM::ActionType eAct);
 
+   // Sequence functions
+   int IsStageSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
+   int GetStageSequenceMaxLength(long& nrEvents) const  {nrEvents = 0; return DEVICE_OK;}
+   int StartStageSequence() const {return DEVICE_OK;}
+   int StopStageSequence() const {return DEVICE_OK;}
+   int LoadStageSequence(std::vector<double> positions) const {return DEVICE_OK;}
+
 private:
    int ExecuteCommand(const std::string& cmd, std::string& response);
    int Autofocus(long param);

@@ -357,6 +357,13 @@ public:
    // ----------------
    int OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
 
+   // Sequence functions
+   int IsStageSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
+   int GetStageSequenceMaxLength(long& nrEvents) const  {nrEvents = 0; return DEVICE_OK;}
+   int StartStageSequence() const {return DEVICE_OK;}
+   int StopStageSequence() const {return DEVICE_OK;}
+   int LoadStageSequence(std::vector<double> positions) const {return DEVICE_OK;}
+
 private:
    void SetIntensityFactor(double pos);
    double stepSize_um_;
@@ -512,6 +519,13 @@ public:
    int GetLimits(double& minVolts, double& maxVolts) {minVolts=0.0; maxVolts= 10.0; return DEVICE_OK;}
    bool Busy() {return false;}
    int Initialize() {return DEVICE_OK;}
+
+   // Sequence functions
+   int IsDASequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
+   int GetDASequenceMaxLength(long& nrEvents) const  {nrEvents = 0; return DEVICE_OK;}
+   int StartDASequence() const {return DEVICE_OK;}
+   int StopDASequence() const {return DEVICE_OK;}
+   int LoadDASequence(std::vector<double> voltages) const {return DEVICE_OK;}
 
 
 private:

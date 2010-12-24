@@ -159,6 +159,13 @@ public:
    int GetSignal(double& volts) {volts_ = volts; return DEVICE_UNSUPPORTED_COMMAND;}     
    int GetLimits(double& minVolts, double& maxVolts) {minVolts = minV_; maxVolts = maxV_; return DEVICE_OK;}
    
+   // Sequence functions
+   int IsDASequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
+   int GetDASequenceMaxLength(long& nrEvents) const  {nrEvents = 0; return DEVICE_OK;}
+   int StartDASequence() const {return DEVICE_OK;} 
+   int StopDASequence() const {return DEVICE_OK;}
+   int LoadDASequence(std::vector<double> voltages) const {return DEVICE_OK;}
+
    // action interface
    // ----------------
    int OnVolts(MM::PropertyBase* pProp, MM::ActionType eAct);

@@ -197,6 +197,13 @@ public:
    int OnThreshold(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnStop(MM::PropertyBase* pProp, MM::ActionType eAct);
 
+   // Sequence functions
+   int IsStageSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
+   int GetStageSequenceMaxLength(long& nrEvents) const  {nrEvents = 0; return DEVICE_OK;}
+   int StartStageSequence() const {return DEVICE_OK;}
+   int StopStageSequence() const {return DEVICE_OK;}
+   int LoadStageSequence(std::vector<double> positions) const {return DEVICE_OK;}
+
 private:                                                                     
    double stepSize_um_;
    std::string name_;  
