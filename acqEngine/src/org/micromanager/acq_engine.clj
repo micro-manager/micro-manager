@@ -284,6 +284,7 @@
                  :last-z-position (get-z-stage-position (. mmc getFocusDevice))})]
     (let [acq-seq (generate-acq-sequence settings)]
        (def acq-sequence acq-seq)
+       (def last-state state)
        (execute (mapcat #(make-event-fns % out-queue) acq-seq))
        (. mmc setAutoShutter (@state :init-auto-shutter)))))
 
