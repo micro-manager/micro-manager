@@ -38,6 +38,9 @@
 
 ;; general utils
 
+(defn log [& x]
+  (org.micromanager.utils.ReportingUtils/logMessage (apply str x)))
+
 (defn data-object-to-map [obj]
   (into {}
     (for [f (.getFields (type obj))
@@ -97,12 +100,7 @@
 
 ;; globals
 
-(declare last-wake-time)
-(def start-time 0)
-(declare interrupt-requests)
-(declare z-corrections)
-(declare init-auto-shutter)
-(declare default-z-position)
+(declare state)
 
 ;; metadata
 
@@ -118,7 +116,6 @@
     (assoc
       "PositionName" (get-in event [:position :label])
       "Channel" (get-in event [:channel :name])
-      "PixelType" (get-pixel-type)
       "ZPositionUm" (get event :z)
       "AxisPositions" (when-let [axes (get-in event [:position :axes])] (JSONObject. axes))
     )))  
@@ -126,10 +123,11 @@
 (defn annotate-image [img event]
   (TaggedImage. img
     (JSONObject. (merge
-      {"ElapsedTime-ms" (- (clock-ms) start-time)
+      {"ElapsedTime-ms" (- (clock-ms) (@state :start-time))
        "Time" (get-current-time-str)
        "Width"  (. mmc getImageWidth)
        "Height" (. mmc getImageHeight)
+       "PixelType" (get-pixel-type)
        "Binning" (. mmc getProperty (. mmc getCameraDevice) "Binning")
        "UUID" (UUID/randomUUID)
       }
@@ -141,11 +139,11 @@
 
 (defn acq-sleep [interval-ms]
   (let [current-time (clock-ms)
-        target-time (+ @last-wake-time interval-ms)
+        target-time (+ (@state :last-wake-time) interval-ms)
         sleep-time (- target-time current-time)]
     (when (pos? sleep-time)
       (Thread/sleep sleep-time)
-      (reset! last-wake-time target-time))))
+      (alter state assoc :last-wake-time target-time))))
 
 (declare device-agents)
 
@@ -158,8 +156,11 @@
   (. mmc getPosition stage))
 
 (defn set-stage-position
-  ([stage-dev z] (when z (. mmc setPosition stage-dev z)))
-  ([stage-dev x y] (when (and x y) (. mmc setXYPosition stage-dev x y))))
+  ([stage-dev z] (log "setting z position to " z)
+		 (. mmc setPosition stage-dev z)
+		 (dosync alter state assoc :last-z-position z))
+  ([stage-dev x y] (log "setting x,y position to " x "," y)
+                   (when (and x y) (. mmc setXYPosition stage-dev x y))))
 
 (defn set-property
   ([dev prop] (. mmc setProperty (prop 0) (prop 1) (prop 2))))
@@ -171,7 +172,8 @@
   (concat
     (when-let [z-drive (:z-drive event)]
       (when-let [z (:z event)]
-        (list [z-drive #(set-stage-position z-drive z)])))
+        (when (and z (not= z (@state :last-z-position)))
+          (list [z-drive #(set-stage-position z-drive z)]))))
     (for [[axis pos] (get-in event [:position :axes])]
       [axis #(apply set-stage-position axis pos)])
     (for [prop (get-in event [:channel :properties])]
@@ -203,10 +205,10 @@
   (if close-after
     (. mmc setShutterOpen false))
     (. mmc waitForDevice (. mmc getShutterDevice))
-  (. mmc setAutoShutter init-auto-shutter))
+  (. mmc setAutoShutter (@state :init-auto-shutter)))
 
 (defn init-burst [length]
-  (. mmc setAutoShutter init-auto-shutter)
+  (. mmc setAutoShutter (@state :init-auto-shutter))
   (. mmc startSequenceAcquisition length 0 false))
 
 (defn expose [event]
@@ -233,16 +235,16 @@
     (.put out-queue (annotate-image image event))))
   
 (defn store-z-correction [z event]
-  (alter z-corrections assoc (get-in event [:position :label]) z))
+  (alter state assoc-in [:z-corrections (get-in event [:position :label])] z))
  
 (defn compute-z-position [event]
   (if-let [z-drive (:z-drive event)]
     (-> event
       (assoc :z
 				(+ (or (get-in event [:channel :z-offset]) 0)
-				   (or (get @z-corrections z-drive)
+				   (or (get (@state :z-corrections) z-drive)
 				     (:slice event)
-				     default-z-position)))
+				     (@state :last-z-position))))
       (assoc-in [:postion :axes z-drive] nil))
     event))
    
@@ -261,28 +263,29 @@
     )))
   
 (defn execute [event-fns]
-  (doseq [event-fn event-fns :while (not (:stop @interrupt-requests))]
-    (while (:pause @interrupt-requests) (Thread/sleep 5))
+  (doseq [event-fn event-fns :while (not (:stop (@state :interrupt-requests)))]
+    (while (:pause (@state :interrupt-requests)) (Thread/sleep 5))
     (event-fn)))
 
 (defn stop-acq []
-  (dosync (alter interrupt-requests assoc :stop true)))
+  (dosync (alter state assoc-in [:interrupt-requests :stop] true)))
   
 (defn pause-acq []
-  (dosync (alter interrupt-requests assoc :pause true)))
+  (dosync (alter state assoc-in [:interrupt-requests :pause] true)))
   
 (defn run-acquisition [settings out-queue] 
   (def acq-settings settings)
-  (binding [interrupt-requests (ref {:pause false :stop false})
-            z-corrections (ref nil)
-            last-wake-time (atom (clock-ms))
-            start-time (clock-ms)
-            init-auto-shutter (. mmc getAutoShutter)
-            default-z-position (get-z-stage-position (. mmc getFocusDevice))]
+  (binding
+    [state (ref {:interrupt-requests {:pause false :stop false}
+                 :z-corrections nil
+                 :last-wake-time (clock-ms)
+		 :start-time (clock-ms)
+		 :init-auto-shutter (. mmc getAutoShutter)
+                 :last-z-position (get-z-stage-position (. mmc getFocusDevice))})]
     (let [acq-seq (generate-acq-sequence settings)]
        (def acq-sequence acq-seq)
        (execute (mapcat #(make-event-fns % out-queue) acq-seq))
-       (. mmc setAutoShutter init-auto-shutter))))
+       (. mmc setAutoShutter (@state :init-auto-shutter)))))
 
 (defn convert-settings [^SequenceSettings settings]
   (-> settings
@@ -310,7 +313,7 @@
 
 (defn run-pipeline [settings acq-eng]
   (create-device-agents)
-	(let [out-queue (GentleLinkedBlockingQueue.)]
+	(let [out-queue (LinkedBlockingQueue.)]
 		(.start (Thread. #(run-acquisition (set-to-absolute-slices (convert-settings settings)) out-queue)))
 		(.start (LiveAcqDisplay. mmc out-queue settings (.channels settings) (.save settings) acq-eng))))
 
