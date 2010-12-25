@@ -2666,6 +2666,9 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             imageWin_ = createImageWindow();
          }
 
+         if (imageWin_ == null)
+            return;
+         
          imageWin_.toFront();
 
          setIJCal(imageWin_);

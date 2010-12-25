@@ -51,7 +51,6 @@ import com.swtdesigner.SwingResourceManager;
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
 
-import org.micromanager.api.MMListenerInterface;
 import org.micromanager.api.MMListenerAdapter;
 import org.micromanager.utils.MMFrame;
 import org.micromanager.utils.PropertyValueCellEditor;
@@ -122,12 +121,14 @@ public class PropertyEditor extends MMFrame{
       getContentPane().setLayout(springLayout);
       setSize(551, 514);
       addWindowListener(new WindowAdapter() {
+         @Override
          public void windowClosing(WindowEvent e) {
             savePosition();
             Preferences prefs = getPrefsNode();
             prefs.putBoolean(PREF_SHOW_READONLY, showReadonlyCheckBox_.isSelected());
             flags_.save(getPrefsNode());
          }
+         @Override
          public void windowOpened(WindowEvent e) {
             // restore values from the previous session
             Preferences prefs = getPrefsNode();
@@ -309,6 +310,7 @@ public class PropertyEditor extends MMFrame{
    
       private static final long serialVersionUID = 1L;
 
+      @Override
       public void setValueAt(Object value, int row, int col) {
          PropertyItem item = propListVisible_.get(row);
          ReportingUtils.logMessage("Setting value " + value + " at row " + row);
@@ -329,6 +331,7 @@ public class PropertyEditor extends MMFrame{
          }
       }
       
+      @Override
       public void update(ShowFlags flags, String groupName, String presetName) {  
          try {
             StrVector devices = core_.getLoadedDevices();
