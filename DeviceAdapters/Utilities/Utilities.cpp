@@ -579,6 +579,43 @@ int DAZStage::GetLimits(double& min, double& max)
    return DEVICE_OK;
 }
 
+int DAZStage::IsStageSequenceable(bool& isSequenceable) const 
+{
+   return DADevice_->IsDASequenceable(isSequenceable);
+}
+
+int DAZStage::GetStageSequenceMaxLength(long& nrEvents) const  
+{
+   return DADevice_->GetDASequenceMaxLength(nrEvents);
+}
+
+int DAZStage::StartStageSequence() const 
+{
+   return DADevice_->StartDASequence();
+}
+
+int DAZStage::StopStageSequence() const 
+{
+   return DADevice_->StopDASequence();
+}
+
+int DAZStage::LoadStageSequence(std::vector<double> positions) const 
+{
+
+   std::vector<double> volts = positions;
+   for (int i=0; i < volts.size(); i++) 
+   {
+      volts[i] = ( (positions[i] + originPos_) / (maxStagePos_ - minStagePos_)) * 
+                     (maxStageVolt_ - minStageVolt_);
+      if (volts[i] > maxStageVolt_)
+         volts[i] = maxStageVolt_;
+      else if (volts[i]  < minStageVolt_)
+         volts[i] = minStageVolt_;
+   }
+
+   return DADevice_->LoadDASequence(volts);
+
+}
 
 ///////////////////////////////////////
 // Action Interface
