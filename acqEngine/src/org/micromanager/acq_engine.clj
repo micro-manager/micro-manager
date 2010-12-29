@@ -16,7 +16,7 @@
 
 (ns org.micromanager.acq-engine
   (:use [org.micromanager.mm :only [when-lets map-config get-config get-positions 
-                                    get-default-devices core log mmc gui]]
+                                    get-default-devices core log mmc gui with-core-setting]]
         [org.micromanager.sequence-generator :only [generate-acq-sequence]])
   (:import [org.micromanager AcqControlDlg]
            [org.micromanager.api AcquisitionEngine]
@@ -140,7 +140,7 @@
         sleep-time (- target-time current-time)]
     (when (pos? sleep-time)
       (Thread/sleep sleep-time)
-      (alter state assoc :last-wake-time target-time))))
+      (dosync alter state assoc :last-wake-time target-time))))
 
 (declare device-agents)
 
@@ -193,15 +193,14 @@
   (.. gui getAutofocusManager getDevice fullFocus))
 
 (defn snap-image [open-before close-after]
-  (core setAutoShutter false)
-  (if open-before
-    (core setShutterOpen true)
-    (core waitForDevice (core getShutterDevice)))
-  (core snapImage)
-  (if close-after
-    (core setShutterOpen false))
-    (core waitForDevice (core getShutterDevice))
-  (core setAutoShutter (@state :init-auto-shutter)))
+  (with-core-setting [getAutoShutter setAutoShutter false]
+		(if open-before
+			(core setShutterOpen true)
+			(core waitForDevice (core getShutterDevice)))
+		(core snapImage)
+		(if close-after
+			(core setShutterOpen false))
+			(core waitForDevice (core getShutterDevice))))
 
 (defn init-burst [length]
   (core setAutoShutter (@state :init-auto-shutter))

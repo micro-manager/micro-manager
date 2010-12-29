@@ -50,6 +50,20 @@
     `(when-let ~bindings ~@body)
     (let [[a b] (map vec (split-at 2 bindings))]     
       `(when-let ~a (when-lets ~b ~@body))))))
+      
+(defmacro with-setting [gst & body]
+  (let [[getter setter temp] gst]
+    `(let [perm# (~getter)
+           temp# ~temp
+           different# (not= perm# temp#)]
+    (println perm#)
+    (when different# (~setter temp#))
+    (do ~@body)
+    (when different# (~setter perm#)))))
+    
+(defmacro with-core-setting [gst & body]
+  (let [[getter setter temp] gst]
+    `(with-setting [#(core ~getter) #(core ~setter %) ~temp] ~@body)))
 
 (defn get-default-devices []
   {:camera          (. mmc getCameraDevice)
