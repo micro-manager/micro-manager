@@ -343,4 +343,16 @@ public class JavaUtils {
 
       return contents.toString();
    }
+
+   /*
+    * Find out how much unused memory (in bytes)
+    * is still available for the JVM to use.
+    * On a MacBook Pro this call takes 0.5 usec.
+    */
+   public static long getAvailableUnusedMemory() {
+      Runtime r = Runtime.getRuntime();
+      return   r.maxMemory()   // how large the JVM heap can get
+             - r.totalMemory() // current size of heap (<= r.maxMemory())
+             + r.freeMemory(); // how much of currently allocated heap is unused
+   }
 }

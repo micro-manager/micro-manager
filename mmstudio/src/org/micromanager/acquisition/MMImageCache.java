@@ -14,6 +14,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMException;
 import org.micromanager.utils.ReportingUtils;
@@ -60,17 +61,21 @@ public class MMImageCache implements TaggedImageStorage {
    private class ImageCollection {
       private ConcurrentLinkedQueue<String> LabelQueue_;
       private Set<String> LabelSet_;
-      private HashMap<String, SoftReference> taggedImgTable_;
+      private HashMap<String, TaggedImage> taggedImgTable_;
 
       public ImageCollection() {
          LabelQueue_ = new ConcurrentLinkedQueue<String>();
-         taggedImgTable_ = new HashMap<String, SoftReference>();
+         taggedImgTable_ = new HashMap<String, TaggedImage>();
          LabelSet_ = new HashSet<String>();
       }
 
       public void add(MMImageCache cache, TaggedImage taggedImage) {
          String label = MDUtils.getLabel(taggedImage.tags) + "/" + cache.hashCode();
-         taggedImgTable_.put(label, new SoftReference(taggedImage));
+         while (JavaUtils.getAvailableUnusedMemory() < 100000000) {
+            String oldLabel = LabelQueue_.poll();
+            taggedImgTable_.remove(oldLabel);
+         }
+         taggedImgTable_.put(label, taggedImage);
          LabelQueue_.add(label);
          LabelSet_.add(label);
       }
@@ -79,11 +84,7 @@ public class MMImageCache implements TaggedImageStorage {
          label += "/" + cache.hashCode();
          LabelQueue_.remove(label);
          LabelQueue_.add(label);
-         SoftReference ref = taggedImgTable_.get(label);
-         if (ref == null)
-            return null;
-         else
-            return (TaggedImage) ref.get();
+         return taggedImgTable_.get(label);
       }
 
       public Set<String> getLabels(MMImageCache cache) {
