@@ -140,7 +140,7 @@
     (log-cmd (@state :last-wake-time))
     (when (pos? sleep-time)
       (Thread/sleep sleep-time)
-      (dosync (alter state assoc :last-wake-time target-time)))))
+      (swap! state assoc :last-wake-time target-time))))
 
 (declare device-agents)
 
@@ -155,7 +155,7 @@
 (defn set-stage-position
   ([stage-dev z] (log "setting z position to " z)
 		 (core setPosition stage-dev z)
-		 (dosync (alter state assoc :last-z-position z)))
+		 (swap! state assoc :last-z-position z))
   ([stage-dev x y] (log "setting x,y position to " x "," y)
                    (when (and x y) (core setXYPosition stage-dev x y))))
 
@@ -228,7 +228,7 @@
     (.put out-queue (annotate-image image event))))
   
 (defn store-z-correction [z event]
-  (dosync (alter state assoc-in [:z-corrections (get-in event [:position :label])] z)))
+  (swap! state assoc-in [:z-corrections (get-in event [:position :label])] z))
  
 (defn compute-z-position [event]
   (if-let [z-drive (:z-drive event)]
@@ -261,21 +261,21 @@
     (event-fn)))
 
 (defn stop-acq []
-  (dosync (alter state assoc :stop true)))
+  (swap! state assoc :stop true))
   
 (defn pause-acq []
-  (dosync (alter state assoc :pause true)))
+  (swap! state assoc :pause true))
   
 (defn run-acquisition [settings out-queue] 
   (def acq-settings settings)
   (binding
-    [state (ref {:pause false
-                 :stop false
-                 :z-corrections nil
-                 :last-wake-time (clock-ms)
-                 :start-time (clock-ms)
-                 :init-auto-shutter (core getAutoShutter)
-                 :last-z-position (get-z-stage-position (core getFocusDevice))})]
+    [state (atom {:pause false
+                  :stop false
+                  :z-corrections nil
+                  :last-wake-time (clock-ms)
+                  :start-time (clock-ms)
+                  :init-auto-shutter (core getAutoShutter)
+                  :last-z-position (get-z-stage-position (core getFocusDevice))})]
     (let [acq-seq (generate-acq-sequence settings)]
        (def acq-sequence acq-seq)
        (def last-state state)
