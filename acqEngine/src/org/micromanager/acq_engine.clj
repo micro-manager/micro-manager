@@ -16,7 +16,7 @@
 
 (ns org.micromanager.acq-engine
   (:use [org.micromanager.mm :only [when-lets map-config get-config get-positions 
-                                    get-default-devices core log mmc gui with-core-setting]]
+                                    get-default-devices core log log-cmd mmc gui with-core-setting]]
         [org.micromanager.sequence-generator :only [generate-acq-sequence]])
   (:import [org.micromanager AcqControlDlg]
            [org.micromanager.api AcquisitionEngine]
@@ -135,12 +135,12 @@
 ;; acq-engine
 
 (defn acq-sleep [interval-ms]
-  (let [current-time (clock-ms)
-        target-time (+ (@state :last-wake-time) interval-ms)
-        sleep-time (- target-time current-time)]
+  (let [target-time (+ (@state :last-wake-time) interval-ms)
+        sleep-time (- target-time (clock-ms))]
+    (log-cmd (@state :last-wake-time))
     (when (pos? sleep-time)
       (Thread/sleep sleep-time)
-      (dosync alter state assoc :last-wake-time target-time))))
+      (dosync (alter state assoc :last-wake-time target-time)))))
 
 (declare device-agents)
 
@@ -155,7 +155,7 @@
 (defn set-stage-position
   ([stage-dev z] (log "setting z position to " z)
 		 (core setPosition stage-dev z)
-		 (dosync alter state assoc :last-z-position z))
+		 (dosync (alter state assoc :last-z-position z)))
   ([stage-dev x y] (log "setting x,y position to " x "," y)
                    (when (and x y) (core setXYPosition stage-dev x y))))
 
@@ -228,7 +228,7 @@
     (.put out-queue (annotate-image image event))))
   
 (defn store-z-correction [z event]
-  (dosync alter state assoc-in [:z-corrections (get-in event [:position :label])] z))
+  (dosync (alter state assoc-in [:z-corrections (get-in event [:position :label])] z)))
  
 (defn compute-z-position [event]
   (if-let [z-drive (:z-drive event)]
@@ -261,15 +261,16 @@
     (event-fn)))
 
 (defn stop-acq []
-  (dosync alter state assoc-in [:interrupt-requests :stop] true))
+  (dosync (alter state assoc :stop true)))
   
 (defn pause-acq []
-  (dosync alter state assoc-in [:interrupt-requests :pause] true))
+  (dosync (alter state assoc :pause true)))
   
 (defn run-acquisition [settings out-queue] 
   (def acq-settings settings)
   (binding
-    [state (ref {:interrupt-requests {:pause false :stop false}
+    [state (ref {:pause false
+                 :stop false
                  :z-corrections nil
                  :last-wake-time (clock-ms)
                  :start-time (clock-ms)
