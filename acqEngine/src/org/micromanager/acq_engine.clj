@@ -228,7 +228,7 @@
     (.put out-queue (annotate-image image event))))
   
 (defn store-z-correction [z event]
-  (alter state assoc-in [:z-corrections (get-in event [:position :label])] z))
+  (dosync alter state assoc-in [:z-corrections (get-in event [:position :label])] z))
  
 (defn compute-z-position [event]
   (if-let [z-drive (:z-drive event)]
@@ -261,10 +261,10 @@
     (event-fn)))
 
 (defn stop-acq []
-  (dosync (alter state assoc-in [:interrupt-requests :stop] true)))
+  (dosync alter state assoc-in [:interrupt-requests :stop] true))
   
 (defn pause-acq []
-  (dosync (alter state assoc-in [:interrupt-requests :pause] true)))
+  (dosync alter state assoc-in [:interrupt-requests :pause] true))
   
 (defn run-acquisition [settings out-queue] 
   (def acq-settings settings)
