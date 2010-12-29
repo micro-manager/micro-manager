@@ -41,6 +41,16 @@
 (defmacro core [& args]
   `(log-cmd (. mmc ~@args)))
 
+(defmacro when-lets [bindings & body]
+  (assert (vector? bindings))
+  (let [n (count bindings)]
+    (assert (zero? (mod n 2)))
+    (assert (<= 2 n))
+  (if (= 2 n)
+    `(when-let ~bindings ~@body)
+    (let [[a b] (map vec (split-at 2 bindings))]     
+      `(when-let ~a (when-lets ~b ~@body))))))
+
 (defn get-default-devices []
   {:camera          (. mmc getCameraDevice)
    :shutter         (. mmc getShutterDevice)

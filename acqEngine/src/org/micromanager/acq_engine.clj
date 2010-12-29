@@ -15,7 +15,7 @@
 ;               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
 (ns org.micromanager.acq-engine
-  (:use [org.micromanager.mm :only [map-config get-config get-positions 
+  (:use [org.micromanager.mm :only [when-lets map-config get-config get-positions 
                                     get-default-devices core log mmc gui]]
         [org.micromanager.sequence-generator :only [generate-acq-sequence]])
   (:import [org.micromanager AcqControlDlg]
@@ -167,10 +167,9 @@
     
 (defn create-presnap-actions [event]
   (concat
-    (when-let [z-drive (:z-drive event)]
-      (when-let [z (:z event)]
-        (when (and z (not= z (@state :last-z-position)))
-          (list [z-drive #(set-stage-position z-drive z)]))))
+    (when-lets [z-drive (:z-drive event) z (:z event)]
+      (when (and z (not= z (@state :last-z-position)))
+        (list [z-drive #(set-stage-position z-drive z)])))
     (for [[axis pos] (get-in event [:position :axes])]
       [axis #(apply set-stage-position axis pos)])
     (for [prop (get-in event [:channel :properties])]
@@ -215,10 +214,8 @@
     nil)))
 
 (defn collect-burst-image []
-  (while
-    (and
-      (core isSequenceRunning)
-      (zero? (core getRemainingImageCount))) (Thread/sleep 5))
+  (while (and (core isSequenceRunning) (zero? (core getRemainingImageCount)))
+    (Thread/sleep 5))
   (core popNextImage))
   
 (defn collect-snap-image []
@@ -312,6 +309,7 @@
 (defn run-pipeline [settings acq-eng]
   (create-device-agents)
 	(let [out-queue (LinkedBlockingQueue.)]
+	  (def outq out-queue)
 		(.start (Thread. #(run-acquisition (set-to-absolute-slices (convert-settings settings)) out-queue)))
 		(.start (LiveAcqDisplay. mmc out-queue settings (.channels settings) (.save settings) acq-eng))))
 
