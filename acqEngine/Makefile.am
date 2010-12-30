@@ -1,4 +1,7 @@
-MMAcqEngine.jar:
+MMAcqEngine.jar: \
+	$(srcdir)/src/org/micromanager/mm.clj \
+	$(srcdir)/src/org/micromanager/acq_engine.clj \
+	$(srcdir)/src/org/micromanager/sequence_generator.clj
 	test -d classes || mkdir classes
 	rm -rf classes/*
 	cp -R src/org classes/
