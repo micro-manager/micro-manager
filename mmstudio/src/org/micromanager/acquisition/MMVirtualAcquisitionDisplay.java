@@ -176,6 +176,10 @@ public class MMVirtualAcquisitionDisplay{
          if (hyperImage_ == null) {
             show(pos);
          }
+         if (numPositions_ == 1 && numChannels_ == 1 && numSlices_ == 1 && numFrames_ == 1) {
+            hyperImage_.setProcessor(virtualStacks_.get(0).getProcessor(1));
+         }
+
          updateWindow();
          JSONObject md = taggedImg.tags;
 
