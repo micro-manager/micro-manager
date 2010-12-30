@@ -260,4 +260,8 @@ public class LiveAcqDisplay extends Thread {
       }
       return maxNumber;
    }
+
+   public void update() {
+      display_.updateWindow();
+   }
 }

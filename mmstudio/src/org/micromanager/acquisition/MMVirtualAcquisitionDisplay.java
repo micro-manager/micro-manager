@@ -137,7 +137,7 @@ public class MMVirtualAcquisitionDisplay{
       hyperImage_.updateAndDraw();
    }
 
-   private void updateWindow() {
+   public void updateWindow() {
       if (hc_ == null)
          return;
 

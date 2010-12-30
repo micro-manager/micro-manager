@@ -273,19 +273,22 @@
   
 (defn run-acquisition [this settings out-queue] 
   (def acq-settings settings)
-  (reset! (.state this) {:pause false
+  (swap! (.state this) assoc
+                  :pause false
                   :stop false
                   :running true
                   :z-corrections nil
                   :last-wake-time (clock-ms)
                   :start-time (clock-ms)
                   :init-auto-shutter (core getAutoShutter)
-                  :last-z-position (get-z-stage-position (core getFocusDevice))})
+                  :last-z-position (get-z-stage-position (core getFocusDevice)))
   (binding [state (.state this)]
+    (def last-state state)
 		(let [acq-seq (generate-acq-sequence settings)]
 			 (def acq-sequence acq-seq)
 			 (def last-state state)
 			 (execute (mapcat #(make-event-fns % out-queue) acq-seq))
+			 (.update (:display @state))
 			 (swap! state assoc :running false)
 			 (core setAutoShutter (@state :init-auto-shutter)))))
 
@@ -322,7 +325,9 @@
 	(let [out-queue (LinkedBlockingQueue.)]
 	  (def outq out-queue)
 		(.start (Thread. #(run-acquisition this (set-to-absolute-slices (convert-settings settings)) out-queue)))
-		(.start (LiveAcqDisplay. mmc out-queue settings (.channels settings) (.save settings) acq-eng))))
+		(swap! (.state this) assoc :display
+		  (doto (LiveAcqDisplay. mmc out-queue settings (.channels settings) (.save settings) acq-eng)
+		        .start))))
 
 (defn -pause [this]
   (log "pause requested!")
