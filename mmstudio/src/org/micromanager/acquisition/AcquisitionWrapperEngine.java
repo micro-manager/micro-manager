@@ -86,6 +86,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    public void runPipeline2(SequenceSettings acquisitionSettings) {
       try {
+         Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
          pipeline_ = (Pipeline) Class.forName("org.micromanager.AcqEngine")
                                              .newInstance();
          pipeline_.run(acquisitionSettings, this);
