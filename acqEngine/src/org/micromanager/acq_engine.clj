@@ -33,7 +33,9 @@
            )
    (:gen-class
      :name org.micromanager.AcqEngine
-     :implements [org.micromanager.api.Pipeline]))
+     :implements [org.micromanager.api.Pipeline]
+     :init init
+     :state state))
 
 ;; constants
 
@@ -100,7 +102,7 @@
 
 ;; globals
 
-(declare state)
+(def state (atom {:running false :stop false}))
 
 ;; metadata
 
@@ -259,8 +261,8 @@
     )))
   
 (defn execute [event-fns]
-  (doseq [event-fn event-fns :while (not (:stop (@state :interrupt-requests)))]
-    (while (:pause (@state :interrupt-requests)) (Thread/sleep 5))
+  (doseq [event-fn event-fns :while (not (:stop @state))]
+    (while (:pause @state) (Thread/sleep 5))
     (event-fn)))
 
 (defn stop-acq []
@@ -269,21 +271,23 @@
 (defn pause-acq []
   (swap! state assoc :pause true))
   
-(defn run-acquisition [settings out-queue] 
+(defn run-acquisition [this settings out-queue] 
   (def acq-settings settings)
-  (binding
-    [state (atom {:pause false
+  (reset! (.state this) {:pause false
                   :stop false
+                  :running true
                   :z-corrections nil
                   :last-wake-time (clock-ms)
                   :start-time (clock-ms)
                   :init-auto-shutter (core getAutoShutter)
-                  :last-z-position (get-z-stage-position (core getFocusDevice))})]
-    (let [acq-seq (generate-acq-sequence settings)]
-       (def acq-sequence acq-seq)
-       (def last-state state)
-       (execute (mapcat #(make-event-fns % out-queue) acq-seq))
-       (core setAutoShutter (@state :init-auto-shutter)))))
+                  :last-z-position (get-z-stage-position (core getFocusDevice))})
+  (binding [state (.state this)]
+		(let [acq-seq (generate-acq-sequence settings)]
+			 (def acq-sequence acq-seq)
+			 (def last-state state)
+			 (execute (mapcat #(make-event-fns % out-queue) acq-seq))
+			 (swap! state assoc :running false)
+			 (core setAutoShutter (@state :init-auto-shutter)))))
 
 (defn convert-settings [^SequenceSettings settings]
   (-> settings
@@ -309,22 +313,35 @@
       (map (partial + (core getPosition (core getFocusDevice))) (:slices settings)))
     settings))
 
+(defn -init []
+  [[] (atom {:running false :stop false})])
+
 (defn -run [this settings acq-eng]
   (load-mm)
   (create-device-agents)
 	(let [out-queue (LinkedBlockingQueue.)]
 	  (def outq out-queue)
-		(.start (Thread. #(run-acquisition (set-to-absolute-slices (convert-settings settings)) out-queue)))
+		(.start (Thread. #(run-acquisition this (set-to-absolute-slices (convert-settings settings)) out-queue)))
 		(.start (LiveAcqDisplay. mmc out-queue settings (.channels settings) (.save settings) acq-eng))))
 
 (defn -pause [this]
-  (log "pause requested!"))
+  (log "pause requested!")
+  (swap! (.state this) assoc :pause true))
   
 (defn -resume [this]
-  (log "resume requested!"))
+  (log "resume requested!")
+  (swap! (.state this) assoc :pause false))
   
 (defn -stop [this]
-  (log "stop requested!"))
+  (log "stop requested!")
+  (swap! (.state this) assoc :stop true)
+  (log @(.state this)))
+  
+(defn -isRunning [this]
+  (:running @(.state this)))	
+  
+(defn -stopHasBeenRequested [this]
+  (:stop @(.state this)))
 
 (defn create-acq-eng []
   (doto

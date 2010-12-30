@@ -247,7 +247,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
    
    public boolean abortRequested() {
-      return eng_.stopHasBeenRequested();
+      return pipeline_.stopHasBeenRequested();
    }
 
    public void shutdown() {
@@ -268,8 +268,8 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 //// State Queries /////////////////////////////////////////////////////
 
    public boolean isAcquisitionRunning() {
-      if (eng_ != null)
-         return eng_.isRunning();
+      if (pipeline_ != null)
+         return pipeline_.isRunning();
       else
          return false;
    }
