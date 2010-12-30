@@ -200,9 +200,12 @@ public class ChannelControlPanel extends javax.swing.JPanel {
    // End of variables declaration//GEN-END:variables
 
    private void editColor() {
-
+      String name = "selected";
+      if (acq_.getChannelNames() != null) {
+         name = acq_.getChannelNames()[channelIndex_];
+      }
       Color newColor = JColorChooser.showDialog(this, "Choose a color for the "
-              + acq_.getChannelNames()[channelIndex_]
+              + name
               + " channel", acq_.getChannelColor(channelIndex_));
 
       if (newColor != null && acq_ != null) {
