@@ -16,7 +16,8 @@
 
 (ns org.micromanager.acq-engine
   (:use [org.micromanager.mm :only [when-lets map-config get-config get-positions load-mm
-                                    get-default-devices core log log-cmd mmc gui with-core-setting]]
+                                    get-default-devices core log log-cmd mmc gui with-core-setting
+                                    do-when]]
         [org.micromanager.sequence-generator :only [generate-acq-sequence]])
   (:import [org.micromanager AcqControlDlg]
            [org.micromanager.api AcquisitionEngine]
@@ -266,8 +267,7 @@
     (event-fn)))
 
 (defn cleanup []
-  (when-let [display (:display @state)]
-    (.update display))
+  (do-when #(.update %) (:display @state))
   (swap! state assoc :running false)
   (when (core isSequenceRunning)
     (core stopSequenceAcquisition))

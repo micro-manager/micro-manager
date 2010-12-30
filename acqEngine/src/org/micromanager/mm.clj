@@ -65,8 +65,10 @@
   (let [[getter setter temp] gst]
     `(with-setting [#(core ~getter) #(core ~setter %) ~temp] ~@body)))
 
-;(defmacro when-and [f & vals]
-;  `(when-lets v
+(defmacro do-when [f & args]
+  (let [args_ args]
+    `(when (and ~@args_)
+      (~f ~@args_))))
 
 (defn get-default-devices []
   {:camera          (. mmc getCameraDevice)
