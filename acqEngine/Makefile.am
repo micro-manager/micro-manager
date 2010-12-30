@@ -11,5 +11,5 @@ install:
 	cp MMAcqEngine.jar $(DESTDIR)$(IJPATH)/plugins/Micro-Manager
 
 clean:
-	rm MMAcqEngine.jar
+	test -e MMAcqEngine.jar && rm MMAcqEngine.jar || echo "MMAcqEngine.jar not found"
 
