@@ -265,11 +265,12 @@
     (while (:pause @state) (Thread/sleep 5))
     (event-fn)))
 
-(defn stop-acq []
-  (swap! state assoc :stop true))
-  
-(defn pause-acq []
-  (swap! state assoc :pause true))
+(defn cleanup []
+  (.update (:display @state))
+  (swap! state assoc :running false)
+  (when (core isSequenceRunning)
+    (core stopSequenceAcquisition))
+  (core setAutoShutter (@state :init-auto-shutter)))
   
 (defn run-acquisition [this settings out-queue] 
   (def acq-settings settings)
@@ -288,9 +289,7 @@
 			 (def acq-sequence acq-seq)
 			 (def last-state state)
 			 (execute (mapcat #(make-event-fns % out-queue) acq-seq))
-			 (.update (:display @state))
-			 (swap! state assoc :running false)
-			 (core setAutoShutter (@state :init-auto-shutter)))))
+			 (cleanup))))
 
 (defn convert-settings [^SequenceSettings settings]
   (-> settings
