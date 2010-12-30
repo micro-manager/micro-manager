@@ -29,7 +29,6 @@
            [org.micromanager.utils ChannelSpec GentleLinkedBlockingQueue MDUtils]
            [org.json JSONObject]
            [java.util Date UUID]
-           [java.util.concurrent LinkedBlockingQueue]
            [java.text SimpleDateFormat]
            )
    (:gen-class
@@ -325,7 +324,7 @@
 (defn -run [this settings acq-eng]
   (load-mm)
   (create-device-agents)
-	(let [out-queue (LinkedBlockingQueue.)]
+	(let [out-queue (GentleLinkedBlockingQueue.)]
 	  (def outq out-queue)
 		(.start (Thread. #(run-acquisition this (set-to-absolute-slices (convert-settings settings)) out-queue)))
 		(swap! (.state this) assoc :display

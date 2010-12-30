@@ -31,6 +31,9 @@
 (defn pairs-back [x]
   (partition 2 1 (lazy-cat (list nil) x)))
 
+(defn if-assoc [pred m k v]
+  (if pred (assoc m k v) m))
+
 (defn make-dimensions [settings]
   (let [{:keys [slices channels frames positions
                 slices-first time-first]} settings
@@ -58,9 +61,8 @@
   (assoc event :z-drive (:focus (get-default-devices))))
   
 (defn assign-exposure [event]
-  (if (:channel event)
-    (assoc event :exposure (get-in event [:channel :exposure]))
-    event))
+  (if-assoc (:channel event)
+    event :exposure (get-in event [:channel :exposure])))
 
 (defn process-skip-z-stack [events slices]
   (if (pos? (count slices))
@@ -107,9 +109,8 @@
   (cons
     (assoc (first events) :wait-time-ms 0)
     (for [[e1 e2] (pairs events) :when e2]
-      (if (not= (:frame e1) (:frame e2))
-        (assoc e2 :wait-time-ms interval-ms)
-        e2))))
+      (if-assoc (not= (:frame e1) (:frame e2))
+        e2 :wait-time-ms interval-ms))))
         
 (defn burst-valid [e1 e2]
   (and
