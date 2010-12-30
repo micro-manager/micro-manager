@@ -141,8 +141,8 @@ public class LiveAcqDisplay extends Thread {
          channelColors.put(channel.color_.getRGB());
          channelNames.put(channel.config_);
          try {
-            channelMaxes.put(255);
-            channelMins.put(0);
+            channelMaxes.put(Integer.MIN_VALUE);
+            channelMins.put(Integer.MAX_VALUE);
          } catch (Exception e) {
             ReportingUtils.logError(e);
          }

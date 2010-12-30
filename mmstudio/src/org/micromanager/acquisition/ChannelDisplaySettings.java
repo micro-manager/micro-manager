@@ -13,8 +13,8 @@ import java.awt.Color;
  */
 public class ChannelDisplaySettings {
    double gamma = 1.0;
-   int min;
-   int max;
+   int min = Integer.MAX_VALUE;
+   int max = Integer.MIN_VALUE;
    Color color = Color.white;
    int nbits;
 }

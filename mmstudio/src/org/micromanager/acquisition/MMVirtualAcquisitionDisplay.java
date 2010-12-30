@@ -200,17 +200,16 @@ public class MMVirtualAcquisitionDisplay{
                      updateAndDraw();
                   }
                } else {
-                  double min = hyperImage_.getDisplayRangeMin();
-                  double max = hyperImage_.getDisplayRangeMax();
-                  if (hyperImage_.getSlice() == 1) {
-                     min = Double.MAX_VALUE;
-                     max = Double.MIN_VALUE;
-                  }
                   
                   int chan = MDUtils.getChannelIndex(md);
 
-                  if (channelSettings_[chan] == null) {
-                     channelSettings_[chan] = new ChannelDisplaySettings();
+                  int min = (int) hyperImage_.getDisplayRangeMin();
+                  int max = (int) hyperImage_.getDisplayRangeMax();
+                  if (hyperImage_.getSlice() == 1
+                          || channelSettings_[chan].min == Integer.MAX_VALUE
+                          || channelSettings_[chan].max == Integer.MIN_VALUE) {
+                     min = Integer.MAX_VALUE;
+                     max = Integer.MIN_VALUE;
                   }
 
                   readChannelSettingsFromCache(false);

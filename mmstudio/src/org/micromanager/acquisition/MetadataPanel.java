@@ -583,6 +583,7 @@ public class MetadataPanel extends javax.swing.JPanel
       int tabSelected = tabbedPane.getSelectedIndex();
       if (imp == null) {
          imageMetadataModel_.setMetadata(null);
+         summaryMetadataModel_.setMetadata(null);
          summaryCommentsTextArea.setText(null);
       } else {
          if (tabSelected == 1) {
@@ -598,6 +599,8 @@ public class MetadataPanel extends javax.swing.JPanel
                      md = selectChangingTags(md);
                   imageMetadataModel_.setMetadata(md);
                }
+               summaryMetadataModel_.setMetadata(stack.getCache()
+                       .getSummaryMetadata());
             } else {
                imageMetadataModel_.setMetadata(null);
             }
