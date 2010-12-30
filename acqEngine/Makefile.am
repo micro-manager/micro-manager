@@ -9,3 +9,7 @@ all: MMAcqEngine.jar
 
 install:
 	cp MMAcqEngine.jar $(DESTDIR)$(IJPATH)/plugins/Micro-Manager
+
+clean:
+	rm MMAcqEngine.jar
+

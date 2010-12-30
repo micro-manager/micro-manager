@@ -12,7 +12,8 @@ import org.micromanager.acquisition.engine.SequenceSettings;
  * @author arthur
  */
 public interface Pipeline {
-   public void run(SequenceSettings settings);
+   public void run(SequenceSettings settings, AcquisitionEngine eng);
    public void pause();
+   public void resume();
    public void stop();
 }

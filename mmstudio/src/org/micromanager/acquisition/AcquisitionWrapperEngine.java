@@ -4,14 +4,8 @@
  */
 package org.micromanager.acquisition;
 
-import clojure.lang.RT;
-import ij.IJ;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.micromanager.acquisition.engine.BurstMaker;
 import java.awt.Color;
-import java.io.File;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -31,7 +25,7 @@ import org.micromanager.acquisition.engine.SequenceSettings;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.DeviceControlGUI;
 import org.micromanager.api.EngineTask;
-import org.micromanager.navigation.MultiStagePosition;
+import org.micromanager.api.Pipeline;
 import org.micromanager.navigation.PositionList;
 import org.micromanager.utils.AutofocusManager;
 import org.micromanager.utils.ChannelSpec;
@@ -78,16 +72,9 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private List<Class> taggedImageProcessors_;
    private List<Class> imageRequestProcessors_;
    private boolean absoluteZ_;
+   private Pipeline pipeline_;
 
    public AcquisitionWrapperEngine() {
-      try {
-         Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
-         RT.load("org/micromanager/acq_engine");
-      } catch (Throwable ex) {
-         ReportingUtils.logError(ex.getCause());
-         ReportingUtils.showError(ex);
-      }
-
       imageRequestProcessors_ = new ArrayList<Class>();
       imageRequestProcessors_.add(BurstMaker.class);
       taggedImageProcessors_ = new ArrayList<Class>();
@@ -99,9 +86,9 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    public void runPipeline2(SequenceSettings acquisitionSettings) {
       try {
-         RT.var("org.micromanager.mm", "load-mm").invoke(gui_);
-         RT.var("org.micromanager.acq-engine", "run-pipeline")
-                 .invoke(acquisitionSettings, this);
+         pipeline_ = (Pipeline) Class.forName("org.micromanager.AcqEngine")
+                                             .newInstance();
+         pipeline_.run(acquisitionSettings, this);
       } catch (Throwable ex) {
          ReportingUtils.showError(ex);
       }
@@ -238,8 +225,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    public void stop(boolean interrupted) {
       try {
-         if (eng_!=null)
-            eng_.stop();
+         pipeline_.stop();
       } catch (Exception ex) {
          ReportingUtils.showError("Acquisition engine stop request failed");
       }
@@ -270,10 +256,10 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    public void setPause(boolean state) {
       if (state) {
-         eng_.pause();
+         pipeline_.pause();
          isPaused_ = true;
       } else {
-         eng_.resume();
+         pipeline_.resume();
          isPaused_ = false;
       }
    }

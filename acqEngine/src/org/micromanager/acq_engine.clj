@@ -15,7 +15,7 @@
 ;               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
 (ns org.micromanager.acq-engine
-  (:use [org.micromanager.mm :only [when-lets map-config get-config get-positions 
+  (:use [org.micromanager.mm :only [when-lets map-config get-config get-positions load-mm
                                     get-default-devices core log log-cmd mmc gui with-core-setting]]
         [org.micromanager.sequence-generator :only [generate-acq-sequence]])
   (:import [org.micromanager AcqControlDlg]
@@ -30,7 +30,10 @@
            [java.util Date UUID]
            [java.util.concurrent LinkedBlockingQueue]
            [java.text SimpleDateFormat]
-           ))
+           )
+   (:gen-class
+     :name org.micromanager.AcqEngine
+     :implements [org.micromanager.api.Pipeline]))
 
 ;; constants
 
@@ -306,12 +309,22 @@
       (map (partial + (core getPosition (core getFocusDevice))) (:slices settings)))
     settings))
 
-(defn run-pipeline [settings acq-eng]
+(defn -run [this settings acq-eng]
+  (load-mm)
   (create-device-agents)
 	(let [out-queue (LinkedBlockingQueue.)]
 	  (def outq out-queue)
 		(.start (Thread. #(run-acquisition (set-to-absolute-slices (convert-settings settings)) out-queue)))
 		(.start (LiveAcqDisplay. mmc out-queue settings (.channels settings) (.save settings) acq-eng))))
+
+(defn -pause [this]
+  (log "pause requested!"))
+  
+(defn -resume [this]
+  (log "resume requested!"))
+  
+(defn -stop [this]
+  (log "stop requested!"))
 
 (defn create-acq-eng []
   (doto
@@ -320,7 +333,7 @@
         (def orig-settings settings)
         (println "ss positions: " (.size (.positions settings)))
         (println "position-count: " (.getNumberOfPositions (.getPositionList gui)))
-				(run-pipeline settings this)
+				(-run settings this)
     (.setCore mmc (.getAutofocusManager gui))
     (.setParentGUI gui)
     (.setPositionList (.getPositionList gui))))))
