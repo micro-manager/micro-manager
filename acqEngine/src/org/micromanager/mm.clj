@@ -65,6 +65,9 @@
   (let [[getter setter temp] gst]
     `(with-setting [#(core ~getter) #(core ~setter %) ~temp] ~@body)))
 
+;(defmacro when-and [f & vals]
+;  `(when-lets v
+
 (defn get-default-devices []
   {:camera          (. mmc getCameraDevice)
    :shutter         (. mmc getShutterDevice)

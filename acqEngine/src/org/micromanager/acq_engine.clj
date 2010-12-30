@@ -266,7 +266,8 @@
     (event-fn)))
 
 (defn cleanup []
-  (.update (:display @state))
+  (when-let [display (:display @state)]
+    (.update display))
   (swap! state assoc :running false)
   (when (core isSequenceRunning)
     (core stopSequenceAcquisition))
@@ -289,7 +290,8 @@
 			 (def acq-sequence acq-seq)
 			 (def last-state state)
 			 (execute (mapcat #(make-event-fns % out-queue) acq-seq))
-			 (cleanup))))
+			 (cleanup)
+			 )))
 
 (defn convert-settings [^SequenceSettings settings]
   (-> settings
