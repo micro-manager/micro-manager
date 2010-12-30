@@ -317,6 +317,8 @@
       (map (partial + (core getPosition (core getFocusDevice))) (:slices settings)))
     settings))
 
+;; java interop
+
 (defn -init []
   [[] (atom {:running false :stop false})])
 
@@ -348,6 +350,8 @@
   
 (defn -stopHasBeenRequested [this]
   (:stop @(.state this)))
+
+;; testing
 
 (defn create-acq-eng []
   (doto

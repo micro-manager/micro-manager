@@ -71,12 +71,12 @@
       (~f ~@args_))))
 
 (defn get-default-devices []
-  {:camera          (. mmc getCameraDevice)
-   :shutter         (. mmc getShutterDevice)
-   :focus           (. mmc getFocusDevice)
-   :xy-stage        (. mmc getXYStageDevice)
-   :autofocus       (. mmc getAutoFocusDevice)
-   :image-processor (. mmc getImageProcessorDevice)})
+  {:camera          (core getCameraDevice)
+   :shutter         (core getShutterDevice)
+   :focus           (core getFocusDevice)
+   :xy-stage        (core getXYStageDevice)
+   :autofocus       (core getAutoFocusDevice)
+   :image-processor (core getImageProcessorDevice)})
    
 (defn map-config [^Configuration config]
   (let [n (.size config)
@@ -87,7 +87,7 @@
          (.getPropertyValue prop)]))))
 
 (defn get-config [group config]
-  (let [data (. mmc getConfigData group config)
+  (let [data (core getConfigData group config)
         n (.size data)
         props (map #(.getSetting data %) (range n))]
     (for [prop props]
