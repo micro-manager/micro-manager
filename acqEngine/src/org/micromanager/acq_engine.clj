@@ -326,12 +326,15 @@
 (defn -run [this settings acq-eng]
   (load-mm)
   (create-device-agents)
-	(let [out-queue (GentleLinkedBlockingQueue.)]
+	(let [out-queue (GentleLinkedBlockingQueue.)
+	      acq-thread (Thread. #(run-acquisition this 
+	        (set-to-absolute-slices (convert-settings settings)) out-queue))
+	      display (LiveAcqDisplay. mmc out-queue settings (.channels settings)
+	        (.save settings) acq-eng)]
 	  (def outq out-queue)
-		(.start (Thread. #(run-acquisition this (set-to-absolute-slices (convert-settings settings)) out-queue)))
-		(swap! (.state this) assoc :display
-		  (doto (LiveAcqDisplay. mmc out-queue settings (.channels settings) (.save settings) acq-eng)
-		        .start))))
+		(.start acq-thread)
+		(swap! (.state this) assoc :display display)
+		(.start display)))
 
 (defn -pause [this]
   (log "pause requested!")
