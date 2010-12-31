@@ -23,6 +23,7 @@ MMJ_.jar:  \
 	$(srcdir)/src/org/micromanager/license.txt \
 	$(srcdir)/src/org/micromanager/acquisition/AcquisitionManager.java \
 	$(srcdir)/src/org/micromanager/acquisition/AcquisitionVirtualStack.java \
+	$(srcdir)/src/org/micromanager/acquisition/AcquisitionWrapperEngine.java \
 	$(srcdir)/src/org/micromanager/acquisition/ChannelControlPanel.java \
 	$(srcdir)/src/org/micromanager/acquisition/ChannelControlPanel.form \
 	$(srcdir)/src/org/micromanager/acquisition/ChannelDisplaySettings.java \
