@@ -93,7 +93,7 @@ public class LiveAcqDisplay extends Thread {
       md.put("Comment", acqSettings.comment);
       md.put("MetadataVersion", 10);
       md.put("Source", "Micro-Manager");
-      md.put("PixelSize_um", core_.getPixelSizeUm());
+     // md.put("PixelSize_um", core_.getPixelSizeUm());
       md.put("PixelAspect", 1.0);
       md.put("GridColumn", 0);
       md.put("GridRow", 0);
