@@ -270,7 +270,8 @@
   (swap! state assoc :running false)
   (when (core isSequenceRunning)
     (core stopSequenceAcquisition))
-  (core setAutoShutter (@state :init-auto-shutter)))
+  (core setAutoShutter (@state :init-auto-shutter))
+  (core setExposure (@state :init-exposure)))
   
 (defn run-acquisition [this settings out-queue] 
   (def acq-settings settings)
@@ -282,6 +283,7 @@
                   :last-wake-time (clock-ms)
                   :start-time (clock-ms)
                   :init-auto-shutter (core getAutoShutter)
+                  :init-exposure (core getExposure)
                   :last-z-position (get-z-stage-position (core getFocusDevice)))
   (binding [state (.state this)]
     (def last-state state)
