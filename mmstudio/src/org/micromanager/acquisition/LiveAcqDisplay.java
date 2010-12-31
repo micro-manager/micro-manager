@@ -41,8 +41,7 @@ public class LiveAcqDisplay extends Thread {
            SequenceSettings acqSettings,
            ArrayList<ChannelSpec> channels,
            boolean diskCached,
-           AcquisitionEngine eng,
-           JSONObject summaryMetadata) {
+           AcquisitionEngine eng) {
       core_ = core;
       acqSettings_ = acqSettings;
       diskCached_ = diskCached;
@@ -59,6 +58,8 @@ public class LiveAcqDisplay extends Thread {
             acqPath = getUniqueUntitledName();
             imageFileManager = new TaggedImageStorageRam(null);
          }
+
+         JSONObject summaryMetadata = makeSummaryMetadata(acqSettings);
 
          imageCache_ = new MMImageCache(imageFileManager);
          imageCache_.setSummaryMetadata(summaryMetadata);
