@@ -25,7 +25,6 @@ public class GentleLinkedBlockingQueue<E> extends LinkedBlockingQueue<E> {
            (i<n) && (JavaUtils.getAvailableUnusedMemory() < limitBytes);
            ++i) {
          JavaUtils.sleep(5);
-         System.out.println("GentleLinkedBlockingQueue sleep");
       }
       super.put(e);
    }
