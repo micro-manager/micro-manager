@@ -41,7 +41,8 @@ public class LiveAcqDisplay extends Thread {
            SequenceSettings acqSettings,
            ArrayList<ChannelSpec> channels,
            boolean diskCached,
-           AcquisitionEngine eng) {
+           AcquisitionEngine eng,
+           JSONObject summaryMetadata) {
       core_ = core;
       acqSettings_ = acqSettings;
       diskCached_ = diskCached;
@@ -58,8 +59,6 @@ public class LiveAcqDisplay extends Thread {
             acqPath = getUniqueUntitledName();
             imageFileManager = new TaggedImageStorageRam(null);
          }
-        
-         JSONObject summaryMetadata = makeSummaryMetadata(acqSettings);
 
          imageCache_ = new MMImageCache(imageFileManager);
          imageCache_.setSummaryMetadata(summaryMetadata);
@@ -93,7 +92,7 @@ public class LiveAcqDisplay extends Thread {
       md.put("Comment", acqSettings.comment);
       md.put("MetadataVersion", 10);
       md.put("Source", "Micro-Manager");
-     // md.put("PixelSize_um", core_.getPixelSizeUm());
+      md.put("PixelSize_um", core_.getPixelSizeUm());
       md.put("PixelAspect", 1.0);
       md.put("GridColumn", 0);
       md.put("GridRow", 0);
