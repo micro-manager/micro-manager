@@ -30,6 +30,7 @@ package org.micromanager.acquisition;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -39,7 +40,7 @@ import org.micromanager.utils.ReportingUtils;
 public class PreLoadDataThread implements Runnable {
 
    private MMVirtualAcquisitionDisplay virtAcq_;
-   private static final long MEMORYLIMIT = 1000000;
+   private static final long MEMORYLIMIT = 5000000;
 
    public PreLoadDataThread(MMVirtualAcquisitionDisplay virtAcq) {
       virtAcq_ = virtAcq;
@@ -60,7 +61,7 @@ public class PreLoadDataThread implements Runnable {
                for (int frame = 0; frame < numFrames; frame ++) {
                   for (int position = 0; position < numPositions; position++) {
                      virtAcq_.imageCache_.getImage(channel, slice, frame, position);
-                     if (Runtime.getRuntime().freeMemory() < MEMORYLIMIT)
+                     if (JavaUtils.getAvailableUnusedMemory() < MEMORYLIMIT)
                         return;
                   }
                }
