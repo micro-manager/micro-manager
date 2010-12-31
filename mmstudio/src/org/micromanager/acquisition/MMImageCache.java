@@ -71,7 +71,7 @@ public class MMImageCache implements TaggedImageStorage {
 
       public void add(MMImageCache cache, TaggedImage taggedImage) {
          String label = MDUtils.getLabel(taggedImage.tags) + "/" + cache.hashCode();
-         while (JavaUtils.getAvailableUnusedMemory() < 100000000) {
+         while (JavaUtils.getAvailableUnusedMemory() < 20000000) {
             String oldLabel = LabelQueue_.poll();
             if (oldLabel != null) {
                taggedImgTable_.remove(oldLabel);
