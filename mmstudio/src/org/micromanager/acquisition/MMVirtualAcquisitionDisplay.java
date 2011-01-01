@@ -144,6 +144,7 @@ public class MMVirtualAcquisitionDisplay{
       if (newData_) {
          if (acquisitionIsRunning()) {
             if (!abortRequested()) {
+               hc_.enableAcquisitionControls();
                if (isPaused()) {
                   status_ = " (Paused)";
                } else {
@@ -151,18 +152,15 @@ public class MMVirtualAcquisitionDisplay{
                }
             } else {
                status_ = " (Interrupted)";
-               hc_.disableAcquisitionControls();
             }
          } else {
             if (!status_.contentEquals(" (Interrupted)")) {
                status_ = " (Finished)";
             }
-            hc_.disableAcquisitionControls();
          }
       } else {
          if (diskCached_)
             status_ = " (On disk)";
-         hc_.disableAcquisitionControls();
       }
       hc_.enableShowFolderButton(diskCached_);
       hyperImage_.getWindow().setTitle(new File(dir_).getName() +  status_);
