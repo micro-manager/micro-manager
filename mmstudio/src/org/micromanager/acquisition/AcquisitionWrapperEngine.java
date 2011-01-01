@@ -4,6 +4,8 @@
  */
 package org.micromanager.acquisition;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.micromanager.acquisition.engine.BurstMaker;
 import java.awt.Color;
 import java.util.ArrayList;
@@ -73,22 +75,37 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private List<Class> imageRequestProcessors_;
    private boolean absoluteZ_;
    private Pipeline pipeline_;
+   private Thread createPipelineThread_;
 
    public AcquisitionWrapperEngine() {
+      Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
+      createPipelineThread_ = new Thread() {
+         public void run() {
+            try {
+               pipeline_ = (Pipeline) Class.forName("org.micromanager.AcqEngine").newInstance();
+            } catch (Exception ex) {
+               ReportingUtils.logError(ex);
+            }
+         }
+      };
+      createPipelineThread_.start();
+
       imageRequestProcessors_ = new ArrayList<Class>();
       imageRequestProcessors_.add(BurstMaker.class);
       taggedImageProcessors_ = new ArrayList<Class>();
    }
 
    public void acquire() throws MMException {
+      try {
+         createPipelineThread_.join();
+      } catch (InterruptedException ex) {
+         ReportingUtils.logError(ex);
+      }
       runPipeline2(gatherSequenceSettings());
    }
 
    public void runPipeline2(SequenceSettings acquisitionSettings) {
       try {
-         Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
-         pipeline_ = (Pipeline) Class.forName("org.micromanager.AcqEngine")
-                                             .newInstance();
          pipeline_.run(acquisitionSettings, this);
       } catch (Throwable ex) {
          ReportingUtils.showError(ex);
