@@ -26,6 +26,7 @@
            [org.micromanager.navigation MultiStagePosition StagePosition]
            [mmcorej TaggedImage Configuration]
            [java.util.prefs Preferences]
+           [java.util.concurrent TimeUnit CountDownLatch]
            [org.micromanager.utils ChannelSpec GentleLinkedBlockingQueue MDUtils]
            [org.json JSONObject]
            [java.util Date UUID]
@@ -139,12 +140,18 @@
 
 ;; acq-engine
 
+
+(defn interruptible-sleep [time-ms]
+  (let [sleepy (CountDownLatch. 1)]
+    (swap! state assoc :sleepy sleepy)
+    (.await sleepy time-ms TimeUnit/MILLISECONDS)))
+
 (defn acq-sleep [interval-ms]
   (let [target-time (+ (@state :last-wake-time) interval-ms)
         sleep-time (- target-time (clock-ms))]
     (log-cmd (@state :last-wake-time))
     (when (pos? sleep-time)
-      (Thread/sleep sleep-time)
+      (interruptible-sleep sleep-time)
       (swap! state assoc :last-wake-time target-time))))
 
 (declare device-agents)
@@ -346,8 +353,10 @@
   
 (defn -stop [this]
   (log "stop requested!")
-  (swap! (.state this) assoc :stop true)
-  (log @(.state this)))
+  (let [state (.state this)]
+    (swap! state assoc :stop true)
+    (do-when #(.countDown %) (:sleepy @state))
+    (log @state)))
   
 (defn -isRunning [this]
   (:running @(.state this)))	
