@@ -141,6 +141,9 @@
 ;; acq-engine
 
 
+(defn await-resume []
+  (while (and (:pause @state) (not (:stop @state))) (Thread/sleep 5)))
+
 (defn interruptible-sleep [time-ms]
   (let [sleepy (CountDownLatch. 1)]
     (swap! state assoc :sleepy sleepy)
@@ -148,11 +151,13 @@
 
 (defn acq-sleep [interval-ms]
   (let [target-time (+ (@state :last-wake-time) interval-ms)
-        sleep-time (- target-time (clock-ms))]
-    (log-cmd (@state :last-wake-time))
-    (when (pos? sleep-time)
-      (interruptible-sleep sleep-time)
-      (swap! state assoc :last-wake-time target-time))))
+        delta (- target-time (clock-ms))]
+    (when (pos? delta)
+      (interruptible-sleep delta))
+    (await-resume)
+    (let [now (clock-ms)
+          wake-time (if (> now (+ target-time 10)) now target-time)]
+      (swap! state assoc :last-wake-time wake-time))))
 
 (declare device-agents)
 
@@ -269,8 +274,9 @@
   
 (defn execute [event-fns]
   (doseq [event-fn event-fns :while (not (:stop @state))]
-    (while (:pause @state) (Thread/sleep 5))
-    (event-fn)))
+    (event-fn)
+    (await-resume)
+    ))
 
 (defn cleanup []
   (do-when #(.update %) (:display @state))
@@ -331,6 +337,7 @@
   [[] (atom {:running false :stop false})])
 
 (defn -run [this settings acq-eng]
+  (def latest-acq this)
   (load-mm)
   (create-device-agents)
 	(let [out-queue (GentleLinkedBlockingQueue.)
