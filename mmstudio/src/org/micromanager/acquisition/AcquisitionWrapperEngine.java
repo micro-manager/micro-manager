@@ -69,7 +69,6 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private int positionMode_;
    private boolean useAutoFocus_;
    private int afSkipInterval_;
-   private boolean isPaused_;
    private Engine eng_ = null;
    private List<Class> taggedImageProcessors_;
    private List<Class> imageRequestProcessors_;
@@ -275,10 +274,8 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    public void setPause(boolean state) {
       if (state) {
          pipeline_.pause();
-         isPaused_ = true;
       } else {
          pipeline_.resume();
-         isPaused_ = false;
       }
    }
 
@@ -754,7 +751,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    public boolean isPaused() {
-      return isPaused_;
+      return pipeline_.isPaused();
    }
 
    public void restoreSystem() {

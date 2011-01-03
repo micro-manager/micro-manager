@@ -191,7 +191,7 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
    }//GEN-LAST:event_abortButtonActionPerformed
 
    private void pauseAndResumeToggleButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_pauseAndResumeToggleButtonActionPerformed
-      boolean newPauseState = acq_.pause();
+      acq_.pause();
 }//GEN-LAST:event_pauseAndResumeToggleButtonActionPerformed
 
    private void saveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveButtonActionPerformed

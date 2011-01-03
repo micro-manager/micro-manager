@@ -17,5 +17,6 @@ public interface Pipeline {
    public void resume();
    public void stop();
    public boolean isRunning();
+   public boolean isPaused();
    public boolean stopHasBeenRequested();
 }
