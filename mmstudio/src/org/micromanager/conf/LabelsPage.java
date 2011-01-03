@@ -38,6 +38,7 @@ import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableModel;
 
 import mmcorej.MMCoreJ;
 import org.micromanager.utils.GUIUtils;
@@ -243,6 +244,10 @@ public class LabelsPage extends PagePanel {
       resetButton.setText("Reset");
       resetButton.setBounds(469,43,93,23);
       add(resetButton);
+      
+
+
+
 
    }
 
@@ -306,6 +311,16 @@ public class LabelsPage extends PagePanel {
       tm.setData(model_);
       try {
          model_.loadStateLabelsFromHardware(core_);
+
+         // default the selection to the first row
+         if( devTable_.getSelectedRowCount() < 1 )
+         {
+            TableModel m2 = devTable_.getModel();
+            if( 0 < m2.getRowCount())
+               devTable_.setRowSelectionInterval(0, 0);
+         }
+
+
       } catch (Exception e) {
          ReportingUtils.showError(e);
          return false;
