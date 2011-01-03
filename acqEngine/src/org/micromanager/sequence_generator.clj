@@ -131,7 +131,6 @@
                 (make-bursts later))
         (lazy-cat (list e1) (make-bursts later))))))
         
-        
 (defn generate-acq-sequence [settings]
   (let [{:keys [slices keep-shutter-open-channels keep-shutter-open-slices
          use-autofocus autofocus-skip interval-ms]} settings]

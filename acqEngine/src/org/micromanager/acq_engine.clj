@@ -146,7 +146,7 @@
 
 (defn interruptible-sleep [time-ms]
   (let [sleepy (CountDownLatch. 1)]
-    (swap! state assoc :sleepy sleepy)
+    (swap! state assoc :sleepy sleepy :next-wake-time (+ (clock-ms) time-ms))
     (.await sleepy time-ms TimeUnit/MILLISECONDS)))
 
 (defn acq-sleep [interval-ms]
@@ -374,6 +374,10 @@
 
 (defn -stopHasBeenRequested [this]
   (:stop @(.state this)))
+  
+(defn -nextWakeTime [this]
+  (or (:next-wake-time @(.state this)) -1))
+
 
 ;; testing
 
