@@ -16,6 +16,7 @@
 
 #include "../../MMDevice/DeviceBase.h"
 #include "../../MMDevice/ImgBuffer.h"
+#include "../../../3rdparty/trunk/Canon/EDSDK2.9/Mac/EDSDK/Header/EDSDKTypes.h"
 
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
@@ -69,8 +70,20 @@ class CanonEDCamera : public CCameraBase<CanonEDCamera>
    int OnCameraCCDYSize(MM::PropertyBase* , MM::ActionType ); 
 
 private:
+   EdsError  getFirstCamera(EdsCameraRef  *camera);
+   int EdsToMMError(EdsError err);
+   static EdsError EDSCALLBACK handleObjectEvent( EdsObjectEvent event, EdsBaseRef  object, EdsVoid * context);
+   static EdsError EDSCALLBACK  handlePropertyEvent (EdsPropertyEvent event, EdsPropertyID  property, EdsUInt32 param, EdsVoid * context);
+   static EdsError EDSCALLBACK handleStateEvent (EdsStateEvent event, EdsUInt32 parameter, EdsVoid * context);
+
+   static void* g_Self;
+
    double nominalPixelSizeUm_;
    unsigned nComponents_;
+   bool isSDKLoaded_;
+   bool isLegacy_;
+   EdsCameraRef camera_;
+   std::string cameraModel_;
 };
 
 
