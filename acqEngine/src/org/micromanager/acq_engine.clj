@@ -21,7 +21,7 @@
         [org.micromanager.sequence-generator :only [generate-acq-sequence]])
   (:import [org.micromanager AcqControlDlg]
            [org.micromanager.api AcquisitionEngine]
-           [org.micromanager.acquisition AcquisitionWrapperEngine LiveAcqDisplay]
+           [org.micromanager.acquisition AcquisitionWrapperEngine LiveAcqDisplay TaggedImageQueue]
            [org.micromanager.acquisition.engine SequenceSettings]
            [org.micromanager.navigation MultiStagePosition StagePosition]
            [mmcorej TaggedImage Configuration]
@@ -304,6 +304,7 @@
 			 (def acq-sequence acq-seq)
 			 (def last-state state)
 			 (execute (mapcat #(make-event-fns % out-queue) acq-seq))
+			 (.put out-queue TaggedImageQueue/POISON)
 			 (cleanup)
 			 )))
 
@@ -337,6 +338,7 @@
   [[] (atom {:running false :stop false})])
 
 (defn -run [this settings acq-eng]
+  (def last-acq this)
   (load-mm)
   (create-device-agents)
 	(let [out-queue (GentleLinkedBlockingQueue.)
