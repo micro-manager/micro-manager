@@ -53,7 +53,7 @@ Source: micro-manager\MMCoreJ_wrap.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_AAAOTF.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Andor.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_AndorLaserCombiner.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_Apogee.dll; DestDir: {app}; Flags: ignoreversion
+;Source: micro-manager\mmgr_dal_Apogee.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Arduino.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_ASIFW1000.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_ASIStage.dll; DestDir: {app}; Flags: ignoreversion
@@ -63,7 +63,7 @@ Source: micro-manager\mmgr_dal_Conix.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Corvus.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_CSUX.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_DemoCamera.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_ExfoXCite.dll; DestDir: {app}; Flags: ignoreversion
+;Source: micro-manager\mmgr_dal_ExfoXCite.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_GenericSLM.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_FreeSerialPort.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Hamamatsu.dll; DestDir: {app}; Flags: ignoreversion
