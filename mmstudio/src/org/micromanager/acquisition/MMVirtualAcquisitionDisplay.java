@@ -300,6 +300,10 @@ public class MMVirtualAcquisitionDisplay{
       }
    }
 
+   public long getNextWakeTime() {
+      return eng_.getNextWakeTime();
+   }
+
    public boolean abortRequested() {
       if (eng_ != null) {
          return eng_.abortRequested();

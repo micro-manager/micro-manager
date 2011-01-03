@@ -19,4 +19,5 @@ public interface Pipeline {
    public boolean isRunning();
    public boolean isPaused();
    public boolean stopHasBeenRequested();
+   public long nextWakeTime();
 }

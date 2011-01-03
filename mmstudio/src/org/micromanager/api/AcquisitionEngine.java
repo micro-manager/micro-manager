@@ -298,4 +298,6 @@ public interface AcquisitionEngine {
    public void removeImageProcessor(Class processor);
 
    public boolean abortRequested();
+
+   public long getNextWakeTime();
 }

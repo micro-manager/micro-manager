@@ -277,25 +277,23 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
             final TaggedImage taggedImg = vstack.getTaggedImage(slice);
             updateStatusLine(taggedImg);
             try {
-               if (acq_.acquisitionIsRunning()) {
-                  if (taggedImg != null && taggedImg.tags.has("NextFrameTimeMs"))  {
-                     final long nextImageTime = taggedImg.tags.getLong("NextFrameTimeMs");
-                     if (System.nanoTime() / 1000000 < nextImageTime) {
-                        final Timer timer = new Timer();
-                        TimerTask task = new TimerTask() {
+               if (acq_.acquisitionIsRunning() && acq_.getNextWakeTime() > 0) {
+                  final long nextImageTime = acq_.getNextWakeTime();
+                  if (System.nanoTime() / 1000000 < nextImageTime) {
+                     final Timer timer = new Timer();
+                     TimerTask task = new TimerTask() {
 
-                           public void run() {
-                              double timeRemainingS = (nextImageTime - System.nanoTime() / 1000000) / 1000;
-                              if (timeRemainingS > 0 && acq_.acquisitionIsRunning()) {
-                                 setStatusLabel("Next frame: " + NumberUtils.doubleToDisplayString(1+timeRemainingS) + " s");
-                              } else {
-                                 timer.cancel();
-                                 updateStatusLine(taggedImg);
-                              }
+                        public void run() {
+                           double timeRemainingS = (nextImageTime - System.nanoTime() / 1000000) / 1000;
+                           if (timeRemainingS > 0 && acq_.acquisitionIsRunning()) {
+                              setStatusLabel("Next frame: " + NumberUtils.doubleToDisplayString(1+timeRemainingS) + " s");
+                           } else {
+                              timer.cancel();
+                              updateStatusLine(taggedImg);
                            }
-                        };
-                        timer.schedule(task, 2000, 100);
-                     }
+                        }
+                     };
+                     timer.schedule(task, 2000, 100);
                   }
                }
                

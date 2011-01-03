@@ -293,6 +293,9 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       throw new UnsupportedOperationException("Not supported yet.");
    }
 
+   public long getNextWakeTime() {
+      return pipeline_.nextWakeTime();
+   }
 
 //////////////////// Setters and Getters ///////////////////////////////
 
