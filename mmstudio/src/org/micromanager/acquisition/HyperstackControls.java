@@ -307,9 +307,9 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
 
    }
 
-   public void enableAcquisitionControls() {
-      abortButton.setEnabled(true);
-      pauseAndResumeToggleButton.setEnabled(true);
+   public void enableAcquisitionControls(boolean state) {
+      abortButton.setEnabled(state);
+      pauseAndResumeToggleButton.setEnabled(state);
    }
 
    void enableShowFolderButton(boolean enabled) {

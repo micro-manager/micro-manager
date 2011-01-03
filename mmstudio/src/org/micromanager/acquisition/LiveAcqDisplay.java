@@ -213,6 +213,7 @@ public class LiveAcqDisplay extends Thread {
    }
 
    protected void cleanup() {
+      update();
       try {
          imageCache_.finished();
       } catch (Exception e) {

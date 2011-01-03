@@ -144,21 +144,24 @@ public class MMVirtualAcquisitionDisplay{
       if (newData_) {
          if (acquisitionIsRunning()) {
             if (!abortRequested()) {
-               hc_.enableAcquisitionControls();
+               hc_.enableAcquisitionControls(true);
                if (isPaused()) {
                   status_ = " (Paused)";
                } else {
                   status_ = " (Running)";
                }
             } else {
+               hc_.enableAcquisitionControls(false);
                status_ = " (Interrupted)";
             }
          } else {
+            hc_.enableAcquisitionControls(false);
             if (!status_.contentEquals(" (Interrupted)")) {
                status_ = " (Finished)";
             }
          }
       } else {
+         hc_.enableAcquisitionControls(false);
          if (diskCached_)
             status_ = " (On disk)";
       }
