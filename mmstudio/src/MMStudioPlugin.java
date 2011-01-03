@@ -76,10 +76,14 @@ public class MMStudioPlugin implements PlugIn, CommandListener {
    }
     
     public String commandExecuting(String command) { 
-/*       if (command.equalsIgnoreCase("Quit") && frame_ != null) {
+       if (command.equalsIgnoreCase("Quit") && frame_ != null) {
           frame_.closeSequence();
           return command;
-       } else if (command.equals("Duplicate...") && IJ.getImage() instanceof Image5D) {
+       } 
+       /* TODO: make these work as expected!!!!
+        *
+        *
+        * else if (command.equals("Duplicate...") && IJ.getImage() instanceof Image5D) {
           Duplicate_Image5D duplicate = new Duplicate_Image5D();
           duplicate.run("");
           return null;
