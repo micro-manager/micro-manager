@@ -337,7 +337,6 @@
   [[] (atom {:running false :stop false})])
 
 (defn -run [this settings acq-eng]
-  (def latest-acq this)
   (load-mm)
   (create-device-agents)
 	(let [out-queue (GentleLinkedBlockingQueue.)
@@ -367,7 +366,10 @@
   
 (defn -isRunning [this]
   (:running @(.state this)))	
-  
+
+(defn -isPaused [this]
+  (:pause @(.state this)))	
+
 (defn -stopHasBeenRequested [this]
   (:stop @(.state this)))
 
