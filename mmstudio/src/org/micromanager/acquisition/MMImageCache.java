@@ -59,51 +59,24 @@ public class MMImageCache implements TaggedImageStorage {
 
 
    private class ImageCollection {
-      private ConcurrentLinkedQueue<String> LabelQueue_;
-      private Set<String> LabelSet_;
-      private HashMap<String, TaggedImage> taggedImgTable_;
+      private HashMap<String, SoftReference<TaggedImage>> taggedImgTable_;
 
       public ImageCollection() {
-         LabelQueue_ = new ConcurrentLinkedQueue<String>();
-         taggedImgTable_ = new HashMap<String, TaggedImage>();
-         LabelSet_ = new HashSet<String>();
+         taggedImgTable_ = new HashMap<String, SoftReference<TaggedImage>>();
       }
 
       public void add(MMImageCache cache, TaggedImage taggedImage) {
          String label = MDUtils.getLabel(taggedImage.tags) + "/" + cache.hashCode();
-         while (JavaUtils.getAvailableUnusedMemory() < 5000000) {
-            for (int i=0;i<100;++i) {
-               String oldLabel = LabelQueue_.poll();
-               if (oldLabel != null) {
-                  taggedImgTable_.remove(oldLabel);
-               } else {
-                  break;
-               }
-            }
-            Runtime.getRuntime().gc();
-            JavaUtils.sleep(5);
-         }
-         taggedImgTable_.put(label, taggedImage);
-         LabelQueue_.add(label);
-         LabelSet_.add(label);
+         taggedImgTable_.put(label, new SoftReference<TaggedImage>(taggedImage));
       }
 
       public TaggedImage get(MMImageCache cache, String label) {
          label += "/" + cache.hashCode();
-         LabelQueue_.remove(label);
-         LabelQueue_.add(label);
-         return taggedImgTable_.get(label);
+         return taggedImgTable_.get(label).get();
       }
 
       public Set<String> getLabels(MMImageCache cache) {
-         String hashCode = Long.toString(cache.hashCode());
-         Set labelSubSet = new HashSet<String>();
-         for (String label: LabelSet_) {
-            if (label.endsWith(hashCode)) {
-               labelSubSet.add(label.split("/")[0]);
-            }
-         }
-         return labelSubSet;
+         return taggedImgTable_.keySet();
       }
    }
 
