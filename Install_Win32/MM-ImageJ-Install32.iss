@@ -46,6 +46,11 @@ Source: micro-manager\libusb0.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\MMCoreJ_wrap.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\usb_main.bin; DestDir: {app}; Flags: ignoreversion
 
+; Breeze stuff
+Source: micro-manager\DSLRRemoteLib.dll; DestDir: {app}; Flags: ignoreversion
+Source: micro-manager\NKRemoteLib.dll; DestDir: {app}; Flags: ignoreversion
+Source: micro-manager\PSRemoteLib.dll; DestDir: {app}; Flags: ignoreversion
+
 Source: micro-manager\mmgr_dal_AAAOTF.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_ABSCamera.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_AgilentLaserCombiner.dll; DestDir: {app}; Flags: ignoreversion
@@ -63,6 +68,7 @@ Source: micro-manager\mmgr_dal_Conix.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Corvus.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_CSUX.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_DemoCamera.dll; DestDir: {app}; Flags: ignoreversion
+Source: micro-manager\mmgr_dal_DSLRRemoteCamera.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_DTOpenLayer.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_ExfoXCite.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_FreeSerialPort.dll; DestDir: {app}; Flags: ignoreversion
@@ -80,6 +86,7 @@ Source: micro-manager\mmgr_dal_MCL_MicroDrive.dll; DestDir: {app}; Flags: ignore
 Source: micro-manager\mmgr_dal_MCL_NanoDrive.dll; DestDir: {app}; Flags: ignoreversion
 ;Source: micro-manager\mmgr_dal_MT20.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Neos.dll; DestDir: {app}; Flags: ignoreversion
+Source: micro-manager\mmgr_dal_NKRemoteCamera.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Nikon.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_NikonAZ100.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_NikonTE2000.dll; DestDir: {app}; Flags: ignoreversion
@@ -94,6 +101,7 @@ Source: micro-manager\mmgr_dal_Piper.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_PrecisExcite.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Prior.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_ProgRes.dll; DestDir: {app}; Flags: ignoreversion
+Source: micro-manager\mmgr_dal_PSRemoteCamera.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_PVCAM.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_QCam.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_ScionCam.dll; DestDir: {app}; Flags: ignoreversion

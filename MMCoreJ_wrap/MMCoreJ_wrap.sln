@@ -149,6 +149,12 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Hamamatsu", "..\SecretDevic
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "KDV", "..\DeviceAdapters\kdv\KDV.vcproj", "{95CE7E3D-1E0D-4C5B-AF9B-B8343A8724FB}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DSLRRemoteCamera", "..\DeviceAdapters\TetheredCam\DSLRRemoteCamera.vcproj", "{7D8848FB-2C9B-48B3-8156-AA08B6AC6034}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NKRemoteCamera", "..\DeviceAdapters\TetheredCam\NKRemoteCamera.vcproj", "{5B2CC024-EC22-4460-8DE7-FFB70C3F8922}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PSRemoteCamera", "..\DeviceAdapters\TetheredCam\PSRemoteCamera.vcproj", "{43FAA548-FAF6-4F58-8F24-C78C41820E27}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -723,6 +729,24 @@ Global
 		{95CE7E3D-1E0D-4C5B-AF9B-B8343A8724FB}.Release|Win32.ActiveCfg = Release|Win32
 		{95CE7E3D-1E0D-4C5B-AF9B-B8343A8724FB}.Release|Win32.Build.0 = Release|Win32
 		{95CE7E3D-1E0D-4C5B-AF9B-B8343A8724FB}.Release|x64.ActiveCfg = Release|Win32
+		{7D8848FB-2C9B-48B3-8156-AA08B6AC6034}.Debug|Win32.ActiveCfg = Debug|Win32
+		{7D8848FB-2C9B-48B3-8156-AA08B6AC6034}.Debug|Win32.Build.0 = Debug|Win32
+		{7D8848FB-2C9B-48B3-8156-AA08B6AC6034}.Debug|x64.ActiveCfg = Debug|Win32
+		{7D8848FB-2C9B-48B3-8156-AA08B6AC6034}.Release|Win32.ActiveCfg = Release|Win32
+		{7D8848FB-2C9B-48B3-8156-AA08B6AC6034}.Release|Win32.Build.0 = Release|Win32
+		{7D8848FB-2C9B-48B3-8156-AA08B6AC6034}.Release|x64.ActiveCfg = Release|Win32
+		{5B2CC024-EC22-4460-8DE7-FFB70C3F8922}.Debug|Win32.ActiveCfg = Debug|Win32
+		{5B2CC024-EC22-4460-8DE7-FFB70C3F8922}.Debug|Win32.Build.0 = Debug|Win32
+		{5B2CC024-EC22-4460-8DE7-FFB70C3F8922}.Debug|x64.ActiveCfg = Debug|Win32
+		{5B2CC024-EC22-4460-8DE7-FFB70C3F8922}.Release|Win32.ActiveCfg = Release|Win32
+		{5B2CC024-EC22-4460-8DE7-FFB70C3F8922}.Release|Win32.Build.0 = Release|Win32
+		{5B2CC024-EC22-4460-8DE7-FFB70C3F8922}.Release|x64.ActiveCfg = Release|Win32
+		{43FAA548-FAF6-4F58-8F24-C78C41820E27}.Debug|Win32.ActiveCfg = Debug|Win32
+		{43FAA548-FAF6-4F58-8F24-C78C41820E27}.Debug|Win32.Build.0 = Debug|Win32
+		{43FAA548-FAF6-4F58-8F24-C78C41820E27}.Debug|x64.ActiveCfg = Debug|Win32
+		{43FAA548-FAF6-4F58-8F24-C78C41820E27}.Release|Win32.ActiveCfg = Release|Win32
+		{43FAA548-FAF6-4F58-8F24-C78C41820E27}.Release|Win32.Build.0 = Release|Win32
+		{43FAA548-FAF6-4F58-8F24-C78C41820E27}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

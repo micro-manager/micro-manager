@@ -134,7 +134,10 @@
 		<copy file="${BinRoot}/mmgr_dal_CSUX.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_DemoCamera.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_DLP4000.dll" todir="${InstallRoot}" />
+		<copy file="${BinRoot}/mmgr_dal_DSLRRemoteCamera.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_DTOpenLayer.dll" todir="${InstallRoot}" />
+            <copy file="${BinRoot}/mmgr_dal_ExfoXCite.dll" todir="${InstallRoot}" />
+
 		<copy file="${BinRoot}/mmgr_dal_FreeSerialPort.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_GenericSLM.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_Hamamatsu.dll" todir="${InstallRoot}" />
@@ -154,6 +157,7 @@
 		<copy file="${BinRoot}/mmgr_dal_NikonAZ100.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_NikonTE2000.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_NikonTI.dll" todir="${InstallRoot}" />
+		<copy file="${BinRoot}/mmgr_dal_NKRemoteCamera.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_Olympus.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_ParallelPort.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_PCO_Camera.dll" todir="${InstallRoot}" />
@@ -164,6 +168,7 @@
 		<copy file="${BinRoot}/mmgr_dal_PrecisExcite.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_Prior.dll" todir="${InstallRoot}" />
     		<copy file="${BinRoot}/mmgr_dal_ProgRes.dll" todir="${InstallRoot}" />
+    <copy file="${BinRoot}/mmgr_dal_PSRemoteCamera.dll" todir="${InstallRoot}" />
     		<copy file="${BinRoot}/mmgr_dal_PVCAM.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_QCam.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_ScionCam.dll" todir="${InstallRoot}" />
