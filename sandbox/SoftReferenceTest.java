@@ -3,8 +3,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- *
- * @author arthur
+ * Arthur Edelstein, arthuredelstein@gmail.com, 2011.01.04
+ * UCSF
+ * 
+ * This program lets you test the effects of different JVM command line
+ * settings on SoftReferences. We create 1 MB objects every 100 ms
+ * and hold them in SoftReferences.
+ * 
+ * Example run command:
+ * java  -Xmx1000M -server -XX:SoftRefLRUPolicyMSPerMB=1000000000000000 SoftReferenceTest 800
+ * 1 GB maximum heap, server mode, only garbage collect SoftRefs when necessary, allocate 800 1-MB objects.
  */
 public class SoftReferenceTest {
 
@@ -12,17 +20,24 @@ public class SoftReferenceTest {
     * @param args the command line arguments
     */
    public static void main(String[] args) {
+      final int MBsize = 1024*1024;
+      final double MB_d = (double) MBsize;
       Runtime r = Runtime.getRuntime();
-      List myList = new ArrayList();
-      for (int i = 0; i < 1000; ++i) {
-         SoftReference x = new SoftReference(new byte[1000000]);
-         myList.add(x);
+      List myList<SoftReference> = new ArrayList<SoftReference>();
+      int n = Integer.parseInt(args[0]);
+      long t0 = System.currentTimeMillis();
+      long t;
+      for (int i = 0; ;) {
+         if (i<n) {
+            SoftReference x<byte[]> = new SoftReference<byte []>(new byte[MBsize]);
+            myList.add(x);
+            ++i;
+         }
+         t = System.currentTimeMillis() - t0;
          try {
             Thread.sleep(100);
          } catch (InterruptedException ex) {}
-         System.out.println("free:" + r.freeMemory() / 1024. / 1024.
-                 + " total: " + r.totalMemory() / 1024. / 1024.
-                 + " max: " + r.maxMemory() / 1024. / 1024.);
+         System.out.format("t: %.2f\tallocated: %.2f\tused: %.2f\theap: %.2f\tmax: %.2f\n", t/(double) 1000., (double) i, (r.totalMemory()-r.freeMemory())/MB_d, r.totalMemory() / MB_d, r.maxMemory() / MB_d);
       }
    }
 }
