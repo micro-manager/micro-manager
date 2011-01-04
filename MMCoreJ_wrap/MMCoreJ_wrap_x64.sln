@@ -170,6 +170,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PrincetonInstruments", "..\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ExfoXCite", "..\DeviceAdapters\ExfoXCite\ExfoXCite.vcproj", "{4B9E78C0-C365-11DF-9539-E01BDFD72085}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "KDV", "..\DeviceAdapters\kdv\KDV.vcproj", "{95CE7E3D-1E0D-4C5B-AF9B-B8343A8724FB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -670,6 +672,14 @@ Global
 		{4B9E78C0-C365-11DF-9539-E01BDFD72085}.Release|Win32.ActiveCfg = Release|Win32
 		{4B9E78C0-C365-11DF-9539-E01BDFD72085}.Release|Win32.Build.0 = Release|Win32
 		{4B9E78C0-C365-11DF-9539-E01BDFD72085}.Release|x64.ActiveCfg = Release|Win32
+		{95CE7E3D-1E0D-4C5B-AF9B-B8343A8724FB}.Debug|Win32.ActiveCfg = Debug|Win32
+		{95CE7E3D-1E0D-4C5B-AF9B-B8343A8724FB}.Debug|Win32.Build.0 = Debug|Win32
+		{95CE7E3D-1E0D-4C5B-AF9B-B8343A8724FB}.Debug|x64.ActiveCfg = Debug|x64
+		{95CE7E3D-1E0D-4C5B-AF9B-B8343A8724FB}.Debug|x64.Build.0 = Debug|x64
+		{95CE7E3D-1E0D-4C5B-AF9B-B8343A8724FB}.Release|Win32.ActiveCfg = Release|Win32
+		{95CE7E3D-1E0D-4C5B-AF9B-B8343A8724FB}.Release|Win32.Build.0 = Release|Win32
+		{95CE7E3D-1E0D-4C5B-AF9B-B8343A8724FB}.Release|x64.ActiveCfg = Release|x64
+		{95CE7E3D-1E0D-4C5B-AF9B-B8343A8724FB}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
