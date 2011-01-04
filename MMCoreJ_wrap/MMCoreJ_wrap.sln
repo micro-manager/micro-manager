@@ -147,6 +147,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ExfoXCite", "..\DeviceAdapt
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Hamamatsu", "..\SecretDeviceAdapters\HamamatsuMac\Hamamatsu.vcproj", "{E0369FA6-1D4C-4FF7-AF9E-FC7B6FA07B1D}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "KDV", "..\DeviceAdapters\kdv\KDV.vcproj", "{95CE7E3D-1E0D-4C5B-AF9B-B8343A8724FB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -715,6 +717,12 @@ Global
 		{E0369FA6-1D4C-4FF7-AF9E-FC7B6FA07B1D}.Release|Win32.ActiveCfg = Release|Win32
 		{E0369FA6-1D4C-4FF7-AF9E-FC7B6FA07B1D}.Release|Win32.Build.0 = Release|Win32
 		{E0369FA6-1D4C-4FF7-AF9E-FC7B6FA07B1D}.Release|x64.ActiveCfg = Release|Win32
+		{95CE7E3D-1E0D-4C5B-AF9B-B8343A8724FB}.Debug|Win32.ActiveCfg = Debug|Win32
+		{95CE7E3D-1E0D-4C5B-AF9B-B8343A8724FB}.Debug|Win32.Build.0 = Debug|Win32
+		{95CE7E3D-1E0D-4C5B-AF9B-B8343A8724FB}.Debug|x64.ActiveCfg = Debug|Win32
+		{95CE7E3D-1E0D-4C5B-AF9B-B8343A8724FB}.Release|Win32.ActiveCfg = Release|Win32
+		{95CE7E3D-1E0D-4C5B-AF9B-B8343A8724FB}.Release|Win32.Build.0 = Release|Win32
+		{95CE7E3D-1E0D-4C5B-AF9B-B8343A8724FB}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

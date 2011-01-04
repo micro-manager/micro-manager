@@ -69,6 +69,7 @@ Source: micro-manager\mmgr_dal_FreeSerialPort.dll; DestDir: {app}; Flags: ignore
 Source: micro-manager\mmgr_dal_Hamamatsu.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_K8055.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_K8061.dll; DestDir: {app}; Flags: ignoreversion
+Source: micro-manager\mmgr_dal_KDV.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_LeicaDMI.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_LeicaDMR.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Ludl.dll; DestDir: {app}; Flags: ignoreversion

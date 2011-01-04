@@ -135,6 +135,7 @@
 <copy file="${BinRoot}/mmgr_dal_Hamamatsu.dll" todir="${InstallRoot}" />
 <copy file="${BinRoot}/mmgr_dal_K8055.dll" todir="${InstallRoot}" />
 <copy file="${BinRoot}/mmgr_dal_K8061.dll" todir="${InstallRoot}" />
+	<copy file="${BinRoot}/mmgr_dal_KDV.dll" todir="${InstallRoot}" />
 <copy file="${BinRoot}/mmgr_dal_LeicaDMI.dll" todir="${InstallRoot}" />
 <copy file="${BinRoot}/mmgr_dal_LeicaDMR.dll" todir="${InstallRoot}" />
 <copy file="${BinRoot}/mmgr_dal_Ludl.dll" todir="${InstallRoot}" />

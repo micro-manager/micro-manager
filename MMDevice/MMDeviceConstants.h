@@ -244,7 +244,7 @@ namespace MM {
       Unimplemented = -2,    // -- there is as yet no mechanism to programmatically detect the device
       Misconfigured = -1,    // -- some information needed to communicate with the device is invalid
       CanNotCommunicate = 0, // -- communication attributes are valid, but the device does not respond
-      CanCommunicate = 1     // -- communication verified
+      CanCommunicate = 1     // -- communication verified, parameters have been set to valid values.
    };
 
 } // namespace MM
