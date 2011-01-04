@@ -3884,8 +3884,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    public void setRelativeStagePosition(double z) throws MMScriptException {
       try {
-         cb_.onStagePositionChangedRelative(core_.getFocusDevice(), z);
          core_.setRelativePosition(core_.getFocusDevice(), z);
+         cb_.onStagePositionChangedRelative(core_.getFocusDevice(), z);
          core_.waitForDevice(core_.getFocusDevice());
       } catch (Exception e) {
          throw new MMScriptException(e.getMessage());
