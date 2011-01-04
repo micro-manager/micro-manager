@@ -10,11 +10,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMException;
 import org.micromanager.utils.ReportingUtils;
@@ -28,17 +26,13 @@ public class MMImageCache implements TaggedImageStorage {
    private TaggedImageStorage imageFileManager_;
    private Set<String> changingKeys_;
    private JSONObject firstTags_;
-   private static ImageCollection coll_;
+   private HashMap<String, SoftReference<TaggedImage>> softTable_;
 
    MMImageCache(TaggedImageStorage imageFileManager) {
       imageFileManager_ = imageFileManager;
       changingKeys_ = new HashSet<String>();
-      if (coll_ == null) {
-         coll_ = new ImageCollection();
-      }
+      softTable_ = new HashMap<String, SoftReference<TaggedImage>>();
    }
-
-
 
    public void finished() {
       imageFileManager_.finished();
@@ -57,34 +51,11 @@ public class MMImageCache implements TaggedImageStorage {
       imageFileManager_.close();
    }
 
-
-   private class ImageCollection {
-      private HashMap<String, SoftReference<TaggedImage>> taggedImgTable_;
-
-      public ImageCollection() {
-         taggedImgTable_ = new HashMap<String, SoftReference<TaggedImage>>();
-      }
-
-      public void add(MMImageCache cache, TaggedImage taggedImage) {
-         String label = MDUtils.getLabel(taggedImage.tags) + "/" + cache.hashCode();
-         taggedImgTable_.put(label, new SoftReference<TaggedImage>(taggedImage));
-      }
-
-      public TaggedImage get(MMImageCache cache, String label) {
-         label += "/" + cache.hashCode();
-         return taggedImgTable_.get(label).get();
-      }
-
-      public Set<String> getLabels(MMImageCache cache) {
-         return taggedImgTable_.keySet();
-      }
-   }
-
    public void saveAs(TaggedImageStorage newImageFileManager) {
       if (newImageFileManager == null) {
          return;
       }
-      for (String label : coll_.getLabels(this)) {
+      for (String label : softTable_.keySet()) {
          int pos[] = MDUtils.getIndices(label);
          try {
             newImageFileManager.putImage(getImage(pos[0], pos[1], pos[2], pos[3]));
@@ -99,7 +70,7 @@ public class MMImageCache implements TaggedImageStorage {
 
    public String putImage(TaggedImage taggedImg) {
       try {
-         coll_.add(this, taggedImg);
+         softTable_.put(MDUtils.getLabel(taggedImg.tags), new SoftReference(taggedImg));
          taggedImg.tags.put("Summary",imageFileManager_.getSummaryMetadata());
          checkForChangingTags(taggedImg);
          return imageFileManager_.putImage(taggedImg);
@@ -111,12 +82,14 @@ public class MMImageCache implements TaggedImageStorage {
 
    public TaggedImage getImage(int channel, int slice, int frame, int position) {
       String label = MDUtils.generateLabel(channel, slice, frame, position);
-      TaggedImage taggedImg = coll_.get(this, label);
+      TaggedImage taggedImg = null;
+      if (softTable_.containsKey(label))
+         taggedImg = softTable_.get(label).get();
       if (taggedImg == null) {
          taggedImg = imageFileManager_.getImage(channel, slice, frame, position);
          if (taggedImg != null) {
             checkForChangingTags(taggedImg);
-            coll_.add(this, taggedImg);
+            softTable_.put(label, new SoftReference(taggedImg));
          }
       }
       return taggedImg;
