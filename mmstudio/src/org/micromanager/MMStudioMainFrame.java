@@ -1089,6 +1089,12 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                   configChanged_ = false;
                }
 
+               boolean liveRunning = false;
+               if (liveRunning_) {
+                  liveRunning = liveRunning_;
+                  enableLiveMode(false);
+               }
+
                // unload all devices before starting configurator
                core_.reset();
                GUIUtils.preventDisplayAdapterChangeExceptions();
@@ -1104,6 +1110,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                mainPrefs_.put(SYSTEM_CONFIG_FILE, sysConfigFile_);
                loadSystemConfiguration();
                GUIUtils.preventDisplayAdapterChangeExceptions();
+
+               if (liveRunning) {
+                  enableLiveMode(liveRunning);
+               }
 
             } catch (Exception e) {
                ReportingUtils.showError(e);
