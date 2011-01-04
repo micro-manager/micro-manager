@@ -101,6 +101,9 @@ public class EditPropertiesPage extends PagePanel {
    }
 
    public boolean enterPage(boolean fromNextPage) {
+      if (fromNextPage)
+         return true;
+
       requestCancel_ = false;
       rebuildTable();
       ArrayList<Device> ports = new ArrayList<Device>();
