@@ -481,6 +481,9 @@ SerialPort::~SerialPort()
 
 int SerialPort::Initialize()
 {
+   if (initialized_)
+      return DEVICE_OK;
+
    // do not initialize if this port has been blacklisted
    std::vector<std::string>::iterator it = g_BlackListedPorts.begin();
    while (it < g_BlackListedPorts.end()) {
