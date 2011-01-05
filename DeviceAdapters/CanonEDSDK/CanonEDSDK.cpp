@@ -265,23 +265,75 @@ int CanonEDCamera::EdsToMMError(EdsError err)
 
 EdsError EDSCALLBACK CanonEDCamera::handleObjectEvent( EdsObjectEvent event, EdsBaseRef  object, EdsVoid * context) 
 { 
+   printf ("Object Event triggered\n");
 
    CanonEDCamera* mmCanon = (CanonEDCamera*) g_Self;
-   // do something 
   
-   /*  
-    switch(event) 
+   switch(event) 
    { 
-    case kEdsObjectEvent_DirItemRequestTransfer: 
-      downloadImage(object); 
-      break; 
-     
-      default: 
-       
-      break; 
-   } 
-   */ 
- 
+      case kEdsObjectEvent_DirItemRequestTransfer: 
+         {
+            EdsError err = EDS_ERR_OK;
+            EdsStreamRef stream = NULL;
+
+            EdsDirectoryItemInfo dirItemInfo;
+            err = EdsGetDirectoryItemInfo(object, &dirItemInfo);
+
+            // do we need to notify the camera?
+            /*
+             if (err == EDS_ERR_OK)
+             {
+             CameraEvent e("DownloadStart");
+             _model->notifyObservers(&e);
+             }
+             */
+
+            if (err == EDS_ERR_OK)
+            {
+               //err = EdsCreateFileStream(dirItemInfo.szFileName, kEdsFileCreateDisposition_CreateAlways, kEdsAccess_ReadWrite, &stream);
+               err = EdsCreateMemoryStream(0, &stream);
+            }
+
+            // Set Progress Callback???
+
+            // Download Image
+            if (err == EDS_ERR_OK)
+            {
+               err = EdsDownload(object,  dirItemInfo.size, stream);
+            }
+
+            if (err == EDS_ERR_OK)
+            {
+               err = EdsDownloadComplete(object);
+            }
+
+            EdsImageRef imageRef = NULL;
+
+            if (err == EDS_ERR_OK)
+            {
+               err = EdsCreateImageRef(stream, &imageRef);
+            }
+
+            EdsImageInfo imageInfo;
+
+            if (err == EDS_ERR_OK)
+            {
+               err = EdsGetImageInfo(imageRef, kEdsImageSrc_FullView, &imageInfo);
+            }
+            if (err == EDS_ERR_OK)
+            {
+               printf ("Image Width: %d\n", imageInfo.width);
+            }
+
+
+         }
+         break; 
+        
+         default: 
+          
+         break; 
+      } 
+    
  
    // Object must be released 
    if(object) 
@@ -293,12 +345,14 @@ EdsError EDSCALLBACK CanonEDCamera::handleObjectEvent( EdsObjectEvent event, Eds
 
 EdsError EDSCALLBACK  CanonEDCamera::handlePropertyEvent (EdsPropertyEvent event, EdsPropertyID  property, EdsUInt32 param, EdsVoid * context) 
 { 
+   printf ("Property Event triggered\n");
    CanonEDCamera* mmCanon = (CanonEDCamera*) g_Self;
     // do something 
 } 
  
 EdsError EDSCALLBACK  CanonEDCamera::handleStateEvent (EdsStateEvent event, EdsUInt32 parameter, EdsVoid * context) 
 { 
+   printf ("Camera State Event triggered\n");
    CanonEDCamera* mmCanon = (CanonEDCamera*) g_Self;
    // do something 
 } 
@@ -309,7 +363,7 @@ int CanonEDCamera::SnapImage()
 {
    EdsError err = EdsSendCommand(camera_, kEdsCameraCommand_TakePicture , 0); 
    if (err != EDS_ERR_OK)
-      return (int) err;
+      return EdsToMMError(err);
 
    return DEVICE_OK;
 }
