@@ -105,6 +105,9 @@
 
 (def state (atom {:running false :stop false}))
 
+(defn state-assoc! [& args]
+  (apply swap! state assoc args))
+
 ;; metadata
 
 (defn generate-metadata [event]
@@ -146,7 +149,7 @@
 
 (defn interruptible-sleep [time-ms]
   (let [sleepy (CountDownLatch. 1)]
-    (swap! state assoc :sleepy sleepy :next-wake-time (+ (clock-ms) time-ms))
+    (state-assoc! :sleepy sleepy :next-wake-time (+ (clock-ms) time-ms))
     (.await sleepy time-ms TimeUnit/MILLISECONDS)))
 
 (defn acq-sleep [interval-ms]
@@ -157,7 +160,7 @@
     (await-resume)
     (let [now (clock-ms)
           wake-time (if (> now (+ target-time 10)) now target-time)]
-      (swap! state assoc :last-wake-time wake-time))))
+      (state-assoc! :last-wake-time wake-time))))
 
 (declare device-agents)
 
@@ -172,7 +175,7 @@
 (defn set-stage-position
   ([stage-dev z] (log "setting z position to " z)
 		 (core setPosition stage-dev z)
-		 (swap! state assoc :last-z-position z))
+		 (state-assoc! :last-z-position z))
   ([stage-dev x y] (log "setting x,y position to " x "," y)
                    (when (and x y) (core setXYPosition stage-dev x y))))
 
@@ -280,7 +283,7 @@
 
 (defn cleanup []
   (do-when #(.update %) (:display @state))
-  (swap! state assoc :running false)
+  (state-assoc! :running false :display nil)
   (when (core isSequenceRunning)
     (core stopSequenceAcquisition))
   (core setAutoShutter (@state :init-auto-shutter))
@@ -299,10 +302,10 @@
                   :init-exposure (core getExposure)
                   :last-z-position (get-z-stage-position (core getFocusDevice)))
   (binding [state (.state this)]
-    (def last-state state)
+    ;(def last-state state)
 		(let [acq-seq (generate-acq-sequence settings)]
-			 (def acq-sequence acq-seq)
-			 (def last-state state)
+			 ;(def acq-sequence acq-seq)
+			 ;(def last-state state)
 			 (execute (mapcat #(make-event-fns % out-queue) acq-seq))
 			 (.put out-queue TaggedImageQueue/POISON)
 			 (cleanup)
@@ -338,7 +341,7 @@
   [[] (atom {:running false :stop false})])
 
 (defn -run [this settings acq-eng]
-  (def last-acq this)
+  ;(def last-acq this)
   (load-mm)
   (create-device-agents)
 	(let [out-queue (GentleLinkedBlockingQueue.)
@@ -385,7 +388,7 @@
   (doto
     (proxy [AcquisitionWrapperEngine] []
       (runPipeline [^SequenceSettings settings]
-        (def orig-settings settings)
+        ;(def orig-settings settings)
         (println "ss positions: " (.size (.positions settings)))
         (println "position-count: " (.getNumberOfPositions (.getPositionList gui)))
 				(-run settings this)
