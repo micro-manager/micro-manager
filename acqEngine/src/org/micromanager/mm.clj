@@ -32,11 +32,12 @@
   (org.micromanager.utils.ReportingUtils/logMessage (apply str x)))
 
 (defmacro log-cmd [expr]
-  `(let [result# ~expr]
-     (if (nil? result#)
-       (log '~expr " -> nil")
-       (log '~expr " -> " result#))
-     result#))
+  `(do (log '~expr)
+    (let [result# ~expr]
+      (if (nil? result#)
+        (log "  --> nil")
+        (log "  --> " result#))
+      result#)))
 
 (defmacro core [& args]
   `(log-cmd (. mmc ~@args)))
