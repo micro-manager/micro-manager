@@ -44,10 +44,8 @@ public class MetadataPanel extends javax.swing.JPanel
    private final MetadataTableModel imageMetadataModel_;
    private final MetadataTableModel summaryMetadataModel_;
    private final String [] columnNames_ = {"Property","Value"};
-   private MMImageCache cache_;
    private boolean showUnchangingKeys_;
    private boolean updatingDisplayModeCombo_ = false;
-   private MMVirtualAcquisitionDisplay acq_;
    private ArrayList<ChannelControlPanel> ccpList_;
 
     /** Creates new form MetadataPanel */
@@ -497,10 +495,11 @@ public class MetadataPanel extends javax.swing.JPanel
       }
    }
 
-   private JSONObject selectChangingTags(JSONObject md) {
+   private JSONObject selectChangingTags(ImagePlus imgp, JSONObject md) {
       JSONObject mdChanging = new JSONObject();
-      if (cache_ != null) {
-         for (String key : cache_.getChangingKeys()) {
+      MMImageCache cache = getCache(imgp);
+      if (cache != null) {
+         for (String key : cache.getChangingKeys()) {
             if (md.has(key)) {
                try {
                   mdChanging.put(key, md.get(key));
@@ -596,7 +595,7 @@ public class MetadataPanel extends javax.swing.JPanel
                } else {
                   JSONObject md = stack.getTaggedImage(slice).tags;
                   if (!showUnchangingKeys_)
-                     md = selectChangingTags(md);
+                     md = selectChangingTags(imp, md);
                   imageMetadataModel_.setMetadata(md);
                }
                summaryMetadataModel_.setMetadata(stack.getCache()
@@ -607,8 +606,9 @@ public class MetadataPanel extends javax.swing.JPanel
          } else if (tabSelected == 0) {
             updateChannelControls();
          } else if (tabSelected == 2) {
-            if (acq_ != null) {
-               imageCommentsTextArea.setText(acq_.getImageComment());
+            MMVirtualAcquisitionDisplay acq = getMMVirtualAcquisitionDisplay();
+            if (acq != null) {
+               imageCommentsTextArea.setText(acq.getImageComment());
             }
          }
       }
@@ -626,12 +626,12 @@ public class MetadataPanel extends javax.swing.JPanel
       }
 
       ImagePlus imgp = focusedWindow.getImagePlus();
-      cache_ = getCache(imgp);
-      acq_ = getMMVirtualAcquisitionDisplay();
+      MMImageCache cache = getCache(imgp);
+      MMVirtualAcquisitionDisplay acq = getMMVirtualAcquisitionDisplay();
 
-      if (acq_ != null) {
-         summaryCommentsTextArea.setText(acq_.getSummaryComment());
-         JSONObject md = cache_.getSummaryMetadata();
+      if (acq != null) {
+         summaryCommentsTextArea.setText(acq.getSummaryComment());
+         JSONObject md = cache.getSummaryMetadata();
          summaryMetadataModel_.setMetadata(md);
       } else {
          summaryCommentsTextArea.setText(null);
@@ -643,8 +643,8 @@ public class MetadataPanel extends javax.swing.JPanel
          displayModeCombo.setSelectedIndex(cimp.getMode() - 1);
          updatingDisplayModeCombo_ = false;
       }
-      if (acq_ != null) {
-         setupChannelControls(acq_);
+      if (acq != null) {
+         setupChannelControls(acq);
          update(imgp);
       }
 
