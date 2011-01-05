@@ -23,19 +23,20 @@ public class SoftReferenceTest {
       final int MBsize = 1024*1024;
       final double MB_d = (double) MBsize;
       Runtime r = Runtime.getRuntime();
-      List myList<SoftReference> = new ArrayList<SoftReference>();
+      List<SoftReference> myList = new ArrayList<SoftReference>();
       int n = Integer.parseInt(args[0]);
+      int dt = Integer.parseInt(args[1]);
       long t0 = System.currentTimeMillis();
       long t;
       for (int i = 0; ;) {
          if (i<n) {
-            SoftReference x<byte[]> = new SoftReference<byte []>(new byte[MBsize]);
+            SoftReference<byte[]> x = new SoftReference<byte []>(new byte[MBsize]);
             myList.add(x);
             ++i;
          }
          t = System.currentTimeMillis() - t0;
          try {
-            Thread.sleep(100);
+            Thread.sleep(dt);
          } catch (InterruptedException ex) {}
          System.out.format("t: %.2f\tallocated: %.2f\tused: %.2f\theap: %.2f\tmax: %.2f\n", t/(double) 1000., (double) i, (r.totalMemory()-r.freeMemory())/MB_d, r.totalMemory() / MB_d, r.maxMemory() / MB_d);
       }
