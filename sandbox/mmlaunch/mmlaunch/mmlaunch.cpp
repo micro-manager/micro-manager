@@ -14,8 +14,8 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
 
- 	_execl("C:\\Progra~1\\Java\\jre6\\bin\\javaw","C:\\Progra~1\\Java\\jre6\\bin\\javaw", "-Xmx1000M -cp ij.jar ij.ImageJ", NULL);
- 	//system("javaw -cp ij.jar ij.ImageJ");
+	_execl("C:\\Progra~1\\Java\\jre6\\bin\\javaw","C:\\Progra~1\\Java\\jre6\\bin\\javaw", "-Xmx1200M -XX:SoftRefLRUPolicyMSPerMB=1000000000000000 -cp ij.jar ij.ImageJ", NULL);
+ 	//system("javaw -cp -Xms1200M -Xmx1200M -XX:SoftRefLRUPolicyMSPerMB=1000000000000000 ij.jar ij.ImageJ");
 
 	return 0;
 }
