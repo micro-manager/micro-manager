@@ -180,7 +180,7 @@
                    (when (and x y) (core setXYPosition stage-dev x y))))
 
 (defn set-property
-  ([prop] (core setProperty (prop 0) (prop 1) (prop 2))))
+  ([prop] (apply* core setProperty prop)))
   
 (defn send-device-action [dev action]
   (send-off (device-agents dev) (fn [_] (action))))
