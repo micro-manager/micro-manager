@@ -307,7 +307,7 @@
   (core setExposure (@state :init-exposure))
   (core setPosition (core getFocusDevice) (@state :init-z-position))
   (when (and (@state :init-continuous-focus)
-             (not (core isContinuousFocusEnabled))
+             (not (core isContinuousFocusEnabled)))
     (core enableContinuousFocus true))
   (return-config))
   
