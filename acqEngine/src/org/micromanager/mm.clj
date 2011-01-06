@@ -79,22 +79,22 @@
    :autofocus       (core getAutoFocusDevice)
    :image-processor (core getImageProcessorDevice)})
    
-(defn map-config [^Configuration config]
-  (let [n (.size config)
-        props (map #(.getSetting config %) (range n))]
-    (into {}
-      (for [prop props]
-        [(str (.getDeviceLabel prop) "-" (.getPropertyName prop))
-         (.getPropertyValue prop)]))))
-
+(defn config-struct [^Configuration data]
+  (for [prop (map #(.getSetting data %) (range (.size data)))]
+    [(.getDeviceLabel prop)
+     (.getPropertyName prop)
+     (.getPropertyValue prop)]))
+   
 (defn get-config [group config]
-  (let [data (core getConfigData group config)
-        n (.size data)
-        props (map #(.getSetting data %) (range n))]
-    (for [prop props]
-      [(.getDeviceLabel prop)
-       (.getPropertyName prop)
-       (.getPropertyValue prop)])))
+  (config-struct (core getConfigData group config)))
+
+(defn get-system-config-cached []
+  (config-struct (core getSystemStateCache)))
+
+(defn map-config [^Configuration config]
+  (into {}
+    (for [prop (config-struct config)]
+      [(str (prop 0) "-" (prop 1)) (prop 2)])))
        
 (defn get-positions []
   (vec (.. gui getPositionList getPositions)))

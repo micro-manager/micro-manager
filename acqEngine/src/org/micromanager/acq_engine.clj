@@ -17,7 +17,7 @@
 (ns org.micromanager.acq-engine
   (:use [org.micromanager.mm :only [when-lets map-config get-config get-positions load-mm
                                     get-default-devices core log log-cmd mmc gui with-core-setting
-                                    do-when]]
+                                    do-when get-system-config-cached]]
           [org.micromanager.sequence-generator :only [generate-acq-sequence]])
   (:import [org.micromanager AcqControlDlg]
            [org.micromanager.api AcquisitionEngine]
@@ -180,7 +180,7 @@
                    (when (and x y) (core setXYPosition stage-dev x y))))
 
 (defn set-property
-  ([dev prop] (core setProperty (prop 0) (prop 1) (prop 2))))
+  ([prop] (core setProperty (prop 0) (prop 1) (prop 2))))
   
 (defn send-device-action [dev action]
   (send-off (device-agents dev) (fn [_] (action))))
@@ -287,6 +287,12 @@
   (into {} (for [position positions]
     [(:label position) (first (get-in position [:axes zdrive]))])))
 
+(defn return-config []
+  (dorun (map set-property
+    (clojure.set/difference
+      (set (@state :init-system-state)) 
+      (set (get-system-config-cached))))))
+
 (defn cleanup []
   (log "cleanup")
   (do-when #(.update %) (:display @state))
@@ -296,7 +302,7 @@
   (core setAutoShutter (@state :init-auto-shutter))
   (core setExposure (@state :init-exposure))
   (core setPosition (core getFocusDevice) (@state :init-z-position))
-  (core setSystemState (@state :init-system-state)))
+  (return-config))
   
 (defn run-acquisition [this settings out-queue] 
   (def acq-settings settings)
@@ -312,7 +318,7 @@
       :init-auto-shutter (core getAutoShutter)
       :init-exposure (core getExposure)
       :init-z-position z
-      :init-system-state (core getSystemState)
+      :init-system-state (get-system-config-cached)
       :z-corrections (get-init-z-corrections (:positions settings) (core getFocusDevice))))
   (binding [state (.state this)]
     (def last-state state)
