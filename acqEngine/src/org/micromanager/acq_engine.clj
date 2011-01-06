@@ -306,7 +306,8 @@
   (core setAutoShutter (@state :init-auto-shutter))
   (core setExposure (@state :init-exposure))
   (core setPosition (core getFocusDevice) (@state :init-z-position))
-  (when (@state :init-continuous-focus)
+  (when (and (@state :init-continuous-focus)
+             (not (core isContinuousFocusEnabled))
     (core enableContinuousFocus true))
   (return-config))
   
