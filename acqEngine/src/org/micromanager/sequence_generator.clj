@@ -57,12 +57,11 @@
 (defn make-main-loops [settings]
   (create-loops (make-dimensions settings)))
 
-(defn assign-z-drive [event]
-  (assoc event :z-drive (:focus (get-default-devices))))
-  
-(defn assign-exposure [event]
-  (if-assoc (:channel event)
-    event :exposure (get-in event [:channel :exposure])))
+(defn build-event [settings event]
+  (assoc event
+    :z-drive (:focus (get-default-devices))
+    :exposure (if (:channel event) (get-in event [:channel :exposure]))
+    :relative-z (:relative-slices settings)))
 
 (defn process-skip-z-stack [events slices]
   (if (pos? (count slices))
@@ -133,9 +132,9 @@
         
 (defn generate-acq-sequence [settings]
   (let [{:keys [slices keep-shutter-open-channels keep-shutter-open-slices
-         use-autofocus autofocus-skip interval-ms]} settings]
+         use-autofocus autofocus-skip interval-ms relative-slices]} settings]
     (-> (make-main-loops settings)
-      (#(map (comp assign-exposure assign-z-drive) %))
+      (#(map (partial build-event settings) %))
       (process-skip-z-stack slices)
       (manage-shutter keep-shutter-open-channels keep-shutter-open-slices)
       (process-channel-skip-frames)

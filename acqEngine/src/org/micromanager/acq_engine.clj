@@ -18,7 +18,7 @@
   (:use [org.micromanager.mm :only [when-lets map-config get-config get-positions load-mm
                                     get-default-devices core log log-cmd mmc gui with-core-setting
                                     do-when]]
-        [org.micromanager.sequence-generator :only [generate-acq-sequence]])
+          [org.micromanager.sequence-generator :only [generate-acq-sequence]])
   (:import [org.micromanager AcqControlDlg]
            [org.micromanager.api AcquisitionEngine]
            [org.micromanager.acquisition AcquisitionWrapperEngine LiveAcqDisplay TaggedImageQueue]
@@ -174,8 +174,8 @@
 
 (defn set-stage-position
   ([stage-dev z] (log "setting z position to " z)
-		 (core setPosition stage-dev z)
-		 (state-assoc! :last-z-position z))
+     (core setPosition stage-dev z)
+     (state-assoc! :last-z-position z))
   ([stage-dev x y] (log "setting x,y position to " x "," y)
                    (when (and x y) (core setXYPosition stage-dev x y))))
 
@@ -187,9 +187,10 @@
     
 (defn create-presnap-actions [event]
   (concat
-    (when-lets [z-drive (:z-drive event) z (:z event)]
-      (when (and z (not= z (@state :last-z-position)))
-        (list [z-drive #(set-stage-position z-drive z)])))
+    (when-let [z-drive (:z-drive event)]
+      (let [z (:z event)]
+        (when (and (:use-autofocus event) (not= z (@state :last-z-position)))
+          (list [z-drive #(set-stage-position z-drive z)]))))
     (for [[axis pos] (get-in event [:position :axes])]
       [axis #(apply set-stage-position axis pos)])
     (for [prop (get-in event [:channel :properties])]
@@ -214,13 +215,13 @@
 
 (defn snap-image [open-before close-after]
   (with-core-setting [getAutoShutter setAutoShutter false]
-		(if open-before
-			(core setShutterOpen true)
-			(core waitForDevice (core getShutterDevice)))
-		(core snapImage)
-		(if close-after
-			(core setShutterOpen false))
-			(core waitForDevice (core getShutterDevice))))
+    (if open-before
+      (core setShutterOpen true)
+      (core waitForDevice (core getShutterDevice)))
+    (core snapImage)
+    (if close-after
+      (core setShutterOpen false))
+      (core waitForDevice (core getShutterDevice))))
 
 (defn init-burst [length]
   (core setAutoShutter (@state :init-auto-shutter))
@@ -244,33 +245,35 @@
   (let [image (condp = (:task event)
                 :snap (collect-snap-image)
                 :init-burst (collect-burst-image)
-			    :collect-burst (collect-burst-image))]
+          :collect-burst (collect-burst-image))]
     (.put out-queue (annotate-image image event))))
   
-(defn store-z-correction [z event]
-  (swap! state assoc-in [:z-corrections (get-in event [:position :label])] z))
+(defn store-z-correction [pos-label z]
+  (swap! state assoc-in [:z-corrections pos-label] z))
  
 (defn compute-z-position [event]
   (if-let [z-drive (:z-drive event)]
     (-> event
       (assoc :z
-				(+ (or (get-in event [:channel :z-offset]) 0)
-				   (or (get (@state :z-corrections) z-drive)
-				     (:slice event)
-				     (@state :last-z-position))))
+        (+ (or (get-in event [:channel :z-offset]) 0)
+           (or (:slice event) 0)
+           (if (:relative-z event)
+             (or (get (@state :z-corrections) (get-in event [:position :label]))
+                 (@state :last-z-position))
+             0)))
       (assoc-in [:postion :axes z-drive] nil))
     event))
    
 (defn make-event-fns [event out-queue]
   (let [event (compute-z-position event)]
     (list
-      ;#(println event)  
+      ;#(log event)  
       #(run-actions (create-presnap-actions event))
       #(await-for 10000 (device-agents (core getCameraDevice)))
       #(when-let [wait-time-ms (event :wait-time-ms)]
         (acq-sleep wait-time-ms))
       #(when (:autofocus event)
-        (store-z-correction (run-autofocus)))
+          (store-z-correction (get-in event [:position :label]) (run-autofocus)))
       #(expose event)
       #(collect-image event out-queue)
     )))
@@ -278,38 +281,47 @@
 (defn execute [event-fns]
   (doseq [event-fn event-fns :while (not (:stop @state))]
     (event-fn)
-    (await-resume)
-    ))
+    (await-resume)))
+
+(defn get-init-z-corrections [positions zdrive]
+  (into {} (for [position positions]
+    [(:label position) (first (get-in position [:axes zdrive]))])))
 
 (defn cleanup []
+  (log "cleanup")
   (do-when #(.update %) (:display @state))
   (state-assoc! :running false :display nil)
   (when (core isSequenceRunning)
     (core stopSequenceAcquisition))
   (core setAutoShutter (@state :init-auto-shutter))
-  (core setExposure (@state :init-exposure)))
+  (core setExposure (@state :init-exposure))
+  (core setPosition (core getFocusDevice) (@state :init-z-position))
+  (core setSystemState (@state :init-system-state)))
   
 (defn run-acquisition [this settings out-queue] 
   (def acq-settings settings)
-  (swap! (.state this) assoc
-                  :pause false
-                  :stop false
-                  :running true
-                  :z-corrections nil
-                  :last-wake-time (clock-ms)
-                  :start-time (clock-ms)
-                  :init-auto-shutter (core getAutoShutter)
-                  :init-exposure (core getExposure)
-                  :last-z-position (get-z-stage-position (core getFocusDevice)))
+  (let [z (get-z-stage-position (core getFocusDevice))]
+    (swap! (.state this) assoc
+      :pause false
+      :stop false
+      :running true
+      :z-corrections nil
+      :last-wake-time (clock-ms)
+      :last-z-position z
+      :start-time (clock-ms)
+      :init-auto-shutter (core getAutoShutter)
+      :init-exposure (core getExposure)
+      :init-z-position z
+      :init-system-state (core getSystemState)
+      :z-corrections (get-init-z-corrections (:positions settings) (core getFocusDevice))))
   (binding [state (.state this)]
-    ;(def last-state state)
-		(let [acq-seq (generate-acq-sequence settings)]
-			 ;(def acq-sequence acq-seq)
-			 ;(def last-state state)
-			 (execute (mapcat #(make-event-fns % out-queue) acq-seq))
-			 (.put out-queue TaggedImageQueue/POISON)
-			 (cleanup)
-			 )))
+    (def last-state state)
+    (let [acq-seq (generate-acq-sequence settings)]
+       (def acq-sequence acq-seq)
+       (execute (mapcat #(make-event-fns % out-queue) acq-seq))
+       (.put out-queue TaggedImageQueue/POISON)
+       (cleanup)
+       )))
 
 (defn convert-settings [^SequenceSettings settings]
   (-> settings
@@ -329,12 +341,6 @@
            :channels (filter :use-channel (map ChannelSpec-to-map (.channels settings)))
            :positions (map MultiStagePosition-to-map (.positions settings)))))
 
-(defn set-to-absolute-slices [settings]
-  (if (and (:slices settings) (:relative-slices settings))
-    (assoc settings :slices
-      (map (partial + (core getPosition (core getFocusDevice))) (:slices settings)))
-    settings))
-
 ;; java interop
 
 (defn -init []
@@ -344,15 +350,15 @@
   ;(def last-acq this)
   (load-mm)
   (create-device-agents)
-	(let [out-queue (GentleLinkedBlockingQueue.)
-	      acq-thread (Thread. #(run-acquisition this 
-	        (set-to-absolute-slices (convert-settings settings)) out-queue))
-	      display (LiveAcqDisplay. mmc out-queue settings (.channels settings)
-	        (.save settings) acq-eng)]
-	  (def outq out-queue)
-		(.start acq-thread)
-		(swap! (.state this) assoc :display display)
-		(.start display)))
+  (let [out-queue (GentleLinkedBlockingQueue.)
+        acq-thread (Thread. #(run-acquisition this 
+          (convert-settings settings) out-queue))
+        display (LiveAcqDisplay. mmc out-queue settings (.channels settings)
+          (.save settings) acq-eng)]
+    (def outq out-queue)
+    (.start acq-thread)
+    (swap! (.state this) assoc :display display)
+    (.start display)))
 
 (defn -pause [this]
   (log "pause requested!")
@@ -391,7 +397,7 @@
         ;(def orig-settings settings)
         (println "ss positions: " (.size (.positions settings)))
         (println "position-count: " (.getNumberOfPositions (.getPositionList gui)))
-				(-run settings this)
+        (-run settings this)
     (.setCore mmc (.getAutofocusManager gui))
     (.setParentGUI gui)
     (.setPositionList (.getPositionList gui))))))
