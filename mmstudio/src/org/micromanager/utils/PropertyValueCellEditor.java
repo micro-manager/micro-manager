@@ -72,7 +72,7 @@ public class PropertyValueCellEditor extends AbstractCellEditor implements Table
 
         text_.addFocusListener(new FocusAdapter() {
             public void focusLost(FocusEvent e) {
-                fireEditingStopped();
+                //fireEditingStopped();
             }
 
         });
