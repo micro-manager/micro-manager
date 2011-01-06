@@ -180,7 +180,7 @@
                    (when (and x y) (core setXYPosition stage-dev x y))))
 
 (defn set-property
-  ([prop] (apply* core setProperty prop)))
+  ([prop] (core setProperty (prop 0) (prop 1) (prop 2))))
   
 (defn send-device-action [dev action]
   (send-off (device-agents dev) (fn [_] (action))))
@@ -293,6 +293,10 @@
       (set (@state :init-system-state)) 
       (set (get-system-config-cached))))))
 
+(defn prepare []
+  (when (@state :init-continuous-focus)
+    (core enableContinuousFocus false)))
+
 (defn cleanup []
   (log "cleanup")
   (do-when #(.update %) (:display @state))
@@ -302,6 +306,8 @@
   (core setAutoShutter (@state :init-auto-shutter))
   (core setExposure (@state :init-exposure))
   (core setPosition (core getFocusDevice) (@state :init-z-position))
+  (when (@state :init-continuous-focus)
+    (core enableContinuousFocus true))
   (return-config))
   
 (defn run-acquisition [this settings out-queue] 
@@ -319,11 +325,13 @@
       :init-exposure (core getExposure)
       :init-z-position z
       :init-system-state (get-system-config-cached)
+      :init-continuous-focus (core isContinuousFocusEnabled)
       :z-corrections (get-init-z-corrections (:positions settings) (core getFocusDevice))))
   (binding [state (.state this)]
     (def last-state state)
     (let [acq-seq (generate-acq-sequence settings)]
        (def acq-sequence acq-seq)
+       (prepare)
        (execute (mapcat #(make-event-fns % out-queue) acq-seq))
        (.put out-queue TaggedImageQueue/POISON)
        (cleanup)
