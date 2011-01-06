@@ -189,9 +189,9 @@
   (concat
     (when-let [z-drive (:z-drive event)]
       (let [z (:z event)]
-        (when (and (:use-autofocus event) (not= z (@state :last-z-position)))
+        (when (or (:use-autofocus event) (not= z (@state :last-z-position)))
           (list [z-drive #(set-stage-position z-drive z)]))))
-    (for [[axis pos] (get-in event [:position :axes])]
+    (for [[axis pos] (get-in event [:position :axes]) :when pos]
       [axis #(apply set-stage-position axis pos)])
     (for [prop (get-in event [:channel :properties])]
       [(prop 0) #(core setProperty (prop 0) (prop 1) (prop 2))])
@@ -259,15 +259,15 @@
            (or (:slice event) 0)
            (if (:relative-z event)
              (or (get (@state :z-corrections) (get-in event [:position :label]))
-                 (@state :last-z-position))
+                 (@state :init-z-position))
              0)))
-      (assoc-in [:postion :axes z-drive] nil))
+      (assoc-in [:position :axes z-drive] nil))
     event))
    
 (defn make-event-fns [event out-queue]
   (let [event (compute-z-position event)]
     (list
-      ;#(log event)  
+      #(log event)  
       #(run-actions (create-presnap-actions event))
       #(await-for 10000 (device-agents (core getCameraDevice)))
       #(when-let [wait-time-ms (event :wait-time-ms)]
