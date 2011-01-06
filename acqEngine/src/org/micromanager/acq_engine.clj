@@ -109,40 +109,34 @@
   (apply swap! state assoc args))
 
 ;; metadata
-
-(defn generate-metadata [event]
-  (-> event
-    (select-and-rekey
-      :channel-index        "ChannelIndex"
-      :frame-index          "Frame"
-      :position-index       "PositionIndex"
-      :slice-index          "Slice"
-      :slice                "SlicePosition"
-    )
-    (assoc
-      "PositionName" (get-in event [:position :label])
-      "Channel" (get-in event [:channel :name])
-      "ZPositionUm" (get event :z)
-      "AxisPositions" (when-let [axes (get-in event [:position :axes])] (JSONObject. axes))
-    )))  
     
 (defn annotate-image [img event]
-  (TaggedImage. img
-    (JSONObject. (merge
-      {"ElapsedTime-ms" (- (clock-ms) (@state :start-time))
-       "Time" (get-current-time-str)
-       "Width"  (core getImageWidth)
-       "Height" (core getImageHeight)
-       "PixelType" (get-pixel-type)
-       "Binning" (core getProperty (core getCameraDevice) "Binning")
-       "UUID" (UUID/randomUUID)
-      }
+  (TaggedImage. img (JSONObject.
+    (merge
       (map-config (core getSystemStateCache))
-      (generate-metadata event)
-      ))))
+      {
+       "AxisPositions" (when-let [axes (get-in event [:position :axes])] (JSONObject. axes))
+       "Binning" (core getProperty (core getCameraDevice) "Binning")
+       "Channel" (get-in event [:channel :name])
+       "ChannelIndex" (:channel-index event)
+       "ElapsedTime-ms" (- (clock-ms) (@state :start-time))
+       "Exposure-ms" (:exposure event)
+       "Frame" (:frame-index event)
+       "Height" (core getImageHeight)
+       "PixelSizeUm" (core getPixelSizeUm)
+       "PixelType" (get-pixel-type)
+       "PositionIndex" (:position-index event)
+       "PositionName" (get-in event [:position :label])
+       "Slice" (:slice-index event)
+       "SlicePosition" (:slice event)
+       "Source" (core getCameraDevice)
+       "Time" (get-current-time-str)
+       "UUID" (UUID/randomUUID)
+       "Width"  (core getImageWidth)
+       "ZPositionUm" (get event :z)
+      }))))
 
 ;; acq-engine
-
 
 (defn await-resume []
   (while (and (:pause @state) (not (:stop @state))) (Thread/sleep 5)))
