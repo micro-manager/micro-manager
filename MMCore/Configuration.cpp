@@ -178,7 +178,7 @@ PropertySetting Configuration::getSetting(const char* device, const char* prop)
       errTxt << "Property " << prop << " not found in device " << device << ".";
       throw CMMError(errTxt.str().c_str(), MMERR_DEVICE_GENERIC);
    }
-   if (it->second >= settings_.size()) {
+   if (((unsigned int) it->second) >= settings_.size()) {
       std::ostringstream errTxt;
       errTxt << "Internal Error locating Property " << prop << " in device " << device << ".";
       throw CMMError(errTxt.str().c_str(), MMERR_DEVICE_GENERIC);
@@ -252,7 +252,7 @@ void Configuration::deleteSetting(const char* device, const char* prop)
 
    // Re-index 
    index_.clear();
-   for (int i = 0; i < settings_.size(); i++) 
+   for (unsigned int i = 0; i < settings_.size(); i++) 
    {
       index_[settings_[i].getKey()] = i;
    }
