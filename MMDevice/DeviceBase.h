@@ -440,7 +440,7 @@ public:
          return DEVICE_PROPERTY_NOT_SEQUENCEABLE;
       }
 
-      if (events.size() >= pProp->GetSequenceMaxSize())
+      if (events.size() >= (unsigned) pProp->GetSequenceMaxSize())
          return DEVICE_SEQUENCE_TOO_LARGE;
 
       return pProp->LoadSequence(events);

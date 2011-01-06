@@ -1942,13 +1942,13 @@ int CDemoObjectiveTurret::OnTrigger(MM::PropertyBase* pProp, MM::ActionType eAct
       std::string tr;
       pProp->Get(tr);
       if (tr == " + ") {
-         if (sequenceIndex_ < sequence_.size()) {
+         if (sequenceIndex_ < (int) sequence_.size()) {
             std::string state = sequence_[sequenceIndex_];
             int ret = SetProperty("State", state.c_str());
             if (ret != DEVICE_OK)
                return ERR_IN_SEQUENCE;
             sequenceIndex_++;
-            if (sequenceIndex_ >= sequence_.size()) {
+            if (sequenceIndex_ >= (int) sequence_.size()) {
                sequenceIndex_ = 0;
             }
          } else
