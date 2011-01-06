@@ -2054,7 +2054,9 @@ int CDemoStage::OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
-      // nothing to do, let the caller use cached property
+      std::stringstream s;
+      s << pos_um_;
+      pProp->Set(s.str().c_str());
    }
    else if (eAct == MM::AfterSet)
    {
