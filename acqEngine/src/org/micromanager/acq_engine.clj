@@ -268,8 +268,7 @@
         (acq-sleep wait-time-ms))
       #(when (:autofocus event)
           (store-z-correction (get-in event [:position :label]) (run-autofocus)))
-      #(expose event)
-      #(collect-image event out-queue)
+      #(do (expose event) (collect-image event out-queue))
     )))
   
 (defn execute [event-fns]
