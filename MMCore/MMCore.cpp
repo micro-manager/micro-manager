@@ -1416,7 +1416,12 @@ void CMMCore::snapImage() throw (CMMError)
          // open the shutter
          if (shutter_ && autoShutter_)
          {
-            shutter_->SetOpen(true);
+            int sret = shutter_->SetOpen(true);
+            if (DEVICE_OK != sret)
+            {
+               logError("CMMCore::snapImage", getDeviceErrorText(sret, shutter_).c_str(), __FILE__, __LINE__);
+               throw CMMError(getDeviceErrorText(sret, shutter_).c_str(), MMERR_DEVICE_GENERIC);
+            }               
             waitForDevice(shutter_);
          }
          ret = camera_->SnapImage();
@@ -1425,7 +1430,12 @@ void CMMCore::snapImage() throw (CMMError)
          // close the shutter
          if (shutter_ && autoShutter_)
          {
-            shutter_->SetOpen(false);
+            int sret  = shutter_->SetOpen(false);
+            if (DEVICE_OK != sret)
+            {
+               logError("CMMCore::snapImage", getDeviceErrorText(sret, shutter_).c_str(), __FILE__, __LINE__);
+               throw CMMError(getDeviceErrorText(sret, shutter_).c_str(), MMERR_DEVICE_GENERIC);
+            }
             waitForDevice(shutter_);
          }
 		}catch( CMMError& e){
