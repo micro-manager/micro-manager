@@ -98,3 +98,6 @@
        
 (defn get-positions []
   (vec (.. gui getPositionList getPositions)))
+
+(defn get-allowed-property-values [dev prop]
+  (seq (core getAllowedPropertyValues dev prop)))

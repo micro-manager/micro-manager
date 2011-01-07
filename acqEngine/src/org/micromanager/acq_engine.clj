@@ -27,7 +27,8 @@
            [mmcorej TaggedImage Configuration]
            [java.util.prefs Preferences]
            [java.util.concurrent TimeUnit CountDownLatch]
-           [org.micromanager.utils ChannelSpec GentleLinkedBlockingQueue MDUtils]
+           [org.micromanager.utils ChannelSpec GentleLinkedBlockingQueue MDUtils
+                                   ReportingUtils]
            [org.json JSONObject]
            [java.util Date UUID]
            [java.text SimpleDateFormat]
@@ -273,7 +274,7 @@
   
 (defn execute [event-fns]
   (doseq [event-fn event-fns :while (not (:stop @state))]
-    (event-fn)
+    (try (event-fn) (catch Throwable e (ReportingUtils/logError e)))
     (await-resume)))
 
 (defn get-init-z-corrections [positions zdrive]
