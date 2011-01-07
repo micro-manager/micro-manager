@@ -630,7 +630,8 @@ int SerialPort::SetCommand(const char* command, const char* term)
          ++written;
       }
    }
-   LogMessage( (std::string("SetCommand -> ") + sendText.substr(0,written)).c_str(), true);
+   if( DEVICE_OK == retv)
+      LogMessage( (std::string("SetCommand -> ") + sendText.substr(0,written)).c_str(), true);
    return retv;
 }
 
@@ -727,7 +728,8 @@ int SerialPort::Write(const unsigned char* buf, unsigned long bufLen)
    int ret = DEVICE_OK;
    // send characters one by one to accomodate slow devices
    std::ostringstream logMsg;
-   for (unsigned i=0; i<bufLen; i++)
+   unsigned i;
+   for (i=0; i<bufLen; i++)
    {
 
       if( ! pPort_->WriteOneCharacter(*(buf + i)))
@@ -741,10 +743,10 @@ int SerialPort::Write(const unsigned char* buf, unsigned long bufLen)
          CDeviceUtils::SleepMs((unsigned long)(0.5+transmitCharWaitMs_));
       logMsg << (int) *(buf + i) << " ";
    }
-   if( 0 < bufLen)
+   if( 0 < i)
    {
       if (verbose_)
-         LogBinaryMessage(false, buf, bufLen, true);
+         LogBinaryMessage(false, buf, i, true);
    }
 
    return ret;
