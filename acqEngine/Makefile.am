@@ -5,7 +5,7 @@ MMAcqEngine.jar: \
 	test -d classes || mkdir classes
 	rm -rf classes/*
 	cp -R src/org classes/
-	java -cp $(CLASSEXT)/clojure.jar:$(IJJARPATH):../mmstudio/MMJ_.jar:./src -Dclojure.compile.path=classes -server clojure.lang.Compile org.micromanager.acq-engine
+	java -cp $(CLASSEXT)/clojure.jar:$(IJJARPATH):../mmstudio/MMJ_.jar:./src -Djava.awt.headless=true -Dclojure.compile.path=classes -server clojure.lang.Compile org.micromanager.acq-engine
 	jar cvf MMAcqEngine.jar -C classes/ .    
 
 all: MMAcqEngine.jar
