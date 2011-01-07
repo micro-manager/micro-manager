@@ -97,12 +97,12 @@
     events))
 
 (defn process-use-autofocus [events use-autofocus autofocus-skip]
-  (for [event events]
-    (assoc event :autofocus
+  (for [[e1 e2] (pairs-back events)]
+    (assoc e2 :autofocus
       (and use-autofocus
-        (or
-          (nil? (event :frame))
-          (zero? (mod (event :frame) (inc autofocus-skip))))))))
+        (and (zero? (mod (e2 :frame) (inc autofocus-skip)))
+             (or (not= (:position e1) (:position e2))
+                 (not= (:frame e1) (:frame e2))))))))
 
 (defn process-wait-time [events interval-ms]
   (cons
