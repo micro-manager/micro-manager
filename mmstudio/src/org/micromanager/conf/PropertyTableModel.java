@@ -55,6 +55,12 @@ class PropertyTableModel extends AbstractTableModel implements MMPropertyTableMo
    
    public PropertyTableModel(PagePanel page, MicroscopeModel model, int mode) {
       parentPage_ = page;
+      updateValues(model, mode);
+   }
+
+
+   public void updateValues(MicroscopeModel model, int mode) {
+
       if (mode == COMPORT)
          devices_ = model.getAvailableSerialPorts();
       else
@@ -110,6 +116,7 @@ class PropertyTableModel extends AbstractTableModel implements MMPropertyTableMo
    public int getColumnCount() {
       return COLUMN_NAMES.length;
    }
+   @Override
    public String getColumnName(int columnIndex) {
       return COLUMN_NAMES[columnIndex];
    }

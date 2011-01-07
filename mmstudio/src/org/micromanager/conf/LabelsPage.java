@@ -120,6 +120,7 @@ public class LabelsPage extends PagePanel {
       public int getColumnCount() {
          return COLUMN_NAMES.length;
       }
+      @Override
       public String getColumnName(int columnIndex) {
          return COLUMN_NAMES[columnIndex];
       }
@@ -130,12 +131,14 @@ public class LabelsPage extends PagePanel {
             return labels_[rowIndex];
       }
       
+      @Override
       public boolean isCellEditable(int nRow, int nCol) {
          if(nCol == 1)
             return true;
          else
             return false;
       }
+      @Override
       public void setValueAt(Object value, int row, int col) {
          if (col == 1) {
             try {
@@ -175,6 +178,7 @@ public class LabelsPage extends PagePanel {
       public int getColumnCount() {
          return COLUMN_NAMES.length;
       }
+      @Override
       public String getColumnName(int columnIndex) {
          return COLUMN_NAMES[columnIndex];
       }
@@ -243,13 +247,9 @@ public class LabelsPage extends PagePanel {
       });
       resetButton.setText("Reset");
       resetButton.setBounds(469,43,93,23);
-      add(resetButton);
-      
-
-
-
-
+      add(resetButton);  
    }
+
 
    public void readFromHardware() {
       LabelTableModel labelTableModel = (LabelTableModel) labelTable_.getModel();

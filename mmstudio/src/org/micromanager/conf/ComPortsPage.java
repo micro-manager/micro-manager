@@ -36,6 +36,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
+import javax.swing.table.TableModel;
 import mmcorej.MMCoreJ;
 import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.PropertyItem;
@@ -86,14 +87,10 @@ public class ComPortsPage extends PagePanel {
             String spname = devicesToTheirPort_.get(deviceName);
             ltm.setValue(spname);
          }
-         ltm.fireTableStructureChanged();
-         //   this does not do quite what you would think....
-         //if( -1 < rowSel)
-         // serialDeviceTable_.setRowSelectionInterval(rowSel, rowSel);
-
-         //serialDeviceTable_.getColumnModel().getColumn(0).setWidth(50);
-         rebuildTable();
-
+         PropertyTableModel tm = (PropertyTableModel) portTable_.getModel();
+         tm.updateValues(model_, PropertyTableModel.COMPORT);
+         tm.fireTableStructureChanged();
+         portTable_.repaint();
       }
    }
 
@@ -118,6 +115,7 @@ public class ComPortsPage extends PagePanel {
       add(serialDeviceScrollPane);
       devicesToTheirPort_ = new HashMap<String,String>();
       saveSerialPortsInUse_ = new HashMap<Integer,Boolean>();
+
       serialDeviceTable_ = new JTable();
       serialDeviceTable_.setColumnSelectionAllowed(false);
       serialDeviceTable_.setRowSelectionAllowed(true);
@@ -127,8 +125,6 @@ public class ComPortsPage extends PagePanel {
       serialDeviceTable_.getSelectionModel().addListSelectionListener(new SelectionListener(serialDeviceTable_));
       serialDeviceTable_.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       serialDeviceScrollPane.setViewportView(serialDeviceTable_);
-
-
 
       // this is the table of serial port properties for the user to review and possibly modify
       final JScrollPane scrollPane = new JScrollPane();
@@ -148,8 +144,8 @@ public class ComPortsPage extends PagePanel {
 
    }
 
-   public boolean enterPage(boolean fromNextPage) {
-      if(fromNextPage){
+   public boolean enterPage(boolean fromPreviousPage) {
+      if(fromPreviousPage){
          try {
             core_.unloadAllDevices();
             // this mostly duplicates the exitPage of the DevicesPage.....
@@ -246,7 +242,11 @@ public class ComPortsPage extends PagePanel {
          }
       }
 
-      rebuildTable();
+      buildPortTable();
+
+      TableModel m2 = serialDeviceTable_.getModel();
+      if( 0 < m2.getRowCount())
+         serialDeviceTable_.setRowSelectionInterval(0, 0);
 
       return true;
    }
@@ -259,7 +259,7 @@ public class ComPortsPage extends PagePanel {
          // restore the port in-use flags
          for (int i = 0; i < ports.length; i++) {
             model_.useSerialPort(i,  saveSerialPortsInUse_.get(i));
-    }
+         }
 
          if (toNextPage) {
             core_.unloadAllDevices();
@@ -312,15 +312,12 @@ public class ComPortsPage extends PagePanel {
             core_.initializeAllDevices();
             GUIUtils.preventDisplayAdapterChangeExceptions();
             model_.loadDeviceDataFromHardware(core_);
-
-         } else {
-            //core_.unloadAllDevices();
+         } else { // i.e. !toNextPage
             GUIUtils.preventDisplayAdapterChangeExceptions();
-
          }
       } catch (Exception e) {
-         handleException(e);
-         if (toNextPage) {
+          handleException(e);
+          if (toNextPage) {
             return false;
          }
       }
@@ -339,10 +336,7 @@ public class ComPortsPage extends PagePanel {
    }
 
 
-   private void rebuildTable() {
-
-//      reloadDevices();
-
+   private void buildPortTable() {
       PropertyTableModel tm = new PropertyTableModel(this, model_, PropertyTableModel.COMPORT);
       portTable_.setModel(tm);
       PropertyValueCellEditor propValueEditor = new PropertyValueCellEditor();
@@ -362,11 +356,12 @@ public class ComPortsPage extends PagePanel {
       }
 
       tm.fireTableStructureChanged();
-      // tm.fire
+
       portTable_.repaint();
    }
 
-class SerialDeviceTableModel extends AbstractTableModel {
+
+   class SerialDeviceTableModel extends AbstractTableModel {
       private static final long serialVersionUID = 1L;
       public final String[] COLUMN_NAMES = new String[] {
             "Serial devices"
@@ -378,7 +373,7 @@ class SerialDeviceTableModel extends AbstractTableModel {
          Device ports[] = model_.getAvailableSerialPorts();
          for (Integer i = 0; i < ports.length; i++) {
             boolean used = false;
-            if( value.equals( ports[i].getAdapterName() ))        {
+            if( value.equals( ports[i].getAdapterName() )) {
                used = true;
             }
             model_.useSerialPort(i, used);
@@ -391,6 +386,7 @@ class SerialDeviceTableModel extends AbstractTableModel {
       public int getColumnCount() {
          return COLUMN_NAMES.length;
       }
+      @Override
       public String getColumnName(int columnIndex) {
          return COLUMN_NAMES[columnIndex];
       }

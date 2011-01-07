@@ -113,10 +113,15 @@ public class GUIUtils {
 
     public static void stopEditingOnLosingFocus(final JTable table) {
         table.addFocusListener(new FocusAdapter() {
+         @Override
             public void focusLost(FocusEvent e) {
                 Component focused = e.getOppositeComponent();
-                if (table!=focused && !table.isAncestorOf(focused))
-                    table.getDefaultEditor(String.class).stopCellEditing();
+                try {
+                  if (table!=focused && !table.isAncestorOf(focused))
+                     table.getDefaultEditor(String.class).stopCellEditing();
+                } catch (Exception ex) {
+                   ReportingUtils.logError(ex);
+                }
             }
         });
     }
