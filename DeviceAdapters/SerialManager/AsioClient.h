@@ -133,14 +133,32 @@ public:
 
    bool WriteCharacters(const char* msg, size_t len)
    { 
-      MMThreadGuard g(implementationLock_);
-      return (len == boost::asio::write(  serialPortImplementation_, boost::asio::buffer(msg,len)));
+      bool retv = false;
+      try
+      {
+         MMThreadGuard g(implementationLock_);
+         retv = (len == boost::asio::write(  serialPortImplementation_, boost::asio::buffer(msg,len)));
+      }
+      catch( std::exception e)
+      {
+         pSerialPortAdapter_->LogMessage(e.what(), false);
+      }
+      return retv;
    } 
 
    bool WriteOneCharacter(const char msg)
    { 
-      MMThreadGuard g(implementationLock_);
-      return (1 == boost::asio::write(  serialPortImplementation_, boost::asio::buffer(&msg,1)));
+      bool retv = false;
+      try
+      {
+         MMThreadGuard g(implementationLock_);
+         retv = (1 == boost::asio::write(  serialPortImplementation_, boost::asio::buffer(&msg,1)));
+      }
+      catch( std::exception e)
+      {
+         pSerialPortAdapter_->LogMessage(e.what(), false);
+      }
+      return retv;
    } 
 
    void Close() // call the DoClose function via the io service
@@ -182,12 +200,19 @@ private:
    static const int max_read_length = 512; // maximum amount of data to read in one operation 
    void ReadStart(void) 
    { // Start an asynchronous read and call ReadComplete when it completes or fails 
-      MMThreadGuard g(implementationLock_);
-      serialPortImplementation_.async_read_some(boost::asio::buffer(read_msg_, max_read_length), 
-         boost::bind(&AsioClient::ReadComplete, 
-         this, 
-         boost::asio::placeholders::error, 
-         boost::asio::placeholders::bytes_transferred)); 
+      try
+      {
+         MMThreadGuard g(implementationLock_);
+         serialPortImplementation_.async_read_some(boost::asio::buffer(read_msg_, max_read_length), 
+            boost::bind(&AsioClient::ReadComplete, 
+            this, 
+            boost::asio::placeholders::error, 
+            boost::asio::placeholders::bytes_transferred)); 
+      }
+      catch(std::exception e)
+      {
+         pSerialPortAdapter_->LogMessage(e.what(), false);
+      }
    } 
 
    void ReadComplete(const boost::system::error_code& error, size_t bytes_transferred) 
