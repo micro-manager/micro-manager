@@ -207,8 +207,8 @@ namespace MM {
    private:
       TimeoutMs(const MM::TimeoutMs&) {}
       const TimeoutMs& operator=(const MM::TimeoutMs&) {return *this;}
-      MMTime interval_; // interval in milliseconds
       MMTime startTime_; // start time
+      MMTime interval_; // interval in milliseconds
    };
 
 
