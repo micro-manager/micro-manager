@@ -104,7 +104,9 @@
                   2 [(.x stage-pos) (.y stage-pos)])])))}))
 
 (defn get-msp [idx]
-  (.. gui getPositionList (getPosition idx)))
+  (let [p-list (. gui getPositionList)]
+    (if (pos? (. p-list getNumberOfPositions))
+      (. p-list (getPosition idx)))))
 
 (defn get-z-position [idx z-stage]
   (if-let [msp (get-msp idx)]
@@ -141,7 +143,7 @@
        "PixelSizeUm" (core getPixelSizeUm)
        "PixelType" (get-pixel-type)
        "PositionIndex" (:position-index event)
-       "PositionName" (.getLabel (get-msp (:position event)))
+       "PositionName" (if-let [pos (:position event)] (.getLabel (get-msp pos)))
        "Slice" (:slice-index event)
        "SlicePosition" (:slice event)
        "Source" (core getCameraDevice)
