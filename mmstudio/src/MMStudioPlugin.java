@@ -49,26 +49,27 @@ public class MMStudioPlugin implements PlugIn, CommandListener {
       }
 
       try {
-         // create and display control panel frame
-         if (JavaUtils.isMac()) {
-            System.setProperty("apple.laf.useScreenMenuBar", "true");
-            // on the Mac, try using a native file opener when it is present
-            try {
-               UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            } catch (Exception e) {
-               ReportingUtils.logError(e);
+         if (frame_ == null || !frame_.isRunning()) {
+            // create and display control panel frame
+            if (JavaUtils.isMac()) {
+               System.setProperty("apple.laf.useScreenMenuBar", "true");
+               // on the Mac, try using a native file opener when it is present
+               try {
+                  UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+               } catch (Exception e) {
+                  ReportingUtils.logError(e);
+                  UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+               }
+            } else {
                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             }
-         } else
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 
-         if (frame_ == null || !frame_.isRunning()) {
             frame_ = new MMStudioMainFrame(true);
             frame_.setVisible(true);
             frame_.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-         } else {
-            JOptionPane.showMessageDialog(frame_, "Another instance of Micro-Manager already running.\n" +
-            "Only one instance allowed.");
+         }
+         if (arg.equals("OpenAcq")) {
+            frame_.openAcquisitionData();
          }
       } catch (Exception e) {
          ReportingUtils.logError(e);

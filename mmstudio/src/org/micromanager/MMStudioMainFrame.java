@@ -2101,7 +2101,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
     * Open an existing acquisition directory and build image5d window.
     *
     */
-   protected void openAcquisitionData() {
+   public void openAcquisitionData() {
 
       // choose the directory
       // --------------------
