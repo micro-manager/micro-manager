@@ -23,7 +23,6 @@
 
 package org.micromanager;
 
-import bsh.ParseException;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
@@ -90,6 +89,7 @@ public class OptionsDlg extends MMDialog {
       super();
       parent_ = parent;
       addWindowListener(new WindowAdapter() {
+         @Override
          public void windowClosing(final WindowEvent e) {
             savePosition();
             parent_.makeActive();
@@ -262,13 +262,12 @@ public class OptionsDlg extends MMDialog {
          }
       });
       sendLogFileButton.setFont(new Font("", Font.PLAIN, 10));
-      sendLogFileButton.setText("Send core log to Micro-manager.org");
+      sendLogFileButton.setText("Send core log to MM.org");
       sendLogFileButton.setPreferredSize(buttonSize);
       getContentPane().add(sendLogFileButton);
       // put send log file button to the right of clear log file button
       springLayout.putConstraint(SpringLayout.NORTH, sendLogFileButton, 0, SpringLayout.NORTH, clearLogFileButton);
-      springLayout.putConstraint(SpringLayout.NORTH, sendLogFileButton, 0, SpringLayout.NORTH, clearLogFileButton);
-      springLayout.putConstraint(SpringLayout.WEST, clearLogFileButton, 300, SpringLayout.WEST, sendLogFileButton);
+      springLayout.putConstraint(SpringLayout.WEST, sendLogFileButton, 20, SpringLayout.EAST, clearLogFileButton);
 
       final JButton clearRegistryButton = new JButton();
       clearRegistryButton.setToolTipText("Clears all persistent settings and returns to defaults");
