@@ -23,6 +23,8 @@
 import ij.CommandListener;
 import ij.Executer;
 import ij.IJ;
+import ij.ImagePlus;
+import ij.plugin.Duplicator;
 import ij.plugin.PlugIn;
 
 import javax.swing.JFrame;
@@ -32,6 +34,7 @@ import javax.swing.UIManager;
 import mmcorej.CMMCore;
 
 import org.micromanager.MMStudioMainFrame;
+import org.micromanager.acquisition.AcquisitionVirtualStack;
 import org.micromanager.utils.AutofocusManager;
 import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.ReportingUtils;
@@ -44,16 +47,16 @@ public class MMStudioPlugin implements PlugIn, CommandListener {
     
    @SuppressWarnings("unchecked")
    public void run(String arg) {
-      if (!IJ.versionLessThan("1.44d")){
-         Executer.addCommandListener(this);
-      }
+
 
       try {
          if (frame_ == null || !frame_.isRunning()) {
-            // create and display control panel frame
+
+            // OS-specific stuff
             if (JavaUtils.isMac()) {
                System.setProperty("apple.laf.useScreenMenuBar", "true");
-               // on the Mac, try using a native file opener when it is present
+
+               // TODO: this code looks bad!!
                try {
                   UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
                } catch (Exception e) {
@@ -64,6 +67,10 @@ public class MMStudioPlugin implements PlugIn, CommandListener {
                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             }
 
+            // create and display control panel frame
+            if (!IJ.versionLessThan("1.44d")){
+               Executer.addCommandListener(this);
+            }
             frame_ = new MMStudioMainFrame(true);
             frame_.setVisible(true);
             frame_.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
@@ -76,50 +83,40 @@ public class MMStudioPlugin implements PlugIn, CommandListener {
       }
    }
     
-    public String commandExecuting(String command) { 
-       if (command.equalsIgnoreCase("Quit") && frame_ != null) {
-          frame_.closeSequence();
-          return command;
-       } 
-       /* TODO: make these work as expected!!!!
-        *
-        *
-        * else if (command.equals("Duplicate...") && IJ.getImage() instanceof Image5D) {
-          Duplicate_Image5D duplicate = new Duplicate_Image5D();
-          duplicate.run("");
-          return null;
-       } else if (command.equals("Crop") && IJ.getImage() instanceof Image5D) {
-          Crop_Image5D crop = new Crop_Image5D();
-          crop.run("");
-          return null;
-       } else if (command.equals("Z Project...") && IJ.getImage() instanceof Image5D) {
-          Z_Project projection = new Z_Project();
-          projection.run("");
-          return null;
-       } else if (command.equals("Make Montage...") && IJ.getImage() instanceof Image5D) {
-          Make_Montage makeMontage = new Make_Montage();
-          makeMontage.run("");
-          return null;
-       }*/
-       return command;
-    }
+   public String commandExecuting(String command) { 
+      if (command.equalsIgnoreCase("Quit") && frame_ != null) {
+         frame_.closeSequence();
+         return command;
+      }  else if (command.equals("Crop")) {
+         if (IJ.getImage().getStack() instanceof AcquisitionVirtualStack) {
+            //Executer ex = new Executer("Duplicate...");
+            //ex.run();
+            // alternative implementation:
+            new Duplicator().run(IJ.getImage()).show();
+            // abort further processing of the Crop command
+            return null;
+         } 
+      }
 
-    public static MMStudioMainFrame getMMStudioMainFrameInstance() {
-        return frame_;
-    }
+      return command;
+   }
 
-    public static CMMCore getMMCoreInstance() {
-       if (frame_ == null || !frame_.isRunning())
-          return null;
-       else
-          return frame_.getMMCore();
-    }
+   public static MMStudioMainFrame getMMStudioMainFrameInstance() {
+       return frame_;
+   }
 
-    public static AutofocusManager getAutofocusManager() {
-       if (frame_ == null || !frame_.isRunning())
-          return null;
-       else
-          return frame_.getAutofocusManager();
-    }
+   public static CMMCore getMMCoreInstance() {
+      if (frame_ == null || !frame_.isRunning())
+         return null;
+      else
+         return frame_.getMMCore();
+   }
+
+   public static AutofocusManager getAutofocusManager() {
+      if (frame_ == null || !frame_.isRunning())
+         return null;
+      else
+         return frame_.getAutofocusManager();
+   }
 
 }
