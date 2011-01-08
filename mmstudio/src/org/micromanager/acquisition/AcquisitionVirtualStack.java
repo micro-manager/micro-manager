@@ -91,6 +91,7 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
       return pixels;
    }
 
+   @Override
    public ImageProcessor getProcessor(int flatIndex) {
       return ImageUtils.makeProcessor(type_, width_, height_, getPixels(flatIndex));
    }
@@ -142,6 +143,7 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
    }
 
 
+   @Override
    public String getSliceLabel(int n) {
       TaggedImage img = getTaggedImage(n);
       if (img == null)

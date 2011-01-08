@@ -752,4 +752,8 @@ public class MMVirtualAcquisitionDisplay{
       }
    }
 
+   public Boolean getDiskCached() {
+      return diskCached_;
+   }
+
 }

@@ -89,13 +89,28 @@ public class MMStudioPlugin implements PlugIn, CommandListener {
          return command;
       }  else if (command.equals("Crop")) {
          if (IJ.getImage().getStack() instanceof AcquisitionVirtualStack) {
-            //Executer ex = new Executer("Duplicate...");
-            //ex.run();
-            // alternative implementation:
+
             new Duplicator().run(IJ.getImage()).show();
+
             // abort further processing of the Crop command
             return null;
          } 
+      } else if (command.equals("Add Noise")) {
+         // blanket method to make sure that ImageJ filters do not execute on disk-cached images
+         // this may backfire!
+         if (IJ.getImage().getStack() instanceof AcquisitionVirtualStack) {
+            AcquisitionVirtualStack avs = (AcquisitionVirtualStack) IJ.getImage().getStack();
+            if (avs.getVirtualAcquisition().getDiskCached()) {
+               // duplicate the image and then run the ImageJ command on what is now the new image
+               new Duplicator().run(IJ.getImage()).show();
+            } else {
+               // Image is not disk chached.  Warn that data will be lost
+               if (!IJ.showMessageWithCancel("Micro-Manager data not saved", "Data are not saved and Undo is impossible. \n" +
+                       "Do you really want to execute the command?") ) {
+                  return null;
+               }
+            }
+         }
       }
 
       return command;
