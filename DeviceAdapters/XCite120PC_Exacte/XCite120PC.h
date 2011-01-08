@@ -3,7 +3,7 @@
 // PROJECT:      Micro-Manager
 // SUBSYSTEM:    DeviceAdapters
 //-----------------------------------------------------------------------------
-// DESCRIPTION:  This is the Micro-Manager device adapter for the EXFO X-Cite 120PC
+// DESCRIPTION:  This is the Micro-Manager device adapter for the X-Cite 120PC
 //            
 // AUTHOR:       Mark Allen Neil, markallenneil@yahoo.com, Dec-2010
 //               This code reuses work done by Jannis Uhlendorf, 2010

@@ -1,10 +1,10 @@
 ///////////////////////////////////////////////////////////////////////////////
-// FILE:         ExfoXCite.cpp
+// FILE:         XCite.cpp
 // PROJECT:      Micro-Manager
 // SUBSYSTEM:    DeviceAdapters
 //-----------------------------------------------------------------------------
 // DESCRIPTION:  This is the root class for Micro-Manager device adapters for 
-//               the EXFO X-Cite Illuminators
+//               the X-Cite Illuminators
 //            
 // AUTHOR:       Mark Allen Neil, markallenneil@yahoo.com, Dec-2010
 //
@@ -23,7 +23,7 @@
 
 #ifdef WIN32
    #include <windows.h>
-   #define snprintf _snprintf 
+   #define snprintf _snprintf
 #endif
 
 #include "XCite120PC.h"
