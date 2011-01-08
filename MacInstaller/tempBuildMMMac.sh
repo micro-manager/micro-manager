@@ -47,29 +47,16 @@ svn update
 cd $RPPC
 
 cp -r MacInstaller/Micro-Manager $TARGET
+find $TARGET -name '.svn' -exec rm -fr {} \;
 cp $CLASSEXT/ij.jar $TARGET
 cp $CLASSEXT/bsh-2.0b4.jar $TARGET/plugins/
+cp $CLASSEXT/clojure.jar $TARGET/plugins/
 cp $CLASSEXT/swingx-0.9.5.jar $TARGET/plugins/
 cp $CLASSEXT/swing-layout-1.0.4.jar $TARGET/plugins/
 cp $CLASSEXT/commons-math-2.0.jar $TARGET/plugins/
-cp -r MacInstaller/Micro-Manager $PPC
-cp $CLASSEXT/ij.jar $PPC
-cp $CLASSEXT/bsh-2.0b4.jar $PPC/plugins/
-cp $CLASSEXT/swingx-0.9.5.jar $PPC/plugins/
-cp $CLASSEXT/swing-layout-1.0.4.jar $PPC/plugins/
-cp $CLASSEXT/commons-math-2.0.jar $PPC/plugins/
-cp -r MacInstaller/Micro-Manager $I386
-cp $CLASSEXT/ij.jar $I386
-cp $CLASSEXT/bsh-2.0b4.jar $I386/plugins/
-cp $CLASSEXT/swingx-0.9.5.jar $I386/plugins/
-cp $CLASSEXT/swing-layout-1.0.4.jar $I386/plugins/
-cp $CLASSEXT/commons-math-2.0.jar $I386/plugins/
-cp -r MacInstaller/Micro-Manager $X86_64
-cp $CLASSEXT/ij.jar $X86_64
-cp $CLASSEXT/bsh-2.0b4.jar $X86_64/plugins/
-cp $CLASSEXT/swingx-0.9.5.jar $X86_64/plugins/
-cp $CLASSEXT/swing-layout-1.0.4.jar $X86_64/plugins/
-cp $CLASSEXT/commons-math-2.0.jar $X86_64/plugins/
+cp -r $TARGET $PPC
+cp -r $TARGET $I386
+cp -r $TARGET $X86_64
 
 
 # build PPC
@@ -115,7 +102,7 @@ for f in $FILES; do lipo -create $PPC/$f $I386/$f $X86_64/$f -o $TARGET/$f; done
 
 
 # copy installed files 
-cp $PPC/plugins/Micro-Manager/* $TARGET/plugins/Micro-Manager/
+cp -r $PPC/plugins/Micro-Manager $TARGET/plugins
 cp $PPC/*.cfg $TARGET/
 cp $PPC/_MMCorePy.so $TARGET/
 cp -r $PPC/mmplugins $TARGET/
