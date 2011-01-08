@@ -45,7 +45,7 @@ import org.micromanager.utils.SliceMode;
 public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private CMMCore core_;
    private MMStudioMainFrame gui_;
-   private PositionList posList_ = new PositionList();
+   private PositionList posList_;
    private String zstage_;
    private double sliceZStepUm_;
    private double sliceZBottomUm_;

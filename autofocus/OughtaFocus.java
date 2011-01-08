@@ -124,51 +124,39 @@ public class OughtaFocus extends AutofocusBase implements org.micromanager.api.A
 
    public double fullFocus() throws MMException {
       applySettings();
-
-      Thread th = new Thread() {
-         public void run() {
-            try {
-               Rectangle oldROI = gui_.getROI();
-               //ReportingUtils.logMessage("Original ROI: " + oldROI);
-               int w = (int) (oldROI.width * cropFactor);
-               int h = (int) (oldROI.height * cropFactor);
-               int x = oldROI.x + (oldROI.width - w) / 2;
-               int y = oldROI.y + (oldROI.height - h) / 2;
-               Rectangle newROI = new Rectangle(x,y,w,h);
-               //ReportingUtils.logMessage("Setting ROI to: " + newROI);
-               Configuration oldState = null;
-               if (channel.length() > 0) {
-                  String chanGroup = core_.getChannelGroup();
-                  oldState = core_.getConfigGroupState(chanGroup);
-                  core_.setConfig(chanGroup, channel);
-               }
-               gui_.setROI(newROI);
-               core_.waitForDevice(core_.getCameraDevice());
-               double oldExposure = core_.getExposure();
-               core_.setExposure(exposure);
-
-               double z = runAutofocusAlgorithm();
-
-               gui_.setROI(oldROI);
-               core_.waitForDevice(core_.getCameraDevice());
-               if (oldState != null) {
-                  core_.setSystemState(oldState);
-               }
-               core_.setExposure(oldExposure);
-               setZPosition(z);
-            } catch (Exception ex) {
-               ReportingUtils.logError(ex);
-            }
-            
+      try {
+         Rectangle oldROI = gui_.getROI();
+         //ReportingUtils.logMessage("Original ROI: " + oldROI);
+         int w = (int) (oldROI.width * cropFactor);
+         int h = (int) (oldROI.height * cropFactor);
+         int x = oldROI.x + (oldROI.width - w) / 2;
+         int y = oldROI.y + (oldROI.height - h) / 2;
+         Rectangle newROI = new Rectangle(x, y, w, h);
+         //ReportingUtils.logMessage("Setting ROI to: " + newROI);
+         Configuration oldState = null;
+         if (channel.length() > 0) {
+            String chanGroup = core_.getChannelGroup();
+            oldState = core_.getConfigGroupState(chanGroup);
+            core_.setConfig(chanGroup, channel);
          }
-      };
+         gui_.setROI(newROI);
+         core_.waitForDevice(core_.getCameraDevice());
+         double oldExposure = core_.getExposure();
+         core_.setExposure(exposure);
 
-      if (show.contentEquals("Yes")) {
-         th.start(); // Run on a separate thread.
-      } else {
-         th.run(); // Run it on this thread instead.
+         double z = runAutofocusAlgorithm();
+
+         gui_.setROI(oldROI);
+         core_.waitForDevice(core_.getCameraDevice());
+         if (oldState != null) {
+            core_.setSystemState(oldState);
+         }
+         core_.setExposure(oldExposure);
+         setZPosition(z);
+         return z;
+      } catch (Exception ex) {
+         throw new MMException("autofocus failed");
       }
-      return 0;
    }
 
    private double runAutofocusAlgorithm() throws Exception {

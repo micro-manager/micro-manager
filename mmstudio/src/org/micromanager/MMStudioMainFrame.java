@@ -48,6 +48,8 @@ import java.io.IOException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -1699,14 +1701,17 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       buttonAutofocus_.setFont(new Font("Arial", Font.PLAIN, 10));
       buttonAutofocus_.setToolTipText("Autofocus now");
       buttonAutofocus_.addActionListener(new ActionListener() {
-
          public void actionPerformed(ActionEvent e) {
             if (afMgr_.getDevice() != null) {
-               try {
-                  afMgr_.getDevice().fullFocus(); // or any other method from Autofocus.java API
-               } catch (MMException mE) {
-                  ReportingUtils.showError(mE);
-               }
+               new Thread() {
+                  public void run() {
+                     try {
+                        afMgr_.getDevice().fullFocus();
+                     } catch (MMException ex) {
+                        ReportingUtils.logError(ex);
+                     }
+                  }
+               }.start(); // or any other method from Autofocus.java API
             }
          }
       });
@@ -3454,19 +3459,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       }
    }
 
-   private class RefreshPositionList implements Runnable {
-
-      public RefreshPositionList() {
-      }
-
-      public void run() {
-         if (posListDlg_ != null) {
-            posListDlg_.setPositionList(posList_);
-            engine_.setPositionList(posList_);
-         }
-      }
-   }
-
    private void testForAbortRequests() throws MMScriptException {
       if (scriptPanel_ != null) {
          if (scriptPanel_.stopRequestPending()) {
@@ -3527,14 +3519,21 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    public void setPositionList(PositionList pl) throws MMScriptException {
       testForAbortRequests();
       // use serialization to clone the PositionList object
-      posList_ = PositionList.newInstance(pl);
-      SwingUtilities.invokeLater(new RefreshPositionList());
+      posList_ = pl; // PositionList.newInstance(pl);
+      SwingUtilities.invokeLater(new Runnable() {
+         public void run() {
+            if (posListDlg_ != null) {
+               posListDlg_.setPositionList(posList_);
+               engine_.setPositionList(posList_);
+            }
+         }
+      });
    }
 
    public PositionList getPositionList() throws MMScriptException {
       testForAbortRequests();
       // use serialization to clone the PositionList object
-      return PositionList.newInstance(posList_);
+      return posList_; //PositionList.newInstance(posList_);
    }
 
    public void sleep(long ms) throws MMScriptException {
@@ -4057,6 +4056,11 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
       SequenceSettings acquisitionSettings = new SequenceSettings();
       AcquisitionWrapperEngine eng = new AcquisitionWrapperEngine();
+      try {
+         eng.setPositionList(this.getPositionList());
+      } catch (MMScriptException ex) {
+         ReportingUtils.logError(ex);
+      }
       eng.setCore(core_, afMgr_);
       eng.setParentGUI(this);
       eng.runPipeline(acquisitionSettings);

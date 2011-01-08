@@ -29,7 +29,6 @@ import org.micromanager.utils.ReportingUtils;
 public class LiveAcqDisplay extends Thread {
    private static int untitledID_ = 0;
    protected final CMMCore core_;
-   protected int imgCount_;
    SequenceSettings acqSettings_;
    private boolean diskCached_ = false;
    private BlockingQueue<TaggedImage>  imageProducingQueue_;
@@ -191,10 +190,11 @@ public class LiveAcqDisplay extends Thread {
 
    public void run() {
       long t1 = System.currentTimeMillis();
-
+      int imageCount = 0;
       try {
          while (true) {
             TaggedImage image = imageProducingQueue_.poll(1, TimeUnit.SECONDS);
+            imageCount++;
             if (image != null) {
                if (TaggedImageQueue.isPoison(image)) {
                   break;
@@ -207,7 +207,7 @@ public class LiveAcqDisplay extends Thread {
       }
 
       long t2 = System.currentTimeMillis();
-      ReportingUtils.logMessage(imgCount_ + " images in " + (t2 - t1) + " ms.");
+      ReportingUtils.logMessage(imageCount + " images in " + (t2 - t1) + " ms.");
 
       cleanup();
    }

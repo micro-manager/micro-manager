@@ -92,15 +92,29 @@
     (assoc :properties (get-config (core getChannelGroup) (.config_ chan)))))
 
 (defn MultiStagePosition-to-map [^MultiStagePosition msp]
-  {:label (.getLabel msp)
-   :axes
-      (into {}
-        (for [i (range (.size msp))]
-          (let [stage-pos (.get msp i)]
-            [(.stageName stage-pos)
-              (condp = (.numAxes stage-pos)
-                1 [(.x stage-pos)]
-                2 [(.x stage-pos) (.y stage-pos)])])))})
+  (if msp
+    {:label (.getLabel msp)
+     :axes
+        (into {}
+          (for [i (range (.size msp))]
+            (let [stage-pos (.get msp i)]
+              [(.stageName stage-pos)
+                (condp = (.numAxes stage-pos)
+                  1 [(.x stage-pos)]
+                  2 [(.x stage-pos) (.y stage-pos)])])))}))
+
+(defn get-msp [idx]
+  (.. gui getPositionList (getPosition idx)))
+
+(defn get-z-position [idx z-stage]
+  (if-let [msp (get-msp idx)]
+    (if-let [stage-pos (. msp get z-stage)]
+      (. stage-pos x))))
+
+(defn set-z-position [idx z-stage z]
+  (if-let [msp (get-msp idx)]
+    (if-let [stage-pos (. msp (get z-stage))]
+      (set! (. stage-pos x) z))))
 
 ;; globals
 
@@ -127,14 +141,14 @@
        "PixelSizeUm" (core getPixelSizeUm)
        "PixelType" (get-pixel-type)
        "PositionIndex" (:position-index event)
-       "PositionName" (get-in event [:position :label])
+       "PositionName" (.getLabel (get-msp (:position event)))
        "Slice" (:slice-index event)
        "SlicePosition" (:slice event)
        "Source" (core getCameraDevice)
        "Time" (get-current-time-str)
        "UUID" (UUID/randomUUID)
        "Width"  (core getImageWidth)
-       "ZPositionUm" (get event :z)
+       "ZPositionUm" (core getPosition (core getFocusDevice))
       }))))
 
 ;; acq-engine
@@ -181,12 +195,9 @@
   (send-off (device-agents dev) (fn [_] (action))))
     
 (defn create-presnap-actions [event]
+  (log (MultiStagePosition-to-map (:position event)))
   (concat
-    (when-let [z-drive (:z-drive event)]
-      (let [z (:z event)]
-        (when (or (:use-autofocus event) (not= z (@state :last-z-position)))
-          (list [z-drive #(set-stage-position z-drive z)]))))
-    (for [[axis pos] (get-in event [:position :axes]) :when pos]
+    (for [[axis pos] (:axes (MultiStagePosition-to-map (:position event))) :when pos]
       [axis #(apply set-stage-position axis pos)])
     (for [prop (get-in event [:channel :properties])]
       [(prop 0) #(core setProperty (prop 0) (prop 1) (prop 2))])
@@ -242,44 +253,37 @@
                 :init-burst (collect-burst-image)
           :collect-burst (collect-burst-image))]
     (.put out-queue (annotate-image image event))))
-  
-(defn store-z-correction [pos-label z]
-  (swap! state assoc-in [:z-corrections pos-label] z))
  
 (defn compute-z-position [event]
   (if-let [z-drive (:z-drive event)]
-    (-> event
-      (assoc :z
-        (+ (or (get-in event [:channel :z-offset]) 0)
-           (or (:slice event) 0)
-           (if (:relative-z event)
-             (or (get (@state :z-corrections) (get-in event [:position :label]))
-                 (@state :init-z-position))
-             0)))
-      (assoc-in [:position :axes z-drive] nil))
-    event))
-   
+    (+ (or (get-in event [:channel :z-offset]) 0)
+       (or (:slice event) 0)
+       (if (:relative-z event)
+         (or (get-z-position (:position event) z-drive)
+             (@state :init-z-position)))
+         0)))
+    
 (defn make-event-fns [event out-queue]
-  (let [event (compute-z-position event)]
-    (list
-      #(log event)  
-      #(run-actions (create-presnap-actions event))
-      #(await-for 10000 (device-agents (core getCameraDevice)))
-      #(when-let [wait-time-ms (event :wait-time-ms)]
-        (acq-sleep wait-time-ms))
-      #(when (:autofocus event)
-          (store-z-correction (get-in event [:position :label]) (run-autofocus)))
-      #(do (expose event) (collect-image event out-queue))
-    )))
-  
+  (list
+    #(log event)  
+    #(run-actions (create-presnap-actions event))
+    #(await-for 10000 (device-agents (core getCameraDevice)))
+    #(when-let [wait-time-ms (event :wait-time-ms)]
+      (acq-sleep wait-time-ms))
+    #(when (:autofocus event)
+      (set-z-position (:position event) (:z-drive event) (run-autofocus)))
+    #(when-let [z-drive (:z-drive event)]
+      (let [z (compute-z-position event)]
+        (when (not= z (@state :last-z-position))
+          (do (set-stage-position z-drive z)
+              (core waitForDevice z-drive)))))
+    #(do (expose event) (collect-image event out-queue))
+  ))
+
 (defn execute [event-fns]
   (doseq [event-fn event-fns :while (not (:stop @state))]
     (try (event-fn) (catch Throwable e (ReportingUtils/logError e)))
     (await-resume)))
-
-(defn get-init-z-corrections [positions zdrive]
-  (into {} (for [position positions]
-    [(:label position) (first (get-in position [:axes zdrive]))])))
 
 (defn return-config []
   (dorun (map set-property
@@ -312,7 +316,6 @@
       :pause false
       :stop false
       :running true
-      :z-corrections nil
       :last-wake-time (clock-ms)
       :last-z-position z
       :start-time (clock-ms)
@@ -321,7 +324,7 @@
       :init-z-position z
       :init-system-state (get-system-config-cached)
       :init-continuous-focus (core isContinuousFocusEnabled)
-      :z-corrections (get-init-z-corrections (:positions settings) (core getFocusDevice))))
+      ))
   (binding [state (.state this)]
     (def last-state state)
     (let [acq-seq (generate-acq-sequence settings)]
@@ -348,7 +351,7 @@
     )
     (assoc :frames (range (.numFrames settings))
            :channels (filter :use-channel (map ChannelSpec-to-map (.channels settings)))
-           :positions (map MultiStagePosition-to-map (.positions settings)))))
+           :positions (range (.. settings positions size)))))
 
 ;; java interop
 
@@ -357,6 +360,7 @@
 
 (defn -run [this settings acq-eng]
   ;(def last-acq this)
+  (def eng acq-eng)
   (load-mm)
   (create-device-agents)
   (let [out-queue (GentleLinkedBlockingQueue.)
