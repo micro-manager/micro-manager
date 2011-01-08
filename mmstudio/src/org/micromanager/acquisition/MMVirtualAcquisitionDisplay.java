@@ -21,6 +21,7 @@ import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.micromanager.MMStudioMainFrame;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.MMWindow;
 import org.micromanager.utils.ImageUtils;
@@ -369,6 +370,7 @@ public class MMVirtualAcquisitionDisplay{
 
       final ImageWindow win = new StackWindow(hyperImage_) {
 
+
          @Override
          public void windowClosing(WindowEvent e) {
             if (eng_ != null && eng_.isAcquisitionRunning()) {
@@ -412,6 +414,10 @@ public class MMVirtualAcquisitionDisplay{
             }
          }
       };
+
+
+      win.setBackground(MMStudioMainFrame.getInstance().getBackgroundColor());
+      MMStudioMainFrame.getInstance().addMMBackgroundListener(win);
 
       ScrollbarWithLabel positionSelector = createPositionScrollbar(numPositions_);
       if (numPositions_ > 1) {

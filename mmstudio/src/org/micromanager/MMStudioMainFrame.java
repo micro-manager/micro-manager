@@ -237,7 +237,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
 
    // Our instance
-   private MMStudioMainFrame gui_;
+   private static MMStudioMainFrame gui_;
    // Callback
    private CoreEventCallback cb_;
 
@@ -2028,6 +2028,12 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       return core_;
    }
 
+   /**
+    * Returns singleton instance of MMStudioMainFrame
+    */
+   public static MMStudioMainFrame getInstance() {
+      return gui_;
+   }
 
    public void saveConfigPresets() {
       MicroscopeModel model = new MicroscopeModel();
