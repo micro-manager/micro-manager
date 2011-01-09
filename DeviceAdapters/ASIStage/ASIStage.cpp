@@ -1668,6 +1668,7 @@ int ZStage::SetPositionUm(double pos)
 
    if (answer.substr(0,2).compare(":A") == 0 || answer.substr(1,2).compare(":A") == 0)
    {
+      this->OnStagePositionChanged(pos);
       return DEVICE_OK;
    }
    // deal with error later

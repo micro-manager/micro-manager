@@ -1418,7 +1418,7 @@ class CXYStageBase : public CDeviceBase<MM::XYStage, U>
    using CDeviceBase<MM::XYStage, U>::SetPositionUm;
 
 public:
-   CXYStageBase() : originXSteps_(0), originYSteps_(0)
+   CXYStageBase() : originXSteps_(0), originYSteps_(0), xPos_(0), yPos_(0)
    {
       // set-up directionality properties
       this->CreateProperty(MM::g_Keyword_Transpose_MirrorX, "0", MM::Integer, false);
@@ -1435,6 +1435,8 @@ public:
    {
       bool mirrorX, mirrorY;
       GetOrientation(mirrorX, mirrorY);
+      double xPos = x;
+      double yPos = y;
 
       long xSteps = 0;
       long ySteps = 0;
@@ -1448,7 +1450,13 @@ public:
       else
          ySteps = originYSteps_ + nint (y / this->GetStepSizeYUm());
 
-      return this->SetPositionSteps(xSteps, ySteps);
+      int ret = this->SetPositionSteps(xSteps, ySteps);
+      if (ret == DEVICE_OK) {
+         xPos_ = xPos;
+         yPos_ = yPos;
+         this->OnXYStagePositionChanged(xPos_, yPos_);
+      }
+      return ret;
    }
 
    /**
@@ -1458,13 +1466,21 @@ public:
    {
       bool mirrorX, mirrorY;
       GetOrientation(mirrorX, mirrorY);
+      double xPos = xPos_ + dx;
+      double yPos = yPos_ + dy;
 
       if (mirrorX)
          dx = -dx;
       if (mirrorY)
          dy = -dy;
 
-      return SetRelativePositionSteps(nint(dx / this->GetStepSizeXUm()), nint(dy / this->GetStepSizeYUm()));
+      int ret = SetRelativePositionSteps(nint(dx / this->GetStepSizeXUm()), nint(dy / this->GetStepSizeYUm()));
+      if (ret == DEVICE_OK) {
+         xPos_ = xPos;
+         yPos_ = yPos;
+         this->OnXYStagePositionChanged(xPos_, yPos_);
+      }
+      return ret;
    }
 
    /**
@@ -1513,6 +1529,9 @@ public:
       else 
          y = - ((originYSteps_ - ySteps) * this->GetStepSizeYUm());
 
+      xPos_ = x;
+      yPos_ = y;
+
       return DEVICE_OK;
    }
 
@@ -1554,6 +1573,8 @@ private:
    // absolute coordinate translation data
    long originXSteps_;
    long originYSteps_;
+   double xPos_;
+   double yPos_;
 };
 
 /**

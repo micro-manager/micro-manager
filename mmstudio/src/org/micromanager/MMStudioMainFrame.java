@@ -3890,7 +3890,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    public void setRelativeStagePosition(double z) throws MMScriptException {
       try {
          core_.setRelativePosition(core_.getFocusDevice(), z);
-         cb_.onStagePositionChangedRelative(core_.getFocusDevice(), z);
          core_.waitForDevice(core_.getFocusDevice());
       } catch (Exception e) {
          throw new MMScriptException(e.getMessage());
@@ -3909,7 +3908,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
       public void setRelativeXYStagePosition(double x, double y) throws MMScriptException {
       try {
-         cb_.onXYStagePositionChangedRelative(core_.getXYStageDevice(), x, y);
          core_.setRelativeXYPosition(core_.getXYStageDevice(), x, y);
          core_.waitForDevice(core_.getXYStageDevice());
       } catch (Exception e) {
