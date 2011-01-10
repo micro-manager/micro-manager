@@ -289,7 +289,7 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
                               setStatusLabel("Next frame: " + NumberUtils.doubleToDisplayString(1+timeRemainingS) + " s");
                            } else {
                               timer.cancel();
-                              updateStatusLine(taggedImg);
+                              setStatusLabel("");
                            }
                         }
                      };
