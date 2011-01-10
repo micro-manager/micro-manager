@@ -22,7 +22,7 @@
   (:import [org.micromanager AcqControlDlg]
            [org.micromanager.api AcquisitionEngine]
            [org.micromanager.acquisition AcquisitionWrapperEngine LiveAcqDisplay TaggedImageQueue]
-           [org.micromanager.acquisition.engine SequenceSettings]
+           [org.micromanager.acquisition.engine SequenceSettings ProcessorStack]
            [org.micromanager.navigation MultiStagePosition StagePosition]
            [mmcorej TaggedImage Configuration]
            [java.util.prefs Preferences]
@@ -262,8 +262,8 @@
        (or (:slice event) 0)
        (if (:relative-z event)
          (or (get-z-position (:position event) z-drive)
-             (@state :init-z-position)))
-         0)))
+             (@state :init-z-position))
+         0))))
     
 (defn make-event-fns [event out-queue]
   (list
@@ -368,7 +368,9 @@
   (let [out-queue (GentleLinkedBlockingQueue.)
         acq-thread (Thread. #(run-acquisition this 
           (convert-settings settings) out-queue))
-        display (LiveAcqDisplay. mmc out-queue settings (.channels settings)
+        processors (ProcessorStack. out-queue (.getTaggedImageProcessors acq-eng))
+        out-queue-2 (.begin processors)
+        display (LiveAcqDisplay. mmc out-queue-2 settings (.channels settings)
           (.save settings) acq-eng)]
     (def outq out-queue)
     (.start acq-thread)
