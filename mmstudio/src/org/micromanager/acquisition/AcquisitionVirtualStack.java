@@ -69,9 +69,9 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
          } else if (MDUtils.isRGB64(image)) {
             pixels = ImageUtils.singleChannelFromRGB64((short []) image.pix, (flatIndex-1) % 3);
          }
-
+/*
          if (image != null) {
-            try {
+           try {
                int binning = MDUtils.getBinning(image.tags);
                if (binning > 1) {
                   ImageProcessor proc = ImageUtils.makeProcessor(type_,
@@ -82,7 +82,7 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
                ReportingUtils.logError("Tagged image did not contain Binning Info");
             }
          }
-
+*/
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
@@ -112,14 +112,6 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
    @Override
    public int getSize() {
       return nSlices_;
-   }
-
-   public void insertImage(TaggedImage taggedImg) {
-      try {
-         imageCache_.putImage(taggedImg);
-      } catch (MMException e) {
-         ReportingUtils.logError(e);
-      }
    }
 
    private int getFlatIndex(JSONObject md) {
