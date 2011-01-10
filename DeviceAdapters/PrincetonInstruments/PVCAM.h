@@ -233,7 +233,7 @@ private:
    int GetSpeedString(std::string& modeString);
    int GetSpeedTable();
    bool GetEnumParam_PvCam(uns32 pvcam_cmd, uns32 index, std::string& enumString, int32& enumIndex);
-   std::string GetPortName(long portId);
+   std::string GetPortNameAndEnum(long portId, long& enumValue);
    int SetAllowedPixelTypes();
    int SetUniversalAllowedValues(int i, uns16 datatype);
    int SetGainLimits();
