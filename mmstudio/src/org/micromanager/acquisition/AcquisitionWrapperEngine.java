@@ -131,8 +131,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
          // ...ImageProcessorStack...
          ProcessorStack<TaggedImage> imageProcessorStack =
-                 new ProcessorStack<TaggedImage>(engineOutput,
-                 taggedImageProcessors_);
+                 new ProcessorStack<TaggedImage>(engineOutput, taggedImageProcessors_);
          BlockingQueue<TaggedImage> imageProcessorStackOutput = imageProcessorStack.begin();
 
          // ...Display and Save...
@@ -790,5 +789,12 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
       }
       return true;
+   }
+
+   /**
+    * @return the taggedImageProcessors_
+    */
+   public List<Class> getTaggedImageProcessors() {
+      return taggedImageProcessors_;
    }
 }
