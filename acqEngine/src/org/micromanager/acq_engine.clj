@@ -22,7 +22,7 @@
   (:import [org.micromanager AcqControlDlg]
            [org.micromanager.api AcquisitionEngine]
            [org.micromanager.acquisition AcquisitionWrapperEngine LiveAcqDisplay TaggedImageQueue]
-           [org.micromanager.acquisition.engine SequenceSettings ProcessorStack]
+           [org.micromanager.acquisition.engine SequenceSettings]
            [org.micromanager.navigation MultiStagePosition StagePosition]
            [mmcorej TaggedImage Configuration]
            [java.util.prefs Preferences]
@@ -219,7 +219,8 @@
         (action) (core waitForDevice dev)))))
 
 (defn run-autofocus []
-  (.. gui getAutofocusManager getDevice fullFocus))
+  (.. gui getAutofocusManager getDevice fullFocus)
+  (state-assoc! :reference-z-position (core getPosition (core getFocusDevice))))
 
 (defn snap-image [open-before close-after]
   (with-core-setting [getAutoShutter setAutoShutter false]
@@ -262,8 +263,8 @@
        (or (:slice event) 0)
        (if (:relative-z event)
          (or (get-z-position (:position event) z-drive)
-             (@state :init-z-position))
-         0))))
+             (@state :reference-z-position)))
+         0)))
     
 (defn make-event-fns [event out-queue]
   (list
@@ -320,6 +321,7 @@
       :running true
       :last-wake-time (clock-ms)
       :last-z-position z
+      :reference-z-position z
       :start-time (clock-ms)
       :init-auto-shutter (core getAutoShutter)
       :init-exposure (core getExposure)
@@ -365,19 +367,15 @@
   (def eng acq-eng)
   (load-mm)
   (create-device-agents)
-  (swap! (.state this) assoc :stop false :pause false)
   (let [out-queue (GentleLinkedBlockingQueue.)
         acq-thread (Thread. #(run-acquisition this 
           (convert-settings settings) out-queue))
-        processors (ProcessorStack. out-queue (.getTaggedImageProcessors acq-eng))
-        out-queue-2 (.begin processors)
-        display (LiveAcqDisplay. mmc out-queue-2 settings (.channels settings)
+        display (LiveAcqDisplay. mmc out-queue settings (.channels settings)
           (.save settings) acq-eng)]
     (def outq out-queue)
-    (when-not (:stop @(.state this))
-			(.start acq-thread)
-			(swap! (.state this) assoc :display display)
-			(.start display))))
+    (.start acq-thread)
+    (swap! (.state this) assoc :display display)
+    (.start display)))
 
 (defn -pause [this]
   (log "pause requested!")
