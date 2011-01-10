@@ -10,6 +10,8 @@ import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
@@ -20,6 +22,7 @@ import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.utils.ChannelSpec;
 import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MDUtils;
+import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -47,28 +50,36 @@ public class LiveAcqDisplay extends Thread {
       imageProducingQueue_ = imageProducingQueue;
 
       String acqPath;
-      try {
-         TaggedImageStorage imageFileManager;
 
-         if (diskCached_) {
+      TaggedImageStorage imageFileManager;
+
+      if (diskCached_) {
+         try {
             acqPath = createAcqPath(acqSettings.root, acqSettings.prefix);
             imageFileManager = new TaggedImageStorageDiskDefault(acqPath, true, null);
-         } else {
-            acqPath = getUniqueUntitledName();
-            imageFileManager = new TaggedImageStorageRam(null);
+         } catch (Exception e) {
+            ReportingUtils.showError("Unable to create directory for saving images.");
+            eng.stop(true);
+            return;
          }
+      } else {
+         acqPath = getUniqueUntitledName();
+         imageFileManager = new TaggedImageStorageRam(null);
+      }
 
-         JSONObject summaryMetadata = makeSummaryMetadata(acqSettings);
+      JSONObject summaryMetadata = makeSummaryMetadata(acqSettings);
 
-         imageCache_ = new MMImageCache(imageFileManager);
-         imageCache_.setSummaryMetadata(summaryMetadata);
+      imageCache_ = new MMImageCache(imageFileManager);
+      imageCache_.setSummaryMetadata(summaryMetadata);
 
-         display_ = new MMVirtualAcquisitionDisplay(acqPath, true, diskCached_);
-         display_.setEngine(eng);
-         display_.setCache(imageCache_);
+      display_ = new MMVirtualAcquisitionDisplay(acqPath, true, diskCached_);
+      display_.setEngine(eng);
+      display_.setCache(imageCache_);
+      try {
          display_.initialize();
-      } catch (Exception ex) {
-         ReportingUtils.logError(ex);
+      } catch (MMScriptException ex) {
+         ReportingUtils.showError("Unable to show acquisition display");
+         eng.stop(true);
       }
    }
 
@@ -199,6 +210,7 @@ public class LiveAcqDisplay extends Thread {
                if (TaggedImageQueue.isPoison(image)) {
                   break;
                }
+               imageCache_.putImage(image);
                displayImage(image);
             }
          }
@@ -223,7 +235,7 @@ public class LiveAcqDisplay extends Thread {
 
    private void displayImage(TaggedImage taggedImg) {
       try {
-         display_.insertImage(taggedImg);
+         display_.showImage(taggedImg);
       } catch (Exception e) {
          ReportingUtils.logError(e);
       }

@@ -344,7 +344,7 @@ public class MMAcquisitionV2 implements AcquisitionInterface {
       }
       virtAcq_.imageCache_.putImage(taggedImg);
       if (updateDisplay)
-         virtAcq_.insertImage(taggedImg);
+         virtAcq_.showImage(taggedImg);
    }
    
    public void close() {

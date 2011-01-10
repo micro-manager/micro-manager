@@ -170,11 +170,11 @@ public class MMVirtualAcquisitionDisplay{
       hyperImage_.getWindow().setTitle(new File(dir_).getName() +  status_);
    }
 
-   public void insertImage(TaggedImage taggedImg) throws MMScriptException {
+   public void showImage(TaggedImage taggedImg) throws MMScriptException {
 
       try {
          int pos = getPositionIndex(taggedImg);
-         virtualStacks_.get(pos).insertImage(taggedImg);
+
          if (hyperImage_ == null) {
             show(pos);
          }
