@@ -3,8 +3,7 @@
 ; SUBSYSTEM:    mmstudio acquisition engine
 ; ----------------------------------------------------------------------------
 ; AUTHOR:       Arthur Edelstein, arthuredelstein@gmail.com, Dec 14, 2010
-;               Adapted from the acq eng by Nenad Amodaj and Nico Stuurman
-; COPYRIGHT:    University of California, San Francisco, 2006-2010
+; COPYRIGHT:    University of California, San Francisco, 2006-2011
 ; LICENSE:      This file is distributed under the BSD license.
 ;               License text is included with the source distribution.
 ;               This file is distributed in the hope that it will be useful,
