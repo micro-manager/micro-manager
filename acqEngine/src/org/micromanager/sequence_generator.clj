@@ -93,7 +93,7 @@
     #(or
        (nil? (% :channel))
        (-> % :channel :skip-frames zero?)
-       (not= 0 (mod (% :frame) (-> % :channel :skip-frames inc))))
+       (zero? (mod (% :frame) (-> % :channel :skip-frames inc))))
     events))
 
 (defn process-use-autofocus [events use-autofocus autofocus-skip]
