@@ -1,10 +1,10 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="ExfoXCite"
+	Name="XCite120PC_Exacte"
 	ProjectGUID="{4B9E78C0-C365-11DF-9539-E01BDFD72085}"
-	RootNamespace="ExfoXCite"
+	RootNamespace="XCite120PC_Exacte"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="0"
 	>
@@ -63,14 +63,14 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="$(OutDir)/mmgr_dal_ExfoXCite.dll"
+				OutputFile="$(OutDir)/mmgr_dal_XCite120PC_Exacte.dll"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
-				ProgramDatabaseFile="$(OutDir)/ExfoXCite.pdb"
+				ProgramDatabaseFile="$(OutDir)/XCite120PC_Exacte.pdb"
 				SubSystem="2"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary="$(OutDir)/ExfoXCite.lib"
+				ImportLibrary="$(OutDir)/XCite120PC_Exacte.lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -141,7 +141,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				OutputFile="$(OutDir)/mmgr_dal_ExfoXCite.dll"
+				OutputFile="$(OutDir)/mmgr_dal_XCite120PC_Exacte.dll"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
 				SubSystem="2"
@@ -149,7 +149,7 @@
 				EnableCOMDATFolding="2"
 				RandomizedBaseAddress="1"
 				DataExecutionPrevention="0"
-				ImportLibrary="$(OutDir)/ExfoXCite.lib"
+				ImportLibrary="$(OutDir)/XCite120PC_Exacte.lib"
 				TargetMachine="1"
 			/>
 			<Tool
@@ -189,7 +189,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\ExfoXCite.cpp"
+				RelativePath=".\XCite120PC.cpp"
 				>
 				<FileConfiguration
 					Name="Release|Win32"

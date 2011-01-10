@@ -136,7 +136,7 @@
 		<copy file="${BinRoot}/mmgr_dal_DLP4000.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_DSLRRemoteCamera.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_DTOpenLayer.dll" todir="${InstallRoot}" />
-            <copy file="${BinRoot}/mmgr_dal_ExfoXCite.dll" todir="${InstallRoot}" />
+            <copy file="${BinRoot}/mmgr_dal_XCite120PC_Exacte.dll" todir="${InstallRoot}" />
 
 		<copy file="${BinRoot}/mmgr_dal_FreeSerialPort.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_GenericSLM.dll" todir="${InstallRoot}" />

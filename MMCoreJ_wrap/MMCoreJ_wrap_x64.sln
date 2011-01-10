@@ -168,7 +168,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PVCAM", "..\DeviceAdapters\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PrincetonInstruments", "..\DeviceAdapters\PrincetonInstruments\PrincetonInstruments.vcproj", "{A28DEB4E-E645-4990-A91D-4A7FF6762240}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ExfoXCite", "..\DeviceAdapters\ExfoXCite\ExfoXCite.vcproj", "{4B9E78C0-C365-11DF-9539-E01BDFD72085}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "XCite120PC_Exacte", "..\DeviceAdapters\XCite120PC_Exacte\XCite120PC_Exacte.vcproj", "{4B9E78C0-C365-11DF-9539-E01BDFD72085}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "KDV", "..\DeviceAdapters\kdv\KDV.vcproj", "{95CE7E3D-1E0D-4C5B-AF9B-B8343A8724FB}"
 EndProject
