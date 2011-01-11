@@ -84,10 +84,6 @@ public class ConfiguratorDlg extends JDialog {
     private JLabel titleLabel_;
     private JEditorPane helpTextPane_;
     private String defaultPath_;
-    private JCheckBox sendCheck_;
-    private boolean sendConfig_;
-
-
     private boolean showSynchroPage_;
 
     /**
@@ -119,22 +115,6 @@ public class ConfiguratorDlg extends JDialog {
         getContentPane().setLayout(null);
         setTitle("Hardware Configuration Wizard");
         setBounds(50, 100, 602, 529);
-
-        sendCheck_ = new JCheckBox();
-        sendCheck_.setBounds(5, 462, 275, 23);
-        sendCheck_.setFont(new Font("", Font.PLAIN, 10));
-        sendCheck_.setSelected(false);
-        sendConfig_ = false;
-        sendCheck_.addActionListener(new ActionListener() {
-
-            public void actionPerformed(ActionEvent arg0) {
-                sendConfig_ = sendCheck_.isSelected();
-            }
-        });
-        sendCheck_.setText("Send configuration to Micro-manager.org");
-
-        getContentPane().add(sendCheck_);
-
 
         final JScrollPane scrollPane = new JScrollPane();
         scrollPane.setBounds(9, 320, 578, 136);
@@ -200,6 +180,7 @@ public class ConfiguratorDlg extends JDialog {
         pages_[pageNumber++] = new FinishPage(prefs_);
 
         microModel_ = new MicroscopeModel();
+        microModel_.setSendConfiguration(false);
         microModel_.loadAvailableDeviceList(core_);
         microModel_.setFileName(defaultPath_);
         microModel_.scanComPorts(core_);
@@ -318,7 +299,7 @@ public class ConfiguratorDlg extends JDialog {
                     return;
             }
         }
-        if (sendConfig_) {
+        if (microModel_.getSendConfiguration()) {
             try {
                 HttpUtils httpu = new HttpUtils();
                 List<File> list = new ArrayList<File>();

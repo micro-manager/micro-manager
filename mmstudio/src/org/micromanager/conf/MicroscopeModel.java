@@ -62,6 +62,8 @@ public class MicroscopeModel {
    public static final String DEVLIST_FILE_NAME = "MMDeviceList.txt";
    public static final String PIXEL_SIZE_GROUP = "PixelSizeGroup";
 
+   boolean sendConfiguration_;
+
    public static boolean generateDeviceListFile() {
       try {
          CMMCore core = new CMMCore();
@@ -112,6 +114,7 @@ public class MicroscopeModel {
       synchroDevices_ = new ArrayList<String>();
       availableComPorts_ = new Device[0];
       pixelSizeGroup_ = new ConfigGroup(PIXEL_SIZE_GROUP);
+      sendConfiguration_ = false;
 
       Device coreDev = new Device(MMCoreJ.getG_Keyword_CoreDevice(), "Default", "MMCore", "Core controller");
       devices_.add(coreDev);
@@ -1223,4 +1226,14 @@ public class MicroscopeModel {
          }
       }
    }
+
+
+   public boolean getSendConfiguration(){
+      return sendConfiguration_;
+   }
+
+   public void setSendConfiguration(boolean value){
+      sendConfiguration_ = value;
+   }
+
 }
