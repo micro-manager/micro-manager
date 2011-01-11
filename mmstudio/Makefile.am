@@ -38,14 +38,8 @@ MMJ_.jar:  \
 	$(srcdir)/src/org/micromanager/acquisition/TaggedImageQueue.java \
 	$(srcdir)/src/org/micromanager/acquisition/TaggedImageStorageDiskDefault.java \
 	$(srcdir)/src/org/micromanager/acquisition/TaggedImageStorageRam.java \
-	$(srcdir)/src/org/micromanager/acquisition/engine/BurstMaker.java \
-	$(srcdir)/src/org/micromanager/acquisition/engine/Engine.java \
-	$(srcdir)/src/org/micromanager/acquisition/engine/ImageRequest.java \
-	$(srcdir)/src/org/micromanager/acquisition/engine/ImageTask.java \
-	$(srcdir)/src/org/micromanager/acquisition/engine/ProcessorStack.java \
-	$(srcdir)/src/org/micromanager/acquisition/engine/SequenceGenerator.java \
-	$(srcdir)/src/org/micromanager/acquisition/engine/SequenceSettings.java \
-	$(srcdir)/src/org/micromanager/acquisition/engine/StopTask.java \
+	$(srcdir)/src/org/micromanager/acquisition/ProcessorStack.java \
+	$(srcdir)/src/org/micromanager/acquisition/SequenceSettings.java \
 	$(srcdir)/src/org/micromanager/api/Autofocus.java \
 	$(srcdir)/src/org/micromanager/api/AcquisitionEngine.java \
 	$(srcdir)/src/org/micromanager/api/DeviceControlGUI.java \
@@ -138,7 +132,7 @@ MMJ_.jar:  \
 	test -d build || mkdir build
 	rm -rf build/*
 	cp $(srcdir)/bin/plugins_mmstudio.config build/plugins.config
-	$(JAVAC) -source 1.5 -target 1.5 -sourcepath ../MMCoreJ_wrap:$(srcdir)/src:../hcs/src:. -classpath $(IJJARPATH):$(BSHJARPATH):$(SWINGXJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):$(CLASSEXT)/clojure.jar:$(topsrcdir)/bin/MMCoreJ.jar:. $(srcdir)/src/*.java $(srcdir)/src/org/micromanager/utils/*.java $(srcdir)/src/org/micromanager/api/*.java -d build
+	$(JAVAC) -source 1.5 -target 1.5 -sourcepath ../MMCoreJ_wrap:$(srcdir)/src:../hcs/src:. -classpath $(IJJARPATH):$(BSHJARPATH):$(SWINGXJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):$(CLASSEXT)/clojure.jar:$(topsrcdir)/bin/MMCoreJ.jar:. $(srcdir)/src/*.java $(srcdir)/src/org/micromanager/acquisition/*.java $(srcdir)/src/org/micromanager/utils/*.java $(srcdir)/src/org/micromanager/api/*.java -d build
 	cp -rf $(srcdir)/src/org/micromanager/icons build/org/micromanager
 	cp -rf $(srcdir)/src/org/micromanager/conf/*html build/org/micromanager/conf
 	## Work around bug in 'jar': jar cf MM_.jar -C bin/ bin/* does not work

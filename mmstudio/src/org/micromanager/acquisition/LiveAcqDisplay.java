@@ -16,7 +16,6 @@ import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.micromanager.acquisition.engine.SequenceSettings;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.utils.ChannelSpec;

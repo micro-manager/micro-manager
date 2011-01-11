@@ -130,7 +130,7 @@ import org.micromanager.acquisition.AcquisitionVirtualStack;
 import org.micromanager.api.AcquisitionInterface;
 import org.micromanager.acquisition.AcquisitionWrapperEngine;
 import org.micromanager.acquisition.MetadataPanel;
-import org.micromanager.acquisition.engine.SequenceSettings;
+import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.api.ImageFocusListener;
 import org.micromanager.utils.ReportingUtils;
 
@@ -4067,7 +4067,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       }
       eng.setCore(core_, afMgr_);
       eng.setParentGUI(this);
-      eng.runPipeline(acquisitionSettings);
+      eng.runPipeline2(acquisitionSettings);
    }
 
    public void setAcquisitionEngine(AcquisitionEngine eng) {

@@ -3,7 +3,7 @@
  * and open the template in the editor.
  */
 
-package org.micromanager.acquisition.engine;
+package org.micromanager.acquisition;
 
 import java.util.ArrayList;
 import org.micromanager.navigation.MultiStagePosition;

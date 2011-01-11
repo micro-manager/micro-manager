@@ -4,29 +4,19 @@
  */
 package org.micromanager.acquisition;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.micromanager.acquisition.engine.BurstMaker;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
 import java.util.prefs.Preferences;
 import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.PropertySetting;
 import mmcorej.StrVector;
-import mmcorej.TaggedImage;
 import org.micromanager.MMStudioMainFrame;
-import org.micromanager.acquisition.engine.Engine;
-import org.micromanager.acquisition.engine.ProcessorStack;
-import org.micromanager.acquisition.engine.SequenceGenerator;
-import org.micromanager.acquisition.engine.SequenceSettings;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.DeviceControlGUI;
-import org.micromanager.api.EngineTask;
 import org.micromanager.api.Pipeline;
 import org.micromanager.navigation.PositionList;
 import org.micromanager.utils.AutofocusManager;
@@ -69,7 +59,6 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private int positionMode_;
    private boolean useAutoFocus_;
    private int afSkipInterval_;
-   private Engine eng_ = null;
    private List<Class> taggedImageProcessors_;
    private List<Class> imageRequestProcessors_;
    private boolean absoluteZ_;
@@ -90,57 +79,23 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       createPipelineThread_.start();
 
       imageRequestProcessors_ = new ArrayList<Class>();
-      imageRequestProcessors_.add(BurstMaker.class);
       taggedImageProcessors_ = new ArrayList<Class>();
    }
 
    public void acquire() throws MMException {
-      try {
-         createPipelineThread_.join();
-      } catch (InterruptedException ex) {
-         ReportingUtils.logError(ex);
-      }
       runPipeline2(gatherSequenceSettings());
    }
 
    public void runPipeline2(SequenceSettings acquisitionSettings) {
       try {
+         createPipelineThread_.join();
+      } catch (InterruptedException ex) {
+         ReportingUtils.logError(ex);
+      }
+      try {
          pipeline_.run(acquisitionSettings, this);
       } catch (Throwable ex) {
          ReportingUtils.showError(ex);
-      }
-   }
-
-   public void runPipeline(SequenceSettings acquisitionSettings) {
-      try {
-         // SET UP THE PIPELINE...
-         // ...Sequence generator...
-         SequenceGenerator generator = new SequenceGenerator(acquisitionSettings, core_.getExposure());
-         BlockingQueue<EngineTask> generatorOutput = generator.begin();
-
-         // ...TaskProcessorStack...
-         ProcessorStack<EngineTask> taskProcessorStack =
-                 new ProcessorStack<EngineTask>(generatorOutput,
-                 imageRequestProcessors_);
-         BlockingQueue<EngineTask> requestProcessorStackOutput = taskProcessorStack.begin();
-
-         // ...Engine...
-         eng_ = new Engine(core_, gui_.getAutofocusManager(),
-                 requestProcessorStackOutput, acquisitionSettings);
-         BlockingQueue<TaggedImage> engineOutput = eng_.begin();
-
-         // ...ImageProcessorStack...
-         ProcessorStack<TaggedImage> imageProcessorStack =
-                 new ProcessorStack<TaggedImage>(engineOutput, taggedImageProcessors_);
-         BlockingQueue<TaggedImage> imageProcessorStackOutput = imageProcessorStack.begin();
-
-         // ...Display and Save...
-         display_ = new LiveAcqDisplay(core_, imageProcessorStackOutput,
-                 acquisitionSettings, acquisitionSettings.channels, saveFiles_, this);
-         display_.start();
-
-      } catch (Exception ex) {
-         ReportingUtils.logError(ex);
       }
    }
 

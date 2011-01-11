@@ -5,7 +5,7 @@
 
 package org.micromanager.api;
 
-import org.micromanager.acquisition.engine.SequenceSettings;
+import org.micromanager.acquisition.SequenceSettings;
 
 /**
  *

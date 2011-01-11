@@ -21,8 +21,8 @@
           [org.micromanager.sequence-generator :only [generate-acq-sequence]])
   (:import [org.micromanager AcqControlDlg]
            [org.micromanager.api AcquisitionEngine]
-           [org.micromanager.acquisition AcquisitionWrapperEngine LiveAcqDisplay TaggedImageQueue]
-           [org.micromanager.acquisition.engine SequenceSettings]
+           [org.micromanager.acquisition AcquisitionWrapperEngine LiveAcqDisplay TaggedImageQueue
+                                         ProcessorStack SequenceSettings]
            [org.micromanager.navigation MultiStagePosition StagePosition]
            [mmcorej TaggedImage Configuration]
            [java.util.prefs Preferences]
@@ -367,15 +367,19 @@
   (def eng acq-eng)
   (load-mm)
   (create-device-agents)
+  (swap! (.state this) assoc :stop false :pause false) 
   (let [out-queue (GentleLinkedBlockingQueue.)
         acq-thread (Thread. #(run-acquisition this 
           (convert-settings settings) out-queue))
-        display (LiveAcqDisplay. mmc out-queue settings (.channels settings)
+        processors (ProcessorStack. out-queue (.getTaggedImageProcessors acq-eng)) 
+        out-queue-2 (.begin processors) 
+        display (LiveAcqDisplay. mmc out-queue-2 settings (.channels settings)
           (.save settings) acq-eng)]
     (def outq out-queue)
-    (.start acq-thread)
-    (swap! (.state this) assoc :display display)
-    (.start display)))
+    (when-not (:stop @(.state this))
+      (.start acq-thread)
+      (swap! (.state this) assoc :display display)
+      (.start display))))
 
 (defn -pause [this]
   (log "pause requested!")
