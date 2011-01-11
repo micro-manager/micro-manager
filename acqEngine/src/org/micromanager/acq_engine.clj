@@ -104,9 +104,10 @@
                   2 [(.x stage-pos) (.y stage-pos)])])))}))
 
 (defn get-msp [idx]
-  (let [p-list (. gui getPositionList)]
-    (if (pos? (. p-list getNumberOfPositions))
-      (. p-list (getPosition idx)))))
+  (when idx
+    (let [p-list (. gui getPositionList)]
+      (if (pos? (. p-list getNumberOfPositions))
+        (. p-list (getPosition idx))))))
 
 (defn get-z-position [idx z-stage]
   (if-let [msp (get-msp idx)]
@@ -197,9 +198,8 @@
   (send-off (device-agents dev) (fn [_] (action))))
     
 (defn create-presnap-actions [event]
-  (log (MultiStagePosition-to-map (:position event)))
   (concat
-    (for [[axis pos] (:axes (MultiStagePosition-to-map (:position event))) :when pos]
+    (for [[axis pos] (:axes (MultiStagePosition-to-map (get-msp (:position event)))) :when pos]
       [axis #(apply set-stage-position axis pos)])
     (for [prop (get-in event [:channel :properties])]
       [(prop 0) #(core setProperty (prop 0) (prop 1) (prop 2))])
