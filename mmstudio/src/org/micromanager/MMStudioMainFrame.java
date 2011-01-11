@@ -4067,7 +4067,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       }
       eng.setCore(core_, afMgr_);
       eng.setParentGUI(this);
-      eng.runPipeline2(acquisitionSettings);
+      eng.runPipeline(acquisitionSettings);
    }
 
    public void setAcquisitionEngine(AcquisitionEngine eng) {

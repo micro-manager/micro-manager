@@ -83,10 +83,10 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    public void acquire() throws MMException {
-      runPipeline2(gatherSequenceSettings());
+      runPipeline(gatherSequenceSettings());
    }
 
-   public void runPipeline2(SequenceSettings acquisitionSettings) {
+   public void runPipeline(SequenceSettings acquisitionSettings) {
       try {
          createPipelineThread_.join();
       } catch (InterruptedException ex) {
