@@ -26,7 +26,6 @@ import ij.WindowManager;
 import ij.gui.Line;
 import ij.gui.Roi;
 import ij.process.ImageProcessor;
-import ij.process.ImageStatistics;
 import ij.process.ShortProcessor;
 
 import java.awt.Color;
@@ -48,8 +47,6 @@ import java.io.IOException;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -119,11 +116,9 @@ import bsh.Interpreter;
 import com.swtdesigner.SwingResourceManager;
 import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
-import ij.process.ColorProcessor;
 import java.awt.Cursor;
 import java.awt.FileDialog;
 import java.awt.Graphics;
-import java.awt.image.DirectColorModel;
 import java.util.Collections;
 import mmcorej.TaggedImage;
 import org.micromanager.acquisition.AcquisitionVirtualStack;
