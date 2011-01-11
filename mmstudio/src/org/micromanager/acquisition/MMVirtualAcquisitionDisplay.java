@@ -369,10 +369,14 @@ public class MMVirtualAcquisitionDisplay{
       }
 
       final ImageWindow win = new StackWindow(hyperImage_) {
+         private boolean windowClosingDone_ = false;
 
 
          @Override
          public void windowClosing(WindowEvent e) {
+            if (windowClosingDone_)
+               return;
+
             if (eng_ != null && eng_.isAcquisitionRunning()) {
                if (!abort()) {
                   return;
@@ -400,11 +404,18 @@ public class MMVirtualAcquisitionDisplay{
             setWindowClosed(true);
             imageCache_ = null;
             virtualStacks_ = null;
-            close();
+            if (!this.isClosed())
+               close();
             hyperImage_ = null;
 
-
             super.windowClosing(e);
+            windowClosingDone_ = true;
+         }
+
+         @Override
+         public void windowClosed(WindowEvent E) {
+            this.windowClosing(E);
+            super.windowClosed(E);
          }
 
          @Override
