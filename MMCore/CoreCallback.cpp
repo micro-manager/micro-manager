@@ -155,12 +155,15 @@ int CoreCallback::OnPropertyChanged(const MM::Device* device, const char* propNa
       MMThreadGuard g(*pValueChangeLock_);
       char label[MM::MaxStrLength];
       device->GetLabel(label);
+      const PropertySetting* ps = new PropertySetting(label, propName, value, core_->isPropertyReadOnly(label, propName));
+      core_->stateCache_.addSetting(*ps);
       core_->externalCallback_->onPropertyChanged(label, propName, value);
       
       // find all configs that contain this property and callback to indicate 
       // that the config group changed
       // TODO: assess whether performace is better by maintaining a map tying 
       // property to configurations
+  /*
       using namespace std;
       vector<string> configGroups = core_->getAvailableConfigGroups ();
       for (vector<string>::iterator it = configGroups.begin(); 
@@ -174,11 +177,16 @@ int CoreCallback::OnPropertyChanged(const MM::Device* device, const char* propNa
             Configuration config = core_->getConfigData((*it).c_str(), (*itc).c_str());
             if (config.isPropertyIncluded(label, propName)) {
                found = true;
-               string currentConfig = core_->getCurrentConfig( (*it).c_str() );
+               // If we are part of this configuration, notify that it was changed
+               // get the new config from cache rather than query the hardware
+               string currentConfig = core_->getCurrentConfigFromCache( (*it).c_str() );
                OnConfigGroupChanged((*it).c_str(), currentConfig.c_str());
             }
          }
       }
+          
+
+       * this is prone to thread clashes.  Update from Cache if possible
       vector<string> pixelSizeConfigs = core_->getAvailablePixelSizeConfigs();
       bool found = false;
       for (vector<string>::iterator itpsc = pixelSizeConfigs.begin();
@@ -191,12 +199,13 @@ int CoreCallback::OnPropertyChanged(const MM::Device* device, const char* propNa
             try {
                pixSizeUm = core_->getPixelSizeUm();
             }
-            catch (CMMError /* e */) {
+            catch (CMMError ) {
                pixSizeUm = 0.0;
             }
             OnPixelSizeChanged(pixSizeUm);
          }
       }
+      */
    }
 
    return DEVICE_OK;
