@@ -33,7 +33,7 @@ import org.micromanager.utils.ReportingUtils;
  *
  * @author arthur
  */
-public class MMVirtualAcquisitionDisplay{
+public class MMVirtualAcquisitionDisplay {
 
    private String dir_;
    MMImageCache imageCache_;
@@ -243,6 +243,11 @@ public class MMVirtualAcquisitionDisplay{
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
+   }
+
+   public void expandPositions() {
+      ++numPositions_;
+      pSelector_.setMaximum(numPositions_+1);
    }
 
    private void updatePosition(int p) {
