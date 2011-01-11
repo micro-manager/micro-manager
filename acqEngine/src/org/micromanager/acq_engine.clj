@@ -263,8 +263,8 @@
        (or (:slice event) 0)
        (if (:relative-z event)
          (or (get-z-position (:position event) z-drive)
-             (@state :reference-z-position)))
-         0)))
+             (@state :reference-z-position))
+         0))))
     
 (defn make-event-fns [event out-queue]
   (list
