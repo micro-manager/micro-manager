@@ -269,10 +269,10 @@
 (defn make-event-fns [event out-queue]
   (list
     #(log event)  
-    #(run-actions (create-presnap-actions event))
-    #(await-for 10000 (device-agents (core getCameraDevice)))
     #(when-let [wait-time-ms (event :wait-time-ms)]
       (acq-sleep wait-time-ms))
+    #(run-actions (create-presnap-actions event))
+    #(await-for 10000 (device-agents (core getCameraDevice)))
     #(when (:autofocus event)
       (set-z-position (:position event) (:z-drive event) (run-autofocus)))
     #(when-let [z-drive (:z-drive event)]
