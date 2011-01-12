@@ -151,7 +151,7 @@
        "Time" (get-current-time-str)
        "UUID" (UUID/randomUUID)
        "Width"  (@state :init-width)
-       "ZPositionUm" (core getPosition (core getFocusDevice))
+       "ZPositionUm" (@state :last-z-position)
       }))))
 
 ;; acq-engine
