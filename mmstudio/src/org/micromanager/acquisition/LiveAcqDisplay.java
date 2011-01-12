@@ -27,13 +27,14 @@ import org.micromanager.utils.ReportingUtils;
  * @author arthur
  */
 public class LiveAcqDisplay extends Thread {
+
    private static int untitledID_ = 0;
    protected final CMMCore core_;
    SequenceSettings acqSettings_;
    private boolean diskCached_ = false;
-   private BlockingQueue<TaggedImage>  imageProducingQueue_;
+   private BlockingQueue<TaggedImage> imageProducingQueue_;
    private MMImageCache imageCache_ = null;
-   private MMVirtualAcquisitionDisplay display_ = null;
+   private VirtualAcquisitionDisplay display_ = null;
 
    public LiveAcqDisplay(CMMCore core,
            BlockingQueue<TaggedImage> imageProducingQueue,
@@ -55,7 +56,7 @@ public class LiveAcqDisplay extends Thread {
             acqPath = createAcqPath(acqSettings.root, acqSettings.prefix);
             imageFileManager = new TaggedImageStorageDiskDefault(acqPath, true, null);
          } catch (Exception e) {
-            ReportingUtils.showError("Unable to create directory for saving images.");
+            ReportingUtils.showError(e, "Unable to create directory for saving images.");
             eng.stop(true);
             return;
          }
@@ -69,7 +70,7 @@ public class LiveAcqDisplay extends Thread {
       imageCache_ = new MMImageCache(imageFileManager);
       imageCache_.setSummaryMetadata(summaryMetadata);
 
-      display_ = new MMVirtualAcquisitionDisplay(acqPath, true, diskCached_);
+      display_ = new VirtualAcquisitionDisplay(acqPath, true, diskCached_);
       display_.setEngine(eng);
       display_.setCache(imageCache_);
       try {
@@ -88,28 +89,28 @@ public class LiveAcqDisplay extends Thread {
    private JSONObject makeSummaryMetadata(SequenceSettings acqSettings) {
       JSONObject md = new JSONObject();
       try {
-      md.put("KeepShutterOpenChannels",acqSettings.keepShutterOpenChannels + "");
-      md.put("KeepShutterOpenSlices", acqSettings.keepShutterOpenSlices + "");
-      md.put("IntervalMs", acqSettings.intervalMs);
-      md.put("SlicesFirst", acqSettings.slicesFirst + "");
-      md.put("TimeFirst", acqSettings.timeFirst + "");
-      md.put("Slices", acqSettings.slices.size());
-      md.put("Frames", acqSettings.numFrames);
-      md.put("Channels", acqSettings.channels.size());
-      md.put("Positions", acqSettings.positions.size());
-      md.put("Comment", acqSettings.comment);
-      md.put("MetadataVersion", 10);
-      md.put("Source", "Micro-Manager");
-      md.put("PixelSize_um", core_.getPixelSizeUm());
-      md.put("PixelAspect", 1.0);
-      md.put("GridColumn", 0);
-      md.put("GridRow", 0);
-      md.put("ComputerName", getComputerName());
-      md.put("Interval_ms", acqSettings.intervalMs);
-      md.put("UserName", System.getProperty("user.name"));
-      md.put("z-step_um", getZStep(acqSettings));
-      setDimensions(md);
-      setChannelTags(acqSettings, md);
+         md.put("Channels", acqSettings.channels.size());
+         md.put("Comment", acqSettings.comment);
+         md.put("ComputerName", getComputerName());
+         md.put("Frames", acqSettings.numFrames);
+         md.put("GridColumn", 0);
+         md.put("GridRow", 0);
+         md.put("Interval_ms", acqSettings.intervalMs);
+         md.put("IntervalMs", acqSettings.intervalMs);
+         md.put("KeepShutterOpenChannels", acqSettings.keepShutterOpenChannels + "");
+         md.put("KeepShutterOpenSlices", acqSettings.keepShutterOpenSlices + "");
+         md.put("MetadataVersion", 10);
+         md.put("PixelAspect", 1.0);
+         md.put("PixelSize_um", core_.getPixelSizeUm());
+         md.put("Positions", acqSettings.positions.size());
+         md.put("Slices", acqSettings.slices.size());
+         md.put("SlicesFirst", acqSettings.slicesFirst + "");
+         md.put("Source", "Micro-Manager");
+         md.put("TimeFirst", acqSettings.timeFirst + "");
+         md.put("UserName", System.getProperty("user.name"));
+         md.put("z-step_um", getZStep(acqSettings));
+         setDimensions(md);
+         setChannelTags(acqSettings, md);
       } catch (Exception e) {
          ReportingUtils.logError(e);
       }
@@ -178,7 +179,7 @@ public class LiveAcqDisplay extends Thread {
          ReportingUtils.logError(ex);
       }
    }
-   
+
    private int getTypeFromDepth(long depth) {
       int type = 0;
       if (depth == 1) {

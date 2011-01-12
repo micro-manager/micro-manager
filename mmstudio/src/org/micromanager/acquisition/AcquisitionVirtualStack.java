@@ -28,11 +28,11 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
    private int nSlices_;
    private ImagePlus imagePlus_;
    private final int positionIndex_;
-   private final MMVirtualAcquisitionDisplay acq_;
+   private final VirtualAcquisitionDisplay acq_;
 
    public AcquisitionVirtualStack(int width, int height, ColorModel cm, 
            MMImageCache imageCache, int nSlices, int posIndex,
-           MMVirtualAcquisitionDisplay acq) {
+           VirtualAcquisitionDisplay acq) {
       super(width, height, cm, "");
       imageCache_ = imageCache;
       width_ = width;
@@ -42,7 +42,7 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
       acq_ = acq;
    }
 
-   public MMVirtualAcquisitionDisplay getVirtualAcquisition() {
+   public VirtualAcquisitionDisplay getVirtualAcquisition() {
       return acq_;
    }
 

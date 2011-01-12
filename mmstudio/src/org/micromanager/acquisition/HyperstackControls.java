@@ -29,11 +29,11 @@ import org.micromanager.utils.ReportingUtils;
  * @author arthur
  */
 public class HyperstackControls extends java.awt.Panel implements ImageListener {
-   private final MMVirtualAcquisitionDisplay acq_;
+   private final VirtualAcquisitionDisplay acq_;
    private final ImageWindow win_;
    
     /** Creates new form HyperstackControls */
-    public HyperstackControls(MMVirtualAcquisitionDisplay acq, ImageWindow win) {
+    public HyperstackControls(VirtualAcquisitionDisplay acq, ImageWindow win) {
         initComponents();
         acq_ = acq;
         win_ = win;

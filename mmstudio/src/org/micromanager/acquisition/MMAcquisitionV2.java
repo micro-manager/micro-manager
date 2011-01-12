@@ -67,7 +67,7 @@ public class MMAcquisitionV2 implements AcquisitionInterface {
    //protected Image5DWindow imgWin_;
    @SuppressWarnings("unused")
    private String rootDirectory_;
-   private MMVirtualAcquisitionDisplay virtAcq_;
+   private VirtualAcquisitionDisplay virtAcq_;
    
    public MMAcquisitionV2(String name, String dir) throws MMScriptException {
       this(name, dir, false, false, false);
@@ -103,7 +103,7 @@ public class MMAcquisitionV2 implements AcquisitionInterface {
          imageFileManager = new TaggedImageStorageRam(null);
 
       MMImageCache imageCache = new MMImageCache(imageFileManager);
-      virtAcq_ = new MMVirtualAcquisitionDisplay(dir + File.separator + name, false, diskCached);
+      virtAcq_ = new VirtualAcquisitionDisplay(dir + File.separator + name, false, diskCached);
       virtAcq_.setCache(imageCache);
       
       if (show && diskCached && existing) {

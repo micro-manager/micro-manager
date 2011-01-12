@@ -549,14 +549,14 @@ public class MetadataPanel extends javax.swing.JPanel
    }
 
    private void writeSummaryComments() {
-       MMVirtualAcquisitionDisplay acq = getMMVirtualAcquisitionDisplay();
+       VirtualAcquisitionDisplay acq = getMMVirtualAcquisitionDisplay();
        if (acq != null) {
           acq.setSummaryComment(summaryCommentsTextArea.getText());
        }
    }
 
    private void writeImageComments() {
-       MMVirtualAcquisitionDisplay acq = getMMVirtualAcquisitionDisplay();
+       VirtualAcquisitionDisplay acq = getMMVirtualAcquisitionDisplay();
        if (acq != null) {
           acq.setImageComment(imageCommentsTextArea.getText());
        }
@@ -613,7 +613,7 @@ public class MetadataPanel extends javax.swing.JPanel
          } else if (tabSelected == 0) {
             updateChannelControls();
          } else if (tabSelected == 2) {
-            MMVirtualAcquisitionDisplay acq = getMMVirtualAcquisitionDisplay();
+            VirtualAcquisitionDisplay acq = getMMVirtualAcquisitionDisplay();
             if (acq != null) {
                imageCommentsTextArea.setText(acq.getImageComment());
             }
@@ -634,7 +634,7 @@ public class MetadataPanel extends javax.swing.JPanel
 
       ImagePlus imgp = focusedWindow.getImagePlus();
       MMImageCache cache = getCache(imgp);
-      MMVirtualAcquisitionDisplay acq = getMMVirtualAcquisitionDisplay();
+      VirtualAcquisitionDisplay acq = getMMVirtualAcquisitionDisplay();
 
       if (acq != null) {
          summaryCommentsTextArea.setText(acq.getSummaryComment());
@@ -657,12 +657,12 @@ public class MetadataPanel extends javax.swing.JPanel
 
    }
 
-   private MMVirtualAcquisitionDisplay getMMVirtualAcquisitionDisplay() {
+   private VirtualAcquisitionDisplay getMMVirtualAcquisitionDisplay() {
       ImagePlus imgp = WindowManager.getCurrentImage();
       if (imgp == null)
          return null;
 
-      MMVirtualAcquisitionDisplay acq;
+      VirtualAcquisitionDisplay acq;
       AcquisitionVirtualStack stack = getAcquisitionStack(imgp);
          if (stack != null) {
             acq = stack.getVirtualAcquisition();
@@ -671,7 +671,7 @@ public class MetadataPanel extends javax.swing.JPanel
       return null;
    }
 
-   public synchronized void setupChannelControls(MMVirtualAcquisitionDisplay acq) {
+   public synchronized void setupChannelControls(VirtualAcquisitionDisplay acq) {
       int hpHeight = 100;
       int nChannels = acq.getNumChannels();
 

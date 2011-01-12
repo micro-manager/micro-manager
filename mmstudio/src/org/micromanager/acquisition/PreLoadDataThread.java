@@ -39,10 +39,10 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class PreLoadDataThread implements Runnable {
 
-   private MMVirtualAcquisitionDisplay virtAcq_;
+   private VirtualAcquisitionDisplay virtAcq_;
    private static final long MEMORYLIMIT = 5000000;
 
-   public PreLoadDataThread(MMVirtualAcquisitionDisplay virtAcq) {
+   public PreLoadDataThread(VirtualAcquisitionDisplay virtAcq) {
       virtAcq_ = virtAcq;
    }
 

@@ -33,7 +33,7 @@ import org.micromanager.utils.ReportingUtils;
  *
  * @author arthur
  */
-public class MMVirtualAcquisitionDisplay {
+public class VirtualAcquisitionDisplay {
 
    private String dir_;
    MMImageCache imageCache_;
@@ -59,7 +59,7 @@ public class MMVirtualAcquisitionDisplay {
    private int curPosition_ = -1;
    private ChannelDisplaySettings[] channelSettings_;
 
-   MMVirtualAcquisitionDisplay(String dir, boolean newData, boolean diskCached) {
+   VirtualAcquisitionDisplay(String dir, boolean newData, boolean diskCached) {
       dir_ = dir;
       newData_ = newData;
       diskCached_ = diskCached;
@@ -191,6 +191,7 @@ public class MMVirtualAcquisitionDisplay {
          try {
             pSelector_.setValue(1 + pos);
             hyperImage_.setPosition(1 + MDUtils.getChannelIndex(md), 1 + MDUtils.getSliceIndex(md), 1 + MDUtils.getFrameIndex(md));
+            setPlaybackLimits(1, 1 + MDUtils.getFrameIndex(md));
          } catch (Exception e) {
             ReportingUtils.logError(e);
          }
@@ -628,6 +629,17 @@ public class MMVirtualAcquisitionDisplay {
       if (hyperImage_ != null) {
          try {
             JavaUtils.setRestrictedFieldValue(null, Animator.class, "animationRate", (double) fps);
+         } catch (NoSuchFieldException ex) {
+            ReportingUtils.showError(ex);
+         }
+      }
+   }
+
+   public void setPlaybackLimits(int firstFrame, int lastFrame) {
+      if (hyperImage_ != null) {
+         try {
+            JavaUtils.setRestrictedFieldValue(null, Animator.class, "firstFrame", firstFrame);
+            JavaUtils.setRestrictedFieldValue(null, Animator.class, "lastFrame", lastFrame);
          } catch (NoSuchFieldException ex) {
             ReportingUtils.showError(ex);
          }

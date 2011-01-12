@@ -27,13 +27,13 @@ import org.micromanager.utils.ReportingUtils;
 public class ChannelControlPanel extends javax.swing.JPanel {
 
    private final int channelIndex_;
-   private final MMVirtualAcquisitionDisplay acq_;
+   private final VirtualAcquisitionDisplay acq_;
    private final HistogramPanel hp_;
    private double binSize_;
    
 
    /** Creates new form ChannelControlsPanel */
-   public ChannelControlPanel(MMVirtualAcquisitionDisplay acq, int channelIndex) {
+   public ChannelControlPanel(VirtualAcquisitionDisplay acq, int channelIndex) {
       initComponents();
       channelIndex_ = channelIndex;
       acq_ = acq;
