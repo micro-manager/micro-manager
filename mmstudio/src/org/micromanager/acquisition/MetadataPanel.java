@@ -106,6 +106,7 @@ public class MetadataPanel extends javax.swing.JPanel
       imageCommentsScrollPane = new javax.swing.JScrollPane();
       imageCommentsTextArea = new javax.swing.JTextArea();
 
+      tabbedPane.setToolTipText("Examine and adjust display settings, metadata, and comments for the multi-dimensional acquisition in the frontmost window.");
       tabbedPane.setFocusable(false);
       tabbedPane.addChangeListener(new javax.swing.event.ChangeListener() {
          public void stateChanged(javax.swing.event.ChangeEvent evt) {
@@ -116,6 +117,7 @@ public class MetadataPanel extends javax.swing.JPanel
       contrastScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
       displayModeCombo.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Composite", "Color", "Grayscale" }));
+      displayModeCombo.setToolTipText("<html>Choose display mode:<br> - Composite = Multicolor overlay<br> - Color = Single channel color view<br> - Grayscale = Single channel grayscale view</li></ul></html>");
       displayModeCombo.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             displayModeComboActionPerformed(evt);
@@ -184,11 +186,13 @@ public class MetadataPanel extends javax.swing.JPanel
             return canEdit [columnIndex];
          }
       });
+      imageMetadataTable.setToolTipText("Metadata tags for each individual image");
       imageMetadataTable.setDebugGraphicsOptions(javax.swing.DebugGraphics.NONE_OPTION);
       imageMetadataTable.setDoubleBuffered(true);
       imageMetadataTableScrollPane.setViewportView(imageMetadataTable);
 
       showUnchangingPropertiesCheckbox.setText("Show unchanging properties");
+      showUnchangingPropertiesCheckbox.setToolTipText("Show/hide properties that are the same for all images in the acquisition");
       showUnchangingPropertiesCheckbox.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             showUnchangingPropertiesCheckboxActionPerformed(evt);
@@ -214,7 +218,7 @@ public class MetadataPanel extends javax.swing.JPanel
                .add(showUnchangingPropertiesCheckbox)
                .add(jLabel2))
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-            .add(imageMetadataTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 257, Short.MAX_VALUE))
+            .add(imageMetadataTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 357, Short.MAX_VALUE))
       );
 
       metadataSplitPane.setRightComponent(imageMetadataScrollPane);
@@ -244,6 +248,7 @@ public class MetadataPanel extends javax.swing.JPanel
             return canEdit [columnIndex];
          }
       });
+      summaryMetadataTable.setToolTipText("Metadata tags for the whole acquisition");
       summaryMetadataScrollPane.setViewportView(summaryMetadataTable);
 
       jLabel3.setText("Acquisition properties");
@@ -262,7 +267,7 @@ public class MetadataPanel extends javax.swing.JPanel
          .add(org.jdesktop.layout.GroupLayout.TRAILING, summaryMetadataPanelLayout.createSequentialGroup()
             .add(jLabel3)
             .add(4, 4, 4)
-            .add(summaryMetadataScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 180, Short.MAX_VALUE))
+            .add(summaryMetadataScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
       );
 
       metadataSplitPane.setLeftComponent(summaryMetadataPanel);
@@ -279,6 +284,7 @@ public class MetadataPanel extends javax.swing.JPanel
       summaryCommentsTextArea.setLineWrap(true);
       summaryCommentsTextArea.setRows(1);
       summaryCommentsTextArea.setTabSize(3);
+      summaryCommentsTextArea.setToolTipText("Enter your comments for the whole acquisition here");
       summaryCommentsTextArea.setWrapStyleWord(true);
       summaryCommentsTextArea.addFocusListener(new java.awt.event.FocusAdapter() {
          public void focusLost(java.awt.event.FocusEvent evt) {
@@ -314,6 +320,7 @@ public class MetadataPanel extends javax.swing.JPanel
       imageCommentsTextArea.setLineWrap(true);
       imageCommentsTextArea.setRows(1);
       imageCommentsTextArea.setTabSize(3);
+      imageCommentsTextArea.setToolTipText("Comments for each image may be entered here.");
       imageCommentsTextArea.setWrapStyleWord(true);
       imageCommentsTextArea.addFocusListener(new java.awt.event.FocusAdapter() {
          public void focusLost(java.awt.event.FocusEvent evt) {

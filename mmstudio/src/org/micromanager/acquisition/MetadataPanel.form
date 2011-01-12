@@ -36,6 +36,7 @@
   <SubComponents>
     <Container class="javax.swing.JTabbedPane" name="tabbedPane">
       <Properties>
+        <Property name="toolTipText" type="java.lang.String" value="Examine and adjust display settings, metadata, and comments for the multi-dimensional acquisition in the frontmost window."/>
         <Property name="focusable" type="boolean" value="false"/>
       </Properties>
       <Events>
@@ -57,7 +58,7 @@
             <DimensionLayout dim="0">
               <Group type="103" groupAlignment="0" attributes="0">
                   <Component id="jPanel1" alignment="0" max="32767" attributes="0"/>
-                  <Component id="contrastScrollPane" alignment="1" pref="555" max="32767" attributes="0"/>
+                  <Component id="contrastScrollPane" alignment="1" pref="539" max="32767" attributes="0"/>
               </Group>
             </DimensionLayout>
             <DimensionLayout dim="1">
@@ -65,7 +66,7 @@
                   <Group type="102" alignment="0" attributes="0">
                       <Component id="jPanel1" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="contrastScrollPane" pref="486" max="32767" attributes="0"/>
+                      <Component id="contrastScrollPane" pref="459" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -87,7 +88,7 @@
                           <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="displayModeCombo" min="-2" pref="134" max="-2" attributes="0"/>
-                          <EmptySpace pref="350" max="32767" attributes="0"/>
+                          <EmptySpace pref="310" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -110,6 +111,7 @@
                         <StringItem index="2" value="Grayscale"/>
                       </StringArray>
                     </Property>
+                    <Property name="toolTipText" type="java.lang.String" value="&lt;html&gt;Choose display mode:&lt;br&gt; - Composite = Multicolor overlay&lt;br&gt; - Color = Single channel color view&lt;br&gt; - Grayscale = Single channel grayscale view&lt;/li&gt;&lt;/ul&gt;&lt;/html&gt;"/>
                   </Properties>
                   <Events>
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="displayModeComboActionPerformed"/>
@@ -151,10 +153,10 @@
               <Layout>
                 <DimensionLayout dim="0">
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="imageMetadataTableScrollPane" alignment="0" pref="555" max="32767" attributes="0"/>
+                      <Component id="imageMetadataTableScrollPane" alignment="0" pref="539" max="32767" attributes="0"/>
                       <Group type="102" alignment="1" attributes="0">
                           <Component id="jLabel2" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace pref="294" max="32767" attributes="0"/>
+                          <EmptySpace pref="195" max="32767" attributes="0"/>
                           <Component id="showUnchangingPropertiesCheckbox" min="-2" max="-2" attributes="0"/>
                       </Group>
                   </Group>
@@ -167,7 +169,7 @@
                               <Component id="jLabel2" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
-                          <Component id="imageMetadataTableScrollPane" pref="382" max="32767" attributes="0"/>
+                          <Component id="imageMetadataTableScrollPane" pref="357" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -188,6 +190,7 @@
                             <Column editable="false" title="Value" type="java.lang.String"/>
                           </Table>
                         </Property>
+                        <Property name="toolTipText" type="java.lang.String" value="Metadata tags for each individual image"/>
                         <Property name="debugGraphicsOptions" type="int" value="-1"/>
                         <Property name="doubleBuffered" type="boolean" value="true"/>
                         <Property name="tableHeader" type="javax.swing.table.JTableHeader" editor="org.netbeans.modules.form.editors2.JTableHeaderEditor">
@@ -200,6 +203,7 @@
                 <Component class="javax.swing.JCheckBox" name="showUnchangingPropertiesCheckbox">
                   <Properties>
                     <Property name="text" type="java.lang.String" value="Show unchanging properties"/>
+                    <Property name="toolTipText" type="java.lang.String" value="Show/hide properties that are the same for all images in the acquisition"/>
                   </Properties>
                   <Events>
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="showUnchangingPropertiesCheckboxActionPerformed"/>
@@ -230,7 +234,7 @@
               <Layout>
                 <DimensionLayout dim="0">
                   <Group type="103" groupAlignment="0" attributes="0">
-                      <Component id="summaryMetadataScrollPane" alignment="1" pref="555" max="32767" attributes="0"/>
+                      <Component id="summaryMetadataScrollPane" alignment="1" pref="539" max="32767" attributes="0"/>
                       <Group type="102" alignment="0" attributes="0">
                           <Component id="jLabel3" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
@@ -242,7 +246,7 @@
                       <Group type="102" alignment="1" attributes="0">
                           <Component id="jLabel3" min="-2" max="-2" attributes="0"/>
                           <EmptySpace min="-2" pref="4" max="-2" attributes="0"/>
-                          <Component id="summaryMetadataScrollPane" pref="82" max="32767" attributes="0"/>
+                          <Component id="summaryMetadataScrollPane" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -268,6 +272,7 @@
                             <Column editable="false" title="Value" type="java.lang.Object"/>
                           </Table>
                         </Property>
+                        <Property name="toolTipText" type="java.lang.String" value="Metadata tags for the whole acquisition"/>
                         <Property name="tableHeader" type="javax.swing.table.JTableHeader" editor="org.netbeans.modules.form.editors2.JTableHeaderEditor">
                           <TableHeader reorderingAllowed="true" resizingAllowed="true"/>
                         </Property>
@@ -314,9 +319,9 @@
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" attributes="0">
                           <Component id="summaryCommentsLabel" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace pref="449" max="32767" attributes="0"/>
+                          <EmptySpace pref="393" max="32767" attributes="0"/>
                       </Group>
-                      <Component id="summaryCommentsScrollPane" alignment="0" pref="555" max="32767" attributes="0"/>
+                      <Component id="summaryCommentsScrollPane" alignment="0" pref="539" max="32767" attributes="0"/>
                   </Group>
                 </DimensionLayout>
                 <DimensionLayout dim="1">
@@ -324,7 +329,7 @@
                       <Group type="102" alignment="0" attributes="0">
                           <Component id="summaryCommentsLabel" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
-                          <Component id="summaryCommentsScrollPane" pref="180" max="32767" attributes="0"/>
+                          <Component id="summaryCommentsScrollPane" pref="176" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -345,6 +350,7 @@
                         <Property name="lineWrap" type="boolean" value="true"/>
                         <Property name="rows" type="int" value="1"/>
                         <Property name="tabSize" type="int" value="3"/>
+                        <Property name="toolTipText" type="java.lang.String" value="Enter your comments for the whole acquisition here"/>
                         <Property name="wrapStyleWord" type="boolean" value="true"/>
                       </Properties>
                       <Events>
@@ -372,9 +378,9 @@
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" attributes="0">
                           <Component id="imageCommentsLabel" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace pref="452" max="32767" attributes="0"/>
+                          <EmptySpace pref="400" max="32767" attributes="0"/>
                       </Group>
-                      <Component id="imageCommentsScrollPane" alignment="0" pref="555" max="32767" attributes="0"/>
+                      <Component id="imageCommentsScrollPane" alignment="0" pref="539" max="32767" attributes="0"/>
                   </Group>
                 </DimensionLayout>
                 <DimensionLayout dim="1">
@@ -382,7 +388,7 @@
                       <Group type="102" alignment="0" attributes="0">
                           <Component id="imageCommentsLabel" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
-                          <Component id="imageCommentsScrollPane" pref="287" max="32767" attributes="0"/>
+                          <Component id="imageCommentsScrollPane" pref="261" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -403,6 +409,7 @@
                         <Property name="lineWrap" type="boolean" value="true"/>
                         <Property name="rows" type="int" value="1"/>
                         <Property name="tabSize" type="int" value="3"/>
+                        <Property name="toolTipText" type="java.lang.String" value="Comments for each image may be entered here."/>
                         <Property name="wrapStyleWord" type="boolean" value="true"/>
                       </Properties>
                       <Events>

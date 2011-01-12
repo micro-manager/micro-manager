@@ -32,13 +32,13 @@
                       <Component id="colorPickerLabel" min="-2" pref="18" max="-2" attributes="0"/>
                       <EmptySpace min="-2" max="-2" attributes="0"/>
                       <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                          <Component id="fullButton" alignment="0" min="-2" pref="40" max="-2" attributes="1"/>
+                          <Component id="fullButton" alignment="0" min="-2" pref="42" max="-2" attributes="1"/>
                           <Group type="102" alignment="0" attributes="1">
                               <Component id="zoomInButton" min="-2" pref="21" max="-2" attributes="0"/>
                               <EmptySpace min="-2" pref="0" max="-2" attributes="0"/>
-                              <Component id="zoomOutButton" min="0" pref="0" max="32767" attributes="0"/>
+                              <Component id="zoomOutButton" min="0" pref="20" max="32767" attributes="0"/>
                           </Group>
-                          <Component id="autoButton" alignment="0" min="-2" pref="40" max="-2" attributes="1"/>
+                          <Component id="autoButton" alignment="0" min="-2" pref="42" max="-2" attributes="1"/>
                       </Group>
                       <EmptySpace type="separate" min="-2" max="-2" attributes="0"/>
                   </Group>
@@ -62,11 +62,10 @@
                   <Component id="colorPickerLabel" alignment="0" min="-2" pref="18" max="-2" attributes="0"/>
               </Group>
               <EmptySpace min="-2" max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="0" attributes="0">
-                  <Component id="zoomOutButton" min="-2" pref="15" max="-2" attributes="0"/>
-                  <Component id="zoomInButton" alignment="0" min="-2" pref="15" max="-2" attributes="0"/>
+              <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                  <Component id="zoomInButton" min="0" pref="21" max="32767" attributes="1"/>
+                  <Component id="zoomOutButton" alignment="0" pref="20" max="32767" attributes="1"/>
               </Group>
-              <EmptySpace min="-2" max="-2" attributes="0"/>
           </Group>
           <Component id="histogramPanelHolder" alignment="0" min="-2" pref="100" max="-2" attributes="3"/>
       </Group>
@@ -81,6 +80,7 @@
           </FontInfo>
         </Property>
         <Property name="text" type="java.lang.String" value="Full"/>
+        <Property name="toolTipText" type="java.lang.String" value="Stretch the display gamma curve over the full pixel range"/>
         <Property name="margin" type="java.awt.Insets" editor="org.netbeans.beaninfo.editors.InsetsEditor">
           <Insets value="[2, 4, 2, 4]"/>
         </Property>
@@ -100,6 +100,7 @@
           </FontInfo>
         </Property>
         <Property name="text" type="java.lang.String" value="Auto"/>
+        <Property name="toolTipText" type="java.lang.String" value="Align the display gamma curve with minimum and maximum measured intensity values"/>
         <Property name="horizontalTextPosition" type="int" value="0"/>
         <Property name="iconTextGap" type="int" value="0"/>
         <Property name="margin" type="java.awt.Insets" editor="org.netbeans.beaninfo.editors.InsetsEditor">
@@ -124,6 +125,7 @@
         <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
           <Color blue="33" green="66" red="ff" type="rgb"/>
         </Property>
+        <Property name="toolTipText" type="java.lang.String" value="Change the color for displaying this channel"/>
         <Property name="border" type="javax.swing.border.Border" editor="org.netbeans.modules.form.editors2.BorderEditor">
           <Border info="org.netbeans.modules.form.compat2.border.LineBorderInfo">
             <LineBorder/>
@@ -139,6 +141,7 @@
       <Properties>
         <Property name="selected" type="boolean" value="true"/>
         <Property name="text" type="java.lang.String" value="Channel"/>
+        <Property name="toolTipText" type="java.lang.String" value="Show/hide this channel in the multi-dimensional viewer"/>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="channelNameCheckboxActionPerformed"/>
@@ -146,6 +149,7 @@
     </Component>
     <Container class="javax.swing.JPanel" name="histogramPanelHolder">
       <Properties>
+        <Property name="toolTipText" type="java.lang.String" value="Adjust the brightness and contrast by dragging triangles at top and bottom. Change the gamma by dragging the curve. (These controls only change display, and do not edit the image data.)"/>
         <Property name="alignmentX" type="float" value="0.3"/>
         <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
           <Dimension value="[0, 100]"/>
@@ -160,7 +164,17 @@
     <Component class="javax.swing.JButton" name="zoomInButton">
       <Properties>
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-          <Image iconType="3" name="/org/micromanager/icons/plus.png"/>
+          <Image iconType="3" name="/org/micromanager/icons/zoom_in.png"/>
+        </Property>
+        <Property name="toolTipText" type="java.lang.String" value="Zoom in the histogram"/>
+        <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+          <Dimension value="[20, 20]"/>
+        </Property>
+        <Property name="minimumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+          <Dimension value="[20, 20]"/>
+        </Property>
+        <Property name="preferredSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
+          <Dimension value="[20, 20]"/>
         </Property>
       </Properties>
       <Events>
@@ -170,8 +184,9 @@
     <Component class="javax.swing.JButton" name="zoomOutButton">
       <Properties>
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
-          <Image iconType="3" name="/org/micromanager/icons/minus.png"/>
+          <Image iconType="3" name="/org/micromanager/icons/zoom_out.png"/>
         </Property>
+        <Property name="toolTipText" type="java.lang.String" value="Zoom out the histogram"/>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="zoomOutButtonActionPerformed"/>

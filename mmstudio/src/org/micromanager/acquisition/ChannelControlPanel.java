@@ -64,6 +64,7 @@ public class ChannelControlPanel extends javax.swing.JPanel {
 
       fullButton.setFont(fullButton.getFont().deriveFont((float)9));
       fullButton.setText("Full");
+      fullButton.setToolTipText("Stretch the display gamma curve over the full pixel range");
       fullButton.setMargin(new java.awt.Insets(2, 4, 2, 4));
       fullButton.setPreferredSize(new java.awt.Dimension(75, 30));
       fullButton.addActionListener(new java.awt.event.ActionListener() {
@@ -74,6 +75,7 @@ public class ChannelControlPanel extends javax.swing.JPanel {
 
       autoButton.setFont(autoButton.getFont().deriveFont((float)9));
       autoButton.setText("Auto");
+      autoButton.setToolTipText("Align the display gamma curve with minimum and maximum measured intensity values");
       autoButton.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
       autoButton.setIconTextGap(0);
       autoButton.setMargin(new java.awt.Insets(2, 4, 2, 4));
@@ -87,6 +89,7 @@ public class ChannelControlPanel extends javax.swing.JPanel {
       });
 
       colorPickerLabel.setBackground(new java.awt.Color(255, 102, 51));
+      colorPickerLabel.setToolTipText("Change the color for displaying this channel");
       colorPickerLabel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
       colorPickerLabel.setOpaque(true);
       colorPickerLabel.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -97,24 +100,31 @@ public class ChannelControlPanel extends javax.swing.JPanel {
 
       channelNameCheckbox.setSelected(true);
       channelNameCheckbox.setText("Channel");
+      channelNameCheckbox.setToolTipText("Show/hide this channel in the multi-dimensional viewer");
       channelNameCheckbox.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             channelNameCheckboxActionPerformed(evt);
          }
       });
 
+      histogramPanelHolder.setToolTipText("Adjust the brightness and contrast by dragging triangles at top and bottom. Change the gamma by dragging the curve. (These controls only change display, and do not edit the image data.)");
       histogramPanelHolder.setAlignmentX(0.3F);
       histogramPanelHolder.setPreferredSize(new java.awt.Dimension(0, 100));
       histogramPanelHolder.setLayout(new java.awt.GridLayout(1, 1));
 
-      zoomInButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/plus.png"))); // NOI18N
+      zoomInButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/zoom_in.png"))); // NOI18N
+      zoomInButton.setToolTipText("Zoom in the histogram");
+      zoomInButton.setMaximumSize(new java.awt.Dimension(20, 20));
+      zoomInButton.setMinimumSize(new java.awt.Dimension(20, 20));
+      zoomInButton.setPreferredSize(new java.awt.Dimension(20, 20));
       zoomInButton.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             zoomInButtonActionPerformed(evt);
          }
       });
 
-      zoomOutButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/minus.png"))); // NOI18N
+      zoomOutButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/zoom_out.png"))); // NOI18N
+      zoomOutButton.setToolTipText("Zoom out the histogram");
       zoomOutButton.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             zoomOutButtonActionPerformed(evt);
@@ -134,12 +144,12 @@ public class ChannelControlPanel extends javax.swing.JPanel {
                   .add(colorPickerLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                   .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
                   .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                     .add(fullButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 40, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                     .add(fullButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 42, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                      .add(layout.createSequentialGroup()
                         .add(zoomInButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 21, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                         .add(0, 0, 0)
-                        .add(zoomOutButton, 0, 0, Short.MAX_VALUE))
-                     .add(autoButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 40, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                        .add(zoomOutButton, 0, 20, Short.MAX_VALUE))
+                     .add(autoButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 42, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                   .add(18, 18, 18)))
             .add(histogramPanelHolder, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 136, Short.MAX_VALUE))
       );
@@ -156,10 +166,9 @@ public class ChannelControlPanel extends javax.swing.JPanel {
                   .add(autoButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                .add(colorPickerLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-               .add(zoomOutButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 15, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-               .add(zoomInButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 15, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-            .addContainerGap())
+            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
+               .add(zoomInButton, 0, 21, Short.MAX_VALUE)
+               .add(zoomOutButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, Short.MAX_VALUE)))
          .add(histogramPanelHolder, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 100, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
       );
    }// </editor-fold>//GEN-END:initComponents
