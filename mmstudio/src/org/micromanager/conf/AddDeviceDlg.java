@@ -186,8 +186,11 @@ public class AddDeviceDlg extends JDialog implements MouseListener, TreeSelectio
     public void mouseExited(MouseEvent e) {
     }
 
+
     protected boolean addDevice() {
         int srows[] = theTree_.getSelectionRows();
+        if (srows == null)
+           return false;
         if (0 < srows.length) {
             if (0 < srows[0]) {
                 TreeNodeShowsDeviceAndDescription node = (TreeNodeShowsDeviceAndDescription) theTree_.getLastSelectedPathComponent();
