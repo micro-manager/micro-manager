@@ -28,6 +28,7 @@
 #include <strstream>
 #include <sstream>
 #include <map>
+#include <memory>
 
 #include "dbgbox.h"
 //#include "Probe.h"
