@@ -20,7 +20,7 @@
                                     do-when get-system-config-cached]]
           [org.micromanager.sequence-generator :only [generate-acq-sequence]])
   (:import [org.micromanager AcqControlDlg]
-           [org.micromanager.api AcquisitionEngine]
+           [org.micromanager.api AcquisitionEngine TaggedImageAnalyzer]
            [org.micromanager.acquisition AcquisitionWrapperEngine LiveAcqDisplay TaggedImageQueue
                                          ProcessorStack SequenceSettings]
            [org.micromanager.navigation MultiStagePosition StagePosition]
@@ -140,7 +140,7 @@
        "ElapsedTime-ms" (- (clock-ms) (@state :start-time))
        "Exposure-ms" (:exposure event)
        "Frame" (:frame-index event)
-       "Height" (core getImageHeight)
+       "Height" (@state :init-height)
        "PixelSizeUm" (core getPixelSizeUm)
        "PixelType" (get-pixel-type)
        "PositionIndex" (:position-index event)
@@ -150,7 +150,7 @@
        "Source" (core getCameraDevice)
        "Time" (get-current-time-str)
        "UUID" (UUID/randomUUID)
-       "Width"  (core getImageWidth)
+       "Width"  (@state :init-width)
        "ZPositionUm" (core getPosition (core getFocusDevice))
       }))))
 
@@ -267,21 +267,23 @@
          0))))
     
 (defn make-event-fns [event out-queue]
-  (list
-    #(log event)  
-    #(when-let [wait-time-ms (event :wait-time-ms)]
-      (acq-sleep wait-time-ms))
-    #(run-actions (create-presnap-actions event))
-    #(await-for 10000 (device-agents (core getCameraDevice)))
-    #(when (:autofocus event)
-      (set-z-position (:position event) (:z-drive event) (run-autofocus)))
-    #(when-let [z-drive (:z-drive event)]
-      (let [z (compute-z-position event)]
-        (when (not= z (@state :last-z-position))
-          (do (set-stage-position z-drive z)
-              (core waitForDevice z-drive)))))
-    #(do (expose event) (collect-image event out-queue))
-  ))
+  (if (= (:task event) :collect-burst)
+		(list #(collect-image event out-queue))
+		(list
+			#(log event)  
+			#(when-let [wait-time-ms (event :wait-time-ms)]
+				(acq-sleep wait-time-ms))
+			#(run-actions (create-presnap-actions event))
+			#(await-for 10000 (device-agents (core getCameraDevice)))
+			#(when (:autofocus event)
+				(set-z-position (:position event) (:z-drive event) (run-autofocus)))
+			#(when-let [z-drive (:z-drive event)]
+				(let [z (compute-z-position event)]
+					(when (not= z (@state :last-z-position))
+						(do (set-stage-position z-drive z)
+								(core waitForDevice z-drive)))))
+			#(do (expose event) (collect-image event out-queue))
+		)))
 
 (defn execute [event-fns]
   (doseq [event-fn event-fns :while (not (:stop @state))]
@@ -328,6 +330,8 @@
       :init-z-position z
       :init-system-state (get-system-config-cached)
       :init-continuous-focus (core isContinuousFocusEnabled)
+      :init-width (core getImageWidth)
+      :init-height (core getImageHeight)
       ))
   (binding [state (.state this)]
     (def last-state state)
@@ -376,6 +380,9 @@
         display (LiveAcqDisplay. mmc out-queue-2 settings (.channels settings)
           (.save settings) acq-eng)]
     (def outq out-queue)
+    ;(.addImageProcessor acq-eng
+      ;(proxy [TaggedImageAnalyzer] []
+        ;(analyze [img] (log "pretending to analyze")))) 
     (when-not (:stop @(.state this))
       (.start acq-thread)
       (swap! (.state this) assoc :display display)
