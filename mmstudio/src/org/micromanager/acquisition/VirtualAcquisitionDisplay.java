@@ -27,6 +27,7 @@ import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
+import org.micromanager.utils.MathFunctions;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -58,6 +59,7 @@ public class VirtualAcquisitionDisplay {
 
    private int curPosition_ = -1;
    private ChannelDisplaySettings[] channelSettings_;
+   private int latestFrame_ = 0;
 
    VirtualAcquisitionDisplay(String dir, boolean newData, boolean diskCached) {
       dir_ = dir;
@@ -169,6 +171,11 @@ public class VirtualAcquisitionDisplay {
       hyperImage_.getWindow().setTitle(new File(dir_).getName() +  status_);
    }
 
+   public int getLatestFrame(int frame) {
+      latestFrame_ = MathFunctions.clip(latestFrame_, frame, Integer.MAX_VALUE);
+      return latestFrame_;
+   }
+
    public void showImage(TaggedImage taggedImg) throws MMScriptException {
 
       try {
@@ -191,7 +198,7 @@ public class VirtualAcquisitionDisplay {
          try {
             pSelector_.setValue(1 + pos);
             hyperImage_.setPosition(1 + MDUtils.getChannelIndex(md), 1 + MDUtils.getSliceIndex(md), 1 + MDUtils.getFrameIndex(md));
-            setPlaybackLimits(1, 1 + MDUtils.getFrameIndex(md));
+            setPlaybackLimits(1, 1 + getLatestFrame(MDUtils.getFrameIndex(md)));
          } catch (Exception e) {
             ReportingUtils.logError(e);
          }
