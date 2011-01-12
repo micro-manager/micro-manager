@@ -11,8 +11,8 @@ import java.util.List;
  * and hold them in SoftReferences.
  * 
  * Example run command:
- * java  -Xmx1000M -server -XX:SoftRefLRUPolicyMSPerMB=1000000000000000 SoftReferenceTest 800
- * 1 GB maximum heap, server mode, only garbage collect SoftRefs when necessary, allocate 800 1-MB objects.
+ * java  -Xmx1000M -server -XX:SoftRefLRUPolicyMSPerMB=1000000000000000 SoftReferenceTest 800 100
+ * 1 GB maximum heap, server mode, only garbage collect SoftRefs when necessary, allocate 800 1-MB objects, 100 ms sleeps
  */
 public class SoftReferenceTest {
 
