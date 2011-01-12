@@ -267,23 +267,25 @@
          0))))
     
 (defn make-event-fns [event out-queue]
-  (if (= (:task event) :collect-burst)
-		(list #(collect-image event out-queue))
-		(list
-			#(log event)  
-			#(when-let [wait-time-ms (event :wait-time-ms)]
-				(acq-sleep wait-time-ms))
-			#(run-actions (create-presnap-actions event))
-			#(await-for 10000 (device-agents (core getCameraDevice)))
-			#(when (:autofocus event)
-				(set-z-position (:position event) (:z-drive event) (run-autofocus)))
-			#(when-let [z-drive (:z-drive event)]
-				(let [z (compute-z-position event)]
-					(when (not= z (@state :last-z-position))
-						(do (set-stage-position z-drive z)
-								(core waitForDevice z-drive)))))
-			#(do (expose event) (collect-image event out-queue))
-		)))
+  (let [task (:task event)]
+    (cond
+      (= task :collect-burst)
+        (list #(collect-image event out-queue))
+      (or (= task :snap) (= task :init-burst))
+        (list
+          #(log event)  
+          #(when-let [wait-time-ms (event :wait-time-ms)]
+            (acq-sleep wait-time-ms))
+          #(run-actions (create-presnap-actions event))
+          #(await-for 10000 (device-agents (core getCameraDevice)))
+          #(when (:autofocus event)
+            (set-z-position (:position event) (:z-drive event) (run-autofocus)))
+          #(when-let [z-drive (:z-drive event)]
+            (let [z (compute-z-position event)]
+              (when (not= z (@state :last-z-position))
+                (do (set-stage-position z-drive z)
+                    (core waitForDevice z-drive)))))
+          #(do (expose event) (collect-image event out-queue))))))
 
 (defn execute [event-fns]
   (doseq [event-fn event-fns :while (not (:stop @state))]
