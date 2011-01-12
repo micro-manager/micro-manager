@@ -65,6 +65,22 @@ public class AddDeviceDlg extends JDialog implements MouseListener, TreeSelectio
             }
             return ret;
         }
+        // if user clicks on a container node, just return a null array instead of the user data
+        public Object[] getUserDataArray(){
+            Object[] ret = null;
+            
+            Object uo = getUserObject();
+            if( null!=uo){
+                if( uo.getClass().isArray()){
+                    // retrieve the device info tuple
+                    Object[] userData = (Object[])uo;
+                    if( 1< userData.length )
+                        ret = userData;
+                }
+                
+            } 
+            return ret;
+        }
     }
 
     private MicroscopeModel model_;
@@ -176,11 +192,12 @@ public class AddDeviceDlg extends JDialog implements MouseListener, TreeSelectio
             if (0 < srows[0]) {
                 TreeNodeShowsDeviceAndDescription node = (TreeNodeShowsDeviceAndDescription) theTree_.getLastSelectedPathComponent();
 
-                Object[] userData = (Object[]) node.getUserObject();
-                String name = userData[1].toString();
+                Object[] userData = node.getUserDataArray();
+                if( null == userData)
+                    return false;
                 boolean validName = false;
                 while (!validName) {
-                    name = JOptionPane.showInputDialog("Please type in the new device name", name);
+                    String name = JOptionPane.showInputDialog("Please type in the new device name", userData[1].toString());
                     if (name == null) {
                         return false;
                     }
