@@ -24,6 +24,7 @@ package org.micromanager.conf;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 
@@ -50,6 +51,7 @@ public class AddDeviceDlg extends JDialog implements MouseListener, TreeSelectio
             super(value);
         }
 
+      @Override
         public String toString() {
             String ret = "";
             Object uo = getUserObject();
@@ -102,7 +104,7 @@ public class AddDeviceDlg extends JDialog implements MouseListener, TreeSelectio
 
         Device allDevs_[] = model.getAvailableDeviceList();
         String thisLibrary = "";
-        TreeNodeShowsDeviceAndDescription root = new TreeNodeShowsDeviceAndDescription("");
+        DefaultMutableTreeNode root = new DefaultMutableTreeNode("Devices supported by µManager");
         TreeNodeShowsDeviceAndDescription node = null;
         for (int idd = 0; idd < allDevs_.length; ++idd) {
             // assume that the first library doesn't have an empty name! (of course!)
@@ -112,18 +114,30 @@ public class AddDeviceDlg extends JDialog implements MouseListener, TreeSelectio
                 root.add(node);
                 thisLibrary = allDevs_[idd].getLibrary(); // remember which library we are processing
             }
-            TreeNodeShowsDeviceAndDescription aLeaf = new TreeNodeShowsDeviceAndDescription(allDevs_[idd].getAdapterName() + " | " + allDevs_[idd].getDescription());
             Object[] userObject = {allDevs_[idd].getLibrary(), allDevs_[idd].getAdapterName(), allDevs_[idd].getDescription()};
+            TreeNodeShowsDeviceAndDescription aLeaf = new TreeNodeShowsDeviceAndDescription("");
             aLeaf.setUserObject(userObject);
             node.add(aLeaf);
         }
         // try building a tree
         theTree_ = new JTree(root);
         theTree_.addTreeSelectionListener(this);
-        // for debugging the tree selection:
 
-        //currentSelectDbg_ = new JTextField("Current Selection: NONE");
-        //getContentPane().add(currentSelectDbg_, BorderLayout.NORTH);
+       // double click should add the device, single click selects row and waits for user to press 'add'
+       MouseListener ml = new MouseAdapter() {
+
+          public void mousePressed(MouseEvent e) {
+
+             if ( 2 == e.getClickCount() ) {
+                   if(addDevice())
+                     rebuildTable();
+                }
+          }
+       };
+       theTree_.addMouseListener(ml);
+
+
+
 
         final JScrollPane scrollPane = new JScrollPane(theTree_);
         scrollPane.setBounds(10, 10, 471, 475);
@@ -154,17 +168,7 @@ public class AddDeviceDlg extends JDialog implements MouseListener, TreeSelectio
         doneButton.setBounds(490, 39, 93, 23);
         getContentPane().add(doneButton);
         model_ = model;
-        //dtm_ = new Dev_TableModel(model);
-
-        /*
-        devTable_ = new JTable();
-        devTable_.setModel(tm);
-        devTable_.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        InputMap im = devTable_.getInputMap(JTable.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-        im.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "none");
-        scrollPane.setViewportView(devTable_);
-        devTable_.addMouseListener(this);
-         */
+    
     }
 
     private void rebuildTable() {
@@ -219,10 +223,7 @@ public class AddDeviceDlg extends JDialog implements MouseListener, TreeSelectio
     }
 
     public void valueChanged(TreeSelectionEvent event) {
-        //currentSelectDbg_.setText("Current Selection: "
-         //       + theTree_.getLastSelectedPathComponent().toString());
 
-        if(addDevice())
-            rebuildTable();
+       // currently we don't need to do anything whilst user navigates the tree
     }
 }
