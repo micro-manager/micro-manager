@@ -104,7 +104,7 @@ public class AddDeviceDlg extends JDialog implements MouseListener, TreeSelectio
 
         Device allDevs_[] = model.getAvailableDeviceList();
         String thisLibrary = "";
-        DefaultMutableTreeNode root = new DefaultMutableTreeNode("Devices supported by µManager");
+        DefaultMutableTreeNode root = new DefaultMutableTreeNode("Devices supported by " + "\u00B5"+ "Manager");
         TreeNodeShowsDeviceAndDescription node = null;
         for (int idd = 0; idd < allDevs_.length; ++idd) {
             // assume that the first library doesn't have an empty name! (of course!)
