@@ -2,8 +2,17 @@ import ij.*;
 import ij.process.*;
 
 
-nChannels = 4;
-nSlices = 1;
+/*
+Arthur - 1/13/2011
+So far, this works for a single position and single channel,
+with one or more slices and one or more frames.
+There are still problems when we include channels
+and positions.
+*/
+
+
+nChannels = 2;
+nSlices = 4;
 nFrames = 1;
 imgp = IJ.getImage();
 stack = imgp.getStack();
@@ -26,7 +35,7 @@ imgp.nFrames = nFrames;
 win.nChannels = nChannels;
 win.nSlices = nSlices;
 win.nFrames = nFrames;
-
+/*
 if (nChannels > 1) {
 	cip = new ImageProcessor[nChannels];
 	for (int i = 0;i<imgp.cip.length; ++i) {
@@ -46,7 +55,7 @@ if (nChannels > 1) {
 	imgp.lut = lut;
 
 }
-	
+	*/
 // Public:
 if (win.hyperStack) {
    if (cs != null)
