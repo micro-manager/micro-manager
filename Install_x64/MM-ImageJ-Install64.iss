@@ -41,7 +41,8 @@ Name: desktopicon; Description: {cm:CreateDesktopIcon}; GroupDescription: {cm:Ad
 ;Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.MFC\mfcm90.dll ; DestDir: {app}; Flags: ignoreversion
 ;Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.MFC\mfcm90u.dll ; DestDir: {app}; Flags: ignoreversion
 ;Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.ATL\atl90.dll ; DestDir: {app}; Flags: ignoreversion
-
+;
+Source: ..\..\3rdparty\jre ; DestDir: {app}\jre; Flags: ignoreversion recursesubdirs createallsubdirs
 
 
 ; device libraries
@@ -121,7 +122,7 @@ Source: micro-manager\MMConfig_demo.cfg; DestDir: {app}; Flags: ignoreversion
 ;Source: micro-manager\MMDeviceList.txt; DestDir: {app}; Flags: ignoreversion
 
 ; ImageJ files
-Source: micro-manager\ImageJ.exe; DestDir: {app}; Flags: ignoreversion
+Source: ..\..\3rdpartypublic\JavaLauncher\ImageJ.exe; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\LaunchMicroManager.bat; DestDir: {app}; Flags: ignoreversion
 
 
@@ -141,4 +142,4 @@ Name: {group}\{cm:UninstallProgram,Micro-Manager-1.4}; Filename: {uninstallexe}
 Name: {commondesktop}\Micro-Manager 1.4; Filename: {app}\LaunchMicroManager.bat; Tasks: desktopicon; WorkingDir: {app}; IconIndex: 0
 
 [Run]
-Filename: {app}\LaunchMicroManager.bat; Description: {cm:LaunchProgram,Micro-Manager-1.4}; Flags: nowait postinstall
+Filename: {app}\ImageJ.exe; Description: {cm:LaunchProgram,Micro-Manager-1.4}; Flags: nowait postinstall
