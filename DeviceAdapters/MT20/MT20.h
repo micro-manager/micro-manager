@@ -29,6 +29,16 @@
 #ifndef _MT20_H_
 #define _MT20_H_
 
+#ifdef WIN32
+	#define WIN32_LEAN_AND_MEAN 
+	#define __USE_W32_SOCKETS
+	#include <winsock2.h>
+	#include <ws2tcpip.h>
+	#include <windows.h>
+#else
+	#include <netdb.h>
+#endif
+
 #include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/DeviceBase.h"
 

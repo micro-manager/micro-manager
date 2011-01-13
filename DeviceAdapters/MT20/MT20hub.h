@@ -30,7 +30,7 @@
 #define _MT20HUB_H_
 
 #ifdef WIN32
-	#define W32_LEAN_AND_MEAN
+	#define WIN32_LEAN_AND_MEAN 
 	#define __USE_W32_SOCKETS
 	#include <winsock2.h>
 	#include <ws2tcpip.h>
