@@ -368,7 +368,7 @@ public class VirtualAcquisitionDisplay {
    }
 
    public void createImagePlus() {
-      ImagePlus imgp = new MMImagePlus(dir_, virtualStacks_.get(0));
+      MMImagePlus imgp = new MMImagePlus(dir_, virtualStacks_.get(0));
       for (AcquisitionVirtualStack virtualStack : virtualStacks_) {
          virtualStack.setImagePlus(imgp);
       }
@@ -673,7 +673,6 @@ public class VirtualAcquisitionDisplay {
          AcquisitionVirtualStack stack = (AcquisitionVirtualStack) hyperImage_.getStack();
 
          int nChannels = hyperImage_.getNChannels();
-         int[] indices = getCurrentSlices();
          String[] chanNames = new String[nChannels];
          for (int i = 0; i < nChannels; ++i) {
             try {
