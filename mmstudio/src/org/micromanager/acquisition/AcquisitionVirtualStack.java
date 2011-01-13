@@ -114,6 +114,10 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
       return nSlices_;
    }
 
+   public void setSize(int size) {
+      nSlices_ = size;
+   }
+
    private int getFlatIndex(JSONObject md) {
       try {
          int channel = MDUtils.getChannelIndex(md);
