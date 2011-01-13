@@ -261,10 +261,10 @@
   (if-let [z-drive (:z-drive event)]
     (+ (or (get-in event [:channel :z-offset]) 0)
        (or (:slice event) 0)
-       (if (:relative-z event)
+       (if (and (:slice event) (not :relative-z event))
+	 0
          (or (get-z-position (:position event) z-drive)
-             (@state :reference-z-position))
-         0))))
+             (@state :reference-z-position))))))
     
 (defn make-event-fns [event out-queue]
   (let [task (:task event)]
