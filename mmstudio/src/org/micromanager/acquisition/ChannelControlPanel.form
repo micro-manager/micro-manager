@@ -52,16 +52,16 @@
           <Group type="102" alignment="0" attributes="1">
               <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
               <Component id="channelNameCheckbox" min="-2" pref="17" max="-2" attributes="0"/>
-              <EmptySpace min="-2" max="-2" attributes="0"/>
+              <EmptySpace min="-2" pref="2" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" attributes="0">
                   <Group type="102" alignment="0" attributes="0">
                       <Component id="fullButton" min="-2" pref="18" max="-2" attributes="0"/>
-                      <EmptySpace min="-2" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="2" max="-2" attributes="0"/>
                       <Component id="autoButton" min="-2" pref="18" max="-2" attributes="0"/>
                   </Group>
                   <Component id="colorPickerLabel" alignment="0" min="-2" pref="18" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace min="-2" max="-2" attributes="0"/>
+              <EmptySpace min="-2" pref="2" max="-2" attributes="0"/>
               <Group type="103" groupAlignment="0" max="-2" attributes="0">
                   <Component id="zoomInButton" min="0" pref="21" max="32767" attributes="1"/>
                   <Component id="zoomOutButton" alignment="0" pref="20" max="32767" attributes="1"/>
