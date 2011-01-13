@@ -27,6 +27,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.io.IOException;
 
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -51,7 +52,7 @@ public class AddDeviceDlg extends JDialog implements MouseListener, TreeSelectio
             super(value);
         }
 
-      @Override
+        @Override
         public String toString() {
             String ret = "";
             Object uo = getUserObject();
@@ -68,27 +69,29 @@ public class AddDeviceDlg extends JDialog implements MouseListener, TreeSelectio
             return ret;
         }
         // if user clicks on a container node, just return a null array instead of the user data
-        public Object[] getUserDataArray(){
+
+        public Object[] getUserDataArray() {
             Object[] ret = null;
-            
+
             Object uo = getUserObject();
-            if( null!=uo){
-                if( uo.getClass().isArray()){
+            if (null != uo) {
+                if (uo.getClass().isArray()) {
                     // retrieve the device info tuple
-                    Object[] userData = (Object[])uo;
-                    if( 1< userData.length )
+                    Object[] userData = (Object[]) uo;
+                    if (1 < userData.length) {
                         ret = userData;
+                    }
                 }
-                
-            } 
+
+            }
             return ret;
         }
     }
-
     private MicroscopeModel model_;
     private DevicesPage devicesPage_;
     private JTree theTree_;
-
+    final String documentationURLroot_;
+    String libraryDocumentationName_;
 
     /**
      * Create the dialog
@@ -104,7 +107,7 @@ public class AddDeviceDlg extends JDialog implements MouseListener, TreeSelectio
 
         Device allDevs_[] = model.getAvailableDeviceList();
         String thisLibrary = "";
-        DefaultMutableTreeNode root = new DefaultMutableTreeNode("Devices supported by " + "\u00B5"+ "Manager");
+        DefaultMutableTreeNode root = new DefaultMutableTreeNode("Devices supported by " + "\u00B5" + "Manager");
         TreeNodeShowsDeviceAndDescription node = null;
         for (int idd = 0; idd < allDevs_.length; ++idd) {
             // assume that the first library doesn't have an empty name! (of course!)
@@ -123,18 +126,19 @@ public class AddDeviceDlg extends JDialog implements MouseListener, TreeSelectio
         theTree_ = new JTree(root);
         theTree_.addTreeSelectionListener(this);
 
-       // double click should add the device, single click selects row and waits for user to press 'add'
-       MouseListener ml = new MouseAdapter() {
+        // double click should add the device, single click selects row and waits for user to press 'add'
+        MouseListener ml = new MouseAdapter() {
 
-          public void mousePressed(MouseEvent e) {
+            public void mousePressed(MouseEvent e) {
 
-             if ( 2 == e.getClickCount() ) {
-                   if(addDevice())
-                     rebuildTable();
+                if (2 == e.getClickCount()) {
+                    if (addDevice()) {
+                        rebuildTable();
+                    }
                 }
-          }
-       };
-       theTree_.addMouseListener(ml);
+            }
+        };
+        theTree_.addMouseListener(ml);
 
 
 
@@ -168,7 +172,28 @@ public class AddDeviceDlg extends JDialog implements MouseListener, TreeSelectio
         doneButton.setBounds(490, 39, 93, 23);
         getContentPane().add(doneButton);
         model_ = model;
-    
+
+
+        //put the URL for the documentation for the selected node into a browswer control
+        documentationURLroot_ = "https://valelab.ucsf.edu/~nico/MMwiki/index.php/";
+        final JButton documentationButton = new JButton();
+        documentationButton.setText("Document");
+        documentationButton.setBounds(490, 68, 93, 23);
+        getContentPane().add(documentationButton);
+        getRootPane().setDefaultButton(documentationButton);
+        documentationButton.addActionListener(new ActionListener() {
+
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    ij.plugin.BrowserLauncher.openURL(documentationURLroot_ + libraryDocumentationName_);
+                } catch (IOException e1) {
+                    ReportingUtils.showError(e1);
+                }
+            }
+        });
+
+
+
     }
 
     private void rebuildTable() {
@@ -190,18 +215,19 @@ public class AddDeviceDlg extends JDialog implements MouseListener, TreeSelectio
     public void mouseExited(MouseEvent e) {
     }
 
-
     protected boolean addDevice() {
         int srows[] = theTree_.getSelectionRows();
-        if (srows == null)
-           return false;
+        if (srows == null) {
+            return false;
+        }
         if (0 < srows.length) {
             if (0 < srows[0]) {
                 TreeNodeShowsDeviceAndDescription node = (TreeNodeShowsDeviceAndDescription) theTree_.getLastSelectedPathComponent();
 
                 Object[] userData = node.getUserDataArray();
-                if( null == userData)
+                if (null == userData) {
                     return false;
+                }
                 boolean validName = false;
                 while (!validName) {
                     String name = JOptionPane.showInputDialog("Please type in the new device name", userData[1].toString());
@@ -224,6 +250,25 @@ public class AddDeviceDlg extends JDialog implements MouseListener, TreeSelectio
 
     public void valueChanged(TreeSelectionEvent event) {
 
-       // currently we don't need to do anything whilst user navigates the tree
+        // update URL for library documentation
+        int srows[] = theTree_.getSelectionRows();
+        if (null != srows) {
+            if (0 < srows.length) {
+                if (0 < srows[0]) {
+                    TreeNodeShowsDeviceAndDescription node = (TreeNodeShowsDeviceAndDescription) theTree_.getLastSelectedPathComponent();
+                    Object uo = node.getUserObject();
+                    if (uo != null) {
+                        if (uo.getClass().isArray()) {
+                            libraryDocumentationName_ = ((Object[]) uo)[0].toString();
+                        } else {
+                            libraryDocumentationName_ = uo.toString();
+                        }
+                    }
+                }
+            }
+        }
     }
+
+
+    
 }
