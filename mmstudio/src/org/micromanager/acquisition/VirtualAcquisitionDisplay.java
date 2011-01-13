@@ -198,7 +198,7 @@ public class VirtualAcquisitionDisplay {
          try {
             pSelector_.setValue(1 + pos);
             hyperImage_.setPosition(1 + MDUtils.getChannelIndex(md), 1 + MDUtils.getSliceIndex(md), 1 + MDUtils.getFrameIndex(md));
-            setPlaybackLimits(1, 1 + getLatestFrame(MDUtils.getFrameIndex(md)));
+            //setPlaybackLimits(1, 1 + MDUtils.getFrameIndex(md));
          } catch (Exception e) {
             ReportingUtils.logError(e);
          }
