@@ -23,23 +23,31 @@ void updateDimensions(ImagePlus imgp, int nChannels, int nSlices, int nFrames) {
 	stack = imgp.getStack();
 	win = imgp.getWindow();
 
-   // Private:
+   // Package private:
 	cs = win.cSelector;
 	zs = win.zSelector;
 	ts = win.tSelector;
 
-	// An instance of my AcquisitionVirtualStack (OK):
-	stack.nSlices_ = nChannels * nSlices * nFrames; // my stack
+	// An instance of my AcquisitionVirtualStack:
+	stack.setSize(nChannels * nSlices * nFrames); // my stack
 	
-   // Private:
+   // Protected:
 	imgp.nChannels = nChannels;
 	imgp.nSlices = nSlices;
    imgp.nFrames = nFrames;
 
+	// Package private:
+	win.nChannels = nChannels;
+	win.nSlices = nSlices;
+	win.nFrames = nFrames;
+	
    // Public:
-	cs.setMaximum(nChannels + 1);
-	zs.setMaximum(nSlices + 1);
-	ts.setMaximum(nFrames + 1);
+   if (cs != null)
+		cs.setMaximum(nChannels + 1);
+	if (zs != null)
+   	zs.setMaximum(nSlices + 1);
+	if (ts != null)
+		ts.setMaximum(nFrames + 1);
 }
 
 update();
