@@ -9,7 +9,7 @@ import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ImageProcessor;
 import org.micromanager.acquisition.AcquisitionVirtualStack;
-import org.micromanager.acquisition.MMVirtualAcquisitionDisplay;
+import org.micromanager.acquisition.VirtualAcquisitionDisplay;
 import org.micromanager.utils.MMScriptException;
 
 /**
@@ -17,7 +17,7 @@ import org.micromanager.utils.MMScriptException;
  * @author nico
  */
 public class MMWindow {
-   MMVirtualAcquisitionDisplay virtAcq_ = null;
+   VirtualAcquisitionDisplay virtAcq_ = null;
    ImagePlus imp_;
    
    public MMWindow(ImagePlus imp) {
