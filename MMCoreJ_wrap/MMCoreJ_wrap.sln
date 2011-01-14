@@ -153,6 +153,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NKRemoteCamera", "..\Device
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PSRemoteCamera", "..\DeviceAdapters\TetheredCam\PSRemoteCamera.vcproj", "{43FAA548-FAF6-4F58-8F24-C78C41820E27}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MT20", "..\DeviceAdapters\MT20\MT20.vcproj", "{E5ABCDE7-03F1-4683-98C3-8F5F79E1A473}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -737,6 +739,14 @@ Global
 		{43FAA548-FAF6-4F58-8F24-C78C41820E27}.Release|Win32.ActiveCfg = Release|Win32
 		{43FAA548-FAF6-4F58-8F24-C78C41820E27}.Release|Win32.Build.0 = Release|Win32
 		{43FAA548-FAF6-4F58-8F24-C78C41820E27}.Release|x64.ActiveCfg = Release|Win32
+		{E5ABCDE7-03F1-4683-98C3-8F5F79E1A473}.Debug|Win32.ActiveCfg = Debug|Win32
+		{E5ABCDE7-03F1-4683-98C3-8F5F79E1A473}.Debug|Win32.Build.0 = Debug|Win32
+		{E5ABCDE7-03F1-4683-98C3-8F5F79E1A473}.Debug|x64.ActiveCfg = Debug|x64
+		{E5ABCDE7-03F1-4683-98C3-8F5F79E1A473}.Debug|x64.Build.0 = Debug|x64
+		{E5ABCDE7-03F1-4683-98C3-8F5F79E1A473}.Release|Win32.ActiveCfg = Release|Win32
+		{E5ABCDE7-03F1-4683-98C3-8F5F79E1A473}.Release|Win32.Build.0 = Release|Win32
+		{E5ABCDE7-03F1-4683-98C3-8F5F79E1A473}.Release|x64.ActiveCfg = Release|x64
+		{E5ABCDE7-03F1-4683-98C3-8F5F79E1A473}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
