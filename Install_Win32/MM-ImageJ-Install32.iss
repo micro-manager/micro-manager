@@ -84,7 +84,7 @@ Source: micro-manager\mmgr_dal_MaestroServo.dll; DestDir: {app}; Flags: ignoreve
 Source: micro-manager\mmgr_dal_Marzhauser.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_MCL_MicroDrive.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_MCL_NanoDrive.dll; DestDir: {app}; Flags: ignoreversion
-;Source: micro-manager\mmgr_dal_MT20.dll; DestDir: {app}; Flags: ignoreversion
+Source: micro-manager\mmgr_dal_MT20.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Neos.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_NKRemoteCamera.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Nikon.dll; DestDir: {app}; Flags: ignoreversion
