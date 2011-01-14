@@ -26,4 +26,5 @@ Information about micro-manager is available from http://www.micro-manager.org
 KH 20110104
 Project files corrected so that correct device adapter dll files are built for Release.
 
+KDV 20110114 Bugfix: ROI was wrong if ROI button clicked twice in succession. Code cleanup.
 

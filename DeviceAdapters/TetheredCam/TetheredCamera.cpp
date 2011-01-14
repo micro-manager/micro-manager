@@ -23,7 +23,7 @@
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-// Compilation :
+// Compilation:
 //
 // In Visual Studio, set
 // Project -> Properties -> Linker -> Input -> Additional Dependencies: windowscodecs.lib
@@ -39,6 +39,18 @@
 // For Nikon:
 // Project -> Properties -> Configuration Properties -> C/C++ -> Preprocessor -> Preprocessor Definitions: add _NKREMOTE_
 // Include library NKRemoteLib.lib in project
+//
+
+// Testing:
+//
+// - Connect a Canon DSLR camera.
+// - Download, install and configure DSLRRemote from www.breezesys.com. Demo version is sufficient.
+// - Start up DSLRRemote. Click on the "Release" button to take a picture. Check the picture is downloaded to the PC, and displayed in the DSLRRemote main window. 
+// - Install the Windows Imaging Component codec for the camera's raw image format. 
+// - With DSLRRemote still running, start up Micro-Manager. 
+// - Create a hardware config consisting of DSLRRemoteCam, Demo Shutter, and Demo Stage.
+// - Click the micro-manager "Snap" button to take a picture. Check the picture appears in the micro-manager "Live" window.
+// - Alternatively test using a Nikon DSLR camera, NKRemote software and NKRemoteCam driver.
 //
 
 #ifndef _DSLRREMOTE_
@@ -83,7 +95,6 @@ const char* g_CameraDeviceDescription = "Canon DSLR Camera";
 #ifdef _NKREMOTE_
 const char* g_CameraDeviceName = "NikonDSLRCam";
 const char* g_CameraDeviceDescription = "Nikon DSLR Camera";
-
 #endif
 
 #ifdef _PSREMOTE_
@@ -92,7 +103,7 @@ const char* g_CameraDeviceDescription = "Canon Powershot Camera";
 #endif
 
 // constants for naming pixel types (allowed values of the "PixelType" property)
-const char* g_PixelType_Gray = "Gray";
+const char* g_PixelType_Gray = "Grayscale";
 const char* g_PixelType_Color = "Color";
 
 // TODO: linux entry code
@@ -190,7 +201,9 @@ CTetheredCamera::CTetheredCamera() :
    roiX_(0),
    roiY_(0),
    roiXSize_(0),
-   roiYSize_(0)
+   roiYSize_(0),
+   originX_(0),
+   originY_(0)
 {
    // call the base class method to set-up default error codes/messages
    InitializeDefaultErrorMessages();
@@ -374,7 +387,7 @@ int CTetheredCamera::SnapImage()
       return nRet;
 
    // Copy frame to image buffer
-	nRet = ResizeImageBuffer();
+   nRet = ResizeImageBuffer();
    return nRet;
 }
 
@@ -392,6 +405,59 @@ int CTetheredCamera::SnapImage()
 const unsigned char* CTetheredCamera::GetImageBuffer()
 {
    return img_.GetPixels();
+}
+
+/**
+* Returns pixel data with interleaved RGB pixels in 32 bpp format
+*/
+
+const unsigned int* CTetheredCamera::GetImageBufferAsRGB32()
+{
+    return (const unsigned int*)GetImageBuffer();
+}
+
+/**
+* Returns the number of channels in this image. This is '1' for grayscale cameras, and '3' for RGB cameras. 
+*/
+unsigned int CTetheredCamera::GetNumberOfChannels() const
+{
+   if (grayScale_)
+      return 1;
+   else
+      return 3;
+}
+
+/**
+* Returns the name for each channel. 
+*/
+int CTetheredCamera::GetChannelName(unsigned int channel, char* name)
+{
+   if (grayScale_)
+   {
+      if (channel == 0)
+         CDeviceUtils::CopyLimitedString(name, "Grayscale");
+      else
+         return DEVICE_NONEXISTENT_CHANNEL;
+   }
+   else 
+   {
+      switch (channel)
+      {
+         case 0:
+            CDeviceUtils::CopyLimitedString(name, "Blue");
+            break;
+         case 1:
+            CDeviceUtils::CopyLimitedString(name, "Green");
+            break;
+         case 2:
+            CDeviceUtils::CopyLimitedString(name, "Red");
+            break;
+         default:
+            return DEVICE_NONEXISTENT_CHANNEL;
+            break;
+      }
+   }
+   return DEVICE_OK;
 }
 
 /**
@@ -457,12 +523,12 @@ long CTetheredCamera::GetImageBufferSize() const
 */
 int CTetheredCamera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 {
-	int scaleFactor = GetBinning();
-   roiX_ += x * scaleFactor;
-   roiY_ += y * scaleFactor;
+   int scaleFactor = GetBinning();
+   roiX_ = originX_ + x * scaleFactor;
+   roiY_ = originY_ + y * scaleFactor;
    roiXSize_ = xSize * scaleFactor;
    roiYSize_ = ySize * scaleFactor;
-   return ResizeImageBuffer();
+   return DEVICE_OK;
 }
 
 /**
@@ -471,11 +537,18 @@ int CTetheredCamera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySi
 */
 int CTetheredCamera::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize)
 {
-	int scaleFactor = GetBinning();
-   x = 0;
-   y = 0;
+   int scaleFactor = GetBinning();
+   x = roiX_ / scaleFactor;
+   y = roiY_ / scaleFactor;
    xSize = roiXSize_ / scaleFactor;
    ySize = roiYSize_ / scaleFactor;
+   if ((roiX_ == 0) && (roiY_ == 0) && (roiXSize_ == 0) && (roiYSize_ == 0)) // Select whole image
+   {
+      x = 0;
+      y = 0;
+      xSize = img_.Width();
+      ySize = img_.Height();
+   }
    return DEVICE_OK;
 }
 
@@ -489,7 +562,7 @@ int CTetheredCamera::ClearROI()
    roiY_ = 0;
    roiXSize_ = 0;
    roiYSize_ = 0;
-   return ResizeImageBuffer();
+   return DEVICE_OK;
 }
 
 /**
@@ -512,6 +585,7 @@ double CTetheredCamera::GetExposure() const
 void CTetheredCamera::SetExposure(double exp)
 {
    SetProperty(MM::g_Keyword_Exposure, CDeviceUtils::ConvertToString(exp));
+   OnPropertiesChanged();
 }
 
 /**
@@ -524,7 +598,11 @@ int CTetheredCamera::GetBinning() const
    int ret = GetProperty(MM::g_Keyword_Binning, buf);
    if (ret != DEVICE_OK)
       return 1;
-   return atoi(buf);
+   int binning = atoi(buf);
+   // Sanity check
+   if (binning <= 0) 
+      binning = 1;
+   return binning;
 }
 
 /**
@@ -533,7 +611,9 @@ int CTetheredCamera::GetBinning() const
 */
 int CTetheredCamera::SetBinning(int binFactor)
 {
-   return SetProperty(MM::g_Keyword_Binning, CDeviceUtils::ConvertToString(binFactor));
+   int ret = SetProperty(MM::g_Keyword_Binning, CDeviceUtils::ConvertToString(binFactor));
+   OnPropertiesChanged();
+   return ret;
 }
 
 int CTetheredCamera::SetAllowedBinning() 
@@ -581,7 +661,7 @@ int CTetheredCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
             pProp->Set(1L);
             ret = ERR_CAM_BAD_PARAM;
          }
-         ResizeImageBuffer();
+         OnPropertiesChanged();
       }break;
    case MM::BeforeGet:
       {
@@ -615,11 +695,11 @@ int CTetheredCamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
             grayScale_ = true;
             ret=DEVICE_OK;
          }
-			else if (pixelType.compare(g_PixelType_Color) == 0)
-			{
+         else if (pixelType.compare(g_PixelType_Color) == 0)
+         {
             grayScale_ = false;
             ret=DEVICE_OK;
-			}
+         }
          else
          {
             // on error switch to default pixel type
@@ -627,13 +707,14 @@ int CTetheredCamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
             grayScale_ = false;
             ret = ERR_CAM_BAD_PARAM;
          }
+         OnPropertiesChanged();
       } break;
    case MM::BeforeGet:
       {
          if (grayScale_)
-         	pProp->Set(g_PixelType_Gray);
-			else
-				pProp->Set(g_PixelType_Color);
+            pProp->Set(g_PixelType_Gray);
+         else
+            pProp->Set(g_PixelType_Color);
          ret=DEVICE_OK;
       }break;
    }
@@ -659,11 +740,11 @@ int CTetheredCamera::OnKeepOriginals(MM::PropertyBase* pProp, MM::ActionType eAc
             keepOriginals_ = true;
             ret=DEVICE_OK;
          }
-			else if (keepOriginals.compare("0") == 0)
-			{
+         else if (keepOriginals.compare("0") == 0)
+         {
             keepOriginals_ = false;
             ret=DEVICE_OK;
-			}
+         }
          else
          {
             // on error switch to default
@@ -671,13 +752,14 @@ int CTetheredCamera::OnKeepOriginals(MM::PropertyBase* pProp, MM::ActionType eAc
             keepOriginals_ = false;
             ret = ERR_CAM_BAD_PARAM;
          }
+         OnPropertiesChanged();
       } break;
    case MM::BeforeGet:
       {
          if (keepOriginals_)
-         	pProp->Set("1");
-			else
-				pProp->Set("0");
+            pProp->Set("1");
+         else
+            pProp->Set("0");
          ret=DEVICE_OK;
       }break;
    }
@@ -710,35 +792,35 @@ bool CTetheredCamera::GetBoolProperty(const char* const propName)
 int CTetheredCamera::GetReturnCode(int status)
 {
    switch(status)
-		{
-		case 0: // success
-			LogMessage("Remotelib call success", true);
-			return DEVICE_OK;
-			break;
-		case 1:
-			LogMessage("DSLRRemote/NKRemote/PSRemote is not running", true);
-			return ERR_CAM_NOT_RUNNING;
-			break;
-		case 2:
-			LogMessage("Camera is not connected", true);
-			return ERR_CAM_NOT_CONNECTED;
-			break;
-		case 3:
-			LogMessage("Camera is busy", true);
-			return ERR_CAM_BUSY;
-			break;
-		case 4:
-			LogMessage("Timeout", true);
-			return ERR_CAM_TIMEOUT;
-			break;
-		case 5:
-			LogMessage("Error releasing shutter e.g. AF failure", true);
-			return ERR_CAM_SHUTTER;
-			break;
-		default:
-			LogMessage("Error: unexpected return status: ", true);
-			return ERR_CAM_UNKNOWN;
-		}
+      {
+      case 0: // success
+         LogMessage("Remotelib call success", true);
+         return DEVICE_OK;
+         break;
+      case 1:
+         LogMessage("DSLRRemote/NKRemote/PSRemote is not running", true);
+         return ERR_CAM_NOT_RUNNING;
+         break;
+      case 2:
+         LogMessage("Camera is not connected", true);
+         return ERR_CAM_NOT_CONNECTED;
+         break;
+      case 3:
+         LogMessage("Camera is busy", true);
+         return ERR_CAM_BUSY;
+         break;
+      case 4:
+         LogMessage("Timeout", true);
+         return ERR_CAM_TIMEOUT;
+         break;
+      case 5:
+         LogMessage("Error releasing shutter e.g. AF failure", true);
+         return ERR_CAM_SHUTTER;
+         break;
+      default:
+         LogMessage("Error: unexpected return status", true);
+         return ERR_CAM_UNKNOWN;
+      }
 }
 
 /*
@@ -849,7 +931,7 @@ int CTetheredCamera::AcquireFrame()
    char filename[MAX_PATH];
 
    /* take one image and report status and filename */
-	int status = ReleaseShutter(60, filename, sizeof(filename));
+   int status = ReleaseShutter(60, filename, sizeof(filename));
    int nRet = GetReturnCode(status);
    if (DEVICE_OK == nRet)
       LogMessage("ReleaseShutter success", true);
@@ -859,7 +941,7 @@ int CTetheredCamera::AcquireFrame()
    if (!(filename && strlen(filename)))
    {
       LogMessage("Image saved on CF card?", true);
-		return ERR_CAM_NO_IMAGE;
+      return ERR_CAM_NO_IMAGE;
    }
 
    /* Convert filename to unicode */
@@ -878,9 +960,9 @@ int CTetheredCamera::AcquireFrame()
      return ERR_CAM_LOAD;
 
    /* 
-	* Use WIC ("Windows Imaging Component") to read the image file and convert to micro-manager format. 
-	* File can be .jpg or any WIC-supported format, or, if the correct codecs have been installed, Canon and Nikon raw. 
-	*/
+   * Use WIC ("Windows Imaging Component") to read the image file and convert to micro-manager format. 
+   * File can be .jpg or any WIC-supported format, including Canon and Nikon raw if the correct codecs have been installed. 
+   */
 
    //Initialize COM.
    CoInitialize(NULL);
@@ -907,7 +989,7 @@ int CTetheredCamera::AcquireFrame()
    UINT nFrameCount=0;
 
    if (SUCCEEDED(hr))
-	{
+   {
       hr = decoder->GetFrameCount(&nFrameCount);
    }
 
@@ -915,14 +997,14 @@ int CTetheredCamera::AcquireFrame()
 
    if (SUCCEEDED(hr))
    {
-		if (nFrameCount == 0) return ERR_CAM_LOAD;
+      if (nFrameCount == 0) return ERR_CAM_LOAD;
 
-    	/* We have a frame! */
+      /* We have a frame! */
       hr = decoder->GetFrame(0, &frameDecode);
    }
 
    IWICFormatConverter *formatConverter = NULL;
-	if (SUCCEEDED(hr))
+   if (SUCCEEDED(hr))
    {
       hr = factory->CreateFormatConverter(&formatConverter);
    }
@@ -941,7 +1023,7 @@ int CTetheredCamera::AcquireFrame()
       frameBytesPerPixel = 4;
    }
 
-	if (SUCCEEDED(hr))
+   if (SUCCEEDED(hr))
    {
       hr = formatConverter->Initialize(
       frameDecode,                     // Input source to convert
@@ -950,16 +1032,16 @@ int CTetheredCamera::AcquireFrame()
       NULL,                            // Specify a particular palette 
       0.f,                             // Alpha threshold
       WICBitmapPaletteTypeCustom       // Palette translation type
-		);
-	}
+      );
+   }
 
    UINT frameWidth = 0;
    UINT frameHeight = 0;
-		
+      
    if (SUCCEEDED(hr))
    {
       hr = formatConverter->GetSize(&frameWidth, &frameHeight);
-	}
+   }
    
    if (SUCCEEDED(hr) && ((frameWidth == 0) || (frameHeight == 0)))
       return ERR_CAM_LOAD;
@@ -995,16 +1077,19 @@ int CTetheredCamera::AcquireFrame()
 }
 
 /*
- * ResizeImage: Clip frameBitmap to the region of interest, apply binning and store the result in img_
- * Called whenever the region of interest or the binning factor changes.
+ * ResizeImage: Clip frameBitmap to the region of interest, apply binning, transpose and store the result in img_
  */
 
 int CTetheredCamera::ResizeImageBuffer()
 {
 
    /* 
-	 * Use WIC ("Windows Imaging Component") to scale/rotate/flip/clip bitmap.
-	 */
+    * Use WIC ("Windows Imaging Component") to scale/rotate/flip/clip bitmap.
+    */
+
+   // Sanity check
+   if (frameBitmap == NULL)
+      return DEVICE_OK;
 
    //Initialize COM.
    CoInitialize(NULL);
@@ -1014,14 +1099,14 @@ int CTetheredCamera::ResizeImageBuffer()
    //Create the COM imaging factory.
    HRESULT hr = CoCreateInstance(CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER, IID_IWICImagingFactory, (LPVOID*)&factory);
 
-	/* binning: scale image down */
+   /* binning: scale image down */
    UINT frameWidth = 0;
    UINT frameHeight = 0;
-		
+      
    if (SUCCEEDED(hr))
    {
       hr = frameBitmap->GetSize(&frameWidth, &frameHeight);
-	}
+   }
 
    UINT scaledWidth = 0;
    UINT scaledHeight = 0;
@@ -1047,7 +1132,7 @@ int CTetheredCamera::ResizeImageBuffer()
       hr = scaler->Initialize(frameBitmap, scaledWidth, scaledHeight, WICBitmapInterpolationModeFant); 
    }
 
-	if (SUCCEEDED(hr))
+   if (SUCCEEDED(hr))
    {
       LogMessage("Scaling done", true);
    }
@@ -1081,21 +1166,21 @@ int CTetheredCamera::ResizeImageBuffer()
    /* Return region of interest (ROI)  */
    UINT transposedWidth = 0;
    UINT transposedHeight = 0;
-		
+      
    if (SUCCEEDED(hr))
    {
       LogMessage("Transposing done", true);
       hr = transposer->GetSize(&transposedWidth, &transposedHeight);
-	}
+   }
    
-	// Apply binning to region of interest
-	UINT clipX = roiX_ / scaleFactor;
-	UINT clipY = roiY_  / scaleFactor;
+   // Apply binning to region of interest
+   UINT clipX = roiX_ / scaleFactor;
+   UINT clipY = roiY_  / scaleFactor;
    UINT clipHeight = roiYSize_  / scaleFactor;
    UINT clipWidth = roiXSize_  / scaleFactor;
 
    if ((clipWidth == 0) || (clipHeight == 0)
-		|| (clipX + clipWidth > transposedWidth) || (clipY + clipHeight > transposedHeight))
+      || (clipX + clipWidth > transposedWidth) || (clipY + clipHeight > transposedHeight))
    {
       // Select complete frame
       clipX = 0;
@@ -1103,6 +1188,10 @@ int CTetheredCamera::ResizeImageBuffer()
       clipHeight = transposedHeight;
       clipWidth = transposedWidth;
    }
+
+   // Save coordinates of ROI lower left pixel 
+   originX_ = clipX * scaleFactor;
+   originY_ = clipY * scaleFactor;
 
    IWICBitmapClipper *clipper = NULL;
 
@@ -1113,23 +1202,23 @@ int CTetheredCamera::ResizeImageBuffer()
 
    if (SUCCEEDED(hr))
    {
-		WICRect roiRect;
-		roiRect.X = clipX;
-		roiRect.Y = clipY;
-		roiRect.Height = clipHeight;
-		roiRect.Width = clipWidth;
+      WICRect roiRect;
+      roiRect.X = clipX;
+      roiRect.Y = clipY;
+      roiRect.Height = clipHeight;
+      roiRect.Width = clipWidth;
       hr = clipper->Initialize(transposer, &roiRect);
    }
 
    /* resize micro-manager image to same dimensions as captured frame */
    UINT imageWidth = 0;
    UINT imageHeight = 0;
-		
+      
    if (SUCCEEDED(hr))
    {
       LogMessage("Clipping to roi done", true);
       hr = clipper->GetSize(&imageWidth, &imageHeight);
-	}
+   }
 
    UINT frameBytesPerPixel;
 
@@ -1140,7 +1229,7 @@ int CTetheredCamera::ResizeImageBuffer()
 
    if (SUCCEEDED(hr))
    {
-   	img_.Resize(imageWidth, imageHeight, frameBytesPerPixel);
+      img_.Resize(imageWidth, imageHeight, frameBytesPerPixel);
    }
 
    /* Copy into image buffer */
@@ -1155,7 +1244,7 @@ int CTetheredCamera::ResizeImageBuffer()
       LogMessage("CopyPixels done", true);
       SafeRelease(clipper);
       SafeRelease(transposer);
-		SafeRelease(scaler);
+      SafeRelease(scaler);
       SafeRelease(factory);
       LogMessage("ResizeImageBuffer done", true);
       return DEVICE_OK;
@@ -1163,3 +1252,4 @@ int CTetheredCamera::ResizeImageBuffer()
   
    return ERR_CAM_CONVERSION;
 }
+// not truncated

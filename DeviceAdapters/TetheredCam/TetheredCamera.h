@@ -77,6 +77,9 @@ public:
    // ------------
    int SnapImage();
    const unsigned char* GetImageBuffer();
+   const unsigned int* GetImageBufferAsRGB32();
+   unsigned GetNumberOfChannels() const;
+   int GetChannelName(unsigned int channel, char* name);
    unsigned GetImageWidth() const;
    unsigned GetImageHeight() const;
    unsigned GetImageBytesPerPixel() const;
@@ -120,7 +123,8 @@ private:
    unsigned roiY_;
    unsigned roiXSize_;
    unsigned roiYSize_;
-
+   unsigned originX_; /* coordinates of lower left corner of view window */
+   unsigned originY_;
 };
 
 #endif //_TETHEREDCAMERA_H_
