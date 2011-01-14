@@ -2478,6 +2478,57 @@ void CMMCore::setProperty(const char* label, const char* propName,
 }
 
 /**
+ * Changes the value of the device property.
+ *
+ * @return void 
+ * @param const char* label device label
+ * @param const char* propName property name
+ * @param const bool propValue the new property value
+ */
+void CMMCore::setProperty(const char* label, const char* propName, 
+                          const bool propValue) throw (CMMError)
+{
+   std::string svalue = (propValue?"1":"0");
+   setProperty(label, propName, svalue.c_str());
+}
+
+/**
+ * Changes the value of the device property.
+ *
+ * @return void 
+ * @param const char* label device label
+ * @param const char* propName property name
+ * @param const long propValue the new property value
+ */
+void CMMCore::setProperty(const char* label, const char* propName, 
+                          const long propValue) throw (CMMError)
+{
+   std::ostringstream ovalue;
+   ovalue << propValue;
+   setProperty(label, propName, ovalue.str().c_str());
+}
+
+/**
+ * Changes the value of the device property.
+ *
+ * @return void 
+ * @param const char* label device label
+ * @param const char* propName property name
+ * @param const float propValue the new property value
+ */
+void CMMCore::setProperty(const char* label, const char* propName, 
+                          const float propValue) throw (CMMError)
+{
+   std::ostringstream ovalue;
+   ovalue << propValue;
+   setProperty(label, propName, ovalue.str().c_str());
+}
+
+
+
+
+
+/**
  * Checks if device has a property with a specified name.
  * The exception will be thrown in case device label is not defined.
  */

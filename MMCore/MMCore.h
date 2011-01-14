@@ -155,6 +155,11 @@ public:
    std::vector<std::string> getDevicePropertyNames(const char* label) const throw (CMMError);
    std::string getProperty(const char* label, const char* propName) const throw (CMMError);
    void setProperty(const char* label, const char* propName, const char* propValue) throw (CMMError);
+   
+   void setProperty(const char* label, const char* propName, const bool propValue) throw (CMMError);
+   void setProperty(const char* label, const char* propName, const long propValue) throw (CMMError);
+   void setProperty(const char* label, const char* propName, const float propValue) throw (CMMError);
+
    bool hasProperty(const char* label, const char* propName) const throw (CMMError);
    std::vector<std::string> getAllowedPropertyValues(const char* label, const char* propName) const throw (CMMError);
    bool isPropertyReadOnly(const char* label, const char* propName) const throw (CMMError);
