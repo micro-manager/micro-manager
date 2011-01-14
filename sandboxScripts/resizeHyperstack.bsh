@@ -1,6 +1,6 @@
 import ij.*;
 import ij.process.*;
-
+import org.micromanager.utils.*;
 
 /*
 Arthur - 1/13/2011
@@ -10,12 +10,17 @@ There are still problems when we include channels.
 */
 
 
-nChannels = 2;
-nSlices = 4;
-nFrames = 1;
 imgp = IJ.getImage();
 stack = imgp.getStack();
 win = imgp.getWindow();
+
+nChannelsOld = imgp.getNChannels();
+nSlicesOld = imgp.getNSlices();
+nFramesOld = imgp.getNFrames();
+
+nChannels = nChannelsOld + 1;
+nFrames = nFramesOld + 1;
+nSlices = nSlicesOld + 1;
 
 // Package private:
 cs = win.cSelector;
@@ -34,27 +39,14 @@ imgp.nFrames = nFrames;
 win.nChannels = nChannels;
 win.nSlices = nSlices;
 win.nFrames = nFrames;
-/*
-if (nChannels > 1) {
-	cip = new ImageProcessor[nChannels];
-	for (int i = 0;i<imgp.cip.length; ++i) {
-      cip[i] = imgp.cip[i];
-   }
-	for (int i = imgp.cip.length; i<nChannels; ++i) {
-      cip[i] = imgp.cip[imgp.cip.length - 1];
-	}
-	imgp.cip = cip;
-	lut = new LUT[nChannels];
-	for (int i = 0;i<imgp.lut.length; ++i) {
-      lut[i] = imgp.lut[i];
-   }
-	for (int i = imgp.lut.length; i<nChannels; ++i) {
-      lut[i] = imgp.lut[imgp.lut.length - 1];
-	}
-	imgp.lut = lut;
 
-}
-	*/
+imgp.cip = JavaUtils.copyOfRange(imgp.cip,0,nChannels);
+imgp.lut = JavaUtils.copyOfRange(imgp.lut,0,nChannels);	
+imgp.cip[nChannels-1] = imgp.cip[0].duplicate();
+lut0 = imgp.lut[0];
+imgp.lut[nChannels-1] = new LUT(lut0,lut0.min,lut0.max);
+imgp.setChannelsUpdated();
+
 // Public:
 if (win.hyperStack) {
    if (cs != null)
@@ -67,6 +59,4 @@ if (win.hyperStack) {
 	if (zs != null)
 		zs.setMaximum(stack.getSize() + 1);
 }
-
-// cip, lut
 
