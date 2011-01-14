@@ -240,8 +240,8 @@ public class VirtualAcquisitionDisplay {
       }
    }
 
-   public void expandPositions() {
-      ++numPositions_;
+   public void setNumPositions(int p) {
+      numPositions_ = p;
       pSelector_.setMaximum(numPositions_+1);
    }
 
