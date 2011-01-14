@@ -4,10 +4,9 @@ import ij.process.*;
 
 /*
 Arthur - 1/13/2011
-So far, this works for a single position and single channel,
-with one or more slices and one or more frames.
-There are still problems when we include channels
-and positions.
+So far, this works for a single channel,
+with one or more slices, frames or positions.
+There are still problems when we include channels.
 */
 
 
