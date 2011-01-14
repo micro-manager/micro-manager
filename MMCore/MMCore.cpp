@@ -2524,6 +2524,23 @@ void CMMCore::setProperty(const char* label, const char* propName,
    setProperty(label, propName, ovalue.str().c_str());
 }
 
+/**
+ * Changes the value of the device property.
+ *
+ * @return void 
+ * @param const char* label device label
+ * @param const char* propName property name
+ * @param const double propValue the new property value
+ */
+void CMMCore::setProperty(const char* label, const char* propName, 
+                          const double propValue) throw (CMMError)
+{
+   std::ostringstream ovalue;
+   ovalue << propValue;
+   setProperty(label, propName, ovalue.str().c_str());
+}
+
+
 
 
 

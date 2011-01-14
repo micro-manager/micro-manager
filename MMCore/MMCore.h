@@ -159,6 +159,7 @@ public:
    void setProperty(const char* label, const char* propName, const bool propValue) throw (CMMError);
    void setProperty(const char* label, const char* propName, const long propValue) throw (CMMError);
    void setProperty(const char* label, const char* propName, const float propValue) throw (CMMError);
+   void setProperty(const char* label, const char* propName, const double propValue) throw (CMMError);
 
    bool hasProperty(const char* label, const char* propName) const throw (CMMError);
    std::vector<std::string> getAllowedPropertyValues(const char* label, const char* propName) const throw (CMMError);
