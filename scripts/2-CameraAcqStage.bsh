@@ -1,0 +1,61 @@
+import org.json.JSONObject;
+import org.micromanager.utils.MDUtils;
+import org.micromanager.utils.NumberUtils;
+
+String c1 = "Andor-Left";
+String c2 = "Andor-Back";
+String acq = "2-Color-Grid-PositionsYXC";
+int nrXPositions_ = 3;
+int nrYPositions_ = 3;
+double stepSize_ = 0.12;
+xyStageDevice_ = "MCL NanoDrive XY Stage";
+xOrigin_ = mmc.getXPosition(xyStageDevice_);
+yOrigin_ = mmc.getYPosition(xyStageDevice_);
+
+gui.closeAllAcquisitions();
+gui.openAcquisition(acq, "Z:/Images/20101214/", 1, 2, 1, nrXPositions_ * nrYPositions_, true, true);
+gui.setChannelColor(acq, 0, Color.RED);
+gui.setChannelColor(acq, 1, Color.GREEN);
+gui.setChannelName(acq, 0, c1);
+gui.setChannelName(acq, 1, c2);
+int w = mmc.getImageWidth();
+int h = mmc.getImageHeight();
+int d = mmc.getBytesPerPixel();
+int [] frameNr  = new int [] {0, 0};
+gui.initializeAcquisition(acq, w, h, d);
+
+for (int x = 0; x < nrXPositions_; x++) {
+	for (int y = 0; y < nrYPositions_; y++) {	
+		mmc.setXYPosition(xyStageDevice_, x * stepSize_ + xOrigin_, y * stepSize_ + yOrigin_);
+
+		// delete previous content of circular buffer
+		mmc.initializeCircularBuffer();
+		//mmc.prepareSequenceAcquisition(c1);
+		//mmc.prepareSequenceAcquisition(c2);
+		mmc.startSequenceAcquisition(c1, 1, 0, false);
+		mmc.startSequenceAcquisition(c2, 1, 0, false);
+		while (mmc.isSequenceRunning() || mmc.getRemainingImageCount() > 0) {
+			if (mmc.getRemainingImageCount() > 0) {
+				img = mmc.popNextTaggedImage();
+				JSONObject md = img.tags;
+
+				MDUtils.setFrameIndex(md, 0);
+				MDUtils.setSliceIndex(md, 0);
+				//int posIndex = (x % nrXPositions_) + (y * nrXPositions_);
+				int posIndex = (y % nrYPositions_) + (x * nrYPositions_);
+				MDUtils.setPositionIndex(md, posIndex);
+				// TODO: use MDUtils.setPositionName instead
+				md.put ("PositionName", "Pos" + posIndex);
+				cName = md.get("Camera");
+				if (c1.equals(cName))
+					MDUtils.setChannelIndex(md, 0);
+				else
+					MDUtils.setChannelIndex(md, 1);
+				gui.addImage(acq, img);
+			}
+		}
+	}
+}
+
+// Return stage to original positions
+mmc.setXYPosition(xyStageDevice_, xOrigin_, yOrigin_);

@@ -1,0 +1,64 @@
+import org.json.JSONObject;
+import org.micromanager.utils.MDUtils;
+import org.micromanager.utils.NumberUtils;
+
+String basedir = "Z:/Images/20110113/";
+String c1 = "Andor-Left";
+String c2 = "Andor-Back";
+String ac = "gridTimeLapse";
+int nrFrames = 100;
+int interval = 10000;
+
+gui.closeAllAcquisitions();
+
+String acq = new String (ac);
+int t = 1;
+while ( (new File(basedir + System.getProperty("file.separator") + acq)).exists()) {
+	acq = new String (ac + "-" + t);
+	t++;
+}
+
+gui.openAcquisition(acq, basedir, nrFrames, 2, 1, 1, true, true);
+gui.setChannelColor(acq, 0, Color.RED);
+gui.setChannelColor(acq, 1, Color.GREEN);
+gui.setChannelName(acq, 0, c1);
+gui.setChannelName(acq, 1, c2);
+int w = mmc.getImageWidth();
+int h = mmc.getImageHeight();
+int d = mmc.getBytesPerPixel();
+int [] frameNr  = new int [] {0, 0};
+gui.initializeAcquisition(acq, w, h, d);
+
+for (int f = 0; f < nrFrames; f++) {
+		// delete previous content of circular buffer
+		mmc.initializeCircularBuffer();
+		//mmc.prepareSequenceAcquisition(c1);
+		//mmc.prepareSequenceAcquisition(c2);
+		mmc.startSequenceAcquisition(c2, 1, 0, false);
+		gui.sleep(5);
+		mmc.startSequenceAcquisition(c1, 1, 0, false);
+		gui.sleep(5);
+		while (mmc.isSequenceRunning() || mmc.getRemainingImageCount() > 0) {
+			if (mmc.getRemainingImageCount() > 0) {
+				img = mmc.popNextTaggedImage();
+				JSONObject md = img.tags;
+				MDUtils.setFrameIndex(md, f);
+				MDUtils.setSliceIndex(md, 0);
+				MDUtils.setPositionIndex(md, 0);
+				
+				//int posIndex = (x % nrXPositions_) + (y * nrXPositions_);
+				//int posIndex = (y % nrYPositions_) + (x * nrYPositions_);
+				//MDUtils.setPositionIndex(0);
+				// TODO: use MDUtils.setPositionName instead
+				//md.put ("PositionName", "Pos" + posIndex);
+				cName = md.get("Camera");
+				if (c1.equals(cName))
+					MDUtils.setChannelIndex(md, 0);
+				else
+					MDUtils.setChannelIndex(md, 1);
+				gui.addImage(acq, img);
+			}
+		}
+	gui.sleep(interval);
+}
+
