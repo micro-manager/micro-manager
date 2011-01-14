@@ -5,6 +5,7 @@
 //-----------------------------------------------------------------------------
 //
 // AUTHOR:       Nenad Amodaj, nenad@amodaj.com, November 07, 2006
+//               New Tree View: Karl Hoover January 13, 2011 
 //
 // COPYRIGHT:    University of California, San Francisco, 2006
 //
@@ -101,7 +102,7 @@ public class AddDeviceDlg extends JDialog implements MouseListener, TreeSelectio
         setModal(true);
         setResizable(false);
         getContentPane().setLayout(null);
-        setTitle("Add Device - Open a library to see available devices & descriptions");
+        setTitle("Add Device");
         setBounds(400, 100, 596, 529);
         devicesPage_ = devicesPage;
 
@@ -139,6 +140,7 @@ public class AddDeviceDlg extends JDialog implements MouseListener, TreeSelectio
             }
         };
         theTree_.addMouseListener(ml);
+        theTree_.setRootVisible(false);
 
 
 
@@ -177,7 +179,7 @@ public class AddDeviceDlg extends JDialog implements MouseListener, TreeSelectio
         //put the URL for the documentation for the selected node into a browswer control
         documentationURLroot_ = "https://valelab.ucsf.edu/~nico/MMwiki/index.php/";
         final JButton documentationButton = new JButton();
-        documentationButton.setText("Document");
+        documentationButton.setText("Help");
         documentationButton.setBounds(490, 68, 93, 23);
         getContentPane().add(documentationButton);
         getRootPane().setDefaultButton(documentationButton);
