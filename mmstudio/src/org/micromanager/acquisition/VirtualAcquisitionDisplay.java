@@ -92,14 +92,15 @@ public class VirtualAcquisitionDisplay {
       }
 
       numGrayChannels_ = numComponents_ * numChannels_;
-      virtualStack_ = new AcquisitionVirtualStack(width_, height_, null,
-                 imageCache_, numGrayChannels_ * numSlices_ * numFrames_, this);;
-
+      int type;
       try {
-         virtualStack_.setType(MDUtils.getSingleChannelType(summaryMetadata_));
+         type = MDUtils.getSingleChannelType(summaryMetadata_);
       } catch (Exception ex) {
-         ReportingUtils.showError(ex);
+         ReportingUtils.showError(ex, "Unable to determine acquisition type.");
+         return;
       }
+      virtualStack_ = new AcquisitionVirtualStack(width_, height_, type, null,
+                 imageCache_, numGrayChannels_ * numSlices_ * numFrames_, this);
 
       if (channelSettings_ == null) {
           channelSettings_ = new ChannelDisplaySettings[numChannels_];

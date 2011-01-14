@@ -18,14 +18,14 @@ import org.micromanager.utils.ReportingUtils;
  * @author arthur
  */
 public class AcquisitionVirtualStack extends ij.VirtualStack {
-   private TaggedImageStorage imageCache_;
+   final private TaggedImageStorage imageCache_;
+   private final VirtualAcquisitionDisplay acq_;
    protected int width_, height_, type_;
    private int nSlices_;
    private int positionIndex_ = 0;
-   private final VirtualAcquisitionDisplay acq_;
 
-   public AcquisitionVirtualStack(int width, int height, ColorModel cm, 
-           MMImageCache imageCache, int nSlices,
+   public AcquisitionVirtualStack(int width, int height, int type,
+           ColorModel cm, MMImageCache imageCache, int nSlices,
            VirtualAcquisitionDisplay acq) {
       super(width, height, cm, "");
       imageCache_ = imageCache;
@@ -33,6 +33,7 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
       height_ = height;
       nSlices_ = nSlices;
       acq_ = acq;
+      type_ = type;
    }
 
    public void setPositionIndex(int pos) {
@@ -42,9 +43,26 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
    public VirtualAcquisitionDisplay getVirtualAcquisition() {
       return acq_;
    }
-   
-   public void setType(int type) {
-      type_ = type;
+
+   public void setSize(int size) {
+      nSlices_ = size;
+   }
+
+   MMImageCache getCache() {
+      return (MMImageCache) this.imageCache_;
+   }
+
+   public TaggedImage getTaggedImage(int flatIndex) {
+      if (acq_.getImagePlus() == null)
+         return null;
+
+      try {
+         int[] pos = acq_.getImagePlus().convertIndexToPosition(flatIndex);
+         return imageCache_.getImage(pos[0] - 1, pos[1] - 1, pos[2] - 1, positionIndex_); // chan, slice, frame
+      } catch (Exception e) {
+         ReportingUtils.logError(e);
+         return null;
+      }
    }
 
    @Override
@@ -73,30 +91,9 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
       return ImageUtils.makeProcessor(type_, width_, height_, getPixels(flatIndex));
    }
 
-   public TaggedImage getTaggedImage(int flatIndex) {
-      if (acq_.getImagePlus() == null)
-         return null;
-      
-      try {
-         int[] pos = acq_.getImagePlus().convertIndexToPosition(flatIndex);
-         return imageCache_.getImage(pos[0] - 1, pos[1] - 1, pos[2] - 1, positionIndex_); // chan, slice, frame
-      } catch (Exception e) {
-         ReportingUtils.logError(e);
-         return null;
-      }
-   }
-
    @Override
    public int getSize() {
       return nSlices_;
-   }
-
-   public void setSize(int size) {
-      nSlices_ = size;
-   }
-
-   MMImageCache getCache() {
-      return (MMImageCache) this.imageCache_;
    }
 
    @Override
