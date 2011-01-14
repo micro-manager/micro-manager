@@ -155,10 +155,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="oldaapi32.lib olmem32.lib"
+				AdditionalDependencies="oldaapi64.lib olmem64.lib"
 				OutputFile="$(OutDir)/mmgr_dal_DTOpenLayer.dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="..\..\..\3rdparty\DataTranslation\SDK\Lib;..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib"
+				AdditionalLibraryDirectories="..\..\..\3rdparty\DataTranslation\SDK\Lib64;..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/DTOpenLayer.pdb"
 				SubSystem="2"
@@ -321,10 +321,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="oldaapi32.lib olmem32.lib"
+				AdditionalDependencies="oldaapi64.lib olmem64.lib"
 				OutputFile="$(OutDir)/mmgr_dal_DTOpenLayer.dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\..\3rdparty\DataTranslation\SDK\Lib;..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib"
+				AdditionalLibraryDirectories="..\..\..\3rdparty\DataTranslation\SDK\Lib64;..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
