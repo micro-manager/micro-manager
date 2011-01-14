@@ -8,17 +8,16 @@ import ij.process.ImageProcessor;
 import java.awt.image.ColorModel;
 import mmcorej.TaggedImage;
 import org.json.JSONObject;
-import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;
 
 /**
- *
- * @author arthur
+ * This stack class provides the ImagePlus with images from the MMImageCache.
+ * 
  */
 public class AcquisitionVirtualStack extends ij.VirtualStack {
-   final private TaggedImageStorage imageCache_;
+   final private MMImageCache imageCache_;
    private final VirtualAcquisitionDisplay acq_;
    protected int width_, height_, type_;
    private int nSlices_;
@@ -48,8 +47,8 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
       nSlices_ = size;
    }
 
-   MMImageCache getCache() {
-      return (MMImageCache) this.imageCache_;
+   public MMImageCache getCache() {
+      return imageCache_;
    }
 
    public TaggedImage getTaggedImage(int flatIndex) {

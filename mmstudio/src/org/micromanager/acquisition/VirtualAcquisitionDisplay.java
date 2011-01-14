@@ -113,12 +113,6 @@ public class VirtualAcquisitionDisplay {
       readChannelSettingsFromCache(true);
    }
 
-   private int getPositionIndex(TaggedImage taggedImg) throws Exception {
-      int pos;
-      pos = MDUtils.getPositionIndex(taggedImg.tags);
-      return pos;
-   }
-
    private void updateAndDraw() {
       if (numChannels_ > 1) {
             ((CompositeImage) hyperImage_).setChannelsUpdated();
@@ -166,7 +160,7 @@ public class VirtualAcquisitionDisplay {
    public void showImage(TaggedImage taggedImg) throws MMScriptException {
 
       try {
-         int pos = getPositionIndex(taggedImg);
+         int pos = MDUtils.getPositionIndex(taggedImg.tags);
 
          if (hyperImage_ == null) {
             show(pos);
@@ -247,10 +241,6 @@ public class VirtualAcquisitionDisplay {
 
    private void updatePosition(int p) {
       if (curPosition_ != p) {
-         double min = hyperImage_.getDisplayRangeMin();
-         double max = hyperImage_.getDisplayRangeMax();
-         // TODO: figure out why position is 1-based in the code
-         // but 0-based for the end user????
          virtualStack_.setPositionIndex(p-1);
          updateAndDraw();
          curPosition_ = p;
@@ -532,7 +522,6 @@ public class VirtualAcquisitionDisplay {
 
    public JSONObject getCurrentMetadata() {
       int index = getCurrentFlatIndex();
-      int posIndex = pSelector_.getValue() - 1;
       try {
          TaggedImage image = virtualStack_.getTaggedImage(index);
          if (image != null) {
@@ -774,7 +763,7 @@ public class VirtualAcquisitionDisplay {
       }
    }
 
-   public Boolean getDiskCached() {
+   public boolean getDiskCached() {
       return diskCached_;
    }
 
