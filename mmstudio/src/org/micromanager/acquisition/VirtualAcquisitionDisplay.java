@@ -14,7 +14,6 @@ import java.awt.event.AdjustmentListener;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import mmcorej.TaggedImage;
@@ -46,7 +45,6 @@ public class VirtualAcquisitionDisplay {
    private int width_;
    private int numComponents_ = 1;
    private ImagePlus hyperImage_;
-   private ArrayList<AcquisitionVirtualStack> virtualStacks_;
    private JSONObject summaryMetadata_ = null;
    private boolean newData_;
    private boolean windowClosed_ = false;
@@ -56,6 +54,7 @@ public class VirtualAcquisitionDisplay {
    private HyperstackControls hc_;
    private String status_ = "";
    private ScrollbarWithLabel pSelector_;
+   AcquisitionVirtualStack virtualStack_;
 
    private int curPosition_ = -1;
    private ChannelDisplaySettings[] channelSettings_;
@@ -93,26 +92,13 @@ public class VirtualAcquisitionDisplay {
       }
 
       numGrayChannels_ = numComponents_ * numChannels_;
-      AcquisitionVirtualStack virtualStack;
-      virtualStacks_ = new ArrayList<AcquisitionVirtualStack>();
+      virtualStack_ = new AcquisitionVirtualStack(width_, height_, null,
+                 imageCache_, numGrayChannels_ * numSlices_ * numFrames_, this);;
 
-      for (int i = 0; i < numPositions_; ++i) {
-         int pos = 0;
-         if (numPositions_ == 1)
-            try {
-               pos = MDUtils.getPositionIndex(summaryMetadata_);
-            } catch (Exception ex) { }
-         else
-            pos = i;
-
-         virtualStack = new AcquisitionVirtualStack(width_, height_, null,
-                 imageCache_, numGrayChannels_ * numSlices_ * numFrames_, pos, this);
-         try {
-            virtualStack.setType(MDUtils.getSingleChannelType(summaryMetadata_));
-            virtualStacks_.add(virtualStack);
-         } catch (Exception ex) {
-            ReportingUtils.showError(ex);
-         }
+      try {
+         virtualStack_.setType(MDUtils.getSingleChannelType(summaryMetadata_));
+      } catch (Exception ex) {
+         ReportingUtils.showError(ex);
       }
 
       if (channelSettings_ == null) {
@@ -185,7 +171,7 @@ public class VirtualAcquisitionDisplay {
             show(pos);
          }
          if (numPositions_ == 1 && numChannels_ == 1 && numSlices_ == 1 && numFrames_ == 1) {
-            hyperImage_.setProcessor(virtualStacks_.get(0).getProcessor(1));
+            hyperImage_.setProcessor(virtualStack_.getProcessor(1));
          }
 
          if (hyperImage_.getSlice() == 1) {
@@ -264,9 +250,7 @@ public class VirtualAcquisitionDisplay {
          double max = hyperImage_.getDisplayRangeMax();
          // TODO: figure out why position is 1-based in the code
          // but 0-based for the end user????
-         hyperImage_.setStack(virtualStacks_.get(p - 1));
-         hyperImage_.setDisplayRange(min, max);
-         virtualStacks_.get(p - 1).setImagePlus(hyperImage_);
+         virtualStack_.setPositionIndex(p-1);
          updateAndDraw();
          curPosition_ = p;
       }
@@ -368,10 +352,8 @@ public class VirtualAcquisitionDisplay {
    }
 
    public void createImagePlus() {
-      MMImagePlus imgp = new MMImagePlus(dir_, virtualStacks_.get(0));
-      for (AcquisitionVirtualStack virtualStack : virtualStacks_) {
-         virtualStack.setImagePlus(imgp);
-      }
+      MMImagePlus imgp = new MMImagePlus(dir_, virtualStack_);
+
       imgp.setDimensions(numGrayChannels_, numSlices_, numFrames_);
       if (numGrayChannels_ > 1) {
          hyperImage_ = new CompositeImage(imgp, CompositeImage.COMPOSITE);
@@ -415,7 +397,7 @@ public class VirtualAcquisitionDisplay {
                imageCache_.close();
             setWindowClosed(true);
             imageCache_ = null;
-            virtualStacks_ = null;
+            virtualStack_ = null;
             if (!this.isClosed())
                close();
             hyperImage_ = null;
@@ -551,7 +533,7 @@ public class VirtualAcquisitionDisplay {
       int index = getCurrentFlatIndex();
       int posIndex = pSelector_.getValue() - 1;
       try {
-         TaggedImage image = virtualStacks_.get(posIndex).getTaggedImage(index);
+         TaggedImage image = virtualStack_.getTaggedImage(index);
          if (image != null) {
             return image.tags;
          } else {
@@ -582,7 +564,7 @@ public class VirtualAcquisitionDisplay {
 
    public ImagePlus getImagePlus(int position) {
       ImagePlus iP = new ImagePlus();
-      iP.setStack(virtualStacks_.get(position - 1));
+      iP.setStack(virtualStack_);
       iP.setDimensions(numChannels_, numSlices_, numFrames_);
       return iP;
    }
