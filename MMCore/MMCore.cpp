@@ -4898,12 +4898,15 @@ bool CMMCore::isConfigurationCurrent(const Configuration& config) const
 
 /**
  * Set all properties in a configuration
- * Upon error, don't stop, but throw an error after processing all properties
+ * Upon error, don't stop, but try to set all failed properties again
+ * until all succees or no more change takes place
+ * If errors remain, throw an error 
  */
 void CMMCore::applyConfiguration(const Configuration& config) throw (CMMError)
 {
    std::ostringstream sall;
    bool error = false;
+   vector<PropertySetting> failedProps;
    for (size_t i=0; i<config.size(); i++)
    {
       PropertySetting setting = config.getSetting(i);
@@ -4921,18 +4924,57 @@ void CMMCore::applyConfiguration(const Configuration& config) throw (CMMError)
          int ret = pDevice->SetProperty(setting.getPropertyName().c_str(), setting.getPropertyValue().c_str());
          if (ret != DEVICE_OK)
          {
+            failedProps.push_back(setting);
             error = true;
-            std::ostringstream se;
-            se << getDeviceErrorText(ret, pDevice).c_str() << "(Error code: " << ret << ")";
-            logError(setting.getDeviceLabel().c_str(), se.str().c_str());
-            sall << se.str();
-         }
-         stateCache_.addSetting(setting);
+         } else
+            stateCache_.addSetting(setting);
       }
    }
    if (error) 
-      throw CMMError(sall.str().c_str(), MMERR_DEVICE_GENERIC);
+   {
+      string errorString;
+      while (failedProps.size() > applyProperties(failedProps, errorString) )
+      {
+         if (failedProps.size() == 0)
+            return;
+      }
+
+      throw CMMError(errorString.c_str(), MMERR_DEVICE_GENERIC);
+   }
 }
+
+/*
+ * Helper function for applyConfiguration
+ * It is possible that setting certain properties failed because they are dependend
+ * on other properties to be set first. As a workaround, continue to apply these failed
+ * properties until there are none left or none succeed
+ * returns number of properties succefully set
+ */
+int CMMCore::applyProperties(vector<PropertySetting>& props, string& lastError)
+{
+   int succeeded = 0;
+   vector<PropertySetting> failedProps;
+   for (size_t i=0; i<props.size(); i++)
+   {
+      // normal processing
+      MM::Device* pDevice = pluginManager_.GetDevice(props[i].getDeviceLabel().c_str());
+      int ret = pDevice->SetProperty(props[i].getPropertyName().c_str(), props[i].getPropertyValue().c_str());
+      if (ret != DEVICE_OK)
+      {
+         failedProps.push_back(props[i]);
+         std::ostringstream se;
+         se << getDeviceErrorText(ret, pDevice).c_str() << "(Error code: " << ret << ")";
+         logError(props[i].getDeviceLabel().c_str(), se.str().c_str());
+         lastError = se.str();
+      } else
+         stateCache_.addSetting(props[i]);
+   }
+   props = failedProps;
+   return failedProps.size();
+}
+
+
+
 
 string CMMCore::getDeviceErrorText(int deviceCode, MM::Device* pDevice) const
 {

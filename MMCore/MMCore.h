@@ -484,6 +484,7 @@ private:
 
    bool isConfigurationCurrent(const Configuration& config) const;
    void applyConfiguration(const Configuration& config) throw (CMMError);
+   int applyProperties(std::vector<PropertySetting>& props, std::string& lastError);
    MM::Device* getDevice(const char* label) const throw (CMMError);
    void waitForDevice(MM::Device* pDev) throw (CMMError);
    std::string getDeviceErrorText(int deviceCode, MM::Device* pDevice) const;
