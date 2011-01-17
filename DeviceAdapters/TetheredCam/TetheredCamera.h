@@ -119,10 +119,11 @@ private:
    IWICBitmap *frameBitmap; /* last captured frame */
    bool grayScale_;
    bool keepOriginals_;
-   unsigned roiX_;
+   unsigned roiX_; /* Region Of Interest */
    unsigned roiY_;
    unsigned roiXSize_;
    unsigned roiYSize_;
+   unsigned scaleFactor_; /* binning of current image */
    unsigned originX_; /* coordinates of lower left corner of view window */
    unsigned originY_;
 };

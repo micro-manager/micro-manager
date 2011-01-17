@@ -28,3 +28,5 @@ Project files corrected so that correct device adapter dll files are built for R
 
 KDV 20110114 Bugfix: ROI was wrong if ROI button clicked twice in succession. Code cleanup.
 
+KDV 20110117 Bugfix: ROI was wrong if both binning and ROI changed in same snap
+

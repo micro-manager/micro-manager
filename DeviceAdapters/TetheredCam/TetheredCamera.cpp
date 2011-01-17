@@ -202,6 +202,7 @@ CTetheredCamera::CTetheredCamera() :
    roiY_(0),
    roiXSize_(0),
    roiYSize_(0),
+   scaleFactor_(1),
    originX_(0),
    originY_(0)
 {
@@ -523,11 +524,12 @@ long CTetheredCamera::GetImageBufferSize() const
 */
 int CTetheredCamera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 {
-   int scaleFactor = GetBinning();
-   roiX_ = originX_ + x * scaleFactor;
-   roiY_ = originY_ + y * scaleFactor;
-   roiXSize_ = xSize * scaleFactor;
-   roiYSize_ = ySize * scaleFactor;
+   if (scaleFactor_ == 0)
+      scaleFactor_ = 1;
+   roiX_ = originX_ + x * scaleFactor_;
+   roiY_ = originY_ + y * scaleFactor_;
+   roiXSize_ = xSize * scaleFactor_;
+   roiYSize_ = ySize * scaleFactor_;
    return DEVICE_OK;
 }
 
@@ -537,11 +539,12 @@ int CTetheredCamera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySi
 */
 int CTetheredCamera::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize)
 {
-   int scaleFactor = GetBinning();
-   x = roiX_ / scaleFactor;
-   y = roiY_ / scaleFactor;
-   xSize = roiXSize_ / scaleFactor;
-   ySize = roiYSize_ / scaleFactor;
+   if (scaleFactor_ == 0)
+      scaleFactor_ = 1;
+   x = roiX_ / scaleFactor_;
+   y = roiY_ / scaleFactor_;
+   xSize = roiXSize_ / scaleFactor_;
+   ySize = roiYSize_ / scaleFactor_;
    if ((roiX_ == 0) && (roiY_ == 0) && (roiXSize_ == 0) && (roiYSize_ == 0)) // Select whole image
    {
       x = 0;
@@ -1111,15 +1114,16 @@ int CTetheredCamera::ResizeImageBuffer()
    UINT scaledWidth = 0;
    UINT scaledHeight = 0;
    
-   int scaleFactor = GetBinning();
-   if (scaleFactor <= 0) 
+   scaleFactor_ = GetBinning();
+
+   if (scaleFactor_ <= 0) 
    {
       LogMessage("Error: Binning value", true);
       return ERR_CAM_CONVERSION;
    }
 
-   scaledWidth = frameWidth / scaleFactor;
-   scaledHeight = frameHeight / scaleFactor;
+   scaledWidth = frameWidth / scaleFactor_;
+   scaledHeight = frameHeight / scaleFactor_;
 
    IWICBitmapScaler *scaler = NULL;
    if (SUCCEEDED(hr))
@@ -1174,10 +1178,10 @@ int CTetheredCamera::ResizeImageBuffer()
    }
    
    // Apply binning to region of interest
-   UINT clipX = roiX_ / scaleFactor;
-   UINT clipY = roiY_  / scaleFactor;
-   UINT clipHeight = roiYSize_  / scaleFactor;
-   UINT clipWidth = roiXSize_  / scaleFactor;
+   UINT clipX = roiX_ / scaleFactor_;
+   UINT clipY = roiY_  / scaleFactor_;
+   UINT clipHeight = roiYSize_  / scaleFactor_;
+   UINT clipWidth = roiXSize_  / scaleFactor_;
 
    if ((clipWidth == 0) || (clipHeight == 0)
       || (clipX + clipWidth > transposedWidth) || (clipY + clipHeight > transposedHeight))
@@ -1190,8 +1194,8 @@ int CTetheredCamera::ResizeImageBuffer()
    }
 
    // Save coordinates of ROI lower left pixel 
-   originX_ = clipX * scaleFactor;
-   originY_ = clipY * scaleFactor;
+   originX_ = clipX * scaleFactor_;
+   originY_ = clipY * scaleFactor_;
 
    IWICBitmapClipper *clipper = NULL;
 
