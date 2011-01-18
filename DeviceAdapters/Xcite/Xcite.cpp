@@ -33,6 +33,7 @@
 #include "../../MMDevice/ModuleInterface.h"
 #include <sstream>
 #include <iostream>
+#include <cstdio>
 
 
 const char* g_Xcite120PCName                = "X-Cite120PC";
