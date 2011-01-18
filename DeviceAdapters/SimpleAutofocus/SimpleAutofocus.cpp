@@ -34,7 +34,7 @@
 #include <string>
 #include <math.h>
 #include <sstream>
-#include <algorithm>
+      
 
 #include "../../MMDevice/ModuleInterface.h"
 #include "../../MMCore/Error.h"

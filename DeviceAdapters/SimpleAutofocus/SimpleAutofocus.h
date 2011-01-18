@@ -32,6 +32,7 @@
 #include <vector>
 #include <math.h>
 #include <queue>
+#include <algorithm>
 
 
 #define ERR_IP_NO_AF_DEVICE   10100
