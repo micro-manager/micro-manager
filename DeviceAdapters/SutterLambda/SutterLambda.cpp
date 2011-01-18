@@ -25,6 +25,8 @@
 #endif
 
 #include "SutterLambda.h"
+#include <vector>
+#include <memory>
 #include <cstdio>
 #include <string>
 #include <math.h>
@@ -113,6 +115,7 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
       Shutter* pShutter = new Shutter(g_ShutterBName, 1);
       return pShutter;
    }
+#ifdef DefineShutterOnTenDashTwo
    else if (strcmp(deviceName, g_ShutterAName10dash2) == 0)
    {
       // create Shutter A
@@ -125,6 +128,7 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
       ShutterOnTenDashTwo* pShutter = new ShutterOnTenDashTwo(g_ShutterBName10dash2, 1);
       return pShutter;
    }
+#endif
    else if (strcmp(deviceName, g_DG4ShutterName) == 0)
    {
       // create DG4 shutter
@@ -1165,7 +1169,7 @@ int Shutter::OnND(MM::PropertyBase* pProp, MM::ActionType eAct)
 ///////////////////////////////////////////////////////////////////////////////
 // Shutter implementation
 // ~~~~~~~~~~~~~~~~~~~~~~~
-
+#ifdef DefineShutterOnTenDashTwo
 ShutterOnTenDashTwo::ShutterOnTenDashTwo(const char* name, int id) :
    initialized_(false), 
    id_(id), 
@@ -1493,7 +1497,7 @@ int ShutterOnTenDashTwo::OnMode(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-
+#endif
 
 
 ///////////////////////////////////////////////////////////////////////////////

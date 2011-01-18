@@ -140,6 +140,7 @@ private:
    Shutter& operator=(Shutter& /*rhs*/) {assert(false); return *this;}
 };
 
+#ifdef DefineShutterOnTenDashTwo 
 class ShutterOnTenDashTwo : public CShutterBase<ShutterOnTenDashTwo>
 {
 public:
@@ -177,7 +178,7 @@ private:
    ShutterOnTenDashTwo& operator=(ShutterOnTenDashTwo& /*rhs*/) {assert(false); return *this;}
 };
 
-
+#endif
 
 class DG4Wheel : public CStateDeviceBase<DG4Wheel>
 {
