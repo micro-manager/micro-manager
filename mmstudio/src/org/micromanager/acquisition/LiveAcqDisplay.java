@@ -203,11 +203,11 @@ public class LiveAcqDisplay extends Thread {
       try {
          while (true) {
             TaggedImage image = imageProducingQueue_.poll(1, TimeUnit.SECONDS);
-            imageCount++;
             if (image != null) {
                if (TaggedImageQueue.isPoison(image)) {
                   break;
                }
+               ++imageCount;
                imageCache_.putImage(image);
                displayImage(image);
             }

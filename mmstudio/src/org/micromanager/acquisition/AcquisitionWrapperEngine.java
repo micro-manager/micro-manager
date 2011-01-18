@@ -86,6 +86,10 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       runPipeline(gatherSequenceSettings());
    }
 
+   public Pipeline getPipeline() {
+      return pipeline_;
+   }
+
    public void runPipeline(SequenceSettings acquisitionSettings) {
       try {
          createPipelineThread_.join();

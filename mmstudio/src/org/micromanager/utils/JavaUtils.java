@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -23,6 +24,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
@@ -355,4 +358,47 @@ public class JavaUtils {
              - r.totalMemory() // current size of heap (<= r.maxMemory())
              + r.freeMemory(); // how much of currently allocated heap is unused
    }
+
+   /**
+    * Borrowed from Java 1.6 java.utils.Arrays
+    *
+    * Copies elements in original array to a new array, from index
+    * start(inclusive) to end(exclusive). The first element (if any) in the new
+    * array is original[from], and other elements in the new array are in the
+    * original order. The padding value whose index is bigger than or equal to
+    * original.length - start is null.
+    *
+    * @param <T>
+    *            type of element in array
+    *
+    * @param original
+    *            the original array
+    * @param start
+    *            the start index, inclusive
+    * @param end
+    *            the end index, exclusive, may bigger than length of the array
+    * @return the new copied array
+    * @throws ArrayIndexOutOfBoundsException
+    *             if start is smaller than 0 or bigger than original.length
+    * @throws IllegalArgumentException
+    *             if start is bigger than end
+    * @throws NullPointerException
+    *             if original is null
+    *
+    */
+   @SuppressWarnings("unchecked")
+   public static <T> T[] copyOfRange(T[] original, int start, int end) {
+      if (original.length >= start && 0 <= start) {
+         if (start <= end) {
+            int length = end - start;
+            int copyLength = Math.min(length, original.length - start);
+            T[] copy = (T[]) Array.newInstance(original.getClass().getComponentType(), length);
+            System.arraycopy(original, start, copy, 0, copyLength);
+            return copy;
+         }
+         throw new IllegalArgumentException();
+      }
+      throw new ArrayIndexOutOfBoundsException();
+   }
+
 }

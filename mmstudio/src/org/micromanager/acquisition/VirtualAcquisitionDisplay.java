@@ -60,7 +60,7 @@ public class VirtualAcquisitionDisplay {
    private ChannelDisplaySettings[] channelSettings_;
    private int latestFrame_ = 0;
 
-   VirtualAcquisitionDisplay(String dir, boolean newData, boolean diskCached) {
+   public VirtualAcquisitionDisplay(String dir, boolean newData, boolean diskCached) {
       dir_ = dir;
       newData_ = newData;
       diskCached_ = diskCached;
@@ -165,9 +165,6 @@ public class VirtualAcquisitionDisplay {
          if (hyperImage_ == null) {
             show(pos);
          }
-         if (numPositions_ == 1 && numChannels_ == 1 && numSlices_ == 1 && numFrames_ == 1) {
-            hyperImage_.setProcessor(virtualStack_.getProcessor(1));
-         }
 
          if (hyperImage_.getSlice() == 1) {
             hyperImage_.getProcessor().setPixels(hyperImage_.getStack().getPixels(1));
@@ -235,8 +232,18 @@ public class VirtualAcquisitionDisplay {
    }
 
    public void setNumPositions(int p) {
+      ImageWindow win = hyperImage_.getWindow();
+      if (numPositions_ == 1 && p > 1)
+         win.add(pSelector_,win.getComponentCount()-1);
+      else if (numPositions_ > 1 && p == 1)
+         win.remove(pSelector_);
+      win.pack();
       numPositions_ = p;
       pSelector_.setMaximum(numPositions_+1);
+   }
+
+   public void incrementNumPositions() {
+      setNumPositions(numPositions_ + 1);
    }
 
    private void updatePosition(int p) {
@@ -766,5 +773,6 @@ public class VirtualAcquisitionDisplay {
    public boolean getDiskCached() {
       return diskCached_;
    }
+   
 
 }

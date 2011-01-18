@@ -378,7 +378,7 @@
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" attributes="0">
                           <Component id="imageCommentsLabel" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace pref="400" max="32767" attributes="0"/>
+                          <EmptySpace min="-2" pref="400" max="-2" attributes="0"/>
                       </Group>
                       <Component id="imageCommentsScrollPane" alignment="0" pref="539" max="32767" attributes="0"/>
                   </Group>
@@ -387,8 +387,8 @@
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" alignment="0" attributes="0">
                           <Component id="imageCommentsLabel" min="-2" max="-2" attributes="0"/>
-                          <EmptySpace max="-2" attributes="0"/>
-                          <Component id="imageCommentsScrollPane" pref="261" max="32767" attributes="0"/>
+                          <EmptySpace min="-2" pref="0" max="-2" attributes="0"/>
+                          <Component id="imageCommentsScrollPane" pref="269" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>

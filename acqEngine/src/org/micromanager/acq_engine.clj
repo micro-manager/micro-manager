@@ -128,7 +128,7 @@
 
 ;; metadata
     
-(defn annotate-image [img event]
+(defn annotate-image [img event state]
   (TaggedImage. img (JSONObject.
     (merge
       (map-config (core getSystemStateCache))
@@ -137,10 +137,10 @@
        "Binning" (core getProperty (core getCameraDevice) "Binning")
        "Channel" (get-in event [:channel :name])
        "ChannelIndex" (:channel-index event)
-       "ElapsedTime-ms" (- (clock-ms) (@state :start-time))
+       "ElapsedTime-ms" (if (state :start-time) (- (clock-ms) (state :start-time)))
        "Exposure-ms" (:exposure event)
        "Frame" (:frame-index event)
-       "Height" (@state :init-height)
+       "Height" (state :init-height)
        "PixelSizeUm" (core getPixelSizeUm)
        "PixelType" (get-pixel-type)
        "PositionIndex" (:position-index event)
@@ -150,8 +150,8 @@
        "Source" (core getCameraDevice)
        "Time" (get-current-time-str)
        "UUID" (UUID/randomUUID)
-       "Width"  (@state :init-width)
-       "ZPositionUm" (@state :last-z-position)
+       "Width"  (state :init-width)
+       "ZPositionUm" (state :last-z-position)
       }))))
 
 ;; acq-engine
@@ -254,8 +254,8 @@
   (let [image (condp = (:task event)
                 :snap (collect-snap-image)
                 :init-burst (collect-burst-image)
-          :collect-burst (collect-burst-image))]
-    (.put out-queue (annotate-image image event))))
+                :collect-burst (collect-burst-image))]
+    (.put out-queue (annotate-image image event @state))))
  
 (defn compute-z-position [event]
   (if-let [z-drive (:z-drive event)]
@@ -315,26 +315,28 @@
              (not (core isContinuousFocusEnabled)))
     (core enableContinuousFocus true))
   (return-config))
+
+(defn prepare-state [this]
+  (let [z (get-z-stage-position (core getFocusDevice))]
+	  (swap! (.state this) assoc
+			:pause false
+			:stop false
+			:running true
+			:last-wake-time (clock-ms)
+			:last-z-position z
+			:reference-z-position z
+			:start-time (clock-ms)
+			:init-auto-shutter (core getAutoShutter)
+			:init-exposure (core getExposure)
+			:init-z-position z
+			:init-system-state (get-system-config-cached)
+			:init-continuous-focus (core isContinuousFocusEnabled)
+			:init-width (core getImageWidth)
+			:init-height (core getImageHeight))))
   
 (defn run-acquisition [this settings out-queue] 
   (def acq-settings settings)
-  (let [z (get-z-stage-position (core getFocusDevice))]
-    (swap! (.state this) assoc
-      :pause false
-      :stop false
-      :running true
-      :last-wake-time (clock-ms)
-      :last-z-position z
-      :reference-z-position z
-      :start-time (clock-ms)
-      :init-auto-shutter (core getAutoShutter)
-      :init-exposure (core getExposure)
-      :init-z-position z
-      :init-system-state (get-system-config-cached)
-      :init-continuous-focus (core isContinuousFocusEnabled)
-      :init-width (core getImageWidth)
-      :init-height (core getImageHeight)
-      ))
+  (prepare-state this)
   (binding [state (.state this)]
     (def last-state state)
     (let [acq-seq (generate-acq-sequence settings)]
@@ -342,8 +344,7 @@
        (prepare)
        (execute (mapcat #(make-event-fns % out-queue) acq-seq))
        (.put out-queue TaggedImageQueue/POISON)
-       (cleanup)
-       )))
+       (cleanup))))
 
 (defn convert-settings [^SequenceSettings settings]
   (-> settings
@@ -362,6 +363,18 @@
     (assoc :frames (range (.numFrames settings))
            :channels (filter :use-channel (map ChannelSpec-to-map (.channels settings)))
            :positions (range (.. settings positions size)))))
+
+(defn acquire-single []
+  (core snapImage)
+  (let [event {:close-shutter true, :frame-index 0, :position 0, :position-index 0,
+               :slice 0.0, :autofocus false, :channel-index 0, :slice-index 0, :frame 0
+               :channel {:name (core getCurrentConfig (core getChannelGroup))},
+               :exposure 10.0, :relative-z true,
+               :task :snap, :z-drive "Z", :wait-time-ms 0}
+        w (core getImageWidth)
+        h (core getImageHeight)
+        state {:init-width w :init-height h}]
+    (annotate-image (collect-snap-image) event state)))
 
 ;; java interop
 
@@ -417,6 +430,15 @@
 (defn -nextWakeTime [this]
   (or (:next-wake-time @(.state this)) -1))
 
+(defn -acquireSingle [this]
+  (prepare-state this)
+  (let [out-queue (GentleLinkedBlockingQueue.)
+        event {:close-shutter true, :frame-index 0, :position-index 0,
+               :autofocus false, :channel-index 0, :slice-index 0,
+               :exposure nil, :relative-z true, :task :snap, :z-drive "Z",
+               :wait-time-ms 0}]
+    (execute (make-event-fns event out-queue))
+    (cleanup)))
 
 ;; testing
 

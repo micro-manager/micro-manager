@@ -335,15 +335,15 @@ public class MetadataPanel extends javax.swing.JPanel
          imageCommentsPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(imageCommentsPanelLayout.createSequentialGroup()
             .add(imageCommentsLabel)
-            .addContainerGap(400, Short.MAX_VALUE))
+            .add(400, 400, 400))
          .add(imageCommentsScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 539, Short.MAX_VALUE)
       );
       imageCommentsPanelLayout.setVerticalGroup(
          imageCommentsPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(imageCommentsPanelLayout.createSequentialGroup()
             .add(imageCommentsLabel)
-            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-            .add(imageCommentsScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 261, Short.MAX_VALUE))
+            .add(0, 0, 0)
+            .add(imageCommentsScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 269, Short.MAX_VALUE))
       );
 
       CommentsSplitPane.setRightComponent(imageCommentsPanel);
