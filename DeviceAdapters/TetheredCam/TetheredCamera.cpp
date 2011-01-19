@@ -196,7 +196,7 @@ CTetheredCamera::CTetheredCamera() :
    initialized_(false),
    cameraName_(""),
    frameBitmap(NULL),
-   grayScale_(false),
+   grayScale_(true),
    keepOriginals_(false),
    roiX_(0),
    roiY_(0),
@@ -422,10 +422,10 @@ const unsigned int* CTetheredCamera::GetImageBufferAsRGB32()
 */
 unsigned int CTetheredCamera::GetNumberOfChannels() const
 {
-   if (grayScale_)
-      return 1;
+   if (img_.Depth() == 1)
+      return 1; // grayscale
    else
-      return 3;
+      return 3; // rgb
 }
 
 /**
@@ -433,7 +433,7 @@ unsigned int CTetheredCamera::GetNumberOfChannels() const
 */
 int CTetheredCamera::GetChannelName(unsigned int channel, char* name)
 {
-   if (grayScale_)
+   if (img_.Depth() == 1)
    {
       if (channel == 0)
          CDeviceUtils::CopyLimitedString(name, "Grayscale");
