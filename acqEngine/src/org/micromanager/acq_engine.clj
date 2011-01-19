@@ -321,21 +321,21 @@
 
 (defn prepare-state [this]
   (let [z (get-z-stage-position (core getFocusDevice))]
-	  (swap! (.state this) assoc
-			:pause false
-			:stop false
-			:running true
-			:last-wake-time (clock-ms)
-			:last-z-position z
-			:reference-z-position z
-			:start-time (clock-ms)
-			:init-auto-shutter (core getAutoShutter)
-			:init-exposure (core getExposure)
-			:init-z-position z
-			:init-system-state (get-system-config-cached)
-			:init-continuous-focus (core isContinuousFocusEnabled)
-			:init-width (core getImageWidth)
-			:init-height (core getImageHeight))))
+    (swap! (.state this) assoc
+      :pause false
+      :stop false
+      :running true
+      :last-wake-time (clock-ms)
+      :last-z-position z
+      :reference-z-position z
+      :start-time (clock-ms)
+      :init-auto-shutter (core getAutoShutter)
+      :init-exposure (core getExposure)
+      :init-z-position z
+      :init-system-state (get-system-config-cached)
+      :init-continuous-focus (core isContinuousFocusEnabled)
+      :init-width (core getImageWidth)
+      :init-height (core getImageHeight))))
   
 (defn run-acquisition [this settings out-queue] 
   (def acq-settings settings)
@@ -372,47 +372,47 @@
   (get {1 ImagePlus/GRAY8 2 ImagePlus/GRAY16 4 ImagePlus/COLOR_RGB 8 64} depth))
 
 (defn get-z-step-um [slices]
-	(if (and slices (< 1 (count slices)))
-	  (- (second slices) (first slices))
-	  0))   
+  (if (and slices (< 1 (count slices)))
+    (- (second slices) (first slices))
+    0))   
 
 (defn make-summary-metadata [settings]
   (let [depth (int (core getBytesPerPixel))
         channels (settings :channels)]
-	   (JSONObject. {"Channels" (count (settings :channels))
-	    "ChNames" (JSONArray. (map :name channels))
-	    "ChColors" (JSONArray. (map #(.getRGB (:color %)) channels))
-	    "ChContrastMax" (JSONArray. (repeat (count channels) Integer/MIN_VALUE))
-	    "ChContrastMin" (JSONArray. (repeat (count channels) Integer/MAX_VALUE))
-			"Comment" (settings :comment)
-			"ComputerName" (.. InetAddress getLocalHost getHostName)
-			"Depth" (core getBytesPerPixel)
-			"Frames" (count (settings :frames))
-			"GridColumn" 0
-			"GridRow" 0
-			"Height" (core getImageHeight)
-			"Interval_ms" (settings :interval-ms)
-			"IntervalMs" (settings :interval-ms)
-			"IJType" (get-IJ-type depth)
-			"KeepShutterOpenChannels" (settings :keep-shutter-open-channels)
-			"KeepShutterOpenSlices" (settings :keep-shutter-open-slices)
-			"MetadataVersion" 10
-			"PixelAspect" 1.0
-			"PixelSize_um" (core getPixelSizeUm)
-			"PixelType" (get-pixel-type)
-			"Positions" (count (settings :positions))
-			"Prefix" (if (settings :save) (settings :prefix))
-			"Directory" (if (settings :save) (settings :root))
-			"Slices" (count (settings :slices))
-			"SlicesFirst" (settings :slices-first)
-			"Source" "Micro-Manager"
-			"TimeFirst" (settings :time-first)
-		  "UserName" (System/getProperty "user.name")
-		  "UUID" (UUID/randomUUID)
-		  "Width" (core getImageWidth)
-			"z-step_um" (get-z-step-um (settings :slices))
-	   })))
-	   		
+     (JSONObject. {"Channels" (count (settings :channels))
+      "ChNames" (JSONArray. (map :name channels))
+      "ChColors" (JSONArray. (map #(.getRGB (:color %)) channels))
+      "ChContrastMax" (JSONArray. (repeat (count channels) Integer/MIN_VALUE))
+      "ChContrastMin" (JSONArray. (repeat (count channels) Integer/MAX_VALUE))
+      "Comment" (settings :comment)
+      "ComputerName" (.. InetAddress getLocalHost getHostName)
+      "Depth" (core getBytesPerPixel)
+      "Frames" (count (settings :frames))
+      "GridColumn" 0
+      "GridRow" 0
+      "Height" (core getImageHeight)
+      "Interval_ms" (settings :interval-ms)
+      "IntervalMs" (settings :interval-ms)
+      "IJType" (get-IJ-type depth)
+      "KeepShutterOpenChannels" (settings :keep-shutter-open-channels)
+      "KeepShutterOpenSlices" (settings :keep-shutter-open-slices)
+      "MetadataVersion" 10
+      "PixelAspect" 1.0
+      "PixelSize_um" (core getPixelSizeUm)
+      "PixelType" (get-pixel-type)
+      "Positions" (count (settings :positions))
+      "Prefix" (if (settings :save) (settings :prefix))
+      "Directory" (if (settings :save) (settings :root))
+      "Slices" (count (settings :slices))
+      "SlicesFirst" (settings :slices-first)
+      "Source" "Micro-Manager"
+      "TimeFirst" (settings :time-first)
+      "UserName" (System/getProperty "user.name")
+      "UUID" (UUID/randomUUID)
+      "Width" (core getImageWidth)
+      "z-step_um" (get-z-step-um (settings :slices))
+     })))
+         
 (defn acquire-single [position-index]
   (core snapImage)
   (let [w (core getImageWidth)
@@ -476,10 +476,10 @@
     (log @state)))
   
 (defn -isRunning [this]
-  (:running @(.state this)))	
+  (:running @(.state this)))  
 
 (defn -isPaused [this]
-  (:pause @(.state this)))	
+  (:pause @(.state this)))  
 
 (defn -stopHasBeenRequested [this]
   (:stop @(.state this)))
