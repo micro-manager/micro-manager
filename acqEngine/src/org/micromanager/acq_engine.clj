@@ -396,6 +396,7 @@
       "IJType" (get-IJ-type depth)
       "KeepShutterOpenChannels" (settings :keep-shutter-open-channels)
       "KeepShutterOpenSlices" (settings :keep-shutter-open-slices)
+      "MicroManagerVersion" (.getVersion gui)
       "MetadataVersion" 10
       "PixelAspect" 1.0
       "PixelSize_um" (core getPixelSizeUm)
