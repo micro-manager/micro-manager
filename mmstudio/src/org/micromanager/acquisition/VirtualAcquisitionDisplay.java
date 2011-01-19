@@ -649,8 +649,6 @@ public class VirtualAcquisitionDisplay {
 
    public String[] getChannelNames() {
       if (hyperImage_ instanceof CompositeImage) {
-         AcquisitionVirtualStack stack = (AcquisitionVirtualStack) hyperImage_.getStack();
-
          int nChannels = hyperImage_.getNChannels();
          String[] chanNames = new String[nChannels];
          for (int i = 0; i < nChannels; ++i) {

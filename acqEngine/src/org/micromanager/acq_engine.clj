@@ -26,12 +26,14 @@
            [org.micromanager.navigation MultiStagePosition StagePosition]
            [mmcorej TaggedImage Configuration]
            [java.util.prefs Preferences]
+           [java.net InetAddress]
            [java.util.concurrent TimeUnit CountDownLatch]
            [org.micromanager.utils ChannelSpec GentleLinkedBlockingQueue MDUtils
                                    ReportingUtils]
-           [org.json JSONObject]
+           [org.json JSONObject JSONArray]
            [java.util Date UUID]
            [java.text SimpleDateFormat]
+           [ij ImagePlus]
            )
    (:gen-class
      :name org.micromanager.AcqEngine
@@ -88,6 +90,7 @@
       :doZStack_               :use-z-stack
       :skipFactorFrame_        :skip-frames
       :useChannel_             :use-channel
+      :color_                  :color
     )
     (assoc :properties (get-config (core getChannelGroup) (.config_ chan)))))
 
@@ -364,16 +367,69 @@
            :channels (filter :use-channel (map ChannelSpec-to-map (.channels settings)))
            :positions (range (.. settings positions size)))))
 
-(defn acquire-single []
+
+(defn get-IJ-type [depth]
+  (get {1 ImagePlus/GRAY8 2 ImagePlus/GRAY16 4 ImagePlus/COLOR_RGB 8 64} depth))
+
+(defn get-z-step-um [slices]
+	(if (and slices (< 1 (count slices)))
+	  (- (second slices) (first slices))
+	  0))   
+
+(defn make-summary-metadata [settings]
+  (let [depth (int (core getBytesPerPixel))
+        channels (settings :channels)]
+	   (JSONObject. {"Channels" (count (settings :channels))
+	    "ChNames" (JSONArray. (map :name channels))
+	    "ChColors" (JSONArray. (map #(.getRGB (:color %)) channels))
+	    "ChContrastMax" (JSONArray. (repeat (count channels) Integer/MIN_VALUE))
+	    "ChContrastMin" (JSONArray. (repeat (count channels) Integer/MAX_VALUE))
+			"Comment" (settings :comment)
+			"ComputerName" (.. InetAddress getLocalHost getHostName)
+			"Depth" (core getBytesPerPixel)
+			"Frames" (count (settings :frames))
+			"GridColumn" 0
+			"GridRow" 0
+			"Height" (core getImageHeight)
+			"Interval_ms" (settings :interval-ms)
+			"IntervalMs" (settings :interval-ms)
+			"IJType" (get-IJ-type depth)
+			"KeepShutterOpenChannels" (settings :keep-shutter-open-channels)
+			"KeepShutterOpenSlices" (settings :keep-shutter-open-slices)
+			"MetadataVersion" 10
+			"PixelAspect" 1.0
+			"PixelSize_um" (core getPixelSizeUm)
+			"PixelType" (get-pixel-type)
+			"Positions" (count (settings :positions))
+			"Prefix" (if (settings :save) (settings :prefix))
+			"Directory" (if (settings :save) (settings :root))
+			"Slices" (count (settings :slices))
+			"SlicesFirst" (settings :slices-first)
+			"Source" "Micro-Manager"
+			"TimeFirst" (settings :time-first)
+		  "UserName" (System/getProperty "user.name")
+		  "UUID" (UUID/randomUUID)
+		  "Width" (core getImageWidth)
+			"z-step_um" (get-z-step-um (settings :slices))
+	   })))
+	   		
+(defn acquire-single [position-index]
   (core snapImage)
-  (let [event {:close-shutter true, :frame-index 0, :position 0, :position-index 0,
-               :slice 0.0, :autofocus false, :channel-index 0, :slice-index 0, :frame 0
-               :channel {:name (core getCurrentConfig (core getChannelGroup))},
-               :exposure 10.0, :relative-z true,
-               :task :snap, :z-drive "Z", :wait-time-ms 0}
-        w (core getImageWidth)
+  (let [w (core getImageWidth)
         h (core getImageHeight)
-        state {:init-width w :init-height h}]
+        summary {:interval-ms 0.0, :use-autofocus false, :autofocus-skip 0,
+                 :relative-slices true, :keep-shutter-open-slices false, :comment "",
+                 :prefix "Untitled", :root "/Users/arthur/AcquisitionData", 
+                 :time-first false, :positions (), :channels (), :slices-first true,
+                 :slices nil, :numFrames 0, :keep-shutter-open-channels false,
+                 :zReference 0.0, :frames (), :save false}
+        event   {:position-index position-index, :position position-index,
+                 :frame-index 0, :slice 0.0, :channel-index 0, :slice-index 0, :frame 0
+                 :channel {:name (core getCurrentConfig (core getChannelGroup))},
+                 :exposure (core getExposure), :relative-z true,
+                 :task :snap, :z-drive (core getFocusDevice), :wait-time-ms 0}
+        state   {:init-width w :init-height h}]
+    ;(let [cache (MMImageCache. ] 
     (annotate-image (collect-snap-image) event state)))
 
 ;; java interop
@@ -381,19 +437,20 @@
 (defn -init []
   [[] (atom {:running false :stop false})])
 
-(defn -run [this settings acq-eng]
+(defn -run [this acq-settings acq-eng]
   ;(def last-acq this)
   (def eng acq-eng)
   (load-mm)
   (create-device-agents)
   (swap! (.state this) assoc :stop false :pause false) 
   (let [out-queue (GentleLinkedBlockingQueue.)
+        settings (convert-settings acq-settings)
         acq-thread (Thread. #(run-acquisition this 
-          (convert-settings settings) out-queue))
+          settings out-queue))
         processors (ProcessorStack. out-queue (.getTaggedImageProcessors acq-eng)) 
-        out-queue-2 (.begin processors) 
-        display (LiveAcqDisplay. mmc out-queue-2 settings (.channels settings)
-          (.save settings) acq-eng)]
+        out-queue-2 (.begin processors)
+        display (LiveAcqDisplay. mmc out-queue-2 (make-summary-metadata settings)
+                  (:save settings) acq-eng)]
     (def outq out-queue)
     ;(.addImageProcessor acq-eng
       ;(proxy [TaggedImageAnalyzer] []
