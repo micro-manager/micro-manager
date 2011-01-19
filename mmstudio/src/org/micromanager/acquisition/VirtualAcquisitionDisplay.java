@@ -60,7 +60,8 @@ public class VirtualAcquisitionDisplay {
    private ChannelDisplaySettings[] channelSettings_;
    private int latestFrame_ = 0;
 
-   public VirtualAcquisitionDisplay(String dir, boolean newData, boolean diskCached) {
+   public VirtualAcquisitionDisplay(String dir, boolean newData,
+           boolean diskCached) {
       dir_ = dir;
       newData_ = newData;
       diskCached_ = diskCached;
@@ -160,22 +161,18 @@ public class VirtualAcquisitionDisplay {
    public void showImage(TaggedImage taggedImg) throws MMScriptException {
 
       try {
-         int pos = MDUtils.getPositionIndex(taggedImg.tags);
-
-         if (hyperImage_ == null) {
-            show(pos);
-         }
-
          if (hyperImage_.getSlice() == 1) {
-            hyperImage_.getProcessor().setPixels(hyperImage_.getStack().getPixels(1));
+            hyperImage_.getProcessor().setPixels(
+                    hyperImage_.getStack().getPixels(1));
          }
 
          updateWindow();
          JSONObject md = taggedImg.tags;
 
          try {
-            pSelector_.setValue(1 + pos);
-            hyperImage_.setPosition(1 + MDUtils.getChannelIndex(md), 1 + MDUtils.getSliceIndex(md), 1 + MDUtils.getFrameIndex(md));
+            pSelector_.setValue(1 + MDUtils.getPositionIndex(taggedImg.tags));
+            hyperImage_.setPosition(1 + MDUtils.getChannelIndex(md),
+                 1 + MDUtils.getSliceIndex(md), 1 + MDUtils.getFrameIndex(md));
             //setPlaybackLimits(1, 1 + MDUtils.getFrameIndex(md));
          } catch (Exception e) {
             ReportingUtils.logError(e);
@@ -186,7 +183,9 @@ public class VirtualAcquisitionDisplay {
                int pixelMax = ImageUtils.getMax(taggedImg.pix);
                if (MDUtils.isRGB(taggedImg)) {
                   for (int i = 1; i <= numGrayChannels_; ++i) {
-                     (hyperImage_).setPosition(i, MDUtils.getSliceIndex(taggedImg.tags), MDUtils.getFrameIndex(taggedImg.tags));
+                     (hyperImage_).setPosition(i,
+                             MDUtils.getSliceIndex(taggedImg.tags),
+                             MDUtils.getFrameIndex(taggedImg.tags));
                      hyperImage_.setDisplayRange(pixelMin, pixelMax);
                      updateAndDraw();
                   }
@@ -330,13 +329,15 @@ public class VirtualAcquisitionDisplay {
          prefix = f.getName();
          root = new File(f.getParent()).getAbsolutePath();
          if (f.exists()) {
-            ReportingUtils.showMessage(prefix + " already exists! Please choose another name.");
+            ReportingUtils.showMessage(prefix
+                    + " already exists! Please choose another name.");
          } else {
             break;
          }
       }
 
-      TaggedImageStorageDiskDefault newFileManager = new TaggedImageStorageDiskDefault(root + "/" + prefix, true,
+      TaggedImageStorageDiskDefault newFileManager
+              = new TaggedImageStorageDiskDefault(root + "/" + prefix, true,
               summaryMetadata_);
       for (int i=0; i<numChannels_; i++) {
          writeChannelSettingsToCache(i);
@@ -422,7 +423,8 @@ public class VirtualAcquisitionDisplay {
       win.setBackground(MMStudioMainFrame.getInstance().getBackgroundColor());
       MMStudioMainFrame.getInstance().addMMBackgroundListener(win);
 
-      ScrollbarWithLabel positionSelector = createPositionScrollbar(numPositions_);
+      ScrollbarWithLabel positionSelector
+              = createPositionScrollbar(numPositions_);
       if (numPositions_ > 1) {
          win.add(positionSelector);
       }
@@ -439,10 +441,6 @@ public class VirtualAcquisitionDisplay {
       updateWindow();
    }
 
-   public void show(int position) {
-      hyperImage_.show();
-   }
-
    private ScrollbarWithLabel createPositionScrollbar(int nPositions) {
       pSelector_ = new ScrollbarWithLabel(null, 1, 1, 1, nPositions + 1, 'p') {
 
@@ -455,7 +453,8 @@ public class VirtualAcquisitionDisplay {
          }
       };
 
-      pSelector_.setFocusable(false); // prevents scroll bar from blinking on Windows
+      // prevents scroll bar from blinking on Windows:
+      pSelector_.setFocusable(false); 
       pSelector_.setUnitIncrement(1);
       pSelector_.setBlockIncrement(1);
       pSelector_.addAdjustmentListener(new AdjustmentListener() {
@@ -485,7 +484,8 @@ public class VirtualAcquisitionDisplay {
       writeChannelSettingsToCache(channel);
    }
 
-   public void setChannelDisplaySettings(int channel, ChannelDisplaySettings settings) {
+   public void setChannelDisplaySettings(int channel,
+                                           ChannelDisplaySettings settings) {
       setChannelLut(channel, settings.color, settings.gamma);
       setChannelDisplayRange(channel, settings.min, settings.max);
       channelSettings_[channel] = settings;
@@ -496,7 +496,8 @@ public class VirtualAcquisitionDisplay {
    }
 
    public void setChannelLut(int channel, Color color, double gamma) {
-      // Note: both hyperImage_ and channelSettings_ can be null when this function is called
+      // Note: both hyperImage_ and channelSettings_ can be
+      // null when this function is called
       // null pointer exception will ensue!
       if (hyperImage_ == null)
          return;
@@ -614,7 +615,8 @@ public class VirtualAcquisitionDisplay {
    public void setPlaybackFPS(double fps) {
       if (hyperImage_ != null) {
          try {
-            JavaUtils.setRestrictedFieldValue(null, Animator.class, "animationRate", (double) fps);
+            JavaUtils.setRestrictedFieldValue(null, Animator.class,
+                                                "animationRate", (double) fps);
          } catch (NoSuchFieldException ex) {
             ReportingUtils.showError(ex);
          }
@@ -624,8 +626,10 @@ public class VirtualAcquisitionDisplay {
    public void setPlaybackLimits(int firstFrame, int lastFrame) {
       if (hyperImage_ != null) {
          try {
-            JavaUtils.setRestrictedFieldValue(null, Animator.class, "firstFrame", firstFrame);
-            JavaUtils.setRestrictedFieldValue(null, Animator.class, "lastFrame", lastFrame);
+            JavaUtils.setRestrictedFieldValue(null, Animator.class,
+                                                "firstFrame", firstFrame);
+            JavaUtils.setRestrictedFieldValue(null, Animator.class,
+                                                "lastFrame", lastFrame);
          } catch (NoSuchFieldException ex) {
             ReportingUtils.showError(ex);
          }
@@ -681,8 +685,11 @@ public class VirtualAcquisitionDisplay {
       if (hyperImage_ == null) {
          return null;
       }
-      if (hyperImage_.isComposite() && ((CompositeImage) hyperImage_).getMode() == CompositeImage.COMPOSITE) {
-         ImageProcessor ip = ((CompositeImage) hyperImage_).getProcessor(channelIndex + 1);
+      if (hyperImage_.isComposite()
+           && ((CompositeImage) hyperImage_).getMode()
+                   == CompositeImage.COMPOSITE) {
+         ImageProcessor ip = ((CompositeImage) hyperImage_)
+                                .getProcessor(channelIndex + 1);
          if (ip == null)
             return null;
          return ip.getHistogram();
@@ -712,7 +719,8 @@ public class VirtualAcquisitionDisplay {
 
    private void readChannelSettingsFromCache(boolean updateDisplay) {
       try {
-         JSONArray channelsArray = imageCache_.getDisplaySettings().getJSONArray("Channels");
+         JSONArray channelsArray = imageCache_.getDisplaySettings()
+                                     .getJSONArray("Channels");
          for (int i = 0; i < channelSettings_.length; ++i) {
             try {
                JSONObject channel = channelsArray.getJSONObject(i);
