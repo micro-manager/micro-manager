@@ -380,37 +380,37 @@
   (let [depth (int (core getBytesPerPixel))
         channels (settings :channels)]
      (JSONObject. {
-			"Channels" (count (settings :channels))
-			"ChNames" (JSONArray. (map :name channels))
-			"ChColors" (JSONArray. (map #(.getRGB (:color %)) channels))
-			"ChContrastMax" (JSONArray. (repeat (count channels) Integer/MIN_VALUE))
-			"ChContrastMin" (JSONArray. (repeat (count channels) Integer/MAX_VALUE))
-			"Comment" (settings :comment)
-			"ComputerName" (.. InetAddress getLocalHost getHostName)
-			"Depth" (core getBytesPerPixel)
-			"Frames" (count (settings :frames))
-			"GridColumn" 0
-			"GridRow" 0
-			"Height" (core getImageHeight)
-			"Interval_ms" (settings :interval-ms)
-			"IJType" (get-IJ-type depth)
-			"KeepShutterOpenChannels" (settings :keep-shutter-open-channels)
-			"KeepShutterOpenSlices" (settings :keep-shutter-open-slices)
-			"MetadataVersion" 10
-			"PixelAspect" 1.0
-			"PixelSize_um" (core getPixelSizeUm)
-			"PixelType" (get-pixel-type)
-			"Positions" (count (settings :positions))
-			"Prefix" (if (settings :save) (settings :prefix))
-			"Directory" (if (settings :save) (settings :root))
-			"Slices" (count (settings :slices))
-			"SlicesFirst" (settings :slices-first)
-			"Source" "Micro-Manager"
-			"TimeFirst" (settings :time-first)
-			"UserName" (System/getProperty "user.name")
-			"UUID" (UUID/randomUUID)
-			"Width" (core getImageWidth)
-			"z-step_um" (get-z-step-um (settings :slices))
+      "Channels" (count (settings :channels))
+      "ChNames" (JSONArray. (map :name channels))
+      "ChColors" (JSONArray. (map #(.getRGB (:color %)) channels))
+      "ChContrastMax" (JSONArray. (repeat (count channels) Integer/MIN_VALUE))
+      "ChContrastMin" (JSONArray. (repeat (count channels) Integer/MAX_VALUE))
+      "Comment" (settings :comment)
+      "ComputerName" (.. InetAddress getLocalHost getHostName)
+      "Depth" (core getBytesPerPixel)
+      "Frames" (count (settings :frames))
+      "GridColumn" 0
+      "GridRow" 0
+      "Height" (core getImageHeight)
+      "Interval_ms" (settings :interval-ms)
+      "IJType" (get-IJ-type depth)
+      "KeepShutterOpenChannels" (settings :keep-shutter-open-channels)
+      "KeepShutterOpenSlices" (settings :keep-shutter-open-slices)
+      "MetadataVersion" 10
+      "PixelAspect" 1.0
+      "PixelSize_um" (core getPixelSizeUm)
+      "PixelType" (get-pixel-type)
+      "Positions" (count (settings :positions))
+      "Prefix" (if (settings :save) (settings :prefix))
+      "Directory" (if (settings :save) (settings :root))
+      "Slices" (count (settings :slices))
+      "SlicesFirst" (settings :slices-first)
+      "Source" "Micro-Manager"
+      "TimeFirst" (settings :time-first)
+      "UserName" (System/getProperty "user.name")
+      "UUID" (UUID/randomUUID)
+      "Width" (core getImageWidth)
+      "z-step_um" (get-z-step-um (settings :slices))
      })))
          
 (defn acquire-single [position-index]
