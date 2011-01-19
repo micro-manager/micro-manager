@@ -109,4 +109,6 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
       }
    }
 
+
+
 }

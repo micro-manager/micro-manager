@@ -75,7 +75,7 @@ public class MMAcquisitionV2 implements AcquisitionInterface {
 
    public MMAcquisitionV2(String name, String dir, boolean show) throws MMScriptException {
       this(name, dir, show, false, false);
-      virtAcq_.show(0);
+      virtAcq_.show();
       show_ = show;
    }
 
@@ -109,7 +109,7 @@ public class MMAcquisitionV2 implements AcquisitionInterface {
       if (show && diskCached && existing) {
          try {
             virtAcq_.initialize();
-            virtAcq_.show(0);
+            virtAcq_.show();
             // start loading all other images in a background thread
             PreLoadDataThread t = new PreLoadDataThread(virtAcq_);
             new Thread(t).start();
@@ -240,7 +240,7 @@ public class MMAcquisitionV2 implements AcquisitionInterface {
 
       virtAcq_.initialize();
       if (show_)
-         virtAcq_.show(0);
+         virtAcq_.show();
 
       initialized_ = true;
    }

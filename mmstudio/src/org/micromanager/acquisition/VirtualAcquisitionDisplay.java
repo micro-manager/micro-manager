@@ -779,6 +779,12 @@ public class VirtualAcquisitionDisplay {
    public boolean getDiskCached() {
       return diskCached_;
    }
-   
+
+
+   public void show() {
+      hyperImage_.show();
+   }
+
+
 
 }
