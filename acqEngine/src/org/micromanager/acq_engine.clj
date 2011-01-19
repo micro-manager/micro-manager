@@ -76,7 +76,7 @@
 
 (defn get-current-time-str []
   (. iso8601modified format (Date.)))
-    
+
 (defn get-pixel-type []
   (str ({1 "GRAY", 4 "RGB"} (int (core getNumberOfComponents))) (* 8 (core getBytesPerPixel))))
 
@@ -130,7 +130,7 @@
   (apply swap! state assoc args))
 
 ;; metadata
-    
+
 (defn annotate-image [img event state]
   (TaggedImage. img (JSONObject.
     (merge
@@ -196,10 +196,10 @@
 
 (defn set-property
   ([prop] (core setProperty (prop 0) (prop 1) (prop 2))))
-  
+
 (defn send-device-action [dev action]
   (send-off (device-agents dev) (fn [_] (action))))
-    
+
 (defn create-presnap-actions [event]
   (concat
     (for [[axis pos] (:axes (MultiStagePosition-to-map (get-msp (:position event)))) :when pos]
@@ -249,7 +249,7 @@
   (while (and (core isSequenceRunning) (zero? (core getRemainingImageCount)))
     (Thread/sleep 5))
   (core popNextImage))
-  
+
 (defn collect-snap-image []
   (core getImage))
 
@@ -259,7 +259,7 @@
                 :init-burst (collect-burst-image)
                 :collect-burst (collect-burst-image))]
     (.put out-queue (annotate-image image event @state))))
- 
+
 (defn compute-z-position [event]
   (if-let [z-drive (:z-drive event)]
     (+ (or (get-in event [:channel :z-offset]) 0)
@@ -268,7 +268,7 @@
          0
          (or (get-z-position (:position event) z-drive)
              (@state :reference-z-position))))))
-    
+
 (defn make-event-fns [event out-queue]
   (let [task (:task event)]
     (cond
@@ -276,7 +276,7 @@
         (list #(collect-image event out-queue))
       (or (= task :snap) (= task :init-burst))
         (list
-          #(log event)  
+          #(log event)
           #(when-let [wait-time-ms (event :wait-time-ms)]
             (acq-sleep wait-time-ms))
           #(run-actions (create-presnap-actions event))
@@ -298,7 +298,7 @@
 (defn return-config []
   (dorun (map set-property
     (clojure.set/difference
-      (set (@state :init-system-state)) 
+      (set (@state :init-system-state))
       (set (get-system-config-cached))))))
 
 (defn prepare []
@@ -336,8 +336,8 @@
       :init-continuous-focus (core isContinuousFocusEnabled)
       :init-width (core getImageWidth)
       :init-height (core getImageHeight))))
-  
-(defn run-acquisition [this settings out-queue] 
+
+(defn run-acquisition [this settings out-queue]
   (def acq-settings settings)
   (prepare-state this)
   (binding [state (.state this)]
@@ -374,7 +374,7 @@
 (defn get-z-step-um [slices]
   (if (and slices (< 1 (count slices)))
     (- (second slices) (first slices))
-    0))   
+    0))
 
 (defn make-summary-metadata [settings]
   (let [depth (int (core getBytesPerPixel))
@@ -413,14 +413,14 @@
       "Width" (core getImageWidth)
       "z-step_um" (get-z-step-um (settings :slices))
      })))
-         
+
 (defn acquire-single [position-index]
   (core snapImage)
   (let [w (core getImageWidth)
         h (core getImageHeight)
         summary {:interval-ms 0.0, :use-autofocus false, :autofocus-skip 0,
                  :relative-slices true, :keep-shutter-open-slices false, :comment "",
-                 :prefix "Untitled", :root "/Users/arthur/AcquisitionData", 
+                 :prefix "Untitled", :root "/Users/arthur/AcquisitionData",
                  :time-first false, :positions (), :channels (), :slices-first true,
                  :slices nil, :numFrames 0, :keep-shutter-open-channels false,
                  :zReference 0.0, :frames (), :save false}
@@ -430,7 +430,7 @@
                  :exposure (core getExposure), :relative-z true,
                  :task :snap, :z-drive (core getFocusDevice), :wait-time-ms 0}
         state   {:init-width w :init-height h}]
-    ;(let [cache (MMImageCache. ] 
+    ;(let [cache (MMImageCache. ]
     (annotate-image (collect-snap-image) event state)))
 
 ;; java interop
@@ -443,19 +443,19 @@
   (def eng acq-eng)
   (load-mm)
   (create-device-agents)
-  (swap! (.state this) assoc :stop false :pause false) 
+  (swap! (.state this) assoc :stop false :pause false)
   (let [out-queue (GentleLinkedBlockingQueue.)
         settings (convert-settings acq-settings)
-        acq-thread (Thread. #(run-acquisition this 
+        acq-thread (Thread. #(run-acquisition this
           settings out-queue))
-        processors (ProcessorStack. out-queue (.getTaggedImageProcessors acq-eng)) 
+        processors (ProcessorStack. out-queue (.getTaggedImageProcessors acq-eng))
         out-queue-2 (.begin processors)
         display (LiveAcqDisplay. mmc out-queue-2 (make-summary-metadata settings)
                   (:save settings) acq-eng)]
     (def outq out-queue)
     ;(.addImageProcessor acq-eng
       ;(proxy [TaggedImageAnalyzer] []
-        ;(analyze [img] (log "pretending to analyze")))) 
+        ;(analyze [img] (log "pretending to analyze"))))
     (when-not (:stop @(.state this))
       (.start acq-thread)
       (swap! (.state this) assoc :display display)
@@ -464,27 +464,27 @@
 (defn -pause [this]
   (log "pause requested!")
   (swap! (.state this) assoc :pause true))
-  
+
 (defn -resume [this]
   (log "resume requested!")
   (swap! (.state this) assoc :pause false))
-  
+
 (defn -stop [this]
   (log "stop requested!")
   (let [state (.state this)]
     (swap! state assoc :stop true)
     (do-when #(.countDown %) (:sleepy @state))
     (log @state)))
-  
+
 (defn -isRunning [this]
-  (:running @(.state this)))  
+  (:running @(.state this)))
 
 (defn -isPaused [this]
-  (:pause @(.state this)))  
+  (:pause @(.state this)))
 
 (defn -stopHasBeenRequested [this]
   (:stop @(.state this)))
-  
+
 (defn -nextWakeTime [this]
   (or (:next-wake-time @(.state this)) -1))
 
@@ -518,4 +518,4 @@
 (defn run-test []
   (test-dialog (create-acq-eng)))
 
-   
+
