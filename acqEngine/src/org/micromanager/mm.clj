@@ -70,6 +70,11 @@
     `(when (and ~@args_)
       (~f ~@args_))))
 
+(defmacro if-args [f & args]
+  (let [args_ args]
+    `(if (and ~@args_)
+      (~f ~@args_))))
+
 (defn get-default-devices []
   {:camera          (core getCameraDevice)
    :shutter         (core getShutterDevice)

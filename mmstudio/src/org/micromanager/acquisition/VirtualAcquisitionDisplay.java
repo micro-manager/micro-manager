@@ -118,6 +118,7 @@ public class VirtualAcquisitionDisplay {
       if (numChannels_ > 1) {
             ((CompositeImage) hyperImage_).setChannelsUpdated();
       }
+      //hyperImage_.setProcessor(hyperImage_.getStack().getProcessor(hyperImage_.getCurrentSlice()));
       hyperImage_.updateAndDraw();
    }
 
@@ -170,7 +171,11 @@ public class VirtualAcquisitionDisplay {
          JSONObject md = taggedImg.tags;
 
          try {
-            pSelector_.setValue(1 + MDUtils.getPositionIndex(taggedImg.tags));
+            int p = MDUtils.getPositionIndex(taggedImg.tags);
+            if (p >= this.getNumPositions()) {
+               this.setNumPositions(p + 1);
+            }
+            setPosition(1 + MDUtils.getPositionIndex(taggedImg.tags));
             hyperImage_.setPosition(1 + MDUtils.getChannelIndex(md),
                  1 + MDUtils.getSliceIndex(md), 1 + MDUtils.getFrameIndex(md));
             //setPlaybackLimits(1, 1 + MDUtils.getFrameIndex(md));

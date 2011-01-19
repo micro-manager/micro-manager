@@ -28,7 +28,7 @@ public class MMImageCache implements TaggedImageStorage {
    private JSONObject firstTags_;
    private HashMap<String, SoftReference<TaggedImage>> softTable_;
 
-   MMImageCache(TaggedImageStorage imageFileManager) {
+   public MMImageCache(TaggedImageStorage imageFileManager) {
       imageFileManager_ = imageFileManager;
       changingKeys_ = new HashSet<String>();
       softTable_ = new HashMap<String, SoftReference<TaggedImage>>();

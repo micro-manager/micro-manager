@@ -17,12 +17,13 @@
 (ns org.micromanager.acq-engine
   (:use [org.micromanager.mm :only [when-lets map-config get-config get-positions load-mm
                                     get-default-devices core log log-cmd mmc gui with-core-setting
-                                    do-when get-system-config-cached]]
+                                    do-when if-args get-system-config-cached]]
           [org.micromanager.sequence-generator :only [generate-acq-sequence]])
   (:import [org.micromanager AcqControlDlg]
            [org.micromanager.api AcquisitionEngine TaggedImageAnalyzer]
            [org.micromanager.acquisition AcquisitionWrapperEngine LiveAcqDisplay TaggedImageQueue
-                                         ProcessorStack SequenceSettings]
+                                         ProcessorStack SequenceSettings MMImageCache
+                                         TaggedImageStorageRam VirtualAcquisitionDisplay]
            [org.micromanager.navigation MultiStagePosition StagePosition]
            [mmcorej TaggedImage Configuration]
            [java.util.prefs Preferences]
@@ -140,14 +141,14 @@
        "Binning" (core getProperty (core getCameraDevice) "Binning")
        "Channel" (get-in event [:channel :name])
        "ChannelIndex" (:channel-index event)
-       "ElapsedTime-ms" (if (state :start-time) (- (clock-ms) (state :start-time)))
+       "ElapsedTime-ms" (if (state :start-time) (- (clock-ms) (state :start-time)) 0)
        "Exposure-ms" (:exposure event)
        "Frame" (:frame-index event)
        "Height" (state :init-height)
        "PixelSizeUm" (core getPixelSizeUm)
        "PixelType" (get-pixel-type)
        "PositionIndex" (:position-index event)
-       "PositionName" (if-let [pos (:position event)] (.getLabel (get-msp pos)))
+       "PositionName" (if-let [pos (:position event)] (if-args #(.getLabel %) (get-msp pos)))
        "Slice" (:slice-index event)
        "SlicePosition" (:slice event)
        "Source" (core getCameraDevice)
@@ -388,6 +389,7 @@
       "Comment" (settings :comment)
       "ComputerName" (.. InetAddress getLocalHost getHostName)
       "Depth" (core getBytesPerPixel)
+      "Directory" (if (settings :save) (settings :root) "")
       "Frames" (count (settings :frames))
       "GridColumn" 0
       "GridRow" 0
@@ -402,8 +404,7 @@
       "PixelSize_um" (core getPixelSizeUm)
       "PixelType" (get-pixel-type)
       "Positions" (count (settings :positions))
-      "Prefix" (if (settings :save) (settings :prefix))
-      "Directory" (if (settings :save) (settings :root))
+      "Prefix" (if (settings :save) (settings :prefix) "")
       "Slices" (count (settings :slices))
       "SlicesFirst" (settings :slices-first)
       "Source" "Micro-Manager"
@@ -413,6 +414,10 @@
       "Width" (core getImageWidth)
       "z-step_um" (get-z-step-um (settings :slices))
      })))
+
+;; acquire button
+
+(def current-acquire-win (atom nil))
 
 (defn acquire-single [position-index]
   (core snapImage)
@@ -424,14 +429,22 @@
                  :time-first false, :positions (), :channels (), :slices-first true,
                  :slices nil, :numFrames 0, :keep-shutter-open-channels false,
                  :zReference 0.0, :frames (), :save false}
-        event   {:position-index position-index, :position position-index,
+        event   {:position-index position-index, :position -1,
                  :frame-index 0, :slice 0.0, :channel-index 0, :slice-index 0, :frame 0
                  :channel {:name (core getCurrentConfig (core getChannelGroup))},
                  :exposure (core getExposure), :relative-z true,
                  :task :snap, :z-drive (core getFocusDevice), :wait-time-ms 0}
-        state   {:init-width w :init-height h}]
-    ;(let [cache (MMImageCache. ]
-    (annotate-image (collect-snap-image) event state)))
+        state   {:init-width w :init-height h}
+        summary-metadata (make-summary-metadata summary)
+        tagged-image (annotate-image (collect-snap-image) event state)]
+	  (if-not @current-acquire-win
+	    (let [cache (MMImageCache. (TaggedImageStorageRam. summary-metadata))
+	          display (doto (VirtualAcquisitionDisplay. "" true false)
+	                        (.setCache cache) .initialize)]
+	          (reset! current-acquire-win {:cache cache :display display})))
+	  (let [{:keys [display cache]} @current-acquire-win]
+      (.putImage cache tagged-image)
+      (doto display (.showImage tagged-image)))))
 
 ;; java interop
 

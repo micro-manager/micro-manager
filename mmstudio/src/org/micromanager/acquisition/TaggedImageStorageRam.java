@@ -24,7 +24,7 @@ public class TaggedImageStorageRam implements TaggedImageStorage {
    private String comment_;
    private JSONObject displaySettings_;
 
-   TaggedImageStorageRam(JSONObject summaryMetadata) {
+   public TaggedImageStorageRam(JSONObject summaryMetadata) {
       imageMap_ = new HashMap<String,TaggedImage>();
       summaryMetadata_ = summaryMetadata;
       displaySettings_ = new JSONObject();
