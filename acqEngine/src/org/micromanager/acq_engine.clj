@@ -423,11 +423,10 @@
 (def current-album (atom nil))
 
 (defn compatible-image? [album annotated-image]
-  (let [tags1 (:first-image-tags album)
-        tags2 (:tags annotated-image)
-        matching-keys ["Width" "Height" "PixelType"]]
-    (= (select-keys tags1 matching-keys)
-       (select-keys tags2 matching-keys))))
+  (select-values-match?
+    (:first-image-tags album)
+    (:tags annotated-image)
+    ["Width" "Height" "PixelType"]))
 
 (defn create-new-album [first-image]
   (let [summary {:interval-ms 0.0, :use-autofocus false, :autofocus-skip 0,

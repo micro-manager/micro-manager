@@ -105,3 +105,7 @@
 
 (defn get-allowed-property-values [dev prop]
   (seq (core getAllowedPropertyValues dev prop)))
+  
+(defn select-values-match? [map1 map2 keys]
+  (= (select-keys map1 keys)
+     (select-keys map2 keys)))

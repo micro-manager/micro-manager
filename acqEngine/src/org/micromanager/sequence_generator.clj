@@ -15,7 +15,7 @@
 ;               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
 (ns org.micromanager.sequence-generator
-  (:use [org.micromanager.mm :only [get-default-devices]]))
+  (:use [org.micromanager.mm :only [get-default-devices select-values-match?]]))
 
 (defstruct channel :name :exposure :z-offset :use-z-stack :skip-frames)
 
@@ -114,8 +114,7 @@
 (defn burst-valid [e1 e2]
   (and
     (#(or (nil? %) (zero? %)) (:wait-time-ms e2))
-    (let [k [:exposure :position :slice :channel]]
-      (= (select-keys e1 k) (select-keys e2 k)))
+    (select-values-match? e1 e2 [:exposure :position :slice :channel])
     (not (:autofocus e2))))
         
 (defn make-bursts [events]
