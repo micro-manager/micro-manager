@@ -25,6 +25,7 @@ package org.micromanager.conf;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -132,7 +133,9 @@ public class AddDeviceDlg extends JDialog implements MouseListener, TreeSelectio
 
             public void mousePressed(MouseEvent e) {
 
-                if (2 == e.getClickCount()) {
+                if( (e.getModifiers() & InputEvent.BUTTON3_MASK) == InputEvent.BUTTON3_MASK){
+                    displayDocumentation();
+                }else if (2 == e.getClickCount()) {
                     if (addDevice()) {
                         rebuildTable();
                     }
@@ -141,7 +144,7 @@ public class AddDeviceDlg extends JDialog implements MouseListener, TreeSelectio
         };
         theTree_.addMouseListener(ml);
         theTree_.setRootVisible(false);
-
+        theTree_.setShowsRootHandles(true);
 
 
 
@@ -184,18 +187,18 @@ public class AddDeviceDlg extends JDialog implements MouseListener, TreeSelectio
         getContentPane().add(documentationButton);
         getRootPane().setDefaultButton(documentationButton);
         documentationButton.addActionListener(new ActionListener() {
-
             public void actionPerformed(ActionEvent e) {
-                try {
-                    ij.plugin.BrowserLauncher.openURL(documentationURLroot_ + libraryDocumentationName_);
-                } catch (IOException e1) {
-                    ReportingUtils.showError(e1);
-                }
+                    displayDocumentation();
             }
         });
+    }
 
-
-
+    private void displayDocumentation(){
+        try {
+            ij.plugin.BrowserLauncher.openURL(documentationURLroot_ + libraryDocumentationName_);
+        } catch (IOException e1) {
+            ReportingUtils.showError(e1);
+        }
     }
 
     private void rebuildTable() {
@@ -272,5 +275,6 @@ public class AddDeviceDlg extends JDialog implements MouseListener, TreeSelectio
     }
 
 
-    
+
+
 }
