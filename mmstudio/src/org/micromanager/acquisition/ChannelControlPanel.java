@@ -113,7 +113,7 @@ public class ChannelControlPanel extends javax.swing.JPanel {
       histogramPanelHolder.setLayout(new java.awt.GridLayout(1, 1));
 
       zoomInButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/zoom_in.png"))); // NOI18N
-      zoomInButton.setToolTipText("Zoom in the histogram");
+      zoomInButton.setToolTipText("Histogram zoom in");
       zoomInButton.setMaximumSize(new java.awt.Dimension(20, 20));
       zoomInButton.setMinimumSize(new java.awt.Dimension(20, 20));
       zoomInButton.setPreferredSize(new java.awt.Dimension(20, 20));
@@ -124,7 +124,7 @@ public class ChannelControlPanel extends javax.swing.JPanel {
       });
 
       zoomOutButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/zoom_out.png"))); // NOI18N
-      zoomOutButton.setToolTipText("Zoom out the histogram");
+      zoomOutButton.setToolTipText("Histogram zoom out");
       zoomOutButton.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             zoomOutButtonActionPerformed(evt);

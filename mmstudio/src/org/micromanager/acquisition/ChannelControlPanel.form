@@ -166,7 +166,7 @@
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
           <Image iconType="3" name="/org/micromanager/icons/zoom_in.png"/>
         </Property>
-        <Property name="toolTipText" type="java.lang.String" value="Zoom in the histogram"/>
+        <Property name="toolTipText" type="java.lang.String" value="Histogram zoom in"/>
         <Property name="maximumSize" type="java.awt.Dimension" editor="org.netbeans.beaninfo.editors.DimensionEditor">
           <Dimension value="[20, 20]"/>
         </Property>
@@ -186,7 +186,7 @@
         <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
           <Image iconType="3" name="/org/micromanager/icons/zoom_out.png"/>
         </Property>
-        <Property name="toolTipText" type="java.lang.String" value="Zoom out the histogram"/>
+        <Property name="toolTipText" type="java.lang.String" value="Histogram zoom out"/>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="zoomOutButtonActionPerformed"/>
