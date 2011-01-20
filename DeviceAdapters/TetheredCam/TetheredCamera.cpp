@@ -420,9 +420,9 @@ const unsigned int* CTetheredCamera::GetImageBufferAsRGB32()
 /**
 * Returns the number of channels in this image. This is '1' for grayscale cameras, and '4' for RGB cameras. 
 */
-unsigned int CTetheredCamera::GetNumberOfChannels() const
+unsigned int CTetheredCamera::GetNumberOfComponents() const
 {
-   if (img_.Depth() == 1) // check whether img_ is grayscale
+   if (grayScale_)
       return 1; // grayscale
    else
       return 4; // rgb
@@ -431,9 +431,9 @@ unsigned int CTetheredCamera::GetNumberOfChannels() const
 /**
 * Returns the name for each channel. 
 */
-int CTetheredCamera::GetChannelName(unsigned int channel, char* name)
+int CTetheredCamera::GetComponentName(unsigned int channel, char* name)
 {
-   if (img_.Depth() == 1) // check whether img_ is grayscale
+   if (grayScale_)
    {
       if (channel == 0)
          CDeviceUtils::CopyLimitedString(name, "Grayscale");
