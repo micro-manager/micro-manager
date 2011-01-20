@@ -55,7 +55,7 @@ public class VirtualAcquisitionDisplay {
    private String status_ = "";
    private ScrollbarWithLabel pSelector_;
    AcquisitionVirtualStack virtualStack_;
-
+   private boolean closed_ = false;
    private int curPosition_ = -1;
    private ChannelDisplaySettings[] channelSettings_;
    private int latestFrame_ = 0;
@@ -76,6 +76,10 @@ public class VirtualAcquisitionDisplay {
    public void setCache(MMImageCache imageCache) {
       imageCache_ = imageCache;
       summaryMetadata_ = imageCache_.getSummaryMetadata();
+   }
+
+   public boolean isClosed() {
+      return closed_;
    }
 
    public void initialize() throws MMScriptException {
@@ -412,6 +416,7 @@ public class VirtualAcquisitionDisplay {
 
             super.windowClosing(e);
             windowClosingDone_ = true;
+            closed_ = true;
          }
 
          @Override
