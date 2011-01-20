@@ -454,7 +454,9 @@
                  :task :snap, :z-drive (core getFocusDevice), :wait-time-ms 0}
         state   {:init-width w :init-height h}
         tagged-image (annotate-image (collect-snap-image) event state)]
-	  (if-not (and @current-album (compatible-image? @current-album tagged-image))
+	  (if-not (and @current-album
+	               (compatible-image? @current-album tagged-image)
+	               (not (.isClosed (:display @current-album))))
 	    (create-new-album tagged-image))
 	  (let [{:keys [display cache]} @current-album
 	        myTaggedImage (make-TaggedImage
