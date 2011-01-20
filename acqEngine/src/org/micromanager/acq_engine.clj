@@ -17,7 +17,7 @@
 (ns org.micromanager.acq-engine
   (:use [org.micromanager.mm :only [when-lets map-config get-config get-positions load-mm
                                     get-default-devices core log log-cmd mmc gui with-core-setting
-                                    do-when if-args get-system-config-cached]]
+                                    do-when if-args get-system-config-cached select-values-match?]]
           [org.micromanager.sequence-generator :only [generate-acq-sequence]])
   (:import [org.micromanager AcqControlDlg]
            [org.micromanager.api AcquisitionEngine TaggedImageAnalyzer]
