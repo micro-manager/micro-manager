@@ -253,8 +253,10 @@ public class VirtualAcquisitionDisplay {
    private void updatePosition(int p) {
       if (curPosition_ != p) {
          virtualStack_.setPositionIndex(p-1);
-         Object pixels = virtualStack_.getPixels(hyperImage_.getCurrentSlice());
-         hyperImage_.getProcessor().setPixels(pixels);
+         if (!isComposite()) {
+            Object pixels = virtualStack_.getPixels(hyperImage_.getCurrentSlice());
+            hyperImage_.getProcessor().setPixels(pixels);
+         }
          updateAndDraw();
          curPosition_ = p;
       }
@@ -659,7 +661,7 @@ public class VirtualAcquisitionDisplay {
    }
 
    public String[] getChannelNames() {
-      if (hyperImage_ instanceof CompositeImage) {
+      if (isComposite()) {
          int nChannels = hyperImage_.getNChannels();
          String[] chanNames = new String[nChannels];
          for (int i = 0; i < nChannels; ++i) {
@@ -680,7 +682,7 @@ public class VirtualAcquisitionDisplay {
    }
 
    public void setChannelVisibility(int channelIndex, boolean visible) {
-      if (!(hyperImage_ instanceof CompositeImage)) {
+      if (!isComposite()) {
          return;
       }
       CompositeImage ci = (CompositeImage) hyperImage_;
@@ -792,6 +794,8 @@ public class VirtualAcquisitionDisplay {
       hyperImage_.show();
    }
 
-
+   public boolean isComposite() {
+      return hyperImage_ instanceof CompositeImage;
+   }
 
 }
