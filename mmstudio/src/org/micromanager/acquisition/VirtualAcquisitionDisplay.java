@@ -253,6 +253,8 @@ public class VirtualAcquisitionDisplay {
    private void updatePosition(int p) {
       if (curPosition_ != p) {
          virtualStack_.setPositionIndex(p-1);
+         Object pixels = virtualStack_.getPixels(hyperImage_.getCurrentSlice());
+         hyperImage_.getProcessor().setPixels(pixels);
          updateAndDraw();
          curPosition_ = p;
       }
