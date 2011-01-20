@@ -133,8 +133,8 @@
 ;; metadata
 
 (defn annotate-image [img event state]
-  (TaggedImage. img (JSONObject.
-    (merge
+  {:pix img
+   :tags (merge
       (map-config (core getSystemStateCache))
       {
        "AxisPositions" (when-let [axes (get-in event [:position :axes])] (JSONObject. axes))
@@ -156,7 +156,10 @@
        "UUID" (UUID/randomUUID)
        "Width"  (state :init-width)
        "ZPositionUm" (state :last-z-position)
-      }))))
+      })})
+
+(defn make-TaggedImage [annotated-img]
+  (TaggedImage. (:pix annotated-img) (JSONObject. (:tags annotated-img))))
 
 ;; acq-engine
 
@@ -259,7 +262,7 @@
                 :snap (collect-snap-image)
                 :init-burst (collect-burst-image)
                 :collect-burst (collect-burst-image))]
-    (.put out-queue (annotate-image image event @state))))
+    (.put out-queue (make-TaggedImage (annotate-image image event @state)))))
 
 (defn compute-z-position [event]
   (if-let [z-drive (:z-drive event)]
@@ -417,34 +420,49 @@
 
 ;; acquire button
 
-(def current-acquire-win (atom nil))
+(def current-album (atom nil))
 
-(defn acquire-single [position-index]
-  (core snapImage)
-  (let [w (core getImageWidth)
-        h (core getImageHeight)
-        summary {:interval-ms 0.0, :use-autofocus false, :autofocus-skip 0,
+(defn compatible-image? [album annotated-image]
+  (let [tags1 (:first-image-tags album)
+        tags2 (:tags annotated-image)
+        matching-keys ["Width" "Height" "PixelType"]]
+    (= (select-keys tags1 matching-keys)
+       (select-keys tags2 matching-keys))))
+
+(defn create-new-album [first-image]
+  (let [summary {:interval-ms 0.0, :use-autofocus false, :autofocus-skip 0,
                  :relative-slices true, :keep-shutter-open-slices false, :comment "",
-                 :prefix "Untitled", :root "/Users/arthur/AcquisitionData",
+                 :prefix "Untitled", :root "",
                  :time-first false, :positions (), :channels (), :slices-first true,
                  :slices nil, :numFrames 0, :keep-shutter-open-channels false,
                  :zReference 0.0, :frames (), :save false}
-        event   {:position-index position-index, :position -1,
+            summary-metadata (make-summary-metadata summary)
+	          cache (MMImageCache. (TaggedImageStorageRam. summary-metadata))
+	          display (doto (VirtualAcquisitionDisplay. "" true false)
+	                        (.setCache cache) .initialize)]
+	          (reset! current-album {:cache cache :display display
+	                                 :first-image-tags (:tags first-image)
+	                                 :count 0})))
+
+(defn acquire-single []
+  (core snapImage)
+  (let [w (core getImageWidth)
+        h (core getImageHeight)
+        event   {:position-index 2, :position -1,
                  :frame-index 0, :slice 0.0, :channel-index 0, :slice-index 0, :frame 0
                  :channel {:name (core getCurrentConfig (core getChannelGroup))},
                  :exposure (core getExposure), :relative-z true,
                  :task :snap, :z-drive (core getFocusDevice), :wait-time-ms 0}
         state   {:init-width w :init-height h}
-        summary-metadata (make-summary-metadata summary)
         tagged-image (annotate-image (collect-snap-image) event state)]
-	  (if-not @current-acquire-win
-	    (let [cache (MMImageCache. (TaggedImageStorageRam. summary-metadata))
-	          display (doto (VirtualAcquisitionDisplay. "" true false)
-	                        (.setCache cache) .initialize)]
-	          (reset! current-acquire-win {:cache cache :display display})))
-	  (let [{:keys [display cache]} @current-acquire-win]
-      (.putImage cache tagged-image)
-      (doto display (.showImage tagged-image)))))
+	  (if-not (and @current-album (compatible-image? @current-album tagged-image))
+	    (create-new-album tagged-image))
+	  (let [{:keys [display cache]} @current-album
+	        myTaggedImage (make-TaggedImage
+	          (assoc-in tagged-image [:tags "PositionIndex"] (@current-album :count)))]
+      (.putImage cache myTaggedImage)
+      (doto display (.showImage myTaggedImage))
+      (swap! current-album update-in [:count] inc))))
 
 ;; java interop
 
@@ -500,16 +518,6 @@
 
 (defn -nextWakeTime [this]
   (or (:next-wake-time @(.state this)) -1))
-
-(defn -acquireSingle [this]
-  (prepare-state this)
-  (let [out-queue (GentleLinkedBlockingQueue.)
-        event {:close-shutter true, :frame-index 0, :position-index 0,
-               :autofocus false, :channel-index 0, :slice-index 0,
-               :exposure nil, :relative-z true, :task :snap, :z-drive "Z",
-               :wait-time-ms 0}]
-    (execute (make-event-fns event out-queue))
-    (cleanup)))
 
 ;; testing
 
