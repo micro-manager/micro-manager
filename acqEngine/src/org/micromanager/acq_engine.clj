@@ -189,7 +189,10 @@
       (zipmap devs (repeatedly (count devs) #(agent nil))))))
 
 (defn get-z-stage-position [stage]
-  (core getPosition stage))
+  (if (pos? (count stage)) (core getPosition stage) 0))
+  
+(defn set-z-stage-position [stage pos]
+  (if (pos? (count stage)) (core setPosition stage pos)))
 
 (defn set-stage-position
   ([stage-dev z] (log "setting z position to " z)
@@ -318,7 +321,7 @@
     (core stopSequenceAcquisition))
   (core setAutoShutter (@state :init-auto-shutter))
   (core setExposure (@state :init-exposure))
-  (core setPosition (core getFocusDevice) (@state :init-z-position))
+  (set-z-stage-position (core getFocusDevice) (@state :init-z-position))
   (when (and (@state :init-continuous-focus)
              (not (core isContinuousFocusEnabled)))
     (core enableContinuousFocus true))
