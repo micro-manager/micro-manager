@@ -224,7 +224,7 @@ CTetheredCamera::CTetheredCamera() :
 
 /**
 * CTetheredCamera destructor.
-* If this device used as intended within the Micro-Manager system,
+* If this device is used as intended within the Micro-Manager system,
 * Shutdown() will be always called before the destructor. But in any case
 * we need to make sure that all resources are properly released even if
 * Shutdown() was not called.
@@ -398,7 +398,7 @@ int CTetheredCamera::SnapImage()
 * Required by the MM::Camera API.
 * The calling program will assume the size of the buffer based on the values
 * obtained from GetImageBufferSize(), which in turn should be consistent with
-* values returned by GetImageWidth(), GetImageHight() and GetImageBytesPerPixel().
+* values returned by GetImageWidth(), GetImageHeight() and GetImageBytesPerPixel().
 * The calling program allso assumes that camera never changes the size of
 * the pixel buffer on its own. In other words, the buffer can change only if
 * appropriate properties are set (such as binning, pixel type, etc.)
@@ -855,7 +855,7 @@ int CTetheredCamera::GetCameraName()
  *
  * The "Shutter Speeds" property needs to contain a list of available shutter speed settings,separated by semicolons.
  * e.g. for a Canon Powershot A80 the property "ShutterSpeeds" should be as follows:
- * 15;13;10;8;6;5;4;3.2;2.5;1.6;1.3;1;0.8;0.6;0.4;0.3;1/4;1/5;1/6;1/8;1/10;1/13;1/15;1/20;1/25;1/30;1/40;1/50;1/60;1/80;1/100;1/125;1/160;1/200;1/250;1/320;1/400;1/500;1/640;1/800;1/1000;1/1250;1/1600;1/2000
+ * 15;13;10;8;6;5;4;3.2;2.5;2;1.6;1.3;1;0.8;0.6;0.5;0.4;0.3;1/4;1/5;1/6;1/8;1/10;1/13;1/15;1/20;1/25;1/30;1/40;1/50;1/60;1/80;1/100;1/125;1/160;1/200;1/250;1/320;1/400;1/500;1/640;1/800;1/1000;1/1250;1/1600;1/2000
  * The shutter speeds have to be in the same order as they appear in the "Tv:" drop-down box in DSLRRemote/NKRemote/PSRemote.
  *
  * Note: as a special case, a shutter speed of 0 ms in micro-manager leaves the camera shutter speed unchanged. 
