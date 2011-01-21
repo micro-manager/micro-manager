@@ -460,8 +460,11 @@
 	               (not (.isClosed (:display @current-album))))
 	    (create-new-album tagged-image))
 	  (let [{:keys [display cache]} @current-album
-	        myTaggedImage (make-TaggedImage
-	          (assoc-in tagged-image [:tags "PositionIndex"] (@current-album :count)))]
+	        count (@current-album :count)
+	        myTaggedImage
+	          (make-TaggedImage
+	            (update-in tagged-image [:tags] merge
+	              {"PositionIndex" count "PositionName" (str "Snap" count)}))]
       (.putImage cache myTaggedImage)
       (doto display (.showImage myTaggedImage) .show)
       (swap! current-album update-in [:count] inc))))
