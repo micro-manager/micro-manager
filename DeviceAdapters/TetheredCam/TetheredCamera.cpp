@@ -196,7 +196,7 @@ CTetheredCamera::CTetheredCamera() :
    initialized_(false),
    cameraName_(""),
    frameBitmap(NULL),
-   grayScale_(true),
+   grayScale_(false),
    keepOriginals_(false),
    roiX_(0),
    roiY_(0),
