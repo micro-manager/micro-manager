@@ -20,9 +20,7 @@ public interface TaggedImageStorage {
    public void finished();
    public void setSummaryMetadata(JSONObject md);
    public JSONObject getSummaryMetadata();
-   public void setComment(String text);
-   public String getComment();
-   public void setDisplaySettings(JSONObject settings);
-   public JSONObject getDisplaySettings();
+   public void setDisplayAndComments(JSONObject settings);
+   public JSONObject getDisplayAndComments();
    public void close();
 }
