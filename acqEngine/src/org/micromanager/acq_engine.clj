@@ -18,7 +18,7 @@
   (:use [org.micromanager.mm :only [when-lets map-config get-config get-positions load-mm
                                     get-default-devices core log log-cmd mmc gui with-core-setting
                                     do-when if-args get-system-config-cached select-values-match?]]
-          [org.micromanager.sequence-generator :only [generate-acq-sequence]])
+        [org.micromanager.sequence-generator :only [generate-acq-sequence]])
   (:import [org.micromanager AcqControlDlg]
            [org.micromanager.api AcquisitionEngine TaggedImageAnalyzer]
            [org.micromanager.acquisition AcquisitionWrapperEngine LiveAcqDisplay TaggedImageQueue
@@ -292,7 +292,8 @@
               (when (not= z (@state :last-z-position))
                 (do (set-stage-position z-drive z)
                     (core waitForDevice z-drive)))))
-          #(do (expose event) (collect-image event out-queue))))))
+          #(do (expose event)
+               (collect-image event out-queue))))))
 
 (defn execute [event-fns]
   (doseq [event-fn event-fns :while (not (:stop @state))]
@@ -462,7 +463,7 @@
 	        myTaggedImage (make-TaggedImage
 	          (assoc-in tagged-image [:tags "PositionIndex"] (@current-album :count)))]
       (.putImage cache myTaggedImage)
-      (doto display (.showImage myTaggedImage))
+      (doto display (.showImage myTaggedImage) .show)
       (swap! current-album update-in [:count] inc))))
 
 ;; java interop
