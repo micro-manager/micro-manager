@@ -38,12 +38,12 @@ public class MMImageCache implements TaggedImageStorage {
       imageFileManager_.finished();
    }
 
-   public void setDisplaySettings(JSONObject settings) {
-      imageFileManager_.setDisplaySettings(settings);
+   public void setDisplayAndComments(JSONObject settings) {
+      imageFileManager_.setDisplayAndComments(settings);
    }
 
-   public JSONObject getDisplaySettings() {
-      return imageFileManager_.getDisplaySettings();
+   public JSONObject getDisplayAndComments() {
+      return imageFileManager_.getDisplayAndComments();
 
    }
 
@@ -63,7 +63,7 @@ public class MMImageCache implements TaggedImageStorage {
             ReportingUtils.logError(ex);
          }
       }
-      newImageFileManager.setComment(this.getComment());
+      newImageFileManager.setDisplayAndComments(this.getDisplayAndComments());
       newImageFileManager.finished();
       imageFileManager_ = newImageFileManager;
    }
@@ -121,11 +121,11 @@ public class MMImageCache implements TaggedImageStorage {
    private JSONObject getCommentsJSONObject() {
       JSONObject comments;
       try {
-         comments = imageFileManager_.getDisplaySettings().getJSONObject("Comments");
+         comments = imageFileManager_.getDisplayAndComments().getJSONObject("Comments");
       } catch (JSONException ex) {
          comments = new JSONObject();
          try {
-            imageFileManager_.getDisplaySettings().put("Comments", comments);
+            imageFileManager_.getDisplayAndComments().put("Comments", comments);
          } catch (JSONException ex1) {
             ReportingUtils.logError(ex1);
          }
@@ -178,7 +178,7 @@ public class MMImageCache implements TaggedImageStorage {
 
    public void setSummaryMetadata(JSONObject tags) {
       imageFileManager_.setSummaryMetadata(tags);
-      imageFileManager_.setDisplaySettings(MDUtils.getDisplaySettingsFromSummary(tags));
+      imageFileManager_.setDisplayAndComments(MDUtils.getDisplaySettingsFromSummary(tags));
    }
 
    public Set<String> getChangingKeys() {

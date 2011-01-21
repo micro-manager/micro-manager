@@ -52,20 +52,11 @@ public class TaggedImageStorageRam implements TaggedImageStorage {
       return summaryMetadata_;
    }
 
-   public void setComment(String text) {
-      comment_ = text;
-   }
-
-   public String getComment() {
-      return comment_;
-   }
-
-
-   public void setDisplaySettings(JSONObject settings) {
+   public void setDisplayAndComments(JSONObject settings) {
       displaySettings_ = settings;
    }
 
-   public JSONObject getDisplaySettings() {
+   public JSONObject getDisplayAndComments() {
       return displaySettings_;
    }
 

@@ -236,7 +236,7 @@ public class MMAcquisitionV2 implements AcquisitionInterface {
       
       virtAcq_.imageCache_.setSummaryMetadata(tags);
 
-      virtAcq_.imageCache_.setDisplaySettings(MDUtils.getDisplaySettingsFromSummary(tags));
+      virtAcq_.imageCache_.setDisplayAndComments(MDUtils.getDisplaySettingsFromSummary(tags));
 
       virtAcq_.initialize();
       if (show_)
@@ -383,7 +383,7 @@ public class MMAcquisitionV2 implements AcquisitionInterface {
       if (isInitialized()) {
          try {
             virtAcq_.imageCache_
-                       .getDisplaySettings()
+                       .getDisplayAndComments()
                        .getJSONArray("Channels")
                        .getJSONObject(channel)
                        .put("Name", name);

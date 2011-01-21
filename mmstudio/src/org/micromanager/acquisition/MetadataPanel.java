@@ -493,7 +493,7 @@ public class MetadataPanel extends javax.swing.JPanel
                try {
                   rowData.add(md.getString(key));
                } catch (JSONException ex) {
-                  ReportingUtils.logError(ex);
+                  //ReportingUtils.logError(ex);
                }
                addRow(rowData);
             }

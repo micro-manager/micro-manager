@@ -672,7 +672,7 @@ public class VirtualAcquisitionDisplay {
          for (int i = 0; i < nChannels; ++i) {
             try {
                chanNames[i] = imageCache_
-                       .getDisplaySettings()
+                       .getDisplayAndComments()
                        .getJSONArray("Channels")
                        .getJSONObject(i)
                        .getString("Name");
@@ -733,7 +733,7 @@ public class VirtualAcquisitionDisplay {
 
    private void readChannelSettingsFromCache(boolean updateDisplay) {
       try {
-         JSONArray channelsArray = imageCache_.getDisplaySettings()
+         JSONArray channelsArray = imageCache_.getDisplayAndComments()
                                      .getJSONArray("Channels");
          for (int i = 0; i < channelSettings_.length; ++i) {
             try {
@@ -756,7 +756,7 @@ public class VirtualAcquisitionDisplay {
    private void writeChannelSettingsToCache(int channelIndex) {
       try {
          JSONObject jsonSetting = imageCache_.
-                 getDisplaySettings().
+                 getDisplayAndComments().
                  getJSONArray("Channels").
                  getJSONObject(channelIndex);
          ChannelDisplaySettings setting = channelSettings_[channelIndex];

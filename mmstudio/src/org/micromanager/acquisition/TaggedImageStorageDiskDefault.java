@@ -30,7 +30,6 @@ import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMException;
-import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 import org.micromanager.utils.TextUtils;
 
@@ -440,25 +439,11 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       this.summaryMetadata_ = summaryMetadata;
    }
 
-   public void setComment(String text) {
-      try {
-         getSummaryMetadata().put("Comment", text);
-      } catch (Exception ex) {
-         ReportingUtils.logError(ex);
-      }
-      if (text != null)
-         JavaUtils.writeTextFile(dir_ + "/comments.txt", text);
-   }
-
-   public String getComment() {
-      return JavaUtils.readTextFile(dir_ + "/comments.txt");
-   }
-
-   public void setDisplaySettings(JSONObject settings) {
+   public void setDisplayAndComments(JSONObject settings) {
       displaySettings_ = settings;
    }
 
-   public JSONObject getDisplaySettings() {
+   public JSONObject getDisplayAndComments() {
       return displaySettings_;
    }
 
@@ -482,9 +467,11 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
          String jsonText = JavaUtils.readTextFile(path);
          if (jsonText != null) {
             JSONObject tmp = new JSONObject(jsonText);
-            JSONObject channels = (JSONObject) tmp.get("Channels");
+            JSONArray channels = (JSONArray) tmp.get("Channels");
             if (channels != null)
                displaySettings_ = tmp;
+            else
+               displaySettings_.put("Comments", tmp.get("Comments"));
          }
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
