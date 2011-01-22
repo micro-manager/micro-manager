@@ -1,5 +1,5 @@
 ///////////////////////////////////////////////////////////////////////////////
-//FILE:          MMAcquisitionV2.java
+//FILE:          MMAcquisition.java
 //PROJECT:       Micro-Manager
 //SUBSYSTEM:     mmstudio
 //-----------------------------------------------------------------------------
@@ -46,7 +46,7 @@ import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 
-public class MMAcquisitionV2 implements AcquisitionInterface {
+public class MMAcquisition implements AcquisitionInterface {
    private int numFrames_ = 0;
    private int numChannels_ = 0;
    private int numSlices_ = 0;
@@ -69,17 +69,17 @@ public class MMAcquisitionV2 implements AcquisitionInterface {
    private String rootDirectory_;
    private VirtualAcquisitionDisplay virtAcq_;
    
-   public MMAcquisitionV2(String name, String dir) throws MMScriptException {
+   public MMAcquisition(String name, String dir) throws MMScriptException {
       this(name, dir, false, false, false);
    }
 
-   public MMAcquisitionV2(String name, String dir, boolean show) throws MMScriptException {
+   public MMAcquisition(String name, String dir, boolean show) throws MMScriptException {
       this(name, dir, show, false, false);
       virtAcq_.show();
       show_ = show;
    }
 
-   public MMAcquisitionV2(String name, String dir, boolean show, 
+   public MMAcquisition(String name, String dir, boolean show,
            boolean diskCached, boolean existing) throws MMScriptException {
       name_ = name;
       rootDirectory_ = dir;
@@ -229,7 +229,7 @@ public class MMAcquisitionV2 implements AcquisitionInterface {
          tags.put("StartTime", MDUtils.getCurrentTime());
          startTimeMs_ = System.currentTimeMillis();
       } catch (JSONException ex) {
-         Logger.getLogger(MMAcquisitionV2.class.getName()).log(Level.SEVERE, null, ex);
+         Logger.getLogger(MMAcquisition.class.getName()).log(Level.SEVERE, null, ex);
       }
 
       setDefaultChannelTags(tags);

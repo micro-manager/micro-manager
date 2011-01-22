@@ -19,7 +19,7 @@ public class AcquisitionManager {
       if (acquisitionExists(name))
          throw new MMScriptException("The name is in use");
       else {
-         MMAcquisitionV2 acq = new MMAcquisitionV2(name, rootDir);
+         MMAcquisition acq = new MMAcquisition(name, rootDir);
          acqs_.put(name, acq);
       }
    }
@@ -45,7 +45,7 @@ public class AcquisitionManager {
       if (acquisitionExists(name)) {
          throw new MMScriptException("The name is in use");
       } else {
-         acqs_.put(name, new MMAcquisitionV2(name, rootDir, show, diskCached, existing));
+         acqs_.put(name, new MMAcquisition(name, rootDir, show, diskCached, existing));
       }
    }
    
