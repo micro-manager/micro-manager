@@ -409,14 +409,15 @@ public class VirtualAcquisitionDisplay {
                int result = JOptionPane.showConfirmDialog(this,
                        "This data set has not yet been saved.\n"
                        + "Do you want to save it?",
-                       "Closing image...",
+                       "Micro-Manager",
                        JOptionPane.YES_NO_CANCEL_OPTION);
-               if (result != JOptionPane.NO_OPTION) {
-                  return;
-               } else if (result == JOptionPane.YES_OPTION) {
+
+               if (result == JOptionPane.YES_OPTION) {
                   if (!saveAs()) {
                      return;
                   }
+               } else if (result == JOptionPane.CANCEL_OPTION) {
+                  return;
                }
             }
 
