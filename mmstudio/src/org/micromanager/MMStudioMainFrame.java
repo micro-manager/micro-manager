@@ -2077,6 +2077,14 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       saveConfigButton_.setEnabled(changed);
    }
 
+   public String getAcqDirectory() {
+      return openAcqDirectory_;
+   }
+
+   public void setAcqDirectory(String dir) {
+      openAcqDirectory_ = dir;
+   }
+
    private File runAcquisitionBrowser() {
          File selectedFile = null;
          if (JavaUtils.isMac()) {

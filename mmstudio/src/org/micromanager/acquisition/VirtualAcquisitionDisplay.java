@@ -10,6 +10,7 @@ import ij.gui.StackWindow;
 import ij.plugin.Animator;
 import ij.process.ImageProcessor;
 import java.awt.Color;
+import java.awt.FileDialog;
 import java.awt.event.AdjustmentListener;
 import java.awt.event.WindowEvent;
 import java.io.File;
@@ -331,10 +332,24 @@ public class VirtualAcquisitionDisplay {
       String prefix;
       String root;
       for (;;) {
-         final JFileChooser fc = new JFileChooser(new File(dir_).getParent());
-         fc.setDialogTitle("Please choose a location for the data set.");
-         fc.showSaveDialog(hyperImage_.getWindow());
-         File f = fc.getSelectedFile();
+         String location = new File(dir_).getParent();
+         if (location == null)
+            location = MMStudioMainFrame.getInstance().getAcqDirectory();
+         File f = null;
+         if (JavaUtils.isMac()) {
+            System.setProperty("apple.awt.fileDialogForDirectories", "true");
+            FileDialog fd = new FileDialog(hyperImage_.getWindow(), location, FileDialog.SAVE);
+            fd.setVisible(true);
+            System.setProperty("apple.awt.fileDialogForDirectories", "false");
+            if (fd.getFile() != null) {
+              f = new File(fd.getDirectory() + "/" + fd.getFile());
+            }
+         } else {
+            final JFileChooser fc = new JFileChooser(location);
+            fc.setDialogTitle("Please choose a location for the data set.");
+            fc.showSaveDialog(hyperImage_.getWindow());
+            f = fc.getSelectedFile();
+         }
          if (f == null) // Canceled.
          {
             return false;
@@ -358,6 +373,7 @@ public class VirtualAcquisitionDisplay {
       imageCache_.saveAs(newFileManager);
       diskCached_ = true;
       dir_ = root + "/" + prefix;
+      MMStudioMainFrame.getInstance().setAcqDirectory(root);
       newData_ = false;
       updateWindow();
       return true;
