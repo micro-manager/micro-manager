@@ -440,7 +440,8 @@
                  :slices nil, :numFrames 0, :keep-shutter-open-channels false,
                  :zReference 0.0, :frames (), :save false}
             summary-metadata (make-summary-metadata summary)
-	          cache (MMImageCache. (TaggedImageStorageRam. summary-metadata))
+	          cache (doto (MMImageCache. (TaggedImageStorageRam. summary-metadata))
+	                  (.setSummaryMetadata summary-metadata))
 	          display (doto (VirtualAcquisitionDisplay. "" true false)
 	                        (.setCache cache) .initialize)]
 	          (reset! current-album {:cache cache :display display
