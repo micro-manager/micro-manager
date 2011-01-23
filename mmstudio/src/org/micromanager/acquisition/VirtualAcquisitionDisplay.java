@@ -7,6 +7,7 @@ import ij.ImagePlus;
 import ij.gui.ImageWindow;
 import ij.gui.ScrollbarWithLabel;
 import ij.gui.StackWindow;
+import ij.measure.Calibration;
 import ij.plugin.Animator;
 import ij.process.ImageProcessor;
 import java.awt.Color;
@@ -121,9 +122,8 @@ public class VirtualAcquisitionDisplay {
 
    private void updateAndDraw() {
       if (numChannels_ > 1) {
-            ((CompositeImage) hyperImage_).setChannelsUpdated();
+         ((CompositeImage) hyperImage_).setChannelsUpdated();
       }
-      //hyperImage_.setProcessor(hyperImage_.getStack().getProcessor(hyperImage_.getCurrentSlice()));
       hyperImage_.updateAndDraw();
    }
 
@@ -463,6 +463,20 @@ public class VirtualAcquisitionDisplay {
       hc_ = new HyperstackControls(this, win);
       win.add(hc_);
       ImagePlus.addImageListener(hc_);
+
+      // Set ImageJ pixel size calibration
+      try {
+         double pixSizeUm = summaryMetadata_.getDouble("PixelSize_um");
+         if (pixSizeUm > 0) {
+            Calibration cal = new Calibration();
+            cal.setUnit("um");
+            cal.pixelWidth = pixSizeUm;
+            cal.pixelHeight = pixSizeUm;
+            getImagePlus().setCalibration(cal);
+         }
+      } catch (JSONException ex) {
+         // no pixelsize defined.  Nothing to do
+      }
 
       win.pack();
 
