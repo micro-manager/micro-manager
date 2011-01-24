@@ -85,13 +85,13 @@ MMJ_.jar:  \
 	$(srcdir)/src/org/micromanager/utils/AutofocusPropertyEditor.java \
 	$(srcdir)/src/org/micromanager/utils/Calibration.java \
 	$(srcdir)/src/org/micromanager/utils/CalibrationList.java \
-	$(srcdir)/src/org/micromanager/utils/CfgFileFilter.java \
 	$(srcdir)/src/org/micromanager/utils/ChannelSpec.java \
 	$(srcdir)/src/org/micromanager/utils/ColorEditor.java \
 	$(srcdir)/src/org/micromanager/utils/ColorRenderer.java \
 	$(srcdir)/src/org/micromanager/utils/ContrastSettings.java \
 	$(srcdir)/src/org/micromanager/utils/CoreAutofocus.java \
 	$(srcdir)/src/org/micromanager/utils/DisplayMode.java \
+        $(srcdir)/src/org/micromanager/utils/FileDialogs.java \
 	$(srcdir)/src/org/micromanager/utils/GammaSliderCalculator.java \
 	$(srcdir)/src/org/micromanager/utils/GUIColors.java \
 	$(srcdir)/src/org/micromanager/utils/GUIUtils.java \
