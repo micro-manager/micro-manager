@@ -24,7 +24,6 @@
 package org.micromanager.conf;
 
 import java.awt.Color;
-import java.awt.Font;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -49,10 +48,8 @@ import java.util.TimeZone;
 import java.util.prefs.Preferences;
 
 import javax.swing.JButton;
-import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JEditorPane;
-import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
@@ -60,6 +57,8 @@ import javax.swing.WindowConstants;
 import javax.swing.border.LineBorder;
 
 import mmcorej.CMMCore;
+import org.micromanager.MMStudioMainFrame;
+import org.micromanager.utils.FileDialogs;
 
 import org.micromanager.utils.ReportingUtils;
 import org.micromanager.utils.HttpUtils;
@@ -385,33 +384,11 @@ public class ConfiguratorDlg extends JDialog {
     }
 
     private void saveConfiguration() {
-        JFileChooser fc = new JFileChooser();
-        boolean saveFile = true;
-        File f;
+        File f = FileDialogs.save(this,
+                "Create a config file", MMStudioMainFrame.MM_CONFIG_FILE);
 
-        do {
-            fc.setSelectedFile(new File(microModel_.getFileName()));
-            int retVal = fc.showSaveDialog(this);
-            if (retVal == JFileChooser.APPROVE_OPTION) {
-                f = fc.getSelectedFile();
-
-                // check if file already exists
-                if (f.exists()) {
-                    int sel = JOptionPane.showConfirmDialog(this,
-                            "Overwrite " + f.getName(),
-                            "File Save",
-                            JOptionPane.YES_NO_OPTION);
-
-                    if (sel == JOptionPane.YES_OPTION) {
-                        saveFile = true;
-                    } else {
-                        saveFile = false;
-                    }
-                }
-            } else {
-                return;
-            }
-        } while (saveFile == false);
+        if (f == null)
+           return;
 
         try {
             microModel_.saveToFile(f.getAbsolutePath());

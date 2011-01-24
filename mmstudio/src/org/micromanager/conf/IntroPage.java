@@ -30,11 +30,11 @@ import java.util.prefs.Preferences;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
-import javax.swing.JFileChooser;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
+import org.micromanager.MMStudioMainFrame;
 
-import org.micromanager.utils.CfgFileFilter;
+import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -154,13 +154,10 @@ public class IntroPage extends PagePanel {
    }
    
    private void loadConfiguration() {
-      JFileChooser fc = new JFileChooser();
-      fc.addChoosableFileFilter(new CfgFileFilter());
-      fc.setSelectedFile(new File(filePathField_.getText()));
-      int retVal = fc.showOpenDialog(this);
-      if (retVal == JFileChooser.APPROVE_OPTION) {
-         File f = fc.getSelectedFile();
-         filePathField_.setText(f.getAbsolutePath());
-      }
+      File f = FileDialogs.openFile(parent_, "Choose a config file",
+              MMStudioMainFrame.MM_CONFIG_FILE);
+      if (f == null)
+         return;
+      filePathField_.setText(f.getAbsolutePath());
    }
 }

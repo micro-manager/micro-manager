@@ -42,7 +42,6 @@ import java.util.prefs.Preferences;
 
 import javax.swing.AbstractCellEditor;
 import javax.swing.JButton;
-import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
@@ -67,6 +66,8 @@ import org.micromanager.utils.GUIColors;
 import org.micromanager.utils.MMDialog;
 
 import com.swtdesigner.SwingResourceManager;
+import org.micromanager.utils.FileDialogs;
+import org.micromanager.utils.FileDialogs.FileType;
 import org.micromanager.utils.ReportingUtils;
 
 
@@ -77,6 +78,8 @@ public class PositionListDlg extends MMDialog implements MouseListener {
    private File curFile_;
    @SuppressWarnings("unused")
    private static final String MAC_BUTTON_SHAPE = "mini";
+   private static FileType POSITION_LIST_FILE =
+           new FileType("POSITION_LIST_FILE","Position list file","pos");
 
    private JTable posTable_;
    private JTable axisTable_;
@@ -261,44 +264,6 @@ public class PositionListDlg extends MMDialog implements MouseListener {
          }
          fireTableCellUpdated(rowIndex, columnIndex);
          axisTable_.clearSelection();
-      }
-   }
-
-   /**
-    * File filter class for Open/Save file choosers 
-    */
-   private class PosFileFilter extends FileFilter {
-      final private String EXT_POS;
-      final private String DESCRIPTION;
-
-      public PosFileFilter() {
-         super();
-         EXT_POS = new String("pos");
-         DESCRIPTION = new String("MM position files (*.pos)");
-      }
-
-      public boolean accept(File f){
-         if (f.isDirectory())
-            return true;
-
-         if (EXT_POS.equals(getExtension(f)))
-            return true;
-         return false;
-      }
-
-      public String getDescription(){
-         return DESCRIPTION;
-      }
-
-      private String getExtension(File f) {
-         String ext = null;
-         String s = f.getName();
-         int i = s.lastIndexOf('.');
-
-         if (i > 0 &&  i < s.length() - 1) {
-            ext = s.substring(i+1).toLowerCase();
-         }
-         return ext;
       }
    }
 
@@ -669,55 +634,26 @@ public void addPosition(MultiStagePosition msp, String label) {
    }
 
    protected boolean savePositionListAs() {
-      JFileChooser fc = new JFileChooser();
-      boolean saveFile = true;
-
-      do {
-         if (curFile_ == null)
-            curFile_ = new File(POSITION_LIST_FILE_NAME);
-
-         fc.setSelectedFile(curFile_);
-         int retVal = fc.showSaveDialog(this);
-         if (retVal == JFileChooser.APPROVE_OPTION) {
-            curFile_ = fc.getSelectedFile();
-
-            // check if file already exists
-            if( curFile_.exists() ) { 
-               int sel = JOptionPane.showConfirmDialog( this,
-                     "Overwrite " + curFile_.getName(),
-                     "File Save",
-                     JOptionPane.YES_NO_OPTION);
-
-               if(sel == JOptionPane.YES_OPTION)
-                  saveFile = true;
-               else
-                  saveFile = false;
-            }
-         } else {
-            return false; 
+      File f = FileDialogs.save(this, "Save the position list", POSITION_LIST_FILE);
+      if (f != null) {
+         curFile_ = f;
+         try {
+            getPositionList().save(curFile_.getAbsolutePath());
+            posListDir_ = curFile_.getParent();
+         } catch (Exception e) {
+            handleError(e);
+            return false;
          }
-      } while (saveFile == false);
-
-      try {
-         getPositionList().save(curFile_.getAbsolutePath());
-         posListDir_ = curFile_.getParent();
-      } catch (Exception e) {
-         handleError(e);
-         return false;
+         return true;
       }
       
-      return true;
+      return false;
    }
 
    protected void loadPositionList() {
-      JFileChooser fc = new JFileChooser();
-      fc.addChoosableFileFilter(new PosFileFilter());
-
-      if (posListDir_ != null)
-         fc.setCurrentDirectory(new File(posListDir_));
-      int retVal = fc.showOpenDialog(this);
-      if (retVal == JFileChooser.APPROVE_OPTION) {
-         curFile_ = fc.getSelectedFile();
+      File f = FileDialogs.openFile(this, "Load a position list", POSITION_LIST_FILE);
+      if (f != null) {
+         curFile_ = f;
          try {
             getPositionList().load(curFile_.getAbsolutePath());
             posListDir_ = curFile_.getParent();

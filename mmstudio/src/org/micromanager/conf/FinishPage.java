@@ -24,12 +24,10 @@
 package org.micromanager.conf;
 
 import java.awt.Color;
-import java.awt.FileDialog;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.io.FilenameFilter;
 import java.util.prefs.Preferences;
 
 import javax.swing.JButton;
@@ -39,6 +37,9 @@ import javax.swing.JOptionPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.border.LineBorder;
+import org.micromanager.MMStudioMainFrame;
+import org.micromanager.utils.FileDialogs;
+import org.micromanager.utils.FileDialogs.FileType;
 
 import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.ReportingUtils;
@@ -145,20 +146,14 @@ public class FinishPage extends PagePanel {
     }
 
     private void browseConfigurationFile() {
-        FileDialog fileDialog = new FileDialog(this.parent_, "Create a configuration file", FileDialog.SAVE);
-        fileDialog.setFilenameFilter(new FilenameFilter() {
-
-            public boolean accept(File dir, String name) {
-                return name.endsWith(".cfg");
-            }
-        });
-        fileDialog.setVisible(true);
-        if (fileDialog.getFile() != null) {
-            File f = new File(fileDialog.getDirectory(), fileDialog.getFile());
+        String suffixes[] = {".cfg"};
+        File f = FileDialogs.save(this.parent_,
+                "Create a configuration file",
+                MMStudioMainFrame.MM_CONFIG_FILE);
+        if (f != null) {
             setFilePath(f);
             overwrite_ = true;
         }
-        fileDialog.dispose();
     }
 
     private void setFilePath(File f) {

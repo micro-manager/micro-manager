@@ -25,11 +25,8 @@ package org.micromanager.utils;
 
 import ij.WindowManager;
 import ij.gui.ImageWindow;
-import ij.process.ColorProcessor;
-import ij.process.ImageStatistics;
 import java.awt.AWTEvent;
 
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GraphicsEnvironment;

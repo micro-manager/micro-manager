@@ -16,7 +16,6 @@ import java.awt.event.AdjustmentListener;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
-import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
@@ -24,6 +23,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.api.AcquisitionEngine;
+import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MDUtils;
@@ -332,24 +332,9 @@ public class VirtualAcquisitionDisplay {
       String prefix;
       String root;
       for (;;) {
-         String location = new File(dir_).getParent();
-         if (location == null)
-            location = MMStudioMainFrame.getInstance().getAcqDirectory();
-         File f = null;
-         if (JavaUtils.isMac()) {
-            System.setProperty("apple.awt.fileDialogForDirectories", "true");
-            FileDialog fd = new FileDialog(hyperImage_.getWindow(), location, FileDialog.SAVE);
-            fd.setVisible(true);
-            System.setProperty("apple.awt.fileDialogForDirectories", "false");
-            if (fd.getFile() != null) {
-              f = new File(fd.getDirectory() + "/" + fd.getFile());
-            }
-         } else {
-            final JFileChooser fc = new JFileChooser(location);
-            fc.setDialogTitle("Please choose a location for the data set.");
-            fc.showSaveDialog(hyperImage_.getWindow());
-            f = fc.getSelectedFile();
-         }
+         File f = FileDialogs.save(hyperImage_.getWindow(),
+                 "Please choose a location for the data set",
+                 MMStudioMainFrame.MM_DATA_SET);
          if (f == null) // Canceled.
          {
             return false;
@@ -358,7 +343,7 @@ public class VirtualAcquisitionDisplay {
          root = new File(f.getParent()).getAbsolutePath();
          if (f.exists()) {
             ReportingUtils.showMessage(prefix
-                    + " already exists! Please choose another name.");
+                    + " is write only! Please choose another name.");
          } else {
             break;
          }

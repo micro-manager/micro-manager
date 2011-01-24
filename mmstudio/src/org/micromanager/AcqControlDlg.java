@@ -54,7 +54,6 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
-import javax.swing.JFileChooser;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -74,7 +73,6 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
-import javax.swing.filechooser.FileFilter;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
@@ -88,6 +86,7 @@ import org.micromanager.utils.ColorEditor;
 import org.micromanager.utils.ColorRenderer;
 import org.micromanager.utils.ContrastSettings;
 import org.micromanager.utils.DisplayMode;
+import org.micromanager.utils.FileDialogs.FileType;
 import org.micromanager.utils.GUIColors;
 import org.micromanager.utils.MMException;
 import org.micromanager.utils.NumberUtils;
@@ -96,6 +95,7 @@ import org.micromanager.utils.SliceMode;
 
 import com.swtdesigner.SwingResourceManager;
 import org.micromanager.acquisition.ComponentTitledBorder;
+import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.ReportingUtils;
 
 /**
@@ -195,6 +195,9 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
     private static final String ACQ_COLUMN_ORDER = "column_order";
     private static final int ACQ_DEFAULT_COLUMN_WIDTH = 77;
 
+    private static final FileType ACQ_SETTINGS_FILE
+            = new FileType("ACQ_SETTINGS_FILE", "Acquisition settings", "xml");
+
     private int columnWidth_[];
     private int columnOrder_[];
     private CheckBoxPanel framesPanel_;
@@ -211,50 +214,6 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
     private boolean disableGUItoSettings_ = false;
 
 
-
-
-
-
-    /**
-     * File filter class for Open/Save file choosers
-     */
-    private class AcqFileFilter extends FileFilter {
-
-        final private String EXT_BSH;
-        final private String DESCRIPTION;
-
-        public AcqFileFilter() {
-            super();
-            EXT_BSH = new String("xml");
-            DESCRIPTION = new String("XML files (*.xml)");
-        }
-
-        public boolean accept(File f) {
-            if (f.isDirectory()) {
-                return true;
-            }
-
-            if (EXT_BSH.equals(getExtension(f))) {
-                return true;
-            }
-            return false;
-        }
-
-        public String getDescription() {
-            return DESCRIPTION;
-        }
-
-        private String getExtension(File f) {
-            String ext = null;
-            String s = f.getName();
-            int i = s.lastIndexOf('.');
-
-            if (i > 0 && i < s.length() - 1) {
-                ext = s.substring(i + 1).toLowerCase();
-            }
-            return ext;
-        }
-    }
 
     /**
      * Data representation class for the channels list
@@ -1640,13 +1599,12 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
     }
 
     protected void setRootDirectory() {
-        JFileChooser fc = new JFileChooser();
-        fc.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-        fc.setCurrentDirectory(new File(acqEng_.getRootName()));
-        int retVal = fc.showOpenDialog(this);
-        if (retVal == JFileChooser.APPROVE_OPTION) {
-            rootField_.setText(fc.getSelectedFile().getAbsolutePath());
-            acqEng_.setRootName(fc.getSelectedFile().getAbsolutePath());
+        File result = FileDialogs.openDir(this,
+                "Please choose a directory root for image data",
+                MMStudioMainFrame.MM_DATA_SET);
+        if (result != null) {
+            rootField_.setText(result.getAbsolutePath());
+            acqEng_.setRootName(result.getAbsolutePath());
         }
     }
 
@@ -1667,31 +1625,10 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
     }
 
     protected void loadAcqSettingsFromFile() {
-        JFileChooser fc = new JFileChooser();
-        fc.addChoosableFileFilter(new AcqFileFilter());
-        if (null != prefs_)
-           acqDir_ = prefs_.get(ACQ_FILE_DIR, null);
-
-        if (acqDir_ != null) {
-            fc.setCurrentDirectory(new File(acqDir_));
-        }
-        int retVal = fc.showOpenDialog(this);
-        if (retVal == JFileChooser.APPROVE_OPTION) {
-            acqFile_ = fc.getSelectedFile();
-            try {
-                FileInputStream in = new FileInputStream(acqFile_);
-                acqPrefs_.clear();
-                Preferences.importPreferences(in);
-                loadAcqSettings();
-                updateGUIContents();
-                in.close();
-                acqDir_ = acqFile_.getParent();
-                prefs_.put(ACQ_FILE_DIR, acqDir_);
-            } catch (Exception e) {
-                ReportingUtils.showError(e);
-                return;
-            }
-        }
+      File f = FileDialogs.openFile(this, "Load acquisition settings", ACQ_SETTINGS_FILE);
+      if (f != null) {
+         loadAcqSettingsFromFile(f.getAbsolutePath());
+       }
     }
 
     public void loadAcqSettingsFromFile(String path) {
@@ -1715,54 +1652,27 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
 
     protected boolean saveAsAcqSettingsToFile() {
         saveAcqSettings();
-        JFileChooser fc = new JFileChooser();
-        boolean saveFile = true;
-        if (acqPrefs_ == null) {
-            return false; //nothing to save
-        }
-        do {
-            if (acqFile_ == null) {
-                acqFile_ = new File(NEW_ACQFILE_NAME);
-            }
-
-            fc.setSelectedFile(acqFile_);
-            int retVal = fc.showSaveDialog(this);
-            if (retVal == JFileChooser.APPROVE_OPTION) {
-                acqFile_ = fc.getSelectedFile();
-
-                // check if file already exists
-                if (acqFile_.exists()) {
-                    int sel = JOptionPane.showConfirmDialog(this,
-                            "Overwrite " + acqFile_.getName(),
-                            "File Save",
-                            JOptionPane.YES_NO_OPTION);
-
-                    if (sel == JOptionPane.YES_OPTION) {
-                        saveFile = true;
-                    } else {
-                        saveFile = false;
-                    }
-                }
-            } else {
-                return false;
-            }
-        } while (saveFile == false);
-
-        FileOutputStream os;
-        try {
-            os = new FileOutputStream(acqFile_);
-            acqPrefs_.exportNode(os);
-        } catch (FileNotFoundException e) {
-            ReportingUtils.showError(e);
-            return false;
-        } catch (IOException e) {
-            ReportingUtils.showError(e);
-            return false;
-        } catch (BackingStoreException e) {
-            ReportingUtils.showError(e);
-            return false;
-        }
-        return true;
+        File f = FileDialogs.save(this, "Save the acquisition settings file", ACQ_SETTINGS_FILE);
+        
+        if (f != null) {
+           FileOutputStream os;
+           try {
+               os = new FileOutputStream(f);
+               acqPrefs_.exportNode(os);
+           } catch (FileNotFoundException e) {
+               ReportingUtils.showError(e);
+               return false;
+           } catch (IOException e) {
+               ReportingUtils.showError(e);
+               return false;
+           } catch (BackingStoreException e) {
+               ReportingUtils.showError(e);
+               return false;
+           }
+           return true;
+       }
+       
+       return false;
     }
 
     public void runAcquisition() {

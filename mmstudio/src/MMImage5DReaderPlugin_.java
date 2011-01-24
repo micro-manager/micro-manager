@@ -30,9 +30,8 @@ import ij.process.ImageStatistics;
 import java.awt.Color;
 import java.io.File;
 
-import javax.swing.JFileChooser;
-
 import org.micromanager.MMStudioMainFrame;
+import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.ProgressBar;
 import org.micromanager.utils.ReportingUtils;
 
@@ -73,15 +72,15 @@ public class MMImage5DReaderPlugin_ implements PlugIn {
       // --------------------
 /*
       System.setProperty("apple.laf.useScreenMenuBar", "true");
+*/
+      /*
+      File f = FileDialogs.openDir(frame_,
+              "Choose a Micro-Manager image data set",
+              MMStudioMainFrame.MM_DATA_SET);
 
-      JFileChooser fc = new JFileChooser();
-      fc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
-      String openAcqDirectory = new String(Prefs.get(MMImage5DReaderDirKey, ""));
-      fc.setSelectedFile(new File(openAcqDirectory));
-      int retVal = fc.showOpenDialog(IJ.getInstance().getOwner());
-      if (retVal == JFileChooser.APPROVE_OPTION) {
-         File f = fc.getSelectedFile();
-         if (f.isDirectory()) {
+      String openAcqDirectory;
+        if (f != null) {
+               if (f.isDirectory()) {
             openAcqDirectory = f.getAbsolutePath();
          } else {
             openAcqDirectory = f.getParent();

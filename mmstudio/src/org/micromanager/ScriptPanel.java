@@ -47,7 +47,6 @@ import java.util.prefs.Preferences;
 import javax.swing.BoxLayout;
 import javax.swing.InputMap;
 import javax.swing.JButton;
-import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -64,7 +63,6 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.filechooser.FileFilter;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.text.PlainDocument;
 import javax.swing.text.Style;
@@ -88,6 +86,7 @@ import bsh.Interpreter;
 import bsh.util.JConsole;
 
 import com.swtdesigner.SwingResourceManager;
+import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.ReportingUtils;
 
 
@@ -111,7 +110,9 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
    private Interpreter beanshellREPLint_;
    private JConsole cons_;
    
-   
+   private static final FileDialogs.FileType BSH_FILE
+           = new FileDialogs.FileType("BSH_FILE","Beanshell files","bsh");
+
    private static final String SCRIPT_DIRECTORY = "script_directory";
    private static final String SCRIPT_FILE = "script_file_";
    private static final String RIGHT_DIVIDER_LOCATION = "right_divider_location";
@@ -285,36 +286,6 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
        }
    }
 
-
-   /**
-    * File filter class for Open/Save file choosers 
-    */
-   private class ScriptFileFilter extends FileFilter {
-      final private String DESCRIPTION;
-
-      public ScriptFileFilter() {
-         super();
-         DESCRIPTION = new String("MM beanshell files (*.bsh)");
-      }
-
-      public boolean accept(File f){
-         if (f.isDirectory())
-            return true;
-
-         if (EXT_POS.equals(getExtension(f)))
-            return true;
-
-         if (EXT_ACQ.equals(getExtension(f)))
-            return true;
-
-         return false;
-      }
-
-      public String getDescription(){
-         return DESCRIPTION;
-      }
-
-   }
 
    public void createBeanshellREPL() {
       // Create console and REPL interpreter:
@@ -714,31 +685,13 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
          if (!promptToSave()) 
             return;
 
-         File curFile;
+         String [] suffixes = {".bsh"};
+         File curFile = FileDialogs.openFile(this, "Select a Beanshell script", BSH_FILE);
 
-         JFileChooser fc = new JFileChooser();
-         fc.addChoosableFileFilter(new ScriptFileFilter());
-
-         String scriptListDir = prefs_.get(SCRIPT_FILE, null);
-         if (scriptListDir != null) {
-            fc.setSelectedFile(new File(scriptListDir));
-         }
-
-         // int retval = fc.showOpenDialog(this);
-         int retval = fc.showDialog(this, "New/Open");
-         if (retval == JFileChooser.APPROVE_OPTION) {
-            curFile = fc.getSelectedFile();
-            try {
-               scriptListDir = curFile.getParent();
-               prefs_.put(SCRIPT_DIRECTORY, scriptListDir);
+         if (curFile != null) {
                prefs_.put(SCRIPT_FILE, curFile.getAbsolutePath());
                // only creates a new file when a file with this name does not exist
-               curFile.createNewFile();
-            } catch (Exception e) {
-               handleException (e);
-            } finally {
                addScriptToModel(curFile);
-            }
          }
       }
    }
@@ -810,23 +763,11 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
     */
    private void saveScriptAs () 
    {
-      JFileChooser fc = new JFileChooser();
-      fc.addChoosableFileFilter(new ScriptFileFilter());
-
-      if (scriptFile_ != null) {
-         fc.setSelectedFile(new File(scriptFile_.getAbsolutePath()));
-      } else {
-         String scriptListFile = prefs_.get(SCRIPT_FILE, null);
-         if (scriptListFile != null) {
-            fc.setSelectedFile(new File(scriptListFile));
-         }
-      }
-
-      int retval = fc.showSaveDialog(this);
-      if (retval == JFileChooser.APPROVE_OPTION) {
-         File saveFile = fc.getSelectedFile();
+      String suffixes [] = {"bsh"};
+      File saveFile = FileDialogs.save(this, "Save beanshell script", BSH_FILE);
+      if (saveFile != null) {
          try {
-            // Add .bsh extension of file did not have an extension itself
+            // Add .bsh extension if file did not have an extension itself
             String fileName = saveFile.getName();
             if (fileName.length() < 5 || (fileName.charAt(fileName.length()-4)!= '.' && fileName.charAt(fileName.length()-5) != '.') )
                fileName+= ".bsh";
@@ -926,20 +867,10 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
       if (!promptToSave()) 
          return;
 
-      JFileChooser fc = new JFileChooser();
-      fc.addChoosableFileFilter(new ScriptFileFilter());
+      File curFile = FileDialogs.openFile(this, "Choose Beanshell script", BSH_FILE);
 
-      String scriptListFile = prefs_.get(SCRIPT_FILE, null);
-      if (scriptListFile != null) {
-         fc.setSelectedFile(new File(scriptListFile));
-      }
-
-      int retval = fc.showOpenDialog(this);
-      File curFile;
-      if (retval == JFileChooser.APPROVE_OPTION) {
-         curFile = fc.getSelectedFile();
+      if (curFile != null) {
          try {
-            scriptListFile = curFile.getParent();
             prefs_.put(SCRIPT_FILE, curFile.getAbsolutePath());
             int row = scriptTable_.getSelectedRow();
             int column =  scriptTable_.getSelectedColumn();
@@ -953,6 +884,7 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
          } catch (Exception e) {
             handleException (e);
          } finally {
+
          }
       }
    }

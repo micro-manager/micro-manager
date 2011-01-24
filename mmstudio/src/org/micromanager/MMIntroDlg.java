@@ -35,21 +35,19 @@ import java.io.File;
 
 import javax.swing.JButton;
 import javax.swing.JDialog;
-import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JTextArea;
 import javax.swing.border.LineBorder;
 
-import org.micromanager.utils.CfgFileFilter;
 
 import com.swtdesigner.SwingResourceManager;
 import ij.IJ;
 import java.util.ArrayList;
-import java.util.Vector;
 import javax.swing.BorderFactory;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.border.EtchedBorder;
+import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.JavaUtils;
 
 /**
@@ -232,8 +230,7 @@ public class MMIntroDlg extends JDialog {
               cfgFileDropperDown_.setSelectedIndex(0);
       }
 */
-      JFileChooser fc = new JFileChooser();
-      fc.addChoosableFileFilter(new CfgFileFilter());
+  
       //textFieldFile_.setText(path);
    }
    
@@ -254,19 +251,9 @@ public class MMIntroDlg extends JDialog {
    }
    
    protected void loadConfigFile() {
-      JFileChooser fc = new JFileChooser();
-      fc.addChoosableFileFilter(new CfgFileFilter());
-      String tstring = new String(cfgFileDropperDown_.getSelectedItem().toString());
-      if( tstring.equals("(none"))
-           tstring = "";
-
-      fc.setSelectedFile(new File(tstring));
-     
-      int retVal = fc.showOpenDialog(this);
-      if (retVal == JFileChooser.APPROVE_OPTION) {
-         setConfigFile(fc.getSelectedFile().getAbsolutePath());
+      File f = FileDialogs.openDir(this, "Choose a config file", MMStudioMainFrame.MM_CONFIG_FILE);
+      if (f != null) {
+         setConfigFile(f.getAbsolutePath());
       }
-   }
- 
-   
+   }   
 }

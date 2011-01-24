@@ -55,7 +55,6 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComboBox;
-import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenu;
@@ -97,7 +96,6 @@ import org.micromanager.navigation.PositionList;
 import org.micromanager.navigation.XYZKeyListener;
 import org.micromanager.navigation.ZWheelListener;
 import org.micromanager.utils.AutofocusManager;
-import org.micromanager.utils.CfgFileFilter;
 import org.micromanager.utils.ContrastSettings;
 import org.micromanager.utils.GUIColors;
 import org.micromanager.utils.GUIUtils;
@@ -112,12 +110,12 @@ import org.micromanager.utils.WaitDialog;
 
 import bsh.EvalError;
 import bsh.Interpreter;
+import clojure.lang.RT;
 
 import com.swtdesigner.SwingResourceManager;
 import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
 import java.awt.Cursor;
-import java.awt.FileDialog;
 import java.awt.Graphics;
 import java.util.Collections;
 import mmcorej.TaggedImage;
@@ -125,8 +123,9 @@ import org.micromanager.acquisition.AcquisitionVirtualStack;
 import org.micromanager.api.AcquisitionInterface;
 import org.micromanager.acquisition.AcquisitionWrapperEngine;
 import org.micromanager.acquisition.MetadataPanel;
-import org.micromanager.acquisition.SequenceSettings;
 import org.micromanager.api.ImageFocusListener;
+import org.micromanager.utils.FileDialogs;
+import org.micromanager.utils.FileDialogs.FileType;
 import org.micromanager.utils.ReportingUtils;
 
 /*
@@ -230,6 +229,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private boolean liveModeSuspended_;
    public Font defaultScriptFont_ = null;
 
+   public static FileDialogs.FileType MM_CONFIG_FILE
+            = new FileType("MM_CONFIG_FILE",
+                           "Micro-Manager Config File",
+                           ".cfg");
 
    // Our instance
    private static MMStudioMainFrame gui_;
@@ -241,6 +244,9 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private boolean virtual_ = false;
    private final JMenu switchConfigurationMenu_;
    private final MetadataPanel metadataPanel_;
+   public static FileDialogs.FileType MM_DATA_SET 
+           = new FileDialogs.FileType("MM_DATA_SET",
+                 "Micro-Manager Image Location",(String) null);
 
    public ImageWindow getImageWin() {
       return imageWin_;
@@ -2036,38 +2042,15 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          model.loadFromFile(sysConfigFile_);
          model.createSetupConfigsFromHardware(core_);
          model.createResolutionsFromHardware(core_);
-         JFileChooser fc = new JFileChooser();
-         boolean saveFile = true;
-         File f;
-         do {
-            fc.setSelectedFile(new File(model.getFileName()));
-            int retVal = fc.showSaveDialog(this);
-            if (retVal == JFileChooser.APPROVE_OPTION) {
-               f = fc.getSelectedFile();
-
-               // check if file already exists
-               if (f.exists()) {
-                  int sel = JOptionPane.showConfirmDialog(this,
-                        "Overwrite " + f.getName(), "File Save",
-                        JOptionPane.YES_NO_OPTION);
-
-                  if (sel == JOptionPane.YES_OPTION) {
-                     saveFile = true;
-                  } else {
-                     saveFile = false;
-                  }
-               }
-            } else {
-               return;
-            }
-         } while (saveFile == false);
-
-         model.saveToFile(f.getAbsolutePath());
-         sysConfigFile_ = f.getAbsolutePath();
-         mainPrefs_.put(SYSTEM_CONFIG_FILE, sysConfigFile_);
-         configChanged_ = false;
-         setConfigSaveButtonStatus(configChanged_);
-         updateTitle();
+         File f = FileDialogs.save(this, "Save the configuration file", MM_CONFIG_FILE);
+         if (f != null) {
+            model.saveToFile(f.getAbsolutePath());
+            sysConfigFile_ = f.getAbsolutePath();
+            mainPrefs_.put(SYSTEM_CONFIG_FILE, sysConfigFile_);
+            configChanged_ = false;
+            setConfigSaveButtonStatus(configChanged_);
+            updateTitle();
+         }
       } catch (MMConfigFileException e) {
          ReportingUtils.showError(e);
       }
@@ -2085,28 +2068,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       openAcqDirectory_ = dir;
    }
 
-   private File runAcquisitionBrowser() {
-         File selectedFile = null;
-         if (JavaUtils.isMac()) {
-            System.setProperty("apple.awt.fileDialogForDirectories", "true");
-            FileDialog fd = new FileDialog(this);
-            fd.setVisible(true);
-            System.setProperty("apple.awt.fileDialogForDirectories", "false");
-            if (fd.getFile() != null) {
-              selectedFile = new File(fd.getDirectory() + "/" + fd.getFile());
-            }
-         } else {
-            JFileChooser fc = new JFileChooser(openAcqDirectory_);
-            fc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
-            int returnVal = fc.showOpenDialog(this);
-            if (returnVal == JFileChooser.APPROVE_OPTION) {
-               selectedFile = fc.getSelectedFile();
-            }
-         }
-         return selectedFile;
-   }
-
-   /**
+      /**
     * Open an existing acquisition directory and build image5d window.
     *
     */
@@ -2114,7 +2076,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
       // choose the directory
       // --------------------
-      File f = runAcquisitionBrowser();
+      File f = FileDialogs.openDir(this, "Please select an image data set", MM_DATA_SET);
 
       if (f != null) {
          if (f.isDirectory()) {
@@ -3084,12 +3046,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
 
    private void loadConfiguration() {
-      JFileChooser fc = new JFileChooser();
-      fc.addChoosableFileFilter(new CfgFileFilter());
-      fc.setSelectedFile(new File(sysConfigFile_));
-      int retVal = fc.showOpenDialog(this);
-      if (retVal == JFileChooser.APPROVE_OPTION) {
-         File f = fc.getSelectedFile();
+      File f = FileDialogs.openFile(this, "Load a config file",MM_CONFIG_FILE);
+      if (f != null) {
          sysConfigFile_ = f.getAbsolutePath();
          configChanged_ = false;
          setConfigSaveButtonStatus(configChanged_);
@@ -3099,12 +3057,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
 
    private void loadSystemState() {
-      JFileChooser fc = new JFileChooser();
-      fc.addChoosableFileFilter(new CfgFileFilter());
-      fc.setSelectedFile(new File(sysStateFile_));
-      int retVal = fc.showOpenDialog(this);
-      if (retVal == JFileChooser.APPROVE_OPTION) {
-         File f = fc.getSelectedFile();
+      File f = FileDialogs.openFile(this, "Load a system state file", MM_CONFIG_FILE);
+      if (f != null) {
          sysStateFile_ = f.getAbsolutePath();
          try {
             // WaitDialog waitDlg = new
@@ -3122,40 +3076,18 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
 
    private void saveSystemState() {
-      JFileChooser fc = new JFileChooser();
-      boolean saveFile = true;
-      File f;
+      File f = FileDialogs.openFile(this,
+              "Save the system state to a config file", MM_CONFIG_FILE);
 
-      do {
-         fc.setSelectedFile(new File(sysStateFile_));
-         int retVal = fc.showSaveDialog(this);
-         if (retVal == JFileChooser.APPROVE_OPTION) {
-            f = fc.getSelectedFile();
+      if (f != null) {
+         sysStateFile_ = f.getAbsolutePath();
 
-            // check if file already exists
-            if (f.exists()) {
-               int sel = JOptionPane.showConfirmDialog(this, "Overwrite "
-                     + f.getName(), "File Save",
-                     JOptionPane.YES_NO_OPTION);
-
-               if (sel == JOptionPane.YES_OPTION) {
-                  saveFile = true;
-               } else {
-                  saveFile = false;
-               }
-            }
-         } else {
+         try {
+            core_.saveSystemState(sysStateFile_);
+         } catch (Exception e) {
+            ReportingUtils.showError(e);
             return;
          }
-      } while (saveFile == false);
-
-      sysStateFile_ = f.getAbsolutePath();
-
-      try {
-         core_.saveSystemState(sysStateFile_);
-      } catch (Exception e) {
-         ReportingUtils.showError(e);
-         return;
       }
    }
 
@@ -4046,31 +3978,14 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
 
    public void snapAndAddToImage5D(String acqName) {
-     /* Object img;
       try {
-         boolean liveRunning = liveRunning_;
-         if (liveRunning) {
-            img = core_.getLastImage();
-         } else {
-            core_.snapImage();
-            img = core_.getImage();
-         }
+         RT.init();
+         RT.loadClassForName("org.micromanager.acq-engine");
+         RT.var("org.micromanager.acq-engine", "acquire-single").invoke();
 
-         addToSnapSeries(img, acqName);
-      } catch (Exception e) {
-         ReportingUtils.showError(e);
-      }*/
-
-      SequenceSettings acquisitionSettings = new SequenceSettings();
-      AcquisitionWrapperEngine eng = new AcquisitionWrapperEngine();
-      try {
-         eng.setPositionList(this.getPositionList());
-      } catch (MMScriptException ex) {
+      } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
-      eng.setCore(core_, afMgr_);
-      eng.setParentGUI(this);
-      eng.runPipeline(acquisitionSettings);
    }
 
    public void setAcquisitionEngine(AcquisitionEngine eng) {

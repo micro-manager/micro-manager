@@ -161,7 +161,9 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
       acquisitionSettings.relativeZSlice = !this.absoluteZ_;
       try {
-         acquisitionSettings.zReference = core_.getPosition(core_.getFocusDevice());
+         String zdrive = core_.getFocusDevice();
+         acquisitionSettings.zReference = (zdrive.length() > 0)
+                 ? core_.getPosition(core_.getFocusDevice()) : 0.0;
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
