@@ -179,7 +179,7 @@ public class ConfiguratorDlg extends JDialog {
         pages_[pageNumber++] = new FinishPage(prefs_);
 
         microModel_ = new MicroscopeModel();
-        microModel_.setSendConfiguration(false);
+        microModel_.setSendConfiguration(true);
         microModel_.loadAvailableDeviceList(core_);
         microModel_.setFileName(defaultPath_);
         microModel_.scanComPorts(core_);
@@ -307,24 +307,24 @@ public class ConfiguratorDlg extends JDialog {
                 // contruct a filename for the configuration file which is extremely
                 // likely to be unique as follows:
                 // yyyyMMddHHmmss + timezone + ip address + host name + mm user + file name
-                String qualifiedConfigFileName = "UserConfiguration_";
+                String qualifiedConfigFileName = "UserConfiguration@";
                 try {
-                    SimpleDateFormat df = new SimpleDateFormat("yyyyMMdd");
+                    SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHHmmss");
                     qualifiedConfigFileName += df.format(new Date());
                     String shortTZName = TimeZone.getDefault().getDisplayName(false, TimeZone.SHORT);
                     qualifiedConfigFileName += shortTZName;
-                    qualifiedConfigFileName += "_";
+                    qualifiedConfigFileName += "@";
                     try {
 
                         qualifiedConfigFileName += InetAddress.getLocalHost().getHostAddress();
-                        qualifiedConfigFileName += "_";
+                        qualifiedConfigFileName += "@";
                         qualifiedConfigFileName += InetAddress.getLocalHost().getHostName();
-                        qualifiedConfigFileName += "_";
+                        qualifiedConfigFileName += "@";
 
                     } catch (UnknownHostException e) {
                     }
                     qualifiedConfigFileName += core_.getUserId();
-                    qualifiedConfigFileName += "_";
+                    qualifiedConfigFileName += "@";
                 } catch (Throwable t) {
                 }
 
@@ -337,6 +337,10 @@ public class ConfiguratorDlg extends JDialog {
                 qualifiedConfigFileName.replace('<', '_');
                 qualifiedConfigFileName.replace('(', '_');
                 qualifiedConfigFileName.replace(')', '_');
+                qualifiedConfigFileName.replace('/', '_');                
+                qualifiedConfigFileName.replace(':', '_');                
+                qualifiedConfigFileName.replace(';', '_');
+
                 File fileToSend = new File(qualifiedConfigFileName);
 
                 FileReader reader = new FileReader(conff);
@@ -353,7 +357,7 @@ public class ConfiguratorDlg extends JDialog {
                     // to test locally on OS X put scripts in apache DocumentRoot, for example:
                     // DocumentRoot "/Library/WebServer/Documents"
                     // "http://localhost/upload_file.php"
-                    URL url = new URL("http://udp022507uds.ucsf.edu/~karlhoover/upload_file.php");
+                    URL url = new URL("http://valelab.ucsf.edu/~MM/upload_file.php");
 
                     List flist = new ArrayList<File>();
                     flist.add(fileToSend);
@@ -397,7 +401,7 @@ public class ConfiguratorDlg extends JDialog {
         }
     }
 
-    public String getFileName() {
+    public String getFileName(){
         return microModel_.getFileName();
     }
 

@@ -95,7 +95,7 @@ public class FinishPage extends PagePanel {
             }
         });
         saveAndTestButton.setText("Save and test the new configuration");
-        saveAndTestButton.setBounds(96, 69, 277, 30);
+        saveAndTestButton.setBounds(96, 59, 277, 30);
         add(saveAndTestButton);
 
         logArea_ = new JTextArea();
@@ -108,17 +108,27 @@ public class FinishPage extends PagePanel {
         sendCheck_ = new JCheckBox();
         sendCheck_.setBounds(10, 100, 280, 23);
         sendCheck_.setFont(new Font("", Font.PLAIN, 10));
-        sendCheck_.setSelected(false);
-
+        sendCheck_.setSelected(true);
         sendCheck_.addActionListener(new ActionListener() {
 
             public void actionPerformed(ActionEvent arg0) {
                 model_.setSendConfiguration(sendCheck_.isSelected());
             }
         });
+
         sendCheck_.setText("Send configuration to Micro-manager.org");
 
+
         add(sendCheck_);
+
+        final JLabel sendConfigExplain = new JLabel();
+        sendConfigExplain.setAutoscrolls(true);
+        sendConfigExplain.setText("The configuration data will aid securing further project funding.");
+        sendConfigExplain.setBounds(10, 84, 500, 23);
+        sendConfigExplain.setFont(sendCheck_.getFont());
+        add(sendConfigExplain);
+        
+
 
 
         //
