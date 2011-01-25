@@ -3108,7 +3108,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
 
    private void saveSystemState() {
-      File f = FileDialogs.openFile(this,
+      File f = FileDialogs.save(this,
               "Save the system state to a config file", MM_CONFIG_FILE);
 
       if (f != null) {
