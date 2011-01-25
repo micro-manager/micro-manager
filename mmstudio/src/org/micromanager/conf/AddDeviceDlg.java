@@ -25,15 +25,17 @@ package org.micromanager.conf;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.IOException;
 
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JDialog;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTree;
 import javax.swing.event.TreeSelectionEvent;
@@ -47,6 +49,54 @@ import org.micromanager.utils.ReportingUtils;
 public class AddDeviceDlg extends JDialog implements MouseListener, TreeSelectionListener {
 
     private static final long serialVersionUID = 1L;
+
+    class TreeWContextMenu extends JTree  implements ActionListener {
+        public TreeWContextMenu(DefaultMutableTreeNode n, AddDeviceDlg d){
+            super(n);
+            d_ = d;
+            popupMenu_ = new JPopupMenu();
+            JMenuItem jmi = new JMenuItem("Add");
+            jmi.setActionCommand("add");
+            jmi.addActionListener(this);
+            popupMenu_.add(jmi);
+            jmi = new JMenuItem("Help");
+            jmi.setActionCommand("help");
+            jmi.addActionListener(this);
+
+            popupMenu_.add(jmi);
+            popupMenu_.setOpaque(true);
+            popupMenu_.setLightWeightPopupEnabled(true);
+
+            addMouseListener(
+                new MouseAdapter() {
+                    public void mouseReleased( MouseEvent e ) {
+                        if ( e.isPopupTrigger()) {
+                        popupMenu_.show( (JComponent)e.getSource(), e.getX(), e.getY() );
+                    }
+                    }
+                
+                }
+            );
+
+        }
+        JPopupMenu popupMenu_;
+        AddDeviceDlg d_;  // pretty ugly
+
+        public void actionPerformed(ActionEvent ae) {
+                if (ae.getActionCommand().equals("help")) {
+                    d_.displayDocumentation();
+                } else if (ae.getActionCommand().equals("add")) {
+                    if (d_.addDevice()) {
+                       d_.rebuildTable();
+                }
+            }
+        }
+
+
+
+
+
+    }
 
     class TreeNodeShowsDeviceAndDescription extends DefaultMutableTreeNode {
 
@@ -91,7 +141,7 @@ public class AddDeviceDlg extends JDialog implements MouseListener, TreeSelectio
     }
     private MicroscopeModel model_;
     private DevicesPage devicesPage_;
-    private JTree theTree_;
+    private TreeWContextMenu theTree_;
     final String documentationURLroot_;
     String libraryDocumentationName_;
 
@@ -125,17 +175,14 @@ public class AddDeviceDlg extends JDialog implements MouseListener, TreeSelectio
             node.add(aLeaf);
         }
         // try building a tree
-        theTree_ = new JTree(root);
+        theTree_ = new TreeWContextMenu(root, this);
         theTree_.addTreeSelectionListener(this);
 
         // double click should add the device, single click selects row and waits for user to press 'add'
         MouseListener ml = new MouseAdapter() {
 
             public void mousePressed(MouseEvent e) {
-
-                if( (e.getModifiers() & InputEvent.BUTTON3_MASK) == InputEvent.BUTTON3_MASK){
-                    displayDocumentation();
-                }else if (2 == e.getClickCount()) {
+                if (2 == e.getClickCount()) {
                     if (addDevice()) {
                         rebuildTable();
                     }
@@ -231,7 +278,14 @@ public class AddDeviceDlg extends JDialog implements MouseListener, TreeSelectio
 
                 Object[] userData = node.getUserDataArray();
                 if (null == userData) {
-                    return false;
+                    // if a folder has one child go ahead and add the childer
+                    if(1==node.getLeafCount())
+                    {
+                        node = (TreeNodeShowsDeviceAndDescription)node.getChildAt(0);
+                        userData = node.getUserDataArray();
+                        if (null==userData)
+                            return false;
+                    }
                 }
                 boolean validName = false;
                 while (!validName) {
