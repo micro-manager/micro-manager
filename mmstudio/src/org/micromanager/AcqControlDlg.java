@@ -196,7 +196,9 @@ public class AcqControlDlg extends JDialog implements PropertyChangeListener {
     private static final int ACQ_DEFAULT_COLUMN_WIDTH = 77;
 
     private static final FileType ACQ_SETTINGS_FILE
-            = new FileType("ACQ_SETTINGS_FILE", "Acquisition settings", "xml");
+            = new FileType("ACQ_SETTINGS_FILE", "Acquisition settings",
+                           System.getProperty("user.home") + "/AcqSettings.xml",
+                           true,"xml");
 
     private int columnWidth_[];
     private int columnOrder_[];

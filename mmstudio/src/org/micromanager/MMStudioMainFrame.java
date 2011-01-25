@@ -233,7 +233,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    public static FileDialogs.FileType MM_CONFIG_FILE
             = new FileType("MM_CONFIG_FILE",
                            "Micro-Manager Config File",
-                           ".cfg");
+                           "./MyScope.cfg",
+                           true, "cfg");
 
    // Our instance
    private static MMStudioMainFrame gui_;
@@ -247,7 +248,9 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private final MetadataPanel metadataPanel_;
    public static FileDialogs.FileType MM_DATA_SET 
            = new FileDialogs.FileType("MM_DATA_SET",
-                 "Micro-Manager Image Location",(String[]) null);
+                 "Micro-Manager Image Location",
+                 System.getProperty("user.home") + "/Untitled",
+                 false, (String[]) null);
    private Thread pipelineClassLoadingThread_ = null;
    private Class pipelineClass_ = null;
    private Pipeline acquirePipeline_ = null;

@@ -111,7 +111,9 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
    private JConsole cons_;
    
    private static final FileDialogs.FileType BSH_FILE
-           = new FileDialogs.FileType("BSH_FILE","Beanshell files","bsh");
+           = new FileDialogs.FileType("BSH_FILE","Beanshell files",
+                    System.getProperty("user.home") + "/MyScript.bsh",
+                    true, "bsh");
 
    private static final String SCRIPT_DIRECTORY = "script_directory";
    private static final String SCRIPT_FILE = "script_file_";

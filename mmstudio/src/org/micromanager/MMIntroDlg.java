@@ -251,7 +251,7 @@ public class MMIntroDlg extends JDialog {
    }
    
    protected void loadConfigFile() {
-      File f = FileDialogs.openDir(this, "Choose a config file", MMStudioMainFrame.MM_CONFIG_FILE);
+      File f = FileDialogs.openFile(this, "Choose a config file", MMStudioMainFrame.MM_CONFIG_FILE);
       if (f != null) {
          setConfigFile(f.getAbsolutePath());
       }

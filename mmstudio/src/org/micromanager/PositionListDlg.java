@@ -79,7 +79,9 @@ public class PositionListDlg extends MMDialog implements MouseListener {
    @SuppressWarnings("unused")
    private static final String MAC_BUTTON_SHAPE = "mini";
    private static FileType POSITION_LIST_FILE =
-           new FileType("POSITION_LIST_FILE","Position list file","pos");
+           new FileType("POSITION_LIST_FILE","Position list file",
+                        System.getProperty("user.home") + "/PositionList.pos",
+                        true,"pos");
 
    private JTable posTable_;
    private JTable axisTable_;

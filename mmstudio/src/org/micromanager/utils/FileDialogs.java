@@ -30,11 +30,16 @@ public class FileDialogs {
       final String name;
       final String[] suffixes;
       final String description;
+      final boolean suggestFileOnSave;
+      final String defaultFileName;
 
-      public FileType(String name, String description, String... suffixes) {
+      public FileType(String name, String description, String defaultFileName,
+              boolean suggestFileOnSave, String... suffixes) {
          this.name = name;
          this.description = description;
          this.suffixes = suffixes;
+         this.defaultFileName = defaultFileName;
+         this.suggestFileOnSave = suggestFileOnSave;
       }
    }
 
@@ -71,10 +76,13 @@ public class FileDialogs {
       }
    }
 
-   public static File show(Window parent, String title, File startFile,
+   public static File show(Window parent,
+                    String title,
+                    File startFile,
                     boolean selectDirectories, boolean load,
                     final String fileDescription,
-                    final String[] fileSuffixes) {
+                    final String[] fileSuffixes,
+                    boolean suggestFileName) {
       File selectedFile = null;
       GeneralFileFilter filter = new GeneralFileFilter(fileDescription, fileSuffixes);
 
@@ -94,7 +102,7 @@ public class FileDialogs {
          }
          if (startFile != null) {
             fd.setDirectory(startFile.getParent());
-            if (!load) {
+            if (!load && suggestFileName) {
                fd.setFile(startFile.getName());
             }
          }
@@ -150,13 +158,13 @@ public class FileDialogs {
    public static File show(Window parent, String title, FileType type,
                     boolean selectDirectories, boolean load) {
       Preferences node = Preferences.userNodeForPackage(FileDialogs.class);
-      String startDirStr = node.get(type.name, null);
+      String startFile = node.get(type.name, type.defaultFileName);
       File startDir = null;
-      if (startDirStr != null) {
-         startDir = new File(startDirStr);
+      if (startFile != null) {
+         startDir = new File(startFile);
       }
       File result = show(parent, title, startDir, selectDirectories, load,
-                         type.description, type.suffixes);
+                         type.description, type.suffixes, type.suggestFileOnSave);
       if (result != null) {
          node.put(type.name, result.getAbsolutePath());
       }
