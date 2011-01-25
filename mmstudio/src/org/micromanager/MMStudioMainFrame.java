@@ -230,7 +230,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private boolean liveModeSuspended_;
    public Font defaultScriptFont_ = null;
 
-   public static FileDialogs.FileType MM_CONFIG_FILE
+   public static FileType MM_CONFIG_FILE
             = new FileType("MM_CONFIG_FILE",
                            "Micro-Manager Config File",
                            "./MyScope.cfg",
@@ -246,8 +246,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private boolean virtual_ = false;
    private final JMenu switchConfigurationMenu_;
    private final MetadataPanel metadataPanel_;
-   public static FileDialogs.FileType MM_DATA_SET 
-           = new FileDialogs.FileType("MM_DATA_SET",
+   public static FileType MM_DATA_SET 
+           = new FileType("MM_DATA_SET",
                  "Micro-Manager Image Location",
                  System.getProperty("user.home") + "/Untitled",
                  false, (String[]) null);

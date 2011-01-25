@@ -87,6 +87,7 @@ import bsh.util.JConsole;
 
 import com.swtdesigner.SwingResourceManager;
 import org.micromanager.utils.FileDialogs;
+import org.micromanager.utils.FileDialogs.FileType;
 import org.micromanager.utils.ReportingUtils;
 
 
@@ -110,8 +111,8 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
    private Interpreter beanshellREPLint_;
    private JConsole cons_;
    
-   private static final FileDialogs.FileType BSH_FILE
-           = new FileDialogs.FileType("BSH_FILE","Beanshell files",
+   private static final FileType BSH_FILE
+           = new FileType("BSH_FILE","Beanshell files",
                     System.getProperty("user.home") + "/MyScript.bsh",
                     true, "bsh");
 

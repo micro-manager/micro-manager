@@ -127,7 +127,7 @@ public class FileDialogs {
       } else {
          JFileChooser fc;
          if (startFile != null) {
-            if (load) {
+            if (load || !suggestFileName) {
                fc = new JFileChooser(startFile.getParentFile());
             } else {
                fc = new JFileChooser(startFile);

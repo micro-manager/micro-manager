@@ -39,7 +39,6 @@ import javax.swing.JTextField;
 import javax.swing.border.LineBorder;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.utils.FileDialogs;
-import org.micromanager.utils.FileDialogs.FileType;
 
 import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.ReportingUtils;
