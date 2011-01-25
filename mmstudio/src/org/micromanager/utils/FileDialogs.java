@@ -157,8 +157,7 @@ public class FileDialogs {
       File result = show(parent, title, startDir, selectDirectories, load,
                          type.description, type.suffixes);
       if (result != null) {
-         File dir = result.getParentFile();
-         node.put(type.name, dir.getAbsolutePath());
+         node.put(type.name, result.getAbsolutePath());
       }
       return result;
    }
