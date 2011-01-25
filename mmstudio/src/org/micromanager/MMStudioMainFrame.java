@@ -247,7 +247,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private final MetadataPanel metadataPanel_;
    public static FileDialogs.FileType MM_DATA_SET 
            = new FileDialogs.FileType("MM_DATA_SET",
-                 "Micro-Manager Image Location",(String) null);
+                 "Micro-Manager Image Location",(String[]) null);
    private Thread pipelineClassLoadingThread_ = null;
    private Class pipelineClass_ = null;
    private Pipeline acquirePipeline_ = null;

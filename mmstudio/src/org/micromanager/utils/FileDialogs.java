@@ -53,8 +53,10 @@ public class FileDialogs {
          String name = pathname.getName();
          int n = name.lastIndexOf(".");
          String suffix = name.substring(1+n).toLowerCase();
+         if (fileSuffixes_ == null || fileSuffixes_.length == 0)
+            return true;
          for (int i=0; i<fileSuffixes_.length; ++i) {
-            if (fileSuffixes_[i].toLowerCase().contentEquals(suffix))
+            if (fileSuffixes_[i] != null && fileSuffixes_[i].toLowerCase().contentEquals(suffix))
                return true;
          }
          return false;
@@ -91,10 +93,9 @@ public class FileDialogs {
             fd = new FileDialog((Dialog) null, title, mode);
          }
          if (startFile != null) {
-            if (load)
-               fd.setDirectory(startFile.getParent());
-            else {
-               fd.setFile(startFile.getAbsolutePath());
+            fd.setDirectory(startFile.getParent());
+            if (!load) {
+               fd.setFile(startFile.getName());
             }
          }
          if (fileSuffixes != null) {
