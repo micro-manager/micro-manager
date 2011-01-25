@@ -124,7 +124,7 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
  */
 SpotCamera::SpotCamera(const char* /*szDeviceName*/) : CCameraBase<SpotCamera>(),
    initialized( false ),   
-   numberOfChannels_( 1 ),
+   numberOfChannels_( 4 ), // EF - changed to 4 for valid number for MMImageWindow, line 125ff, byteDepth = 4
 	pImplementation_(NULL),
 	rawBuffer_(NULL),
 	rawBufferSize_(0),
@@ -237,6 +237,13 @@ int SpotCamera::Initialize()
 		pImplementation_->Initialize(deviceName_);
 
 		// read camera information
+		
+		// EF: set the number of channels depending on the camera
+		if ( pImplementation_->BitDepth() < 24 ) {
+			numberOfChannels_ = 1;
+		} else {
+			numberOfChannels_ = 4;
+		}
 
 		// set camera name - SPOT cameras have mode & serial number together
 		// set device name
@@ -676,7 +683,13 @@ int SpotCamera::NextSequentialImage(ImgBuffer& img)
 	{
 		bytesPerPixel = (int)sourcedepth;
 	}
-
+	// EF: set the number of channels depending on the picture returned
+	if ( cdepth < 3 ) {
+		numberOfChannels_ = 1;
+	} else {
+		numberOfChannels_ = 4;
+	}
+	
 	const unsigned long bytesRequired = sourceheight*sourcewidth*bytesPerPixel;
 
 
@@ -693,16 +706,21 @@ int SpotCamera::NextSequentialImage(ImgBuffer& img)
 	//memset(ptemp, 0, destdepth*destwidth*destheight);
 
 	// handle case where buffer doesn't match returned image size
+   /*
 	unsigned int xdest, ydest;//, xsource, ysource;
-	int roffsetdest, goffsetdest, boffsetdest;
+   int roffsetdest, goffsetdest, boffsetdest;
 	int roffsetsource, goffsetsource, boffsetsource;
-
-	unsigned int workingwidth = min(destwidth, sourcewidth);
+   unsigned int workingwidth = min(destwidth, sourcewidth);
 	unsigned int workingheight = min(destheight, sourceheight);
+   */
 
 	unsigned char* ptemp = img.GetPixelsRW();
 
 	memset(ptemp,0, destdepth*destwidth*destheight);
+	// memcpy for all platforms now
+	memcpy( ptemp, pData, destdepth*destwidth*destheight);
+
+	/* Byte arrangement done in SpotDevice 
 #ifndef WIN32 // __APPLE__
 	memcpy( ptemp, pData, destdepth*destwidth*destheight);
 #else
@@ -756,7 +774,7 @@ int SpotCamera::NextSequentialImage(ImgBuffer& img)
 #endif
 	//img.SetPixels(ptemp);
 #endif 
-
+*/
 	return nRet;
 
 }
@@ -830,8 +848,9 @@ unsigned SpotCamera::GetImageHeight() const
  */
 unsigned SpotCamera::GetImageBytesPerPixel() const
 {
-
-   return imageBuffer.Depth() / GetNumberOfComponents();
+	
+	// EF: should not be imageBuffer.Depth() / GetNumberOfComponents() (=1); Depth()=Bytes per pixel
+	return imageBuffer.Depth();
 } 
 
 /**

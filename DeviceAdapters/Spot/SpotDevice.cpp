@@ -199,23 +199,23 @@ void SpotDevice::InitializeCamera()
 
    SpotAPI(SpotSetAbortFlag)(&bAbortFlag_);  
    SpotAPI(SpotGetCameraAttributes)(&dwAttributes);
-   stCameraInfo_.bCanDoColor = dwAttributes & SPOT_ATTR_COLOR;
-   stCameraInfo_.bHasMosaicSensor = dwAttributes & SPOT_ATTR_MOSAIC;
-   stCameraInfo_.bDoesMultiShotColor = dwAttributes & SPOT_ATTR_COLORFILTER;
-   stCameraInfo_.bHasFilterWheel = dwAttributes & SPOT_ATTR_FILTERWHEEL;
-   stCameraInfo_.bHasSlider = dwAttributes & SPOT_ATTR_SLIDER;
-   stCameraInfo_.bCanDetectSliderPosition = dwAttributes & SPOT_ATTR_SLIDERPOSITIONDETECTION;
-   stCameraInfo_.bCanComputeExposure = dwAttributes & SPOT_ATTR_AUTOEXPOSURE;
-   stCameraInfo_.bCanDoEdgeTrigger = dwAttributes & SPOT_ATTR_EDGETRIGGER;
-   stCameraInfo_.bCanDoBulbTrigger = dwAttributes & SPOT_ATTR_BULBTRIGGER;
-   stCameraInfo_.bCanSetTriggerActiveState = dwAttributes & SPOT_ATTR_TRIGGERACTIVESTATE;
-   stCameraInfo_.bCanReadSensorTemperature = dwAttributes & SPOT_ATTR_TEMPERATUREREADOUT;
-   stCameraInfo_.bCanRegulateSensorTemperature = dwAttributes & SPOT_ATTR_TEMPERATUREREGULATION;
-   stCameraInfo_.bCanDoAccurateTTLOutputAndTriggerDelayTiming = dwAttributes & SPOT_ATTR_ACCURATETTLDELAYTIMING;
-   stCameraInfo_.bCanDoLiveMode = dwAttributes & SPOT_ATTR_LIVEMODE;
-   stCameraInfo_.bCanShiftImageSensor = dwAttributes & SPOT_ATTR_SENSORSHIFTING;
-   stCameraInfo_.bIs1394FireWireCamera = dwAttributes & SPOT_ATTR_1394;
-   stCameraInfo_.bCanDoLiveImageScaling = dwAttributes & SPOT_ATTR_LIVEHISTOGRAM;
+   stCameraInfo_.bCanDoColor = (long) (dwAttributes & SPOT_ATTR_COLOR) != 0 ? true : false;
+   stCameraInfo_.bHasMosaicSensor = (long) (dwAttributes & SPOT_ATTR_MOSAIC) != 0 ? true : false;
+   stCameraInfo_.bDoesMultiShotColor = (long) (dwAttributes & SPOT_ATTR_COLORFILTER) != 0 ? true : false;
+   stCameraInfo_.bHasFilterWheel = (long) (dwAttributes & SPOT_ATTR_FILTERWHEEL) != 0 ? true : false;
+   stCameraInfo_.bHasSlider = (long) (dwAttributes & SPOT_ATTR_SLIDER) != 0 ? true : false;
+   stCameraInfo_.bCanDetectSliderPosition = (long) (dwAttributes & SPOT_ATTR_SLIDERPOSITIONDETECTION) != 0 ? true : false;
+   stCameraInfo_.bCanComputeExposure = (long) (dwAttributes & SPOT_ATTR_AUTOEXPOSURE) != 0 ? true : false;
+   stCameraInfo_.bCanDoEdgeTrigger = (long) (dwAttributes & SPOT_ATTR_EDGETRIGGER) != 0 ? true : false;
+   stCameraInfo_.bCanDoBulbTrigger = (long) (dwAttributes & SPOT_ATTR_BULBTRIGGER) != 0 ? true : false;
+   stCameraInfo_.bCanSetTriggerActiveState = (long) (dwAttributes & SPOT_ATTR_TRIGGERACTIVESTATE) != 0 ? true : false;
+   stCameraInfo_.bCanReadSensorTemperature = (long) (dwAttributes & SPOT_ATTR_TEMPERATUREREADOUT) != 0 ? true : false;
+   stCameraInfo_.bCanRegulateSensorTemperature = (long) (dwAttributes & SPOT_ATTR_TEMPERATUREREGULATION) != 0 ? true : false;
+   stCameraInfo_.bCanDoAccurateTTLOutputAndTriggerDelayTiming = (long) (dwAttributes & SPOT_ATTR_ACCURATETTLDELAYTIMING) != 0 ? true : false;
+   stCameraInfo_.bCanDoLiveMode = (long) (dwAttributes & SPOT_ATTR_LIVEMODE) != 0 ? true : false;
+   stCameraInfo_.bCanShiftImageSensor = (long) (dwAttributes & SPOT_ATTR_SENSORSHIFTING) != 0 ? true : false;
+   stCameraInfo_.bIs1394FireWireCamera = (long) (dwAttributes & SPOT_ATTR_1394) != 0 ? true : false;
+   stCameraInfo_.bCanDoLiveImageScaling = (long) (dwAttributes & SPOT_ATTR_LIVEHISTOGRAM) != 0 ? true : false;
    SpotAPI(SpotGetVersionInfo2)(&stVerInfo);
 #pragma warning(disable:4996)
    strcpy(stCameraInfo_.szModelNumber, stVerInfo.szCameraModelNum);
@@ -473,15 +473,16 @@ void SpotDevice::SetupImageSequence( const int nimages , const int interval )
       lTemp = 15;      // Set the TTL output delay to 15 microseconds
    else lTemp = 1000;  // The camera can't time TTL output delay to the microsecond
    SpotAPI(SpotSetValue)(SPOT_TTLOUTPUTDELAY, &lTemp);
-   
-
-   // Now that the parameters have been set, ask the SpotCam driver how big the acquired image will be
-   SpotAPI(SpotGetValue)(SPOT_ACQUIREDIMAGESIZE, asTemp);
-   nImageWidth_ = asTemp[0];
-   nImageHeight_ = asTemp[1];
-
 #endif
-   bAbortFlag_ = FALSE;
+
+	// Now that the parameters have been set, ask the SpotCam driver how big the acquired image will be
+	// EF: This is used in ifdef __APPLE__ and should be outside the if 0 statement
+	SpotAPI(SpotGetValue)(SPOT_ACQUIREDIMAGESIZE, asTemp);
+	nImageWidth_ = nImageHeight_ = 0;
+	nImageWidth_ = (int) asTemp[0];
+	nImageHeight_ = (int) asTemp[1];
+
+	bAbortFlag_ = FALSE;
 	
    SpotAPI(SpotGetValue)(SPOT_BITDEPTH, &asTemp);
 	bitDepthOfADC_  = asTemp[0];
@@ -550,7 +551,6 @@ void SpotDevice::SetupImageSequence( const int nimages , const int interval )
 		}
 	}
 #endif
-
 
 	//SpotAPI(SpotClearStatus)();
 	int spotcode = SpotAPI(SpotGetSequentialImages)(nNumImages, interval , FALSE, FALSE, FALSE, NULL
@@ -1008,7 +1008,12 @@ char* SpotDevice::GetNextSequentialImage(unsigned int& imheight, unsigned int& i
 	int spotcode;
 	double time0 = pMMCamera_->GetCurrentMMTime().getMsec();
    int nRowBytes = 0;//, nPaletteSize;
-
+	
+	// EF: byte order of the color for rearranging to MicroManager's BGRA
+	const short color_ARGB [] = {3, 2, 1, 0}; // Mac: ARGB to BGRA
+	const short color_BGRA [] = {-1}; // Windows: don't rearrange, this is what we need	
+	const short color_NOCHANGE [] = {-1}; // Default for bit-depths other than 24bit
+	const short *colorOrder = color_NOCHANGE; // default to NOCHANGE, colorOrder will be one of the above
 
 	int nloops;
 	int bytesToTransfer = sizeofbuf_;
@@ -1101,9 +1106,8 @@ char* SpotDevice::GetNextSequentialImage(unsigned int& imheight, unsigned int& i
 		}while(false);
 	
 	}
-
-	char colorOrder[4]; memset(colorOrder,0, 4*sizeof(colorOrder[0]));
-	SpotAPI(SpotGetValue)(SPOT_COLORORDER, colorOrder);
+		
+		
 #ifdef __APPLE__
         int nchars = nImageBitDepth_ / 8;
         if (3==nchars) nchars = 4;
@@ -1229,35 +1233,114 @@ char* SpotDevice::GetNextSequentialImage(unsigned int& imheight, unsigned int& i
 			if (NULL!=pbuf_) sizeofbuf_ = imheight*bytes;
 		}
 		memset(pbuf_, 0, imheight*bytes);
+
+		// EF
+		// Find out if the 24bit color image in the camera buffer is RGB or RGBA
+		// MM expects BGRA
+		if ( nImageBitDepth_ == 24 ) {					
+
+			bytesppixel = 4; //EF: VERY CRITICAL, otherwise the A channel is not taken into account below
+						
+			// Find the 24bit byte-order with SPOT_24BPPIMAGEBUFFERFORMAT
+			// Contrary to the docs (at least on Mac):
+			// - This value is read-only, SpotSetValue results into bus error
+			// - The value returned is currently 0, not the SPOT_24BPP... id's.
+			sValue[0] = 0;
+			SpotAPI(SpotGetValue)(SPOT_24BPPIMAGEBUFFERFORMAT, &sValue);
+			switch (sValue[0]) {
+				case SPOT_24BPPIMAGEBUFFERFORMATBGR: // Win default
+				case SPOT_24BPPIMAGEBUFFERFORMATBGRA:
+					colorOrder = color_BGRA;
+					break;
+				case SPOT_24BPPIMAGEBUFFERFORMATARGB: // Mac default (alpha is first!!!)
+					colorOrder = color_ARGB;
+					break;
+				case 0:
+					// As of Spot 4.6.21, SPOT_24BPPIMAGEBUFFERFORMAT returns always 0
+					// -> hack to assign the default color order to the one defined in the API docs
+					// if this ever gets fixed, this code should still work 
+					//
+					// Possiblity: Find the RGB arrangement and deduce from there?
+					// char rgbColorOrder[4]; memset(rgbColorOrder,0, 4*sizeof(rbgColorOrder[0]));
+					// SpotAPI(SpotGetValue)(SPOT_COLORORDER, rgbColorOrder);
+					// std::cerr << "SPOT_COLORORDER: " << rgbColorOrder << std::endl;
+					// 
+					// For the time being, hard code it depending on architecture
+#ifdef __APPLE__
+					colorOrder = color_ARGB;
+#else
+					colorOrder = color_BGRA;
+#endif
+					break;
+				default:
+					std::ostringstream emesss;
+					emesss << "unsupported color order: " << nImageBitDepth_;
+					throw SpotBad( emesss.str());
+					break;
+						   
+			}
+						   
+		}
+		else 
+		{
+			colorOrder = color_NOCHANGE;
+		}
 		
-#if 0 // no top-bottom flip
+		
+		// EF rearrange outside the loop
 		//GetImage returns a compact array, so keep it that way
 		char* praster = (char *)voidStarBuffer_;
-		char* poutput = (char *)pbuf_;
-		for(int yoff = 0; yoff < imheight; ++yoff)
+		char* poutput;
+		short pmuliplier;
+		
+		// EF: query image orientation and flip if necessary
+		short imageOrient; 
+		SpotAPI(SpotGetValue)(SPOT_IMAGEORIENTATION, &sValue);
+		imageOrient = sValue[0];
+		if ( imageOrient == 1 ) 
 		{
-			memcpy(poutput, praster, imwidth*bytesppixel);
-			poutput += imwidth*bytesppixel;
-			praster += bytes;
-		}
-#endif
-
-#if 1  // flip top & bottom
-
-		//GetImage returns a compact array, so keep it that way
-		char* praster = (char *)voidStarBuffer_;
-		char* poutput = (char *)pbuf_ + (imheight-1)*(imwidth*bytesppixel);
-		for(unsigned int yoff = 0; yoff < imheight; ++yoff)
+			// no top-bottom flip (usually Mac)
+			poutput = (char *)pbuf_;
+			pmuliplier = 1;
+		} 
+		else if  ( imageOrient == 1 )
+		{			
+			// flip top & bottom (usually Win)
+			//GetImage returns a compact array, so keep it that way
+			poutput = (char *)pbuf_ + (imheight-1)*(imwidth*bytesppixel);
+			pmuliplier = -1;
+		} 
+		else 
 		{
-			memcpy(poutput, praster, imwidth*bytesppixel);
-			poutput -= imwidth*bytesppixel;
-			praster += bytes;
+			std::ostringstream messs;
+			messs << "unsupported image orientation: " << imageOrient;		
+			throw SpotBad(messs.str());
 		}
-
-
-#endif
-
-
+	
+			
+		if ( colorOrder[0] >= 0 ) 
+		{
+			for(int yoff = 0; yoff < imheight; ++yoff)
+			{
+				for (int xoff = 0; xoff < imwidth*bytesppixel; xoff += bytesppixel) {
+					// poutput[xoff] = 255-praster[xoff+colorOrder[0]]; // for Spot Idea USB camera???
+					poutput[xoff] = praster[xoff+colorOrder[0]];
+					poutput[xoff+1] = praster[xoff+colorOrder[1]];
+					poutput[xoff+2] = praster[xoff+colorOrder[2]];
+					poutput[xoff+3] = praster[xoff+colorOrder[3]];
+				}
+				poutput += imwidth*bytesppixel*pmuliplier;
+				praster += bytes;
+			}
+		} else {
+			for(int yoff = 0; yoff < imheight; ++yoff)
+			{
+				// no rearrangement of color bytes or monochrome
+				memcpy(poutput, praster, imwidth*bytesppixel);
+				poutput += imwidth*bytesppixel;
+				praster += bytes;
+			}
+		}
 	}
 	else
 	{

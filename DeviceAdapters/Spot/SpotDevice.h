@@ -32,15 +32,22 @@
 #include "../../../3rdparty/Spot/WINDOWS/SpotCam/SpotCam.h"
 #define SpotAPI(X) (*p##X)
 #else
+// #define SpotAPI(X) (std::cerr << __LINE__ << ": Calling Spot API: " #X << std::endl, X)
 #define SpotAPI(X) (X)
 #ifdef __APPLE__
+//EF for Spot header V5.0
+//typedef struct
+//{
+//   int left, top;
+//   int right, bottom;
+//} SPOT_RECT;
+//
+//typedef SPOT_RECT Rect;
 typedef struct
 {
-   int left, top;
-   int right, bottom;
-} SPOT_RECT;
-
-typedef SPOT_RECT Rect;
+	short left, top;
+	short right, bottom;
+} RECT;
 #define FALSE 0
 #define TRUE 1
 

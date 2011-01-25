@@ -98,7 +98,7 @@ public:
    int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnGain(MM::PropertyBase* pProp, MM::ActionType eAct);
 
-	int OnMultiShotExposure(MM::PropertyBase* pProp__, MM::ActionType eAct__, long componentIndex__);
+	int OnMultiShotExposure(MM::PropertyBase* pProp_a, MM::ActionType eAct_a, long componentIndex_a);
 
    int OnTemperature(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnTemperatureSetpoint(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -139,15 +139,15 @@ public:
 	int RestartSequenceAcquisition() { return StartSequenceAcquisition(numImages_, interval_ms_, stopOnOverflow_);}
 	
 	bool ExposureComplete(void)const { return exposureComplete_;};
-	void ExposureComplete(const bool val__) {exposureComplete_ = val__;};
+	void ExposureComplete(const bool val_a) {exposureComplete_ = val_a;};
 
 	// this property is a flag that is set when autoexposure computation is completed.
 	bool AutoEposureCalculationDone(void) const { return autoEposureCalculationDone_;};
-	void AutoEposureCalculationDone(const bool val__) { autoEposureCalculationDone_ = val__;};
+	void AutoEposureCalculationDone(const bool val_a) { autoEposureCalculationDone_ = val_a;};
 
 	// SnapImageStartTime is millisecond time stamp of beginning of snapimage sequence
 	double SnapImageStartTime(void)const { return snapImageStartTime_;};
-	void SnapImageStartTime(double val__) { snapImageStartTime_ = val__;};
+	void SnapImageStartTime(double val_a) { snapImageStartTime_ = val_a;};
 
 private:  
 
