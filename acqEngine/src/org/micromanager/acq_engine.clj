@@ -501,6 +501,10 @@
       (swap! (.state this) assoc :display display)
       (.start display))))
 
+(defn -acquireSingle [this]
+  (load-mm)
+  (acquire-single))
+
 (defn -pause [this]
   (log "pause requested!")
   (swap! (.state this) assoc :pause true))

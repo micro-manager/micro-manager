@@ -124,6 +124,7 @@ import org.micromanager.api.AcquisitionInterface;
 import org.micromanager.acquisition.AcquisitionWrapperEngine;
 import org.micromanager.acquisition.MetadataPanel;
 import org.micromanager.api.ImageFocusListener;
+import org.micromanager.api.Pipeline;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.FileDialogs.FileType;
 import org.micromanager.utils.ReportingUtils;
@@ -247,6 +248,9 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    public static FileDialogs.FileType MM_DATA_SET 
            = new FileDialogs.FileType("MM_DATA_SET",
                  "Micro-Manager Image Location",(String) null);
+   private Thread pipelineClassLoadingThread_ = null;
+   private Class pipelineClass_ = null;
+   private Pipeline acquirePipeline_ = null;
 
    public ImageWindow getImageWin() {
       return imageWin_;
@@ -343,6 +347,32 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    public boolean isBurstAcquisitionRunning() throws MMScriptException {
       throw new UnsupportedOperationException("Not supported yet.");
+   }
+
+   private void startLoadingPipelineClass() {
+      Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
+      pipelineClassLoadingThread_ = new Thread() {
+         @Override
+         public void run() {
+            try {
+               pipelineClass_  = Class.forName("org.micromanager.AcqEngine");
+            } catch (Exception ex) {
+               ReportingUtils.logError(ex);
+               pipelineClass_ = null;
+            }
+         }
+      };
+      pipelineClassLoadingThread_.start();
+   }
+
+   public Class getPipelineClass() {
+      try {
+         pipelineClassLoadingThread_.join();
+         return pipelineClass_;
+      } catch (InterruptedException ex) {
+         ReportingUtils.logError(ex);
+         return null;
+      }
    }
 
    /**
@@ -480,6 +510,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             ReportingUtils.showError(e, "An uncaught exception was thrown in thread " + t.getName() + ".");
          }
       });
+
+      startLoadingPipelineClass();
 
       options_ = new MMOptions();
       options_.loadSettings();
@@ -3979,10 +4011,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    public void snapAndAddToImage5D(String acqName) {
       try {
-         RT.init();
-         RT.loadClassForName("org.micromanager.acq-engine");
-         RT.var("org.micromanager.acq-engine", "acquire-single").invoke();
-
+         if (acquirePipeline_ == null) {
+            acquirePipeline_ = (Pipeline) getPipelineClass().newInstance();
+         }
+         acquirePipeline_.acquireSingle();
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }

@@ -63,21 +63,8 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private List<Class> imageRequestProcessors_;
    private boolean absoluteZ_;
    private Pipeline pipeline_;
-   private Thread createPipelineThread_;
 
    public AcquisitionWrapperEngine() {
-      Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
-      createPipelineThread_ = new Thread() {
-         public void run() {
-            try {
-               pipeline_ = (Pipeline) Class.forName("org.micromanager.AcqEngine").newInstance();
-            } catch (Exception ex) {
-               ReportingUtils.logError(ex);
-            }
-         }
-      };
-      createPipelineThread_.start();
-
       imageRequestProcessors_ = new ArrayList<Class>();
       taggedImageProcessors_ = new ArrayList<Class>();
    }
@@ -92,8 +79,8 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    public void runPipeline(SequenceSettings acquisitionSettings) {
       try {
-         createPipelineThread_.join();
-      } catch (InterruptedException ex) {
+         pipeline_ = (Pipeline) gui_.getPipelineClass().newInstance();
+      } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
       try {
