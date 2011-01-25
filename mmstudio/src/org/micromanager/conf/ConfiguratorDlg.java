@@ -307,7 +307,8 @@ public class ConfiguratorDlg extends JDialog {
                 // contruct a filename for the configuration file which is extremely
                 // likely to be unique as follows:
                 // yyyyMMddHHmmss + timezone + ip address + host name + mm user + file name
-                String qualifiedConfigFileName = "UserConfiguration@";
+                String prependedLine = "#";
+                String qualifiedConfigFileName = "";
                 try {
                     SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHHmmss");
                     qualifiedConfigFileName += df.format(new Date());
@@ -315,29 +316,16 @@ public class ConfiguratorDlg extends JDialog {
                     qualifiedConfigFileName += shortTZName;
                     qualifiedConfigFileName += "@";
                     try {
-
                         qualifiedConfigFileName += InetAddress.getLocalHost().getHostAddress();
-                        qualifiedConfigFileName += "@";
-                        qualifiedConfigFileName += InetAddress.getLocalHost().getHostName();
-                        qualifiedConfigFileName += "@";
-
+                        prependedLine += "Host: " + InetAddress.getLocalHost().getHostName() + " ";
                     } catch (UnknownHostException e) {
                     }
-                    qualifiedConfigFileName += core_.getUserId();
-                    qualifiedConfigFileName += "@";
+                    prependedLine += "User: " + core_.getUserId()+ " configuration file: " + conff.getName()+ "\n";
                 } catch (Throwable t) {
                 }
 
-                qualifiedConfigFileName += conff.getName();
-                // try ensure valid and convenient UNIX file name
-                qualifiedConfigFileName.replace(' ', '_');
-                qualifiedConfigFileName.replace('*', '_');
-                qualifiedConfigFileName.replace('|', '_');
-                qualifiedConfigFileName.replace('>', '_');
-                qualifiedConfigFileName.replace('<', '_');
-                qualifiedConfigFileName.replace('(', '_');
-                qualifiedConfigFileName.replace(')', '_');
-                qualifiedConfigFileName.replace('/', '_');                
+                // can raw IP address have :'s in them? (ipv6??)
+                // try ensure valid and convenient UNIX file name               
                 qualifiedConfigFileName.replace(':', '_');                
                 qualifiedConfigFileName.replace(';', '_');
 
@@ -345,18 +333,15 @@ public class ConfiguratorDlg extends JDialog {
 
                 FileReader reader = new FileReader(conff);
                 FileWriter writer = new FileWriter(fileToSend);
-                int c;
+                writer.append(prependedLine);
+                    int c;
                 while (-1 != (c = reader.read())) {
                     writer.write(c);
                 }
                 reader.close();
                 writer.close();
                 try {
-                    // my MacBook for testing...
-                    // "http://udp022507uds.ucsf.edu/~karlhoover/upload_file.php"
-                    // to test locally on OS X put scripts in apache DocumentRoot, for example:
-                    // DocumentRoot "/Library/WebServer/Documents"
-                    // "http://localhost/upload_file.php"
+
                     URL url = new URL("http://valelab.ucsf.edu/~MM/upload_file.php");
 
                     List flist = new ArrayList<File>();
