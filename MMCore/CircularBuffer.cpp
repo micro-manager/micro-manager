@@ -41,7 +41,7 @@ const int maxCBSize = 1000;    //a reasonable limit to circular buffer size
 static MMThreadLock g_bufferLock;
 
 CircularBuffer::CircularBuffer(unsigned int memorySizeMB) :
-   width_(0), height_(0), pixDepth_(0), insertIndex_(0), saveIndex_(0), memorySizeMB_(memorySizeMB), overflow_(false), estimatedIntervalMs_(0)
+width_(0), height_(0), pixDepth_(0), insertIndex_(0), saveIndex_(0), memorySizeMB_(memorySizeMB), overflow_(false), estimatedIntervalMs_(0)
 {
 }
 
@@ -49,49 +49,58 @@ CircularBuffer::~CircularBuffer() {}
 
 bool CircularBuffer::Initialize(unsigned channels, unsigned slices, unsigned int w, unsigned int h, unsigned int pixDepth)
 {
-   if (w == 0 || h==0 || pixDepth == 0 || channels == 0 || slices == 0)
-      return false; // does not make sense
 
-   if (w == width_ && height_ == h && pixDepth_ == pixDepth && channels == numChannels_ && slices == numSlices_)
-      return true; // nothing to change
-
-   width_ = w;
-   height_ = h;
-   pixDepth_ = pixDepth;
-   numChannels_ = channels;
-   numSlices_ = slices;
-
-   insertIndex_ = 0;
-   saveIndex_ = 0;
-   overflow_ = false;
-
-   // calculate the size of the entire buffer array once all images get allocated
-   // the acutual size at the time of the creation is going to be less, because
-   // images are not allocated until pixels become available
-   unsigned long frameSizeBytes = width_ * height_ * pixDepth_ * numChannels_ * numSlices_;
-   unsigned long cbSize = (memorySizeMB_ * bytesInMB) / frameSizeBytes;
-
-   if (cbSize == 0)
-      return false; // memory footprint too small
-
-   // set a reasonable limit to circular buffer capacity 
-   if (cbSize > maxCBSize)
-      cbSize=maxCBSize; 
-
-   // TODO: verify if we have enough RAM to satisfy this request
-
-   for (unsigned long i=0; i<frameArray_.size(); i++)
-      frameArray_[i].Clear();
-
-   // allocate buffers  - could conceivably throw an out-of-memory exception
-   frameArray_.resize(cbSize);
-   for (unsigned long i=0; i<frameArray_.size(); i++)
+   bool ret = true;
+   try
    {
-      frameArray_[i].Resize(w, h, pixDepth);
-      frameArray_[i].Preallocate(numChannels_, numSlices_);
+      if (w == 0 || h==0 || pixDepth == 0 || channels == 0 || slices == 0)
+         return false; // does not make sense
+
+      if (w == width_ && height_ == h && pixDepth_ == pixDepth && channels == numChannels_ && slices == numSlices_)
+         return true; // nothing to change
+
+      width_ = w;
+      height_ = h;
+      pixDepth_ = pixDepth;
+      numChannels_ = channels;
+      numSlices_ = slices;
+
+      insertIndex_ = 0;
+      saveIndex_ = 0;
+      overflow_ = false;
+
+      // calculate the size of the entire buffer array once all images get allocated
+      // the acutual size at the time of the creation is going to be less, because
+      // images are not allocated until pixels become available
+      unsigned long frameSizeBytes = width_ * height_ * pixDepth_ * numChannels_ * numSlices_;
+      unsigned long cbSize = (memorySizeMB_ * bytesInMB) / frameSizeBytes;
+
+      if (cbSize == 0)
+         return false; // memory footprint too small
+
+      // set a reasonable limit to circular buffer capacity 
+      if (cbSize > maxCBSize)
+         cbSize=maxCBSize; 
+
+      // TODO: verify if we have enough RAM to satisfy this request
+
+      for (unsigned long i=0; i<frameArray_.size(); i++)
+         frameArray_[i].Clear();
+
+      // allocate buffers  - could conceivably throw an out-of-memory exception
+      frameArray_.resize(cbSize);
+      for (unsigned long i=0; i<frameArray_.size(); i++)
+      {
+         frameArray_[i].Resize(w, h, pixDepth);
+         frameArray_[i].Preallocate(numChannels_, numSlices_);
+      }
    }
 
-   return true;
+   catch( std::bad_alloc& ex)
+   {
+      ret = false;
+   }
+   return ret;
 }
 
 unsigned long CircularBuffer::GetSize() const
@@ -114,16 +123,16 @@ unsigned long CircularBuffer::GetRemainingImageCount() const
 }
 
 /**
- * Inserts a single image in the buffer.
- */
+* Inserts a single image in the buffer.
+*/
 bool CircularBuffer::InsertImage(const unsigned char* pixArray, unsigned int width, unsigned int height, unsigned int byteDepth, const Metadata* pMd) throw (CMMError)
 {
    return InsertMultiChannel(pixArray, 1, width, height, byteDepth, pMd);
 }
 
 /**
- * Inserts a multi-channel frame in the buffer.
- */
+* Inserts a multi-channel frame in the buffer.
+*/
 bool CircularBuffer::InsertMultiChannel(const unsigned char* pixArray, unsigned numChannels, unsigned width, unsigned height, unsigned byteDepth, const Metadata* pMd) throw (CMMError)
 {
    MMThreadGuard guard(g_bufferLock);
@@ -140,7 +149,7 @@ bool CircularBuffer::InsertMultiChannel(const unsigned char* pixArray, unsigned 
    if (width != width_ || height_ != height || byteDepth != byteDepth)
       throw CMMError("Incompatible image dimensions in the circular buffer", MMERR_CircularBufferIncompatibleImage);
 
-   
+
    if ((long)frameArray_.size() - (insertIndex_ - saveIndex_) > 0)
    {
       for (unsigned i=0; i<numChannels; i++)
@@ -194,7 +203,7 @@ bool CircularBuffer::InsertMultiChannel(const unsigned char* pixArray, unsigned 
          insertIndex_ -= adjustThreshold;
          saveIndex_ -= adjustThreshold;
       }
-      
+
       previousTicks = GetClockTicksMs();
 
       return true;
@@ -208,7 +217,7 @@ bool CircularBuffer::InsertMultiChannel(const unsigned char* pixArray, unsigned 
 
 const unsigned char* CircularBuffer::GetTopImage() const
 {
-    MMThreadGuard guard(g_bufferLock);
+   MMThreadGuard guard(g_bufferLock);
 
    if (frameArray_.size() == 0)
       return 0;
@@ -274,20 +283,20 @@ double CircularBuffer::GetAverageIntervalMs() const
 // millisecond clock tick incrementing from the time first requested
 unsigned long CircularBuffer::GetClockTicksMs() const
 {
-	using namespace boost::posix_time;
-	using namespace boost::gregorian;
-	// use tick from the first time this is call is requested
-	static boost::posix_time::ptime sst(boost::date_time::not_a_date_time);
-	if (boost::posix_time::ptime(boost::date_time::not_a_date_time) == sst)
-	{
-		boost::gregorian::date today( day_clock::local_day());
-		sst = boost::posix_time::ptime(today); 
-	}
+   using namespace boost::posix_time;
+   using namespace boost::gregorian;
+   // use tick from the first time this is call is requested
+   static boost::posix_time::ptime sst(boost::date_time::not_a_date_time);
+   if (boost::posix_time::ptime(boost::date_time::not_a_date_time) == sst)
+   {
+      boost::gregorian::date today( day_clock::local_day());
+      sst = boost::posix_time::ptime(today); 
+   }
 
-	boost::posix_time::ptime t = boost::posix_time::microsec_clock::local_time();
+   boost::posix_time::ptime t = boost::posix_time::microsec_clock::local_time();
 
-	time_duration diff = t - sst;
-	return static_cast<unsigned long>(diff.total_milliseconds());
+   time_duration diff = t - sst;
+   return static_cast<unsigned long>(diff.total_milliseconds());
 
 
 }
