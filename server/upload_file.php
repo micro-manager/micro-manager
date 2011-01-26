@@ -20,16 +20,17 @@ else
    echo 'Type: ' . $_FILES['file']['type'] . '<br />';
    echo 'Size: ' . ($_FILES['file']['size'] / 1024) . ' Kb<br />';
    echo 'Temp file: ' . $_FILES['file']['tmp_name'] . '<br />';
+   $opath = $uploadPlace_ . '/'. $_FILES['file']['name'];
 
-   if (file_exists($uploadPlace_ . '/'. $_FILES['file']['name']))
+   if (file_exists($opath))
    {
       echo $_FILES['file']['name'] . ' already exists. ';
    }
    else
    {
       move_uploaded_file($_FILES['file']['tmp_name'],
-      $uploadPlace_ . '/' . $_FILES['file']['name']);
-      echo 'Stored in: ' . $uploadPlace . '/' . $_FILES['file']['name'];
+      $opath);
+      echo 'Stored in: ' . $opath;
    }
 }
 ?>
