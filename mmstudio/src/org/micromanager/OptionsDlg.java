@@ -176,19 +176,18 @@ public class OptionsDlg extends MMDialog {
                     try {
 
                         qualifiedArchiveFileName += InetAddress.getLocalHost().getHostAddress();
-                        qualifiedArchiveFileName += "_";
-                        qualifiedArchiveFileName += InetAddress.getLocalHost().getHostName();
-                        qualifiedArchiveFileName += "_";
+                        //qualifiedArchiveFileName += InetAddress.getLocalHost().getHostName();
+                        //qualifiedArchiveFileName += "_";
 
                     } catch (UnknownHostException e2) {
                     }
-                    qualifiedArchiveFileName += core_.getUserId();
-                    qualifiedArchiveFileName += "_";
+                   // qualifiedArchiveFileName += core_.getUserId();
+                    //qualifiedArchiveFileName += "_";
                 } catch (Throwable t) {
                 }
 
                 // get the file name part of the path
-                qualifiedArchiveFileName += archiveFile.getName();
+                //qualifiedArchiveFileName += archiveFile.getName();
                 // try ensure valid and convenient UNIX file name
                 qualifiedArchiveFileName.replace(' ', '_');
                 qualifiedArchiveFileName.replace('*', '_');
@@ -197,7 +196,8 @@ public class OptionsDlg extends MMDialog {
                 qualifiedArchiveFileName.replace('<', '_');
                 qualifiedArchiveFileName.replace('(', '_');
                 qualifiedArchiveFileName.replace(')', '_');
-                //File fileToSend = new File(qualifiedArchiveFileName);
+                qualifiedArchiveFileName.replace(':', '_');
+                qualifiedArchiveFileName.replace(';', '_');                //File fileToSend = new File(qualifiedArchiveFileName);
                 qualifiedArchiveFileName += ".uu";
 
                 //FileReader reader = new FileReader(archiveFile);
@@ -208,29 +208,12 @@ public class OptionsDlg extends MMDialog {
                 OutputStream writer = new FileOutputStream(qualifiedArchiveFileName);
                 uuec.encodeBuffer(reader, writer);
 
-      //} catch (IOException e) {
-      //   System.out.println(e.toString());
-      //}
-
-
-
-
-
-
-              //  int c;
-               // while (-1 != (c = reader.read())) {
-                //    writer.write(c);
-              //  }
                 reader.close();
                 writer.close();
                 File fileToSend = new File(qualifiedArchiveFileName);
                 try {
-                    // my MacBook for testing...
-                    // "http://udp022507uds.ucsf.edu/~karlhoover/upload_file.php"
-                    // to test locally on OS X put scripts in apache DocumentRoot, for example:
-                    // DocumentRoot "/Library/WebServer/Documents"
-                    // "http://localhost/upload_file.php"
-                    URL url = new URL("http://udp022507uds.ucsf.edu/~karlhoover/upload_file.php");
+
+                    URL url = new URL("http://valelab.ucsf.edu/~MM/upload_file.php");
 
                     List flist = new ArrayList<File>();
                     flist.add(fileToSend);
