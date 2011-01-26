@@ -497,7 +497,8 @@
       ;(proxy [TaggedImageAnalyzer] []
         ;(analyze [img] (log "pretending to analyze"))))
     (when-not (:stop @(.state this))
-      (. gui enableLiveMode false)
+      (if (. gui isLiveModeOn)
+        (. gui enableLiveMode false))
       (.start acq-thread)
       (swap! (.state this) assoc :display display)
       (.start display))))
