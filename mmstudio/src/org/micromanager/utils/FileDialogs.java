@@ -58,8 +58,12 @@ public class FileDialogs {
          String name = pathname.getName();
          int n = name.lastIndexOf(".");
          String suffix = name.substring(1+n).toLowerCase();
-         if (fileSuffixes_ == null || fileSuffixes_.length == 0)
+         if (fileSuffixes_ == null || fileSuffixes_.length == 0) {
             return true;
+         }
+         if (!JavaUtils.isMac() && pathname.isDirectory()) {
+            return true;
+         }
          for (int i=0; i<fileSuffixes_.length; ++i) {
             if (fileSuffixes_[i] != null && fileSuffixes_[i].toLowerCase().contentEquals(suffix))
                return true;
@@ -125,15 +129,13 @@ public class FileDialogs {
 
          fd.dispose();
       } else {
-         JFileChooser fc;
+         JFileChooser fc = new JFileChooser();
          if (startFile != null) {
-            if (load || !suggestFileName) {
-               fc = new JFileChooser(startFile.getParentFile());
+            if (!load && suggestFileName) {
+               fc.setSelectedFile(startFile);
             } else {
-               fc = new JFileChooser(startFile);
+               fc.setSelectedFile(startFile.getParentFile());
             }
-         } else {
-            fc = new JFileChooser();
          }
          fc.setDialogTitle(title);
          if (selectDirectories) {
