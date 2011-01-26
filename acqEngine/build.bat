@@ -1,4 +1,4 @@
-rmdir classes /s /q
+if exist classes rmdir classes /s /q
 mkdir classes
 xcopy /E /y src classes\
 "%JAVA_HOME%\bin\java" -cp ../../3rdpartypublic/classext/clojure.jar;../MMCoreJ_wrap/MMCoreJ.jar;../../3rdpartypublic/classext/ij.jar;../mmstudio/MMJ_.jar;./src -Dclojure.compile.path=classes clojure.lang.Compile org.micromanager.acq-engine
