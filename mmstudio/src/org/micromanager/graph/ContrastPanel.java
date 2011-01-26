@@ -584,7 +584,7 @@ public class ContrastPanel extends JPanel implements ImageController,
 
       image_.getProcessor().setMinAndMax(0, maxIntensity_);
       lutMin_ = 0;
-      lutMax_ = 255;
+      lutMax_ = maxIntensity_;
       updateCursors();
       
 		image_.updateAndDraw();
