@@ -306,7 +306,7 @@ public class ConfiguratorDlg extends JDialog {
 
                 // contruct a filename for the configuration file which is extremely
                 // likely to be unique as follows:
-                // yyyyMMddHHmmss + timezone + ip address + host name + mm user + file name
+                // yyyyMMddHHmmss + timezone + ip address 
                 String prependedLine = "#";
                 String qualifiedConfigFileName = "";
                 try {
@@ -334,7 +334,7 @@ public class ConfiguratorDlg extends JDialog {
                 FileReader reader = new FileReader(conff);
                 FileWriter writer = new FileWriter(fileToSend);
                 writer.append(prependedLine);
-                    int c;
+                int c;
                 while (-1 != (c = reader.read())) {
                     writer.write(c);
                 }
