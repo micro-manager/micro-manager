@@ -189,9 +189,10 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
    public void stop(boolean interrupted) {
       try {
-         pipeline_.stop();
+         if (pipeline_ != null)
+            pipeline_.stop();
       } catch (Exception ex) {
-         ReportingUtils.showError("Acquisition engine stop request failed");
+         ReportingUtils.showError(ex, "Acquisition engine stop request failed");
       }
    }
 
