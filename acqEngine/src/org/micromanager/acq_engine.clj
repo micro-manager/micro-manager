@@ -486,8 +486,7 @@
   (swap! (.state this) assoc :stop false :pause false)
   (let [out-queue (GentleLinkedBlockingQueue.)
         settings (convert-settings acq-settings)
-        acq-thread (Thread. #(run-acquisition this
-          settings out-queue))
+        acq-thread (Thread. #(run-acquisition this settings out-queue))
         processors (ProcessorStack. out-queue (.getTaggedImageProcessors acq-eng))
         out-queue-2 (.begin processors)
         display (LiveAcqDisplay. mmc out-queue-2 (make-summary-metadata settings)
