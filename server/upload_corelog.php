@@ -4,7 +4,7 @@
 
 date_default_timezone_set('America/Los_Angeles');
 $month =  date('Ym');
-$uploadPlace_ = '/home/MM/configUploads/' . $month;
+$uploadPlace_ = '/home/MM/corelogUploads/' . $month;
 if (!file_exists($uploadPlace_)) 
 {
    mkdir($uploadPlace_, 0750);
