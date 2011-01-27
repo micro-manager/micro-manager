@@ -166,7 +166,7 @@ public class OptionsDlg extends MMDialog {
                 // contruct a filename for the archive which is extremely
                 // likely to be unique as follows:
                 // yyyyMMddHHmm + timezone + ip address + host name + mm user + file name
-                String qualifiedArchiveFileName = "LogArchive_";
+                String qualifiedArchiveFileName = "";
                 try {
                     SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHHmm");
                     qualifiedArchiveFileName += df.format(new Date());
@@ -198,7 +198,7 @@ public class OptionsDlg extends MMDialog {
                 qualifiedArchiveFileName.replace(')', '_');
                 qualifiedArchiveFileName.replace(':', '_');
                 qualifiedArchiveFileName.replace(';', '_');                //File fileToSend = new File(qualifiedArchiveFileName);
-                qualifiedArchiveFileName += ".uu";
+                qualifiedArchiveFileName += ".log";
 
                 //FileReader reader = new FileReader(archiveFile);
                 //FileWriter writer = new FileWriter(fileToSend);
@@ -213,7 +213,7 @@ public class OptionsDlg extends MMDialog {
                 File fileToSend = new File(qualifiedArchiveFileName);
                 try {
 
-                    URL url = new URL("http://valelab.ucsf.edu/~MM/upload_file.php");
+                    URL url = new URL("http://valelab.ucsf.edu/~MM/upload_corelog.php");
 
                     List flist = new ArrayList<File>();
                     flist.add(fileToSend);
