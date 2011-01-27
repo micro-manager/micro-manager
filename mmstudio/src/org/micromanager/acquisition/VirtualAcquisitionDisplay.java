@@ -11,7 +11,6 @@ import ij.measure.Calibration;
 import ij.plugin.Animator;
 import ij.process.ImageProcessor;
 import java.awt.Color;
-import java.awt.FileDialog;
 import java.awt.event.AdjustmentListener;
 import java.awt.event.WindowEvent;
 import java.io.File;
@@ -61,7 +60,7 @@ public class VirtualAcquisitionDisplay {
    private int curPosition_ = -1;
    private ChannelDisplaySettings[] channelSettings_;
    private int latestFrame_ = 0;
-
+   
    public VirtualAcquisitionDisplay(String dir, boolean newData,
            boolean diskCached) {
       dir_ = dir;
@@ -110,8 +109,8 @@ public class VirtualAcquisitionDisplay {
                  imageCache_, numGrayChannels_ * numSlices_ * numFrames_, this);
 
       if (channelSettings_ == null) {
-          channelSettings_ = new ChannelDisplaySettings[numChannels_];
-          for (int i=0;i<numChannels_;++i) {
+          channelSettings_ = new ChannelDisplaySettings[numGrayChannels_];
+          for (int i=0;i<numGrayChannels_;++i) {
             channelSettings_[i] = new ChannelDisplaySettings();
           }
       }
@@ -352,7 +351,7 @@ public class VirtualAcquisitionDisplay {
       TaggedImageStorageDiskDefault newFileManager
               = new TaggedImageStorageDiskDefault(root + "/" + prefix, true,
               summaryMetadata_);
-      for (int i=0; i<numChannels_; i++) {
+      for (int i=0; i<numGrayChannels_; i++) {
          writeChannelSettingsToCache(i);
       }
       imageCache_.saveAs(newFileManager);
@@ -582,6 +581,10 @@ public class VirtualAcquisitionDisplay {
       return numChannels_;
    }
 
+   public int getNumGrayChannels() {
+      return numGrayChannels_;
+   }
+
    public int getNumPositions() {
       return numPositions_;
    }
@@ -593,7 +596,7 @@ public class VirtualAcquisitionDisplay {
    public ImagePlus getImagePlus(int position) {
       ImagePlus iP = new ImagePlus();
       iP.setStack(virtualStack_);
-      iP.setDimensions(numChannels_, numSlices_, numFrames_);
+      iP.setDimensions(numGrayChannels_, numSlices_, numFrames_);
       return iP;
    }
 
@@ -683,7 +686,7 @@ public class VirtualAcquisitionDisplay {
 
    public String[] getChannelNames() {
       if (isComposite()) {
-         int nChannels = hyperImage_.getNChannels();
+         int nChannels = numGrayChannels_;//hyperImage_.getNChannels();
          String[] chanNames = new String[nChannels];
          for (int i = 0; i < nChannels; ++i) {
             try {

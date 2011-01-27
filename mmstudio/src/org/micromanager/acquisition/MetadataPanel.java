@@ -673,7 +673,7 @@ public class MetadataPanel extends javax.swing.JPanel
 
    public synchronized void setupChannelControls(VirtualAcquisitionDisplay acq) {
       int hpHeight = 100;
-      int nChannels = acq.getNumChannels();
+      int nChannels = acq.getNumGrayChannels();
 
       JPanel p = new JPanel();
       p.setPreferredSize(new Dimension(200,nChannels * hpHeight));

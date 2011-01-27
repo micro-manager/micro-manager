@@ -43,7 +43,7 @@ public class MMWindow {
    public int getNumberOfChannels() {
       if (virtAcq_ == null)
          return 0;
-      return virtAcq_.getNumChannels();
+      return virtAcq_.getNumGrayChannels();
    }
 
    public int getNumberOfSlices() {
