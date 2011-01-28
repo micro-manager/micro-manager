@@ -34,27 +34,27 @@ import org.micromanager.utils.ReportingUtils;
  * @author arthur
  */
 public class VirtualAcquisitionDisplay {
+
    final MMImageCache imageCache_;
    final private AcquisitionEngine eng_;
    final private ImagePlus hyperImage_;
    final private HyperstackControls hc_;
    final AcquisitionVirtualStack virtualStack_;
    final private ScrollbarWithLabel pSelector_;
-
    private ChannelDisplaySettings[] channelSettings_;
-   private int numPositions_ = 1;
    private int numComponents_ = 1;
-   
+
    public VirtualAcquisitionDisplay(boolean newData, MMImageCache imageCache, AcquisitionEngine eng) {
       imageCache_ = imageCache;
       eng_ = eng;
       pSelector_ = createPositionScrollbar();
-      
+
       JSONObject summaryMetadata = getSummaryMetadata();
       int numSlices = 1;
       int numFrames = 1;
       int numChannels = 1;
       int numGrayChannels;
+      int numPositions = 1;
       int width = 0;
       int height = 0;
 
@@ -64,7 +64,7 @@ public class VirtualAcquisitionDisplay {
          numSlices = Math.max(summaryMetadata.getInt("Slices"), 1);
          numFrames = Math.max(summaryMetadata.getInt("Frames"), 1);
          numChannels = Math.max(summaryMetadata.getInt("Channels"), 1);
-         numPositions_ = Math.max(summaryMetadata.getInt("Positions"), 1);
+         numPositions = Math.max(summaryMetadata.getInt("Positions"), 1);
          numComponents_ = MDUtils.getNumberOfComponents(summaryMetadata);
       } catch (Exception e) {
          ReportingUtils.showError(e);
@@ -78,24 +78,51 @@ public class VirtualAcquisitionDisplay {
          ReportingUtils.showError(ex, "Unable to determine acquisition type.");
       }
       virtualStack_ = new AcquisitionVirtualStack(width, height, type, null,
-                 imageCache, numGrayChannels * numSlices * numFrames, this);
+              imageCache, numGrayChannels * numSlices * numFrames, this);
 
       if (channelSettings_ == null) {
-          channelSettings_ = new ChannelDisplaySettings[numGrayChannels];
-          for (int i=0;i<numGrayChannels;++i) {
+         channelSettings_ = new ChannelDisplaySettings[numGrayChannels];
+         for (int i = 0; i < numGrayChannels; ++i) {
             channelSettings_[i] = new ChannelDisplaySettings();
-          }
+         }
       }
 
       hc_ = new HyperstackControls(this);
       hyperImage_ = createImagePlus(numChannels, numSlices, numFrames, virtualStack_, hc_);
-
-      updatePSelector();
+      applyPixelSizeCalibration(hyperImage_);
+      createWindow(hyperImage_, hc_);
+      setNumPositions(numPositions);
       updateAndDraw();
       updateWindow();
 
-
       readChannelSettingsFromCache(true);
+   }
+
+   private void applyPixelSizeCalibration(final ImagePlus hyperImage) {
+      // Set ImageJ pixel size calibration
+      try {
+         double pixSizeUm = getSummaryMetadata().getDouble("PixelSize_um");
+         if (pixSizeUm > 0) {
+            Calibration cal = new Calibration();
+            cal.setUnit("um");
+            cal.pixelWidth = pixSizeUm;
+            cal.pixelHeight = pixSizeUm;
+            hyperImage.setCalibration(cal);
+         }
+      } catch (JSONException ex) {
+         // no pixelsize defined.  Nothing to do
+      }
+   }
+
+   private void setNumPositions(int n) {
+      pSelector_.setMaximum(n + 1);
+      ImageWindow win = hyperImage_.getWindow();
+      if (n > 1 && pSelector_.getParent() == null) {
+         win.add(pSelector_, win.getComponentCount() - 1);
+      } else if (n == 1 && pSelector_.getParent() != null) {
+         win.remove(pSelector_);
+      }
+      win.pack();
    }
 
    public ImagePlus getHyperImage() {
@@ -110,8 +137,9 @@ public class VirtualAcquisitionDisplay {
    }
 
    public void updateWindow() {
-      if (hc_ == null)
+      if (hc_ == null) {
          return;
+      }
 
       String status = "";
 
@@ -138,14 +166,15 @@ public class VirtualAcquisitionDisplay {
       } else {
          hc_.enableAcquisitionControls(false);
       }
-      if (isDiskCached())
+      if (isDiskCached()) {
          status += "on disk";
-      else
+      } else {
          status += "not yet saved";
-      
+      }
+
       hc_.enableShowFolderButton(imageCache_.getDiskLocation() != null);
-      String path = isDiskCached() ? new File(imageCache_.getDiskLocation()).getName() + " ": "Untitled ";
-      hyperImage_.getWindow().setTitle(path +  "(" + status +")");
+      String path = isDiskCached() ? new File(imageCache_.getDiskLocation()).getName() + " " : "Untitled ";
+      hyperImage_.getWindow().setTitle(path + "(" + status + ")");
    }
 
    public void showImage(TaggedImage taggedImg) throws MMScriptException {
@@ -160,14 +189,13 @@ public class VirtualAcquisitionDisplay {
          JSONObject md = taggedImg.tags;
 
          try {
-            int p = MDUtils.getPositionIndex(taggedImg.tags);
-            if (p >= this.getNumPositions()) {
-               numPositions_ = p + 1;
-               updatePSelector();
+            int p = 1 + MDUtils.getPositionIndex(taggedImg.tags);
+            if (p >= getNumPositions()) {
+               setNumPositions(p);
             }
             setPosition(1 + MDUtils.getPositionIndex(taggedImg.tags));
             hyperImage_.setPosition(1 + MDUtils.getChannelIndex(md),
-                 1 + MDUtils.getSliceIndex(md), 1 + MDUtils.getFrameIndex(md));
+                    1 + MDUtils.getSliceIndex(md), 1 + MDUtils.getFrameIndex(md));
             //setPlaybackLimits(1, 1 + MDUtils.getFrameIndex(md));
          } catch (Exception e) {
             ReportingUtils.logError(e);
@@ -185,7 +213,7 @@ public class VirtualAcquisitionDisplay {
                      updateAndDraw();
                   }
                } else {
-                  
+
                   int chan = MDUtils.getChannelIndex(md);
 
                   int min = (int) hyperImage_.getDisplayRangeMin();
@@ -205,12 +233,8 @@ public class VirtualAcquisitionDisplay {
                   channelSettings_[chan].max = (int) max;
 
                   hyperImage_.setDisplayRange(min, max);
-                  getSummaryMetadata()
-                    .getJSONArray("ChContrastMax")
-                    .put(chan,max);
-                  getSummaryMetadata()
-                    .getJSONArray("ChContrastMin")
-                    .put(chan,min);
+                  getSummaryMetadata().getJSONArray("ChContrastMax").put(chan, max);
+                  getSummaryMetadata().getJSONArray("ChContrastMin").put(chan, min);
                   writeChannelSettingsToCache(chan);
                }
             } catch (Exception ex) {
@@ -223,23 +247,8 @@ public class VirtualAcquisitionDisplay {
       }
    }
 
-   public void updatePSelector() {
-      ImageWindow win = hyperImage_.getWindow();
-      if (numPositions_ > 1)
-         win.add(pSelector_,win.getComponentCount()-1);
-      else if (numPositions_ == 1)
-         win.remove(pSelector_);
-      pSelector_.setMaximum(numPositions_+1);
-      win.pack();
-   }
-
-   public void incrementNumPositions() {
-      ++numPositions_;
-      updatePSelector();
-   }
-
    private void updatePosition(int p) {
-      virtualStack_.setPositionIndex(p-1);
+      virtualStack_.setPositionIndex(p - 1);
       if (!isComposite()) {
          Object pixels = virtualStack_.getPixels(hyperImage_.getCurrentSlice());
          hyperImage_.getProcessor().setPixels(pixels);
@@ -247,11 +256,9 @@ public class VirtualAcquisitionDisplay {
       updateAndDraw();
    }
 
-
    public void setPosition(int p) {
       pSelector_.setValue(p);
    }
-
 
    boolean pause() {
       if (eng_ != null) {
@@ -325,10 +332,9 @@ public class VirtualAcquisitionDisplay {
          }
       }
 
-      TaggedImageStorageDiskDefault newFileManager
-              = new TaggedImageStorageDiskDefault(root + "/" + prefix, true,
+      TaggedImageStorageDiskDefault newFileManager = new TaggedImageStorageDiskDefault(root + "/" + prefix, true,
               getSummaryMetadata());
-      for (int i=0; i<getNumGrayChannels(); i++) {
+      for (int i = 0; i < getNumGrayChannels(); i++) {
          writeChannelSettingsToCache(i);
       }
       imageCache_.saveAs(newFileManager);
@@ -350,15 +356,20 @@ public class VirtualAcquisitionDisplay {
          hyperImage = imgp;
          imgp.setOpenAsHyperStack(true);
       }
+      return hyperImage;
+   }
 
+   private void createWindow(ImagePlus hyperImage, HyperstackControls hc) {
       final ImageWindow win = new StackWindow(hyperImage) {
+
          private boolean windowClosingDone_ = false;
          private boolean closed_ = false;
 
          @Override
          public void windowClosing(WindowEvent e) {
-            if (windowClosingDone_)
+            if (windowClosingDone_) {
                return;
+            }
 
             if (eng_ != null && eng_.isAcquisitionRunning()) {
                if (!abort()) {
@@ -383,12 +394,14 @@ public class VirtualAcquisitionDisplay {
             }
 
             // push current display settings to cache
-            if (imageCache_ != null)
+            if (imageCache_ != null) {
                imageCache_.close();
+            }
 
-            if (!closed_)
+            if (!closed_) {
                close();
- 
+            }
+
             super.windowClosing(e);
             windowClosingDone_ = true;
             closed_ = true;
@@ -414,23 +427,7 @@ public class VirtualAcquisitionDisplay {
 
       win.add(hc);
       ImagePlus.addImageListener(hc);
-
-      // Set ImageJ pixel size calibration
-      try {
-         double pixSizeUm = getSummaryMetadata().getDouble("PixelSize_um");
-         if (pixSizeUm > 0) {
-            Calibration cal = new Calibration();
-            cal.setUnit("um");
-            cal.pixelWidth = pixSizeUm;
-            cal.pixelHeight = pixSizeUm;
-            hyperImage.setCalibration(cal);
-         }
-      } catch (JSONException ex) {
-         // no pixelsize defined.  Nothing to do
-      }
-
       win.pack();
-      return hyperImage;
    }
 
    private ScrollbarWithLabel createPositionScrollbar() {
@@ -462,8 +459,7 @@ public class VirtualAcquisitionDisplay {
    public JSONObject getCurrentMetadata() {
       try {
          if (hyperImage_ != null) {
-            TaggedImage image = virtualStack_
-                    .getTaggedImage(hyperImage_.getCurrentSlice());
+            TaggedImage image = virtualStack_.getTaggedImage(hyperImage_.getCurrentSlice());
             if (image != null) {
                return image.tags;
             } else {
@@ -490,7 +486,7 @@ public class VirtualAcquisitionDisplay {
    }
 
    public int getNumPositions() {
-      return numPositions_;
+      return pSelector_.getMaximum() - 1;
    }
 
    public ImagePlus getImagePlus() {
@@ -517,12 +513,14 @@ public class VirtualAcquisitionDisplay {
    }
 
    public void close() {
-      if (hyperImage_ != null)
+      if (hyperImage_ != null) {
          hyperImage_.close();
+      }
    }
 
    public synchronized boolean windowClosed() {
-      return hyperImage_.getWindow().isClosed();
+      ImageWindow win = hyperImage_.getWindow();
+      return (win == null || win.isClosed());
    }
 
    public void showFolder() {
@@ -543,7 +541,7 @@ public class VirtualAcquisitionDisplay {
       if (hyperImage_ != null) {
          try {
             JavaUtils.setRestrictedFieldValue(null, Animator.class,
-                                                "animationRate", (double) fps);
+                    "animationRate", (double) fps);
          } catch (NoSuchFieldException ex) {
             ReportingUtils.showError(ex);
          }
@@ -554,9 +552,9 @@ public class VirtualAcquisitionDisplay {
       if (hyperImage_ != null) {
          try {
             JavaUtils.setRestrictedFieldValue(null, Animator.class,
-                                                "firstFrame", firstFrame);
+                    "firstFrame", firstFrame);
             JavaUtils.setRestrictedFieldValue(null, Animator.class,
-                                                "lastFrame", lastFrame);
+                    "lastFrame", lastFrame);
          } catch (NoSuchFieldException ex) {
             ReportingUtils.showError(ex);
          }
@@ -565,17 +563,6 @@ public class VirtualAcquisitionDisplay {
 
    public double getPlaybackFPS() {
       return Animator.getFrameRate();
-   }
-
-   public int[] getCurrentSlices() {
-      int frame = hyperImage_.getFrame();
-      int slice = hyperImage_.getSlice();
-      int nChannels = hyperImage_.getNChannels();
-      int[] indices = new int[nChannels];
-      for (int i = 0; i < nChannels; ++i) {
-         indices[i] = hyperImage_.getStackIndex(i + 1, slice, frame);
-      }
-      return indices;
    }
 
    public String getSummaryComment() {
@@ -599,7 +586,11 @@ public class VirtualAcquisitionDisplay {
    }
 
    public boolean isDiskCached() {
-      return imageCache_.getDiskLocation() != null;
+      MMImageCache imageCache = imageCache_;
+      if (imageCache == null)
+         return false;
+      else
+         return imageCache.getDiskLocation() != null;
    }
 
    public void show() {
@@ -611,9 +602,7 @@ public class VirtualAcquisitionDisplay {
       return hyperImage_ instanceof CompositeImage;
    }
 
-   
    // CHANNEL SECTION ////////////
-
    public int getNumChannels() {
       return hyperImage_.getNChannels();
    }
@@ -628,11 +617,7 @@ public class VirtualAcquisitionDisplay {
          String[] chanNames = new String[nChannels];
          for (int i = 0; i < nChannels; ++i) {
             try {
-               chanNames[i] = imageCache_
-                       .getDisplayAndComments()
-                       .getJSONArray("Channels")
-                       .getJSONObject(i)
-                       .getString("Name");
+               chanNames[i] = imageCache_.getDisplayAndComments().getJSONArray("Channels").getJSONObject(i).getString("Name");
             } catch (Exception ex) {
                ReportingUtils.logError(ex);
             }
@@ -653,22 +638,23 @@ public class VirtualAcquisitionDisplay {
    }
 
    public int[] getChannelHistogram(int channelIndex) {
-      if (hyperImage_ == null) {
+      if (hyperImage_ == null || hyperImage_.getProcessor() == null) {
          return null;
       }
       if (hyperImage_.isComposite()
-           && ((CompositeImage) hyperImage_).getMode()
-                   == CompositeImage.COMPOSITE) {
-         ImageProcessor ip = ((CompositeImage) hyperImage_)
-                                .getProcessor(channelIndex + 1);
-         if (ip == null)
+              && ((CompositeImage) hyperImage_).getMode()
+              == CompositeImage.COMPOSITE) {
+         ImageProcessor ip = ((CompositeImage) hyperImage_).getProcessor(channelIndex + 1);
+         if (ip == null) {
             return null;
+         }
          return ip.getHistogram();
       } else {
-         if (hyperImage_.getChannel() == (channelIndex + 1))
+         if (hyperImage_.getChannel() == (channelIndex + 1)) {
             return hyperImage_.getProcessor().getHistogram();
-         else
+         } else {
             return null;
+         }
       }
    }
 
@@ -690,8 +676,7 @@ public class VirtualAcquisitionDisplay {
 
    private void readChannelSettingsFromCache(boolean updateDisplay) {
       try {
-         JSONArray channelsArray = imageCache_.getDisplayAndComments()
-                                     .getJSONArray("Channels");
+         JSONArray channelsArray = imageCache_.getDisplayAndComments().getJSONArray("Channels");
          for (int i = 0; i < channelSettings_.length; ++i) {
             try {
                JSONObject channel = channelsArray.getJSONObject(i);
@@ -699,8 +684,9 @@ public class VirtualAcquisitionDisplay {
                channelSettings_[i].min = channel.getInt("Min");
                channelSettings_[i].max = channel.getInt("Max");
                channelSettings_[i].gamma = channel.getDouble("Gamma");
-               if (updateDisplay)
+               if (updateDisplay) {
                   setChannelDisplaySettings(i, channelSettings_[i]);
+               }
             } catch (JSONException ex) {
                //ReportingUtils.logError(ex);
             }
@@ -712,8 +698,7 @@ public class VirtualAcquisitionDisplay {
 
    private void writeChannelSettingsToCache(int channelIndex) {
       try {
-         JSONObject jsonSetting = imageCache_.
-                 getDisplayAndComments().
+         JSONObject jsonSetting = imageCache_.getDisplayAndComments().
                  getJSONArray("Channels").
                  getJSONObject(channelIndex);
          ChannelDisplaySettings setting = channelSettings_[channelIndex];
@@ -734,7 +719,7 @@ public class VirtualAcquisitionDisplay {
          hyperImage_.setPositionWithoutUpdate(channel, z, t);
       }
    }
-   
+
    public void setChannelColor(int channel, int rgb) throws MMScriptException {
       double gamma;
       if (channelSettings_ == null) {
@@ -753,7 +738,7 @@ public class VirtualAcquisitionDisplay {
    }
 
    public void setChannelDisplaySettings(int channel,
-                                           ChannelDisplaySettings settings) {
+           ChannelDisplaySettings settings) {
       setChannelLut(channel, settings.color, settings.gamma);
       setChannelDisplayRange(channel, settings.min, settings.max);
       channelSettings_[channel] = settings;
@@ -767,8 +752,9 @@ public class VirtualAcquisitionDisplay {
       // Note: both hyperImage_ and channelSettings_ can be
       // null when this function is called
       // null pointer exception will ensue!
-      if (hyperImage_ == null)
+      if (hyperImage_ == null) {
          return;
+      }
       LUT lut = ImageUtils.makeLUT(color, gamma, 8);
       if (hyperImage_.isComposite()) {
          CompositeImage ci = (CompositeImage) hyperImage_;
@@ -784,8 +770,9 @@ public class VirtualAcquisitionDisplay {
    }
 
    public void setChannelDisplayRange(int channel, int min, int max) {
-      if (hyperImage_ == null)
+      if (hyperImage_ == null) {
          return;
+      }
       setChannelWithoutUpdate(channel + 1);
       hyperImage_.updateImage();
       hyperImage_.setDisplayRange(min, max);
@@ -795,6 +782,4 @@ public class VirtualAcquisitionDisplay {
 
       writeChannelSettingsToCache(channel);
    }
-
-
 }

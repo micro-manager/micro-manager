@@ -519,6 +519,11 @@ public class MetadataPanel extends javax.swing.JPanel
       return mdChanging;
    }
 
+   private boolean isHyperImage(ImagePlus imgp) {
+      ImageStack stack = imgp.getStack();
+      return (stack instanceof AcquisitionVirtualStack);
+   }
+
    private AcquisitionVirtualStack getAcquisitionStack(ImagePlus imp) {
       ImageStack stack = imp.getStack();
       if (stack instanceof AcquisitionVirtualStack) {
@@ -570,7 +575,8 @@ public class MetadataPanel extends javax.swing.JPanel
          if (((StackWindow) win).getAnimate())
             return;
       }
-      update(imp);
+      if (isHyperImage(imp))
+         update(imp);
    }
 
    private MMImageCache getCache(ImagePlus imgp) {
