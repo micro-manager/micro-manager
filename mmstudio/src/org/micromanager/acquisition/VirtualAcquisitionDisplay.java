@@ -44,11 +44,8 @@ public class VirtualAcquisitionDisplay {
    private ChannelDisplaySettings[] channelSettings_;
    private int numPositions_ = 1;
    private int numComponents_ = 1;
-   private boolean newData_;
-   private boolean closed_ = false;
    
    public VirtualAcquisitionDisplay(boolean newData, MMImageCache imageCache, AcquisitionEngine eng) {
-      newData_ = newData;
       imageCache_ = imageCache;
       eng_ = eng;
       pSelector_ = createPositionScrollbar();
@@ -104,14 +101,6 @@ public class VirtualAcquisitionDisplay {
    public ImagePlus getHyperImage() {
       return hyperImage_;
    }
-   
-   public boolean isClosed() {
-      return closed_;
-   }
-
-   public int getNumGrayChannels() {
-      return numComponents_ * getNumChannels();
-   }
 
    private void updateAndDraw() {
       if (getNumGrayChannels() > 1) {
@@ -125,33 +114,38 @@ public class VirtualAcquisitionDisplay {
          return;
 
       String status = "";
-      if (newData_) {
+
+      if (eng_ != null) {
          if (acquisitionIsRunning()) {
             if (!abortRequested()) {
                hc_.enableAcquisitionControls(true);
                if (isPaused()) {
-                  status = " (Paused)";
+                  status = "paused";
                } else {
-                  status = " (Running)";
+                  status = "running";
                }
             } else {
                hc_.enableAcquisitionControls(false);
-               status = " (Interrupted)";
+               status = "interrupted";
             }
          } else {
             hc_.enableAcquisitionControls(false);
-            if (!status.contentEquals(" (Interrupted)")) {
-               status = " (Finished)";
+            if (!status.contentEquals("interrupted")) {
+               status = "finished";
             }
          }
+         status += ", ";
       } else {
          hc_.enableAcquisitionControls(false);
-         if (imageCache_.getDiskLocation() != null)
-            status = " (On disk)";
       }
+      if (isDiskCached())
+         status += "on disk";
+      else
+         status += "not yet saved";
+      
       hc_.enableShowFolderButton(imageCache_.getDiskLocation() != null);
-      String path = isDiskCached() ? imageCache_.getDiskLocation() : "";
-      hyperImage_.getWindow().setTitle(new File(path).getName() +  status);
+      String path = isDiskCached() ? new File(imageCache_.getDiskLocation()).getName() + " ": "Untitled ";
+      hyperImage_.getWindow().setTitle(path +  "(" + status +")");
    }
 
    public void showImage(TaggedImage taggedImg) throws MMScriptException {
@@ -339,7 +333,6 @@ public class VirtualAcquisitionDisplay {
       }
       imageCache_.saveAs(newFileManager);
       MMStudioMainFrame.getInstance().setAcqDirectory(root);
-      newData_ = false;
       updateWindow();
       return true;
    }
@@ -360,7 +353,7 @@ public class VirtualAcquisitionDisplay {
 
       final ImageWindow win = new StackWindow(hyperImage) {
          private boolean windowClosingDone_ = false;
-
+         private boolean closed_ = false;
 
          @Override
          public void windowClosing(WindowEvent e) {
@@ -393,7 +386,7 @@ public class VirtualAcquisitionDisplay {
             if (imageCache_ != null)
                imageCache_.close();
 
-            if (!this.isClosed())
+            if (!closed_)
                close();
  
             super.windowClosing(e);
@@ -466,85 +459,22 @@ public class VirtualAcquisitionDisplay {
       return pSelector;
    }
 
-   public void setChannelColor(int channel, int rgb) throws MMScriptException {
-      double gamma;
-      if (channelSettings_ == null) {
-         gamma = 1.0;
-      } else {
-         gamma = channelSettings_[channel].gamma;
-      }
-
-      setChannelLut(channel, new Color(rgb), gamma);
-      writeChannelSettingsToCache(channel);
-   }
-
-   public void setChannelGamma(int channel, double gamma) {
-      setChannelLut(channel, channelSettings_[channel].color, gamma);
-      writeChannelSettingsToCache(channel);
-   }
-
-   public void setChannelDisplaySettings(int channel,
-                                           ChannelDisplaySettings settings) {
-      setChannelLut(channel, settings.color, settings.gamma);
-      setChannelDisplayRange(channel, settings.min, settings.max);
-      channelSettings_[channel] = settings;
-   }
-
-   public ChannelDisplaySettings getChannelDisplaySettings(int channel) {
-      return channelSettings_[channel];
-   }
-
-   public void setChannelLut(int channel, Color color, double gamma) {
-      // Note: both hyperImage_ and channelSettings_ can be
-      // null when this function is called
-      // null pointer exception will ensue!
-      if (hyperImage_ == null)
-         return;
-      LUT lut = ImageUtils.makeLUT(color, gamma, 8);
-      if (hyperImage_.isComposite()) {
-         CompositeImage ci = (CompositeImage) hyperImage_;
-         setChannelWithoutUpdate(channel + 1);
-         ci.setChannelColorModel(lut);
-      } else {
-         hyperImage_.getProcessor().setColorModel(lut);
-      }
-      updateAndDraw();
-
-      channelSettings_[channel].color = color;
-      channelSettings_[channel].gamma = gamma;
-   }
-
-   public void setChannelDisplayRange(int channel, int min, int max) {
-      if (hyperImage_ == null)
-         return;
-      setChannelWithoutUpdate(channel + 1);
-      hyperImage_.updateImage();
-      hyperImage_.setDisplayRange(min, max);
-      updateAndDraw();
-      channelSettings_[channel].min = min;
-      channelSettings_[channel].max = max;
-
-      writeChannelSettingsToCache(channel);
-   }
-
    public JSONObject getCurrentMetadata() {
-      int index = getCurrentFlatIndex();
       try {
-         TaggedImage image = virtualStack_.getTaggedImage(index);
-         if (image != null) {
-            return image.tags;
+         if (hyperImage_ != null) {
+            TaggedImage image = virtualStack_
+                    .getTaggedImage(hyperImage_.getCurrentSlice());
+            if (image != null) {
+               return image.tags;
+            } else {
+               return null;
+            }
          } else {
             return null;
          }
       } catch (NullPointerException ex) {
          return null;
       }
-   }
-
-   private int getCurrentFlatIndex() {
-      if (hyperImage_ != null)
-         return hyperImage_.getCurrentSlice();
-      return 0;
    }
 
    public int getCurrentPosition() {
@@ -557,10 +487,6 @@ public class VirtualAcquisitionDisplay {
 
    public int getNumFrames() {
       return hyperImage_.getNFrames();
-   }
-
-   public int getNumChannels() {
-      return hyperImage_.getNChannels();
    }
 
    public int getNumPositions() {
@@ -599,7 +525,7 @@ public class VirtualAcquisitionDisplay {
       return hyperImage_.getWindow().isClosed();
    }
 
-   void showFolder() {
+   public void showFolder() {
       if (isDiskCached()) {
          try {
             if (JavaUtils.isWindows()) {
@@ -611,16 +537,6 @@ public class VirtualAcquisitionDisplay {
             ReportingUtils.logError(ex);
          }
       }
-   }
-
-   private void setChannelWithoutUpdate(int channel) {
-      if (hyperImage_ != null) {
-         int z = hyperImage_.getSlice();
-         int t = hyperImage_.getFrame();
-
-         hyperImage_.setPositionWithoutUpdate(channel, z, t);
-      }
-
    }
 
    public void setPlaybackFPS(double fps) {
@@ -660,6 +576,50 @@ public class VirtualAcquisitionDisplay {
          indices[i] = hyperImage_.getStackIndex(i + 1, slice, frame);
       }
       return indices;
+   }
+
+   public String getSummaryComment() {
+      return imageCache_.getComment();
+   }
+
+   public void setSummaryComment(String comment) {
+      imageCache_.setComment(comment);
+   }
+
+   void setImageComment(String comment) {
+      imageCache_.setImageComment(comment, getCurrentMetadata());
+   }
+
+   String getImageComment() {
+      try {
+         return imageCache_.getImageComment(getCurrentMetadata());
+      } catch (NullPointerException ex) {
+         return "";
+      }
+   }
+
+   public boolean isDiskCached() {
+      return imageCache_.getDiskLocation() != null;
+   }
+
+   public void show() {
+      hyperImage_.show();
+      hyperImage_.getWindow().toFront();
+   }
+
+   public boolean isComposite() {
+      return hyperImage_ instanceof CompositeImage;
+   }
+
+   
+   // CHANNEL SECTION ////////////
+
+   public int getNumChannels() {
+      return hyperImage_.getNChannels();
+   }
+
+   public int getNumGrayChannels() {
+      return numComponents_ * getNumChannels();
    }
 
    public String[] getChannelNames() {
@@ -764,40 +724,77 @@ public class VirtualAcquisitionDisplay {
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
-
    }
 
-   public String getSummaryComment() {
-      return imageCache_.getComment();
-   }
+   private void setChannelWithoutUpdate(int channel) {
+      if (hyperImage_ != null) {
+         int z = hyperImage_.getSlice();
+         int t = hyperImage_.getFrame();
 
-   public void setSummaryComment(String comment) {
-      imageCache_.setComment(comment);
-   }
-
-   void setImageComment(String comment) {
-      imageCache_.setImageComment(comment, getCurrentMetadata());
-   }
-
-   String getImageComment() {
-      try {
-         return imageCache_.getImageComment(getCurrentMetadata());
-      } catch (NullPointerException ex) {
-         return "";
+         hyperImage_.setPositionWithoutUpdate(channel, z, t);
       }
    }
+   
+   public void setChannelColor(int channel, int rgb) throws MMScriptException {
+      double gamma;
+      if (channelSettings_ == null) {
+         gamma = 1.0;
+      } else {
+         gamma = channelSettings_[channel].gamma;
+      }
 
-   public boolean isDiskCached() {
-      return imageCache_.getDiskLocation() != null;
+      setChannelLut(channel, new Color(rgb), gamma);
+      writeChannelSettingsToCache(channel);
    }
 
-   public void show() {
-      hyperImage_.show();
-      hyperImage_.getWindow().toFront();
+   public void setChannelGamma(int channel, double gamma) {
+      setChannelLut(channel, channelSettings_[channel].color, gamma);
+      writeChannelSettingsToCache(channel);
    }
 
-   public boolean isComposite() {
-      return hyperImage_ instanceof CompositeImage;
+   public void setChannelDisplaySettings(int channel,
+                                           ChannelDisplaySettings settings) {
+      setChannelLut(channel, settings.color, settings.gamma);
+      setChannelDisplayRange(channel, settings.min, settings.max);
+      channelSettings_[channel] = settings;
    }
+
+   public ChannelDisplaySettings getChannelDisplaySettings(int channel) {
+      return channelSettings_[channel];
+   }
+
+   public void setChannelLut(int channel, Color color, double gamma) {
+      // Note: both hyperImage_ and channelSettings_ can be
+      // null when this function is called
+      // null pointer exception will ensue!
+      if (hyperImage_ == null)
+         return;
+      LUT lut = ImageUtils.makeLUT(color, gamma, 8);
+      if (hyperImage_.isComposite()) {
+         CompositeImage ci = (CompositeImage) hyperImage_;
+         setChannelWithoutUpdate(channel + 1);
+         ci.setChannelColorModel(lut);
+      } else {
+         hyperImage_.getProcessor().setColorModel(lut);
+      }
+      updateAndDraw();
+
+      channelSettings_[channel].color = color;
+      channelSettings_[channel].gamma = gamma;
+   }
+
+   public void setChannelDisplayRange(int channel, int min, int max) {
+      if (hyperImage_ == null)
+         return;
+      setChannelWithoutUpdate(channel + 1);
+      hyperImage_.updateImage();
+      hyperImage_.setDisplayRange(min, max);
+      updateAndDraw();
+      channelSettings_[channel].min = min;
+      channelSettings_[channel].max = max;
+
+      writeChannelSettingsToCache(channel);
+   }
+
 
 }
