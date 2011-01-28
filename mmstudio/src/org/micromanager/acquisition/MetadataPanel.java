@@ -520,15 +520,15 @@ public class MetadataPanel extends javax.swing.JPanel
    }
 
    private boolean isHyperImage(ImagePlus imgp) {
-      ImageStack stack = imgp.getStack();
-      return (stack instanceof AcquisitionVirtualStack);
+      return VirtualAcquisitionDisplay.getDisplay(imgp) != null;
    }
 
    private AcquisitionVirtualStack getAcquisitionStack(ImagePlus imp) {
-      ImageStack stack = imp.getStack();
-      if (stack instanceof AcquisitionVirtualStack) {
-         return (AcquisitionVirtualStack) stack;
-      } else {
+      VirtualAcquisitionDisplay display
+              = VirtualAcquisitionDisplay.getDisplay(imp);
+      if (display != null) {
+         return display.virtualStack_;
+      } else{
          return null;
       }
    }
@@ -554,14 +554,14 @@ public class MetadataPanel extends javax.swing.JPanel
    }
 
    private void writeSummaryComments() {
-       VirtualAcquisitionDisplay acq = getMMVirtualAcquisitionDisplay();
+       VirtualAcquisitionDisplay acq = getVirtualAcquisitionDisplay();
        if (acq != null) {
           acq.setSummaryComment(summaryCommentsTextArea.getText());
        }
    }
 
    private void writeImageComments() {
-       VirtualAcquisitionDisplay acq = getMMVirtualAcquisitionDisplay();
+       VirtualAcquisitionDisplay acq = getVirtualAcquisitionDisplay();
        if (acq != null) {
           acq.setImageComment(imageCommentsTextArea.getText());
        }
@@ -580,11 +580,11 @@ public class MetadataPanel extends javax.swing.JPanel
    }
 
    private MMImageCache getCache(ImagePlus imgp) {
-      AcquisitionVirtualStack stack = getAcquisitionStack(imgp);
-      if (stack != null)
-         return stack.getCache();
-      else
+      if ( VirtualAcquisitionDisplay.getDisplay(imgp) != null) {
+         return VirtualAcquisitionDisplay.getDisplay(imgp).imageCache_;
+      } else {
          return null;
+      }
    }
 
    /*
@@ -619,7 +619,7 @@ public class MetadataPanel extends javax.swing.JPanel
          } else if (tabSelected == 0) {
             updateChannelControls();
          } else if (tabSelected == 2) {
-            VirtualAcquisitionDisplay acq = getMMVirtualAcquisitionDisplay();
+            VirtualAcquisitionDisplay acq = getVirtualAcquisitionDisplay();
             if (acq != null) {
                imageCommentsTextArea.setText(acq.getImageComment());
             }
@@ -640,7 +640,7 @@ public class MetadataPanel extends javax.swing.JPanel
 
       ImagePlus imgp = focusedWindow.getImagePlus();
       MMImageCache cache = getCache(imgp);
-      VirtualAcquisitionDisplay acq = getMMVirtualAcquisitionDisplay();
+      VirtualAcquisitionDisplay acq = getVirtualAcquisitionDisplay();
 
       if (acq != null) {
          summaryCommentsTextArea.setText(acq.getSummaryComment());
@@ -663,18 +663,11 @@ public class MetadataPanel extends javax.swing.JPanel
 
    }
 
-   private VirtualAcquisitionDisplay getMMVirtualAcquisitionDisplay() {
+   private VirtualAcquisitionDisplay getVirtualAcquisitionDisplay() {
       ImagePlus imgp = WindowManager.getCurrentImage();
       if (imgp == null)
          return null;
-
-      VirtualAcquisitionDisplay acq;
-      AcquisitionVirtualStack stack = getAcquisitionStack(imgp);
-         if (stack != null) {
-            acq = stack.getVirtualAcquisition();
-            return acq;
-      }
-      return null;
+      return VirtualAcquisitionDisplay.getDisplay(imgp);
    }
 
    public synchronized void setupChannelControls(VirtualAcquisitionDisplay acq) {

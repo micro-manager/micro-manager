@@ -123,8 +123,11 @@ import org.micromanager.acquisition.AcquisitionVirtualStack;
 import org.micromanager.api.AcquisitionInterface;
 import org.micromanager.acquisition.AcquisitionWrapperEngine;
 import org.micromanager.acquisition.MetadataPanel;
+import org.micromanager.acquisition.TaggedImageStorageDiskDefault;
+import org.micromanager.acquisition.VirtualAcquisitionDisplay;
 import org.micromanager.api.ImageFocusListener;
 import org.micromanager.api.Pipeline;
+import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.FileDialogs.FileType;
 import org.micromanager.utils.ReportingUtils;
@@ -3518,7 +3521,11 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
 
    public void openAcquisition(String name, String rootDir, boolean show) throws MMScriptException {
-      acqMgr_.openAcquisition(name, rootDir, show);
+      //acqMgr_.openAcquisition(name, rootDir, show);
+      TaggedImageStorage imageFileManager = new TaggedImageStorageDiskDefault((new File(rootDir, name)).getAbsolutePath());
+      MMImageCache cache = new MMImageCache(imageFileManager);
+      VirtualAcquisitionDisplay display = new VirtualAcquisitionDisplay(false, cache, null);
+      display.show();
    }
 
    public void openAcquisition(String name, String rootDir, int nrFrames,

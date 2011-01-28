@@ -15,6 +15,11 @@ import java.awt.event.AdjustmentListener;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Hashtable;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
@@ -34,6 +39,18 @@ import org.micromanager.utils.ReportingUtils;
  * @author arthur
  */
 public class VirtualAcquisitionDisplay {
+
+   private static Hashtable<ImagePlus, VirtualAcquisitionDisplay> 
+           acquisitionDisplays_
+           = new Hashtable<ImagePlus, VirtualAcquisitionDisplay>();
+   
+   public static VirtualAcquisitionDisplay getDisplay(ImagePlus imgp) {
+      if (acquisitionDisplays_.containsKey(imgp))
+         return acquisitionDisplays_.get(imgp);
+      else
+         return null;
+   }
+
 
    final MMImageCache imageCache_;
    final private AcquisitionEngine eng_;
@@ -79,7 +96,13 @@ public class VirtualAcquisitionDisplay {
       }
       virtualStack_ = new AcquisitionVirtualStack(width, height, type, null,
               imageCache, numGrayChannels * numSlices * numFrames, this);
-
+      if (summaryMetadata.has("PositionIndex")) {
+         try {
+            virtualStack_.setPositionIndex(MDUtils.getPositionIndex(summaryMetadata));
+         } catch (Exception ex) {
+            ReportingUtils.logError(ex);
+         }
+      }
       if (channelSettings_ == null) {
          channelSettings_ = new ChannelDisplaySettings[numGrayChannels];
          for (int i = 0; i < numGrayChannels; ++i) {
@@ -89,12 +112,12 @@ public class VirtualAcquisitionDisplay {
 
       hc_ = new HyperstackControls(this);
       hyperImage_ = createImagePlus(numChannels, numSlices, numFrames, virtualStack_, hc_);
+      acquisitionDisplays_.put(hyperImage_, this);
       applyPixelSizeCalibration(hyperImage_);
       createWindow(hyperImage_, hc_);
       setNumPositions(numPositions);
       updateAndDraw();
       updateWindow();
-
       readChannelSettingsFromCache(true);
    }
 
@@ -191,11 +214,12 @@ public class VirtualAcquisitionDisplay {
          try {
             int p = 1 + MDUtils.getPositionIndex(taggedImg.tags);
             if (p >= getNumPositions()) {
-               setNumPositions(p);
+               setNumPositions(p+1);
             }
             setPosition(1 + MDUtils.getPositionIndex(taggedImg.tags));
             hyperImage_.setPosition(1 + MDUtils.getChannelIndex(md),
-                    1 + MDUtils.getSliceIndex(md), 1 + MDUtils.getFrameIndex(md));
+                                    1 + MDUtils.getSliceIndex(md),
+                                    1 + MDUtils.getFrameIndex(md));
             //setPlaybackLimits(1, 1 + MDUtils.getFrameIndex(md));
          } catch (Exception e) {
             ReportingUtils.logError(e);

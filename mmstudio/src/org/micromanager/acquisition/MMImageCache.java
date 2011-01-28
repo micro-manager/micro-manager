@@ -23,36 +23,36 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class MMImageCache implements TaggedImageStorage {
 
-   private TaggedImageStorage imageFileManager_;
+   private TaggedImageStorage imageStorage_;
    private Set<String> changingKeys_;
    private JSONObject firstTags_;
    private HashMap<String, SoftReference<TaggedImage>> softTable_;
 
-   public MMImageCache(TaggedImageStorage imageFileManager) {
-      imageFileManager_ = imageFileManager;
+   public MMImageCache(TaggedImageStorage imageStorage) {
+      imageStorage_ = imageStorage;
       changingKeys_ = new HashSet<String>();
       softTable_ = new HashMap<String, SoftReference<TaggedImage>>();
    }
 
    public void finished() {
-      imageFileManager_.finished();
+      imageStorage_.finished();
    }
 
    public String getDiskLocation() {
-      return imageFileManager_.getDiskLocation();
+      return imageStorage_.getDiskLocation();
    }
 
    public void setDisplayAndComments(JSONObject settings) {
-      imageFileManager_.setDisplayAndComments(settings);
+      imageStorage_.setDisplayAndComments(settings);
    }
 
    public JSONObject getDisplayAndComments() {
-      return imageFileManager_.getDisplayAndComments();
+      return imageStorage_.getDisplayAndComments();
 
    }
 
    public void close() {
-      imageFileManager_.close();
+      imageStorage_.close();
    }
 
    public void saveAs(TaggedImageStorage newImageFileManager) {
@@ -69,15 +69,15 @@ public class MMImageCache implements TaggedImageStorage {
       }
       newImageFileManager.setDisplayAndComments(this.getDisplayAndComments());
       newImageFileManager.finished();
-      imageFileManager_ = newImageFileManager;
+      imageStorage_ = newImageFileManager;
    }
 
    public String putImage(TaggedImage taggedImg) {
       try {
          softTable_.put(MDUtils.getLabel(taggedImg.tags), new SoftReference(taggedImg));
-         taggedImg.tags.put("Summary",imageFileManager_.getSummaryMetadata());
+         taggedImg.tags.put("Summary",imageStorage_.getSummaryMetadata());
          checkForChangingTags(taggedImg);
-         return imageFileManager_.putImage(taggedImg);
+         return imageStorage_.putImage(taggedImg);
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
          return null;
@@ -90,7 +90,7 @@ public class MMImageCache implements TaggedImageStorage {
       if (softTable_.containsKey(label))
          taggedImg = softTable_.get(label).get();
       if (taggedImg == null) {
-         taggedImg = imageFileManager_.getImage(channel, slice, frame, position);
+         taggedImg = imageStorage_.getImage(channel, slice, frame, position);
          if (taggedImg != null) {
             checkForChangingTags(taggedImg);
             softTable_.put(label, new SoftReference(taggedImg));
@@ -125,11 +125,11 @@ public class MMImageCache implements TaggedImageStorage {
    private JSONObject getCommentsJSONObject() {
       JSONObject comments;
       try {
-         comments = imageFileManager_.getDisplayAndComments().getJSONObject("Comments");
+         comments = imageStorage_.getDisplayAndComments().getJSONObject("Comments");
       } catch (JSONException ex) {
          comments = new JSONObject();
          try {
-            imageFileManager_.getDisplayAndComments().put("Comments", comments);
+            imageStorage_.getDisplayAndComments().put("Comments", comments);
          } catch (JSONException ex1) {
             ReportingUtils.logError(ex1);
          }
@@ -177,12 +177,12 @@ public class MMImageCache implements TaggedImageStorage {
    }
 
    public JSONObject getSummaryMetadata() {
-      return imageFileManager_.getSummaryMetadata();
+      return imageStorage_.getSummaryMetadata();
    }
 
    public void setSummaryMetadata(JSONObject tags) {
-      imageFileManager_.setSummaryMetadata(tags);
-      imageFileManager_.setDisplayAndComments(MDUtils.getDisplaySettingsFromSummary(tags));
+      imageStorage_.setSummaryMetadata(tags);
+      imageStorage_.setDisplayAndComments(MDUtils.getDisplaySettingsFromSummary(tags));
    }
 
    public Set<String> getChangingKeys() {

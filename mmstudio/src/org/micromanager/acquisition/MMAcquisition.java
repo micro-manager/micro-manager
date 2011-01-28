@@ -40,7 +40,6 @@ import org.json.JSONObject;
 import org.json.JSONException;
 
 import org.micromanager.api.AcquisitionInterface;
-import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
@@ -98,9 +97,9 @@ public class MMAcquisition implements AcquisitionInterface {
 
          imageFileManager = new TaggedImageStorageDiskDefault(dirname,
               !existing, new JSONObject());
-      }
-      else
+      } else {
          imageFileManager = new TaggedImageStorageRam(null);
+      }
 
       MMImageCache imageCache = new MMImageCache(imageFileManager);
       virtAcq_ = new VirtualAcquisitionDisplay(false, imageCache, null);

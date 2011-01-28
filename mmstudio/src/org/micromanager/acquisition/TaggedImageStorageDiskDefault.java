@@ -48,7 +48,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
    private HashMap<String, JSONObject> metadataTable_ = null;
    private JSONObject displaySettings_;
    
-   TaggedImageStorageDiskDefault(String dir) {
+   public TaggedImageStorageDiskDefault(String dir) {
       this(dir, false, null);
    }
 
