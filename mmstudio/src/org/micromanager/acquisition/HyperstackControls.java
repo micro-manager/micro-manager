@@ -267,6 +267,7 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
    }
 
    public void imageUpdated(ImagePlus imp) {
+      if (true) return;
       if (imp == acq_.getHyperImage()) {
          ImageStack stack = imp.getStack();
          if (stack instanceof AcquisitionVirtualStack) {

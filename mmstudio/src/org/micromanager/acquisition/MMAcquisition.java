@@ -102,7 +102,7 @@ public class MMAcquisition implements AcquisitionInterface {
       }
 
       MMImageCache imageCache = new MMImageCache(imageFileManager);
-      virtAcq_ = new VirtualAcquisitionDisplay(false, imageCache, null);
+      virtAcq_ = new VirtualAcquisitionDisplay(imageCache, null);
       
       if (show && diskCached && existing) {
             virtAcq_.show();

@@ -3524,7 +3524,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       //acqMgr_.openAcquisition(name, rootDir, show);
       TaggedImageStorage imageFileManager = new TaggedImageStorageDiskDefault((new File(rootDir, name)).getAbsolutePath());
       MMImageCache cache = new MMImageCache(imageFileManager);
-      VirtualAcquisitionDisplay display = new VirtualAcquisitionDisplay(false, cache, null);
+      VirtualAcquisitionDisplay display = new VirtualAcquisitionDisplay(cache, null);
       display.show();
    }
 

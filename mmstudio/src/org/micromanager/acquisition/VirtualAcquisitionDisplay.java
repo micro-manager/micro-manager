@@ -15,11 +15,7 @@ import java.awt.event.AdjustmentListener;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Hashtable;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
@@ -61,7 +57,7 @@ public class VirtualAcquisitionDisplay {
    private ChannelDisplaySettings[] channelSettings_;
    private int numComponents_ = 1;
 
-   public VirtualAcquisitionDisplay(boolean newData, MMImageCache imageCache, AcquisitionEngine eng) {
+   public VirtualAcquisitionDisplay(MMImageCache imageCache, AcquisitionEngine eng) {
       imageCache_ = imageCache;
       eng_ = eng;
       pSelector_ = createPositionScrollbar();
@@ -214,7 +210,7 @@ public class VirtualAcquisitionDisplay {
          try {
             int p = 1 + MDUtils.getPositionIndex(taggedImg.tags);
             if (p >= getNumPositions()) {
-               setNumPositions(p+1);
+               setNumPositions(p);
             }
             setPosition(1 + MDUtils.getPositionIndex(taggedImg.tags));
             hyperImage_.setPosition(1 + MDUtils.getChannelIndex(md),

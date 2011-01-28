@@ -61,7 +61,7 @@ public class LiveAcqDisplay extends Thread {
       imageCache_ = new MMImageCache(imageFileManager);
       imageCache_.setSummaryMetadata(summaryMetadata);
 
-      display_ = new VirtualAcquisitionDisplay(true, imageCache_, eng);
+      display_ = new VirtualAcquisitionDisplay(imageCache_, eng);
    }
 
    private static String getUniqueUntitledName() {
