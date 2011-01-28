@@ -38,6 +38,10 @@ public class MMImageCache implements TaggedImageStorage {
       imageFileManager_.finished();
    }
 
+   public String getDiskLocation() {
+      return imageFileManager_.getDiskLocation();
+   }
+
    public void setDisplayAndComments(JSONObject settings) {
       imageFileManager_.setDisplayAndComments(settings);
    }

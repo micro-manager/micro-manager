@@ -103,20 +103,14 @@ public class MMAcquisition implements AcquisitionInterface {
          imageFileManager = new TaggedImageStorageRam(null);
 
       MMImageCache imageCache = new MMImageCache(imageFileManager);
-      virtAcq_ = new VirtualAcquisitionDisplay(dir + File.separator + name, false, diskCached);
-      virtAcq_.setCache(imageCache);
+      virtAcq_ = new VirtualAcquisitionDisplay(false, imageCache, null);
       
       if (show && diskCached && existing) {
-         try {
-            virtAcq_.initialize();
             virtAcq_.show();
             // start loading all other images in a background thread
             PreLoadDataThread t = new PreLoadDataThread(virtAcq_);
             new Thread(t).start();
             initialized_ = true;
-         } catch (MMScriptException ex) {
-            ReportingUtils.showError( ex);
-         }
       }
       
       show_ = show;
@@ -235,10 +229,8 @@ public class MMAcquisition implements AcquisitionInterface {
       setDefaultChannelTags(tags);
       
       virtAcq_.imageCache_.setSummaryMetadata(tags);
-
       virtAcq_.imageCache_.setDisplayAndComments(MDUtils.getDisplaySettingsFromSummary(tags));
 
-      virtAcq_.initialize();
       if (show_)
          virtAcq_.show();
 
@@ -557,14 +549,6 @@ public class MMAcquisition implements AcquisitionInterface {
 
    public void setSystemState(JSONObject md) throws MMScriptException {
       throw new UnsupportedOperationException("Not supported yet.");
-   }
-
-   public void setEngine(AcquisitionEngine eng) {
-      throw new UnsupportedOperationException("Not supported yet.");
-   }
-
-   public void setCache(MMImageCache imageCache) {
-      virtAcq_.setCache(imageCache);
    }
 
 }

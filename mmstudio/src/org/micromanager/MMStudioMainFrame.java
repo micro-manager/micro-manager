@@ -320,16 +320,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       MMFrames_.remove(comp);
    }
 
-   public void setAcquisitionEngine(String acqName, AcquisitionEngine eng) {
-      this.acqMgr_.setAcquisitionEngine(acqName, eng);
-   }
-
    public void updateContrast(ImagePlus iplus) {
       contrastPanel_.updateContrast(iplus);
-   }
-
-   public void setAcquisitionCache(String acqName, MMImageCache imageCache) {
-      this.acqMgr_.setAcquisitionCache(acqName, imageCache);
    }
 
    public void runBurstAcquisition() throws MMScriptException {

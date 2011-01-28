@@ -64,4 +64,8 @@ public class TaggedImageStorageRam implements TaggedImageStorage {
       // do nothing for now.
    }
 
+   public String getDiskLocation() {
+      return null;
+   }
+
 }

@@ -18,8 +18,8 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class AcquisitionVirtualStack extends ij.VirtualStack {
    final private MMImageCache imageCache_;
-   private final VirtualAcquisitionDisplay acq_;
-   protected int width_, height_, type_;
+   final private VirtualAcquisitionDisplay acq_;
+   final protected int width_, height_, type_;
    private int nSlices_;
    private int positionIndex_ = 0;
 
@@ -37,6 +37,10 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
 
    public void setPositionIndex(int pos) {
       positionIndex_ = pos;
+   }
+
+   public int getPositionIndex() {
+      return positionIndex_;
    }
 
    public VirtualAcquisitionDisplay getVirtualAcquisition() {

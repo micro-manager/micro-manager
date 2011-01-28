@@ -100,7 +100,7 @@ public class MMStudioPlugin implements PlugIn, CommandListener {
          // this may backfire!
          if (IJ.getImage().getStack() instanceof AcquisitionVirtualStack) {
             AcquisitionVirtualStack avs = (AcquisitionVirtualStack) IJ.getImage().getStack();
-            if (avs.getVirtualAcquisition().getDiskCached()) {
+            if (avs.getVirtualAcquisition().isDiskCached()) {
                // duplicate the image and then run the ImageJ command on what is now the new image
                new Duplicator().run(IJ.getImage()).show();
             } else {

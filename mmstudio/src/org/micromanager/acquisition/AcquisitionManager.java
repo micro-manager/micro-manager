@@ -55,11 +55,7 @@ public class AcquisitionManager {
  //     return acq;
       return null;
    }
-  
-   public void setAcquisitionEngine(String name, AcquisitionEngine eng) {
-      acqs_.get(name).setEngine(eng);
-   }
-   
+     
    public void closeAcquisition(String name) throws MMScriptException {
       if (!acqs_.containsKey(name))
          throw new MMScriptException("The name does not exist");
@@ -107,10 +103,6 @@ public class AcquisitionManager {
          e.nextElement().close();
       
       acqs_.clear();
-   }
-
-   public void setAcquisitionCache(String acqName, MMImageCache imageCache) {
-      acqs_.get(acqName).setCache(imageCache);
    }
 
    public String getUniqueAcquisitionName(String name) {

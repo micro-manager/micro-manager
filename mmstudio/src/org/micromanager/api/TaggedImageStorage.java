@@ -23,4 +23,5 @@ public interface TaggedImageStorage {
    public void setDisplayAndComments(JSONObject settings);
    public JSONObject getDisplayAndComments();
    public void close();
+   public String getDiskLocation();
 }

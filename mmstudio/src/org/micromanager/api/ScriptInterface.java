@@ -486,10 +486,7 @@ public interface ScriptInterface {
     */
    public Color getBackgroundColor();
 
-   public void setAcquisitionEngine(String acqName, AcquisitionEngine eng);
-
    public boolean displayImage(Object pix);
 
-   public void setAcquisitionCache(String acqName, MMImageCache imageCache);
 
 }

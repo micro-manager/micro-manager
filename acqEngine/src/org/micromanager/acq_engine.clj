@@ -442,8 +442,7 @@
             summary-metadata (make-summary-metadata summary)
 	          cache (doto (MMImageCache. (TaggedImageStorageRam. summary-metadata))
 	                  (.setSummaryMetadata summary-metadata))
-	          display (doto (VirtualAcquisitionDisplay. "" true false)
-	                        (.setCache cache) .initialize)]
+	          display (doto (VirtualAcquisitionDisplay. true cache nil))]
 	          (reset! current-album {:cache cache :display display
 	                                 :first-image-tags (:tags first-image)
 	                                 :count 0})))

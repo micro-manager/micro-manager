@@ -84,8 +84,4 @@ public interface AcquisitionInterface {
 
    boolean windowClosed();
 
-   public void setEngine(AcquisitionEngine eng);
-
-   public void setCache(MMImageCache imageCache);
-
 }

@@ -61,15 +61,7 @@ public class LiveAcqDisplay extends Thread {
       imageCache_ = new MMImageCache(imageFileManager);
       imageCache_.setSummaryMetadata(summaryMetadata);
 
-      display_ = new VirtualAcquisitionDisplay(acqPath, true, diskCached_);
-      display_.setEngine(eng);
-      display_.setCache(imageCache_);
-      try {
-         display_.initialize();
-      } catch (MMScriptException ex) {
-         ReportingUtils.showError("Unable to show acquisition display");
-         eng.stop(true);
-      }
+      display_ = new VirtualAcquisitionDisplay(true, imageCache_, eng);
    }
 
    private static String getUniqueUntitledName() {

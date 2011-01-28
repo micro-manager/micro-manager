@@ -486,6 +486,8 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       }
    }
 
+   public String getDiskLocation() {
+      return dir_;
+   }
 
-   
 }

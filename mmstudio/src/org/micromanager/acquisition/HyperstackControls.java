@@ -30,13 +30,11 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class HyperstackControls extends java.awt.Panel implements ImageListener {
    private final VirtualAcquisitionDisplay acq_;
-   private final ImageWindow win_;
    
     /** Creates new form HyperstackControls */
-    public HyperstackControls(VirtualAcquisitionDisplay acq, ImageWindow win) {
+    public HyperstackControls(VirtualAcquisitionDisplay acq) {
         initComponents();
         acq_ = acq;
-        win_ = win;
         fpsField.setText(NumberUtils.doubleToDisplayString(acq_.getPlaybackFPS()));
     }
 
@@ -269,7 +267,7 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
    }
 
    public void imageUpdated(ImagePlus imp) {
-      if (imp == win_.getImagePlus()) {
+      if (imp == acq_.getHyperImage()) {
          ImageStack stack = imp.getStack();
          if (stack instanceof AcquisitionVirtualStack) {
             AcquisitionVirtualStack vstack = (AcquisitionVirtualStack) imp.getStack();
