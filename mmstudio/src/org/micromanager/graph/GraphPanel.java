@@ -151,7 +151,8 @@ public class GraphPanel extends JPanel {
          }
       }
 
-      if (bounds_.getRangeX() <= 0.0 || bounds_.getRangeY() <= 0.0) {
+      // bounds can have strange values (i.e. 1e-42).  Avoid artefacts:
+      if (bounds_.getRangeX() <= 0.0 || bounds_.getRangeY() <= 1.e-10) {
          return; // invalid range data
       }
             
@@ -221,10 +222,9 @@ public class GraphPanel extends JPanel {
          }
       }
       
-      if (bounds_.getRangeX() <= 0.0 || bounds_.getRangeY() <= 0.0)
+      if (bounds_.getRangeX() <= 0.0 || bounds_.getRangeY() <= 0)
       {
-         //ReportingUtils.logMessage("Out of range " + bounds_.getRangeX() + ", " + bounds_.getRangeY());
-         return; // invalid range data
+          return; // invalid range data
       }
       
       int tickCountX = 5;
