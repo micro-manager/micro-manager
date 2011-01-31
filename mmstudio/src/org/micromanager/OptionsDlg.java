@@ -20,7 +20,6 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 // CVS:          $Id$
-
 package org.micromanager;
 
 import java.awt.Dimension;
@@ -46,6 +45,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
@@ -71,6 +72,7 @@ import sun.misc.UUEncoder;
  *
  */
 public class OptionsDlg extends MMDialog {
+
    private JTextField startupScriptFile_;
    private static final long serialVersionUID = 1L;
    private JTextField bufSizeField_;
@@ -89,6 +91,7 @@ public class OptionsDlg extends MMDialog {
       super();
       parent_ = parent;
       addWindowListener(new WindowAdapter() {
+
          @Override
          public void windowClosing(final WindowEvent e) {
             savePosition();
@@ -107,19 +110,21 @@ public class OptionsDlg extends MMDialog {
       guiColors_ = new GUIColors();
       Dimension buttonSize = new Dimension(120, 20);
 
-      if (opts_.displayBackground.equals("Day"))
+      if (opts_.displayBackground.equals("Day")) {
          setBackground(java.awt.SystemColor.control);
-      else if (opts_.displayBackground.equals("Night"))
+      } else if (opts_.displayBackground.equals("Night")) {
          setBackground(java.awt.Color.gray);
+      }
       Preferences root = Preferences.userNodeForPackage(this.getClass());
       setPrefsNode(root.node(root.absolutePath() + "/OptionsDlg"));
-      
+
       Rectangle r = getBounds();
       loadPosition(r.x, r.y);
 
       final JCheckBox debugLogEnabledCheckBox = new JCheckBox();
       debugLogEnabledCheckBox.setToolTipText("Set extra verbose logging for debugging purposes");
       debugLogEnabledCheckBox.addActionListener(new ActionListener() {
+
          public void actionPerformed(final ActionEvent e) {
             opts_.debugLogEnabled = debugLogEnabledCheckBox.isSelected();
             core_.enableDebugLog(opts_.debugLogEnabled);
@@ -133,15 +138,16 @@ public class OptionsDlg extends MMDialog {
       springLayout.putConstraint(SpringLayout.WEST, debugLogEnabledCheckBox, 10, SpringLayout.WEST, getContentPane());
 
       final JButton clearLogFileButton = new JButton();
-      clearLogFileButton.setMargin(new Insets(0,0,0,0));
+      clearLogFileButton.setMargin(new Insets(0, 0, 0, 0));
       clearLogFileButton.setToolTipText("Erases all entries in the current log file (recommended)");
       clearLogFileButton.addActionListener(new ActionListener() {
+
          public void actionPerformed(final ActionEvent e) {
             core_.clearLog();
             core_.logMessage("MM Studio version: " + parent_.getVersion());
-            core_.logMessage (core_.getVersionInfo());
-            core_.logMessage (core_.getAPIVersionInfo());
-            core_.logMessage ("Operating System: " + System.getProperty("os.name") + " " + System.getProperty("os.version") );
+            core_.logMessage(core_.getVersionInfo());
+            core_.logMessage(core_.getAPIVersionInfo());
+            core_.logMessage("Operating System: " + System.getProperty("os.name") + " " + System.getProperty("os.version"));
          }
       });
       clearLogFileButton.setFont(new Font("", Font.PLAIN, 10));
@@ -152,96 +158,98 @@ public class OptionsDlg extends MMDialog {
       springLayout.putConstraint(SpringLayout.NORTH, clearLogFileButton, 175, SpringLayout.NORTH, getContentPane());
 
       final JButton sendLogFileButton = new JButton();
-      sendLogFileButton.setMargin(new Insets(0,0,0,0));
+      sendLogFileButton.setMargin(new Insets(0, 0, 0, 0));
       sendLogFileButton.setToolTipText("Send a compressed archive of your log file to Micro-manager.org");
       sendLogFileButton.addActionListener(new ActionListener() {
+
          public void actionPerformed(final ActionEvent e) {
-             String archPath = core_.saveLogArchive();
-             
-            try{
-                HttpUtils httpu = new HttpUtils();
-                List<File> list = new ArrayList<File>();
-                File archiveFile = new File(archPath);
 
-                // contruct a filename for the archive which is extremely
-                // likely to be unique as follows:
-                // yyyyMMddHHmm + timezone + ip address + host name + mm user + file name
-                String qualifiedArchiveFileName = "";
-                try {
-                    SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHHmm");
-                    qualifiedArchiveFileName += df.format(new Date());
-                    String shortTZName = TimeZone.getDefault().getDisplayName(false, TimeZone.SHORT);
-                    qualifiedArchiveFileName += shortTZName;
-                    qualifiedArchiveFileName += "_";
-                    try {
+            class Sender extends Thread {
 
-                        qualifiedArchiveFileName += InetAddress.getLocalHost().getHostAddress();
-                        //qualifiedArchiveFileName += InetAddress.getLocalHost().getHostName();
-                        //qualifiedArchiveFileName += "_";
+               public Sender() {
+                  super("sender");
 
-                    } catch (UnknownHostException e2) {
-                    }
-                   // qualifiedArchiveFileName += core_.getUserId();
-                    //qualifiedArchiveFileName += "_";
-                } catch (Throwable t) {
-                }
+               }
 
-                // get the file name part of the path
-                //qualifiedArchiveFileName += archiveFile.getName();
-                // try ensure valid and convenient UNIX file name
-                qualifiedArchiveFileName.replace(' ', '_');
-                qualifiedArchiveFileName.replace('*', '_');
-                qualifiedArchiveFileName.replace('|', '_');
-                qualifiedArchiveFileName.replace('>', '_');
-                qualifiedArchiveFileName.replace('<', '_');
-                qualifiedArchiveFileName.replace('(', '_');
-                qualifiedArchiveFileName.replace(')', '_');
-                qualifiedArchiveFileName.replace(':', '_');
-                qualifiedArchiveFileName.replace(';', '_');                //File fileToSend = new File(qualifiedArchiveFileName);
-                qualifiedArchiveFileName += ".log";
+               public void run() {
 
-                //FileReader reader = new FileReader(archiveFile);
-                //FileWriter writer = new FileWriter(fileToSend);
-
-                UUEncoder uuec = new UUEncoder();
-                InputStream reader = new FileInputStream(archiveFile);
-                OutputStream writer = new FileOutputStream(qualifiedArchiveFileName);
-                uuec.encodeBuffer(reader, writer);
-
-                reader.close();
-                writer.close();
-                File fileToSend = new File(qualifiedArchiveFileName);
-                try {
-
-                    URL url = new URL("http://valelab.ucsf.edu/~MM/upload_corelog.php");
-
-                    List flist = new ArrayList<File>();
-                    flist.add(fileToSend);
-                    // for each of a colleciton of files to send...
-                    for (Object o0 : flist) {
-                        File f0 = (File)o0;
+                  String archPath = core_.saveLogArchive();
+                  try {
+                     HttpUtils httpu = new HttpUtils();
+                     List<File> list = new ArrayList<File>();
+                     File archiveFile = new File(archPath);
+                     // contruct a filename for the archive which is extremely
+                     // likely to be unique as follows:
+                     // yyyyMMddHHmm + timezone + ip address + host name + mm user + file name
+                     String qualifiedArchiveFileName = "";
+                     try {
+                        SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHHmm");
+                        qualifiedArchiveFileName += df.format(new Date());
+                        String shortTZName = TimeZone.getDefault().getDisplayName(false, TimeZone.SHORT);
+                        qualifiedArchiveFileName += shortTZName;
+                        qualifiedArchiveFileName += "_";
                         try {
-                            httpu.upload(url, f0);
-                        } catch (java.net.UnknownHostException e2) {
-                            ReportingUtils.logError(e2, " log archive upload");
-
-                        } catch (IOException e2) {
-                            ReportingUtils.logError(e2);
-                        } catch (SecurityException e2) {
-                            ReportingUtils.logError(e2, "");
-                        } catch (Exception e2) {
-                            ReportingUtils.logError(e2);
+                           qualifiedArchiveFileName += InetAddress.getLocalHost().getHostAddress();
+                        } catch (UnknownHostException e2) {
                         }
-                    }
-                } catch (MalformedURLException e2) {
-                    ReportingUtils.logError(e2);
-                }
-            } catch (IOException e2) {
-               ReportingUtils.showError(e2);
-          }
-       
-             
-             
+                     } catch (Throwable t) {
+                     }
+                     // try ensure valid and convenient UNIX file name
+                     qualifiedArchiveFileName.replace(' ', '_');
+                     qualifiedArchiveFileName.replace('*', '_');
+                     qualifiedArchiveFileName.replace('|', '_');
+                     qualifiedArchiveFileName.replace('>', '_');
+                     qualifiedArchiveFileName.replace('<', '_');
+                     qualifiedArchiveFileName.replace('(', '_');
+                     qualifiedArchiveFileName.replace(')', '_');
+                     qualifiedArchiveFileName.replace(':', '_');
+                     qualifiedArchiveFileName.replace(';', '_');                //File fileToSend = new File(qualifiedArchiveFileName);
+                     qualifiedArchiveFileName += ".log";
+                     UUEncoder uuec = new UUEncoder();
+                     InputStream reader = new FileInputStream(archiveFile);
+                     OutputStream writer = new FileOutputStream(qualifiedArchiveFileName);
+                     uuec.encodeBuffer(reader, writer);
+                     reader.close();
+                     writer.close();
+                     File fileToSend = new File(qualifiedArchiveFileName);
+                     try {
+                        URL url = new URL("http://valelab.ucsf.edu/~MM/upload_corelog.php");
+                        List flist = new ArrayList<File>();
+                        flist.add(fileToSend);
+                        // for each of a colleciton of files to send...
+                        for (Object o0 : flist) {
+                           File f0 = (File) o0;
+                           try {
+                              httpu.upload(url, f0);
+                           } catch (java.net.UnknownHostException e2) {
+                              ReportingUtils.logError(e2, " log archive upload");
+                           } catch (IOException e2) {
+                              ReportingUtils.logError(e2);
+                           } catch (SecurityException e2) {
+                              ReportingUtils.logError(e2, "");
+                           } catch (Exception e2) {
+                              ReportingUtils.logError(e2);
+                           }
+                        }
+                     } catch (MalformedURLException e2) {
+                        ReportingUtils.logError(e2);
+                     }
+                  } catch (IOException e2) {
+                     ReportingUtils.showError(e2);
+                  }
+
+
+               }
+            }
+
+            Sender s0 = new Sender();
+            s0.run();
+            try {
+               s0.join();
+            } catch (InterruptedException ex) {
+               Logger.getLogger(OptionsDlg.class.getName()).log(Level.SEVERE, null, ex);
+            }
+
          }
       });
       sendLogFileButton.setFont(new Font("", Font.PLAIN, 10));
@@ -255,16 +263,17 @@ public class OptionsDlg extends MMDialog {
       final JButton clearRegistryButton = new JButton();
       clearRegistryButton.setToolTipText("Clears all persistent settings and returns to defaults");
       clearRegistryButton.addActionListener(new ActionListener() {
+
          public void actionPerformed(final ActionEvent e) {
             try {
                boolean previouslyRegistered = mainPrefs_.getBoolean(RegistrationDlg.REGISTRATION, false);
                mainPrefs_.clear();
                Preferences acqPrefs = mainPrefs_.node(mainPrefs_.absolutePath() + "/" + AcqControlDlg.ACQ_SETTINGS_NODE);
                acqPrefs.clear();
-               
+
                // restore registration flag
                mainPrefs_.putBoolean(RegistrationDlg.REGISTRATION, previouslyRegistered);
-               
+
             } catch (BackingStoreException exc) {
                ReportingUtils.showError(e);
             }
@@ -281,13 +290,14 @@ public class OptionsDlg extends MMDialog {
 
       final JButton okButton = new JButton();
       okButton.addActionListener(new ActionListener() {
+
          public void actionPerformed(final ActionEvent e) {
             try {
-            opts_.circularBufferSizeMB = NumberUtils.displayStringToInt(bufSizeField_.getText());
-         } catch (Exception e1) {
-            ReportingUtils.showError(e1);
-            return;
-         }
+               opts_.circularBufferSizeMB = NumberUtils.displayStringToInt(bufSizeField_.getText());
+            } catch (Exception e1) {
+               ReportingUtils.showError(e1);
+               return;
+            }
             opts_.startupScript = startupScriptFile_.getText();
             savePosition();
             parent_.makeActive();
@@ -300,11 +310,12 @@ public class OptionsDlg extends MMDialog {
       getContentPane().add(okButton);
       springLayout.putConstraint(SpringLayout.NORTH, okButton, 12, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.SOUTH, okButton, 35, SpringLayout.NORTH, getContentPane());
-      
+
       debugLogEnabledCheckBox.setSelected(opts_.debugLogEnabled);
 
       final JCheckBox doNotAskForConfigFileCheckBox = new JCheckBox();
       doNotAskForConfigFileCheckBox.addActionListener(new ActionListener() {
+
          public void actionPerformed(ActionEvent arg0) {
             opts_.doNotAskForConfigFile = doNotAskForConfigFileCheckBox.isSelected();
          }
@@ -332,17 +343,18 @@ public class OptionsDlg extends MMDialog {
       final JLabel displayLabel = new JLabel();
       //displayLabel.setFont(new Font("Arial", Font.PLAIN, 10));
       displayLabel.setText("Display-Background");
-      getContentPane().add(displayLabel); 
+      getContentPane().add(displayLabel);
       springLayout.putConstraint(SpringLayout.EAST, displayLabel, 170, SpringLayout.WEST, getContentPane());
       springLayout.putConstraint(SpringLayout.WEST, displayLabel, 15, SpringLayout.WEST, getContentPane());
       springLayout.putConstraint(SpringLayout.SOUTH, displayLabel, 108, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.NORTH, displayLabel, 92, SpringLayout.NORTH, getContentPane());
 
       comboDisplayBackground_ = new JComboBox(guiColors_.styleOptions);
-      comboDisplayBackground_.setFont(new Font("Arial", Font.PLAIN, 10));              
+      comboDisplayBackground_.setFont(new Font("Arial", Font.PLAIN, 10));
       comboDisplayBackground_.setMaximumRowCount(2);
       comboDisplayBackground_.setSelectedItem(opts_.displayBackground);
       comboDisplayBackground_.addActionListener(new ActionListener() {
+
          public void actionPerformed(ActionEvent e) {
             changeBackground();
          }
@@ -374,15 +386,14 @@ public class OptionsDlg extends MMDialog {
    }
 
    private void changeBackground() {
-       String background = (String)comboDisplayBackground_.getSelectedItem();
-       opts_.displayBackground = background;
-       setBackground(guiColors_.background.get(background));
+      String background = (String) comboDisplayBackground_.getSelectedItem();
+      opts_.displayBackground = background;
+      setBackground(guiColors_.background.get(background));
 
-       if (parent_ != null) // test for null just to avoid crashes (should never be null)
-       {
-          // set background and trigger redraw of parent and its descendant windows
-          parent_.setBackgroundStyle(background);
-       }
+      if (parent_ != null) // test for null just to avoid crashes (should never be null)
+      {
+         // set background and trigger redraw of parent and its descendant windows
+         parent_.setBackgroundStyle(background);
+      }
    }
-
 }
