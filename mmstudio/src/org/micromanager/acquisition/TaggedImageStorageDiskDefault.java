@@ -461,7 +461,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
    }
 
    private void readDisplaySettings() {
-      displaySettings_ = MDUtils.getDisplaySettingsFromSummary(summaryMetadata_);
+      displaySettings_ = null;
       String path = dir_ + "/" + "display_and_comments.txt";
       try {
          String jsonText = JavaUtils.readTextFile(path);

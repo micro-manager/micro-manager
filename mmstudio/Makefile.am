@@ -32,7 +32,6 @@ MMJ_.jar:  \
 	$(srcdir)/src/org/micromanager/acquisition/LiveAcqDisplay.java \
 	$(srcdir)/src/org/micromanager/acquisition/MMAcquisition.java \
 	$(srcdir)/src/org/micromanager/acquisition/MMImageCache.java \
-	$(srcdir)/src/org/micromanager/acquisition/MMImagePlus.java \
 	$(srcdir)/src/org/micromanager/acquisition/VirtualAcquisitionDisplay.java \
 	$(srcdir)/src/org/micromanager/acquisition/MetadataPanel.java \
 	$(srcdir)/src/org/micromanager/acquisition/TaggedImageQueue.java \

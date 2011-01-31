@@ -17,7 +17,8 @@
 (ns org.micromanager.acq-engine
   (:use [org.micromanager.mm :only [when-lets map-config get-config get-positions load-mm
                                     get-default-devices core log log-cmd mmc gui with-core-setting
-                                    do-when if-args get-system-config-cached select-values-match?]]
+                                    do-when if-args get-system-config-cached select-values-match?
+                                    get-property]]
         [org.micromanager.sequence-generator :only [generate-acq-sequence]])
   (:import [org.micromanager AcqControlDlg]
            [org.micromanager.api AcquisitionEngine TaggedImageAnalyzer]
@@ -384,13 +385,26 @@
     (- (second slices) (first slices))
     0))
 
+(defn get-channel-components [channel]
+  (let [default-cam (get-property "Core" "Camera")
+        chan-cam
+          (or
+            (first
+              (filter #(= (take 2 %) '("Core" "Camera"))
+                (:properties channel)))
+            default-cam)]
+    (set-property chan-cam)
+    (let [n (int (core getNumberOfComponents))]
+      (set-property default-cam)
+      (get {1 1 , 4 3} n))))
+
 (defn make-summary-metadata [settings]
   (let [depth (int (core getBytesPerPixel))
         channels (settings :channels)]
      (JSONObject. {
       "Channels" (count (settings :channels))
       "ChNames" (JSONArray. (map :name channels))
-      "ChColors" (JSONArray. (map #(.getRGB (:color %)) channels))
+      "ChColors" (JSONArray. (map #(.getRGB (:color %)) channels))         
       "ChContrastMax" (JSONArray. (repeat (count channels) Integer/MIN_VALUE))
       "ChContrastMin" (JSONArray. (repeat (count channels) Integer/MAX_VALUE))
       "Comment" (settings :comment)
@@ -442,7 +456,7 @@
             summary-metadata (make-summary-metadata summary)
 	          cache (doto (MMImageCache. (TaggedImageStorageRam. summary-metadata))
 	                  (.setSummaryMetadata summary-metadata))
-	          display (doto (VirtualAcquisitionDisplay. true cache nil))]
+	          display (doto (VirtualAcquisitionDisplay. cache nil))]
 	          (reset! current-album {:cache cache :display display
 	                                 :first-image-tags (:tags first-image)
 	                                 :count 0})))
@@ -460,7 +474,7 @@
         tagged-image (annotate-image (collect-snap-image) event state)]
 	  (if-not (and @current-album
 	               (compatible-image? @current-album tagged-image)
-	               (not (.isClosed (:display @current-album))))
+	               (not (.windowClosed (:display @current-album))))
 	    (create-new-album tagged-image))
 	  (let [{:keys [display cache]} @current-album
 	        count (@current-album :count)

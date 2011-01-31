@@ -294,46 +294,6 @@ public class MDUtils {
       return keyArray;
    }
 
-   public static JSONObject getDisplaySettingsFromSummary(JSONObject summaryMetadata) {
-      try {
-         JSONObject displaySettings = new JSONObject();
-         JSONArray chNames = getJSONArrayMember(summaryMetadata, "ChNames");
-         JSONArray chColors = getJSONArrayMember(summaryMetadata, "ChColors");
-         JSONArray chMaxes = getJSONArrayMember(summaryMetadata, "ChContrastMax");
-         JSONArray chMins = getJSONArrayMember(summaryMetadata, "ChContrastMin");
-
-         JSONArray channels = new JSONArray();
-         for (int i=0;i<chNames.length();++i) {
-            String name = (String) chNames.get(i);
-            int color = chColors.getInt(i);
-            JSONObject channelObject = new JSONObject();
-            int min = chMins.getInt(i);
-            int max = chMaxes.getInt(i);
-            channelObject.put("Color", color);
-            channelObject.put("Name", name);
-            channelObject.put("Gamma", 1.0);
-            channelObject.put("Min", min);
-            channelObject.put("Max", max);
-            channels.put(channelObject);
-         }
-         if (chNames.length() == 0) {
-            JSONObject channelObject = new JSONObject();
-            channelObject.put("Color", Color.white.getRGB());
-            channelObject.put("Name", "Default");
-            channelObject.put("Gamma", 1.0);
-            channels.put(channelObject);
-         }
-         displaySettings.put("Channels", channels);
-
-         JSONObject comments = new JSONObject();
-         comments.put("Summary", summaryMetadata.getString("Comment"));
-         displaySettings.put("Comments", comments);
-         return displaySettings;
-      } catch (JSONException e) {
-         ReportingUtils.logError(e);
-         return null;
-      }
-   }
 
    public static JSONArray getJSONArrayMember(JSONObject obj, String key) throws JSONException {
       JSONArray theArray;

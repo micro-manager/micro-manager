@@ -228,7 +228,7 @@ public class MMAcquisition implements AcquisitionInterface {
       setDefaultChannelTags(tags);
       
       virtAcq_.imageCache_.setSummaryMetadata(tags);
-      virtAcq_.imageCache_.setDisplayAndComments(MDUtils.getDisplaySettingsFromSummary(tags));
+      virtAcq_.imageCache_.setDisplayAndComments(virtAcq_.getDisplaySettingsFromSummary(tags));
 
       if (show_)
          virtAcq_.show();

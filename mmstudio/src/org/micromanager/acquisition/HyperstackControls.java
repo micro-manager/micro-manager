@@ -14,7 +14,6 @@ package org.micromanager.acquisition;
 import ij.ImageListener;
 import ij.ImagePlus;
 import ij.ImageStack;
-import ij.gui.ImageWindow;
 import java.text.ParseException;
 import java.util.Timer;
 import java.util.TimerTask;

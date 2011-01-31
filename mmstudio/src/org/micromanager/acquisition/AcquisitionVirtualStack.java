@@ -58,12 +58,15 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
    public TaggedImage getTaggedImage(int flatIndex) {
       try {
          int[] pos;
-         // If we don't know the ImagePlus yet, then we need to assume
-         // we are on the very first frame.
+         // If we don't have the ImagePlus yet, then we need to assume
+         // we are on the very first image.
          if (acq_.getImagePlus() == null) {
             pos = new int [] {1, 1, 1};
          } else {
             pos = acq_.getImagePlus().convertIndexToPosition(flatIndex);
+         }
+         if (MDUtils.getNumberOfComponents(imageCache_.getSummaryMetadata()) == 3) {
+            pos[0] = ((pos[0]-1) / 3) + 1;
          }
          return imageCache_.getImage(pos[0] - 1, pos[1] - 1, pos[2] - 1, positionIndex_); // chan, slice, frame
       } catch (Exception e) {

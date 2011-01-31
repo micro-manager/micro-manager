@@ -182,7 +182,6 @@ public class MMImageCache implements TaggedImageStorage {
 
    public void setSummaryMetadata(JSONObject tags) {
       imageStorage_.setSummaryMetadata(tags);
-      imageStorage_.setDisplayAndComments(MDUtils.getDisplaySettingsFromSummary(tags));
    }
 
    public Set<String> getChangingKeys() {

@@ -5,10 +5,8 @@
 
 package org.micromanager.api;
 
-import java.util.Map;
 import mmcorej.TaggedImage;
 import org.json.JSONObject;
-import org.micromanager.acquisition.MMImageCache;
 import org.micromanager.acquisition.AcquisitionData;
 import org.micromanager.utils.MMScriptException;
 

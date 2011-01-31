@@ -13,7 +13,6 @@ package org.micromanager.acquisition;
 import ij.CompositeImage;
 import ij.ImageListener;
 import ij.ImagePlus;
-import ij.ImageStack;
 import ij.WindowManager;
 import ij.gui.ImageWindow;
 import ij.gui.StackWindow;

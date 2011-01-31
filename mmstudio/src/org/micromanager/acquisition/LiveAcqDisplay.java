@@ -13,7 +13,6 @@ import org.json.JSONObject;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.utils.JavaUtils;
-import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 
 /**
