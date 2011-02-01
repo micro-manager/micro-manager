@@ -128,8 +128,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SpotCamera", "..\DeviceAdap
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Neos", "..\DeviceAdapters\Neos\Neos.vcproj", "{19B83E51-446A-41DC-8899-ED2D59679999}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DLP4000", "..\SecretDeviceAdapters\DLP4000\DLP4000.vcproj", "{5B9F9B2A-3E14-401E-8194-0E4442B0B0CB}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Apogee", "..\DeviceAdapters\Apogee\Apogee.vcproj", "{0F47459C-3A45-4A07-AF18-FC7E5CD5A220}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GenericSLM", "..\DeviceAdapters\GenericSLM\GenericSLM.vcproj", "{E3DA287B-6861-49E2-8484-B08DBA020F7D}"
@@ -173,6 +171,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MT20", "..\DeviceAdapters\MT20\MT20.vcproj", "{E5ABCDE7-03F1-4683-98C3-8F5F79E1A473}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DTOpenLayer", "..\DeviceAdapters\DTOpenLayer\DTOpenLayer.vcproj", "{D29861C1-D0A2-44EB-BAD9-3808165609D8}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GigECamera", "..\DeviceAdapters\GigECamera\GigECamera.vcproj", "{7DFCF21B-1F90-4444-B2AF-27212A52BA44}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -510,14 +510,6 @@ Global
 		{19B83E51-446A-41DC-8899-ED2D59679999}.Release|Win32.Build.0 = Release|Win32
 		{19B83E51-446A-41DC-8899-ED2D59679999}.Release|x64.ActiveCfg = Release|x64
 		{19B83E51-446A-41DC-8899-ED2D59679999}.Release|x64.Build.0 = Release|x64
-		{5B9F9B2A-3E14-401E-8194-0E4442B0B0CB}.Debug|Win32.ActiveCfg = Debug|Win32
-		{5B9F9B2A-3E14-401E-8194-0E4442B0B0CB}.Debug|Win32.Build.0 = Debug|Win32
-		{5B9F9B2A-3E14-401E-8194-0E4442B0B0CB}.Debug|x64.ActiveCfg = Debug|x64
-		{5B9F9B2A-3E14-401E-8194-0E4442B0B0CB}.Debug|x64.Build.0 = Debug|x64
-		{5B9F9B2A-3E14-401E-8194-0E4442B0B0CB}.Release|Win32.ActiveCfg = Release|Win32
-		{5B9F9B2A-3E14-401E-8194-0E4442B0B0CB}.Release|Win32.Build.0 = Release|Win32
-		{5B9F9B2A-3E14-401E-8194-0E4442B0B0CB}.Release|x64.ActiveCfg = Release|x64
-		{5B9F9B2A-3E14-401E-8194-0E4442B0B0CB}.Release|x64.Build.0 = Release|x64
 		{0F47459C-3A45-4A07-AF18-FC7E5CD5A220}.Debug|Win32.ActiveCfg = Debug|Win32
 		{0F47459C-3A45-4A07-AF18-FC7E5CD5A220}.Debug|Win32.Build.0 = Debug|Win32
 		{0F47459C-3A45-4A07-AF18-FC7E5CD5A220}.Debug|x64.ActiveCfg = Debug|x64
@@ -690,6 +682,14 @@ Global
 		{D29861C1-D0A2-44EB-BAD9-3808165609D8}.Release|Win32.Build.0 = Release|Win32
 		{D29861C1-D0A2-44EB-BAD9-3808165609D8}.Release|x64.ActiveCfg = Release|x64
 		{D29861C1-D0A2-44EB-BAD9-3808165609D8}.Release|x64.Build.0 = Release|x64
+		{7DFCF21B-1F90-4444-B2AF-27212A52BA44}.Debug|Win32.ActiveCfg = Debug|Win32
+		{7DFCF21B-1F90-4444-B2AF-27212A52BA44}.Debug|Win32.Build.0 = Debug|Win32
+		{7DFCF21B-1F90-4444-B2AF-27212A52BA44}.Debug|x64.ActiveCfg = Debug|x64
+		{7DFCF21B-1F90-4444-B2AF-27212A52BA44}.Debug|x64.Build.0 = Debug|x64
+		{7DFCF21B-1F90-4444-B2AF-27212A52BA44}.Release|Win32.ActiveCfg = Release|Win32
+		{7DFCF21B-1F90-4444-B2AF-27212A52BA44}.Release|Win32.Build.0 = Release|Win32
+		{7DFCF21B-1F90-4444-B2AF-27212A52BA44}.Release|x64.ActiveCfg = Release|x64
+		{7DFCF21B-1F90-4444-B2AF-27212A52BA44}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
