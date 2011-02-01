@@ -45,6 +45,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 
 import javax.swing.JButton;
@@ -138,7 +140,7 @@ public class ConfiguratorDlg extends JDialog {
             }
         });
 
-  
+
 
 
         nextButton_.setText("Next >");
@@ -164,7 +166,7 @@ public class ConfiguratorDlg extends JDialog {
 
         // add page panels
 
-        pages_ = new PagePanel[(showSynchroPage_?9:8)];
+        pages_ = new PagePanel[(showSynchroPage_ ? 9 : 8)];
 
         int pageNumber = 0;
         pages_[pageNumber++] = new IntroPage(prefs_);
@@ -173,8 +175,9 @@ public class ConfiguratorDlg extends JDialog {
         pages_[pageNumber++] = new ComPortsPage(prefs_);
         pages_[pageNumber++] = new RolesPage(prefs_);
         pages_[pageNumber++] = new DelayPage(prefs_);
-        if (showSynchroPage_)
-        pages_[pageNumber++] = new SynchroPage(prefs_);
+        if (showSynchroPage_) {
+            pages_[pageNumber++] = new SynchroPage(prefs_);
+        }
         pages_[pageNumber++] = new LabelsPage(prefs_);
         pages_[pageNumber++] = new FinishPage(prefs_);
 
@@ -190,15 +193,14 @@ public class ConfiguratorDlg extends JDialog {
         titleLabel_.setBounds(9, 4, 578, 21);
         getContentPane().add(titleLabel_);
         for (int i = 0; i < pages_.length; i++) {
-           try{
-            pages_[i].setModel(microModel_, core_);
-            pages_[i].loadSettings();
-            pages_[i].setBounds(r);
-            pages_[i].setTitle("Step " + (i + 1) + " of " + pages_.length + ": " + pages_[i].getTitle());
-            pages_[i].setParentDialog(this);
-           }
-            catch(Exception e){
-            ReportingUtils.logError(e);
+            try {
+                pages_[i].setModel(microModel_, core_);
+                pages_[i].loadSettings();
+                pages_[i].setBounds(r);
+                pages_[i].setTitle("Step " + (i + 1) + " of " + pages_.length + ": " + pages_[i].getTitle());
+                pages_[i].setParentDialog(this);
+            } catch (Exception e) {
+                ReportingUtils.logError(e);
             }
         }
         setPage(0);
@@ -277,6 +279,79 @@ public class ConfiguratorDlg extends JDialog {
         }
     }
 
+    private void UploadCurrentConfigFile() {
+        try {
+            HttpUtils httpu = new HttpUtils();
+            List<File> list = new ArrayList<File>();
+            File conff = new File(this.getFileName());
+
+            // contruct a filename for the configuration file which is extremely
+            // likely to be unique as follows:
+            // yyyyMMddHHmmss + timezone + ip address
+            String prependedLine = "#";
+            String qualifiedConfigFileName = "";
+            try {
+                SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHHmmss");
+                qualifiedConfigFileName += df.format(new Date());
+                String shortTZName = TimeZone.getDefault().getDisplayName(false, TimeZone.SHORT);
+                qualifiedConfigFileName += shortTZName;
+                qualifiedConfigFileName += "@";
+                try {
+                    qualifiedConfigFileName += InetAddress.getLocalHost().getHostAddress();
+                    prependedLine += "Host: " + InetAddress.getLocalHost().getHostName() + " ";
+                } catch (UnknownHostException e) {
+                }
+                prependedLine += "User: " + core_.getUserId() + " configuration file: " + conff.getName() + "\n";
+            } catch (Throwable t) {
+            }
+
+            // can raw IP address have :'s in them? (ipv6??)
+            // try ensure valid and convenient UNIX file name
+            qualifiedConfigFileName.replace(':', '_');
+            qualifiedConfigFileName.replace(';', '_');
+
+            File fileToSend = new File(qualifiedConfigFileName);
+
+            FileReader reader = new FileReader(conff);
+            FileWriter writer = new FileWriter(fileToSend);
+            writer.append(prependedLine);
+            int c;
+            while (-1 != (c = reader.read())) {
+                writer.write(c);
+            }
+            reader.close();
+            writer.close();
+            try {
+
+                URL url = new URL("http://valelab.ucsf.edu/~MM/upload_file.php");
+
+                List flist = new ArrayList<File>();
+                flist.add(fileToSend);
+                // for each of a colleciton of files to send...
+                for (Object o0 : flist) {
+                    File f0 = (File) o0;
+                    try {
+                        httpu.upload(url, f0);
+                    } catch (java.net.UnknownHostException e) {
+                        ReportingUtils.logError(e, "config posting");
+
+                    } catch (IOException e) {
+                        ReportingUtils.logError(e);
+                    } catch (SecurityException e) {
+                        ReportingUtils.logError(e, "");
+                    } catch (Exception e) {
+                        ReportingUtils.logError(e);
+                    }
+                }
+            } catch (MalformedURLException e) {
+                ReportingUtils.logError(e);
+            }
+        } catch (IOException e) {
+            ReportingUtils.showError(e);
+        }
+
+    }
+
     private void onCloseWindow() {
         for (int i = 0; i < pages_.length; i++) {
             pages_[i].saveSettings();
@@ -299,74 +374,23 @@ public class ConfiguratorDlg extends JDialog {
             }
         }
         if (microModel_.getSendConfiguration()) {
+            class Uploader extends Thread {
+
+                public Uploader() {
+                    super("uploader");
+                }
+
+                @Override
+                public void run() {
+                    UploadCurrentConfigFile();
+                }
+            }
+            Uploader u = new Uploader();
+            u.start();
             try {
-                HttpUtils httpu = new HttpUtils();
-                List<File> list = new ArrayList<File>();
-                File conff = new File(this.getFileName());
-
-                // contruct a filename for the configuration file which is extremely
-                // likely to be unique as follows:
-                // yyyyMMddHHmmss + timezone + ip address 
-                String prependedLine = "#";
-                String qualifiedConfigFileName = "";
-                try {
-                    SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHHmmss");
-                    qualifiedConfigFileName += df.format(new Date());
-                    String shortTZName = TimeZone.getDefault().getDisplayName(false, TimeZone.SHORT);
-                    qualifiedConfigFileName += shortTZName;
-                    qualifiedConfigFileName += "@";
-                    try {
-                        qualifiedConfigFileName += InetAddress.getLocalHost().getHostAddress();
-                        prependedLine += "Host: " + InetAddress.getLocalHost().getHostName() + " ";
-                    } catch (UnknownHostException e) {
-                    }
-                    prependedLine += "User: " + core_.getUserId()+ " configuration file: " + conff.getName()+ "\n";
-                } catch (Throwable t) {
-                }
-
-                // can raw IP address have :'s in them? (ipv6??)
-                // try ensure valid and convenient UNIX file name               
-                qualifiedConfigFileName.replace(':', '_');                
-                qualifiedConfigFileName.replace(';', '_');
-
-                File fileToSend = new File(qualifiedConfigFileName);
-
-                FileReader reader = new FileReader(conff);
-                FileWriter writer = new FileWriter(fileToSend);
-                writer.append(prependedLine);
-                int c;
-                while (-1 != (c = reader.read())) {
-                    writer.write(c);
-                }
-                reader.close();
-                writer.close();
-                try {
-
-                    URL url = new URL("http://valelab.ucsf.edu/~MM/upload_file.php");
-
-                    List flist = new ArrayList<File>();
-                    flist.add(fileToSend);
-                    // for each of a colleciton of files to send...
-                    for (Object o0 : flist) {
-                        File f0 = (File)o0;
-                        try {
-                            httpu.upload(url, f0);
-                        } catch (java.net.UnknownHostException e) {
-                            ReportingUtils.logError(e, "config posting");
-
-                        } catch (IOException e) {
-                            ReportingUtils.logError(e);
-                        } catch (SecurityException e) {
-                            ReportingUtils.logError(e, "");
-                        } catch (Exception e) {
-                            ReportingUtils.logError(e);
-                        }
-                    }
-                } catch (MalformedURLException e) {
-                    ReportingUtils.logError(e);
-                }
-            } catch (IOException e) {
-                ReportingUtils.showError(e);
+                u.join();
+            } catch (InterruptedException ex) {
+                Logger.getLogger(ConfiguratorDlg.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
         dispose();
@@ -376,8 +400,9 @@ public class ConfiguratorDlg extends JDialog {
         File f = FileDialogs.save(this,
                 "Create a config file", MMStudioMainFrame.MM_CONFIG_FILE);
 
-        if (f == null)
-           return;
+        if (f == null) {
+            return;
+        }
 
         try {
             microModel_.saveToFile(f.getAbsolutePath());
@@ -386,7 +411,7 @@ public class ConfiguratorDlg extends JDialog {
         }
     }
 
-    public String getFileName(){
+    public String getFileName() {
         return microModel_.getFileName();
     }
 
@@ -404,6 +429,4 @@ public class ConfiguratorDlg extends JDialog {
         }
         return bf.toString();
     }
-
-
 }
