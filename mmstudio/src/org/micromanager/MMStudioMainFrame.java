@@ -1199,8 +1199,9 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
          public void actionPerformed(final ActionEvent e) {
             int oldBufsize = options_.circularBufferSizeMB;
+
             OptionsDlg dlg = new OptionsDlg(options_, core_, mainPrefs_,
-                  thisInstance);
+                  thisInstance, sysConfigFile_);
             dlg.setVisible(true);
             // adjust memory footprint if necessary
             if (oldBufsize != options_.circularBufferSizeMB) {

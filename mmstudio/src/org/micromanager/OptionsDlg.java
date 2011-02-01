@@ -30,12 +30,20 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.io.Reader;
+import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
+import java.io.Writer;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -83,12 +91,14 @@ public class OptionsDlg extends MMDialog {
    private JComboBox comboDisplayBackground_;
    private DeviceControlGUI parent_;
    private GUIColors guiColors_;
+   private String currentCfgPath_;
 
    /**
     * Create the dialog
     */
-   public OptionsDlg(MMOptions opts, CMMCore core, Preferences mainPrefs, DeviceControlGUI parent) {
+   public OptionsDlg(MMOptions opts, CMMCore core, Preferences mainPrefs, DeviceControlGUI parent, String cfgPath) {
       super();
+      currentCfgPath_ = cfgPath;
       parent_ = parent;
       addWindowListener(new WindowAdapter() {
 
@@ -157,6 +167,7 @@ public class OptionsDlg extends MMDialog {
       //springLayout.putConstraint(SpringLayout.SOUTH, clearLogFileButton, 166, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.NORTH, clearLogFileButton, 175, SpringLayout.NORTH, getContentPane());
 
+
       final JButton sendLogFileButton = new JButton();
       sendLogFileButton.setMargin(new Insets(0, 0, 0, 0));
       sendLogFileButton.setToolTipText("Send a compressed archive of your log file to Micro-manager.org");
@@ -172,18 +183,43 @@ public class OptionsDlg extends MMDialog {
                }
 
                public void run() {
+                  String cfgFile = currentCfgPath_;
+                  // is there a public way to get these keys??
+                  //mainPrefs_.get("sysconfig_file", cfgFile);
 
-                  String archPath = core_.saveLogArchive();
+                  String preamble = "#";
+                  try{
+                     preamble += "Host: " + InetAddress.getLocalHost().getHostName() + " ";
+                  }
+                  catch(IOException e){
+                  }
+                  preamble += ("User: " + core_.getUserId() + " configuration file: " + cfgFile + "\n");
+                  try{
+                     Reader in = new BufferedReader(new FileReader(cfgFile));
+                     StringBuilder sb = new StringBuilder();
+                     char[] tmpBuffer = new char[8192];
+                     int length;
+
+                     while ((length = in.read(tmpBuffer)) > 0) {
+                        sb.append(tmpBuffer, 0, length);
+                     }
+                     preamble += sb.toString();
+                     preamble += "\n";
+                  }
+                  catch(IOException e){
+                  }
+                  String archPath =  core_.saveLogArchiveWithPreamble(preamble, preamble.length());
+                  //String archPath = core_.saveLogArchive();
                   try {
                      HttpUtils httpu = new HttpUtils();
                      List<File> list = new ArrayList<File>();
                      File archiveFile = new File(archPath);
                      // contruct a filename for the archive which is extremely
                      // likely to be unique as follows:
-                     // yyyyMMddHHmm + timezone + ip address + host name + mm user + file name
+                     // yyyyMMddHHmmss + timezone + ip address
                      String qualifiedArchiveFileName = "";
                      try {
-                        SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHHmm");
+                        SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHHmmss");
                         qualifiedArchiveFileName += df.format(new Date());
                         String shortTZName = TimeZone.getDefault().getDisplayName(false, TimeZone.SHORT);
                         qualifiedArchiveFileName += shortTZName;

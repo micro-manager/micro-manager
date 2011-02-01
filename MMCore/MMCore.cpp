@@ -5090,6 +5090,59 @@ std::string CMMCore::saveLogArchive(void)
    return payLoadPath;
 
 }
+
+
+// just like saveLogArchive, but client can add whatever header he wants
+std::string CMMCore::saveLogArchiveWithPreamble(char* preamble, int preambleLength)
+{
+   if( 0 == preamble)
+      preambleLength = 0; // intentionally modifying local copy of arg
+
+   char* pLogContents = 0;
+   unsigned long logLength = 0;
+   IMMLogger::Instance()->LogContents(&pLogContents, logLength);
+   if( 0 == pLogContents) // file reading failed
+   {
+      const char* pWarning =
+         "MMCore was not able to read the log file!";
+      logLength = static_cast<unsigned long>(strlen(pWarning));
+      pLogContents = new char[logLength];
+      strcpy( pLogContents, pWarning);
+   }
+
+   char* pEntireMessage = new char[preambleLength + logLength];
+   if(0 < preambleLength)
+      memcpy( pEntireMessage, preamble, preambleLength);
+   memcpy( pEntireMessage + preambleLength, pLogContents, logLength);
+
+   // finished with the log contents
+   delete [] pLogContents;
+   pLogContents = 0;
+
+
+   char* pCompressedContents = 0;
+   unsigned long compressedLength = 0;
+
+   // prepare a gz archive
+   Compressor::CompressData(pEntireMessage, preambleLength + logLength, &pCompressedContents, compressedLength);
+
+   std::string payLoadPath = IMMLogger::Instance()->LogPath() + ".gz";
+
+   std::ofstream ofile( payLoadPath.c_str(), ios::out|ios::binary);
+   if (ofile.is_open())
+   {
+     if( 0!=pCompressedContents)
+      ofile.write( pCompressedContents, compressedLength);
+   }
+   // finished with the compressed contents
+   if( 0 != pCompressedContents)
+    free(pCompressedContents);
+
+   CORE_LOG("prepared log archive...");
+   return payLoadPath;
+
+}
+
 void CMMCore::updateAllowedChannelGroups()
 {
    std::vector<std::string> groups = getAvailableConfigGroups();

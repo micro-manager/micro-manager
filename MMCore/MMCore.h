@@ -122,6 +122,7 @@ public:
    void logMessage(const char* msg);
    // this creates an archive of the current log contents and returns the path created
    std::string saveLogArchive(void);
+   std::string saveLogArchiveWithPreamble(char* preamble, int length);
 
    std::string getVersionInfo() const;
    std::string getAPIVersionInfo() const;

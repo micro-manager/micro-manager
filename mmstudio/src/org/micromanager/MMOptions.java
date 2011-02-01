@@ -44,7 +44,7 @@ public class MMOptions {
    public String startupScript = "MMStartup.bsh";
    
    public void saveSettings() {
-      Preferences root = Preferences.userNodeForPackage(this.getClass());
+      Preferences root = Preferences.userNodeForPackage( this.getClass());
       Preferences prefs = root.node(root.absolutePath() + "/" + PREF_DIR);
       
       prefs.putBoolean(DEBUG_LOG, debugLogEnabled);
