@@ -155,6 +155,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PSRemoteCamera", "..\Device
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MT20", "..\DeviceAdapters\MT20\MT20.vcproj", "{E5ABCDE7-03F1-4683-98C3-8F5F79E1A473}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GigECamera", "..\DeviceAdapters\GigECamera\GigECamera.vcproj", "{7DFCF21B-1F90-4444-B2AF-27212A52BA44}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -747,6 +749,14 @@ Global
 		{E5ABCDE7-03F1-4683-98C3-8F5F79E1A473}.Release|Win32.Build.0 = Release|Win32
 		{E5ABCDE7-03F1-4683-98C3-8F5F79E1A473}.Release|x64.ActiveCfg = Release|x64
 		{E5ABCDE7-03F1-4683-98C3-8F5F79E1A473}.Release|x64.Build.0 = Release|x64
+		{7DFCF21B-1F90-4444-B2AF-27212A52BA44}.Debug|Win32.ActiveCfg = Debug|Win32
+		{7DFCF21B-1F90-4444-B2AF-27212A52BA44}.Debug|Win32.Build.0 = Debug|Win32
+		{7DFCF21B-1F90-4444-B2AF-27212A52BA44}.Debug|x64.ActiveCfg = Debug|x64
+		{7DFCF21B-1F90-4444-B2AF-27212A52BA44}.Debug|x64.Build.0 = Debug|x64
+		{7DFCF21B-1F90-4444-B2AF-27212A52BA44}.Release|Win32.ActiveCfg = Release|Win32
+		{7DFCF21B-1F90-4444-B2AF-27212A52BA44}.Release|Win32.Build.0 = Release|Win32
+		{7DFCF21B-1F90-4444-B2AF-27212A52BA44}.Release|x64.ActiveCfg = Release|x64
+		{7DFCF21B-1F90-4444-B2AF-27212A52BA44}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

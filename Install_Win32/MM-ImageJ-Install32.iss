@@ -29,7 +29,7 @@ Name: eng; MessagesFile: compiler:Default.isl
 Name: desktopicon; Description: {cm:CreateDesktopIcon}; GroupDescription: {cm:AdditionalIcons}; Flags: unchecked
 
 [Files]
-
+; the entire redistributable set
 Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.ATL\atl90.dll ; DestDir: {app}\Microsoft.VC90.ATL; Flags: ignoreversion
 Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.ATL\Microsoft.VC90.ATL.manifest ; DestDir: {app}\Microsoft.VC90.ATL; Flags: ignoreversion
 Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.CRT\msvcm90.dll ; DestDir: {app}\Microsoft.VC90.CRT; Flags: ignoreversion
@@ -92,6 +92,7 @@ Source: micro-manager\mmgr_dal_DTOpenLayer.dll; DestDir: {app}; Flags: ignorever
 Source: micro-manager\mmgr_dal_XCite120PC_Exacte.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_FreeSerialPort.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_GenericSLM.dll; DestDir: {app}; Flags: ignoreversion
+Source: micro-manager\mmgr_dal_GigECamera.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Hamamatsu.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_K8055.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_K8061.dll; DestDir: {app}; Flags: ignoreversion

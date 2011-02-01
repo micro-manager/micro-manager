@@ -33,14 +33,33 @@ Name: eng; MessagesFile: compiler:Default.isl
 Name: desktopicon; Description: {cm:CreateDesktopIcon}; GroupDescription: {cm:AdditionalIcons}; Flags: unchecked
 
 [Files]
-;Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.CRT\msvcm90.dll ; DestDir: {app}; Flags: ignoreversion
-;Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.CRT\msvcp90.dll ; DestDir: {app}; Flags: ignoreversion
-;Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.CRT\msvcr90.dll ; DestDir: {app}; Flags: ignoreversion
-;Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.MFC\mfc90.dll ; DestDir: {app}; Flags: ignoreversion
-;Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.MFC\mfc90u.dll ; DestDir: {app}; Flags: ignoreversion
-;Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.MFC\mfcm90.dll ; DestDir: {app}; Flags: ignoreversion
-;Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.MFC\mfcm90u.dll ; DestDir: {app}; Flags: ignoreversion
-;Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.ATL\atl90.dll ; DestDir: {app}; Flags: ignoreversion
+; the entire redistributable set
+Source: ..\..\3rdparty\Microsoft\VisualC++\lib\amd64\Microsoft.VC90.ATL\atl90.dll ; DestDir: {app}\Microsoft.VC90.ATL; Flags: ignoreversion
+Source: ..\..\3rdparty\Microsoft\VisualC++\lib\amd64\Microsoft.VC90.ATL\Microsoft.VC90.ATL.manifest ; DestDir: {app}\Microsoft.VC90.ATL; Flags: ignoreversion
+Source: ..\..\3rdparty\Microsoft\VisualC++\lib\amd64\Microsoft.VC90.CRT\msvcm90.dll ; DestDir: {app}\Microsoft.VC90.CRT; Flags: ignoreversion
+Source: ..\..\3rdparty\Microsoft\VisualC++\lib\amd64\Microsoft.VC90.CRT\msvcp90.dll ; DestDir: {app}\Microsoft.VC90.CRT; Flags: ignoreversion
+Source: ..\..\3rdparty\Microsoft\VisualC++\lib\amd64\Microsoft.VC90.CRT\msvcr90.dll ; DestDir: {app}\Microsoft.VC90.CRT; Flags: ignoreversion
+Source: ..\..\3rdparty\Microsoft\VisualC++\lib\amd64\Microsoft.VC90.CRT\Microsoft.VC90.CRT.manifest ; DestDir: {app}\Microsoft.VC90.CRT; Flags: ignoreversion
+Source: ..\..\3rdparty\Microsoft\VisualC++\lib\amd64\Microsoft.VC90.MFC\mfc90.dll ; DestDir: {app}\Microsoft.VC90.MFC; Flags: ignoreversion
+Source: ..\..\3rdparty\Microsoft\VisualC++\lib\amd64\Microsoft.VC90.MFC\mfc90u.dll ; DestDir: {app}\Microsoft.VC90.MFC; Flags: ignoreversion
+Source: ..\..\3rdparty\Microsoft\VisualC++\lib\amd64\Microsoft.VC90.MFC\mfcm90.dll ; DestDir: {app}\Microsoft.VC90.MFC; Flags: ignoreversion
+Source: ..\..\3rdparty\Microsoft\VisualC++\lib\amd64\Microsoft.VC90.MFC\mfcm90u.dll ; DestDir: {app}\Microsoft.VC90.MFC; Flags: ignoreversion
+Source: ..\..\3rdparty\Microsoft\VisualC++\lib\amd64\Microsoft.VC90.MFC\Microsoft.VC90.MFC.manifest ; DestDir: {app}\Microsoft.VC90.MFC; Flags: ignoreversion
+Source: ..\..\3rdparty\Microsoft\VisualC++\lib\amd64\Microsoft.VC90.MFCLOC\MFC90CHS.dll ; DestDir: {app}\Microsoft.VC90.MFCLOC; Flags: ignoreversion
+Source: ..\..\3rdparty\Microsoft\VisualC++\lib\amd64\Microsoft.VC90.MFCLOC\MFC90CHT.dll ; DestDir: {app}\Microsoft.VC90.MFCLOC; Flags: ignoreversion
+Source: ..\..\3rdparty\Microsoft\VisualC++\lib\amd64\Microsoft.VC90.MFCLOC\MFC90DEU.dll ; DestDir: {app}\Microsoft.VC90.MFCLOC; Flags: ignoreversion
+Source: ..\..\3rdparty\Microsoft\VisualC++\lib\amd64\Microsoft.VC90.MFCLOC\MFC90ENU.dll ; DestDir: {app}\Microsoft.VC90.MFCLOC; Flags: ignoreversion
+Source: ..\..\3rdparty\Microsoft\VisualC++\lib\amd64\Microsoft.VC90.MFCLOC\MFC90ESN.dll ; DestDir: {app}\Microsoft.VC90.MFCLOC; Flags: ignoreversion
+Source: ..\..\3rdparty\Microsoft\VisualC++\lib\amd64\Microsoft.VC90.MFCLOC\MFC90ESP.dll ; DestDir: {app}\Microsoft.VC90.MFCLOC; Flags: ignoreversion
+Source: ..\..\3rdparty\Microsoft\VisualC++\lib\amd64\Microsoft.VC90.MFCLOC\MFC90FRA.dll ; DestDir: {app}\Microsoft.VC90.MFCLOC; Flags: ignoreversion
+Source: ..\..\3rdparty\Microsoft\VisualC++\lib\amd64\Microsoft.VC90.MFCLOC\MFC90ITA.dll ; DestDir: {app}\Microsoft.VC90.MFCLOC; Flags: ignoreversion
+Source: ..\..\3rdparty\Microsoft\VisualC++\lib\amd64\Microsoft.VC90.MFCLOC\MFC90JPN.dll ; DestDir: {app}\Microsoft.VC90.MFCLOC; Flags: ignoreversion
+Source: ..\..\3rdparty\Microsoft\VisualC++\lib\amd64\Microsoft.VC90.MFCLOC\MFC90KOR.dll ; DestDir: {app}\Microsoft.VC90.MFCLOC; Flags: ignoreversion
+Source: ..\..\3rdparty\Microsoft\VisualC++\lib\amd64\Microsoft.VC90.MFCLOC\Microsoft.VC90.MFCLOC.manifest ; DestDir: {app}\Microsoft.VC90.MFCLOC; Flags: ignoreversion
+Source: ..\..\3rdparty\Microsoft\VisualC++\lib\amd64\Microsoft.VC90.OPENMP\vcomp90.dll ; DestDir: {app}\Microsoft.VC90.OPENMP; Flags: ignoreversion
+Source: ..\..\3rdparty\Microsoft\VisualC++\lib\amd64\Microsoft.VC90.OPENMP\Microsoft.VC90.OpenMP.manifest ; DestDir: {app}\Microsoft.VC90.OPENMP; Flags: ignoreversion
+
+
 ;
 Source: ..\..\3rdparty\jre\* ; DestDir: {app}\jre; Flags: ignoreversion recursesubdirs createallsubdirs
 
@@ -67,6 +86,7 @@ Source: micro-manager\mmgr_dal_DemoCamera.dll; DestDir: {app}; Flags: ignorevers
 Source: micro-manager\mmgr_dal_DTOpenLayer.dll; DestDir: {app}; Flags: ignoreversion
 ;Source: micro-manager\mmgr_dal_XCite120PC_Exacte.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_GenericSLM.dll; DestDir: {app}; Flags: ignoreversion
+Source: micro-manager\mmgr_dal_GigECamera.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_FreeSerialPort.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Hamamatsu.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_K8055.dll; DestDir: {app}; Flags: ignoreversion
