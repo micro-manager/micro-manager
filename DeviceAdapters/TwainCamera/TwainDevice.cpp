@@ -43,7 +43,6 @@
 #include "../../MMDevice/ModuleInterface.h"
 #include "../../MMCore/CoreUtils.h"
 
-#include "../Utilities/CodeUtility.h"
 //#define mmdebugmessage(x) LogMessage((x), true)
 #define UNREFERENCEDPARAMETER(p__) (p__)
 
