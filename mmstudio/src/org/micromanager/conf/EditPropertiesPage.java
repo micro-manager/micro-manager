@@ -5,6 +5,9 @@
 //-----------------------------------------------------------------------------
 //
 // AUTHOR:       Nenad Amodaj, nenad@amodaj.com, October 29, 2006
+//               Karl Hoover January 2011
+//               (automatic device detection)
+//                
 //
 // COPYRIGHT:    University of California, San Francisco, 2006
 //
