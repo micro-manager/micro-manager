@@ -599,7 +599,7 @@ double local_min_rc ( double *a, double *b, int *status, double value, double to
 // modified:
 //    Karl Hoover UCSF 20100316
 //      1. pass in tolerance parameter
-//      2. move all implementation to header so that it is eash to make this a member function of any enclosing close
+//      2. move all implementation to header so that it is easy to make this a member function of any enclosing class
 //      3. remvoe comment about "F" which this subroutine does not use.
 //
 //  Reference:
