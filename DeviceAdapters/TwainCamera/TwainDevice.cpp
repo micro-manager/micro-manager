@@ -2301,7 +2301,7 @@ char* TwainDevice::GetImage(int& imageHeight, int& imageWidth, char& bytesPerPix
 			double framesPerSecond = 1000./el;
 			ostringstream o;
 			o << " current acq rate " << framesPerSecond << " frames per sec. \n";
-			CodeUtility::DebugOutput( o.str());
+			//CodeUtility::DebugOutput( o.str());
 		}
 	}
 	previousImageStartTime_  = imageTransferStartTime_;
