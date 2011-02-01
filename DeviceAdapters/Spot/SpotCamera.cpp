@@ -38,7 +38,7 @@
 #include "SpotDevice.h"
 
 #include "../../MMDevice/ModuleInterface.h"
-#include "../Utilities/CodeUtility.h"
+#include "CodeUtility.h"
 
 bool requestShutdown;
 using namespace std;

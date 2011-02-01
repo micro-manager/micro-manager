@@ -56,7 +56,7 @@ typedef struct
 #endif
 #endif
 
-#include "../Utilities/CodeUtility.h"
+#include "CodeUtility.h"
 namespace ExposureComputationImageTypeNS
 {
 enum ExposureComputationImageType { BrightField = 1, DarkField = 2 };

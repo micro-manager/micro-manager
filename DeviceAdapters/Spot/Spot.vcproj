@@ -367,7 +367,7 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\Utilities\CodeUtility.cpp"
+				RelativePath=".\CodeUtility.cpp"
 				>
 			</File>
 			<File
@@ -401,7 +401,7 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath="..\Utilities\CodeUtility.h"
+				RelativePath=".\CodeUtility.h"
 				>
 			</File>
 			<File
