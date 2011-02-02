@@ -177,12 +177,19 @@ public class OptionsDlg extends MMDialog {
 
             class Sender extends Thread {
 
+               private String status_;
+
                public Sender() {
                   super("sender");
+                  status_ = "";
 
+               }
+               public String Status(){
+                   return status_;
                }
 
                public void run() {
+                  status_ = "";
                   String cfgFile = currentCfgPath_;
                   // is there a public way to get these keys??
                   //mainPrefs_.get("sysconfig_file", cfgFile);
@@ -258,32 +265,33 @@ public class OptionsDlg extends MMDialog {
                            try {
                               httpu.upload(url, f0);
                            } catch (java.net.UnknownHostException e2) {
-                              ReportingUtils.logError(e2, " log archive upload");
+                              status_ = e2.toString();//, " log archive upload");
                            } catch (IOException e2) {
-                              ReportingUtils.logError(e2);
+                              status_ = e2.toString();
                            } catch (SecurityException e2) {
-                              ReportingUtils.logError(e2, "");
+                              status_ = e2.toString();
                            } catch (Exception e2) {
-                              ReportingUtils.logError(e2);
+                              status_ = e2.toString();
                            }
                         }
                      } catch (MalformedURLException e2) {
-                        ReportingUtils.logError(e2);
+                       status_ = e2.toString();
                      }
                   } catch (IOException e2) {
-                     ReportingUtils.showError(e2);
+                       status_ = e2.toString();
                   }
-
-
-               }
+              }
             }
 
             Sender s0 = new Sender();
-            s0.run();
+            s0.start();
             try {
                s0.join();
             } catch (InterruptedException ex) {
                Logger.getLogger(OptionsDlg.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            if(0< s0.Status().length()){
+                ReportingUtils.showError("Error uploading corelog.txt:\n " + s0.Status());
             }
 
          }

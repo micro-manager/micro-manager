@@ -279,11 +279,14 @@ public class ConfiguratorDlg extends JDialog {
         }
     }
 
-    private void UploadCurrentConfigFile() {
+    private String UploadCurrentConfigFile() {
+        String returnValue = "";
         try {
             HttpUtils httpu = new HttpUtils();
             List<File> list = new ArrayList<File>();
             File conff = new File(this.getFileName());
+            //if( conff.exists())
+            //{
 
             // contruct a filename for the configuration file which is extremely
             // likely to be unique as follows:
@@ -333,22 +336,24 @@ public class ConfiguratorDlg extends JDialog {
                     try {
                         httpu.upload(url, f0);
                     } catch (java.net.UnknownHostException e) {
-                        ReportingUtils.logError(e, "config posting");
+                        returnValue = e.toString();
 
                     } catch (IOException e) {
-                        ReportingUtils.logError(e);
+                        returnValue = e.toString();
                     } catch (SecurityException e) {
-                        ReportingUtils.logError(e, "");
+                        returnValue = e.toString();
                     } catch (Exception e) {
-                        ReportingUtils.logError(e);
+                        returnValue = e.toString();
                     }
                 }
             } catch (MalformedURLException e) {
-                ReportingUtils.logError(e);
+                        returnValue = e.toString();
             }
+            //}
         } catch (IOException e) {
-            ReportingUtils.showError(e);
+           returnValue = e.toString();
         }
+        return returnValue;
 
     }
 
@@ -375,14 +380,19 @@ public class ConfiguratorDlg extends JDialog {
         }
         if (microModel_.getSendConfiguration()) {
             class Uploader extends Thread {
+                private String statusMessage_;
 
                 public Uploader() {
                     super("uploader");
+                    statusMessage_ = "";
                 }
 
                 @Override
                 public void run() {
-                    UploadCurrentConfigFile();
+                    statusMessage_ = UploadCurrentConfigFile();
+                }
+                public String Status(){
+                    return statusMessage_;
                 }
             }
             Uploader u = new Uploader();
@@ -391,6 +401,9 @@ public class ConfiguratorDlg extends JDialog {
                 u.join();
             } catch (InterruptedException ex) {
                 Logger.getLogger(ConfiguratorDlg.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            if( 0 < u.Status().length())            {
+                ReportingUtils.showError("Error uploading configuration file:\n" + u.Status());
             }
         }
         dispose();
