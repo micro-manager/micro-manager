@@ -144,7 +144,6 @@ Source: micro-manager\MMConfig_demo.cfg; DestDir: {app}; Flags: ignoreversion
 
 ; ImageJ files
 Source: ..\..\3rdpartypublic\JavaLauncher\ImageJ.exe; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\LaunchMicroManager.bat; DestDir: {app}; Flags: ignoreversion
 
 
 ;Source: micro-manager\ImageJ.cfg; DestDir: {app}; Flags: onlyifdoesntexist
@@ -158,9 +157,9 @@ Source: micro-manager\plugins\*; DestDir: {app}\plugins; Flags: ignoreversion re
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
-Name: {group}\Micro-Manager-1.4; Filename: {app}\LaunchMicroManager.bat; WorkingDir: {app}
+Name: {group}\Micro-Manager-1.4; Filename: {app}\ImageJ.exe; WorkingDir: {app}
 Name: {group}\{cm:UninstallProgram,Micro-Manager-1.4}; Filename: {uninstallexe}
-Name: {commondesktop}\Micro-Manager 1.4; Filename: {app}\LaunchMicroManager.bat; Tasks: desktopicon; WorkingDir: {app}; IconIndex: 0
+Name: {commondesktop}\Micro-Manager 1.4; Filename: {app}\ImageJ.exe; Tasks: desktopicon; WorkingDir: {app}; IconIndex: 0
 
 [Run]
 Filename: {app}\ImageJ.exe; Description: {cm:LaunchProgram,Micro-Manager-1.4}; Flags: nowait postinstall
