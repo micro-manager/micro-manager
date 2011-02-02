@@ -285,73 +285,72 @@ public class ConfiguratorDlg extends JDialog {
             HttpUtils httpu = new HttpUtils();
             List<File> list = new ArrayList<File>();
             File conff = new File(this.getFileName());
-            //if( conff.exists())
-            //{
+            if (conff.exists()) {
 
-            // contruct a filename for the configuration file which is extremely
-            // likely to be unique as follows:
-            // yyyyMMddHHmmss + timezone + ip address
-            String prependedLine = "#";
-            String qualifiedConfigFileName = "";
-            try {
-                SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHHmmss");
-                qualifiedConfigFileName += df.format(new Date());
-                String shortTZName = TimeZone.getDefault().getDisplayName(false, TimeZone.SHORT);
-                qualifiedConfigFileName += shortTZName;
-                qualifiedConfigFileName += "@";
+                // contruct a filename for the configuration file which is extremely
+                // likely to be unique as follows:
+                // yyyyMMddHHmmss + timezone + ip address
+                String prependedLine = "#";
+                String qualifiedConfigFileName = "";
                 try {
-                    qualifiedConfigFileName += InetAddress.getLocalHost().getHostAddress();
-                    prependedLine += "Host: " + InetAddress.getLocalHost().getHostName() + " ";
-                } catch (UnknownHostException e) {
-                }
-                prependedLine += "User: " + core_.getUserId() + " configuration file: " + conff.getName() + "\n";
-            } catch (Throwable t) {
-            }
-
-            // can raw IP address have :'s in them? (ipv6??)
-            // try ensure valid and convenient UNIX file name
-            qualifiedConfigFileName.replace(':', '_');
-            qualifiedConfigFileName.replace(';', '_');
-
-            File fileToSend = new File(qualifiedConfigFileName);
-
-            FileReader reader = new FileReader(conff);
-            FileWriter writer = new FileWriter(fileToSend);
-            writer.append(prependedLine);
-            int c;
-            while (-1 != (c = reader.read())) {
-                writer.write(c);
-            }
-            reader.close();
-            writer.close();
-            try {
-
-                URL url = new URL("http://valelab.ucsf.edu/~MM/upload_file.php");
-
-                List flist = new ArrayList<File>();
-                flist.add(fileToSend);
-                // for each of a colleciton of files to send...
-                for (Object o0 : flist) {
-                    File f0 = (File) o0;
+                    SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHHmmss");
+                    qualifiedConfigFileName += df.format(new Date());
+                    String shortTZName = TimeZone.getDefault().getDisplayName(false, TimeZone.SHORT);
+                    qualifiedConfigFileName += shortTZName;
+                    qualifiedConfigFileName += "@";
                     try {
-                        httpu.upload(url, f0);
-                    } catch (java.net.UnknownHostException e) {
-                        returnValue = e.toString();
-
-                    } catch (IOException e) {
-                        returnValue = e.toString();
-                    } catch (SecurityException e) {
-                        returnValue = e.toString();
-                    } catch (Exception e) {
-                        returnValue = e.toString();
+                        qualifiedConfigFileName += InetAddress.getLocalHost().getHostAddress();
+                        prependedLine += "Host: " + InetAddress.getLocalHost().getHostName() + " ";
+                    } catch (UnknownHostException e) {
                     }
+                    prependedLine += "User: " + core_.getUserId() + " configuration file: " + conff.getName() + "\n";
+                } catch (Throwable t) {
                 }
-            } catch (MalformedURLException e) {
-                        returnValue = e.toString();
+
+                // can raw IP address have :'s in them? (ipv6??)
+                // try ensure valid and convenient UNIX file name
+                qualifiedConfigFileName.replace(':', '_');
+                qualifiedConfigFileName.replace(';', '_');
+
+                File fileToSend = new File(qualifiedConfigFileName);
+
+                FileReader reader = new FileReader(conff);
+                FileWriter writer = new FileWriter(fileToSend);
+                writer.append(prependedLine);
+                int c;
+                while (-1 != (c = reader.read())) {
+                    writer.write(c);
+                }
+                reader.close();
+                writer.close();
+                try {
+
+                    URL url = new URL("http://valelab.ucsf.edu/~MM/upload_file.php");
+
+                    List flist = new ArrayList<File>();
+                    flist.add(fileToSend);
+                    // for each of a colleciton of files to send...
+                    for (Object o0 : flist) {
+                        File f0 = (File) o0;
+                        try {
+                            httpu.upload(url, f0);
+                        } catch (java.net.UnknownHostException e) {
+                            returnValue = e.toString();
+
+                        } catch (IOException e) {
+                            returnValue = e.toString();
+                        } catch (SecurityException e) {
+                            returnValue = e.toString();
+                        } catch (Exception e) {
+                            returnValue = e.toString();
+                        }
+                    }
+                } catch (MalformedURLException e) {
+                    returnValue = e.toString();
+                }
             }
-            //}
         } catch (IOException e) {
-           returnValue = e.toString();
+            returnValue = e.toString();
         }
         return returnValue;
 
@@ -380,6 +379,7 @@ public class ConfiguratorDlg extends JDialog {
         }
         if (microModel_.getSendConfiguration()) {
             class Uploader extends Thread {
+
                 private String statusMessage_;
 
                 public Uploader() {
@@ -391,7 +391,8 @@ public class ConfiguratorDlg extends JDialog {
                 public void run() {
                     statusMessage_ = UploadCurrentConfigFile();
                 }
-                public String Status(){
+
+                public String Status() {
                     return statusMessage_;
                 }
             }
@@ -402,7 +403,7 @@ public class ConfiguratorDlg extends JDialog {
             } catch (InterruptedException ex) {
                 Logger.getLogger(ConfiguratorDlg.class.getName()).log(Level.SEVERE, null, ex);
             }
-            if( 0 < u.Status().length())            {
+            if (0 < u.Status().length()) {
                 ReportingUtils.showError("Error uploading configuration file:\n" + u.Status());
             }
         }
