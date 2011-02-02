@@ -9,22 +9,26 @@
            [java.io ByteArrayInputStream])
   (:require [clojure.xml]))
 
+;; xml <--> str
+
+(defn str-to-xml [s]
+  (clojure.xml/parse (ByteArrayInputStream. (.getBytes s "UTF-8"))))
+
+(defn xml-to-str [xml]
+  (with-out-str (clojure.xml/emit xml)))
+
+;; OMEXMLMetadata functions
+
 (def ome-xml-service (. (ServiceFactory.) (getInstance OMEXMLService)))
 
 (defn new-ome-meta []
   (. ome-xml-service createOMEXMLMetadata))
 
-(defn get-xml-string [m]
+(defn get-ome-xml-string [m]
   (.getOMEXML ome-xml-service m))
-
-(defn parse-xml-str [s]
-  (clojure.xml/parse (ByteArrayInputStream. (.getBytes s "UTF-8"))))
-
-(defn xml-to-str [xml]
-  (with-out-str (clojure.xml/emit xml)))
                     
 (defn ome-to-xml [m]
-  (-> m get-xml-string parse-xml-str))
+  (-> m get-ome-xml-string str-to-xml))
 
 (defn +int [n] (PositiveInteger. n))
 
@@ -43,6 +47,8 @@
     (.setPixelsType PixelType/UINT8 0)
     (.setChannelID "Channel:0:0" 0 0)
     (.setChannelSamplesPerPixel (+int ncomponents) 0 0)))
+
+;; read/write tiff files
 
 (defn write-ome-tiff [filename pixels metadata]
   (doto (ImageWriter.)
@@ -68,6 +74,8 @@
 
 ;; testing
 
+;;;; image generation
+
 (defn rand-byte []
   (byte (- (rand-int 256) 128)))
 
@@ -76,6 +84,8 @@
 
 (defn rand-image [w h nchannels bytes-per-pixel]
   (rand-bytes (* w h nchannels )))
+
+;;;; metadata tests
 
 (def test-meta (populate-meta (new-ome-meta) 512 512 2 2 2 2))
 
@@ -86,5 +96,5 @@
     test-meta))
 
 (defn overwrite-metadata [filename metadata]
-  (overwrite-comment filename (get-xml-string metadata)))
+  (overwrite-comment filename (get-ome-xml-string metadata)))
 
