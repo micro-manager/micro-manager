@@ -314,6 +314,68 @@ int CSUXHub::RunDisk(MM::Device& device, MM::Core& core, bool run)
    return  GetAcknowledgment(device, core);
 }
 
+/*
+ * Set BrightFieldPort
+ * 0 = off
+ * 1 = on
+ * TODO: Make sure that CSUX can handle commands send in sequence without delay
+ */
+int CSUXHub::SetBrightFieldPort(MM::Device& device, MM::Core& core, int pos)
+{
+   std::string cmd = "BF_ON";
+   if (pos == 0)
+      cmd = "BF_OFF";
+
+   bool succeeded = false;
+   int counter = 0;
+   // try up to 10 times, wait 50 ms in between tries
+   int ret = DEVICE_OK;
+   while (!succeeded && counter < 10)
+   {
+      ret = ExecuteCommand(device, core, cmd.c_str());
+      if (ret != DEVICE_OK)
+         return ret;
+      ret = GetAcknowledgment(device,core);
+      if (ret != DEVICE_OK)  {
+         usleep(50000);
+         counter++;
+      } else
+         succeeded = true;
+   }
+   if (!succeeded)
+       return ret;
+
+   return DEVICE_OK;
+}
+
+/*
+ * Queries CSU for current BrightFieldPort position
+ * 0 - Confocal
+ * 1 - BrightfieldPort
+ */
+int CSUXHub::GetBrightFieldPort(MM::Device& device, MM::Core& core, int& pos)
+{
+   ClearAllRcvBuf(device, core);
+   std::string cmd;
+   cmd = "BF_POS, ?";
+   int ret = ExecuteCommand(device, core, cmd.c_str());
+   ret = core.GetSerialAnswer(&device, port_.c_str(), RCV_BUF_LENGTH, rcvBuf_, "\r");
+   if (ret != DEVICE_OK)
+      return ret;
+   ret = Acknowledge();
+   if (ret != DEVICE_OK)
+      return ret;
+   std::ostringstream os;
+   os << "Get BrightFieldPort answer is: " << rcvBuf_;
+core.LogMessage(&device, os.str().c_str(), false);
+   if (strstr(rcvBuf_, "OFF") != 0)
+      pos = 0;
+   else
+      pos = 1;
+   return DEVICE_OK;
+}
+    
+ 
 ///////////////////////////////////////////////////////////////////////////////
 // HUB generic methods
 ///////////////////////////////////////////////////////////////////////////////

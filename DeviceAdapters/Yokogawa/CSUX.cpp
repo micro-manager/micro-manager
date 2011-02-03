@@ -154,9 +154,22 @@ int Hub::Initialize()
    if (DEVICE_OK != ret)
       return ret;
 
+   // Bright field port
+   int pos = 0;
+   ret = g_hub.GetBrightFieldPort(*this, *GetCoreCallback(), pos);
+   if (ret == DEVICE_OK)
+   {
+      CPropertyAction* pAct = new CPropertyAction (this, &Hub::OnBrightFieldPort);
+      CreateProperty("BrightFieldPort", "Confocal", MM::String, false, pAct);
+      AddAllowedValue("BrightFieldPort", "Confocal");
+      AddAllowedValue("BrightFieldPort", "BrightField");
+   }
+
+   /*
    ret = UpdateStatus();
    if (ret != DEVICE_OK)
       return ret;
+   */
 
    initialized_ = true;
    
@@ -197,6 +210,32 @@ int Hub::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
       pProp->Get(port_);
       g_hub.SetPort(port_.c_str());
    }
+   return DEVICE_OK;
+}
+
+int Hub::OnBrightFieldPort(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      int pos;
+      int ret = g_hub.GetBrightFieldPort(*this, *GetCoreCallback(), pos);
+      if (ret != DEVICE_OK)
+         return ret;
+      if (pos == 0)
+         pProp->Set("Confocal");
+      else
+         pProp->Set("BrightField");
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      std::string setting;
+      pProp->Get(setting);
+      int pos = 1;
+      if (setting == "Confocal")
+         pos = 0;
+      return g_hub.SetBrightFieldPort(*this, *GetCoreCallback(), pos);
+   }
+
    return DEVICE_OK;
 }
 
@@ -474,24 +513,24 @@ int Dichroic::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
-      long pos;
-      int ret = g_hub.GetDichroicPosition(*this, *GetCoreCallback(), pos);
+      long csuPos;
+      int ret = g_hub.GetDichroicPosition(*this, *GetCoreCallback(), csuPos);
       if (ret != DEVICE_OK)
          return ret;
-      pos_ = pos - 1;
+      pos_ = csuPos - 1;
       pProp->Set(pos_);
    }
    else if (eAct == MM::AfterSet)
    {
       long pos; 
       pProp->Get(pos);
-      if ( (pos + 1) == pos_)
+      if (pos == pos_)
          return DEVICE_OK;
 
       int ret = g_hub.SetDichroicPosition(*this, *GetCoreCallback(), pos + 1);
       if (ret != DEVICE_OK)
          return  ret;
-      pos_ = pos + 1;
+      pos_ = pos;
    }
    return DEVICE_OK;
 }

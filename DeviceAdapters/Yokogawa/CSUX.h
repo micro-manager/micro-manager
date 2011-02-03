@@ -64,6 +64,7 @@ public:
    // action interface
    // ----------------
    int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnBrightFieldPort(MM::PropertyBase* pProp, MM::ActionType eAct); 
 
 private:
    bool initialized_;

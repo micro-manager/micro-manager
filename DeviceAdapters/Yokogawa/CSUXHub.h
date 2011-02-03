@@ -81,6 +81,9 @@ public:
    int SetAutoAdjustDriveSpeed(MM::Device& device, MM::Core& core, double exposureMs);
    int RunDisk(MM::Device& device, MM::Core& core, bool run);
 
+   int SetBrightFieldPort(MM::Device& device, MM::Core& core, int pos);
+   int GetBrightFieldPort(MM::Device& device, MM::Core& core, int& pos);
+
 
 private:
    int ExecuteCommand(MM::Device& device, MM::Core& core, const char* command);
