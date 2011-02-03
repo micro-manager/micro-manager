@@ -1,0 +1,165 @@
+// Mark III - interrogate camera for exposure limits
+// estimate latency and overhead
+// verify exposure time stability
+
+import java.lang.Math; 
+
+
+double EvaluateImageTiming(Float[] deviations)
+{
+
+   // measure average shutter time
+   // calculate the standard deviation & mean
+   long nPts = 0;
+   double mean_ = 0;
+   double M2 = 0;
+   double delta;
+   long value;
+   Long boxValue = new Long(0);
+   String valueList = new String("");
+
+   for( int titter =0; titter<12; ++ titter){
+      value = System.currentTimeMillis();
+      mmc.snapImage();
+      value = System.currentTimeMillis() - value;
+      boxValue = value;
+      if( 0 < valueList.length())
+         valueList += ", ";
+      valueList += boxValue.toString();
+      // one-pass algorithm for mean and std from Welford / Knuth
+      ++nPts;
+      delta = value - mean_;
+      mean_ = mean_ + delta/nPts;
+      M2 = M2 + delta*(value - mean_); // #This expression uses the new value of mean_
+      mmc.getImage();
+   }
+
+   double variance = M2/(nPts - 1);
+   double meanScaling = 1.;
+   // autobox only the final results !!  
+   Float standardDeviation = new Float(java.lang.Math.pow(variance,0.5));
+   
+   Double theMean = new Double(mean_);
+   print(" durations: {" + valueList+ "}  <snap time>: " + theMean.toString()+
+      "  std: " + standardDeviation.toString() );
+
+   deviations[0] = (Float)standardDeviation;
+
+   return mean_;
+
+};
+
+
+
+int warnings = 0;
+int errors = 0;
+String theCamera = new String(mmc.getCameraDevice());
+Double minExposure = new Double(0.);
+Double maxExposure = new Double(3600000.);
+if (mmc.hasProperty(theCamera,"Exposure")){
+   if( mmc.hasPropertyLimits(theCamera,"Exposure") ){
+      minExposure = mmc.getPropertyLowerLimit(theCamera,"Exposure");
+      maxExposure = mmc.getPropertyUpperLimit(theCamera,"Exposure");
+   }
+};
+
+Double x = new Double(0.);
+print ("current camera is " + theCamera + " current exposure range is [" + minExposure.toString() +"," + maxExposure.toString() + "]" );
+
+
+for( int ite = 0; ite <2;  ++ite){
+   mmc.setAutoShutter((1==ite));
+   Float [] stdevs0 = new Float[1];
+   Float [] stdevs1 = new Float[1];
+   Float [] stdevs2 = new Float[1];
+
+   // estimate the camera latency by measuring duration of a short exposure = s and and 2s and calculate intercept
+   print("running with autoshutter " + (1==ite?"on":"off" ));
+   Double st1 = new Double(0);
+   Double st2 = new Double(0);
+
+   mmc.setExposure(minExposure);
+   exptime = mmc.getExposure();
+   // measure the shortest snap time on this equipment
+
+   print(" find short exposure time, exptime set to " + exptime.toString());
+   exptime = EvaluateImageTiming(stdevs0);
+   print (" average duration for min exposure time " + exptime.toString() + " std dev is " + stdevs0[0].toString() + " " + exptime.toString() + " will be used for short exposure time" );
+   
+   mmc.setExposure(exptime);
+   exptime = mmc.getExposure();
+   Double  shortExposure1 = new Double(exptime);
+   st1 = EvaluateImageTiming(stdevs1);
+   print (" duration 1 is " + st1.toString() + "+/-" + stdevs1[0] );
+
+
+   // now measure duration when exposure time is 10 x
+   mmc.setExposure(10.*shortExposure1);
+   exptime = mmc.getExposure();
+   print( " now running at exposure= " + exptime.toString());
+   Double  shortExposure2 = new Double(exptime);
+   
+   st2 = EvaluateImageTiming(stdevs2);
+    print (" duration 2 is " + st2.toString() + "+/-" + stdevs2[0] );
+  
+ 
+ // really should do least squares line fine, oh well, another day...
+   Double slope = (st2 - st1)/( shortExposure2 - shortExposure1);
+   Double inter = st1 - slope * shortExposure1;
+   print( "duration = slope*exposure + intercept -> slope = " + slope.toString() + " inter = " + inter.toString());
+
+
+   double standardDeviation  = stdevs1[0];
+   if( standardDeviation < stdevs2[0])
+      standardDeviation = stdevs2[0];
+
+
+   mmc.snapImage();
+   ro0 = System.currentTimeMillis();
+   mmc.getImage();
+   ro0 = System.currentTimeMillis() - ro0;
+   // always include the minimum exposure time!
+   Boolean ranMinExposureTime = false;
+   Long loopexptime = new Long(0);
+   for( loopexptime = 1; loopexptime < 10000; loopexptime*=10) {
+      exptime = loopexptime;
+      if( maxExposure < exptime)
+         break;
+
+      if(ranMinExposureTime && exptime < minExposure)
+      {
+          continue;
+      }
+
+      ranMinExposureTime =(exptime < minExposure);
+      exptime = java.lang.Math.max(exptime,minExposure);
+         
+      mmc.setExposure( exptime);
+      t0 = System.currentTimeMillis();
+      mmc.snapImage();
+      t1 = System.currentTimeMillis();
+      Long dvalue = new Long(t1-t0);
+      print(" exposure time " + exptime.toString() + " elapsed snap time " + dvalue.toString() );
+      double snaptime = dvalue;
+
+
+      Double difff = new Double(snaptime - exptime);
+      Double adifff = java.lang.Math.abs(difff);
+
+
+      t1 = System.currentTimeMillis();
+
+
+
+      img = mmc.getImage();
+      t2 = System.currentTimeMillis();
+      Long gdelta = new Long(t2 - t1);
+      print("get image  time is " + gdelta.toString());
+      gui.displayImage(img);
+   }
+};
+
+print("test completed");
+print("total warnings "); print(warnings);
+print("total errors "); print(errors);
+
