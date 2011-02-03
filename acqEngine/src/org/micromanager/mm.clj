@@ -16,7 +16,8 @@
 (ns org.micromanager.mm
   (:import MMStudioPlugin
            [org.micromanager.navigation MultiStagePosition]
-           [mmcorej Configuration]))
+           [mmcorej Configuration]
+           [ij IJ]))
 
 (declare gui)
 (declare mmc)
@@ -112,3 +113,7 @@
 (defn select-values-match? [map1 map2 keys]
   (= (select-keys map1 keys)
      (select-keys map2 keys)))
+     
+(defn current-tagged-image []
+  (let [img (IJ/getImage)]
+    (.. img getStack (getTaggedImage (.getCurrentSlice img)))))

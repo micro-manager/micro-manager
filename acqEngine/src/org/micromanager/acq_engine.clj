@@ -133,6 +133,20 @@
 
 ;; metadata
 
+(defn json-to-data [json]
+  (condp #(isa? (type %2) %1) json
+    JSONObject
+      (let [keys (iterator-seq (.keys json))]
+        (into {}
+          (for [key keys]
+            (let [val (if (.isNull json key) nil (.get json key))]
+              [key (json-to-data val)]))))
+    JSONArray
+      (vec
+        (for [i (range (.length json))]
+          (json-to-data (.get json i))))
+    json))
+
 (defn annotate-image [img event state]
   {:pix img
    :tags (merge
