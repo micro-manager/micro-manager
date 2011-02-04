@@ -349,11 +349,11 @@ int AndorCamera::GetListOfAvailableCameras()
       msg << "Andor detected: ID " << CameraID << "\n" ;
       LogMessage(msg.str());
 
-      if( ret ==DRV_SUCCESS ) {
+      if( ret == DRV_SUCCESS ) {
          ret = SetCurrentCamera(CameraID);
-         if( ret ==DRV_SUCCESS ) {
+         if( ret == DRV_SUCCESS ) {
             ret=::Initialize(const_cast<char*>(driverDir_.c_str()));
-            if( ret!=DRV_SUCCESS && ret != DRV_ERROR_FILELOAD ) {
+            if( ret != DRV_SUCCESS && ret != DRV_ERROR_FILELOAD ) {
                ret = ShutDown();
             }
          }
@@ -1027,7 +1027,7 @@ int AndorCamera::GetListOfAvailableCameras()
       // Temperature Set Point
       if(mb_canSetTemp) {
 
-         if(minTemp<-70) {
+         if(minTemp < -70) {
             strTempSetPoint = "-70";
          }
          else {
@@ -1421,13 +1421,15 @@ int AndorCamera::GetListOfAvailableCameras()
    {
       DriverGuard dg(this);
 
+      int ret;
+
       if (initialized_)
       {
          SetToIdle();
          int ShutterMode = 2;  //0: auto, 1: open, 2: close
          SetShutter(1, ShutterMode, 20,20);//0, 0);
          if(mb_canSetTemp) {CoolerOFF();}  //Daigang 24-may-2007 turn off the cooler at shutdown
-         ShutDown();
+         ret = ShutDown();
       }
 
       initialized_ = false;
@@ -1472,7 +1474,7 @@ int AndorCamera::GetListOfAvailableCameras()
          if(!IsAcquiring())
          {
             SetIsolatedCropMode(0, currentCropHeight_, currentCropWidth_, 1, 1);
-            SetImage(1, 1, roi_.x+1, roi_.x+roi_.xSize, roi_.y+1, roi_.y+roi_.ySize);
+            SetImage(binSize_, binSize_, roi_.x+1, roi_.x+roi_.xSize, roi_.y+1, roi_.y+roi_.ySize);
             GetReadoutTime(); 
             if (iCurrentTriggerMode_ == SOFTWARE || iCurrentTriggerMode_ == EXTERNAL)
             {
@@ -1516,7 +1518,7 @@ int AndorCamera::GetListOfAvailableCameras()
            error = GetStatus(&status); 
          }
          SetIsolatedCropMode(0, currentCropHeight_, currentCropWidth_, 1, 1);
-         SetImage(1, 1, roi_.x+1, roi_.x+roi_.xSize, roi_.y+1, roi_.y+roi_.ySize);
+         SetImage(binSize_, binSize_, roi_.x+1, roi_.x+roi_.xSize, roi_.y+1, roi_.y+roi_.ySize);
          StartAcquisition();
       }
 
@@ -3313,7 +3315,9 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
             }
             if(HasProperty("Pre-Amp-Gain")) {
                int rc = SetAllowedValues("Pre-Amp-Gain",PreAmpGains_);
-               assert(rc == DEVICE_OK);
+               if (rc != DEVICE_OK) {
+                  return ret;
+               }
             }
 
             if(HasProperty(g_OutputAmplifier)) {
@@ -3335,7 +3339,9 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
                   }
                }
                int nRet = SetAllowedValues(g_OutputAmplifier, vAvailAmps);
-               assert(nRet == DEVICE_OK);
+               if (nRet != DEVICE_OK) {
+                  return nRet;
+               }
 
                if(changeAmp) {
                   if(vAvailAmps.size() > 0) {
@@ -3704,6 +3710,9 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
 
       if (ret != DRV_SUCCESS)
       {
+         std::ostringstream os;
+         os << "Andor driver returned error value: " << ret;
+         LogMessage(os.str().c_str(), false);
          SetAcquisitionMode(1);
          return ret;
       } else 
@@ -3783,6 +3792,10 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
    */
    int AndorCamera::PushImage()
    {
+      unsigned int width;
+      unsigned int height;
+      unsigned int bytesPerPixel;
+       
       {
          DriverGuard dg(this);
          unsigned ret;
@@ -3793,6 +3806,10 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
             ret = GetMostRecentImage16((WORD*)fullFrameBuffer_, roi_.xSize/binSize_ * roi_.ySize/binSize_);
          if (ret != DRV_SUCCESS)
             return (int)ret;
+
+         width =  GetImageWidth();
+         height = GetImageHeight();
+         bytesPerPixel = GetImageBytesPerPixel();
 
       }
 
@@ -3839,9 +3856,9 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
 
       // This method inserts new image in the circular buffer (residing in MMCore)
       int retCode = GetCoreCallback()->InsertImage(this, (unsigned char*) fullFrameBuffer_,
-         GetImageWidth(),
-         GetImageHeight(),
-         GetImageBytesPerPixel(),
+         width,
+         height,
+         bytesPerPixel,
          &md);
 
       if (!stopOnOverflow_ && retCode == DEVICE_BUFFER_OVERFLOW)
@@ -3985,7 +4002,9 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
       if(bEMGainSupported) {
          CPropertyAction *pAct = new CPropertyAction(this, &AndorCamera::OnEMSwitch);
          int nRet = CreateProperty(g_EMGain, "On", MM::String, false, pAct);
-         assert (nRet == DEVICE_OK);
+         if (nRet != DEVICE_OK) {
+            return nRet;
+         }
          AddAllowedValue(g_EMGain, "On");      
          AddAllowedValue(g_EMGain, "Off");
       }
@@ -4053,7 +4072,11 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
          roi_.x = 0;
          roi_.y = 0;
 
-         SetImage(1, 1, roi_.x+1, roi_.x+roi_.xSize,
+         // adjust image extent to conform to the bin size
+         roi_.xSize -= roi_.xSize % binSize_;
+         roi_.ySize -= roi_.ySize % binSize_;
+
+         /* unsigned aret = */ SetImage(binSize_, binSize_, roi_.x+1, roi_.x+roi_.xSize,
             roi_.y+1, roi_.y+roi_.ySize);
 
          GetReadoutTime();
@@ -4126,7 +4149,11 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
          roi_.x = 0;
          roi_.y = 0;
 
-         SetImage(1, 1, roi_.x+1, roi_.x+roi_.xSize,
+         // adjust image extent to conform to the bin size
+         roi_.xSize -= roi_.xSize % binSize_;
+         roi_.ySize -= roi_.ySize % binSize_;
+
+         /* unsigned aret = */ SetImage(binSize_, binSize_, roi_.x+1, roi_.x+roi_.xSize,
             roi_.y+1, roi_.y+roi_.ySize);
 
          GetReadoutTime();
@@ -4219,7 +4246,9 @@ unsigned int AndorCamera::createIsolatedCropModeProperty(AndorCapabilities * cap
   if((caps->ulSetFunctions&AC_SETFUNCTION_CROPMODE) == AC_SETFUNCTION_CROPMODE) {
      CPropertyAction *pAct = new CPropertyAction(this, &AndorCamera::OnCropModeSwitch);
      int nRet = CreateProperty(g_cropMode, "Off", MM::String, false, pAct);
-     assert (nRet == DEVICE_OK);
+     if (nRet != DEVICE_OK) {
+        return nRet;
+     }
      AddAllowedValue(g_cropMode, "On");      
      AddAllowedValue(g_cropMode, "Off");
 
@@ -4292,7 +4321,9 @@ unsigned int AndorCamera::createIsolatedCropModeProperty(AndorCapabilities * cap
       {
          CPropertyAction *pAct = new CPropertyAction (this, &AndorCamera::OnSelectTrigger);
          int nRet = CreateProperty("Trigger", "Trigger Mode", MM::String, false, pAct);
-         assert(nRet == DEVICE_OK);
+         if (nRet != DEVICE_OK) {
+            return nRet;
+         }
       }
       int nRet = SetAllowedValues("Trigger", vTriggerModes);
       assert(nRet == DEVICE_OK);
