@@ -110,7 +110,6 @@ import org.micromanager.utils.WaitDialog;
 
 import bsh.EvalError;
 import bsh.Interpreter;
-import clojure.lang.RT;
 
 import com.swtdesigner.SwingResourceManager;
 import ij.gui.ImageCanvas;
@@ -131,6 +130,7 @@ import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.FileDialogs.FileType;
 import org.micromanager.utils.ReportingUtils;
+
 
 /*
  * Main panel and application class for the MMStudio.
@@ -2876,6 +2876,21 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          registerMenuItem.setText("Register your copy of Micro-Manager...");
          helpMenu.add(registerMenuItem);
       }
+
+
+      final MMStudioMainFrame thisFrame = this;
+      final JMenuItem reportProblemMenuItem = new JMenuItem();
+      reportProblemMenuItem.addActionListener(new ActionListener() {
+
+         public void actionPerformed(ActionEvent e) {
+            ReportProblemDialog dlg = new ReportProblemDialog(core_, thisFrame, sysConfigFile_);
+            dlg.setVisible(true);
+         }
+      });
+      reportProblemMenuItem.setText("Report Problem");
+      helpMenu.add(reportProblemMenuItem);
+
+
 
       final JMenuItem aboutMenuItem = new JMenuItem();
       aboutMenuItem.addActionListener(new ActionListener() {
