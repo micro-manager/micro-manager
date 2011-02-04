@@ -1456,6 +1456,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             if (!options_.doNotAskForConfigFile) {
                MMIntroDlg introDlg = new MMIntroDlg(VERSION, MRUConfigFiles_);
                introDlg.setConfigFile(sysConfigFile_);
+               introDlg.setBackground(guiColors_.background.get((options_.displayBackground)));
                introDlg.setVisible(true);
                sysConfigFile_ = introDlg.getConfigFile();
             }
@@ -2888,8 +2889,9 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
              if( null==reportProblemDialog_){
 
                 reportProblemDialog_ = new ReportProblemDialog(core_, thisFrame, sysConfigFile_, options_);
-                thisFrame.addMMBackgroundListener(reportProblemDialog_)
-;             }
+                thisFrame.addMMBackgroundListener(reportProblemDialog_);
+                reportProblemDialog_.setBackground(guiColors_.background.get((options_.displayBackground)));
+             }
             reportProblemDialog_.setVisible(true);
          }
       });
