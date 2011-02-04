@@ -9,10 +9,17 @@ import ij.process.ShortProcessor;
 import java.awt.Color;
 
 import java.awt.Point;
+import java.lang.reflect.InvocationTargetException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import mmcorej.CMMCore;
+import org.json.JSONObject;
+import org.micromanager.acquisition.TaggedImageStorageDiskDefault;
+import org.micromanager.api.TaggedImageStorage;
 
 public class ImageUtils {
+   private static Class storageClass_ = TaggedImageStorageDiskDefault.class;
 
    public static int BppToImageType(long Bpp) {
       int BppInt = (int) Bpp;
@@ -331,6 +338,23 @@ public class ImageUtils {
          bs[p] = (byte) (yn * b);
       }
       return new LUT(rs,gs,bs);
+   }
+
+   public static void setPreferredTaggedImageStorage(Class storageClass) {
+      storageClass_ = storageClass;
+   }
+
+   public static TaggedImageStorage newImageStorageInstance
+           (String acqPath, boolean b, JSONObject summaryMetadata) {
+      try {
+        // return new TaggedImageStorageDiskDefault(acqPath, b, summaryMetadata);
+        return (TaggedImageStorage) storageClass_
+                 .getConstructor(String.class, Boolean.class, JSONObject.class)
+                 .newInstance(acqPath, b, summaryMetadata);
+      } catch (Exception ex) {
+         ReportingUtils.showError(ex);
+      }
+      return null;
    }
 
    public class MinAndMax {

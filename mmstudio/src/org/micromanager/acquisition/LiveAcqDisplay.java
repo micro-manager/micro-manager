@@ -7,11 +7,15 @@ package org.micromanager.acquisition;
 import java.io.File;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONObject;
+import org.micromanager.MMStudioMainFrame;
 import org.micromanager.api.AcquisitionEngine;
 import org.micromanager.api.TaggedImageStorage;
+import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.ReportingUtils;
 
@@ -45,7 +49,8 @@ public class LiveAcqDisplay extends Thread {
          try {
             acqPath = createAcqPath(summaryMetadata.getString("Directory"),
                                     summaryMetadata.getString("Prefix"));
-            imageFileManager = new TaggedImageStorageDiskDefault(acqPath, true, null);
+            imageFileManager = ImageUtils.newImageStorageInstance(acqPath,
+                    true, (JSONObject) null);
          } catch (Exception e) {
             ReportingUtils.showError(e, "Unable to create directory for saving images.");
             eng.stop(true);
@@ -113,15 +118,8 @@ public class LiveAcqDisplay extends Thread {
    private String createAcqPath(String root, String prefix) throws Exception {
       File rootDir = JavaUtils.createDirectory(root);
       int curIndex = getCurrentMaxDirIndex(rootDir, prefix + "_");
-
-      File acqDir = null;
-      acqDir = JavaUtils.createDirectory(root + "/" + prefix + "_" + (1 + curIndex));
-
-      if (acqDir != null) {
-         return acqDir.getAbsolutePath();
-      } else {
-         return "";
-      }
+      File acqDir = new File(root + "/" + prefix + "_" + (1 + curIndex));
+      return acqDir.getAbsolutePath();
    }
 
    private int getCurrentMaxDirIndex(File rootDir, String prefix) throws NumberFormatException {
@@ -132,9 +130,14 @@ public class LiveAcqDisplay extends Thread {
          theName = acqDir.getName();
          if (theName.startsWith(prefix)) {
             try {
-               number = Integer.parseInt(theName.substring(prefix.length()));
-               if (number >= maxNumber) {
-                  maxNumber = number;
+               //e.g.: "blah_32.ome.tiff"
+               Pattern p = Pattern.compile(prefix + "(\\d+).*+");
+               Matcher m = p.matcher(theName);
+               if (m.matches()) {
+                  number = Integer.parseInt(m.group(1));
+                  if (number >= maxNumber) {
+                     maxNumber = number;
+                  }
                }
             } catch (NumberFormatException e) {
             } // Do nothing.

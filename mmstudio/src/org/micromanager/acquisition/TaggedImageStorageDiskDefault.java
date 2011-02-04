@@ -52,7 +52,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       this(dir, false, null);
    }
 
-   TaggedImageStorageDiskDefault(String dir, boolean newDataSet,
+   public TaggedImageStorageDiskDefault(String dir, Boolean newDataSet,
            JSONObject summaryMetadata) {
       summaryMetadata_ = summaryMetadata;
       dir_ = dir;

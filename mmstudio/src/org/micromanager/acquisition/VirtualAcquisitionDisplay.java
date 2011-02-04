@@ -598,10 +598,14 @@ public class VirtualAcquisitionDisplay {
    public void showFolder() {
       if (isDiskCached()) {
          try {
+            File location = new File(imageCache_.getDiskLocation());
             if (JavaUtils.isWindows()) {
-               Runtime.getRuntime().exec("Explorer /n,/select," + imageCache_.getDiskLocation());
+               Runtime.getRuntime().exec("Explorer /n,/select," + location.getAbsolutePath());
             } else if (JavaUtils.isMac()) {
-               Runtime.getRuntime().exec("open " + imageCache_.getDiskLocation());
+               if (! location.isDirectory()) {
+                  location = location.getParentFile();
+               }
+               Runtime.getRuntime().exec("open " + location.getAbsolutePath());
             }
          } catch (IOException ex) {
             ReportingUtils.logError(ex);

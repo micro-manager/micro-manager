@@ -19,9 +19,8 @@ import org.micromanager.utils.MMException;
  * This class stores a collection of TaggedImages, all in ram.
  */
 public class TaggedImageStorageRam implements TaggedImageStorage {
-   HashMap<String, TaggedImage> imageMap_;
+   protected HashMap<String, TaggedImage> imageMap_;
    private JSONObject summaryMetadata_;
-   private String comment_;
    private JSONObject displaySettings_;
 
    public TaggedImageStorageRam(JSONObject summaryMetadata) {

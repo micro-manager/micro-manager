@@ -91,7 +91,11 @@ public class MDUtils {
    }
 
    public static String getPositionName(JSONObject map) throws Exception {
-      return map.getString("PositionName");
+      if (map.has("PositionName") && !map.isNull("PositionName")) {
+         return map.getString("PositionName");
+      } else {
+         return null;
+      }
    }
 
    public static void setPositionName(JSONObject map, String positionName) throws Exception {
