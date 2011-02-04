@@ -181,6 +181,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private PropertyEditor propertyBrowser_;
    private CalibrationListDlg calibrationListDlg_;
    private AcqControlDlg acqControlWin_;
+   private ReportProblemDialog reportProblemDialog_;
+
    private ArrayList<PluginItem> plugins_;
    private List<MMListenerInterface> MMListeners_
            = (List<MMListenerInterface>)
@@ -2883,8 +2885,11 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       reportProblemMenuItem.addActionListener(new ActionListener() {
 
          public void actionPerformed(ActionEvent e) {
-            ReportProblemDialog dlg = new ReportProblemDialog(core_, thisFrame, sysConfigFile_);
-            dlg.setVisible(true);
+             if( null==reportProblemDialog_){
+                reportProblemDialog_ = new ReportProblemDialog(core_, thisFrame, sysConfigFile_);
+                thisFrame.addMMBackgroundListener(reportProblemDialog_)
+;             }
+            reportProblemDialog_.setVisible(true);
          }
       });
       reportProblemMenuItem.setText("Report Problem");

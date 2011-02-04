@@ -8,7 +8,6 @@
  *
  * Created on Feb 3, 2011, 11:49:27 AM
  */
-
 package org.micromanager;
 
 import java.util.logging.Level;
@@ -22,6 +21,7 @@ import org.micromanager.utils.ReportingUtils;
  * @author karlhoover
  */
 public class ReportProblemDialog extends javax.swing.JDialog {
+
     private Integer step_;
     String reportPreamble_;
     CMMCore core_;
@@ -34,7 +34,7 @@ public class ReportProblemDialog extends javax.swing.JDialog {
         //(parent, modal);
         initComponents();
         reportPreamble_ = "";
-        step_= 0;
+        step_ = 0;
         core_ = c;
         parent_ = parentMMGUI;
         configPath_ = configPath;
@@ -150,15 +150,16 @@ public class ReportProblemDialog extends javax.swing.JDialog {
     }// </editor-fold>//GEN-END:initComponents
 
     private void SkipButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SkipButton_ActionPerformed
-        switch(step_){
+        switch (step_) {
             case 0:
                 break;
             case 1:
-                step_ = step_+1;
+                step_ = step_ + 1;
                 NextButton_.setText("Next");
                 SkipButton_.setVisible(false);
                 break;
             case 2:
+                BuildAndSendReport();
                 break;
             default:
                 break;
@@ -174,50 +175,56 @@ public class ReportProblemDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_formComponentShown
 
     private void NextButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NextButton_ActionPerformed
-       switch(step_){
-           case 0:
-               reportPreamble_ = "#User Description: " + DescriptionPane_.getText();
-               DescriptionPane_.setEditable(false);
-               SkipButton_.setVisible(true);
-               NextButton_.setText("Clear!");
-               StepInstructions_.setText("If the system has been running for some time, the log file is likely very large. If you can easily replicate the problem situation, press Clear! to restart the log file a new. Else press skip to leave your log file intact.");
-               step_ = 1;
-               break;
-           case 1:
-               // user wishes to clear the log file..
-               core_.clearLog();
-               core_.logMessage("MM Studio version: " + parent_.getVersion());
-               core_.logMessage(core_.getVersionInfo());
-               core_.logMessage(core_.getAPIVersionInfo());
-               core_.logMessage("Operating System: " + System.getProperty("os.name") + " " + System.getProperty("os.version"));
-               NextButton_.setText("Next");
-               StepInstructions_.setText("Now operate the system until you've duplicated the problem. When you're successful, press Next to send your description, system configuration, and log to micro-manager.org.");
-               step_ = 2;
-               break;
-           case 2:
-               {
-               StepInstructions_.setText("Sending...");
-               ProblemReportSender p = new ProblemReportSender(reportPreamble_, core_, configPath_);
-               String result = p.Send();
-               if( 0 < result.length()){
-                   ReportingUtils.logError(result);
-                   StepInstructions_.setText("There was a problem sending the report, please verify your internet connection.");
-               }
-               else
-                   StepInstructions_.setText("The report was successfully submitted to micro-manager.org");
-               step_ = 3;
-               SkipButton_.setVisible(false);
-               }
-               break;
-           case 3:
-               InitializeDialog();
-               setVisible(false);
-               break;
-           default:
+        switch (step_) {
+            case 0:
+                SkipButton_.setVisible(true);
+                NextButton_.setText("Clear!");
+                StepInstructions_.setText("If the system has been running for some time, the log file is likely very large,"
+                        + " and may take a long time to send. If you can easily replicate the problem situation, press Clear!"
+                        + " to restart the log file anew. Else press skip to leave your log file intact.");
+                step_ = 1;
+                break;
+            case 1:
+                // user wishes to clear the log file..
+                core_.clearLog();
+                core_.logMessage("MM Studio version: " + parent_.getVersion());
+                core_.logMessage(core_.getVersionInfo());
+                core_.logMessage(core_.getAPIVersionInfo());
+                core_.logMessage("Operating System: " + System.getProperty("os.name") + " " + System.getProperty("os.version"));
+                NextButton_.setText("Next");
+                StepInstructions_.setText("Now operate the system until you've duplicated the problem. When you're successful, "
+                        +"press Next to send your problem description, system configuration, and log to micro-manager.org.");
+                step_ = 2;
+                break;
+            case 2:
+                BuildAndSendReport();
+                break;
+            case 3:
+                InitializeDialog();
+                setVisible(false);
+                break;
+            default:
 
-               break;
-       }
+                break;
+        }
     }//GEN-LAST:event_NextButton_ActionPerformed
+
+    private void BuildAndSendReport() {
+        reportPreamble_ = "#User Description: " + DescriptionPane_.getText();
+        DescriptionPane_.setEnabled(false);
+        DescriptionPane_.setEditable(false);
+        StepInstructions_.setText("Sending...");
+        ProblemReportSender p = new ProblemReportSender(reportPreamble_, core_, configPath_);
+        String result = p.Send();
+        if (0 < result.length()) {
+            ReportingUtils.logError(result);
+            StepInstructions_.setText("There was a problem sending the report, please verify your internet connection.");
+        } else {
+            StepInstructions_.setText("The report was successfully submitted to micro-manager.org");
+        }
+        step_ = 3;
+        SkipButton_.setVisible(false);
+    }
 
     private void CancelButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_CancelButton_ActionPerformed
         InitializeDialog();
@@ -225,19 +232,20 @@ public class ReportProblemDialog extends javax.swing.JDialog {
     }//GEN-LAST:event_CancelButton_ActionPerformed
 
     private void DoneButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_DoneButton_ActionPerformed
-                       InitializeDialog();
-               this.setVisible(false);
+        InitializeDialog();
+        this.setVisible(false);
     }//GEN-LAST:event_DoneButton_ActionPerformed
 
-    void InitializeDialog(){
+    void InitializeDialog() {
         step_ = 0;
         StepInstructions_.setText("Please describe the problem in the panel below:");
         DescriptionPane_.setText("");
         DescriptionPane_.setVisible(true);
         DescriptionPane_.setEditable(true);
-    }
+        DescriptionPane_.setEnabled(true);
+        DescriptionPane_.requestFocus();
 
-    
+    }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton CancelButton_;
     private javax.swing.JEditorPane DescriptionPane_;
@@ -248,5 +256,4 @@ public class ReportProblemDialog extends javax.swing.JDialog {
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     // End of variables declaration//GEN-END:variables
-
 }
