@@ -134,6 +134,16 @@ class ProblemReportSender extends Thread {
             status_ = e2.toString();
         }
     }
+    public String Send(){
+       start();
+       try {
+            join();
+       } catch (InterruptedException ex) {
+           status_ = ex.toString();
+
+       }
+       return Status();
+    }
 }
 
 
