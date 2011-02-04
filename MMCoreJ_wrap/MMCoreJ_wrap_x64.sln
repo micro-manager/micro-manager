@@ -174,6 +174,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DTOpenLayer", "..\DeviceAda
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GigECamera", "..\DeviceAdapters\GigECamera\GigECamera.vcproj", "{7DFCF21B-1F90-4444-B2AF-27212A52BA44}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PiperMmAdapter", "..\DeviceAdapters\Piper\PiperMmAdapter.vcproj", "{8FDA6D04-7C5D-4061-8467-AE0C104A2C83}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -690,6 +692,14 @@ Global
 		{7DFCF21B-1F90-4444-B2AF-27212A52BA44}.Release|Win32.Build.0 = Release|Win32
 		{7DFCF21B-1F90-4444-B2AF-27212A52BA44}.Release|x64.ActiveCfg = Release|x64
 		{7DFCF21B-1F90-4444-B2AF-27212A52BA44}.Release|x64.Build.0 = Release|x64
+		{8FDA6D04-7C5D-4061-8467-AE0C104A2C83}.Debug|Win32.ActiveCfg = Debug|Win32
+		{8FDA6D04-7C5D-4061-8467-AE0C104A2C83}.Debug|Win32.Build.0 = Debug|Win32
+		{8FDA6D04-7C5D-4061-8467-AE0C104A2C83}.Debug|x64.ActiveCfg = Debug|x64
+		{8FDA6D04-7C5D-4061-8467-AE0C104A2C83}.Debug|x64.Build.0 = Debug|x64
+		{8FDA6D04-7C5D-4061-8467-AE0C104A2C83}.Release|Win32.ActiveCfg = Release|Win32
+		{8FDA6D04-7C5D-4061-8467-AE0C104A2C83}.Release|Win32.Build.0 = Release|Win32
+		{8FDA6D04-7C5D-4061-8467-AE0C104A2C83}.Release|x64.ActiveCfg = Release|x64
+		{8FDA6D04-7C5D-4061-8467-AE0C104A2C83}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
