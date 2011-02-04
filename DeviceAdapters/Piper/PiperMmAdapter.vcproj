@@ -69,10 +69,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="../../../3rdParty/PiperApi/PiperAPI.lib"
+				AdditionalDependencies="PiperAPI.lib"
 				OutputFile="$(OutDir)/mmgr_dal_Piper.dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;;&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib&quot;"
+				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\PiperAPI\Lib\$(PlatformName)&quot;;&quot;..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;;&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib&quot;"
 				UACExecutionLevel="1"
 				ModuleDefinitionFile=".\PiperMmAdapter.def"
 				GenerateDebugInformation="true"
@@ -158,10 +158,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="../../../3rdParty/PiperApi/PiperAPI.lib"
+				AdditionalDependencies="PiperAPI.lib"
 				OutputFile="$(OutDir)/mmgr_dal_Piper.dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;;&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib&quot;"
+				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\PiperAPI\Lib\$(PlatformName)&quot;;&quot;..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;;&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib&quot;"
 				UACExecutionLevel="1"
 				ModuleDefinitionFile=".\PiperMmAdapter.def"
 				GenerateDebugInformation="true"
@@ -244,10 +244,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="../../../3rdParty/PiperApi/PiperAPI.lib"
+				AdditionalDependencies="PiperAPI.lib"
 				OutputFile="$(OutDir)/mmgr_dal_Piper.dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;;&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib&quot;"
+				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\PiperAPI\Lib\$(PlatformName)&quot;;&quot;..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;;&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib&quot;"
 				UACExecutionLevel="1"
 				ModuleDefinitionFile=".\PiperMmAdapter.def"
 				GenerateDebugInformation="false"
@@ -316,7 +316,6 @@
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_AFXEXT;MODULE_EXPORTS"
 				ExceptionHandling="2"
 				RuntimeLibrary="2"
-				EnableEnhancedInstructionSet="2"
 				FloatingPointModel="2"
 				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="2"
@@ -334,10 +333,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="../../../3rdParty/PiperApi/PiperAPI.lib"
+				AdditionalDependencies="PiperAPI.lib"
 				OutputFile="$(OutDir)/mmgr_dal_Piper.dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;;&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib&quot;"
+				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\PiperAPI\Lib\$(PlatformName)&quot;;&quot;..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;;&quot;..\..\..\3rdparty\Microsoft\VisualC++\atlmfc\lib&quot;"
 				UACExecutionLevel="1"
 				ModuleDefinitionFile=".\PiperMmAdapter.def"
 				GenerateDebugInformation="false"
