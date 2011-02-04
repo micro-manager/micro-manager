@@ -1,0 +1,4 @@
+import org.micromanager.utils.*;
+import org.micromanager.bioformats.*;
+
+ImageUtils.setPreferredTaggedImageStorage(TaggedImageStorageOMETIFF.class);
