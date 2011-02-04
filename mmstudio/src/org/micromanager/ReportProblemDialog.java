@@ -27,9 +27,10 @@ public class ReportProblemDialog extends javax.swing.JDialog {
     CMMCore core_;
     private DeviceControlGUI parent_;
     String configPath_;
+    MMOptions mmoptions_;
 
     /** Creates new form ReportProblemDialog */
-    public ReportProblemDialog(CMMCore c, DeviceControlGUI parentMMGUI, String configPath) {
+    public ReportProblemDialog(CMMCore c, DeviceControlGUI parentMMGUI, String configPath, MMOptions mmoptions) {
         super();
         //(parent, modal);
         initComponents();
@@ -38,6 +39,7 @@ public class ReportProblemDialog extends javax.swing.JDialog {
         core_ = c;
         parent_ = parentMMGUI;
         configPath_ = configPath;
+        mmoptions_ = mmoptions;
     }
 
     /** This method is called from within the constructor to
@@ -56,7 +58,6 @@ public class ReportProblemDialog extends javax.swing.JDialog {
         jScrollPane2 = new javax.swing.JScrollPane();
         DescriptionPane_ = new javax.swing.JEditorPane();
         CancelButton_ = new javax.swing.JButton();
-        DoneButton_ = new javax.swing.JButton();
 
         setTitle("Report Problem Dialog");
         addComponentListener(new java.awt.event.ComponentAdapter() {
@@ -97,13 +98,6 @@ public class ReportProblemDialog extends javax.swing.JDialog {
             }
         });
 
-        DoneButton_.setText("Done");
-        DoneButton_.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                DoneButton_ActionPerformed(evt);
-            }
-        });
-
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -111,7 +105,6 @@ public class ReportProblemDialog extends javax.swing.JDialog {
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, DoneButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 85, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, NextButton_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 97, Short.MAX_VALUE)
                     .add(org.jdesktop.layout.GroupLayout.TRAILING, SkipButton_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 97, Short.MAX_VALUE))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
@@ -136,14 +129,9 @@ public class ReportProblemDialog extends javax.swing.JDialog {
                         .addContainerGap()
                         .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 109, Short.MAX_VALUE)))
                 .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-                        .add(jScrollPane2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 84, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                        .add(CancelButton_))
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-                        .add(DoneButton_)
-                        .add(8, 8, 8))))
+                .add(jScrollPane2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 84, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                .add(CancelButton_))
         );
 
         pack();
@@ -156,6 +144,10 @@ public class ReportProblemDialog extends javax.swing.JDialog {
             case 1:
                 step_ = step_ + 1;
                 NextButton_.setText("Next");
+
+                StepInstructions_.setText("If the problem can be easily replicated, please so do. In any case, "
+                        +"press Next to send your problem description, system configuration, and log to micro-manager.org.");
+                step_ = 2;
                 SkipButton_.setVisible(false);
                 break;
             case 2:
@@ -177,10 +169,11 @@ public class ReportProblemDialog extends javax.swing.JDialog {
     private void NextButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NextButton_ActionPerformed
         switch (step_) {
             case 0:
+                core_.enableDebugLog(true);
                 SkipButton_.setVisible(true);
                 NextButton_.setText("Clear!");
                 StepInstructions_.setText("If the system has been running for some time, the log file is likely very large,"
-                        + " and may take a long time to send. If you can easily replicate the problem situation, press Clear!"
+                        + " and may take a long time to send, and longer for us to understand. If you can easily replicate the problem situation, press Clear!"
                         + " to restart the log file anew. Else press skip to leave your log file intact.");
                 step_ = 1;
                 break;
@@ -223,6 +216,8 @@ public class ReportProblemDialog extends javax.swing.JDialog {
             StepInstructions_.setText("The report was successfully submitted to micro-manager.org");
         }
         step_ = 3;
+        NextButton_.setText("Done");
+        CancelButton_.setVisible(false);
         SkipButton_.setVisible(false);
     }
 
@@ -230,11 +225,6 @@ public class ReportProblemDialog extends javax.swing.JDialog {
         InitializeDialog();
         this.setVisible(false);
     }//GEN-LAST:event_CancelButton_ActionPerformed
-
-    private void DoneButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_DoneButton_ActionPerformed
-        InitializeDialog();
-        this.setVisible(false);
-    }//GEN-LAST:event_DoneButton_ActionPerformed
 
     void InitializeDialog() {
         step_ = 0;
@@ -244,12 +234,13 @@ public class ReportProblemDialog extends javax.swing.JDialog {
         DescriptionPane_.setEditable(true);
         DescriptionPane_.setEnabled(true);
         DescriptionPane_.requestFocus();
+        core_.enableDebugLog(mmoptions_.debugLogEnabled);
+        CancelButton_.setVisible(true);
 
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton CancelButton_;
     private javax.swing.JEditorPane DescriptionPane_;
-    private javax.swing.JButton DoneButton_;
     private javax.swing.JButton NextButton_;
     private javax.swing.JButton SkipButton_;
     private javax.swing.JTextArea StepInstructions_;

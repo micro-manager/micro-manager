@@ -2886,7 +2886,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
          public void actionPerformed(ActionEvent e) {
              if( null==reportProblemDialog_){
-                reportProblemDialog_ = new ReportProblemDialog(core_, thisFrame, sysConfigFile_);
+
+                reportProblemDialog_ = new ReportProblemDialog(core_, thisFrame, sysConfigFile_, options_);
                 thisFrame.addMMBackgroundListener(reportProblemDialog_)
 ;             }
             reportProblemDialog_.setVisible(true);
