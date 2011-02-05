@@ -1,0 +1,65 @@
+// Script to test Micro-Manager ScriptInterface.
+// Please first load the Demo-configuration file and then execute this script
+// Any failures reflect bugs in the Micro-Managare code
+// Nico Stuurman, February 2011
+
+gui.clearMessageWindow();
+gui.sleep(100);
+gui.refreshGUI();
+gui.snapSingleImage();
+
+imw = gui.getImageWin();
+af = gui.getAutofocus();
+c = gui.getMMCore();
+pl = gui.getPositionList();
+gui.setPositionList(pl);
+gui.showAutofocusDialog();
+acq = gui.getAcquisitionEngine();
+
+xyStage = gui.getXYStageName();
+xyPos = gui.getXYStagePosition();
+gui.message("XY Stage: " + xyStage + " is at position: " + xyPos.x + ", " + xyPos.y);
+gui.setRelativeXYStagePosition(1.0, 1.0);
+gui.setXYStagePosition(xyPos.x -1.0, xyPos.y - 1.0);
+// gui.setStagePosition();  // there does not seem to be a gui.getStagePOsition!!
+gui.setRelativeStagePosition(1);
+
+gui.logMessage("Test message from test script");
+gui.showMessage("Hello there!  Just testing, 1, 2, 3");
+
+
+mmc.snapImage();
+gui.displayImage(mmc.getImage());
+
+gui.closeAllAcquisitions();
+gui.runAcquisition(); // This does not open the acquisition window as the documentation says it would!
+gui.runAcquisition("AcquistionData", "Test");
+gui.closeAllAcquisitions();
+
+width = mmc.getImageWidth();
+height = mmc.getImageHeight();
+depth = mmc.getImageBitDepth();
+
+
+nrFrames = 10;
+nrChannels = 2;
+nrSlices = 5;
+acqName = "Test";
+gui.openAcquisition(acqName, "", nrFrames, nrChannels, nrSlices);   // this one currently fails!
+gui.initializeAcquisition(acqName, width, height, depth);
+for (frame = 0; frame < nrFrames; frame++)
+   for (channel = 0; channel < nrChannels; channel++)
+		for (slice = 0; slice < nrSlices; slice++)
+			snapAndAddImage(acqName, frame, channel, slice);
+if (gui.acquisitionExists(acqName) != true)
+	gui.message("Error in acquisitionExists function");
+gui.closeAcquisition(acqName);
+if (gui.acquisitionExists(acqName) == true)
+	gui.mesage("Error in acquisitionExists function");
+
+gui.runBurstAcquistion();
+gui.runBurstAcquisition(10);
+gui.runBurstAcquistion(10, acqName, "");
+
+
+gui.message("All tests succeeded successfully!");
