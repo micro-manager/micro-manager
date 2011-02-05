@@ -1741,7 +1741,12 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                new Thread() {
                   public void run() {
                      try {
-                        afMgr_.getDevice().fullFocus();
+                       boolean lmo  = IsLiveModeOn();
+                      if(lmo)
+                           enableLiveMode(false);
+                       afMgr_.getDevice().fullFocus();
+                       if(lmo)
+                           enableLiveMode(true);
                      } catch (MMException ex) {
                         ReportingUtils.logError(ex);
                      }

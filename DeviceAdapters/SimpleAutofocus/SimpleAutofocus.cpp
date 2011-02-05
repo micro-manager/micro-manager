@@ -367,6 +367,15 @@ int SimpleAutofocus::FullFocus()
    // todo - how to get list of valid property values?
    pCore_->GetDeviceProperty(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreCamera, coreCameraDeviceName);
    pCore_->GetDeviceProperty(coreCameraDeviceName, MM::g_Keyword_Binning, value);
+   MM::Device* pCamera = pCore_->GetDevice(this, coreCameraDeviceName);
+   if(
+     ((MM::Camera*)pCamera)->IsCapturing()
+     )
+   {
+     pCore_->PostError(DEVICE_CAMERA_BUSY_ACQUIRING, "Autofocus not possible");
+     return DEVICE_CAMERA_BUSY_ACQUIRING;
+   }
+   
    std::istringstream issbinning(value);
    issbinning >> oldBinning;
    if( 0 < binningForAutofocusAcquisition_ && ( oldBinning != binningForAutofocusAcquisition_))
@@ -559,6 +568,15 @@ int SimpleAutofocus::OnRecalculate(MM::PropertyBase* pProp, MM::ActionType eAct)
          pProp->Get(recalculate_);
          if( 0!= recalculate_)
          {
+            // check if camera is available
+            char coreCameraDeviceName[MM::MaxStrLength];
+            char value[MM::MaxStrLength];
+            pCore_->GetDeviceProperty(MM::g_Keyword_CoreDevice, MM::g_Keyword_CoreCamera, coreCameraDeviceName);
+            MM::Device* pCamera = pCore_->GetDevice(this, coreCameraDeviceName);
+            if(
+               ((MM::Camera*)pCamera)->IsCapturing()
+               )
+            return DEVICE_CAMERA_BUSY_ACQUIRING;
             latestSharpness_ = SharpnessAtZ(Z());
             recalculate_ = 0;
             pProp->Set(recalculate_);
