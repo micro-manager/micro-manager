@@ -10,8 +10,6 @@
  */
 package org.micromanager;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import mmcorej.CMMCore;
 import org.micromanager.api.DeviceControlGUI;
 import org.micromanager.utils.ReportingUtils;
@@ -22,7 +20,6 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class ReportProblemDialog extends javax.swing.JDialog {
 
-    private Integer step_;
     String reportPreamble_;
     CMMCore core_;
     private DeviceControlGUI parent_;
@@ -35,7 +32,7 @@ public class ReportProblemDialog extends javax.swing.JDialog {
         //(parent, modal);
         initComponents();
         reportPreamble_ = "";
-        step_ = 0;
+
         core_ = c;
         parent_ = parentMMGUI;
         configPath_ = configPath;
@@ -51,43 +48,32 @@ public class ReportProblemDialog extends javax.swing.JDialog {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
-        SkipButton_ = new javax.swing.JButton();
-        NextButton_ = new javax.swing.JButton();
-        jScrollPane1 = new javax.swing.JScrollPane();
-        StepInstructions_ = new javax.swing.JTextArea();
         jScrollPane2 = new javax.swing.JScrollPane();
         DescriptionPane_ = new javax.swing.JEditorPane();
         CancelButton_ = new javax.swing.JButton();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        StepInstructions_ = new javax.swing.JTextPane();
+        jLabel1 = new javax.swing.JLabel();
+        Name_ = new javax.swing.JTextField();
+        jLabel2 = new javax.swing.JLabel();
+        jLabel3 = new javax.swing.JLabel();
+        Organization_ = new javax.swing.JTextField();
+        jLabel4 = new javax.swing.JLabel();
+        eemailText_ = new javax.swing.JTextField();
+        ClearButton_ = new javax.swing.JButton();
+        SendButton_ = new javax.swing.JButton();
 
         setTitle("Report Problem Dialog");
         addComponentListener(new java.awt.event.ComponentAdapter() {
             public void componentShown(java.awt.event.ComponentEvent evt) {
                 formComponentShown(evt);
             }
-        });
-
-        SkipButton_.setText("Skip");
-        SkipButton_.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                SkipButton_ActionPerformed(evt);
+            public void componentHidden(java.awt.event.ComponentEvent evt) {
+                formComponentHidden(evt);
             }
         });
 
-        NextButton_.setText("Next");
-        NextButton_.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                NextButton_ActionPerformed(evt);
-            }
-        });
-
-        StepInstructions_.setColumns(20);
-        StepInstructions_.setFont(new java.awt.Font("Lucida Sans Unicode", 0, 10));
-        StepInstructions_.setLineWrap(true);
-        StepInstructions_.setRows(5);
-        StepInstructions_.setWrapStyleWord(true);
-        jScrollPane1.setViewportView(StepInstructions_);
-
-        DescriptionPane_.setFont(new java.awt.Font("Lucida Sans Unicode", 0, 10));
+        DescriptionPane_.setFont(new java.awt.Font("Lucida Sans Unicode", 0, 10)); // NOI18N
         jScrollPane2.setViewportView(DescriptionPane_);
 
         CancelButton_.setText("Cancel");
@@ -98,114 +84,161 @@ public class ReportProblemDialog extends javax.swing.JDialog {
             }
         });
 
+        StepInstructions_.setBorder(javax.swing.BorderFactory.createLineBorder(getBackground()));
+        StepInstructions_.setEditable(false);
+        StepInstructions_.setFont(new java.awt.Font("Lucida Sans Unicode", 0, 10)); // NOI18N
+        jScrollPane1.setViewportView(StepInstructions_);
+
+        jLabel1.setText("Problem Description");
+
+        Name_.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                Name_ActionPerformed(evt);
+            }
+        });
+        Name_.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
+            public void propertyChange(java.beans.PropertyChangeEvent evt) {
+                Name_PropertyChange(evt);
+            }
+        });
+
+        jLabel2.setText("Name");
+
+        jLabel3.setText("Organization");
+
+        Organization_.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                Organization_ActionPerformed(evt);
+            }
+        });
+        Organization_.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
+            public void propertyChange(java.beans.PropertyChangeEvent evt) {
+                Organization_PropertyChange(evt);
+            }
+        });
+
+        jLabel4.setText("e-mail");
+
+        eemailText_.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                eemailText_ActionPerformed(evt);
+            }
+        });
+        eemailText_.addPropertyChangeListener(new java.beans.PropertyChangeListener() {
+            public void propertyChange(java.beans.PropertyChangeEvent evt) {
+                eemailText_PropertyChange(evt);
+            }
+        });
+
+        ClearButton_.setText("Clear Event Log!");
+        ClearButton_.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                ClearButton_ActionPerformed(evt);
+            }
+        });
+
+        SendButton_.setText("Send");
+        SendButton_.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                SendButton_ActionPerformed(evt);
+            }
+        });
+
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(layout.createSequentialGroup()
-                .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, NextButton_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 97, Short.MAX_VALUE)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, SkipButton_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 97, Short.MAX_VALUE))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 335, Short.MAX_VALUE)
-                    .add(jScrollPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 335, Short.MAX_VALUE)
-                    .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-                        .add(249, 249, 249)
-                        .add(CancelButton_)))
+                    .add(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .add(ClearButton_)
+                        .add(18, 18, 18)
+                        .add(SendButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 145, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                        .add(41, 41, 41)
+                        .add(CancelButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 140, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+                        .add(layout.createSequentialGroup()
+                            .addContainerGap()
+                            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                                .add(jLabel3)
+                                .add(jLabel2)
+                                .add(jLabel4)
+                                .add(jLabel1))
+                            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+                            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                                .add(eemailText_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 631, Short.MAX_VALUE)
+                                .add(Organization_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 631, Short.MAX_VALUE)
+                                .add(org.jdesktop.layout.GroupLayout.TRAILING, Name_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 631, Short.MAX_VALUE)
+                                .add(jScrollPane2)))
+                        .add(layout.createSequentialGroup()
+                            .add(72, 72, 72)
+                            .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 717, Short.MAX_VALUE))))
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(layout.createSequentialGroup()
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(jLabel2)
+                    .add(Name_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(jLabel3)
+                    .add(Organization_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                .add(18, 18, 18)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(jLabel4)
+                    .add(eemailText_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                     .add(layout.createSequentialGroup()
-                        .add(28, 28, 28)
-                        .add(SkipButton_)
-                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                        .add(NextButton_))
+                        .add(49, 49, 49)
+                        .add(jLabel1))
                     .add(layout.createSequentialGroup()
-                        .addContainerGap()
-                        .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 109, Short.MAX_VALUE)))
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(jScrollPane2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 84, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                .add(CancelButton_))
+                        .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                        .add(jScrollPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 154, Short.MAX_VALUE)))
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 115, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 15, Short.MAX_VALUE)
+                .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                    .add(ClearButton_)
+                    .add(SendButton_)
+                    .add(CancelButton_))
+                .add(9, 9, 9))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void SkipButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SkipButton_ActionPerformed
-        switch (step_) {
-            case 0:
-                break;
-            case 1:
-                step_ = step_ + 1;
-                NextButton_.setText("Next");
-
-                StepInstructions_.setText("If the problem can be easily replicated, please so do. In any case, "
-                        +"press Next to send your problem description, system configuration, and log to micro-manager.org.");
-                step_ = 2;
-                SkipButton_.setVisible(false);
-                break;
-            case 2:
-                BuildAndSendReport();
-                break;
-            default:
-                break;
-
-        }
-    }//GEN-LAST:event_SkipButton_ActionPerformed
-
     private void formComponentShown(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentShown
 
-        SkipButton_.setVisible(false);
+        ////SkipButton_.setVisible(false);
         InitializeDialog();
 
     }//GEN-LAST:event_formComponentShown
 
-    private void NextButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_NextButton_ActionPerformed
-        switch (step_) {
-            case 0:
-                core_.enableDebugLog(true);
-                SkipButton_.setVisible(true);
-                NextButton_.setText("Clear!");
-                StepInstructions_.setText("If the system has been running for some time, the log file is likely very large,"
-                        + " and may take a long time to send, and longer for us to understand. If you can easily replicate the problem situation, press Clear!"
-                        + " to restart the log file anew. Else press skip to leave your log file intact.");
-                step_ = 1;
-                break;
-            case 1:
-                // user wishes to clear the log file..
-                core_.clearLog();
-                core_.logMessage("MM Studio version: " + parent_.getVersion());
-                core_.logMessage(core_.getVersionInfo());
-                core_.logMessage(core_.getAPIVersionInfo());
-                core_.logMessage("Operating System: " + System.getProperty("os.name") + " " + System.getProperty("os.version"));
-                NextButton_.setText("Next");
-                StepInstructions_.setText("Now operate the system until you've duplicated the problem. When you're successful, "
-                        +"press Next to send your problem description, system configuration, and log to micro-manager.org.");
-                step_ = 2;
-                break;
-            case 2:
-                BuildAndSendReport();
-                break;
-            case 3:
-                InitializeDialog();
-                setVisible(false);
-                break;
-            default:
-
-                break;
+    private boolean userInputsValid(){
+        boolean r = false;
+        String EMAIL_REGEX = "^[\\w-_\\.+]*[\\w-_\\.]\\@([\\w]+\\.)+[\\w]+[\\w]$";
+        if (eemailText_.getText().matches(EMAIL_REGEX)) {
+            if (0 < Name_.getText().length()) {
+                if (0 < Organization_.getText().length()) {
+                    r = true;
+                }
+            }
         }
-    }//GEN-LAST:event_NextButton_ActionPerformed
+
+        return r;
+    }
 
     private void BuildAndSendReport() {
-        reportPreamble_ = "#User Description: " + DescriptionPane_.getText();
+        reportPreamble_ = "#User Name:" + Name_.getText();
+        reportPreamble_ += ("#Organization: " + Organization_.getText());
+        reportPreamble_ += ("#User e-mail: " + eemailText_.getSelectedText());
+        reportPreamble_ += ("#User Description: " + DescriptionPane_.getText());
         DescriptionPane_.setEnabled(false);
         DescriptionPane_.setEditable(false);
+        SendButton_.setEnabled(false);
         StepInstructions_.setText("Sending...");
         ProblemReportSender p = new ProblemReportSender(reportPreamble_, core_, configPath_);
         String result = p.Send();
@@ -215,35 +248,123 @@ public class ReportProblemDialog extends javax.swing.JDialog {
         } else {
             StepInstructions_.setText("The report was successfully submitted to micro-manager.org");
         }
-        step_ = 3;
-        NextButton_.setText("Done");
-        CancelButton_.setVisible(false);
-        SkipButton_.setVisible(false);
+
     }
 
     private void CancelButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_CancelButton_ActionPerformed
-        InitializeDialog();
+        FinishDialog();
         this.setVisible(false);
     }//GEN-LAST:event_CancelButton_ActionPerformed
 
+    private void Name_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_Name_ActionPerformed
+    }//GEN-LAST:event_Name_ActionPerformed
+
+    private void Name_PropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_Name_PropertyChange
+        // TODO add your handling code here:
+    }//GEN-LAST:event_Name_PropertyChange
+
+    private void ClearButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ClearButton_ActionPerformed
+        // user wishes to clear the log file..
+        core_.clearLog();
+        core_.logMessage("MM Studio version: " + parent_.getVersion());
+        core_.logMessage(core_.getVersionInfo());
+        core_.logMessage(core_.getAPIVersionInfo());
+        core_.logMessage("Operating System: " + System.getProperty("os.name") + " " + System.getProperty("os.version"));
+
+        StepInstructions_.setText("The system is now capturing a 'debug' level log file. Operate the system until you've duplicated the problem. When you're successful, "
+            + " press Send to send your information, problem description, system configuration, and log to micro-manager.org.");
+
+
+        DescriptionPane_.setEnabled(true);
+        DescriptionPane_.setEditable(true);
+        SendButton_.setEnabled(true);
+
+    }//GEN-LAST:event_ClearButton_ActionPerformed
+
+    private void formComponentHidden(java.awt.event.ComponentEvent evt) {//GEN-FIRST:event_formComponentHidden
+        FinishDialog();
+    }//GEN-LAST:event_formComponentHidden
+
+    private void SendButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_SendButton_ActionPerformed
+
+        String EMAIL_REGEX = "^[\\w-_\\.+]*[\\w-_\\.]\\@([\\w]+\\.)+[\\w]+[\\w]$";
+        if (eemailText_.getText().matches(EMAIL_REGEX)) {
+            if (0 < Name_.getText().length()) {
+                if (0 < Organization_.getText().length()) {
+                    BuildAndSendReport();
+                } else {
+                    ReportingUtils.showMessage("Please provide your Organization name.");
+                    Organization_.requestFocus();
+                }
+            } else {
+                ReportingUtils.showMessage("Please provide your name.");
+                Name_.requestFocus();
+            }
+        } else {
+            ReportingUtils.showMessage("Please provide a valid e-mail.");
+            eemailText_.requestFocus();
+        }
+
+}//GEN-LAST:event_SendButton_ActionPerformed
+
+    private void eemailText_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_eemailText_ActionPerformed
+
+
+        // TODO add your handling code here:
+    }//GEN-LAST:event_eemailText_ActionPerformed
+
+    private void Organization_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_Organization_ActionPerformed
+
+    }//GEN-LAST:event_Organization_ActionPerformed
+
+    private void Organization_PropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_Organization_PropertyChange
+
+        // TODO add your handling code here:
+    }//GEN-LAST:event_Organization_PropertyChange
+
+    private void eemailText_PropertyChange(java.beans.PropertyChangeEvent evt) {//GEN-FIRST:event_eemailText_PropertyChange
+        // TODO add your handling code here:
+    }//GEN-LAST:event_eemailText_PropertyChange
+    void FinishDialog() {
+        SendButton_.setEnabled(true);
+        DescriptionPane_.setEnabled(true);
+        DescriptionPane_.setEditable(true);
+        core_.enableDebugLog(mmoptions_.debugLogEnabled);
+    }
+
     void InitializeDialog() {
-        step_ = 0;
-        StepInstructions_.setText("Please describe the problem in the panel below:");
+
+        StepInstructions_.setText("If the system has been running for some time, the log file is likely very large,"
+            + " and may take a long time to send, and longer for us to understand. If you can easily replicate the problem situation, press 'Clear Event Log!'"
+            + " to start the log file anew.\n"
+            + "The system is now capturing a 'debug' level log file. Operate the system until you've duplicated the problem. When you're successful, "
+            + " press Send to send your information, problem description, system configuration, and log to micro-manager.org.");
+        StepInstructions_.setBackground(this.getBackground());
+
+
         DescriptionPane_.setText("");
         DescriptionPane_.setVisible(true);
         DescriptionPane_.setEditable(true);
         DescriptionPane_.setEnabled(true);
         DescriptionPane_.requestFocus();
-        core_.enableDebugLog(mmoptions_.debugLogEnabled);
+        core_.enableDebugLog(true);
         CancelButton_.setVisible(true);
+        SendButton_.setEnabled(true);
 
     }
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton CancelButton_;
+    private javax.swing.JButton ClearButton_;
     private javax.swing.JEditorPane DescriptionPane_;
-    private javax.swing.JButton NextButton_;
-    private javax.swing.JButton SkipButton_;
-    private javax.swing.JTextArea StepInstructions_;
+    private javax.swing.JTextField Name_;
+    private javax.swing.JTextField Organization_;
+    private javax.swing.JButton SendButton_;
+    private javax.swing.JTextPane StepInstructions_;
+    private javax.swing.JTextField eemailText_;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     // End of variables declaration//GEN-END:variables
