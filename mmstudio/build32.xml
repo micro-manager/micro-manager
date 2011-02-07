@@ -171,6 +171,7 @@
 		<copy file="${BinRoot}/mmgr_dal_ProgRes.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_PSRemoteCamera.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_PVCAM.dll" todir="${InstallRoot}" />
+		<copy file="${BinRoot}/mmgr_dal_Sapphire.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_QCam.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_ScionCam.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_Sensicam.dll" todir="${InstallRoot}" />

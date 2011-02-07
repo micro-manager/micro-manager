@@ -124,6 +124,7 @@ Source: micro-manager\mmgr_dal_ProgRes.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_PSRemoteCamera.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_PVCAM.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_QCam.dll; DestDir: {app}; Flags: ignoreversion
+Source: micro-manager\mmgr_dal_Sapphire.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_ScionCam.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Sensicam.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_SerialManager.dll; DestDir: {app}; Flags: ignoreversion
