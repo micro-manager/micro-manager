@@ -4,15 +4,13 @@
  */
 package org.micromanager.bioformats;
 
-import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import loci.common.services.ServiceFactory;
-import loci.formats.FormatException;
 import loci.formats.ImageReader;
 import loci.formats.ImageWriter;
+import loci.formats.meta.MetadataStore;
 import loci.formats.ome.OMEXMLMetadata;
 import loci.formats.services.OMEXMLService;
+import mmcorej.TaggedImage;
 import ome.xml.model.enums.DimensionOrder;
 import ome.xml.model.enums.PixelType;
 import ome.xml.model.primitives.PositiveInteger;
@@ -29,6 +27,7 @@ public class TaggedImageStorageOMETIFF extends TaggedImageStorageRam {
 
    final private String location_;
    private boolean saved_ = true;
+   ImageReader reader_ = null;
 
    public TaggedImageStorageOMETIFF(String location, Boolean newData, JSONObject summaryMetadata) {
       super(summaryMetadata);
@@ -38,21 +37,37 @@ public class TaggedImageStorageOMETIFF extends TaggedImageStorageRam {
       location_ = location;
    }
 
+   @Override
+   public TaggedImage getImage(int channel, int slice, int frame, int position) {
+      if (reader_ == null) {
+         return super.getImage(channel, slice, frame, position);
+      } else {
+         JSONObject tags = new JSONObject();
+         reader_.setSeries(position);
+         Object pix = reader_.getIndex(slice, channel, frame);
+         TaggedImage image = new TaggedImage(pix, tags);
+         return image;
+      }
+   }
+
+
    private void loadImages() {
       try {
-         ImageReader reader = new ImageReader();
-         reader.setId(location_);
-         int nPositions = reader.getSeriesCount();
-         int nChannels = reader.getSizeC();
-         int nFrames = reader.getSizeT();
-         int nSlices = reader.getSizeZ();
-         int width = reader.getSizeX();
-         int height = reader.getSizeY();
+         reader_ = new ImageReader();
+         reader_.setId(location_);
+         int nPositions = reader_.getSeriesCount();
+         int nChannels = reader_.getSizeC();
+         int nFrames = reader_.getSizeT();
+         int nSlices = reader_.getSizeZ();
+         int width = reader_.getSizeX();
+         int height = reader_.getSizeY();
+         
+         MetadataStore metadata = reader_.getMetadataStore();
 
          for (int position = 0; position < nPositions; position++) {
-            reader.setSeries(position);
+            reader_.setSeries(position);
 
-            byte[] pixels = reader.openBytes(0);
+            byte[] pixels = reader_.openBytes(0);
 
             // this.putImage(null)
          }
