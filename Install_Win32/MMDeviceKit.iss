@@ -1,13 +1,13 @@
 [Setup]
-OutputDir=C:\projects\micromanager\Install\Output
-OutputBaseFilename=MMDeviceKit-win-34-01
-DefaultDirName=C:/Program Files/Micro-Manager-1.4/MMDeviceKit-win-34-01
-VersionInfoVersion=34
+OutputDir=C:\projects\micromanager
+OutputBaseFilename=MMDeviceKit-win-38
+DefaultDirName=C:/Program Files/Micro-Manager-1.4/MMDeviceKit-win-38
+VersionInfoVersion=38
 VersionInfoCompany=micro-manager.org
 VersionInfoCopyright=University of California San Francisco
 AppCopyright=Unviersity of California San Francisco
 AppName=Micro-Manager-1.4 DeviceKit
-AppVerName=DeviceKit for API version 34
+AppVerName=DeviceKit for API version 38
 ShowLanguageDialog=yes
 DisableDirPage=false
 
@@ -31,6 +31,7 @@ Source: ..\DeviceAdapters\DemoCamera\DemoCamera.cpp; DestDir: {app}\DeviceAdapte
 Source: ..\DeviceAdapters\DemoCamera\DemoCamera.h; DestDir: {app}\DeviceAdapters\DemoCamera
 Source: ..\DeviceAdapters\DemoCamera\DemoCamera.vcproj; DestDir: {app}\DeviceAdapters\DemoCamera
 Source: ..\DeviceAdapters\DemoCamera\license.txt; DestDir: {app}\DeviceAdapters\DemoCamera
+Source: ..\DeviceAdapters\DemoCamera\WriteCompactTiffRGB.h; DestDir: {app}\DeviceAdapters\DemoCamera
 Source: ..\DeviceAdapters\Sensicam\Sensicam.cpp; DestDir: {app}\DeviceAdapters\Sensicam
 Source: ..\DeviceAdapters\Sensicam\Sensicam.h; DestDir: {app}\DeviceAdapters\Sensicam
 Source: ..\DeviceAdapters\Sensicam\Sensicam.vcproj; DestDir: {app}\DeviceAdapters\Sensicam
@@ -42,8 +43,8 @@ Source: ..\DeviceAdapters\Nikon\Nikon.vcproj; DestDir: {app}\DeviceAdapters\Niko
 Source: ..\DeviceAdapters\Nikon\license.txt; DestDir: {app}\DeviceAdapters\Nikon
 
 ; test files
-Source: ..\lib\MMCored.lib; DestDir: {app}\lib
-Source: ..\lib\MMCorer.lib; DestDir: {app}\lib
+Source: ..\lib_Win32\MMCored.lib; DestDir: {app}\lib
+Source: ..\lib_Win32\MMCorer.lib; DestDir: {app}\lib
 Source: ..\Test_Programs\Test_MMCore_devkit\Test_MMCore_devkit.cpp; DestDir: {app}\Test_MMCore_devkit
 Source: ..\Test_Programs\Test_MMCore_devkit\Test_MMCore_devkit.vcproj; DestDir: {app}\Test_MMCore_devkit
 Source: ..\Test_Programs\Test_MMCore_devkit\Test_MMCore_devkit.sln; DestDir: {app}\Test_MMCore_devkit
