@@ -16,8 +16,6 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
@@ -49,7 +47,6 @@ public class VirtualAcquisitionDisplay {
          return null;
    }
 
-
    final MMImageCache imageCache_;
    final private AcquisitionEngine eng_;
    final private ImagePlus hyperImage_;
@@ -58,7 +55,6 @@ public class VirtualAcquisitionDisplay {
    final private ScrollbarWithLabel pSelector_;
    private ChannelDisplaySettings[] channelSettings_;
    private int numComponents_ = 1;
-   final HashMap channelMap = new HashMap();
 
    public VirtualAcquisitionDisplay(MMImageCache imageCache, AcquisitionEngine eng) {
       imageCache_ = imageCache;
@@ -120,9 +116,34 @@ public class VirtualAcquisitionDisplay {
       setNumPositions(numPositions);
       updateAndDraw();
       updateWindow();
-      readChannelSettingsFromCache(true);
+      applySettingsFromCache(true);
    }
 
+
+   public int rgbToGrayChannel(int channelIndex) {
+      try {
+         if (MDUtils.getNumberOfComponents(imageCache_.getSummaryMetadata()) == 3) {
+            return channelIndex * 3;
+         }
+         return channelIndex;
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
+         return 0;
+      }
+   }
+
+
+   public int grayToRGBChannel(int grayIndex) {
+      try {
+         if (MDUtils.getNumberOfComponents(imageCache_.getSummaryMetadata()) == 3) {
+            return grayIndex / 3;
+         }
+         return grayIndex;
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
+         return 0;
+      }
+   }
 
    public static JSONObject getDisplaySettingsFromSummary(JSONObject summaryMetadata) {
       try {
@@ -196,6 +217,25 @@ public class VirtualAcquisitionDisplay {
       return hyperImage_;
    }
 
+   private void setupChannelContrast(int grayChannel, int pixelMin, int pixelMax) throws JSONException, MMScriptException {
+      int min = (int) hyperImage_.getDisplayRangeMin();
+      int max = (int) hyperImage_.getDisplayRangeMax();
+      if (hyperImage_.getSlice() == 1 || channelSettings_[grayChannel].min == Integer.MAX_VALUE || channelSettings_[grayChannel].max == Integer.MIN_VALUE) {
+         min = Integer.MAX_VALUE;
+         max = Integer.MIN_VALUE;
+      }
+      applySettingsFromCache(false);
+      setChannelColor(grayChannel, channelSettings_[grayChannel].color.getRGB());
+      min = Math.min(min, pixelMin);
+      max = Math.max(max, pixelMax);
+      channelSettings_[grayChannel].min = (int) min;
+      channelSettings_[grayChannel].max = (int) max;
+      hyperImage_.setDisplayRange(min, max);
+      getSummaryMetadata().getJSONArray("ChContrastMax").put(grayChannel, max);
+      getSummaryMetadata().getJSONArray("ChContrastMin").put(grayChannel, min);
+      writeChannelSettingsToCache(grayChannel);
+   }
+
    private void updateAndDraw() {
       if (getNumGrayChannels() > 1) {
          ((CompositeImage) hyperImage_).setChannelsUpdated();
@@ -246,10 +286,6 @@ public class VirtualAcquisitionDisplay {
    }
 
    public void showImage(TaggedImage taggedImg) throws MMScriptException {
-      if (hyperImage_ == null) {
-
-      }
-      
       try {
          if (hyperImage_.getSlice() == 1) {
             hyperImage_.getProcessor().setPixels(
@@ -258,6 +294,7 @@ public class VirtualAcquisitionDisplay {
 
          updateWindow();
          JSONObject md = taggedImg.tags;
+         int chan = this.rgbToGrayChannel(MDUtils.getChannelIndex(md));
 
          try {
             int p = 1 + MDUtils.getPositionIndex(taggedImg.tags);
@@ -265,7 +302,7 @@ public class VirtualAcquisitionDisplay {
                setNumPositions(p);
             }
             setPosition(1 + MDUtils.getPositionIndex(taggedImg.tags));
-            hyperImage_.setPosition(1 + MDUtils.getChannelIndex(md),
+            hyperImage_.setPosition(1 + chan,
                                     1 + MDUtils.getSliceIndex(md),
                                     1 + MDUtils.getFrameIndex(md));
             //setPlaybackLimits(1, 1 + MDUtils.getFrameIndex(md));
@@ -277,38 +314,13 @@ public class VirtualAcquisitionDisplay {
                int pixelMin = ImageUtils.getMin(taggedImg.pix);
                int pixelMax = ImageUtils.getMax(taggedImg.pix);
                if (MDUtils.isRGB(taggedImg)) {
-                  for (int i = 1; i <= getNumGrayChannels(); ++i) {
-                     (hyperImage_).setPosition(i,
-                             MDUtils.getSliceIndex(taggedImg.tags),
-                             MDUtils.getFrameIndex(taggedImg.tags));
-                     hyperImage_.setDisplayRange(pixelMin, pixelMax);
-                     updateAndDraw();
+                  for (int i=0; i<3; ++i) {
+                     setupChannelContrast(chan + i, pixelMin, pixelMax);
                   }
                } else {
-
-                  int chan = MDUtils.getChannelIndex(md);
-
-                  int min = (int) hyperImage_.getDisplayRangeMin();
-                  int max = (int) hyperImage_.getDisplayRangeMax();
-                  if (hyperImage_.getSlice() == 1
-                          || channelSettings_[chan].min == Integer.MAX_VALUE
-                          || channelSettings_[chan].max == Integer.MIN_VALUE) {
-                     min = Integer.MAX_VALUE;
-                     max = Integer.MIN_VALUE;
-                  }
-
-                  readChannelSettingsFromCache(false);
-                  setChannelColor(chan, channelSettings_[chan].color.getRGB());
-                  min = Math.min(min, pixelMin);
-                  max = Math.max(max, pixelMax);
-                  channelSettings_[chan].min = (int) min;
-                  channelSettings_[chan].max = (int) max;
-
-                  hyperImage_.setDisplayRange(min, max);
-                  getSummaryMetadata().getJSONArray("ChContrastMax").put(chan, max);
-                  getSummaryMetadata().getJSONArray("ChContrastMin").put(chan, min);
-                  writeChannelSettingsToCache(chan);
+                  setupChannelContrast(chan, pixelMin, pixelMax);
                }
+               
             } catch (Exception ex) {
                ReportingUtils.showError(ex);
             }
@@ -750,18 +762,19 @@ public class VirtualAcquisitionDisplay {
       return channelSettings_[channelIndex].color;
    }
 
-   private void readChannelSettingsFromCache(boolean updateDisplay) {
+   private void applySettingsFromCache(boolean updateDisplay) {
       try {
          JSONArray channelsArray = imageCache_.getDisplayAndComments().getJSONArray("Channels");
-         for (int i = 0; i < channelSettings_.length; ++i) {
+         for (int grayChan = 0; grayChan < channelSettings_.length; ++grayChan) {
             try {
-               JSONObject channel = channelsArray.getJSONObject(i);
-               channelSettings_[i].color = new Color(channel.getInt("Color"));
-               channelSettings_[i].min = channel.getInt("Min");
-               channelSettings_[i].max = channel.getInt("Max");
-               channelSettings_[i].gamma = channel.getDouble("Gamma");
+               int colorChan = this.rgbToGrayChannel(grayChan);
+               JSONObject channel = channelsArray.getJSONObject(colorChan);
+               channelSettings_[grayChan].color = new Color(channel.getInt("Color"));
+               channelSettings_[grayChan].min = channel.getInt("Min");
+               channelSettings_[grayChan].max = channel.getInt("Max");
+               channelSettings_[grayChan].gamma = channel.getDouble("Gamma");
                if (updateDisplay) {
-                  setChannelDisplaySettings(i, channelSettings_[i]);
+                  setChannelDisplaySettings(grayChan, channelSettings_[grayChan]);
                }
             } catch (JSONException ex) {
                //ReportingUtils.logError(ex);
