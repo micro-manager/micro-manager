@@ -1,7 +1,7 @@
 [Setup]
 OutputDir=C:\projects\micromanager
 OutputBaseFilename=MMDeviceKit-win-38
-DefaultDirName=C:/Program Files/Micro-Manager-1.4/MMDeviceKit-win-38
+DefaultDirName=C:/Program Files/Micro-Manager1.4/MMDeviceKit-win-38
 VersionInfoVersion=38
 VersionInfoCompany=micro-manager.org
 VersionInfoCopyright=University of California San Francisco
