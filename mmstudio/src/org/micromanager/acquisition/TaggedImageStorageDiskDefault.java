@@ -103,11 +103,12 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
          String fileName = tiffFileName;
          try {
             posName = getPosition(md);
-            JavaUtils.createDirectory(dir_ + "/" + posName);
-            if (posName.length() > 0)
+            if (posName != null && posName.length() > 0 && !posName.contentEquals("null")) {
+               JavaUtils.createDirectory(dir_ + "/" + posName);
                fileName = posName + "/" + tiffFileName;
-            else
+            } else {
                fileName = tiffFileName;
+            }
          } catch (Exception ex) {
             ReportingUtils.logError(ex);
          }
@@ -278,6 +279,8 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
    private void openNewDataSet(TaggedImage firstImage) throws Exception, IOException {
       String time = firstImage.tags.getString("Time");
       String pos = getPosition(firstImage);
+      if (pos == null)
+         pos = "";
       JavaUtils.createDirectory(dir_ + "/" + pos);
       firstElement_ = true;
       Writer metadataStream = new BufferedWriter(new FileWriter(dir_ + "/" + pos + "/metadata.txt"));

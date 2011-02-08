@@ -65,15 +65,14 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
          } else {
             pos = acq_.getImagePlus().convertIndexToPosition(flatIndex);
          }
-         if (MDUtils.getNumberOfComponents(imageCache_.getSummaryMetadata()) == 3) {
-            pos[0] = ((pos[0]-1) / 3) + 1;
-         }
-         return imageCache_.getImage(pos[0] - 1, pos[1] - 1, pos[2] - 1, positionIndex_); // chan, slice, frame
+         int chanIndex = acq_.grayToRGBChannel(pos[0]-1);
+         return imageCache_.getImage(chanIndex, pos[1] - 1, pos[2] - 1, positionIndex_); // chan, slice, frame
       } catch (Exception e) {
          ReportingUtils.logError(e);
          return null;
       }
    }
+
 
    @Override
    public Object getPixels(int flatIndex) {
