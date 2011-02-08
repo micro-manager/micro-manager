@@ -20,8 +20,8 @@
 //
 
 #ifdef WIN32
-   #include <windows.h>
-   #define snprintf _snprintf 
+#include <windows.h>
+#define snprintf _snprintf 
 #endif
 
 #include "SutterLambda.h"
@@ -152,7 +152,7 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 //  SutterUtils: Static utility functions that can be used from all devices
 //////////////////////////////////////////////////////////////////////////////////
 bool SutterUtils::ControllerBusy(MM::Device& /*device*/, MM::Core& /*core*/, std::string port, 
-      unsigned long /*answerTimeoutMs*/)
+                                 unsigned long /*answerTimeoutMs*/)
 {
 
    MMThreadGuard g(*(::gplocks_[port]));
@@ -185,13 +185,18 @@ int SutterUtils::GoOnLine(MM::Device& device, MM::Core& core,
 }
 
 int SutterUtils::GetControllerType(MM::Device& device, MM::Core& core, std::string port, 
-                        unsigned long answerTimeoutMs, std::string& type, std::string& id) 
+                                   unsigned long answerTimeoutMs, std::string& type, std::string& id) 
 {
    core.PurgeSerial(&device, port.c_str());
+   int ret = DEVICE_OK;
+
+#define USE_SETCOMMAND
+#ifndef USE_SETCOMMAND
+
    unsigned char msg[1];
    msg[0]  = 253;
    // send command
-   int ret = core.WriteToSerial(&device, port.c_str(), msg, 1);
+   ret = core.WriteToSerial(&device, port.c_str(), msg, 1);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -211,9 +216,24 @@ int SutterUtils::GetControllerType(MM::Device& device, MM::Core& core, std::stri
    while( !responseReceived && (core.GetCurrentMMTime() - startTime) < (answerTimeoutMs * 1000.0) );
    if (!responseReceived)
       return ERR_NO_ANSWER;
+#else
+   std::vector<unsigned char> ans;
+   std::vector<unsigned char> emptyv;
+   std::vector<unsigned char> command;
+   command.push_back((unsigned char)253);
+
+   if( DEVICE_OK != SutterUtils::SetCommandNoCR(device, core, 
+      port, command, emptyv, answerTimeoutMs, ans, true))
+      return false;
+#endif
 
    char ans2[128];
    ret = core.GetSerialAnswer(&device, port.c_str(), 128, ans2, "\r");
+
+
+
+
+
    std::string answer = ans2;
    if (ret != DEVICE_OK || answer.length() == 0 ) {
       type = "10-2";
@@ -231,14 +251,14 @@ int SutterUtils::GetControllerType(MM::Device& device, MM::Core& core, std::stri
 }
 
 /**
- * Queries the controller for its status
- * Meaning of status depends on controller type
- * status should be allocated by the caller and at least be 21 bytes long
- * status will be the answer returned by the controller, stripped from the first byte (which echos the command) 
- */
+* Queries the controller for its status
+* Meaning of status depends on controller type
+* status should be allocated by the caller and at least be 21 bytes long
+* status will be the answer returned by the controller, stripped from the first byte (which echos the command) 
+*/
 int SutterUtils::GetStatus(MM::Device& device, MM::Core& core,        
-                        std::string port, unsigned long answerTimeoutMs,
-                        unsigned char* status)
+                           std::string port, unsigned long answerTimeoutMs,
+                           unsigned char* status)
 {
    core.PurgeSerial(&device, port.c_str());
    unsigned char msg[1];
@@ -255,8 +275,8 @@ int SutterUtils::GetStatus(MM::Device& device, MM::Core& core,
    do {
       if (DEVICE_OK != core.ReadFromSerial(&device, port.c_str(), &ans, 1, read))
          return false;
-      if (read > 0)
-         printf("Read char: %x", ans);
+      /*if (read > 0)
+      printf("Read char: %x", ans);*/
       if (ans == 204)
          responseReceived = true;
       CDeviceUtils::SleepMs(2);
@@ -272,7 +292,7 @@ int SutterUtils::GetStatus(MM::Device& device, MM::Core& core,
       if (DEVICE_OK != core.ReadFromSerial(&device, port.c_str(), &ans, 1, read))
          return false;
       if (read > 0) {
-         printf("Read char: %x", ans);
+         /* printf("Read char: %x", ans);*/
          status[j] = ans;
          j++;
          if (ans == '\r')
@@ -288,19 +308,251 @@ int SutterUtils::GetStatus(MM::Device& device, MM::Core& core,
 }
 
 
+
+
+
+int SutterUtils::SetCommand(MM::Device& device, MM::Core& core, 
+                            const std::string port, const std::vector<unsigned char> command, const std::vector<unsigned char> alternateEcho,
+                            const unsigned long answerTimeoutMs, const bool responseRequired, const bool CRExpected )
+{
+   std::vector<unsigned char> tmpr;
+   return  SutterUtils::SetCommand(device, core, port,  command, alternateEcho, answerTimeoutMs, tmpr,  responseRequired, CRExpected);
+}
+
+
+
+// lock the port for access,
+// write 1, 2, or 3 char. command to equipment
+// ensure the command completed by waiting for \r
+// pass response back in argument
+int SutterUtils::SetCommand(MM::Device& device, MM::Core& core, 
+                            const std::string port, const std::vector<unsigned char> command, const std::vector<unsigned char> alternateEcho,
+                            const unsigned long answerTimeoutMs, std::vector<unsigned char>& response,  const bool responseRequired, const bool CRExpected)
+
+
+
+{
+   int ret = DEVICE_OK;
+   bool responseReceived = false;
+
+   // block if port is accessed by another thread
+   MMThreadGuard g(*(::gplocks_[port]));
+   if( ::g_Busy[port])
+      core.LogMessage(&device, "busy entering SetCommand", false);
+   /*   
+   // todo put this timeout in thread lock
+   MM::MMTime startmmTime = GetCurrentMMTime();
+   while (::g_Busy[port] && (GetCurrentMMTime() - startmmTime) < (g_busyTimeoutMs * 1000.0) )
+   {
+   CDeviceUtils::SleepMs(10);
+   }
+   */
+   if( ! alternateEcho.empty())
+   {
+#ifdef EXTRADEBUG
+      core.LogMessage(&device, ("command " + CDeviceUtils::HexRep(command) + 
+         " expected echo "+ CDeviceUtils::HexRep(alternateEcho)).c_str(), true);
+#endif
+   }
+   if(!::g_Busy[port] )
+   {
+      g_Busy[port] = true;
+      if( ! command.empty())
+      {
+         core.PurgeSerial(&device, port.c_str());
+         // start time of entire transaction
+         MM::MMTime commandStartTime = core.GetCurrentMMTime();
+         // write command to the port
+         ret = core.WriteToSerial(&device, port.c_str(), &command[0], command.size());
+
+         if( DEVICE_OK == ret)
+         {
+            if( responseRequired)
+            {
+               // now ensure that command is echoed from controller
+               bool expectA13 = CRExpected;
+               std::vector<unsigned char>::const_iterator allowedResponse = alternateEcho.begin();
+               for( std::vector<unsigned char>::const_iterator irep = command.begin(); irep != command.end(); ++irep)
+               {
+                  // the echoed command can be different from the command, for example, the SC controller
+                  // echoes close 172 for open 170 and vice versa....
+
+                  // and Wheel set position INTERMITTENTLY echos the position with the command and speed stripped out
+
+                  // block/wait for acknowledge, or until we time out;
+                  unsigned char answer = 0;
+                  unsigned long read;
+                  MM::MMTime responseStartTime = core.GetCurrentMMTime();
+                  // read the response
+                  for(;;)
+                  {
+                     answer = 0;
+                     int status = core.ReadFromSerial( &device, port.c_str(), &answer, 1, read);
+                     if (DEVICE_OK != status)
+                     {
+                        // give up - somebody pulled the serial hardware out of the computer
+                        core.LogMessage(&device, "ReadFromSerial failed", false);
+                        return status;
+                     }
+                     if( 0 < read)
+                        response.push_back(answer);
+                     if (answer == *irep)
+                     {
+                        if (!CRExpected)
+                        {
+                           responseReceived = true;
+                        }
+                        break;
+                     }
+                     else if (answer == 13) // CR
+                     {
+                        if(CRExpected)
+                        {
+                           expectA13 = false;
+                           core.LogMessage(&device, "error, command was not echoed!", false);
+                        }
+                        else
+                        {
+                           // todo: can 13 ever be a command echo?? (probably not - no 14 position filter wheels)
+                           ;
+                        }
+                        break;
+                     }
+                     else if( answer != 0)
+                     {
+                        if( alternateEcho.end() != allowedResponse )
+                        {
+                           // command was echoed, after a fashion....
+                           if( answer == *allowedResponse)
+                           {
+
+                              core.LogMessage(&device, ("command " + CDeviceUtils::HexRep(command) + 
+                                  " was echoed as "+ CDeviceUtils::HexRep(response)).c_str(), true);
+                              ++allowedResponse;
+                              break;
+                           }
+                        }
+                        std::ostringstream bufff;
+                        bufff.flags(  ios::hex | ios::showbase );
+
+                        bufff << (unsigned int)answer;
+                        core.LogMessage(&device, (std::string("unexpected response: ") + bufff.str()).c_str(), false);
+                        break;
+                     }
+                     MM::MMTime delta = core.GetCurrentMMTime() - responseStartTime;
+                     if( 1000.0 * answerTimeoutMs < delta.getUsec()   )
+                     {
+                        expectA13 = false;
+                        std::ostringstream bufff;
+                        bufff << delta.getUsec() << " microsec";
+
+                        // in some cases it might be normal for the controller to not respond,
+                        // for example, whenever the command is the same as the previous command or when
+                        // go on-line sent to a controller already on-line
+                        core.LogMessage(&device, (std::string("command echo timeout after ") + bufff.str()).c_str(), !responseRequired );
+                        break;
+                     }
+                     CDeviceUtils::SleepMs(5);
+                     // if we are not at the end of the 'alternate' echo, iterate forward in that alternate echo string
+                     if(alternateEcho.end() != allowedResponse)
+                       ++allowedResponse;
+                  } // loop over timeout
+               } // the command was echoed  entirely...
+               if( expectA13)
+               {
+                  MM::MMTime startTime = core.GetCurrentMMTime();
+                  // now look for a 13 - this indicates that the command has really completed!
+                  unsigned char answer = 0;
+                  unsigned long read;
+                  for(;;)
+                  {
+                     answer = 0;
+                     int status = core.ReadFromSerial(&device, port.c_str(), &answer, 1, read);
+                     if (DEVICE_OK != status )
+                     {
+                        core.LogMessage(&device, "ReadFromComPort failed", false);
+                        return status;
+                     }
+                     if( 0 < read)
+                        response.push_back(answer);
+                     if (answer == 13) // CR  - sometimes the SC sends a 1 before the 13....
+                     {
+                        responseReceived = true;
+                        break;
+                     }
+                     if( 0 < read)
+                     {
+                        std::ostringstream bufff;
+                        bufff.flags(  ios::hex | ios::showbase );
+                        bufff << (unsigned int)answer;
+                        core.LogMessage(&device, ("error, extraneous response  " + bufff.str()).c_str(), false);
+                     }
+
+                     MM::MMTime del2 = core.GetCurrentMMTime() - startTime;
+                     if( 1000.0 * answerTimeoutMs < del2.getUsec())
+                     {
+                        std::ostringstream bufff;
+                        MM::MMTime del3 = core.GetCurrentMMTime() - commandStartTime;
+                        bufff << "command completion timeout after " << del3.getUsec() << " microsec";
+                        core.LogMessage(&device, bufff.str().c_str(),false);
+                        break;
+                     }
+                  }
+               }
+            } // response required
+            else // no response required / expected
+            {
+               CDeviceUtils::SleepMs(5); // docs say controller echoes any command within 100 microseconds
+               // 3 ms is enough time for controller to send 3 bytes @  9600 baud
+               core.PurgeSerial(&device, port.c_str());
+            }
+         }
+         else
+         {
+            core.LogMessage(&device,"WriteToComPort failed!", false);
+         }
+         g_Busy[port] = false;
+      }// a command was specified
+
+      return responseRequired?(responseReceived?DEVICE_OK:DEVICE_ERR):DEVICE_OK;
+   }// not busy...
+   else
+   {
+      core.LogMessage(&device, ("Sequence error, port " + port + " was busy!").c_str(), false);
+      ret =  DEVICE_INTERNAL_INCONSISTENCY;
+   }
+
+   return ret;
+
+}
+
+// some commands don't send a \r!!!
+int SutterUtils::SetCommandNoCR(MM::Device& device, MM::Core& core, 
+                                const std::string port, const std::vector<unsigned char> command, const std::vector<unsigned char> alternateEcho, 
+                                const unsigned long answerTimeoutMs, std::vector<unsigned char>& response, const bool responseRequired)
+{
+
+   return  SutterUtils::SetCommand(device, core, port,  command, alternateEcho, answerTimeoutMs, response,  responseRequired, false);
+}
+
+
+
+
+
+
 ///////////////////////////////////////////////////////////////////////////////
 // Wheel implementation
 // ~~~~~~~~~~~~~~~~~~~~
 
 Wheel::Wheel(const char* name, unsigned id) :
-   initialized_(false), 
-   numPos_(10), 
-   id_(id), 
-   name_(name), 
-   curPos_(0), 
-   speed_(3), 
-   busy_(false),
-   answerTimeoutMs_(500)
+initialized_(false), 
+numPos_(10), 
+id_(id), 
+name_(name), 
+curPos_(0), 
+speed_(3), 
+busy_(false),
+answerTimeoutMs_(500)
 {
    assert(id==0 || id==1 || id==2);
    assert(strlen(name) < (unsigned int) MM::MaxStrLength);
@@ -341,9 +593,9 @@ void Wheel::GetName(char* name) const
 }
 
 /**
- * Kludgey implementation of the status check
- *
- */
+* Kludgey implementation of the status check
+*
+*/
 bool Wheel::Busy()
 {
    MMThreadGuard g(*(::gplocks_[port_]));
@@ -453,25 +705,74 @@ int Wheel::Shutdown()
 }
 
 /**
- * Sends a command to Lambda through the serial port.
- * The command format is one byte encoded as follows:
- * bits 0-3 : position
- * bits 4-6 : speed
- * bit  7   : wheel id
- */
+* Sends a command to Lambda through the serial port.
+* The command format is one byte encoded as follows:
+* bits 0-3 : position
+* bits 4-6 : speed
+* bit  7   : wheel id
+*/
+
 bool Wheel::SetWheelPosition(unsigned pos)
 {
 
-   unsigned long startTime = GetClockTicksUs();
+   // build the respective command for the wheel
+
+   unsigned char upos = (unsigned char) pos;
+
+
+   std::vector<unsigned char> command;
+
+   // the Lambda 10-2, at least, SOMETIMES echos only the pos, not the command and speed - really confusing!!!
+   std::vector<unsigned char> alternateEcho;
+
+   switch( id_)
+   {
+   case 0:
+      command.push_back( (unsigned char) (speed_ * 16 + pos) );
+      alternateEcho.push_back( upos );
+      break;
+   case 1:
+      command.push_back( (unsigned char)(128 + speed_ * 16 + pos));
+      alternateEcho.push_back( upos );
+      break;
+   case 2:
+      alternateEcho.push_back( upos);    // TODO!!!  G.O.K. what they really echo...
+      command.push_back( (unsigned char)252) ; // used for filter C
+      command.push_back( (unsigned char) (speed_ * 16 + pos));
+      break;
+   default:
+      break;
+   }
+
+   std::vector<unsigned char> tmp;
+
+   int ret2 = SutterUtils::SetCommand(*this, *GetCoreCallback(), port_, command, alternateEcho, 
+      (unsigned long)(0.5+answerTimeoutMs_), tmp, true, true);
+   return (DEVICE_OK == ret2) ? true: false;
+
+}
+
+
+
+
+
+#if 0
+bool Wheel::SetWheelPosition(unsigned pos)
+{
+
 
    // wait if the device is busy
    MMThreadGuard g(*(::gplocks_[port_]));
+
+   if( ::g_Busy[port_])
+      LogMessage("busy entering SetWheelPosition",true);
+
    MM::MMTime startmmTime = GetCurrentMMTime();
    while (::g_Busy[port_] && (GetCurrentMMTime() - startmmTime) < (g_busyTimeoutMs * 1000.0) )
    {
       CDeviceUtils::SleepMs(10);
    }
-   
+
    if(g_Busy[port_] )
       LogMessage(std::string("Sequence error, port ") + port_ + std::string(" was busy!"), false);
 
@@ -516,12 +817,13 @@ bool Wheel::SetWheelPosition(unsigned pos)
    // block/wait for acknowledge, or until we time out;
    unsigned char answer = 0;
    unsigned long read;
-   startTime = GetClockTicksUs();
+   MM::MMTime startTime = GetClockTicksUs();
 
    bool ret = false;
 
-   // read the command
-   do {
+   // read the response
+   for(;;)
+   {
       if (DEVICE_OK != ReadFromComPort(port_.c_str(), &answer, 1, read))
       {
          LogMessage("ReadFromComPort failed", false);
@@ -532,18 +834,31 @@ bool Wheel::SetWheelPosition(unsigned pos)
          ret = true;
          break;
       }
-      if (answer == 13) // CR
+      else if (answer == 13) // CR
       {
-         LogMessage("comm. error, command was not echoed!", false);
+         LogMessage("error, command was not echoed!", false);
          break;
       }
-
+      else if( answer != 0)
+      {
+         std::ostringstream bufff;
+         bufff << answer;
+         LogMessage("unexpected response: " + bufff.str(), false);
+      }
+      if( 1000.0 * answerTimeoutMs_ < (GetCurrentMMTime() - startTime).getUsec())
+      {
+         std::ostringstream bufff;
+         bufff << answerTimeoutMs_ << " msec";
+         LogMessage("answer timeout after " + bufff.str(),false);
+         break;
+      }
    }
-   while(!ret && (GetClockTicksUs() - startTime) / 1000.0 < answerTimeoutMs_);
 
+
+   startTime = GetCurrentMMTime();
    answer = 0;
    // now look for a 13
-   do {
+   for(;;){
       if (DEVICE_OK != ReadFromComPort(port_.c_str(), &answer, 1, read))
       {
          LogMessage("ReadFromComPort failed", false);
@@ -556,15 +871,23 @@ bool Wheel::SetWheelPosition(unsigned pos)
       }
       if( 0 < read)
       {
-         LogMessage(std::string("comm. error, extraneous response ") + std::string((char*)&answer), false);
+         LogMessage("error, extraneous response " + std::string((char*)&answer), false);
+      }
+      if( 1000.0 * answerTimeoutMs_ < (GetCurrentMMTime() - startTime).getUsec())
+      {
+         std::ostringstream bufff;
+         bufff << answerTimeoutMs_*2. << " msec";
+         LogMessage("answer timeout after " + bufff.str(),false);
+         break;
       }
    }
-   while(!ret && (GetClockTicksUs() - startTime) / 1000.0 < answerTimeoutMs_);
 
    g_Busy[port_] = false;
 
    return ret;
 }
+
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 // Action handlers
@@ -705,14 +1028,14 @@ int Wheel::OnBusy(MM::PropertyBase* pProp, MM::ActionType eAct)
 // ~~~~~~~~~~~~~~~~~~~~~~~
 
 Shutter::Shutter(const char* name, int id) :
-   initialized_(false), 
-   id_(id), 
-   name_(name), 
-   nd_(1),
-   controllerType_("10-2"),
-   controllerId_(""),
-   answerTimeoutMs_(200), 
-   curMode_(g_FastMode)
+initialized_(false), 
+id_(id), 
+name_(name), 
+nd_(1),
+controllerType_("10-2"),
+controllerId_(""),
+answerTimeoutMs_(500), 
+curMode_(g_FastMode)
 {
    InitializeDefaultErrorMessages();
    SetErrorText (ERR_NO_ANSWER, "No Sutter Controller found.  Is it switched on and connected to the specified comunication port?");
@@ -757,7 +1080,7 @@ int Shutter::Initialize()
 
    // set property list
    // -----------------
-   
+
    // State
    // -----
    CPropertyAction* pAct = new CPropertyAction (this, &Shutter::OnState);
@@ -854,7 +1177,7 @@ int Shutter::Initialize()
       if (curMode_ == g_NDMode)
          nd_ = (unsigned int) status[2];
    }
-   
+
    // Needed for Busy flag
    changedTime_ = GetCurrentMMTime();
 
@@ -899,102 +1222,31 @@ int Shutter::Fire(double /*deltaT*/)
 }
 
 /**
- * Sends a command to Lambda through the serial port.
- */
+* Sends a command to Lambda through the serial port.
+*/
 bool Shutter::SetShutterPosition(bool state)
 {
-   unsigned char command;
+   std::vector<unsigned char> command;
+   std::vector<unsigned char> alternateEcho;
+
+   // the Lambda intermittently SC echoes inverted commands!
+
    if (id_ == 0)
    {
       // shutter A
-      command = state ? 170 : 172;
+      command.push_back( state ? 170 : 172);
+      alternateEcho.push_back( state? 172 : 170);
    }
    else
    {
       // shutter B
-      command = state ? 186 : 188;
+      command.push_back( state ? 186 : 188);
+      alternateEcho.push_back( state? 188 : 186);
    }
 
-   // wait if the device is busy
-   MMThreadGuard g(*(::gplocks_[port_]));
-   MM::MMTime startTime = GetCurrentMMTime();
-
-   while (::g_Busy[port_] && (GetCurrentMMTime() - startTime) < (g_busyTimeoutMs * 1000.0) )
-   {
-      CDeviceUtils::SleepMs(10);
-   }
-   if(g_Busy[port_] )
-      LogMessage(std::string("Sequence error, port ") + port_ + std::string(" was busy!"), false);
-
-   g_Busy[port_] = true;
-
-
-   unsigned char msg[1];
-   msg[0] = command;
-
-   // send command
-   if (DEVICE_OK != PurgeComPort(port_.c_str()))
-	   return false;
-
-   if (DEVICE_OK != WriteToComPort(port_.c_str(), msg, 1))
-      return false;
-
-   // Start timer for Busy flag
-   changedTime_ = GetCurrentMMTime();
-
-   // block/wait for acknowledge, or until we time out;
-   unsigned char answer = 0;
-   unsigned long read;
-
-   bool ret = false;
-
-   startTime = GetCurrentMMTime();
-   // read the command
-   do {
-      if (DEVICE_OK != ReadFromComPort(port_.c_str(), &answer, 1, read))
-      {
-         LogMessage("ReadFromComPort failed", false);
-         return false;
-      }
-      if (answer == command)
-      {
-         ret = true;
-         break;
-      }
-      if (answer == 13) // CR
-      {
-         LogMessage("comm. error, command was not echoed!", false);
-         break;
-      }
-
-   }
-   while(!ret && (GetCurrentMMTime() - startTime) < 1000.0 * answerTimeoutMs_);
-   
-   
-   startTime = GetCurrentMMTime();
-   answer = 0;
-   // now look for a 13
-   do {
-      if (DEVICE_OK != ReadFromComPort(port_.c_str(), &answer, 1, read))
-      {
-         LogMessage("ReadFromComPort failed", false);
-         return false;
-      }
-      if (answer == 13) // CR
-      {
-         ret = true;
-         break;
-      }
-      if( 0 < read)
-      {
-         LogMessage("comm. error, extraneous response " + std::string((char*)&answer), false);
-      }
-   }
-   while(!ret && (GetCurrentMMTime() - startTime) < 1000.0 * answerTimeoutMs_);
-
-   g_Busy[port_] = false;
-
-   return true;
+   int ret = SutterUtils::SetCommand( *this, *GetCoreCallback(),  port_, command, alternateEcho, 
+      (unsigned long)(0.5+answerTimeoutMs_));
+   return (DEVICE_OK == ret)? true: false;
 }
 
 bool Shutter::Busy()
@@ -1009,7 +1261,7 @@ bool Shutter::Busy()
          return true;
       }
    }
-   
+
    return false;
 }
 
@@ -1020,6 +1272,8 @@ bool Shutter::ControllerBusy()
 
 bool Shutter::SetShutterMode(const char* mode)
 {
+
+#if 0
    const int maxNrChars = 2;
    int nrChars = maxNrChars;
    unsigned char msg[maxNrChars];
@@ -1037,7 +1291,7 @@ bool Shutter::SetShutterMode(const char* mode)
       return false;
 
    msg[1] = (unsigned char)id_ + 1;
- 
+
    // Shutter number is not needed for SC controller
    if (controllerType_ == "SC")
       nrChars = 1;
@@ -1045,12 +1299,34 @@ bool Shutter::SetShutterMode(const char* mode)
    // send command
    if (DEVICE_OK != WriteToComPort(port_.c_str(), msg, nrChars))
       return false;
+#endif
 
-   return true;
+
+   if (strcmp(mode, g_NDMode) == 0)
+      return SetND(nd_);
+
+   std::vector<unsigned char> command;
+   std::vector<unsigned char> alternateEcho;
+
+   if( 0 == strcmp( mode, g_FastMode) )
+      command.push_back((unsigned char)220);
+   else if( 0 == strcmp( mode, g_SoftMode) )
+      command.push_back((unsigned char)221);
+
+   if( "SC" != controllerType_)
+      command.push_back((unsigned char)(id_+1));
+
+
+   int ret = SutterUtils::SetCommand( *this, *GetCoreCallback(),  port_, command, alternateEcho, 
+      (unsigned long)(0.5+answerTimeoutMs_));
+   return (DEVICE_OK == ret)? true: false;
 }
+
+
 
 bool Shutter::SetND(unsigned int nd)
 {
+#if 0
    const int maxNrChars = 3;
    int nrchars = maxNrChars;
    unsigned char msg[maxNrChars];
@@ -1067,19 +1343,37 @@ bool Shutter::SetND(unsigned int nd)
    // send command
    if (DEVICE_OK != WriteToComPort(port_.c_str(), msg, nrchars))
       return false;
+#endif
 
-   return true;
+
+   std::vector<unsigned char> command;
+   std::vector<unsigned char> alternateEcho;
+
+   command.push_back((unsigned char)222);
+
+   if( "SC" == controllerType_)
+      command.push_back((unsigned char)nd);
+   else
+   {
+      command.push_back((unsigned char)(id_ + 1));
+      command.push_back((unsigned char)(nd));
+   }
+
+   int ret = SutterUtils::SetCommand( *this, *GetCoreCallback(),  port_, command, alternateEcho, 
+      (unsigned long)(0.5+answerTimeoutMs_));
+   return (DEVICE_OK == ret)? true: false;
+
 }
 
 int Shutter::GoOnLine() 
 {
-   return SutterUtils::GoOnLine(*this, *GetCoreCallback(), port_, answerTimeoutMs_);
+   return SutterUtils::GoOnLine(*this, *GetCoreCallback(), port_, nint(answerTimeoutMs_));
 }
 
 int Shutter::GetControllerType(std::string& type, std::string& id) 
 {
-   return SutterUtils::GetControllerType(*this, *GetCoreCallback(), port_, answerTimeoutMs_,
-                                          type, id);
+   return SutterUtils::GetControllerType(*this, *GetCoreCallback(), port_, nint(answerTimeoutMs_),
+      type, id);
 }
 
 
@@ -1171,11 +1465,11 @@ int Shutter::OnND(MM::PropertyBase* pProp, MM::ActionType eAct)
 // ~~~~~~~~~~~~~~~~~~~~~~~
 #ifdef DefineShutterOnTenDashTwo
 ShutterOnTenDashTwo::ShutterOnTenDashTwo(const char* name, int id) :
-   initialized_(false), 
-   id_(id), 
-   name_(name), 
-   answerTimeoutMs_(200), 
-   curMode_(g_FastMode)
+initialized_(false), 
+id_(id), 
+name_(name), 
+answerTimeoutMs_(500), 
+curMode_(g_FastMode)
 {
    InitializeDefaultErrorMessages();
 
@@ -1221,7 +1515,7 @@ int ShutterOnTenDashTwo::Initialize()
 
    // set property list
    // -----------------
-   
+
    // State
    // -----
    CPropertyAction* pAct = new CPropertyAction (this, &ShutterOnTenDashTwo::OnState);
@@ -1302,10 +1596,11 @@ int ShutterOnTenDashTwo::Fire(double /*deltaT*/)
 }
 
 /**
- * Sends a command to Lambda through the serial port.
- */
+* Sends a command to Lambda through the serial port.
+*/
 bool ShutterOnTenDashTwo::SetShutterPosition(bool state)
 {
+   bool ret = true;
    unsigned char command;
    if (id_ == 0)
    {
@@ -1320,12 +1615,16 @@ bool ShutterOnTenDashTwo::SetShutterPosition(bool state)
 
    // wait if the device is busy
    MMThreadGuard g(*(::gplocks_[port_]));
+
+   if( ::g_Busy[port_])
+      LogMessage("busy entering SetShutterPosition",true);
+
    MM::MMTime startTime = GetCurrentMMTime();
    while (::g_Busy[port_] && (GetCurrentMMTime() - startTime) < (g_busyTimeoutMs * 1000.0) )
    {
       CDeviceUtils::SleepMs(10);
    }
-   
+
    if(g_Busy[port_] )
       LogMessage(std::string("Sequence error, port ") + port_ + std::string("was busy!"), false);
 
@@ -1334,9 +1633,9 @@ bool ShutterOnTenDashTwo::SetShutterPosition(bool state)
    unsigned char msg[2];
    msg[0] = command;
    msg[1] = 13; // CR
-   
+
    (void)PurgeComPort(port_.c_str());
-	  
+
    // send command
    if (DEVICE_OK != WriteToComPort(port_.c_str(), msg, 1))
       return false;
@@ -1350,40 +1649,72 @@ bool ShutterOnTenDashTwo::SetShutterPosition(bool state)
    startTime = GetCurrentMMTime();
 
    // first we will see the echo
-   do {
-      // if there is an error attempting to read, return
+   startTime = GetCurrentMMTime();
+   // read the response
+   for(;;)
+   {
       if (DEVICE_OK != ReadFromComPort(port_.c_str(), &answer, 1, read))
+      {
+         LogMessage("ReadFromComPort failed", false);
          return false;
+      }
       if (answer == command)
       {
+         ret = true;
          break;
       }
-      if( 13 == answer)
+      else if (answer == 13) // CR
       {
-         LogMessage("communication error, command was not echoed", false);
+         LogMessage("error, command was not echoed!", false);
+         break;
+      }
+      else if( answer != 0)
+      {
+         std::ostringstream bufff;
+         bufff << answer;
+         LogMessage("unexpected response: " + bufff.str(), false);
+      }
+      MM::MMTime del2 = GetCurrentMMTime() - startTime;
+      if( 1000.0 * answerTimeoutMs_ < del2.getUsec())
+      {
+         std::ostringstream bufff;
+         bufff << "answer timeout after " << del2.getUsec() << " microsec";
+         LogMessage(bufff.str(),false);
          break;
       }
    }
-   while((GetCurrentMMTime() - startTime) < (answerTimeoutMs_ * 1000.0) );
-   
-   answer = 0;
-   startTime = GetCurrentMMTime();
 
-   // now we will see 13
-   do {
-      // if there is an error attempting to read, return
+
+   startTime = GetCurrentMMTime();
+   answer = 0;
+   // now look for a 13
+   for(;;){
       if (DEVICE_OK != ReadFromComPort(port_.c_str(), &answer, 1, read))
-         return false;
-      if( 13 == answer)
       {
+         LogMessage("ReadFromComPort failed", false);
+         return false;
+      }
+      if (answer == 13) // CR
+      {
+         ret = true;
+         break;
+      }
+      if( 0 < read)
+      {
+         LogMessage("error, extraneous response " + std::string((char*)&answer), false);
+      }
+      if( 1000.0 * answerTimeoutMs_ < (GetCurrentMMTime() - startTime).getUsec())
+      {
+         std::ostringstream bufff;
+         bufff << answerTimeoutMs_*2. << " msec";
+         LogMessage("answer timeout after " + bufff.str(),false);
          break;
       }
    }
-   while((GetCurrentMMTime() - startTime) < (answerTimeoutMs_ * 1000.0) );
-  
+
    g_Busy[port_] = false;
 
-   return true;
+   return ret;
 }
 
 bool ShutterOnTenDashTwo::Busy()
@@ -1402,7 +1733,7 @@ bool ShutterOnTenDashTwo::Busy()
          return true;
       }
    }
-   
+
    return false;
 }
 
@@ -1509,9 +1840,9 @@ int ShutterOnTenDashTwo::OnMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 // ~~~~~~~~~~~~~~~~~~~~~~~~~
 
 DG4Shutter::DG4Shutter() : 
-   initialized_(false), 
-   name_(g_DG4ShutterName), 
-   answerTimeoutMs_(200)
+initialized_(false), 
+name_(g_DG4ShutterName), 
+answerTimeoutMs_(500)
 {
    InitializeDefaultErrorMessages();
 
@@ -1545,7 +1876,7 @@ int DG4Shutter::Initialize()
 {
    // set property list
    // -----------------
-   
+
    // State
    // -----
    CPropertyAction* pAct = new CPropertyAction (this, &DG4Shutter::OnState);
@@ -1610,8 +1941,8 @@ int DG4Shutter::Fire(double /*deltaT*/)
 }
 
 /**
- * Sends a command to Lambda through the serial port.
- */
+* Sends a command to Lambda through the serial port.
+*/
 bool DG4Shutter::SetShutterPosition(bool state)
 {
    unsigned char command;
@@ -1625,9 +1956,9 @@ bool DG4Shutter::SetShutterPosition(bool state)
       command = (unsigned char)g_DG4Position; // open
    }
    if (DEVICE_OK != WriteToComPort(port_.c_str(), &command, 1))
-	   return false;
+      return false;
 
-      unsigned char answer = 0;
+   unsigned char answer = 0;
    unsigned long read;
    MM::MMTime startTime = GetCurrentMMTime();
    MM::MMTime now = startTime;
@@ -1717,8 +2048,8 @@ int DG4Shutter::OnDelay(MM::PropertyBase* pProp, MM::ActionType eAct)
 // ~~~~~~~~~~~~~~~~~~~~~~~
 
 DG4Wheel::DG4Wheel() :
-      initialized_(false), numPos_(13), name_(g_DG4WheelName), curPos_(0), busy_(false),
-      answerTimeoutMs_(200)
+initialized_(false), numPos_(13), name_(g_DG4WheelName), curPos_(0), busy_(false),
+answerTimeoutMs_(500)
 {
    InitializeDefaultErrorMessages();
 
@@ -1758,7 +2089,7 @@ void DG4Wheel::GetName(char* name) const
 bool DG4Wheel::Busy()
 {
    // TODO: Implement as for shutter and wheel (ASCII 13 is send as a completion message)
-	return false;
+   return false;
 }
 
 int DG4Wheel::Initialize()
@@ -1766,7 +2097,7 @@ int DG4Wheel::Initialize()
 
    // set property list
    // -----------------
-   
+
    // State
    // -----
    CPropertyAction* pAct = new CPropertyAction (this, &DG4Wheel::OnState);
@@ -1832,15 +2163,15 @@ int DG4Wheel::Shutdown()
 }
 
 /**
- * Sends a command to Lambda through the serial port.
- */
+* Sends a command to Lambda through the serial port.
+*/
 bool DG4Wheel::SetWheelPosition(unsigned pos)
 {
    unsigned char command = (unsigned char) pos;
 
    if (g_DG4State == false)
       return true; // assume that position has been set (shutter is closed)
-   
+
    // send command
    if (DEVICE_OK != WriteToComPort(port_.c_str(), &command, 1))
       return false;
