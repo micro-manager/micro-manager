@@ -53,6 +53,7 @@ public class VirtualAcquisitionDisplay {
    final private HyperstackControls hc_;
    final AcquisitionVirtualStack virtualStack_;
    final private ScrollbarWithLabel pSelector_;
+   final private ScrollbarWithLabel tSelector_;
    private ChannelDisplaySettings[] channelSettings_;
    private int numComponents_ = 1;
 
@@ -110,6 +111,7 @@ public class VirtualAcquisitionDisplay {
 
       hc_ = new HyperstackControls(this);
       hyperImage_ = createImagePlus(numGrayChannels, numSlices, numFrames, virtualStack_, hc_);
+      tSelector_ = getTSelector();
       acquisitionDisplays_.put(hyperImage_, this);
       applyPixelSizeCalibration(hyperImage_);
       createWindow(hyperImage_, hc_);
@@ -117,6 +119,17 @@ public class VirtualAcquisitionDisplay {
       updateAndDraw();
       updateWindow();
       applySettingsFromCache(true);
+   }
+
+   private ScrollbarWithLabel getTSelector() {
+      ScrollbarWithLabel tSelector;
+      try {
+         tSelector = (ScrollbarWithLabel) JavaUtils.getRestrictedFieldValue(hyperImage_.getWindow(), ImageWindow.class, "tSelector");
+      } catch (NoSuchFieldException ex) {
+         tSelector = null;
+         ReportingUtils.logError(ex);
+      }
+      return tSelector;
    }
 
 
@@ -211,6 +224,19 @@ public class VirtualAcquisitionDisplay {
          win.remove(pSelector_);
       }
       win.pack();
+   }
+
+   private void setNumFrames(int n) {
+      if (tSelector_ != null) {
+         tSelector_.setMaximum(n + 1);
+         ImageWindow win = hyperImage_.getWindow();
+         try {
+            JavaUtils.setRestrictedFieldValue(hyperImage_, ImagePlus.class, "nSlices", n);
+            JavaUtils.setRestrictedFieldValue(win, ImageWindow.class, "nSlices", n);
+         } catch (NoSuchFieldException ex) {
+            ReportingUtils.logError(ex);
+         }
+      }
    }
 
    public ImagePlus getHyperImage() {
@@ -427,7 +453,7 @@ public class VirtualAcquisitionDisplay {
       return true;
    }
 
-   public ImagePlus createImagePlus(int channels, int slices,
+   final public ImagePlus createImagePlus(int channels, int slices,
            int frames, final AcquisitionVirtualStack virtualStack,
            HyperstackControls hc) {
       ImagePlus imgp = new ImagePlus(imageCache_.getDiskLocation(), virtualStack);
