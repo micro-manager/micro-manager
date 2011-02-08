@@ -92,6 +92,25 @@ const char* CDeviceUtils::ConvertToString(bool val)
    return m_pszBuffer;
 }
 
+
+// from a vectors of chars make a string like "0x00 0x01 0x02....
+std::string CDeviceUtils::HexRep(std::vector<unsigned char>  values)
+{
+   std::ostringstream ret;
+   for(std::vector<unsigned char>::iterator i = values.begin(); i != values.end(); ++i)
+   {
+      if (i!=values.begin())
+         ret << " ";
+      std::ios_base::fmtflags restore = ret.flags(  std::ios::hex | std::ios::showbase );
+      ret << (unsigned int)(*i);
+      ret.flags(restore);
+   }
+   return ret.str();
+
+}
+
+
+
 /**
  * Parse the string and return an array of tokens.
  * @param str - input string

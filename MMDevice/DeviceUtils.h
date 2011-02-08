@@ -60,6 +60,7 @@ public:
    static const char* ConvertToString(bool val);
    static void Tokenize(const std::string& str, std::vector<std::string>& tokens, const std::string& delimiters = ",");
    static void SleepMs(long ms);
+   static std::string HexRep(std::vector<unsigned char>  );
 private:
    static char m_pszBuffer[MM::MaxStrLength];
 };
