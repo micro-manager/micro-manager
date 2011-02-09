@@ -58,7 +58,7 @@ import javax.swing.JSlider;
 import javax.swing.SpringLayout;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import org.micromanager.api.ImageFocusListener;
+import org.micromanager.utils.ImageFocusListener;
 import org.micromanager.graph.HistogramPanel.CursorListener;
 
 import org.micromanager.utils.ContrastSettings;

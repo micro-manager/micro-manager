@@ -3,7 +3,7 @@
  * and open the template in the editor.
  */
 
-package org.micromanager.api;
+package org.micromanager.utils;
 
 import ij.gui.ImageWindow;
 

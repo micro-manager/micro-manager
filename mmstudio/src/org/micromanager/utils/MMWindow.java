@@ -3,7 +3,7 @@
  * shown in a Micro-Manager Image viewer
  */
 
-package org.micromanager.api;
+package org.micromanager.utils;
 
 import ij.ImagePlus;
 import ij.ImageStack;

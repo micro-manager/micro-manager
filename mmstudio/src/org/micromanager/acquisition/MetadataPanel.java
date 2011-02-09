@@ -26,7 +26,7 @@ import javax.swing.table.AbstractTableModel;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.api.ImageFocusListener;
+import org.micromanager.utils.ImageFocusListener;
 import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;

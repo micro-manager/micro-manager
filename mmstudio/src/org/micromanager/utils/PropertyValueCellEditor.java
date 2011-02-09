@@ -15,7 +15,6 @@ import javax.swing.JComboBox;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.table.TableCellEditor;
-import org.micromanager.api.MMPropertyTableModel;
 
 /**
  * Cell editing using either JTextField or JComboBox depending on whether the

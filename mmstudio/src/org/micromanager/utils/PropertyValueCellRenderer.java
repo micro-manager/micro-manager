@@ -7,7 +7,6 @@ import java.awt.Component;
 import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
-import org.micromanager.api.MMPropertyTableModel;
 
 
 public class PropertyValueCellRenderer implements TableCellRenderer {

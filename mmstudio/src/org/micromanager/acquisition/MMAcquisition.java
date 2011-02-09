@@ -39,13 +39,12 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONException;
 
-import org.micromanager.api.AcquisitionInterface;
 import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 
-public class MMAcquisition implements AcquisitionInterface {
+public class MMAcquisition {
    private int numFrames_ = 0;
    private int numChannels_ = 0;
    private int numSlices_ = 0;

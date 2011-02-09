@@ -122,12 +122,15 @@ public class VirtualAcquisitionDisplay {
    }
 
    private ScrollbarWithLabel getTSelector() {
-      ScrollbarWithLabel tSelector;
-      try {
-         tSelector = (ScrollbarWithLabel) JavaUtils.getRestrictedFieldValue(hyperImage_.getWindow(), ImageWindow.class, "tSelector");
-      } catch (NoSuchFieldException ex) {
-         tSelector = null;
-         ReportingUtils.logError(ex);
+      ScrollbarWithLabel tSelector = null;
+      ImageWindow win = hyperImage_.getWindow();
+      if (win instanceof StackWindow) {
+         try {
+            tSelector = (ScrollbarWithLabel) JavaUtils.getRestrictedFieldValue((StackWindow) win, StackWindow.class, "tSelector");
+         } catch (NoSuchFieldException ex) {
+            tSelector = null;
+            ReportingUtils.logError(ex);
+         }
       }
       return tSelector;
    }

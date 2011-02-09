@@ -1,6 +1,5 @@
 package org.micromanager.acquisition;
 
-import org.micromanager.api.AcquisitionInterface;
 import java.util.Enumeration;
 import java.util.Hashtable;
 
@@ -8,10 +7,10 @@ import org.micromanager.MMStudioMainFrame;
 import org.micromanager.utils.MMScriptException;
 
 public class AcquisitionManager {
-   Hashtable<String, AcquisitionInterface> acqs_;
+   Hashtable<String, MMAcquisition> acqs_;
    
    public AcquisitionManager() {
-      acqs_ = new Hashtable<String, AcquisitionInterface>();
+      acqs_ = new Hashtable<String, MMAcquisition>();
    }
    
    public void openAcquisition(String name, String rootDir) throws MMScriptException {
@@ -48,7 +47,7 @@ public class AcquisitionManager {
       }
    }
    
-   public AcquisitionInterface openAcquisitionSnap(String name, String rootDir, MMStudioMainFrame gui_, boolean show) throws MMScriptException {
+   public MMAcquisition openAcquisitionSnap(String name, String rootDir, MMStudioMainFrame gui_, boolean show) throws MMScriptException {
 //      MMAcquisition acq = new MMAcquisitionSnap(name, rootDir, gui_, show);
  //     acqs_.put(name, acq);
  //     return acq;
@@ -90,7 +89,7 @@ public class AcquisitionManager {
       return false;
    }
       
-   public AcquisitionInterface getAcquisition(String name) throws MMScriptException {
+   public MMAcquisition getAcquisition(String name) throws MMScriptException {
       if (acquisitionExists(name))
          return acqs_.get(name);
       else
@@ -98,7 +97,7 @@ public class AcquisitionManager {
    }
 
    public void closeAll() {
-      for (Enumeration<AcquisitionInterface> e=acqs_.elements(); e.hasMoreElements(); )
+      for (Enumeration<MMAcquisition> e=acqs_.elements(); e.hasMoreElements(); )
          e.nextElement().close();
       
       acqs_.clear();

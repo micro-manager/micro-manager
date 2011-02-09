@@ -51,7 +51,7 @@ import com.swtdesigner.SwingResourceManager;
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
 
-import org.micromanager.api.MMListenerAdapter;
+import org.micromanager.utils.MMListenerAdapter;
 import org.micromanager.utils.MMFrame;
 import org.micromanager.utils.PropertyValueCellEditor;
 import org.micromanager.utils.PropertyValueCellRenderer;

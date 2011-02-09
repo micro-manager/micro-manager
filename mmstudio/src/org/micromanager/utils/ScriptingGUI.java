@@ -1,4 +1,4 @@
-package org.micromanager.api;
+package org.micromanager.utils;
 
 public interface ScriptingGUI {
    public void displayMessage(String message);

@@ -26,7 +26,7 @@ package org.micromanager.conf;
 import java.util.ArrayList;
 
 import javax.swing.table.AbstractTableModel;
-import org.micromanager.api.MMPropertyTableModel;
+import org.micromanager.utils.MMPropertyTableModel;
 import org.micromanager.utils.PropertyItem;
 
 /**

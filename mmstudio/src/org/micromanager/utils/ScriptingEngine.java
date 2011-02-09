@@ -1,4 +1,4 @@
-package org.micromanager.api;
+package org.micromanager.utils;
 
 import org.micromanager.utils.MMScriptException;
 

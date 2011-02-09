@@ -12,7 +12,6 @@ import mmcorej.PropertySetting;
 import mmcorej.StrVector;
 
 import org.micromanager.MMStudioMainFrame;
-import org.micromanager.api.MMPropertyTableModel;
 
 /**
  * Property table data model, representing MMCore data

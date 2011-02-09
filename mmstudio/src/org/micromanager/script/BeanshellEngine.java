@@ -1,7 +1,7 @@
 package org.micromanager.script;
 
-import org.micromanager.api.ScriptingEngine;
-import org.micromanager.api.ScriptingGUI;
+import org.micromanager.utils.ScriptingEngine;
+import org.micromanager.utils.ScriptingGUI;
 import org.micromanager.utils.MMScriptException;
 
 import bsh.EvalError;
