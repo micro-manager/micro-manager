@@ -4,8 +4,10 @@
  */
 package org.micromanager.acquisition;
 
+import ij.ImagePlus;
 import ij.process.ImageProcessor;
 import java.awt.image.ColorModel;
+import java.util.ArrayList;
 import mmcorej.TaggedImage;
 import org.json.JSONObject;
 import org.micromanager.utils.ImageUtils;
@@ -60,19 +62,33 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
          int[] pos;
          // If we don't have the ImagePlus yet, then we need to assume
          // we are on the very first image.
-         if (acq_.getImagePlus() == null) {
+         ImagePlus imagePlus = acq_.getImagePlus();
+         if (imagePlus == null) {
             pos = new int [] {1, 1, 1};
          } else {
-            pos = acq_.getImagePlus().convertIndexToPosition(flatIndex);
+            pos = imagePlus.convertIndexToPosition(flatIndex);
          }
          int chanIndex = acq_.grayToRGBChannel(pos[0]-1);
-         return imageCache_.getImage(chanIndex, pos[1] - 1, pos[2] - 1, positionIndex_); // chan, slice, frame
+         TaggedImage img ;
+         int frame = pos[2] - 1;
+         int slice = pos[1] - 1;
+         int nSlices = imagePlus.getNSlices();
+         do {
+            int sliceSearchIndex = 0;
+            do {
+               img = imageCache_.getImage(chanIndex,
+                       (nSlices + slice - sliceSearchIndex) % nSlices,
+                       frame, positionIndex_);
+               ++sliceSearchIndex;
+            } while (img == null && sliceSearchIndex < nSlices);
+            --frame;
+         } while (img == null && frame >= 0);
+         return img;
       } catch (Exception e) {
          ReportingUtils.logError(e);
          return null;
       }
    }
-
 
    @Override
    public Object getPixels(int flatIndex) {
