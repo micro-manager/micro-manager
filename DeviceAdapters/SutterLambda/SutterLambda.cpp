@@ -1197,6 +1197,91 @@ int Shutter::Shutdown()
    return DEVICE_OK;
 }
 
+
+MM::DeviceDetectionStatus Shutter::DetectDevice(void)
+{
+   MM::DeviceDetectionStatus result = MM::Misconfigured;
+
+   std::vector< std::string> propertiesToRestore;
+   std::map< std::string, std::string> valuesToRestore;
+
+   // gather the properties that will be restored if we don't find the device
+   propertiesToRestore.push_back(MM::g_Keyword_BaudRate);
+   propertiesToRestore.push_back(MM::g_Keyword_DataBits);
+   propertiesToRestore.push_back(MM::g_Keyword_StopBits);
+   propertiesToRestore.push_back(MM::g_Keyword_Parity);
+   propertiesToRestore.push_back(MM::g_Keyword_Handshaking);
+   propertiesToRestore.push_back("AnswerTimeout");
+   propertiesToRestore.push_back("DelayBetweenCharsMs");
+
+   try
+   {
+      // convert into lower case to detect invalid port names:
+      std::string test = port_;
+      for(std::string::iterator its = test.begin(); its != test.end(); ++its)
+      {
+         *its = (char)tolower(*its);
+      }
+      // ensure we have been provided with a valid serial port device name
+      if( 0< test.length() &&  0 != test.compare("undefined")  && 0 != test.compare("unknown") )
+      {
+
+         // record the default parameters
+         char previousValue[MM::MaxStrLength];
+         for( std::vector< std::string>::iterator sit = propertiesToRestore.begin(); sit!= propertiesToRestore.end(); ++sit)
+         {
+            GetCoreCallback()->GetDeviceProperty(port_.c_str(),(*sit).c_str(), previousValue);
+            valuesToRestore[*sit] = std::string(previousValue);
+         } 
+
+         // the port property seems correct, so give it a try
+         result = MM::CanNotCommunicate;
+         // device specific default communication parameters
+         GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_BaudRate, "9600" );
+         GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_StopBits, "1");
+         GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_Handshaking, "Off");
+
+         // we can speed up detection with shorter answer timeout here
+         GetCoreCallback()->SetDeviceProperty(port_.c_str(), "AnswerTimeout", "50.0");
+         GetCoreCallback()->SetDeviceProperty(port_.c_str(), "DelayBetweenCharsMs", "0.0");
+         MM::Device* pS = GetCoreCallback()->GetDevice(this, port_.c_str());
+
+         if (DEVICE_OK == pS->Initialize()) 
+         {
+            int status = SutterUtils::GoOnLine(*this, *GetCoreCallback(), port_, nint(answerTimeoutMs_));
+            if( DEVICE_OK == status)
+               result = MM::CanCommunicate;
+            pS->Shutdown();
+         }
+         GetCoreCallback()->SetDeviceProperty(port_.c_str(), "AnswerTimeout", "2000.0");
+      }
+   }
+   catch(...)
+   {
+      LogMessage("Exception in DetectDevice");
+   }
+
+   // if the device is not there, restore the parameters to the previous settings
+   if ( MM::CanCommunicate != result)
+   {
+
+      for( std::vector< std::string>::iterator sit = propertiesToRestore.begin(); sit!= propertiesToRestore.end(); ++sit)
+      {
+         try
+         {
+            GetCoreCallback()->SetDeviceProperty(port_.c_str(), (*sit).c_str(), (valuesToRestore[*sit]).c_str());
+         }
+         catch(...)
+         {}
+      }
+
+   }
+
+   return result;
+}
+
+
+
 int Shutter::SetOpen(bool open)
 {
    long pos;
