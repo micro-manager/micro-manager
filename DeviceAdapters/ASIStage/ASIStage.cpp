@@ -1600,6 +1600,11 @@ int ZStage::Initialize()
    stepSizeUm_ = 0.1; //res;
 
    int ret = GetPositionSteps(curSteps_);
+   // if command fails, try one more time, 
+   // other devices may have send crud to this serial port during device detection
+   if (ret != DEVICE_OK) 
+      ret = GetPositionSteps(curSteps_);
+
    if (ret != DEVICE_OK)
       return ret;
 

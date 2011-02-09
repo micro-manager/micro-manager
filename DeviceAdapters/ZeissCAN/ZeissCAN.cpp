@@ -496,6 +496,10 @@ int ZeissScope::Initialize()
    // Version
    string version;
    int ret = g_hub.GetVersion(*this, *GetCoreCallback(), version);
+   // if this fails, try one more time
+   // The device detection code may have left crud in the device
+   if (ret != DEVICE_OK)
+      ret = g_hub.GetVersion(*this, *GetCoreCallback(), version);
    if (DEVICE_OK != ret)
       return ret;
    ret = CreateProperty("Microscope Version", version.c_str(), MM::String, true);
