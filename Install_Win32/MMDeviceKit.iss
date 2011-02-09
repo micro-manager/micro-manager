@@ -11,6 +11,10 @@ AppVerName=DeviceKit for API version 38
 ShowLanguageDialog=yes
 DisableDirPage=false
 
+[Dirs]
+Name:   "{app}\bin_Win32"
+Name:   "{app}\bin_x64"
+
 [Files]
 ; driver files
 Source: ..\MMDevice\DeviceBase.h; DestDir: {app}\MMDevice
@@ -42,12 +46,14 @@ Source: ..\DeviceAdapters\Nikon\Nikon.h; DestDir: {app}\DeviceAdapters\Nikon
 Source: ..\DeviceAdapters\Nikon\Nikon.vcproj; DestDir: {app}\DeviceAdapters\Nikon
 Source: ..\DeviceAdapters\Nikon\license.txt; DestDir: {app}\DeviceAdapters\Nikon
 
+
+
 ; test files
 Source: ..\lib_Win32\MMCored.lib; DestDir: {app}\lib
 Source: ..\lib_Win32\MMCorer.lib; DestDir: {app}\lib
-Source: ..\Test_Programs\Test_MMCore_devkit\Test_MMCore_devkit.cpp; DestDir: {app}\Test_MMCore_devkit
-Source: ..\Test_Programs\Test_MMCore_devkit\Test_MMCore_devkit.vcproj; DestDir: {app}\Test_MMCore_devkit
-Source: ..\Test_Programs\Test_MMCore_devkit\Test_MMCore_devkit.sln; DestDir: {app}\Test_MMCore_devkit
+Source: ..\Test_Programs\ModuleTest\ModuleTest.cpp; DestDir: {app}\Test_Programs\ModuleTest
+Source: ..\Test_Programs\ModuleTest\ModuleTest.vcproj; DestDir: {app}\Test_Programs\ModuleTest
+Source: ..\Test_Programs\ModuleTest\ModuleTest.sln; DestDir: {app}\Test_Programs\ModuleTest
 
 ; MMCore files
 Source: ..\MMCore\MMCore.h; DestDir: {app}\MMCore
