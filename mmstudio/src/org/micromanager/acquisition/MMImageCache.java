@@ -27,6 +27,7 @@ public class MMImageCache implements TaggedImageStorage {
    private Set<String> changingKeys_;
    private JSONObject firstTags_;
    private HashMap<String, SoftReference<TaggedImage>> softTable_;
+   int lastFrame_ = -1;
 
    public MMImageCache(TaggedImageStorage imageStorage) {
       imageStorage_ = imageStorage;
@@ -36,6 +37,10 @@ public class MMImageCache implements TaggedImageStorage {
 
    public void finished() {
       imageStorage_.finished();
+   }
+
+   public int lastAcquiredFrame() {
+      return lastFrame_;
    }
 
    public String getDiskLocation() {
@@ -77,6 +82,7 @@ public class MMImageCache implements TaggedImageStorage {
          softTable_.put(MDUtils.getLabel(taggedImg.tags), new SoftReference(taggedImg));
          taggedImg.tags.put("Summary",imageStorage_.getSummaryMetadata());
          checkForChangingTags(taggedImg);
+         lastFrame_ = MDUtils.getFrameIndex(taggedImg.tags);
          return imageStorage_.putImage(taggedImg);
       } catch (Exception ex) {
          ReportingUtils.logError(ex);

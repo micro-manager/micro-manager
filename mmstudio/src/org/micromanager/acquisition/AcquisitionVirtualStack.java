@@ -7,7 +7,6 @@ package org.micromanager.acquisition;
 import ij.ImagePlus;
 import ij.process.ImageProcessor;
 import java.awt.image.ColorModel;
-import java.util.ArrayList;
 import mmcorej.TaggedImage;
 import org.json.JSONObject;
 import org.micromanager.utils.ImageUtils;
@@ -80,9 +79,9 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
                        (nSlices + slice - sliceSearchIndex) % nSlices,
                        frame, positionIndex_);
                ++sliceSearchIndex;
-            } while (img == null && sliceSearchIndex < nSlices);
+            } while (img == null && sliceSearchIndex < nSlices && frame < imageCache_.lastAcquiredFrame());
             --frame;
-         } while (img == null && frame >= 0);
+         } while (img == null && frame >= 0  && frame < (imageCache_.lastAcquiredFrame()-1));
          return img;
       } catch (Exception e) {
          ReportingUtils.logError(e);

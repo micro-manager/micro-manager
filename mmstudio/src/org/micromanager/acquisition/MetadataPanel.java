@@ -20,6 +20,8 @@ import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Vector;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JPanel;
 import javax.swing.SpringLayout;
 import javax.swing.table.AbstractTableModel;
@@ -510,7 +512,12 @@ public class MetadataPanel extends javax.swing.JPanel
                try {
                   mdChanging.put(key, md.get(key));
                } catch (JSONException ex) {
-                  ReportingUtils.logError(ex);
+                  try {
+                     mdChanging.put(key, "");
+                     //ReportingUtils.logError(ex);
+                  } catch (JSONException ex1) {
+                     ReportingUtils.logError(ex1);
+                  }
                }
             }
          }
