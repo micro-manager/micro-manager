@@ -35,8 +35,7 @@
            [org.json JSONObject JSONArray]
            [java.util Date UUID]
            [java.text SimpleDateFormat]
-           [ij ImagePlus]
-           )
+           [ij ImagePlus])
    (:gen-class
      :name org.micromanager.AcqEngine
      :implements [org.micromanager.api.Pipeline]
@@ -182,6 +181,9 @@
   (while (and (:pause @state) (not (:stop @state))) (Thread/sleep 5)))
 
 (defn interruptible-sleep [time-ms]
+  (when (and (@state :init-continuous-focus)
+             (not (core isContinuousFocusEnabled)))
+    (core enableContinuousFocus true))
   (let [sleepy (CountDownLatch. 1)]
     (state-assoc! :sleepy sleepy :next-wake-time (+ (clock-ms) time-ms))
     (.await sleepy time-ms TimeUnit/MILLISECONDS)))
@@ -207,11 +209,13 @@
   (if (pos? (count stage)) (core getPosition stage) 0))
   
 (defn set-z-stage-position [stage pos]
-  (if (pos? (count stage)) (core setPosition stage pos)))
+  (when (core isContinuousFocusEnabled)
+    (core enableContinuousFocus false))
+  (when (pos? (count stage)) (core setPosition stage pos)))
 
 (defn set-stage-position
   ([stage-dev z] (log "setting z position to " z)
-     (core setPosition stage-dev z)
+     (set-z-stage-position stage-dev z)
      (state-assoc! :last-z-position z))
   ([stage-dev x y] (log "setting x,y position to " x "," y)
                    (when (and x y) (core setXYPosition stage-dev x y))))
@@ -324,10 +328,6 @@
       (set (@state :init-system-state))
       (set (get-system-config-cached))))))
 
-(defn prepare []
-  (when (@state :init-continuous-focus)
-    (core enableContinuousFocus false)))
-
 (defn cleanup []
   (log "cleanup")
   (do-when #(.update %) (:display @state))
@@ -367,7 +367,6 @@
     (def last-state state)
     (let [acq-seq (generate-acq-sequence settings)]
        (def acq-sequence acq-seq)
-       (prepare)
        (execute (mapcat #(make-event-fns % out-queue) acq-seq))
        (.put out-queue TaggedImageQueue/POISON)
        (cleanup))))
