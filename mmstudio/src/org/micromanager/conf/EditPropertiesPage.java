@@ -28,13 +28,11 @@ package org.micromanager.conf;
 
 import java.awt.Rectangle;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import javax.swing.JDialog;
-import javax.swing.JLabel;
 
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
@@ -64,6 +62,7 @@ public class EditPropertiesPage extends PagePanel {
     private JScrollPane scrollPane_;
     private static final String HELP_FILE_NAME = "conf_preinit_page.html";
     private boolean requestCancel_;
+    private JDialog progressDialog_;
     /**
      * Create the panel
      */
@@ -83,6 +82,7 @@ public class EditPropertiesPage extends PagePanel {
         propTable_.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         propTable_.setAutoCreateColumnsFromModel(false);
         scrollPane_.setViewportView(propTable_);
+        progressDialog_ = null;
     }
 
     private void rebuildTable() {
@@ -203,17 +203,16 @@ public class EditPropertiesPage extends PagePanel {
         String looking = "";
 
         // no devices need to configure serial ports
-        if( devicesToSearch.size() < 1)
+        if (devicesToSearch.size() < 1) {
             return true;
-
-
+        }
 
         int dialogHeight = devicesToSearch.size();
         if (dialogHeight < ports.size()) {
             dialogHeight = ports.size();
         }
 
-        JDialog dialog = new JDialog(parent_, "\u00B5" + "Manager device detection", false);
+        progressDialog_ = new JDialog(parent_, "\u00B5" + "Manager device detection", false);
         JTextArea l = new JTextArea();
         String initText = "";
         for (int lni = 0; lni < dialogHeight; ++lni) {
@@ -223,30 +222,34 @@ public class EditPropertiesPage extends PagePanel {
         l.setText(initText);
         //l.setEnabled(false);//.setHorizontalAlignment(JLabel.CENTER);
         l.setEditable(false);
-        dialog.add(l);
+        progressDialog_.add(l);
 
-
-
-
-        /*   JButton cancelButton = new JButton();
+        /*
+        JButton cancelButton = new JButton();
         cancelButton.setText("Cancel");
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
-        public void actionPerformed(java.awt.event.ActionEvent evt) {
-        requestCancel_=true;
-        }
+
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                requestCancel_ = true;
+            }
+
         });
-        dialog.add(cancelButton);*/
+        progressDialog_.add(cancelButton);
+         *
+         pack puts the Cancel button on top of the TextArea
+         */
 
-        dialog.pack();
-        dialog.setLocationRelativeTo(this);
+        progressDialog_.pack();
+        progressDialog_.setLocationRelativeTo(this);
         Rectangle r = new Rectangle();
-        dialog.getBounds(r);
+        progressDialog_.getBounds(r);
         r.setRect(r.getX(), r.getY(), r.getWidth(), r.getHeight());
-        dialog.setBounds(r);
-        dialog.setAlwaysOnTop(true);
-        dialog.setResizable(false);
+        progressDialog_.setBounds(r);
+        progressDialog_.setAlwaysOnTop(true);
+        progressDialog_.setResizable(false);
+        progressDialog_.setVisible(true);
 
-        //dialog.addMouseListener(null)
+        //progressDialog_.addMouseListener(null)
         boolean currentDebugLogSetting = core_.debugLogEnabled();
         // during detection we'll generate lots of spurious error messages.
         core_.enableDebugLog(false);
@@ -270,8 +273,8 @@ public class EditPropertiesPage extends PagePanel {
                     }
                 }
                 l.setText("Looking for " + looking);
-                dialog.setVisible(true);
-                dialog.paint(dialog.getGraphics());
+                // progressDialog_.setVisible(true);
+                progressDialog_.paint(progressDialog_.getGraphics());
 
                 for (Detector d : detectors) {
                     d.start();
@@ -317,8 +320,8 @@ public class EditPropertiesPage extends PagePanel {
                     }
                 }
                 l.setText("Looking for\n " + looking);
-                dialog.setVisible(true);
-                dialog.paint(dialog.getGraphics());
+                // progressDialog_.setVisible(true);
+                progressDialog_.paint(progressDialog_.getGraphics());
                 for (Detector d : detectors) {
                     d.start();
                 }
@@ -371,6 +374,7 @@ public class EditPropertiesPage extends PagePanel {
             if (!any) {
                 if (null != onlyConfigured) {
                     if (0 < onlyConfigured.size()) {
+                        Collections.sort(onlyConfigured);
                         allowed = new String[onlyConfigured.size()];
                         int i2 = 0;
                         for (String ss : onlyConfigured) {
@@ -387,22 +391,26 @@ public class EditPropertiesPage extends PagePanel {
             }
         }
         l.setText("Found:\n " + foundem);
-        dialog.setVisible(true);
-        dialog.paint(dialog.getGraphics());
+        progressDialog_.setVisible(true);
+        progressDialog_.paint(progressDialog_.getGraphics());
         try {
             Thread.sleep(900);
         } catch (InterruptedException ex) {
         }
+       
 
 
-
-        dialog.setVisible(false);
+        progressDialog_.setVisible(false);
         core_.enableDebugLog(currentDebugLogSetting);
         return true;
     }
 
     public boolean exitPage(boolean toNextPage) {
         try {
+            
+            if( null!=progressDialog_)
+                progressDialog_.setVisible(false);
+
             if (toNextPage) {
                 // create an array of allowed port names
                 ArrayList<String> ports = new ArrayList<String>();
