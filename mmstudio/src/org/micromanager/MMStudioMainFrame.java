@@ -84,7 +84,7 @@ import org.micromanager.api.Autofocus;
 import org.micromanager.api.DeviceControlGUI;
 import org.micromanager.api.MMPlugin;
 import org.micromanager.api.ScriptInterface;
-import org.micromanager.utils.MMListenerInterface;
+import org.micromanager.api.MMListenerInterface;
 import org.micromanager.conf.ConfiguratorDlg;
 import org.micromanager.conf.MMConfigFileException;
 import org.micromanager.conf.MicroscopeModel;
@@ -515,7 +515,11 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       startLoadingPipelineClass();
 
       options_ = new MMOptions();
-      options_.loadSettings();
+      try {
+         options_.loadSettings();
+      } catch (NullPointerException ex) {
+         ReportingUtils.logError(ex);
+      }
 
       guiColors_ = new GUIColors();
 
@@ -545,7 +549,11 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
       ReportingUtils.SetContainingFrame(gui_);
       // set the location for app preferences
-      mainPrefs_ = Preferences.userNodeForPackage(this.getClass());
+      try {
+         mainPrefs_ = Preferences.userNodeForPackage(this.getClass());
+      } catch (Exception e) {
+         ReportingUtils.logError(e);
+      }
       systemPrefs_ = mainPrefs_;
       // check system preferences
       try {

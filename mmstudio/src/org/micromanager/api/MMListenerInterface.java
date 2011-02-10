@@ -20,7 +20,7 @@
 //               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
 
-package org.micromanager.utils;
+package org.micromanager.api;
 
 public interface MMListenerInterface{
    public void propertiesChangedAlert();

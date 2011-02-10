@@ -42,8 +42,6 @@ MMJ_.jar:  \
 	$(srcdir)/src/org/micromanager/api/Autofocus.java \
 	$(srcdir)/src/org/micromanager/api/AcquisitionEngine.java \
 	$(srcdir)/src/org/micromanager/api/DeviceControlGUI.java \
-	$(srcdir)/src/org/micromanager/api/MMPropertyTableModel.java \
-	$(srcdir)/src/org/micromanager/api/MMWindow.java \
 	$(srcdir)/src/org/micromanager/api/Pipeline.java \
 	$(srcdir)/src/org/micromanager/api/ScriptInterface.java \
 	$(srcdir)/src/org/micromanager/conf/*.html \
@@ -90,7 +88,7 @@ MMJ_.jar:  \
 	$(srcdir)/src/org/micromanager/utils/ContrastSettings.java \
 	$(srcdir)/src/org/micromanager/utils/CoreAutofocus.java \
 	$(srcdir)/src/org/micromanager/utils/DisplayMode.java \
-        $(srcdir)/src/org/micromanager/utils/FileDialogs.java \
+	$(srcdir)/src/org/micromanager/utils/FileDialogs.java \
 	$(srcdir)/src/org/micromanager/utils/GammaSliderCalculator.java \
 	$(srcdir)/src/org/micromanager/utils/GUIColors.java \
 	$(srcdir)/src/org/micromanager/utils/GUIUtils.java \
@@ -107,6 +105,7 @@ MMJ_.jar:  \
 	$(srcdir)/src/org/micromanager/utils/MMImageWindow.java \
 	$(srcdir)/src/org/micromanager/utils/MMScriptException.java \
 	$(srcdir)/src/org/micromanager/utils/MMSerializationException.java \
+	$(srcdir)/src/org/micromanager/utils/MMWindow.java \
 	$(srcdir)/src/org/micromanager/utils/MathFunctions.java \
 	$(srcdir)/src/org/micromanager/utils/MemoryUtils.java \
 	$(srcdir)/src/org/micromanager/utils/NumberUtils.java \

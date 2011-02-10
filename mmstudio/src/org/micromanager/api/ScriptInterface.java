@@ -22,7 +22,6 @@
 
 package org.micromanager.api;
 
-import org.micromanager.utils.MMListenerInterface;
 import ij.gui.ImageWindow;
 import java.awt.Color;
 import java.awt.Component;

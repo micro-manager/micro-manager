@@ -22,6 +22,8 @@
 
 package org.micromanager.utils;
 
+import org.micromanager.api.MMListenerInterface;
+
 
 public class MMListenerAdapter implements MMListenerInterface {
    public void propertiesChangedAlert(){
