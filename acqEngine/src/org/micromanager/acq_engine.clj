@@ -147,6 +147,7 @@
     json))
 
 (defn annotate-image [img event state]
+  (println event)
   {:pix img
    :tags (merge
       (map-config (core getSystemStateCache))
@@ -159,7 +160,7 @@
        "Exposure-ms" (:exposure event)
        "Frame" (:frame-index event)
        "Height" (state :init-height)
-       "NextFrameIndex" (:next-frame-index event)
+       "NextFrame" (:next-frame-index event)
        "PixelSizeUm" (core getPixelSizeUm)
        "PixelType" (get-pixel-type)
        "PositionIndex" (:position-index event)

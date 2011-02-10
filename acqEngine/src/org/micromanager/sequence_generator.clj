@@ -130,7 +130,7 @@
         (lazy-cat (list e1) (make-bursts later))))))
       
 (defn add-next-task-tags [events]
-  (for [p pairs]
+  (for [p (pairs events)]
     (assoc (first p) :next-frame-index (get (second p) :frame-index))))
   
 (defn generate-acq-sequence [settings]
