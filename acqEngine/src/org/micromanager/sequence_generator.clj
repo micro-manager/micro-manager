@@ -128,7 +128,11 @@
                 (map #(assoc % :task :collect-burst) run)
                 (make-bursts later))
         (lazy-cat (list e1) (make-bursts later))))))
-        
+      
+(defn add-next-task-tags [events]
+  (for [p pairs]
+    (assoc (first p) :next-frame-index (get (second p) :frame-index))))
+  
 (defn generate-acq-sequence [settings]
   (let [{:keys [slices keep-shutter-open-channels keep-shutter-open-slices
          use-autofocus autofocus-skip interval-ms relative-slices]} settings]
@@ -140,7 +144,7 @@
       (process-use-autofocus use-autofocus autofocus-skip)
       (process-wait-time interval-ms)
       (make-bursts)
-      )))
+      (add-next-task-tags))))
 
 ; Testing:
 
