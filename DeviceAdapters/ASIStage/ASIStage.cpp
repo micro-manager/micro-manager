@@ -184,6 +184,9 @@ MM::DeviceDetectionStatus ASICheckSerialPort(MM::Device& device, MM::Core& core,
             pS->Shutdown();
             if( MM::CanCommunicate == result)
                break;
+            else
+               // try to yield to GUI
+               CDeviceUtils::SleepMs(10);
          }
          // always restore the AnswerTimeout to the default
          core.SetDeviceProperty(portToCheck.c_str(), "AnswerTimeout", (valuesToRestore["AnswerTimeout"]).c_str());

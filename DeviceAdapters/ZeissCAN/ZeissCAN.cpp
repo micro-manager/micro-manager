@@ -584,6 +584,9 @@ MM::DeviceDetectionStatus ZeissScope::DetectDevice(void)
             // quit when we find the setting that works
             if( MM::CanCommunicate == result)
                break;
+            else
+               // try to yield to GUI
+            CDeviceUtils::SleepMs(10);
          }
          GetCoreCallback()->SetDeviceProperty(g_hub.port_.c_str(), "AnswerTimeout", "2000.0");
       }

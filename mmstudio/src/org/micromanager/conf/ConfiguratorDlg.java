@@ -182,7 +182,7 @@ public class ConfiguratorDlg extends JDialog {
         pages_[pageNumber++] = new FinishPage(prefs_);
 
         microModel_ = new MicroscopeModel();
-        microModel_.setSendConfiguration(true);
+        microModel_.setSendConfiguration(false);
         microModel_.loadAvailableDeviceList(core_);
         microModel_.setFileName(defaultPath_);
         microModel_.scanComPorts(core_);

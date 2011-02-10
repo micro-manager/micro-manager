@@ -111,7 +111,7 @@ public class FinishPage extends PagePanel {
         sendCheck_.addActionListener(new ActionListener() {
 
             public void actionPerformed(ActionEvent arg0) {
-                model_.setSendConfiguration(sendCheck_.isSelected());
+              model_.setSendConfiguration(sendCheck_.isSelected());
             }
         });
 
@@ -134,6 +134,7 @@ public class FinishPage extends PagePanel {
     }
 
     public boolean enterPage(boolean next) {
+        model_.setSendConfiguration(sendCheck_.isSelected());
         fileNameField_.setText(model_.getFileName());
         return true;
     }
