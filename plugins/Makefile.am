@@ -50,8 +50,15 @@ MultiCamera.jar:  \
 	$(JAVAC) -source 1.5 -target 1.5 -sourcepath $(srcdir):. -classpath $(srcdir)/MultiCamera.jar:$(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):../bin/MMCoreJ.jar:../mmstudio/MMJ_.jar:. $(srcdir)/MultiCamera/src/org/micromanager/multicamera/*.java -d build
 	cd build && jar cf ../MultiCamera.jar * 
 
-all: PixelCalibrator.jar RecallPlugin.jar StageControl.jar MultiCamera.jar
-##SlideExplorer.jar
+Big.jar:  \
+	$(srcdir)/Big/src/edu/umassmed/big/*.java
+	test -d build || mkdir build
+	rm -rf build/*
+	$(JAVAC) -source 1.5 -target 1.5 -sourcepath $(srcdir):. -classpath $(srcdir)/Big.jar:$(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):../bin/MMCoreJ.jar:../mmstudio/MMJ_.jar:. $(srcdir)/Big/src/edu/umassmed/big/*.java -d build
+	## Work around bug in 'jar': jar cf MM_.jar -C bin/ bin/* does not work
+	cd build && jar cf ../Big.jar *
+ 
+all: PixelCalibrator.jar RecallPlugin.jar StageControl.jar MultiCamera.jar Big.jar
 
 install: 
 	test -d $(IJPATH)/mmplugins || mkdir $(IJPATH)/mmplugins
@@ -61,6 +68,7 @@ install:
 	cp RecallPlugin.jar $(IJPATH)/mmplugins
 	cp StageControl.jar $(IJPATH)/mmplugins
 	cp MultiCamera.jar $(IJPATH)/mmplugins
+	cp Big.jar $(IJPATH)/mmplugins
 	
 clean:
 	test -f MMTracker_.jar && rm MMTracker_.jar || echo "MMTracker_.jar not found"
@@ -70,5 +78,6 @@ clean:
 	test -f StageControl.jar && rm StageControl.jar || echo "StageControl.jar not found"
 	test -f MultiCamera.jar && rm MultiCamera.jar || echo "MultiCamera.jar not found"
 	test -f RecallPlugin.jar && rm RecallPlugin.jar || echo "RecallPlugin.jar not found"
+	test -f Big.jar && rm Big.jar || echo "Big.jar not found"
 	
 EXTRA_DIST = src build.xml
