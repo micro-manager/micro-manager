@@ -348,6 +348,11 @@ public class ConfiguratorDlg extends JDialog {
                 } catch (MalformedURLException e) {
                     returnValue = e.toString();
                 }
+                fileToSend.deleteOnExit();
+                // now delete the temporary file
+               // if(!fileToSend.delete())
+               //     ReportingUtils.logError("Sorry, couldn't delete temporary file " +qualifiedConfigFileName );
+
             }
         } catch (IOException e) {
             returnValue = e.toString();

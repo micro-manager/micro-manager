@@ -116,6 +116,7 @@ public:
    void initializeLogging();
    void shutdownLogging();
    void enableDebugLog(bool enable);
+   bool debugLogEnabled(void) { return debugLog_;};
    void enableStderrLog(bool enable);
    std::string getUserId() const;
    std::string getHostName() const;
