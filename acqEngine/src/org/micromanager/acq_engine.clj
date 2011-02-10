@@ -181,14 +181,14 @@
   (while (and (:pause @state) (not (:stop @state))) (Thread/sleep 5)))
 
 (defn interruptible-sleep [time-ms]
-  (when (and (@state :init-continuous-focus)
-             (not (core isContinuousFocusEnabled)))
-    (core enableContinuousFocus true))
   (let [sleepy (CountDownLatch. 1)]
     (state-assoc! :sleepy sleepy :next-wake-time (+ (clock-ms) time-ms))
     (.await sleepy time-ms TimeUnit/MILLISECONDS)))
 
 (defn acq-sleep [interval-ms]
+  (when (and (@state :init-continuous-focus)
+             (not (core isContinuousFocusEnabled)))
+    (core enableContinuousFocus true))
   (let [target-time (+ (@state :last-wake-time) interval-ms)
         delta (- target-time (clock-ms))]
     (when (pos? delta)
