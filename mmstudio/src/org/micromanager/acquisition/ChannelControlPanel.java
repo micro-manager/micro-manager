@@ -228,9 +228,6 @@ public class ChannelControlPanel extends javax.swing.JPanel {
       updateChannelSettings();
    }
 
-   public ChannelDisplaySettings getSettings() {
-      return acq_.getChannelDisplaySettings(channelIndex_);
-   }
 
    private void updateChannelVisibility() {
       acq_.setChannelVisibility(channelIndex_, channelNameCheckbox.isSelected());
@@ -326,10 +323,9 @@ public class ChannelControlPanel extends javax.swing.JPanel {
    }
 
    public final void drawDisplaySettings() {
-      ChannelDisplaySettings settings = getSettings();
-      hp_.setCursors(settings.min/binSize_,
-              settings.max/binSize_,
-              settings.gamma);
+      hp_.setCursors(acq_.getChannelMin(channelIndex_)/binSize_,
+              acq_.getChannelMax(channelIndex_)/binSize_,
+              acq_.getChannelGamma(channelIndex_));
       hp_.repaint();
    }
 

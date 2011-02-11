@@ -62,16 +62,19 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
          // If we don't have the ImagePlus yet, then we need to assume
          // we are on the very first image.
          ImagePlus imagePlus = acq_.getImagePlus();
+         int nSlices;
          if (imagePlus == null) {
             pos = new int [] {1, 1, 1};
+            nSlices = 1;
          } else {
             pos = imagePlus.convertIndexToPosition(flatIndex);
+            nSlices = imagePlus.getNSlices();
          }
          int chanIndex = acq_.grayToRGBChannel(pos[0]-1);
          TaggedImage img ;
          int frame = pos[2] - 1;
          int slice = pos[1] - 1;
-         int nSlices = imagePlus.getNSlices();
+
          do {
             int sliceSearchIndex = 0;
             do {

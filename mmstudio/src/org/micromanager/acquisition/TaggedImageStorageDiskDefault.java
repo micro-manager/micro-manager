@@ -77,7 +77,11 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
    
    private String getPosition(JSONObject tags) {
       try {
-         return MDUtils.getPositionName(tags);
+         String pos =  MDUtils.getPositionName(tags);
+         if (pos == null)
+            return "";
+         else
+            return pos;
       } catch (Exception e) {
          return "";
       }
