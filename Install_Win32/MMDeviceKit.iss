@@ -49,8 +49,10 @@ Source: ..\DeviceAdapters\Nikon\license.txt; DestDir: {app}\DeviceAdapters\Nikon
 
 
 ; test files
-Source: ..\lib_Win32\MMCored.lib; DestDir: {app}\lib
-Source: ..\lib_Win32\MMCorer.lib; DestDir: {app}\lib
+Source: ..\lib_Win32\MMCored.lib; DestDir: {app}\lib_Win32
+Source: ..\lib_Win32\MMCorer.lib; DestDir: {app}\lib_Win32
+Source: ..\lib_x64\MMCored.lib; DestDir: {app}\lib_x64
+Source: ..\lib_x64\MMCorer.lib; DestDir: {app}\lib_x64
 Source: ..\Test_Programs\ModuleTest\ModuleTest.cpp; DestDir: {app}\Test_Programs\ModuleTest
 Source: ..\Test_Programs\ModuleTest\ModuleTest.vcproj; DestDir: {app}\Test_Programs\ModuleTest
 Source: ..\Test_Programs\ModuleTest\ModuleTest.sln; DestDir: {app}\Test_Programs\ModuleTest
@@ -58,6 +60,8 @@ Source: ..\Test_Programs\ModuleTest\ModuleTest.sln; DestDir: {app}\Test_Programs
 ; MMCore files
 Source: ..\MMCore\MMCore.h; DestDir: {app}\MMCore
 Source: ..\MMCore\PluginManager.h; DestDir: {app}\MMCore
+Source: ..\MMCore\PluginManager.cpp; DestDir: {app}\MMCore
+
 Source: ..\MMCore\Configuration.h; DestDir: {app}\MMCore
 Source: ..\MMCore\Error.h; DestDir: {app}\MMCore
 Source: ..\MMCore\ErrorCodes.h; DestDir: {app}\MMCore
