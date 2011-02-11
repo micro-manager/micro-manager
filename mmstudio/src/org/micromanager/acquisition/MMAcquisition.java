@@ -55,17 +55,17 @@ public class MMAcquisition {
    protected int depth_ = 1;
    private boolean initialized_ = false;
    private long startTimeMs_;
-   private boolean show_ = true;
-   private boolean diskCached_ = false;
 
    private String comment_ = "Acquisition from a script";
-   private int[] channelColors_;
-   private String[] channelNames_;
+
 
    //protected Image5DWindow imgWin_;
    @SuppressWarnings("unused")
    private String rootDirectory_;
    private VirtualAcquisitionDisplay virtAcq_;
+   private final boolean existing_;
+   private final boolean diskCached_;
+   private final boolean show_;
    
    public MMAcquisition(String name, String dir) throws MMScriptException {
       this(name, dir, false, false, false);
@@ -73,45 +73,14 @@ public class MMAcquisition {
 
    public MMAcquisition(String name, String dir, boolean show) throws MMScriptException {
       this(name, dir, show, false, false);
-      virtAcq_.show();
-      show_ = show;
    }
 
    public MMAcquisition(String name, String dir, boolean show,
            boolean diskCached, boolean existing) throws MMScriptException {
       name_ = name;
       rootDirectory_ = dir;
-      TaggedImageStorage imageFileManager;
-      if (!existing) {
-         if (new File(dir).exists()) {
-            name = generateRootName(name, rootDirectory_);
-         }
-      }
-      if (diskCached) {
-         String dirname = dir + File.separator + name;
-         File f = new File(dirname);
-         // this is quite stupid but a way to find out if this name was generated upstream
-         if (!f.isDirectory())
-            dirname = dirname.substring(0, dirname.length() - 2);
-
-         imageFileManager = new TaggedImageStorageDiskDefault(dirname,
-              !existing, new JSONObject());
-      } else {
-         imageFileManager = new TaggedImageStorageRam(null);
-      }
-
-      MMImageCache imageCache = new MMImageCache(imageFileManager);
-      virtAcq_ = new VirtualAcquisitionDisplay(imageCache, null);
-      
-      if (show && diskCached && existing) {
-            virtAcq_.show();
-            // start loading all other images in a background thread
-            PreLoadDataThread t = new PreLoadDataThread(virtAcq_);
-            new Thread(t).start();
-            initialized_ = true;
-      }
-      
       show_ = show;
+      existing_ = existing;
       diskCached_ = diskCached;
    }
 
@@ -175,16 +144,6 @@ public class MMAcquisition {
       numChannels_ = channels;
       numSlices_ = slices;
       numPositions_ = positions;
-
-      channelColors_ = new int[numChannels_];
-      for (Integer i = 0; i<numChannels_; i++) {
-         channelColors_[i] = Color.WHITE.getRGB();
-      }
-
-      channelNames_ = new String[numChannels_];
-      for (Integer i = 0; i<numChannels_; i++) {
-         channelNames_[i] = i.toString();
-      }
    }
 
    public void setRootDirectory(String dir) throws MMScriptException {
@@ -195,40 +154,69 @@ public class MMAcquisition {
 
    
    public void initialize() throws MMScriptException {
-
-      JSONObject tags = new JSONObject();
+      JSONObject summaryMetadata = new JSONObject();
       try {
-         tags.put("Width", width_);
-         tags.put("Height", height_);
-         tags.put("Slices", numSlices_);
-         tags.put("Frames", numFrames_);
-         tags.put("Channels", numChannels_);
-         tags.put("Positions", numPositions_);
-         tags.put("NumComponents", 1);
-         tags.put("Comment", comment_);
-         tags.put("MetadataVersion", 10);
-         tags.put("Source", "Micro-Manager");
+         summaryMetadata.put("Width", width_);
+         summaryMetadata.put("Height", height_);
+         summaryMetadata.put("Slices", numSlices_);
+         summaryMetadata.put("Frames", numFrames_);
+         summaryMetadata.put("Channels", numChannels_);
+         summaryMetadata.put("Positions", numPositions_);
+         summaryMetadata.put("NumComponents", 1);
+         summaryMetadata.put("Comment", comment_);
+         summaryMetadata.put("MetadataVersion", 10);
+         summaryMetadata.put("Source", "Micro-Manager");
          //tags.put("PixelSize_um", core_.getPixelSizeUm());
-         tags.put("PixelAspect", 1.0);
-         tags.put("GridColumn", 0);
-         tags.put("GridRow", 0);
+         summaryMetadata.put("PixelAspect", 1.0);
+         summaryMetadata.put("GridColumn", 0);
+         summaryMetadata.put("GridRow", 0);
          //tags.put("ComputerName", getComputerName());
-         tags.put("UserName", System.getProperty("user.name"));
+         summaryMetadata.put("UserName", System.getProperty("user.name"));
          if (depth_ == 1)
-            tags.put("PixelType", "GRAY8");
+            summaryMetadata.put("PixelType", "GRAY8");
          else if (depth_ == 2)
-            tags.put("PixelType", "GRAY16");
-         tags.put("StartTime", MDUtils.getCurrentTime());
+            summaryMetadata.put("PixelType", "GRAY16");
+         summaryMetadata.put("StartTime", MDUtils.getCurrentTime());
+
          startTimeMs_ = System.currentTimeMillis();
       } catch (JSONException ex) {
          Logger.getLogger(MMAcquisition.class.getName()).log(Level.SEVERE, null, ex);
       }
 
-      setDefaultChannelTags(tags);
-      
-      virtAcq_.imageCache_.setSummaryMetadata(tags);
-      virtAcq_.imageCache_.setDisplayAndComments(virtAcq_.getDisplaySettingsFromSummary(tags));
+      TaggedImageStorage imageFileManager;
+      String name = name_;
+      if (!existing_) {
+         if (new File(rootDirectory_).exists()) {
+            name = generateRootName(name, rootDirectory_);
+         }
+      }
+      if (diskCached_) {
+         String dirname = rootDirectory_ + File.separator + name;
+         File f = new File(dirname);
+         // this is quite stupid but a way to find out if this name was generated upstream
+         if (!f.isDirectory())
+            dirname = dirname.substring(0, dirname.length() - 2);
 
+         imageFileManager = new TaggedImageStorageDiskDefault(dirname,
+              !existing_, new JSONObject());
+      } else {
+         imageFileManager = new TaggedImageStorageRam(null);
+      }
+      setDefaultChannelTags(summaryMetadata);
+
+      MMImageCache imageCache = new MMImageCache(imageFileManager);
+
+      imageCache.setSummaryMetadata(summaryMetadata);
+      virtAcq_ = new VirtualAcquisitionDisplay(imageCache, null);
+
+      if (show_ && diskCached_ && existing_) {
+            // start loading all other images in a background thread
+            PreLoadDataThread t = new PreLoadDataThread(virtAcq_);
+            new Thread(t).start();
+            initialized_ = true;
+      } else {
+         imageCache.setDisplayAndComments(virtAcq_.getDisplaySettingsFromSummary(summaryMetadata));
+      }
       if (show_)
          virtAcq_.show();
 
@@ -242,8 +230,8 @@ public class MMAcquisition {
       JSONArray channelMins = new JSONArray();
 
       for (Integer i=0; i<numChannels_; i++) {
-         channelColors.put(channelColors_[i]);
-         channelNames.put(channelNames_[i]);
+         channelColors.put(Color.WHITE.getRGB());
+         channelNames.put(String.valueOf(i));
          try {
             channelMaxes.put(255);
             channelMins.put(0);
@@ -275,7 +263,7 @@ public class MMAcquisition {
          JSONObject tags = new JSONObject();
          tags.put("Frame", frame);
          tags.put("ChannelIndex", channel);
-         tags.put("Channel", channelNames_[channel]);
+         tags.put("Channel", getChannelName(channel));
          tags.put("Slice", slice);
          tags.put("PositionIndex", position);
          // the following influences the format data will be saved!
@@ -325,7 +313,7 @@ public class MMAcquisition {
    public void insertImage(TaggedImage taggedImg, boolean updateDisplay) throws MMScriptException {
       try {
          int channel = taggedImg.tags.getInt("ChannelIndex");
-         taggedImg.tags.put("Channel", channelNames_[channel]);
+         taggedImg.tags.put("Channel", getChannelName(channel));
          long elapsedTimeMillis = System.currentTimeMillis() - startTimeMs_;
          taggedImg.tags.put("ElapsedTime-ms", elapsedTimeMillis);
          taggedImg.tags.put("Time", MDUtils.getCurrentTime());
@@ -369,6 +357,22 @@ public class MMAcquisition {
 	   return null;
    }
 
+   public JSONObject getSummaryMetadata() {
+      return virtAcq_.imageCache_.getSummaryMetadata();
+   }
+
+   public String getChannelName(int channel) {
+      if (isInitialized()) {
+         try {
+            getSummaryMetadata().getJSONArray("ChNames").get(channel);
+         } catch (JSONException e) {
+            ReportingUtils.logError(e);
+            return "";
+         }
+      }
+      return "";
+   }
+
    public void setChannelName(int channel, String name) throws MMScriptException {
       if (isInitialized()) {
          try {
@@ -381,16 +385,9 @@ public class MMAcquisition {
                     .getSummaryMetadata()
                     .getJSONArray("ChNames")
                     .put(channel,name);
-            channelNames_[channel] = name;
          } catch (JSONException e) {
             throw new MMScriptException("Problem setting Channel name");
          }
-      }
-      else {
-         if (channelNames_ == null)
-            throw new MMScriptException("Dimensions need to be set first");
-         if (channelNames_.length > channel)
-            channelNames_[channel] = name;
       }
    }
 
@@ -402,16 +399,9 @@ public class MMAcquisition {
                     .getSummaryMetadata()
                     .getJSONArray("ChColors")
                     .put(channel,rgb);
-          channelColors_[channel] = rgb;
           } catch (JSONException ex) {
              throw new MMScriptException(ex);
           }
-       }
-       else {
-         if (channelNames_ == null)
-            throw new MMScriptException("Dimensions need to be set first");
-          if (channelColors_.length > channel)
-             channelColors_[channel] = rgb;
        }
    }
    
@@ -540,6 +530,8 @@ public class MMAcquisition {
    }
 
    public boolean windowClosed() {
+      if (! initialized_)
+         return false;
       if (virtAcq_ != null && ! virtAcq_.windowClosed())
          return false;
       return true;
