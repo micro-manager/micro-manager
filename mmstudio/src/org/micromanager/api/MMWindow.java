@@ -1,9 +1,31 @@
+///////////////////////////////////////////////////////////////////////////////
+//FILE:          MMWindow.java
+//PROJECT:       Micro-Manager
+//SUBSYSTEM:     mmstudio
+//-----------------------------------------------------------------------------
+//
+// AUTHOR:       Nico Stuurman, nico@cmp.ucsf.edu, 2010
+//
+// COPYRIGHT:    University of California, San Francisco, 2010
+//
+// LICENSE:      This file is distributed under the BSD license.
+//               License text is included with the source distribution.
+//
+//               This file is distributed in the hope that it will be useful,
+//               but WITHOUT ANY WARRANTY; without even the implied warranty
+//               of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+//
+//               IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+//               CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+//               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
+
+
 /*
  * Goal of this class is to give easy programmatic access to pixels and metadata
  * shown in a Micro-Manager Image viewer
  */
 
-package org.micromanager.utils;
+package org.micromanager.api;
 
 import ij.ImagePlus;
 import ij.ImageStack;
@@ -12,10 +34,7 @@ import org.micromanager.acquisition.AcquisitionVirtualStack;
 import org.micromanager.acquisition.VirtualAcquisitionDisplay;
 import org.micromanager.utils.MMScriptException;
 
-/**
- *
- * @author nico
- */
+
 public class MMWindow {
    VirtualAcquisitionDisplay virtAcq_ = null;
    ImagePlus imp_;
