@@ -18,6 +18,7 @@ public interface Pipeline {
    public void stop();
    public boolean isRunning();
    public boolean isPaused();
+   public boolean isFinished();
    public boolean stopHasBeenRequested();
    public long nextWakeTime();
    public void acquireSingle();

@@ -48,7 +48,6 @@ public class VirtualAcquisitionDisplay {
    }
 
    final MMImageCache imageCache_;
-   final private AcquisitionEngine eng_;
    final private ImagePlus hyperImage_;
    final private HyperstackControls hc_;
    final AcquisitionVirtualStack virtualStack_;
@@ -56,7 +55,9 @@ public class VirtualAcquisitionDisplay {
    final private ScrollbarWithLabel tSelector_;
    private ChannelDisplaySettings[] channelSettings_;
    private int numComponents_ = 1;
-
+   private AcquisitionEngine eng_;
+   private boolean finished_ = false;
+   
    public VirtualAcquisitionDisplay(MMImageCache imageCache, AcquisitionEngine eng) {
       imageCache_ = imageCache;
       eng_ = eng;
@@ -294,12 +295,18 @@ public class VirtualAcquisitionDisplay {
             }
          } else {
             hc_.enableAcquisitionControls(false);
-            if (!status.contentEquals("interrupted")) {
+            if (!status.contentEquals("interrupted") && eng_.isFinished()) {
                status = "finished";
             }
          }
          status += ", ";
+         if (eng_.isFinished())
+            eng_ = null;
+         finished_ = true;
       } else {
+         if (finished_ = true) {
+            status = "finished, ";
+         }
          hc_.enableAcquisitionControls(false);
       }
       if (isDiskCached()) {
@@ -312,6 +319,7 @@ public class VirtualAcquisitionDisplay {
       String path = isDiskCached() ?
          new File(imageCache_.getDiskLocation()).getName() : "Untitled";
       hyperImage_.getWindow().setTitle(path + " (" + status + ")");
+
    }
 
    public void showImage(TaggedImage taggedImg) throws MMScriptException {

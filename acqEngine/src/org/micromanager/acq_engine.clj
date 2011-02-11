@@ -333,7 +333,7 @@
 (defn cleanup []
   (log "cleanup")
   (do-when #(.update %) (:display @state))
-  (state-assoc! :running false :display nil)
+  (state-assoc! :finished true, :running false, :display nil)
   (when (core isSequenceRunning)
     (core stopSequenceAcquisition))
   (core setAutoShutter (@state :init-auto-shutter))
@@ -351,6 +351,7 @@
       :pause false
       :stop false
       :running true
+      :finished false
       :last-wake-time (clock-ms)
       :last-z-position z
       :reference-z-position z
@@ -508,7 +509,7 @@
   [[] (atom {:running false :stop false})])
 
 (defn -run [this acq-settings acq-eng]
-  ;(def last-acq this)
+  (def last-acq this)
   (def eng acq-eng)
   (load-mm)
   (create-device-agents)
@@ -552,6 +553,9 @@
 
 (defn -isRunning [this]
   (:running @(.state this)))
+
+(defn -isFinished [this]
+  (or (get @(.state this) :finished) false))
 
 (defn -isPaused [this]
   (:pause @(.state this)))

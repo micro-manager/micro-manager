@@ -237,6 +237,13 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
          return false;
    }
 
+   public boolean isFinished() {
+      if (pipeline_ != null)
+         return pipeline_.isFinished();
+      else
+         return false;
+   }
+
    public boolean isMultiFieldRunning() {
       throw new UnsupportedOperationException("Not supported yet.");
    }

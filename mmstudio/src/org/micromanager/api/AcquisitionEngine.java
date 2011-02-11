@@ -300,4 +300,5 @@ public interface AcquisitionEngine {
    public boolean abortRequested();
 
    public long getNextWakeTime();
+   public boolean isFinished();
 }
