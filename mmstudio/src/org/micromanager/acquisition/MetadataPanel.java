@@ -376,11 +376,11 @@ public class MetadataPanel extends javax.swing.JPanel
 }//GEN-LAST:event_displayModeComboActionPerformed
 
     private void summaryCommentsTextAreaFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_summaryCommentsTextAreaFocusLost
-      writeSummaryComments();
+      writeSummaryComments(WindowManager.getCurrentImage());
 }//GEN-LAST:event_summaryCommentsTextAreaFocusLost
 
     private void imageCommentsTextAreaFocusLost(java.awt.event.FocusEvent evt) {//GEN-FIRST:event_imageCommentsTextAreaFocusLost
-      writeImageComments();
+      writeImageComments(WindowManager.getCurrentImage());
 }//GEN-LAST:event_imageCommentsTextAreaFocusLost
 
     private void showUnchangingPropertiesCheckboxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_showUnchangingPropertiesCheckboxActionPerformed
@@ -553,21 +553,23 @@ public class MetadataPanel extends javax.swing.JPanel
 
    //Implements ImageListener
    public void imageClosed(ImagePlus imp) {
-      writeSummaryComments();
+      writeSummaryComments(imp);
       if (WindowManager.getCurrentWindow() == null) {
          update((ImagePlus) null);
+      } else {
+         imageUpdated(WindowManager.getCurrentImage());
       }
    }
 
-   private void writeSummaryComments() {
-       VirtualAcquisitionDisplay acq = getVirtualAcquisitionDisplay();
+   private void writeSummaryComments(ImagePlus imp) {
+       VirtualAcquisitionDisplay acq = getVirtualAcquisitionDisplay(imp);
        if (acq != null) {
           acq.setSummaryComment(summaryCommentsTextArea.getText());
        }
    }
 
-   private void writeImageComments() {
-       VirtualAcquisitionDisplay acq = getVirtualAcquisitionDisplay();
+   private void writeImageComments(ImagePlus imgp) {
+       VirtualAcquisitionDisplay acq = getVirtualAcquisitionDisplay(imgp);
        if (acq != null) {
           acq.setImageComment(imageCommentsTextArea.getText());
        }
@@ -625,7 +627,7 @@ public class MetadataPanel extends javax.swing.JPanel
          } else if (tabSelected == 0) {
             updateChannelControls();
          } else if (tabSelected == 2) {
-            VirtualAcquisitionDisplay acq = getVirtualAcquisitionDisplay();
+            VirtualAcquisitionDisplay acq = getVirtualAcquisitionDisplay(imp);
             if (acq != null) {
                imageCommentsTextArea.setText(acq.getImageComment());
             }
@@ -646,7 +648,7 @@ public class MetadataPanel extends javax.swing.JPanel
 
       ImagePlus imgp = focusedWindow.getImagePlus();
       MMImageCache cache = getCache(imgp);
-      VirtualAcquisitionDisplay acq = getVirtualAcquisitionDisplay();
+      VirtualAcquisitionDisplay acq = getVirtualAcquisitionDisplay(imgp);
 
       if (acq != null) {
          summaryCommentsTextArea.setText(acq.getSummaryComment());
@@ -669,8 +671,7 @@ public class MetadataPanel extends javax.swing.JPanel
 
    }
 
-   private VirtualAcquisitionDisplay getVirtualAcquisitionDisplay() {
-      ImagePlus imgp = WindowManager.getCurrentImage();
+   private VirtualAcquisitionDisplay getVirtualAcquisitionDisplay(ImagePlus imgp) {
       if (imgp == null)
          return null;
       return VirtualAcquisitionDisplay.getDisplay(imgp);
