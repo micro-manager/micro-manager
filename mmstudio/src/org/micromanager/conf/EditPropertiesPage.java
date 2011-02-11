@@ -320,7 +320,7 @@ public class EditPropertiesPage extends PagePanel {
                 core_.enableDebugLog(currentDebugLogSetting);
                 rebuildTable();
                 // restore normal operation of the Detect button
-                detectButton_.setText("Detect");
+                detectButton_.setText(DetectPorts);
             }
         }
 
@@ -331,6 +331,7 @@ public class EditPropertiesPage extends PagePanel {
             }
         }
     }
+    private final String DetectPorts = "Detect Ports";
     private static final long serialVersionUID = 1L;
     private JTable propTable_;
     private JScrollPane scrollPane_;
@@ -367,7 +368,7 @@ public class EditPropertiesPage extends PagePanel {
         detectButton_.addActionListener(new ActionListener() {
 
             public void actionPerformed(ActionEvent arg0) {
-                if (detectButton_.getText().equalsIgnoreCase("Detect")) {
+                if (detectButton_.getText().equalsIgnoreCase(DetectPorts)) {
                     requestCancel_ = false;
                     progressDialog_ = new DetectorJDialog(parent_, false);
                     progressDialog_.setTitle("\u00B5" + "Manager device detection");
@@ -379,11 +380,11 @@ public class EditPropertiesPage extends PagePanel {
                 } else {
                     requestCancel_ = true;
                     dt_.finish();
-                    detectButton_.setText("Detect");
+                    detectButton_.setText(DetectPorts);
                 }
             }
         });
-        detectButton_.setText("Detect");
+        detectButton_.setText(DetectPorts);
         detectButton_.setBounds(469, 10, 93, 23);
         add(detectButton_);
 
