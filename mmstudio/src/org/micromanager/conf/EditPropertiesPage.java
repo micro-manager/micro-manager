@@ -26,12 +26,14 @@
 //
 package org.micromanager.conf;
 
+import java.awt.BorderLayout;
 import java.awt.Rectangle;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.prefs.Preferences;
+import javax.swing.JButton;
 import javax.swing.JDialog;
 
 import javax.swing.JOptionPane;
@@ -222,23 +224,24 @@ public class EditPropertiesPage extends PagePanel {
         l.setText(initText);
         //l.setEnabled(false);//.setHorizontalAlignment(JLabel.CENTER);
         l.setEditable(false);
-        progressDialog_.add(l);
+        progressDialog_.getContentPane().add(l, BorderLayout.NORTH);
 
         /*
+        
         JButton cancelButton = new JButton();
         cancelButton.setText("Cancel");
         cancelButton.addActionListener(new java.awt.event.ActionListener() {
 
             public void actionPerformed(java.awt.event.ActionEvent evt) {
+                System.out.print("cancelbutton");
                 requestCancel_ = true;
             }
 
         });
-        progressDialog_.add(cancelButton);
-         *
-         pack puts the Cancel button on top of the TextArea
+        progressDialog_.getContentPane().add(cancelButton, BorderLayout.SOUTH);
+         
          */
-
+        
         progressDialog_.pack();
         progressDialog_.setLocationRelativeTo(this);
         Rectangle r = new Rectangle();
