@@ -31,36 +31,39 @@ import java.util.prefs.Preferences;
 public class MMOptions {
    private static final String DEBUG_LOG = "DebugLog";
    private static final String PREF_DIR = "MMOptions";
-   //private static final String MT_ACQ = "MultiThread";
+   private static final String CLOSE_ON_EXIT = "CloseOnExit";
    private static final String SKIP_CONFIG = "SkipSplashScreen";
    private static final String BUFFSIZE_MB = "bufsize_mb";
    private static final String DISPLAY_BACKGROUND = "displayBackground";
    private static final String STARTUP_SCRIPT_FILE = "startupScript";
    
-   public boolean debugLogEnabled = false;
-   public boolean doNotAskForConfigFile = false;
-   public int circularBufferSizeMB = 25;
-   public String displayBackground = "Day";
-   public String startupScript = "MMStartup.bsh";
+   public boolean debugLogEnabled_ = false;
+   public boolean doNotAskForConfigFile_ = false;
+   public boolean closeOnExit_ = true;
+   public int circularBufferSizeMB_ = 25;
+   public String displayBackground_ = "Day";
+   public String startupScript_ = "MMStartup.bsh";
    
    public void saveSettings() {
       Preferences root = Preferences.userNodeForPackage( this.getClass());
       Preferences prefs = root.node(root.absolutePath() + "/" + PREF_DIR);
       
-      prefs.putBoolean(DEBUG_LOG, debugLogEnabled);
-      prefs.putBoolean(SKIP_CONFIG, doNotAskForConfigFile);
-      prefs.putInt(BUFFSIZE_MB, circularBufferSizeMB);
-      prefs.put(DISPLAY_BACKGROUND, displayBackground);
-      prefs.put(STARTUP_SCRIPT_FILE, startupScript);   }
+      prefs.putBoolean(DEBUG_LOG, debugLogEnabled_);
+      prefs.putBoolean(SKIP_CONFIG, doNotAskForConfigFile_);
+      prefs.putBoolean(CLOSE_ON_EXIT, closeOnExit_);
+      prefs.putInt(BUFFSIZE_MB, circularBufferSizeMB_);
+      prefs.put(DISPLAY_BACKGROUND, displayBackground_);
+      prefs.put(STARTUP_SCRIPT_FILE, startupScript_);   }
    
    public void loadSettings() {
       Preferences root = Preferences.userNodeForPackage(this.getClass());
       Preferences prefs = root.node(root.absolutePath() + "/" + PREF_DIR);
       
-      debugLogEnabled = prefs.getBoolean(DEBUG_LOG, debugLogEnabled);
-      doNotAskForConfigFile = prefs.getBoolean(SKIP_CONFIG, doNotAskForConfigFile);
-      circularBufferSizeMB = prefs.getInt(BUFFSIZE_MB, circularBufferSizeMB);
-      displayBackground = prefs.get(DISPLAY_BACKGROUND, displayBackground);
-      startupScript = prefs.get(STARTUP_SCRIPT_FILE, startupScript);
+      debugLogEnabled_ = prefs.getBoolean(DEBUG_LOG, debugLogEnabled_);
+      doNotAskForConfigFile_ = prefs.getBoolean(SKIP_CONFIG, doNotAskForConfigFile_);
+      closeOnExit_ = prefs.getBoolean(CLOSE_ON_EXIT, closeOnExit_);
+      circularBufferSizeMB_ = prefs.getInt(BUFFSIZE_MB, circularBufferSizeMB_);
+      displayBackground_ = prefs.get(DISPLAY_BACKGROUND, displayBackground_);
+      startupScript_ = prefs.get(STARTUP_SCRIPT_FILE, startupScript_);
    }
 }

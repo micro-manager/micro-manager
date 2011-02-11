@@ -531,23 +531,21 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       setIconImage(SwingResourceManager.getImage(MMStudioMainFrame.class,
             "icons/microscope.gif"));
       running_ = true;
-      // !!! contrastSettings8_ = new ContrastSettings();
-      // contrastSettings16_ = new ContrastSettings();
 
       acqMgr_ = new AcquisitionManager();
 
       sysConfigFile_ = new String(System.getProperty("user.dir") + "/"
             + DEFAULT_CONFIG_FILE_NAME);
 
-
-      if (options_.startupScript.length() > 0) {
+      if (options_.startupScript_.length() > 0) {
          startupScriptFile_ = new String(System.getProperty("user.dir") + "/"
-               + options_.startupScript);
+               + options_.startupScript_);
       } else {
          startupScriptFile_ = "";
       }
 
       ReportingUtils.SetContainingFrame(gui_);
+
       // set the location for app preferences
       try {
          mainPrefs_ = Preferences.userNodeForPackage(this.getClass());
@@ -583,7 +581,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          }
       }
 
-
       liveModeTimer_ = new Timer();
 
       // load application preferences
@@ -600,11 +597,11 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       openAcqDirectory_ = mainPrefs_.get(OPEN_ACQ_DIR, "");
 
       setBounds(x, y, width, height);
-      setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+      setExitStrategy(options_.closeOnExit_);
       springLayout_ = new SpringLayout();
       getContentPane().setLayout(springLayout_);
       setTitle(MICRO_MANAGER_TITLE);
-      setBackground(guiColors_.background.get((options_.displayBackground)));
+      setBackground(guiColors_.background.get((options_.displayBackground_)));
 
       // Snap button
       // -----------
@@ -1209,15 +1206,15 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       optionsMenuItem.addActionListener(new ActionListener() {
 
          public void actionPerformed(final ActionEvent e) {
-            int oldBufsize = options_.circularBufferSizeMB;
+            int oldBufsize = options_.circularBufferSizeMB_;
 
             OptionsDlg dlg = new OptionsDlg(options_, core_, mainPrefs_,
                   thisInstance, sysConfigFile_);
             dlg.setVisible(true);
             // adjust memory footprint if necessary
-            if (oldBufsize != options_.circularBufferSizeMB) {
+            if (oldBufsize != options_.circularBufferSizeMB_) {
                try {
-                  core_.setCircularBufferMemoryFootprint(options_.circularBufferSizeMB);
+                  core_.setCircularBufferMemoryFootprint(options_.circularBufferSizeMB_);
                } catch (Exception exc) {
                   ReportingUtils.showError(exc);
                }
@@ -1432,7 +1429,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             }
             ReportingUtils.setCore(core_);
 
-            core_.enableDebugLog(options_.debugLogEnabled);
+            core_.enableDebugLog(options_.debugLogEnabled_);
             core_.logMessage("MM Studio version: " + getVersion());
             core_.logMessage(core_.getVersionInfo());
             core_.logMessage(core_.getAPIVersionInfo());
@@ -1450,7 +1447,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             core_.registerCallback(cb_);
 
             try {
-               core_.setCircularBufferMemoryFootprint(options_.circularBufferSizeMB);
+               core_.setCircularBufferMemoryFootprint(options_.circularBufferSizeMB_);
             } catch (Exception e2) {
                ReportingUtils.showError(e2);
             }
@@ -1462,10 +1459,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
             loadMRUConfigFiles();
 
-            if (!options_.doNotAskForConfigFile) {
+            if (!options_.doNotAskForConfigFile_) {
                MMIntroDlg introDlg = new MMIntroDlg(VERSION, MRUConfigFiles_);
                introDlg.setConfigFile(sysConfigFile_);
-               introDlg.setBackground(guiColors_.background.get((options_.displayBackground)));
+               introDlg.setBackground(guiColors_.background.get((options_.displayBackground_)));
                introDlg.setVisible(true);
                sysConfigFile_ = introDlg.getConfigFile();
             }
@@ -1822,7 +1819,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       if (msg.length() > 0) {
          errText += msg + " -- ";
       }
-      if (options_.debugLogEnabled) {
+      if (options_.debugLogEnabled_) {
          errText += e.getMessage();
       } else {
          errText += e.toString() + "\n";
@@ -1891,7 +1888,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       profileWin_.setData(lineProfileData_);
       profileWin_.setAutoScale();
       profileWin_.setTitle("Live line profile");
-      profileWin_.setBackground(guiColors_.background.get((options_.displayBackground)));
+      profileWin_.setBackground(guiColors_.background.get((options_.displayBackground_)));
       addMMBackgroundListener(profileWin_);
       profileWin_.setVisible(true);
    }
@@ -2008,6 +2005,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          ReportingUtils.showError(e);
       }
    }
+
    private BooleanLock creatingImageWindow_ = new BooleanLock(false);
    private static long waitForCreateImageWindowTimeout_ = 5000;
 
@@ -2039,7 +2037,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
          core_.logMessage("createImageWin1");
 
-         win.setBackground(guiColors_.background.get((options_.displayBackground)));
+         win.setBackground(guiColors_.background.get((options_.displayBackground_)));
          addMMBackgroundListener(win);
          setIJCal(win);
 
@@ -2082,6 +2080,14 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
     */
    public static MMStudioMainFrame getInstance() {
       return gui_;
+   }
+
+
+   public void setExitStrategy(boolean closeOnExit) {
+      if (closeOnExit)
+         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+      else
+         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
    }
 
    public void saveConfigPresets() {
@@ -2228,7 +2234,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          scriptPanel_.insertScriptingObject(SCRIPT_CORE_OBJECT, core_);
          scriptPanel_.insertScriptingObject(SCRIPT_ACQENG_OBJECT, engine_);
          scriptPanel_.setParentGUI(this);
-         scriptPanel_.setBackground(guiColors_.background.get((options_.displayBackground)));
+         scriptPanel_.setBackground(guiColors_.background.get((options_.displayBackground_)));
          addMMBackgroundListener(scriptPanel_);
 
       }
@@ -2904,7 +2910,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
                 reportProblemDialog_ = new ReportProblemDialog(core_, thisFrame, sysConfigFile_, options_);
                 thisFrame.addMMBackgroundListener(reportProblemDialog_);
-                reportProblemDialog_.setBackground(guiColors_.background.get((options_.displayBackground)));
+                reportProblemDialog_.setBackground(guiColors_.background.get((options_.displayBackground_)));
              }
             reportProblemDialog_.setVisible(true);
          }
@@ -3183,12 +3189,14 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          this.logError(e);
       }
       dispose();
-      if (!runsAsPlugin_) {
-         System.exit(0);
-      } else {
-         ImageJ ij = IJ.getInstance();
-         if (ij != null) {
-            ij.quit();
+      if (options_.closeOnExit_) {
+         if (!runsAsPlugin_) {
+            System.exit(0);
+         } else {
+            ImageJ ij = IJ.getInstance();
+            if (ij != null) {
+               ij.quit();
+            }
          }
       }
 
@@ -3406,25 +3414,25 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
     * @return
     */
    public Color getBackgroundColor() {
-      return guiColors_.background.get((options_.displayBackground));
+      return guiColors_.background.get((options_.displayBackground_));
    }
 
    /*
     * Changes background color of this window and all other MM windows
     */
    public void setBackgroundStyle(String backgroundType) {
-      setBackground(guiColors_.background.get((options_.displayBackground)));
+      setBackground(guiColors_.background.get((options_.displayBackground_)));
       paint(MMStudioMainFrame.this.getGraphics());
       
       // sets background of all registered Components
       for (Component comp:MMFrames_) {
          if (comp != null)
-            comp.setBackground(guiColors_.background.get((options_.displayBackground)));
+            comp.setBackground(guiColors_.background.get((options_.displayBackground_)));
        }
    }
 
    public String getBackgroundStyle() {
-      return options_.displayBackground;
+      return options_.displayBackground_;
    }
 
    // Set ImageJ pixel calibration

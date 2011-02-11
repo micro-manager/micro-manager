@@ -329,7 +329,7 @@ public class ReportProblemDialog extends javax.swing.JDialog {
         SendButton_.setEnabled(true);
         DescriptionPane_.setEnabled(true);
         DescriptionPane_.setEditable(true);
-        core_.enableDebugLog(mmoptions_.debugLogEnabled);
+        core_.enableDebugLog(mmoptions_.debugLogEnabled_);
     }
 
     void InitializeDialog() {

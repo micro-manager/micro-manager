@@ -30,31 +30,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.Reader;
-import java.io.StringWriter;
-import java.io.UnsupportedEncodingException;
-import java.io.Writer;
-import java.net.InetAddress;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.UnknownHostException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.TimeZone;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
@@ -69,11 +44,9 @@ import mmcorej.CMMCore;
 
 import org.micromanager.api.DeviceControlGUI;
 import org.micromanager.utils.GUIColors;
-import org.micromanager.utils.HttpUtils;
 import org.micromanager.utils.MMDialog;
 import org.micromanager.utils.NumberUtils;
 import org.micromanager.utils.ReportingUtils;
-import sun.misc.UUEncoder;
 
 /**
  * Options dialog for MMStudio.
@@ -120,9 +93,9 @@ public class OptionsDlg extends MMDialog {
       guiColors_ = new GUIColors();
       Dimension buttonSize = new Dimension(120, 20);
 
-      if (opts_.displayBackground.equals("Day")) {
+      if (opts_.displayBackground_.equals("Day")) {
          setBackground(java.awt.SystemColor.control);
-      } else if (opts_.displayBackground.equals("Night")) {
+      } else if (opts_.displayBackground_.equals("Night")) {
          setBackground(java.awt.Color.gray);
       }
       Preferences root = Preferences.userNodeForPackage(this.getClass());
@@ -136,8 +109,8 @@ public class OptionsDlg extends MMDialog {
       debugLogEnabledCheckBox.addActionListener(new ActionListener() {
 
          public void actionPerformed(final ActionEvent e) {
-            opts_.debugLogEnabled = debugLogEnabledCheckBox.isSelected();
-            core_.enableDebugLog(opts_.debugLogEnabled);
+            opts_.debugLogEnabled_ = debugLogEnabledCheckBox.isSelected();
+            core_.enableDebugLog(opts_.debugLogEnabled_);
          }
       });
       debugLogEnabledCheckBox.setText("Debug log enabled");
@@ -166,143 +139,6 @@ public class OptionsDlg extends MMDialog {
       getContentPane().add(clearLogFileButton);
       //springLayout.putConstraint(SpringLayout.SOUTH, clearLogFileButton, 166, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.NORTH, clearLogFileButton, 175, SpringLayout.NORTH, getContentPane());
-
-
-      final JButton sendLogFileButton = new JButton();
-      sendLogFileButton.setMargin(new Insets(0, 0, 0, 0));
-      sendLogFileButton.setToolTipText("Send a compressed archive of your log file to Micro-manager.org");
-      sendLogFileButton.addActionListener(new ActionListener() {
-
-         public void actionPerformed(final ActionEvent e) {
-
-            class Sender extends Thread {
-
-               private String status_;
-
-               public Sender() {
-                  super("sender");
-                  status_ = "";
-
-               }
-               public String Status(){
-                   return status_;
-               }
-
-               public void run() {
-                  status_ = "";
-                  String cfgFile = currentCfgPath_;
-                  // is there a public way to get these keys??
-                  //mainPrefs_.get("sysconfig_file", cfgFile);
-
-                  String preamble = "#";
-                  try{
-                     preamble += "Host: " + InetAddress.getLocalHost().getHostName() + " ";
-                  }
-                  catch(IOException e){
-                  }
-                  preamble += ("User: " + core_.getUserId() + " configuration file: " + cfgFile + "\n");
-                  try{
-                     Reader in = new BufferedReader(new FileReader(cfgFile));
-                     StringBuilder sb = new StringBuilder();
-                     char[] tmpBuffer = new char[8192];
-                     int length;
-
-                     while ((length = in.read(tmpBuffer)) > 0) {
-                        sb.append(tmpBuffer, 0, length);
-                     }
-                     preamble += sb.toString();
-                     preamble += "\n";
-                  }
-                  catch(IOException e){
-                  }
-                  String archPath =  core_.saveLogArchiveWithPreamble(preamble, preamble.length());
-                  //String archPath = core_.saveLogArchive();
-                  try {
-                     HttpUtils httpu = new HttpUtils();
-                     List<File> list = new ArrayList<File>();
-                     File archiveFile = new File(archPath);
-                     // contruct a filename for the archive which is extremely
-                     // likely to be unique as follows:
-                     // yyyyMMddHHmmss + timezone + ip address
-                     String qualifiedArchiveFileName = "";
-                     try {
-                        SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHHmmss");
-                        qualifiedArchiveFileName += df.format(new Date());
-                        String shortTZName = TimeZone.getDefault().getDisplayName(false, TimeZone.SHORT);
-                        qualifiedArchiveFileName += shortTZName;
-                        qualifiedArchiveFileName += "_";
-                        try {
-                           qualifiedArchiveFileName += InetAddress.getLocalHost().getHostAddress();
-                        } catch (UnknownHostException e2) {
-                        }
-                     } catch (Throwable t) {
-                     }
-                     // try ensure valid and convenient UNIX file name
-                     qualifiedArchiveFileName.replace(' ', '_');
-                     qualifiedArchiveFileName.replace('*', '_');
-                     qualifiedArchiveFileName.replace('|', '_');
-                     qualifiedArchiveFileName.replace('>', '_');
-                     qualifiedArchiveFileName.replace('<', '_');
-                     qualifiedArchiveFileName.replace('(', '_');
-                     qualifiedArchiveFileName.replace(')', '_');
-                     qualifiedArchiveFileName.replace(':', '_');
-                     qualifiedArchiveFileName.replace(';', '_');                //File fileToSend = new File(qualifiedArchiveFileName);
-                     qualifiedArchiveFileName += ".log";
-                     UUEncoder uuec = new UUEncoder();
-                     InputStream reader = new FileInputStream(archiveFile);
-                     OutputStream writer = new FileOutputStream(qualifiedArchiveFileName);
-                     uuec.encodeBuffer(reader, writer);
-                     reader.close();
-                     writer.close();
-                     File fileToSend = new File(qualifiedArchiveFileName);
-                     try {
-                        URL url = new URL("http://valelab.ucsf.edu/~MM/upload_corelog.php");
-                        List flist = new ArrayList<File>();
-                        flist.add(fileToSend);
-                        // for each of a colleciton of files to send...
-                        for (Object o0 : flist) {
-                           File f0 = (File) o0;
-                           try {
-                              httpu.upload(url, f0);
-                           } catch (java.net.UnknownHostException e2) {
-                              status_ = e2.toString();//, " log archive upload");
-                           } catch (IOException e2) {
-                              status_ = e2.toString();
-                           } catch (SecurityException e2) {
-                              status_ = e2.toString();
-                           } catch (Exception e2) {
-                              status_ = e2.toString();
-                           }
-                        }
-                     } catch (MalformedURLException e2) {
-                       status_ = e2.toString();
-                     }
-                  } catch (IOException e2) {
-                       status_ = e2.toString();
-                  }
-              }
-            }
-
-            Sender s0 = new Sender();
-            s0.start();
-            try {
-               s0.join();
-            } catch (InterruptedException ex) {
-               Logger.getLogger(OptionsDlg.class.getName()).log(Level.SEVERE, null, ex);
-            }
-            if(0< s0.Status().length()){
-                ReportingUtils.showError("Error uploading corelog.txt:\n " + s0.Status());
-            }
-
-         }
-      });
-      sendLogFileButton.setFont(new Font("", Font.PLAIN, 10));
-      sendLogFileButton.setText("Send core log to MM.org");
-      sendLogFileButton.setPreferredSize(buttonSize);
-      getContentPane().add(sendLogFileButton);
-      // put send log file button to the right of clear log file button
-      springLayout.putConstraint(SpringLayout.NORTH, sendLogFileButton, 0, SpringLayout.NORTH, clearLogFileButton);
-      springLayout.putConstraint(SpringLayout.WEST, sendLogFileButton, 20, SpringLayout.EAST, clearLogFileButton);
 
       final JButton clearRegistryButton = new JButton();
       clearRegistryButton.setToolTipText("Clears all persistent settings and returns to defaults");
@@ -337,12 +173,12 @@ public class OptionsDlg extends MMDialog {
 
          public void actionPerformed(final ActionEvent e) {
             try {
-               opts_.circularBufferSizeMB = NumberUtils.displayStringToInt(bufSizeField_.getText());
+               opts_.circularBufferSizeMB_ = NumberUtils.displayStringToInt(bufSizeField_.getText());
             } catch (Exception e1) {
                ReportingUtils.showError(e1);
                return;
             }
-            opts_.startupScript = startupScriptFile_.getText();
+            opts_.startupScript_ = startupScriptFile_.getText();
             savePosition();
             parent_.makeActive();
             dispose();
@@ -355,13 +191,12 @@ public class OptionsDlg extends MMDialog {
       springLayout.putConstraint(SpringLayout.NORTH, okButton, 12, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.SOUTH, okButton, 35, SpringLayout.NORTH, getContentPane());
 
-      debugLogEnabledCheckBox.setSelected(opts_.debugLogEnabled);
+      debugLogEnabledCheckBox.setSelected(opts_.debugLogEnabled_);
 
       final JCheckBox doNotAskForConfigFileCheckBox = new JCheckBox();
       doNotAskForConfigFileCheckBox.addActionListener(new ActionListener() {
-
          public void actionPerformed(ActionEvent arg0) {
-            opts_.doNotAskForConfigFile = doNotAskForConfigFileCheckBox.isSelected();
+            opts_.doNotAskForConfigFile_ = doNotAskForConfigFileCheckBox.isSelected();
          }
       });
       doNotAskForConfigFileCheckBox.setText("Do not ask for config file");
@@ -369,7 +204,9 @@ public class OptionsDlg extends MMDialog {
       springLayout.putConstraint(SpringLayout.EAST, doNotAskForConfigFileCheckBox, 220, SpringLayout.WEST, getContentPane());
       springLayout.putConstraint(SpringLayout.WEST, doNotAskForConfigFileCheckBox, 0, SpringLayout.WEST, debugLogEnabledCheckBox);
       springLayout.putConstraint(SpringLayout.SOUTH, doNotAskForConfigFileCheckBox, 60, SpringLayout.NORTH, getContentPane());
-      doNotAskForConfigFileCheckBox.setSelected(opts_.doNotAskForConfigFile);
+      doNotAskForConfigFileCheckBox.setSelected(opts_.doNotAskForConfigFile_);
+
+
 
       final JLabel sequenceBufferSizeLabel = new JLabel();
       sequenceBufferSizeLabel.setText("Sequence buffer size [MB]");
@@ -379,7 +216,7 @@ public class OptionsDlg extends MMDialog {
       springLayout.putConstraint(SpringLayout.SOUTH, sequenceBufferSizeLabel, 84, SpringLayout.NORTH, getContentPane());
       //springLayout.putConstraint(SpringLayout.NORTH, sequenceBufferSizeLabel, 95, SpringLayout.NORTH, getContentPane());
 
-      bufSizeField_ = new JTextField(Integer.toString(opts_.circularBufferSizeMB));
+      bufSizeField_ = new JTextField(Integer.toString(opts_.circularBufferSizeMB_));
       getContentPane().add(bufSizeField_);
       springLayout.putConstraint(SpringLayout.SOUTH, bufSizeField_, 85, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.NORTH, bufSizeField_, 65, SpringLayout.NORTH, getContentPane());
@@ -396,7 +233,7 @@ public class OptionsDlg extends MMDialog {
       comboDisplayBackground_ = new JComboBox(guiColors_.styleOptions);
       comboDisplayBackground_.setFont(new Font("Arial", Font.PLAIN, 10));
       comboDisplayBackground_.setMaximumRowCount(2);
-      comboDisplayBackground_.setSelectedItem(opts_.displayBackground);
+      comboDisplayBackground_.setSelectedItem(opts_.displayBackground_);
       comboDisplayBackground_.addActionListener(new ActionListener() {
 
          public void actionPerformed(ActionEvent e) {
@@ -419,7 +256,7 @@ public class OptionsDlg extends MMDialog {
       springLayout.putConstraint(SpringLayout.WEST, startupScriptLabel, 0, SpringLayout.WEST, displayLabel);
       springLayout.putConstraint(SpringLayout.SOUTH, startupScriptLabel, 135, SpringLayout.NORTH, getContentPane());
 
-      startupScriptFile_ = new JTextField(opts_.startupScript);
+      startupScriptFile_ = new JTextField(opts_.startupScript_);
       getContentPane().add(startupScriptFile_);
       springLayout.putConstraint(SpringLayout.EAST, okButton, 0, SpringLayout.EAST, startupScriptFile_);
       springLayout.putConstraint(SpringLayout.WEST, okButton, 250, SpringLayout.WEST, getContentPane());
@@ -427,11 +264,29 @@ public class OptionsDlg extends MMDialog {
       springLayout.putConstraint(SpringLayout.WEST, startupScriptFile_, 140, SpringLayout.WEST, getContentPane());
       springLayout.putConstraint(SpringLayout.SOUTH, startupScriptFile_, 137, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.NORTH, startupScriptFile_, 5, SpringLayout.SOUTH, comboDisplayBackground_);
+
+      final JCheckBox closeOnExitCheckBox = new JCheckBox();
+      closeOnExitCheckBox.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent arg0) {
+            opts_.closeOnExit_ = closeOnExitCheckBox.isSelected();
+            MMStudioMainFrame.getInstance().setExitStrategy(opts_.closeOnExit_);
+         }
+      });
+      closeOnExitCheckBox.setText("Close app when quitting MM");
+      getContentPane().add(closeOnExitCheckBox);
+      //springLayout.putConstraint(SpringLayout.EAST, closeOnExitCheckBox, 220, SpringLayout.WEST, getContentPane());
+      //springLayout.putConstraint(SpringLayout.WEST, closeOnExitCheckBox, 0, SpringLayout.WEST, debugLogEnabledCheckBox);
+      //springLayout.putConstraint(SpringLayout.SOUTH, closeOnExitCheckBox, 60, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, closeOnExitCheckBox, 0, SpringLayout.NORTH, clearLogFileButton);
+      springLayout.putConstraint(SpringLayout.WEST, closeOnExitCheckBox, 20, SpringLayout.EAST, clearLogFileButton);
+      closeOnExitCheckBox.setSelected(opts_.closeOnExit_);
+
+
    }
 
    private void changeBackground() {
       String background = (String) comboDisplayBackground_.getSelectedItem();
-      opts_.displayBackground = background;
+      opts_.displayBackground_ = background;
       setBackground(guiColors_.background.get(background));
 
       if (parent_ != null) // test for null just to avoid crashes (should never be null)
