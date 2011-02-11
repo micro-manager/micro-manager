@@ -30,3 +30,20 @@ KDV 20110114 Bugfix: ROI was wrong if ROI button clicked twice in succession. Co
 
 KDV 20110117 Bugfix: ROI was wrong if both binning and ROI changed in same snap
 
+KDV 20110209 8/16 bit colors added; raw image decoding through libraw added.
+
+Steps taken to add libraw to the VC++ project:
+- download LibRaw-0.13.1.zip from http://www.libraw.org, unzip.
+- remove version number from directory name, changing directory name to "LibRaw"
+- add to project:
+  from directory LibRaw\internal:
+    dcraw_common.cpp  dcraw_fileio.cpp  demosaic_packs.cpp
+  from directory LibRaw\src:
+    libraw_c_api.cpp  libraw_cxx.cpp
+- to project>properties>configuration properties>c/c++>additional include directories:
+    add LibRaw
+- to project>properties>configuration properties>c/c++>preprocessor>preprocessor definitions:
+    add LIBRAW_NODLL
+- select files:
+    dcraw_common.cpp  dcraw_fileio.cpp  demosaic_packs.cpp  libraw_c_api.cpp  libraw_cxx.cpp
+  right click and set properties>configuration properties>c/c++>warning level to "Off (/W0)"

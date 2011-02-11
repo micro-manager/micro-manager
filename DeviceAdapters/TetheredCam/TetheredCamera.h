@@ -34,6 +34,12 @@
 #include <map>
 #include <wincodec.h>
 
+// Add libraw.h, but disable warnings
+#pragma warning (push)
+#pragma warning (disable: 4127)
+#include "libraw/libraw.h"
+#pragma warning (pop)
+
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
 //
@@ -47,14 +53,18 @@
 #define ERR_CAM_SHUTTER          109
 #define ERR_CAM_UNKNOWN          110
 #define ERR_CAM_LOAD             111
-#define ERR_CAM_CONVERSION       112
-#define ERR_CAM_SHUTTER_SPEEDS   113
+#define ERR_CAM_RAW              112
+#define ERR_CAM_CONVERSION       113
+#define ERR_CAM_SHUTTER_SPEEDS   114
+
 
 //////////////////////////////////////////////////////////////////////////////
 // Properties
 //
 #define g_Keyword_ShutterSpeeds  "ShutterSpeeds"
 #define g_Keyword_KeepOriginals  "KeepOriginals"
+#define g_Keyword_BitDepth       "BitDepth"
+#define g_Keyword_ImageDecoder   "ImageDecoder"
 
 //////////////////////////////////////////////////////////////////////////////
 // CDemoCamera class
@@ -100,6 +110,8 @@ public:
    int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnKeepOriginals(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnImageDecoder(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    int AcquireFrame();
@@ -112,13 +124,20 @@ private:
    int SetCameraExposure(double exp_ms);
    int GetCameraName();
    int GetReturnCode(int status);
+   int LoadWICImage(IWICImagingFactory *factory, const char* filename); /* Load an image from file using Windows WIC Codecs */
+   int LoadRawImage(IWICImagingFactory *factory, const char* filename); /* Load a raw image from file using libraw */
+   int Convert64bppRGBAto64bppBGRA(ImgBuffer *img);  
+
    ImgBuffer img_;
+   LibRaw rawProcessor_;
 
    bool initialized_;
    std::string cameraName_; /* Camera manufacturer and model */
    IWICBitmap *frameBitmap; /* last captured frame */
    bool grayScale_;
    bool keepOriginals_;
+   bool internalDecoder_;
+   unsigned bitDepth_;
    unsigned roiX_; /* Region Of Interest */
    unsigned roiY_;
    unsigned roiXSize_;

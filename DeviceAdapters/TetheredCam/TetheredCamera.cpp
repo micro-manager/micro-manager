@@ -106,6 +106,10 @@ const char* g_CameraDeviceDescription = "Canon Powershot Camera";
 const char* g_PixelType_Gray = "Grayscale";
 const char* g_PixelType_Color = "Color";
 
+// constants for naming image decoder types (allowed values of the "ImageDecoder" property)
+const char* g_ImageDecoder_Windows = "Windows";
+const char* g_ImageDecoder_Micromanager = "Micro-Manager";
+
 // TODO: linux entry code
 
 // windows DLL entry code
@@ -139,7 +143,6 @@ inline void SafeRelease(T *&p)
    }
 }
 #endif
-
 
 ///////////////////////////////////////////////////////////////////////////////
 // Exported MMDevice API
@@ -198,6 +201,8 @@ CTetheredCamera::CTetheredCamera() :
    frameBitmap(NULL),
    grayScale_(false),
    keepOriginals_(false),
+   internalDecoder_(false),
+   bitDepth_(8),
    roiX_(0),
    roiY_(0),
    roiXSize_(0),
@@ -218,6 +223,7 @@ CTetheredCamera::CTetheredCamera() :
    SetErrorText(ERR_CAM_SHUTTER, "Error releasing shutter e.g. AF failure");
    SetErrorText(ERR_CAM_UNKNOWN, "Unexpected return status");
    SetErrorText(ERR_CAM_LOAD, "Image load failure");
+   SetErrorText(ERR_CAM_RAW, "Error decoding raw image");
    SetErrorText(ERR_CAM_CONVERSION, "Image conversion failure");
    SetErrorText(ERR_CAM_SHUTTER_SPEEDS, "Error in list of camera shutter speeds");
 }
@@ -332,6 +338,32 @@ int CTetheredCamera::Initialize()
    if (nRet != DEVICE_OK)
       return nRet;
 
+   // Bit depth of images
+   pAct = new CPropertyAction (this, &CTetheredCamera::OnBitDepth);
+   nRet = CreateProperty(g_Keyword_BitDepth, "8", MM::Integer, false, pAct);
+   assert(nRet == DEVICE_OK);
+
+   vector<string> bitDepthValues;
+   bitDepthValues.push_back("8");
+   bitDepthValues.push_back("16"); 
+
+   nRet = SetAllowedValues(g_Keyword_BitDepth, bitDepthValues);
+   if (nRet != DEVICE_OK)
+      return nRet;
+
+   // Image decoder
+   pAct = new CPropertyAction (this, &CTetheredCamera::OnImageDecoder);
+   nRet = CreateProperty(g_Keyword_ImageDecoder, g_ImageDecoder_Windows, MM::String, false, pAct);
+   assert(nRet == DEVICE_OK);
+
+   vector<string> imageDecoderValues;
+   imageDecoderValues.push_back(g_ImageDecoder_Windows);
+   imageDecoderValues.push_back(g_ImageDecoder_Micromanager); 
+
+   nRet = SetAllowedValues(g_Keyword_ImageDecoder, imageDecoderValues);
+   if (nRet != DEVICE_OK)
+      return nRet;
+
    // Exposure
    nRet = CreateProperty(MM::g_Keyword_Exposure, "0.0", MM::Float, false);
    assert(nRet == DEVICE_OK);
@@ -349,10 +381,6 @@ int CTetheredCamera::Initialize()
 
    // initialize image buffer
    nRet = SnapImage();
-   if (nRet != DEVICE_OK)
-      return nRet;
-
-   nRet = ResizeImageBuffer();
    return nRet;
 }
 
@@ -499,7 +527,7 @@ unsigned CTetheredCamera::GetImageBytesPerPixel() const
 */
 unsigned CTetheredCamera::GetBitDepth() const
 {
-   return 8; // All pixel values are 0..255, in rgb as well as in grayscale
+   return bitDepth_;
 }
 
 /**
@@ -772,6 +800,98 @@ int CTetheredCamera::OnKeepOriginals(MM::PropertyBase* pProp, MM::ActionType eAc
    return ret; 
 }
 
+/**
+* Handles "BitDepth" property.
+*/
+int CTetheredCamera::OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   int ret = DEVICE_ERR;
+   switch(eAct)
+   {
+   case MM::AfterSet:
+      {
+         string bitDepth;
+         pProp->Get(bitDepth);
+
+         if (bitDepth.compare("8") == 0)
+         {
+            bitDepth_ = 8;
+            ret=DEVICE_OK;
+         }
+         else if (bitDepth.compare("16") == 0)
+         {
+            bitDepth_ = 16;
+            ret=DEVICE_OK;
+         }
+         else
+         {
+            // on error switch to default
+            pProp->Set("8");
+            bitDepth_ = 8;
+            ret = ERR_CAM_BAD_PARAM;
+         }
+         OnPropertiesChanged();
+      } break;
+   case MM::BeforeGet:
+      {
+         if (bitDepth_ == 16)
+            pProp->Set("16");
+         else
+            pProp->Set("8");
+         ret=DEVICE_OK;
+      }break;
+   }
+   return ret; 
+}
+
+/**
+* Handles "ImageDecoder" property.
+*/
+int CTetheredCamera::OnImageDecoder(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   int ret = DEVICE_ERR;
+   switch(eAct)
+   {
+   case MM::AfterSet:
+      {
+         if(IsCapturing())
+            return DEVICE_CAMERA_BUSY_ACQUIRING;
+
+         string imageDecoder;
+         pProp->Get(imageDecoder);
+
+         if (imageDecoder.compare(g_ImageDecoder_Micromanager) == 0)
+         {
+            internalDecoder_ = true;
+            ret=DEVICE_OK;
+         }
+         else if (imageDecoder.compare(g_ImageDecoder_Windows) == 0)
+         {
+            internalDecoder_ = false;
+            ret=DEVICE_OK;
+         }
+         else
+         {
+            // on error switch to default decoder type
+            pProp->Set(g_ImageDecoder_Windows);
+            internalDecoder_ = false;
+            ret = ERR_CAM_BAD_PARAM;
+         }
+         OnPropertiesChanged();
+      } break;
+   case MM::BeforeGet:
+      {
+         if (internalDecoder_)
+            pProp->Set(g_ImageDecoder_Micromanager);
+         else
+            pProp->Set(g_ImageDecoder_Windows);
+         ret=DEVICE_OK;
+      }break;
+   }
+   return ret; 
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////
 // Private CTetheredCamera methods
 ///////////////////////////////////////////////////////////////////////////////
@@ -950,124 +1070,51 @@ int CTetheredCamera::AcquireFrame()
       return ERR_CAM_NO_IMAGE;
    }
 
-   /* Convert filename to unicode */
-   int lenA = lstrlenA(filename);
-   int lenW;
-   BSTR unicodefilename;
-
-   lenW = ::MultiByteToWideChar(CP_ACP, 0, filename, lenA, 0, 0);
-   if (lenW > 0)
-   {
-     // Check whether conversion was successful
-     unicodefilename = ::SysAllocStringLen(0, lenW);
-     ::MultiByteToWideChar(CP_ACP, 0, filename, lenA, unicodefilename, lenW);
-   }
-   else
-     return ERR_CAM_LOAD;
-
-   /* 
-   * Use WIC ("Windows Imaging Component") to read the image file and convert to micro-manager format. 
-   * File can be .jpg or any WIC-supported format, including Canon and Nikon raw if the correct codecs have been installed. 
-   */
-
+   // Raw images downloaded from www.rawsamples.ch , used for testing. 
+   // Uncomment one of the following to force the driver to load the file.
+   // Note: if keepOriginals_ is false, the file will be deleted.
+   //strcpy(filename, "C:\\RAW_NIKON_D3.NEF");
+   //strcpy(filename, "C:\\RAW_CANON_40D_RAW_V103.CR2");
+ 
    //Initialize COM.
    CoInitialize(NULL);
 
-   IWICImagingFactory *factory = NULL;
-   IWICBitmapDecoder *decoder = NULL;
-
    //Create the COM imaging factory.
+   IWICImagingFactory *factory = NULL;
    HRESULT hr = CoCreateInstance(CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER, IID_IWICImagingFactory, (LPVOID*)&factory);
 
-   if (SUCCEEDED(hr))
+   if (FAILED(hr))
    {
-      hr = factory->CreateDecoderFromFilename(unicodefilename, NULL, GENERIC_READ, WICDecodeMetadataCacheOnDemand, &decoder);
-   }
-    
-   LogMessage("CreateDecoderFromFilename done", true);
-   if (SUCCEEDED(hr))
-   {
-      // free the BSTR
-      ::SysFreeString(unicodefilename);
+      SafeRelease(factory);
+      return ERR_CAM_LOAD;     
    }
 
-   /* Decode first frame to bitmap */
-   UINT nFrameCount=0;
-
-   if (SUCCEEDED(hr))
+   int rc = 0;
+   if (internalDecoder_) 
    {
-      hr = decoder->GetFrameCount(&nFrameCount);
-   }
-
-   IWICBitmapFrameDecode *frameDecode = NULL;
-
-   if (SUCCEEDED(hr))
-   {
-      if (nFrameCount == 0) return ERR_CAM_LOAD;
-
-      /* We have a frame! */
-      hr = decoder->GetFrame(0, &frameDecode);
-   }
-
-   IWICFormatConverter *formatConverter = NULL;
-   if (SUCCEEDED(hr))
-   {
-      hr = factory->CreateFormatConverter(&formatConverter);
-   }
-   
-   WICPixelFormatGUID pixelFormat;
-   UINT frameBytesPerPixel;
-
-   if (grayScale_) 
-   {
-      pixelFormat = GUID_WICPixelFormat8bppGray;
-      frameBytesPerPixel = 1;
+      // Load image using libraw
+      rc = LoadRawImage(factory, filename);
+      if (rc != DEVICE_OK)
+      {
+         // If libraw failed, try loading using the WIC Codecs
+         rc = LoadWICImage(factory, filename);
+      }
    }
    else
    {
-      pixelFormat = GUID_WICPixelFormat32bppPBGRA;
-      frameBytesPerPixel = 4;
+      // Load image using the WIC Codecs 
+      rc = LoadWICImage(factory, filename);
+      if (rc != DEVICE_OK)
+      {
+         // If WIC Codecs failed, try loading using libraw 
+         rc = LoadRawImage(factory, filename);
+      }
    }
 
-   if (SUCCEEDED(hr))
+   SafeRelease(factory);
+
+   if (rc == DEVICE_OK)
    {
-      hr = formatConverter->Initialize(
-      frameDecode,                     // Input source to convert
-      pixelFormat,                     // Destination pixel format
-      WICBitmapDitherTypeNone,         // Specified dither pattern
-      NULL,                            // Specify a particular palette 
-      0.f,                             // Alpha threshold
-      WICBitmapPaletteTypeCustom       // Palette translation type
-      );
-   }
-
-   UINT frameWidth = 0;
-   UINT frameHeight = 0;
-      
-   if (SUCCEEDED(hr))
-   {
-      hr = formatConverter->GetSize(&frameWidth, &frameHeight);
-   }
-   
-   if (SUCCEEDED(hr) && ((frameWidth == 0) || (frameHeight == 0)))
-      return ERR_CAM_LOAD;
-
-   /* convert to bitmap */
-   if (SUCCEEDED(hr))
-   {
-      SafeRelease(frameBitmap);
-      hr = factory->CreateBitmapFromSource(formatConverter, WICBitmapCacheOnLoad, &frameBitmap);
-   }
-
-   if (SUCCEEDED(hr))
-   {
-      LogMessage("CreateBitmapFromSource done", true);
-
-      SafeRelease(formatConverter);
-      SafeRelease(frameDecode);
-      SafeRelease(decoder);
-      SafeRelease(factory);
-
       // If keepOriginals is set, keep the original raw bitmap as downloaded from camera.
       if (!keepOriginals_)
       {
@@ -1078,7 +1125,8 @@ int CTetheredCamera::AcquireFrame()
       LogMessage("AcquireFrame done", true);
       return DEVICE_OK;
    }
-
+       
+   LogMessage("AcquireFrame fail", true);
    return ERR_CAM_LOAD;
 }
 
@@ -1088,11 +1136,6 @@ int CTetheredCamera::AcquireFrame()
 
 int CTetheredCamera::ResizeImageBuffer()
 {
-
-   /* 
-    * Use WIC ("Windows Imaging Component") to scale/rotate/flip/clip bitmap.
-    */
-
    // Sanity check
    if (frameBitmap == NULL)
       return DEVICE_OK;
@@ -1100,9 +1143,8 @@ int CTetheredCamera::ResizeImageBuffer()
    //Initialize COM.
    CoInitialize(NULL);
 
-   IWICImagingFactory *factory = NULL;
-
    //Create the COM imaging factory.
+   IWICImagingFactory *factory = NULL;
    HRESULT hr = CoCreateInstance(CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER, IID_IWICImagingFactory, (LPVOID*)&factory);
 
    /* binning: scale image down */
@@ -1217,6 +1259,66 @@ int CTetheredCamera::ResizeImageBuffer()
       hr = clipper->Initialize(transposer, &roiRect);
    }
 
+   /* change to 8bpp grayscale, 16bpp grayscale, 32bpp rgb or 64bpp rgb */
+
+   IWICFormatConverter *formatConverter = NULL;
+   if (SUCCEEDED(hr))
+   {
+      hr = factory->CreateFormatConverter(&formatConverter);
+   }
+   
+   WICPixelFormatGUID pixelFormat = GUID_WICPixelFormat8bppGray;
+   UINT frameBytesPerPixel = 1;
+
+   if (grayScale_) 
+   {
+      if (bitDepth_ == 8)
+      {
+         pixelFormat = GUID_WICPixelFormat8bppGray;
+         frameBytesPerPixel = 1;
+      }
+      else if (bitDepth_ == 16)
+      {
+         pixelFormat = GUID_WICPixelFormat16bppGray;
+         frameBytesPerPixel = 2;
+      }
+      else
+      {
+         LogMessage("grayscale bitdepth not implemented", true);
+         return ERR_CAM_LOAD;
+      }
+   }
+   else
+   {  
+      if (bitDepth_ == 8)
+      {
+         pixelFormat = GUID_WICPixelFormat32bppPBGRA;
+         frameBytesPerPixel = 4;
+      }
+      else if (bitDepth_ == 16)
+      {
+         pixelFormat = GUID_WICPixelFormat64bppRGBA /* XXX We need GUID_WICPixelFormat64bppBGRA, but this is not available */;
+         frameBytesPerPixel = 8;
+      }
+      else
+      {
+         LogMessage("color bitdepth not implemented", true);
+         return ERR_CAM_LOAD;
+      }
+   }
+
+   if (SUCCEEDED(hr))
+   {
+      hr = formatConverter->Initialize(
+      clipper,                         // Input source to convert
+      pixelFormat,                     // Destination pixel format
+      WICBitmapDitherTypeNone,         // Specified dither pattern
+      NULL,                            // Specify a particular palette 
+      0.f,                             // Alpha threshold
+      WICBitmapPaletteTypeCustom       // Palette translation type
+      );
+   }
+
    /* resize micro-manager image to same dimensions as captured frame */
    UINT imageWidth = 0;
    UINT imageHeight = 0;
@@ -1224,15 +1326,11 @@ int CTetheredCamera::ResizeImageBuffer()
    if (SUCCEEDED(hr))
    {
       LogMessage("Clipping to roi done", true);
-      hr = clipper->GetSize(&imageWidth, &imageHeight);
+      hr = formatConverter->GetSize(&imageWidth, &imageHeight);
    }
 
-   UINT frameBytesPerPixel;
-
-   if (grayScale_) 
-      frameBytesPerPixel = 1;
-   else 
-      frameBytesPerPixel = 4;
+   if (SUCCEEDED(hr) && ((frameWidth == 0) || (frameHeight == 0)))
+      return ERR_CAM_LOAD;
 
    if (SUCCEEDED(hr))
    {
@@ -1243,12 +1341,19 @@ int CTetheredCamera::ResizeImageBuffer()
    if (SUCCEEDED(hr))
    {
       LogMessage("Resize done", true);
-      hr = clipper->CopyPixels(NULL, imageWidth*frameBytesPerPixel, imageHeight*imageWidth*frameBytesPerPixel, img_.GetPixelsRW());
+      hr = formatConverter->CopyPixels(NULL, imageWidth*frameBytesPerPixel, imageHeight*imageWidth*frameBytesPerPixel, img_.GetPixelsRW());
    }
    
+   if (SUCCEEDED(hr) && !grayScale_ && (bitDepth_ == 16)) // Test for 64bpp RGB color
+   {
+      // XXX micro-manager expects 64bpp BGRA images, but Windows Imaging Component provides us 64bpp RGBA. Convert.
+      Convert64bppRGBAto64bppBGRA(&img_);
+   }
+
    if (SUCCEEDED(hr))
    {
       LogMessage("CopyPixels done", true);
+      SafeRelease(formatConverter);
       SafeRelease(clipper);
       SafeRelease(transposer);
       SafeRelease(scaler);
@@ -1258,5 +1363,198 @@ int CTetheredCamera::ResizeImageBuffer()
    }
   
    return ERR_CAM_CONVERSION;
+}
+
+/*
+* Swap R and B components in a 64bit RGBA image, converting it to BGRA.
+*/
+int CTetheredCamera::Convert64bppRGBAto64bppBGRA(ImgBuffer *img)
+{
+   UINT16* p = reinterpret_cast<UINT16 *>(img->GetPixelsRW());
+   unsigned int width = img->Width();
+   unsigned int height = img->Height();
+
+   if (img->Depth() != 8) 
+   {
+      LogMessage("Convert64bppRGBAto64bppBGRA: not a 64bpp image", true);
+      return ERR_CAM_CONVERSION;
+   }
+
+   for (unsigned int h = 0;h < height;  h++)
+      for (unsigned int w = 0; w < width; w++)
+      {
+         UINT16 t;
+         t = *p; // swap R and B
+         *p = *(p+2);
+         *(p+2) = t;
+         p+=4; // next pixel
+      }
+   LogMessage("Convert64bppRGBAto64bppBGRA done", true);
+   return DEVICE_OK;
+}
+
+/* 
+ * Use WIC ("Windows Imaging Component") to read the image file. 
+ * File can be .jpg or any WIC-supported format, including Canon and Nikon raw if the correct codecs have been installed. 
+ */
+
+int CTetheredCamera::LoadWICImage(IWICImagingFactory *factory, const char* filename)
+{
+   IWICBitmapDecoder *decoder = NULL;
+
+   /* Convert filename to unicode */
+   int lenA = lstrlenA(filename);
+   int lenW;
+   BSTR unicodefilename;
+
+   lenW = ::MultiByteToWideChar(CP_ACP, 0, filename, lenA, 0, 0);
+   if (lenW > 0)
+   {
+      // Check whether conversion was successful
+      unicodefilename = ::SysAllocStringLen(0, lenW);
+      ::MultiByteToWideChar(CP_ACP, 0, filename, lenA, unicodefilename, lenW);
+   }
+   else
+     return ERR_CAM_LOAD;
+
+   HRESULT  hr = factory->CreateDecoderFromFilename(unicodefilename, NULL, GENERIC_READ, WICDecodeMetadataCacheOnDemand, &decoder);
+    
+   LogMessage("WIC: decoder created", true);
+
+   /* Decode first frame to bitmap */
+   UINT nFrameCount=0;
+
+   if (SUCCEEDED(hr))
+   {
+      hr = decoder->GetFrameCount(&nFrameCount);
+   }
+
+   if (SUCCEEDED(hr) && (nFrameCount == 0))
+   {  
+      LogMessage("WIC: no frames found", true);
+      SafeRelease(decoder);
+      return ERR_CAM_LOAD;
+   }
+
+   IWICBitmapFrameDecode *frameDecode = NULL;
+
+   if (SUCCEEDED(hr))
+   {
+      /* We have a frame! */
+      hr = decoder->GetFrame(0, &frameDecode);
+   }
+
+   /* convert to bitmap */
+   if (SUCCEEDED(hr))
+   {
+      SafeRelease(frameBitmap);
+      hr = factory->CreateBitmapFromSource(frameDecode, WICBitmapCacheOnLoad, &frameBitmap);
+   }
+
+   ::SysFreeString(unicodefilename);
+   SafeRelease(frameDecode);
+   SafeRelease(decoder);
+
+   if (SUCCEEDED(hr))
+   {
+      LogMessage("WIC: image loaded", true);
+      return DEVICE_OK;
+   }
+
+   return ERR_CAM_LOAD;
+}
+
+/* 
+ * Use libraw to read the image file. See http://www.libraw.org
+ * This allows reading Canon and Nikon raw, even if no WIC codecs have been installed.
+ */
+
+int CTetheredCamera::LoadRawImage(IWICImagingFactory *factory, const char* filename)
+{
+   libraw_processed_image_t* rawImg = NULL;
+
+   // Decode raw image file "filename" into 48bpp RGB bitmap "rawImg".
+   int rc;
+   rc = rawProcessor_.open_file(filename);
+   if (rc == 0)
+   {
+      rc = rawProcessor_.unpack();
+   }
+   if (rc == 0)
+   {
+      rawProcessor_.imgdata.params.document_mode = 0;
+      rawProcessor_.imgdata.params.use_camera_wb = 1;
+      rawProcessor_.imgdata.params.output_bps = 16;
+      rawProcessor_.imgdata.params.filtering_mode = LIBRAW_FILTERING_AUTOMATIC;
+      rawProcessor_.imgdata.params.no_auto_bright = 1;
+      rc = rawProcessor_.dcraw_process();
+   }
+   if (rc == 0)
+   {
+      rawImg = rawProcessor_.dcraw_make_mem_image(&rc);
+   }
+
+   // Exit if raw image conversion failed
+   if (rc != 0)
+   {
+      LogMessage(rawProcessor_.strerror(rc), true);
+      rawProcessor_.recycle();
+      return ERR_CAM_RAW;
+   }
+
+   LogMessage("Raw image decoded", true);
+
+   // Convert decoded raw bitmap "rawImg" to WIC bitmap "frameBitmap"
+   SafeRelease(frameBitmap);
+   UINT uiWidth = rawImg->width;
+   UINT uiHeight = rawImg->height;
+   WICPixelFormatGUID formatGUID = GUID_WICPixelFormat48bppRGB;
+
+   HRESULT hr = factory->CreateBitmap(uiWidth, uiHeight, formatGUID, WICBitmapCacheOnDemand, &frameBitmap);
+   if (SUCCEEDED(hr))
+   {
+      WICRect rcLock = { 0, 0, uiWidth, uiHeight };
+      IWICBitmapLock *pLock = NULL;
+      UINT cbBufferSize = 0;
+      UINT cbStride = 0;
+      BYTE *pv = NULL;
+
+      hr = frameBitmap->Lock(&rcLock, WICBitmapLockWrite, &pLock);
+      if (SUCCEEDED(hr))
+      {
+         hr = pLock->GetStride(&cbStride);
+      }
+      if (SUCCEEDED(hr))
+      {
+         hr = pLock->GetDataPointer(&cbBufferSize, &pv);
+      }
+      if (SUCCEEDED(hr))
+      {
+         if (rawImg->data_size <= cbBufferSize)
+         {
+            CopyMemory(pv, rawImg->data, rawImg->data_size);
+         }
+         else
+         {
+            LogMessage("Raw image: buffer too small", true);
+            return ERR_CAM_RAW; // bail out
+         }
+      }
+      if (SUCCEEDED(hr))
+      {
+         hr = pLock->Release();
+      }
+   }
+
+   rawProcessor_.dcraw_clear_mem(rawImg);
+   rawProcessor_.recycle();
+
+   if (SUCCEEDED(hr))
+   {
+      LogMessage("Raw image loaded", true);
+      return DEVICE_OK;
+   }
+
+   return ERR_CAM_RAW;
 }
 // not truncated
