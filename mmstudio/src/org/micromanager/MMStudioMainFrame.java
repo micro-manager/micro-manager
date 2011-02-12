@@ -330,20 +330,53 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       contrastPanel_.updateContrast(iplus);
    }
 
+   /**
+    * Part of ScriptInterface
+    * Manipulate acquisition so that it looks like a burst
+    */
    public void runBurstAcquisition() throws MMScriptException {
-      throw new UnsupportedOperationException("Not supported yet.");
-   }
-
-   public void runBurstAcquisition(int nr, String name, String root) throws MMScriptException {
-      throw new UnsupportedOperationException("Not supported yet.");
+      double interval = engine_.getFrameIntervalMs();
+      int nr = engine_.getNumFrames();
+      boolean doZStack = engine_.isZSliceSettingEnabled();
+      boolean doChannels = engine_.isChannelsSettingEnabled();
+      engine_.enableZSliceSetting(false);
+      engine_.setFrames(nr, 0);
+      engine_.enableChannelsSetting(false);
+      try {
+         engine_.acquire();
+      } catch (MMException e) {
+         throw new MMScriptException(e);
+      }
+      engine_.setFrames(nr, interval);
+      engine_.enableZSliceSetting(doZStack);
+      engine_.enableChannelsSetting(doChannels);
    }
 
    public void runBurstAcquisition(int nr) throws MMScriptException {
-      throw new UnsupportedOperationException("Not supported yet.");
+      int originalNr = engine_.getNumFrames();
+      double interval = engine_.getFrameIntervalMs();
+      engine_.setFrames(nr, 0);
+      this.runBurstAcquisition();
+      engine_.setFrames(originalNr, interval);
    }
 
+   public void runBurstAcquisition(int nr, String name, String root) throws MMScriptException {
+      //String originalName = engine_.getDirName();
+      String originalRoot = engine_.getRootName();
+      engine_.setDirName(name);
+      engine_.setRootName(root);
+      this.runBurstAcquisition(nr);
+      engine_.setRootName(originalRoot);
+      //engine_.setDirName(originalDirName);
+   }
+
+
+   /**
+    * @deprecated
+    * @throws MMScriptException
+    */
    public void startBurstAcquisition() throws MMScriptException {
-      throw new UnsupportedOperationException("Not supported yet.");
+      runAcquisition();
    }
 
    public boolean isBurstAcquisitionRunning() throws MMScriptException {
