@@ -26,24 +26,18 @@
 //
 package org.micromanager.conf;
 
-import java.awt.BorderLayout;
-import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import javax.swing.JButton;
-import javax.swing.JDialog;
 
 import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-import javax.swing.JTextArea;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.TableColumn;
 
@@ -320,7 +314,7 @@ public class EditPropertiesPage extends PagePanel {
                 core_.enableDebugLog(currentDebugLogSetting);
                 rebuildTable();
                 // restore normal operation of the Detect button
-                detectButton_.setText(DetectPorts);
+                detectButton_.setText(detectPorts_);
             }
         }
 
@@ -331,7 +325,7 @@ public class EditPropertiesPage extends PagePanel {
             }
         }
     }
-    private final String DetectPorts = "Detect Ports";
+    private final String detectPorts_ = "Detect Ports";
     private static final long serialVersionUID = 1L;
     private JTable propTable_;
     private JScrollPane scrollPane_;
@@ -353,7 +347,7 @@ public class EditPropertiesPage extends PagePanel {
         setHelpFileName(HELP_FILE_NAME);
 
         scrollPane_ = new JScrollPane();
-        scrollPane_.setBounds(10, 9, 381, 262);
+        scrollPane_.setBounds(10, 9, 421, 262);
         add(scrollPane_);
 
         propTable_ = new JTable();
@@ -368,7 +362,7 @@ public class EditPropertiesPage extends PagePanel {
         detectButton_.addActionListener(new ActionListener() {
 
             public void actionPerformed(ActionEvent arg0) {
-                if (detectButton_.getText().equalsIgnoreCase(DetectPorts)) {
+                if (detectButton_.getText().equalsIgnoreCase(detectPorts_)) {
                     requestCancel_ = false;
                     progressDialog_ = new DetectorJDialog(parent_, false);
                     progressDialog_.setTitle("\u00B5" + "Manager device detection");
@@ -380,12 +374,12 @@ public class EditPropertiesPage extends PagePanel {
                 } else {
                     requestCancel_ = true;
                     dt_.finish();
-                    detectButton_.setText(DetectPorts);
+                    detectButton_.setText(detectPorts_);
                 }
             }
         });
-        detectButton_.setText(DetectPorts);
-        detectButton_.setBounds(469, 10, 93, 23);
+        detectButton_.setText(detectPorts_);
+        detectButton_.setBounds(454, 10, 108, 23);
         add(detectButton_);
 
 

@@ -223,6 +223,7 @@ public class AddDeviceDlg extends JDialog implements MouseListener, TreeSelectio
         doneButton.setText("Done");
         doneButton.setBounds(490, 39, 93, 23);
         getContentPane().add(doneButton);
+        getRootPane().setDefaultButton(doneButton);
         model_ = model;
 
 
@@ -232,7 +233,6 @@ public class AddDeviceDlg extends JDialog implements MouseListener, TreeSelectio
         documentationButton.setText("Help");
         documentationButton.setBounds(490, 68, 93, 23);
         getContentPane().add(documentationButton);
-        getRootPane().setDefaultButton(documentationButton);
         documentationButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                     displayDocumentation();

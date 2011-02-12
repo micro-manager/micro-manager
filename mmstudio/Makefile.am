@@ -41,6 +41,7 @@ MMJ_.jar:  \
 	$(srcdir)/src/org/micromanager/api/Autofocus.java \
 	$(srcdir)/src/org/micromanager/api/AcquisitionEngine.java \
 	$(srcdir)/src/org/micromanager/api/DeviceControlGUI.java \
+	$(srcdir)/src/org/micromanager/api/MMWindow.java \
 	$(srcdir)/src/org/micromanager/api/Pipeline.java \
 	$(srcdir)/src/org/micromanager/api/ScriptInterface.java \
 	$(srcdir)/src/org/micromanager/conf/*.html \
@@ -51,6 +52,7 @@ MMJ_.jar:  \
 	$(srcdir)/src/org/micromanager/conf/DelayPage.java \
 	$(srcdir)/src/org/micromanager/conf/Device.java \
 	$(srcdir)/src/org/micromanager/conf/DevicesPage.java \
+	$(srcdir)/src/org/micromanager/conf/DetectorJDialog.java \
 	$(srcdir)/src/org/micromanager/conf/EditPropertiesPage.java \
 	$(srcdir)/src/org/micromanager/conf/FinishPage.java \
 	$(srcdir)/src/org/micromanager/conf/IntroPage.java \
@@ -104,7 +106,6 @@ MMJ_.jar:  \
 	$(srcdir)/src/org/micromanager/utils/MMImageWindow.java \
 	$(srcdir)/src/org/micromanager/utils/MMScriptException.java \
 	$(srcdir)/src/org/micromanager/utils/MMSerializationException.java \
-	$(srcdir)/src/org/micromanager/utils/MMWindow.java \
 	$(srcdir)/src/org/micromanager/utils/MathFunctions.java \
 	$(srcdir)/src/org/micromanager/utils/MemoryUtils.java \
 	$(srcdir)/src/org/micromanager/utils/NumberUtils.java \
