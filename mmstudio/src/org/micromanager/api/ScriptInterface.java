@@ -201,7 +201,7 @@ public interface ScriptInterface {
     * Execute burst acquisition with settings from Burst Acquisition Dialog
     * Will open the Dialog when it is not open yet
     * Returns after Burst Acquisition finishes
-    * @deprecated
+    *
     * Burst acquisitions will now be carried out by a normal Acquisition (when so configured)
     */
    public void runBurstAcquisition() throws MMScriptException;

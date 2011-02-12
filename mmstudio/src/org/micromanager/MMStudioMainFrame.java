@@ -380,7 +380,9 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
 
    public boolean isBurstAcquisitionRunning() throws MMScriptException {
-      throw new UnsupportedOperationException("Not supported yet.");
+      if (engine_ == null)
+         return false;
+      return engine_.isAcquisitionRunning();
    }
 
    private void startLoadingPipelineClass() {
@@ -3696,8 +3698,14 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       acqMgr_.closeImage5D(title);
    }
 
-   public void loadBurstAcquisition(String path) {
-      // TODO Auto-generated method stub
+   /**
+    * Since Burst and normal acquisition are now carried out by the same engine,
+    * loadBurstAcquistion simply calls loadAcquisition
+    * t
+    * @param path - path to file specifying acquisition settings
+    */
+   public void loadBurstAcquisition(String path) throws MMScriptException {
+      this.loadAcquisition(path);
    }
 
    public void refreshGUI() {
