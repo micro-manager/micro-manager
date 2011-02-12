@@ -53,6 +53,30 @@
 // - Alternatively test using a Nikon DSLR camera, NKRemote software and NKRemoteCam driver.
 //
 
+// Flow:
+//
+// SnapImage
+//    SetCameraExposure
+//       SetShutterAperture           [breezesys, set exposure time]
+//    AcquireFrame
+//       ReleaseShutter               [breezesys, take picture]
+//       LoadWICImage                 [load image using WIC]
+//          CreateDecoderFromFilename [WIC, decode image file]
+//          CreateBitmapFromSource    [WIC, store decoded bitmap]
+//       LoadRawImage                 [load image using libraw]
+//          dcraw_process             [libraw, decode image file]
+//          dcraw_make_mem_image      [libraw, store decoded bitmap]
+//          CreateBitmap              [WIC, create empty bitmap, 48bpp RGB]
+//          CopyMemory                [copy decoded bitmap to WIC bitmap]
+//    ResizeImageBuffer
+//       CreateBitmapScaler           [WIC, binning]
+//       CreateBitmapFlipRotator      [WIC, transposing]
+//       CreateBitmapClipper          [WIC, clip to region of interest]
+//       CreateFormatConverter        [WIC, convert to grayscale/color, 8/16bpp]
+//       CopyPixels                   [WIC, copy to micro-manager image buffer]
+//       Convert64bppRGBAto64bppBGRA  [swap R and B channels for 64bpp color]
+   
+
 #ifndef _DSLRREMOTE_
 #ifndef _NKREMOTE_
 #ifndef _PSREMOTE_

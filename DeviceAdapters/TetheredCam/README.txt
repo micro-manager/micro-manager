@@ -47,3 +47,4 @@ Steps taken to add libraw to the VC++ project:
 - select files:
     dcraw_common.cpp  dcraw_fileio.cpp  demosaic_packs.cpp  libraw_c_api.cpp  libraw_cxx.cpp
   right click and set properties>configuration properties>c/c++>warning level to "Off (/W0)"
+- later: set optimisation of libraw sources to /O2 (speed)
