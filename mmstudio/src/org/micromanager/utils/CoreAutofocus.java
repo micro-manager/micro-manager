@@ -3,8 +3,6 @@ package org.micromanager.utils;
 import java.util.Vector;
 
 import mmcorej.CMMCore;
-import mmcorej.Metadata;
-import mmcorej.MetadataSingleTag;
 import mmcorej.StrVector;
 
 import org.micromanager.api.Autofocus;

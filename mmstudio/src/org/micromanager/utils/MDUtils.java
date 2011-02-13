@@ -6,7 +6,6 @@
 package org.micromanager.utils;
 
 import ij.ImagePlus;
-import java.awt.Color;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Iterator;

@@ -23,8 +23,6 @@
 package org.micromanager.utils;
 
 import java.awt.geom.NoninvertibleTransformException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.apache.commons.math.linear.DecompositionSolver;
 import org.apache.commons.math.linear.RealMatrix;
 import java.awt.geom.AffineTransform;

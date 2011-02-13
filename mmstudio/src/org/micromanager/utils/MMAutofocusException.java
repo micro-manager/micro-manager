@@ -18,6 +18,7 @@ public class MMAutofocusException extends Exception {
        this.cause = t;
    }
 
+   @Override
    public Throwable getCause() {
        return this.cause;
    }

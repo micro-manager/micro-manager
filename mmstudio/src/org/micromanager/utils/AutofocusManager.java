@@ -23,7 +23,6 @@ package org.micromanager.utils;
 
 import java.util.Vector;
 
-import javax.swing.JOptionPane;
 
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;

@@ -9,9 +9,6 @@ import ij.process.ShortProcessor;
 import java.awt.Color;
 
 import java.awt.Point;
-import java.lang.reflect.InvocationTargetException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import mmcorej.CMMCore;
 import org.json.JSONObject;

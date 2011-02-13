@@ -1,8 +1,6 @@
 
 package org.micromanager.utils;
 
-import org.micromanager.utils.PropertyItem;
-
 /**
  *
  * @author arthur

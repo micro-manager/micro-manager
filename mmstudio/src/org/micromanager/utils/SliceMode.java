@@ -33,6 +33,7 @@ public class SliceMode {
       id_ = id;
    }
    
+   @Override
    public String toString() {
       if (id_ == CHANNELS_FIRST)
          return new String("Channels first");

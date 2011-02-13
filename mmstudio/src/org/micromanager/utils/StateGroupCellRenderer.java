@@ -9,7 +9,6 @@ import java.awt.Component;
 import java.awt.Font;
 import javax.swing.JLabel;
 import javax.swing.JTable;
-import javax.swing.table.TableCellRenderer;
 import org.micromanager.ConfigGroupPad;
 
 /**
@@ -27,6 +26,7 @@ public class StateGroupCellRenderer extends PropertyValueCellRenderer {
     // using this renderer needs to be rendered.
     StateItem stateItem_;
 
+   @Override
     public Component getTableCellRendererComponent(JTable table, Object value,
             boolean isSelected, boolean hasFocus, int rowIndex, int colIndex) {
 
@@ -55,9 +55,13 @@ public class StateGroupCellRenderer extends PropertyValueCellRenderer {
         return comp;
     }
       // The following methods override the defaults for performance reasons
+   @Override
       public void validate(){}
+   @Override
       public void revalidate(){}
+   @Override
       protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {}
+   @Override
       public void firePropertyChange(String propertyName, boolean oldValue, boolean newValue) {}
 
    }

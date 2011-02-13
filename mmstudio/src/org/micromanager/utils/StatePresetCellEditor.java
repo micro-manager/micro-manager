@@ -51,6 +51,7 @@ public class StatePresetCellEditor extends AbstractCellEditor implements TableCe
 
         slider_.addSliderMouseListener(new MouseAdapter() {
 
+         @Override
             public void mouseReleased(MouseEvent e) {
                 fireEditingStopped();
             }

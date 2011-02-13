@@ -33,6 +33,7 @@ public class DisplayMode {
       id_ = id;
    }
    
+   @Override
    public String toString() {
       if (id_ == ALL)
          return new String("All");

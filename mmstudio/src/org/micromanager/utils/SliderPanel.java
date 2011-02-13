@@ -186,6 +186,7 @@ public class SliderPanel extends JPanel {
 		slider_.addMouseListener(md);
 	}
 
+   @Override
 	public void setBackground(Color bg) {
 		super.setBackground(bg);
 		if (slider_ != null)
@@ -194,6 +195,7 @@ public class SliderPanel extends JPanel {
 			textField_.setBackground(bg);
 	}
 
+   @Override
 	public void setEnabled(boolean enabled) {
 		textField_.setEnabled(enabled);
 		slider_.setEnabled(enabled);
