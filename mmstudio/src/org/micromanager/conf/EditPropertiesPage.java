@@ -367,6 +367,7 @@ public class EditPropertiesPage extends PagePanel {
                     progressDialog_ = new DetectorJDialog(parent_, false);
                     progressDialog_.setTitle("\u00B5" + "Manager device detection");
                     progressDialog_.setLocationRelativeTo(thisPage);
+                    progressDialog_.setSize(483, 288);
                     progressDialog_.setVisible(true);
                     dt_ = new DetectionTask("serial_detect");
                     dt_.start();

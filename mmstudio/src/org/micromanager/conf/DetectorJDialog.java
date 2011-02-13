@@ -36,9 +36,7 @@ public class DetectorJDialog extends javax.swing.JDialog {
     public DetectorJDialog(java.awt.Dialog parent, boolean modal) {
         super(parent, modal);
         initComponents();
-        getContentPane().setMinimumSize(new Dimension(408, 259));
-        getContentPane().setSize(408, 259);
-        pack();
+
         cancelRequest_ = false;
     }
 
@@ -79,7 +77,7 @@ public class DetectorJDialog extends javax.swing.JDialog {
       jScrollPane1.setViewportView(detectionTextArea_);
 
       getContentPane().add(jScrollPane1);
-      jScrollPane1.setBounds(18, 21, 355, 192);
+      jScrollPane1.setBounds(18, 21, 440, 192);
 
       getAccessibleContext().setAccessibleName("detectionTextArea");
       getAccessibleContext().setAccessibleDescription("detectionTextArea");
