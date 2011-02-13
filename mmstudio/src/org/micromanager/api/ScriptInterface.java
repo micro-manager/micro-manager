@@ -30,10 +30,10 @@ import java.awt.geom.Point2D;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONObject;
-import org.micromanager.acquisition.MMImageCache;
 
 import org.micromanager.navigation.PositionList;
 import org.micromanager.utils.MMScriptException;
+
 /**
  * Interface to execute commands in the main panel.
  * All functions throw MMScriptException (TBD)
@@ -134,7 +134,7 @@ public interface ScriptInterface {
    public void closeAllAcquisitions();
    
    /**
-    * Snaps an image with current settings and moves pixels into the specified layer of the image5d
+    * Snaps an image with current settings and moves pixels into the specified layer of the MDA viewer
     * @throws MMScriptException 
     */
    public void snapAndAddImage(String name, int frame, int channel, int z) throws MMScriptException;
@@ -280,7 +280,7 @@ public interface ScriptInterface {
    public PositionList getPositionList() throws MMScriptException;
    
    /**
-    * Sets the color of the specified channel in an image5d
+    * Sets the color of the specified channel in the image viewer
     */
    public void setChannelColor(String title, int channel, Color color) throws MMScriptException;
    
@@ -350,12 +350,11 @@ public interface ScriptInterface {
     */
    public void setRelativeXYStagePosition(double x, double y)  throws MMScriptException ;
 
-   /**
-    * Open empty image acquisition window
-    * @throws MMScriptException
+    /**
+    * There can be multiple XY stage devices in a system.  This function returns
+    * the currently active one
+    * @return Name of the active XYStage device
     */
-   //public void openCompatibleImage5D(String title, int frames, int channels, int slices) throws MMScriptException;
-   
    public String getXYStageName();
    
    public void setXYOrigin(double x, double y) throws MMScriptException;
@@ -488,6 +487,7 @@ public interface ScriptInterface {
     * @return
     */
    public Color getBackgroundColor();
+
 
    public boolean displayImage(Object pix);
 

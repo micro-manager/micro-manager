@@ -720,11 +720,11 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       toggleButtonLive_.addActionListener(new ActionListener() {
 
          public void actionPerformed(ActionEvent e) {
-            if (!IsLiveModeOn()) {
+            if (!isLiveModeOn()) {
                // Display interval for Live Mode changes as well
                setLiveModeInterval();
             }
-            enableLiveMode(!IsLiveModeOn());
+            enableLiveMode(!isLiveModeOn());
          }
       });
 
@@ -1782,7 +1782,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                new Thread() {
                   public void run() {
                      try {
-                       boolean lmo  = IsLiveModeOn();
+                       boolean lmo  = isLiveModeOn();
                       if(lmo)
                            enableLiveMode(false);
                        afMgr_.getDevice().fullFocus();
@@ -1868,7 +1868,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
 
    private void handleError(String message) {
-      if (IsLiveModeOn()) {
+      if (isLiveModeOn()) {
          // Should we always stop live mode on any error?
          enableLiveMode(false);
       }
@@ -2466,7 +2466,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       return ret;
    }
 
-   boolean IsLiveModeOn() {
+   boolean isLiveModeOn() {
       return liveModeTimerTask_ != null && liveModeTimerTask_.isRunning();
    }
 
@@ -2517,7 +2517,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    public void enableLiveMode(boolean enable) {
       if (enable) {
-         if (IsLiveModeOn()) {
+         if (isLiveModeOn()) {
             return;
          }
          try {
@@ -2583,7 +2583,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             }
          }
       } else {
-         if (!IsLiveModeOn()) {
+         if (!isLiveModeOn()) {
             return;
          }
          try {
@@ -2644,12 +2644,13 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    public boolean updateImage() {
       try {
-         if (!isImageWindowOpen()) {
-            // stop live acquistion if the window is not open
-            if (IsLiveModeOn()) {
+         if (isLiveModeOn()) {
                enableLiveMode(false);
-               return true; // nothing to do
-            }
+               return true; // nothing to do, just show the last image
+         }
+
+         if (!isImageWindowOpen()) {
+            createImageWindow();
          }
 
          core_.snapImage();
@@ -3045,7 +3046,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
 
    public boolean okToAcquire() {
-      return !liveModeTimerTask_.isRunning();
+      return !isLiveModeOn();
    }
 
    public void stopAllActivity() {
@@ -3456,13 +3457,13 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
     * Changes background color of this window and all other MM windows
     */
    public void setBackgroundStyle(String backgroundType) {
-      setBackground(guiColors_.background.get((options_.displayBackground_)));
+      setBackground(guiColors_.background.get((backgroundType)));
       paint(MMStudioMainFrame.this.getGraphics());
       
       // sets background of all registered Components
       for (Component comp:MMFrames_) {
          if (comp != null)
-            comp.setBackground(guiColors_.background.get((options_.displayBackground_)));
+            comp.setBackground(guiColors_.background.get(backgroundType));
        }
    }
 
@@ -4147,7 +4148,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    ;
 
    public void suspendLiveMode() {
-      liveModeSuspended_ = IsLiveModeOn();
+      liveModeSuspended_ = isLiveModeOn();
       enableLiveMode(false);
    }
 
