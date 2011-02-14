@@ -115,7 +115,7 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
          }
       });
 
-      statusLineLabel.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+      statusLineLabel.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       statusLineLabel.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
 
       pauseAndResumeToggleButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/org/micromanager/icons/control_pause.png"))); // NOI18N
@@ -157,17 +157,14 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
       );
       layout.setVerticalGroup(
          layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-         .add(layout.createSequentialGroup()
-            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING, false)
-               .add(org.jdesktop.layout.GroupLayout.LEADING, statusLineLabel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-               .add(org.jdesktop.layout.GroupLayout.LEADING, showFolderButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-               .add(org.jdesktop.layout.GroupLayout.LEADING, saveButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-               .add(org.jdesktop.layout.GroupLayout.LEADING, layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                  .add(fpsLabel)
-                  .add(fpsField))
-               .add(org.jdesktop.layout.GroupLayout.LEADING, abortButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-               .add(org.jdesktop.layout.GroupLayout.LEADING, pauseAndResumeToggleButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-            .addContainerGap(20, Short.MAX_VALUE))
+         .add(statusLineLabel, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 28, Short.MAX_VALUE)
+         .add(showFolderButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+         .add(saveButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+         .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+            .add(fpsLabel)
+            .add(fpsField))
+         .add(abortButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+         .add(pauseAndResumeToggleButton, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
       );
    }// </editor-fold>//GEN-END:initComponents
 
