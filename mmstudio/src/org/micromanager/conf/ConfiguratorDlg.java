@@ -321,8 +321,16 @@ public class ConfiguratorDlg extends JDialog {
                 while (-1 != (c = reader.read())) {
                     writer.write(c);
                 }
-                reader.close();
+                try{
+                    reader.close();
+                }catch(Exception e){
+                    ReportingUtils.logError(e);
+                }
+                try {
                 writer.close();
+                }catch(Exception e){
+                    ReportingUtils.logError(e);
+                }
                 try {
 
                     URL url = new URL("http://valelab.ucsf.edu/~MM/upload_file.php");
@@ -348,10 +356,11 @@ public class ConfiguratorDlg extends JDialog {
                 } catch (MalformedURLException e) {
                     returnValue = e.toString();
                 }
-                fileToSend.deleteOnExit();
+
+
                 // now delete the temporary file
-               // if(!fileToSend.delete())
-               //     ReportingUtils.logError("Sorry, couldn't delete temporary file " +qualifiedConfigFileName );
+                if(!fileToSend.delete())
+                   ReportingUtils.logError("Couldn't delete temporary file " +qualifiedConfigFileName );
 
             }
         } catch (IOException e) {
