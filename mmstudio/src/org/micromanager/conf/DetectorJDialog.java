@@ -11,6 +11,11 @@
 
 package org.micromanager.conf;
 
+import java.lang.reflect.InvocationTargetException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.SwingUtilities;
+
 /**
  *
  * @author karlhoover
@@ -21,12 +26,15 @@ public class DetectorJDialog extends javax.swing.JDialog {
         return cancelRequest_;
     }
 
-    public void ProgressText( String t){
-        detectionTextArea_.setText(t);
+    public void ProgressText(final String t){
+
+        detectionTextPane_.setText(t);
+
+        
     }
 
     public String ProgressText(){
-        return detectionTextArea_.getText();
+        return detectionTextPane_.getText();
     }
 
     private boolean cancelRequest_;
@@ -47,11 +55,10 @@ public class DetectorJDialog extends javax.swing.JDialog {
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
-        bindingGroup = new org.jdesktop.beansbinding.BindingGroup();
 
-        jScrollPane1 = new javax.swing.JScrollPane();
-        detectionTextArea_ = new javax.swing.JTextArea();
         cancelButton_ = new javax.swing.JButton();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        detectionTextPane_ = new javax.swing.JTextPane();
 
         addComponentListener(new java.awt.event.ComponentAdapter() {
             public void componentShown(java.awt.event.ComponentEvent evt) {
@@ -59,24 +66,14 @@ public class DetectorJDialog extends javax.swing.JDialog {
             }
         });
 
-        detectionTextArea_.setColumns(20);
-        detectionTextArea_.setRows(5);
-
-        org.jdesktop.beansbinding.Binding binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, detectionTextArea_, org.jdesktop.beansbinding.ELProperty.create("${text}"), detectionTextArea_, org.jdesktop.beansbinding.BeanProperty.create("text"));
-        bindingGroup.addBinding(binding);
-
-        jScrollPane1.setViewportView(detectionTextArea_);
-
         cancelButton_.setText("Cancel");
-
-        binding = org.jdesktop.beansbinding.Bindings.createAutoBinding(org.jdesktop.beansbinding.AutoBinding.UpdateStrategy.READ_WRITE, cancelButton_, org.jdesktop.beansbinding.ELProperty.create("${selected}"), cancelButton_, org.jdesktop.beansbinding.BeanProperty.create("selected"));
-        bindingGroup.addBinding(binding);
-
         cancelButton_.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 cancelButton_ActionPerformed(evt);
             }
         });
+
+        jScrollPane2.setViewportView(detectionTextPane_);
 
         org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
@@ -85,21 +82,19 @@ public class DetectorJDialog extends javax.swing.JDialog {
             .add(layout.createSequentialGroup()
                 .addContainerGap()
                 .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-                    .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 352, Short.MAX_VALUE)
-                    .add(cancelButton_))
-                .add(28, 28, 28))
+                    .add(cancelButton_)
+                    .add(org.jdesktop.layout.GroupLayout.TRAILING, jScrollPane2, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 361, Short.MAX_VALUE))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
             .add(layout.createSequentialGroup()
-                .add(24, 24, 24)
-                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 193, Short.MAX_VALUE)
-                .add(37, 37, 37)
+                .addContainerGap()
+                .add(jScrollPane2, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 156, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                .add(17, 17, 17)
                 .add(cancelButton_)
-                .addContainerGap())
+                .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
-
-        bindingGroup.bind();
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
@@ -119,9 +114,8 @@ public class DetectorJDialog extends javax.swing.JDialog {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton cancelButton_;
-    private javax.swing.JTextArea detectionTextArea_;
-    private javax.swing.JScrollPane jScrollPane1;
-    private org.jdesktop.beansbinding.BindingGroup bindingGroup;
+    private javax.swing.JTextPane detectionTextPane_;
+    private javax.swing.JScrollPane jScrollPane2;
     // End of variables declaration//GEN-END:variables
 
 }
