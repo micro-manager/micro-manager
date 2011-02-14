@@ -56,7 +56,7 @@ public class EditPropertiesPage extends PagePanel {
             super(id);
         }
         public void run() {
-            boolean currentDebugLogSetting = core_.debugLogEnabled();
+            boolean currentDebugLogSetting = true; /*core_.debugLogEnabled();*/
             try {
                 ArrayList<Device> ports = new ArrayList<Device>();
                 model_.removeDuplicateComPorts();
