@@ -24,6 +24,7 @@ import ij.ImagePlus;
 import ij.gui.Overlay;
 import ij.gui.Roi;
 import ij.gui.TextRoi;
+import java.awt.Color;
 
 import java.awt.Font;
 import java.text.NumberFormat;
@@ -46,25 +47,26 @@ public class SizeBar {
    private ImagePlus ip_;
    private Font font_ = new Font("Helvetics", Font.PLAIN, 12);
    private double pixelSizeUm_;
-   private final double MULTIPLIER = 3.3333333333333;
+   private final double MULTIPLIER = Math.sqrt(10.0);
    private int exponent_ = 0;
    private int barWidth_, barHeight_;
    private String value_;
    private String units_ = "\u00B5" + "m";
 
-   public SizeBar(ImagePlus ip, double pixelSizeUm) {
+   public SizeBar(ImagePlus ip) {
       ip_ = ip;
-      pixelSizeUm_ = pixelSizeUm;
+      double pixelSize = ip.getCalibration().pixelWidth;
+      units_ = ip.getCalibration().getXUnit();
 
-      if (pixelSizeUm > 0) {
+      if (pixelSize > 0) {
          int width = ip_.getWidth();
          int height = ip_.getHeight();
          barHeight_ = (int) (height / 75);
          int minBarWidth = width / 20;
          int maxBarWidth = width / 4;
-         double pixsPerUm = 1.0 / pixelSizeUm;
+         double pixsPerUnit = 1.0 / pixelSize;
 
-         double pixs = pixsPerUm;
+         double pixs = pixsPerUnit;
          while (pixs < minBarWidth) {
             pixs *= MULTIPLIER;
             exponent_++;
@@ -74,7 +76,7 @@ public class SizeBar {
             exponent_--;
          }
          double value = Math.pow(MULTIPLIER, exponent_);
-
+/*
          if (exponent_ >= 6) {
             units_ = "mm";
             value = value / 1000000;
@@ -83,6 +85,7 @@ public class SizeBar {
             units_ = "nm";
             value = value * 1000000;
          }
+ */
 
          NumberFormat format = NumberFormat.getInstance();
          format.setMaximumFractionDigits(1);
@@ -107,6 +110,7 @@ public class SizeBar {
       font_ = font_.deriveFont((int) (0.015 * ip_.getWidth()));
       TextRoi text = new TextRoi(10, 10, value_ + units_, font_);
       int textWidth = ip_.getProcessor().getStringWidth(value_ + units_);
+      // TODO: text positioning depends on textHeight, but I don't know how to get this...
       if (pos_ == Position.TOPLEFT) {
          text.setLocation((int) (OFFSET + (0.5 * barWidth_ ) - (0.5 * textWidth)),
                  OFFSET - barHeight_ - 2);
@@ -115,14 +119,13 @@ public class SizeBar {
                  OFFSET - barHeight_ - 2);
       } else if (pos_ == Position.BOTTOMLEFT) {
          text.setLocation((int) (OFFSET + (0.5 * barWidth_ ) - (0.5 * textWidth)),
-                 ip_.getHeight() - OFFSET - barHeight_ - 2);
+                 ip_.getHeight() - OFFSET - (3 * barHeight_) - 2);
       } else if (pos_ == Position.BOTTOMRIGHT) {
          text.setLocation( (int) (ip_.getWidth() - OFFSET - (0.5 * barWidth_) - (0.5 * textWidth)),
-                 ip_.getHeight() - OFFSET - barHeight_ - 2);
+                 ip_.getHeight() - OFFSET - (3 * barHeight_) - 2);
       }
 
-      ol.addElement(text);
-
+      ol.add(text);
 
       Roi bar = new Roi(OFFSET, OFFSET + barHeight_, barWidth_, barHeight_);
       if (pos_ == Position.TOPRIGHT) {
@@ -132,7 +135,9 @@ public class SizeBar {
       } else if (pos_ == Position.BOTTOMRIGHT) {
          bar.setLocation(ip_.getWidth() - OFFSET - barWidth_, ip_.getHeight() - OFFSET - barHeight_);
       }
-      ol.addElement(bar);
+
+
+      ol.add(bar);
    }
 
 }

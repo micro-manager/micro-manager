@@ -884,28 +884,4 @@ public class VirtualAcquisitionDisplay {
       }
    }
    
-   public void showSizeBar(boolean show) {
-      if (show) {
-         if (sizeBar_ == null) {
-            try {
-               double pixSizeUm = getSummaryMetadata().getDouble("PixelSize_um");
-               sizeBar_ = new SizeBar(hyperImage_, pixSizeUm);
-            } catch (JSONException ex) {
-               return;
-            }
-         }
-         if (sizeBar_ != null) {
-            Overlay ol = hyperImage_.getOverlay();
-            if (ol == null) {
-               ol = new Overlay();
-               //ol.setFillColor(Color.white); // this causes the text to get a white background!
-               ol.setStrokeColor(Color.white);
-            }
-            sizeBar_.setPosition(SizeBar.Position.BOTTOMRIGHT);
-            sizeBar_.addToOverlay(ol);
-            hyperImage_.setOverlay(ol);
-         }
-      }
-      hyperImage_.setHideOverlay(!show);
-   }
 }
