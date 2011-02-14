@@ -131,7 +131,27 @@ public:
       ReadStart(); 
    } 
 
-   bool WriteCharacters(const char* msg, size_t len)
+   void WriteOneCharacterAsynchronously(const char msg) // pass the write data to the DoWrite function via the io service in the other thread 
+   { 
+	   int cz = sizeof(msg);
+	   if( 1!=cz)
+	   {
+		   return;
+	   }
+      io_service_.post(boost::bind(&AsioClient::DoWrite, this, msg)); 
+   }
+
+   void WriteCharactersAsynchronously(const char* pmsg, int len) // pass the write data to the DoWrite function via the io service in the other thread 
+   { 
+
+      for( int ii =0; ii < len; ++ii)
+      {
+         io_service_.post(boost::bind(&AsioClient::DoWrite, this, *(pmsg+ii))); 
+      }
+   }
+
+
+   bool WriteCharactersSynchronously(const char* msg, size_t len)
    { 
       bool retv = false;
       try
@@ -146,7 +166,7 @@ public:
       return retv;
    } 
 
-   bool WriteOneCharacter(const char msg)
+   bool WriteOneCharacterSynchronously(const char msg)
    { 
       bool retv = false;
       try
@@ -165,7 +185,6 @@ public:
    { 
       if(active_)
       {
-         //MMThreadGuard g(serviceLock_);
          io_service_.post(boost::bind(&AsioClient::DoClose, this, boost::system::error_code())); 
       }
    } 
@@ -174,8 +193,16 @@ public:
    void Purge(void)
    {
       // clear read buffer;
+      do{
       MMThreadGuard g(readBufferLock_);
       data_read_.clear();
+      }while(bfalse_s);
+
+      // clear write buffer
+      do{
+      MMThreadGuard g(writeBufferLock_);
+      write_msgs_.clear(); // buffered write data 
+      }while(bfalse_s);
    }
 
 
@@ -219,7 +246,6 @@ private:
    { // the asynchronous read operation has now completed or failed and returned an error 
       if (!error) 
       { // read completed, so process the data 
-
          do  // just a scope for the guard...
          {
             MMThreadGuard g(readBufferLock_);
@@ -236,6 +262,55 @@ private:
          // this is a normal situtation when closing the port 
          if( ! shutDownInProgress_)
             pSerialPortAdapter_->LogMessage(("error in ReadComplete: "+boost::lexical_cast<std::string,int>(error.value()) + " " + error.message()).c_str(), false);
+         DoClose(error); 
+      }
+   } 
+
+
+   // for asynchronous write operations:
+   void DoWrite(const char msg) 
+   { // callback to handle write call from outside this class 
+      std::auto_ptr<MMThreadGuard> apwg( new MMThreadGuard(writeBufferLock_));
+      bool write_in_progress = !write_msgs_.empty(); // is there anything currently being written? 
+      write_msgs_.push_back(msg); // store in write buffer 
+
+      // unlock the thread guard here
+      MMThreadGuard* pg = apwg.release();
+      delete pg;
+
+      if (!write_in_progress) // if nothing is currently being written, then start 
+         WriteStart(); 
+   } 
+
+   void WriteStart(void) 
+   { // Start an asynchronous write and call WriteComplete when it completes or fails 
+      MMThreadGuard g(writeBufferLock_);
+      boost::asio::async_write(serialPortImplementation_, 
+         boost::asio::buffer(&write_msgs_.front(), 1), 
+         boost::bind(&AsioClient::WriteComplete, 
+         this, 
+         boost::asio::placeholders::error)); 
+   } 
+
+   void WriteComplete(const boost::system::error_code& error) 
+   { // the asynchronous read operation has now completed or failed and returned an error 
+      if (!error) 
+      { // write completed, so send next write data 
+         std::auto_ptr<MMThreadGuard> apwg( new MMThreadGuard(writeBufferLock_));
+         if ( 0 < write_msgs_.size())
+            write_msgs_.pop_front(); // remove the completed data 
+         bool anythingThere = !write_msgs_.empty();
+
+         // unlock the thread guard here
+         MMThreadGuard* pg = apwg.release();
+         delete pg;
+
+         if (anythingThere) // if there is anthing left to be written 
+            WriteStart(); // then start sending the next item in the buffer 
+      } 
+      else 
+      {
+         pSerialPortAdapter_->LogMessage("error in WriteComplete: ", true);
          DoClose(error); 
       }
    } 
@@ -271,10 +346,12 @@ private:
    boost::asio::io_service& io_service_; // the main IO service that runs this connection 
    boost::asio::serial_port serialPortImplementation_; // the serial port this instance is connected to 
    char read_msg_[max_read_length]; // data read from the socket 
+   std::deque<char> write_msgs_; // buffered write data 
    std::deque<char> data_read_;
    SerialPort* pSerialPortAdapter_;
 
    MMThreadLock readBufferLock_;
+   MMThreadLock writeBufferLock_;
    MMThreadLock serviceLock_;
    MMThreadLock implementationLock_;
    bool shutDownInProgress_;

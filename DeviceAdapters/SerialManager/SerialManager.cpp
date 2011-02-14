@@ -602,13 +602,13 @@ int SerialPort::SetCommand(const char* command, const char* term)
 
    if (transmitCharWaitMs_ < 0.001)
    {
-      if( !pPort_->WriteCharacters(sendText.c_str(), sendText.length()) )
-      {
+      pPort_->WriteCharactersAsynchronously(sendText.c_str(), sendText.length() );
+      /*{
          LogMessage("write error",false);
          retv = DEVICE_ERR;
-      }
-      else
-         written = sendText.length();
+      }*/
+      
+      written = sendText.length();
    }
    else
    {
@@ -619,12 +619,12 @@ int SerialPort::SetCommand(const char* command, const char* term)
          do
          {
             
-            if (! pPort_->WriteOneCharacter(*jj) )
-            {
+            pPort_->WriteOneCharacterAsynchronously(*jj );
+            /*{
                LogMessage("error writing!", false);
                retv = DEVICE_ERR;
                break;
-            }
+            }*/
          }while(bfalse);
          CDeviceUtils::SleepMs((long)(0.5+transmitCharWaitMs_));         
          ++written;
@@ -732,13 +732,13 @@ int SerialPort::Write(const unsigned char* buf, unsigned long bufLen)
    for (i=0; i<bufLen; i++)
    {
 
-      if( ! pPort_->WriteOneCharacter(*(buf + i)))
-      {
+      pPort_->WriteOneCharacterAsynchronously(*(buf + i));
+      /*{
          LogMessage("write error!",false);
          ret = DEVICE_ERR;
          break;
          
-      }
+      }*/
       if( 0.001 < transmitCharWaitMs_)
          CDeviceUtils::SleepMs((unsigned long)(0.5+transmitCharWaitMs_));
       logMsg << (int) *(buf + i) << " ";
