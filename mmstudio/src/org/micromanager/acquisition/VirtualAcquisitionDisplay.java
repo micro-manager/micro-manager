@@ -5,6 +5,8 @@ import java.awt.event.AdjustmentEvent;
 import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.gui.ImageWindow;
+import ij.gui.Overlay;
+import ij.gui.Roi;
 import ij.gui.ScrollbarWithLabel;
 import ij.gui.StackWindow;
 import ij.measure.Calibration;
@@ -16,8 +18,6 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JOptionPane;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
@@ -31,6 +31,7 @@ import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
+import org.micromanager.utils.SizeBar;
 
 /**
  *
@@ -58,6 +59,7 @@ public class VirtualAcquisitionDisplay {
    private int numComponents_ = 1;
    private AcquisitionEngine eng_;
    private boolean finished_ = false;
+   private SizeBar sizeBar_;
    
    public VirtualAcquisitionDisplay(MMImageCache imageCache, AcquisitionEngine eng) {
       imageCache_ = imageCache;
@@ -885,6 +887,31 @@ public class VirtualAcquisitionDisplay {
       } catch (Exception e) {
          ReportingUtils.logError(e);
       }
+   }
+
+   public void showSizeBar(boolean show) {
+      if (show) {
+         if (sizeBar_ == null) {
+            try {
+               double pixSizeUm = getSummaryMetadata().getDouble("PixelSize_um");
+               sizeBar_ = new SizeBar(hyperImage_, pixSizeUm);
+            } catch (JSONException ex) {
+               return;
+            }
+         }
+         if (sizeBar_ != null) {
+            Overlay ol = hyperImage_.getOverlay();
+            if (ol == null) {
+               ol = new Overlay();
+               ol.setFillColor(Color.white);
+               ol.setStrokeColor(Color.white);
+            }
+            sizeBar_.setPosition(SizeBar.Position.BOTTOMRIGHT);
+            sizeBar_.addToOverlay(ol);
+            hyperImage_.setOverlay(ol);
+         }
+      }
+      hyperImage_.setHideOverlay(!show);
    }
 
    private JSONObject getChannelSetting(int channel) {
