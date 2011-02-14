@@ -55,6 +55,12 @@ public class HttpUtils {
         httpOut.flush();
         httpOut.close();
 
+        try{
+            uploadFileReader.close();
+        }catch(Exception e){
+            ReportingUtils.logError(e);
+        }
+
         // read & parse the response
         InputStream is = anURLConnection.getInputStream();
         StringBuilder response = new StringBuilder();
