@@ -24,6 +24,7 @@ import ij.ImagePlus;
 import ij.gui.Overlay;
 import ij.gui.Roi;
 import ij.gui.TextRoi;
+
 import java.awt.Font;
 import java.text.NumberFormat;
 
@@ -103,6 +104,7 @@ public class SizeBar {
    }
 
    public void addToOverlay(Overlay ol) {
+      font_ = font_.deriveFont((int) (0.015 * ip_.getWidth()));
       TextRoi text = new TextRoi(10, 10, value_ + units_, font_);
       int textWidth = ip_.getProcessor().getStringWidth(value_ + units_);
       if (pos_ == Position.TOPLEFT) {

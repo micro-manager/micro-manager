@@ -903,7 +903,7 @@ public class VirtualAcquisitionDisplay {
             Overlay ol = hyperImage_.getOverlay();
             if (ol == null) {
                ol = new Overlay();
-               ol.setFillColor(Color.white);
+               //ol.setFillColor(Color.white); // this causes the text to get a white background!
                ol.setStrokeColor(Color.white);
             }
             sizeBar_.setPosition(SizeBar.Position.BOTTOMRIGHT);
