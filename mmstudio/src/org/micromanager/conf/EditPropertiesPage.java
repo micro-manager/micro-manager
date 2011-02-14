@@ -113,7 +113,7 @@ public class EditPropertiesPage extends PagePanel {
                     for (int j = 0; j < devices[i].getNumberOfProperties(); j++) {
                         PropertyItem p = devices[i].getProperty(j);
                         if (p.name.compareTo(MMCoreJ.getG_Keyword_Port()) == 0) {
-                            if (ports.size() == 0) {
+                            if (0 == ports.size() ) {
                                 // no ports available, tell user and return
                                 JOptionPane.showMessageDialog(null, "No serial communication ports were found in your computer!");
                                 return;
@@ -151,7 +151,6 @@ public class EditPropertiesPage extends PagePanel {
                             }
                         }
                         progressDialog_.ProgressText("Looking for:\n" + looking);
-                        progressDialog_.paint(progressDialog_.getGraphics());
                         for (Detector d : detectors) {
                             d.start();
                         }
@@ -199,7 +198,6 @@ public class EditPropertiesPage extends PagePanel {
                             }
                         }
                         progressDialog_.ProgressText("Looking for:\n" + looking);
-                        progressDialog_.paint(progressDialog_.getGraphics());
                         for (Detector d : detectors) {
                             d.start();
                         }
@@ -268,7 +266,6 @@ public class EditPropertiesPage extends PagePanel {
                     }
                 }
                 progressDialog_.ProgressText("Found:\n " + foundem);
-                progressDialog_.paint(progressDialog_.getGraphics());
                 try {
                     Thread.sleep(900);
                 } catch (InterruptedException ex) {
@@ -407,8 +404,7 @@ public class EditPropertiesPage extends PagePanel {
                     model_.useSerialPort(p, false);
                 } // apply the properties and mark the serial ports that are really in use
                 PropertyTableModel ptm = (PropertyTableModel) propTable_.getModel();
-                for (int i = 0; i
-                        < ptm.getRowCount(); i++) {
+                for (int i = 0; i< ptm.getRowCount(); i++) {
                     Setting s = ptm.getSetting(i);
                     if (s.propertyName_.compareTo(MMCoreJ.getG_Keyword_Port()) == 0) {
                         // check that this is a valid port
@@ -416,9 +412,7 @@ public class EditPropertiesPage extends PagePanel {
                             JOptionPane.showMessageDialog(null, "Please select a valid serial port for " + s.deviceName_);
                             return false;
                         } else {
-                            for (int j = 0; j
-                                    < avPorts.length;
-                                    ++j) {
+                            for (int j = 0; j< avPorts.length; ++j) {
                                 if (0 == s.propertyValue_.compareTo(avPorts[j].getAdapterName())) {
                                     model_.useSerialPort(avPorts[j], true);
                                 }
