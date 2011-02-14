@@ -6,7 +6,6 @@ import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.gui.ImageWindow;
 import ij.gui.Overlay;
-import ij.gui.Roi;
 import ij.gui.ScrollbarWithLabel;
 import ij.gui.StackWindow;
 import ij.measure.Calibration;
@@ -89,7 +88,8 @@ public class VirtualAcquisitionDisplay {
 
       numGrayChannels = numComponents_ * numChannels;
 
-      imageCache_.setDisplayAndComments(getDisplaySettingsFromSummary(summaryMetadata));
+      if (imageCache_.getDisplayAndComments() == null || imageCache_.getDisplayAndComments().isNull("Channels"))
+         imageCache_.setDisplayAndComments(getDisplaySettingsFromSummary(summaryMetadata));
       
       int type = 0;
       try {
@@ -114,6 +114,9 @@ public class VirtualAcquisitionDisplay {
       applyPixelSizeCalibration(hyperImage_);
       createWindow(hyperImage_, hc_);
       setNumPositions(numPositions);
+      for (int i=0;i<numGrayChannels;++i) {
+         updateChannelDisplay(i);
+      }
       updateAndDraw();
       updateWindow();
    }
@@ -243,25 +246,6 @@ public class VirtualAcquisitionDisplay {
       return hyperImage_;
    }
 
-   private void setupChannelContrast(int grayChannel, int pixelMin, int pixelMax) throws JSONException, MMScriptException {
-      int min = (int) hyperImage_.getDisplayRangeMin();
-      int max = (int) hyperImage_.getDisplayRangeMax();
-      JSONObject channelSettings = this.getChannelSetting(grayChannel);
-      if (hyperImage_.getSlice() == 1 || channelSettings.getInt("Min") == Integer.MAX_VALUE || channelSettings.getInt("Max") == Integer.MIN_VALUE) {
-         min = Integer.MAX_VALUE;
-         max = Integer.MIN_VALUE;
-      }
-
-      setChannelColor(grayChannel, channelSettings.getInt("Color"));
-      min = Math.min(min, pixelMin);
-      max = Math.max(max, pixelMax);
-      channelSettings.put("Min", min);
-      channelSettings.put("Max", max);
-      hyperImage_.setDisplayRange(min, max);
-      getSummaryMetadata().getJSONArray("ChContrastMax").put(grayChannel, max);
-      getSummaryMetadata().getJSONArray("ChContrastMin").put(grayChannel, min);
-   }
-
    private void updateAndDraw() {
       if (getNumGrayChannels() > 1) {
          ((CompositeImage) hyperImage_).setChannelsUpdated();
@@ -300,7 +284,7 @@ public class VirtualAcquisitionDisplay {
             eng_ = null;
          finished_ = true;
       } else {
-         if (finished_ = true) {
+         if (finished_ == true) {
             status = "finished, ";
          }
          hc_.enableAcquisitionControls(false);
@@ -348,12 +332,11 @@ public class VirtualAcquisitionDisplay {
                int pixelMax = ImageUtils.getMax(taggedImg.pix);
                if (MDUtils.isRGB(taggedImg)) {
                   for (int i=0; i<3; ++i) {
-                     setupChannelContrast(chan + i, pixelMin, pixelMax);
+                     setChannelDisplayRange(chan + i, pixelMin, pixelMax, true);
                   }
                } else {
-                  setupChannelContrast(chan, pixelMin, pixelMax);
+                  setChannelDisplayRange(chan, pixelMin, pixelMax, true);
                }
-               
             } catch (Exception ex) {
                ReportingUtils.showError(ex);
             }
@@ -777,40 +760,23 @@ public class VirtualAcquisitionDisplay {
       }
    }
 
-   public int getChannelMax(int channelIndex) {
-      try {
-         return getChannelSetting(channelIndex).getInt("Max");
-      } catch (JSONException ex) {
-         ReportingUtils.logError(ex);
-         return Integer.MIN_VALUE;
+   public void updateChannelDisplay(int channel) {
+      if (hyperImage_ == null) {
+         return;
       }
-   }
+      LUT lut = ImageUtils.makeLUT(getChannelColor(channel), getChannelGamma(channel), 8);
 
-   public int getChannelMin(int channelIndex) {
-      try {
-         return getChannelSetting(channelIndex).getInt("Min");
-      } catch (JSONException ex) {
-         ReportingUtils.logError(ex);
-         return Integer.MAX_VALUE;
+      if (hyperImage_.isComposite()) {
+         CompositeImage ci = (CompositeImage) hyperImage_;
+         setChannelWithoutUpdate(channel + 1);
+         ci.setChannelColorModel(lut);
+         ci.updateImage();
+         ci.setDisplayRange(getChannelMin(channel), getChannelMax(channel));
+      } else {
+         hyperImage_.getProcessor().setColorModel(lut);
+         hyperImage_.setDisplayRange(getChannelMin(channel), getChannelMax(channel));
       }
-   }
-
-   public double getChannelGamma(int channelIndex) {
-      try {
-         return getChannelSetting(channelIndex).getDouble("Gamma");
-      } catch (JSONException ex) {
-         ReportingUtils.logError(ex);
-         return 1.0;
-      }
-   }
-
-   public Color getChannelColor(int channelIndex) {
-       try {
-         return new Color(getChannelSetting(channelIndex).getInt("Color"));
-      } catch (JSONException ex) {
-         ReportingUtils.logError(ex);
-         return Color.WHITE;
-      }
+      updateAndDraw();
    }
 
    private void setChannelWithoutUpdate(int channel) {
@@ -822,7 +788,40 @@ public class VirtualAcquisitionDisplay {
       }
    }
 
-   public void setChannelColor(int channel, int rgb) throws MMScriptException {
+   public int getChannelMin(int channelIndex) {
+      try {
+         return getChannelSetting(channelIndex).getInt("Min");
+      } catch (Exception ex) {
+         return Integer.MAX_VALUE;
+      }
+   }
+
+   public int getChannelMax(int channelIndex) {
+      try {
+         return getChannelSetting(channelIndex).getInt("Max");
+      } catch (Exception ex) {
+         return Integer.MIN_VALUE;
+      }
+   }
+
+   public double getChannelGamma(int channelIndex) {
+      try {
+         return getChannelSetting(channelIndex).getDouble("Gamma");
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
+         return 1.0;
+      }
+   }
+
+   public Color getChannelColor(int channelIndex) {
+       try {
+         return new Color(getChannelSetting(channelIndex).getInt("Color"));
+      } catch (Exception ex) {
+         return Color.WHITE;
+      }
+   }
+
+   public void setChannelColor(int channel, int rgb, boolean updateDisplay) throws MMScriptException {
       double gamma;
       JSONObject chan = getChannelSetting(channel);
       if (chan == null) {
@@ -840,46 +839,24 @@ public class VirtualAcquisitionDisplay {
       } catch (JSONException ex) {
          ReportingUtils.logError(ex);
       }
-      setChannelLut(channel, new Color(rgb), gamma);
+      if (updateDisplay) {
+         updateChannelDisplay(channel);
+      }
    }
 
-   public void setChannelGamma(int channel, double gamma) {
-      setChannelLut(channel, getChannelColor(channel), gamma);
-   }
-
-   public void setChannelLut(int channel, Color color, double gamma) {
-      // Note: both hyperImage_ and channelSettings_ can be
-      // null when this function is called
-      // null pointer exception will ensue!
-      if (hyperImage_ == null) {
-         return;
-      }
-      LUT lut = ImageUtils.makeLUT(color, gamma, 8);
-      if (hyperImage_.isComposite()) {
-         CompositeImage ci = (CompositeImage) hyperImage_;
-         setChannelWithoutUpdate(channel + 1);
-         ci.setChannelColorModel(lut);
-      } else {
-         hyperImage_.getProcessor().setColorModel(lut);
-      }
-      updateAndDraw();
-      JSONObject chan = this.getChannelSetting(channel);
+   public void setChannelGamma(int channel, double gamma, boolean updateDisplay) {
+      JSONObject chan = getChannelSetting(channel);
       try {
-         chan.put("Color", color.getRGB());
          chan.put("Gamma", gamma);
-      } catch (JSONException ex) {
-         ReportingUtils.logError(ex);
+      } catch (Exception e) {
+         ReportingUtils.logError(e);
+      }
+      if (updateDisplay) {
+         updateChannelDisplay(channel);
       }
    }
 
-   public void setChannelDisplayRange(int channel, int min, int max) {
-      if (hyperImage_ == null) {
-         return;
-      }
-      setChannelWithoutUpdate(channel + 1);
-      hyperImage_.updateImage();
-      hyperImage_.setDisplayRange(min, max);
-      updateAndDraw();
+   public void setChannelDisplayRange(int channel, int min, int max, boolean updateDisplay) {
       JSONObject chan = getChannelSetting(channel);
       try {
          chan.put("Min", min);
@@ -887,8 +864,26 @@ public class VirtualAcquisitionDisplay {
       } catch (Exception e) {
          ReportingUtils.logError(e);
       }
+      if (updateDisplay) {
+         updateChannelDisplay(channel);
+      }
    }
 
+   private JSONObject getChannelSetting(int channel) {
+      try {
+         JSONArray array = imageCache_.getDisplayAndComments()
+                 .getJSONArray("Channels");
+         if (array != null) {
+            return array.getJSONObject(channel);
+         } else {
+            return null;
+         }
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
+         return null;
+      }
+   }
+   
    public void showSizeBar(boolean show) {
       if (show) {
          if (sizeBar_ == null) {
@@ -912,15 +907,5 @@ public class VirtualAcquisitionDisplay {
          }
       }
       hyperImage_.setHideOverlay(!show);
-   }
-
-   private JSONObject getChannelSetting(int channel) {
-      try {
-         return imageCache_.getDisplayAndComments()
-                 .getJSONArray("Channels").getJSONObject(channel);
-      } catch (JSONException ex) {
-         ReportingUtils.logError(ex);
-         return null;
-      }
    }
 }
