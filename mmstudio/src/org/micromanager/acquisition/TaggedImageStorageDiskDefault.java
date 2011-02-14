@@ -4,6 +4,8 @@
  */
 package org.micromanager.acquisition;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.micromanager.api.TaggedImageStorage;
 import ij.CompositeImage;
 import ij.ImagePlus;
@@ -447,7 +449,14 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
    }
 
    public void setDisplayAndComments(JSONObject settings) {
+      boolean newSettings
+               = (displaySettings_ == null)
+              || displaySettings_.isNull("Channels")
+              || displaySettings_.isNull("Comments");
       displaySettings_ = settings;
+      if (newSettings) {
+         this.writeDisplaySettings();
+      }
    }
 
    public JSONObject getDisplayAndComments() {
@@ -457,6 +466,13 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
    private void writeDisplaySettings() {
       if (displaySettings_ == null)
          return;
+      if (! new File(dir_).exists()) {
+         try {
+            JavaUtils.createDirectory(dir_);
+         } catch (Exception ex) {
+            ReportingUtils.logError(ex);
+         }
+      }
       File displayFile = new File(dir_ + "/" + "display_and_comments.txt");
       try {
          Writer displayFileWriter = new FileWriter(displayFile);
