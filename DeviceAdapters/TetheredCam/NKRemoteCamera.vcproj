@@ -200,6 +200,7 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
+						ExceptionHandling="1"
 						WarningLevel="0"
 					/>
 				</FileConfiguration>
@@ -208,6 +209,8 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
+						Optimization="2"
+						ExceptionHandling="1"
 						WarningLevel="0"
 					/>
 				</FileConfiguration>
@@ -220,6 +223,7 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
+						ExceptionHandling="1"
 						WarningLevel="0"
 					/>
 				</FileConfiguration>
@@ -228,6 +232,8 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
+						Optimization="2"
+						ExceptionHandling="1"
 						WarningLevel="0"
 					/>
 				</FileConfiguration>
@@ -240,6 +246,7 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
+						ExceptionHandling="1"
 						WarningLevel="0"
 					/>
 				</FileConfiguration>
@@ -248,6 +255,8 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
+						Optimization="2"
+						ExceptionHandling="1"
 						WarningLevel="0"
 					/>
 				</FileConfiguration>
@@ -284,6 +293,7 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
+						ExceptionHandling="1"
 						WarningLevel="0"
 					/>
 				</FileConfiguration>
@@ -292,6 +302,8 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
+						Optimization="2"
+						ExceptionHandling="1"
 						WarningLevel="0"
 					/>
 				</FileConfiguration>
@@ -304,6 +316,7 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
+						ExceptionHandling="1"
 						WarningLevel="0"
 					/>
 				</FileConfiguration>
@@ -312,6 +325,8 @@
 					>
 					<Tool
 						Name="VCCLCompilerTool"
+						Optimization="2"
+						ExceptionHandling="1"
 						WarningLevel="0"
 					/>
 				</FileConfiguration>

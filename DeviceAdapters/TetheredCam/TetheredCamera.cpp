@@ -46,10 +46,11 @@
 // - Connect a Canon DSLR camera.
 // - Download, install and configure DSLRRemote from www.breezesys.com. Demo version is sufficient.
 // - Start up DSLRRemote. Click on the "Release" button to take a picture. Check the picture is downloaded to the PC, and displayed in the DSLRRemote main window. 
-// - Install the Windows Imaging Component codec for the camera's raw image format. 
 // - With DSLRRemote still running, start up Micro-Manager. 
 // - Create a hardware config consisting of DSLRRemoteCam, Demo Shutter, and Demo Stage.
+// - Open the property browser, and select ImageDecoder "Micro-Manager".
 // - Click the micro-manager "Snap" button to take a picture. Check the picture appears in the micro-manager "Live" window.
+// - If the camera supports jpeg and raw, take pictures in both formats. 
 // - Alternatively test using a Nikon DSLR camera, NKRemote software and NKRemoteCam driver.
 //
 
@@ -75,6 +76,7 @@
 //       CreateFormatConverter        [WIC, convert to grayscale/color, 8/16bpp]
 //       CopyPixels                   [WIC, copy to micro-manager image buffer]
 //       Convert64bppRGBAto64bppBGRA  [swap R and B channels for 64bpp color]
+//
    
 
 #ifndef _DSLRREMOTE_
@@ -1309,7 +1311,7 @@ int CTetheredCamera::ResizeImageBuffer()
       else
       {
          LogMessage("grayscale bitdepth not implemented", true);
-         return ERR_CAM_LOAD;
+         return ERR_CAM_CONVERSION;
       }
    }
    else
@@ -1327,7 +1329,7 @@ int CTetheredCamera::ResizeImageBuffer()
       else
       {
          LogMessage("color bitdepth not implemented", true);
-         return ERR_CAM_LOAD;
+         return ERR_CAM_CONVERSION;
       }
    }
 
@@ -1354,7 +1356,7 @@ int CTetheredCamera::ResizeImageBuffer()
    }
 
    if (SUCCEEDED(hr) && ((frameWidth == 0) || (frameHeight == 0)))
-      return ERR_CAM_LOAD;
+      return ERR_CAM_CONVERSION;
 
    if (SUCCEEDED(hr))
    {
@@ -1526,7 +1528,7 @@ int CTetheredCamera::LoadRawImage(IWICImagingFactory *factory, const char* filen
       return ERR_CAM_RAW;
    }
 
-   LogMessage("Raw image decoded", true);
+   LogMessage("Raw: image decoded", true);
 
    // Convert decoded raw bitmap "rawImg" to WIC bitmap "frameBitmap"
    SafeRelease(frameBitmap);
@@ -1560,7 +1562,7 @@ int CTetheredCamera::LoadRawImage(IWICImagingFactory *factory, const char* filen
          }
          else
          {
-            LogMessage("Raw image: buffer too small", true);
+            LogMessage("Raw: image buffer too small", true);
             return ERR_CAM_RAW; // bail out
          }
       }
@@ -1575,7 +1577,7 @@ int CTetheredCamera::LoadRawImage(IWICImagingFactory *factory, const char* filen
 
    if (SUCCEEDED(hr))
    {
-      LogMessage("Raw image loaded", true);
+      LogMessage("Raw: image loaded", true);
       return DEVICE_OK;
    }
 
