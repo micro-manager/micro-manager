@@ -2,7 +2,7 @@
 // Please first load the Demo-configuration file and then execute this script
 // Any failures reflect bugs in the Micro-Managare code
 // Nico Stuurman, February 2011
-
+/*
 gui.clearMessageWindow();
 gui.sleep(100);
 gui.refreshGUI();
@@ -34,23 +34,24 @@ gui.displayImage(mmc.getImage());
 gui.closeAllAcquisitions();
 gui.runAcquisition(); // This does not open the acquisition window as the documentation says it would!
 gui.runAcquisition("AcquistionData", "Test");
+*/
 gui.closeAllAcquisitions();
 
 width = mmc.getImageWidth();
 height = mmc.getImageHeight();
-depth = mmc.getImageBitDepth();
+depth = mmc.getBytesPerPixel();
 
 
 nrFrames = 10;
 nrChannels = 2;
 nrSlices = 5;
 acqName = "Test";
-gui.openAcquisition(acqName, "", nrFrames, nrChannels, nrSlices);   // this one currently fails!
-gui.initializeAcquisition(acqName, width, height, depth);
-for (frame = 0; frame < nrFrames; frame++)
-   for (channel = 0; channel < nrChannels; channel++)
-		for (slice = 0; slice < nrSlices; slice++)
-			snapAndAddImage(acqName, frame, channel, slice);
+gui.openAcquisition(acqName, "/Users/arthur/qqq/", nrFrames, nrChannels, nrSlices, true, true);   // this one currently fails!
+gui.initializeAcquisition(acqName, (int) width, (int) height, (int) depth);
+for (int frame = 0; frame < nrFrames; frame++)
+   for (int channel = 0; channel < nrChannels; channel++)
+		for (int slice = 0; slice < nrSlices; slice++)
+			gui.snapAndAddImage(acqName, frame, channel, slice);
 if (gui.acquisitionExists(acqName) != true)
 	gui.message("Error in acquisitionExists function");
 gui.closeAcquisition(acqName);
