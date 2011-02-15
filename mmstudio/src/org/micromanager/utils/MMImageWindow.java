@@ -411,7 +411,7 @@ public class MMImageWindow extends ImageWindow {
 	public void newImageWithStatusLine(Object img, String statusLine) {
       //TODO: add error handling
 		if (getImageWindowByteLength() != imageByteLenth(img)) {
-			throw (new RuntimeException("Image bytelenth does not much"));
+			throw (new RuntimeException("Image bytelength does not match"));
 		}
 		ImagePlus ip = getImagePlus();
 		if(null != ip) {
