@@ -70,7 +70,7 @@ public class VirtualAcquisitionDisplay {
       int numFrames = 1;
       int numChannels = 1;
       int numGrayChannels;
-      int numPositions = 1;
+      int numPositions = 0;
       int width = 0;
       int height = 0;
 
@@ -80,7 +80,7 @@ public class VirtualAcquisitionDisplay {
          numSlices = Math.max(summaryMetadata.getInt("Slices"), 1);
          numFrames = Math.max(summaryMetadata.getInt("Frames"), 1);
          numChannels = Math.max(summaryMetadata.getInt("Channels"), 1);
-         numPositions = Math.max(summaryMetadata.getInt("Positions"), 1);
+         numPositions = Math.max(summaryMetadata.getInt("Positions"), 0);
          numComponents_ = MDUtils.getNumberOfComponents(summaryMetadata);
       } catch (Exception e) {
          ReportingUtils.showError(e);
@@ -231,11 +231,12 @@ public class VirtualAcquisitionDisplay {
    }
 
    private void setNumPositions(int n) {
-      pSelector_.setMaximum(n + 1);
+      pSelector_.setMinimum(0);
+      pSelector_.setMaximum(n);
       ImageWindow win = hyperImage_.getWindow();
       if (n > 1 && pSelector_.getParent() == null) {
          win.add(pSelector_, win.getComponentCount() - 1);
-      } else if (n == 1 && pSelector_.getParent() != null) {
+      } else if (n <= 1 && pSelector_.getParent() != null) {
          win.remove(pSelector_);
       }
       win.pack();
@@ -330,7 +331,7 @@ public class VirtualAcquisitionDisplay {
             if (p >= getNumPositions()) {
                setNumPositions(p);
             }
-            setPosition(1 + MDUtils.getPositionIndex(taggedImg.tags));
+            setPosition(MDUtils.getPositionIndex(taggedImg.tags));
             hyperImage_.setPosition(1 + chan,
                                     1 + MDUtils.getSliceIndex(md),
                                     1 + MDUtils.getFrameIndex(md));
@@ -360,7 +361,7 @@ public class VirtualAcquisitionDisplay {
    }
 
    private void updatePosition(int p) {
-      virtualStack_.setPositionIndex(p - 1);
+      virtualStack_.setPositionIndex(p);
       if (!isComposite()) {
          Object pixels = virtualStack_.getPixels(hyperImage_.getCurrentSlice());
          hyperImage_.getProcessor().setPixels(pixels);
@@ -596,11 +597,15 @@ public class VirtualAcquisitionDisplay {
    }
 
    public int getNumPositions() {
-      return pSelector_.getMaximum() - 1;
+      return pSelector_.getMaximum();
    }
 
    public ImagePlus getImagePlus() {
       return hyperImage_;
+   }
+
+   public MMImageCache getImageCache() {
+      return imageCache_;
    }
 
    public ImagePlus getImagePlus(int position) {

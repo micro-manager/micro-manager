@@ -269,6 +269,41 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       return imageWin_;
    }
 
+   private void doSnapColor() {
+      
+   }
+
+   private void doSnapMonochrome() {
+      try {
+         Cursor waitCursor = new Cursor(Cursor.WAIT_CURSOR);
+         setCursor(waitCursor);
+         if (!isImageWindowOpen()) {
+            imageWin_ = createImageWindow();
+         }
+         if (imageWin_ == null) {
+            return;
+         }
+         imageWin_.toFront();
+         setIJCal(imageWin_);
+         // this is needed to clear the subtite, should be folded into
+         // drawInfo
+         imageWin_.getGraphics().clearRect(0, 0, imageWin_.getWidth(), 40);
+         imageWin_.drawInfo(imageWin_.getGraphics());
+         imageWin_.setSubTitle("Snap");
+         String expStr = textFieldExp_.getText();
+         if (expStr.length() > 0) {
+            core_.setExposure(NumberUtils.displayStringToDouble(expStr));
+            updateImage();
+         } else {
+            handleError("Exposure field is empty!");
+         }
+      } catch (Exception e) {
+         ReportingUtils.showError(e);
+      }
+      Cursor defaultCursor = new Cursor(Cursor.DEFAULT_CURSOR);
+      setCursor(defaultCursor);
+   }
+
    private void updateSwitchConfigurationMenu() {
       switchConfigurationMenu_.removeAll();
       for (final String configFile : MRUConfigFiles_) {
@@ -410,7 +445,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          return null;
       }
    }
-
+   
    /**
     * Callback to update GUI when a change happens in the MMCore.
     */
@@ -2733,38 +2768,11 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
 
    private void doSnap() {
-      try {
-         Cursor waitCursor = new Cursor(Cursor.WAIT_CURSOR);
-         setCursor(waitCursor);
-
-         if (!isImageWindowOpen()) {
-            imageWin_ = createImageWindow();
-         }
-
-         if (imageWin_ == null)
-            return;
-         
-         imageWin_.toFront();
-
-         setIJCal(imageWin_);
-         // this is needed to clear the subtite, should be folded into
-         // drawInfo
-         imageWin_.getGraphics().clearRect(0, 0, imageWin_.getWidth(), 40);
-         imageWin_.drawInfo(imageWin_.getGraphics());
-         imageWin_.setSubTitle("Snap");
-
-         String expStr = textFieldExp_.getText();
-         if (expStr.length() > 0) {
-            core_.setExposure(NumberUtils.displayStringToDouble(expStr));
-            updateImage();
-         } else {
-            handleError("Exposure field is empty!");
-         }
-      } catch (Exception e) {
-         ReportingUtils.showError(e);
+      if (core_.getNumberOfComponents() == 1) {
+         doSnapMonochrome();
+      } else {
+         doSnapColor();
       }
-      Cursor defaultCursor = new Cursor(Cursor.DEFAULT_CURSOR);
-      setCursor(defaultCursor);
    }
 
    public void initializeGUI() {
