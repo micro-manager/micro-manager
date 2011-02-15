@@ -5,7 +5,6 @@ import java.awt.event.AdjustmentEvent;
 import ij.CompositeImage;
 import ij.ImagePlus;
 import ij.gui.ImageWindow;
-import ij.gui.Overlay;
 import ij.gui.ScrollbarWithLabel;
 import ij.gui.StackWindow;
 import ij.measure.Calibration;
@@ -30,7 +29,6 @@ import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
-import org.micromanager.utils.SizeBar;
 
 /**
  *
@@ -49,6 +47,8 @@ public class VirtualAcquisitionDisplay {
          return null;
    }
 
+   final static Color[] rgb = {Color.red, Color.green, Color.blue};
+
    final MMImageCache imageCache_;
    final private ImagePlus hyperImage_;
    final private HyperstackControls hc_;
@@ -58,7 +58,7 @@ public class VirtualAcquisitionDisplay {
    private int numComponents_ = 1;
    private AcquisitionEngine eng_;
    private boolean finished_ = false;
-   private SizeBar sizeBar_;
+
    
    public VirtualAcquisitionDisplay(MMImageCache imageCache, AcquisitionEngine eng) {
       imageCache_ = imageCache;
@@ -170,18 +170,24 @@ public class VirtualAcquisitionDisplay {
          JSONArray chMins = MDUtils.getJSONArrayMember(summaryMetadata, "ChContrastMin");
          int numComponents = MDUtils.getNumberOfComponents(summaryMetadata);
          JSONArray channels = new JSONArray();
-         for (int i=0;i<chNames.length();++i) {
-            String name = (String) chNames.get(i);
-            int color = chColors.getInt(i);
-            JSONObject channelObject = new JSONObject();
-            int min = chMins.getInt(i);
-            int max = chMaxes.getInt(i);
-            channelObject.put("Color", color);
-            channelObject.put("Name", name);
-            channelObject.put("Gamma", 1.0);
-            channelObject.put("Min", min);
-            channelObject.put("Max", max);
-            channels.put(channelObject);
+         for (int k=0;k<chNames.length();++k) {
+            String name = (String) chNames.get(k);
+            int color = chColors.getInt(k);
+            int min = chMins.getInt(k);
+            int max = chMaxes.getInt(k);
+            for (int component=0; component<numComponents; ++component) {
+               JSONObject channelObject = new JSONObject();
+               if (numComponents == 1) {
+                  channelObject.put("Color", color);
+               } else {
+                  channelObject.put("Color",rgb[component].getRGB());
+               }
+               channelObject.put("Name", name);
+               channelObject.put("Gamma", 1.0);
+               channelObject.put("Min", min);
+               channelObject.put("Max", max);
+               channels.put(channelObject);
+            }
          }
          if (chNames.length() == 0) {
             JSONObject channelObject = new JSONObject();
@@ -719,7 +725,9 @@ public class VirtualAcquisitionDisplay {
          String[] chanNames = new String[nChannels];
          for (int i = 0; i < nChannels; ++i) {
             try {
-               chanNames[i] = imageCache_.getDisplayAndComments().getJSONArray("Channels").getJSONObject(i/numComponents_).getString("Name");
+               chanNames[i] = imageCache_.getDisplayAndComments()
+                       .getJSONArray("Channels")
+                       .getJSONObject(i).getString("Name");
             } catch (Exception ex) {
                ReportingUtils.logError(ex);
             }
@@ -822,18 +830,7 @@ public class VirtualAcquisitionDisplay {
    }
 
    public void setChannelColor(int channel, int rgb, boolean updateDisplay) throws MMScriptException {
-      double gamma;
       JSONObject chan = getChannelSetting(channel);
-      if (chan == null) {
-         gamma = 1.0;
-      } else {
-         try {
-            gamma = chan.getDouble("Gamma");
-         } catch (JSONException ex) {
-            ReportingUtils.logError(ex);
-            gamma = 1.0;
-         }
-      }
       try {
          chan.put("Color", rgb);
       } catch (JSONException ex) {
