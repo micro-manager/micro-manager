@@ -1,0 +1,41 @@
+// Exercice the DeviceControlGUI api
+
+gui.updateGUI(false);
+gui.updateGUI(true);
+gui.stopAllActivity();
+gui.sleep(200);  // needed so that updateGUI can finish
+gui.refreshGUI();
+gui.stopAllActivity();
+gui.getVersion();
+gui.updateImage();
+gui.enableLiveMode(true);
+if (gui.getLiveMode() == false)
+	gui.message("Live Mode failed to start");
+gui.sleep(300);
+gui.updateImage();
+if (gui.getLiveMode() == true)
+	gui.message("Live Mode is on unexpectedly");
+
+mmc.snapImage();
+pixels = mmc.getImage();
+gui.displayImage(pixels);
+gui.displayImageWithStatusLine(pixels, "Testing the statusline");
+gui.sleep(1000);
+gui.displayStatusLine("More testing of the statusline");
+
+gui.getContrastSettings();
+
+gui.setBackgroundStyle("Day");
+gui.getBackgroundColor();
+
+gui.showXYPositionList();
+
+gui.getAutofocusManager();
+
+gui.okToAcquire();
+
+gui.startBurstAcquisition();
+
+gui.makeActive();
+
+gui.setBackgroundStyle("Night");
