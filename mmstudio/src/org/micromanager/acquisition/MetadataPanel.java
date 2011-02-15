@@ -22,8 +22,6 @@ import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Vector;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.JPanel;
 import javax.swing.SpringLayout;
 import javax.swing.table.AbstractTableModel;
@@ -51,6 +49,7 @@ public class MetadataPanel extends javax.swing.JPanel
    private boolean showUnchangingKeys_;
    private boolean updatingDisplayModeCombo_ = false;
    private ArrayList<ChannelControlPanel> ccpList_;
+   private Color overlayColor_ = Color.white;
 
     /** Creates new form MetadataPanel */
     public MetadataPanel() {
@@ -92,6 +91,7 @@ public class MetadataPanel extends javax.swing.JPanel
       jLabel1 = new javax.swing.JLabel();
       sizeBarCheckBox = new javax.swing.JCheckBox();
       sizeBarComboBox = new javax.swing.JComboBox();
+      overlayColorComboBox_ = new javax.swing.JComboBox();
       metadataSplitPane = new javax.swing.JSplitPane();
       imageMetadataScrollPane = new javax.swing.JPanel();
       imageMetadataTableScrollPane = new javax.swing.JScrollPane();
@@ -163,6 +163,13 @@ public class MetadataPanel extends javax.swing.JPanel
          }
       });
 
+      overlayColorComboBox_.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "White", "Black", "Yellow", "Gray" }));
+      overlayColorComboBox_.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            overlayColorComboBox_ActionPerformed(evt);
+         }
+      });
+
       org.jdesktop.layout.GroupLayout ChannelsTablePanelLayout = new org.jdesktop.layout.GroupLayout(ChannelsTablePanel);
       ChannelsTablePanel.setLayout(ChannelsTablePanelLayout);
       ChannelsTablePanelLayout.setHorizontalGroup(
@@ -170,8 +177,10 @@ public class MetadataPanel extends javax.swing.JPanel
          .add(ChannelsTablePanelLayout.createSequentialGroup()
             .add(sizeBarCheckBox)
             .add(18, 18, 18)
-            .add(sizeBarComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 127, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-            .add(318, 318, 318))
+            .add(sizeBarComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 134, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+            .add(overlayColorComboBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 105, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+            .add(204, 204, 204))
          .add(org.jdesktop.layout.GroupLayout.TRAILING, contrastScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 539, Short.MAX_VALUE)
          .add(ChannelsTablePanelLayout.createSequentialGroup()
             .add(jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -182,11 +191,12 @@ public class MetadataPanel extends javax.swing.JPanel
          .add(ChannelsTablePanelLayout.createSequentialGroup()
             .add(ChannelsTablePanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
                .add(sizeBarCheckBox)
-               .add(sizeBarComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+               .add(sizeBarComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+               .add(overlayColorComboBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
             .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-            .add(contrastScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 435, Short.MAX_VALUE))
+            .add(contrastScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 434, Short.MAX_VALUE))
       );
 
       tabbedPane.addTab("Channels", ChannelsTablePanel);
@@ -249,7 +259,7 @@ public class MetadataPanel extends javax.swing.JPanel
                .add(showUnchangingPropertiesCheckbox)
                .add(jLabel2))
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-            .add(imageMetadataTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 370, Short.MAX_VALUE))
+            .add(imageMetadataTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 369, Short.MAX_VALUE))
       );
 
       metadataSplitPane.setRightComponent(imageMetadataScrollPane);
@@ -433,6 +443,20 @@ public class MetadataPanel extends javax.swing.JPanel
        showSizeBar();
     }//GEN-LAST:event_sizeBarComboBoxActionPerformed
 
+    private void overlayColorComboBox_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_overlayColorComboBox_ActionPerformed
+       if ((overlayColorComboBox_.getSelectedItem()).equals("Black")) {
+          overlayColor_ = Color.black;
+       } else  if ((overlayColorComboBox_.getSelectedItem()).equals("White")) {
+          overlayColor_ = Color.white;
+       } else if ((overlayColorComboBox_.getSelectedItem()).equals("Yellow")) {
+          overlayColor_ = Color.yellow;
+       } else if ((overlayColorComboBox_.getSelectedItem()).equals("Gray")) {
+          overlayColor_ = Color.gray;
+       }
+       showSizeBar();
+       
+    }//GEN-LAST:event_overlayColorComboBox_ActionPerformed
+
 
 
    // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -452,6 +476,7 @@ public class MetadataPanel extends javax.swing.JPanel
    private javax.swing.JLabel jLabel3;
    private javax.swing.JPanel jPanel1;
    private javax.swing.JSplitPane metadataSplitPane;
+   private javax.swing.JComboBox overlayColorComboBox_;
    private javax.swing.JCheckBox showUnchangingPropertiesCheckbox;
    private javax.swing.JCheckBox sizeBarCheckBox;
    private javax.swing.JComboBox sizeBarComboBox;
@@ -687,7 +712,7 @@ public class MetadataPanel extends javax.swing.JPanel
          if (sizeBar != null) {
             Overlay ol = new Overlay();
             //ol.setFillColor(Color.white); // this causes the text to get a white background!
-            ol.setStrokeColor(Color.white);
+            ol.setStrokeColor(overlayColor_);
             String selected = (String) sizeBarComboBox.getSelectedItem();
             if (selected.equals("Top-Right"))
                sizeBar.setPosition(SizeBar.Position.TOPRIGHT);
@@ -698,7 +723,7 @@ public class MetadataPanel extends javax.swing.JPanel
             if (selected.equals("Bottom-Left"))
                sizeBar.setPosition(SizeBar.Position.BOTTOMLEFT);
             sizeBar.addToOverlay(ol);
-            ol.setStrokeColor(Color.white);
+            ol.setStrokeColor(overlayColor_);
             ip.setOverlay(ol);
          }
       }
@@ -718,7 +743,7 @@ public class MetadataPanel extends javax.swing.JPanel
       ImagePlus imgp = focusedWindow.getImagePlus();
       MMImageCache cache = getCache(imgp);
       VirtualAcquisitionDisplay acq = getVirtualAcquisitionDisplay(imgp);
-      sizeBarCheckBox.setSelected(!imgp.getHideOverlay());
+      sizeBarCheckBox.setSelected(imgp.getOverlay()!= null && !imgp.getHideOverlay());
 
       if (acq != null) {
          summaryCommentsTextArea.setText(acq.getSummaryComment());

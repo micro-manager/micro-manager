@@ -1,4 +1,4 @@
-<?xml version="1.1" encoding="UTF-8" ?>
+<?xml version="1.0" encoding="UTF-8" ?>
 
 <Form version="1.5" maxVersion="1.7" type="org.netbeans.modules.form.forminfo.JPanelFormInfo">
   <AuxValues>
@@ -60,8 +60,10 @@
                   <Group type="102" alignment="0" attributes="0">
                       <Component id="sizeBarCheckBox" min="-2" max="-2" attributes="0"/>
                       <EmptySpace type="separate" max="-2" attributes="0"/>
-                      <Component id="sizeBarComboBox" min="-2" pref="127" max="-2" attributes="0"/>
-                      <EmptySpace min="-2" pref="318" max="-2" attributes="0"/>
+                      <Component id="sizeBarComboBox" min="-2" pref="134" max="-2" attributes="0"/>
+                      <EmptySpace max="-2" attributes="0"/>
+                      <Component id="overlayColorComboBox_" min="-2" pref="105" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="204" max="-2" attributes="0"/>
                   </Group>
                   <Component id="contrastScrollPane" alignment="1" pref="539" max="32767" attributes="0"/>
                   <Group type="102" alignment="0" attributes="0">
@@ -76,11 +78,12 @@
                       <Group type="103" groupAlignment="3" attributes="0">
                           <Component id="sizeBarCheckBox" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="sizeBarComboBox" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="overlayColorComboBox_" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="jPanel1" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="contrastScrollPane" pref="435" max="32767" attributes="0"/>
+                      <Component id="contrastScrollPane" pref="434" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -161,6 +164,21 @@
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="sizeBarComboBoxActionPerformed"/>
               </Events>
             </Component>
+            <Component class="javax.swing.JComboBox" name="overlayColorComboBox_">
+              <Properties>
+                <Property name="model" type="javax.swing.ComboBoxModel" editor="org.netbeans.modules.form.editors2.ComboBoxModelEditor">
+                  <StringArray count="4">
+                    <StringItem index="0" value="White"/>
+                    <StringItem index="1" value="Black"/>
+                    <StringItem index="2" value="Yellow"/>
+                    <StringItem index="3" value="Gray"/>
+                  </StringArray>
+                </Property>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="overlayColorComboBox_ActionPerformed"/>
+              </Events>
+            </Component>
           </SubComponents>
         </Container>
         <Container class="javax.swing.JSplitPane" name="metadataSplitPane">
@@ -206,7 +224,7 @@
                               <Component id="jLabel2" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
-                          <Component id="imageMetadataTableScrollPane" pref="370" max="32767" attributes="0"/>
+                          <Component id="imageMetadataTableScrollPane" pref="369" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
