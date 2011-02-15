@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.TimeZone;
 import mmcorej.CMMCore;
 import org.micromanager.utils.HttpUtils;
+import org.micromanager.utils.ReportingUtils;
 import sun.misc.UUEncoder;
 
 class ProblemReportSender extends Thread {
@@ -130,6 +131,10 @@ class ProblemReportSender extends Thread {
             } catch (MalformedURLException e2) {
                 status_ = e2.toString();
             }
+            if( !fileToSend.delete())
+                ReportingUtils.logMessage("Couldn't delete temporary file " + qualifiedArchiveFileName );
+            if(!archiveFile.delete())
+                ReportingUtils.logMessage("Couldn't delete archive file " + archPath);
         } catch (IOException e2) {
             status_ = e2.toString();
         }
