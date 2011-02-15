@@ -190,11 +190,17 @@ public class VirtualAcquisitionDisplay {
             }
          }
          if (chNames.length() == 0) {
-            JSONObject channelObject = new JSONObject();
-            channelObject.put("Color", Color.white.getRGB());
-            channelObject.put("Name", "Default");
-            channelObject.put("Gamma", 1.0);
-            channels.put(channelObject);
+            for (int component = 0;component <numComponents; ++component) {
+               JSONObject channelObject = new JSONObject();
+               if (numComponents == 1) {
+                  channelObject.put("Color", Color.white);
+               } else {
+                  channelObject.put("Color",rgb[component].getRGB());
+               }
+               channelObject.put("Name", "Default");
+               channelObject.put("Gamma", 1.0);
+               channels.put(channelObject);
+            }
          }
          displaySettings.put("Channels", channels);
 
