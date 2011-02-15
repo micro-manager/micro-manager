@@ -36,7 +36,7 @@ import java.text.NumberFormat;
  * @author Nico Stuurman
  * 
  */
-public class SizeBar {
+public class ScaleBar {
 
    public enum Position {
       TOPLEFT, TOPRIGHT, BOTTOMLEFT, BOTTOMRIGHT
@@ -53,7 +53,7 @@ public class SizeBar {
    private String value_;
    private String units_ = "\u00B5" + "m";
 
-   public SizeBar(ImagePlus ip) {
+   public ScaleBar(ImagePlus ip) {
       ip_ = ip;
       double pixelSize = ip.getCalibration().pixelWidth;
       units_ = ip.getCalibration().getXUnit();

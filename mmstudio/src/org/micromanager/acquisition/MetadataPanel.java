@@ -32,7 +32,7 @@ import org.micromanager.utils.ImageFocusListener;
 import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;
-import org.micromanager.utils.SizeBar;
+import org.micromanager.utils.ScaleBar;
 
 /**
  *
@@ -707,7 +707,7 @@ public class MetadataPanel extends javax.swing.JPanel
       boolean show = sizeBarCheckBox.isSelected();
       ImagePlus ip = WindowManager.getCurrentImage();
       if (show) {
-         SizeBar sizeBar = new SizeBar(ip);
+         ScaleBar sizeBar = new ScaleBar(ip);
 
          if (sizeBar != null) {
             Overlay ol = new Overlay();
@@ -715,13 +715,13 @@ public class MetadataPanel extends javax.swing.JPanel
             ol.setStrokeColor(overlayColor_);
             String selected = (String) sizeBarComboBox.getSelectedItem();
             if (selected.equals("Top-Right"))
-               sizeBar.setPosition(SizeBar.Position.TOPRIGHT);
+               sizeBar.setPosition(ScaleBar.Position.TOPRIGHT);
             if (selected.equals("Top-Left"))
-               sizeBar.setPosition(SizeBar.Position.TOPLEFT);
+               sizeBar.setPosition(ScaleBar.Position.TOPLEFT);
             if (selected.equals("Bottom-Right"))
-               sizeBar.setPosition(SizeBar.Position.BOTTOMRIGHT);
+               sizeBar.setPosition(ScaleBar.Position.BOTTOMRIGHT);
             if (selected.equals("Bottom-Left"))
-               sizeBar.setPosition(SizeBar.Position.BOTTOMLEFT);
+               sizeBar.setPosition(ScaleBar.Position.BOTTOMLEFT);
             sizeBar.addToOverlay(ol);
             ol.setStrokeColor(overlayColor_);
             ip.setOverlay(ol);
