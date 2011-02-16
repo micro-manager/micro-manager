@@ -270,8 +270,13 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
 
    private void doSnapColor() {
-      
+      try {
+         getPipeline().doSnap();
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
+      }
    }
+   
 
    private void doSnapMonochrome() {
       try {
@@ -2501,7 +2506,11 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
 
    boolean isLiveModeOn() {
+      if (core_.getNumberOfComponents() == 1) {
       return liveModeTimerTask_ != null && liveModeTimerTask_.isRunning();
+      } else {
+         return getPipeline().isLiveRunning();
+      }
    }
 
    // Timer task that displays the live image
@@ -2550,126 +2559,133 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    };
 
    public void enableLiveMode(boolean enable) {
-      if (enable) {
-         if (isLiveModeOn()) {
-            return;
-         }
-         try {
-            if (!isImageWindowOpen() && creatingImageWindow_.isFalse()) {
-               imageWin_ = createImageWindow();
+      if (core_.getNumberOfComponents() == 1) {
+         if (enable) {
+            if (isLiveModeOn()) {
+               return;
             }
+            try {
+               if (!isImageWindowOpen() && creatingImageWindow_.isFalse()) {
+                  imageWin_ = createImageWindow();
+               }
 
-            // this is needed to clear the subtitle, should be folded into
-            // drawInfo
-            imageWin_.getGraphics().clearRect(0, 0, imageWin_.getWidth(),
-                  40);
-            imageWin_.drawInfo(imageWin_.getGraphics());
-            imageWin_.toFront();
+               // this is needed to clear the subtitle, should be folded into
+               // drawInfo
+               imageWin_.getGraphics().clearRect(0, 0, imageWin_.getWidth(),
+                       40);
+               imageWin_.drawInfo(imageWin_.getGraphics());
+               imageWin_.toFront();
 
-            // turn off auto shutter and open the shutter
-            autoShutterOrg_ = core_.getAutoShutter();
-            if (shutterLabel_.length() > 0) {
-               shutterOrg_ = core_.getShutterOpen();
+               // turn off auto shutter and open the shutter
+               autoShutterOrg_ = core_.getAutoShutter();
+               if (shutterLabel_.length() > 0) {
+                  shutterOrg_ = core_.getShutterOpen();
+               }
+               core_.setAutoShutter(false);
+
+               // Hide the autoShutter Checkbox
+               autoShutterCheckBox_.setEnabled(false);
+
+               shutterLabel_ = core_.getShutterDevice();
+               // only open the shutter when we have one and the Auto shutter
+               // checkbox was checked
+               if ((shutterLabel_.length() > 0) && autoShutterOrg_) {
+                  core_.setShutterOpen(true);
+               }
+               // attach mouse wheel listener to control focus:
+               if (zWheelListener_ == null) {
+                  zWheelListener_ = new ZWheelListener(core_, this);
+               }
+               zWheelListener_.start(imageWin_);
+
+               // attach key listener to control the stage and focus:
+               if (xyzKeyListener_ == null) {
+                  xyzKeyListener_ = new XYZKeyListener(core_, this);
+               }
+               xyzKeyListener_.start(imageWin_);
+
+               // Do not display more often than dictated by the exposure time
+               setLiveModeInterval();
+               core_.startContinuousSequenceAcquisition(0.0);
+               liveModeTimerTask_ = new LiveModeTimerTask();
+               liveModeTimer_.schedule(liveModeTimerTask_, (long) 0, (long) liveModeInterval_);
+               // Only hide the shutter checkbox if we are in autoshuttermode
+               buttonSnap_.setEnabled(false);
+               if (autoShutterOrg_) {
+                  toggleButtonShutter_.setEnabled(false);
+               }
+               imageWin_.setSubTitle("Live (running)");
+               liveRunning_ = true;
+            } catch (Exception err) {
+               ReportingUtils.showError(err, "Failed to enable live mode.");
+
+               if (imageWin_ != null) {
+                  imageWin_.saveAttributes();
+                  WindowManager.removeWindow(imageWin_);
+                  imageWin_.dispose();
+                  imageWin_ = null;
+               }
             }
-            core_.setAutoShutter(false);
-
-            // Hide the autoShutter Checkbox
-            autoShutterCheckBox_.setEnabled(false);
-
-            shutterLabel_ = core_.getShutterDevice();
-            // only open the shutter when we have one and the Auto shutter
-            // checkbox was checked
-            if ((shutterLabel_.length() > 0) && autoShutterOrg_) {
-               core_.setShutterOpen(true);
+         } else {
+            if (!isLiveModeOn()) {
+               return;
             }
-            // attach mouse wheel listener to control focus:
-            if (zWheelListener_ == null) {
-               zWheelListener_ = new ZWheelListener(core_, this);
-            }
-            zWheelListener_.start(imageWin_);
+            try {
+               liveModeTimerTask_.cancel();
+               core_.stopSequenceAcquisition();
 
-            // attach key listener to control the stage and focus:
-            if (xyzKeyListener_ == null) {
-               xyzKeyListener_ = new XYZKeyListener(core_, this);
-            }
-            xyzKeyListener_.start(imageWin_);
+               if (zWheelListener_ != null) {
+                  zWheelListener_.stop();
+               }
+               if (xyzKeyListener_ != null) {
+                  xyzKeyListener_.stop();
+               }
 
-            // Do not display more often than dictated by the exposure time
-            setLiveModeInterval();
-            core_.startContinuousSequenceAcquisition(0.0);
-            liveModeTimerTask_ = new LiveModeTimerTask();
-            liveModeTimer_.schedule(liveModeTimerTask_, (long)0, (long) liveModeInterval_);
-            // Only hide the shutter checkbox if we are in autoshuttermode
-            buttonSnap_.setEnabled(false);
-            if (autoShutterOrg_) {
-               toggleButtonShutter_.setEnabled(false);
-            }
-            imageWin_.setSubTitle("Live (running)");
-            liveRunning_ = true;
-         } catch (Exception err) {
-            ReportingUtils.showError(err, "Failed to enable live mode.");
+               // restore auto shutter and close the shutter
+               if (shutterLabel_.length() > 0) {
+                  core_.setShutterOpen(shutterOrg_);
+               }
+               core_.setAutoShutter(autoShutterOrg_);
+               if (autoShutterOrg_) {
+                  toggleButtonShutter_.setEnabled(false);
+               } else {
+                  toggleButtonShutter_.setEnabled(true);
+               }
+               liveRunning_ = false;
+               buttonSnap_.setEnabled(true);
+               autoShutterCheckBox_.setEnabled(true);
+               // TODO: add timeout so that we can not hang here
+               while (liveModeTimerTask_.isRunning()); // Make sure Timer properly stops.
+               // This is here to avoid crashes when changing ROI in live mode
+               // with Sensicam
+               // Should be removed when underlying problem is dealt with
+               Thread.sleep(100);
 
-            if (imageWin_ != null) {
-               imageWin_.saveAttributes();
-               WindowManager.removeWindow(imageWin_);
-               imageWin_.dispose();
-               imageWin_ = null;
+               imageWin_.setSubTitle("Live (stopped)");
+               liveModeTimerTask_ = null;
+
+            } catch (Exception err) {
+               ReportingUtils.showError(err, "Failed to disable live mode.");
+               if (imageWin_ != null) {
+                  WindowManager.removeWindow(imageWin_);
+                  imageWin_.dispose();
+                  imageWin_ = null;
+               }
             }
          }
       } else {
-         if (!isLiveModeOn()) {
-            return;
-         }
-         try {
-            liveModeTimerTask_.cancel();
-            core_.stopSequenceAcquisition();
-
-            if (zWheelListener_ != null) {
-               zWheelListener_.stop();
-            }
-            if (xyzKeyListener_ != null) {
-               xyzKeyListener_.stop();
-            }
-
-            // restore auto shutter and close the shutter
-            if (shutterLabel_.length() > 0) {
-               core_.setShutterOpen(shutterOrg_);
-            }
-            core_.setAutoShutter(autoShutterOrg_);
-            if (autoShutterOrg_) {
-               toggleButtonShutter_.setEnabled(false);
-            } else {
-               toggleButtonShutter_.setEnabled(true);
-            }
-            liveRunning_ = false;
-            buttonSnap_.setEnabled(true);
-            autoShutterCheckBox_.setEnabled(true);
-            // TODO: add timeout so that we can not hang here
-            while (liveModeTimerTask_.isRunning()); // Make sure Timer properly stops.
-            // This is here to avoid crashes when changing ROI in live mode
-            // with Sensicam
-            // Should be removed when underlying problem is dealt with
-            Thread.sleep(100);
-
-            imageWin_.setSubTitle("Live (stopped)");
-            liveModeTimerTask_ = null;
-
-         } catch (Exception err) {
-            ReportingUtils.showError(err, "Failed to disable live mode.");
-            if (imageWin_ != null) {
-               WindowManager.removeWindow(imageWin_);
-               imageWin_.dispose();
-               imageWin_ = null;
-            }
-         }
+         buttonSnap_.setEnabled(!enable);
+         autoShutterCheckBox_.setEnabled(!enable);
+         getPipeline().enableLiveMode(enable);
+         liveRunning_ = enable;
       }
+
       toggleButtonLive_.setIcon(liveRunning_ ? SwingResourceManager.getIcon(MMStudioMainFrame.class,
-            "/org/micromanager/icons/cancel.png")
-            : SwingResourceManager.getIcon(MMStudioMainFrame.class,
-            "/org/micromanager/icons/camera_go.png"));
+              "/org/micromanager/icons/cancel.png")
+              : SwingResourceManager.getIcon(MMStudioMainFrame.class,
+              "/org/micromanager/icons/camera_go.png"));
       toggleButtonLive_.setSelected(liveRunning_);
       toggleButtonLive_.setText(liveRunning_ ? "Stop Live" : "Live");
-
    }
 
    public boolean getLiveMode() {
@@ -4106,12 +4122,20 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       return core_;
    }
 
-   public void snapAndAddToImage5D(String acqName) {
+   public Pipeline getPipeline() {
       try {
          if (acquirePipeline_ == null) {
             acquirePipeline_ = (Pipeline) getPipelineClass().newInstance();
          }
-         acquirePipeline_.acquireSingle();
+         return acquirePipeline_;
+      } catch (Exception e) {
+         return null;
+      }
+   }
+
+   public void snapAndAddToImage5D(String acqName) {
+      try {
+         getPipeline().acquireSingle();
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }

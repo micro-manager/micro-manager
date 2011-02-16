@@ -8,7 +8,7 @@ MMAcqEngine.jar: \
 	java -cp $(CLASSEXT)/clojure.jar:$(IJJARPATH):../mmstudio/MMJ_.jar:./src -Djava.awt.headless=true -Dclojure.compile.path=classes -server clojure.lang.Compile org.micromanager.acq-engine
 	jar cvf MMAcqEngine.jar -C classes/ .    
 
-all: MMAcqEngine.jar
+all: ../mmstudio MMAcqEngine.jar
 
 install:
 	cp MMAcqEngine.jar $(DESTDIR)$(IJPATH)/plugins/Micro-Manager

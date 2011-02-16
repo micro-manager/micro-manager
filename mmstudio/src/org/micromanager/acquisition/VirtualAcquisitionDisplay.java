@@ -714,7 +714,7 @@ public class VirtualAcquisitionDisplay {
 
    public void show() {
       hyperImage_.show();
-      hyperImage_.getWindow().toFront();
+      //hyperImage_.getWindow().toFront();
    }
 
    public boolean isComposite() {

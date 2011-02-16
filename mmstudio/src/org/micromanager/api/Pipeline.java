@@ -22,4 +22,7 @@ public interface Pipeline {
    public boolean stopHasBeenRequested();
    public long nextWakeTime();
    public void acquireSingle();
+   public void doSnap();
+   public void enableLiveMode(boolean on);
+   public boolean isLiveRunning();
 }
