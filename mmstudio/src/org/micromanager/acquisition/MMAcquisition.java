@@ -241,12 +241,16 @@ public class MMAcquisition {
          try {
             channelColors_.get(i);
          } catch (JSONException ex) {
-            channelColors_.put(Color.WHITE.getRGB());
+            try {
+               channelColors_.put(i, (Object) Color.white.getRGB());
+            } catch (JSONException exx ) {;}
          }
          try {
             channelNames_.get(i);
          } catch (JSONException ex) {
-            channelNames_.put(String.valueOf(i));
+            try {
+               channelNames_.put(i, String.valueOf(i));
+            } catch (JSONException exx) {;}
          }
          try {
             channelMaxes.put(255);
