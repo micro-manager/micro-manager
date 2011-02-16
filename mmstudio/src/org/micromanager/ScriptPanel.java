@@ -1160,7 +1160,8 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
    }
 
    public void sleep(long ms) throws MMScriptException {
-      interp_.sleep(ms);
+      if (ms > 0)
+         interp_.sleep(ms);
    }
 
 }

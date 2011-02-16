@@ -104,14 +104,14 @@ public interface ScriptInterface {
     * @param nrSlices
     * @param nrPositions
     * @param show
-    * @param virtual
+    * @param save
     * @throws MMScriptException
     */
-   public void openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices, int nrPositions, boolean show, boolean virtual) throws MMScriptException;
+   public void openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices, int nrPositions, boolean show, boolean save) throws MMScriptException;
 
    public void openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices, boolean show) throws MMScriptException;
 
-   public void openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices, boolean show, boolean virtual) throws MMScriptException;
+   public void openAcquisition(String name, String rootDir, int nrFrames, int nrChannels, int nrSlices, boolean show, boolean save) throws MMScriptException;
 
 
    public void initializeAcquisition(String name, int width, int height, int depth) throws MMScriptException;

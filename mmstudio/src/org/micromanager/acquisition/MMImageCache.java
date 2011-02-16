@@ -129,6 +129,11 @@ public class MMImageCache implements TaggedImageStorage {
    }
 
    private JSONObject getCommentsJSONObject() {
+      if (imageStorage_ == null) {
+         ReportingUtils.logError("imageStorage_ is null in getCommentsJSONObject");
+         return null;
+      }
+
       JSONObject comments;
       try {
          comments = imageStorage_.getDisplayAndComments().getJSONObject("Comments");
@@ -183,10 +188,18 @@ public class MMImageCache implements TaggedImageStorage {
    }
 
    public JSONObject getSummaryMetadata() {
+      if (imageStorage_ == null) {
+         ReportingUtils.logError("imageStorage_ is null in getSummaryMetadata");
+         return null;
+      }
       return imageStorage_.getSummaryMetadata();
    }
 
    public void setSummaryMetadata(JSONObject tags) {
+      if (imageStorage_ == null) {
+         ReportingUtils.logError("imageStorage_ is null in setSummaryMetadata");
+         return;
+      }
       imageStorage_.setSummaryMetadata(tags);
    }
 

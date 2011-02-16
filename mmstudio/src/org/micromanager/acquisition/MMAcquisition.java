@@ -237,6 +237,9 @@ public class MMAcquisition {
       JSONArray channelMaxes = new JSONArray();
       JSONArray channelMins = new JSONArray();
 
+      // Both channelColors_ and channelNames_ may, or may not yet contain values
+      // Since we don't know the size in the constructor, we can not pre-initialize
+      // the data.  Therefore, fill in the blanks with deafults here:
       for (Integer i = 0; i < numChannels_; i++) {
          try {
             channelColors_.get(i);
@@ -397,12 +400,14 @@ public class MMAcquisition {
 
    public String getChannelName(int channel) {
       if (isInitialized()) {
+         String name = "";
          try {
-            getSummaryMetadata().getJSONArray("ChNames").get(channel);
+            name = (String) getSummaryMetadata().getJSONArray("ChNames").get(channel);
          } catch (JSONException e) {
             ReportingUtils.logError(e);
             return "";
          }
+         return name;
       } else {
          try {
             return channelNames_.getString(channel);
@@ -458,7 +463,7 @@ public class MMAcquisition {
       if (!isInitialized()) 
          throw new MMScriptException (NOTINITIALIZED);
 
-      throw new MMScriptException("Not implemented");
+      ReportingUtils.logError("API call setContrastBasedOnFrame is not implemented!");
 
       // TODO
       /*
