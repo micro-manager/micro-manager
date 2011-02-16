@@ -80,7 +80,7 @@
 
 //
 // Note:
-// With hindsight, Windows Imaging Component could have been replaced with os-independent open source libraries (e.g. freeimagelib), and the driver split in two:
+// With hindsight, Windows Imaging Component could have been replaced with os-independent open source libraries (e.g. freeimage), and the driver split in two:
 // - an operating system and camera independent part, common to all
 // - an operating system and camera dependent part, which has a single method: take a picture and return the filename of the picture.
 //    
