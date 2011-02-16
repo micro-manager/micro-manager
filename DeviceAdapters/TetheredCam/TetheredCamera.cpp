@@ -77,7 +77,13 @@
 //       CopyPixels                   [WIC, copy to micro-manager image buffer]
 //       Convert64bppRGBAto64bppBGRA  [swap R and B channels for 64bpp color]
 //
-   
+
+//
+// Note:
+// With hindsight, Windows Imaging Component could have been replaced with os-independent open source libraries (e.g. freeimagelib), and the driver split in two:
+// - an operating system and camera independent part, common to all
+// - an operating system and camera dependent part, which has a single method: take a picture and return the filename of the picture.
+//    
 
 #ifndef _DSLRREMOTE_
 #ifndef _NKREMOTE_
