@@ -1,0 +1,48 @@
+package DEMessaging;
+
+message DEPacket {
+	enum Type { P_COMMAND=1; P_ACKNOWLEDGE=2; P_DATA_HEADER=3; }
+	required Type type = 1; //identifies which packet type the current one is
+	optional uint32 camera_identifier = 2; // camera id
+	repeated SingleCommand command = 3; // if P_COMMAND, set one or more commands
+	repeated SingleAcknowledge acknowledge = 4; // if P_ACKNOWLEDGE, set one or more acknowledgements
+	optional DataHeader data_header = 5; // if P_DATA_HEADER, set the data header
+	optional string camera_name = 6;
+}
+
+message SingleCommand {
+	optional uint32 command_id = 1; // command_id
+	optional string command_name = 2; // name of the command
+	repeated AnyParameter parameter = 3; // parameters
+}
+
+message AnyParameter {
+	enum Type { P_INT=1; P_BOOL=2; P_STRING=3; P_FLOAT=4; P_BYTES=5; }
+	required Type type = 1;// Identifies which field is filled in.
+	optional string name = 2; //Identifies the name of the parameter if more than one parameters. 
+
+	// One of the following will be filled in.
+	optional sint32 p_int = 3; //signed integer 
+	optional bool p_bool = 4; // bool
+	optional string p_string = 5; //string
+	optional float p_float = 6; //float
+	optional bytes p_bytes = 7; //any bytes
+}
+
+message Acknowledge {
+	optional uint32 camera_identifier = 1; // camera id
+	repeated SingleAcknowledge acknowledge = 2; // handle one or more commands
+}
+
+message SingleAcknowledge {
+	required bool error = 1; // error=TRUE when there is a problem
+	optional uint32 command_id = 2; // command_id
+	optional string command_name = 3; // name of the command that was executed	
+	optional string error_message = 4; // error message if there is a problem. 	
+	repeated AnyParameter parameter = 5; // parameters
+}
+
+message DataHeader {
+	required uint64 bytesize = 1; // size of the data to follow, in bytes
+	optional string identifier = 2; // identifier or name of the data
+}
