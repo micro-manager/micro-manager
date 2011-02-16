@@ -24,7 +24,6 @@ import ij.ImagePlus;
 import ij.gui.Overlay;
 import ij.gui.Roi;
 import ij.gui.TextRoi;
-import java.awt.Color;
 
 import java.awt.Font;
 import java.text.NumberFormat;
