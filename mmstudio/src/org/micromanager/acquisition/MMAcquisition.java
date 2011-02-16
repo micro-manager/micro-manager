@@ -25,8 +25,6 @@
  */
 package org.micromanager.acquisition;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.awt.Color;
 import java.io.File;
 import java.util.Iterator;
@@ -36,6 +34,7 @@ import mmcorej.TaggedImage;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONException;
+import org.micromanager.MMStudioMainFrame;
 
 import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.utils.MDUtils;
@@ -49,19 +48,21 @@ public class MMAcquisition {
    private int numSlices_ = 0;
    private int numPositions_ = 0;
    protected String name_;
-   protected int width_;
-   protected int height_;
+   protected int width_ = 0;
+   protected int height_ = 0;
    protected int depth_ = 1;
    private boolean initialized_ = false;
    private long startTimeMs_;
    private String comment_ = "Acquisition from a script";
-   //protected Image5DWindow imgWin_;
-   @SuppressWarnings("unused")
    private String rootDirectory_;
    private VirtualAcquisitionDisplay virtAcq_;
    private final boolean existing_;
    private final boolean diskCached_;
    private final boolean show_;
+   private JSONArray channelColors_ = new JSONArray();
+   private JSONArray channelNames_ = new JSONArray();
+   private JSONObject summary_ = new JSONObject();
+   private final String NOTINITIALIZED = "Acquisition was not initialized";
 
    public MMAcquisition(String name, String dir) throws MMScriptException {
       this(name, dir, false, false, false);
@@ -151,7 +152,9 @@ public class MMAcquisition {
    }
 
    public void initialize() throws MMScriptException {
-
+      if (initialized_)
+         throw new MMScriptException("Acquisition is already initialized");
+      
       TaggedImageStorage imageFileManager;
       String name = name_;
 
@@ -188,8 +191,17 @@ public class MMAcquisition {
       if (new File(rootDirectory_).exists()) {
          name = generateRootName(name, rootDirectory_);
       }
-      JSONObject summaryMetadata = new JSONObject();
+
+      String keys[] = new String[summary_.length()];
+      Iterator<String> it = summary_.keys();
+      int i = 0;
+      while (it.hasNext()) {
+         keys[0] = it.next();
+         i++;
+      }
+      
       try {
+         JSONObject summaryMetadata = new JSONObject(summary_, keys);
          summaryMetadata.put("Width", width_);
          summaryMetadata.put("Height", height_);
          summaryMetadata.put("Slices", numSlices_);
@@ -200,11 +212,11 @@ public class MMAcquisition {
          summaryMetadata.put("Comment", comment_);
          summaryMetadata.put("MetadataVersion", 10);
          summaryMetadata.put("Source", "Micro-Manager");
-         //tags.put("PixelSize_um", core_.getPixelSizeUm());
+         summaryMetadata.put("PixelSize_um", MMStudioMainFrame.getInstance().getCore().getPixelSizeUm());
          summaryMetadata.put("PixelAspect", 1.0);
          summaryMetadata.put("GridColumn", 0);
          summaryMetadata.put("GridRow", 0);
-         //tags.put("ComputerName", getComputerName());
+         //summaryMetadata.put("ComputerName", getComputerName());
          summaryMetadata.put("UserName", System.getProperty("user.name"));
          if (depth_ == 1) {
             summaryMetadata.put("PixelType", "GRAY8");
@@ -221,14 +233,21 @@ public class MMAcquisition {
    }
 
    private void setDefaultChannelTags(JSONObject md) {
-      JSONArray channelColors = new JSONArray();
-      JSONArray channelNames = new JSONArray();
+
       JSONArray channelMaxes = new JSONArray();
       JSONArray channelMins = new JSONArray();
 
       for (Integer i = 0; i < numChannels_; i++) {
-         channelColors.put(Color.WHITE.getRGB());
-         channelNames.put(String.valueOf(i));
+         try {
+            channelColors_.get(i);
+         } catch (JSONException ex) {
+            channelColors_.put(Color.WHITE.getRGB());
+         }
+         try {
+            channelNames_.get(i);
+         } catch (JSONException ex) {
+            channelNames_.put(String.valueOf(i));
+         }
          try {
             channelMaxes.put(255);
             channelMins.put(0);
@@ -237,8 +256,8 @@ public class MMAcquisition {
          }
       }
       try {
-         md.put("ChColors", channelColors);
-         md.put("ChNames", channelNames);
+         md.put("ChColors", channelColors_);
+         md.put("ChNames", channelNames_);
          md.put("ChContrastMax", channelMaxes);
          md.put("ChContrastMin", channelMins);
       } catch (Exception e) {
@@ -313,6 +332,9 @@ public class MMAcquisition {
    }
 
    public void insertImage(TaggedImage taggedImg, boolean updateDisplay) throws MMScriptException {
+      if (!initialized_) {
+         throw new MMScriptException("Acquisition data must be initialized before inserting images");
+      }
       try {
          int channel = taggedImg.tags.getInt("ChannelIndex");
          taggedImg.tags.put("Channel", getChannelName(channel));
@@ -349,7 +371,7 @@ public class MMAcquisition {
    public void setComment(String comment) throws MMScriptException {
       if (isInitialized()) {
          try {
-            virtAcq_.imageCache_.getSummaryMetadata().put("COMMENT", comment_);
+            virtAcq_.imageCache_.getSummaryMetadata().put("COMMENT", comment);
          } catch (JSONException e) {
             throw new MMScriptException("Failed to set Comment");
          }
@@ -364,7 +386,9 @@ public class MMAcquisition {
    }
 
    public JSONObject getSummaryMetadata() {
-      return virtAcq_.imageCache_.getSummaryMetadata();
+      if (isInitialized())
+         return virtAcq_.imageCache_.getSummaryMetadata();
+      return null;
    }
 
    public String getChannelName(int channel) {
@@ -374,6 +398,12 @@ public class MMAcquisition {
          } catch (JSONException e) {
             ReportingUtils.logError(e);
             return "";
+         }
+      } else {
+         try {
+            return channelNames_.getString(channel);
+         } catch (JSONException ex) {
+            // not found, do nothing
          }
       }
       return "";
@@ -387,7 +417,14 @@ public class MMAcquisition {
          } catch (JSONException e) {
             throw new MMScriptException("Problem setting Channel name");
          }
+      } else {
+         try {
+            channelNames_.put(channel, name);
+         } catch (JSONException ex) {
+            throw new MMScriptException(ex);
+         }
       }
+
    }
 
    public void setChannelColor(int channel, int rgb) throws MMScriptException {
@@ -398,14 +435,27 @@ public class MMAcquisition {
          } catch (JSONException ex) {
             throw new MMScriptException(ex);
          }
+      } else {
+         try {
+            channelColors_.put(channel, rgb);
+         } catch (JSONException ex) {
+            throw new MMScriptException(ex);
+         }
       }
    }
 
    public void setChannelContrast(int channel, int min, int max) throws MMScriptException {
-      virtAcq_.setChannelDisplayRange(channel, min, max, true);
+      if (isInitialized())
+         virtAcq_.setChannelDisplayRange(channel, min, max, true);
+      throw new MMScriptException (NOTINITIALIZED);
    }
 
    public void setContrastBasedOnFrame(int frame, int slice) throws MMScriptException {
+      if (!isInitialized()) 
+         throw new MMScriptException (NOTINITIALIZED);
+
+      throw new MMScriptException("Not implemented");
+
       // TODO
       /*
       try {
@@ -431,8 +481,13 @@ public class MMAcquisition {
          } catch (JSONException e) {
             throw new MMScriptException("Failed to set property: " + propertyName);
          }
-      } else // TODO:
-      ;
+      } else {
+         try {
+            summary_.put(propertyName, value);
+         } catch (JSONException e) {
+            throw new MMScriptException("Failed to set property: " + propertyName);
+         }
+      }
    }
 
    /*
@@ -445,9 +500,13 @@ public class MMAcquisition {
          } catch (JSONException e) {
             throw new MMScriptException("Failed to get property: " + propertyName);
          }
-      } else // TODO
-      ;
-      return "";
+      } else {
+         try {
+            return summary_.getString(propertyName);
+         } catch (JSONException e) {
+            throw new MMScriptException("Failed to get property: " + propertyName);
+         }
+      }
    }
 
    public void setProperty(int frame, int channel, int slice, String propName,
@@ -459,8 +518,8 @@ public class MMAcquisition {
          } catch (JSONException e) {
             throw new MMScriptException(e);
          }
-      } else // TODO
-      ;
+      } else
+         throw new MMScriptException("Can not set property before acquisition is initialized");
    }
 
    public void setSystemState(int frame, int channel, int slice, JSONObject state) throws MMScriptException {
@@ -475,9 +534,9 @@ public class MMAcquisition {
          } catch (JSONException e) {
             throw new MMScriptException(e);
          }
-      } else // TODO
-      ;
-   }
+      } else
+         throw new MMScriptException("Can not set system state before acquisition is initialized");
+  }
 
    public String getProperty(int frame, int channel, int slice, String propName) throws MMScriptException {
       if (isInitialized()) {
@@ -505,6 +564,16 @@ public class MMAcquisition {
             while (iState.hasNext()) {
                String key = iState.next();
                tags.put(key, md.get(key));
+            }
+         } catch (Exception ex) {
+            throw new MMScriptException(ex);
+         }
+      } else {
+         try {
+            Iterator<String> iState = md.keys();
+            while (iState.hasNext()) {
+               String key = iState.next();
+               summary_.put(key, md.get(key));
             }
          } catch (Exception ex) {
             throw new MMScriptException(ex);

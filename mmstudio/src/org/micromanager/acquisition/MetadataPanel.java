@@ -140,7 +140,7 @@ public class MetadataPanel extends javax.swing.JPanel
             .add(jLabel1)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
             .add(displayModeCombo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 134, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-            .addContainerGap(290, Short.MAX_VALUE))
+            .addContainerGap(301, Short.MAX_VALUE))
       );
       jPanel1Layout.setVerticalGroup(
          jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -149,7 +149,7 @@ public class MetadataPanel extends javax.swing.JPanel
             .add(displayModeCombo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
       );
 
-      sizeBarCheckBox.setText("SizeBar");
+      sizeBarCheckBox.setText("Scale Bar");
       sizeBarCheckBox.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             sizeBarCheckBoxActionPerformed(evt);
@@ -176,12 +176,12 @@ public class MetadataPanel extends javax.swing.JPanel
          ChannelsTablePanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(ChannelsTablePanelLayout.createSequentialGroup()
             .add(sizeBarCheckBox)
-            .add(18, 18, 18)
+            .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
             .add(sizeBarComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 134, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
             .add(overlayColorComboBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 105, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-            .add(204, 204, 204))
-         .add(org.jdesktop.layout.GroupLayout.TRAILING, contrastScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 539, Short.MAX_VALUE)
+            .add(214, 214, 214))
+         .add(org.jdesktop.layout.GroupLayout.TRAILING, contrastScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 550, Short.MAX_VALUE)
          .add(ChannelsTablePanelLayout.createSequentialGroup()
             .add(jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
             .addContainerGap())
@@ -246,10 +246,10 @@ public class MetadataPanel extends javax.swing.JPanel
       imageMetadataScrollPane.setLayout(imageMetadataScrollPaneLayout);
       imageMetadataScrollPaneLayout.setHorizontalGroup(
          imageMetadataScrollPaneLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-         .add(imageMetadataTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 539, Short.MAX_VALUE)
+         .add(imageMetadataTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 550, Short.MAX_VALUE)
          .add(org.jdesktop.layout.GroupLayout.TRAILING, imageMetadataScrollPaneLayout.createSequentialGroup()
             .add(jLabel2)
-            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 195, Short.MAX_VALUE)
+            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 206, Short.MAX_VALUE)
             .add(showUnchangingPropertiesCheckbox))
       );
       imageMetadataScrollPaneLayout.setVerticalGroup(
@@ -298,7 +298,7 @@ public class MetadataPanel extends javax.swing.JPanel
       summaryMetadataPanel.setLayout(summaryMetadataPanelLayout);
       summaryMetadataPanelLayout.setHorizontalGroup(
          summaryMetadataPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-         .add(org.jdesktop.layout.GroupLayout.TRAILING, summaryMetadataScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 539, Short.MAX_VALUE)
+         .add(org.jdesktop.layout.GroupLayout.TRAILING, summaryMetadataScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 550, Short.MAX_VALUE)
          .add(summaryMetadataPanelLayout.createSequentialGroup()
             .add(jLabel3)
             .addContainerGap())
@@ -340,8 +340,8 @@ public class MetadataPanel extends javax.swing.JPanel
          summaryCommentsPaneLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(summaryCommentsPaneLayout.createSequentialGroup()
             .add(summaryCommentsLabel)
-            .addContainerGap(393, Short.MAX_VALUE))
-         .add(summaryCommentsScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 539, Short.MAX_VALUE)
+            .addContainerGap(404, Short.MAX_VALUE))
+         .add(summaryCommentsScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 550, Short.MAX_VALUE)
       );
       summaryCommentsPaneLayout.setVerticalGroup(
          summaryCommentsPaneLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -377,7 +377,7 @@ public class MetadataPanel extends javax.swing.JPanel
          .add(imageCommentsPanelLayout.createSequentialGroup()
             .add(imageCommentsLabel)
             .add(400, 400, 400))
-         .add(imageCommentsScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 539, Short.MAX_VALUE)
+         .add(imageCommentsScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 550, Short.MAX_VALUE)
       );
       imageCommentsPanelLayout.setVerticalGroup(
          imageCommentsPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -397,7 +397,7 @@ public class MetadataPanel extends javax.swing.JPanel
          layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
             .addContainerGap()
-            .add(tabbedPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 560, Short.MAX_VALUE)
+            .add(tabbedPane)
             .addContainerGap())
       );
       layout.setVerticalGroup(
