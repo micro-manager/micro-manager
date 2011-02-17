@@ -2220,6 +2220,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          try {
             acqMgr_.openAcquisition(name, rootDir, true, true, true);
             acqMgr_.getAcquisition(name).initialize();
+            acqMgr_.closeAcquisition(name);
          } catch (MMScriptException ex) {
             ReportingUtils.showError(ex);
          }
