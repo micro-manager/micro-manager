@@ -57,6 +57,7 @@ public class MMImageCache implements TaggedImageStorage {
    }
 
    public void close() {
+      softTable_ = null;
       imageStorage_.close();
    }
 

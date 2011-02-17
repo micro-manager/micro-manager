@@ -214,8 +214,11 @@ public class VirtualAcquisitionDisplay {
       }
    }
 
+   /**
+    * Sets ImageJ pixel size calibration
+    * @param hyperImage
+    */
    private void applyPixelSizeCalibration(final ImagePlus hyperImage) {
-      // Set ImageJ pixel size calibration
       try {
          double pixSizeUm = getSummaryMetadata().getDouble("PixelSize_um");
          if (pixSizeUm > 0) {
