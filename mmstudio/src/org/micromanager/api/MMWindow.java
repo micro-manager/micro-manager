@@ -75,24 +75,26 @@ public class MMWindow {
 
    /**
     * Sets the display to the given position
+    * Position are 1-based
     * @param position
     * @throws MMScriptException
     */
    public void setPosition(int position) throws MMScriptException {
-      if (position < 0 || position >= getNumberOfPositions())
+      if (position < 1 || position > getNumberOfPositions())
          throw new MMScriptException ("Invalid position requested");
       if (virtAcq_ != null)
-         virtAcq_.setPosition(position);
+         virtAcq_.setPosition(position - 1);
    }
 
    /**
     * Returns the current position of the image viewer
+    * Positions are 1-
     * @return The current position of the image viewer
     * @throws MMScriptException
     */
    public int getPosition() throws MMScriptException{
       if (virtAcq_ != null)
-         return virtAcq_. getCurrentPosition();
+         return virtAcq_. getCurrentPosition() + 1;
       throw new MMScriptException("This is not a MMWindow");
    }
 
