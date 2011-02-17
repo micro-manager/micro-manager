@@ -44,7 +44,7 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
       return positionIndex_;
    }
 
-   public VirtualAcquisitionDisplay getVirtualAcquisition() {
+   public VirtualAcquisitionDisplay getVirtualAcquisitionDisplay() {
       return acq_;
    }
 

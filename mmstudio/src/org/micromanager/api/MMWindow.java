@@ -36,17 +36,13 @@ import org.micromanager.utils.MMScriptException;
 
 
 public class MMWindow {
-   VirtualAcquisitionDisplay virtAcq_ = null;
-   ImagePlus imp_;
+   private final VirtualAcquisitionDisplay virtAcq_;
+   private final ImagePlus imp_;
    
    public MMWindow(ImagePlus imp) {
       AcquisitionVirtualStack acqStack;
       imp_ = imp;
-      ImageStack stack = imp.getStack();
-      if (stack instanceof AcquisitionVirtualStack) {
-         acqStack = (AcquisitionVirtualStack) stack;
-         virtAcq_ = acqStack.getVirtualAcquisition();
-      }
+      virtAcq_ = VirtualAcquisitionDisplay.getDisplay(imp);
    }
 
    public boolean isMMWindow() {

@@ -1,5 +1,6 @@
 package org.micromanager.acquisition;
 
+import ij.ImageStack;
 import ij.process.LUT;
 import java.awt.event.AdjustmentEvent;
 import ij.CompositeImage;
@@ -35,16 +36,14 @@ import org.micromanager.utils.ReportingUtils;
  * @author arthur
  */
 public class VirtualAcquisitionDisplay {
-
-   private static HashMap<ImagePlus, VirtualAcquisitionDisplay>
-           acquisitionDisplays_
-           = new HashMap<ImagePlus, VirtualAcquisitionDisplay>();
    
    public static VirtualAcquisitionDisplay getDisplay(ImagePlus imgp) {
-      if (acquisitionDisplays_.containsKey(imgp))
-         return acquisitionDisplays_.get(imgp);
-      else
+      ImageStack stack = imgp.getStack();
+      if (stack instanceof AcquisitionVirtualStack) {
+         return ((AcquisitionVirtualStack) stack).getVirtualAcquisitionDisplay();
+      } else {
          return null;
+      }
    }
 
    final static Color[] rgb = {Color.red, Color.green, Color.blue};
@@ -58,6 +57,7 @@ public class VirtualAcquisitionDisplay {
    private int numComponents_ = 1;
    private AcquisitionEngine eng_;
    private boolean finished_ = false;
+   private boolean channelDisplayUpdated_ = false;
 
    
    public VirtualAcquisitionDisplay(MMImageCache imageCache, AcquisitionEngine eng) {
@@ -110,7 +110,6 @@ public class VirtualAcquisitionDisplay {
       hc_ = new HyperstackControls(this);
       hyperImage_ = createImagePlus(numGrayChannels, numSlices, numFrames, virtualStack_, hc_);
       tSelector_ = getTSelector();
-      acquisitionDisplays_.put(hyperImage_, this);
       applyPixelSizeCalibration(hyperImage_);
       createWindow(hyperImage_, hc_);
       setNumPositions(numPositions);
@@ -348,11 +347,15 @@ public class VirtualAcquisitionDisplay {
                int pixelMax = ImageUtils.getMax(taggedImg.pix);
                if (MDUtils.isRGB(taggedImg)) {
                   for (int i=0; i<3; ++i) {
-                     setChannelDisplayRange(chan + i, pixelMin, pixelMax, true);
+                     setChannelDisplayRange(chan + i, pixelMin, pixelMax, false);
+                  }
+                  for (int i=0; i<3; ++i) {
+                     updateChannelDisplay(chan + i);
                   }
                } else {
                   setChannelDisplayRange(chan, pixelMin, pixelMax, true);
                }
+               channelDisplayUpdated_ = true;
             } catch (Exception ex) {
                ReportingUtils.showError(ex);
             }
@@ -791,8 +794,8 @@ public class VirtualAcquisitionDisplay {
       if (hyperImage_.isComposite()) {
          CompositeImage ci = (CompositeImage) hyperImage_;
          setChannelWithoutUpdate(channel + 1);
-         ci.setChannelColorModel(lut);
-         ci.updateImage();
+         ci.setChannelLut(lut, channel + 1);
+         //ci.updateImage();
          ci.setDisplayRange(getChannelMin(channel), getChannelMax(channel));
       } else {
          hyperImage_.getProcessor().setColorModel(lut);
