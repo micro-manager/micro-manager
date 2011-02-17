@@ -46,7 +46,7 @@
 #include "../../MMDevice/ModuleInterface.h"
 #include "../../MMDevice/DeviceUtils.h"
 //#include "../Utilities/CodeUtility.h"
-#include "../../MMCore/CoreUtils.h"
+//#include "../../MMCore/CoreUtils.h"
 #include <sstream>
 #include <iostream>
 
@@ -907,7 +907,7 @@ int PiezoStage::GetPositionUm(double& pos)
    pos = 0.;
    bool ret = pImpl_->pALC_REVPiezo_->GetPosition(&pos);
    return (ret?DEVICE_OK:DEVICE_ERR);
-   return DEVICE_OK;
+//   return DEVICE_OK;
 }
   
 int PiezoStage::SetPositionSteps(long pos)

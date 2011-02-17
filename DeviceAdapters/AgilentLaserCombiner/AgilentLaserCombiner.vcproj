@@ -44,7 +44,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../../3rdpartypublic/boost;..\..\..\3rdparty\Agilent\LaserCombiner"
+				AdditionalIncludeDirectories="..\..\..\3rdparty\Agilent\LaserCombiner"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				MinimalRebuild="true"
 				ExceptionHandling="2"
@@ -70,7 +70,7 @@
 				AdditionalDependencies="LaserCombinerSDK.lib"
 				OutputFile="$(OutDir)\mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="..\..\..\3rdparty\Agilent\LaserCombiner;&quot;..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;"
+				AdditionalLibraryDirectories="..\..\..\3rdparty\Agilent\LaserCombiner"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				RandomizedBaseAddress="1"
@@ -126,7 +126,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../../3rdpartypublic/boost;..\..\..\3rdparty\Agilent\LaserCombiner"
+				AdditionalIncludeDirectories="..\..\..\3rdparty\Agilent\LaserCombiner"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				MinimalRebuild="true"
 				ExceptionHandling="2"
@@ -152,7 +152,7 @@
 				AdditionalDependencies="LaserCombinerSDK.lib"
 				OutputFile="$(OutDir)\mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="..\..\..\3rdparty\Agilent\LaserCombiner;&quot;..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;"
+				AdditionalLibraryDirectories="..\..\..\3rdparty\Agilent\LaserCombiner"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				RandomizedBaseAddress="1"
@@ -207,7 +207,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="../../../3rdpartypublic/boost;..\..\..\3rdparty\Agilent\LaserCombiner"
+				AdditionalIncludeDirectories="..\..\..\3rdparty\Agilent\LaserCombiner"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				ExceptionHandling="2"
 				RuntimeLibrary="0"
@@ -231,7 +231,7 @@
 				AdditionalDependencies="LaserCombinerSDK.lib"
 				OutputFile="$(OutDir)\mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\..\3rdparty\Agilent\LaserCombiner;&quot;..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;"
+				AdditionalLibraryDirectories="..\..\..\3rdparty\Agilent\LaserCombiner"
 				GenerateDebugInformation="false"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -291,7 +291,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="../../../3rdpartypublic/boost;..\..\..\3rdparty\Agilent\LaserCombiner"
+				AdditionalIncludeDirectories="..\..\..\3rdparty\Agilent\LaserCombiner"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				ExceptionHandling="2"
 				RuntimeLibrary="0"
@@ -315,7 +315,7 @@
 				AdditionalDependencies="LaserCombinerSDK.lib"
 				OutputFile="$(OutDir)\mmgr_dal_$(ProjectName).dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\..\3rdparty\Agilent\LaserCombiner;&quot;..\..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;"
+				AdditionalLibraryDirectories="..\..\..\3rdparty\Agilent\LaserCombiner"
 				GenerateDebugInformation="false"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -359,11 +359,11 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A33D752A2FF}"
 			>
 			<File
-				RelativePath="..\..\MMDevice\DeviceUtils.cpp"
+				RelativePath=".\AgilentLaserCombiner.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\AgilentLaserCombiner.cpp"
+				RelativePath="..\..\MMDevice\DeviceUtils.cpp"
 				>
 			</File>
 			<File
@@ -381,6 +381,10 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-627FBE52EBFB}"
 			>
 			<File
+				RelativePath=".\AgilentLaserCombiner.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\MMDevice\DeviceBase.h"
 				>
 			</File>
@@ -390,10 +394,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\100xImaging\LaserCombinerSDK\LaserCombinerSDK\ErrorCodes.h"
-				>
-			</File>
-			<File
-				RelativePath=".\AgilentLaserCombiner.h"
 				>
 			</File>
 			<File

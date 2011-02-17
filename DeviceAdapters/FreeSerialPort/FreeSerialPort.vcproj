@@ -367,11 +367,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\MMDevice\ModuleInterface.cpp"
+				RelativePath=".\FreeSerialPort.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\FreeSerialPort.cpp"
+				RelativePath="..\..\MMDevice\ModuleInterface.cpp"
 				>
 			</File>
 			<File
@@ -389,11 +389,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\MMDevice\ModuleInterface.h"
+				RelativePath=".\FreeSerialPort.h"
 				>
 			</File>
 			<File
-				RelativePath=".\FreeSerialPort.h"
+				RelativePath="..\..\MMDevice\ModuleInterface.h"
 				>
 			</File>
 			<File

@@ -41,7 +41,7 @@
 #include "SaveBmpImage.h"  // write file directly from OS handle
 #include "../../MMDevice/MMDevice.h"
 #include "../../MMDevice/ModuleInterface.h"
-#include "../../MMCore/CoreUtils.h"
+//#include "../../MMCore/CoreUtils.h"
 
 //#define mmdebugmessage(x) LogMessage((x), true)
 #define UNREFERENCEDPARAMETER(p__) (p__)
