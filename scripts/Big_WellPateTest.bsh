@@ -14,11 +14,18 @@ int [] ipos  = new int[2];
 mmc.setXYPosition(xystage,xyposition[0],xyposition[1]);
 mmc.waitForDevice(xystage);
 
+// ensure an image window is open
+mmc.snapImage();
+image0 = mmc.getImage();
+gui.displayImage(image0);
+
 SBSPlate plate = new SBSPlate(1536);
 numberOfWells = plate.getNumberOfWells();
 Integer m = new Integer(0);
 for (m = 1; m <= numberOfWells; m++) {
   // code to take an image could be here
+
+  gui.snapSingleImage();
 
   // move the stage to the next well
   ipos = plate.getNextPosition(); // 0 indexed in mcrons
