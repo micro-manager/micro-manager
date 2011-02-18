@@ -505,11 +505,13 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       } catch (Exception e) {
          ReportingUtils.logError(e);
       }
+      /*
       this.summaryMetadata_ = null;
       this.metadataStreams_ = null;
       this.metadataTable_ = null;
       this.filenameTable_ = null;
       this.displaySettings_ = null;
+       */
    }
 
    public String getDiskLocation() {

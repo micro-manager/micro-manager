@@ -60,9 +60,9 @@ public class TaggedImageStorageRam implements TaggedImageStorage {
    }
 
    public void close() {
-      imageMap_ = null;
-      summaryMetadata_ = null;
-      displaySettings_ = null;
+      //imageMap_ = null;
+      //summaryMetadata_ = null;
+      //displaySettings_ = null;
       // do nothing for now.
    }
 
