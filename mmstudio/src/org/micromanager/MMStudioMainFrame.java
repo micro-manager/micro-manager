@@ -3352,6 +3352,9 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       this.initializeGUI();
 
       updateSwitchConfigurationMenu();
+
+      FileDialogs.storePath(MM_CONFIG_FILE, new File(sysConfigFile_));
+
       return result;
    }
 

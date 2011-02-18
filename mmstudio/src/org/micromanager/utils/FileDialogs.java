@@ -173,6 +173,11 @@ public class FileDialogs {
       return result;
    }
 
+   public static void storePath(FileType type, File path) {
+      Preferences.userNodeForPackage(FileDialogs.class)
+              .put(type.name, path.getAbsolutePath());
+   }
+
    public static File openFile(Window parent, String title, FileType type) {
       return show(parent, title, type, false, true);
    }
