@@ -1,0 +1,36 @@
+// Karl Bellve's Well Plate Test Script
+// 20110218 K.H. explicitly add the class path & added some progress messages, 
+
+addClassPath("Big.jar");
+import edu.umassmed.big.SBSPlate;
+gui.closeAllAcquisitions();
+gui.clearMessageWindow();
+
+xystage = mmc.getXYStageDevice();
+Integer [] xyposition = new Integer[2];
+xyposition[0] = 0;
+xyposition[1] = 0;
+int [] ipos  = new int[2]; 
+mmc.setXYPosition(xystage,xyposition[0],xyposition[1]);
+mmc.waitForDevice(xystage);
+
+SBSPlate plate = new SBSPlate(1536);
+numberOfWells = plate.getNumberOfWells();
+Integer m = new Integer(0);
+for (m = 1; m <= numberOfWells; m++) {
+  // code to take an image could be here
+
+  // move the stage to the next well
+  ipos = plate.getNextPosition(); // 0 indexed in mcrons
+
+  xyposition[0] = ipos[0];
+  xyposition[1] = ipos[1];
+  mmc.setXYPosition(xystage,xyposition[0],xyposition[1]);
+  print("going-> [" + xyposition[0].toString() + ", " + xyposition[1].toString()+"]");
+  mmc.waitForDevice(xystage);
+}
+// return stage to starting position
+mmc.setXYPosition(xystage,0,0);
+mmc.waitForDevice(xystage);
+// this will help you if you ever define any functions in this bean shell script
+update();
