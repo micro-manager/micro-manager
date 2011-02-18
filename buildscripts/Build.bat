@@ -136,6 +136,14 @@ pushd plugins\Tracker
 call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml %cleantarget% compile build 
 popd
 
+pushd plugins\Big
+IF NOT "%1"=="FULL" GOTO BUILDBIG
+call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml %cleantarget%
+:BUILDBIG
+call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml compile build 
+popd
+
+
 
 set DEVICELISTBUILDER=1
 cd mmStudio\src
