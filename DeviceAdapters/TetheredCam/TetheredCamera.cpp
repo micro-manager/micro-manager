@@ -1514,11 +1514,13 @@ int CTetheredCamera::LoadRawImage(IWICImagingFactory *factory, const char* filen
    }
    if (rc == 0)
    {
-      rawProcessor_.imgdata.params.document_mode = 0;
-      rawProcessor_.imgdata.params.use_camera_wb = 1;
-      rawProcessor_.imgdata.params.output_bps = 16;
+      rawProcessor_.imgdata.params.document_mode = 0; // standard processing (with white balance)
+      rawProcessor_.imgdata.params.use_camera_wb = 1; // If possible, use the white balance from the camera.
       rawProcessor_.imgdata.params.filtering_mode = LIBRAW_FILTERING_AUTOMATIC;
-      rawProcessor_.imgdata.params.no_auto_bright = 1;
+      //rawProcessor_.imgdata.params.filtering_mode = LIBRAW_FILTERING_NONE;
+      rawProcessor_.imgdata.params.gamm[0] = rawProcessor_.imgdata.params.gamm[1] = 1.0; // linear gamma curve
+      rawProcessor_.imgdata.params.no_auto_bright = 1; // Don't use automatic increase of brightness by histogram.
+      rawProcessor_.imgdata.params.output_bps = 16; // 16 bit output
       rc = rawProcessor_.dcraw_process();
    }
    if (rc == 0)
