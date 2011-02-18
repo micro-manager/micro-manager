@@ -136,6 +136,10 @@ pushd plugins\Tracker
 call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml %cleantarget% compile build 
 popd
 
+pushd plugins\Big
+call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml %cleantarget% compile build 
+popd
+
 
 set DEVICELISTBUILDER=1
 pushd mmStudio\src
