@@ -50,7 +50,7 @@ import org.micromanager.utils.ReportingUtils;
 public class FinishPage extends PagePanel {
 
     private static final long serialVersionUID = 1L;
-    private JTextArea logArea_;
+
     private JButton browseButton_;
     private JTextField fileNameField_;
     private boolean overwrite_ = false;
@@ -61,7 +61,7 @@ public class FinishPage extends PagePanel {
      */
     public FinishPage(Preferences prefs) {
         super();
-        title_ = "Test configuration, save and exit";
+        title_ = "Save configuration and exit";
         setHelpFileName("conf_finish_page.html");
         prefs_ = prefs;
         setLayout(null);
@@ -85,7 +85,7 @@ public class FinishPage extends PagePanel {
         browseButton_.setText("Browse...");
         browseButton_.setBounds(443, 31, 100, 23);
         add(browseButton_);
-
+/*
         final JButton saveAndTestButton = new JButton();
         saveAndTestButton.addActionListener(new ActionListener() {
 
@@ -97,16 +97,13 @@ public class FinishPage extends PagePanel {
         saveAndTestButton.setBounds(96, 59, 277, 30);
         add(saveAndTestButton);
 
-        logArea_ = new JTextArea();
-        logArea_.setLineWrap(true);
-        logArea_.setWrapStyleWord(true);
-        logArea_.setBorder(new LineBorder(Color.black, 1, false));
-        logArea_.setBounds(10, 136, 480, 127);
-        add(logArea_);
+ */
+
+      
 
         sendCheck_ = new JCheckBox();
-        sendCheck_.setBounds(10, 100, 280, 23);
-        sendCheck_.setFont(new Font("", Font.PLAIN, 10));
+        sendCheck_.setBounds(10, 100, 360, 33);
+        sendCheck_.setFont(new Font("", Font.PLAIN, 12));
         sendCheck_.setSelected(true);
         sendCheck_.addActionListener(new ActionListener() {
 
@@ -122,8 +119,8 @@ public class FinishPage extends PagePanel {
 
         final JLabel sendConfigExplain = new JLabel();
         sendConfigExplain.setAutoscrolls(true);
-        sendConfigExplain.setText("The configuration data will aid securing further project funding.");
-        sendConfigExplain.setBounds(10, 84, 500, 23);
+        sendConfigExplain.setText("Providing the configuration data will assist securing further project funding.");
+        sendConfigExplain.setBounds(10, 150, 500, 33);
         sendConfigExplain.setFont(sendCheck_.getFont());
         add(sendConfigExplain);
         
@@ -139,8 +136,11 @@ public class FinishPage extends PagePanel {
         return true;
     }
 
-    public boolean exitPage(boolean next) {
-        // TODO Auto-generated method stub
+
+    public boolean exitPage(boolean toNext) {
+        if( toNext)
+            saveAndTest();
+        
         return true;
     }
 
@@ -158,7 +158,7 @@ public class FinishPage extends PagePanel {
     private void browseConfigurationFile() {
         String suffixes[] = {".cfg"};
         File f = FileDialogs.save(this.parent_,
-                "Create a configuration file",
+                "Select a configuration file name",
                 MMStudioMainFrame.MM_CONFIG_FILE);
         if (f != null) {
             setFilePath(f);
@@ -186,7 +186,7 @@ public class FinishPage extends PagePanel {
                         "File Save",
                         JOptionPane.YES_NO_OPTION);
                 if (sel == JOptionPane.NO_OPTION) {
-                    logArea_.setText("File must be saved in order to test the configuration!");
+                    ReportingUtils.logMessage("H.W. Configuration problem: File must be saved in order to test the configuration!");
                     return;
                 }
             }
@@ -202,6 +202,6 @@ public class FinishPage extends PagePanel {
             return;
         }
 
-        logArea_.setText("Success!");
+       
     }
 }

@@ -133,6 +133,9 @@ public class ConfiguratorDlg extends JDialog {
 
             public void actionPerformed(ActionEvent arg0) {
                 if (curPage_ == pages_.length - 1) {
+                    
+                    // call the last page's exit
+                    pages_[curPage_].exitPage(true);
                     onCloseWindow();
                 } else {
                     setPage(curPage_ + 1);
@@ -418,7 +421,8 @@ public class ConfiguratorDlg extends JDialog {
                 Logger.getLogger(ConfiguratorDlg.class.getName()).log(Level.SEVERE, null, ex);
             }
             if (0 < u.Status().length()) {
-                ReportingUtils.showError("Error uploading configuration file:\n" + u.Status());
+                ReportingUtils.logError("Error uploading configuration file: " + u.Status());
+                ReportingUtils.showMessage("Error uploading configuration file:\n" + u.Status());
             }
         }
         dispose();
