@@ -794,7 +794,7 @@ public class VirtualAcquisitionDisplay {
       if (hyperImage_.isComposite()) {
          CompositeImage ci = (CompositeImage) hyperImage_;
          setChannelWithoutUpdate(channel + 1);
-         ci.setChannelLut(lut, channel + 1);
+         ci.setChannelLut(lut); // , channel + 1);
          //ci.updateImage();
          ci.setDisplayRange(getChannelMin(channel), getChannelMax(channel));
       } else {
@@ -809,7 +809,8 @@ public class VirtualAcquisitionDisplay {
          int z = hyperImage_.getSlice();
          int t = hyperImage_.getFrame();
 
-         hyperImage_.setPositionWithoutUpdate(channel, z, t);
+         hyperImage_.updatePosition(channel, z, t);
+//         hyperImage_.setPositionWithoutUpdate(channel, z, t);
       }
    }
 
