@@ -16,7 +16,6 @@ import java.awt.event.AdjustmentListener;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
 import javax.swing.JOptionPane;
 import mmcorej.TaggedImage;
 import org.json.JSONArray;
@@ -810,7 +809,6 @@ public class VirtualAcquisitionDisplay {
          int t = hyperImage_.getFrame();
 
          hyperImage_.updatePosition(channel, z, t);
-//         hyperImage_.setPositionWithoutUpdate(channel, z, t);
       }
    }
 
