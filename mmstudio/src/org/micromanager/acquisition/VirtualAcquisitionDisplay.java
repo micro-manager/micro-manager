@@ -792,9 +792,8 @@ public class VirtualAcquisitionDisplay {
 
       if (hyperImage_.isComposite()) {
          CompositeImage ci = (CompositeImage) hyperImage_;
-         setChannelWithoutUpdate(channel + 1);
-         ci.setChannelLut(lut); // , channel + 1);
-         //ci.updateImage();
+         setChannelWithoutMovingSlider(channel + 1);
+         ci.setChannelLut(lut);
          ci.setDisplayRange(getChannelMin(channel), getChannelMax(channel));
       } else {
          hyperImage_.getProcessor().setColorModel(lut);
@@ -803,7 +802,7 @@ public class VirtualAcquisitionDisplay {
       updateAndDraw();
    }
 
-   private void setChannelWithoutUpdate(int channel) {
+   private void setChannelWithoutMovingSlider(int channel) {
       if (hyperImage_ != null) {
          int z = hyperImage_.getSlice();
          int t = hyperImage_.getFrame();
