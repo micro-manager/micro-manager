@@ -1553,7 +1553,10 @@ int CTetheredCamera::LoadRawImage(IWICImagingFactory *factory, const char* filen
    // Exit if raw image conversion failed
    if (rc != 0)
    {
-      LogMessage(rawProcessor_.strerror(rc), true);
+      ostringstream msg;
+      msg.str("");
+      msg << "Raw: error. " << rawProcessor_.strerror(rc);
+      LogMessage(msg.str(), true);
       rawProcessor_.recycle();
       return ERR_CAM_RAW;
    }
