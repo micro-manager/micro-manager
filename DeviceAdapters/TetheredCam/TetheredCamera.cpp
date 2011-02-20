@@ -1496,6 +1496,27 @@ int CTetheredCamera::LoadWICImage(IWICImagingFactory *factory, const char* filen
    return ERR_CAM_LOAD;
 }
 
+/*
+ * Log libraw progress messages to micro-manager CoreLog
+ */
+
+int LibrawProgressCallback(void *data, enum LibRaw_progress stage,int iteration, int expected)
+{
+   ostringstream msg;
+   CTetheredCamera *cam;
+   cam = reinterpret_cast<CTetheredCamera*>(data);
+   msg.str("");
+   msg << "Raw: " << LibRaw::strprogress(stage);
+   if ((expected == 2) && (iteration == 0))
+      msg << " begin";
+   else if ((expected == 2) && (iteration == 1))
+      msg << " end";
+   else
+      msg << " pass " << iteration << " of " << expected;
+   cam->LogMessage(msg.str(), true);
+   return 0; // always return 0 to continue processing
+}
+
 /* 
  * Use libraw to read the image file. See http://www.libraw.org
  * This allows reading Canon and Nikon raw, even if no WIC codecs have been installed.
@@ -1507,6 +1528,7 @@ int CTetheredCamera::LoadRawImage(IWICImagingFactory *factory, const char* filen
 
    // Decode raw image file "filename" into 48bpp RGB bitmap "rawImg".
    int rc;
+   rawProcessor_.set_progress_handler(&LibrawProgressCallback, (void *)this); // log libraw progress messages to micro-manager CoreLog
    rc = rawProcessor_.open_file(filename);
    if (rc == 0)
    {
