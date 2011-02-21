@@ -8,14 +8,18 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import javax.swing.JOptionPane;
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.PropertySetting;
 import mmcorej.StrVector;
+import mmcorej.TaggedImage;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.api.AcquisitionEngine;
+import org.micromanager.api.DataProcessor;
 import org.micromanager.api.DeviceControlGUI;
 import org.micromanager.api.Pipeline;
 import org.micromanager.navigation.PositionList;
@@ -59,14 +63,14 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    private int positionMode_;
    private boolean useAutoFocus_;
    private int afSkipInterval_;
-   private List<Class> taggedImageProcessors_;
+   private List<DataProcessor<TaggedImage>> taggedImageProcessors_;
    private List<Class> imageRequestProcessors_;
    private boolean absoluteZ_;
    private Pipeline pipeline_;
 
    public AcquisitionWrapperEngine() {
       imageRequestProcessors_ = new ArrayList<Class>();
-      taggedImageProcessors_ = new ArrayList<Class>();
+      taggedImageProcessors_ = new ArrayList<DataProcessor<TaggedImage>>();
    }
 
    public void acquire() throws MMException {
@@ -113,7 +117,19 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
 
 
    public void addImageProcessor(Class taggedImageProcessorClass) {
-      taggedImageProcessors_.add(taggedImageProcessorClass);
+      try {
+         taggedImageProcessors_.add(
+                 (DataProcessor<TaggedImage>)
+                 taggedImageProcessorClass.newInstance());
+      } catch (InstantiationException ex) {
+         ReportingUtils.logError(ex);
+      } catch (IllegalAccessException ex) {
+         ReportingUtils.logError(ex);
+      }
+   }
+
+   public void addImageProcessor(DataProcessor<TaggedImage> taggedImageProcessor) {
+      taggedImageProcessors_.add(taggedImageProcessor);
    }
 
    public void removeImageProcessor(Class taggedImageProcessor) {
@@ -750,7 +766,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    /**
     * @return the taggedImageProcessors_
     */
-   public List<Class> getTaggedImageProcessors() {
+   public List<DataProcessor<TaggedImage>> getTaggedImageProcessors() {
       return taggedImageProcessors_;
    }
 }

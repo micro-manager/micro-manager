@@ -5,12 +5,10 @@
 
 package org.micromanager.acquisition;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import org.micromanager.api.DataProcessor;
 import org.micromanager.utils.GentleLinkedBlockingQueue;
-import org.micromanager.utils.ReportingUtils;
 
 /**
  *
@@ -22,17 +20,8 @@ public class ProcessorStack<E> {
    private final BlockingQueue<E> input_;
    private final BlockingQueue<E> output_;
    public ProcessorStack(BlockingQueue<E> input,
-           List<Class> processorClasses) {
-      processors_ = new ArrayList<DataProcessor<E>>();
-      for (Class processorClass:processorClasses) {
-         try {
-            processors_.add((DataProcessor<E>) processorClass.newInstance());
-         } catch (InstantiationException ex) {
-            ReportingUtils.logError(ex);
-         } catch (IllegalAccessException ex) {
-            ReportingUtils.logError(ex);
-         }
-      }
+           List<DataProcessor<E>> processors) {
+      processors_ = processors;
       input_ = input;
 
       BlockingQueue<E> left = input_;

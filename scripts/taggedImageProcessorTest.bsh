@@ -1,0 +1,4 @@
+import org.micromanager.examples.imageflipper.*;
+f = new TaggedImageFlipper();
+f.setApp(gui);
+f.show();

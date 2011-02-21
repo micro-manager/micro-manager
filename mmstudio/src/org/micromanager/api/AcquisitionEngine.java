@@ -295,6 +295,8 @@ public interface AcquisitionEngine {
    public void restoreSystem();
 
    public void addImageProcessor(Class processor);
+   public void addImageProcessor(DataProcessor<TaggedImage> processor);
+
    public void removeImageProcessor(Class processor);
 
    public boolean abortRequested();

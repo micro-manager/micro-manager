@@ -58,9 +58,9 @@ gui.closeAcquisition(acqName);
 if (gui.acquisitionExists(acqName) == true)
 	gui.mesage("Error in acquisitionExists function");
 
-gui.runBurstAcquistion();
+gui.runBurstAcquisition();
 gui.runBurstAcquisition(10);
-gui.runBurstAcquistion(10, acqName, "");
+gui.runBurstAcquisition(10, acqName, "");
 
 
 gui.message("All tests succeeded successfully!");
