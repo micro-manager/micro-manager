@@ -1120,6 +1120,7 @@ int CTetheredCamera::AcquireFrame()
    if (FAILED(hr))
    {
       SafeRelease(factory);
+      LogWICMessage(hr);
       return ERR_CAM_LOAD;     
    }
 
