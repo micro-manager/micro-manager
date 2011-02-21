@@ -44,7 +44,8 @@ public class ProcessorStack<E> {
 
    public void start() {
       for (DataProcessor<E> processor:processors_) {
-        processor.start();
+        if (!processor.isAlive())
+          processor.start();
       }
    }
 
