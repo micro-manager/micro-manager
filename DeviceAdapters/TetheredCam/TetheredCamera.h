@@ -43,7 +43,6 @@
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
 //
-//#define ERR_UNKNOWN_MODE         102
 #define ERR_CAM_BAD_PARAM        103
 #define ERR_CAM_NO_IMAGE         104
 #define ERR_CAM_NOT_RUNNING      105
@@ -100,8 +99,7 @@ public:
    int SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize); 
    int GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize); 
    int ClearROI();
-   double GetNominalPixelSizeUm() const {return nominalPixelSizeUm_;}
-   double GetPixelSizeUm() const {return nominalPixelSizeUm_ * GetBinning();}
+   double GetPixelSizeUm() const {return GetBinning();}
    int GetBinning() const;
    int SetBinning(int binSize);
 
@@ -118,13 +116,15 @@ private:
    int ResizeImageBuffer();
 
    int SetAllowedBinning();
-   static const double nominalPixelSizeUm_;
    bool GetBoolProperty(const char *const propName);
 
    int SetCameraExposure(double exp_ms);
    int GetCameraName();
    int GetReturnCode(int status);
+
    int LoadWICImage(IWICImagingFactory *factory, const char* filename); /* Load an image from file using Windows WIC Codecs */
+   void LogWICMessage(HRESULT hr); /* log a WIC error message to micro-manager CoreLog */
+
    int LoadRawImage(IWICImagingFactory *factory, const char* filename); /* Load a raw image from file using libraw */
    int Convert64bppRGBAto64bppBGRA(ImgBuffer *img);  
 
@@ -132,18 +132,22 @@ private:
    LibRaw rawProcessor_;
 
    bool initialized_;
-   std::string cameraName_; /* Camera manufacturer and model */
-   IWICBitmap *frameBitmap; /* last captured frame */
-   bool grayScale_;
-   bool keepOriginals_;
-   bool internalDecoder_;
-   unsigned bitDepth_;
-   unsigned roiX_; /* Region Of Interest */
+   std::string cameraName_;   /* Camera manufacturer and model */
+   IWICBitmap *frameBitmap;   /* last captured frame */
+   bool grayScale_;           /* If true, create grayscale images. If false, create color images */
+   bool internalDecoder_;     /* If true, decode using libraw. If false, decode using Windows Imaging Component */
+   unsigned bitDepth_;        /* number of bits per color value. */
+   bool keepOriginals_;       /* if true, do not delete picture from disk */
+
+   unsigned imgBinning_;      /* binning of current image */
+   bool imgGrayScale_;        /* grayScale of current image */
+   unsigned imgBitDepth_;     /* bitDepth of current image */
+   
+   unsigned roiX_;            /* Region Of Interest */
    unsigned roiY_;
    unsigned roiXSize_;
    unsigned roiYSize_;
-   unsigned scaleFactor_; /* binning of current image */
-   unsigned originX_; /* coordinates of lower left corner of view window */
+   unsigned originX_;         /* coordinates of lower left corner of view window */
    unsigned originY_;
 };
 

@@ -101,6 +101,7 @@
 #include "../../MMDevice/ModuleInterface.h"
 #include "../../MMCore/Error.h"
 #include <sstream>
+#include <comdef.h>
 
 #ifdef _DSLRREMOTE_
 #include "DSLRRemoteLib.h"
@@ -115,7 +116,6 @@
 #endif
 
 using namespace std;
-const double CTetheredCamera::nominalPixelSizeUm_ = 1.0;
 
 // External names used used by the rest of the system
 // to load particular device from the "DemoCamera.dll" library
@@ -232,14 +232,16 @@ CTetheredCamera::CTetheredCamera() :
    cameraName_(""),
    frameBitmap(NULL),
    grayScale_(false),
-   keepOriginals_(false),
    internalDecoder_(false),
    bitDepth_(8),
+   keepOriginals_(false),
+   imgBinning_(1),
+   imgGrayScale_(false),
+   imgBitDepth_(8),
    roiX_(0),
    roiY_(0),
    roiXSize_(0),
    roiYSize_(0),
-   scaleFactor_(1),
    originX_(0),
    originY_(0)
 {
@@ -482,7 +484,7 @@ const unsigned int* CTetheredCamera::GetImageBufferAsRGB32()
 */
 unsigned int CTetheredCamera::GetNumberOfComponents() const
 {
-   if (grayScale_)
+   if (imgGrayScale_)
       return 1; // grayscale
    else
       return 4; // rgb
@@ -493,7 +495,7 @@ unsigned int CTetheredCamera::GetNumberOfComponents() const
 */
 int CTetheredCamera::GetComponentName(unsigned int channel, char* name)
 {
-   if (grayScale_)
+   if (imgGrayScale_)
    {
       if (channel == 0)
          CDeviceUtils::CopyLimitedString(name, "Grayscale");
@@ -559,7 +561,7 @@ unsigned CTetheredCamera::GetImageBytesPerPixel() const
 */
 unsigned CTetheredCamera::GetBitDepth() const
 {
-   return bitDepth_;
+   return imgBitDepth_;
 }
 
 /**
@@ -568,7 +570,7 @@ unsigned CTetheredCamera::GetBitDepth() const
 */
 long CTetheredCamera::GetImageBufferSize() const
 {
-   return img_.Width() * img_.Height() * GetImageBytesPerPixel();
+   return img_.Width() * img_.Height() * img_.Depth();
 }
 
 /**
@@ -579,20 +581,20 @@ long CTetheredCamera::GetImageBufferSize() const
 * exact dimensions requested - but should try do as close as possible.
 * If the hardware does not have this capability the software should simulate the ROI by
 * appropriately cropping each frame.
-* This demo implementation ignores the position coordinates and just crops the buffer.
-* @param x - top-left corner coordinate
-* @param y - top-left corner coordinate
-* @param xSize - width
-* @param ySize - height
+* 
+*  x - top-left corner coordinate
+*  y - top-left corner coordinate
+*  xSize - width
+*  ySize - height
 */
 int CTetheredCamera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 {
-   if (scaleFactor_ == 0)
-      scaleFactor_ = 1;
-   roiX_ = originX_ + x * scaleFactor_;
-   roiY_ = originY_ + y * scaleFactor_;
-   roiXSize_ = xSize * scaleFactor_;
-   roiYSize_ = ySize * scaleFactor_;
+   if (imgBinning_ == 0)
+      imgBinning_ = 1;
+   roiX_ = originX_ + x * imgBinning_;
+   roiY_ = originY_ + y * imgBinning_;
+   roiXSize_ = xSize * imgBinning_;
+   roiYSize_ = ySize * imgBinning_;
    return DEVICE_OK;
 }
 
@@ -602,12 +604,12 @@ int CTetheredCamera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySi
 */
 int CTetheredCamera::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize)
 {
-   if (scaleFactor_ == 0)
-      scaleFactor_ = 1;
-   x = roiX_ / scaleFactor_;
-   y = roiY_ / scaleFactor_;
-   xSize = roiXSize_ / scaleFactor_;
-   ySize = roiYSize_ / scaleFactor_;
+   if (imgBinning_ == 0)
+      imgBinning_ = 1;
+   x = roiX_ / imgBinning_;
+   y = roiY_ / imgBinning_;
+   xSize = roiXSize_ / imgBinning_;
+   ySize = roiYSize_ / imgBinning_;
    if ((roiX_ == 0) && (roiY_ == 0) && (roiXSize_ == 0) && (roiYSize_ == 0)) // Select whole image
    {
       x = 0;
@@ -1191,16 +1193,16 @@ int CTetheredCamera::ResizeImageBuffer()
    UINT scaledWidth = 0;
    UINT scaledHeight = 0;
    
-   scaleFactor_ = GetBinning();
+   UINT binning = GetBinning();
 
-   if (scaleFactor_ <= 0) 
+   if (binning <= 0) 
    {
       LogMessage("Error: Binning value", true);
       return ERR_CAM_CONVERSION;
    }
 
-   scaledWidth = frameWidth / scaleFactor_;
-   scaledHeight = frameHeight / scaleFactor_;
+   scaledWidth = frameWidth / binning;
+   scaledHeight = frameHeight / binning;
 
    IWICBitmapScaler *scaler = NULL;
    if (SUCCEEDED(hr))
@@ -1255,10 +1257,10 @@ int CTetheredCamera::ResizeImageBuffer()
    }
    
    // Apply binning to region of interest
-   UINT clipX = roiX_ / scaleFactor_;
-   UINT clipY = roiY_  / scaleFactor_;
-   UINT clipHeight = roiYSize_  / scaleFactor_;
-   UINT clipWidth = roiXSize_  / scaleFactor_;
+   UINT clipX = roiX_ / binning;
+   UINT clipY = roiY_  / binning;
+   UINT clipHeight = roiYSize_  / binning;
+   UINT clipWidth = roiXSize_  / binning;
 
    if ((clipWidth == 0) || (clipHeight == 0)
       || (clipX + clipWidth > transposedWidth) || (clipY + clipHeight > transposedHeight))
@@ -1271,8 +1273,8 @@ int CTetheredCamera::ResizeImageBuffer()
    }
 
    // Save coordinates of ROI lower left pixel 
-   originX_ = clipX * scaleFactor_;
-   originY_ = clipY * scaleFactor_;
+   originX_ = clipX * binning;
+   originY_ = clipY * binning;
 
    IWICBitmapClipper *clipper = NULL;
 
@@ -1378,22 +1380,29 @@ int CTetheredCamera::ResizeImageBuffer()
    
    if (SUCCEEDED(hr) && !grayScale_ && (bitDepth_ == 16)) // Test for 64bpp RGB color
    {
-      // XXX micro-manager expects 64bpp BGRA images, but Windows Imaging Component provides us 64bpp RGBA. Convert.
+      // micro-manager expects 64bpp BGRA images, but Windows Imaging Component provides us 64bpp RGBA. Convert.
       Convert64bppRGBAto64bppBGRA(&img_);
    }
 
    if (SUCCEEDED(hr))
    {
       LogMessage("CopyPixels done", true);
+      /* release all resources */
       SafeRelease(formatConverter);
       SafeRelease(clipper);
       SafeRelease(transposer);
       SafeRelease(scaler);
       SafeRelease(factory);
+      /* save current image parameters */
+      imgBinning_ = GetBinning();
+      imgGrayScale_ = grayScale_;
+      imgBitDepth_ = bitDepth_;
+      /* log and exit */
       LogMessage("ResizeImageBuffer done", true);
       return DEVICE_OK;
    }
   
+   LogWICMessage(hr);
    return ERR_CAM_CONVERSION;
 }
 
@@ -1447,7 +1456,10 @@ int CTetheredCamera::LoadWICImage(IWICImagingFactory *factory, const char* filen
       ::MultiByteToWideChar(CP_ACP, 0, filename, lenA, unicodefilename, lenW);
    }
    else
-     return ERR_CAM_LOAD;
+   {
+      LogMessage("WIC: not unicode filename", true);
+      return ERR_CAM_LOAD;
+   }
 
    HRESULT  hr = factory->CreateDecoderFromFilename(unicodefilename, NULL, GENERIC_READ, WICDecodeMetadataCacheOnDemand, &decoder);
     
@@ -1493,7 +1505,23 @@ int CTetheredCamera::LoadWICImage(IWICImagingFactory *factory, const char* filen
       return DEVICE_OK;
    }
 
+   LogWICMessage(hr);
    return ERR_CAM_LOAD;
+}
+
+
+/*
+ * Log WIC error message to Micro-Manager Corelog
+ */
+
+void CTetheredCamera::LogWICMessage(HRESULT hr)
+{
+   _com_error err(hr);
+   ostringstream msg;
+   msg.str("");
+   msg << "WIC: error. " << err.ErrorMessage();
+   LogMessage(msg.str(), true); 
+   return;
 }
 
 /*
@@ -1542,7 +1570,8 @@ int CTetheredCamera::LoadRawImage(IWICImagingFactory *factory, const char* filen
       //rawProcessor_.imgdata.params.filtering_mode = LIBRAW_FILTERING_NONE;
       rawProcessor_.imgdata.params.gamm[0] = rawProcessor_.imgdata.params.gamm[1] = 1.0; // linear gamma curve
       rawProcessor_.imgdata.params.no_auto_bright = 1; // Don't use automatic increase of brightness by histogram.
-      rawProcessor_.imgdata.params.output_bps = 16; // 16 bit output
+      rawProcessor_.imgdata.params.output_bps = 16; // Write 16 bits per color value
+      rawProcessor_.imgdata.params.half_size = 0; // Half-size the output image.  Instead  of  interpolating, reduce each 2x2 block of sensors to one pixel.
       rc = rawProcessor_.dcraw_process();
    }
    if (rc == 0)
@@ -1614,6 +1643,7 @@ int CTetheredCamera::LoadRawImage(IWICImagingFactory *factory, const char* filen
       return DEVICE_OK;
    }
 
+   LogWICMessage(hr);
    return ERR_CAM_RAW;
 }
 // not truncated
