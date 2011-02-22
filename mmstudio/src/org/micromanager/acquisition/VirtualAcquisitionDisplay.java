@@ -319,11 +319,6 @@ public class VirtualAcquisitionDisplay {
 
    public void showImage(TaggedImage taggedImg) throws MMScriptException {
       try {
-         if (hyperImage_.getSlice() == 1) {
-            hyperImage_.getProcessor().setPixels(
-                    hyperImage_.getStack().getPixels(1));
-         }
-
          updateWindow();
          JSONObject md = taggedImg.tags;
          int chan = this.rgbToGrayChannel(MDUtils.getChannelIndex(md));
@@ -343,8 +338,8 @@ public class VirtualAcquisitionDisplay {
          }
          if (hyperImage_.getFrame() == 1) {
             try {
-               int pixelMin = ImageUtils.getMin(taggedImg.pix);
-               int pixelMax = ImageUtils.getMax(taggedImg.pix);
+               int pixelMin = Math.min(this.getChannelMin(chan),ImageUtils.getMin(taggedImg.pix));
+               int pixelMax = Math.max(this.getChannelMax(chan),ImageUtils.getMax(taggedImg.pix));
                if (MDUtils.isRGB(taggedImg)) {
                   for (int i=0; i<3; ++i) {
                      setChannelDisplayRange(chan + i, pixelMin, pixelMax, false);
@@ -359,6 +354,12 @@ public class VirtualAcquisitionDisplay {
                ReportingUtils.showError(ex);
             }
          }
+         
+         if (hyperImage_.getSlice() == 1) {
+            hyperImage_.getProcessor().setPixels(
+                    hyperImage_.getStack().getPixels(1));
+         }
+
          updateAndDraw();
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
