@@ -1591,7 +1591,7 @@ int CTetheredCamera::LoadRawImage(IWICImagingFactory *factory, const char* filen
       rawProcessor_.imgdata.params.output_bps = 16; // Write 16 bits per color value
       // Let libraw do the binning for us.
       rawProcessor_.imgdata.params.half_size = (GetBinning() >= 2); // Half-size the output image. Instead  of  interpolating, reduce each 2x2 block of sensors to one pixel.
-      //rawProcessor_.imgdata.params.bad_pixels = "badpixels.txt"; // remove dead or stuck pixels from this file
+      //rawProcessor_.imgdata.params.bad_pixels = "badpixels.txt"; // Path to file with bad pixels map (in dcraw format)
       
       rc = rawProcessor_.dcraw_process();
    }
