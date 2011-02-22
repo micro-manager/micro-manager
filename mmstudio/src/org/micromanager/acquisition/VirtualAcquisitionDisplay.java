@@ -113,7 +113,8 @@ public class VirtualAcquisitionDisplay {
       createWindow(hyperImage_, hc_);
       setNumPositions(numPositions);
       for (int i=0;i<numGrayChannels;++i) {
-         updateChannelDisplay(i);
+         updateChannelLUT(i);
+         updateChannelContrast(i);
       }
       updateAndDraw();
       updateWindow();
@@ -261,7 +262,7 @@ public class VirtualAcquisitionDisplay {
    }
 
    private void updateAndDraw() {
-      if (getNumGrayChannels() > 1) {
+      if (hyperImage_ instanceof CompositeImage) {
          ((CompositeImage) hyperImage_).setChannelsUpdated();
       }
       hyperImage_.updateAndDraw();
@@ -347,12 +348,11 @@ public class VirtualAcquisitionDisplay {
                if (MDUtils.isRGB(taggedImg)) {
                   for (int i=0; i<3; ++i) {
                      setChannelDisplayRange(chan + i, pixelMin, pixelMax, false);
-                  }
-                  for (int i=0; i<3; ++i) {
-                     updateChannelDisplay(chan + i);
+                     hyperImage_.updateImage();
                   }
                } else {
-                  setChannelDisplayRange(chan, pixelMin, pixelMax, true);
+                  setChannelDisplayRange(chan, pixelMin, pixelMax, false);
+                  hyperImage_.updateImage();
                }
                channelDisplayUpdated_ = true;
             } catch (Exception ex) {
@@ -784,22 +784,31 @@ public class VirtualAcquisitionDisplay {
       }
    }
 
-   public void updateChannelDisplay(int channel) {
+   private void updateChannelContrast(int channel) {
+      if (hyperImage_ == null) {
+         return;
+      }
+      if (hyperImage_.isComposite()) {
+         setChannelWithoutMovingSlider(channel);
+         CompositeImage ci = (CompositeImage) hyperImage_;
+         ci.setDisplayRange(getChannelMin(channel), getChannelMax(channel));
+      } else {
+         hyperImage_.setDisplayRange(getChannelMin(channel), getChannelMax(channel));
+      }
+   }
+
+   private void updateChannelLUT(int channel) {
       if (hyperImage_ == null) {
          return;
       }
       LUT lut = ImageUtils.makeLUT(getChannelColor(channel), getChannelGamma(channel), 8);
-
       if (hyperImage_.isComposite()) {
+         setChannelWithoutMovingSlider(channel);
          CompositeImage ci = (CompositeImage) hyperImage_;
-         setChannelWithoutMovingSlider(channel + 1);
          ci.setChannelLut(lut);
-         ci.setDisplayRange(getChannelMin(channel), getChannelMax(channel));
       } else {
          hyperImage_.getProcessor().setColorModel(lut);
-         hyperImage_.setDisplayRange(getChannelMin(channel), getChannelMax(channel));
       }
-      updateAndDraw();
    }
 
    private void setChannelWithoutMovingSlider(int channel) {
@@ -807,7 +816,7 @@ public class VirtualAcquisitionDisplay {
          int z = hyperImage_.getSlice();
          int t = hyperImage_.getFrame();
 
-         hyperImage_.updatePosition(channel, z, t);
+         hyperImage_.updatePosition(channel+1, z, t);
       }
    }
 
@@ -851,8 +860,9 @@ public class VirtualAcquisitionDisplay {
       } catch (JSONException ex) {
          ReportingUtils.logError(ex);
       }
+      updateChannelLUT(channel);
       if (updateDisplay) {
-         updateChannelDisplay(channel);
+         updateAndDraw();
       }
    }
 
@@ -863,12 +873,14 @@ public class VirtualAcquisitionDisplay {
       } catch (Exception e) {
          ReportingUtils.logError(e);
       }
+      updateChannelLUT(channel);
       if (updateDisplay) {
-         updateChannelDisplay(channel);
+         updateAndDraw();
       }
    }
 
    public void setChannelDisplayRange(int channel, int min, int max, boolean updateDisplay) {
+
       JSONObject chan = getChannelSetting(channel);
       try {
          chan.put("Min", min);
@@ -876,9 +888,11 @@ public class VirtualAcquisitionDisplay {
       } catch (Exception e) {
          ReportingUtils.logError(e);
       }
+      updateChannelContrast(channel);
       if (updateDisplay) {
-         updateChannelDisplay(channel);
+         updateAndDraw();
       }
+      
    }
 
    private JSONObject getChannelSetting(int channel) {
