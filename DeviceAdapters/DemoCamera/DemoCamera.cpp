@@ -105,6 +105,7 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_ShutterDeviceName, "Demo shutter");
    AddAvailableDeviceName(g_DADeviceName, "Demo DA");
    AddAvailableDeviceName(g_MagnifierDeviceName, "Demo Optovar");
+   AddAvailableDeviceName("DemoTranspose", "DemoTranspose");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
@@ -167,6 +168,12 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
    {
       // create Optovar 
       return new DemoMagnifier();
+   }
+
+   else if(strcmp(deviceName, "DemoTranspose") == 0)
+   {
+
+      return new DemoTranspose();
    }
 
    // ...supplied name not recognized
@@ -465,7 +472,22 @@ const unsigned char* CDemoCamera::GetImageBuffer()
    MMThreadGuard g(imgPixelsLock_);
    MM::MMTime readoutTime(readoutUs_);
    while (readoutTime > (GetCurrentMMTime() - readoutStartTime_)) {}
-   return img_.GetPixels();
+
+		
+	MM::ImageProcessor* ip = NULL;
+   ip = GetCoreCallback()->GetImageProcessor(this);
+   unsigned char *pB = (unsigned char*)(img_.GetPixels());
+
+	if (ip)
+	{
+      // huh...
+		ip->Process(pB, GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel());
+
+	}
+
+
+   
+   return pB;
 }
 
 /**
@@ -2359,4 +2381,212 @@ int DemoAutoFocus::Initialize()
    initialized_ = true;
 
    return DEVICE_OK;
+}
+
+
+int DemoTranspose::Initialize()
+{
+   if( NULL != this->pTemp_)
+   {
+      free(pTemp_);
+      pTemp_ = NULL;
+      this->tempSize_ = 0;
+   }
+    CPropertyAction* pAct = new CPropertyAction (this, &DemoTranspose::OnInPlaceAlgorithm);
+   (void)CreateProperty("InPlaceAlgorithm", "0", MM::Integer, false, pAct); 
+   return DEVICE_OK;
+}
+
+   // action interface
+   // ----------------
+int DemoTranspose::OnInPlaceAlgorithm(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(this->inPlace_?1L:0L);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      long ltmp;
+      pProp->Get(ltmp);
+      inPlace_ = (0==ltmp?false:true);
+   }
+
+   return DEVICE_OK;
+}
+
+
+int DemoTranspose::Process(unsigned char *pBuffer, unsigned int width, unsigned int height, unsigned int byteDepth)
+{
+   int ret = DEVICE_OK;
+
+   // 
+   if( width != height)
+      return DEVICE_NOT_SUPPORTED; // problem with tranposing non-square images is that the image buffer
+   // will need to be modified by the image processor.
+ 
+   busy_ = true;
+
+   if( inPlace_)
+   {
+      if( 1 == byteDepth)
+      {
+         unsigned char ctmp;
+         for( unsigned long ix = 0; ix < width; ++ix)
+         {
+            for( unsigned long iy = ix; iy < width; ++iy)
+            {
+               ctmp = pBuffer[iy*width + ix];
+               pBuffer[iy*width +ix] = pBuffer[ix*width + iy];
+               pBuffer[ix*width +iy] = ctmp; 
+            }
+         }
+      }
+      else if( 2 == byteDepth)
+      {
+         unsigned short stmp;
+         unsigned short *pB = (unsigned short*) pBuffer; 
+         for( unsigned long ix = 0; ix < width; ++ix)
+         {
+            for( unsigned long iy = ix; iy < height; ++iy)
+            {
+               stmp = pB[ ix + iy*height];
+               pB[ ix + iy*height] = pB[iy + ix*width];
+               pB[iy + ix*width] = stmp;
+            }
+         }
+
+      }
+
+
+      else if( 4 == byteDepth)
+      {
+         unsigned long ltmp;
+         unsigned long *pB = (unsigned long*) pBuffer; 
+         for( unsigned long ix = 0; ix < width; ++ix)
+         {
+            for( unsigned long iy = ix; iy < height; ++iy)
+            {
+               ltmp = pB[ ix + iy*height];
+               pB[ ix + iy*height] = pB[iy + ix*width];
+               pB[iy + ix*width] = ltmp;
+            }
+         }
+
+      }
+      else 
+      {
+         ret = DEVICE_NOT_SUPPORTED;
+      }
+   }
+   else
+   {
+
+      // really primative image transpose algorithm which will work fine for non-square images... 
+
+      if( 1 == byteDepth)
+      {
+         if( 1 != sizeof(char))
+            return DEVICE_NOT_SUPPORTED;
+         unsigned long tsize = width*height;
+         if( this->tempSize_ != tsize)
+         {
+            if( NULL != this->pTemp_)
+            {
+               free(pTemp_);
+               pTemp_ = NULL;
+            }
+            pTemp_ = (char*)malloc(tsize);
+         }
+         if( NULL != pTemp_)
+         {
+            tempSize_ = tsize;
+            for( unsigned long ix = 0; ix < width; ++ix)
+            {
+               for( unsigned long iy = 0; iy < height; ++iy)
+               {
+                  pTemp_[iy + ix*width] = pBuffer[ ix + iy*height];
+               }
+            }
+            memcpy( pBuffer, pTemp_, tsize);
+         }
+         else
+         {
+            ret = DEVICE_ERR;
+         }
+      }
+      else if( 2 == byteDepth)
+      {
+         if( 2 != sizeof(unsigned short))
+            return DEVICE_NOT_SUPPORTED;
+
+         unsigned long tsize = width*height*2;
+         if( this->tempSize_ != tsize)
+         {
+            if( NULL != this->pTemp_)
+            {
+               free(pTemp_);
+               pTemp_ = NULL;
+            }
+            pTemp_ = (char*)malloc(tsize);
+         }
+         if( NULL != pTemp_)
+         {
+            unsigned short *pInput = (unsigned short*)pBuffer;
+            unsigned short *pTemp = (unsigned short*)pTemp_;
+            for( unsigned long ix = 0; ix < width; ++ix)
+            {
+               for( unsigned long iy = 0; iy < height; ++iy)
+               {
+                  pTemp[iy + ix*width] = pInput[ ix + iy*height];
+               }
+            }
+            memcpy( pBuffer, pTemp_, tsize);
+         }
+         else
+         {
+            ret = DEVICE_ERR;
+         }
+      }
+      else if( 4 == byteDepth)
+      {
+         if( 4 != sizeof(unsigned long))
+            return DEVICE_NOT_SUPPORTED;
+         unsigned long tsize = width*height*4;
+         if( this->tempSize_ != tsize)
+         {
+            if( NULL != this->pTemp_)
+            {
+               free(pTemp_);
+               pTemp_ = NULL;
+            }
+            pTemp_ = (char*)malloc(tsize);
+         }
+         if( NULL != pTemp_)
+         {
+            unsigned long *pInput = (unsigned long*)pBuffer;
+            unsigned long *pTemp = (unsigned long*)pTemp_;
+            for( unsigned long ix = 0; ix < width; ++ix)
+            {
+               for( unsigned long iy = 0; iy < height; ++iy)
+               {
+                  pTemp[iy + ix*width] = pInput[ ix + iy*height];
+               }
+            }
+            memcpy( pBuffer, pTemp_, tsize);
+         }
+         else
+         {
+            ret = DEVICE_ERR;
+         }
+      }
+
+      else
+      {
+         ret =  DEVICE_NOT_SUPPORTED;
+      }
+   }
+   busy_ = false;
+
+   return ret;
 }

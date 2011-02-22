@@ -562,6 +562,38 @@ private:
 };
 
 //////////////////////////////////////////////////////////////////////////////
+// DemoTranspose class
+// transpose an image
+//////////////////////////////////////////////////////////////////////////////
+class DemoTranspose : public CImageProcessorBase<DemoTranspose>
+{
+public:
+   DemoTranspose () : inPlace_ (false), pTemp_(NULL), tempSize_(0), busy_(false) {}
+   ~DemoTranspose () {if( NULL!= pTemp_) free(pTemp_); tempSize_=0;  }
+
+   int Shutdown() {return DEVICE_OK;}
+   void GetName(char* name) const {strcpy(name,"DemoTranspose");}
+
+   int Initialize();
+
+   bool Busy(void) { return busy_;};
+
+   int Process(unsigned char* buffer, unsigned width, unsigned height, unsigned byteDepth);
+
+   // action interface
+   // ----------------
+   int OnInPlaceAlgorithm(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+private:
+   bool inPlace_;
+   char* pTemp_;
+   unsigned long tempSize_;
+   bool busy_;
+};
+
+
+
+//////////////////////////////////////////////////////////////////////////////
 // DemoAutoFocus class
 // Simulation of the auto-focusing module
 //////////////////////////////////////////////////////////////////////////////
