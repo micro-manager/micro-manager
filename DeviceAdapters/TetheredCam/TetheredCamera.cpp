@@ -414,7 +414,7 @@ int CTetheredCamera::Initialize()
       return nRet;
 
    // initialize image buffer
-   nRet = SnapImage();
+   // nRet = SnapImage();
    return nRet;
 }
 
@@ -1067,7 +1067,10 @@ int CTetheredCamera::SetCameraExposure(double exp_ms)
          }
       }
       else 
+      {
+         LogMessage("Shutter speeds syntax error", true);
          return ERR_CAM_SHUTTER_SPEEDS;
+      }
       currSetting++;
    }
 
@@ -1202,8 +1205,16 @@ int CTetheredCamera::ResizeImageBuffer()
       return ERR_CAM_CONVERSION;
    }
 
-   scaledWidth = frameWidth / binning;
-   scaledHeight = frameHeight / binning;
+   /*
+   * If binning is required and we are using the internal raw picture decoder, 
+   * libraw has already done binning by a factor of 2.
+   */
+   UINT scaleFactor = binning;
+   if (internalDecoder_ && (binning >= 2))
+      scaleFactor = binning / 2;
+
+   scaledWidth = frameWidth / scaleFactor;
+   scaledHeight = frameHeight / scaleFactor;
 
    IWICBitmapScaler *scaler = NULL;
    if (SUCCEEDED(hr))
@@ -1365,7 +1376,10 @@ int CTetheredCamera::ResizeImageBuffer()
    }
 
    if (SUCCEEDED(hr) && ((frameWidth == 0) || (frameHeight == 0)))
+   {
+      LogMessage("Zero dimension image", true);
       return ERR_CAM_CONVERSION;
+   }
 
    if (SUCCEEDED(hr))
    {
@@ -1385,19 +1399,22 @@ int CTetheredCamera::ResizeImageBuffer()
       Convert64bppRGBAto64bppBGRA(&img_);
    }
 
+   /* release all resources */
+   SafeRelease(formatConverter);
+   SafeRelease(clipper);
+   SafeRelease(transposer);
+   SafeRelease(scaler);
+   SafeRelease(factory);
+
    if (SUCCEEDED(hr))
    {
       LogMessage("CopyPixels done", true);
-      /* release all resources */
-      SafeRelease(formatConverter);
-      SafeRelease(clipper);
-      SafeRelease(transposer);
-      SafeRelease(scaler);
-      SafeRelease(factory);
+
       /* save current image parameters */
       imgBinning_ = GetBinning();
       imgGrayScale_ = grayScale_;
       imgBitDepth_ = bitDepth_;
+
       /* log and exit */
       LogMessage("ResizeImageBuffer done", true);
       return DEVICE_OK;
@@ -1476,8 +1493,8 @@ int CTetheredCamera::LoadWICImage(IWICImagingFactory *factory, const char* filen
 
    if (SUCCEEDED(hr) && (nFrameCount == 0))
    {  
-      LogMessage("WIC: no frames found", true);
       SafeRelease(decoder);
+      LogMessage("WIC: no frames found", true);
       return ERR_CAM_LOAD;
    }
 
@@ -1572,7 +1589,10 @@ int CTetheredCamera::LoadRawImage(IWICImagingFactory *factory, const char* filen
       rawProcessor_.imgdata.params.gamm[0] = rawProcessor_.imgdata.params.gamm[1] = 1.0; // linear gamma curve
       rawProcessor_.imgdata.params.no_auto_bright = 1; // Don't use automatic increase of brightness by histogram.
       rawProcessor_.imgdata.params.output_bps = 16; // Write 16 bits per color value
-      rawProcessor_.imgdata.params.half_size = 0; // Half-size the output image.  Instead  of  interpolating, reduce each 2x2 block of sensors to one pixel.
+      // Let libraw do the binning for us.
+      rawProcessor_.imgdata.params.half_size = (GetBinning() >= 2); // Half-size the output image. Instead  of  interpolating, reduce each 2x2 block of sensors to one pixel.
+      //rawProcessor_.imgdata.params.bad_pixels = "badpixels.txt"; // remove dead or stuck pixels from this file
+      
       rc = rawProcessor_.dcraw_process();
    }
    if (rc == 0)
@@ -1594,11 +1614,12 @@ int CTetheredCamera::LoadRawImage(IWICImagingFactory *factory, const char* filen
    LogMessage("Raw: image decoded", true);
 
    // Convert decoded raw bitmap "rawImg" to WIC bitmap "frameBitmap"
-   SafeRelease(frameBitmap);
+
    UINT uiWidth = rawImg->width;
    UINT uiHeight = rawImg->height;
    WICPixelFormatGUID formatGUID = GUID_WICPixelFormat48bppRGB;
 
+   SafeRelease(frameBitmap);
    HRESULT hr = factory->CreateBitmap(uiWidth, uiHeight, formatGUID, WICBitmapCacheOnDemand, &frameBitmap);
    if (SUCCEEDED(hr))
    {
