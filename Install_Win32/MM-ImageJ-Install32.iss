@@ -94,6 +94,7 @@ Source: micro-manager\mmgr_dal_FreeSerialPort.dll; DestDir: {app}; Flags: ignore
 Source: micro-manager\mmgr_dal_GenericSLM.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_GigECamera.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Hamamatsu.dll; DestDir: {app}; Flags: ignoreversion
+Source: micro-manager\mmgr_dal_ImageProcessorChain.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_K8055.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_K8061.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_KDV.dll; DestDir: {app}; Flags: ignoreversion
