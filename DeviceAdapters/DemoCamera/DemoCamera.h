@@ -578,6 +578,59 @@ public:
 
    bool Busy(void) { return busy_;};
 
+    // really primative image transpose algorithm which will work fine for non-square images... 
+   template <typename PixelType> int TransposeRectangleOutOfPlace( PixelType* pI, unsigned int width, unsigned int height)
+   {
+      int ret = DEVICE_OK;
+      unsigned long tsize = width*height*sizeof(PixelType);
+      if( this->tempSize_ != tsize)
+      {
+         if( NULL != this->pTemp_)
+         {
+            free(pTemp_);
+            pTemp_ = NULL;
+         }
+         pTemp_ = (PixelType *)malloc(tsize);
+      }
+      if( NULL != pTemp_)
+      {
+         PixelType* pTmpImage = (PixelType *) pTemp_;
+         tempSize_ = tsize;
+         for( unsigned long ix = 0; ix < width; ++ix)
+         {
+            for( unsigned long iy = 0; iy < height; ++iy)
+            {
+               pTmpImage[iy + ix*width] = pI[ ix + iy*height];
+            }
+         }
+         memcpy( pI, pTmpImage, tsize);
+      }
+      else
+      {
+         ret = DEVICE_ERR;
+      }
+
+      return ret;
+
+   }
+
+   
+   template <typename PixelType> void TransposeSquareInPlace( PixelType* pI, unsigned int dim) 
+   { 
+      PixelType tmp;
+      for( unsigned long ix = 0; ix < dim; ++ix)
+      {
+         for( unsigned long iy = ix; iy < dim; ++iy)
+         {
+            tmp = pI[iy*dim + ix];
+            pI[iy*dim +ix] = pI[ix*dim + iy];
+            pI[ix*dim +iy] = tmp; 
+         }
+      }
+
+      return;
+   }
+
    int Process(unsigned char* buffer, unsigned width, unsigned height, unsigned byteDepth);
 
    // action interface
@@ -586,7 +639,7 @@ public:
 
 private:
    bool inPlace_;
-   char* pTemp_;
+   void* pTemp_;
    unsigned long tempSize_;
    bool busy_;
 };

@@ -2418,6 +2418,11 @@ int DemoTranspose::OnInPlaceAlgorithm(MM::PropertyBase* pProp, MM::ActionType eA
 }
 
 
+
+
+
+
+
 int DemoTranspose::Process(unsigned char *pBuffer, unsigned int width, unsigned int height, unsigned int byteDepth)
 {
    int ret = DEVICE_OK;
@@ -2431,174 +2436,45 @@ int DemoTranspose::Process(unsigned char *pBuffer, unsigned int width, unsigned 
 
    if( inPlace_)
    {
-      if( 1 == byteDepth)
+      if(  sizeof(unsigned char) == byteDepth)
       {
-         unsigned char ctmp;
-         for( unsigned long ix = 0; ix < width; ++ix)
-         {
-            for( unsigned long iy = ix; iy < width; ++iy)
-            {
-               ctmp = pBuffer[iy*width + ix];
-               pBuffer[iy*width +ix] = pBuffer[ix*width + iy];
-               pBuffer[ix*width +iy] = ctmp; 
-            }
-         }
+         TransposeSquareInPlace( (unsigned char*)pBuffer, width);
       }
-      else if( 2 == byteDepth)
+      else if( sizeof(unsigned short) == byteDepth)
       {
-         unsigned short stmp;
-         unsigned short *pB = (unsigned short*) pBuffer; 
-         for( unsigned long ix = 0; ix < width; ++ix)
-         {
-            for( unsigned long iy = ix; iy < height; ++iy)
-            {
-               stmp = pB[ ix + iy*height];
-               pB[ ix + iy*height] = pB[iy + ix*width];
-               pB[iy + ix*width] = stmp;
-            }
-         }
-
+         TransposeSquareInPlace( (unsigned short*)pBuffer, width);
       }
-
-
-      else if( 4 == byteDepth)
+      else if( sizeof(unsigned long) == byteDepth)
       {
-         unsigned long ltmp;
-         unsigned long *pB = (unsigned long*) pBuffer; 
-         for( unsigned long ix = 0; ix < width; ++ix)
-         {
-            for( unsigned long iy = ix; iy < height; ++iy)
-            {
-               ltmp = pB[ ix + iy*height];
-               pB[ ix + iy*height] = pB[iy + ix*width];
-               pB[iy + ix*width] = ltmp;
-            }
-         }
-
+         TransposeSquareInPlace( (unsigned long*)pBuffer, width);
       }
-      else if( 8 == byteDepth)
+      else if( sizeof(unsigned long long) == byteDepth)
       {
-         unsigned long long lltmp;
-         unsigned long long *pB = (unsigned long long*) pBuffer; 
-         for( unsigned long ix = 0; ix < width; ++ix)
-         {
-            for( unsigned long iy = ix; iy < height; ++iy)
-            {
-               lltmp = pB[ ix + iy*height];
-               pB[ ix + iy*height] = pB[iy + ix*width];
-               pB[iy + ix*width] = lltmp;
-            }
-         }
-
+         TransposeSquareInPlace( (unsigned long long*)pBuffer, width);
       }
       else 
-
       {
          ret = DEVICE_NOT_SUPPORTED;
       }
    }
    else
    {
-
-      // really primative image transpose algorithm which will work fine for non-square images... 
-
-      if( 1 == byteDepth)
+      if( sizeof(unsigned char) == byteDepth)
       {
-         if( 1 != sizeof(char))
-            return DEVICE_NOT_SUPPORTED;
-         unsigned long tsize = width*height;
-         if( this->tempSize_ != tsize)
-         {
-            if( NULL != this->pTemp_)
-            {
-               free(pTemp_);
-               pTemp_ = NULL;
-            }
-            pTemp_ = (char*)malloc(tsize);
-         }
-         if( NULL != pTemp_)
-         {
-            tempSize_ = tsize;
-            for( unsigned long ix = 0; ix < width; ++ix)
-            {
-               for( unsigned long iy = 0; iy < height; ++iy)
-               {
-                  pTemp_[iy + ix*width] = pBuffer[ ix + iy*height];
-               }
-            }
-            memcpy( pBuffer, pTemp_, tsize);
-         }
-         else
-         {
-            ret = DEVICE_ERR;
-         }
+         ret = TransposeRectangleOutOfPlace( (unsigned char*)pBuffer, width, height);
       }
-      else if( 2 == byteDepth)
+      else if( sizeof(unsigned short) == byteDepth)
       {
-         if( 2 != sizeof(unsigned short))
-            return DEVICE_NOT_SUPPORTED;
-
-         unsigned long tsize = width*height*2;
-         if( this->tempSize_ != tsize)
-         {
-            if( NULL != this->pTemp_)
-            {
-               free(pTemp_);
-               pTemp_ = NULL;
-            }
-            pTemp_ = (char*)malloc(tsize);
-         }
-         if( NULL != pTemp_)
-         {
-            unsigned short *pInput = (unsigned short*)pBuffer;
-            unsigned short *pTemp = (unsigned short*)pTemp_;
-            for( unsigned long ix = 0; ix < width; ++ix)
-            {
-               for( unsigned long iy = 0; iy < height; ++iy)
-               {
-                  pTemp[iy + ix*width] = pInput[ ix + iy*height];
-               }
-            }
-            memcpy( pBuffer, pTemp_, tsize);
-         }
-         else
-         {
-            ret = DEVICE_ERR;
-         }
+         ret = TransposeRectangleOutOfPlace( (unsigned short*)pBuffer, width, height);
       }
-      else if( 4 == byteDepth)
+      else if( sizeof(unsigned long) == byteDepth)
       {
-         if( 4 != sizeof(unsigned long))
-            return DEVICE_NOT_SUPPORTED;
-         unsigned long tsize = width*height*4;
-         if( this->tempSize_ != tsize)
-         {
-            if( NULL != this->pTemp_)
-            {
-               free(pTemp_);
-               pTemp_ = NULL;
-            }
-            pTemp_ = (char*)malloc(tsize);
-         }
-         if( NULL != pTemp_)
-         {
-            unsigned long *pInput = (unsigned long*)pBuffer;
-            unsigned long *pTemp = (unsigned long*)pTemp_;
-            for( unsigned long ix = 0; ix < width; ++ix)
-            {
-               for( unsigned long iy = 0; iy < height; ++iy)
-               {
-                  pTemp[iy + ix*width] = pInput[ ix + iy*height];
-               }
-            }
-            memcpy( pBuffer, pTemp_, tsize);
-         }
-         else
-         {
-            ret = DEVICE_ERR;
-         }
+         ret = TransposeRectangleOutOfPlace( (unsigned long*)pBuffer, width, height);
       }
-
+      else if( sizeof(unsigned long long) == byteDepth)
+      {
+         ret =  TransposeRectangleOutOfPlace( (unsigned long long*)pBuffer, width, height);
+      }
       else
       {
          ret =  DEVICE_NOT_SUPPORTED;
