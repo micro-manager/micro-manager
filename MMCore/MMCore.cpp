@@ -1592,14 +1592,20 @@ void* CMMCore::getImage() const throw (CMMError)
             std::pair< int, std::string>  toThrow(postedErrors_[0]);
             // todo, process the collection of posted errors.
             postedErrors_.clear();
-            throw CMMError( toThrow.second.c_str(), toThrow.first);
-         
+            throw CMMError( toThrow.second.c_str(), toThrow.first);         
          }
       }
 
       void* pBuf(0);
       try {
          pBuf = const_cast<unsigned char*> (camera_->GetImageBuffer());
+		
+      	if (imageProcessor_)
+	      {
+            imageProcessor_->Process((unsigned char*)pBuf, camera_->GetImageHeight(),  camera_->GetImageWidth(), camera_->GetImageBytesPerPixel() );
+	      }
+
+
 		} catch( CMMError& e){
 			throw e;
 		} catch (...) {

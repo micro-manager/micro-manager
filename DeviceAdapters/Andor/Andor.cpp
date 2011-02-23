@@ -1546,13 +1546,7 @@ int AndorCamera::GetListOfAvailableCameras()
       assert(pImgBuffer_!=0);
       unsigned char* rawBuffer = pImgBuffer_;
       // process image
-      MM::ImageProcessor* ip = GetCoreCallback()->GetImageProcessor(this);
-      if (ip)
-      {
-         int ret = ip->Process((unsigned char*) rawBuffer, img_.Width(), img_.Height(), img_.Depth());
-         if (ret != DEVICE_OK)
-            return 0;
-      }
+      // imageprocessor now called from core
 
       PrepareSnap();
       return (unsigned char*)rawBuffer;
@@ -3814,13 +3808,7 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
       }
 
       // process image
-      MM::ImageProcessor* ip = GetCoreCallback()->GetImageProcessor(this);
-      if (ip)
-      {
-         int ret = ip->Process((unsigned char*) fullFrameBuffer_, GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel());
-         if (ret != DEVICE_OK)
-            return ret;
-      }
+      // imageprocesssor now called from core
 
       // create metadata
       char label[MM::MaxStrLength];

@@ -3720,15 +3720,7 @@ int QICamera::InsertImage(int iFrameBuff)
     //}
 
     // process the image
-    MM::ImageProcessor* ip = GetCoreCallback()->GetImageProcessor(this);
-    if (ip) {
-        ret = ip->Process((unsigned char*)pFrame->pBuffer, 
-            pFrame->width, pFrame->height, bytes);
-        if (ret != DEVICE_OK) {  
-            return ret; // Assume error is reported in ip->Process
-        }
-    }
-
+//image processor now called from core
     // This method inserts new image in the circular buffer (residing in MMCore)
     // NOTE: it essentially does a memcpy() from the camera's buffer
     // to MMCore's circular buffer

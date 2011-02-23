@@ -1256,18 +1256,7 @@ int CCameraAdapter::SnapImage()
    oCS.Lock();
 
    int nRet = DEVICE_OK;
-   MM::ImageProcessor* ip = GetCoreCallback()->GetImageProcessor(this);
-   if (ip)
-   {
-      nRet = ip->Process
-         (
-            m_punRoi,
-            nRoiWidth,
-            nRoiHeight,
-            nImgPixelBytes
-         );
-   }
-
+//imageprocessor now called from core
    return nRet;
 }
 
@@ -1397,21 +1386,8 @@ void CCameraAdapter::Capture()
 
       // process image
       SetProperty(MM::g_Keyword_ActualInterval_ms, CDeviceUtils::ConvertToString(m_fStreamAvgTime * 1000.0));
-      MM::ImageProcessor* ip = GetCoreCallback()->GetImageProcessor(this);
-      if (ip)
-      {
-         int ret = ip->Process
-            (
-               punBuffer,
-               m_nRoiWidth,
-               m_nRoiHeight,
-               m_nImgPixelBytes
-            );
-         if (ret != DEVICE_OK)
-         {
-            m_bStream = FALSE;
-         }
-      }
+
+      //imageprocessor now called from core
 
       // insert image into the circular buffer
       int ret = GetCoreCallback()->InsertImage

@@ -2424,13 +2424,7 @@ int Universal::PushImage2(void* pixBuffer)
 
    int nRet = DEVICE_ERR;
    // process image
-   MM::ImageProcessor* ip = GetCoreCallback()->GetImageProcessor(this);
-   if (ip)
-   {
-      nRet = ip->Process((unsigned char*) pixBuffer, GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel());
-      if (nRet != DEVICE_OK) 
-         return LogMMError(nRet, __LINE__);
-   }
+// imageprocessor is now called from core
    // create metadata
 
    char label[MM::MaxStrLength];

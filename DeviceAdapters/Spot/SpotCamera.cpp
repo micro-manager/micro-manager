@@ -594,12 +594,7 @@ const unsigned char* SpotCamera::GetImageBuffer()
 
 		NextSequentialImage(img_[0] );
 		
-		MM::ImageProcessor* ip = GetCoreCallback()->GetImageProcessor(this);
-		if (ip)
-		{
-			ip->Process(const_cast<unsigned char*>(img_[0].GetPixels()), GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel());
-
-		}
+// image processor now called from core
 
 	  //  while (GetCurrentMMTime() - readoutStartTime_ < MM::MMTime(readoutUs_)) {CDeviceUtils::SleepMs(5);}
 		singleChannelSize = img_[0].Width() * img_[0].Height() * img_[0].Depth();

@@ -160,6 +160,9 @@ bool CircularBuffer::InsertMultiChannel(const unsigned char* pixArray, unsigned 
          if (!pImg)
             return false;
 
+
+         
+
          Metadata md;
 
          if (pMd)

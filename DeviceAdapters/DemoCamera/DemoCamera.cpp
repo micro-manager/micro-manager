@@ -475,7 +475,9 @@ const unsigned char* CDemoCamera::GetImageBuffer()
 
 		
 	MM::ImageProcessor* ip = NULL;
+#ifdef PROCESSIMAGEINDEVICEADAPTER
    ip = GetCoreCallback()->GetImageProcessor(this);
+#endif
    unsigned char *pB = (unsigned char*)(img_.GetPixels());
 
 	if (ip)
@@ -2474,7 +2476,23 @@ int DemoTranspose::Process(unsigned char *pBuffer, unsigned int width, unsigned 
          }
 
       }
+      else if( 8 == byteDepth)
+      {
+         unsigned long long lltmp;
+         unsigned long long *pB = (unsigned long long*) pBuffer; 
+         for( unsigned long ix = 0; ix < width; ++ix)
+         {
+            for( unsigned long iy = ix; iy < height; ++iy)
+            {
+               lltmp = pB[ ix + iy*height];
+               pB[ ix + iy*height] = pB[iy + ix*width];
+               pB[iy + ix*width] = lltmp;
+            }
+         }
+
+      }
       else 
+
       {
          ret = DEVICE_NOT_SUPPORTED;
       }
