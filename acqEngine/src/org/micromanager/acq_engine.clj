@@ -202,6 +202,10 @@
 
 (declare device-agents)
 
+(defn wait-for-device [dev]
+  (when (and dev (pos? (.length dev)))
+    (core waitForDevice dev)))
+
 (defn create-device-agents []
   (def device-agents
     (let [devs (seq (core getLoadedDevices))]
@@ -247,7 +251,7 @@
       (doall (map (partial await-for 10000) (vals device-agents))))
     (do
       (doseq [[dev action] action-map]
-        (action) (core waitForDevice dev)))))
+        (action) (wait-for-device dev)))))
 
 (defn run-autofocus []
   (.. gui getAutofocusManager getDevice fullFocus)
@@ -257,11 +261,11 @@
   (with-core-setting [getAutoShutter setAutoShutter false]
     (if open-before
       (core setShutterOpen true)
-      (core waitForDevice (core getShutterDevice)))
+      (wait-for-device (core getShutterDevice)))
     (core snapImage)
     (if close-after
       (core setShutterOpen false))
-      (core waitForDevice (core getShutterDevice))))
+      (wait-for-device (core getShutterDevice))))
 
 (defn init-burst [length]
   (core setAutoShutter (@state :init-auto-shutter))
@@ -315,7 +319,7 @@
             (let [z (compute-z-position event)]
               (when (not= z (@state :last-z-position))
                 (do (set-stage-position z-drive z)
-                    (core waitForDevice z-drive)))))
+                    (wait-for-device z-drive)))))
           #(do (expose event)
                (collect-image event out-queue))))))
 
