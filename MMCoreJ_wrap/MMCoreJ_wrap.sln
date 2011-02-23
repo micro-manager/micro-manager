@@ -159,6 +159,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GigECamera", "..\DeviceAdap
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Sapphire", "..\DeviceAdapters\Sapphire\Sapphire.vcproj", "{3A83E7A0-34A5-4304-8D88-00005A99712E}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ImageProcessorChain", "..\DeviceAdapters\ImageProcessorChain\ImageProcessorChain.vcproj", "{806A629B-7EAA-4265-A4C0-000000000000}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -767,6 +769,14 @@ Global
 		{3A83E7A0-34A5-4304-8D88-00005A99712E}.Release|Win32.Build.0 = Release|Win32
 		{3A83E7A0-34A5-4304-8D88-00005A99712E}.Release|x64.ActiveCfg = Release|x64
 		{3A83E7A0-34A5-4304-8D88-00005A99712E}.Release|x64.Build.0 = Release|x64
+		{806A629B-7EAA-4265-A4C0-000000000000}.Debug|Win32.ActiveCfg = Debug|Win32
+		{806A629B-7EAA-4265-A4C0-000000000000}.Debug|Win32.Build.0 = Debug|Win32
+		{806A629B-7EAA-4265-A4C0-000000000000}.Debug|x64.ActiveCfg = Debug|x64
+		{806A629B-7EAA-4265-A4C0-000000000000}.Debug|x64.Build.0 = Debug|x64
+		{806A629B-7EAA-4265-A4C0-000000000000}.Release|Win32.ActiveCfg = Release|Win32
+		{806A629B-7EAA-4265-A4C0-000000000000}.Release|Win32.Build.0 = Release|Win32
+		{806A629B-7EAA-4265-A4C0-000000000000}.Release|x64.ActiveCfg = Release|x64
+		{806A629B-7EAA-4265-A4C0-000000000000}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
