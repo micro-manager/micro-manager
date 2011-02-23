@@ -182,6 +182,9 @@
 		<copy file="${BinRoot}/mmgr_dal_SutterLambda.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_ThorlabsFilterWheel.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_ThorlabsSC10.dll" todir="${InstallRoot}" />
+
+		<copy file="${BinRoot}/mmgr_dal_TIScam.dll" todir="${InstallRoot}" />
+
 		<copy file="${BinRoot}/mmgr_dal_TwainCamera.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_USBManager.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_Utilities.dll" todir="${InstallRoot}" />
