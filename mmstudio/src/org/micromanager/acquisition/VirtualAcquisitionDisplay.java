@@ -77,7 +77,7 @@ public class VirtualAcquisitionDisplay {
          width = MDUtils.getWidth(summaryMetadata);
          height = MDUtils.getHeight(summaryMetadata);
          numSlices = Math.max(summaryMetadata.getInt("Slices"), 1);
-         numFrames = Math.max(summaryMetadata.getInt("Frames"), 1);
+         numFrames = Math.max(Math.min(2,summaryMetadata.getInt("Frames")), 1);
          numChannels = Math.max(summaryMetadata.getInt("Channels"), 1);
          numPositions = Math.max(summaryMetadata.getInt("Positions"), 0);
          numComponents_ = MDUtils.getNumberOfComponents(summaryMetadata);
@@ -108,9 +108,9 @@ public class VirtualAcquisitionDisplay {
 
       hc_ = new HyperstackControls(this);
       hyperImage_ = createImagePlus(numGrayChannels, numSlices, numFrames, virtualStack_, hc_);
-      tSelector_ = getTSelector();
       applyPixelSizeCalibration(hyperImage_);
       createWindow(hyperImage_, hc_);
+      tSelector_ = getTSelector();
       setNumPositions(numPositions);
       for (int i=0;i<numGrayChannels;++i) {
          updateChannelLUT(i);
@@ -126,6 +126,14 @@ public class VirtualAcquisitionDisplay {
       if (win instanceof StackWindow) {
          try {
             tSelector = (ScrollbarWithLabel) JavaUtils.getRestrictedFieldValue((StackWindow) win, StackWindow.class, "tSelector");
+         } catch (NoSuchFieldException ex) {
+            tSelector = null;
+            ReportingUtils.logError(ex);
+         }
+      }
+      if (tSelector == null) {
+         try {
+            tSelector = (ScrollbarWithLabel) JavaUtils.getRestrictedFieldValue((StackWindow) win, StackWindow.class, "animationSelector");
          } catch (NoSuchFieldException ex) {
             tSelector = null;
             ReportingUtils.logError(ex);
@@ -249,8 +257,9 @@ public class VirtualAcquisitionDisplay {
          tSelector_.setMaximum(n + 1);
          ImageWindow win = hyperImage_.getWindow();
          try {
-            JavaUtils.setRestrictedFieldValue(hyperImage_, ImagePlus.class, "nSlices", n);
-            JavaUtils.setRestrictedFieldValue(win, ImageWindow.class, "nSlices", n);
+            this.virtualStack_.setSize(this.getNumChannels() * n * this.getNumSlices());
+            JavaUtils.setRestrictedFieldValue(hyperImage_, ImagePlus.class, "nFrames", n);
+            JavaUtils.setRestrictedFieldValue(win, StackWindow.class, "nFrames", n);
          } catch (NoSuchFieldException ex) {
             ReportingUtils.logError(ex);
          }
@@ -322,6 +331,10 @@ public class VirtualAcquisitionDisplay {
          updateWindow();
          JSONObject md = taggedImg.tags;
          int chan = this.rgbToGrayChannel(MDUtils.getChannelIndex(md));
+         int frame = MDUtils.getFrameIndex(taggedImg.tags);
+         if (this.getNumFrames() <= frame) {
+            this.setNumFrames(1 + frame);
+         }
 
          try {
             int p = 1 + MDUtils.getPositionIndex(taggedImg.tags);
