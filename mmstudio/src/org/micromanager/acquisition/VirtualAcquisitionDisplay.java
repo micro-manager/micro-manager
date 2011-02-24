@@ -338,8 +338,10 @@ public class VirtualAcquisitionDisplay {
          JSONObject md = taggedImg.tags;
          int chan = this.rgbToGrayChannel(MDUtils.getChannelIndex(md));
          int frame = MDUtils.getFrameIndex(taggedImg.tags);
-         if (tSelector_.getMaximum() <= (1 + frame)) {
-            this.setNumFrames(1 + frame);
+         if (tSelector_ != null) {
+            if (tSelector_.getMaximum() <= (1 + frame)) {
+               this.setNumFrames(1 + frame);
+            }
          }
 
          try {
