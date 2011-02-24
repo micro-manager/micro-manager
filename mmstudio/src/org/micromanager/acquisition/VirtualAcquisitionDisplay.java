@@ -56,7 +56,6 @@ public class VirtualAcquisitionDisplay {
    private int numComponents_ = 1;
    private AcquisitionEngine eng_;
    private boolean finished_ = false;
-   private boolean channelDisplayUpdated_ = false;
 
    
    public VirtualAcquisitionDisplay(MMImageCache imageCache, AcquisitionEngine eng) {
@@ -261,7 +260,7 @@ public class VirtualAcquisitionDisplay {
    private void setNumFrames(int n) {
       if (tSelector_ != null) {
          tSelector_.setMaximum(n + 1);
-         ImageWindow win = hyperImage_.getWindow();
+         //ImageWindow win = hyperImage_.getWindow();
          try {
             this.virtualStack_.setSize(this.getNumChannels() * n * this.getNumSlices());
             JavaUtils.setRestrictedFieldValue(hyperImage_, ImagePlus.class, "nFrames", n);
@@ -370,7 +369,6 @@ public class VirtualAcquisitionDisplay {
                   setChannelDisplayRange(chan, pixelMin, pixelMax, false);
                   hyperImage_.updateImage();
                }
-               channelDisplayUpdated_ = true;
             } catch (Exception ex) {
                ReportingUtils.showError(ex);
             }
