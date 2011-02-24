@@ -120,7 +120,7 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
 
    @Override
    public int getSize() {
-      return nSlices_;
+      return acq_.getStackSize();
    }
 
    @Override
