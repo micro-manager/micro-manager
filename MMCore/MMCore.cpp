@@ -578,7 +578,7 @@ vector<string> CMMCore::getDeviceLibraries() throw (CMMError)
  * Loads a device from the plugin library.
  * @param label assigned name for the device during the core session
  * @param library the name of the plugin library (dll). The name should be supplied without the
- *                extension and path since the naming convention and locations are paltform
+ *                extension and path since the naming convention and locations are platform
  *                dependent
  * @param device the name of the device. The name must correspond to one of the names recognized
  *                   by the specific plugin library.
