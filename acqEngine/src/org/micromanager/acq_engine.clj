@@ -35,6 +35,7 @@
            [org.json JSONObject JSONArray]
            [java.util Date UUID]
            [java.text SimpleDateFormat]
+           [javax.swing SwingUtilities]
            [ij ImagePlus])
    (:gen-class
      :name org.micromanager.AcqEngine
@@ -154,6 +155,7 @@
       {
        "AxisPositions" (when-let [axes (get-in event [:position :axes])] (JSONObject. axes))
        "Binning" (core getProperty (core getCameraDevice) "Binning")
+       "CameraBitDepth" (core getImageBitDepth)
        "Channel" (get-in event [:channel :name])
        "ChannelIndex" (:channel-index event)
        "ElapsedTime-ms" (if (state :start-time) (- (clock-ms) (state :start-time)) 0)
@@ -529,6 +531,7 @@
 
 (def live-mode-running (ref false))
 
+
 (defn enable-live-mode [^Boolean on]
       (if on
         (let [event (create-basic-event)
@@ -536,12 +539,11 @@
           (dosync (ref-set live-mode-running true))
           (core startContinuousSequenceAcquisition 0)
           (.start (Thread.
-                    #(do
-                       (while @live-mode-running
-                         (let [img (annotate-image (core getLastImage) event state)]
-                           (reset-snap-window img)
-                             (show-image @snap-window img)))
-                       (core stopSequenceAcquisition)))))
+                    #(do (while @live-mode-running
+                           (let [img (annotate-image (core getLastImage) event state)]
+                              (reset-snap-window img)
+                              (show-image @snap-window img)))
+                         (core stopSequenceAcquisition)))))
         (dosync (ref-set live-mode-running false))))
 
 ;; java interop
