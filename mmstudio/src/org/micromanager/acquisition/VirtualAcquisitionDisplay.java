@@ -259,12 +259,12 @@ public class VirtualAcquisitionDisplay {
 
    private void setNumFrames(int n) {
       if (tSelector_ != null) {
-         tSelector_.setMaximum(n + 1);
          //ImageWindow win = hyperImage_.getWindow();
          try {
-            this.virtualStack_.setSize(this.getNumChannels() * n * this.getNumSlices());
+            this.virtualStack_.setSize(this.getNumChannels() * this.getNumSlices() * n);
             JavaUtils.setRestrictedFieldValue(hyperImage_, ImagePlus.class, "nFrames", n);
-           // JavaUtils.setRestrictedFieldValue(win, StackWindow.class, "nFrames", n);
+            tSelector_.setMaximum(n + 1);
+            // JavaUtils.setRestrictedFieldValue(win, StackWindow.class, "nFrames", n);
          } catch (NoSuchFieldException ex) {
             ReportingUtils.logError(ex);
          }
@@ -618,7 +618,8 @@ public class VirtualAcquisitionDisplay {
    }
 
    public int getNumFrames() {
-      return hyperImage_.getNFrames();
+      return tSelector_.getMaximum() - 1;
+//      return hyperImage_.getNFrames();
    }
 
    public int getNumPositions() {
