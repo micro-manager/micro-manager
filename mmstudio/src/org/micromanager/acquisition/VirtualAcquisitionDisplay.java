@@ -112,7 +112,11 @@ public class VirtualAcquisitionDisplay {
       applyPixelSizeCalibration(hyperImage_);
       createWindow(hyperImage_, hc_);
       tSelector_ = getTSelector();
-      setNumFrames(2);
+      if (imageCache_.lastAcquiredFrame() > 1) {
+         setNumFrames(1 + imageCache_.lastAcquiredFrame());
+      } else {
+         setNumFrames(2);
+      }
       setNumPositions(numPositions);
       for (int i=0;i<numGrayChannels;++i) {
          updateChannelLUT(i);

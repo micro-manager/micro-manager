@@ -11,6 +11,7 @@ import org.json.JSONObject;
 import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMException;
+import org.micromanager.utils.ReportingUtils;
 
 /**
  *
@@ -22,7 +23,8 @@ public class TaggedImageStorageRam implements TaggedImageStorage {
    protected HashMap<String, TaggedImage> imageMap_;
    private JSONObject summaryMetadata_;
    private JSONObject displaySettings_;
-
+   private int lastFrame_ = -1;
+   
    public TaggedImageStorageRam(JSONObject summaryMetadata) {
       imageMap_ = new HashMap<String,TaggedImage>();
       summaryMetadata_ = summaryMetadata;
@@ -32,6 +34,11 @@ public class TaggedImageStorageRam implements TaggedImageStorage {
    public String putImage(TaggedImage taggedImage) throws MMException {
       String label = MDUtils.getLabel(taggedImage.tags);
       imageMap_.put(label, taggedImage);
+      try {
+         lastFrame_ = Math.max(lastFrame_, MDUtils.getFrameIndex(taggedImage.tags));
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex);
+      }
       return label;
    }
 
@@ -68,6 +75,10 @@ public class TaggedImageStorageRam implements TaggedImageStorage {
 
    public String getDiskLocation() {
       return null;
+   }
+
+   public int lastAcquiredFrame() {
+      return lastFrame_;
    }
 
 }

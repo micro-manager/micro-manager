@@ -24,4 +24,5 @@ public interface TaggedImageStorage {
    public JSONObject getDisplayAndComments();
    public void close();
    public String getDiskLocation();
+   public int lastAcquiredFrame();
 }

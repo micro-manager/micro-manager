@@ -40,6 +40,7 @@ public class MMImageCache implements TaggedImageStorage {
    }
 
    public int lastAcquiredFrame() {
+      lastFrame_ = Math.max(imageStorage_.lastAcquiredFrame(), lastFrame_);
       return lastFrame_;
    }
 
@@ -83,7 +84,7 @@ public class MMImageCache implements TaggedImageStorage {
          softTable_.put(MDUtils.getLabel(taggedImg.tags), new SoftReference(taggedImg));
          taggedImg.tags.put("Summary",imageStorage_.getSummaryMetadata());
          checkForChangingTags(taggedImg);
-         lastFrame_ = MDUtils.getFrameIndex(taggedImg.tags);
+         lastFrame_ = Math.max(lastFrame_, MDUtils.getFrameIndex(taggedImg.tags));
          return imageStorage_.putImage(taggedImg);
       } catch (Exception ex) {
          ReportingUtils.logError(ex);

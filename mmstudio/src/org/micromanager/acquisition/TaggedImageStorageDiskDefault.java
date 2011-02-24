@@ -47,7 +47,8 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
    private HashMap<String,String> filenameTable_;
    private HashMap<String, JSONObject> metadataTable_ = null;
    private JSONObject displaySettings_;
-   
+   private int lastFrame_ = -1;
+
    public TaggedImageStorageDiskDefault(String dir) {
       this(dir, false, null);
    }
@@ -69,6 +70,10 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       } catch (Exception e) {
          ReportingUtils.logError(e);
       }
+   }
+
+   public int lastAcquiredFrame() {
+      return lastFrame_;
    }
 
    private String getPosition(TaggedImage taggedImg) {
@@ -347,6 +352,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
                         if (!md.has("PixelType") && !md.has("IJType")) {
                            md.put("PixelType", MDUtils.getPixelType(summaryMetadata_));
                         }
+                        lastFrame_ = Math.max(MDUtils.getFrameIndex(md), lastFrame_);
                         String fileName = MDUtils.getFileName(md);
                         if (position.length() > 0)
                            fileName = position + "/" + fileName;
