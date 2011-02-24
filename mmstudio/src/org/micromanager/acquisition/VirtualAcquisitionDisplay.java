@@ -77,7 +77,8 @@ public class VirtualAcquisitionDisplay {
          width = MDUtils.getWidth(summaryMetadata);
          height = MDUtils.getHeight(summaryMetadata);
          numSlices = Math.max(summaryMetadata.getInt("Slices"), 1);
-         numFrames = Math.max(Math.min(2,summaryMetadata.getInt("Frames")), 1);
+         numFrames = Math.max(summaryMetadata.getInt("Frames"), 1);
+         //numFrames = Math.max(Math.min(2,summaryMetadata.getInt("Frames")), 1);
          numChannels = Math.max(summaryMetadata.getInt("Channels"), 1);
          numPositions = Math.max(summaryMetadata.getInt("Positions"), 0);
          numComponents_ = MDUtils.getNumberOfComponents(summaryMetadata);
@@ -111,6 +112,7 @@ public class VirtualAcquisitionDisplay {
       applyPixelSizeCalibration(hyperImage_);
       createWindow(hyperImage_, hc_);
       tSelector_ = getTSelector();
+      setNumFrames(2);
       setNumPositions(numPositions);
       for (int i=0;i<numGrayChannels;++i) {
          updateChannelLUT(i);
@@ -259,7 +261,7 @@ public class VirtualAcquisitionDisplay {
          try {
             this.virtualStack_.setSize(this.getNumChannels() * n * this.getNumSlices());
             JavaUtils.setRestrictedFieldValue(hyperImage_, ImagePlus.class, "nFrames", n);
-            JavaUtils.setRestrictedFieldValue(win, StackWindow.class, "nFrames", n);
+           // JavaUtils.setRestrictedFieldValue(win, StackWindow.class, "nFrames", n);
          } catch (NoSuchFieldException ex) {
             ReportingUtils.logError(ex);
          }
@@ -332,7 +334,7 @@ public class VirtualAcquisitionDisplay {
          JSONObject md = taggedImg.tags;
          int chan = this.rgbToGrayChannel(MDUtils.getChannelIndex(md));
          int frame = MDUtils.getFrameIndex(taggedImg.tags);
-         if (this.getNumFrames() <= frame) {
+         if (tSelector_.getMaximum() <= frame) {
             this.setNumFrames(1 + frame);
          }
 
