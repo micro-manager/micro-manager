@@ -45,7 +45,14 @@ public class VirtualAcquisitionDisplay {
       }
    }
 
+   /* This interface and the following two classes
+    * allow us to manipulate the dimensions
+    * in an ImagePlus without it throwing conniptions.
+    */
    public interface IMMImagePlus {
+      public int getNChannelsUnverified();
+      public int getNSlicesUnverified();
+      public int getNFramesUnverified();
       public void setNChannelsUnverified(int nChannels);
       public void setNSlicesUnverified(int nSlices);
       public void setNFramesUnverified(int nFrames);
@@ -66,6 +73,16 @@ public class VirtualAcquisitionDisplay {
          return getImageStackSize();
       }
 
+      public int getNChannelsUnverified() {
+         return super.nChannels;
+      }
+      public int getNSlicesUnverified() {
+         return super.nSlices;
+      }
+      public int getNFramesUnverified() {
+         return super.nFrames;
+      }
+
       public void setNChannelsUnverified(int nChannels) {
          super.nChannels = nChannels;
       }
@@ -77,12 +94,19 @@ public class VirtualAcquisitionDisplay {
       }
    }
 
-   /* This class allows us to manipulate the dimensions
-    * in an ImagePlus without have it throw conniptions.
-    */
    public class MMImagePlus extends ImagePlus implements IMMImagePlus {
       MMImagePlus(String title, ImageStack stack) {
          super(title, stack);
+      }
+
+      @Override
+      public int getImageStackSize() {
+         return super.nChannels * super.nSlices * super.nFrames;
+      }
+
+      @Override
+      public int getStackSize() {
+         return getImageStackSize();
       }
 
       public int getNChannelsUnverified() {
@@ -118,7 +142,6 @@ public class VirtualAcquisitionDisplay {
    private AcquisitionEngine eng_;
    private boolean finished_ = false;
    final private MMImagePlus mmImagePlus_;
-
    
    public VirtualAcquisitionDisplay(MMImageCache imageCache, AcquisitionEngine eng) {
 
@@ -180,7 +203,7 @@ public class VirtualAcquisitionDisplay {
       if (imageCache_.lastAcquiredFrame() > 1) {
          setNumFrames(1 + imageCache_.lastAcquiredFrame());
       } else {
-         setNumFrames(2);
+         setNumFrames(1);
       }
       setNumPositions(numPositions);
       for (int i=0;i<numGrayChannels;++i) {
@@ -337,10 +360,12 @@ public class VirtualAcquisitionDisplay {
    }
 
    public int getStackSize() {
-      if (mmImagePlus_ == null) {
-         return 2;
-      } else {
+      if (hyperImage_ != null) {
          return getNumChannels() * getNumSlices() * getNumFrames();
+      } else if (mmImagePlus_ != null) {
+         return mmImagePlus_.getStackSize();
+      } else {
+         return 2;
       }
    }
 
@@ -687,11 +712,11 @@ public class VirtualAcquisitionDisplay {
    }
 
    public int getNumSlices() {
-      return mmImagePlus_.getNSlicesUnverified();
+      return ((IMMImagePlus) hyperImage_).getNSlicesUnverified();
    }
 
    public int getNumFrames() {
-      return mmImagePlus_.getNFramesUnverified();
+      return ((IMMImagePlus) hyperImage_).getNFramesUnverified();
    }
 
    public int getNumPositions() {
@@ -821,7 +846,7 @@ public class VirtualAcquisitionDisplay {
 
    // CHANNEL SECTION ////////////
    public int getNumChannels() {
-      return mmImagePlus_.getNChannelsUnverified();
+      return ((IMMImagePlus) hyperImage_).getNChannelsUnverified();
    }
 
    public int getNumGrayChannels() {
