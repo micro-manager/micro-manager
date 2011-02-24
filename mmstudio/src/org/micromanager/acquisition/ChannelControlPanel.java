@@ -16,6 +16,7 @@ import javax.swing.JColorChooser;
 import org.micromanager.graph.GraphData;
 import org.micromanager.graph.HistogramPanel;
 import org.micromanager.graph.HistogramPanel.CursorListener;
+import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.MathFunctions;
 import org.micromanager.utils.ReportingUtils;
@@ -305,8 +306,13 @@ public class ChannelControlPanel extends javax.swing.JPanel {
          int maxValue = 0;
          if (type == ImagePlus.GRAY8)
             maxValue = 1 << 8;
-         if (type == ImagePlus.GRAY16)
-            maxValue = 1 << 16;
+         if (type == ImagePlus.GRAY16) {
+            try {
+               maxValue = 1 << MDUtils.getBitDepth(acq_.getSummaryMetadata());
+            } catch (Exception ex) {
+               maxValue = 1 << 16;
+            }
+         }
          return maxValue;
    }
 

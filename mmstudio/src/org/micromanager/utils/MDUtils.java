@@ -41,6 +41,14 @@ public class MDUtils {
       map.put("PositionIndex", positionIndex);
    }
 
+   public static int getBitDepth(JSONObject map) throws Exception {
+      return map.getInt("BitDepth");
+   }
+
+   public static void setBitDepth(JSONObject map, int bitDepth) throws Exception {
+      map.put("BitDepth", bitDepth);
+   }
+
    public static int getWidth(JSONObject map) throws Exception {
       return map.getInt("Width");
    }

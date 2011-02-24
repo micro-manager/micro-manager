@@ -425,6 +425,7 @@
   (let [depth (int (core getBytesPerPixel))
         channels (settings :channels)]
      (JSONObject. {
+      "BitDepth" (core getImageBitDepth)
       "Channels" (count (settings :channels))
       "ChNames" (JSONArray. (map :name channels))
       "ChColors" (JSONArray. (map #(.getRGB (:color %)) channels))         
