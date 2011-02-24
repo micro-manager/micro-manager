@@ -3,10 +3,7 @@
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   The example implementation of the demo camera.
-//                Simulates generic digital camera and associated automated
-//                microscope devices and enables testing of the rest of the
-//                system without the need to connect to the actual hardware. 
+// DESCRIPTION:   Runs a chain of other ImageProcessors on each image 
 //                
 // AUTHOR:        Karl Hoover
 //
