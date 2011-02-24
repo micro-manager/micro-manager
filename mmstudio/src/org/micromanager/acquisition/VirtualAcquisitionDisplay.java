@@ -45,6 +45,19 @@ public class VirtualAcquisitionDisplay {
       }
    }
 
+   final static Color[] rgb = {Color.red, Color.green, Color.blue};
+
+   final MMImageCache imageCache_;
+   final private ImagePlus hyperImage_;
+   final private HyperstackControls hc_;
+   final AcquisitionVirtualStack virtualStack_;
+   final private ScrollbarWithLabel pSelector_;
+   final private ScrollbarWithLabel tSelector_;
+   final private MMImagePlus mmImagePlus_;
+   final private int numComponents_;
+   private AcquisitionEngine eng_;
+   private boolean finished_ = false;
+
    /* This interface and the following two classes
     * allow us to manipulate the dimensions
     * in an ImagePlus without it throwing conniptions.
@@ -129,19 +142,6 @@ public class VirtualAcquisitionDisplay {
          super.nFrames = nFrames;
       }
    }
-
-   final static Color[] rgb = {Color.red, Color.green, Color.blue};
-
-   final MMImageCache imageCache_;
-   final private ImagePlus hyperImage_;
-   final private HyperstackControls hc_;
-   final AcquisitionVirtualStack virtualStack_;
-   final private ScrollbarWithLabel pSelector_;
-   final private ScrollbarWithLabel tSelector_;
-   private int numComponents_ = 1;
-   private AcquisitionEngine eng_;
-   private boolean finished_ = false;
-   final private MMImagePlus mmImagePlus_;
    
    public VirtualAcquisitionDisplay(MMImageCache imageCache, AcquisitionEngine eng) {
 
@@ -159,7 +159,7 @@ public class VirtualAcquisitionDisplay {
       int numPositions = 0;
       int width = 0;
       int height = 0;
-
+      int numComponents = 1;
       try {
          width = MDUtils.getWidth(summaryMetadata);
          height = MDUtils.getHeight(summaryMetadata);
@@ -168,11 +168,11 @@ public class VirtualAcquisitionDisplay {
          //numFrames = Math.max(Math.min(2,summaryMetadata.getInt("Frames")), 1);
          numChannels = Math.max(summaryMetadata.getInt("Channels"), 1);
          numPositions = Math.max(summaryMetadata.getInt("Positions"), 0);
-         numComponents_ = MDUtils.getNumberOfComponents(summaryMetadata);
+          numComponents = Math.max(MDUtils.getNumberOfComponents(summaryMetadata),1);
       } catch (Exception e) {
          ReportingUtils.showError(e);
       }
-
+      numComponents_ = numComponents;
       numGrayChannels = numComponents_ * numChannels;
 
       if (imageCache_.getDisplayAndComments() == null || imageCache_.getDisplayAndComments().isNull("Channels"))
