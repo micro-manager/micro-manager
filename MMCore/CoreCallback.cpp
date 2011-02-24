@@ -35,14 +35,23 @@
 #include "boost/date_time/posix_time/posix_time.hpp"
 
 
-int CoreCallback::InsertImage(const MM::Device* caller, const unsigned char* buf, unsigned width, unsigned height, unsigned byteDepth, const Metadata* pMd)
+
+int CoreCallback::InsertImage(const MM::Device* caller, const unsigned char* buf, unsigned width, unsigned height, unsigned byteDepth, const Metadata* pMd, bool doProcess)
 {
    try 
    {
 
-   MM::ImageProcessor* ip = GetImageProcessor(caller);
-   if( NULL != ip)
-      ip->Process(const_cast<unsigned char*>(buf), width, height, byteDepth);
+      if(doProcess)
+      {
+         MM::ImageProcessor* ip = GetImageProcessor(caller);
+         if( NULL != ip)
+         {
+            //LogMessage(caller,"call Process from InsertImage(caller,buf,width,height,...)",true);
+
+            ip->Process(const_cast<unsigned char*>(buf), width, height, byteDepth);
+
+         }
+      }
 
       if (core_->cbuf_->InsertImage(buf, width, height, byteDepth, pMd))
          return DEVICE_OK;
@@ -55,13 +64,18 @@ int CoreCallback::InsertImage(const MM::Device* caller, const unsigned char* buf
    }
 
 }
+
 int CoreCallback::InsertImage(const MM::Device* caller, const ImgBuffer & imgBuf)
 {
    Metadata md = imgBuf.GetMetadata();
    unsigned char* p = const_cast<unsigned char*>(imgBuf.GetPixels());
    MM::ImageProcessor* ip = GetImageProcessor(caller);
    if( NULL != ip)
+   {
+                  //LogMessage(caller,"call Process from InsertImage(caller,imgBuf)",true);
+
       ip->Process(p, imgBuf.Width(), imgBuf.Height(), imgBuf.Depth());
+   }
 
    return InsertImage(caller, imgBuf.GetPixels(), imgBuf.Width(), 
       imgBuf.Height(), imgBuf.Depth(), &md);

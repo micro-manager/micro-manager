@@ -114,6 +114,9 @@ public:
 
 private:
    int SetAllowedBinning();
+
+   void GenerateEmptyImage(ImgBuffer& img);
+
    void GenerateSyntheticImage(ImgBuffer& img, double exp);
    int ResizeImageBuffer();
 

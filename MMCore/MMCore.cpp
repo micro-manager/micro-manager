@@ -1602,6 +1602,8 @@ void* CMMCore::getImage() const throw (CMMError)
 		
       	if (imageProcessor_)
 	      {
+            CMMCore* pc = const_cast<CMMCore*>(this);
+            //pc->logMessage("call Process from getImage()");
             imageProcessor_->Process((unsigned char*)pBuf, camera_->GetImageHeight(),  camera_->GetImageWidth(), camera_->GetImageBytesPerPixel() );
 	      }
 

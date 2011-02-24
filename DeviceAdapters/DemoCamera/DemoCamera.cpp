@@ -404,8 +404,14 @@ int CDemoCamera::Initialize()
 
    initialized_ = true;
 
+
+
+
    // initialize image buffer
-   return SnapImage();
+   GenerateEmptyImage(img_);
+   return DEVICE_OK;
+
+
 }
 
 /**
@@ -723,12 +729,19 @@ int CDemoCamera::InsertImage()
 
    MMThreadGuard g(imgPixelsLock_);
 
-   int ret = GetCoreCallback()->InsertImage(this, GetImageBuffer(), GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel(), &md);
+
+   const unsigned char* pI = GetImageBuffer();
+   unsigned int w = GetImageWidth();
+   unsigned int h = GetImageHeight();
+   unsigned int b = GetImageBytesPerPixel();
+
+   int ret = GetCoreCallback()->InsertImage(this, pI, w, h, b, &md);
    if (!stopOnOverflow_ && ret == DEVICE_BUFFER_OVERFLOW)
    {
       // do not stop on overflow - just reset the buffer
       GetCoreCallback()->ClearImageBuffer(this);
-      return GetCoreCallback()->InsertImage(this, GetImageBuffer(), GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel(), &md);
+      // don't process this same image again...
+      return GetCoreCallback()->InsertImage(this, pI, w, h, b, &md, false);
    } else
       return ret;
 }
@@ -1244,11 +1257,23 @@ int CDemoCamera::ResizeImageBuffer()
    return DEVICE_OK;
 }
 
+void CDemoCamera::GenerateEmptyImage(ImgBuffer& img)
+{
+   MMThreadGuard g(imgPixelsLock_);
+   if (img.Height() == 0 || img.Width() == 0 || img.Depth() == 0)
+      return;
+   unsigned char* pBuf = const_cast<unsigned char*>(img.GetPixels());
+   memset(pBuf, 0, img.Height()*img.Width()*img.Depth());
+}
+
+
+
 /**
 * Generate a spatial sine wave.
 */
 void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
 {
+   LogMessage("enter GenerateSyntheticImage", true);
    MMThreadGuard g(imgPixelsLock_);
 
 	//std::string pixelType;
@@ -2431,6 +2456,8 @@ int DemoTranspose::Process(unsigned char *pBuffer, unsigned int width, unsigned 
    if( width != height)
       return DEVICE_NOT_SUPPORTED; // problem with tranposing non-square images is that the image buffer
    // will need to be modified by the image processor.
+   if(busy_)
+      return DEVICE_ERR;
  
    busy_ = true;
 
@@ -2481,6 +2508,7 @@ int DemoTranspose::Process(unsigned char *pBuffer, unsigned int width, unsigned 
       }
    }
    busy_ = false;
+   LogMessage("Leaving DemoTranspose::Process", true);
 
    return ret;
 }
