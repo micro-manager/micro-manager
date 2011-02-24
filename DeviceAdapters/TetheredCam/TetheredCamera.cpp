@@ -410,11 +410,6 @@ int CTetheredCamera::Initialize()
    // synchronize all properties
    // --------------------------
    nRet = UpdateStatus();
-   if (nRet != DEVICE_OK)
-      return nRet;
-
-   // initialize image buffer
-   // nRet = SnapImage();
    return nRet;
 }
 
@@ -1132,21 +1127,11 @@ int CTetheredCamera::AcquireFrame()
    {
       // Load image using libraw
       rc = LoadRawImage(factory, filename);
-      if (rc != DEVICE_OK)
-      {
-         // If libraw failed, try loading using the WIC Codecs
-         rc = LoadWICImage(factory, filename);
-      }
    }
    else
    {
       // Load image using the WIC Codecs 
       rc = LoadWICImage(factory, filename);
-      if (rc != DEVICE_OK)
-      {
-         // If WIC Codecs failed, try loading using libraw 
-         rc = LoadRawImage(factory, filename);
-      }
    }
 
    SafeRelease(factory);
@@ -1205,16 +1190,8 @@ int CTetheredCamera::ResizeImageBuffer()
       return ERR_CAM_CONVERSION;
    }
 
-   /*
-   * If binning is required and we are using the internal raw picture decoder, 
-   * libraw has already done binning by a factor of 2.
-   */
-   UINT scaleFactor = binning;
-   if (internalDecoder_ && (binning >= 2))
-      scaleFactor = binning / 2;
-
-   scaledWidth = frameWidth / scaleFactor;
-   scaledHeight = frameHeight / scaleFactor;
+   scaledWidth = frameWidth / binning;
+   scaledHeight = frameHeight / binning;
 
    IWICBitmapScaler *scaler = NULL;
    if (SUCCEEDED(hr))
@@ -1314,19 +1291,19 @@ int CTetheredCamera::ResizeImageBuffer()
    }
    
    WICPixelFormatGUID pixelFormat = GUID_WICPixelFormat8bppGray;
-   UINT frameBytesPerPixel = 1;
+   UINT imageBytesPerPixel = 1;
 
    if (grayScale_) 
    {
       if (bitDepth_ == 8)
       {
          pixelFormat = GUID_WICPixelFormat8bppGray;
-         frameBytesPerPixel = 1;
+         imageBytesPerPixel = 1;
       }
       else if (bitDepth_ == 16)
       {
          pixelFormat = GUID_WICPixelFormat16bppGray;
-         frameBytesPerPixel = 2;
+         imageBytesPerPixel = 2;
       }
       else
       {
@@ -1339,12 +1316,12 @@ int CTetheredCamera::ResizeImageBuffer()
       if (bitDepth_ == 8)
       {
          pixelFormat = GUID_WICPixelFormat32bppPBGRA;
-         frameBytesPerPixel = 4;
+         imageBytesPerPixel = 4;
       }
       else if (bitDepth_ == 16)
       {
          pixelFormat = GUID_WICPixelFormat64bppRGBA /* XXX We need GUID_WICPixelFormat64bppBGRA, but this is not available */;
-         frameBytesPerPixel = 8;
+         imageBytesPerPixel = 8;
       }
       else
       {
@@ -1375,7 +1352,7 @@ int CTetheredCamera::ResizeImageBuffer()
       hr = formatConverter->GetSize(&imageWidth, &imageHeight);
    }
 
-   if (SUCCEEDED(hr) && ((frameWidth == 0) || (frameHeight == 0)))
+   if (SUCCEEDED(hr) && ((imageWidth == 0) || (imageHeight == 0)))
    {
       LogMessage("Zero dimension image", true);
       return ERR_CAM_CONVERSION;
@@ -1383,14 +1360,14 @@ int CTetheredCamera::ResizeImageBuffer()
 
    if (SUCCEEDED(hr))
    {
-      img_.Resize(imageWidth, imageHeight, frameBytesPerPixel);
+      img_.Resize(imageWidth, imageHeight, imageBytesPerPixel);
    }
 
    /* Copy into image buffer */
    if (SUCCEEDED(hr))
    {
       LogMessage("Resize done", true);
-      hr = formatConverter->CopyPixels(NULL, imageWidth*frameBytesPerPixel, imageHeight*imageWidth*frameBytesPerPixel, img_.GetPixelsRW());
+      hr = formatConverter->CopyPixels(NULL, imageWidth*imageBytesPerPixel, imageHeight*imageWidth*imageBytesPerPixel, img_.GetPixelsRW());
    }
    
    if (SUCCEEDED(hr) && !grayScale_ && (bitDepth_ == 16)) // Test for 64bpp RGB color
@@ -1582,19 +1559,31 @@ int CTetheredCamera::LoadRawImage(IWICImagingFactory *factory, const char* filen
    }
    if (rc == 0)
    {
-      rawProcessor_.imgdata.params.document_mode = 0; // standard processing (with white balance)
-      rawProcessor_.imgdata.params.use_camera_wb = 1; // If possible, use the white balance from the camera.
       rawProcessor_.imgdata.params.filtering_mode = LIBRAW_FILTERING_AUTOMATIC;
-      //rawProcessor_.imgdata.params.filtering_mode = LIBRAW_FILTERING_NONE;
+      rawProcessor_.imgdata.params.output_bps = 16; // Write 16 bits per color value
       rawProcessor_.imgdata.params.gamm[0] = rawProcessor_.imgdata.params.gamm[1] = 1.0; // linear gamma curve
       rawProcessor_.imgdata.params.no_auto_bright = 1; // Don't use automatic increase of brightness by histogram.
-      rawProcessor_.imgdata.params.output_bps = 16; // Write 16 bits per color value
-      // Let libraw do the binning for us.
-      rawProcessor_.imgdata.params.half_size = (GetBinning() >= 2); // Half-size the output image. Instead  of  interpolating, reduce each 2x2 block of sensors to one pixel.
-      //rawProcessor_.imgdata.params.bad_pixels = "badpixels.txt"; // Path to file with bad pixels map (in dcraw format)
-      
-      rc = rawProcessor_.dcraw_process();
+
+      /*
+      * If we're using grayscale, there's no need for color interpolation; 
+      * and if binning is 2 or more, there's no need to interpolate the bayer grid either.
+      * This reduces memory requirements by a factor 4; and speeds up image processing.
+      */
+      if (grayScale_ && (GetBinning() >= 2))
+      {
+         rawProcessor_.imgdata.params.document_mode = 2; // grayscale, no color interpolation, no debayer, no white balance
+         rc = rawProcessor_.dcraw_document_mode_processing();
+      }
+      else /* color */
+      {
+         rawProcessor_.imgdata.params.document_mode = 0; // standard processing (with white balance)
+         rawProcessor_.imgdata.params.use_camera_wb = 1; // If possible, use the white balance from the camera.
+         rc = rawProcessor_.dcraw_process();
+      }
+      if (rawProcessor_.imgdata.process_warnings & LIBRAW_WARN_BAD_CAMERA_WB)
+         LogMessage("Raw: warning: camera white balance not suitable for use.", true);
    }
+   
    if (rc == 0)
    {
       rawImg = rawProcessor_.dcraw_make_mem_image(&rc);
@@ -1611,14 +1600,27 @@ int CTetheredCamera::LoadRawImage(IWICImagingFactory *factory, const char* filen
       return ERR_CAM_RAW;
    }
 
-   LogMessage("Raw: image decoded", true);
-
    // Convert decoded raw bitmap "rawImg" to WIC bitmap "frameBitmap"
 
    UINT uiWidth = rawImg->width;
    UINT uiHeight = rawImg->height;
+
    WICPixelFormatGUID formatGUID = GUID_WICPixelFormat48bppRGB;
 
+   if ((rawImg->type != LIBRAW_IMAGE_BITMAP) || (rawImg->bits != 16))
+   {
+      LogMessage("Raw: error in raw decoding, unsupported bitdepth.", true);
+      return ERR_CAM_RAW;
+   }
+
+   if (rawImg->colors == 1) formatGUID = GUID_WICPixelFormat16bppGray;
+   else if (rawImg->colors == 3) formatGUID = GUID_WICPixelFormat48bppRGB;
+   else 
+   {  
+      LogMessage("Raw: error in raw decoding, unsupported number of colors.", true);
+      return ERR_CAM_RAW;
+   }  
+   
    SafeRelease(frameBitmap);
    HRESULT hr = factory->CreateBitmap(uiWidth, uiHeight, formatGUID, WICBitmapCacheOnDemand, &frameBitmap);
    if (SUCCEEDED(hr))
@@ -1640,14 +1642,15 @@ int CTetheredCamera::LoadRawImage(IWICImagingFactory *factory, const char* filen
       }
       if (SUCCEEDED(hr))
       {
-         if (rawImg->data_size <= cbBufferSize)
+         ZeroMemory(pv, cbBufferSize);
+         if (rawImg->data_size < cbBufferSize)
          {
-            CopyMemory(pv, rawImg->data, rawImg->data_size);
+            LogMessage("Raw: warning: image buffer too small", true);
+            CopyMemory(pv, rawImg->data, rawImg->data_size); // This is the best we can do.
          }
          else
          {
-            LogMessage("Raw: image buffer too small", true);
-            return ERR_CAM_RAW; // bail out
+            CopyMemory(pv, rawImg->data, cbBufferSize); // Copy all pixels.
          }
       }
       if (SUCCEEDED(hr))
