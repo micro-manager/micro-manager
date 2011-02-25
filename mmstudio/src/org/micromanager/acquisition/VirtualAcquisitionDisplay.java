@@ -637,6 +637,8 @@ public class VirtualAcquisitionDisplay {
             }
 
             super.windowClosing(e);
+            MMStudioMainFrame.getInstance().removeMMBackgroundListener(this);
+            ImagePlus.removeImageListener(hc_);
             windowClosingDone_ = true;
             closed_ = true;
          }

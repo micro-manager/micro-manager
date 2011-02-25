@@ -611,8 +611,6 @@ public class MetadataPanel extends javax.swing.JPanel
       super.setVisible(visible);
    }
 
-
-
    //Implements ImageListener
    public void imageOpened(ImagePlus imp) {
       update(imp);
@@ -672,6 +670,7 @@ public class MetadataPanel extends javax.swing.JPanel
          imageMetadataModel_.setMetadata(null);
          summaryMetadataModel_.setMetadata(null);
          summaryCommentsTextArea.setText(null);
+         ccpList_ = null;
       } else {
          if (tabSelected == 1) {
             AcquisitionVirtualStack stack = getAcquisitionStack(imp);
