@@ -1107,7 +1107,7 @@ int CTetheredCamera::AcquireFrame()
    // Note: if keepOriginals_ is false, the file will be deleted.
    //strcpy(filename, "C:\\RAW_NIKON_D3.NEF");
    //strcpy(filename, "C:\\RAW_CANON_40D_RAW_V103.CR2");
- 
+
    //Initialize COM.
    CoInitialize(NULL);
 
@@ -1190,8 +1190,13 @@ int CTetheredCamera::ResizeImageBuffer()
       return ERR_CAM_CONVERSION;
    }
 
-   scaledWidth = frameWidth / binning;
-   scaledHeight = frameHeight / binning;
+   UINT scaleFactor = binning;
+   // Reduce scale factor if libraw already has scaled the image by a factor of 2.
+   if (internalDecoder_ && (rawProcessor_.imgdata.params.half_size == 1))
+      scaleFactor = binning / 2;
+
+   scaledWidth = frameWidth / scaleFactor;
+   scaledHeight = frameHeight / scaleFactor;
 
    IWICBitmapScaler *scaler = NULL;
    if (SUCCEEDED(hr))
@@ -1520,6 +1525,33 @@ void CTetheredCamera::LogWICMessage(HRESULT hr)
 }
 
 /*
+ * Log libraw warnings to micro-manager CoreLog
+ */
+
+void CTetheredCamera::LogRawWarnings()
+{
+   if (rawProcessor_.imgdata.process_warnings & LIBRAW_WARN_BAD_CAMERA_WB)
+      LogMessage("Raw: Warning: Camera white balance is not suitable for use.", true);
+   if (rawProcessor_.imgdata.process_warnings & LIBRAW_WARN_NO_METADATA)
+      LogMessage("Raw: Warning: Metadata extraction failed.", true);
+   if (rawProcessor_.imgdata.process_warnings & LIBRAW_WARN_NO_JPEGLIB)
+      LogMessage("Raw: Warning: Data in JPEG format.", true);
+   if (rawProcessor_.imgdata.process_warnings & LIBRAW_WARN_NO_EMBEDDED_PROFILE)
+      LogMessage("Raw: Warning: No embedded input profile found.", true);
+   if (rawProcessor_.imgdata.process_warnings & LIBRAW_WARN_NO_INPUT_PROFILE)
+      LogMessage("Raw: Warning: Error when opening input profile ICC file.", true);
+   if (rawProcessor_.imgdata.process_warnings & LIBRAW_WARN_BAD_OUTPUT_PROFILE)
+      LogMessage("Raw: Warning: Error when opening output profile ICC file.", true);
+   if (rawProcessor_.imgdata.process_warnings & LIBRAW_WARN_NO_BADPIXELMAP)
+      LogMessage("Raw: Warning: Error when opening bad pixels map file.", true);
+   if (rawProcessor_.imgdata.process_warnings & LIBRAW_WARN_BAD_DARKFRAME_FILE)
+      LogMessage("Raw: Warning: Error when opening dark frame file.", true);
+   if (rawProcessor_.imgdata.process_warnings & LIBRAW_WARN_BAD_DARKFRAME_DIM)
+      LogMessage("Raw: Warning: Dark frame file does not have same dimensions as RAW file, or is not in 16-bit PGM format", true);
+   return;
+ } 
+
+/*
  * Log libraw progress messages to micro-manager CoreLog
  */
 
@@ -1551,42 +1583,52 @@ int CTetheredCamera::LoadRawImage(IWICImagingFactory *factory, const char* filen
 
    // Decode raw image file "filename" into 48bpp RGB bitmap "rawImg".
    int rc;
+
    rawProcessor_.set_progress_handler(&LibrawProgressCallback, (void *)this); // log libraw progress messages to micro-manager CoreLog
+ 
+  // Let libraw do part of the binning for us.
+   rawProcessor_.imgdata.params.half_size = (GetBinning() >= 2); // Half-size the output image. Instead  of  interpolating, reduce each 2x2 block of sensors to one pixel.
+   rawProcessor_.imgdata.params.document_mode = 0; // standard processing (with white balance)
+   rawProcessor_.imgdata.params.use_camera_wb = 1; // If possible, use the white balance from the camera.
+   rawProcessor_.imgdata.params.filtering_mode = LIBRAW_FILTERING_AUTOMATIC;
+   rawProcessor_.imgdata.params.output_bps = 16; // Write 16 bits per color value
+   rawProcessor_.imgdata.params.gamm[0] = rawProcessor_.imgdata.params.gamm[1] = 1.0; // Use linear gamma curve
+   rawProcessor_.imgdata.params.no_auto_bright = 1; // Don't use automatic increase of brightness by histogram.
+
    rc = rawProcessor_.open_file(filename);
+   
    if (rc == 0)
    {
       rc = rawProcessor_.unpack();
    }
    if (rc == 0)
-   {
-      rawProcessor_.imgdata.params.filtering_mode = LIBRAW_FILTERING_AUTOMATIC;
-      rawProcessor_.imgdata.params.output_bps = 16; // Write 16 bits per color value
-      rawProcessor_.imgdata.params.gamm[0] = rawProcessor_.imgdata.params.gamm[1] = 1.0; // linear gamma curve
-      rawProcessor_.imgdata.params.no_auto_bright = 1; // Don't use automatic increase of brightness by histogram.
-
-      /*
-      * If we're using grayscale, there's no need for color interpolation; 
-      * and if binning is 2 or more, there's no need to interpolate the bayer grid either.
-      * This reduces memory requirements by a factor 4; and speeds up image processing.
-      */
-      if (grayScale_ && (GetBinning() >= 2))
-      {
-         rawProcessor_.imgdata.params.document_mode = 2; // grayscale, no color interpolation, no debayer, no white balance
-         rc = rawProcessor_.dcraw_document_mode_processing();
-      }
-      else /* color */
-      {
-         rawProcessor_.imgdata.params.document_mode = 0; // standard processing (with white balance)
-         rawProcessor_.imgdata.params.use_camera_wb = 1; // If possible, use the white balance from the camera.
-         rc = rawProcessor_.dcraw_process();
-      }
-      if (rawProcessor_.imgdata.process_warnings & LIBRAW_WARN_BAD_CAMERA_WB)
-         LogMessage("Raw: warning: camera white balance not suitable for use.", true);
+   {      
+      rc = rawProcessor_.dcraw_process();
+      LogRawWarnings();
+      //rawProcessor_.dcraw_ppm_tiff_writer("tetheredcam_debug.ppm"); // dump decoded image as ppm bitmap
    }
-   
    if (rc == 0)
    {
       rawImg = rawProcessor_.dcraw_make_mem_image(&rc);
+   }
+
+   if (rc == 0)
+   {
+      if (rawImg->type != LIBRAW_IMAGE_BITMAP)
+      {
+         LogMessage("Raw: error in raw decoding: not a bitmap", true);
+         rc = 1;
+      }
+      if (rawImg->bits != 16)
+      {
+         LogMessage("Raw: error in raw decoding: bitdepth not 16", true);
+         rc = 1;
+      }      
+      if (rawImg->colors != 3)
+      {
+         LogMessage("Raw: error in raw decoding: not rgb", true);
+         rc = 1;
+      }
    }
 
    // Exit if raw image conversion failed
@@ -1604,55 +1646,50 @@ int CTetheredCamera::LoadRawImage(IWICImagingFactory *factory, const char* filen
 
    UINT uiWidth = rawImg->width;
    UINT uiHeight = rawImg->height;
-
    WICPixelFormatGUID formatGUID = GUID_WICPixelFormat48bppRGB;
 
-   if ((rawImg->type != LIBRAW_IMAGE_BITMAP) || (rawImg->bits != 16))
-   {
-      LogMessage("Raw: error in raw decoding, unsupported bitdepth.", true);
-      return ERR_CAM_RAW;
-   }
-
-   if (rawImg->colors == 1) formatGUID = GUID_WICPixelFormat16bppGray;
-   else if (rawImg->colors == 3) formatGUID = GUID_WICPixelFormat48bppRGB;
-   else 
-   {  
-      LogMessage("Raw: error in raw decoding, unsupported number of colors.", true);
-      return ERR_CAM_RAW;
-   }  
-   
    SafeRelease(frameBitmap);
    HRESULT hr = factory->CreateBitmap(uiWidth, uiHeight, formatGUID, WICBitmapCacheOnDemand, &frameBitmap);
    if (SUCCEEDED(hr))
    {
       WICRect rcLock = { 0, 0, uiWidth, uiHeight };
       IWICBitmapLock *pLock = NULL;
-      UINT cbBufferSize = 0;
-      UINT cbStride = 0;
-      BYTE *pv = NULL;
+      UINT destBufferSize = 0;
+      UINT destStride = 0;
+      BYTE *pDest = NULL;
 
       hr = frameBitmap->Lock(&rcLock, WICBitmapLockWrite, &pLock);
       if (SUCCEEDED(hr))
       {
-         hr = pLock->GetStride(&cbStride);
+         hr = pLock->GetStride(&destStride);
       }
       if (SUCCEEDED(hr))
       {
-         hr = pLock->GetDataPointer(&cbBufferSize, &pv);
+         hr = pLock->GetDataPointer(&destBufferSize, &pDest);
       }
       if (SUCCEEDED(hr))
       {
-         ZeroMemory(pv, cbBufferSize);
-         if (rawImg->data_size < cbBufferSize)
+         if (rawImg->data_size <= destBufferSize)
          {
-            LogMessage("Raw: warning: image buffer too small", true);
-            CopyMemory(pv, rawImg->data, rawImg->data_size); // This is the best we can do.
+            // Copy pixels, taking stride into account.
+            ZeroMemory(pDest, destBufferSize);
+            BYTE *pSrc = rawImg->data;
+            UINT srcStride = rawImg->width * rawImg->colors * rawImg->bits / 8 ;
+
+            for (UINT row = 0; row < uiHeight; row++)
+            {
+               CopyMemory(pDest, pSrc, srcStride);
+               pSrc += srcStride;
+               pDest += destStride;
+            }
          }
          else
          {
-            CopyMemory(pv, rawImg->data, cbBufferSize); // Copy all pixels.
+            LogMessage("Raw: image buffer too small", true);
+            hr = E_FAIL;
          }
       }
+
       if (SUCCEEDED(hr))
       {
          hr = pLock->Release();
