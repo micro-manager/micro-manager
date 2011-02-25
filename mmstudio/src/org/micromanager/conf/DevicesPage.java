@@ -25,6 +25,8 @@ package org.micromanager.conf;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 
 import javax.swing.JButton;
@@ -253,6 +255,11 @@ public class DevicesPage extends PagePanel {
          model_.removeDuplicateComPorts();
          } catch (Exception e) {
             handleException(e);
+                try {
+                    core_.unloadAllDevices();
+                } catch (Exception ex) {
+                    
+                }
             return false;
          }
       }
