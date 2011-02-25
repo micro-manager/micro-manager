@@ -670,11 +670,7 @@ public class MetadataPanel extends javax.swing.JPanel
          imageMetadataModel_.setMetadata(null);
          summaryMetadataModel_.setMetadata(null);
          summaryCommentsTextArea.setText(null);
-         // This is a stopgap measure to get rid of references to VirtualAcquisition
-         // maintained in the ChhanelControlPanels that somehow survive
-         for (ChannelControlPanel ccp:ccpList_) {
-            ccp.shutdown();
-         }
+         contrastScrollPane.setViewportView(null);
          ccpList_ = null;
       } else {
          if (tabSelected == 1) {
