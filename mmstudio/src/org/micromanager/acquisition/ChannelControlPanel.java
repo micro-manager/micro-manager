@@ -28,7 +28,7 @@ import org.micromanager.utils.ReportingUtils;
 public class ChannelControlPanel extends javax.swing.JPanel {
 
    private final int channelIndex_;
-   private final VirtualAcquisitionDisplay acq_;
+   private VirtualAcquisitionDisplay acq_;
    private final HistogramPanel hp_;
    private double binSize_;
    
@@ -41,6 +41,12 @@ public class ChannelControlPanel extends javax.swing.JPanel {
       hp_ = addHistogramPanel();
       updateChannelSettings();
       drawDisplaySettings();
+   }
+
+   // This is  stopgap measure to reduce memory leaks caused by ChannelControlPanel
+   // objects surviving for ever
+   public void shutdown() {
+      acq_ = null;
    }
 
    /** This method is called from within the constructor to
