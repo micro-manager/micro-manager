@@ -457,11 +457,9 @@ public class VirtualAcquisitionDisplay {
                if (MDUtils.isRGB(taggedImg)) {
                   for (int i=0; i<3; ++i) {
                      setChannelDisplayRange(chan + i, pixelMin, pixelMax, false);
-                     hyperImage_.updateImage();
                   }
                } else {
                   setChannelDisplayRange(chan, pixelMin, pixelMax, false);
-                  hyperImage_.updateImage();
                }
             } catch (Exception ex) {
                ReportingUtils.showError(ex);
@@ -999,7 +997,7 @@ public class VirtualAcquisitionDisplay {
       }
    }
 
-   public void setChannelDisplayRange(int channel, int min, int max, boolean updateDisplay) {
+   public void setChannelDisplayRange(int channel, int min, int max, boolean redraw) {
 
       JSONObject chan = getChannelSetting(channel);
       try {
@@ -1008,11 +1006,16 @@ public class VirtualAcquisitionDisplay {
       } catch (Exception e) {
          ReportingUtils.logError(e);
       }
-      updateChannelContrast(channel);
-      if (updateDisplay) {
+
+      // Strange bug in ImageJ requires that we call these two methods
+      // twice to ensure that contrast actually is applied:
+      for (int i=0;i<2;++i) {
+         updateChannelContrast(channel);
+         hyperImage_.updateImage();
+      }
+      if (redraw) {
          updateAndDraw();
       }
-      
    }
 
    private JSONObject getChannelSetting(int channel) {
