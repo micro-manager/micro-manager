@@ -82,8 +82,8 @@ popd
 rem remove any installer package with exactly the same name as the current output
 echo trying to delete \Projects\micromanager\Install_Win32\Output\MMSetup_.exe 
 del \Projects\micromanager\Install_Win32\Output\MMSetup_.exe 
-echo trying to delete \Projects\micromanager\Install_Win32\Output\MMSetupx86_%mmversion%_%YYYYMMDD%.exe
-del \Projects\micromanager\Install_Win32\Output\MMSetupx86_%mmversion%_%YYYYMMDD%.exe
+echo trying to delete \Projects\micromanager\Install_Win32\Output\MMSetup32BIT_%mmversion%_%YYYYMMDD%.exe
+del \Projects\micromanager\Install_Win32\Output\MMSetup32BIT_%mmversion%_%YYYYMMDD%.exe
 
 ECHO incremental build of Java components...
 
@@ -148,10 +148,10 @@ call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile ../build32.xml insta
 set DEVICELISTBUILDER=""
 
 pushd \Projects\micromanager\Install_Win32\Output
-rename MMSetup_.exe  MMSetupx86_%mmversion%_%YYYYMMDD%.exe
+rename MMSetup_.exe  MMSetup32BIT_%mmversion%_%YYYYMMDD%.exe
 popd
 
-\Projects\micromanager\Install_Win32\Output\MMSetupx86_%mmversion%_%YYYYMMDD%.exe  /silent
+\Projects\micromanager\Install_Win32\Output\MMSetup32BIT_%mmversion%_%YYYYMMDD%.exe  /silent
 
 ECHO "Done installing"
-pscp -i c:\projects\MM.ppk -batch /projects/micromanager/Install_Win32/Output/MMSetupx86_%mmversion%_%YYYYMMDD%.exe MM@valelab.ucsf.edu:./public_html/nightlyBuilds/1.4/Windows/MMSetupx86_%mmversion%_%YYYYMMDD%.exe
+pscp -i c:\projects\MM.ppk -batch /projects/micromanager/Install_Win32/Output/MMSetup32BIT_%mmversion%_%YYYYMMDD%.exe MM@valelab.ucsf.edu:./public_html/nightlyBuilds/1.4/Windows/MMSetup32BIT_%mmversion%_%YYYYMMDD%.exe
