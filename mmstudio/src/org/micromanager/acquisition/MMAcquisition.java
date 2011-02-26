@@ -368,6 +368,7 @@ public class MMAcquisition {
          }
          tags.put("BitDepth", core.getImageBitDepth());
          tags.put("PixelSizeUm",core.getPixelSizeUm());
+         tags.put("ROI", MDUtils.getROI(core));
 
       } catch (JSONException ex) {
          throw new MMScriptException(ex);

@@ -10,6 +10,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.UUID;
+import mmcorej.CMMCore;
 import mmcorej.Configuration;
 import mmcorej.PropertySetting;
 import mmcorej.TaggedImage;
@@ -326,6 +327,21 @@ public class MDUtils {
 
    public static String getCurrentTime() {
       return getTime(new Date());
+   }
+
+   public static String getROI (CMMCore core) {
+      String roi = "";
+      int [] x = new int[1];
+      int [] y = new int[1];
+      int [] xSize = new int[1];
+      int [] ySize = new int[1];
+      try {
+         core.getROI(x, y, xSize, ySize);
+         roi += x[0] + "-" + y[0] + "-" + xSize[0] + "-" + ySize[0];
+      } catch (Exception ex) {
+         ReportingUtils.logError(ex, "Error in MDUtils::getROI");
+      }
+      return roi;
    }
 
 }
