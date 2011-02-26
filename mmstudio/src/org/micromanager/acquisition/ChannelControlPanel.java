@@ -308,7 +308,7 @@ public class ChannelControlPanel extends javax.swing.JPanel {
             maxValue = 1 << 8;
          if (type == ImagePlus.GRAY16) {
             try {
-               maxValue = 1 << MDUtils.getBitDepth(acq_.getSummaryMetadata());
+               maxValue = 1 << MDUtils.getBitDepth(acq_.getCurrentMetadata());
             } catch (Exception ex) {
                maxValue = 1 << 16;
             }
