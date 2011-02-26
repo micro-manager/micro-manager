@@ -249,13 +249,17 @@ public class MDUtils {
    }
 
 
-   public static void addConfiguration(JSONObject md, Configuration config) throws Exception {
+   public static void addConfiguration(JSONObject md, Configuration config) {
       PropertySetting setting;
       for (int i = 0; i < config.size(); ++i) {
-         setting = config.getSetting(i);
-         String key = setting.getDeviceLabel() + "-" + setting.getPropertyName();
+         try {
+            setting = config.getSetting(i);
+               String key = setting.getDeviceLabel() + "-" + setting.getPropertyName();
          String value = setting.getPropertyValue();
-         md.put(key, value);
+            md.put(key, value);
+         } catch (Exception ex) {
+
+         }
       }
    }
 

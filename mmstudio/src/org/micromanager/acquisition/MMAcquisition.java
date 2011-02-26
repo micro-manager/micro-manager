@@ -28,6 +28,7 @@ package org.micromanager.acquisition;
 import java.awt.Color;
 import java.io.File;
 import java.util.Iterator;
+import mmcorej.CMMCore;
 
 import mmcorej.TaggedImage;
 
@@ -202,30 +203,34 @@ public class MMAcquisition {
       
       try {
          JSONObject summaryMetadata = new JSONObject(summary_, keys);
-         summaryMetadata.put("Width", width_);
-         summaryMetadata.put("Height", height_);
-         summaryMetadata.put("Slices", numSlices_);
-         summaryMetadata.put("Frames", numFrames_);
+         CMMCore core = MMStudioMainFrame.getInstance().getCore();
+
+         summaryMetadata.put("BitDepth", core.getImageBitDepth());
          summaryMetadata.put("Channels", numChannels_);
-         summaryMetadata.put("Positions", numPositions_);
-         summaryMetadata.put("NumComponents", 1);
+         setDefaultChannelTags(summaryMetadata);
          summaryMetadata.put("Comment", comment_);
-         summaryMetadata.put("MetadataVersion", 10);
-         summaryMetadata.put("Source", "Micro-Manager");
-         summaryMetadata.put("PixelSize_um", MMStudioMainFrame.getInstance().getCore().getPixelSizeUm());
-         summaryMetadata.put("PixelAspect", 1.0);
+         summaryMetadata.put("Depth", core.getBytesPerPixel());
+         summaryMetadata.put("Frames", numFrames_);
          summaryMetadata.put("GridColumn", 0);
          summaryMetadata.put("GridRow", 0);
-         //summaryMetadata.put("ComputerName", getComputerName());
-         summaryMetadata.put("UserName", System.getProperty("user.name"));
+         summaryMetadata.put("Height", height_);
+         summaryMetadata.put("MetadataVersion", 10);
+         summaryMetadata.put("MicroManagerVersion", MMStudioMainFrame.getInstance().getVersion());
+         summaryMetadata.put("NumComponents", 1);
+         summaryMetadata.put("Positions", numPositions_);
+         summaryMetadata.put("Source", "Micro-Manager");
+         summaryMetadata.put("PixelAspect", 1.0);
+         summaryMetadata.put("PixelSize_um", core.getPixelSizeUm());
          if (depth_ == 1) {
             summaryMetadata.put("PixelType", "GRAY8");
          } else if (depth_ == 2) {
             summaryMetadata.put("PixelType", "GRAY16");
          }
+         summaryMetadata.put("Slices", numSlices_);
          summaryMetadata.put("StartTime", MDUtils.getCurrentTime());
+         summaryMetadata.put("UserName", System.getProperty("user.name"));
+         summaryMetadata.put("Width", width_);
          startTimeMs_ = System.currentTimeMillis();
-         setDefaultChannelTags(summaryMetadata);
          imageCache.setSummaryMetadata(summaryMetadata);
       } catch (JSONException ex) {
          ReportingUtils.showError(ex);
@@ -284,18 +289,20 @@ public class MMAcquisition {
 
       // update acq data
       try {
+         
          JSONObject tags = new JSONObject();
-         tags.put("Frame", frame);
-         tags.put("ChannelIndex", channel);
+
          tags.put("Channel", getChannelName(channel));
-         tags.put("Slice", slice);
+         tags.put("ChannelIndex", channel);
+         tags.put("Frame", frame);
+         tags.put("Height", height_);
          tags.put("PositionIndex", position);
          // the following influences the format data will be saved!
          if (numPositions_ > 1) {
             tags.put("PositionName", "Pos" + position);
          }
+         tags.put("Slice", slice);
          tags.put("Width", width_);
-         tags.put("Height", height_);
          if (depth_ == 1) {
             tags.put("PixelType", "GRAY8");
          } else if (depth_ == 2) {
@@ -317,17 +324,16 @@ public class MMAcquisition {
       // update acq data
       try {
          JSONObject tags = taggedImg.tags;
+
          tags.put("Frame", frame);
          tags.put("ChannelIndex", channel);
          tags.put("Slice", slice);
-         tags.put("PositionIndex", 0);
-         //tags.put("Width", width_);
-         //tags.put("Height", height_);
          if (depth_ == 1) {
             tags.put("PixelType", "GRAY8");
          } else if (depth_ == 2) {
             tags.put("PixelType", "GRAY16");
          }
+         tags.put("PositionIndex", 0);
          insertImage(taggedImg);
       } catch (JSONException e) {
          throw new MMScriptException(e);
@@ -338,16 +344,31 @@ public class MMAcquisition {
       insertImage(taggedImg, show_);
    }
 
+   /*
+    * This is the insertImage version that actually puts data into the acquisition
+    */
    public void insertImage(TaggedImage taggedImg, boolean updateDisplay) throws MMScriptException {
       if (!initialized_) {
          throw new MMScriptException("Acquisition data must be initialized before inserting images");
       }
       try {
-         int channel = taggedImg.tags.getInt("ChannelIndex");
-         taggedImg.tags.put("Channel", getChannelName(channel));
+         JSONObject tags = taggedImg.tags;
+         int channel = tags.getInt("ChannelIndex");
+         tags.put("Channel", getChannelName(channel));
          long elapsedTimeMillis = System.currentTimeMillis() - startTimeMs_;
-         taggedImg.tags.put("ElapsedTime-ms", elapsedTimeMillis);
-         taggedImg.tags.put("Time", MDUtils.getCurrentTime());
+         tags.put("ElapsedTime-ms", elapsedTimeMillis);
+         tags.put("Time", MDUtils.getCurrentTime());
+
+         CMMCore core = MMStudioMainFrame.getInstance().getCore();
+         MDUtils.addConfiguration(taggedImg.tags, core.getSystemStateCache());
+         try {
+            taggedImg.tags.put("Binning", core.getProperty (core.getCameraDevice(), "Binning"));
+         } catch (Exception ex) {
+
+         }
+         tags.put("BitDepth", core.getImageBitDepth());
+         tags.put("PixelSizeUm",core.getPixelSizeUm());
+
       } catch (JSONException ex) {
          throw new MMScriptException(ex);
       }
