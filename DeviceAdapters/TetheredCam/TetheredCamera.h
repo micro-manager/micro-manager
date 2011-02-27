@@ -126,6 +126,7 @@ private:
    void LogWICMessage(HRESULT hr); /* log a WIC error message to micro-manager CoreLog */
 
    int LoadRawImage(IWICImagingFactory *factory, const char* filename); /* Load a raw image from file using libraw */
+   void LogRawWarnings(); /* Log libraw warnings to micro-manager CoreLog */
    int Convert64bppRGBAto64bppBGRA(ImgBuffer *img);  
 
    ImgBuffer img_;
