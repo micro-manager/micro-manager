@@ -25,7 +25,7 @@
 (defn load-mm
 	([gui] (def mmc (.getMMCore gui)))
 	([]
-		(def gui (MMStudioPlugin/getMMStudioMainFrameInstance))
+		(def gui (MMStudioMainFrame/getInstance))
 		(load-mm gui)))
     
 (defn log [& x]
