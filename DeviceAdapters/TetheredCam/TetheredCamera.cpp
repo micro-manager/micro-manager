@@ -1709,7 +1709,7 @@ int CTetheredCamera::LoadRawImage(IWICImagingFactory *factory, const char* filen
             // Copy pixels, taking stride into account.
             ZeroMemory(pDest, destBufferSize);
             BYTE *pSrc = rawImg->data;
-            UINT srcStride = rawImg->width * rawImg->colors * rawImg->bits / 8 ;
+            UINT srcStride = rawImg->width * rawImg->colors * rawImg->bits / 8 ;  // size in bytes of one row of pixels
 
             for (UINT row = 0; row < uiHeight; row++)
             {
