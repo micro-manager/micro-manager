@@ -64,9 +64,12 @@
 //       LoadWICImage                 [load image using WIC]
 //          CreateDecoderFromFilename [WIC, decode image file]
 //          CreateBitmapFromSource    [WIC, store decoded bitmap]
+//          LogWICMessage             [log WIC messages to micro-manager corelog]
 //       LoadRawImage                 [load image using libraw]
 //          dcraw_process             [libraw, decode image file]
 //          dcraw_make_mem_image      [libraw, store decoded bitmap]
+//          LibrawProgressCallback    [log libraw messages to micro-manager corelog]
+//          LogRawWarnings            [log libraw warnings to micro-manager corelog]
 //          CreateBitmap              [WIC, create empty bitmap, 48bpp RGB]
 //          CopyMemory                [copy decoded bitmap to WIC bitmap]
 //    ResizeImageBuffer
@@ -140,7 +143,8 @@ const char* g_PixelType_Color = "Color";
 
 // constants for naming image decoder types (allowed values of the "ImageDecoder" property)
 const char* g_ImageDecoder_Windows = "Windows";
-const char* g_ImageDecoder_Micromanager = "Micro-Manager";
+const char* g_ImageDecoder_Raw = "Raw";
+const char* g_ImageDecoder_Raw_No_Gamma = "Raw (no gamma compensation)";
 
 // TODO: linux entry code
 
@@ -231,8 +235,8 @@ CTetheredCamera::CTetheredCamera() :
    initialized_(false),
    cameraName_(""),
    frameBitmap(NULL),
+   decoder_(decoder_windows),
    grayScale_(false),
-   internalDecoder_(false),
    bitDepth_(8),
    keepOriginals_(false),
    imgBinning_(1),
@@ -392,7 +396,8 @@ int CTetheredCamera::Initialize()
 
    vector<string> imageDecoderValues;
    imageDecoderValues.push_back(g_ImageDecoder_Windows);
-   imageDecoderValues.push_back(g_ImageDecoder_Micromanager); 
+   imageDecoderValues.push_back(g_ImageDecoder_Raw);
+   imageDecoderValues.push_back(g_ImageDecoder_Raw_No_Gamma); 
 
    nRet = SetAllowedValues(g_Keyword_ImageDecoder, imageDecoderValues);
    if (nRet != DEVICE_OK)
@@ -889,32 +894,48 @@ int CTetheredCamera::OnImageDecoder(MM::PropertyBase* pProp, MM::ActionType eAct
          string imageDecoder;
          pProp->Get(imageDecoder);
 
-         if (imageDecoder.compare(g_ImageDecoder_Micromanager) == 0)
+         if (imageDecoder.compare(g_ImageDecoder_Raw) == 0)
          {
-            internalDecoder_ = true;
-            ret=DEVICE_OK;
+            decoder_ = decoder_raw;
+            ret = DEVICE_OK;
+         }
+         else if (imageDecoder.compare(g_ImageDecoder_Raw_No_Gamma) == 0)
+         {
+            decoder_ = decoder_raw_no_gamma;
+            ret = DEVICE_OK;
          }
          else if (imageDecoder.compare(g_ImageDecoder_Windows) == 0)
          {
-            internalDecoder_ = false;
-            ret=DEVICE_OK;
+            decoder_ = decoder_windows;
+            ret = DEVICE_OK;
          }
          else
          {
-            // on error switch to default decoder type
+            // switch to default decoder type
             pProp->Set(g_ImageDecoder_Windows);
-            internalDecoder_ = false;
-            ret = ERR_CAM_BAD_PARAM;
+            decoder_ = decoder_windows;
+            ret = DEVICE_OK;
          }
          OnPropertiesChanged();
       } break;
    case MM::BeforeGet:
       {
-         if (internalDecoder_)
-            pProp->Set(g_ImageDecoder_Micromanager);
-         else
-            pProp->Set(g_ImageDecoder_Windows);
-         ret=DEVICE_OK;
+         switch (decoder_)
+         {
+            case decoder_raw:
+               pProp->Set(g_ImageDecoder_Raw);
+               break;
+            case decoder_raw_no_gamma:
+               pProp->Set(g_ImageDecoder_Raw_No_Gamma);
+               break;
+            case decoder_windows:
+               pProp->Set(g_ImageDecoder_Windows);
+               break;
+            default:
+               pProp->Set(g_ImageDecoder_Windows);
+               break;
+         }
+         ret = DEVICE_OK;
       }break;
    }
    return ret; 
@@ -1123,15 +1144,15 @@ int CTetheredCamera::AcquireFrame()
    }
 
    int rc = 0;
-   if (internalDecoder_) 
-   {
-      // Load image using libraw
-      rc = LoadRawImage(factory, filename);
-   }
-   else
+   if (decoder_ == decoder_windows)
    {
       // Load image using the WIC Codecs 
       rc = LoadWICImage(factory, filename);
+   }
+   else
+   {
+      // Load image using libraw
+      rc = LoadRawImage(factory, filename);
    }
 
    SafeRelease(factory);
@@ -1192,7 +1213,7 @@ int CTetheredCamera::ResizeImageBuffer()
 
    UINT scaleFactor = binning;
    // Reduce scale factor if libraw already has scaled the image by a factor of 2.
-   if (internalDecoder_ && (rawProcessor_.imgdata.params.half_size == 1))
+   if ((decoder_ != decoder_windows) && (rawProcessor_.imgdata.params.half_size == 1))
       scaleFactor = binning / 2;
 
    scaledWidth = frameWidth / scaleFactor;
@@ -1586,14 +1607,28 @@ int CTetheredCamera::LoadRawImage(IWICImagingFactory *factory, const char* filen
 
    rawProcessor_.set_progress_handler(&LibrawProgressCallback, (void *)this); // log libraw progress messages to micro-manager CoreLog
  
-  // Let libraw do part of the binning for us.
-   rawProcessor_.imgdata.params.half_size = (GetBinning() >= 2); // Half-size the output image. Instead  of  interpolating, reduce each 2x2 block of sensors to one pixel.
    rawProcessor_.imgdata.params.document_mode = 0; // standard processing (with white balance)
    rawProcessor_.imgdata.params.use_camera_wb = 1; // If possible, use the white balance from the camera.
    rawProcessor_.imgdata.params.filtering_mode = LIBRAW_FILTERING_AUTOMATIC;
    rawProcessor_.imgdata.params.output_bps = 16; // Write 16 bits per color value
-   rawProcessor_.imgdata.params.gamm[0] = rawProcessor_.imgdata.params.gamm[1] = 1.0; // Use linear gamma curve
    rawProcessor_.imgdata.params.no_auto_bright = 1; // Don't use automatic increase of brightness by histogram.
+
+   // let libraw do part of the binning for us.
+   rawProcessor_.imgdata.params.half_size = (GetBinning() >= 2); // Half-size the output image. Instead  of  interpolating, reduce each 2x2 block of sensors to one pixel.
+
+   // gamma compensation
+   if (decoder_ == decoder_raw)
+   {
+      // Use sRGB gamma
+      rawProcessor_.imgdata.params.gamm[0] = 1.0/2.4;
+      rawProcessor_.imgdata.params.gamm[1] = 12.92;
+   }
+   else
+   {
+      // Use linear grayscale
+      rawProcessor_.imgdata.params.gamm[0] = 1.0;
+      rawProcessor_.imgdata.params.gamm[1] = 1.0;
+   }
 
    rc = rawProcessor_.open_file(filename);
    

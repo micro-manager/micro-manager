@@ -135,8 +135,13 @@ private:
    bool initialized_;
    std::string cameraName_;   /* Camera manufacturer and model */
    IWICBitmap *frameBitmap;   /* last captured frame */
+   enum
+      {
+         decoder_windows,     /* Use Windows Imaging Component */
+         decoder_raw,         /* Use libraw */
+         decoder_raw_no_gamma /* Use libraw, no gamma compensation */
+      } decoder_;
    bool grayScale_;           /* If true, create grayscale images. If false, create color images */
-   bool internalDecoder_;     /* If true, decode using libraw. If false, decode using Windows Imaging Component */
    unsigned bitDepth_;        /* number of bits per color value. */
    bool keepOriginals_;       /* if true, do not delete picture from disk */
 
