@@ -160,6 +160,7 @@
 		<copy file="${BinRoot}/mmgr_dal_NikonTE2000.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_NikonTI.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_NKRemoteCamera.dll" todir="${InstallRoot}" />
+		<copy file="${BinRoot}/mmgr_dal_NNLC.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_Olympus.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_ParallelPort.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_PCO_Camera.dll" todir="${InstallRoot}" />

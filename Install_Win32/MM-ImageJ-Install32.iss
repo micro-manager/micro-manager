@@ -107,11 +107,12 @@ Source: micro-manager\mmgr_dal_MCL_MicroDrive.dll; DestDir: {app}; Flags: ignore
 Source: micro-manager\mmgr_dal_MCL_NanoDrive.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_MT20.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Neos.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_NKRemoteCamera.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Nikon.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_NikonAZ100.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_NikonTE2000.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_NikonTI.dll; DestDir: {app}; Flags: ignoreversion
+Source: micro-manager\mmgr_dal_NKRemoteCamera.dll; DestDir: {app}; Flags: ignoreversion
+Source: micro-manager\mmgr_dal_NNLC.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Olympus.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_ParallelPort.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_PCO_Camera.dll; DestDir: {app}; Flags: ignoreversion
