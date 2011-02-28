@@ -52,6 +52,8 @@
 #include "CoreProperty.h"
 #include "CoreUtils.h"
 #include "FastLogger.h"
+
+#include "host.h"
 #include "MMCore.h"
 #include "MMEventCallback.h"
 #include "../MMDevice/DeviceUtils.h"
@@ -5222,4 +5224,13 @@ void CMMCore::acqBeforeStack() throw (CMMError)
 void CMMCore::acqAfterStack() throw (CMMError)
 {
 }
+
+
+// at least on OS X, there is a 'primary' MAC address, so we'll
+// assume that is the first one.
+std::vector<std::string> CMMCore::getMACAddresses(void)
+{
+   return Host::MACAddresses();
+}
+
 

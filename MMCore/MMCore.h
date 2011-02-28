@@ -441,6 +441,8 @@ public:
    return pSpecDev;                                                          
 }  
 
+   std::vector<std::string> getMACAddresses(void);
+
 
 
 private:
