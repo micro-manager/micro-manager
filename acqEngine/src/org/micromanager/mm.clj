@@ -14,7 +14,7 @@
 ;               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
 (ns org.micromanager.mm
-  (:import MMStudioPlugin
+  (:import [org.micromanager MMStudioMainFrame]
            [org.micromanager.navigation MultiStagePosition]
            [mmcorej Configuration]
            [ij IJ]))
@@ -23,10 +23,9 @@
 (declare mmc)
 
 (defn load-mm
-	([gui] (def mmc (.getMMCore gui)))
-	([]
-		(def gui (MMStudioMainFrame/getInstance))
-		(load-mm gui)))
+  ([gui] (def mmc (.getMMCore gui)))
+  ([] (def gui (MMStudioMainFrame/getInstance))
+      (load-mm gui)))
     
 (defn log [& x]
   (org.micromanager.utils.ReportingUtils/logMessage (apply str x)))
