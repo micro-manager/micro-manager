@@ -3,24 +3,28 @@ import ij.process.*;
 import org.micromanager.utils.*;
 
 /*
-Arthur - 1/13/2011
-So far, this works for a single channel,
-with one or more slices, frames or positions.
-There are still problems when we include channels.
+Arthur - 1/14/2011
+This script demonstrates changing the size of each
+of the four dimensions in a hyper image:
+T, P, C, Z. Still to be implemented:
+
 */
 
 
 imgp = IJ.getImage();
 stack = imgp.getStack();
 win = imgp.getWindow();
+disp = imgp.getStack().acq_;
 
 nChannelsOld = imgp.getNChannels();
 nSlicesOld = imgp.getNSlices();
 nFramesOld = imgp.getNFrames();
+nPositionsOld = disp.getNumPositions();
 
 nChannels = nChannelsOld + 1;
 nFrames = nFramesOld + 1;
 nSlices = nSlicesOld + 1;
+nPositions = nPositionsOld + 1;
 
 // Package private:
 cs = win.cSelector;
@@ -59,4 +63,6 @@ if (win.hyperStack) {
 	if (zs != null)
 		zs.setMaximum(stack.getSize() + 1);
 }
+
+disp.setNumPositions(nPositions);
 

@@ -128,7 +128,7 @@ call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml %cleantarg
 popd
 
 pushd plugins\SlideExplorer
-rem call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml %cleantarget% compile build
+call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml %cleantarget% compile build
 popd
 
 pushd plugins\StageControl
