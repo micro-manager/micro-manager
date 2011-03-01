@@ -160,8 +160,12 @@ public class MMAcquisition {
       String name = name_;
 
       if (diskCached_) {
-         String dirname = rootDirectory_ + File.separator + name;
-         imageFileManager = new TaggedImageStorageDiskDefault(dirname,
+         String dirName = rootDirectory_ + File.separator + name;
+         if (!existing_ && (new File(dirName)).exists()) {
+            name = generateRootName(name_, rootDirectory_);
+            dirName = rootDirectory_ + File.separator + name;
+         }
+         imageFileManager = new TaggedImageStorageDiskDefault(dirName,
                  !existing_, new JSONObject());
       } else {
          imageFileManager = new TaggedImageStorageRam(null);
@@ -189,9 +193,9 @@ public class MMAcquisition {
    }
 
    private void createDefaultAcqSettings(String name, MMImageCache imageCache) {
-      if (new File(rootDirectory_).exists()) {
-         name = generateRootName(name, rootDirectory_);
-      }
+      //if (new File(rootDirectory_).exists()) {
+      //   name = generateRootName(name, rootDirectory_);
+      //}
 
       String keys[] = new String[summary_.length()];
       Iterator<String> it = summary_.keys();
