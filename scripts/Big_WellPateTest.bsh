@@ -3,14 +3,31 @@
 
 addClassPath("Big.jar");
 import edu.umassmed.big.SBSPlate;
+import javax.swing.JOptionPane;
+import java.lang.Math;
 gui.closeAllAcquisitions();
 gui.clearMessageWindow();
 
+
+// coordinates of well A1
+double [] x0;
+double [] y0;
+x0 = new double[1];
+y0 = new double[1];
+
 xystage = mmc.getXYStageDevice();
-Integer [] xyposition = new Integer[2];
+Integer[] xyposition = new Integer[2];
 xyposition[0] = 0;
 xyposition[1] = 0;
 int [] ipos  = new int[2]; 
+
+JOptionPane.showMessageDialog(null, "Please position stage at center of Well A1, then press OK");
+mmc.getXYPosition (xystage, x0, y0);
+print(" current position : \n");
+xyposition[0] += (int)Math.round(x0[0]);
+xyposition[1] += (int) Math.round(y0[0]);
+
+
 mmc.setXYPosition(xystage,xyposition[0],xyposition[1]);
 mmc.waitForDevice(xystage);
 
@@ -19,19 +36,19 @@ mmc.snapImage();
 image0 = mmc.getImage();
 gui.displayImage(image0);
 
-SBSPlate plate = new SBSPlate(1536);
+SBSPlate plate = new SBSPlate(24);//(1536);
 numberOfWells = plate.getNumberOfWells();
 Integer m = new Integer(0);
 for (m = 1; m <= numberOfWells; m++) {
   // code to take an image could be here
 
-  gui.snapSingleImage();
+  gui.updateImage();
 
   // move the stage to the next well
   ipos = plate.getNextPosition(); // 0 indexed in mcrons
 
-  xyposition[0] = ipos[0];
-  xyposition[1] = ipos[1];
+  xyposition[0] = ipos[0] + (int)Math.round(x0[0]);
+  xyposition[1] = ipos[1] + (int)Math.round(y0[0]);
   mmc.setXYPosition(xystage,xyposition[0],xyposition[1]);
   print("going-> [" + xyposition[0].toString() + ", " + xyposition[1].toString()+"]");
   mmc.waitForDevice(xystage);
