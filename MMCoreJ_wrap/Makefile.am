@@ -10,6 +10,7 @@ SWIGLIB_SOURCES = MMCoreJ.i \
 	../MMCore/Error.h \
 	../MMCore/ErrorCodes.h \
 	../MMCore/MMCore.h  \
+	../MMCore/Host.h  \
 	../MMDevice/MMDeviceConstants.h 
 
 MMCoreJ_wrap.cxx: $(SWIGLIB_SOURCES)
