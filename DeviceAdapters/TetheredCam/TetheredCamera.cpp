@@ -145,6 +145,7 @@ const char* g_PixelType_Color = "Color";
 const char* g_ImageDecoder_Windows = "Windows";
 const char* g_ImageDecoder_Raw = "Raw";
 const char* g_ImageDecoder_Raw_No_Gamma = "Raw (no gamma compensation)";
+const char* g_ImageDecoder_Raw_No_White_Balance = "Raw (no gamma compensation; no white balance)";
 
 // TODO: linux entry code
 
@@ -397,7 +398,8 @@ int CTetheredCamera::Initialize()
    vector<string> imageDecoderValues;
    imageDecoderValues.push_back(g_ImageDecoder_Windows);
    imageDecoderValues.push_back(g_ImageDecoder_Raw);
-   imageDecoderValues.push_back(g_ImageDecoder_Raw_No_Gamma); 
+   imageDecoderValues.push_back(g_ImageDecoder_Raw_No_Gamma);
+   imageDecoderValues.push_back(g_ImageDecoder_Raw_No_White_Balance);
 
    nRet = SetAllowedValues(g_Keyword_ImageDecoder, imageDecoderValues);
    if (nRet != DEVICE_OK)
@@ -904,6 +906,11 @@ int CTetheredCamera::OnImageDecoder(MM::PropertyBase* pProp, MM::ActionType eAct
             decoder_ = decoder_raw_no_gamma;
             ret = DEVICE_OK;
          }
+         else if (imageDecoder.compare(g_ImageDecoder_Raw_No_White_Balance) == 0)
+         {
+            decoder_ = decoder_raw_no_white_balance;
+            ret = DEVICE_OK;
+         }
          else if (imageDecoder.compare(g_ImageDecoder_Windows) == 0)
          {
             decoder_ = decoder_windows;
@@ -914,7 +921,7 @@ int CTetheredCamera::OnImageDecoder(MM::PropertyBase* pProp, MM::ActionType eAct
             // switch to default decoder type
             pProp->Set(g_ImageDecoder_Windows);
             decoder_ = decoder_windows;
-            ret = DEVICE_OK;
+            ret = ERR_CAM_BAD_PARAM;
          }
          OnPropertiesChanged();
       } break;
@@ -927,6 +934,9 @@ int CTetheredCamera::OnImageDecoder(MM::PropertyBase* pProp, MM::ActionType eAct
                break;
             case decoder_raw_no_gamma:
                pProp->Set(g_ImageDecoder_Raw_No_Gamma);
+               break;
+            case decoder_raw_no_white_balance:
+               pProp->Set(g_ImageDecoder_Raw_No_White_Balance);
                break;
             case decoder_windows:
                pProp->Set(g_ImageDecoder_Windows);
@@ -1126,7 +1136,7 @@ int CTetheredCamera::AcquireFrame()
    // Raw images downloaded from www.rawsamples.ch , used for testing. 
    // Uncomment one of the following to force the driver to load the file.
    // Note: if keepOriginals_ is false, the file will be deleted.
-   //strcpy(filename, "C:\\RAW_NIKON_D3.NEF");
+   //strcpy(filename, "C:\\RAW_NIKON_D3X.NEF");
    //strcpy(filename, "C:\\RAW_CANON_40D_RAW_V103.CR2");
 
    //Initialize COM.
@@ -1608,7 +1618,6 @@ int CTetheredCamera::LoadRawImage(IWICImagingFactory *factory, const char* filen
    rawProcessor_.set_progress_handler(&LibrawProgressCallback, (void *)this); // log libraw progress messages to micro-manager CoreLog
  
    rawProcessor_.imgdata.params.document_mode = 0; // standard processing (with white balance)
-   rawProcessor_.imgdata.params.use_camera_wb = 1; // If possible, use the white balance from the camera.
    rawProcessor_.imgdata.params.filtering_mode = LIBRAW_FILTERING_AUTOMATIC;
    rawProcessor_.imgdata.params.output_bps = 16; // Write 16 bits per color value
    rawProcessor_.imgdata.params.no_auto_bright = 1; // Don't use automatic increase of brightness by histogram.
@@ -1628,6 +1637,26 @@ int CTetheredCamera::LoadRawImage(IWICImagingFactory *factory, const char* filen
       // Use linear grayscale
       rawProcessor_.imgdata.params.gamm[0] = 1.0;
       rawProcessor_.imgdata.params.gamm[1] = 1.0;
+   }
+
+   // white balance
+   if (decoder_ != decoder_raw_no_white_balance)
+   {
+      // Use camera white balance
+      rawProcessor_.imgdata.params.use_camera_wb = 1; // If possible, use the white balance from the camera.
+      rawProcessor_.imgdata.params.user_mul[0] = 0.0; // Multipliers for user-defined white balance.
+      rawProcessor_.imgdata.params.user_mul[1] = 0.0;
+      rawProcessor_.imgdata.params.user_mul[2] = 0.0;
+      rawProcessor_.imgdata.params.user_mul[3] = 0.0;
+   }
+   else
+   {
+      // No white balance
+      rawProcessor_.imgdata.params.use_camera_wb = 0; // Don't use the white balance from the camera.
+      rawProcessor_.imgdata.params.user_mul[0] = 1.0; // Multipliers for user-defined white balance.
+      rawProcessor_.imgdata.params.user_mul[1] = 1.0;
+      rawProcessor_.imgdata.params.user_mul[2] = 1.0;
+      rawProcessor_.imgdata.params.user_mul[3] = 1.0;
    }
 
    rc = rawProcessor_.open_file(filename);
@@ -1709,7 +1738,7 @@ int CTetheredCamera::LoadRawImage(IWICImagingFactory *factory, const char* filen
             // Copy pixels, taking stride into account.
             ZeroMemory(pDest, destBufferSize);
             BYTE *pSrc = rawImg->data;
-            UINT srcStride = rawImg->width * rawImg->colors * rawImg->bits / 8 ;  // size in bytes of one row of pixels
+            UINT srcStride = rawImg->width * rawImg->colors * rawImg->bits / 8 ; // size, in bytes, of one row of pixels
 
             for (UINT row = 0; row < uiHeight; row++)
             {

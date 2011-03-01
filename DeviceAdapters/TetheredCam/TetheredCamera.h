@@ -137,9 +137,10 @@ private:
    IWICBitmap *frameBitmap;   /* last captured frame */
    enum
       {
-         decoder_windows,     /* Use Windows Imaging Component */
-         decoder_raw,         /* Use libraw */
-         decoder_raw_no_gamma /* Use libraw, no gamma compensation */
+         decoder_windows,              /* Use Windows Imaging Component */
+         decoder_raw,                  /* Use libraw */
+         decoder_raw_no_gamma,         /* Use libraw, no gamma compensation */
+         decoder_raw_no_white_balance  /* Use libraw, no gamma compensation, no white balance */
       } decoder_;
    bool grayScale_;           /* If true, create grayscale images. If false, create color images */
    unsigned bitDepth_;        /* number of bits per color value. */
