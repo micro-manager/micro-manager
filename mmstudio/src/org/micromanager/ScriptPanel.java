@@ -347,6 +347,7 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
       setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 
       addWindowListener(new WindowAdapter() {
+         @Override
          public void windowClosing(WindowEvent arg0) {
             if (!promptToSave()) 
                return;
@@ -359,9 +360,8 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
       });
 
       interp_ = new BeanshellEngine(this);
-      interp_.setInterpreter(beanshellREPLint_);;
+      interp_.setInterpreter(beanshellREPLint_);
       
-      new GUIColors();
       setTitle("Script Panel");
       setIconImage(SwingResourceManager.getImage(PropertyEditor.class, "icons/microscope.gif"));
       setBounds(100, 100, 550, 495);
@@ -461,6 +461,7 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
       immediatePane_.addActionListener(new immediatePaneListener());
       // Implement History with up and down keys
       immediatePane_.addKeyListener(new KeyAdapter() {
+         @Override
          public void keyPressed(KeyEvent e) {
             if (e.getKeyCode() == KeyEvent.VK_KP_UP || e.getKeyCode() == KeyEvent.VK_UP) {
                doImmediatePaneHistoryUp();
@@ -603,7 +604,26 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
       saveAsButton.setPreferredSize(buttonSize);
       spTopRight.putConstraint(SpringLayout.NORTH, saveAsButton, gap, SpringLayout.NORTH, topRightPanel);
       spTopRight.putConstraint(SpringLayout.WEST, saveAsButton, gap, SpringLayout.EAST, saveButton);
- 
+
+
+      final JButton helpButton = new JButton();
+      helpButton.setMargin(new Insets(0,0,0,0));
+      topRightPanel.add(helpButton);
+      helpButton.setFont(new Font("", Font.PLAIN, 10));
+      helpButton.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent e) {
+            try {
+               ij.plugin.BrowserLauncher.openURL("https://valelab.ucsf.edu/~nico/MMwiki/index.php/Script_Panel_GUI");
+            } catch (IOException e1) {
+               ReportingUtils.showError(e1);
+            }
+         }
+      });
+      helpButton.setText("Help");
+      helpButton.setPreferredSize(buttonSize);
+      spTopRight.putConstraint(SpringLayout.NORTH, helpButton, gap, SpringLayout.NORTH, topRightPanel);
+      spTopRight.putConstraint(SpringLayout.WEST, helpButton, gap, SpringLayout.EAST, saveAsButton);
+
       // Set up basic structure
       leftPanel.setMinimumSize(new Dimension(180, 130));
       rightSplitPane_ = new JSplitPane(JSplitPane.VERTICAL_SPLIT, topRightPanel, bottomRightPanel);
@@ -788,7 +808,7 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
          }
       }
    }
-   
+
    /*
     * Runs the content of the editor Pane in the REPL context.
     */
@@ -1040,7 +1060,7 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
       boolean isFile = false;
       do {
          script = prefs_.get(SCRIPT_FILE + j, null);
-         if ( (script != null) && (script != "") ) 
+         if ( (script != null) && (!script.equals("") ) )
          {
             File file = new File(script);
             if (file.isFile()) {
