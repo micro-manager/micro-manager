@@ -1,5 +1,4 @@
 #include "Host.h"
-typedef long long MACValue;
 
 #ifdef _WINDOWS
 #include <winsock2.h>
@@ -37,7 +36,7 @@ Host::~Host(void)
 
 // a free function to call into the OS stuff
 
-std::vector<MACValue > getMACAddresses(void)
+std::vector<MACValue > Host::getMACAddresses(void)
 {
 
 
@@ -151,7 +150,7 @@ return retval;
 
 
 
-std::vector<std::string> Host::MACAddresses()
+std::vector<std::string> Host::MACAddresses(void)
 {
 
    std::vector<std::string> retval;

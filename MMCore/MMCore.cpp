@@ -5230,7 +5230,22 @@ void CMMCore::acqAfterStack() throw (CMMError)
 // assume that is the first one.
 std::vector<std::string> CMMCore::getMACAddresses(void)
 {
-   return Host::MACAddresses();
+   std::vector<std::string> retv;
+   try
+   {
+
+      Host* pHost = new Host();
+      if(NULL != pHost)
+      {
+         retv =  pHost->MACAddresses();
+         delete pHost;
+      }
+   }
+   catch(...)
+   {
+
+   }
+   return retv;
 }
 
 
