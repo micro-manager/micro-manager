@@ -64,7 +64,7 @@ install:
 	test -d $(IJPATH)/mmplugins || mkdir $(IJPATH)/mmplugins
 	## cp MMTracker_.jar $(IJPATH)/mmplugins
 	cp PixelCalibrator.jar $(IJPATH)/mmplugins
-	cp SlideExplorer.jar $(IJPATH)/mmplugins
+	## cp SlideExplorer.jar $(IJPATH)/mmplugins
 	cp RecallPlugin.jar $(IJPATH)/mmplugins
 	cp StageControl.jar $(IJPATH)/mmplugins
 	cp MultiCamera.jar $(IJPATH)/mmplugins
