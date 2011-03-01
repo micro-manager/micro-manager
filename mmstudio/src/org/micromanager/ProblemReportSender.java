@@ -19,6 +19,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
 import mmcorej.CMMCore;
+import mmcorej.StrVector;
 import org.micromanager.utils.HttpUtils;
 import org.micromanager.utils.ReportingUtils;
 import sun.misc.UUEncoder;
@@ -44,6 +45,8 @@ class ProblemReportSender extends Thread {
 
     public void run() {
         status_ = "";
+        // a handy, unique ID for the equipment
+        String physicalAddress = "00-00-00-00-00-00";
         String cfgFile = currentCfgPath_;
         // is there a public way to get these keys??
         //mainPrefs_.get("sysconfig_file", cfgFile);
@@ -51,7 +54,18 @@ class ProblemReportSender extends Thread {
         if(0< preamble.length())
             preamble += "\n";
         preamble += "#";
+        StrVector ss = core_.getMACAddresses();
+        if (0 < ss.size())
+        {
+            String pa2 = ss.get(0);
+            if(!pa2.isEmpty())
+            {
+                physicalAddress = pa2;
+            }
+        }
+        preamble += ("MAC: " + physicalAddress + " ");
         try {
+
             preamble += "Host: " + InetAddress.getLocalHost().getHostName() + " ";
         } catch (IOException e) {
         }
@@ -85,10 +99,7 @@ class ProblemReportSender extends Thread {
                 String shortTZName = TimeZone.getDefault().getDisplayName(false, TimeZone.SHORT);
                 qualifiedArchiveFileName += shortTZName;
                 qualifiedArchiveFileName += "_";
-                try {
-                    qualifiedArchiveFileName += InetAddress.getLocalHost().getHostAddress();
-                } catch (UnknownHostException e2) {
-                }
+                qualifiedArchiveFileName += physicalAddress; //InetAddress.getLocalHost().getHostAddress();
             } catch (Throwable t) {
             }
             // try ensure valid and convenient UNIX file name
