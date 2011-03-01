@@ -70,7 +70,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="mmcored.lib"
+				AdditionalDependencies="mmcored.lib Iphlpapi.lib"
 				ShowProgress="0"
 				OutputFile="$(OutDir)/MMCoreJ_wrap.dll"
 				LinkIncremental="2"
@@ -159,7 +159,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="mmcored.lib"
+				AdditionalDependencies="mmcored.lib Iphlpapi.lib"
 				ShowProgress="0"
 				OutputFile="$(OutDir)/MMCoreJ_wrap.dll"
 				LinkIncremental="2"
@@ -244,7 +244,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="mmcorer.lib"
+				AdditionalDependencies="mmcorer.lib Iphlpapi.lib"
 				OutputFile="$(OutDir)/MMCoreJ_wrap.dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;;&quot;..\lib_$(PlatformName)&quot;"
@@ -277,7 +277,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\bin_$(PlatformName)&#x0D;&#x0A;del mmcorej\*.class&#x0D;&#x0A;&quot;%JAVA_HOME%\bin\javac&quot; -source 5 mmcorej\*.java ../mmstudio/src/org/json/*.java&#x0D;&#x0A;&quot;%JAVA_HOME%\bin\jar&quot; cvf MMCoreJ.jar mmcorej\*.class&#x0D;&#x0A;copy *.jar ..\bin_$(PlatformName)&#x0D;&#x0A;copy *.jar \&quot;Program Files&quot;\ImageJ\plugins\Micro-Manager&#x0D;&#x0A;copy ..\bin_$(PlatformName)\*.dll  \&quot;Program Files&quot;\ImageJ"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\bin_$(PlatformName)&#x0D;&#x0A;del mmcorej\*.class&#x0D;&#x0A;&quot;%JAVA_HOME%\bin\javac&quot; -source 5 mmcorej\*.java ../mmstudio/src/org/json/*.java&#x0D;&#x0A;&quot;%JAVA_HOME%\bin\jar&quot; cvf MMCoreJ.jar mmcorej\*.class&#x0D;&#x0A;copy *.jar ..\bin_$(PlatformName)&#x0D;&#x0A;copy *.jar \&quot;Program Files&quot;\ImageJ\plugins\Micro-Manager&#x0D;&#x0A;copy ..\bin_$(PlatformName)\*.dll  \&quot;Program Files&quot;\ImageJ&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -329,7 +329,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="mmcorer.lib"
+				AdditionalDependencies="mmcorer.lib Iphlpapi.lib"
 				OutputFile="$(OutDir)/MMCoreJ_wrap.dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;;&quot;..\lib_$(PlatformName)&quot;"
@@ -362,7 +362,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\bin_$(PlatformName)&#x0D;&#x0A;del mmcorej\*.class&#x0D;&#x0A;&quot;%JAVA_HOME%\bin\javac&quot; -source 5 mmcorej\*.java ../mmstudio/src/org/json/*.java&#x0D;&#x0A;&quot;%JAVA_HOME%\bin\jar&quot; cvf MMCoreJ.jar mmcorej\*.class&#x0D;&#x0A;copy *.jar ..\bin_$(PlatformName)&#x0D;&#x0A;copy *.jar \&quot;Program Files&quot;\ImageJ\plugins\Micro-Manager&#x0D;&#x0A;copy ..\bin_$(PlatformName)\*.dll  \&quot;Program Files&quot;\ImageJ"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\bin_$(PlatformName)&#x0D;&#x0A;del mmcorej\*.class&#x0D;&#x0A;&quot;%JAVA_HOME%\bin\javac&quot; -source 5 mmcorej\*.java ../mmstudio/src/org/json/*.java&#x0D;&#x0A;&quot;%JAVA_HOME%\bin\jar&quot; cvf MMCoreJ.jar mmcorej\*.class&#x0D;&#x0A;copy *.jar ..\bin_$(PlatformName)&#x0D;&#x0A;copy *.jar \&quot;Program Files&quot;\ImageJ\plugins\Micro-Manager&#x0D;&#x0A;copy ..\bin_$(PlatformName)\*.dll  \&quot;Program Files&quot;\ImageJ&#x0D;&#x0A;"
 			/>
 		</Configuration>
 	</Configurations>
