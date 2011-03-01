@@ -15,6 +15,14 @@ typedef long long MACValue;
 
 #endif //__APPLE__
 
+#ifdef linux
+#include <stdio.h>
+#include <sys/ioctl.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <net/if.h>
+#endif // linux
+
 
 Host::Host(void)
 {
@@ -114,7 +122,27 @@ retval.push_back(0);
 
 
 
-#endif
+#endif // __APPLE__
+
+#ifdef linux
+
+//not tested!
+// assumes the device eth0 is the primary ethernet card
+
+
+	int sock;
+	struct ifreq buffer;
+	sock = socket(PF_INET, SOCK_DGRAM, 0);
+	memset(&buffer, 0, sizeof(buffer));
+	strcpy(buffer.ifr_name, "eth0");
+	ioctl(sock, SIOCGIFHWADDR, &buffer);
+	close(sock);
+   MACValue v = 0;
+   memcpy(&v, buffer.ifr_hwaddr.sa_data, 6);
+	retval.push_back(v);
+
+
+#endif // linux
 
 
 
