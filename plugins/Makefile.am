@@ -58,13 +58,13 @@ Big.jar:  \
 	## Work around bug in 'jar': jar cf MM_.jar -C bin/ bin/* does not work
 	cd build && jar cf ../Big.jar *
  
-all: PixelCalibrator.jar RecallPlugin.jar StageControl.jar MultiCamera.jar Big.jar
+all: PixelCalibrator.jar SlideExplorer.jar RecallPlugin.jar StageControl.jar MultiCamera.jar Big.jar
 
 install: 
 	test -d $(IJPATH)/mmplugins || mkdir $(IJPATH)/mmplugins
 	## cp MMTracker_.jar $(IJPATH)/mmplugins
 	cp PixelCalibrator.jar $(IJPATH)/mmplugins
-	## cp SlideExplorer.jar $(IJPATH)/mmplugins
+	cp SlideExplorer.jar $(IJPATH)/mmplugins
 	cp RecallPlugin.jar $(IJPATH)/mmplugins
 	cp StageControl.jar $(IJPATH)/mmplugins
 	cp MultiCamera.jar $(IJPATH)/mmplugins
