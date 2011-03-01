@@ -45,6 +45,7 @@ import ij.gui.Roi;
 import ij.gui.ShapeRoi;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
+import org.micromanager.navigation.StagePosition;
 import org.micromanager.utils.JavaUtils;
 import org.micromanager.utils.ReportingUtils;
 
@@ -183,43 +184,24 @@ public class RoiManager extends ij.plugin.frame.RoiManager{
 
 	
 	
-	void addRoiTrajectoryToPositionList(ArrayList<Point> acqTraj, int roiNumber, PositionList posList) {
+	void addRoiTrajectoryToPositionList(String roiName, ArrayList<Point> acqTraj, int roiNumber, PositionList posList) {
 		String xystage = mmc.getXYStageDevice();
-		//String zstage = mmc.getFocusDevice();
-      ArrayList<Point2D.Double> subPositions = new ArrayList<Point2D.Double>();
-
-
-      int left = Integer.MAX_VALUE;
-      int right = Integer.MIN_VALUE;
-      int top = Integer.MAX_VALUE;
-      int bottom = Integer.MIN_VALUE;
+      int tileCount = 0;
       for (Point acqPt:acqTraj) {
+         ++tileCount;
          Point mapPt = slideexplorerCoords_.offScreenClickToMap(acqPt);
 			Point2D.Double stagePos = controller_.mapToStage(mapPt);
             //System.out.println("acqPt: "+acqPt + "computed stagePos: "+stagePos);
-         subPositions.add(stagePos);
-         left = Math.min(mapPt.x, left);
-         right = Math.max(mapPt.x, right);
-         top = Math.min(mapPt.y, top);
-         bottom = Math.max(mapPt.y, bottom);
-		}
-
-      Dimension tileDims = controller_.getTileDimensions();
-      Point2D.Double centerStagePos = controller_.mapToStage(new Point((left + right)/2, (top + bottom) /2));
-      Rectangle bounds = new Rectangle(left, top, right - left + tileDims.width, bottom - top + tileDims.height);
-
-      MultiStagePositionMosaic msp = new MultiStagePositionMosaic(xystage, centerStagePos.x, centerStagePos.y);
-      msp.subPositions = subPositions;
-      msp.setLabel("roi"+roiNumber);
-      msp.bounds = bounds;
-      
-      posList.addPosition(msp);
-
-      try {
-			app_.setPositionList(posList);
-		} catch (MMScriptException e) {
-			ReportingUtils.logError(e);
-		}
+         StagePosition sp = new StagePosition();
+         sp.x = stagePos.x;
+         sp.y = stagePos.y;
+         sp.numAxes = 2;
+         sp.stageName = xystage;
+         MultiStagePosition msp = new MultiStagePosition();
+         msp.setLabel(roiName + "_tile" + tileCount);
+         msp.add(sp);
+         posList.addPosition(msp);
+      }
 	}
 
 	/*
@@ -247,7 +229,7 @@ public class RoiManager extends ij.plugin.frame.RoiManager{
                 //System.out.println("mapRoi: "+mapRoi.getBoundingRect());
                 ArrayList<Point> traj = generateRoiTrajectory(acqRoi);
                 System.out.println("traj :" + traj);
-                addRoiTrajectoryToPositionList(traj, roiCount, posList);
+                addRoiTrajectoryToPositionList("roi" + roiCount, traj, roiCount, posList);
             //}
 			//scanRoiTrajectory(traj);
 		}

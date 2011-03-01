@@ -27,7 +27,6 @@ public class ControlButtonsPanel extends javax.swing.JPanel {
 
     public ControlButtonsPanel(Display display) {
         initComponents();
-        mosaicButton.setEnabled(false);
         display_ = display;
     }
 
@@ -40,14 +39,23 @@ public class ControlButtonsPanel extends javax.swing.JPanel {
    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
    private void initComponents() {
 
+      snapButton = new javax.swing.JButton();
       navigatorButton = new javax.swing.JButton();
       explorerButton = new javax.swing.JButton();
       fullScreenButton = new javax.swing.JButton();
       configureButton = new javax.swing.JButton();
       mosaicButton = new javax.swing.JButton();
-      snapButton = new javax.swing.JButton();
       jComboBox1 = new javax.swing.JComboBox();
       clearROIsButton = new javax.swing.JButton();
+
+      snapButton.setText("Snap");
+      snapButton.setToolTipText("Snap an image at the current location");
+      snapButton.setFocusable(false);
+      snapButton.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            snapButtonActionPerformed(evt);
+         }
+      });
 
       setBackground(new java.awt.Color(255, 255, 255));
       setBorder(javax.swing.BorderFactory.createEmptyBorder(1, 1, 1, 1));
@@ -102,21 +110,12 @@ public class ControlButtonsPanel extends javax.swing.JPanel {
          }
       });
 
-      mosaicButton.setText("ROIs->Posns");
+      mosaicButton.setText("ROI->Pos");
       mosaicButton.setToolTipText("Creates tiles from ROIs and sends to position list.");
       mosaicButton.setFocusable(false);
       mosaicButton.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
             mosaicButtonActionPerformed(evt);
-         }
-      });
-
-      snapButton.setText("Snap");
-      snapButton.setToolTipText("Snap an image at the current location");
-      snapButton.setFocusable(false);
-      snapButton.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            snapButtonActionPerformed(evt);
          }
       });
 
@@ -146,18 +145,15 @@ public class ControlButtonsPanel extends javax.swing.JPanel {
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
             .add(navigatorButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 105, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-            .add(mosaicButton)
+            .add(mosaicButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 88, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
             .add(fullScreenButton)
-            .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
             .add(configureButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 100, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-            .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-            .add(snapButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 66, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
             .add(jComboBox1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-            .add(clearROIsButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 95, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-            .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+            .add(clearROIsButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 95, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
       );
       layout.setVerticalGroup(
          layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -168,7 +164,6 @@ public class ControlButtonsPanel extends javax.swing.JPanel {
                .add(mosaicButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 30, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                .add(fullScreenButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 30, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                .add(configureButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 30, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-               .add(snapButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 30, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                .add(jComboBox1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 27, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                .add(clearROIsButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 30, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
             .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))

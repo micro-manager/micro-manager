@@ -1,6 +1,18 @@
 <?xml version="1.1" encoding="UTF-8" ?>
 
 <Form version="1.3" maxVersion="1.7" type="org.netbeans.modules.form.forminfo.JPanelFormInfo">
+  <NonVisualComponents>
+    <Component class="javax.swing.JButton" name="snapButton">
+      <Properties>
+        <Property name="text" type="java.lang.String" value="Snap"/>
+        <Property name="toolTipText" type="java.lang.String" value="Snap an image at the current location"/>
+        <Property name="focusable" type="boolean" value="false"/>
+      </Properties>
+      <Events>
+        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="snapButtonActionPerformed"/>
+      </Events>
+    </Component>
+  </NonVisualComponents>
   <Properties>
     <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
       <Color blue="ff" green="ff" red="ff" type="rgb"/>
@@ -41,18 +53,15 @@
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
               <Component id="navigatorButton" min="-2" pref="105" max="-2" attributes="1"/>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
-              <Component id="mosaicButton" min="-2" max="-2" attributes="1"/>
+              <Component id="mosaicButton" min="-2" pref="88" max="-2" attributes="1"/>
               <EmptySpace type="unrelated" max="-2" attributes="0"/>
               <Component id="fullScreenButton" min="-2" max="-2" attributes="1"/>
-              <EmptySpace type="unrelated" max="-2" attributes="0"/>
+              <EmptySpace max="-2" attributes="0"/>
               <Component id="configureButton" min="-2" pref="100" max="-2" attributes="1"/>
-              <EmptySpace type="unrelated" max="-2" attributes="0"/>
-              <Component id="snapButton" min="-2" pref="66" max="-2" attributes="1"/>
               <EmptySpace max="-2" attributes="0"/>
               <Component id="jComboBox1" min="-2" max="-2" attributes="0"/>
-              <EmptySpace max="-2" attributes="0"/>
+              <EmptySpace type="unrelated" max="-2" attributes="0"/>
               <Component id="clearROIsButton" min="-2" pref="95" max="-2" attributes="1"/>
-              <EmptySpace max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
@@ -65,7 +74,6 @@
                   <Component id="mosaicButton" alignment="3" min="-2" pref="30" max="-2" attributes="0"/>
                   <Component id="fullScreenButton" alignment="3" min="-2" pref="30" max="-2" attributes="0"/>
                   <Component id="configureButton" alignment="3" min="-2" pref="30" max="-2" attributes="0"/>
-                  <Component id="snapButton" alignment="3" min="-2" pref="30" max="-2" attributes="0"/>
                   <Component id="jComboBox1" alignment="3" min="-2" pref="27" max="-2" attributes="0"/>
                   <Component id="clearROIsButton" alignment="3" min="-2" pref="30" max="-2" attributes="0"/>
               </Group>
@@ -141,22 +149,12 @@
     </Component>
     <Component class="javax.swing.JButton" name="mosaicButton">
       <Properties>
-        <Property name="text" type="java.lang.String" value="ROIs-&gt;Posns"/>
+        <Property name="text" type="java.lang.String" value="ROI-&gt;Pos"/>
         <Property name="toolTipText" type="java.lang.String" value="Creates tiles from ROIs and sends to position list."/>
         <Property name="focusable" type="boolean" value="false"/>
       </Properties>
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="mosaicButtonActionPerformed"/>
-      </Events>
-    </Component>
-    <Component class="javax.swing.JButton" name="snapButton">
-      <Properties>
-        <Property name="text" type="java.lang.String" value="Snap"/>
-        <Property name="toolTipText" type="java.lang.String" value="Snap an image at the current location"/>
-        <Property name="focusable" type="boolean" value="false"/>
-      </Properties>
-      <Events>
-        <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="snapButtonActionPerformed"/>
       </Events>
     </Component>
     <Component class="javax.swing.JComboBox" name="jComboBox1">

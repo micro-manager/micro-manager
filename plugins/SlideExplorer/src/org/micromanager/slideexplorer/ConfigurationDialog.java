@@ -187,7 +187,7 @@ public class ConfigurationDialog extends javax.swing.JFrame {
         private int numRows_ = 3;
 
 
-        String columnNames_[] = { "Resolution setting", "x-offset, Œºm", "y-offset, Œºm", "z-offset, Œºm" };
+        String columnNames_[] = { "Resolution setting", "x-offset, \u03BCm", "y-offset, \u03BCm", "z-offset, \u03BCm" };
         private final Object[] tableData_;
 
 

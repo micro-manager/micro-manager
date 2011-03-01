@@ -21,6 +21,7 @@ import org.micromanager.api.ScriptInterface;
 import org.micromanager.pixelcalibrator.PixelCalibratorPlugin;
 import org.micromanager.utils.ImageUtils;
 import org.micromanager.utils.JavaUtils;
+import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.ReportingUtils;
 
 public class Hub {
@@ -326,17 +327,13 @@ public class Hub {
    }
 
    void acquireMosaics() {
-    /*  roiManager_.updateMappings();
-
-      MMAcquisitionEngineMTMosaic eng = new MMAcquisitionEngineMTMosaic(this);
-      eng.setCore(core_, ((MMStudioMainFrame) app_).getAutofocusManager());
-      eng.setRoiManager(roiManager_);
-      eng.setParentGUI((DeviceControlGUI) app_);
-      if (mosaicDlg_ == null) {
-         mosaicDlg_ = new AcqControlDlgMosaic(eng, app_);
-      } else {
-         mosaicDlg_.setVisible(true);
-      }*/
+      roiManager_.updateMappings();
+      try {
+         app_.setPositionList(roiManager_.convertRoiManagerToPositionList());
+         app_.showXYPositionList();
+      } catch (MMScriptException ex) {
+         ex.printStackTrace();
+      }
    }
 
    int getZoomLevel() {
