@@ -3,26 +3,20 @@ package org.micromanager.slideexplorer;
 import ij.process.ImageProcessor;
 
 import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.Point;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 
 import java.util.Hashtable;
 import java.util.prefs.Preferences;
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
 import mmcorej.CMMCore;
 
 import mmcorej.StrVector;
-import org.micromanager.AcqControlDlg;
 import org.micromanager.MMStudioMainFrame;
-import org.micromanager.api.DeviceControlGUI;
 import org.micromanager.api.ScriptInterface;
 import org.micromanager.pixelcalibrator.PixelCalibratorPlugin;
 import org.micromanager.utils.ImageUtils;
@@ -58,7 +52,7 @@ public class Hub {
    private String currentPixelSizeConfig_ = "None";
    private Hashtable<String, OffsetsRow> offsetsData_ = new Hashtable<String, OffsetsRow>();
    private double autofocusOffset_ = 0;
-   private AcqControlDlgMosaic mosaicDlg_ = null;
+//   private AcqControlDlgMosaic mosaicDlg_ = null;
 
    /*
     * Hub constructor.
@@ -332,7 +326,7 @@ public class Hub {
    }
 
    void acquireMosaics() {
-      roiManager_.updateMappings();
+    /*  roiManager_.updateMappings();
 
       MMAcquisitionEngineMTMosaic eng = new MMAcquisitionEngineMTMosaic(this);
       eng.setCore(core_, ((MMStudioMainFrame) app_).getAutofocusManager());
@@ -342,7 +336,7 @@ public class Hub {
          mosaicDlg_ = new AcqControlDlgMosaic(eng, app_);
       } else {
          mosaicDlg_.setVisible(true);
-      }
+      }*/
    }
 
    int getZoomLevel() {
@@ -509,12 +503,9 @@ public class Hub {
    void snap() {
       app_.snapSingleImage();
    }
-
+/*
    public class AcqControlDlgMosaic extends AcqControlDlg {
 
-      /**
-       *
-       */
       protected static final long serialVersionUID = 1L;
 
       public AcqControlDlgMosaic(MMAcquisitionEngineMTMosaic eng, ScriptInterface app) {
@@ -543,11 +534,12 @@ public class Hub {
          setVisible(true);
 
       }
-   }
+   }*/
 
    /*
     * Draws tiles and the ROI at the end of the Swing Event Dispatcher Thread Queue.
     */
+
    class GUIUpdater implements Runnable {
 
       private Point tileIndex_ = null;

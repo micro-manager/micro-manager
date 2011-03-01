@@ -27,6 +27,7 @@ public class ControlButtonsPanel extends javax.swing.JPanel {
 
     public ControlButtonsPanel(Display display) {
         initComponents();
+        mosaicButton.setEnabled(false);
         display_ = display;
     }
 
@@ -101,8 +102,8 @@ public class ControlButtonsPanel extends javax.swing.JPanel {
          }
       });
 
-      mosaicButton.setText("5D Acq");
-      mosaicButton.setToolTipText("Acquire tiled 5D images of one or more ROIs.");
+      mosaicButton.setText("ROIs->Posns");
+      mosaicButton.setToolTipText("Creates tiles from ROIs and sends to position list.");
       mosaicButton.setFocusable(false);
       mosaicButton.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -156,7 +157,7 @@ public class ControlButtonsPanel extends javax.swing.JPanel {
             .add(jComboBox1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
             .add(clearROIsButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 95, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-            .addContainerGap(89, Short.MAX_VALUE))
+            .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
       );
       layout.setVerticalGroup(
          layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
@@ -172,8 +173,6 @@ public class ControlButtonsPanel extends javax.swing.JPanel {
                .add(clearROIsButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 30, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
             .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
       );
-
-      configureButton.getAccessibleContext().setAccessibleDescription("Configure the slide explorer");
    }// </editor-fold>//GEN-END:initComponents
 
     private void navigatorButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_navigatorButtonActionPerformed
