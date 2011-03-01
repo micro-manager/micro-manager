@@ -32,7 +32,8 @@ cd $REPOSITORY
 
 cp -r MacInstaller/Micro-Manager $TARGET
 find $TARGET -name '.svn' -exec rm -fr {} \;
-cp $CLASSEXT/ij.jar $TARGETcp $CLASSEXT/bsh-2.0b4.jar $TARGET/plugins/
+cp $CLASSEXT/ij.jar $TARGET
+cp $CLASSEXT/bsh-2.0b4.jar $TARGET/plugins/
 cp $CLASSEXT/clojure.jar $TARGET/plugins/
 cp $CLASSEXT/swingx-0.9.5.jar $TARGET/plugins/
 cp $CLASSEXT/swing-layout-1.0.4.jar $TARGET/plugins/
@@ -98,5 +99,3 @@ cd $REPOSITORY/MacInstaller
 
 # upload to mightly build server:
 scp Micro-Manager$VERSION.dmg $UPLOADPLACE
-
-
