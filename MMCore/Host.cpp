@@ -137,7 +137,7 @@ std::vector<std::string> Host::MACAddresses()
       memcpy( ctmp, &(*j), 6);
 
     char address[19];
-    snprintf(address, 19, "%02x:%02x:%02x:%02x:%02x:%02x",
+    snprintf(address, 19, "%02x-%02x-%02x-%02x-%02x-%02x",
                        ctmp[0],
                        ctmp[1],
                        ctmp[2],
