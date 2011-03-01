@@ -32,7 +32,8 @@ libMMCoreJ_wrap_la_SOURCES = $(SWIGLIB_SOURCES) \
 	$(top_srcdir)/MMCore/CoreProperty.cpp \
 	$(top_srcdir)/MMCore/FastLogger.cpp \
 	$(top_srcdir)/MMCore/MMCore.cpp \
-	$(top_srcdir)/MMCore/PluginManager.cpp
+	$(top_srcdir)/MMCore/PluginManager.cpp \
+        $(top_srcdir)/MMCore/Host.cpp
  
 #not sure if Boost linking is needed
 libMMCoreJ_wrap_la_LDFLAGS = -Wl, -module -ldl $(BOOST_LDFLAGS)
