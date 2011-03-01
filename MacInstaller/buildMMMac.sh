@@ -2,18 +2,28 @@
 # from a single repository.
 # It does a clean build, and therefore can best be used only for a full release
 
-REPOSITORY=`pwd`/..
+REPOSITORYROOT=/Users/MM/svn
 BUILDDIR=/Users/MM/MMBuild
+UPLOADPLACE=valelab.ucsf.edu:/home/MM/public_html/builds/1.4/Mac/
 
-CLASSEXT=$REPOSITORY/../3rdpartypublic/$CLASSEXT
 TARGET=$BUILDDIR/Micro-Manager1.4
 PPC=$BUILDDIR/Micro-Manager1.4-ppc
 I386=$BUILDDIR/Micro-Manager1.4-i386
 X86_64=$BUILDDIR/Micro-Manager1.4-x86_64
 
+REPOSITORY=$REPOSITORYROOT/micromanager1.4
+RPPC=$REPOSITORYROOT/micromanager1.4-ppc
+RI386=$REPOSITORYROOT/micromanager1.4-i386
+RX86_64=$REPOSITORYROOT/micromanager1.4-x86_64
+
+CLASSEXT=$REPOSITORYROOT/3rdpartypublic/classext
+
+
 test -d $BUILDDIR && rm -rf $TARGET*
 mkdir $BUILDDIR
 
+cd $REPOSITORYROOT/3rdpartypublic/
+svn update
 cd $REPOSITORY
 svn update
 cd $REPOSITORY/SecretDeviceAdapters
@@ -21,29 +31,16 @@ svn update
 cd $REPOSITORY
 
 cp -r MacInstaller/Micro-Manager $TARGET
-cp $CLASSEXT/ij.jar $TARGET
-cp $CLASSEXT/bsh-2.0b4.jar $TARGET/plugins/
+find $TARGET -name '.svn' -exec rm -fr {} \;
+cp $CLASSEXT/ij.jar $TARGETcp $CLASSEXT/bsh-2.0b4.jar $TARGET/plugins/
+cp $CLASSEXT/clojure.jar $TARGET/plugins/
 cp $CLASSEXT/swingx-0.9.5.jar $TARGET/plugins/
 cp $CLASSEXT/swing-layout-1.0.4.jar $TARGET/plugins/
 cp $CLASSEXT/commons-math-2.0.jar $TARGET/plugins/
-cp -r MacInstaller/Micro-Manager $PPC
-cp $CLASSEXT/ij.jar $PPC
-cp $CLASSEXT/bsh-2.0b4.jar $PPC/plugins/
-cp $CLASSEXT/swingx-0.9.5.jar $PPC/plugins/
-cp $CLASSEXT/swing-layout-1.0.4.jar $PPC/plugins/
-cp $CLASSEXT/commons-math-2.0.jar $PPC/plugins/
-cp -r MacInstaller/Micro-Manager $I386
-cp $CLASSEXT/ij.jar $I386
-cp $CLASSEXT/bsh-2.0b4.jar $I386/plugins/
-cp $CLASSEXT/swingx-0.9.5.jar $I386/plugins/
-cp $CLASSEXT/swing-layout-1.0.4.jar $I386/plugins/
-cp $CLASSEXT/commons-math-2.0.jar $I386/plugins/
-cp -r MacInstaller/Micro-Manager $X86_64
-cp $CLASSEXT/ij.jar $X86_64
-cp $CLASSEXT/bsh-2.0b4.jar $X86_64/plugins/
-cp $CLASSEXT/swingx-0.9.5.jar $X86_64/plugins/
-cp $CLASSEXT/swing-layout-1.0.4.jar $X86_64/plugins/
-cp $CLASSEXT/commons-math-2.0.jar $X86_64/plugins/
+cp -r $TARGET $PPC
+cp -r $TARGET $I386
+cp -r $TARGET $X86_64
+
 
 ./mmUnixBuild.sh || exit
 cd $REPOSITORY
@@ -98,5 +95,8 @@ cp $I386/MMDeviceList.txt $TARGET/MMDeviceList.txt
 
 cd $REPOSITORY/MacInstaller
 ./makemacdisk.sh -r -s $TARGET
+
+# upload to mightly build server:
+scp Micro-Manager$VERSION.dmg $UPLOADPLACE
 
 

@@ -102,7 +102,7 @@ for f in $FILES; do lipo -create $PPC/$f $I386/$f $X86_64/$f -o $TARGET/$f; done
 
 
 # copy installed files 
-cp -r $PPC/plugins/Micro-Manager $TARGET/plugins
+cp -r $PPC/plugins/Micro-Manager $TARGET/plugins/
 cp $PPC/*.cfg $TARGET/
 cp $PPC/_MMCorePy.so $TARGET/
 cp -r $PPC/mmplugins $TARGET/
