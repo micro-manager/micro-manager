@@ -34,7 +34,7 @@ Host::~Host(void)
 
 
 
-// a free function to call into the OS stuff
+// a function to call into the OS stuff
 
 std::vector<MACValue > Host::getMACAddresses(void)
 {
@@ -87,12 +87,12 @@ delete[] pBuffer;
 #ifdef __APPLE__
 
 
-#ifdef APPLEHOSTIMPL  // no way all this works just yet.
+//#ifdef APPLEHOSTIMPL  // no way all this works just yet.
 
     io_iterator_t   intfIterator;
     UInt8           MACAddress[kIOEthernetAddressSize];
  
-    kernResult = FindEthernetInterfaces(&intfIterator);
+    int kernResult = FindEthernetInterfaces(&intfIterator);
     
     if (KERN_SUCCESS != kernResult) {
         printf("FindEthernetInterfaces returned 0x%08x\n", kernResult);
@@ -105,19 +105,15 @@ delete[] pBuffer;
         }
         else {
            MACValue v;
-           memcpy(v, MACAddress, sizeof(v));
+           memcpy(&v, MACAddress, sizeof(v));
 
 
-            //printf("This system's built-in MAC address is %02x:%02x:%02x:%02x:%02x:%02x.\n",
-            //        MACAddress[0], MACAddress[1], MACAddress[2], MACAddress[3], MACAddress[4], MACAddress[5]);
         retval.push_back(v);
         }
     }
     
     (void) IOObjectRelease(intfIterator);   // Release the iterator.
-#else  // APPLEHOSTIMPL
-retval.push_back(0);
-#endif  //APPLEHOSTIMPL
+//#endif  //APPLEHOSTIMPL
 
 
 
