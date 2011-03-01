@@ -37,6 +37,9 @@ else
       $gcommand = 'gzip -d ' . $opath . '.gz';
       echo 'gzip command:  ' . $gcommand . '<br />';
       exec( $gcommand);
+      $rcommand = 'rm ' . $opath . '.uu';
+      exec( $rcommand);
+
       
    }
 }
