@@ -1,17 +1,17 @@
 #include "Host.h"
+typedef long long MACValue;
 
 #ifdef _WINDOWS
 #include <winsock2.h>
 #include "Iphlpapi.h"
 #include <stdio.h>
 #define snprintf _snprintf 
-typedef long long MACValue;
 
 #endif //_WINDOWS
 
 #ifdef __APPLE__
 
-#include AppleHost.cpp
+#include "AppleHost.h"
 
 #endif //__APPLE__
 
@@ -137,7 +137,7 @@ std::vector<std::string> Host::MACAddresses()
       memcpy( ctmp, &(*j), 6);
 
     char address[19];
-    _snprintf(address, 19, "%02x:%02x:%02x:%02x:%02x:%02x",
+    snprintf(address, 19, "%02x:%02x:%02x:%02x:%02x:%02x",
                        ctmp[0],
                        ctmp[1],
                        ctmp[2],

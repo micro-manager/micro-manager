@@ -15,6 +15,6 @@ libMMCore_a_SOURCES = MMCore.cpp MMCore.h \
 	../MMDevice/MMDevice.h ../MMDevice/MMDeviceConstants.h \
 	../MMDevice/ModuleInterface.h \
       Host.cpp Host.h \
-      AppleHost.cpp
+      AppleHost.h
 
 EXTRA_DIST = license.txt MMCore_vc8.vcproj MMCore.vcproj
