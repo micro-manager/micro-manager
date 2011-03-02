@@ -40,6 +40,10 @@ else
       $rcommand = 'rm ' . $opath . '.uu';
       exec( $rcommand);
 
+mail('info@micro-manager.org', 'New Problem Report!', $opath);
+mail('karl.hoover@ucsf.edu', 'New Problem Report!', $opath);
+
+
       
    }
 }
