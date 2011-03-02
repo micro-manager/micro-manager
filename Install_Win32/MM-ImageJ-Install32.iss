@@ -121,6 +121,7 @@ Source: micro-manager\mmgr_dal_PI.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_PI_GCS.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Piper.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_PrecisExcite.dll; DestDir: {app}; Flags: ignoreversion
+Source: micro-manager\mmgr_dal_PrincetonInstruments.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Prior.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_ProgRes.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_PSRemoteCamera.dll; DestDir: {app}; Flags: ignoreversion
