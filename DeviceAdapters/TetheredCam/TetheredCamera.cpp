@@ -417,6 +417,16 @@ int CTetheredCamera::Initialize()
    // synchronize all properties
    // --------------------------
    nRet = UpdateStatus();
+
+   // Log debug info
+   ostringstream msg;
+   msg.str("");
+   msg << "Using LibRaw " <<  LibRaw::version();
+   LogMessage(msg.str(), true);
+   msg.str("");
+   msg << "Connected to " << cameraName_;
+   LogMessage(msg.str(), true);
+                   
    return nRet;
 }
 
