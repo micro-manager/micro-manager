@@ -5237,7 +5237,15 @@ std::vector<std::string> CMMCore::getMACAddresses(void)
       Host* pHost = new Host();
       if(NULL != pHost)
       {
-         retv =  pHost->MACAddresses();
+         long status;
+         retv =  pHost->MACAddresses(status);
+
+         if( 0 != status)
+         {
+            std::ostringstream m;
+            m << "error retrieving MAC address " << status;
+            logMessage(m.str().c_str());
+         }
          delete pHost;
       }
    }

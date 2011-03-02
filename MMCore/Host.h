@@ -11,8 +11,8 @@ class Host
 public:
    Host(void);
    ~Host(void);
-   std::vector<std::string> MACAddresses(void);
-   std::vector<MACValue > getMACAddresses(void);
+   std::vector<std::string> MACAddresses(long& status);
+   std::vector<MACValue > getMACAddresses(long& status);
 
 
 };
