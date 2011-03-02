@@ -55,12 +55,12 @@ class ProblemReportSender extends Thread {
             preamble += "\n";
         preamble += "#";
         StrVector ss = core_.getMACAddresses();
-        if (0 < ss.size())
-        {
+        if (0 < ss.size()){
             String pa2 = ss.get(0);
-            if(!pa2.isEmpty())
-            {
-                physicalAddress = pa2;
+            if(null != pa2){
+                if( 0 <  pa2.length()){
+                    physicalAddress = pa2;
+                }
             }
         }
         preamble += ("MAC: " + physicalAddress + " ");
