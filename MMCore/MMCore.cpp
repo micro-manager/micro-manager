@@ -379,7 +379,9 @@ string CMMCore::getVersionInfo() const
 /**
  * Get available devices from the specified library.
  */
-vector<string> CMMCore::getAvailableDevices(const char* library) throw (CMMError)
+vector<string> CMMCore::getAvailableDevices(const char* library ///< the device adapter library name
+                                            
+                                            ) throw (CMMError)
 {
    try
    {
@@ -394,7 +396,8 @@ vector<string> CMMCore::getAvailableDevices(const char* library) throw (CMMError
 /**
  * Get descriptions for available devices from the specified library.
  */
-vector<string> CMMCore::getAvailableDeviceDescriptions(const char* library) throw (CMMError)
+vector<string> CMMCore::getAvailableDeviceDescriptions(const char* library ///< the device adapter library name
+                                                       ) throw (CMMError)
 {
    try
    {
@@ -409,7 +412,8 @@ vector<string> CMMCore::getAvailableDeviceDescriptions(const char* library) thro
 /**
  * Get type information for available devices from the specified library.
  */
-vector<long> CMMCore::getAvailableDeviceTypes(const char* library) throw (CMMError)
+vector<long> CMMCore::getAvailableDeviceTypes(const char* library ///< the device adapter library name
+                                              ) throw (CMMError)
 {
    try
    {
@@ -653,7 +657,8 @@ void CMMCore::loadDevice(const char* label, const char* library, const char* dev
 /**
  * Unloads the device from the core and adjusts all configuration data.
  */
-void CMMCore::unloadDevice(const char* label) throw (CMMError)
+void CMMCore::unloadDevice(const char* label///< the name of the device to unload
+                           ) throw (CMMError)
 {
    MM::Device* pDevice = getDevice(label);
    
@@ -895,7 +900,8 @@ void CMMCore::updateCoreProperties() throw (CMMError)
  *
  * @param label device label
  */
-void CMMCore::initializeDevice(const char* label) throw (CMMError)
+void CMMCore::initializeDevice(const char* label ///< the device to initialize
+                               ) throw (CMMError)
 {
    MM::Device* pDevice = getDevice(label);
    
@@ -1925,7 +1931,8 @@ void* CMMCore::popNextImageMD(Metadata& md) throw (CMMError)
 /**
  * Reserve memory for the circular buffer.
  */
-void CMMCore::setCircularBufferMemoryFootprint(unsigned sizeMB) throw (CMMError)
+void CMMCore::setCircularBufferMemoryFootprint(unsigned sizeMB ///< n megabytes
+                                               ) throw (CMMError)
 {
    delete cbuf_; // discard old buffer
 	try
@@ -5067,6 +5074,10 @@ string CMMCore::getDeviceName(MM::Device* pDev)
    return name;
 }
 
+/**
+* Compress the core log into a gz archive return the path of the archive
+* 
+*/
 
 std::string CMMCore::saveLogArchive(void)
 {
@@ -5108,9 +5119,13 @@ std::string CMMCore::saveLogArchive(void)
 
 }
 
-
-// just like saveLogArchive, but client can add whatever header he wants
-std::string CMMCore::saveLogArchiveWithPreamble(char* preamble, int preambleLength)
+/**
+* just like saveLogArchive, but client can add whatever header desired
+* 
+*/
+std::string CMMCore::saveLogArchiveWithPreamble(char* preamble, ///< beginning of a header to be prepended to the corelog
+                                                int preambleLength ///< length of the header
+                                                )
 {
    if( 0 == preamble)
       preambleLength = 0; // intentionally modifying local copy of arg
@@ -5228,6 +5243,11 @@ void CMMCore::acqAfterStack() throw (CMMError)
 
 // at least on OS X, there is a 'primary' MAC address, so we'll
 // assume that is the first one.
+/**
+* Retrieve vector of MAC addresses for the Ethernet cards in the current computer
+* formatted xx-xx-xx-xx-xx-xx
+* 
+*/
 std::vector<std::string> CMMCore::getMACAddresses(void)
 {
    std::vector<std::string> retv;
