@@ -143,8 +143,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "FreeSerialPort", "..\Device
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "XCite120PC_Exacte", "..\DeviceAdapters\XCite120PC_Exacte\XCite120PC_Exacte.vcproj", "{4B9E78C0-C365-11DF-9539-E01BDFD72085}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Hamamatsu", "..\SecretDeviceAdapters\HamamatsuMac\Hamamatsu.vcproj", "{E0369FA6-1D4C-4FF7-AF9E-FC7B6FA07B1D}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "KDV", "..\DeviceAdapters\kdv\KDV.vcproj", "{95CE7E3D-1E0D-4C5B-AF9B-B8343A8724FB}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DSLRRemoteCamera", "..\DeviceAdapters\TetheredCam\DSLRRemoteCamera.vcproj", "{7D8848FB-2C9B-48B3-8156-AA08B6AC6034}"
@@ -162,6 +160,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ImageProcessorChain", "..\DeviceAdapters\ImageProcessorChain\ImageProcessorChain.vcproj", "{806A629B-7EAA-4265-A4C0-000000000000}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NNLC", "..\SecretDeviceAdapters\NNLC\NNLC.vcproj", "{3BFC5BBD-6C7D-44A7-8381-F9D6E03C98AB}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Hamamatsu", "..\SecretDeviceAdapters\Hamamatsu\Hamamatsu.vcproj", "{E0369FA6-1D4C-4FF7-AF9E-FC7B6FA07B1D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -717,12 +717,6 @@ Global
 		{4B9E78C0-C365-11DF-9539-E01BDFD72085}.Release|Win32.ActiveCfg = Release|Win32
 		{4B9E78C0-C365-11DF-9539-E01BDFD72085}.Release|Win32.Build.0 = Release|Win32
 		{4B9E78C0-C365-11DF-9539-E01BDFD72085}.Release|x64.ActiveCfg = Release|Win32
-		{E0369FA6-1D4C-4FF7-AF9E-FC7B6FA07B1D}.Debug|Win32.ActiveCfg = Debug|Win32
-		{E0369FA6-1D4C-4FF7-AF9E-FC7B6FA07B1D}.Debug|Win32.Build.0 = Debug|Win32
-		{E0369FA6-1D4C-4FF7-AF9E-FC7B6FA07B1D}.Debug|x64.ActiveCfg = Debug|Win32
-		{E0369FA6-1D4C-4FF7-AF9E-FC7B6FA07B1D}.Release|Win32.ActiveCfg = Release|Win32
-		{E0369FA6-1D4C-4FF7-AF9E-FC7B6FA07B1D}.Release|Win32.Build.0 = Release|Win32
-		{E0369FA6-1D4C-4FF7-AF9E-FC7B6FA07B1D}.Release|x64.ActiveCfg = Release|Win32
 		{95CE7E3D-1E0D-4C5B-AF9B-B8343A8724FB}.Debug|Win32.ActiveCfg = Debug|Win32
 		{95CE7E3D-1E0D-4C5B-AF9B-B8343A8724FB}.Debug|Win32.Build.0 = Debug|Win32
 		{95CE7E3D-1E0D-4C5B-AF9B-B8343A8724FB}.Debug|x64.ActiveCfg = Debug|Win32
@@ -787,6 +781,14 @@ Global
 		{3BFC5BBD-6C7D-44A7-8381-F9D6E03C98AB}.Release|Win32.Build.0 = Release|Win32
 		{3BFC5BBD-6C7D-44A7-8381-F9D6E03C98AB}.Release|x64.ActiveCfg = Release|x64
 		{3BFC5BBD-6C7D-44A7-8381-F9D6E03C98AB}.Release|x64.Build.0 = Release|x64
+		{E0369FA6-1D4C-4FF7-AF9E-FC7B6FA07B1D}.Debug|Win32.ActiveCfg = Debug|Win32
+		{E0369FA6-1D4C-4FF7-AF9E-FC7B6FA07B1D}.Debug|Win32.Build.0 = Debug|Win32
+		{E0369FA6-1D4C-4FF7-AF9E-FC7B6FA07B1D}.Debug|x64.ActiveCfg = Debug|x64
+		{E0369FA6-1D4C-4FF7-AF9E-FC7B6FA07B1D}.Debug|x64.Build.0 = Debug|x64
+		{E0369FA6-1D4C-4FF7-AF9E-FC7B6FA07B1D}.Release|Win32.ActiveCfg = Release|Win32
+		{E0369FA6-1D4C-4FF7-AF9E-FC7B6FA07B1D}.Release|Win32.Build.0 = Release|Win32
+		{E0369FA6-1D4C-4FF7-AF9E-FC7B6FA07B1D}.Release|x64.ActiveCfg = Release|x64
+		{E0369FA6-1D4C-4FF7-AF9E-FC7B6FA07B1D}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
