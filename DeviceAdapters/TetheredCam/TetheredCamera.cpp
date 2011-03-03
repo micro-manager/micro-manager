@@ -418,13 +418,16 @@ int CTetheredCamera::Initialize()
    // --------------------------
    nRet = UpdateStatus();
 
+   // initialize image buffer
+   img_.Resize(640, 480, 4); // imgGrayScale_(false), imgBitDepth_(8) implies 8bit rgb, 4 bytes per pixel.
+
    // Log debug info
    ostringstream msg;
    msg.str("");
    msg << "Using LibRaw " <<  LibRaw::version();
    LogMessage(msg.str(), true);
    msg.str("");
-   msg << "Connected to " << cameraName_;
+   msg << "Camera: " << cameraName_;
    LogMessage(msg.str(), true);
                    
    return nRet;
