@@ -159,7 +159,7 @@ Source: micro-manager\MMCorePy.py; DestDir: {app}; Flags: ignoreversion skipifso
 Source: micro-manager\MMCoreWrapDemo.py; DestDir: {app}; Flags: ignoreversion skipifsourcedoesntexist
 
 ; drivers
-Source: micro-manager\drivers\*; DestDir: {app}\drivers; Flags: ignoreversion
+Source: micro-manager\drivers_Win32\*; DestDir: {app}\drivers; Flags: ignoreversion
 
 ; beanshell scripts
 Source: ..\scripts\*; DestDir: {app}\scripts; Flags: ignoreversion
