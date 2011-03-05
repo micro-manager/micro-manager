@@ -109,6 +109,7 @@ public:
    int OnErrorSimulation(MM::PropertyBase* , MM::ActionType );
    int OnCameraCCDXSize(MM::PropertyBase* , MM::ActionType );
    int OnCameraCCDYSize(MM::PropertyBase* , MM::ActionType );
+   int OnTriggerDevice(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    MM::MMTime CurrentTime(void) { return GetCurrentMMTime(); };
 
@@ -139,6 +140,7 @@ private:
 	long binSize_;
 	long cameraCCDXSize_;
 	long cameraCCDYSize_;
+	std::string triggerDevice_;
 
 	double testProperty_[10];
    MMThreadLock* pDemoResourceLock_;

@@ -1,0 +1,15 @@
+import mmcorej.StrVector;
+
+// This demonstrates triggering with the demo configuration.
+mmc.setProperty("Camera","TriggerDevice","Objective");
+seq = new StrVector();
+seq.add("0");
+seq.add("2");
+seq.add("1");
+seq.add("3");
+mmc.loadPropertySequence("Objective","State",seq);
+mmc.startPropertySequence("Objective","State");
+gui.enableLiveMode(true);
+Thread.sleep(3000);
+gui.enableLiveMode(false);
+mmc.stopPropertySequence("Objective","State");

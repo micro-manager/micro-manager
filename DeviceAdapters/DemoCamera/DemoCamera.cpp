@@ -210,11 +210,12 @@ CDemoCamera::CDemoCamera() :
    roiY_(0),
    sequenceStartTime_(0),
    errorSimulation_(false),
-	binSize_(1),
-	cameraCCDXSize_(512),
-	cameraCCDYSize_(512),
+	 binSize_(1),
+	 cameraCCDXSize_(512),
+	 cameraCCDYSize_(512),
    nComponents_(1),
-   pDemoResourceLock_(0)
+   pDemoResourceLock_(0),
+   triggerDevice_("")
 {
    // call the base class method to set-up default error codes/messages
    InitializeDefaultErrorMessages();
@@ -382,6 +383,9 @@ int CDemoCamera::Initialize()
    pAct = new CPropertyAction (this, &CDemoCamera::OnCameraCCDYSize);
    CreateProperty("OnCameraCCDYSize", "512", MM::Integer, false, pAct);
 
+   // Trigger device
+   pAct = new CPropertyAction (this, &CDemoCamera::OnTriggerDevice);
+   CreateProperty("TriggerDevice","", MM::String, false, pAct);
 
    // synchronize all properties
    // --------------------------
@@ -753,6 +757,19 @@ int CDemoCamera::InsertImage()
 int CDemoCamera::ThreadRun (void)
 {
    int ret=DEVICE_ERR;
+   
+   // Trigger
+   if (triggerDevice_.length() > 0) {
+      MM::Device* triggerDev = GetDevice(triggerDevice_.c_str());
+      if (triggerDev != 0) {
+      	char label[256];
+      	//triggerDev->GetLabel(label);
+      	LogMessage("trigger requested");
+      	triggerDev->SetProperty("Trigger","+");
+      }
+   }
+   
+   
    ret = SnapImage();
    if (ret != DEVICE_OK)
    {
@@ -791,6 +808,7 @@ void CDemoCamera::OnThreadExiting() throw()
       LogMessage(g_Msg_EXCEPTION_IN_ON_THREAD_EXITING, false);
    }
 }
+
 
 MySequenceThread::MySequenceThread(CDemoCamera* pCam)
    :intervalMs_(default_intervalMS)
@@ -1213,6 +1231,19 @@ int CDemoCamera::OnCameraCCDYSize(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 }
 
+int CDemoCamera::OnTriggerDevice(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(triggerDevice_.c_str());
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(triggerDevice_);
+   }
+   return DEVICE_OK;
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Private CDemoCamera methods
@@ -1398,7 +1429,7 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
       {
          // write the compact debug image...
          char ctmp[12];
-         snprintf(ctmp,12,"%d",iseq++);
+         snprintf(ctmp,12,"%ld",iseq++);
          int status = writeCompactTiffRGB( img.Width(), img.Height(), pTmpBuffer, ("democamera"+std::string(ctmp)).c_str()
             );
 			status = status;
@@ -1905,9 +1936,9 @@ int CDemoObjectiveTurret::Initialize()
 
    // Triggers to test sequence capabilities
    pAct = new CPropertyAction (this, &CDemoObjectiveTurret::OnTrigger);
-   ret = CreateProperty("Trigger", " - ", MM::String, false, pAct);
-   AddAllowedValue("Trigger", " - ");
-   AddAllowedValue("Trigger", " + ");
+   ret = CreateProperty("Trigger", "-", MM::String, false, pAct);
+   AddAllowedValue("Trigger", "-");
+   AddAllowedValue("Trigger", "+");
 
    ret = UpdateStatus();
    if (ret != DEVICE_OK)
@@ -1984,13 +2015,13 @@ int CDemoObjectiveTurret::OnTrigger(MM::PropertyBase* pProp, MM::ActionType eAct
 {
    if (eAct == MM::BeforeGet)
    {
-      pProp->Set(" - ");
+      pProp->Set("-");
    } else if (eAct == MM::AfterSet) {
       if (!sequenceRunning_)
          return ERR_SEQUENCE_INACTIVE;
       std::string tr;
       pProp->Get(tr);
-      if (tr == " + ") {
+      if (tr == "+") {
          if (sequenceIndex_ < (int) sequence_.size()) {
             std::string state = sequence_[sequenceIndex_];
             int ret = SetProperty("State", state.c_str());
