@@ -1,10 +1,14 @@
 // Karl Bellve's Well Plate Test Script
 // 20110218 K.H. explicitly add the class path & added some progress messages, 
 
+// for N = 96, generated position will lie on x on [0,99000] microns y on [0, 63000] microns
+// for N = 24 only ever 4th well is inspected on a 96 well plate
+
 addClassPath("Big.jar");
 import edu.umassmed.big.SBSPlate;
 import javax.swing.JOptionPane;
 import java.lang.Math;
+import org.micromanager.api.Autofocus;
 gui.closeAllAcquisitions();
 gui.clearMessageWindow();
 
@@ -16,6 +20,8 @@ x0 = new double[1];
 y0 = new double[1];
 
 xystage = mmc.getXYStageDevice();
+zstage = mmc.getFocusDevice();
+Autofocus a2 = gui.getAutofocus();
 Integer[] xyposition = new Integer[2];
 xyposition[0] = 0;
 xyposition[1] = 0;
@@ -35,6 +41,10 @@ mmc.waitForDevice(xystage);
 mmc.snapImage();
 image0 = mmc.getImage();
 gui.displayImage(image0);
+//ad hoc for the plate I've got I see that there is a rather large incline of the focus plane in Y
+// for y = 0, z = -843
+// for y = 63000, z =  -1189
+// z = -843 - (.00549 * y)
 
 SBSPlate plate = new SBSPlate(24);//(1536);
 numberOfWells = plate.getNumberOfWells();
@@ -42,8 +52,8 @@ Integer m = new Integer(0);
 for (m = 1; m <= numberOfWells; m++) {
   // code to take an image could be here
 
+  a2.fullFocus();
   gui.updateImage();
-
   // move the stage to the next well
   ipos = plate.getNextPosition(); // 0 indexed in mcrons
 
@@ -52,9 +62,17 @@ for (m = 1; m <= numberOfWells; m++) {
   mmc.setXYPosition(xystage,xyposition[0],xyposition[1]);
   print("going-> [" + xyposition[0].toString() + ", " + xyposition[1].toString()+"]");
   mmc.waitForDevice(xystage);
+/*
+  Double zoffcalc = -843. -(0.00549*ipos[1]);
+  mmc.setPosition(zstage, zoffcalc);
+  print("setting Z to " + zoffcalc.toString());
+  mmc.waitForDevice(zstage);
+*/
+  Double newz = mmc.getPosition(zstage);
+print ("reported z position is " + newz.toString());
 }
 // return stage to starting position
-mmc.setXYPosition(xystage,0,0);
+mmc.setXYPosition(xystage,x0[0],y0[0]);
 mmc.waitForDevice(xystage);
 // this will help you if you ever define any functions in this bean shell script
 update();
