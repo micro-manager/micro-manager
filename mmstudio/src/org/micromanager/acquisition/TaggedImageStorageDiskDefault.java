@@ -339,7 +339,11 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
          if (data != null) {
             try {
                summaryMetadata_ = jsonToMetadata(data.getJSONObject("Summary"));
-               int metadataVersion = summaryMetadata_.getInt("MetadataVersion");
+               int metadataVersion = 0;
+               try {
+                  metadataVersion = summaryMetadata_.getInt("MetadataVersion");
+               } catch (JSONException ex) {
+               }
                for (String key:makeJsonIterableKeys(data)) {
                   JSONObject chunk = data.getJSONObject(key);
                   if (key.startsWith("FrameKey")) {
@@ -365,7 +369,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
                   }
                }
             } catch (JSONException ex) {
-               ReportingUtils.logError(ex);
+               ReportingUtils.showError(ex);
             }
          }
          try {
@@ -380,17 +384,28 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
    private int getChannelIndex(String channelName) {
       try {
          JSONArray channelNames;
-         Object tmp = getSummaryMetadata().get("ChNames");
-         if (tmp instanceof String) {
-            channelNames = new JSONArray((String) tmp);
-         } else {
-            channelNames = (JSONArray) tmp;
+         Object tmp = null;
+         try {
+            tmp = getSummaryMetadata().get("ChNames");
+            if (tmp instanceof String) {
+               channelNames = new JSONArray((String) tmp);
+            } else {
+               channelNames = (JSONArray) tmp;
+            }
+            for (int i=0;i<channelNames.length();++i) {
+               if (channelNames.getString(i).contentEquals(channelName))
+                  return i;
+            }
+            // older metadata versions may not have ChNames
+            // create it here from the data we read from the FrameKeys
+            channelNames.put(channelName);
+            return channelNames.length();
+         } catch (JSONException ex) {
+            channelNames = new JSONArray();
+            channelNames.put(channelName);
+            getSummaryMetadata().put("ChNames", channelNames);
+            return 0;
          }
-         for (int i=0;i<channelNames.length();++i) {
-            if (channelNames.getString(i).contentEquals(channelName))
-               return i;
-         }
-         return 0;
       } catch (JSONException ex) {
          ReportingUtils.logError(ex);
          return 0;

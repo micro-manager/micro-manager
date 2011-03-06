@@ -583,7 +583,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
 
          public void uncaughtException(Thread t, Throwable e) {
-            ReportingUtils.showError(e, "An uncaught exception was thrown in thread " + t.getName() + ".");
+            // This call can result in loops that go on forever
+            // and display thousands of Errors.  Not sure why, but for now,
+            // it seems better to do nothing
+            // ReportingUtils.showError(e, "An uncaught exception was thrown in thread " + t.getName() + ".");
          }
       });
 

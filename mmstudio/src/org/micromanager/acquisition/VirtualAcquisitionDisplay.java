@@ -265,11 +265,43 @@ public class VirtualAcquisitionDisplay {
    public static JSONObject getDisplaySettingsFromSummary(JSONObject summaryMetadata) {
       try {
          JSONObject displaySettings = new JSONObject();
+         JSONArray chColors;
          JSONArray chNames = MDUtils.getJSONArrayMember(summaryMetadata, "ChNames");
-         JSONArray chColors = MDUtils.getJSONArrayMember(summaryMetadata, "ChColors");
-         JSONArray chMaxes = MDUtils.getJSONArrayMember(summaryMetadata, "ChContrastMax");
-         JSONArray chMins = MDUtils.getJSONArrayMember(summaryMetadata, "ChContrastMin");
-         int numComponents = MDUtils.getNumberOfComponents(summaryMetadata);
+         try {
+            chColors = MDUtils.getJSONArrayMember(summaryMetadata, "ChColors");
+         } catch (JSONException ex) {
+            int[] defaultColors = { Color.RED.getRGB(),
+                                    Color.GREEN.getRGB(),
+                                    Color.BLUE.getRGB() };
+            chColors = new JSONArray();
+            for (int i = 0; i < chNames.length(); i++)
+               chColors.put(defaultColors[i % defaultColors.length]);
+            summaryMetadata.put("ChColors", chColors);
+         }
+         JSONArray chMaxes;
+         try {
+            chMaxes = MDUtils.getJSONArrayMember(summaryMetadata, "ChContrastMax");
+         } catch (JSONException ex) {
+            chMaxes = new JSONArray();
+            for (int i = 0; i < chNames.length(); i++)
+               chMaxes.put(256);
+            summaryMetadata.put("ChContrastMax", chMaxes);
+         }
+         JSONArray chMins;
+         try {
+            chMins = MDUtils.getJSONArrayMember(summaryMetadata, "ChContrastMin");
+         } catch (JSONException ex) {
+            chMins = new JSONArray();
+            for (int i = 0; i < chNames.length(); i++)
+               chMins.put(0);
+            summaryMetadata.put("ChContrastMin", chMins);
+         }
+         int numComponents = 1;
+         try {
+            numComponents = MDUtils.getNumberOfComponents(summaryMetadata);
+         } catch (JSONException ex) {
+         }
+         
          JSONArray channels = new JSONArray();
          for (int k=0;k<chNames.length();++k) {
             String name = (String) chNames.get(k);
@@ -306,7 +338,13 @@ public class VirtualAcquisitionDisplay {
          displaySettings.put("Channels", channels);
 
          JSONObject comments = new JSONObject();
-         comments.put("Summary", summaryMetadata.getString("Comment"));
+         String summary = "";
+         try {
+            summary = summaryMetadata.getString("Comment");
+         } catch (JSONException ex) {
+            summaryMetadata.put("Comment", "");
+         }
+         comments.put("Summary", summary);
          displaySettings.put("Comments", comments);
          return displaySettings;
       } catch (Exception e) {
