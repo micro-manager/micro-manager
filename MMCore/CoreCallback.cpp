@@ -46,10 +46,7 @@ int CoreCallback::InsertImage(const MM::Device* caller, const unsigned char* buf
          MM::ImageProcessor* ip = GetImageProcessor(caller);
          if( NULL != ip)
          {
-            //LogMessage(caller,"call Process from InsertImage(caller,buf,width,height,...)",true);
-
             ip->Process(const_cast<unsigned char*>(buf), width, height, byteDepth);
-
          }
       }
 
@@ -72,8 +69,6 @@ int CoreCallback::InsertImage(const MM::Device* caller, const ImgBuffer & imgBuf
    MM::ImageProcessor* ip = GetImageProcessor(caller);
    if( NULL != ip)
    {
-                  //LogMessage(caller,"call Process from InsertImage(caller,imgBuf)",true);
-
       ip->Process(p, imgBuf.Width(), imgBuf.Height(), imgBuf.Depth());
    }
 
@@ -675,7 +670,7 @@ void CoreCallback::ClearPostedErrors( void)
 
 /**
  * Returns the number of microsecond tick
- N.B. an unsigned long microsecond count rolls over in just over an hour!!!!
+ * N.B. an unsigned long microsecond count rolls over in just over an hour!!!!
  * NOTE: This method is 'obsolete.'
  */
 unsigned long CoreCallback::GetClockTicksUs(const MM::Device* /*caller*/)
@@ -688,17 +683,6 @@ unsigned long CoreCallback::GetClockTicksUs(const MM::Device* /*caller*/)
 	time_duration diff = t - timet_start; 
 	return (unsigned long) diff.total_microseconds();
 }
-
-//MM::MMTime CoreCallback::GetCurrentMMTime()
-//{		
-//	using namespace boost::posix_time;
-//	using namespace boost::gregorian;
-//	boost::posix_time::ptime t0 = boost::posix_time::microsec_clock::local_time();
-//	ptime timet_start(date(2000,1,1)); 
-//	time_duration diff = t0 - timet_start; 
-//	return MM::MMTime( (double) diff.total_microseconds());
-//}
-//
 
 MM::MMTime CoreCallback::GetCurrentMMTime()
 {		
