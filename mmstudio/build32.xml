@@ -169,6 +169,7 @@
 		<copy file="${BinRoot}/mmgr_dal_PI.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_Piper.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_PrecisExcite.dll" todir="${InstallRoot}" />
+		<copy file="${BinRoot}/mmgr_dal_PrincetonInstruments.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_Prior.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_ProgRes.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_PSRemoteCamera.dll" todir="${InstallRoot}" />
