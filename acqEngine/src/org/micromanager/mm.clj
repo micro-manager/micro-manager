@@ -116,3 +116,8 @@
 (defn current-tagged-image []
   (let [img (IJ/getImage)]
     (.. img getStack (getTaggedImage (.getCurrentSlice img)))))
+
+(defn get-camera-roi []
+  (let [r (repeatedly 4 #(int-array 1))]
+    (core getROI (nth r 0) (nth r 1) (nth r 2) (nth r 3))
+    (flatten (map seq r))))

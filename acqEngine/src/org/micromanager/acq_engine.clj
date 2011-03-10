@@ -18,7 +18,7 @@
   (:use [org.micromanager.mm :only [when-lets map-config get-config get-positions load-mm
                                     get-default-devices core log log-cmd mmc gui with-core-setting
                                     do-when if-args get-system-config-cached select-values-match?
-                                    get-property]]
+                                    get-property get-camera-roi]]
         [org.micromanager.sequence-generator :only [generate-acq-sequence]])
   (:import [org.micromanager AcqControlDlg]
            [org.micromanager.api AcquisitionEngine TaggedImageAnalyzer]
@@ -450,6 +450,7 @@
       "PixelType" (get-pixel-type)
       "Positions" (count (settings :positions))
       "Prefix" (if (settings :save) (settings :prefix) "")
+      "ROI" (JSONArray. (get-camera-roi))
       "Slices" (count (settings :slices))
       "SlicesFirst" (settings :slices-first)
       "Source" "Micro-Manager"
