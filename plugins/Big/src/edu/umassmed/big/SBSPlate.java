@@ -30,13 +30,17 @@ public class SBSPlate {
 	private int[] firstWell = {0,0}; // 0 indexed
 	private int[] lastWell = {11,7}; // 0 indexed
 	private int[] currentWell = {0,0};
+	private double[] A1Position = {0,0}; // if stage can't be zeroed, then use this an an offset, in microns.
 
 	
 	public SBSPlate () {
-		initialize (SBSPlateTypes.SBS_96_WELL);	
+		initialize (SBSPlateTypes.SBS_96_WELL, 0, 0);	
 	}
 	public SBSPlate (SBSPlateTypes platesize) {
-		initialize (platesize);
+		initialize (platesize,0,0);
+	}
+	public SBSPlate (SBSPlateTypes platesize, double x, double y) {
+		initialize (platesize,x,y);
 	}
 	public SBSPlate (int Size) {
 		SBSPlateTypes platesize;
@@ -61,14 +65,41 @@ public class SBSPlate {
 		}
 		}
 		
-		initialize (platesize);
+		initialize (platesize, 0, 0);
 	}
-	public void initialize (SBSPlateTypes platesize) {
+	public SBSPlate (int Size, double x, double y) {
+		SBSPlateTypes platesize;
+		
+		switch (Size) {
+		case 24: {
+			platesize = SBSPlate.SBSPlateTypes.SBS_24_WELL;;
+			break;
+		}
+		default:
+		case 96: {
+			platesize = SBSPlate.SBSPlateTypes.SBS_96_WELL;
+			break;
+		}
+		case 384: {
+			platesize = SBSPlate.SBSPlateTypes.SBS_384_WELL;
+			break;
+		}
+		case 1536: {
+			platesize = SBSPlate.SBSPlateTypes.SBS_1536_WELL;
+			break;
+		}
+		}
+		
+		initialize (platesize, x, y);
+	}
+	public void initialize (SBSPlateTypes platesize, double x, double y) {
 		setPlateType(platesize);
 		firstWell[0] = 0;
 		firstWell[1] = 0;
 		lastWell[0] = this.plateSize.getX() - 1;
 		lastWell[1] = this.plateSize.getY() - 1;
+		A1Position[0] = x;
+		A1Position[1] = y;
 	}
 	public SBSPlateTypes getPlateType() {
 		return this.plateSize;
@@ -120,6 +151,11 @@ public class SBSPlate {
 	public void setFirstWell(int[] firstwell) {
 		setFirstWell(firstwell[0],firstwell[1]);
 	}
+	
+	public void setPositionA1(int x, int y) {
+		A1Position[0] = x;
+		A1Position[1] = y;
+	}
 	public void setLastWell(int x, int y) {
 		if (x > this.plateSize.getX()) x = this.plateSize.getX();
 		if (y > this.plateSize.getY()) y = this.plateSize.getY();
@@ -136,6 +172,8 @@ public class SBSPlate {
 	public void setLastWell(int[] lastcell) {
 		setLastWell(lastcell[0],lastcell[1]);
 	}
+	
+	// Not implemented yet
 	public int[] getWellPosition (int well) {
 		int[] position = {0,0};
 		
@@ -143,12 +181,12 @@ public class SBSPlate {
 		
 		return position;
 	}	
-	public int[] getWellPosition (int X, int Y) {
-		int[] position = {0,0};
+	public double[] getWellPosition (int X, int Y) {
+		double[] position = {0,0};
 		// switch to 0 indexed
 		X--;Y--;
-		position[0] = X * this.plateSize.getWellSpacing();
-		position[1] = Y * this.plateSize.getWellSpacing();
+		position[0] = (X * this.plateSize.getWellSpacing()) + A1Position[0];
+		position[1] = (Y * this.plateSize.getWellSpacing()) + A1Position[1];
 		
 		return position;
 	}
@@ -191,8 +229,8 @@ public class SBSPlate {
 		
 		return Positions;
 	}
-	public int[] getNextPosition() {
-		int[] position = {0,0}; // returns microns position
+	public double[] getNextPosition() {
+		double[] position = {0,0}; // returns microns position
 		
 		if (firstWell[0] % 2 == 0 || firstWell[0] == 0) {
 			if (currentWell[0] % 2 == 0 || currentWell[0] == 0) {
@@ -232,8 +270,8 @@ public class SBSPlate {
 			currentWell[0] = firstWell[0];
 			currentWell[1] = firstWell[1];
 		}	
-		position[0] = (currentWell[0]) * this.plateSize.getWellSpacing();
-		position[1] = (currentWell[1]) * this.plateSize.getWellSpacing();		
+		position[0] = ((currentWell[0]) * this.plateSize.getWellSpacing())  + A1Position[0];
+		position[1] = ((currentWell[1]) * this.plateSize.getWellSpacing())  + A1Position[1];		
 		
 		return position;
 	}
