@@ -12,7 +12,7 @@
 	<property name="NativeRoot" value="../MMCoreJ_wrap"/>
 	<property name="ScriptsRoot" value="../scripts"/>
 	<property name="ScriptsInstall" value="../Install_Win32/micro-manager/scripts"/>
-	<property name="DriversRoot" value="../drivers"/>
+	<property name="DriversRoot" value="../drivers_Win32"/>
 	<property name="DriversInstall" value="../Install_Win32/micro-manager/drivers"/>
 
 	<!-- Do not modify from this point on -->
