@@ -30,9 +30,10 @@
 #define _std_iostream_INCLUDED_
 #endif
 
+#include <usb.h>
+
 // Note that this only works with gcc (which we should be testing for)
 #ifdef __GNUC__
-#include <usb.h>
 void __attribute__ ((constructor)) my_init(void)
 {
    usb_init();
@@ -45,7 +46,6 @@ void __attribute__ ((destructor)) my_fini(void)
 
 // windows dll entry code                                                    
 #ifdef WIN32    
-#include "../../../3rdparty/libusb/libusb-win32-device-bin-0.1.12.1/include/usb.h"
 #include <time.h>
 #pragma warning(disable : 4290)
    BOOL APIENTRY DllMain( HANDLE /*hModule*/,                                
@@ -472,7 +472,8 @@ int MDUSBDevice::Write(const unsigned char* buf, unsigned long bufLen)
 int MDUSBDevice::Read(unsigned char* buf, unsigned long bufLen, unsigned long& charsRead)
 {
    ostringstream logMsg;
-   int charsReceived = 0, nrPackets, packet;
+   unsigned int charsReceived = 0;
+   int nrPackets, packet;
    bool statusContinue = true;
    char* internalBuf;
 
@@ -483,7 +484,7 @@ int MDUSBDevice::Read(unsigned char* buf, unsigned long bufLen, unsigned long& c
 
    // keep an internal buffer in case we read too many chars from USB
    if (overflowBufferLength_ > 0) {
-      int size = overflowBufferLength_ - overflowBufferOffset_;
+      unsigned int size = overflowBufferLength_ - overflowBufferOffset_;
       if (size >= bufLen) {
          memcpy(buf, overflowBuffer_ + overflowBufferOffset_, bufLen);
          charsRead = bufLen;
