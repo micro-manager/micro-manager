@@ -53,7 +53,7 @@
 #include "CoreUtils.h"
 #include "FastLogger.h"
 
-#include "host.h"
+#include "Host.h"
 #include "MMCore.h"
 #include "MMEventCallback.h"
 #include "../MMDevice/DeviceUtils.h"

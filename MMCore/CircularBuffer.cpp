@@ -201,7 +201,6 @@ bool CircularBuffer::InsertMultiChannel(const unsigned char* pixArray, unsigned 
       insertIndex_++;
       if ((insertIndex_ - (long)frameArray_.size()) > adjustThreshold && (saveIndex_- (long)frameArray_.size()) > adjustThreshold)
       {
-         printf("adjusting indices\n");
          // adjust buffer indices to avoid overflowing integer size
          insertIndex_ -= adjustThreshold;
          saveIndex_ -= adjustThreshold;
