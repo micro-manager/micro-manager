@@ -65,7 +65,6 @@
 #include <algorithm>
 #include <vector>
 #include <ostream>
-#include <strstream>
 
 
 #ifndef _WINDOWS
@@ -1046,9 +1045,9 @@ void CMMCore::waitForDevice(MM::Device* pDev) throw (CMMError)
       if (timeout.expired(GetMMTimeNow()))
       {
          string label = pluginManager_.GetDeviceLabel(*pDev);
-         std::ostrstream mez;
+         std::ostringstream mez;
          mez << "wait timed out after " << timeoutMs_ << " ms. ";
-         logError(label.c_str(), mez.str(), __FILE__, __LINE__);
+         logError(label.c_str(), mez.str().c_str(), __FILE__, __LINE__);
          throw CMMError(label.c_str(), getCoreErrorText(MMERR_DevicePollingTimeout).c_str(), MMERR_DevicePollingTimeout);
       }
 
