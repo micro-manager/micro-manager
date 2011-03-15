@@ -47,6 +47,8 @@ import java.io.IOException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -116,6 +118,8 @@ import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
 import java.awt.Cursor;
 import java.awt.Graphics;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.Collections;
 import mmcorej.TaggedImage;
 import org.micromanager.acquisition.AcquisitionVirtualStack;
@@ -235,7 +239,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private int snapCount_ = -1;
    private boolean liveModeSuspended_;
    public Font defaultScriptFont_ = null;
-
+   public JLabel citePleaLabel_;
+   
    public static FileType MM_CONFIG_FILE
             = new FileType("MM_CONFIG_FILE",
                            "Micro-Manager Config File",
@@ -1484,6 +1489,28 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             SpringLayout.WEST, getContentPane());
       springLayout_.putConstraint(SpringLayout.WEST, refreshButton, 7,
             SpringLayout.WEST, getContentPane());
+
+      JLabel citePleaLabel_ = new JLabel("<html>Please <a href=\"http://micro-manager.org\">cite Micro-Manager</a> so funding will continue!</html>");
+      getContentPane().add(citePleaLabel_);
+      citePleaLabel_.setFont(new Font("Arial", Font.PLAIN, 11));
+      springLayout_.putConstraint(SpringLayout.SOUTH, citePleaLabel_, 139,
+              SpringLayout.NORTH, getContentPane());
+      springLayout_.putConstraint(SpringLayout.NORTH, citePleaLabel_, 119,
+            SpringLayout.NORTH, getContentPane());
+      springLayout_.putConstraint(SpringLayout.EAST, citePleaLabel_, 270,
+            SpringLayout.WEST, getContentPane());
+      springLayout_.putConstraint(SpringLayout.WEST, citePleaLabel_, 7,
+            SpringLayout.WEST, getContentPane());
+      citePleaLabel_.addMouseListener(new MouseAdapter() {
+          public void mousePressed(MouseEvent e) {
+            try {
+               java.awt.Desktop.getDesktop().browse(new java.net.URI("https://valelab.ucsf.edu/~nico/MMwiki/index.php/Citing_Micro-Manager"));
+            } catch (Exception ex) {
+               ReportingUtils.logError(ex);
+            }
+          }
+
+      });
 
       // add window listeners
       addWindowListener(new WindowAdapter() {
