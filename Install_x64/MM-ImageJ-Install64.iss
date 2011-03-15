@@ -136,7 +136,7 @@ Source: micro-manager\mmgr_dal_ZeissCAN29.dll; DestDir: {app}; Flags: ignorevers
 ;Source: micro-manager\MMCoreWrapDemo.py; DestDir: {app}; Flags: ignoreversion skipifsourcedoesntexist
 
 ; drivers
-Source: micro-manager\drivers\*; DestDir: {app}\drivers; Flags: ignoreversion
+Source: ..\drivers\*; DestDir: {app}\drivers; Flags: ignoreversion recursesubdirs
 
 ; beanshell scripts
 Source: ..\scripts\*; DestDir: {app}\scripts; Flags: ignoreversion

@@ -12,7 +12,7 @@
 	<property name="NativeRoot" value="../MMCoreJ_wrap"/>
 	<property name="ScriptsRoot" value="../scripts"/>
 	<property name="ScriptsInstall" value="../Install_Win32/micro-manager/scripts"/>
-	<property name="DriversRoot" value="../drivers_Win32"/>
+	<property name="DriversRoot" value="../drivers"/>
 	<property name="DriversInstall" value="../Install_Win32/micro-manager/drivers"/>
 
 	<!-- Do not modify from this point on -->
@@ -217,15 +217,6 @@
 		<copy file="${ScriptsRoot}/mm_test_shutter.bsh" todir="${ScriptsInstall}" />
 		<copy file="${ScriptsRoot}/mm_test_xystage.bsh" todir="${ScriptsInstall}" />
 		<copy file="${ScriptsRoot}/mm_test_zstage.bsh" todir="${ScriptsInstall}" />
-		<copy file="${DriversRoot}/K8055_libusb.inf" todir="${DriversInstall}" />
-		<copy file="${DriversRoot}/K8055_libusb.cat" todir="${DriversInstall}" />
-		<copy file="${DriversRoot}/K8061_libusb.inf" todir="${DriversInstall}" />
-		<copy file="${DriversRoot}/K8061_libusb.cat" todir="${DriversInstall}" />
-		<copy file="${DriversRoot}/NikonAZ100.inf" todir="${DriversInstall}" />
-		<copy file="${DriversRoot}/NikonAZ100.cat" todir="${DriversInstall}" />
-		<copy file="${DriversRoot}/libusb0.dll" todir="${DriversInstall}" />
-		<copy file="${DriversRoot}/libusb0.dll" todir="${InstallRoot}" />
-		<copy file="${DriversRoot}/libusb0.sys" todir="${DriversInstall}" />
 
 	</target>
 
