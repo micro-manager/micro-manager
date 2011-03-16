@@ -132,7 +132,18 @@
 (defn add-next-task-tags [events]
   (for [p (pairs events)]
     (assoc (first p) :next-frame-index (get (second p) :frame-index))))
-  
+
+(defn selectively-update-tag [events event-template key update-fn]
+  (let [ks (keys event-template)]
+    (for [event events]
+      (if (select-values-match? event event-template ks)
+        (update-in event [key] update-fn)
+        event))))
+
+(defn selectively-append-runnable [events event-template runnable]
+  (selectively-update-tag events event-template :runnables
+    #(conj (vec %) runnable)))
+
 (defn generate-acq-sequence [settings]
   (let [{:keys [slices keep-shutter-open-channels keep-shutter-open-slices
          use-autofocus autofocus-skip interval-ms relative-slices]} settings]
@@ -166,7 +177,7 @@
 (def test-settings
   (struct-map acq-settings
     :frames (range 10) :positions [{:name "a" :x 1 :y 2} {:name "b" :x 4 :y 5}]
-    :channels my-channels :slices (range 5)
+    :channels nil :slices (range 5)
     :slices-first true :time-first true
     :keep-shutter-open-slices false :keep-shutter-open-channels true
     :use-autofocus true :autofocus-skip 3 :relative-slices true :exposure 100
