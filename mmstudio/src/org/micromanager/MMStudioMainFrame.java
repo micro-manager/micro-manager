@@ -47,8 +47,6 @@ import java.io.IOException;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -1504,12 +1502,11 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       citePleaLabel_.addMouseListener(new MouseAdapter() {
           public void mousePressed(MouseEvent e) {
             try {
-               java.awt.Desktop.getDesktop().browse(new java.net.URI("https://valelab.ucsf.edu/~nico/MMwiki/index.php/Citing_Micro-Manager"));
-            } catch (Exception ex) {
-               ReportingUtils.logError(ex);
+               ij.plugin.BrowserLauncher.openURL("https://valelab.ucsf.edu/~nico/MMwiki/index.php/Citing_Micro-Manager");
+            } catch (IOException e1) {
+               ReportingUtils.showError(e1);
             }
           }
-
       });
 
       // add window listeners
