@@ -43,8 +43,11 @@ const char* g_WheelCName = "Wheel-C";
 const char* g_ShutterAName = "Shutter-A";
 const char* g_ShutterBName = "Shutter-B";
 
+#ifdef DefineShutterOnTenDashTwo
+
 const char* g_ShutterAName10dash2 = "Shutter-A 10-2";
 const char* g_ShutterBName10dash2 = "Shutter-B 10-2";
+#endif
 
 const char* g_DG4WheelName = "Wheel-DG4";
 const char* g_DG4ShutterName = "Shutter-DG4";
@@ -74,9 +77,11 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_WheelCName, "Lambda 10 wheel C (10-3 only)");
    AddAvailableDeviceName(g_ShutterAName, "Lambda 10 shutter A");
    AddAvailableDeviceName(g_ShutterBName, "Lambda 10 shutter B");
+#ifdef DefineShutterOnTenDashTwo
 
    AddAvailableDeviceName(g_ShutterAName10dash2, "Lambda 10-2 shutter A");
    AddAvailableDeviceName(g_ShutterBName10dash2, "Lambda 10-2 shutter B");
+#endif
 
    AddAvailableDeviceName(g_DG4ShutterName, "DG4 shutter");
    AddAvailableDeviceName(g_DG4WheelName, "DG4 filter changer");
