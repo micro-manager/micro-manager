@@ -142,7 +142,7 @@
 
 (defn selectively-append-runnable [events event-template runnable]
   (selectively-update-tag events event-template :runnables
-    #(conj (vec %) runnable)))
+                          #(conj (vec %) runnable)))
 
 (defn generate-acq-sequence [settings]
   (let [{:keys [slices keep-shutter-open-channels keep-shutter-open-slices

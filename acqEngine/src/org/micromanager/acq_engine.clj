@@ -306,13 +306,12 @@
 (defn make-event-fns [event out-queue]
   (let [task (:task event)]
     (cond
-      (= task :runnable)
-        (.run (event :runnable))
       (= task :collect-burst)
         (list #(collect-image event out-queue))
       (or (= task :snap) (= task :init-burst))
         (list
           #(log event)
+          (fn [] (doall (map #(.run %) (event :runnables))))
           #(when-let [wait-time-ms (event :wait-time-ms)]
             (acq-sleep wait-time-ms))
           #(run-actions (create-presnap-actions event))
