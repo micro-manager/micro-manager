@@ -285,7 +285,7 @@ public class EditPropertiesPage extends PagePanel {
             }
         }
     }
-    private final String detectPorts_ = "Detect Ports";
+    private final String detectPorts_ = "Scan Ports";
     private static final long serialVersionUID = 1L;
     private JTable propTable_;
     private JScrollPane scrollPane_;
@@ -377,7 +377,45 @@ public class EditPropertiesPage extends PagePanel {
             return true;
         }
         requestCancel_ = false;
+
+
+
+
+
+
         rebuildTable();
+
+
+      // initially, user can select any serial port he wishes
+      // later, the Scan Ports button can be pressed to identify which device is on which port
+      ArrayList<Device> ports = new ArrayList<Device>();
+      Device avPorts[] = model_.getAvailableSerialPorts();
+      for(int i=0; i<avPorts.length; i++)
+         if (model_.isPortInUse(avPorts[i]))
+            ports.add(avPorts[i]);
+
+      // identify "port" properties and assign available com ports declared for use
+      Device devices[] = model_.getDevices();
+      for (int i=0; i<devices.length; i++) {
+         for (int j=0; j<devices[i].getNumberOfProperties(); j++) {
+            PropertyItem p = devices[i].getProperty(j);
+            if (p.name.compareTo(MMCoreJ.getG_Keyword_Port()) == 0) {
+            	if (ports.size() == 0) {
+            		// no ports available, tell user and return
+            		JOptionPane.showMessageDialog(null, "No Serial Ports are found in your computer!");
+            		return true;
+            	}
+               String allowed[] = new String[ports.size()];
+               for (int k=0; k<ports.size(); k++)
+                  allowed[k] = ports.get(k).getName();
+               p.allowed = allowed;
+            }
+         }
+      }
+
+
+
+
         return true;
     }
     public boolean exitPage(boolean toNextPage) {
