@@ -160,6 +160,7 @@
 		<copy file="${BinRoot}/mmgr_dal_Prior.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_PVCAM.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_PrincetonInstruments.dll" todir="${InstallRoot}" />
+		<copy file="${BinRoot}/mmgr_dal_QCam.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_Sapphire.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_SerialManager.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_SimpleAutofocus.dll" todir="${InstallRoot}" />

@@ -114,6 +114,7 @@ Source: micro-manager\mmgr_dal_PrecisExcite.dll; DestDir: {app}; Flags: ignoreve
 Source: micro-manager\mmgr_dal_PrincetonInstruments.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Prior.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_PVCAM.dll; DestDir: {app}; Flags: ignoreversion
+Source: micro-manager\mmgr_dal_QCam.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Sapphire.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_SerialManager.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_SimpleAutofocus.dll; DestDir: {app}; Flags: ignoreversion

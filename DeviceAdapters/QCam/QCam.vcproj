@@ -155,7 +155,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="qcamdriver.lib"
+				AdditionalDependencies="qcamdriverx64.lib"
 				OutputFile="$(OutDir)/mmgr_dal_QCam.dll"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\QImaging\QCam SDK\libs&quot;"
@@ -321,7 +321,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="qcamdriver.lib"
+				AdditionalDependencies="qcamdriverx64.lib"
 				OutputFile="$(OutDir)/mmgr_dal_QCam.dll"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="&quot;..\..\..\3rdparty\QImaging\QCam SDK\libs&quot;"

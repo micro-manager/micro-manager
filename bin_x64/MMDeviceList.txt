@@ -168,6 +168,7 @@ Prior,TTL-1,Pro Scan TTL 1,3
 Prior,TTL-2,Pro Scan TTL 2,3
 Prior,TTL-3,Pro Scan TTL 3,3
 ProgRes,Jenoptik-ProgRes,Jenoptik_ProgRes_Camera,2
+QCam,QCamera,QImaging universal camera adapter,2
 Sapphire,Sapphire,Sapphire Laser,3
 SimpleAutofocus,SimpleAutofocus,SimpleAutofocus Finder,9
 SpectralLMM5,LMM5-Hub,Description N/A,8
