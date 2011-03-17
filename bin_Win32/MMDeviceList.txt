@@ -224,6 +224,8 @@ SutterLambda,Wheel-B,Lambda 10 filter wheel B,4
 SutterLambda,Wheel-C,Lambda 10 wheel C (10-3 only),4
 SutterLambda,Shutter-A,Lambda 10 shutter A,3
 SutterLambda,Shutter-B,Lambda 10 shutter B,3
+SutterLambda,Shutter-A 10-2,Lambda 10-2 shutter A,3
+SutterLambda,Shutter-B 10-2,Lambda 10-2 shutter B,3
 SutterLambda,Shutter-DG4,DG4 shutter,3
 SutterLambda,Wheel-DG4,DG4 filter changer,4
 TIScam,TIS_DCAM,The Imaging Source,2
