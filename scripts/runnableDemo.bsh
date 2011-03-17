@@ -1,0 +1,17 @@
+// Demo of runnables on acq engine
+// Arthur Edelstein, UCSF, March 2011.
+// arthuredelstein@gmail.com
+
+acq.clearRunnables();
+
+runnable = new Runnable() {
+   int count = 0;
+   public void run() {
+      print("beanshell-generated runnable executed on acq eng. #"+count);
+      ++count;
+   }
+};
+
+// Run the runnable on all frames, positions, channels, but only slice 0.
+acq.attachRunnable(-1,-1,0,0,runnable); 
+
