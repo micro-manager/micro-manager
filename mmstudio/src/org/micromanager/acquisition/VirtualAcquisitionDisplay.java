@@ -467,7 +467,7 @@ public class VirtualAcquisitionDisplay {
       try {
          updateWindow();
          JSONObject md = taggedImg.tags;
-         int chan = this.rgbToGrayChannel(MDUtils.getChannelIndex(md));
+         int cameraChannel = this.rgbToGrayChannel(MDUtils.getChannelIndex(md));
          int frame = MDUtils.getFrameIndex(taggedImg.tags);
          if (tSelector_ != null) {
             if (tSelector_.getMaximum() <= (1 + frame)) {
@@ -481,7 +481,7 @@ public class VirtualAcquisitionDisplay {
                setNumPositions(p);
             }
             setPosition(MDUtils.getPositionIndex(taggedImg.tags));
-            hyperImage_.setPosition(1 + chan,
+            hyperImage_.setPosition(1 + cameraChannel,
                                     1 + MDUtils.getSliceIndex(md),
                                     1 + MDUtils.getFrameIndex(md));
             //setPlaybackLimits(1, 1 + MDUtils.getFrameIndex(md));
@@ -490,14 +490,14 @@ public class VirtualAcquisitionDisplay {
          }
          if (hyperImage_.getFrame() == 1) {
             try {
-               int pixelMin = Math.min(this.getChannelMin(chan),ImageUtils.getMin(taggedImg.pix));
-               int pixelMax = Math.max(this.getChannelMax(chan),ImageUtils.getMax(taggedImg.pix));
+               int pixelMin = Math.min(this.getChannelMin(cameraChannel),ImageUtils.getMin(taggedImg.pix));
+               int pixelMax = Math.max(this.getChannelMax(cameraChannel),ImageUtils.getMax(taggedImg.pix));
                if (MDUtils.isRGB(taggedImg)) {
                   for (int i=0; i<3; ++i) {
-                     setChannelDisplayRange(chan + i, pixelMin, pixelMax, false);
+                     setChannelDisplayRange(cameraChannel + i, pixelMin, pixelMax, false);
                   }
                } else {
-                  setChannelDisplayRange(chan, pixelMin, pixelMax, false);
+                  setChannelDisplayRange(cameraChannel, pixelMin, pixelMax, false);
                }
             } catch (Exception ex) {
                ReportingUtils.showError(ex);

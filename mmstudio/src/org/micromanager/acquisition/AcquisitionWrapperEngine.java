@@ -78,17 +78,14 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    }
 
    public Pipeline getPipeline() {
+      if (pipeline_ == null)
+         pipeline_ = gui_.getPipeline();
       return pipeline_;
    }
 
    public void runPipeline(SequenceSettings acquisitionSettings) {
       try {
-         pipeline_ = (Pipeline) gui_.getPipelineClass().newInstance();
-      } catch (Exception ex) {
-         ReportingUtils.logError(ex);
-      }
-      try {
-         pipeline_.run(acquisitionSettings, this);
+         getPipeline().run(acquisitionSettings, this);
       } catch (Throwable ex) {
          ReportingUtils.showError(ex);
       }
@@ -98,6 +95,22 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
       for(ChannelSpec channel:channels_) {
          channel.camera_ = getSource(channel);
       }
+   }
+
+   /*
+    * Attach a runnable to the acquisition engine. Each index (f, p, c, s) can
+    * be specified. Passing a value of -1 results in the runnable being attached
+    * at all values of that index. For example, if the first argument is -1,
+    * then the runnable will execute at every frame.
+    */
+   public void attachRunnable(int frame, int position, int channel, int slice, Runnable runnable) {
+      getPipeline().attachRunnable(frame, position, slice, channel, runnable);
+   }
+   /*
+    * Clear all attached runnables from the acquisition engine.
+    */
+   public void clearRunnables() {
+      getPipeline().clearRunnables();
    }
 
    private String getSource(ChannelSpec channel) {

@@ -144,9 +144,16 @@
   (selectively-update-tag events event-template :runnables
                           #(conj (vec %) runnable)))
 
-(defn generate-acq-sequence [settings]
+(defn attach-runnables [events runnable-list]
+  (if (pos? (count runnable-list))
+    (recur (apply selectively-append-runnable events (first runnable-list))
+           (next runnable-list))
+    events))
+
+(defn generate-acq-sequence [settings runnables]
   (let [{:keys [slices keep-shutter-open-channels keep-shutter-open-slices
-         use-autofocus autofocus-skip interval-ms relative-slices]} settings]
+                use-autofocus autofocus-skip interval-ms relative-slices
+                runnable-list]} settings]
     (-> (make-main-loops settings)
       (#(map (partial build-event settings) %))
       (process-skip-z-stack slices)
@@ -154,6 +161,7 @@
       (process-channel-skip-frames)
       (process-use-autofocus use-autofocus autofocus-skip)
       (process-wait-time interval-ms)
+      (attach-runnables runnables)
       (make-bursts)
       (add-next-task-tags))))
 
@@ -166,7 +174,7 @@
 
 (def default-settings
   (struct-map acq-settings
-    :frames (range 100) :positions [{:name "a" :x 1 :y 2} {:name "b" :x 4 :y 5}]
+    :frames (range 10) :positions [{:name "a" :x 1 :y 2} {:name "b" :x 4 :y 5}]
     :channels my-channels :slices (range 5)
     :slices-first true :time-first true
     :keep-shutter-open-slices false :keep-shutter-open-channels true
@@ -177,7 +185,7 @@
 (def test-settings
   (struct-map acq-settings
     :frames (range 10) :positions [{:name "a" :x 1 :y 2} {:name "b" :x 4 :y 5}]
-    :channels nil :slices (range 5)
+    :channels my-channels :slices (range 5)
     :slices-first true :time-first true
     :keep-shutter-open-slices false :keep-shutter-open-channels true
     :use-autofocus true :autofocus-skip 3 :relative-slices true :exposure 100

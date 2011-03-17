@@ -47,6 +47,8 @@ import java.io.IOException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -444,15 +446,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       pipelineClassLoadingThread_.start();
    }
 
-   public Class getPipelineClass() {
-      try {
-         pipelineClassLoadingThread_.join();
-         return pipelineClass_;
-      } catch (InterruptedException ex) {
-         ReportingUtils.logError(ex);
-         return null;
-      }
-   }
+ 
    
    /**
     * Callback to update GUI when a change happens in the MMCore.
@@ -4155,8 +4149,9 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    public Pipeline getPipeline() {
       try {
+         pipelineClassLoadingThread_.join();
          if (acquirePipeline_ == null) {
-            acquirePipeline_ = (Pipeline) getPipelineClass().newInstance();
+            acquirePipeline_ = (Pipeline) pipelineClass_.newInstance();
          }
          return acquirePipeline_;
       } catch (Exception e) {

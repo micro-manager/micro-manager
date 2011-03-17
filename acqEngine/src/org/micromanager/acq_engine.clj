@@ -130,6 +130,8 @@
 
 (defn state-assoc! [& args]
   (apply swap! state assoc args))
+   
+(def attached-runnables (atom (vec nil)))
 
 ;; metadata
 
@@ -376,7 +378,7 @@
   (prepare-state this)
   (binding [state (.state this)]
     (def last-state state)
-    (let [acq-seq (generate-acq-sequence settings)]
+    (let [acq-seq (generate-acq-sequence settings @attached-runnables)]
        (def acq-sequence acq-seq)
        (execute (mapcat #(make-event-fns % out-queue) acq-seq))
        (.put out-queue TaggedImageQueue/POISON)
@@ -622,6 +624,20 @@
 
 (defn -nextWakeTime [this]
   (or (:next-wake-time @(.state this)) -1))
+
+;; attaching runnables
+
+(defn -attachRunnable [this f p c s runnable]
+  (let [template (into {}
+          (for [[k v]
+                {:frame-index f :position-index p
+                 :channel-index c :slice-index s}
+                 :when (not (neg? v))]
+            [k v]))]
+    (swap! attached-runnables conj [template runnable])))
+  
+(defn -clearRunnables [this]
+  (reset! attached-runnables (vec nil)))
 
 ;; testing
 
