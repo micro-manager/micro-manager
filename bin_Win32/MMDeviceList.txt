@@ -53,12 +53,14 @@ DemoCamera,DAutoFocus,Demo auto focus,9
 DemoCamera,DShutter,Demo shutter,3
 DemoCamera,D-DA,Demo DA,13
 DemoCamera,DOptovar,Demo Optovar,14
+DemoCamera,DemoTranspose,DemoTranspose,11
 ExfoXCite,XCite-120PC,EXFO X-Cite 120PC,3
 ExfoXCite,XCite-Exacte,EXFO X-Cite Exacte,3
 FreeSerialPort,FreeSerialPort,Free-form communication Serial Port.,8
 GenericSLM,GenericSLM,Spatial Light Modulator controlled through computer graphics output,16
 GigECamera,GigE camera adapter,GigE camera,2
 Hamamatsu,Hamamatsu_DCAM,Universal adapter using DCAM interface,2
+ImageProcessorChain,ImageProcessorChain,ImageProcessorChain,11
 K8055,K8055-Hub,Hub,8
 K8055,K8055-Switch,Switch,4
 K8055,K8055-Shutter,Shutter,3
@@ -118,6 +120,10 @@ Marzhauser,Tango Lamp-2,Tango Lamp-2 [0..100%],3
 Marzhauser,Tango DAC,Tango DAC [0..10V],13
 Marzhauser,Tango ADC,Tango ADC [0..5V],13
 NKRemoteCamera,NikonDSLRCam,Nikon DSLR Camera,2
+NNLC,LC-Shutter,Shutter,3
+NNLC,LC-DAC,DA,13
+NNLC,LC-Setup,Setup,3
+NNLC,LC-Digital Out,Digital Out,3
 Neos,Neos,Neos controller with USB,3
 Nikon,ZStage,Remote accessory Z-stage,5
 Nikon,TIRFShutter,TIRF Laser Shutter controller T-LUSU(2),3
@@ -186,6 +192,8 @@ Pecon,CTIController3700,CTI controller 3700 digital,8
 Pecon,CO2Controller,CO2 controller,8
 Piper,SPI Cameras,Stanford Photonics cameras,2
 PrecisExcite,PrecisExcite,PrecisExcite LED illuminator,3
+PrincetonInstruments,Camera-1,Princeton Instruments interface - camera slot 1,2
+PrincetonInstruments,Camera-2,Princeton Instruments interface - camera slot 2,2
 Prior,Shutter-1,Pro Scan shutter 1,3
 Prior,Shutter-2,Pro Scan shutter 2,3
 Prior,Shutter-3,Pro Scan shutter 3,3
@@ -202,6 +210,7 @@ Prior,TTL-2,Pro Scan TTL 2,3
 Prior,TTL-3,Pro Scan TTL 3,3
 ProgRes,Jenoptik-ProgRes,Jenoptik_ProgRes_Camera,2
 QCam,QCamera,QImaging universal camera adapter,2
+Sapphire,Sapphire,Sapphire Laser,3
 ScionCam,ScionCam,Scion 1394 Camera,2
 Sensicam,Sensicam,PCO Sensicam camera adapter,2
 SimpleAutofocus,SimpleAutofocus,SimpleAutofocus Finder,9
@@ -215,10 +224,9 @@ SutterLambda,Wheel-B,Lambda 10 filter wheel B,4
 SutterLambda,Wheel-C,Lambda 10 wheel C (10-3 only),4
 SutterLambda,Shutter-A,Lambda 10 shutter A,3
 SutterLambda,Shutter-B,Lambda 10 shutter B,3
-SutterLambda,Shutter-A 10-2,Lambda 10-2 shutter A,1
-SutterLambda,Shutter-B 10-2,Lambda 10-2 shutter B,1
 SutterLambda,Shutter-DG4,DG4 shutter,3
 SutterLambda,Wheel-DG4,DG4 filter changer,4
+TIScam,TIS_DCAM,The Imaging Source,2
 ThorlabsFilterWheel,Thorlabs Filter Wheel,Thorlabs filter wheel,4
 ThorlabsSC10,SC10,ThorLabs SC10 shutter controller,3
 TwainCamera,TwainCam,Twain camera,1
