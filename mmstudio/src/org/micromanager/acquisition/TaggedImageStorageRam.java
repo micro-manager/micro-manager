@@ -20,6 +20,8 @@ import org.micromanager.utils.ReportingUtils;
  * This class stores a collection of TaggedImages, all in ram.
  */
 public class TaggedImageStorageRam implements TaggedImageStorage {
+   public static String menuName_ = null;
+
    protected HashMap<String, TaggedImage> imageMap_;
    private JSONObject summaryMetadata_;
    private JSONObject displaySettings_;

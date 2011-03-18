@@ -38,7 +38,7 @@ import org.micromanager.utils.TextUtils;
  * @author arthur
  */
 public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
-
+   public static String menuName_ = "Default";
    private final String dir_;
    private boolean firstElement_;
    private HashMap<String,Writer> metadataStreams_;
@@ -538,5 +538,6 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
    public String getDiskLocation() {
       return dir_;
    }
+
 
 }

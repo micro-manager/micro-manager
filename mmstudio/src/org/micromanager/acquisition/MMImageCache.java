@@ -22,7 +22,7 @@ import org.micromanager.utils.ReportingUtils;
  * @author arthur
  */
 public class MMImageCache implements TaggedImageStorage {
-
+   public static String menuName_ = null;
    private TaggedImageStorage imageStorage_;
    private Set<String> changingKeys_;
    private JSONObject firstTags_;
@@ -208,4 +208,5 @@ public class MMImageCache implements TaggedImageStorage {
    public Set<String> getChangingKeys() {
       return changingKeys_;
    }
+
 }

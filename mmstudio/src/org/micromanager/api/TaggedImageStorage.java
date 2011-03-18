@@ -14,6 +14,7 @@ import org.micromanager.utils.MMException;
  * @author arthur
  */
 public interface TaggedImageStorage {
+   public static String storagePluginName = null;
    public TaggedImage getImage(int channelIndex, int sliceIndex,
                                int frameIndex, int positionIndex);
    public String putImage(TaggedImage taggedImage) throws MMException;
