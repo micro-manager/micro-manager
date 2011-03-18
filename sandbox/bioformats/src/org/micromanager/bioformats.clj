@@ -85,22 +85,24 @@
 ;; generate ome metadata using bioformats
 
 (defn +int [n] (PositiveInteger. n))
-
-(defn populate-meta [m w h nslices nchannels nframes ncomponents]
+  
+(defn populate-meta [pos m w h nslices nchannels nframes ncomponents]
   (doto m
     .createRoot
-    (.setImageID "Image:0" 0)
-    (.setPixelsID "Pixels:0" 0)
-    (.setPixelsBinDataBigEndian true 0 0)
-    (.setPixelsDimensionOrder DimensionOrder/XYZCT 0)
-    (.setPixelsSizeX (+int w) 0)
-    (.setPixelsSizeY (+int h) 0)
-    (.setPixelsSizeZ (+int nslices) 0)
-    (.setPixelsSizeC (+int nchannels) 0)
-    (.setPixelsSizeT (+int nframes) 0)
-    (.setPixelsType PixelType/UINT8 0)
-    (.setChannelID "Channel:0:0" 0 0)
-    (.setChannelSamplesPerPixel (+int ncomponents) 0 0)))
+    (.setImageID "Image:0" pos)
+    (.setPixelsID "Pixels:0" pos)
+    (.setPixelsBinDataBigEndian true pos 0)
+    (.setPixelsDimensionOrder DimensionOrder/XYZCT pos)
+    (.setPixelsSizeX (+int w) pos)
+    (.setPixelsSizeY (+int h) pos)
+    (.setPixelsSizeZ (+int nslices) pos)
+    (.setPixelsSizeC (+int nchannels) pos)
+    (.setPixelsSizeT (+int nframes) pos)
+    (.setPixelsType PixelType/UINT8 pos))
+  (doseq [chan (range nchannels)]
+    (doto m (.setChannelID (str "Channel:" pos ":" chan) pos chan)
+            (.setChannelSamplesPerPixel (+int ncomponents) pos chan)))
+  m)
 
 ;; testing
 
@@ -117,7 +119,7 @@
 
 ;;;; metadata tests
 
-(def test-meta (populate-meta (new-ome-meta) 512 512 2 2 2 2))
+(def test-meta (populate-meta 0 (new-ome-meta) 512 512 2 2 2 2))
 
 (defn test-write-image []
   (write-ome-tiff
