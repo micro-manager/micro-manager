@@ -12,6 +12,7 @@ runnable = new Runnable() {
    }
 };
 
-// Run the runnable on all frames, positions, channels, but only slice 0.
+// Run the runnable on all frames and positions,
+// but only channel 0 and slice 0.
 acq.attachRunnable(-1,-1,0,0,runnable); 
 
