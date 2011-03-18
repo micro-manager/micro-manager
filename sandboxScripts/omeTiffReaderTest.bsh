@@ -1,0 +1,9 @@
+import loci.formats.*;
+ImageReader reader = new ImageReader();
+reader.setId("/Users/arthur/qqq/blah_177.ome.tiff");
+int nPositions = reader.getSeriesCount();
+int nChannels = reader.getSizeC();
+int nFrames = reader.getSizeT();
+int nSlices = reader.getSizeZ();
+int width = reader.getSizeX();
+int height = reader.getSizeY();
