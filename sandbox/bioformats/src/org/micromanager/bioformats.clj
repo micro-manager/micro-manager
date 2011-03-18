@@ -30,24 +30,6 @@
 (defn ome-to-xml [m]
   (-> m get-ome-xml-string str-to-xml))
 
-(defn +int [n] (PositiveInteger. n))
-
-(defn populate-meta [m w h nslices nchannels nframes ncomponents]
-  (doto m
-    .createRoot
-    (.setImageID "Image:0" 0)
-    (.setPixelsID "Pixels:0" 0)
-    (.setPixelsBinDataBigEndian true 0 0)
-    (.setPixelsDimensionOrder DimensionOrder/XYZCT 0)
-    (.setPixelsSizeX (+int w) 0)
-    (.setPixelsSizeY (+int h) 0)
-    (.setPixelsSizeZ (+int nslices) 0)
-    (.setPixelsSizeC (+int nchannels) 0)
-    (.setPixelsSizeT (+int nframes) 0)
-    (.setPixelsType PixelType/UINT8 0)
-    (.setChannelID "Channel:0:0" 0 0)
-    (.setChannelSamplesPerPixel (+int ncomponents) 0 0)))
-
 ;; read/write tiff files
 
 (defn write-ome-tiff [filename pixels metadata]
@@ -71,6 +53,54 @@
 
 (defn overwrite-tiff-xml [filename xml]
   (overwrite-comment filename (xml-to-str xml)))
+
+;; construct OME metadata using clojure xml emitter
+
+(def ome-attrs
+  {:xmlns "http://www.openmicroscopy.org/Schemas/OME/2010-06",
+  :xmlns:xsi "http://www.w3.org/2001/XMLSchema-instance",
+  :xsi:schemaLocation
+  "http://www.openmicroscopy.org/Schemas/OME/2010-06 http://www.openmicroscopy.org/Schemas/OME/2010-06/ome.xsd"})
+
+(def empty-bin-data ;; we don't put an image in this file
+  {:tag :BinData,
+       :attrs
+       {:xmlns
+        "http://www.openmicroscopy.org/Schemas/BinaryFile/2010-06",
+        :BigEndian "true"},
+       :content nil})
+
+(defn generate-img-meta-xml [img-meta] nil)
+
+(defn generate-chan-meta-xml [img-meta] nil)
+
+(defn generate-meta-xml [img-meta]
+  {:tag :OME
+   :attrs ome-attrs
+   :content [{:tag :Image,
+              :attrs (generate-img-meta-xml img-meta)
+              :content [(generate-chan-meta-xml img-meta)
+                        empty-bin-data]}]})              
+
+;; generate ome metadata using bioformats
+
+(defn +int [n] (PositiveInteger. n))
+
+(defn populate-meta [m w h nslices nchannels nframes ncomponents]
+  (doto m
+    .createRoot
+    (.setImageID "Image:0" 0)
+    (.setPixelsID "Pixels:0" 0)
+    (.setPixelsBinDataBigEndian true 0 0)
+    (.setPixelsDimensionOrder DimensionOrder/XYZCT 0)
+    (.setPixelsSizeX (+int w) 0)
+    (.setPixelsSizeY (+int h) 0)
+    (.setPixelsSizeZ (+int nslices) 0)
+    (.setPixelsSizeC (+int nchannels) 0)
+    (.setPixelsSizeT (+int nframes) 0)
+    (.setPixelsType PixelType/UINT8 0)
+    (.setChannelID "Channel:0:0" 0 0)
+    (.setChannelSamplesPerPixel (+int ncomponents) 0 0)))
 
 ;; testing
 
