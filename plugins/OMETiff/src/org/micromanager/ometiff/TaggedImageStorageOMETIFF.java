@@ -24,7 +24,7 @@ import org.micromanager.utils.ReportingUtils;
  * @author arthur
  */
 public class TaggedImageStorageOMETIFF extends TaggedImageStorageRam {
-
+   public static String menuName_ = "OME TIFF";
    final private String location_;
    private boolean saved_ = true;
    ImageReader reader_ = null;
@@ -145,11 +145,6 @@ public class TaggedImageStorageOMETIFF extends TaggedImageStorageRam {
          ReportingUtils.showError(ex);
       }
 
-   }
-   
-   @Override
-   public String getStoragePluginName() {
-      return "OME Tiff";
    }
    
    @Override
