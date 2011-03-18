@@ -11,10 +11,10 @@
 
 ;; xml <--> str
 
-(defn str-to-xml [s]
+(defn parse-xml [s]
   (clojure.xml/parse (ByteArrayInputStream. (.getBytes s "UTF-8"))))
 
-(defn xml-to-str [xml]
+(defn generate-xml [xml]
   (with-out-str (clojure.xml/emit xml)))
 
 ;; OMEXMLMetadata functions
@@ -27,8 +27,8 @@
 (defn get-ome-xml-string [m]
   (.getOMEXML ome-xml-service m))
                     
-(defn ome-to-xml [m]
-  (-> m get-ome-xml-string str-to-xml))
+(defn parse-ome-metadata [m]
+  (-> m get-ome-xml-string parse-xml))
 
 ;; read/write tiff files
 
@@ -42,8 +42,8 @@
 (defn get-tiff-comment [filename]
   (.getComment (TiffParser. filename)))
 
-(defn read-tiff-xml [filename]
-  (-> filename get-tiff-comment parse-xml-str))
+(defn read-tiff-metadata [filename]
+  (-> filename get-tiff-comment parse-xml))
 
 (defn overwrite-comment [filename comment]
   (.overwriteComment
@@ -51,8 +51,8 @@
     (RandomAccessInputStream. filename)
     comment))
 
-(defn overwrite-tiff-xml [filename xml]
-  (overwrite-comment filename (xml-to-str xml)))
+(defn overwrite-tiff-metadata [filename md]
+  (overwrite-comment filename (generate-xml md)))
 
 ;; construct OME metadata using clojure xml emitter
 
@@ -121,9 +121,9 @@
 
 (def test-meta (populate-meta 0 (new-ome-meta) 512 512 2 2 2 2))
 
-(defn test-write-image []
+(defn test-write-image [name]
   (write-ome-tiff
-    "blah.tiff"
+    (str name ".ome.tiff")
     (rand-image 512 512 2 2)
     test-meta))
 
