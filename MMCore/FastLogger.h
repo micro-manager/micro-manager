@@ -118,7 +118,7 @@ public:
    bool IsValid()throw();
    void Shutdown()throw(IMMLogger::runtime_exception);
    bool Reset()throw(IMMLogger::runtime_exception);
-   bool Open(const std::string f__);
+   bool Open(const std::string f_a);
    priority SetPriorityLevel(priority level)throw();
    bool EnableLogToStderr(bool enable)throw();
    IMMLogger::priority  EnableTimeStamp(IMMLogger::priority flags)throw();
@@ -134,8 +134,8 @@ public:
    std::string LogPath(void);
 
 	unsigned long flags(void) const { return fast_log_flags_;};
-	void set_flags( unsigned long bits__) { fast_log_flags_ |= bits__;};
-	void clr_flags( unsigned long bits__) { fast_log_flags_ &=(~bits__);};
+	void set_flags( unsigned long bits_a) { fast_log_flags_ |= bits_a;};
+	void clr_flags( unsigned long bits_a) { fast_log_flags_ &=(~bits_a);};
 
 private:
    //helpers
