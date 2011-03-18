@@ -1,11 +1,16 @@
-package org.micromanager.clojurescripting;
+/*
+ * Arthur Edelstein, UCSF, 2011
+ */
+
+package org.micromanager.clojureeditor;
 
 import org.micromanager.api.MMPlugin;
 import org.micromanager.api.ScriptInterface;
 import clooj.core;
 
-public class ClojureScripting implements MMPlugin {
-
+public class ClojureEditorPlugin implements MMPlugin {
+   public static String menuName = "Clojure editor";
+   
    public void dispose() {
       // do nothing
    }
