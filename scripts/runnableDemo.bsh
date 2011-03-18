@@ -16,3 +16,5 @@ runnable = new Runnable() {
 // but only channel 0 and slice 0.
 acq.attachRunnable(-1,-1,0,0,runnable); 
 
+// After running this script, you can test the results by
+// running a multi-dimensional acquisition from the Acquisition Dialog.
