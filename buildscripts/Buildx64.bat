@@ -32,6 +32,7 @@ popd
 echo Building native C++ libraries....
 
 echo setup include path for Vizual Studio....
+pushd
 c:
 set include=
 if exist "\Program Files (x86)\Microsoft Visual Studio 9.0\VC\" goto probably_x64
@@ -41,6 +42,7 @@ goto setvcvars
 pushd "\Program Files (x86)\Microsoft Visual Studio 9.0\VC\
 :setvcvars
 call vcvarsall.bat
+popd
 popd
 
 set include=d:\projects\3rdpartypublic\boost;%include%
