@@ -59,6 +59,7 @@ import javax.swing.WindowConstants;
 import javax.swing.border.LineBorder;
 
 import mmcorej.CMMCore;
+import mmcorej.StrVector;
 import org.micromanager.MMStudioMainFrame;
 import org.micromanager.utils.FileDialogs;
 
@@ -87,6 +88,9 @@ public class ConfiguratorDlg extends JDialog {
     private String defaultPath_;
     private boolean showSynchroPage_;
 
+    private static final String CFG_OKAY_TO_SEND = "CFG_Okay_To_Send";
+
+
     /**
      * Create the application
      */
@@ -105,6 +109,7 @@ public class ConfiguratorDlg extends JDialog {
      */
     private void initialize() {
         prefs_ = Preferences.userNodeForPackage(this.getClass());
+
 
         addWindowListener(new WindowAdapter() {
 
@@ -185,7 +190,9 @@ public class ConfiguratorDlg extends JDialog {
         pages_[pageNumber++] = new FinishPage(prefs_);
 
         microModel_ = new MicroscopeModel();
-        microModel_.setSendConfiguration(false);
+        // default to allow sending of configuration to micro-manager.org server
+        boolean bvalue = prefs_.getBoolean(CFG_OKAY_TO_SEND, true);
+        microModel_.setSendConfiguration( bvalue);
         microModel_.loadAvailableDeviceList(core_);
         microModel_.setFileName(defaultPath_);
         microModel_.scanComPorts(core_);
@@ -302,7 +309,19 @@ public class ConfiguratorDlg extends JDialog {
                     qualifiedConfigFileName += shortTZName;
                     qualifiedConfigFileName += "@";
                     try {
-                        qualifiedConfigFileName += InetAddress.getLocalHost().getHostAddress();
+                        // a handy, unique ID for the user's computer
+                        String physicalAddress = "00-00-00-00-00-00";
+
+                        StrVector ss = core_.getMACAddresses();
+                        if (0 < ss.size()){
+                            String pa2 = ss.get(0);
+                            if(null != pa2){
+                                if( 0 <  pa2.length()){
+                                    physicalAddress = pa2;
+                                }
+                            }
+                        }
+                        qualifiedConfigFileName += physicalAddress;
                         prependedLine += "Host: " + InetAddress.getLocalHost().getHostName() + " ";
                     } catch (UnknownHostException e) {
                     }
@@ -374,6 +393,7 @@ public class ConfiguratorDlg extends JDialog {
     }
 
     private void onCloseWindow() {
+
         for (int i = 0; i < pages_.length; i++) {
             pages_[i].saveSettings();
         }
@@ -425,6 +445,8 @@ public class ConfiguratorDlg extends JDialog {
                 ReportingUtils.showMessage("Error uploading configuration file:\n" + u.Status());
             }
         }
+
+        prefs_.putBoolean(CFG_OKAY_TO_SEND, microModel_.getSendConfiguration());
         dispose();
     }
 

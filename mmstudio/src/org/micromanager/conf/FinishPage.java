@@ -104,7 +104,6 @@ public class FinishPage extends PagePanel {
         sendCheck_ = new JCheckBox();
         sendCheck_.setBounds(10, 100, 360, 33);
         sendCheck_.setFont(new Font("", Font.PLAIN, 12));
-        sendCheck_.setSelected(true);
         sendCheck_.addActionListener(new ActionListener() {
 
             public void actionPerformed(ActionEvent arg0) {
@@ -113,8 +112,6 @@ public class FinishPage extends PagePanel {
         });
 
         sendCheck_.setText("Send configuration to Micro-manager.org");
-
-
         add(sendCheck_);
 
         final JLabel sendConfigExplain = new JLabel();
@@ -131,7 +128,7 @@ public class FinishPage extends PagePanel {
     }
 
     public boolean enterPage(boolean next) {
-        model_.setSendConfiguration(sendCheck_.isSelected());
+        sendCheck_.setSelected(model_.getSendConfiguration());
         fileNameField_.setText(model_.getFileName());
         return true;
     }
