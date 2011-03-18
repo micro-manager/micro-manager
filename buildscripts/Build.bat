@@ -32,8 +32,6 @@ popd
 echo Building native C++ libraries....
 
 echo setup include path for Vizual Studio....
-pushd
-c:
 set include=
 if exist "\Program Files (x86)\Microsoft Visual Studio 9.0\VC\" goto probably_x64
 pushd "\Program Files\Microsoft Visual Studio 9.0\VC\"
@@ -43,7 +41,6 @@ pushd "\Program Files (x86)\Microsoft Visual Studio 9.0\VC\
 :setvcvars
 call vcvarsall.bat
 popd 
-popd
 
 
 set include=d:\projects\3rdpartypublic\boost;%include%
@@ -152,6 +149,9 @@ pushd plugins\Big
 call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml %cleantarget% compile build 
 popd
 
+pushd plugins\MultiCamera
+call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml %cleantarget% compile build 
+popd
 
 
 set DEVICELISTBUILDER=1
