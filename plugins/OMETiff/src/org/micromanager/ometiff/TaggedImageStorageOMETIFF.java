@@ -29,7 +29,8 @@ public class TaggedImageStorageOMETIFF extends TaggedImageStorageRam {
    private boolean saved_ = true;
    ImageReader reader_ = null;
 
-   public TaggedImageStorageOMETIFF(String location, Boolean newData, JSONObject summaryMetadata) {
+   public TaggedImageStorageOMETIFF(String location, Boolean newData,
+                                    JSONObject summaryMetadata) {
       super(summaryMetadata);
       if (!newData) {
          loadImages();
@@ -38,7 +39,8 @@ public class TaggedImageStorageOMETIFF extends TaggedImageStorageRam {
    }
 
    @Override
-   public TaggedImage getImage(int channel, int slice, int frame, int position) {
+   public TaggedImage getImage(int channel, int slice,
+                               int frame, int position) {
       if (reader_ == null) {
          return super.getImage(channel, slice, frame, position);
       } else {
@@ -91,11 +93,13 @@ public class TaggedImageStorageOMETIFF extends TaggedImageStorageRam {
          int nFrames = Math.max(1, summaryMetadata.getInt("Frames"));
          int nSlices = Math.max(1, summaryMetadata.getInt("Slices"));
 
-         OMEXMLMetadata metadata = new ServiceFactory().getInstance(OMEXMLService.class).createOMEXMLMetadata();
+         OMEXMLMetadata metadata = new ServiceFactory()
+                 .getInstance(OMEXMLService.class).createOMEXMLMetadata();
          ImageWriter writer = new ImageWriter();
 
          for (int position = 0; position < nPositions; ++position) {
-            String positionName = MDUtils.getPositionName(super.getImage(0, 0, 0, position).tags);
+            String positionName = MDUtils.getPositionName(
+                    super.getImage(0, 0, 0, position).tags);
             if (positionName == null) {
                positionName = "Single";
             }
@@ -103,15 +107,19 @@ public class TaggedImageStorageOMETIFF extends TaggedImageStorageRam {
             metadata.setPixelsID("Pixels:" + position, position);
             metadata.setPixelsDimensionOrder(DimensionOrder.XYZCT, position);
             metadata.setPixelsBinDataBigEndian(true, position, 0);
-            metadata.setPixelsSizeX(new PositiveInteger(MDUtils.getWidth(summaryMetadata)), position);
-            metadata.setPixelsSizeY(new PositiveInteger(MDUtils.getHeight(summaryMetadata)), position);
+            metadata.setPixelsSizeX(new PositiveInteger(
+                    MDUtils.getWidth(summaryMetadata)), position);
+            metadata.setPixelsSizeY(new PositiveInteger(
+                    MDUtils.getHeight(summaryMetadata)), position);
             metadata.setPixelsSizeZ(new PositiveInteger(nSlices), position);
             metadata.setPixelsSizeC(new PositiveInteger(nChannels), position);
             metadata.setPixelsSizeT(new PositiveInteger(nFrames), position);
             metadata.setPixelsType(PixelType.UINT8, position);
             for (int channel = 0; channel < nChannels; ++channel) {
-               metadata.setChannelID("Channel:" + position + ":" + channel, position, channel);
-               metadata.setChannelSamplesPerPixel(new PositiveInteger(1), position, channel);
+               metadata.setChannelID("Channel:" + position + ":" + channel,
+                       position, channel);
+               metadata.setChannelSamplesPerPixel(new PositiveInteger(1),
+                       position, channel);
             }
          }
 
