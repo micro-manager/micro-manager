@@ -146,29 +146,14 @@ snap_in_progress = true;
 //sprintf(msg, "exposure duration = %x\r\n", exposure);
 //sLogMessage(msg);
 
-// delay if exposure delay is enabled (wait for duration of exposure with padding)
+// delay if exposure delay is enalbed (wait for duration of exposure with padding)
 if(exposure_delay_enabled != 0)
 	{
-	long	frame_period = 0;
-
-	if(so.cam_config->get_rate() == SFW_FR_28MHZ)
-	{
-		frame_period = frame_period_28mhz;
-	}
-	else if(so.cam_config->get_rate() == SFW_FR_14MHZ)
-	{
-		frame_period = frame_period_14mhz;
-	}
-	else
-	{
-		frame_period = frame_period_7mhz;
-	}
-
 	long	exposure = (long)d_exposure;
 	long	duration = 0;
-	long	exp_start = frame_period - (exposure % frame_period);
+	long	exp_start = 133 - (exposure % 133);
 
-	duration = frame_period + exp_start + exposure;
+	duration = 133 + exp_start + exposure;
 
 
 	// wait for exposure duration (exposure in ms)
