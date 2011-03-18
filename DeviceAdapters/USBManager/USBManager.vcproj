@@ -45,7 +45,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\..\3rdpartypublic\libusb-win32-bin-1.2.2.0\include"
+				AdditionalIncludeDirectories="..\..\..\3rdpartypublic\libusb-win32-bin-1.2.3.0\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				MinimalRebuild="true"
 				ExceptionHandling="2"
@@ -72,7 +72,7 @@
 				AdditionalDependencies="libusb.lib"
 				OutputFile="$(OutDir)/mmgr_dal_USBManager.dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;../../../3rdpartypublic/libusb-win32-bin-1.2.2.0/lib/msvc&quot;"
+				AdditionalLibraryDirectories="..\..\..\3rdpartypublic\libusb-win32-bin-1.2.3.0\lib\msvc_$(PlatformName)"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/SerialManager.pdb"
 				SubSystem="2"
@@ -131,7 +131,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\..\..\3rdpartypublic\libusb-win32-bin-1.2.2.0\include"
+				AdditionalIncludeDirectories="..\..\..\3rdpartypublic\libusb-win32-bin-1.2.3.0\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				MinimalRebuild="true"
 				ExceptionHandling="2"
@@ -158,7 +158,7 @@
 				AdditionalDependencies="libusb.lib"
 				OutputFile="$(OutDir)/mmgr_dal_USBManager.dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;../../../3rdpartypublic/libusb-win32-bin-1.2.2.0/lib/msvc_x64&quot;"
+				AdditionalLibraryDirectories="..\..\..\3rdpartypublic\libusb-win32-bin-1.2.3.0\lib\msvc_$(PlatformName)"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/SerialManager.pdb"
 				SubSystem="2"
@@ -215,7 +215,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\..\..\3rdpartypublic\libusb-win32-bin-1.2.2.0\include"
+				AdditionalIncludeDirectories="..\..\..\3rdpartypublic\libusb-win32-bin-1.2.3.0\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				ExceptionHandling="2"
 				RuntimeLibrary="0"
@@ -240,7 +240,7 @@
 				AdditionalDependencies="libusb.lib"
 				OutputFile="$(OutDir)/mmgr_dal_USBManager.dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;../../../3rdpartypublic/libusb-win32-bin-1.2.2.0/lib/msvc&quot;"
+				AdditionalLibraryDirectories="..\..\..\3rdpartypublic\libusb-win32-bin-1.2.3.0\lib\msvc_$(PlatformName)"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -299,7 +299,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="..\..\..\3rdpartypublic\libusb-win32-bin-1.2.2.0\include"
+				AdditionalIncludeDirectories="..\..\..\3rdpartypublic\libusb-win32-bin-1.2.3.0\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS"
 				ExceptionHandling="2"
 				RuntimeLibrary="0"
@@ -324,7 +324,7 @@
 				AdditionalDependencies="libusb.lib"
 				OutputFile="$(OutDir)/mmgr_dal_USBManager.dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;../../../3rdpartypublic/libusb-win32-bin-1.2.2.0/lib/msvc_x64&quot;"
+				AdditionalLibraryDirectories="..\..\..\3rdpartypublic\libusb-win32-bin-1.2.3.0\lib\msvc_$(PlatformName)"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
