@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.micromanager.bioformats;
+package org.micromanager.ometiff;
 
 import loci.common.services.ServiceFactory;
 import loci.formats.ImageReader;
@@ -138,7 +138,12 @@ public class TaggedImageStorageOMETIFF extends TaggedImageStorageRam {
       }
 
    }
-
+   
+   @Override
+   public String getStoragePluginName() {
+      return "OME Tiff";
+   }
+   
    @Override
    public String getDiskLocation() {
       if (saved_) {
