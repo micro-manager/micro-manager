@@ -1,4 +1,4 @@
-libusb-win32-bin v1.2.2.0 (10/02/2010) - [Package Information]
+libusb-win32-bin v1.2.3.0 (03/16/2011) - [Package Information]
 
 ALL ARCHITECTURES:
   x86\libusb0_x86.dll: x86 32-bit library. Must be renamed to libusb0.dll
@@ -6,7 +6,7 @@ ALL ARCHITECTURES:
     On 32 bit, Installs to Windows\system32\libusb0.dll.
 
   x86\inf-wizard.exe: inf-wizard application with embedded libusb-win32
-    v1.2.2.0 binaries.
+    v1.2.3.0 binaries.
 
 X86 ONLY ARCHITECTURES:
   x86\libusb0.sys: x86 32-bit driver.
