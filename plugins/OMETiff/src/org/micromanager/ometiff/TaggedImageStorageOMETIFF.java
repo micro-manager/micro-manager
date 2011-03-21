@@ -4,7 +4,11 @@
  */
 package org.micromanager.ometiff;
 
+import java.io.IOException;
+import loci.common.services.DependencyException;
+import loci.common.services.ServiceException;
 import loci.common.services.ServiceFactory;
+import loci.formats.FormatException;
 import loci.formats.ImageReader;
 import loci.formats.ImageWriter;
 import loci.formats.meta.MetadataStore;
@@ -14,6 +18,7 @@ import mmcorej.TaggedImage;
 import ome.xml.model.enums.DimensionOrder;
 import ome.xml.model.enums.PixelType;
 import ome.xml.model.primitives.PositiveInteger;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.acquisition.TaggedImageStorageRam;
 import org.micromanager.utils.MDUtils;
@@ -28,6 +33,9 @@ public class TaggedImageStorageOMETIFF extends TaggedImageStorageRam {
    final private String location_;
    private boolean saved_ = true;
    ImageReader reader_ = null;
+   private ImageWriter writer_ = null;
+   private JSONObject summaryMetadata_ = null;
+   private int planeIndex_;
 
    public TaggedImageStorageOMETIFF(String location, Boolean newData,
                                     JSONObject summaryMetadata) {
@@ -35,6 +43,7 @@ public class TaggedImageStorageOMETIFF extends TaggedImageStorageRam {
       if (!newData) {
          loadImages();
       }
+      summaryMetadata_ = summaryMetadata;
       location_ = location;
    }
 
@@ -81,73 +90,80 @@ public class TaggedImageStorageOMETIFF extends TaggedImageStorageRam {
 
    @Override
    public void finished() {
-      saveImages(super.getSummaryMetadata());
+      if (writer_ != null)
+         try {
+            writer_.close();
+         } catch (IOException ex) {
+            ReportingUtils.logError(ex);
+         }
       super.finished();
    }
 
-   private void saveImages(JSONObject summaryMetadata) {
+   public void putImage(TaggedImage taggedImage) {
       try {
-         saved_ = true;
-         int nPositions = Math.max(1, summaryMetadata.getInt("Positions"));
-         int nChannels = Math.max(1, summaryMetadata.getInt("Channels"));
-         int nFrames = Math.max(1, summaryMetadata.getInt("Frames"));
-         int nSlices = Math.max(1, summaryMetadata.getInt("Slices"));
-
-         OMEXMLMetadata metadata = new ServiceFactory()
-                 .getInstance(OMEXMLService.class).createOMEXMLMetadata();
-         ImageWriter writer = new ImageWriter();
-
-         for (int position = 0; position < nPositions; ++position) {
-            String positionName = MDUtils.getPositionName(
-                    super.getImage(0, 0, 0, position).tags);
-            if (positionName == null) {
-               positionName = "Single";
-            }
-            metadata.setImageID(positionName, position);
-            metadata.setPixelsID("Pixels:" + position, position);
-            metadata.setPixelsDimensionOrder(DimensionOrder.XYZCT, position);
-            metadata.setPixelsBinDataBigEndian(true, position, 0);
-            metadata.setPixelsSizeX(new PositiveInteger(
-                    MDUtils.getWidth(summaryMetadata)), position);
-            metadata.setPixelsSizeY(new PositiveInteger(
-                    MDUtils.getHeight(summaryMetadata)), position);
-            metadata.setPixelsSizeZ(new PositiveInteger(nSlices), position);
-            metadata.setPixelsSizeC(new PositiveInteger(nChannels), position);
-            metadata.setPixelsSizeT(new PositiveInteger(nFrames), position);
-            metadata.setPixelsType(PixelType.UINT8, position);
-            for (int channel = 0; channel < nChannels; ++channel) {
-               metadata.setChannelID("Channel:" + position + ":" + channel,
-                       position, channel);
-               metadata.setChannelSamplesPerPixel(new PositiveInteger(1),
-                       position, channel);
-            }
+         if (writer_ == null) {
+            setupWriter();
          }
 
-         writer.setMetadataRetrieve(metadata);
-         writer.setId(location_ + ".ome.tiff");
-
-         for (int position = 0; position < nPositions; ++position) {
-            int planeIndex = 0;
-            writer.setSeries(position);
-            for (int frame = 0; frame < nFrames; ++frame) {
-               for (int channel = 0; channel < nChannels; ++channel) {
-                  for (int slice = 0; slice < nSlices; ++slice) {
-                     Object pix = super.getImage(channel, slice, frame, position).pix;
-                     writer.saveBytes(planeIndex, (byte[]) pix);
-                     ++planeIndex;
-                  }
-               }
-            }
-         }
-
-         writer.close();
+         writer_.setSeries(MDUtils.getPositionIndex(taggedImage.tags));
+         writer_.saveBytes(planeIndex_, (byte[]) taggedImage.pix);
+         ++planeIndex_;
+        
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
       }
 
    }
+
+   private void setupWriter() throws Exception {
+      writer_ = setupImageWriter(summaryMetadata_);
+      planeIndex_ = 0;
+   }
+
+   private ome.xml.model.enums.DimensionOrder
+           computeDimensionOrder(JSONObject summaryMetadata) {
+      try {
+         boolean slicesFirst = summaryMetadata_.getBoolean("SlicesFirst");
+         return slicesFirst ? DimensionOrder.XYZCT : DimensionOrder.XYCZT;
+      } catch (JSONException ex) {
+         ReportingUtils.logError(ex);
+         return DimensionOrder.XYCZT;
+      }
+   }
+
+   private ImageWriter setupImageWriter(JSONObject summaryMetadata) throws FormatException, Exception, DependencyException, IOException, JSONException, ServiceException {
+      saved_ = true;
+      int nPositions = Math.max(1, summaryMetadata.getInt("Positions"));
+      int nChannels = Math.max(1, summaryMetadata.getInt("Channels"));
+      int nFrames = Math.max(1, summaryMetadata.getInt("Frames"));
+      int nSlices = Math.max(1, summaryMetadata.getInt("Slices"));
+      OMEXMLMetadata metadata = new ServiceFactory().getInstance(OMEXMLService.class).createOMEXMLMetadata();
+      ImageWriter writer = new ImageWriter();
+      for (int position = 0; position < nPositions; ++position) {
+         String positionName = MDUtils.getPositionName(super.getImage(0, 0, 0, position).tags);
+         if (positionName == null) {
+            positionName = "Single";
+         }
+         metadata.setImageID(positionName, position);
+         metadata.setPixelsID("Pixels:" + position, position);
+         metadata.setPixelsDimensionOrder(computeDimensionOrder(summaryMetadata), position);
+         metadata.setPixelsBinDataBigEndian(true, position, 0);
+         metadata.setPixelsSizeX(new PositiveInteger(MDUtils.getWidth(summaryMetadata)), position);
+         metadata.setPixelsSizeY(new PositiveInteger(MDUtils.getHeight(summaryMetadata)), position);
+         metadata.setPixelsSizeZ(new PositiveInteger(nSlices), position);
+         metadata.setPixelsSizeC(new PositiveInteger(nChannels), position);
+         metadata.setPixelsSizeT(new PositiveInteger(nFrames), position);
+         metadata.setPixelsType(PixelType.UINT8, position);
+         for (int channel = 0; channel < nChannels; ++channel) {
+            metadata.setChannelID("Channel:" + position + ":" + channel, position, channel);
+            metadata.setChannelSamplesPerPixel(new PositiveInteger(1), position, channel);
+         }
+      }
+      writer.setMetadataRetrieve(metadata);
+      writer.setId(location_ + ".ome.tiff");
+      return writer;
+   }
    
-   @Override
    public String getDiskLocation() {
       if (saved_) {
          return location_ + ".ome.tiff";
