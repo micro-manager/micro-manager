@@ -21,6 +21,7 @@ import ome.xml.model.primitives.PositiveInteger;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.acquisition.TaggedImageStorageRam;
+import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;
 
@@ -28,7 +29,7 @@ import org.micromanager.utils.ReportingUtils;
  *
  * @author arthur
  */
-public class TaggedImageStorageOMETIFF extends TaggedImageStorageRam {
+public class TaggedImageStorageOMETIFF implements TaggedImageStorage {
    public static String menuName_ = "OME TIFF";
    final private String location_;
    private boolean saved_ = true;
@@ -39,7 +40,7 @@ public class TaggedImageStorageOMETIFF extends TaggedImageStorageRam {
 
    public TaggedImageStorageOMETIFF(String location, Boolean newData,
                                     JSONObject summaryMetadata) {
-      super(summaryMetadata);
+      summaryMetadata_ = summaryMetadata;
       if (!newData) {
          loadImages();
       }
@@ -51,7 +52,7 @@ public class TaggedImageStorageOMETIFF extends TaggedImageStorageRam {
    public TaggedImage getImage(int channel, int slice,
                                int frame, int position) {
       if (reader_ == null) {
-         return super.getImage(channel, slice, frame, position);
+         return null; // super.getImage(channel, slice, frame, position);
       } else {
          JSONObject tags = new JSONObject();
          reader_.setSeries(position);
@@ -96,7 +97,6 @@ public class TaggedImageStorageOMETIFF extends TaggedImageStorageRam {
          } catch (IOException ex) {
             ReportingUtils.logError(ex);
          }
-      super.finished();
    }
 
    public void putImage(TaggedImage taggedImage) {
@@ -140,7 +140,7 @@ public class TaggedImageStorageOMETIFF extends TaggedImageStorageRam {
       OMEXMLMetadata metadata = new ServiceFactory().getInstance(OMEXMLService.class).createOMEXMLMetadata();
       ImageWriter writer = new ImageWriter();
       for (int position = 0; position < nPositions; ++position) {
-         String positionName = MDUtils.getPositionName(super.getImage(0, 0, 0, position).tags);
+         String positionName = null;//MDUtils.getPositionName(super.getImage(0, 0, 0, position).tags);
          if (positionName == null) {
             positionName = "Single";
          }
@@ -170,5 +170,29 @@ public class TaggedImageStorageOMETIFF extends TaggedImageStorageRam {
       } else {
          return null;
       }
+   }
+
+   public void setSummaryMetadata(JSONObject md) {
+      throw new UnsupportedOperationException("Not supported yet.");
+   }
+
+   public JSONObject getSummaryMetadata() {
+      throw new UnsupportedOperationException("Not supported yet.");
+   }
+
+   public void setDisplayAndComments(JSONObject settings) {
+      throw new UnsupportedOperationException("Not supported yet.");
+   }
+
+   public JSONObject getDisplayAndComments() {
+      throw new UnsupportedOperationException("Not supported yet.");
+   }
+
+   public void close() {
+      throw new UnsupportedOperationException("Not supported yet.");
+   }
+
+   public int lastAcquiredFrame() {
+      throw new UnsupportedOperationException("Not supported yet.");
    }
 }
