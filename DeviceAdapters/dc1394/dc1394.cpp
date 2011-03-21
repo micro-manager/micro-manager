@@ -30,7 +30,7 @@
    #include <memory.h>
    void ZeroMemory(void* mem, int size) 
    {
-      memset(mem,size,0);
+      memset(mem, 0, size);
    }
 #endif
 
@@ -2266,7 +2266,6 @@ int Cdc1394::StartSequenceAcquisition(double interval_ms)
    if (!endFound)
       LogMessage("Timeout while emptying dma buffer before starting acquisition thread");
 
-   printf("%ld Frames discarded\n", nrFrames);
    acquiring_ = true;
    acqThread_->Start();
 
