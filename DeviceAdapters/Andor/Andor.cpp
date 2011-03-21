@@ -3807,13 +3807,9 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
 
       }
 
-      // process image
-      // imageprocesssor now called from core
-
       // create metadata
       char label[MM::MaxStrLength];
       this->GetLabel(label);
-
 
       MM::MMTime timestamp = this->GetCurrentMMTime();
       Metadata md;
@@ -3824,6 +3820,8 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
       md.put(MM::g_Keyword_Metadata_ImageNumber, CDeviceUtils::ConvertToString(imageCounter_));
       md.put(MM::g_Keyword_Binning, binSize_);
 
+      /*
+       * Seens that this method does not work and the above one does....
       MetadataSingleTag mstStartTime(MM::g_Keyword_Metadata_StartTime, label, true);
       mstStartTime.SetValue(CDeviceUtils::ConvertToString(startTime_.getMsec()));
       md.SetTag(mstStartTime);
@@ -3839,6 +3837,7 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
       MetadataSingleTag mstB(MM::g_Keyword_Binning, label, true);
       mstB.SetValue(CDeviceUtils::ConvertToString(binSize_));      
       md.SetTag(mstB);
+      */
 
       imageCounter_++;
 

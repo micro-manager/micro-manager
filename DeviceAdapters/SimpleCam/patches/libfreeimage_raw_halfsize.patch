@@ -1,0 +1,30 @@
+diff -uNr FreeImage.ORIG/Source/FreeImage/PluginRAW.cpp FreeImage/Source/FreeImage/PluginRAW.cpp
+--- FreeImage.ORIG/Source/FreeImage/PluginRAW.cpp	2011-01-24 05:06:08.000000000 +0100
++++ FreeImage/Source/FreeImage/PluginRAW.cpp	2011-03-13 07:04:05.000000000 +0100
+@@ -442,10 +442,15 @@
+ 
+ 	BOOL header_only = (flags & FIF_LOAD_NOPIXELS) == FIF_LOAD_NOPIXELS;
+ 
++	BOOL half_size = ((flags & RAW_HALFSIZE) == RAW_HALFSIZE);
++
+ 	try {
+ 		// wrap the input datastream
+ 		LibRaw_freeimage_datastream datastream(io, handle);
+ 
++		// if half_size, output half-sized color image (fast, no color interpolation)
++		RawProcessor.imgdata.params.half_size = half_size;
++
+ 		// open the datastream
+ 		if(RawProcessor.open_datastream(&datastream) != LIBRAW_SUCCESS) {
+ 			throw "LibRaw : failed to open input stream (unknown format)";
+diff -uNr FreeImage.ORIG/Source/FreeImage.h FreeImage/Source/FreeImage.h
+--- FreeImage.ORIG/Source/FreeImage.h	2011-01-24 05:06:08.000000000 +0100
++++ FreeImage/Source/FreeImage.h	2011-03-13 07:02:21.000000000 +0100
+@@ -710,6 +710,7 @@
+ #define RAW_DEFAULT         0		// load the file as linear RGB 48-bit
+ #define RAW_PREVIEW			1		// try to load the embedded JPEG preview with included Exif Data or default to RGB 24-bit
+ #define RAW_DISPLAY			2		// load the file as RGB 24-bit
++#define RAW_HALFSIZE			4		// output a half-size color image
+ #define SGI_DEFAULT			0
+ #define TARGA_DEFAULT       0
+ #define TARGA_LOAD_RGB888   1       // If set the loader converts RGB555 and ARGB8888 -> RGB888.

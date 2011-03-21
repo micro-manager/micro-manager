@@ -36,5 +36,5 @@ if BUILD_V4L2
 endif
 
 
-SUBDIRS =  AAAOTF AOTF $(ANDOR) $(ANDORLASERCOMBINER) Arduino ASIFW1000 ASIStage ASIWPTR Cobolt CoherentCube Conix $(DC1394) DTOpenLayer DemoCamera Corvus ImageProcessorChain $(ITC) FreeSerialPort kdv K8055 K8061 LeicaDMI LeicaDMR Ludl LudlLow MaestroServo Neos $(NIDAQ) Nikon NikonTE2000 PI PI_GCS Prior ParallelPort Pecon PrecisExcite $(PVCAM) $(QCAM) Sapphire $(SCION) $(SENSICAM) SerialManager SimpleAutofocus $(SPOT) SpectralLMM5 SutterLambda ThorlabsDCxxxx ThorlabsFilterWheel ThorlabsSC10 $(USBMANAGER) Utilities Vincent $(V4L) XCite120PC_Exacte Xcite Yokogawa ZeissCAN ZeissCAN29
+SUBDIRS =  AAAOTF AOTF $(ANDOR) $(ANDORLASERCOMBINER) Arduino ASIFW1000 ASIStage ASIWPTR Cobolt CoherentCube Conix $(DC1394) DTOpenLayer DemoCamera Corvus ImageProcessorChain $(ITC) FreeSerialPort kdv K8055 K8061 LeicaDMI LeicaDMR Ludl LudlLow MaestroServo Neos $(NIDAQ) Nikon NikonTE2000 PI PI_GCS Prior ParallelPort Pecon PrecisExcite $(PVCAM) $(QCAM) Sapphire $(SCION) $(SENSICAM) SerialManager SimpleAutofocus SimpleCam $(SPOT) SpectralLMM5 SutterLambda ThorlabsDCxxxx ThorlabsFilterWheel ThorlabsSC10 $(USBMANAGER) Utilities Vincent $(V4L) XCite120PC_Exacte Xcite Yokogawa ZeissCAN ZeissCAN29
  

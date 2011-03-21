@@ -1,0 +1,9 @@
+CXXFLAGS=-I/opt/local/include
+LDFLAGS=-L/opt/local/lib -lgphoto2 -lgphoto2_port
+OBJECTS=test.o SimpleCam.o
+
+test: $(OBJECTS)
+	$(CXX) $(LDFLAGS) $(OBJECTS) -o test
+
+clean:
+	rm -f test *.o
