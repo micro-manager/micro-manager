@@ -33,7 +33,7 @@ public class TaggedImageStorageRam implements TaggedImageStorage {
       displaySettings_ = new JSONObject();
    }
 
-   public String putImage(TaggedImage taggedImage) throws MMException {
+   public void putImage(TaggedImage taggedImage) throws MMException {
       String label = MDUtils.getLabel(taggedImage.tags);
       imageMap_.put(label, taggedImage);
       try {
@@ -41,7 +41,6 @@ public class TaggedImageStorageRam implements TaggedImageStorage {
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
       }
-      return label;
    }
 
    public TaggedImage getImage(int channel, int slice, int frame, int position) {

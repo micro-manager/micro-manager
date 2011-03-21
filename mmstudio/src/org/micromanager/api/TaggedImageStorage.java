@@ -17,7 +17,7 @@ public interface TaggedImageStorage {
    public static String storagePluginName = null;
    public TaggedImage getImage(int channelIndex, int sliceIndex,
                                int frameIndex, int positionIndex);
-   public String putImage(TaggedImage taggedImage) throws MMException;
+   public void putImage(TaggedImage taggedImage) throws MMException;
    public void finished();
    public void setSummaryMetadata(JSONObject md);
    public JSONObject getSummaryMetadata();

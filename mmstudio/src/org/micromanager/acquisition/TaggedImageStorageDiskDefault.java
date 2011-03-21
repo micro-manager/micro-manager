@@ -38,7 +38,7 @@ import org.micromanager.utils.TextUtils;
  * @author arthur
  */
 public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
-   public static String menuName_ = "Default";
+   public static String menuName_ = "Micro-Manager default file format";
    private final String dir_;
    private boolean firstElement_;
    private HashMap<String,Writer> metadataStreams_;
@@ -92,7 +92,7 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       }
    }
 
-   public String putImage(TaggedImage taggedImg) throws MMException {
+   public void putImage(TaggedImage taggedImg) throws MMException {
       try {
          if (!newDataSet_) {
             throw new MMException("This ImageFileManager is read-only.");
@@ -126,10 +126,8 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
          writeFrameMetadata(md);
          String label = MDUtils.getLabel(md);
          filenameTable_.put(label, fileName);
-         return MDUtils.getLabel(md);
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
-         return null;
       }
    }
 

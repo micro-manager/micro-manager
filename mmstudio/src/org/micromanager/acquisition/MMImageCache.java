@@ -79,16 +79,15 @@ public class MMImageCache implements TaggedImageStorage {
       imageStorage_ = newImageFileManager;
    }
 
-   public String putImage(TaggedImage taggedImg) {
+   public void putImage(TaggedImage taggedImg) {
       try {
          softTable_.put(MDUtils.getLabel(taggedImg.tags), new SoftReference(taggedImg));
          taggedImg.tags.put("Summary",imageStorage_.getSummaryMetadata());
          checkForChangingTags(taggedImg);
          lastFrame_ = Math.max(lastFrame_, MDUtils.getFrameIndex(taggedImg.tags));
-         return imageStorage_.putImage(taggedImg);
+         imageStorage_.putImage(taggedImg);
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
-         return null;
       }
    }
 
