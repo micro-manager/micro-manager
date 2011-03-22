@@ -65,7 +65,7 @@ ImageFlipper.jar:  \
 	$(JAVAC) -source 1.5 -target 1.5 -sourcepath $(srcdir):. -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):../bin/MMCoreJ.jar:../mmstudio/MMJ_.jar:. $(srcdir)/MultiCamera/src/org/micromanager/multicamera/*.java -d build
 	cd build && jar cf ../ImageFlipper.jar * 
 
-all: PixelCalibrator.jar RecallPlugin.jar StageControl.jar MultiCamera.jar Big.jar ImageFlipper.jar
+all: PixelCalibrator.jar RecallPlugin.jar StageControl.jar MultiCamera.jar Big.jar ImageFlipper.jar SlideExplorer.jar
 
 install: 
 	test -d $(IJPATH)/mmplugins || mkdir $(IJPATH)/mmplugins
