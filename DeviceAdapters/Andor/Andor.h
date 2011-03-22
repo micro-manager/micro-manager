@@ -181,7 +181,6 @@ private:
    bool IsThermoSteady();
    void SetToIdle();
    bool IsAcquiring();
-   int SetExposure_();
 
    void LogStatus();
 	int PrepareSnap();

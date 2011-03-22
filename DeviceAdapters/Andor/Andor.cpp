@@ -1504,12 +1504,12 @@ int AndorCamera::GetListOfAvailableCameras()
       if (sequenceRunning_)   // If we are in the middle of a SequenceAcquisition
          return ERR_BUSY_ACQUIRING;
 
-      if(iCurrentTriggerMode_ == SOFTWARE || iCurrentTriggerMode_ == EXTERNAL) 
+      if(iCurrentTriggerMode_ == SOFTWARE) 
       {
          /* int ret = */ PrepareSnap();
          SendSoftwareTrigger();
       }
-      else // INTERNAL trigger mode
+      else if (iCurrentTriggerMode_ == INTERNAL) 
       {        
          AbortAcquisition();
          int status = DRV_ACQUIRING;
@@ -1538,15 +1538,18 @@ int AndorCamera::GetListOfAvailableCameras()
    {
       DriverGuard dg(this);
 
-      if (IsAcquiring())
-         WaitForAcquisition();
+      if (IsAcquiring() && iCurrentTriggerMode_ != EXTERNAL)
+      {
+         int ret = WaitForAcquisitionByHandleTimeOut(myCameraID_, imageTimeOut_ms_);
+         if (ret != DRV_SUCCESS)
+            return 0;
+      }
+         //WaitForAcquisition();
 
       pImgBuffer_ = GetAcquiredImage();
       assert(img_.Depth() == 2);
       assert(pImgBuffer_!=0);
       unsigned char* rawBuffer = pImgBuffer_;
-      // process image
-      // imageprocessor now called from core
 
       PrepareSnap();
       return (unsigned char*)rawBuffer;
@@ -1831,11 +1834,11 @@ int AndorCamera::GetListOfAvailableCameras()
    */
    int AndorCamera::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
-      DriverGuard dg(this);
       // exposure property is stored in milliseconds,
       // while the driver returns the value in seconds
       if (eAct == MM::BeforeGet)
       {
+         DriverGuard dg(this);
          pProp->Set(currentExpMS_);
       }
       else if (eAct == MM::AfterSet)
@@ -1845,30 +1848,27 @@ int AndorCamera::GetListOfAvailableCameras()
 
          if(fabs(exp-currentExpMS_)>0.001)
          {
-            //	   SetToIdle();
             bool acquiring = sequenceRunning_;
             if (acquiring)
                StopSequenceAcquisition(true);
 
             if (sequenceRunning_)
                return ERR_BUSY_ACQUIRING;
+             
+            {
+				   DriverGuard dg(this);
+				   currentExpMS_ = exp;
 
-            currentExpMS_ = exp;
+				   unsigned ret = SetExposureTime((float)(exp / 1000.0));
+				   if (DRV_SUCCESS != ret)
+					   return (int)ret;
+				   expMs_ = exp;
 
-            unsigned ret = SetExposureTime((float)(exp / 1000.0));
-            if (DRV_SUCCESS != ret)
-               return (int)ret;
-            expMs_ = exp;
-
-            UpdateHSSpeeds();
-            if (initialized_) {
-               OnPropertiesChanged();
+				   UpdateHSSpeeds();
             }
 
             if (acquiring)
                StartSequenceAcquisition(sequenceLength_ - imageCounter_, intervalMs_, stopOnOverflow_);
-
-            // PrepareSnap();
          }
       }
       return DEVICE_OK;
@@ -3807,9 +3807,13 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
 
       }
 
+      // process image
+      // imageprocesssor now called from core
+
       // create metadata
       char label[MM::MaxStrLength];
       this->GetLabel(label);
+
 
       MM::MMTime timestamp = this->GetCurrentMMTime();
       Metadata md;
@@ -3820,8 +3824,6 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
       md.put(MM::g_Keyword_Metadata_ImageNumber, CDeviceUtils::ConvertToString(imageCounter_));
       md.put(MM::g_Keyword_Binning, binSize_);
 
-      /*
-       * Seens that this method does not work and the above one does....
       MetadataSingleTag mstStartTime(MM::g_Keyword_Metadata_StartTime, label, true);
       mstStartTime.SetValue(CDeviceUtils::ConvertToString(startTime_.getMsec()));
       md.SetTag(mstStartTime);
@@ -3837,7 +3839,6 @@ int AndorCamera::OnSpuriousNoiseFilter(MM::PropertyBase* pProp, MM::ActionType e
       MetadataSingleTag mstB(MM::g_Keyword_Binning, label, true);
       mstB.SetValue(CDeviceUtils::ConvertToString(binSize_));      
       md.SetTag(mstB);
-      */
 
       imageCounter_++;
 
