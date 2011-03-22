@@ -4,14 +4,12 @@
  */
 package org.micromanager.ometiff;
 
+import java.io.File;
 import java.io.IOException;
-import loci.common.services.DependencyException;
-import loci.common.services.ServiceException;
 import loci.common.services.ServiceFactory;
-import loci.formats.FormatException;
 import loci.formats.ImageReader;
 import loci.formats.ImageWriter;
-import loci.formats.meta.MetadataStore;
+import loci.formats.meta.IMetadata;
 import loci.formats.ome.OMEXMLMetadata;
 import loci.formats.services.OMEXMLService;
 import mmcorej.TaggedImage;
@@ -20,7 +18,6 @@ import ome.xml.model.enums.PixelType;
 import ome.xml.model.primitives.PositiveInteger;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.micromanager.acquisition.TaggedImageStorageRam;
 import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;
@@ -37,13 +34,10 @@ public class TaggedImageStorageOMETIFF implements TaggedImageStorage {
    private ImageWriter writer_ = null;
    private JSONObject summaryMetadata_ = null;
    private int planeIndex_;
+   private JSONObject displayAndComments_;
 
    public TaggedImageStorageOMETIFF(String location, Boolean newData,
                                     JSONObject summaryMetadata) {
-      summaryMetadata_ = summaryMetadata;
-      if (!newData) {
-         loadImages();
-      }
       summaryMetadata_ = summaryMetadata;
       location_ = location;
    }
@@ -52,39 +46,49 @@ public class TaggedImageStorageOMETIFF implements TaggedImageStorage {
    public TaggedImage getImage(int channel, int slice,
                                int frame, int position) {
       if (reader_ == null) {
-         return null; // super.getImage(channel, slice, frame, position);
-      } else {
+         reader_ = createReader();
+      }
+      if (true)
+         return null;
+
+      try {
          JSONObject tags = new JSONObject();
          reader_.setSeries(position);
-         Object pix = reader_.getIndex(slice, channel, frame);
+         Object pix = reader_.openBytes(reader_.getIndex(slice, channel, frame));
+         MDUtils.setChannelIndex(tags, channel);
+         MDUtils.setSliceIndex(tags, slice);
+         MDUtils.setPositionIndex(tags, position);
+         MDUtils.setFrameIndex(tags, frame);
          TaggedImage image = new TaggedImage(pix, tags);
          return image;
+      } catch (Exception e) {
+         ReportingUtils.logError(e);
+         return null;
       }
    }
 
-
-   private void loadImages() {
+   private ImageReader createReader() {
       try {
-         reader_ = new ImageReader();
-         reader_.setId(location_);
-         int nPositions = reader_.getSeriesCount();
-         int nChannels = reader_.getSizeC();
-         int nFrames = reader_.getSizeT();
-         int nSlices = reader_.getSizeZ();
-         int width = reader_.getSizeX();
-         int height = reader_.getSizeY();
-         
-         MetadataStore metadata = reader_.getMetadataStore();
+         String filename = location_ + ".ome.tiff";
+         if (new File(filename).exists()) {
+            ImageReader reader = new ImageReader();
 
-         for (int position = 0; position < nPositions; position++) {
-            reader_.setSeries(position);
+            reader.setId(filename);
+            int nPositions = reader.getSeriesCount();
+            int nChannels = reader.getSizeC();
+            int nFrames = reader.getSizeT();
+            int nSlices = reader.getSizeZ();
+            int width = reader.getSizeX();
+            int height = reader.getSizeY();
 
-            byte[] pixels = reader_.openBytes(0);
-
-            // this.putImage(null)
+            IMetadata metadata = (IMetadata) reader.getMetadataStore();
+            return reader;
+         } else {
+            return null;
          }
       } catch (Exception ex) {
          ReportingUtils.showError(ex);
+         return null;
       }
 
    }
@@ -102,7 +106,7 @@ public class TaggedImageStorageOMETIFF implements TaggedImageStorage {
    public void putImage(TaggedImage taggedImage) {
       try {
          if (writer_ == null) {
-            setupWriter();
+            setupWriter(taggedImage);
          }
 
          writer_.setSeries(MDUtils.getPositionIndex(taggedImage.tags));
@@ -115,8 +119,8 @@ public class TaggedImageStorageOMETIFF implements TaggedImageStorage {
 
    }
 
-   private void setupWriter() throws Exception {
-      writer_ = setupImageWriter(summaryMetadata_);
+   private void setupWriter(TaggedImage firstImage) throws Exception {
+      writer_ = setupImageWriter(summaryMetadata_, firstImage);
       planeIndex_ = 0;
    }
 
@@ -131,7 +135,8 @@ public class TaggedImageStorageOMETIFF implements TaggedImageStorage {
       }
    }
 
-   private ImageWriter setupImageWriter(JSONObject summaryMetadata) throws FormatException, Exception, DependencyException, IOException, JSONException, ServiceException {
+   private ImageWriter setupImageWriter(JSONObject summaryMetadata,
+           TaggedImage firstImage) throws Exception {
       saved_ = true;
       int nPositions = Math.max(1, summaryMetadata.getInt("Positions"));
       int nChannels = Math.max(1, summaryMetadata.getInt("Channels"));
@@ -140,7 +145,7 @@ public class TaggedImageStorageOMETIFF implements TaggedImageStorage {
       OMEXMLMetadata metadata = new ServiceFactory().getInstance(OMEXMLService.class).createOMEXMLMetadata();
       ImageWriter writer = new ImageWriter();
       for (int position = 0; position < nPositions; ++position) {
-         String positionName = null;//MDUtils.getPositionName(super.getImage(0, 0, 0, position).tags);
+         String positionName = MDUtils.getPositionName(firstImage.tags);
          if (positionName == null) {
             positionName = "Single";
          }
@@ -159,6 +164,7 @@ public class TaggedImageStorageOMETIFF implements TaggedImageStorage {
             metadata.setChannelSamplesPerPixel(new PositiveInteger(1), position, channel);
          }
       }
+      metadata.setUUID(MDUtils.getUUID(summaryMetadata_).toString());
       writer.setMetadataRetrieve(metadata);
       writer.setId(location_ + ".ome.tiff");
       return writer;
@@ -173,26 +179,31 @@ public class TaggedImageStorageOMETIFF implements TaggedImageStorage {
    }
 
    public void setSummaryMetadata(JSONObject md) {
-      throw new UnsupportedOperationException("Not supported yet.");
+      summaryMetadata_ = md;
    }
 
    public JSONObject getSummaryMetadata() {
-      throw new UnsupportedOperationException("Not supported yet.");
+      return summaryMetadata_;
    }
 
    public void setDisplayAndComments(JSONObject settings) {
-      throw new UnsupportedOperationException("Not supported yet.");
+      displayAndComments_ = settings;
    }
 
    public JSONObject getDisplayAndComments() {
-      throw new UnsupportedOperationException("Not supported yet.");
+      return displayAndComments_;
    }
 
    public void close() {
-      throw new UnsupportedOperationException("Not supported yet.");
+      try {
+         reader_.close();
+         writer_.close();
+      } catch (IOException ex) {
+         ReportingUtils.logError(ex);
+      }
    }
 
    public int lastAcquiredFrame() {
-      throw new UnsupportedOperationException("Not supported yet.");
+      return 0;
    }
 }
