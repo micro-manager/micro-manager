@@ -2,15 +2,18 @@ import org.json.JSONObject;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.NumberUtils;
 
-String basedir = "Z:/Images/20110113/";
+String basedir = "Z:/Images/20110318/";
 String c1 = "Andor-Left";
 String c2 = "Andor-Back";
-String ac = "gridTimeLapse";
-int nrFrames = 100;
+String ac = "tl";
+int nrFrames = 330;
 int interval = 10000;
 
 gui.closeAllAcquisitions();
 
+bdir = new File(basedir);
+if (!bdir.canWrite())
+	bdir.mkdirs();
 String acq = new String (ac);
 int t = 1;
 while ( (new File(basedir + System.getProperty("file.separator") + acq)).exists()) {
@@ -59,6 +62,9 @@ for (int f = 0; f < nrFrames; f++) {
 				gui.addImage(acq, img);
 			}
 		}
-	gui.sleep(interval);
+		if (f == 0) {
+			//gui.setContrastBasedOnFrame(acq,f,0);
+		}
+		gui.sleep(interval);
 }
 
