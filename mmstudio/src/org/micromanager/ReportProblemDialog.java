@@ -246,7 +246,7 @@ public class ReportProblemDialog extends javax.swing.JDialog {
     private void BuildAndSendReport() {
         reportPreamble_ = "#User Name:" + name_.getText();
         reportPreamble_ += ("#Organization: " + organization_.getText());
-        reportPreamble_ += ("#User e-mail: " + emailText_.getSelectedText());
+        reportPreamble_ += ("#User e-mail: " + emailText_.getText());
         reportPreamble_ += ("#User Description: " + descriptionPane_.getText());
         descriptionPane_.setEnabled(false);
         descriptionPane_.setEditable(false);
