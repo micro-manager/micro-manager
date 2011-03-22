@@ -34,7 +34,7 @@
 // Header version
 // If any of the class declarations changes, the interface version
 // must be incremented
-#define DEVICE_INTERFACE_VERSION 38
+#define DEVICE_INTERFACE_VERSION 39
 ///////////////////////////////////////////////////////////////////////////////
 
 #pragma once
@@ -292,6 +292,8 @@ namespace MM {
 
       //device discovery API
       virtual MM::DeviceDetectionStatus DetectDevice(void) = 0;
+
+      virtual int Abort(void) = 0;
    };
 
    /** 
