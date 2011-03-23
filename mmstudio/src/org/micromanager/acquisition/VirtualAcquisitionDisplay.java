@@ -441,9 +441,10 @@ public class VirtualAcquisitionDisplay {
             }
          }
          status += ", ";
-         if (eng_.isFinished())
+         if (eng_.isFinished()) {
             eng_ = null;
-         finished_ = true;
+            finished_ = true;
+         }
       } else {
          if (finished_ == true) {
             status = "finished, ";
@@ -457,9 +458,11 @@ public class VirtualAcquisitionDisplay {
       }
 
       hc_.enableShowFolderButton(imageCache_.getDiskLocation() != null);
-      String path = isDiskCached() ?
-         new File(imageCache_.getDiskLocation()).getName() : "Untitled";
-      hyperImage_.getWindow().setTitle(path + " (" + status + ")");
+      String path = isDiskCached()
+              ? new File(imageCache_.getDiskLocation()).getName() : "Untitled";
+      if (hyperImage_.isVisible()) {
+         hyperImage_.getWindow().setTitle(path + " (" + status + ")");
+      }
 
    }
 

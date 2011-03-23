@@ -561,7 +561,7 @@
   (def eng acq-eng)
   (load-mm)
   (create-device-agents)
-  (swap! (.state this) assoc :stop false :pause false)
+  (swap! (.state this) assoc :stop false :pause false :finished false)
   (let [out-queue (GentleLinkedBlockingQueue.)
         settings (convert-settings acq-settings)
         acq-thread (Thread. #(run-acquisition this settings out-queue))

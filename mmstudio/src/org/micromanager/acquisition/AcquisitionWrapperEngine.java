@@ -228,7 +228,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
    public boolean abortRequest() {
       if (isAcquisitionRunning()) {
          int result = JOptionPane.showConfirmDialog(null,
-                 "Abort current acquisition task ?",
+                 "Abort current acquisition task?",
                  "Micro-Manager", JOptionPane.YES_NO_OPTION,
                  JOptionPane.INFORMATION_MESSAGE);
 
