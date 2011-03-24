@@ -705,8 +705,7 @@ public:
       return  MM::Unimplemented;
    };
 
-   // device operation abort
-   int Abort() {return DEVICE_NOT_SUPPORTED;};
+
 
 
    ////////////////////////////////////////////////////////////////////////////
