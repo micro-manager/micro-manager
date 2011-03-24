@@ -12,7 +12,6 @@ import java.io.Reader;
 import java.net.InetAddress;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.net.UnknownHostException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -21,8 +20,8 @@ import java.util.TimeZone;
 import mmcorej.CMMCore;
 import mmcorej.StrVector;
 import org.micromanager.utils.HttpUtils;
+import org.micromanager.utils.MMUUEncoder;
 import org.micromanager.utils.ReportingUtils;
-import sun.misc.UUEncoder;
 
 class ProblemReportSender extends Thread {
 
@@ -113,7 +112,7 @@ class ProblemReportSender extends Thread {
             qualifiedArchiveFileName.replace(':', '_');
             qualifiedArchiveFileName.replace(';', '_');                //File fileToSend = new File(qualifiedArchiveFileName);
             qualifiedArchiveFileName += ".log";
-            UUEncoder uuec = new UUEncoder();
+            MMUUEncoder uuec = new MMUUEncoder();
             InputStream reader = new FileInputStream(archiveFile);
             OutputStream writer = new FileOutputStream(qualifiedArchiveFileName);
             uuec.encodeBuffer(reader, writer);
