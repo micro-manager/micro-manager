@@ -293,7 +293,6 @@ namespace MM {
       //device discovery API
       virtual MM::DeviceDetectionStatus DetectDevice(void) = 0;
 
-      virtual int Abort(void) = 0;
    };
 
    /** 
