@@ -66,6 +66,9 @@
 #include <vector>
 #include <ostream>
 
+#include "boost/date_time/posix_time/posix_time.hpp"
+
+
 
 #ifndef _WINDOWS
 // Needed on Unix for getcwd() and gethostname()
@@ -81,9 +84,9 @@ using namespace std;
 
 // constants
 #ifdef linux
-const char* g_logFileName = "/tmp/CoreLog.txt";
+const char* g_logFileName = "/tmp/CoreLog";
 #else
-const char* g_logFileName = "CoreLog.txt";
+const char* g_logFileName = "CoreLog";
 #endif
 
 const char* g_CoreName = "MMCore";
@@ -590,8 +593,6 @@ vector<string> CMMCore::getDeviceLibraries() throw (CMMError)
  */
 void CMMCore::loadDevice(const char* label, const char* library, const char* device) throw (CMMError)
 {
-   initializeLogging(); // we need to do this here as well as in the constructor
-                        // beacuse ACE global variables are initalized on per thread basis
 
    try
    {
@@ -5044,7 +5045,19 @@ MM::Device* CMMCore::getDevice(const char* label) const throw (CMMError)
 
 void CMMCore::initializeLogging()
 {
-   IMMLogger::Instance()->Initialize(g_logFileName, g_CoreName);
+   // append start day to corelog name
+   boost::gregorian::date today( boost::gregorian::day_clock::local_day());
+
+   std::ostringstream sout; 
+	sout.fill('0'); 
+	sout.width(4);
+   sout<<today.year();
+   sout << std::setw(2) << today.month().as_number() << std::setw(2) << today.day() ; 
+  
+   std::string logName = g_logFileName + sout.str() + std::string(".txt");
+
+
+   IMMLogger::Instance()->Initialize(logName, g_CoreName);
    IMMLogger::Instance()->EnableLogToStderr(true);
    //only "debug" priority messages will have time stamp
    //- requested feature
