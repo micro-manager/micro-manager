@@ -259,6 +259,7 @@
 
 (defn run-autofocus []
   (.. gui getAutofocusManager getDevice fullFocus)
+  (log "running autofocus " (.. gui getAutofocusManager getDevice getDeviceName))
   (state-assoc! :reference-z-position (core getPosition (core getFocusDevice))))
 
 (defn snap-image [open-before close-after]

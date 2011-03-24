@@ -84,8 +84,8 @@
                (and
                  (not keep-shutter-open-slices)
                  (not= (e1 :slice) (e2 :slice)))
-               (not= (e1 :frame) (e2 :frame))
-               (not= (e1 :position) (e2 :position)))
+               (not= (e1 :frame-index) (e2 :frame-index))
+               (not= (e1 :position-index) (e2 :position-index)))
         true))))
 
 (defn process-channel-skip-frames [events]
@@ -101,15 +101,15 @@
     (assoc e2 :autofocus
       (and use-autofocus
         (or (not e1)
-          (and (zero? (mod (e2 :frame) (inc autofocus-skip)))
-               (or (not= (:position e1) (:position e2))
-                   (not= (:frame e1) (:frame e2)))))))))
+          (and (zero? (mod (e2 :frame-index) (inc autofocus-skip)))
+               (or (not= (:position-index e1) (:position-index e2))
+                   (not= (:frame-index e1) (:frame-index e2)))))))))
 
 (defn process-wait-time [events interval-ms]
   (cons
     (assoc (first events) :wait-time-ms 0)
     (for [[e1 e2] (pairs events) :when e2]
-      (if-assoc (not= (:frame e1) (:frame e2))
+      (if-assoc (not= (:frame-index e1) (:frame-index e2))
         e2 :wait-time-ms interval-ms))))
         
 (defn burst-valid [e1 e2]
