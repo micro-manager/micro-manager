@@ -1493,13 +1493,26 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             SpringLayout.WEST, getContentPane());
       springLayout_.putConstraint(SpringLayout.WEST, citePleaLabel_, 7,
             SpringLayout.WEST, getContentPane());
-      citePleaLabel_.addMouseListener(new MouseAdapter() {
-          public void mousePressed(MouseEvent e) {
-            try {
+
+      class Pleader extends Thread{
+         Pleader(){
+            super("pleader");
+         }
+         @Override
+         public void run(){
+          try {
                ij.plugin.BrowserLauncher.openURL("https://valelab.ucsf.edu/~nico/MMwiki/index.php/Citing_Micro-Manager");
             } catch (IOException e1) {
                ReportingUtils.showError(e1);
             }
+         }
+
+      }
+      citePleaLabel_.addMouseListener(new MouseAdapter() {
+         @Override
+          public void mousePressed(MouseEvent e) {
+             Pleader p = new Pleader();
+             p.start();
           }
       });
 
