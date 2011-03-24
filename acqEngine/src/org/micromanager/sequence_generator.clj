@@ -100,9 +100,10 @@
   (for [[e1 e2] (pairs-back events)]
     (assoc e2 :autofocus
       (and use-autofocus
-        (and (zero? (mod (e2 :frame) (inc autofocus-skip)))
-             (or (not= (:position e1) (:position e2))
-                 (not= (:frame e1) (:frame e2))))))))
+        (or (not e1)
+          (and (zero? (mod (e2 :frame) (inc autofocus-skip)))
+               (or (not= (:position e1) (:position e2))
+                   (not= (:frame e1) (:frame e2)))))))))
 
 (defn process-wait-time [events interval-ms]
   (cons
