@@ -6,6 +6,7 @@ package org.micromanager.acquisition;
 
 import java.io.File;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -67,35 +68,91 @@ public class LiveAcqDisplay extends Thread {
       display_ = new VirtualAcquisitionDisplay(imageCache_, eng);
    }
 
+   public void start() {
+      final BlockingQueue<TaggedImage> displayQueue = new LinkedBlockingQueue<TaggedImage>();
+      final BlockingQueue<TaggedImage> savingQueue = new LinkedBlockingQueue<TaggedImage>();
+
+      Thread splitter = new Thread() {
+         public void run() {
+              while (true) {
+                 try {
+                    TaggedImage image = imageProducingQueue_.poll(1, TimeUnit.SECONDS);
+                    if (image != null) {
+                       savingQueue.put(image);
+                       displayQueue.put(image);
+                       if (TaggedImageQueue.isPoison(image)) {
+                        break;
+                       }
+                    }
+                 } catch (Exception e) {
+                    ReportingUtils.logError(e);
+                 }
+              }
+ 
+         }
+      };
+      splitter.start();
+
+      Thread displayThread = new Thread() {
+         public void run() {
+            long t1 = System.currentTimeMillis();
+            int imageCount = 0;
+            try {
+               while (true) {
+                  TaggedImage image = displayQueue.poll(1, TimeUnit.SECONDS);
+                  if (image != null) {
+                     if (TaggedImageQueue.isPoison(image)) {
+                        break;
+                     }
+                     ++imageCount;
+                     displayImage(image);
+                  }
+               }
+            } catch (Exception ex2) {
+               ReportingUtils.logError(ex2);
+            }
+
+            long t2 = System.currentTimeMillis();
+            ReportingUtils.logMessage(imageCount + " images saved in " + (t2 - t1) + " ms.");
+
+            cleanup();
+         }
+      };
+      displayThread.start();
+
+      Thread savingThread = new Thread() {
+         public void run() {
+            long t1 = System.currentTimeMillis();
+            int imageCount = 0;
+            try {
+               while (true) {
+                  TaggedImage image = savingQueue.poll(1, TimeUnit.SECONDS);
+                  if (image != null) {
+                     if (TaggedImageQueue.isPoison(image)) {
+                        break;
+                     }
+                     ++imageCount;
+                     imageCache_.putImage(image);
+                  }
+               }
+            } catch (Exception ex2) {
+               ReportingUtils.logError(ex2);
+            }
+
+            long t2 = System.currentTimeMillis();
+            ReportingUtils.logMessage(imageCount + " images displayed in " + (t2 - t1) + " ms.");
+         }
+      };
+      savingThread.start();
+
+
+   }
+   
    private static String getUniqueUntitledName() {
       ++untitledID_;
       return "Untitled" + untitledID_;
    }
 
-   public void run() {
-      long t1 = System.currentTimeMillis();
-      int imageCount = 0;
-      try {
-         while (true) {
-            TaggedImage image = imageProducingQueue_.poll(1, TimeUnit.SECONDS);
-            if (image != null) {
-               if (TaggedImageQueue.isPoison(image)) {
-                  break;
-               }
-               ++imageCount;
-               imageCache_.putImage(image);
-               displayImage(image);
-            }
-         }
-      } catch (Exception ex2) {
-         ReportingUtils.logError(ex2);
-      }
-
-      long t2 = System.currentTimeMillis();
-      ReportingUtils.logMessage(imageCount + " images in " + (t2 - t1) + " ms.");
-
-      cleanup();
-   }
 
    protected void cleanup() {
       update();
