@@ -31,6 +31,7 @@
 
 // forward declaration for implementation class
 class TwainDevice;
+class CameraSequenceThread;
 
 class TwainBad  // exception to throw upon error in Twain device
 {
@@ -127,6 +128,8 @@ private:
    //Do necessary for capturing
    //Is called from the thread function
    //Overrides ones defined in the CCameraBase class 
+   bool IsCapturing();
+
    int ThreadRun();
    int PushImage();
 
@@ -156,69 +159,11 @@ private:
 	bool stopRequest_;
 	
 
+   CameraSequenceThread * thd_;
+   friend class CameraSequenceThread;
+
+
 };
 
-//////////////////////////////////////////////////////////////////////////////
-// DemoNoiseProcessor class
-// Demonstration of the image processor module.
-//////////////////////////////////////////////////////////////////////////////
-class DemoNoiseProcessor : public CImageProcessorBase<DemoNoiseProcessor>  
-{
-public:
-   DemoNoiseProcessor();
-   ~DemoNoiseProcessor();
-  
-   // MMDevice API
-   // ------------
-   int Initialize();
-   int Shutdown();
-  
-   void GetName(char* name) const;      
-   bool Busy();
-   
-   // ImageProcessor API
-   // ------------------
-   int Process(unsigned char* buffer, unsigned width, unsigned height, unsigned byteDepth);
-
-   // action interface
-   // ----------------
-   int OnStdDev(MM::PropertyBase* pProp, MM::ActionType eAct);
-
-private:
-   bool initialized_;
-   double stdDev_;
-};
-
-
-/**
- * Acquisition thread
- *
-class AcqSequenceThread : public MMDeviceThreadBase
-{
-public:
-   AcqSequenceThread(TwainCamera* pCam) : 
-      intervalMs_(100.0), numImages_(1), busy_(false), stop_(false), suspend_(false), suspended_(false)
-      {camera_ = pCam;}
-   ~AcqSequenceThread() {}
-   int svc(void);
-
-   void SetInterval(double intervalMs) {intervalMs_ = intervalMs;}
-   void SetLength(long images) {numImages_ = images;}
-   void Stop();
-   void Start();
-   void Suspend() {suspend_ = true;}
-   bool IsSuspended() {return suspended_;}
-   void Resume() {suspend_ = false;}
-
-private:
-   TwainCamera* camera_;
-   double intervalMs_;
-   long numImages_;
-   bool busy_;
-   bool stop_;
-   bool suspend_;
-   bool suspended_;
-};
-*/
 
 #endif //_TWAIN_CAMERA_H_

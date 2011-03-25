@@ -1281,10 +1281,11 @@ public:
 			if(NULL != preturn)
 				*preturn = tw_status;
 			
+         /*
 			std::ostringstream x;
 			static std::string previousEvent;
 			
-			x << "T.C. 0x" << std::hex << MSG;
+			//x << "T.C. 0x" << std::hex << MSG;
 			x << std::dec << " DG" << DG << " from " << pOrigin->ProductName << " to " ;
 			if(NULL!=pDest)
 			{
@@ -1295,10 +1296,12 @@ public:
 				x<< "NULL";
 			}
 			x <<" status " << tw_status ; 
+         */
 
 			if (!retval) // query status on error
 			{
 				(*m_pDSMProc)(pOrigin,pDest,DG_CONTROL,DAT_STATUS,MSG_GET,&m_Status);
+            /*
 				x << " condition code " <<   m_Status.ConditionCode << std::endl;
 
 				if ( previousEvent != x.str())
@@ -1306,6 +1309,7 @@ public:
 					previousEvent = x.str();
 					OutputDebugString( previousEvent.c_str());
 				}
+            */
 				// so, on further investigation, the Twain driver is telling us that the request DID work....
 				if (0 == m_Status.ConditionCode) 
 					retval = true;
