@@ -9,6 +9,8 @@
 //                system without the need to connect to the actual hardware. 
 //                
 // AUTHOR:        Nenad Amodaj, nenad@amodaj.com, 06/08/2005
+//                
+//                Karl Hoover (stuff such as programmable CCD size and transpose processor)
 //
 // COPYRIGHT:     University of California, San Francisco, 2006
 //                100X Imaging Inc, 2008
