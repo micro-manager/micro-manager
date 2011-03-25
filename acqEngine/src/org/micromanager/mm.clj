@@ -28,7 +28,7 @@
       (load-mm gui)))
     
 (defn log [& x]
-  (org.micromanager.utils.ReportingUtils/logMessage (apply str x)))
+  (.logMessage mmc (apply str x) true))
 
 (defmacro log-cmd [expr]
   `(do (log '~expr)
