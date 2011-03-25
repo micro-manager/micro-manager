@@ -310,6 +310,21 @@ void CMMCore::logMessage(const char* msg)
    CORE_LOG1("> %s\n", msg);
 }
 
+
+/**
+ * Record text message in the log file.
+ */
+void CMMCore::logMessage(const char* msg, bool debugOnly)
+{
+  if (debugOnly) {
+    CORE_DEBUG1("> %s\n", msg);
+  } else {
+    CORE_LOG1("> %s\n", msg);
+  }
+}
+
+
+
 /**
  * Enable or disable logging of debug messages.
  * @param enable - if set to true debug messages will be recorded in the log file 

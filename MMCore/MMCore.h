@@ -121,6 +121,7 @@ public:
    std::string getUserId() const;
    std::string getHostName() const;
    void logMessage(const char* msg);
+   void logMessage(const char* msg, bool debugOnly);
    // this creates an archive of the current log contents and returns the path created
    std::string saveLogArchive(void);
    std::string saveLogArchiveWithPreamble(char* preamble, int length);
