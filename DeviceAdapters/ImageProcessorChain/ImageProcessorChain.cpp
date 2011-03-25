@@ -7,7 +7,7 @@
 //                
 // AUTHOR:        Karl Hoover
 //
-// COPYRIGHT:     University of California, San Francisco, 2006
+// COPYRIGHT:     University of California, San Francisco, 2011
 // LICENSE:       This file is distributed under the BSD license.
 //                License text is included with the source distribution.
 //
