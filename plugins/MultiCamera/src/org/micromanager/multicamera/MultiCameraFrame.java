@@ -81,6 +81,8 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
    private static final String MODECONV16 = "Conventional-16bit";
    private static final String MODEEM14 = "EM-14bit";
    private static final String MODEEM16 = "EM-16bit";
+   private static final String MODECONV = "Conventional";
+   private static final String MODEEM = "EM";
    private static final String EMMODE = "Electron Multiplying";
    private static final String NORMALMODE = "Conventional";
    private static final String ADCONVERTER = "AD_Converter";
@@ -228,9 +230,14 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
        } else {
           modeComboBox.removeAllItems();
           modeComboBox.addItem(MIXED);
-          modeComboBox.addItem(MODECONV16);
-          modeComboBox.addItem(MODEEM14);
-          modeComboBox.addItem(MODEEM16);
+          if (core_.hasProperty(currentCamera, ADCONVERTER)) {
+             modeComboBox.addItem(MODECONV16);
+             modeComboBox.addItem(MODEEM14);
+             modeComboBox.addItem(MODEEM16);
+          } else {
+             modeComboBox.addItem(MODECONV);
+             modeComboBox.addItem(MODEEM);
+          }
           modeComboBox.setSelectedItem(getMode());
        }
 
@@ -379,7 +386,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
       jLabel3.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       jLabel3.setText("Binning");
 
-      binningComboBox.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+      binningComboBox.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       binningComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "1", "2", "4", "8" }));
       binningComboBox.addItemListener(new java.awt.event.ItemListener() {
          public void itemStateChanged(java.awt.event.ItemEvent evt) {
@@ -387,7 +394,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
          }
       });
 
-      exposureTextField.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+      exposureTextField.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       exposureTextField.setText("10");
       exposureTextField.setToolTipText("Exposure time in ms");
       exposureTextField.addActionListener(new java.awt.event.ActionListener() {
@@ -422,6 +429,11 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
             modeComboBoxItemStateChanged(evt);
          }
       });
+      modeComboBox.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            modeComboBoxActionPerformed(evt);
+         }
+      });
 
       jLabel4.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       jLabel4.setText("EM Gain");
@@ -432,7 +444,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
       GainLabel.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       GainLabel.setText("Gain");
 
-      speedComboBox.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+      speedComboBox.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       speedComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "1MHz", "3MHz", "5MHz", "10MHz" }));
       speedComboBox.addItemListener(new java.awt.event.ItemListener() {
          public void itemStateChanged(java.awt.event.ItemEvent evt) {
@@ -443,7 +455,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
       SpeedLabel.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       SpeedLabel.setText("Speed");
 
-      EMCheckBox.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+      EMCheckBox.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       EMCheckBox.setText("Use");
       EMCheckBox.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -451,7 +463,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
          }
       });
 
-      gainComboBox.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+      gainComboBox.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       gainComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "1", "2", "3", "4", "5" }));
       gainComboBox.addItemListener(new java.awt.event.ItemListener() {
          public void itemStateChanged(java.awt.event.ItemEvent evt) {
@@ -462,7 +474,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
       FrameTransferLabel.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       FrameTransferLabel.setText("FrameTransfer");
 
-      frameTransferComboBox.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+      frameTransferComboBox.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       frameTransferComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "On", "Off" }));
       frameTransferComboBox.addItemListener(new java.awt.event.ItemListener() {
          public void itemStateChanged(java.awt.event.ItemEvent evt) {
@@ -473,7 +485,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
       jLabel9.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       jLabel9.setText("Active Camera");
 
-      cameraSelectComboBox.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+      cameraSelectComboBox.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       cameraSelectComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "1", "2", "4", "8" }));
       cameraSelectComboBox.addItemListener(new java.awt.event.ItemListener() {
          public void itemStateChanged(java.awt.event.ItemEvent evt) {
@@ -484,7 +496,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
       TriggerLabel.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       TriggerLabel.setText("Trigger");
 
-      triggerComboBox.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+      triggerComboBox.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       triggerComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "On", "Off" }));
       triggerComboBox.addItemListener(new java.awt.event.ItemListener() {
          public void itemStateChanged(java.awt.event.ItemEvent evt) {
@@ -492,7 +504,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
          }
       });
 
-      tempButton.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
+      tempButton.setFont(new java.awt.Font("Tahoma", 0, 10));
       tempButton.setText("Temp");
       tempButton.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -502,7 +514,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
 
       tempLabel.setText("jLabel11");
 
-      exposureButton.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
+      exposureButton.setFont(new java.awt.Font("Tahoma", 0, 10));
       exposureButton.setText("Exposure [ms]");
       exposureButton.setMargin(new java.awt.Insets(2, 5, 2, 5));
       exposureButton.addActionListener(new java.awt.event.ActionListener() {
@@ -511,7 +523,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
          }
       });
 
-      snapButton.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
+      snapButton.setFont(new java.awt.Font("Tahoma", 0, 10));
       snapButton.setText("Snap");
       snapButton.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -519,7 +531,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
          }
       });
 
-      liveButton.setFont(new java.awt.Font("Tahoma", 0, 10)); // NOI18N
+      liveButton.setFont(new java.awt.Font("Tahoma", 0, 10));
       liveButton.setText("Live");
       liveButton.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -782,6 +794,7 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
             val = EMGainMin_;
          EMGainSlider.setEnabled(true);
          EMGainSlider.setValue(val);
+         setEMGain();
        } catch (ParseException e) {
           // ignore if the user types garbage
        }
@@ -814,24 +827,38 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
        try {
           String fs = firstSelectedCamera();
           String modeProp = core_.getProperty(fs, MODE);
-          String adProp = core_.getProperty(fs, ADCONVERTER);
-          if (modeProp.equals(EMMODE)) {
-             if (adProp.equals(AD14BIT))
-                mode = MODEEM14;
-             else if (adProp.equals(AD16BIT))
-                mode = MODEEM16;
-          } else if (modeProp.equals(NORMALMODE)) {
-             if (adProp.equals(AD16BIT))
-                mode = MODECONV16;
-          }
-          for (String camera : cameras_) {
-             if (!camera.equals(fs) && selectedCameras_.get(camera)) {
-                String mP = core_.getProperty(camera, MODE);
-                String aP = core_.getProperty(camera, ADCONVERTER);
-                if (!mP.equals(modeProp))
-                   mode = MIXED;
-                if (!aP.equals(adProp))
-                   mode = MIXED;
+          if (core_.hasProperty(fs, ADCONVERTER)) {
+             String adProp = core_.getProperty(fs, ADCONVERTER);
+             if (modeProp.equals(EMMODE)) {
+                if (adProp.equals(AD14BIT))
+                   mode = MODEEM14;
+                else if (adProp.equals(AD16BIT))
+                   mode = MODEEM16;
+             } else if (modeProp.equals(NORMALMODE)) {
+                if (adProp.equals(AD16BIT))
+                   mode = MODECONV16;
+             }
+             for (String camera : cameras_) {
+                if (!camera.equals(fs) && selectedCameras_.get(camera)) {
+                   String mP = core_.getProperty(camera, MODE);
+                   String aP = core_.getProperty(camera, ADCONVERTER);
+                   if (!mP.equals(modeProp))
+                      mode = MIXED;
+                   if (!aP.equals(adProp))
+                      mode = MIXED;
+                }
+             }
+          } else {  // No AD Converter
+             if (modeProp.equals(EMMODE))
+                mode = MODEEM;
+             else
+                mode = MODECONV;
+             for (String camera : cameras_) {
+                if (!camera.equals(fs) && selectedCameras_.get(camera)) {
+                   String mP = core_.getProperty(camera, MODE);
+                   if (!mP.equals(modeProp))
+                      mode = MIXED;
+                }
              }
           }
        } catch (Exception ex) {
@@ -1046,6 +1073,10 @@ public class MultiCameraFrame extends javax.swing.JFrame implements MMListenerIn
           liveButton.setText("Live");
       }
     }//GEN-LAST:event_liveButtonActionPerformed
+
+    private void modeComboBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_modeComboBoxActionPerformed
+       // TODO add your handling code here:
+    }//GEN-LAST:event_modeComboBoxActionPerformed
 
     private void enableLiveMode(boolean start)  {
        int nrSelectedCameras = nrSelectedCameras();
