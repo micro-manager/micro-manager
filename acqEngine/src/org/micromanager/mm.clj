@@ -16,7 +16,7 @@
 (ns org.micromanager.mm
   (:import [org.micromanager MMStudioMainFrame]
            [org.micromanager.navigation MultiStagePosition]
-           [mmcorej Configuration]
+           [mmcorej Configuration Metadata]
            [ij IJ]))
 
 (declare gui)
@@ -121,3 +121,8 @@
   (let [r (repeatedly 4 #(int-array 1))]
     (core getROI (nth r 0) (nth r 1) (nth r 2) (nth r 3))
     (flatten (map seq r))))
+
+(defn parse-core-metadata [^Metadata m]
+  (let [ks (seq (.. m getFrameKeys toArray))
+        fd (. m getFrameData)]
+    (zipmap ks (map #(.get fd %) ks))))

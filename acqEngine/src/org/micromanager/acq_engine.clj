@@ -18,7 +18,7 @@
   (:use [org.micromanager.mm :only [when-lets map-config get-config get-positions load-mm
                                     get-default-devices core log log-cmd mmc gui with-core-setting
                                     do-when if-args get-system-config-cached select-values-match?
-                                    get-property get-camera-roi]]
+                                    get-property get-camera-roi parse-core-metadata]]
         [org.micromanager.sequence-generator :only [generate-acq-sequence]])
   (:import [org.micromanager AcqControlDlg]
            [org.micromanager.api AcquisitionEngine TaggedImageAnalyzer]
@@ -26,7 +26,7 @@
                                          ProcessorStack SequenceSettings MMImageCache
                                          TaggedImageStorageRam VirtualAcquisitionDisplay]
            [org.micromanager.navigation MultiStagePosition StagePosition]
-           [mmcorej TaggedImage Configuration]
+           [mmcorej TaggedImage Configuration Metadata]
            [java.util.prefs Preferences]
            [java.net InetAddress]
            [java.util.concurrent TimeUnit CountDownLatch]
@@ -149,9 +149,19 @@
           (json-to-data (.get json i))))
     json))
 
+(defn compute-time-from-core [tags]
+  ; (log "core tags: " tags)
+  (if (@state :burst-init-time)
+    (+ (Double/parseDouble (tags "ElapsedTime-ms"))
+       (@state :burst-init-time))
+    nil))
+
+(defn elapsed-time [state]
+  (if (state :start-time) (- (clock-ms) (state :start-time)) 0))
+
 (defn annotate-image [img event state]
   ;(println event)
-  {:pix img
+  {:pix (:pix img)
    :tags (merge
       (map-config (core getSystemStateCache))
       {
@@ -160,7 +170,7 @@
        "BitDepth" (core getImageBitDepth)
        "Channel" (get-in event [:channel :name])
        "ChannelIndex" (:channel-index event)
-       "ElapsedTime-ms" (if (state :start-time) (- (clock-ms) (state :start-time)) 0)
+       "ElapsedTime-ms" (elapsed-time state)
        "Exposure-ms" (:exposure event)
        "Frame" (:frame-index event)
        "Height" (state :init-height)
@@ -176,7 +186,8 @@
        "UUID" (UUID/randomUUID)
        "Width"  (state :init-width)
        "ZPositionUm" (state :last-z-position)
-      })})
+      }
+       (:tags img))})
 
 (defn make-TaggedImage [annotated-img]
   (TaggedImage. (:pix annotated-img) (JSONObject. (:tags annotated-img))))
@@ -274,6 +285,7 @@
 
 (defn init-burst [length]
   (core setAutoShutter (@state :init-auto-shutter))
+  (swap! state assoc :burst-init-time (elapsed-time @state))
   (core startSequenceAcquisition length 0 false))
 
 (defn expose [event]
@@ -285,10 +297,18 @@
 (defn collect-burst-image []
   (while (and (core isSequenceRunning) (zero? (core getRemainingImageCount)))
     (Thread/sleep 5))
-  (core popNextImage))
+  (let [md (Metadata.)
+        pix (core popNextImageMD md)
+        tags (parse-core-metadata md)
+        t (compute-time-from-core tags)
+        tags (if (and t (pos? t))
+               (assoc tags "ElapsedTime-ms" t)
+               (dissoc tags "ElapsedTime-ms"))]
+    (log "t: " t)
+    {:pix pix :tags (dissoc tags "StartTime-ms")}))
 
 (defn collect-snap-image []
-  (core getImage))
+  {:pix (core getImage) :tags nil})
 
 (defn collect-image [event out-queue]
   (let [image (condp = (:task event)
