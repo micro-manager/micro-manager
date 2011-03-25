@@ -224,7 +224,8 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
             String xyPosition;
             try {
                xyPosition = taggedImg.tags.getString("PositionName");
-               status += xyPosition + ", ";
+               if (xyPosition != null)
+                  status += xyPosition + ", ";
             } catch (Exception e) {
                //Oh well...
             }
