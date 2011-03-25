@@ -157,7 +157,7 @@
       {
        "AxisPositions" (when-let [axes (get-in event [:position :axes])] (JSONObject. axes))
        "Binning" (core getProperty (core getCameraDevice) "Binning")
-       "CameraBitDepth" (core getImageBitDepth)
+       "BitDepth" (core getImageBitDepth)
        "Channel" (get-in event [:channel :name])
        "ChannelIndex" (:channel-index event)
        "ElapsedTime-ms" (if (state :start-time) (- (clock-ms) (state :start-time)) 0)
