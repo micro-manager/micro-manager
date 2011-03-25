@@ -286,7 +286,7 @@
 (defn init-burst [length]
   (core setAutoShutter (@state :init-auto-shutter))
   (swap! state assoc :burst-init-time (elapsed-time @state))
-  (core startSequenceAcquisition length 0 false))
+  (core startSequenceAcquisition length 0 true))
 
 (defn expose [event]
   (do (condp = (:task event)
@@ -315,7 +315,10 @@
                 :snap (collect-snap-image)
                 :init-burst (collect-burst-image)
                 :collect-burst (collect-burst-image))]
-    (.put out-queue (make-TaggedImage (annotate-image image event @state)))))
+    (if (. mmc isBufferOverflowed)
+      (do (swap! state assoc :stop true)
+          (ReportingUtils/showError "Circular buffer overflowed."))
+      (.put out-queue (make-TaggedImage (annotate-image image event @state))))))
 
 (defn compute-z-position [event]
   (if-let [z-drive (:z-drive event)]
