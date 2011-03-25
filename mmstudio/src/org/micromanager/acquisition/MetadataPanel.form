@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8" ?>
+<?xml version="1.1" encoding="UTF-8" ?>
 
 <Form version="1.5" maxVersion="1.7" type="org.netbeans.modules.form.forminfo.JPanelFormInfo">
   <AuxValues>
@@ -18,7 +18,7 @@
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="1" attributes="0">
               <EmptySpace max="-2" attributes="0"/>
-              <Component id="tabbedPane" max="32767" attributes="0"/>
+              <Component id="tabbedPane" pref="571" max="32767" attributes="0"/>
               <EmptySpace max="-2" attributes="0"/>
           </Group>
       </Group>
@@ -83,7 +83,7 @@
                       <EmptySpace type="unrelated" max="-2" attributes="0"/>
                       <Component id="jPanel1" min="-2" max="-2" attributes="0"/>
                       <EmptySpace max="-2" attributes="0"/>
-                      <Component id="contrastScrollPane" pref="434" max="32767" attributes="0"/>
+                      <Component id="contrastScrollPane" pref="435" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
@@ -105,7 +105,11 @@
                           <Component id="jLabel1" min="-2" max="-2" attributes="0"/>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="displayModeCombo" min="-2" pref="134" max="-2" attributes="0"/>
-                          <EmptySpace pref="301" max="32767" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="autostretchCheckBox" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace max="-2" attributes="0"/>
+                          <Component id="logScaleCheckBox" min="-2" max="-2" attributes="0"/>
+                          <EmptySpace pref="111" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -114,6 +118,8 @@
                       <Group type="103" alignment="0" groupAlignment="3" attributes="0">
                           <Component id="jLabel1" alignment="3" min="-2" max="-2" attributes="0"/>
                           <Component id="displayModeCombo" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="autostretchCheckBox" alignment="3" min="-2" max="-2" attributes="0"/>
+                          <Component id="logScaleCheckBox" alignment="3" min="-2" max="-2" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -138,6 +144,22 @@
                   <Properties>
                     <Property name="text" type="java.lang.String" value="Display mode:"/>
                   </Properties>
+                </Component>
+                <Component class="javax.swing.JCheckBox" name="autostretchCheckBox">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="Autostretch"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="autostretchCheckBoxActionPerformed"/>
+                  </Events>
+                </Component>
+                <Component class="javax.swing.JCheckBox" name="logScaleCheckBox">
+                  <Properties>
+                    <Property name="text" type="java.lang.String" value="Log hist"/>
+                  </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="logScaleCheckBoxActionPerformed"/>
+                  </Events>
                 </Component>
               </SubComponents>
             </Container>
@@ -224,7 +246,7 @@
                               <Component id="jLabel2" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
-                          <Component id="imageMetadataTableScrollPane" pref="369" max="32767" attributes="0"/>
+                          <Component id="imageMetadataTableScrollPane" pref="370" max="32767" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>

@@ -1042,20 +1042,30 @@ public class VirtualAcquisitionDisplay {
 
       JSONObject chan = getChannelSetting(channel);
       try {
-         chan.put("Min", min);
-         chan.put("Max", max);
+         if (chan.getInt("Min") == min && chan.getInt("Max") == max) {
+            return;
+         }
       } catch (Exception e) {
-         ReportingUtils.logError(e);
+         
       }
 
-      // Strange bug in ImageJ requires that we call these two methods
-      // twice to ensure that contrast actually is applied:
-      for (int i=0;i<2;++i) {
-         updateChannelContrast(channel);
-         hyperImage_.updateImage();
-      }
-      if (redraw) {
-         updateAndDraw();
+      {
+          try {
+            chan.put("Min", min);
+            chan.put("Max", max);
+         } catch (Exception e) {
+            ReportingUtils.logError(e);
+         }
+
+         // Strange bug in ImageJ requires that we call these two methods
+         // twice to ensure that contrast actually is applied:
+         for (int i=0;i<2;++i) {
+            updateChannelContrast(channel);
+            hyperImage_.updateImage();
+         }
+         if (redraw) {
+            updateAndDraw();
+         }
       }
    }
 

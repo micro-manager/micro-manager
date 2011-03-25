@@ -23,51 +23,72 @@
     <DimensionLayout dim="0">
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" attributes="0">
-              <Group type="103" groupAlignment="1" attributes="0">
+              <Group type="103" groupAlignment="0" attributes="0">
+                  <Component id="channelNameCheckbox" min="-2" pref="110" max="-2" attributes="0"/>
                   <Group type="102" attributes="0">
-                      <Component id="channelNameCheckbox" min="-2" pref="110" max="-2" attributes="0"/>
-                      <EmptySpace min="4" pref="4" max="-2" attributes="0"/>
-                  </Group>
-                  <Group type="102" alignment="1" attributes="0">
+                      <EmptySpace min="20" pref="20" max="20" attributes="0"/>
                       <Component id="colorPickerLabel" min="-2" pref="18" max="-2" attributes="0"/>
-                      <EmptySpace min="-2" max="-2" attributes="0"/>
-                      <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                          <Component id="fullButton" alignment="0" min="-2" pref="42" max="-2" attributes="1"/>
-                          <Group type="102" alignment="0" attributes="1">
+                      <EmptySpace min="22" pref="22" max="22" attributes="0"/>
+                      <Component id="fullButton" min="-2" pref="42" max="-2" attributes="0"/>
+                  </Group>
+                  <Group type="102" attributes="0">
+                      <EmptySpace min="10" pref="10" max="10" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Group type="102" attributes="0">
                               <Component id="zoomInButton" min="-2" pref="21" max="-2" attributes="0"/>
-                              <EmptySpace min="-2" pref="0" max="-2" attributes="0"/>
-                              <Component id="zoomOutButton" min="0" pref="20" max="32767" attributes="0"/>
+                              <EmptySpace min="29" pref="29" max="29" attributes="0"/>
+                              <Component id="autoButton" min="-2" pref="42" max="-2" attributes="0"/>
                           </Group>
-                          <Component id="autoButton" alignment="0" min="-2" pref="42" max="-2" attributes="1"/>
+                          <Component id="minLabel" min="-2" pref="100" max="-2" attributes="0"/>
+                          <Group type="102" attributes="0">
+                              <EmptySpace min="20" pref="20" max="20" attributes="0"/>
+                              <Component id="zoomOutButton" min="-2" pref="21" max="-2" attributes="0"/>
+                          </Group>
+                          <Component id="maxLabel" min="-2" pref="100" max="-2" attributes="0"/>
                       </Group>
-                      <EmptySpace type="separate" min="-2" max="-2" attributes="0"/>
                   </Group>
               </Group>
+              <EmptySpace min="-2" pref="4" max="-2" attributes="0"/>
               <Component id="histogramPanelHolder" pref="136" max="32767" attributes="0"/>
+          </Group>
+          <Group type="102" alignment="1" attributes="0">
+              <EmptySpace min="-2" pref="205" max="-2" attributes="0"/>
+              <Component id="histMaxLabel" min="-2" max="-2" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Group type="102" alignment="0" attributes="1">
-              <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
-              <Component id="channelNameCheckbox" min="-2" pref="17" max="-2" attributes="0"/>
-              <EmptySpace min="-2" pref="2" max="-2" attributes="0"/>
+          <Group type="102" attributes="0">
               <Group type="103" groupAlignment="0" attributes="0">
-                  <Group type="102" alignment="0" attributes="0">
-                      <Component id="fullButton" min="-2" pref="18" max="-2" attributes="0"/>
-                      <EmptySpace min="-2" pref="2" max="-2" attributes="0"/>
-                      <Component id="autoButton" min="-2" pref="18" max="-2" attributes="0"/>
+                  <Group type="102" attributes="0">
+                      <Component id="channelNameCheckbox" min="-2" pref="17" max="-2" attributes="0"/>
+                      <EmptySpace min="3" pref="3" max="3" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="colorPickerLabel" min="-2" pref="18" max="-2" attributes="0"/>
+                          <Component id="fullButton" min="-2" pref="18" max="-2" attributes="0"/>
+                      </Group>
+                      <EmptySpace min="2" pref="2" max="2" attributes="0"/>
+                      <Group type="103" groupAlignment="0" attributes="0">
+                          <Component id="zoomInButton" min="-2" pref="21" max="-2" attributes="0"/>
+                          <Component id="autoButton" min="-2" pref="18" max="-2" attributes="0"/>
+                          <Group type="102" attributes="0">
+                              <EmptySpace min="20" pref="20" max="20" attributes="0"/>
+                              <Component id="minLabel" min="-2" pref="20" max="-2" attributes="0"/>
+                          </Group>
+                          <Component id="zoomOutButton" min="-2" pref="21" max="-2" attributes="0"/>
+                          <Group type="102" attributes="0">
+                              <EmptySpace min="30" pref="30" max="30" attributes="0"/>
+                              <Component id="maxLabel" min="-2" pref="30" max="-2" attributes="0"/>
+                          </Group>
+                      </Group>
                   </Group>
-                  <Component id="colorPickerLabel" alignment="0" min="-2" pref="18" max="-2" attributes="0"/>
+                  <Component id="histogramPanelHolder" alignment="0" min="-2" max="-2" attributes="0"/>
               </Group>
-              <EmptySpace min="-2" pref="2" max="-2" attributes="0"/>
-              <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                  <Component id="zoomInButton" min="0" pref="21" max="32767" attributes="1"/>
-                  <Component id="zoomOutButton" alignment="0" pref="20" max="32767" attributes="1"/>
-              </Group>
+              <EmptySpace min="-2" pref="0" max="-2" attributes="0"/>
+              <Component id="histMaxLabel" min="-2" max="-2" attributes="0"/>
+              <EmptySpace max="32767" attributes="0"/>
           </Group>
-          <Component id="histogramPanelHolder" alignment="0" min="-2" pref="100" max="-2" attributes="3"/>
       </Group>
     </DimensionLayout>
   </Layout>
@@ -191,6 +212,30 @@
       <Events>
         <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="zoomOutButtonActionPerformed"/>
       </Events>
+    </Component>
+    <Component class="javax.swing.JLabel" name="minLabel">
+      <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+          <Font name="Lucida Grande" size="10" style="0"/>
+        </Property>
+        <Property name="text" type="java.lang.String" value="min"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="maxLabel">
+      <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+          <Font name="Lucida Grande" size="10" style="0"/>
+        </Property>
+        <Property name="text" type="java.lang.String" value="max"/>
+      </Properties>
+    </Component>
+    <Component class="javax.swing.JLabel" name="histMaxLabel">
+      <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+          <Font name="Lucida Grande" size="10" style="0"/>
+        </Property>
+        <Property name="text" type="java.lang.String" value="    "/>
+      </Properties>
     </Component>
   </SubComponents>
 </Form>

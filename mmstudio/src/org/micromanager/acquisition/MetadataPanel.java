@@ -89,6 +89,8 @@ public class MetadataPanel extends javax.swing.JPanel
       jPanel1 = new javax.swing.JPanel();
       displayModeCombo = new javax.swing.JComboBox();
       jLabel1 = new javax.swing.JLabel();
+      autostretchCheckBox = new javax.swing.JCheckBox();
+      logScaleCheckBox = new javax.swing.JCheckBox();
       sizeBarCheckBox = new javax.swing.JCheckBox();
       sizeBarComboBox = new javax.swing.JComboBox();
       overlayColorComboBox_ = new javax.swing.JComboBox();
@@ -132,6 +134,20 @@ public class MetadataPanel extends javax.swing.JPanel
 
       jLabel1.setText("Display mode:");
 
+      autostretchCheckBox.setText("Autostretch");
+      autostretchCheckBox.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            autostretchCheckBoxActionPerformed(evt);
+         }
+      });
+
+      logScaleCheckBox.setText("Log hist");
+      logScaleCheckBox.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            logScaleCheckBoxActionPerformed(evt);
+         }
+      });
+
       org.jdesktop.layout.GroupLayout jPanel1Layout = new org.jdesktop.layout.GroupLayout(jPanel1);
       jPanel1.setLayout(jPanel1Layout);
       jPanel1Layout.setHorizontalGroup(
@@ -140,13 +156,19 @@ public class MetadataPanel extends javax.swing.JPanel
             .add(jLabel1)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
             .add(displayModeCombo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 134, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-            .addContainerGap(301, Short.MAX_VALUE))
+            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+            .add(autostretchCheckBox)
+            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+            .add(logScaleCheckBox)
+            .addContainerGap(111, Short.MAX_VALUE))
       );
       jPanel1Layout.setVerticalGroup(
          jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
             .add(jLabel1)
-            .add(displayModeCombo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+            .add(displayModeCombo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+            .add(autostretchCheckBox)
+            .add(logScaleCheckBox))
       );
 
       sizeBarCheckBox.setText("Scale Bar");
@@ -196,7 +218,7 @@ public class MetadataPanel extends javax.swing.JPanel
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
             .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-            .add(contrastScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 434, Short.MAX_VALUE))
+            .add(contrastScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 435, Short.MAX_VALUE))
       );
 
       tabbedPane.addTab("Channels", ChannelsTablePanel);
@@ -259,7 +281,7 @@ public class MetadataPanel extends javax.swing.JPanel
                .add(showUnchangingPropertiesCheckbox)
                .add(jLabel2))
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-            .add(imageMetadataTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 369, Short.MAX_VALUE))
+            .add(imageMetadataTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 370, Short.MAX_VALUE))
       );
 
       metadataSplitPane.setRightComponent(imageMetadataScrollPane);
@@ -397,7 +419,7 @@ public class MetadataPanel extends javax.swing.JPanel
          layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
             .addContainerGap()
-            .add(tabbedPane)
+            .add(tabbedPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 571, Short.MAX_VALUE)
             .addContainerGap())
       );
       layout.setVerticalGroup(
@@ -457,11 +479,25 @@ public class MetadataPanel extends javax.swing.JPanel
        
     }//GEN-LAST:event_overlayColorComboBox_ActionPerformed
 
+    private void autostretchCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_autostretchCheckBoxActionPerformed
+       for (ChannelControlPanel ccp:ccpList_) {
+          ccp.setAutostretch(autostretchCheckBox.isSelected());
+          ccp.drawDisplaySettings();
+       }
+    }//GEN-LAST:event_autostretchCheckBoxActionPerformed
+
+    private void logScaleCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_logScaleCheckBoxActionPerformed
+       for (ChannelControlPanel ccp:ccpList_) {
+          ccp.setLogScale(logScaleCheckBox.isSelected());
+       }
+    }//GEN-LAST:event_logScaleCheckBoxActionPerformed
+
 
 
    // Variables declaration - do not modify//GEN-BEGIN:variables
    private javax.swing.JPanel ChannelsTablePanel;
    private javax.swing.JSplitPane CommentsSplitPane;
+   private javax.swing.JCheckBox autostretchCheckBox;
    private javax.swing.JScrollPane contrastScrollPane;
    private javax.swing.JComboBox displayModeCombo;
    private javax.swing.JLabel imageCommentsLabel;
@@ -475,6 +511,7 @@ public class MetadataPanel extends javax.swing.JPanel
    private javax.swing.JLabel jLabel2;
    private javax.swing.JLabel jLabel3;
    private javax.swing.JPanel jPanel1;
+   private javax.swing.JCheckBox logScaleCheckBox;
    private javax.swing.JSplitPane metadataSplitPane;
    private javax.swing.JComboBox overlayColorComboBox_;
    private javax.swing.JCheckBox showUnchangingPropertiesCheckbox;
@@ -507,6 +544,10 @@ public class MetadataPanel extends javax.swing.JPanel
          ci.setMode(state);
          ci.updateAndDraw();
       }
+   }
+
+   void setAutostretch(boolean state) {
+      autostretchCheckBox.setSelected(state);
    }
 
 
@@ -773,7 +814,7 @@ public class MetadataPanel extends javax.swing.JPanel
    }
 
    public synchronized void setupChannelControls(VirtualAcquisitionDisplay acq) {
-      int hpHeight = 100;
+      int hpHeight = 110;
       int nChannels = acq.getNumGrayChannels();
 
       JPanel p = new JPanel();
@@ -784,7 +825,7 @@ public class MetadataPanel extends javax.swing.JPanel
       ccpList_ = new ArrayList<ChannelControlPanel>();
 
       for (int i=0;i<nChannels;++i) {
-         ChannelControlPanel ccp = new ChannelControlPanel(acq, i);
+         ChannelControlPanel ccp = new ChannelControlPanel(acq, i, this);
 
          layout.putConstraint(SpringLayout.NORTH,ccp,hpHeight*i,SpringLayout.NORTH,p);
          layout.putConstraint(SpringLayout.EAST,ccp,0,SpringLayout.EAST,p);

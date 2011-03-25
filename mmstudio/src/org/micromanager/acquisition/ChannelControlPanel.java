@@ -31,14 +31,18 @@ public class ChannelControlPanel extends javax.swing.JPanel {
    private final VirtualAcquisitionDisplay acq_;
    private final HistogramPanel hp_;
    private double binSize_;
-   
+   private boolean autostretch_ = false;
+   private final MetadataPanel metadataPanel_;
+   private boolean logScale_ = false;
 
    /** Creates new form ChannelControlsPanel */
-   public ChannelControlPanel(VirtualAcquisitionDisplay acq, int channelIndex) {
+   public ChannelControlPanel(VirtualAcquisitionDisplay acq, int channelIndex,
+           MetadataPanel metadataPanel) {
       initComponents();
       channelIndex_ = channelIndex;
       acq_ = acq;
       hp_ = addHistogramPanel();
+      metadataPanel_ = metadataPanel;
       updateChannelSettings();
       drawDisplaySettings();
    }
@@ -59,6 +63,9 @@ public class ChannelControlPanel extends javax.swing.JPanel {
       histogramPanelHolder = new javax.swing.JPanel();
       zoomInButton = new javax.swing.JButton();
       zoomOutButton = new javax.swing.JButton();
+      minLabel = new javax.swing.JLabel();
+      maxLabel = new javax.swing.JLabel();
+      histMaxLabel = new javax.swing.JLabel();
 
       setOpaque(false);
       setPreferredSize(new java.awt.Dimension(250, 100));
@@ -132,45 +139,70 @@ public class ChannelControlPanel extends javax.swing.JPanel {
          }
       });
 
+      minLabel.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+      minLabel.setText("min");
+
+      maxLabel.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+      maxLabel.setText("max");
+
+      histMaxLabel.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+      histMaxLabel.setText("    ");
+
       org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(this);
       this.setLayout(layout);
       layout.setHorizontalGroup(
          layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(layout.createSequentialGroup()
-            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+               .add(channelNameCheckbox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 110, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                .add(layout.createSequentialGroup()
-                  .add(channelNameCheckbox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 110, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                  .add(4, 4, 4))
-               .add(layout.createSequentialGroup()
+                  .add(20, 20, 20)
                   .add(colorPickerLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-                  .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-                     .add(fullButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 42, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                  .add(22, 22, 22)
+                  .add(fullButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 42, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+               .add(layout.createSequentialGroup()
+                  .add(10, 10, 10)
+                  .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                      .add(layout.createSequentialGroup()
                         .add(zoomInButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 21, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                        .add(0, 0, 0)
-                        .add(zoomOutButton, 0, 20, Short.MAX_VALUE))
-                     .add(autoButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 42, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                  .add(18, 18, 18)))
+                        .add(29, 29, 29)
+                        .add(autoButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 42, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                     .add(minLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 100, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                     .add(layout.createSequentialGroup()
+                        .add(20, 20, 20)
+                        .add(zoomOutButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 21, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                     .add(maxLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 100, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))))
+            .add(4, 4, 4)
             .add(histogramPanelHolder, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 136, Short.MAX_VALUE))
+         .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+            .add(205, 205, 205)
+            .add(histMaxLabel))
       );
       layout.setVerticalGroup(
          layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(layout.createSequentialGroup()
-            .add(10, 10, 10)
-            .add(channelNameCheckbox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 17, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-            .add(2, 2, 2)
             .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
                .add(layout.createSequentialGroup()
-                  .add(fullButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                  .add(channelNameCheckbox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 17, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                  .add(3, 3, 3)
+                  .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                     .add(colorPickerLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                     .add(fullButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
                   .add(2, 2, 2)
-                  .add(autoButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-               .add(colorPickerLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-            .add(2, 2, 2)
-            .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING, false)
-               .add(zoomInButton, 0, 21, Short.MAX_VALUE)
-               .add(zoomOutButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, Short.MAX_VALUE)))
-         .add(histogramPanelHolder, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 100, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                  .add(layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+                     .add(zoomInButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 21, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                     .add(autoButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 18, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                     .add(layout.createSequentialGroup()
+                        .add(20, 20, 20)
+                        .add(minLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                     .add(zoomOutButton, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 21, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                     .add(layout.createSequentialGroup()
+                        .add(30, 30, 30)
+                        .add(maxLabel, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 30, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))))
+               .add(histogramPanelHolder, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+            .add(0, 0, 0)
+            .add(histMaxLabel)
+            .addContainerGap(org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
       );
    }// </editor-fold>//GEN-END:initComponents
 
@@ -205,7 +237,10 @@ public class ChannelControlPanel extends javax.swing.JPanel {
    private javax.swing.JCheckBox channelNameCheckbox;
    private javax.swing.JLabel colorPickerLabel;
    private javax.swing.JButton fullButton;
+   private javax.swing.JLabel histMaxLabel;
    private javax.swing.JPanel histogramPanelHolder;
+   private javax.swing.JLabel maxLabel;
+   private javax.swing.JLabel minLabel;
    private javax.swing.JButton zoomInButton;
    private javax.swing.JButton zoomOutButton;
    // End of variables declaration//GEN-END:variables
@@ -229,9 +264,22 @@ public class ChannelControlPanel extends javax.swing.JPanel {
       updateChannelSettings();
    }
 
+   public void setAutostretch(boolean state) {
+      autostretch_ = state;
+   }
+
+   public void setLogScale(boolean logScale) {
+      logScale_ = logScale;
+      updateChannelSettings();
+   }
 
    private void updateChannelVisibility() {
       acq_.setChannelVisibility(channelIndex_, channelNameCheckbox.isSelected());
+   }
+
+   private void turnOffAutostretch() {
+      metadataPanel_.setAutostretch(false);
+      autostretch_ = false;
    }
 
    public final HistogramPanel addHistogramPanel() {
@@ -247,6 +295,7 @@ public class ChannelControlPanel extends javax.swing.JPanel {
 
 
          public void onLeftCursor(double pos) {
+            turnOffAutostretch();
             int max = acq_.getChannelMax(channelIndex_);
 
             int min = (int) (pos * binSize_);
@@ -257,6 +306,7 @@ public class ChannelControlPanel extends javax.swing.JPanel {
          }
 
          public void onRightCursor(double pos) {
+            turnOffAutostretch();
             int min = acq_.getChannelMin(channelIndex_);
 
             int max = (int) (pos * binSize_);
@@ -329,9 +379,15 @@ public class ChannelControlPanel extends javax.swing.JPanel {
    }
 
    public final void drawDisplaySettings() {
+      if (autostretch_) {
+         acq_.setChannelDisplayRange(channelIndex_, getMin(), getMax(), false);
+      }
       hp_.setCursors(acq_.getChannelMin(channelIndex_)/binSize_,
               acq_.getChannelMax(channelIndex_)/binSize_,
               acq_.getChannelGamma(channelIndex_));
+      minLabel.setText("min: "+getMin());
+      maxLabel.setText("max: "+getMax());
+      histMaxLabel.setText(Integer.toString((int) (binSize_ * 256)));
       hp_.repaint();
    }
 
@@ -350,6 +406,9 @@ public class ChannelControlPanel extends javax.swing.JPanel {
          histogram[i] = 0;
          for (int j = 0; j < binSize_; j++) {
             histogram[i] += rawHistogram[(int) (i * binSize_) + j];
+         }
+         if (logScale_) {
+            histogram[i] = histogram[i] > 0 ? (int) (1000 * Math.log(histogram[i])) : 0;
          }
       }
 
@@ -380,6 +439,32 @@ public class ChannelControlPanel extends javax.swing.JPanel {
    }
 
 
+   private int getMin() {
+      int [] histogram = acq_.getChannelHistogram(channelIndex_);
+      int min = 0;
+      for (int i=0;i<histogram.length;++i) {
+         if (histogram[i] != 0 && min == 0) {
+            min = i;
+         }
+      }
+      return min;
+   }
+
+   private int getMax() {
+      int [] histogram = acq_.getChannelHistogram(channelIndex_);
+      int min = 0;
+      int max = 0;
+      for (int i=0;i<histogram.length;++i) {
+         if (histogram[i] != 0 && min == 0) {
+            min = i;
+            max = min;
+         }
+         if (histogram[i] != 0) {
+            max = i;
+         }
+      }
+      return max;
+   }
 
 
 }
