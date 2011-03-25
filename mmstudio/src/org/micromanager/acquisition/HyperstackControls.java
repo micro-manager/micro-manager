@@ -224,8 +224,9 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
             String xyPosition;
             try {
                xyPosition = taggedImg.tags.getString("PositionName");
-               if (xyPosition != null)
+               if (xyPosition != null) {
                   status += xyPosition + ", ";
+               }
             } catch (Exception e) {
                //Oh well...
             }
@@ -252,7 +253,9 @@ public class HyperstackControls extends java.awt.Panel implements ImageListener 
             String chan;
             try {
                chan = MDUtils.getChannelName(taggedImg.tags);
-               status += ", " + chan;
+               if (chan != null) {
+                  status += ", " + chan;
+               }
             } catch (Exception ex) {
             }
 
