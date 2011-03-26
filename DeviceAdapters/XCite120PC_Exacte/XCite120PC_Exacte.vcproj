@@ -93,7 +93,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\bin"
+				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\bin_$(PlatformName)"
 			/>
 		</Configuration>
 		<Configuration
@@ -203,6 +203,10 @@
 			<File
 				RelativePath=".\XCite120PC.cpp"
 				>
+			</File>
+			<File
+				RelativePath=".\XCite120PC.cpp"
+				>
 				<FileConfiguration
 					Name="Release|Win32"
 					>
@@ -211,10 +215,6 @@
 						UsePrecompiledHeader="0"
 					/>
 				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\XCite120PC.cpp"
-				>
 			</File>
 			<File
 				RelativePath=".\XCiteExacte.cpp"

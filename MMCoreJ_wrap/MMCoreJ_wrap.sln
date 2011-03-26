@@ -163,6 +163,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Hamamatsu", "..\SecretDevic
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SpotCamera", "..\DeviceAdapters\Spot(Windows)\Spot.vcproj", "{59EBAD3C-A6C7-11DE-8344-1C9455D89593}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Thorlabs", "..\DeviceAdapters\Thorlabs\Thorlabs.vcproj", "{308AA3EE-4053-47E0-9004-A57E9572C7A6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -789,6 +791,12 @@ Global
 		{59EBAD3C-A6C7-11DE-8344-1C9455D89593}.Release|Win32.Build.0 = Release|Win32
 		{59EBAD3C-A6C7-11DE-8344-1C9455D89593}.Release|x64.ActiveCfg = Release|x64
 		{59EBAD3C-A6C7-11DE-8344-1C9455D89593}.Release|x64.Build.0 = Release|x64
+		{308AA3EE-4053-47E0-9004-A57E9572C7A6}.Debug|Win32.ActiveCfg = Debug|Win32
+		{308AA3EE-4053-47E0-9004-A57E9572C7A6}.Debug|Win32.Build.0 = Debug|Win32
+		{308AA3EE-4053-47E0-9004-A57E9572C7A6}.Debug|x64.ActiveCfg = Debug|Win32
+		{308AA3EE-4053-47E0-9004-A57E9572C7A6}.Release|Win32.ActiveCfg = Release|Win32
+		{308AA3EE-4053-47E0-9004-A57E9572C7A6}.Release|Win32.Build.0 = Release|Win32
+		{308AA3EE-4053-47E0-9004-A57E9572C7A6}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
