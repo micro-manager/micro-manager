@@ -10,6 +10,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.swing.SwingUtilities;
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
 import org.json.JSONObject;
@@ -99,7 +100,7 @@ public class LiveAcqDisplay extends Thread {
             int imageCount = 0;
             try {
                while (true) {
-                  TaggedImage image = displayQueue.poll(1, TimeUnit.SECONDS);
+                  final TaggedImage image = displayQueue.poll(1, TimeUnit.SECONDS);
                   if (image != null) {
                      if (TaggedImageQueue.isPoison(image)) {
                         break;
@@ -114,8 +115,6 @@ public class LiveAcqDisplay extends Thread {
 
             long t2 = System.currentTimeMillis();
             ReportingUtils.logMessage(imageCount + " images saved in " + (t2 - t1) + " ms.");
-
-            cleanup();
          }
       };
       displayThread.start();
@@ -141,6 +140,7 @@ public class LiveAcqDisplay extends Thread {
 
             long t2 = System.currentTimeMillis();
             ReportingUtils.logMessage(imageCount + " images displayed in " + (t2 - t1) + " ms.");
+            cleanup();
          }
       };
       savingThread.start();
