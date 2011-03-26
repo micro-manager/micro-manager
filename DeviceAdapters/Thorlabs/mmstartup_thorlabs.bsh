@@ -1,0 +1,16 @@
+// startup script to home Thorlabs BBD102 XY stage
+//
+import ij.gui.GenericDialog;
+
+GenericDialog dlg = new GenericDialog("HOME command - XY Stage", null);
+dlg.addMessage("WARNING!!! The XY stage is about to move. Make sure objectives are out of the way.\nIf you are in doubt about what to do Cancel this command!");
+dlg.showDialog();
+if (dlg.wasCanceled())
+	return false;
+
+gui.message("Homing started...");
+xyStage = mmc.getXYStageDevice();
+mmc.home(xyStage);
+x = mmc.getXPosition(xyStage);
+y = mmc.getYPosition(xyStage);
+gui.message("Done! Home position [um]: " + x + ", " + y);

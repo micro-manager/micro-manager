@@ -1,0 +1,8 @@
+// home XY Stage
+gui.message("Homing started...");
+xyStage = mmc.getXYStageDevice();
+mmc.home(xyStage);
+x = mmc.getXPosition(xyStage);
+y = mmc.getYPosition(xyStage);
+gui.message("Done! Home position [um]: " + x + ", " + y);
+

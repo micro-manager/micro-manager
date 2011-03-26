@@ -1,0 +1,4 @@
+// get position
+x = mmc.getXPosition(xyStage);
+y = mmc.getYPosition(xyStage);
+gui.message("Current position: " + x + ", " + y);
