@@ -100,6 +100,7 @@ public class ContrastPanel extends JPanel implements ImageController,
 	ContrastSettings cs8bit_;
 	ContrastSettings cs16bit_;
 	private JCheckBox stretchCheckBox_;
+	private JCheckBox rejectOutliersCheckBox_;
 	private boolean logScale_ = false;
 	private JCheckBox logHistCheckBox_;
    private boolean imageUpdated_;
@@ -107,6 +108,8 @@ public class ContrastPanel extends JPanel implements ImageController,
    private boolean liveStretchMode_ = true;
    private double lutMin_;
    private double lutMax_;
+	private double minAfterRejectingOutliers_;
+	private double maxAfterRejectingOutliers_;
 
 	/**
 	 * Create the panel
@@ -255,7 +258,7 @@ public class ContrastPanel extends JPanel implements ImageController,
       add(gammaLabel);
 		springLayout.putConstraint(SpringLayout.WEST, gammaLabel, 5,
 				SpringLayout.WEST, this);
-      springLayout.putConstraint(SpringLayout.NORTH, gammaLabel, 195,
+      springLayout.putConstraint(SpringLayout.NORTH, gammaLabel, 225,
 				SpringLayout.NORTH, this);
 
       gammaValue_ = new JFormattedTextField(numberFormat_);
@@ -314,6 +317,34 @@ public class ContrastPanel extends JPanel implements ImageController,
 				SpringLayout.NORTH, this);
 		springLayout.putConstraint(SpringLayout.NORTH, stretchCheckBox_, 160,
 				SpringLayout.NORTH, this);
+
+
+	   rejectOutliersCheckBox_ = new JCheckBox();
+		rejectOutliersCheckBox_.setFont(new Font("", Font.PLAIN, 10));
+		rejectOutliersCheckBox_.setText("Rejct Outliers");
+		rejectOutliersCheckBox_.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent ce) {
+            if (rejectOutliersCheckBox_.isSelected()) {
+
+					; // as with the other check boxes, takes effect when setAutoScale runs...
+            }
+			};
+		});
+		add(rejectOutliersCheckBox_);
+
+		springLayout.putConstraint(SpringLayout.EAST, rejectOutliersCheckBox_, -2,
+				SpringLayout.WEST, histogramPanel_);
+		springLayout.putConstraint(SpringLayout.WEST, rejectOutliersCheckBox_, 1,
+				SpringLayout.WEST, this);
+		springLayout.putConstraint(SpringLayout.SOUTH, rejectOutliersCheckBox_, 220,
+				SpringLayout.NORTH, this);
+		springLayout.putConstraint(SpringLayout.NORTH, rejectOutliersCheckBox_, 195,
+				SpringLayout.NORTH, this);
+
+
+
+
+
 
 		modeComboBox_ = new JComboBox();
 		modeComboBox_.setFont(new Font("", Font.PLAIN, 10));
@@ -406,6 +437,36 @@ public class ContrastPanel extends JPanel implements ImageController,
    public void updateHistogram(ImagePlus image) {
       if (image != null) {
          int[] rawHistogram = image.getProcessor().getHistogram();
+
+			if( rejectOutliersCheckBox_.isSelected())			{
+				// todo handle negative values
+				minAfterRejectingOutliers_ = 0;
+				maxAfterRejectingOutliers_ = rawHistogram.length;
+				// don't let pixels lying outside 3 sigma influence the automatic contrast setting
+				int totalPoints = image.getHeight() * image.getWidth();
+				int maxOutliers = (int)(0.5 + totalPoints * 0.0027);
+
+				// march through raw histogram until we see 0.0027*totalPoints pixels
+				int iterator;
+				int outliers;
+				outliers = 0;
+				for(  iterator = 0; iterator < rawHistogram.length; ++iterator){
+					outliers += rawHistogram[iterator];
+					if( outliers >= maxOutliers){
+						minAfterRejectingOutliers_ = iterator;
+						break;
+					}
+				}
+				outliers = 0;
+			   for( iterator = rawHistogram.length-1 ; iterator >= 0 ; --iterator){
+					outliers += rawHistogram[iterator];
+					if( outliers >= maxOutliers){
+						maxAfterRejectingOutliers_ = iterator;
+						break;
+					}
+				}
+
+			}
          if (histogramData_ == null) {
             histogramData_ = new GraphData();
          } // 256 bins
@@ -419,6 +480,8 @@ public class ContrastPanel extends JPanel implements ImageController,
             }
             total += histogram[i];
          }
+
+
          // work around what is apparently a bug in ImageJ
          if (total == 0) {
             if (image.getProcessor().getMin() == 0) {
@@ -568,6 +631,16 @@ public class ContrastPanel extends JPanel implements ImageController,
 
          lutMin_ = min;
          lutMax_ = max;
+
+			if(rejectOutliersCheckBox_.isSelected()){
+				if( lutMin_ < minAfterRejectingOutliers_  ){
+					lutMin_ =  minAfterRejectingOutliers_;
+				}
+				if( maxAfterRejectingOutliers_ < lutMax_){
+					lutMax_ = maxAfterRejectingOutliers_;
+				}
+
+			}
       } else {
          ReportingUtils.logError("Internal error: ImageProcessor is null");
       }
