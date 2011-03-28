@@ -796,7 +796,8 @@ Global
 		{308AA3EE-4053-47E0-9004-A57E9572C7A6}.Debug|x64.ActiveCfg = Debug|Win32
 		{308AA3EE-4053-47E0-9004-A57E9572C7A6}.Release|Win32.ActiveCfg = Release|Win32
 		{308AA3EE-4053-47E0-9004-A57E9572C7A6}.Release|Win32.Build.0 = Release|Win32
-		{308AA3EE-4053-47E0-9004-A57E9572C7A6}.Release|x64.ActiveCfg = Release|Win32
+		{308AA3EE-4053-47E0-9004-A57E9572C7A6}.Release|x64.ActiveCfg = Release|x64
+		{308AA3EE-4053-47E0-9004-A57E9572C7A6}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
