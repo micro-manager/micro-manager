@@ -112,7 +112,9 @@ public:
    int OnCameraCCDXSize(MM::PropertyBase* , MM::ActionType );
    int OnCameraCCDYSize(MM::PropertyBase* , MM::ActionType );
    int OnTriggerDevice(MM::PropertyBase* pProp, MM::ActionType eAct);
-
+   int OnDropPixels(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSaturatePixels(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnFractionOfPixelsToDropOrSaturate(MM::PropertyBase* pProp, MM::ActionType eAct);
    MM::MMTime CurrentTime(void) { return GetCurrentMMTime(); };
 
 private:
@@ -143,6 +145,11 @@ private:
 	long cameraCCDXSize_;
 	long cameraCCDYSize_;
 	std::string triggerDevice_;
+
+	bool dropPixels_;
+	bool saturatePixels_;
+	double fractionOfPixelsToDropOrSaturate_;
+
 
 	double testProperty_[10];
    MMThreadLock* pDemoResourceLock_;

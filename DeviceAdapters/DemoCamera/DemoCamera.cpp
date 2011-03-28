@@ -32,7 +32,6 @@
 #include "../../MMCore/Error.h"
 #include <sstream>
 #include <algorithm>
-
 #include "WriteCompactTiffRGB.h"
 
 
@@ -210,12 +209,15 @@ CDemoCamera::CDemoCamera() :
    roiY_(0),
    sequenceStartTime_(0),
    errorSimulation_(false),
-	 binSize_(1),
-	 cameraCCDXSize_(512),
-	 cameraCCDYSize_(512),
+	binSize_(1),
+	cameraCCDXSize_(512),
+	cameraCCDYSize_(512),
    nComponents_(1),
    pDemoResourceLock_(0),
-   triggerDevice_("")
+   triggerDevice_(""),
+	dropPixels_(false),
+	saturatePixels_(false),
+	fractionOfPixelsToDropOrSaturate_(0.002)
 {
    // call the base class method to set-up default error codes/messages
    InitializeDefaultErrorMessages();
@@ -386,6 +388,22 @@ int CDemoCamera::Initialize()
    // Trigger device
    pAct = new CPropertyAction (this, &CDemoCamera::OnTriggerDevice);
    CreateProperty("TriggerDevice","", MM::String, false, pAct);
+
+   pAct = new CPropertyAction (this, &CDemoCamera::OnDropPixels);
+	CreateProperty("DropPixels", "0", MM::Integer, false, pAct);
+   AddAllowedValue("DropPixels", "0");
+   AddAllowedValue("DropPixels", "1");
+
+	pAct = new CPropertyAction (this, &CDemoCamera::OnSaturatePixels);
+	CreateProperty("SaturatePixels", "0", MM::Integer, false, pAct);
+   AddAllowedValue("SaturatePixels", "0");
+   AddAllowedValue("SaturatePixels", "1");
+
+   pAct = new CPropertyAction (this, &CDemoCamera::OnFractionOfPixelsToDropOrSaturate);
+	CreateProperty("FractionOfPixelsToDropOrSaturate", "0.002", MM::Float, false, pAct);
+	SetPropertyLimits("FractionOfPixelsToDropOrSaturate", 0., 0.1);
+
+
 
    // synchronize all properties
    // --------------------------
@@ -1166,6 +1184,54 @@ int CDemoCamera::OnErrorSimulation(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+int CDemoCamera::OnDropPixels(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::AfterSet)
+   {
+      long tvalue = 0;
+      pProp->Get(tvalue);
+		dropPixels_ = (0==tvalue)?false:true;
+   }
+   else if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(dropPixels_?1L:0L);
+   }
+
+   return DEVICE_OK;
+}
+
+int CDemoCamera::OnSaturatePixels(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::AfterSet)
+   {
+      long tvalue = 0;
+      pProp->Get(tvalue);
+		saturatePixels_ = (0==tvalue)?false:true;
+   }
+   else if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(saturatePixels_?1L:0L);
+   }
+
+   return DEVICE_OK;
+}
+
+int CDemoCamera::OnFractionOfPixelsToDropOrSaturate(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::AfterSet)
+   {
+      double tvalue = 0;
+      pProp->Get(tvalue);
+		fractionOfPixelsToDropOrSaturate_ = tvalue;
+   }
+   else if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(fractionOfPixelsToDropOrSaturate_);
+   }
+
+   return DEVICE_OK;
+}
+
 /*
 * Handles "ScanMode" property.
 * Changes allowed Binning values to test whether the UI updates properly
@@ -1306,8 +1372,8 @@ void CDemoCamera::GenerateEmptyImage(ImgBuffer& img)
 * Generate a spatial sine wave.
 */
 void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
-{
-   LogMessage("enter GenerateSyntheticImage", true);
+{ 
+  
    MMThreadGuard g(imgPixelsLock_);
 
 	//std::string pixelType;
@@ -1337,6 +1403,13 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
 	// bitDepth_ is 8, 10, 12, 16 i.e. it is depth per component
    long maxValue = 1 << bitDepth_;
 
+	long pixelsToDrop = 0;
+	if( dropPixels_)
+		pixelsToDrop = (long)(0.5 + fractionOfPixelsToDropOrSaturate_*img.Height()*img.Width());
+	long pixelsToSaturate = 0;
+	if( saturatePixels_)
+		pixelsToSaturate = (long)(0.5 + fractionOfPixelsToDropOrSaturate_*img.Height()*img.Width());
+
    unsigned j, k;
    if (pixelType.compare(g_PixelType_8bit) == 0)
    {
@@ -1350,7 +1423,21 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
             *(pBuf + lIndex) = (unsigned char) (g_IntensityFactor_ * min(255.0, (pedestal + dAmp * sin(dPhase_ + dLinePhase + (2.0 * cPi * k) / lPeriod))));
          }
          dLinePhase += cLinePhaseInc;
-      }         
+      }
+	   for(int snoise = 0; snoise < pixelsToSaturate; ++snoise)
+		{
+			j = (unsigned)(0.5 + (double)img.Height()*(double)rand()/(double)RAND_MAX);
+			k = (unsigned)(0.5 + (double)img.Width()*(double)rand()/(double)RAND_MAX);
+			*(pBuf + img.Width()*j + k) = maxValue;
+		}
+		int pnoise;
+		for(pnoise = 0; pnoise < pixelsToDrop; ++pnoise)
+		{
+			j = (unsigned)(0.5 + (double)img.Height()*(double)rand()/(double)RAND_MAX);
+			k = (unsigned)(0.5 + (double)img.Width()*(double)rand()/(double)RAND_MAX);
+			*(pBuf + img.Width()*j + k) = 0;
+		}
+
    }
    else if (pixelType.compare(g_PixelType_16bit) == 0)
    {
@@ -1366,7 +1453,21 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
          }
          dLinePhase += cLinePhaseInc;
       }         
-   }
+	   for(int snoise = 0; snoise < pixelsToSaturate; ++snoise)
+		{
+			j = (unsigned)(0.5 + (double)img.Height()*(double)rand()/(double)RAND_MAX);
+			k = (unsigned)(0.5 + (double)img.Width()*(double)rand()/(double)RAND_MAX);
+			*(pBuf + img.Width()*j + k) = maxValue;
+		}
+		int pnoise;
+		for(pnoise = 0; pnoise < pixelsToDrop; ++pnoise)
+		{
+			j = (unsigned)(0.5 + (double)img.Height()*(double)rand()/(double)RAND_MAX);
+			k = (unsigned)(0.5 + (double)img.Width()*(double)rand()/(double)RAND_MAX);
+			*(pBuf + img.Width()*j + k) = 0;
+		}
+	
+	}
 	else if (pixelType.compare(g_PixelType_32bitRGB) == 0)
 	{
       double pedestal = 127 * exp / 100.0;
