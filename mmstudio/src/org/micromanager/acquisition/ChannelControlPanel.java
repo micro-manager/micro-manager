@@ -440,30 +440,39 @@ public class ChannelControlPanel extends javax.swing.JPanel {
 
 
    private int getMin() {
-      int [] histogram = acq_.getChannelHistogram(channelIndex_);
-      int min = 0;
-      for (int i=0;i<histogram.length;++i) {
-         if (histogram[i] != 0 && min == 0) {
-            min = i;
+      int[] histogram = acq_.getChannelHistogram(channelIndex_);
+      if (histogram != null) {
+         int min = 0;
+         for (int i = 0; i < histogram.length; ++i) {
+            if (histogram[i] != 0 && min == 0) {
+               min = i;
+            }
          }
+
+         return min;
+      } else {
+         return 0;
       }
-      return min;
    }
 
    private int getMax() {
-      int [] histogram = acq_.getChannelHistogram(channelIndex_);
-      int min = 0;
-      int max = 0;
-      for (int i=0;i<histogram.length;++i) {
-         if (histogram[i] != 0 && min == 0) {
-            min = i;
-            max = min;
+      int[] histogram = acq_.getChannelHistogram(channelIndex_);
+      if (histogram != null) {
+         int min = 0;
+         int max = 0;
+         for (int i = 0; i < histogram.length; ++i) {
+            if (histogram[i] != 0 && min == 0) {
+               min = i;
+               max = min;
+            }
+            if (histogram[i] != 0) {
+               max = i;
+            }
          }
-         if (histogram[i] != 0) {
-            max = i;
-         }
+         return max;
+      } else {
+         return 0;
       }
-      return max;
    }
 
 
