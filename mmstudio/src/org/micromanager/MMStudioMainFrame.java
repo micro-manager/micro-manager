@@ -121,6 +121,9 @@ import java.awt.Graphics;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Collections;
+import javax.swing.BorderFactory;
+import javax.swing.JPanel;
+import javax.swing.JSplitPane;
 import mmcorej.TaggedImage;
 import org.micromanager.acquisition.AcquisitionVirtualStack;
 
@@ -149,6 +152,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private static final String MAIN_FRAME_Y = "y";
    private static final String MAIN_FRAME_WIDTH = "width";
    private static final String MAIN_FRAME_HEIGHT = "height";
+   private static final String MAIN_FRAME_DIVIDER_POS = "divider_pos";
    private static final String MAIN_EXPOSURE = "exposure";
    private static final String SYSTEM_CONFIG_FILE = "sysconfig_file";
    private static final String MAIN_STRETCH_CONTRAST = "stretch_contrast";
@@ -162,13 +166,14 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private static final String SCRIPT_GUI_OBJECT = "gui";
    private static final String AUTOFOCUS_DEVICE = "autofocus_device";
    private static final String MOUSE_MOVES_STAGE = "mouse_moves_stage";
+
+
    // cfg file saving
    private static final String CFGFILE_ENTRY_BASE = "CFGFileEntry"; // + {0, 1, 2, 3, 4}
    // GUI components
    private JComboBox comboBinning_;
    private JComboBox shutterComboBox_;
    private JTextField textFieldExp_;
-   private SpringLayout springLayout_;
    private JLabel labelImageDimensions_;
    private JToggleButton toggleButtonLive_;
    private JCheckBox autoShutterCheckBox_;
@@ -265,6 +270,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private Thread pipelineClassLoadingThread_ = null;
    private Class pipelineClass_ = null;
    private Pipeline acquirePipeline_ = null;
+   private final JSplitPane splitPane_;
 
    public ImageWindow getImageWin() {
       return imageWin_;
@@ -666,17 +672,33 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       int x = mainPrefs_.getInt(MAIN_FRAME_X, 100);
       int y = mainPrefs_.getInt(MAIN_FRAME_Y, 100);
       int width = mainPrefs_.getInt(MAIN_FRAME_WIDTH, 580);
-      int height = mainPrefs_.getInt(MAIN_FRAME_HEIGHT, 451);
+      int height = mainPrefs_.getInt(MAIN_FRAME_HEIGHT, 482);
       boolean stretch = mainPrefs_.getBoolean(MAIN_STRETCH_CONTRAST, true);
-
+      int dividerPos = mainPrefs_.getInt(MAIN_FRAME_DIVIDER_POS, 178);
       openAcqDirectory_ = mainPrefs_.get(OPEN_ACQ_DIR, "");
 
       setBounds(x, y, width, height);
       setExitStrategy(options_.closeOnExit_);
-      springLayout_ = new SpringLayout();
-      getContentPane().setLayout(springLayout_);
       setTitle(MICRO_MANAGER_TITLE);
       setBackground(guiColors_.background.get((options_.displayBackground_)));
+      SpringLayout topLayout = new SpringLayout();
+      //this.setLayout(topLayout);
+
+      this.setMinimumSize(new Dimension(580,0));
+      JPanel topPanel = new JPanel();
+      topPanel.setLayout(topLayout);
+      topPanel.setMinimumSize(new Dimension(580, 175));
+
+      JPanel bottomPanel = new JPanel();
+      bottomPanel.setLayout(topLayout);
+      //bottomPanel.setMinimumSize(new Dimension(580,290));
+      
+      splitPane_ = new JSplitPane(JSplitPane.VERTICAL_SPLIT, true,
+              topPanel, bottomPanel);
+      splitPane_.setBorder(BorderFactory.createEmptyBorder());
+      splitPane_.setDividerLocation(dividerPos);
+      splitPane_.setResizeWeight(0.0);
+      getContentPane().add(splitPane_);
 
       // Snap button
       // -----------
@@ -694,15 +716,15 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             doSnap();
          }
       });
-      getContentPane().add(buttonSnap_);
-      springLayout_.putConstraint(SpringLayout.SOUTH, buttonSnap_, 25,
-            SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.NORTH, buttonSnap_, 4,
-            SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.EAST, buttonSnap_, 95,
-            SpringLayout.WEST, getContentPane());
-      springLayout_.putConstraint(SpringLayout.WEST, buttonSnap_, 7,
-            SpringLayout.WEST, getContentPane());
+      topPanel.add(buttonSnap_);
+      topLayout.putConstraint(SpringLayout.SOUTH, buttonSnap_, 25,
+            SpringLayout.NORTH, topPanel);
+      topLayout.putConstraint(SpringLayout.NORTH, buttonSnap_, 4,
+            SpringLayout.NORTH, topPanel);
+      topLayout.putConstraint(SpringLayout.EAST, buttonSnap_, 95,
+            SpringLayout.WEST, topPanel);
+      topLayout.putConstraint(SpringLayout.WEST, buttonSnap_, 7,
+            SpringLayout.WEST, topPanel);
 
       // Initialize
       // ----------
@@ -712,15 +734,15 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       final JLabel label_1 = new JLabel();
       label_1.setFont(new Font("Arial", Font.PLAIN, 10));
       label_1.setText("Exposure [ms]");
-      getContentPane().add(label_1);
-      springLayout_.putConstraint(SpringLayout.EAST, label_1, 198,
-            SpringLayout.WEST, getContentPane());
-      springLayout_.putConstraint(SpringLayout.WEST, label_1, 111,
-            SpringLayout.WEST, getContentPane());
-      springLayout_.putConstraint(SpringLayout.SOUTH, label_1, 39,
-            SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.NORTH, label_1, 23,
-            SpringLayout.NORTH, getContentPane());
+      topPanel.add(label_1);
+      topLayout.putConstraint(SpringLayout.EAST, label_1, 198,
+            SpringLayout.WEST, topPanel);
+      topLayout.putConstraint(SpringLayout.WEST, label_1, 111,
+            SpringLayout.WEST, topPanel);
+      topLayout.putConstraint(SpringLayout.SOUTH, label_1, 39,
+            SpringLayout.NORTH, topPanel);
+      topLayout.putConstraint(SpringLayout.NORTH, label_1, 23,
+            SpringLayout.NORTH, topPanel);
 
       textFieldExp_ = new JTextField();
       textFieldExp_.addFocusListener(new FocusAdapter() {
@@ -736,15 +758,15 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             setExposure();
          }
       });
-      getContentPane().add(textFieldExp_);
-      springLayout_.putConstraint(SpringLayout.SOUTH, textFieldExp_, 40,
-            SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.NORTH, textFieldExp_, 21,
-            SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.EAST, textFieldExp_, 276,
-            SpringLayout.WEST, getContentPane());
-      springLayout_.putConstraint(SpringLayout.WEST, textFieldExp_, 203,
-            SpringLayout.WEST, getContentPane());
+      topPanel.add(textFieldExp_);
+      topLayout.putConstraint(SpringLayout.SOUTH, textFieldExp_, 40,
+            SpringLayout.NORTH, topPanel);
+      topLayout.putConstraint(SpringLayout.NORTH, textFieldExp_, 21,
+            SpringLayout.NORTH, topPanel);
+      topLayout.putConstraint(SpringLayout.EAST, textFieldExp_, 276,
+            SpringLayout.WEST, topPanel);
+      topLayout.putConstraint(SpringLayout.WEST, textFieldExp_, 203,
+            SpringLayout.WEST, topPanel);
 
       // Live button
       // -----------
@@ -769,15 +791,15 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       });
 
       toggleButtonLive_.setText("Live");
-      getContentPane().add(toggleButtonLive_);
-      springLayout_.putConstraint(SpringLayout.SOUTH, toggleButtonLive_, 47,
-            SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.NORTH, toggleButtonLive_, 26,
-            SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.EAST, toggleButtonLive_, 95,
-            SpringLayout.WEST, getContentPane());
-      springLayout_.putConstraint(SpringLayout.WEST, toggleButtonLive_, 7,
-            SpringLayout.WEST, getContentPane());
+      topPanel.add(toggleButtonLive_);
+      topLayout.putConstraint(SpringLayout.SOUTH, toggleButtonLive_, 47,
+            SpringLayout.NORTH, topPanel);
+      topLayout.putConstraint(SpringLayout.NORTH, toggleButtonLive_, 26,
+            SpringLayout.NORTH, topPanel);
+      topLayout.putConstraint(SpringLayout.EAST, toggleButtonLive_, 95,
+            SpringLayout.WEST, topPanel);
+      topLayout.putConstraint(SpringLayout.WEST, toggleButtonLive_, 7,
+            SpringLayout.WEST, topPanel);
 
       // Acquire button
       // -----------
@@ -798,15 +820,15 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       });
 
       acquireButton.setText("Acquire");
-      getContentPane().add(acquireButton);
-      springLayout_.putConstraint(SpringLayout.SOUTH, acquireButton, 69,
-            SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.NORTH, acquireButton, 48,
-            SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.EAST, acquireButton, 95,
-            SpringLayout.WEST, getContentPane());
-      springLayout_.putConstraint(SpringLayout.WEST, acquireButton, 7,
-            SpringLayout.WEST, getContentPane());
+      topPanel.add(acquireButton);
+      topLayout.putConstraint(SpringLayout.SOUTH, acquireButton, 69,
+            SpringLayout.NORTH, topPanel);
+      topLayout.putConstraint(SpringLayout.NORTH, acquireButton, 48,
+            SpringLayout.NORTH, topPanel);
+      topLayout.putConstraint(SpringLayout.EAST, acquireButton, 95,
+            SpringLayout.WEST, topPanel);
+      topLayout.putConstraint(SpringLayout.WEST, acquireButton, 7,
+            SpringLayout.WEST, topPanel);
 
       // Shutter button
       // --------------
@@ -832,29 +854,29 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       toggleButtonShutter_.setIconTextGap(6);
       toggleButtonShutter_.setFont(new Font("Arial", Font.BOLD, 10));
       toggleButtonShutter_.setText("Open");
-      getContentPane().add(toggleButtonShutter_);
-      springLayout_.putConstraint(SpringLayout.EAST, toggleButtonShutter_,
-            275, SpringLayout.WEST, getContentPane());
-      springLayout_.putConstraint(SpringLayout.WEST, toggleButtonShutter_,
-            203, SpringLayout.WEST, getContentPane());
-      springLayout_.putConstraint(SpringLayout.SOUTH, toggleButtonShutter_,
-            138 - 21, SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.NORTH, toggleButtonShutter_,
-            117 - 21, SpringLayout.NORTH, getContentPane());
+      topPanel.add(toggleButtonShutter_);
+      topLayout.putConstraint(SpringLayout.EAST, toggleButtonShutter_,
+            275, SpringLayout.WEST, topPanel);
+      topLayout.putConstraint(SpringLayout.WEST, toggleButtonShutter_,
+            203, SpringLayout.WEST, topPanel);
+      topLayout.putConstraint(SpringLayout.SOUTH, toggleButtonShutter_,
+            138 - 21, SpringLayout.NORTH, topPanel);
+      topLayout.putConstraint(SpringLayout.NORTH, toggleButtonShutter_,
+            117 - 21, SpringLayout.NORTH, topPanel);
 
       // Active shutter label
       final JLabel activeShutterLabel = new JLabel();
       activeShutterLabel.setFont(new Font("Arial", Font.PLAIN, 10));
       activeShutterLabel.setText("Shutter");
-      getContentPane().add(activeShutterLabel);
-      springLayout_.putConstraint(SpringLayout.SOUTH, activeShutterLabel,
-            108 - 22, SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.NORTH, activeShutterLabel,
-            95 - 22, SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.EAST, activeShutterLabel,
-            160 - 2, SpringLayout.WEST, getContentPane());
-      springLayout_.putConstraint(SpringLayout.WEST, activeShutterLabel,
-            113 - 2, SpringLayout.WEST, getContentPane());
+      topPanel.add(activeShutterLabel);
+      topLayout.putConstraint(SpringLayout.SOUTH, activeShutterLabel,
+            108 - 22, SpringLayout.NORTH, topPanel);
+      topLayout.putConstraint(SpringLayout.NORTH, activeShutterLabel,
+            95 - 22, SpringLayout.NORTH, topPanel);
+      topLayout.putConstraint(SpringLayout.EAST, activeShutterLabel,
+            160 - 2, SpringLayout.WEST, topPanel);
+      topLayout.putConstraint(SpringLayout.WEST, activeShutterLabel,
+            113 - 2, SpringLayout.WEST, topPanel);
 
       // Active shutter Combo Box
       shutterComboBox_ = new JComboBox();
@@ -871,15 +893,15 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             return;
          }
       });
-      getContentPane().add(shutterComboBox_);
-      springLayout_.putConstraint(SpringLayout.SOUTH, shutterComboBox_,
-            114 - 22, SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.NORTH, shutterComboBox_,
-            92 - 22, SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.EAST, shutterComboBox_, 275,
-            SpringLayout.WEST, getContentPane());
-      springLayout_.putConstraint(SpringLayout.WEST, shutterComboBox_, 170,
-            SpringLayout.WEST, getContentPane());
+      topPanel.add(shutterComboBox_);
+      topLayout.putConstraint(SpringLayout.SOUTH, shutterComboBox_,
+            114 - 22, SpringLayout.NORTH, topPanel);
+      topLayout.putConstraint(SpringLayout.NORTH, shutterComboBox_,
+            92 - 22, SpringLayout.NORTH, topPanel);
+      topLayout.putConstraint(SpringLayout.EAST, shutterComboBox_, 275,
+            SpringLayout.WEST, topPanel);
+      topLayout.putConstraint(SpringLayout.WEST, shutterComboBox_, 170,
+            SpringLayout.WEST, topPanel);
 
       menuBar_ = new JMenuBar();
       setJMenuBar(menuBar_);
@@ -1302,27 +1324,27 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       final JLabel binningLabel = new JLabel();
       binningLabel.setFont(new Font("Arial", Font.PLAIN, 10));
       binningLabel.setText("Binning");
-      getContentPane().add(binningLabel);
-      springLayout_.putConstraint(SpringLayout.SOUTH, binningLabel, 64,
-            SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.NORTH, binningLabel, 43,
-            SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.EAST, binningLabel, 200 - 1,
-            SpringLayout.WEST, getContentPane());
-      springLayout_.putConstraint(SpringLayout.WEST, binningLabel, 112 - 1,
-            SpringLayout.WEST, getContentPane());
+      topPanel.add(binningLabel);
+      topLayout.putConstraint(SpringLayout.SOUTH, binningLabel, 64,
+            SpringLayout.NORTH, topPanel);
+      topLayout.putConstraint(SpringLayout.NORTH, binningLabel, 43,
+            SpringLayout.NORTH, topPanel);
+      topLayout.putConstraint(SpringLayout.EAST, binningLabel, 200 - 1,
+            SpringLayout.WEST, topPanel);
+      topLayout.putConstraint(SpringLayout.WEST, binningLabel, 112 - 1,
+            SpringLayout.WEST, topPanel);
 
       labelImageDimensions_ = new JLabel();
       labelImageDimensions_.setFont(new Font("Arial", Font.PLAIN, 10));
-      getContentPane().add(labelImageDimensions_);
-      springLayout_.putConstraint(SpringLayout.SOUTH, labelImageDimensions_,
-            -5, SpringLayout.SOUTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.NORTH, labelImageDimensions_,
-            -25, SpringLayout.SOUTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.EAST, labelImageDimensions_,
-            -5, SpringLayout.EAST, getContentPane());
-      springLayout_.putConstraint(SpringLayout.WEST, labelImageDimensions_,
-            5, SpringLayout.WEST, getContentPane());
+      bottomPanel.add(labelImageDimensions_);
+      topLayout.putConstraint(SpringLayout.SOUTH, labelImageDimensions_,
+            -5, SpringLayout.SOUTH, bottomPanel);
+      topLayout.putConstraint(SpringLayout.NORTH, labelImageDimensions_,
+            -25, SpringLayout.SOUTH, bottomPanel);
+      topLayout.putConstraint(SpringLayout.EAST, labelImageDimensions_,
+            -5, SpringLayout.EAST, bottomPanel);
+      topLayout.putConstraint(SpringLayout.WEST, labelImageDimensions_,
+            5, SpringLayout.WEST, bottomPanel);
 
       comboBinning_ = new JComboBox();
       comboBinning_.setFont(new Font("Arial", Font.PLAIN, 10));
@@ -1333,68 +1355,68 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             changeBinning();
          }
       });
-      getContentPane().add(comboBinning_);
-      springLayout_.putConstraint(SpringLayout.EAST, comboBinning_, 275,
-            SpringLayout.WEST, getContentPane());
-      springLayout_.putConstraint(SpringLayout.WEST, comboBinning_, 200,
-            SpringLayout.WEST, getContentPane());
-      springLayout_.putConstraint(SpringLayout.SOUTH, comboBinning_, 66,
-            SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.NORTH, comboBinning_, 43,
-            SpringLayout.NORTH, getContentPane());
+      topPanel.add(comboBinning_);
+      topLayout.putConstraint(SpringLayout.EAST, comboBinning_, 275,
+            SpringLayout.WEST, topPanel);
+      topLayout.putConstraint(SpringLayout.WEST, comboBinning_, 200,
+            SpringLayout.WEST, topPanel);
+      topLayout.putConstraint(SpringLayout.SOUTH, comboBinning_, 66,
+            SpringLayout.NORTH, topPanel);
+      topLayout.putConstraint(SpringLayout.NORTH, comboBinning_, 43,
+            SpringLayout.NORTH, topPanel);
 
 
 
       final JLabel cameraSettingsLabel = new JLabel();
       cameraSettingsLabel.setFont(new Font("Arial", Font.BOLD, 11));
       cameraSettingsLabel.setText("Camera settings");
-      getContentPane().add(cameraSettingsLabel);
-      springLayout_.putConstraint(SpringLayout.EAST, cameraSettingsLabel,
-            211, SpringLayout.WEST, getContentPane());
-      springLayout_.putConstraint(SpringLayout.NORTH, cameraSettingsLabel, 6,
-            SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.WEST, cameraSettingsLabel,
-            109, SpringLayout.WEST, getContentPane());
+      topPanel.add(cameraSettingsLabel);
+      topLayout.putConstraint(SpringLayout.EAST, cameraSettingsLabel,
+            211, SpringLayout.WEST, topPanel);
+      topLayout.putConstraint(SpringLayout.NORTH, cameraSettingsLabel, 6,
+            SpringLayout.NORTH, topPanel);
+      topLayout.putConstraint(SpringLayout.WEST, cameraSettingsLabel,
+            109, SpringLayout.WEST, topPanel);
 
 
       configPad_ = new ConfigGroupPad();
 
       configPad_.setFont(new Font("", Font.PLAIN, 10));
-      getContentPane().add(configPad_);
-      springLayout_.putConstraint(SpringLayout.EAST, configPad_, -4,
-            SpringLayout.EAST, getContentPane());
-      springLayout_.putConstraint(SpringLayout.WEST, configPad_, 5,
+      topPanel.add(configPad_);
+      topLayout.putConstraint(SpringLayout.EAST, configPad_, -4,
+            SpringLayout.EAST, topPanel);
+      topLayout.putConstraint(SpringLayout.WEST, configPad_, 5,
             SpringLayout.EAST, comboBinning_);
-      springLayout_.putConstraint(SpringLayout.SOUTH, configPad_, 156,
-            SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.NORTH, configPad_, 21,
-            SpringLayout.NORTH, getContentPane());
+      topLayout.putConstraint(SpringLayout.SOUTH, configPad_, -21,
+            SpringLayout.SOUTH, topPanel);
+      topLayout.putConstraint(SpringLayout.NORTH, configPad_, 21,
+            SpringLayout.NORTH, topPanel);
 
       configPadButtonPanel_ = new ConfigPadButtonPanel();
       configPadButtonPanel_.setConfigPad(configPad_);
       configPadButtonPanel_.setGUI(this);
-      getContentPane().add(configPadButtonPanel_);
-      springLayout_.putConstraint(SpringLayout.EAST, configPadButtonPanel_, -4,
-            SpringLayout.EAST, getContentPane());
-      springLayout_.putConstraint(SpringLayout.WEST, configPadButtonPanel_, 5,
+      topPanel.add(configPadButtonPanel_);
+      topLayout.putConstraint(SpringLayout.EAST, configPadButtonPanel_, -4,
+            SpringLayout.EAST, topPanel);
+      topLayout.putConstraint(SpringLayout.WEST, configPadButtonPanel_, 5,
             SpringLayout.EAST, comboBinning_);
-      springLayout_.putConstraint(SpringLayout.SOUTH, configPadButtonPanel_, 174,
-            SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.NORTH, configPadButtonPanel_, 158,
-            SpringLayout.NORTH, getContentPane());
+      topLayout.putConstraint(SpringLayout.SOUTH, configPadButtonPanel_, 0,
+            SpringLayout.SOUTH, topPanel);
+      topLayout.putConstraint(SpringLayout.NORTH, configPadButtonPanel_, -18,
+            SpringLayout.SOUTH, topPanel);
 
 
       final JLabel stateDeviceLabel = new JLabel();
       stateDeviceLabel.setFont(new Font("Arial", Font.BOLD, 11));
       stateDeviceLabel.setText("Configuration settings");
-      getContentPane().add(stateDeviceLabel);
-      springLayout_.putConstraint(SpringLayout.SOUTH, stateDeviceLabel, 0,
+      topPanel.add(stateDeviceLabel);
+      topLayout.putConstraint(SpringLayout.SOUTH, stateDeviceLabel, 0,
             SpringLayout.SOUTH, cameraSettingsLabel);
-      springLayout_.putConstraint(SpringLayout.NORTH, stateDeviceLabel, 0,
+      topLayout.putConstraint(SpringLayout.NORTH, stateDeviceLabel, 0,
             SpringLayout.NORTH, cameraSettingsLabel);
-      springLayout_.putConstraint(SpringLayout.EAST, stateDeviceLabel, 150,
+      topLayout.putConstraint(SpringLayout.EAST, stateDeviceLabel, 150,
             SpringLayout.WEST, configPad_);
-      springLayout_.putConstraint(SpringLayout.WEST, stateDeviceLabel, 0,
+      topLayout.putConstraint(SpringLayout.WEST, stateDeviceLabel, 0,
             SpringLayout.WEST, configPad_);
 
 
@@ -1412,15 +1434,15 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          }
       });
       buttonAcqSetup.setText("Multi-D Acq.");
-      getContentPane().add(buttonAcqSetup);
-      springLayout_.putConstraint(SpringLayout.SOUTH, buttonAcqSetup, 91,
-            SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.NORTH, buttonAcqSetup, 70,
-            SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.EAST, buttonAcqSetup, 95,
-            SpringLayout.WEST, getContentPane());
-      springLayout_.putConstraint(SpringLayout.WEST, buttonAcqSetup, 7,
-            SpringLayout.WEST, getContentPane());
+      topPanel.add(buttonAcqSetup);
+      topLayout.putConstraint(SpringLayout.SOUTH, buttonAcqSetup, 91,
+            SpringLayout.NORTH, topPanel);
+      topLayout.putConstraint(SpringLayout.NORTH, buttonAcqSetup, 70,
+            SpringLayout.NORTH, topPanel);
+      topLayout.putConstraint(SpringLayout.EAST, buttonAcqSetup, 95,
+            SpringLayout.WEST, topPanel);
+      topLayout.putConstraint(SpringLayout.WEST, buttonAcqSetup, 7,
+            SpringLayout.WEST, topPanel);
 
       autoShutterCheckBox_ = new JCheckBox();
       autoShutterCheckBox_.setFont(new Font("Arial", Font.PLAIN, 10));
@@ -1446,15 +1468,15 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       autoShutterCheckBox_.setIconTextGap(6);
       autoShutterCheckBox_.setHorizontalTextPosition(SwingConstants.LEADING);
       autoShutterCheckBox_.setText("Auto shutter");
-      getContentPane().add(autoShutterCheckBox_);
-      springLayout_.putConstraint(SpringLayout.EAST, autoShutterCheckBox_,
-            202 - 3, SpringLayout.WEST, getContentPane());
-      springLayout_.putConstraint(SpringLayout.WEST, autoShutterCheckBox_,
-            110 - 3, SpringLayout.WEST, getContentPane());
-      springLayout_.putConstraint(SpringLayout.SOUTH, autoShutterCheckBox_,
-            141 - 22, SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.NORTH, autoShutterCheckBox_,
-            118 - 22, SpringLayout.NORTH, getContentPane());
+      topPanel.add(autoShutterCheckBox_);
+      topLayout.putConstraint(SpringLayout.EAST, autoShutterCheckBox_,
+            202 - 3, SpringLayout.WEST, topPanel);
+      topLayout.putConstraint(SpringLayout.WEST, autoShutterCheckBox_,
+            110 - 3, SpringLayout.WEST, topPanel);
+      topLayout.putConstraint(SpringLayout.SOUTH, autoShutterCheckBox_,
+            141 - 22, SpringLayout.NORTH, topPanel);
+      topLayout.putConstraint(SpringLayout.NORTH, autoShutterCheckBox_,
+            118 - 22, SpringLayout.NORTH, topPanel);
 
     
       final JButton refreshButton = new JButton();
@@ -1472,27 +1494,27 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          }
       });
       refreshButton.setText("Refresh");
-      getContentPane().add(refreshButton);
-      springLayout_.putConstraint(SpringLayout.SOUTH, refreshButton, 113,
-            SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.NORTH, refreshButton, 92,
-            SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.EAST, refreshButton, 95,
-            SpringLayout.WEST, getContentPane());
-      springLayout_.putConstraint(SpringLayout.WEST, refreshButton, 7,
-            SpringLayout.WEST, getContentPane());
+      topPanel.add(refreshButton);
+      topLayout.putConstraint(SpringLayout.SOUTH, refreshButton, 113,
+            SpringLayout.NORTH, topPanel);
+      topLayout.putConstraint(SpringLayout.NORTH, refreshButton, 92,
+            SpringLayout.NORTH, topPanel);
+      topLayout.putConstraint(SpringLayout.EAST, refreshButton, 95,
+            SpringLayout.WEST, topPanel);
+      topLayout.putConstraint(SpringLayout.WEST, refreshButton, 7,
+            SpringLayout.WEST, topPanel);
 
       JLabel citePleaLabel_ = new JLabel("<html>Please <a href=\"http://micro-manager.org\">cite Micro-Manager</a> so funding will continue!</html>");
-      getContentPane().add(citePleaLabel_);
+      topPanel.add(citePleaLabel_);
       citePleaLabel_.setFont(new Font("Arial", Font.PLAIN, 11));
-      springLayout_.putConstraint(SpringLayout.SOUTH, citePleaLabel_, 139,
-              SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.NORTH, citePleaLabel_, 119,
-            SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.EAST, citePleaLabel_, 270,
-            SpringLayout.WEST, getContentPane());
-      springLayout_.putConstraint(SpringLayout.WEST, citePleaLabel_, 7,
-            SpringLayout.WEST, getContentPane());
+      topLayout.putConstraint(SpringLayout.SOUTH, citePleaLabel_, 139,
+              SpringLayout.NORTH, topPanel);
+      topLayout.putConstraint(SpringLayout.NORTH, citePleaLabel_, 119,
+            SpringLayout.NORTH, topPanel);
+      topLayout.putConstraint(SpringLayout.EAST, citePleaLabel_, 270,
+            SpringLayout.WEST, topPanel);
+      topLayout.putConstraint(SpringLayout.WEST, citePleaLabel_, 7,
+            SpringLayout.WEST, topPanel);
 
       class Pleader extends Thread{
          Pleader(){
@@ -1641,15 +1663,15 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             setROI();
          }
       });
-      getContentPane().add(setRoiButton);
-      springLayout_.putConstraint(SpringLayout.EAST, setRoiButton, 37,
-            SpringLayout.WEST, getContentPane());
-      springLayout_.putConstraint(SpringLayout.WEST, setRoiButton, 7,
-            SpringLayout.WEST, getContentPane());
-      springLayout_.putConstraint(SpringLayout.SOUTH, setRoiButton, 174,
-            SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.NORTH, setRoiButton, 154,
-            SpringLayout.NORTH, getContentPane());
+      topPanel.add(setRoiButton);
+      topLayout.putConstraint(SpringLayout.EAST, setRoiButton, 37,
+            SpringLayout.WEST, topPanel);
+      topLayout.putConstraint(SpringLayout.WEST, setRoiButton, 7,
+            SpringLayout.WEST, topPanel);
+      topLayout.putConstraint(SpringLayout.SOUTH, setRoiButton, 174,
+            SpringLayout.NORTH, topPanel);
+      topLayout.putConstraint(SpringLayout.NORTH, setRoiButton, 154,
+            SpringLayout.NORTH, topPanel);
 
       final JButton clearRoiButton = new JButton();
       clearRoiButton.setIcon(SwingResourceManager.getIcon(
@@ -1663,58 +1685,58 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             clearROI();
          }
       });
-      getContentPane().add(clearRoiButton);
-      springLayout_.putConstraint(SpringLayout.EAST, clearRoiButton, 70,
-            SpringLayout.WEST, getContentPane());
-      springLayout_.putConstraint(SpringLayout.WEST, clearRoiButton, 40,
-            SpringLayout.WEST, getContentPane());
-      springLayout_.putConstraint(SpringLayout.SOUTH, clearRoiButton, 174,
-            SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.NORTH, clearRoiButton, 154,
-            SpringLayout.NORTH, getContentPane());
+      topPanel.add(clearRoiButton);
+      topLayout.putConstraint(SpringLayout.EAST, clearRoiButton, 70,
+            SpringLayout.WEST, topPanel);
+      topLayout.putConstraint(SpringLayout.WEST, clearRoiButton, 40,
+            SpringLayout.WEST, topPanel);
+      topLayout.putConstraint(SpringLayout.SOUTH, clearRoiButton, 174,
+            SpringLayout.NORTH, topPanel);
+      topLayout.putConstraint(SpringLayout.NORTH, clearRoiButton, 154,
+            SpringLayout.NORTH, topPanel);
 
       final JLabel regionOfInterestLabel = new JLabel();
       regionOfInterestLabel.setFont(new Font("Arial", Font.BOLD, 11));
       regionOfInterestLabel.setText("ROI");
-      getContentPane().add(regionOfInterestLabel);
-      springLayout_.putConstraint(SpringLayout.SOUTH, regionOfInterestLabel,
-            154, SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.NORTH, regionOfInterestLabel,
-            140, SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.EAST, regionOfInterestLabel,
-            71, SpringLayout.WEST, getContentPane());
-      springLayout_.putConstraint(SpringLayout.WEST, regionOfInterestLabel,
-            8, SpringLayout.WEST, getContentPane());
+      topPanel.add(regionOfInterestLabel);
+      topLayout.putConstraint(SpringLayout.SOUTH, regionOfInterestLabel,
+            154, SpringLayout.NORTH, topPanel);
+      topLayout.putConstraint(SpringLayout.NORTH, regionOfInterestLabel,
+            140, SpringLayout.NORTH, topPanel);
+      topLayout.putConstraint(SpringLayout.EAST, regionOfInterestLabel,
+            71, SpringLayout.WEST, topPanel);
+      topLayout.putConstraint(SpringLayout.WEST, regionOfInterestLabel,
+            8, SpringLayout.WEST, topPanel);
 
 
       contrastPanel_ = new ContrastPanel();
       contrastPanel_.setFont(new Font("", Font.PLAIN, 10));
       contrastPanel_.setContrastStretch(stretch);
-      contrastPanel_.setBorder(new LineBorder(Color.black, 1, false));
-      getContentPane().add(contrastPanel_);
-      springLayout_.putConstraint(SpringLayout.SOUTH, contrastPanel_, -26,
-            SpringLayout.SOUTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.NORTH, contrastPanel_, 176,
-            SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.EAST, contrastPanel_, -5,
-            SpringLayout.EAST, getContentPane());
-      springLayout_.putConstraint(SpringLayout.WEST, contrastPanel_, 7,
-            SpringLayout.WEST, getContentPane());
+      contrastPanel_.setBorder(BorderFactory.createEmptyBorder());
+      bottomPanel.add(contrastPanel_);
+      topLayout.putConstraint(SpringLayout.SOUTH, contrastPanel_, -20,
+            SpringLayout.SOUTH, bottomPanel);
+      topLayout.putConstraint(SpringLayout.NORTH, contrastPanel_, 0,
+            SpringLayout.NORTH, bottomPanel);
+      topLayout.putConstraint(SpringLayout.EAST, contrastPanel_, 0,
+            SpringLayout.EAST, bottomPanel);
+      topLayout.putConstraint(SpringLayout.WEST, contrastPanel_, 0,
+            SpringLayout.WEST, bottomPanel);
 
       
       metadataPanel_ = new MetadataPanel();
       metadataPanel_.setVisible(false);
 
-      getContentPane().add(metadataPanel_);
-      springLayout_.putConstraint(SpringLayout.SOUTH, metadataPanel_, -26,
-            SpringLayout.SOUTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.NORTH, metadataPanel_, 176,
-            SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.EAST, metadataPanel_, -5,
-            SpringLayout.EAST, getContentPane());
-      springLayout_.putConstraint(SpringLayout.WEST, metadataPanel_, 7,
-            SpringLayout.WEST, getContentPane());
-      metadataPanel_.setBorder(new LineBorder(Color.black, 1, false));
+      bottomPanel.add(metadataPanel_);
+      topLayout.putConstraint(SpringLayout.SOUTH, metadataPanel_, -20,
+            SpringLayout.SOUTH, bottomPanel);
+      topLayout.putConstraint(SpringLayout.NORTH, metadataPanel_, 0,
+            SpringLayout.NORTH, bottomPanel);
+      topLayout.putConstraint(SpringLayout.EAST, metadataPanel_, 0,
+            SpringLayout.EAST, bottomPanel);
+      topLayout.putConstraint(SpringLayout.WEST, metadataPanel_, 0,
+            SpringLayout.WEST, bottomPanel);
+      metadataPanel_.setBorder(BorderFactory.createEmptyBorder());
 
       GUIUtils.registerImageFocusListener(new ImageFocusListener() {
          public void focusReceived(ImageWindow focusedWindow) {
@@ -1735,17 +1757,17 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       final JLabel regionOfInterestLabel_1 = new JLabel();
       regionOfInterestLabel_1.setFont(new Font("Arial", Font.BOLD, 11));
       regionOfInterestLabel_1.setText("Zoom");
-      getContentPane().add(regionOfInterestLabel_1);
-      springLayout_.putConstraint(SpringLayout.SOUTH,
+      topPanel.add(regionOfInterestLabel_1);
+      topLayout.putConstraint(SpringLayout.SOUTH,
             regionOfInterestLabel_1, 154, SpringLayout.NORTH,
-            getContentPane());
-      springLayout_.putConstraint(SpringLayout.NORTH,
+            topPanel);
+      topLayout.putConstraint(SpringLayout.NORTH,
             regionOfInterestLabel_1, 140, SpringLayout.NORTH,
-            getContentPane());
-      springLayout_.putConstraint(SpringLayout.EAST, regionOfInterestLabel_1,
-            139, SpringLayout.WEST, getContentPane());
-      springLayout_.putConstraint(SpringLayout.WEST, regionOfInterestLabel_1,
-            81, SpringLayout.WEST, getContentPane());
+            topPanel);
+      topLayout.putConstraint(SpringLayout.EAST, regionOfInterestLabel_1,
+            139, SpringLayout.WEST, topPanel);
+      topLayout.putConstraint(SpringLayout.WEST, regionOfInterestLabel_1,
+            81, SpringLayout.WEST, topPanel);
 
       final JButton zoomInButton = new JButton();
       zoomInButton.addActionListener(new ActionListener() {
@@ -1758,15 +1780,15 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             "/org/micromanager/icons/zoom_in.png"));
       zoomInButton.setToolTipText("Zoom in");
       zoomInButton.setFont(new Font("Arial", Font.PLAIN, 10));
-      getContentPane().add(zoomInButton);
-      springLayout_.putConstraint(SpringLayout.SOUTH, zoomInButton, 174,
-            SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.NORTH, zoomInButton, 154,
-            SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.EAST, zoomInButton, 110,
-            SpringLayout.WEST, getContentPane());
-      springLayout_.putConstraint(SpringLayout.WEST, zoomInButton, 80,
-            SpringLayout.WEST, getContentPane());
+      topPanel.add(zoomInButton);
+      topLayout.putConstraint(SpringLayout.SOUTH, zoomInButton, 174,
+            SpringLayout.NORTH, topPanel);
+      topLayout.putConstraint(SpringLayout.NORTH, zoomInButton, 154,
+            SpringLayout.NORTH, topPanel);
+      topLayout.putConstraint(SpringLayout.EAST, zoomInButton, 110,
+            SpringLayout.WEST, topPanel);
+      topLayout.putConstraint(SpringLayout.WEST, zoomInButton, 80,
+            SpringLayout.WEST, topPanel);
 
       final JButton zoomOutButton = new JButton();
       zoomOutButton.addActionListener(new ActionListener() {
@@ -1779,15 +1801,15 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             "/org/micromanager/icons/zoom_out.png"));
       zoomOutButton.setToolTipText("Zoom out");
       zoomOutButton.setFont(new Font("Arial", Font.PLAIN, 10));
-      getContentPane().add(zoomOutButton);
-      springLayout_.putConstraint(SpringLayout.SOUTH, zoomOutButton, 174,
-            SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.NORTH, zoomOutButton, 154,
-            SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.EAST, zoomOutButton, 143,
-            SpringLayout.WEST, getContentPane());
-      springLayout_.putConstraint(SpringLayout.WEST, zoomOutButton, 113,
-            SpringLayout.WEST, getContentPane());
+      topPanel.add(zoomOutButton);
+      topLayout.putConstraint(SpringLayout.SOUTH, zoomOutButton, 174,
+            SpringLayout.NORTH, topPanel);
+      topLayout.putConstraint(SpringLayout.NORTH, zoomOutButton, 154,
+            SpringLayout.NORTH, topPanel);
+      topLayout.putConstraint(SpringLayout.EAST, zoomOutButton, 143,
+            SpringLayout.WEST, topPanel);
+      topLayout.putConstraint(SpringLayout.WEST, zoomOutButton, 113,
+            SpringLayout.WEST, topPanel);
 
       // Profile
       // -------
@@ -1795,15 +1817,15 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       final JLabel profileLabel_ = new JLabel();
       profileLabel_.setFont(new Font("Arial", Font.BOLD, 11));
       profileLabel_.setText("Profile");
-      getContentPane().add(profileLabel_);
-      springLayout_.putConstraint(SpringLayout.SOUTH, profileLabel_, 154,
-            SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.NORTH, profileLabel_, 140,
-            SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.EAST, profileLabel_, 217,
-            SpringLayout.WEST, getContentPane());
-      springLayout_.putConstraint(SpringLayout.WEST, profileLabel_, 154,
-            SpringLayout.WEST, getContentPane());
+      topPanel.add(profileLabel_);
+      topLayout.putConstraint(SpringLayout.SOUTH, profileLabel_, 154,
+            SpringLayout.NORTH, topPanel);
+      topLayout.putConstraint(SpringLayout.NORTH, profileLabel_, 140,
+            SpringLayout.NORTH, topPanel);
+      topLayout.putConstraint(SpringLayout.EAST, profileLabel_, 217,
+            SpringLayout.WEST, topPanel);
+      topLayout.putConstraint(SpringLayout.WEST, profileLabel_, 154,
+            SpringLayout.WEST, topPanel);
 
       final JButton buttonProf = new JButton();
       buttonProf.setIcon(SwingResourceManager.getIcon(
@@ -1818,15 +1840,15 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          }
       });
       // buttonProf.setText("Profile");
-      getContentPane().add(buttonProf);
-      springLayout_.putConstraint(SpringLayout.SOUTH, buttonProf, 174,
-            SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.NORTH, buttonProf, 154,
-            SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.EAST, buttonProf, 183,
-            SpringLayout.WEST, getContentPane());
-      springLayout_.putConstraint(SpringLayout.WEST, buttonProf, 153,
-            SpringLayout.WEST, getContentPane());
+      topPanel.add(buttonProf);
+      topLayout.putConstraint(SpringLayout.SOUTH, buttonProf, 174,
+            SpringLayout.NORTH, topPanel);
+      topLayout.putConstraint(SpringLayout.NORTH, buttonProf, 154,
+            SpringLayout.NORTH, topPanel);
+      topLayout.putConstraint(SpringLayout.EAST, buttonProf, 183,
+            SpringLayout.WEST, topPanel);
+      topLayout.putConstraint(SpringLayout.WEST, buttonProf, 153,
+            SpringLayout.WEST, topPanel);
 
       // Autofocus
       // -------
@@ -1834,15 +1856,15 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       final JLabel autofocusLabel_ = new JLabel();
       autofocusLabel_.setFont(new Font("Arial", Font.BOLD, 11));
       autofocusLabel_.setText("Autofocus");
-      getContentPane().add(autofocusLabel_);
-      springLayout_.putConstraint(SpringLayout.SOUTH, autofocusLabel_, 154,
-            SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.NORTH, autofocusLabel_, 140,
-            SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.EAST, autofocusLabel_, 274,
-            SpringLayout.WEST, getContentPane());
-      springLayout_.putConstraint(SpringLayout.WEST, autofocusLabel_, 194,
-            SpringLayout.WEST, getContentPane());
+      topPanel.add(autofocusLabel_);
+      topLayout.putConstraint(SpringLayout.SOUTH, autofocusLabel_, 154,
+            SpringLayout.NORTH, topPanel);
+      topLayout.putConstraint(SpringLayout.NORTH, autofocusLabel_, 140,
+            SpringLayout.NORTH, topPanel);
+      topLayout.putConstraint(SpringLayout.EAST, autofocusLabel_, 274,
+            SpringLayout.WEST, topPanel);
+      topLayout.putConstraint(SpringLayout.WEST, autofocusLabel_, 194,
+            SpringLayout.WEST, topPanel);
 
       buttonAutofocus_ = new JButton();
       buttonAutofocus_.setIcon(SwingResourceManager.getIcon(
@@ -1870,15 +1892,15 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             }
          }
       });
-      getContentPane().add(buttonAutofocus_);
-      springLayout_.putConstraint(SpringLayout.SOUTH, buttonAutofocus_, 174,
-            SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.NORTH, buttonAutofocus_, 154,
-            SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.EAST, buttonAutofocus_, 223,
-            SpringLayout.WEST, getContentPane());
-      springLayout_.putConstraint(SpringLayout.WEST, buttonAutofocus_, 193,
-            SpringLayout.WEST, getContentPane());
+      topPanel.add(buttonAutofocus_);
+      topLayout.putConstraint(SpringLayout.SOUTH, buttonAutofocus_, 174,
+            SpringLayout.NORTH, topPanel);
+      topLayout.putConstraint(SpringLayout.NORTH, buttonAutofocus_, 154,
+            SpringLayout.NORTH, topPanel);
+      topLayout.putConstraint(SpringLayout.EAST, buttonAutofocus_, 223,
+            SpringLayout.WEST, topPanel);
+      topLayout.putConstraint(SpringLayout.WEST, buttonAutofocus_, 193,
+            SpringLayout.WEST, topPanel);
 
       buttonAutofocusTools_ = new JButton();
       buttonAutofocusTools_.setIcon(SwingResourceManager.getIcon(
@@ -1892,15 +1914,15 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             showAutofocusDialog();
          }
       });
-      getContentPane().add(buttonAutofocusTools_);
-      springLayout_.putConstraint(SpringLayout.SOUTH, buttonAutofocusTools_, 174,
-            SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.NORTH, buttonAutofocusTools_, 154,
-            SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.EAST, buttonAutofocusTools_, 256,
-            SpringLayout.WEST, getContentPane());
-      springLayout_.putConstraint(SpringLayout.WEST, buttonAutofocusTools_, 226,
-            SpringLayout.WEST, getContentPane());
+      topPanel.add(buttonAutofocusTools_);
+      topLayout.putConstraint(SpringLayout.SOUTH, buttonAutofocusTools_, 174,
+            SpringLayout.NORTH, topPanel);
+      topLayout.putConstraint(SpringLayout.NORTH, buttonAutofocusTools_, 154,
+            SpringLayout.NORTH, topPanel);
+      topLayout.putConstraint(SpringLayout.EAST, buttonAutofocusTools_, 256,
+            SpringLayout.WEST, topPanel);
+      topLayout.putConstraint(SpringLayout.WEST, buttonAutofocusTools_, 226,
+            SpringLayout.WEST, topPanel);
 
       saveConfigButton_ = new JButton();
       saveConfigButton_.addActionListener(new ActionListener() {
@@ -1912,15 +1934,15 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       saveConfigButton_.setToolTipText("Save current presets to the configuration file");
       saveConfigButton_.setText("Save");
       saveConfigButton_.setEnabled(false);
-      getContentPane().add(saveConfigButton_);
-      springLayout_.putConstraint(SpringLayout.SOUTH, saveConfigButton_, 20,
-            SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.NORTH, saveConfigButton_, 2,
-            SpringLayout.NORTH, getContentPane());
-      springLayout_.putConstraint(SpringLayout.EAST, saveConfigButton_, -5,
-            SpringLayout.EAST, getContentPane());
-      springLayout_.putConstraint(SpringLayout.WEST, saveConfigButton_, -80,
-            SpringLayout.EAST, getContentPane());
+      topPanel.add(saveConfigButton_);
+      topLayout.putConstraint(SpringLayout.SOUTH, saveConfigButton_, 20,
+            SpringLayout.NORTH, topPanel);
+      topLayout.putConstraint(SpringLayout.NORTH, saveConfigButton_, 2,
+            SpringLayout.NORTH, topPanel);
+      topLayout.putConstraint(SpringLayout.EAST, saveConfigButton_, -5,
+            SpringLayout.EAST, topPanel);
+      topLayout.putConstraint(SpringLayout.WEST, saveConfigButton_, -80,
+            SpringLayout.EAST, topPanel);
    }
 
    private void handleException(Exception e, String msg) {
@@ -3196,6 +3218,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       mainPrefs_.putInt(MAIN_FRAME_Y, r.y);
       mainPrefs_.putInt(MAIN_FRAME_WIDTH, r.width);
       mainPrefs_.putInt(MAIN_FRAME_HEIGHT, r.height);
+      mainPrefs_.putInt(MAIN_FRAME_DIVIDER_POS, this.splitPane_.getDividerLocation());
 
       mainPrefs_.putBoolean(MAIN_STRETCH_CONTRAST, contrastPanel_.isContrastStretch());
 
