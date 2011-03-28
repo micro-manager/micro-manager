@@ -136,6 +136,7 @@ Source: micro-manager\mmgr_dal_SpotCamera.dll; DestDir: {app}; Flags: ignorevers
 Source: micro-manager\mmgr_dal_SutterLambda.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_ThorlabsFilterWheel.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_ThorlabsSC10.dll; DestDir: {app}; Flags: ignoreversion
+Source: micro-manager\mmgr_dal_Thorlabs.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_TIScam.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_TwainCamera.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_USBManager.dll; DestDir: {app}; Flags: ignoreversion

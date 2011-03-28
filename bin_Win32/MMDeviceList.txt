@@ -229,6 +229,7 @@ SutterLambda,Shutter-B 10-2,Lambda 10-2 shutter B,3
 SutterLambda,Shutter-DG4,DG4 shutter,3
 SutterLambda,Wheel-DG4,DG4 filter changer,4
 TIScam,TIS_DCAM,The Imaging Source,2
+Thorlabs,XYStage,Thorlabs BD102 XY Stage,6
 ThorlabsFilterWheel,Thorlabs Filter Wheel,Thorlabs filter wheel,4
 ThorlabsSC10,SC10,ThorLabs SC10 shutter controller,3
 TwainCamera,TwainCam,Twain camera,1
