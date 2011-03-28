@@ -507,11 +507,6 @@ public class VirtualAcquisitionDisplay {
             }
          }
          
-         if (hyperImage_.getSlice() == 1) {
-            hyperImage_.getProcessor().setPixels(
-                    hyperImage_.getStack().getPixels(1));
-         }
-
          updateAndDraw();
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
