@@ -1401,7 +1401,7 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
  
 
 	// bitDepth_ is 8, 10, 12, 16 i.e. it is depth per component
-   long maxValue = 1 << bitDepth_;
+   long maxValue = (1L << bitDepth_)-1;
 
 	long pixelsToDrop = 0;
 	if( dropPixels_)
@@ -1428,7 +1428,7 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
 		{
 			j = (unsigned)(0.5 + (double)img.Height()*(double)rand()/(double)RAND_MAX);
 			k = (unsigned)(0.5 + (double)img.Width()*(double)rand()/(double)RAND_MAX);
-			*(pBuf + img.Width()*j + k) = maxValue;
+			*(pBuf + img.Width()*j + k) = (unsigned char)maxValue;
 		}
 		int pnoise;
 		for(pnoise = 0; pnoise < pixelsToDrop; ++pnoise)
@@ -1457,7 +1457,7 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
 		{
 			j = (unsigned)(0.5 + (double)img.Height()*(double)rand()/(double)RAND_MAX);
 			k = (unsigned)(0.5 + (double)img.Width()*(double)rand()/(double)RAND_MAX);
-			*(pBuf + img.Width()*j + k) = maxValue;
+			*(pBuf + img.Width()*j + k) = (unsigned short)maxValue;
 		}
 		int pnoise;
 		for(pnoise = 0; pnoise < pixelsToDrop; ++pnoise)
