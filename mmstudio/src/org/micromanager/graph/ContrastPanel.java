@@ -38,6 +38,7 @@ import java.awt.Color;
 
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -309,9 +310,9 @@ public class ContrastPanel extends JPanel implements ImageController,
 		});
 		add(stretchCheckBox_);
 
-		springLayout.putConstraint(SpringLayout.EAST, stretchCheckBox_, -2,
+		springLayout.putConstraint(SpringLayout.EAST, stretchCheckBox_, 5,
 				SpringLayout.WEST, histogramPanel_);
-		springLayout.putConstraint(SpringLayout.WEST, stretchCheckBox_, 1,
+		springLayout.putConstraint(SpringLayout.WEST, stretchCheckBox_, 0,
 				SpringLayout.WEST, this);
 		springLayout.putConstraint(SpringLayout.SOUTH, stretchCheckBox_, 185,
 				SpringLayout.NORTH, this);
@@ -321,7 +322,7 @@ public class ContrastPanel extends JPanel implements ImageController,
 
 	   rejectOutliersCheckBox_ = new JCheckBox();
 		rejectOutliersCheckBox_.setFont(new Font("", Font.PLAIN, 10));
-		rejectOutliersCheckBox_.setText("Rejct Outliers");
+		rejectOutliersCheckBox_.setText("Reject Outliers");
 		rejectOutliersCheckBox_.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent ce) {
             if (rejectOutliersCheckBox_.isSelected()) {
@@ -332,13 +333,13 @@ public class ContrastPanel extends JPanel implements ImageController,
 		});
 		add(rejectOutliersCheckBox_);
 
-		springLayout.putConstraint(SpringLayout.EAST, rejectOutliersCheckBox_, -2,
+		springLayout.putConstraint(SpringLayout.EAST, rejectOutliersCheckBox_, 5,
 				SpringLayout.WEST, histogramPanel_);
-		springLayout.putConstraint(SpringLayout.WEST, rejectOutliersCheckBox_, 1,
+		springLayout.putConstraint(SpringLayout.WEST, rejectOutliersCheckBox_, 0,
 				SpringLayout.WEST, this);
-		springLayout.putConstraint(SpringLayout.SOUTH, rejectOutliersCheckBox_, 220,
+		springLayout.putConstraint(SpringLayout.SOUTH, rejectOutliersCheckBox_, 210,
 				SpringLayout.NORTH, this);
-		springLayout.putConstraint(SpringLayout.NORTH, rejectOutliersCheckBox_, 195,
+		springLayout.putConstraint(SpringLayout.NORTH, rejectOutliersCheckBox_, 185,
 				SpringLayout.NORTH, this);
 
 
@@ -654,7 +655,7 @@ public class ContrastPanel extends JPanel implements ImageController,
 	private void setFullScale() {
 		if (image_ == null)
 			return;
-
+      setContrastStretch(false);
       image_.getProcessor().setMinAndMax(0, maxIntensity_);
       lutMin_ = 0;
       lutMax_ = maxIntensity_;
