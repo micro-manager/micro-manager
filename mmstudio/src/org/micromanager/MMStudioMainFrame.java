@@ -41,6 +41,7 @@ import java.awt.event.FocusEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.Point2D;
+import java.beans.PropertyChangeEvent;
 
 import java.io.File;
 import java.io.IOException;
@@ -120,6 +121,7 @@ import java.awt.Cursor;
 import java.awt.Graphics;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.beans.PropertyChangeListener;
 import java.util.Collections;
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
@@ -684,21 +686,30 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       SpringLayout topLayout = new SpringLayout();
       //this.setLayout(topLayout);
 
-      this.setMinimumSize(new Dimension(580,485));
+      this.setMinimumSize(new Dimension(580,480));
       JPanel topPanel = new JPanel();
       topPanel.setLayout(topLayout);
       topPanel.setMinimumSize(new Dimension(580, 175));
 
       JPanel bottomPanel = new JPanel();
       bottomPanel.setLayout(topLayout);
-      bottomPanel.setMinimumSize(new Dimension(0,290));
       
-      splitPane_ = new JSplitPane(JSplitPane.VERTICAL_SPLIT, true,
+      splitPane_ = new JSplitPane(JSplitPane.VERTICAL_SPLIT, false,
               topPanel, bottomPanel);
       splitPane_.setBorder(BorderFactory.createEmptyBorder());
       splitPane_.setDividerLocation(dividerPos);
       splitPane_.setResizeWeight(0.0);
       getContentPane().add(splitPane_);
+
+      splitPane_.addPropertyChangeListener(JSplitPane.DIVIDER_LOCATION_PROPERTY,
+                                    new PropertyChangeListener() {
+         public void propertyChange(PropertyChangeEvent evt) {
+				int dh = (Integer) evt.getNewValue() - (Integer) evt.getOldValue();
+				System.out.println(dh);
+				Rectangle r = getBounds();
+				setBounds(r.x, r.y, r.width, r.height + dh);
+         }
+      });
 
       // Snap button
       // -----------
