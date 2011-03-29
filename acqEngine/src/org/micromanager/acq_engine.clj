@@ -424,7 +424,8 @@
     )
     (assoc :frames (range (.numFrames settings))
            :channels (filter :use-channel (map ChannelSpec-to-map (.channels settings)))
-           :positions (range (.. settings positions size)))))
+           :positions (range (.. settings positions size))
+           :default-exposure (core getExposure))))
 
 
 (defn get-IJ-type [depth]

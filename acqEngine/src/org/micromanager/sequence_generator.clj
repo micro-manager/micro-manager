@@ -60,7 +60,9 @@
 (defn build-event [settings event]
   (assoc event
     :z-drive (:focus (get-default-devices))
-    :exposure (if (:channel event) (get-in event [:channel :exposure]))
+    :exposure (if (:channel event)
+                (get-in event [:channel :exposure])
+                (:default-exposure settings))
     :relative-z (:relative-slices settings)))
 
 (defn process-skip-z-stack [events slices]
@@ -113,6 +115,7 @@
         e2 :wait-time-ms interval-ms))))
         
 (defn burst-valid [e1 e2]
+  (println e2)
   (and
     (#(or (nil? %) (>= (:exposure e2) %)) (:wait-time-ms e2))
     (select-values-match? e1 e2 [:exposure :position :slice :channel])
