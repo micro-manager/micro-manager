@@ -70,32 +70,33 @@ public class LiveAcqDisplay extends Thread {
    }
 
    public void start() {
-      final BlockingQueue<TaggedImage> displayQueue = new LinkedBlockingQueue<TaggedImage>();
-      final BlockingQueue<TaggedImage> savingQueue = new LinkedBlockingQueue<TaggedImage>();
-
-      Thread splitter = new Thread() {
+      Thread savingThread = new Thread() {
          public void run() {
-              while (true) {
-                 try {
-                    TaggedImage image = imageProducingQueue_.poll(1, TimeUnit.SECONDS);
-                    if (image != null) {
-                       savingQueue.put(image);
-                       displayQueue.put(image);
-                       if (TaggedImageQueue.isPoison(image)) {
+            long t1 = System.currentTimeMillis();
+            int imageCount = 0;
+            try {
+               while (true) {
+                  TaggedImage image = imageProducingQueue_.poll(1, TimeUnit.SECONDS);
+                  if (image != null) {
+                     if (TaggedImageQueue.isPoison(image)) {
                         break;
-                       }
-                    }
-                 } catch (Exception e) {
-                    ReportingUtils.logError(e);
-                 }
-              }
- 
+                     }
+                     ++imageCount;
+                     imageCache_.putImage(image);
+                  }
+               }
+            } catch (Exception ex2) {
+               ReportingUtils.logError(ex2);
+            }
+            long t2 = System.currentTimeMillis();
+            ReportingUtils.logMessage(imageCount + " images displayed in " + (t2 - t1) + " ms.");
+            cleanup();
          }
       };
-      splitter.start();
+      savingThread.start();
+
 
       Thread displayThread = new Thread() {
-
          public void run() {
             long t1 = System.currentTimeMillis();
             int imageCount = 0;
@@ -111,47 +112,15 @@ public class LiveAcqDisplay extends Thread {
                   }
                   ++imageCount;
                }
-
                updateDisplay();
-
             } catch (Exception ex2) {
                ReportingUtils.logError(ex2);
             }
-
             long t2 = System.currentTimeMillis();
             ReportingUtils.logMessage(imageCount + " images saved in " + (t2 - t1) + " ms.");
          }
       };
       displayThread.start();
-
-      Thread savingThread = new Thread() {
-         public void run() {
-            long t1 = System.currentTimeMillis();
-            int imageCount = 0;
-            try {
-               while (true) {
-                  TaggedImage image = savingQueue.poll(1, TimeUnit.SECONDS);
-                  if (image != null) {
-                     if (TaggedImageQueue.isPoison(image)) {
-                        break;
-                     }
-                     ++imageCount;
-                     imageCache_.putImage(image);
-
-                  }
-               }
-            } catch (Exception ex2) {
-               ReportingUtils.logError(ex2);
-            }
-
-            long t2 = System.currentTimeMillis();
-            ReportingUtils.logMessage(imageCount + " images displayed in " + (t2 - t1) + " ms.");
-            cleanup();
-         }
-      };
-      savingThread.start();
-
-
    }
    
    private static String getUniqueUntitledName() {
