@@ -291,7 +291,10 @@ bool FastLogger::EnableLogToStderr(bool enable)throw()
    {
       fast_log_flags_ &= ~STDERR;
    }
+   pLogThread_g->Stop();
+   pLogThread_g->wait();
    set_flags (fast_log_flags_);
+	pLogThread_g->Start();
 
    return bRet;
 };
@@ -528,7 +531,6 @@ void FastLogger::Log(IMMLogger::priority p, const char* format, ...)throw()
 				stringToWrite_g += '\n';
 			stringToWrite_g += workingString;
 		}while(bfalse);
- //     ace___->log (strFormat.c_str(), ace_p, argp);
 
 
 
