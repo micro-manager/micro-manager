@@ -466,12 +466,18 @@ public class VirtualAcquisitionDisplay {
 
    }
 
-   public void showImage(TaggedImage taggedImg) throws MMScriptException {
-      try {
+   public void showImage(TaggedImage taggedImg) throws Exception {
+       showImage(taggedImg.tags);
+   }
+
+   public void showImage(JSONObject md) throws Exception {
          updateWindow();
-         JSONObject md = taggedImg.tags;
+
          int cameraChannel = this.rgbToGrayChannel(MDUtils.getChannelIndex(md));
-         int frame = MDUtils.getFrameIndex(taggedImg.tags);
+         int frame = MDUtils.getFrameIndex(md);
+         int position = MDUtils.getPositionIndex(md);
+         int slice = MDUtils.getSliceIndex(md);
+
          if (tSelector_ != null) {
             if (tSelector_.getMaximum() <= (1 + frame)) {
                this.setNumFrames(1 + frame);
@@ -479,23 +485,24 @@ public class VirtualAcquisitionDisplay {
          }
 
          try {
-            int p = 1 + MDUtils.getPositionIndex(taggedImg.tags);
+            int p = 1 + MDUtils.getPositionIndex(md);
             if (p >= getNumPositions()) {
                setNumPositions(p);
             }
-            setPosition(MDUtils.getPositionIndex(taggedImg.tags));
+            setPosition(MDUtils.getPositionIndex(md));
             hyperImage_.setPosition(1 + cameraChannel,
                                     1 + MDUtils.getSliceIndex(md),
                                     1 + MDUtils.getFrameIndex(md));
-            //setPlaybackLimits(1, 1 + MDUtils.getFrameIndex(md));
          } catch (Exception e) {
             ReportingUtils.logError(e);
          }
-         if (hyperImage_.getFrame() == 1) {
+
+         if (this.getChannelMin(cameraChannel) >= getChannelMax(cameraChannel)) {
             try {
-               int pixelMin = Math.min(this.getChannelMin(cameraChannel),ImageUtils.getMin(taggedImg.pix));
-               int pixelMax = Math.max(this.getChannelMax(cameraChannel),ImageUtils.getMax(taggedImg.pix));
-               if (MDUtils.isRGB(taggedImg)) {
+               Object pix = imageCache_.getImage(cameraChannel, slice, frame, position).pix;
+               int pixelMin = Math.min(this.getChannelMin(cameraChannel),ImageUtils.getMin(pix));
+               int pixelMax = Math.max(this.getChannelMax(cameraChannel),ImageUtils.getMax(pix));
+               if (MDUtils.isRGB(md)) {
                   for (int i=0; i<3; ++i) {
                      setChannelDisplayRange(cameraChannel + i, pixelMin, pixelMax, false);
                   }
@@ -507,10 +514,8 @@ public class VirtualAcquisitionDisplay {
             }
          }
          
+         
          updateAndDraw();
-      } catch (Exception ex) {
-         ReportingUtils.logError(ex);
-      }
    }
 
    private void updatePosition(int p) {
