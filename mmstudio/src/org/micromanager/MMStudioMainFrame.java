@@ -684,14 +684,14 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       SpringLayout topLayout = new SpringLayout();
       //this.setLayout(topLayout);
 
-      this.setMinimumSize(new Dimension(580,0));
+      this.setMinimumSize(new Dimension(580,485));
       JPanel topPanel = new JPanel();
       topPanel.setLayout(topLayout);
       topPanel.setMinimumSize(new Dimension(580, 175));
 
       JPanel bottomPanel = new JPanel();
       bottomPanel.setLayout(topLayout);
-      //bottomPanel.setMinimumSize(new Dimension(580,290));
+      bottomPanel.setMinimumSize(new Dimension(0,290));
       
       splitPane_ = new JSplitPane(JSplitPane.VERTICAL_SPLIT, true,
               topPanel, bottomPanel);
