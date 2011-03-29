@@ -686,6 +686,14 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       SpringLayout topLayout = new SpringLayout();
       //this.setLayout(topLayout);
 
+      // Set up splitPane. When user moves divider, the top
+      // panel should grow in height and the window should
+      // also grow by the same amount, so that the bottom
+      // panel moves but its height does not change.
+      // If the user expands the window height, then
+      // the bottom panel should expand and the
+      // top panel should remain unchanged.
+      
       this.setMinimumSize(new Dimension(580,480));
       JPanel topPanel = new JPanel();
       topPanel.setLayout(topLayout);
@@ -705,7 +713,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                                     new PropertyChangeListener() {
          public void propertyChange(PropertyChangeEvent evt) {
 				int dh = (Integer) evt.getNewValue() - (Integer) evt.getOldValue();
-				System.out.println(dh);
 				Rectangle r = getBounds();
 				setBounds(r.x, r.y, r.width, r.height + dh);
          }
