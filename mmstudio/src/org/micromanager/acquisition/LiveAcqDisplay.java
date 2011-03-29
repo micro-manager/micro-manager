@@ -95,20 +95,25 @@ public class LiveAcqDisplay extends Thread {
       splitter.start();
 
       Thread displayThread = new Thread() {
+
          public void run() {
             long t1 = System.currentTimeMillis();
             int imageCount = 0;
+            long t = 0;
+            long tLast = 0;
+            boolean finished = false;
             try {
-               while (true) {
-                  final TaggedImage image = displayQueue.poll(1, TimeUnit.SECONDS);
-                  if (image != null) {
-                     if (TaggedImageQueue.isPoison(image)) {
-                        break;
-                     }
-                     ++imageCount;
-                     displayImage(image);
+               while (!imageCache_.isFinished()) {
+                  updateDisplay();
+                  t = System.currentTimeMillis();
+                  if (t - tLast < 30) {
+                     JavaUtils.sleep((int) (t - tLast));
                   }
+                  ++imageCount;
                }
+
+               updateDisplay();
+
             } catch (Exception ex2) {
                ReportingUtils.logError(ex2);
             }
@@ -132,6 +137,7 @@ public class LiveAcqDisplay extends Thread {
                      }
                      ++imageCount;
                      imageCache_.putImage(image);
+
                   }
                }
             } catch (Exception ex2) {
@@ -163,9 +169,10 @@ public class LiveAcqDisplay extends Thread {
       }
    }
 
-   private void displayImage(TaggedImage taggedImg) {
+   private void updateDisplay() {
       try {
-         display_.showImage(taggedImg);
+         JSONObject tags = imageCache_.getLastImageTags();
+         display_.showImage(tags);
       } catch (Exception e) {
          ReportingUtils.logError(e);
       }

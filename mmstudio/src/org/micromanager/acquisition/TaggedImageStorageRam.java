@@ -21,6 +21,7 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class TaggedImageStorageRam implements TaggedImageStorage {
    public static String menuName_ = null;
+   private boolean finished_ = false;
 
    protected HashMap<String, TaggedImage> imageMap_;
    private JSONObject summaryMetadata_;
@@ -48,7 +49,11 @@ public class TaggedImageStorageRam implements TaggedImageStorage {
    }
 
    public void finished() {
-      // Do nothing.
+      finished_ = true;
+   }
+
+   public boolean isFinished() {
+      return finished_;
    }
 
    public void setSummaryMetadata(JSONObject md) {

@@ -305,6 +305,10 @@ public class TaggedImageStorageDiskDefault implements TaggedImageStorage {
       newDataSet_ = false;
    }
 
+   public boolean isFinished() {
+      return !newDataSet_;
+   }
+
    private void closeMetadataStreams() {
       if (newDataSet_) {
          try {

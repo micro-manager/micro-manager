@@ -74,7 +74,7 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
          TaggedImage img ;
          int frame = pos[2] - 1;
          int slice = pos[1] - 1;
-
+         
          do {
             int sliceSearchIndex = 0;
             do {

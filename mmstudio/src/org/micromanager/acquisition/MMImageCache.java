@@ -27,7 +27,8 @@ public class MMImageCache implements TaggedImageStorage {
    private Set<String> changingKeys_;
    private JSONObject firstTags_;
    private HashMap<String, SoftReference<TaggedImage>> softTable_;
-   int lastFrame_ = -1;
+   private int lastFrame_ = -1;
+   private JSONObject lastTags_;
 
    public MMImageCache(TaggedImageStorage imageStorage) {
       imageStorage_ = imageStorage;
@@ -39,9 +40,15 @@ public class MMImageCache implements TaggedImageStorage {
       imageStorage_.finished();
    }
 
+   public boolean isFinished() {
+      return imageStorage_.isFinished();
+   }
+
    public int lastAcquiredFrame() {
-      lastFrame_ = Math.max(imageStorage_.lastAcquiredFrame(), lastFrame_);
-      return lastFrame_;
+      synchronized (this) {
+         lastFrame_ = Math.max(imageStorage_.lastAcquiredFrame(), lastFrame_);
+         return lastFrame_;
+      }
    }
 
    public String getDiskLocation() {
@@ -84,10 +91,19 @@ public class MMImageCache implements TaggedImageStorage {
          softTable_.put(MDUtils.getLabel(taggedImg.tags), new SoftReference(taggedImg));
          taggedImg.tags.put("Summary",imageStorage_.getSummaryMetadata());
          checkForChangingTags(taggedImg);
-         lastFrame_ = Math.max(lastFrame_, MDUtils.getFrameIndex(taggedImg.tags));
+         synchronized (this) {
+            lastFrame_ = Math.max(lastFrame_, MDUtils.getFrameIndex(taggedImg.tags));
+            lastTags_ = taggedImg.tags;
+         }
          imageStorage_.putImage(taggedImg);
       } catch (Exception ex) {
          ReportingUtils.logError(ex);
+      }
+   }
+
+   public JSONObject getLastImageTags() {
+      synchronized (this) {
+         return lastTags_;
       }
    }
 

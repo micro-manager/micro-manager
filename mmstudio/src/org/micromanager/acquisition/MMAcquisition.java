@@ -379,7 +379,11 @@ public class MMAcquisition {
       }
       virtAcq_.imageCache_.putImage(taggedImg);
       if (updateDisplay) {
-         virtAcq_.showImage(taggedImg);
+         try {
+            virtAcq_.showImage(taggedImg);
+         } catch (Exception e) {
+            throw new MMScriptException("Unabel to show image");
+         }
       }
    }
 
