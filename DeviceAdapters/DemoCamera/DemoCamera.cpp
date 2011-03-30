@@ -33,6 +33,7 @@
 #include <sstream>
 #include <algorithm>
 #include "WriteCompactTiffRGB.h"
+#include <iostream>
 
 
 
@@ -466,7 +467,19 @@ int CDemoCamera::SnapImage()
    double expUs = exp * 1000.0;
    GenerateSyntheticImage(img_, exp);
 
-   while (GetCurrentMMTime() - startTime < MM::MMTime(expUs)) {}
+   MM::MMTime s0(0,0);
+   if( s0 < startTime )
+   {
+
+      while (GetCurrentMMTime() - startTime < MM::MMTime(expUs)) {}
+   }
+   else
+   {
+      std::cerr << "You are operating this device adapter without setting the core callback, timing functions aren't yet available" << std::endl;
+      // called without the core callback probably in off line test program
+      // need way to build the core in the test program
+
+   }
    readoutStartTime_ = GetCurrentMMTime();
 
    if( errorSimulation_)
