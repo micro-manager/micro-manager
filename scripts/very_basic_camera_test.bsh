@@ -1,0 +1,33 @@
+  import java.lang.Math;  //future
+  mmc.setExposure( 50);
+  print(" exposure time 100"); 
+  Integer minstime = new Integer(999999);
+  Integer maxstime = new Integer( -1);
+  Integer minrotime = new Integer(999999);
+  Integer maxrotime = new Integer( -1);
+  Integer snaptime;
+  Integer rotime;
+  for( long iiii = 0; iiii<50; ++iiii) {
+    int t0 = System.currentTimeMillis();
+    //expose
+    mmc.snapImage();
+    int t1 = System.currentTimeMillis();
+    snaptime = new Integer( t1 - t0);
+    int t3 = System.currentTimeMillis();
+    //readout
+    img = mmc.getImage();
+    int t4 = System.currentTimeMillis();
+    rotime  = new Integer(t4 - t3);
+    print(" snap image  time is " + snaptime.toString()+ ", readout image  time is " + rotime.toString());
+    gui.displayImage(img);
+    if( maxstime<snaptime) 
+		maxstime = snaptime;
+    if( minstime>snaptime)
+      minstime = snaptime;
+    if( maxrotime<rotime) 
+		maxrotime = rotime;
+    if( minrotime>rotime)
+      minrotime = rotime;
+  }
+print(" snap time [" + minstime.toString()+","+" " + maxstime+"]  r.o. time [" + minrotime.toString() + ", "+maxrotime.toString()+"]" );
+update();
