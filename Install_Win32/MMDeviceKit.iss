@@ -1,7 +1,7 @@
 [Setup]
 OutputDir=C:\projects\micromanager
 OutputBaseFilename=MMDeviceKit-win-38
-DefaultDirName=C:/Program Files/Micro-Manager1.4/MMDeviceKit-win-38
+DefaultDirName=C:/Program Files/MMDeviceKit-win-38
 VersionInfoVersion=38
 VersionInfoCompany=micro-manager.org
 VersionInfoCopyright=University of California San Francisco
@@ -45,7 +45,20 @@ Source: ..\DeviceAdapters\Nikon\Nikon.cpp; DestDir: {app}\DeviceAdapters\Nikon
 Source: ..\DeviceAdapters\Nikon\Nikon.h; DestDir: {app}\DeviceAdapters\Nikon
 Source: ..\DeviceAdapters\Nikon\Nikon.vcproj; DestDir: {app}\DeviceAdapters\Nikon
 Source: ..\DeviceAdapters\Nikon\license.txt; DestDir: {app}\DeviceAdapters\Nikon
+Source: ..\DeviceAdapters\SimpleAutofocus\*; DestDir: {app}\DeviceAdapters\SimpleAutofocus
 
+; boost stuff, specific to VS2008 for now....
+; if they want different binaries, they'll need to build them
+
+Source: ..\..\3rdpartypublic\boost\stage_Win32\lib\libboost_date_time-vc90-mt-1_43.lib; DestDir: {app}\lib_Win32
+Source: ..\..\3rdpartypublic\boost\stage_Win32\lib\libboost_date_time-vc90-mt-gd-1_43.lib; DestDir: {app}\lib_Win32
+Source: ..\..\3rdpartypublic\boost\stage_Win32\lib\libboost_thread-vc90-mt-1_43.lib; DestDir: {app}\lib_Win32
+Source: ..\..\3rdpartypublic\boost\stage_Win32\lib\libboost_thread-vc90-mt-gd-1_43.lib; DestDir: {app}\lib_Win32
+
+Source: ..\..\3rdpartypublic\boost\stage_x64\lib\libboost_date_time-vc90-mt-1_43.lib; DestDir: {app}\lib_x64
+Source: ..\..\3rdpartypublic\boost\stage_x64\lib\libboost_date_time-vc90-mt-gd-1_43.lib; DestDir: {app}\lib_x64
+Source: ..\..\3rdpartypublic\boost\stage_x64\lib\libboost_thread-vc90-mt-1_43.lib; DestDir: {app}\lib_x64
+Source: ..\..\3rdpartypublic\boost\stage_x64\lib\libboost_thread-vc90-mt-gd-1_43.lib; DestDir: {app}\lib_x64
 
 
 ; test files
@@ -57,17 +70,13 @@ Source: ..\Test_Programs\ModuleTest\ModuleTest.cpp; DestDir: {app}\Test_Programs
 Source: ..\Test_Programs\ModuleTest\ModuleTest.vcproj; DestDir: {app}\Test_Programs\ModuleTest
 Source: ..\Test_Programs\ModuleTest\ModuleTest.sln; DestDir: {app}\Test_Programs\ModuleTest
 
-; MMCore files
-Source: ..\MMCore\MMCore.h; DestDir: {app}\MMCore
-Source: ..\MMCore\PluginManager.h; DestDir: {app}\MMCore
-Source: ..\MMCore\PluginManager.cpp; DestDir: {app}\MMCore
+Source: ..\Test_Programs\MMCoreTest\*; DestDir: {app}\Test_Programs\MMCoreTest
+; pickup whatever matching device adapters we've put into the running directory
+Source: ..\Test_Programs\MMCoreTest\Win32\Release\*; DestDir: {app}\Test_Programs\MMCoreTest\Win32\Release
+Source: ..\Test_Programs\MMCoreTest\x64\Release\*; DestDir: {app}\Test_Programs\MMCoreTest\x64\Release 
 
-Source: ..\MMCore\Configuration.h; DestDir: {app}\MMCore
-Source: ..\MMCore\Error.h; DestDir: {app}\MMCore
-Source: ..\MMCore\ErrorCodes.h; DestDir: {app}\MMCore
-Source: ..\MMCore\license.txt; DestDir: {app}\MMCore
+; MMCore files
+Source: ..\MMCore\*; DestDir: {app}\MMCore
 
 ; scripting files
-Source: ..\scripts\init.bsh; DestDir: {app}\scripts
-Source: ..\scripts\camera_test.bsh; DestDir: {app}\scripts
-Source: ..\scripts\config_test.bsh; DestDir: {app}\scripts
+Source: ..\scripts\*; DestDir: {app}\scripts
