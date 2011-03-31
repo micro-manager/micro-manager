@@ -20,9 +20,10 @@ rem - been having trouble updating from boost.org, but don't need to do that any
 svn update --force --ignore-externals --non-interactive
 popd
 
+svn cleanup --non-interactive
+
 :UPDATEMMTREE
 echo update micromanager tree from the repository
-svn cleanup --non-interactive
 svn update --non-interactive
 pushd SecretDeviceAdapters
 svn cleanup --non-interactive
@@ -113,7 +114,7 @@ call build.bat
 POPD
 
 PUSHD autofocus
-call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build32.xml %cleantarget% compile build
+call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml %cleantarget% compile build
 POPD
 
 pushd plugins\Bleach

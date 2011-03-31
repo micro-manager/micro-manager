@@ -112,7 +112,7 @@ call build.bat
 POPD
 
 PUSHD autofocus
-call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build64.xml %cleantarget% compile build
+call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml %cleantarget% compile build
 POPD
 
 pushd plugins\Bleach
