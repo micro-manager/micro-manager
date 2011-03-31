@@ -1649,6 +1649,83 @@ int LeicaScopeInterface::GetTransmittedLightShutterPosition(MM::Device &device, 
 	position = scopeModel_->TransmittedLight_.GetPosition(position);
 	return DEVICE_OK;
 }
+
+
+int LeicaScopeInterface::SetContinuousAutoFocusState(MM::Device &device, MM::Core &core, bool on)
+{
+   std::stringstream os;
+   os << g_AFC << "020" << " " << (on ? "1" : "0");
+	int ret = core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+	if(ret != DEVICE_OK)
+		return ret;	
+	return DEVICE_OK;
+}
+
+int LeicaScopeInterface::GetContinuousAutoFocusState(MM::Device &device, MM::Core &core, bool & on)
+{
+   
+   std::stringstream os;
+   std::string answer;
+	os<<g_AFC<<"021";
+	int ret = core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+	ret = GetAnswer(device, core, os.str().c_str(), answer);
+
+   std::stringstream ts(answer);
+   int cmdEcho;
+   int state;
+   ts >> cmdEcho;
+   ts >> state;
+   on = (state == 1);
+
+   if(ret != DEVICE_OK)
+		return ret;	
+	return DEVICE_OK;
+   
+}
+
+int LeicaScopeInterface::IsContinuousAutoFocusLocked(MM::Device &device, MM::Core &core, bool & locked)
+{
+   double offset;
+   int ret = GetContinuousAutoFocusOffset(device, core, offset);
+    
+   if(ret != DEVICE_OK)
+		return ret;	
+
+   locked = (offset >= 0.0);
+
+	return DEVICE_OK;
+   
+}
+
+int LeicaScopeInterface::GetContinuousAutoFocusOffset(MM::Device &device, MM::Core &core, double & offset)
+{
+   std::stringstream os;
+      std::string answer;
+	os<<g_AFC<<"023";
+	int ret = core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+	ret = GetAnswer(device, core, os.str().c_str(), answer);
+
+   std::stringstream ts(answer);
+   int cmdEcho;
+   ts >> cmdEcho;
+   ts >> offset;
+
+   if(ret != DEVICE_OK)
+		return ret;	
+	return DEVICE_OK;
+}
+
+int LeicaScopeInterface::SetContinuousAutoFocusOffset(MM::Device &device, MM::Core &core, double offset)
+{
+   std::stringstream os;
+   os << g_AFC << "024" << " " << offset;
+	int ret = core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+	if(ret != DEVICE_OK)
+		return ret;	
+	return DEVICE_OK;
+}
+
+
 /*
  * Thread that continuously monitors messages from the Leica scope and inserts them into a model of the microscope
  */

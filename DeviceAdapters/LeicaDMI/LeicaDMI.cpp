@@ -109,7 +109,7 @@ const char* g_LeicaTLPolarizer = "TLPolarizer";
 const char* g_LeicaDICTurret = "DIC Turret";
 const char* g_LeicaCondensorTurret = "Condensor";
 const char* g_LeicaTransmittedLight = "Transmitted Light";
-
+const char* g_LeicaAFC = "Adaptive Focus Control";
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -131,6 +131,7 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_LeicaDICTurret, "DIC Turret");
    AddAvailableDeviceName(g_LeicaCondensorTurret, "Condensor Turret");
    AddAvailableDeviceName(g_LeicaTransmittedLight,"Transmitted Light");
+   AddAvailableDeviceName(g_LeicaAFC,"Adaptive Focus Control");
 }
 using namespace std;
 
@@ -175,6 +176,8 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
 	   return new CondensorTurret();
    else if (strcmp(deviceName, g_LeicaTransmittedLight) == 0)
 	   return new TransmittedLight();
+   else if (strcmp(deviceName, g_LeicaAFC) == 0)
+	   return new AFC();
 
    return 0;
 }
@@ -2487,3 +2490,99 @@ int TransmittedLight::GetOpen(bool &open)
 int TransmittedLight::Fire(double)
 {   return DEVICE_UNSUPPORTED_COMMAND;  
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+// AFC
+//
+AFC::AFC() :
+   initialized_(false),    
+   name_(g_LeicaAFC)
+{
+
+   // create pre-initialization properties
+   // ------------------------------------
+
+   // Name
+   CreateProperty(MM::g_Keyword_Name, g_LeicaAFC, MM::String, true);
+   
+   // Description                                                            
+   CreateProperty(MM::g_Keyword_Description, "Leica Adaptive Focus Control (Hardware autofocus)", MM::String, true);
+   
+}
+
+AFC::~AFC() 
+{
+   if (initialized_) {
+      Shutdown();
+   }
+}
+
+int AFC::Initialize() 
+{
+   initialized_ = true;
+   return 0;
+}
+
+int AFC::Shutdown() 
+{
+   return 0;
+}
+
+void AFC::GetName (char* Name) const
+{
+   CDeviceUtils::CopyLimitedString(Name, g_LeicaDeviceName);
+}
+
+bool AFC::Busy() 
+{
+   bool busy;
+   g_ScopeModel.method_.GetBusy(busy);
+   return busy;
+}
+
+
+int AFC::SetContinuousFocusing(bool state) {
+   int ret = g_ScopeInterface.SetContinuousAutoFocusState(*this, *GetCoreCallback(), state);
+   if (ret != DEVICE_OK)
+      return ret;
+   return DEVICE_OK;
+}
+
+int AFC::GetContinuousFocusing(bool& state) {
+   int ret = g_ScopeInterface.GetContinuousAutoFocusState(*this, *GetCoreCallback(), state);
+   if (ret != DEVICE_OK)
+      return ret;
+   return DEVICE_OK;
+}
+
+bool AFC::IsContinuousFocusLocked() {
+   bool locked;
+   int ret = g_ScopeInterface.IsContinuousAutoFocusLocked(*this, *GetCoreCallback(), locked);
+   if (ret != DEVICE_OK)
+      return false;
+   return locked;
+}
+
+int AFC::FullFocus() {
+   return DEVICE_OK;
+}
+
+int AFC::IncrementalFocus() {
+   return FullFocus();
+}
+
+int AFC::GetOffset(double &offset) {
+   return g_ScopeInterface.GetContinuousAutoFocusOffset(*this, *GetCoreCallback(), offset);
+}
+
+int AFC::SetOffset(double offset) {
+   return g_ScopeInterface.SetContinuousAutoFocusOffset(*this, *GetCoreCallback(), offset);;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Action handlers
+///////////////////////////////////////////////////////////////////////////////
+
+// ...

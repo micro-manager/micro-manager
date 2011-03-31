@@ -34,6 +34,7 @@ const int g_Field_Diaphragm_IL = 94; // motorized with maximum 12 positions
 const int g_Aperture_Diaphragm_IL = 95; // motorized diaphragm disk with maximum 12 positions
 const int g_Constant_Color_Intensity_Control_TL = 97; // 12 bits
 const int g_TL_Polarizer = 98; // motorizedin the condenser
+const int g_AFC = 48; // adaptive focus control / autofocus
 
 
 //////////////////////////////////////////////////////////////////////////////

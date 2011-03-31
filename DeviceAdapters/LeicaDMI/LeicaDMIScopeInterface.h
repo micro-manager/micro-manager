@@ -66,9 +66,12 @@ class LeicaScopeInterface
       int GetDICTurretInfo(MM::Device& device, MM::Core& core);
       int GetMagChangerInfo(MM::Device& device, MM::Core& core);
       int GetDriveParameters(MM::Device& device, MM::Core& core, int deviceID);
-	  int GetTransmittedLightState(MM::Device& device, MM::Core& core, int & position);
-	  int GetTransmittedLightShutterPosition(MM::Device& device, MM::Core& core, int & position);
-     
+	   int GetTransmittedLightState(MM::Device& device, MM::Core& core, int & position);
+	   int GetTransmittedLightShutterPosition(MM::Device& device, MM::Core& core, int & position);
+      int GetContinuousAutoFocusState(MM::Device& device, MM::Core& core, bool & on);
+      int GetContinuousAutoFocusOffset(MM::Device &device, MM::Core &core, double & offset);
+      int IsContinuousAutoFocusLocked(MM::Device &device, MM::Core &core, bool & locked);
+
       // commands to set individual components
       int SetMethod(MM::Device& device, MM::Core& core, int position);
       int SetTLShutterPosition(MM::Device& device, MM::Core& core, int position);
@@ -87,8 +90,10 @@ class LeicaScopeInterface
       int SetTLPolarizerPosition(MM::Device& device, MM::Core& core, int position);
       int SetDICPrismTurretPosition(MM::Device& device, MM::Core& core, int position);
       int SetDICPrismFinePosition(MM::Device& device, MM::Core& core, int position);
-	  int SetTransmittedLightState(MM::Device& device, MM::Core& core, int position);
-	  int SetTransmittedLightShutterPosition(MM::Device& device, MM::Core& core, int position);
+	   int SetTransmittedLightState(MM::Device& device, MM::Core& core, int position);
+	   int SetTransmittedLightShutterPosition(MM::Device& device, MM::Core& core, int position);
+      int SetContinuousAutoFocusState(MM::Device& device, MM::Core& core, bool on);
+      int SetContinuousAutoFocusOffset(MM::Device &device, MM::Core &core, double offset);
 
       LeicaMonitoringThread* monitoringThread_;
       LeicaDMIModel* scopeModel_;

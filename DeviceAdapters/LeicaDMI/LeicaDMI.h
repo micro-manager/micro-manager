@@ -438,4 +438,32 @@ private:
 
 };
 
+class AFC: public CAutoFocusBase<AFC>
+{
+public:
+	AFC();
+	~AFC();
+
+   int Initialize();
+   int Shutdown();
+
+   void GetName (char* pszName) const;
+   bool Busy();
+
+   // AutoFocus API
+   int SetContinuousFocusing(bool state);
+   int GetContinuousFocusing(bool& state);
+   bool IsContinuousFocusLocked();
+   int FullFocus();
+   int IncrementalFocus();
+   int GetLastFocusScore(double& /*score*/) {return DEVICE_UNSUPPORTED_COMMAND;}
+   int GetCurrentFocusScore(double& score) {score = 0.0; return DEVICE_OK;}
+   int GetOffset(double &offset);
+   int SetOffset(double offset);
+
+
+private:
+   bool initialized_;
+   std::string name_;
+};
 #endif // _LeicaDMI_H_
