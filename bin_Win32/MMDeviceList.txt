@@ -89,6 +89,7 @@ LeicaDMI,TLPolarizer,Transmitted light Polarizer,4
 LeicaDMI,DIC Turret,DIC Turret,4
 LeicaDMI,Condensor,Condensor Turret,4
 LeicaDMI,Transmitted Light,Transmitted Light,3
+LeicaDMI,Adaptive Focus Control,Adaptive Focus Control,9
 LeicaDMR,Leica DM microscope,LeicaDMR (DM RXA; DM RME; RD RBE; DM RXA; DM RA; DM IRBE) Controller,8
 LeicaDMR,Reflected Light Module,Reflected Light LModule,4
 LeicaDMR,Halogen Lamp,Halogen Lamp,3

@@ -4,7 +4,7 @@
 <project name="Big" default="build">
 
 	<!-- Specify the system path to the ImageJ root directory -->
-	<property name="InstallRoot" value="../../Install_Win32/micro-manager"/>
+	<property name="InstallRoot" value="../../Install_AllPlatforms/micro-manager"/>
 
 	<!-- Do not modify from this point on -->
 	<property name="MMPluginDir" value="../../mmstudio"/>
