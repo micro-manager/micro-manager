@@ -38,7 +38,6 @@ import java.awt.Color;
 
 import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -55,7 +54,6 @@ import javax.swing.JComboBox;
 import javax.swing.JFormattedTextField;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.JSlider;
 import javax.swing.SpringLayout;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -65,6 +63,7 @@ import org.micromanager.graph.HistogramPanel.CursorListener;
 import org.micromanager.utils.ContrastSettings;
 import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.GammaSliderCalculator;
+import org.micromanager.utils.HistogramUtils;
 import org.micromanager.utils.ImageController;
 import org.micromanager.utils.MMImageWindow;
 import org.micromanager.utils.ReportingUtils;
@@ -441,32 +440,14 @@ public class ContrastPanel extends JPanel implements ImageController,
 
 			if( rejectOutliersCheckBox_.isSelected())			{
 				// todo handle negative values
-				minAfterRejectingOutliers_ = 0;
 				maxAfterRejectingOutliers_ = rawHistogram.length;
 				// don't let pixels lying outside 3 sigma influence the automatic contrast setting
 				int totalPoints = image.getHeight() * image.getWidth();
-				int maxOutliers = (int)(0.5 + totalPoints * 0.0027);
-
-				// march through raw histogram until we see 0.0027*totalPoints pixels
-				int iterator;
-				int outliers;
-				outliers = 0;
-				for(  iterator = 0; iterator < rawHistogram.length; ++iterator){
-					outliers += rawHistogram[iterator];
-					if( outliers >= maxOutliers){
-						minAfterRejectingOutliers_ = iterator;
-						break;
-					}
-				}
-				outliers = 0;
-			   for( iterator = rawHistogram.length-1 ; iterator >= 0 ; --iterator){
-					outliers += rawHistogram[iterator];
-					if( outliers >= maxOutliers){
-						maxAfterRejectingOutliers_ = iterator;
-						break;
-					}
-				}
-
+            HistogramUtils hu = new HistogramUtils(rawHistogram, totalPoints);
+            minAfterRejectingOutliers_ = hu.getMinAfterRejectingOutliers();
+            int maxr = hu.getMaxAfterRejectingOutliers();
+            if( 0< maxr)
+               maxAfterRejectingOutliers_ = maxr;
 			}
          if (histogramData_ == null) {
             histogramData_ = new GraphData();
@@ -635,10 +616,12 @@ public class ContrastPanel extends JPanel implements ImageController,
 
 			if(rejectOutliersCheckBox_.isSelected()){
 				if( lutMin_ < minAfterRejectingOutliers_  ){
-					lutMin_ =  minAfterRejectingOutliers_;
+               if( 0 < minAfterRejectingOutliers_){
+                  lutMin_ =  minAfterRejectingOutliers_;
+               }
 				}
 				if( maxAfterRejectingOutliers_ < lutMax_){
-					lutMax_ = maxAfterRejectingOutliers_;
+                  lutMax_ = maxAfterRejectingOutliers_;
 				}
 
 			}
