@@ -322,6 +322,87 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       setCursor(defaultCursor);
    }
 
+    private void initializeHelpMenu() {
+        // add help menu item
+        final JMenu helpMenu = new JMenu();
+        helpMenu.setText("Help");
+        menuBar_.add(helpMenu);
+        final JMenuItem usersGuideMenuItem = new JMenuItem();
+        usersGuideMenuItem.addActionListener(new ActionListener() {
+
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    ij.plugin.BrowserLauncher.openURL("http://micro-manager.org/documentation.php?object=Userguide");
+                } catch (IOException e1) {
+                    ReportingUtils.showError(e1);
+                }
+            }
+        });
+        usersGuideMenuItem.setText("User's Guide...");
+        helpMenu.add(usersGuideMenuItem);
+        final JMenuItem configGuideMenuItem = new JMenuItem();
+        configGuideMenuItem.addActionListener(new ActionListener() {
+
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    ij.plugin.BrowserLauncher.openURL("http://micro-manager.org/documentation.php?object=Configguide");
+                } catch (IOException e1) {
+                    ReportingUtils.showError(e1);
+                }
+            }
+        });
+        configGuideMenuItem.setText("Configuration Guide...");
+        helpMenu.add(configGuideMenuItem);
+        if (!systemPrefs_.getBoolean(RegistrationDlg.REGISTRATION, false)) {
+            final JMenuItem registerMenuItem = new JMenuItem();
+            registerMenuItem.addActionListener(new ActionListener() {
+
+                public void actionPerformed(ActionEvent e) {
+                    try {
+                        RegistrationDlg regDlg = new RegistrationDlg(systemPrefs_);
+                        regDlg.setVisible(true);
+                    } catch (Exception e1) {
+                        ReportingUtils.showError(e1);
+                    }
+                }
+            });
+            registerMenuItem.setText("Register your copy of Micro-Manager...");
+            helpMenu.add(registerMenuItem);
+        }
+        final MMStudioMainFrame thisFrame = this;
+        final JMenuItem reportProblemMenuItem = new JMenuItem();
+        reportProblemMenuItem.addActionListener(new ActionListener() {
+
+            public void actionPerformed(ActionEvent e) {
+                if (null == reportProblemDialog_) {
+                    reportProblemDialog_ = new ReportProblemDialog(core_, thisFrame, sysConfigFile_, options_);
+                    thisFrame.addMMBackgroundListener(reportProblemDialog_);
+                    reportProblemDialog_.setBackground(guiColors_.background.get(options_.displayBackground_));
+                }
+                reportProblemDialog_.setVisible(true);
+            }
+        });
+        reportProblemMenuItem.setText("Report Problem");
+        helpMenu.add(reportProblemMenuItem);
+        final JMenuItem aboutMenuItem = new JMenuItem();
+        aboutMenuItem.addActionListener(new ActionListener() {
+
+            public void actionPerformed(ActionEvent e) {
+                MMAboutDlg dlg = new MMAboutDlg();
+                String versionInfo = "MM Studio version: " + VERSION;
+                versionInfo += "\n" + core_.getVersionInfo();
+                versionInfo += "\n" + core_.getAPIVersionInfo();
+                versionInfo += "\nUser: " + core_.getUserId();
+                versionInfo += "\nHost: " + core_.getHostName();
+                dlg.setVersionInfo(versionInfo);
+                dlg.setVisible(true);
+            }
+        });
+        aboutMenuItem.setText("About...");
+        helpMenu.add(aboutMenuItem);
+        menuBar_.validate();
+    }
+
    private void updateSwitchConfigurationMenu() {
       switchConfigurationMenu_.removeAll();
       for (final String configFile : MRUConfigFiles_) {
@@ -1651,7 +1732,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             // initialize controls
             initializeGUI();
             initializePluginMenu();
-
+            initializeHelpMenu();
+            
             String afDevice = mainPrefs_.get(AUTOFOCUS_DEVICE, "");
             if (afMgr_.hasDevice(afDevice)) {
                try {
@@ -2983,95 +3065,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          }
       }
 
-      // add help menu item
-      final JMenu helpMenu = new JMenu();
-      helpMenu.setText("Help");
-      menuBar_.add(helpMenu);
-
-      final JMenuItem usersGuideMenuItem = new JMenuItem();
-      usersGuideMenuItem.addActionListener(new ActionListener() {
-
-         public void actionPerformed(ActionEvent e) {
-            try {
-               ij.plugin.BrowserLauncher.openURL("http://micro-manager.org/documentation.php?object=Userguide");
-            } catch (IOException e1) {
-               ReportingUtils.showError(e1);
-            }
-         }
-      });
-      usersGuideMenuItem.setText("User's Guide...");
-      helpMenu.add(usersGuideMenuItem);
-
-
-      final JMenuItem configGuideMenuItem = new JMenuItem();
-      configGuideMenuItem.addActionListener(new ActionListener() {
-
-         public void actionPerformed(ActionEvent e) {
-            try {
-               ij.plugin.BrowserLauncher.openURL("http://micro-manager.org/documentation.php?object=Configguide");
-            } catch (IOException e1) {
-               ReportingUtils.showError(e1);
-            }
-         }
-      });
-      configGuideMenuItem.setText("Configuration Guide...");
-      helpMenu.add(configGuideMenuItem);
-
-      if (!systemPrefs_.getBoolean(RegistrationDlg.REGISTRATION, false)) {
-         final JMenuItem registerMenuItem = new JMenuItem();
-         registerMenuItem.addActionListener(new ActionListener() {
-
-            public void actionPerformed(ActionEvent e) {
-               try {
-                  RegistrationDlg regDlg = new RegistrationDlg(systemPrefs_);
-                  regDlg.setVisible(true);
-               } catch (Exception e1) {
-                  ReportingUtils.showError(e1);
-               }
-            }
-         });
-         registerMenuItem.setText("Register your copy of Micro-Manager...");
-         helpMenu.add(registerMenuItem);
-      }
-
-
-      final MMStudioMainFrame thisFrame = this;
-      final JMenuItem reportProblemMenuItem = new JMenuItem();
-      reportProblemMenuItem.addActionListener(new ActionListener() {
-
-         public void actionPerformed(ActionEvent e) {
-             if( null==reportProblemDialog_){
-
-                reportProblemDialog_ = new ReportProblemDialog(core_, thisFrame, sysConfigFile_, options_);
-                thisFrame.addMMBackgroundListener(reportProblemDialog_);
-                reportProblemDialog_.setBackground(guiColors_.background.get((options_.displayBackground_)));
-             }
-            reportProblemDialog_.setVisible(true);
-         }
-      });
-      reportProblemMenuItem.setText("Report Problem");
-      helpMenu.add(reportProblemMenuItem);
-
-
-
-      final JMenuItem aboutMenuItem = new JMenuItem();
-      aboutMenuItem.addActionListener(new ActionListener() {
-
-         public void actionPerformed(ActionEvent e) {
-            MMAboutDlg dlg = new MMAboutDlg();
-            String versionInfo = "MM Studio version: " + VERSION;
-            versionInfo += "\n" + core_.getVersionInfo();
-            versionInfo += "\n" + core_.getAPIVersionInfo();
-            versionInfo += "\nUser: " + core_.getUserId();
-            versionInfo += "\nHost: " + core_.getHostName();
-
-            dlg.setVersionInfo(versionInfo);
-            dlg.setVisible(true);
-         }
-      });
-      aboutMenuItem.setText("About...");
-      helpMenu.add(aboutMenuItem);
-
+      menuBar_.validate();
 
    }
 
@@ -4209,6 +4203,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          }
          return acquirePipeline_;
       } catch (Exception e) {
+         ReportingUtils.logError(e);
          return null;
       }
    }
