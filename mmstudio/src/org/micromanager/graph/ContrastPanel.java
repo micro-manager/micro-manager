@@ -445,9 +445,7 @@ public class ContrastPanel extends JPanel implements ImageController,
 				int totalPoints = image.getHeight() * image.getWidth();
             HistogramUtils hu = new HistogramUtils(rawHistogram, totalPoints);
             minAfterRejectingOutliers_ = hu.getMinAfterRejectingOutliers();
-            int maxr = hu.getMaxAfterRejectingOutliers();
-            if( 0< maxr)
-               maxAfterRejectingOutliers_ = maxr;
+            maxAfterRejectingOutliers_ = hu.getMaxAfterRejectingOutliers();
 			}
          if (histogramData_ == null) {
             histogramData_ = new GraphData();
