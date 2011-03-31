@@ -16,6 +16,7 @@ import javax.swing.JColorChooser;
 import org.micromanager.graph.GraphData;
 import org.micromanager.graph.HistogramPanel;
 import org.micromanager.graph.HistogramPanel.CursorListener;
+import org.micromanager.utils.HistogramUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMScriptException;
 import org.micromanager.utils.MathFunctions;
@@ -32,6 +33,7 @@ public class ChannelControlPanel extends javax.swing.JPanel {
    private final HistogramPanel hp_;
    private double binSize_;
    private boolean autostretch_ = false;
+   private boolean rejectOutliers_ = false;
    private final MetadataPanel metadataPanel_;
    private boolean logScale_ = false;
 
@@ -268,6 +270,10 @@ public class ChannelControlPanel extends javax.swing.JPanel {
       autostretch_ = state;
    }
 
+   public void setRejectOutliers(boolean v){
+      rejectOutliers_ = v;
+   }
+
    public void setLogScale(boolean logScale) {
       logScale_ = logScale;
       updateChannelSettings();
@@ -380,7 +386,23 @@ public class ChannelControlPanel extends javax.swing.JPanel {
 
    public final void drawDisplaySettings() {
       if (autostretch_) {
-         acq_.setChannelDisplayRange(channelIndex_, getMin(), getMax(), false);
+         if( rejectOutliers_){
+            // calculations here are correct but aren't used to update display image
+            // until user 'cycles' the autostretch check box.
+            // so feature is temporarily disabled.
+
+            // image may have dropped or saturated pixels which should not influence contrast setting, i.e.
+				// don't let pixels lying outside 3 sigma influence the automatic contrast setting
+            int totalPoints =  acq_.getHyperImage().getWidth() * acq_.getHyperImage().getHeight();
+            int[] histogram = acq_.getChannelHistogram(channelIndex_);
+            HistogramUtils hu = new HistogramUtils(histogram, totalPoints);
+				int minAfterRejectingOutliers = hu.getMinAfterRejectingOutliers();
+            int maxAfterRejectingOutliers = hu.getMaxAfterRejectingOutliers();
+
+            acq_.setChannelDisplayRange(channelIndex_, minAfterRejectingOutliers, maxAfterRejectingOutliers, false);
+         }else{
+            acq_.setChannelDisplayRange(channelIndex_, getMin(), getMax(), false);
+         }
       }
       hp_.setCursors(acq_.getChannelMin(channelIndex_)/binSize_,
               acq_.getChannelMax(channelIndex_)/binSize_,
@@ -440,6 +462,7 @@ public class ChannelControlPanel extends javax.swing.JPanel {
 
 
    private int getMin() {
+
       int[] histogram = acq_.getChannelHistogram(channelIndex_);
       if (histogram != null) {
          int min = 0;
