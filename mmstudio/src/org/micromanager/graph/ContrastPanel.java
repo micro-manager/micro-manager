@@ -38,6 +38,7 @@ import java.awt.Color;
 
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -68,6 +69,7 @@ import org.micromanager.utils.ImageController;
 import org.micromanager.utils.MMImageWindow;
 import org.micromanager.utils.ReportingUtils;
 import org.micromanager.utils.NumberUtils;
+import org.micromanager.utils.SliderPanel;
 
 /**
  * Slider and histogram panel for adjusting contrast and brightness.
@@ -110,12 +112,18 @@ public class ContrastPanel extends JPanel implements ImageController,
    private double lutMax_;
 	private double minAfterRejectingOutliers_;
 	private double maxAfterRejectingOutliers_;
+   SliderPanel rejectOutliersFractionSlider_;
+   private double fractionToReject_;
+
 
 	/**
 	 * Create the panel
 	 */
 	public ContrastPanel() {
 		super();
+
+      HistogramUtils h = new HistogramUtils(null);
+      fractionToReject_ = h.getFractionToReject(); // get the default value
 		setToolTipText("Switch between linear and log histogram");
 		setFont(new Font("", Font.PLAIN, 10));
 		springLayout = new SpringLayout();
@@ -175,7 +183,7 @@ public class ContrastPanel extends JPanel implements ImageController,
 		springLayout.putConstraint(SpringLayout.NORTH, minField_, 64,
 				SpringLayout.NORTH, this);
 
-		maxField_ = new JLabel();
+      maxField_ = new JLabel();
 		maxField_.setFont(new Font("", Font.PLAIN, 10));
 		add(maxField_);
 		springLayout.putConstraint(SpringLayout.EAST, maxField_, 95,
@@ -258,7 +266,7 @@ public class ContrastPanel extends JPanel implements ImageController,
       add(gammaLabel);
 		springLayout.putConstraint(SpringLayout.WEST, gammaLabel, 5,
 				SpringLayout.WEST, this);
-      springLayout.putConstraint(SpringLayout.NORTH, gammaLabel, 225,
+      springLayout.putConstraint(SpringLayout.NORTH, gammaLabel, 255,
 				SpringLayout.NORTH, this);
 
       gammaValue_ = new JFormattedTextField(numberFormat_);
@@ -266,6 +274,7 @@ public class ContrastPanel extends JPanel implements ImageController,
       gammaValue_.setValue(gamma_);
       gammaValue_.addPropertyChangeListener("value", this);
       gammaValue_.setPreferredSize(new Dimension(35, 20));
+
       add(gammaValue_);
 		springLayout.putConstraint(SpringLayout.WEST, gammaValue_, 45,
 				SpringLayout.WEST, this);
@@ -298,6 +307,8 @@ public class ContrastPanel extends JPanel implements ImageController,
 		stretchCheckBox_.setText("Auto-stretch");
 		stretchCheckBox_.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent ce) {
+            rejectOutliersCheckBox_.setEnabled(stretchCheckBox_.isSelected());
+            rejectOutliersFractionSlider_.setEnabled(stretchCheckBox_.isSelected() && rejectOutliersCheckBox_.isSelected()  );
             if (stretchCheckBox_.isSelected()) {
                liveStretchMode_ = true;
                setAutoScale();
@@ -321,9 +332,10 @@ public class ContrastPanel extends JPanel implements ImageController,
 
 	   rejectOutliersCheckBox_ = new JCheckBox();
 		rejectOutliersCheckBox_.setFont(new Font("", Font.PLAIN, 10));
-		rejectOutliersCheckBox_.setText("Reject Outliers");
+		rejectOutliersCheckBox_.setText("Ignore Outliers");
 		rejectOutliersCheckBox_.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent ce) {
+            rejectOutliersFractionSlider_.setEnabled(rejectOutliersCheckBox_.isSelected());
             if (rejectOutliersCheckBox_.isSelected()) {
 
 					; // as with the other check boxes, takes effect when setAutoScale runs...
@@ -341,8 +353,32 @@ public class ContrastPanel extends JPanel implements ImageController,
 		springLayout.putConstraint(SpringLayout.NORTH, rejectOutliersCheckBox_, 185,
 				SpringLayout.NORTH, this);
 
+      rejectOutliersFractionSlider_ = new SliderPanel();
+      rejectOutliersFractionSlider_.setLimits(0., 1.);
+      // user sees the fraction as percent
+      rejectOutliersFractionSlider_.setText(NumberUtils.doubleToDisplayString(100.*fractionToReject_));
+      add(rejectOutliersFractionSlider_);
+      rejectOutliersFractionSlider_.setEnabled(false);
 
 
+		springLayout.putConstraint(SpringLayout.EAST, rejectOutliersFractionSlider_, 5,
+				SpringLayout.WEST, histogramPanel_);
+		springLayout.putConstraint(SpringLayout.WEST, rejectOutliersFractionSlider_, 5,
+				SpringLayout.WEST, this);
+		springLayout.putConstraint(SpringLayout.SOUTH, rejectOutliersFractionSlider_, 235,
+				SpringLayout.NORTH, this);
+		springLayout.putConstraint(SpringLayout.NORTH, rejectOutliersFractionSlider_, 210,
+				SpringLayout.NORTH, this);
+
+      JLabel percentOutliersLabel = new JLabel();
+      percentOutliersLabel.setFont(new Font("Arial", Font.PLAIN, 10));
+      percentOutliersLabel.setPreferredSize(new Dimension(80, 20));
+      percentOutliersLabel.setText("% to Ignore");
+      add(percentOutliersLabel);
+		springLayout.putConstraint(SpringLayout.WEST, percentOutliersLabel, 5,
+				SpringLayout.WEST, this);
+      springLayout.putConstraint(SpringLayout.NORTH, percentOutliersLabel, 230,
+				SpringLayout.NORTH, this);
 
 
 
@@ -440,10 +476,16 @@ public class ContrastPanel extends JPanel implements ImageController,
 
 			if( rejectOutliersCheckBox_.isSelected())			{
 				// todo handle negative values
+
 				maxAfterRejectingOutliers_ = rawHistogram.length;
-				// don't let pixels lying outside 3 sigma influence the automatic contrast setting
+				// specified percent of pixels are ignored in the automatic contrast setting
 				int totalPoints = image.getHeight() * image.getWidth();
-            HistogramUtils hu = new HistogramUtils(rawHistogram, totalPoints);
+            try {
+               fractionToReject_ = 0.01 * NumberUtils.displayStringToDouble(rejectOutliersFractionSlider_.getText());
+            } catch (ParseException ex) {
+               fractionToReject_ = 0.;
+            }
+            HistogramUtils hu = new HistogramUtils(rawHistogram, totalPoints, fractionToReject_);
             minAfterRejectingOutliers_ = hu.getMinAfterRejectingOutliers();
             maxAfterRejectingOutliers_ = hu.getMaxAfterRejectingOutliers();
 			}
