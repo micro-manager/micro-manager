@@ -13,12 +13,27 @@ public class HistogramUtils {
    public HistogramUtils(int[] histogram, int totalPoints) {
       histogram_ = histogram;
       totalPoints_ = totalPoints;
+      fractionToReject_ = 0.0027; // corresponds to 3 sigma
    }
 
    public HistogramUtils(int[] histogram) {
       histogram_ = histogram;
       totalPoints_ = 0;
+      fractionToReject_ = 0.0027; // corresponds to 3 sigma
    }
+
+      public HistogramUtils(int[] histogram, int totalPoints, double f) {
+      histogram_ = histogram;
+      totalPoints_ = totalPoints;
+      fractionToReject_ = f;
+   }
+
+   public HistogramUtils(int[] histogram, double f) {
+      histogram_ = histogram;
+      totalPoints_ = 0;
+      fractionToReject_ = f;
+   }
+
 
    public int getMin() {
       int ret = 0;
@@ -54,15 +69,15 @@ public class HistogramUtils {
       return t;
    }
 
-   //ignore pixels beyond -3 sigma
+   //ignore a fraction of low pixels
    public int getMinAfterRejectingOutliers() {
       int ret = 0;
       if (totalPoints_ < 1) {
          totalPoints_ = sumTotalPoints();
       }
-      int maxOutliers = (int) (0.5 + totalPoints_ * 0.0027);
+      int maxOutliers = (int) (0.5 + totalPoints_ * fractionToReject_);
 
-      // march through raw histogram until we see 0.0027*totalPoints pixels
+      // march through raw histogram until we see fractionToReject_*totalPoints pixels
       int iterator;
       int outliers;
       outliers = 0;
@@ -77,13 +92,13 @@ public class HistogramUtils {
 
    }
 
-   //ignore pixels beyond +3 sigma
+   //ignore a fraction of high pixels
    public int getMaxAfterRejectingOutliers() {
       int ret = 0;
       if (totalPoints_ < 1) {
          totalPoints_ = sumTotalPoints();
       }
-      int maxOutliers = (int) (0.5 + totalPoints_ * 0.0027);
+      int maxOutliers = (int) (0.5 + totalPoints_ * fractionToReject_);
       int outliers = 0;
       for (int iterator = histogram_.length - 1; iterator >= 0; --iterator) {
          outliers += histogram_[iterator];
@@ -95,6 +110,25 @@ public class HistogramUtils {
       return ret;
 
    }
+   public double getFractionToReject(){
+      return fractionToReject_;
+   }
+
+   public int getTotalPoints(){
+      if( null!= histogram_){
+         if (totalPoints_ < 1) {
+            totalPoints_ = sumTotalPoints();
+         }
+      }
+      return totalPoints_;
+   }
+
+   public void setFractionToReject(double f){
+      fractionToReject_ = f;
+   }
+
    int[] histogram_;
    int totalPoints_;
+   double fractionToReject_;
+
 }
