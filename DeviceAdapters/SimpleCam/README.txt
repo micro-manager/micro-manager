@@ -16,7 +16,9 @@ Patch FreeImage 3.15.0 or lower with libfreeimage_raw_halfsize.patch to add supp
 patch -p0 < patches/libfreeimage_raw_halfsize.patch
 
 You need to add support for both FreeImage and FreeImagePlus.
+
 On Windows, link with both FreeImage.lib and FreeImagePlus.lib, and copy FreeImage.dll and FreeImagePlus.dll to the micro-manager directory.
+
 On Mac, you need to compile both FreeImage and FreeImagePlus
 - change line 5 of Makefile.osx from "include Makefile.srcs" to "include fipMakefile.srcs".
 - run make
