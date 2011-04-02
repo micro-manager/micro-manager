@@ -29,6 +29,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Paint;
 import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.Stroke;
 import java.awt.geom.GeneralPath;
 import java.awt.geom.Line2D;
@@ -280,7 +281,11 @@ public class GraphPanel extends JPanel {
       
       super.paintComponent(g); // JPanel draws background
       Graphics2D  g2d = (Graphics2D) g;
-      
+
+       g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                        RenderingHints.VALUE_ANTIALIAS_ON);
+
+
       // get drawing rectangle
       Rectangle box = getBox();
        
