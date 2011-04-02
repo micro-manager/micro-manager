@@ -810,17 +810,17 @@ int XYStage::FillHardwareInfo()
 
    // fill hardware info struct
    unsigned char* bufPtr = packet;
-   info_.dwSerialNum = (DWORD) *bufPtr;
-   bufPtr += sizeof(DWORD);
+   info_.dwSerialNum = (unsigned long) *bufPtr;
+   bufPtr += sizeof(unsigned long);
    memcpy(info_.szModelNum, bufPtr, 8);
    bufPtr += 8;
-   info_.wHWType = (WORD) *bufPtr;
-   bufPtr += sizeof(WORD);
-   info_.dwSoftwareVersion = (DWORD) *bufPtr;
-   bufPtr += sizeof(DWORD);
+   info_.wHWType = (unsigned short) *bufPtr;
+   bufPtr += sizeof(unsigned short);
+   info_.dwSoftwareVersion = (unsigned long) *bufPtr;
+   bufPtr += sizeof(unsigned long);
    memcpy(info_.szNotes, bufPtr, 64);
    bufPtr += 64;
-   info_.wNumChannels = (WORD) *bufPtr;
+   info_.wNumChannels = (unsigned short) *bufPtr;
 
    return DEVICE_OK;
 }
@@ -833,19 +833,19 @@ int XYStage::ParseStatus(const unsigned char* buf, int bufLen, DCMOTSTATUS& stat
       return ERR_INVALID_PACKET_LENGTH;
 
    int bufPtr = 0; 
-   memcpy(&stat.wChannel, buf, sizeof(WORD));
-   bufPtr += sizeof(WORD);
+   memcpy(&stat.wChannel, buf, sizeof(unsigned short));
+   bufPtr += sizeof(unsigned short);
 
    memcpy(&stat.lPosition, buf + bufPtr, sizeof(long));
    bufPtr += sizeof(long);
 
-   memcpy(&stat.wVelocity, buf + bufPtr, sizeof(WORD));
-   bufPtr += sizeof(WORD);
+   memcpy(&stat.wVelocity, buf + bufPtr, sizeof(unsigned short));
+   bufPtr += sizeof(unsigned short);
 
-   memcpy(&stat.wReserved, buf + bufPtr, sizeof(WORD));
-   bufPtr += sizeof(WORD);
+   memcpy(&stat.wReserved, buf + bufPtr, sizeof(unsigned short));
+   bufPtr += sizeof(unsigned short);
 
-   memcpy(&stat.dwStatusBits, buf + bufPtr, sizeof(DWORD));
+   memcpy(&stat.dwStatusBits, buf + bufPtr, sizeof(unsigned long));
 
    return DEVICE_OK;
 }
@@ -859,8 +859,8 @@ int XYStage::ParseVelocityProfile(const unsigned char* buf, int bufLen, MOTVELPA
       return ERR_INVALID_PACKET_LENGTH;
 
    int bufPtr = 0; 
-   memcpy(&params.wChannel, buf, sizeof(WORD));
-   bufPtr += sizeof(WORD);
+   memcpy(&params.wChannel, buf, sizeof(unsigned short));
+   bufPtr += sizeof(unsigned short);
 
    memcpy(&params.lMinVel, buf + bufPtr, sizeof(long));
    bufPtr += sizeof(long);

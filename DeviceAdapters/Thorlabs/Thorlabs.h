@@ -49,31 +49,31 @@ unsigned const char* GenerateYCommand(const unsigned char* xCmd);
 /////////////////////////////////////////////////////////////////////////////
 typedef struct _HWINFO
 {
-  DWORD dwSerialNum;		   // Unique 8 digit serial number.
-  char szModelNum[8];		// Alphanumeric model number.
-  WORD wHWType;		      // Hardware type ident (see #defines below).
-  DWORD dwSoftwareVersion;	// Software version
-  char szNotes[64];		   // Arbitrary alphanumeric info string.
-  WORD wNumChannels;		   // Number of channels of operation
+  unsigned long dwSerialNum;		   // Unique 8 digit serial number.
+  char szModelNum[8];		         // Alphanumeric model number.
+  unsigned short wHWType;		      // Hardware type ident (see #defines below).
+  unsigned long dwSoftwareVersion;	// Software version
+  char szNotes[64];		            // Arbitrary alphanumeric info string.
+  unsigned short wNumChannels;		// Number of channels of operation
 } HWINFO;
 
 // velocity and acceleration parameters
 typedef struct _MOTVELPARAMS
 {
-  WORD wChannel;	// Channel ident (see #defines earlier).
-  long lMinVel;	// Minimum (start) velocity
-  long lAccn;		// Acceleration in position pos. steps/sec*sec 
-  long lMaxVel;	// Maximum (final) velocity in pos. steps/sec 
+  unsigned short wChannel;	// Channel ident (see #defines earlier).
+  long lMinVel;	         // Minimum (start) velocity
+  long lAccn;		         // Acceleration in position pos. steps/sec*sec 
+  long lMaxVel;	         // Maximum (final) velocity in pos. steps/sec 
 } MOTVELPARAMS;
 
 // motor status parameters
 typedef struct _DCMOTSTATUS
 {
-WORD wChannel;				   // Channel ident.
-	LONG lPosition;			// Position in encoder counts. 
-	WORD wVelocity;			// Velocity in encoder counts/sec.
-	WORD wReserved;			// Controller specific use 
-	DWORD dwStatusBits;	   // Status bits (see #defines below).
+   unsigned short wChannel;   // Channel ident.
+	long lPosition;			   // Position in encoder counts. 
+	unsigned short wVelocity;  // Velocity in encoder counts/sec.
+	unsigned short wReserved;	// Controller specific use 
+	unsigned long dwStatusBits;// Status bits (see #defines below).
 } DCMOTSTATUS;
 
 ///////////////////////////////////////////////////////////////////////////////
