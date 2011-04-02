@@ -132,8 +132,11 @@ BOOL APIENTRY DllMain( HANDLE /*hModule*/,
 #endif
 
 #ifdef _SIMPLECAM_GPHOTO_
+
 // define gphoto callback for logging
 static void gphoto2_logger(GPLogLevel level, const char *domain, const char *format, va_list args, void *data);
+static int gphoto2_log_id = 0;
+
 #endif _SIMPLECAM_GPHOTO_
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -273,7 +276,7 @@ int CCameraFrontend::Initialize()
       return nRet;
 
    // Description
-   char desc[]="GPhoto Camera";
+   char desc[] = SIMPLECAM_DESCRIPTION;
 
    nRet = CreateProperty(MM::g_Keyword_Description, desc, MM::String, true);
    assert(nRet == DEVICE_OK);
@@ -377,7 +380,9 @@ int CCameraFrontend::Initialize()
    }
    LogMessage(msg.str(), false);
 
-   gp_log_add_func(GP_LOG_DEBUG, gphoto2_logger, this);
+   /* Switch on gphoto2 logging */
+   gphoto2_log_id = gp_log_add_func(GP_LOG_DEBUG, gphoto2_logger, this);
+
 #endif _SIMPLECAM_GPHOTO_
 
    /* Finally, connect to default camera */
@@ -397,6 +402,12 @@ int CCameraFrontend::Initialize()
 */
 int CCameraFrontend::Shutdown()
 {
+
+#ifdef _SIMPLECAM_GPHOTO_
+   /* Switch off gphoto2 logging */
+   gp_log_remove_func(gphoto2_log_id);
+#endif _SIMPLECAM_GPHOTO_
+
    initialized_ = false;
    return DEVICE_OK;
 }
@@ -1079,6 +1090,7 @@ int CCameraFrontend::SetCameraShutterSpeed()
    else
       msg << "fail";
    LogMessage(msg.str(), true);
+   return success;
 }
 
 /* Convert a shutter speed from text to a value in milliseconds. 
@@ -1123,11 +1135,11 @@ void CCameraFrontend::EscapeValues(vector<string>& valueList)
       while (p != value.end())
       {
          if (*p == '\\') newValue += "\\\\";       /* escape backslashes: \ -> \\ */
-         else if (*p = ',') newValue += "\\;";     /* escape commas:      , -> \; */
+         else if (*p == ',') newValue += "\\;";    /* escape commas:      , -> \; */
          else newValue += *p;                      /* pass-through */
          p++;
       }
-      value = newValue;
+      valueList[i] = newValue;
    }
 }
 
@@ -1140,12 +1152,26 @@ void CCameraFrontend::UnEscapeValue(string& value)
 {
    string newValue = "";
    string::iterator p;
+   bool escaped = false;
 
    p = value.begin();
    while (p != value.end())
    {
-      if (*p == '\\') p++;
-      newValue += *p++;
+      if (escaped)
+      {
+         escaped = false;
+         if (*p == ';')
+            newValue += ',';
+         else
+            newValue += *p;
+      }
+      else
+      {
+         escaped = (*p == '\\');
+         if (!escaped)
+            newValue += *p;
+      }
+      p++;
    }
    value = newValue;
 }
@@ -1280,7 +1306,7 @@ int CCameraFrontend::LoadImage(fipImage frameBitmap)
       }
 
    /* change to 8bpp grayscale, 16bpp grayscale, 32bpp rgb or 64bpp rgb */
-   unsigned int bytesPerPixel;
+   unsigned int bytesPerPixel = 1;
 
    if (rc)
    {

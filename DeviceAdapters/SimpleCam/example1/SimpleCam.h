@@ -37,8 +37,8 @@
 
 // Device name and description
 
-#define SIMPLECAM_DEVICENAME  "GPhoto";
-#define SIMPLECAM_DESCRIPTION "Generic Camera driver";
+#define SIMPLECAM_DEVICENAME  "GPhoto"
+#define SIMPLECAM_DESCRIPTION "Generic Camera driver"
 
 class CSimpleCam
 {
