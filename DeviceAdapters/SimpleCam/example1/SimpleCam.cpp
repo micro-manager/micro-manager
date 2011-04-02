@@ -121,7 +121,7 @@ string CSimpleCam::captureImage()
       }
    }
 
-   /* save bitmap to file. jpg, tiff and pnm  */
+   /* save bitmap to file */
 #ifdef _WIN32
    string fname="C:\\TEST.TIF";
 #else
