@@ -6,7 +6,7 @@ MMJAVACODE = MMCoreJ_wrap mmstudio acqEngine autofocus plugins scripts
 endif
 
 if BUILD_APP
-APP = MMCore $(MMJAVACODE) Test_Programs
+APP = MMCore $(MMJAVACODE) 
 endif
 
 if BUILD_PYTHON
