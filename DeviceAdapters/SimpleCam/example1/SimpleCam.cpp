@@ -129,7 +129,7 @@ string CSimpleCam::captureImage()
 #endif
    image.save(fname.c_str());
 
-   /* return value is FreeImagePlus bitmap */
+   /* return value is the filename of a bitmap file */
    return fname;
 }
 
