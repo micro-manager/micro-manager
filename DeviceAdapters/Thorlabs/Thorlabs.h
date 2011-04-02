@@ -23,8 +23,8 @@
 #ifndef _THORLABS_H_
 #define _THORLABS_H_
 
-#include "MMDevice.h"
-#include "DeviceBase.h"
+#include "../../MMDevice/MMDevice.h"
+#include "../../MMDevice/DeviceBase.h"
 #include <string>
 #include <map>
 

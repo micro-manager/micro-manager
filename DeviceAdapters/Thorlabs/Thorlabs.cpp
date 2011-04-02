@@ -26,7 +26,7 @@
 #endif
 
 #include "Thorlabs.h"
-#include "ModuleInterface.h"
+#include "../../MMDevice/ModuleInterface.h"
 #include <cstdio>
 #include <string>
 #include <math.h>
