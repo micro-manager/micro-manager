@@ -24,7 +24,7 @@
 
 //
 // Description:
-// This is an example of a SimpleCam driver, where the captureImage() method returns a bitmap.
+// This is an example of a SimpleCam driver, where the captureImage() method returns a filename.
 //
 
 #include "SimpleCam.h"
