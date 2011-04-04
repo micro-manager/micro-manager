@@ -10,7 +10,7 @@ To debug and test:
    ./test
    This tests this device driver and libgphoto2. Adapt test.cpp to your needs.
 
-3. Use the gphoto2 command line program
+3. Using the gphoto2 command line program
    Build gphoto2 using macports:
    port install gphoto2
    gphoto2 --camera "Nikon DSC D40x (PTP mode)" --capture-image-and-download
