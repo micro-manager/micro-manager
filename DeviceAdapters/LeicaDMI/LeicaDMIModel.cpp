@@ -293,18 +293,11 @@ int LeicaAFCModel::SetMode(bool on)
    return DEVICE_OK;
 }
 
-int LeicaAFCModel::GetTopLEDColor(int& color)
+int LeicaAFCModel::GetLEDColors(int& topColor, int& bottomColor)
 {
    MM_THREAD_GUARD_LOCK(&mutex_);
-   color = topLEDColor_;
-   MM_THREAD_GUARD_UNLOCK(&mutex_);
-   return DEVICE_OK;
-}
-
-int LeicaAFCModel::GetBottomLEDColor(int& color)
-{
-   MM_THREAD_GUARD_LOCK(&mutex_);
-   color = bottomLEDColor_;
+   topColor = topLEDColor_;
+   bottomColor = bottomLEDColor_;
    MM_THREAD_GUARD_UNLOCK(&mutex_);
    return DEVICE_OK;
 }

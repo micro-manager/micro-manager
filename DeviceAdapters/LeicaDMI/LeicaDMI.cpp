@@ -2567,9 +2567,9 @@ int AFC::GetContinuousFocusing(bool& state) {
 }
 
 bool AFC::IsContinuousFocusLocked() {
-   int bottomColor;
+   int topColor, bottomColor;
    int ret;
-   ret = g_ScopeModel.afc_.GetBottomLEDColor(bottomColor);
+   ret = g_ScopeModel.afc_.GetLEDColors(topColor, bottomColor);
    if (ret != DEVICE_OK)
       return false;
    

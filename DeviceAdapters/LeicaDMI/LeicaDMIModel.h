@@ -241,8 +241,7 @@ public:
    int SetOffset(double mag);  // Measured value
    int GetMode(bool& mode);
    int SetMode(bool mode);
-   int GetTopLEDColor(int& color);
-   int GetBottomLEDColor(int& color);
+   int GetLEDColors(int& topColor, int& bottomColor);
    int SetLEDColors(int topColor, int bottomColor);
 private:
    double offset_;
