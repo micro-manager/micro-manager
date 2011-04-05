@@ -230,6 +230,30 @@ private:
 };
 
 /*
+ * Model for Leica Motorized Magnification Changer
+ */
+class LeicaAFCModel : public LeicaDeviceModel
+{
+public:
+   LeicaAFCModel();
+
+   int GetOffset(double& mag); // Set point
+   int SetOffset(double mag);  // Measured value
+   int GetMode(bool& mode);
+   int SetMode(bool mode);
+   int GetTopLEDColor(int& color);
+   int GetBottomLEDColor(int& color);
+   int SetLEDColors(int topColor, int bottomColor);
+private:
+   double offset_;
+   bool mode_;
+   double diff_;
+   int topLEDColor_;
+   int bottomLEDColor_;
+};
+
+
+/*
  * Abstract model of the Lecia DMI microscope
  * All get and set methods refer to the model, not to the actual microscope
  * No communication with the microscope takes place in the model, this is merely
@@ -282,6 +306,7 @@ public:
    LeicaDICPrismTurretModel dicTurret_;
    LeicaDeviceModel tlPolarizer_;
    LeicaMagChangerModel magChanger_;
+   LeicaAFCModel afc_;
 
 private:
    std::vector<bool> availableDevices_;

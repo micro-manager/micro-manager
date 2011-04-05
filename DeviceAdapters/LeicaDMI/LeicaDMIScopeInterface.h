@@ -68,9 +68,6 @@ class LeicaScopeInterface
       int GetDriveParameters(MM::Device& device, MM::Core& core, int deviceID);
 	   int GetTransmittedLightState(MM::Device& device, MM::Core& core, int & position);
 	   int GetTransmittedLightShutterPosition(MM::Device& device, MM::Core& core, int & position);
-      int GetContinuousAutoFocusState(MM::Device& device, MM::Core& core, bool & on);
-      int GetContinuousAutoFocusOffset(MM::Device &device, MM::Core &core, double & offset);
-      int IsContinuousAutoFocusLocked(MM::Device &device, MM::Core &core, bool & locked);
 
       // commands to set individual components
       int SetMethod(MM::Device& device, MM::Core& core, int position);
@@ -92,8 +89,10 @@ class LeicaScopeInterface
       int SetDICPrismFinePosition(MM::Device& device, MM::Core& core, int position);
 	   int SetTransmittedLightState(MM::Device& device, MM::Core& core, int position);
 	   int SetTransmittedLightShutterPosition(MM::Device& device, MM::Core& core, int position);
-      int SetContinuousAutoFocusState(MM::Device& device, MM::Core& core, bool on);
-      int SetContinuousAutoFocusOffset(MM::Device &device, MM::Core &core, double offset);
+      int SetAFCMode(MM::Device& device, MM::Core& core, bool on);
+      int SetAFCOffset(MM::Device &device, MM::Core &core, double offset);
+      int SetAFCDichroicMirrorPosition(MM::Device &device, MM::Core &core, int position);
+
 
       LeicaMonitoringThread* monitoringThread_;
       LeicaDMIModel* scopeModel_;

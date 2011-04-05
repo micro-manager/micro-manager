@@ -209,6 +209,15 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
       command.str("");
    }
 
+   // Suppress event reporting for AFC
+   if (scopeModel_->IsDeviceAvailable(g_AFC)) {
+      command << g_AFC << "003 0 0 0 0 0 0 0 0 0";
+      ret = GetAnswer(device, core, command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+      command.str("");
+   }
+
    CDeviceUtils::SleepMs(100);
 
    if (scopeModel_->IsDeviceAvailable(g_Lamp)) {
@@ -411,6 +420,16 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
       command.str("");
    }
 
+   // Start event reporting for AFC
+   if (scopeModel_->IsDeviceAvailable(g_AFC)) {
+      command << g_AFC << "003 1 0 0 1 1 0 1 0 0";
+      ret = GetAnswer(device, core, command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+      command.str("");
+   }
+
+
    // Start monitoring of all messages coming from the microscope
    monitoringThread_ = new LeicaMonitoringThread(device, core, port_, scopeModel_);
    monitoringThread_->Start();
@@ -510,6 +529,32 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
             return ret;
          command.str("");
       }
+   }
+
+   if (scopeModel_->IsDeviceAvailable(g_AFC)) {
+      command << g_AFC << "021";
+      ret = core.SetSerialCommand(&device, port_.c_str(), command.str().c_str(), "\r");
+      if (ret != DEVICE_OK)
+         return ret;
+      command.str("");
+
+      command << g_AFC << "023";
+      ret = core.SetSerialCommand(&device, port_.c_str(), command.str().c_str(), "\r");
+      if (ret != DEVICE_OK)
+         return ret;
+      command.str("");
+
+      command << g_AFC << "039";
+      ret = core.SetSerialCommand(&device, port_.c_str(), command.str().c_str(), "\r");
+      if (ret != DEVICE_OK)
+         return ret;
+      command.str("");
+
+      command << g_AFC << "032";
+      ret = core.SetSerialCommand(&device, port_.c_str(), command.str().c_str(), "\r");
+      if (ret != DEVICE_OK)
+         return ret;
+      command.str("");
    }
 
    initialized_ = true;
@@ -1322,7 +1367,7 @@ int LeicaScopeInterface::GetMagChangerInfo(MM::Device& device, MM::Core& core)
 /*
  * Sends commands to the scope enquiring about current position, speed and acceleration settings
  *  of the specified drive.
- * Does not deal with microscope answers (will be taked care of by the monitoringthread
+ * Does not deal with microscope answers (will be taked care of by the monitoring thread
  */
 int LeicaScopeInterface::GetDriveParameters(MM::Device& device, MM::Core& core, int deviceID)
 {
@@ -1646,12 +1691,14 @@ int LeicaScopeInterface::SetTransmittedLightShutterPosition(MM::Device &device, 
 
 int LeicaScopeInterface::GetTransmittedLightShutterPosition(MM::Device &device, MM::Core &core, int & position)
 {
-	position = scopeModel_->TransmittedLight_.GetPosition(position);
-	return DEVICE_OK;
+	return scopeModel_->TransmittedLight_.GetPosition(position);
 }
 
 
-int LeicaScopeInterface::SetContinuousAutoFocusState(MM::Device &device, MM::Core &core, bool on)
+/**
+ * Set autofocus mode on and off
+ */
+int LeicaScopeInterface::SetAFCMode(MM::Device &device, MM::Core &core, bool on)
 {
    std::stringstream os;
    os << g_AFC << "020" << " " << (on ? "1" : "0");
@@ -1661,28 +1708,33 @@ int LeicaScopeInterface::SetContinuousAutoFocusState(MM::Device &device, MM::Cor
 	return DEVICE_OK;
 }
 
-int LeicaScopeInterface::GetContinuousAutoFocusState(MM::Device &device, MM::Core &core, bool & on)
+/**
+ * Set continuous autofocus offset
+ */
+int LeicaScopeInterface::SetAFCOffset(MM::Device &device, MM::Core &core, double offset)
 {
-   
    std::stringstream os;
-   std::string answer;
-	os<<g_AFC<<"021";
+   os << g_AFC << "024" << " " << offset;
 	int ret = core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
-	ret = GetAnswer(device, core, os.str().c_str(), answer);
-
-   std::stringstream ts(answer);
-   int cmdEcho;
-   int state;
-   ts >> cmdEcho;
-   ts >> state;
-   on = (state == 1);
-
-   if(ret != DEVICE_OK)
+	if(ret != DEVICE_OK)
 		return ret;	
 	return DEVICE_OK;
-   
 }
 
+/**
+ * Set dichroic mirror in and out
+ */
+int LeicaScopeInterface::SetAFCDichroicMirrorPosition(MM::Device &device, MM::Core &core, int position)
+{
+   std::stringstream os;
+   os << g_AFC << "031" << " " << position;
+	int ret = core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+	if(ret != DEVICE_OK)
+		return ret;	
+	return DEVICE_OK;
+}
+
+/*
 int LeicaScopeInterface::IsContinuousAutoFocusLocked(MM::Device &device, MM::Core &core, bool & locked)
 {
    double offset;
@@ -1696,35 +1748,7 @@ int LeicaScopeInterface::IsContinuousAutoFocusLocked(MM::Device &device, MM::Cor
 	return DEVICE_OK;
    
 }
-
-int LeicaScopeInterface::GetContinuousAutoFocusOffset(MM::Device &device, MM::Core &core, double & offset)
-{
-   std::stringstream os;
-      std::string answer;
-	os<<g_AFC<<"023";
-	int ret = core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
-	ret = GetAnswer(device, core, os.str().c_str(), answer);
-
-   std::stringstream ts(answer);
-   int cmdEcho;
-   ts >> cmdEcho;
-   ts >> offset;
-
-   if(ret != DEVICE_OK)
-		return ret;	
-	return DEVICE_OK;
-}
-
-int LeicaScopeInterface::SetContinuousAutoFocusOffset(MM::Device &device, MM::Core &core, double offset)
-{
-   std::stringstream os;
-   os << g_AFC << "024" << " " << offset;
-	int ret = core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
-	if(ret != DEVICE_OK)
-		return ret;	
-	return DEVICE_OK;
-}
-
+*/
 
 /*
  * Thread that continuously monitors messages from the Leica scope and inserts them into a model of the microscope
@@ -1788,7 +1812,7 @@ int LeicaMonitoringThread::svc()
             CDeviceUtils::SleepMs(intervalUs_/1000);
          }
          if (strlen(message) >= 5 && !stop_) {
-            // Analyze incoming messages.  Tokenize and take action based on first toke
+            // Analyze incoming messages.  Tokenize and take action based on first token
             std::stringstream os(message);
             std::string command;
             os >> command;
@@ -2237,14 +2261,50 @@ int LeicaMonitoringThread::svc()
                         scopeModel_->dicTurret_.SetBusy(false);
                         break;
                      }
-					 case (77) : // Transmission Lamp State, put other lamp stuff here too
-					 {
-						 int pos;
-						 os>>pos;
-						 scopeModel_->TransmittedLight_.SetPosition(pos);
-						 scopeModel_->TransmittedLight_.SetBusy(false);
-						 break;
-					 }
+                     case (77) : // Transmission Lamp State, put other lamp stuff here too
+                        {
+                           int pos;
+                           os>>pos;
+                           scopeModel_->TransmittedLight_.SetPosition(pos);
+                           scopeModel_->TransmittedLight_.SetBusy(false);
+                           break;
+                        }
+                  }
+               case (g_AFC) :
+                  switch (commandId) {
+                     case (21) : // Focus enabled
+                     {
+                        int state;
+                        os >> state;
+                        scopeModel_->afc_.SetMode(state == 1);
+                        scopeModel_->afc_.SetBusy(false);
+                        break;
+                     }
+                     case (23) : // Current offset
+                     {
+                        double offset;
+                        os >> offset;
+                        scopeModel_->afc_.SetOffset(offset);
+                        scopeModel_->afc_.SetBusy(false);
+                        break;
+                     }
+                     case (32) : // AFC dichroic mirror position
+                     {
+                        int pos;
+                        os >> pos;
+                        scopeModel_->afc_.SetPosition(pos);
+                        scopeModel_->afc_.SetBusy(false);
+                        break;
+                     }
+                     case (39) : // LED colors
+                     {
+                        int topColor, bottomColor;
+                        os >> topColor;
+                        os >> bottomColor;
+                        scopeModel_->afc_.SetLEDColors(topColor, bottomColor);
+                        scopeModel_->afc_.SetBusy(false);
+                        break;
+                     }
                      break;
                   }
               }

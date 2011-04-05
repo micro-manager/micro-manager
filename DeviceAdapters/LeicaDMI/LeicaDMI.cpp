@@ -2498,7 +2498,8 @@ int TransmittedLight::Fire(double)
 //
 AFC::AFC() :
    initialized_(false),    
-   name_(g_LeicaAFC)
+   name_(g_LeicaAFC),
+   timeOut_(5000)
 {
 
    // create pre-initialization properties
@@ -2521,6 +2522,18 @@ AFC::~AFC()
 
 int AFC::Initialize() 
 {
+      // State
+   // -----
+   CPropertyAction* pAct = new CPropertyAction(this, &AFC::OnDichroicMirrorPosition);
+   int ret = CreateProperty("DichroicMirrorIn", "1", MM::Integer, false, pAct);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   AddAllowedValue("DichroicMirrorIn", "0", 0);
+   AddAllowedValue("DichroicMirrorIn", "1", 1);
+   if (ret != DEVICE_OK)
+      return ret;
+
    initialized_ = true;
    return 0;
 }
@@ -2538,35 +2551,54 @@ void AFC::GetName (char* Name) const
 bool AFC::Busy() 
 {
    bool busy;
-   g_ScopeModel.method_.GetBusy(busy);
+   g_ScopeModel.afc_.GetBusy(busy);
    return busy;
 }
 
-
 int AFC::SetContinuousFocusing(bool state) {
-   int ret = g_ScopeInterface.SetContinuousAutoFocusState(*this, *GetCoreCallback(), state);
+   int ret = g_ScopeInterface.SetAFCMode(*this, *GetCoreCallback(), state);
    if (ret != DEVICE_OK)
       return ret;
    return DEVICE_OK;
 }
 
 int AFC::GetContinuousFocusing(bool& state) {
-   int ret = g_ScopeInterface.GetContinuousAutoFocusState(*this, *GetCoreCallback(), state);
-   if (ret != DEVICE_OK)
-      return ret;
-   return DEVICE_OK;
+   return g_ScopeModel.afc_.GetMode(state);
 }
 
 bool AFC::IsContinuousFocusLocked() {
-   bool locked;
-   int ret = g_ScopeInterface.IsContinuousAutoFocusLocked(*this, *GetCoreCallback(), locked);
+   int bottomColor;
+   int ret;
+   ret = g_ScopeModel.afc_.GetBottomLEDColor(bottomColor);
    if (ret != DEVICE_OK)
       return false;
-   return locked;
+   
+   if (bottomColor == 2 /* green */) {
+      return true;
+   } else {
+      return false;
+   }
 }
 
 int AFC::FullFocus() {
-   return DEVICE_OK;
+   int ret = SetContinuousFocusing(true);
+   if (ret != DEVICE_OK)
+      return ret;
+   int time = 0;
+   int delta = 10;
+   for (int time = 0;
+        !IsContinuousFocusLocked() && (time < timeOut_);
+        time += delta) {
+      ::Sleep(delta);
+   }
+
+   if (time > timeOut_) {
+      SetErrorText(DEVICE_LOCALLY_DEFINED_ERROR, "Autofocus Lock Timeout");
+      return DEVICE_LOCALLY_DEFINED_ERROR;
+   }
+   
+   ret = SetContinuousFocusing(false);
+   return ret;
 }
 
 int AFC::IncrementalFocus() {
@@ -2574,15 +2606,34 @@ int AFC::IncrementalFocus() {
 }
 
 int AFC::GetOffset(double &offset) {
-   return g_ScopeInterface.GetContinuousAutoFocusOffset(*this, *GetCoreCallback(), offset);
+   return g_ScopeModel.afc_.GetOffset(offset);
 }
 
 int AFC::SetOffset(double offset) {
-   return g_ScopeInterface.SetContinuousAutoFocusOffset(*this, *GetCoreCallback(), offset);;
+   return g_ScopeInterface.SetAFCOffset(*this, *GetCoreCallback(), offset);;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 // Action handlers
 ///////////////////////////////////////////////////////////////////////////////
 
+int AFC::OnDichroicMirrorPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      int pos;
+      int ret = g_ScopeModel.afc_.GetPosition(pos);
+      if (ret != DEVICE_OK)
+         return ret;
+      pProp->Set((long) pos);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      long pos;
+      pProp->Get(pos);
+      return g_ScopeInterface.SetAFCDichroicMirrorPosition(*this, *GetCoreCallback(), (int) pos);
+   }
+   return DEVICE_OK;
+}
 // ...
+

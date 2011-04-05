@@ -239,16 +239,84 @@ LeicaMagChangerModel::LeicaMagChangerModel() :
 
 int LeicaMagChangerModel::GetMagnification(int pos, double& mag)
 {
+   MM_THREAD_GUARD_LOCK(&mutex_);
    mag = magnification_.at(pos);
+   MM_THREAD_GUARD_UNLOCK(&mutex_);
    return DEVICE_OK;
 }
 
 int LeicaMagChangerModel::SetMagnification(int pos, double mag)
 {
+   MM_THREAD_GUARD_LOCK(&mutex_);
    magnification_[pos] = mag;
+   MM_THREAD_GUARD_UNLOCK(&mutex_);
    return DEVICE_OK;
 }
 
+/**
+ * Leica AFC (Hardware autofocus)
+ */
+LeicaAFCModel::LeicaAFCModel() :
+   offset_(0.0)
+{
+}
+
+int LeicaAFCModel::GetOffset(double& offset)
+{
+   MM_THREAD_GUARD_LOCK(&mutex_);
+   offset = offset_;
+   MM_THREAD_GUARD_UNLOCK(&mutex_);
+   return DEVICE_OK;
+}
+
+int LeicaAFCModel::SetOffset(double offset)
+{
+   MM_THREAD_GUARD_LOCK(&mutex_);
+   offset_ = offset;
+   MM_THREAD_GUARD_UNLOCK(&mutex_);
+   return DEVICE_OK;
+}
+
+int LeicaAFCModel::GetMode(bool& on)
+{
+   MM_THREAD_GUARD_LOCK(&mutex_);
+   on = mode_;
+   MM_THREAD_GUARD_UNLOCK(&mutex_);
+   return DEVICE_OK;
+}
+
+int LeicaAFCModel::SetMode(bool on)
+{
+   MM_THREAD_GUARD_LOCK(&mutex_);
+   mode_ = on;
+   MM_THREAD_GUARD_UNLOCK(&mutex_);
+   return DEVICE_OK;
+}
+
+int LeicaAFCModel::GetTopLEDColor(int& color)
+{
+   MM_THREAD_GUARD_LOCK(&mutex_);
+   color = topLEDColor_;
+   MM_THREAD_GUARD_UNLOCK(&mutex_);
+   return DEVICE_OK;
+}
+
+int LeicaAFCModel::GetBottomLEDColor(int& color)
+{
+   MM_THREAD_GUARD_LOCK(&mutex_);
+   color = bottomLEDColor_;
+   MM_THREAD_GUARD_UNLOCK(&mutex_);
+   return DEVICE_OK;
+}
+
+int LeicaAFCModel::SetLEDColors(int topColor, int bottomColor)
+{
+   MM_THREAD_GUARD_LOCK(&mutex_);
+   topLEDColor_ = topColor;
+   bottomLEDColor_ = bottomColor;
+   MM_THREAD_GUARD_UNLOCK(&mutex_);
+   return DEVICE_OK;
+}
 
 /*
  * Class that keeps a model of the state of the Leica DMI microscope

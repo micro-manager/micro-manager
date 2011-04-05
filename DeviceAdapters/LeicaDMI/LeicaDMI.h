@@ -461,9 +461,13 @@ public:
    int GetOffset(double &offset);
    int SetOffset(double offset);
 
+   //Action Handlers
+   int OnDichroicMirrorPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
+
 
 private:
    bool initialized_;
    std::string name_;
+   long timeOut_;
 };
 #endif // _LeicaDMI_H_
