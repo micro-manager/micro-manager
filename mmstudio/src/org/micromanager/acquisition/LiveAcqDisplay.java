@@ -141,7 +141,9 @@ public class LiveAcqDisplay extends Thread {
    private void updateDisplay() {
       try {
          JSONObject tags = imageCache_.getLastImageTags();
-         display_.showImage(tags);
+         if (tags != null) {
+            display_.showImage(tags);
+         }
       } catch (Exception e) {
          ReportingUtils.logError(e);
       }
