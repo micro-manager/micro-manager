@@ -3,7 +3,7 @@ To debug and test:
 1. Switch on debugging in micro-manager
    Tools > Options > Debug log enabled
    Debug log is in /Applications/Micro-Manager1.4/CoreLog.txt
-   This debugs micro-manager, this device driver and libgphoto2.
+   This switches on debug logging for micro-manager, this device driver and libgphoto2.
 
 2. Using the test program 
    make -f Makefile.test
