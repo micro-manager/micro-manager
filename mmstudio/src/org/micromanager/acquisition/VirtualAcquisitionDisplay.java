@@ -472,7 +472,8 @@ public class VirtualAcquisitionDisplay {
 
    public void showImage(JSONObject md) throws Exception {
          updateWindow();
-
+         if (md == null)
+            return;
          int cameraChannel = this.rgbToGrayChannel(MDUtils.getChannelIndex(md));
          int frame = MDUtils.getFrameIndex(md);
          int position = MDUtils.getPositionIndex(md);
@@ -513,9 +514,14 @@ public class VirtualAcquisitionDisplay {
                ReportingUtils.showError(ex);
             }
          }
-         
-         
-         updateAndDraw();
+
+      // Make sure image is shown if it is a single plane:
+      if (hyperImage_.getStackSize() == 1) {
+         hyperImage_.getProcessor().setPixels(
+                 hyperImage_.getStack().getPixels(1));
+      }
+
+      updateAndDraw();
    }
 
    private void updatePosition(int p) {
