@@ -32,6 +32,7 @@ public class LiveAcqDisplay extends Thread {
    private BlockingQueue<TaggedImage> imageProducingQueue_;
    private MMImageCache imageCache_ = null;
    private VirtualAcquisitionDisplay display_ = null;
+   private JSONObject lastTags_ = null;
 
    public LiveAcqDisplay(CMMCore core,
            BlockingQueue<TaggedImage> imageProducingQueue,
@@ -140,9 +141,12 @@ public class LiveAcqDisplay extends Thread {
 
    private void updateDisplay() {
       try {
+
          JSONObject tags = imageCache_.getLastImageTags();
-         if (tags != null) {
+
+         if (tags != null && tags != lastTags_) {
             display_.showImage(tags);
+            lastTags_ = tags;
          }
       } catch (Exception e) {
          ReportingUtils.logError(e);
