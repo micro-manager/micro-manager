@@ -36,6 +36,7 @@ public class ChannelControlPanel extends javax.swing.JPanel {
    private boolean rejectOutliers_ = false;
    private final MetadataPanel metadataPanel_;
    private boolean logScale_ = false;
+   private double fractionToReject_;
 
    /** Creates new form ChannelControlsPanel */
    public ChannelControlPanel(VirtualAcquisitionDisplay acq, int channelIndex,
@@ -45,8 +46,11 @@ public class ChannelControlPanel extends javax.swing.JPanel {
       acq_ = acq;
       hp_ = addHistogramPanel();
       metadataPanel_ = metadataPanel;
+      HistogramUtils huu = new HistogramUtils(null);
+      fractionToReject_ = huu.getFractionToReject();
       updateChannelSettings();
       drawDisplaySettings();
+
    }
 
    /** This method is called from within the constructor to
@@ -395,7 +399,7 @@ public class ChannelControlPanel extends javax.swing.JPanel {
 				// don't let pixels lying outside 3 sigma influence the automatic contrast setting
             int totalPoints =  acq_.getHyperImage().getWidth() * acq_.getHyperImage().getHeight();
             int[] histogram = acq_.getChannelHistogram(channelIndex_);
-            HistogramUtils hu = new HistogramUtils(histogram, totalPoints);
+            HistogramUtils hu = new HistogramUtils(histogram, totalPoints, fractionToReject_);
 				int minAfterRejectingOutliers = hu.getMinAfterRejectingOutliers();
             int maxAfterRejectingOutliers = hu.getMaxAfterRejectingOutliers();
 
@@ -498,5 +502,14 @@ public class ChannelControlPanel extends javax.swing.JPanel {
       }
    }
 
+
+   public double getFractionToReject(){
+      return fractionToReject_;
+   }
+
+   public void setFractionToReject(double v){
+      fractionToReject_ = v;
+
+   }
 
 }

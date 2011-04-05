@@ -22,7 +22,11 @@ import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Vector;
+import javax.swing.JCheckBox;
 import javax.swing.JPanel;
+import javax.swing.JSpinner;
+import javax.swing.SpinnerModel;
+import javax.swing.SpinnerNumberModel;
 import javax.swing.SpringLayout;
 import javax.swing.table.AbstractTableModel;
 import mmcorej.TaggedImage;
@@ -30,6 +34,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.micromanager.utils.ImageFocusListener;
 import org.micromanager.utils.GUIUtils;
+import org.micromanager.utils.HistogramUtils;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.ReportingUtils;
 import org.micromanager.utils.ScaleBar;
@@ -50,6 +55,7 @@ public class MetadataPanel extends javax.swing.JPanel
    private boolean updatingDisplayModeCombo_ = false;
    private ArrayList<ChannelControlPanel> ccpList_;
    private Color overlayColor_ = Color.white;
+   private double fractionOutliersToReject_;
 
     /** Creates new form MetadataPanel */
     public MetadataPanel() {
@@ -61,6 +67,16 @@ public class MetadataPanel extends javax.swing.JPanel
       //update(WindowManager.getCurrentImage());
       imageMetadataTable.setModel(imageMetadataModel_);
       summaryMetadataTable.setModel(summaryMetadataModel_);
+      
+      HistogramUtils defaultHistogram = new HistogramUtils(null);
+      // start out with a fraction that represents 3 sigma in normal distribution
+      fractionOutliersToReject_ = defaultHistogram.getFractionToReject();
+      SpinnerModel smodel = new SpinnerNumberModel(100.*fractionOutliersToReject_,0.,1.,.01);
+      rejectPercentSpinner_.setModel(smodel);
+      rejectOutliersCB_.setEnabled(autostretchCheckBox.isSelected());
+      rejectPercentSpinner_.setEnabled(rejectOutliersCB_.isSelected() && autostretchCheckBox.isSelected());
+
+
 
       setDisplayState(CompositeImage.COMPOSITE);
     }
@@ -90,10 +106,12 @@ public class MetadataPanel extends javax.swing.JPanel
       displayModeCombo = new javax.swing.JComboBox();
       jLabel1 = new javax.swing.JLabel();
       autostretchCheckBox = new javax.swing.JCheckBox();
-      logScaleCheckBox = new javax.swing.JCheckBox();
+      rejectOutliersCB_ = new javax.swing.JCheckBox();
+      rejectPercentSpinner_ = new javax.swing.JSpinner();
       sizeBarCheckBox = new javax.swing.JCheckBox();
       sizeBarComboBox = new javax.swing.JComboBox();
       overlayColorComboBox_ = new javax.swing.JComboBox();
+      logScaleCheckBox = new javax.swing.JCheckBox();
       metadataSplitPane = new javax.swing.JSplitPane();
       imageMetadataScrollPane = new javax.swing.JPanel();
       imageMetadataTableScrollPane = new javax.swing.JScrollPane();
@@ -141,10 +159,16 @@ public class MetadataPanel extends javax.swing.JPanel
          }
       });
 
-      logScaleCheckBox.setText("Log hist");
-      logScaleCheckBox.addActionListener(new java.awt.event.ActionListener() {
+      rejectOutliersCB_.setText("ignore %");
+      rejectOutliersCB_.addActionListener(new java.awt.event.ActionListener() {
          public void actionPerformed(java.awt.event.ActionEvent evt) {
-            logScaleCheckBoxActionPerformed(evt);
+            rejectOutliersCB_ActionPerformed(evt);
+         }
+      });
+
+      rejectPercentSpinner_.addChangeListener(new javax.swing.event.ChangeListener() {
+         public void stateChanged(javax.swing.event.ChangeEvent evt) {
+            rejectPercentSpinner_StateChanged(evt);
          }
       });
 
@@ -153,22 +177,28 @@ public class MetadataPanel extends javax.swing.JPanel
       jPanel1Layout.setHorizontalGroup(
          jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(jPanel1Layout.createSequentialGroup()
+            .add(24, 24, 24)
             .add(jLabel1)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
             .add(displayModeCombo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 134, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
             .add(autostretchCheckBox)
-            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-            .add(logScaleCheckBox)
-            .addContainerGap(111, Short.MAX_VALUE))
+            .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+            .add(rejectOutliersCB_)
+            .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+            .add(rejectPercentSpinner_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 45, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+            .addContainerGap(36, Short.MAX_VALUE))
       );
       jPanel1Layout.setVerticalGroup(
          jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-         .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-            .add(jLabel1)
-            .add(displayModeCombo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+         .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
             .add(autostretchCheckBox)
-            .add(logScaleCheckBox))
+            .add(rejectOutliersCB_)
+            .add(rejectPercentSpinner_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+         .add(displayModeCombo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+         .add(jPanel1Layout.createSequentialGroup()
+            .add(4, 4, 4)
+            .add(jLabel1))
       );
 
       sizeBarCheckBox.setText("Scale Bar");
@@ -192,6 +222,13 @@ public class MetadataPanel extends javax.swing.JPanel
          }
       });
 
+      logScaleCheckBox.setText("Log hist");
+      logScaleCheckBox.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            logScaleCheckBoxActionPerformed(evt);
+         }
+      });
+
       org.jdesktop.layout.GroupLayout ChannelsTablePanelLayout = new org.jdesktop.layout.GroupLayout(ChannelsTablePanel);
       ChannelsTablePanel.setLayout(ChannelsTablePanelLayout);
       ChannelsTablePanelLayout.setHorizontalGroup(
@@ -203,22 +240,27 @@ public class MetadataPanel extends javax.swing.JPanel
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
             .add(overlayColorComboBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 105, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
             .add(214, 214, 214))
-         .add(org.jdesktop.layout.GroupLayout.TRAILING, contrastScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 550, Short.MAX_VALUE)
          .add(ChannelsTablePanelLayout.createSequentialGroup()
             .add(jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addContainerGap())
+            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+            .add(logScaleCheckBox)
+            .add(134, 134, 134))
+         .add(org.jdesktop.layout.GroupLayout.TRAILING, contrastScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 671, Short.MAX_VALUE)
       );
       ChannelsTablePanelLayout.setVerticalGroup(
          ChannelsTablePanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(ChannelsTablePanelLayout.createSequentialGroup()
-            .add(ChannelsTablePanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-               .add(sizeBarCheckBox)
-               .add(sizeBarComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-               .add(overlayColorComboBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+            .add(ChannelsTablePanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
+               .add(ChannelsTablePanelLayout.createSequentialGroup()
+                  .add(ChannelsTablePanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+                     .add(sizeBarCheckBox)
+                     .add(sizeBarComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+                     .add(overlayColorComboBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+                  .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+               .add(logScaleCheckBox))
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-            .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-            .add(contrastScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 435, Short.MAX_VALUE))
+            .add(contrastScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 515, Short.MAX_VALUE))
       );
 
       tabbedPane.addTab("Channels", ChannelsTablePanel);
@@ -268,10 +310,10 @@ public class MetadataPanel extends javax.swing.JPanel
       imageMetadataScrollPane.setLayout(imageMetadataScrollPaneLayout);
       imageMetadataScrollPaneLayout.setHorizontalGroup(
          imageMetadataScrollPaneLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-         .add(imageMetadataTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 550, Short.MAX_VALUE)
+         .add(imageMetadataTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 671, Short.MAX_VALUE)
          .add(org.jdesktop.layout.GroupLayout.TRAILING, imageMetadataScrollPaneLayout.createSequentialGroup()
             .add(jLabel2)
-            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 206, Short.MAX_VALUE)
+            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 410, Short.MAX_VALUE)
             .add(showUnchangingPropertiesCheckbox))
       );
       imageMetadataScrollPaneLayout.setVerticalGroup(
@@ -281,7 +323,7 @@ public class MetadataPanel extends javax.swing.JPanel
                .add(showUnchangingPropertiesCheckbox)
                .add(jLabel2))
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-            .add(imageMetadataTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 370, Short.MAX_VALUE))
+            .add(imageMetadataTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 452, Short.MAX_VALUE))
       );
 
       metadataSplitPane.setRightComponent(imageMetadataScrollPane);
@@ -320,7 +362,7 @@ public class MetadataPanel extends javax.swing.JPanel
       summaryMetadataPanel.setLayout(summaryMetadataPanelLayout);
       summaryMetadataPanelLayout.setHorizontalGroup(
          summaryMetadataPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-         .add(org.jdesktop.layout.GroupLayout.TRAILING, summaryMetadataScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 550, Short.MAX_VALUE)
+         .add(org.jdesktop.layout.GroupLayout.TRAILING, summaryMetadataScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 671, Short.MAX_VALUE)
          .add(summaryMetadataPanelLayout.createSequentialGroup()
             .add(jLabel3)
             .addContainerGap())
@@ -330,7 +372,7 @@ public class MetadataPanel extends javax.swing.JPanel
          .add(org.jdesktop.layout.GroupLayout.TRAILING, summaryMetadataPanelLayout.createSequentialGroup()
             .add(jLabel3)
             .add(4, 4, 4)
-            .add(summaryMetadataScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .add(summaryMetadataScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 82, Short.MAX_VALUE))
       );
 
       metadataSplitPane.setLeftComponent(summaryMetadataPanel);
@@ -362,15 +404,15 @@ public class MetadataPanel extends javax.swing.JPanel
          summaryCommentsPaneLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(summaryCommentsPaneLayout.createSequentialGroup()
             .add(summaryCommentsLabel)
-            .addContainerGap(404, Short.MAX_VALUE))
-         .add(summaryCommentsScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 550, Short.MAX_VALUE)
+            .addContainerGap(565, Short.MAX_VALUE))
+         .add(summaryCommentsScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 671, Short.MAX_VALUE)
       );
       summaryCommentsPaneLayout.setVerticalGroup(
          summaryCommentsPaneLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(summaryCommentsPaneLayout.createSequentialGroup()
             .add(summaryCommentsLabel)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-            .add(summaryCommentsScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 176, Short.MAX_VALUE))
+            .add(summaryCommentsScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 180, Short.MAX_VALUE))
       );
 
       CommentsSplitPane.setLeftComponent(summaryCommentsPane);
@@ -399,14 +441,14 @@ public class MetadataPanel extends javax.swing.JPanel
          .add(imageCommentsPanelLayout.createSequentialGroup()
             .add(imageCommentsLabel)
             .add(400, 400, 400))
-         .add(imageCommentsScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 550, Short.MAX_VALUE)
+         .add(imageCommentsScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 671, Short.MAX_VALUE)
       );
       imageCommentsPanelLayout.setVerticalGroup(
          imageCommentsPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(imageCommentsPanelLayout.createSequentialGroup()
             .add(imageCommentsLabel)
             .add(0, 0, 0)
-            .add(imageCommentsScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 282, Short.MAX_VALUE))
+            .add(imageCommentsScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 363, Short.MAX_VALUE))
       );
 
       CommentsSplitPane.setRightComponent(imageCommentsPanel);
@@ -419,14 +461,14 @@ public class MetadataPanel extends javax.swing.JPanel
          layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
             .addContainerGap()
-            .add(tabbedPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 571, Short.MAX_VALUE)
+            .add(tabbedPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 676, Short.MAX_VALUE)
             .addContainerGap())
       );
       layout.setVerticalGroup(
          layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(layout.createSequentialGroup()
             .addContainerGap()
-            .add(tabbedPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 553, Short.MAX_VALUE)
+            .add(tabbedPane)
             .addContainerGap())
       );
    }// </editor-fold>//GEN-END:initComponents
@@ -480,10 +522,18 @@ public class MetadataPanel extends javax.swing.JPanel
     }//GEN-LAST:event_overlayColorComboBox_ActionPerformed
 
     private void autostretchCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_autostretchCheckBoxActionPerformed
+       rejectOutliersCB_.setEnabled(autostretchCheckBox.isSelected());
+       boolean rejectem = rejectOutliersCB_.isSelected() && autostretchCheckBox.isSelected();
+       rejectPercentSpinner_.setEnabled(rejectem);
+       fractionOutliersToReject_ = 0.01*(Double)rejectPercentSpinner_.getValue();
        for (ChannelControlPanel ccp:ccpList_) {
+          ccp.setFractionToReject(fractionOutliersToReject_);
+          ccp.setRejectOutliers(rejectem);
           ccp.setAutostretch(autostretchCheckBox.isSelected());
           ccp.drawDisplaySettings();
        }
+       
+
     }//GEN-LAST:event_autostretchCheckBoxActionPerformed
 
     private void logScaleCheckBoxActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_logScaleCheckBoxActionPerformed
@@ -491,6 +541,17 @@ public class MetadataPanel extends javax.swing.JPanel
           ccp.setLogScale(logScaleCheckBox.isSelected());
        }
     }//GEN-LAST:event_logScaleCheckBoxActionPerformed
+
+    private void rejectOutliersCB_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_rejectOutliersCB_ActionPerformed
+      JCheckBox cb = (JCheckBox)evt.getSource();
+       rejectPercentSpinner_.setEnabled(cb.isSelected() && autostretchCheckBox.isSelected());
+    }//GEN-LAST:event_rejectOutliersCB_ActionPerformed
+
+    private void rejectPercentSpinner_StateChanged(javax.swing.event.ChangeEvent evt) {//GEN-FIRST:event_rejectPercentSpinner_StateChanged
+       JSpinner sp = (JSpinner)evt.getSource();
+        Double currentValue = (Double)sp.getValue(); //
+
+    }//GEN-LAST:event_rejectPercentSpinner_StateChanged
 
 
 
@@ -514,6 +575,8 @@ public class MetadataPanel extends javax.swing.JPanel
    private javax.swing.JCheckBox logScaleCheckBox;
    private javax.swing.JSplitPane metadataSplitPane;
    private javax.swing.JComboBox overlayColorComboBox_;
+   private javax.swing.JCheckBox rejectOutliersCB_;
+   private javax.swing.JSpinner rejectPercentSpinner_;
    private javax.swing.JCheckBox showUnchangingPropertiesCheckbox;
    private javax.swing.JCheckBox sizeBarCheckBox;
    private javax.swing.JComboBox sizeBarComboBox;
@@ -831,6 +894,11 @@ public class MetadataPanel extends javax.swing.JPanel
          layout.putConstraint(SpringLayout.EAST,ccp,0,SpringLayout.EAST,p);
          layout.putConstraint(SpringLayout.WEST,ccp,0,SpringLayout.WEST,p);
          layout.putConstraint(SpringLayout.SOUTH,ccp,hpHeight * (i+1),SpringLayout.NORTH,p);
+
+          ccp.setFractionToReject(fractionOutliersToReject_);
+          ccp.setRejectOutliers(rejectOutliersCB_.isSelected() && autostretchCheckBox.isSelected());
+
+
 
          p.add(ccp);
          ccpList_.add(ccp);
