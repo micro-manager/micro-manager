@@ -37,6 +37,12 @@ DemoCamera,DAutoFocus,Demo auto focus,9
 DemoCamera,DShutter,Demo shutter,3
 DemoCamera,D-DA,Demo DA,13
 DemoCamera,DOptovar,Demo Optovar,14
+DTOpenLayer,DTOL-Switch,Description N/A,4
+DTOpenLayer,DTOL-Shutter,Description N/A,3
+DTOpenLayer,DTOL-DAC-0,Description N/A,13
+DTOpenLayer,DTOL-DAC-1,Description N/A,13
+DTOpenLayer,DTOL-DAC-2,Description N/A,13
+DTOpenLayer,DTOL-DAC-3,Description N/A,13
 GenericSLM,GenericSLM,Spatial Light Modulator controlled through computer graphics output,16
 GigECamera,GigE camera adapter,GigE camera,2
 Hamamatsu,Hamamatsu_DCAM,Universal adapter using DCAM interface,2
