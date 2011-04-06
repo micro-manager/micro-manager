@@ -513,7 +513,7 @@ void CPluginManager::GetModules(vector<string> &modules, const char* searchPath)
    if( 0 < duplicateLibraries.str().length())
    {
       std::ostringstream mes;
-      mes << "Duplicate Libraries found:\n" << duplicateLibraries.str() << " -  please check your path";
+      mes << "Duplicate Libraries found:\n" << duplicateLibraries.str();
       CMMError toThrow( mes.str().c_str(), DEVICE_DUPLICATE_LIBRARY);
       throw toThrow;
    }
@@ -527,8 +527,32 @@ vector<string> CPluginManager::GetModules()
    vector<string> modules;
    vector<string>::const_iterator it;
 
+   std::string searchPathList;
+   std::string delim;
+#ifdef WIN32
+   delim = "\n";
+#else
+   delim = "\n";
+#endif
    for (it = searchPaths_.begin(); it != searchPaths_.end(); it++)
-      GetModules(modules, it->c_str());
+   {
+      if(0 < searchPathList.length())
+         searchPathList+=delim;
+      searchPathList += *it;
+   }
+
+   try
+   {
+      for (it = searchPaths_.begin(); it != searchPaths_.end(); it++)
+         GetModules(modules, it->c_str());
+   }
+   catch(CMMError e)
+   {
+      std::string m = e.getCoreMsg();
+      m += "search path list is :\n" + searchPathList + "\nPlease check the path.";
+      e.setCoreMsg(m.c_str() );
+      throw e;
+   }
 
    return modules;
 }
