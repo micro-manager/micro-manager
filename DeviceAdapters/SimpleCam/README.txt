@@ -30,5 +30,7 @@ On Mac, you need to compile both FreeImage and FreeImagePlus
 On Linux, you need to compile both FreeImage and FreeImagePlus
 make -f Makefile.fip
 
+You may have to copy FreeImagePlus.h to /usr/local/include manually.
+
 Koen De Vleeschauwer, www.kdvelectronics.eu
 Nico Stuurman
