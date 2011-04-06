@@ -117,7 +117,7 @@
         
 (defn burst-valid [e1 e2]
   (and
-    (#(or (nil? %) (zero? %)) (:wait-time-ms e2))
+    (#(or (nil? %) (>= (:exposure e2) %)) (:wait-time-ms e2))
     (select-values-match? e1 e2 [:exposure :position :slice :channel])
     (not (:autofocus e2))))
         
