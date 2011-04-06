@@ -111,6 +111,14 @@ public:
       return pSerial->GetPortType();
    }
  
+   int SetSerialProperties(const char* portName,
+                           const char* answerTimeout,
+                           const char* baudRate,
+                           const char* delayBetweenCharsMs,
+                           const char* handshaking,
+                           const char* parity,
+                           const char* stopBits);
+
    int WriteToSerial(const MM::Device* caller, const char* portName, const unsigned char* buf, unsigned long length);
    int ReadFromSerial(const MM::Device* caller, const char* portName, unsigned char* buf, unsigned long bufLength, unsigned long &bytesRead);
    int PurgeSerial(const MM::Device* caller, const char* portName);

@@ -366,6 +366,13 @@ public:
     * API for serial ports
     */
    //@ {
+   int setSerialProperties(const char* portName,
+                           const char* answerTimeout,
+                           const char* baudRate,
+                           const char* delayBetweenCharsMs,
+                           const char* handshaking,
+                           const char* parity,
+                           const char* stopBits);
    void setSerialPortCommand(const char* deviceLabel, const char* command, const char* term) throw (CMMError);
    std::string getSerialPortAnswer(const char* deviceLabel, const char* term) throw (CMMError);
    void writeToSerialPort(const char* deviceLabel, const std::vector<char> &data) throw (CMMError);

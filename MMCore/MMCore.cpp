@@ -1625,7 +1625,7 @@ void* CMMCore::getImage() const throw (CMMError)
 		
       	if (imageProcessor_)
 	      {
-            CMMCore* pc = const_cast<CMMCore*>(this);
+            //CMMCore* pc = const_cast<CMMCore*>(this);
             //pc->logMessage("call Process from getImage()");
             imageProcessor_->Process((unsigned char*)pBuf, camera_->GetImageHeight(),  camera_->GetImageWidth(), camera_->GetImageBytesPerPixel() );
 	      }
@@ -4070,6 +4070,30 @@ PropertyBlock CMMCore::getData(const char* deviceLabel) const
    return blk;
 }
 
+int CMMCore::setSerialProperties(const char* portName,
+                                 const char* answerTimeout,
+                                 const char* baudRate,
+                                 const char* delayBetweenCharsMs,
+                                 const char* handshaking,
+                                 const char* parity,
+                                 const char* stopBits) {
+   MM::Serial* pSerial = getSpecificDevice<MM::Serial>(portName);
+   int ret;
+   ret = pSerial->SetProperty(MM::g_Keyword_AnswerTimeout, answerTimeout);
+   if (ret != DEVICE_OK) return ret;
+   ret = pSerial->SetProperty(MM::g_Keyword_BaudRate, baudRate);
+   if (ret != DEVICE_OK) return ret;
+   ret = pSerial->SetProperty(MM::g_Keyword_DelayBetweenCharsMs, delayBetweenCharsMs);
+   if (ret != DEVICE_OK) return ret;
+   ret = pSerial->SetProperty(MM::g_Keyword_Handshaking, handshaking);
+   if (ret != DEVICE_OK) return ret;
+   pSerial->SetProperty(MM::g_Keyword_Parity, parity);
+   if (ret != DEVICE_OK) return ret;
+   ret = pSerial->SetProperty(MM::g_Keyword_StopBits, stopBits);
+   return ret;
+}
+
+
 /**
  * Send string to the serial device and return an answer.
  * This command blocks until it recives an answer fromt he device terminated by the specified
@@ -4991,7 +5015,7 @@ void CMMCore::applyConfiguration(const Configuration& config) throw (CMMError)
  */
 int CMMCore::applyProperties(vector<PropertySetting>& props, string& lastError)
 {
-   int succeeded = 0;
+  // int succeeded = 0;
    vector<PropertySetting> failedProps;
    for (size_t i=0; i<props.size(); i++)
    {
@@ -5009,7 +5033,7 @@ int CMMCore::applyProperties(vector<PropertySetting>& props, string& lastError)
          stateCache_.addSetting(props[i]);
    }
    props = failedProps;
-   return failedProps.size();
+   return (int) failedProps.size();
 }
 
 

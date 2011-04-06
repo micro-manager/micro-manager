@@ -296,6 +296,20 @@ int CoreCallback::OnFinished(const MM::Device* /* caller */)
    return DEVICE_OK;
 }
 
+
+int CoreCallback::SetSerialProperties(const char* portName,
+                                      const char* answerTimeout,
+                                      const char* baudRate,
+                                      const char* delayBetweenCharsMs,
+                                      const char* handshaking,
+                                      const char* parity,
+                                      const char* stopBits)
+{
+   return core_->setSerialProperties(portName, answerTimeout, baudRate,
+      delayBetweenCharsMs, handshaking, parity, stopBits);
+
+}
+
 /**
  * Sends an array of bytes to the port.
  */

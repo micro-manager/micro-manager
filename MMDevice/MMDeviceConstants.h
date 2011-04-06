@@ -111,7 +111,9 @@ namespace MM {
    const char* const g_Keyword_StopBits         = "StopBits";
    const char* const g_Keyword_Parity           = "Parity";
    const char* const g_Keyword_Handshaking      = "Handshaking";
+   const char* const g_Keyword_DelayBetweenCharsMs = "DelayBetweenCharsMs";
    const char* const g_Keyword_Port             = "Port";
+   const char* const g_Keyword_AnswerTimeout    = "AnswerTimeout";
    const char* const g_Keyword_Speed            = "Speed";
    const char* const g_Keyword_CoreDevice       = "Core";
    const char* const g_Keyword_CoreInitialize   = "Initialize";
@@ -133,6 +135,7 @@ namespace MM {
    const char* const g_Keyword_Transpose_MirrorY = "TransposeMirrorY";
    const char* const g_Keyword_Transpose_Correction = "TransposeCorrection";
    const char* const g_Keyword_Closed_Position = "ClosedPosition";
+
 
    // image annotations
    const char* const g_Keyword_Metadata_Z           = "Z-um";

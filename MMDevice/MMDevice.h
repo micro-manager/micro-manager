@@ -847,6 +847,13 @@ namespace MM {
       virtual int GetDeviceProperty(const char* deviceName, const char* propName, char* value) = 0;
       virtual int SetDeviceProperty(const char* deviceName, const char* propName, const char* value) = 0;
       virtual void GetLoadedDeviceOfType(const Device* caller, MM::DeviceType devType, char* pDeviceName, const unsigned int deviceIterator) = 0;
+      virtual int SetSerialProperties(const char* portName,
+                                      const char* answerTimeout,
+                                      const char* baudRate,
+                                      const char* delayBetweenCharsMs,
+                                      const char* handshaking,
+                                      const char* parity,
+                                      const char* stopBits) = 0;
       virtual int SetSerialCommand(const Device* caller, const char* portName, const char* command, const char* term) = 0;
       virtual int GetSerialAnswer(const Device* caller, const char* portName, unsigned long ansLength, char* answer, const char* term) = 0;
       virtual int WriteToSerial(const Device* caller, const char* port, const unsigned char* buf, unsigned long length) = 0;
