@@ -60,9 +60,7 @@
 (defn build-event [settings event]
   (assoc event
     :z-drive (:focus (get-default-devices))
-    :exposure (if (:channel event)
-                (get-in event [:channel :exposure])
-                (:default-exposure settings))
+    :exposure (if (:channel event) (get-in event [:channel :exposure]))
     :relative-z (:relative-slices settings)))
 
 (defn process-skip-z-stack [events slices]
@@ -86,7 +84,10 @@
                (and
                  (not keep-shutter-open-slices)
                  (not= (e1 :slice) (e2 :slice)))
-               (not= (e1 :frame-index) (e2 :frame-index))
+               (and
+                 (not= (e1 :frame-index) (e2 :frame-index))
+                 (not= (e2 :wait-time-ms) 0)
+                 (not (e2 :autofocus)))
                (not= (e1 :position-index) (e2 :position-index)))
         true))))
 
@@ -116,7 +117,7 @@
         
 (defn burst-valid [e1 e2]
   (and
-    (#(or (nil? %) (>= (:exposure e2) %)) (:wait-time-ms e2))
+    (#(or (nil? %) (zero? %)) (:wait-time-ms e2))
     (select-values-match? e1 e2 [:exposure :position :slice :channel])
     (not (:autofocus e2))))
         
@@ -160,10 +161,10 @@
     (-> (make-main-loops settings)
       (#(map (partial build-event settings) %))
       (process-skip-z-stack slices)
-      (manage-shutter keep-shutter-open-channels keep-shutter-open-slices)
       (process-channel-skip-frames)
       (process-use-autofocus use-autofocus autofocus-skip)
       (process-wait-time interval-ms)
+      (manage-shutter keep-shutter-open-channels keep-shutter-open-slices)
       (attach-runnables runnables)
       (make-bursts)
       (add-next-task-tags))))

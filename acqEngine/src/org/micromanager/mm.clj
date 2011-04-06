@@ -22,6 +22,9 @@
 (declare gui)
 (declare mmc)
 
+(defmacro apply* [& args]
+  `(~@(butlast args) ~@(eval (last args))))
+
 (defn load-mm
   ([gui] (def mmc (.getMMCore gui)))
   ([] (def gui (MMStudioMainFrame/getInstance))
@@ -100,8 +103,8 @@
 
 (defn map-config [^Configuration config]
   (into {}
-    (for [prop (config-struct config)]
-      [(str (prop 0) "-" (prop 1)) (prop 2)])))
+    (for [[dev prop val] (config-struct config)]
+      [(str dev "-"prop) val])))
        
 (defn get-positions []
   (vec (.. gui getPositionList getPositions)))
@@ -118,11 +121,14 @@
     (.. img getStack (getTaggedImage (.getCurrentSlice img)))))
 
 (defn get-camera-roi []
-  (let [r (repeatedly 4 #(int-array 1))]
-    (core getROI (nth r 0) (nth r 1) (nth r 2) (nth r 3))
-    (flatten (map seq r))))
+  (let [[x y w h] (repeatedly 4 #(int-array 1))]
+    (core getROI x y w h)
+    (map first [x y w h])))
 
 (defn parse-core-metadata [^Metadata m]
   (let [ks (seq (.. m getFrameKeys toArray))
         fd (. m getFrameData)]
     (zipmap ks (map #(.get fd %) ks))))
+
+(def sequenceable?
+  (memoize (fn [dev prop] (core isPropertySequenceable dev prop))))
