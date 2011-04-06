@@ -151,10 +151,10 @@
 
 (defn compute-time-from-core [tags]
   ; (log "core tags: " tags)
-  (when (@state :burst-init-time)
-    (when-let [t (tags "ElapsedTime-ms")]
-      (+ (Double/parseDouble t)
-         (@state :burst-init-time)))))
+  (if (@state :burst-init-time)
+    (+ (Double/parseDouble (tags "ElapsedTime-ms"))
+       (@state :burst-init-time))
+    nil))
 
 (defn elapsed-time [state]
   (if (state :start-time) (- (clock-ms) (state :start-time)) 0))
