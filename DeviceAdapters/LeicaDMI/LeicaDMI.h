@@ -50,7 +50,8 @@ class LeicaScope : public CGenericBase<LeicaScope>
       int Shutdown();
       void GetName(char* pszName) const;
       bool Busy();
-      
+      MM::DeviceDetectionStatus DetectDevice();
+
       // action interface                                                       
       // ----------------                                                       
       int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct); 

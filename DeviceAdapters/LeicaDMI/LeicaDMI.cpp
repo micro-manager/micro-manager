@@ -232,6 +232,27 @@ LeicaScope::~LeicaScope()
    Shutdown();
 }
 
+
+MM::DeviceDetectionStatus LeicaScope::DetectDevice()
+{
+   GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_BaudRate, "19200" );
+   GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_StopBits, "1");
+   GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_AnswerTimeout, "500.0");
+   GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_DelayBetweenCharsMs, "0.0");
+   GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_Parity, "None");
+   GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_Handshaking, "Off");
+
+   int ret = g_ScopeInterface.GetStandInfo(*this, *GetCoreCallback());
+   if (ret != DEVICE_OK)
+   {
+      return MM::CanNotCommunicate;
+   }
+   else
+   {
+      return MM::CanCommunicate;
+   }
+}
+
 int LeicaScope::Initialize() 
 {
    int ret = DEVICE_OK;
@@ -2589,7 +2610,7 @@ int AFC::FullFocus() {
    for (int time = 0;
         !IsContinuousFocusLocked() && (time < timeOut_);
         time += delta) {
-      ::Sleep(delta);
+        CDeviceUtils::SleepMs(delta);
    }
 
    if (time > timeOut_) {
