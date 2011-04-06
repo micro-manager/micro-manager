@@ -5320,8 +5320,8 @@ MM::DeviceDetectionStatus CMMCore::detectDevice(char* deviceName)
                propertiesToRestore.push_back(MM::g_Keyword_StopBits);
                propertiesToRestore.push_back(MM::g_Keyword_Parity);
                propertiesToRestore.push_back(MM::g_Keyword_Handshaking);
-               propertiesToRestore.push_back("AnswerTimeout");
-               propertiesToRestore.push_back("DelayBetweenCharsMs");
+               propertiesToRestore.push_back(MM::g_Keyword_AnswerTimeout);
+               propertiesToRestore.push_back(MM::g_Keyword_DelayBetweenCharsMs);
                // record the current settings before running device detection.
                std::string previousValue;
                for( std::vector< std::string>::iterator sit = propertiesToRestore.begin(); sit!= propertiesToRestore.end(); ++sit)

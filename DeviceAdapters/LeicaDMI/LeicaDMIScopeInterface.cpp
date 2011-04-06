@@ -1789,8 +1789,8 @@ int LeicaMonitoringThread::svc()
    while (!stop_) 
    {
       do { 
-         dataLength = LeicaScopeInterface::RCV_BUF_LENGTH - strlen(rcvBuf);
-         int bufLen = strlen(rcvBuf);
+         dataLength = (unsigned long) LeicaScopeInterface::RCV_BUF_LENGTH - strlen(rcvBuf);
+         int bufLen = (int) strlen(rcvBuf);
          int ret = core_.ReadFromSerial(&device_, port_.c_str(), (unsigned char*) (rcvBuf + bufLen), dataLength, charsRead);
 
          // Remove after debuggging with Stamatis!

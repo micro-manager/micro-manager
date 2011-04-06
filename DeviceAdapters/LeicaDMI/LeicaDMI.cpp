@@ -235,14 +235,22 @@ LeicaScope::~LeicaScope()
 
 MM::DeviceDetectionStatus LeicaScope::DetectDevice()
 {
-   GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_BaudRate, "19200" );
-   GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_StopBits, "1");
-   GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_AnswerTimeout, "500.0");
-   GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_DelayBetweenCharsMs, "0.0");
-   GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_Parity, "None");
-   GetCoreCallback()->SetDeviceProperty(port_.c_str(), MM::g_Keyword_Handshaking, "Off");
+   MM::Device* pS = GetCoreCallback()->GetDevice(this, port_.c_str());
 
-   int ret = g_ScopeInterface.GetStandInfo(*this, *GetCoreCallback());
+   int ret;
+   ret = GetCoreCallback()->SetSerialProperties(port_.c_str(), "500.0", "19200", "0.0", "Off", "None", "1");
+   if (ret != 0)
+   {
+      return MM::CanNotCommunicate;
+   }
+   ret = pS->Initialize();
+
+   if (ret == DEVICE_OK)
+   {
+       ret = g_ScopeInterface.GetStandInfo(*this, *GetCoreCallback());
+   }
+   
+   pS->Shutdown();
    if (ret != DEVICE_OK)
    {
       return MM::CanNotCommunicate;
