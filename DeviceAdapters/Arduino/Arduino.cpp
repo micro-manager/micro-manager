@@ -181,17 +181,7 @@ MM::DeviceDetectionStatus CArduinoHub::DetectDevice(void)
 {
    // all conditions must be satisfied...
    MM::DeviceDetectionStatus result = MM::Misconfigured;
-   std::vector< std::string> propertiesToRestore;
-   std::map< std::string, std::string> valuesToRestore;
-
-   // gather the properties that will be restored if we don't find the device
-   propertiesToRestore.push_back(MM::g_Keyword_BaudRate);
-   propertiesToRestore.push_back(MM::g_Keyword_DataBits);
-   propertiesToRestore.push_back(MM::g_Keyword_StopBits);
-   propertiesToRestore.push_back(MM::g_Keyword_Parity);
-   propertiesToRestore.push_back(MM::g_Keyword_Handshaking);
-   propertiesToRestore.push_back("AnswerTimeout");
-   propertiesToRestore.push_back("DelayBetweenCharsMs");
+   char answerTO[MM::MaxStrLength];
    
    try
    {
@@ -203,13 +193,9 @@ MM::DeviceDetectionStatus CArduinoHub::DetectDevice(void)
       if( 0< portLowerCase.length() &&  0 != portLowerCase.compare("undefined")  && 0 != portLowerCase.compare("unknown") )
       {
          result = MM::CanNotCommunicate;
-         // record the default parameters
-         char previousValue[MM::MaxStrLength];
-         for( std::vector< std::string>::iterator sit = propertiesToRestore.begin(); sit!= propertiesToRestore.end(); ++sit)
-         {
-            GetCoreCallback()->GetDeviceProperty(g_port.c_str(),(*sit).c_str(), previousValue);
-            valuesToRestore[*sit] = std::string(previousValue);
-         }  
+         // record the default answer time out
+         GetCoreCallback()->GetDeviceProperty(g_port.c_str(), "AnswerTimeout", answerTO);
+
          // device specific default communication parameters
          // for Arduino Duemilanova
          GetCoreCallback()->SetDeviceProperty(g_port.c_str(), MM::g_Keyword_Handshaking, "Off");
@@ -239,7 +225,7 @@ MM::DeviceDetectionStatus CArduinoHub::DetectDevice(void)
          }
          pS->Shutdown();
          // always restore the AnswerTimeout to the default
-         GetCoreCallback()->SetDeviceProperty(g_port.c_str(), "AnswerTimeout", (valuesToRestore["AnswerTimeout"]).c_str());
+         GetCoreCallback()->SetDeviceProperty(g_port.c_str(), "AnswerTimeout", answerTO);
 
       }
    }
@@ -248,21 +234,6 @@ MM::DeviceDetectionStatus CArduinoHub::DetectDevice(void)
       LogMessage("Exception in DetectDevice!",false);
    }
 
-   // if the device is not there, restore the parameters to the original settings
-   if ( MM::CanCommunicate != result)
-   {
-
-      for( std::vector< std::string>::iterator sit = propertiesToRestore.begin(); sit!= propertiesToRestore.end(); ++sit)
-      {
-         try
-         {
-            GetCoreCallback()->SetDeviceProperty(g_port.c_str(), (*sit).c_str(), (valuesToRestore[*sit]).c_str());
-         }
-         catch(...)
-         {}
-      }
-
-   }
    return result;
 }
 

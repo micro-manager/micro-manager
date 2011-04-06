@@ -111,17 +111,8 @@ MM::DeviceDetectionStatus ASICheckSerialPort(MM::Device& device, MM::Core& core,
 {
    // all conditions must be satisfied...
    MM::DeviceDetectionStatus result = MM::Misconfigured;
-   std::vector< std::string> propertiesToRestore;
-   std::map< std::string, std::string> valuesToRestore;
+   char answerTO[MM::MaxStrLength];
 
-   // gather the properties that will be restored if we don't find the device
-   propertiesToRestore.push_back(MM::g_Keyword_BaudRate);
-   propertiesToRestore.push_back(MM::g_Keyword_DataBits);
-   propertiesToRestore.push_back(MM::g_Keyword_StopBits);
-   propertiesToRestore.push_back(MM::g_Keyword_Parity);
-   propertiesToRestore.push_back(MM::g_Keyword_Handshaking);
-   propertiesToRestore.push_back("AnswerTimeout");
-   propertiesToRestore.push_back("DelayBetweenCharsMs");
    try
    {
       std::string portLowerCase = portToCheck;
@@ -132,13 +123,7 @@ MM::DeviceDetectionStatus ASICheckSerialPort(MM::Device& device, MM::Core& core,
       if( 0< portLowerCase.length() &&  0 != portLowerCase.compare("undefined")  && 0 != portLowerCase.compare("unknown") )
       {
          result = MM::CanNotCommunicate;
-         // record the default parameters
-         char previousValue[MM::MaxStrLength];
-         for( std::vector< std::string>::iterator sit = propertiesToRestore.begin(); sit!= propertiesToRestore.end(); ++sit)
-         {
-            core.GetDeviceProperty(portToCheck.c_str(),(*sit).c_str(), previousValue);
-            valuesToRestore[*sit] = std::string(previousValue);
-         }  
+         core.GetDeviceProperty(portToCheck.c_str(), "AnswerTimeout", answerTO);
          // device specific default communication parameters
          // for ASI Stage
          core.SetDeviceProperty(portToCheck.c_str(), MM::g_Keyword_Handshaking, "Off");
@@ -189,25 +174,12 @@ MM::DeviceDetectionStatus ASICheckSerialPort(MM::Device& device, MM::Core& core,
                CDeviceUtils::SleepMs(10);
          }
          // always restore the AnswerTimeout to the default
-         core.SetDeviceProperty(portToCheck.c_str(), "AnswerTimeout", (valuesToRestore["AnswerTimeout"]).c_str());
+         core.SetDeviceProperty(portToCheck.c_str(), "AnswerTimeout", answerTO);
       }
    }
    catch(...)
    {
       core.LogMessage(&device, "Exception in DetectDevice!",false);
-   }
-   // if the device is not there, restore the parameters to the original settings
-   if ( MM::CanCommunicate != result)
-   {
-      for( std::vector< std::string>::iterator sit = propertiesToRestore.begin(); sit!= propertiesToRestore.end(); ++sit)
-      {
-         try
-         {
-            core.SetDeviceProperty(portToCheck.c_str(), (*sit).c_str(), (valuesToRestore[*sit]).c_str());
-         }
-         catch(...)
-         {}
-      }
    }
    return result;
 }

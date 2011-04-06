@@ -1207,18 +1207,6 @@ MM::DeviceDetectionStatus Shutter::DetectDevice(void)
 {
    MM::DeviceDetectionStatus result = MM::Misconfigured;
 
-   std::vector< std::string> propertiesToRestore;
-   std::map< std::string, std::string> valuesToRestore;
-
-   // gather the properties that will be restored if we don't find the device
-   propertiesToRestore.push_back(MM::g_Keyword_BaudRate);
-   propertiesToRestore.push_back(MM::g_Keyword_DataBits);
-   propertiesToRestore.push_back(MM::g_Keyword_StopBits);
-   propertiesToRestore.push_back(MM::g_Keyword_Parity);
-   propertiesToRestore.push_back(MM::g_Keyword_Handshaking);
-   propertiesToRestore.push_back("AnswerTimeout");
-   propertiesToRestore.push_back("DelayBetweenCharsMs");
-
    try
    {
       // convert into lower case to detect invalid port names:
@@ -1231,13 +1219,6 @@ MM::DeviceDetectionStatus Shutter::DetectDevice(void)
       if( 0< test.length() &&  0 != test.compare("undefined")  && 0 != test.compare("unknown") )
       {
 
-         // record the default parameters
-         char previousValue[MM::MaxStrLength];
-         for( std::vector< std::string>::iterator sit = propertiesToRestore.begin(); sit!= propertiesToRestore.end(); ++sit)
-         {
-            GetCoreCallback()->GetDeviceProperty(port_.c_str(),(*sit).c_str(), previousValue);
-            valuesToRestore[*sit] = std::string(previousValue);
-         } 
 
          // the port property seems correct, so give it a try
          result = MM::CanNotCommunicate;
@@ -1258,28 +1239,13 @@ MM::DeviceDetectionStatus Shutter::DetectDevice(void)
                result = MM::CanCommunicate;
             pS->Shutdown();
          }
+         // but for operation, we'll need a longer timeout
          GetCoreCallback()->SetDeviceProperty(port_.c_str(), "AnswerTimeout", "2000.0");
       }
    }
    catch(...)
    {
       LogMessage("Exception in DetectDevice");
-   }
-
-   // if the device is not there, restore the parameters to the previous settings
-   if ( MM::CanCommunicate != result)
-   {
-
-      for( std::vector< std::string>::iterator sit = propertiesToRestore.begin(); sit!= propertiesToRestore.end(); ++sit)
-      {
-         try
-         {
-            GetCoreCallback()->SetDeviceProperty(port_.c_str(), (*sit).c_str(), (valuesToRestore[*sit]).c_str());
-         }
-         catch(...)
-         {}
-      }
-
    }
 
    return result;

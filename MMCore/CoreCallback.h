@@ -215,16 +215,21 @@ public:
          strncpy( deviceName, v.at(deviceIterator).c_str(), MM::MaxStrLength);
       return;
    }
-
+//#if 0
    // device discovery  -- todo do we need this on the callback??
    MM::DeviceDetectionStatus DetectDevice(const MM::Device* /*pCaller*/, char* deviceName)
    {
       MM::DeviceDetectionStatus result = MM::Unimplemented; 
       try
       {
-         MM::Device* pDevice = core_->getDevice(deviceName);
-         if ( 0 != pDevice)
-            result = pDevice->DetectDevice();
+         if( NULL != deviceName)
+         {
+            if( 0 < strlen(deviceName))
+            {
+
+               result = core_->detectDevice(deviceName);
+            }
+         }
       }
       catch (...)
       {
@@ -233,8 +238,7 @@ public:
 
       return result;
    }
-
-
+//
 
 private:
    CMMCore* core_;

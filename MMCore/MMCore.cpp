@@ -5268,6 +5268,78 @@ void CMMCore::acqAfterStack() throw (CMMError)
 }
 
 
+MM::DeviceDetectionStatus CMMCore::detectDevice(char* deviceName)
+{
+   MM::DeviceDetectionStatus result = MM::Unimplemented; 
+   std::vector< std::string> propertiesToRestore;
+   std::map< std::string, std::string> valuesToRestore;
+   char p[MM::MaxStrLength];
+   p[0] = 0;
+
+   try
+   {
+
+      MM::Device* pDevice  = pluginManager_.GetDevice(deviceName);
+
+      if( NULL != pDevice)
+      {
+         if(DEVICE_OK == pDevice->GetProperty(MM::g_Keyword_Port,p))
+         {
+            if( 0 < strlen(p))
+            {
+               // there is a valid serial port setting for this device, so 
+               // gather the properties that will be restored if we don't find the device
+
+
+               propertiesToRestore.push_back(MM::g_Keyword_BaudRate);
+               propertiesToRestore.push_back(MM::g_Keyword_DataBits);
+               propertiesToRestore.push_back(MM::g_Keyword_StopBits);
+               propertiesToRestore.push_back(MM::g_Keyword_Parity);
+               propertiesToRestore.push_back(MM::g_Keyword_Handshaking);
+               propertiesToRestore.push_back("AnswerTimeout");
+               propertiesToRestore.push_back("DelayBetweenCharsMs");
+               // record the current settings before running device detection.
+               std::string previousValue;
+               for( std::vector< std::string>::iterator sit = propertiesToRestore.begin(); sit!= propertiesToRestore.end(); ++sit)
+               {
+                  previousValue = getProperty(p,(*sit).c_str());
+                  valuesToRestore[*sit] = std::string(previousValue);
+               }  
+            }
+         }
+
+
+      }
+
+      result = pDevice->DetectDevice();
+   }
+   catch(...)
+   {
+
+   }
+
+   // if the device is not there, restore the parameters to the original settings
+   if ( MM::CanCommunicate != result)
+   {
+      for( std::vector< std::string>::iterator sit = propertiesToRestore.begin(); sit!= propertiesToRestore.end(); ++sit)
+      {
+         if( 0 <strlen(p))
+         {
+            try
+            {
+               setProperty(p, (*sit).c_str(), (valuesToRestore[*sit]).c_str());
+            }
+            catch(...)
+            {}
+         }
+      }
+   }
+
+   return result;
+}
+
+
+
 // at least on OS X, there is a 'primary' MAC address, so we'll
 // assume that is the first one.
 /**

@@ -401,22 +401,8 @@ public:
    //@ }
 
    // device discovery
-   MM::DeviceDetectionStatus detectDevice(char* deviceName)
-   {
-      MM::DeviceDetectionStatus result = MM::Unimplemented; 
-      try
-      {
-         MM::Device* pDevice  = pluginManager_.GetDevice(deviceName);
-         result = pDevice->DetectDevice();
-      }
-      catch(...)
-      {
-
-      }
-
-      return result;
-   }
-
+   MM::DeviceDetectionStatus detectDevice(char* deviceName);
+   
    template <class T>
    T* getSpecificDevice(const char* deviceLabel) const throw (CMMError)
 {
