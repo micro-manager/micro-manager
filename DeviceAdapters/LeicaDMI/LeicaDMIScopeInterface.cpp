@@ -581,13 +581,14 @@ int LeicaScopeInterface::GetAnswer(MM::Device& device, MM::Core& core, const cha
    return DEVICE_OK;
 }
 
+
 /**
- * Reads model, version and available devices from the stand
- * Stores directly into the model
+ *
  */
-int LeicaScopeInterface::GetStandInfo(MM::Device& device, MM::Core& core)
+int LeicaScopeInterface::GetDevicesPresent(MM::Device& device, MM::Core& core)
 {
-   // returns the stand designation and list of IDs of all addressable IDs
+
+// returns the stand designation and list of IDs of all addressable IDs
    std::ostringstream os;
    os << g_Master << "001";
    int ret = core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
@@ -620,7 +621,20 @@ int LeicaScopeInterface::GetStandInfo(MM::Device& device, MM::Core& core)
    while (ss >> devId) {
       scopeModel_->SetDeviceAvailable(devId);
    }
-  
+   return ret;
+}
+
+/**
+ * Reads model, version and available devices from the stand
+ * Stores directly into the model
+ */
+int LeicaScopeInterface::GetStandInfo(MM::Device& device, MM::Core& core)
+{
+   long unsigned int responseLength = RCV_BUF_LENGTH;
+   char response[RCV_BUF_LENGTH] = "";
+   std::string answer;
+
+   int ret = GetDevicesPresent(device, core);
    if (ret != DEVICE_OK)
       return ret;
 

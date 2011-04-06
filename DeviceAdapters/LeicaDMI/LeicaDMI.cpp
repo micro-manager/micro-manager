@@ -247,7 +247,7 @@ MM::DeviceDetectionStatus LeicaScope::DetectDevice()
 
    if (ret == DEVICE_OK)
    {
-       ret = g_ScopeInterface.GetStandInfo(*this, *GetCoreCallback());
+       ret = g_ScopeInterface.GetDevicesPresent(*this, *GetCoreCallback());
    }
    
    pS->Shutdown();
@@ -343,7 +343,6 @@ int LeicaScope::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
       g_ScopeInterface.scopeModel_ = &g_ScopeModel;
       // set flags indicating we have a port
       g_ScopeInterface.portInitialized_ = true;
-      initialized_ = true;
    }
 
    return DEVICE_OK;

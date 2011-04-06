@@ -56,6 +56,7 @@ class LeicaScopeInterface
       // Utility function
       int GetAnswer(MM::Device& device, MM::Core& core, const char* command, std::string& answer);
       int GetStandInfo(MM::Device& device, MM::Core& core);
+	  int GetDevicesPresent(MM::Device& device, MM::Core& core);
       int GetILTurretInfo(MM::Device& device, MM::Core& core);
       int GetCondensorInfo(MM::Device& device, MM::Core& core);
       int GetRevolverInfo(MM::Device& device, MM::Core& core);
