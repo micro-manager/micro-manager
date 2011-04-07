@@ -15,12 +15,6 @@ libtoolize --force
 automake --foreign --add-missing
 autoconf -I ../m4
 cd ..
-cd Test_Programs
-aclocal -I ../m4
-libtoolize --force
-automake --foreign --add-missing
-autoconf -I ../m4
-cd ..
 if test -r "SecretDeviceAdapters/configure.in" ;  then
    cd SecretDeviceAdapters
    aclocal -I ../m4
