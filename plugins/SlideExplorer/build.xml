@@ -53,7 +53,7 @@
 		<copy file="SlideExplorer.jar" todir="${MMPluginsDir-inst}" />
 	</target>
 	
-	<target name="cleanMMSlideExplorer" description="Delete the SlideExplorer build files.">
+	<target name="clean" description="Delete the SlideExplorer build files.">
 		<delete dir="build" />
 		<delete file="SlideExplorer.jar" />
 	</target>
