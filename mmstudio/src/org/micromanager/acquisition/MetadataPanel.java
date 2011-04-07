@@ -101,17 +101,17 @@ public class MetadataPanel extends javax.swing.JPanel
 
       tabbedPane = new javax.swing.JTabbedPane();
       ChannelsTablePanel = new javax.swing.JPanel();
-      contrastScrollPane = new javax.swing.JScrollPane();
       jPanel1 = new javax.swing.JPanel();
       displayModeCombo = new javax.swing.JComboBox();
       jLabel1 = new javax.swing.JLabel();
       autostretchCheckBox = new javax.swing.JCheckBox();
       rejectOutliersCB_ = new javax.swing.JCheckBox();
       rejectPercentSpinner_ = new javax.swing.JSpinner();
+      logScaleCheckBox = new javax.swing.JCheckBox();
       sizeBarCheckBox = new javax.swing.JCheckBox();
       sizeBarComboBox = new javax.swing.JComboBox();
       overlayColorComboBox_ = new javax.swing.JComboBox();
-      logScaleCheckBox = new javax.swing.JCheckBox();
+      contrastScrollPane = new javax.swing.JScrollPane();
       metadataSplitPane = new javax.swing.JSplitPane();
       imageMetadataScrollPane = new javax.swing.JPanel();
       imageMetadataTableScrollPane = new javax.swing.JScrollPane();
@@ -134,13 +134,14 @@ public class MetadataPanel extends javax.swing.JPanel
 
       tabbedPane.setToolTipText("Examine and adjust display settings, metadata, and comments for the multi-dimensional acquisition in the frontmost window.");
       tabbedPane.setFocusable(false);
+      tabbedPane.setPreferredSize(new java.awt.Dimension(400, 640));
       tabbedPane.addChangeListener(new javax.swing.event.ChangeListener() {
          public void stateChanged(javax.swing.event.ChangeEvent evt) {
             tabbedPaneStateChanged(evt);
          }
       });
 
-      contrastScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+      ChannelsTablePanel.setPreferredSize(new java.awt.Dimension(400, 594));
 
       displayModeCombo.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Composite", "Color", "Grayscale" }));
       displayModeCombo.setToolTipText("<html>Choose display mode:<br> - Composite = Multicolor overlay<br> - Color = Single channel color view<br> - Grayscale = Single channel grayscale view</li></ul></html>");
@@ -166,9 +167,17 @@ public class MetadataPanel extends javax.swing.JPanel
          }
       });
 
+      rejectPercentSpinner_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       rejectPercentSpinner_.addChangeListener(new javax.swing.event.ChangeListener() {
          public void stateChanged(javax.swing.event.ChangeEvent evt) {
             rejectPercentSpinner_StateChanged(evt);
+         }
+      });
+
+      logScaleCheckBox.setText("Log hist");
+      logScaleCheckBox.addActionListener(new java.awt.event.ActionListener() {
+         public void actionPerformed(java.awt.event.ActionEvent evt) {
+            logScaleCheckBoxActionPerformed(evt);
          }
       });
 
@@ -177,27 +186,28 @@ public class MetadataPanel extends javax.swing.JPanel
       jPanel1Layout.setHorizontalGroup(
          jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(jPanel1Layout.createSequentialGroup()
-            .add(24, 24, 24)
+            .addContainerGap(24, Short.MAX_VALUE)
             .add(jLabel1)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
             .add(displayModeCombo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 134, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
             .add(autostretchCheckBox)
-            .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
+            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
             .add(rejectOutliersCB_)
-            .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-            .add(rejectPercentSpinner_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 45, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-            .addContainerGap(36, Short.MAX_VALUE))
+            .add(6, 6, 6)
+            .add(rejectPercentSpinner_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 63, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+            .add(logScaleCheckBox))
       );
       jPanel1Layout.setVerticalGroup(
          jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.CENTER)
             .add(autostretchCheckBox)
             .add(rejectOutliersCB_)
-            .add(rejectPercentSpinner_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-         .add(displayModeCombo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-         .add(jPanel1Layout.createSequentialGroup()
-            .add(4, 4, 4)
+            .add(rejectPercentSpinner_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+            .add(logScaleCheckBox))
+         .add(jPanel1Layout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+            .add(displayModeCombo, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
             .add(jLabel1))
       );
 
@@ -222,12 +232,8 @@ public class MetadataPanel extends javax.swing.JPanel
          }
       });
 
-      logScaleCheckBox.setText("Log hist");
-      logScaleCheckBox.addActionListener(new java.awt.event.ActionListener() {
-         public void actionPerformed(java.awt.event.ActionEvent evt) {
-            logScaleCheckBoxActionPerformed(evt);
-         }
-      });
+      contrastScrollPane.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+      contrastScrollPane.setPreferredSize(new java.awt.Dimension(400, 4));
 
       org.jdesktop.layout.GroupLayout ChannelsTablePanelLayout = new org.jdesktop.layout.GroupLayout(ChannelsTablePanel);
       ChannelsTablePanel.setLayout(ChannelsTablePanelLayout);
@@ -238,29 +244,25 @@ public class MetadataPanel extends javax.swing.JPanel
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
             .add(sizeBarComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 134, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-            .add(overlayColorComboBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 105, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-            .add(214, 214, 214))
-         .add(ChannelsTablePanelLayout.createSequentialGroup()
-            .add(jPanel1, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-            .add(logScaleCheckBox)
-            .add(134, 134, 134))
-         .add(org.jdesktop.layout.GroupLayout.TRAILING, contrastScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 671, Short.MAX_VALUE)
+            .add(overlayColorComboBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 105, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+         .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+         .add(ChannelsTablePanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(contrastScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 601, Short.MAX_VALUE))
       );
       ChannelsTablePanelLayout.setVerticalGroup(
          ChannelsTablePanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(ChannelsTablePanelLayout.createSequentialGroup()
-            .add(ChannelsTablePanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.TRAILING)
-               .add(ChannelsTablePanelLayout.createSequentialGroup()
-                  .add(ChannelsTablePanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
-                     .add(sizeBarCheckBox)
-                     .add(sizeBarComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                     .add(overlayColorComboBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-                  .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-                  .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-               .add(logScaleCheckBox))
+            .add(ChannelsTablePanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.BASELINE)
+               .add(sizeBarCheckBox)
+               .add(sizeBarComboBox, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+               .add(overlayColorComboBox_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.UNRELATED)
-            .add(contrastScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 515, Short.MAX_VALUE))
+            .add(jPanel1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+            .addContainerGap(569, Short.MAX_VALUE))
+         .add(ChannelsTablePanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+            .add(ChannelsTablePanelLayout.createSequentialGroup()
+               .add(79, 79, 79)
+               .add(contrastScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 555, Short.MAX_VALUE)))
       );
 
       tabbedPane.addTab("Channels", ChannelsTablePanel);
@@ -310,10 +312,10 @@ public class MetadataPanel extends javax.swing.JPanel
       imageMetadataScrollPane.setLayout(imageMetadataScrollPaneLayout);
       imageMetadataScrollPaneLayout.setHorizontalGroup(
          imageMetadataScrollPaneLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-         .add(imageMetadataTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 671, Short.MAX_VALUE)
+         .add(imageMetadataTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 604, Short.MAX_VALUE)
          .add(org.jdesktop.layout.GroupLayout.TRAILING, imageMetadataScrollPaneLayout.createSequentialGroup()
             .add(jLabel2)
-            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 410, Short.MAX_VALUE)
+            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, 260, Short.MAX_VALUE)
             .add(showUnchangingPropertiesCheckbox))
       );
       imageMetadataScrollPaneLayout.setVerticalGroup(
@@ -323,7 +325,7 @@ public class MetadataPanel extends javax.swing.JPanel
                .add(showUnchangingPropertiesCheckbox)
                .add(jLabel2))
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-            .add(imageMetadataTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 452, Short.MAX_VALUE))
+            .add(imageMetadataTableScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 497, Short.MAX_VALUE))
       );
 
       metadataSplitPane.setRightComponent(imageMetadataScrollPane);
@@ -362,7 +364,7 @@ public class MetadataPanel extends javax.swing.JPanel
       summaryMetadataPanel.setLayout(summaryMetadataPanelLayout);
       summaryMetadataPanelLayout.setHorizontalGroup(
          summaryMetadataPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-         .add(org.jdesktop.layout.GroupLayout.TRAILING, summaryMetadataScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 671, Short.MAX_VALUE)
+         .add(org.jdesktop.layout.GroupLayout.TRAILING, summaryMetadataScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 604, Short.MAX_VALUE)
          .add(summaryMetadataPanelLayout.createSequentialGroup()
             .add(jLabel3)
             .addContainerGap())
@@ -372,7 +374,7 @@ public class MetadataPanel extends javax.swing.JPanel
          .add(org.jdesktop.layout.GroupLayout.TRAILING, summaryMetadataPanelLayout.createSequentialGroup()
             .add(jLabel3)
             .add(4, 4, 4)
-            .add(summaryMetadataScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 82, Short.MAX_VALUE))
+            .add(summaryMetadataScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
       );
 
       metadataSplitPane.setLeftComponent(summaryMetadataPanel);
@@ -404,15 +406,15 @@ public class MetadataPanel extends javax.swing.JPanel
          summaryCommentsPaneLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(summaryCommentsPaneLayout.createSequentialGroup()
             .add(summaryCommentsLabel)
-            .addContainerGap(565, Short.MAX_VALUE))
-         .add(summaryCommentsScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 671, Short.MAX_VALUE)
+            .addContainerGap(458, Short.MAX_VALUE))
+         .add(summaryCommentsScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 604, Short.MAX_VALUE)
       );
       summaryCommentsPaneLayout.setVerticalGroup(
          summaryCommentsPaneLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(summaryCommentsPaneLayout.createSequentialGroup()
             .add(summaryCommentsLabel)
             .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
-            .add(summaryCommentsScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 180, Short.MAX_VALUE))
+            .add(summaryCommentsScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 176, Short.MAX_VALUE))
       );
 
       CommentsSplitPane.setLeftComponent(summaryCommentsPane);
@@ -441,14 +443,14 @@ public class MetadataPanel extends javax.swing.JPanel
          .add(imageCommentsPanelLayout.createSequentialGroup()
             .add(imageCommentsLabel)
             .add(400, 400, 400))
-         .add(imageCommentsScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 671, Short.MAX_VALUE)
+         .add(imageCommentsScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 604, Short.MAX_VALUE)
       );
       imageCommentsPanelLayout.setVerticalGroup(
          imageCommentsPanelLayout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(imageCommentsPanelLayout.createSequentialGroup()
             .add(imageCommentsLabel)
             .add(0, 0, 0)
-            .add(imageCommentsScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 363, Short.MAX_VALUE))
+            .add(imageCommentsScrollPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 409, Short.MAX_VALUE))
       );
 
       CommentsSplitPane.setRightComponent(imageCommentsPanel);
@@ -459,16 +461,16 @@ public class MetadataPanel extends javax.swing.JPanel
       this.setLayout(layout);
       layout.setHorizontalGroup(
          layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-         .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+         .add(layout.createSequentialGroup()
             .addContainerGap()
-            .add(tabbedPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 676, Short.MAX_VALUE)
+            .add(tabbedPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 625, Short.MAX_VALUE)
             .addContainerGap())
       );
       layout.setVerticalGroup(
          layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
          .add(layout.createSequentialGroup()
             .addContainerGap()
-            .add(tabbedPane)
+            .add(tabbedPane, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, 680, Short.MAX_VALUE)
             .addContainerGap())
       );
    }// </editor-fold>//GEN-END:initComponents
