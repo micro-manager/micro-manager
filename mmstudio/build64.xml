@@ -134,6 +134,7 @@
 		<copy file="${BinRoot}/mmgr_dal_GenericSLM.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_GigECamera.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_Hamamatsu.dll" todir="${InstallRoot}" />
+		<copy file="${BinRoot}/mmgr_dal_HamamatsuUCSF.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_ImageProcessorChain.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_K8055.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_K8061.dll" todir="${InstallRoot}" />

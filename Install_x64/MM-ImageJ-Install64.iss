@@ -88,6 +88,7 @@ Source: micro-manager\mmgr_dal_GenericSLM.dll; DestDir: {app}; Flags: ignorevers
 Source: micro-manager\mmgr_dal_GigECamera.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_FreeSerialPort.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Hamamatsu.dll; DestDir: {app}; Flags: ignoreversion
+Source: micro-manager\mmgr_dal_HamamatsuUCSF.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_K8055.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_K8061.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_KDV.dll; DestDir: {app}; Flags: ignoreversion
@@ -144,7 +145,7 @@ Source: ..\scripts\*; DestDir: {app}\scripts; Flags: ignoreversion
 
 ; configuration files
 Source: micro-manager\MMConfig_demo.cfg; DestDir: {app}; Flags: ignoreversion
-;Source: micro-manager\MMDeviceList.txt; DestDir: {app}; Flags: ignoreversion
+Source: micro-manager\MMDeviceList.txt; DestDir: {app}; Flags: ignoreversion
 
 ; ImageJ files
 Source: ..\..\3rdpartypublic\JavaLauncher\ImageJ.exe; DestDir: {app}; Flags: ignoreversion
