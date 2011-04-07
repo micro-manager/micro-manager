@@ -30,6 +30,8 @@
 
 #define ABSCAM_CIRCULAR_BUFFER_IMG_COUNT  (2)
 
+class CameraSequenceThread;
+
 
 class ABSCamera : public CCameraBase<ABSCamera>  
 {
@@ -97,6 +99,7 @@ private:
     MM_THREAD_GUARD lockImgBufPtr;
 
     virtual int ThreadRun();
+    bool IsCapturing();
     virtual int InsertImage();
 
    int UpdateExposureLimits(void);
@@ -151,6 +154,14 @@ private:
    void* GetCameraCap( unsigned __int64 CamFuncID )  const;   
    int GetCameraFunction( unsigned __int64 CamFuncID, void* functionPara, unsigned long size, void* functionParamOut = NULL, unsigned long sizeOut = 0 )  const;   
    int SetCameraFunction( unsigned __int64 CamFuncID, void* functionPara, unsigned long size ) const;
+
+   CameraSequenceThread * thd_;
+   friend class CameraSequenceThread;
+
+
+
+
+
   
 };
 
