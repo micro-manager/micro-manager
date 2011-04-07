@@ -46,6 +46,11 @@
 #else 
 #include "atmcdLXd.h"
 #include <dlfcn.h>
+#ifndef MAX_PATH
+#define MAX_PATH PATH_MAX
+#endif
+#define stricmp strcasecmp 
+#define strnicmp strncasecmp 
 #endif
 
 #include "../../MMDevice/ModuleInterface.h"
@@ -271,7 +276,7 @@ spuriousNoiseFilterDescriptionStr_("")
    driverDir_ = "/usr/local/etc/andor/";
 #endif
 
-   GetListOfAvailableCameras();
+   if (GetListOfAvailableCameras() != DRV_SUCCESS) exit;
 
 }
 
@@ -833,37 +838,40 @@ int AndorCamera::GetListOfAvailableCameras()
       ret = GetNumberPreAmpGains(&numPreAmpGain);
       if (ret != DRV_SUCCESS)
          return ret;
-      char PreAmpGainBuf[10];
-      PreAmpGains_.clear();
-      for (int i=0; i<numPreAmpGain; i++)
-      {
-         float pag;
-         ret = GetPreAmpGain(i, &pag); 
-         if (ret != DRV_SUCCESS)
-            return ret;
-         sprintf(PreAmpGainBuf, "%.2f", pag);
-         PreAmpGains_.push_back(PreAmpGainBuf);
-      }
-      if (PreAmpGains_.empty())
-         return ERR_INVALID_PREAMPGAIN;
+      if (numPreAmpGain > 0 ) {
+            
+        char PreAmpGainBuf[10];
+        PreAmpGains_.clear();
+        for (int i=0; i<numPreAmpGain; i++)
+        {
+            float pag;
+            ret = GetPreAmpGain(i, &pag); 
+            if (ret != DRV_SUCCESS)
+                return ret;
+            sprintf(PreAmpGainBuf, "%.2f", pag);
+            PreAmpGains_.push_back(PreAmpGainBuf);
+        }
+        if (PreAmpGains_.empty())
+            return ERR_INVALID_PREAMPGAIN;
 
-      if(!HasProperty("Pre-Amp-Gain"))
-      {
-         pAct = new CPropertyAction (this, &AndorCamera::OnPreAmpGain);
-         if(numPreAmpGain>1)
-            nRet = CreateProperty("Pre-Amp-Gain", PreAmpGains_[numPreAmpGain-1].c_str(), MM::String, false, pAct);
-         else
-            nRet = CreateProperty("Pre-Amp-Gain", PreAmpGains_[numPreAmpGain-1].c_str(), MM::String, true, pAct);
-         assert(nRet == DEVICE_OK);
-      }
-      nRet = SetAllowedValues("Pre-Amp-Gain", PreAmpGains_);
-      nRet = SetProperty("Pre-Amp-Gain", PreAmpGains_[PreAmpGains_.size()-1].c_str());
-      PreAmpGain_ = PreAmpGains_[numPreAmpGain-1];
-      if(numPreAmpGain > 1)
-      {
-         ret = SetPreAmpGain(numPreAmpGain-1);
-         if (ret != DRV_SUCCESS)
-            return ret;
+        if(!HasProperty("Pre-Amp-Gain"))
+        {
+            pAct = new CPropertyAction (this, &AndorCamera::OnPreAmpGain);
+            if(numPreAmpGain>1)
+                nRet = CreateProperty("Pre-Amp-Gain", PreAmpGains_[numPreAmpGain-1].c_str(), MM::String, false, pAct);
+            else
+                nRet = CreateProperty("Pre-Amp-Gain", PreAmpGains_[numPreAmpGain-1].c_str(), MM::String, true, pAct);
+            assert(nRet == DEVICE_OK);
+        }
+        nRet = SetAllowedValues("Pre-Amp-Gain", PreAmpGains_);
+        nRet = SetProperty("Pre-Amp-Gain", PreAmpGains_[PreAmpGains_.size()-1].c_str());
+        PreAmpGain_ = PreAmpGains_[numPreAmpGain-1];
+        if(numPreAmpGain > 1)
+        {
+            ret = SetPreAmpGain(numPreAmpGain-1);
+            if (ret != DRV_SUCCESS)
+                return ret;
+        }
       }
 
       // Vertical Shift Speed
