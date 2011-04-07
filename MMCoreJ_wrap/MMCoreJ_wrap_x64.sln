@@ -143,6 +143,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "QCam", "..\DeviceAdapters\Q
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Thorlabs", "..\DeviceAdapters\Thorlabs\Thorlabs.vcproj", "{308AA3EE-4053-47E0-9004-A57E9572C7A6}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HamamatsuUCSF", "..\SecretDeviceAdapters\HamamatsuUCSF\HamamatsuUCSF.vcproj", "{E0369FA6-1D4C-4FF7-AF9E-FC7B6FA00C5F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -706,6 +708,14 @@ Global
 		{308AA3EE-4053-47E0-9004-A57E9572C7A6}.Release|Win32.Build.0 = Release|Win32
 		{308AA3EE-4053-47E0-9004-A57E9572C7A6}.Release|x64.ActiveCfg = Release|x64
 		{308AA3EE-4053-47E0-9004-A57E9572C7A6}.Release|x64.Build.0 = Release|x64
+		{E0369FA6-1D4C-4FF7-AF9E-FC7B6FA00C5F}.Debug|Win32.ActiveCfg = Debug|Win32
+		{E0369FA6-1D4C-4FF7-AF9E-FC7B6FA00C5F}.Debug|Win32.Build.0 = Debug|Win32
+		{E0369FA6-1D4C-4FF7-AF9E-FC7B6FA00C5F}.Debug|x64.ActiveCfg = Debug|x64
+		{E0369FA6-1D4C-4FF7-AF9E-FC7B6FA00C5F}.Debug|x64.Build.0 = Debug|x64
+		{E0369FA6-1D4C-4FF7-AF9E-FC7B6FA00C5F}.Release|Win32.ActiveCfg = Release|Win32
+		{E0369FA6-1D4C-4FF7-AF9E-FC7B6FA00C5F}.Release|Win32.Build.0 = Release|Win32
+		{E0369FA6-1D4C-4FF7-AF9E-FC7B6FA00C5F}.Release|x64.ActiveCfg = Release|x64
+		{E0369FA6-1D4C-4FF7-AF9E-FC7B6FA00C5F}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
