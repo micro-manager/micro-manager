@@ -8,6 +8,7 @@ import ij.ImagePlus;
 import ij.gui.ImageWindow;
 import ij.gui.ScrollbarWithLabel;
 import ij.gui.StackWindow;
+import ij.io.FileInfo;
 import ij.measure.Calibration;
 import ij.plugin.Animator;
 import ij.process.ImageProcessor;
@@ -619,7 +620,14 @@ public class VirtualAcquisitionDisplay {
    }
 
    final public MMImagePlus createMMImagePlus(AcquisitionVirtualStack virtualStack) {
-      return new MMImagePlus(imageCache_.getDiskLocation(), virtualStack);
+      MMImagePlus img = new MMImagePlus(imageCache_.getDiskLocation(), virtualStack);
+      FileInfo fi = new FileInfo();
+      fi.width = virtualStack.getWidth();
+      fi.height = virtualStack.getHeight();
+      fi.fileName = virtualStack.getDirectory();
+      fi.url = null;
+      img.setFileInfo(fi);
+      return img;
    }
 
    final public ImagePlus createHyperImage(int channels, int slices,
@@ -782,6 +790,7 @@ public class VirtualAcquisitionDisplay {
       ImagePlus iP = new ImagePlus();
       iP.setStack(virtualStack_);
       iP.setDimensions(numComponents_ * getNumChannels(), getNumSlices(), getNumFrames());
+      iP.setFileInfo(hyperImage_.getFileInfo());
       return iP;
    }
 
