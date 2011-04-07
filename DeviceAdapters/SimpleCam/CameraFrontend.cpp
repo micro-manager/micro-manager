@@ -137,7 +137,7 @@ BOOL APIENTRY DllMain( HANDLE /*hModule*/,
 static void gphoto2_logger(GPLogLevel level, const char *domain, const char *format, va_list args, void *data);
 static int gphoto2_log_id = 0;
 
-#endif _SIMPLECAM_GPHOTO_
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 // Exported MMDevice API
@@ -383,7 +383,7 @@ int CCameraFrontend::Initialize()
    /* Switch on gphoto2 logging */
    gphoto2_log_id = gp_log_add_func(GP_LOG_DEBUG, gphoto2_logger, this);
 
-#endif _SIMPLECAM_GPHOTO_
+#endif
 
    /* Finally, connect to default camera */
    SetProperty(MM::g_Keyword_CameraName, defaultCameraName.c_str());
@@ -406,7 +406,7 @@ int CCameraFrontend::Shutdown()
 #ifdef _SIMPLECAM_GPHOTO_
    /* Switch off gphoto2 logging */
    gp_log_remove_func(gphoto2_log_id);
-#endif _SIMPLECAM_GPHOTO_
+#endif
 
    initialized_ = false;
    return DEVICE_OK;
@@ -1199,6 +1199,12 @@ bool CCameraFrontend::GetBoolProperty(const char* const propName)
 #ifndef RAW_HALFSIZE
 #define RAW_HALFSIZE 0
 #endif 
+#ifndef RAW_DISPLAY
+#define RAW_DISPLAY 0
+#endif 
+#ifndef RAW_DEFAULT
+#define RAW_DEFAULT 0
+#endif 
 
 /* Load frame buffer from a file  */
 int CCameraFrontend::LoadImage(string imageFilename)
@@ -1464,6 +1470,6 @@ static void gphoto2_logger(GPLogLevel level, const char *domain, const char *for
    }
    return;
 }
-#endif _SIMPLECAM_GPHOTO_
+#endif
 
 // not truncated
