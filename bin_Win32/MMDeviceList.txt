@@ -54,12 +54,11 @@ DemoCamera,DShutter,Demo shutter,3
 DemoCamera,D-DA,Demo DA,13
 DemoCamera,DOptovar,Demo Optovar,14
 DemoCamera,DemoTranspose,DemoTranspose,11
-ExfoXCite,XCite-120PC,EXFO X-Cite 120PC,3
-ExfoXCite,XCite-Exacte,EXFO X-Cite Exacte,3
 FreeSerialPort,FreeSerialPort,Free-form communication Serial Port.,8
 GenericSLM,GenericSLM,Spatial Light Modulator controlled through computer graphics output,16
 GigECamera,GigE camera adapter,GigE camera,2
 Hamamatsu,Hamamatsu_DCAM,Universal adapter using DCAM interface,2
+HamamatsuHam,HamamatsuHam_DCAM,Universal adapter using DCAM interface,2
 ImageProcessorChain,ImageProcessorChain,ImageProcessorChain,11
 K8055,K8055-Hub,Hub,8
 K8055,K8055-Switch,Switch,4

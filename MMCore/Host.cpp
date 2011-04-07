@@ -111,8 +111,6 @@ std::vector<MACValue > Host::getMACAddresses(long& status)
 
 #ifdef __APPLE__
 
-   //#ifdef APPLEHOSTIMPL  // no way all this works just yet.
-
    io_iterator_t   intfIterator;
    UInt8           MACAddress[kIOEthernetAddressSize];
 

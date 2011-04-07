@@ -14,6 +14,7 @@
 	<property name="ScriptsInstall" value="../Install_x64/micro-manager/scripts"/>
 	<property name="DriversRoot" value="../drivers"/>
 	<property name="DriversInstall" value="../Install_x64/micro-manager/drivers"/>
+	<property name="AdaptersRoot" value="../DeviceAdapters"/>
 
 	<!-- Do not modify from this point on -->
 	<property name="MMPluginDir" value="${ImageJPath}/plugins/Micro-Manager"/>
@@ -104,6 +105,15 @@
 
 
 	<target name="install" description="Create installation image">
+
+
+		<!-- always clean the device adapters from install image -->
+            <delete>
+			<fileset dir="${InstallRoot}">
+		  		<include name="**/mmgr_dal_*.dll"/>
+			</fileset>
+            </delete>
+
 		<copy file="${ImageJPath}/ImageJ.exe" todir="${InstallRoot}" />
 		<copy file="${IJ}" todir="${InstallRoot}" />
 		<copy file="MMJ_.jar" todir="${MMPluginDir-inst}" />
