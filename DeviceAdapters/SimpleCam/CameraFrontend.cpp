@@ -386,7 +386,7 @@ int CCameraFrontend::Initialize()
 #endif
 
    /* Finally, connect to default camera */
-   SetProperty(MM::g_Keyword_CameraName, defaultCameraName.c_str());
+   //SetProperty(MM::g_Keyword_CameraName, defaultCameraName.c_str());
    OnPropertiesChanged();
 
    return nRet;
@@ -1195,7 +1195,7 @@ bool CCameraFrontend::GetBoolProperty(const char* const propName)
  * Load image file from disk to img_ buffer
  */ 
 
-/* for libfreeimage without the raw_half_size patch */
+/* for older versions of libfreeimage (3.15.0 or previous) */
 #ifndef RAW_HALFSIZE
 #define RAW_HALFSIZE 0
 #endif 
