@@ -4787,7 +4787,7 @@ void CMMCore::enableContinuousFocus(bool enable) throw (CMMError)
    {
       if (enable)
       {
-         logError(getDeviceName(autoFocus_).c_str(), getCoreErrorText(MMERR_ContFocusNotAvailable).c_str());
+         logError("Core",getCoreErrorText(MMERR_ContFocusNotAvailable).c_str());
          throw CMMError(getCoreErrorText(MMERR_ContFocusNotAvailable).c_str(), MMERR_ContFocusNotAvailable);
       }
    }

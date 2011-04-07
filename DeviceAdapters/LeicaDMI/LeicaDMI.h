@@ -60,7 +60,6 @@ class LeicaScope : public CGenericBase<LeicaScope>
 
    private:
       bool initialized_;
-      std::string port_;
       double answerTimeoutMs_;
 };
 

@@ -194,8 +194,7 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 // LeicaScope
 //
 LeicaScope::LeicaScope() :
-   initialized_(false),
-   port_("Undefined"),                                                       
+   initialized_(false),                                                 
    answerTimeoutMs_(250)
 {
    InitializeDefaultErrorMessages();
@@ -235,10 +234,10 @@ LeicaScope::~LeicaScope()
 
 MM::DeviceDetectionStatus LeicaScope::DetectDevice()
 {
-   MM::Device* pS = GetCoreCallback()->GetDevice(this, port_.c_str());
+   MM::Device* pS = GetCoreCallback()->GetDevice(this, g_ScopeInterface.port_.c_str());
 
    int ret;
-   ret = GetCoreCallback()->SetSerialProperties(port_.c_str(), "500.0", "19200", "0.0", "Off", "None", "1");
+   ret = GetCoreCallback()->SetSerialProperties(g_ScopeInterface.port_.c_str(), "500.0", "19200", "0.0", "Off", "None", "1");
    if (ret != 0)
    {
       return MM::CanNotCommunicate;
