@@ -265,6 +265,19 @@ public class OptionsDlg extends MMDialog {
       springLayout.putConstraint(SpringLayout.SOUTH, startupScriptFile_, 137, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.NORTH, startupScriptFile_, 5, SpringLayout.SOUTH, comboDisplayBackground_);
 
+      final JCheckBox conserveRamCheckBox = new JCheckBox();
+      conserveRamCheckBox.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent arg0) {
+            opts_.conserveRam_ = conserveRamCheckBox.isSelected();
+            MMStudioMainFrame.getInstance().setExitStrategy(opts_.closeOnExit_);
+         }
+      });
+      conserveRamCheckBox.setText("Conserve RAM");
+      getContentPane().add(conserveRamCheckBox);
+      springLayout.putConstraint(SpringLayout.NORTH, conserveRamCheckBox, -20, SpringLayout.NORTH, clearLogFileButton);
+      springLayout.putConstraint(SpringLayout.WEST, conserveRamCheckBox, 20, SpringLayout.EAST, clearLogFileButton);
+      conserveRamCheckBox.setSelected(opts_.conserveRam_);
+
       final JCheckBox closeOnExitCheckBox = new JCheckBox();
       closeOnExitCheckBox.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {

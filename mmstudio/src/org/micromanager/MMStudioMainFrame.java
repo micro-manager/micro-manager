@@ -71,6 +71,7 @@ import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.border.LineBorder;
+import javax.swing.event.AncestorEvent;
 
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
@@ -126,6 +127,7 @@ import java.util.Collections;
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
+import javax.swing.event.AncestorListener;
 import mmcorej.TaggedImage;
 import org.micromanager.acquisition.AcquisitionVirtualStack;
 
@@ -771,7 +773,18 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       topPanel.setLayout(topLayout);
       topPanel.setMinimumSize(new Dimension(580, 175));
 
-      JPanel bottomPanel = new JPanel();
+      class ListeningJPanel extends JPanel implements AncestorListener {
+
+         public void ancestorMoved(AncestorEvent event) {
+            System.out.println("moved!");
+         }
+
+         public void ancestorRemoved(AncestorEvent event) {}
+         public void ancestorAdded(AncestorEvent event) {}
+
+      }
+
+      ListeningJPanel bottomPanel = new ListeningJPanel();
       bottomPanel.setLayout(topLayout);
       
       splitPane_ = new JSplitPane(JSplitPane.VERTICAL_SPLIT, true,
@@ -779,6 +792,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       splitPane_.setBorder(BorderFactory.createEmptyBorder());
       splitPane_.setDividerLocation(dividerPos);
       splitPane_.setResizeWeight(0.0);
+      splitPane_.addAncestorListener(bottomPanel);
       getContentPane().add(splitPane_);
 
 
@@ -2073,6 +2087,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       } catch (Exception exp) {
          // Do nothing.
       }
+   }
+
+   public boolean getConserveRamOption() {
+      return options_.conserveRam_;
    }
 
    private void updateTitle() {
@@ -4449,6 +4467,7 @@ class BooleanLock extends Object {
       return (value == state);
    }
 
+ 
 
 }
 

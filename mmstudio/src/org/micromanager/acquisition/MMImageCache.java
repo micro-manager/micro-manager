@@ -13,6 +13,7 @@ import java.util.Set;
 import mmcorej.TaggedImage;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.micromanager.MMStudioMainFrame;
 import org.micromanager.utils.MDUtils;
 import org.micromanager.utils.MMException;
 import org.micromanager.utils.ReportingUtils;
@@ -29,11 +30,13 @@ public class MMImageCache implements TaggedImageStorage {
    private HashMap<String, SoftReference<TaggedImage>> softTable_;
    private int lastFrame_ = -1;
    private JSONObject lastTags_;
+   private boolean conserveRam_;
 
    public MMImageCache(TaggedImageStorage imageStorage) {
       imageStorage_ = imageStorage;
       changingKeys_ = new HashSet<String>();
       softTable_ = new HashMap<String, SoftReference<TaggedImage>>();
+      conserveRam_ = MMStudioMainFrame.getInstance().getConserveRamOption();
    }
 
    public void finished() {
@@ -88,7 +91,8 @@ public class MMImageCache implements TaggedImageStorage {
 
    public void putImage(TaggedImage taggedImg) {
       try {
-         softTable_.put(MDUtils.getLabel(taggedImg.tags), new SoftReference(taggedImg));
+         if (!conserveRam_)
+            softTable_.put(MDUtils.getLabel(taggedImg.tags), new SoftReference(taggedImg));
          taggedImg.tags.put("Summary",imageStorage_.getSummaryMetadata());
          checkForChangingTags(taggedImg);
          synchronized (this) {
@@ -116,7 +120,8 @@ public class MMImageCache implements TaggedImageStorage {
          taggedImg = imageStorage_.getImage(channel, slice, frame, position);
          if (taggedImg != null) {
             checkForChangingTags(taggedImg);
-            softTable_.put(label, new SoftReference(taggedImg));
+            if (!conserveRam_)
+               softTable_.put(label, new SoftReference(taggedImg));
          }
       }
       return taggedImg;
