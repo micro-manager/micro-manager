@@ -386,7 +386,7 @@ int CCameraFrontend::Initialize()
 #endif
 
    /* Finally, connect to default camera */
-   //SetProperty(MM::g_Keyword_CameraName, defaultCameraName.c_str());
+   SetProperty(MM::g_Keyword_CameraName, defaultCameraName.c_str());
    OnPropertiesChanged();
 
    return nRet;

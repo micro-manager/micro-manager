@@ -4,7 +4,7 @@
     AC_MSG_RESULT([not found])
  fi
  
-+# Only build SimpleCam if FreeImagePlus and Gphoto2 found.
++# Only build GPhoto if FreeImagePlus and Gphoto2 found.
 +AC_MSG_CHECKING(for FreeImage)
 +AC_FIND_FILE([FreeImage.h], [/usr/include /usr/local/include /opt/local/include], FREEIMAGEINCDIR)
 +if test x$FREEIMAGEINCDIR = xNO; then
@@ -57,7 +57,7 @@
 +fi
 +AC_SUBST(LIBGPHOTO2)
 +
-+AM_CONDITIONAL([BUILD_SIMPLECAM], [test -f "$FREEIMAGEINCDIR/FreeImage.h" -a -f "$GPHOTO2INCDIR/gphoto2.h" ])
++AM_CONDITIONAL([BUILD_GPHOTO], [test -f "$FREEIMAGEINCDIR/FreeImage.h" -a -f "$GPHOTO2INCDIR/gphoto2.h" ])
 +
  # Video4linux
  AC_MSG_CHECKING(for Video4linux2)
@@ -75,7 +75,7 @@
  if BUILD_ANDORLASERCOMBINER
     ANDORLASERCOMBINER = AndorLaserCombiner
  endif
-+if BUILD_SIMPLECAM
++if BUILD_GPHOTO
 +   SIMPLECAM = SimpleCam
 +endif
  if BUILD_SENSICAM
