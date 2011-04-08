@@ -13,7 +13,7 @@ needs: libgphoto2-2.4.10.1 or higher, FreeImage 3.15 or higher.
 
 libgphoto:
 To compile a static libgphoto, drop support for ax203, jl2005a, jl2005c, st2205, and topfield drivers:
-./configure --enable-static --with-drivers=adc65,agfa_cl20,aox,barbie,canon,casio_qv,clicksmart310,digigr8,digita,dimera3500,directory,enigma13,fuji,gsmart300,hp215,iclick,jamcam,jd11,kodak_dc120,kodak_dc210,kodak_dc240,kodak_dc3200,kodak_ez200,konica,konica_qm150,largan,lg_gsm,mars,dimagev,mustek,panasonic_coolshot,panasonic_l859,panasonic_dc1000,panasonic_dc1580,pccam300,pccam600,polaroid_pdc320,polaroid_pdc640,polaroid_pdc700,ptp2,ricoh,ricoh_g3,samsung,sierra,sipix_blink2,sipix_web2,smal,sonix,sony_dscf1,sony_dscf55,soundvision,spca50x,sq905,stv0674,stv0680,sx330z,toshiba_pdrm11
+./configure --enable-static --without-libexif --disable-nls --with-drivers=adc65,agfa_cl20,aox,barbie,canon,casio_qv,clicksmart310,digigr8,digita,dimera3500,directory,enigma13,fuji,gsmart300,hp215,iclick,jamcam,jd11,kodak_dc120,kodak_dc210,kodak_dc240,kodak_dc3200,kodak_ez200,konica,konica_qm150,largan,lg_gsm,mars,dimagev,mustek,panasonic_coolshot,panasonic_l859,panasonic_dc1000,panasonic_dc1580,pccam300,pccam600,polaroid_pdc320,polaroid_pdc640,polaroid_pdc700,ptp2,ricoh,ricoh_g3,samsung,sierra,sipix_blink2,sipix_web2,smal,sonix,sony_dscf1,sony_dscf55,soundvision,spca50x,sq905,stv0674,stv0680,sx330z,toshiba_pdrm11
 
 freeimage:
 Patch FreeImage 3.15.0 with libfreeimage_raw_halfsize.patch to add support for raw images without color interpolation. Later versions of FreeImage already have the patch applied.
