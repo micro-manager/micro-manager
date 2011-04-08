@@ -304,7 +304,8 @@
         tags (if (and t (pos? t))
                (assoc tags "ElapsedTime-ms" t)
                (dissoc tags "ElapsedTime-ms"))]
-    (log "t: " t)
+    (println "cam-t: " t ", collect-t: " (elapsed-time @state)
+         ", remaining-images: " (core getRemainingImageCount))
     {:pix pix :tags (dissoc tags "StartTime-ms")}))
 
 (defn collect-snap-image []
@@ -318,7 +319,11 @@
     (if (. mmc isBufferOverflowed)
       (do (swap! state assoc :stop true)
           (ReportingUtils/showError "Circular buffer overflowed."))
-      (.put out-queue (make-TaggedImage (annotate-image image event @state))))))
+      (do (log "collect-image: "
+               (select-keys event [:position-index :frame-index
+                                   :slice-index :channel-index]))
+          (.put out-queue
+                (make-TaggedImage (annotate-image image event @state)))))))
 
 (defn compute-z-position [event]
   (if-let [z-drive (:z-drive event)]
