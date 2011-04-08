@@ -166,8 +166,8 @@
       (map-config (core getSystemStateCache))
       {
        "AxisPositions" (when-let [axes (get-in event [:position :axes])] (JSONObject. axes))
-       "Binning" (core getProperty (core getCameraDevice) "Binning")
-       "BitDepth" (core getImageBitDepth)
+       "Binning" (state :binning)
+       "BitDepth" (state :bit-depth)
        "Channel" (get-in event [:channel :name])
        "ChannelIndex" (:channel-index event)
        "ElapsedTime-ms" (elapsed-time state)
@@ -175,13 +175,13 @@
        "Frame" (:frame-index event)
        "Height" (state :init-height)
        "NextFrame" (:next-frame-index event)
-       "PixelSizeUm" (core getPixelSizeUm)
-       "PixelType" (get-pixel-type)
+       "PixelSizeUm" (state :pixel-size-um)
+       "PixelType" (state :pixel-type)
        "PositionIndex" (:position-index event)
        "PositionName" (if-let [pos (:position event)] (if-args #(.getLabel %) (get-msp pos)))
        "Slice" (:slice-index event)
        "SlicePosition" (:slice event)
-       "Source" (core getCameraDevice)
+       "Source" (state :source)
        "Time" (get-current-time-str)
        "UUID" (UUID/randomUUID)
        "Width"  (state :init-width)
@@ -304,8 +304,8 @@
         tags (if (and t (pos? t))
                (assoc tags "ElapsedTime-ms" t)
                (dissoc tags "ElapsedTime-ms"))]
-    (println "cam-t: " t ", collect-t: " (elapsed-time @state)
-         ", remaining-images: " (core getRemainingImageCount))
+   ; (println "cam-t: " t ", collect-t: " (elapsed-time @state)
+   ;      ", remaining-images: " (core getRemainingImageCount))
     {:pix pix :tags (dissoc tags "StartTime-ms")}))
 
 (defn collect-snap-image []
@@ -400,7 +400,13 @@
       :init-system-state (get-system-config-cached)
       :init-continuous-focus (core isContinuousFocusEnabled)
       :init-width (core getImageWidth)
-      :init-height (core getImageHeight))))
+      :init-height (core getImageHeight)
+      :binning (core getProperty (core getCameraDevice) "Binning")
+      :bit-depth (core getImageBitDepth)
+      :pixel-size-um (core getPixelSizeUm)
+      :source (core getCameraDevice)
+      :pixel-type (get-pixel-type)
+      )))
 
 (defn run-acquisition [this settings out-queue]
   (def acq-settings settings)
