@@ -259,7 +259,7 @@ public class ConfiguratorDlg extends JDialog {
         }
 
         if (curPage_ == pages_.length - 1) {
-            nextButton_.setText("Exit");
+            nextButton_.setText("Finish");
         } else {
             nextButton_.setText("Next >");
         }
