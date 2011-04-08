@@ -1780,25 +1780,30 @@ public:
       }
 
       // then test if the given position already has a label
-      for (it=labels_.begin(); it!=labels_.end(); it++)
+
+      // then test if the given position already has a label
+      for (it=labels_.begin(); ; it++)
+      {
+         if (labels_.end() == it)
+            break; 
          if (it->second == pos)
          {
             labels_.erase(it);
             break;
          }
+      }
+      // finally we can add the new label-position mapping
+      labels_[label] = pos;
 
-         // finally we can add the new label-position mapping
-         labels_[label] = pos;
+      // attempt to define allowed values for label property (if it exists),
+      // and don't make any fuss if the operation fails
+      std::string strLabel(label);
+      std::vector<std::string> values;
+      for (it=labels_.begin(); it!=labels_.end(); it++)
+         values.push_back(it->first);
+      this->SetAllowedValues(MM::g_Keyword_Label, values);
 
-         // attempt to define allowed values for label property (if it exists),
-         // and don't make any fuss if the operation fails
-         std::string strLabel(label);
-         std::vector<std::string> values;
-         for (it=labels_.begin(); it!=labels_.end(); it++)
-            values.push_back(it->first);
-         this->SetAllowedValues(MM::g_Keyword_Label, values);
-
-         return DEVICE_OK;
+      return DEVICE_OK;
    }
 
    /**
