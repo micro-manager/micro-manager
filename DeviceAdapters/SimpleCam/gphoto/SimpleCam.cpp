@@ -23,7 +23,10 @@
 
 #include "SimpleCam.h"
 #include <fcntl.h>
+#include <assert.h>
+#include <string.h>
 #include <iostream>
+#include <algorithm>
 #include <gphoto2/gphoto2.h>
 #include <gphoto2/gphoto2-version.h>
 #include <gphoto2/gphoto2-port-version.h>
@@ -222,7 +225,7 @@ bool CSimpleCam::connectCamera(string cameraName)
 #ifdef __APPLE__
       if (rc < GP_OK)
          gp_log(GP_LOG_ERROR, "SimpleCam", "Perhaps you forgot to kill the Mac OS X PTP daemon after switching on the camera, but before running the program?");
-#endif __APPLE__
+#endif
    }
 
    if (rc < GP_OK)
@@ -288,7 +291,7 @@ int CSimpleCam::getShutterSpeedWidget(CameraWidget* &rootConfig, CameraWidget* &
 /* utility to access arbitrary setting.
    e.g. configName "main/capturesettings/shutterspeed" accesses shutter speed; 
    configName "/main/imgsettings/iso" accesses iso speed.  */
-int CSimpleCam::getWidget(CameraWidget* &rootConfig, CameraWidget* &configWidget, char* configName)
+int CSimpleCam::getWidget(CameraWidget* &rootConfig, CameraWidget* &configWidget, const char* configName)
 {
    CameraWidget *currentConfig;
    CameraWidget *childConfig;

@@ -56,7 +56,7 @@ private:
    GPContext *context_;
    Camera   *camera_;
    int getShutterSpeedWidget(CameraWidget* &rootConfig, CameraWidget* &shutterSpeedWidget);
-   int getWidget(CameraWidget* &rootConfig, CameraWidget* &configWidget, char* configName);
+   int getWidget(CameraWidget* &rootConfig, CameraWidget* &configWidget, const char* configName);
 };
 
 #endif //_SIMPLECAM_H_
