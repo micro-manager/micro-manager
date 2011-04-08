@@ -1937,6 +1937,9 @@ int DG4Shutter::Initialize()
 
    // State
    // -----
+
+   LogMessage("enter DG4Shutter::Initialize", true);
+   
    CPropertyAction* pAct = new CPropertyAction (this, &DG4Shutter::OnState);
    int ret = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
    if (ret != DEVICE_OK)
@@ -1959,6 +1962,8 @@ int DG4Shutter::Initialize()
    SetProperty(MM::g_Keyword_State, "0");
 
    initialized_ = true;
+
+   LogMessage("exit DG4Shutter::Initialize", true);
 
    return DEVICE_OK;
 }
