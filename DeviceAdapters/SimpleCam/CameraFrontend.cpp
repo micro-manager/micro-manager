@@ -429,6 +429,8 @@ int CCameraFrontend::SnapImage()
    /* take a picture and load image into micro-manager buffer */
    int nRet = LoadImage(cam_.captureImage());
 
+   /* update shutter speeds */
+   SetAllowedShutterSpeeds();
    UpdateStatus();
 
    /* Check error conditions */
@@ -897,10 +899,7 @@ int CCameraFrontend::OnCameraName(MM::PropertyBase* pProp, MM::ActionType eAct)
          {
             /* Connect new camera */
             if (cam_.connectCamera(cameraName))
-            {
-               SetAllowedShutterSpeeds(); /* update shutter speeds */
                ret = SnapImage();
-            }
             else
                ret = ERR_CAM_CONNECT_FAIL;
          }
