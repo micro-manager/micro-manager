@@ -227,19 +227,23 @@
       (zipmap devs (repeatedly (count devs) #(agent nil))))))
 
 (defn get-z-stage-position [stage]
-  (if (pos? (count stage)) (core getPosition stage) 0))
+  (when-not (empty? stage) (core getPosition stage) 0))
   
 (defn set-z-stage-position [stage pos]
   (when (core isContinuousFocusEnabled)
     (core enableContinuousFocus false))
-  (when (pos? (count stage)) (core setPosition stage pos)))
+  (when-not (empty? stage) (core setPosition stage pos)))
 
 (defn set-stage-position
-  ([stage-dev z] (log "setting z position to " z)
-     (set-z-stage-position stage-dev z)
-     (state-assoc! :last-z-position z))
-  ([stage-dev x y] (log "setting x,y position to " x "," y)
-                   (when (and x y) (core setXYPosition stage-dev x y))))
+  ([stage-dev z]
+    (when (not= z (:last-z-position @state))
+      (set-z-stage-position stage-dev z)
+      (state-assoc! :last-z-position z)))
+  ([stage-dev x y]
+    (when (and x y
+               (not= [x y] (:last-xy-position @state)))
+      (core setXYPosition stage-dev x y)
+      (state-assoc! :last-xy-position [x y]))))
 
 (defn set-property
   ([prop] (core setProperty (prop 0) (prop 1) (prop 2))))
@@ -391,7 +395,8 @@
       :running true
       :finished false
       :last-wake-time (clock-ms)
-      :last-z-position z
+      :last-z-position nil
+      :last-xy-position nil
       :reference-z-position z
       :start-time (clock-ms)
       :init-auto-shutter (core getAutoShutter)
