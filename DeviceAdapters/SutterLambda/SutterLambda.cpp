@@ -67,6 +67,15 @@ const double g_busyTimeoutMs = 500;
 int g_DG4Position = 0;
 bool g_DG4State = false;
 
+void newGlobals(std::string p)
+{
+   if( g_Busy.end() ==  g_Busy.find(p))
+   {
+      g_Busy[p] = false;
+      gplocks_[p] = new MMThreadLock();
+   }
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Exported MMDevice API
 ///////////////////////////////////////////////////////////////////////////////
@@ -613,11 +622,7 @@ int Wheel::Initialize()
 {
 
 
-   if( g_Busy.end() ==  g_Busy.find(port_))
-   {
-      g_Busy[port_] = false;
-      gplocks_[port_] = new MMThreadLock();
-   }
+  newGlobals(port_);
    // set property list
    // -----------------
 
@@ -657,11 +662,8 @@ int Wheel::Initialize()
    if (ret != DEVICE_OK)
       return ret;
 
-   if( g_Busy.end() ==  g_Busy.find(port_))
-   {
-      g_Busy[port_] = false;
-      gplocks_[port_] = new MMThreadLock();
-   }
+	newGlobals(port_);
+
 
 
    // Busy
@@ -1078,11 +1080,7 @@ int Shutter::Initialize()
    if (initialized_) 
       return DEVICE_OK;
 
-   if( g_Busy.end() ==  g_Busy.find(port_))
-   {
-      g_Busy[port_] = false;
-      gplocks_[port_] = new MMThreadLock();
-   }
+newGlobals(port_);
 
 
    // set property list
@@ -1564,12 +1562,7 @@ int ShutterOnTenDashTwo::Initialize()
       return DEVICE_OK;
 
 
-   if( g_Busy.end() ==  g_Busy.find(port_))
-   {
-      g_Busy[port_] = false;
-      gplocks_[port_] = new MMThreadLock();
-      // not happy! *(glocks_[port_]) = *(new MMThreadLock());
-   }
+ newGlobals(port_);
 
    // set property list
    // -----------------
@@ -1938,7 +1931,7 @@ int DG4Shutter::Initialize()
    // State
    // -----
 
-   LogMessage("enter DG4Shutter::Initialize", true);
+   newGlobals(port_);
    
    CPropertyAction* pAct = new CPropertyAction (this, &DG4Shutter::OnState);
    int ret = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
@@ -1962,8 +1955,6 @@ int DG4Shutter::Initialize()
    SetProperty(MM::g_Keyword_State, "0");
 
    initialized_ = true;
-
-   LogMessage("exit DG4Shutter::Initialize", true);
 
    return DEVICE_OK;
 }
@@ -2157,6 +2148,8 @@ bool DG4Wheel::Busy()
 
 int DG4Wheel::Initialize()
 {
+
+	newGlobals(port_);
 
    // set property list
    // -----------------
