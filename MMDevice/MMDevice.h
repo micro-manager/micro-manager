@@ -247,10 +247,20 @@ namespace MM {
       virtual int GetPropertyType(const char* name, MM::PropertyType& pt) const = 0;
       virtual unsigned GetNumberOfPropertyValues(const char* propertyName) const = 0;
       virtual bool GetPropertyValueAt(const char* propertyName, unsigned index, char* value) const = 0;
+      // Sequences can be used for fast acquisitions, sycnchronized by TTLs rather than
+      // computer commands. 
+      // Sequences of states can be uploaded to the device.  The device will cycle through
+      // the uploaded list of states (triggered by an external trigger - most often coming 
+      // from the camera).  If the device is capable (and ready) to do so isSequenceable will
+      // be true
       virtual int IsPropertySequenceable(const char* name, bool& isSequenceable) const = 0;
+      // The largest sequence that can be stored in the device
       virtual int GetPropertySequenceMaxLength(const char* propertyName, long& nrEvents) const = 0;
+      // Starts execution of the sequence
       virtual int StartPropertySequence(const char* propertyName) const = 0;
+      // Stops execution of the device
       virtual int StopPropertySequence(const char* propertyName) const = 0;
+      // Loads the given sequence of states into the device
       virtual int LoadPropertySequence(const char* propertyName, std::vector<std::string> events) const = 0;
 
       virtual bool GetErrorText(int errorCode, char* errMessage) const = 0;
@@ -493,6 +503,13 @@ namespace MM {
       virtual int GetLimits(double& lower, double& upper) = 0;
 
       // Sequence functions
+      // Sequences can be used for fast acquisitions, sycnchronized by TTLs rather than
+      // computer commands. 
+      // Sequences of positions can be uploaded to the stage.  The device will cycle through
+      // the uploaded list of states (triggered by an external trigger - most often coming 
+      // from the camera).  If the device is capable (and ready) to do so isSequenceable will
+      // be true. If your device can not execute this (true for most stages
+      // simply set isSequenceable to false
       virtual int IsStageSequenceable(bool& isSequenceable) const = 0;
       virtual int GetStageSequenceMaxLength(long& nrEvents) const = 0;
       virtual int StartStageSequence() const = 0;
@@ -730,6 +747,12 @@ namespace MM {
       virtual int GetLimits(double& minVolts, double& maxVolts) = 0;
 
       // Sequence functions
+      // Sequences can be used for fast acquisitions, sycnchronized by TTLs rather than
+      // computer commands. 
+      // Sequences of voltagess can be uploaded to the stage.  The device will cycle through
+      // the uploaded list of voltages (triggered by an external trigger - most often coming 
+      // from the camera).  If the device is capable (and ready) to do so isSequenceable will
+      // be true. If your device can not execute this simply set isSequenceable to false
       virtual int IsDASequenceable(bool& isSequenceable) const = 0;
       virtual int GetDASequenceMaxLength(long& nrEvents) const = 0;
       virtual int StartDASequence() const = 0;
