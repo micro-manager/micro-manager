@@ -53,6 +53,7 @@ public:
    bool getShutterSpeed(std::string& currentShutterSpeed);           /* if connected to a camera, returns current shutter speed */
    bool setShutterSpeed(std::string newShutterSpeed);                /* if connected to a camera, sets new shutter speed. newShutterSpeed is one of the shutter speeds returned by listShutterSpeeds */
    std::string captureImage();                                       /* if connected to a camera, takes a picture, and saves it to disk. return value is the filename of a bitmap file */
+   fipImage capturePreview();                                        /* if connected to a camera, returns a viewfinder preview. return value is a FreeImagePlus bitmap */
 };
 
 #endif //_SIMPLECAM_H_

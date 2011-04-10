@@ -124,4 +124,11 @@ fipImage CSimpleCam::captureImage()
    return image;
 }
 
+/* if connected to a camera, returns a viewfinder preview. return value is a FreeImagePlus bitmap; typically 320x240 pixels */
+fipImage CSimpleCam::capturePreview()
+{
+   fipImage previewImage;
+   return previewImage;
+}
+
 // not truncated
