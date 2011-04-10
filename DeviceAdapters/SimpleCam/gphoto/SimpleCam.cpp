@@ -502,4 +502,56 @@ string CSimpleCam::captureImage()
       return "";
 }
 
+
+/* if connected to a camera, returns a viewfinder preview. return value is a FreeImagePlus bitmap; typically 320x240 pixels */
+fipImage CSimpleCam::capturePreview()
+{
+   int rc = GP_OK;
+
+   /* create a FreeImagePlus bitmap */
+   fipImage previewImage;
+
+   /* Check whether connected to a camera */
+   if (!(context_ && camera_))
+   {
+      gp_log(GP_LOG_ERROR, "SimpleCam", "Not connected.");
+      rc = GP_ERROR;
+   }
+
+   CameraFile* previewFile = NULL;
+
+   if (rc >= GP_OK)
+   {
+      rc = gp_file_new(&previewFile);
+   }
+
+   if (rc >= GP_OK)
+   {
+      rc = gp_camera_capture_preview(camera_, previewFile, context_);
+   }
+
+   const char* previewData;
+   unsigned long int previewSize;
+
+   if (rc >= GP_OK)
+   {
+      rc = gp_file_get_data_and_size(previewFile, &previewData, &previewSize);
+   }
+
+   if (rc >= GP_OK)
+   {
+      fipMemoryIO previewBuf((BYTE *)previewData, previewSize);
+      BOOL nRet =  previewImage.loadFromMemory(previewBuf, 0);
+      rc = (nRet ? GP_OK : GP_ERROR);
+   }
+
+   if (rc >= GP_OK)
+   {
+      rc = gp_file_unref(previewFile);
+   }
+
+   /* return value is FreeImagePlus bitmap */
+   return previewImage;
+}
+
 // not truncated

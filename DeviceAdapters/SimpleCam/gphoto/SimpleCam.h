@@ -30,8 +30,7 @@
 #include <sstream>
 #define _SIMPLECAM_GPHOTO_
 #include <gphoto2/gphoto2.h>
-#include <gphoto2/gphoto2-version.h>
-#include <gphoto2/gphoto2-port-version.h>
+#include <FreeImagePlus.h>
 
 // Device name and description
 
@@ -51,6 +50,7 @@ public:
    bool getShutterSpeed(std::string& currentShutterSpeed);           /* if connected to a camera, returns current shutter speed */
    bool setShutterSpeed(std::string newShutterSpeed);                /* if connected to a camera, sets new shutter speed. newShutterSpeed is one of the shutter speeds returned by listShutterSpeeds */
    std::string captureImage();                                       /* if connected to a camera, takes a picture, and saves it to disk. return value is the filename of the picture */
+   fipImage capturePreview();                                        /* if connected to a camera, returns a viewfinder preview. return value is a FreeImagePlus bitmap */
 
 private:
    GPContext *context_;

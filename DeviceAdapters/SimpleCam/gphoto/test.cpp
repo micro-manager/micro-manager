@@ -83,6 +83,11 @@ main ()
    fname = scam.captureImage();
    cout << "captured to" << fname << endl;
 
+#ifdef TRY_PREVIEW
+   fipImage preview = scam.capturePreview();
+   preview.save("/tmp/preview.jpg");
+#endif
+
    scam.disconnectCamera();
 }
 //not truncated
