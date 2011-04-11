@@ -9,6 +9,7 @@ libmmgr_dal_GPhoto_la_LDFLAGS = -module
 # gphoto2 driver: uses libgphoto2 built using macports
 AM_CXXFLAGS += -Igphoto 
 libmmgr_dal_GPhoto_la_SOURCES += gphoto/SimpleCam.cpp gphoto/SimpleCam.h
+#libmmgr_dal_GPhoto_la_LIBADD += -L/opt/local/lib -lgphoto2 -lgphoto2_port -lm
 libmmgr_dal_GPhoto_la_LIBADD += $(LIBGPHOTO2)
 
 install:

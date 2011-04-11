@@ -112,6 +112,10 @@ private:
    int LoadImage(fipImage imageBitmap);
    void EscapeValues(std::vector<std::string>& valueList);
    void UnEscapeValue(std::string& value);
+   
+   int DetectLiveView();      /* check whether the camera supports live view */
+   bool UseLiveView();        /* if true, use live viewfinder image */
+   bool supportsLiveView_;    /* if true, camera supports capturing live viewfinder image */
 
    ImgBuffer img_;
    CSimpleCam cam_;

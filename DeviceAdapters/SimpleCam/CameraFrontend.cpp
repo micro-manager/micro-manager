@@ -195,6 +195,7 @@ CCameraFrontend::CCameraFrontend() :
    grayScale_(false),
    bitDepth_(8),
    keepOriginals_(false),
+   supportsLiveView_(false),
    imgBinning_(1),
    imgGrayScale_(false),
    imgBitDepth_(8),
@@ -427,7 +428,11 @@ int CCameraFrontend::SnapImage()
    SetCameraShutterSpeed();
    
    /* take a picture and load image into micro-manager buffer */
-   int nRet = LoadImage(cam_.captureImage());
+   int nRet;
+   if (UseLiveView())
+      nRet = LoadImage(cam_.capturePreview()); // live viewfinder image
+   else
+      nRet = LoadImage(cam_.captureImage()); // high-resolution picture
 
    /* Check error conditions */
    if (nRet == DEVICE_OK)
@@ -901,6 +906,8 @@ int CCameraFrontend::OnCameraName(MM::PropertyBase* pProp, MM::ActionType eAct)
                ret = SnapImage();
                /* update shutter speeds */
                SetAllowedShutterSpeeds();
+               /* check whether camera supports Live View */
+               DetectLiveView();
             }
             else
                ret = ERR_CAM_CONNECT_FAIL;
@@ -1118,6 +1125,38 @@ double CCameraFrontend::ShutterSpeedToMs(string shutterSpeed)
 }
 
 /*
+ * DetectLiveView();
+ * Check whether the camera supports capturing the live viewfinder image.
+ * set supportsLiveView_ variable.
+ */
+
+int CCameraFrontend::DetectLiveView()
+{
+   /* try to acquire a live viewfinder image */
+   supportsLiveView_ = cam_.capturePreview().isValid();
+   if (supportsLiveView_) 
+      LogMessage("Live viewfinder support detected", true);
+   else
+      LogMessage("No live viewfinder support", true);
+   return DEVICE_OK;
+}
+
+/*
+ * UseLiveView();
+ * Decide when to use live viewfinder image and when to use normal image.
+ * true if we need to use the live viewfinder image;
+ * false if we need to use the high-resolution image.
+ */
+
+bool CCameraFrontend::UseLiveView()
+{
+   /* Use live view if the camera supports live view (supportsLiveView_ is true) and micro-manager is in "Live View" mode. */
+   bool useLiveView =  supportsLiveView_ && IsCapturing();
+   useLiveView = false; // Set to false until we've found out a foolproof way to detect "Live View".
+   return useLiveView;
+}
+
+/*
  * EscapeValues
  * micro-manager does not accept values with a comma "," in them, 
  * as configurations are stored in comma-separated value format, and commas would cause problems.
@@ -1250,6 +1289,10 @@ int CCameraFrontend::LoadImage(fipImage frameBitmap)
    /* binning: scale image down */
    bool rc = true;
    unsigned int binning = GetBinning();
+
+   /* the live viewfinder image is already quite small; no sense in making it smaller */
+   if (UseLiveView())
+      binning = 1;
 
    if (binning <= 0)
    {
