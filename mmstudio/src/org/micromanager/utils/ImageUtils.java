@@ -390,11 +390,11 @@ public class ImageUtils {
    public static int getMax(final Object pixels) {
       if (pixels instanceof byte[]) {
          byte[] bytes = (byte []) pixels;
-         int min = Integer.MIN_VALUE;
+         int max = Integer.MIN_VALUE;
          for (int i=0;i<bytes.length;++i) {
-            min = Math.max(min, unsignedValue(bytes[i]));
+            max = Math.max(max, unsignedValue(bytes[i]));
          }
-         return min;
+         return max;
       }
       if (pixels instanceof short[]) {
          short[] shorts = (short []) pixels;
@@ -405,6 +405,34 @@ public class ImageUtils {
          return min;
       }
       return -1;
+   }
+
+   public static int[] getMinMax(final Object pixels) {
+      int[] result = new int[2];
+      int max = Integer.MIN_VALUE;
+      int min = Integer.MAX_VALUE;
+
+      if (pixels instanceof byte[]) {
+         byte[] bytes = (byte []) pixels;
+         for (int i=0;i<bytes.length;++i) {
+            max = Math.max(max, unsignedValue(bytes[i]));
+            min = Math.min(min, unsignedValue(bytes[i]));
+         }
+         result[0] = min;
+         result[1] = max;
+         return result;
+      }
+      if (pixels instanceof short[]) {
+         short[] shorts = (short []) pixels;
+         for (int i=0;i<shorts.length;++i) {
+            min = Math.min(min, unsignedValue(shorts[i]));
+            max = Math.max(max, unsignedValue(shorts[i]));
+         }
+         result[0] = min;
+         result[1] = max;
+         return result;
+      }
+      return null;
    }
 
 }
