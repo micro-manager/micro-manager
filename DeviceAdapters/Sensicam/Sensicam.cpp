@@ -324,11 +324,11 @@ int CSensicam::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 		if (0!=nErr)
 		{
 			std::ostringstream logMe;
-			logMe<<"Sensicam::OnBinning SET_COC returns "<<nErr<<endl;
+         logMe<<"Sensicam::OnBinning SET_COC returns "<<nErr<< ",hbin " << m_nHBin << ", vbin "<<m_nVBin<< std::endl;
 			LogMessage(logMe.str().c_str());
 		}
-		if (IsSensicamError(nErr))
-	      return nErr;
+		//if (IsSensicamError(nErr))
+	   //   return nErr;
    
 		return ResizeImageBuffer();
    }
@@ -478,6 +478,7 @@ int CSensicam::Initialize()
 
    // Binning
    pAct = new CPropertyAction (this, &CSensicam::OnBinning);
+   m_nHBin = m_nVBin = 1;
    nRet = CreateProperty(MM::g_Keyword_Binning, "1", MM::Integer, false, pAct);
    if (nRet != DEVICE_OK)
       return nRet;
