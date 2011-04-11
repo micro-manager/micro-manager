@@ -41,15 +41,12 @@ import java.awt.event.FocusEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.Point2D;
-import java.beans.PropertyChangeEvent;
 
 import java.io.File;
 import java.io.IOException;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -70,7 +67,6 @@ import javax.swing.SpringLayout;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
-import javax.swing.border.LineBorder;
 import javax.swing.event.AncestorEvent;
 
 import mmcorej.CMMCore;
@@ -120,9 +116,9 @@ import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
 import java.awt.Cursor;
 import java.awt.Graphics;
+import java.awt.KeyboardFocusManager;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.beans.PropertyChangeListener;
 import java.util.Collections;
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
@@ -141,6 +137,7 @@ import org.micromanager.api.Pipeline;
 import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.FileDialogs.FileType;
+import org.micromanager.utils.MMKeyDispatcher;
 import org.micromanager.utils.ReportingUtils;
 
 
@@ -150,7 +147,7 @@ import org.micromanager.utils.ReportingUtils;
 public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, ScriptInterface {
 
    private static final String MICRO_MANAGER_TITLE = "Micro-Manager 1.4";
-   private static final String VERSION = "1.4.0 ";
+   private static final String VERSION = "1.4.4 ";
    private static final long serialVersionUID = 3556500289598574541L;
    private static final String MAIN_FRAME_X = "x";
    private static final String MAIN_FRAME_Y = "y";
@@ -933,18 +930,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       toggleButtonShutter_.addActionListener(new ActionListener() {
 
          public void actionPerformed(final ActionEvent e) {
-            try {
-               if (toggleButtonShutter_.isSelected()) {
-                  setShutterButton(true);
-                  core_.setShutterOpen(true);
-               } else {
-                  core_.setShutterOpen(false);
-                  setShutterButton(false);
-               }
-            } catch (Exception e1) {
-               ReportingUtils.showError(e1);
-            }
+            toggleShutter();
          }
+
+
       });
       toggleButtonShutter_.setToolTipText("Open/close the shutter");
       toggleButtonShutter_.setIconTextGap(6);
@@ -1558,7 +1547,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             } else {
                toggleButtonShutter_.setEnabled(true);
             }
-
          }
       });
       autoShutterCheckBox_.setIconTextGap(6);
@@ -1973,6 +1961,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          public void actionPerformed(ActionEvent e) {
             if (afMgr_.getDevice() != null) {
                new Thread() {
+                  @Override
                   public void run() {
                      try {
                        boolean lmo  = isLiveModeOn();
@@ -2040,6 +2029,11 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             SpringLayout.EAST, topPanel);
       topLayout.putConstraint(SpringLayout.WEST, saveConfigButton_, -80,
             SpringLayout.EAST, topPanel);
+
+      // Add our own keyboard manager that handles Micro-Manager shortcuts
+      MMKeyDispatcher mmKD = new MMKeyDispatcher(gui_);
+      KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(mmKD);
+
    }
 
    private void handleException(Exception e, String msg) {
@@ -2315,7 +2309,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
 
 
-   public void setExitStrategy(boolean closeOnExit) {
+   public final void setExitStrategy(boolean closeOnExit) {
       if (closeOnExit)
          setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
       else
@@ -2565,6 +2559,23 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       staticInfo_.y_ = y[0];
 
       updateStaticInfoFromCache();
+   }
+
+   public void toggleShutter() {
+      try {
+         if (!toggleButtonShutter_.isEnabled())
+            return;
+         toggleButtonShutter_.requestFocusInWindow();
+         if (toggleButtonShutter_.getText().equals("Open")) {
+            setShutterButton(true);
+            core_.setShutterOpen(true);
+         } else {
+            core_.setShutterOpen(false);
+            setShutterButton(false);
+         }
+      } catch (Exception e1) {
+         ReportingUtils.showError(e1);
+      }
    }
 
    private void setShutterButton(boolean state) {

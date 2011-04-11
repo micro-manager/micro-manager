@@ -91,7 +91,7 @@ import org.micromanager.utils.FileDialogs.FileType;
 import org.micromanager.utils.ReportingUtils;
 
 
-public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI {
+public final class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI {
    private static final long serialVersionUID = 1L;
    private JTable scriptTable_;
    private ScriptTableModel model_;
@@ -140,18 +140,6 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
          scriptFileArray_ = new ArrayList<File>();
          lastModArray_ = new ArrayList<Long>();
       }
-
-      /*
-      public void setData (ArrayList<File> scriptFileArray) {
-         scriptFileArray_ = scriptFileArray;
-         lastModArray_ = new ArrayList<Long>();
-         Iterator<File> it = scriptFileArray.iterator();
-         while (it.hasNext()) {
-            File f = (File) it.next();
-            lastModArray_.add(f.lastModified());
-         }
-      }
-     */
       
       public Boolean HasScriptAlready(File f) {
          Boolean preExisting = false;
@@ -223,6 +211,7 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
          return columnCount_;
       }
 
+      @Override
       public String getColumnName(int columnIndex) {
          return "Script-Shortcuts";
       }
@@ -290,7 +279,7 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
    }
 
 
-   public void createBeanshellREPL() {
+   public final void createBeanshellREPL() {
       // Create console and REPL interpreter:
       cons_ = new JConsole();
       if (gui_.defaultScriptFont_ != null)
@@ -319,13 +308,6 @@ public class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI 
       // This command allows variables to be inspected in the command-line
       // (e.g., typing "x;" causes the value of x to be returned):
       beanshellREPLint_.setShowResults(true);
-
-      // Set up window for interpreter:
-/*    JFrame frame = new JFrame();
-      frame.setBounds(100,100,500,500);
-      frame.setTitle("Beanshell Interactive Console (Micro-Manager)");
-      frame.add(cons_);
-      frame.setVisible(true);*/
       
    }
    
