@@ -569,7 +569,6 @@ vector<string> CPluginManager::GetAvailableDevices(const char* moduleName) throw
    fnGetNumberOfDevices hGetNumberOfDevices(0);
    fnGetDeviceName hGetDeviceName(0);
    fnInitializeModuleData hInitializeModuleData(0);
-   fnGetDeviceIsDiscoverable hGetDeviceIsDiscoverable(NULL);
 
    try
    {
@@ -582,9 +581,6 @@ vector<string> CPluginManager::GetAvailableDevices(const char* moduleName) throw
       assert(hGetNumberOfDevices);
       hGetDeviceName = (fnGetDeviceName) GetModuleFunction(hLib, "GetDeviceName");
       assert(hGetDeviceName);
-
-      hGetDeviceIsDiscoverable = (fnGetDeviceIsDiscoverable)GetModuleFunction(hLib, "GetDeviceIsDiscoverable");
-      assert(hGetDeviceIsDiscoverable);
 
       unsigned numDev = hGetNumberOfDevices();
       for (unsigned i=0; i<numDev; i++)

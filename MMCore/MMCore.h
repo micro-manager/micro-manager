@@ -151,10 +151,6 @@ public:
     * Device inventory discovery interface.
     */
 
-   bool getIsDeviceDiscoverable(const char* library, ///< library just as in getAvailableDevices
-      const unsigned deviceIndex ///< of set into vector of devices as returned by getAvailableDevices
-      );
-
 
    std::vector<bool> getDeviceDiscoverability(const char* library ///< library just as in getAvailableDevices
       );

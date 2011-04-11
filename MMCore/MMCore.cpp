@@ -462,16 +462,6 @@ std::vector<bool> CMMCore::getDeviceDiscoverability(const char* library)
    }
 }
 
-bool CMMCore::getIsDeviceDiscoverable(const char* library, ///< library just as in getAvailableDevices
-      const unsigned deviceIndex ///< of set into vector of devices as returned by getAvailableDevices
-      )
-   {
-
-      return false;
-
-
-   }
-
 
 
 
