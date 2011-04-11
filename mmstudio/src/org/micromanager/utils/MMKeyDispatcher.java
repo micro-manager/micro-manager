@@ -46,6 +46,16 @@ public class MMKeyDispatcher implements KeyEventDispatcher{
          return false;
       if (t.equals("class org.jeditsyntax.JEditTextArea"))
          return false;
+      if (t.equals("class java.awt.TextArea"))
+         return false;
+      if (t.equals("class java.awt.TextField"))
+         return false;
+      if (t.equals("class ij.text.TextCanvas"))
+         return false;
+      if (t.equals("class javax.swing.JTextField"))
+         return false;
+      if (t.equals("class javax.swing.JFormattedTextField"))
+         return false;
       return true;
    }
 
