@@ -34,3 +34,6 @@ You may have to copy FreeImagePlus.h to /usr/local/include manually.
 
 Koen De Vleeschauwer, www.kdvelectronics.eu
 Nico Stuurman
+
+ToDo:
+- Implement LiveView using capturePreview() (fast 20 fps 320x240 pixel viewfinder image) instead of using captureImage() (slow, high-resolution camera image)
