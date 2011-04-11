@@ -548,7 +548,8 @@ fipImage CSimpleCam::capturePreview()
 
    if (previewFile)
    {
-      rc = gp_file_unref(previewFile);
+      gp_file_unref(previewFile);
+      previewFile = NULL;
    }
 
    /* return value is FreeImagePlus bitmap */
