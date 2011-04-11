@@ -898,6 +898,8 @@ int CCameraFrontend::OnCameraName(MM::PropertyBase* pProp, MM::ActionType eAct)
          else
          {
             /* Connect new camera */
+            /* First take an image; then read shutter speeds. 
+             * Some camera models require taking a picture before accessing the settings */
             if (cam_.connectCamera(cameraName))
                ret = SnapImage();
             else

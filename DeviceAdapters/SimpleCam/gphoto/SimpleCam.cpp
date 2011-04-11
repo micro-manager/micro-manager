@@ -503,7 +503,8 @@ string CSimpleCam::captureImage()
 }
 
 
-/* if connected to a camera, returns a viewfinder preview. return value is a FreeImagePlus bitmap; typically 320x240 pixels */
+/* if connected to a camera, returns a viewfinder preview. 
+ * return value is a FreeImagePlus bitmap; typically 320x240 pixels at 20 frames per second*/
 fipImage CSimpleCam::capturePreview()
 {
    int rc = GP_OK;
@@ -545,7 +546,7 @@ fipImage CSimpleCam::capturePreview()
       rc = (nRet ? GP_OK : GP_ERROR);
    }
 
-   if (rc >= GP_OK)
+   if (previewFile)
    {
       rc = gp_file_unref(previewFile);
    }

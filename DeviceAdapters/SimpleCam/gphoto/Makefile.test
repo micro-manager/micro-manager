@@ -1,9 +1,11 @@
 CXXFLAGS=-I/opt/local/include
-LDFLAGS=-L/opt/local/lib -lgphoto2 -lgphoto2_port
+LDFLAGS=-L/opt/local/lib -lgphoto2 -lgphoto2_port -lfreeimage
+#CXXFLAGS=-I/usr/local/include
+#LDFLAGS=-L/usr/local/lib -lgphoto2 -lgphoto2_port -lfreeimageplus -lm
 OBJECTS=test.o SimpleCam.o
 
 test: $(OBJECTS)
-	$(CXX) $(LDFLAGS) $(OBJECTS) -o test
+	$(CXX) $(OBJECTS) $(LDFLAGS) -o test
 
 clean:
 	rm -f test *.o
