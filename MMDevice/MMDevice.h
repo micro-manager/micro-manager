@@ -34,7 +34,7 @@
 // Header version
 // If any of the class declarations changes, the interface version
 // must be incremented
-#define DEVICE_INTERFACE_VERSION 38
+#define DEVICE_INTERFACE_VERSION 39
 ///////////////////////////////////////////////////////////////////////////////
 
 #pragma once
@@ -302,6 +302,11 @@ namespace MM {
 
       //device discovery API
       virtual MM::DeviceDetectionStatus DetectDevice(void) = 0;
+
+      // this API should be able to run BEFORE initialization, provided that communication parameters
+      // are correct.
+      virtual int GetNumberOfDiscoverableDevices() = 0;
+      virtual void GetDiscoverableDevice(int peripheralNum, char* peripheralName, unsigned int maxNameLen) = 0;
 
    };
 

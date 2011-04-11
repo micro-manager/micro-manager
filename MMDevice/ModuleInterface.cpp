@@ -29,6 +29,7 @@
 
 typedef std::pair<std::string, std::string> DeviceInfo; 
 std::vector<DeviceInfo> g_availableDevices;
+std::map<std::string,bool> g_deviceDiscoverability;
 
 MODULE_API long GetModuleVersion()
 {
@@ -49,6 +50,15 @@ void AddAvailableDeviceName(const char* name, const char* descr)
 
    // add to the list
    g_availableDevices.push_back(std::make_pair(name, descr));   
+}
+
+void SetDeviceIsDiscoverable( const char* pdevice, const bool value)
+{
+   if(pdevice)
+   {
+      g_deviceDiscoverability[std::string(pdevice)] = value;
+   }
+
 }
 
 MODULE_API unsigned GetNumberOfDevices()
@@ -75,4 +85,26 @@ MODULE_API bool GetDeviceDescription(unsigned deviceIndex, char* description, un
    
    strncpy(description, g_availableDevices[deviceIndex].second.c_str(), bufLen-1);
    return true;
+}
+
+
+MODULE_API bool GetDeviceIsDiscoverable(char* pDeviceName, bool* pvalue)
+{
+   bool ret = false;
+   if( pvalue)
+   {
+      *pvalue = false;
+      std::string name(pDeviceName);
+      std::map<std::string,bool>::iterator ii = g_deviceDiscoverability.find(name);
+      if( ii != g_deviceDiscoverability.end())
+      {
+         // found it
+         *pvalue = (*ii).second;
+         ret = true;
+      }
+   }
+
+   return ret;
+
+
 }

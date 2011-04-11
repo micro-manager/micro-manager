@@ -102,7 +102,14 @@ class Hub : public CGenericBase<Hub>
       // device discovery
       MM::DeviceDetectionStatus DetectDevice(void);
 
+     int GetNumberOfDiscoverableDevices();
+     void GetDiscoverableDevice(int peripheralNum, char* peripheralName, unsigned int maxNameLen);
+
+
    private:
+      void QueryPeripheralInventory();
+
+      std::vector<std::string> discoverableDevices_;
 
       int QueryVersion(std::string& version);
 

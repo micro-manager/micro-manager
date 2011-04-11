@@ -50,7 +50,8 @@
 // header version
 // NOTE: If any of the exported module API calls changes, the interface version
 // must be incremented
-#define MODULE_INTERFACE_VERSION 4
+// new version 5 supports device discoverability
+#define MODULE_INTERFACE_VERSION 5
 
 #ifdef WIN32
 const char* const LIB_NAME_PREFIX = "mmgr_dal_";
@@ -71,6 +72,8 @@ extern "C" {
    MODULE_API unsigned GetNumberOfDevices();
    MODULE_API bool GetDeviceName(unsigned deviceIndex, char* name, unsigned bufferLength);
    MODULE_API bool GetDeviceDescription(unsigned deviceIndex, char* name, unsigned bufferLength);
+   /* look up by device name */
+   MODULE_API bool GetDeviceIsDiscoverable(char* name, bool* pvalue);
    /**
     * Intializes the list of available devices and perhaps other global initialization tasks.
     * The method may be called any number of times during the uManager session.
@@ -86,10 +89,13 @@ typedef long (*fnGetDeviceInterfaceVersion) ();
 typedef unsigned (*fnGetNumberOfDevices)();
 typedef bool (*fnGetDeviceName)(unsigned, char*, unsigned);
 typedef bool (*fnGetDeviceDescription)(unsigned, char*, unsigned);
+typedef bool (*fnGetDeviceIsDiscoverable)(char* , bool* );
 typedef void (*fnInitializeModuleData)();
 
 // functions for internal use
 void AddAvailableDeviceName(const char* deviceName, const char* description = "Description N/A");
+void SetDeviceIsDiscoverable( const char* pdevice, const bool value);
+
 
 
 #endif //_MODULE_INTERFACE_H_

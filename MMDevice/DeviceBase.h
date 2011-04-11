@@ -705,6 +705,11 @@ public:
       return  MM::Unimplemented;
    };
 
+   // device 'inventory'
+
+   int GetNumberOfDiscoverableDevices(){ return 0;};
+   void GetDiscoverableDevice(int /*peripheralNum*/, char* /*peripheralName*/, unsigned int /*maxNameLen*/){return;}; 
+
 
 
 

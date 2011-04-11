@@ -414,6 +414,68 @@ int Hub::Shutdown()
 }
 
 
+
+void Hub::QueryPeripheralInventory()
+{
+   discoverableDevices_.clear();
+   clearPort(*this, *GetCoreCallback(), port_.c_str());
+
+   // Get description of attached modules
+   const char* cmd = "Rconfig";
+   int ret;
+   ret = SendSerialCommand(port_.c_str(), cmd, "\r");
+   if (ret != DEVICE_OK) 
+      return;
+
+   // Read out result
+   std::string result;
+   result = "";
+   ret = GetSerialAnswer(port_.c_str(), ":", result);
+   if (ret != DEVICE_OK) 
+      return;
+   if (result.length() < 1)
+      return;
+   // Looks like there are controllers that start with ':'
+   if (result.length() == 1) 
+   {
+      result = "";
+      ret = GetSerialAnswer(port_.c_str(), ":", result);
+      if (ret != DEVICE_OK) 
+         return;
+      if (result.length() < 1)
+         return;
+   }
+
+   //TODO actually parse the report !!!!!!
+   discoverableDevices_.push_back(result);
+
+
+}
+
+int Hub::GetNumberOfDiscoverableDevices()
+{
+   QueryPeripheralInventory();
+   return discoverableDevices_.size();
+
+}
+
+void Hub::GetDiscoverableDevice(int peripheralNum, char* peripheralName, unsigned int maxNameLen)
+{ 
+   if( -1 < peripheralNum)
+   {
+      if( peripheralNum < int(discoverableDevices_.size()))
+      {
+            strncpy(peripheralName, discoverableDevices_[peripheralNum].c_str(), maxNameLen - 1);
+            peripheralName[maxNameLen - 1] = 0;
+      }
+   
+   }
+   return;
+} 
+
+
+
+
 //////////////// Action Handlers (Hub) /////////////////
 
 int Hub::OnPort(MM::PropertyBase* pProp, MM::ActionType pAct)

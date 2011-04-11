@@ -569,6 +569,8 @@ vector<string> CPluginManager::GetAvailableDevices(const char* moduleName) throw
    fnGetNumberOfDevices hGetNumberOfDevices(0);
    fnGetDeviceName hGetDeviceName(0);
    fnInitializeModuleData hInitializeModuleData(0);
+   fnGetDeviceIsDiscoverable hGetDeviceIsDiscoverable(NULL);
+
    try
    {
       // initalize module data
@@ -580,6 +582,9 @@ vector<string> CPluginManager::GetAvailableDevices(const char* moduleName) throw
       assert(hGetNumberOfDevices);
       hGetDeviceName = (fnGetDeviceName) GetModuleFunction(hLib, "GetDeviceName");
       assert(hGetDeviceName);
+
+      hGetDeviceIsDiscoverable = (fnGetDeviceIsDiscoverable)GetModuleFunction(hLib, "GetDeviceIsDiscoverable");
+      assert(hGetDeviceIsDiscoverable);
 
       unsigned numDev = hGetNumberOfDevices();
       for (unsigned i=0; i<numDev; i++)
@@ -604,6 +609,62 @@ vector<string> CPluginManager::GetAvailableDevices(const char* moduleName) throw
 }
 
 
+std::vector<bool> CPluginManager::GetDeviceDiscoverability(const char* moduleName) throw (CMMError)
+{
+   std::vector<bool> values;
+   HDEVMODULE hLib = LoadPluginLibrary(moduleName);
+   CheckVersion(hLib); // verify that versions match
+
+   fnGetNumberOfDevices hGetNumberOfDevices(0);
+   fnGetDeviceName hGetDeviceName(0);
+   fnInitializeModuleData hInitializeModuleData(0);
+   fnGetDeviceIsDiscoverable hGetDeviceIsDiscoverable(NULL);
+
+   try
+   {
+      // initalize module data
+      hInitializeModuleData = (fnInitializeModuleData) GetModuleFunction(hLib, "InitializeModuleData");
+      assert(hInitializeModuleData);
+      hInitializeModuleData();
+
+      hGetNumberOfDevices = (fnGetNumberOfDevices) GetModuleFunction(hLib, "GetNumberOfDevices");
+      assert(hGetNumberOfDevices);
+      hGetDeviceName = (fnGetDeviceName) GetModuleFunction(hLib, "GetDeviceName");
+      assert(hGetDeviceName);
+
+      hGetDeviceIsDiscoverable = (fnGetDeviceIsDiscoverable)GetModuleFunction(hLib, "GetDeviceIsDiscoverable");
+      assert(hGetDeviceIsDiscoverable);
+
+      unsigned numDev = hGetNumberOfDevices();
+      for (unsigned i=0; i<numDev; i++)
+      {
+         bool discoverable = false;
+         char deviceName[MM::MaxStrLength];
+         if (hGetDeviceName(i, deviceName, MM::MaxStrLength))
+         {
+            hGetDeviceIsDiscoverable(deviceName, &discoverable);
+
+         }
+         values.push_back(discoverable);
+      }
+   }
+   catch (CMMError& err)
+   {
+      std::ostringstream o;
+      o << " module " << moduleName;
+
+      CMMError newErr( o.str().c_str(), err.getCoreMsg().c_str(), err.getCode());
+      ReleasePluginLibrary(hLib);
+      throw newErr;
+   }
+   
+   ReleasePluginLibrary(hLib);
+   return values;
+}
+
+
+
+
 /**
  * List all available devices in the specified module.
  */
@@ -616,6 +677,7 @@ vector<string> CPluginManager::GetAvailableDeviceDescriptions(const char* module
    fnGetNumberOfDevices hGetNumberOfDevices(0);
    fnGetDeviceDescription hGetDeviceDescription(0);
    fnInitializeModuleData hInitializeModuleData(0);
+
    try
    {
       hInitializeModuleData = (fnInitializeModuleData) GetModuleFunction(hLib, "InitializeModuleData");

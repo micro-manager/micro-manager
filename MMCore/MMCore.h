@@ -146,7 +146,20 @@ public:
    std::vector<std::string> getAvailableDevices(const char* library) throw (CMMError);
    std::vector<std::string> getAvailableDeviceDescriptions(const char* library) throw (CMMError);
    std::vector<long> getAvailableDeviceTypes(const char* library) throw (CMMError);
- 
+
+    /** 
+    * Device inventory discovery interface.
+    */
+
+   bool getIsDeviceDiscoverable(const char* library, ///< library just as in getAvailableDevices
+      const unsigned deviceIndex ///< of set into vector of devices as returned by getAvailableDevices
+      );
+
+
+   std::vector<bool> getDeviceDiscoverability(const char* library ///< library just as in getAvailableDevices
+      );
+
+
    /** @name Generic device interface
     * API guaranteed to work for all devices.
     */
@@ -193,6 +206,8 @@ public:
    long getTimeoutMs() { return timeoutMs_;}
    bool usesDeviceDelay(const char* label) const throw (CMMError);
    std::string getCoreErrorText(int code) const;
+
+
    //@ }
 
    /**
@@ -409,6 +424,10 @@ public:
 
    // device discovery
    MM::DeviceDetectionStatus detectDevice(char* deviceName);
+
+   // hubs and 'scopes can provide a list of peripheral devices currently attached
+   std::vector<std::string> getDiscoverableDevices(const char* deviceLabel); 
+
    
    template <class T>
    T* getSpecificDevice(const char* deviceLabel) const throw (CMMError)

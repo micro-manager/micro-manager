@@ -69,6 +69,9 @@ public:
    static std::vector<std::string> GetAvailableDeviceDescriptions(const char* moduleName) throw (CMMError);
    static std::vector<long> GetAvailableDeviceTypes(const char* moduleName) throw (CMMError);
 
+   static std::vector<bool> GetDeviceDiscoverability(const char* moduleName) throw (CMMError);
+
+
    // persistence
    static void SetPersistentData(HDEVMODULE hLib, const char* moduleName);
    std::string Serialize();

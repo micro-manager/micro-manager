@@ -443,6 +443,38 @@ vector<long> CMMCore::getAvailableDeviceTypes(const char* library ///< the devic
    }
 }
 
+
+std::vector<bool> CMMCore::getDeviceDiscoverability(const char* library)
+{
+
+   try
+   {
+
+      std::vector<bool> ret;
+      ret = CPluginManager::GetDeviceDiscoverability(library);
+      return ret;
+   }
+
+   catch (CMMError& e)
+   {
+      logError("core", e.getMsg().c_str());
+      throw;
+   }
+}
+
+bool CMMCore::getIsDeviceDiscoverable(const char* library, ///< library just as in getAvailableDevices
+      const unsigned deviceIndex ///< of set into vector of devices as returned by getAvailableDevices
+      )
+   {
+
+      return false;
+
+
+   }
+
+
+
+
 /**
  * Displays the module and device interface versions.
  */
@@ -5362,6 +5394,23 @@ MM::DeviceDetectionStatus CMMCore::detectDevice(char* deviceName)
    return result;
 }
 
+std::vector<std::string> CMMCore::getDiscoverableDevices(const char* deviceLabel)
+{
+   std::vector<std::string> result;
+   MM::Device* pDevice  = pluginManager_.GetDevice(deviceLabel);
+   char pname[4096];
+   if( NULL != pDevice)
+   {
+
+      int n = pDevice->GetNumberOfDiscoverableDevices();
+      for( int iter = 0; iter < n; ++iter)
+      {
+         pDevice->GetDiscoverableDevice(iter, pname, 4096);
+         result.push_back(pname);
+      }
+   }
+   return result;
+}
 
 
 // at least on OS X, there is a 'primary' MAC address, so we'll
