@@ -12,14 +12,15 @@
 #ifndef _ABSCAMERA_H_
 #define _ABSCAMERA_H_
 
-#include "../../MMDevice/MMDevice.h"
-#include "../../MMDevice/DeviceBase.h"
-#include "../../MMDevice/DeviceUtils.h"
-#include "../../MMDevice/ImgBuffer.h"
-#include "camusb_api.h"
+#include "./../../MMDevice/MMDevice.h"
+#include "./../../MMDevice/DeviceBase.h"
+#include "./../../MMDevice/DeviceUtils.h"
+#include "./../../MMDevice/ImgBuffer.h"
+#include "./include/camusb_api.h"
 
-#include <string>
-#include <map>
+#include <string>	// std::string
+#include <vector>	// std::string
+#include <map>		// std::map
 
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
@@ -28,9 +29,20 @@
 #define ERR_UNKNOWN_POSITION     103
 #define ERR_BUSY_ACQIRING        104
 
-#define ABSCAM_CIRCULAR_BUFFER_IMG_COUNT  (2)
+#define ABSCAM_CIRCULAR_BUFFER_IMG_COUNT  (1)
 
-class CameraSequenceThread;
+//////////////////////////////////////////////////////////////////////////////
+// structs
+//
+//! \brief list of supported pixeltypes (supported for this application)
+typedef struct tagSupportedPixelTypes
+{
+   std::string strPixelType;
+   unsigned int dwPixelType;
+} SupportedPixelTypes;
+
+// pixeltype list typedef
+typedef std::vector<SupportedPixelTypes> CSupportedPixeltypes;
 
 
 class ABSCamera : public CCameraBase<ABSCamera>  
@@ -99,7 +111,6 @@ private:
     MM_THREAD_GUARD lockImgBufPtr;
 
     virtual int ThreadRun();
-    bool IsCapturing();
     virtual int InsertImage();
 
    int UpdateExposureLimits(void);
@@ -147,6 +158,13 @@ private:
    S_TEMPERATURE_CAPS*  temperatureCap;
    S_FRAMERATE_CAPS*    framerateCap;
 
+   CSupportedPixeltypes cPixeltypes;        // list of supported pixeltypes
+   int InitSupportedPixeltypes( void );     // init list of supported pixeltypes (cPixeltypes)
+   unsigned int StringToPixelType( std::string strPixelType );
+   unsigned int BinValueToCamValue( int iBinning );
+   int          CamValueToBinValue( unsigned int dwBin );
+   
+
    void GenerateSyntheticImage(ImgBuffer& img, double exp);
    int ResizeImageBuffer();
    void ShowError( unsigned int errorNumber ) const;
@@ -154,14 +172,6 @@ private:
    void* GetCameraCap( unsigned __int64 CamFuncID )  const;   
    int GetCameraFunction( unsigned __int64 CamFuncID, void* functionPara, unsigned long size, void* functionParamOut = NULL, unsigned long sizeOut = 0 )  const;   
    int SetCameraFunction( unsigned __int64 CamFuncID, void* functionPara, unsigned long size ) const;
-
-   CameraSequenceThread * thd_;
-   friend class CameraSequenceThread;
-
-
-
-
-
   
 };
 
