@@ -417,6 +417,10 @@ int Hub::Shutdown()
 
 void Hub::QueryPeripheralInventory()
 {
+
+   std::string v;
+   QueryVersion(v);
+
    discoverableDevices_.clear();
    clearPort(*this, *GetCoreCallback(), port_.c_str());
 
@@ -446,9 +450,43 @@ void Hub::QueryPeripheralInventory()
          return;
    }
 
+/* from MAC200 PDF
+Modul-Id   Address  Label  Description 
+ 
+  X  1  EMOT  stage X axis 
+  Y  2  EMOT  stage Y axis 
+  B  3  EMOT  aux axis 
+  R  4  EMOT  aux axis 
+  C  5  EMOT  aux axis 
+  Z  6  EMOT  aux axis 
+  T  7  EMOT  aux axis 
+ 
+  I  9 & 8  EDAIO  digital in ports 
+  O  9 & 8  EDAIO  digital out ports 
+ 
+  F  11  EAFC  auto focus finder 
+P[1]  12  HPHCD           photometer No. 1 
+  P2  13  HPHCD           photometer No. 2 
+  P3  14  HPHCD           photometer No. 3 
+  P4  15  HPHCD           photometer No. 4 
+  P5  16  HPHCD           photometer No. 5 
+ 
+S[1]  17  EFILS  filter shutter No. 1 
+  S2  18  EFILS  filter shutter No. 2 
+  S3  19  EFILS  filter shutter No. 3 
+  S4  20  EFILS  filter shutter No. 4 
+  S5  21  EFILS  filter shutter No. 5 
+*/
+
+
+
+
+
+
 
    std::string shutterToken = "EFILS";
    std::string wheelToken = "FWSHC";
+   std::string motorToken = "EMOT"; // Mac2000 x,y, or 'aux'
   
    std::stringstream ireport(report);
    std::string line;
@@ -481,6 +519,11 @@ void Hub::QueryPeripheralInventory()
          }
          if( numericIdAtStart)  // parse the inventory line
          {
+            std::stringstream ids(tokens.at(0));
+            // for MAC2000 this is on [1,21]
+            int deviceID;
+            ids >> deviceID;
+
             std::vector<std::string>::iterator itt = tokens.begin();
 
             for(itt++ ; itt != tokens.end(); ++itt)
@@ -493,6 +536,12 @@ void Hub::QueryPeripheralInventory()
                if(0==(*itt).compare(wheelToken))
                {
                   discoverableDevices_.push_back(g_Wheel);
+               }
+               if(0 == (*itt).compare(motorToken))
+               {
+                  if (1 == deviceID) // if we find the X axis, say we have an XY stage
+                     discoverableDevices_.push_back(g_XYStageDeviceName);
+
                }
 
             }
