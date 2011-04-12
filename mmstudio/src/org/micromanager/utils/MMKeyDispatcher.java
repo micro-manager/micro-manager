@@ -35,7 +35,7 @@ public class MMKeyDispatcher implements KeyEventDispatcher{
 	}
 
    /*
-    * Exclude key events coming from specific sources (like test editors)
+    * Exclude key events coming from specific sources (like text components)
     * Only way I could come up with was introspection
     * If there are other areas in the application in which keyevents should not
     * be processed, add those here
