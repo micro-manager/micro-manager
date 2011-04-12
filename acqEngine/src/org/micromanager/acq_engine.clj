@@ -537,7 +537,10 @@
    :z-drive (core getFocusDevice), :wait-time-ms 0})
 
 (defn create-basic-state []
-  {:init-width (core getImageWidth) :init-height (core getImageHeight)})
+  {:init-width (core getImageWidth)
+   :init-height (core getImageHeight)
+   :pixel-type (get-pixel-type)
+   :binning (core getProperty (core getCameraDevice) "Binning")})
 
 (defn acquire-tagged-image []
   (core snapImage)
