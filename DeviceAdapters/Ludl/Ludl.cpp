@@ -427,29 +427,79 @@ void Hub::QueryPeripheralInventory()
    if (ret != DEVICE_OK) 
       return;
 
-   // Read out result
-   std::string result;
-   result = "";
-   ret = GetSerialAnswer(port_.c_str(), ":", result);
+   // Read out report
+   std::string report;
+   report = "";
+   ret = GetSerialAnswer(port_.c_str(), ":", report);
    if (ret != DEVICE_OK) 
       return;
-   if (result.length() < 1)
+   if (report.length() < 1)
       return;
    // Looks like there are controllers that start with ':'
-   if (result.length() == 1) 
+   if (report.length() == 1) 
    {
-      result = "";
-      ret = GetSerialAnswer(port_.c_str(), ":", result);
+      report = "";
+      ret = GetSerialAnswer(port_.c_str(), ":", report);
       if (ret != DEVICE_OK) 
          return;
-      if (result.length() < 1)
+      if (report.length() < 1)
          return;
    }
 
-   //TODO actually parse the report !!!!!!
-   discoverableDevices_.push_back(result);
 
+   std::string shutterToken = "EFILS";
+   std::string wheelToken = "FWSHC";
+  
+   std::stringstream ireport(report);
+   std::string line;
+   while( std::getline(ireport, line))
+   {
+      if( 0 < line.length())
+      {
+         std::vector<std::string> tokens;
+         // tokenize the line
+         std::stringstream iline(line);
+         std::string word;
+         while (iline >> word)
+            tokens.push_back(word);
+        
+         bool numericIdAtStart = false;
+         if( 0 < tokens.size())
+         {
+            if( 0 < tokens.at(0).length())
+            {
+               numericIdAtStart = true;
+               for( std::string::iterator ii = tokens.at(0).begin(); tokens.at(0).end()!=ii; ++ii)
+               {
+                  if(!isdigit(*ii))
+                  {
+                     numericIdAtStart = false;
+                     break;
+                  }
+               }
+            }
+         }
+         if( numericIdAtStart)  // parse the inventory line
+         {
+            std::vector<std::string>::iterator itt = tokens.begin();
 
+            for(itt++ ; itt != tokens.end(); ++itt)
+            {
+               if(0==(*itt).compare(shutterToken))
+               {
+                  discoverableDevices_.push_back(g_Shutter);
+               }
+
+               if(0==(*itt).compare(wheelToken))
+               {
+                  discoverableDevices_.push_back(g_Wheel);
+               }
+
+            }
+
+         }
+      }
+   }
 }
 
 int Hub::GetNumberOfDiscoverableDevices()
