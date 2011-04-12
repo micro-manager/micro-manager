@@ -33,9 +33,7 @@ public class MMKeyDispatcher implements KeyEventDispatcher{
       final Class [] forbiddenClasses_;
 
    public MMKeyDispatcher(MMStudioMainFrame gui) {
-      gui_ = gui;
-      // Get textCanvasClass this way because it's package private:
-      try {
+      gui_ = gui;try {
          textCanvasClass = ClassLoader.getSystemClassLoader().loadClass("ij.text.TextCanvas");
       } catch (ClassNotFoundException ex) {
          textCanvasClass = null;
@@ -77,41 +75,10 @@ public class MMKeyDispatcher implements KeyEventDispatcher{
       // we need to efficiently determinne whether or not to deal with this
       // key event will be dealt with.  CheckSource seems relatively expensive
       // so only call this when the key matches
-      char key = ke.getKeyChar();
-      // snap
-      if (key == 's' && ke.getModifiers() == 0) {
-         if (checkSource(ke)) {
-            gui_.snapSingleImage();
-            return true;
-         }
+      if (HotKeys.keys_.containsKey(ke.getKeyCode())) {
+         if (checkSource(ke))
+            return HotKeys.keys_.get(ke.getKeyCode()).ExecuteAction();
       }
-      // toggle live
-      if (key == 'l' && ke.getModifiers() == 0) {
-         if (checkSource(ke)) {
-            if (gui_.getLiveMode())
-               gui_.enableLiveMode(false);
-            else
-               gui_.enableLiveMode(true);
-            return true;
-         }
-      }
-      
-      // acquire
-      if (key == 'a' && ke.getModifiers() == 0) {
-         if (checkSource(ke)) {
-            gui_.snapAndAddToImage5D(null);
-            return true;
-         }
-      }
-
-      // toggle shutter
-      if (key == ' ' && ke.getModifiers() == 0) {
-         if (checkSource(ke)) {
-            gui_.toggleShutter();
-            return true;
-         }
-      }
-      
       return false;
    }
 }

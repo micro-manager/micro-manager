@@ -398,6 +398,20 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
       spLeft.putConstraint(SpringLayout.NORTH, removeButton, gap, SpringLayout.NORTH, leftPanel);
       spLeft.putConstraint(SpringLayout.WEST, removeButton, gap, SpringLayout.EAST, addButton);
       leftPanel.add(removeButton);
+
+      final JButton hotkeyButton = new JButton();
+      hotkeyButton.setMargin(new Insets(0,0,0,0));
+      hotkeyButton.setFont(new Font("", Font.PLAIN, 10));
+      hotkeyButton.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent arg0) {
+            new org.micromanager.utils.HotKeyFrame();
+         }
+      });
+      hotkeyButton.setText("Hot Keys");
+      hotkeyButton.setPreferredSize(buttonSize);
+      spLeft.putConstraint(SpringLayout.NORTH, hotkeyButton, gap, SpringLayout.NORTH, leftPanel);
+      spLeft.putConstraint(SpringLayout.WEST, hotkeyButton, gap, SpringLayout.EAST, removeButton);
+      leftPanel.add(hotkeyButton);
       
       // Scrollpane for shortcut table
       final JScrollPane scrollPane = new JScrollPane();

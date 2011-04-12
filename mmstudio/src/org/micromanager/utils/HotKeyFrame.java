@@ -7,16 +7,26 @@
 
 package org.micromanager.utils;
 
+import java.awt.Component;
+import java.awt.event.KeyEvent;
 import java.util.Iterator;
 import java.util.Map;
+import javax.swing.AbstractCellEditor;
+import javax.swing.DefaultCellEditor;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.JComboBox;
+import javax.swing.JTextField;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableCellEditor;
 
 /**
  *
  * @author nico
  */
-public class HotKeyFrame extends javax.swing.JFrame {
+public final class HotKeyFrame extends javax.swing.JFrame {
    ShortCutTableModel sctModel_ = new ShortCutTableModel();
+   JComboBox combo_ = new JComboBox();
  
    private class ShortCutTableModel extends AbstractTableModel {
 
@@ -24,7 +34,7 @@ public class HotKeyFrame extends javax.swing.JFrame {
 
       public int getRowCount() {
          if (HotKeys.keys_ != null)
-            return HotKeys.keys_.size();
+            return HotKeys.keys_.size() + 1;
          return 0;
       }
 
@@ -48,22 +58,109 @@ public class HotKeyFrame extends javax.swing.JFrame {
          int i = 0;
          while (it.hasNext()) {
             Map.Entry pairs = (Map.Entry)it.next();
-            if (i == row)
-               if (column == 0)
-                  return pairs.getValue();
-               else if (column == 1)
-                  return pairs.getKey();
+            if (i == row) {
+               if (column == 0) {
+                  HotKeyAction ha = (HotKeyAction) pairs.getValue();
+                  if (ha != null) {
+                     if (ha.type_ == HotKeyAction.GUICOMMAND) {
+                        return HotKeyAction.guiItems_[ha.guiCommand_];
+                     } else
+                        return ha.beanShellScript_.getAbsoluteFile();
+                  }
+               }  else if (column == 1)
+                  return KeyEvent.getKeyText((Integer)pairs.getKey());
+            }
             i++;
          }
          return null;
       }
+
+      @Override
+      public boolean isCellEditable(int row, int col) {
+         if (col == 1)
+            return true;
+         return false;
+      }
+
+
+      @Override
+      public void setValueAt(Object value, int row, int col) {
+         if (col == 0) {
+            int keyCode = (Integer) getValueAt(row, 1);
+            //if (keyCode != null)
+            //   HotKeys.keys_[keyCode] =
+         }
+         if (col == 1) {
+
+         }
+
+
+         fireTableCellUpdated(row, col);
+
+        }
+
    }
 
 
     /** Creates new form HotKeys */
     public  HotKeyFrame() {
         initComponents();
+        
+        HotKeys.keys_.put((Integer)KeyEvent.VK_S, new HotKeyAction(0));
+        HotKeys.keys_.put((Integer)KeyEvent.VK_L, new HotKeyAction(1));
+        HotKeys.keys_.put((Integer)KeyEvent.VK_SPACE, new HotKeyAction(2));
+        HotKeys.keys_.put((Integer)KeyEvent.VK_A, new HotKeyAction(3));
+
+        updateComboBox();
+        HotKeyTableCellEditor myCellEditor = new HotKeyTableCellEditor();
+        hotKeyTable.setCellEditor(myCellEditor);
+        //hotKeyTable.setDefaultEditor(null, myCellEditor);
+        //hotKeyTable.getColumnModel().getColumn(0).setCellEditor(new DefaultCellEditor(combo_));
+        hotKeyTable.getColumnModel().getColumn(1).setCellRenderer(new HotKeyColumn2Renderer());
+        setVisible(true);
+        //hotKeyTable.setCellEditor(TableCellEditor tce = );
     }
+
+    public void updateComboBox() {
+       Object[] items = new Object[HotKeyAction.NRGUICOMMANDS];
+       System.arraycopy(HotKeyAction.guiItems_, 0, items, 0, HotKeyAction.guiItems_.length);
+       //TODO: Add Beanshell scripts
+       DefaultComboBoxModel model = new DefaultComboBoxModel(items);
+       combo_.setModel(model);
+    }
+
+    public class HotKeyColumn2Renderer extends DefaultTableCellRenderer {
+       public void SetValue(Object value) {
+          setText(KeyEvent.getKeyText((Integer) value));
+       }
+    }
+    public class HotKeyTableCellEditor extends AbstractCellEditor implements TableCellEditor {
+       // We'll need a component that listens for key stroks here:
+       JTextField text_ = new JTextField();
+
+       // This method is called when a cell value is edited by the user.
+       public Component getTableCellEditorComponent(javax.swing.JTable table, Object value,
+               boolean isSelected, int rowIndex, int vColIndex) {
+           // 'value' is value contained in the cell located at (rowIndex, vColIndex)
+
+           if (isSelected) {
+               // cell (and perhaps other cells) are selected
+           }
+           if (vColIndex == 0)
+              return combo_;
+
+           // Todo: map correct HotKey
+           text_.setText("a");
+           return text_;
+
+       }
+
+       // This method is called when editing is completed.
+       // It must return the new value to be stored in the cell.
+       public Object getCellEditorValue() {
+           return combo_.getSelectedItem();
+       }
+   }
 
    
     /** This method is called from within the constructor to
