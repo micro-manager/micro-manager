@@ -41,21 +41,15 @@ public class MMKeyDispatcher implements KeyEventDispatcher{
     * be processed, add those here
     */
    private boolean checkSource(KeyEvent ke) {
-      String t = ke.getSource().getClass().toString();
-      if (t.equals("class bsh.util.JConsole$1"))
-         return false;
-      if (t.equals("class org.jeditsyntax.JEditTextArea"))
-         return false;
-      if (t.equals("class java.awt.TextArea"))
-         return false;
-      if (t.equals("class java.awt.TextField"))
-         return false;
-      if (t.equals("class ij.text.TextCanvas"))
-         return false;
-      if (t.equals("class javax.swing.JTextField"))
-         return false;
-      if (t.equals("class javax.swing.JFormattedTextField"))
-         return false;
+      Class [] forbiddenClasses = {
+         java.awt.TextComponent.class,
+         javax.swing.text.JTextComponent.class
+      };
+      Object source = ke.getSource();
+      for (Class clazz:forbiddenClasses) {
+         if (clazz.isInstance(source))
+            return false;
+      }
       return true;
    }
 
