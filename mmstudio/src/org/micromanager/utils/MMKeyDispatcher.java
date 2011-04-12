@@ -34,6 +34,7 @@ public class MMKeyDispatcher implements KeyEventDispatcher{
 
    public MMKeyDispatcher(MMStudioMainFrame gui) {
       gui_ = gui;
+      // Get textCanvasClass this way because it's package private:
       try {
          textCanvasClass = ClassLoader.getSystemClassLoader().loadClass("ij.text.TextCanvas");
       } catch (ClassNotFoundException ex) {
