@@ -7,6 +7,8 @@
 
 package org.micromanager.utils;
 
+import java.util.Iterator;
+import java.util.Map;
 import javax.swing.table.AbstractTableModel;
 
 /**
@@ -21,7 +23,9 @@ public class HotKeyFrame extends javax.swing.JFrame {
       private static final int columnCount_ = 2;
 
       public int getRowCount() {
-         throw new UnsupportedOperationException("Not supported yet.");
+         if (HotKeys.keys_ != null)
+            return HotKeys.keys_.size();
+         return 0;
       }
 
       public int getColumnCount() {
@@ -35,14 +39,29 @@ public class HotKeyFrame extends javax.swing.JFrame {
          return "HotKey";
       }
 
-      public Object getValueAt(int i, int i1) {
-         throw new UnsupportedOperationException("Not supported yet.");
+      public Object getValueAt(int row, int column) {
+         if (HotKeys.keys_ == null)
+            return null;
+         if (row > HotKeys.keys_.size())
+            return null;
+         Iterator it = HotKeys.keys_.entrySet().iterator();
+         int i = 0;
+         while (it.hasNext()) {
+            Map.Entry pairs = (Map.Entry)it.next();
+            if (i == row)
+               if (column == 0)
+                  return pairs.getValue();
+               else if (column == 1)
+                  return pairs.getKey();
+            i++;
+         }
+         return null;
       }
-    }
+   }
 
 
     /** Creates new form HotKeys */
-    public HotKeyFrame() {
+    public  HotKeyFrame() {
         initComponents();
     }
 
@@ -64,7 +83,6 @@ public class HotKeyFrame extends javax.swing.JFrame {
       saveButton_ = new javax.swing.JButton();
 
       setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-      setPreferredSize(new java.awt.Dimension(366, 372));
 
       jScrollPane1_.setMinimumSize(new java.awt.Dimension(23, 15));
 
@@ -72,7 +90,7 @@ public class HotKeyFrame extends javax.swing.JFrame {
       hotKeyTable.setModel(sctModel_);
       jScrollPane1_.setViewportView(hotKeyTable);
 
-      addButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+      addButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       addButton_.setText("Add");
       addButton_.setMinimumSize(new java.awt.Dimension(75, 20));
       addButton_.setPreferredSize(new java.awt.Dimension(75, 20));
@@ -82,7 +100,7 @@ public class HotKeyFrame extends javax.swing.JFrame {
          }
       });
 
-      removeButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+      removeButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       removeButton_.setText("Remove");
       removeButton_.setMinimumSize(new java.awt.Dimension(75, 20));
       removeButton_.setPreferredSize(new java.awt.Dimension(75, 20));
@@ -92,7 +110,7 @@ public class HotKeyFrame extends javax.swing.JFrame {
          }
       });
 
-      loadButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+      loadButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       loadButton_.setText("Load");
       loadButton_.setMinimumSize(new java.awt.Dimension(75, 20));
       loadButton_.setPreferredSize(new java.awt.Dimension(75, 20));
@@ -102,7 +120,7 @@ public class HotKeyFrame extends javax.swing.JFrame {
          }
       });
 
-      saveButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+      saveButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       saveButton_.setText("Save");
       saveButton_.setMinimumSize(new java.awt.Dimension(75, 20));
       saveButton_.setPreferredSize(new java.awt.Dimension(75, 20));
