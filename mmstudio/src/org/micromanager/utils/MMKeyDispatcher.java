@@ -29,10 +29,26 @@ import org.micromanager.MMStudioMainFrame;
  */
 public class MMKeyDispatcher implements KeyEventDispatcher{
    private MMStudioMainFrame gui_;
+      Class textCanvasClass = null;
+      final Class [] forbiddenClasses_;
 
    public MMKeyDispatcher(MMStudioMainFrame gui) {
       gui_ = gui;
-	}
+      try {
+         textCanvasClass = ClassLoader.getSystemClassLoader().loadClass("ij.text.TextCanvas");
+      } catch (ClassNotFoundException ex) {
+         textCanvasClass = null;
+         ReportingUtils.logError(ex);
+      }
+
+      Class [] forbiddenClasses = {
+         java.awt.TextComponent.class,
+         javax.swing.text.JTextComponent.class,
+         org.jeditsyntax.JEditTextArea.class,
+         textCanvasClass
+      };
+      forbiddenClasses_ = forbiddenClasses;
+   }
 
    /*
     * Exclude key events coming from specific sources (like text components)
@@ -41,14 +57,9 @@ public class MMKeyDispatcher implements KeyEventDispatcher{
     * be processed, add those here
     */
    private boolean checkSource(KeyEvent ke) {
-      Class [] forbiddenClasses = {
-         java.awt.TextComponent.class,
-         javax.swing.text.JTextComponent.class,
-         org.jeditsyntax.JEditTextArea.class
-      };
       Object source = ke.getSource();
-      for (Class clazz:forbiddenClasses) {
-         if (clazz.isInstance(source))
+      for (Class clazz:forbiddenClasses_) {
+         if (clazz != null && clazz.isInstance(source))
             return false;
       }
       return true;
