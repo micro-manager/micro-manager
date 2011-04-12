@@ -43,9 +43,11 @@ public class MMKeyDispatcher implements KeyEventDispatcher{
    private boolean checkSource(KeyEvent ke) {
       Class [] forbiddenClasses = {
          java.awt.TextComponent.class,
-         javax.swing.text.JTextComponent.class
+         javax.swing.text.JTextComponent.class,
+         org.jeditsyntax.JEditTextArea.class
       };
       Object source = ke.getSource();
+      System.out.println(source.toString());
       for (Class clazz:forbiddenClasses) {
          if (clazz.isInstance(source))
             return false;
