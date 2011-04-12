@@ -49,6 +49,7 @@ void AddAvailableDeviceName(const char* name, const char* descr)
          return; // already there
 
    // add to the list
+   SetDeviceIsDiscoverable(name, false);
    g_availableDevices.push_back(std::make_pair(name, descr));   
 }
 

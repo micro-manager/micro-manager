@@ -26,6 +26,7 @@ package org.micromanager.conf;
 
 import java.util.ArrayList;
 import java.util.Hashtable;
+import mmcorej.BooleanVector;
 
 import mmcorej.CMMCore;
 import mmcorej.DeviceType;
@@ -50,7 +51,22 @@ import org.micromanager.utils.PropertyItem;
    private double delayMs_;
    private boolean usesDelay_;
    private int numPos_ = 0;
+   private boolean discoverable_;
    
+   public Device(String name, String lib, String adapterName, String descr, boolean discoverable) {
+      name_ = name;
+      library_ = lib;
+      adapterName_ = adapterName;
+      description_ = descr;
+      type_ = DeviceType.AnyType;
+      setupLabels_ = new Hashtable<Integer, Label>();
+      properties_ = new PropertyItem[0];
+      setupProperties_ = new ArrayList<PropertyItem>();
+      usesDelay_ = false;
+      delayMs_ = 0.0;
+      discoverable_ = discoverable;
+   }
+
    public Device(String name, String lib, String adapterName, String descr) {
       name_ = name;
       library_ = lib;
@@ -62,6 +78,7 @@ import org.micromanager.utils.PropertyItem;
       setupProperties_ = new ArrayList<PropertyItem>();
       usesDelay_ = false;
       delayMs_ = 0.0;
+      discoverable_ = false;
    }
    public Device(String name, String lib, String adapterName) {
       this(name, lib, adapterName, "");
@@ -115,10 +132,16 @@ import org.micromanager.utils.PropertyItem;
       StrVector adapterNames = core.getAvailableDevices(libName);
       StrVector devDescrs = core.getAvailableDeviceDescriptions(libName);
       LongVector devTypes = core.getAvailableDeviceTypes(libName);
+      BooleanVector disco = core.getDeviceDiscoverability(libName);
       
       Device[] devList = new Device[(int)adapterNames.size()];
       for (int i=0; i<adapterNames.size(); i++) {
-         devList[i] = new Device("Undefined", libName, adapterNames.get(i), devDescrs.get(i));
+
+         // not all adapters fill this yet
+         boolean isDiscoverable = false;
+         if( i < disco.size())
+            isDiscoverable = disco.get(i);
+         devList[i] = new Device("Undefined", libName, adapterNames.get(i), devDescrs.get(i),isDiscoverable);
          devList[i].setTypeByInt(devTypes.get(i));
       }
       
