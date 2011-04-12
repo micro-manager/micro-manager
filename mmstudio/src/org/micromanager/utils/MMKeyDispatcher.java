@@ -47,7 +47,6 @@ public class MMKeyDispatcher implements KeyEventDispatcher{
          org.jeditsyntax.JEditTextArea.class
       };
       Object source = ke.getSource();
-      System.out.println(source.toString());
       for (Class clazz:forbiddenClasses) {
          if (clazz.isInstance(source))
             return false;
@@ -65,7 +64,7 @@ public class MMKeyDispatcher implements KeyEventDispatcher{
       // Since all key events in the application go through here
       // we need to efficiently determinne whether or not to deal with this
       // key event will be dealt with.  CheckSource seems relatively expensive
-      // so only call this whne the key matches
+      // so only call this when the key matches
       char key = ke.getKeyChar();
       // snap
       if (key == 's' && ke.getModifiers() == 0) {
