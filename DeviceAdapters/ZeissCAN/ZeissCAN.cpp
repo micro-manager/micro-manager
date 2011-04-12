@@ -443,7 +443,8 @@ int ZeissTurret::GetPresence(MM::Device& device, MM::Core& core,  int turretNr, 
 //
 ZeissScope::ZeissScope() :
    initialized_(false),                                                     
-   answerTimeoutMs_(1000)
+   answerTimeoutMs_(1000),
+   pTurretIDMap_(NULL)
 {
    InitializeDefaultErrorMessages();
 
