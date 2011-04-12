@@ -116,8 +116,14 @@ class ZeissScope : public CGenericBase<ZeissScope>
       // device detection
       MM::DeviceDetectionStatus DetectDevice(void);
 
+      int GetNumberOfDiscoverableDevices();
+      void GetDiscoverableDevice(int peripheralNum, char* peripheralName, unsigned int maxNameLen);
 
    private:
+      std::vector<std::string> peripherals_;
+      std::map<int,std::string>* pTurretIDMap_;
+      std::map<int,std::string>& turretIDMap();
+      void GetPeripheralInventory();
       bool initialized_;
       //std::string port_;
       double answerTimeoutMs_;

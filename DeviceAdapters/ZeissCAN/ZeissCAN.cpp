@@ -463,6 +463,7 @@ ZeissScope::ZeissScope() :
 
 ZeissScope::~ZeissScope() 
 {
+   delete pTurretIDMap_;
    Shutdown();
 }
 
@@ -493,24 +494,27 @@ int ZeissScope::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int ZeissScope::Initialize() 
 {
-   // Version
-   string version;
-   int ret = g_hub.GetVersion(*this, *GetCoreCallback(), version);
-   // if this fails, try one more time
-   // The device detection code may have left crud in the device
-   if (ret != DEVICE_OK)
-      ret = g_hub.GetVersion(*this, *GetCoreCallback(), version);
-   if (DEVICE_OK != ret)
-      return ret;
-   ret = CreateProperty("Microscope Version", version.c_str(), MM::String, true);
-   if (DEVICE_OK != ret)
-      return ret;
-    
-   ret = UpdateStatus();
-   if (DEVICE_OK != ret)
-      return ret;
+   if(!initialized_)
+   {
+      // Version
+      string version;
+      int ret = g_hub.GetVersion(*this, *GetCoreCallback(), version);
+      // if this fails, try one more time
+      // The device detection code may have left crud in the device
+      if (ret != DEVICE_OK)
+         ret = g_hub.GetVersion(*this, *GetCoreCallback(), version);
+      if (DEVICE_OK != ret)
+         return ret;
+      ret = CreateProperty("Microscope Version", version.c_str(), MM::String, true);
+      if (DEVICE_OK != ret)
+         return ret;
+       
+      ret = UpdateStatus();
+      if (DEVICE_OK != ret)
+         return ret;
 
-   initialized_ = true;
+      initialized_ = true;
+   }
    return 0;
 }
 
@@ -597,6 +601,109 @@ MM::DeviceDetectionStatus ZeissScope::DetectDevice(void)
    }
    return result;
 }
+
+
+std::map<int,std::string>& ZeissScope::turretIDMap()
+{
+
+   if( NULL == pTurretIDMap_)
+   {
+      pTurretIDMap_ =  new std::map<int, std::string>();
+      (*pTurretIDMap_)[g_ReflectorTurret] = g_ZeissReflector;
+      (*pTurretIDMap_)[g_ObjectiveTurret] = g_ZeissObjectives;
+      (*pTurretIDMap_)[g_ExtFilterWheel] = g_ZeissExtFilterWheel;
+      (*pTurretIDMap_)[g_OptovarTurret] = g_ZeissObjectives;
+      (*pTurretIDMap_)[g_FilterWheel1] = g_ZeissFilterWheel1;
+      (*pTurretIDMap_)[g_FilterWheel2] = g_ZeissFilterWheel2;
+      (*pTurretIDMap_)[g_CondenserTurret] = g_ZeissCondenser;
+      //(*pTurretIDMap_)[g_CondenserFrontlens] = g_ZeissObjectives;
+      (*pTurretIDMap_)[g_TubelensTurret] = g_ZeissTubelens;
+      (*pTurretIDMap_)[g_BasePortSlider] = g_ZeissBasePort;
+      (*pTurretIDMap_)[g_SidePortTurret] = g_ZeissSidePort;
+      (*pTurretIDMap_)[g_LampMirror] = g_ZeissLampMirror;
+      (*pTurretIDMap_)[g_ObjectiveTurret] = g_ZeissObjectives;
+
+/*
+
+const char* g_ZeissDeviceName = "ZeissScope";
+const char* g_ZeissShutter = "ZeissShutter";
+const char* g_ZeissShutterMF = "ZeissShutterMFFirmware";
+const char* g_ZeissShutterNr = "ZeissShutterNr";
+const char* g_ZeissReflector = "ZeissReflectorTurret";
+const char* g_ZeissSidePort = "ZeissSidePortTurret";
+const char* g_ZeissBasePort = "ZeissBasePortSlider";
+const char* g_ZeissObjectives = "ZeissObjectives";
+const char* g_ZeissOptovar = "ZeissOptovar";
+const char* g_ZeissTubelens = "ZeissTubelens";
+const char* g_ZeissCondenser = "ZeissCondenser";
+const char* g_ZeissLampMirror = "ZeissExcitationLampSwitcher";
+const char* g_ZeissHalogenLamp = "ZeissHalogenLamp";
+const char* g_ZeissFocusName = "Focus";
+const char* g_ZeissExternal = "External-Internal Shutter";
+const char* g_ZeissExtFilterWheel = "ZeissExternalFilterWheel";
+const char* g_ZeissFilterWheel1 = "ZeissFilterWheel1";
+const char* g_ZeissFilterWheel2 = "ZeissFilterWheel2";
+
+*/
+
+   }
+   return *pTurretIDMap_;
+
+}
+
+
+
+void ZeissScope::GetPeripheralInventory()
+{
+   if(!initialized_)
+      Initialize();
+
+   peripherals_.clear();
+
+   int ret;
+   bool exists;
+
+   std::map<int,std::string>& turrr = turretIDMap();
+   std::map<int, std::string>::iterator iii;
+
+
+   for( iii = turrr.begin(); turrr.end() != iii; ++iii)
+   {
+   
+      ret = g_turret.GetPresence(*this, *GetCoreCallback(), iii->first, exists);
+      if (DEVICE_OK == ret)
+      {
+         if(exists)
+            peripherals_.push_back(iii->second);
+      }
+   }
+
+}
+
+
+
+int ZeissScope::GetNumberOfDiscoverableDevices()
+{
+   GetPeripheralInventory();
+   return peripherals_.size();
+
+}
+
+void ZeissScope::GetDiscoverableDevice(int peripheralNum, char* peripheralName, unsigned int maxNameLen)
+{ 
+   if( -1 < peripheralNum)
+   {
+      if( peripheralNum < int(peripherals_.size()))
+      {
+            strncpy(peripheralName, peripherals_[peripheralNum].c_str(), maxNameLen - 1);
+            peripheralName[maxNameLen - 1] = 0;
+      }
+   
+   }
+   return;
+} 
+
+
 
 
 ///////////////////////////////////////////////////////////////////////////////
