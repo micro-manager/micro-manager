@@ -264,6 +264,35 @@ int CCameraFrontend::Initialize()
    if (initialized_)
       return DEVICE_OK;
 
+   /* Log debug info */
+   ostringstream msg;
+   msg.str("");
+   msg << "Using FreeImage " << FreeImage_GetVersion();
+   LogMessage(msg.str(), false);
+
+#ifdef _SIMPLECAM_GPHOTO_
+   /* Log gphoto2 version info */
+   msg.str("");
+   msg << "Using gphoto2";
+
+   const char **libgphoto2_version = gp_library_version(GP_VERSION_VERBOSE);
+   if (libgphoto2_version && *libgphoto2_version)
+   {
+      msg << ", libgphoto2 " << *libgphoto2_version;
+   }
+   
+   const char **libgphoto2_port_version = gp_port_library_version(GP_VERSION_VERBOSE);
+   if (libgphoto2_port_version && *libgphoto2_port_version)
+   {
+      msg << ", libgphoto2_port " << *libgphoto2_port_version;
+   }
+   LogMessage(msg.str(), false);
+
+   /* Switch on gphoto2 logging */
+   gphoto2_log_id = gp_log_add_func(GP_LOG_DEBUG, gphoto2_logger, this);
+
+#endif
+
    // set property list
    // -----------------
 
@@ -356,35 +385,6 @@ int CCameraFrontend::Initialize()
 
    // initialize image buffer
    img_.Resize(640, 480, 4); // imgGrayScale_(false), imgBitDepth_(8) implies 8bit rgb, 4 bytes per pixel.
-
-   /* Log debug info */
-   ostringstream msg;
-   msg.str("");
-   msg << "Using FreeImage " << FreeImage_GetVersion();
-   LogMessage(msg.str(), false);
-
-#ifdef _SIMPLECAM_GPHOTO_
-   /* Log gphoto2 version info */
-   msg.str("");
-   msg << "Using gphoto2";
-
-   const char **libgphoto2_version = gp_library_version(GP_VERSION_VERBOSE);
-   if (libgphoto2_version && *libgphoto2_version)
-   {
-      msg << ", libgphoto2 " << *libgphoto2_version;
-   }
-   
-   const char **libgphoto2_port_version = gp_port_library_version(GP_VERSION_VERBOSE);
-   if (libgphoto2_port_version && *libgphoto2_port_version)
-   {
-      msg << ", libgphoto2_port " << *libgphoto2_port_version;
-   }
-   LogMessage(msg.str(), false);
-
-   /* Switch on gphoto2 logging */
-   gphoto2_log_id = gp_log_add_func(GP_LOG_DEBUG, gphoto2_logger, this);
-
-#endif
 
    /* Finally, connect to default camera */
    SetProperty(MM::g_Keyword_CameraName, defaultCameraName.c_str());
@@ -1167,7 +1167,7 @@ bool CCameraFrontend::UseCameraLiveView()
 {
    /* Use live view if the camera supports live view and micro-manager is in "Live View" mode. */
    bool useCameraLiveView =  cameraSupportsLiveView_ && InLiveMode();
-   useCameraLiveView = true;
+//   useCameraLiveView = true;
    return useCameraLiveView;
 }
 

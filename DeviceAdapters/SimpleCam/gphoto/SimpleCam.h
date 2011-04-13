@@ -59,6 +59,7 @@ private:
    Camera   *camera_;
    int getShutterSpeedWidget(CameraWidget* &rootConfig, CameraWidget* &shutterSpeedWidget);
    int getWidget(CameraWidget* &rootConfig, CameraWidget* &configWidget, const char* configName);
+   int setLibPaths();   /* Mac OS X: load gphoto2 camera drivers from ./libgphoto2, and i/o drivers from ./libgphoto2_port, if these directories exist. */
 };
 
 #endif //_SIMPLECAM_H_
