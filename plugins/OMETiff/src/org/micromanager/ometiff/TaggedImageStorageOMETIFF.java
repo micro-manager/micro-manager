@@ -144,6 +144,7 @@ public class TaggedImageStorageOMETIFF implements TaggedImageStorage {
       int nSlices = Math.max(1, summaryMetadata.getInt("Slices"));
       OMEXMLMetadata metadata = new ServiceFactory().getInstance(OMEXMLService.class).createOMEXMLMetadata();
       ImageWriter writer = new ImageWriter();
+      
       for (int position = 0; position < nPositions; ++position) {
          String positionName = MDUtils.getPositionName(firstImage.tags);
          if (positionName == null) {
