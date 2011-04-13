@@ -293,7 +293,9 @@ void CPluginManager::UnloadDevice(MM::Device* pDevice)
 
    // invalidate the entry in the label-device map
    string label = GetDeviceLabel(*pDevice);
-   devices_[label] = 0;
+
+   std::map<std::string, MM::Device*>::iterator dd =  devices_.find(label);
+   dd->second = NULL;
 
    // remove the entry from the device array
    DeviceArray::iterator it;
@@ -341,7 +343,11 @@ MM::Device* CPluginManager::LoadDevice(const char* label, const char* moduleName
    CDeviceMap::const_iterator it;
    it = devices_.find(label);
    if (it != devices_.end())
-      throw CMMError(label, MMERR_DuplicateLabel);
+   {
+      if( NULL != it->second)
+         throw CMMError(label, MMERR_DuplicateLabel);
+
+   }
 
    if (strlen(label) == 0)
       throw CMMError(label, MMERR_InvalidLabel);
