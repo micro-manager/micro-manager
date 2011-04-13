@@ -109,7 +109,7 @@ public class ConfiguratorDlg extends JDialog {
      */
     private void initialize() {
         prefs_ = Preferences.userNodeForPackage(this.getClass());
-
+        org.micromanager.utils.HotKeys.active_ = false;
 
         addWindowListener(new WindowAdapter() {
 
@@ -447,6 +447,8 @@ public class ConfiguratorDlg extends JDialog {
         }
 
         prefs_.putBoolean(CFG_OKAY_TO_SEND, microModel_.getSendConfiguration());
+        
+        org.micromanager.utils.HotKeys.active_ = true;
         dispose();
     }
 

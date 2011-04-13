@@ -68,6 +68,8 @@ public class MMKeyDispatcher implements KeyEventDispatcher{
     * 
     */
    public boolean dispatchKeyEvent(KeyEvent ke) {
+      if (!HotKeys.active_)
+         return false;
       if (ke.getID() != KeyEvent.KEY_PRESSED)
          return false;
 

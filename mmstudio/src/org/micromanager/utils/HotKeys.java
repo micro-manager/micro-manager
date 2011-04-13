@@ -9,6 +9,5 @@ import java.util.LinkedHashMap;
 public class HotKeys {
    public static final LinkedHashMap<Integer, HotKeyAction> keys_ =
            new LinkedHashMap<Integer, HotKeyAction>();
-   
-   
+   public  static boolean active_ = true;
 }
