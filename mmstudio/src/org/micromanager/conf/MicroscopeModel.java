@@ -1236,4 +1236,45 @@ public class MicroscopeModel {
       sendConfiguration_ = value;
    }
 
+   public void ConfigureDiscoveredDevices(CMMCore c) {
+      Device allDevs_[] = getAvailableDeviceList();
+      for (Device d : getDevices()) {
+         if (!d.getName().equals("Core")) {
+            StrVector disco = c.getDiscoverableDevices(d.getName());
+            if (0 < disco.size()) {
+               String message = " attached to " + d.getName() + " found following peripherals ";
+               for (String devvs : disco) {
+                  message += devvs;
+                  // find the device description
+                  String descr = "";
+                  String defaultName = "";
+                  for (int idd = 0; idd < allDevs_.length; ++idd) {
+
+                     if (allDevs_[idd].getAdapterName().equalsIgnoreCase(devvs)) {
+                        descr = allDevs_[idd].getDescription();
+                        defaultName = allDevs_[idd].getAdapterName();
+                     }
+                  }
+                  if (0 < defaultName.length()) {
+
+                     Device newDev = new Device(defaultName, d.getLibrary(), defaultName, descr);
+                     try {
+                             int x = 1;  /*   this is working fine, but needs GUI
+                     addDevice(newDev);
+                     c.loadDevice(newDev.getName(), newDev.getLibrary(), newDev.getAdapterName());
+                     for (int i = 0; i < newDev.getNumberOfSetupProperties(); i++) {
+                        PropertyItem p = newDev.getSetupProperty(i);
+                        c.setProperty(newDev.getName(), p.name, p.value);
+                     }
+
+                */
+                     } catch (Exception e) {
+                     }
+                  }
+                  // // ReportingUtils.displayNonBlockingMessage(message);
+               }
+            }
+         }
+      }
+   }
 }

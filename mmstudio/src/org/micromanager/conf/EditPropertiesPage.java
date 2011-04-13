@@ -41,6 +41,7 @@ import javax.swing.table.TableColumn;
 import org.micromanager.utils.GUIUtils;
 import mmcorej.MMCoreJ;
 import mmcorej.DeviceDetectionStatus;
+import mmcorej.StrVector;
 import org.micromanager.utils.PropertyItem;
 import org.micromanager.utils.PropertyNameCellRenderer;
 import org.micromanager.utils.PropertyValueCellEditor;
@@ -464,6 +465,7 @@ public class EditPropertiesPage extends PagePanel {
                         model_.addSetupProperty(s.deviceName_, new PropertyItem(s.propertyName_, s.propertyValue_, true));
                     }
                     model_.setDeviceSetupProperty(s.deviceName_, s.propertyName_, s.propertyValue_);
+
                 }
             } else {
                 GUIUtils.preventDisplayAdapterChangeExceptions();
