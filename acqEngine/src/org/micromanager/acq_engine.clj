@@ -74,7 +74,7 @@
 
 ;; mm utils
 
-(def iso8601modified (SimpleDateFormat. "yyyy-MM-dd E HH:mm:ss Z"))
+(def iso8601modified (SimpleDateFormat. "yyyy-MM-dd HH:mm:ss Z"))
 
 (defn get-current-time-str []
   (. iso8601modified format (Date.)))
