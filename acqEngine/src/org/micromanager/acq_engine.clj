@@ -395,7 +395,7 @@
       :running true
       :finished false
       :last-wake-time (clock-ms)
-      :last-z-position nil
+      :last-z-position z
       :last-xy-position nil
       :reference-z-position z
       :start-time (clock-ms)
