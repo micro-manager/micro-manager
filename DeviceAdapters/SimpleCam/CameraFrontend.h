@@ -113,9 +113,10 @@ private:
    void EscapeValues(std::vector<std::string>& valueList);
    void UnEscapeValue(std::string& value);
    
-   int DetectLiveView();      /* check whether the camera supports live view */
-   bool UseLiveView();        /* if true, use live viewfinder image */
-   bool supportsLiveView_;    /* if true, camera supports capturing live viewfinder image */
+   int DetectCameraLiveView();      /* check whether the camera supports live view */
+   bool UseCameraLiveView();        /* if true, use camera live viewfinder image */
+   bool cameraSupportsLiveView_;    /* if true, camera supports capturing live viewfinder image */
+   bool InLiveMode();               /* true if micro-manager is in Live mode  */
 
    ImgBuffer img_;
    CSimpleCam cam_;

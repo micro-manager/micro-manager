@@ -195,7 +195,7 @@ CCameraFrontend::CCameraFrontend() :
    grayScale_(false),
    bitDepth_(8),
    keepOriginals_(false),
-   supportsLiveView_(false),
+   cameraSupportsLiveView_(false),
    imgBinning_(1),
    imgGrayScale_(false),
    imgBitDepth_(8),
@@ -429,7 +429,7 @@ int CCameraFrontend::SnapImage()
    
    /* take a picture and load image into micro-manager buffer */
    int nRet;
-   if (UseLiveView())
+   if (UseCameraLiveView())
       nRet = LoadImage(cam_.capturePreview()); // live viewfinder image
    else
       nRet = LoadImage(cam_.captureImage()); // high-resolution picture
@@ -907,7 +907,7 @@ int CCameraFrontend::OnCameraName(MM::PropertyBase* pProp, MM::ActionType eAct)
                /* update shutter speeds */
                SetAllowedShutterSpeeds();
                /* check whether camera supports Live View */
-               DetectLiveView();
+               DetectCameraLiveView();
             }
             else
                ret = ERR_CAM_CONNECT_FAIL;
@@ -1125,35 +1125,50 @@ double CCameraFrontend::ShutterSpeedToMs(string shutterSpeed)
 }
 
 /*
- * DetectLiveView();
+ * DetectCameraLiveView();
  * Check whether the camera supports capturing the live viewfinder image.
- * set supportsLiveView_ variable.
+ * set cameraSupportsLiveView_ variable.
  */
 
-int CCameraFrontend::DetectLiveView()
+int CCameraFrontend::DetectCameraLiveView()
 {
    /* try to acquire a live viewfinder image */
-   supportsLiveView_ = cam_.capturePreview().isValid();
-   if (supportsLiveView_) 
-      LogMessage("Live viewfinder support detected", true);
+   cameraSupportsLiveView_ = cam_.capturePreview().isValid();
+   if (cameraSupportsLiveView_)
+      LogMessage("Camera with live viewfinder support detected", false);
    else
-      LogMessage("No live viewfinder support", true);
+      LogMessage("Camera without live viewfinder support", false);
    return DEVICE_OK;
 }
 
 /*
- * UseLiveView();
+ * InLiveMode():
+ * true if micro-manager is in "Live" mode.
+ */
+bool CCameraFrontend::InLiveMode()
+{
+   /* Live View is called as StartSequenceAcquisition(LONG_MAX, 0.0, false); 
+    * See whether we're in live view mode by checking acquisition is running (IsCapturing() == true) and 
+    * StartSequenceAcquisition parameters are numImages == LONG_MAX, interval_ms == 0.0, stopOnOverflow == false.
+    */
+   bool inLiveMode = IsCapturing() && (thd_->GetLength() == LONG_MAX) && (thd_->GetIntervalMs() == 0.0) && (stopOnOverflow_ == false);
+
+   return inLiveMode;
+}
+
+/*
+ * UseCameraLiveView();
  * Decide when to use live viewfinder image and when to use normal image.
  * true if we need to use the live viewfinder image;
  * false if we need to use the high-resolution image.
  */
 
-bool CCameraFrontend::UseLiveView()
+bool CCameraFrontend::UseCameraLiveView()
 {
-   /* Use live view if the camera supports live view (supportsLiveView_ is true) and micro-manager is in "Live View" mode. */
-   bool useLiveView =  supportsLiveView_ && IsCapturing();
-   useLiveView = false; // Set to false until we've found out a foolproof way to detect "Live View".
-   return useLiveView;
+   /* Use live view if the camera supports live view and micro-manager is in "Live View" mode. */
+   bool useCameraLiveView =  cameraSupportsLiveView_ && InLiveMode();
+   useCameraLiveView = true;
+   return useCameraLiveView;
 }
 
 /*
@@ -1290,9 +1305,12 @@ int CCameraFrontend::LoadImage(fipImage frameBitmap)
    bool rc = true;
    unsigned int binning = GetBinning();
 
-   /* the live viewfinder image is already quite small; no sense in making it smaller */
-   if (UseLiveView())
+   /* the live viewfinder image is already quite small; not much sense in making it even smaller */
+   if (UseCameraLiveView())
+   {
+      ClearROI();
       binning = 1;
+   }
 
    if (binning <= 0)
    {
