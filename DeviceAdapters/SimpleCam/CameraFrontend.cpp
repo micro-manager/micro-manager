@@ -192,7 +192,7 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 CCameraFrontend::CCameraFrontend() :
    CCameraBase<CCameraFrontend> (),
    initialized_(false),
-   grayScale_(false),
+   grayScale_(true),
    bitDepth_(8),
    keepOriginals_(false),
    cameraSupportsLiveView_(false),
