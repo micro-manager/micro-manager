@@ -15,7 +15,7 @@
 ;               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
 (ns org.micromanager.sequence-generator
-  (:use [org.micromanager.mm :only [get-default-devices select-values-match?]]))
+  (:use [org.micromanager.mm :only [select-values-match?]]))
 
 (defstruct channel :name :exposure :z-offset :use-z-stack :skip-frames)
 
@@ -59,7 +59,6 @@
 
 (defn build-event [settings event]
   (assoc event
-    :z-drive (:focus (get-default-devices))
     :exposure (if (:channel event)
                 (get-in event [:channel :exposure])
                 (:default-exposure settings))
@@ -158,16 +157,58 @@
   (let [{:keys [slices keep-shutter-open-channels keep-shutter-open-slices
                 use-autofocus autofocus-skip interval-ms relative-slices
                 runnable-list]} settings]
-    (-> (make-main-loops settings)
-      (#(map (partial build-event settings) %))
-      (process-skip-z-stack slices)
-      (manage-shutter keep-shutter-open-channels keep-shutter-open-slices)
-      (process-channel-skip-frames)
-      (process-use-autofocus use-autofocus autofocus-skip)
-      (process-wait-time interval-ms)
-      (attach-runnables runnables)
-      (make-bursts)
-      (add-next-task-tags))))
+   (-> (make-main-loops settings)
+     (#(map (partial build-event settings) %))
+       (process-skip-z-stack slices)
+       (manage-shutter keep-shutter-open-channels keep-shutter-open-slices)
+       (process-channel-skip-frames)
+       (process-use-autofocus use-autofocus autofocus-skip)
+       (process-wait-time interval-ms)
+       (attach-runnables runnables)
+       (make-bursts)
+       (add-next-task-tags)   
+    )))
+
+;; Alternative burst computation:
+
+(defn index [dim]
+  (if-not (empty? dim) (range (count dim)) '(0)))
+
+(defn generate-channels-and-slices [settings]
+  (let [{:keys [channels slices slices-first]} settings]
+    (if slices-first
+      (for [c (index channels)
+            s (index slices)]
+        {:channel (nth channels c nil)
+         :slice (nth slices s nil)
+         :channel-index c
+         :slice-index s})
+      (for [s (index slices)
+            c (index channels)]
+        {:channel (nth channels nil)
+         :slice (nth slices nil)
+         :channel-index c
+         :slice-index s}))))
+
+(defn generate-positions-and-frames [settings]
+  (let [{:keys [positions frames time-first]} settings]
+    (if time-first
+      (for [p (index positions)
+            f (index frames)]
+        {:position (nth positions p nil)
+         :frame (nth frames f nil)
+         :position-index p
+         :frame-index f})
+      (for [f (index frames)
+            p (index positions)]
+        {:position (nth positions p nil)
+         :frame (nth frames f nil)
+         :position-index p
+         :frame-index f}))))   
+
+(defn merge-layers [positions-and-frames channels-and-slices]
+  (for [pf positions-and-frames cs channels-and-slices]
+    (merge pf cs)))
 
 ; Testing:
 
