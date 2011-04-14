@@ -86,7 +86,7 @@ void ClearAllDeviceNames(void);
 // create an ABSCamera object
 ABSCamera* CreateABSDevice(const char* szDeviceName);
 
-
+static bool g_bInitializeModuleDataDone = false;
 // ------------------------------ DLL main --------------------------------------
 //
 // windows DLL entry code
@@ -120,6 +120,8 @@ MODULE_API void InitializeModuleData()
 	char* szCameraDescription;	// description of the camera			
 	char* szDeviveName;			// used devicename
 
+  g_bInitializeModuleDataDone = false;
+
 	// allocate strings
 	szDeviveName		= new char[MAX_PATH + 1];
 	szCameraDescription = new char[MAX_PATH + 1];
@@ -127,12 +129,13 @@ MODULE_API void InitializeModuleData()
 	ZeroMemory(szDeviveName,	 sizeof(char) * (MAX_PATH + 1));
 	ZeroMemory(szCameraDescription, sizeof(char) * (MAX_PATH + 1));
 
-	
+  /*
 	// fire the debugger directly or crash without one
 	__asm
 	{
       int 3;
 	 }
+   */
 
 	// remove all old device names
 	ClearAllDeviceNames();
@@ -169,6 +172,8 @@ MODULE_API void InitializeModuleData()
 
 			AddAvailableDeviceName( szDeviveName, szCameraDescription );
 		}
+
+    g_bInitializeModuleDataDone = true;
 	}
 	__except (DelayLoadDllExceptionFilter(GetExceptionInformation())) 
 	{
@@ -187,7 +192,7 @@ MODULE_API void InitializeModuleData()
 
 MODULE_API MM::Device* CreateDevice(const char* szDeviceName)
 {
-	// true if the camusb_api.dll wasn't found
+  // true if the camusb_api.dll wasn't found
 	bool bApiNotAvailable = FALSE;
 
 	// Wrap all calls to delay-load DLL functions inside an SEH
@@ -203,7 +208,7 @@ MODULE_API MM::Device* CreateDevice(const char* szDeviceName)
 		bApiNotAvailable = true;
 	}
 
-	// ABSCamera object will be created within CreateABSDevice to allow "structured exception handling"
+  // ABSCamera object will be created within CreateABSDevice to allow "structured exception handling"
 	// return camera object (if possible)
 	return (bApiNotAvailable) ? NULL : CreateABSDevice(szDeviceName);
 }
@@ -224,6 +229,9 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 
 ABSCamera* CreateABSDevice(const char* szDeviceName)
 {
+  
+  if (!g_bInitializeModuleDataDone) InitializeModuleData();
+
 	// init camera return object pointer as ...supplied name not recognized
 	ABSCamera* pABSCamera = NULL;
 
@@ -235,7 +243,7 @@ ABSCamera* CreateABSDevice(const char* szDeviceName)
 	  
 	  // should the first camera be used
 	  if ( (strncmp(g_CameraDeviceNameBase, szDeviceName, min( strlen(szDeviceName), iBaseNameLenght+2)) == 0) ||                    // first one
-		   (-1 != sscanf_s(szDeviceName + iBaseNameLenght, "%d", &iDeviceNumber)) ) // speciffic camera should be used
+		   (-1 != sscanf_s(szDeviceName + iBaseNameLenght, "%d", &iDeviceNumber)) ) // specific camera should be used
 	  {
 		// create camera with specific camera id
 		pABSCamera = (ABSCamera*) new ABSCamera(iDeviceNumber, szDeviceName);
@@ -315,6 +323,7 @@ ABSCamera::~ABSCamera()
  */
 void ABSCamera::GetName(char* name) const
 {
+   if (!g_bInitializeModuleDataDone) InitializeModuleData();
    // We just return the name we use for referring to this
    // device adapter. 
    CDeviceUtils::CopyLimitedString(name, (char*) m_szDeviceName.c_str());
@@ -341,34 +350,37 @@ bool ABSCamera::Busy()
 int ABSCamera::Initialize()
 {
   u32 dwRC;
+  
+  if (!g_bInitializeModuleDataDone) InitializeModuleData();
+
   if ( this->initialized ) return DEVICE_OK;
 
   this->busy_ = true;
-
-  /* 
+   
   // initialise camera
   // try to init camera without reboot (makes the init process a bit fast)
   dwRC = GET_RC(CamUSB_InitCamera( this->deviceNumber, NO_SERIAL_NUMBER, FALSE ), this->deviceNumber);
   
   // on error try to boot the camera
   if ( !IsNoError(dwRC) )
-  */
   {
       // init camera with reboot
       dwRC = GET_RC(CamUSB_InitCamera( this->deviceNumber ), this->deviceNumber);
 
       if ( !IsNoError(dwRC) )
       {
-        this->ShowError();
+        this->ShowError( dwRC );
         return DEVICE_LOCALLY_DEFINED_ERROR;
       }
   }
 
   // read camera information
   camVersion.dwStructSize = sizeof( S_CAMERA_VERSION );
-  if ( !CamUSB_GetCameraVersion( &camVersion, this->deviceNumber ) )
-  {
-    this->ShowError();
+  unsigned long iRC;
+  iRC = GET_RC( CamUSB_GetCameraVersion( &camVersion, this->deviceNumber ), this->deviceNumber );
+  if ( !IsNoError(iRC) )
+  {    
+    this->ShowError(iRC);
     return DEVICE_LOCALLY_DEFINED_ERROR;
   }
 
@@ -400,10 +412,11 @@ int ABSCamera::Initialize()
   // try to set the default resolution for this camera
   dwRC = GET_RC(CamUSB_SetStandardRes(STDRES_FULLSENSOR, this->deviceNumber), this->deviceNumber);
 
-  // read function mask of the camera
-  if ( !CamUSB_GetCameraFunctions( &this->cameraFunctionMask, this->deviceNumber ) )
-  {
-    this->ShowError();
+  // read function mask of the camera  
+  dwRC = GET_RC( CamUSB_GetCameraFunctions( &this->cameraFunctionMask, this->deviceNumber ), this->deviceNumber );
+  if ( !IsNoError(dwRC) )
+  {    
+    this->ShowError(dwRC); 
     return DEVICE_LOCALLY_DEFINED_ERROR;
   }
 
@@ -430,8 +443,8 @@ int ABSCamera::Initialize()
     this->framerateCap      = (S_FRAMERATE_CAPS*)   this->GetCameraCap( FUNC_FRAMERATE );
   }
   catch ( ... )
-  {
-    this->ShowError();
+  {    
+    this->ShowError( CamUSB_GetLastError(this->deviceNumber) );
     return DEVICE_LOCALLY_DEFINED_ERROR;
   }
 
@@ -457,7 +470,7 @@ int ABSCamera::Initialize()
   
   if ( !IsNoError(dwRC) )
   {
-    this->ShowError();
+    this->ShowError( dwRC );
     return DEVICE_LOCALLY_DEFINED_ERROR;
   }
 
@@ -563,7 +576,7 @@ int ABSCamera::createExposure()
   dwRC = GET_RC(CamUSB_SetExposureTime( &exposureValue, this->deviceNumber ), this->deviceNumber);
   if (!IsNoError(dwRC))
   {
-    this->ShowError();
+    this->ShowError(dwRC);
     return DEVICE_LOCALLY_DEFINED_ERROR;
   }
   
@@ -601,7 +614,7 @@ int ABSCamera::UpdateExposureLimits(void)
     dwRC = GET_RC(CamUSB_SetExposureTime( &dwExposure, this->deviceNumber ), this->deviceNumber);
     if (!IsNoError(dwRC))
     {
-      this->ShowError();
+      this->ShowError(dwRC);
       return DEVICE_LOCALLY_DEFINED_ERROR;
     }
     minExposureTime = static_cast<double>( dwExposure ) / 1000.0;
@@ -675,9 +688,11 @@ int ABSCamera::UpdatePixelTypes(void)
   if ( this->pixelTypeCap == NULL ) return DEVICE_ERR;
 
   // read current pixel type from hardware  
-  if ( !CamUSB_GetPixelType( &pixelType, this->deviceNumber ) )
-  {
-    this->ShowError();
+  unsigned long iRC;
+  iRC = GET_RC( CamUSB_GetPixelType( &pixelType, this->deviceNumber ), this->deviceNumber );
+  if ( !IsNoError(iRC) )
+  {    
+    this->ShowError(iRC); 
     return DEVICE_LOCALLY_DEFINED_ERROR;
   }
 
@@ -715,11 +730,13 @@ int ABSCamera::UpdatePixelTypes(void)
 
 // update the list of valid pixel types based on the ColorMode settings coded in bColor
 int ABSCamera::SetPixelType(unsigned long dwPixelType)
-{  
-  if ( !CamUSB_SetPixelType( dwPixelType, this->deviceNumber) )
-  {
-      this->ShowError();
-      return DEVICE_LOCALLY_DEFINED_ERROR;
+{
+  unsigned long iRC;
+  iRC = GET_RC( CamUSB_SetPixelType( dwPixelType, this->deviceNumber), this->deviceNumber );
+  if ( !IsNoError(iRC) )
+  {    
+    this->ShowError(iRC); 
+    return DEVICE_LOCALLY_DEFINED_ERROR;
   }
 
   // setup number of channels depending on current pixel type  
@@ -1063,15 +1080,15 @@ unsigned ABSCamera::GetBitDepth() const
   
   // read current pixel type from hardware
   unsigned long pixelType;
-  if ( CamUSB_GetPixelType( &pixelType, this->deviceNumber ) )
-  {
+  unsigned long iRC;
+  iRC = GET_RC( CamUSB_GetPixelType( &pixelType, this->deviceNumber ), this->deviceNumber );
+  if ( IsNoError(iRC) )
+  {    
       bitDepth = GetUsedBpp( pixelType );    
-
-      
   }
   else
   {
-    this->ShowError();
+    this->ShowError(iRC); 
   }
 
   if ( bitDepth == 8) bitDepth *= (GetImageBytesPerPixel() * GetNumberOfComponents()) ;
@@ -1115,9 +1132,10 @@ int ABSCamera::SetROI( unsigned x, unsigned y, unsigned xSize, unsigned ySize )
   unsigned long skip_HW, binning_HW; // hardware binning and skip
 
   // read hardware resolution values
-  if ( !CamUSB_GetCameraResolution( &x_HW, &y_HW, &xSize_HW, &ySize_HW, &skip_HW, &binning_HW, this->deviceNumber ) )
+  dwRC = GET_RC( CamUSB_GetCameraResolution( &x_HW, &y_HW, &xSize_HW, &ySize_HW, &skip_HW, &binning_HW, this->deviceNumber ), this->deviceNumber );
+  if ( !IsNoError( dwRC ) )
   {
-    this->ShowError();
+    this->ShowError(dwRC);
     return DEVICE_LOCALLY_DEFINED_ERROR;
   }
 
@@ -1139,13 +1157,13 @@ int ABSCamera::SetROI( unsigned x, unsigned y, unsigned xSize, unsigned ySize )
       }
       catch ( ... )
       {
-        this->ShowError();
+        this->ShowError( CamUSB_GetLastError(this->deviceNumber) );
         return DEVICE_LOCALLY_DEFINED_ERROR;
       }
   }
   else
   {
-      this->ShowError();
+      this->ShowError(dwRC);
       return DEVICE_LOCALLY_DEFINED_ERROR;
   }
 
@@ -1163,9 +1181,12 @@ int ABSCamera::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize
   // read current ROI from hardware
   S_RESOLUTION_RETVALS resolutionReturn;
   unsigned long size = sizeof(S_RESOLUTION_RETVALS);
-  if ( CamUSB_GetFunction( FUNC_RESOLUTION, &resolutionReturn, &size, NULL, 0, NULL, 0, this->deviceNumber ) == false )
-  {
-    this->ShowError();
+  
+  unsigned long iRC;
+  iRC = GET_RC( CamUSB_GetFunction( FUNC_RESOLUTION, &resolutionReturn, &size, NULL, 0, NULL, 0, this->deviceNumber ), this->deviceNumber );
+  if ( !IsNoError(iRC) )
+  {    
+    this->ShowError(iRC);
     return DEVICE_LOCALLY_DEFINED_ERROR;
   }
   
@@ -1201,9 +1222,11 @@ double ABSCamera::GetExposure() const
   //bSetGetExposureActive = true;
   
   // read exposure time from hardware
-  if (!CamUSB_GetExposureTime( &exposureValue, this->deviceNumber ) )
-  {
-    this->ShowError();    
+  unsigned long iRC;
+  iRC = GET_RC( CamUSB_GetExposureTime( &exposureValue, this->deviceNumber ), this->deviceNumber );
+  if ( !IsNoError(iRC) )
+  {    
+    this->ShowError(iRC);
   }
   else
   {
@@ -1229,9 +1252,11 @@ void ABSCamera::SetExposure(double exposure)
   unsigned long exposureValue = static_cast<unsigned long>(exposure) * 1000;
   
   // set exposure time 
-  if (!CamUSB_SetExposureTime( &exposureValue, this->deviceNumber ) )
-  {
-    this->ShowError();
+  unsigned long iRC;
+  iRC = GET_RC( CamUSB_SetExposureTime( &exposureValue, this->deviceNumber ), this->deviceNumber );
+  if ( !IsNoError(iRC) )
+  {    
+    this->ShowError(iRC);
   }
 
   exposure = static_cast<double>( exposureValue  / 1000.0);
@@ -1254,9 +1279,11 @@ int ABSCamera::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
 
     unsigned long exposureValue = static_cast<unsigned long>(exposure) * 1000l;
     // set exposure time 
-    if (!CamUSB_SetExposureTime( &exposureValue, this->deviceNumber ) )
-    {
-      this->ShowError();
+    unsigned long iRC;
+    iRC = GET_RC( CamUSB_SetExposureTime( &exposureValue, this->deviceNumber ), this->deviceNumber );
+    if ( !IsNoError(iRC) )
+    {    
+     this->ShowError(iRC);
     }
 
     exposure = static_cast<double>( exposureValue  / 1000.0);
@@ -1416,7 +1443,7 @@ int ABSCamera::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
     dwRC = GET_RC(CamUSB_SetGain( &dwGain, wGainChannel, this->deviceNumber), this->deviceNumber);
     if ( !IsNoError(dwRC) )
     {
-        this->ShowError();
+        this->ShowError(dwRC);
         return DEVICE_LOCALLY_DEFINED_ERROR;
     }
     else // gain value set
@@ -1434,7 +1461,7 @@ int ABSCamera::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
     dwRC = GET_RC(CamUSB_GetGain( &dwGain, wGainChannel, this->deviceNumber), this->deviceNumber);
     if ( !IsNoError(dwRC) )
     {
-        this->ShowError();
+        this->ShowError(dwRC);
         return DEVICE_LOCALLY_DEFINED_ERROR;
     }
     else // gain value set
@@ -1490,9 +1517,11 @@ int ABSCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
     unsigned long size = sizeof(S_RESOLUTION_RETVALS);
     S_RESOLUTION_RETVALS resolutionReturn;
 
-    if (!CamUSB_GetFunction( FUNC_RESOLUTION, &resolutionReturn, &size, NULL, 0, NULL, 0, this->deviceNumber ) )
-    {
-      this->ShowError();
+    unsigned long iRC;
+    iRC = GET_RC( CamUSB_GetFunction( FUNC_RESOLUTION, &resolutionReturn, &size, NULL, 0, NULL, 0, this->deviceNumber ), this->deviceNumber );
+    if ( !IsNoError(iRC) )
+    {    
+      this->ShowError(iRC);
       return DEVICE_LOCALLY_DEFINED_ERROR;
     }
     
@@ -1534,7 +1563,7 @@ int ABSCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
     ///if (!CamUSB_SetFunction( FUNC_RESOLUTION, &resolutionReturn, size ) )
     if ( !IsNoError(dwRC) )
     {
-      this->ShowError();
+      this->ShowError(dwRC);
       return DEVICE_LOCALLY_DEFINED_ERROR;
     }
 
@@ -1549,9 +1578,11 @@ int ABSCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
     unsigned long size = sizeof(S_RESOLUTION_RETVALS);
     S_RESOLUTION_RETVALS resolutionReturn;
 
-    if (!CamUSB_GetFunction( FUNC_RESOLUTION, &resolutionReturn, &size, NULL, 0, NULL, 0, this->deviceNumber ) )
-    {
-      this->ShowError();
+    unsigned long iRC;
+    iRC = GET_RC( CamUSB_GetFunction( FUNC_RESOLUTION, &resolutionReturn, &size, NULL, 0, NULL, 0, this->deviceNumber ), this->deviceNumber );
+    if ( !IsNoError(iRC) )
+    {    
+      this->ShowError(iRC);    
       return DEVICE_LOCALLY_DEFINED_ERROR;
     }
 
@@ -1602,9 +1633,11 @@ int ABSCamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
 
     // read current pixel type from hardware
     unsigned long pixType;
-    if ( !CamUSB_GetPixelType( &pixType, this->deviceNumber ) )
-    {
-      this->ShowError();
+    unsigned long iRC;
+    iRC = GET_RC( CamUSB_GetPixelType( &pixType, this->deviceNumber ), this->deviceNumber );
+    if ( !IsNoError(iRC) )
+    {    
+      this->ShowError(iRC);
       return DEVICE_LOCALLY_DEFINED_ERROR;
     }
 
@@ -1672,9 +1705,11 @@ int ABSCamera::ResizeImageBuffer()
   
   // read current pixel type from hardware
   unsigned long pixelType;
-  if ( !CamUSB_GetPixelType( &pixelType, this->deviceNumber ) )
-  {
-    this->ShowError();
+  unsigned long iRC;
+  iRC = GET_RC( CamUSB_GetPixelType( &pixelType, this->deviceNumber ), this->deviceNumber );
+  if ( !IsNoError(iRC) )
+  {    
+    this->ShowError(iRC);
     return DEVICE_LOCALLY_DEFINED_ERROR;
   }
   // calculate required bytes
@@ -1694,15 +1729,8 @@ int ABSCamera::ResizeImageBuffer()
   return DEVICE_OK;
 }
 
-// show ABSCamera error
-void ABSCamera::ShowError() const
-{
-  unsigned long errorNumber = CamUSB_GetLastError( this->deviceNumber ); // read last error code
-  this->ShowError( errorNumber );
-}
-
 // show ABSCamera error with the specified number
-void ABSCamera::ShowError( unsigned int errorNumber ) const
+void ABSCamera::ShowError( unsigned long errorNumber ) const
 {
   char errorMessage[MAX_PATH]; // error string (MAX_PATH is normally around 255)
   char messageCaption[MAX_PATH];      // caption string
@@ -1748,9 +1776,11 @@ int ABSCamera::GetCameraFunction( unsigned __int64 CamFuncID, void* functionPara
 {
   if ( ( this->cameraFunctionMask & CamFuncID ) == CamFuncID )
   {
-    if ( CamUSB_GetFunction( CamFuncID, functionPara, &size, functionParaOut, sizeOut, NULL, 0, this->deviceNumber ) == false )
+    unsigned long iRC;
+    iRC = GET_RC( CamUSB_GetFunction( CamFuncID, functionPara, &size, functionParaOut, sizeOut, NULL, 0, this->deviceNumber ), this->deviceNumber );
+    if ( !IsNoError(iRC) )
     {
-      this->ShowError();
+      this->ShowError(iRC);
       return DEVICE_LOCALLY_DEFINED_ERROR;
     }
   }
@@ -1762,9 +1792,11 @@ int ABSCamera::SetCameraFunction( unsigned __int64 CamFuncID, void* functionPara
 {
   if ( ( this->cameraFunctionMask & CamFuncID ) == CamFuncID )
   {
-    if ( CamUSB_SetFunction( CamFuncID, functionPara, size, NULL, NULL, NULL, 0, this->deviceNumber ) == false )
+    unsigned long iRC;
+    iRC = GET_RC( CamUSB_SetFunction( CamFuncID, functionPara, size, NULL, NULL, NULL, 0, this->deviceNumber ), this->deviceNumber );
+    if ( !IsNoError(iRC) )
     {
-      this->ShowError();
+      this->ShowError(iRC);
       return DEVICE_LOCALLY_DEFINED_ERROR;
     }
   }

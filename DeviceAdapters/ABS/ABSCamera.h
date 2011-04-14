@@ -167,8 +167,7 @@ private:
 
    void GenerateSyntheticImage(ImgBuffer& img, double exp);
    int ResizeImageBuffer();
-   void ShowError( unsigned int errorNumber ) const;
-   void ShowError() const;
+   void ShowError( unsigned long errorNumber ) const;   
    void* GetCameraCap( unsigned __int64 CamFuncID )  const;   
    int GetCameraFunction( unsigned __int64 CamFuncID, void* functionPara, unsigned long size, void* functionParamOut = NULL, unsigned long sizeOut = 0 )  const;   
    int SetCameraFunction( unsigned __int64 CamFuncID, void* functionPara, unsigned long size ) const;
