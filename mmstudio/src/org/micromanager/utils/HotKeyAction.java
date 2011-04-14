@@ -50,6 +50,9 @@ public class HotKeyAction {
                   gui_.snapAndAddToImage5D(null);
                   return true;
             }
+         } else {
+            org.micromanager.ScriptPanel.runFile(beanShellScript_);
+            return true;
          }
          return false;
       }

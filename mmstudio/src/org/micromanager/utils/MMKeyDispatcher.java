@@ -24,7 +24,10 @@ import java.awt.event.KeyEvent;
 import org.micromanager.MMStudioMainFrame;
 
 /**
- *
+ * Application-wide key dispatcher
+ * It is necessary to use this approach since otherwise ImageJ will steal the
+ * shortcuts before we get them
+ * Downside is that all keyevents in the application will go through here
  * @author nico
  */
 public class MMKeyDispatcher implements KeyEventDispatcher{
@@ -33,13 +36,18 @@ public class MMKeyDispatcher implements KeyEventDispatcher{
       final Class [] forbiddenClasses_;
 
    public MMKeyDispatcher(MMStudioMainFrame gui) {
-      gui_ = gui;try {
+      gui_ = gui;
+      try {
          textCanvasClass = ClassLoader.getSystemClassLoader().loadClass("ij.text.TextCanvas");
       } catch (ClassNotFoundException ex) {
          textCanvasClass = null;
          ReportingUtils.logError(ex);
       }
 
+      /*
+       * If there are other areas in the application in which keyevents should not
+       * be processed, add those here
+       */
       Class [] forbiddenClasses = {
          java.awt.TextComponent.class,
          javax.swing.text.JTextComponent.class,
@@ -52,8 +60,7 @@ public class MMKeyDispatcher implements KeyEventDispatcher{
    /*
     * Exclude key events coming from specific sources (like text components)
     * Only way I could come up with was introspection
-    * If there are other areas in the application in which keyevents should not
-    * be processed, add those here
+
     */
    private boolean checkSource(KeyEvent ke) {
       Object source = ke.getSource();
@@ -74,9 +81,10 @@ public class MMKeyDispatcher implements KeyEventDispatcher{
          return false;
 
       // Since all key events in the application go through here
-      // we need to efficiently determinne whether or not to deal with this
+      // we need to efficiently determine whether or not to deal with this
       // key event will be dealt with.  CheckSource seems relatively expensive
       // so only call this when the key matches
+
       if (HotKeys.keys_.containsKey(ke.getKeyCode())) {
          if (checkSource(ke))
             return HotKeys.keys_.get(ke.getKeyCode()).ExecuteAction();

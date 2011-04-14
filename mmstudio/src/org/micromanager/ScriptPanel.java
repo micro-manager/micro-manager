@@ -86,6 +86,7 @@ import bsh.Interpreter;
 import bsh.util.JConsole;
 
 import com.swtdesigner.SwingResourceManager;
+import java.io.BufferedReader;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.FileDialogs.FileType;
 import org.micromanager.utils.ReportingUtils;
@@ -93,18 +94,19 @@ import org.micromanager.utils.ReportingUtils;
 
 public final class ScriptPanel extends MMFrame implements MouseListener, ScriptingGUI {
    private static final long serialVersionUID = 1L;
+   private static final int HISTORYSIZE = 100;
    private JTable scriptTable_;
-   private ScriptTableModel model_;
+   private static ScriptTableModel model_;
    private final JEditTextArea scriptPane_;
    private boolean scriptPaneSaved_;
    private File scriptFile_;
    private JTextField immediatePane_;
    private JSplitPane rightSplitPane_;
    private JSplitPane splitPane_;
-   private Vector<String> immediatePaneHistory_ = new Vector<String>(50);
+   private Vector<String> immediatePaneHistory_ = new Vector<String>(HISTORYSIZE);
    private int immediatePaneHistoryIndex_ = 0;
    private Preferences prefs_;
-   private ScriptingEngine interp_;
+   private static ScriptingEngine interp_;
    private ScriptInterface parentGUI_;
    private JTextPane messagePane_;
    private StyleContext sc_;
@@ -859,6 +861,56 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
       }
    }
 
+
+      /*
+    * Runs the content of the editor Pane
+    */
+   public static void runFile(File curFile)
+   {
+      // check if file on disk was modified.
+      if (curFile != null) {
+         try {
+            interp_.evaluateAsync(getContents(curFile));
+            //interp_.evaluate(scriptPane_.getText());
+         } catch (MMScriptException e) {
+            ReportingUtils.logError(e);
+            //messageException(e.getMessage(), -1);
+         }
+      }
+   }
+
+   public static   String getContents(File aFile) {
+      StringBuilder contents = new StringBuilder();
+
+      try {
+         //use buffering, reading one line at a time
+         //FileReader always assumes default encoding is OK!
+         BufferedReader input =  new BufferedReader(new FileReader(aFile));
+         try {
+           String line = null; //not declared within while loop
+           /*
+           * readLine is a bit quirky :
+           * it returns the content of a line MINUS the newline.
+           * it returns null only for the END of the stream.
+           * it returns an empty String if two newlines appear in a row.
+           */
+           while (( line = input.readLine()) != null){
+             contents.append(line);
+             contents.append(System.getProperty("line.separator"));
+           }
+        }
+        finally {
+            input.close();
+        }
+    }
+    catch (IOException ex){
+      ex.printStackTrace();
+    }
+
+    return contents.toString();
+  }
+
+
    /*
     * Empties the editor Pane and deselects the shortcuts, in effect creating a 'blank' editor pane
     */
@@ -1069,6 +1121,10 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
       while ( (script != null) && (!script.equals("") )  && isFile);
    }
 
+
+   public static ArrayList<File> getScriptList() {
+      return model_.getFileArray();
+   }
 
    public void saveScriptsToPrefs ()
    { 
