@@ -330,7 +330,7 @@
                 (make-TaggedImage (annotate-image image event @state)))))))
 
 (defn compute-z-position [event]
-  (if-let [z-drive (:z-drive event)]
+  (if-let [z-drive (@state :default-z-drive)]
     (+ (or (get-in event [:channel :z-offset]) 0)
        (or (:slice event) 0)
        (if (and (:slice event) (not (:relative-z event)))
@@ -352,8 +352,8 @@
           #(run-actions (create-presnap-actions event))
           #(await-for 10000 (device-agents (core getCameraDevice)))
           #(when (:autofocus event)
-            (set-z-position (:position event) (:z-drive event) (run-autofocus)))
-          #(when-let [z-drive (:z-drive event)]
+            (set-z-position (:position event) (@state :default-z-drive) (run-autofocus)))
+          #(when-let [z-drive (@state :default-z-drive)]
             (let [z (compute-z-position event)]
               (when (not= z (@state :last-z-position))
                 (do (set-stage-position z-drive z)
@@ -401,6 +401,7 @@
       :start-time (clock-ms)
       :init-auto-shutter (core getAutoShutter)
       :init-exposure (core getExposure)
+      :default-z-drive (core getFocusDevice)
       :init-z-position z
       :init-system-state (get-system-config-cached)
       :init-continuous-focus (core isContinuousFocusEnabled)
@@ -420,6 +421,7 @@
     (def last-state state)
     (let [acq-seq (generate-acq-sequence settings @attached-runnables)]
        (def acq-sequence acq-seq)
+       (time (count acq-seq))
        (execute (mapcat #(make-event-fns % out-queue) acq-seq))
        (.put out-queue TaggedImageQueue/POISON)
        (cleanup))))
@@ -534,7 +536,7 @@
    :frame-index 0, :slice 0.0, :channel-index 0, :slice-index 0, :frame 0
    :channel {:name (core getCurrentConfig (core getChannelGroup))},
    :exposure (core getExposure), :relative-z true,
-   :z-drive (core getFocusDevice), :wait-time-ms 0})
+   :wait-time-ms 0})
 
 (defn create-basic-state []
   {:init-width (core getImageWidth)
