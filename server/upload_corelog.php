@@ -20,7 +20,9 @@ else
    echo 'Type: ' . $_FILES['file']['type'] . '<br />';
    echo 'Size: ' . ($_FILES['file']['size'] / 1024) . ' Kb<br />';
    echo 'Temp file: ' . $_FILES['file']['tmp_name'] . '<br />';
-   $opath = $uploadPlace_ . '/'. $_FILES['file']['name'];
+   $ipaddress = getenv(REMOTE_ADDR);
+
+   $opath = $uploadPlace_ . '/'. $_FILES['file']['name'] . '_' . $ipaddress;
 
    if (file_exists($opath . '.uu' ))
    {
