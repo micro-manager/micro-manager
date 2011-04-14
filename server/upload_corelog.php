@@ -1,6 +1,4 @@
 <?php
-//print_r($_FILES);
-
 
 date_default_timezone_set('America/Los_Angeles');
 $month =  date('Ym');
@@ -42,11 +40,25 @@ else
       $rcommand = 'rm ' . $opath . '.uu';
       exec( $rcommand);
 
-mail('info@micro-manager.org', 'New Problem Report!', $opath);
-mail('karl.hoover@ucsf.edu', 'New Problem Report!', $opath);
+      $mess = $opath . "\n" ;
+      // extract beginning of report
+      $rhandle = fopen( $opath, 'r');
+      $lineCount = 0;
+      if ($rhandle){
+	 while(! feof($rhandle) ){
+            $line = fgets($rhandle);
+            $mess = $mess . rtrim($line) . "\n";
+            $lineCount = $lineCount + 1;
+            if( 2000 < $lineCount)
+                break 1;
+            }
+       } 
+       fclose($rhandle);
 
+       mail('info@micro-manager.org', 'New Problem Report!', $mess);
+       mail('karl.hoover@ucsf.edu', 'New Problem Report!', $mess);
+       //mail('mugwortmoxa@hotmail.com', 'New Problem Report!', $mess);
 
-      
-   }
-}
+   }// uploaded .uu was found
+} // FILES was parsed
 ?>
