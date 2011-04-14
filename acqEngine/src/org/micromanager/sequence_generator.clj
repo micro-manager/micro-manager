@@ -175,40 +175,44 @@
   (if-not (empty? dim) (range (count dim)) '(0)))
 
 (defn generate-channels-and-slices [settings]
-  (let [{:keys [channels slices slices-first]} settings]
+  (let [{:keys [channels slices slices-first]} settings
+        create-event
+          (fn [c s]
+             {:channel (nth channels c nil)
+              :slice (nth slices s nil)
+              :channel-index c
+              :slice-index s})]
     (if slices-first
       (for [c (index channels)
             s (index slices)]
-        {:channel (nth channels c nil)
-         :slice (nth slices s nil)
-         :channel-index c
-         :slice-index s})
+        (create-event c s))
       (for [s (index slices)
             c (index channels)]
-        {:channel (nth channels nil)
-         :slice (nth slices nil)
-         :channel-index c
-         :slice-index s}))))
+        (create-event c s)))))
 
 (defn generate-positions-and-frames [settings]
-  (let [{:keys [positions frames time-first]} settings]
+  (let [{:keys [positions frames time-first]} settings
+        create-event
+          (fn [p f]
+            {:position (nth positions p nil)
+             :frame (nth frames f nil)
+             :position-index p
+             :frame-index f})]
     (if time-first
       (for [p (index positions)
             f (index frames)]
-        {:position (nth positions p nil)
-         :frame (nth frames f nil)
-         :position-index p
-         :frame-index f})
+        (create-event p f))
       (for [f (index frames)
             p (index positions)]
-        {:position (nth positions p nil)
-         :frame (nth frames f nil)
-         :position-index p
-         :frame-index f}))))   
+        (create-event p f)))))   
 
 (defn merge-layers [positions-and-frames channels-and-slices]
   (for [pf positions-and-frames cs channels-and-slices]
     (merge pf cs)))
+
+(defn sieve [multiples nmax]
+  (take-while #(< % nmax)
+    (for [n (range) :when (some #(zero? (mod n %)) multiples)] n)))
 
 ; Testing:
 
