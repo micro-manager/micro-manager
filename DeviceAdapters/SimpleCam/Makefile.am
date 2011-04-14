@@ -2,14 +2,16 @@ AM_CXXFLAGS = -fpermissive $(BOOST_CPPFLAGS)
 lib_LTLIBRARIES = libmmgr_dal_GPhoto.la
 libmmgr_dal_GPhoto_la_SOURCES = CameraFrontend.cpp CameraFrontend.h 
 ## adding the libtool library gives problems on OS X 10.4, adding the static lib works
-#libmmgr_dal_GPhoto_la_LIBADD = ../../MMDevice/.libs/libMMDevice.a $(LIBFREEIMAGE)
-libmmgr_dal_GPhoto_la_LIBADD = ../../MMDevice/.libs/libMMDevice.a -lfreeimage
+libmmgr_dal_GPhoto_la_LIBADD = ../../MMDevice/.libs/libMMDevice.a
 libmmgr_dal_GPhoto_la_LDFLAGS = -module
 
-# gphoto2 driver: uses libgphoto2 built using macports
+# FreeImage library
+libmmgr_dal_GPhoto_la_LIBADD += $(LIBFREEIMAGE)
+
+# gphoto2 library
 AM_CXXFLAGS += -Igphoto 
 libmmgr_dal_GPhoto_la_SOURCES += gphoto/SimpleCam.cpp gphoto/SimpleCam.h
-#libmmgr_dal_GPhoto_la_LIBADD += -L/opt/local/lib -lgphoto2 -lgphoto2_port -lm
+#libmmgr_dal_GPhoto_la_LIBADD += /Applications/Micro-Manager1.4/local/lib/libgphoto2.la
 libmmgr_dal_GPhoto_la_LIBADD += $(LIBGPHOTO2)
 
 install:
