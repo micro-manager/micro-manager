@@ -65,10 +65,10 @@ class ProblemReportSender extends Thread {
         preamble += ("MAC: " + physicalAddress + " ");
         try {
 
-            preamble += "Host: " + InetAddress.getLocalHost().getHostName() + " ";
+            preamble += "\n#Host: " + InetAddress.getLocalHost().getHostName() + " ";
         } catch (IOException e) {
         }
-        preamble += ("User: " + core_.getUserId() + " configuration file: " + cfgFile + "\n");
+        preamble += ("\n#User: " + core_.getUserId() + "\n#configuration file: " + cfgFile + "\n");
         try {
             Reader in = new BufferedReader(new FileReader(cfgFile));
             StringBuilder sb = new StringBuilder();
