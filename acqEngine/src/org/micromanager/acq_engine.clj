@@ -227,7 +227,7 @@
       (zipmap devs (repeatedly (count devs) #(agent nil))))))
 
 (defn get-z-stage-position [stage]
-  (when-not (empty? stage) (core getPosition stage) 0))
+  (if-not (empty? stage) (core getPosition stage) 0))
   
 (defn set-z-stage-position [stage pos]
   (when (core isContinuousFocusEnabled)
