@@ -962,12 +962,16 @@ public class VirtualAcquisitionDisplay {
       if (hyperImage_ == null) {
          return;
       }
-      if (hyperImage_.isComposite()) {
-         setChannelWithoutMovingSlider(channel);
-         CompositeImage ci = (CompositeImage) hyperImage_;
-         ci.setDisplayRange(getChannelMin(channel), getChannelMax(channel));
-      } else {
-         hyperImage_.setDisplayRange(getChannelMin(channel), getChannelMax(channel));
+      // Some strange ImageJ bug means we have to run this twice:
+      for (int i=0;i<2;++i) {
+         if (hyperImage_.isComposite()) {
+            setChannelWithoutMovingSlider(channel);
+            CompositeImage ci = (CompositeImage) hyperImage_;
+            ci.setDisplayRange(getChannelMin(channel), getChannelMax(channel));
+         } else {
+            hyperImage_.setDisplayRange(getChannelMin(channel), getChannelMax(channel));
+         }
+         hyperImage_.updateImage();
       }
    }
 
@@ -1072,12 +1076,8 @@ public class VirtualAcquisitionDisplay {
             ReportingUtils.logError(e);
          }
 
-         // Strange bug in ImageJ requires that we call these two methods
-         // twice to ensure that contrast actually is applied:
-         for (int i=0;i<2;++i) {
-            updateChannelContrast(channel);
-            hyperImage_.updateImage();
-         }
+
+         updateChannelContrast(channel);
          if (redraw) {
             updateAndDraw();
          }
