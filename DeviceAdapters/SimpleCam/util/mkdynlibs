@@ -1,0 +1,31 @@
+#!/bin/bash
+#
+# Install gphoto2 camera and i/o drivers in Micro-Manager directory 
+#
+
+cd /Applications/Micro-Manager1.4
+
+rm -rf libgphoto2 libgphoto2_port libgphoto2_dylib
+
+mkdir libgphoto2_dylib 
+
+cp /opt/local/lib/libgphoto2.2.dylib libgphoto2_dylib
+install_name_tool -id @loader_path/../libgphoto2_dylib/libgphoto2.2.dylib libgphoto2_dylib/libgphoto2.2.dylib
+install_name_tool -change /opt/local/lib/libgphoto2_port.0.dylib @loader_path/../libgphoto2_dylib/libgphoto2_port.0.dylib libgphoto2_dylib/libgphoto2.2.dylib
+
+cp /opt/local/lib/libgphoto2_port.0.dylib libgphoto2_dylib
+install_name_tool -id @loader_path/../libgphoto2_dylib/libgphoto2_port.0.dylib libgphoto2_dylib/libgphoto2_port.0.dylib
+
+mkdir libgphoto2
+cp /opt/local/lib/libgphoto2/2.4.10.1/*.so libgphoto2/
+
+mkdir libgphoto2_port
+cp /opt/local/lib/libgphoto2_port/0.8.0/*.so libgphoto2_port/
+
+for SO in libgphoto2/*.so libgphoto2_port/*.so
+do
+   install_name_tool -change /opt/local/lib/libgphoto2.2.dylib @loader_path/../libgphoto2_dylib/libgphoto2.2.dylib $SO
+   install_name_tool -change /opt/local/lib/libgphoto2_port.0.dylib @loader_path/../libgphoto2_dylib/libgphoto2_port.0.dylib $SO
+done
+
+#not truncated
