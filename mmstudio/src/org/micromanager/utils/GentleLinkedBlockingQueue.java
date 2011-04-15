@@ -25,7 +25,11 @@ public class GentleLinkedBlockingQueue<E> extends LinkedBlockingQueue<E> {
          long m = JavaUtils.getAvailableUnusedMemory();
          if (m > minimumBytes)
             break;
-         ReportingUtils.logError("Running out of memory: " + minimumBytes + "left.");
+         String err = "Running out of memory: Only " + minimumBytes/1000000 + " MB left.";
+         if (i==0)
+            ReportingUtils.showError(err);
+         else
+            ReportingUtils.logError(err);
          JavaUtils.sleep(5);
       }
       super.put(e);
