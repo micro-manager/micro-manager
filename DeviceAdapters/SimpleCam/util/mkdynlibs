@@ -23,6 +23,26 @@
 # dynamic linkages to /opt/local/lib/libgphoto2.2.dylib have been changed to Micro-Manager/libgphoto2_dylib/libgphoto2.2.dylib
 # dynamic linkages to /opt/local/lib/libgphoto2_port.0.dylib have been changed to Micro-Manager/libgphoto2_dylib/libgphoto2_port.0.dylib
 #
+# These dynamic linkages can be verified with otool -L :
+#
+# SimpleCam koen$ otool -L .libs/libmmgr_dal_GPhoto.so 
+# .libs/libmmgr_dal_GPhoto.so:
+#    /opt/local/lib/libgphoto2.2.dylib (compatibility version 7.0.0, current version 7.0.0)
+#    /opt/local/lib/libgphoto2_port.0.dylib (compatibility version 9.0.0, current version 9.0.0)
+#    /usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 111.1.6)
+#    /usr/lib/libltdl.3.dylib (compatibility version 5.0.0, current version 5.4.0)
+#    /usr/lib/libstdc++.6.dylib (compatibility version 7.0.0, current version 7.4.0)
+#    /usr/lib/libgcc_s.1.dylib (compatibility version 1.0.0, current version 1.0.0)
+#
+# SimpleCam koen$ otool -L /Applications/Micro-Manager1.4/libmmgr_dal_GPhoto 
+# /Applications/Micro-Manager1.4/libmmgr_dal_GPhoto:
+#    @loader_path/libgphoto2_dylib/libgphoto2.2.dylib (compatibility version 7.0.0, current version 7.0.0)
+#    @loader_path/libgphoto2_dylib/libgphoto2_port.0.dylib (compatibility version 9.0.0, current version 9.0.0)
+#    /usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 111.1.6)
+#    /usr/lib/libltdl.3.dylib (compatibility version 5.0.0, current version 5.4.0)
+#    /usr/lib/libstdc++.6.dylib (compatibility version 7.0.0, current version 7.4.0)
+#    /usr/lib/libgcc_s.1.dylib (compatibility version 1.0.0, current version 1.0.0)
+#
 
 #
 # Assume we are in DeviceAdapters/SimpleCam and compiled driver is in .libs/libmmgr_dal_GPhoto.so
