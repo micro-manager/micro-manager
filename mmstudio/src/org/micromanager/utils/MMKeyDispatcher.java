@@ -60,7 +60,6 @@ public class MMKeyDispatcher implements KeyEventDispatcher{
    /*
     * Exclude key events coming from specific sources (like text components)
     * Only way I could come up with was introspection
-
     */
    private boolean checkSource(KeyEvent ke) {
       Object source = ke.getSource();

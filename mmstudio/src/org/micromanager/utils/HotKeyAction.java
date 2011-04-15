@@ -1,6 +1,7 @@
 package org.micromanager.utils;
 
 /**
+ * Storage container for HotKeyActions
  *
  * @author nico
  */

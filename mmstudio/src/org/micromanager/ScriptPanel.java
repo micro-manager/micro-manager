@@ -89,6 +89,7 @@ import com.swtdesigner.SwingResourceManager;
 import java.io.BufferedReader;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.FileDialogs.FileType;
+import org.micromanager.utils.HotKeyFrame;
 import org.micromanager.utils.ReportingUtils;
 
 
@@ -339,9 +340,11 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
             prefs_.putInt(DIVIDER_LOCATION, splitPane_.getDividerLocation());
             saveScriptsToPrefs();
             savePosition();
-            dispose();
+            setVisible(false);
          }
       });
+
+      setVisible(false);
 
       interp_ = new BeanshellEngine(this);
       interp_.setInterpreter(beanshellREPLint_);
@@ -406,10 +409,11 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
       hotkeyButton.setFont(new Font("", Font.PLAIN, 10));
       hotkeyButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
-            new org.micromanager.utils.HotKeyFrame();
+            HotKeyFrame hk = new HotKeyFrame();
+            hk.setBackground(getBackground());
          }
       });
-      hotkeyButton.setText("Hot Keys");
+      hotkeyButton.setText("ShortCuts");
       hotkeyButton.setPreferredSize(buttonSize);
       spLeft.putConstraint(SpringLayout.NORTH, hotkeyButton, gap, SpringLayout.NORTH, leftPanel);
       spLeft.putConstraint(SpringLayout.WEST, hotkeyButton, gap, SpringLayout.EAST, removeButton);
@@ -438,8 +442,6 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
       scriptPane_.setPreferredSize(new Dimension(800, 300));
       scriptPaneSaved_ = true;
       scriptPane_.setFocusTraversalKeysEnabled(false);
-      //InputMap imEditor = scriptPane_.getInputMap(JTable.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-      //imEditor.put (KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0), "none");
 
       spTopRight.putConstraint(SpringLayout.EAST, scriptPane_, 0, SpringLayout.EAST, topRightPanel);
       spTopRight.putConstraint(SpringLayout.SOUTH, scriptPane_, 0, SpringLayout.SOUTH, topRightPanel);
@@ -470,7 +472,6 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
       });
       immediatePane_.setMinimumSize(new Dimension(100, 15));
       immediatePane_.setMaximumSize(new Dimension(2000, 15));
-      //bottomRightPanel.add(immediatePane_);
 
       // Message (output) pane
       messagePane_ = new JTextPane();
@@ -479,7 +480,6 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
       final JScrollPane messageScrollPane = new JScrollPane(messagePane_);
       messageScrollPane.setMinimumSize(new Dimension(100, 30));
       messageScrollPane.setMaximumSize(new Dimension(2000, 2000));
-      //bottomRightPanel.add(messageScrollPane);
 
       // Set up styles for the messagePane
       sc_ = new StyleContext();
@@ -522,20 +522,6 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
       runPaneButton.setPreferredSize(buttonSize);
       spTopRight.putConstraint(SpringLayout.NORTH, runPaneButton, gap, SpringLayout.NORTH, topRightPanel);
       spTopRight.putConstraint(SpringLayout.WEST, runPaneButton, gap, SpringLayout.WEST, topRightPanel);
-
-/*      final JButton injectPaneButton = new JButton();
-      topRightPanel.add(injectPaneButton);
-      injectPaneButton.setFont(new Font("", Font.PLAIN, 10));
-      injectPaneButton.addActionListener(new ActionListener() {
-         public void actionPerformed(ActionEvent arg0) {
-             injectPane();
-         }
-      });
-      injectPaneButton.setText("Inject");
-      injectPaneButton.setPreferredSize(buttonSize);
-      spTopRight.putConstraint(SpringLayout.NORTH, injectPaneButton, gap, SpringLayout.NORTH, topRightPanel);
-      spTopRight.putConstraint(SpringLayout.WEST, injectPaneButton, gap, SpringLayout.WEST, runPaneButton);
-*/
       
       final JButton stopButton = new JButton();
       topRightPanel.add(stopButton);
@@ -706,7 +692,6 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
          if (!promptToSave()) 
             return;
 
-         String [] suffixes = {".bsh"};
          File curFile = FileDialogs.openFile(this, "Select a Beanshell script", BSH_FILE);
 
          if (curFile != null) {
@@ -862,9 +847,9 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
    }
 
 
-      /*
-    * Runs the content of the editor Pane
-    */
+   /*
+   * Runs the content of the editor Pane
+   */
    public static void runFile(File curFile)
    {
       // check if file on disk was modified.

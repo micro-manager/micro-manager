@@ -9,39 +9,57 @@ package org.micromanager.utils;
 
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Font;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.prefs.Preferences;
 import javax.swing.AbstractCellEditor;
 import javax.swing.DefaultCellEditor;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
-import javax.swing.JTextField;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellEditor;
+import org.micromanager.utils.FileDialogs.FileType;
 
 /**
  *
  * @author nico
  */
-public final class HotKeyFrame extends javax.swing.JFrame {
-   ShortCutTableModel sctModel_ = new ShortCutTableModel();
-   JComboBox combo_ = new JComboBox();
-   Integer lastTypedKey_ = 0;
-   KeyEvtHandler keh_;
-   ArrayList<Integer> keys_ = new ArrayList<Integer>();
-   ArrayList<HotKeyAction> actions_ = new ArrayList<HotKeyAction>();
-   ArrayList<HotKeyAction> possibleActions_ = new ArrayList<HotKeyAction>();
-   String[] possibleActionsAsString_;
-   java.awt.Font ourFont_ = new java.awt.Font("Lucida Grande", java.awt.Font.PLAIN, 10);
+public final class HotKeyFrame extends MMFrame {
+   private ShortCutTableModel sctModel_ = new ShortCutTableModel();
+   private JComboBox combo_ = new JComboBox();
+   private Integer lastTypedKey_ = 0;
+   private KeyEvtHandler keh_;
+   private ArrayList<Integer> keys_ = new ArrayList<Integer>();
+   private ArrayList<HotKeyAction> actions_ = new ArrayList<HotKeyAction>();
+   private ArrayList<HotKeyAction> possibleActions_ = new ArrayList<HotKeyAction>();
+   private String[] possibleActionsAsString_;
+   private Font ourFont_ = new Font("Lucida Grande", java.awt.Font.PLAIN, 10);
+   private Preferences prefs_;
 
+   public static FileType MM_HOTKEYS
+           = new FileType("MM_HOTKEYS",
+                 "Micro-Manager HotKeys",
+                 System.getProperty("user.home") + "/MMHotKeys",
+                 false, (String[]) null);
  
    public class ShortCutTableModel extends AbstractTableModel {
 
@@ -121,6 +139,12 @@ public final class HotKeyFrame extends javax.swing.JFrame {
     public  HotKeyFrame() {
         initComponents();
 
+        Preferences root = Preferences.userNodeForPackage(this.getClass());
+        prefs_ = root.node(root.absolutePath() + "/HotKeyFrame");
+        setPrefsNode(prefs_);
+        loadPosition(0, 0, 377, 378);
+
+
         HotKeys.active_ = false;
         // copy the map with hotkeys and action temporarily into two ArrayLists
         // Those will be used by our table model and written back to HotKeys.keys_
@@ -145,14 +169,7 @@ public final class HotKeyFrame extends javax.swing.JFrame {
               }
 
               HotKeys.active_ = true;
-               /*
-               prefs_.putInt(RIGHT_DIVIDER_LOCATION, rightSplitPane_.getDividerLocation());
-               prefs_.putInt(DIVIDER_LOCATION, splitPane_.getDividerLocation());
-               saveScriptsToPrefs();
-               savePosition();
-               dispose();
-                *
-                */
+              savePosition();
             }
         });
 
@@ -161,7 +178,6 @@ public final class HotKeyFrame extends javax.swing.JFrame {
 
         hotKeyTable_.getColumnModel().getColumn(0).setCellEditor(new DefaultCellEditor(combo_));
         hotKeyTable_.getColumnModel().getColumn(1).setCellEditor(new HotKeyCol1Editor());
-        //hotKeyTable.setDefaultEditor(null, myCellEditor);
         hotKeyTable_.getColumnModel().getColumn(1).setCellRenderer(new HotKeyCol1Renderer());
         setVisible(true);
 
@@ -279,6 +295,7 @@ public final class HotKeyFrame extends javax.swing.JFrame {
       setModalExclusionType(java.awt.Dialog.ModalExclusionType.APPLICATION_EXCLUDE);
 
       jScrollPane1_.setMinimumSize(new java.awt.Dimension(23, 15));
+      jScrollPane1_.setPreferredSize(new java.awt.Dimension(32767, 32767));
 
       hotKeyTable_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
       hotKeyTable_.setModel(sctModel_);
@@ -304,7 +321,7 @@ public final class HotKeyFrame extends javax.swing.JFrame {
          }
       });
 
-      loadButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
+      loadButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
       loadButton_.setText("Load");
       loadButton_.setMinimumSize(new java.awt.Dimension(75, 20));
       loadButton_.setPreferredSize(new java.awt.Dimension(75, 20));
@@ -346,8 +363,9 @@ public final class HotKeyFrame extends javax.swing.JFrame {
                .add(removeButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                .add(saveButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
                .add(loadButton_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 20, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
-            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .add(jScrollPane1_, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 351, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE))
+            .addPreferredGap(org.jdesktop.layout.LayoutStyle.RELATED)
+            .add(jScrollPane1_, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, org.jdesktop.layout.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .add(0, 0, Short.MAX_VALUE))
       );
 
       pack();
@@ -371,11 +389,50 @@ public final class HotKeyFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_removeButton_ActionPerformed
 
     private void loadButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_loadButton_ActionPerformed
-       // TODO add your handling code here:
+       File f = FileDialogs.openFile(this, "Load ShortCuts", MM_HOTKEYS);
+       
+       if (f != null && f.canRead()) {
+         try {
+            ObjectInputStream in = 
+                    new ObjectInputStream(new BufferedInputStream(new FileInputStream(f)));
+            LinkedHashMap<Integer, HotKeyAction> keys =
+                  new LinkedHashMap<Integer, HotKeyAction>();
+            keys = (LinkedHashMap<Integer, HotKeyAction>) in.readObject();
+            if (keys != null && keys.size() > 0) {
+               HotKeys.keys_.clear();
+               Iterator it = keys.entrySet().iterator();
+               while (it.hasNext()) {
+                  Map.Entry pairs = (Map.Entry)it.next();
+                  HotKeys.keys_.put((Integer)pairs.getKey(), (HotKeyAction)pairs.getValue());
+               }
+            }
+         } catch (ClassNotFoundException ex) {
+            ReportingUtils.showError("Class not found");
+         } catch (IOException ex) {
+            ReportingUtils.showError("Failed to read file");
+         }
+          
+       }
     }//GEN-LAST:event_loadButton_ActionPerformed
 
     private void saveButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveButton_ActionPerformed
-       // TODO add your handling code here:
+       //File f = FileDialogs.openDir(this, "Please select an image data set", MM_DATA_SET);
+       File f = FileDialogs.save(this, "Save Shortcuts", MM_HOTKEYS);
+
+       if (f != null) {
+         try {
+            if (f.createNewFile()) {
+               try {
+                  ObjectOutputStream out = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(f)));
+                  out.writeObject(HotKeys.keys_);
+               } catch (IOException ex) {
+                  ReportingUtils.showError("Failed to write to file");
+               }
+            }
+         } catch (IOException ex) {
+            ReportingUtils.showError("Failed to create file");
+         }
+       }
     }//GEN-LAST:event_saveButton_ActionPerformed
 
  

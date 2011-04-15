@@ -137,6 +137,7 @@ import org.micromanager.api.Pipeline;
 import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.FileDialogs.FileType;
+import org.micromanager.utils.HotKeyFrame;
 import org.micromanager.utils.MMKeyDispatcher;
 import org.micromanager.utils.ReportingUtils;
 
@@ -234,8 +235,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private boolean liveRunning_ = false;
    private boolean configChanged_ = false;
    private StrVector shutters_ = null;
+
    private JButton saveConfigButton_;
    private ScriptPanel scriptPanel_;
+   private org.micromanager.utils.HotKeys hotKeys_;
    //private SplitView splitView_;
    private CenterAndDragListener centerAndDragListener_;
    private ZWheelListener zWheelListener_;
@@ -697,12 +700,12 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
       acqMgr_ = new AcquisitionManager();
 
-      sysConfigFile_ = new String(System.getProperty("user.dir") + "/"
-            + DEFAULT_CONFIG_FILE_NAME);
+      sysConfigFile_ = System.getProperty("user.dir") + "/"
+            + DEFAULT_CONFIG_FILE_NAME;
 
       if (options_.startupScript_.length() > 0) {
-         startupScriptFile_ = new String(System.getProperty("user.dir") + "/"
-               + options_.startupScript_);
+         startupScriptFile_ = System.getProperty("user.dir") + "/"
+                 + options_.startupScript_;
       } else {
          startupScriptFile_ = "";
       }
@@ -746,6 +749,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
       liveModeTimer_ = new Timer();
 
+
       // load application preferences
       // NOTE: only window size and position preferences are loaded,
       // not the settings for the camera and live imaging -
@@ -773,7 +777,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       class ListeningJPanel extends JPanel implements AncestorListener {
 
          public void ancestorMoved(AncestorEvent event) {
-            System.out.println("moved!");
+            //System.out.println("moved!");
          }
 
          public void ancestorRemoved(AncestorEvent event) {}
@@ -1203,11 +1207,21 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       scriptPanelMenuItem.addActionListener(new ActionListener() {
 
          public void actionPerformed(ActionEvent e) {
-            createScriptPanel();
-
+            scriptPanel_.setVisible(true);
          }
       });
       scriptPanelMenuItem.setText("Script Panel...");
+
+      final JMenuItem hotKeysMenuItem = new JMenuItem();
+      toolsMenu.add(hotKeysMenuItem);
+      hotKeysMenuItem.addActionListener(new ActionListener() {
+
+         public void actionPerformed(ActionEvent e) {
+            HotKeyFrame hk = new HotKeyFrame();
+            hk.setBackground(guiColors_.background.get((options_.displayBackground_)));
+         }
+      });
+      hotKeysMenuItem.setText("Shortcuts...");
 
       final JMenuItem propertyEditorMenuItem = new JMenuItem();
       toolsMenu.add(propertyEditorMenuItem);
@@ -1691,6 +1705,12 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             engine_.setCore(core_, afMgr_);
             posList_ = new PositionList();
             engine_.setPositionList(posList_);
+            // load (but do no show) the scriptPanel
+            createScriptPanel();
+
+            // Create an instance of HotKeys so that they can be read in from prefs
+            hotKeys_ = new org.micromanager.utils.HotKeys();
+            hotKeys_.loadSettings();
 
             // if an error occurred during config loading, 
             // do not display more errors than needed
@@ -2464,8 +2484,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          addMMBackgroundListener(scriptPanel_);
 
       }
-      scriptPanel_.setVisible(true);
-
    }
 
    /**
@@ -3326,6 +3344,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       try {
          configPad_.saveSettings();
          options_.saveSettings();
+         hotKeys_.saveSettings();
       } catch (NullPointerException e) {
          this.logError(e);
       }
@@ -3987,7 +4006,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       }
 
       public void run() {
-         scriptPanel_.message(msg_);
+         if (scriptPanel_ != null)
+            scriptPanel_.message(msg_);
       }
    }
 
