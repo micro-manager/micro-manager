@@ -3,6 +3,31 @@
 # Install gphoto2 camera and i/o drivers in Micro-Manager directory 
 #
 
+#
+# end result:
+# Micro-Manager/libgphoto2_dylib: shared libraries
+#  libgphoto2.2.dylib
+#  libgphoto2_port.0.dylib
+# Micro-Manager/libgphoto2: camera drivers
+#  canon.so
+#  ptp2.so
+#  ...
+# Micro-Manager/libgphoto2_port: io drivers
+#  serial.so
+#  usb.so
+#  ...
+#
+# for all shared libraries, camera and io drivers in Micro-Manager/libgphoto2_dylib, Micro-Manager/libgphoto2 and Micro-Manager/libgphoto2_port :
+# dynamic linkages to /opt/local/lib/libgphoto2.2.dylib have been changed to Micro-Manager/libgphoto2_dylib/libgphoto2.2.dylib
+# dynamic linkages to /opt/local/lib/libgphoto2_port.0.dylib have been changed to Micro-Manager/libgphoto2_dylib/libgphoto2_port.0.dylib
+#
+
+#
+# Assume we are in DeviceAdapters/SimpleCam and compiled driver is in .libs/libmmgr_dal_GPhoto.so
+#
+
+cp .libs/libmmgr_dal_GPhoto.so /Applications/Micro-Manager1.4/libmmgr_dal_GPhoto
+
 cd /Applications/Micro-Manager1.4
 
 rm -rf libgphoto2 libgphoto2_port libgphoto2_dylib
@@ -11,6 +36,9 @@ mkdir libgphoto2_dylib
 
 cp /opt/local/lib/libgphoto2.2.dylib libgphoto2_dylib
 install_name_tool -id @loader_path/../libgphoto2_dylib/libgphoto2.2.dylib libgphoto2_dylib/libgphoto2.2.dylib
+
+# Change dynamic linkage in libgphoto2.2.dylib from /opt/local/lib/libgphoto2_port.0.dylib to Micro-Manager/libgphoto2_dylib/libgphoto2_port.0.dylib
+
 install_name_tool -change /opt/local/lib/libgphoto2_port.0.dylib @loader_path/../libgphoto2_dylib/libgphoto2_port.0.dylib libgphoto2_dylib/libgphoto2.2.dylib
 
 cp /opt/local/lib/libgphoto2_port.0.dylib libgphoto2_dylib
@@ -22,10 +50,17 @@ cp /opt/local/lib/libgphoto2/2.4.10.1/*.so libgphoto2/
 mkdir libgphoto2_port
 cp /opt/local/lib/libgphoto2_port/0.8.0/*.so libgphoto2_port/
 
-for SO in libgphoto2/*.so libgphoto2_port/*.so
+# Change all dynamic linkages in Micro-Manager/libgphoto2 and Micro-Manager/libgphoto2_port
+
+for SO in libgphoto2/*.so libgphoto2_port/*.so 
 do
    install_name_tool -change /opt/local/lib/libgphoto2.2.dylib @loader_path/../libgphoto2_dylib/libgphoto2.2.dylib $SO
    install_name_tool -change /opt/local/lib/libgphoto2_port.0.dylib @loader_path/../libgphoto2_dylib/libgphoto2_port.0.dylib $SO
 done
+
+# Change dynamic linkages in Micro-Manager/libmmgr_dal_GPhoto 
+
+install_name_tool -change /opt/local/lib/libgphoto2.2.dylib @loader_path/libgphoto2_dylib/libgphoto2.2.dylib libmmgr_dal_GPhoto
+install_name_tool -change /opt/local/lib/libgphoto2_port.0.dylib @loader_path/libgphoto2_dylib/libgphoto2_port.0.dylib libmmgr_dal_GPhoto
 
 #not truncated
