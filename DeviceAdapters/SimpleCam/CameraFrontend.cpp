@@ -384,7 +384,7 @@ int CCameraFrontend::Initialize()
    nRet = UpdateStatus();
 
    // initialize image buffer
-   img_.Resize(640, 480, 4); // imgGrayScale_(false), imgBitDepth_(8) implies 8bit rgb, 4 bytes per pixel.
+   img_.Resize(640, 480, 1); // imgGrayScale_(true), imgBitDepth_(8) implies 8bit per pixel.
 
    /* Finally, connect to default camera */
    SetProperty(MM::g_Keyword_CameraName, defaultCameraName.c_str());
