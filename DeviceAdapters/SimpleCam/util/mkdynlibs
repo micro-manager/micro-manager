@@ -18,6 +18,8 @@
 #  ...
 #
 # for all shared libraries, camera and io drivers in Micro-Manager/libgphoto2_dylib, Micro-Manager/libgphoto2 and Micro-Manager/libgphoto2_port :
+# and for libmmgr_dal_GPhoto , the GPhoto driver itself:
+#
 # dynamic linkages to /opt/local/lib/libgphoto2.2.dylib have been changed to Micro-Manager/libgphoto2_dylib/libgphoto2.2.dylib
 # dynamic linkages to /opt/local/lib/libgphoto2_port.0.dylib have been changed to Micro-Manager/libgphoto2_dylib/libgphoto2_port.0.dylib
 #

@@ -11,7 +11,6 @@ libmmgr_dal_GPhoto_la_LIBADD += $(LIBFREEIMAGE)
 # gphoto2 library
 AM_CXXFLAGS += -Igphoto 
 libmmgr_dal_GPhoto_la_SOURCES += gphoto/SimpleCam.cpp gphoto/SimpleCam.h
-#libmmgr_dal_GPhoto_la_LIBADD += /opt/local/lib/libgphoto2.a /opt/local/lib/libgphoto2_port.a /usr/lib/libltdl.la -ldl -lpthread -lm
 libmmgr_dal_GPhoto_la_LIBADD += $(LIBGPHOTO2)
 
 install:
