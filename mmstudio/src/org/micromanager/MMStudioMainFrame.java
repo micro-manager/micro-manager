@@ -2385,8 +2385,14 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             openAcqDirectory_ = f.getParent();
          }
 
-         String rootDir = new File(openAcqDirectory_).getAbsolutePath();
-         String name = new File(openAcqDirectory_).getName();
+         openAcquisitionData(openAcqDirectory_);
+         
+      }
+   }
+
+   public void openAcquisitionData(String dir) {
+               String rootDir = new File(dir).getAbsolutePath();
+         String name = new File(dir).getName();
          rootDir= rootDir.substring(0, rootDir.length() - (name.length() + 1));
          try {
             acqMgr_.openAcquisition(name, rootDir, true, true, true);
@@ -2395,8 +2401,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          } catch (MMScriptException ex) {
             ReportingUtils.showError(ex);
          }
-         
-      }
    }
 
    protected void zoomOut() {
