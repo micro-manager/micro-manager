@@ -5,13 +5,18 @@
 
 #
 # end result:
+#
+# Micro-Manager/libmmgr_dal_GPhoto: GPhoto device driver
+#
 # Micro-Manager/libgphoto2_dylib: shared libraries
 #  libgphoto2.2.dylib
 #  libgphoto2_port.0.dylib
+#
 # Micro-Manager/libgphoto2: camera drivers
 #  canon.so
 #  ptp2.so
 #  ...
+#
 # Micro-Manager/libgphoto2_port: io drivers
 #  serial.so
 #  usb.so
