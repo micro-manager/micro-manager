@@ -3,7 +3,7 @@
 # Configure and compile libgphoto2
 #
 export LIBUSB_LIBS="/opt/local/lib/libusb.a /opt/local/lib/libusb-1.0.a -framework IOKit -framework CoreFoundation "  
-export LIBUSB_CFLAGS=-I/Applications/Micro-Manager1.4/local/include
+export LIBUSB_CFLAGS=-I/opt/local/include
 
 rm -rf builddir
 mkdir builddir
