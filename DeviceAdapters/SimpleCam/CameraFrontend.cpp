@@ -1432,6 +1432,9 @@ int CCameraFrontend::LoadImage(fipImage frameBitmap)
    /* Copy frameBitmap to micro-manager image buffer img_ */
    if (rc)
    {
+      /* Check whether image dimension changed */
+      bool sizeChanged = (img_.Width() != frameBitmap.getWidth()) || (img_.Height() != frameBitmap.getHeight()) || (img_.Depth() != bytesPerPixel);
+
       /* Resize image buffer */
       img_.Resize(frameBitmap.getWidth(), frameBitmap.getHeight(), bytesPerPixel);
 
@@ -1463,6 +1466,12 @@ int CCameraFrontend::LoadImage(fipImage frameBitmap)
 
       /* copy the bitmap to the image buffer */
       FreeImage_ConvertToRawBits(img_.GetPixelsRW(), frameBitmap, frameBitmap.getWidth() * bytesPerPixel, bytesPerPixel * 8, 0, 0, 0, true); 
+
+      /* If image dimension changed resize circular buffer as well */
+      if (sizeChanged)
+      {
+         GetCoreCallback()->InitializeImageBuffer(GetNumberOfComponents(), 1, GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel());
+      }
    }
 
    /* save current image parameters */
