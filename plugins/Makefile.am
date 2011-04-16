@@ -65,7 +65,14 @@ ImageFlipper.jar:  \
 	$(JAVAC) -source 1.5 -target 1.5 -sourcepath $(srcdir):. -classpath $(IJJARPATH):$(BSHJARPATH):$(COMMONSMATHJARPATH):$(SWINGLAYOUTJARPATH):../bin/MMCoreJ.jar:../mmstudio/MMJ_.jar:. $(srcdir)/MultiCamera/src/org/micromanager/multicamera/*.java -d build
 	cd build && jar cf ../ImageFlipper.jar * 
 
-all: PixelCalibrator.jar RecallPlugin.jar StageControl.jar MultiCamera.jar Big.jar ImageFlipper.jar SlideExplorer.jar
+DataBrowser.jar: \
+	$(srcdir)/DataBrowser/src/org/micromanager/browser/*.clj
+	test -d classes || mkdir classes
+	rm -rf classes/*
+	java -cp DataBrowser/classes/:$(CLASSEXT)/clojure.jar:$(CLASSEXT)/clojure-contrib.jar:$(IJJARPATH):../mmstudio/MMJ_.jar:$(CLASSEXT)/bsh-2.0b4.jar:../acqEngine/MMAcqEngine.jar:DataBrowser/src -Djava.awt.headless=true -Dclojure.compile.path=DataBrowser/classes -server clojure.lang.Compile org.micromanager.browser.core
+	jar cvf DataBrowser.jar -C DataBrowser/classes/ .
+
+all: PixelCalibrator.jar DataBrowser.jar RecallPlugin.jar StageControl.jar MultiCamera.jar Big.jar ImageFlipper.jar SlideExplorer.jar
 
 install: 
 	test -d $(IJPATH)/mmplugins || mkdir $(IJPATH)/mmplugins
