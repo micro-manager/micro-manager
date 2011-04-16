@@ -1,10 +1,20 @@
 package org.micromanager.utils;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 
 /**
@@ -83,6 +93,75 @@ public class HotKeys {
 
       // Add key as signal for the reader to stop reading
       prefs_.putInt(KEY + i, STOP);
+
+   }
+
+   public static void load(File f) throws FileNotFoundException {
+      if (f== null || !f.canRead())
+         return;
+
+      DataInputStream in = new DataInputStream
+              (new BufferedInputStream(new FileInputStream(f)));
+      keys_.clear();
+      try {
+         while (in.available() > 0) {
+            int key = in.readInt();
+            int type = in.readInt();
+            int guiCommand = 0;
+            String filePath = "";
+            if (type == HotKeyAction.GUICOMMAND) {
+               guiCommand = in.readInt();
+               HotKeyAction action = new HotKeyAction(guiCommand);
+               keys_.put(key, action);
+            }
+            else {
+               int strLength = in.readInt();
+               for (int i=0; i < strLength; i ++)
+                  filePath += in.readChar();
+               HotKeyAction action = new HotKeyAction(new File(filePath));
+               keys_.put(key, action);
+            }
+         }
+         in.close();
+      } catch (IOException ex) {
+         ReportingUtils.showError("Error while reading in Shortcuts");
+      }
+   }
+   /*
+    * Save Hotkeys to a file
+    * File needs to exist and be writeable
+    */
+   public static void save(File f) throws FileNotFoundException {
+      if (f== null || !f.canWrite())
+         return;
+
+      DataOutputStream out = new DataOutputStream
+              (new BufferedOutputStream(new FileOutputStream(f)));
+
+      Iterator it = keys_.entrySet().iterator();
+      int i = 0;
+      while (it.hasNext()) {
+         try {
+            Map.Entry pairs = (Map.Entry) it.next();
+            out.writeInt(((Integer) pairs.getKey()).intValue());
+            HotKeyAction action = (HotKeyAction) pairs.getValue();
+            out.writeInt(action.type_);
+            if (action.type_ == HotKeyAction.GUICOMMAND) {
+               out.writeInt(action.guiCommand_);
+            } else {
+               out.writeInt(action.beanShellScript_.getAbsolutePath().length());
+               out.writeChars(action.beanShellScript_.getAbsolutePath());
+            }
+            i++;
+         } catch (IOException ex) {
+            ReportingUtils.showError("Error while saving Shortcuts");
+         }
+      }
+      try {
+         out.close();
+      } catch (IOException ex) {
+         ReportingUtils.showError("Error while closing Shortcuts file");
+      }
 
    }
 }

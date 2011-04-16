@@ -137,7 +137,7 @@ import org.micromanager.api.Pipeline;
 import org.micromanager.api.TaggedImageStorage;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.FileDialogs.FileType;
-import org.micromanager.utils.HotKeyFrame;
+import org.micromanager.utils.HotKeysDialog;
 import org.micromanager.utils.MMKeyDispatcher;
 import org.micromanager.utils.ReportingUtils;
 
@@ -668,6 +668,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    public MMStudioMainFrame(boolean pluginStatus) {
       super();
 
+      /*
       Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
 
          public void uncaughtException(Thread t, Throwable e) {
@@ -677,6 +678,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             // ReportingUtils.showError(e, "An uncaught exception was thrown in thread " + t.getName() + ".");
          }
       });
+       */
 
       startLoadingPipelineClass();
 
@@ -1217,8 +1219,9 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       hotKeysMenuItem.addActionListener(new ActionListener() {
 
          public void actionPerformed(ActionEvent e) {
-            HotKeyFrame hk = new HotKeyFrame();
-            hk.setBackground(guiColors_.background.get((options_.displayBackground_)));
+            HotKeysDialog hk = new HotKeysDialog
+                    (guiColors_.background.get((options_.displayBackground_)));
+            //hk.setBackground(guiColors_.background.get((options_.displayBackground_)));
          }
       });
       hotKeysMenuItem.setText("Shortcuts...");

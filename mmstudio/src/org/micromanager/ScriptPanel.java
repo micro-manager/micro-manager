@@ -89,7 +89,7 @@ import com.swtdesigner.SwingResourceManager;
 import java.io.BufferedReader;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.FileDialogs.FileType;
-import org.micromanager.utils.HotKeyFrame;
+import org.micromanager.utils.HotKeysDialog;
 import org.micromanager.utils.ReportingUtils;
 
 
@@ -409,8 +409,8 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
       hotkeyButton.setFont(new Font("", Font.PLAIN, 10));
       hotkeyButton.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
-            HotKeyFrame hk = new HotKeyFrame();
-            hk.setBackground(getBackground());
+            HotKeysDialog hk = new HotKeysDialog(getBackground());
+            //hk.setBackground(getBackground());
          }
       });
       hotkeyButton.setText("ShortCuts");

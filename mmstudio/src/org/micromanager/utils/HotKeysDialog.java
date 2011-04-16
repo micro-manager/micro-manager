@@ -14,20 +14,12 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import javax.swing.AbstractCellEditor;
 import javax.swing.DefaultCellEditor;
@@ -43,7 +35,7 @@ import org.micromanager.utils.FileDialogs.FileType;
  *
  * @author nico
  */
-public final class HotKeyFrame extends MMFrame {
+public final class HotKeysDialog extends MMDialog {
    private ShortCutTableModel sctModel_ = new ShortCutTableModel();
    private JComboBox combo_ = new JComboBox();
    private Integer lastTypedKey_ = 0;
@@ -136,53 +128,72 @@ public final class HotKeyFrame extends MMFrame {
 
 
     /** Creates new form HotKeys */
-    public  HotKeyFrame() {
+    public  HotKeysDialog(Color backgroundColor) {
         initComponents();
+
+        this.setBackground(backgroundColor);
 
         Preferences root = Preferences.userNodeForPackage(this.getClass());
         prefs_ = root.node(root.absolutePath() + "/HotKeyFrame");
         setPrefsNode(prefs_);
         loadPosition(0, 0, 377, 378);
+        //org.micromanager.MMStudioMainFrame.getInstance().addMMBackgroundListener(this);
 
+        readKeys();
 
         HotKeys.active_ = false;
-        // copy the map with hotkeys and action temporarily into two ArrayLists
-        // Those will be used by our table model and written back to HotKeys.keys_
-        // on exit
-        Iterator it = HotKeys.keys_.entrySet().iterator();
-        while (it.hasNext()) {
-           Map.Entry pairs = (Map.Entry)it.next();
-           keys_.add((Integer)pairs.getKey());
-           actions_.add((HotKeyAction) pairs.getValue());
-        }
 
         addWindowListener(new WindowAdapter() {
            @Override
            public void windowClosing(WindowEvent arg0) {
               hotKeyTable_.getColumnModel().getColumn(0).getCellEditor().stopCellEditing();
               hotKeyTable_.getColumnModel().getColumn(1).getCellEditor().stopCellEditing();
-              
-              // copy keys_ and actions_ back to HotKeys.keys_
-              HotKeys.keys_.clear();
-              for (int i=0; i < keys_.size(); i++) {
-                 HotKeys.keys_.put(keys_.get(i), actions_.get(i));
-              }
+              generateKeys();
 
               HotKeys.active_ = true;
               savePosition();
             }
-        });
 
+        });
 
         updateComboBox();
 
         hotKeyTable_.getColumnModel().getColumn(0).setCellEditor(new DefaultCellEditor(combo_));
         hotKeyTable_.getColumnModel().getColumn(1).setCellEditor(new HotKeyCol1Editor());
         hotKeyTable_.getColumnModel().getColumn(1).setCellRenderer(new HotKeyCol1Renderer());
-        setVisible(true);
+        
 
         keh_ = new KeyEvtHandler();
         hotKeyTable_.addKeyListener(keh_);
+
+        setModal(true);
+        setVisible(true);
+    }
+
+    /*
+     * copy keys_ and actions_ back to HotKeys.keys_
+     */
+    private void generateKeys() {
+       HotKeys.keys_.clear();
+       for (int i = 0; i < keys_.size(); i++) {
+          HotKeys.keys_.put(keys_.get(i), actions_.get(i));
+       }
+    }
+    
+   /*
+    * copy the map with hotkeys and action temporarily into two ArrayLists
+    * Those will be used by our table model and written back to HotKeys.keys_
+    * on exit
+    */
+    private void readKeys() {
+       keys_.clear();
+       actions_.clear();
+       Iterator it = HotKeys.keys_.entrySet().iterator();
+       while (it.hasNext()) {
+           Map.Entry pairs = (Map.Entry)it.next();
+           keys_.add((Integer)pairs.getKey());
+           actions_.add((HotKeyAction) pairs.getValue());
+       }
     }
 
     public void updateComboBox() {
@@ -291,13 +302,12 @@ public final class HotKeyFrame extends MMFrame {
       saveButton_ = new javax.swing.JButton();
 
       setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-      setAlwaysOnTop(true);
       setModalExclusionType(java.awt.Dialog.ModalExclusionType.APPLICATION_EXCLUDE);
 
       jScrollPane1_.setMinimumSize(new java.awt.Dimension(23, 15));
       jScrollPane1_.setPreferredSize(new java.awt.Dimension(32767, 32767));
 
-      hotKeyTable_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+      hotKeyTable_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       hotKeyTable_.setModel(sctModel_);
       jScrollPane1_.setViewportView(hotKeyTable_);
 
@@ -321,7 +331,7 @@ public final class HotKeyFrame extends MMFrame {
          }
       });
 
-      loadButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10)); // NOI18N
+      loadButton_.setFont(new java.awt.Font("Lucida Grande", 0, 10));
       loadButton_.setText("Load");
       loadButton_.setMinimumSize(new java.awt.Dimension(75, 20));
       loadButton_.setPreferredSize(new java.awt.Dimension(75, 20));
@@ -379,6 +389,8 @@ public final class HotKeyFrame extends MMFrame {
     }//GEN-LAST:event_addButton_ActionPerformed
 
     private void removeButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_removeButton_ActionPerformed
+       hotKeyTable_.getColumnModel().getColumn(0).getCellEditor().stopCellEditing();
+       hotKeyTable_.getColumnModel().getColumn(1).getCellEditor().stopCellEditing();
        int[] rows = hotKeyTable_.getSelectedRows();
        for (int i=rows.length-1; i >= 0; i--) {
           keys_.remove(rows[i]);
@@ -393,46 +405,32 @@ public final class HotKeyFrame extends MMFrame {
        
        if (f != null && f.canRead()) {
          try {
-            ObjectInputStream in = 
-                    new ObjectInputStream(new BufferedInputStream(new FileInputStream(f)));
-            LinkedHashMap<Integer, HotKeyAction> keys =
-                  new LinkedHashMap<Integer, HotKeyAction>();
-            keys = (LinkedHashMap<Integer, HotKeyAction>) in.readObject();
-            if (keys != null && keys.size() > 0) {
-               HotKeys.keys_.clear();
-               Iterator it = keys.entrySet().iterator();
-               while (it.hasNext()) {
-                  Map.Entry pairs = (Map.Entry)it.next();
-                  HotKeys.keys_.put((Integer)pairs.getKey(), (HotKeyAction)pairs.getValue());
-               }
-            }
-         } catch (ClassNotFoundException ex) {
-            ReportingUtils.showError("Class not found");
-         } catch (IOException ex) {
-            ReportingUtils.showError("Failed to read file");
+            HotKeys.load(f);
+            readKeys();
+            sctModel_.fireTableDataChanged();
+         } catch (FileNotFoundException ex) {
+            ReportingUtils.showError("Could not find the file");
          }
-          
        }
+
     }//GEN-LAST:event_loadButton_ActionPerformed
 
     private void saveButton_ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveButton_ActionPerformed
-       //File f = FileDialogs.openDir(this, "Please select an image data set", MM_DATA_SET);
-       File f = FileDialogs.save(this, "Save Shortcuts", MM_HOTKEYS);
-
-       if (f != null) {
-         try {
-            if (f.createNewFile()) {
-               try {
-                  ObjectOutputStream out = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(f)));
-                  out.writeObject(HotKeys.keys_);
-               } catch (IOException ex) {
-                  ReportingUtils.showError("Failed to write to file");
-               }
-            }
-         } catch (IOException ex) {
-            ReportingUtils.showError("Failed to create file");
+      generateKeys();
+      try {
+         File f = FileDialogs.save(this, "Save Shortcuts", MM_HOTKEYS);
+         if (f == null) {
+            return;
          }
-       }
+         f.createNewFile();
+         try {
+            HotKeys.save(f);
+         } catch (FileNotFoundException ex) {
+            ReportingUtils.showError("File not found");
+         }
+      } catch (IOException ex) {
+         ReportingUtils.showError("Failed to create file");
+      }
     }//GEN-LAST:event_saveButton_ActionPerformed
 
  
