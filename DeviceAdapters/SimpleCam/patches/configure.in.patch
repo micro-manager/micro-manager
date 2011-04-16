@@ -23,7 +23,7 @@
 +               AC_MSG_RESULT([libfreeimage not found])
 +            else
 +               AC_MSG_RESULT([libfreeimage.a found])
-+               LIBFREEIMAGE="$FREEIMAGELIBDIR/libfreeimage.a"
++               LIBFREEIMAGE="-L$FREEIMAGELIBDIR -lfreeimage"
 +            fi
 +         ;;
 +      esac
