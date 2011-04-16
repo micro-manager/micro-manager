@@ -67,8 +67,9 @@ ImageFlipper.jar:  \
 
 DataBrowser.jar: \
 	$(srcdir)/DataBrowser/src/org/micromanager/browser/*.clj
-	test -d classes || mkdir classes
-	rm -rf classes/*
+	test -d DataBrowser/classes || mkdir DataBrowser/classes
+	rm -rf DataBrowser/classes/*
+	cp -R DataBrowser/src/org DataBrowser/classes/
 	java -cp DataBrowser/classes/:$(CLASSEXT)/clojure.jar:$(CLASSEXT)/clojure-contrib.jar:$(IJJARPATH):../mmstudio/MMJ_.jar:$(CLASSEXT)/bsh-2.0b4.jar:../acqEngine/MMAcqEngine.jar:DataBrowser/src -Djava.awt.headless=true -Dclojure.compile.path=DataBrowser/classes -server clojure.lang.Compile org.micromanager.browser.core
 	jar cvf DataBrowser.jar -C DataBrowser/classes/ .
 
