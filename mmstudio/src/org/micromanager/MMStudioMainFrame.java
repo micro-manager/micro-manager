@@ -4169,7 +4169,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             pi.menuItem = className;
             //core_.logMessage(className + " fails to implement static String menuName.");
          }
-
+         pi.menuItem = pi.menuItem.replace("_", " ");
          pi.pluginClass = cl;
          plugins_.add(pi);
 
