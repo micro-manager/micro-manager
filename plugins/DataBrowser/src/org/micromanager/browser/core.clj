@@ -8,11 +8,10 @@
            [java.awt Color Dimension Font Insets]
            [java.awt.event KeyAdapter MouseAdapter]
            [com.swtdesigner SwingResourceManager])
-  (:use [clooj.utils :only (constrain-to-parent attach-action-key)]
+  (:use [org.micromanager.browser.utils
+            :only (constrain-to-parent attach-action-key)]
         [clojure.contrib.json :only (read-json)]
         [org.micromanager.mm :only (load-mm gui)]))
-
-(load-mm)
 
 (defn get-search-icon []
   (SwingResourceManager/getIcon
@@ -135,6 +134,7 @@
 (def default-headings ["CurrentPath" "Time" "Frames" "Comment"])
 
 (defn start-browser []
+  (load-mm)
   (-> (get-summary-maps "/Users/arthur/qqq")
     (create-table-model default-headings)
     create-browser))
