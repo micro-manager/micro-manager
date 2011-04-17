@@ -1305,13 +1305,6 @@ int CCameraFrontend::LoadImage(fipImage frameBitmap)
    bool rc = true;
    unsigned int binning = GetBinning();
 
-   /* the live viewfinder image is already quite small; not much sense in making it even smaller */
-   if (UseCameraLiveView())
-   {
-      ClearROI();
-      binning = 1;
-   }
-
    if (binning <= 0)
    {
       LogMessage("Error: Binning value", true);

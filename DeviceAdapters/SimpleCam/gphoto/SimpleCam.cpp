@@ -582,7 +582,7 @@ string CSimpleCam::captureImage()
 
 
 /* if connected to a camera, returns a viewfinder preview. 
- * return value is a FreeImagePlus bitmap; typically 320x240 pixels at 20 frames per second*/
+ * return value is a FreeImagePlus bitmap; typically 320x240 pixels for Canon PowerShot, 640x426 pixels for Nikon DSLR, 768x512 to 1056x704 pixels for Canon DSLR; at 10-20 frames per second */
 fipImage CSimpleCam::capturePreview()
 {
    int rc = GP_OK;
