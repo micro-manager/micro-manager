@@ -93,7 +93,7 @@ public class PresetEditor extends ConfigDialog {
                            same = false;
                }
                if (same) {
-                  showMessageDialog("This combination of properties is already in found in the \"" + cfgs.get(j) + "\" preset.\nPlease choose unique property values for your new preset.");
+                  showMessageDialog("This combination of properties is already found in the \"" + cfgs.get(j) + "\" preset.\nPlease choose unique property values for your new preset.");
                   return false;
                }
             }
