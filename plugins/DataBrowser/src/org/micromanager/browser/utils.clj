@@ -1,8 +1,14 @@
 (ns org.micromanager.browser.utils
   (:import (java.util UUID)
            (java.awt.event ActionListener)
-           (javax.swing AbstractAction KeyStroke SpringLayout)))
+           (javax.swing AbstractAction BorderFactory JButton
+                        KeyStroke SpringLayout)))
 
+; clojure utils
+
+(defmacro gen-map [& args]
+  (let [kw (map keyword args)]
+    (zipmap kw args)))
 
 ;; identify OS
 
@@ -37,9 +43,24 @@
 
 (defn constrain-to-parent
   "Distance from edges of parent comp args"
-  [comp & args]
-  (apply put-constraints comp
-         (flatten (map #(cons (.getParent comp) %) (partition 2 args)))))
+  [& args]
+  (doseq [[comp & params] (partition 9 args)]
+    (apply put-constraints comp
+           (flatten (map #(cons (.getParent comp) %) (partition 2 params))))))
+
+;; borders
+
+(defn remove-borders [& components]
+  (doseq [comp components]
+    (.setBorder comp (BorderFactory/createEmptyBorder))))
+
+;; standard swing
+
+(defn create-button [text fn]
+  (doto (JButton. text)
+    (.addActionListener
+      (reify ActionListener
+        (actionPerformed [_ _] (fn))))))
 
 ;; keys
 

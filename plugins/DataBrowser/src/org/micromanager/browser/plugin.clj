@@ -4,13 +4,14 @@
    :name org.micromanager.browser.Data_Browser
    :implements [org.micromanager.api.MMPlugin]))
 
-(defn -dispose [] )
-(defn -setApp [app] )
-(defn -show [] (start-browser))
+(defn -dispose [this] )
+(defn -setApp [this app] )
+(defn -show [this] (start-browser))
 
-;; Don nothing:
-(defn -configurationChanged [])
-(defn -getDescription [])
-(defn -getInfo [])
-(defn -getVersion [])
-(defn -getCopyright [])
+
+;; Do nothing:
+(defn -configurationChanged [this])
+(defn -getDescription [this])
+(defn -getInfo [this])
+(defn -getVersion [this])
+(defn -getCopyright [this])

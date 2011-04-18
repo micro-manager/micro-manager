@@ -1,7 +1,8 @@
 (ns org.micromanager.browser.core
-  (:import [javax.swing JButton JFrame JLabel JPanel JScrollPane 
+  (:import [javax.swing BorderFactory JButton JFrame JLabel
+                        JList JPanel JScrollPane JSplitPane
                         JTable JTextField RowFilter SpringLayout SwingUtilities]
-           [javax.swing.table AbstractTableModel TableRowSorter]
+           [javax.swing.table AbstractTableModel DefaultTableModel TableRowSorter]
            [javax.swing.event DocumentListener]
            [java.io BufferedReader File FileReader]
            [java.util Vector]
@@ -9,7 +10,8 @@
            [java.awt.event KeyAdapter MouseAdapter]
            [com.swtdesigner SwingResourceManager])
   (:use [org.micromanager.browser.utils
-            :only (constrain-to-parent attach-action-key)]
+            :only (gen-map constrain-to-parent create-button
+                   attach-action-key remove-borders)]
         [clojure.contrib.json :only (read-json)]
         [org.micromanager.mm :only (load-mm gui)]))
 
@@ -45,40 +47,68 @@
         (if (= 2 (.getClickCount e))
           (. gui openAcquisitionData (.getValueAt table (.getSelectedRow table) -1)))))))
 
-(defn create-browser [model]
-  (let [f (JFrame. "Micro-Manager Data Set Browser")
-        p (JPanel.)
-        t (proxy [JTable] [] (isCellEditable [_ _] false))
-        sc (JScrollPane. t)
-        tf (JTextField.)
+(defn create-settings-window []
+  (let [labeled-list
+          (fn [label-text parent]
+            (let [label (JLabel. label-text)
+                  list (JList.)
+                  panel (JPanel.)
+                  scroll-pane (JScrollPane. panel)]
+              (.setBorder list (BorderFactory/createLineBorder (Color/GRAY)))
+              (doto panel (.add label) (.add list)
+                          (.setLayout (SpringLayout.)))
+              (constrain-to-parent label :n 0 :w 0 :n 20 :e 0
+                                   list :n 20 :w 0 :s 0 :e 0)
+              (.add parent scroll-pane)
+              list))
+        split-pane (JSplitPane. JSplitPane/HORIZONTAL_SPLIT true)
+        locations-list (labeled-list "Locations" split-pane)
+        columns-list (labeled-list "Columns" split-pane)
+        main-panel (JPanel.)
+        frame (JFrame. "Micro-Manager Data Set Browser Settings")]
+    (apply remove-borders (.getComponents split-pane))
+    (.. frame getContentPane (add main-panel))
+    (doto split-pane
+      (.setResizeWeight 0.5)
+      (.setDividerLocation 0.5))
+    (remove-borders split-pane)
+    (.add main-panel split-pane)
+    (.setLayout main-panel (SpringLayout.))
+    (constrain-to-parent
+      split-pane :n 32 :w 5 :s -5 :e -5)
+    (.setBounds frame 50 50 600 600)
+    (gen-map frame locations-list columns-list)))
+
+(defn create-browser [settings-window]
+  (let [frame (JFrame. "Micro-Manager Data Set Browser")
+        panel (JPanel.)
+        table (proxy [JTable] [] (isCellEditable [_ _] false))
+        scroll-pane (JScrollPane. table)
+        search-field (JTextField.)
         search-label (JLabel.)
-        index-button (JButton. "Add folder...")
-        columns-button (JButton. "Columns...")]
-    (set-model t model)
-    (doto p (.add sc) (.add tf) (.add index-button)
-            (.add columns-button) (.add search-label))
-    (doto t (.setAutoCreateRowSorter true)
-            (.setShowGrid false)
-            (.setGridColor Color/LIGHT_GRAY)
-            (.setShowVerticalLines true))
+        settings-button (create-button "Settings..."
+                          #(.show (:frame settings-window)))]
+    (doto panel (.add scroll-pane) (.add search-field)
+                (.add settings-button) (.add search-label))
+    (doto table (.setAutoCreateRowSorter true)
+                (.setShowGrid false)
+                (.setGridColor Color/LIGHT_GRAY)
+                (.setShowVerticalLines true))
     (doto search-label (.setIcon (get-search-icon)))
-    (.setFont tf (.getFont t))
-    (.setLayout p (SpringLayout.))
-    (constrain-to-parent sc :n 32 :w 5 :s -5 :e -5)
-    (constrain-to-parent tf :n 5 :w 25 :n 28 :w 200)
-    (constrain-to-parent index-button :n 5 :w 205 :n 28 :w 330)
-    (constrain-to-parent columns-button :n 5 :w 330 :n 28 :w 450)
-    (constrain-to-parent search-label :n 5 :w 5 :n 28 :w 25)
-    (.setEnabled columns-button false)
-    (.setEnabled index-button false)
-    (connect-search tf t)
-    (listen-to-open t)
-    (attach-action-key tf "ESCAPE" #(.setText tf ""))
-    (doto f (.. getContentPane (add p))
+    (.setFont search-field (.getFont table))
+    (.setLayout panel (SpringLayout.))
+    (constrain-to-parent scroll-pane :n 32 :w 5 :s -5 :e -5
+                         search-field :n 5 :w 25 :n 28 :w 200
+                         settings-button :n 5 :w 205 :n 28 :w 330
+                         search-label :n 5 :w 5 :n 28 :w 25)
+    (connect-search search-field table)
+    (.setSortsOnUpdates (.getRowSorter table) true)
+    (listen-to-open table)
+    (attach-action-key search-field "ESCAPE" #(.setText search-field ""))
+    (doto frame (.. getContentPane (add panel))
        (.setBounds 50 50 500 500)
        (.setVisible true))
-    {:frame f :table t :scroll-pane sc :index-button index-button
-     :columns-button columns-button :search-field tf})) 
+    (gen-map frame table scroll-pane settings-button search-field)))
     
 (defn find-data-sets [root-dir]
   (map #(.getParent %)
@@ -121,29 +151,31 @@
 
 (defn get-summary-maps [root-dir]
   (map get-summary-map (find-data-sets root-dir)))
-  
-(defn create-table-model [summary-maps headings]
-  (proxy [AbstractTableModel] []
-    (getRowCount [] (count summary-maps))
-    (getColumnCount [] (count headings))
-    (getValueAt [row col]
-      (get (nth summary-maps row)
-        (if (neg? col) "CurrentPath" (nth headings col))))
-    (getColumnName [col] (get headings col))))
+
+(defn create-table-model [headings]
+  (DefaultTableModel. (Vector. headings) 0))
 
 (def default-headings ["CurrentPath" "Time" "Frames" "Comment"])
+  
+(defn add-summary-maps [browser map-list headings]
+  (.start (Thread. (fn [] (doseq [m map-list]
+                      (SwingUtilities/invokeLater (fn []
+                      (.addRow (.getModel (:table browser))
+                        (Vector. (map #(get m %) headings))))))))))     
+
+;; create a table model with all metadata.
+;; Then use .addColumn, .removeColumn to show and hide columns, as controlled by
+;; the settings window. The DefaultTableModel can be used to keep track of the 
+;; "CurrentPath" for a given row even if that column is hidden.
 
 (defn start-browser []
   (load-mm)
-  (-> (get-summary-maps "/Users/arthur/qqq")
-    (create-table-model default-headings)
-    create-browser))
-
-;(defn update-browser [dir headings]
-;  (.setModel (:table browser)
-;             (create-table-model
-;               (swap! sm concat (get-summary-maps dir)) headings)))
-;
+  (let [settings-window (create-settings-window)
+        browser (create-browser settings-window)
+        maps (get-summary-maps "/Users/arthur/qqq")]
+    (.setModel (:table browser) (create-table-model default-headings))
+    (add-summary-maps browser maps default-headings)
+    browser))
 
 
 
