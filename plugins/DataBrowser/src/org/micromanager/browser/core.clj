@@ -21,6 +21,16 @@
 
 (def headings (atom nil))
 
+(def tags [
+  "ChColors" "ChContrastMax" "ChContrastMin" "ChNames" "Channels" "Comment"
+  "ComputerName" "Date" "Depth" "Directory" "FrameComments" "Frames" "GridColumn"
+  "GridRow" "Height" "IJType" "Interval_ms" "KeepShutterOpenChannels"
+  "KeepShutterOpenSlices" "Location" "MetadataVersion" "MicroManagerVersion"
+  "Name" "Path" "PixelAspect" "PixelSize_um" "PixelType" "PositionIndex"
+  "Positions" "Prefix" "Slices" "SlicesFirst" "Source" "Time" "TimeFirst"
+  "UUID" "UserName" "Width" "z-step_um"
+   ])
+
 (defn get-icon [name]
   (SwingResourceManager/getIcon
     org.micromanager.MMStudioMainFrame (str "icons/" name)))
@@ -30,8 +40,11 @@
   (.setRowSorter table (TableRowSorter. m)))
 
 (defn set-filter [table text]
-  (let [sorter (.getRowSorter table)]
-      (do (.setRowFilter sorter (RowFilter/regexFilter text (int-array 0))))))
+  (let [sorter (.getRowSorter table)
+        column-indices
+          (int-array (map #(.getModelIndex %)
+               (enumeration-seq (.. table getColumnModel getColumns))))]
+      (do (.setRowFilter sorter (RowFilter/regexFilter text column-indices)))))
 
 (defn connect-search [search-field table]
   (let [d (.getDocument search-field)
@@ -153,27 +166,48 @@
                      "Please add a location to scan for files")]
     (add-location (.getAbsolutePath loc))))
 
+(defn create-column-table []
+  (let [table (proxy [JTable] [0 2]
+                (isCellEditable [_ i] (get [true false] i)))
+        model (proxy [DefaultTableModel] [0 2]
+                (getColumnClass [i]
+                  (get [Boolean String] i)))]
+    (doto table
+      (.setModel model)
+      (.setRowSelectionAllowed false)
+      (.setFocusable false)
+      (.. getColumnModel (getColumn 0) (setMinWidth 20))
+      (.. getColumnModel (getColumn 0) (setMaxWidth 20))
+    ; (.. getColumnModel (getColumn 1) (setMaximumWidth 20))
+    ; (.setAutoResizeMode JTable/AUTO_RESIZE_LAST_COLUMN))
+    )
+    (doseq [tag tags]
+      (.addRow model (Vector. [false tag])))
+    table))
+
 (defn create-settings-window []
-  (let [labeled-table
-          (fn [label-text parent]
+  (let [label-table
+          (fn [table label-text parent]
             (let [label (JLabel. label-text)
-                  table (proxy [JTable] [0 1] (isCellEditable [_ _] false))
                   panel (JPanel.)
-                  scroll-pane (JScrollPane. panel)]
+                  scroll-pane (JScrollPane. table)]
               (.setBorder table (BorderFactory/createLineBorder (Color/GRAY)))
-              (doto panel (.add label) (.add table)
+              (doto panel (.add label) (.add scroll-pane)
                           (.setLayout (SpringLayout.)))
               (constrain-to-parent label :n 0 :w 0 :n 20 :e 0
-                                   table :n 20 :w 0 :s 0 :e 0)
-              (.add parent scroll-pane)
+                                   scroll-pane :n 20 :w 0 :s 0 :e 0)
+              (.add parent panel)
+              (remove-borders table)
+              (.setTableHeader table nil)
               (gen-map table panel)))
         split-pane (JSplitPane. JSplitPane/HORIZONTAL_SPLIT true)
-        locations (labeled-table "Locations" split-pane)
+        locations (label-table (proxy [JTable] [0 1] (isCellEditable [_ _] false))
+                               "Locations" split-pane)
         add-location-button
           (create-icon-button (get-icon "plus.png") user-add-location)
         remove-location-button
           (create-icon-button (get-icon "minus.png") remove-locations)
-        columns (labeled-table "Columns" split-pane)
+        columns (label-table (create-column-table) "Columns" split-pane)
         main-panel (JPanel.)
         frame (JFrame. "Micro-Manager Data Set Browser Settings")]
     (apply remove-borders (.getComponents split-pane))
