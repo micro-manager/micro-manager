@@ -1,8 +1,10 @@
 (ns org.micromanager.browser.utils
   (:import (java.util UUID)
+           (java.io File FilenameFilter)
+           (java.awt FileDialog)
            (java.awt.event ActionListener)
            (javax.swing AbstractAction BorderFactory JButton
-                        KeyStroke SpringLayout)))
+                        JFileChooser KeyStroke SpringLayout)))
 
 ; clojure utils
 
@@ -62,6 +64,13 @@
       (reify ActionListener
         (actionPerformed [_ _] (fn))))))
 
+(defn create-icon-button [icon fun]
+  (doto (JButton.)
+    (.addActionListener
+      (reify ActionListener
+        (actionPerformed [_ _] (fun))))
+    (.setIcon icon)))
+
 ;; keys
 
 (defn get-keystroke [key-shortcut]
@@ -107,3 +116,32 @@
   "Maps input keys to action-fns."
   (doall (map #(apply attach-action-key comp %) items)))
 
+
+;; file handling
+
+(defn choose-file [parent title suffix load]
+  (let [dialog
+    (doto (FileDialog. parent title
+            (if load FileDialog/LOAD FileDialog/SAVE))
+      (.setFilenameFilter
+        (reify FilenameFilter
+          (accept [this _ name] (. name endsWith suffix))))
+      (.setVisible true))
+    d (.getDirectory dialog)
+    n (.getFile dialog)]
+    (if (and d n)
+      (File. d n))))
+
+(defn choose-directory [parent title]
+  (if (is-mac)
+    (let [dirs-on #(System/setProperty
+                     "apple.awt.fileDialogForDirectories" (str %))]
+      (dirs-on true)
+        (let [dir (choose-file parent title "" true)]
+          (dirs-on false)
+          dir))
+    (let [fc (JFileChooser.)]
+      (doto fc (.setFileSelectionMode JFileChooser/DIRECTORIES_ONLY)
+               (.setDialogTitle title))
+       (if (= JFileChooser/APPROVE_OPTION (.showOpenDialog fc parent))
+         (.getSelectedFile fc)))))
