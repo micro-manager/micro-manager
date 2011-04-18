@@ -694,6 +694,14 @@ int CDemoCamera::SetAllowedBinning()
       binValues.push_back("4");
    if (scanMode_ < 2)
       binValues.push_back("8");
+   if (binSize_ == 8 && scanMode_ == 3) {
+      SetProperty(MM::g_Keyword_Binning, "2");
+   } else if (binSize_ == 8 && scanMode_ == 2) {
+      SetProperty(MM::g_Keyword_Binning, "4");
+   } else if (binSize_ == 4 && scanMode_ == 3) {
+      SetProperty(MM::g_Keyword_Binning, "2");
+   }
+      
    LogMessage("Setting Allowed Binning settings", true);
    return SetAllowedValues(MM::g_Keyword_Binning, binValues);
 }
