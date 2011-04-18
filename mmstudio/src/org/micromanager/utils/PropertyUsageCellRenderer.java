@@ -8,7 +8,6 @@ package org.micromanager.utils;
 import java.awt.Component;
 import javax.swing.JCheckBox;
 import javax.swing.JTable;
-import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableCellRenderer;
 
 /**
@@ -16,19 +15,20 @@ import javax.swing.table.TableCellRenderer;
  * @author arthur
  */
 public class PropertyUsageCellRenderer implements TableCellRenderer {
-    PropertyItem item_;
 
-    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int rowIndex, int column) {
-        PropertyTableData data = (PropertyTableData)table.getModel();
-		item_ = data.getPropertyItem(rowIndex);
+   PropertyItem item_;
+   JCheckBox cb_ = new JCheckBox();
 
-        JCheckBox cb = new JCheckBox();
-			cb.setSelected(item_.confInclude);
-			//((AbstractTableModel) table.getModel()).fireTableCellUpdated(rowIndex, column);
-			if (item_.readOnly)
-				cb.setEnabled(false);
-		return (Component) cb;
-    }
+   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int rowIndex, int column) {
+      PropertyTableData data = (PropertyTableData) table.getModel();
+      item_ = data.getPropertyItem(rowIndex);
+
+      cb_.setSelected(item_.confInclude);
+      if (item_.readOnly) {
+         cb_.setEnabled(false);
+      }
+      return (Component) cb_;
+   }
 
     
     // The following methods override the defaults for performance reasons

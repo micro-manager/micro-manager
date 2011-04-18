@@ -24,20 +24,20 @@ public class PropertyItem {
    
    public PropertyItem() {
       device = new String();
-      name = new String("Undefined");
+      name = "Undefined";
       value = new String();
       allowed = new String[0];
    }
 
    public PropertyItem(String _name, String _value) {
-      name = new String(_name);
-      value = new String(_value);
+      name = _name;
+      value = _value;
       allowed = new String[0];
    }
 
    public PropertyItem(String _name, String _value, boolean _preInit) {
-      name = new String(_name);
-      value = new String(_value);
+      name = _name;
+      value = _value;
       allowed = new String[0];
       preInit = _preInit;
    }

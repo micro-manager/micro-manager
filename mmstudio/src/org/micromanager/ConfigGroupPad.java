@@ -154,7 +154,7 @@ public class ConfigGroupPad extends JScrollPane{
    /**
     * Property table data model, representing state devices
     */
-   public class StateTableData extends AbstractTableModel {
+   public final class StateTableData extends AbstractTableModel {
       private static final long serialVersionUID = -6584881796860806078L;
       final public String columnNames_[] = {
             "Group",

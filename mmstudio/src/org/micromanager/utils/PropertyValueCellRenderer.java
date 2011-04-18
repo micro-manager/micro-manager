@@ -1,4 +1,3 @@
-
 package org.micromanager.utils;
 
 import java.awt.Color;
@@ -8,71 +7,72 @@ import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
 
-
 public class PropertyValueCellRenderer implements TableCellRenderer {
-	// This method is called each time a cell in a column
-	// using this renderer needs to be rendered.
-	PropertyItem item_;
+   // This method is called each time a cell in a column
+   // using this renderer needs to be rendered.
 
-    private boolean disableExcluded_;
+   PropertyItem item_;
+   JLabel lab_ = new JLabel();
+   private boolean disable_;
 
-	public PropertyValueCellRenderer(boolean disableExcluded) {
-        super();
-		disableExcluded_ = disableExcluded;
+   public PropertyValueCellRenderer(boolean disable) {
+      super();
+      disable_ = disable;
+   }
 
-	}
+   public PropertyValueCellRenderer() {
+      this(false);
+   }
 
-    public PropertyValueCellRenderer() {
-        this(false);
-    }
-    
-	public Component getTableCellRendererComponent(JTable table, Object value,
-			boolean isSelected, boolean hasFocus, int rowIndex, int colIndex) {
+   public Component getTableCellRendererComponent(JTable table, Object value,
+           boolean isSelected, boolean hasFocus, int rowIndex, int colIndex) {
 
-		MMPropertyTableModel data = (MMPropertyTableModel)table.getModel();
-		item_ = data.getPropertyItem(rowIndex);
+      MMPropertyTableModel data = (MMPropertyTableModel) table.getModel();
+      item_ = data.getPropertyItem(rowIndex);
 
+      lab_.setOpaque(true);
+      lab_.setHorizontalAlignment(JLabel.LEFT);
 
-		JLabel lab = new JLabel();
-		lab.setOpaque(true);
-		lab.setHorizontalAlignment(JLabel.LEFT);
+      Component comp;
 
+      if (item_.hasRange) {
+         SliderPanel slider = new SliderPanel();
+         if (item_.isInteger()) {
+            slider.setLimits((int) item_.lowerLimit, (int) item_.upperLimit);
+         } else {
+            slider.setLimits(item_.lowerLimit, item_.upperLimit);
+         }
+         slider.setText((String) value);
+         slider.setToolTipText(item_.value);
+         comp = slider;
+      } else {
+         lab_.setText(item_.value);
+         comp = lab_;
+      }
 
-		Component comp;
+      if (disable_) {
+         comp.setEnabled(false); // Disable preset values that aren't checked.
+      }
+      
+      if (item_.readOnly) {
+         comp.setBackground(Color.LIGHT_GRAY);
+      } else {
+         comp.setBackground(Color.WHITE);
+      }
 
-        if (item_.hasRange) {
-            SliderPanel slider = new SliderPanel();
-            if (item_.isInteger())
-                slider.setLimits((int)item_.lowerLimit, (int)item_.upperLimit);
-            else {
-                slider.setLimits(item_.lowerLimit, item_.upperLimit);
-            }
-            slider.setText((String) value);
-            slider.setToolTipText(item_.value);
-            comp = slider;
-        } else {
-            lab.setText(item_.value);
-            comp = lab;
-        }
+      return comp;
+   }
 
-        if (disableExcluded_) {
-            comp.setEnabled(item_.confInclude); // Disable preset values that aren't checked.
-        }
-		if (item_.readOnly) {
-			//comp.setForeground(Color.DARK_GRAY);
-			comp.setBackground(Color.LIGHT_GRAY);
-		} else {
-			//comp.setForeground(Color.BLACK);
-			comp.setBackground(Color.WHITE);
-		}         
+   // The following methods override the defaults for performance reasons
+   public void validate() {
+   }
 
-		return comp;
-	}
+   public void revalidate() {
+   }
 
-	// The following methods override the defaults for performance reasons
-	public void validate() {}
-	public void revalidate() {}
-	protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {}
-	public void firePropertyChange(String propertyName, boolean oldValue, boolean newValue) {}
+   protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
+   }
 
+   public void firePropertyChange(String propertyName, boolean oldValue, boolean newValue) {
+   }
 }

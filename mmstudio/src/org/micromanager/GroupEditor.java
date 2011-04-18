@@ -54,7 +54,7 @@ public class GroupEditor extends ConfigDialog {
       showUnused_ = true;
       showFlagsPanelVisible = true;
       scrollPaneTop_ = 140;
-      numColumns=3;
+      numColumns_ = 3;
       data_ = new PropertyTableData(core_,groupName_,presetName_,2,1, this);
       initializeData();
       data_.setColumnNames("Property Name","Use in Group?","Current Property Value");
@@ -62,6 +62,7 @@ public class GroupEditor extends ConfigDialog {
       initialize();
    }
    
+   @Override
    public void okChosen() {
       String newName = nameField_.getText();
    

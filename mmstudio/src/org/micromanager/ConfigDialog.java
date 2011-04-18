@@ -99,7 +99,7 @@ public class ConfigDialog extends MMDialog {
    protected String presetName_;
 
    protected Boolean showUnused_ = true;
-   protected int numColumns = 3;
+   protected int numColumns_ = 3;
 
    protected boolean newItem_ = true;
    protected boolean showFlagsPanelVisible = true;
@@ -297,11 +297,11 @@ public class ConfigDialog extends MMDialog {
         scrollPane_.setViewportView(table_);
         table_.setModel(data_);
 
-        if (numColumns == 3) {
+        if (numColumns_ == 3) {
             table_.addColumn(new TableColumn(0, 200, new PropertyNameCellRenderer(), null));
             table_.addColumn(new TableColumn(1, 75, new PropertyUsageCellRenderer(), new PropertyUsageCellEditor()));
             table_.addColumn(new TableColumn(2, 200, new PropertyValueCellRenderer(true), new PropertyValueCellEditor(true)));
-        } else if (numColumns == 2) {
+        } else if (numColumns_ == 2) {
             table_.addColumn(new TableColumn(0, 200, new PropertyNameCellRenderer(), null));
             table_.addColumn(new TableColumn(1, 200, new PropertyValueCellRenderer(false), new PropertyValueCellEditor(false)));
         }

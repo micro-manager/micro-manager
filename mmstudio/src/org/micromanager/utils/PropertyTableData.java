@@ -151,18 +151,19 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
 	}
 
 
+   @Override
 	public void setValueAt(Object value, int row, int col) {
 		PropertyItem item = propListVisible_.get(row);
 		ReportingUtils.logMessage("Setting value " + value + " at row " + row);
 		if (col == PropertyValueColumn_) {
 			if (item.confInclude) {
 				setValueInCore(item,value);
+            refresh();
+            gui_.refreshGUI();
 			}
 		}  else if (col == PropertyUsedColumn_)  {
 			item.confInclude = ((Boolean)value).booleanValue();
 		}
-		refresh();
-		gui_.refreshGUI();
 		fireTableCellUpdated(row, col);
 	}
 
@@ -174,11 +175,15 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
    @Override
 	public boolean isCellEditable(int nRow, int nCol) {
 		if (nCol == PropertyValueColumn_)
-			return !propListVisible_.get(nRow).readOnly;
+         if (nCol == 2)  // do not allow editing in the group editor view
+            return false;
+         else
+            return !propListVisible_.get(nRow).readOnly;
 		else if (nCol == PropertyUsedColumn_) {
 			if (!isEditingGroup())
 				return false;
-			return true;
+         else
+            return true;
 		} else
 			return false;
 	}
@@ -191,7 +196,7 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
 	public void refresh() {
 		try {            
 			gui_.suspendLiveMode();
-         //update();
+         update();
 			for (int i=0; i<propList_.size(); i++){
 				PropertyItem item = propList_.get(i);
             if (showDevice(flags_, item.device)) {

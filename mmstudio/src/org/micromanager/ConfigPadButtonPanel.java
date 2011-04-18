@@ -18,7 +18,7 @@ import mmcorej.CMMCore;
 import com.swtdesigner.SwingResourceManager;
 import org.micromanager.utils.ReportingUtils;
 
-public class ConfigPadButtonPanel extends JPanel {
+public final class ConfigPadButtonPanel extends JPanel {
    /**
     * 
     */
