@@ -295,11 +295,6 @@ public class ConfigDialog extends MMDialog {
         table_.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         table_.setAutoCreateColumnsFromModel(false);
         scrollPane_.setViewportView(table_);
-
-        table_ = new JTable();
-        table_.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        table_.setAutoCreateColumnsFromModel(false);
-        scrollPane_.setViewportView(table_);
         table_.setModel(data_);
 
         if (numColumns == 3) {
