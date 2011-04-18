@@ -1431,6 +1431,12 @@ int CCameraFrontend::LoadImage(fipImage frameBitmap)
       /* Resize image buffer */
       img_.Resize(frameBitmap.getWidth(), frameBitmap.getHeight(), bytesPerPixel);
 
+      /* If image dimension changed resize circular buffer as well */
+      if (sizeChanged)
+      {
+         GetCoreCallback()->InitializeImageBuffer(GetNumberOfComponents(), 1, GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel());
+      }
+
       /* Micro-manager expects 16-bit color images as 64bpp bgra. Convert 48bpp rgb to 64bpp bgra. */
       if (bytesPerPixel == 8)
       {
@@ -1459,12 +1465,6 @@ int CCameraFrontend::LoadImage(fipImage frameBitmap)
 
       /* copy the bitmap to the image buffer */
       FreeImage_ConvertToRawBits(img_.GetPixelsRW(), frameBitmap, frameBitmap.getWidth() * bytesPerPixel, bytesPerPixel * 8, 0, 0, 0, true); 
-
-      /* If image dimension changed resize circular buffer as well */
-      if (sizeChanged)
-      {
-         GetCoreCallback()->InitializeImageBuffer(GetNumberOfComponents(), 1, GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel());
-      }
    }
 
    /* save current image parameters */

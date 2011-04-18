@@ -57,28 +57,28 @@ int CSimpleCam::setLibPaths()
    /*
       load gphoto2 camera drivers from ./libgphoto2, and i/o drivers from ./libgphoto2_port, if these directories exist.
       unless the user decides otherwise by setting CAMLIBS or IOLIBS . See libgphoto2(3) man page.
-		This allows packaging the gphoto2 drivers with the application.
+      This allows packaging the gphoto2 drivers with the application.
    */
    char executablePath[MAXPATHLEN];
-	uint32_t bufSize = sizeof(executablePath); 
-	CFBundleRef mainBundle = CFBundleGetMainBundle();
-	CFURLRef resourcesURL = CFBundleCopyResourcesDirectoryURL(mainBundle); // get path of bundle
-	bool dirFound = CFURLGetFileSystemRepresentation(resourcesURL, TRUE, (UInt8 *)executablePath, MAXPATHLEN);
-	CFRelease(resourcesURL);
+   uint32_t bufSize = sizeof(executablePath); 
+   CFBundleRef mainBundle = CFBundleGetMainBundle();
+   CFURLRef resourcesURL = CFBundleCopyResourcesDirectoryURL(mainBundle); // get path of bundle
+   bool dirFound = CFURLGetFileSystemRepresentation(resourcesURL, TRUE, (UInt8 *)executablePath, MAXPATHLEN);
+   CFRelease(resourcesURL);
    if (dirFound)
-	
+   
    {
       char realExecutablePath[MAXPATHLEN];
       strlcpy(realExecutablePath, executablePath, sizeof(realExecutablePath));
       if (realpath(executablePath, realExecutablePath) != NULL) // Clean up path
 
       {
-			/* Move three directories up */
+         /* Move three directories up */
          for (int i=0; i<3; i++)
          {
-			   char *slash = strrchr(realExecutablePath, '/');
-			   if (slash && (slash != realExecutablePath)) 
-				   *slash='\0';
+            char *slash = strrchr(realExecutablePath, '/');
+            if (slash && (slash != realExecutablePath)) 
+               *slash='\0';
          }
          
          /*
@@ -90,12 +90,12 @@ int CSimpleCam::setLibPaths()
          struct stat st;
          // Set CAMLIBS environment variable to path_of_executable/libgphoto2 if directory exists
          if (stat(camlibsPath, &st) == 0)
-			{
-      		gp_log(GP_LOG_DEBUG, "SimpleCam", "Setting CAMLIBS to '%s'", camlibsPath);
+         {
+            gp_log(GP_LOG_DEBUG, "SimpleCam", "Setting CAMLIBS to '%s'", camlibsPath);
             setenv("CAMLIBS", camlibsPath, 0);
-			}
-			else
-      		gp_log(GP_LOG_DEBUG, "SimpleCam", "Directory '%s' not found. Not setting CAMLIBS. Using default libgphoto2 driver directory.", camlibsPath);
+         }
+         else
+            gp_log(GP_LOG_DEBUG, "SimpleCam", "Directory '%s' not found. Not setting CAMLIBS. Using default libgphoto2 driver directory.", camlibsPath);
 
          /*
           * If path_of_executable/libgphoto2_port exists, load libgphoto2_port drivers from there
@@ -103,18 +103,18 @@ int CSimpleCam::setLibPaths()
          char iolibsPath[MAXPATHLEN];
          strlcpy(iolibsPath, realExecutablePath, sizeof(iolibsPath));
          strlcat(iolibsPath, "/libgphoto2_port", sizeof(iolibsPath)); // iolibsPath is now path_of_executable/libgphoto2_port
-         // Set IOLIBS environment variable to path_of_executable/../Frameworks/libgphoto2_port if directory exists
+         // Set IOLIBS environment variable to path_of_executable/libgphoto2_port if directory exists
          if (stat(iolibsPath, &st) == 0)
-			{
-      		gp_log(GP_LOG_DEBUG, "SimpleCam", "Setting IOLIBS to '%s'", iolibsPath);
+         {
+            gp_log(GP_LOG_DEBUG, "SimpleCam", "Setting IOLIBS to '%s'", iolibsPath);
             setenv("IOLIBS", iolibsPath, 0);
-			}
-			else
-      		gp_log(GP_LOG_DEBUG, "SimpleCam", "Directory '%s' not found. Not setting IOLIBS. Using default libgphoto2_port driver directory.", iolibsPath);
+         }
+         else
+            gp_log(GP_LOG_DEBUG, "SimpleCam", "Directory '%s' not found. Not setting IOLIBS. Using default libgphoto2_port driver directory.", iolibsPath);
       }
    }
    else
-     	gp_log(GP_LOG_ERROR, "SimpleCam", "Failed to get path of executable. Using default libgphoto2 and libgphoto2_port driver directory.");
+      gp_log(GP_LOG_ERROR, "SimpleCam", "Failed to get path of executable. Using default libgphoto2 and libgphoto2_port driver directory.");
 #endif __APPLE__
 return 0;
 }
