@@ -190,7 +190,8 @@ public class PropertyTableData extends AbstractTableModel implements MMPropertyT
 
 	public void refresh() {
 		try {            
-			gui_.suspendLiveMode(); 
+			gui_.suspendLiveMode();
+         update();
 			for (int i=0; i<propList_.size(); i++){
 				PropertyItem item = propList_.get(i);
             if (showDevice(flags_, item.device)) {
