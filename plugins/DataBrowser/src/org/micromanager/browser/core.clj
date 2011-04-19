@@ -261,9 +261,11 @@
      :locations
        (->> @settings-window :locations :table .getModel .getDataVector
             seq (map seq) flatten)
-;     :sorted-column
-;       (->> table getRowSorter 
-     }))
+     :sorted-column
+       (let [sort-key (->> table .getRowSorter .getSortKeys seq first)]
+         {:order ({SortOrder/ASCENDING 1 SortOrder/DESCENDING -1}
+                   (.getSortOrder sort-key))
+          :model-column (.getColumnName model (.getColumn sort-key))})}))
 
 (defn update-collection-menu [items]
   (let [menu (@browser :collection-menu)]
