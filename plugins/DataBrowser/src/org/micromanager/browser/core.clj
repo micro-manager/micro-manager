@@ -19,7 +19,7 @@
            [javax.swing.table AbstractTableModel DefaultTableModel
                               TableColumn TableRowSorter]
            [javax.swing.event DocumentListener TableModelListener]
-           [java.io BufferedReader File FileReader]
+           [java.io BufferedReader File FileReader PrintWriter]
            [java.util Vector]
            [java.util.prefs Preferences]
            [java.awt Color Dimension Font Insets]
@@ -37,6 +37,8 @@
 (def settings-window (atom nil))
 
 (def headings (atom nil))
+
+(def collections (atom nil))
 
 (def prefs (.. Preferences userRoot
       (node "MMDataBrowser") (node "b3d184b1-c580-4f06-a1d9-b9cc00f12641")))
@@ -237,14 +239,13 @@
 
 ;; collection files
 
-(defn create-default-path []
-  (str (System/getProperty "user.name") ".mmdb.txt"))
+(defn read-collection-map []
+  (or (read-value-from-prefs prefs "collection-files")
+      (let [name (System/getProperty "user.name")]
+        {name (.getAbsolutePath (File. (str name ".mmdb.txt")))})))
 
-(defn new-collection []
-  (File. (create-default-path)))
-
-(defn read-collection-list []
-  (read-value-from-prefs prefs "collection-files"))
+(defn save-collection-map [collection-map]
+  (write-value-to-prefs prefs "collection-files" collection-map))
 
 (defn get-current-data-and-settings []
   (let [table (@browser :table)
@@ -262,16 +263,44 @@
        (->> @settings-window :locations :table .getModel .getDataVector
             seq (map seq) flatten)
      :sorted-column
-       (let [sort-key (->> table .getRowSorter .getSortKeys seq first)]
+       (when-let [sort-key (->> table .getRowSorter .getSortKeys seq first)]
          {:order ({SortOrder/ASCENDING 1 SortOrder/DESCENDING -1}
                    (.getSortOrder sort-key))
-          :model-column (.getColumnName model (.getColumn sort-key))})}))
+          :model-column (.getColumnName model (.getColumn sort-key))})
+     }))
 
-(defn update-collection-menu [items]
-  (let [menu (@browser :collection-menu)]
+(defn apply-data-and-settings [settings]
+  (let [table (@browser :table)
+        model (.getModel table)
+        {:keys [browser-model-data
+                browser-model-headings
+                window-size display-columns
+                locations sorted-column]} settings]
+    (.setDataVector model
+      (Vector. (map #(Vector. %) (:browser-model-data settings)))
+      (Vector. browser-model-headings))
+    ))
+
+(defn get-current-collection-file []
+   (->> @browser :collection-menu
+               .getSelectedItem (get @collections)))
+
+(defn save-current-data-and-settings []
+    (with-open [pr (PrintWriter. (get-current-collection-file))]
+      (write-json (get-current-data-and-settings) pr)))
+
+(defn load-data-and-settings [name]
+  (let [f (get @collections name)]
+    (apply-data-and-settings (read-json (slurp f))))
+    (.setSelectedItem (@browser :collection-menu) name))
+
+(defn update-collection-menu []
+  (let [menu (@browser :collection-menu)
+        names (sort (keys @collections))]
     (.removeAllItems menu)
-    (dorun (map #(.addItem menu %) (sort items)))
-    (.addItem menu "New...")))
+    (dorun (map #(.addItem menu %) names))
+    (.addItem menu "New...")
+    (.addItem menu "Load...")))
 
 ;; windows
 
@@ -341,10 +370,10 @@
     (.setLayout panel (SpringLayout.))
     (constrain-to-parent scroll-pane :n 32 :w 5 :s -5 :e -5
                          search-field :n 5 :w 25 :n 28 :w 200
-                         settings-button :n 5 :w 200 :n 28 :w 305
+                         settings-button :n 5 :w 405 :n 28 :w 510
                          search-label :n 5 :w 5 :n 28 :w 25
-                         collection-label :n 5 :w 310 :n 28 :w 380
-                         collection-menu :n 5 :w 380 :n 28 :w 525)
+                         collection-label :n 5 :w 205 :n 28 :w 275
+                         collection-menu :n 5 :w 275 :n 28 :w 405)
     (connect-search search-field table)
     (.setSortsOnUpdates (.getRowSorter table) true)
     (listen-to-open table)
@@ -357,11 +386,13 @@
 
 (defn start-browser []
   (load-mm)
+  (reset! collections (read-collection-map))
   (reset! settings-window (create-settings-window))
   (reset! browser (create-browser))
   (reset! headings tags)
   (.setModel (:table @browser) (create-table-model tags))
   (update-all-columns (.getModel (get-in @settings-window [:columns :table])))
+  (update-collection-menu)
   (add-location "/Users/arthur/qqqq")
   (.show (@browser :frame))
   browser)
