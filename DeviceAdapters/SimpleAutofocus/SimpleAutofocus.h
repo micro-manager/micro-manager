@@ -56,14 +56,14 @@ public:
 
    // AutoFocus API
    virtual int SetContinuousFocusing(bool state)
-   { 
-      continuousFocusing_ = state; 
+   {
+      continuousFocusing_ = state;
       return DEVICE_OK;
    };
-   
-   virtual int GetContinuousFocusing(bool& state) 
+
+   virtual int GetContinuousFocusing(bool& state)
    {
-      state = continuousFocusing_; 
+      state = continuousFocusing_;
       return DEVICE_OK;
    };
    virtual bool IsContinuousFocusLocked();
@@ -80,16 +80,16 @@ public:
 
    void Z(const double value);
    double Z(void);
-   
+
    int BruteForceSearch();
    int BrentSearch();
-   
+
    // action interface
    // ---------------
 
    // these two properties are used only if non-0
-   int OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct); 
-   int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct); 
+   int OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    int OnCoarseStepNumber(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnFineStepNumber(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -119,10 +119,13 @@ private:
    bool continuousFocusing_;
    bool locked_;
    std::string name_;
-   SimpleAutofocus& operator=(SimpleAutofocus& /*rhs*/) {assert(false); return *this;};
+   SimpleAutofocus& operator=(SimpleAutofocus& /*rhs*/) {
+      assert(false);
+      return *this;
+   };
 
    // N.B  (note well) this utility MODIFIES the argument, make a copy yourself if you want the original data preserved
-   template <class U> U FindMedian(std::vector<U>& values ){ 
+   template <class U> U FindMedian(std::vector<U>& values ) {
       std::sort(values.begin(), values.end());
       return values[(values.size())>>1];
    };
@@ -140,10 +143,10 @@ private:
    float* pSmoothedIm_;
    unsigned long sizeOfSmoothedIm_;
 
-   short* pShort_;
+   unsigned short* pShort_;
    // a flag to trigger recalculation
    long recalculate_;
-   double mean_;  
+   double mean_;
    double standardDeviationOverMean_;
    SAFData* pPoints_;
    std::string selectedChannelConfig_;
@@ -159,7 +162,7 @@ private:
    //std::multiset<float> mins_;
    //std::mulitset<float> maxs_;
    //const int nExtrema_ = 5;
-   
+
    float min1_;
    float min2_;
    float max1_;
@@ -175,18 +178,18 @@ private:
 // FocusMonitor class
 // Focus monitoring module
 //////////////////////////////////////////////////////////////////////////////
-class FocusMonitor : public CImageProcessorBase<FocusMonitor>  
+class FocusMonitor : public CImageProcessorBase<FocusMonitor>
 {
 public:
    FocusMonitor();
    ~FocusMonitor();
- 
+
    // MMDevice API
    // ------------
    int Initialize();
    int Shutdown();
-  
-   void GetName(char* name) const;      
+
+   void GetName(char* name) const;
    bool Busy();
 
    int AcqBeforeFrame();
@@ -210,38 +213,44 @@ private:
 
    class AFThread : public MMDeviceThreadBase
    {
-      public:
-         AFThread(FocusMonitor* fm) : fm_(fm), delaySec_(2.0), running_(false) {}
-         ~AFThread() {}
+   public:
+      AFThread(FocusMonitor* fm) : fm_(fm), delaySec_(2.0), running_(false) {}
+      ~AFThread() {}
 
-         int svc (void)
+      int svc (void)
+      {
+         running_ = true;
+         CDeviceUtils::SleepMs((long)(delaySec_*1000));
+         int ret = fm_->DoAF();
+         if (ret != DEVICE_OK)
          {
-            running_ = true;
-            CDeviceUtils::SleepMs((long)(delaySec_*1000));
-            int ret = fm_->DoAF();
-            if (ret != DEVICE_OK)
-            {
-               std::ostringstream txt;
-               txt << "Focus monitor AF failed with code " << ret;
-               fm_->GetCoreCallback()->LogMessage(fm_, txt.str().c_str(), false);
-            }
-            running_ = false;
-            return 0;
+            std::ostringstream txt;
+            txt << "Focus monitor AF failed with code " << ret;
+            fm_->GetCoreCallback()->LogMessage(fm_, txt.str().c_str(), false);
          }
+         running_ = false;
+         return 0;
+      }
 
-         bool isRunning() { return running_;}
-         void setDelaySec(double sec) {delaySec_ = sec;}
+      bool isRunning() {
+         return running_;
+      }
+      void setDelaySec(double sec) {
+         delaySec_ = sec;
+      }
 
-         double getDelaySec(){return delaySec_;}
+      double getDelaySec() {
+         return delaySec_;
+      }
 
-      private:
-         double delaySec_;
-         FocusMonitor* fm_;
-         bool running_;
+   private:
+      double delaySec_;
+      FocusMonitor* fm_;
+      bool running_;
    };
 
-  AFThread* delayThd_;
-  int DoAF();
+   AFThread* delayThd_;
+   int DoAF();
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -253,26 +262,37 @@ class ThreePointAF : public CAutoFocusBase<ThreePointAF>
 public:
    ThreePointAF() ;
    ~ThreePointAF() {}
-      
+
    // MMDevice API
-   bool Busy() {return busy_;}
+   bool Busy() {
+      return busy_;
+   }
    void GetName(char* pszName) const;
 
    int Initialize();
    int Shutdown();
 
    // AutoFocus API
-   int SetContinuousFocusing(bool state) {return state ? DEVICE_UNSUPPORTED_COMMAND : DEVICE_OK;}
-   int GetContinuousFocusing(bool& state) {state = false; return DEVICE_OK;}
-   bool IsContinuousFocusLocked() {return false;}
+   int SetContinuousFocusing(bool state) {
+      return state ? DEVICE_UNSUPPORTED_COMMAND : DEVICE_OK;
+   }
+   int GetContinuousFocusing(bool& state) {
+      state = false;
+      return DEVICE_OK;
+   }
+   bool IsContinuousFocusLocked() {
+      return false;
+   }
    int FullFocus();
-   int IncrementalFocus() {return FullFocus();}
+   int IncrementalFocus() {
+      return FullFocus();
+   }
    int SetOffset(double offset);
    int GetOffset(double & offset);
-	
+
    // Helper functions
    int GetLastFocusScore(double& score);
-   int GetCurrentFocusScore(double& score); 
+   int GetCurrentFocusScore(double& score);
 
    // properties
    int OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct);
