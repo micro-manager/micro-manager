@@ -1,5 +1,5 @@
 (ns org.micromanager.browser.core
-  (:import [javax.swing BorderFactory JButton JFrame JLabel
+  (:import [javax.swing BorderFactory JButton JComboBox JFrame JLabel
                         JList JPanel JScrollPane JSplitPane
                         JTable JTextField RowFilter SpringLayout SwingUtilities]
            [javax.swing.table AbstractTableModel DefaultTableModel
@@ -7,12 +7,14 @@
            [javax.swing.event DocumentListener TableModelListener]
            [java.io BufferedReader File FileReader]
            [java.util Vector]
+           [java.util.prefs Preferences]
            [java.awt Color Dimension Font Insets]
            [java.awt.event KeyAdapter MouseAdapter]
            [com.swtdesigner SwingResourceManager])
   (:use [org.micromanager.browser.utils
             :only (gen-map constrain-to-parent create-button create-icon-button
-                   attach-action-key remove-borders choose-directory)]
+                   attach-action-key remove-borders choose-directory
+                   read-value-from-prefs write-value-to-prefs)]
         [clojure.contrib.json :only (read-json)]
         [org.micromanager.mm :only (load-mm gui)]))
 
@@ -21,6 +23,9 @@
 (def settings-window (atom nil))
 
 (def headings (atom nil))
+
+(def prefs (.. Preferences userRoot
+      (node "MMDataBrowser") (node "b3d184b1-c580-4f06-a1d9-b9cc00f12641")))
 
 (def tags [
   "ChColors" "ChContrastMax" "ChContrastMin" "ChNames" "Channels" "Comment"
@@ -71,7 +76,8 @@
   (let [path-column (get-model-column-index table "Path")]
     (doseq [i (.getSelectedRows table)]
       (.openAcquisitionData gui
-        (.getValueAt table i path-column)))))
+        (.. table getModel
+            (getValueAt (.convertRowIndexToModel table i) path-column))))))
 
 (defn listen-to-open [table]
   (.addMouseListener table
@@ -215,6 +221,44 @@
       (.addRow model (Vector. [false tag])))
     table))
 
+;; collection files
+
+(defn create-default-path []
+  (str (System/getProperty "user.name") ".mmdb.txt"))
+
+(defn new-collection []
+  (File. (create-default-path)))
+
+(defn read-collection-list []
+  (read-value-from-prefs prefs "collection-files"))
+
+(defn get-current-data-and-settings []
+  (let [table (@browser :table)
+        model (.getModel table)]
+    {:browser-model-data (map seq (seq (. model getDataVector)))
+     :browser-model-headings (map #(.getColumnName model %)
+                               (range (.getColumnCount model)))
+     :window-size (let [f (@browser :frame)] [(.getWidth f) (.getHeight f)])
+     :display-columns
+       (let [total-width (float (.getWidth table))]
+         (->> table .getColumnModel .getColumns enumeration-seq
+              (map #(hash-map :width (/ (.getWidth %) total-width)
+                              :title (.getIdentifier %)))))
+     :locations
+       (->> @settings-window :locations :table .getModel .getDataVector
+            seq (map seq) flatten)
+;     :sorted-column
+;       (->> table getRowSorter 
+     }))
+
+(defn update-collection-menu [items]
+  (let [menu (@browser :collection-menu)]
+    (.removeAllItems menu)
+    (dorun (map #(.addItem menu %) (sort items)))
+    (.addItem menu "New...")))
+
+;; windows
+
 (defn create-settings-window []
   (let [label-table
           (fn [table label-text parent]
@@ -251,7 +295,7 @@
       (.add add-location-button) (.add remove-location-button))
     (.setLayout main-panel (SpringLayout.))
     (constrain-to-parent
-      split-pane :n 32 :w 5 :s -5 :e -5
+      split-pane :n 5 :w 5 :s -5 :e -5
       add-location-button :n 0 :e -38 :n 18 :e -20
       remove-location-button :n 0 :e -18 :n 18 :e 0)
     (.setBounds frame 50 50 600 600)
@@ -263,32 +307,37 @@
         table (proxy [JTable] [] (isCellEditable [_ _] false))
         scroll-pane (JScrollPane. table)
         search-field (JTextField.)
-        search-label (JLabel.)
+        search-label (JLabel. (get-icon "zoom.png"))
         settings-button (create-button "Settings..."
-                          #(.show (:frame @settings-window)))]
+                          #(.show (:frame @settings-window)))
+        collection-label (JLabel. "Collection:")
+        collection-menu (JComboBox.)]
     (doto panel (.add scroll-pane) (.add search-field)
-                (.add settings-button) (.add search-label))
+                (.add settings-button) (.add search-label)
+                (.add collection-label) (.add collection-menu))
     (doto table
       (.setAutoCreateRowSorter true)
       (.setShowGrid false)
       (.setGridColor Color/LIGHT_GRAY)
       (.setShowVerticalLines true))
     (attach-action-key table "ENTER" #(open-selected-files table))
-    (doto search-label (.setIcon (get-icon "zoom.png")))
     (.setFont search-field (.getFont table))
     (.setLayout panel (SpringLayout.))
     (constrain-to-parent scroll-pane :n 32 :w 5 :s -5 :e -5
                          search-field :n 5 :w 25 :n 28 :w 200
-                         settings-button :n 5 :w 205 :n 28 :w 330
-                         search-label :n 5 :w 5 :n 28 :w 25)
+                         settings-button :n 5 :w 200 :n 28 :w 305
+                         search-label :n 5 :w 5 :n 28 :w 25
+                         collection-label :n 5 :w 310 :n 28 :w 380
+                         collection-menu :n 5 :w 380 :n 28 :w 525)
     (connect-search search-field table)
     (.setSortsOnUpdates (.getRowSorter table) true)
     (listen-to-open table)
     (attach-action-key search-field "ESCAPE" #(.setText search-field ""))
-    (doto frame (.. getContentPane (add panel))
-       (.setBounds 50 50 500 500)
-       (.setVisible true))
-    (gen-map frame table scroll-pane settings-button search-field)))
+    (doto frame
+      (.. getContentPane (add panel))
+      (.setBounds 50 50 540 500))
+    (gen-map frame table scroll-pane settings-button search-field
+             collection-menu)))
 
 (defn start-browser []
   (load-mm)
@@ -298,6 +347,7 @@
   (.setModel (:table @browser) (create-table-model tags))
   (update-all-columns (.getModel (get-in @settings-window [:columns :table])))
   (add-location "/Users/arthur/qqqq")
+  (.show (@browser :frame))
   browser)
 
 

@@ -1,6 +1,7 @@
 (ns org.micromanager.browser.utils
   (:import (java.util UUID)
-           (java.io File FilenameFilter)
+           (java.util.prefs Preferences)
+           (java.io ByteArrayInputStream ByteArrayOutputStream File FilenameFilter)
            (java.awt FileDialog)
            (java.awt.event ActionListener)
            (javax.swing AbstractAction BorderFactory JButton
@@ -11,6 +12,35 @@
 (defmacro gen-map [& args]
   (let [kw (map keyword args)]
     (zipmap kw args)))
+
+; Java Preferences
+
+(defn partition-str [n s]
+  (loop [rem s acc []]
+    (if (pos? (.length rem))
+      (recur (clojure.contrib.string/drop n rem)
+             (conj acc (clojure.contrib.string/take n rem)))
+      (seq acc))))
+
+(def pref-max-bytes (* 3/4 Preferences/MAX_VALUE_LENGTH))
+
+(defn write-value-to-prefs
+  "Writes a pure clojure data structure to Preferences object."
+  [prefs key value]
+  (let [chunks (partition-str pref-max-bytes (with-out-str (pr value)))
+        node (. prefs node key)]
+    (.clear node)
+    (doseq [i (range (count chunks))]
+       (. node put (str i) (nth chunks i)))))
+
+(defn read-value-from-prefs
+  "Reads a pure clojure data structure from Preferences object."
+  [prefs key]
+  (let [node (. prefs node key)]
+    (let [s (apply str
+              (for [i (range (count (. node keys)))]
+                (.get node (str i) nil)))]
+      (when (and s (pos? (.length s))) (read-string s)))))
 
 ;; identify OS
 
