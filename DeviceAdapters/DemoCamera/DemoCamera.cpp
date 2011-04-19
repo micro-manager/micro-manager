@@ -468,10 +468,10 @@ int CDemoCamera::SnapImage()
    GenerateSyntheticImage(img_, exp);
 
    MM::MMTime s0(0,0);
+   MM::MMTime t2 = GetCurrentMMTime();
    if( s0 < startTime )
    {
-
-      while (GetCurrentMMTime() - startTime < MM::MMTime(expUs)) {}
+	   CDeviceUtils::SleepMs(exp - (t2-startTime).getMsec());
    }
    else
    {
