@@ -86,9 +86,9 @@ int CSimpleCam::setLibPaths()
           */
          char camlibsPath[MAXPATHLEN];
          strlcpy(camlibsPath, realExecutablePath, sizeof(camlibsPath));
-         strlcat(camlibsPath, "/libgphoto2", sizeof(camlibsPath)); // camlibsPath is now path_of_executable/libgphoto2
+         strlcat(camlibsPath, "/libgphoto2/libgphoto2", sizeof(camlibsPath)); // camlibsPath is now path_of_executable/libgphoto2/libgphoto2
          struct stat st;
-         // Set CAMLIBS environment variable to path_of_executable/libgphoto2 if directory exists
+         // Set CAMLIBS environment variable to path_of_executable/libgphoto2/libgphoto2 if directory exists
          if (stat(camlibsPath, &st) == 0)
          {
             gp_log(GP_LOG_DEBUG, "SimpleCam", "Setting CAMLIBS to '%s'", camlibsPath);
@@ -102,8 +102,8 @@ int CSimpleCam::setLibPaths()
           */
          char iolibsPath[MAXPATHLEN];
          strlcpy(iolibsPath, realExecutablePath, sizeof(iolibsPath));
-         strlcat(iolibsPath, "/libgphoto2_port", sizeof(iolibsPath)); // iolibsPath is now path_of_executable/libgphoto2_port
-         // Set IOLIBS environment variable to path_of_executable/libgphoto2_port if directory exists
+         strlcat(iolibsPath, "/libgphoto2/libgphoto2_port", sizeof(iolibsPath)); // iolibsPath is now path_of_executable/libgphoto2/libgphoto2_port
+         // Set IOLIBS environment variable to path_of_executable/libgphoto2/libgphoto2_port if directory exists
          if (stat(iolibsPath, &st) == 0)
          {
             gp_log(GP_LOG_DEBUG, "SimpleCam", "Setting IOLIBS to '%s'", iolibsPath);
