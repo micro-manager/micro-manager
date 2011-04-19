@@ -51,6 +51,8 @@
 #
 # Assume we are in DeviceAdapters/SimpleCam and compiled driver is in .libs/libmmgr_dal_GPhoto.so
 #
+GPHOTO2_VERSION=`pkg-config libgphoto2 --variable=VERSION`
+GPHOTO2_PORT_VERSION=`pkg-config libgphoto2_port --variable=VERSION`
 
 cp .libs/libmmgr_dal_GPhoto.so /Applications/Micro-Manager1.4/libmmgr_dal_GPhoto
 
@@ -71,11 +73,11 @@ install_name_tool -id @loader_path/libgphoto2/libgphoto2_port.0.dylib libgphoto2
 
 # Copy camera drivers
 mkdir libgphoto2/libgphoto2
-cp /opt/local/lib/libgphoto2/2.4.10.1/*.so libgphoto2/libgphoto2/
+cp /opt/local/lib/libgphoto2/$GPHOTO2_VERSION/*.so libgphoto2/libgphoto2/
 
 # Copy io drivers
 mkdir libgphoto2/libgphoto2_port
-cp /opt/local/lib/libgphoto2_port/0.8.0/*.so libgphoto2/libgphoto2_port/
+cp /opt/local/lib/libgphoto2_port/$GPHOTO2_PORT_VERSION/*.so libgphoto2/libgphoto2_port/
 
 # Change all dynamic linkages in Micro-Manager/libgphoto2/libgphoto2 and Micro-Manager/libgphoto2/libgphoto2_port
 for SO in libgphoto2/libgphoto2/*.so libgphoto2/libgphoto2_port/*.so 
