@@ -1624,7 +1624,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          @Override
          public void run(){
           try {
-               ij.plugin.BrowserLauncher.openURL("https://valelab.ucsf.edu/~nico/MMwiki/index.php/Citing_Micro-Manager");
+               ij.plugin.BrowserLauncher.openURL("https://valelab.ucsf.edu/~MM/MMwiki/index.php/Citing_Micro-Manager");
             } catch (IOException e1) {
                ReportingUtils.showError(e1);
             }
