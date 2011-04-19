@@ -2,8 +2,9 @@
   (:import [javax.swing BorderFactory JButton JFrame JLabel
                         JList JPanel JScrollPane JSplitPane
                         JTable JTextField RowFilter SpringLayout SwingUtilities]
-           [javax.swing.table AbstractTableModel DefaultTableModel TableRowSorter]
-           [javax.swing.event DocumentListener]
+           [javax.swing.table AbstractTableModel DefaultTableModel
+                              TableColumn TableRowSorter]
+           [javax.swing.event DocumentListener TableModelListener]
            [java.io BufferedReader File FileReader]
            [java.util Vector]
            [java.awt Color Dimension Font Insets]
@@ -42,9 +43,9 @@
 (defn set-filter [table text]
   (let [sorter (.getRowSorter table)
         column-indices
-          (int-array (map #(.getModelIndex %)
-               (enumeration-seq (.. table getColumnModel getColumns))))]
-      (do (.setRowFilter sorter (RowFilter/regexFilter text column-indices)))))
+        (int-array (map #(.getModelIndex %)
+        (enumeration-seq (.. table getColumnModel getColumns))))]
+    (do (.setRowFilter sorter (RowFilter/regexFilter text column-indices)))))
 
 (defn connect-search [search-field table]
   (let [d (.getDocument search-field)
@@ -59,12 +60,18 @@
         (changedUpdate [_ _] (f))
         (removeUpdate [_ _] (f))))))
 
-(defn get-column-index [table text]
+(defn get-model-column-index [table text]
   (let [table-model (.getModel table)]
     (-> (vec
       (for [i (range (.getColumnCount table-model))]
         (.getColumnName table-model i)))
       (.indexOf text))))
+
+(defn open-selected-files [table]
+  (let [path-column (get-model-column-index table "Path")]
+    (doseq [i (.getSelectedRows table)]
+      (.openAcquisitionData gui
+        (.getValueAt table i path-column)))))
 
 (defn listen-to-open [table]
   (.addMouseListener table
@@ -73,19 +80,13 @@
         (when (= 2 (.getClickCount e)) ; double click
           (open-selected-files table))))))
 
-(defn open-selected-files [table]
-  (let [path-column (get-column-index table "Path")]
-    (doseq [i (.getSelectedRows table)]
-      (.openAcquisitionData gui
-        (.getValueAt table i path-column)))))
-
 (defn remove-locations [] 
   (let [location-table (get-in @settings-window [:locations :table])
         selected-rows (.getSelectedRows location-table)
         location-model (.getModel location-table)
         browser-table (:table @browser)
         browser-model (.getModel browser-table)
-        location-column (get-column-index browser-table "Location")]
+        location-column (get-model-column-index browser-table "Location")]
     (println browser-model "," location-model "," location-column)
     (doseq [location-row (reverse selected-rows)]
       (when-let [loc (.getValueAt location-model location-row 0)]
@@ -166,8 +167,35 @@
                      "Please add a location to scan for files")]
     (add-location (.getAbsolutePath loc))))
 
+(defn get-display-index [table index]
+  (let [column-model (.getColumnModel table)]
+    (first
+      (for [i (range (.getColumnCount column-model))
+        :when (= index (.getModelIndex (.getColumn column-model i)))]
+          i))))
+
+(defn update-column [tags-model col]
+  (when (:table @browser)
+    (let [on (.getValueAt tags-model col 0)
+          tag (.getValueAt tags-model col 1)
+          table (:table @browser)
+          column-model (.getColumnModel table)
+          model-index (get-model-column-index table tag)
+          display-index (get-display-index table model-index)]
+      (when (<= 0 model-index)
+        (when (and (not on) display-index)
+          (.removeColumn column-model (.getColumn column-model display-index)))
+        (when (and on (not display-index))
+          (println model-index)
+          (.addColumn column-model
+            (doto (TableColumn. model-index)
+              (.setHeaderValue tag))))))))
+
+(defn update-all-columns [tags-model]
+  (dorun (map #(update-column tags-model %) (range (.getRowCount tags-model)))))
+
 (defn create-column-table []
-  (let [table (proxy [JTable] [0 2]
+  (let [table (proxy [JTable] []
                 (isCellEditable [_ i] (get [true false] i)))
         model (proxy [DefaultTableModel] [0 2]
                 (getColumnClass [i]
@@ -177,10 +205,12 @@
       (.setRowSelectionAllowed false)
       (.setFocusable false)
       (.. getColumnModel (getColumn 0) (setMinWidth 20))
-      (.. getColumnModel (getColumn 0) (setMaxWidth 20))
-    ; (.. getColumnModel (getColumn 1) (setMaximumWidth 20))
-    ; (.setAutoResizeMode JTable/AUTO_RESIZE_LAST_COLUMN))
-    )
+      (.. getColumnModel (getColumn 0) (setMaxWidth 20)))
+      (.addTableModelListener model
+        (reify TableModelListener
+          (tableChanged [_ e]
+            (dorun (map #(update-column model %)
+              (range (.getFirstRow e) (inc (.getLastRow e))))))))
     (doseq [tag tags]
       (.addRow model (Vector. [false tag])))
     table))
@@ -264,8 +294,9 @@
   (load-mm)
   (reset! settings-window (create-settings-window))
   (reset! browser (create-browser))
-  (reset! headings default-headings)
-  (.setModel (:table @browser) (create-table-model default-headings))
+  (reset! headings tags)
+  (.setModel (:table @browser) (create-table-model tags))
+  (update-all-columns (.getModel (get-in @settings-window [:columns :table])))
   (add-location "/Users/arthur/qqqq")
   browser)
 
