@@ -487,7 +487,7 @@ public:
    unsigned long GetNumberOfPositions()const {return numPos_;};
 
    // action interface
-   int OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 protected:
    unsigned int numPos_;

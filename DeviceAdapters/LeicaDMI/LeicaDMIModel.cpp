@@ -41,7 +41,8 @@
 LeicaDeviceModel::LeicaDeviceModel() :
    position_(1),
    minPosition_(0),
-   maxPosition_(1)
+   maxPosition_(1),
+	busy_(false)
 {
    MM_THREAD_INITIALIZE_GUARD(&mutex_);
 }

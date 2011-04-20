@@ -2722,34 +2722,40 @@ int SidePort::Initialize()
    // set property list
    // ----------------
 
-   // Position
+   //state
 
    // create property
    int maxPos;
 	ret = g_ScopeModel.sidePort_.GetMaxPosition(maxPos);
    if (ret != DEVICE_OK)
       return ret;
-   numPos_ = maxPos;
-
 	int minPos ;
 	g_ScopeModel.sidePort_.GetMinPosition(minPos);
-
-   CPropertyAction* pAct = new CPropertyAction(this, &SidePort::OnPosition);
-   ret = CreateProperty("Position", "1", MM::String, false, pAct);
-   if (ret != DEVICE_OK)
-      return ret;
+   numPos_ = maxPos-minPos+1;
 
 
+   CPropertyAction* pAct = new CPropertyAction (this, &SidePort::OnState);
+	(void)CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
 
-    //create default positions and labels
-   for (unsigned i=minPos; i <= numPos_; i++)
+
+   // Label
+   // -----
+   pAct = new CPropertyAction (this, &CStateBase::OnLabel);
+   (void)CreateProperty(MM::g_Keyword_Label, "Undefined", MM::String, false, pAct);
+   
+
+	std::ostringstream dmess;
+	dmess << "minPos " << minPos << " numPos_ " << numPos_ << " labels: ";
+
+   for (unsigned i=0; i < numPos_; ++i)
    {
-		std::ostringstream os;
-      os << i ;
-      AddAllowedValue("Position", os.str().c_str());
-		//todo retrieve actual optical paths
-		SetPositionLabel((long)i, os.str().c_str());
+	   std::ostringstream os;
+      os << i+minPos ;
+		// better name for this would be SetStateLabel
+      SetPositionLabel((long)i,  os.str().c_str());
+		dmess << os.str();
    }
+	LogMessage(dmess.str().c_str(),true);
 
    ret = UpdateStatus();
    if (ret!= DEVICE_OK)
@@ -2779,27 +2785,30 @@ bool SidePort::Busy()
 ///////////////////////////////////////////////////////////////////////////////
 // Action handlers                                                           
 ///////////////////////////////////////////////////////////////////////////////
-int SidePort::OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
+int SidePort::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
+	int ret = DEVICE_OK;
    if (eAct == MM::BeforeGet)
    {
       int pos;
-      int ret = g_ScopeModel.sidePort_.GetPosition(pos);
-      if (ret != DEVICE_OK)
-         return ret;
-      //if (pos == 0)
-      //   return ERR_TURRET_NOT_ENGAGED;
+		// 1 - based position
+      ret = g_ScopeModel.sidePort_.GetPosition(pos);
+		std::ostringstream o;
+		o<<" in OnState BeforeGet " << pos;
+		LogMessage(o.str().c_str(),true);
       ostringstream os;
-      pProp->Set((long)pos);
+		// 0 - based 'state'
+      pProp->Set((long)(pos-1));
    }
    else if (eAct == MM::AfterSet)
    {
       long pos;
       pProp->Get(pos);
-      if ((pos > 0) && (pos <= (int) numPos_)) {
-         return g_ScopeInterface.SetSidePortPosition(*this, *GetCoreCallback(), pos);
-      } //else
-        // return ERR_INVALID_TURRET_POSITION;
+		std::ostringstream o;
+		o<<" in OnState AfterSet " << pos;
+		LogMessage(o.str().c_str(),true);
+      ret = g_ScopeInterface.SetSidePortPosition(*this, *GetCoreCallback(), (int)(pos+1));
+
    }
-   return DEVICE_OK;
+   return ret;
 }

@@ -444,6 +444,16 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
       command.str("");
    }
 
+	   // Start event reporting for side port
+	if (scopeModel_->IsDeviceAvailable(::g_Side_Port)) {
+      command << g_Side_Port << "003 1";
+      ret = GetAnswer(device, core, command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+      command.str("");
+   }
+
+
 
    // Start monitoring of all messages coming from the microscope
    monitoringThread_ = new LeicaMonitoringThread(device, core, port_, scopeModel_);
@@ -1432,7 +1442,6 @@ int LeicaScopeInterface::GetSidePortInfo(MM::Device& device, MM::Core& core)
    ts.clear();
    ts.str("");
 
-	scopeModel_->sidePort_.SetPosition(minPos);
 
 	return DEVICE_OK;
 
@@ -1929,19 +1938,24 @@ int LeicaMonitoringThread::svc()
                         }
                         break;
                      }
+							case (22) :
+							{
+								// the scope echoed the command
+							   //scopeModel_->sidePort_.SetBusy(false);
+							}
+							break;
                      case (23) : // Absolute position
                      {
-                        int pos;
-                        os >> pos;
-                        scopeModel_->sidePort_.SetPosition(pos);
+
+								int pos;
+								os >> pos;
+								scopeModel_->sidePort_.SetPosition(pos);
                         scopeModel_->sidePort_.SetBusy(false);
-                        break;
+                        
                      }
+							break;
                      case (28) : // Absolute position
                      {
-                        int pos;
-                        os >> pos;
-                        scopeModel_->sidePort_.SetPosition(pos);
                         scopeModel_->sidePort_.SetBusy(false);
                         break;
                      }
