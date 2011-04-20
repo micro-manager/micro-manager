@@ -470,4 +470,33 @@ private:
    std::string name_;
    long timeOut_;
 };
+
+
+class SidePort : public CStateDeviceBase<SidePort>
+{
+public:
+   SidePort();
+   ~SidePort();
+
+   // MMDevice API
+   int Initialize();
+   int Shutdown();
+    
+   void GetName(char* pszName) const;
+   bool Busy();
+   unsigned long GetNumberOfPositions()const {return numPos_;};
+
+   // action interface
+   int OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+protected:
+   unsigned int numPos_;
+
+private:
+   bool initialized_;
+   long pos_;
+   std::string name_;
+   std::string description_;
+};
+
 #endif // _LeicaDMI_H_

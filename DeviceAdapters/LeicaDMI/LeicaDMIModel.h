@@ -307,6 +307,8 @@ public:
    LeicaMagChangerModel magChanger_;
    LeicaAFCModel afc_;
 
+	LeicaDeviceModel sidePort_;
+
 private:
    std::vector<bool> availableDevices_;
    bool usesMethods_;

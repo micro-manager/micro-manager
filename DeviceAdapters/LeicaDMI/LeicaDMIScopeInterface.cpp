@@ -217,7 +217,15 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
          return ret;
       command.str("");
    }
-
+	
+   // Suppress event reporting for side port
+	if (scopeModel_->IsDeviceAvailable(::g_Side_Port)) {
+		command << ::g_Side_Port << "003 0 0 0 0 0 0 0 0 0";
+      ret = GetAnswer(device, core, command.str().c_str(), answer);
+      if (ret != DEVICE_OK)
+         return ret;
+      command.str("");
+   }
    CDeviceUtils::SleepMs(100);
 
    if (scopeModel_->IsDeviceAvailable(g_Lamp)) {
@@ -304,6 +312,13 @@ int LeicaScopeInterface::Initialize(MM::Device& device, MM::Core& core)
       if (ret != DEVICE_OK)
          return ret;
    }
+
+	if(scopeModel_->IsDeviceAvailable(g_Side_Port))
+	{
+		ret = GetSidePortInfo(device, core);
+			if( DEVICE_OK != ret)
+				return ret;
+	}
 
    // Start all events at this point
 
@@ -1378,6 +1393,52 @@ int LeicaScopeInterface::GetMagChangerInfo(MM::Device& device, MM::Core& core)
    return DEVICE_OK;
 }
 
+
+int LeicaScopeInterface::GetSidePortInfo(MM::Device& device, MM::Core& core)
+{
+   std::ostringstream command;
+   std::string answer, token;
+
+   // Get minimum position
+   command << g_Side_Port << "025";
+   int ret = GetAnswer(device, core, command.str().c_str(), answer);
+   if (ret != DEVICE_OK)
+      return ret;
+   command.str("");
+
+   std::stringstream ts(answer);
+   int minPos;
+   ts >> minPos;
+   ts >> minPos;
+   if ( 0 < minPos)
+		scopeModel_->sidePort_.SetMinPosition(minPos);
+   ts.clear();
+   ts.str("");
+
+   // Get maximum position
+	command << ::g_Side_Port << "026";
+   ret = GetAnswer(device, core, command.str().c_str(), answer);
+   if (ret != DEVICE_OK)
+      return ret;
+   command.str("");
+
+   ts << answer;
+   int maxPos;
+   ts >> maxPos;
+   ts >> maxPos;
+   if (maxPos < 1 || maxPos >4)
+      maxPos = 4;
+	scopeModel_->sidePort_.SetMaxPosition(maxPos);
+   ts.clear();
+   ts.str("");
+
+	scopeModel_->sidePort_.SetPosition(minPos);
+
+	return DEVICE_OK;
+
+}
+
+
 /*
  * Sends commands to the scope enquiring about current position, speed and acceleration settings
  *  of the specified drive.
@@ -1540,6 +1601,18 @@ int LeicaScopeInterface::SetDiaphragmPosition(MM::Device& device, MM::Core& core
    diaphragm->SetBusy(true);
    std::ostringstream os;
    os << deviceID << "022 " << position;
+   return core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
+}
+
+
+/**
+ * Sets Position of SIDE PORT
+ */
+int LeicaScopeInterface::SetSidePortPosition(MM::Device& device, MM::Core& core, int position)
+{
+   scopeModel_->sidePort_.SetBusy(true);
+   std::ostringstream os;
+	os << ::g_Side_Port << "022" << " " << position;
    return core.SetSerialCommand(&device, port_.c_str(), os.str().c_str(), "\r");
 }
 
@@ -1808,9 +1881,12 @@ int LeicaMonitoringThread::svc()
          int ret = core_.ReadFromSerial(&device_, port_.c_str(), (unsigned char*) (rcvBuf + bufLen), dataLength, charsRead);
 
          // Remove after debuggging with Stamatis!
-         std::ostringstream tmpOut;
-         tmpOut << "MonitoringThread, read " << charsRead << " from serial port";
-         core_.LogMessage(&device_, tmpOut.str().c_str(), true);
+			if( 0 < charsRead)
+			{
+				std::ostringstream tmpOut;
+				tmpOut << "MonitoringThread, read " << charsRead << " from serial port";
+				core_.LogMessage(&device_, tmpOut.str().c_str(), true);
+			}
 
          rcvBuf[charsRead + bufLen] = 0;
          memset(message, 0, strlen(message));
@@ -1841,6 +1917,44 @@ int LeicaMonitoringThread::svc()
                deviceId = atoi(command.substr(0,2).c_str());
             }
             switch (deviceId) {
+
+					case (::g_Side_Port) :
+                  switch (commandId) {
+                     case (4) :
+                     {
+                        int status;
+                        os >> status;
+                        if (status == 1) {
+                           scopeModel_->sidePort_.SetBusy(false);
+                        }
+                        break;
+                     }
+                     case (23) : // Absolute position
+                     {
+                        int pos;
+                        os >> pos;
+                        scopeModel_->sidePort_.SetPosition(pos);
+                        scopeModel_->sidePort_.SetBusy(false);
+                        break;
+                     }
+                     case (28) : // Absolute position
+                     {
+                        int pos;
+                        os >> pos;
+                        scopeModel_->sidePort_.SetPosition(pos);
+                        scopeModel_->sidePort_.SetBusy(false);
+                        break;
+                     }
+                     break;
+                  }
+                  break;
+
+
+
+
+
+
+
                case (g_Master) :
                    switch (commandId) {
                       // Set Method command, signals completion of command sends

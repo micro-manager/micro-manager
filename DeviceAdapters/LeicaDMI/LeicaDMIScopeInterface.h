@@ -70,6 +70,8 @@ class LeicaScopeInterface
 	   int GetTransmittedLightState(MM::Device& device, MM::Core& core, int & position);
 	   int GetTransmittedLightShutterPosition(MM::Device& device, MM::Core& core, int & position);
 
+		int GetSidePortInfo(MM::Device& device, MM::Core& core);
+
       // commands to set individual components
       int SetMethod(MM::Device& device, MM::Core& core, int position);
       int SetTLShutterPosition(MM::Device& device, MM::Core& core, int position);
@@ -93,7 +95,7 @@ class LeicaScopeInterface
       int SetAFCMode(MM::Device& device, MM::Core& core, bool on);
       int SetAFCOffset(MM::Device &device, MM::Core &core, double offset);
       int SetAFCDichroicMirrorPosition(MM::Device &device, MM::Core &core, int position);
-
+		int SetSidePortPosition(MM::Device& device, MM::Core& core, int position);
 
       LeicaMonitoringThread* monitoringThread_;
       LeicaDMIModel* scopeModel_;

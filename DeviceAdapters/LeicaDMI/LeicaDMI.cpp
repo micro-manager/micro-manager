@@ -132,6 +132,8 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_LeicaCondensorTurret, "Condensor Turret");
    AddAvailableDeviceName(g_LeicaTransmittedLight,"Transmitted Light");
    AddAvailableDeviceName(g_LeicaAFC,"Adaptive Focus Control");
+
+	AddAvailableDeviceName(::g_LeicaSidePort,"Side Port");
 }
 using namespace std;
 
@@ -178,6 +180,8 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
 	   return new TransmittedLight();
    else if (strcmp(deviceName, g_LeicaAFC) == 0)
 	   return new AFC();
+	else if (strcmp(deviceName, ::g_LeicaSidePort) ==0)
+		return new SidePort();
 
    return 0;
 }
@@ -1975,7 +1979,7 @@ int TLPolarizer::Initialize()
 
    // create default positions and labels
    int maxPos;
-   ret = g_ScopeModel.ILTurret_.GetMaxPosition(maxPos);
+	ret = g_ScopeModel.tlPolarizer_.GetMaxPosition(maxPos);
    if (ret != DEVICE_OK)
       return ret;
    numPos_ = maxPos;
@@ -2664,3 +2668,138 @@ int AFC::OnDichroicMirrorPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
 }
 // ...
 
+
+SidePort::SidePort():
+   numPos_(3),
+   initialized_ (false),
+   name_("Side Port"),
+   description_("Side Port"),
+   pos_(1)
+{
+   InitializeDefaultErrorMessages();
+
+   // TODO provide error messages
+   SetErrorText(ERR_SCOPE_NOT_ACTIVE, "Leica Scope is not initialized.  It is needed for this port to work");
+   SetErrorText(ERR_INVALID_TURRET_POSITION, "The requested position is not available on this port");
+   SetErrorText(ERR_MODULE_NOT_FOUND, "This port is not installed in this Leica microscope");
+
+   // Create pre-initialization properties
+   // ------------------------------------
+
+   // Name
+   CreateProperty(MM::g_Keyword_Name, name_.c_str(), MM::String, true);
+
+   // Description
+   CreateProperty(MM::g_Keyword_Description, description_.c_str(), MM::String, true);
+
+}
+
+SidePort::~SidePort()
+{
+   Shutdown();
+}
+
+void SidePort::GetName(char* name) const
+{
+   CDeviceUtils::CopyLimitedString(name, name_.c_str());
+}
+
+int SidePort::Initialize()
+{
+   if (!g_ScopeInterface.portInitialized_)
+      return ERR_SCOPE_NOT_ACTIVE;
+
+   int ret = DEVICE_OK;
+   if (!g_ScopeInterface.IsInitialized())
+      ret = g_ScopeInterface.Initialize(*this, *GetCoreCallback());
+   if (ret != DEVICE_OK)
+      return ret;
+   
+   // check if this turret exists:
+	if (! g_ScopeModel.IsDeviceAvailable(::g_Side_Port))
+      return ERR_MODULE_NOT_FOUND;
+
+   // set property list
+   // ----------------
+
+   // Position
+
+   // create property
+   int maxPos;
+	ret = g_ScopeModel.sidePort_.GetMaxPosition(maxPos);
+   if (ret != DEVICE_OK)
+      return ret;
+   numPos_ = maxPos;
+
+	int minPos ;
+	g_ScopeModel.sidePort_.GetMinPosition(minPos);
+
+   CPropertyAction* pAct = new CPropertyAction(this, &SidePort::OnPosition);
+   ret = CreateProperty("Position", "1", MM::String, false, pAct);
+   if (ret != DEVICE_OK)
+      return ret;
+
+
+
+    //create default positions and labels
+   for (unsigned i=minPos; i <= numPos_; i++)
+   {
+		std::ostringstream os;
+      os << i ;
+      AddAllowedValue("Position", os.str().c_str());
+		//todo retrieve actual optical paths
+		SetPositionLabel((long)i, os.str().c_str());
+   }
+
+   ret = UpdateStatus();
+   if (ret!= DEVICE_OK)
+      return ret;
+   
+	initialized_ = true;
+   return DEVICE_OK;
+}
+
+int SidePort::Shutdown()
+{
+   if (initialized_) 
+      initialized_ = false;
+   return DEVICE_OK;
+}
+
+bool SidePort::Busy()
+{
+   bool busy;
+   int ret = g_ScopeModel.sidePort_.GetBusy(busy);
+   if (ret != DEVICE_OK)  // This is bad and should not happen
+      return false;
+
+   return busy;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// Action handlers                                                           
+///////////////////////////////////////////////////////////////////////////////
+int SidePort::OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      int pos;
+      int ret = g_ScopeModel.sidePort_.GetPosition(pos);
+      if (ret != DEVICE_OK)
+         return ret;
+      //if (pos == 0)
+      //   return ERR_TURRET_NOT_ENGAGED;
+      ostringstream os;
+      pProp->Set((long)pos);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      long pos;
+      pProp->Get(pos);
+      if ((pos > 0) && (pos <= (int) numPos_)) {
+         return g_ScopeInterface.SetSidePortPosition(*this, *GetCoreCallback(), pos);
+      } //else
+        // return ERR_INVALID_TURRET_POSITION;
+   }
+   return DEVICE_OK;
+}
