@@ -13,7 +13,7 @@
 ;               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
 (ns org.micromanager.browser.core
-  (:import [javax.swing BorderFactory JButton JComboBox JFrame JLabel
+  (:import [javax.swing BorderFactory JButton JComboBox JFrame JLabel JOptionPane
                         JList JPanel JScrollPane JSplitPane SortOrder
                         JTable JTextField RowFilter SpringLayout SwingUtilities]
            [javax.swing.table AbstractTableModel DefaultTableModel
@@ -23,7 +23,7 @@
            [java.util Vector]
            [java.util.prefs Preferences]
            [java.awt Color Dimension Font Insets]
-           [java.awt.event KeyAdapter MouseAdapter]
+           [java.awt.event ItemEvent ItemListener KeyAdapter MouseAdapter]
            [com.swtdesigner SwingResourceManager])
   (:use [org.micromanager.browser.utils
             :only (gen-map constrain-to-parent create-button create-icon-button
@@ -185,11 +185,6 @@
                           (add-browser-table-row
                             (map #(get m %) headings)))))))))     
 
-;; create a table model with all metadata.
-;; Then use .addColumn, .removeColumn to show and hide columns, as controlled by
-;; the settings window. The DefaultTableModel can be used to keep track of the 
-;; "CurrentPath" for a given row even if that column is hidden.
-
 (defn add-location [location]
   (.. (get-in @settings-window [:locations :table])
       getModel (addRow (Vector. (list location))))
@@ -207,6 +202,21 @@
       (for [i (range (.getColumnCount column-model))
         :when (= index (.getModelIndex (.getColumn column-model i)))]
           i))))
+
+(defn show-columns [display-columns]
+  (println "show-columns" display-columns)
+  (let [table (:table @browser)
+        column-model (.getColumnModel (:table @browser))
+        total-width (.getWidth table)]
+    (dorun (map #(.removeColumn column-model %)
+                (doall (enumeration-seq (.getColumns column-model)))))
+    (doseq [display-column display-columns]
+      (let [tag (:title display-column)
+            model-index (get-model-column-index table tag)]
+        (.addColumn column-model
+          (doto (TableColumn. model-index)
+            (.setHeaderValue tag)
+            (.setPreferredWidth (* total-width (:width display-column)))))))))
 
 (defn update-column [tags-model col]
   (when (:table @browser)
@@ -252,12 +262,13 @@
 ;; collection files
 
 (defn read-collection-map []
-  (or (read-value-from-prefs prefs "collection-files")
-      (let [name (System/getProperty "user.name")]
-        {name (.getAbsolutePath (File. (str name ".mmdb.txt")))})))
+  (reset! collections
+    (or (read-value-from-prefs prefs "collection-files")
+        (let [name (System/getProperty "user.name")]
+          {name (.getAbsolutePath (File. (str name ".mmdb.txt")))}))))
 
-(defn save-collection-map [collection-map]
-  (write-value-to-prefs prefs "collection-files" collection-map))
+(defn save-collection-map []
+  (write-value-to-prefs prefs "collection-files" @collections))
 
 (defn get-current-data-and-settings []
   (let [table (@browser :table)
@@ -288,8 +299,9 @@
                 browser-model-headings
                 window-size display-columns
                 locations sorted-column]} settings]
-   ; (println (map :title display-columns))
+    (println "apply:" display-columns)
     (reset! current-data browser-model-data)
+    (doto model (.fireTableDataChanged) (.fireTableStructureChanged))
     (-> @settings-window :locations :table .getModel
       (.setDataVector
         (Vector. (map #(Vector. (list %)) (seq locations)))
@@ -297,38 +309,62 @@
     (let [column-model (-> @settings-window :columns :table .getModel)]
       (doseq [row (range (.getRowCount column-model))]
         (.setValueAt column-model
-          (some #{(.getValueAt column-model row 1)} (map :title display-columns))
+          (not (nil? (some #{(.getValueAt column-model row 1)}
+                           (map :title display-columns))))
           row 0))
-      (update-all-columns column-model))
+      (show-columns display-columns))
     (println display-columns)
     (println window-size)
     ))))
 
-(defn get-current-collection-file []
-   (->> @browser :collection-menu
-               .getSelectedItem (get @collections)))
-
-(defn save-current-data-and-settings []
-    (with-open [pr (PrintWriter. (get-current-collection-file))]
-      (write-json (get-current-data-and-settings) pr)))
+(defn save-data-and-settings [collection-name]
+  (println "save-data-and-settings" collection-name)
+  (with-open [pr (PrintWriter. (get @collections collection-name))]
+    (write-json (get-current-data-and-settings) pr))
+  (println "saved data and settings: " (:display-columns (get-current-data-and-settings))))
 
 (defn load-data-and-settings [name]
   (let [f (get @collections name)]
     (apply-data-and-settings (read-json (slurp f))))
     (.setSelectedItem (@browser :collection-menu) name))
 
+(defn user-creates-collection []
+  (let [prompt-msg "Please enter a name for the new collection."]
+    (loop [msg prompt-msg]
+       (let [collection-name (JOptionPane/showInputDialog msg)]
+         (cond
+           (empty? (.trim collection-name))
+             (recur (str "Name must contain at least one character.\n"
+                         prompt-msg))
+           (contains? @collections collection-name)
+             (recur (str "There is already a collection named " collection-name "!\n"
+                         prompt-msg))
+           :else collection-name)))))
+
 (defn update-collection-menu []
   (let [menu (@browser :collection-menu)
-        names (sort (keys @collections))]
+        names (sort (keys @collections))
+        listeners (.getItemListeners menu)]
+    (dorun (map #(.removeItemListener menu %) listeners))
     (.removeAllItems menu)
     (dorun (map #(.addItem menu %) names))
     (.addItem menu "New...")
-    (.addItem menu "Load...")))
+    (.addItem menu "Load...")
+    (dorun (map #(.addItemListener menu %) listeners))))
 
-(defn start-new-collection []
-  (save-current-data-and-settings)
-  (reset! current-data nil)
-  (-> @browser :table .getModel .fireTableDataChanged))
+(defn new-data-and-settings []
+  (let [collection-name (user-creates-collection)]
+    (swap! collections assoc collection-name
+      (.getAbsolutePath (File. (str collection-name ".mmdb.txt"))))
+    (println "hi")
+    (reset! current-data nil)
+    (save-collection-map)
+    (save-data-and-settings collection-name)
+    (SwingUtilities/invokeLater
+      #(do (update-collection-menu)
+           (let [m (-> @browser :table .getModel)]
+             (.fireTableDataChanged m)
+             )))))
 
 ;; windows
 
@@ -374,6 +410,17 @@
     (.setBounds frame 50 50 600 600)
     (gen-map frame locations columns)))
 
+(defn create-collection-menu-listener []
+  (reify ItemListener
+    (itemStateChanged [_ e]
+      (println e)
+      (let [item (.getItem e)]
+        (if (= (.getStateChange e) ItemEvent/SELECTED)
+          (condp = item
+            "New..." (new-data-and-settings)
+            (load-data-and-settings item))
+          (save-data-and-settings item))))))
+
 (defn create-browser []
   (let [frame (JFrame. "Micro-Manager Data Set Browser")
         panel (JPanel.)
@@ -393,6 +440,7 @@
       (.setShowGrid false)
       (.setGridColor Color/LIGHT_GRAY)
       (.setShowVerticalLines true))
+    (.addItemListener collection-menu (create-collection-menu-listener))
     (attach-action-key table "ENTER" #(open-selected-files table))
     (.setFont search-field (.getFont table))
     (.setLayout panel (SpringLayout.))
@@ -414,7 +462,7 @@
 
 (defn start-browser []
   (load-mm)
-  (reset! collections (read-collection-map))
+  (read-collection-map)
   (reset! settings-window (create-settings-window))
   (reset! browser (create-browser))
   (reset! headings tags)

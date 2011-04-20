@@ -30,6 +30,7 @@
 (defn remove-nth [s n]
   (lazy-cat (take n s) (drop (inc n) s)))
 
+
 ; Java Preferences
 
 (defn partition-str [n s]
@@ -164,7 +165,7 @@
   (doall (map #(apply attach-action-key comp %) items)))
 
 
-;; file handling
+;; file choosers
 
 (defn choose-file [parent title suffix load]
   (let [dialog
