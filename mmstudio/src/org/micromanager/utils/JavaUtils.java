@@ -72,11 +72,10 @@ public class JavaUtils {
                      jarEntry = jarFile.getNextJarEntry();
                      if (jarEntry != null) {
                         String classFile = jarEntry.getName();
-                        if (classFile.endsWith(".class")) {
+                        if (classFile.endsWith(".class") && !classFile.contains("$")) {
                            try {
                               String className = stripFilenameExtension(classFile).replace("/", ".");
                               classes.add(Class.forName(className));
-
                            } catch (Throwable e3) {
                               ReportingUtils.logError(e3);
                            }

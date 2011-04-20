@@ -105,7 +105,10 @@ public class FileDialogs {
             fd = new FileDialog((Dialog) null, title, mode);
          }
          if (startFile != null) {
-            fd.setDirectory(startFile.getParent());
+            if (startFile.isDirectory())
+               fd.setDirectory(startFile.getAbsolutePath());
+            else
+               fd.setDirectory(startFile.getParent());
             if (!load && suggestFileName) {
                fd.setFile(startFile.getName());
             }
@@ -131,7 +134,7 @@ public class FileDialogs {
       } else {
          JFileChooser fc = new JFileChooser();
          if (startFile != null) {
-            if (!load && suggestFileName) {
+            if ((!load && suggestFileName) || startFile.isDirectory()) {
                fc.setSelectedFile(startFile);
             } else {
                fc.setSelectedFile(startFile.getParentFile());

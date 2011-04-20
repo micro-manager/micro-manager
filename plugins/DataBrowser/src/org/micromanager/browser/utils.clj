@@ -19,7 +19,8 @@
            (java.awt FileDialog)
            (java.awt.event ActionListener)
            (javax.swing AbstractAction BorderFactory JButton
-                        JFileChooser KeyStroke SpringLayout)))
+                        JFileChooser KeyStroke SpringLayout
+                        SwingUtilities)))
 
 ; clojure utils
 
@@ -30,6 +31,8 @@
 (defn remove-nth [s n]
   (lazy-cat (take n s) (drop (inc n) s)))
 
+(defmacro awt-event [& body]
+  `(SwingUtilities/invokeLater (fn [] ~@body)))
 
 ; Java Preferences
 

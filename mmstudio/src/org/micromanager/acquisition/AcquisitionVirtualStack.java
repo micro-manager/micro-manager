@@ -61,7 +61,7 @@ public class AcquisitionVirtualStack extends ij.VirtualStack {
          int[] pos;
          // If we don't have the ImagePlus yet, then we need to assume
          // we are on the very first image.
-         ImagePlus imagePlus = acq_.getImagePlus();
+            ImagePlus imagePlus = acq_.getImagePlus();
          int nSlices;
          if (imagePlus == null) {
             pos = new int [] {1, 1, 1};

@@ -15,7 +15,7 @@
 (ns org.micromanager.browser.core
   (:import [javax.swing BorderFactory JButton JComboBox JFrame JLabel JOptionPane
                         JList JPanel JScrollPane JSplitPane SortOrder
-                        JTable JTextField RowFilter SpringLayout SwingUtilities]
+                        JTable JTextField RowFilter SpringLayout]
            [javax.swing.table AbstractTableModel DefaultTableModel
                               TableColumn TableRowSorter]
            [javax.swing.event DocumentListener TableModelListener]
@@ -24,11 +24,13 @@
            [java.util.prefs Preferences]
            [java.awt Color Dimension Font Insets]
            [java.awt.event ItemEvent ItemListener KeyAdapter MouseAdapter]
-           [com.swtdesigner SwingResourceManager])
+           [com.swtdesigner SwingResourceManager]
+           [org.micromanager.acquisition ImageStorageListener MMImageCache])
   (:use [org.micromanager.browser.utils
             :only (gen-map constrain-to-parent create-button create-icon-button
                    attach-action-key remove-borders choose-directory
-                   read-value-from-prefs write-value-to-prefs remove-nth)]
+                   read-value-from-prefs write-value-to-prefs remove-nth
+                   awt-event)]
         [clojure.contrib.json :only (read-json write-json)]
         [org.micromanager.mm :only (load-mm gui)]))
 
@@ -41,6 +43,8 @@
 (def collections (atom nil))
 
 (def current-data (atom nil))
+
+(def scanning-agent (agent nil))
 
 (def prefs (.. Preferences userRoot
       (node "MMDataBrowser") (node "b3d184b1-c580-4f06-a1d9-b9cc00f12641")))
@@ -72,11 +76,11 @@
 
 (defn connect-search [search-field table]
   (let [d (.getDocument search-field)
-        f (fn [] (SwingUtilities/invokeLater
-                   #(do (set-filter table (.getText d 0 (.getLength d)))
-                        (.setBackground search-field
-                          (if (zero? (.getRowCount table))
-                            Color/PINK Color/WHITE)))))]
+        f #(awt-event
+            (set-filter table (.getText d 0 (.getLength d)))
+            (.setBackground search-field
+              (if (zero? (.getRowCount table))
+                Color/PINK Color/WHITE)))]
     (.addDocumentListener d
       (reify DocumentListener
         (insertUpdate [_ _] (f))
@@ -120,19 +124,26 @@
   (swap! current-data remove-nth n)
   (.fireTableRowsDeleted (.getModel (@browser :table)) n n))
 
-(defn remove-locations [] 
+(defn remove-location [loc]
+  (let [location-column (.indexOf tags "Location")]
+    (doseq [browser-row (reverse (range (count @current-data)))]
+      (when (= (nth (nth @current-data browser-row) location-column) loc)
+        (remove-browser-table-row browser-row)))))
+
+(defn remove-selected-locations [] 
   (let [location-table (get-in @settings-window [:locations :table])
         selected-rows (.getSelectedRows location-table)
         location-model (.getModel location-table)
         location-column (.indexOf tags "Location")]
     (doseq [location-row (reverse selected-rows)]
       (when-let [loc (.getValueAt location-model location-row 0)]
-        (println location-row)
-        (doseq [browser-row (reverse (range (count @current-data)))]
-          (when (= (nth (nth @current-data browser-row) location-column) loc)
-            (remove-browser-table-row browser-row))))
+        (when-not (empty? loc)
+          (remove-location loc)))
       (.removeRow location-model location-row))))
     
+(defn clear-history []
+  (remove-location ""))
+
 (defn find-data-sets [root-dir]
   (map #(.getParent %)
     (->> (File. root-dir)
@@ -162,6 +173,7 @@
       (.concat "}}") (read-json false) (get "Summary"))) 
 
 (defn get-summary-map [data-set location]
+  (println "get-summary-map" data-set location)
   (merge (read-summary-map data-set)
     (if-let [frames (count-frames data-set)]
       {"Frames" frames})
@@ -179,11 +191,11 @@
 (def default-headings ["Path" "Time" "Frames" "Comment" "Location"])
   
 (defn add-summary-maps [browser map-list headings]
-  (.start (Thread. (fn [] (doseq [m map-list]
-                      (SwingUtilities/invokeLater
-                        (fn []
-                          (add-browser-table-row
-                            (map #(get m %) headings)))))))))     
+  (send-off scanning-agent 
+            (fn [_] (doseq [m map-list]
+                      (awt-event
+                        (add-browser-table-row
+                          (map #(get m %) headings)))))))
 
 (defn add-location [location]
   (.. (get-in @settings-window [:locations :table])
@@ -292,7 +304,7 @@
      }))
 
 (defn apply-data-and-settings [settings]
-  (SwingUtilities/invokeLater (fn []
+  (awt-event
   (let [table (@browser :table)
         model (.getModel table)
         {:keys [browser-model-data
@@ -312,10 +324,11 @@
           (not (nil? (some #{(.getValueAt column-model row 1)}
                            (map :title display-columns))))
           row 0))
-      (show-columns display-columns))
+      (show-columns display-columns)
+      (update-all-columns))
     (println display-columns)
     (println window-size)
-    ))))
+    )))
 
 (defn save-data-and-settings [collection-name]
   (println "save-data-and-settings" collection-name)
@@ -360,12 +373,18 @@
     (reset! current-data nil)
     (save-collection-map)
     (save-data-and-settings collection-name)
-    (SwingUtilities/invokeLater
-      #(do (update-collection-menu)
-           (let [m (-> @browser :table .getModel)]
-             (.fireTableDataChanged m)
-             )))))
+    (awt-event
+      (update-collection-menu)
+        (let [m (-> @browser :table .getModel)]
+          (.fireTableDataChanged m)
+             ))))
 
+(defn create-image-storage-listener []
+  (reify ImageStorageListener
+    (imageStorageFinished [_ path]
+      (add-summary-maps @browser
+                        (list (get-summary-map path "")) @headings))))
+      
 ;; windows
 
 (defn create-settings-window []
@@ -389,24 +408,25 @@
         add-location-button
           (create-icon-button (get-icon "plus.png") user-add-location)
         remove-location-button
-          (create-icon-button (get-icon "minus.png") remove-locations)
+          (create-icon-button (get-icon "minus.png") remove-selected-locations)
         columns (label-table (create-column-table) "Columns" split-pane)
-        main-panel (JPanel.)
-        frame (JFrame. "Micro-Manager Data Set Browser Settings")]
+        frame (JFrame. "Micro-Manager Data Set Browser Settings")
+        main-panel (.getContentPane frame)
+        clear-history-button (create-button "Clear history" clear-history)]
     (apply remove-borders (.getComponents split-pane))
-    (.. frame getContentPane (add main-panel))
     (doto split-pane
       (.setResizeWeight 0.5)
       (.setDividerLocation 0.5))
     (remove-borders split-pane)
-    (.add main-panel split-pane)
+    (doto main-panel (.add split-pane) (.add clear-history-button)) 
     (doto (:panel locations)
       (.add add-location-button) (.add remove-location-button))
     (.setLayout main-panel (SpringLayout.))
     (constrain-to-parent
-      split-pane :n 5 :w 5 :s -5 :e -5
+      split-pane :n 30 :w 5 :s -5 :e -5
       add-location-button :n 0 :e -38 :n 18 :e -20
-      remove-location-button :n 0 :e -18 :n 18 :e 0)
+      remove-location-button :n 0 :e -18 :n 18 :e 0
+      clear-history-button :n 5 :w 5 :n 30 :w 125)
     (.setBounds frame 50 50 600 600)
     (gen-map frame locations columns)))
 
@@ -423,7 +443,7 @@
 
 (defn create-browser []
   (let [frame (JFrame. "Micro-Manager Data Set Browser")
-        panel (JPanel.)
+        panel (.getContentPane frame)
         table (proxy [JTable] [] (isCellEditable [_ _] false))
         scroll-pane (JScrollPane. table)
         search-field (JTextField.)
@@ -432,9 +452,10 @@
                           #(.show (:frame @settings-window)))
         collection-label (JLabel. "Collection:")
         collection-menu (JComboBox.)]
-    (doto panel (.add scroll-pane) (.add search-field)
-                (.add settings-button) (.add search-label)
-                (.add collection-label) (.add collection-menu))
+    (doto panel
+       (.add scroll-pane) (.add search-field)
+       (.add settings-button) (.add search-label)
+       (.add collection-label) (.add collection-menu))
     (doto table
       (.setAutoCreateRowSorter true)
       (.setShowGrid false)
@@ -455,7 +476,6 @@
     (listen-to-open table)
     (attach-action-key search-field "ESCAPE" #(.setText search-field ""))
     (doto frame
-      (.. getContentPane (add panel))
       (.setBounds 50 50 540 500))
     (gen-map frame table scroll-pane settings-button search-field
              collection-menu)))
@@ -466,6 +486,7 @@
   (reset! settings-window (create-settings-window))
   (reset! browser (create-browser))
   (reset! headings tags)
+  (MMImageCache/addImageStorageListener (create-image-storage-listener))
   (.setModel (:table @browser) (create-browser-table-model tags))
   (update-all-columns (.getModel (get-in @settings-window [:columns :table])))
   (update-collection-menu)

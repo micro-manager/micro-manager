@@ -5,6 +5,7 @@
 package org.micromanager.acquisition;
 
 import java.lang.ref.SoftReference;
+import java.util.ArrayList;
 import org.micromanager.api.TaggedImageStorage;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -24,6 +25,8 @@ import org.micromanager.utils.ReportingUtils;
  */
 public class MMImageCache implements TaggedImageStorage {
    public static String menuName_ = null;
+   public static ArrayList<ImageStorageListener> imageStorageListeners_
+           = new ArrayList<ImageStorageListener>();
    private TaggedImageStorage imageStorage_;
    private Set<String> changingKeys_;
    private JSONObject firstTags_;
@@ -31,6 +34,19 @@ public class MMImageCache implements TaggedImageStorage {
    private int lastFrame_ = -1;
    private JSONObject lastTags_;
    private boolean conserveRam_;
+
+
+   public static void addImageStorageListener(ImageStorageListener l) {
+      imageStorageListeners_.add(l);
+   }
+
+   public static ImageStorageListener[] getImageStorageListeners() {
+      return (ImageStorageListener []) imageStorageListeners_.toArray();
+   }
+
+   public static void removeImageStorageListener(ImageStorageListener l) {
+      imageStorageListeners_.remove(l);
+   }
 
    public MMImageCache(TaggedImageStorage imageStorage) {
       imageStorage_ = imageStorage;
@@ -41,6 +57,12 @@ public class MMImageCache implements TaggedImageStorage {
 
    public void finished() {
       imageStorage_.finished();
+      String path = getDiskLocation();
+      if (path != null) {
+         for (ImageStorageListener l:imageStorageListeners_) {
+            l.imageStorageFinished(path);
+         }
+      }
    }
 
    public boolean isFinished() {
