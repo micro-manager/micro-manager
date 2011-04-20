@@ -27,6 +27,9 @@
   (let [kw (map keyword args)]
     (zipmap kw args)))
 
+(defn remove-nth [s n]
+  (lazy-cat (take n s) (drop (inc n) s)))
+
 ; Java Preferences
 
 (defn partition-str [n s]
@@ -189,3 +192,4 @@
                (.setDialogTitle title))
        (if (= JFileChooser/APPROVE_OPTION (.showOpenDialog fc parent))
          (.getSelectedFile fc)))))
+

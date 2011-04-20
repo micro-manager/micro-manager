@@ -14,7 +14,7 @@
 
 (ns org.micromanager.browser.core
   (:import [javax.swing BorderFactory JButton JComboBox JFrame JLabel
-                        JList JPanel JScrollPane JSplitPane
+                        JList JPanel JScrollPane JSplitPane SortOrder
                         JTable JTextField RowFilter SpringLayout SwingUtilities]
            [javax.swing.table AbstractTableModel DefaultTableModel
                               TableColumn TableRowSorter]
@@ -28,8 +28,8 @@
   (:use [org.micromanager.browser.utils
             :only (gen-map constrain-to-parent create-button create-icon-button
                    attach-action-key remove-borders choose-directory
-                   read-value-from-prefs write-value-to-prefs)]
-        [clojure.contrib.json :only (read-json)]
+                   read-value-from-prefs write-value-to-prefs remove-nth)]
+        [clojure.contrib.json :only (read-json write-json)]
         [org.micromanager.mm :only (load-mm gui)]))
 
 (def browser (atom nil))
@@ -39,6 +39,8 @@
 (def headings (atom nil))
 
 (def collections (atom nil))
+
+(def current-data (atom nil))
 
 (def prefs (.. Preferences userRoot
       (node "MMDataBrowser") (node "b3d184b1-c580-4f06-a1d9-b9cc00f12641")))
@@ -102,20 +104,33 @@
         (when (= 2 (.getClickCount e)) ; double click
           (open-selected-files table))))))
 
+(defn create-browser-table-model [headings]
+  (proxy [AbstractTableModel] []
+    (getRowCount [] (count @current-data))
+    (getColumnCount [] (count (first @current-data)))
+    (getValueAt [row column] (nth (nth @current-data row) column))
+    (getColumnName [column] (nth tags column))))
+
+(defn add-browser-table-row [s]
+  (swap! current-data conj (vec s))
+  (let [r (dec (count @current-data))]
+    (.fireTableRowsInserted (.getModel (@browser :table)) r r)))
+
+(defn remove-browser-table-row [n]
+  (swap! current-data remove-nth n)
+  (.fireTableRowsDeleted (.getModel (@browser :table)) n n))
+
 (defn remove-locations [] 
   (let [location-table (get-in @settings-window [:locations :table])
         selected-rows (.getSelectedRows location-table)
         location-model (.getModel location-table)
-        browser-table (:table @browser)
-        browser-model (.getModel browser-table)
-        location-column (get-model-column-index browser-table "Location")]
-    (println browser-model "," location-model "," location-column)
+        location-column (.indexOf tags "Location")]
     (doseq [location-row (reverse selected-rows)]
       (when-let [loc (.getValueAt location-model location-row 0)]
         (println location-row)
-        (doseq [browser-row (reverse (range (.getRowCount browser-model)))]
-          (when (= (.getValueAt browser-model browser-row location-column) loc)
-            (.removeRow browser-model browser-row))))
+        (doseq [browser-row (reverse (range (count @current-data)))]
+          (when (= (nth (nth @current-data browser-row) location-column) loc)
+            (remove-browser-table-row browser-row))))
       (.removeRow location-model location-row))))
     
 (defn find-data-sets [root-dir]
@@ -144,7 +159,7 @@
            FileReader. BufferedReader. line-seq
            (take-while #(not (.startsWith % "},")))
            (apply str))
-      (.concat "}}") (read-json false) (get "Summary")))
+      (.concat "}}") (read-json false) (get "Summary"))) 
 
 (defn get-summary-map [data-set location]
   (merge (read-summary-map data-set)
@@ -161,17 +176,14 @@
 (defn get-summary-maps [root-dir]
   (map #(get-summary-map % root-dir) (find-data-sets root-dir)))
 
-(defn create-table-model [headings]
-  (DefaultTableModel. (Vector. headings) 0))
-
 (def default-headings ["Path" "Time" "Frames" "Comment" "Location"])
   
 (defn add-summary-maps [browser map-list headings]
   (.start (Thread. (fn [] (doseq [m map-list]
                       (SwingUtilities/invokeLater
                         (fn []
-                          (.addRow (.getModel (:table browser))
-                            (Vector. (map #(get m %) headings))))))))))     
+                          (add-browser-table-row
+                            (map #(get m %) headings)))))))))     
 
 ;; create a table model with all metadata.
 ;; Then use .addColumn, .removeColumn to show and hide columns, as controlled by
@@ -250,9 +262,8 @@
 (defn get-current-data-and-settings []
   (let [table (@browser :table)
         model (.getModel table)]
-    {:browser-model-data (map seq (seq (. model getDataVector)))
-     :browser-model-headings (map #(.getColumnName model %)
-                               (range (.getColumnCount model)))
+    {:browser-model-data @current-data
+     :browser-model-headings tags
      :window-size (let [f (@browser :frame)] [(.getWidth f) (.getHeight f)])
      :display-columns
        (let [total-width (float (.getWidth table))]
@@ -270,16 +281,28 @@
      }))
 
 (defn apply-data-and-settings [settings]
+  (SwingUtilities/invokeLater (fn []
   (let [table (@browser :table)
         model (.getModel table)
         {:keys [browser-model-data
                 browser-model-headings
                 window-size display-columns
                 locations sorted-column]} settings]
-    (.setDataVector model
-      (Vector. (map #(Vector. %) (:browser-model-data settings)))
-      (Vector. browser-model-headings))
-    ))
+   ; (println (map :title display-columns))
+    (reset! current-data browser-model-data)
+    (-> @settings-window :locations :table .getModel
+      (.setDataVector
+        (Vector. (map #(Vector. (list %)) (seq locations)))
+        (Vector. (list "Locations"))))
+    (let [column-model (-> @settings-window :columns :table .getModel)]
+      (doseq [row (range (.getRowCount column-model))]
+        (.setValueAt column-model
+          (some #{(.getValueAt column-model row 1)} (map :title display-columns))
+          row 0))
+      (update-all-columns column-model))
+    (println display-columns)
+    (println window-size)
+    ))))
 
 (defn get-current-collection-file []
    (->> @browser :collection-menu
@@ -301,6 +324,11 @@
     (dorun (map #(.addItem menu %) names))
     (.addItem menu "New...")
     (.addItem menu "Load...")))
+
+(defn start-new-collection []
+  (save-current-data-and-settings)
+  (reset! current-data nil)
+  (-> @browser :table .getModel .fireTableDataChanged))
 
 ;; windows
 
@@ -390,7 +418,7 @@
   (reset! settings-window (create-settings-window))
   (reset! browser (create-browser))
   (reset! headings tags)
-  (.setModel (:table @browser) (create-table-model tags))
+  (.setModel (:table @browser) (create-browser-table-model tags))
   (update-all-columns (.getModel (get-in @settings-window [:columns :table])))
   (update-collection-menu)
   (add-location "/Users/arthur/qqqq")
