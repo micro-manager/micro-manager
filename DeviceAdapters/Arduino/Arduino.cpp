@@ -1372,6 +1372,10 @@ int CArduinoShutter::Shutdown()
 
 int CArduinoShutter::SetOpen(bool open)
 {
+	std::ostringstream os;
+	os << "Request " << open;
+	LogMessage(os.str().c_str(), true);
+
    if (open)
       return SetProperty("OnOff", "1");
    else
