@@ -2,7 +2,7 @@
 OutputDir=C:\projects\micromanager
 OutputBaseFilename=MMDeviceKit-win-38
 DefaultDirName=C:/Program Files/MMDeviceKit-win-Dev39-Mod5
-VersionInfoVersion=38
+VersionInfoVersion=39
 VersionInfoCompany=micro-manager.org
 VersionInfoCopyright=University of California San Francisco
 AppCopyright=Unviersity of California San Francisco
