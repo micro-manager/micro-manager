@@ -148,6 +148,19 @@ void CDeviceUtils::SleepMs(long periodMs)
 #endif
 }
 
+/**
+ * Yield to other threads for the specified interval in microseconds.
+ */
+void CDeviceUtils::NapMicros(long period)
+{
+#ifdef WIN32
+   Sleep(period/1000);
+#else
+   usleep(period);
+#endif
+}
+
+
 
 
 #ifdef _WINDOWS
