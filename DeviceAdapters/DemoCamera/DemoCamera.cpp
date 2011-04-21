@@ -471,6 +471,7 @@ int CDemoCamera::SnapImage()
    MM::MMTime t2 = GetCurrentMMTime();
    if( s0 < startTime )
    {
+      // ensure wait time is non-negative
       long naptime = 0.5 + expUs - (double)(t2-startTime).getUsec();
       if( naptime < 1)
          naptime = 1;
