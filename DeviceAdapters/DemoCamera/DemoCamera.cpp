@@ -471,7 +471,10 @@ int CDemoCamera::SnapImage()
    MM::MMTime t2 = GetCurrentMMTime();
    if( s0 < startTime )
    {
-	   CDeviceUtils::SleepMs(exp - (t2-startTime).getMsec());
+      long naptime = 0.5 + expUs - (double)(t2-startTime).getUsec();
+      if( naptime < 1)
+         naptime = 1;
+      CDeviceUtils::NapMicros(naptime);
    }
    else
    {
