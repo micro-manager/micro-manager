@@ -73,7 +73,7 @@ DataBrowser.jar: \
 	java -cp DataBrowser/classes/:$(CLASSEXT)/clojure.jar:$(CLASSEXT)/clojure-contrib.jar:$(IJJARPATH):../mmstudio/MMJ_.jar:$(CLASSEXT)/bsh-2.0b4.jar:../acqEngine/MMAcqEngine.jar:DataBrowser/src -Djava.awt.headless=true -Dclojure.compile.path=DataBrowser/classes -server clojure.lang.Compile org.micromanager.browser.plugin
 	jar cvf DataBrowser.jar -C DataBrowser/classes/ .
 
-all: PixelCalibrator.jar DataBrowser.jar RecallPlugin.jar StageControl.jar MultiCamera.jar Big.jar ImageFlipper.jar SlideExplorer.jar
+all: PixelCalibrator.jar RecallPlugin.jar StageControl.jar MultiCamera.jar Big.jar ImageFlipper.jar SlideExplorer.jar
 
 install: 
 	test -d $(IJPATH)/mmplugins || mkdir $(IJPATH)/mmplugins
