@@ -39,6 +39,7 @@
 #include "LeicaDMICodes.h"
 #include "../../MMDevice/ModuleInterface.h"
 #include <string>
+#include <string.h>
 #include <math.h>
 #include <sstream>
 #include <algorithm>
@@ -262,6 +263,60 @@ MM::DeviceDetectionStatus LeicaScope::DetectDevice()
    {
       return MM::CanCommunicate;
    }
+}
+
+
+void LeicaScope::AttemptToDiscover(int deviceCode, const char* deviceName)
+{
+   if (g_ScopeInterface.scopeModel_->IsDeviceAvailable(deviceCode))
+   {
+      discoveredDevices_.push_back(std::string(deviceName));
+   }
+}
+
+
+int LeicaScope::GetNumberOfDiscoverableDevices()
+{
+   if (!g_ScopeInterface.IsInitialized())
+   {
+      int ret = g_ScopeInterface.Initialize(*this, *GetCoreCallback());
+      if (ret != DEVICE_OK)
+         return 0;
+   }
+
+   discoveredDevices_.clear();
+
+   AttemptToDiscover(g_IL_Turret, g_LeicaReflector);
+   AttemptToDiscover(g_Revolver, g_LeicaNosePiece);
+   AttemptToDiscover(g_Field_Diaphragm_TL, g_LeicaFieldDiaphragmTL);
+   AttemptToDiscover(g_Aperture_Diaphragm_TL, g_LeicaApertureDiaphragmTL);
+   AttemptToDiscover(g_Field_Diaphragm_IL, g_LeicaFieldDiaphragmIL);
+   AttemptToDiscover(g_Aperture_Diaphragm_IL, g_LeicaApertureDiaphragmIL);
+   AttemptToDiscover(g_ZDrive, g_LeicaFocusAxis);
+   AttemptToDiscover(g_Mag_Changer_Mot, g_LeicaMagChanger);
+  // AttemptToDiscover(___, g_LeicaTubeLensShutter); Not supported.
+   AttemptToDiscover(g_Side_Port, g_LeicaSidePort);
+   AttemptToDiscover(g_Lamp, g_LeicaIncidentLightShutter);
+   AttemptToDiscover(g_Lamp, g_LeicaTransmittedLightShutter);
+   // AttemptToDiscover(___, g_LeicaHalogenLightSwitch); Not supported.
+   // AttemptToDiscover(___, g_LeicaRLFLAttenuator); Not supported.
+   AttemptToDiscover(g_XDrive, g_LeicaXYStage);
+   // AttemptToDiscover(___, g_LeicaBasePort); Not supported.
+   // AttemptToDiscover(___, g_LeicaUniblitz); Not supported.
+   // AttemptToDiscover(___, g_LeicaFilterWheel); Not supported.
+   AttemptToDiscover(g_TL_Polarizer, g_LeicaTLPolarizer);
+   AttemptToDiscover(g_DIC_Turret, g_LeicaDICTurret);
+   AttemptToDiscover(g_Condensor, g_LeicaCondensorTurret);
+   AttemptToDiscover(g_Lamp, g_LeicaTransmittedLight);
+   AttemptToDiscover(g_AFC, g_LeicaAFC);
+
+   return (int) discoveredDevices_.size();
+}
+
+void LeicaScope::GetDiscoverableDevice(int deviceNum, char *deviceName,
+                                      unsigned int maxLength)
+{
+    strcpy(deviceName, discoveredDevices_[deviceNum].c_str());
 }
 
 int LeicaScope::Initialize() 
@@ -2553,10 +2608,23 @@ AFC::~AFC()
 
 int AFC::Initialize() 
 {
+   int ret = DEVICE_OK;
+   if (!g_ScopeInterface.portInitialized_)
+      return ERR_SCOPE_NOT_ACTIVE;
+
+   if (!g_ScopeInterface.IsInitialized())
+      ret = g_ScopeInterface.Initialize(*this, *GetCoreCallback());
+   if (ret != DEVICE_OK)
+      return ret;
+   
+   // check if this shutter exists:
+   if (!g_ScopeModel.IsDeviceAvailable(g_AFC))
+      return ERR_MODULE_NOT_FOUND;
+
       // State
    // -----
    CPropertyAction* pAct = new CPropertyAction(this, &AFC::OnDichroicMirrorPosition);
-   int ret = CreateProperty("DichroicMirrorIn", "1", MM::Integer, false, pAct);
+   ret = CreateProperty("DichroicMirrorIn", "1", MM::Integer, false, pAct);
    if (ret != DEVICE_OK)
       return ret;
 

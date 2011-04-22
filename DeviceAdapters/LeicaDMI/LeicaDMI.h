@@ -51,16 +51,21 @@ class LeicaScope : public CGenericBase<LeicaScope>
       void GetName(char* pszName) const;
       bool Busy();
       MM::DeviceDetectionStatus DetectDevice();
+      int GetNumberOfDiscoverableDevices();
+      void GetDiscoverableDevice(int deviceNum, char * deviceName, unsigned int maxLength);
 
       // action interface                                                       
       // ----------------                                                       
       int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct); 
       int OnMethod(MM::PropertyBase* pProp, MM::ActionType eAct); 
       int OnAnswerTimeOut(MM::PropertyBase* pProp, MM::ActionType eAct); 
+      void AttemptToDiscover(int deviceCode, const char* deviceName);
+
 
    private:
       bool initialized_;
       double answerTimeoutMs_;
+      std::vector<std::string> discoveredDevices_;
 };
 
 
