@@ -38,8 +38,6 @@
 
 (def settings-window (atom nil))
 
-(def headings (atom nil))
-
 (def collections (atom nil))
 
 (def current-data (atom nil))
@@ -63,10 +61,6 @@
   (SwingResourceManager/getIcon
     org.micromanager.MMStudioMainFrame (str "icons/" name)))
 
-(defn set-model [table m]
-  (.setModel table m)
-  (.setRowSorter table (TableRowSorter. m)))
-
 (defn set-filter [table text]
   (let [sorter (.getRowSorter table)
         column-indices
@@ -88,11 +82,7 @@
         (removeUpdate [_ _] (f))))))
 
 (defn get-model-column-index [table text]
-  (let [table-model (.getModel table)]
-    (-> (vec
-      (for [i (range (.getColumnCount table-model))]
-        (.getColumnName table-model i)))
-      (.indexOf text))))
+  (.. table (getColumn text) getModelIndex))
 
 (defn open-selected-files [table]
   (let [path-column (get-model-column-index table "Path")]
@@ -115,10 +105,25 @@
     (getValueAt [row column] (nth (nth @current-data row) column))
     (getColumnName [column] (nth tags column))))
 
-(defn add-browser-table-row [s]
-  (swap! current-data conj (vec s))
-  (let [r (dec (count @current-data))]
-    (.fireTableRowsInserted (.getModel (@browser :table)) r r)))
+(defn get-row-path [row]
+  (nth row (.indexOf tags "Path")))
+
+(defn refresh-row [rows new-row]
+  (let [changed (atom false)
+        new-path (get-row-path new-row)
+        data
+          (vec
+            (for [row rows]
+              (if (= (get-row-path row) new-path)
+                (do (reset! changed true) new-row)
+                row)))]
+    (if @changed
+      data
+      (conj data new-row))))
+
+(defn add-browser-table-row [new-row]
+  (swap! current-data refresh-row (vec new-row))
+  (.fireTableDataChanged (.getModel (@browser :table))))
 
 (defn remove-browser-table-row [n]
   (swap! current-data remove-nth n)
@@ -193,15 +198,15 @@
 (defn add-summary-maps [browser map-list headings]
   (send-off scanning-agent 
             (fn [_] (doseq [m map-list]
-                      (awt-event
-                        (add-browser-table-row
-                          (map #(get m %) headings)))))))
+                      (Thread/sleep 5)
+                      (add-browser-table-row
+                        (map #(get m %) headings))))))
 
 (defn add-location [location]
   (.. (get-in @settings-window [:locations :table])
       getModel (addRow (Vector. (list location))))
   (let [maps (get-summary-maps location)]
-    (add-summary-maps @browser maps @headings)))
+    (add-summary-maps @browser maps tags)))
 
 (defn user-add-location []
   (when-let [loc (choose-directory nil
@@ -215,63 +220,76 @@
         :when (= index (.getModelIndex (.getColumn column-model i)))]
           i))))
 
-(defn show-columns [display-columns]
-  (println "show-columns" display-columns)
-  (let [table (:table @browser)
-        column-model (.getColumnModel (:table @browser))
-        total-width (.getWidth table)]
-    (dorun (map #(.removeColumn column-model %)
-                (doall (enumeration-seq (.getColumns column-model)))))
-    (doseq [display-column display-columns]
-      (let [tag (:title display-column)
-            model-index (get-model-column-index table tag)]
-        (.addColumn column-model
-          (doto (TableColumn. model-index)
-            (.setHeaderValue tag)
-            (.setPreferredWidth (* total-width (:width display-column)))))))))
+(defn update-browser-column [])
 
-(defn update-column [tags-model col]
-  (when (:table @browser)
-    (let [on (.getValueAt tags-model col 0)
-          tag (.getValueAt tags-model col 1)
-          table (:table @browser)
-          column-model (.getColumnModel table)
-          model-index (get-model-column-index table tag)
-          display-index (get-display-index table model-index)]
-      (when (<= 0 model-index)
-        (when (and (not on) display-index)
-          (.removeColumn column-model (.getColumn column-model display-index)))
-        (when (and on (not display-index))
-          (println model-index)
-          (.addColumn column-model
-            (doto (TableColumn. model-index)
-              (.setHeaderValue tag))))))))
+(defn add-browser-column [tag]
+  (let [column (doto (TableColumn. (.indexOf tags tag))
+                 (.setHeaderValue tag))]
+    (.addColumn (@browser :table) column)
+    column))
 
-(defn update-all-columns [tags-model]
-  (dorun (map #(update-column tags-model %) (range (.getRowCount tags-model)))))
+(defn column-visible? [tag]
+  (true?
+    (some #{true}
+      (for [col (enumeration-seq (.getColumns (->@browser :table .getColumnModel)))]
+        (= (.getIdentifier col) tag)))))
+
+(defn set-column-visible [tag visible]
+      (let [table (@browser :table)]
+        (if (and visible (not (column-visible? tag)))
+          (add-browser-column tag))
+        (if (and (not visible) (column-visible? tag))
+          (.removeColumn (.getColumnModel table)
+            (.getColumn table tag)))))
+
+(defn create-column-model []
+   (proxy [AbstractTableModel] []
+                (getRowCount [] (count tags))
+                (getColumnCount [] 2)
+                (getValueAt [row column]
+                  (let [tag (nth tags row)]
+                    (condp = column
+                      0 (column-visible? tag)
+                      1 tag)))
+                (setValueAt [val row column]
+                  (when (zero? column)
+                    (let [tag (nth tags row)]
+                      (set-column-visible tag val))))
+                (getColumnClass [column]
+                  (get [Boolean String] column))))
 
 (defn create-column-table []
   (let [table (proxy [JTable] []
                 (isCellEditable [_ i] (get [true false] i)))
-        model (proxy [DefaultTableModel] [0 2]
-                (getColumnClass [i]
-                  (get [Boolean String] i)))]
+        model (create-column-model)]
     (doto table
       (.setModel model)
       (.setRowSelectionAllowed false)
       (.setFocusable false)
       (.. getColumnModel (getColumn 0) (setMinWidth 20))
       (.. getColumnModel (getColumn 0) (setMaxWidth 20)))
-      (.addTableModelListener model
-        (reify TableModelListener
-          (tableChanged [_ e]
-            (dorun (map #(update-column model %)
-              (range (.getFirstRow e) (inc (.getLastRow e))))))))
-    (doseq [tag tags]
-      (.addRow model (Vector. [false tag])))
     table))
 
+(defn update-collection-menu [name ]
+  (let [menu (@browser :collection-menu)
+        names (sort (keys @collections))
+        listeners (.getItemListeners menu)]
+    (dorun (map #(.removeItemListener menu %) listeners))
+    (.removeAllItems menu)
+    (dorun (map #(.addItem menu %) names))
+    (.addItem menu "New...")
+    (.setSelectedItem (@browser :collection-menu) name)
+    (dorun (map #(.addItemListener menu %) listeners))))
+
 ;; collection files
+
+
+(defn save-last-collection [name]
+  (write-value-to-prefs prefs "last-collection" name))
+
+(defn load-last-collection []
+  (or (read-value-from-prefs prefs "last-collection")
+    (System/getProperty "user.name")))
 
 (defn read-collection-map []
   (reset! collections
@@ -305,30 +323,31 @@
 
 (defn apply-data-and-settings [settings]
   (awt-event
-  (let [table (@browser :table)
-        model (.getModel table)
-        {:keys [browser-model-data
-                browser-model-headings
-                window-size display-columns
-                locations sorted-column]} settings]
-    (println "apply:" display-columns)
-    (reset! current-data browser-model-data)
-    (doto model (.fireTableDataChanged) (.fireTableStructureChanged))
-    (-> @settings-window :locations :table .getModel
-      (.setDataVector
-        (Vector. (map #(Vector. (list %)) (seq locations)))
-        (Vector. (list "Locations"))))
-    (let [column-model (-> @settings-window :columns :table .getModel)]
-      (doseq [row (range (.getRowCount column-model))]
-        (.setValueAt column-model
-          (not (nil? (some #{(.getValueAt column-model row 1)}
-                           (map :title display-columns))))
-          row 0))
-      (show-columns display-columns)
-      (update-all-columns))
-    (println display-columns)
-    (println window-size)
-    )))
+    (let [table (@browser :table)
+          model (.getModel table)
+          {:keys [browser-model-data
+                  browser-model-headings
+                  window-size display-columns
+                  locations sorted-column]} settings]
+      (def dc display-columns)
+      (reset! current-data browser-model-data)
+      (doto model (.fireTableDataChanged) (.fireTableStructureChanged))
+      (-> @settings-window :locations :table .getModel
+        (.setDataVector
+          (Vector. (map #(Vector. (list %)) (seq locations)))
+          (Vector. (list "Locations"))))
+      (let [column-model (.. table getColumnModel)]
+        (println (-> column-model .getColumns enumeration-seq count))
+        (dorun (map #(.removeColumn column-model %)
+             (-> column-model .getColumns enumeration-seq reverse))))
+      (println display-columns)
+      (let [total-width (.getWidth table)]
+        (doseq [col display-columns]
+          (println col)
+          (doto (add-browser-column (:title col))
+            (.setPreferredWidth (* total-width (:width col)))))))
+      (-> @settings-window :columns :table
+                           .getModel .fireTableDataChanged)))
 
 (defn save-data-and-settings [collection-name]
   (println "save-data-and-settings" collection-name)
@@ -337,9 +356,10 @@
   (println "saved data and settings: " (:display-columns (get-current-data-and-settings))))
 
 (defn load-data-and-settings [name]
+  (save-last-collection name)
   (let [f (get @collections name)]
     (apply-data-and-settings (read-json (slurp f))))
-    (.setSelectedItem (@browser :collection-menu) name))
+  (update-collection-menu name))
 
 (defn user-creates-collection []
   (let [prompt-msg "Please enter a name for the new collection."]
@@ -354,17 +374,6 @@
                          prompt-msg))
            :else collection-name)))))
 
-(defn update-collection-menu []
-  (let [menu (@browser :collection-menu)
-        names (sort (keys @collections))
-        listeners (.getItemListeners menu)]
-    (dorun (map #(.removeItemListener menu %) listeners))
-    (.removeAllItems menu)
-    (dorun (map #(.addItem menu %) names))
-    (.addItem menu "New...")
-    (.addItem menu "Load...")
-    (dorun (map #(.addItemListener menu %) listeners))))
-
 (defn new-data-and-settings []
   (let [collection-name (user-creates-collection)]
     (swap! collections assoc collection-name
@@ -374,7 +383,7 @@
     (save-collection-map)
     (save-data-and-settings collection-name)
     (awt-event
-      (update-collection-menu)
+      (update-collection-menu collection-name)
         (let [m (-> @browser :table .getModel)]
           (.fireTableDataChanged m)
              ))))
@@ -383,8 +392,14 @@
   (reify ImageStorageListener
     (imageStorageFinished [_ path]
       (add-summary-maps @browser
-                        (list (get-summary-map path "")) @headings))))
+                        (list (get-summary-map path "")) tags))))
       
+(defn refresh-collection []
+  (let [n (.indexOf tags "Location")
+        locations (distinct (map #(get % n) @current-data))]
+    ; blah blah
+  ))
+
 ;; windows
 
 (defn create-settings-window []
@@ -448,6 +463,7 @@
         scroll-pane (JScrollPane. table)
         search-field (JTextField.)
         search-label (JLabel. (get-icon "zoom.png"))
+        refresh-button (create-button "Refresh" refresh-collection)
         settings-button (create-button "Settings..."
                           #(.show (:frame @settings-window)))
         collection-label (JLabel. "Collection:")
@@ -480,17 +496,17 @@
     (gen-map frame table scroll-pane settings-button search-field
              collection-menu)))
 
+(defn init-columns []
+  (vec (map #(vec (list % false)) tags)))
+
 (defn start-browser []
   (load-mm)
   (read-collection-map)
   (reset! settings-window (create-settings-window))
   (reset! browser (create-browser))
-  (reset! headings tags)
   (MMImageCache/addImageStorageListener (create-image-storage-listener))
   (.setModel (:table @browser) (create-browser-table-model tags))
-  (update-all-columns (.getModel (get-in @settings-window [:columns :table])))
-  (update-collection-menu)
-  (add-location "/Users/arthur/qqqq")
+  (load-data-and-settings (load-last-collection))
   (.show (@browser :frame))
   browser)
 
