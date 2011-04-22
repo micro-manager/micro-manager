@@ -140,25 +140,8 @@ cc = so.capture->start_frame();
 
 snap_in_progress = true;
 
-
-//long	exposure = d_exposure;
-//char	msg[256];
-//sprintf(msg, "exposure duration = %x\r\n", exposure);
-//sLogMessage(msg);
-
-// delay if exposure delay is enalbed (wait for duration of exposure with padding)
-if(exposure_delay_enabled != 0)
-	{
-	long	exposure = (long)d_exposure;
-	long	duration = 0;
-	long	exp_start = 133 - (exposure % 133);
-
-	duration = 133 + exp_start + exposure;
-
-
-	// wait for exposure duration (exposure in ms)
-	CDeviceUtils::SleepMs(duration);
-	}
+// wait for exposure duration (exposure in ms)
+CDeviceUtils::SleepMs((long)d_exposure);
 
 return(return_cc);
 }

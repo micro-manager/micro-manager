@@ -179,7 +179,7 @@ public:
    int OnContrast(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnBlackLevel(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnExposureDelay(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnAfterExposureDelay(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    int OnGammaMode(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnGamma(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -262,7 +262,7 @@ private:
 	unsigned int	stream_mode;			// 1 = stream on
 	unsigned int	restart_stream;			// 1 = restart stream
 
-	long			exposure_delay_enabled;	// 1 = exposure delay active
+   long           afterExposureDelay_;
 
 	double			d_gain;					// gain
 	double			d_max_gain;				// max allowed gain value

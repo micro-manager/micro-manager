@@ -85,8 +85,6 @@ if (fp != NULL)
     }
 #endif
 
-#else
-   msg = msg;
 #endif
 
 return;

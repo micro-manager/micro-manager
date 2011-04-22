@@ -304,7 +304,7 @@ CScionCamera::CScionCamera() :
    index(0),
    stream_mode(0),
    restart_stream(0),
-   exposure_delay_enabled(0),
+   afterExposureDelay_(133),
    d_gain(0.0),
    d_max_gain(0.0),
    d_min_gain(0.0),
@@ -399,7 +399,6 @@ CScionCamera::CScionCamera(unsigned int camera_id) :
    index(0),
    stream_mode(0),
    restart_stream(0),
-   exposure_delay_enabled(0),
    d_gain(0.0),
    d_max_gain(0.0),
    d_min_gain(0.0),
@@ -784,6 +783,7 @@ else
 	{
 	// start a capture - block for exposure time and then return
 	cc = start_snap();
+   CDeviceUtils::SleepMs(afterExposureDelay_);
 	if(cc == 0)
 		{
 		// got frame
@@ -1333,12 +1333,12 @@ else if (eAct == MM::AfterSet)
 return DEVICE_OK;
 }
 
-int CScionCamera::OnExposureDelay(MM::PropertyBase* pProp, MM::ActionType eAct)
+int CScionCamera::OnAfterExposureDelay(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet) {
-      pProp->Set(exposure_delay_enabled);
+      pProp->Set(afterExposureDelay_);
    } else if (eAct == MM::AfterSet) {
-      pProp->Get(exposure_delay_enabled);
+      pProp->Get(afterExposureDelay_);
    }
    return DEVICE_OK;
 }
@@ -2494,10 +2494,10 @@ nRet = CreateProperty(MM::g_Keyword_Exposure,
 	CDeviceUtils::ConvertToString(d_exposure), MM::Float, false, pAct);
 assert(nRet == DEVICE_OK);
 
-// Delay after exposure enabled
-pAct = new CPropertyAction (this, &CScionCamera::OnExposureDelay);
-nRet = CreateProperty("Exposure Delay Enabled", 
-	CDeviceUtils::ConvertToString(exposure_delay_enabled), MM::Integer, false, pAct);
+// Delay after exposure (used to correct for unknown delay between sending the software trigger to the camera and exposure start, can hopefully be removed in the future)
+pAct = new CPropertyAction (this, &CScionCamera::OnAfterExposureDelay);
+nRet = CreateProperty("After Exposure Delay", 
+	CDeviceUtils::ConvertToString(afterExposureDelay_), MM::Integer, false, pAct);
 assert(nRet == DEVICE_OK);
 
 // camera gain
