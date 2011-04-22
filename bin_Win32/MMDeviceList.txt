@@ -1,5 +1,5 @@
 AAAOTF,AAAOTF,AAAOTF,3
-ABSCamera,ABSCam,No ABS camera device connected!,2
+ABSCamera,ABSCam,CamUSB_API_hal.dll not found or wrong version! Device won't work!,1
 AOTF,AOTF-Switch,TLL digital out AOTF wavelength selector,4
 AOTF,AOTF-Shutter,TTL digital out AOTF shutter,3
 ASIFW1000,ASIFWController,ASIFW1000 Controller,8
@@ -89,6 +89,7 @@ LeicaDMI,DIC Turret,DIC Turret,4
 LeicaDMI,Condensor,Condensor Turret,4
 LeicaDMI,Transmitted Light,Transmitted Light,3
 LeicaDMI,Adaptive Focus Control,Adaptive Focus Control,9
+LeicaDMI,SidePort,Side Port,4
 LeicaDMR,Leica DM microscope,LeicaDMR (DM RXA; DM RME; RD RBE; DM RXA; DM RA; DM IRBE) Controller,8
 LeicaDMR,Reflected Light Module,Reflected Light LModule,4
 LeicaDMR,Halogen Lamp,Halogen Lamp,3

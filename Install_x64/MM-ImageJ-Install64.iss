@@ -68,6 +68,7 @@ Source: ..\..\3rdparty\jre\* ; DestDir: {app}\jre; Flags: ignoreversion recurses
 Source: micro-manager\atmcd64d.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\inpoutx64.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\MMCoreJ_wrap.dll; DestDir: {app}; Flags: ignoreversion
+Source: ..\drivers\K8061\amd64\libusb0.dll; DestDir: {app}; DestName: libusb0.dll; Flags: ignoreversion
 
 Source: micro-manager\mmgr_dal_AAAOTF.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Andor.dll; DestDir: {app}; Flags: ignoreversion

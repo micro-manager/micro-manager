@@ -56,19 +56,25 @@ Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.OPENMP\vcomp90
 Source: ..\..\3rdparty\Microsoft\VisualC++\lib\x86\Microsoft.VC90.OPENMP\Microsoft.VC90.OpenMP.manifest ; DestDir: {app}\Microsoft.VC90.OPENMP; Flags: ignoreversion
 
 
-
 ; device libraries
 Source: micro-manager\ATMCD32D.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\CamUsb_API.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\inpout32.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\MMCoreJ_wrap.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\usb_main.bin; DestDir: {app}; Flags: ignoreversion
+Source: ..\drivers\K8061\x86\libusb0_x86.dll; DestDir: {app}; DestName: libusb0.dll; Flags: ignoreversion
+Source: micro-manager\camconj.dll; DestDir: {app}; Flags: ignoreversion
+Source: micro-manager\FireCamJ.dll; DestDir: {app}; Flags: ignoreversion
+Source: micro-manager\MexJCam.dll; DestDir: {app}; Flags: ignoreversion
+Source: micro-manager\ProcessLib.dll; DestDir: {app}; Flags: ignoreversion
+Source: micro-manager\FxLib.dll; DestDir: {app}; Flags: ignoreversion
+Source: micro-manager\SysInfo.dll; DestDir: {app}; Flags: ignoreversion
 
 ; Breeze stuff
 Source: micro-manager\DSLRRemoteLib.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\NKRemoteLib.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\PSRemoteLib.dll; DestDir: {app}; Flags: ignoreversion
 
+Source: micro-manager\MMCoreJ_wrap.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_AAAOTF.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_ABSCamera.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_AgilentLaserCombiner.dll; DestDir: {app}; Flags: ignoreversion
@@ -146,12 +152,7 @@ Source: micro-manager\mmgr_dal_Vincent.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_Yokogawa.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_ZeissCAN.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\mmgr_dal_ZeissCAN29.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\camconj.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\FireCamJ.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\MexJCam.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\ProcessLib.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\FxLib.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\SysInfo.dll; DestDir: {app}; Flags: ignoreversion
+
 
 
 ; python wrapper

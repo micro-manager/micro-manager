@@ -1,6 +1,6 @@
 [Setup]
-OutputDir=C:\projects\micromanager
-OutputBaseFilename=MMDeviceKit-win-39
+OutputDir=\projects\micromanager
+OutputBaseFilename=MMDeviceKit-win-x86-x64-Dev39-Mod5
 DefaultDirName=C:/Program Files/MMDeviceKit-win-Dev39-Mod5
 VersionInfoVersion=39
 VersionInfoCompany=micro-manager.org
