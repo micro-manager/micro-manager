@@ -20,7 +20,8 @@
            (java.awt.event ActionListener)
            (javax.swing AbstractAction BorderFactory JButton
                         JFileChooser KeyStroke SpringLayout
-                        SwingUtilities)))
+                        SwingUtilities))
+  (:require [clojure.contrib.string :as string]))
 
 ; clojure utils
 
@@ -39,8 +40,8 @@
 (defn partition-str [n s]
   (loop [rem s acc []]
     (if (pos? (.length rem))
-      (recur (clojure.contrib.string/drop n rem)
-             (conj acc (clojure.contrib.string/take n rem)))
+      (recur (string/drop n rem)
+             (conj acc (string/take n rem)))
       (seq acc))))
 
 (def pref-max-bytes (* 3/4 Preferences/MAX_VALUE_LENGTH))

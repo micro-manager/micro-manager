@@ -231,7 +231,7 @@
 (defn column-visible? [tag]
   (true?
     (some #{true}
-      (for [col (enumeration-seq (.getColumns (->@browser :table .getColumnModel)))]
+      (for [col (-> @browser :table .getColumnModel .getColumns enumeration-seq)]
         (= (.getIdentifier col) tag)))))
 
 (defn set-column-visible [tag visible]
