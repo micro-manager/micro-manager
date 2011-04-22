@@ -197,7 +197,8 @@ public class I2I {
 		min = 0; max = 0; xOrg = 0; yOrg = 0;
 		data_size = getX() * getY() * getZ();
 		image_size = getX() * getY();
-		history[0] = ("* Created on " + Utils.generateDate() + " by " + System.getenv("HOSTNAME"));
+      Utils u = new Utils();
+		history[0] = ("* Created on " + u.generateDate() + " by " + System.getenv("HOSTNAME"));
 	}
 	/// Saves an I2I image 
 	public void saveImage(String file) {
@@ -289,18 +290,19 @@ public class I2I {
 	}
 	// return 1 2D plane
 	public short[] getImage2D(int z) {
-		
-		return (Utils.getarray(data, z * image_size,image_size));
+		Utils u = new Utils();
+      return data;
+		// function is missing return (Utils.getarray(data, z * image_size,image_size));
 
 	}
 	// return 1 3D plane
 	public short[] getImage3D(int z) {
-		
+		/*
 		if (T.intValue() > 1) {
 			int foo = image_size * Z.intValue()/T.intValue();
 			return (Utils.getarray(data, z * foo,foo));
 		}
-		else return (data); // only one 3D time point, just return the entire array 
+		else*/ return (data); // only one 3D time point, just return the entire array
 	}
 	public void addImage(int[] image, int z) {
 		// expand array to add
