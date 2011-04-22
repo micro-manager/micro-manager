@@ -59,13 +59,13 @@ class LeicaScope : public CGenericBase<LeicaScope>
       int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct); 
       int OnMethod(MM::PropertyBase* pProp, MM::ActionType eAct); 
       int OnAnswerTimeOut(MM::PropertyBase* pProp, MM::ActionType eAct); 
-      void AttemptToDiscover(int deviceCode, const char* deviceName);
-
 
    private:
       bool initialized_;
       double answerTimeoutMs_;
       std::vector<std::string> discoveredDevices_;
+
+      void AttemptToDiscover(int deviceCode, const char* deviceName);
 };
 
 
