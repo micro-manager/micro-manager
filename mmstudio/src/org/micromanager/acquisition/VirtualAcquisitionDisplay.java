@@ -437,8 +437,10 @@ public class VirtualAcquisitionDisplay {
             }
          } else {
             hc_.enableAcquisitionControls(false);
-            if (!status.contentEquals("interrupted") && eng_.isFinished()) {
-               status = "finished";
+            if (!status.contentEquals("interrupted")) {
+              if (eng_.isFinished()) {
+                 status = "finished";
+              }
             }
          }
          status += ", ";

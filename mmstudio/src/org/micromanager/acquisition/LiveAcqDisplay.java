@@ -103,7 +103,6 @@ public class LiveAcqDisplay extends Thread {
             int imageCount = 0;
             long t = 0;
             long tLast = 0;
-            boolean finished = false;
             try {
                while (!imageCache_.isFinished()) {
                   updateDisplay();
@@ -111,6 +110,7 @@ public class LiveAcqDisplay extends Thread {
                   if (t - tLast < 30) {
                      JavaUtils.sleep((int) (t - tLast));
                   }
+                  tLast = t;
                   ++imageCount;
                }
                updateDisplay();
@@ -131,7 +131,6 @@ public class LiveAcqDisplay extends Thread {
 
 
    protected void cleanup() {
-      update();
       try {
          imageCache_.finished();
       } catch (Exception e) {
