@@ -60,6 +60,7 @@ const char* g_PixelType_8bit = "8bit";
 const char* g_PixelType_16bit = "16bit";
 const char* g_PixelType_32bitRGB = "32bitRGB";
 const char* g_PixelType_64bitRGB = "64bitRGB";
+const char* g_PixelType_32bit = "32bit";  // floating point greyscale
 
 // TODO: linux entry code
 
@@ -306,6 +307,7 @@ int CDemoCamera::Initialize()
    pixelTypeValues.push_back(g_PixelType_16bit); 
 	pixelTypeValues.push_back(g_PixelType_32bitRGB);
 	pixelTypeValues.push_back(g_PixelType_64bitRGB);
+   pixelTypeValues.push_back(::g_PixelType_32bit);
 
    nRet = SetAllowedValues(MM::g_Keyword_PixelType, pixelTypeValues);
    if (nRet != DEVICE_OK)
@@ -322,6 +324,7 @@ int CDemoCamera::Initialize()
    bitDepths.push_back("12");
    bitDepths.push_back("14");
    bitDepths.push_back("16");
+   bitDepths.push_back("32");
    nRet = SetAllowedValues("BitDepth", bitDepths);
    if (nRet != DEVICE_OK)
       return nRet;
@@ -1041,6 +1044,12 @@ int CDemoCamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
             img_.Resize(img_.Width(), img_.Height(), 8);
             ret=DEVICE_OK;
 			}
+         else if ( pixelType.compare(g_PixelType_32bit) == 0)
+			{
+            nComponents_ = 1;
+            img_.Resize(img_.Width(), img_.Height(), 4);
+            ret=DEVICE_OK;
+			}
          else
          {
             // on error switch to default pixel type
@@ -1057,8 +1066,13 @@ int CDemoCamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
          	pProp->Set(g_PixelType_8bit);
          else if (bytesPerPixel == 2)
          	pProp->Set(g_PixelType_16bit);
-         else if (bytesPerPixel == 4) // todo SEPARATE bitdepth from #components
-				pProp->Set(g_PixelType_32bitRGB);
+         else if (bytesPerPixel == 4)
+         {
+            if(4 == this->nComponents_) // todo SEPARATE bitdepth from #components
+				   pProp->Set(g_PixelType_32bitRGB);
+            else if( 1 == nComponents_)
+               pProp->Set(::g_PixelType_32bit);
+         }
          else if (bytesPerPixel == 8) // todo SEPARATE bitdepth from #components
 				pProp->Set(g_PixelType_64bitRGB);
 			else
@@ -1113,6 +1127,11 @@ int CDemoCamera::OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct)
                bitDepth_ = 16;
                ret=DEVICE_OK;
             break;
+            case 32:
+               bytesPerComponent = 4;
+               bitDepth_ = 32; 
+               ret=DEVICE_OK;
+            break;
             default: 
                // on error switch to default pixel type
 					bytesPerComponent = 1;
@@ -1128,6 +1147,7 @@ int CDemoCamera::OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct)
 			unsigned int bytesPerPixel = 1;
 			
 
+         // automagickally change pixel type when bit depth exceeds possible value
          if (pixelType.compare(g_PixelType_8bit) == 0)
          {
 				if( 2 == bytesPerComponent)
@@ -1135,10 +1155,14 @@ int CDemoCamera::OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct)
 					SetProperty(MM::g_Keyword_PixelType, g_PixelType_16bit);
 					bytesPerPixel = 2;
 				}
-				else
-				{
+				else if ( 4 == bytesPerComponent)
+            {
+					SetProperty(MM::g_Keyword_PixelType, g_PixelType_32bit);
+					bytesPerPixel = 4;
 
-				bytesPerPixel = 1;
+            }else
+				{
+				   bytesPerPixel = 1;
 				}
          }
          else if (pixelType.compare(g_PixelType_16bit) == 0)
@@ -1146,6 +1170,10 @@ int CDemoCamera::OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct)
 				bytesPerPixel = 2;
          }
 			else if ( pixelType.compare(g_PixelType_32bitRGB) == 0)
+			{
+				bytesPerPixel = 4;
+			}
+			else if ( pixelType.compare(g_PixelType_32bit) == 0)
 			{
 				bytesPerPixel = 4;
 			}
@@ -1373,6 +1401,10 @@ int CDemoCamera::ResizeImageBuffer()
 	{
       byteDepth = 4;
 	}
+	else if ( pixelType.compare(g_PixelType_32bit) == 0)
+	{
+      byteDepth = 4;
+	}
 	else if ( pixelType.compare(g_PixelType_64bitRGB) == 0)
 	{
       byteDepth = 8;
@@ -1425,7 +1457,7 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
 
  
 
-	// bitDepth_ is 8, 10, 12, 16 i.e. it is depth per component
+	// for integer images: bitDepth_ is 8, 10, 12, 16 i.e. it is depth per component
    long maxValue = (1L << bitDepth_)-1;
 
 	long pixelsToDrop = 0;
@@ -1491,6 +1523,46 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
 			k = (unsigned)(0.5 + (double)img.Width()*(double)rand()/(double)RAND_MAX);
 			*(pBuf + img.Width()*j + k) = 0;
 		}
+	
+	}
+   else if (pixelType.compare(g_PixelType_32bit) == 0)
+   {
+      double pedestal = 127 * exp / 100.0 * GetBinning() * GetBinning();
+      float* pBuf = (float*) const_cast<unsigned char*>(img.GetPixels());
+      float saturatedValue = 255.;
+      memset(pBuf, 0, img.Height()*img.Width()*4);
+      static unsigned int j2;
+      for (j=0; j<img.Height(); j++)
+      {
+         for (k=0; k<img.Width(); k++)
+         {
+            long lIndex = img.Width()*j + k;
+            double value =  (g_IntensityFactor_ * min(255.0, (pedestal + dAmp * sin(dPhase_ + dLinePhase + (2.0 * cPi * k) / lPeriod))));
+            *(pBuf + lIndex) = (float) value;
+            if( 0 == lIndex)
+            {
+               std::ostringstream os;
+               os << " first pixel is " << (float)value;
+               LogMessage(os.str().c_str());
+
+            }
+         }
+         dLinePhase += cLinePhaseInc;
+      }
+
+	   for(int snoise = 0; snoise < pixelsToSaturate; ++snoise)
+		{
+			j = (unsigned)(0.5 + (double)img.Height()*(double)rand()/(double)RAND_MAX);
+			k = (unsigned)(0.5 + (double)img.Width()*(double)rand()/(double)RAND_MAX);
+			*(pBuf + img.Width()*j + k) = saturatedValue;
+		}
+		int pnoise;
+		for(pnoise = 0; pnoise < pixelsToDrop; ++pnoise)
+		{
+			j = (unsigned)(0.5 + (double)img.Height()*(double)rand()/(double)RAND_MAX);
+			k = (unsigned)(0.5 + (double)img.Width()*(double)rand()/(double)RAND_MAX);
+			*(pBuf + img.Width()*j + k) = 0;
+      }
 	
 	}
 	else if (pixelType.compare(g_PixelType_32bitRGB) == 0)
