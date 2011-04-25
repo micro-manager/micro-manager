@@ -1,3 +1,13 @@
+/*
+ * 
+ * Karl Bellve
+ * Biomedical Imaging Group
+ * University of Massachusetts Medical School
+ * Karl.Bellve@umassmed.edu
+ * http://big.umassmed.edu/
+ *
+ */
+
 package edu.umassmed.big;
 
 
@@ -5,7 +15,7 @@ import java.util.Calendar;
 
 public class Utils {
 
-	public String generateDate ()
+	public static String generateDate ()
 	{
 		String Date;
 		
@@ -22,4 +32,13 @@ public class Utils {
 		return Date;
 	}
 
+	// get only a piece of the array, use only for 2D, since I think 3D sizes run into memory issues
+	public static short[] getarray(short[] array, int offset, int length) 
+	{
+		short[] result;
+	    result = new short[length];
+	    System.arraycopy(array, offset, result, 0, length);
+	    return result;
+		   
+	}
 }
