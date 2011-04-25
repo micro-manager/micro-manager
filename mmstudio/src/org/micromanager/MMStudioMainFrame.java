@@ -116,11 +116,13 @@ import bsh.Interpreter;
 import com.swtdesigner.SwingResourceManager;
 import ij.gui.ImageCanvas;
 import ij.gui.ImageWindow;
+import ij.process.FloatProcessor;
 import java.awt.Cursor;
 import java.awt.Graphics;
 import java.awt.KeyboardFocusManager;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.nio.ByteBuffer;
 import java.util.Collections;
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
@@ -295,6 +297,33 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       }
    }
    
+   private void doSnapFloat() {
+      try {
+         // just a test harness
+         core_.snapImage();
+         byte[] byteImage = (byte[]) core_.getImage();
+         int  ii = (int)core_.getImageWidth();
+         int   jj = (int)core_.getImageHeight();
+         int   npoints = ii*jj;
+         float[] floatImage = new float[npoints];
+
+         ImagePlus implus = new ImagePlus();
+         int iiterator = 0;
+         int oiterator = 0;
+         for (; oiterator < npoints; ++oiterator) {
+            floatImage[oiterator] = Float.intBitsToFloat(((int) byteImage[iiterator+3 ] << 24) + ((int) byteImage[iiterator + 2] << 16) + ((int) byteImage[iiterator + 1] << 8) + (int) byteImage[iiterator]);
+            iiterator += 4;
+         }
+         FloatProcessor fp = new FloatProcessor(ii, jj, floatImage, null);
+         implus.setProcessor(fp);
+         ImageWindow iwindow = new ImageWindow(implus);
+         WindowManager.setCurrentWindow(iwindow);
+      } catch (Exception ex) {
+         ReportingUtils.showError(ex);
+      }
+
+
+   }
 
    private void doSnapMonochrome() {
       try {
@@ -2982,7 +3011,11 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    private void doSnap() {
       if (core_.getNumberOfComponents() == 1) {
+         if(4==core_.getBytesPerPixel()){
+            doSnapFloat();
+         }else{
          doSnapMonochrome();
+         }
       } else {
          doSnapColor();
       }
