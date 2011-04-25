@@ -594,7 +594,8 @@
                            (let [img (annotate-image (core getLastImage) event state)]
                               (reset-snap-window img)
                               (show-image @snap-window img)))
-                         (core stopSequenceAcquisition)))))
+                         (core stopSequenceAcquisition))
+                    "Live mode (clojure)")))
         (dosync (ref-set live-mode-running false))))
 
 ;; java interop
