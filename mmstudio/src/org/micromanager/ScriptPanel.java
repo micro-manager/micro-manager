@@ -289,7 +289,7 @@ public final class ScriptPanel extends MMFrame implements MouseListener, Scripti
          cons_.setFont(gui_.defaultScriptFont_);
       
       beanshellREPLint_ = new Interpreter(cons_);
-      new Thread(beanshellREPLint_).start();
+      new Thread(beanshellREPLint_, "Beanshell interpreter").start();
 
       try {
        File f = new File("scripts/mm_beanshell_startup.bsh");

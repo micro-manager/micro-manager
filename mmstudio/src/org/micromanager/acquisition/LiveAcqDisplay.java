@@ -71,7 +71,7 @@ public class LiveAcqDisplay extends Thread {
    }
 
    public void start() {
-      Thread savingThread = new Thread() {
+      Thread savingThread = new Thread("LiveAcqDisplay saving thread.") {
          public void run() {
             long t1 = System.currentTimeMillis();
             int imageCount = 0;
@@ -97,7 +97,7 @@ public class LiveAcqDisplay extends Thread {
       savingThread.start();
 
 
-      Thread displayThread = new Thread() {
+      Thread displayThread = new Thread("LiveAcqDisplay display thread.") {
          public void run() {
             long t1 = System.currentTimeMillis();
             int imageCount = 0;

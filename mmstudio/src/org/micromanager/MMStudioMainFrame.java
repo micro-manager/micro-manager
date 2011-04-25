@@ -47,6 +47,8 @@ import java.io.IOException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -110,6 +112,7 @@ import org.micromanager.utils.WaitDialog;
 
 import bsh.EvalError;
 import bsh.Interpreter;
+import clojure.lang.RT;
 
 import com.swtdesigner.SwingResourceManager;
 import ij.gui.ImageCanvas;
@@ -135,6 +138,7 @@ import org.micromanager.acquisition.VirtualAcquisitionDisplay;
 import org.micromanager.utils.ImageFocusListener;
 import org.micromanager.api.Pipeline;
 import org.micromanager.api.TaggedImageStorage;
+import org.micromanager.browser.Data_Browser;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.FileDialogs.FileType;
 import org.micromanager.utils.HotKeysDialog;
@@ -194,7 +198,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private CalibrationListDlg calibrationListDlg_;
    private AcqControlDlg acqControlWin_;
    private ReportProblemDialog reportProblemDialog_;
-
+   
+   private JMenu pluginMenu_;
    private ArrayList<PluginItem> plugins_;
    private List<MMListenerInterface> MMListeners_
            = (List<MMListenerInterface>)
@@ -523,7 +528,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    private void startLoadingPipelineClass() {
       Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
-      pipelineClassLoadingThread_ = new Thread() {
+      pipelineClassLoadingThread_ = new Thread("Pipeline Class loading thread") {
          @Override
          public void run() {
             try {
@@ -667,18 +672,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    public MMStudioMainFrame(boolean pluginStatus) {
       super();
-
-      /*
-      Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
-
-         public void uncaughtException(Thread t, Throwable e) {
-            // This call can result in loops that go on forever
-            // and display thousands of Errors.  Not sure why, but for now,
-            // it seems better to do nothing
-            // ReportingUtils.showError(e, "An uncaught exception was thrown in thread " + t.getName() + ".");
-         }
-      });
-       */
 
       startLoadingPipelineClass();
 
@@ -1690,7 +1683,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             }
 
             loadMRUConfigFiles();
+            initializePlugins();
 
+            toFront();
+            
             if (!options_.doNotAskForConfigFile_) {
                MMIntroDlg introDlg = new MMIntroDlg(VERSION, MRUConfigFiles_);
                introDlg.setConfigFile(sysConfigFile_);
@@ -1721,8 +1717,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                ReportingUtils.showErrorOn(false);
 
             executeStartupScript();
-            loadPlugins();
-            toFront();
+
 
             // Create Multi-D window here but do not show it.
             // This window needs to be created in order to properly set the "ChannelGroup"
@@ -1739,7 +1734,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
             // initialize controls
             initializeGUI();
-            initializePluginMenu();
             initializeHelpMenu();
             
             String afDevice = mainPrefs_.get(AUTOFOCUS_DEVICE, "");
@@ -1754,6 +1748,17 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             
             // switch error reporting back on
             ReportingUtils.showErrorOn(true);
+         }
+
+         private void initializePlugins() {
+            pluginMenu_ = new JMenu();
+            pluginMenu_.setText("Plugins");
+            menuBar_.add(pluginMenu_);
+            new Thread("Plugin loading") {
+               public void run() {
+                  loadPlugins();
+               }
+            }.start();
          }
 
         
@@ -3072,38 +3077,23 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       return VERSION;
    }
 
-   private void initializePluginMenu() {
+   private void addPluginToMenu(final PluginItem plugin) {
       // add plugin menu items
-      if (plugins_.size() > 0) {
-         final JMenu pluginMenu = new JMenu();
-         pluginMenu.setText("Plugins");
-         menuBar_.add(pluginMenu);
 
-         for (int i = 0; i < plugins_.size(); i++) {
-            final JMenuItem newMenuItem = new JMenuItem();
-            newMenuItem.addActionListener(new ActionListener() {
+      final JMenuItem newMenuItem = new JMenuItem();
+      newMenuItem.addActionListener(new ActionListener() {
 
-               public void actionPerformed(final ActionEvent e) {
-                  ReportingUtils.logMessage("Plugin command: "
-                        + e.getActionCommand());
-                  // find the coresponding plugin
-                  for (int i = 0; i < plugins_.size(); i++) {
-                     if (plugins_.get(i).menuItem.equals(e.getActionCommand())) {
-                        PluginItem plugin = plugins_.get(i);
-                        plugin.instantiate();
-                        plugin.plugin.show();
-                        break;
-                     }
-                  }
-               }
-            });
-            newMenuItem.setText(plugins_.get(i).menuItem);
-            pluginMenu.add(newMenuItem);
+         public void actionPerformed(final ActionEvent e) {
+            ReportingUtils.logMessage("Plugin command: "
+                  + e.getActionCommand());
+                  plugin.instantiate();
+                  plugin.plugin.show();
          }
-      }
-
+      });
+      newMenuItem.setText(plugin.menuItem);
+      pluginMenu_.add(newMenuItem);
+      pluginMenu_.validate();
       menuBar_.validate();
-
    }
 
    public void updateGUI(boolean updateConfigPadStructure) {
@@ -4175,6 +4165,13 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          pi.menuItem = pi.menuItem.replace("_", " ");
          pi.pluginClass = cl;
          plugins_.add(pi);
+         final PluginItem pi2 = pi;
+         SwingUtilities.invokeLater(
+            new Runnable() {
+               public void run() {
+                  addPluginToMenu(pi2);
+               }
+            });
 
       } catch (NoClassDefFoundError e) {
          msg = className + " class definition not found.";
@@ -4196,7 +4193,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    public String installPlugin(String className) {
       String msg = "";
       try {
-         return installPlugin(Class.forName(className));
+         Class clazz = Class.forName(className);
+         return installPlugin(clazz);
       } catch (ClassNotFoundException e) {
          msg = className + " plugin not found.";
          ReportingUtils.logError(e, msg);
@@ -4330,8 +4328,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       try {
          long t1 = System.currentTimeMillis();
          classes = JavaUtils.findClasses(new File("mmplugins"), 2);
-         System.out.println(System.currentTimeMillis() - t1);
-         System.out.println(classes.size());
+         //System.out.println("findClasses: " + (System.currentTimeMillis() - t1));
+         //System.out.println(classes.size());
          for (Class<?> clazz : classes) {
             for (Class<?> iface : clazz.getInterfaces()) {
                //core_.logMessage("interface found: " + iface.getName());
@@ -4358,6 +4356,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
       for (Class<?> plugin : pluginClasses) {
          try {
+            ReportingUtils.logMessage("Attempting to install plugin " + plugin.getName());
             installPlugin(plugin);
          } catch (Exception e) {
             ReportingUtils.logError(e, "Attempted to install the \"" + plugin.getName() + "\" plugin .");

@@ -185,7 +185,7 @@ public class MMAcquisition {
       if (show_ && diskCached_ && existing_) {
          // start loading all other images in a background thread
          PreLoadDataThread t = new PreLoadDataThread(virtAcq_);
-         new Thread(t).start();
+         new Thread(t, "PreLoadDataThread").start();
       }
       if (show_) {
          virtAcq_.show();

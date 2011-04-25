@@ -30,6 +30,8 @@ import java.util.jar.JarInputStream;
 import java.util.prefs.Preferences;
 import java.util.prefs.BackingStoreException;
 
+import clojure.lang.RT;
+
 public class JavaUtils {
 
    private static final String BACKING_STORE_AVAIL = "BackingStoreAvail";
@@ -72,10 +74,13 @@ public class JavaUtils {
                      jarEntry = jarFile.getNextJarEntry();
                      if (jarEntry != null) {
                         String classFile = jarEntry.getName();
-                        if (classFile.endsWith(".class") && !classFile.contains("$")) {
+                        if (classFile.endsWith(".class")
+                                && !classFile.contains("$")) {
                            try {
                               String className = stripFilenameExtension(classFile).replace("/", ".");
+                              //long t1 = System.currentTimeMillis();
                               classes.add(Class.forName(className));
+                              //System.out.println(className +": " + (System.currentTimeMillis() - t1));
                            } catch (Throwable e3) {
                               ReportingUtils.logError(e3);
                            }
