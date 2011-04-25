@@ -388,6 +388,7 @@ int CCameraFrontend::Initialize()
 
    /* Finally, connect to default camera */
    SetProperty(MM::g_Keyword_CameraName, defaultCameraName.c_str());
+
    OnPropertiesChanged();
 
    return nRet;
@@ -1434,7 +1435,12 @@ int CCameraFrontend::LoadImage(fipImage frameBitmap)
       /* If image dimension changed resize circular buffer as well */
       if (sizeChanged)
       {
-         GetCoreCallback()->InitializeImageBuffer(GetNumberOfComponents(), 1, GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel());
+         int numberOfComponents;
+         if (grayScale_)
+            numberOfComponents = 1;
+         else
+            numberOfComponents = 4;
+         GetCoreCallback()->InitializeImageBuffer(numberOfComponents, 1, frameBitmap.getWidth(), frameBitmap.getHeight(), bytesPerPixel);
       }
 
       /* Micro-manager expects 16-bit color images as 64bpp bgra. Convert 48bpp rgb to 64bpp bgra. */
