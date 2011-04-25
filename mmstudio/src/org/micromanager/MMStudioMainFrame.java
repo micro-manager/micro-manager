@@ -112,7 +112,6 @@ import org.micromanager.utils.WaitDialog;
 
 import bsh.EvalError;
 import bsh.Interpreter;
-import clojure.lang.RT;
 
 import com.swtdesigner.SwingResourceManager;
 import ij.gui.ImageCanvas;
@@ -138,7 +137,6 @@ import org.micromanager.acquisition.VirtualAcquisitionDisplay;
 import org.micromanager.utils.ImageFocusListener;
 import org.micromanager.api.Pipeline;
 import org.micromanager.api.TaggedImageStorage;
-import org.micromanager.browser.Data_Browser;
 import org.micromanager.utils.FileDialogs;
 import org.micromanager.utils.FileDialogs.FileType;
 import org.micromanager.utils.HotKeysDialog;

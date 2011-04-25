@@ -30,7 +30,6 @@ import java.util.jar.JarInputStream;
 import java.util.prefs.Preferences;
 import java.util.prefs.BackingStoreException;
 
-import clojure.lang.RT;
 
 public class JavaUtils {
 
