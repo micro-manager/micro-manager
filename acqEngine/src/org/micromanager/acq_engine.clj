@@ -320,7 +320,7 @@
                 :snap (collect-snap-image)
                 :init-burst (collect-burst-image)
                 :collect-burst (collect-burst-image))]
-    (if (. mmc isBufferOverflowed)
+    (if (core isBufferOverflowed)
       (do (swap! state assoc :stop true)
           (ReportingUtils/showError "Circular buffer overflowed."))
       (do (log "collect-image: "
@@ -610,7 +610,8 @@
   (swap! (.state this) assoc :stop false :pause false :finished false)
   (let [out-queue (GentleLinkedBlockingQueue.)
         settings (convert-settings acq-settings)
-        acq-thread (Thread. #(run-acquisition this settings out-queue))
+        acq-thread (Thread. #(run-acquisition this settings out-queue)
+                     "Acquisition Engine Thread (Clojure)")
         processors (ProcessorStack. out-queue (.getTaggedImageProcessors acq-eng))
         out-queue-2 (.begin processors)
         display (LiveAcqDisplay. mmc out-queue-2 (make-summary-metadata settings)
