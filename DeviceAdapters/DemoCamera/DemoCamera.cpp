@@ -1543,7 +1543,7 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
             {
                std::ostringstream os;
                os << " first pixel is " << (float)value;
-               LogMessage(os.str().c_str());
+               LogMessage(os.str().c_str(), true);
 
             }
          }
