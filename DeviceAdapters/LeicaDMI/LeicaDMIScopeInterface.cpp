@@ -2006,22 +2006,43 @@ int LeicaMonitoringThread::svc()
                          scopeModel_->ILTurret_.SetBusy(false);
                          break;
                       case (23) :
-                         int pos;
-                         os >> pos;
-                         scopeModel_->ILTurret_.SetPosition(pos);
-                         scopeModel_->ILTurret_.SetBusy(false);
-                         if (standFamily_ == g_CTRMIC) {
-                            // TODO: cleanup after user feedback
-                            std::string tmp;
-                            os >> tmp;
-                            os >> pos;
-                            if (tmp == "--") {
-                               scopeModel_->TLShutter_.SetPosition(pos);
-                               scopeModel_->TLShutter_.SetBusy(false);
+                         {
+                            int turretPos;
+                            os >> turretPos;
+                            // so the test "tmp == "--"" below means that the shutter position
+                            // is reported on the Turret message?
+                            // so that's probably where the position 0 is coming from...
+                            // sample message is "$78023 0  -- 0\r"
+                            // Pedro Almada encountered a problem where his DMI-RE2 scope always reported
+                            // turret not engaged
+                            int minPos, maxPos;
+                            scopeModel_->ILTurret_.GetMinPosition(minPos);
+                            scopeModel_->ILTurret_.GetMaxPosition(maxPos);
+
+                            if( minPos <= turretPos  && turretPos <= maxPos)
+                              scopeModel_->ILTurret_.SetPosition(turretPos);
+                            else
+                            {
+                               std::ostringstream os;
+                               os << "invalid position reported " << turretPos << "outside of ["<<minPos<<","<<maxPos<<"]";
+                               core_.LogMessage(&device_, os.str().c_str(), false);
+
                             }
-                            std::ostringstream pp;
-                            pp << "ILTurret reports, tmp: " << tmp << " pos: " << pos;
-                            core_.LogMessage(&device_, pp.str().c_str(), true);
+                            scopeModel_->ILTurret_.SetBusy(false);
+                            if (standFamily_ == g_CTRMIC) {
+                               int shutterPos;
+                               // TODO: cleanup after user feedback
+                               std::string tmp;
+                               os >> tmp;
+                               os >> shutterPos;
+                               if (tmp == "--") {
+                                  scopeModel_->TLShutter_.SetPosition(shutterPos);
+                                  scopeModel_->TLShutter_.SetBusy(false);
+                               }
+                               std::ostringstream pp;
+                               pp << "ILTurret reports, tmp: " << tmp << " pos: " << turretPos;
+                               core_.LogMessage(&device_, pp.str().c_str(), true);
+                            }
                          }
                          break;
                          // dark flap in CTR_MIC
