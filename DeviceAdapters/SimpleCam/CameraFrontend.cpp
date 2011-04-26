@@ -389,7 +389,7 @@ int CCameraFrontend::Initialize()
    /* Finally, connect to default camera */
    SetProperty(MM::g_Keyword_CameraName, defaultCameraName.c_str());
 
-   OnPropertiesChanged();
+   LogMessage("Initialized", true);
 
    return nRet;
 }
@@ -913,7 +913,8 @@ int CCameraFrontend::OnCameraName(MM::PropertyBase* pProp, MM::ActionType eAct)
             else
                ret = ERR_CAM_CONNECT_FAIL;
          }
-         OnPropertiesChanged();
+         if (initialized_)
+            OnPropertiesChanged();
       }
       break;
    case MM::BeforeGet:
@@ -1022,7 +1023,8 @@ int CCameraFrontend::SetAllowedShutterSpeeds()
       }
    }
 
-   OnPropertiesChanged();
+   if (initialized_)
+      OnPropertiesChanged();
 
    return DEVICE_OK;
 }
