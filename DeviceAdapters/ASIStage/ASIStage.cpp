@@ -414,7 +414,7 @@ int XYStage::SetPositionSteps(long x, long y)
    ClearPort(*this, *GetCoreCallback(), port_.c_str()); 
 
    ostringstream command;
-   command << "M X=" << x/ASISerialUnit_ << " Y=" << y/ASISerialUnit_; // steps are 10th of micros
+   command << fixed << "M X=" << x/ASISerialUnit_ << " Y=" << y/ASISerialUnit_; // steps are 10th of micros
 
    // send command
    int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
@@ -447,7 +447,7 @@ int XYStage::SetRelativePositionSteps(long x, long y)
    ClearPort(*this, *GetCoreCallback(), port_.c_str()); 
 
    ostringstream command;
-   command << "R X=" << x/ASISerialUnit_  << " Y=" << y/ASISerialUnit_; // in 10th of micros
+   command << fixed << "R X=" << x/ASISerialUnit_  << " Y=" << y/ASISerialUnit_; // in 10th of micros
 
    // send command
    int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
@@ -1127,7 +1127,7 @@ int XYStage::OnOverShoot(MM::PropertyBase* pProp, MM::ActionType eAct)
          overShoot = 0.0;
       overShoot = overShoot / 1000.0;
       ostringstream command;
-      command << "OS X=" << overShoot << " Y=" << overShoot;
+      command << fixed << "OS X=" << overShoot << " Y=" << overShoot;
       // send command
       int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
       if (ret != DEVICE_OK)
@@ -1190,7 +1190,7 @@ int XYStage::OnError(MM::PropertyBase* pProp, MM::ActionType eAct)
          error = 0.0;
       error = error / 1000000.0;
       ostringstream command;
-      command << "E X=" << error << " Y=" << error;
+      command << fixed << "E X=" << error << " Y=" << error;
       // send command
       int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
       if (ret != DEVICE_OK)
@@ -1255,7 +1255,7 @@ int XYStage::OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
       else if (speed > 7.5)
          speed = 7.5;
       ostringstream command;
-      command << "S X=" << speed << " Y=" << speed;
+      command << fixed << "S X=" << speed << " Y=" << speed;
       // send command
       int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
       if (ret != DEVICE_OK)
@@ -1633,7 +1633,7 @@ int ZStage::SetPositionUm(double pos)
    ClearPort(*this, *GetCoreCallback(), port_.c_str()); 
 
    ostringstream command;
-   command << "M " << axis_ << "=" << pos / stepSizeUm_; // in 10th of micros
+   command << fixed << "M " << axis_ << "=" << pos / stepSizeUm_; // in 10th of micros
 
    // send command
    int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
@@ -2308,7 +2308,7 @@ int CRIF::SetPositionUm(double pos)
    ClearPort(*this, *GetCoreCallback(), port_.c_str()); 
 
    ostringstream command;
-   command << "M " << axis_ << "=" << pos / stepSizeUm_; // in 10th of micros
+   command << fixed << "M " << axis_ << "=" << pos / stepSizeUm_; // in 10th of micros
 
    // send command
    int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
