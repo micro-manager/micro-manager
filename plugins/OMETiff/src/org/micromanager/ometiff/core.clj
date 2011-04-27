@@ -62,16 +62,16 @@
       (make-bytes 1 2)
       (apply concat
         (map #(apply make-tag %)
-          [[:ImageWidth :long 1 width]   ;ImageWidth
-           [:ImageWidth :long 1 height] ; ImageHeight
-           [:BitsPerSample :short 1 bits-per-pixel] ;BitsPerSample
-           [:Compression :short 1 1] ;Compression -> None
-           [:PhotometricInterpretation :short 1 1] ;PhotometricInterpretation -> Black=0
-           [:StripOffsets :long 1 image-offset] ;StripOffsets
-           [:RowsPerStrip :long 1 height] ;RowsPerStrip
-           [:StripByteCounts :long 1 (* width height)] ;StripByteCounts
-           [:XResolution :rational 1 pixel-size-offset] ;XResolution
-           [:YResolution :rational 1 pixel-size-offset] ;YResolution
+          [[:ImageWidth :long 1 width]
+           [:ImageWidth :long 1 height]
+           [:BitsPerSample :short 1 bits-per-pixel]
+           [:Compression :short 1 1] ; No compression
+           [:PhotometricInterpretation :short 1 1] ; (Black=0;White=Max)
+           [:StripOffsets :long 1 image-offset]
+           [:RowsPerStrip :long 1 height]
+           [:StripByteCounts :long 1 (* width height)]
+           [:XResolution :rational 1 pixel-size-offset]
+           [:YResolution :rational 1 pixel-size-offset]
            [:ResolutionUnit :short 1 (if pixel-size-cm 3)]]))
        (make-bytes (if final-image? 0 (+ image-offset bytes-per-image)) 4)
        (rational-value pixel-size-cm))))
@@ -88,7 +88,7 @@
 (defn write-header [mmap]
   (.put (:byte-buf mmap) (create-header)))
 
-(defn write-image [pix w h bits-per-pixel pixel-size-um final-image?]
+;(defn write-image [pix w h bits-per-pixel pixel-size-um final-image?]
   
 
 ; (.position dbb) <-- gets cursor pos
