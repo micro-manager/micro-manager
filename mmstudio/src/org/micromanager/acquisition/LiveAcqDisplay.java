@@ -168,7 +168,7 @@ public class LiveAcqDisplay extends Thread {
          if (theName.startsWith(prefix)) {
             try {
                //e.g.: "blah_32.ome.tiff"
-               Pattern p = Pattern.compile(prefix + "(\\d+).*+");
+               Pattern p = Pattern.compile("\\Q" + prefix +"\\E"+ "(\\d+).*+");
                Matcher m = p.matcher(theName);
                if (m.matches()) {
                   number = Integer.parseInt(m.group(1));
