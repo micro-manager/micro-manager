@@ -90,4 +90,7 @@ done
 install_name_tool -change /opt/local/lib/libgphoto2.2.dylib @loader_path/libgphoto2/libgphoto2.2.dylib libmmgr_dal_GPhoto
 install_name_tool -change /opt/local/lib/libgphoto2_port.0.dylib @loader_path/libgphoto2/libgphoto2_port.0.dylib libmmgr_dal_GPhoto
 
+# Add killptpcamera app
+osacompile -e 'tell application "PTPCamera" to quit' -o libgphoto2/KillPtpCamera.app
+
 #not truncated
