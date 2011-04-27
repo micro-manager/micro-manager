@@ -54,6 +54,7 @@ const char* g_AutoFocusDeviceName = "DAutoFocus";
 const char* g_ShutterDeviceName = "DShutter";
 const char* g_DADeviceName = "D-DA";
 const char* g_MagnifierDeviceName = "DOptovar";
+const char* g_HubDeviceName = "DHub";
 
 // constants for naming pixel types (allowed values of the "PixelType" property)
 const char* g_PixelType_8bit = "8bit";
@@ -83,6 +84,25 @@ BOOL APIENTRY DllMain( HANDLE /*hModule*/,
 }
 #endif
 
+bool DiscoverabilityTest()
+{
+   bool discoverabilityTest = false;
+   const char* pd = getenv("DISCOVERABILITYTEST");
+   if( 0!=pd)
+   {
+      std::string env = std::string(pd);
+      if( 0 < env.length())
+      {
+         char initial =  (char)tolower(env.at(0));
+         discoverabilityTest = ('0' != initial) && ('f' != initial) && ( 'n' != initial);
+      }
+   }
+   return discoverabilityTest;
+}
+
+
+
+
 ///////////////////////////////////////////////////////////////////////////////
 // Exported MMDevice API
 ///////////////////////////////////////////////////////////////////////////////
@@ -107,6 +127,25 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_DADeviceName, "Demo DA");
    AddAvailableDeviceName(g_MagnifierDeviceName, "Demo Optovar");
    AddAvailableDeviceName("DemoTranspose", "DemoTranspose");
+   AddAvailableDeviceName(g_HubDeviceName, "DHub");
+
+   if (DiscoverabilityTest())
+   {
+      SetDeviceIsDiscoverable(g_WheelDeviceName, true);
+      SetDeviceIsDiscoverable(g_StateDeviceName, true);
+      SetDeviceIsDiscoverable(g_ObjectiveDeviceName, true);
+      SetDeviceIsDiscoverable(g_StageDeviceName, true); 
+      SetDeviceIsDiscoverable(g_XYStageDeviceName, true);
+      SetDeviceIsDiscoverable(g_LightPathDeviceName, true);
+      SetDeviceIsDiscoverable(g_AutoFocusDeviceName, true);
+      SetDeviceIsDiscoverable(g_ShutterDeviceName, true);
+      SetDeviceIsDiscoverable(g_DADeviceName, true);
+      SetDeviceIsDiscoverable(g_MagnifierDeviceName, true);
+      SetDeviceIsDiscoverable("DemoTranspose", true);
+   }
+
+
+
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
@@ -175,6 +214,11 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
    {
 
       return new DemoTranspose();
+   }
+   else if (strcmp(deviceName, g_HubDeviceName) == 0)
+   {
+
+      return new DemoHub();
    }
 
    // ...supplied name not recognized
@@ -475,7 +519,7 @@ int CDemoCamera::SnapImage()
    if( s0 < startTime )
    {
       // ensure wait time is non-negative
-      long naptime = 0.5 + expUs - (double)(t2-startTime).getUsec();
+      long naptime = (long)(0.5 + expUs - (double)(t2-startTime).getUsec());
       if( naptime < 1)
          naptime = 1;
       CDeviceUtils::NapMicros(naptime);
@@ -2744,3 +2788,60 @@ int DemoTranspose::Process(unsigned char *pBuffer, unsigned int width, unsigned 
 
    return ret;
 }
+
+
+void  DemoHub::GetPeripheralInventory()
+{
+   Initialize();
+
+   peripherals_.clear();
+   if( DiscoverabilityTest())
+   {
+      // all the adapters in this module
+      int n = GetNumberOfDevices();
+      char deviceName[MM::MaxStrLength];
+      for( int i = 0; i < n; ++i)
+      {
+         bool succ = GetDeviceName(i, deviceName, MM::MaxStrLength);
+         if( succ)
+         {
+            bool isDiscoverable;
+            succ = GetDeviceIsDiscoverable( deviceName, &isDiscoverable);
+            if( succ)
+            {
+               if(isDiscoverable)
+               {
+                  peripherals_.push_back(deviceName);
+               }
+
+            }
+         }
+      }
+   }
+}
+
+
+int DemoHub::GetNumberOfDiscoverableDevices()
+{
+   GetPeripheralInventory();
+   return peripherals_.size();
+
+}
+
+void DemoHub::GetDiscoverableDevice(int peripheralNum, char* peripheralName, unsigned int maxNameLen)
+{ 
+   if( -1 < peripheralNum)
+   {
+      if( peripheralNum < int(peripherals_.size()))
+      {
+            strncpy(peripheralName, peripherals_[peripheralNum].c_str(), maxNameLen - 1);
+            peripheralName[maxNameLen - 1] = 0;
+      }
+   
+   }
+   return;
+} 
+
+
+
+void DemoHub::GetName(char* pName) const{  CDeviceUtils::CopyLimitedString(pName, g_HubDeviceName);} ;

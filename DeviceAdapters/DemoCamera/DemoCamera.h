@@ -272,7 +272,7 @@ public:
    int Initialize();
    int Shutdown();
   
-   void GetName(char* pszName) const;
+   void GetName(char* pszName) const ;
    bool Busy() {return busy_;}
    unsigned long GetNumberOfPositions()const {return numPos_;}
 
@@ -698,6 +698,37 @@ private:
    bool busy_;
    bool initialized_;
 };
+
+class DemoHub : public CGenericBase<DemoHub>
+{
+public:
+   DemoHub():initialized_(false), busy_(false) {} ;
+   ~DemoHub() {};
+
+   // Device API
+   // ---------
+   int Initialize() { initialized_ = true; return DEVICE_OK;} ;
+   int Shutdown() {return DEVICE_OK;};
+   void GetName(char* pName) const; 
+   bool Busy() { return busy_;} ;
+
+
+   // peripheral device discovery
+   int GetNumberOfDiscoverableDevices();
+   void GetDiscoverableDevice(int peripheralNum, char* peripheralName, unsigned int maxNameLen);
+
+
+private:
+   bool busy_;
+   bool initialized_;
+   std::vector<std::string> peripherals_;
+   void GetPeripheralInventory();
+
+};
+
+
+
+
 
 
 #endif //_DEMOCAMERA_H_
