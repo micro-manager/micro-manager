@@ -51,12 +51,14 @@
 #
 # Assume we are in DeviceAdapters/SimpleCam and compiled driver is in .libs/libmmgr_dal_GPhoto.so
 #
+DESTDIR=/Applications/Micro-Manager1.4
+
 GPHOTO2_VERSION=`pkg-config libgphoto2 --variable=VERSION`
 GPHOTO2_PORT_VERSION=`pkg-config libgphoto2_port --variable=VERSION`
 
-cp .libs/libmmgr_dal_GPhoto.so /Applications/Micro-Manager1.4/libmmgr_dal_GPhoto
+cp .libs/libmmgr_dal_GPhoto.so $DESTDIR/libmmgr_dal_GPhoto
 
-cd /Applications/Micro-Manager1.4
+cd $DESTDIR
 
 rm -rf libgphoto2
 
