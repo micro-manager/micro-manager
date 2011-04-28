@@ -25,8 +25,7 @@ package org.micromanager.conf;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.Vector;
 import java.util.prefs.Preferences;
 
 import javax.swing.JButton;
@@ -58,19 +57,29 @@ public class DevicesPage extends PagePanel {
       
       MicroscopeModel model_;
       Device devices_[];
+      Vector<Device> filteredDevices_;
+
+      private void filterDevices(){
+         filteredDevices_.clear();
+         for( Device d:devices_){
+            if( !d.isDiscoverable())
+               filteredDevices_.add(d);
+         }
+      }
       
       public DeviceTable_TableModel(MicroscopeModel model) {
-         devices_ = model.getDevices();
-         model_ = model;
+         filteredDevices_ = new Vector<Device> ();
+         setMicroscopeModel(model);
       }
       
       public void setMicroscopeModel(MicroscopeModel mod) {
          devices_ = mod.getDevices();
          model_ = mod;
+         filterDevices();
       }
       
       public int getRowCount() {
-         return devices_.length;
+         return filteredDevices_.size();
       }
       public int getColumnCount() {
          return COLUMN_NAMES.length;
@@ -82,17 +91,17 @@ public class DevicesPage extends PagePanel {
       public Object getValueAt(int rowIndex, int columnIndex) {
          
          if (columnIndex == 0)
-            return devices_[rowIndex].getName();
+            return filteredDevices_.get(rowIndex).getName();
          else if (columnIndex == 1)
-            return new String (devices_[rowIndex].getAdapterName() + "/" + devices_[rowIndex].getLibrary());
+            return new String (filteredDevices_.get(rowIndex).getAdapterName() + "/" + filteredDevices_.get(rowIndex).getLibrary());
          else
-            return devices_[rowIndex].getDescription();
+            return filteredDevices_.get(rowIndex).getDescription();
       }
 
       @Override
       public void setValueAt(Object value, int row, int col) {
          String newName = (String) value;
-         String oldName = devices_[row].getName();
+         String oldName = filteredDevices_.get(row).getName();
          if (col == 0) {
             try {
                model_.changeDeviceName(oldName, newName);
@@ -113,6 +122,7 @@ public class DevicesPage extends PagePanel {
       
       public void refresh() {
          devices_ = model_.getDevices();
+         filterDevices();
          this.fireTableDataChanged();
       }
    }

@@ -46,12 +46,12 @@ public class DiscoveredDevicesDialog extends javax.swing.JDialog {
 
 
 
-       class CheckBoxNodeRenderer implements TreeCellRenderer {
+   class CheckBoxNodeRenderer implements TreeCellRenderer {
 
       private JCheckBox leafRenderer = new JCheckBox();
       private DefaultTreeCellRenderer nonLeafRenderer = new DefaultTreeCellRenderer();
       Color selectionBorderColor, selectionForeground, selectionBackground,
-              textForeground, textBackground;
+            textForeground, textBackground;
 
       protected JCheckBox getLeafRenderer() {
          return leafRenderer;
@@ -65,8 +65,7 @@ public class DiscoveredDevicesDialog extends javax.swing.JDialog {
          }
          Boolean booleanValue = (Boolean) UIManager.get("Tree.drawsFocusBorderAroundIcon");
          leafRenderer.setFocusPainted((booleanValue != null)
-                 && (booleanValue.booleanValue()));
-
+                                      && (booleanValue.booleanValue()));
          selectionBorderColor = UIManager.getColor("Tree.selectionBorderColor");
          selectionForeground = UIManager.getColor("Tree.selectionForeground");
          selectionBackground = UIManager.getColor("Tree.selectionBackground");
@@ -75,19 +74,15 @@ public class DiscoveredDevicesDialog extends javax.swing.JDialog {
       }
 
       public Component getTreeCellRendererComponent(JTree tree, Object value,
-              boolean selected, boolean expanded, boolean leaf, int row,
-              boolean hasFocus) {
-
+            boolean selected, boolean expanded, boolean leaf, int row,
+            boolean hasFocus) {
          Component returnValue;
          if (leaf) {
-
             String stringValue = tree.convertValueToText(value, selected,
-                    expanded, leaf, row, false);
+                                 expanded, leaf, row, false);
             leafRenderer.setText(stringValue);
             leafRenderer.setSelected(false);
-
             leafRenderer.setEnabled(tree.isEnabled());
-
             if (selected) {
                leafRenderer.setForeground(selectionForeground);
                leafRenderer.setBackground(selectionBackground);
@@ -95,7 +90,6 @@ public class DiscoveredDevicesDialog extends javax.swing.JDialog {
                leafRenderer.setForeground(textForeground);
                leafRenderer.setBackground(textBackground);
             }
-
             if ((value != null) && (value instanceof DefaultMutableTreeNode)) {
                Object userObject = ((DefaultMutableTreeNode) value).getUserObject();
                if (userObject instanceof CheckBoxNode) {
@@ -107,7 +101,7 @@ public class DiscoveredDevicesDialog extends javax.swing.JDialog {
             returnValue = leafRenderer;
          } else {
             returnValue = nonLeafRenderer.getTreeCellRendererComponent(tree,
-                    value, selected, expanded, leaf, row, hasFocus);
+                          value, selected, expanded, leaf, row, hasFocus);
          }
          return returnValue;
       }
@@ -126,7 +120,7 @@ public class DiscoveredDevicesDialog extends javax.swing.JDialog {
       public Object getCellEditorValue() {
          JCheckBox checkbox = renderer.getLeafRenderer();
          CheckBoxNode checkBoxNode = new CheckBoxNode(checkbox.getText(),
-                 checkbox.isSelected());
+               checkbox.isSelected());
          return checkBoxNode;
       }
 
@@ -135,7 +129,7 @@ public class DiscoveredDevicesDialog extends javax.swing.JDialog {
          if (event instanceof MouseEvent) {
             MouseEvent mouseEvent = (MouseEvent) event;
             TreePath path = tree.getPathForLocation(mouseEvent.getX(),
-                    mouseEvent.getY());
+                                                    mouseEvent.getY());
             if (path != null) {
                Object node = path.getLastPathComponent();
                if ((node != null) && (node instanceof DefaultMutableTreeNode)) {
@@ -149,14 +143,11 @@ public class DiscoveredDevicesDialog extends javax.swing.JDialog {
       }
 
       public Component getTreeCellEditorComponent(JTree tree, Object value,
-              boolean selected, boolean expanded, boolean leaf, int row) {
-
+            boolean selected, boolean expanded, boolean leaf, int row) {
          Component editor = renderer.getTreeCellRendererComponent(tree, value,
-                 true, expanded, leaf, row, true);
-
+                            true, expanded, leaf, row, true);
          // editor always selected / focused
          ItemListener itemListener = new ItemListener() {
-
             public void itemStateChanged(ItemEvent itemEvent) {
                if (stopCellEditing()) {
                   fireEditingStopped();
@@ -166,7 +157,6 @@ public class DiscoveredDevicesDialog extends javax.swing.JDialog {
          if (editor instanceof JCheckBox) {
             ((JCheckBox) editor).addItemListener(itemListener);
          }
-
          return editor;
       }
    }
@@ -232,20 +222,21 @@ public class DiscoveredDevicesDialog extends javax.swing.JDialog {
 
 
 
-    /** Creates new form DiscoveredDevicesDialog */
-    public DiscoveredDevicesDialog(JDialog parent, boolean modal) {
-        super(parent, modal);
-        initComponents();
-
-              CheckBoxNode ludlperipherals[] = {
+   /** Creates new form DiscoveredDevicesDialog */
+   public DiscoveredDevicesDialog(JDialog parent, boolean modal) {
+      super(parent, modal);
+      initComponents();
+      CheckBoxNode ludlperipherals[] = {
          new CheckBoxNode(
-         "LudlShutter", "Ludl Shutter", true),
-         new CheckBoxNode("LudlShutter", "Ludl Shutter", true)};
+            "LudlShutter", "Ludl Shutter", true),
+         new CheckBoxNode("LudlShutter", "Ludl Shutter", true)
+      };
       CheckBoxNode zeissperif[] = {
          new CheckBoxNode("ZeissWheel", "ZeissWheel", true),
-         new CheckBoxNode("ZeissShutter", "ZeissWheel", true)};
+         new CheckBoxNode("ZeissShutter", "ZeissWheel", true)
+      };
       Vector ludlnotdes = new HubsNodeList("LudlHub",
-              ludlperipherals);
+                                           ludlperipherals);
       Vector zeissnodes = new HubsNodeList("ZeissScope", zeissperif);
       Object rootNodes[] = {ludlnotdes, zeissnodes};
       Vector rootVector = new HubsNodeList("Root", rootNodes);
@@ -256,63 +247,48 @@ public class DiscoveredDevicesDialog extends javax.swing.JDialog {
       tree_.setEditable(true);
       tree_.setShowsRootHandles(false);
       tree_.setShowsRootHandles(true);
+      jScrollPane1.setViewportView(tree_);
+   }
 
-
-     jScrollPane1.setViewportView(tree_);
-
-
-
-
-
-
-
-
-    }
-
-    /** This method is called from within the constructor to
-     * initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is
-     * always regenerated by the Form Editor.
-     */
-    @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
-    private void initComponents() {
-
-        jScrollPane1 = new javax.swing.JScrollPane();
-        tree_ = new javax.swing.JTree();
-
-        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-
-        jScrollPane1.setViewportView(tree_);
-
-        org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(layout.createSequentialGroup()
-                .addContainerGap()
-                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 338, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(42, Short.MAX_VALUE))
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
-            .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(20, Short.MAX_VALUE)
-                .add(jScrollPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 275, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap())
-        );
-
-        pack();
-    }// </editor-fold>//GEN-END:initComponents
-
-    /**
-    * @param args the command line arguments
+   /** This method is called from within the constructor to
+    * initialize the form.
+    * WARNING: Do NOT modify this code. The content of this method is
+    * always regenerated by the Form Editor.
     */
+   @SuppressWarnings("unchecked")
+   // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
+   private void initComponents() {
+      jScrollPane1 = new javax.swing.JScrollPane();
+      tree_ = new javax.swing.JTree();
+      setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+      jScrollPane1.setViewportView(tree_);
+      org.jdesktop.layout.GroupLayout layout = new org.jdesktop.layout.GroupLayout(getContentPane());
+      getContentPane().setLayout(layout);
+      layout.setHorizontalGroup(
+         layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+         .add(layout.createSequentialGroup()
+              .addContainerGap()
+              .add(jScrollPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 338, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+              .addContainerGap(42, Short.MAX_VALUE))
+      );
+      layout.setVerticalGroup(
+         layout.createParallelGroup(org.jdesktop.layout.GroupLayout.LEADING)
+         .add(org.jdesktop.layout.GroupLayout.TRAILING, layout.createSequentialGroup()
+              .addContainerGap(20, Short.MAX_VALUE)
+              .add(jScrollPane1, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE, 275, org.jdesktop.layout.GroupLayout.PREFERRED_SIZE)
+              .addContainerGap())
+      );
+      pack();
+   }// </editor-fold>//GEN-END:initComponents
+
+   /**
+   * @param args the command line arguments
+   */
 
 
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JTree tree_;
-    // End of variables declaration//GEN-END:variables
+   // Variables declaration - do not modify//GEN-BEGIN:variables
+   private javax.swing.JScrollPane jScrollPane1;
+   private javax.swing.JTree tree_;
+   // End of variables declaration//GEN-END:variables
 
 }

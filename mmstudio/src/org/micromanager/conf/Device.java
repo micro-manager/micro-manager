@@ -320,4 +320,9 @@ import org.micromanager.utils.PropertyItem;
       else
          return type_.toString();
    }
-}
+
+   public boolean isDiscoverable(){
+       return discoverable_;
+   }
+
+ }

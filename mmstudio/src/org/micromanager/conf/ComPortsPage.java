@@ -320,7 +320,7 @@ public class ComPortsPage extends PagePanel {
                }
             }
 
-            model_.ConfigureDiscoveredDevices(core_);
+            //model_.ConfigureDiscoveredDevices(core_);
 
             // initialize the entire system
             core_.initializeAllDevices();

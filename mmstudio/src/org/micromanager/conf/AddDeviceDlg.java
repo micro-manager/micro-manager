@@ -163,16 +163,18 @@ public class AddDeviceDlg extends JDialog implements MouseListener, TreeSelectio
         TreeNodeShowsDeviceAndDescription node = null;
         for (int idd = 0; idd < allDevs_.length; ++idd) {
             // assume that the first library doesn't have an empty name! (of course!)
-            if (0 != thisLibrary.compareTo(allDevs_[idd].getLibrary())) {
-                // create a new node of devices for this library
-                node = new TreeNodeShowsDeviceAndDescription(allDevs_[idd].getLibrary());
-                root.add(node);
-                thisLibrary = allDevs_[idd].getLibrary(); // remember which library we are processing
+            if( !allDevs_[idd].isDiscoverable()) { // don't add devices which can be added by their respective master / hub
+               if (0 != thisLibrary.compareTo(allDevs_[idd].getLibrary())) {
+                   // create a new node of devices for this library
+                   node = new TreeNodeShowsDeviceAndDescription(allDevs_[idd].getLibrary());
+                   root.add(node);
+                   thisLibrary = allDevs_[idd].getLibrary(); // remember which library we are processing
+               }
+               Object[] userObject = {allDevs_[idd].getLibrary(), allDevs_[idd].getAdapterName(), allDevs_[idd].getDescription()};
+               TreeNodeShowsDeviceAndDescription aLeaf = new TreeNodeShowsDeviceAndDescription("");
+               aLeaf.setUserObject(userObject);
+               node.add(aLeaf);
             }
-            Object[] userObject = {allDevs_[idd].getLibrary(), allDevs_[idd].getAdapterName(), allDevs_[idd].getDescription()};
-            TreeNodeShowsDeviceAndDescription aLeaf = new TreeNodeShowsDeviceAndDescription("");
-            aLeaf.setUserObject(userObject);
-            node.add(aLeaf);
         }
         // try building a tree
         theTree_ = new TreeWContextMenu(root, this);

@@ -167,6 +167,12 @@ public class ConfiguratorDlg extends JDialog {
         backButton_.setBounds(395, 462, 93, 23);
         getContentPane().add(backButton_);
 
+
+
+
+
+
+
         pagesLabel_ = new JLabel();
         pagesLabel_.setBorder(new LineBorder(Color.black, 1, false));
         pagesLabel_.setBounds(9, 28, 578, 286);
@@ -174,13 +180,14 @@ public class ConfiguratorDlg extends JDialog {
 
         // add page panels
 
-        pages_ = new PagePanel[(showSynchroPage_ ? 9 : 8)];
+        pages_ = new PagePanel[(showSynchroPage_ ? 10 : 9)];
 
         int pageNumber = 0;
         pages_[pageNumber++] = new IntroPage(prefs_);
         pages_[pageNumber++] = new DevicesPage(prefs_);
         pages_[pageNumber++] = new EditPropertiesPage(prefs_);
         pages_[pageNumber++] = new ComPortsPage(prefs_);
+        pages_[pageNumber++] = new PeripheralDevicesPage(prefs_);
         pages_[pageNumber++] = new RolesPage(prefs_);
         pages_[pageNumber++] = new DelayPage(prefs_);
         if (showSynchroPage_) {
