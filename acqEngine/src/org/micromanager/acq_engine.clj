@@ -551,7 +551,7 @@
 (defn show-image [display tagged-img]
   (let [myTaggedImage (make-TaggedImage tagged-img)
         cache (.getImageCache display)]
-    (println (.pix myTaggedImage))
+    ;(println (.pix myTaggedImage))
     (.putImage cache myTaggedImage)
      (.showImage display myTaggedImage)
      (when-not false ;; (.isVisible display)
