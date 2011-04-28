@@ -260,6 +260,7 @@ CTIScamera::~CTIScamera()
    {
       DShowLib::ExitLibrary();
       delete pGrabber;
+      pGrabber = 0;
       Shutdown();
    }
 
@@ -848,13 +849,20 @@ int CTIScamera::Shutdown()
 {
    initialized_ = false;
 
-   pGrabber->stopLive();
-   pGrabber->closeDev();
+   // this is called from CPluginManager::UnloadDevice
+   // which doesn't guarantee that Initialize has been called
+
+   if( 0 != pGrabber)
+   {
+      pGrabber->stopLive();
+      pGrabber->closeDev();
+   }
    for (int ii = 0; ii < NUMBER_OF_BUFFERS; ++ii)
    {
       delete pBuf[ii];
    }
    delete pGrabber;
+   pGrabber = 0;
 
    return DEVICE_OK;
 }
