@@ -13,7 +13,7 @@
           (map #(bit-and 0xFF %)
            (take n (iterate #(bit-shift-right % 8) val))))]
     (for [char chars]
-      (if (> char 0x7F) (- char 0xFF) char))))
+      (if (> char 0x7F) (- char 0x100) char))))
 
 (def tag-codes
   {
@@ -32,7 +32,7 @@
 
 (def type-codes {:byte 1, :ascii 2, :short 3, :long 4, :rational 5})
 
-(def type-length {:byte 1, :ascii 1, :short 2, :long 4, :rational 8})
+(def type-length {:byte 1, :ascii 1, :short 2, :long 4, :rational 4})
 
 (defn make-tag
   "Create a big-endian tiff image IFD entry"
@@ -64,8 +64,8 @@
     (let [ifd-entry-count 11
           pixel-size-cm (* 1e-4 pixel-size-um)
           pixels-per-image (* width height)
-          bytes-per-image (* width height (bit-shift-right bits-per-pixel 1))
-          pixel-size-offset (+ 2 (* 12 ifd-entry-count) current-offset)
+          bytes-per-image (* width height (/ bits-per-pixel 8))
+          pixel-size-offset (+ current-offset 2 (* 12 ifd-entry-count) 4 2)
           image-offset (+ pixel-size-offset 8)
           ifd-entries
             (map #(apply make-tag %)
@@ -79,22 +79,27 @@
                [:StripByteCounts :long 1 (* width height)]
                [:XResolution :rational 1 pixel-size-offset]
                [:YResolution :rational 1 pixel-size-offset]
-               [:ResolutionUnit :short 1 (if pixel-size-cm 3)]])
+               [:ResolutionUnit :short 1 (if pixel-size-cm 3 1)]
+               ])
               ]
+    ;  (println "pso:" pixel-size-offset ", bpi:" bytes-per-image ", current: " current-offset "; next: "  (+ image-offset bytes-per-image))
       (concat
         (make-bytes ifd-entry-count 2)
         (list ifd-entries)
         (make-bytes (if final-image? 0 (+ image-offset bytes-per-image)) 4)
-        (rational-value pixel-size-cm)))))
+        (make-bytes 0 2)
+        (rational-value pixel-size-cm)
+        ))))
 
 
 ;; Memory-mapped files
 
 (defn open-mmap [file size]
-  (let [rwChannel (.getChannel (RandomAccessFile. file "rwd"))
+  (let [f (RandomAccessFile. file "rwd")
+        rwChannel (.getChannel f)
         dbb (.map rwChannel FileChannel$MapMode/READ_WRITE 0 size)
         dsb (.asShortBuffer dbb)]
-    {:rwChannel rwChannel :byte-buf dbb :short-buf dsb}))
+    {:file f :rwChannel rwChannel :byte-buf dbb :short-buf dsb}))
         
 (defn write-seq [mmap byte-vals]
   (.put (:byte-buf mmap) (byte-array (map byte byte-vals))))  
@@ -109,7 +114,8 @@
   (let [chan (:rwChannel mmap)]
     (doto chan
       (.truncate (get-pos mmap))
-      .close)))
+      .close)
+    (.close (:file mmap))))
 
 ; (.position dbb) <-- gets cursor pos
 ; (.position dbb 10) <-- sets cursor pos
@@ -133,13 +139,33 @@
 
 ;; write minimal one-page tiff
    
-(defn write-one-page-tiff [pix w h]
-  (let [mmap (open-mmap "test1.tif" 1000000000)]
+(defn write-one-page-tiff [name pix w h]
+  (let [mmap (open-mmap name 1000000000)]
     (write-seq mmap
       (create-header))
     (write-seq mmap
       (create-IFD (get-pos mmap) w h 8 1.0 true)) 
-    (write-bytes mmap pix)
+    (dorun (repeatedly 500 #(write-bytes mmap pix)))
+    (close-mmap mmap)))
+
+(defn write-multi-page-tiff [name pix w h n]
+  (if (not= (* w h) (count pix))
+    (throw (Exception. "Pixel array doesn't match requested dimensions.")))
+  (let [mmap (open-mmap name 1200000000)]
+    (write-seq mmap
+      (create-header))
+    (doseq [i (range n)]
+      (let [last-image (= i (dec n))
+            pos (get-pos mmap)]
+        ;(println i)
+        (write-seq mmap
+          (create-IFD pos w h 8 1.0 last-image))
+        (write-bytes mmap pix)
+       ; (println "pos:" (get-pos mmap))
+        ))
     (close-mmap mmap)))
    
-   
+(defn big-test []
+  (let [img (rand-byte-image 2560 4320 1)]
+    (time (write-multi-page-tiff "test.tif" img 2560 4320 100))))
+
