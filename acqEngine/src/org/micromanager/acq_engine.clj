@@ -551,6 +551,7 @@
 (defn show-image [display tagged-img]
   (let [myTaggedImage (make-TaggedImage tagged-img)
         cache (.getImageCache display)]
+    (println (.pix myTaggedImage))
     (.putImage cache myTaggedImage)
      (.showImage display myTaggedImage)
      (when-not false ;; (.isVisible display)
@@ -589,9 +590,11 @@
               state (create-basic-state)]
           (dosync (ref-set live-mode-running true))
           (core startContinuousSequenceAcquisition 0)
+          (log "started sequence acquisition")
           (.start (Thread.
                     #(do (while @live-mode-running
-                           (let [img (annotate-image (core getLastImage) event state)]
+                           (let [raw-image {:pix (core getLastImage) :tags nil}
+                                 img (annotate-image raw-image event state)]
                               (reset-snap-window img)
                               (show-image @snap-window img)))
                          (core stopSequenceAcquisition))
