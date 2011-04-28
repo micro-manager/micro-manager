@@ -934,16 +934,23 @@ unsigned CTIScamera::GetNumberOfComponents() const
    unsigned int nc = 1;
    if( pGrabber->isDevValid())
 	{
+      
 		DShowLib::FrameTypeInfo info;
 		pSink->getOutputFrameType(info);
+      
       const tColorformatEnum cf = info.getColorformat();
       if( cf == eRGB32)
          nc = 4;
       else if( cf == eRGB24)
          nc = 3; // user will see a message that this pixel type is not supported
+      else if( cf == eInvalidColorformat)
+         nc = 0; // hope user seels a message the this pixel type is not supported
+      else if (cf == eUYVY)
+         nc = 1;
+      
       // there are several 32 bit modes?
-      if( 32 == info.getBitsPerPixel())
-         nc = 4;
+      //if( 32 == info.getBitsPerPixel())
+      //   nc = 4;
 
 	}
 
@@ -1423,18 +1430,21 @@ int CTIScamera::OnExposure(MM::PropertyBase* pProp, MM::ActionType eAct)
 	}
 	else if (eAct == MM::AfterSet)
 	{
-		bool bCanBeSet = true;
-		if( pExposureAuto != NULL )
-		{
-			bCanBeSet = !pExposureAuto->getSwitch();
-		}
+      if( pExposureRange != NULL )
+      {
+		   bool bCanBeSet = true;
+		   if( pExposureAuto != NULL )
+		   {
+			   bCanBeSet = !pExposureAuto->getSwitch();
+		   }
 
-		if(!bCanBeSet) return DEVICE_CAN_NOT_SET_PROPERTY;
+		   if(!bCanBeSet) return DEVICE_CAN_NOT_SET_PROPERTY;
 
-      double dExp;
-		pProp->Get(dExp);
-		pExposureRange->setValue(dExp);
-		dExp_ = dExp;
+         double dExp;
+		   pProp->Get(dExp);
+		   pExposureRange->setValue(dExp);
+		   dExp_ = dExp;
+      }
 	}
 	return DEVICE_OK;
 }
