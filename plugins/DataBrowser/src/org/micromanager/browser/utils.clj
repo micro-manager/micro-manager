@@ -64,6 +64,11 @@
                 (.get node (str i) nil)))]
       (when (and s (pos? (.length s))) (read-string s)))))
 
+(defn remove-value-from-prefs
+  [prefs key]
+  (let [node (. prefs node key)]
+    (.removeNode node)))
+
 ;; identify OS
 
 (defn get-os []

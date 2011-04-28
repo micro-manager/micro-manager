@@ -29,7 +29,8 @@
   (:use [org.micromanager.browser.utils
             :only (gen-map constrain-to-parent create-button create-icon-button
                    attach-action-key remove-borders choose-directory
-                   read-value-from-prefs write-value-to-prefs remove-nth
+                   read-value-from-prefs write-value-to-prefs 
+                   remove-value-from-prefs remove-nth
                    awt-event)]
         [clojure.contrib.json :only (read-json write-json)]
         [org.micromanager.mm :only (load-mm gui)]))
@@ -210,7 +211,7 @@
 
 (defn user-add-location []
   (when-let [loc (choose-directory nil
-                     "Please add a location to scan for files")]
+                     "Please add a location to scan for Micro-Manager image sets.")]
     (add-location (.getAbsolutePath loc))))
 
 (defn get-display-index [table index]
@@ -350,15 +351,26 @@
                            .getModel .fireTableDataChanged)))
 
 (defn save-data-and-settings [collection-name]
-  (println "save-data-and-settings" collection-name)
   (with-open [pr (PrintWriter. (get @collections collection-name))]
     (write-json (get-current-data-and-settings) pr))
   (println "saved data and settings: " (:display-columns (get-current-data-and-settings))))
 
+(defn fresh-data-and-settings [collection-name]
+  (reset! current-data nil)
+  (save-collection-map)
+  (save-data-and-settings collection-name)
+  (user-add-location)
+  (awt-event
+    (update-collection-menu collection-name)
+      (let [m (-> @browser :table .getModel)]
+        (.fireTableDataChanged m))))  
+
 (defn load-data-and-settings [name]
   (save-last-collection name)
   (let [f (get @collections name)]
-    (apply-data-and-settings (read-json (slurp f))))
+    (if (.exists (File. f))
+      (apply-data-and-settings (read-json (slurp f))))
+      (fresh-data-and-settings name))
   (update-collection-menu name))
 
 (defn user-creates-collection []
@@ -378,15 +390,7 @@
   (let [collection-name (user-creates-collection)]
     (swap! collections assoc collection-name
       (.getAbsolutePath (File. (str collection-name ".mmdb.txt"))))
-    (println "hi")
-    (reset! current-data nil)
-    (save-collection-map)
-    (save-data-and-settings collection-name)
-    (awt-event
-      (update-collection-menu collection-name)
-        (let [m (-> @browser :table .getModel)]
-          (.fireTableDataChanged m)
-             ))))
+      (fresh-data-and-settings collection-name)))
 
 (defn create-image-storage-listener []
   (reify ImageStorageListener
