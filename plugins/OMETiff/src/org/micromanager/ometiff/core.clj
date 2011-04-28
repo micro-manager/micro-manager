@@ -1,6 +1,34 @@
 (ns org.micromanager.ometiff.core
-  (:import [java.io RandomAccessFile]
+  (:import [java.io FileOutputStream RandomAccessFile]
            [java.nio.channels FileChannel$MapMode]))
+
+;; Memory-mapped files
+
+(defn open-mmap [file size]
+  (let [f (RandomAccessFile. file "rwd")
+        rwChannel (.getChannel f)
+        bb (.map rwChannel FileChannel$MapMode/READ_WRITE 0 size)
+        sb  nil ;(.asShortBuffer dbb)
+        ]
+    {:file f :rwChannel rwChannel :byte-buf bb :short-buf sb}))
+        
+(defn write-seq [mmap byte-vals]
+  (.put (:byte-buf mmap) (byte-array (map byte byte-vals))))  
+
+(defn write-bytes [mmap bytes]
+  (.put (:byte-buf mmap) bytes))
+
+(defn get-pos [mmap]
+  (.position (:byte-buf mmap)))
+
+(defn close-mmap [mmap]
+  (let [chan (:rwChannel mmap)]
+    (doto chan
+      (.truncate (get-pos mmap))
+      .close)
+    (.close (:file mmap))))
+
+;; tiff composing
 
 (defn create-header
   "Creates a big-endian tiff image file header."
@@ -91,54 +119,19 @@
         (rational-value pixel-size-cm)
         ))))
 
+;; tiff parsing
 
-;; Memory-mapped files
+(defn get-val [bytes]
+  (loop [b bytes val 0]
+    (let [first-byte (first b)
+          first-byte (if (neg? first-byte) (+ 0x100 first-byte) first-byte)
+          new-val (+ (* 0x100 val) first-byte)]
+      (if (next b)
+        (recur (next b) new-val)
+        new-val))))
 
-(defn open-mmap [file size]
-  (let [f (RandomAccessFile. file "rwd")
-        rwChannel (.getChannel f)
-        dbb (.map rwChannel FileChannel$MapMode/READ_WRITE 0 size)
-        dsb (.asShortBuffer dbb)]
-    {:file f :rwChannel rwChannel :byte-buf dbb :short-buf dsb}))
-        
-(defn write-seq [mmap byte-vals]
-  (.put (:byte-buf mmap) (byte-array (map byte byte-vals))))  
+;; tiff writing
 
-(defn write-bytes [mmap bytes]
-  (.put (:byte-buf mmap) bytes))
-
-(defn get-pos [mmap]
-  (.position (:byte-buf mmap)))
-
-(defn close-mmap [mmap]
-  (let [chan (:rwChannel mmap)]
-    (doto chan
-      (.truncate (get-pos mmap))
-      .close)
-    (.close (:file mmap))))
-
-; (.position dbb) <-- gets cursor pos
-; (.position dbb 10) <-- sets cursor pos
-; (.get dbb q) <-- read array
-
-;; testing
-
-;;;; image generation
-
-(defn rand-byte []
-  (byte (- (rand-int 256) 128)))
-
-(defn rand-bytes [n]
-  (let [array (byte-array n)]
-    (doseq [i (range n)]
-      (aset-byte array i (rand-byte)))
-    array))
-
-(defn rand-byte-image [w h nchannels]
-  (rand-bytes (* w h nchannels )))
-
-;; write minimal one-page tiff
-   
 (defn write-one-page-tiff [name pix w h]
   (let [mmap (open-mmap name 1000000000)]
     (write-seq mmap
@@ -164,8 +157,28 @@
        ; (println "pos:" (get-pos mmap))
         ))
     (close-mmap mmap)))
-   
-(defn big-test []
-  (let [img (rand-byte-image 2560 4320 1)]
-    (time (write-multi-page-tiff "test.tif" img 2560 4320 100))))
+
+; (.position dbb) <-- gets cursor pos
+; (.position dbb 10) <-- sets cursor pos
+; (.get dbb q) <-- read array
+
+;; testing
+
+;;;; image generation
+
+(defn rand-byte []
+  (byte (- (rand-int 256) 128)))
+
+(defn rand-bytes [n]
+  (let [array (byte-array n)]
+    (doseq [i (range n)]
+      (aset-byte array i (rand-byte)))
+    array))
+
+(defn rand-byte-image [w h nchannels]
+  (rand-bytes (* w h nchannels )))
+  
+(defn big-test [name]
+  (let [img (rand-byte-image 1024 1024 1)]
+    (time (write-multi-page-tiff name img 1024 1024 1000))))
 
