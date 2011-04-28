@@ -222,7 +222,8 @@ CTIScamera::CTIScamera() : CCameraBase<CTIScamera> (),
    nominalPixelSizeUm_(1.0),
 
    acquiring_(false),
-   interval_ms_ (0)
+   interval_ms_ (0),
+   seqThread_(0)
 
 
 {
@@ -921,7 +922,24 @@ and '4' for RGB cameras.
 ==============================================================================*/
 unsigned CTIScamera::GetNumberOfComponents() const
 {
-  return 1;
+   // treat any 8 or 16 bit image as monochrome for now
+   unsigned int nc = 1;
+   if( pGrabber->isDevValid())
+	{
+		DShowLib::FrameTypeInfo info;
+		pSink->getOutputFrameType(info);
+      const tColorformatEnum cf = info.getColorformat();
+      if( cf == eRGB32)
+         nc = 4;
+      else if( cf == eRGB24)
+         nc = 3; // user will see a message that this pixel type is not supported
+      // there are several 32 bit modes?
+      if( 32 == info.getBitsPerPixel())
+         nc = 4;
+
+	}
+
+  return nc;
 }
 
 
