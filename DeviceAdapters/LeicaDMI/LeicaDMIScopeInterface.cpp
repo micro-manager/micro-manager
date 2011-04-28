@@ -2036,8 +2036,8 @@ int LeicaMonitoringThread::svc()
                                os >> tmp;
                                os >> shutterPos;
                                if (tmp == "--") {
-                                  scopeModel_->TLShutter_.SetPosition(shutterPos);
-                                  scopeModel_->TLShutter_.SetBusy(false);
+                                  scopeModel_->ILShutter_.SetPosition(shutterPos);
+                                  scopeModel_->ILShutter_.SetBusy(false);
                                }
                                std::ostringstream pp;
                                pp << "ILTurret reports, tmp: " << tmp << " pos: " << turretPos;
