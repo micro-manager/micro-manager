@@ -62,11 +62,14 @@
   (SwingResourceManager/getIcon
     org.micromanager.MMStudioMainFrame (str "icons/" name)))
 
+(defn get-table-columns [table]
+  (when-let [col-vector (.. table getColumnModel getColumns)]
+    (enumeration-seq col-vector)))
+
 (defn set-filter [table text]
   (let [sorter (.getRowSorter table)
         column-indices
-        (int-array (map #(.getModelIndex %)
-        (enumeration-seq (.. table getColumnModel getColumns))))]
+          (int-array (map #(.getModelIndex %) (get-table-columns table)))]
     (do (.setRowFilter sorter (RowFilter/regexFilter text column-indices)))))
 
 (defn connect-search [search-field table]
@@ -232,7 +235,7 @@
 (defn column-visible? [tag]
   (true?
     (some #{true}
-      (for [col (-> @browser :table .getColumnModel .getColumns enumeration-seq)]
+      (for [col (get-table-columns (@browser :table))]
         (= (.getIdentifier col) tag)))))
 
 (defn set-column-visible [tag visible]
@@ -309,9 +312,9 @@
      :window-size (let [f (@browser :frame)] [(.getWidth f) (.getHeight f)])
      :display-columns
        (let [total-width (float (.getWidth table))]
-         (->> table .getColumnModel .getColumns enumeration-seq
-              (map #(hash-map :width (/ (.getWidth %) total-width)
-                              :title (.getIdentifier %)))))
+         (map #(hash-map :width (/ (.getWidth %) total-width)
+                                :title (.getIdentifier %))
+              (get-table-columns table)))
      :locations
        (->> @settings-window :locations :table .getModel .getDataVector
             seq (map seq) flatten)
@@ -338,9 +341,9 @@
           (Vector. (map #(Vector. (list %)) (seq locations)))
           (Vector. (list "Locations"))))
       (let [column-model (.. table getColumnModel)]
-        (println (-> column-model .getColumns enumeration-seq count))
+        (println (-> table get-table-columns count))
         (dorun (map #(.removeColumn column-model %)
-             (-> column-model .getColumns enumeration-seq reverse))))
+             (-> table get-table-columns reverse))))
       (println display-columns)
       (let [total-width (.getWidth table)]
         (doseq [col display-columns]
@@ -359,7 +362,7 @@
   (reset! current-data nil)
   (save-collection-map)
   (save-data-and-settings collection-name)
-  (user-add-location)
+  (map add-browser-column ["Path" "Time" "Frames" "Comment"])
   (awt-event
     (update-collection-menu collection-name)
       (let [m (-> @browser :table .getModel)]
