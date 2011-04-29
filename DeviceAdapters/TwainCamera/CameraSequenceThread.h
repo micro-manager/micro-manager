@@ -72,10 +72,6 @@ private:
          } while (DEVICE_OK == ret && !IsStopped() && imageCounter_++ < numImages_-1);
          if (IsStopped())
             camera_->LogMessage("SeqAcquisition interrupted by the user\n");
-
-      }catch( CMMError& e){
-         camera_->LogMessage(e.getMsg(), false);
-         ret = e.getCode();
       }catch(...){
          camera_->LogMessage(g_Msg_EXCEPTION_IN_THREAD, false);
       }

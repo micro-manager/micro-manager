@@ -2292,10 +2292,6 @@ int AcqSequenceThread::svc(void)
     try 
     {
         ret = camera_->ThreadRun();
-
-    }catch( CMMError& e){
-        camera_->LogMessage(e.getMsg(), false);
-        ret = e.getCode();
     }catch(...){
         camera_->LogMessage(g_Msg_EXCEPTION_IN_THREAD, false);
     }
