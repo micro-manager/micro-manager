@@ -26,6 +26,7 @@ package org.micromanager.conf;
 
 import java.util.ArrayList;
 import java.util.Hashtable;
+import java.util.Vector;
 import mmcorej.BooleanVector;
 
 import mmcorej.CMMCore;
@@ -40,19 +41,37 @@ import org.micromanager.utils.PropertyItem;
  * Part of the MicroscopeModel. 
  *
  */public class Device {
-   private String name_;
-   private String adapterName_;
-   private String library_;
-   private PropertyItem properties_[];
-   private ArrayList<PropertyItem> setupProperties_;
-   private String description_;
-   private DeviceType type_;
-   private Hashtable<Integer, Label> setupLabels_;
-   private double delayMs_;
-   private boolean usesDelay_;
-   private int numPos_ = 0;
-   private boolean discoverable_;
-   
+      private String name_;
+      private String adapterName_;
+      private String library_;
+      private PropertyItem properties_[];
+      private ArrayList<PropertyItem> setupProperties_;
+      private String description_;
+      private DeviceType type_;
+      private Hashtable<Integer, Label> setupLabels_;
+      private double delayMs_;
+      private boolean usesDelay_;
+      private int numPos_ = 0;
+      private boolean discoverable_;
+      private String master_; // discoverable devices record which hub they are on
+      private Vector<String> slaves_; // hubs record their peripheral devices
+
+   public Device(String name, String lib, String adapterName, String descr, boolean discoverable, String master,Vector<String> slaves ) {
+      name_ = name;
+      library_ = lib;
+      adapterName_ = adapterName;
+      description_ = descr;
+      type_ = DeviceType.AnyType;
+      setupLabels_ = new Hashtable<Integer, Label>();
+      properties_ = new PropertyItem[0];
+      setupProperties_ = new ArrayList<PropertyItem>();
+      usesDelay_ = false;
+      delayMs_ = 0.0;
+      discoverable_ = discoverable;
+      master_ = master;
+      slaves_ =  slaves;
+   }
+
    public Device(String name, String lib, String adapterName, String descr, boolean discoverable) {
       name_ = name;
       library_ = lib;
@@ -65,6 +84,8 @@ import org.micromanager.utils.PropertyItem;
       usesDelay_ = false;
       delayMs_ = 0.0;
       discoverable_ = discoverable;
+      master_ = "";
+      slaves_ =  new Vector<String>();
    }
 
    public Device(String name, String lib, String adapterName, String descr) {
@@ -79,6 +100,8 @@ import org.micromanager.utils.PropertyItem;
       usesDelay_ = false;
       delayMs_ = 0.0;
       discoverable_ = false;
+      master_ = "";
+      slaves_ =  new Vector<String>();
    }
    public Device(String name, String lib, String adapterName) {
       this(name, lib, adapterName, "");
@@ -323,6 +346,22 @@ import org.micromanager.utils.PropertyItem;
 
    public boolean isDiscoverable(){
        return discoverable_;
+   }
+
+   public Vector<String> getSlaves(){
+      return slaves_;
+   }
+
+   public void setSlaves(Vector<String> slaves){
+      slaves_ = slaves;
+   }
+
+   public String getMaster(){
+      return master_;
+   }
+
+   public void setMaster(String m){
+      master_ = m;
    }
 
  }
