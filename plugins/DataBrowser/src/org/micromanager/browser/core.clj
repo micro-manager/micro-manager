@@ -66,6 +66,11 @@
   (when-let [col-vector (.. table getColumnModel getColumns)]
     (enumeration-seq col-vector)))
 
+(defn remove-all-columns [table]
+  (let [column-model (. table getColumnModel)]
+    (dorun (->> table get-table-columns reverse
+                      (map #(.removeColumn column-model %))))))
+
 (defn set-filter [table text]
   (let [sorter (.getRowSorter table)
         column-indices
@@ -182,7 +187,6 @@
       (.concat "}}") (read-json false) (get "Summary"))) 
 
 (defn get-summary-map [data-set location]
-  (println "get-summary-map" data-set location)
   (merge (read-summary-map data-set)
     (if-let [frames (count-frames data-set)]
       {"Frames" frames})
@@ -274,7 +278,7 @@
       (.. getColumnModel (getColumn 0) (setMaxWidth 20)))
     table))
 
-(defn update-collection-menu [name ]
+(defn update-collection-menu [name]
   (let [menu (@browser :collection-menu)
         names (sort (keys @collections))
         listeners (.getItemListeners menu)]
@@ -288,10 +292,10 @@
 ;; collection files
 
 
-(defn save-last-collection [name]
+(defn set-last-collection-name [name]
   (write-value-to-prefs prefs "last-collection" name))
 
-(defn load-last-collection []
+(defn get-last-collection-name []
   (or (read-value-from-prefs prefs "last-collection")
     (System/getProperty "user.name")))
 
@@ -304,6 +308,33 @@
 (defn save-collection-map []
   (write-value-to-prefs prefs "collection-files" @collections))
 
+;; "data and settings"
+
+(defn save-data-and-settings [collection-name settings]
+  (with-open [pr (PrintWriter. (get @collections collection-name))]
+    (write-json settings pr)))
+
+(defn load-data-and-settings [name]
+  (or 
+    (when-let [f (get @collections name)]
+      (when (.exists (File. f))
+        (read-json (slurp f))))
+    (fresh-data-and-settings)))
+
+(defn fresh-data-and-settings []
+  {:browser-model-data nil
+   :browser-model-headings tags
+   :window-size nil
+   :display-columns
+     [{:width 0.3 :title "Path"}
+      {:width 0.3 :title "Time"}
+      {:width 0.1 :title "Frames"}
+      {:width 0.3 :title "Comment"}]
+   :locations nil
+   :sorted-column {:order 1 :model-column "Time"}})
+
+;; data and settings <--> gui
+
 (defn get-current-data-and-settings []
   (let [table (@browser :table)
         model (.getModel table)]
@@ -312,9 +343,10 @@
      :window-size (let [f (@browser :frame)] [(.getWidth f) (.getHeight f)])
      :display-columns
        (let [total-width (float (.getWidth table))]
-         (map #(hash-map :width (/ (.getWidth %) total-width)
-                                :title (.getIdentifier %))
-              (get-table-columns table)))
+         (when (pos? total-width)
+           (map #(hash-map :width (/ (.getWidth %) total-width)
+                                  :title (.getIdentifier %))
+                (get-table-columns table))))
      :locations
        (->> @settings-window :locations :table .getModel .getDataVector
             seq (map seq) flatten)
@@ -322,10 +354,12 @@
        (when-let [sort-key (->> table .getRowSorter .getSortKeys seq first)]
          {:order ({SortOrder/ASCENDING 1 SortOrder/DESCENDING -1}
                    (.getSortOrder sort-key))
-          :model-column (.getColumnName model (.getColumn sort-key))})
-     }))
+          :model-column (.getColumnName model (.getColumn sort-key))})}))
 
-(defn apply-data-and-settings [settings]
+
+(defn apply-data-and-settings [collection-name settings]
+  (update-collection-menu collection-name)
+  (set-last-collection-name collection-name)
   (awt-event
     (let [table (@browser :table)
           model (.getModel table)
@@ -335,48 +369,23 @@
                   locations sorted-column]} settings]
       (def dc display-columns)
       (reset! current-data browser-model-data)
-      (doto model (.fireTableDataChanged) (.fireTableStructureChanged))
-      (-> @settings-window :locations :table .getModel
+      (.fireTableDataChanged model)
+      (doto (-> @settings-window :locations :table .getModel)
         (.setDataVector
           (Vector. (map #(Vector. (list %)) (seq locations)))
-          (Vector. (list "Locations"))))
-      (let [column-model (.. table getColumnModel)]
-        (println (-> table get-table-columns count))
-        (dorun (map #(.removeColumn column-model %)
-             (-> table get-table-columns reverse))))
-      (println display-columns)
+          (Vector. (list "Locations")))
+        .fireTableDataChanged)
+      (remove-all-columns table)
       (let [total-width (.getWidth table)]
         (doseq [col display-columns]
-          (println col)
           (doto (add-browser-column (:title col))
-            (.setPreferredWidth (* total-width (:width col)))))))
+            (.setPreferredWidth (* total-width (:width col))))))
       (-> @settings-window :columns :table
-                           .getModel .fireTableDataChanged)))
+                           .getModel .fireTableDataChanged))))
 
-(defn save-data-and-settings [collection-name]
-  (with-open [pr (PrintWriter. (get @collections collection-name))]
-    (write-json (get-current-data-and-settings) pr))
-  (println "saved data and settings: " (:display-columns (get-current-data-and-settings))))
+;; creating a new collection
 
-(defn fresh-data-and-settings [collection-name]
-  (reset! current-data nil)
-  (save-collection-map)
-  (save-data-and-settings collection-name)
-  (map add-browser-column ["Path" "Time" "Frames" "Comment"])
-  (awt-event
-    (update-collection-menu collection-name)
-      (let [m (-> @browser :table .getModel)]
-        (.fireTableDataChanged m))))  
-
-(defn load-data-and-settings [name]
-  (save-last-collection name)
-  (let [f (get @collections name)]
-    (if (.exists (File. f))
-      (apply-data-and-settings (read-json (slurp f))))
-      (fresh-data-and-settings name))
-  (update-collection-menu name))
-
-(defn user-creates-collection []
+(defn user-specifies-collection-name []
   (let [prompt-msg "Please enter a name for the new collection."]
     (loop [msg prompt-msg]
        (let [collection-name (JOptionPane/showInputDialog msg)]
@@ -389,11 +398,13 @@
                          prompt-msg))
            :else collection-name)))))
 
-(defn new-data-and-settings []
-  (let [collection-name (user-creates-collection)]
-    (swap! collections assoc collection-name
-      (.getAbsolutePath (File. (str collection-name ".mmdb.txt"))))
-      (fresh-data-and-settings collection-name)))
+(defn create-new-collection []
+  (let [collection-name (user-specifies-collection-name)]
+    (when collection-name
+      (swap! collections assoc collection-name
+        (.getAbsolutePath (File. (str collection-name ".mmdb.txt"))))
+        (save-collection-map)
+        (apply-data-and-settings collection-name (fresh-data-and-settings)))))
 
 (defn create-image-storage-listener []
   (reify ImageStorageListener
@@ -455,13 +466,12 @@
 (defn create-collection-menu-listener []
   (reify ItemListener
     (itemStateChanged [_ e]
-      (println e)
       (let [item (.getItem e)]
         (if (= (.getStateChange e) ItemEvent/SELECTED)
           (condp = item
-            "New..." (new-data-and-settings)
-            (load-data-and-settings item))
-          (save-data-and-settings item))))))
+            "New..." (create-new-collection)
+            (apply-data-and-settings item (load-data-and-settings item)))
+          (save-data-and-settings item (get-current-data-and-settings)))))))
 
 (defn create-browser []
   (let [frame (JFrame. "Micro-Manager Data Set Browser")
@@ -513,7 +523,8 @@
   (reset! browser (create-browser))
   (MMImageCache/addImageStorageListener (create-image-storage-listener))
   (.setModel (:table @browser) (create-browser-table-model tags))
-  (load-data-and-settings (load-last-collection))
+  (let [collection-name (get-last-collection-name)]
+    (apply-data-and-settings collection-name (load-data-and-settings collection-name)))
   (.show (@browser :frame))
   browser)
 
