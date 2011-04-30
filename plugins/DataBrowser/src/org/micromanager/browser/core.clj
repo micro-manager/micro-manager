@@ -22,6 +22,7 @@
            [java.io BufferedReader File FileReader PrintWriter]
            [java.util Vector]
            [java.util.prefs Preferences]
+           [java.util.concurrent LinkedBlockingQueue]
            [java.awt Color Dimension Font Insets]
            [java.awt.event ItemEvent ItemListener KeyAdapter MouseAdapter]
            [com.swtdesigner SwingResourceManager]
@@ -43,7 +44,13 @@
 
 (def current-data (atom nil))
 
-(def scanning-agent (agent nil))
+(def current-locations (atom (sorted-set)))
+
+(def pending-locations (LinkedBlockingQueue.))
+
+(def pending-data-sets (LinkedBlockingQueue.))
+
+(def stop (atom false))
 
 (def prefs (.. Preferences userRoot
       (node "MMDataBrowser") (node "b3d184b1-c580-4f06-a1d9-b9cc00f12641")))
@@ -57,6 +64,10 @@
   "Positions" "Prefix" "Slices" "SlicesFirst" "Source" "Time" "TimeFirst"
   "UUID" "UserName" "Width" "z-step_um"
    ])
+
+(defn set-browser-status [text]
+  (-> @browser :frame
+      (.setTitle (str "Micro-Manager Data Set Browser (" text ")"))))
 
 (defn get-icon [name]
   (SwingResourceManager/getIcon
@@ -90,11 +101,8 @@
         (changedUpdate [_ _] (f))
         (removeUpdate [_ _] (f))))))
 
-(defn get-model-column-index [table text]
-  (.. table (getColumn text) getModelIndex))
-
 (defn open-selected-files [table]
-  (let [path-column (get-model-column-index table "Path")]
+  (let [path-column (.indexOf tags "Path")]
     (doseq [i (.getSelectedRows table)]
       (.openAcquisitionData gui
         (.. table getModel
@@ -112,7 +120,14 @@
     (getRowCount [] (count @current-data))
     (getColumnCount [] (count (first @current-data)))
     (getValueAt [row column] (nth (nth @current-data row) column))
-    (getColumnName [column] (nth tags column))))
+    (getColumnName [column] (nth headings column))))
+
+(defn create-locations-table-model []
+  (proxy [AbstractTableModel] []
+    (getRowCount [] (count @current-locations))
+    (getColumnCount [] 1)
+    (getValueAt [row _] (nth (vec @current-locations) row))
+    (getColumnName [_] "Locations")))
 
 (defn get-row-path [row]
   (nth row (.indexOf tags "Path")))
@@ -132,28 +147,27 @@
 
 (defn add-browser-table-row [new-row]
   (swap! current-data refresh-row (vec new-row))
-  (.fireTableDataChanged (.getModel (@browser :table))))
-
-(defn remove-browser-table-row [n]
-  (swap! current-data remove-nth n)
-  (.fireTableRowsDeleted (.getModel (@browser :table)) n n))
+  (awt-event (.fireTableDataChanged (.getModel (@browser :table)))))
 
 (defn remove-location [loc]
+  (swap! current-locations disj loc)
   (let [location-column (.indexOf tags "Location")]
-    (doseq [browser-row (reverse (range (count @current-data)))]
-      (when (= (nth (nth @current-data browser-row) location-column) loc)
-        (remove-browser-table-row browser-row)))))
+    (swap! current-data
+           (fn [coll] (remove #(= (nth % location-column) loc) coll)))
+    (-> @browser :table .getModel .fireTableDataChanged)))
 
 (defn remove-selected-locations [] 
-  (let [location-table (get-in @settings-window [:locations :table])
-        selected-rows (.getSelectedRows location-table)
+  (let [location-table (-> @settings-window :locations :table)
         location-model (.getModel location-table)
-        location-column (.indexOf tags "Location")]
-    (doseq [location-row (reverse selected-rows)]
-      (when-let [loc (.getValueAt location-model location-row 0)]
-        (when-not (empty? loc)
-          (remove-location loc)))
-      (.removeRow location-model location-row))))
+        selected-rows (.getSelectedRows location-table)]
+    (awt-event
+      (dorun
+        (map remove-location
+          (remove nil?
+            (for [location-row selected-rows]
+              (do (println (.getValueAt location-model location-row 0))
+                  (.getValueAt location-model location-row 0))))))
+      (.fireTableDataChanged location-model))))
     
 (defn clear-history []
   (remove-location ""))
@@ -198,23 +212,41 @@
        "Name"     (.getName data-dir)
        "Location" location})))
 
-(defn get-summary-maps [root-dir]
-  (map #(get-summary-map % root-dir) (find-data-sets root-dir)))
-
 (def default-headings ["Path" "Time" "Frames" "Comment" "Location"])
   
-(defn add-summary-maps [browser map-list headings]
-  (send-off scanning-agent 
-            (fn [_] (doseq [m map-list]
-                      (Thread/sleep 5)
-                      (add-browser-table-row
-                        (map #(get m %) headings))))))
+(defn start-scanning-thread []
+  (doto (Thread.
+            (fn []
+              (dorun (loop []
+                (try
+                  (let [location (.take pending-locations)]
+                    (if-not (= location pending-locations)
+                      (do (doseq [data-set (find-data-sets location)]
+                            (println "data-set:" data-set)
+                            (.put pending-data-sets [data-set location]))
+                          (recur))
+                    nil))
+                  (catch Exception e nil)))))) .start))
+
+(defn start-reading-thread []
+  (doto (Thread.
+            (fn []
+              (dorun (loop []
+                (set-browser-status
+                  (if (empty? pending-data-sets) "Idle" "Scanning"))
+                (try
+                  (let [data-set (.take pending-data-sets)]
+                    (if-not (= data-set pending-data-sets)
+                      (let [m (apply get-summary-map data-set)]
+                        (add-browser-table-row (map #(get m %) tags))
+                        (recur))
+                      nil))
+                  (catch Exception e nil)))))) .start))
 
 (defn add-location [location]
-  (.. (get-in @settings-window [:locations :table])
-      getModel (addRow (Vector. (list location))))
-  (let [maps (get-summary-maps location)]
-    (add-summary-maps @browser maps tags)))
+  (swap! current-locations conj location)
+  (.put pending-locations location)
+  (awt-event (-> @settings-window :locations :table .getModel .fireTableDataChanged)))
 
 (defn user-add-location []
   (when-let [loc (choose-directory nil
@@ -279,15 +311,16 @@
     table))
 
 (defn update-collection-menu [name]
-  (let [menu (@browser :collection-menu)
-        names (sort (keys @collections))
-        listeners (.getItemListeners menu)]
-    (dorun (map #(.removeItemListener menu %) listeners))
-    (.removeAllItems menu)
-    (dorun (map #(.addItem menu %) names))
-    (.addItem menu "New...")
-    (.setSelectedItem (@browser :collection-menu) name)
-    (dorun (map #(.addItemListener menu %) listeners))))
+  (awt-event
+    (let [menu (@browser :collection-menu)
+          names (sort (keys @collections))
+          listeners (.getItemListeners menu)]
+      (dorun (map #(.removeItemListener menu %) listeners))
+      (.removeAllItems menu)
+      (dorun (map #(.addItem menu %) names))
+      (.addItem menu "New...")
+      (.setSelectedItem (@browser :collection-menu) name)
+      (dorun (map #(.addItemListener menu %) listeners)))))
 
 ;; collection files
 
@@ -310,17 +343,6 @@
 
 ;; "data and settings"
 
-(defn save-data-and-settings [collection-name settings]
-  (with-open [pr (PrintWriter. (get @collections collection-name))]
-    (write-json settings pr)))
-
-(defn load-data-and-settings [name]
-  (or 
-    (when-let [f (get @collections name)]
-      (when (.exists (File. f))
-        (read-json (slurp f))))
-    (fresh-data-and-settings)))
-
 (defn fresh-data-and-settings []
   {:browser-model-data nil
    :browser-model-headings tags
@@ -333,12 +355,23 @@
    :locations nil
    :sorted-column {:order 1 :model-column "Time"}})
 
+(defn save-data-and-settings [collection-name settings]
+  (with-open [pr (PrintWriter. (get @collections collection-name))]
+    (write-json settings pr)))
+
+(defn load-data-and-settings [name]
+  (or 
+    (when-let [f (get @collections name)]
+      (when (.exists (File. f))
+        (read-json (slurp f))))
+    (fresh-data-and-settings)))
+
 ;; data and settings <--> gui
 
 (defn get-current-data-and-settings []
   (let [table (@browser :table)
         model (.getModel table)]
-    {:browser-model-data @current-data
+    {:browser-model-data (map #(zipmap tags %) @current-data)
      :browser-model-headings tags
      :window-size (let [f (@browser :frame)] [(.getWidth f) (.getHeight f)])
      :display-columns
@@ -347,9 +380,7 @@
            (map #(hash-map :width (/ (.getWidth %) total-width)
                                   :title (.getIdentifier %))
                 (get-table-columns table))))
-     :locations
-       (->> @settings-window :locations :table .getModel .getDataVector
-            seq (map seq) flatten)
+     :locations @current-locations
      :sorted-column
        (when-let [sort-key (->> table .getRowSorter .getSortKeys seq first)]
          {:order ({SortOrder/ASCENDING 1 SortOrder/DESCENDING -1}
@@ -360,21 +391,18 @@
 (defn apply-data-and-settings [collection-name settings]
   (update-collection-menu collection-name)
   (set-last-collection-name collection-name)
-  (awt-event
-    (let [table (@browser :table)
-          model (.getModel table)
-          {:keys [browser-model-data
-                  browser-model-headings
-                  window-size display-columns
-                  locations sorted-column]} settings]
+  (let [table (@browser :table)
+        model (.getModel table)
+        {:keys [browser-model-data
+                browser-model-headings
+                window-size display-columns
+                locations sorted-column]} settings]
+    (awt-event
       (def dc display-columns)
-      (reset! current-data browser-model-data)
+      (reset! current-data (map (fn [r] (map #(get r (keyword %)) tags)) browser-model-data))
       (.fireTableDataChanged model)
-      (doto (-> @settings-window :locations :table .getModel)
-        (.setDataVector
-          (Vector. (map #(Vector. (list %)) (seq locations)))
-          (Vector. (list "Locations")))
-        .fireTableDataChanged)
+      (reset! current-locations (apply sorted-set locations))
+      (-> @settings-window :locations :table .getModel .fireTableDataChanged)
       (remove-all-columns table)
       (let [total-width (.getWidth table)]
         (doseq [col display-columns]
@@ -390,6 +418,8 @@
     (loop [msg prompt-msg]
        (let [collection-name (JOptionPane/showInputDialog msg)]
          (cond
+           (nil? collection-name)
+             nil
            (empty? (.trim collection-name))
              (recur (str "Name must contain at least one character.\n"
                          prompt-msg))
@@ -400,23 +430,24 @@
 
 (defn create-new-collection []
   (let [collection-name (user-specifies-collection-name)]
-    (when collection-name
-      (swap! collections assoc collection-name
-        (.getAbsolutePath (File. (str collection-name ".mmdb.txt"))))
+    (if collection-name
+      (do
+        (swap! collections assoc collection-name
+          (.getAbsolutePath (File. (str collection-name ".mmdb.txt"))))
         (save-collection-map)
-        (apply-data-and-settings collection-name (fresh-data-and-settings)))))
+        (apply-data-and-settings collection-name (fresh-data-and-settings)))
+      (update-collection-menu (get-last-collection-name)))))
 
 (defn create-image-storage-listener []
   (reify ImageStorageListener
     (imageStorageFinished [_ path]
-      (add-summary-maps @browser
-                        (list (get-summary-map path "")) tags))))
-      
+      (println "image storage:" path)
+      (.put pending-data-sets [path ""]))))
+
 (defn refresh-collection []
-  (let [n (.indexOf tags "Location")
-        locations (distinct (map #(get % n) @current-data))]
-    ; blah blah
-  ))
+  (.clear pending-locations)
+  (.clear pending-data-sets)
+  (dorun (map add-location @current-locations)))
 
 ;; windows
 
@@ -461,6 +492,7 @@
       remove-location-button :n 0 :e -18 :n 18 :e 0
       clear-history-button :n 5 :w 5 :n 30 :w 125)
     (.setBounds frame 50 50 600 600)
+    (-> locations :table (.setModel (create-locations-table-model)))
     (gen-map frame locations columns)))
 
 (defn create-collection-menu-listener []
@@ -474,7 +506,7 @@
           (save-data-and-settings item (get-current-data-and-settings)))))))
 
 (defn create-browser []
-  (let [frame (JFrame. "Micro-Manager Data Set Browser")
+  (let [frame (JFrame.)
         panel (.getContentPane frame)
         table (proxy [JTable] [] (isCellEditable [_ _] false))
         scroll-pane (JScrollPane. table)
@@ -486,7 +518,7 @@
         collection-label (JLabel. "Collection:")
         collection-menu (JComboBox.)]
     (doto panel
-       (.add scroll-pane) (.add search-field)
+       (.add scroll-pane) (.add search-field) (.add refresh-button)
        (.add settings-button) (.add search-label)
        (.add collection-label) (.add collection-menu))
     (doto table
@@ -500,7 +532,8 @@
     (.setLayout panel (SpringLayout.))
     (constrain-to-parent scroll-pane :n 32 :w 5 :s -5 :e -5
                          search-field :n 5 :w 25 :n 28 :w 200
-                         settings-button :n 5 :w 405 :n 28 :w 510
+                         settings-button :n 5 :w 500 :n 28 :w 600
+                         refresh-button :n 5 :w 405 :n 28 :w 500
                          search-label :n 5 :w 5 :n 28 :w 25
                          collection-label :n 5 :w 205 :n 28 :w 275
                          collection-menu :n 5 :w 275 :n 28 :w 405)
@@ -509,9 +542,9 @@
     (listen-to-open table)
     (attach-action-key search-field "ESCAPE" #(.setText search-field ""))
     (doto frame
-      (.setBounds 50 50 540 500))
+      (.setBounds 50 50 620 500))
     (gen-map frame table scroll-pane settings-button search-field
-             collection-menu)))
+             collection-menu refresh-button)))
 
 (defn init-columns []
   (vec (map #(vec (list % false)) tags)))
@@ -521,11 +554,14 @@
   (read-collection-map)
   (reset! settings-window (create-settings-window))
   (reset! browser (create-browser))
+  (set-browser-status "Idle")
+  (start-scanning-thread)
+  (start-reading-thread)
   (MMImageCache/addImageStorageListener (create-image-storage-listener))
   (.setModel (:table @browser) (create-browser-table-model tags))
   (let [collection-name (get-last-collection-name)]
     (apply-data-and-settings collection-name (load-data-and-settings collection-name)))
-  (.show (@browser :frame))
+  (awt-event (.show (@browser :frame)))
   browser)
 
 
