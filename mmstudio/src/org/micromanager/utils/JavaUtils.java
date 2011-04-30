@@ -29,7 +29,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.prefs.Preferences;
 import java.util.prefs.BackingStoreException;
-
+import org.micromanager.MMStudioMainFrame;
 
 public class JavaUtils {
 
@@ -73,15 +73,19 @@ public class JavaUtils {
                      jarEntry = jarFile.getNextJarEntry();
                      if (jarEntry != null) {
                         String classFile = jarEntry.getName();
-                        if (classFile.endsWith(".class")
-                                && !classFile.contains("$")) {
+                        if (classFile.endsWith(".class")) {
+                           String className = stripFilenameExtension(classFile).replace("/", ".");
                            try {
-                              String className = stripFilenameExtension(classFile).replace("/", ".");
+                              //String cl = JavaUtils.class.getClassLoader().toString();
+                              //System.out.println("Attempting to load: "+className + " in " + cl);
                               //long t1 = System.currentTimeMillis();
                               classes.add(Class.forName(className));
                               //System.out.println(className +": " + (System.currentTimeMillis() - t1));
                            } catch (Throwable e3) {
-                              ReportingUtils.logError(e3);
+                              ReportingUtils.logError(e3, "Failed to load "+className + " " + e3.getCause());
+                              for (StackTraceElement t:e3.getCause().getStackTrace()) {
+                                 ReportingUtils.logMessage(t.toString());
+                              }
                            }
                         }
                      }

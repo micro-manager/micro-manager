@@ -1783,6 +1783,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             menuBar_.add(pluginMenu_);
             new Thread("Plugin loading") {
                public void run() {
+                  Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
                   loadPlugins();
                }
             }.start();
