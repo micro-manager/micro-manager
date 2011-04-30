@@ -24,7 +24,8 @@
            [java.util.prefs Preferences]
            [java.util.concurrent LinkedBlockingQueue]
            [java.awt Color Dimension Font Insets]
-           [java.awt.event ItemEvent ItemListener KeyAdapter MouseAdapter]
+           [java.awt.event ItemEvent ItemListener KeyAdapter MouseAdapter
+                           WindowAdapter WindowListener]
            [com.swtdesigner SwingResourceManager]
            [org.micromanager.acquisition ImageStorageListener MMImageCache])
   (:use [org.micromanager.browser.utils
@@ -37,6 +38,8 @@
         [org.micromanager.mm :only (load-mm gui)]))
 
 (def browser (atom nil))
+
+(def browser-status (atom "Idle"))
 
 (def settings-window (atom nil))
 
@@ -65,9 +68,15 @@
   "UUID" "UserName" "Width" "z-step_um"
    ])
 
+(defn clear-queues []
+  (.clear pending-locations)
+  (.clear pending-data-sets)
+  (while (not= @browser-status "Idle") (Thread/sleep 10)))
+
 (defn set-browser-status [text]
   (-> @browser :frame
-      (.setTitle (str "Micro-Manager Data Set Browser (" text ")"))))
+      (.setTitle (str "Micro-Manager Data Set Browser (" text ")")))
+  (reset! browser-status text))
 
 (defn get-icon [name]
   (SwingResourceManager/getIcon
@@ -219,6 +228,7 @@
             (fn []
               (dorun (loop []
                 (try
+                  (Thread/sleep 5)
                   (let [location (.take pending-locations)]
                     (if-not (= location pending-locations)
                       (do (doseq [data-set (find-data-sets location)]
@@ -226,14 +236,15 @@
                             (.put pending-data-sets [data-set location]))
                           (recur))
                     nil))
-                  (catch Exception e nil)))))) .start))
+                  (catch Exception e nil)))))
+          "data browser scanning thread") .start))
 
 (defn start-reading-thread []
   (doto (Thread.
             (fn []
               (dorun (loop []
-                (set-browser-status
-                  (if (empty? pending-data-sets) "Idle" "Scanning"))
+                (Thread/sleep 5)
+                (when (empty? pending-data-sets) (set-browser-status "Idle"))
                 (try
                   (let [data-set (.take pending-data-sets)]
                     (if-not (= data-set pending-data-sets)
@@ -241,11 +252,13 @@
                         (add-browser-table-row (map #(get m %) tags))
                         (recur))
                       nil))
-                  (catch Exception e nil)))))) .start))
+                  (catch Exception e nil)))))
+          "data browser reading thread") .start))
 
 (defn add-location [location]
   (swap! current-locations conj location)
   (.put pending-locations location)
+  (set-browser-status "Scanning")
   (awt-event (-> @settings-window :locations :table .getModel .fireTableDataChanged)))
 
 (defn user-add-location []
@@ -389,6 +402,7 @@
 
 
 (defn apply-data-and-settings [collection-name settings]
+  (clear-queues)
   (update-collection-menu collection-name)
   (set-last-collection-name collection-name)
   (let [table (@browser :table)
@@ -397,10 +411,11 @@
                 browser-model-headings
                 window-size display-columns
                 locations sorted-column]} settings]
-    (awt-event
+  ;  (awt-event
       (def dc display-columns)
       (reset! current-data (map (fn [r] (map #(get r (keyword %)) tags)) browser-model-data))
-      (.fireTableDataChanged model)
+      (.fireTableDataChanged model);)
+  ;  (awt-event
       (reset! current-locations (apply sorted-set locations))
       (-> @settings-window :locations :table .getModel .fireTableDataChanged)
       (remove-all-columns table)
@@ -409,7 +424,7 @@
           (doto (add-browser-column (:title col))
             (.setPreferredWidth (* total-width (:width col))))))
       (-> @settings-window :columns :table
-                           .getModel .fireTableDataChanged))))
+                           .getModel .fireTableDataChanged)));)
 
 ;; creating a new collection
 
@@ -435,7 +450,8 @@
         (swap! collections assoc collection-name
           (.getAbsolutePath (File. (str collection-name ".mmdb.txt"))))
         (save-collection-map)
-        (apply-data-and-settings collection-name (fresh-data-and-settings)))
+        (awt-event
+          (apply-data-and-settings collection-name (fresh-data-and-settings))))
       (update-collection-menu (get-last-collection-name)))))
 
 (defn create-image-storage-listener []
@@ -445,8 +461,7 @@
       (.put pending-data-sets [path ""]))))
 
 (defn refresh-collection []
-  (.clear pending-locations)
-  (.clear pending-data-sets)
+  (clear-queues)
   (dorun (map add-location @current-locations)))
 
 ;; windows
@@ -502,7 +517,7 @@
         (if (= (.getStateChange e) ItemEvent/SELECTED)
           (condp = item
             "New..." (create-new-collection)
-            (apply-data-and-settings item (load-data-and-settings item)))
+            (awt-event (apply-data-and-settings item (load-data-and-settings item))))
           (save-data-and-settings item (get-current-data-and-settings)))))))
 
 (defn create-browser []
@@ -542,7 +557,15 @@
     (listen-to-open table)
     (attach-action-key search-field "ESCAPE" #(.setText search-field ""))
     (doto frame
-      (.setBounds 50 50 620 500))
+      (.setBounds 50 50 620 500)
+      (.addWindowListener
+        (proxy [WindowAdapter] []
+          (windowClosing [e]
+            (println frame)
+            (save-data-and-settings
+              (get-last-collection-name)
+                (get-current-data-and-settings))
+            (.setVisible frame false)))))
     (gen-map frame table scroll-pane settings-button search-field
              collection-menu refresh-button)))
 
@@ -558,10 +581,9 @@
   (start-scanning-thread)
   (start-reading-thread)
   (MMImageCache/addImageStorageListener (create-image-storage-listener))
-  (.setModel (:table @browser) (create-browser-table-model tags))
-  (let [collection-name (get-last-collection-name)]
-    (apply-data-and-settings collection-name (load-data-and-settings collection-name)))
-  (awt-event (.show (@browser :frame)))
+  (awt-event
+    (.show (@browser :frame))
+    (.setModel (:table @browser) (create-browser-table-model tags))
+    (let [collection-name (get-last-collection-name)]
+      (apply-data-and-settings collection-name (load-data-and-settings collection-name))))
   browser)
-
-
