@@ -142,14 +142,20 @@
   (nth row (.indexOf tags "Path")))
 
 (defn refresh-row [rows new-row]
-  (let [changed (atom false)
+  (let [location-col (.indexOf tags "Location")
+        new-loc (new-row location-col)
+        changed (atom false)
         new-path (get-row-path new-row)
         data
           (vec
-            (for [row rows]
-              (if (= (get-row-path row) new-path)
-                (do (reset! changed true) new-row)
-                row)))]
+            (for [old-row rows]
+              (if (= (get-row-path old-row) new-path)
+                (do (reset! changed true)
+                    (let [old-loc (old-row location-col)]
+                      (if (super-location? new-loc old-loc)
+                        (assoc new-row location-col old-loc)
+                        new-row)))
+                old-row)))]
     (if @changed
       data
       (conj data new-row))))
@@ -251,7 +257,7 @@
                 (when (empty? pending-data-sets) (set-browser-status "Idle"))
                 (try
                   (let [data-set (.take pending-data-sets)]
-                    (println @current-locations (second data-set) (contains? @current-locations (second data-set)))
+                   ; (println @current-locations (second data-set) (contains? @current-locations (second data-set)))
                     (if (not= data-set pending-data-sets) ;; poison
                       (do (when (contains? @current-locations (second data-set))
                             (let [m (apply get-summary-map data-set)]
@@ -261,8 +267,27 @@
                   (catch Exception e nil)))))
           "data browser reading thread") .start))
 
+(defn super-location? [loc1 loc2]
+  (loop [loc loc1]
+    (let [f1 (File. loc)
+          f2 (File. loc2)]
+     ; (println f1 f2)
+      (if (= f1 f2)
+        true
+        (let [parent-loc (.getParent f1)]
+          (if (nil? parent-loc)
+            false
+            (recur parent-loc)))))))
+
 (defn add-location [location]
-  (dosync (alter current-locations conj location))
+  (dosync
+    (if (some #{true}
+              (map #(super-location? location %) @current-locations))
+      nil
+      (do (doseq [old-loc @current-locations]
+            (if (super-location? old-loc location)
+              (remove-location old-loc)))
+            (alter current-locations conj location))))
   (.put pending-locations location)
   (set-browser-status "Scanning")
   (awt-event (-> @settings-window :locations :table .getModel .fireTableDataChanged)))
