@@ -521,6 +521,12 @@
             (awt-event (apply-data-and-settings item (load-data-and-settings item))))
           (save-data-and-settings item (get-current-data-and-settings)))))))
 
+(defn handle-exit []
+  (println "Shutting down Data Browser.")
+  (close-window (@browser :frame))
+  (close-window (@settings-window :frame))
+  true)
+
 (defn create-browser []
   (let [frame (JFrame.)
         panel (.getContentPane frame)
@@ -580,6 +586,7 @@
   (read-collection-map)
   (reset! settings-window (create-settings-window))
   (reset! browser (create-browser))
+  (.addExitHandler gui handle-exit)
   (set-browser-status "Idle")
   (start-scanning-thread)
   (start-reading-thread)
