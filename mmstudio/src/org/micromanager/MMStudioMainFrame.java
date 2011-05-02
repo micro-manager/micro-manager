@@ -281,7 +281,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private Class pipelineClass_ = null;
    private Pipeline acquirePipeline_ = null;
    private final JSplitPane splitPane_;
-   private ArrayList<Callable<Boolean>> exitHandlers;
+   private ArrayList<Callable<Boolean>> exitHandlers = new ArrayList<Callable<Boolean>>();
 
    public ImageWindow getImageWin() {
       return imageWin_;
