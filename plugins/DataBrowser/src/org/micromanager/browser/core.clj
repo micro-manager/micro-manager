@@ -280,22 +280,30 @@
             (recur parent-loc)))))))
 
 (defn add-location [location]
-  (dosync
-    (if (some #{true}
-              (map #(super-location? location %) @current-locations))
-      nil
-      (do (doseq [old-loc @current-locations]
-            (if (super-location? old-loc location)
-              (remove-location old-loc)))
-            (alter current-locations conj location))))
-  (.put pending-locations location)
-  (set-browser-status "Scanning")
-  (awt-event (-> @settings-window :locations :table .getModel .fireTableDataChanged)))
+  (if
+    (dosync
+      (if (some #{true}
+                (map #(super-location? location %) @current-locations))
+        nil
+        (do (doseq [old-loc @current-locations]
+              (if (super-location? old-loc location)
+                (remove-location old-loc)))
+              (alter current-locations conj location))))
+    (do
+      (.put pending-locations location)
+      (set-browser-status "Scanning")
+      (awt-event (-> @settings-window :locations :table .getModel .fireTableDataChanged))
+      true)
+    false))
 
 (defn user-add-location []
   (when-let [loc (choose-directory nil
                      "Please add a location to scan for Micro-Manager image sets.")]
-    (add-location (.getAbsolutePath loc))))
+    (when-not (add-location (.getAbsolutePath loc))
+      (JOptionPane/showMessageDialog
+        (@settings :frame) "This new location cannot be added because it is already
+inside an existing location in your collection."
+        (.getAbsolutePath loc) JOptionPane/INFORMATION_MESSAGE))))
 
 (defn get-display-index [table index]
   (let [column-model (.getColumnModel table)]
