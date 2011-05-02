@@ -33,7 +33,7 @@
                    attach-action-key remove-borders choose-directory
                    read-value-from-prefs write-value-to-prefs 
                    remove-value-from-prefs remove-nth
-                   awt-event)]
+                   awt-event persist-window-shape)]
         [clojure.contrib.json :only (read-json write-json)]
         [org.micromanager.mm :only (load-mm gui)]))
 
@@ -508,6 +508,7 @@
       clear-history-button :n 5 :w 5 :n 30 :w 125)
     (.setBounds frame 50 50 600 600)
     (-> locations :table (.setModel (create-locations-table-model)))
+    (persist-window-shape prefs "settings-window-shape" frame)
     (gen-map frame locations columns)))
 
 (defn create-collection-menu-listener []
@@ -566,6 +567,7 @@
               (get-last-collection-name)
                 (get-current-data-and-settings))
             (.setVisible frame false)))))
+    (persist-window-shape prefs "browser-shape" frame)
     (gen-map frame table scroll-pane settings-button search-field
              collection-menu refresh-button)))
 

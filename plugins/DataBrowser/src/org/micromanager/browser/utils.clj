@@ -173,6 +173,53 @@
   "Maps input keys to action-fns."
   (doall (map #(apply attach-action-key comp %) items)))
 
+;; tree seq on widgets (awt or swing)
+
+(defn widget-seq [^java.awt.Component comp]
+  (tree-seq #(instance? java.awt.Container %)
+            #(seq (.getComponents %))
+            comp))
+
+;; saving and restoring window shape in preferences
+
+(defn get-shape [^java.awt.Component window]
+  (for [comp (widget-seq window)]
+    (condp instance? comp
+      java.awt.Window
+        [:window {:x (.getX comp) :y (.getY comp)
+                  :w (.getWidth comp) :h (.getHeight comp)}]
+      javax.swing.JSplitPane
+        [:split-pane {:location (.getDividerLocation comp)}]
+      nil)))
+
+(defn set-shape [comp shape-data]
+  (loop [comps (widget-seq comp) shapes shape-data]
+    (let [comp (first comps)
+          shape (first shapes)]
+      (try
+        (when shape
+          (condp = (first shape)
+            :window
+              (let [{:keys [x y w h]} (second shape)]
+                (.setBounds comp x y w h))
+            :split-pane
+                (.setDividerLocation comp (:location (second shape)))
+            nil))
+        (catch Exception e (println e))))
+    (when (next comps)
+      (recur (next comps) (next shapes)))))
+
+(defn save-shape [prefs name component]
+  (write-value-to-prefs prefs name (get-shape component)))
+
+(defn restore-shape [prefs name component]
+  (set-shape component (read-value-from-prefs prefs name)))
+
+(defn persist-window-shape [prefs name ^java.awt.Window window]
+  (restore-shape prefs name window)
+  (.addWindowListener window
+    (proxy [java.awt.event.WindowAdapter] []
+      (windowClosing [_] (save-shape prefs name window)))))
 
 ;; file choosers
 
