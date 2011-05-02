@@ -45,9 +45,9 @@
 
 (def collections (atom nil))
 
-(def current-data (atom nil))
+(def current-data (ref nil))
 
-(def current-locations (atom (sorted-set)))
+(def current-locations (ref (sorted-set)))
 
 (def pending-locations (LinkedBlockingQueue.))
 
@@ -155,15 +155,20 @@
       (conj data new-row))))
 
 (defn add-browser-table-row [new-row]
-  (swap! current-data refresh-row (vec new-row))
+  (let [row-vec (vec new-row)
+        location (row-vec (.indexOf tags "Location"))]
+    (dosync
+      (if (contains? @current-locations location)
+        (alter current-data refresh-row (vec new-row)))))
   (awt-event (.fireTableDataChanged (.getModel (@browser :table)))))
-
+    
 (defn remove-location [loc]
-  (swap! current-locations disj loc)
-  (let [location-column (.indexOf tags "Location")]
-    (swap! current-data
-           (fn [coll] (remove #(= (nth % location-column) loc) coll)))
-    (-> @browser :table .getModel .fireTableDataChanged)))
+  (dosync
+    (alter current-locations disj loc)
+    (let [location-column (.indexOf tags "Location")]
+      (alter current-data
+             (fn [coll] (remove #(= (nth % location-column) loc) coll)))))
+  (awt-event (-> @browser :table .getModel .fireTableDataChanged)))
 
 (defn remove-selected-locations [] 
   (let [location-table (-> @settings-window :locations :table)
@@ -246,16 +251,18 @@
                 (when (empty? pending-data-sets) (set-browser-status "Idle"))
                 (try
                   (let [data-set (.take pending-data-sets)]
-                    (if-not (= data-set pending-data-sets)
-                      (let [m (apply get-summary-map data-set)]
-                        (add-browser-table-row (map #(get m %) tags))
-                        (recur))
+                    (println @current-locations (second data-set) (contains? @current-locations (second data-set)))
+                    (if (not= data-set pending-data-sets) ;; poison
+                      (do (when (contains? @current-locations (second data-set))
+                            (let [m (apply get-summary-map data-set)]
+                              (add-browser-table-row (map #(get m %) tags))))
+                          (recur))
                       nil))
                   (catch Exception e nil)))))
           "data browser reading thread") .start))
 
 (defn add-location [location]
-  (swap! current-locations conj location)
+  (dosync (alter current-locations conj location))
   (.put pending-locations location)
   (set-browser-status "Scanning")
   (awt-event (-> @settings-window :locations :table .getModel .fireTableDataChanged)))
@@ -410,20 +417,18 @@
                 browser-model-headings
                 window-size display-columns
                 locations sorted-column]} settings]
-  ;  (awt-event
-      (def dc display-columns)
-      (reset! current-data (map (fn [r] (map #(get r (keyword %)) tags)) browser-model-data))
-      (.fireTableDataChanged model);)
-  ;  (awt-event
-      (reset! current-locations (apply sorted-set locations))
-      (-> @settings-window :locations :table .getModel .fireTableDataChanged)
-      (remove-all-columns table)
-      (let [total-width (.getWidth table)]
-        (doseq [col display-columns]
-          (doto (add-browser-column (:title col))
-            (.setPreferredWidth (* total-width (:width col))))))
-      (-> @settings-window :columns :table
-                           .getModel .fireTableDataChanged)));)
+    (dosync
+      (ref-set current-data (map (fn [r] (map #(get r (keyword %)) tags)) browser-model-data))
+      (ref-set current-locations (apply sorted-set locations)))
+    (.fireTableDataChanged model)
+    (-> @settings-window :locations :table .getModel .fireTableDataChanged)
+    (remove-all-columns table)
+    (let [total-width (.getWidth table)]
+      (doseq [col display-columns]
+        (doto (add-browser-column (:title col))
+          (.setPreferredWidth (* total-width (:width col))))))
+    (-> @settings-window :columns :table
+                         .getModel .fireTableDataChanged)))
 
 ;; creating a new collection
 
