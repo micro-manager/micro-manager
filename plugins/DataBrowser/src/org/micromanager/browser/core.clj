@@ -33,7 +33,7 @@
                    attach-action-key remove-borders choose-directory
                    read-value-from-prefs write-value-to-prefs 
                    remove-value-from-prefs remove-nth
-                   awt-event persist-window-shape)]
+                   awt-event persist-window-shape close-window)]
         [clojure.contrib.json :only (read-json write-json)]
         [org.micromanager.mm :only (load-mm gui)]))
 
@@ -566,6 +566,7 @@
             (save-data-and-settings
               (get-last-collection-name)
                 (get-current-data-and-settings))
+            (close-window (@settings-window :frame))
             (.setVisible frame false)))))
     (persist-window-shape prefs "browser-shape" frame)
     (gen-map frame table scroll-pane settings-button search-field

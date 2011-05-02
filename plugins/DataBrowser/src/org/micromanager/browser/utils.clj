@@ -180,6 +180,11 @@
             #(seq (.getComponents %))
             comp))
 
+(defn close-window [^java.awt.Window window]
+  (let [listeners (.getWindowListeners window)]
+    (dorun (map #(.windowClosing % nil) listeners))
+    (.setVisible window false)))
+
 ;; saving and restoring window shape in preferences
 
 (defn get-shape [^java.awt.Component window]
