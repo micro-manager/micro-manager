@@ -174,9 +174,8 @@
         (map remove-location
           (remove nil?
             (for [location-row selected-rows]
-              (do (println (.getValueAt location-model location-row 0))
-                  (.getValueAt location-model location-row 0))))))
-      (.fireTableDataChanged location-model))))
+              (.getValueAt location-model location-row 0))))))
+      (.fireTableDataChanged location-model)))
     
 (defn clear-history []
   (remove-location ""))
@@ -232,7 +231,7 @@
                   (let [location (.take pending-locations)]
                     (if-not (= location pending-locations)
                       (do (doseq [data-set (find-data-sets location)]
-                            (println "data-set:" data-set)
+                           ; (println "data-set:" data-set)
                             (.put pending-data-sets [data-set location]))
                           (recur))
                     nil))
@@ -457,7 +456,7 @@
 (defn create-image-storage-listener []
   (reify ImageStorageListener
     (imageStorageFinished [_ path]
-      (println "image storage:" path)
+     ; (println "image storage:" path)
       (.put pending-data-sets [path ""]))))
 
 (defn refresh-collection []
@@ -522,7 +521,10 @@
           (save-data-and-settings item (get-current-data-and-settings)))))))
 
 (defn handle-exit []
-  (println "Shutting down Data Browser.")
+;  (println "Shutting down Data Browser.")
+  (clear-queues)
+  (.put pending-data-sets pending-data-sets)
+  (.put pending-locations pending-locations)
   (close-window (@browser :frame))
   (close-window (@settings-window :frame))
   true)
@@ -568,7 +570,7 @@
       (.addWindowListener
         (proxy [WindowAdapter] []
           (windowClosing [e]
-            (println frame)
+            (clear-queues)
             (save-data-and-settings
               (get-last-collection-name)
                 (get-current-data-and-settings))
