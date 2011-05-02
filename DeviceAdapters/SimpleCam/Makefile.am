@@ -1,4 +1,4 @@
-AM_CXXFLAGS = -fpermissive $(BOOST_CPPFLAGS)
+AM_CXXFLAGS = -fpermissive $(BOOST_CPPFLAGS) $(LIBFREEIMAGE_CXXFLAGS)
 lib_LTLIBRARIES = libmmgr_dal_GPhoto.la
 libmmgr_dal_GPhoto_la_SOURCES = CameraFrontend.cpp CameraFrontend.h 
 ## adding the libtool library gives problems on OS X 10.4, adding the static lib works

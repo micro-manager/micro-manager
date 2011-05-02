@@ -113,6 +113,30 @@ else
    AC_MSG_RESULT([not found])
 fi
 
+# SimpleCam 
+AC_MSG_CHECKING(for SimpleCam)
+#AM_CONDITIONAL([BUILD_SIMPLECAM],[test -f "/usr/local/include/gphoto2/gphoto2.h"])
+if test -f "/usr/local/include/gphoto2/gphoto2.h"; then
+   buildsc=true
+   AC_MSG_RESULT([found])
+else
+   buildsc=false
+   AC_MSG_RESULT([not found])
+fi
+
+# LibFreeImage
+AC_MSG_CHECKING(for libFreeImage)
+AM_CONDITIONAL([LIBFREEIMAGEFOUND], [test -f "../../3rdpartypublic/FreeImage/Dist/FreeImage"])
+if test -f "../../3rdpartypublic/FreeImage/Dist/FreeImage.h"; then
+   AC_MSG_RESULT([found])
+   AC_SUBST(LIBFREEIMAGE, "-lfreeimage")
+   AC_SUBST(LIBFREEIMAGE_CXXFLAGS, "-I../../../3rdpartypublic/FreeImage/Dist -I../../../3rdpartypublic/FreeImage/Wrapper/FreeImagePlus ")
+else
+   buildsc=false
+   AC_MSG_RESULT([not found: To build the GPhoto device adapter download and install FreeImage in ../../3rdpartypublic/FreeImage])
+fi
+AM_CONDITIONAL([BUILD_SIMPLECAM], [test x$buildsc = xtrue])
+
 # Video4linux
 AC_MSG_CHECKING(for Video4linux2)
 AM_CONDITIONAL([BUILD_V4L2],[test -f "/usr/include/libv4l2.h"])
@@ -222,5 +246,5 @@ AC_SUBST(MMPREFIX)
 AC_HEADER_STDC
 AC_CHECK_FUNCS([memset])
 
-AC_CONFIG_FILES(Makefile AAAOTF/Makefile AOTF/Makefile Andor/Makefile AndorLaserCombiner/Makefile Arduino/Makefile ASIFW1000/Makefile ASIStage/Makefile ASIWPTR/Makefile Cobolt/Makefile CoherentCube/Makefile Conix/Makefile Corvus/Makefile DTOpenLayer/Makefile DemoCamera/Makefile ImageProcessorChain/Makefile FreeSerialPort/Makefile ITC18/Makefile SerialManager/Makefile SimpleAutofocus/Makefile USBManager/Makefile LeicaDMI/Makefile LeicaDMR/Makefile Ludl/Makefile LudlLow/Makefile ZeissCAN/Makefile ZeissCAN29/Makefile Video4Linux/Makefile Vincent/Makefile kdv/Makefile K8055/Makefile K8061/Makefile MaestroServo/Makefile PVCAM/Makefile Neos/Makefile Nikon/Makefile NikonTE2000/Makefile ParallelPort/Makefile Pecon/Makefile PrecisExcite/Makefile Sapphire/Makefile ScionCam/Makefile Sensicam/Makefile SpectralLMM5/Makefile Spot/Makefile SutterLambda/Makefile Thorlabs/Makefile ThorlabsDCxxxx/Makefile ThorlabsFilterWheel/Makefile ThorlabsSC10/Makefile Prior/Makefile PI/Makefile PI_GCS/Makefile Utilities/Makefile dc1394/Makefile QCam/Makefile XCite120PC_Exacte/Makefile Xcite/Makefile Yokogawa/Makefile)
+AC_CONFIG_FILES(Makefile AAAOTF/Makefile AOTF/Makefile Andor/Makefile AndorLaserCombiner/Makefile Arduino/Makefile ASIFW1000/Makefile ASIStage/Makefile ASIWPTR/Makefile Cobolt/Makefile CoherentCube/Makefile Conix/Makefile Corvus/Makefile DTOpenLayer/Makefile DemoCamera/Makefile ImageProcessorChain/Makefile FreeSerialPort/Makefile ITC18/Makefile SerialManager/Makefile SimpleAutofocus/Makefile USBManager/Makefile LeicaDMI/Makefile LeicaDMR/Makefile Ludl/Makefile LudlLow/Makefile ZeissCAN/Makefile ZeissCAN29/Makefile Video4Linux/Makefile Vincent/Makefile kdv/Makefile K8055/Makefile K8061/Makefile MaestroServo/Makefile PVCAM/Makefile Neos/Makefile Nikon/Makefile NikonTE2000/Makefile ParallelPort/Makefile Pecon/Makefile PrecisExcite/Makefile Sapphire/Makefile ScionCam/Makefile Sensicam/Makefile SimpleCam/Makefile SpectralLMM5/Makefile Spot/Makefile SutterLambda/Makefile Thorlabs/Makefile ThorlabsDCxxxx/Makefile ThorlabsFilterWheel/Makefile ThorlabsSC10/Makefile Prior/Makefile PI/Makefile PI_GCS/Makefile Utilities/Makefile dc1394/Makefile QCam/Makefile XCite120PC_Exacte/Makefile Xcite/Makefile Yokogawa/Makefile)
 AC_OUTPUT
