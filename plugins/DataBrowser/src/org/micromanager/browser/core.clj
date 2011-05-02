@@ -15,7 +15,7 @@
 (ns org.micromanager.browser.core
   (:import [javax.swing BorderFactory JButton JComboBox JFrame JLabel JOptionPane
                         JList JPanel JScrollPane JSplitPane SortOrder
-                        JTable JTextField RowFilter SpringLayout]
+                        JTable JTextField RowFilter RowSorter$SortKey SpringLayout]
            [javax.swing.table AbstractTableModel DefaultTableModel
                               TableColumn TableRowSorter]
            [javax.swing.event DocumentListener TableModelListener]
@@ -435,10 +435,9 @@ inside an existing location in your collection."
      :locations @current-locations
      :sorted-column
        (when-let [sort-key (->> table .getRowSorter .getSortKeys seq first)]
-         {:order ({SortOrder/ASCENDING 1 SortOrder/DESCENDING -1}
+         {:order ({SortOrder/ASCENDING 0 SortOrder/DESCENDING 1 SortOrder/UNSORTED 2}
                    (.getSortOrder sort-key))
           :model-column (.getColumnName model (.getColumn sort-key))})}))
-
 
 (defn apply-data-and-settings [collection-name settings]
   (clear-queues)
@@ -460,6 +459,11 @@ inside an existing location in your collection."
       (doseq [col display-columns]
         (doto (add-browser-column (:title col))
           (.setPreferredWidth (* total-width (:width col))))))
+    (println "sorted-column" sorted-column :model-column)
+    (.. table getRowSorter
+        (setSortKeys (list (RowSorter$SortKey.
+                             (.indexOf tags (sorted-column :model-column))
+                             (nth (SortOrder/values) (sorted-column :order))))))
     (-> @settings-window :columns :table
                          .getModel .fireTableDataChanged)))
 
