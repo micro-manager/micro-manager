@@ -124,6 +124,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.nio.ByteBuffer;
 import java.util.Collections;
+import java.util.concurrent.Callable;
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
@@ -280,6 +281,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private Class pipelineClass_ = null;
    private Pipeline acquirePipeline_ = null;
    private final JSplitPane splitPane_;
+   private ArrayList<Callable<Boolean>> exitHandlers;
 
    public ImageWindow getImageWin() {
       return imageWin_;
@@ -3283,6 +3285,14 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       }
    }
 
+   public void addExitHandler(Callable<Boolean> exitHandler) {
+      exitHandlers.add(exitHandler);
+   }
+
+   public void removeExitHandler(Callable<Boolean> exitHandler) {
+      exitHandlers.remove(exitHandler);
+   }
+
    private void saveSettings() {
       Rectangle r = this.getBounds();
 
@@ -3355,6 +3365,16 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    }
 
    public void closeSequence() {
+      /* exit handlers can cancel exiting if they return false */
+      for (Callable<Boolean> exitHandler:exitHandlers) {
+         try {
+            if (!exitHandler.call())
+               return;
+         } catch (Exception ex) {
+            ReportingUtils.logError(ex);
+         }
+      }
+
       if (engine_ != null && engine_.isAcquisitionRunning()) {
          int result = JOptionPane.showConfirmDialog(
                this,

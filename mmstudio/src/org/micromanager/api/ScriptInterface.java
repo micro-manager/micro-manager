@@ -26,6 +26,7 @@ import ij.gui.ImageWindow;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.geom.Point2D;
+import java.util.concurrent.Callable;
 
 import mmcorej.CMMCore;
 import mmcorej.TaggedImage;
@@ -491,5 +492,13 @@ public interface ScriptInterface {
 
    public boolean displayImage(Object pix);
 
+   /* Adds a Callable that will be run as the application exits. If
+    Callable returns false, then exiting will be canceled.*/
+   
+   public void addExitHandler(Callable<Boolean> exitHandler);
+
+   /* Removes an exit handler. */
+   
+   public void removeExitHandler(Callable<Boolean> exitHandler);
 
 }
