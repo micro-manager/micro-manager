@@ -474,10 +474,12 @@ inside an existing location in your collection."
           (.setPreferredWidth (* total-width (:width col))))))
     ;(println "sorted-column" sorted-column :model-column)
     (when sorted-column
+    (try
       (.. table getRowSorter
           (setSortKeys (list (RowSorter$SortKey.
                                (.indexOf tags (sorted-column :model-column))
-                               (nth (SortOrder/values) (sorted-column :order)))))))
+                               (nth (SortOrder/values) (sorted-column :order))))))
+      (catch Exception e nil)))
     (-> @settings-window :columns :table
                          .getModel .fireTableDataChanged))
   (update-browser-status))
