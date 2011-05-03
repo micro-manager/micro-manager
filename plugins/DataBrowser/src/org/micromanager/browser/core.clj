@@ -508,8 +508,7 @@ inside an existing location in your collection."
         (save-collection-map)
         (awt-event
           (apply-data-and-settings collection-name (fresh-data-and-settings))))
-      (update-collection-menu (get-last-collection-name))))
-  (user-add-location))
+      (update-collection-menu (get-last-collection-name)))))
 
 (defn create-image-storage-listener []
   (reify ImageStorageListener
