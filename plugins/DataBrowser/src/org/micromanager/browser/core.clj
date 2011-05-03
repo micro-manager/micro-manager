@@ -95,19 +95,26 @@
                       (map #(.removeColumn column-model %))))))
 
 (defn set-filter [table text]
-  (let [sorter (.getRowSorter table)
+  (let [chunks (.split text "\\s")
+        sorter (.getRowSorter table)
         column-indices
-          (int-array (map #(.getModelIndex %) (get-table-columns table)))]
-    (do (.setRowFilter sorter
-          (RowFilter/regexFilter (str "\\Q" text "\\E") column-indices)))))
+          (int-array (map #(.getModelIndex %) (get-table-columns table)))
+        filters
+          (map #(RowFilter/regexFilter (str "\\Q" % "\\E") column-indices)
+               chunks)]
+    (do (.setRowFilter sorter   
+          (RowFilter/andFilter filters)))))
+
+(def filter-agent (agent nil))
 
 (defn connect-search [search-field table]
   (let [d (.getDocument search-field)
-        f #(awt-event
-            (set-filter table (.getText d 0 (.getLength d)))
-            (.setBackground search-field
-              (if (zero? (.getRowCount table))
-                Color/PINK Color/WHITE)))]
+        f #(send-off filter-agent
+            (fn [_]
+              (set-filter table (.getText d 0 (.getLength d)))
+              (.setBackground search-field
+                (if (zero? (.getRowCount table))
+                  Color/PINK Color/WHITE))))]
     (.addDocumentListener d
       (reify DocumentListener
         (insertUpdate [_ _] (f))
