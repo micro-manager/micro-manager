@@ -98,7 +98,8 @@
   (let [sorter (.getRowSorter table)
         column-indices
           (int-array (map #(.getModelIndex %) (get-table-columns table)))]
-    (do (.setRowFilter sorter (RowFilter/regexFilter text column-indices)))))
+    (do (.setRowFilter sorter
+          (RowFilter/regexFilter (str "\\Q" text "\\E") column-indices)))))
 
 (defn connect-search [search-field table]
   (let [d (.getDocument search-field)
@@ -304,7 +305,7 @@
                      "Please add a location to scan for Micro-Manager image sets.")]
     (when-not (add-location (.getAbsolutePath loc))
       (JOptionPane/showMessageDialog
-        (@settings :frame) "This new location cannot be added because it is already
+        (@settings-window :frame) "This new location cannot be added because it is already
 inside an existing location in your collection."
         (.getAbsolutePath loc) JOptionPane/INFORMATION_MESSAGE))))
 
@@ -364,6 +365,12 @@ inside an existing location in your collection."
       (.. getColumnModel (getColumn 0) (setMinWidth 20))
       (.. getColumnModel (getColumn 0) (setMaxWidth 20)))
     table))
+
+
+(defn set-default-comparator [table]
+  (let [row-sorter (.getRowSorter table)]
+    (dotimes [i (-> @browser :table .getModel .getColumnCount)]
+        (.setComparator row-sorter i alphanumeric-comparator))))
 
 (defn update-collection-menu [name]
   (awt-event
@@ -455,6 +462,8 @@ inside an existing location in your collection."
     (dosync
       (ref-set current-data (map (fn [r] (map #(get r (keyword %)) tags)) browser-model-data))
       (ref-set current-locations (apply sorted-set locations)))
+    (when (pos? (count @current-data))
+      (set-default-comparator table))
     (.fireTableDataChanged model)
     (-> @settings-window :locations :table .getModel .fireTableDataChanged)
     (remove-all-columns table)
@@ -634,7 +643,7 @@ inside an existing location in your collection."
   (read-collection-map)
   (reset! settings-window (create-settings-window))
   (reset! browser (create-browser))
-  (.addExitHandler gui handle-exit)
+ ; (.addExitHandler gui handle-exit)
   (set-browser-status "Idle")
   (start-scanning-thread)
   (start-reading-thread)
@@ -642,9 +651,6 @@ inside an existing location in your collection."
   (awt-event
     (.show (@browser :frame))
     (.setModel (:table @browser) (create-browser-table-model tags))
-    (let [row-sorter (.getRowSorter (@browser :table))]
-      (dotimes [i (.getColumnCount (-> @browser :table .getModel))]
-        (.setComparator row-sorter i alphanumeric-comparator)))
     (let [collection-name (get-last-collection-name)]
       (apply-data-and-settings collection-name (load-data-and-settings collection-name))))
   browser)

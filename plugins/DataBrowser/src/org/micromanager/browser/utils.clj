@@ -258,30 +258,38 @@
 
 ;; alphanumeric sorting
 
+(def floating-point-re #"^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?$")
+
+(def integer-re #"\d+")
+
+(def alternate-re #"\d+|\D+")
+
 (defn compare-alphanumeric [val1 val2]
   (let [str1 (str val1)
-        str2 (str val2)
-        double-compare
-          #(try (Double/compare
-                 (Double/parseDouble %1)
-                 (Double/parseDouble %2))
-               (catch NumberFormatException _ nil))]
-    (println str1 "vs" str2)
-    (or
-      (double-compare str1 str2)
-      (let [re #"\d+|\D+"
-            s1 (vec (re-seq re str1))
-            s2 (vec (re-seq re str2))
-            chunk-results
-              (for [i (range (max (count s1) (count s2)))]
-                (let [chunk1 (get s1 i)
-                      chunk2 (get s2 i)]
-                  (if (and chunk1 chunk2)
-                    (or
-                      (double-compare chunk1 chunk2)
-                      (.compareTo chunk1 chunk2))
-                    (if chunk1 1 -1))))]
-        (or (first (filter #(not (zero? %)) chunk-results)) 0)))))
+        str2 (str val2)]
+    (if
+      (and (re-matches floating-point-re str1)
+           (re-matches floating-point-re str2))
+        (Double/compare
+          (Double/parseDouble str1)
+          (Double/parseDouble str2)))
+        (let [s1 (vec (re-seq alternate-re str1))
+              s2 (vec (re-seq alternate-re str2))]
+            (loop [i 0]
+              (let [chunk1 (get s1 i)
+                    chunk2 (get s2 i)]
+                (cond
+                  (and (nil? chunk1) chunk2) -1
+                  (and (nil? chunk2) chunk1) 1
+                  (and (nil? chunk1) (nil? chunk2)) 0
+                  (= chunk1 chunk2) (recur (inc i))
+                  (and (re-matches integer-re chunk1)
+                       (re-matches integer-re chunk2))
+                    (.compareTo
+                      (Integer/parseInt chunk1)
+                      (Integer/parseInt chunk2))
+                  :else
+                    (.compareTo chunk1 chunk2)))))))
 
 (defn create-alphanumeric-comparator []
   (reify java.util.Comparator
