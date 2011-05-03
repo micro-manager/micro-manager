@@ -89,7 +89,7 @@ make install || exit
 cd $RX86_64
 ./mmUnixBuild.sh || exit
 export MACOSX_DEPLOYMENT_TARGET=10.5
-./configure --with-imagej=$X86_64 --enable-python --enable-arch=x86_64 --with-boost=/usr/local/x86_64 CXX="g++-4.2" CXXFLAGS="-g -O2 -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk -arch x86_64"  LDFLAGS="-L/usr/local/x86_64/lib" --disable-dependency-tracking || exit
+./configure --with-imagej=$X86_64 --enable-arch=x86_64 --with-boost=/usr/local/x86_64 CXX="g++-4.2" CXXFLAGS="-g -O2 -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk -arch x86_64"  LDFLAGS="-L/usr/local/x86_64/lib" --disable-dependency-tracking || exit
 make clean || exit
 make || exit
 make install || exit
