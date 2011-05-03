@@ -34,13 +34,12 @@
                    read-value-from-prefs write-value-to-prefs 
                    remove-value-from-prefs remove-nth
                    awt-event persist-window-shape close-window
-                   create-alphanumeric-comparator)]
+                   create-alphanumeric-comparator
+                   super-location?)]
         [clojure.contrib.json :only (read-json write-json)]
         [org.micromanager.mm :only (load-mm gui)]))
 
 (def browser (atom nil))
-
-(def browser-status (atom "Idle"))
 
 (def settings-window (atom nil))
 
@@ -73,13 +72,14 @@
 
 (defn clear-queues []
   (.clear pending-locations)
-  (.clear pending-data-sets)
-  (while (not= @browser-status "Idle") (Thread/sleep 10)))
+  (.clear pending-data-sets))
 
-(defn set-browser-status [text]
+(defn update-browser-status []
   (-> @browser :frame
-      (.setTitle (str "Micro-Manager Data Set Browser (" text ")")))
-  (reset! browser-status text))
+      (.setTitle
+        (str "Micro-Manager Data Set Browser ("
+             (if (empty? pending-data-sets) "Idle" "Scanning")
+             " \u2014 " (count @current-data) " images)"))))
 
 (defn get-icon [name]
   (SwingResourceManager/getIcon
@@ -162,7 +162,7 @@
             (for [old-row rows]
               (if (= (get-row-path old-row) new-path)
                 (do (reset! changed true)
-                    (let [old-loc (old-row location-col)]
+                    (let [old-loc (nth old-row location-col)]
                       (if (super-location? new-loc old-loc)
                         (assoc new-row location-col old-loc)
                         new-row)))
@@ -175,8 +175,8 @@
   (let [row-vec (vec new-row)
         location (row-vec (.indexOf tags "Location"))]
     (dosync
-      (if (contains? @current-locations location)
-        (alter current-data refresh-row (vec new-row)))))
+      (if (or (contains? @current-locations location) (= location ""))
+        (alter current-data refresh-row row-vec))))
   (awt-event (.fireTableDataChanged (.getModel (@browser :table)))))
     
 (defn remove-location [loc]
@@ -184,7 +184,7 @@
     (alter current-locations disj loc)
     (let [location-column (.indexOf tags "Location")]
       (alter current-data
-             (fn [coll] (remove #(= (nth % location-column) loc) coll)))))
+             (fn [coll] (vec (remove #(= (nth % location-column) loc) coll))))))
   (awt-event (-> @browser :table .getModel .fireTableDataChanged)))
 
 (defn remove-selected-locations [] 
@@ -197,10 +197,12 @@
           (remove nil?
             (for [location-row selected-rows]
               (.getValueAt location-model location-row 0))))))
-      (.fireTableDataChanged location-model)))
+      (.fireTableDataChanged location-model))
+  (awt-event (update-browser-status)))
     
 (defn clear-history []
-  (remove-location ""))
+  (remove-location "")
+  (awt-event (update-browser-status)))
 
 (defn find-data-sets [root-dir]
   (map #(.getParent %)
@@ -243,7 +245,7 @@
        "Location" location})))
 
 (def default-headings ["Path" "Time" "Frames" "Comment" "Location"])
-  
+
 (defn start-scanning-thread []
   (doto (Thread.
             (fn []
@@ -263,32 +265,28 @@
 (defn start-reading-thread []
   (doto (Thread.
             (fn []
-              (dorun (loop []
-                (Thread/sleep 5)
-                (when (empty? pending-data-sets) (set-browser-status "Idle"))
-                (try
-                  (let [data-set (.take pending-data-sets)]
-                   ; (println @current-locations (second data-set) (contains? @current-locations (second data-set)))
-                    (if (not= data-set pending-data-sets) ;; poison
-                      (do (when (contains? @current-locations (second data-set))
+              (dorun
+                (loop []
+                  (Thread/sleep 5)
+                  (try
+                    (let [data-set (.take pending-data-sets)]
+                      ;(println @current-locations (second data-set) (contains? @current-locations (second data-set)))
+                      (if (= data-set pending-data-sets) ;; poison
+                        (update-browser-status)
+                        (let [loc (second data-set)]
+                          (when (or (= loc "") (contains? @current-locations loc))
                             (let [m (apply get-summary-map data-set)]
-                              (add-browser-table-row (map #(get m %) tags))))
-                          (recur))
-                      nil))
-                  (catch Exception e nil)))))
+                              (add-browser-table-row (map #(get m %) tags))
+                              (awt-event (update-browser-status))))
+                          (recur))))
+                    (catch Exception e (.printStackTrace e))))))
           "data browser reading thread") .start))
 
-(defn super-location? [loc1 loc2]
-  (loop [loc loc1]
-    (let [f1 (File. loc)
-          f2 (File. loc2)]
-     ; (println f1 f2)
-      (if (= f1 f2)
-        true
-        (let [parent-loc (.getParent f1)]
-          (if (nil? parent-loc)
-            false
-            (recur parent-loc)))))))
+(defn scan-location [location]
+  (.put pending-locations location)
+    (update-browser-status)
+    (awt-event (-> @settings-window :locations :table
+                   .getModel .fireTableDataChanged)))
 
 (defn add-location [location]
   (if
@@ -300,11 +298,7 @@
               (if (super-location? old-loc location)
                 (remove-location old-loc)))
               (alter current-locations conj location))))
-    (do
-      (.put pending-locations location)
-      (set-browser-status "Scanning")
-      (awt-event (-> @settings-window :locations :table .getModel .fireTableDataChanged))
-      true)
+    (do (scan-location location) true)
     false))
 
 (defn user-add-location []
@@ -467,7 +461,7 @@ inside an existing location in your collection."
                 window-size display-columns
                 locations sorted-column]} settings]
     (dosync
-      (ref-set current-data (map (fn [r] (map #(get r (keyword %)) tags)) browser-model-data))
+      (ref-set current-data (vec (map (fn [r] (vec (map #(get r (keyword %)) tags))) browser-model-data)))
       (ref-set current-locations (apply sorted-set locations)))
     (when (pos? (count @current-data))
       (set-default-comparator table))
@@ -478,14 +472,15 @@ inside an existing location in your collection."
       (doseq [col display-columns]
         (doto (add-browser-column (:title col))
           (.setPreferredWidth (* total-width (:width col))))))
-    (println "sorted-column" sorted-column :model-column)
+    ;(println "sorted-column" sorted-column :model-column)
     (when sorted-column
       (.. table getRowSorter
           (setSortKeys (list (RowSorter$SortKey.
                                (.indexOf tags (sorted-column :model-column))
                                (nth (SortOrder/values) (sorted-column :order)))))))
     (-> @settings-window :columns :table
-                         .getModel .fireTableDataChanged)))
+                         .getModel .fireTableDataChanged))
+  (update-browser-status))
 
 ;; creating a new collection
 
@@ -513,17 +508,18 @@ inside an existing location in your collection."
         (save-collection-map)
         (awt-event
           (apply-data-and-settings collection-name (fresh-data-and-settings))))
-      (update-collection-menu (get-last-collection-name)))))
+      (update-collection-menu (get-last-collection-name))))
+  (user-add-location))
 
 (defn create-image-storage-listener []
   (reify ImageStorageListener
     (imageStorageFinished [_ path]
-     ; (println "image storage:" path)
+      ;(println "image storage:" path)
       (.put pending-data-sets [path ""]))))
 
 (defn refresh-collection []
   (clear-queues)
-  (dorun (map add-location @current-locations)))
+  (dorun (map scan-location @current-locations)))
 
 ;; windows
 
@@ -583,7 +579,7 @@ inside an existing location in your collection."
           (save-data-and-settings item (get-current-data-and-settings)))))))
 
 (defn handle-exit []
-;  (println "Shutting down Data Browser.")
+  (println "Shutting down Data Browser.")
   (clear-queues)
   (.put pending-data-sets pending-data-sets)
   (.put pending-locations pending-locations)
@@ -624,7 +620,7 @@ inside an existing location in your collection."
                          collection-label :n 5 :w 205 :n 28 :w 275
                          collection-menu :n 5 :w 275 :n 28 :w 405)
     (connect-search search-field table)
-    (.setSortsOnUpdates (.getRowSorter table) true)
+    (.setSortsOnUpdates (.getRowSorter table) false)
     (listen-to-open table)
     (attach-action-key search-field "ESCAPE" #(.setText search-field ""))
     (doto frame
@@ -633,9 +629,9 @@ inside an existing location in your collection."
         (proxy [WindowAdapter] []
           (windowClosing [e]
             (clear-queues)
-            (save-data-and-settings
-              (get-last-collection-name)
-                (get-current-data-and-settings))
+              (save-data-and-settings
+                (get-last-collection-name)
+                  (get-current-data-and-settings))
             (close-window (@settings-window :frame))
             (.setVisible frame false)))))
     (persist-window-shape prefs "browser-shape" frame)
@@ -650,8 +646,7 @@ inside an existing location in your collection."
   (read-collection-map)
   (reset! settings-window (create-settings-window))
   (reset! browser (create-browser))
- ; (.addExitHandler gui handle-exit)
-  (set-browser-status "Idle")
+  (update-browser-status)
   (start-scanning-thread)
   (start-reading-thread)
   (MMImageCache/addImageStorageListener (create-image-storage-listener))

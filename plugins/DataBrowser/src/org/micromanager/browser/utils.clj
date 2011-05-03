@@ -292,7 +292,20 @@
                     (.compareTo chunk1 chunk2)))))))
 
 (defn create-alphanumeric-comparator []
+  (let [mem-compare (memoize #(compare-alphanumeric %1 %2))]
   (reify java.util.Comparator
-    (compare [_ val1 val2] (compare-alphanumeric val1 val2))))
+    (compare [_ val1 val2] (mem-compare val1 val2)))))
 
-
+;; file util
+  
+(defn super-location? [loc1 loc2]
+  (loop [loc loc1]
+    (let [f1 (File. loc)
+          f2 (File. loc2)]
+     ; (println f1 f2)
+      (if (= f1 f2)
+        true
+        (let [parent-loc (.getParent f1)]
+          (if (nil? parent-loc)
+            false
+            (recur parent-loc)))))))
