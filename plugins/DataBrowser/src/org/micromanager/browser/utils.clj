@@ -15,7 +15,7 @@
 (ns org.micromanager.browser.utils
   (:import (java.util UUID)
            (java.util.prefs Preferences)
-           (java.io ByteArrayInputStream ByteArrayOutputStream File FilenameFilter)
+           (java.io File FilenameFilter)
            (java.awt FileDialog)
            (java.awt.event ActionListener)
            (javax.swing AbstractAction BorderFactory JButton
