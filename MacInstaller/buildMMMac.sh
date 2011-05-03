@@ -53,21 +53,21 @@ sed -i -e "s/\"1.4.*\"/\"$VERSION\"/"  mmstudio/src/org/micromanager/MMStudioMai
 
 # build PPC
 MACOSX_DEPLOYMENT_TARGET=10.4
-./configure --with-imagej=$PPC --enable-python --enable-arch=ppc --with-boost=/usr/local/ppc CXX="g++-4.0" CXXFLAGS="-g -O2 -mmacosx-version-min=10.4 -isysroot /Developer/SDKs/MacOSX10.4u.sdk -arch ppc" --disable-dependency-tracking || exit
+./configure --with-imagej=$PPC --enable-python --enable-arch=ppc --with-boost=/usr/local/ppc CXX="g++-4.0" CXXFLAGS="-g -O2 -mmacosx-version-min=10.4 -isysroot /Developer/SDKs/MacOSX10.4u.sdk -arch ppc" LDFLAGS="-L/usr/local/ppc/lib" --disable-dependency-tracking || exit
 make clean || exit
 make || exit
 make install || exit
 
 # build i386
 MACOSX_DEPLOYMENT_TARGET=10.4
-./configure --with-imagej=$I386 --enable-arch=i386 --with-boost=/usr/local/i386 CXX="g++-4.0" CXXFLAGS="-g -O2 -mmacosx-version-min=10.4 -isysroot /Developer/SDKs/MacOSX10.4u.sdk -arch i386" --disable-dependency-tracking || exit
+./configure --with-imagej=$I386 --enable-python --enable-arch=i386 --with-boost=/usr/local/i386 CXX="g++-4.0" CXXFLAGS="-g -O2 -mmacosx-version-min=10.4 -isysroot /Developer/SDKs/MacOSX10.4u.sdk -arch i386" LDFLAGS="-L/usr/local/i386/lib" --disable-dependency-tracking || exit
 make clean || exit
 make || exit
 make install || exit
 
 # build x86_64
 export MACOSX_DEPLOYMENT_TARGET=10.5
-./configure --with-imagej=$X86_64 --enable-arch=x86_64 --with-boost=/usr/local/x86_64 CXX="g++-4.2" CXXFLAGS="-g -O2 -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk -arch x86_64" --disable-dependency-tracking || exit
+./configure --with-imagej=$X86_64 --enable-python --enable-arch=x86_64 --with-boost=/usr/local/x86_64 CXX="g++-4.2" CXXFLAGS="-g -O2 -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk -arch x86_64" LDFLAGS="-L/usr/local/x86_64/lib" --disable-dependency-tracking || exit
 make clean || exit
 make || exit
 make install || exit
@@ -76,6 +76,7 @@ make install || exit
 lipo -create $PPC/libMMCoreJ_wrap.jnilib $I386/libMMCoreJ_wrap.jnilib $X86_64/libMMCoreJ_wrap.jnilib -o $TARGET/libMMCoreJ_wrap.jnilib
 #strip -X -S $TARGET/libMMCoreJ_wrap.jnilib
 cd $PPC
+
 FILES=libmmgr*
 for f in $FILES; do lipo -create $PPC/$f $I386/$f $X86_64/$f -o $TARGET/$f; done
 #for f in $FILES; do strip -X -S $TARGET/$f; done
