@@ -154,6 +154,10 @@ pushd plugins\MultiCamera
 call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml %cleantarget% compile build 
 popd
 
+pushd plugins\DataBrowser
+call build.bat
+popd
+
 
 set DEVICELISTBUILDER=1
 cd mmStudio\src
