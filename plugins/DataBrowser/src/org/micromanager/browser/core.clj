@@ -20,7 +20,7 @@
                               TableColumn TableRowSorter]
            [javax.swing.event DocumentListener TableModelListener]
            [java.io BufferedReader File FileReader PrintWriter]
-           [java.util Vector]
+           [java.util Comparator Vector]
            [java.util.prefs Preferences]
            [java.util.concurrent LinkedBlockingQueue]
            [java.awt Color Dimension Font Insets]
@@ -33,7 +33,8 @@
                    attach-action-key remove-borders choose-directory
                    read-value-from-prefs write-value-to-prefs 
                    remove-value-from-prefs remove-nth
-                   awt-event persist-window-shape close-window)]
+                   awt-event persist-window-shape close-window
+                   create-alphanumeric-comparator)]
         [clojure.contrib.json :only (read-json write-json)]
         [org.micromanager.mm :only (load-mm gui)]))
 
@@ -67,6 +68,8 @@
   "Positions" "Prefix" "Slices" "SlicesFirst" "Source" "Time" "TimeFirst"
   "UUID" "UserName" "Width" "z-step_um"
    ])
+
+(def alphanumeric-comparator (create-alphanumeric-comparator))
 
 (defn clear-queues []
   (.clear pending-locations)
@@ -460,10 +463,11 @@ inside an existing location in your collection."
         (doto (add-browser-column (:title col))
           (.setPreferredWidth (* total-width (:width col))))))
     (println "sorted-column" sorted-column :model-column)
-    (.. table getRowSorter
-        (setSortKeys (list (RowSorter$SortKey.
-                             (.indexOf tags (sorted-column :model-column))
-                             (nth (SortOrder/values) (sorted-column :order))))))
+    (when sorted-column
+      (.. table getRowSorter
+          (setSortKeys (list (RowSorter$SortKey.
+                               (.indexOf tags (sorted-column :model-column))
+                               (nth (SortOrder/values) (sorted-column :order)))))))
     (-> @settings-window :columns :table
                          .getModel .fireTableDataChanged)))
 
@@ -638,6 +642,9 @@ inside an existing location in your collection."
   (awt-event
     (.show (@browser :frame))
     (.setModel (:table @browser) (create-browser-table-model tags))
+    (let [row-sorter (.getRowSorter (@browser :table))]
+      (dotimes [i (.getColumnCount (-> @browser :table .getModel))]
+        (.setComparator row-sorter i alphanumeric-comparator)))
     (let [collection-name (get-last-collection-name)]
       (apply-data-and-settings collection-name (load-data-and-settings collection-name))))
   browser)

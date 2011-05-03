@@ -255,3 +255,36 @@
        (if (= JFileChooser/APPROVE_OPTION (.showOpenDialog fc parent))
          (.getSelectedFile fc)))))
 
+
+;; alphanumeric sorting
+
+(defn compare-alphanumeric [val1 val2]
+  (let [str1 (str val1)
+        str2 (str val2)
+        double-compare
+          #(try (Double/compare
+                 (Double/parseDouble %1)
+                 (Double/parseDouble %2))
+               (catch NumberFormatException _ nil))]
+    (println str1 "vs" str2)
+    (or
+      (double-compare str1 str2)
+      (let [re #"\d+|\D+"
+            s1 (vec (re-seq re str1))
+            s2 (vec (re-seq re str2))
+            chunk-results
+              (for [i (range (max (count s1) (count s2)))]
+                (let [chunk1 (get s1 i)
+                      chunk2 (get s2 i)]
+                  (if (and chunk1 chunk2)
+                    (or
+                      (double-compare chunk1 chunk2)
+                      (.compareTo chunk1 chunk2))
+                    (if chunk1 1 -1))))]
+        (or (first (filter #(not (zero? %)) chunk-results)) 0)))))
+
+(defn create-alphanumeric-comparator []
+  (reify java.util.Comparator
+    (compare [_ val1 val2] (compare-alphanumeric val1 val2))))
+
+
