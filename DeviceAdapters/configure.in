@@ -118,6 +118,7 @@ AC_MSG_CHECKING(for SimpleCam)
 #AM_CONDITIONAL([BUILD_SIMPLECAM],[test -f "/usr/local/include/gphoto2/gphoto2.h"])
 if test -f "/usr/local/include/gphoto2/gphoto2.h"; then
    buildsc=true
+   AC_SUBST(LIBGPHOTO2, "-lgphoto2")
    AC_MSG_RESULT([found])
 else
    buildsc=false
