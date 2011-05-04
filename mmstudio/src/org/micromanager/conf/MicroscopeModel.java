@@ -31,10 +31,10 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.GregorianCalendar;
 import java.util.Hashtable;
 import java.util.Vector;
+import mmcorej.BooleanVector;
 
 import mmcorej.CMMCore;
 import mmcorej.Configuration;
@@ -1059,6 +1059,31 @@ public class MicroscopeModel {
          
       }
       return devs;
+   }
+
+   public void removePeripherals( String hubName, CMMCore core){
+      Device d = findDevice(hubName);
+      // check if this is hub device, that is simply any device with a non-empty discoverable peripheral list
+      String thisLibrary = d.getLibrary();
+      try{
+         StrVector devicesAvailable = core.getAvailableDevices(thisLibrary); // force a call into the module API to load the dyn. lib.
+         BooleanVector discoverability = core.getDeviceDiscoverability(thisLibrary);
+         for( Device peripheral: devices_){
+             for( int ii = 0; ii < devicesAvailable.size(); ++ii){
+                 // the devicesAvailble should be identified by their default name
+                 if(devicesAvailable.get(ii).equals(peripheral.getAdapterName())){
+                     if( ii < discoverability.size()){
+                        if( discoverability.get(ii)){
+                           removeDevice(peripheral.getName());
+                        }
+                     }
+                     break; // look for next device
+                 }
+             }
+         }
+      }
+      catch(Exception e){
+      }
    }
 
    public void removeDevice(String devName) {
