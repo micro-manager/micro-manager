@@ -158,7 +158,12 @@ public class RolesPage extends PagePanel {
          items[0] = "";
          for (int i=0; i<cameras.size(); i++)
             items[i+1] = cameras.get(i);
-         
+
+         if(1 == cameras.size()) try{
+               model_.setDeviceSetupProperty(MMCoreJ.getG_Keyword_CoreDevice(), MMCoreJ.getG_Keyword_CoreCamera(),cameras.get(0));
+               }
+               catch( Exception e){
+            }
          GUIUtils.replaceComboContents(cameraComboBox_, items);
       }
        
@@ -167,7 +172,11 @@ public class RolesPage extends PagePanel {
          items[0] = "";
          for (int i=0; i<shutters.size(); i++)
             items[i+1] = shutters.get(i);
-         
+         if( 1 == shutters.size()) try{
+            model_.setDeviceSetupProperty(MMCoreJ.getG_Keyword_CoreDevice(), MMCoreJ.getG_Keyword_CoreShutter(), shutters.get(0));
+         }
+         catch(Exception e){
+         }
          GUIUtils.replaceComboContents(shutterComboBox_, items);
       }
       
@@ -176,8 +185,16 @@ public class RolesPage extends PagePanel {
          items[0] = "";
          for (int i=0; i<stages.size(); i++)
             items[i+1] = stages.get(i);
+
+         if( 1 == stages.size()) try{
+            model_.setDeviceSetupProperty(MMCoreJ.getG_Keyword_CoreDevice(), MMCoreJ.getG_Keyword_CoreFocus(), stages.get(0));
+         }
+         catch( Exception e){
+
+         }
          
          GUIUtils.replaceComboContents(focusComboBox_, items);
+
       }
    
       try {
