@@ -348,6 +348,11 @@ import org.micromanager.utils.PropertyItem;
        return discoverable_;
    }
 
+   public void setDiscoverable(boolean v){
+       discoverable_ = v;
+
+   }
+
    public Vector<String> getSlaves(){
       return slaves_;
    }
