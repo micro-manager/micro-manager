@@ -468,12 +468,13 @@ public:
 
    //Action Handlers
    int OnDichroicMirrorPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
-
+   int OnFullFocusTime(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    bool initialized_;
    std::string name_;
    long timeOut_;
+   long fullFocusTime_;
 };
 
 

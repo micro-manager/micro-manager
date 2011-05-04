@@ -2585,7 +2585,8 @@ int TransmittedLight::Fire(double)
 AFC::AFC() :
    initialized_(false),    
    name_(g_LeicaAFC),
-   timeOut_(5000)
+   timeOut_(5000),
+   fullFocusTime_(300)
 {
 
    // create pre-initialization properties
@@ -2627,11 +2628,22 @@ int AFC::Initialize()
    ret = CreateProperty("DichroicMirrorIn", "1", MM::Integer, false, pAct);
    if (ret != DEVICE_OK)
       return ret;
-
    AddAllowedValue("DichroicMirrorIn", "0", 0);
    AddAllowedValue("DichroicMirrorIn", "1", 1);
    if (ret != DEVICE_OK)
       return ret;
+
+   CPropertyAction* pAct2 = new CPropertyAction(this, &AFC::OnFullFocusTime);
+   ret = CreateProperty("FullFocusTime", "300", MM::Integer, false, pAct2);
+   if (ret != DEVICE_OK)
+      return ret;
+   AddAllowedValue("FullFocusTime", "0", 0);
+   AddAllowedValue("FullFocusTime", "100", 100);
+   AddAllowedValue("FullFocusTime", "200", 200);
+   AddAllowedValue("FullFocusTime", "300", 300);
+   AddAllowedValue("FullFocusTime", "500", 500);
+   AddAllowedValue("FullFocusTime", "700", 700);
+   AddAllowedValue("FullFocusTime", "1000", 1000);
 
    initialized_ = true;
    return 0;
@@ -2695,7 +2707,7 @@ int AFC::FullFocus() {
       SetErrorText(DEVICE_LOCALLY_DEFINED_ERROR, "Autofocus Lock Timeout");
       return DEVICE_LOCALLY_DEFINED_ERROR;
    }
-   
+   CDeviceUtils::SleepMs(fullFocusTime_);
    ret = SetContinuousFocusing(false);
    return ret;
 }
@@ -2734,6 +2746,21 @@ int AFC::OnDichroicMirrorPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    return DEVICE_OK;
 }
+
+int AFC::OnFullFocusTime(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set((long) fullFocusTime_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(fullFocusTime_);
+      return DEVICE_OK;
+   }
+   return DEVICE_OK;
+}
+
 // ...
 
 
