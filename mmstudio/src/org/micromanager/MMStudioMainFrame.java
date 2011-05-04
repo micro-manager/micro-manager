@@ -47,8 +47,6 @@ import java.io.IOException;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.prefs.Preferences;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -122,7 +120,6 @@ import java.awt.Graphics;
 import java.awt.KeyboardFocusManager;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.concurrent.Callable;
 import javax.swing.BorderFactory;
@@ -1418,6 +1415,22 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       });
       saveConfigurationPresetsMenuItem.setText("Save Configuration Settings...");
       toolsMenu.add(saveConfigurationPresetsMenuItem);
+
+
+      final JMenuItem regenerateConfiguratorDeviceListMenuItem = new JMenuItem();
+      regenerateConfiguratorDeviceListMenuItem.addActionListener(new ActionListener() {
+
+         public void actionPerformed(ActionEvent arg0) {
+            Cursor oldc = Cursor.getDefaultCursor();
+            Cursor waitc = new Cursor(Cursor.WAIT_CURSOR);
+            setCursor(waitc);
+            MicroscopeModel.generateDeviceListFile();
+            setCursor(oldc);
+         }
+      });
+      regenerateConfiguratorDeviceListMenuItem.setText("Regenerate Configurator Device List");
+      toolsMenu.add(regenerateConfiguratorDeviceListMenuItem);
+
 
       toolsMenu.addSeparator();
 

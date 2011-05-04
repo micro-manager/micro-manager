@@ -70,9 +70,9 @@ public class AddDeviceDlg extends JDialog implements MouseListener, TreeSelectio
             addMouseListener(
                 new MouseAdapter() {
                     public void mouseReleased( MouseEvent e ) {
-                        if ( e.isPopupTrigger()) {
-                        popupMenu_.show( (JComponent)e.getSource(), e.getX(), e.getY() );
-                    }
+                           if ( e.isPopupTrigger()) {
+                           popupMenu_.show( (JComponent)e.getSource(), e.getX(), e.getY() );
+                       }
                     }
                 
                 }
@@ -91,11 +91,6 @@ public class AddDeviceDlg extends JDialog implements MouseListener, TreeSelectio
                 }
             }
         }
-
-
-
-
-
     }
 
     class TreeNodeShowsDeviceAndDescription extends DefaultMutableTreeNode {
@@ -195,8 +190,6 @@ public class AddDeviceDlg extends JDialog implements MouseListener, TreeSelectio
         theTree_.setRootVisible(false);
         theTree_.setShowsRootHandles(true);
 
-
-
         final JScrollPane scrollPane = new JScrollPane(theTree_);
         scrollPane.setBounds(10, 10, 471, 475);
         getContentPane().add(scrollPane);
@@ -229,7 +222,7 @@ public class AddDeviceDlg extends JDialog implements MouseListener, TreeSelectio
         model_ = model;
 
 
-        //put the URL for the documentation for the selected node into a browswer control
+        //put the URL for the documentation for the selected node into a browser control
         documentationURLroot_ = "https://valelab.ucsf.edu/~nico/MMwiki/index.php/";
         final JButton documentationButton = new JButton();
         documentationButton.setText("Help");
@@ -237,7 +230,7 @@ public class AddDeviceDlg extends JDialog implements MouseListener, TreeSelectio
         getContentPane().add(documentationButton);
         documentationButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                    displayDocumentation();
+                displayDocumentation();
             }
         });
     }

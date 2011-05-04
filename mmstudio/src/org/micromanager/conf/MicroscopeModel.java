@@ -79,7 +79,7 @@ public class MicroscopeModel {
                }
             } catch (Exception e) {
                ReportingUtils.logError(e);
-               return false;
+              // return false;
             }
          }
 
@@ -88,8 +88,8 @@ public class MicroscopeModel {
             BufferedWriter out = new BufferedWriter(new FileWriter(f.getAbsolutePath()));
             for (int i = 0; i < devs.size(); i++) {
                Device dev = devs.get(i);
-               if (!dev.isSerialPort()) {
-                  // do not output serial devices
+                  // do not output serial devices or other discoverable peripherals
+               if (!dev.isSerialPort() && !dev.isDiscoverable()) {
                   String descr = dev.getDescription().replaceAll(",", ";");
                   out.write(dev.getLibrary() + "," + dev.getAdapterName() + "," + descr + "," + dev.getTypeAsInt());
                   out.newLine();

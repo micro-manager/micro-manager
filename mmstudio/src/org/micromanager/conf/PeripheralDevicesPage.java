@@ -79,31 +79,37 @@ public class PeripheralDevicesPage extends PagePanel {
       public void setMicroscopeModel(MicroscopeModel mod) {
          devices_ = mod.getDevices();
          model_ = mod;
-         Device allPossibleDevices[] = mod.getAvailableDeviceList();
 
          for (Device d : devices_) {
          if (!d.getName().equals("Core")) {
             StrVector disco = core_.getDiscoverableDevices(d.getName());
             if (0 < disco.size()) {
                for (String devvs : disco) {
-                  // find the device description
-                  String descr = "";
-                  String defaultName = "";
-                  for (int idd = 0; idd < allPossibleDevices.length; ++idd) {
+                  try{
+                     Device allPossiblePeripherals[] = Device.getLibraryContents(d.getLibrary(), core_);
+                     // find the device description
+                     String descr = "";
+                     String defaultName = "";
+                     for (int idd = 0; idd < allPossiblePeripherals.length; ++idd) {
 
-                     if (allPossibleDevices[idd].getAdapterName().equalsIgnoreCase(devvs)) {
-                        descr = allPossibleDevices[idd].getDescription();
-                        defaultName = allPossibleDevices[idd].getAdapterName();
-                        break;
+                        if (allPossiblePeripherals[idd].getAdapterName().equalsIgnoreCase(devvs)) {
+                           descr = allPossiblePeripherals[idd].getDescription();
+                           defaultName = allPossiblePeripherals[idd].getAdapterName();
+                           break;
+                        }
                      }
+                     if (0 < defaultName.length()) {
+                        Device newDev = new Device(defaultName, d.getLibrary(), defaultName, descr);
+                        newDev.setDiscoverable(true);
+                        masterDevices_.add(d.getName());
+                        selected_.add(true);
+                        peripheralDevices_.add(newDev);
+                     }
+                     // // ReportingUtils.displayNonBlockingMessage(message);
                   }
-                  if (0 < defaultName.length()) {
-                     Device newDev = new Device(defaultName, d.getLibrary(), defaultName, descr);
-                     masterDevices_.add(d.getName());
-                     selected_.add(true);
-                     peripheralDevices_.add(newDev);
+                  catch(Exception e){
+                     
                   }
-                  // // ReportingUtils.displayNonBlockingMessage(message);
                }
             }
          }

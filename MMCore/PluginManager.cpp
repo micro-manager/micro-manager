@@ -614,7 +614,10 @@ vector<string> CPluginManager::GetAvailableDevices(const char* moduleName) throw
 std::vector<bool> CPluginManager::GetDeviceDiscoverability(const char* moduleName) throw (CMMError)
 {
    std::vector<bool> values;
-   HDEVMODULE hLib = LoadPluginLibrary(moduleName);
+   HDEVMODULE hLib = 0;
+   try
+   {
+   hLib = LoadPluginLibrary(moduleName);
    CheckVersion(hLib); // verify that versions match
 
    fnGetNumberOfDevices hGetNumberOfDevices(0);
@@ -622,8 +625,7 @@ std::vector<bool> CPluginManager::GetDeviceDiscoverability(const char* moduleNam
    fnInitializeModuleData hInitializeModuleData(0);
    fnGetDeviceIsDiscoverable hGetDeviceIsDiscoverable(NULL);
 
-   try
-   {
+
       // initalize module data
       hInitializeModuleData = (fnInitializeModuleData) GetModuleFunction(hLib, "InitializeModuleData");
       assert(hInitializeModuleData);
