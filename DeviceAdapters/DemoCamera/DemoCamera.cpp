@@ -131,16 +131,16 @@ MODULE_API void InitializeModuleData()
 
    if (DiscoverabilityTest())
    {
-      SetDeviceIsDiscoverable(g_WheelDeviceName, true);
-      SetDeviceIsDiscoverable(g_StateDeviceName, true);
-      SetDeviceIsDiscoverable(g_ObjectiveDeviceName, true);
+      SetDeviceIsDiscoverable(g_WheelDeviceName, false);
+      SetDeviceIsDiscoverable(g_StateDeviceName, false);
+      SetDeviceIsDiscoverable(g_ObjectiveDeviceName, false);
       SetDeviceIsDiscoverable(g_StageDeviceName, true); 
       SetDeviceIsDiscoverable(g_XYStageDeviceName, true);
-      SetDeviceIsDiscoverable(g_LightPathDeviceName, true);
+      SetDeviceIsDiscoverable(g_LightPathDeviceName, false);
       SetDeviceIsDiscoverable(g_AutoFocusDeviceName, true);
       SetDeviceIsDiscoverable(g_ShutterDeviceName, true);
       SetDeviceIsDiscoverable(g_DADeviceName, true);
-      SetDeviceIsDiscoverable(g_MagnifierDeviceName, true);
+      SetDeviceIsDiscoverable(g_MagnifierDeviceName, false);
       SetDeviceIsDiscoverable("DemoTranspose", true);
    }
 
