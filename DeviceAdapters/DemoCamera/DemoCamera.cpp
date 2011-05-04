@@ -542,9 +542,6 @@ int CDemoCamera::SnapImage()
             GetCoreCallback()->PostError( MMERR_CameraNotAvailable, mes.c_str() );
          }
    }
-
-
-
    return DEVICE_OK;
 }
 
@@ -578,9 +575,6 @@ const unsigned char* CDemoCamera::GetImageBuffer()
 		ip->Process(pB, GetImageWidth(), GetImageHeight(), GetImageBytesPerPixel());
 
 	}
-
-
-   
    return pB;
 }
 
