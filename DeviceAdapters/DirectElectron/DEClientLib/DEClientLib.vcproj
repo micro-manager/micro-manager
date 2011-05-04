@@ -21,7 +21,7 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(SolutionDir)bin_$(PlatformName)\$(ConfigurationName)\"
+			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\"
 			IntermediateDirectory="$(OutDir)\$(ProjectName)\"
 			ConfigurationType="4"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
@@ -45,7 +45,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="C:\direct_electron\ThirdPartyLibs\include;..\Common\DEMessaging"
+				AdditionalIncludeDirectories="../../../../3rdpartypublic/boost;../../../../3rdpartypublic/google/protocolbuffers/src;../DEMessaging"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;ACE_AS_STATIC_LIBS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -68,7 +68,7 @@
 			<Tool
 				Name="VCLibrarianTool"
 				AdditionalDependencies="libprotobuf.lib DEMessaging.lib"
-				AdditionalLibraryDirectories="c:\direct_electron\ThirdPartyLibs\x32\protobuf\Debug;$(TargetDir)"
+				AdditionalLibraryDirectories="../../../../3rdpartypublic/google/protocolbuffers/vsprojects/$(PlatformName)/$(ConfigurationName);$(TargetDir)"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -84,12 +84,12 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\bin_$(PlatformName)"
+				CommandLine=""
 			/>
 		</Configuration>
 		<Configuration
 			Name="Debug|x64"
-			OutputDirectory="$(SolutionDir)bin_$(PlatformName)\$(ConfigurationName)\"
+			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\"
 			IntermediateDirectory="$(OutDir)\$(ProjectName)\"
 			ConfigurationType="4"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
@@ -114,7 +114,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="C:\direct_electron\ThirdPartyLibs\include;..\Common\DEMessaging"
+				AdditionalIncludeDirectories="../../../../3rdpartypublic/boost;../../../../3rdpartypublic/google/protocolbuffers/src;../DEMessaging"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;ACE_AS_STATIC_LIBS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -137,7 +137,7 @@
 			<Tool
 				Name="VCLibrarianTool"
 				AdditionalDependencies="libprotobuf.lib DEMessaging.lib"
-				AdditionalLibraryDirectories="c:\direct_electron\ThirdPartyLibs\x64\protobuf\Debug;$(TargetDir)"
+				AdditionalLibraryDirectories="../../../../3rdpartypublic/google/protocolbuffers/vsprojects/$(PlatformName)/$(ConfigurationName);$(TargetDir)"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -153,12 +153,12 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\bin_$(PlatformName)"
+				CommandLine=""
 			/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)bin_$(PlatformName)\$(ConfigurationName)\"
+			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\"
 			IntermediateDirectory="$(OutDir)\$(ProjectName)\"
 			ConfigurationType="4"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
@@ -181,7 +181,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="C:\direct_electron\ThirdPartyLibs\include;..\Common\DEMessaging"
+				AdditionalIncludeDirectories="../../../../3rdpartypublic/boost;../../../../3rdpartypublic/google/protocolbuffers/src;../DEMessaging"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
@@ -201,7 +201,7 @@
 			<Tool
 				Name="VCLibrarianTool"
 				AdditionalDependencies="libprotobuf.lib DEMessaging.lib"
-				AdditionalLibraryDirectories="c:\direct_electron\ThirdPartyLibs\x32\protobuf\Release;$(TargetDir)"
+				AdditionalLibraryDirectories="../../../../3rdpartypublic/google/protocolbuffers/vsprojects/$(PlatformName)/$(ConfigurationName);$(TargetDir)"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -217,12 +217,12 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\bin_$(PlatformName)"
+				CommandLine=""
 			/>
 		</Configuration>
 		<Configuration
 			Name="Release|x64"
-			OutputDirectory="$(SolutionDir)bin_$(PlatformName)\$(ConfigurationName)\"
+			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\"
 			IntermediateDirectory="$(OutDir)\$(ProjectName)\"
 			ConfigurationType="4"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
@@ -246,7 +246,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="C:\direct_electron\ThirdPartyLibs\include;..\Common\DEMessaging"
+				AdditionalIncludeDirectories="../../../../3rdpartypublic/boost;../../../../3rdpartypublic/google/protocolbuffers/src;../DEMessaging"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
@@ -266,7 +266,7 @@
 			<Tool
 				Name="VCLibrarianTool"
 				AdditionalDependencies="libprotobuf.lib DEMessaging.lib"
-				AdditionalLibraryDirectories="c:\direct_electron\ThirdPartyLibs\x64\protobuf\Release;$(TargetDir)"
+				AdditionalLibraryDirectories="../../../../3rdpartypublic/google/protocolbuffers/vsprojects/$(PlatformName)/$(ConfigurationName);$(TargetDir)"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -282,7 +282,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\bin_$(PlatformName)"
+				CommandLine=""
 			/>
 		</Configuration>
 	</Configurations>

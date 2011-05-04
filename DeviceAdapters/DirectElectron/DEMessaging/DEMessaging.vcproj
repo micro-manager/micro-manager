@@ -20,7 +20,7 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="$(SolutionDir)bin_$(PlatformName)\$(ConfigurationName)\"
+			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\"
 			IntermediateDirectory="$(OutDir)\$(ProjectName)\"
 			ConfigurationType="4"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
@@ -44,7 +44,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="c:\direct_electron\ThirdPartyLibs\include"
+				AdditionalIncludeDirectories="../../../../3rdpartypublic/boost;../../../../3rdpartypublic/google/protocolbuffers/src"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;ACE_AS_STATIC_LIBS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -81,12 +81,12 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\bin_$(PlatformName)"
+				CommandLine=""
 			/>
 		</Configuration>
 		<Configuration
 			Name="Debug|x64"
-			OutputDirectory="$(SolutionDir)bin_$(PlatformName)\$(ConfigurationName)\"
+			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\"
 			IntermediateDirectory="$(OutDir)\$(ProjectName)\"
 			ConfigurationType="4"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
@@ -111,7 +111,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="c:\direct_electron\ThirdPartyLibs\include"
+				AdditionalIncludeDirectories="../../../../3rdpartypublic/boost;../../../../3rdpartypublic/google/protocolbuffers/src"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;ACE_AS_STATIC_LIBS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -148,12 +148,12 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\bin_$(PlatformName)"
+				CommandLine=""
 			/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="$(SolutionDir)bin_$(PlatformName)\$(ConfigurationName)\"
+			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\"
 			IntermediateDirectory="$(OutDir)\$(ProjectName)\"
 			ConfigurationType="4"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
@@ -176,7 +176,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="c:\direct_electron\ThirdPartyLibs\include"
+				AdditionalIncludeDirectories="../../../../3rdpartypublic/boost;../../../../3rdpartypublic/google/protocolbuffers/src"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
@@ -210,12 +210,12 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\bin_$(PlatformName)"
+				CommandLine=""
 			/>
 		</Configuration>
 		<Configuration
 			Name="Release|x64"
-			OutputDirectory="$(SolutionDir)bin_$(PlatformName)\$(ConfigurationName)\"
+			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)\"
 			IntermediateDirectory="$(OutDir)\$(ProjectName)\"
 			ConfigurationType="4"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
@@ -239,7 +239,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="c:\direct_electron\ThirdPartyLibs\include"
+				AdditionalIncludeDirectories="../../../../3rdpartypublic/boost;../../../../3rdpartypublic/google/protocolbuffers/src"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
@@ -273,7 +273,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy &quot;$(TargetPath)&quot; ..\..\bin_$(PlatformName)"
+				CommandLine=""
 			/>
 		</Configuration>
 	</Configurations>
