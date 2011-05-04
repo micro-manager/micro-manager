@@ -105,7 +105,7 @@ boost::tuple<double, double> PropertyHelper::GetRange()
 
 void PropertyHelper::GetSet(vector<string>& values)
 {
-	for (int i = 0; i < this->_values.size(); i++)
+	for (unsigned int i = 0; i < this->_values.size(); i++)
 	{
 		values.push_back(this->_values[i]);
 	}

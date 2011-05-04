@@ -29,6 +29,15 @@ DENetwork::DENetwork()
 	this->read = new tcp::socket(io_service);
 	this->write = new tcp::socket(io_service);
 	this->connected = false;
+
+	// Sets whether denetwork is operating in debug or release mode.
+	// if denetwork is operating in debug mode, then the commands will no longer 
+	// be affected by timeouts.
+	#ifdef _DEBUG
+	this->debugMode = true;
+	#else
+	this->debugMode = false;
+	#endif
 }
 
 DENetwork::~DENetwork()
@@ -79,8 +88,10 @@ bool DENetwork::send(void* data, long size, std::size_t timeout)
 	optional<error_code> write_result;
 
 	deadline_timer timer(this->write->io_service());
+
 	timer.expires_from_now(seconds(timeout));
-	timer.async_wait(boost::bind(&DENetwork::setResult, this, &timeout_result, _1, 0));
+	if (!debugMode)
+		timer.async_wait(boost::bind(&DENetwork::setResult, this, &timeout_result, _1, 0));
 	async_write(
 		*(this->write), 
 		boost::asio::buffer((byte*)data, size), 
@@ -125,7 +136,8 @@ bool DENetwork::receive(void* data, long size, std::size_t timeout)
 
 	deadline_timer timer(this->read->io_service());
 	timer.expires_from_now(seconds(timeout));
-	timer.async_wait(boost::bind(&DENetwork::setResult, this, &timeout_result, _1, 0));
+	if (!debugMode)
+		timer.async_wait(boost::bind(&DENetwork::setResult, this, &timeout_result, _1, 0));
 	async_read(
 		*(this->read), 
 		boost::asio::buffer((byte*)data, size), 
@@ -166,8 +178,10 @@ bool DENetwork::createSocket(const char* ip, port no, tcp::socket* socket_)
 	tcp::endpoint endpoint_(boost::asio::ip::address_v4::from_string(ip), 
 							no);
 	socket_->connect(endpoint_, this->error);
+	int lastError = error.value();
+	socket_->set_option(boost::asio::ip::tcp::no_delay(true));
 
-	return (error.value() == boost::system::errc::success);
+	return (lastError == boost::system::errc::success);
 }
 
 

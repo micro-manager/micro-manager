@@ -91,6 +91,7 @@ private:
 	void setResult(optional<error_code>* a, const error_code& b, std::size_t bytes_transferred);
 	bool connected;
 	boost::system::error_code error;
+	bool debugMode;
 
 	static DENetwork* instance;
 	boost::mutex _transactionMutex;

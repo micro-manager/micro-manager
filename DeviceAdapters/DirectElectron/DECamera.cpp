@@ -47,17 +47,20 @@ const char* g_Property_DE_RoiDimensionX = "ROI Dimension X";
 const char* g_Property_DE_RoiDimensionY = "ROI Dimension Y";
 const char* g_Property_DE_SensorSizeX = "Sensor Size X";
 const char* g_Property_DE_SensorSizeY = "Sensor Size Y";
+const char* g_Property_DE_FrameTimeout = "Image Acquisition Timeout (seconds)";
 
 // Optional properties but expected by Micro Manager
 const char* g_Property_DE_PixelSizeX = "Pixel Size X";
 const char* g_Property_DE_PixelSizeY = "Pixel Size Y";
-const char* g_Property_DE_ExposureTime = "Exposure Time";
+const char* g_Property_DE_ExposureTime = "Exposure Time (seconds)";
 const char* g_Property_DE_BinningX = "Binning X";
 const char* g_Property_DE_BinningY = "Binning Y";
 
 #define DEVICE_INCONSISTENT_STATE 5001
-const char* g_DECamera_InconsistentStateMessage = "Camera state synchronized.  Please retry the last operation";
+const char* g_DECamera_InconsistentStateMessage = "Operation failed. Please try again.";
 
+// Minimal communication timeout
+const int DE_minimal_communication_timeout = 30; //60 seconds of minimal timeout to account for network overhead and server response
 
 // Custom error for custom messages
 #define DEVICE_CUSTOM_ERROR 36
@@ -142,6 +145,8 @@ CDECamera::CDECamera() :
 	// call the base class method to set-up default error codes/messages
 	InitializeDefaultErrorMessages();
 	readoutStartTime_ = GetCurrentMMTime();
+	//custom error codes/messages	
+	SetErrorText(DEVICE_INCONSISTENT_STATE, g_DECamera_InconsistentStateMessage);	
 
 	// Set up the correct proxy->  In the future, we may want to 
 	// add some logic to choose what proxy to select.
@@ -156,6 +161,8 @@ CDECamera::CDECamera() :
 	SetPropertyLimits(g_Property_WritePort, 0, 65535);
 
 	exposureEnabled_ = false;
+	current_roi_offset_.x = 0; current_roi_offset_.y=0;
+	current_binning_factor_ = 1;
 }
 
 /**
@@ -222,7 +229,7 @@ int CDECamera::Initialize()
 		}
 
 		this->camera_name_ = string(name);
-
+		LogMessage("Active Camera Set to " + this->camera_name_, false);
 
 		// Initialize properties after connection is established.
 		int nRet = this->InitializeProperties();
@@ -242,22 +249,29 @@ int CDECamera::Initialize()
 		this->proxy_->set_Property(g_Property_DE_RoiOffsetY, 0);
 		this->proxy_->set_Property(g_Property_DE_RoiDimensionX, this->sensorSizeX_);
 		this->proxy_->set_Property(g_Property_DE_RoiDimensionY, this->sensorSizeY_);
-
-		//get the pixel sizes and store in local variables
+		current_roi_offset_.x = 0; current_roi_offset_.y=0; 
+				
+		// Lastly load optional properties group 1
 		pixelSize_.x = 6; //default value for DE-12
-		pixelSize_.y = 6; //default value for DE-12
-		exposureTime_ = 0.0;	//default
-
-		// Lastly load optional properties
+		pixelSize_.y = 6; //default value for DE-12	
 		try {
 			this->proxy_->get_Property(g_Property_DE_PixelSizeX, (float)pixelSize_.x);
-			this->proxy_->get_Property(g_Property_DE_PixelSizeY, (float)pixelSize_.y);
-			this->proxy_->get_Property(g_Property_DE_ExposureTime, exposureTime_);
+			this->proxy_->get_Property(g_Property_DE_PixelSizeY, (float)pixelSize_.y);			
+		}
+		catch (const CommandException& e){
+			// Ignore optional parameters.			
+		}		
+
+		// Lastly load optional properties group 2
+		exposureTime_ = 0.0;	//default
+		try {
+			this->proxy_->get_Property(g_Property_DE_ExposureTime, exposureTime_); 
 			exposureTime_ = exposureTime_*1000; // convert to millisec
 		}
 		catch (const CommandException& e){
-			// Ignore optional parameters.
+			// Ignore optional parameters.			
 		}
+		this->proxy_->set_ImageTimeout((size_t)(exposureTime_/1000*1.5 + DE_minimal_communication_timeout));
 
 		// synchronize all properties
 		// --------------------------
@@ -351,6 +365,18 @@ int CDECamera::SnapImage()
 	MM::MMTime startTime = GetCurrentMMTime();
 	double exp = 0;
 	try {
+		// Set the frame time if it's available.
+		if (HasProperty(g_Property_DE_FrameTimeout))
+		{
+			MM::PropertyType type;
+			GetPropertyType(g_Property_DE_FrameTimeout, type);
+			if (type == MM::Float)
+			{		
+				double frameTime = 0; 
+				this->proxy_->get_Property(g_Property_DE_FrameTimeout, frameTime);
+				this->proxy_->set_ImageTimeout(abs((int)ceil(frameTime))+DE_minimal_communication_timeout);
+			}
+		}
 		this->ResizeImageBuffer();
 		this->proxy_->get_Image( img_.GetPixelsRW(), img_.Width() * img_.Height() * img_.Depth() );
 	}
@@ -503,11 +529,14 @@ long CDECamera::GetImageBufferSize() const
 */
 int CDECamera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 {
-	try {
-			this->proxy_->set_Property(g_Property_DE_RoiOffsetX, (int&)x);
-			this->proxy_->set_Property(g_Property_DE_RoiOffsetY, (int&)y);
-			this->proxy_->set_Property(g_Property_DE_RoiDimensionX, (int&)xSize);
-			this->proxy_->set_Property(g_Property_DE_RoiDimensionY, (int&)ySize);
+	try {			
+			IntPair new_roi_offset_; 
+			new_roi_offset_.x = current_roi_offset_.x + x*current_binning_factor_; //NOTE: x, y is relative to the existing ROI, instead of the original sensor. 
+			new_roi_offset_.y = current_roi_offset_.y + y*current_binning_factor_; // if binning is enabled, the offset is calculated based from binned image						
+			this->proxy_->set_Property(g_Property_DE_RoiOffsetX, (int&)new_roi_offset_.x);
+			this->proxy_->set_Property(g_Property_DE_RoiOffsetY, (int&)new_roi_offset_.y);
+			this->proxy_->set_Property(g_Property_DE_RoiDimensionX, (int&)xSize*current_binning_factor_); //binning needs to be considered as well
+			this->proxy_->set_Property(g_Property_DE_RoiDimensionY, (int&)ySize*current_binning_factor_);
 
 			int xo, yo, xd, yd; 
 			this->proxy_->get_Property(g_Property_DE_RoiOffsetX, xo);
@@ -515,10 +544,8 @@ int CDECamera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 			this->proxy_->get_Property(g_Property_DE_RoiDimensionX, xd);
 			this->proxy_->get_Property(g_Property_DE_RoiDimensionY, yd);
 
-			this->SetProperty(g_Property_DE_RoiOffsetX, CDeviceUtils::ConvertToString(xo)); 
-			this->SetProperty(g_Property_DE_RoiOffsetY, CDeviceUtils::ConvertToString(yo)); 
-			this->SetProperty(g_Property_DE_RoiDimensionX, CDeviceUtils::ConvertToString(xd)); 
-			this->SetProperty(g_Property_DE_RoiDimensionY, CDeviceUtils::ConvertToString(yd)); 
+			current_roi_offset_.x = xo; //Store the current ROI. 
+			current_roi_offset_.y = yo;
 	}
 	catch (const std::exception& e)
 	{
@@ -561,6 +588,7 @@ int CDECamera::ClearROI()
 		this->proxy_->set_Property(g_Property_DE_RoiOffsetY, 0);
 		this->proxy_->set_Property(g_Property_DE_RoiDimensionX, this->sensorSizeX_);
 		this->proxy_->set_Property(g_Property_DE_RoiDimensionY, this->sensorSizeY_);
+		current_roi_offset_.x = 0; current_roi_offset_.y = 0; 
 	}
 	catch (const std::exception& e){
 		return BoostToMMError(e);
@@ -576,8 +604,17 @@ int CDECamera::ClearROI()
 double CDECamera::GetExposure() const
 {
 	if (exposureEnabled_ == false) return 0.0;
-
-	return exposureTime_;
+	double doubleTemp=0.0;
+	bool retval = false;
+	try {
+		retval = this->proxy_->get_Property(g_Property_DE_ExposureTime, doubleTemp);
+	}
+	catch (const std::exception& e){
+	}
+	if(retval){
+		return doubleTemp*1000; //get latest value from the server (cannot update local copy as the method is const)
+	} else
+		return exposureTime_; //return local copy
 }
 
 /**
@@ -587,16 +624,17 @@ double CDECamera::GetExposure() const
 void CDECamera::SetExposure(double exp)
 {	
 	if (exposureEnabled_ == false) return;
+	if(IsCapturing()) return; // do not continue when camera is capturing (live mode)
 	this->exposureTime_ = exp; //store in the local variable
 	//try to set exposure on remote server
 	double doubleTemp = exp/1000; 
-	try {
+	try {		
 		if(this->proxy_->set_Property(g_Property_DE_ExposureTime, doubleTemp)){
 			doubleTemp = 0.0;
 			//verify setting from the server
 			if(this->proxy_->get_Property(g_Property_DE_ExposureTime, doubleTemp)){
 				this->exposureTime_ = doubleTemp*1000; //update local variable
-				this->proxy_->set_ImageTimeout((size_t)(doubleTemp*2));
+				this->proxy_->set_ImageTimeout((size_t)(doubleTemp*1.5 + DE_minimal_communication_timeout));
 			}
 		}
 	}
@@ -612,7 +650,7 @@ void CDECamera::SetExposure(double exp)
 * Required by the MM::Camera API.
 */
 int CDECamera::GetBinning() const
-{
+{	
 	char buf[MM::MaxStrLength];
 	int ret = GetProperty(MM::g_Keyword_Binning, buf);
 	if (ret != DEVICE_OK)
@@ -625,7 +663,7 @@ int CDECamera::GetBinning() const
 * Required by the MM::Camera API.
 */
 int CDECamera::SetBinning(int binFactor)
-{
+{  
   return SetProperty(MM::g_Keyword_Binning, CDeviceUtils::ConvertToString(binFactor));
 }
 
@@ -656,15 +694,16 @@ int CDECamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 	int ret = DEVICE_OK;
 	try {
+		if(IsCapturing())
+			return DEVICE_CAMERA_BUSY_ACQUIRING; // do not continue when camera is capturing (live mode)
+
 		if ( MM::AfterSet == eAct)
 		{
-			if(IsCapturing())
-				return DEVICE_CAMERA_BUSY_ACQUIRING;
-
 			// the user just set the new value for the property, so we have to
 			// apply this value to the 'hardware'.
 			long binFactor;
 			pProp->Get(binFactor);
+			current_binning_factor_ = binFactor;
 
 			SetProperty(g_Property_DE_BinningX, CDeviceUtils::ConvertToString(binFactor));
 			SetProperty(g_Property_DE_BinningY, CDeviceUtils::ConvertToString(binFactor));
@@ -678,7 +717,8 @@ int CDECamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 			this->proxy_->get_Property(g_Property_DE_BinningX, (int&)binFactor);
 			this->proxy_->get_Property(g_Property_DE_BinningY, (int&)binFactor);
-
+			
+			current_binning_factor_ = binFactor;
 			pProp->Set((long)binFactor);
 		}
 	}
@@ -710,6 +750,9 @@ int CDECamera::OnProperty(MM::PropertyBase* pProp, MM::ActionType eAct)
 	int intTemp;
 	long longTemp;
 	try {
+		if(IsCapturing())
+			return DEVICE_CAMERA_BUSY_ACQUIRING; // do not continue when camera is capturing (live mode)
+
 		if (eAct == MM::AfterSet)
 		{
 			switch (pProp->GetType())
@@ -860,17 +903,16 @@ void CDECamera::SetupProperty(string label, PropertyHelper settings)
 	boost::tuple<double, double> range;
 	
 	// Keep list of special case properties.  If so enable and move on.
-	if (label.compare(g_Property_DE_ExposureTime) == 0 )
+	if ( label.compare(g_Property_DE_ExposureTime) == 0 )
 	{
-		exposureEnabled_ = true;
-		return;
+		exposureEnabled_ = true;		
 	}
 
 	// Check to see if property already exists.  if so, ignore.
 	if (HasProperty(label.c_str()))
 		return; 
 	
-	LogMessage(label.c_str(), false);    
+	LogMessage(label.c_str(), true);    
 
 	switch (settings.GetType())
 	{

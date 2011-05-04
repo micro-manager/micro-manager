@@ -27,13 +27,7 @@ namespace DEMessaging {
 		kGetAllowableValues,
 		kGetProperty,
 		kSetProperty,
-		k_GetImage,	
-		kGetBinning,
-		kSetBinning,
-		kGetOffset,
-		kSetOffset,
-		kGetDimension,
-		kSetDimension,
+		k_GetImage
 	};
 }
 #endif

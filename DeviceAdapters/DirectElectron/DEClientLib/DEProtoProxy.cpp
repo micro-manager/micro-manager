@@ -12,7 +12,7 @@ DEProtoProxy::DEProtoProxy()
 {
 	this->server = DENetwork::getInstance();
 	this->_cameraName.clear();
-	this->set_ParamTimeout(5);
+	this->set_ParamTimeout(30);
 	this->set_ImageTimeout(120);
 }
 
@@ -41,61 +41,9 @@ void DEProtoProxy::set_ParamTimeout(size_t seconds)
 void DEProtoProxy::set_ImageTimeout(size_t seconds) 
 { 
 	boost::lock_guard<boost::mutex>(*this->server->getTransactionMutex());
-	this->imageTimeout = seconds;
-}
-
-bool DEProtoProxy::set_Binning(int x, int y)
-{
-	boost::lock_guard<boost::mutex>(*this->server->getTransactionMutex());
-	PacketCreator util;
-	util.add(x, string("x"));
-	util.add(y, string("y"));
-	return this->setValues(util, kSetBinning);
-}
-
-bool DEProtoProxy::get_Binning(int& x, int& y)
-{
-	boost::lock_guard<boost::mutex>(*this->server->getTransactionMutex());
-	PacketParser util;
-	util.add(&x);
-	util.add(&y);
-	return this->getValues(util, kGetBinning);
-}
-
-bool DEProtoProxy::set_Offset(int x, int y)
-{
-	boost::lock_guard<boost::mutex>(*this->server->getTransactionMutex());
-	PacketCreator util;
-	util.add(x, string("x"));
-	util.add(y, string("y"));
-	return this->setValues(util, kSetOffset);
-}
-
-bool DEProtoProxy::get_Offset(int& x, int& y)
-{
-	boost::lock_guard<boost::mutex>(*this->server->getTransactionMutex());
-	PacketParser util;
-	util.add(&x);
-	util.add(&y);
-	return this->getValues(util, kSetOffset);
-}
-
-bool DEProtoProxy::set_Dimension(int x, int y)
-{
-	boost::lock_guard<boost::mutex>(*this->server->getTransactionMutex());
-	PacketCreator util;
-	util.add(x, string("x"));
-	util.add(y, string("y"));
-	return this->setValues(util, kSetDimension);
-}
-
-bool DEProtoProxy::get_Dimension(int &x, int &y)
-{
-	boost::lock_guard<boost::mutex>(*this->server->getTransactionMutex());
-	PacketParser util;
-	util.add(&x);
-	util.add(&y);
-	return this->getValues(util, kGetDimension);
+	// Always wait a minimum paramTimeout (or 5 secs) when setting the 
+	// image time out.
+	this->imageTimeout = seconds + this->paramTimeout;
 }
 
 bool DEProtoProxy::get_CameraNames(vector<string>& names)

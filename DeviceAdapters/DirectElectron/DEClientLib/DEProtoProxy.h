@@ -29,15 +29,9 @@ class DEProtoProxy
 
 		// Set Functions
 		bool set_Property(string prop, AnyP val);
-		bool set_CameraName(string name);
-		bool set_Binning(int x, int y);
-		bool set_Offset(int x, int y);
-		bool set_Dimension(int x, int y);
+		bool set_CameraName(string name);		
 
 		// Get Functions
-		bool get_Binning(int& x, int& y);
-		bool get_Offset(int& x, int& y);
-		bool get_Dimension(int &x, int &y);		
 		bool get_Image(void* image, unsigned int length);
 		bool get_CameraNames(vector<string>& names);
 		bool get_Properties(vector<string>& props);

@@ -9,6 +9,8 @@
 #ifndef _DECAMERA_H_
 #define _DECAMERA_H_
 
+#define WIN32_LEAN_AND_MEAN		
+
 #include "../../MMDevice/DeviceBase.h"
 #include "../../MMDevice/ImgBuffer.h"
 #include "../../MMDevice/DeviceThreads.h"
@@ -94,9 +96,11 @@ private:
    double readoutUs_;
    MM::MMTime readoutStartTime_;
    long scanMode_;
-   int bitDepth_;
+   int bitDepth_;   
    string camera_name_;
    bool camera_supports_binning_; 
+   IntPair current_roi_offset_; 
+   int current_binning_factor_; 
    
    int ResizeImageBuffer();
 
