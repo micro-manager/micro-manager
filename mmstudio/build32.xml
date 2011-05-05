@@ -137,6 +137,7 @@
 		<copy file="${swing_layout}" todir="${MMPluginDir-inst}" />
 		<copy file="${commons_math}" todir="${MMPluginDir-inst}" />
 		<copy file="${clojure}" todir="${MMPluginDir-inst}" />
+		<copy file="${clojurecontrib}" todir="${MMPluginDir-inst}" />
 		<copy file="${BinRoot}/MMCoreJ_wrap.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/MMConfig_demo.cfg" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_AAAOTF.dll" todir="${InstallRoot}" />
