@@ -24,6 +24,7 @@
 	<property name="swing_layout" value="../../3rdpartypublic/classext/swing-layout-1.0.4.jar"/>
 	<property name="commons_math" value="../../3rdpartypublic/classext/commons-math-2.0.jar"/>
 	<property name="clojure" value="../../3rdpartypublic/classext/clojure.jar"/>
+	<property name="clojurecontrib" value="../../3rdpartypublic/classext/clojure-contrib.jar"/>
 	<property name="MMCoreJ" value="../bin_x64/MMCoreJ.jar"/>
 	<property name="MMPluginDir-inst" value="${InstallRoot}/plugins/Micro-Manager"/>
 	<property name="BinRoot" value="../bin_x64"/>
@@ -81,13 +82,16 @@
 		<jar jarfile="MMJ_.jar" basedir="build" manifest="./src/MANIFEST.MF" />
 
 		<mkdir dir="${MMPluginDir}" />
-		<copy file="MMJ_.jar" todir="${MMPluginDir}" />
+		<copy file="MMJ_.jar" todir="${MMPluginDir}" overwrite="true" />
+		
 		<copy file="${beanshell}" todir="${MMPluginDir}" />
-		<copy file="${swingx}" todir="${MMPluginDir}" />
-		<copy file="${MMCoreJ}" todir="${MMPluginDir}" />
-		<copy file="${swing_layout}" todir="${MMPluginDir}" />
-		<copy file="${commons_math}" todir="${MMPluginDir}" />
-		<copy file="${clojure}" todir="${MMPluginDir}" />
+		<copy file="${swingx}" todir="${MMPluginDir}" overwrite="true" />
+		<copy file="${MMCoreJ}" todir="${MMPluginDir}" overwrite="true"  />
+		<copy file="${swing_layout}" todir="${MMPluginDir}" overwrite="true" />
+		<copy file="${commons_math}" todir="${MMPluginDir}" overwrite="true" />
+		<copy file="${clojure}" todir="${MMPluginDir}" overwrite="true" />
+		<copy file="${clojurecontrib}" todir="${MMPluginDir}" overwrite="true" />
+
 	</target>
 
 	<target name="buildMMReader" description="Build MMReader_.jar">
