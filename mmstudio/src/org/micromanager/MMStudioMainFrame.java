@@ -364,7 +364,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
             public void actionPerformed(ActionEvent e) {
                 try {
-                    ij.plugin.BrowserLauncher.openURL("http://micro-manager.org/documentation.php?object=Userguide");
+                    ij.plugin.BrowserLauncher.openURL("http://valelab.ucsf.edu/~MM/MMwiki/index.php/Micro-Manager_User%27s_Guide");
                 } catch (IOException e1) {
                     ReportingUtils.showError(e1);
                 }
@@ -377,7 +377,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
             public void actionPerformed(ActionEvent e) {
                 try {
-                    ij.plugin.BrowserLauncher.openURL("http://micro-manager.org/documentation.php?object=Configguide");
+                    ij.plugin.BrowserLauncher.openURL("http://valelab.ucsf.edu/~MM/MMwiki/index.php/Micro-Manager_Configuration_Guide");
                 } catch (IOException e1) {
                     ReportingUtils.showError(e1);
                 }
@@ -1801,7 +1801,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                   Thread.currentThread().setContextClassLoader(this.getClass().getClassLoader());
                   loadPlugins();
                }
-            }.start();
+            }.run();
          }
 
         
