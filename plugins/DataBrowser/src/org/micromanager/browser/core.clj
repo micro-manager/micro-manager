@@ -139,7 +139,8 @@
   (proxy [AbstractTableModel] []
     (getRowCount [] (count @current-data))
     (getColumnCount [] (count (first @current-data)))
-    (getValueAt [row column] (nth (nth @current-data row) column))
+    (getValueAt [row column] (when (pos? (count @current-data))
+                               (nth (nth @current-data row) column)))
     (getColumnName [column] (nth headings column))))
 
 (defn create-locations-table-model []
@@ -185,7 +186,9 @@
     (let [location-column (.indexOf tags "Location")]
       (alter current-data
              (fn [coll] (vec (remove #(= (nth % location-column) loc) coll))))))
-  (awt-event (-> @browser :table .getModel .fireTableDataChanged)))
+  (awt-event (-> @browser :table .getModel .fireTableDataChanged)
+             (-> @settings-window :locations :table .getModel .fireTableDataChanged)
+))
 
 (defn remove-selected-locations [] 
   (let [location-table (-> @settings-window :locations :table)
