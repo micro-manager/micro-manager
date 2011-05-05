@@ -1521,15 +1521,15 @@ void CDemoCamera::GenerateSyntheticImage(ImgBuffer& img, double exp)
       }
 	   for(int snoise = 0; snoise < pixelsToSaturate; ++snoise)
 		{
-			j = (unsigned)(0.5 + (double)img.Height()*(double)rand()/(double)RAND_MAX);
-			k = (unsigned)(0.5 + (double)img.Width()*(double)rand()/(double)RAND_MAX);
+			j = (unsigned)( (double)(img.Height()-1)*(double)rand()/(double)RAND_MAX);
+			k = (unsigned)( (double)(img.Width()-1)*(double)rand()/(double)RAND_MAX);
 			*(pBuf + img.Width()*j + k) = (unsigned char)maxValue;
 		}
 		int pnoise;
 		for(pnoise = 0; pnoise < pixelsToDrop; ++pnoise)
 		{
-			j = (unsigned)(0.5 + (double)img.Height()*(double)rand()/(double)RAND_MAX);
-			k = (unsigned)(0.5 + (double)img.Width()*(double)rand()/(double)RAND_MAX);
+			j = (unsigned)( (double)(img.Height()-1)*(double)rand()/(double)RAND_MAX);
+			k = (unsigned)( (double)(img.Width()-1)*(double)rand()/(double)RAND_MAX);
 			*(pBuf + img.Width()*j + k) = 0;
 		}
 
@@ -2778,7 +2778,6 @@ int DemoTranspose::Process(unsigned char *pBuffer, unsigned int width, unsigned 
       }
    }
    busy_ = false;
-   LogMessage("Leaving DemoTranspose::Process", true);
 
    return ret;
 }
