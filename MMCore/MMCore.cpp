@@ -977,6 +977,39 @@ MM::DeviceType CMMCore::getDeviceType(const char* label) throw (CMMError)
    return pDevice->GetType();
 }
 
+
+/**
+ * Returns device library (aka module, device adapter) name.
+ */
+std::string CMMCore::getDeviceLibrary(const char* label) throw (CMMError)
+{
+   if (strcmp(label, MM::g_Keyword_CoreDevice) == 0)
+      return "";
+   
+   MM::Device* pDevice = getDevice(label);
+
+   char moduleName[MM::MaxStrLength];
+   pDevice->GetModuleName(moduleName);
+   return string(moduleName);
+}
+
+/**
+ * Returns device name (as specified in library/module/device adapter).
+ */
+std::string CMMCore::getDeviceNameInLibrary(const char* label) throw (CMMError)
+{
+   if (strcmp(label, MM::g_Keyword_CoreDevice) == 0)
+      return "Core";
+   
+   MM::Device* pDevice = getDevice(label);
+
+   char name[MM::MaxStrLength];
+   pDevice->GetName(name);
+   return string(name);
+}
+
+
+
 /**
  * Reports action delay in milliseconds for the specific device.
  * The delay is used in the synchronization process to ensure that
@@ -1089,7 +1122,7 @@ void CMMCore::waitForDevice(MM::Device* pDev) throw (CMMError)
          throw CMMError(label.c_str(), getCoreErrorText(MMERR_DevicePollingTimeout).c_str(), MMERR_DevicePollingTimeout);
       }
 
-     CORE_DEBUG("Polling...\n");
+     //CORE_DEBUG("Polling...\n");
      sleep(pollingIntervalMs_);
    }
    CORE_DEBUG("Finished waiting.\n");
@@ -5018,7 +5051,7 @@ void CMMCore::applyConfiguration(const Configuration& config) throw (CMMError)
    if (error) 
    {
       string errorString;
-      while (failedProps.size() > applyProperties(failedProps, errorString) )
+      while (failedProps.size() > (unsigned) applyProperties(failedProps, errorString) )
       {
          if (failedProps.size() == 0)
             return;
