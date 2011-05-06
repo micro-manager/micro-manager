@@ -378,12 +378,6 @@ public class EditPropertiesPage extends PagePanel {
             return true;
         }
         requestCancel_ = false;
-
-
-
-
-
-
         rebuildTable();
 
 
