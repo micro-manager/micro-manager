@@ -122,6 +122,7 @@ class ZeissScope : public CGenericBase<ZeissScope>
    private:
       std::vector<std::string> peripherals_;
       std::map<int,std::string>* pTurretIDMap_;
+      // this would better be a static member!!!!
       std::map<int,std::string>& turretIDMap();
       void GetPeripheralInventory();
       bool initialized_;

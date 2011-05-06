@@ -107,6 +107,24 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_ZeissExtFilterWheel,"External FilterWheel"); 
    AddAvailableDeviceName(g_ZeissFilterWheel1,"FilterWheel 1"); 
    AddAvailableDeviceName(g_ZeissFilterWheel2,"FilterWheel 2"); 
+
+
+   if( DiscoverabilityTest())
+   {
+      // only the 'turrets' implment isPresent??
+      SetDeviceIsDiscoverable(g_ZeissReflector,true);
+      SetDeviceIsDiscoverable(g_ZeissObjectives,true);
+      SetDeviceIsDiscoverable(g_ZeissExtFilterWheel,true);
+      SetDeviceIsDiscoverable(g_ZeissOptovar,true);
+      SetDeviceIsDiscoverable(g_ZeissFilterWheel1,true);;
+      SetDeviceIsDiscoverable(g_ZeissFilterWheel2,true);
+      SetDeviceIsDiscoverable(g_ZeissCondenser,true);
+      //SetDeviceIsDiscoverable(g_CondenserFrontlens,true);
+      SetDeviceIsDiscoverable(g_ZeissTubelens,true);
+      SetDeviceIsDiscoverable(g_ZeissBasePort,true);
+      SetDeviceIsDiscoverable(g_ZeissSidePort,true);
+      SetDeviceIsDiscoverable(g_ZeissLampMirror,true);
+   }
 }
 
 using namespace std;
@@ -613,7 +631,7 @@ std::map<int,std::string>& ZeissScope::turretIDMap()
       (*pTurretIDMap_)[g_ReflectorTurret] = g_ZeissReflector;
       (*pTurretIDMap_)[g_ObjectiveTurret] = g_ZeissObjectives;
       (*pTurretIDMap_)[g_ExtFilterWheel] = g_ZeissExtFilterWheel;
-      (*pTurretIDMap_)[g_OptovarTurret] = g_ZeissObjectives;
+      (*pTurretIDMap_)[g_OptovarTurret] = g_ZeissOptovar;
       (*pTurretIDMap_)[g_FilterWheel1] = g_ZeissFilterWheel1;
       (*pTurretIDMap_)[g_FilterWheel2] = g_ZeissFilterWheel2;
       (*pTurretIDMap_)[g_CondenserTurret] = g_ZeissCondenser;
@@ -622,10 +640,8 @@ std::map<int,std::string>& ZeissScope::turretIDMap()
       (*pTurretIDMap_)[g_BasePortSlider] = g_ZeissBasePort;
       (*pTurretIDMap_)[g_SidePortTurret] = g_ZeissSidePort;
       (*pTurretIDMap_)[g_LampMirror] = g_ZeissLampMirror;
-      (*pTurretIDMap_)[g_ObjectiveTurret] = g_ZeissObjectives;
 
 /*
-
 const char* g_ZeissDeviceName = "ZeissScope";
 const char* g_ZeissShutter = "ZeissShutter";
 const char* g_ZeissShutterMF = "ZeissShutterMFFirmware";
@@ -644,14 +660,11 @@ const char* g_ZeissExternal = "External-Internal Shutter";
 const char* g_ZeissExtFilterWheel = "ZeissExternalFilterWheel";
 const char* g_ZeissFilterWheel1 = "ZeissFilterWheel1";
 const char* g_ZeissFilterWheel2 = "ZeissFilterWheel2";
-
 */
 
    }
    return *pTurretIDMap_;
-
 }
-
 
 
 void ZeissScope::GetPeripheralInventory()
@@ -660,25 +673,27 @@ void ZeissScope::GetPeripheralInventory()
       Initialize();
 
    peripherals_.clear();
-
-   int ret;
-   bool exists;
-
-   std::map<int,std::string>& turrr = turretIDMap();
-   std::map<int, std::string>::iterator iii;
-
-
-   for( iii = turrr.begin(); turrr.end() != iii; ++iii)
+   if(::DiscoverabilityTest())
    {
-   
-      ret = g_turret.GetPresence(*this, *GetCoreCallback(), iii->first, exists);
-      if (DEVICE_OK == ret)
+
+      int ret;
+      bool exists;
+
+      std::map<int,std::string>& turrr = turretIDMap();
+      std::map<int, std::string>::iterator iii;
+
+
+      for( iii = turrr.begin(); turrr.end() != iii; ++iii)
       {
-         if(exists)
-            peripherals_.push_back(iii->second);
+      
+         ret = g_turret.GetPresence(*this, *GetCoreCallback(), iii->first, exists);
+         if (DEVICE_OK == ret)
+         {
+            if(exists)
+               peripherals_.push_back(iii->second);
+         }
       }
    }
-
 }
 
 
