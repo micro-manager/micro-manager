@@ -45,6 +45,50 @@
 #define ERR_UNKNOWN_POSITION     103
 #define ERR_IN_SEQUENCE          104
 #define ERR_SEQUENCE_INACTIVE    105
+#define SIMULATED_ERROR          200
+
+
+
+////////////////////////
+// DemoHub
+//////////////////////
+
+class DemoHub : public CGenericBase<DemoHub>
+{
+public:
+   DemoHub():initialized_(false), busy_(false), errorRate_(0.0) {} ;
+   ~DemoHub() {};
+
+   // Device API
+   // ---------
+   int Initialize();
+   int Shutdown() {return DEVICE_OK;};
+   void GetName(char* pName) const; 
+   bool Busy() { return busy_;} ;
+   bool GenerateRandomError();
+
+
+   // peripheral device discovery
+   int GetNumberOfDiscoverableDevices();
+   void GetDiscoverableDevice(int peripheralNum, char* peripheralName, unsigned int maxNameLen);
+   // action interface
+   int OnErrorRate(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+
+private:
+   bool busy_;
+   bool initialized_;
+   std::vector<std::string> peripherals_;
+   void GetPeripheralInventory();
+   double errorRate_;
+
+};
+
+////////////////////////
+// Static pointer to hub
+////////////////////////
+
+DemoHub * g_hub = NULL;
 
 
 //////////////////////////////////////////////////////////////////////////////
@@ -81,7 +125,12 @@ public:
    int SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize); 
    int GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize); 
    int ClearROI();
-   int PrepareSequenceAcqusition() {return DEVICE_OK;}
+   int PrepareSequenceAcqusition()
+   {
+      if (g_hub && g_hub->GenerateRandomError())
+         return SIMULATED_ERROR;
+         return DEVICE_OK;
+   }
    int StartSequenceAcquisition(double interval);
    int StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow);
    int StopSequenceAcquisition();
@@ -140,7 +189,6 @@ private:
    unsigned roiY_;
    MM::MMTime sequenceStartTime_;
    long imageCounter_;
-   bool errorSimulation_;
 	long binSize_;
 	long cameraCCDXSize_;
 	long cameraCCDYSize_;
@@ -354,13 +402,30 @@ public:
    double GetStepSize() {return stepSize_um_;}
    int SetPositionSteps(long steps) 
    {
+      if (g_hub && g_hub->GenerateRandomError())
+         return SIMULATED_ERROR;
+
       pos_um_ = steps * stepSize_um_; 
       return  OnStagePositionChanged(pos_um_);
    }
-   int GetPositionSteps(long& steps) {steps = (long)(pos_um_ / stepSize_um_); return DEVICE_OK;}
-   int SetOrigin() {return DEVICE_OK;}
+   int GetPositionSteps(long& steps)
+   {
+      if (g_hub && g_hub->GenerateRandomError())
+         return SIMULATED_ERROR;
+
+      steps = (long)(pos_um_ / stepSize_um_);
+      return DEVICE_OK;
+   }
+   int SetOrigin() {
+      if (g_hub && g_hub->GenerateRandomError())
+         return SIMULATED_ERROR;
+      return DEVICE_OK;
+   }
    int GetLimits(double& lower, double& upper)
    {
+      if (g_hub && g_hub->GenerateRandomError())
+         return SIMULATED_ERROR;
+
       lower = lowerLimit_;
       upper = upperLimit_;
       return DEVICE_OK;
@@ -372,10 +437,29 @@ public:
    int OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
 
    // Sequence functions
-   int IsStageSequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
-   int GetStageSequenceMaxLength(long& nrEvents) const  {nrEvents = 0; return DEVICE_OK;}
-   int StartStageSequence() const {return DEVICE_OK;}
-   int StopStageSequence() const {return DEVICE_OK;}
+   int IsStageSequenceable(bool& isSequenceable) const {
+      if (g_hub && g_hub->GenerateRandomError())
+         return SIMULATED_ERROR;
+      isSequenceable = false; return DEVICE_OK;
+   }
+   int GetStageSequenceMaxLength(long& nrEvents) const 
+   {
+      if (g_hub && g_hub->GenerateRandomError())
+         return SIMULATED_ERROR;
+      nrEvents = 0; return DEVICE_OK;
+   }
+   int StartStageSequence() const
+   {
+      if (g_hub && g_hub->GenerateRandomError())
+         return SIMULATED_ERROR;
+         return DEVICE_OK;
+      }
+   int StopStageSequence() const
+   {  
+      if (g_hub && g_hub->GenerateRandomError())
+         return SIMULATED_ERROR;
+      return DEVICE_OK;
+   }
    int LoadStageSequence(std::vector<double> positions) const {return DEVICE_OK;}
 
 private:
@@ -416,6 +500,9 @@ public:
    virtual double GetStepSize() {return stepSize_um_;}
    virtual int SetPositionSteps(long x, long y)
    {
+      if (g_hub && g_hub->GenerateRandomError())
+         return SIMULATED_ERROR;
+
       posX_um_ = x * stepSize_um_;
       posY_um_ = y * stepSize_um_;
       int ret = OnXYStagePositionChanged(posX_um_, posY_um_);
@@ -426,19 +513,38 @@ public:
    }
    virtual int GetPositionSteps(long& x, long& y)
    {
+      if (g_hub && g_hub->GenerateRandomError())
+         return SIMULATED_ERROR;
+
+      posX_um_ = x * stepSize_um_;
       x = (long)(posX_um_ / stepSize_um_);
       y = (long)(posY_um_ / stepSize_um_);
       return DEVICE_OK;
    }
    int SetRelativePositionSteps(long x, long y)                                                           
    {                                                                                                      
+      if (g_hub && g_hub->GenerateRandomError())
+         return SIMULATED_ERROR;
+
       long xSteps, ySteps;                                                                                
       GetPositionSteps(xSteps, ySteps);                                                   
 
       return this->SetPositionSteps(xSteps+x, ySteps+y);                                                  
    } 
-   virtual int Home() {return DEVICE_OK;}
-   virtual int Stop() {return DEVICE_OK;}
+   virtual int Home()
+   {
+      if (g_hub && g_hub->GenerateRandomError())
+         return SIMULATED_ERROR;
+
+      return DEVICE_OK;
+   }
+   virtual int Stop()
+   {
+      if (g_hub && g_hub->GenerateRandomError())
+         return SIMULATED_ERROR;
+
+      return DEVICE_OK;
+   }
 
    /* This sets the 0,0 position of the adapter to the current position.  
     * If possible, the stage controller itself should also be set to 0,0
@@ -446,15 +552,27 @@ public:
     * sets the coordinate system used by the adapter
     * to values different from the system used by the stage controller
     */
-   virtual int SetOrigin() {return DEVICE_OK;}
+   virtual int SetOrigin()
+   {
+      if (g_hub && g_hub->GenerateRandomError())
+         return SIMULATED_ERROR;
+
+      return DEVICE_OK;
+   }
    virtual int GetLimits(double& lower, double& upper)
    {
+      if (g_hub && g_hub->GenerateRandomError())
+         return SIMULATED_ERROR;
+
       lower = lowerLimit_;
       upper = upperLimit_;
       return DEVICE_OK;
    }
    virtual int GetLimitsUm(double& xMin, double& xMax, double& yMin, double& yMax)
    {
+      if (g_hub && g_hub->GenerateRandomError())
+         return SIMULATED_ERROR;
+
       xMin = lowerLimit_; xMax = upperLimit_;
       yMin = lowerLimit_; yMax = upperLimit_;
       return DEVICE_OK;
@@ -462,10 +580,25 @@ public:
 
    virtual int GetStepLimits(long& /*xMin*/, long& /*xMax*/, long& /*yMin*/, long& /*yMax*/)
    {
+      if (g_hub && g_hub->GenerateRandomError())
+         return SIMULATED_ERROR;
+
       return DEVICE_UNSUPPORTED_COMMAND;
    }
-   double GetStepSizeXUm() {return stepSize_um_;}
-   double GetStepSizeYUm() {return stepSize_um_;}
+   double GetStepSizeXUm()
+   {
+      if (g_hub && g_hub->GenerateRandomError())
+         return SIMULATED_ERROR;
+
+      return stepSize_um_;
+   }
+   double GetStepSizeYUm()
+   {
+      if (g_hub && g_hub->GenerateRandomError())
+         return SIMULATED_ERROR;
+
+      return stepSize_um_;
+   }
    int Move(double /*vx*/, double /*vy*/) {return DEVICE_OK;}
 
    // action interface
@@ -501,9 +634,30 @@ public:
    bool Busy();
 
    // Shutter API
-   int SetOpen (bool open = true) {state_ = open; changedTime_ = GetCurrentMMTime(); return DEVICE_OK;}
-   int GetOpen(bool& open) {open = state_; return DEVICE_OK;}
-   int Fire(double /*deltaT*/) {return DEVICE_UNSUPPORTED_COMMAND;}
+   int SetOpen (bool open = true)
+   {
+      if (g_hub && g_hub->GenerateRandomError())
+         return SIMULATED_ERROR;
+
+      state_ = open;
+      changedTime_ = GetCurrentMMTime();
+      return DEVICE_OK;
+   }
+   int GetOpen(bool& open)
+   {
+      if (g_hub && g_hub->GenerateRandomError())
+         return SIMULATED_ERROR;
+
+      open = state_;
+      return DEVICE_OK;
+   }
+   int Fire(double /*deltaT*/)
+   {
+      if (g_hub && g_hub->GenerateRandomError())
+         return SIMULATED_ERROR;
+
+      return DEVICE_UNSUPPORTED_COMMAND;
+   }
 
    // action interface
    int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -530,16 +684,58 @@ public:
    int GetGateOpen(bool& open);
    int SetSignal(double volts);
    int GetSignal(double& volts);
-   int GetLimits(double& minVolts, double& maxVolts) {minVolts=0.0; maxVolts= 10.0; return DEVICE_OK;}
+   int GetLimits(double& minVolts, double& maxVolts)
+   {
+      if (g_hub && g_hub->GenerateRandomError())
+         return SIMULATED_ERROR;
+
+      minVolts=0.0; maxVolts= 10.0; return DEVICE_OK;
+   }
    bool Busy() {return false;}
-   int Initialize() {return DEVICE_OK;}
+   int Initialize()
+   {
+      if (g_hub && g_hub->GenerateRandomError())
+         return SIMULATED_ERROR;
+
+      return DEVICE_OK;
+   }
 
    // Sequence functions
-   int IsDASequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
-   int GetDASequenceMaxLength(long& nrEvents) const  {nrEvents = 0; return DEVICE_OK;}
-   int StartDASequence() const {return DEVICE_OK;}
-   int StopDASequence() const {return DEVICE_OK;}
-   int LoadDASequence(std::vector<double> voltages) const {return DEVICE_OK;}
+   int IsDASequenceable(bool& isSequenceable) const
+   {
+      if (g_hub && g_hub->GenerateRandomError())
+         return SIMULATED_ERROR;
+
+      isSequenceable = false; return DEVICE_OK;
+   }
+   int GetDASequenceMaxLength(long& nrEvents) const 
+   {
+      if (g_hub && g_hub->GenerateRandomError())
+         return SIMULATED_ERROR;
+
+      nrEvents = 0; return DEVICE_OK;
+   }
+   int StartDASequence() const
+   {
+      if (g_hub && g_hub->GenerateRandomError())
+         return SIMULATED_ERROR;
+
+      return DEVICE_OK;
+   }
+   int StopDASequence() const
+   {
+      if (g_hub && g_hub->GenerateRandomError())
+         return SIMULATED_ERROR;
+
+      return DEVICE_OK;
+   }
+   int LoadDASequence(std::vector<double> voltages) const
+   {
+      if (g_hub && g_hub->GenerateRandomError())
+         return SIMULATED_ERROR;
+
+      return DEVICE_OK;
+   }
 
 
 private:
@@ -559,7 +755,13 @@ public:
    DemoMagnifier () : position (0) {}
    ~DemoMagnifier () {}
 
-   int Shutdown() {return DEVICE_OK;}
+   int Shutdown()
+   {
+      if (g_hub && g_hub->GenerateRandomError())
+         return SIMULATED_ERROR;
+
+      return DEVICE_OK;
+   }
    void GetName(char* name) const {strcpy(name,"Demo Optovar");}
 
    bool Busy() {return false;}
@@ -683,49 +885,77 @@ public:
    int Shutdown(){initialized_ = false; return DEVICE_OK;}
 
    // AutoFocus API
-   virtual int SetContinuousFocusing(bool state) {running_ = state; return DEVICE_OK;}
-   virtual int GetContinuousFocusing(bool& state) {state = running_; return DEVICE_OK;}
-   virtual bool IsContinuousFocusLocked() {return running_;}
-   virtual int FullFocus() {return DEVICE_OK;}
-   virtual int IncrementalFocus() {return DEVICE_OK;}
-   virtual int GetLastFocusScore(double& score) {score = 0.0; return DEVICE_OK;}
-   virtual int GetCurrentFocusScore(double& score) {score = 1.0; return DEVICE_OK;}
-   virtual int GetOffset(double& /*offset*/) {return DEVICE_OK;}
-   virtual int SetOffset(double /*offset*/) {return DEVICE_OK;}
+   virtual int SetContinuousFocusing(bool state)
+   {
+      if (g_hub && g_hub->GenerateRandomError())
+         return SIMULATED_ERROR;
+
+      running_ = state; return DEVICE_OK;
+   }
+   virtual int GetContinuousFocusing(bool& state)
+   {
+      if (g_hub && g_hub->GenerateRandomError())
+         return SIMULATED_ERROR;
+
+      state = running_; return DEVICE_OK;
+   }
+   virtual bool IsContinuousFocusLocked()
+   {
+      if (g_hub && g_hub->GenerateRandomError())
+         return false;
+
+      return running_;
+   }
+   virtual int FullFocus()
+   {
+      if (g_hub && g_hub->GenerateRandomError())
+         return SIMULATED_ERROR;
+
+      return DEVICE_OK;
+   }
+   virtual int IncrementalFocus()
+   {
+      if (g_hub && g_hub->GenerateRandomError())
+         return SIMULATED_ERROR;
+
+      return DEVICE_OK;
+   }
+   virtual int GetLastFocusScore(double& score)
+   {
+      if (g_hub && g_hub->GenerateRandomError())
+         return SIMULATED_ERROR;
+
+      score = 0.0;
+      return DEVICE_OK;
+   }
+   virtual int GetCurrentFocusScore(double& score)
+   {
+      if (g_hub && g_hub->GenerateRandomError())
+         return SIMULATED_ERROR;
+
+      score = 1.0;
+      return DEVICE_OK;
+   }
+   virtual int GetOffset(double& /*offset*/)
+   {
+      if (g_hub && g_hub->GenerateRandomError())
+         return SIMULATED_ERROR;
+
+      return DEVICE_OK;
+   }
+   virtual int SetOffset(double /*offset*/)
+   {
+      if (g_hub && g_hub->GenerateRandomError())
+         return SIMULATED_ERROR;
+
+      return DEVICE_OK;
+   }
 
 private:
    bool running_;
    bool busy_;
    bool initialized_;
 };
-
-class DemoHub : public CGenericBase<DemoHub>
-{
-public:
-   DemoHub():initialized_(false), busy_(false) {} ;
-   ~DemoHub() {};
-
-   // Device API
-   // ---------
-   int Initialize() { initialized_ = true; return DEVICE_OK;} ;
-   int Shutdown() {return DEVICE_OK;};
-   void GetName(char* pName) const; 
-   bool Busy() { return busy_;} ;
-
-
-   // peripheral device discovery
-   int GetNumberOfDiscoverableDevices();
-   void GetDiscoverableDevice(int peripheralNum, char* peripheralName, unsigned int maxNameLen);
-
-
-private:
-   bool busy_;
-   bool initialized_;
-   std::vector<std::string> peripherals_;
-   void GetPeripheralInventory();
-
-};
-
 
 
 

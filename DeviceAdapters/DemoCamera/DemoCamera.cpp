@@ -202,8 +202,8 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
    }
    else if (strcmp(deviceName, g_HubDeviceName) == 0)
    {
-
-      return new DemoHub();
+	  g_hub = new DemoHub();
+	  return g_hub;
    }
 
    // ...supplied name not recognized
@@ -212,6 +212,8 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
 
 MODULE_API void DeleteDevice(MM::Device* pDevice)
 {
+   if (g_hub == pDevice)
+	   g_hub = NULL;
    delete pDevice;
 }
 
@@ -239,7 +241,6 @@ CDemoCamera::CDemoCamera() :
    roiX_(0),
    roiY_(0),
    sequenceStartTime_(0),
-   errorSimulation_(false),
 	binSize_(1),
 	cameraCCDXSize_(512),
 	cameraCCDYSize_(512),
@@ -293,6 +294,9 @@ void CDemoCamera::GetName(char* name) const
 */
 int CDemoCamera::Initialize()
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    if (initialized_)
       return DEVICE_OK;
 
@@ -410,15 +414,7 @@ int CDemoCamera::Initialize()
    nRet = CreateProperty(MM::g_Keyword_ReadoutTime, "0", MM::Float, false, pAct);
    assert(nRet == DEVICE_OK);
 
-   // error simulation
-
-   pAct = new CPropertyAction (this, &CDemoCamera::OnErrorSimulation);
-   nRet = CreateProperty("ErrorSimulation", "0", MM::Integer, false, pAct);
-   AddAllowedValue("ErrorSimulation", "0");
-   AddAllowedValue("ErrorSimulation", "1");
-   assert(nRet == DEVICE_OK);
-
-	// CCD size of the camera we are modeling
+   // CCD size of the camera we are modeling
    pAct = new CPropertyAction (this, &CDemoCamera::OnCameraCCDXSize);
    CreateProperty("OnCameraCCDXSize", "512", MM::Integer, false, pAct);
    pAct = new CPropertyAction (this, &CDemoCamera::OnCameraCCDYSize);
@@ -485,6 +481,9 @@ int CDemoCamera::Initialize()
 */
 int CDemoCamera::Shutdown()
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    initialized_ = false;
    return DEVICE_OK;
 }
@@ -497,6 +496,9 @@ int CDemoCamera::Shutdown()
 */
 int CDemoCamera::SnapImage()
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
 	static int callCounter = 0;
 	++callCounter;
 
@@ -524,15 +526,6 @@ int CDemoCamera::SnapImage()
    }
    readoutStartTime_ = GetCurrentMMTime();
 
-   if( errorSimulation_)
-   {
-	   if( 10 < callCounter)
-	      if( 0 == rand()%223 )
-         {
-            std::string mes("Simulated 'not available' error in the DemoCamera!");
-            GetCoreCallback()->PostError( MMERR_CameraNotAvailable, mes.c_str() );
-         }
-   }
    return DEVICE_OK;
 }
 
@@ -549,6 +542,9 @@ int CDemoCamera::SnapImage()
 */
 const unsigned char* CDemoCamera::GetImageBuffer()
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return 0;
+
    MMThreadGuard g(imgPixelsLock_);
    MM::MMTime readoutTime(readoutUs_);
    while (readoutTime > (GetCurrentMMTime() - readoutStartTime_)) {}
@@ -575,6 +571,9 @@ const unsigned char* CDemoCamera::GetImageBuffer()
 */
 unsigned CDemoCamera::GetImageWidth() const
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return 0;
+
    return img_.Width();
 }
 
@@ -584,6 +583,9 @@ unsigned CDemoCamera::GetImageWidth() const
 */
 unsigned CDemoCamera::GetImageHeight() const
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return 0;
+
    return img_.Height();
 }
 
@@ -593,6 +595,8 @@ unsigned CDemoCamera::GetImageHeight() const
 */
 unsigned CDemoCamera::GetImageBytesPerPixel() const
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return 0;
    return img_.Depth();
 } 
 
@@ -604,6 +608,8 @@ unsigned CDemoCamera::GetImageBytesPerPixel() const
 */
 unsigned CDemoCamera::GetBitDepth() const
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return 0;
    return bitDepth_;
 }
 
@@ -613,6 +619,8 @@ unsigned CDemoCamera::GetBitDepth() const
 */
 long CDemoCamera::GetImageBufferSize() const
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return 0;
    return img_.Width() * img_.Height() * GetImageBytesPerPixel();
 }
 
@@ -632,6 +640,9 @@ long CDemoCamera::GetImageBufferSize() const
 */
 int CDemoCamera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    if (xSize == 0 && ySize == 0)
    {
       // effectively clear ROI
@@ -655,6 +666,9 @@ int CDemoCamera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 */
 int CDemoCamera::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize)
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    x = roiX_;
    y = roiY_;
 
@@ -670,6 +684,9 @@ int CDemoCamera::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySi
 */
 int CDemoCamera::ClearROI()
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    ResizeImageBuffer();
    roiX_ = 0;
    roiY_ = 0;
@@ -683,6 +700,9 @@ int CDemoCamera::ClearROI()
 */
 double CDemoCamera::GetExposure() const
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    char buf[MM::MaxStrLength];
    int ret = GetProperty(MM::g_Keyword_Exposure, buf);
    if (ret != DEVICE_OK)
@@ -705,6 +725,9 @@ void CDemoCamera::SetExposure(double exp)
 */
 int CDemoCamera::GetBinning() const
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    char buf[MM::MaxStrLength];
    int ret = GetProperty(MM::g_Keyword_Binning, buf);
    if (ret != DEVICE_OK)
@@ -718,11 +741,17 @@ int CDemoCamera::GetBinning() const
 */
 int CDemoCamera::SetBinning(int binF)
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    return SetProperty(MM::g_Keyword_Binning, CDeviceUtils::ConvertToString(binF));
 }
 
 int CDemoCamera::SetAllowedBinning() 
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    vector<string> binValues;
    binValues.push_back("1");
    binValues.push_back("2");
@@ -749,6 +778,9 @@ int CDemoCamera::SetAllowedBinning()
  * The Base class implementation is deprecated and will be removed shortly
  */
 int CDemoCamera::StartSequenceAcquisition(double interval) {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    return StartSequenceAcquisition(LONG_MAX, interval, false);            
 }
 
@@ -757,6 +789,9 @@ int CDemoCamera::StartSequenceAcquisition(double interval) {
 */                                                                        
 int CDemoCamera::StopSequenceAcquisition()                                     
 {                                                                         
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    if (!thd_->IsStopped()) {
       thd_->Stop();                                                       
       thd_->wait();                                                       
@@ -772,6 +807,9 @@ int CDemoCamera::StopSequenceAcquisition()
 */
 int CDemoCamera::StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow)
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    if (IsCapturing())
       return DEVICE_CAMERA_BUSY_ACQUIRING;
 
@@ -790,6 +828,9 @@ int CDemoCamera::StartSequenceAcquisition(long numImages, double interval_ms, bo
  */
 int CDemoCamera::InsertImage()
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    MM::MMTime timeStamp = this->GetCurrentMMTime();
    char label[MM::MaxStrLength];
    this->GetLabel(label);
@@ -834,6 +875,9 @@ int CDemoCamera::InsertImage()
  */
 int CDemoCamera::ThreadRun (void)
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    int ret=DEVICE_ERR;
    
    // Trigger
@@ -977,6 +1021,9 @@ int MySequenceThread::svc(void) throw()
 
 int CDemoCamera::OnTestProperty(MM::PropertyBase* pProp, MM::ActionType eAct, long indexx)
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    if (eAct == MM::BeforeGet)
    {
       pProp->Set(testProperty_[indexx]);
@@ -1001,6 +1048,9 @@ void CDemoCamera::RefreshTestProperty(long indexx)
 */
 int CDemoCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    int ret = DEVICE_ERR;
    switch(eAct)
    {
@@ -1037,6 +1087,9 @@ int CDemoCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 */
 int CDemoCamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    int ret = DEVICE_ERR;
    switch(eAct)
    {
@@ -1117,6 +1170,9 @@ int CDemoCamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
 */
 int CDemoCamera::OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    int ret = DEVICE_ERR;
    switch(eAct)
    {
@@ -1226,6 +1282,9 @@ int CDemoCamera::OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct)
 */
 int CDemoCamera::OnReadoutTime(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    if (eAct == MM::AfterSet)
    {
       double readoutMs;
@@ -1241,33 +1300,11 @@ int CDemoCamera::OnReadoutTime(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-
-int CDemoCamera::OnErrorSimulation(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-   if (eAct == MM::AfterSet)
-   {
-      long tvalue = 0;
-      pProp->Get(tvalue);
-#ifdef WIN32
-#pragma warning ( push )
-#pragma warning (disable:4800)
-#endif
-      errorSimulation_ = (bool)tvalue;
-#ifdef WIN32
-#pragma warning ( pop)
-#endif
-
-   }
-   else if (eAct == MM::BeforeGet)
-   {
-      pProp->Set(errorSimulation_?1L:0L);
-   }
-
-   return DEVICE_OK;
-}
-
 int CDemoCamera::OnDropPixels(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    if (eAct == MM::AfterSet)
    {
       long tvalue = 0;
@@ -1284,6 +1321,9 @@ int CDemoCamera::OnDropPixels(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int CDemoCamera::OnSaturatePixels(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    if (eAct == MM::AfterSet)
    {
       long tvalue = 0;
@@ -1300,6 +1340,9 @@ int CDemoCamera::OnSaturatePixels(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int CDemoCamera::OnFractionOfPixelsToDropOrSaturate(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    if (eAct == MM::AfterSet)
    {
       double tvalue = 0;
@@ -1320,6 +1363,9 @@ int CDemoCamera::OnFractionOfPixelsToDropOrSaturate(MM::PropertyBase* pProp, MM:
 */
 int CDemoCamera::OnScanMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 { 
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    if (eAct == MM::AfterSet) {
       pProp->Get(scanMode_);
       SetAllowedBinning();
@@ -1340,6 +1386,9 @@ int CDemoCamera::OnScanMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int CDemoCamera::OnCameraCCDXSize(MM::PropertyBase* pProp , MM::ActionType eAct)
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    if (eAct == MM::BeforeGet)
    {
 		pProp->Set(cameraCCDXSize_);
@@ -1362,6 +1411,9 @@ int CDemoCamera::OnCameraCCDXSize(MM::PropertyBase* pProp , MM::ActionType eAct)
 
 int CDemoCamera::OnCameraCCDYSize(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    if (eAct == MM::BeforeGet)
    {
 		pProp->Set(cameraCCDYSize_);
@@ -1384,6 +1436,9 @@ int CDemoCamera::OnCameraCCDYSize(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int CDemoCamera::OnTriggerDevice(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    if (eAct == MM::BeforeGet)
    {
       pProp->Set(triggerDevice_.c_str());
@@ -1405,6 +1460,9 @@ int CDemoCamera::OnTriggerDevice(MM::PropertyBase* pProp, MM::ActionType eAct)
 */
 int CDemoCamera::ResizeImageBuffer()
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    char buf[MM::MaxStrLength];
    //int ret = GetProperty(MM::g_Keyword_Binning, buf);
    //if (ret != DEVICE_OK)
@@ -1726,6 +1784,9 @@ void CDemoFilterWheel::GetName(char* Name) const
 
 int CDemoFilterWheel::Initialize()
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    if (initialized_)
       return DEVICE_OK;
 
@@ -1797,6 +1858,9 @@ bool CDemoFilterWheel::Busy()
 
 int CDemoFilterWheel::Shutdown()
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    if (initialized_)
    {
       initialized_ = false;
@@ -1810,6 +1874,9 @@ int CDemoFilterWheel::Shutdown()
 
 int CDemoFilterWheel::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    if (eAct == MM::BeforeGet)
    {
       pProp->Set(position_);
@@ -1868,6 +1935,9 @@ void CDemoStateDevice::GetName(char* Name) const
 
 int CDemoStateDevice::Initialize()
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    if (initialized_)
       return DEVICE_OK;
 
@@ -1938,6 +2008,9 @@ bool CDemoStateDevice::Busy()
 
 int CDemoStateDevice::Shutdown()
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    if (initialized_)
    {
       initialized_ = false;
@@ -1951,6 +2024,9 @@ int CDemoStateDevice::Shutdown()
 
 int CDemoStateDevice::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    if (eAct == MM::BeforeGet)
    {
       pProp->Set(position_);
@@ -1976,6 +2052,9 @@ int CDemoStateDevice::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int CDemoStateDevice::OnNumberOfStates(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    if (eAct == MM::BeforeGet)
    {
       pProp->Set(numPos_);
@@ -2014,6 +2093,9 @@ void CDemoLightPath::GetName(char* Name) const
 
 int CDemoLightPath::Initialize()
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    if (initialized_)
       return DEVICE_OK;
 
@@ -2064,6 +2146,9 @@ int CDemoLightPath::Initialize()
 
 int CDemoLightPath::Shutdown()
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    if (initialized_)
    {
       initialized_ = false;
@@ -2077,6 +2162,9 @@ int CDemoLightPath::Shutdown()
 
 int CDemoLightPath::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    if (eAct == MM::BeforeGet)
    {
       // nothing to do, let the caller to use cached property
@@ -2125,6 +2213,9 @@ void CDemoObjectiveTurret::GetName(char* Name) const
 
 int CDemoObjectiveTurret::Initialize()
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    if (initialized_)
       return DEVICE_OK;
 
@@ -2181,6 +2272,9 @@ int CDemoObjectiveTurret::Initialize()
 
 int CDemoObjectiveTurret::Shutdown()
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    if (initialized_)
    {
       initialized_ = false;
@@ -2196,6 +2290,9 @@ int CDemoObjectiveTurret::Shutdown()
 
 int CDemoObjectiveTurret::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    if (eAct == MM::BeforeGet)
    {
       // nothing to do, let the caller to use cached property
@@ -2243,6 +2340,9 @@ int CDemoObjectiveTurret::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int CDemoObjectiveTurret::OnTrigger(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    if (eAct == MM::BeforeGet)
    {
       pProp->Set("-");
@@ -2297,6 +2397,9 @@ void CDemoStage::GetName(char* Name) const
 
 int CDemoStage::Initialize()
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    if (initialized_)
       return DEVICE_OK;
 
@@ -2331,6 +2434,9 @@ int CDemoStage::Initialize()
 
 int CDemoStage::Shutdown()
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    if (initialized_)
    {
       initialized_ = false;
@@ -2340,6 +2446,9 @@ int CDemoStage::Shutdown()
 
 int CDemoStage::SetPositionUm(double pos) 
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    pos_um_ = pos; 
    SetIntensityFactor(pos);
    return OnStagePositionChanged(pos_um_);
@@ -2347,6 +2456,9 @@ int CDemoStage::SetPositionUm(double pos)
 
 void CDemoStage::SetIntensityFactor(double pos)
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return;
+
    pos = fabs(pos);
    pos = 10.0 - pos;
    if (pos < 0)
@@ -2362,6 +2474,9 @@ void CDemoStage::SetIntensityFactor(double pos)
 
 int CDemoStage::OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    if (eAct == MM::BeforeGet)
    {
       std::stringstream s;
@@ -2413,6 +2528,9 @@ void CDemoXYStage::GetName(char* Name) const
 
 int CDemoXYStage::Initialize()
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    if (initialized_)
       return DEVICE_OK;
 
@@ -2440,6 +2558,9 @@ int CDemoXYStage::Initialize()
 
 int CDemoXYStage::Shutdown()
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    if (initialized_)
    {
       initialized_ = false;
@@ -2463,6 +2584,9 @@ void DemoShutter::GetName(char* name) const
 
 int DemoShutter::Initialize()
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    if (initialized_)
       return DEVICE_OK;
 
@@ -2518,6 +2642,9 @@ bool DemoShutter::Busy()
 
 int DemoShutter::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    if (eAct == MM::BeforeGet)
    {
       if (state_)
@@ -2546,6 +2673,9 @@ int DemoShutter::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 int DemoMagnifier::Initialize()
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    CPropertyAction* pAct = new CPropertyAction (this, &DemoMagnifier::OnPosition);
    int ret = CreateProperty("Position", "1x", MM::String, false, pAct); 
    if (ret != DEVICE_OK) 
@@ -2571,6 +2701,9 @@ double DemoMagnifier::GetMagnification() {
 
 int DemoMagnifier::OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct) 
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    if (eAct == MM::BeforeGet)
    {
       // nothing to do, let the caller use cached property
@@ -2605,6 +2738,9 @@ DemoDA::~DemoDA() {
 
 int DemoDA::SetGateOpen(bool open) 
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    open_ = open; 
    if (open_) 
       gatedVolts_ = volt_; 
@@ -2616,11 +2752,17 @@ int DemoDA::SetGateOpen(bool open)
 
 int DemoDA::GetGateOpen(bool& open) 
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    open = open_; 
    return DEVICE_OK;
 }
 
 int DemoDA::SetSignal(double volts) {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    volt_ = volts; 
    if (open_)
       gatedVolts_ = volts;
@@ -2630,6 +2772,9 @@ int DemoDA::SetSignal(double volts) {
 
 int DemoDA::GetSignal(double& volts) 
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    volts = volt_; 
    return DEVICE_OK;
 }
@@ -2644,6 +2789,9 @@ void DemoAutoFocus::GetName(char* name) const
 
 int DemoAutoFocus::Initialize()
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    if (initialized_)
       return DEVICE_OK;
 
@@ -2674,6 +2822,9 @@ int DemoAutoFocus::Initialize()
 
 int TransposeProcessor::Initialize()
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    if( NULL != this->pTemp_)
    {
       free(pTemp_);
@@ -2689,6 +2840,9 @@ int TransposeProcessor::Initialize()
    // ----------------
 int TransposeProcessor::OnInPlaceAlgorithm(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    if (eAct == MM::BeforeGet)
    {
       pProp->Set(this->inPlace_?1L:0L);
@@ -2711,6 +2865,9 @@ int TransposeProcessor::OnInPlaceAlgorithm(MM::PropertyBase* pProp, MM::ActionTy
 
 int TransposeProcessor::Process(unsigned char *pBuffer, unsigned int width, unsigned int height, unsigned int byteDepth)
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    int ret = DEVICE_OK;
 
    // 
@@ -2774,8 +2931,31 @@ int TransposeProcessor::Process(unsigned char *pBuffer, unsigned int width, unsi
 }
 
 
+int DemoHub::Initialize()
+{
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
+	initialized_ = true;
+   SetErrorText(SIMULATED_ERROR, "Simulated Error");
+	CPropertyAction *pAct = new CPropertyAction (this, &DemoHub::OnErrorRate);
+	CreateProperty("SimulatedErrorRate", "0.0", MM::Float, false, pAct);
+	AddAllowedValue("SimulatedErrorRate", "0.0000");
+	AddAllowedValue("SimulatedErrorRate", "0.0001");
+   AddAllowedValue("SimulatedErrorRate", "0.0010");
+	AddAllowedValue("SimulatedErrorRate", "0.0100");
+	AddAllowedValue("SimulatedErrorRate", "0.1000");
+	AddAllowedValue("SimulatedErrorRate", "0.2000");
+	AddAllowedValue("SimulatedErrorRate", "0.5000");
+	AddAllowedValue("SimulatedErrorRate", "1.0000");
+	return DEVICE_OK;
+}
+
 void  DemoHub::GetPeripheralInventory()
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return;
+
    Initialize();
 
    peripherals_.clear();
@@ -2807,6 +2987,9 @@ void  DemoHub::GetPeripheralInventory()
 
 int DemoHub::GetNumberOfDiscoverableDevices()
 {
+   if (g_hub && g_hub->GenerateRandomError())
+      return SIMULATED_ERROR;
+
    GetPeripheralInventory();
    return peripherals_.size();
 
@@ -2814,6 +2997,9 @@ int DemoHub::GetNumberOfDiscoverableDevices()
 
 void DemoHub::GetDiscoverableDevice(int peripheralNum, char* peripheralName, unsigned int maxNameLen)
 { 
+   if (g_hub && g_hub->GenerateRandomError())
+      return;
+
    if( -1 < peripheralNum)
    {
       if( peripheralNum < int(peripherals_.size()))
@@ -2829,3 +3015,27 @@ void DemoHub::GetDiscoverableDevice(int peripheralNum, char* peripheralName, uns
 
 
 void DemoHub::GetName(char* pName) const{  CDeviceUtils::CopyLimitedString(pName, g_HubDeviceName);} ;
+
+bool DemoHub::GenerateRandomError()
+{
+   if (errorRate_ == 0.0)
+      return false;
+
+	return (0 == (rand() % ((int) (1.0 / errorRate_))));
+}
+
+int DemoHub::OnErrorRate(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   // Don't simulate an error here!!!!
+
+   if (eAct == MM::AfterSet)
+   {
+      pProp->Get(errorRate_);
+
+   }
+   else if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(errorRate_);
+   }
+   return DEVICE_OK;
+}
