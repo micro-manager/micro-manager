@@ -187,8 +187,8 @@ public:
    void loadPropertySequence(const char* label, const char* propName, std::vector<std::string> eventSequence) const throw (CMMError);
    MM::PropertyType getPropertyType(const char* label, const char* propName) const throw (CMMError);
    MM::DeviceType getDeviceType(const char* label) throw (CMMError);
-   std::string CMMCore::getDeviceLibrary(const char* label) throw (CMMError);
-   std::string CMMCore::getDeviceNameInLibrary(const char* label) throw (CMMError);
+   std::string getDeviceLibrary(const char* label) throw (CMMError);
+   std::string getDeviceNameInLibrary(const char* label) throw (CMMError);
    bool deviceBusy(const char* deviceName) throw (CMMError);
    void waitForDevice(const char* deviceName) throw (CMMError);
    void waitForConfig(const char* group, const char* configName) throw (CMMError);
