@@ -109,3 +109,21 @@ MODULE_API bool GetDeviceIsDiscoverable(char* pDeviceName, bool* pvalue)
 
 
 }
+
+
+bool DiscoverabilityTest()
+{
+   bool discoverabilityTest = false;
+   const char* pd = getenv("DISCOVERABILITYTEST");
+   if( 0!=pd)
+   {
+      std::string env = std::string(pd);
+      if( 0 < env.length())
+      {
+         char initial =  (char)tolower(env.at(0));
+         discoverabilityTest = ('0' != initial) && ('f' != initial) && ( 'n' != initial);
+      }
+   }
+   return discoverabilityTest;
+}
+

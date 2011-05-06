@@ -98,4 +98,11 @@ void SetDeviceIsDiscoverable( const char* pdevice, const bool value);
 
 
 
+// allow phased-in deployment of device discovering....
+
+bool DiscoverabilityTest();
+
+
+
+
 #endif //_MODULE_INTERFACE_H_
