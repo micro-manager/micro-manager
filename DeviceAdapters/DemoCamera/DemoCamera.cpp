@@ -84,21 +84,6 @@ BOOL APIENTRY DllMain( HANDLE /*hModule*/,
 }
 #endif
 
-bool DiscoverabilityTest()
-{
-   bool discoverabilityTest = false;
-   const char* pd = getenv("DISCOVERABILITYTEST");
-   if( 0!=pd)
-   {
-      std::string env = std::string(pd);
-      if( 0 < env.length())
-      {
-         char initial =  (char)tolower(env.at(0));
-         discoverabilityTest = ('0' != initial) && ('f' != initial) && ( 'n' != initial);
-      }
-   }
-   return discoverabilityTest;
-}
 
 
 
@@ -126,17 +111,17 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_ShutterDeviceName, "Demo shutter");
    AddAvailableDeviceName(g_DADeviceName, "Demo DA");
    AddAvailableDeviceName(g_MagnifierDeviceName, "Demo Optovar");
-   AddAvailableDeviceName("Transpose", "TransposeProcessor");
+   AddAvailableDeviceName("TransposeProcessor", "TransposeProcessor");
    AddAvailableDeviceName(g_HubDeviceName, "DHub");
 
    if (DiscoverabilityTest())
    {
-      SetDeviceIsDiscoverable(g_WheelDeviceName, false);
+      SetDeviceIsDiscoverable(g_WheelDeviceName, true);
       SetDeviceIsDiscoverable(g_StateDeviceName, true);
       SetDeviceIsDiscoverable(g_ObjectiveDeviceName, true);
       SetDeviceIsDiscoverable(g_StageDeviceName, true); 
       SetDeviceIsDiscoverable(g_XYStageDeviceName, true);
-      SetDeviceIsDiscoverable(g_LightPathDeviceName, false);
+      SetDeviceIsDiscoverable(g_LightPathDeviceName, true);
       SetDeviceIsDiscoverable(g_AutoFocusDeviceName, true);
       SetDeviceIsDiscoverable(g_ShutterDeviceName, true);
       SetDeviceIsDiscoverable(g_DADeviceName, true);
