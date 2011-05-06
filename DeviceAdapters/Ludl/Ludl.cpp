@@ -73,6 +73,14 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_Wheel, "Ludl Filter Wheel");
    AddAvailableDeviceName(g_XYStageDeviceName, "XY Stage");
    AddAvailableDeviceName(g_StageDeviceName, "Single Axis Stage");
+
+   if( DiscoverabilityTest())
+   {
+      SetDeviceIsDiscoverable(g_Shutter, true);
+      SetDeviceIsDiscoverable(g_Wheel, true);
+      SetDeviceIsDiscoverable(g_XYStageDeviceName, true);
+      SetDeviceIsDiscoverable(g_StageDeviceName, true);
+   }
 }                                                                            
                                                                              
 MODULE_API MM::Device* CreateDevice(const char* deviceName)                  
@@ -450,6 +458,8 @@ void Hub::QueryPeripheralInventory()
          return;
    }
 
+   LogMessage(std::string("Inventory report:: ")+ report, false);
+
 /* from MAC200 PDF
 Modul-Id   Address  Label  Description 
  
@@ -541,6 +551,8 @@ S[1]  17  EFILS  filter shutter No. 1
                {
                   if (1 == deviceID) // if we find the X axis, say we have an XY stage
                      discoverableDevices_.push_back(g_XYStageDeviceName);
+                  else if( 6 == deviceID)
+                     discoverableDevices_.push_back(g_StageDeviceName);
 
                }
 

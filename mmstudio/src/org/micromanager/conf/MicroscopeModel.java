@@ -1275,6 +1275,14 @@ public class MicroscopeModel {
             } catch (Exception e) {
             }    
          }
+         else{
+            try{
+            c.unloadDevice(pd.get(idit).getName());
+            }
+            catch(Exception e){
+
+            }
+         }
       }
    }
 
