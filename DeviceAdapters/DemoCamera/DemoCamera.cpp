@@ -126,22 +126,22 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_ShutterDeviceName, "Demo shutter");
    AddAvailableDeviceName(g_DADeviceName, "Demo DA");
    AddAvailableDeviceName(g_MagnifierDeviceName, "Demo Optovar");
-   AddAvailableDeviceName("DemoTranspose", "DemoTranspose");
+   AddAvailableDeviceName("Transpose", "TransposeProcessor");
    AddAvailableDeviceName(g_HubDeviceName, "DHub");
 
    if (DiscoverabilityTest())
    {
       SetDeviceIsDiscoverable(g_WheelDeviceName, false);
-      SetDeviceIsDiscoverable(g_StateDeviceName, false);
-      SetDeviceIsDiscoverable(g_ObjectiveDeviceName, false);
+      SetDeviceIsDiscoverable(g_StateDeviceName, true);
+      SetDeviceIsDiscoverable(g_ObjectiveDeviceName, true);
       SetDeviceIsDiscoverable(g_StageDeviceName, true); 
       SetDeviceIsDiscoverable(g_XYStageDeviceName, true);
       SetDeviceIsDiscoverable(g_LightPathDeviceName, false);
       SetDeviceIsDiscoverable(g_AutoFocusDeviceName, true);
       SetDeviceIsDiscoverable(g_ShutterDeviceName, true);
       SetDeviceIsDiscoverable(g_DADeviceName, true);
-      SetDeviceIsDiscoverable(g_MagnifierDeviceName, false);
-      SetDeviceIsDiscoverable("DemoTranspose", true);
+      SetDeviceIsDiscoverable(g_MagnifierDeviceName, true);
+      SetDeviceIsDiscoverable("TransposeProcessor", true);
    }
 
 
@@ -210,10 +210,10 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
       return new DemoMagnifier();
    }
 
-   else if(strcmp(deviceName, "DemoTranspose") == 0)
+   else if(strcmp(deviceName, "TransposeProcessor") == 0)
    {
 
-      return new DemoTranspose();
+      return new TransposeProcessor();
    }
    else if (strcmp(deviceName, g_HubDeviceName) == 0)
    {
@@ -381,14 +381,20 @@ int CDemoCamera::Initialize()
 	CPropertyActionEx *pActX = 0;
 	// create an extended (i.e. array) properties 1 through 4
 	
-	for(int ij = 1; ij < 5;++ij)
+	for(int ij = 1; ij < 7;++ij)
 	{
-      char ctmp[2];
-      snprintf(ctmp,2,"%d",ij);
-      std::string propName = "TestProperty" + std::string(ctmp);
+      std::ostringstream os;
+      os<<ij;
+      std::string propName = "TestProperty" + os.str();
 		pActX = new CPropertyActionEx(this, &CDemoCamera::OnTestProperty, ij);
 		nRet = CreateProperty(propName.c_str(), "0.", MM::Float, false, pActX);
-		SetPropertyLimits(propName.c_str(), ij, ij + 1);
+      if(0!=(ij%5))
+      {
+         // try several different limit ranges
+         double upperLimit = (double)ij*pow(10.,(double)(((ij%2)?-1:1)*ij));
+         double lowerLimit = (ij%3)?-upperLimit:0.;
+         SetPropertyLimits(propName.c_str(), lowerLimit, upperLimit);
+      }
 	}
 	
 	
@@ -2681,7 +2687,7 @@ int DemoAutoFocus::Initialize()
 }
 
 
-int DemoTranspose::Initialize()
+int TransposeProcessor::Initialize()
 {
    if( NULL != this->pTemp_)
    {
@@ -2689,14 +2695,14 @@ int DemoTranspose::Initialize()
       pTemp_ = NULL;
       this->tempSize_ = 0;
    }
-    CPropertyAction* pAct = new CPropertyAction (this, &DemoTranspose::OnInPlaceAlgorithm);
+    CPropertyAction* pAct = new CPropertyAction (this, &TransposeProcessor::OnInPlaceAlgorithm);
    (void)CreateProperty("InPlaceAlgorithm", "0", MM::Integer, false, pAct); 
    return DEVICE_OK;
 }
 
    // action interface
    // ----------------
-int DemoTranspose::OnInPlaceAlgorithm(MM::PropertyBase* pProp, MM::ActionType eAct)
+int TransposeProcessor::OnInPlaceAlgorithm(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
@@ -2718,7 +2724,7 @@ int DemoTranspose::OnInPlaceAlgorithm(MM::PropertyBase* pProp, MM::ActionType eA
 
 
 
-int DemoTranspose::Process(unsigned char *pBuffer, unsigned int width, unsigned int height, unsigned int byteDepth)
+int TransposeProcessor::Process(unsigned char *pBuffer, unsigned int width, unsigned int height, unsigned int byteDepth)
 {
    int ret = DEVICE_OK;
 

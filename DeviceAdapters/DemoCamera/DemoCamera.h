@@ -576,17 +576,17 @@ private:
 };
 
 //////////////////////////////////////////////////////////////////////////////
-// DemoTranspose class
+// TransposeProcessor class
 // transpose an image
 //////////////////////////////////////////////////////////////////////////////
-class DemoTranspose : public CImageProcessorBase<DemoTranspose>
+class TransposeProcessor : public CImageProcessorBase<TransposeProcessor>
 {
 public:
-   DemoTranspose () : inPlace_ (false), pTemp_(NULL), tempSize_(0), busy_(false) {}
-   ~DemoTranspose () {if( NULL!= pTemp_) free(pTemp_); tempSize_=0;  }
+   TransposeProcessor () : inPlace_ (false), pTemp_(NULL), tempSize_(0), busy_(false) {}
+   ~TransposeProcessor () {if( NULL!= pTemp_) free(pTemp_); tempSize_=0;  }
 
    int Shutdown() {return DEVICE_OK;}
-   void GetName(char* name) const {strcpy(name,"DemoTranspose");}
+   void GetName(char* name) const {strcpy(name,"TransposeProcessor");}
 
    int Initialize();
 
