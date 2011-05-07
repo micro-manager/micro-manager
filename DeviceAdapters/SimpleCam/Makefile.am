@@ -11,7 +11,7 @@ libmmgr_dal_GPhoto_la_LIBADD += $(LIBFREEIMAGE)
 # gphoto2 library
 AM_CXXFLAGS += -Igphoto 
 libmmgr_dal_GPhoto_la_SOURCES += gphoto/SimpleCam.cpp gphoto/SimpleCam.h
-libmmgr_dal_GPhoto_la_LIBADD += $(LIBGPHOTO2)
+libmmgr_dal_GPhoto_la_LIBADD += $(LIBGPHOTO2) -lltdl
 
 install:
 	cp .libs/libmmgr_dal_GPhoto.so $(DESTDIR)$(DEVICEADAPTERPATH)/libmmgr_dal_GPhoto$(MMSUFFIX)
