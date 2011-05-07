@@ -135,7 +135,7 @@ else
                AC_MSG_RESULT(["libgphoto2 not found"])
             else
                AC_MSG_RESULT(["libgphoto2.a" found])
-               LIBGPHOTO2="$GPHOTO2LIBDIR/libgphoto2.a"
+               LIBGPHOTO2="$GPHOTO2LIBDIR/libgphoto2.a $GPHOTO2LIBDIR/libgphoto2_port.a $GPHOTO2LIBDIR/libgphoto2/2.4.10.1/*.a"
             fi
          ;;
       esac
