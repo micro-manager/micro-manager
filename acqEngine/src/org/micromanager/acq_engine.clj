@@ -18,7 +18,7 @@
   (:use [org.micromanager.mm :only [when-lets map-config get-config get-positions load-mm
                                     get-default-devices core log log-cmd mmc gui with-core-setting
                                     do-when if-args get-system-config-cached select-values-match?
-                                    get-property get-camera-roi parse-core-metadata]]
+                                    get-property get-camera-roi parse-core-metadata reload-device]]
         [org.micromanager.sequence-generator :only [generate-acq-sequence]])
   (:import [org.micromanager AcqControlDlg]
            [org.micromanager.api AcquisitionEngine TaggedImageAnalyzer]
@@ -260,6 +260,22 @@
     (when-let [exposure (:exposure event)]
       (list [(core getCameraDevice) #(core setExposure exposure)]))))
 
+(defmacro successful? [& body]
+  `(try (do ~@body true)
+     (catch Exception e#
+            (do (ReportingUtils/logError e#) false))))
+
+
+(defn device-best-effort [dev fun]
+  (let [attempt #(do (wait-for-device dev) (fun))]
+    (when-not
+      (or
+        (successful? (attempt)) ; first attempt
+        (successful? (attempt)) ; second attempt
+        (when false
+          (successful? (reload-device dev) (attempt)))) ; third attempt after reloading
+      (ReportingUtils/showError (str "Device failure: " dev)))))
+
 (defn run-actions [action-map]
   (if run-devices-parallel
     (do
@@ -270,7 +286,9 @@
       (doall (map (partial await-for 10000) (vals device-agents))))
     (do
       (doseq [[dev action] action-map]
-        (action) (wait-for-device dev)))))
+        ;(action) (wait-for-device dev)
+        (device-best-effort dev action)
+        ))))
 
 (defn run-autofocus []
   (.. gui getAutofocusManager getDevice fullFocus)
