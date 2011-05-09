@@ -1,12 +1,4 @@
-AndorLaserCombiner,AndorLaserCombiner,AndorLaserCombiner,3
-AOTF,AOTF-Switch,TLL digital out AOTF wavelength selector,4
-AOTF,AOTF-Shutter,TTL digital out AOTF shutter,3
-Apogee,ApogeeCamera,Apogee Alta camera adapter,2
-Arduino,Arduino-Hub,Hub,8
-Arduino,Arduino-Switch,Switch,4
-Arduino,Arduino-Shutter,Shutter,3
-Arduino,Arduino-DAC,DA,13
-Arduino,Arduino-Input,Input,1
+AAAOTF,AAAOTF,AAAOTF,3
 ASIFW1000,ASIFWController,ASIFW1000 Controller,8
 ASIFW1000,ASIFilterWheel,ASI FilterWheel,4
 ASIFW1000,ASIShutter,ASI Shutter,3
@@ -15,17 +7,32 @@ ASIStage,XYStage,XY Stage,6
 ASIStage,CRIF,CRIF,9
 ASIStage,AZ100 Turret,AZ100 Turret,4
 ASIwptr,WPTRobot,WPTRobot,8
-CoherentCube,CoherentCube,CoherentCube Laser,3
-Conix,ConixQuadFilter,External Filter Cube Switcher,4
-Conix,ConixXYStage,Conix XY stage,6
-Corvus,ITK Corvus Controller,ITK Corvus Controller,8
-Corvus,XY Stage,XY Stage,6
-Corvus,Z Axis,Z Axis,5
+Andor,Andor,Generic Andor Camera Adapter,2
+AndorLaserCombiner,AndorLaserCombiner,AndorLaserCombiner,3
+AndorLaserCombiner,PiezoStage,PiezoStage,5
+Arduino,Arduino-Hub,Hub,8
+Arduino,Arduino-Switch,Switch,4
+Arduino,Arduino-Shutter,Shutter,3
+Arduino,Arduino-DAC,DA,13
+Arduino,Arduino-Input,Input,8
 CSUX,CSUX-Hub,CSUX Hub (Needed for CSUX),8
 CSUX,CSUX-Filter Wheel,Filter Wheel,4
 CSUX,CSUX-Dichroic Mirror,Dichroic Mirror,4
 CSUX,CSUX-Shutter,Shutter,3
 CSUX,CSUX-DriveSpeed,DriveSpeed,4
+CoherentCube,CoherentCube,CoherentCube Laser,3
+Conix,ConixQuadFilter,External Filter Cube Switcher,4
+Conix,ConixXYStage,Conix XY stage,6
+Conix,ConixZStage,Conix Z stage,5
+Corvus,ITK Corvus Controller,ITK Corvus Controller,8
+Corvus,XY Stage,XY Stage,6
+Corvus,Z Axis,Z Axis,5
+DTOpenLayer,DTOL-Switch,Description N/A,4
+DTOpenLayer,DTOL-Shutter,Description N/A,3
+DTOpenLayer,DTOL-DAC-0,Description N/A,13
+DTOpenLayer,DTOL-DAC-1,Description N/A,13
+DTOpenLayer,DTOL-DAC-2,Description N/A,13
+DTOpenLayer,DTOL-DAC-3,Description N/A,13
 DemoCamera,DCam,Demo camera,2
 DemoCamera,DWheel,Demo filter wheel,4
 DemoCamera,DStateDevice,Demo State Device,4
@@ -37,15 +44,16 @@ DemoCamera,DAutoFocus,Demo auto focus,9
 DemoCamera,DShutter,Demo shutter,3
 DemoCamera,D-DA,Demo DA,13
 DemoCamera,DOptovar,Demo Optovar,14
-DTOpenLayer,DTOL-Switch,Description N/A,4
-DTOpenLayer,DTOL-Shutter,Description N/A,3
-DTOpenLayer,DTOL-DAC-0,Description N/A,13
-DTOpenLayer,DTOL-DAC-1,Description N/A,13
-DTOpenLayer,DTOL-DAC-2,Description N/A,13
-DTOpenLayer,DTOL-DAC-3,Description N/A,13
+DemoCamera,TransposeProcessor,TransposeProcessor,11
+DemoCamera,ImageFlipX,ImageFlipX,11
+DemoCamera,ImageFlipY,ImageFlipY,11
+DemoCamera,DHub,DHub,8
+FreeSerialPort,FreeSerialPort,Free-form communication Serial Port.,8
 GenericSLM,GenericSLM,Spatial Light Modulator controlled through computer graphics output,16
 GigECamera,GigE camera adapter,GigE camera,2
 Hamamatsu,Hamamatsu_DCAM,Universal adapter using DCAM interface,2
+HamamatsuHam,HamamatsuHam_DCAM,Universal adapter using DCAM interface,2
+ImageProcessorChain,ImageProcessorChain,ImageProcessorChain,11
 K8055,K8055-Hub,Hub,8
 K8055,K8055-Switch,Switch,4
 K8055,K8055-Shutter,Shutter,3
@@ -57,6 +65,7 @@ K8061,K8061-Switch,Switch,4
 K8061,K8061-Shutter,Shutter,3
 K8061,K8061-DAC,DA,13
 K8061,K8061-Input,Input,8
+KDV,KDVZStage,Focus drive for Meiji Techno EMZ,5
 LeicaDMI,Scope,Leica DMI microscope controlled through serial interface,8
 LeicaDMI,TL-Shutter,Transmitted Light Shutter,3
 LeicaDMI,IL-Shutter,Incident Light Shutter,3
@@ -73,6 +82,8 @@ LeicaDMI,TLPolarizer,Transmitted light Polarizer,4
 LeicaDMI,DIC Turret,DIC Turret,4
 LeicaDMI,Condensor,Condensor Turret,4
 LeicaDMI,Transmitted Light,Transmitted Light,3
+LeicaDMI,Adaptive Focus Control,Adaptive Focus Control,9
+LeicaDMI,SidePort,Side Port,4
 LeicaDMR,Leica DM microscope,LeicaDMR (DM RXA; DM RME; RD RBE; DM RXA; DM RA; DM IRBE) Controller,8
 LeicaDMR,Reflected Light Module,Reflected Light LModule,4
 LeicaDMR,Halogen Lamp,Halogen Lamp,3
@@ -86,6 +97,12 @@ Ludl,LudlShutter,Ludl Shutter,3
 Ludl,LudlWheel,Ludl Filter Wheel,4
 Ludl,XYStage,XY Stage,6
 Ludl,Stage,Single Axis Stage,5
+MT20,MT20-HUB,Olympus MT20 hub device,8
+MT20,MT20-Burner,Olympus MT20 burner,4
+MT20,MT20-Shutter,Olympus MT20 shutter,3
+MT20,MT20-Filterwheel,Olympus MT20 filterwheel,4
+MT20,MT20-Attenuator,Olympus MT20 attenuator,4
+MaestroServo,MaestroServo,Pololu MaestroServo controller,8
 Marzhauser,Tango Controller,Tango Controller,8
 Marzhauser,XY Stage,XY Stage,6
 Marzhauser,Z Axis,Z Axis,5
@@ -94,6 +111,10 @@ Marzhauser,Tango Lamp-1,Tango Lamp-1 [0..100%],3
 Marzhauser,Tango Lamp-2,Tango Lamp-2 [0..100%],3
 Marzhauser,Tango DAC,Tango DAC [0..10V],13
 Marzhauser,Tango ADC,Tango ADC [0..5V],13
+NNLC,LC-Shutter,Shutter,3
+NNLC,LC-DAC,DA,13
+NNLC,LC-Setup,Setup,3
+NNLC,LC-Digital Out,Digital Out,3
 Neos,Neos,Neos controller with USB,3
 Nikon,ZStage,Remote accessory Z-stage,5
 Nikon,TIRFShutter,TIRF Laser Shutter controller T-LUSU(2),3
@@ -149,16 +170,18 @@ Olympus,FluorescenceLamp,Epifluorescence lamp (voltage/on/off),4
 Olympus,ManualFocus,Z-drive (jog wheel),5
 Olympus,CondenserApertureStop,Condenser Aperture Stop,8
 Olympus,AutoFocusZDC,ZDC (Auto Focus),9
+PI,PIZStage,PI E-662 Z-stage,5
+PI_GCS,PIZStage,PI GCS Z-stage,5
+PVCAM,Camera-1,Universal PVCAM interface - camera slot 1,2
+PVCAM,Camera-2,Universal PVCAM interface - camera slot 2,2
 ParallelPort,LPT1,Printer port TTL digital output,4
 ParallelPort,LPT-Shutter,Printer port TTLs used as shutters,3
-PCO_Camera,pco_camera,PCO generic camera adapter,2
 Pecon,TempControl,Temperature controller 37-2 digital,8
 Pecon,CTIController3700,CTI controller 3700 digital,8
 Pecon,CO2Controller,CO2 controller,8
-PI,PIZStage,PI E-662 Z-stage,5
-Piper,SPI Cameras,Stanford Photonics cameras,2
-PI_GCS,PIZStage,PI GCS Z-stage,5
 PrecisExcite,PrecisExcite,PrecisExcite LED illuminator,3
+PrincetonInstruments,Camera-1,Princeton Instruments interface - camera slot 1,2
+PrincetonInstruments,Camera-2,Princeton Instruments interface - camera slot 2,2
 Prior,Shutter-1,Pro Scan shutter 1,3
 Prior,Shutter-2,Pro Scan shutter 2,3
 Prior,Shutter-3,Pro Scan shutter 3,3
@@ -173,20 +196,25 @@ Prior,TTL-0,Pro Scan TTL 0,3
 Prior,TTL-1,Pro Scan TTL 1,3
 Prior,TTL-2,Pro Scan TTL 2,3
 Prior,TTL-3,Pro Scan TTL 3,3
-ProgRes,Jenoptik-ProgRes,Jenoptik_ProgRes_Camera,2
 QCam,QCamera,QImaging universal camera adapter,2
 Sapphire,Sapphire,Sapphire Laser,3
 SimpleAutofocus,SimpleAutofocus,SimpleAutofocus Finder,9
+SimpleAutofocus,FocusMonitor,Focus score monitor - 100XImaging Inc.,11
+SimpleAutofocus,TPFocus,Three point focus - 100XImaging Inc.,9
 SpectralLMM5,LMM5-Hub,Description N/A,8
 SpectralLMM5,LMM5-Shutter,Description N/A,3
-SpotCamera,Spot,SpotCam,2
+SpotCamera,Spot,SpotCam,1
 SutterLambda,Wheel-A,Lambda 10 filter wheel A,4
 SutterLambda,Wheel-B,Lambda 10 filter wheel B,4
 SutterLambda,Wheel-C,Lambda 10 wheel C (10-3 only),4
 SutterLambda,Shutter-A,Lambda 10 shutter A,3
 SutterLambda,Shutter-B,Lambda 10 shutter B,3
+SutterLambda,Shutter-A 10-2,Lambda 10-2 shutter A,3
+SutterLambda,Shutter-B 10-2,Lambda 10-2 shutter B,3
 SutterLambda,Shutter-DG4,DG4 shutter,3
 SutterLambda,Wheel-DG4,DG4 filter changer,4
+TIScam,TIS_DCAM,The Imaging Source,2
+Thorlabs,XYStage,Thorlabs BD102 XY Stage,6
 ThorlabsFilterWheel,Thorlabs Filter Wheel,Thorlabs filter wheel,4
 ThorlabsSC10,SC10,ThorLabs SC10 shutter controller,3
 TwainCamera,TwainCam,Twain camera,1
