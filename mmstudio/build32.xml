@@ -207,6 +207,7 @@
 		<copy file="${BinRoot}/mmgr_dal_SimpleAutofocus.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_SpectralLMM5.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_SpotCamera.dll" todir="${InstallRoot}" />
+		<copy file="${BinRoot}/mmgr_dal_Stradus.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_SutterLambda.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_ThorlabsFilterWheel.dll" todir="${InstallRoot}" />
 		<copy file="${BinRoot}/mmgr_dal_ThorlabsSC10.dll" todir="${InstallRoot}" />
