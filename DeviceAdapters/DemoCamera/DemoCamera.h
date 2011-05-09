@@ -10,7 +10,8 @@
 //                
 // AUTHOR:        Nenad Amodaj, nenad@amodaj.com, 06/08/2005
 //                
-//                Karl Hoover (stuff such as programmable CCD size and transpose processor)
+//                Karl Hoover (stuff such as programmable CCD size  & the various image processors)
+//                Arther Edelstein ( equipment error simulation)
 //
 // COPYRIGHT:     University of California, San Francisco, 2006
 //                100X Imaging Inc, 2008
@@ -951,22 +952,121 @@ private:
 
 
 
+//////////////////////////////////////////////////////////////////////////////
+// MedianFilter class
+// transpose an image
+//////////////////////////////////////////////////////////////////////////////
+class MedianFilter : public CImageProcessorBase<MedianFilter>
+{
+public:
+   MedianFilter () : busy_(false), performanceTiming_(0.),pSmoothedIm_(0), sizeOfSmoothedIm_(0) {};
+   ~MedianFilter () { if(0!=pSmoothedIm_) free(pSmoothedIm_); };
+
+   int Shutdown() {return DEVICE_OK;}
+   void GetName(char* name) const {strcpy(name,"MedianFilter");}
+
+   int Initialize();
+   bool Busy(void) { return busy_;};
+
+   // NOTE: this utility MODIFIES the argument, make a copy yourself if you want the original data preserved
+   template <class U> U FindMedian(std::vector<U>& values ) {
+      std::sort(values.begin(), values.end());
+      return values[(values.size())>>1];
+   };
 
 
+   template <typename PixelType> int Filter( PixelType* pI, unsigned int width, unsigned int height)
+   {
+      int ret = DEVICE_OK;
+      int x[9];
+      int y[9];
+
+      const unsigned long thisSize = sizeof(*pI)*width*height;
+      if( thisSize != sizeOfSmoothedIm_)
+      {
+         if(NULL!=pSmoothedIm_)
+         {
+            sizeOfSmoothedIm_ = 0;
+            free(pSmoothedIm_);
+         }
+         // malloc is faster than new...
+         pSmoothedIm_ = (PixelType*)malloc(thisSize);
+         if(NULL!=pSmoothedIm_)
+         {
+            sizeOfSmoothedIm_ = thisSize;
+         }
+      }
+
+      PixelType* pSmooth = (PixelType*) pSmoothedIm_;
+
+      if(NULL != pSmooth)
+      {
+      /*Apply 3x3 median filter to reduce shot noise*/
+      for (unsigned int i=0; i<width; i++) {
+         for (unsigned int j=0; j<height; j++) {
+            x[0]=i-1;
+            y[0]=(j-1);
+            x[1]=i;
+            y[1]=(j-1);
+            x[2]=i+1;
+            y[2]=(j-1);
+            x[3]=i-1;
+            y[3]=(j);
+            x[4]=i;
+            y[4]=(j);
+            x[5]=i+1;
+            y[5]=(j);
+            x[6]=i-1;
+            y[6]=(j+1);
+            x[7]=i;
+            y[7]=(j+1);
+            x[8]=i+1;
+            y[8]=(j+1);
+            // truncate the median filter window  -- duplicate edge points
+            // this could be more efficient, we could fill in the interior image [1,w0-1]x[1,h0-1] then explicitly fill in the edge pixels.
+            // also the temporary image could be as small as 2 rasters of the image
+            for(int ij =0; ij < 9; ++ij)
+            {
+               if( x[ij] < 0)
+                  x[ij] = 0;
+               else if( int(width-1) < x[ij])
+                  x[ij] = int(width-1);
+               if( y[ij] < 0)
+                  y[ij] = 0;
+               else if( int(height-1) < y[ij])
+                  y[ij] = (int)(height-1);
+            }
+            std::vector<PixelType> windo;
+            for(int ij = 0; ij < 9; ++ij)
+            {
+               windo.push_back(pI[ x[ij] + width*y[ij]]);
+            }
+            pSmooth[i + j*width] = FindMedian(windo);
+         }
+      }
+
+      memcpy( pI, pSmoothedIm_, thisSize);
+      }
+      else
+         ret = DEVICE_ERR;
+
+      return ret;
+   }
+   int Process(unsigned char* buffer, unsigned width, unsigned height, unsigned byteDepth);
+
+   // action interface
+   // ----------------
+   int OnPerformanceTiming(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+private:
+   bool busy_;
+   MM::MMTime performanceTiming_;
+   void*  pSmoothedIm_;
+   unsigned long sizeOfSmoothedIm_;
+   
 
 
-
-
-
-
-
-
-
-
-
-
-
-
+};
 
 
 

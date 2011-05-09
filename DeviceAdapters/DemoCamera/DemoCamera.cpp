@@ -114,6 +114,7 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName("TransposeProcessor", "TransposeProcessor");
    AddAvailableDeviceName("ImageFlipX", "ImageFlipX");
    AddAvailableDeviceName("ImageFlipY", "ImageFlipY");
+   AddAvailableDeviceName("MedianFilter", "MedianFilter");
    AddAvailableDeviceName(g_HubDeviceName, "DHub");
 
    if (DiscoverabilityTest())
@@ -131,6 +132,7 @@ MODULE_API void InitializeModuleData()
       SetDeviceIsDiscoverable("TransposeProcessor", true);
       SetDeviceIsDiscoverable("ImageFlipX", true);
       SetDeviceIsDiscoverable("ImageFlipY", true);
+      SetDeviceIsDiscoverable("MedianFilter", true);
    }
 
 
@@ -210,6 +212,10 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
    else if(strcmp(deviceName, "ImageFlipY") == 0)
    {
       return new ImageFlipY();
+   }
+   else if(strcmp(deviceName, "MedianFilter") == 0)
+   {
+      return new MedianFilter();
    }
    else if (strcmp(deviceName, g_HubDeviceName) == 0)
    {
@@ -895,7 +901,7 @@ int CDemoCamera::ThreadRun (void)
    if (triggerDevice_.length() > 0) {
       MM::Device* triggerDev = GetDevice(triggerDevice_.c_str());
       if (triggerDev != 0) {
-      	char label[256];
+      	//char label[256];
       	//triggerDev->GetLabel(label);
       	LogMessage("trigger requested");
       	triggerDev->SetProperty("Trigger","+");
@@ -2938,12 +2944,10 @@ int TransposeProcessor::Process(unsigned char *pBuffer, unsigned int width, unsi
 
 
 
-
-
 int ImageFlipY::Initialize()
 {
     CPropertyAction* pAct = new CPropertyAction (this, &ImageFlipY::OnPerformanceTiming);
-    (void)CreateProperty("PeformanceTiming", "0", MM::Float, true, pAct); 
+    (void)CreateProperty("PeformanceTiming (microseconds)", "0", MM::Float, true, pAct); 
    return DEVICE_OK;
 }
 
@@ -3014,7 +3018,7 @@ int ImageFlipY::Process(unsigned char *pBuffer, unsigned int width, unsigned int
 int ImageFlipX::Initialize()
 {
     CPropertyAction* pAct = new CPropertyAction (this, &ImageFlipX::OnPerformanceTiming);
-    (void)CreateProperty("PeformanceTiming", "0", MM::Float, true, pAct); 
+    (void)CreateProperty("PeformanceTiming (microseconds)", "0", MM::Float, true, pAct); 
    return DEVICE_OK;
 }
 
@@ -3074,6 +3078,74 @@ int ImageFlipX::Process(unsigned char *pBuffer, unsigned int width, unsigned int
 
    return ret;
 }
+
+///
+int MedianFilter::Initialize()
+{
+    CPropertyAction* pAct = new CPropertyAction (this, &MedianFilter::OnPerformanceTiming);
+    (void)CreateProperty("PeformanceTiming (microseconds)", "0", MM::Float, true, pAct); 
+    (void)CreateProperty("BEWARE", "THIS FILTER MODIFIES DATA, EACH PIXEL IS REPLACED BY 3X3 NEIGHBORHOOD MEDIAN", MM::String, true); 
+   return DEVICE_OK;
+}
+
+   // action interface
+   // ----------------
+int MedianFilter::OnPerformanceTiming(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set( performanceTiming_.getUsec());
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      // -- it's ready only!
+   }
+
+   return DEVICE_OK;
+}
+
+
+int MedianFilter::Process(unsigned char *pBuffer, unsigned int width, unsigned int height, unsigned int byteDepth)
+{
+   if(busy_)
+      return DEVICE_ERR;
+
+   int ret = DEVICE_OK;
+ 
+   busy_ = true;
+   performanceTiming_ = MM::MMTime(0.);
+   MM::MMTime  s0 = GetCurrentMMTime();
+
+
+   if( sizeof(unsigned char) == byteDepth)
+   {
+      ret = Filter( (unsigned char*)pBuffer, width, height);
+   }
+   else if( sizeof(unsigned short) == byteDepth)
+   {
+      ret = Filter( (unsigned short*)pBuffer, width, height);
+   }
+   else if( sizeof(unsigned long) == byteDepth)
+   {
+      ret = Filter( (unsigned long*)pBuffer, width, height);
+   }
+   else if( sizeof(unsigned long long) == byteDepth)
+   {
+      ret =  Filter( (unsigned long long*)pBuffer, width, height);
+   }
+   else
+   {
+      ret =  DEVICE_NOT_SUPPORTED;
+   }
+
+   performanceTiming_ = GetCurrentMMTime() - s0;
+   busy_ = false;
+
+   return ret;
+}
+
+
 
 
 
@@ -3139,7 +3211,7 @@ int DemoHub::GetNumberOfDiscoverableDevices()
       return SIMULATED_ERROR;
 
    GetPeripheralInventory();
-   return peripherals_.size();
+   return  (int) peripherals_.size();
 
 }
 
