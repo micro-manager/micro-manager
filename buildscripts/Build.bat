@@ -162,6 +162,7 @@ popd
 set DEVICELISTBUILDER=1
 cd mmStudio\src
 call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile ../build32.xml install makeDeviceList packInstaller
+popd
 set DEVICELISTBUILDER=""
 
 pushd \Projects\micromanager\Install_Win32\Output

@@ -33,10 +33,10 @@ echo Building native C++ libraries....
 
 echo setup include path for Vizual Studio....
 set include=
-if exist "\Program Files (x86)\Microsoft Visual Studio 9.0\VC\" goto probably_x64
+if "%PROCESSOR_ARCHITECTURE%" == "AMD64" goto _x64
 pushd "\Program Files\Microsoft Visual Studio 9.0\VC\"
 goto setvcvars
-:probably_x64
+:_x64
 pushd "\Program Files (x86)\Microsoft Visual Studio 9.0\VC\
 :setvcvars
 call vcvarsall.bat
@@ -156,12 +156,14 @@ pushd plugins\DataBrowser
 call build.bat
 popd
 
-
 set DEVICELISTBUILDER=1
 pushd mmStudio\src
-rem to do
-rem call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile ../build64.xml install makeDeviceList packInstaller
+if "%PROCESSOR_ARCHITECTURE%" == "AMD64" GOTO AMD64BUILDMACHINE
 call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile ../build64.xml install packInstaller
+GOTO NOTAMD64
+:AMD64BUILDMACHINE
+call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile ../build64.xml install makeDeviceList packInstaller
+:NOTAMD64
 popd
 set DEVICELISTBUILDER=""
 
