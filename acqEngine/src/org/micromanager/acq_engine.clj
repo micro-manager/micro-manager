@@ -213,7 +213,8 @@
     (await-resume)
     (let [now (clock-ms)
           wake-time (if (> now (+ target-time 10)) now target-time)]
-      (state-assoc! :last-wake-time wake-time))))
+      (state-assoc! :last-wake-time wake-time
+                    :reference-z-position (get-z-stage-position (core getFocusDevice))))))
 
 (declare device-agents)
 
@@ -272,8 +273,7 @@
       (or
         (successful? (attempt)) ; first attempt
         (successful? (attempt)) ; second attempt
-        (when false
-          (successful? (reload-device dev) (attempt)))) ; third attempt after reloading
+        (successful? (reload-device dev) (attempt))) ; third attempt after reloading
       (ReportingUtils/showError (str "Device failure: " dev)))))
 
 (defn run-actions [action-map]
