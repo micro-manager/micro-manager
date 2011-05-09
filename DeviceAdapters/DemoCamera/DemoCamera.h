@@ -827,7 +827,6 @@ public:
       }
 
       return ret;
-
    }
 
    
@@ -859,6 +858,116 @@ private:
    unsigned long tempSize_;
    bool busy_;
 };
+
+
+
+//////////////////////////////////////////////////////////////////////////////
+// ImageFlipX class
+// transpose an image
+//////////////////////////////////////////////////////////////////////////////
+class ImageFlipX : public CImageProcessorBase<ImageFlipX>
+{
+public:
+   ImageFlipX () :  busy_(false) {}
+   ~ImageFlipX () {  }
+
+   int Shutdown() {return DEVICE_OK;}
+   void GetName(char* name) const {strcpy(name,"ImageFlipX");}
+
+   int Initialize();
+   bool Busy(void) { return busy_;};
+
+    // 
+   template <typename PixelType> int Flip( PixelType* pI, unsigned int width, unsigned int height)
+   {
+      PixelType tmp;
+      int ret = DEVICE_OK;
+      for( unsigned long iy = 0; iy < height; ++iy)
+      {
+         for( unsigned long ix = 0; ix <  (width>>1) ; ++ix)
+         {
+            tmp = pI[ ix + iy*height];
+            pI[ ix + iy*height] = pI[ width - 1 - ix + iy*height];
+            pI[ width -1 - ix + iy*height] = tmp;
+         }
+      }
+      return ret;
+   }
+
+   int Process(unsigned char* buffer, unsigned width, unsigned height, unsigned byteDepth);
+
+   int OnPerformanceTiming(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+private:
+   bool busy_;
+   MM::MMTime performanceTiming_;
+};
+
+
+//////////////////////////////////////////////////////////////////////////////
+// ImageFlipY class
+// transpose an image
+//////////////////////////////////////////////////////////////////////////////
+class ImageFlipY : public CImageProcessorBase<ImageFlipY>
+{
+public:
+   ImageFlipY () : busy_(false), performanceTiming_(0.) {}
+   ~ImageFlipY () {  }
+
+   int Shutdown() {return DEVICE_OK;}
+   void GetName(char* name) const {strcpy(name,"ImageFlipY");}
+
+   int Initialize();
+   bool Busy(void) { return busy_;};
+
+   template <typename PixelType> int Flip( PixelType* pI, unsigned int width, unsigned int height)
+   {
+      PixelType tmp;
+      int ret = DEVICE_OK;
+      for( unsigned long ix = 0; ix < width ; ++ix)
+      {
+         for( unsigned long iy = 0; iy < (height>>1); ++iy)
+         {
+            tmp = pI[ ix + iy*height];
+            pI[ ix + iy*height] = pI[ ix + (height - 1 - iy)*height];
+            pI[ ix + (height - 1 - iy)*height] = tmp;
+         }
+      }
+      return ret;
+   }
+
+
+   int Process(unsigned char* buffer, unsigned width, unsigned height, unsigned byteDepth);
+
+   // action interface
+   // ----------------
+   int OnPerformanceTiming(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+private:
+   bool busy_;
+   MM::MMTime performanceTiming_;
+
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

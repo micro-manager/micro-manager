@@ -112,6 +112,8 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_DADeviceName, "Demo DA");
    AddAvailableDeviceName(g_MagnifierDeviceName, "Demo Optovar");
    AddAvailableDeviceName("TransposeProcessor", "TransposeProcessor");
+   AddAvailableDeviceName("ImageFlipX", "ImageFlipX");
+   AddAvailableDeviceName("ImageFlipY", "ImageFlipY");
    AddAvailableDeviceName(g_HubDeviceName, "DHub");
 
    if (DiscoverabilityTest())
@@ -127,6 +129,8 @@ MODULE_API void InitializeModuleData()
       SetDeviceIsDiscoverable(g_DADeviceName, true);
       SetDeviceIsDiscoverable(g_MagnifierDeviceName, true);
       SetDeviceIsDiscoverable("TransposeProcessor", true);
+      SetDeviceIsDiscoverable("ImageFlipX", true);
+      SetDeviceIsDiscoverable("ImageFlipY", true);
    }
 
 
@@ -197,8 +201,15 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
 
    else if(strcmp(deviceName, "TransposeProcessor") == 0)
    {
-
       return new TransposeProcessor();
+   }
+   else if(strcmp(deviceName, "ImageFlipX") == 0)
+   {
+      return new ImageFlipX();
+   }
+   else if(strcmp(deviceName, "ImageFlipY") == 0)
+   {
+      return new ImageFlipY();
    }
    else if (strcmp(deviceName, g_HubDeviceName) == 0)
    {
@@ -2858,18 +2869,12 @@ int TransposeProcessor::OnInPlaceAlgorithm(MM::PropertyBase* pProp, MM::ActionTy
 }
 
 
-
-
-
-
-
 int TransposeProcessor::Process(unsigned char *pBuffer, unsigned int width, unsigned int height, unsigned int byteDepth)
 {
    if (g_hub && g_hub->GenerateRandomError())
       return SIMULATED_ERROR;
 
    int ret = DEVICE_OK;
-
    // 
    if( width != height)
       return DEVICE_NOT_SUPPORTED; // problem with tranposing non-square images is that the image buffer
@@ -2929,6 +2934,149 @@ int TransposeProcessor::Process(unsigned char *pBuffer, unsigned int width, unsi
 
    return ret;
 }
+
+
+
+
+
+
+int ImageFlipY::Initialize()
+{
+    CPropertyAction* pAct = new CPropertyAction (this, &ImageFlipY::OnPerformanceTiming);
+    (void)CreateProperty("PeformanceTiming", "0", MM::Float, true, pAct); 
+   return DEVICE_OK;
+}
+
+   // action interface
+   // ----------------
+int ImageFlipY::OnPerformanceTiming(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set( performanceTiming_.getUsec());
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      // -- it's ready only!
+   }
+
+   return DEVICE_OK;
+}
+
+
+int ImageFlipY::Process(unsigned char *pBuffer, unsigned int width, unsigned int height, unsigned int byteDepth)
+{
+   if(busy_)
+      return DEVICE_ERR;
+
+   int ret = DEVICE_OK;
+ 
+   busy_ = true;
+   performanceTiming_ = MM::MMTime(0.);
+   MM::MMTime  s0 = GetCurrentMMTime();
+
+
+   if( sizeof(unsigned char) == byteDepth)
+   {
+      ret = Flip( (unsigned char*)pBuffer, width, height);
+   }
+   else if( sizeof(unsigned short) == byteDepth)
+   {
+      ret = Flip( (unsigned short*)pBuffer, width, height);
+   }
+   else if( sizeof(unsigned long) == byteDepth)
+   {
+      ret = Flip( (unsigned long*)pBuffer, width, height);
+   }
+   else if( sizeof(unsigned long long) == byteDepth)
+   {
+      ret =  Flip( (unsigned long long*)pBuffer, width, height);
+   }
+   else
+   {
+      ret =  DEVICE_NOT_SUPPORTED;
+   }
+
+   performanceTiming_ = GetCurrentMMTime() - s0;
+   busy_ = false;
+
+   return ret;
+}
+
+
+
+
+
+
+
+///
+int ImageFlipX::Initialize()
+{
+    CPropertyAction* pAct = new CPropertyAction (this, &ImageFlipX::OnPerformanceTiming);
+    (void)CreateProperty("PeformanceTiming", "0", MM::Float, true, pAct); 
+   return DEVICE_OK;
+}
+
+   // action interface
+   // ----------------
+int ImageFlipX::OnPerformanceTiming(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set( performanceTiming_.getUsec());
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      // -- it's ready only!
+   }
+
+   return DEVICE_OK;
+}
+
+
+int ImageFlipX::Process(unsigned char *pBuffer, unsigned int width, unsigned int height, unsigned int byteDepth)
+{
+   if(busy_)
+      return DEVICE_ERR;
+
+   int ret = DEVICE_OK;
+ 
+   busy_ = true;
+   performanceTiming_ = MM::MMTime(0.);
+   MM::MMTime  s0 = GetCurrentMMTime();
+
+
+   if( sizeof(unsigned char) == byteDepth)
+   {
+      ret = Flip( (unsigned char*)pBuffer, width, height);
+   }
+   else if( sizeof(unsigned short) == byteDepth)
+   {
+      ret = Flip( (unsigned short*)pBuffer, width, height);
+   }
+   else if( sizeof(unsigned long) == byteDepth)
+   {
+      ret = Flip( (unsigned long*)pBuffer, width, height);
+   }
+   else if( sizeof(unsigned long long) == byteDepth)
+   {
+      ret =  Flip( (unsigned long long*)pBuffer, width, height);
+   }
+   else
+   {
+      ret =  DEVICE_NOT_SUPPORTED;
+   }
+
+   performanceTiming_ = GetCurrentMMTime() - s0;
+   busy_ = false;
+
+   return ret;
+}
+
+
+
 
 
 int DemoHub::Initialize()
