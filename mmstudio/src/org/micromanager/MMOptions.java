@@ -37,6 +37,7 @@ public class MMOptions {
    private static final String DISPLAY_BACKGROUND = "displayBackground";
    private static final String STARTUP_SCRIPT_FILE = "startupScript";
    private static final String CONSERVE_RAM = "conserveRam";
+   private static final String AUTORELOAD_DEVICES = "autoreloadDevices";
    
    public boolean debugLogEnabled_ = false;
    public boolean doNotAskForConfigFile_ = false;
@@ -45,6 +46,7 @@ public class MMOptions {
    public String displayBackground_ = "Day";
    public String startupScript_ = "MMStartup.bsh";
    boolean conserveRam_ = false;
+   boolean autoreloadDevices_ = false;
    
    public void saveSettings() {
       Preferences root = Preferences.userNodeForPackage( this.getClass());
@@ -54,9 +56,11 @@ public class MMOptions {
       prefs.putBoolean(SKIP_CONFIG, doNotAskForConfigFile_);
       prefs.putBoolean(CLOSE_ON_EXIT, closeOnExit_);
       prefs.putBoolean(CONSERVE_RAM, conserveRam_);
+      prefs.putBoolean(AUTORELOAD_DEVICES, conserveRam_);
       prefs.putInt(BUFFSIZE_MB, circularBufferSizeMB_);
       prefs.put(DISPLAY_BACKGROUND, displayBackground_);
-      prefs.put(STARTUP_SCRIPT_FILE, startupScript_);   }
+      prefs.put(STARTUP_SCRIPT_FILE, startupScript_);
+   }
    
    public void loadSettings() {
       Preferences root = Preferences.userNodeForPackage(this.getClass());
@@ -69,5 +73,6 @@ public class MMOptions {
       displayBackground_ = prefs.get(DISPLAY_BACKGROUND, displayBackground_);
       startupScript_ = prefs.get(STARTUP_SCRIPT_FILE, startupScript_);
       conserveRam_ = prefs.getBoolean(CONSERVE_RAM, conserveRam_);
+      autoreloadDevices_ = prefs.getBoolean(AUTORELOAD_DEVICES, autoreloadDevices_);
    }
 }

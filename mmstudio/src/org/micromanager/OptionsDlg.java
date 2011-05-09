@@ -274,9 +274,21 @@ public class OptionsDlg extends MMDialog {
       });
       conserveRamCheckBox.setText("Conserve RAM");
       getContentPane().add(conserveRamCheckBox);
-      springLayout.putConstraint(SpringLayout.NORTH, conserveRamCheckBox, -20, SpringLayout.NORTH, clearLogFileButton);
-      springLayout.putConstraint(SpringLayout.WEST, conserveRamCheckBox, 20, SpringLayout.EAST, clearLogFileButton);
+      springLayout.putConstraint(SpringLayout.NORTH, conserveRamCheckBox, 0, SpringLayout.NORTH, clearLogFileButton);
+      springLayout.putConstraint(SpringLayout.WEST, conserveRamCheckBox, 5, SpringLayout.EAST, clearLogFileButton);
       conserveRamCheckBox.setSelected(opts_.conserveRam_);
+
+      final JCheckBox autoreloadDevicesCheckBox = new JCheckBox();
+      autoreloadDevicesCheckBox.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent arg0) {
+            opts_.autoreloadDevices_ = autoreloadDevicesCheckBox.isSelected();
+         }
+      });
+      autoreloadDevicesCheckBox.setText("Auto-reload devices (Danger!)");
+      getContentPane().add(autoreloadDevicesCheckBox);
+      springLayout.putConstraint(SpringLayout.NORTH, autoreloadDevicesCheckBox, 20, SpringLayout.NORTH, conserveRamCheckBox);
+      springLayout.putConstraint(SpringLayout.WEST, autoreloadDevicesCheckBox, 0, SpringLayout.WEST, conserveRamCheckBox);
+      autoreloadDevicesCheckBox.setSelected(opts_.autoreloadDevices_);
 
       final JCheckBox closeOnExitCheckBox = new JCheckBox();
       closeOnExitCheckBox.addActionListener(new ActionListener() {
@@ -290,8 +302,8 @@ public class OptionsDlg extends MMDialog {
       //springLayout.putConstraint(SpringLayout.EAST, closeOnExitCheckBox, 220, SpringLayout.WEST, getContentPane());
       //springLayout.putConstraint(SpringLayout.WEST, closeOnExitCheckBox, 0, SpringLayout.WEST, debugLogEnabledCheckBox);
       //springLayout.putConstraint(SpringLayout.SOUTH, closeOnExitCheckBox, 60, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, closeOnExitCheckBox, 0, SpringLayout.NORTH, clearLogFileButton);
-      springLayout.putConstraint(SpringLayout.WEST, closeOnExitCheckBox, 20, SpringLayout.EAST, clearLogFileButton);
+      springLayout.putConstraint(SpringLayout.NORTH, closeOnExitCheckBox, 20, SpringLayout.NORTH, autoreloadDevicesCheckBox);
+      springLayout.putConstraint(SpringLayout.WEST, closeOnExitCheckBox, 0, SpringLayout.WEST, autoreloadDevicesCheckBox);
       closeOnExitCheckBox.setSelected(opts_.closeOnExit_);
 
 

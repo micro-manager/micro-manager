@@ -2158,6 +2158,10 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       return options_.conserveRam_;
    }
 
+   public boolean getAutoreloadOption() {
+      return options_.autoreloadDevices_;
+   }
+
    private void updateTitle() {
       this.setTitle("System: " + sysConfigFile_);
    }
