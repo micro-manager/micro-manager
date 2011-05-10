@@ -194,6 +194,23 @@
 
 ;; acq-engine
 
+(defmacro successful? [& body]
+  `(try (do ~@body true)
+     (catch Exception e#
+            (do (ReportingUtils/logError e#) false))))
+
+(defmacro device-best-effort [dev & body]
+  `(let [attempt# #(do (wait-for-device ~dev) ~@body)]
+    (when-not
+      (or
+        (successful? (attempt#)) ; first attempt
+        (do (log "second attempt") (successful? (attempt#)))
+        (do (log "reload and try a third time")
+            (successful? (reload-device ~dev) (attempt#)))) ; third attempt after reloading
+      (throw (Exception. (str "Device failure: " ~dev)))
+      (swap! state assoc :stop true)
+      nil)))
+
 (defn get-z-stage-position [stage]
   (if-not (empty? stage) (core getPosition stage) 0))
 
@@ -261,22 +278,6 @@
     (when-let [exposure (:exposure event)]
       (list [(core getCameraDevice) #(core setExposure exposure)]))))
 
-(defmacro successful? [& body]
-  `(try (do ~@body true)
-     (catch Exception e#
-            (do (ReportingUtils/logError e#) false))))
-
-
-(defn device-best-effort [dev fun]
-  (let [attempt #(do (wait-for-device dev) (fun))]
-    (when-not
-      (or
-        (successful? (attempt)) ; first attempt
-        (successful? (attempt)) ; second attempt
-        (successful? (reload-device dev) (attempt))) ; third attempt after reloading
-      (ReportingUtils/showError (str "Device failure: " dev ".\nAborting acquisition."))
-      (swap! state assoc :stop true))))
-
 (defn run-actions [action-map]
   (if run-devices-parallel
     (do
@@ -287,7 +288,7 @@
       (doall (map (partial await-for 10000) (vals device-agents))))
     (do
       (doseq [[dev action] action-map]
-        (device-best-effort dev action)))))
+        (device-best-effort dev (action))))))
 
 (defn run-autofocus []
   (.. gui getAutofocusManager getDevice fullFocus)
@@ -296,13 +297,17 @@
 
 (defn snap-image [open-before close-after]
   (with-core-setting [getAutoShutter setAutoShutter false]
-    (when open-before
-      (core setShutterOpen true)
-      (wait-for-device (core getShutterDevice)))
-    (core snapImage)
-    (when close-after
-      (core setShutterOpen false))
-      (wait-for-device (core getShutterDevice))))
+    (let [shutter (core getShutterDevice)]
+      (device-best-effort shutter
+        (when open-before
+          (core setShutterOpen true)
+          (wait-for-device (core getShutterDevice))))
+      (device-best-effort (core getCameraDevice)
+        (core snapImage))
+      (device-best-effort shutter
+        (when close-after
+          (core setShutterOpen false))
+          (wait-for-device (core getShutterDevice))))))
 
 (defn init-burst [length]
   (core setAutoShutter (@state :init-auto-shutter))
