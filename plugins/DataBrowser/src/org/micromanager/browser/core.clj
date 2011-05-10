@@ -244,7 +244,10 @@
         {"Comment" (get-in d+c ["Comments" "Summary"])
          "FrameComments" (dissoc (get d+c "Comments") "Summary")})
       (let [data-dir (File. data-set)
-            path (if (pos? (get raw-summary-map "Positions"))
+            position-count (get raw-summary-map "Positions")
+            position (get raw-summary-map "Position")
+            path (if (or (not (empty? position))
+                         (and position-count (pos? position-count)))
                    (get-file-parent data-dir)
                    (.getAbsolutePath data-dir))]
         {"Path"     path
@@ -266,12 +269,11 @@
                 (try
                   (Thread/sleep 5)
                   (let [location (.take pending-locations)]
-                    (if-not (= location pending-locations)
-                      (do (doseq [data-set (find-data-sets location)]
-                           ; (println "data-set:" data-set)
-                            (.put pending-data-sets [data-set location]))
-                          (recur))
-                    nil))
+                    (when-not (= location pending-locations)
+                      (doseq [data-set (find-data-sets location)]
+                       ; (println "data-set:" data-set)
+                        (.put pending-data-sets [data-set location]))
+                        (recur)))
                   (catch Exception e nil)))))
           "data browser scanning thread") .start))
 
