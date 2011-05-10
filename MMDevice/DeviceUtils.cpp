@@ -161,6 +161,17 @@ void CDeviceUtils::NapMicros(long period)
 }
 
 
+bool CDeviceUtils::CheckEnvironment(std::string env)
+{
+   bool bvalue = false;
+   if( 0 < env.length())
+   {
+      char initial =  (char)tolower(env.at(0));
+      bvalue = ('0' != initial) && ('f' != initial) && ( 'n' != initial);
+   }
+   return bvalue;
+}
+
 
 
 #ifdef _WINDOWS
