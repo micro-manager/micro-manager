@@ -69,8 +69,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ASIwptr", "..\DeviceAdapter
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ThorlabsFilterWheel", "..\DeviceAdapters\ThorlabsFilterWheel\ThorlabsFilterWheel.vcproj", "{DEE8AF34-2F99-4AA8-AFDA-848DE44F1DB2}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "PCO-Generic", "..\DeviceAdapters\PCO_Generic\MicroManager.vcproj", "{391502E7-BAAF-42DF-9327-2114B73FF8DF}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ThorlabsSC10", "..\DeviceAdapters\ThorlabsSC10\ThorlabsSC10.vcproj", "{DEE8AF34-2F99-4AA8-AFDA-848DE44F1DB3}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LeicaDMR", "..\DeviceAdapters\LeicaDMR\LeicaDMR.vcproj", "{EB02D0C4-F80E-4C5A-9B8E-C5760E02F8BE}"
@@ -90,8 +88,6 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "GenericSLM", "..\DeviceAdapters\GenericSLM\GenericSLM.vcproj", "{E3DA287B-6861-49E2-8484-B08DBA020F7D}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AndorLaserCombiner", "..\DeviceAdapters\AndorLaserCombiner\AndorLaserCombiner.vcproj", "{489AF9AB-7A0E-43DE-8483-3E4B8CCCBFCD}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "mmgrProgRes", "..\DeviceAdapters\Jenoptik\mmgrProgRes.vcproj", "{9D891399-2C51-4BDA-8F44-3A8A506657BA}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BaumerOptronic", "..\SecretDeviceAdapters\BaumerOptronic\BaumerOptronic.vcproj", "{B06A629B-7EAA-4265-A4C0-8A0EC03B00B0}"
 EndProject
@@ -419,14 +415,6 @@ Global
 		{DEE8AF34-2F99-4AA8-AFDA-848DE44F1DB2}.Release|Win32.Build.0 = Release|Win32
 		{DEE8AF34-2F99-4AA8-AFDA-848DE44F1DB2}.Release|x64.ActiveCfg = Release|x64
 		{DEE8AF34-2F99-4AA8-AFDA-848DE44F1DB2}.Release|x64.Build.0 = Release|x64
-		{391502E7-BAAF-42DF-9327-2114B73FF8DF}.Debug|Win32.ActiveCfg = Debug|Win32
-		{391502E7-BAAF-42DF-9327-2114B73FF8DF}.Debug|Win32.Build.0 = Debug|Win32
-		{391502E7-BAAF-42DF-9327-2114B73FF8DF}.Debug|x64.ActiveCfg = Debug|x64
-		{391502E7-BAAF-42DF-9327-2114B73FF8DF}.Debug|x64.Build.0 = Debug|x64
-		{391502E7-BAAF-42DF-9327-2114B73FF8DF}.Release|Win32.ActiveCfg = Release|Win32
-		{391502E7-BAAF-42DF-9327-2114B73FF8DF}.Release|Win32.Build.0 = Release|Win32
-		{391502E7-BAAF-42DF-9327-2114B73FF8DF}.Release|x64.ActiveCfg = Release|x64
-		{391502E7-BAAF-42DF-9327-2114B73FF8DF}.Release|x64.Build.0 = Release|x64
 		{DEE8AF34-2F99-4AA8-AFDA-848DE44F1DB3}.Debug|Win32.ActiveCfg = Debug|Win32
 		{DEE8AF34-2F99-4AA8-AFDA-848DE44F1DB3}.Debug|Win32.Build.0 = Debug|Win32
 		{DEE8AF34-2F99-4AA8-AFDA-848DE44F1DB3}.Debug|x64.ActiveCfg = Debug|x64
@@ -507,14 +495,6 @@ Global
 		{489AF9AB-7A0E-43DE-8483-3E4B8CCCBFCD}.Release|Win32.Build.0 = Release|Win32
 		{489AF9AB-7A0E-43DE-8483-3E4B8CCCBFCD}.Release|x64.ActiveCfg = Release|x64
 		{489AF9AB-7A0E-43DE-8483-3E4B8CCCBFCD}.Release|x64.Build.0 = Release|x64
-		{9D891399-2C51-4BDA-8F44-3A8A506657BA}.Debug|Win32.ActiveCfg = Debug|Win32
-		{9D891399-2C51-4BDA-8F44-3A8A506657BA}.Debug|Win32.Build.0 = Debug|Win32
-		{9D891399-2C51-4BDA-8F44-3A8A506657BA}.Debug|x64.ActiveCfg = Debug|x64
-		{9D891399-2C51-4BDA-8F44-3A8A506657BA}.Debug|x64.Build.0 = Debug|x64
-		{9D891399-2C51-4BDA-8F44-3A8A506657BA}.Release|Win32.ActiveCfg = Release|Win32
-		{9D891399-2C51-4BDA-8F44-3A8A506657BA}.Release|Win32.Build.0 = Release|Win32
-		{9D891399-2C51-4BDA-8F44-3A8A506657BA}.Release|x64.ActiveCfg = Release|x64
-		{9D891399-2C51-4BDA-8F44-3A8A506657BA}.Release|x64.Build.0 = Release|x64
 		{B06A629B-7EAA-4265-A4C0-8A0EC03B00B0}.Debug|Win32.ActiveCfg = Debug|Win32
 		{B06A629B-7EAA-4265-A4C0-8A0EC03B00B0}.Debug|Win32.Build.0 = Debug|Win32
 		{B06A629B-7EAA-4265-A4C0-8A0EC03B00B0}.Debug|x64.ActiveCfg = Debug|x64
