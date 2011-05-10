@@ -15,5 +15,17 @@ libmmgr_dal_GPhoto_la_LIBADD += $(LIBGPHOTO2) -lltdl
 
 install:
 	cp .libs/libmmgr_dal_GPhoto.so $(DESTDIR)$(DEVICEADAPTERPATH)/libmmgr_dal_GPhoto$(MMSUFFIX)
+	test -d $(DESTDIR)$(DEVICEADAPTERPATH)/libgphoto2 || mkdir $(DESTDIR)$(DEVICEADAPTERPATH)/libgphoto2
+	test -d $(DESTDIR)$(DEVICEADAPTERPATH)/libgphoto2/libgphoto2 || mkdir $(DESTDIR)$(DEVICEADAPTERPATH)/libgphoto2/libgphoto2
+	test -d $(DESTDIR)$(DEVICEADAPTERPATH)/libgphoto2/libgphoto2_port || mkdir $(DESTDIR)$(DEVICEADAPTERPATH)/libgphoto2/libgphoto2_port
+	rm -rf $(DESTDIR)$(DEVICEADAPTERPATH)/libgphoto2/libgphoto2/*
+	rm -rf $(DESTDIR)$(DEVICEADAPTERPATH)/libgphoto2/libgphoto2_port/*
+	cp $(GPHOTO2LIBDIR)/libgphoto2/$(GPHOTO2_VERSION)/*.so $(DESTDIR)$(DEVICEADAPTERPATH)/libgphoto2/libgphoto2/
+	cp $(GPHOTO2LIBDIR)/libgphoto2_port/$(GPHOTO2_PORT_VERSION)/*.so $(DESTDIR)$(DEVICEADAPTERPATH)/libgphoto2/libgphoto2_port/
+#install_name_tool -change $(GPHOTO2LIBDIR)/libgphoto2.2.dylib @loader_path/libgphoto2/libgphoto2.2.dylib $(DESTDIR)$(DEVICEADAPTERPATH)/libmmgr_dal_GPhoto$(MMSUFFIX)
+#install_name_tool -change $(GPHOTO2LIBDIR)/libgphoto2_port.0.dylib @loader_path/libgphoto2/libgphoto2_port.0.dylib $(DESTDIR)$(DEVICEADAPTERPATH)/libmmgr_dal_GPhoto$(MMSUFFIX)
+
+
+
 
 EXTRA_DIST = license.txt

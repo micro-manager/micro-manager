@@ -122,11 +122,14 @@ if test x$GPHOTO2INCDIR = xNO; then
    AC_MSG_RESULT([not found])
 else
    buildsc=true
+   # todo: dynamically determine GPhoto2 version
+   GPHOTO2_VERSION="2.4.10.1"
+   GPHOTO2_PORT_VERSION="0.8.0"
    AC_CHECK_HEADERS([$GPHOTO2INCDIR/gphoto2.h])
    if test -z "$LIBGPHOTO2" ; then
       case $host in
          *-*-linux*)
-            LIBGPHOTO2="-lusb"
+            LIBGPHOTO2="-lgphoto2"
             ;;
          *)
             AC_FIND_FILE([libgphoto2.a], [/usr/lib /usr/lib64 /usr/local/$ARCH/lib], GPHOTO2LIBDIR)
@@ -135,12 +138,15 @@ else
                AC_MSG_RESULT(["libgphoto2 not found"])
             else
                AC_MSG_RESULT(["libgphoto2.a" found])
-               LIBGPHOTO2="$GPHOTO2LIBDIR/libgphoto2.a $GPHOTO2LIBDIR/libgphoto2_port.a $GPHOTO2LIBDIR/libgphoto2/2.4.10.1/*.a"
+               LIBGPHOTO2="$GPHOTO2LIBDIR/libgphoto2.a $GPHOTO2LIBDIR/libgphoto2_port.a"
             fi
          ;;
       esac
    fi
 fi
+AC_SUBST(GPHOTO2LIBDIR)
+AC_SUBST(GPHOTO2_VERSION)
+AC_SUBST(GPHOTO2_PORT_VERSION)
 AC_SUBST(LIBGPHOTO2)
 
 # LibFreeImage
