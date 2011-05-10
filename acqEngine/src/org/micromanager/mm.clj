@@ -16,7 +16,7 @@
 (ns org.micromanager.mm
   (:import [org.micromanager MMStudioMainFrame]
            [org.micromanager.navigation MultiStagePosition]
-           [mmcorej Configuration DeviceType Metadata]
+           [mmcorej Configuration Metadata]
            [ij IJ]))
 
 (declare gui)
@@ -128,15 +128,16 @@
     (zipmap ks (map #(.get fd %) ks))))
 
 (defn reload-device [dev]
-  (when (. gui getAutoReloadOption)
+  (when (. gui getAutoreloadOption)
     (log "Attempting to reload " dev "...")
     (let [props (filter #(= (first %) dev)
                         (get-system-config-cached))
           prop-map (into {} (map #(-> % next vec) props))
           library (core getDeviceLibrary dev)
           name-in-library (core getDeviceNameInLibrary dev)
-          state-labels (when (= DeviceType/StateDevice (core getDeviceType dev))
-                         (seq (core getStateLabels "Dichroic")))]
+          state-device (.. Class (forName "mmcorej.DeviceType") (getField "StateDevice") (get nil))
+          state-labels (when (= state-device (core getDeviceType dev))
+                         (seq (core getStateLabels dev)))]
       (core unloadDevice dev)
       (core loadDevice dev library name-in-library)
       (let [init-props (select-keys prop-map
@@ -144,9 +145,9 @@
                                             (core getDevicePropertyNames dev)))]
         (doseq [[prop val] init-props]
           (core setProperty dev prop val)))
+      (core initializeDevice dev)
       (when state-labels
         (dotimes [i (count state-labels)]
-          (core defineStateLabel dev i (nth state-labels i))))
-      (core initializeDevice dev))
+          (core defineStateLabel dev i (nth state-labels i)))))
     (log "...reloading of " dev " has apparently succeeded.")))
 

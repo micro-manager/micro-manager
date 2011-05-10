@@ -5,7 +5,6 @@ MMAcqEngine.jar: \
 	test -d classes || mkdir classes
 	rm -rf classes/*
 	cp -R src/org classes/
-	ln -s ../MMCoreJ_wrap/.libs/libMMCoreJ_wrap.so ./libMMCoreJ_wrap$(JAVASO)
 	java -cp ../MMCoreJ_wrap/MMCoreJ.jar:$(CLASSEXT)/clojure.jar:$(IJJARPATH):../mmstudio/MMJ_.jar:$(CLASSEXT)/bsh-2.0b4.jar:./src -Djava.library.path=. -Djava.awt.headless=true -Dclojure.compile.path=classes -server clojure.lang.Compile org.micromanager.acq-engine
 	jar cvf MMAcqEngine.jar -C classes/ .    
 

@@ -194,6 +194,9 @@
 
 ;; acq-engine
 
+(defn get-z-stage-position [stage]
+  (if-not (empty? stage) (core getPosition stage) 0))
+
 (defn await-resume []
   (while (and (:pause @state) (not (:stop @state))) (Thread/sleep 5)))
 
@@ -226,9 +229,6 @@
   (def device-agents
     (let [devs (seq (core getLoadedDevices))]
       (zipmap devs (repeatedly (count devs) #(agent nil))))))
-
-(defn get-z-stage-position [stage]
-  (if-not (empty? stage) (core getPosition stage) 0))
   
 (defn set-z-stage-position [stage pos]
   (when (core isContinuousFocusEnabled)
