@@ -78,7 +78,9 @@
   (-> @browser :frame
       (.setTitle
         (str "Micro-Manager Data Set Browser ("
-             (if (empty? pending-data-sets) "Idle" "Scanning")
+             (if (and (empty? pending-data-sets)
+                      (empty? pending-locations))
+               "Idle" "Scanning")
              " \u2014 " (count @current-data) " images)"))))
 
 (defn get-icon [name]
