@@ -274,7 +274,8 @@
         (successful? (attempt)) ; first attempt
         (successful? (attempt)) ; second attempt
         (successful? (reload-device dev) (attempt))) ; third attempt after reloading
-      (ReportingUtils/showError (str "Device failure: " dev)))))
+      (ReportingUtils/showError (str "Device failure: " dev ".\nAborting acquisition."))
+      (swap! state assoc :stop true))))
 
 (defn run-actions [action-map]
   (if run-devices-parallel
