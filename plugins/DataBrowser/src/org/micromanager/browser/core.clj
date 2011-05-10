@@ -533,7 +533,8 @@ inside an existing location in your collection."
   (reify ImageStorageListener
     (imageStorageFinished [_ path]
       ;(println "image storage:" path)
-      (.put pending-data-sets [path ""]))))
+      (doseq [data-set (find-data-sets path)]
+        (.put pending-data-sets [data-set ""])))))
 
 (defn refresh-collection []
   (clear-queues)
