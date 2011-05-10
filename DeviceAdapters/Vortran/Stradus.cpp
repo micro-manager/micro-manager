@@ -67,8 +67,8 @@ Stradus::Stradus() :
    initialized_(false),
    busy_(false),
    answerTimeoutMs_(1000),
-   power_(0.00),
-   pulPwr_(0.00),
+   power_(1.00),
+   pulPwr_(1),
    laserOn_("Undefined"),
    epc_("Undefined"),
    digMod_("Undefined"),
@@ -304,22 +304,30 @@ int Stradus::OnBaseT(MM::PropertyBase* pProp, MM::ActionType eAct)
      std::ostringstream command,parsed;
      std::vector<std::string> tokens;
      std::string delims="=";
-
-     command << "?bpt";
-     int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-     if (ret != DEVICE_OK) return ret;
-     CDeviceUtils::SleepMs(50);
-     ret = GetSerialAnswer(port_.c_str(), "\r\n", baseT_);
-     ret = GetSerialAnswer(port_.c_str(), "\r\n", baseT_);
-     PurgeComPort(port_.c_str());
-     if (ret != DEVICE_OK) return ret;
-
-     Stradus::Tokenize(baseT_, tokens, delims);
-     if ( 2 == tokens.size())
+     
+     if(eAct==MM::BeforeGet)
      {
-		baseT_ = tokens.at(1);
+        command << "?bpt";
+        int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+        if (ret != DEVICE_OK) return ret;
+        CDeviceUtils::SleepMs(50);
+        ret = GetSerialAnswer(port_.c_str(), "\r\n", baseT_);
+        ret = GetSerialAnswer(port_.c_str(), "\r\n", baseT_);
+        PurgeComPort(port_.c_str());
+        if (ret != DEVICE_OK) return ret;
+
+        Stradus::Tokenize(baseT_, tokens, delims);
+        if ( 2 == tokens.size())
+        {
+		    baseT_ = tokens.at(1);
+        }
+        pProp->Set(baseT_.c_str());
      }
-     pProp->Set(baseT_.c_str());
+     else 
+        if(eAct==MM::AfterSet)
+        {
+            //Read Only, Do nothing
+        }
 
      return DEVICE_OK;
 
@@ -445,25 +453,34 @@ int Stradus::OnPulPwrStatus(MM::PropertyBase* pProp, MM::ActionType eAct)
      std::ostringstream command;
      std::vector<std::string> tokens;
      std::string delims="=";
+     
+     if(eAct==MM::BeforeGet)
+     {
 
-     command << "?pp";
-     int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-     if (ret != DEVICE_OK) return ret;
-     CDeviceUtils::SleepMs(50);
-     ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-     ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-     PurgeComPort(port_.c_str());
-     if (ret != DEVICE_OK) return ret;
+        command << "?pp";
+        int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+        if (ret != DEVICE_OK) return ret;
+        CDeviceUtils::SleepMs(50);
+        ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+        ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+        PurgeComPort(port_.c_str());
+        if (ret != DEVICE_OK) return ret;
      
 
-     Stradus::Tokenize(answer, tokens, delims);
-     if ( 2 == tokens.size())
-     {
-		answer=tokens.at(1).c_str();
+        Stradus::Tokenize(answer, tokens, delims);
+        if ( 2 == tokens.size())
+        {
+		    answer=tokens.at(1).c_str();
+        }
+        pProp->Set(atol(answer.c_str()));
      }
-     pProp->Set(atol(answer.c_str()));
+     else 
+        if(eAct==MM::AfterSet)
+        {
+            //Read Only, Do Nothing
+        }
 
-     return DEVICE_OK;
+        return DEVICE_OK;
 
 }
 
@@ -498,11 +515,11 @@ int Stradus::OnPulPwr(MM::PropertyBase* pProp, MM::ActionType eAct)
      }
      else if (eAct == MM::AfterSet)
      {
-          pProp->Get((double&)pulPwr_);
+          pProp->Get((long&)pulPwr_);
           command << "pp=" << pulPwr_;
           int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
           if (ret != DEVICE_OK) return ret;
-          CDeviceUtils::SleepMs(100);
+          CDeviceUtils::SleepMs(1000);
           ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
           ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
           PurgeComPort(port_.c_str());
@@ -547,7 +564,7 @@ int Stradus::OnPower(MM::PropertyBase* pProp, MM::ActionType eAct)
           command << "lp=" << power_;
           int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
           if (ret != DEVICE_OK) return ret;
-          CDeviceUtils::SleepMs(100);
+          CDeviceUtils::SleepMs(500);
           ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
           ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
           PurgeComPort(port_.c_str());
@@ -564,22 +581,30 @@ int Stradus::OnPowerStatus(MM::PropertyBase* pProp, MM::ActionType eAct)
      std::ostringstream command;
      std::vector<std::string> tokens;
      std::string delims="=";
-
-     command << "?lp";
-     int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-     if (ret != DEVICE_OK) return ret;
-     CDeviceUtils::SleepMs(50);
-     ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-     ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-     PurgeComPort(port_.c_str());
-     if (ret != DEVICE_OK) return ret;
-
-     Stradus::Tokenize(answer, tokens, delims);
-     if ( 2 == tokens.size())
+     
+     if(eAct==MM::BeforeGet)
      {
-		answer=tokens.at(1).c_str();
+        command << "?lp";
+        int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+        if (ret != DEVICE_OK) return ret;
+        CDeviceUtils::SleepMs(50);
+        ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+        ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+        PurgeComPort(port_.c_str());
+        if (ret != DEVICE_OK) return ret;
+
+        Stradus::Tokenize(answer, tokens, delims);
+        if ( 2 == tokens.size())
+        {
+		    answer=tokens.at(1).c_str();
+        }
+        pProp->Set(answer.c_str());
      }
-     pProp->Set(atof(answer.c_str()));
+     else
+        if(eAct==MM::AfterSet)
+        {
+            //Read Only, Do Nothing
+        }
 
      return DEVICE_OK;
 }
@@ -590,22 +615,31 @@ int Stradus::OnHours(MM::PropertyBase* pProp, MM::ActionType eAct)
      std::ostringstream command;
      std::vector<std::string> tokens;
      std::string delims="=";
-
-     command << "?lh";
-     int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-     if (ret != DEVICE_OK) return ret;
-     CDeviceUtils::SleepMs(50);
-     ret = GetSerialAnswer(port_.c_str(), "\r\n", hours_);
-     ret = GetSerialAnswer(port_.c_str(), "\r\n", hours_);
-     PurgeComPort(port_.c_str());
-     if (ret != DEVICE_OK) return ret;
-
-     Stradus::Tokenize(hours_, tokens, delims);
-     if ( 2 == tokens.size())
+     
+     if(eAct==MM::BeforeGet)
      {
-		hours_=tokens.at(1).c_str();
+
+        command << "?lh";
+        int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+        if (ret != DEVICE_OK) return ret;
+        CDeviceUtils::SleepMs(50);
+        ret = GetSerialAnswer(port_.c_str(), "\r\n", hours_);
+        ret = GetSerialAnswer(port_.c_str(), "\r\n", hours_);
+        PurgeComPort(port_.c_str());
+        if (ret != DEVICE_OK) return ret;
+
+        Stradus::Tokenize(hours_, tokens, delims);
+        if ( 2 == tokens.size())
+        {
+		    hours_=tokens.at(1).c_str();
+        }
+        pProp->Set(hours_.c_str());
      }
-     pProp->Set(hours_.c_str());
+     else
+         if(eAct==MM::AfterSet)
+         {
+             //Read Only, Do Nothing
+         }
 
      return DEVICE_OK;
 }
@@ -614,22 +648,32 @@ int Stradus::OnFaultCode(MM::PropertyBase* pProp, MM::ActionType eAct)
      std::ostringstream command;
      std::vector<std::string> tokens;
      std::string delims="=";
-
-     command << "?fc";
-     int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-     if (ret != DEVICE_OK) return ret;
-     CDeviceUtils::SleepMs(50);
-     ret = GetSerialAnswer(port_.c_str(), "\r\n", faultCode_);
-     ret = GetSerialAnswer(port_.c_str(), "\r\n", faultCode_);
-     PurgeComPort(port_.c_str());
-     if (ret != DEVICE_OK) return ret;
-
-     Stradus::Tokenize(faultCode_, tokens, delims);
-     if ( 2 == tokens.size())
+     
+     if(eAct==MM::BeforeGet)
      {
-		faultCode_=tokens.at(1).c_str();
+
+        command << "?fc";
+        int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+        if (ret != DEVICE_OK) return ret;
+        CDeviceUtils::SleepMs(50);
+        ret = GetSerialAnswer(port_.c_str(), "\r\n", faultCode_);
+        ret = GetSerialAnswer(port_.c_str(), "\r\n", faultCode_);
+        PurgeComPort(port_.c_str());
+        if (ret != DEVICE_OK) return ret;
+
+        Stradus::Tokenize(faultCode_, tokens, delims);
+        if ( 2 == tokens.size())
+        {
+		    faultCode_=tokens.at(1).c_str();
+        }
+        pProp->Set(faultCode_.c_str());
+     
      }
-     pProp->Set(faultCode_.c_str());
+     else
+        if(eAct==MM::AfterSet)
+        {
+            //Read Only, Do Nothing
+        }
 
      return DEVICE_OK;
 
@@ -640,22 +684,31 @@ int Stradus::OnSerialNumber(MM::PropertyBase* pProp, MM::ActionType eAct)
      std::ostringstream command,parsed;
      std::vector<std::string> tokens;
      std::string delims="=";
-
-     command << "?li";
-     int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-     if (ret != DEVICE_OK) return ret;
-     CDeviceUtils::SleepMs(50);
-     ret = GetSerialAnswer(port_.c_str(), "\r\n", serialNumber_);
-     ret = GetSerialAnswer(port_.c_str(), "\r\n", serialNumber_);
-     PurgeComPort(port_.c_str());
-     if (ret != DEVICE_OK) return ret;
-
-     Stradus::Tokenize(serialNumber_, tokens, delims);
-     if ( 2 == tokens.size())
+     
+     if(eAct==MM::BeforeGet)
      {
-		serialNumber_ = tokens.at(1);
+
+        command << "?li";
+        int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+        if (ret != DEVICE_OK) return ret;
+        CDeviceUtils::SleepMs(50);
+        ret = GetSerialAnswer(port_.c_str(), "\r\n", serialNumber_);
+        ret = GetSerialAnswer(port_.c_str(), "\r\n", serialNumber_);
+        PurgeComPort(port_.c_str());
+        if (ret != DEVICE_OK) return ret;
+
+        Stradus::Tokenize(serialNumber_, tokens, delims);
+        if ( 2 == tokens.size())
+        {
+		    serialNumber_ = tokens.at(1);
+        }
+        pProp->Set(serialNumber_.c_str());
      }
-     pProp->Set(serialNumber_.c_str());
+     else
+        if(eAct==MM::AfterSet)
+        {
+            //Read Only, Do Nothing
+        }
 
      return DEVICE_OK;
 }
@@ -665,23 +718,32 @@ int Stradus::OnVersion(MM::PropertyBase* pProp, MM::ActionType eAct)
      std::ostringstream command;
      std::vector<std::string> tokens;
      std::string delims="=";
-
-     command << "?fv";
-     int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-     if (ret != DEVICE_OK) return ret;
-     CDeviceUtils::SleepMs(50);
-     ret = GetSerialAnswer(port_.c_str(), "\r\n", version_);
-     ret = GetSerialAnswer(port_.c_str(), "\r\n", version_);
-     PurgeComPort(port_.c_str());
-     if (ret != DEVICE_OK) return ret;
-
-     Stradus::Tokenize(version_, tokens, delims);
-     if ( 2 == tokens.size())
+     
+     if(eAct==MM::BeforeGet)
      {
-		version_=tokens.at(1).c_str();
-     }
 
-     pProp->Set(version_.c_str());
+        command << "?fv";
+        int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+        if (ret != DEVICE_OK) return ret;
+        CDeviceUtils::SleepMs(50);
+        ret = GetSerialAnswer(port_.c_str(), "\r\n", version_);
+        ret = GetSerialAnswer(port_.c_str(), "\r\n", version_);
+        PurgeComPort(port_.c_str());
+        if (ret != DEVICE_OK) return ret;
+
+        Stradus::Tokenize(version_, tokens, delims);
+        if ( 2 == tokens.size())
+        {
+		    version_=tokens.at(1).c_str();
+        }
+
+        pProp->Set(version_.c_str());
+     }
+     else 
+        if(eAct==MM::AfterSet)
+        {
+            //Read Only, Do Nothing
+        }
 
      return DEVICE_OK;
 }
@@ -692,24 +754,32 @@ int Stradus::OnCurrent(MM::PropertyBase* pProp, MM::ActionType eAct)
      std::ostringstream command;
      std::vector<std::string> tokens;
      std::string delims="=";
-
-     command << "?lc";
-     int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-     if (ret != DEVICE_OK) return ret;
-     CDeviceUtils::SleepMs(50);
-     ret = GetSerialAnswer(port_.c_str(), "\r\n", current_);
-     ret = GetSerialAnswer(port_.c_str(), "\r\n", current_);
-     PurgeComPort(port_.c_str());
-     if (ret != DEVICE_OK) return ret;
-
-     Stradus::Tokenize(current_, tokens, delims);
-
-     if ( 2 == tokens.size())
+     
+     if(eAct==MM::BeforeGet)
      {
-		current_=tokens.at(1).c_str();
-     }
+        command << "?lc";
+        int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+        if (ret != DEVICE_OK) return ret;
+        CDeviceUtils::SleepMs(50);
+        ret = GetSerialAnswer(port_.c_str(), "\r\n", current_);
+        ret = GetSerialAnswer(port_.c_str(), "\r\n", current_);
+        PurgeComPort(port_.c_str());
+        if (ret != DEVICE_OK) return ret;
 
-     pProp->Set(current_.c_str());
+        Stradus::Tokenize(current_, tokens, delims);
+
+        if ( 2 == tokens.size())
+        {
+		    current_=tokens.at(1).c_str();
+        }
+
+        pProp->Set(current_.c_str());
+     }
+     else
+        if(eAct==MM::AfterSet)
+        {
+            //Read Only, Do Nothing
+        }
 
      return DEVICE_OK;
 }
@@ -720,28 +790,36 @@ int Stradus::OnInterlock(MM::PropertyBase* pProp, MM::ActionType eAct)
      std::string answer;
      std::vector<std::string> tokens;
      std::string delims="=";
-
-     command << "?il";
-     int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-     if (ret != DEVICE_OK) return ret;
-     CDeviceUtils::SleepMs(50);
-     ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-     ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-     PurgeComPort(port_.c_str());
-     if (ret != DEVICE_OK) return ret;
-
-     Stradus::Tokenize(answer, tokens, delims);
-     if ( 2 == tokens.size())
+     
+     if(eAct==MM::BeforeGet)
      {
-		answer=tokens.at(1).c_str();
-     }
+        command << "?il";
+        int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+        if (ret != DEVICE_OK) return ret;
+        CDeviceUtils::SleepMs(50);
+        ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+        ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+        PurgeComPort(port_.c_str());
+        if (ret != DEVICE_OK) return ret;
 
-     if (answer == "1")
+        Stradus::Tokenize(answer, tokens, delims);
+        if ( 2 == tokens.size())
+        {
+		    answer=tokens.at(1).c_str();
+        }
+
+        if (answer == "1")
           interlock_ = "OK";
-     else if (answer == "0")
+        else if (answer == "0")
           interlock_ = "INTERLOCK OPEN!";
 
-     pProp->Set(interlock_.c_str());
+        pProp->Set(interlock_.c_str());
+     }
+     else
+        if(eAct==MM::AfterSet)
+        {
+            //Read Only, Do Nothing
+        }
      return DEVICE_OK;
 }
 //System Faults or Operating Condition
@@ -751,22 +829,30 @@ int Stradus::OnFault(MM::PropertyBase* pProp, MM::ActionType eAct)
      std::string answer;
      std::vector<std::string> tokens;
      std::string delims="=";
-
-     command << "?fd";
-     int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-     if (ret != DEVICE_OK) return ret;
-     CDeviceUtils::SleepMs(50);
-     ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-     ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-     PurgeComPort(port_.c_str());
-     if (ret != DEVICE_OK) return ret;
-
-     Stradus::Tokenize(answer, tokens, delims);
-     if ( 2 == tokens.size())
+     
+     if(eAct==MM::BeforeGet)
      {
-		answer=tokens.at(1).c_str();
+        command << "?fd";
+        int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+        if (ret != DEVICE_OK) return ret;
+        CDeviceUtils::SleepMs(50);
+        ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+        ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+        PurgeComPort(port_.c_str());
+        if (ret != DEVICE_OK) return ret;
+
+        Stradus::Tokenize(answer, tokens, delims);
+        if ( 2 == tokens.size())
+        {
+		    answer=tokens.at(1).c_str();
+        }
+        pProp->Set(answer.c_str());
      }
-     pProp->Set(answer.c_str());
+     else
+        if(eAct==MM::AfterSet)
+        {
+            //Read Only, Do Nothing
+        }
 
      return DEVICE_OK;
 
