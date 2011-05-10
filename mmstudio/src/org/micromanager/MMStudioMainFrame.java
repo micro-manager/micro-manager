@@ -1402,6 +1402,16 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          
       }
 
+      final JMenuItem reloadConfigMenuItem = new JMenuItem();
+      toolsMenu.add(reloadConfigMenuItem);
+      reloadConfigMenuItem.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent e) {
+            loadSystemConfiguration();
+            initializeGUI();
+         }
+      });
+      reloadConfigMenuItem.setText("Reload Hardware Configuration");
+
       switchConfigurationMenu_.setText("Switch Hardware Configuration");
       toolsMenu.add(switchConfigurationMenu_);
 
