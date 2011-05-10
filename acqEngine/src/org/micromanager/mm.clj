@@ -135,7 +135,7 @@
           prop-map (into {} (map #(-> % next vec) props))
           library (core getDeviceLibrary dev)
           name-in-library (core getDeviceNameInLibrary dev)
-          state-device (.. Class (forName "mmcorej.DeviceType") (getField "StateDevice") (get nil))
+          state-device (eval 'mmcorej.DeviceType/StateDevice) ; load at runtime
           state-labels (when (= state-device (core getDeviceType dev))
                          (seq (core getStateLabels dev)))]
       (core unloadDevice dev)
