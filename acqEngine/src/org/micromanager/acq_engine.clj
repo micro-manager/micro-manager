@@ -287,9 +287,7 @@
       (doall (map (partial await-for 10000) (vals device-agents))))
     (do
       (doseq [[dev action] action-map]
-        ;(action) (wait-for-device dev)
-        (device-best-effort dev action)
-        ))))
+        (device-best-effort dev action)))))
 
 (defn run-autofocus []
   (.. gui getAutofocusManager getDevice fullFocus)
@@ -298,11 +296,11 @@
 
 (defn snap-image [open-before close-after]
   (with-core-setting [getAutoShutter setAutoShutter false]
-    (if open-before
+    (when open-before
       (core setShutterOpen true)
       (wait-for-device (core getShutterDevice)))
     (core snapImage)
-    (if close-after
+    (when close-after
       (core setShutterOpen false))
       (wait-for-device (core getShutterDevice))))
 
