@@ -35,7 +35,7 @@
                    remove-value-from-prefs remove-nth
                    awt-event persist-window-shape close-window
                    create-alphanumeric-comparator
-                   super-location?)]
+                   super-location? get-file-parent)]
         [clojure.contrib.json :only (read-json write-json)]
         [org.micromanager.mm :only (load-mm gui)]))
 
@@ -236,16 +236,26 @@
       (.concat "}}") (read-json false) (get "Summary"))) 
 
 (defn get-summary-map [data-set location]
-  (merge (read-summary-map data-set)
-    (if-let [frames (count-frames data-set)]
-      {"Frames" frames})
-    (if-let [d+c (get-display-and-comments data-set)]
-      {"Comment" (get-in d+c ["Comments" "Summary"])
-       "FrameComments" (dissoc (get d+c "Comments") "Summary")})
-    (let [data-dir (File. data-set)]
-      {"Path"     (.getAbsolutePath data-dir)
-       "Name"     (.getName data-dir)
-       "Location" location})))
+  (let [raw-summary-map (read-summary-map data-set)]
+    (merge raw-summary-map
+      (if-let [frames (count-frames data-set)]
+        {"Frames" frames})
+      (if-let [d+c (get-display-and-comments data-set)]
+        {"Comment" (get-in d+c ["Comments" "Summary"])
+         "FrameComments" (dissoc (get d+c "Comments") "Summary")})
+      (let [data-dir (File. data-set)
+            path (if (pos? (get raw-summary-map "Positions"))
+                   (get-file-parent data-dir)
+                   (.getAbsolutePath data-dir))]
+        {"Path"     path
+         "Name"     (.getName (File. path))
+         "Location" location}))))
+
+(defn remove-sibling-positions [summary-map]
+  (doseq [pending-data-set pending-data-sets]
+    (when (super-location? (first pending-data-set) (get summary-map "Path"))
+      (.remove pending-data-sets pending-data-set)
+      (println "removed " pending-data-set))))
 
 (def default-headings ["Path" "Time" "Frames" "Comment" "Location"])
 
@@ -265,6 +275,7 @@
                   (catch Exception e nil)))))
           "data browser scanning thread") .start))
 
+
 (defn start-reading-thread []
   (doto (Thread.
             (fn []
@@ -280,6 +291,7 @@
                           (when (or (= loc "") (contains? @current-locations loc))
                             (let [m (apply get-summary-map data-set)]
                               (add-browser-table-row (map #(get m %) tags))
+                              (remove-sibling-positions m)
                               (awt-event (update-browser-status))))
                           (recur))))
                     (catch Exception e (.printStackTrace e))))))

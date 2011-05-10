@@ -298,6 +298,9 @@
 
 ;; file util
   
+(defn get-file-parent [^File f]
+  (.getParent (File. (.getAbsolutePath f))))
+
 (defn super-location? [loc1 loc2]
   (loop [loc loc1]
     (let [f1 (File. loc)
