@@ -102,14 +102,16 @@ cd $PPC
 FILES=libmmgr*
 for f in $FILES; do lipo -create $PPC/$f $I386/$f $X86_64/$f -o $TARGET/$f; done
 mkdir $TARGET/libgphoto2
-GPHOTODIR=libgphoto2/libgpoto2
+GPHOTODIR=libgphoto2/libgphoto2
 mkdir $TARGET/$GPHOTODIR
-GPHOTOFILES=$GPHOTODIR/*.so
-for g in $GPHOTOFILES; do lipo create $PPC/$g $I386/$g $X86_64/$g -o $TARGET/$g; done
-GPHOTOPORTDIR=libgphoto2/libgpoto2_port
+cd $PPC/$GPHOTODIR
+GPHOTOFILES=*.so
+for g in $GPHOTOFILES; do lipo -create $PPC/$GPHOTODIR/$g $I386/$GPHOTODIR/$g $X86_64/$GPHOTODIR/$g -o $TARGET/$GPHOTODIR/$g; done
+GPHOTOPORTDIR=libgphoto2/libgphoto2_port
 mkdir $TARGET/$GPHOTOPORTDIR
-GPHOTOPORTFILES=$GPHOTOPORTDIR/*.so
-for p in $GPHOTOPORTFILES; do lipo create $PPC/$p $I386/$p $X86_64/$p -o $TARGET/$p; done
+cd $PPC/$GPHOTOPORTDIR
+GPHOTOPORTFILES=*.so
+for p in $GPHOTOPORTFILES; do lipo -create $PPC/$GPHOTOPORTDIR/$p $I386/$GPHOTOPORTDIR/$p $X86_64/$GPHOTOPORTDIR/$p -o $TARGET/$GPHOTOPORTDIR/$p; done
 #for f in $FILES; do strip -X -S $TARGET/$f; done
 #lipo -create $PPC/_MMCorePy.so $I386/_MMCorePy.so $X86_64/_MMCorePy.so -o $TARGET/_MMCorePy.so
 
