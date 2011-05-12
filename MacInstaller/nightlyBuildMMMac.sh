@@ -112,6 +112,12 @@ mkdir $TARGET/$GPHOTOPORTDIR
 cd $PPC/$GPHOTOPORTDIR
 GPHOTOPORTFILES=*.so
 for p in $GPHOTOPORTFILES; do lipo -create $PPC/$GPHOTOPORTDIR/$p $I386/$GPHOTOPORTDIR/$p $X86_64/$GPHOTOPORTDIR/$p -o $TARGET/$GPHOTOPORTDIR/$p; done
+cd $PPC/libgphoto2
+GPHOTOLIBS=*.so
+for l in $GPHOTOLIBS; do lipo -create $PPC/libgphoto2/$l $I386/libgphoto2/$l $X86_64/libgphoto2/$l; -o $TARGET/libgphoto2/$l; done
+
+
+
 #for f in $FILES; do strip -X -S $TARGET/$f; done
 #lipo -create $PPC/_MMCorePy.so $I386/_MMCorePy.so $X86_64/_MMCorePy.so -o $TARGET/_MMCorePy.so
 
