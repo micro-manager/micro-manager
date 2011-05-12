@@ -19,6 +19,33 @@ AX_BOOST_SYSTEM
 
 # Checks for header files.
 
+# Checkfor libUSB 
+AC_MSG_CHECKING(for libusb)
+AC_FIND_FILE([usb.h], [/usr/include /usr/local/$ARCH/include], USBINCDIR)
+if test x$USBINCDIR = xNO; then
+   AC_MSG_RESULT([not found])
+else
+   AC_CHECK_HEADERS([$USBINCDIR/usb.h])
+   if test -z "$LIBUSB" ; then
+      case $host in
+         *-*-linux*)
+            LIBUSB="-lusb"
+            ;;
+         *)
+            AC_FIND_FILE([libusb.a], [/usr/lib /usr/lib64 /usr/local/$ARCH/lib], USBLIBDIR)
+            if test x$USBLIBDIR = xNO; then
+               AC_MSG_RESULT(["libusb not found"])
+            else
+               AC_MSG_RESULT(["libusb.a" found])
+               LIBUSB="$USBLIBDIR/libusb.a"
+            fi
+         ;;
+      esac
+   fi
+fi
+AC_SUBST(LIBUSB)
+AM_CONDITIONAL([BUILD_USBMANAGER], [test -f "$LIBUSB"])
+
 # Only build PVCAM if header files present.
 AC_MSG_CHECKING(for Pvcam)
 AC_FIND_FILE([pvcam.h], [/usr/include/pvcam /Library/Frameworks/PVCAM.framework/Headers], PVCAMINCDIR)
@@ -113,16 +140,21 @@ else
    AC_MSG_RESULT([not found])
 fi
 
+PKG_PROG_PKG_CONFIG
+PKG_CHECK_MODULES([GPHOTO2], [libgphoto2 >= 2.1.10], AC_DEFINE([HAVE_LIBGPHOTO2], [YES]), AC_DEFINE([HAVE_LIBGPHOTO2], [NO]))
 
 # SimpleCam 
 AC_MSG_CHECKING(for gphoto2)
-AC_FIND_FILE([gphoto2.h], [/usr/local/$ARCH/include/gphoto2], GPHOTO2INCDIR)
+AC_FIND_FILE([gphoto2.h], [/usr/local/$ARCH/include/gphoto2 /opt/local/include/gphoto2], GPHOTO2INCDIR)
 if test x$GPHOTO2INCDIR = xNO; then
+#if test x$HAVE_LIBGPHOTO2 = xNO; then
    buildsc=false
    AC_MSG_RESULT([not found])
 else
    buildsc=true
    # todo: dynamically determine GPhoto2 version
+   #GPHOTO2_VERSION=`$PKG_CONFIG --modversion libgphoto2`
+   #GPHOTO2_PORT_VERSION=`$PKG_CONFIG --modversion libgphoto2_port`
    GPHOTO2_VERSION="2.4.10.1"
    GPHOTO2_PORT_VERSION="0.8.0"
    AC_CHECK_HEADERS([$GPHOTO2INCDIR/gphoto2.h])
@@ -132,19 +164,30 @@ else
             LIBGPHOTO2="-lgphoto2"
             ;;
          *)
-            AC_FIND_FILE([libgphoto2.a], [/usr/lib /usr/lib64 /usr/local/$ARCH/lib], GPHOTO2LIBDIR)
-            if test x$GPHOTO2LIBDIR = xNO; then
+            AC_FIND_FILE([libgphoto2.2.dylib], [/usr/lib /usr/lib64 /usr/local/$ARCH/lib /opt/local/lib], GPHOTO2_LIBDIR)
+            if test x$GPHOTO2_LIBDIR = xNO; then
                buildsc=false
                AC_MSG_RESULT(["libgphoto2 not found"])
             else
-               AC_MSG_RESULT(["libgphoto2.a" found])
-               LIBGPHOTO2="$GPHOTO2LIBDIR/libgphoto2.a $GPHOTO2LIBDIR/libgphoto2_port.a"
+               AC_MSG_RESULT(["libgphoto2.2.dylib" found])
+               LIBGPHOTO2="-L$GPHOTO2_LIBDIR -lgphoto2 -lgphoto2_port $LIBUSB"
             fi
          ;;
       esac
    fi
 fi
-AC_SUBST(GPHOTO2LIBDIR)
+
+# On mac, install dynamic gphoto2 libraries 
+case $host in
+   *apple-darwin*)
+      AC_SUBST([INSTALL_LIBGPHOTO], [install_macos])
+      ;;
+   *)
+      AC_SUBST([INSTALL_LIBGPHOTO], [install_linux])
+      ;;
+esac
+
+AC_SUBST(GPHOTO2_LIBDIR)
 AC_SUBST(GPHOTO2_VERSION)
 AC_SUBST(GPHOTO2_PORT_VERSION)
 AC_SUBST(LIBGPHOTO2)
@@ -186,33 +229,6 @@ if test -f "/usr/local/include/ITC18.h" ; then
 else
    AC_MSG_RESULT([not found])
 fi
-
-# and for libUSB 
-AC_MSG_CHECKING(for libusb)
-AC_FIND_FILE([usb.h], [/usr/include /usr/local/$ARCH/include], USBINCDIR)
-if test x$USBINCDIR = xNO; then
-   AC_MSG_RESULT([not found])
-else
-   AC_CHECK_HEADERS([$USBINCDIR/usb.h])
-   if test -z "$LIBUSB" ; then
-      case $host in
-         *-*-linux*)
-            LIBUSB="-lusb"
-            ;;
-         *)
-            AC_FIND_FILE([libusb.a], [/usr/lib /usr/lib64 /usr/local/$ARCH/lib], USBLIBDIR)
-            if test x$USBLIBDIR = xNO; then
-               AC_MSG_RESULT(["libusb not found"])
-            else
-               AC_MSG_RESULT(["libusb.a" found])
-               LIBUSB="$USBLIBDIR/libusb.a"
-            fi
-         ;;
-      esac
-   fi
-fi
-AC_SUBST(LIBUSB)
-AM_CONDITIONAL([BUILD_USBMANAGER], [test -f "$LIBUSB"])
 
 # Only build ... when the code is there
 AM_CONDITIONAL([BUILD_TEST],[test -f "Test/Test.h"])
