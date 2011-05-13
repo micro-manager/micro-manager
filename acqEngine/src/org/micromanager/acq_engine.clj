@@ -50,6 +50,8 @@
 
 (def state (atom {:running false :stop false}))
 
+(def settings (atom nil))
+
 (defn state-assoc! [& args]
   (apply swap! state assoc args))
    
@@ -293,6 +295,84 @@
              (not (core isContinuousFocusEnabled)))
     (core enableContinuousFocus true))
   (return-config))
+
+;; alternative iterations
+
+(defn allowed-image? [f c s]
+  (if-let [channel (get-in @settings [:channels c])]
+    (and
+      (let [skip-n (channel :skip-frames)]
+        (zero? (mod f (inc skip-n)))))
+      (or
+        (channel :use-z-stack)
+        (= s (int (/ (count (@settings :slices)) 2))))
+    true))
+                      
+(defn manage-shutter [p f c s]
+  (let [[p_ f_ c_ s_] (:last-indices @state)]
+    (when (or
+            (and
+              (not (:keep-shutter-open-channels @settings))
+              (not= c c_))
+            (and
+              (not (:keep-shutter-open-slices @settings))
+              (not= s s_))
+            (not= f f_)
+            (not= p p_))
+      (core setShutterOpen false))))
+
+(defn set-position [p]
+  (let [msp (get-in @settings [:positions p])
+        m (MultiStagePosition-to-map msp)]
+    (for [[axis pos] (:axes m) :when pos]
+      [axis (apply set-stage-position axis pos)])))
+
+(defn set-channel [c]
+  (for [prop (get-in @settings [:channels c :properties])]
+    (core setProperty (prop 0) (prop 1) (prop 2))))
+
+(defn collect-prev-image []
+  (let [pix (core getImage)]
+    (:last-indices @state)))
+  
+(defn acq-wait [f]
+  (let [[_ f_ _ _] (:last-indices @state)]
+    (if (and (not= f f_) (pos? f))
+      (acq-sleep (@settings :interval-ms)))))
+
+(defn manage-autofocus [f]
+  (when (@settings :use-autofocus)
+    (let [[_ f_ _ _] (:last-indices @state)]
+      (when (and
+              (not= f f_)
+              (zero? (mod f (inc (@settings :autofocus-skip)))))
+        (run-autofocus)))))
+
+(defn set-slice [c s]
+  (if-let [z-drive (@state :default-z-drive)]
+    (let [[_ _ c_ s_] (:last-indices @state)]
+      (+ (or (get-in @settings [:channels c :z-offset]) 0)
+         (or (get-in @settings [:slices s]) 0)
+         (if (and (:slice event) (not (:relative-z event)))
+           0
+           (or (get-z-position (:position event) z-drive)
+               (@state :reference-z-position))))))
+      
+(defn snap-single-image [p f c s]
+  (core snapImage)
+  (swap! state assoc :last-snap-time (elapsed-time @state)))
+
+(defn run-snap-event [p f c s]
+  "Run a single iteration with the specified indices."
+  (when (allowed-image? f c s)
+    (manage-shutter p f c s)
+    (set-position p)
+    (set-channel c)
+    (collect-prev-image)
+    (acq-wait f)
+    (manage-autofocus f)
+    (set-slice s)
+    (snap-single-image p f c s)))
 
 ;; iterations
 
