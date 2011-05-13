@@ -140,13 +140,10 @@ else
    AC_MSG_RESULT([not found])
 fi
 
+# SimpleCam - GPhoto
 PKG_PROG_PKG_CONFIG
 PKG_CHECK_MODULES([GPHOTO2], [libgphoto2 >= 2.1.10], AC_DEFINE([HAVE_LIBGPHOTO2], [YES]), AC_DEFINE([HAVE_LIBGPHOTO2], [NO]))
 
-# SimpleCam 
-#AC_MSG_CHECKING(for gphoto2)
-#AC_FIND_FILE([gphoto2.h], [/usr/local/$ARCH/include/gphoto2 /opt/local/include/gphoto2], GPHOTO2INCDIR)
-#if test x$GPHOTO2INCDIR = xNO; then
 if test x$HAVE_LIBGPHOTO2 = xNO; then
    buildsc=false
    AC_MSG_RESULT([not found])
@@ -157,27 +154,6 @@ else
    GPHOTO2_PORT_VERSION=`$PKG_CONFIG --modversion libgphoto2_port`
    GPHOTO2_LIBDIR=`$PKG_CONFIG --variable=libdir libgphoto2`
    LIBGPHOTO2=`$PKG_CONFIG --variable=libdir libgphoto2`/libgphoto2.la
-   #GPHOTO2_VERSION="2.4.10.1"
-   #GPHOTO2_PORT_VERSION="0.8.0"
-   #AC_CHECK_HEADERS([$GPHOTO2INCDIR/gphoto2.h])
-
-  # if test -z "$LIBGPHOTO2" ; then
-  #    case $host in
-  #       *-*-linux*)
-  #          LIBGPHOTO2="-lgphoto2"
-  #          ;;
-  #       *)
-  #          AC_FIND_FILE([libgphoto2.2.dylib], [/usr/lib /usr/lib64 /usr/local/$ARCH/lib /opt/local/lib], GPHOTO2_LIBDIR)
-  #          if test x$GPHOTO2_LIBDIR = xNO; then
-  #             buildsc=false
-  #             AC_MSG_RESULT(["libgphoto2 not found"])
-  #          else
-  #             AC_MSG_RESULT(["libgphoto2.2.dylib" found])
-  #             LIBGPHOTO2="-L$GPHOTO2_LIBDIR -lgphoto2 -lgphoto2_port $LIBUSB"
-  #          fi
-  #       ;;
-  #    esac
-  # fi
 fi
 
 # On mac, install dynamic gphoto2 libraries 
