@@ -55,13 +55,15 @@
 (defmacro log-cmd
   ([cmd-count expr]
     (let [[cmd# args#] (split-at cmd-count expr)]
-      `(let [result# ~expr]
+      `(let [vals# (list ~@args#)]
         (log
-          (.trim (prn-str (concat '~cmd# (list ~@args#))))
-          (if (nil? result#)
-            "  --> nil"
-            (str "  --> " result#)))
-          result#)))
+          (.trim (prn-str (concat '~cmd# vals#))))
+        (let [result# (eval (concat '~cmd# vals#))]
+          (log
+            (if (nil? result#)
+              "  --> nil"
+              (str "  --> " result#)))
+            result#))))
   ([expr] (log-cmd 1 expr)))
 
 (defmacro core [& args]
