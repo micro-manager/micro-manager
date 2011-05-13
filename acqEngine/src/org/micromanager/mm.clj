@@ -32,9 +32,6 @@
   ([] (def gui (MMStudioMainFrame/getInstance))
       (load-mm gui)))
 
-;(defmacro apply* [& args]
-;  `(~@(butlast args) ~@(eval (last args))))
-
 (defn rekey
   ([m kold knew]
     (-> m (dissoc kold) (assoc knew (get m kold))))
@@ -55,16 +52,21 @@
 (defn log [& x]
   (.logMessage mmc (apply str x) true))
 
-(defmacro log-cmd [expr]
-  `(do (log '~expr)
-    (let [result# ~expr]
-      (if (nil? result#)
-        (log "  --> nil")
-        (log "  --> " result#))
-      result#)))
+(defmacro log-cmd
+  ([cmd-count expr]
+    (let [cmd# (take cmd-count expr)
+          args# (map eval (drop cmd-count expr))]
+      `(do
+      (log (.trim (prn-str (concat '~cmd# '~args#))))
+      (let [result# ~(concat cmd# args#)]
+        (if (nil? result#)
+          (log "  --> nil")
+          (log "  --> " result#))
+        result#))))
+  ([expr] (log-cmd 1 expr)))
 
 (defmacro core [& args]
-  `(log-cmd (. mmc ~@args)))
+  `(log-cmd 3 (. mmc ~@args)))
 
 (defmacro when-lets [bindings & body]
   (assert (vector? bindings))
