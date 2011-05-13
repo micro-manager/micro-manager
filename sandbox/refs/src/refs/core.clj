@@ -63,4 +63,4 @@
     para)) 
 
 (defn doi-to-pmcid [doi]
-  (pmid-to-pmcid (doi-to-pmid doi)))
+  (-> doi pmid-to-pmcid doi-to-pmid doi))
