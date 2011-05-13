@@ -18,6 +18,10 @@
            [org.micromanager.navigation MultiStagePosition]
            [mmcorej Configuration Metadata]
            [org.json JSONArray JSONObject]
+           [java.text SimpleDateFormat]
+           [org.micromanager.navigation MultiStagePosition StagePosition]
+           [org.micromanager.utils ChannelSpec]
+           [java.util Date]
            [ij IJ]))
 
 (declare gui)
@@ -27,7 +31,27 @@
   ([gui] (def mmc (.getMMCore gui)))
   ([] (def gui (MMStudioMainFrame/getInstance))
       (load-mm gui)))
+
+;(defmacro apply* [& args]
+;  `(~@(butlast args) ~@(eval (last args))))
+
+(defn rekey
+  ([m kold knew]
+    (-> m (dissoc kold) (assoc knew (get m kold))))
+  ([m kold knew & ks]
+    (reduce #(apply rekey %1 %2)
+      m (partition 2 (conj ks knew kold)))))
+
+(defn select-and-rekey [m & ks]
+    (apply rekey (select-keys m (apply concat (partition 1 2 ks))) ks))
     
+(defn data-object-to-map [obj]
+  (into {}
+    (for [f (.getFields (type obj))
+          :when (zero? (bit-and
+                         (.getModifiers f) java.lang.reflect.Modifier/STATIC))]
+      [(keyword (.getName f)) (.get f obj)])))
+
 (defn log [& x]
   (.logMessage mmc (apply str x) true))
 
@@ -166,3 +190,52 @@
           (json-to-data (.get json i))))
     json))
 
+(def iso8601modified (SimpleDateFormat. "yyyy-MM-dd HH:mm:ss Z"))
+
+(defn get-current-time-str []
+  (. iso8601modified format (Date.)))
+
+(defn get-pixel-type []
+  (str ({1 "GRAY", 4 "RGB"} (int (core getNumberOfComponents))) (* 8 (core getBytesPerPixel))))
+
+(defn ChannelSpec-to-map [^ChannelSpec chan]
+  (-> chan
+    (data-object-to-map)
+    (select-and-rekey
+      :config_                 :name
+      :exposure_               :exposure
+      :zOffset_                :z-offset
+      :doZStack_               :use-z-stack
+      :skipFactorFrame_        :skip-frames
+      :useChannel_             :use-channel
+      :color_                  :color
+    )
+    (assoc :properties (get-config (core getChannelGroup) (.config_ chan)))))
+
+(defn MultiStagePosition-to-map [^MultiStagePosition msp]
+  (if msp
+    {:label (.getLabel msp)
+     :axes
+        (into {}
+          (for [i (range (.size msp))]
+            (let [stage-pos (.get msp i)]
+              [(.stageName stage-pos)
+                (condp = (.numAxes stage-pos)
+                  1 [(.x stage-pos)]
+                  2 [(.x stage-pos) (.y stage-pos)])])))}))
+
+(defn get-msp [idx]
+  (when idx
+    (let [p-list (. gui getPositionList)]
+      (if (pos? (. p-list getNumberOfPositions))
+        (. p-list (getPosition idx))))))
+
+(defn get-z-position [idx z-stage]
+  (if-let [msp (get-msp idx)]
+    (if-let [stage-pos (. msp get z-stage)]
+      (. stage-pos x))))
+
+(defn set-z-position [idx z-stage z]
+  (if-let [msp (get-msp idx)]
+    (if-let [stage-pos (. msp (get z-stage))]
+      (set! (. stage-pos x) z))))

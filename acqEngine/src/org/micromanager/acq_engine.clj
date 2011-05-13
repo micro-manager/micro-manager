@@ -15,27 +15,29 @@
 ;               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
 (ns org.micromanager.acq-engine
-  (:use [org.micromanager.mm :only [when-lets map-config get-config get-positions load-mm
-                                    get-default-devices core log log-cmd mmc gui with-core-setting
-                                    do-when if-args get-system-config-cached select-values-match?
-                                    get-property get-camera-roi parse-core-metadata reload-device
-                                    json-to-data]]
+  (:use [org.micromanager.mm :only
+          [when-lets map-config get-config get-positions load-mm
+           get-default-devices core log log-cmd mmc gui with-core-setting
+           do-when if-args get-system-config-cached select-values-match?
+           get-property get-camera-roi parse-core-metadata reload-device
+           json-to-data get-pixel-type get-z-position set-z-position
+           get-msp MultiStagePosition-to-map ChannelSpec-to-map
+           get-pixel-type get-current-time-str rekey
+           data-object-to-map]]
         [org.micromanager.sequence-generator :only [generate-acq-sequence]])
   (:import [org.micromanager AcqControlDlg]
            [org.micromanager.api AcquisitionEngine TaggedImageAnalyzer]
            [org.micromanager.acquisition AcquisitionWrapperEngine LiveAcqDisplay TaggedImageQueue
                                          ProcessorStack SequenceSettings MMImageCache
                                          TaggedImageStorageRam VirtualAcquisitionDisplay]
-           [org.micromanager.navigation MultiStagePosition StagePosition]
            [mmcorej TaggedImage Configuration Metadata]
            [java.util.prefs Preferences]
            [java.net InetAddress]
            [java.util.concurrent TimeUnit CountDownLatch]
-           [org.micromanager.utils ChannelSpec GentleLinkedBlockingQueue MDUtils
+           [org.micromanager.utils GentleLinkedBlockingQueue MDUtils
                                    ReportingUtils]
            [org.json JSONObject JSONArray]
            [java.util Date UUID]
-           [java.text SimpleDateFormat]
            [javax.swing SwingUtilities]
            [ij ImagePlus])
    (:gen-class
@@ -53,91 +55,12 @@
    
 (def attached-runnables (atom (vec nil)))
 
-;; constants
-
-(def run-devices-parallel false)
-
-;; general utils
-
-(defn data-object-to-map [obj]
-  (into {}
-    (for [f (.getFields (type obj))
-          :when (zero? (bit-and
-                         (.getModifiers f) java.lang.reflect.Modifier/STATIC))]
-      [(keyword (.getName f)) (.get f obj)])))
-
-(defmacro apply* [& args]
-  `(~@(butlast args) ~@(eval (last args))))
-
-(defn rekey
-  ([m kold knew]
-    (-> m (dissoc kold) (assoc knew (get m kold))))
-  ([m kold knew & ks]
-    (reduce #(apply rekey %1 %2)
-      m (partition 2 (conj ks knew kold)))))
-
-(defn select-and-rekey [m & ks]
-    (apply rekey (select-keys m (apply concat (partition 1 2 ks))) ks))
+;; time
 
 (defn clock-ms []
   (quot (System/nanoTime) 1000000))
 
-;; mm utils
-
-(def iso8601modified (SimpleDateFormat. "yyyy-MM-dd HH:mm:ss Z"))
-
-(defn get-current-time-str []
-  (. iso8601modified format (Date.)))
-
-(defn get-pixel-type []
-  (str ({1 "GRAY", 4 "RGB"} (int (core getNumberOfComponents))) (* 8 (core getBytesPerPixel))))
-
-(defn ChannelSpec-to-map [^ChannelSpec chan]
-  (-> chan
-    (data-object-to-map)
-    (select-and-rekey
-      :config_                 :name
-      :exposure_               :exposure
-      :zOffset_                :z-offset
-      :doZStack_               :use-z-stack
-      :skipFactorFrame_        :skip-frames
-      :useChannel_             :use-channel
-      :color_                  :color
-    )
-    (assoc :properties (get-config (core getChannelGroup) (.config_ chan)))))
-
-(defn MultiStagePosition-to-map [^MultiStagePosition msp]
-  (if msp
-    {:label (.getLabel msp)
-     :axes
-        (into {}
-          (for [i (range (.size msp))]
-            (let [stage-pos (.get msp i)]
-              [(.stageName stage-pos)
-                (condp = (.numAxes stage-pos)
-                  1 [(.x stage-pos)]
-                  2 [(.x stage-pos) (.y stage-pos)])])))}))
-
-(defn get-msp [idx]
-  (when idx
-    (let [p-list (. gui getPositionList)]
-      (if (pos? (. p-list getNumberOfPositions))
-        (. p-list (getPosition idx))))))
-
-(defn get-z-position [idx z-stage]
-  (if-let [msp (get-msp idx)]
-    (if-let [stage-pos (. msp get z-stage)]
-      (. stage-pos x))))
-
-(defn set-z-position [idx z-stage z]
-  (if-let [msp (get-msp idx)]
-    (if-let [stage-pos (. msp (get z-stage))]
-      (set! (. stage-pos x) z))))
-
-;; time
-
 (defn compute-time-from-core [tags]
-  ; (log "core tags: " tags)
   (when (@state :burst-init-time)
     (when-let [t (tags "ElapsedTime-ms")]
       (+ (Double/parseDouble t)
@@ -207,6 +130,7 @@
           (wait-for-device (core getShutterDevice))))
       (device-best-effort (core getCameraDevice)
         (core snapImage))
+      (swap! state assoc :last-image-time (elapsed-time @state))
       (device-best-effort shutter
         (when close-after
           (core setShutterOpen false))
@@ -227,12 +151,10 @@
         tags (if (and t (pos? t))
                (assoc tags "ElapsedTime-ms" t)
                (dissoc tags "ElapsedTime-ms"))]
-   ; (println "cam-t: " t ", collect-t: " (elapsed-time @state)
-   ;      ", remaining-images: " (core getRemainingImageCount))
     {:pix pix :tags (dissoc tags "StartTime-ms")}))
 
 (defn collect-snap-image []
-  {:pix (core getImage) :tags nil})
+  {:pix (core getImage) :tags {"ElapsedTime-ms" (@state :last-image-time)}})
 
 (defn return-config []
   (dorun (map set-property
@@ -267,7 +189,6 @@
 ;; image metadata
 
 (defn annotate-image [img event state]
-  ;(println event)
   {:pix (:pix img)
    :tags (merge
       (map-config (core getSystemStateCache))
@@ -277,7 +198,6 @@
        "BitDepth" (state :bit-depth)
        "Channel" (get-in event [:channel :name])
        "ChannelIndex" (:channel-index event)
-       "ElapsedTime-ms" (elapsed-time state)
        "Exposure-ms" (:exposure event)
        "Frame" (:frame-index event)
        "Height" (state :init-height)
@@ -299,20 +219,7 @@
 (defn make-TaggedImage [annotated-img]
   (TaggedImage. (:pix annotated-img) (JSONObject. (:tags annotated-img))))
 
-;; acq-engine
-
-(defn create-presnap-actions [event]
-  (concat
-    (for [[axis pos] (:axes (MultiStagePosition-to-map (get-msp (:position event)))) :when pos]
-      [axis #(apply set-stage-position axis pos)])
-    (for [prop (get-in event [:channel :properties])]
-      [(prop 0) #(core setProperty (prop 0) (prop 1) (prop 2))])
-    (when-let [exposure (:exposure event)]
-      (list [(core getCameraDevice) #(core setExposure exposure)]))))
-
-(defn run-actions [action-map]
-  (doseq [[dev action] action-map]
-    (device-best-effort dev (action))))
+;; higher level
 
 (defn expose [event]
   (do (condp = (:task event)
@@ -343,47 +250,7 @@
          (or (get-z-position (:position event) z-drive)
              (@state :reference-z-position))))))
 
-(defn make-event-fns [event out-queue]
-  (let [task (:task event)]
-    (cond
-      (= task :collect-burst)
-        (list #(collect-image event out-queue))
-      (or (= task :snap) (= task :init-burst))
-        (list
-          #(log event)
-          (fn [] (doall (map #(.run %) (event :runnables))))
-          #(when-let [wait-time-ms (event :wait-time-ms)]
-            (acq-sleep wait-time-ms))
-          #(run-actions (create-presnap-actions event))
-          #(when (:autofocus event)
-            (set-z-position (:position event) (@state :default-z-drive) (run-autofocus)))
-          #(when-let [z-drive (@state :default-z-drive)]
-            (let [z (compute-z-position event)]
-              (when (not= z (@state :last-z-position))
-                (do (set-stage-position z-drive z)
-                    (wait-for-device z-drive)))))
-          #(do (expose event)
-               (collect-image event out-queue))))))
-
-(defn execute [event-fns]
-  (doseq [event-fn event-fns :while (not (:stop @state))]
-    (try (event-fn) (catch Throwable e (ReportingUtils/logError e)))
-    (await-resume)))
-
-(defn cleanup []
-  (log "cleanup")
-  (do-when #(.update %) (:display @state))
-  (state-assoc! :finished true, :running false, :display nil)
-  (when (core isSequenceRunning)
-    (core stopSequenceAcquisition))
-  (core setAutoShutter (@state :init-auto-shutter))
-  (core setExposure (@state :init-exposure))
-  (when (not= (@state :last-z-position) (@state :init-z-position))
-    (set-z-stage-position (core getFocusDevice) (@state :init-z-position)))
-  (when (and (@state :init-continuous-focus)
-             (not (core isContinuousFocusEnabled)))
-    (core enableContinuousFocus true))
-  (return-config))
+;; startup and shutdown
 
 (defn prepare-state [this]
   (let [z (get-z-stage-position (core getFocusDevice))]
@@ -412,6 +279,63 @@
       :pixel-type (get-pixel-type)
       )))
 
+(defn cleanup []
+  (log "cleanup")
+  (do-when #(.update %) (:display @state))
+  (state-assoc! :finished true, :running false, :display nil)
+  (when (core isSequenceRunning)
+    (core stopSequenceAcquisition))
+  (core setAutoShutter (@state :init-auto-shutter))
+  (core setExposure (@state :init-exposure))
+  (when (not= (@state :last-z-position) (@state :init-z-position))
+    (set-z-stage-position (core getFocusDevice) (@state :init-z-position)))
+  (when (and (@state :init-continuous-focus)
+             (not (core isContinuousFocusEnabled)))
+    (core enableContinuousFocus true))
+  (return-config))
+
+;; iterations
+
+(defn create-presnap-actions [event]
+  (concat
+    (for [[axis pos] (:axes (MultiStagePosition-to-map (get-msp (:position event)))) :when pos]
+      [axis #(apply set-stage-position axis pos)])
+    (for [prop (get-in event [:channel :properties])]
+      [(prop 0) #(core setProperty (prop 0) (prop 1) (prop 2))])
+    (when-let [exposure (:exposure event)]
+      (list [(core getCameraDevice) #(core setExposure exposure)]))))
+
+(defn run-actions [action-map]
+  (doseq [[dev action] action-map]
+    (device-best-effort dev (action))))
+
+(defn make-event-fns [event out-queue]
+  (let [task (:task event)]
+    (cond
+      (= task :collect-burst)
+        (list #(collect-image event out-queue))
+      (or (= task :snap) (= task :init-burst))
+        (list
+          #(log event)
+          (fn [] (doall (map #(.run %) (event :runnables))))
+          #(when-let [wait-time-ms (event :wait-time-ms)]
+            (acq-sleep wait-time-ms))
+          #(run-actions (create-presnap-actions event))
+          #(when (:autofocus event)
+            (set-z-position (:position event) (@state :default-z-drive) (run-autofocus)))
+          #(when-let [z-drive (@state :default-z-drive)]
+            (let [z (compute-z-position event)]
+              (when (not= z (@state :last-z-position))
+                (do (set-stage-position z-drive z)
+                    (wait-for-device z-drive)))))
+          #(do (expose event)
+               (collect-image event out-queue))))))
+
+(defn execute [event-fns]
+  (doseq [event-fn event-fns :while (not (:stop @state))]
+    (try (event-fn) (catch Throwable e (ReportingUtils/logError e)))
+    (await-resume)))
+
 (defn run-acquisition [this settings out-queue]
   (def acq-settings settings)
   (prepare-state this)
@@ -423,6 +347,8 @@
        (execute (mapcat #(make-event-fns % out-queue) acq-seq))
        (.put out-queue TaggedImageQueue/POISON)
        (cleanup))))
+
+;; generic metadata
 
 (defn convert-settings [^SequenceSettings settings]
   (-> settings
@@ -442,7 +368,6 @@
            :channels (filter :use-channel (map ChannelSpec-to-map (.channels settings)))
            :positions (range (.. settings positions size))
            :default-exposure (core getExposure))))
-
 
 (defn get-IJ-type [depth]
   (get {1 ImagePlus/GRAY8 2 ImagePlus/GRAY16 4 ImagePlus/COLOR_RGB 8 64} depth))
@@ -549,11 +474,10 @@
 (defn show-image [display tagged-img]
   (let [myTaggedImage (make-TaggedImage tagged-img)
         cache (.getImageCache display)]
-    ;(println (.pix myTaggedImage))
     (.putImage cache myTaggedImage)
-     (.showImage display myTaggedImage)
-     (when-not false ;; (.isVisible display)
-       (.show display))))
+    (.showImage display myTaggedImage)
+    (when-not false
+      (.show display))))
     
 (defn add-to-album []
   (let [tagged-image (acquire-tagged-image)]
@@ -619,9 +543,6 @@
         display (LiveAcqDisplay. mmc out-queue-2 (make-summary-metadata settings)
                   (:save settings) acq-eng)]
     (def outq out-queue)
-    ;(.addImageProcessor acq-eng
-      ;(proxy [TaggedImageAnalyzer] []
-        ;(analyze [img] (log "pretending to analyze"))))
     (when-not (:stop @(.state this))
       (if (. gui getLiveMode)
         (. gui enableLiveMode false))
@@ -694,7 +615,6 @@
   (doto
     (proxy [AcquisitionWrapperEngine] []
       (runPipeline [^SequenceSettings settings]
-        ;(def orig-settings settings)
         (println "ss positions: " (.size (.positions settings)))
         (println "position-count: " (.getNumberOfPositions (.getPositionList gui)))
         (-run settings this)
