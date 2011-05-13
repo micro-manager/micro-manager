@@ -117,6 +117,7 @@ for p in $GPHOTOPORTFILES; do lipo -create $I386/$GPHOTOPORTDIR/$p $X86_64/$GPHO
 cd $I386/libgphoto2
 GPHOTOLIBS=*.dylib
 for l in $GPHOTOLIBS; do lipo -create $I386/libgphoto2/$l $X86_64/libgphoto2/$l -o $TARGET/libgphoto2/$l; done
+cp -r $I386/libgphoto2//KillPtpCamera.app $TARGET/libgphoto2/
 
 
 #for f in $FILES; do strip -X -S $TARGET/$f; done
