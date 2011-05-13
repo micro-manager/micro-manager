@@ -18,7 +18,8 @@
   (:use [org.micromanager.mm :only [when-lets map-config get-config get-positions load-mm
                                     get-default-devices core log log-cmd mmc gui with-core-setting
                                     do-when if-args get-system-config-cached select-values-match?
-                                    get-property get-camera-roi parse-core-metadata reload-device]]
+                                    get-property get-camera-roi parse-core-metadata reload-device
+                                    json-to-data]]
         [org.micromanager.sequence-generator :only [generate-acq-sequence]])
   (:import [org.micromanager AcqControlDlg]
            [org.micromanager.api AcquisitionEngine TaggedImageAnalyzer]
@@ -42,6 +43,15 @@
      :implements [org.micromanager.api.Pipeline]
      :init init
      :state state))
+
+;; globals
+
+(def state (atom {:running false :stop false}))
+
+(defn state-assoc! [& args]
+  (apply swap! state assoc args))
+   
+(def attached-runnables (atom (vec nil)))
 
 ;; constants
 
@@ -124,30 +134,7 @@
     (if-let [stage-pos (. msp (get z-stage))]
       (set! (. stage-pos x) z))))
 
-;; globals
-
-(def state (atom {:running false :stop false}))
-
-(defn state-assoc! [& args]
-  (apply swap! state assoc args))
-   
-(def attached-runnables (atom (vec nil)))
-
-;; metadata
-
-(defn json-to-data [json]
-  (condp #(isa? (type %2) %1) json
-    JSONObject
-      (let [keys (iterator-seq (.keys json))]
-        (into {}
-          (for [key keys]
-            (let [val (if (.isNull json key) nil (.get json key))]
-              [key (json-to-data val)]))))
-    JSONArray
-      (vec
-        (for [i (range (.length json))]
-          (json-to-data (.get json i))))
-    json))
+;; time
 
 (defn compute-time-from-core [tags]
   ; (log "core tags: " tags)
@@ -158,6 +145,126 @@
 
 (defn elapsed-time [state]
   (if (state :start-time) (- (clock-ms) (state :start-time)) 0))
+
+;; hardware error handling
+
+(defmacro successful? [& body]
+  `(try (do ~@body true)
+     (catch Exception e#
+            (do (ReportingUtils/logError e#) false))))
+
+(defmacro device-best-effort [dev & body]
+  `(let [attempt# #(do (wait-for-device ~dev) ~@body)]
+    (when-not
+      (or
+        (successful? (attempt#)) ; first attempt
+        (do (log "second attempt") (successful? (attempt#)))
+        (do (log "reload and try a third time")
+            (successful? (reload-device ~dev) (attempt#)))) ; third attempt after reloading
+      (throw (Exception. (str "Device failure: " ~dev)))
+      (swap! state assoc :stop true)
+      nil)))
+
+;; hardware control
+
+(defn wait-for-device [dev]
+  (when (and dev (pos? (.length dev)))
+    (core waitForDevice dev)))
+
+(defn get-z-stage-position [stage]
+  (if-not (empty? stage) (core getPosition stage) 0))
+  
+(defn set-z-stage-position [stage pos]
+  (when (core isContinuousFocusEnabled)
+    (core enableContinuousFocus false))
+  (when-not (empty? stage) (core setPosition stage pos)))
+
+(defn set-stage-position
+  ([stage-dev z]
+    (when (not= z (:last-z-position @state))
+      (set-z-stage-position stage-dev z)
+      (state-assoc! :last-z-position z)))
+  ([stage-dev x y]
+    (when (and x y
+               (not= [x y] (:last-xy-position @state)))
+      (core setXYPosition stage-dev x y)
+      (state-assoc! :last-xy-position [x y]))))
+
+(defn set-property
+  ([prop] (core setProperty (prop 0) (prop 1) (prop 2))))
+
+(defn run-autofocus []
+  (.. gui getAutofocusManager getDevice fullFocus)
+  (log "running autofocus " (.. gui getAutofocusManager getDevice getDeviceName))
+  (state-assoc! :reference-z-position (core getPosition (core getFocusDevice))))
+
+(defn snap-image [open-before close-after]
+  (with-core-setting [getAutoShutter setAutoShutter false]
+    (let [shutter (core getShutterDevice)]
+      (device-best-effort shutter
+        (when open-before
+          (core setShutterOpen true)
+          (wait-for-device (core getShutterDevice))))
+      (device-best-effort (core getCameraDevice)
+        (core snapImage))
+      (device-best-effort shutter
+        (when close-after
+          (core setShutterOpen false))
+          (wait-for-device (core getShutterDevice))))))
+
+(defn init-burst [length]
+  (core setAutoShutter (@state :init-auto-shutter))
+  (swap! state assoc :burst-init-time (elapsed-time @state))
+  (core startSequenceAcquisition length 0 true))
+
+(defn collect-burst-image []
+  (while (and (core isSequenceRunning) (zero? (core getRemainingImageCount)))
+    (Thread/sleep 5))
+  (let [md (Metadata.)
+        pix (core popNextImageMD md)
+        tags (parse-core-metadata md)
+        t (compute-time-from-core tags)
+        tags (if (and t (pos? t))
+               (assoc tags "ElapsedTime-ms" t)
+               (dissoc tags "ElapsedTime-ms"))]
+   ; (println "cam-t: " t ", collect-t: " (elapsed-time @state)
+   ;      ", remaining-images: " (core getRemainingImageCount))
+    {:pix pix :tags (dissoc tags "StartTime-ms")}))
+
+(defn collect-snap-image []
+  {:pix (core getImage) :tags nil})
+
+(defn return-config []
+  (dorun (map set-property
+    (clojure.set/difference
+      (set (@state :init-system-state))
+      (set (get-system-config-cached))))))
+
+;; sleeping
+
+(defn await-resume []
+  (while (and (:pause @state) (not (:stop @state))) (Thread/sleep 5)))
+
+(defn interruptible-sleep [time-ms]
+  (let [sleepy (CountDownLatch. 1)]
+    (state-assoc! :sleepy sleepy :next-wake-time (+ (clock-ms) time-ms))
+    (.await sleepy time-ms TimeUnit/MILLISECONDS)))
+
+(defn acq-sleep [interval-ms]
+  (when (and (@state :init-continuous-focus)
+             (not (core isContinuousFocusEnabled)))
+    (core enableContinuousFocus true))
+  (let [target-time (+ (@state :last-wake-time) interval-ms)
+        delta (- target-time (clock-ms))]
+    (when (pos? delta)
+      (interruptible-sleep delta))
+    (await-resume)
+    (let [now (clock-ms)
+          wake-time (if (> now (+ target-time 10)) now target-time)]
+      (state-assoc! :last-wake-time wake-time
+                    :reference-z-position (get-z-stage-position (core getFocusDevice))))))
+
+;; image metadata
 
 (defn annotate-image [img event state]
   ;(println event)
@@ -194,81 +301,6 @@
 
 ;; acq-engine
 
-(defmacro successful? [& body]
-  `(try (do ~@body true)
-     (catch Exception e#
-            (do (ReportingUtils/logError e#) false))))
-
-(defmacro device-best-effort [dev & body]
-  `(let [attempt# #(do (wait-for-device ~dev) ~@body)]
-    (when-not
-      (or
-        (successful? (attempt#)) ; first attempt
-        (do (log "second attempt") (successful? (attempt#)))
-        (do (log "reload and try a third time")
-            (successful? (reload-device ~dev) (attempt#)))) ; third attempt after reloading
-      (throw (Exception. (str "Device failure: " ~dev)))
-      (swap! state assoc :stop true)
-      nil)))
-
-(defn get-z-stage-position [stage]
-  (if-not (empty? stage) (core getPosition stage) 0))
-
-(defn await-resume []
-  (while (and (:pause @state) (not (:stop @state))) (Thread/sleep 5)))
-
-(defn interruptible-sleep [time-ms]
-  (let [sleepy (CountDownLatch. 1)]
-    (state-assoc! :sleepy sleepy :next-wake-time (+ (clock-ms) time-ms))
-    (.await sleepy time-ms TimeUnit/MILLISECONDS)))
-
-(defn acq-sleep [interval-ms]
-  (when (and (@state :init-continuous-focus)
-             (not (core isContinuousFocusEnabled)))
-    (core enableContinuousFocus true))
-  (let [target-time (+ (@state :last-wake-time) interval-ms)
-        delta (- target-time (clock-ms))]
-    (when (pos? delta)
-      (interruptible-sleep delta))
-    (await-resume)
-    (let [now (clock-ms)
-          wake-time (if (> now (+ target-time 10)) now target-time)]
-      (state-assoc! :last-wake-time wake-time
-                    :reference-z-position (get-z-stage-position (core getFocusDevice))))))
-
-(declare device-agents)
-
-(defn wait-for-device [dev]
-  (when (and dev (pos? (.length dev)))
-    (core waitForDevice dev)))
-
-(defn create-device-agents []
-  (def device-agents
-    (let [devs (seq (core getLoadedDevices))]
-      (zipmap devs (repeatedly (count devs) #(agent nil))))))
-  
-(defn set-z-stage-position [stage pos]
-  (when (core isContinuousFocusEnabled)
-    (core enableContinuousFocus false))
-  (when-not (empty? stage) (core setPosition stage pos)))
-
-(defn set-stage-position
-  ([stage-dev z]
-    (when (not= z (:last-z-position @state))
-      (set-z-stage-position stage-dev z)
-      (state-assoc! :last-z-position z)))
-  ([stage-dev x y]
-    (when (and x y
-               (not= [x y] (:last-xy-position @state)))
-      (core setXYPosition stage-dev x y)
-      (state-assoc! :last-xy-position [x y]))))
-
-(defn set-property
-  ([prop] (core setProperty (prop 0) (prop 1) (prop 2))))
-
-(defn send-device-action [dev action]
-  (send-off (device-agents dev) (fn [_] (action))))
-
 (defn create-presnap-actions [event]
   (concat
     (for [[axis pos] (:axes (MultiStagePosition-to-map (get-msp (:position event)))) :when pos]
@@ -279,63 +311,14 @@
       (list [(core getCameraDevice) #(core setExposure exposure)]))))
 
 (defn run-actions [action-map]
-  (if run-devices-parallel
-    (do
-      (doseq [[dev action] action-map]
-        (send-device-action dev action))
-      (doseq [dev (keys action-map)]
-        (send-device-action dev #(core waitForDevice dev)))
-      (doall (map (partial await-for 10000) (vals device-agents))))
-    (do
-      (doseq [[dev action] action-map]
-        (device-best-effort dev (action))))))
-
-(defn run-autofocus []
-  (.. gui getAutofocusManager getDevice fullFocus)
-  (log "running autofocus " (.. gui getAutofocusManager getDevice getDeviceName))
-  (state-assoc! :reference-z-position (core getPosition (core getFocusDevice))))
-
-(defn snap-image [open-before close-after]
-  (with-core-setting [getAutoShutter setAutoShutter false]
-    (let [shutter (core getShutterDevice)]
-      (device-best-effort shutter
-        (when open-before
-          (core setShutterOpen true)
-          (wait-for-device (core getShutterDevice))))
-      (device-best-effort (core getCameraDevice)
-        (core snapImage))
-      (device-best-effort shutter
-        (when close-after
-          (core setShutterOpen false))
-          (wait-for-device (core getShutterDevice))))))
-
-(defn init-burst [length]
-  (core setAutoShutter (@state :init-auto-shutter))
-  (swap! state assoc :burst-init-time (elapsed-time @state))
-  (core startSequenceAcquisition length 0 true))
+  (doseq [[dev action] action-map]
+    (device-best-effort dev (action))))
 
 (defn expose [event]
   (do (condp = (:task event)
     :snap (snap-image true (:close-shutter event))
     :init-burst (init-burst (:burst-length event))
     nil)))
-
-(defn collect-burst-image []
-  (while (and (core isSequenceRunning) (zero? (core getRemainingImageCount)))
-    (Thread/sleep 5))
-  (let [md (Metadata.)
-        pix (core popNextImageMD md)
-        tags (parse-core-metadata md)
-        t (compute-time-from-core tags)
-        tags (if (and t (pos? t))
-               (assoc tags "ElapsedTime-ms" t)
-               (dissoc tags "ElapsedTime-ms"))]
-   ; (println "cam-t: " t ", collect-t: " (elapsed-time @state)
-   ;      ", remaining-images: " (core getRemainingImageCount))
-    {:pix pix :tags (dissoc tags "StartTime-ms")}))
-
-(defn collect-snap-image []
-  {:pix (core getImage) :tags nil})
 
 (defn collect-image [event out-queue]
   (let [image (condp = (:task event)
@@ -372,7 +355,6 @@
           #(when-let [wait-time-ms (event :wait-time-ms)]
             (acq-sleep wait-time-ms))
           #(run-actions (create-presnap-actions event))
-          #(await-for 10000 (device-agents (core getCameraDevice)))
           #(when (:autofocus event)
             (set-z-position (:position event) (@state :default-z-drive) (run-autofocus)))
           #(when-let [z-drive (@state :default-z-drive)]
@@ -387,12 +369,6 @@
   (doseq [event-fn event-fns :while (not (:stop @state))]
     (try (event-fn) (catch Throwable e (ReportingUtils/logError e)))
     (await-resume)))
-
-(defn return-config []
-  (dorun (map set-property
-    (clojure.set/difference
-      (set (@state :init-system-state))
-      (set (get-system-config-cached))))))
 
 (defn cleanup []
   (log "cleanup")
@@ -603,8 +579,9 @@
     (reset-snap-window tagged-image)
     (show-image @snap-window tagged-image)))
 
-(def live-mode-running (ref false))
+;; live mode
 
+(def live-mode-running (ref false))
 
 (defn enable-live-mode [^Boolean on]
       (if on
@@ -632,7 +609,6 @@
   (def last-acq this)
   (def eng acq-eng)
   (load-mm)
-  (create-device-agents)
   (swap! (.state this) assoc :stop false :pause false :finished false)
   (let [out-queue (GentleLinkedBlockingQueue.)
         settings (convert-settings acq-settings)
