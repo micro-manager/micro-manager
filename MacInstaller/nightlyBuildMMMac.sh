@@ -80,7 +80,7 @@ make install || exit
 cd $RI386
 ./mmUnixBuild.sh || exit
 MACOSX_DEPLOYMENT_TARGET=10.4
-./configure --with-imagej=$I386 --enable-python --enable-arch=i386 --with-boost=/usr/local/i386 CXX="g++-4.0" CXXFLAGS="-g -O2 -mmacosx-version-min=10.4 -isysroot /Developer/SDKs/MacOSX10.4u.sdk -arch i386"  --disable-dependency-tracking || exit
+./configure --with-imagej=$I386 --enable-python --enable-arch=i386 --with-boost=/usr/local/i386 CXX="g++-4.0" CXXFLAGS="-g -O2 -mmacosx-version-min=10.4 -isysroot /Developer/SDKs/MacOSX10.4u.sdk -arch i386"  --disable-dependency-tracking PKG_CONFIG_LIBDIR="/usr/local/i386/lib/pkgconfig/" || exit
 make clean || exit
 make || exit
 make install || exit
@@ -89,7 +89,7 @@ make install || exit
 cd $RX86_64
 ./mmUnixBuild.sh || exit
 export MACOSX_DEPLOYMENT_TARGET=10.5
-./configure --with-imagej=$X86_64 --enable-arch=x86_64 --with-boost=/usr/local/x86_64 CXX="g++-4.2" CXXFLAGS="-g -O2 -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk -arch x86_64" --disable-dependency-tracking || exit
+./configure --with-imagej=$X86_64 --enable-arch=x86_64 --with-boost=/usr/local/x86_64 CXX="g++-4.2" CXXFLAGS="-g -O2 -mmacosx-version-min=10.5 -isysroot /Developer/SDKs/MacOSX10.5.sdk -arch x86_64" --disable-dependency-tracking PKG_CONFIG_LIBDIR="/usr/local/x86_64/lib/pkgconfig/" || exit
 make clean || exit
 make || exit
 make install || exit
@@ -101,21 +101,22 @@ lipo -create $PPC/libNativeGUI.jnilib $I386/libNativeGUI.jnilib $X86_64/libNativ
 cd $PPC
 FILES=libmmgr*
 for f in $FILES; do lipo -create $PPC/$f $I386/$f $X86_64/$f -o $TARGET/$f; done
+
+# Build Gphoto on I386 and X86_64 but not on PPC since p2p does not build there
 mkdir $TARGET/libgphoto2
 GPHOTODIR=libgphoto2/libgphoto2
 mkdir $TARGET/$GPHOTODIR
-cd $PPC/$GPHOTODIR
+cd $I386/$GPHOTODIR
 GPHOTOFILES=*.so
-for g in $GPHOTOFILES; do lipo -create $PPC/$GPHOTODIR/$g $I386/$GPHOTODIR/$g $X86_64/$GPHOTODIR/$g -o $TARGET/$GPHOTODIR/$g; done
+for g in $GPHOTOFILES; do lipo -create $I386/$GPHOTODIR/$g $X86_64/$GPHOTODIR/$g -o $TARGET/$GPHOTODIR/$g; done
 GPHOTOPORTDIR=libgphoto2/libgphoto2_port
 mkdir $TARGET/$GPHOTOPORTDIR
-cd $PPC/$GPHOTOPORTDIR
+cd $I386/$GPHOTOPORTDIR
 GPHOTOPORTFILES=*.so
-for p in $GPHOTOPORTFILES; do lipo -create $PPC/$GPHOTOPORTDIR/$p $I386/$GPHOTOPORTDIR/$p $X86_64/$GPHOTOPORTDIR/$p -o $TARGET/$GPHOTOPORTDIR/$p; done
+for p in $GPHOTOPORTFILES; do lipo -create $I386/$GPHOTOPORTDIR/$p $X86_64/$GPHOTOPORTDIR/$p -o $TARGET/$GPHOTOPORTDIR/$p; done
 cd $I386/libgphoto2
 GPHOTOLIBS=*.dylib
-for l in $GPHOTOLIBS; do lipo -create $PPC/libgphoto2/$l $I386/libgphoto2/$l $X86_64/libgphoto2/$l -o $TARGET/libgphoto2/$l; done
-
+for l in $GPHOTOLIBS; do lipo -create $I386/libgphoto2/$l $X86_64/libgphoto2/$l -o $TARGET/libgphoto2/$l; done
 
 
 #for f in $FILES; do strip -X -S $TARGET/$f; done
