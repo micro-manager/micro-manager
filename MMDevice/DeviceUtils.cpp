@@ -166,8 +166,12 @@ bool CDeviceUtils::CheckEnvironment(std::string env)
    bool bvalue = false;
    if( 0 < env.length())
    {
-      char initial =  (char)tolower(env.at(0));
-      bvalue = ('0' != initial) && ('f' != initial) && ( 'n' != initial);
+      std::string value = ::getenv(env.c_str());
+      if( 0 < value.length())
+      {
+         char initial =  (char)tolower(value.at(0));
+         bvalue = ('0' != initial) && ('f' != initial) && ( 'n' != initial);
+      }
    }
    return bvalue;
 }
