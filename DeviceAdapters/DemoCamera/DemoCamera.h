@@ -150,7 +150,6 @@ public:
    // ----------------
 	// floating point read-only properties for testing
 	int OnTestProperty(MM::PropertyBase* pProp, MM::ActionType eAct, long);
-   void RefreshTestProperty(long);
 
 
    int OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct);

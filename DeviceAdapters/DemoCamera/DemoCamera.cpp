@@ -268,6 +268,8 @@ CDemoCamera::CDemoCamera() :
 	saturatePixels_(false),
 	fractionOfPixelsToDropOrSaturate_(0.002)
 {
+   memset(testProperty_,0,sizeof(testProperty_));
+
    // call the base class method to set-up default error codes/messages
    InitializeDefaultErrorMessages();
    readoutStartTime_ = GetCurrentMMTime();
@@ -1051,11 +1053,6 @@ int CDemoCamera::OnTestProperty(MM::PropertyBase* pProp, MM::ActionType eAct, lo
    }
 	return DEVICE_OK;
 
-}
-
-void CDemoCamera::RefreshTestProperty(long indexx)
-{
-   testProperty_[indexx] = indexx + (double)rand()/(double)RAND_MAX;
 }
 
 
