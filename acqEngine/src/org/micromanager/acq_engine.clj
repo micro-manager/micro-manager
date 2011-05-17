@@ -302,10 +302,10 @@
   (if-let [channel (get-in @settings [:channels c])]
     (and
       (let [skip-n (channel :skip-frames)]
-        (zero? (mod f (inc skip-n)))))
+        (zero? (mod f (inc skip-n))))
       (or
         (channel :use-z-stack)
-        (= s (int (/ (count (@settings :slices)) 2))))
+        (= s (int (/ (count (@settings :slices)) 2)))))
     true))
                       
 (defn manage-shutter [p f c s]
@@ -328,8 +328,8 @@
       [axis (apply set-stage-position axis pos)])))
 
 (defn set-channel [c]
-  (for [prop (get-in @settings [:channels c :properties])]
-    (core setProperty (prop 0) (prop 1) (prop 2))))
+  (for [[d p v] (get-in @settings [:channels c :properties])]
+    (core setProperty d p v)))
 
 (defn collect-prev-image []
   (let [pix (core getImage)]
@@ -349,21 +349,24 @@
         (run-autofocus)))))
 
 (defn set-slice [c s]
-  (if-let [z-drive (@state :default-z-drive)]
-    (let [[_ _ c_ s_] (:last-indices @state)]
-      (+ (or (get-in @settings [:channels c :z-offset]) 0)
-         (or (get-in @settings [:slices s]) 0)
-         (if (and (:slice event) (not (:relative-z event)))
-           0
-           (or (get-z-position (:position event) z-drive)
-               (@state :reference-z-position))))))
+  (if-let [z-drive (@settings :z-drive)]
+    (let [[_ _ c_ s_] (:last-indices @state)
+          z (+ (or (get-in @settings [:channels c :z-offset]) 0)
+               (or (get-in @settings [:slices s]) 0))]
+         (if (@settings :relative-slices)
+           (let [delta-z (- z (:last-relative-slice @state))]
+               (core setRelativePosition z-drive delta-z)
+               (swap! state assoc :last-relative-slice z))
+           (core setPosition z-drive z)))))
       
 (defn snap-single-image [p f c s]
   (core snapImage)
   (swap! state assoc :last-snap-time (elapsed-time @state)))
 
-(defn run-snap-event [p f c s]
-  "Run a single iteration with the specified indices."
+(defn run-snap-event 
+  "Run a single iteration with the specified indices:
+  position, frame, channel, slice."
+  [p f c s]
   (when (allowed-image? f c s)
     (manage-shutter p f c s)
     (set-position p)
@@ -372,7 +375,8 @@
     (acq-wait f)
     (manage-autofocus f)
     (set-slice s)
-    (snap-single-image p f c s)))
+    (snap-single-image p f c s)
+    (swap! state assoc :last-indices [p f c s])))
 
 ;; iterations
 

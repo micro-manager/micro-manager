@@ -56,9 +56,8 @@
   ([cmd-count expr]
     (let [[cmd# args#] (split-at cmd-count expr)]
       `(let [expr# (concat '~cmd# (list ~@args#))]
-        (log
-          (.trim (prn-str expr#)))
-        (let [result# (eval expr#)]
+        (log (.trim (prn-str expr#)))
+        (let [result# ~expr]
           (log
             (if (nil? result#)
               "  --> nil"
