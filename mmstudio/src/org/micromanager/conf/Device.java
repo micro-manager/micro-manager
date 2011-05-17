@@ -53,8 +53,6 @@ import org.micromanager.utils.PropertyItem;
       private boolean usesDelay_;
       private int numPos_ = 0;
       private boolean discoverable_;
-      private String master_; // discoverable devices record which hub they are on
-      private Vector<String> slaves_; // hubs record their peripheral devices
 
    public Device(String name, String lib, String adapterName, String descr, boolean discoverable, String master,Vector<String> slaves ) {
       name_ = name;
@@ -68,8 +66,6 @@ import org.micromanager.utils.PropertyItem;
       usesDelay_ = false;
       delayMs_ = 0.0;
       discoverable_ = discoverable;
-      master_ = master;
-      slaves_ =  slaves;
    }
 
    public Device(String name, String lib, String adapterName, String descr, boolean discoverable) {
@@ -84,8 +80,6 @@ import org.micromanager.utils.PropertyItem;
       usesDelay_ = false;
       delayMs_ = 0.0;
       discoverable_ = discoverable;
-      master_ = "";
-      slaves_ =  new Vector<String>();
    }
 
    public Device(String name, String lib, String adapterName, String descr) {
@@ -100,8 +94,6 @@ import org.micromanager.utils.PropertyItem;
       usesDelay_ = false;
       delayMs_ = 0.0;
       discoverable_ = false;
-      master_ = "";
-      slaves_ =  new Vector<String>();
    }
    public Device(String name, String lib, String adapterName) {
       this(name, lib, adapterName, "");
@@ -353,20 +345,5 @@ import org.micromanager.utils.PropertyItem;
 
    }
 
-   public Vector<String> getSlaves(){
-      return slaves_;
-   }
-
-   public void setSlaves(Vector<String> slaves){
-      slaves_ = slaves;
-   }
-
-   public String getMaster(){
-      return master_;
-   }
-
-   public void setMaster(String m){
-      master_ = m;
-   }
 
  }

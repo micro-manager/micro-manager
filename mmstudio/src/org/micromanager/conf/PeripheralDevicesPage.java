@@ -277,23 +277,24 @@ public class PeripheralDevicesPage extends PagePanel {
       rebuildTable();
    }
    
-	public boolean enterPage(boolean fromNextPage) {
-		try {
-			rebuildTable();
-			if (fromNextPage) {
-           ;
-         }
-			return true;
-		} catch (Exception e2) {
-			ReportingUtils.showError(e2);
-		}
-		return false;
-	}
+    public boolean enterPage(boolean fromNextPage) {
+        try {
+            rebuildTable();
+            if (fromNextPage) {
+                model_.loadModel(core_,false);
+            }
+            return true;
+        } catch (Exception e2) {
+            ReportingUtils.showError(e2);
+        }
+        return false;
+    }
 
    public boolean exitPage(boolean toNextPage) {
+      boolean status = true;
       if (toNextPage) {
          try {
-            DeviceTable_TableModel tmd = (DeviceTable_TableModel)deviceTable_.getModel();
+            DeviceTable_TableModel tmd = (DeviceTable_TableModel) deviceTable_.getModel();
 
             Vector<Device> pd = tmd.getPeripheralDevices();
             Vector<String> hubs = tmd.getMasterDevices();
@@ -302,15 +303,24 @@ public class PeripheralDevicesPage extends PagePanel {
             model_.loadDeviceDataFromHardware(core_);
          } catch (Exception e) {
             handleException(e);
-                try {
-                    core_.unloadAllDevices();
-                } catch (Exception ex) {
-                    
-                }
-            return false;
+            status = false;
+         } finally {
+            try {
+               core_.unloadAllDevices();
+            } catch (Exception ex) {
+            }
+            model_.loadModel(core_, false);
+            try {
+               core_.initializeAllDevices();
+               // create the post-initialization properties
+               model_.loadDeviceDataFromHardware(core_);
+
+               model_.loadStateLabelsFromHardware(core_);
+            } catch (Exception ex) {
+            }
          }
       }
-      return true;
+      return status;
    }
 
    public void loadSettings() {

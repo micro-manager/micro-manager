@@ -92,7 +92,8 @@ public class PeripheralDevicesPreInitializationPropertiesPage extends PagePanel 
         tm.fireTableStructureChanged();
         tm.fireTableDataChanged();
         boolean any = false;
-        Device devices[] = model_.getDevices();
+        Device devices[] = model_.getPeripheralDevices();
+
         //  build list of devices to look for on the serial ports
         for (int i = 0; i < devices.length; i++) {
             for (int j = 0; j < devices[i].getNumberOfProperties(); j++) {

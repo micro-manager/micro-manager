@@ -64,11 +64,11 @@ public class DevicesPage extends PagePanel {
       private void filterDevices(){
          filteredDevices_.clear();
          // some assumptions here are:
-         // there may be mulitple non-discoverable devices in the the same library
+         // there may be multiple non-discoverable devices in the the same library
          // however, only ONE of the non-discoverable devices is the Hub for that library
          HashMap<String, Object> loadedDevices = new HashMap<String, Object>();
 
-         // at this point the adapter might not be loaded, since the user maybe adding the entries
+         // at this point the adapter might not be loaded, since the user may be adding the entries
          // from the MMDeviceList.txt or else the entries may already be in the configuration file.
          // ... so for every configured device we must:
          // 1. find which library it's in
@@ -288,46 +288,13 @@ public class DevicesPage extends PagePanel {
 		return false;
 	}
 
-   public boolean exitPage(boolean toNextPage) {
-      if (toNextPage) {
-         try {
-            StrVector ld = core_.getLoadedDevices();
-            
-            // first load com ports
-            Device ports[] = model_.getAvailableSerialPorts();
-
-           // allow the user to first associate the COM port with the device,
-            // later we will clear the 'use' flag after we determine we don't need the serial port
-            for( Device p : ports)
-                model_.useSerialPort(p, true);
-            
-            for (int i=0; i<ports.length; i++) {
-               if (model_.isPortInUse(ports[i])) {
-                   core_.loadDevice(ports[i].getName(), ports[i].getLibrary(), ports[i].getAdapterName());
-               }
-            }
-               
-            // load devices
-            Device devs[] = model_.getDevices();
-            for (int i=0; i<devs.length; i++) {
-               if (!devs[i].isCore()) {
-                  core_.loadDevice(devs[i].getName(), devs[i].getLibrary(), devs[i].getAdapterName());
-               }
-            }
-         model_.loadDeviceDataFromHardware(core_);
-         model_.removeDuplicateComPorts();
-         } catch (Exception e) {
-            handleException(e);
-                try {
-                    core_.unloadAllDevices();
-                } catch (Exception ex) {
-                    
-                }
-            return false;
-         }
-      }
-      return true;
-   }
+    public boolean exitPage(boolean toNextPage) {
+        boolean status = true;
+        if (toNextPage) {
+            status = model_.loadModel(core_, true);
+        }
+        return status;
+    }
 
    public void loadSettings() {
       

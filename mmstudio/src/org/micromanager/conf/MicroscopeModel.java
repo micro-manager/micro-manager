@@ -1061,6 +1061,26 @@ public class MicroscopeModel {
       return devs;
    }
 
+   // all the devices in the model that are discoverable on a hub
+   public Device[] getPeripheralDevices() {
+      int len = 0;
+
+      for( Device d : devices_){
+         if(d.isDiscoverable())
+            ++len;
+      }
+      Device[] devs = new Device[len];
+      if( 0 < len){
+         len = 0;
+         for(Device d : devices_){
+            if(d.isDiscoverable())
+               devs[len++] = d;
+         }
+      }
+      return devs;
+   }
+
+
    public void removePeripherals( String hubName, CMMCore core){
       Device d = findDevice(hubName);
       // check if this is hub device, that is simply any device with a non-empty discoverable peripheral list
@@ -1285,5 +1305,44 @@ public class MicroscopeModel {
          }
       }
    }
+
+    public boolean loadModel(CMMCore c, boolean useAllSerialPorts) {
+        boolean status = true;
+        try {
+            StrVector ld = c.getLoadedDevices();
+            // first load com ports
+            Device ports[] = getAvailableSerialPorts();
+            // allow the user to first associate the COM port with the device,
+            // later we will clear the 'use' flag after we determine we don't need the serial port
+            if(useAllSerialPorts){
+               for (Device p : ports) {
+                   useSerialPort(p, true);
+               }
+            }
+            for (int i = 0; i < ports.length; i++) {
+                if (isPortInUse(ports[i])) {
+                    c.loadDevice(ports[i].getName(), ports[i].getLibrary(), ports[i].getAdapterName());
+                }
+            }
+            // load devices
+            Device devs[] = getDevices();
+            for (int i = 0; i < devs.length; i++) {
+                if (!devs[i].isCore()) {
+                    c.loadDevice(devs[i].getName(), devs[i].getLibrary(), devs[i].getAdapterName());
+                }
+            }
+            loadDeviceDataFromHardware(c);
+            removeDuplicateComPorts();
+        } catch (Exception e) {
+            ReportingUtils.showError(e);
+            try {
+                c.unloadAllDevices();
+            } catch (Exception ex) {
+            }
+            status = false;
+        }
+        return status;
+    }
+
 
 }

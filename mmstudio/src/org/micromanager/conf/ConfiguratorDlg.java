@@ -180,7 +180,7 @@ public class ConfiguratorDlg extends JDialog {
 
         // add page panels
 
-        pages_ = new PagePanel[(showSynchroPage_ ? 10 : 9)];
+        pages_ = new PagePanel[(showSynchroPage_ ? 11 : 10)];
 
         int pageNumber = 0;
         pages_[pageNumber++] = new IntroPage(prefs_);
@@ -188,6 +188,7 @@ public class ConfiguratorDlg extends JDialog {
         pages_[pageNumber++] = new EditPropertiesPage(prefs_);
         pages_[pageNumber++] = new ComPortsPage(prefs_);
         pages_[pageNumber++] = new PeripheralDevicesPage(prefs_);
+        pages_[pageNumber++] = new PeripheralDevicesPreInitializationPropertiesPage(prefs_);
         pages_[pageNumber++] = new RolesPage(prefs_);
         pages_[pageNumber++] = new DelayPage(prefs_);
         if (showSynchroPage_) {

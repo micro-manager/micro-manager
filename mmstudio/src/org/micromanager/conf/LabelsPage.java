@@ -310,7 +310,10 @@ public class LabelsPage extends PagePanel {
       DevTableModel tm = (DevTableModel)devTable_.getModel();
       tm.setData(model_);
       try {
+         try{
          model_.loadStateLabelsFromHardware(core_);
+         }catch(Throwable t){
+            ReportingUtils.logError(t);}
 
          // default the selection to the first row
          if( devTable_.getSelectedRowCount() < 1 )
@@ -326,6 +329,7 @@ public class LabelsPage extends PagePanel {
          return false;
       }
 
+      resetLabels();
       return true;
   }
 
