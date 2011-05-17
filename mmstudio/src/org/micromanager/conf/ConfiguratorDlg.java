@@ -166,20 +166,12 @@ public class ConfiguratorDlg extends JDialog {
         backButton_.setText("< Back");
         backButton_.setBounds(395, 462, 93, 23);
         getContentPane().add(backButton_);
-
-
-
-
-
-
-
         pagesLabel_ = new JLabel();
         pagesLabel_.setBorder(new LineBorder(Color.black, 1, false));
         pagesLabel_.setBounds(9, 28, 578, 286);
         getContentPane().add(pagesLabel_);
 
         // add page panels
-
         pages_ = new PagePanel[(showSynchroPage_ ? 11 : 10)];
 
         int pageNumber = 0;

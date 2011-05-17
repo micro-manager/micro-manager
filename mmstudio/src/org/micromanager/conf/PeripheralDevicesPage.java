@@ -23,6 +23,8 @@
 //
 package org.micromanager.conf;
 
+import java.awt.Container;
+import java.awt.Cursor;
 import java.util.Vector;
 import java.util.prefs.Preferences;
 
@@ -31,7 +33,6 @@ import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
-import mmcorej.CMMCore;
 
 import mmcorej.MMCoreJ;
 import mmcorej.StrVector;
@@ -277,18 +278,33 @@ public class PeripheralDevicesPage extends PagePanel {
       rebuildTable();
    }
    
-    public boolean enterPage(boolean fromNextPage) {
-        try {
-            rebuildTable();
-            if (fromNextPage) {
-                model_.loadModel(core_,false);
+   public boolean enterPage(boolean fromNextPage) {
+      boolean status = true;
+      Container ancestor = getTopLevelAncestor();
+      Cursor oldc = null;
+      if (null != ancestor) {
+         oldc = ancestor.getCursor();
+         Cursor waitc = new Cursor(Cursor.WAIT_CURSOR);
+         ancestor.setCursor(waitc);
+      }
+
+      try {
+         rebuildTable();
+         if (fromNextPage) {
+            model_.loadModel(core_, false);
+         }
+      } catch (Exception e2) {
+         ReportingUtils.showError(e2);
+         status = false;
+      } finally {
+         if (null != ancestor) {
+            if (null != oldc) {
+               ancestor.setCursor(oldc);
             }
-            return true;
-        } catch (Exception e2) {
-            ReportingUtils.showError(e2);
-        }
-        return false;
-    }
+         }
+      }
+      return status;
+   }
 
    public boolean exitPage(boolean toNextPage) {
       boolean status = true;
@@ -308,15 +324,31 @@ public class PeripheralDevicesPage extends PagePanel {
             try {
                core_.unloadAllDevices();
             } catch (Exception ex) {
+               ReportingUtils.logError(ex);
+            }
+            Container ancestor = getTopLevelAncestor();
+            Cursor oldc = null;
+            if (null != ancestor){
+               oldc = ancestor.getCursor();
+               Cursor waitc = new Cursor(Cursor.WAIT_CURSOR);
+               ancestor.setCursor(waitc);
             }
             model_.loadModel(core_, false);
             try {
+
+
                core_.initializeAllDevices();
                // create the post-initialization properties
                model_.loadDeviceDataFromHardware(core_);
 
                model_.loadStateLabelsFromHardware(core_);
             } catch (Exception ex) {
+               ReportingUtils.logError(ex);
+            } finally{
+               if (null != ancestor){
+                  if( null != oldc)
+                     ancestor.setCursor(oldc);
+               }
             }
          }
       }

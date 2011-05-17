@@ -23,6 +23,8 @@
 //
 package org.micromanager.conf;
 
+import java.awt.Container;
+import java.awt.Cursor;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.HashMap;
@@ -291,7 +293,18 @@ public class DevicesPage extends PagePanel {
     public boolean exitPage(boolean toNextPage) {
         boolean status = true;
         if (toNextPage) {
+            Container ancestor = getTopLevelAncestor();
+            Cursor oldc = null;
+            if (null != ancestor){
+               oldc = ancestor.getCursor();
+               Cursor waitc = new Cursor(Cursor.WAIT_CURSOR);
+               ancestor.setCursor(waitc);
+            }
             status = model_.loadModel(core_, true);
+            if (null != ancestor){
+               if( null != oldc)
+                  ancestor.setCursor(oldc);
+            }
         }
         return status;
     }

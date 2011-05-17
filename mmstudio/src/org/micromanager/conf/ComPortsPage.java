@@ -23,6 +23,8 @@
 //
 package org.micromanager.conf;
 
+import java.awt.Container;
+import java.awt.Cursor;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Vector;
@@ -38,13 +40,11 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 import mmcorej.MMCoreJ;
-import mmcorej.StrVector;
 import org.micromanager.utils.GUIUtils;
 import org.micromanager.utils.PropertyItem;
 import org.micromanager.utils.PropertyNameCellRenderer;
 import org.micromanager.utils.PropertyValueCellEditor;
 import org.micromanager.utils.PropertyValueCellRenderer;
-import org.micromanager.utils.ReportingUtils;
 
 /**
  * Config Wizard COM ports page.
@@ -147,6 +147,14 @@ public class ComPortsPage extends PagePanel {
    }
 
    public boolean enterPage(boolean fromPreviousPage) {
+
+      Container ancestor = getTopLevelAncestor();
+      Cursor oldc = null;
+      if (null != ancestor){
+         oldc = ancestor.getCursor();
+         Cursor waitc = new Cursor(Cursor.WAIT_CURSOR);
+         ancestor.setCursor(waitc);
+      }
       if (fromPreviousPage) {
          try {
             core_.unloadAllDevices();
@@ -177,6 +185,10 @@ public class ComPortsPage extends PagePanel {
             }
          } catch (Exception e) {
             handleException(e);
+            if (null != ancestor){
+               if( null != oldc)
+                  ancestor.setCursor(oldc);
+            }
             return false;
          }
       }
@@ -247,16 +259,26 @@ public class ComPortsPage extends PagePanel {
       }
 
       buildPortTable();
-
       TableModel m2 = serialDeviceTable_.getModel();
       if (0 < m2.getRowCount()) {
          serialDeviceTable_.setRowSelectionInterval(0, 0);
       }
-
+      if (null != ancestor){
+         if( null != oldc)
+            ancestor.setCursor(oldc);
+      }
       return true;
    }
 
    public boolean exitPage(boolean toNextPage) {
+      Container ancestor = getTopLevelAncestor();
+      Cursor oldc = null;
+      if (null != ancestor){
+         oldc = ancestor.getCursor();
+         Cursor waitc = new Cursor(Cursor.WAIT_CURSOR);
+         ancestor.setCursor(waitc);
+      }
+
       try {
 
          Device ports[] = model_.getAvailableSerialPorts();
@@ -332,8 +354,16 @@ public class ComPortsPage extends PagePanel {
       } catch (Exception e) {
          handleException(e);
          if (toNextPage) {
+            if (null != ancestor){
+               if( null != oldc)
+                  ancestor.setCursor(oldc);
+            }
             return false;
          }
+      }
+      if (null != ancestor){
+         if( null != oldc)
+            ancestor.setCursor(oldc);
       }
       return true;
    }

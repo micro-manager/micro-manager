@@ -60,7 +60,7 @@ public class PeripheralDevicesPreInitializationPropertiesPage extends PagePanel 
      */
     public PeripheralDevicesPreInitializationPropertiesPage(Preferences prefs) {
         super();
-        title_ = "Edit pre-initialization settings";
+        title_ = "Edit peripheral device pre-initialization settings";
         helpText_ = "The list of device properties which must be defined prior to initialization is shown above. ";
         setLayout(null);
         prefs_ = prefs;

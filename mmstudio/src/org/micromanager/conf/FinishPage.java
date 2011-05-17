@@ -23,6 +23,8 @@
 //
 package org.micromanager.conf;
 
+import java.awt.Container;
+import java.awt.Cursor;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -169,6 +171,13 @@ public class FinishPage extends PagePanel {
     }
 
     private void saveAndTest() {
+         Container ancestor = getTopLevelAncestor();
+         Cursor oldc = null;
+         if (null != ancestor){
+            oldc = ancestor.getCursor();
+            Cursor waitc = new Cursor(Cursor.WAIT_CURSOR);
+            ancestor.setCursor(waitc);
+         }
         try {
             core_.unloadAllDevices();
             GUIUtils.preventDisplayAdapterChangeExceptions();
@@ -193,9 +202,11 @@ public class FinishPage extends PagePanel {
             ReportingUtils.showError(e);
         } catch (Exception e) {
             ReportingUtils.showError(e);
-            return;
+        } finally{
+            if (null != ancestor){
+               if( null != oldc)
+                  ancestor.setCursor(oldc);
+            }
         }
-
-       
     }
 }
