@@ -534,7 +534,8 @@ int CDemoCamera::SnapImage()
       long naptime = (long)(0.5 + expUs - (double)(t2-startTime).getUsec());
       if( naptime < 1)
          naptime = 1;
-      CDeviceUtils::NapMicros(naptime);
+      // longest possible nap is about 38 minutes
+      CDeviceUtils::NapMicros((unsigned long) naptime);
    }
    else
    {
