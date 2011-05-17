@@ -151,7 +151,7 @@ void CDeviceUtils::SleepMs(long periodMs)
 /**
  * Yield to other threads for the specified interval in microseconds.
  */
-void CDeviceUtils::NapMicros(long period)
+void CDeviceUtils::NapMicros(unsigned long period)
 {
 #ifdef WIN32
    Sleep(period/1000);
@@ -166,11 +166,14 @@ bool CDeviceUtils::CheckEnvironment(std::string env)
    bool bvalue = false;
    if( 0 < env.length())
    {
-      std::string value = ::getenv(env.c_str());
-      if( 0 < value.length())
+      char *pvalue = ::getenv(env.c_str());
+      if( 0 != pvalue)
       {
-         char initial =  (char)tolower(value.at(0));
-         bvalue = ('0' != initial) && ('f' != initial) && ( 'n' != initial);
+         if( 0 != *pvalue)
+         {
+            char initial =  (char)tolower(*pvalue);
+            bvalue = ('0' != initial) && ('f' != initial) && ( 'n' != initial);
+         }
       }
    }
    return bvalue;

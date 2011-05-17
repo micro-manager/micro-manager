@@ -60,7 +60,7 @@ public:
    static const char* ConvertToString(bool val);
    static void Tokenize(const std::string& str, std::vector<std::string>& tokens, const std::string& delimiters = ",");
    static void SleepMs(long ms);
-   static void NapMicros(long microsecs);
+   static void NapMicros(unsigned long microsecs);
    static std::string HexRep(std::vector<unsigned char>  );
    static bool CheckEnvironment(std::string environment);
 private:
