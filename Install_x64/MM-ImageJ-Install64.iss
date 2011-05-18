@@ -70,71 +70,9 @@ Source: micro-manager\inpoutx64.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\MMCoreJ_wrap.dll; DestDir: {app}; Flags: ignoreversion
 Source: ..\drivers\K8061\amd64\libusb0.dll; DestDir: {app}; DestName: libusb0.dll; Flags: ignoreversion
 
-Source: micro-manager\mmgr_dal_AAAOTF.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_Andor.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_AndorLaserCombiner.dll; DestDir: {app}; Flags: ignoreversion
-;Source: micro-manager\mmgr_dal_Apogee.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_Arduino.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_ASIFW1000.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_ASIStage.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_ASIwptr.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_CoherentCube.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_Conix.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_Corvus.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_CSUX.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_DemoCamera.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_DTOpenLayer.dll; DestDir: {app}; Flags: ignoreversion
-;Source: micro-manager\mmgr_dal_XCite120PC_Exacte.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_GenericSLM.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_GigECamera.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_FreeSerialPort.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_Hamamatsu.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_HamamatsuHam.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_ImageProcessorChain.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_K8055.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_K8061.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_KDV.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_LeicaDMI.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_LeicaDMR.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_Ludl.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_MaestroServo.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_Marzhauser.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_MT20.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_Neos.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_Nikon.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_NikonAZ100.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_NikonTE2000.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_NikonTI.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_NNLC.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_Olympus.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_ParallelPort.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_Pecon.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_PI.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_PI_GCS.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_Piper.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_PrecisExcite.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_PrincetonInstruments.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_Prior.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_PVCAM.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_QCam.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_Sapphire.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_SerialManager.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_SimpleAutofocus.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_SpectralLMM5.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_SpotCamera.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_Stradus.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_SutterLambda.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_Thorlabs.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_ThorlabsFilterWheel.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_ThorlabsSC10.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_TIScam.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_TwainCamera.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_USBManager.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_Utilities.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_Vincent.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_Yokogawa.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_ZeissCAN.dll; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\mmgr_dal_ZeissCAN29.dll; DestDir: {app}; Flags: ignoreversion
+; device adapters
+Source: micro-manager\mmgr_dal_*.dll; DestDir: {app}; Flags: ignoreversion
+
 ; python wrapper
 ;Source: micro-manager\_MMCorePy.pyd; DestDir: {app}; Flags: ignoreversion skipifsourcedoesntexist
 ;Source: micro-manager\MMCorePy.py; DestDir: {app}; Flags: ignoreversion skipifsourcedoesntexist

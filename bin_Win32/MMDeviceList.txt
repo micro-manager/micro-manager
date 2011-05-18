@@ -53,7 +53,11 @@ DemoCamera,DAutoFocus,Demo auto focus,9
 DemoCamera,DShutter,Demo shutter,3
 DemoCamera,D-DA,Demo DA,13
 DemoCamera,DOptovar,Demo Optovar,14
-DemoCamera,DemoTranspose,DemoTranspose,11
+DemoCamera,TransposeProcessor,TransposeProcessor,11
+DemoCamera,ImageFlipX,ImageFlipX,11
+DemoCamera,ImageFlipY,ImageFlipY,11
+DemoCamera,MedianFilter,MedianFilter,11
+DemoCamera,DHub,DHub,8
 FreeSerialPort,FreeSerialPort,Free-form communication Serial Port.,8
 GenericSLM,GenericSLM,Spatial Light Modulator controlled through computer graphics output,16
 GigECamera,GigE camera adapter,GigE camera,2
@@ -220,6 +224,7 @@ SimpleAutofocus,TPFocus,Three point focus - 100XImaging Inc.,9
 SpectralLMM5,LMM5-Hub,Description N/A,8
 SpectralLMM5,LMM5-Shutter,Description N/A,3
 SpotCamera,Spot,SpotCam,2
+Stradus,VLTStradus,VLTStradus,8
 SutterLambda,Wheel-A,Lambda 10 filter wheel A,4
 SutterLambda,Wheel-B,Lambda 10 filter wheel B,4
 SutterLambda,Wheel-C,Lambda 10 wheel C (10-3 only),4
