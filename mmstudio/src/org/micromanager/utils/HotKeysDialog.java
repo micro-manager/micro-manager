@@ -302,7 +302,7 @@ public final class HotKeysDialog extends MMDialog {
       saveButton_ = new javax.swing.JButton();
 
       setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
-      setModalExclusionType(java.awt.Dialog.ModalExclusionType.APPLICATION_EXCLUDE);
+      //setModalExclusionType(java.awt.Dialog.ModalExclusionType.APPLICATION_EXCLUDE);
 
       jScrollPane1_.setMinimumSize(new java.awt.Dimension(23, 15));
       jScrollPane1_.setPreferredSize(new java.awt.Dimension(32767, 32767));
