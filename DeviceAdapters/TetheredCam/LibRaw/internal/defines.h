@@ -22,7 +22,7 @@ it under the terms of the one of three licenses as you choose:
 */
 
 #define NO_JPEG
-#define VERSION "9.06"
+#define VERSION "9.07"
 
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
