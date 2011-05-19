@@ -144,16 +144,17 @@ fi
 PKG_PROG_PKG_CONFIG
 PKG_CHECK_MODULES([GPHOTO2], [libgphoto2 >= 2.1.10], AC_DEFINE([HAVE_LIBGPHOTO2], [YES]), AC_DEFINE([HAVE_LIBGPHOTO2], [NO]))
 
-if test x$HAVE_LIBGPHOTO2 = xNO; then
-   buildsc=false
-   AC_MSG_RESULT([not found])
-else
+buildsc=false
+if test x$HAVE_LIBGPHOTO2 = xYES; then
    buildsc=true
    AC_MSG_RESULT([found])
    GPHOTO2_VERSION=`$PKG_CONFIG --modversion libgphoto2`
    GPHOTO2_PORT_VERSION=`$PKG_CONFIG --modversion libgphoto2_port`
    GPHOTO2_LIBDIR=`$PKG_CONFIG --variable=libdir libgphoto2`
    LIBGPHOTO2=`$PKG_CONFIG --variable=libdir libgphoto2`/libgphoto2.la
+else
+   buildsc=false
+   AC_MSG_RESULT([not found])
 fi
 
 # On mac, install dynamic gphoto2 libraries 
