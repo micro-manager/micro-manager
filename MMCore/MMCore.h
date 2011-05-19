@@ -85,25 +85,25 @@ class MMEventCallback;
 typedef unsigned int* imgRGB32;
 
 /**
- * The interface to the core image acquisition services.
- * This class is intended as the top-most level interface to the core services.
- * Its public methods define the programmatic API, typically wrapped into the
- * high-level language wrapper (Python, Java, etc.). Public methods are designed
- * to conform to default processing conventions for the automatic wrapper generator
- * SWIG (http://www.swig.org).
- */
+* The interface to the core image acquisition services.
+* This class is intended as the top-most level interface to the core services.
+* Its public methods define the programmatic API, typically wrapped into the
+* high-level language wrapper (Python, Java, etc.). Public methods are designed
+* to conform to default processing conventions for the automatic wrapper generator
+* SWIG (http://www.swig.org).
+*/
 class CMMCore
 {
-friend class CoreCallback;
+   friend class CoreCallback;
 
 public:
 
-	CMMCore();
-	~CMMCore();
-   
+   CMMCore();
+   ~CMMCore();
+
    /** @name Initialization and set-up
-    * Loading of drivers, initialization and setting-up the environment.
-    */
+   * Loading of drivers, initialization and setting-up the environment.
+   */
    //@ {
    void loadDevice(const char* label, const char* library, const char* name) throw (CMMError);
    void unloadDevice(const char* label) throw (CMMError);
@@ -142,14 +142,14 @@ public:
    //@ }
 
    /** @name Device discovery and configuration interface.
-    */
+   */
    std::vector<std::string> getAvailableDevices(const char* library) throw (CMMError);
    std::vector<std::string> getAvailableDeviceDescriptions(const char* library) throw (CMMError);
    std::vector<long> getAvailableDeviceTypes(const char* library) throw (CMMError);
 
-    /** 
-    * Device inventory discovery interface.
-    */
+   /** 
+   * Device inventory discovery interface.
+   */
 
 
    std::vector<bool> getDeviceDiscoverability(const char* library ///< library just as in getAvailableDevices
@@ -157,8 +157,8 @@ public:
 
 
    /** @name Generic device interface
-    * API guaranteed to work for all devices.
-    */
+   * API guaranteed to work for all devices.
+   */
    //@ {
    static void addSearchPath(const char *path);
    static std::vector<std::string> getDeviceLibraries() throw (CMMError);
@@ -167,7 +167,7 @@ public:
    std::vector<std::string> getDevicePropertyNames(const char* label) const throw (CMMError);
    std::string getProperty(const char* label, const char* propName) const throw (CMMError);
    void setProperty(const char* label, const char* propName, const char* propValue) throw (CMMError);
-   
+
    void setProperty(const char* label, const char* propName, const bool propValue) throw (CMMError);
    void setProperty(const char* label, const char* propName, const long propValue) throw (CMMError);
    void setProperty(const char* label, const char* propName, const float propValue) throw (CMMError);
@@ -209,8 +209,8 @@ public:
    //@ }
 
    /**
-    * @name System role identification for devices.
-    */
+   * @name System role identification for devices.
+   */
    //@ {
    std::string getCameraDevice();
    std::string getShutterDevice();
@@ -232,8 +232,8 @@ public:
 
 
    /** @name Multiple property settings
-    * A single configuration applies to multiple devices at the same time.
-    */
+   * A single configuration applies to multiple devices at the same time.
+   */
    //@ {
    void defineConfig(const char* groupName, const char* configName) throw (CMMError);
    void defineConfig(const char* groupName, const char* configName, const char* deviceName, const char* propName, const char* value) throw (CMMError);
@@ -267,8 +267,8 @@ public:
    //@ }
 
    /** @name Imaging support
-    * Imaging related API.
-    */
+   * Imaging related API.
+   */
    //@ {
    void setROI(int x, int y, int xSize, int ySize) throw (CMMError); 
    void getROI(int& x, int& y, int& xSize, int& ySize) const throw (CMMError); 
@@ -318,8 +318,8 @@ public:
    //@ }
 
    /** @name Auto-focusing
-    * API for controlling auto-focusing devices or software modules.
-    */
+   * API for controlling auto-focusing devices or software modules.
+   */
    //@ {
    double getLastFocusScore();
    double getCurrentFocusScore();
@@ -333,8 +333,8 @@ public:
    //@}
 
    /** @name State device support
-    * API for controlling state devices (filters, turrets, etc.)
-    */
+   * API for controlling state devices (filters, turrets, etc.)
+   */
    //@ {
    void setState(const char* deviceLabel, long state) throw (CMMError);
    long getState(const char* deviceLabel) const throw (CMMError);
@@ -349,8 +349,8 @@ public:
    //@ }
 
    /** @name Property blocks
-    * API for defining interchangeable equipment attributes
-    */
+   * API for defining interchangeable equipment attributes
+   */
    //@ {
    void definePropertyBlock(const char* blockName, const char* propertyName, const char* propertyValue);
    std::vector<std::string> getAvailablePropertyBlocks() const;
@@ -358,8 +358,8 @@ public:
    //@ }
 
    /** @name Stage control
-    * API for controlling X, Y and Z stages
-    */
+   * API for controlling X, Y and Z stages
+   */
    //@ {
    void setPosition(const char* deviceLabel, double position) throw (CMMError);
    double getPosition(const char* deviceLabel) const throw (CMMError);
@@ -376,16 +376,16 @@ public:
    //@ }
 
    /** @name Serial port control
-    * API for serial ports
-    */
+   * API for serial ports
+   */
    //@ {
    int setSerialProperties(const char* portName,
-                           const char* answerTimeout,
-                           const char* baudRate,
-                           const char* delayBetweenCharsMs,
-                           const char* handshaking,
-                           const char* parity,
-                           const char* stopBits);
+      const char* answerTimeout,
+      const char* baudRate,
+      const char* delayBetweenCharsMs,
+      const char* handshaking,
+      const char* parity,
+      const char* stopBits);
    void setSerialPortCommand(const char* deviceLabel, const char* command, const char* term) throw (CMMError);
    std::string getSerialPortAnswer(const char* deviceLabel, const char* term) throw (CMMError);
    void writeToSerialPort(const char* deviceLabel, const std::vector<char> &data) throw (CMMError);
@@ -393,8 +393,8 @@ public:
    //@ }
 
    /** @name SLM control
-    * API for spatial light modulators such as liquid crystal on silicon (LCoS), digital micromirror devices (DMD), or multimedia projectors. 
-    */
+   * API for spatial light modulators such as liquid crystal on silicon (LCoS), digital micromirror devices (DMD), or multimedia projectors. 
+   */
    //@ {
    void setSLMImage(const char* deviceLabel, unsigned char * pixels) throw (CMMError);
    void setSLMImage(const char* deviceLabel, imgRGB32 pixels) throw (CMMError);
@@ -408,9 +408,9 @@ public:
    //@ }
 
    /** @name Acquisition context API
-    * NOTE: experimental feature
-    * API notifying core of acquisition context events
-    */
+   * NOTE: experimental feature
+   * API notifying core of acquisition context events
+   */
    //@ {
    void acqBefore() throw (CMMError);
    void acqAfter() throw (CMMError);
@@ -426,33 +426,40 @@ public:
    // hubs and 'scopes can provide a list of peripheral devices currently attached
    std::vector<std::string> getDiscoverableDevices(const char* deviceLabel); 
 
-   
+
    template <class T>
    T* getSpecificDevice(const char* deviceLabel) const throw (CMMError)
-{
-   MM::Device* pDevice;
-   T* pSpecDev = 0;
-   try {
-      pDevice = pluginManager_.GetDevice(deviceLabel);
-      // The most appropriate thing to do here is to use
-      // pSpecDev = dynamic_cast<T*>(pDevice). But, we can't use dynamic_cast beacuse
-      // GCC linker on Linux does not interpret RTTI properly across the DLL boundary.
-      // Instead we'll check the type through the Type identifier and use static_cast.
-      if (pDevice->GetType() != T::Type)
-         throw CMMError(deviceLabel, MMERR_InvalidSpecificDevice);
+   {
+      MM::Device* pDevice;
+      T* pSpecDev = 0;
+      try {
+         pDevice = pluginManager_.GetDevice(deviceLabel);
+         // The most appropriate thing to do here is to use
+         // pSpecDev = dynamic_cast<T*>(pDevice). But, we can't use dynamic_cast beacuse
+         // GCC linker on Linux does not interpret RTTI properly across the DLL boundary.
+         // Instead we'll check the type through the Type identifier and use static_cast.
+         if (pDevice->GetType() != T::Type)
+            throw CMMError(deviceLabel, MMERR_InvalidSpecificDevice);
 
-      pSpecDev = static_cast<T*>(pDevice);                                                                             
-   } catch (CMMError& err) {                                                 
-      err.setCoreMsg(getCoreErrorText(err.getCode()).c_str());               
-      throw;                                                                 
-   } catch (...) {                                                           
-       throw CMMError(getCoreErrorText(MMERR_UnhandledException).c_str(), MMERR_UnhandledException);
-   }                                                                         
-                                                                             
-   return pSpecDev;                                                          
-}  
+         pSpecDev = static_cast<T*>(pDevice);                                                                             
+      } catch (CMMError& err) {                                                 
+         err.setCoreMsg(getCoreErrorText(err.getCode()).c_str());               
+         throw;                                                                 
+      } catch (...) {                                                           
+         throw CMMError(getCoreErrorText(MMERR_UnhandledException).c_str(), MMERR_UnhandledException);
+      }                                                                         
+      return pSpecDev;                                                          
+   }  
 
    std::vector<std::string> getMACAddresses(void);
+
+   void setDeviceDiscoveryEnabled(bool en){
+      enableDeviceDiscovery_ = en;
+   }
+   
+   bool getDeviceDiscoveryEnabled(){
+      return enableDeviceDiscovery_;
+   }
 
 
 
@@ -464,7 +471,7 @@ private:
    typedef std::map<std::string, Configuration*> CConfigMap;
    typedef std::map<std::string, PropertyBlock*> CPropBlockMap;
 
-	static MMThreadLock deviceLock_;
+   static MMThreadLock deviceLock_;
 
    char* pathBuf_; // cached version of current working directoy
 
@@ -519,6 +526,7 @@ private:
 
    MMThreadLock* pPostedErrorsLock_;
    mutable std::deque<std::pair< int, std::string> > postedErrors_;
+   bool enableDeviceDiscovery_;
 
 
 };

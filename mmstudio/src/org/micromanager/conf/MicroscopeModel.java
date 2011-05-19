@@ -41,6 +41,7 @@ import mmcorej.Configuration;
 import mmcorej.MMCoreJ;
 import mmcorej.PropertySetting;
 import mmcorej.StrVector;
+import org.micromanager.MMOptions;
 import org.micromanager.utils.PropertyItem;
 import org.micromanager.utils.ReportingUtils;
 
@@ -59,14 +60,19 @@ public class MicroscopeModel {
    Hashtable<String, ConfigGroup> configGroups_;
    ConfigGroup pixelSizeGroup_;
    ArrayList<String> synchroDevices_;
+   // this device list is created WITHOUT automated peripheral device discovery
    public static final String DEVLIST_FILE_NAME = "MMDeviceList.txt";
+   // this device list is created WITH automated peripheral device discovery (i.e. 'primary' devices only)
+   public static final String DEVLISTPRIME_FILE_NAME = "MMDeviceListPrime.txt";
    public static final String PIXEL_SIZE_GROUP = "PixelSizeGroup";
 
    boolean sendConfiguration_;
 
-   public static boolean generateDeviceListFile() {
+   public static boolean generateDeviceListFile(boolean enableDeviceDiscovery, String deviceListFileName ) {
       try {
+         deviceListFileName = (enableDeviceDiscovery?DEVLISTPRIME_FILE_NAME:DEVLIST_FILE_NAME );
          CMMCore core = new CMMCore();
+         core.setDeviceDiscoveryEnabled(enableDeviceDiscovery);
          core.enableDebugLog(true);
          StrVector libs = getDeviceLibraries(core);
          ArrayList<Device> devs = new ArrayList<Device>();
@@ -83,7 +89,8 @@ public class MicroscopeModel {
             }
          }
 
-         File f = new File(MicroscopeModel.DEVLIST_FILE_NAME);
+         File f = new File(deviceListFileName);
+
          try {
             BufferedWriter out = new BufferedWriter(new FileWriter(f.getAbsolutePath()));
             for (int i = 0; i < devs.size(); i++) {
@@ -97,7 +104,7 @@ public class MicroscopeModel {
             }
             out.close();
          } catch (IOException e1) {
-            ReportingUtils.showError(e1, "Unable to open the output file: " + MicroscopeModel.DEVLIST_FILE_NAME);
+            ReportingUtils.showError(e1, "Unable to open the output file: " + deviceListFileName);
             return false;
          }
       } catch (Exception e2) {
@@ -212,11 +219,12 @@ public class MicroscopeModel {
    public void loadAvailableDeviceList(CMMCore core) {
       try {
          ArrayList<Device> devsTotal = new ArrayList<Device>();
+         String deviceListFileName = (core.getDeviceDiscoveryEnabled()?DEVLISTPRIME_FILE_NAME:DEVLIST_FILE_NAME );
 
          // attempt to load device info from file
-         File f = new File(DEVLIST_FILE_NAME);
+         File f = new File(deviceListFileName);
          if (f.exists()) {
-            loadDevicesFromListFile(devsTotal);
+            loadDevicesFromListFile(devsTotal,deviceListFileName);
          }
 
          // assign available devices
@@ -256,8 +264,8 @@ public class MicroscopeModel {
 
    }
 
-   private void loadDevicesFromListFile(ArrayList<Device> devsTotal) {
-      File f = new File(DEVLIST_FILE_NAME);
+   private void loadDevicesFromListFile(ArrayList<Device> devsTotal, String fileName) {
+      File f = new File(fileName);
       BufferedReader input = null;
       try {
          input = new BufferedReader(new FileReader(f));

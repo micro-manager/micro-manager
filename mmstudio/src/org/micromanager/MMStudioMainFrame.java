@@ -1399,7 +1399,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          JMenuItem configItem = new JMenuItem();
          configItem.setText(Integer.toString(i));
          switchConfigurationMenu_.add(configItem);
-         
       }
 
       final JMenuItem reloadConfigMenuItem = new JMenuItem();
@@ -1434,7 +1433,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             Cursor oldc = Cursor.getDefaultCursor();
             Cursor waitc = new Cursor(Cursor.WAIT_CURSOR);
             setCursor(waitc);
-            MicroscopeModel.generateDeviceListFile();
+            String resultFile = null;
+            MicroscopeModel.generateDeviceListFile(options_.enableDeviceDiscovery_, resultFile);
             setCursor(oldc);
          }
       });
@@ -1704,6 +1704,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
                return;
             }
             ReportingUtils.setCore(core_);
+            core_.setDeviceDiscoveryEnabled(options_.enableDeviceDiscovery_);
 
             core_.enableDebugLog(options_.debugLogEnabled_);
             core_.logMessage("MM Studio version: " + getVersion());

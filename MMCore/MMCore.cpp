@@ -110,7 +110,8 @@ MMThreadLock CMMCore::deviceLock_;
  */
 CMMCore::CMMCore() :
    camera_(0), everSnapped_(false), shutter_(0), focusStage_(0), xyStage_(0), autoFocus_(0), slm_(0), imageProcessor_(0), pollingIntervalMs_(10), timeoutMs_(5000),
-   logStream_(0), autoShutter_(true), callback_(0), configGroups_(0), properties_(0), externalCallback_(0), pixelSizeGroup_(0), cbuf_(0), pPostedErrorsLock_(NULL)
+   logStream_(0), autoShutter_(true), callback_(0), configGroups_(0), properties_(0), externalCallback_(0), pixelSizeGroup_(0), cbuf_(0), pPostedErrorsLock_(NULL), 
+   enableDeviceDiscovery_(false)
 {
    // get current working directory
 #ifdef _WINDOWS
@@ -397,12 +398,11 @@ string CMMCore::getVersionInfo() const
  * Get available devices from the specified library.
  */
 vector<string> CMMCore::getAvailableDevices(const char* library ///< the device adapter library name
-                                            
                                             ) throw (CMMError)
 {
    try
    {
-      return CPluginManager::GetAvailableDevices(library);
+      return CPluginManager::GetAvailableDevices(library, enableDeviceDiscovery_);
    }
    catch (CMMError& e)
    {
@@ -418,7 +418,7 @@ vector<string> CMMCore::getAvailableDeviceDescriptions(const char* library ///< 
 {
    try
    {
-      return CPluginManager::GetAvailableDeviceDescriptions(library);
+      return CPluginManager::GetAvailableDeviceDescriptions(library,enableDeviceDiscovery_);
    }
    catch (CMMError& e)
    {
@@ -434,7 +434,7 @@ vector<long> CMMCore::getAvailableDeviceTypes(const char* library ///< the devic
 {
    try
    {
-      return CPluginManager::GetAvailableDeviceTypes(library);
+      return CPluginManager::GetAvailableDeviceTypes(library, enableDeviceDiscovery_);
    }
    catch (CMMError& e)
    {
@@ -451,7 +451,7 @@ std::vector<bool> CMMCore::getDeviceDiscoverability(const char* library)
    {
 
       std::vector<bool> ret;
-      ret = CPluginManager::GetDeviceDiscoverability(library);
+      ret = CPluginManager::GetDeviceDiscoverability(library,enableDeviceDiscovery_);
       return ret;
    }
 

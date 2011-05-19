@@ -31,12 +31,18 @@ import org.micromanager.utils.ReportingUtils;
 public class DeviceListBuilder {
 
    public static void main(String[] args) {
+      String resultingFile = null;
 	   
-      if (MicroscopeModel.generateDeviceListFile())
-         ReportingUtils.logMessage("Device list generated.");
+      if (MicroscopeModel.generateDeviceListFile(true, resultingFile))
+         ReportingUtils.logMessage("Device list " + resultingFile + " generated.");
       else
-         ReportingUtils.logMessage("Device list not generated or invalid.");
- 
+         ReportingUtils.logMessage("Device list " + resultingFile + " not generated or invalid.");
+
+      if (MicroscopeModel.generateDeviceListFile(false, resultingFile))
+         ReportingUtils.logMessage("Device list " + resultingFile + " generated.");
+      else
+         ReportingUtils.logMessage("Device list " + resultingFile + " not generated or invalid.");
+
    }
 
 }

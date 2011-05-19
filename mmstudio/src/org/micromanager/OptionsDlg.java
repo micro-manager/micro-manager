@@ -115,10 +115,38 @@ public class OptionsDlg extends MMDialog {
       });
       debugLogEnabledCheckBox.setText("Debug log enabled");
       getContentPane().add(debugLogEnabledCheckBox);
-      springLayout.putConstraint(SpringLayout.SOUTH, debugLogEnabledCheckBox, 35, SpringLayout.NORTH, getContentPane());
-      springLayout.putConstraint(SpringLayout.NORTH, debugLogEnabledCheckBox, 12, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.SOUTH, debugLogEnabledCheckBox, 30, SpringLayout.NORTH, getContentPane());
+      springLayout.putConstraint(SpringLayout.NORTH, debugLogEnabledCheckBox, 7, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.EAST, debugLogEnabledCheckBox, 190, SpringLayout.WEST, getContentPane());
       springLayout.putConstraint(SpringLayout.WEST, debugLogEnabledCheckBox, 10, SpringLayout.WEST, getContentPane());
+      debugLogEnabledCheckBox.setSelected(opts_.debugLogEnabled_);
+
+      final JCheckBox doNotAskForConfigFileCheckBox = new JCheckBox();
+      doNotAskForConfigFileCheckBox.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent arg0) {
+            opts_.doNotAskForConfigFile_ = doNotAskForConfigFileCheckBox.isSelected();
+         }
+      });
+      doNotAskForConfigFileCheckBox.setText("Do not ask for config file");
+      getContentPane().add(doNotAskForConfigFileCheckBox);
+      springLayout.putConstraint(SpringLayout.EAST, doNotAskForConfigFileCheckBox, 220, SpringLayout.WEST, getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, doNotAskForConfigFileCheckBox, 0, SpringLayout.WEST, debugLogEnabledCheckBox);
+      springLayout.putConstraint(SpringLayout.SOUTH, doNotAskForConfigFileCheckBox, 50, SpringLayout.NORTH, getContentPane());
+      doNotAskForConfigFileCheckBox.setSelected(opts_.doNotAskForConfigFile_);
+
+      final JCheckBox enableDeviceDiscoveryCheckBox = new JCheckBox();
+      enableDeviceDiscoveryCheckBox.addActionListener(new ActionListener() {
+         public void actionPerformed(ActionEvent arg0) {
+            opts_.enableDeviceDiscovery_ = enableDeviceDiscoveryCheckBox.isSelected();
+         }
+      });
+      enableDeviceDiscoveryCheckBox.setText("Enable Peripheral Device Discovery");
+      getContentPane().add(enableDeviceDiscoveryCheckBox);
+      springLayout.putConstraint(SpringLayout.EAST, enableDeviceDiscoveryCheckBox, 220, SpringLayout.WEST, getContentPane());
+      springLayout.putConstraint(SpringLayout.WEST, enableDeviceDiscoveryCheckBox, 0, SpringLayout.WEST, debugLogEnabledCheckBox);
+      springLayout.putConstraint(SpringLayout.SOUTH, enableDeviceDiscoveryCheckBox, 70, SpringLayout.NORTH, getContentPane());
+      enableDeviceDiscoveryCheckBox.setSelected(opts_.enableDeviceDiscovery_);
+
 
       final JButton clearLogFileButton = new JButton();
       clearLogFileButton.setMargin(new Insets(0, 0, 0, 0));
@@ -190,21 +218,6 @@ public class OptionsDlg extends MMDialog {
       getContentPane().add(okButton);
       springLayout.putConstraint(SpringLayout.NORTH, okButton, 12, SpringLayout.NORTH, getContentPane());
       springLayout.putConstraint(SpringLayout.SOUTH, okButton, 35, SpringLayout.NORTH, getContentPane());
-
-      debugLogEnabledCheckBox.setSelected(opts_.debugLogEnabled_);
-
-      final JCheckBox doNotAskForConfigFileCheckBox = new JCheckBox();
-      doNotAskForConfigFileCheckBox.addActionListener(new ActionListener() {
-         public void actionPerformed(ActionEvent arg0) {
-            opts_.doNotAskForConfigFile_ = doNotAskForConfigFileCheckBox.isSelected();
-         }
-      });
-      doNotAskForConfigFileCheckBox.setText("Do not ask for config file");
-      getContentPane().add(doNotAskForConfigFileCheckBox);
-      springLayout.putConstraint(SpringLayout.EAST, doNotAskForConfigFileCheckBox, 220, SpringLayout.WEST, getContentPane());
-      springLayout.putConstraint(SpringLayout.WEST, doNotAskForConfigFileCheckBox, 0, SpringLayout.WEST, debugLogEnabledCheckBox);
-      springLayout.putConstraint(SpringLayout.SOUTH, doNotAskForConfigFileCheckBox, 60, SpringLayout.NORTH, getContentPane());
-      doNotAskForConfigFileCheckBox.setSelected(opts_.doNotAskForConfigFile_);
 
 
 

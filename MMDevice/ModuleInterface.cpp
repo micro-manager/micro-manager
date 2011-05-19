@@ -31,6 +31,8 @@ typedef std::pair<std::string, std::string> DeviceInfo;
 std::vector<DeviceInfo> g_availableDevices;
 std::map<std::string,bool> g_deviceDiscoverability;
 
+bool discoverabilityEnabled_g;
+
 MODULE_API long GetModuleVersion()
 {
    return MODULE_INTERFACE_VERSION;   
@@ -110,9 +112,17 @@ MODULE_API bool GetDeviceIsDiscoverable(char* pDeviceName, bool* pvalue)
 
 }
 
+MODULE_API void EnableDeviceDiscovery(bool enable)
+{
+   discoverabilityEnabled_g = enable;
+}
 
+
+
+// 
 bool DiscoverabilityTest()
 {
-   return CDeviceUtils::CheckEnvironment("DISCOVERABILITYTEST");
+   return ::discoverabilityEnabled_g;
+   //return CDeviceUtils::CheckEnvironment("DISCOVERABILITYTEST");
 }
 
