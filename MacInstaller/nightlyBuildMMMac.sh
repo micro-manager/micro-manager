@@ -29,21 +29,21 @@ test -d $BUILDDIR && rm -rf $TARGET*
 mkdir $BUILDDIR
 
 cd $REPOSITORY
-svn update
+svn update --accept theirs-conflict
 cd $REPOSITORY/SecretDeviceAdapters
-svn update
+svn update --accept theirs-conflict
 cd $RPPC
-svn update
+svn update --accept theirs-conflict
 cd $RPPC/SecretDeviceAdapters
-svn update
+svn update --accept theirs-conflict
 cd $RI386
-svn update
+svn update --accept theirs-conflict
 cd $RI386/SecretDeviceAdapters
-svn update
+svn update --accept theirs-conflict
 cd $RX86_64
-svn update
+svn update --accept theirs-conflict
 cd $RX86_64/SecretDeviceAdapters
-svn update
+svn update --accept theirs-conflict
 cd $RPPC
 
 cp -r MacInstaller/Micro-Manager $TARGET
