@@ -1425,7 +1425,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       saveConfigurationPresetsMenuItem.setText("Save Configuration Settings...");
       toolsMenu.add(saveConfigurationPresetsMenuItem);
 
-
+/*
       final JMenuItem regenerateConfiguratorDeviceListMenuItem = new JMenuItem();
       regenerateConfiguratorDeviceListMenuItem.addActionListener(new ActionListener() {
 
@@ -1433,14 +1433,14 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             Cursor oldc = Cursor.getDefaultCursor();
             Cursor waitc = new Cursor(Cursor.WAIT_CURSOR);
             setCursor(waitc);
-            String resultFile = null;
-            MicroscopeModel.generateDeviceListFile(options_.enableDeviceDiscovery_, resultFile);
+            StringBuffer resultFile = new StringBuffer();
+            MicroscopeModel.generateDeviceListFile(options_.enableDeviceDiscovery_, resultFile,core_);
             setCursor(oldc);
          }
       });
       regenerateConfiguratorDeviceListMenuItem.setText("Regenerate Configurator Device List");
       toolsMenu.add(regenerateConfiguratorDeviceListMenuItem);
-
+*/
 
       toolsMenu.addSeparator();
 
@@ -3423,6 +3423,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
    }
 
+
    public void applyContrastSettings(ContrastSettings contrast8,
          ContrastSettings contrast16) {
       contrastPanel_.applyContrastSettings(contrast8, contrast16);
@@ -4383,6 +4384,19 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       configPad_.setGroup(groupName);
    }
 
+   public String regenerateDeviceList()   {
+            Cursor oldc = Cursor.getDefaultCursor();
+            Cursor waitc = new Cursor(Cursor.WAIT_CURSOR);
+            setCursor(waitc);
+            StringBuffer resultFile = new StringBuffer();
+            MicroscopeModel.generateDeviceListFile(options_.enableDeviceDiscovery_, resultFile, core_);
+            setCursor(oldc);
+            return resultFile.toString();
+   }
+
+
+
+
    private void loadPlugins() {
 
       ArrayList<Class<?>> pluginClasses = new ArrayList<Class<?>>();
@@ -4571,6 +4585,7 @@ class BooleanLock extends Object {
 
       return (value == state);
    }
+
 
  
 

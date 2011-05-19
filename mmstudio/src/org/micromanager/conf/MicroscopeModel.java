@@ -68,10 +68,10 @@ public class MicroscopeModel {
 
    boolean sendConfiguration_;
 
-   public static boolean generateDeviceListFile(boolean enableDeviceDiscovery, String deviceListFileName ) {
+   public static boolean generateDeviceListFile(boolean enableDeviceDiscovery, StringBuffer deviceListFileName, CMMCore c ) {
       try {
-         deviceListFileName = (enableDeviceDiscovery?DEVLISTPRIME_FILE_NAME:DEVLIST_FILE_NAME );
-         CMMCore core = new CMMCore();
+         deviceListFileName.append((enableDeviceDiscovery?DEVLISTPRIME_FILE_NAME:DEVLIST_FILE_NAME ));
+         CMMCore core = (null==c)?new CMMCore():c;
          core.setDeviceDiscoveryEnabled(enableDeviceDiscovery);
          core.enableDebugLog(true);
          StrVector libs = getDeviceLibraries(core);
@@ -89,7 +89,9 @@ public class MicroscopeModel {
             }
          }
 
-         File f = new File(deviceListFileName);
+         if( null==c)
+            core.delete();
+         File f = new File(deviceListFileName.toString());
 
          try {
             BufferedWriter out = new BufferedWriter(new FileWriter(f.getAbsolutePath()));
