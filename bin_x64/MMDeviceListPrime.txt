@@ -37,20 +37,6 @@ DTOpenLayer,DTOL-DAC-1,Description N/A,13
 DTOpenLayer,DTOL-DAC-2,Description N/A,13
 DTOpenLayer,DTOL-DAC-3,Description N/A,13
 DemoCamera,DCam,Demo camera,2
-DemoCamera,DWheel,Demo filter wheel,4
-DemoCamera,DStateDevice,Demo State Device,4
-DemoCamera,DObjective,Demo objective turret,4
-DemoCamera,DStage,Demo stage,5
-DemoCamera,DXYStage,Demo XY stage,6
-DemoCamera,DLightPath,Demo light path,4
-DemoCamera,DAutoFocus,Demo auto focus,9
-DemoCamera,DShutter,Demo shutter,3
-DemoCamera,D-DA,Demo DA,13
-DemoCamera,DOptovar,Demo Optovar,14
-DemoCamera,TransposeProcessor,TransposeProcessor,11
-DemoCamera,ImageFlipX,ImageFlipX,11
-DemoCamera,ImageFlipY,ImageFlipY,11
-DemoCamera,MedianFilter,MedianFilter,11
 DemoCamera,DHub,DHub,8
 FreeSerialPort,FreeSerialPort,Free-form communication Serial Port.,8
 GenericSLM,GenericSLM,Spatial Light Modulator controlled through computer graphics output,16
@@ -97,10 +83,6 @@ LeicaDMR,Objective Nosepiece,Objective Nosepiece,4
 LeicaDMR,Aperture Diaphragm,Aperture Diaphragm,8
 LeicaDMR,Field Diaphragm,Field Diaphragm,8
 Ludl,LudlController,Ludl Controller,8
-Ludl,LudlShutter,Ludl Shutter,3
-Ludl,LudlWheel,Ludl Filter Wheel,4
-Ludl,XYStage,XY Stage,6
-Ludl,Stage,Single Axis Stage,5
 MT20,MT20-HUB,Olympus MT20 hub device,8
 MT20,MT20-Burner,Olympus MT20 burner,4
 MT20,MT20-Shutter,Olympus MT20 shutter,3
@@ -140,23 +122,6 @@ NikonTE2000,PerfectFocus,PFS autofocus device,9
 NikonTE2000,PFS-Offset,PFS Offset Lens,5
 NikonTE2000,Excitation Filter wheel,Nikon excitation side filter changer,4
 NikonTI,TIScope,Nikon TI microscope,8
-NikonTI,TICondenserCassette,Condenser,4
-NikonTI,TINosePiece,Objective Turret,4
-NikonTI,TIFilterBlock1,FilterBlock 1,4
-NikonTI,TIFilterBlock2,FilterBlock 2,4
-NikonTI,TILightPath,LightPath,4
-NikonTI,TIZDrive,Z-Stage,5
-NikonTI,TIXYDrive,XY-Stage,6
-NikonTI,TIPFSOffset,PFS Offset,5
-NikonTI,TIPFSStatus,PFS Status,9
-NikonTI,TITIRF,TIRF,8
-NikonTI,TIEpiShutter,Epi Shutter,3
-NikonTI,TIDiaShutter,Dia Shutter,3
-NikonTI,TIAuxShutter,Aux Shutter,3
-NikonTI,TIDiaLamp,Dia Lamp,3
-NikonTI,TIExcitationFilterWheel,Excitation Filter Wheel,4
-NikonTI,TIBarrierFilterWheel,Barrier Filter Wheel,4
-NikonTI,TIAnalyzer,Analyzer,8
 Olympus,OlympusHub,Olympus Hub - required for all other devices,8
 Olympus,Objective,Objective turret,4
 Olympus,LightPath,Light path prism (eye/camera),4
@@ -238,19 +203,8 @@ Yokogawa,DriveSpeed,DriveSpeed,4
 ZeissCAN,ZeissScope,Zeiss Axiovert 200m controlled through serial interface,8
 ZeissCAN,ZeissShutter,Shutter,3
 ZeissCAN,ZeissShutterMFFirmware,ShutterMFFirmware,3
-ZeissCAN,ZeissReflectorTurret,Reflector Turret (dichroics),4
-ZeissCAN,ZeissSidePortTurret,SidePort switcher,4
-ZeissCAN,ZeissBasePortSlider,BasePort Slider,4
-ZeissCAN,ZeissObjectives,Objective Turret,4
-ZeissCAN,ZeissCondenser,Condenser Turret,4
-ZeissCAN,ZeissOptovar,Optovar,4
-ZeissCAN,ZeissTubelens,Tubelens,4
-ZeissCAN,ZeissExcitationLampSwitcher,Lamp Switcher,4
 ZeissCAN,ZeissHalogenLamp,Halogen Lamp,3
 ZeissCAN,Focus,Z-Drive,5
-ZeissCAN,ZeissExternalFilterWheel,External FilterWheel,4
-ZeissCAN,ZeissFilterWheel1,FilterWheel 1,4
-ZeissCAN,ZeissFilterWheel2,FilterWheel 2,4
 ZeissCAN29,ZeissScope,Zeiss AxioObserver controlled through serial interface,8
 ZeissCAN29,ZeissReflectorTurret,Reflector Turret (dichroics),4
 ZeissCAN29,ZeissObjectiveTurret,Objective Turret,4
