@@ -75,9 +75,9 @@ Source: micro-manager\NKRemoteLib.dll; DestDir: {app}; Flags: ignoreversion
 Source: micro-manager\PSRemoteLib.dll; DestDir: {app}; Flags: ignoreversion
 
 Source: micro-manager\MMCoreJ_wrap.dll; DestDir: {app}; Flags: ignoreversion
+
+; device adapters
 Source: micro-manager\mmgr_dal_*.dll; DestDir: {app}; Flags: ignoreversion
-
-
 
 ; python wrapper
 Source: micro-manager\_MMCorePy.pyd; DestDir: {app}; Flags: ignoreversion skipifsourcedoesntexist
@@ -92,7 +92,7 @@ Source: ..\scripts\*; DestDir: {app}\scripts; Flags: ignoreversion
 
 ; configuration files
 Source: micro-manager\MMConfig_demo.cfg; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\MMDeviceList.txt; DestDir: {app}; Flags: ignoreversion
+Source: micro-manager\MMDeviceList*.txt; DestDir: {app}; Flags: ignoreversion
 
 ; ImageJ files
 Source: micro-manager\ImageJ.exe; DestDir: {app}; Flags: ignoreversion

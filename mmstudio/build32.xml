@@ -179,7 +179,12 @@
 		<exec dir="${InstallRoot}" executable="java">
 			<arg line="-cp plugins\Micro-Manager\MMJ_.jar;plugins\Micro-Manager\MMCoreJ.jar DeviceListBuilder "/>
 		</exec>
-		<copy file="${InstallRoot}/MMDeviceList.txt" todir="${BinRoot}" />
+
+		<copy todir="${BinRoot}">
+			<fileset dir="${InstallRoot}" casesensitive="no">
+				<include name="MMDeviceList*.txt"/>
+			</fileset>
+		</copy>
 	</target>
 
 	<target name="packInstaller" description="Create installation package">

@@ -86,7 +86,7 @@ Source: ..\scripts\*; DestDir: {app}\scripts; Flags: ignoreversion
 
 ; configuration files
 Source: micro-manager\MMConfig_demo.cfg; DestDir: {app}; Flags: ignoreversion
-Source: micro-manager\MMDeviceList.txt; DestDir: {app}; Flags: ignoreversion
+Source: micro-manager\MMDeviceList*.txt; DestDir: {app}; Flags: ignoreversion
 
 ; ImageJ files
 Source: ..\..\3rdpartypublic\JavaLauncher\ImageJ.exe; DestDir: {app}; Flags: ignoreversion
