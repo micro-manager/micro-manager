@@ -145,7 +145,7 @@ PKG_PROG_PKG_CONFIG
 PKG_CHECK_MODULES([GPHOTO2], [libgphoto2 >= 2.1.10], AC_DEFINE([HAVE_LIBGPHOTO2], [YES]), AC_DEFINE([HAVE_LIBGPHOTO2], [NO]))
 
 buildsc=false
-if test x$HAVE_LIBGPHOTO2 = xYES; then
+if test x$HAVE_LIBGPHOTO2=xYES; then
    buildsc=true
    AC_MSG_RESULT([found])
    GPHOTO2_VERSION=`$PKG_CONFIG --modversion libgphoto2`
