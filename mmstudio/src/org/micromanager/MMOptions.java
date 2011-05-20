@@ -48,7 +48,7 @@ public class MMOptions {
    public String startupScript_ = "MMStartup.bsh";
    boolean conserveRam_ = false;
    boolean autoreloadDevices_ = false;
-   public boolean enableDeviceDiscovery_  = true;
+   public boolean enableDeviceDiscovery_  = false;
    
    public void saveSettings() {
       Preferences root = Preferences.userNodeForPackage( this.getClass());
