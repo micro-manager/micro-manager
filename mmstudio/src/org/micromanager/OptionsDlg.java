@@ -137,7 +137,19 @@ public class OptionsDlg extends MMDialog {
       final JCheckBox enableDeviceDiscoveryCheckBox = new JCheckBox();
       enableDeviceDiscoveryCheckBox.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
+				final  boolean oldValue = core_.getDeviceDiscoveryEnabled();
             opts_.enableDeviceDiscovery_ = enableDeviceDiscoveryCheckBox.isSelected();
+				core_.setDeviceDiscoveryEnabled(opts_.enableDeviceDiscovery_);
+				/*
+				if( oldValue !=opts_.enableDeviceDiscovery_ )
+					try{
+					core_.reset();
+					}catch(Throwable t){
+						ReportingUtils.showError(t);
+					}
+				 
+				 */
+
          }
       });
       enableDeviceDiscoveryCheckBox.setText("Enable Peripheral Device Discovery");
