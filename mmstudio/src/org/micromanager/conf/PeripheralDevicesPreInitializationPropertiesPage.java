@@ -119,16 +119,29 @@ public class PeripheralDevicesPreInitializationPropertiesPage extends PagePanel 
     public boolean exitPage(boolean toNextPage) {
         try {
             if (toNextPage) {
+
+                // set the properties of only the 'peripheral' devices!!
+                Device devices[] = model_.getPeripheralDevices();
+
                 PropertyTableModel ptm = (PropertyTableModel) propTable_.getModel();
                 for (int i = 0; i< ptm.getRowCount(); i++) {
                     Setting s = ptm.getSetting(i);
-                    core_.setProperty(s.deviceName_, s.propertyName_, s.propertyValue_);
-                    Device dev = model_.findDevice(s.deviceName_);
-                    PropertyItem prop = dev.findSetupProperty(s.propertyName_);
-                    if (prop == null) {
-                        model_.addSetupProperty(s.deviceName_, new PropertyItem(s.propertyName_, s.propertyValue_, true));
+                    boolean found = false;
+                    for(Device d : devices){
+                        if( s.deviceName_.equals(d.getName())){
+                            found = true;
+                            break;
+                        }
                     }
-                    model_.setDeviceSetupProperty(s.deviceName_, s.propertyName_, s.propertyValue_);
+                    if( found){
+                        core_.setProperty(s.deviceName_, s.propertyName_, s.propertyValue_);
+                        Device dev = model_.findDevice(s.deviceName_);
+                        PropertyItem prop = dev.findSetupProperty(s.propertyName_);
+                        if (prop == null) {
+                            model_.addSetupProperty(s.deviceName_, new PropertyItem(s.propertyName_, s.propertyValue_, true));
+                        }
+                        model_.setDeviceSetupProperty(s.deviceName_, s.propertyName_, s.propertyValue_);
+                    }
                 }
             } else {
                 GUIUtils.preventDisplayAdapterChangeExceptions();
