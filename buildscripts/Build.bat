@@ -172,4 +172,6 @@ popd
 \Projects\micromanager\Install_Win32\Output\%TARGETNAME%  /silent
 
 ECHO "Done installing"
+IF NOT "%3%" == "UPLOAD" GOTO FINISH
 pscp -i c:\projects\MM.ppk -batch /projects/micromanager/Install_Win32/Output/%TARGETNAME% MM@valelab.ucsf.edu:./public_html/nightlyBuilds/1.4/Windows/%TARGETNAME%
+:FINISH
