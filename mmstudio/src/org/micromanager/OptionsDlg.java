@@ -137,7 +137,7 @@ public class OptionsDlg extends MMDialog {
       final JCheckBox enableDeviceDiscoveryCheckBox = new JCheckBox();
       enableDeviceDiscoveryCheckBox.addActionListener(new ActionListener() {
          public void actionPerformed(ActionEvent arg0) {
-				final  boolean oldValue = core_.getDeviceDiscoveryEnabled();
+	    final  boolean oldValue = core_.getDeviceDiscoveryEnabled();
             opts_.enableDeviceDiscovery_ = enableDeviceDiscoveryCheckBox.isSelected();
 				core_.setDeviceDiscoveryEnabled(opts_.enableDeviceDiscovery_);
 				/*
