@@ -16,7 +16,6 @@
 	<property name="DriversInstall" value="../Install_Win32/micro-manager/drivers"/>
 	<property name="AdaptersRoot" value="../DeviceAdapters"/>
 
-
 	<!-- Do not modify from this point on -->
 	<property name="MMPluginDir" value="${ImageJPath}/plugins/Micro-Manager"/>
 	<property name="IJ" value="../../3rdpartypublic/classext/ij.jar"/>
@@ -57,6 +56,7 @@
 	</path>
 
 	<target name="compile" description="Compile MM Studio.">
+
 		<mkdir dir="build" />
 		<javac srcdir="./src" destdir="./build" sourcepath="./src/org/micromanager/utils/AutofocusBase.java" optimize="on" source="1.5" target="1.5" debug="on">
 
@@ -111,6 +111,9 @@
 
 
 	<target name="install" description="Create installation image">
+
+
+
 
 		<!-- always clean the device adapters from install image -->
             <delete>
@@ -176,6 +179,11 @@
 
 
 	<target name="makeDeviceList" description="Run DeviceListBuilder to generate MMDeviceList.txt">
+
+		<!-- adapters which support mulitple DLL instantiation      -->
+		<copy file="${BinRoot}/mmgr_dal_DemoCamera.dll" tofile="${BinRoot}/mmgr_dal_DemoCameraNumber2.dll"  overwrite="true" verbose="true" />
+		<copy file="${BinRoot}/mmgr_dal_Ludl.dll" tofile="${BinRoot}/mmgr_dal_LudlNumber2.dll"  overwrite="true" verbose="true" />
+
 		<exec dir="${InstallRoot}" executable="java">
 			<arg line="-cp plugins\Micro-Manager\MMJ_.jar;plugins\Micro-Manager\MMCoreJ.jar DeviceListBuilder "/>
 		</exec>
