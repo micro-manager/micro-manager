@@ -102,8 +102,8 @@ IF "%1%"=="FULL" SET cleantarget=clean
 
 PUSHD \projects\micromanager\mmStudio\src
 echo building mmStudio with command:
-echo call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile ../build32.xml %cleantarget% compile build buildMMReader
-call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile ../build32.xml %cleantarget% compile build buildMMReader
+echo call ant -buildfile ../build32.xml %cleantarget% compile build buildMMReader
+call ant -buildfile ../build32.xml %cleantarget% compile build buildMMReader
 POPD
 
 rem haven't got to the bottom of this yet, but Pixel Calibrator and Slide Explorer need this jar file there....
@@ -114,44 +114,44 @@ call build.bat
 POPD
 
 PUSHD autofocus
-call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml %cleantarget% compile build
+call ant -buildfile build.xml %cleantarget% compile build
 POPD
 
 pushd plugins\Bleach
-call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml %cleantarget% compile build
+call ant -buildfile build.xml %cleantarget% compile build
 popd
 
 echo building pixelcalibrator
 pushd plugins\PixelCalibrator 
-call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml %cleantarget% compile build
+call ant -buildfile build.xml %cleantarget% compile build
 popd
 
 pushd plugins\Projector
-call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml %cleantarget% compile build
+call ant -buildfile build.xml %cleantarget% compile build
 popd
 
 pushd plugins\Recall
-call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml %cleantarget% compile build
+call ant -buildfile build.xml %cleantarget% compile build
 popd
 
 pushd plugins\SlideExplorer
-call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml %cleantarget% compile build
+call ant -buildfile build.xml %cleantarget% compile build
 popd
 
 pushd plugins\StageControl
-call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml %cleantarget% compile build
+call ant -buildfile build.xml %cleantarget% compile build
 popd
 
 pushd plugins\Tracker 
-call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml %cleantarget% compile build 
+call ant -buildfile build.xml %cleantarget% compile build 
 popd
 
 pushd plugins\Big
-call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml %cleantarget% compile build 
+call ant -buildfile build.xml %cleantarget% compile build 
 popd
 
 pushd plugins\MultiCamera
-call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile build.xml %cleantarget% compile build 
+call ant -buildfile build.xml %cleantarget% compile build 
 popd
 
 pushd plugins\DataBrowser
@@ -161,7 +161,7 @@ popd
 
 set DEVICELISTBUILDER=1
 cd mmStudio\src
-call \projects\3rdparty\apache-ant-1.6.5\bin\ant -buildfile ../build32.xml install makeDeviceList packInstaller
+call ant -buildfile ../build32.xml install makeDeviceList packInstaller
 popd
 set DEVICELISTBUILDER=""
 
