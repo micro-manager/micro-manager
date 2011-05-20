@@ -19,35 +19,41 @@ import edu.umassmed.big.Utils;
 public class I2I {
 
 	private String history[] = new String[15];
+	private String i2i_fileName;
 	private short min, max, xOrg, yOrg;
 	private Integer X, Y, Z, T = 1;
 	private Integer data_size, image_size;
 	private int file_endian;
 	private byte[] buffer = new byte[64];
+	private int bufferedZ = 0;
+	private RandomAccessFile out = null;
+	private RandomAccessFile in = null;
 	short[] data;
-
-	/// Creates an blank I2I image with dimensions X,Y,Z
-	public I2I(long x, long y, long z) {
-		try { 
-			// creates a header file for a new I2I image
-			initializeI2I((int)x,(int)y, (int)z, 0);
-			data = new short[data_size];
-		} catch (Exception e) {
-			System.out.println("Failed to create blank I2I: "+e.getMessage());
-		}
-	}
-	/// Creates an blank I2I image with dimensions X,Y,Z
+	/**
+	 * Creates an blank I2I image with dimensions X,Y,Z
+	 * 
+	 * @param x
+	 * @param y
+	 * @param z
+	 */
 	public I2I(int x, int y, int z) {
 		try { 
 			// creates a header file for a new I2I image
 			initializeI2I(x, y, z, 0);
 			data = new short[data_size];
 		} catch (Exception e) {
-			System.out.println("Failed to create blank I2I: "+e.getMessage());
+			System.err.println("Failed to create blank I2I: "+e.getMessage());
 		}
 	}
 	
-	/// Creates an I2I 16bit image from a 16 bit image with dimensions X,Y,Z.
+	/**
+	 * 	Creates an I2I 16bit image from a 16 bit image with dimensions X,Y,Z.
+	 * 
+	 * @param image
+	 * @param x
+	 * @param y
+	 * @param z
+	 */
 	public I2I(short[] image,int x, int y, int z) {
 		try {
 			// creates a header file for a new I2I image
@@ -59,10 +65,17 @@ public class I2I {
 			//	data[x] = image[x];
 			//}
 		} catch (Exception e) {
-			System.out.println("Failed to create I2I: "+e.getMessage());
+			System.err.println("Failed to create I2I: "+e.getMessage());
 		}
 	}
-	/// Creates an I2I 16bit image from an 8 bit image with dimensions X,Y,Z.
+	/**
+	 * Creates an I2I 16bit image from an 8 bit image with dimensions X,Y,Z.
+	 * 
+	 * @param image
+	 * @param x
+	 * @param y
+	 * @param z
+	 */
 	public I2I(byte[] image, int x, int y, int z) {
 		try {
 			// creates a header file for a new I2I image
@@ -75,118 +88,146 @@ public class I2I {
 			//	data[x] = image[x];
 			//}
 		} catch (Exception e) {
-			System.out.println("Failed to create I2I: "+e.getMessage());
+			System.err.println("Failed to create I2I: "+e.getMessage());
 		}
 	}
-	
-////// BELOW DEPRECATED	
-	// deprecated, use the function that has the array first
-	/// Creates an I2I 16bit image from a 16 bit image with dimensions X,Y,Z.
-	public I2I(int x, int y, int z, short[] image) {
+	/**
+	 * Opens a buffered image stream to save images as acquired. This will keep the file open, so you must call close()
+	 * 
+	 * @param file 
+	 * @param x
+	 * @param y
+	 * @param z
+	 * @param t
+	 */
+	public I2I(String file, int x, int y, int z) {
+		
 		try {
-			// creates a header file for a new I2I image
-			initializeI2I(x, y, z, 0);
-			data = new short[data_size];
-			System.arraycopy(image,0,data, 0,image.length);
-			//for (x = 0; x < data_size; x++) 
-			//{
-			//	data[x] = image[x];
-			//}
-		} catch (Exception e) {
-			System.out.println("Failed to create I2I: "+e.getMessage());
-		}
-	}
-	
-	// deprecated, use the function that has the array first
-	public I2I(int x, int y, int z, byte[] image) {
-		try {
-			// creates a header file for a new I2I image
-			initializeI2I(x, y, z, 0);
-			data = new short[data_size];
+			i2i_fileName = new String(file);
 			
-			System.arraycopy(image,0,data, 0,image.length);
-			//for (x = 0; x < data_size; x++) 
-			//{
-			//	data[x] = image[x];
-			//}
-		} catch (Exception e) {
-			System.out.println("Failed to create I2I: "+e.getMessage());
-		}
+			System.out.println("opening " + i2i_fileName);
+			out = new RandomAccessFile(i2i_fileName,"rw");	
+			
+			// creates a header file for a new I2I image
+			bufferedZ = 1;
+			System.out.println("initialize " + i2i_fileName);
+			initializeI2I(x, y, z, 0);
+			data = new short[data_size];
+				
+			System.out.println("write header " + i2i_fileName);
+			// write the header
+			writeHeader(out);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}  
 	}
 	
-////// ABOVE DEPRECATED
-	/// Opens an I2I file
+	/**
+	 * Opens an existing I2I file
+	 * 
+	 * @param file
+	 */
 	public I2I(String file) {
-
-		DataInputStream in = null;
-
 		try {
-			in = new DataInputStream(new BufferedInputStream(
-					new FileInputStream(file)));
-
-			// Are we an I2I file?
-			int c = in.readByte();
-			if (c == 'I') {
-				// READ HEADER
-				in.read(buffer, 0, 6);
-				String _X = new String(buffer, 0, 6);
-				X = Integer.parseInt(_X.trim());
-
-				in.read(buffer, 0, 6);
-				String _Y = new String(buffer, 0, 6);
-				Y = Integer.parseInt(_Y.trim());
-
-				in.read(buffer, 0, 6);
-				String _Z = new String(buffer, 0, 6);
-				Z = Integer.parseInt(_Z.trim());
-
-				in.skip(1); // skip space
-				file_endian = in.readByte();
-				if (file_endian == 'L') { // must swap bytes if data is little
-											// endian
-					min = swap(in.readShort());
-					max = swap(in.readShort());
-					xOrg = swap(in.readShort());
-					yOrg = swap(in.readShort());
-					setT(swap(in.readShort()));
-
-				} else {
-					// Java is big endian, most significant byte first
-					min = in.readShort();
-					max = in.readShort();
-					xOrg = in.readShort();
-					yOrg = in.readShort();
-					setT(in.readShort());
-				}
-
-				// Load History file
-				in.skip(33);
-				for (int x = 0; x < 15; x++) {
-					in.read(buffer, 0, 64);
-					history[x] = new String(buffer);
-				}
-
-				// READ DATA
-				data_size = getX() * getY() * getZ();
-				data = new short[data_size];
-
-				System.out.println(file + " Data Size: " + data_size);
-				for (int x = 0; x < data_size; x++) {
-					if (file_endian == 'B')
-						data[x] = in.readShort();
-					else
-						data[x] = swap(in.readShort());
+			//in = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
+			i2i_fileName = new String(file);
+			in = null;
+			in = new RandomAccessFile(i2i_fileName,"r");
+			try {
+				// Are we an I2I file?
+				int c = in.readByte();
+				if (c == 'I') {
+					// READ HEADER
+					in.read(buffer, 0, 6);
+					String _X = new String(buffer, 0, 6);
+					X = Integer.parseInt(_X.trim());
+		
+					in.read(buffer, 0, 6);
+					String _Y = new String(buffer, 0, 6);
+					Y = Integer.parseInt(_Y.trim());
+		
+					in.read(buffer, 0, 6);
+					String _Z = new String(buffer, 0, 6);
+					Z = Integer.parseInt(_Z.trim());
+		
+					//in.skip(1); // skip space
+					in.skipBytes(1);
+					file_endian = in.readByte();
+					if (file_endian == 'L') { // must swap bytes if data is little
+												// endian
+						min = swap(in.readShort());
+						max = swap(in.readShort());
+						xOrg = swap(in.readShort());
+						yOrg = swap(in.readShort());
+						setT(swap(in.readShort()));
+		
+					} else {
+						// Java is big endian, most significant byte first
+						min = in.readShort();
+						max = in.readShort();
+						xOrg = in.readShort();
+						yOrg = in.readShort();
+						setT(in.readShort());
+					}
+		
+					// Load History file
+					//in.skip(33);
+					in.skipBytes(33);
+					for (int x = 0; x < 15; x++) {
+						in.read(buffer, 0, 64);
+						history[x] = new String(buffer);
+					}
+		
+					// READ DATA
+					data_size = getX() * getY() * getZ();
+					data = new short[data_size];
+		
+					System.out.println(i2i_fileName + " Data Size: " + data_size);
+					for (int x = 0; x < data_size; x++) {
+						if (file_endian == 'B')
+							data[x] = in.readShort();
+						else
+							data[x] = swap(in.readShort());
+					}
 				}
 			}
-			in.close();
-
+			finally {
+				in.close();
+			} 
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
-		}
+		}  
 	}
-	/// Initializer method
+	/** 
+	 * Closes any open file streams
+	 */
+	public void close() {
+		try {
+			if (out != null) out.close();
+			out = null;
+		}
+		catch (IOException e) {
+			e.printStackTrace();
+		}  
+		
+		try {
+			if (in != null) in.close();
+			in = null;
+		}
+		catch (IOException e) {
+			e.printStackTrace();
+		}  
+	}
+	/**
+	 * Initializer method that sets up common parameters
+	 * 
+	 * @param x
+	 * @param y
+	 * @param z
+	 * @param t
+	 */
 	private void initializeI2I(int x, int y, int z, int t)
 	{
 		
@@ -195,51 +236,38 @@ public class I2I {
 		setZ(z);
 		setT(t);
 		min = 0; max = 0; xOrg = 0; yOrg = 0;
-		data_size = getX() * getY() * getZ();
+		// Are we buffering?
+		if (bufferedZ > 0)data_size = getX() * getY() * bufferedZ;
+		else data_size = getX() * getY() * getZ();
+		
 		image_size = getX() * getY();
       Utils u = new Utils();
 		history[0] = ("* Created on " + u.generateDate() + " by " + System.getenv("HOSTNAME"));
 	}
-	/// Saves an I2I image 
+	/**
+	 * Creates a new I2I image file
+	 * 
+	 * @param file
+	 */
 	public void saveImage(String file) {
-
-		DataOutputStream out = null;
 		try {
+			i2i_fileName = new String(file);
+			out = null;
+			out = new RandomAccessFile(i2i_fileName,"w");
 			
-			out = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
-			// write header
-			System.out.println("Writing Header");
-			String header = String.format("I %5d %5d %5d B", getX(), getY(),getZ());
-			out.writeBytes(header);
-			out.writeShort(getMin());
-			out.writeShort(getMax());
-			out.writeShort(getxOrg());
-			out.writeShort(getyOrg());
-			out.writeShort(getT());
-			
-			for (int x = 0; x < 33; x++)
-				out.writeByte(32);
-			// write history
-			System.out.println("Writing History");
-			for (int x = 0; x < 15; x++) {
-				if (history[x] != null) {
-					out.writeBytes(history[x]);
-					if (history[x].length() < 64) {
-						for (int y = history[x].length(); y < 64; y++)
-							out.writeByte(32); // fill with spaces
-					}
+			try {	
+				// write header
+				System.out.println("Writing Header");
+				writeHeader(out);
+				System.out.println("Writing Image Data");
+				// write data
+				for (int x = 0; x < data_size; x++) {
+					out.writeShort(data[x]);
 				}
-				else {
-					for (int y = 0; y < 64;y++) out.writeByte(32); // fill with spaces
-				}
+				
+			} finally {
+				if (out != null) out.close();
 			}
-			
-			System.out.println("Writing Image Data");
-			// write data
-			for (int x = 0; x < data_size; x++) {
-				out.writeShort(data[x]);
-			}
-			out.close();
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
@@ -271,34 +299,53 @@ public class I2I {
 		Y = y;
 		return;
 	}
-	// number of total planes
+	/**
+	 * Sets the number of Z planes, or number of images if T = 0 or 1
+	 * 
+	 * @param z
+	 */
 	public void setZ(int z) {
 		if (z < 0) z = 1;
 		Z = z;
 		return;
 	}
-	// number of time points. Divide Z/T to get the number of Z per time point
+	/**
+	 * Sets the number of time points. Divide Z/T to get the number of Z per time point
+	 * 
+	 * @param t
+	 */
 	public void setT(int t) {
 		if (t < 1) t = 1;
 		if (t == 8224) t = 1;
 		T = t;
 		return;
 	}
-	// full array
+	/**
+	 * Returns entire data, but it might be buffered and just a single image
+	 * 
+	 * @return
+	 */
 	public short[] getImage() {	
 		return (data); // pointer to all the data
 	}
-	// return 1 2D plane
+	/**
+	 * Returns a specific 2D image out of a 3D image. It creates a second array to store and return the 2D image
+	 * 
+	 * @param z
+	 * @return
+	 */
 	public short[] getImage2D(int z) {
-		Utils u = new Utils();
-      return data;
-		// function is missing return (Utils.getarray(data, z * image_size,image_size));
+		if (bufferedZ > 1) {
+			// perhaps retrieve that image from the file, but not implemented
+			return Utils.getarray(data, 0 ,image_size); 
+		}
+		else return (Utils.getarray(data, z * image_size,image_size));
 
 	}
 	// return 1 3D plane
 	public short[] getImage3D(int z) {
 		/*
-		if (T.intValue() > 1) {
+		if ((T.intValue() > 1) && (bufferedZ == 0)) {
 			int foo = image_size * Z.intValue()/T.intValue();
 			return (Utils.getarray(data, z * foo,foo));
 		}
@@ -307,63 +354,93 @@ public class I2I {
 	public void addImage(int[] image, int z) {
 		// expand array to add
 		try {
-			int foo = X * Y * z;
-			//System.arraycopy(image,0,data,foo,image.length);
+			int foo;
+			if (bufferedZ > 0) foo = 0;
+			else foo = X * Y * z;
+			
 			for (int x = 0; x < X * Y; x++) 
 			{
 				data[foo + x] = (short) (image[x]);
 			}
-		}
-		catch  (Exception e){
-			System.out.println("Exception: " + e.getMessage());
+			// we need to purge image if we are buffering
+			if (bufferedZ > 0) {
+				writeImage(out,data,z);
+			}
+		} catch  (Exception e){
+			System.err.println("Exception: " + e.getMessage());
 		}
 		return;
 	}
-	// micromanager uses unsigned shorts, but we store as signed shorts.
+	/**
+	 * micromanager uses unsigned shorts, but we store as signed shorts.
+	 * 
+	 * @param image
+	 * @param z location to add 3D image
+	 */
 	public void addUImage(short[] image, int z) {
 		try {
-		// expand array to add
+			// expand array to add, unless it is buffered
 			int value = 0;
-			int foo = X * Y * z;
+			int foo;
+			if (bufferedZ > 0) foo = 0;
+			else foo = X * Y * z;
+			
 			for (int x = 0; x < X * Y; x++) 
 			{   
 				value = (int)(char)image[x];
 				data[foo + x] = (short)(value>>1);  // divide by 2 to avoid out of bounds
 			}
+			// we need to purge image if we are buffering
+			if (bufferedZ > 0) {
+				writeImage(out,data,z);
+			}
 
 		}
 		catch  (Exception e){
-			System.out.println("Exception: " + e.getMessage());
+			System.err.println("Exception: " + e.getMessage());
 		}
 		return;
 	}
 	public void addImage(short[] image, int z) {
-		// expand array to add
-
 		try { 
-			int foo = X * Y * z;
-				for (int x = 0; x < X * Y; x++) 
-				{   
-					data[foo + x] = image[x];  
-				}
+			// expand array to add, unless it is buffered
+			int foo;
+			if (bufferedZ > 0) foo = 0;
+			else foo = X * Y * z;
+			
+			for (int x = 0; x < X * Y; x++) 
+			{   
+				data[foo + x] = image[x];  
+			}
+			// we need to purge image if we are buffering
+			if (bufferedZ > 0) {
+				writeImage(out,data,z);
+			}
 		}
 		catch (Exception e){ 
-			System.out.println("Exception: " + e.getMessage());
+			System.err.println("Exception: " + e.getMessage());
 			
 		}
 		return;
 	}
 	public void addImage(byte[] image, int z) {
 		try {
-			// expand array to add
-			int foo = X * Y * z;
+			// expand array to add, unless it is buffered
+			int foo;
+			if (bufferedZ > 0) foo = 0;
+			else foo = X * Y * z;
+			
 			for (int x = 0; x < X * Y; x++) 
 			{
 				data[foo + x] = (short)image[x];
 			}
+			// we need to purge image if we are buffering
+			if (bufferedZ > 0) {
+				writeImage(out,data,z);
+			}
 		}
 		catch (Exception e){
-			System.out.println("Exception: " + e.getMessage());
+			System.err.println("Exception: " + e.getMessage());
 		}
 		
 		return;
@@ -410,4 +487,57 @@ public class I2I {
 		if (yOrg == 8224) yOrg = 0;
 		this.yOrg = yOrg;
 	}
+	/***
+	 * Writes the first 1024 bytes to a file
+	 * 
+	 * @param out Already existing output file stream
+	 */
+	private void writeHeader(RandomAccessFile out) {
+		
+		try {
+			if (out != null) {
+				out.seek(0);
+				String header = String.format("I %5d %5d %5d B", getX(), getY(),getZ());
+				out.writeBytes(header);
+				out.writeShort(getMin());
+				out.writeShort(getMax());
+				out.writeShort(getxOrg());
+				out.writeShort(getyOrg());
+				out.writeShort(getT());
+				
+				for (int x = 0; x < 33; x++)
+					out.writeByte(32);
+				// write history
+				System.out.println("Writing History");
+				for (int x = 0; x < 15; x++) {
+					if (history[x] != null) {
+						out.writeBytes(history[x]);
+						if (history[x].length() < 64) {
+							for (int y = history[x].length(); y < 64; y++)
+								out.writeByte(32); // fill with spaces
+						}
+					}
+					else {
+						for (int y = 0; y < 64;y++) out.writeByte(32); // fill with spaces
+					}
+				}
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	private void writeImage(RandomAccessFile out, short[] image, int z) {
+		try {
+			if (out != null) {
+				out.seek((image_size.intValue() * z * 2) + 1024);
+				for (int x = 0; x < image_size; x++) {
+					out.writeShort(image[x]);
+				}
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
 }
