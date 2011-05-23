@@ -38,6 +38,8 @@ public class DeviceListBuilder {
       else
          ReportingUtils.logMessage("Device list " + resultingFile + " not generated or invalid.");
 
+		resultingFile.delete(0, resultingFile.length());
+
       if (MicroscopeModel.generateDeviceListFile(false, resultingFile,null))
          ReportingUtils.logMessage("Device list " + resultingFile + " generated.");
       else

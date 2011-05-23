@@ -70,6 +70,7 @@ public class MicroscopeModel {
 
    public static boolean generateDeviceListFile(boolean enableDeviceDiscovery, StringBuffer deviceListFileName, CMMCore c ) {
       try {
+			deviceListFileName.delete(0, deviceListFileName.length());
          deviceListFileName.append((enableDeviceDiscovery?DEVLISTPRIME_FILE_NAME:DEVLIST_FILE_NAME ));
          CMMCore core = (null==c)?new CMMCore():c;
          core.setDeviceDiscoveryEnabled(enableDeviceDiscovery);
