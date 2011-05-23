@@ -187,8 +187,9 @@
     (let [now (clock-ms)
           wake-time (if (> now (+ target-time 10)) now target-time)]
       (state-assoc! :last-wake-time wake-time
-                    :reference-z-position (- (get-z-stage-position (core getFocusDevice))
-                                             old-z)))))
+                    :reference-z-position (+ (@state :reference-z-position)
+                                             (- (get-z-stage-position (core getFocusDevice))
+                                                old-z))))))
 
 ;; image metadata
 
