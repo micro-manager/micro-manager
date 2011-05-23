@@ -188,7 +188,6 @@
 			<arg line="-cp plugins\Micro-Manager\MMJ_.jar;plugins\Micro-Manager\MMCoreJ.jar DeviceListBuilder "/>
 		</exec>
 
-<!-- temporarily disable device list re-creation     -->
 	</target>
 
 	<target name="packInstaller" description="Create installation package">
