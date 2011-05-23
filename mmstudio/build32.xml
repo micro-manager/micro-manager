@@ -174,7 +174,8 @@
 		<copy file="${BinRoot}/mmgr_dal_Ludl.dll" tofile="${BinRoot}/mmgr_dal_LudlNumber2.dll"  overwrite="true" verbose="true" />
 
 		<exec dir="${InstallRoot}" executable="java">
-			<arg line="-cp plugins\Micro-Manager\MMJ_.jar;plugins\Micro-Manager\MMCoreJ.jar DeviceListBuilder "/>
+			<arg line="-cp plugins\Micro-Manager\MMJ_.jar;plugins\Micro-Manager\MMCoreJ.jar DeviceListBuilder NotdeviceDiscoveryEnabled"/>
+			<arg line="-cp plugins\Micro-Manager\MMJ_.jar;plugins\Micro-Manager\MMCoreJ.jar DeviceListBuilder deviceDiscoveryEnabled"/>
 		</exec>
 
 	</target>
