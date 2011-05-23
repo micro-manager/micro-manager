@@ -179,14 +179,16 @@
              (not (core isContinuousFocusEnabled)))
     (core enableContinuousFocus true))
   (let [target-time (+ (@state :last-wake-time) interval-ms)
-        delta (- target-time (clock-ms))]
+        delta (- target-time (clock-ms))
+        old-z (get-z-stage-position (core getFocusDevice))]
     (when (pos? delta)
       (interruptible-sleep delta))
     (await-resume)
     (let [now (clock-ms)
           wake-time (if (> now (+ target-time 10)) now target-time)]
       (state-assoc! :last-wake-time wake-time
-                    :reference-z-position (get-z-stage-position (core getFocusDevice))))))
+                    :reference-z-position (- (get-z-stage-position (core getFocusDevice))
+                                             old-z)))))
 
 ;; image metadata
 
