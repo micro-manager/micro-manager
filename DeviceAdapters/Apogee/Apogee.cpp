@@ -121,10 +121,7 @@ CApogeeCamera::CApogeeCamera() :
     m_dExposure(100.0),
     m_nInterfaceType(999),
     m_nCamIdOne(-1),
-    m_nCamIdTwo(0),
-	m_sequenceRunning(false),
-	m_stopRequested(false),
-	m_sequenceCount(0)
+    m_nCamIdTwo(0)
 {
     // call the base class method to set-up default error codes/messages
     InitializeDefaultErrorMessages();
@@ -151,10 +148,6 @@ CApogeeCamera::CApogeeCamera() :
     pAct = new CPropertyAction (this, &CApogeeCamera::OnCameraIdTwo);
     nRet = CreateProperty("CameraIdTwo", "0", MM::Integer, false, pAct, true);
     assert(nRet == DEVICE_OK);
-
-	// Create sequence thread
-	m_acqSequenceThread = new AcqSequenceThread(this);
-
 }
 
 /**
@@ -165,7 +158,7 @@ CApogeeCamera::CApogeeCamera() :
  */
 CApogeeCamera::~CApogeeCamera()
 {
-   delete m_acqSequenceThread;
+    // no clean-up required for this device
 }
 
 /**
@@ -1295,124 +1288,4 @@ int CApogeeCamera::ResizeImageBuffer()
     return DEVICE_OK;
 }
 
-// Sequence acquisition methods
 
-void CApogeeCamera::SequenceCheckImageBuffer()
-{
-	// Get the image data from the camera and place in the circular buffer 
-    if(img_.Depth() != 2) assert(!"Unsupported pixel depth.");
-	m_sequenceWidth = (unsigned) GetImageWidth();
-	m_sequenceHeight = (unsigned) GetImageHeight();
-    if(img_.Width()!=m_sequenceWidth || img_.Height()!=m_sequenceHeight) 
-        assert(!"Image buffer size does not match camera buffer.");
-}
-
-int CApogeeCamera::StartSequenceAcquisition(double interval)
-{
-	/*
-	SequenceCheckImageBuffer();
-	m_sequenceLengthRequested_ = LONG_MAX;
-	_t( AltaCamera->SequenceBulkDownload = false; )
-	_t( AltaCamera->ContinuousImaging = true; )
-	return InitiateGenericSequence();
-	*/
-	//return StartSequenceAcquisition(100, 0, false);
-	printf("running first seq...\n");
-	AltaCamera->SequenceBulkDownload = false;
-	AltaCamera->ImageCount = 100;
-	AltaCamera->Expose(0.001, true);
-	CDeviceUtils::SleepMs(5000);
-	printf("SequenceCounter: %ld",AltaCamera->SequenceCounter);
-	printf("%ld\n",AltaCamera->StopExposure(false));
-	printf("running second seq...\n");
-	AltaCamera->SequenceBulkDownload = false;
-	AltaCamera->ImageCount = 100;
-	AltaCamera->Expose(0.001, true);
-	CDeviceUtils::SleepMs(5000);
-	printf("%ld",AltaCamera->StopExposure(false));
-	return true;
-}
-
-int CApogeeCamera::StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow)
-{
-	SequenceCheckImageBuffer();
-	m_sequenceLengthRequested_ = numImages;
-	_t( AltaCamera->SequenceBulkDownload = false; )
-	_t( AltaCamera->ImageCount = numImages; )
-	return InitiateGenericSequence();
-}
-
-int CApogeeCamera::InitiateGenericSequence()
-{
-  _t(  AltaCamera->Expose(m_dExposure/1000, m_nLightImgMode); )
-	m_sequenceCount = 0;
-	m_stopRequested = false;
-	m_sequenceRunning = true;
-	_t( m_acqSequenceThread->Start(); )
-	return DEVICE_OK;
-}
-
-int CApogeeCamera::StopSequenceAcquisition()
-{
-	m_stopRequested = true;
-	m_acqSequenceThread->Stop();
-	m_acqSequenceThread->wait();
-	return DEVICE_OK;
-}
-
-bool CApogeeCamera::IsCapturing()
-{
-	return m_sequenceRunning;
-}
-
-int CApogeeCamera::TransferImage()
-{
-	if (m_sequenceCount >= m_sequenceLengthRequested_)
-		return -1;
-
-	unsigned short* pBuf = (unsigned short*) const_cast<unsigned char*>(img_.GetPixels());
-	//unsigned short* pBuf = new unsigned short[ m_sequenceWidth * m_sequenceHeight];
-
-	long sequenceCounter = AltaCamera->SequenceCounter;
-	while (sequenceCounter < m_sequenceCount && !m_stopRequested)
-	{
-	_t(	sequenceCounter = AltaCamera->SequenceCounter; )
-	_t(	int ready = AltaCamera->ImagingStatus == Apn_Status_ImageReady; )
-		CDeviceUtils::SleepMs(100);
-	}
-
-	if (AltaCamera->SequenceCounter >= m_sequenceCount)
-	{
-		++m_sequenceCount;
-
-	HRESULT hr = AltaCamera->GetImage((long) pBuf);
-	if (SUCCEEDED(hr))
-	{
-	_t(	GetCoreCallback()->InsertImage(this, (const unsigned char *) pBuf, m_sequenceWidth, m_sequenceHeight, 2); )
-	}
-	}
-	return DEVICE_OK;
-}
-
-int CApogeeCamera::CleanupAfterSequence()
-{
-_t(	AltaCamera->StopExposure(true);  )
-	m_sequenceRunning = false;
-_t(	AltaCamera->ImageCount = 1;  )
-	return DEVICE_OK;
-}
-
-// Acquisition thread
-
-int AcqSequenceThread::svc()
-{
-	int ret = DEVICE_OK;
-	while (! stop_ && (ret == DEVICE_OK))
-	{
-		ret = camera_->TransferImage();
-	}
-	if (ret == -1)
-		ret = DEVICE_OK;
-	camera_->CleanupAfterSequence();
-	return ret;
-}
