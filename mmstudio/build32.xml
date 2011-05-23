@@ -81,10 +81,8 @@
 
 		<copy file="./bin/plugins_mmstudio.config" tofile="./build/plugins.config"  overwrite="true" verbose="true" />
 		<jar jarfile="MMJ_.jar" basedir="build" manifest="./src/MANIFEST.MF" />
-
 		<mkdir dir="${MMPluginDir}" />
-		<copy file="MMJ_.jar" todir="${MMPluginDir}" overwrite="true" />
-		
+		<copy file="MMJ_.jar" todir="${MMPluginDir}" overwrite="true" />		
 		<copy file="${beanshell}" todir="${MMPluginDir}" />
 		<copy file="${swingx}" todir="${MMPluginDir}" overwrite="true" />
 		<copy file="${MMCoreJ}" todir="${MMPluginDir}" overwrite="true"  />
@@ -97,10 +95,8 @@
 
 
 	<target name="buildMMReader" description="Build MMReader_.jar">
-
 		<copy file="./bin/plugins_reader.config" tofile="./build/plugins.config" overwrite="true" verbose="true"/>
 		<jar jarfile="MMReader_.jar" basedir="build" manifest="./src/MANIFEST.MF" />
-
 	</target>
 
 	<target name="clean" description="Delete the MMStudio build files.">
@@ -111,10 +107,6 @@
 
 
 	<target name="install" description="Create installation image">
-
-
-
-
 		<!-- always clean the device adapters from install image -->
             <delete>
 			<fileset dir="${InstallRoot}">
@@ -149,9 +141,6 @@
 				<include name="mmgr_dal_*.dll"/>
 			</fileset>
 		</copy>
-
-
-
 
 		<copy file="${ScriptsRoot}/sdemo1.bsh" todir="${ScriptsInstall}" />
 		<copy file="${ScriptsRoot}/sdemo2.bsh" todir="${ScriptsInstall}" />
