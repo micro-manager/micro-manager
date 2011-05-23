@@ -37,6 +37,10 @@
 // External names used by the rest of the system to load particular devices from ApogeeCam.dll. 
 const char* g_CameraDeviceName =    "ApogeeCamera";
 
+
+// Forward declaration:
+class AcqSequenceThread;
+
 //////////////////////////////////////////////////////////////////////////////
 // Implementation of the MMDevice and MMCamera interfaces
 //
@@ -74,9 +78,12 @@ public:
     double GetPixelSizeUm() const {return nominalPixelSizeUm_ * GetBinning();}
     int GetBinning() const;
     int SetBinning(int binSize);
-    //int StartSequenceAcquisition(long numImages, double /*interval_ms*/, bool stopOnOverflow);
-    //int StopSequenceAcquisition();
-    //bool IsCapturing();
+    int StartSequenceAcquisition(long numImages, double /*interval_ms*/, bool stopOnOverflow);
+	int StartSequenceAcquisition(double interval);
+    int StopSequenceAcquisition();
+    bool IsCapturing();
+	int TransferImage();
+	int CleanupAfterSequence();
 
     // action interface
     int OnCameraInterface(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -122,7 +129,7 @@ private:
 	double m_dExposure; 
 	bool m_bBusy;
 	bool m_bInitialized;
-
+	
 	 // Apogee data
     long m_nInterfaceType;
     long m_nCamIdOne;
@@ -134,7 +141,41 @@ private:
     long m_roiY;
     long m_roiH;
 	long m_roiV;
+
+	// Sequence variables and methods
+	long m_sequenceCount;
+	unsigned m_sequenceWidth;
+	unsigned m_sequenceHeight;
+	AcqSequenceThread* m_acqSequenceThread;
+	bool m_sequenceRunning;
+	bool m_stopRequested;
+	long m_sequenceLengthRequested_;
+
+	int InitiateGenericSequence();
+	void SequenceCheckImageBuffer();
 };
 
+
+/**
+ * Acquisition thread
+ */
+class AcqSequenceThread : public MMDeviceThreadBase
+{
+public:
+   AcqSequenceThread(CApogeeCamera* camera) : 
+      stop_(false)
+   {
+      camera_ = camera;
+   };
+   ~AcqSequenceThread() {}
+ 
+   int svc(void);
+   void Stop() {stop_ = true;}
+   void Start() {stop_ = false; activate();}
+
+private:
+   CApogeeCamera* camera_;
+   bool stop_;
+};
 
 #endif //_APOGEE_H_

@@ -162,7 +162,7 @@ if "%PROCESSOR_ARCHITECTURE%" == "AMD64" GOTO AMD64BUILDMACHINE
 call ant -buildfile ../build64.xml install packInstaller
 GOTO NOTAMD64
 :AMD64BUILDMACHINE
-call ant -buildfile ../build64.xml install makeDeviceList packInstaller
+call ant -diagnostics -buildfile ../build64.xml install makeDeviceList packInstaller
 :NOTAMD64
 popd
 set DEVICELISTBUILDER=""
@@ -171,10 +171,13 @@ pushd \Projects\micromanager\Install_x64\Output
 rename MMSetup_.exe  %TARGETNAME%
 popd
 
-rem won't install on the current build machine
-rem\Projects\micromanager\Install_x64\Output\%TARGETNAME% /silent
-
+REM -- try to install on build machine
+if "%PROCESSOR_ARCHITECTURE%" == "AMD64" GOTO AMD64BUILDMACHINE2
+GOTO CANTINSTALLHERE
+:AMD64BUILDMACHINE2
+\Projects\micromanager\Install_x64\Output\%TARGETNAME% /silent
 ECHO "Done installing"
+:CANTINSTALLHERE
 
 IF NOT "%3%" == "UPLOAD" GOTO FINISH
 pscp -i c:\projects\MM.ppk -batch /projects/micromanager/Install_x64/Output/%TARGETNAME% MM@valelab.ucsf.edu:./public_html/nightlyBuilds/1.4/Windows/%TARGETNAME%
