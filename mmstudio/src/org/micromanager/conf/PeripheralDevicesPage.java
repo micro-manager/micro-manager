@@ -337,6 +337,8 @@ public class PeripheralDevicesPage extends PagePanel {
             try {
 
 
+
+                core_.initializeDevice(title_);
                core_.initializeAllDevices();
                // create the post-initialization properties
                model_.loadDeviceDataFromHardware(core_);

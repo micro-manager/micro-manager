@@ -23,23 +23,13 @@
 // CVS:          $Id: PeripheralDevicesPreInitializationPropertiesPage.java 6968 2011-04-13 19:30:09Z karlh $
 //
 package org.micromanager.conf;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.prefs.Preferences;
-import javax.swing.JButton;
-import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.ListSelectionModel;
 import javax.swing.table.TableColumn;
 import org.micromanager.utils.GUIUtils;
 import mmcorej.MMCoreJ;
-import mmcorej.DeviceDetectionStatus;
-import mmcorej.StrVector;
 import org.micromanager.utils.PropertyItem;
 import org.micromanager.utils.PropertyNameCellRenderer;
 import org.micromanager.utils.PropertyValueCellEditor;
@@ -113,12 +103,18 @@ public class PeripheralDevicesPreInitializationPropertiesPage extends PagePanel 
         if (fromNextPage) {
             return true;
         }
+        try{
+        core_.unloadAllDevices();
+        }catch(Exception e){
+            ReportingUtils.logError(e);
+        }
         rebuildTable();
         return true;
     }
     public boolean exitPage(boolean toNextPage) {
         try {
             if (toNextPage) {
+                model_.loadModel(core_, false);
 
                 // set the properties of only the 'peripheral' devices!!
                 Device devices[] = model_.getPeripheralDevices();
