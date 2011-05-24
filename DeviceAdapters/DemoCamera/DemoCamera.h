@@ -38,6 +38,7 @@
 #include "../../MMDevice/DeviceThreads.h"
 #include <string>
 #include <map>
+#include <algorithm>
 
 //////////////////////////////////////////////////////////////////////////////
 // Error codes
