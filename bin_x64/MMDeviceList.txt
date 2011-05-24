@@ -52,6 +52,22 @@ DemoCamera,ImageFlipX,ImageFlipX,11
 DemoCamera,ImageFlipY,ImageFlipY,11
 DemoCamera,MedianFilter,MedianFilter,11
 DemoCamera,DHub,DHub,8
+DemoCameraNumber2,DCam,Demo camera,2
+DemoCameraNumber2,DWheel,Demo filter wheel,4
+DemoCameraNumber2,DStateDevice,Demo State Device,4
+DemoCameraNumber2,DObjective,Demo objective turret,4
+DemoCameraNumber2,DStage,Demo stage,5
+DemoCameraNumber2,DXYStage,Demo XY stage,6
+DemoCameraNumber2,DLightPath,Demo light path,4
+DemoCameraNumber2,DAutoFocus,Demo auto focus,9
+DemoCameraNumber2,DShutter,Demo shutter,3
+DemoCameraNumber2,D-DA,Demo DA,13
+DemoCameraNumber2,DOptovar,Demo Optovar,14
+DemoCameraNumber2,TransposeProcessor,TransposeProcessor,11
+DemoCameraNumber2,ImageFlipX,ImageFlipX,11
+DemoCameraNumber2,ImageFlipY,ImageFlipY,11
+DemoCameraNumber2,MedianFilter,MedianFilter,11
+DemoCameraNumber2,DHub,DHub,8
 FreeSerialPort,FreeSerialPort,Free-form communication Serial Port.,8
 GenericSLM,GenericSLM,Spatial Light Modulator controlled through computer graphics output,16
 GigECamera,GigE camera adapter,GigE camera,2
@@ -101,6 +117,11 @@ Ludl,LudlShutter,Ludl Shutter,3
 Ludl,LudlWheel,Ludl Filter Wheel,4
 Ludl,XYStage,XY Stage,6
 Ludl,Stage,Single Axis Stage,5
+LudlNumber2,LudlController,Ludl Controller,8
+LudlNumber2,LudlShutter,Ludl Shutter,3
+LudlNumber2,LudlWheel,Ludl Filter Wheel,4
+LudlNumber2,XYStage,XY Stage,6
+LudlNumber2,Stage,Single Axis Stage,5
 MT20,MT20-HUB,Olympus MT20 hub device,8
 MT20,MT20-Burner,Olympus MT20 burner,4
 MT20,MT20-Shutter,Olympus MT20 shutter,3

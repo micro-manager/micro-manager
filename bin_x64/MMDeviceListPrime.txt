@@ -38,6 +38,8 @@ DTOpenLayer,DTOL-DAC-2,Description N/A,13
 DTOpenLayer,DTOL-DAC-3,Description N/A,13
 DemoCamera,DCam,Demo camera,2
 DemoCamera,DHub,DHub,8
+DemoCameraNumber2,DCam,Demo camera,2
+DemoCameraNumber2,DHub,DHub,8
 FreeSerialPort,FreeSerialPort,Free-form communication Serial Port.,8
 GenericSLM,GenericSLM,Spatial Light Modulator controlled through computer graphics output,16
 GigECamera,GigE camera adapter,GigE camera,2
@@ -83,6 +85,7 @@ LeicaDMR,Objective Nosepiece,Objective Nosepiece,4
 LeicaDMR,Aperture Diaphragm,Aperture Diaphragm,8
 LeicaDMR,Field Diaphragm,Field Diaphragm,8
 Ludl,LudlController,Ludl Controller,8
+LudlNumber2,LudlController,Ludl Controller,8
 MT20,MT20-HUB,Olympus MT20 hub device,8
 MT20,MT20-Burner,Olympus MT20 burner,4
 MT20,MT20-Shutter,Olympus MT20 shutter,3
