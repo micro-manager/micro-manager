@@ -162,7 +162,7 @@ if "%PROCESSOR_ARCHITECTURE%" == "AMD64" GOTO AMD64BUILDMACHINE
 call ant -buildfile ../build64.xml install packInstaller
 GOTO NOTAMD64
 :AMD64BUILDMACHINE
-call ant -diagnostics -buildfile ../build64.xml install makeDeviceList packInstaller
+call ant -buildfile ../build64.xml install makeDeviceList packInstaller
 :NOTAMD64
 popd
 set DEVICELISTBUILDER=""
