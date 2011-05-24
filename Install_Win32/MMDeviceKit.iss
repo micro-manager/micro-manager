@@ -1,13 +1,13 @@
 [Setup]
 OutputDir=\projects\micromanager
-OutputBaseFilename=MMDeviceKit-win-x86-x64-Dev39-Mod5
-DefaultDirName=C:/Program Files/MMDeviceKit-win-Dev39-Mod5
+OutputBaseFilename=MMDeviceKit-win-x86-x64-Dev39-Mod6
+DefaultDirName=C:/Program Files/MMDeviceKit-win-Dev39-Mod6
 VersionInfoVersion=39
 VersionInfoCompany=micro-manager.org
 VersionInfoCopyright=University of California San Francisco
 AppCopyright=Unviersity of California San Francisco
 AppName=Micro-Manager-1.4 DeviceKit
-AppVerName=DeviceKit for Device API version 39 Module API version 5
+AppVerName=DeviceKit for Device API version 39 Module API version 6
 ShowLanguageDialog=yes
 DisableDirPage=false
 
