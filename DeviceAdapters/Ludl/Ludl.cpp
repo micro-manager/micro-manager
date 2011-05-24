@@ -425,139 +425,137 @@ int Hub::Shutdown()
 
 void Hub::QueryPeripheralInventory()
 {
-
-   std::string v;
-   QueryVersion(v);
-
    discoverableDevices_.clear();
-   clearPort(*this, *GetCoreCallback(), port_.c_str());
 
-   // Get description of attached modules
-   const char* cmd = "Rconfig";
-   int ret;
-   ret = SendSerialCommand(port_.c_str(), cmd, "\r");
-   if (ret != DEVICE_OK) 
-      return;
-
-   // Read out report
-   std::string report;
-   report = "";
-   ret = GetSerialAnswer(port_.c_str(), ":", report);
-   if (ret != DEVICE_OK) 
-      return;
-   if (report.length() < 1)
-      return;
-   // Looks like there are controllers that start with ':'
-   if (report.length() == 1) 
+   if(::DiscoverabilityTest())
    {
+
+      std::string v;
+      QueryVersion(v);
+
+      clearPort(*this, *GetCoreCallback(), port_.c_str());
+
+      // Get description of attached modules
+      const char* cmd = "Rconfig";
+      int ret;
+      ret = SendSerialCommand(port_.c_str(), cmd, "\r");
+      if (ret != DEVICE_OK) 
+         return;
+
+      // Read out report
+      std::string report;
       report = "";
       ret = GetSerialAnswer(port_.c_str(), ":", report);
       if (ret != DEVICE_OK) 
          return;
       if (report.length() < 1)
          return;
-   }
-
-   LogMessage(std::string("Inventory report:: ")+ report, false);
-
-/* from MAC200 PDF
-Modul-Id   Address  Label  Description 
- 
-  X  1  EMOT  stage X axis 
-  Y  2  EMOT  stage Y axis 
-  B  3  EMOT  aux axis 
-  R  4  EMOT  aux axis 
-  C  5  EMOT  aux axis 
-  Z  6  EMOT  aux axis 
-  T  7  EMOT  aux axis 
- 
-  I  9 & 8  EDAIO  digital in ports 
-  O  9 & 8  EDAIO  digital out ports 
- 
-  F  11  EAFC  auto focus finder 
-P[1]  12  HPHCD           photometer No. 1 
-  P2  13  HPHCD           photometer No. 2 
-  P3  14  HPHCD           photometer No. 3 
-  P4  15  HPHCD           photometer No. 4 
-  P5  16  HPHCD           photometer No. 5 
- 
-S[1]  17  EFILS  filter shutter No. 1 
-  S2  18  EFILS  filter shutter No. 2 
-  S3  19  EFILS  filter shutter No. 3 
-  S4  20  EFILS  filter shutter No. 4 
-  S5  21  EFILS  filter shutter No. 5 
-*/
-
-
-
-
-
-
-
-   std::string shutterToken = "EFILS";
-   std::string wheelToken = "FWSHC";
-   std::string motorToken = "EMOT"; // Mac2000 x,y, or 'aux'
-  
-   std::stringstream ireport(report);
-   std::string line;
-   while( std::getline(ireport, line))
-   {
-      if( 0 < line.length())
+      // Looks like there are controllers that start with ':'
+      if (report.length() == 1) 
       {
-         std::vector<std::string> tokens;
-         // tokenize the line
-         std::stringstream iline(line);
-         std::string word;
-         while (iline >> word)
-            tokens.push_back(word);
-        
-         bool numericIdAtStart = false;
-         if( 0 < tokens.size())
+         report = "";
+         ret = GetSerialAnswer(port_.c_str(), ":", report);
+         if (ret != DEVICE_OK) 
+            return;
+         if (report.length() < 1)
+            return;
+      }
+
+      LogMessage(std::string("Inventory report:: ")+ report, false);
+
+   /* from MAC200 PDF
+   Modul-Id   Address  Label  Description 
+    
+     X  1  EMOT  stage X axis 
+     Y  2  EMOT  stage Y axis 
+     B  3  EMOT  aux axis 
+     R  4  EMOT  aux axis 
+     C  5  EMOT  aux axis 
+     Z  6  EMOT  aux axis 
+     T  7  EMOT  aux axis 
+    
+     I  9 & 8  EDAIO  digital in ports 
+     O  9 & 8  EDAIO  digital out ports 
+    
+     F  11  EAFC  auto focus finder 
+   P[1]  12  HPHCD           photometer No. 1 
+     P2  13  HPHCD           photometer No. 2 
+     P3  14  HPHCD           photometer No. 3 
+     P4  15  HPHCD           photometer No. 4 
+     P5  16  HPHCD           photometer No. 5 
+    
+   S[1]  17  EFILS  filter shutter No. 1 
+     S2  18  EFILS  filter shutter No. 2 
+     S3  19  EFILS  filter shutter No. 3 
+     S4  20  EFILS  filter shutter No. 4 
+     S5  21  EFILS  filter shutter No. 5 
+   */
+
+      std::string shutterToken = "EFILS";
+      std::string wheelToken = "FWSHC";
+      std::string motorToken = "EMOT"; // Mac2000 x,y, or 'aux'
+     
+      std::stringstream ireport(report);
+      std::string line;
+      while( std::getline(ireport, line))
+      {
+         if( 0 < line.length())
          {
-            if( 0 < tokens.at(0).length())
+            std::vector<std::string> tokens;
+            // tokenize the line
+            std::stringstream iline(line);
+            std::string word;
+            while (iline >> word)
+               tokens.push_back(word);
+           
+            bool numericIdAtStart = false;
+            if( 0 < tokens.size())
             {
-               numericIdAtStart = true;
-               for( std::string::iterator ii = tokens.at(0).begin(); tokens.at(0).end()!=ii; ++ii)
+               if( 0 < tokens.at(0).length())
                {
-                  if(!isdigit(*ii))
+                  numericIdAtStart = true;
+                  for( std::string::iterator ii = tokens.at(0).begin(); tokens.at(0).end()!=ii; ++ii)
                   {
-                     numericIdAtStart = false;
-                     break;
+                     if(!isdigit(*ii))
+                     {
+                        numericIdAtStart = false;
+                        break;
+                     }
                   }
                }
             }
-         }
-         if( numericIdAtStart)  // parse the inventory line
-         {
-            std::stringstream ids(tokens.at(0));
-            // for MAC2000 this is on [1,21]
-            int deviceID;
-            ids >> deviceID;
-
-            std::vector<std::string>::iterator itt = tokens.begin();
-
-            for(itt++ ; itt != tokens.end(); ++itt)
+            if( numericIdAtStart)  // parse the inventory line
             {
-               if(0==(*itt).compare(shutterToken))
-               {
-                  discoverableDevices_.push_back(g_Shutter);
-               }
+               std::stringstream ids(tokens.at(0));
+               // for MAC2000 this is on [1,21]
+               int deviceID;
+               ids >> deviceID;
 
-               if(0==(*itt).compare(wheelToken))
+               std::vector<std::string>::iterator itt = tokens.begin();
+
+               for(itt++ ; itt != tokens.end(); ++itt)
                {
-                  discoverableDevices_.push_back(g_Wheel);
-               }
-               if(0 == (*itt).compare(motorToken))
-               {
-                  if (1 == deviceID) // if we find the X axis, say we have an XY stage
-                     discoverableDevices_.push_back(g_XYStageDeviceName);
-                  else if( 6 == deviceID)
-                     discoverableDevices_.push_back(g_StageDeviceName);
+                  if(0==(*itt).compare(shutterToken))
+                  {
+                     discoverableDevices_.push_back(g_Shutter);
+                  }
+
+                  if(0==(*itt).compare(wheelToken))
+                  {
+                     discoverableDevices_.push_back(g_Wheel);
+                  }
+                  if(0 == (*itt).compare(motorToken))
+                  {
+                     if (1 == deviceID) // if we find the X axis, say we have an XY stage
+                        discoverableDevices_.push_back(g_XYStageDeviceName);
+                     else if( 6 == deviceID)
+                        discoverableDevices_.push_back(g_StageDeviceName);
+
+                  }
 
                }
 
             }
-
          }
       }
    }

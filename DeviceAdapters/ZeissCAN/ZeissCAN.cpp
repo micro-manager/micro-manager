@@ -669,12 +669,13 @@ const char* g_ZeissFilterWheel2 = "ZeissFilterWheel2";
 
 void ZeissScope::GetPeripheralInventory()
 {
-   if(!initialized_)
-      Initialize();
-
    peripherals_.clear();
+
    if(::DiscoverabilityTest())
    {
+      if(!initialized_)
+         Initialize();
+
 
       int ret;
       bool exists;

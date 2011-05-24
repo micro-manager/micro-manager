@@ -3174,11 +3174,11 @@ void  DemoHub::GetPeripheralInventory()
    if (g_hub && g_hub->GenerateRandomError())
       return;
 
-   Initialize();
-
+    
    peripherals_.clear();
    if( DiscoverabilityTest())
-   {
+   {  
+      Initialize();
       // all the adapters in this module
       int n = GetNumberOfDevices();
       char deviceName[MM::MaxStrLength];
