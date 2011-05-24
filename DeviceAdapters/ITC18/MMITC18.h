@@ -228,6 +228,17 @@ public:
     int OnVolts(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnMaxVolt(MM::PropertyBase* pProp, MM::ActionType eAct);
     int OnDACPort(MM::PropertyBase* pProp, MM::ActionType eAct);
+    
+    // These commands are not supported on this device
+    // Sequence functions
+    int IsDASequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
+    int GetDASequenceMaxLength(long& nrEvents) const  {nrEvents = 0; return DEVICE_OK;}
+    int StartDASequence() const {return DEVICE_OK;} 
+    int StopDASequence() const {return DEVICE_OK;}
+    int LoadDASequence(std::vector<double> voltages) const {return DEVICE_OK;}
+    
+   
+    
 private:
     int ITC18RunOnce(double value);
 
@@ -270,6 +281,15 @@ public:
      int OnVolts(MM::PropertyBase* pProp, MM::ActionType eAct);
      int OnRange(MM::PropertyBase* pProp, MM::ActionType eAct);
      int OnADCPort(MM::PropertyBase* pProp, MM::ActionType eAct);
+     
+     // These commands are not supported on this device
+     // Sequence functions
+     int IsDASequenceable(bool& isSequenceable) const {isSequenceable = false; return DEVICE_OK;}
+     int GetDASequenceMaxLength(long& nrEvents) const  {nrEvents = 0; return DEVICE_OK;}
+     int StartDASequence() const {return DEVICE_OK;} 
+     int StopDASequence() const {return DEVICE_OK;}
+     int LoadDASequence(std::vector<double> voltages) const {return DEVICE_OK;}
+     
 private:
      int ITC18RunOnce(double &value);		
      std::string name_;
