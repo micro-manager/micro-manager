@@ -278,15 +278,15 @@ void LeicaScope::AttemptToDiscover(int deviceCode, const char* deviceName)
 int LeicaScope::GetNumberOfDiscoverableDevices()
 {
    discoveredDevices_.clear();
+   if (!g_ScopeInterface.IsInitialized())
+   {
+      int ret = g_ScopeInterface.Initialize(*this, *GetCoreCallback());
+      if (ret != DEVICE_OK)
+         return 0;
+   }
+
    if(::DiscoverabilityTest())
    {
-      if (!g_ScopeInterface.IsInitialized())
-      {
-         int ret = g_ScopeInterface.Initialize(*this, *GetCoreCallback());
-         if (ret != DEVICE_OK)
-            return 0;
-      }
-
 
       AttemptToDiscover(g_IL_Turret, g_LeicaReflector);
       AttemptToDiscover(g_Revolver, g_LeicaNosePiece);
