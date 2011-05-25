@@ -1041,8 +1041,15 @@ int Turret::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       pProp->Get(pos_);
       int pos = pos_ + 1;
-      if ((pos > 0) && (pos <= (int) numPos_))
-         return ZeissChanger::SetPosition(*this, *GetCoreCallback(), devId_, pos);
+      if ((pos > 0) && (pos <= (int) numPos_)) {
+         // Only change position if it is different from requested
+         int currentPos;
+         int ret = ZeissChanger::GetPosition(*this, *GetCoreCallback(), devId_, currentPos);
+         if (ret != DEVICE_OK)
+            return ret;
+         if (pos != currentPos)
+            return ZeissChanger::SetPosition(*this, *GetCoreCallback(), devId_, pos);
+      }
       else
          return ERR_INVALID_TURRET_POSITION;
    }
