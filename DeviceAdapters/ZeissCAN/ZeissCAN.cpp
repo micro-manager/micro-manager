@@ -504,7 +504,7 @@ int ZeissScope::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
          pProp->Get(g_hub.port_);
 
          g_hub.initialized_ = true;
-         initialized_ = true;
+         //initialized_ = true;
       }
    }
 
