@@ -1298,7 +1298,7 @@ public class MicroscopeModel {
             try {
                addDevice(newDev);
                c.loadDevice(newDev.getName(), newDev.getLibrary(), newDev.getAdapterName());
-               //c.initializeDevice(newDev.getName());
+               c.initializeDevice(newDev.getName());
                for (int i = 0; i < newDev.getNumberOfSetupProperties(); i++) {
                   PropertyItem p = newDev.getSetupProperty(i);
                   c.setProperty(newDev.getName(), p.name, p.value);
