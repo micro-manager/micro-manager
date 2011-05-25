@@ -90,7 +90,7 @@ class ProblemReportSender extends Thread {
             File archiveFile = new File(archPath);
             // contruct a filename for the archive which is extremely
             // likely to be unique as follows:
-            // yyyyMMddHHmmss + timezone + ip address
+            // yyyyMMddHHmmss + timezone + MAC address
             String qualifiedArchiveFileName = "";
             try {
                 SimpleDateFormat df = new SimpleDateFormat("yyyyMMddHHmmss");
@@ -98,7 +98,7 @@ class ProblemReportSender extends Thread {
                 String shortTZName = TimeZone.getDefault().getDisplayName(false, TimeZone.SHORT);
                 qualifiedArchiveFileName += shortTZName;
                 qualifiedArchiveFileName += "_";
-                qualifiedArchiveFileName += physicalAddress; //InetAddress.getLocalHost().getHostAddress();
+                qualifiedArchiveFileName += physicalAddress; 
             } catch (Throwable t) {
             }
             // try ensure valid and convenient UNIX file name
@@ -114,6 +114,8 @@ class ProblemReportSender extends Thread {
             qualifiedArchiveFileName += ".log";
             MMUUEncoder uuec = new MMUUEncoder();
             InputStream reader = new FileInputStream(archiveFile);
+            // put the report in the tmp directory
+            qualifiedArchiveFileName = System.getProperty("java.io.tmpdir") + qualifiedArchiveFileName;
             OutputStream writer = new FileOutputStream(qualifiedArchiveFileName);
             uuec.encodeBuffer(reader, writer);
             reader.close();
