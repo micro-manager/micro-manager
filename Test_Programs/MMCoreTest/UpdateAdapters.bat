@@ -1,3 +1,5 @@
+del *.ilk /s/q/f
+del *.ncb /s/q/f
 del mmgr_dal*.dll /s/q/f
 
 
