@@ -2252,7 +2252,7 @@ int CDemoObjectiveTurret::Initialize()
    char buf[bufSize];
    for (long i=0; i<numPos_; i++)
    {
-      snprintf(buf, bufSize, "Objective-%ld", i);
+      snprintf(buf, bufSize, "Objective-%c",'A'+ (char)i);
       SetPositionLabel(i, buf);
    }
 
