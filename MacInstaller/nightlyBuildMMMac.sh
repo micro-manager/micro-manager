@@ -134,8 +134,10 @@ cp -r $PPC/scripts $TARGET/
 
 # Build devicelist using 32-bit JVM (Set using /Applications/Utilities/Java Preferences)
 cd $I386
-java -cp plugins/Micro-Manager/MMJ_.jar:plugins/Micro-Manager/MMCoreJ.jar DeviceListBuilder
+java -cp plugins/Micro-Manager/MMJ_.jar:plugins/Micro-Manager/MMCoreJ.jar DeviceListBuilder notDeviceDiscoveryEnabled
 cp $I386/MMDeviceList.txt $TARGET/MMDeviceList.txt
+java -cp plugins/Micro-Manager/MMJ_.jar:plugins/Micro-Manager/MMCoreJ.jar DeviceListBuilder deviceDiscoveryEnabled
+cp $I386/MMDeviceListPrime.txt $TARGET/MMDeviceListPrime.txt
 
 
 cd $REPOSITORY/MacInstaller
