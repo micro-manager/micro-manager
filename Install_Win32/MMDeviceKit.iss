@@ -1,13 +1,13 @@
 [Setup]
 OutputDir=\projects\micromanager
-OutputBaseFilename=MMDeviceKit-win-x86-x64-Dev39-Mod6
-DefaultDirName=C:/Program Files/MMDeviceKit-win-Dev39-Mod6
-VersionInfoVersion=39
+OutputBaseFilename=MMDeviceKit-win-x86-x64-Dev40-Mod6
+DefaultDirName=C:/Program Files/MMDeviceKit-win-Dev40-Mod6
+VersionInfoVersion=40
 VersionInfoCompany=micro-manager.org
 VersionInfoCopyright=University of California San Francisco
 AppCopyright=Unviersity of California San Francisco
 AppName=Micro-Manager-1.4 DeviceKit
-AppVerName=DeviceKit for Device API version 39 Module API version 6
+AppVerName=DeviceKit for Device API version 40 Module API version 6
 ShowLanguageDialog=yes
 DisableDirPage=false
 
@@ -74,6 +74,8 @@ Source: ..\Test_Programs\MMCoreTest\*; DestDir: {app}\Test_Programs\MMCoreTest
 ; pickup whatever matching device adapters we've put into the running directory
 Source: ..\Test_Programs\MMCoreTest\Win32\Release\*; DestDir: {app}\Test_Programs\MMCoreTest\Win32\Release
 Source: ..\Test_Programs\MMCoreTest\x64\Release\*; DestDir: {app}\Test_Programs\MMCoreTest\x64\Release 
+Source: ..\Test_Programs\MMCoreTest\Win32\Debug\*; DestDir: {app}\Test_Programs\MMCoreTest\Win32\Debug
+Source: ..\Test_Programs\MMCoreTest\x64\Debug\*; DestDir: {app}\Test_Programs\MMCoreTest\x64\Debug
 
 ; MMCore files
 Source: ..\MMCore\*; DestDir: {app}\MMCore
