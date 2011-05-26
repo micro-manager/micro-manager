@@ -81,4 +81,5 @@ Source: ..\Test_Programs\MMCoreTest\x64\Debug\*; DestDir: {app}\Test_Programs\MM
 Source: ..\MMCore\*; DestDir: {app}\MMCore
 
 ; scripting files
-Source: ..\scripts\*; DestDir: {app}\scripts
+; confusing to include these with the core_test
+;Source: ..\scripts\*; DestDir: {app}\scripts
