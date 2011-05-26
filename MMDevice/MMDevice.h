@@ -34,7 +34,7 @@
 // Header version
 // If any of the class declarations changes, the interface version
 // must be incremented
-#define DEVICE_INTERFACE_VERSION 39
+#define DEVICE_INTERFACE_VERSION 40
 ///////////////////////////////////////////////////////////////////////////////
 
 #pragma once
@@ -307,6 +307,10 @@ namespace MM {
       // are correct.
       virtual int GetNumberOfDiscoverableDevices() = 0;
       virtual void GetDiscoverableDevice(int peripheralNum, char* peripheralName, unsigned int maxNameLen) = 0;
+
+      // the hubs may have provided properties about the peripheral devices that are needed to initialize the device!
+      virtual int GetDiscoDeviceNumberOfProperties(int peripheralNum) = 0;
+      virtual void GetDiscoDeviceProperty(int peripheralNum, short propertyNumber, char* propertyName, char* propValue, unsigned int maxNameLen) = 0;
 
    };
 

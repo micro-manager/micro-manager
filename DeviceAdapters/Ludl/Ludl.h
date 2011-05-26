@@ -105,11 +105,17 @@ class Hub : public CGenericBase<Hub>
      int GetNumberOfDiscoverableDevices();
      void GetDiscoverableDevice(int peripheralNum, char* peripheralName, unsigned int maxNameLen);
 
+     int GetDiscoDeviceNumberOfProperties(int peripheralNum);
+     void GetDiscoDeviceProperty(int peripheralNum, short propertyNumber ,char* propertyName, char* propValue, unsigned int maxValueLen);
+
 
    private:
       void QueryPeripheralInventory();
 
       std::vector<std::string> discoverableDevices_;
+
+      std::vector<short> inventoryDeviceAddresses_; // 1, 2, 17 etc.
+      std::vector<char> inventoryDeviceIDs_; //  X Y S, etc.
 
       int QueryVersion(std::string& version);
 

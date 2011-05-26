@@ -705,11 +705,12 @@ public:
    };
 
    // device 'inventory'
-
    int GetNumberOfDiscoverableDevices(){ return 0;};
    void GetDiscoverableDevice(int /*peripheralNum*/, char* /*peripheralName*/, unsigned int /*maxNameLen*/){return;}; 
 
-
+   // properties for a peripheral device reported by that device's hub
+   int GetDiscoDeviceNumberOfProperties(int /*peripheralNum*/){return 0;};
+   void GetDiscoDeviceProperty(int /*peripheralNum*/, short /*propertyNumber*/,char* /*propertyName*/, char* /*propValue*/, unsigned int /*maxValueLen*/){ return;};
 
 
    ////////////////////////////////////////////////////////////////////////////

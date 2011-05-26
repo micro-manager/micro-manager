@@ -426,6 +426,8 @@ int Hub::Shutdown()
 void Hub::QueryPeripheralInventory()
 {
    discoverableDevices_.clear();
+   inventoryDeviceAddresses_.clear();
+   inventoryDeviceIDs_.clear();
 
    if(::DiscoverabilityTest())
    {
@@ -491,6 +493,20 @@ void Hub::QueryPeripheralInventory()
      S5  21  EFILS  filter shutter No. 5 
    */
 
+      /* from a MAC 5000 i see the following kind of report:
+
+      "
+
+Dev Addres   Label   Id   Description 
+
+    1       EMOT    X    X axis stage        MCMSE
+    2       EMOT    Y    Y axis stage        MCMSE
+   17       EFILS   S    S Filter Shutter    FWSHC
+
+      "
+
+   I don't know why in the world the filter wheel token appears on the shutter device entry!
+      */
       std::string shutterToken = "EFILS";
       std::string wheelToken = "FWSHC";
       std::string motorToken = "EMOT"; // Mac2000 x,y, or 'aux'
@@ -530,31 +546,48 @@ void Hub::QueryPeripheralInventory()
                // for MAC2000 this is on [1,21]
                int deviceID;
                ids >> deviceID;
-
+               // if it's a Y axis assume it's controlled together with the X axis
+               if (2==deviceID)
+                  continue;
                std::vector<std::string>::iterator itt = tokens.begin();
-
                for(itt++ ; itt != tokens.end(); ++itt)
                {
+                  bool validEntry = false;
                   if(0==(*itt).compare(shutterToken))
                   {
                      discoverableDevices_.push_back(g_Shutter);
+                     validEntry = true;
                   }
-
                   if(0==(*itt).compare(wheelToken))
                   {
                      discoverableDevices_.push_back(g_Wheel);
+                     validEntry = true;
                   }
                   if(0 == (*itt).compare(motorToken))
                   {
                      if (1 == deviceID) // if we find the X axis, say we have an XY stage
+                     {
+                        validEntry = true;
                         discoverableDevices_.push_back(g_XYStageDeviceName);
+                     }
                      else if( 6 == deviceID)
+                     {
+                        validEntry = true;
                         discoverableDevices_.push_back(g_StageDeviceName);
-
+                     }
                   }
-
+                  if(validEntry)
+                  {
+                     inventoryDeviceAddresses_.push_back(deviceID);
+                     char ID = '?';
+                     if ( (itt+1) != tokens.end())
+                     {
+                        ID = (itt+1)->at(0);
+                     }
+                     inventoryDeviceIDs_.push_back( ID);
+                     break;
+                  }
                }
-
             }
          }
       }
@@ -581,6 +614,57 @@ void Hub::GetDiscoverableDevice(int peripheralNum, char* peripheralName, unsigne
    }
    return;
 } 
+
+int Hub::GetDiscoDeviceNumberOfProperties(int peripheralNum)
+{
+   int retv = 0;
+
+   // the LUDL controller always reports an integer 'device number' and char 'id'
+   // assume client has always already called QueryPeripheralInventory...
+   if( -1 < peripheralNum)
+   {
+      if( peripheralNum < (int)inventoryDeviceAddresses_.size())
+         retv =2;
+   }
+   return retv;
+
+}
+
+void Hub::GetDiscoDeviceProperty(int peripheralNum, short propertyNumber,char* propertyName, char* propValue, unsigned int maxValueLen)
+{
+   if( -1 < peripheralNum)
+   {
+      if( peripheralNum < (int)inventoryDeviceAddresses_.size())
+      {
+         switch( propertyNumber)
+         {
+            //there is something interesting in here, some of the axes use the the 1-character device ID as the "ID" and some use something else...
+            // so for today I will call these two properties ONECHARACTERDEVICEID and DEVICEADDRESS
+         case 0:
+            if( 0 != propertyName)
+               strncpy(propertyName,"DEVICEADDRESS",maxValueLen-1);
+            if(0!=propValue)
+            {
+               std::ostringstream os;
+               os << inventoryDeviceAddresses_[peripheralNum];
+               strncpy(propValue, os.str().c_str(), maxValueLen-1);
+            }
+            break;
+
+         case 1:
+            if( 0 != propertyName)
+               strncpy(propertyName,"ONECHARACTERDEVICEID",maxValueLen-1);
+            if(0!=propValue)
+            {
+               std::ostringstream os;
+               os <<  inventoryDeviceIDs_[peripheralNum];
+               strncpy(propValue, os.str().c_str(), maxValueLen-1);
+            }
+            break;
+         }
+      }
+   }
+}
 
 
 
@@ -672,7 +756,7 @@ int Hub::OnTransmissionDelay(MM::PropertyBase* pProp, MM::ActionType pAct)
             return ret;
       }
 
-      if (result[1] != 'A') 
+      if (result[1] != 'A' && result[0]!='A') 
          return ERR_UNRECOGNIZED_ANSWER;
 
       // tokenize on space
