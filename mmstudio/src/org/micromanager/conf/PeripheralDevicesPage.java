@@ -334,22 +334,11 @@ public class PeripheralDevicesPage extends PagePanel {
                ancestor.setCursor(waitc);
             }
             model_.loadModel(core_, false);
-            try {
 
-
-               core_.initializeAllDevices();
-               // create the post-initialization properties
-               model_.loadDeviceDataFromHardware(core_);
-
-               model_.loadStateLabelsFromHardware(core_);
-            } catch (Exception ex) {
-               ReportingUtils.logError(ex);
-            } finally{
                if (null != ancestor){
                   if( null != oldc)
                      ancestor.setCursor(oldc);
                }
-            }
          }
       }
       return status;

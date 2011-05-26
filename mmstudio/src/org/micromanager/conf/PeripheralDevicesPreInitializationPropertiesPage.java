@@ -143,6 +143,25 @@ public class PeripheralDevicesPreInitializationPropertiesPage extends PagePanel 
                         model_.setDeviceSetupProperty(s.deviceName_, s.propertyName_, s.propertyValue_);
                     }
                 }
+
+                            try {
+
+
+               core_.initializeAllDevices();
+               // create the post-initialization properties
+               model_.loadDeviceDataFromHardware(core_);
+               model_.loadStateLabelsFromHardware(core_);
+            } catch (Exception ex) {
+               ReportingUtils.logError(ex);
+            } finally{
+;
+            }
+
+
+
+                
+
+
             } else {
                 GUIUtils.preventDisplayAdapterChangeExceptions();
             }
