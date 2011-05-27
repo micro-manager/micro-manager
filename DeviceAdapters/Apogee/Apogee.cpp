@@ -121,7 +121,8 @@ CApogeeCamera::CApogeeCamera() :
     m_dExposure(100.0),
     m_nInterfaceType(999),
     m_nCamIdOne(-1),
-    m_nCamIdTwo(0)
+    m_nCamIdTwo(0),
+	 m_sequenceCount(0)
 {
     // call the base class method to set-up default error codes/messages
     InitializeDefaultErrorMessages();
@@ -148,6 +149,10 @@ CApogeeCamera::CApogeeCamera() :
     pAct = new CPropertyAction (this, &CApogeeCamera::OnCameraIdTwo);
     nRet = CreateProperty("CameraIdTwo", "0", MM::Integer, false, pAct, true);
     assert(nRet == DEVICE_OK);
+
+	// Create sequence thread
+	m_acqSequenceThread = new AcqSequenceThread(this);
+
 }
 
 /**
@@ -158,7 +163,7 @@ CApogeeCamera::CApogeeCamera() :
  */
 CApogeeCamera::~CApogeeCamera()
 {
-    // no clean-up required for this device
+   delete m_acqSequenceThread;
 }
 
 /**
@@ -1288,4 +1293,98 @@ int CApogeeCamera::ResizeImageBuffer()
     return DEVICE_OK;
 }
 
+// Sequence acquisition methods
 
+void CApogeeCamera::SequenceCheckImageBuffer()
+{
+	// Get the image data from the camera and place in the circular buffer 
+   if(img_.Depth() != 2) assert(!"Unsupported pixel depth.");
+	m_sequenceWidth = (unsigned) GetImageWidth();
+	m_sequenceHeight = (unsigned) GetImageHeight();
+   if(img_.Width()!=m_sequenceWidth || img_.Height()!=m_sequenceHeight) 
+      assert(!"Image buffer size does not match camera buffer.");
+}
+
+int CApogeeCamera::StartSequenceAcquisition(double interval)
+{
+   // Set to the maximum value, 65534. Note that 65535 doesn't work!
+	return StartSequenceAcquisition(65534, interval, false);
+}
+
+int CApogeeCamera::StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow)
+{
+	SequenceCheckImageBuffer();
+	m_sequenceLengthRequested = numImages;
+   m_stopOnOverflow = stopOnOverflow;
+	AltaCamera->SequenceBulkDownload = false; 
+	AltaCamera->ImageCount = numImages;
+   AltaCamera->SequenceDelay = interval_ms / 1000.0;
+   AltaCamera->Expose(m_dExposure/1000, m_nLightImgMode);
+
+   m_sequenceCount = 0;
+	m_acqSequenceThread->Start();
+	return DEVICE_OK;
+}
+
+int CApogeeCamera::StopSequenceAcquisition()
+{
+	m_acqSequenceThread->Stop();
+	m_acqSequenceThread->wait();
+	return DEVICE_OK;
+}
+
+bool CApogeeCamera::IsCapturing()
+{
+	return m_acqSequenceThread->IsRunning();
+}
+
+int CApogeeCamera::TransferImage()
+{
+	if (m_sequenceCount >= m_sequenceLengthRequested)
+		return -1;
+
+	if (AltaCamera->SequenceCounter >= m_sequenceCount)
+	{
+      ++m_sequenceCount;
+      unsigned short* pBuf = (unsigned short*) const_cast<unsigned char*>(img_.GetPixels());
+	   HRESULT hr = AltaCamera->GetImage((long) pBuf);
+	   if (SUCCEEDED(hr))
+	   {
+	      int ret = GetCoreCallback()->InsertImage(this, (const unsigned char *) pBuf, m_sequenceWidth, m_sequenceHeight, 2);
+         if (!m_stopOnOverflow && ret == DEVICE_BUFFER_OVERFLOW)
+         {
+            // do not stop on overflow - just reset the buffer
+            GetCoreCallback()->ClearImageBuffer(this);
+         } else
+            return ret;
+	      }
+      else
+      {
+         return DEVICE_ERR;
+      }
+	}
+	return DEVICE_OK;
+}
+
+int CApogeeCamera::CleanupAfterSequence()
+{
+   AltaCamera->StopExposure(true); 
+   AltaCamera->ImageCount = 1;
+	return DEVICE_OK;
+}
+
+// Acquisition thread
+
+int AcqSequenceThread::Run()
+{
+	int ret = DEVICE_OK;
+	while (! StopRequested() && (ret == DEVICE_OK))
+	{  
+		ret = camera_->TransferImage();
+      CDeviceUtils::SleepMs(5);
+	}
+	if (ret == -1)
+		ret = DEVICE_OK;
+	camera_->CleanupAfterSequence();
+	return ret;
+}
