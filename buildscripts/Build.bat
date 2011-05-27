@@ -11,23 +11,23 @@ IF NOT "%1"=="FULL" GOTO UPDATEMMTREE
 pushd ..\3rdparty
 svn cleanup --non-interactive
 rem - been having trouble updating from boost.org, but don't need to do that anyhow for now.
-svn update --force --ignore-externals --non-interactive
+svn update --accept postpone --force --ignore-externals --non-interactive
 popd
 pushd ..\3rdpartypublic
 echo update 3rdpartypublic tree from the repository
 svn cleanup --non-interactive
 rem - been having trouble updating from boost.org, but don't need to do that anyhow for now.
-svn update --force --ignore-externals --non-interactive
+svn update --accept postpone --force --ignore-externals --non-interactive
 popd
 
 svn cleanup --non-interactive
 
 :UPDATEMMTREE
 echo update micromanager tree from the repository
-svn update --non-interactive
+svn update --accept postpone --non-interactive
 pushd SecretDeviceAdapters
 svn cleanup --non-interactive
-svn update --non-interactive
+svn update --accept postpone --non-interactive
 popd
 
 echo Building native C++ libraries....
