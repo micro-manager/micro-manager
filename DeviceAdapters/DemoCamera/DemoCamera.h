@@ -58,7 +58,7 @@
 class DemoHub : public CGenericBase<DemoHub>
 {
 public:
-   DemoHub():initialized_(false), busy_(false), errorRate_(0.0) {} ;
+   DemoHub():initialized_(false), busy_(false), errorRate_(0.0), divideOneByMe_(1) {} ;
    ~DemoHub() {};
 
    // Device API
@@ -75,6 +75,7 @@ public:
    void GetDiscoverableDevice(int peripheralNum, char* peripheralName, unsigned int maxNameLen);
    // action interface
    int OnErrorRate(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnDivideOneByMe(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 
 private:
@@ -83,6 +84,7 @@ private:
    std::vector<std::string> peripherals_;
    void GetPeripheralInventory();
    double errorRate_;
+   long divideOneByMe_;
 
 };
 
@@ -781,6 +783,7 @@ private:
 //////////////////////////////////////////////////////////////////////////////
 // TransposeProcessor class
 // transpose an image
+// K.H.
 //////////////////////////////////////////////////////////////////////////////
 class TransposeProcessor : public CImageProcessorBase<TransposeProcessor>
 {
@@ -864,7 +867,8 @@ private:
 
 //////////////////////////////////////////////////////////////////////////////
 // ImageFlipX class
-// transpose an image
+// flip an image
+// K.H.
 //////////////////////////////////////////////////////////////////////////////
 class ImageFlipX : public CImageProcessorBase<ImageFlipX>
 {
@@ -907,7 +911,8 @@ private:
 
 //////////////////////////////////////////////////////////////////////////////
 // ImageFlipY class
-// transpose an image
+// flip an image
+// K.H.
 //////////////////////////////////////////////////////////////////////////////
 class ImageFlipY : public CImageProcessorBase<ImageFlipY>
 {
@@ -954,7 +959,8 @@ private:
 
 //////////////////////////////////////////////////////////////////////////////
 // MedianFilter class
-// transpose an image
+// apply Median filter an image
+// K.H.
 //////////////////////////////////////////////////////////////////////////////
 class MedianFilter : public CImageProcessorBase<MedianFilter>
 {
