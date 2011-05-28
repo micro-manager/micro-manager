@@ -6,6 +6,7 @@ libmmgr_dal_GPhoto_la_LIBADD = ../../MMDevice/.libs/libMMDevice.a
 libmmgr_dal_GPhoto_la_LDFLAGS = -module
 
 # FreeImage library
+# libmmgr_dal_GPhoto_la_LIBADD += /usr/local/lib/libfreeimage.la
 libmmgr_dal_GPhoto_la_LIBADD += $(LIBFREEIMAGE)
 
 # gphoto2 library
