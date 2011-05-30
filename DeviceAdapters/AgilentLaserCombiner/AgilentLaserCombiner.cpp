@@ -25,6 +25,8 @@
 
 const char* g_DeviceNameLCShutter = "LC-Shutter";
 const char* g_DeviceNameLCDA = "LC-DAC";
+const char* g_fiber_1 = "Fiber 1";
+const char* g_fiber_2 = "Fiber 2";
 
 
 // Global state of the LC switch to enable simulation of the shutter device.
@@ -302,6 +304,23 @@ int LCShutter::Initialize()
    if (ret != DEVICE_OK)
       return ret;
 
+   char buf[64];
+   ret = LaserBoardDriverVersion(buf);
+   if (ret != NO_ERR)
+      return ret;
+
+   driverVersion_ = buf;
+
+   std::stringstream s;
+   s << driverVersion_;
+   s >> driverVersionNum_;
+
+   ret = LaserBoardFirmwareVersion(buf);
+   if (ret != NO_ERR)
+      return ret;
+   firmwareVersion_ = buf;
+
+
    // set property list
    // -----------------
    
@@ -322,6 +341,16 @@ int LCShutter::Initialize()
       return ret;
    ret = CreateProperty("Serial", serial, MM::String, true);
 
+   // Firmware Version
+   ret = CreateProperty("Firmware Version", firmwareVersion_.c_str(), MM::String, true);
+   if (DEVICE_OK != ret)
+      return ret;
+
+   // Driver Version
+   ret = CreateProperty("Driver Version", driverVersion_.c_str(), MM::String, true);
+   if (DEVICE_OK != ret)
+      return ret;
+
    ret = LaserBoardGetNrLines(&nrLines_);
    if (ret != NO_ERR)
       return ret;
@@ -335,8 +364,7 @@ int LCShutter::Initialize()
       nm.push_back(nmi);
       mw.push_back(maxMW);
    }
-
-   
+ 
    for (unsigned int i=0; i<nrLines_; i++) {
       std::string propName;
       std::ostringstream os;
@@ -377,6 +405,7 @@ int LCShutter::Initialize()
       }
    }
 
+   // Blank
    pAct = new CPropertyAction(this, &LCShutter::OnBlank);
    ret = CreateProperty("Blank", "Off", MM::String, false, pAct);
    if (ret != DEVICE_OK)
@@ -384,6 +413,7 @@ int LCShutter::Initialize()
    AddAllowedValue("Blank", "Off");
    AddAllowedValue("Blank", "On");
 
+   // External control
    pAct = new CPropertyAction(this, &LCShutter::OnExternalControl);
    ret = CreateProperty("ExternalControl", "Off", MM::String, false, pAct);
    if (ret != DEVICE_OK)
@@ -391,12 +421,49 @@ int LCShutter::Initialize()
    AddAllowedValue("ExternalControl", "Off");
    AddAllowedValue("ExternalControl", "On");
 
+   // Sync
    pAct = new CPropertyAction(this, &LCShutter::OnSync);
    ret = CreateProperty("External Trigger", "Off", MM::String, false, pAct);
    if (ret != DEVICE_OK)
       return ret;
    AddAllowedValue("External Trigger", "Off");
    AddAllowedValue("External Trigger", "On");
+
+   // Functions that are only in newer Driver versions
+   if (driverVersionNum_ >= 0.2) 
+   {
+      // Output (Galvo)
+      int position;
+      ret = LaserBoardGetGalvo(&position);
+      if (ret == NO_ERR)
+      {
+         pAct = new CPropertyAction(this, &LCShutter::OnOutput);
+         ret = CreateProperty("Output", g_fiber_1, MM::String, false, pAct);
+         if (ret != DEVICE_OK)
+            return ret;
+         AddAllowedValue("Output", g_fiber_1);
+         AddAllowedValue("Output", g_fiber_2);
+      }
+
+      // ND filters
+      int on;
+      ret = LaserBoardGetNDOnOff(0, &on);
+      if (ret == NO_ERR)
+      {
+         for (unsigned char i = 0; i < nrLines_; i++) 
+         {
+            CPropertyActionEx* pActEx = new CPropertyActionEx(this, &LCShutter::OnND, i);
+            unsigned char state = 1 << i;
+            std::stringstream propName;
+            propName << "ND" << laserNameByState_[state];
+            ret = CreateProperty(propName.str().c_str(), "Off", MM::String, false, pActEx);
+            if (ret != DEVICE_OK)
+               return ret;
+            AddAllowedValue(propName.str().c_str(), "On");
+            AddAllowedValue(propName.str().c_str(), "Off");
+         }
+      }
+   }
 
    // set shutter into the off state
    LaserBoardSetState(0);
@@ -563,3 +630,57 @@ int LCShutter::OnPower(MM::PropertyBase* pProp, MM::ActionType eAct, long laserL
 
    return DEVICE_OK;
 }
+
+int LCShutter::OnND(MM::PropertyBase* pProp, MM::ActionType eAct, long laserLine)
+{
+   if (eAct == MM::BeforeGet)
+   {  
+      int open;
+      int ret = LaserBoardGetNDOnOff((unsigned int) laserLine, &open);
+      if (ret != NO_ERR)
+         return ret;
+      if (open == 0)
+         pProp->Set("Off");
+      else
+         pProp->Set("On");
+   } 
+   else if (eAct == MM::AfterSet)
+   {
+      std::string state;
+      pProp->Get(state);
+      int open = 0;
+      if (state == "On")
+         open = 1;
+      return LaserBoardSetNDOnOff( (unsigned int) laserLine, open);
+   }
+   return DEVICE_OK;
+}
+
+
+int LCShutter::OnOutput(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      int position;
+      std::string fiber = g_fiber_1;
+      int ret = LaserBoardGetGalvo(&position);
+      if (ret != DEVICE_OK)
+         return ret;
+      if (position == 1)
+         fiber = g_fiber_2;
+      pProp->Set(fiber.c_str());
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      std::string fiber;
+      pProp->Get(fiber);
+      int position = 0;
+      if (fiber == g_fiber_1)
+         position = 0;
+      else
+         position = 1;
+      return LaserBoardSetGalvo(position);
+   }
+   return DEVICE_OK;
+}
+

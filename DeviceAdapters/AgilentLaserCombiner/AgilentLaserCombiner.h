@@ -51,6 +51,8 @@ public:
    int OnBlank(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnExternalControl(MM::PropertyBase* pProp, MM::ActionType eAct);   
    int OnSync(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnND(MM::PropertyBase* pProp, MM::ActionType eAct, long laserLine);
+   int OnOutput(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    std::vector<double> currentMW_;
@@ -62,6 +64,9 @@ private:
    unsigned char state_;
    bool blank_;
    std::string name_;
+   std::string driverVersion_;
+   float driverVersionNum_;
+   std::string firmwareVersion_;
 };
 
 
