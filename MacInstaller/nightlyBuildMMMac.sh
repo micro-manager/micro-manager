@@ -102,6 +102,9 @@ cd $PPC
 FILES=libmmgr*
 for f in $FILES; do lipo -create $PPC/$f $I386/$f $X86_64/$f -o $TARGET/$f; done
 
+# need to do files absent from ppc seperately
+lipo -create $I386/libmmgr_dal_GPhoto  $X86_64/libmmgr_dal_GPhoto -o $TARGET/libmmgr_dal_GPhoto
+
 # Build Gphoto on I386 and X86_64 but not on PPC since p2p does not build there
 mkdir $TARGET/libgphoto2
 GPHOTODIR=libgphoto2/libgphoto2
