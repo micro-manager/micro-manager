@@ -103,7 +103,7 @@ FILES=libmmgr*
 for f in $FILES; do lipo -create $PPC/$f $I386/$f $X86_64/$f -o $TARGET/$f; done
 
 # need to do files absent from ppc seperately
-lipo -create $I386/libmmgr_dal_GPhoto  $X86_64/libmmgr_dal_GPhoto -o $TARGET/libmmgr_dal_GPhoto
+#lipo -create $I386/libmmgr_dal_GPhoto  $X86_64/libmmgr_dal_GPhoto -o $TARGET/libmmgr_dal_GPhoto
 
 # Build Gphoto on I386 and X86_64 but not on PPC since p2p does not build there
 mkdir $TARGET/libgphoto2
@@ -111,15 +111,15 @@ GPHOTODIR=libgphoto2/libgphoto2
 mkdir $TARGET/$GPHOTODIR
 cd $I386/$GPHOTODIR
 GPHOTOFILES=*.so
-for g in $GPHOTOFILES; do lipo -create $I386/$GPHOTODIR/$g $X86_64/$GPHOTODIR/$g -o $TARGET/$GPHOTODIR/$g; done
+for g in $GPHOTOFILES; do lipo -create $PPC/$GPHOTODIR/$g $I386/$GPHOTODIR/$g $X86_64/$GPHOTODIR/$g -o $TARGET/$GPHOTODIR/$g; done
 GPHOTOPORTDIR=libgphoto2/libgphoto2_port
 mkdir $TARGET/$GPHOTOPORTDIR
 cd $I386/$GPHOTOPORTDIR
 GPHOTOPORTFILES=*.so
-for p in $GPHOTOPORTFILES; do lipo -create $I386/$GPHOTOPORTDIR/$p $X86_64/$GPHOTOPORTDIR/$p -o $TARGET/$GPHOTOPORTDIR/$p; done
+for p in $GPHOTOPORTFILES; do lipo -create $PPC/$GPHOTOPORTDIR/$p $I386/$GPHOTOPORTDIR/$p $X86_64/$GPHOTOPORTDIR/$p -o $TARGET/$GPHOTOPORTDIR/$p; done
 cd $I386/libgphoto2
 GPHOTOLIBS=*.dylib
-for l in $GPHOTOLIBS; do lipo -create $I386/libgphoto2/$l $X86_64/libgphoto2/$l -o $TARGET/libgphoto2/$l; done
+for l in $GPHOTOLIBS; do lipo -create $PPC/libgphoto2/$l $I386/libgphoto2/$l $X86_64/libgphoto2/$l -o $TARGET/libgphoto2/$l; done
 cp -r $I386/libgphoto2//KillPtpCamera.app $TARGET/libgphoto2/
 
 
