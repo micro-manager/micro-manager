@@ -385,8 +385,9 @@
 (defn create-presnap-actions [event]
   (concat
     (for [[axis pos] (:axes (MultiStagePosition-to-map (get-msp (:position event)))) :when pos]
-      [axis #(do (when (= axis (core getFocusDrive))
-                   (state-assoc! :reference-z-position pos))
+      [axis #(do ;(when (= axis (core getFocusDevice))
+                 ;  (println "setting reference z position from msp")
+                 ;  (state-assoc! :reference-z-position pos))
                  (apply set-stage-position axis pos))])
     (for [prop (get-in event [:channel :properties])]
       [(prop 0) #(core setProperty (prop 0) (prop 1) (prop 2))])
