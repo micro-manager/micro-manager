@@ -81,7 +81,7 @@
 (defmacro device-best-effort [dev & body]
   `(let [attempt# #(do (wait-for-device ~dev) ~@body)]
     (when-not
-      (or
+      (or 
         (successful? (attempt#)) ; first attempt
         (do (log "second attempt") (successful? (attempt#)))
         (do (log "reload and try a third time")
@@ -175,21 +175,19 @@
     (.await sleepy time-ms TimeUnit/MILLISECONDS)))
 
 (defn acq-sleep [interval-ms]
+  (core setPosition (core getFocusDevice) (@state :reference-z-position))
   (when (and (@state :init-continuous-focus)
-             (not (core isContinuousFocusEnabled)))
-    (core enableContinuousFocus true))
+    (not (core isContinuousFocusEnabled)))
+      (core enableContinuousFocus true))
   (let [target-time (+ (@state :last-wake-time) interval-ms)
-        delta (- target-time (clock-ms))
-        old-z (get-z-stage-position (core getFocusDevice))]
+        delta (- target-time (clock-ms))]
     (when (pos? delta)
       (interruptible-sleep delta))
     (await-resume)
     (let [now (clock-ms)
           wake-time (if (> now (+ target-time 10)) now target-time)]
       (state-assoc! :last-wake-time wake-time
-                    :reference-z-position (+ (@state :reference-z-position)
-                                             (- (get-z-stage-position (core getFocusDevice))
-                                                old-z))))))
+                    :reference-z-position (get-z-stage-position (core getFocusDevice))))))
 
 ;; image metadata
 
@@ -252,8 +250,7 @@
        (or (:slice event) 0)
        (if (and (:slice event) (not (:relative-z event)))
          0
-         (or (get-z-position (:position event) z-drive)
-             (@state :reference-z-position))))))
+         (@state :reference-z-position)))))
 
 ;; startup and shutdown
 
@@ -381,12 +378,16 @@
     (snap-single-image p f c s)
     (swap! state assoc :last-indices [p f c s])))
 
+
+
 ;; iterations
 
 (defn create-presnap-actions [event]
   (concat
     (for [[axis pos] (:axes (MultiStagePosition-to-map (get-msp (:position event)))) :when pos]
-      [axis #(apply set-stage-position axis pos)])
+      [axis #(do (when (= axis (core getFocusDrive))
+                   (state-assoc! :reference-z-position pos))
+                 (apply set-stage-position axis pos))])
     (for [prop (get-in event [:channel :properties])]
       [(prop 0) #(core setProperty (prop 0) (prop 1) (prop 2))])
     (when-let [exposure (:exposure event)]
