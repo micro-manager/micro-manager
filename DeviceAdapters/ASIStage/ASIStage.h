@@ -257,4 +257,41 @@ private:
    MM::MMTime changedTime_;                                                  
    long position_; 
 };
+
+class LED : public CShutterBase<LED>
+{
+public:
+   LED();
+   ~LED();
+
+   int Initialize();
+   int Shutdown();
+
+   MM::DeviceDetectionStatus LED::DetectDevice(void);
+
+   void GetName (char* pszName) const;
+   bool Busy();
+
+   // Shutter API                                             
+   int SetOpen (bool open = true);                            
+   int GetOpen(bool& open);                                   
+   int Fire(double deltaT);                                   
+                                                              
+   // action interface                                        
+   int OnState(MM::PropertyBase* pProp, MM::ActionType eAct); 
+   int OnIntensity(MM::PropertyBase* pProp, MM::ActionType eAct); 
+   int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+private:
+   bool initialized_;
+   bool open_;
+   long intensity_;
+   std::string name_;
+   std::string port_;
+   int answerTimeoutMs_;
+   
+};
+   
+
+
 #endif //_ASIStage_H_

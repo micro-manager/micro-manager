@@ -48,6 +48,9 @@ const char* g_XYStageDeviceName = "XYStage";
 const char* g_ZStageDeviceName = "ZStage";
 const char* g_CRIFDeviceName = "CRIF";
 const char* g_AZ100TurretName = "AZ100 Turret";
+const char* g_LEDName = "LED";
+const char* g_Open = "Open";
+const char* g_Closed = "Closed";
 
 // CRIF states
 const char* g_CRIFState = "CRIF State";
@@ -72,6 +75,7 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_XYStageDeviceName, "XY Stage");
    AddAvailableDeviceName(g_CRIFDeviceName, "CRIF");
    AddAvailableDeviceName(g_AZ100TurretName, "AZ100 Turret");
+   AddAvailableDeviceName(g_LEDName, "LED");
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
@@ -96,6 +100,10 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
    else if (strcmp(deviceName, g_AZ100TurretName) == 0)
    {
       return  new AZ100Turret();
+   }
+   else if (strcmp(deviceName, g_LEDName) == 0)
+   {
+      return  new LED();
    }
 
    return 0;
@@ -2604,3 +2612,192 @@ int AZ100Turret::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
+
+LED::LED() :
+   CShutterBase<LED>(),
+   initialized_(false), 
+   open_(false),
+   intensity_(1),
+   port_("Undefined"),
+   name_("LED"),
+   answerTimeoutMs_(1000)
+{
+   InitializeDefaultErrorMessages();
+
+   // create pre-initialization properties
+   // ------------------------------------
+
+   // Name
+   CreateProperty(MM::g_Keyword_Name, g_LEDName, MM::String, true);
+
+   // Description
+   CreateProperty(MM::g_Keyword_Description, "ASI LED controller", MM::String, true);
+
+   // Port
+   CPropertyAction* pAct = new CPropertyAction (this, &LED::OnPort);
+   CreateProperty(MM::g_Keyword_Port, "Undefined", MM::String, false, pAct, true);
+}
+
+void LED::GetName(char* Name) const
+{
+   CDeviceUtils::CopyLimitedString(Name, g_LEDName);
+}
+
+
+MM::DeviceDetectionStatus LED::DetectDevice(void)
+{
+   return ASICheckSerialPort(*this,*GetCoreCallback(), port_, answerTimeoutMs_);
+}
+
+LED::~LED()
+{
+   Shutdown();
+}
+
+int LED::Initialize()
+{
+   // TODO:  See that we can communicate????
+
+   CPropertyAction* pAct = new CPropertyAction (this, &LED::OnState);
+   CreateProperty(MM::g_Keyword_State, g_Closed, MM::String, false, pAct);
+   AddAllowedValue(MM::g_Keyword_State, g_Closed);
+   AddAllowedValue(MM::g_Keyword_State, g_Open);
+
+   pAct = new CPropertyAction(this, &LED::OnIntensity);
+   CreateProperty("Intensity", "1", MM::Integer, false, pAct);
+   SetPropertyLimits("Intensity", 1, 100);
+
+   initialized_ = true;
+   return DEVICE_OK;
+}
+
+int LED::Shutdown() 
+{
+   initialized_ = false;
+   return DEVICE_OK;
+}
+
+bool LED::Busy()
+{
+   // The LED should be a whole lot faster than our serial communication
+   // so always respond false
+   return false;
+} 
+
+   // Shutter API                                                                     
+// All communication with the LED takes place in this function
+int LED::SetOpen (bool open)
+{
+   // empty the Rx serial buffer before sending command
+   ClearPort(*this, *GetCoreCallback(), port_.c_str()); 
+
+   ostringstream command;
+   if (open)
+   {
+      if (intensity_ == 100)
+         command << "TTL Y=1";
+      else
+         command << fixed << "TTL Y=9 " << intensity_;
+   } else
+   {
+      command << "TTL Y=0";
+   }
+
+   // send command
+   int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+   if (ret != DEVICE_OK)
+      return ret;
+
+   // block/wait for acknowledge, or until we time out;
+   string answer;
+   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   if ( (answer.substr(0,2).compare(":A") == 0) || (answer.substr(1,2).compare(":A") == 0) )
+   {
+      return DEVICE_OK;
+   }
+   // deal with error later
+   else if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2)
+   {
+      int errNo = atoi(answer.substr(4).c_str());
+      return ERR_OFFSET + errNo;
+   }
+
+   open_ = open;
+   return DEVICE_OK;
+}
+
+int LED::GetOpen(bool& open)
+{
+   open = open_;
+
+   return DEVICE_OK;
+}
+
+int LED::Fire(double deltaT)
+{
+   return DEVICE_OK;
+}
+
+// action interface
+
+int LED::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      std::string state = g_Open;
+      if (!open_)
+         state = g_Closed;
+      pProp->Set(state.c_str());
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      bool open = true;
+      std::string state;
+      pProp->Get(state);
+      if (state == g_Closed)
+         open = false;
+      return SetOpen(open);
+   }
+
+   return DEVICE_OK;
+}
+
+int LED::OnIntensity(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(intensity_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(intensity_);
+      if (open_)
+         return SetOpen(open_);
+   }
+
+   return DEVICE_OK;
+}
+
+int LED::OnPort(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(port_.c_str());
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      if (initialized_)
+      {
+         // revert
+         pProp->Set(port_.c_str());
+         return ERR_PORT_CHANGE_FORBIDDEN;
+      }
+
+      pProp->Get(port_);
+   }
+
+   return DEVICE_OK;
+}
