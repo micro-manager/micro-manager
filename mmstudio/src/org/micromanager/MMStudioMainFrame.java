@@ -2816,6 +2816,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    };
 
    public void enableLiveMode(boolean enable) {
+      if (core_ == null)
+         return;
       if (core_.getNumberOfComponents() == 1) {
          if (enable) {
             if (isLiveModeOn()) {
@@ -3407,7 +3409,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
          options_.saveSettings();
          hotKeys_.saveSettings();
       } catch (NullPointerException e) {
-         this.logError(e);
+         if (core_ != null)
+            this.logError(e);
       }
       dispose();
       if (options_.closeOnExit_) {
