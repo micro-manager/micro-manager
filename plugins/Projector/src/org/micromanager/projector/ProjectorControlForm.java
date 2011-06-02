@@ -149,12 +149,10 @@ public class ProjectorControlForm extends javax.swing.JFrame {
     }//GEN-LAST:event_allPixelsButtonActionPerformed
 
    public void dispose() {
-      GUIUtils.storePosition(this);
       super.dispose();
    }
    
     private void formWindowClosing(java.awt.event.WindowEvent evt) {
-       GUIUtils.storePosition(this);
        plugin_.dispose();
     }
 
