@@ -12,10 +12,6 @@ PUSHD autofocus
 call ant -buildfile build.xml %cleantarget% compile build
 POPD
 
-pushd plugins\Bleach
-call ant -buildfile build.xml %cleantarget% compile build
-popd
-
 echo building pixelcalibrator
 pushd plugins\PixelCalibrator 
 call ant -buildfile build.xml %cleantarget% compile build
@@ -37,10 +33,6 @@ pushd plugins\StageControl
 call ant -buildfile build.xml %cleantarget% compile build
 popd
 
-pushd plugins\Tracker 
-call ant -buildfile build.xml %cleantarget% compile build 
-popd
-
 pushd plugins\Big
 call ant -buildfile build.xml %cleantarget% compile build 
 popd
@@ -52,5 +44,13 @@ popd
 pushd plugins\DataBrowser
 call build.bat
 popd
+
+rem pushd plugins\Bleach
+rem call ant -buildfile build.xml %cleantarget% compile build
+rem popd
+
+rem pushd plugins\Tracker 
+rem call ant -buildfile build.xml %cleantarget% compile build 
+rem popd
 
 POPD
