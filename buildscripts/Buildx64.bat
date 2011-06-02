@@ -2,7 +2,7 @@ echo stop any instances that might already be running.
 pskill javaw.exe
 pskill java.exe
 
-cd \projects\micromanager
+cd /d %~dp0\..
 echo working directory is 
 cd
 
@@ -107,53 +107,8 @@ POPD
 rem haven't got to the bottom of this yet, but Pixel Calibrator and Slide Explorer need this jar file there....
 copy \projects\micromanager\bin_x64\plugins\Micro-Manager\MMJ_.jar \projects\micromanager\bin_x64\
 
-PUSHD acqEngine
-call build.bat
-POPD
-
-PUSHD autofocus
-call ant -buildfile build.xml %cleantarget% compile build
-POPD
-
-pushd plugins\Bleach
-call ant -buildfile build.xml %cleantarget% compile build
-popd
-
-echo building pixelcalibrator
-pushd plugins\PixelCalibrator 
-call ant -buildfile build.xml %cleantarget% compile build
-popd
-
-pushd plugins\Projector
-call ant -buildfile build.xml %cleantarget% compile build
-popd
-
-pushd plugins\Recall
-call ant -buildfile build.xml %cleantarget% compile build
-popd
-
-pushd plugins\SlideExplorer
-call ant -buildfile build.xml %cleantarget% compile build
-popd
-
-pushd plugins\StageControl
-call ant -buildfile build.xml %cleantarget% compile build
-popd
-
-pushd plugins\Tracker 
-call ant -buildfile build.xml %cleantarget% compile build 
-popd
-
-pushd plugins\Big
-call ant -buildfile build.xml %cleantarget% compile build 
-popd
-
-pushd plugins\MultiCamera
-call ant -buildfile build.xml %cleantarget% compile build 
-popd
-
-pushd plugins\DataBrowser
-call build.bat
+pushd buildscripts
+call buildJars %1
 popd
 
 set DEVICELISTBUILDER=1
