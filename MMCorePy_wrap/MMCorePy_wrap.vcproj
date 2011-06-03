@@ -49,7 +49,7 @@
 				AdditionalIncludeDirectories="&quot;C:\Python26\Lib\site-packages\numpy\core\include\numpy&quot;;C:\Python26\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MMCOREPY_WRAP_EXPORTS;__WIN32__"
 				ExceptionHandling="2"
-				RuntimeLibrary="0"
+				RuntimeLibrary="2"
 				RuntimeTypeInfo="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="4"
@@ -68,10 +68,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="mmcorer.lib"
+				AdditionalDependencies=" Iphlpapi.lib"
 				OutputFile="$(OutDir)/_MMCorePy.pyd"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="C:\Python26\libs;C:\Python26\DLLs;..\lib;&quot;..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;"
+				AdditionalLibraryDirectories="D:\projects\micromanager\MMCore\Win32\Release;C:\Python26\libs;C:\Python26\DLLs;..\lib;&quot;..\..\3rdpartypublic\boost\stage_$(PlatformName)\lib&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -101,7 +101,7 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
-				CommandLine="copy $(OutDir)\_MMCorePy.pyd $(InputDir)\..\bin&#x0D;&#x0A;copy $(InputDir)\MMCorePy.py $(InputDir)\..\bin&#x0D;&#x0A;"
+				CommandLine="copy $(OutDir)\_MMCorePy.pyd $(InputDir)\..\bin_Win32&#x0D;&#x0A;copy $(InputDir)\MMCorePy.py $(InputDir)\..\bin_Win32&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration

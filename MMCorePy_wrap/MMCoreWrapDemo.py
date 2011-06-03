@@ -5,9 +5,6 @@ import MMCorePy
 mmc = MMCorePy.CMMCore()
 mmc.loadDevice("cam","DemoCamera","DCam")
 mmc.initializeDevice("cam")
-mmc.loadDevice("rgbcam","DemoRGBCamera","DRGBCam")
-mmc.initializeDevice("rgbcam")
-
 
 print "Test acquire and display of monochrome images."
 
@@ -17,7 +14,7 @@ mmc.snapImage()
 im1 = mmc.getImage()
 imshow(im1,cmap = cm.gray)
 
-
+"""
 print "Test acquire and display of RGB images."
 
 figure()
@@ -25,7 +22,7 @@ mmc.setCameraDevice("rgbcam")
 mmc.snapImage()
 im2 = mmc.getRGB32Image()
 imshow(im2)
-
+"""
 
 print "Test MMCore.registerCallback():"
 
