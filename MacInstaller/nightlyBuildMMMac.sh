@@ -142,6 +142,10 @@ cp $I386/MMDeviceList.txt $TARGET/MMDeviceList.txt
 java -cp plugins/Micro-Manager/MMJ_.jar:plugins/Micro-Manager/MMCoreJ.jar DeviceListBuilder deviceDiscoveryEnabled
 cp $I386/MMDeviceListPrime.txt $TARGET/MMDeviceListPrime.txt
 
+#Install Python, only I386
+cp $RI386/bin/MMCorePy.py $TARGET/
+cp $RI386/bin/_MMCorePy.so $TARGET/
+
 
 cd $REPOSITORY/MacInstaller
 ./makemacdisk.sh -d -s $TARGET

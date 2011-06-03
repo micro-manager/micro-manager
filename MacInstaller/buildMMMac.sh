@@ -94,6 +94,10 @@ cd $I386
 java -cp plugins/Micro-Manager/MMJ_.jar:plugins/Micro-Manager/MMCoreJ.jar DeviceListBuilder
 cp $I386/MMDeviceList.txt $TARGET/MMDeviceList.txt
 
+#Install Python, only I386
+cp $RI386/bin/MMCorePy.py $TARGET/
+cp $RI386/bin/_MMCorePy.so $TARGET/
+
 
 cd $REPOSITORY/MacInstaller
 ./makemacdisk.sh -r -s $TARGET
