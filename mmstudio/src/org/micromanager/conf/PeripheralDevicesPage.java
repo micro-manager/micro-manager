@@ -332,7 +332,7 @@ public class PeripheralDevicesPage extends PagePanel {
             status = false;
          } finally {
             try {
-               // core_.unloadAllDevices();
+               core_.unloadAllDevices();
             } catch (Exception ex) {
                ReportingUtils.showError(ex);
             }
@@ -343,7 +343,7 @@ public class PeripheralDevicesPage extends PagePanel {
                Cursor waitc = new Cursor(Cursor.WAIT_CURSOR);
                ancestor.setCursor(waitc);
             }
-            //model_.loadModel(core_, false);
+            model_.loadModel(core_, false);
 
             if (null != ancestor) {
                if (null != oldc) {
