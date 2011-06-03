@@ -8,6 +8,7 @@ SWIGLIBSOURCES = MMCorePy.i \
 	../MMCore/CoreUtils.h \
 	../MMCore/Error.h \
 	../MMCore/ErrorCodes.h \
+	../MMCore/Host.h \
 	../MMCore/MMCore.h  \
 	../MMDevice/MMDeviceConstants.h
 
@@ -23,6 +24,7 @@ MMCOREPYSOURCES = $(SWIGLIBSOURCES) \
 	$(top_srcdir)/MMCore/CoreCallback.cpp \
 	$(top_srcdir)/MMCore/CoreProperty.cpp \
 	$(top_srcdir)/MMCore/FastLogger.cpp \
+	$(top_srcdir)/MMCore/Host.cpp \
 	$(top_srcdir)/MMCore/MMCore.cpp \
 	$(top_srcdir)/MMCore/PluginManager.cpp
 
