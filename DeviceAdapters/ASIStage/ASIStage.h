@@ -283,6 +283,8 @@ public:
    int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
+   int IsOpen(bool* open); // queries the device rather than using a cached value
+   int CurrentIntensity(long* intensity); // queries the device rather than using a cached value
    bool initialized_;
    bool open_;
    long intensity_;

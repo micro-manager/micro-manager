@@ -2656,7 +2656,19 @@ LED::~LED()
 
 int LED::Initialize()
 {
-   // TODO:  See that we can communicate????
+    // empty the Rx serial buffer before sending command
+   ClearPort(*this, *GetCoreCallback(), port_.c_str()); 
+
+   // check status first to see if we can communicate
+   const char* command = "/"; // check STATUS
+   int ret = SendSerialCommand(port_.c_str(), command, "\r");
+   if (ret != DEVICE_OK)
+      return ret;
+
+   std::string answer;
+   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+   if (ret != DEVICE_OK)
+      return false;
 
    CPropertyAction* pAct = new CPropertyAction (this, &LED::OnState);
    CreateProperty(MM::g_Keyword_State, g_Closed, MM::String, false, pAct);
@@ -2666,6 +2678,14 @@ int LED::Initialize()
    pAct = new CPropertyAction(this, &LED::OnIntensity);
    CreateProperty("Intensity", "1", MM::Integer, false, pAct);
    SetPropertyLimits("Intensity", 1, 100);
+
+   ret = IsOpen(&open_);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   ret = CurrentIntensity(&intensity_);
+   if (ret != DEVICE_OK)
+      return ret;
 
    initialized_ = true;
    return DEVICE_OK;
@@ -2716,6 +2736,7 @@ int LED::SetOpen (bool open)
 
    if ( (answer.substr(0,2).compare(":A") == 0) || (answer.substr(1,2).compare(":A") == 0) )
    {
+      open_ = open;
       return DEVICE_OK;
    }
    // deal with error later
@@ -2729,6 +2750,10 @@ int LED::SetOpen (bool open)
    return DEVICE_OK;
 }
 
+/**
+ * GetOpen returns a cached value.  If ASI ever gives another control to the TTL out
+ * other than the serial interface, this will need to be changed to a call to IsOpen
+ */
 int LED::GetOpen(bool& open)
 {
    open = open_;
@@ -2736,7 +2761,87 @@ int LED::GetOpen(bool& open)
    return DEVICE_OK;
 }
 
-int LED::Fire(double deltaT)
+/**
+ * IsOpen queries the microscope for the state of the TTL
+ */
+int LED::IsOpen(bool *open)
+{
+   *open = true;
+
+   // empty the Rx serial buffer before sending command
+   ClearPort(*this, *GetCoreCallback(), port_.c_str()); 
+
+   ostringstream command;
+   command << "TTL Y?";
+
+   // send command
+   int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+   if (ret != DEVICE_OK)
+      return ret;
+
+   // block/wait for acknowledge, or until we time out;
+   string answer;
+   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   std::istringstream is(answer);
+   std::string tok;
+   is >> tok;
+   if ( (tok.substr(0,2).compare(":A") == 0) || (tok.substr(1,2).compare(":A") == 0) ) {
+      is >> tok;
+      if (tok.substr(2,1) == "0")
+         *open = false;
+   }
+   else if (tok.substr(0, 2).compare(":N") == 0 && tok.length() > 2)
+   {
+      int errNo = atoi(tok.substr(4).c_str());
+      return ERR_OFFSET + errNo;
+   }
+   return DEVICE_OK;
+}
+
+/**
+ * IsOpen queries the microscope for the state of the TTL
+ */
+int LED::CurrentIntensity(long* intensity)
+{
+   *intensity = 1;
+
+   // empty the Rx serial buffer before sending command
+   ClearPort(*this, *GetCoreCallback(), port_.c_str()); 
+
+   ostringstream command;
+   command << "LED X?";
+
+   // send command
+   int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+   if (ret != DEVICE_OK)
+      return ret;
+
+   // block/wait for acknowledge, or until we time out;
+   string answer;
+   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   std::istringstream is(answer);
+   std::string tok;
+   std::string tok2;
+   is >> tok;
+   is >> tok2;
+   if ( (tok2.substr(0,2).compare(":A") == 0) || (tok2.substr(1,2).compare(":A") == 0) ) {
+      *intensity = atoi(tok.substr(2).c_str());
+   }
+   else if (tok.substr(0, 2).compare(":N") == 0 && tok.length() > 2)
+   {
+      int errNo = atoi(tok.substr(4).c_str());
+      return ERR_OFFSET + errNo;
+   }
+   return DEVICE_OK;
+}
+
+int LED::Fire(double )
 {
    return DEVICE_OK;
 }
@@ -2774,6 +2879,36 @@ int LED::OnIntensity(MM::PropertyBase* pProp, MM::ActionType eAct)
    else if (eAct == MM::AfterSet)
    {
       pProp->Get(intensity_);
+      // We could check that 0 < intensity_ < 101, but the system shoudl guarantee that
+      if (intensity_ < 100)
+      {
+         ClearPort(*this, *GetCoreCallback(), port_.c_str()); 
+
+         ostringstream command;
+         command << "LED X=";
+         command << intensity_;
+
+         // send command
+         int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+         if (ret != DEVICE_OK)
+            return ret;
+
+         // block/wait for acknowledge, or until we time out;
+         string answer;
+         ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+         if (ret != DEVICE_OK)
+            return ret;
+
+         std::istringstream is(answer);
+         std::string tok;
+         is >> tok;
+         if (tok.substr(0, 2).compare(":N") == 0 && tok.length() > 2)
+         {
+            int errNo = atoi(tok.substr(4).c_str());
+            return ERR_OFFSET + errNo;
+         }
+
+      }
       if (open_)
          return SetOpen(open_);
    }
