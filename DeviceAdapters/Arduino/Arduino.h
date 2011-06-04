@@ -58,6 +58,9 @@ public:
    // Device Discovery interface
    int GetNumberOfDiscoverableDevices();
    void GetDiscoverableDevice(int peripheralNum, char* peripheralName, unsigned int maxNameLen);
+   int GetDiscoDeviceNumberOfProperties(int peripheralNum);
+   void GetDiscoDeviceProperty(int peripheralNum, short propertyNumber, char* propertyName, char* propValue, unsigned int maxNameLen);
+
 private:
    std::vector<std::string> peripherals_;
    int GetControllerVersion(int&);

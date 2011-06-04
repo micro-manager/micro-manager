@@ -27,6 +27,7 @@ const char* g_DeviceNameArduinoHub = "Arduino-Hub";
 const char* g_DeviceNameArduinoSwitch = "Arduino-Switch";
 const char* g_DeviceNameArduinoShutter = "Arduino-Shutter";
 const char* g_DeviceNameArduinoDA = "Arduino-DAC";
+const char* g_DeviceNameArduinoDA2 = "Arduino-DAC2";
 const char* g_DeviceNameArduinoInput = "Arduino-Input";
 
 
@@ -56,6 +57,7 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_DeviceNameArduinoSwitch, "Switch");
    AddAvailableDeviceName(g_DeviceNameArduinoShutter, "Shutter");
    AddAvailableDeviceName(g_DeviceNameArduinoDA, "DA");
+   AddAvailableDeviceName(g_DeviceNameArduinoDA2, "DA2");
    AddAvailableDeviceName(g_DeviceNameArduinoInput, "Input");
 
    if( DiscoverabilityTest())
@@ -63,6 +65,8 @@ MODULE_API void InitializeModuleData()
       SetDeviceIsDiscoverable(g_DeviceNameArduinoHub, false);
       SetDeviceIsDiscoverable(g_DeviceNameArduinoSwitch, true);
       SetDeviceIsDiscoverable(g_DeviceNameArduinoShutter, true);
+      SetDeviceIsDiscoverable(g_DeviceNameArduinoDA, true);
+      SetDeviceIsDiscoverable(g_DeviceNameArduinoDA2, true);
       SetDeviceIsDiscoverable(g_DeviceNameArduinoInput, true);
    }
 }
@@ -85,6 +89,10 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
       return new CArduinoShutter;
    }
    else if (strcmp(deviceName, g_DeviceNameArduinoDA) == 0)
+   {
+      return new CArduinoDA();
+   }
+   else if (strcmp(deviceName, g_DeviceNameArduinoDA2) == 0)
    {
       return new CArduinoDA();
    }
@@ -251,6 +259,8 @@ void CArduinoHub::GetPeripheralInventory()
    peripherals_.push_back(g_DeviceNameArduinoSwitch);
    peripherals_.push_back(g_DeviceNameArduinoShutter);
    peripherals_.push_back(g_DeviceNameArduinoInput);
+   peripherals_.push_back(g_DeviceNameArduinoDA);
+   peripherals_.push_back(g_DeviceNameArduinoDA2);
 }
 
 int CArduinoHub::GetNumberOfDiscoverableDevices()
@@ -268,6 +278,42 @@ void CArduinoHub::GetDiscoverableDevice(int peripheralNum, char* peripheralName,
    }                                                                      
    return;                                                                   
 }
+
+int CArduinoHub::GetDiscoDeviceNumberOfProperties(int peripheralNum)
+{
+   if (peripheralNum == 3 || peripheralNum == 4)
+      return 1;
+   
+   return 0;
+}
+
+void CArduinoHub::GetDiscoDeviceProperty(int peripheralNum, short propertyNumber, char* propertyName, char* propValue, unsigned int maxNameLen)
+{
+   if (peripheralNum == 3) 
+   {
+      if (propertyNumber == 0) 
+      {
+         if (maxNameLen > 8)
+         {
+            propertyName = "Channel";
+            propValue = "1";
+         }
+      }
+   }
+   else if (peripheralNum == 4) 
+   {
+      if (propertyNumber == 0) 
+      {
+         if (maxNameLen > 8)
+         {
+            propertyName = "Channel";
+            propValue = "2";
+         }
+      }
+   }
+
+};
+
 
 int CArduinoHub::Initialize()
 {
