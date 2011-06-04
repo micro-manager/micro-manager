@@ -57,6 +57,14 @@ MODULE_API void InitializeModuleData()
    AddAvailableDeviceName(g_DeviceNameArduinoShutter, "Shutter");
    AddAvailableDeviceName(g_DeviceNameArduinoDA, "DA");
    AddAvailableDeviceName(g_DeviceNameArduinoInput, "Input");
+
+   if( DiscoverabilityTest())
+   {  
+      SetDeviceIsDiscoverable(g_DeviceNameArduinoHub, false);
+      SetDeviceIsDiscoverable(g_DeviceNameArduinoSwitch, true);
+      SetDeviceIsDiscoverable(g_DeviceNameArduinoShutter, true);
+      SetDeviceIsDiscoverable(g_DeviceNameArduinoInput, true);
+   }
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
@@ -237,6 +245,29 @@ MM::DeviceDetectionStatus CArduinoHub::DetectDevice(void)
    return result;
 }
 
+void CArduinoHub::GetPeripheralInventory()
+{
+   peripherals_.clear();
+   peripherals_.push_back(g_DeviceNameArduinoSwitch);
+   peripherals_.push_back(g_DeviceNameArduinoShutter);
+   peripherals_.push_back(g_DeviceNameArduinoInput);
+}
+
+int CArduinoHub::GetNumberOfDiscoverableDevices()
+{
+   GetPeripheralInventory();
+   return peripherals_.size();
+}
+
+void CArduinoHub::GetDiscoverableDevice(int peripheralNum, char* peripheralName, unsigned int maxNameLen)
+{
+   if(peripheralNum >= 0 && peripheralNum < int(peripherals_.size()))
+   {                                                                      
+       strncpy(peripheralName, peripherals_[peripheralNum].c_str(), maxNameLen - 1);  
+       peripheralName[maxNameLen - 1] = 0;                              
+   }                                                                      
+   return;                                                                   
+}
 
 int CArduinoHub::Initialize()
 {

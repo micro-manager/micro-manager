@@ -55,10 +55,15 @@ public:
    int OnLogic(MM::PropertyBase* pPropt, MM::ActionType eAct);
    int OnVersion(MM::PropertyBase* pPropt, MM::ActionType eAct);
 
+   // Device Discovery interface
+   int GetNumberOfDiscoverableDevices();
+   void GetDiscoverableDevice(int peripheralNum, char* peripheralName, unsigned int maxNameLen);
 private:
+   std::vector<std::string> peripherals_;
    int GetControllerVersion(int&);
    std::string port_;
    bool initialized_;
+   void GetPeripheralInventory();
 };
 
 class CArduinoShutter : public CShutterBase<CArduinoShutter>  
