@@ -24,6 +24,7 @@
 
 
 const char* g_DeviceNameLCShutter = "LC-Shutter";
+const char* g_DeviceNameLCSafetyShutter = "LC-SafetyShutter";
 const char* g_DeviceNameLCDA = "LC-DAC";
 const char* g_fiber_1 = "Fiber 1";
 const char* g_fiber_2 = "Fiber 2";
@@ -683,4 +684,151 @@ int LCShutter::OnOutput(MM::PropertyBase* pProp, MM::ActionType eAct)
    }
    return DEVICE_OK;
 }
+
+/********
+ * Device Safety Shutter
+ * It's sole function is to control the safety shutter present in some 
+ * models of the LaserCombiner
+ */
+
+
+LCSafetyShutter::LCSafetyShutter() :
+   changedTime_(0),
+   initialized_(false),
+   state_(0),
+   name_(g_DeviceNameLCShutter)
+{
+   InitializeDefaultErrorMessages();
+   
+   // custom error messages
+   SetErrorText(ERR_BOARD_NOT_FOUND,GS_ERR_BOARD_NOT_FOUND);
+   SetErrorText(ERR_NOT_IN_THIS_FIRMWARE, GS_NOT_IN_THIS_FIRMWARE);
+   EnableDelay();
+}
+   
+LCSafetyShutter::~LCSafetyShutter()
+{
+   Shutdown();
+}
+  
+
+int LCSafetyShutter::Initialize()
+{
+   int ret = DEVICE_OK;
+
+   if (!LaserBoardIsOpen()) {
+      ret = LaserBoardOpen();
+      if (ret != NO_ERR)
+         return ret;
+   }
+
+   char buf[64];
+   ret = LaserBoardDriverVersion(buf);
+   if (ret != NO_ERR)
+      return ret;
+
+   std::string driverVersion = buf;
+   float driverVersionNum = 0.0;
+   std::stringstream s;
+   s << driverVersion;
+   s >> driverVersionNum;
+
+   if (driverVersionNum < 0.2)
+      return ERR_NOT_IN_THIS_FIRMWARE;
+
+   // Name
+   ret = CreateProperty(MM::g_Keyword_Name, name_.c_str(), MM::String, true);
+   if (DEVICE_OK != ret)
+      return ret;
+
+   // Description
+   ret = CreateProperty(MM::g_Keyword_Description, "LC Safety Shutter", MM::String, true);
+   if (DEVICE_OK != ret)
+      return ret;
+
+   CPropertyAction* pAct = new CPropertyAction(this, &LCSafetyShutter::OnState);
+   ret = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
+   if (DEVICE_OK != ret)
+      return ret;
+   AddAllowedValue(MM::g_Keyword_State, "0");  
+   AddAllowedValue(MM::g_Keyword_State, "1");
+
+   return DEVICE_OK;
+}
+
+int LCSafetyShutter::Shutdown()
+{
+   if (initialized_)
+   {
+      if (LaserBoardIsOpen())
+         LaserBoardClose();
+      initialized_ = false;
+   }
+   return DEVICE_OK;
+}
+  
+void LCSafetyShutter::GetName(char* pszName) const
+{
+   CDeviceUtils::CopyLimitedString(pszName, name_.c_str());
+}
+
+bool LCSafetyShutter::Busy()
+{
+   // TODO: check timeouts
+   return false;
+}
+   
+  
+int LCSafetyShutter::SetOpen(bool open)
+{
+   return LaserBoardSetShutter(open);
+}
+
+int LCSafetyShutter::GetOpen(bool& open)
+{
+   int state;
+   int ret = LaserBoardGetShutter(&state);
+   if (ret != DEVICE_OK)
+      return ret;
+   if (state == 0)
+      open = false;
+   else
+      open = true;
+
+   return DEVICE_OK;
+}
+
+int LCSafetyShutter::Fire(double /*deltaT*/)
+{
+   return DEVICE_OK;
+}
+
+
+int LCSafetyShutter::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      bool open;
+      int ret = GetOpen(open);
+      if (ret != DEVICE_OK)
+         return ret;
+      std::string state = "0";
+      if (open)
+         state = "1";
+      pProp->Set(state.c_str());
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      std::string state;
+      pProp->Get(state);
+      bool open = false;
+      if (state == "1")
+         open = true;
+      return SetOpen(open);
+   }
+
+   return DEVICE_OK;
+}
+
+
 

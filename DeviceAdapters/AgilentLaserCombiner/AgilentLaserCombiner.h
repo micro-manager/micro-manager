@@ -69,6 +69,36 @@ private:
    std::string firmwareVersion_;
 };
 
+class LCSafetyShutter : public CShutterBase<LCSafetyShutter>  
+{
+public:
+   LCSafetyShutter();
+   ~LCSafetyShutter();
+  
+   // MMDevice API
+   // ------------
+   int Initialize();
+   int Shutdown();
+  
+   void GetName(char* pszName) const;
+   bool Busy();
+   
+   // Shutter API
+   int SetOpen(bool open = true);
+   int GetOpen(bool& open);
+   int Fire(double deltaT);
+
+   // action interface
+   // ----------------
+   int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+private:
+   MM::MMTime changedTime_;
+   bool initialized_;
+   unsigned char state_;
+   std::string name_;
+};
+
 
 class LCDA : public CSignalIOBase<LCDA>  
 {
