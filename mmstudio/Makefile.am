@@ -61,6 +61,8 @@ MMJ_.jar:  \
 	$(srcdir)/src/org/micromanager/conf/MMConfigFileException.java \
 	$(srcdir)/src/org/micromanager/conf/MicroscopeModel.java \
 	$(srcdir)/src/org/micromanager/conf/PagePanel.java \
+	$(srcdir)/src/org/micromanager/conf/PeripheralDevicesPage.java \
+	$(srcdir)/src/org/micromanager/conf/PeripheralDevicesPreInitializationPropertiesPage.java \
 	$(srcdir)/src/org/micromanager/conf/PropertyTableModel.java \
 	$(srcdir)/src/org/micromanager/conf/RolesPage.java \
 	$(srcdir)/src/org/micromanager/conf/Setting.java \

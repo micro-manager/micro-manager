@@ -130,6 +130,19 @@ public class PeripheralDevicesPreInitializationPropertiesPage extends PagePanel 
                model_.setDeviceSetupProperty(s.deviceName_, s.propertyName_, s.propertyValue_);
             }
 
+            // Reset the serial port settings
+            Device ports[] = model_.getAvailableSerialPorts();
+            for (int i = 0; i < ports.length; i++) {
+               if (model_.isPortInUse(ports[i])) {
+                  // core_.loadDevice(ports[i].getName(), ports[i].getLibrary(), ports[i].getAdapterName());
+                  Device d = model_.findSerialPort(ports[i].getName());
+                  for (int j = 0; j < d.getNumberOfSetupProperties(); j++) {
+                     PropertyItem prop = d.getSetupProperty(j);
+                     core_.setProperty(d.getName(), prop.name, prop.value);
+                  }
+               }
+            }
+
             try {
                core_.initializeAllDevices();
                // create the post-initialization properties
