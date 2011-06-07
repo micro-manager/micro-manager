@@ -223,7 +223,7 @@ public class AddDeviceDlg extends JDialog implements MouseListener, TreeSelectio
 
 
         //put the URL for the documentation for the selected node into a browser control
-        documentationURLroot_ = "https://valelab.ucsf.edu/~nico/MMwiki/index.php/";
+        documentationURLroot_ = "https://valelab.ucsf.edu/~MM/MMwiki/index.php/";
         final JButton documentationButton = new JButton();
         documentationButton.setText("Help");
         documentationButton.setBounds(490, 68, 93, 23);
