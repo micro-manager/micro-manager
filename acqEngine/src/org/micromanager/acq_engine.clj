@@ -296,99 +296,12 @@
     (core enableContinuousFocus true))
   (return-config))
 
-;; alternative iterations
-
-(defn allowed-image? [f c s]
-  (if-let [channel (get-in @settings [:channels c])]
-    (and
-      (let [skip-n (channel :skip-frames)]
-        (zero? (mod f (inc skip-n))))
-      (or
-        (channel :use-z-stack)
-        (= s (int (/ (count (@settings :slices)) 2)))))
-    true))
-                      
-(defn manage-shutter [p f c s]
-  (let [[p_ f_ c_ s_] (:last-indices @state)]
-    (when (or
-            (and
-              (not (:keep-shutter-open-channels @settings))
-              (not= c c_))
-            (and
-              (not (:keep-shutter-open-slices @settings))
-              (not= s s_))
-            (not= f f_)
-            (not= p p_))
-      (core setShutterOpen false))))
-
-(defn set-position [p]
-  (let [msp (get-in @settings [:positions p])
-        m (MultiStagePosition-to-map msp)]
-    (for [[axis pos] (:axes m) :when pos]
-      [axis (apply set-stage-position axis pos)])))
-
-(defn set-channel [c]
-  (for [[d p v] (get-in @settings [:channels c :properties])]
-    (core setProperty d p v)))
-
-(defn collect-prev-image []
-  (let [pix (core getImage)]
-    (:last-indices @state)))
-  
-(defn acq-wait [f]
-  (let [[_ f_ _ _] (:last-indices @state)]
-    (if (and (not= f f_) (pos? f))
-      (acq-sleep (@settings :interval-ms)))))
-
-(defn manage-autofocus [f]
-  (when (@settings :use-autofocus)
-    (let [[_ f_ _ _] (:last-indices @state)]
-      (when (and
-              (not= f f_)
-              (zero? (mod f (inc (@settings :autofocus-skip)))))
-        (run-autofocus)))))
-
-(defn set-slice [c s]
-  (if-let [z-drive (@settings :z-drive)]
-    (let [[_ _ c_ s_] (:last-indices @state)
-          z (+ (or (get-in @settings [:channels c :z-offset]) 0)
-               (or (get-in @settings [:slices s]) 0))]
-         (if (@settings :relative-slices)
-           (let [delta-z (- z (:last-relative-slice @state))]
-               (core setRelativePosition z-drive delta-z)
-               (swap! state assoc :last-relative-slice z))
-           (core setPosition z-drive z)))))
-      
-(defn snap-single-image [p f c s]
-  (core snapImage)
-  (swap! state assoc :last-snap-time (elapsed-time @state)))
-
-(defn run-snap-event 
-  "Run a single iteration with the specified indices:
-  position, frame, channel, slice."
-  [p f c s]
-  (when (allowed-image? f c s)
-    (manage-shutter p f c s)
-    (set-position p)
-    (set-channel c)
-    (collect-prev-image)
-    (acq-wait f)
-    (manage-autofocus f)
-    (set-slice s)
-    (snap-single-image p f c s)
-    (swap! state assoc :last-indices [p f c s])))
-
-
-
 ;; iterations
 
 (defn create-presnap-actions [event]
   (concat
     (for [[axis pos] (:axes (MultiStagePosition-to-map (get-msp (:position event)))) :when pos]
-      [axis #(do ;(when (= axis (core getFocusDevice))
-                 ;  (println "setting reference z position from msp")
-                 ;  (state-assoc! :reference-z-position pos))
-                 (apply set-stage-position axis pos))])
+      [axis #(apply set-stage-position axis pos)])
     (for [[d p v] (get-in event [:channel :properties])]
       [d #(core setProperty d p v)])
     (when-let [exposure (:exposure event)]
@@ -433,12 +346,12 @@
   (prepare-state this)
   (binding [state (.state this)]
     (def last-state state)
-    (let [acq-seq (generate-acq-sequence settings @attached-runnables)]
-       (def acq-sequence acq-seq)
-       (time (count acq-seq))
-       (execute (mapcat #(make-event-fns % out-queue) acq-seq))
-       (.put out-queue TaggedImageQueue/POISON)
-       (cleanup))))
+      (let [acq-seq (generate-acq-sequence settings @attached-runnables)]
+        (def acq-sequence acq-seq)
+        (time (count acq-seq))
+        (execute (mapcat #(make-event-fns % out-queue) acq-seq))
+        (.put out-queue TaggedImageQueue/POISON)
+        (cleanup))))
 
 ;; generic metadata
 
