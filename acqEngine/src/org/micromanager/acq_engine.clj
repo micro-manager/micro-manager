@@ -389,8 +389,8 @@
                  ;  (println "setting reference z position from msp")
                  ;  (state-assoc! :reference-z-position pos))
                  (apply set-stage-position axis pos))])
-    (for [prop (get-in event [:channel :properties])]
-      [(prop 0) #(core setProperty (prop 0) (prop 1) (prop 2))])
+    (for [[d p v] (get-in event [:channel :properties])]
+      [d #(core setProperty d p v)])
     (when-let [exposure (:exposure event)]
       (list [(core getCameraDevice) #(core setExposure exposure)]))))
 
@@ -415,9 +415,12 @@
           #(when-let [z-drive (@state :default-z-drive)]
             (let [z (compute-z-position event)]
               (when (not= z (@state :last-z-position))
-                (do (set-stage-position z-drive z)
-                    (wait-for-device z-drive)))))
-          #(do (expose event)
+                (set-stage-position z-drive z))))
+          #(do (for [[d _ _] (get-in event [:channel :properties])]
+                 (wait-for-device d))
+               (wait-for-device (@state :default-z-drive))
+               (wait-for-device (core getXYStageDevice))
+               (expose event)
                (collect-image event out-queue))))))
 
 (defn execute [event-fns]
