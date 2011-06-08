@@ -218,7 +218,6 @@ int ClearPort(MM::Device& device, MM::Core& core, std::string port)
 XYStage::XYStage() :
    CXYStageBase<XYStage>(),
    initialized_(false), 
-   port_("Undefined"), 
    stepSizeXUm_(0.0), 
    stepSizeYUm_(0.0), 
    ASISerialUnit_(10.0),
@@ -371,9 +370,11 @@ int XYStage::Initialize()
    }
    */
 
+   /*
    ret = UpdateStatus();  
    if (ret != DEVICE_OK)
       return ret;
+   */
 
    initialized_ = true;
    return DEVICE_OK;
