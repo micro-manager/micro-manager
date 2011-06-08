@@ -27,7 +27,8 @@
            [java.awt.event ItemEvent ItemListener KeyAdapter MouseAdapter
                            WindowAdapter WindowListener]
            [com.swtdesigner SwingResourceManager]
-           [org.micromanager.acquisition ImageStorageListener MMImageCache])
+           [org.micromanager.acquisition ImageStorageListener MMImageCache]
+           [org.micromanager.utils.ReportingUtils])
   (:use [org.micromanager.browser.utils
             :only (gen-map constrain-to-parent create-button create-icon-button
                    attach-action-key remove-borders choose-directory
@@ -126,9 +127,11 @@
 (defn open-selected-files [table]
   (let [path-column (.indexOf tags "Path")]
     (doseq [i (.getSelectedRows table)]
-      (.openAcquisitionData gui
-        (.. table getModel
-            (getValueAt (.convertRowIndexToModel table i) path-column))))))
+      (let [f (.. table getModel
+                  (getValueAt (.convertRowIndexToModel table i) path-column))]
+        (if (.exists (File. f))
+          (.openAcquisitionData gui f)
+          (ReportingUtils/showError "File not found."))))))
 
 (defn listen-to-open [table]
   (.addMouseListener table
