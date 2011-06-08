@@ -191,33 +191,38 @@
 
 ;; image metadata
 
+(defn generate-metadata [event state]
+  (merge
+    (map-config (core getSystemStateCache))
+    {
+     "AxisPositions" (when-let [axes (get-in event [:position :axes])] (JSONObject. axes))
+     "Binning" (state :binning)
+     "BitDepth" (state :bit-depth)
+     "Channel" (get-in event [:channel :name])
+     "ChannelIndex" (:channel-index event)
+     "Exposure-ms" (:exposure event)
+     "Frame" (:frame-index event)
+     "Height" (state :init-height)
+     "NextFrame" (:next-frame-index event)
+     "PixelSizeUm" (state :pixel-size-um)
+     "PixelType" (state :pixel-type)
+     "PositionIndex" (:position-index event)
+     "PositionName" (if-let [pos (:position event)] (if-args #(.getLabel %) (get-msp pos)))
+     "Slice" (:slice-index event)
+     "SlicePosition" (:slice event)
+     "Source" (state :source)
+     "Time" (get-current-time-str)
+     "UUID" (UUID/randomUUID)
+     "Width"  (state :init-width)
+     "ZPositionUm" (state :last-z-position)
+    }))
+   
 (defn annotate-image [img event state]
   {:pix (:pix img)
-   :tags (merge
-      (map-config (core getSystemStateCache))
-      {
-       "AxisPositions" (when-let [axes (get-in event [:position :axes])] (JSONObject. axes))
-       "Binning" (state :binning)
-       "BitDepth" (state :bit-depth)
-       "Channel" (get-in event [:channel :name])
-       "ChannelIndex" (:channel-index event)
-       "Exposure-ms" (:exposure event)
-       "Frame" (:frame-index event)
-       "Height" (state :init-height)
-       "NextFrame" (:next-frame-index event)
-       "PixelSizeUm" (state :pixel-size-um)
-       "PixelType" (state :pixel-type)
-       "PositionIndex" (:position-index event)
-       "PositionName" (if-let [pos (:position event)] (if-args #(.getLabel %) (get-msp pos)))
-       "Slice" (:slice-index event)
-       "SlicePosition" (:slice event)
-       "Source" (state :source)
-       "Time" (get-current-time-str)
-       "UUID" (UUID/randomUUID)
-       "Width"  (state :init-width)
-       "ZPositionUm" (state :last-z-position)
-      }
-       (:tags img))})
+   :tags 
+   (merge
+     (generate-metadata event state)
+     (:tags img))}) ;; include any existing metadata
 
 (defn make-TaggedImage [annotated-img]
   (TaggedImage. (:pix annotated-img) (JSONObject. (:tags annotated-img))))
@@ -319,7 +324,7 @@
       (or (= task :snap) (= task :init-burst))
         (list
           #(log event)
-          (fn [] (doall (map #(.run %) (event :runnables))))
+          #(doall (map (fn [x] (.run x)) (event :runnables)))
           #(when-let [wait-time-ms (event :wait-time-ms)]
             (acq-sleep wait-time-ms))
           #(run-actions (create-presnap-actions event))
