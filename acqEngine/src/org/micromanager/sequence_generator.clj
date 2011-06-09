@@ -48,41 +48,8 @@
     (for [i (range (count dim-vals)) event events]
       (assoc event
         dim-index-kw i
-        dim (get dim-vals i)))
+        dim (if (= dim-index-kw :frame-index) i (get dim-vals i))))
     (map #(assoc % dim-index-kw 0) events)))
-
-;(defn create-event [settings f p c s]
-;  {:task :snap
-;   :slice-index s
-;   :slice (get (settings :slices) s)
-;   :channel-index c
-;   :channel (get (settings :positions) c)
-;   :frame-index f
-;   :frame (get (settings :frames) f)
-;   :position-index p
-;   :position (get (settings :positions) p)})
-;
-;(defn create-cs-loops [settings]
-;  (let [{:keys [frames positions
-;                channels slices
-;                slices-first time-first]} settings
-;        nc (Math/max 1 (count channels))
-;        nf (Math/max 1 (count frames))
-;        ns (Math/max 1 (count slices))
-;        np (Math/max 1 (count positions))]
-;    (cond
-;      (and slices-first time-first)
-;        (for [p np f nf c nc s ns]
-;           (create-event settings f p c s))
-;      (and slices-first (not time-first))
-;        (for [f nf p np c nc s ns]
-;           (create-event settings f p c s))          
-;      (and (not slices-first) time-first)
-;        (for [p np f nf s ns c nc]
-;           (create-event settings f p c s))
-;      (and (not slices-first) (not time-first))
-;        (for [f nf p np s ns c nc]
-;           (create-event settings f p c s)))))
 
 (defn create-loops [dimensions]
   (reduce #(apply (partial nest-loop %1) %2) [{:task :snap}] dimensions))

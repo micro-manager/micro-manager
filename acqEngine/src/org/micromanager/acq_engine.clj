@@ -372,7 +372,7 @@
       :relativeZSlice          :relative-slices
       :intervalMs              :interval-ms
     )
-    (assoc :frames (vec (range (.numFrames settings)))
+    (assoc :frames (range (.numFrames settings))
            :channels (vec (filter :use-channel (map ChannelSpec-to-map (.channels settings))))
            :positions (vec (range (.. settings positions size)))
            :slices (vec (.slices settings))
