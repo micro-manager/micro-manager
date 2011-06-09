@@ -28,7 +28,7 @@
                            WindowAdapter WindowListener]
            [com.swtdesigner SwingResourceManager]
            [org.micromanager.acquisition ImageStorageListener MMImageCache]
-           [org.micromanager.utils.ReportingUtils])
+           [org.micromanager.utils ReportingUtils])
   (:use [org.micromanager.browser.utils
             :only (gen-map constrain-to-parent create-button create-icon-button
                    attach-action-key remove-borders choose-directory
