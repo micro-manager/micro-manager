@@ -186,7 +186,7 @@
            (next runnable-list))
     events))
 
-(defn generate-acq-sequence [settings runnables]
+(defn generate-default-acq-sequence [settings runnables]
   (let [{:keys [slices keep-shutter-open-channels keep-shutter-open-slices
                 use-autofocus autofocus-skip interval-ms relative-slices
                 runnable-list]} settings]
@@ -201,6 +201,36 @@
        (make-bursts)
        (add-next-task-tags)   
     )))
+
+(defn generate-simple-burst-sequence [numFrames]
+  (let [x
+        (->> (range numFrames)
+             (map
+               #(hash-map
+                  :frame-index %
+                  :next-frame-index (inc %)
+                  :task (if (zero? %) :init-burst :collect-burst)
+                  :wait-time-ms 0.0
+                  :position-index 0
+                  :autofocus false
+                  :channel-index 0
+                  :slice-index 0)))]
+    (cons (assoc (first x) :burst-length numFrames) (rest x))))
+
+(defn generate-acq-sequence [settings runnables]
+  (let [{:keys [numFrames time-first positions slices channels
+                use-autofocus default-exposure interval-ms]} settings]
+    (cond
+      (and (or time-first
+               (> 2 (count positions)))
+           (> 2 (count slices))
+           (> 2 (count channels))
+           (not use-autofocus)
+           (zero? (count runnables))
+           (> default-exposure interval-ms))
+             (generate-simple-burst-sequence numFrames)
+      :else
+        (generate-default-acq-sequence settings runnables))))
 
 
 ; Testing:

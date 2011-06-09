@@ -352,11 +352,10 @@
   (binding [state (.state this)]
     (def last-state state)
       (let [acq-seq (generate-acq-sequence settings @attached-runnables)]
-;        (def acq-sequence acq-seq)
-;        (time (count acq-seq))
         (execute (mapcat #(make-event-fns % out-queue) acq-seq))
         (.put out-queue TaggedImageQueue/POISON)
-        (cleanup))))
+        (cleanup)
+        (def acq-sequence acq-seq))))
 
 ;; generic metadata
 
