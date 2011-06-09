@@ -352,8 +352,8 @@
   (binding [state (.state this)]
     (def last-state state)
       (let [acq-seq (generate-acq-sequence settings @attached-runnables)]
-        (def acq-sequence acq-seq)
-        (time (count acq-seq))
+;        (def acq-sequence acq-seq)
+;        (time (count acq-seq))
         (execute (mapcat #(make-event-fns % out-queue) acq-seq))
         (.put out-queue TaggedImageQueue/POISON)
         (cleanup))))
@@ -372,11 +372,11 @@
       :skipAutofocusCount      :autofocus-skip
       :relativeZSlice          :relative-slices
       :intervalMs              :interval-ms
-      :slices                  :slices
     )
-    (assoc :frames (range (.numFrames settings))
-           :channels (filter :use-channel (map ChannelSpec-to-map (.channels settings)))
-           :positions (range (.. settings positions size))
+    (assoc :frames (vec (range (.numFrames settings)))
+           :channels (vec (filter :use-channel (map ChannelSpec-to-map (.channels settings))))
+           :positions (vec (range (.. settings positions size)))
+           :slices (vec (.slices settings))
            :default-exposure (core getExposure))))
 
 (defn get-IJ-type [depth]

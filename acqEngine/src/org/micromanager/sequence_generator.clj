@@ -48,8 +48,41 @@
     (for [i (range (count dim-vals)) event events]
       (assoc event
         dim-index-kw i
-        dim (nth dim-vals i)))
+        dim (get dim-vals i)))
     (map #(assoc % dim-index-kw 0) events)))
+
+;(defn create-event [settings f p c s]
+;  {:task :snap
+;   :slice-index s
+;   :slice (get (settings :slices) s)
+;   :channel-index c
+;   :channel (get (settings :positions) c)
+;   :frame-index f
+;   :frame (get (settings :frames) f)
+;   :position-index p
+;   :position (get (settings :positions) p)})
+;
+;(defn create-cs-loops [settings]
+;  (let [{:keys [frames positions
+;                channels slices
+;                slices-first time-first]} settings
+;        nc (Math/max 1 (count channels))
+;        nf (Math/max 1 (count frames))
+;        ns (Math/max 1 (count slices))
+;        np (Math/max 1 (count positions))]
+;    (cond
+;      (and slices-first time-first)
+;        (for [p np f nf c nc s ns]
+;           (create-event settings f p c s))
+;      (and slices-first (not time-first))
+;        (for [f nf p np c nc s ns]
+;           (create-event settings f p c s))          
+;      (and (not slices-first) time-first)
+;        (for [p np f nf s ns c nc]
+;           (create-event settings f p c s))
+;      (and (not slices-first) (not time-first))
+;        (for [f nf p np s ns c nc]
+;           (create-event settings f p c s)))))
 
 (defn create-loops [dimensions]
   (reduce #(apply (partial nest-loop %1) %2) [{:task :snap}] dimensions))
@@ -66,7 +99,7 @@
 
 (defn process-skip-z-stack [events slices]
   (if (pos? (count slices))
-    (let [middle-slice (nth slices (int (/ (count slices) 2)))]
+    (let [middle-slice (get slices (int (/ (count slices) 2)))]
       (filter
         #(or
            (nil? (% :channel))
@@ -169,50 +202,6 @@
        (add-next-task-tags)   
     )))
 
-;; Alternative burst computation:
-
-(defn index [dim]
-  (if-not (empty? dim) (range (count dim)) '(0)))
-
-(defn generate-channels-and-slices [settings]
-  (let [{:keys [channels slices slices-first]} settings
-        create-event
-          (fn [c s]
-             {:channel (nth channels c nil)
-              :slice (nth slices s nil)
-              :channel-index c
-              :slice-index s})]
-    (if slices-first
-      (for [c (index channels)
-            s (index slices)]
-        (create-event c s))
-      (for [s (index slices)
-            c (index channels)]
-        (create-event c s)))))
-
-(defn generate-positions-and-frames [settings]
-  (let [{:keys [positions frames time-first]} settings
-        create-event
-          (fn [p f]
-            {:position (nth positions p nil)
-             :frame (nth frames f nil)
-             :position-index p
-             :frame-index f})]
-    (if time-first
-      (for [p (index positions)
-            f (index frames)]
-        (create-event p f))
-      (for [f (index frames)
-            p (index positions)]
-        (create-event p f)))))   
-
-(defn merge-layers [positions-and-frames channels-and-slices]
-  (for [pf positions-and-frames cs channels-and-slices]
-    (merge pf cs)))
-
-(defn sieve [multiples nmax]
-  (take-while #(< % nmax)
-    (for [n (range) :when (some #(zero? (mod n %)) multiples)] n)))
 
 ; Testing:
 

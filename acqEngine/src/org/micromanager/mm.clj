@@ -164,7 +164,7 @@
           name-in-library (core getDeviceNameInLibrary dev)
           state-device (eval 'mmcorej.DeviceType/StateDevice) ; load at runtime
           state-labels (when (= state-device (core getDeviceType dev))
-                         (seq (core getStateLabels dev)))]
+                         (vec (core getStateLabels dev)))]
       (core unloadDevice dev)
       (core loadDevice dev library name-in-library)
       (let [init-props (select-keys prop-map
@@ -175,7 +175,7 @@
       (core initializeDevice dev)
       (when state-labels
         (dotimes [i (count state-labels)]
-          (core defineStateLabel dev i (nth state-labels i)))))
+          (core defineStateLabel dev i (get state-labels i)))))
     (log "...reloading of " dev " has apparently succeeded.")))
 
 (defn json-to-data [json]
