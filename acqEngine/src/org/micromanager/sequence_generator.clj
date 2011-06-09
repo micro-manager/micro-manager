@@ -169,7 +169,7 @@
        (add-next-task-tags)   
     )))
 
-(defn generate-simple-burst-sequence [numFrames]
+(defn generate-simple-burst-sequence [numFrames use-autofocus]
   (let [x
         (->> (range numFrames)
              (map
@@ -179,23 +179,36 @@
                   :task (if (zero? %) :init-burst :collect-burst)
                   :wait-time-ms 0.0
                   :position-index 0
-                  :autofocus false
+                  :autofocus (if (zero? %) use-autofocus false)
                   :channel-index 0
                   :slice-index 0)))]
     (cons (assoc (first x) :burst-length numFrames) (rest x))))
 
+(defn generate-multiposition-bursts [positions num-frames use-autofocus]
+  (let [simple (generate-simple-burst-sequence num-frames use-autofocus)]
+    (flatten
+      (for [pos-index (range (count positions))]
+        (map #(assoc % :position-index pos-index
+                       :position (nth positions pos-index))
+             simple)))))
+
 (defn generate-acq-sequence [settings runnables]
   (let [{:keys [numFrames time-first positions slices channels
-                use-autofocus default-exposure interval-ms]} settings]
+                use-autofocus default-exposure interval-ms
+                autofocus-skip]} settings
+        num-positions (count positions)]
     (cond
       (and (or time-first
-               (> 2 (count positions)))
+               (> 2 num-positions))
            (> 2 (count slices))
            (> 2 (count channels))
-           (not use-autofocus)
+           (or (not use-autofocus)
+               (>= autofocus-skip (dec numFrames)))
            (zero? (count runnables))
            (> default-exposure interval-ms))
-             (generate-simple-burst-sequence numFrames)
+             (if (< 1 num-positions)
+               (generate-multiposition-bursts positions numFrames use-autofocus)
+               (generate-simple-burst-sequence numFrames use-autofocus))
       :else
         (generate-default-acq-sequence settings runnables))))
 
