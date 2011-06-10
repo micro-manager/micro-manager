@@ -28,8 +28,8 @@
 //
 
 #ifdef WIN32
-   //#include <windows.h>
-   #define snprintf _snprintf 
+#define snprintf _snprintf 
+#pragma warning(disable: 4355)
 #endif
 
 #include "ASIStage.h"
@@ -609,7 +609,7 @@ void XYStage::Wait()
    const char* command = "/";
    string answer="";
    // query the device
-   int ret = QueryCommand(command, answer);
+   QueryCommand(command, answer);
    //if (ret != DEVICE_OK)
    //   return ret;
 
@@ -629,7 +629,7 @@ void XYStage::Wait()
 		totaltime += intervalMs;
 
 		// query the device
-		int ret = QueryCommand(command, answer);
+		QueryCommand(command, answer);
 		//if (ret != DEVICE_OK)
 		//  return ret;
 
