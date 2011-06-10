@@ -193,23 +193,104 @@ MM::DeviceDetectionStatus ASICheckSerialPort(MM::Device& device, MM::Core& core,
 }
 
 
-
-// General utility function:
-int ClearPort(MM::Device& device, MM::Core& core, std::string port)
+///////////////////////////////////////////////////////////////////////////////
+// ASIStage (convenience parent class)
+//
+ASIStage::ASIStage(MM::Device *device, const char *prefix) :
+   initialized_(false),
+   oldstagePrefix_(prefix),
+   port_("Undefined")
 {
-   // Clear contents of serial port 
+   device_ = static_cast<ASIDeviceBase *>(device);
+}
+
+ASIStage::~ASIStage()
+{
+}
+
+// Communication "clear buffer" utility function:
+int ASIStage::ClearPort(void)
+{
+   // Clear contents of serial port
    const int bufSize = 255;
-   unsigned char clear[bufSize];                                                        
-   unsigned long read = bufSize;                                               
-   int ret;                                                                    
-   while ((int) read == bufSize)                                                     
-   {                                                                           
-      ret = core.ReadFromSerial(&device, port.c_str(), clear, bufSize, read); 
-      if (ret != DEVICE_OK)                                                    
-         return ret;                                                           
-   }       
+   unsigned char clear[bufSize];
+   unsigned long read = bufSize;
+   int ret;
+   while ((int) read == bufSize)
+   {
+      ret = device_->ReadFromComPort(port_.c_str(), clear, bufSize, read);
+      if (ret != DEVICE_OK)
+         return ret;
+   }
    return DEVICE_OK;                                                           
 } 
+
+// Communication "send" utility function:
+int ASIStage::SendCommand(const char *command)
+{
+   std::string base_command = "";
+   int ret;
+
+   if (oldstage_)
+      base_command += oldstagePrefix_;
+   base_command += command;
+   // send command
+   ret = device_->SendSerialCommand(port_.c_str(), base_command.c_str(), "\r");
+   return ret;
+}
+
+// Communication "send & receive" utility function:
+int ASIStage::QueryCommand(const char *command, std::string &answer)
+{
+   const char *terminator;
+   int ret;
+
+   // send command
+   ret = SendCommand(command);
+   if (ret != DEVICE_OK)
+      return ret;
+   // block/wait for acknowledge (or until we time out)
+   if (oldstage_)
+      terminator = "\r\n\3";
+   else
+      terminator = "\r\n";
+   ret = device_->GetSerialAnswer(port_.c_str(), terminator, answer);
+   return ret;
+}
+
+// Communication "send, receive, and look for acknowledgement" utility function:
+int ASIStage::QueryCommandACK(const char *command)
+{
+   std::string answer;
+   int ret = QueryCommand(command, answer);
+   if (ret != DEVICE_OK)
+      return ret;
+
+   // The controller only acknowledges receipt of the command
+   if (answer.substr(0,2) != ":A")
+      return ERR_UNRECOGNIZED_ANSWER;
+
+   return DEVICE_OK;
+}
+
+// Communication "test device type" utility function:
+int ASIStage::CheckDeviceStatus(void)
+{
+   const char* command = "/"; // check STATUS
+   std::string answer;
+   int ret;
+
+   // send status command (test for new protocol)
+   oldstage_ = false;
+   ret = QueryCommand(command, answer);
+   if (ret != DEVICE_OK && !oldstagePrefix_.empty())
+   {
+      // send status command (test for older LX-4000 protocol)
+      oldstage_ = true;
+      ret = QueryCommand(command, answer);
+   }
+   return ret;
+}
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -217,7 +298,7 @@ int ClearPort(MM::Device& device, MM::Core& core, std::string port)
 //
 XYStage::XYStage() :
    CXYStageBase<XYStage>(),
-   initialized_(false), 
+   ASIStage(this, "2H"),
    stepSizeXUm_(0.0), 
    stepSizeYUm_(0.0), 
    ASISerialUnit_(10.0),
@@ -266,22 +347,15 @@ MM::DeviceDetectionStatus XYStage::DetectDevice(void)
 int XYStage::Initialize()
 {
    // empty the Rx serial buffer before sending command
-   ClearPort(*this, *GetCoreCallback(), port_.c_str()); 
+   ClearPort(); 
 
    CPropertyAction* pAct = new CPropertyAction (this, &XYStage::OnVersion);
    CreateProperty("Version", "", MM::String, true, pAct);
 
-   // check status first
-   const char* command = "/"; // check STATUS
-   // send command
-   int ret = SendSerialCommand(port_.c_str(), command, "\r");
+   // check status first (test for communication protocol)
+   int ret = CheckDeviceStatus();
    if (ret != DEVICE_OK)
       return ret;
-
-   string answer;
-   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-   if (ret != DEVICE_OK)
-      return false;
 
    // Most ASIStages have the origin in the top right corner, the following reverses direction of the X-axis:
    ret = SetAxisDirection();
@@ -392,17 +466,12 @@ int XYStage::Shutdown()
 bool XYStage::Busy()
 {
    // empty the Rx serial buffer before sending command
-   ClearPort(*this, *GetCoreCallback(), port_.c_str()); 
+   ClearPort(); 
 
    const char* command = "/";
-   // send command
-   int ret = SendSerialCommand(port_.c_str(), command, "\r");
-   if (ret != DEVICE_OK)
-      return false;
-
-   // block/wait for acknowledge, or until we time out;
    string answer;
-   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+   // query the device
+   int ret = QueryCommand(command, answer);
    if (ret != DEVICE_OK)
       return false;
 
@@ -420,19 +489,14 @@ bool XYStage::Busy()
 int XYStage::SetPositionSteps(long x, long y)
 {
    // empty the Rx serial buffer before sending command
-   ClearPort(*this, *GetCoreCallback(), port_.c_str()); 
+   ClearPort();
 
    ostringstream command;
    command << fixed << "M X=" << x/ASISerialUnit_ << " Y=" << y/ASISerialUnit_; // steps are 10th of micros
 
-   // send command
-   int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-   if (ret != DEVICE_OK)
-      return ret;
-
-   // block/wait for acknowledge, or until we time out;
    string answer;
-   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+   // query the device
+   int ret = QueryCommand(command.str().c_str(), answer);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -453,19 +517,14 @@ int XYStage::SetPositionSteps(long x, long y)
 int XYStage::SetRelativePositionSteps(long x, long y)
 {
    // empty the Rx serial buffer before sending command
-   ClearPort(*this, *GetCoreCallback(), port_.c_str()); 
+   ClearPort();
 
    ostringstream command;
    command << fixed << "R X=" << x/ASISerialUnit_  << " Y=" << y/ASISerialUnit_; // in 10th of micros
 
-   // send command
-   int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-   if (ret != DEVICE_OK)
-      return ret;
-
-   // block/wait for acknowledge, or until we time out;
    string answer;
-   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+   // query the device
+   int ret = QueryCommand(command.str().c_str(), answer);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -486,19 +545,14 @@ int XYStage::SetRelativePositionSteps(long x, long y)
 int XYStage::GetPositionSteps(long& x, long& y)
 {
    // empty the Rx serial buffer before sending command
-   ClearPort(*this, *GetCoreCallback(), port_.c_str()); 
+   ClearPort();
 
    ostringstream command;
    command << "W X Y";
 
-   // send command
-   int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-   if (ret != DEVICE_OK)
-      return ret;
-
-   // block/wait for acknowledge, or until we time out;
    string answer;
-   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+   // query the device
+   int ret = QueryCommand(command.str().c_str(), answer);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -525,14 +579,9 @@ int XYStage::GetPositionSteps(long& x, long& y)
   
 int XYStage::SetOrigin()
 {
-   // send command
-   int ret = SendSerialCommand(port_.c_str(), "H X=0 Y=0", "\r"); // use command HERE, zero (z) zero all x,y,z
-   if (ret != DEVICE_OK)
-      return ret;
-
-   // block/wait for acknowledge, or until we time out;
    string answer;
-   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+   // query the device
+   int ret = QueryCommand("H X=0 Y=0", answer); // use command HERE, zero (z) zero all x,y,z
    if (ret != DEVICE_OK)
       return ret;
 
@@ -553,18 +602,14 @@ int XYStage::SetOrigin()
 void XYStage::Wait()
 {
    // empty the Rx serial buffer before sending command
-   ClearPort(*this, *GetCoreCallback(), port_.c_str()); 
+   ClearPort();
 
    //if (stopSignal_) return DEVICE_OK;
    bool busy=true;
    const char* command = "/";
-   // send command
-   int ret = SendSerialCommand(port_.c_str(), command, "\r");
-   //if (ret != DEVICE_OK)
-   //   return ret;
-   // get answer
    string answer="";
-   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+   // query the device
+   int ret = QueryCommand(command, answer);
    //if (ret != DEVICE_OK)
    //   return ret;
 
@@ -583,10 +628,8 @@ void XYStage::Wait()
 		//Sleep(intervalMs);
 		totaltime += intervalMs;
 
-		ret = SendSerialCommand(port_.c_str(), command, "\r");
-		//if (ret != DEVICE_OK)
-		//  return ret;
-		ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+		// query the device
+		int ret = QueryCommand(command, answer);
 		//if (ret != DEVICE_OK)
 		//  return ret;
 
@@ -605,16 +648,11 @@ void XYStage::Wait()
 int XYStage::Home()
 {
    // empty the Rx serial buffer before sending command
-   ClearPort(*this, *GetCoreCallback(), port_.c_str()); 
-	
-	// do home command
-   int ret = SendSerialCommand(port_.c_str(), "! X Y", "\r"); // use command HOME
-    if (ret != DEVICE_OK)
-      return ret;
+   ClearPort();
 
-   // block/wait for acknowledge, or until we time out;
    string answer;
-   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+   // query the device
+   int ret = QueryCommand("! X Y", answer); // use command HOME
    if (ret != DEVICE_OK)
       return ret;
 
@@ -649,14 +687,10 @@ int XYStage::Calibrate(){
 
 	//
 
-	// do home command
-	ret = SendSerialCommand(port_.c_str(), "! X Y", "\r"); // use command HOME
-    if (ret != DEVICE_OK)
-      return ret;
-
-   // block/wait for acknowledge, or until we time out;
+   // do home command
    string answer;
-   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+   // query the device
+   ret = QueryCommand("! X Y", answer); // use command HOME
    if (ret != DEVICE_OK)
       return ret;
 
@@ -721,16 +755,12 @@ int XYStage::Calibrate1() {
 int XYStage::Stop() 
 {
    // empty the Rx serial buffer before sending command
-   ClearPort(*this, *GetCoreCallback(), port_.c_str()); 
+   ClearPort();
 
    stopSignal_ = true;
-   int ret = SendSerialCommand(port_.c_str(), "HALT", "\r"); // use command HALT "\"
-   if (ret != DEVICE_OK)
-      return ret;
-
-   // block/wait for acknowledge, or until we time out;
    string answer;
-   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+   // query the device
+   int ret = QueryCommand("HALT", answer);  // use command HALT "\"
    if (ret != DEVICE_OK)
       return ret;
 
@@ -759,14 +789,9 @@ int XYStage::GetStepLimits(long& /*xMin*/, long& /*xMax*/, long& /*yMin*/, long&
 }
 
 bool XYStage::hasCommand(std::string command) {
-   // send command
-   int ret = SendSerialCommand(port_.c_str(), command.c_str(), "\r");
-   if (ret != DEVICE_OK)
-      return false;
-
-   // block/wait for acknowledge, or until we time out;
    string answer;
-   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+   // query the device
+   int ret = QueryCommand(command.c_str(), answer);
    if (ret != DEVICE_OK)
       return false;
 
@@ -830,14 +855,9 @@ int XYStage::OnVersion(MM::PropertyBase* pProp, MM::ActionType eAct)
    {
       ostringstream command;
       command << "V";
-      // send command
-      int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-      if (ret != DEVICE_OK)
-         return ret;
-
-      // block/wait for acknowledge, or until we time out;
       string answer;
-      ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+      // query the device
+      int ret = QueryCommand(command.str().c_str(), answer);
       if (ret != DEVICE_OK)
          return ret;
 
@@ -873,12 +893,12 @@ int XYStage::OnNrMoveRepetitions(MM::PropertyBase* pProp, MM::ActionType eAct)
          nrMoveRepetitions_ = 0;
       ostringstream command;
       command << "CCA Y=" << nrMoveRepetitions_;
-      // send command
-      int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
+      string answer;
+      // some controller do not answer, so do not check answer
+      int ret = SendCommand(command.str().c_str());
       if (ret != DEVICE_OK)
          return ret;
 
-      // some controller do not answer, so do not check answer
       /*
       // block/wait for acknowledge, or until we time out;
       string answer;
@@ -907,14 +927,9 @@ int XYStage::OnWait(MM::PropertyBase* pProp, MM::ActionType eAct)
       // To simplify our life we only read out waitcycles for the X axis, but set for both
       ostringstream command;
       command << "WT X?";
-      // send command
-      int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-      if (ret != DEVICE_OK)
-         return ret;
-
-      // block/wait for acknowledge, or until we time out;
       string answer;
-      ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+      // query command
+      int ret = QueryCommand(command.str().c_str(), answer);
       if (ret != DEVICE_OK)
          return ret;
 
@@ -941,14 +956,9 @@ int XYStage::OnWait(MM::PropertyBase* pProp, MM::ActionType eAct)
          waitCycles = 255;
       ostringstream command;
       command << "WT X=" << waitCycles << " Y=" << waitCycles;
-      // send command
-      int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-      if (ret != DEVICE_OK)
-         return ret;
-
-      // block/wait for acknowledge, or until we time out;
       string answer;
-      ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+      // query command
+      int ret = QueryCommand(command.str().c_str(), answer);
       if (ret != DEVICE_OK)
          return ret;
 
@@ -972,14 +982,9 @@ int XYStage::OnBacklash(MM::PropertyBase* pProp, MM::ActionType eAct)
       // To simplify our life we only read out waitcycles for the X axis, but set for both
       ostringstream command;
       command << "B X?";
-      // send command
-      int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-      if (ret != DEVICE_OK)
-         return ret;
-
-      // block/wait for acknowledge, or until we time out;
       string answer;
-      ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+      // query command
+      int ret = QueryCommand(command.str().c_str(), answer);
       if (ret != DEVICE_OK)
          return ret;
 
@@ -1004,14 +1009,9 @@ int XYStage::OnBacklash(MM::PropertyBase* pProp, MM::ActionType eAct)
          backlash = 0.0;
       ostringstream command;
       command << "B X=" << backlash << " Y=" << backlash;
-      // send command
-      int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-      if (ret != DEVICE_OK)
-         return ret;
-
-      // block/wait for acknowledge, or until we time out;
       string answer;
-      ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+      // query command
+      int ret = QueryCommand(command.str().c_str(), answer);
       if (ret != DEVICE_OK)
          return ret;
 
@@ -1034,14 +1034,9 @@ int XYStage::OnFinishError(MM::PropertyBase* pProp, MM::ActionType eAct)
       // To simplify our life we only read out waitcycles for the X axis, but set for both
       ostringstream command;
       command << "PC X?";
-      // send command
-      int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-      if (ret != DEVICE_OK)
-         return ret;
-
-      // block/wait for acknowledge, or until we time out;
       string answer;
-      ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+      // query command
+      int ret = QueryCommand(command.str().c_str(), answer);
       if (ret != DEVICE_OK)
          return ret;
 
@@ -1074,14 +1069,9 @@ int XYStage::OnFinishError(MM::PropertyBase* pProp, MM::ActionType eAct)
       error = error/1000000;
       ostringstream command;
       command << "PC X=" << error << " Y=" << error;
-      // send command
-      int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-      if (ret != DEVICE_OK)
-         return ret;
-
-      // block/wait for acknowledge, or until we time out;
       string answer;
-      ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+      // query command
+      int ret = QueryCommand(command.str().c_str(), answer);
       if (ret != DEVICE_OK)
          return ret;
 
@@ -1104,14 +1094,9 @@ int XYStage::OnOverShoot(MM::PropertyBase* pProp, MM::ActionType eAct)
       // To simplify our life we only read out waitcycles for the X axis, but set for both
       ostringstream command;
       command << "OS X?";
-      // send command
-      int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-      if (ret != DEVICE_OK)
-         return ret;
-
-      // block/wait for acknowledge, or until we time out;
       string answer;
-      ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+      // query command
+      int ret = QueryCommand(command.str().c_str(), answer);
       if (ret != DEVICE_OK)
          return ret;
 
@@ -1137,14 +1122,9 @@ int XYStage::OnOverShoot(MM::PropertyBase* pProp, MM::ActionType eAct)
       overShoot = overShoot / 1000.0;
       ostringstream command;
       command << fixed << "OS X=" << overShoot << " Y=" << overShoot;
-      // send command
-      int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-      if (ret != DEVICE_OK)
-         return ret;
-
-      // block/wait for acknowledge, or until we time out;
       string answer;
-      ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+      // query the device
+      int ret = QueryCommand(command.str().c_str(), answer);
       if (ret != DEVICE_OK)
          return ret;
 
@@ -1167,14 +1147,9 @@ int XYStage::OnError(MM::PropertyBase* pProp, MM::ActionType eAct)
       // To simplify our life we only read out waitcycles for the X axis, but set for both
       ostringstream command;
       command << "E X?";
-      // send command
-      int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-      if (ret != DEVICE_OK)
-         return ret;
-
-      // block/wait for acknowledge, or until we time out;
       string answer;
-      ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+      // query command
+      int ret = QueryCommand(command.str().c_str(), answer);
       if (ret != DEVICE_OK)
          return ret;
 
@@ -1200,14 +1175,9 @@ int XYStage::OnError(MM::PropertyBase* pProp, MM::ActionType eAct)
       error = error / 1000000.0;
       ostringstream command;
       command << fixed << "E X=" << error << " Y=" << error;
-      // send command
-      int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-      if (ret != DEVICE_OK)
-         return ret;
-
-      // block/wait for acknowledge, or until we time out;
       string answer;
-      ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+      // query the device
+      int ret = QueryCommand(command.str().c_str(), answer);
       if (ret != DEVICE_OK)
          return ret;
 
@@ -1230,14 +1200,9 @@ int XYStage::OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
       // To simplify our life we only read out waitcycles for the X axis, but set for both
       ostringstream command;
       command << "S X?";
-      // send command
-      int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-      if (ret != DEVICE_OK)
-         return ret;
-
-      // block/wait for acknowledge, or until we time out;
       string answer;
-      ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+      // query command
+      int ret = QueryCommand(command.str().c_str(), answer);
       if (ret != DEVICE_OK)
          return ret;
 
@@ -1265,14 +1230,9 @@ int XYStage::OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
          speed = 7.5;
       ostringstream command;
       command << fixed << "S X=" << speed << " Y=" << speed;
-      // send command
-      int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-      if (ret != DEVICE_OK)
-         return ret;
-
-      // block/wait for acknowledge, or until we time out;
       string answer;
-      ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+      // query the device
+      int ret = QueryCommand(command.str().c_str(), answer);
       if (ret != DEVICE_OK)
          return ret;
 
@@ -1313,14 +1273,9 @@ int XYStage::OnMotorCtrl(MM::PropertyBase* pProp, MM::ActionType eAct)
       }
       ostringstream command;
       command << "MC X" << value << " Y" << value;
-      // send command
-      int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-      if (ret != DEVICE_OK)
-         return ret;
-
-      // block/wait for acknowledge, or until we time out;
       string answer;
-      ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+      // query command
+      int ret = QueryCommand(command.str().c_str(), answer);
       if (ret != DEVICE_OK)
          return ret;
 
@@ -1365,14 +1320,9 @@ int XYStage::OnJSMirror(MM::PropertyBase* pProp, MM::ActionType eAct)
       }
       ostringstream command;
       command << "JS X=" << value << joyStickSpeedFast_ << " Y=" << value << joyStickSpeedSlow_;
-      // send command
-      int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-      if (ret != DEVICE_OK)
-         return ret;
-
-      // block/wait for acknowledge, or until we time out;
       string answer;
-      ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+      // query command
+      int ret = QueryCommand(command.str().c_str(), answer);
       if (ret != DEVICE_OK)
          return ret;
 
@@ -1416,14 +1366,9 @@ int XYStage::OnJSFastSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
 
       ostringstream command;
       command << "JS X=" << value << joyStickSpeedFast_ << " Y=" << value << joyStickSpeedSlow_;
-      // send command
-      int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-      if (ret != DEVICE_OK)
-         return ret;
-
-      // block/wait for acknowledge, or until we time out;
       string answer;
-      ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+      // query command
+      int ret = QueryCommand(command.str().c_str(), answer);
       if (ret != DEVICE_OK)
          return ret;
 
@@ -1462,14 +1407,9 @@ int XYStage::OnJSSlowSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
 
       ostringstream command;
       command << "JS X=" << value << joyStickSpeedFast_ << " Y=" << value << joyStickSpeedSlow_;
-      // send command
-      int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-      if (ret != DEVICE_OK)
-         return ret;
-
-      // block/wait for acknowledge, or until we time out;
       string answer;
-      ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+      // query command
+      int ret = QueryCommand(command.str().c_str(), answer);
       if (ret != DEVICE_OK)
          return ret;
 
@@ -1480,6 +1420,7 @@ int XYStage::OnJSSlowSpeed(MM::PropertyBase* pProp, MM::ActionType eAct)
       else if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2) {
          int errNo = atoi(answer.substr(3).c_str());
          return ERR_OFFSET + errNo;
+
       }
       else
          return ERR_UNRECOGNIZED_ANSWER;
@@ -1498,14 +1439,9 @@ int XYStage::SetAxisDirection()
 {
    ostringstream command;
    command << "UM X=-10000 Y=10000";
-   // send command
-   int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-   if (ret != DEVICE_OK)
-      return ret;
-
-   // block/wait for acknowledge, or until we time out;
-   string answer;
-   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+   string answer = "";
+   // query command
+   int ret = QueryCommand(command.str().c_str(), answer);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -1526,8 +1462,7 @@ int XYStage::SetAxisDirection()
 // ZStage
 
 ZStage::ZStage() :
-   initialized_(false),
-   port_("Undefined"),
+   ASIStage(this, "1H"),
    axis_("Z"),
    stepSizeUm_(0.1),
    answerTimeoutMs_(1000)
@@ -1572,6 +1507,14 @@ MM::DeviceDetectionStatus ZStage::DetectDevice(void)
 
 int ZStage::Initialize()
 {
+   // empty the Rx serial buffer before sending command
+   ClearPort();
+
+   // check status first (test for communication protocol)
+   int ret = CheckDeviceStatus();
+   if (ret != DEVICE_OK)
+       return ret;
+
    // set stage step size and resolution
    //double res;
    //int ret = GetResolution(res);
@@ -1583,7 +1526,7 @@ int ZStage::Initialize()
 
    stepSizeUm_ = 0.1; //res;
 
-   int ret = GetPositionSteps(curSteps_);
+   ret = GetPositionSteps(curSteps_);
    // if command fails, try one more time, 
    // other devices may have send crud to this serial port during device detection
    if (ret != DEVICE_OK) 
@@ -1612,17 +1555,12 @@ int ZStage::Shutdown()
 bool ZStage::Busy()
 {
    // empty the Rx serial buffer before sending command
-   ClearPort(*this, *GetCoreCallback(), port_.c_str()); 
+   ClearPort();
 
    const char* command = "/";
-   // send command
-   int ret = SendSerialCommand(port_.c_str(), command, "\r");
-   if (ret != DEVICE_OK)
-      return false;
-
-   // block/wait for acknowledge, or until we time out;
    string answer;
-   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+   // query command
+   int ret = QueryCommand(command, answer);
    if (ret != DEVICE_OK)
       return false;
 
@@ -1639,19 +1577,14 @@ bool ZStage::Busy()
 int ZStage::SetPositionUm(double pos)
 {
    // empty the Rx serial buffer before sending command
-   ClearPort(*this, *GetCoreCallback(), port_.c_str()); 
+   ClearPort();
 
    ostringstream command;
    command << fixed << "M " << axis_ << "=" << pos / stepSizeUm_; // in 10th of micros
 
-   // send command
-   int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-   if (ret != DEVICE_OK)
-      return ret;
-
-   // block/wait for acknowledge, or until we time out;
    string answer;
-   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+   // query the device
+   int ret = QueryCommand(command.str().c_str(), answer);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -1673,19 +1606,14 @@ int ZStage::SetPositionUm(double pos)
 int ZStage::GetPositionUm(double& pos)
 {
    // empty the Rx serial buffer before sending command
-   ClearPort(*this, *GetCoreCallback(), port_.c_str()); 
+   ClearPort();
 
    ostringstream command;
    command << "W " << axis_;
 
-   // send command
-   int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-   if (ret != DEVICE_OK)
-      return ret;
-
-   // block/wait for acknowledge, or until we time out;
    string answer;
-   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+   // query command
+   int ret = QueryCommand(command.str().c_str(), answer);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -1716,14 +1644,9 @@ int ZStage::SetPositionSteps(long pos)
    ostringstream command;
    command << "M " << axis_ << "=" << pos; // in 10th of micros
 
-   // send command
-   int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-   if (ret != DEVICE_OK)
-      return ret;
-
-   // block/wait for acknowledge, or until we time out;
    string answer;
-   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+   // query command
+   int ret = QueryCommand(command.str().c_str(), answer);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -1745,19 +1668,14 @@ int ZStage::SetPositionSteps(long pos)
 int ZStage::GetPositionSteps(long& steps)
 {
    // empty the Rx serial buffer before sending command
-   ClearPort(*this, *GetCoreCallback(), port_.c_str()); 
+   ClearPort();
 
    ostringstream command;
    command << "W " << axis_;
 
-   // send command
-   int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-   if (ret != DEVICE_OK)
-      return ret;
-
-   // block/wait for acknowledge, or until we time out;
    string answer;
-   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+   // query command
+   int ret = QueryCommand(command.str().c_str(), answer);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -1787,14 +1705,9 @@ int ZStage::GetPositionSteps(long& steps)
 //{
 //   const char* command="RES,Z";
 //
-//   // send command
-//   int ret = SendSerialCommand(port_.c_str(), command, "\r");
-//   if (ret != DEVICE_OK)
-//      return ret;
-//
-//   // block/wait for acknowledge, or until we time out;
 //   string answer;
-//   ret = GetSerialAnswer(port_.c_str(), "\r", answer);
+//   // query command
+//   int ret = QueryCommand(command, answer);
 //   if (ret != DEVICE_OK)
 //      return ret;
 //
@@ -1815,18 +1728,13 @@ int ZStage::GetPositionSteps(long& steps)
 int ZStage::SetOrigin()
 {
    // empty the Rx serial buffer before sending command
-   ClearPort(*this, *GetCoreCallback(), port_.c_str()); 
+   ClearPort();
 
-   // send command
    ostringstream os;
    os << "H " << axis_;
-   int ret = SendSerialCommand(port_.c_str(), os.str().c_str(), "\r"); // use command HERE, zero (z) zero all x,y,z
-   if (ret != DEVICE_OK)
-      return ret;
-
-   // block/wait for acknowledge, or until we time out;
    string answer;
-   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+   // query command
+   int ret = QueryCommand(os.str().c_str(), answer); // use command HERE, zero (z) zero all x,y,z
    if (ret != DEVICE_OK)
       return ret;
 
@@ -1896,9 +1804,8 @@ int ZStage::OnAxis(MM::PropertyBase* pProp, MM::ActionType eAct)
 // CRIF reflection-based autofocussing unit (Nico, May 2007)
 ////
 CRIF::CRIF() :
-   initialized_(false), 
+   ASIStage(this, "" /* LX-4000 Prefix Unknown */),
    justCalibrated_(false),
-   port_("Undefined"),
    axis_("Z"),
    stepSizeUm_(0.1),
    waitAfterLock_(3000)
@@ -1988,16 +1895,12 @@ void CRIF::GetName(char* pszName) const
 int CRIF::GetFocusState(std::string& focusState)
 {
    // empty the Rx serial buffer before sending command
-   ClearPort(*this, *GetCoreCallback(), port_.c_str()); 
+   ClearPort();
 
    const char* command = "LOCK X?"; // Requests single char lock state description
-   // send command
-   int ret = SendSerialCommand(port_.c_str(), command, "\r");
-   if (ret != DEVICE_OK)
-      return ret;
-
    string answer;
-   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+   // query command
+   int ret = QueryCommand(command, answer);
    if (ret != DEVICE_OK)
       return ERR_UNRECOGNIZED_ANSWER;
 
@@ -2067,11 +1970,8 @@ int CRIF::SetFocusState(std::string focusState)
       if (currentState == g_CRIF_G || currentState == g_CRIF_B || currentState == g_CRIF_L)
       {
          const char* command = "LK Z";
-         // send command
-         int ret = SendSerialCommand(port_.c_str(), command, "\r");
-         if (ret != DEVICE_OK)
-            return ret;
-         ret = WaitForAcknowledgement();
+         // query command and wait for acknowledgement
+         int ret = QueryCommandACK(command);
          if (ret != DEVICE_OK)
             return ret;
       }
@@ -2079,10 +1979,8 @@ int CRIF::SetFocusState(std::string focusState)
       {
          CDeviceUtils::SleepMs(1000); // ms
          const char* command = "LK Z";
-         int ret = SendSerialCommand(port_.c_str(), command, "\r");
-         if (ret != DEVICE_OK)
-            return ret;
-         ret = WaitForAcknowledgement();
+         // query command and wait for acknowledgement
+         int ret = QueryCommandACK(command);
          if (ret != DEVICE_OK)
             return ret;
       }
@@ -2094,11 +1992,8 @@ int CRIF::SetFocusState(std::string focusState)
       if ( (currentState == g_CRIF_I) || currentState == g_CRIF_O)
       {
          const char* command = "LK Z";
-         // send command
-         int ret = SendSerialCommand(port_.c_str(), command, "\r");
-         if (ret != DEVICE_OK)
-            return ret;
-         ret = WaitForAcknowledgement();
+         // query command and wait for acknowledgement
+         int ret = QueryCommandACK(command);
          if (ret != DEVICE_OK)
             return ret;
       }
@@ -2109,10 +2004,8 @@ int CRIF::SetFocusState(std::string focusState)
       const char* command = "LK Z";
       if (currentState == g_CRIF_B || currentState == g_CRIF_O)
       {
-         ret = SendSerialCommand(port_.c_str(), command, "\r");
-         if (ret != DEVICE_OK)
-            return ret;
-         ret = WaitForAcknowledgement();
+         // query command and wait for acknowledgement
+         int ret = QueryCommandACK(command);
          if (ret != DEVICE_OK)
             return ret;
          ret = GetFocusState(currentState);
@@ -2121,10 +2014,8 @@ int CRIF::SetFocusState(std::string focusState)
       }  
       if (currentState == g_CRIF_I) // Idle, first switch on laser
       {
-         ret = SendSerialCommand(port_.c_str(), command, "\r");
-         if (ret != DEVICE_OK)
-            return ret;
-         ret = WaitForAcknowledgement();
+         // query command and wait for acknowledgement
+         int ret = QueryCommandACK(command);
          if (ret != DEVICE_OK)
             return ret;
          ret = GetFocusState(currentState);
@@ -2133,10 +2024,8 @@ int CRIF::SetFocusState(std::string focusState)
       }
       if (currentState == g_CRIF_L)
       {
-         int ret = SendSerialCommand(port_.c_str(), command, "\r");
-         if (ret != DEVICE_OK)
-            return ret;
-         ret = WaitForAcknowledgement();
+         // query command and wait for acknowledgement
+         int ret = QueryCommandACK(command);
          if (ret != DEVICE_OK)
             return ret;
       }
@@ -2191,7 +2080,7 @@ bool CRIF::IsContinuousFocusLocked()
 int CRIF::SetContinuousFocusing(bool state)
 {
    // empty the Rx serial buffer before sending command
-   ClearPort(*this, *GetCoreCallback(), port_.c_str()); 
+   ClearPort();
 
    string command;
    if (state)
@@ -2206,15 +2095,11 @@ int CRIF::SetContinuousFocusing(bool state)
    {
       command = "UL X"; // Turns off laser and unlocks
    }
-   // send command
-   int ret = SendSerialCommand(port_.c_str(), command.c_str(), "\r");
+   string answer;
+   // query command
+   int ret = QueryCommand(command.c_str(), answer);
    if (ret != DEVICE_OK)
       return ret;
-
-   string answer;
-   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-   if (ret != DEVICE_OK)
-      return ERR_UNRECOGNIZED_ANSWER;
 
    // The controller only acknowledges receipt of the command
    if (answer.substr(0,2) != ":A")
@@ -2276,19 +2161,15 @@ int CRIF::IncrementalFocus()
 int CRIF::GetLastFocusScore(double& score)
 {
    // empty the Rx serial buffer before sending command
-   ClearPort(*this, *GetCoreCallback(), port_.c_str()); 
+   ClearPort();
 
    score = 0;
    const char* command = "LOCK Y?"; // Requests present value of the PSD signal as shown on LCD panel
-   // send command
-   int ret = SendSerialCommand(port_.c_str(), command, "\r");
+   string answer;
+   // query command
+   int ret = QueryCommand(command, answer);
    if (ret != DEVICE_OK)
       return ret;
-
-   string answer;
-   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-   if (ret != DEVICE_OK)
-   return DEVICE_OK;
 
    score = atof (answer.substr(2).c_str());
    if (score == 0)
@@ -2297,36 +2178,17 @@ int CRIF::GetLastFocusScore(double& score)
    return DEVICE_OK;
 }
 
-int CRIF::WaitForAcknowledgement()
-{  
-   string answer;
-   int ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-   if (ret != DEVICE_OK)
-      return ERR_UNRECOGNIZED_ANSWER;
-
-   // The controller only acknowledges receipt of the command
-   if (answer.substr(0,2) != ":A")
-      return ERR_UNRECOGNIZED_ANSWER;
-
-   return DEVICE_OK;
-}
-
 int CRIF::SetPositionUm(double pos)
 {
    // empty the Rx serial buffer before sending command
-   ClearPort(*this, *GetCoreCallback(), port_.c_str()); 
+   ClearPort();
 
    ostringstream command;
    command << fixed << "M " << axis_ << "=" << pos / stepSizeUm_; // in 10th of micros
 
-   // send command
-   int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-   if (ret != DEVICE_OK)
-      return ret;
-
-   // block/wait for acknowledge, or until we time out;
    string answer;
-   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+   // query the device
+   int ret = QueryCommand(command.str().c_str(), answer);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -2347,19 +2209,14 @@ int CRIF::SetPositionUm(double pos)
 int CRIF::GetPositionUm(double& pos)
 {
    // empty the Rx serial buffer before sending command
-   ClearPort(*this, *GetCoreCallback(), port_.c_str()); 
+   ClearPort();
 
    ostringstream command;
    command << "W " << axis_;
 
-   // send command
-   int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-   if (ret != DEVICE_OK)
-      return ret;
-
-   // block/wait for acknowledge, or until we time out;
    string answer;
-   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+   // query command
+   int ret = QueryCommand(command.str().c_str(), answer);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -2451,9 +2308,8 @@ int CRIF::OnWaitAfterLock(MM::PropertyBase* pProp, MM::ActionType eAct)
  */
 
 AZ100Turret::AZ100Turret() :
+   ASIStage(this, "" /* LX-4000 Prefix Unknown */),
    numPos_(4),
-   initialized_(false),
-   port_("Undefined"),
    position_ (0)
 {
    InitializeDefaultErrorMessages();
@@ -2528,17 +2384,12 @@ int AZ100Turret::Shutdown()
 bool AZ100Turret::Busy()
 {
    // empty the Rx serial buffer before sending command
-   ClearPort(*this, *GetCoreCallback(), port_.c_str()); 
+   ClearPort();
 
    const char* command = "RS F";
-   // send command
-   int ret = SendSerialCommand(port_.c_str(), command, "\r");
-   if (ret != DEVICE_OK)
-      return false;
-
-   // block/wait for acknowledge, or until we time out;
    string answer;
-   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+   // query command
+   int ret = QueryCommand(command, answer);
    if (ret != DEVICE_OK)
       return false;
 
@@ -2587,15 +2438,11 @@ int AZ100Turret::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
       ostringstream os;
       os << "MTUR X=" << position + 1;
 
-      // send command
-      int ret = SendSerialCommand(port_.c_str(), os.str().c_str(), "\r");
+      string answer;
+      // query command
+      int ret = QueryCommand(os.str().c_str(), answer);
       if (ret != DEVICE_OK)
          return ret;
-
-      string answer;
-      ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-      if (ret != DEVICE_OK)
-      return DEVICE_OK;
 
       if (answer.substr(0, 2).compare(":N") == 0 && answer.length() > 2)
       {
@@ -2616,10 +2463,9 @@ int AZ100Turret::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 LED::LED() :
    CShutterBase<LED>(),
-   initialized_(false), 
+   ASIStage(this, "" /* LX-4000 Prefix Unknown */),
    open_(false),
    intensity_(1),
-   port_("Undefined"),
    name_("LED"),
    answerTimeoutMs_(1000)
 {
@@ -2657,19 +2503,13 @@ LED::~LED()
 
 int LED::Initialize()
 {
-    // empty the Rx serial buffer before sending command
-   ClearPort(*this, *GetCoreCallback(), port_.c_str()); 
+   // empty the Rx serial buffer before sending command
+   ClearPort();
 
-   // check status first to see if we can communicate
-   const char* command = "/"; // check STATUS
-   int ret = SendSerialCommand(port_.c_str(), command, "\r");
+   // check status first (test for communication protocol)
+   int ret = CheckDeviceStatus();
    if (ret != DEVICE_OK)
-      return ret;
-
-   std::string answer;
-   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
-   if (ret != DEVICE_OK)
-      return false;
+       return ret;
 
    CPropertyAction* pAct = new CPropertyAction (this, &LED::OnState);
    CreateProperty(MM::g_Keyword_State, g_Closed, MM::String, false, pAct);
@@ -2710,7 +2550,7 @@ bool LED::Busy()
 int LED::SetOpen (bool open)
 {
    // empty the Rx serial buffer before sending command
-   ClearPort(*this, *GetCoreCallback(), port_.c_str()); 
+   ClearPort();
 
    ostringstream command;
    if (open)
@@ -2724,14 +2564,9 @@ int LED::SetOpen (bool open)
       command << "TTL Y=0";
    }
 
-   // send command
-   int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-   if (ret != DEVICE_OK)
-      return ret;
-
-   // block/wait for acknowledge, or until we time out;
    string answer;
-   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+   // query the device
+   int ret = QueryCommand(command.str().c_str(), answer);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -2770,19 +2605,14 @@ int LED::IsOpen(bool *open)
    *open = true;
 
    // empty the Rx serial buffer before sending command
-   ClearPort(*this, *GetCoreCallback(), port_.c_str()); 
+   ClearPort();
 
    ostringstream command;
    command << "TTL Y?";
 
-   // send command
-   int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-   if (ret != DEVICE_OK)
-      return ret;
-
-   // block/wait for acknowledge, or until we time out;
    string answer;
-   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+   // query the device
+   int ret = QueryCommand(command.str().c_str(), answer);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -2810,19 +2640,14 @@ int LED::CurrentIntensity(long* intensity)
    *intensity = 1;
 
    // empty the Rx serial buffer before sending command
-   ClearPort(*this, *GetCoreCallback(), port_.c_str()); 
+   ClearPort();
 
    ostringstream command;
    command << "LED X?";
 
-   // send command
-   int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-   if (ret != DEVICE_OK)
-      return ret;
-
-   // block/wait for acknowledge, or until we time out;
    string answer;
-   ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+   // query the device
+   int ret = QueryCommand(command.str().c_str(), answer);
    if (ret != DEVICE_OK)
       return ret;
 
@@ -2883,20 +2708,15 @@ int LED::OnIntensity(MM::PropertyBase* pProp, MM::ActionType eAct)
       // We could check that 0 < intensity_ < 101, but the system shoudl guarantee that
       if (intensity_ < 100)
       {
-         ClearPort(*this, *GetCoreCallback(), port_.c_str()); 
+         ClearPort();
 
          ostringstream command;
          command << "LED X=";
          command << intensity_;
 
-         // send command
-         int ret = SendSerialCommand(port_.c_str(), command.str().c_str(), "\r");
-         if (ret != DEVICE_OK)
-            return ret;
-
-         // block/wait for acknowledge, or until we time out;
          string answer;
-         ret = GetSerialAnswer(port_.c_str(), "\r\n", answer);
+         // query the device
+         int ret = QueryCommand(command.str().c_str(), answer);
          if (ret != DEVICE_OK)
             return ret;
 

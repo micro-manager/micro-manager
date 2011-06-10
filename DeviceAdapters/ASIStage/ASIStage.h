@@ -54,11 +54,41 @@
 // eof from Prior
 
 
-int ClearPort(MM::Device& device, MM::Core& core, std::string port);
-
 MM::DeviceDetectionStatus ASICheckSerialPort(MM::Device& device, MM::Core& core, std::string port, double ato);
 
-class XYStage : public CXYStageBase<XYStage>
+class ASIStage;
+
+class ASIDeviceBase : public CDeviceBase<MM::Device, ASIDeviceBase>
+{
+public:
+   ASIDeviceBase() { }
+   ~ASIDeviceBase() { }
+
+   friend class ASIStage;
+};
+
+class ASIStage
+{
+public:
+   ASIStage(MM::Device *device, const char *prefix);
+   ~ASIStage();
+
+   int ClearPort(void);
+   int CheckDeviceStatus(void);
+   int SendCommand(const char *command);
+   int QueryCommandACK(const char *command);
+   int QueryCommand(const char *command, std::string &answer);
+
+protected:
+   bool oldstage_;
+   MM::Core *core_;
+   bool initialized_;
+   std::string port_;
+   ASIDeviceBase *device_;
+   std::string oldstagePrefix_;
+};
+
+class XYStage : public CXYStageBase<XYStage>, public ASIStage
 {
 public:
    XYStage();
@@ -118,8 +148,6 @@ private:
    bool hasCommand(std::string commnand);
    void Wait();
   
-   bool initialized_;
-   std::string port_;
    double stepSizeXUm_;
    double stepSizeYUm_;
    // This variable convert the floating point number provided by ASI (expressing 10ths of microns) into a long
@@ -134,7 +162,7 @@ private:
    bool stopSignal_;
 };
 
-class ZStage : public CStageBase<ZStage>
+class ZStage : public CStageBase<ZStage>, public ASIStage
 {
 public:
    ZStage();
@@ -176,8 +204,6 @@ private:
    int Autofocus(long param);
    //int GetResolution(double& res);
 
-   bool initialized_;
-   std::string port_;
    std::string axis_;
    double stepSizeUm_;
    double answerTimeoutMs_;
@@ -185,7 +211,7 @@ private:
 };
 
 
-class CRIF : public CAutoFocusBase<CRIF>
+class CRIF : public CAutoFocusBase<CRIF>, public ASIStage
 {
 public:
    CRIF();
@@ -218,13 +244,10 @@ public:
 private:
    int GetFocusState(std::string& focusState);
    int SetFocusState(std::string focusState);
-   int WaitForAcknowledgement();
    int SetPositionUm(double pos);
    int GetPositionUm(double& pos);
 
-   bool initialized_;
    bool justCalibrated_;
-   std::string port_;
    double stepSizeUm_;
    std::string focusState_;
    long waitAfterLock_;
@@ -232,7 +255,7 @@ private:
 };
 
 
-class AZ100Turret : public CStateDeviceBase<AZ100Turret>
+class AZ100Turret : public CStateDeviceBase<AZ100Turret>, public ASIStage
 {
 public:
    AZ100Turret();
@@ -251,14 +274,12 @@ public:
 
 private:
    long numPos_;                                                             
-   bool busy_;                                                               
-   bool initialized_;                                                        
-   std::string port_;
+   bool busy_;       
    MM::MMTime changedTime_;                                                  
    long position_; 
 };
 
-class LED : public CShutterBase<LED>
+class LED : public CShutterBase<LED>, public ASIStage
 {
 public:
    LED();
@@ -285,11 +306,9 @@ public:
 private:
    int IsOpen(bool* open); // queries the device rather than using a cached value
    int CurrentIntensity(long* intensity); // queries the device rather than using a cached value
-   bool initialized_;
    bool open_;
    long intensity_;
    std::string name_;
-   std::string port_;
    int answerTimeoutMs_;
    
 };
