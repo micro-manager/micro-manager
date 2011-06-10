@@ -232,12 +232,12 @@
       (if (pos? (. p-list getNumberOfPositions))
         (. p-list (getPosition idx))))))
 
-(defn get-z-position [idx z-stage]
+(defn get-msp-z-position [idx z-stage]
   (if-let [msp (get-msp idx)]
     (if-let [stage-pos (. msp get z-stage)]
       (. stage-pos x))))
 
-(defn set-z-position [idx z-stage z]
+(defn set-msp-z-position [idx z-stage z]
   (if-let [msp (get-msp idx)]
     (if-let [stage-pos (. msp (get z-stage))]
       (set! (. stage-pos x) z))))

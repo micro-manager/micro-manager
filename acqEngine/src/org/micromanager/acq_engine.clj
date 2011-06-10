@@ -20,7 +20,7 @@
            get-default-devices core log log-cmd mmc gui with-core-setting
            do-when if-args get-system-config-cached select-values-match?
            get-property get-camera-roi parse-core-metadata reload-device
-           json-to-data get-pixel-type get-z-position set-z-position
+           json-to-data get-pixel-type get-msp-z-position set-msp-z-position
            get-msp MultiStagePosition-to-map ChannelSpec-to-map
            get-pixel-type get-current-time-str rekey
            data-object-to-map]]
@@ -56,6 +56,11 @@
   (apply swap! state assoc args))
    
 (def attached-runnables (atom (vec nil)))
+
+(def pending-devices (atom nil))
+
+(defn add-to-pending [dev]
+  (swap! pending-devices conj dev))
 
 ;; time
 
@@ -96,6 +101,10 @@
   (when (and dev (pos? (.length dev)))
     (core waitForDevice dev)))
 
+(defn wait-for-pending-devices []
+  (dorun (map wait-for-device @pending-devices))
+  (reset! pending-devices nil))
+
 (defn get-z-stage-position [stage]
   (if-not (empty? stage) (core getPosition stage) 0))
   
@@ -106,17 +115,23 @@
 
 (defn set-stage-position
   ([stage-dev z]
-    (when (not= z (:last-z-position @state))
-      (set-z-stage-position stage-dev z)
-      (state-assoc! :last-z-position z)))
+    (log (@state :last-positions) "," stage-dev)
+    (when (not= z (get-in @state [:last-positions stage-dev]))
+      (device-best-effort stage-dev (set-z-stage-position stage-dev z))
+      (swap! state assoc-in [:last-positions stage-dev] z)
+      (add-to-pending stage-dev)))
   ([stage-dev x y]
+    (log (@state :last-positions) "," stage-dev)
     (when (and x y
-               (not= [x y] (:last-xy-position @state)))
-      (core setXYPosition stage-dev x y)
-      (state-assoc! :last-xy-position [x y]))))
+               (not= [x y] (get-in @state [:last-positions stage-dev])))
+      (device-best-effort stage-dev (core setXYPosition stage-dev x y))
+      (swap! state assoc-in [:last-positions stage-dev] [x y])
+      (add-to-pending stage-dev))))
 
 (defn set-property
-  ([prop] (core setProperty (prop 0) (prop 1) (prop 2))))
+  ([prop] (let [[d p v] prop]
+            (device-best-effort d (core setProperty d p v))
+            (add-to-pending d))))
 
 (defn run-autofocus []
   (.. gui getAutofocusManager getDevice fullFocus)
@@ -175,7 +190,7 @@
     (.await sleepy time-ms TimeUnit/MILLISECONDS)))
 
 (defn acq-sleep [interval-ms]
-  (core setPosition (core getFocusDevice) (@state :reference-z-position))
+  (set-stage-position (core getFocusDevice) (@state :reference-z-position))
   (when (and (@state :init-continuous-focus)
     (not (core isContinuousFocusEnabled)))
       (core enableContinuousFocus true))
@@ -214,7 +229,7 @@
      "Time" (get-current-time-str)
      "UUID" (UUID/randomUUID)
      "Width"  (state :init-width)
-     "ZPositionUm" (state :last-z-position)
+     "ZPositionUm" (get-in state [:last-positions (state :default-z-drive)])
     }))
    
 (defn annotate-image [img event state]
@@ -260,15 +275,15 @@
 ;; startup and shutdown
 
 (defn prepare-state [this]
-  (let [z (get-z-stage-position (core getFocusDevice))]
+  (let [default-z-drive (core getFocusDevice)
+        z (get-z-stage-position default-z-drive)]
     (swap! (.state this) assoc
       :pause false
       :stop false
       :running true
       :finished false
       :last-wake-time (clock-ms)
-      :last-z-position z
-      :last-xy-position nil
+      :last-positions {default-z-drive z}
       :reference-z-position z
       :start-time (clock-ms)
       :init-auto-shutter (core getAutoShutter)
@@ -294,7 +309,7 @@
     (core stopSequenceAcquisition))
   (core setAutoShutter (@state :init-auto-shutter))
   (core setExposure (@state :init-exposure))
-  (when (not= (@state :last-z-position) (@state :init-z-position))
+  (when (not= (get-in @state [:last-positions (core getFocusDevice)]) (@state :init-z-position))
     (set-z-stage-position (core getFocusDevice) (@state :init-z-position)))
   (when (and (@state :init-continuous-focus)
              (not (core isContinuousFocusEnabled)))
@@ -309,12 +324,13 @@
       [axis #(apply set-stage-position axis pos)])
     (for [[d p v] (get-in event [:channel :properties])]
       [d #(core setProperty d p v)])
-    (when-let [exposure (:exposure event)]
-      (list [(core getCameraDevice) #(core setExposure exposure)]))))
+    (when-lets [exposure (:exposure event)
+                camera (core getCameraDevice)]
+      (list [camera #(device-best-effort camera (core setExposure exposure))]))))
 
 (defn run-actions [action-map]
   (doseq [[dev action] action-map]
-    (device-best-effort dev (action))))
+    (action)))
 
 (defn make-event-fns [event out-queue]
   (let [task (:task event)]
@@ -329,15 +345,11 @@
             (acq-sleep wait-time-ms))
           #(run-actions (create-presnap-actions event))
           #(when (:autofocus event)
-            (set-z-position (:position event) (@state :default-z-drive) (run-autofocus)))
+            (set-msp-z-position (:position event) (@state :default-z-drive) (run-autofocus)))
           #(when-let [z-drive (@state :default-z-drive)]
             (let [z (compute-z-position event)]
-              (when (not= z (@state :last-z-position))
-                (set-stage-position z-drive z))))
-          #(do (for [[d _ _] (get-in event [:channel :properties])]
-                 (wait-for-device d))
-               (wait-for-device (@state :default-z-drive))
-               (wait-for-device (core getXYStageDevice))
+              (set-stage-position z-drive z)))
+          #(do (wait-for-pending-devices)
                (expose event)
                (collect-image event out-queue))))))
 
