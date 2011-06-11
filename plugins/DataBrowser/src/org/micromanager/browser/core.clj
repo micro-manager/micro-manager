@@ -124,14 +124,18 @@
         (changedUpdate [_ _] (f))
         (removeUpdate [_ _] (f))))))
 
+(defn row-index-to-path [i]
+  (let [table (@browser :table)]
+    (.. table getModel
+        (getValueAt (.convertRowIndexToModel table i)
+                    (.indexOf tags "Path")))))
+
 (defn open-selected-files [table]
-  (let [path-column (.indexOf tags "Path")]
-    (doseq [i (.getSelectedRows table)]
-      (let [f (.. table getModel
-                  (getValueAt (.convertRowIndexToModel table i) path-column))]
-        (if (.exists (File. f))
-          (.openAcquisitionData gui f)
-          (ReportingUtils/showError "File not found."))))))
+  (doseq [i (.getSelectedRows table)]
+    (let [f (row-index-to-path i)]
+      (if (.exists (File. f))
+        (.openAcquisitionData gui f)
+        (ReportingUtils/showError "File not found.")))))
 
 (defn listen-to-open [table]
   (.addMouseListener table
@@ -177,13 +181,25 @@
       data
       (conj data new-row))))
 
+(defn update-browser-table []
+  (let [table (@browser :table)
+        selected-rows (.getSelectedRows table)
+        selected-paths (set (map row-index-to-path selected-rows))]
+    (.. table getModel fireTableDataChanged)
+    (doseq [selected-row selected-rows]
+      (.addRowSelectionInterval table selected-row selected-row))
+;    (doseq [row (range (.getRowCount table))]
+;      (when (selected-paths (row-index-to-path row))
+;        (.addRowSelectionInterval table row row)))))
+))
+
 (defn add-browser-table-row [new-row]
   (let [row-vec (vec new-row)
         location (row-vec (.indexOf tags "Location"))]
     (dosync
       (if (or (contains? @current-locations location) (= location ""))
         (alter current-data refresh-row row-vec))))
-  (awt-event (.fireTableDataChanged (.getModel (@browser :table)))))
+  (awt-event (update-browser-table)))
     
 (defn remove-location [loc]
   (dosync
@@ -191,7 +207,7 @@
     (let [location-column (.indexOf tags "Location")]
       (alter current-data
              (fn [coll] (vec (remove #(= (nth % location-column) loc) coll))))))
-  (awt-event (-> @browser :table .getModel .fireTableDataChanged)
+  (awt-event (update-browser-table)
              (-> @settings-window :locations :table .getModel .fireTableDataChanged)
 ))
 
