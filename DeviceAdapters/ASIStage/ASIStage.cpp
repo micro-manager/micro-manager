@@ -194,9 +194,9 @@ MM::DeviceDetectionStatus ASICheckSerialPort(MM::Device& device, MM::Core& core,
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// ASIStage (convenience parent class)
+// ASIBase (convenience parent class)
 //
-ASIStage::ASIStage(MM::Device *device, const char *prefix) :
+ASIBase::ASIBase(MM::Device *device, const char *prefix) :
    initialized_(false),
    oldstagePrefix_(prefix),
    port_("Undefined")
@@ -204,12 +204,12 @@ ASIStage::ASIStage(MM::Device *device, const char *prefix) :
    device_ = static_cast<ASIDeviceBase *>(device);
 }
 
-ASIStage::~ASIStage()
+ASIBase::~ASIBase()
 {
 }
 
 // Communication "clear buffer" utility function:
-int ASIStage::ClearPort(void)
+int ASIBase::ClearPort(void)
 {
    // Clear contents of serial port
    const int bufSize = 255;
@@ -226,7 +226,7 @@ int ASIStage::ClearPort(void)
 } 
 
 // Communication "send" utility function:
-int ASIStage::SendCommand(const char *command)
+int ASIBase::SendCommand(const char *command)
 {
    std::string base_command = "";
    int ret;
@@ -240,7 +240,7 @@ int ASIStage::SendCommand(const char *command)
 }
 
 // Communication "send & receive" utility function:
-int ASIStage::QueryCommand(const char *command, std::string &answer)
+int ASIBase::QueryCommand(const char *command, std::string &answer)
 {
    const char *terminator;
    int ret;
@@ -259,7 +259,7 @@ int ASIStage::QueryCommand(const char *command, std::string &answer)
 }
 
 // Communication "send, receive, and look for acknowledgement" utility function:
-int ASIStage::QueryCommandACK(const char *command)
+int ASIBase::QueryCommandACK(const char *command)
 {
    std::string answer;
    int ret = QueryCommand(command, answer);
@@ -274,7 +274,7 @@ int ASIStage::QueryCommandACK(const char *command)
 }
 
 // Communication "test device type" utility function:
-int ASIStage::CheckDeviceStatus(void)
+int ASIBase::CheckDeviceStatus(void)
 {
    const char* command = "/"; // check STATUS
    std::string answer;
@@ -298,7 +298,7 @@ int ASIStage::CheckDeviceStatus(void)
 //
 XYStage::XYStage() :
    CXYStageBase<XYStage>(),
-   ASIStage(this, "2H"),
+   ASIBase(this, "2H"),
    stepSizeXUm_(0.0), 
    stepSizeYUm_(0.0), 
    ASISerialUnit_(10.0),
@@ -1462,7 +1462,7 @@ int XYStage::SetAxisDirection()
 // ZStage
 
 ZStage::ZStage() :
-   ASIStage(this, "1H"),
+   ASIBase(this, "1H"),
    axis_("Z"),
    stepSizeUm_(0.1),
    answerTimeoutMs_(1000)
@@ -1804,7 +1804,7 @@ int ZStage::OnAxis(MM::PropertyBase* pProp, MM::ActionType eAct)
 // CRIF reflection-based autofocussing unit (Nico, May 2007)
 ////
 CRIF::CRIF() :
-   ASIStage(this, "" /* LX-4000 Prefix Unknown */),
+   ASIBase(this, "" /* LX-4000 Prefix Unknown */),
    justCalibrated_(false),
    axis_("Z"),
    stepSizeUm_(0.1),
@@ -2308,7 +2308,7 @@ int CRIF::OnWaitAfterLock(MM::PropertyBase* pProp, MM::ActionType eAct)
  */
 
 AZ100Turret::AZ100Turret() :
-   ASIStage(this, "" /* LX-4000 Prefix Unknown */),
+   ASIBase(this, "" /* LX-4000 Prefix Unknown */),
    numPos_(4),
    position_ (0)
 {
@@ -2463,7 +2463,7 @@ int AZ100Turret::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 LED::LED() :
    CShutterBase<LED>(),
-   ASIStage(this, "" /* LX-4000 Prefix Unknown */),
+   ASIBase(this, "" /* LX-4000 Prefix Unknown */),
    open_(false),
    intensity_(1),
    name_("LED"),

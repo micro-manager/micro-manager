@@ -56,7 +56,7 @@
 
 MM::DeviceDetectionStatus ASICheckSerialPort(MM::Device& device, MM::Core& core, std::string port, double ato);
 
-class ASIStage;
+class ASIBase;
 
 class ASIDeviceBase : public CDeviceBase<MM::Device, ASIDeviceBase>
 {
@@ -64,14 +64,14 @@ public:
    ASIDeviceBase() { }
    ~ASIDeviceBase() { }
 
-   friend class ASIStage;
+   friend class ASIBase;
 };
 
-class ASIStage
+class ASIBase
 {
 public:
-   ASIStage(MM::Device *device, const char *prefix);
-   ~ASIStage();
+   ASIBase(MM::Device *device, const char *prefix);
+   ~ASIBase();
 
    int ClearPort(void);
    int CheckDeviceStatus(void);
@@ -88,7 +88,7 @@ protected:
    std::string oldstagePrefix_;
 };
 
-class XYStage : public CXYStageBase<XYStage>, public ASIStage
+class XYStage : public CXYStageBase<XYStage>, public ASIBase
 {
 public:
    XYStage();
@@ -162,7 +162,7 @@ private:
    bool stopSignal_;
 };
 
-class ZStage : public CStageBase<ZStage>, public ASIStage
+class ZStage : public CStageBase<ZStage>, public ASIBase
 {
 public:
    ZStage();
@@ -211,7 +211,7 @@ private:
 };
 
 
-class CRIF : public CAutoFocusBase<CRIF>, public ASIStage
+class CRIF : public CAutoFocusBase<CRIF>, public ASIBase
 {
 public:
    CRIF();
@@ -255,7 +255,7 @@ private:
 };
 
 
-class AZ100Turret : public CStateDeviceBase<AZ100Turret>, public ASIStage
+class AZ100Turret : public CStateDeviceBase<AZ100Turret>, public ASIBase
 {
 public:
    AZ100Turret();
@@ -279,7 +279,7 @@ private:
    long position_; 
 };
 
-class LED : public CShutterBase<LED>, public ASIStage
+class LED : public CShutterBase<LED>, public ASIBase
 {
 public:
    LED();
