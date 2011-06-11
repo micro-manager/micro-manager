@@ -404,4 +404,22 @@ public class JavaUtils {
       throw new ArrayIndexOutOfBoundsException();
    }
 
+   public static String getApplicationDataPath() {
+      if (isMac()) {
+         return System.getenv("HOME")+"/Library/Application Support/Micro-Manager/";
+      }
+      if (isWindows()) {
+         String os = System.getProperty("os.name").toLowerCase();
+         if (os.indexOf("xp") >= 0) {
+            return System.getenv("USERPROFILE") + "/Local Settings/Application Data/Micro-Manager/";
+         } else if ((os.indexOf("windows 7") >= 0) || (os.indexOf("windows vista") >= 0)) {
+            return System.getenv("USERPROFILE") + "/AppData/Local/Micro-Manager/";
+         }
+      }
+      if (isUnix()) {
+         return System.getenv("HOME") + "/.config/Micro-Manager/";
+      }
+      return null;
+   }
+
 }
