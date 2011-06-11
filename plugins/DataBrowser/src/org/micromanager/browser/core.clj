@@ -251,12 +251,13 @@
       (let [data-dir (File. data-set)
             position-count (get raw-summary-map "Positions")
             position (get raw-summary-map "Position")
-            path (if (or (not (empty? position))
+            path (if (or (.. data-dir getName (startsWith "Snap"))
+                         (not (empty? position))
                          (and position-count (pos? position-count)))
                    (get-file-parent data-dir)
                    (.getAbsolutePath data-dir))]
         {"Path"     path
-         "Name"     (.getName (File. path))
+         "Name"      (.getName (File. path))
          "Location" location}))))
 
 (defn remove-sibling-positions [summary-map]
