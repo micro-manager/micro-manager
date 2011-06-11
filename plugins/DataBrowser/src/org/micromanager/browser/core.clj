@@ -28,7 +28,7 @@
                            WindowAdapter WindowListener]
            [com.swtdesigner SwingResourceManager]
            [org.micromanager.acquisition ImageStorageListener MMImageCache]
-           [org.micromanager.utils ReportingUtils])
+           [org.micromanager.utils JavaUtils ReportingUtils])
   (:use [org.micromanager.browser.utils
             :only (gen-map constrain-to-parent create-button create-icon-button
                    attach-action-key remove-borders choose-directory
@@ -438,7 +438,8 @@ inside an existing location in your collection."
   (reset! collections
     (or (read-value-from-prefs prefs "collection-files")
         (let [name (System/getProperty "user.name")]
-          {name (.getAbsolutePath (File. (str name ".mmdb.txt")))}))))
+          {name (.getAbsolutePath (File. (JavaUtils/getApplicationDataPath)
+                                         (str name ".mmdb.txt")))}))))
 
 (defn save-collection-map []
   (write-value-to-prefs prefs "collection-files" @collections))
@@ -458,8 +459,10 @@ inside an existing location in your collection."
    :sorted-column {:order 1 :model-column "Time"}})
 
 (defn save-data-and-settings [collection-name settings]
-  (with-open [pr (PrintWriter. (get @collections collection-name))]
-    (write-json settings pr)))
+  (let [data-path (get @collections collection-name)]
+    (-> (File. data-path) .getParent (File.) .mkdirs)
+    (with-open [pr (PrintWriter. data-path)]
+      (write-json settings pr))))
 
 (defn load-data-and-settings [name]
   (or 
@@ -545,7 +548,8 @@ inside an existing location in your collection."
     (if collection-name
       (do
         (swap! collections assoc collection-name
-          (.getAbsolutePath (File. (str collection-name ".mmdb.txt"))))
+          (.getAbsolutePath (File. (JavaUtils/getApplicationDataPath)
+                                   (str collection-name ".mmdb.txt"))))
         (save-collection-map)
         (awt-event
           (apply-data-and-settings collection-name (fresh-data-and-settings))))
