@@ -1,7 +1,7 @@
 AM_CXXFLAGS = -fpermissive
 lib_LTLIBRARIES = libmmgr_dal_video4linux2.la
 libmmgr_dal_video4linux2_la_SOURCES = video4linux2.cpp video4linux2.h
-libmmgr_dal_video4linux2_la_LIBADD = ../../MMDevice/.libs/libMMDevice.a $(LIBACE)
+libmmgr_dal_video4linux2_la_LIBADD = ../../MMDevice/.libs/libMMDevice.a
 libmmgr_dal_video4linux2_la_LDFLAGS = 
 
 install:
