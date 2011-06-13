@@ -1,7 +1,7 @@
 [Setup]
 OutputDir=\projects\micromanager
-OutputBaseFilename=MMDeviceKit-win-x86-x64-Dev40-Mod6
-DefaultDirName=C:/Program Files/MMDeviceKit-win-Dev40-Mod6
+OutputBaseFilename=MMDeviceKit-win-x86-x64-Dev40-Mod6a
+DefaultDirName=C:/Program Files/MMDeviceKit-win-Dev40
 VersionInfoVersion=40
 VersionInfoCompany=micro-manager.org
 VersionInfoCopyright=University of California San Francisco
@@ -40,25 +40,28 @@ Source: ..\DeviceAdapters\Sensicam\Sensicam.cpp; DestDir: {app}\DeviceAdapters\S
 Source: ..\DeviceAdapters\Sensicam\Sensicam.h; DestDir: {app}\DeviceAdapters\Sensicam
 Source: ..\DeviceAdapters\Sensicam\Sensicam.vcproj; DestDir: {app}\DeviceAdapters\Sensicam
 Source: ..\DeviceAdapters\Sensicam\license.txt; DestDir: {app}\DeviceAdapters\Sensicam
-Source: ..\doc\MMDeviceKit.doc; DestDir: {app}
 Source: ..\DeviceAdapters\Nikon\Nikon.cpp; DestDir: {app}\DeviceAdapters\Nikon
 Source: ..\DeviceAdapters\Nikon\Nikon.h; DestDir: {app}\DeviceAdapters\Nikon
 Source: ..\DeviceAdapters\Nikon\Nikon.vcproj; DestDir: {app}\DeviceAdapters\Nikon
 Source: ..\DeviceAdapters\Nikon\license.txt; DestDir: {app}\DeviceAdapters\Nikon
 Source: ..\DeviceAdapters\SimpleAutofocus\*; DestDir: {app}\DeviceAdapters\SimpleAutofocus
 
+; documentation file
+
+Source: ..\doc\DeviceKitDocumentation.url; DestDir: {app}\
+
 ; boost stuff, specific to VS2008 for now....
 ; if they want different binaries, they'll need to build them
 
-Source: ..\..\3rdpartypublic\boost\stage_Win32\lib\libboost_date_time-vc90-mt-1_43.lib; DestDir: {app}\lib_Win32
-Source: ..\..\3rdpartypublic\boost\stage_Win32\lib\libboost_date_time-vc90-mt-gd-1_43.lib; DestDir: {app}\lib_Win32
-Source: ..\..\3rdpartypublic\boost\stage_Win32\lib\libboost_thread-vc90-mt-1_43.lib; DestDir: {app}\lib_Win32
-Source: ..\..\3rdpartypublic\boost\stage_Win32\lib\libboost_thread-vc90-mt-gd-1_43.lib; DestDir: {app}\lib_Win32
+Source: ..\..\3rdpartypublic\boost\stage_Win32\lib\libboost_date_time-vc90-mt-1_46_1.lib; DestDir: {app}\lib_Win32
+Source: ..\..\3rdpartypublic\boost\stage_Win32\lib\libboost_date_time-vc90-mt-gd-1_46_1.lib; DestDir: {app}\lib_Win32
+Source: ..\..\3rdpartypublic\boost\stage_Win32\lib\libboost_thread-vc90-mt-1_46_1.lib; DestDir: {app}\lib_Win32
+Source: ..\..\3rdpartypublic\boost\stage_Win32\lib\libboost_thread-vc90-mt-gd-1_46_1.lib; DestDir: {app}\lib_Win32
 
-Source: ..\..\3rdpartypublic\boost\stage_x64\lib\libboost_date_time-vc90-mt-1_43.lib; DestDir: {app}\lib_x64
-Source: ..\..\3rdpartypublic\boost\stage_x64\lib\libboost_date_time-vc90-mt-gd-1_43.lib; DestDir: {app}\lib_x64
-Source: ..\..\3rdpartypublic\boost\stage_x64\lib\libboost_thread-vc90-mt-1_43.lib; DestDir: {app}\lib_x64
-Source: ..\..\3rdpartypublic\boost\stage_x64\lib\libboost_thread-vc90-mt-gd-1_43.lib; DestDir: {app}\lib_x64
+Source: ..\..\3rdpartypublic\boost\stage_x64\lib\libboost_date_time-vc90-mt-1_46_1.lib; DestDir: {app}\lib_x64
+Source: ..\..\3rdpartypublic\boost\stage_x64\lib\libboost_date_time-vc90-mt-gd-1_46_1.lib; DestDir: {app}\lib_x64
+Source: ..\..\3rdpartypublic\boost\stage_x64\lib\libboost_thread-vc90-mt-1_46_1.lib; DestDir: {app}\lib_x64
+Source: ..\..\3rdpartypublic\boost\stage_x64\lib\libboost_thread-vc90-mt-gd-1_46_1.lib; DestDir: {app}\lib_x64
 
 
 ; test files
