@@ -20,7 +20,11 @@ done
 
 REPOSITORYROOT=/Users/MM/svn
 BUILDDIR=/Users/MM/MMBuild
-UPLOADPLACE=valelab.ucsf.edu:/home/MM/public_html/nightlyBuilds/1.4/Mac/
+if [ -n "FULL" ]; then
+   UPLOADPLACE=valelab.ucsf.edu:/home/MM/public_html/nightlyBuilds/1.4/Mac/
+else
+   UPLOADPLACE=valelab.ucsf.edu:/home/MM/public_html/builds/1.4/Mac/
+fi
 
 # No edits should be needed below this line
 
