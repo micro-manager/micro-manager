@@ -12,6 +12,7 @@ while getopts "f" optname
 do
    case "$optname" in
       "f")
+      echo "Executing full build"
       FULL="full"
       ;;
    esac
@@ -20,7 +21,7 @@ done
 
 REPOSITORYROOT=/Users/MM/svn
 BUILDDIR=/Users/MM/MMBuild
-if [ -n "FULL" ]; then
+if [ "$FULL" != "full" ]; then
    UPLOADPLACE=valelab.ucsf.edu:/home/MM/public_html/nightlyBuilds/1.4/Mac/
 else
    UPLOADPLACE=valelab.ucsf.edu:/home/MM/public_html/builds/1.4/Mac/
@@ -79,7 +80,7 @@ cd $RPPC
 # set version variable and change version in java source code to include build date stamp
 VERSION=`cat version.txt`
 # nightly build
-if [ -n "FULL" ]; then
+if [ "$FULL" != "full" ]; then
    VERSION=$VERSION-`date "+%Y%m%d"`
 fi
 echo $VERSION
@@ -165,7 +166,7 @@ cp $RI386/bin/_MMCorePy.so $TARGET/
 
 
 cd $REPOSITORY/MacInstaller
-if [ -n "$FULL" ]; then
+if [ "$FULL" != "full" ]; then
    ./makemacdisk.sh -d -s $TARGET
 else
    ./makemacdisk.sh -r -s $TARGET
