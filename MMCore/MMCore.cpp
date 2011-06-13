@@ -1222,9 +1222,8 @@ void CMMCore::waitForImageSynchro() throw (CMMError)
  */
 void CMMCore::setPosition(const char* label, double position) throw (CMMError)
 {
-   //ACE_Guard<ACE_Mutex> guard(deviceLock_);
 
-	 MMThreadGuard guard(deviceLock_);
+   MMThreadGuard guard(deviceLock_);
 
    MM::Stage* pStage = getSpecificDevice<MM::Stage>(label);
    CORE_DEBUG2("attempt to set %s  to %.5g um\n", label, position);
@@ -1246,8 +1245,7 @@ void CMMCore::setPosition(const char* label, double position) throw (CMMError)
  */
 void CMMCore::setRelativePosition(const char* label, double d) throw (CMMError)
 {
-  // ACE_Guard<ACE_Mutex> guard(deviceLock_);
-	 MMThreadGuard guard(deviceLock_);
+   MMThreadGuard guard(deviceLock_);
 
    MM::Stage* pStage = getSpecificDevice<MM::Stage>(label);
    CORE_DEBUG2("attempt to move %s relative %.5g um\n", label, d);
@@ -1269,8 +1267,7 @@ void CMMCore::setRelativePosition(const char* label, double d) throw (CMMError)
  */
 double CMMCore::getPosition(const char* label) const throw (CMMError)
 {
-   //ACE_Guard<ACE_Mutex> guard(deviceLock_);
-	 MMThreadGuard guard(deviceLock_);
+   MMThreadGuard guard(deviceLock_);
 
    MM::Stage* pStage = getSpecificDevice<MM::Stage>(label);
    double pos;
@@ -1293,7 +1290,6 @@ double CMMCore::getPosition(const char* label) const throw (CMMError)
  */
 void CMMCore::setXYPosition(const char* deviceName, double x, double y) throw (CMMError)
 {
-   //ACE_Guard<ACE_Mutex> guard(deviceLock_);
 
    MM::XYStage* pXYStage = getSpecificDevice<MM::XYStage>(deviceName);
    int ret = pXYStage->SetPositionUm(x, y);
@@ -1315,8 +1311,7 @@ void CMMCore::setXYPosition(const char* deviceName, double x, double y) throw (C
  */
 void CMMCore::setRelativeXYPosition(const char* deviceName, double dx, double dy) throw (CMMError)
 {
-   //ACE_Guard<ACE_Mutex> guard(deviceLock_);
-	 MMThreadGuard guard(deviceLock_);
+   MMThreadGuard guard(deviceLock_);
    CORE_DEBUG3("Attempt relative move of %s to %g ,  %g um\n", deviceName, dx, dy);
 
    MM::XYStage* pXYStage = getSpecificDevice<MM::XYStage>(deviceName);
@@ -1338,8 +1333,7 @@ void CMMCore::setRelativeXYPosition(const char* deviceName, double dx, double dy
  */
 void CMMCore::getXYPosition(const char* deviceName, double& x, double& y) throw (CMMError)
 {
-   //ACE_Guard<ACE_Mutex> guard(deviceLock_);
-	 MMThreadGuard guard(deviceLock_);
+   MMThreadGuard guard(deviceLock_);
 
    MM::XYStage* pXYStage = getSpecificDevice<MM::XYStage>(deviceName);
    int ret = pXYStage->GetPositionUm(x, y);
@@ -1359,8 +1353,7 @@ void CMMCore::getXYPosition(const char* deviceName, double& x, double& y) throw 
  */
 double CMMCore::getXPosition(const char* deviceName) throw (CMMError)
 {
-   //ACE_Guard<ACE_Mutex> guard(deviceLock_);
-	 MMThreadGuard guard(deviceLock_);
+   MMThreadGuard guard(deviceLock_);
 
    MM::XYStage* pXYStage = getSpecificDevice<MM::XYStage>(deviceName);
    double x, y;
@@ -1383,8 +1376,7 @@ double CMMCore::getXPosition(const char* deviceName) throw (CMMError)
  */
 double CMMCore::getYPosition(const char* deviceName) throw (CMMError)
 {
-   //ACE_Guard<ACE_Mutex> guard(deviceLock_);
-	 MMThreadGuard guard(deviceLock_);
+   MMThreadGuard guard(deviceLock_);
 
    MM::XYStage* pXYStage = getSpecificDevice<MM::XYStage>(deviceName);
    double x, y;
@@ -1410,8 +1402,7 @@ double CMMCore::getYPosition(const char* deviceName) throw (CMMError)
 // */
 void CMMCore::stop(const char* deviceName) throw (CMMError)
 {
-   //ACE_Guard<ACE_Mutex> guard(deviceLock_);
-	 MMThreadGuard guard(deviceLock_);
+   MMThreadGuard guard(deviceLock_);
    MM::XYStage* pXYStage = getSpecificDevice<MM::XYStage>(deviceName);
    int ret = pXYStage->Stop();
    if (ret != DEVICE_OK)
@@ -1427,8 +1418,7 @@ void CMMCore::stop(const char* deviceName) throw (CMMError)
  */
 void CMMCore::home(const char* deviceName) throw (CMMError)
 {
-   //ACE_Guard<ACE_Mutex> guard(deviceLock_);
-	 MMThreadGuard guard(deviceLock_);
+   MMThreadGuard guard(deviceLock_);
    MM::XYStage* pXYStage = getSpecificDevice<MM::XYStage>(deviceName);
    int ret = pXYStage->Home();
    if (ret != DEVICE_OK)
@@ -1447,7 +1437,7 @@ void CMMCore::home(const char* deviceName) throw (CMMError)
  */
 void CMMCore::setOriginXY(const char* deviceName) throw (CMMError)
 {
-   /*ACE_Guard<ACE_Mutex>*/  MMThreadGuard guard(deviceLock_);
+   MMThreadGuard guard(deviceLock_);
 
    MM::XYStage* pXYStage = getSpecificDevice<MM::XYStage>(deviceName);
    int ret = pXYStage->SetOrigin();
@@ -1465,7 +1455,7 @@ void CMMCore::setOriginXY(const char* deviceName) throw (CMMError)
  */
 void CMMCore::setAdapterOriginXY(const char* deviceName, double x, double y) throw (CMMError)
 {
-   /*ACE_Guard<ACE_Mutex>*/  MMThreadGuard guard(deviceLock_);
+   MMThreadGuard guard(deviceLock_);
 
    MM::XYStage* pXYStage = getSpecificDevice<MM::XYStage>(deviceName);
    int ret = pXYStage->SetAdapterOriginUm(x, y);
