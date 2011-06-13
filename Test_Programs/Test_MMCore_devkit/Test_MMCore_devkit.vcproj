@@ -63,10 +63,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="MMCored.lib aced.lib"
+				AdditionalDependencies="MMCored.lib"
 				OutputFile="$(OutDir)/Test_MMCore.exe"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="..\..\lib;..\ ..\..\3rdparty\ACE_wrappers_5.5\lib "
+				AdditionalLibraryDirectories="..\..\lib"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/Test_MMCore.pdb"
 				SubSystem="1"
@@ -142,10 +142,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="ace.lib MMCore.lib"
+				AdditionalDependencies="MMCore.lib"
 				OutputFile="$(OutDir)/Test_MMCore.exe"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="..\..\lib;..\ ..\..\3rdparty\ACE_wrappers_5.5\lib "
+				AdditionalLibraryDirectories="..\..\lib"
 				GenerateDebugInformation="true"
 				SubSystem="1"
 				OptimizeReferences="2"
