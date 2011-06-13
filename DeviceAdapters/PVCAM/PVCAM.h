@@ -51,8 +51,6 @@
 #include "PVCAMProperty.h"
 
 #if(WIN32 && NDEBUG)
- //NOTE: not clear why is this necessary
- //but otherwise ACE headers won't compile under NDEBUG option 
    WINBASEAPI
    BOOL
    WINAPI
