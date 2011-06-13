@@ -7,6 +7,17 @@
 #                 - micro-manager1.4-x86_64
 # contents of $BUILDDIR will be removed!!!
 
+# Use "-f" to build a release version, no option will do nightly build (only difference is in the name of the output)
+while getopts "f" optname
+do
+   case "$optname" in
+      "f")
+      FULL="full"
+      ;;
+   esac
+done
+
+
 REPOSITORYROOT=/Users/MM/svn
 BUILDDIR=/Users/MM/MMBuild
 UPLOADPLACE=valelab.ucsf.edu:/home/MM/public_html/nightlyBuilds/1.4/Mac/
@@ -63,8 +74,10 @@ cp -r $TARGET $X86_64
 cd $RPPC
 # set version variable and change version in java source code to include build date stamp
 VERSION=`cat version.txt`
-#daily build
-VERSION=$VERSION-`date "+%Y%m%d"`
+# nightly build
+if [ -n "FULL" ]; then
+   VERSION=$VERSION-`date "+%Y%m%d"`
+fi
 echo $VERSION
 sed -i -e "s/\"1.4.*\"/\"$VERSION\"/"  mmstudio/src/org/micromanager/MMStudioMainFrame.java || exit
 
@@ -148,7 +161,12 @@ cp $RI386/bin/_MMCorePy.so $TARGET/
 
 
 cd $REPOSITORY/MacInstaller
-./makemacdisk.sh -d -s $TARGET
+if [ -n "$FULL" ]; then
+   ./makemacdisk.sh -d -s $TARGET
+else
+   ./makemacdisk.sh -r -s $TARGET
+fi
+
 
 
 # upload to mightly build server:
