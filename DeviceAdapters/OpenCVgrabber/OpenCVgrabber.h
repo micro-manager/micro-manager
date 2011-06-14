@@ -1,20 +1,20 @@
 ///////////////////////////////////////////////////////////////////////////////
-// FILE:          DemoCamera.h
+// FILE:          OpenCVgrabber.h
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   The example implementation of the demo camera.
-//                Simulates generic digital camera and associated automated
-//                microscope devices and enables testing of the rest of the
-//                system without the need to connect to the actual hardware. 
-//                
-// AUTHOR:        Nenad Amodaj, nenad@amodaj.com, 06/08/2005
-//                
-//                Karl Hoover (stuff such as programmable CCD size  & the various image processors)
-//                Arther Edelstein ( equipment error simulation)
+// DESCRIPTION:   OpenCVgrabber utilises the easy image capture interface provided
+//                by highgui in the OpenVC project.
 //
-// COPYRIGHT:     University of California, San Francisco, 2006
-//                100X Imaging Inc, 2008
+//                
+// AUTHOR:        (Original file - democamera.h) Nenad Amodaj, nenad@amodaj.com, 06/08/2005
+//                
+//                (Original file - democamera.h) Karl Hoover (stuff such as programmable CCD size  & the various image processors)
+//                (Original file - democamera.h) Arther Edelstein ( equipment error simulation)
+//				  Ed Simmons OpenCVgrabber.h 2011
+//
+// COPYRIGHT:     Ed Simmons 2011
+//				  ESImaging 2011
 //
 // LICENSE:       This file is distributed under the BSD license.
 //                License text is included with the source distribution.
@@ -27,8 +27,7 @@
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 //
-// CVS:           $Id: DemoCamera.h 7289 2011-05-24 17:19:15Z karlh $
-//
+
 
 #ifndef _OPENCVGRABBER_H_
 #define _OPENCVGRABBER_H_

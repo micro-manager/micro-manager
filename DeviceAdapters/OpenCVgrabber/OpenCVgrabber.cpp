@@ -1,15 +1,18 @@
 ///////////////////////////////////////////////////////////////////////////////
-// FILE:          TucsenCamera.cpp - based on DemoCamera.cpp
+// FILE:          OpenCVgrabber.cpp - based on DemoCamera.cpp
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
 // DESCRIPTION:   Implements capture from DirectShow and WDM class drivers.
 //                Based heavily on the demo camera project.
 //                
-// AUTHOR:        Nenad Amodaj, nenad@amodaj.com, 06/08/2005
-//			      Edited by Ed Simmons ed@esimaging.co.uk
+// AUTHOR:        Ed Simmons ed@esimaging.co.uk
+//				  http://www.esimaging.co.uk
+//
 // 
-// COPYRIGHT:     University of California, San Francisco, 2006 
+// COPYRIGHT:     Ed Simmons 2011
+//				  ESImaging 2011
+//
 // LICENSE:       This file is distributed under the BSD license.
 //                License text is included with the source distribution.
 //
@@ -20,7 +23,6 @@
 //                IN NO EVENT SHALL THE COPYRIGHT OWNER OR
 //                CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 //                INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
-// CVS:           $Id: DemoCamera.cpp 7239 2011-05-17 19:52:35Z karlh $
 //
 
 #include "OpenCVgrabber.h"
@@ -36,11 +38,10 @@
 
 
 // opencv includes
-#include "..\..\..\3rdpartypublic\OpenCV2.1\include\opencv\cv.h"
-#include "..\..\..\3rdpartypublic\OpenCV2.1\include\opencv\highgui.h"
+#include "cv.h"
+#include "highgui.h"
 
 using namespace cv;
-
 using namespace std;
 
 
@@ -50,7 +51,7 @@ IplImage* temp = 0; // used during conversion
 
 
 const double COpenCVgrabber::nominalPixelSizeUm_ = 1.0;
-double g_IntensityFactor_ = 1.0;
+
 
 // External names used used by the rest of the system
 // to load particular device from the "DemoCamera.dll" library
@@ -58,11 +59,7 @@ const char* g_CameraDeviceName = "OpenCVgrabber";
 
 // constants for naming pixel types (allowed values of the "PixelType" property)
 const char* g_PixelType_8bit = "8bit";
-const char* g_PixelType_16bit = "16bit";
 const char* g_PixelType_32bitRGB = "32bitRGB";
-const char* g_PixelType_64bitRGB = "64bitRGB";
-const char* g_PixelType_32bit = "32bit";  // floating point greyscale
-
 
 // constants for naming resolution modes
 const char* g_Keyword_Resolution = "Resolution";
@@ -189,10 +186,8 @@ COpenCVgrabber::COpenCVgrabber() :
 	cameraCCDYSize_(600),
    nComponents_(4),
    pDemoResourceLock_(0),
-   triggerDevice_(""),
-	dropPixels_(false),
-	saturatePixels_(false),
-	fractionOfPixelsToDropOrSaturate_(0.002)
+   triggerDevice_("")
+
 {
    memset(testProperty_,0,sizeof(testProperty_));
 
@@ -265,10 +260,13 @@ int COpenCVgrabber::Initialize()
    }
    long w = cvGetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH);
    long h = cvGetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT);
-   cameraCCDXSize_ = w;
-   cameraCCDYSize_ = h;
 
-
+   if(w > 0 && h > 0){
+		cameraCCDXSize_ = w;
+		cameraCCDYSize_ = h;
+   } else {
+	   return DEVICE_ERR;
+   }
    // set property list
    // -----------------
 
@@ -306,11 +304,8 @@ int COpenCVgrabber::Initialize()
 
    vector<string> pixelTypeValues;
    pixelTypeValues.push_back(g_PixelType_8bit);
-   //pixelTypeValues.push_back(g_PixelType_16bit); 
-	pixelTypeValues.push_back(g_PixelType_32bitRGB);
-	//pixelTypeValues.push_back(g_PixelType_64bitRGB);
-   //pixelTypeValues.push_back(::g_PixelType_32bit);
-
+   pixelTypeValues.push_back(g_PixelType_32bitRGB);
+   
    nRet = SetAllowedValues(MM::g_Keyword_PixelType, pixelTypeValues);
    if (nRet != DEVICE_OK)
       return nRet;
@@ -322,11 +317,7 @@ int COpenCVgrabber::Initialize()
 
    vector<string> bitDepths;
    bitDepths.push_back("8");
-   //bitDepths.push_back("10");
-  //bitDepths.push_back("12");
-   //bitDepths.push_back("14");
-   //bitDepths.push_back("16");
-   //bitDepths.push_back("32");
+
    nRet = SetAllowedValues("BitDepth", bitDepths);
    if (nRet != DEVICE_OK)
       return nRet;
@@ -376,23 +367,12 @@ int COpenCVgrabber::Initialize()
    if (nRet != DEVICE_OK)
       return nRet;
 
-
-
    // exposure
    
    nRet = CreateProperty(MM::g_Keyword_Exposure,  "40"/*CDeviceUtils::ConvertToString(GetExposure())*/, MM::Float, false);
    assert(nRet == DEVICE_OK);
    SetPropertyLimits(MM::g_Keyword_Exposure, 0, 10000);
 
-   /*
-   // scan mode
-   pAct = new CPropertyAction (this, &COpenCVgrabber::OnScanMode);
-   nRet = CreateProperty("ScanMode", "1", MM::Integer, false, pAct);
-   assert(nRet == DEVICE_OK);
-   AddAllowedValue("ScanMode","1");
-   //AddAllowedValue("ScanMode","2");
-   //AddAllowedValue("ScanMode","3");
-   */
    /*
    // camera gain
    pAct = new CPropertyAction (this, &COpenCVgrabber::OnGain);
@@ -475,7 +455,7 @@ int COpenCVgrabber::SnapImage()
    MM::MMTime startTime = GetCurrentMMTime();
    double exp = GetExposure();
    double expUs = exp * 1000.0;
-   //GenerateSyntheticImage(img_, exp);
+
 
    cvGrabFrame(capture);
    
@@ -679,8 +659,8 @@ int COpenCVgrabber::ClearROI()
 */
 double COpenCVgrabber::GetExposure() const
 {
-	//double exp = cvGetCaptureProperty(capture,CV_CAP_PROP_EXPOSURE); // try to get the exposure from OpenCV - not all drivers allow this
-	//if(exp != 0) return exp; // if it works, great, return it, otherwise...
+	double exp = cvGetCaptureProperty(capture,CV_CAP_PROP_EXPOSURE); // try to get the exposure from OpenCV - not all drivers allow this
+	if(exp >= 1) return exp; // if it works, great, return it, otherwise...
 
 
    char buf[MM::MaxStrLength];
@@ -728,20 +708,7 @@ int COpenCVgrabber::SetAllowedBinning()
 {
    vector<string> binValues;
    binValues.push_back("1");
-   /*
-   binValues.push_back("2");
-   if (scanMode_ < 3)
-      binValues.push_back("4");
-   if (scanMode_ < 2)
-      binValues.push_back("8");
-   if (binSize_ == 8 && scanMode_ == 3) {
-      SetProperty(MM::g_Keyword_Binning, "2");
-   } else if (binSize_ == 8 && scanMode_ == 2) {
-      SetProperty(MM::g_Keyword_Binning, "4");
-   } else if (binSize_ == 4 && scanMode_ == 3) {
-      SetProperty(MM::g_Keyword_Binning, "2");
-   }
-      */
+
    LogMessage("Setting Allowed Binning settings", true);
    return SetAllowedValues(MM::g_Keyword_Binning, binValues);
 }
@@ -778,8 +745,8 @@ int COpenCVgrabber::StopSequenceAcquisition()
 int COpenCVgrabber::StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow)
 {
 
-   //if (IsCapturing())
-   //   return DEVICE_CAMERA_BUSY_ACQUIRING;
+   if (IsCapturing())
+      return DEVICE_CAMERA_BUSY_ACQUIRING;
 
    int ret = GetCoreCallback()->PrepareForAcq(this);
    if (ret != DEVICE_OK)
@@ -855,13 +822,6 @@ int COpenCVgrabber::ThreadRun (void)
    ret = SnapImage();
    if(ret != DEVICE_OK) return ret;
    
-   /*
-   temp = cvQueryFrame(capture);
-   if(!temp) return DEVICE_ERR;
-   for(int i=0; i < temp->width * temp->height; i++){
-				memcpy(img_.GetPixelsRW()+i*4, temp->imageData+i*3,3);
-			}
-*/
    ret = InsertImage();
    if (ret != DEVICE_OK)
    {
@@ -1154,32 +1114,14 @@ int COpenCVgrabber::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
 
             ret=DEVICE_OK;
          }
-         else if (pixelType.compare(g_PixelType_16bit) == 0)
-         {
-            nComponents_ = 1;
-            img_.Resize(img_.Width(), img_.Height(), 2);
-            ret=DEVICE_OK;
-         }
-			else if ( pixelType.compare(g_PixelType_32bitRGB) == 0)
-			{
+         else if ( pixelType.compare(g_PixelType_32bitRGB) == 0)
+		{
             nComponents_ = 4;
             img_.Resize(img_.Width(), img_.Height(), 4);
 
             ret=DEVICE_OK;
-			}
-			else if ( pixelType.compare(g_PixelType_64bitRGB) == 0)
-			{
-            nComponents_ = 4;
-            img_.Resize(img_.Width(), img_.Height(), 8);
-            ret=DEVICE_OK;
-			}
-         else if ( pixelType.compare(g_PixelType_32bit) == 0)
-			{
-            nComponents_ = 1;
-            img_.Resize(img_.Width(), img_.Height(), 4);
-            ret=DEVICE_OK;
-			}
-         else
+		}
+		else
          {
             // on error switch to default pixel type
             nComponents_ = 1;
@@ -1190,24 +1132,7 @@ int COpenCVgrabber::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
       } break;
    case MM::BeforeGet:
       {
-		  /*
-         long bytesPerPixel = GetImageBytesPerPixel();
-         if (bytesPerPixel == 1)
-         	pProp->Set(g_PixelType_8bit);
-         else if (bytesPerPixel == 2)
-         	pProp->Set(g_PixelType_16bit);
-         else if (bytesPerPixel == 4)
-         {
-            if(4 == this->nComponents_) // todo SEPARATE bitdepth from #components
-				   pProp->Set(g_PixelType_32bitRGB);
-            else if( 1 == nComponents_)
-               pProp->Set(::g_PixelType_32bit);
-         }
-         else if (bytesPerPixel == 8) // todo SEPARATE bitdepth from #components
-				pProp->Set(g_PixelType_64bitRGB);
-			else
-				pProp->Set(g_PixelType_8bit);
-				*/
+
          ret=DEVICE_OK;
 		 
       }break;
@@ -1282,37 +1207,13 @@ int COpenCVgrabber::OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct)
          // automagickally change pixel type when bit depth exceeds possible value
          if (pixelType.compare(g_PixelType_8bit) == 0)
          {
-				if( 2 == bytesPerComponent)
-				{
-					SetProperty(MM::g_Keyword_PixelType, g_PixelType_16bit);
-					bytesPerPixel = 2;
-				}
-				else if ( 4 == bytesPerComponent)
-            {
-					SetProperty(MM::g_Keyword_PixelType, g_PixelType_32bit);
-					bytesPerPixel = 4;
-
-            }else
-				{
-				   bytesPerPixel = 1;
-				}
+			bytesPerPixel = 1;
          }
-         else if (pixelType.compare(g_PixelType_16bit) == 0)
-         {
-				bytesPerPixel = 2;
-         }
-			else if ( pixelType.compare(g_PixelType_32bitRGB) == 0)
+         else if ( pixelType.compare(g_PixelType_32bitRGB) == 0)
 			{
 				bytesPerPixel = 4;
 			}
-			else if ( pixelType.compare(g_PixelType_32bit) == 0)
-			{
-				bytesPerPixel = 4;
-			}
-			else if ( pixelType.compare(g_PixelType_64bitRGB) == 0)
-			{
-				bytesPerPixel = 8;
-			}
+			
 			img_.Resize(img_.Width(), img_.Height(), bytesPerPixel);
 
       } break;
@@ -1653,23 +1554,11 @@ int COpenCVgrabber::ResizeImageBuffer()
    {
       byteDepth = 1;
    }
-   else if (pixelType.compare(g_PixelType_16bit) == 0)
-   {
-      byteDepth = 2;
-   }
-	else if ( pixelType.compare(g_PixelType_32bitRGB) == 0)
+   else if ( pixelType.compare(g_PixelType_32bitRGB) == 0)
 	{
       byteDepth = 4;
 	}
-	else if ( pixelType.compare(g_PixelType_32bit) == 0)
-	{
-      byteDepth = 4;
-	}
-	else if ( pixelType.compare(g_PixelType_64bitRGB) == 0)
-	{
-      byteDepth = 8;
-	}
-
+	
    img_.Resize(cameraCCDXSize_/binSize_, cameraCCDYSize_/binSize_, byteDepth);
    return DEVICE_OK;
 }
