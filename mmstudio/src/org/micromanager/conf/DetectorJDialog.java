@@ -11,11 +11,6 @@
 
 package org.micromanager.conf;
 
-import java.lang.reflect.InvocationTargetException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import javax.swing.SwingUtilities;
-
 /**
  *
  * @author karlhoover

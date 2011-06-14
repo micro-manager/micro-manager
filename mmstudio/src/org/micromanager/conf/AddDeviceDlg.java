@@ -178,6 +178,7 @@ public class AddDeviceDlg extends JDialog implements MouseListener, TreeSelectio
         // double click should add the device, single click selects row and waits for user to press 'add'
         MouseListener ml = new MouseAdapter() {
 
+         @Override
             public void mousePressed(MouseEvent e) {
                 if (2 == e.getClickCount()) {
                     if (addDevice()) {

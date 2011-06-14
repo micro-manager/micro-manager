@@ -148,7 +148,9 @@ public class EditPropertiesPage extends PagePanel {
                                 }
                                 looking += devicesToSearch.get(diterator).getName() + " on " + ports.get(portOffset).getName();
                             } catch (Exception e) {
-                                ReportingUtils.showError(e);
+                                // USB devices will try to open the interface and return an error on failure
+                                // so do not show, but only log the error
+                                ReportingUtils.logError(e);
                             }
                         }
                         progressDialog_.ProgressText("Looking for:\n" + looking);
