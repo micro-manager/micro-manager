@@ -38,8 +38,10 @@
 
 
 // opencv includes
-#include "cv.h"
-#include "highgui.h"
+
+
+#include "..\..\..\3rdpartypublic\OpenCV2.1\include\opencv\cv.h"
+#include "..\..\..\3rdpartypublic\OpenCV2.1\include\opencv\highgui.h"
 
 using namespace cv;
 using namespace std;
@@ -187,10 +189,7 @@ COpenCVgrabber::COpenCVgrabber() :
    nComponents_(4),
    pDemoResourceLock_(0),
    triggerDevice_("")
-
 {
-   memset(testProperty_,0,sizeof(testProperty_));
-
    // call the base class method to set-up default error codes/messages
    InitializeDefaultErrorMessages();
    readoutStartTime_ = GetCurrentMMTime();
@@ -267,6 +266,7 @@ int COpenCVgrabber::Initialize()
    } else {
 	   return DEVICE_ERR;
    }
+
    // set property list
    // -----------------
 
@@ -373,6 +373,7 @@ int COpenCVgrabber::Initialize()
    assert(nRet == DEVICE_OK);
    SetPropertyLimits(MM::g_Keyword_Exposure, 0, 10000);
 
+   
    /*
    // camera gain
    pAct = new CPropertyAction (this, &COpenCVgrabber::OnGain);
