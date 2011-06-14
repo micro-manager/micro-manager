@@ -330,6 +330,8 @@ int MDUSBDevice::Initialize()
    if (!IsCallbackRegistered())
       return DEVICE_NO_CALLBACK_REGISTERED;
    // open the port:
+   if (open_)
+      return DEVICE_OK;
    int ret = Open(deviceName_.c_str());
    if (ret != DEVICE_OK)
       return ret;
