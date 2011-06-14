@@ -409,13 +409,13 @@
             System.load(new File(path, libraryName).getAbsolutePath());
             return;
         }
-    String paths = System.getProperty("java.library.path");
-    if (paths != null)
-        for (String path : paths.split(File.pathSeparator))
-        if (new File(path, libraryName).exists()) {
-            System.load(new File(path, libraryName).getAbsolutePath());
-            return;
-      }
+//    String paths = System.getProperty("java.library.path");
+//    if (paths != null)
+//        for (String path : paths.split(File.pathSeparator))
+//        if (new File(path, libraryName).exists()) {
+//            System.load(new File(path, libraryName).getAbsolutePath());
+//            return;
+//      }
     System.loadLibrary(name);
   }
 
