@@ -3,7 +3,7 @@
 // PROJECT:       Micro-Manager
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
-// DESCRIPTION:   Implements Tucsen's 10MP CMOS TCA10.0C-N camera
+// DESCRIPTION:   Implements capture from DirectShow and WDM class drivers.
 //                Based heavily on the demo camera project.
 //                
 // AUTHOR:        Nenad Amodaj, nenad@amodaj.com, 06/08/2005
@@ -36,8 +36,8 @@
 
 
 // opencv includes
-#include "cv.h"
-#include "highgui.h"
+#include "..\..\..\3rdpartypublic\OpenCV2.1\include\opencv\cv.h"
+#include "..\..\..\3rdpartypublic\OpenCV2.1\include\opencv\highgui.h"
 
 using namespace cv;
 
@@ -49,23 +49,12 @@ IplImage* frame; // do not modify, do not release!
 IplImage* temp = 0; // used during conversion
 
 
-const double CDemoCamera::nominalPixelSizeUm_ = 1.0;
+const double COpenCVgrabber::nominalPixelSizeUm_ = 1.0;
 double g_IntensityFactor_ = 1.0;
 
 // External names used used by the rest of the system
 // to load particular device from the "DemoCamera.dll" library
 const char* g_CameraDeviceName = "OpenCVgrabber";
-const char* g_WheelDeviceName = "DWheel";
-const char* g_StateDeviceName = "DStateDevice";
-const char* g_LightPathDeviceName = "DLightPath";
-const char* g_ObjectiveDeviceName = "DObjective";
-const char* g_StageDeviceName = "DStage";
-const char* g_XYStageDeviceName = "DXYStage";
-const char* g_AutoFocusDeviceName = "DAutoFocus";
-const char* g_ShutterDeviceName = "DShutter";
-const char* g_DADeviceName = "D-DA";
-const char* g_MagnifierDeviceName = "DOptovar";
-const char* g_HubDeviceName = "DHub";
 
 // constants for naming pixel types (allowed values of the "PixelType" property)
 const char* g_PixelType_8bit = "8bit";
@@ -77,25 +66,38 @@ const char* g_PixelType_32bit = "32bit";  // floating point greyscale
 
 // constants for naming resolution modes
 const char* g_Keyword_Resolution = "Resolution";
-/*
-const char* g_Resolution0 = "3664x2748"; 
-const char* g_Resolution1 = "1600x1200"; 
-const char* g_Resolution2 = "1280x960"; 
-const char* g_Resolution3 = "800x600"; 
-const char* g_Resolution4 = "640x480"; 
-*/
-/*
-const char* g_Resolution0 = "0"; 
-const char* g_Resolution1 = "1"; 
-const char* g_Resolution2 = "2"; 
-const char* g_Resolution3 = "3"; 
-const char* g_Resolution4 = "4"; 
-*/
 
-const char* g_Resolution3 = "640x480"; 
-const char* g_Resolution2 = "1024x768"; 
-const char* g_Resolution1 = "1280x960"; 
-const char* g_Resolution0 = "768x576";
+const char* g_Res0 = "320x200";// cga
+const char* g_Res1 = "320x240";//qvga 
+const char* g_Res2 = "340x256"; 
+const char* g_Res3 = "480x320"; 
+const char* g_Res4 = "640x480";//vga 
+const char* g_Res5 = "680x512"; 
+const char* g_Res6 = "720x480";// 
+const char* g_Res7 = "768x576";//pal 
+const char* g_Res8 = "800x480";//wvga
+const char* g_Res9 = "854x480";//wvga
+const char* g_Res10 = "800x480";//svga
+const char* g_Res11 = "1024x600";//wsvga
+const char* g_Res12 = "1024x768";//xga
+const char* g_Res13 = "1136x768";
+const char* g_Res14 = "1280x720";//hd720
+const char* g_Res15 = "1280x800";//wxga
+const char* g_Res16 = "1280x960";
+const char* g_Res17 = "1280x1024";//sxga
+const char* g_Res18 = "1360x1024";
+const char* g_Res19 = "1400x1050";//sxga+
+const char* g_Res20 = "1440x900";
+const char* g_Res21 = "1440x960";
+const char* g_Res22 = "1600x1200";//uxga
+const char* g_Res23 = "1680x1050";//wsxga+
+const char* g_Res24 = "1920x1080";// are you ready for the hud?
+const char* g_Res25 = "1920x1200";//wuxga
+const char* g_Res26 = "2048x1080";//2k
+const char* g_Res27 = "2048x1536";//qxga
+const char* g_Res28 = "2560x1600";//wqxga
+const char* g_Res29 = "2560x2048";//sqxga
+const char* g_Res30 = "2592x1944";
 
 const char* g_Keyword_Contrast = "Contrast";
 const char* g_Keyword_Saturation = "Saturation";
@@ -122,10 +124,6 @@ BOOL APIENTRY DllMain( HANDLE /*hModule*/,
 }
 #endif
 
-
-
-
-
 ///////////////////////////////////////////////////////////////////////////////
 // Exported MMDevice API
 ///////////////////////////////////////////////////////////////////////////////
@@ -139,44 +137,6 @@ BOOL APIENTRY DllMain( HANDLE /*hModule*/,
 MODULE_API void InitializeModuleData()
 {
    AddAvailableDeviceName(g_CameraDeviceName, "OpenCVgrabber video input");
-  // AddAvailableDeviceName(g_WheelDeviceName, "Demo filter wheel");
- //  AddAvailableDeviceName(g_StateDeviceName, "Demo State Device");
- //  AddAvailableDeviceName(g_ObjectiveDeviceName, "Demo objective turret");
- //  AddAvailableDeviceName(g_StageDeviceName, "Demo stage");
- //  AddAvailableDeviceName(g_XYStageDeviceName, "Demo XY stage");
- //  AddAvailableDeviceName(g_LightPathDeviceName, "Demo light path");
- //  AddAvailableDeviceName(g_AutoFocusDeviceName, "Demo auto focus");
- //  AddAvailableDeviceName(g_ShutterDeviceName, "Demo shutter");
- //  AddAvailableDeviceName(g_DADeviceName, "Demo DA");
- //  AddAvailableDeviceName(g_MagnifierDeviceName, "Demo Optovar");
- //  AddAvailableDeviceName("TransposeProcessor", "TransposeProcessor");
- //  AddAvailableDeviceName("ImageFlipX", "ImageFlipX");
- //  AddAvailableDeviceName("ImageFlipY", "ImageFlipY");
- //  AddAvailableDeviceName("MedianFilter", "MedianFilter");
- //  AddAvailableDeviceName(g_HubDeviceName, "DHub");
-
-   if (DiscoverabilityTest())
-   {
-	  /*
-      SetDeviceIsDiscoverable(g_WheelDeviceName, true);
-      SetDeviceIsDiscoverable(g_StateDeviceName, true);
-      SetDeviceIsDiscoverable(g_ObjectiveDeviceName, true);
-      SetDeviceIsDiscoverable(g_StageDeviceName, true); 
-      SetDeviceIsDiscoverable(g_XYStageDeviceName, true);
-      SetDeviceIsDiscoverable(g_LightPathDeviceName, true);
-      SetDeviceIsDiscoverable(g_AutoFocusDeviceName, true);
-      SetDeviceIsDiscoverable(g_ShutterDeviceName, true);
-      SetDeviceIsDiscoverable(g_DADeviceName, true);
-      SetDeviceIsDiscoverable(g_MagnifierDeviceName, true);
-      SetDeviceIsDiscoverable("TransposeProcessor", true);
-      SetDeviceIsDiscoverable("ImageFlipX", true);
-      SetDeviceIsDiscoverable("ImageFlipY", true);
-      SetDeviceIsDiscoverable("MedianFilter", true);
-	  */
-   }
-
-
-
 }
 
 MODULE_API MM::Device* CreateDevice(const char* deviceName)
@@ -188,98 +148,24 @@ MODULE_API MM::Device* CreateDevice(const char* deviceName)
    if (strcmp(deviceName, g_CameraDeviceName) == 0)
    {
       // create camera
-      return new CDemoCamera();
-   }
-   /*else if (strcmp(deviceName, g_WheelDeviceName) == 0)
-   {
-      // create filter wheel
-      return new CDemoFilterWheel();
-   }
-   else if (strcmp(deviceName, g_ObjectiveDeviceName) == 0)
-   {
-      // create objective turret
-      return new CDemoObjectiveTurret();
-   }
-   else if (strcmp(deviceName, g_StateDeviceName) == 0)
-   {
-      // create state device
-      return new CDemoStateDevice();
-   }
-   else if (strcmp(deviceName, g_StageDeviceName) == 0)
-   {
-      // create stage
-      return new CDemoStage();
-   }
-   else if (strcmp(deviceName, g_XYStageDeviceName) == 0)
-   {
-      // create stage
-      return new CDemoXYStage();
-   }
-   else if (strcmp(deviceName, g_LightPathDeviceName) == 0)
-   {
-      // create light path
-      return new CDemoLightPath();
-   }
-   else if (strcmp(deviceName, g_ShutterDeviceName) == 0)
-   {
-      // create shutter
-      return new DemoShutter();
-   }
-   else if (strcmp(deviceName, g_DADeviceName) == 0)
-   {
-      // create DA
-      return new DemoDA();
-   }
-   else if (strcmp(deviceName, g_AutoFocusDeviceName) == 0)
-   {
-      // create autoFocus
-      return new DemoAutoFocus();
-   }
-   else if (strcmp(deviceName, g_MagnifierDeviceName) == 0)
-   {
-      // create Optovar 
-      return new DemoMagnifier();
+      return new COpenCVgrabber();
    }
 
-   else if(strcmp(deviceName, "TransposeProcessor") == 0)
-   {
-      return new TransposeProcessor();
-   }
-   else if(strcmp(deviceName, "ImageFlipX") == 0)
-   {
-      return new ImageFlipX();
-   }
-   else if(strcmp(deviceName, "ImageFlipY") == 0)
-   {
-      return new ImageFlipY();
-   }
-   else if(strcmp(deviceName, "MedianFilter") == 0)
-   {
-      return new MedianFilter();
-   }
-   else if (strcmp(deviceName, g_HubDeviceName) == 0)
-   {
-	  g_hub = new DemoHub();
-	  return g_hub;
-   }
-   */
    // ...supplied name not recognized
    return 0;
 }
 
 MODULE_API void DeleteDevice(MM::Device* pDevice)
 {
-   if (g_hub == pDevice)
-	   g_hub = NULL;
    delete pDevice;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// CDemoCamera implementation
+// COpenCVgrabber implementation
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 /**
-* CDemoCamera constructor.
+* COpenCVgrabber constructor.
 * Setup default all variables and create device properties required to exist
 * before intialization. In this case, no such properties were required. All
 * properties will be created in the Initialize() method.
@@ -288,8 +174,8 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 * the constructor. We should do as little as possible in the constructor and
 * perform most of the initialization in the Initialize() method.
 */
-CDemoCamera::CDemoCamera() :
-   CCameraBase<CDemoCamera> (),
+COpenCVgrabber::COpenCVgrabber() :
+   CCameraBase<COpenCVgrabber> (),
    dPhase_(0),
    initialized_(false),
    readoutUs_(0.0),
@@ -318,13 +204,13 @@ CDemoCamera::CDemoCamera() :
 }
 
 /**
-* CDemoCamera destructor.
+* COpenCVgrabber destructor.
 * If this device used as intended within the Micro-Manager system,
 * Shutdown() will be always called before the destructor. But in any case
 * we need to make sure that all resources are properly released even if
 * Shutdown() was not called.
 */
-CDemoCamera::~CDemoCamera()
+COpenCVgrabber::~COpenCVgrabber()
 {
 	if(capture){
 	   cvReleaseCapture(&capture);
@@ -341,7 +227,7 @@ CDemoCamera::~CDemoCamera()
 * Obtains device name.
 * Required by the MM::Device API.
 */
-void CDemoCamera::GetName(char* name) const
+void COpenCVgrabber::GetName(char* name) const
 {
    // We just return the name we use for referring to this
    // device adapter.
@@ -357,7 +243,7 @@ void CDemoCamera::GetName(char* name) const
 * Such pre-initialization properties are created in the constructor.
 * (This device does not have any pre-initialization properties)
 */
-int CDemoCamera::Initialize()
+int COpenCVgrabber::Initialize()
 {
 
    if (initialized_)
@@ -377,8 +263,8 @@ int CDemoCamera::Initialize()
       printf("Cannot retrieve frame from camera!");
       return DEVICE_NOT_CONNECTED;
    }
-   double w = cvGetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH);
-   double h = cvGetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT);
+   long w = cvGetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH);
+   long h = cvGetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT);
    cameraCCDXSize_ = w;
    cameraCCDYSize_ = h;
 
@@ -405,7 +291,7 @@ int CDemoCamera::Initialize()
    assert(nRet == DEVICE_OK);
 
    // binning
-   CPropertyAction *pAct = new CPropertyAction (this, &CDemoCamera::OnBinning);
+   CPropertyAction *pAct = new CPropertyAction (this, &COpenCVgrabber::OnBinning);
    nRet = CreateProperty(MM::g_Keyword_Binning, "1", MM::Integer, false, pAct);
    assert(nRet == DEVICE_OK);
 
@@ -414,7 +300,7 @@ int CDemoCamera::Initialize()
       return nRet;
 
    // pixel type
-   pAct = new CPropertyAction (this, &CDemoCamera::OnPixelType);
+   pAct = new CPropertyAction (this, &COpenCVgrabber::OnPixelType);
    nRet = CreateProperty(MM::g_Keyword_PixelType, g_PixelType_32bitRGB, MM::String, false, pAct);
    assert(nRet == DEVICE_OK);
 
@@ -430,7 +316,7 @@ int CDemoCamera::Initialize()
       return nRet;
 
    // Bit depth
-   pAct = new CPropertyAction (this, &CDemoCamera::OnBitDepth);
+   pAct = new CPropertyAction (this, &COpenCVgrabber::OnBitDepth);
    nRet = CreateProperty("BitDepth", "8", MM::Integer, false, pAct);
    assert(nRet == DEVICE_OK);
 
@@ -448,18 +334,45 @@ int CDemoCamera::Initialize()
    // Resolution
 
 
-    pAct = new CPropertyAction (this, &CDemoCamera::OnResolution);
-   nRet = CreateProperty(g_Keyword_Resolution, g_Resolution0, MM::String, false, pAct);
+    pAct = new CPropertyAction (this, &COpenCVgrabber::OnResolution);
+   nRet = CreateProperty(g_Keyword_Resolution, g_Res0, MM::String, false, pAct);
    assert(nRet == DEVICE_OK);
 
-   vector<string> resolutionValues;
-   resolutionValues.push_back(g_Resolution0);
-   resolutionValues.push_back(g_Resolution1); 
-   resolutionValues.push_back(g_Resolution2);
-   resolutionValues.push_back(g_Resolution3);
-   //resolutionValues.push_back(g_Resolution4);
+   vector<string> ResValues;
 
-   nRet = SetAllowedValues(g_Keyword_Resolution, resolutionValues);
+   ResValues.push_back(g_Res0);
+   ResValues.push_back(g_Res1);
+   ResValues.push_back(g_Res2);
+   ResValues.push_back(g_Res3);
+   ResValues.push_back(g_Res4);
+   ResValues.push_back(g_Res5);
+   ResValues.push_back(g_Res6);
+   ResValues.push_back(g_Res7);
+   ResValues.push_back(g_Res8);
+   ResValues.push_back(g_Res9);
+   ResValues.push_back(g_Res10);
+   ResValues.push_back(g_Res11);
+   ResValues.push_back(g_Res12);
+   ResValues.push_back(g_Res13);
+   ResValues.push_back(g_Res14);
+   ResValues.push_back(g_Res15);
+   ResValues.push_back(g_Res16);
+   ResValues.push_back(g_Res17);
+   ResValues.push_back(g_Res18);
+   ResValues.push_back(g_Res19);
+   ResValues.push_back(g_Res20);
+   ResValues.push_back(g_Res21);
+   ResValues.push_back(g_Res22);
+   ResValues.push_back(g_Res23);
+   ResValues.push_back(g_Res24);
+   ResValues.push_back(g_Res25);
+   ResValues.push_back(g_Res26);
+   ResValues.push_back(g_Res27);
+   ResValues.push_back(g_Res28);
+   ResValues.push_back(g_Res29);
+   ResValues.push_back(g_Res30);
+
+   nRet = SetAllowedValues(g_Keyword_Resolution, ResValues);
    if (nRet != DEVICE_OK)
       return nRet;
 
@@ -473,7 +386,7 @@ int CDemoCamera::Initialize()
 
    /*
    // scan mode
-   pAct = new CPropertyAction (this, &CDemoCamera::OnScanMode);
+   pAct = new CPropertyAction (this, &COpenCVgrabber::OnScanMode);
    nRet = CreateProperty("ScanMode", "1", MM::Integer, false, pAct);
    assert(nRet == DEVICE_OK);
    AddAllowedValue("ScanMode","1");
@@ -482,7 +395,7 @@ int CDemoCamera::Initialize()
    */
    /*
    // camera gain
-   pAct = new CPropertyAction (this, &CDemoCamera::OnGain);
+   pAct = new CPropertyAction (this, &COpenCVgrabber::OnGain);
    nRet = CreateProperty(MM::g_Keyword_Gain, "50", MM::Integer, false, pAct);
    assert(nRet == DEVICE_OK);
    SetPropertyLimits(MM::g_Keyword_Gain, 0, 1023);
@@ -492,14 +405,14 @@ int CDemoCamera::Initialize()
    assert(nRet == DEVICE_OK);
  
    // readout time
-   pAct = new CPropertyAction (this, &CDemoCamera::OnReadoutTime);
+   pAct = new CPropertyAction (this, &COpenCVgrabber::OnReadoutTime);
    nRet = CreateProperty(MM::g_Keyword_ReadoutTime, "0", MM::Float, false, pAct);
    assert(nRet == DEVICE_OK);
 
    // CCD size of the camera we are using
-   pAct = new CPropertyAction (this, &CDemoCamera::OnCameraCCDXSize);
+   pAct = new CPropertyAction (this, &COpenCVgrabber::OnCameraCCDXSize);
    CreateProperty("OnCameraCCDXSize", /*"512"*/CDeviceUtils::ConvertToString(w), MM::Integer, false, pAct);
-   pAct = new CPropertyAction (this, &CDemoCamera::OnCameraCCDYSize);
+   pAct = new CPropertyAction (this, &COpenCVgrabber::OnCameraCCDYSize);
    CreateProperty("OnCameraCCDYSize", /*"512"*/CDeviceUtils::ConvertToString(h), MM::Integer, false, pAct);
  
    // synchronize all properties
@@ -536,7 +449,7 @@ int CDemoCamera::Initialize()
 * After Shutdown() we should be allowed to call Initialize() again to load the device
 * without causing problems.
 */
-int CDemoCamera::Shutdown()
+int COpenCVgrabber::Shutdown()
 {
 	if(capture){
 	   cvReleaseCapture(&capture);
@@ -554,7 +467,7 @@ int CDemoCamera::Shutdown()
 * (i.e., before readout).  This behavior is needed for proper synchronization with the shutter.
 * Required by the MM::Camera API.
 */
-int CDemoCamera::SnapImage()
+int COpenCVgrabber::SnapImage()
 {
 	static int callCounter = 0;
 	++callCounter;
@@ -600,7 +513,7 @@ int CDemoCamera::SnapImage()
 * the pixel buffer on its own. In other words, the buffer can change only if
 * appropriate properties are set (such as binning, pixel type, etc.)
 */
-const unsigned char* CDemoCamera::GetImageBuffer()
+const unsigned char* COpenCVgrabber::GetImageBuffer()
 {
 
    MMThreadGuard g(imgPixelsLock_);
@@ -652,7 +565,7 @@ const unsigned char* CDemoCamera::GetImageBuffer()
 * Returns image buffer X-size in pixels.
 * Required by the MM::Camera API.
 */
-unsigned CDemoCamera::GetImageWidth() const
+unsigned COpenCVgrabber::GetImageWidth() const
 {
    
    return img_.Width();
@@ -662,7 +575,7 @@ unsigned CDemoCamera::GetImageWidth() const
 * Returns image buffer Y-size in pixels.
 * Required by the MM::Camera API.
 */
-unsigned CDemoCamera::GetImageHeight() const
+unsigned COpenCVgrabber::GetImageHeight() const
 {
    return img_.Height();
 }
@@ -671,7 +584,7 @@ unsigned CDemoCamera::GetImageHeight() const
 * Returns image buffer pixel depth in bytes.
 * Required by the MM::Camera API.
 */
-unsigned CDemoCamera::GetImageBytesPerPixel() const
+unsigned COpenCVgrabber::GetImageBytesPerPixel() const
 {
    return img_.Depth();
 } 
@@ -682,7 +595,7 @@ unsigned CDemoCamera::GetImageBytesPerPixel() const
 * a guideline on how to interpret pixel values.
 * Required by the MM::Camera API.
 */
-unsigned CDemoCamera::GetBitDepth() const
+unsigned COpenCVgrabber::GetBitDepth() const
 {
    return bitDepth_;
 }
@@ -691,7 +604,7 @@ unsigned CDemoCamera::GetBitDepth() const
 * Returns the size in bytes of the image buffer.
 * Required by the MM::Camera API.
 */
-long CDemoCamera::GetImageBufferSize() const
+long COpenCVgrabber::GetImageBufferSize() const
 {
    return img_.Width() * img_.Height() * GetImageBytesPerPixel();
 }
@@ -710,7 +623,7 @@ long CDemoCamera::GetImageBufferSize() const
 * @param xSize - width
 * @param ySize - height
 */
-int CDemoCamera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
+int COpenCVgrabber::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 {
 
    if (xSize == 0 && ySize == 0)
@@ -734,7 +647,7 @@ int CDemoCamera::SetROI(unsigned x, unsigned y, unsigned xSize, unsigned ySize)
 * Returns the actual dimensions of the current ROI.
 * Required by the MM::Camera API.
 */
-int CDemoCamera::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize)
+int COpenCVgrabber::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySize)
 {
 
 
@@ -751,11 +664,8 @@ int CDemoCamera::GetROI(unsigned& x, unsigned& y, unsigned& xSize, unsigned& ySi
 * Resets the Region of Interest to full frame.
 * Required by the MM::Camera API.
 */
-int CDemoCamera::ClearROI()
+int COpenCVgrabber::ClearROI()
 {
-   if (g_hub && g_hub->GenerateRandomError())
-      return SIMULATED_ERROR;
-
    ResizeImageBuffer();
    roiX_ = 0;
    roiY_ = 0;
@@ -767,7 +677,7 @@ int CDemoCamera::ClearROI()
 * Returns the current exposure setting in milliseconds.
 * Required by the MM::Camera API.
 */
-double CDemoCamera::GetExposure() const
+double COpenCVgrabber::GetExposure() const
 {
 	//double exp = cvGetCaptureProperty(capture,CV_CAP_PROP_EXPOSURE); // try to get the exposure from OpenCV - not all drivers allow this
 	//if(exp != 0) return exp; // if it works, great, return it, otherwise...
@@ -785,7 +695,7 @@ double CDemoCamera::GetExposure() const
 * Sets exposure in milliseconds.
 * Required by the MM::Camera API.
 */
-void CDemoCamera::SetExposure(double exp)
+void COpenCVgrabber::SetExposure(double exp)
 {
    SetProperty(MM::g_Keyword_Exposure, CDeviceUtils::ConvertToString(exp));
    cvSetCaptureProperty(capture,CV_CAP_PROP_EXPOSURE,exp); // there is no benefit from checking if this works (many capture drivers via opencv just don't allow this) - just carry on regardless.
@@ -795,7 +705,7 @@ void CDemoCamera::SetExposure(double exp)
 * Returns the current binning factor.
 * Required by the MM::Camera API.
 */
-int CDemoCamera::GetBinning() const
+int COpenCVgrabber::GetBinning() const
 {
 
    char buf[MM::MaxStrLength];
@@ -809,12 +719,12 @@ int CDemoCamera::GetBinning() const
 * Sets binning factor.
 * Required by the MM::Camera API.
 */
-int CDemoCamera::SetBinning(int binF)
+int COpenCVgrabber::SetBinning(int binF)
 {
    return SetProperty(MM::g_Keyword_Binning, CDeviceUtils::ConvertToString(binF));
 }
 
-int CDemoCamera::SetAllowedBinning() 
+int COpenCVgrabber::SetAllowedBinning() 
 {
    vector<string> binValues;
    binValues.push_back("1");
@@ -842,14 +752,14 @@ int CDemoCamera::SetAllowedBinning()
  * Please implement this yourself and do not rely on the base class implementation
  * The Base class implementation is deprecated and will be removed shortly
  */
-int CDemoCamera::StartSequenceAcquisition(double interval) {
+int COpenCVgrabber::StartSequenceAcquisition(double interval) {
    return StartSequenceAcquisition(LONG_MAX, interval, false);            
 }
 
 /**                                                                       
 * Stop and wait for the Sequence thread finished                                   
 */                                                                        
-int CDemoCamera::StopSequenceAcquisition()                                     
+int COpenCVgrabber::StopSequenceAcquisition()                                     
 {                                                                         
 
    if (!thd_->IsStopped()) {
@@ -865,7 +775,7 @@ int CDemoCamera::StopSequenceAcquisition()
 * A sequence acquisition should run on its own thread and transport new images
 * coming of the camera into the MMCore circular buffer.
 */
-int CDemoCamera::StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow)
+int COpenCVgrabber::StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow)
 {
 
    //if (IsCapturing())
@@ -884,7 +794,7 @@ int CDemoCamera::StartSequenceAcquisition(long numImages, double interval_ms, bo
 /*
  * Inserts Image and MetaData into MMCore circular Buffer
  */
-int CDemoCamera::InsertImage()
+int COpenCVgrabber::InsertImage()
 {
    MM::MMTime timeStamp = this->GetCurrentMMTime();
    char label[MM::MaxStrLength];
@@ -928,7 +838,7 @@ int CDemoCamera::InsertImage()
  * Do actual capturing
  * Called from inside the thread  
  */
-int CDemoCamera::ThreadRun (void)
+int COpenCVgrabber::ThreadRun (void)
 {
    int ret=DEVICE_ERR;
    
@@ -961,14 +871,14 @@ int CDemoCamera::ThreadRun (void)
    return ret;
 };
 
-bool CDemoCamera::IsCapturing() {
+bool COpenCVgrabber::IsCapturing() {
    return !thd_->IsStopped();
 }
 
 /*
  * called from the thread function before exit 
  */
-void CDemoCamera::OnThreadExiting() throw()
+void COpenCVgrabber::OnThreadExiting() throw()
 {
    try
    {
@@ -989,7 +899,7 @@ void CDemoCamera::OnThreadExiting() throw()
 }
 
 
-MySequenceThread::MySequenceThread(CDemoCamera* pCam)
+MySequenceThread::MySequenceThread(COpenCVgrabber* pCam)
    :intervalMs_(default_intervalMS)
    ,numImages_(default_numImages)
    ,imageCounter_(0)
@@ -1071,17 +981,15 @@ int MySequenceThread::svc(void) throw()
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// CDemoCamera Action handlers
+// COpenCVgrabber Action handlers
 ///////////////////////////////////////////////////////////////////////////////
 
 /*
 * this Read Only property will update whenever any property is modified
 */
 
-int CDemoCamera::OnTestProperty(MM::PropertyBase* pProp, MM::ActionType eAct, long indexx)
+int COpenCVgrabber::OnTestProperty(MM::PropertyBase* pProp, MM::ActionType eAct, long indexx)
 {
-   if (g_hub && g_hub->GenerateRandomError())
-      return SIMULATED_ERROR;
 
    if (eAct == MM::BeforeGet)
    {
@@ -1097,7 +1005,7 @@ int CDemoCamera::OnTestProperty(MM::PropertyBase* pProp, MM::ActionType eAct, lo
 
 // handles contrast property
 /*
-int CDemoCamera::OnContrast(MM::PropertyBase* pProp, MM::ActionType eAct)
+int COpenCVgrabber::OnContrast(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    int ret = DEVICE_ERR;
    switch(eAct)
@@ -1127,7 +1035,7 @@ int CDemoCamera::OnContrast(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 // handles gain property
 
-int CDemoCamera::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
+int COpenCVgrabber::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 
    int ret = DEVICE_ERR;
@@ -1156,7 +1064,7 @@ int CDemoCamera::OnGain(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 // handles saturation property
 /*
-int CDemoCamera::OnSaturation(MM::PropertyBase* pProp, MM::ActionType eAct)
+int COpenCVgrabber::OnSaturation(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 
    int ret = DEVICE_ERR;
@@ -1188,7 +1096,7 @@ int CDemoCamera::OnSaturation(MM::PropertyBase* pProp, MM::ActionType eAct)
 /**
 * Handles "Binning" property.
 */
-int CDemoCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
+int COpenCVgrabber::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    int ret = DEVICE_ERR;
    switch(eAct)
@@ -1224,7 +1132,7 @@ int CDemoCamera::OnBinning(MM::PropertyBase* pProp, MM::ActionType eAct)
 /**
 * Handles "PixelType" property.
 */
-int CDemoCamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
+int COpenCVgrabber::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 
    int ret = DEVICE_ERR;
@@ -1310,7 +1218,7 @@ int CDemoCamera::OnPixelType(MM::PropertyBase* pProp, MM::ActionType eAct)
 /**
 * Handles "BitDepth" property.
 */
-int CDemoCamera::OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct)
+int COpenCVgrabber::OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    int ret = DEVICE_ERR;
    switch(eAct)
@@ -1419,7 +1327,7 @@ int CDemoCamera::OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct)
 /**
 * Handles "Resolution" property.
 */
-int CDemoCamera::OnResolution(MM::PropertyBase* pProp, MM::ActionType eAct)
+int COpenCVgrabber::OnResolution(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    int ret = DEVICE_ERR;
    switch(eAct)
@@ -1432,37 +1340,167 @@ int CDemoCamera::OnResolution(MM::PropertyBase* pProp, MM::ActionType eAct)
 		 std::string resolution;
          pProp->Get(resolution);
 
-
-         if (resolution.compare(g_Resolution0) == 0)
+		 if (resolution.compare(g_Res0) == 0)
+         {
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 320);
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 200);
+			pProp->Set(g_Res0);
+         } else if (resolution.compare(g_Res1) == 0)
+         {
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 320);
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 240);
+			pProp->Set(g_Res1);
+         } else if (resolution.compare(g_Res2) == 0)
+         {
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 340);
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 256);
+			pProp->Set(g_Res2);
+         } else if (resolution.compare(g_Res3) == 0)
+         {
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 480);
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 320);
+			pProp->Set(g_Res3);
+         } else if (resolution.compare(g_Res4) == 0)
+         {
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 640);
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 480);
+			pProp->Set(g_Res4);
+         } else if (resolution.compare(g_Res5) == 0)
+         {
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 680);
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 512);
+			pProp->Set(g_Res5);
+         } else if (resolution.compare(g_Res6) == 0)
+         {
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 720);
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 480);
+			pProp->Set(g_Res6);
+         } else if (resolution.compare(g_Res7) == 0)
          {
 			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 768);
 			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 576);
-			
-			pProp->Set(g_Resolution0);
-         } else if (resolution.compare(g_Resolution1) == 0)
+			pProp->Set(g_Res7);
+         } else if (resolution.compare(g_Res8) == 0)
          {
-            cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 1280);
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 960);
-			
-			pProp->Set(g_Resolution1);
-         } else if (resolution.compare(g_Resolution2) == 0)
-         {
-            cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 1024);
-			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 768);
-			
-			pProp->Set(g_Resolution2);
-         } else if (resolution.compare(g_Resolution3) == 0)
-         {
-            cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 640);
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 800);
 			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 480);
-			
-			pProp->Set(g_Resolution3);
-         } else {
-			 pProp->Set(g_Resolution0);
-			 cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 768);
-			 cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 576);
-			 
-			 return DEVICE_ERR;
+			pProp->Set(g_Res8);
+         } else if (resolution.compare(g_Res9) == 0)
+         {
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 854);
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 480);
+			pProp->Set(g_Res9);
+         } else if (resolution.compare(g_Res10) == 0)
+         {
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 800);
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 600);
+			pProp->Set(g_Res10);
+         } else if (resolution.compare(g_Res11) == 0)
+         {
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 1024);
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 600);
+			pProp->Set(g_Res11);
+         } else if (resolution.compare(g_Res12) == 0)
+         {
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 1024);
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 768);
+			pProp->Set(g_Res12);
+         } else if (resolution.compare(g_Res13) == 0)
+         {
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 1136);
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 768);
+			pProp->Set(g_Res13);
+         } else if (resolution.compare(g_Res14) == 0)
+         {
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 1280);
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 720);
+			pProp->Set(g_Res14);
+         } else if (resolution.compare(g_Res15) == 0)
+         {
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 1280);
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 800);
+			pProp->Set(g_Res15);
+         } else if (resolution.compare(g_Res16) == 0)
+         {
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 1280);
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 960);
+			pProp->Set(g_Res16);
+         } else if (resolution.compare(g_Res17) == 0)
+         {
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 1280);
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 1024);
+			pProp->Set(g_Res17);
+         } else if (resolution.compare(g_Res18) == 0)
+         {
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 1360);
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 1024);
+			pProp->Set(g_Res18);
+         } else if (resolution.compare(g_Res19) == 0)
+         {
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 1400);
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 1050);
+			pProp->Set(g_Res19);
+         } else if (resolution.compare(g_Res20) == 0)
+         {
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 1440);
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 900);
+			pProp->Set(g_Res20);
+         } else if (resolution.compare(g_Res21) == 0)
+         {
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 1440);
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 960);
+			pProp->Set(g_Res21);
+         } else if (resolution.compare(g_Res22) == 0)
+         {
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 1600);
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 1200);
+			pProp->Set(g_Res22);
+         } else if (resolution.compare(g_Res23) == 0)
+         {
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 1680);
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 1050);
+			pProp->Set(g_Res23);
+         } else if (resolution.compare(g_Res24) == 0)
+         {
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 1920);
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 1080);
+			pProp->Set(g_Res24);
+         } else if (resolution.compare(g_Res25) == 0)
+         {
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 1920);
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 1200);
+			pProp->Set(g_Res25);
+         } else if (resolution.compare(g_Res26) == 0)
+         {
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 2048);
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 1080);
+			pProp->Set(g_Res26);
+         } else if (resolution.compare(g_Res27) == 0)
+         {
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 2048);
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 1536);
+			pProp->Set(g_Res27);
+         } else if (resolution.compare(g_Res28) == 0)
+         {
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 2560);
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 1600);
+			pProp->Set(g_Res28);
+         } else if (resolution.compare(g_Res29) == 0)
+         {
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 2560);
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 2048);
+			pProp->Set(g_Res29);
+         } else if (resolution.compare(g_Res30) == 0)
+         {
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, 2592);
+			cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, 1944);
+			pProp->Set(g_Res30);
+         } else  {
+			 ret = DEVICE_ERR;
+			 pProp->Set("Error");
+		 }
+		 if(ret != DEVICE_OK){
+			 return ret;
 		 }
 
 		 cameraCCDXSize_ = cvGetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH);
@@ -1484,7 +1522,7 @@ int CDemoCamera::OnResolution(MM::PropertyBase* pProp, MM::ActionType eAct)
 /**
 * Handles "ReadoutTime" property.
 */
-int CDemoCamera::OnReadoutTime(MM::PropertyBase* pProp, MM::ActionType eAct)
+int COpenCVgrabber::OnReadoutTime(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::AfterSet)
    {
@@ -1501,68 +1539,13 @@ int CDemoCamera::OnReadoutTime(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-int CDemoCamera::OnDropPixels(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-   if (g_hub && g_hub->GenerateRandomError())
-      return SIMULATED_ERROR;
 
-   if (eAct == MM::AfterSet)
-   {
-      long tvalue = 0;
-      pProp->Get(tvalue);
-		dropPixels_ = (0==tvalue)?false:true;
-   }
-   else if (eAct == MM::BeforeGet)
-   {
-      pProp->Set(dropPixels_?1L:0L);
-   }
-
-   return DEVICE_OK;
-}
-
-int CDemoCamera::OnSaturatePixels(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-   if (g_hub && g_hub->GenerateRandomError())
-      return SIMULATED_ERROR;
-
-   if (eAct == MM::AfterSet)
-   {
-      long tvalue = 0;
-      pProp->Get(tvalue);
-		saturatePixels_ = (0==tvalue)?false:true;
-   }
-   else if (eAct == MM::BeforeGet)
-   {
-      pProp->Set(saturatePixels_?1L:0L);
-   }
-
-   return DEVICE_OK;
-}
-
-int CDemoCamera::OnFractionOfPixelsToDropOrSaturate(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-   if (g_hub && g_hub->GenerateRandomError())
-      return SIMULATED_ERROR;
-
-   if (eAct == MM::AfterSet)
-   {
-      double tvalue = 0;
-      pProp->Get(tvalue);
-		fractionOfPixelsToDropOrSaturate_ = tvalue;
-   }
-   else if (eAct == MM::BeforeGet)
-   {
-      pProp->Set(fractionOfPixelsToDropOrSaturate_);
-   }
-
-   return DEVICE_OK;
-}
 
 /*
 * Handles "ScanMode" property.
 * Changes allowed Binning values to test whether the UI updates properly
 */
-int CDemoCamera::OnScanMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+int COpenCVgrabber::OnScanMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 { 
 
    if (eAct == MM::AfterSet) {
@@ -1583,7 +1566,7 @@ int CDemoCamera::OnScanMode(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 
 
-int CDemoCamera::OnCameraCCDXSize(MM::PropertyBase* pProp , MM::ActionType eAct)
+int COpenCVgrabber::OnCameraCCDXSize(MM::PropertyBase* pProp , MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
@@ -1605,7 +1588,7 @@ int CDemoCamera::OnCameraCCDXSize(MM::PropertyBase* pProp , MM::ActionType eAct)
 
 }
 
-int CDemoCamera::OnCameraCCDYSize(MM::PropertyBase* pProp, MM::ActionType eAct)
+int COpenCVgrabber::OnCameraCCDYSize(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 
    if (eAct == MM::BeforeGet)
@@ -1628,7 +1611,7 @@ int CDemoCamera::OnCameraCCDYSize(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 }
 
-int CDemoCamera::OnTriggerDevice(MM::PropertyBase* pProp, MM::ActionType eAct)
+int COpenCVgrabber::OnTriggerDevice(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
 
    if (eAct == MM::BeforeGet)
@@ -1644,13 +1627,13 @@ int CDemoCamera::OnTriggerDevice(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 
 ///////////////////////////////////////////////////////////////////////////////
-// Private CDemoCamera methods
+// Private COpenCVgrabber methods
 ///////////////////////////////////////////////////////////////////////////////
 
 /**
 * Sync internal image buffer size to the chosen property values.
 */
-int CDemoCamera::ResizeImageBuffer()
+int COpenCVgrabber::ResizeImageBuffer()
 {
 
    char buf[MM::MaxStrLength];
@@ -1691,7 +1674,7 @@ int CDemoCamera::ResizeImageBuffer()
    return DEVICE_OK;
 }
 
-void CDemoCamera::GenerateEmptyImage(ImgBuffer& img)
+void COpenCVgrabber::GenerateEmptyImage(ImgBuffer& img)
 {
    MMThreadGuard g(imgPixelsLock_);
    if (img.Height() == 0 || img.Width() == 0 || img.Depth() == 0)
@@ -1702,1497 +1685,9 @@ void CDemoCamera::GenerateEmptyImage(ImgBuffer& img)
 
 
 
-void CDemoCamera::TestResourceLocking(const bool recurse)
+void COpenCVgrabber::TestResourceLocking(const bool recurse)
 {
    MMThreadGuard g(*pDemoResourceLock_);
    if(recurse)
       TestResourceLocking(false);
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// CDemoFilterWheel implementation
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-CDemoFilterWheel::CDemoFilterWheel() : 
-numPos_(10), 
-busy_(false), 
-initialized_(false), 
-changedTime_(0.0),
-position_(0)
-{
-   InitializeDefaultErrorMessages();
-   SetErrorText(ERR_UNKNOWN_POSITION, "Requested position not available in this device");
-   EnableDelay(); // signals that the dealy setting will be used
-}
-
-CDemoFilterWheel::~CDemoFilterWheel()
-{
-   Shutdown();
-}
-
-void CDemoFilterWheel::GetName(char* Name) const
-{
-   CDeviceUtils::CopyLimitedString(Name, g_WheelDeviceName);
-}
-
-
-int CDemoFilterWheel::Initialize()
-{
-   if (g_hub && g_hub->GenerateRandomError())
-      return SIMULATED_ERROR;
-
-   if (initialized_)
-      return DEVICE_OK;
-
-   // set property list
-   // -----------------
-
-   // Name
-   int ret = CreateProperty(MM::g_Keyword_Name, g_WheelDeviceName, MM::String, true);
-   if (DEVICE_OK != ret)
-      return ret;
-
-   // Description
-   ret = CreateProperty(MM::g_Keyword_Description, "Demo filter wheel driver", MM::String, true);
-   if (DEVICE_OK != ret)
-      return ret;
-
-   // Set timer for the Busy signal, or we'll get a time-out the first time we check the state of the shutter, for good measure, go back 'delay' time into the past
-   changedTime_ = GetCurrentMMTime();   
-
-   // Gate Closed Position
-   ret = CreateProperty(MM::g_Keyword_Closed_Position,"", MM::Integer, false);
-   if (ret != DEVICE_OK)
-      return ret;
-
-   // create default positions and labels
-   const int bufSize = 1024;
-   char buf[bufSize];
-   for (long i=0; i<numPos_; i++)
-   {
-      snprintf(buf, bufSize, "State-%ld", i);
-      SetPositionLabel(i, buf);
-      snprintf(buf, bufSize, "%ld", i);
-      AddAllowedValue(MM::g_Keyword_Closed_Position, buf);
-   }
-
-   // State
-   // -----
-   CPropertyAction* pAct = new CPropertyAction (this, &CDemoFilterWheel::OnState);
-   ret = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
-   if (ret != DEVICE_OK)
-      return ret;
-
-   // Label
-   // -----
-   pAct = new CPropertyAction (this, &CStateBase::OnLabel);
-   ret = CreateProperty(MM::g_Keyword_Label, "", MM::String, false, pAct);
-   if (ret != DEVICE_OK)
-      return ret;
-
-   ret = UpdateStatus();
-   if (ret != DEVICE_OK)
-      return ret;
-
-   initialized_ = true;
-
-   return DEVICE_OK;
-}
-
-bool CDemoFilterWheel::Busy()
-{
-   MM::MMTime interval = GetCurrentMMTime() - changedTime_;
-   MM::MMTime delay(GetDelayMs()*1000.0);
-   if (interval < delay)
-      return true;
-   else
-      return false;
-}
-
-
-int CDemoFilterWheel::Shutdown()
-{
-   if (g_hub && g_hub->GenerateRandomError())
-      return SIMULATED_ERROR;
-
-   if (initialized_)
-   {
-      initialized_ = false;
-   }
-   return DEVICE_OK;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// Action handlers
-///////////////////////////////////////////////////////////////////////////////
-
-int CDemoFilterWheel::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-   if (g_hub && g_hub->GenerateRandomError())
-      return SIMULATED_ERROR;
-
-   if (eAct == MM::BeforeGet)
-   {
-      pProp->Set(position_);
-      // nothing to do, let the caller to use cached property
-   }
-   else if (eAct == MM::AfterSet)
-   {
-      // Set timer for the Busy signal
-      changedTime_ = GetCurrentMMTime();
-
-      long pos;
-      pProp->Get(pos);
-      if (pos >= numPos_ || pos < 0)
-      {
-         pProp->Set(position_); // revert
-         return ERR_UNKNOWN_POSITION;
-      }
-
-      position_ = pos;
-   }
-
-   return DEVICE_OK;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// CDemoStateDevice implementation
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-CDemoStateDevice::CDemoStateDevice() : 
-numPos_(10), 
-busy_(false), 
-initialized_(false), 
-changedTime_(0.0),
-position_(0)
-{
-   InitializeDefaultErrorMessages();
-   SetErrorText(ERR_UNKNOWN_POSITION, "Requested position not available in this device");
-   EnableDelay(); // signals that the dealy setting will be used
-
-   // Number of positions
-   // -----
-   CPropertyAction* pAct = new CPropertyAction (this, &CDemoStateDevice::OnNumberOfStates);
-   CreateProperty("Number of positions", "0", MM::Integer, false, pAct, true);
-}
-
-CDemoStateDevice::~CDemoStateDevice()
-{
-   Shutdown();
-}
-
-void CDemoStateDevice::GetName(char* Name) const
-{
-   CDeviceUtils::CopyLimitedString(Name, g_StateDeviceName);
-}
-
-
-int CDemoStateDevice::Initialize()
-{
-   if (g_hub && g_hub->GenerateRandomError())
-      return SIMULATED_ERROR;
-
-   if (initialized_)
-      return DEVICE_OK;
-
-   // set property list
-   // -----------------
-
-   // Name
-   int ret = CreateProperty(MM::g_Keyword_Name, g_StateDeviceName, MM::String, true);
-   if (DEVICE_OK != ret)
-      return ret;
-
-   // Description
-   ret = CreateProperty(MM::g_Keyword_Description, "Demo state device driver", MM::String, true);
-   if (DEVICE_OK != ret)
-      return ret;
-
-   // Set timer for the Busy signal, or we'll get a time-out the first time we check the state of the shutter, for good measure, go back 'delay' time into the past
-   changedTime_ = GetCurrentMMTime();   
-
-   // Gate Closed Position
-   ret = CreateProperty(MM::g_Keyword_Closed_Position,"", MM::String, false);
-
-   // create default positions and labels
-   const int bufSize = 1024;
-   char buf[bufSize];
-   for (long i=0; i<numPos_; i++)
-   {
-      snprintf(buf, bufSize, "State-%ld", i);
-      SetPositionLabel(i, buf);
-      AddAllowedValue(MM::g_Keyword_Closed_Position, buf);
-   }
-
-   // State
-   // -----
-   CPropertyAction* pAct = new CPropertyAction (this, &CDemoStateDevice::OnState);
-   ret = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
-   if (ret != DEVICE_OK)
-      return ret;
-
-   // Label
-   // -----
-   pAct = new CPropertyAction (this, &CStateBase::OnLabel);
-   ret = CreateProperty(MM::g_Keyword_Label, "", MM::String, false, pAct);
-   if (ret != DEVICE_OK)
-      return ret;
-
-
-
-   ret = UpdateStatus();
-   if (ret != DEVICE_OK)
-      return ret;
-
-   initialized_ = true;
-
-   return DEVICE_OK;
-}
-
-bool CDemoStateDevice::Busy()
-{
-   MM::MMTime interval = GetCurrentMMTime() - changedTime_;
-   MM::MMTime delay(GetDelayMs()*1000.0);
-   if (interval < delay)
-      return true;
-   else
-      return false;
-}
-
-
-int CDemoStateDevice::Shutdown()
-{
-   if (g_hub && g_hub->GenerateRandomError())
-      return SIMULATED_ERROR;
-
-   if (initialized_)
-   {
-      initialized_ = false;
-   }
-   return DEVICE_OK;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// Action handlers
-///////////////////////////////////////////////////////////////////////////////
-
-int CDemoStateDevice::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-   if (g_hub && g_hub->GenerateRandomError())
-      return SIMULATED_ERROR;
-
-   if (eAct == MM::BeforeGet)
-   {
-      pProp->Set(position_);
-      // nothing to do, let the caller to use cached property
-   }
-   else if (eAct == MM::AfterSet)
-   {
-      // Set timer for the Busy signal
-      changedTime_ = GetCurrentMMTime();
-
-      long pos;
-      pProp->Get(pos);
-      if (pos >= numPos_ || pos < 0)
-      {
-         pProp->Set(position_); // revert
-         return ERR_UNKNOWN_POSITION;
-      }
-      position_ = pos;
-   }
-
-   return DEVICE_OK;
-}
-
-int CDemoStateDevice::OnNumberOfStates(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-   if (g_hub && g_hub->GenerateRandomError())
-      return SIMULATED_ERROR;
-
-   if (eAct == MM::BeforeGet)
-   {
-      pProp->Set(numPos_);
-   }
-   else if (eAct == MM::AfterSet)
-   {
-      if (!initialized_)
-         pProp->Get(numPos_);
-   }
-
-   return DEVICE_OK;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// CDemoLightPath implementation
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-CDemoLightPath::CDemoLightPath() : 
-numPos_(3), 
-busy_(false), 
-initialized_(false)
-{
-   InitializeDefaultErrorMessages();
-}
-
-CDemoLightPath::~CDemoLightPath()
-{
-   Shutdown();
-}
-
-void CDemoLightPath::GetName(char* Name) const
-{
-   CDeviceUtils::CopyLimitedString(Name, g_LightPathDeviceName);
-}
-
-
-int CDemoLightPath::Initialize()
-{
-   if (g_hub && g_hub->GenerateRandomError())
-      return SIMULATED_ERROR;
-
-   if (initialized_)
-      return DEVICE_OK;
-
-   // set property list
-   // -----------------
-
-   // Name
-   int ret = CreateProperty(MM::g_Keyword_Name, g_LightPathDeviceName, MM::String, true);
-   if (DEVICE_OK != ret)
-      return ret;
-
-   // Description
-   ret = CreateProperty(MM::g_Keyword_Description, "Demo light-path driver", MM::String, true);
-   if (DEVICE_OK != ret)
-      return ret;
-
-   // create default positions and labels
-   const int bufSize = 1024;
-   char buf[bufSize];
-   for (long i=0; i<numPos_; i++)
-   {
-      snprintf(buf, bufSize, "State-%ld", i);
-      SetPositionLabel(i, buf);
-   }
-
-   // State
-   // -----
-   CPropertyAction* pAct = new CPropertyAction (this, &CDemoLightPath::OnState);
-   ret = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
-   if (ret != DEVICE_OK)
-      return ret;
-
-   // Label
-   // -----
-   pAct = new CPropertyAction (this, &CStateBase::OnLabel);
-   ret = CreateProperty(MM::g_Keyword_Label, "", MM::String, false, pAct);
-   if (ret != DEVICE_OK)
-      return ret;
-
-   ret = UpdateStatus();
-   if (ret != DEVICE_OK)
-      return ret;
-
-   initialized_ = true;
-
-   return DEVICE_OK;
-}
-
-int CDemoLightPath::Shutdown()
-{
-   if (g_hub && g_hub->GenerateRandomError())
-      return SIMULATED_ERROR;
-
-   if (initialized_)
-   {
-      initialized_ = false;
-   }
-   return DEVICE_OK;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// Action handlers
-///////////////////////////////////////////////////////////////////////////////
-
-int CDemoLightPath::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-   if (g_hub && g_hub->GenerateRandomError())
-      return SIMULATED_ERROR;
-
-   if (eAct == MM::BeforeGet)
-   {
-      // nothing to do, let the caller to use cached property
-   }
-   else if (eAct == MM::AfterSet)
-   {
-      long pos;
-      pProp->Get(pos);
-      if (pos >= numPos_ || pos < 0)
-      {
-         pProp->Set(position_); // revert
-         return ERR_UNKNOWN_POSITION;
-      }
-      position_ = pos;
-   }
-
-   return DEVICE_OK;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// CDemoObjectiveTurret implementation
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-CDemoObjectiveTurret::CDemoObjectiveTurret() : 
-   numPos_(6), 
-   busy_(false), 
-   initialized_(false),
-   sequenceRunning_(false),
-   sequenceMaxSize_(10)
-{
-   SetErrorText(ERR_IN_SEQUENCE, "Error occurred while executing sequence");
-   SetErrorText(ERR_SEQUENCE_INACTIVE, "Sequence triggered, but sequence is not running");
-   InitializeDefaultErrorMessages();
-}
-
-CDemoObjectiveTurret::~CDemoObjectiveTurret()
-{
-   Shutdown();
-}
-
-void CDemoObjectiveTurret::GetName(char* Name) const
-{
-   CDeviceUtils::CopyLimitedString(Name, g_ObjectiveDeviceName);
-}
-
-
-int CDemoObjectiveTurret::Initialize()
-{
-   if (g_hub && g_hub->GenerateRandomError())
-      return SIMULATED_ERROR;
-
-   if (initialized_)
-      return DEVICE_OK;
-
-   // set property list
-   // -----------------
-
-   // Name
-   int ret = CreateProperty(MM::g_Keyword_Name, g_ObjectiveDeviceName, MM::String, true);
-   if (DEVICE_OK != ret)
-      return ret;
-
-   // Description
-   ret = CreateProperty(MM::g_Keyword_Description, "Demo objective turret driver", MM::String, true);
-   if (DEVICE_OK != ret)
-      return ret;
-
-   // create default positions and labels
-   const int bufSize = 1024;
-   char buf[bufSize];
-   for (long i=0; i<numPos_; i++)
-   {
-      snprintf(buf, bufSize, "Objective-%ld", i);
-      SetPositionLabel(i, buf);
-   }
-
-   // State
-   // -----
-   CPropertyAction* pAct = new CPropertyAction (this, &CDemoObjectiveTurret::OnState);
-   ret = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct);
-   if (ret != DEVICE_OK)
-      return ret;
-
-   // Label
-   // -----
-   pAct = new CPropertyAction (this, &CStateBase::OnLabel);
-   ret = CreateProperty(MM::g_Keyword_Label, "", MM::String, false, pAct);
-   if (ret != DEVICE_OK)
-      return ret;
-
-   // Triggers to test sequence capabilities
-   pAct = new CPropertyAction (this, &CDemoObjectiveTurret::OnTrigger);
-   ret = CreateProperty("Trigger", "-", MM::String, false, pAct);
-   AddAllowedValue("Trigger", "-");
-   AddAllowedValue("Trigger", "+");
-
-   ret = UpdateStatus();
-   if (ret != DEVICE_OK)
-      return ret;
-
-   initialized_ = true;
-
-   return DEVICE_OK;
-}
-
-int CDemoObjectiveTurret::Shutdown()
-{
-   if (g_hub && g_hub->GenerateRandomError())
-      return SIMULATED_ERROR;
-
-   if (initialized_)
-   {
-      initialized_ = false;
-   }
-   return DEVICE_OK;
-}
-
-
-
-///////////////////////////////////////////////////////////////////////////////
-// Action handlers
-///////////////////////////////////////////////////////////////////////////////
-
-int CDemoObjectiveTurret::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-   if (g_hub && g_hub->GenerateRandomError())
-      return SIMULATED_ERROR;
-
-   if (eAct == MM::BeforeGet)
-   {
-      // nothing to do, let the caller to use cached property
-   }
-   else if (eAct == MM::AfterSet)
-   {
-      long pos;
-      pProp->Get(pos);
-      if (pos >= numPos_ || pos < 0)
-      {
-         pProp->Set(position_); // revert
-         return ERR_UNKNOWN_POSITION;
-      }
-      position_ = pos;
-      std::ostringstream os;
-      os << position_;
-      OnPropertyChanged("State", os.str().c_str());
-      char label[MM::MaxStrLength];
-      GetPositionLabel(position_, label);
-      OnPropertyChanged("Label", label);
-   }
-   else if (eAct == MM::IsSequenceable) 
-   {
-      pProp->SetSequenceable(sequenceMaxSize_);
-   }
-   else if (eAct == MM::AfterLoadSequence)
-   {
-      sequence_ = pProp->GetSequence();
-      // DeviceBase.h checks that the vector is smaller than sequenceMaxSize_
-   }
-   else if (eAct == MM::StartSequence)
-   {
-      if (sequence_.size() > 0) {
-         sequenceIndex_ = 0;
-         sequenceRunning_ = true;
-      }
-   }
-   else if (eAct  == MM::StopSequence)
-   {
-      sequenceRunning_ = false;
-   }
-
-   return DEVICE_OK;
-}
-
-int CDemoObjectiveTurret::OnTrigger(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-   if (g_hub && g_hub->GenerateRandomError())
-      return SIMULATED_ERROR;
-
-   if (eAct == MM::BeforeGet)
-   {
-      pProp->Set("-");
-   } else if (eAct == MM::AfterSet) {
-      if (!sequenceRunning_)
-         return ERR_SEQUENCE_INACTIVE;
-      std::string tr;
-      pProp->Get(tr);
-      if (tr == "+") {
-         if (sequenceIndex_ < (int) sequence_.size()) {
-            std::string state = sequence_[sequenceIndex_];
-            int ret = SetProperty("State", state.c_str());
-            if (ret != DEVICE_OK)
-               return ERR_IN_SEQUENCE;
-            sequenceIndex_++;
-            if (sequenceIndex_ >= (int) sequence_.size()) {
-               sequenceIndex_ = 0;
-            }
-         } else
-         {
-            return ERR_IN_SEQUENCE;
-         }
-      }
-   }
-   return DEVICE_OK;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// CDemoStage implementation
-// ~~~~~~~~~~~~~~~~~~~~~~~~~
-
-CDemoStage::CDemoStage() : 
-stepSize_um_(0.025),
-pos_um_(0.0),
-busy_(false),
-initialized_(false),
-lowerLimit_(0.0),
-upperLimit_(20000.0)
-{
-   InitializeDefaultErrorMessages();
-}
-
-CDemoStage::~CDemoStage()
-{
-   Shutdown();
-}
-
-void CDemoStage::GetName(char* Name) const
-{
-   CDeviceUtils::CopyLimitedString(Name, g_StageDeviceName);
-}
-
-int CDemoStage::Initialize()
-{
-   if (g_hub && g_hub->GenerateRandomError())
-      return SIMULATED_ERROR;
-
-   if (initialized_)
-      return DEVICE_OK;
-
-   // set property list
-   // -----------------
-
-   // Name
-   int ret = CreateProperty(MM::g_Keyword_Name, g_StageDeviceName, MM::String, true);
-   if (DEVICE_OK != ret)
-      return ret;
-
-   // Description
-   ret = CreateProperty(MM::g_Keyword_Description, "Demo stage driver", MM::String, true);
-   if (DEVICE_OK != ret)
-      return ret;
-
-   // Position
-   // --------
-   CPropertyAction* pAct = new CPropertyAction (this, &CDemoStage::OnPosition);
-   ret = CreateProperty(MM::g_Keyword_Position, "0", MM::Float, false, pAct);
-   if (ret != DEVICE_OK)
-      return ret;
-
-   ret = UpdateStatus();
-   if (ret != DEVICE_OK)
-      return ret;
-
-   initialized_ = true;
-
-   return DEVICE_OK;
-}
-
-int CDemoStage::Shutdown()
-{
-   if (g_hub && g_hub->GenerateRandomError())
-      return SIMULATED_ERROR;
-
-   if (initialized_)
-   {
-      initialized_ = false;
-   }
-   return DEVICE_OK;
-}
-
-int CDemoStage::SetPositionUm(double pos) 
-{
-   if (g_hub && g_hub->GenerateRandomError())
-      return SIMULATED_ERROR;
-
-   pos_um_ = pos; 
-   SetIntensityFactor(pos);
-   return OnStagePositionChanged(pos_um_);
-}
-
-void CDemoStage::SetIntensityFactor(double pos)
-{
-   if (g_hub && g_hub->GenerateRandomError())
-      return;
-
-   pos = fabs(pos);
-   pos = 10.0 - pos;
-   if (pos < 0)
-      g_IntensityFactor_ = 1.0;
-   else
-      g_IntensityFactor_ = pos/10.0;
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-// Action handlers
-///////////////////////////////////////////////////////////////////////////////
-
-int CDemoStage::OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-   if (g_hub && g_hub->GenerateRandomError())
-      return SIMULATED_ERROR;
-
-   if (eAct == MM::BeforeGet)
-   {
-      std::stringstream s;
-      s << pos_um_;
-      pProp->Set(s.str().c_str());
-   }
-   else if (eAct == MM::AfterSet)
-   {
-      double pos;
-      pProp->Get(pos);
-      if (pos > upperLimit_ || lowerLimit_ > pos)
-      {
-         pProp->Set(pos_um_); // revert
-         return ERR_UNKNOWN_POSITION;
-      }
-      pos_um_ = pos;
-      SetIntensityFactor(pos);
-   }
-
-   return DEVICE_OK;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// CDemoXYStage implementation
-// ~~~~~~~~~~~~~~~~~~~~~~~~~
-
-CDemoXYStage::CDemoXYStage() : 
-CXYStageBase<CDemoXYStage>(),
-stepSize_um_(0.015),
-posX_um_(0.0),
-posY_um_(0.0),
-busy_(false),
-initialized_(false),
-lowerLimit_(0.0),
-upperLimit_(20000.0)
-{
-   InitializeDefaultErrorMessages();
-}
-
-CDemoXYStage::~CDemoXYStage()
-{
-   Shutdown();
-}
-
-void CDemoXYStage::GetName(char* Name) const
-{
-   CDeviceUtils::CopyLimitedString(Name, g_XYStageDeviceName);
-}
-
-int CDemoXYStage::Initialize()
-{
-   if (g_hub && g_hub->GenerateRandomError())
-      return SIMULATED_ERROR;
-
-   if (initialized_)
-      return DEVICE_OK;
-
-   // set property list
-   // -----------------
-
-   // Name
-   int ret = CreateProperty(MM::g_Keyword_Name, g_XYStageDeviceName, MM::String, true);
-   if (DEVICE_OK != ret)
-      return ret;
-
-   // Description
-   ret = CreateProperty(MM::g_Keyword_Description, "Demo XY stage driver", MM::String, true);
-   if (DEVICE_OK != ret)
-      return ret;
-
-   ret = UpdateStatus();
-   if (ret != DEVICE_OK)
-      return ret;
-
-   initialized_ = true;
-
-   return DEVICE_OK;
-}
-
-int CDemoXYStage::Shutdown()
-{
-   if (g_hub && g_hub->GenerateRandomError())
-      return SIMULATED_ERROR;
-
-   if (initialized_)
-   {
-      initialized_ = false;
-   }
-   return DEVICE_OK;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// Action handlers
-///////////////////////////////////////////////////////////////////////////////
-// none implemented
-
-
-///////////////////////////////////////////////////////////////////////////////
-// CDemoShutter implementation
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-void DemoShutter::GetName(char* name) const
-{
-   CDeviceUtils::CopyLimitedString(name, g_ShutterDeviceName);
-}
-
-int DemoShutter::Initialize()
-{
-   if (g_hub && g_hub->GenerateRandomError())
-      return SIMULATED_ERROR;
-
-   if (initialized_)
-      return DEVICE_OK;
-
-   // set property list
-   // -----------------
-
-   // Name
-   int ret = CreateProperty(MM::g_Keyword_Name, g_ShutterDeviceName, MM::String, true);
-   if (DEVICE_OK != ret)
-      return ret;
-
-   // Description
-   ret = CreateProperty(MM::g_Keyword_Description, "Demo shutter driver", MM::String, true);
-   if (DEVICE_OK != ret)
-      return ret;
-
-   changedTime_ = GetCurrentMMTime();
-
-   // state
-   CPropertyAction* pAct = new CPropertyAction (this, &DemoShutter::OnState);
-   ret = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct); 
-   if (ret != DEVICE_OK) 
-      return ret; 
-
-   AddAllowedValue(MM::g_Keyword_State, "0"); // Closed
-   AddAllowedValue(MM::g_Keyword_State, "1"); // Open
-
-   state_ = false;
-
-   ret = UpdateStatus();
-   if (ret != DEVICE_OK)
-      return ret;
-
-   initialized_ = true;
-
-   return DEVICE_OK;
-}
-
-
-bool DemoShutter::Busy()
-{
-   MM::MMTime interval = GetCurrentMMTime() - changedTime_;
-
-   if ( interval < MM::MMTime(1000.0 * GetDelayMs()))
-      return true;
-   else
-      return false;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// Action handlers
-///////////////////////////////////////////////////////////////////////////////
-
-int DemoShutter::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-   if (g_hub && g_hub->GenerateRandomError())
-      return SIMULATED_ERROR;
-
-   if (eAct == MM::BeforeGet)
-   {
-      if (state_)
-         pProp->Set(1L);
-      else
-         pProp->Set(0L);
-   }
-   else if (eAct == MM::AfterSet)
-   {
-      // Set timer for the Busy signal
-      changedTime_ = GetCurrentMMTime();
-
-      long pos;
-      pProp->Get(pos);
-
-      // apply the value
-      state_ = pos == 0 ? false : true;
-   }
-
-   return DEVICE_OK;
-}
-
-
-///////////////////////////////////////////////////////////////////////////////
-// CDemoMagnifier implementation
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~
-int DemoMagnifier::Initialize()
-{
-   if (g_hub && g_hub->GenerateRandomError())
-      return SIMULATED_ERROR;
-
-   CPropertyAction* pAct = new CPropertyAction (this, &DemoMagnifier::OnPosition);
-   int ret = CreateProperty("Position", "1x", MM::String, false, pAct); 
-   if (ret != DEVICE_OK) 
-      return ret; 
-
-   position = 0;
-
-   AddAllowedValue("Position", "1x"); 
-   AddAllowedValue("Position", "1.6x"); 
-
-   ret = UpdateStatus();
-   if (ret != DEVICE_OK)
-      return ret;
-
-   return DEVICE_OK;
-}
-
-double DemoMagnifier::GetMagnification() {
-   if (position == 0)
-      return 1.0;
-   return 1.6;
-}
-
-int DemoMagnifier::OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct) 
-{
-   if (g_hub && g_hub->GenerateRandomError())
-      return SIMULATED_ERROR;
-
-   if (eAct == MM::BeforeGet)
-   {
-      // nothing to do, let the caller use cached property
-   }
-   else if (eAct == MM::AfterSet)
-   {
-      std::string pos;
-      pProp->Get(pos);
-      if (pos == "1x")
-         position = 0;
-      else
-         position = 1;
-   }
-
-   return DEVICE_OK;
-}
-
-
-/****
-* Demo DA device
-*/
-
-DemoDA::DemoDA () : 
-volt_(0), 
-gatedVolts_(0), 
-open_(true) 
-{
-}
-
-DemoDA::~DemoDA() {
-}
-
-int DemoDA::SetGateOpen(bool open) 
-{
-   if (g_hub && g_hub->GenerateRandomError())
-      return SIMULATED_ERROR;
-
-   open_ = open; 
-   if (open_) 
-      gatedVolts_ = volt_; 
-   else 
-      gatedVolts_ = 0;
-
-   return DEVICE_OK;
-}
-
-int DemoDA::GetGateOpen(bool& open) 
-{
-   if (g_hub && g_hub->GenerateRandomError())
-      return SIMULATED_ERROR;
-
-   open = open_; 
-   return DEVICE_OK;
-}
-
-int DemoDA::SetSignal(double volts) {
-   if (g_hub && g_hub->GenerateRandomError())
-      return SIMULATED_ERROR;
-
-   volt_ = volts; 
-   if (open_)
-      gatedVolts_ = volts;
-
-   return DEVICE_OK;
-}
-
-int DemoDA::GetSignal(double& volts) 
-{
-   if (g_hub && g_hub->GenerateRandomError())
-      return SIMULATED_ERROR;
-
-   volts = volt_; 
-   return DEVICE_OK;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// CDemoAutoFocus implementation
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-void DemoAutoFocus::GetName(char* name) const
-{
-   CDeviceUtils::CopyLimitedString(name, g_AutoFocusDeviceName);
-}
-
-int DemoAutoFocus::Initialize()
-{
-   if (g_hub && g_hub->GenerateRandomError())
-      return SIMULATED_ERROR;
-
-   if (initialized_)
-      return DEVICE_OK;
-
-   // set property list
-   // -----------------
-
-   // Name
-   int ret = CreateProperty(MM::g_Keyword_Name, g_AutoFocusDeviceName, MM::String, true);
-   if (DEVICE_OK != ret)
-      return ret;
-
-   // Description
-   ret = CreateProperty(MM::g_Keyword_Description, "Demo auto-focus adapter", MM::String, true);
-   if (DEVICE_OK != ret)
-      return ret;
-
-   running_ = false;   
-
-   ret = UpdateStatus();
-   if (ret != DEVICE_OK)
-      return ret;
-
-   initialized_ = true;
-
-   return DEVICE_OK;
-}
-
-
-int TransposeProcessor::Initialize()
-{
-   if (g_hub && g_hub->GenerateRandomError())
-      return SIMULATED_ERROR;
-
-   if( NULL != this->pTemp_)
-   {
-      free(pTemp_);
-      pTemp_ = NULL;
-      this->tempSize_ = 0;
-   }
-    CPropertyAction* pAct = new CPropertyAction (this, &TransposeProcessor::OnInPlaceAlgorithm);
-   (void)CreateProperty("InPlaceAlgorithm", "0", MM::Integer, false, pAct); 
-   return DEVICE_OK;
-}
-
-   // action interface
-   // ----------------
-int TransposeProcessor::OnInPlaceAlgorithm(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-   if (g_hub && g_hub->GenerateRandomError())
-      return SIMULATED_ERROR;
-
-   if (eAct == MM::BeforeGet)
-   {
-      pProp->Set(this->inPlace_?1L:0L);
-   }
-   else if (eAct == MM::AfterSet)
-   {
-      long ltmp;
-      pProp->Get(ltmp);
-      inPlace_ = (0==ltmp?false:true);
-   }
-
-   return DEVICE_OK;
-}
-
-
-int TransposeProcessor::Process(unsigned char *pBuffer, unsigned int width, unsigned int height, unsigned int byteDepth)
-{
-   if (g_hub && g_hub->GenerateRandomError())
-      return SIMULATED_ERROR;
-
-   int ret = DEVICE_OK;
-   // 
-   if( width != height)
-      return DEVICE_NOT_SUPPORTED; // problem with tranposing non-square images is that the image buffer
-   // will need to be modified by the image processor.
-   if(busy_)
-      return DEVICE_ERR;
- 
-   busy_ = true;
-
-   if( inPlace_)
-   {
-      if(  sizeof(unsigned char) == byteDepth)
-      {
-         TransposeSquareInPlace( (unsigned char*)pBuffer, width);
-      }
-      else if( sizeof(unsigned short) == byteDepth)
-      {
-         TransposeSquareInPlace( (unsigned short*)pBuffer, width);
-      }
-      else if( sizeof(unsigned long) == byteDepth)
-      {
-         TransposeSquareInPlace( (unsigned long*)pBuffer, width);
-      }
-      else if( sizeof(unsigned long long) == byteDepth)
-      {
-         TransposeSquareInPlace( (unsigned long long*)pBuffer, width);
-      }
-      else 
-      {
-         ret = DEVICE_NOT_SUPPORTED;
-      }
-   }
-   else
-   {
-      if( sizeof(unsigned char) == byteDepth)
-      {
-         ret = TransposeRectangleOutOfPlace( (unsigned char*)pBuffer, width, height);
-      }
-      else if( sizeof(unsigned short) == byteDepth)
-      {
-         ret = TransposeRectangleOutOfPlace( (unsigned short*)pBuffer, width, height);
-      }
-      else if( sizeof(unsigned long) == byteDepth)
-      {
-         ret = TransposeRectangleOutOfPlace( (unsigned long*)pBuffer, width, height);
-      }
-      else if( sizeof(unsigned long long) == byteDepth)
-      {
-         ret =  TransposeRectangleOutOfPlace( (unsigned long long*)pBuffer, width, height);
-      }
-      else
-      {
-         ret =  DEVICE_NOT_SUPPORTED;
-      }
-   }
-   busy_ = false;
-
-   return ret;
-}
-
-
-
-
-int ImageFlipY::Initialize()
-{
-    CPropertyAction* pAct = new CPropertyAction (this, &ImageFlipY::OnPerformanceTiming);
-    (void)CreateProperty("PeformanceTiming (microseconds)", "0", MM::Float, true, pAct); 
-   return DEVICE_OK;
-}
-
-   // action interface
-   // ----------------
-int ImageFlipY::OnPerformanceTiming(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-
-   if (eAct == MM::BeforeGet)
-   {
-      pProp->Set( performanceTiming_.getUsec());
-   }
-   else if (eAct == MM::AfterSet)
-   {
-      // -- it's ready only!
-   }
-
-   return DEVICE_OK;
-}
-
-
-int ImageFlipY::Process(unsigned char *pBuffer, unsigned int width, unsigned int height, unsigned int byteDepth)
-{
-   if(busy_)
-      return DEVICE_ERR;
-
-   int ret = DEVICE_OK;
- 
-   busy_ = true;
-   performanceTiming_ = MM::MMTime(0.);
-   MM::MMTime  s0 = GetCurrentMMTime();
-
-
-   if( sizeof(unsigned char) == byteDepth)
-   {
-      ret = Flip( (unsigned char*)pBuffer, width, height);
-   }
-   else if( sizeof(unsigned short) == byteDepth)
-   {
-      ret = Flip( (unsigned short*)pBuffer, width, height);
-   }
-   else if( sizeof(unsigned long) == byteDepth)
-   {
-      ret = Flip( (unsigned long*)pBuffer, width, height);
-   }
-   else if( sizeof(unsigned long long) == byteDepth)
-   {
-      ret =  Flip( (unsigned long long*)pBuffer, width, height);
-   }
-   else
-   {
-      ret =  DEVICE_NOT_SUPPORTED;
-   }
-
-   performanceTiming_ = GetCurrentMMTime() - s0;
-   busy_ = false;
-
-   return ret;
-}
-
-
-
-
-
-
-
-///
-int ImageFlipX::Initialize()
-{
-    CPropertyAction* pAct = new CPropertyAction (this, &ImageFlipX::OnPerformanceTiming);
-    (void)CreateProperty("PeformanceTiming (microseconds)", "0", MM::Float, true, pAct); 
-   return DEVICE_OK;
-}
-
-   // action interface
-   // ----------------
-int ImageFlipX::OnPerformanceTiming(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-
-   if (eAct == MM::BeforeGet)
-   {
-      pProp->Set( performanceTiming_.getUsec());
-   }
-   else if (eAct == MM::AfterSet)
-   {
-      // -- it's ready only!
-   }
-
-   return DEVICE_OK;
-}
-
-
-int ImageFlipX::Process(unsigned char *pBuffer, unsigned int width, unsigned int height, unsigned int byteDepth)
-{
-   if(busy_)
-      return DEVICE_ERR;
-
-   int ret = DEVICE_OK;
- 
-   busy_ = true;
-   performanceTiming_ = MM::MMTime(0.);
-   MM::MMTime  s0 = GetCurrentMMTime();
-
-
-   if( sizeof(unsigned char) == byteDepth)
-   {
-      ret = Flip( (unsigned char*)pBuffer, width, height);
-   }
-   else if( sizeof(unsigned short) == byteDepth)
-   {
-      ret = Flip( (unsigned short*)pBuffer, width, height);
-   }
-   else if( sizeof(unsigned long) == byteDepth)
-   {
-      ret = Flip( (unsigned long*)pBuffer, width, height);
-   }
-   else if( sizeof(unsigned long long) == byteDepth)
-   {
-      ret =  Flip( (unsigned long long*)pBuffer, width, height);
-   }
-   else
-   {
-      ret =  DEVICE_NOT_SUPPORTED;
-   }
-
-   performanceTiming_ = GetCurrentMMTime() - s0;
-   busy_ = false;
-
-   return ret;
-}
-
-///
-int MedianFilter::Initialize()
-{
-    CPropertyAction* pAct = new CPropertyAction (this, &MedianFilter::OnPerformanceTiming);
-    (void)CreateProperty("PeformanceTiming (microseconds)", "0", MM::Float, true, pAct); 
-    (void)CreateProperty("BEWARE", "THIS FILTER MODIFIES DATA, EACH PIXEL IS REPLACED BY 3X3 NEIGHBORHOOD MEDIAN", MM::String, true); 
-   return DEVICE_OK;
-}
-
-   // action interface
-   // ----------------
-int MedianFilter::OnPerformanceTiming(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-
-   if (eAct == MM::BeforeGet)
-   {
-      pProp->Set( performanceTiming_.getUsec());
-   }
-   else if (eAct == MM::AfterSet)
-   {
-      // -- it's ready only!
-   }
-
-   return DEVICE_OK;
-}
-
-
-int MedianFilter::Process(unsigned char *pBuffer, unsigned int width, unsigned int height, unsigned int byteDepth)
-{
-   if(busy_)
-      return DEVICE_ERR;
-
-   int ret = DEVICE_OK;
- 
-   busy_ = true;
-   performanceTiming_ = MM::MMTime(0.);
-   MM::MMTime  s0 = GetCurrentMMTime();
-
-
-   if( sizeof(unsigned char) == byteDepth)
-   {
-      ret = Filter( (unsigned char*)pBuffer, width, height);
-   }
-   else if( sizeof(unsigned short) == byteDepth)
-   {
-      ret = Filter( (unsigned short*)pBuffer, width, height);
-   }
-   else if( sizeof(unsigned long) == byteDepth)
-   {
-      ret = Filter( (unsigned long*)pBuffer, width, height);
-   }
-   else if( sizeof(unsigned long long) == byteDepth)
-   {
-      ret =  Filter( (unsigned long long*)pBuffer, width, height);
-   }
-   else
-   {
-      ret =  DEVICE_NOT_SUPPORTED;
-   }
-
-   performanceTiming_ = GetCurrentMMTime() - s0;
-   busy_ = false;
-
-   return ret;
-}
-
-
-
-
-
-
-
-int DemoHub::Initialize()
-{
-   if (g_hub && g_hub->GenerateRandomError())
-      return SIMULATED_ERROR;
-
-	initialized_ = true;
-   SetErrorText(SIMULATED_ERROR, "Simulated Error");
-	CPropertyAction *pAct = new CPropertyAction (this, &DemoHub::OnErrorRate);
-	CreateProperty("SimulatedErrorRate", "0.0", MM::Float, false, pAct);
-	AddAllowedValue("SimulatedErrorRate", "0.0000");
-	AddAllowedValue("SimulatedErrorRate", "0.0001");
-   AddAllowedValue("SimulatedErrorRate", "0.0010");
-	AddAllowedValue("SimulatedErrorRate", "0.0100");
-	AddAllowedValue("SimulatedErrorRate", "0.1000");
-	AddAllowedValue("SimulatedErrorRate", "0.2000");
-	AddAllowedValue("SimulatedErrorRate", "0.5000");
-	AddAllowedValue("SimulatedErrorRate", "1.0000");
-	return DEVICE_OK;
-}
-
-void  DemoHub::GetPeripheralInventory()
-{
-   if (g_hub && g_hub->GenerateRandomError())
-      return;
-
-   Initialize();
-
-   peripherals_.clear();
-   if( DiscoverabilityTest())
-   {
-      // all the adapters in this module
-      int n = GetNumberOfDevices();
-      char deviceName[MM::MaxStrLength];
-      for( int i = 0; i < n; ++i)
-      {
-         bool succ = GetDeviceName(i, deviceName, MM::MaxStrLength);
-         if( succ)
-         {
-            bool isDiscoverable;
-            succ = GetDeviceIsDiscoverable( deviceName, &isDiscoverable);
-            if( succ)
-            {
-               if(isDiscoverable)
-               {
-                  peripherals_.push_back(deviceName);
-               }
-
-            }
-         }
-      }
-   }
-}
-
-
-int DemoHub::GetNumberOfDiscoverableDevices()
-{
-   if (g_hub && g_hub->GenerateRandomError())
-      return SIMULATED_ERROR;
-
-   GetPeripheralInventory();
-   return  (int) peripherals_.size();
-
-}
-
-void DemoHub::GetDiscoverableDevice(int peripheralNum, char* peripheralName, unsigned int maxNameLen)
-{ 
-   if (g_hub && g_hub->GenerateRandomError())
-      return;
-
-   if( -1 < peripheralNum)
-   {
-      if( peripheralNum < int(peripherals_.size()))
-      {
-            strncpy(peripheralName, peripherals_[peripheralNum].c_str(), maxNameLen - 1);
-            peripheralName[maxNameLen - 1] = 0;
-      }
-   
-   }
-   return;
-} 
-
-
-
-void DemoHub::GetName(char* pName) const{  CDeviceUtils::CopyLimitedString(pName, g_HubDeviceName);} ;
-
-bool DemoHub::GenerateRandomError()
-{
-   if (errorRate_ == 0.0)
-      return false;
-
-	return (0 == (rand() % ((int) (1.0 / errorRate_))));
-}
-
-int DemoHub::OnErrorRate(MM::PropertyBase* pProp, MM::ActionType eAct)
-{
-   // Don't simulate an error here!!!!
-
-   if (eAct == MM::AfterSet)
-   {
-      pProp->Get(errorRate_);
-
-   }
-   else if (eAct == MM::BeforeGet)
-   {
-      pProp->Set(errorRate_);
-   }
-   return DEVICE_OK;
 }
