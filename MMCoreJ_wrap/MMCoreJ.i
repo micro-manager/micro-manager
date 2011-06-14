@@ -460,13 +460,19 @@
          * As libMMCoreJ_wrap lives in the same directory as the
          * device drivers, let's add those paths to the search
          * paths, too.
+         *
+         * ======
+         * 6/14/2011
+         * I'm commenting out the java.library.path code because it is
+         * causing us to experience DLL hell. Discussion welcome.
+         * -- Arthur
          */
         for (File path : searchPaths)
           CMMCore.addSearchPath(path.getAbsolutePath());
-        String libPath = System.getProperty("java.library.path");
-        if (libPath != null)
-            for (String path : libPath.split(File.pathSeparator))
-                CMMCore.addSearchPath(path);
+//        String libPath = System.getProperty("java.library.path");
+//        if (libPath != null)
+//            for (String path : libPath.split(File.pathSeparator))
+//                CMMCore.addSearchPath(path);
     } catch (UnsatisfiedLinkError e) {
         System.err.println("Native code library failed to load. \n" + e);
         // do not exit here, loadLibrary does not work on all platforms in the same way,
