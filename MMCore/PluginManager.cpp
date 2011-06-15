@@ -113,22 +113,22 @@ string CPluginManager::FindInSearchPath(string filename)
 
    vector<string>::const_iterator it;
    for (it = searchPaths_.begin(); it != searchPaths_.end(); it++) {
-      string path = *it;
+      stringstream path;
+      path << *it;
       #ifdef WIN32
-      path += "\\";
+      path << "\\" << filename << ".dll";
       #else
-      path += "/";
+      path << "/" << filename;
       #endif
-      path += filename;
 
       // test whether it exists
-      cout << "Searching for " << path << endl;
-      ifstream in(path.c_str(), ifstream::in);
+      cout << "Searching for " << path.str() << endl;
+      ifstream in(path.str().c_str(), ifstream::in);
       in.close();
 
       if (!in.fail())
          // we found it!
-         return path;
+         return path.str();
    }
 
    // not found!
