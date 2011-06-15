@@ -390,8 +390,9 @@
     // We need to get rid of multiple protocols (jar: and file:)
     // and end up with an file path correct on every platform.
     // The following lines seem to work, though it's ugly:
-	String decodedUrl = URLDecoder.decode(url.getPath(), "UTF-8");
-	return new File(new URL(decodedUrl).getPath()).getAbsolutePath();
+	String url1 = URLDecoder.decode(url.getPath(), "UTF-8");
+	String url2 = URLDecoder.decode(new URL(url1).getPath(), "UTF-8");
+	return new File(url2).getAbsolutePath();
   }
 
   private static String getJarPath() {
@@ -423,13 +424,6 @@
             System.load(new File(path, libraryName).getAbsolutePath());
             return;
         }
-//    String paths = System.getProperty("java.library.path");
-//    if (paths != null)
-//        for (String path : paths.split(File.pathSeparator))
-//        if (new File(path, libraryName).exists()) {
-//            System.load(new File(path, libraryName).getAbsolutePath());
-//            return;
-//      }
     System.loadLibrary(name);
   }
 
@@ -437,56 +431,21 @@
     List<File> searchPaths = new ArrayList<File>();
     File directory = new File(getJarPath()).getParentFile();
     searchPaths.add(directory);
-    directory = directory.getParentFile().getParentFile();
+    directory = directory.getParentFile();
     searchPaths.add(directory);
-    directory = new File(new File(directory, "mm"), getPlatformString());
+    File directoryMM = new File(new File(directory, "mm"), getPlatformString());
+    searchPaths.add(directoryMM);
+    directory = directory.getParentFile();
     searchPaths.add(directory);
-
-    try {
-        loadLibrary(searchPaths, "MMCoreJ_wrap");
-        /*
-         * NOTE: it is positively _dangerous_ to rely on the
-         * java.library.path!
-         *
-         * For one, The assumption that Java respects that setting
-         * when changed after starting up Java is _wrong_, as
-         * explained in this Sun Java-specific hack:
-         * http://forums.sun.com/thread.jspa?threadID=707176
-         *
-         * But there is an even more serious reason:
-         * getDeviceLibraries() is supposed to list the drivers
-         * which can later be loaded. But they are loaded via
-         * dlopen(), which does not respect the java.library.path
-         * property at all!
-         *
-         * Indeed, it is very easy for the search paths of Java and
-         * of dlopen() to become unsynchronized, and it does not
-         * even take malice to do so!
-         *
-         * However, we cannot easily get the search path for
-         * dlopen(), and we cannot modify it at runtime at all!
-         *
-         * In the interest of the law of the least surprise,
-         * therefore, we parse java.library.path ourselves and
-         * respect that search path both for the discovery of the
-         * drivers as well as for the actual loading.
-         *
-         * As libMMCoreJ_wrap lives in the same directory as the
-         * device drivers, let's add those paths to the search
-         * paths, too.
-         *
-         * ======
-         * 6/14/2011
-         * I'm commenting out the java.library.path code because it is
-         * causing us to experience DLL hell. Discussion welcome.
-         * -- Arthur
-         */
-        for (File path : searchPaths)
+    directoryMM = new File(new File(directory, "mm"), getPlatformString());
+    searchPaths.add(directoryMM);    
+    
+	try {
+	    loadLibrary(searchPaths, "MMCoreJ_wrap");
+        for (File path : searchPaths) {
+          System.out.println(path.getAbsolutePath());
           CMMCore.addSearchPath(path.getAbsolutePath());
-//        String libPath = System.getProperty("java.library.path");
-//        if (libPath != null)
-//            for (String path : libPath.split(File.pathSeparator))
-//                CMMCore.addSearchPath(path);
+          }
     } catch (UnsatisfiedLinkError e) {
         System.err.println("Native code library failed to load. \n" + e);
         // do not exit here, loadLibrary does not work on all platforms in the same way,
