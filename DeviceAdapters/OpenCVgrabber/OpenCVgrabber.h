@@ -4,8 +4,7 @@
 // SUBSYSTEM:     DeviceAdapters
 //-----------------------------------------------------------------------------
 // DESCRIPTION:   OpenCVgrabber utilises the easy image capture interface provided
-//                by highgui in the OpenVC project.
-//
+//                by highgui in the OpenCV project, supporting almost any WDM or DirectShow image capture hardware
 //                
 // AUTHOR:        (Original file - democamera.h) Nenad Amodaj, nenad@amodaj.com, 06/08/2005
 //                
@@ -114,7 +113,7 @@ public:
    int OnBitDepth(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnReadoutTime(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnScanMode(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnErrorSimulation(MM::PropertyBase* , MM::ActionType );
+
    int OnCameraCCDXSize(MM::PropertyBase* , MM::ActionType );
    int OnCameraCCDYSize(MM::PropertyBase* , MM::ActionType );
    int OnTriggerDevice(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -127,12 +126,12 @@ private:
 
    void GenerateEmptyImage(ImgBuffer& img);
 
-   void GenerateSyntheticImage(ImgBuffer& img, double exp);
+
    int ResizeImageBuffer();
 
    static const double nominalPixelSizeUm_;
 
-   double dPhase_;
+
    ImgBuffer img_;
    bool busy_;
    bool stopOnOverFlow_;
@@ -150,12 +149,6 @@ private:
 	long cameraCCDYSize_;
 	std::string triggerDevice_;
 
-	bool dropPixels_;
-	bool saturatePixels_;
-	double fractionOfPixelsToDropOrSaturate_;
-
-
-	double testProperty_[10];
    MMThreadLock* pDemoResourceLock_;
    MMThreadLock imgPixelsLock_;
    int nComponents_;

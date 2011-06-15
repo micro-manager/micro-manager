@@ -175,7 +175,6 @@ MODULE_API void DeleteDevice(MM::Device* pDevice)
 */
 COpenCVgrabber::COpenCVgrabber() :
    CCameraBase<COpenCVgrabber> (),
-   dPhase_(0),
    initialized_(false),
    readoutUs_(0.0),
    scanMode_(1),
@@ -532,7 +531,6 @@ const unsigned char* COpenCVgrabber::GetImageBuffer()
 	   }
 		
    } else {
-	   // TODO: return a proper greyscale image rather than the first channel of a colour one!!
 		for(int i=0; i < cameraCCDXSize_ * cameraCCDYSize_; i++){
 			memcpy(img_.GetPixelsRW()+i, temp->imageData+i*3,1);
 		}
@@ -945,24 +943,6 @@ int MySequenceThread::svc(void) throw()
 // COpenCVgrabber Action handlers
 ///////////////////////////////////////////////////////////////////////////////
 
-/*
-* this Read Only property will update whenever any property is modified
-*/
-
-int COpenCVgrabber::OnTestProperty(MM::PropertyBase* pProp, MM::ActionType eAct, long indexx)
-{
-
-   if (eAct == MM::BeforeGet)
-   {
-      pProp->Set(testProperty_[indexx]);
-   }
-   else if (eAct == MM::AfterSet)
-   {
-      pProp->Get(testProperty_[indexx]);
-   }
-	return DEVICE_OK;
-
-}
 
 // handles contrast property
 /*
