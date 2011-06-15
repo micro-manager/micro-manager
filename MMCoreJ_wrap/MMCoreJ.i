@@ -380,18 +380,32 @@
 
    import java.util.ArrayList;
    import java.util.List;
+   import java.net.URL;
+   import java.net.URLDecoder;
 %}
 
 %pragma(java) jniclasscode=%{
+
+  private static String URLtoFilePath(URL url) throws Exception {
+    // We need to get rid of multiple protocols (jar: and file:)
+    // and end up with an file path correct on every platform.
+    // The following lines seem to work, though it's ugly:
+	String decodedUrl = URLDecoder.decode(url.getPath(), "UTF-8");
+	return new File(new URL(decodedUrl).getPath()).getAbsolutePath();
+  }
+
   private static String getJarPath() {
     String classFile = "/mmcorej/CMMCore.class";
-    String path = CMMCore.class.getResource(classFile).getFile();
-    if (path.startsWith("file:"))
-      path = path.substring(5);
-    int bang = path.indexOf('!');
-    if (bang > 0)
-      path = path.substring(0, bang);
-    return path;
+    try {
+		String path = URLtoFilePath(CMMCore.class.getResource(classFile));
+		int bang = path.indexOf('!');
+		if (bang > 0)
+			path = path.substring(0, bang);
+		System.out.println("MMCoreJ.jar path = " + path);
+		return path;
+	} catch (Exception e) {
+		return "";
+	}
   }
 
   private static String getPlatformString() {
