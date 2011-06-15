@@ -437,7 +437,7 @@
     List<File> searchPaths = new ArrayList<File>();
     File directory = new File(getJarPath()).getParentFile();
     searchPaths.add(directory);
-    directory = directory.getParentFile();
+    directory = directory.getParentFile().getParentFile();
     searchPaths.add(directory);
     directory = new File(new File(directory, "mm"), getPlatformString());
     searchPaths.add(directory);
