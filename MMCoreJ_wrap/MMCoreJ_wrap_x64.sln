@@ -143,6 +143,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "HamamatsuHam", "..\SecretDe
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Stradus", "..\DeviceAdapters\Vortran\Stradus.vcproj", "{3A83E7A0-34A5-4304-8D88-00000572AD05}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ThorlabsDCxxxx", "..\DeviceAdapters\ThorlabsDCxxxx\ThorlabsDCxxxx.vcproj", "{DEE8AF34-2F99-4AA8-AFDA-948DE44F1DB2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -706,6 +708,12 @@ Global
 		{3A83E7A0-34A5-4304-8D88-00000572AD05}.Release|Win32.Build.0 = Release|Win32
 		{3A83E7A0-34A5-4304-8D88-00000572AD05}.Release|x64.ActiveCfg = Release|x64
 		{3A83E7A0-34A5-4304-8D88-00000572AD05}.Release|x64.Build.0 = Release|x64
+		{DEE8AF34-2F99-4AA8-AFDA-948DE44F1DB2}.Debug|Win32.ActiveCfg = Debug|Win32
+		{DEE8AF34-2F99-4AA8-AFDA-948DE44F1DB2}.Debug|Win32.Build.0 = Debug|Win32
+		{DEE8AF34-2F99-4AA8-AFDA-948DE44F1DB2}.Debug|x64.ActiveCfg = Debug|Win32
+		{DEE8AF34-2F99-4AA8-AFDA-948DE44F1DB2}.Release|Win32.ActiveCfg = Release|Win32
+		{DEE8AF34-2F99-4AA8-AFDA-948DE44F1DB2}.Release|Win32.Build.0 = Release|Win32
+		{DEE8AF34-2F99-4AA8-AFDA-948DE44F1DB2}.Release|x64.ActiveCfg = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
