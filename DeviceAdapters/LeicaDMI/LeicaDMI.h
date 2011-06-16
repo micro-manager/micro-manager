@@ -434,13 +434,14 @@ public:
 
    // action interface
    int OnState(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnLevel(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
    bool initialized_;
    std::string name_;
    std::string description_;
    bool state_;
-
+   long level_;
 };
 
 class AFC: public CAutoFocusBase<AFC>

@@ -82,6 +82,8 @@ using namespace std;
 LeicaScopeInterface g_ScopeInterface;
 LeicaDMIModel g_ScopeModel;
 
+const char* g_LevelProp = "Level";
+
 ///////////////////////////////////////////////////////////////////////////////
 // Devices in this adapter.  
 // The device name needs to be a class name in this file
@@ -2419,7 +2421,7 @@ int CondensorTurret::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 ///////////////////////////////////////////////////////////////////////////////
 TransmittedLight::TransmittedLight():   
 initialized_ (false),
-state_(0)
+state_(false), level_(1)
 {
    InitializeDefaultErrorMessages();
 
@@ -2470,22 +2472,26 @@ int TransmittedLight::Initialize()
 
    // State
    CPropertyAction* pAct = new CPropertyAction (this, &TransmittedLight::OnState);
-   if (state_)
-      ret = CreateProperty(MM::g_Keyword_State, "1", MM::Integer, false, pAct); 
-   else
-      ret = CreateProperty(MM::g_Keyword_State, "0", MM::Integer, false, pAct); 
-
+   ret = CreateProperty(MM::g_Keyword_State, state_ ? "1" : "0", MM::Integer, false, pAct); 
    if (ret != DEVICE_OK) 
       return ret; 
 
    AddAllowedValue(MM::g_Keyword_State, "0"); // Closed
    AddAllowedValue(MM::g_Keyword_State, "1"); // Open
 
-   //Label
+   pAct = new CPropertyAction (this, &TransmittedLight::OnLevel);
+   ret = CreateProperty(g_LevelProp, "1", MM::Integer, false, pAct); 
+   if (ret != DEVICE_OK) 
+      return ret; 
+
+   SetPropertyLimits(g_LevelProp, 0.0, 255.0);
 
    ret = UpdateStatus();
    if (ret != DEVICE_OK) 
       return ret; 
+
+   SetProperty(g_LevelProp, "1");
+   SetProperty(MM::g_Keyword_State, "0");
 
    initialized_ = true;
 
@@ -2541,11 +2547,32 @@ int TransmittedLight::OnState(MM::PropertyBase *pProp, MM::ActionType eAct)
 	return DEVICE_OK;
 }
 
+int TransmittedLight::OnLevel(MM::PropertyBase *pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(level_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(level_);
+
+      // apply level is shutter is open
+      if (state_)
+      {
+         int ret = g_ScopeInterface.SetTransmittedLightShutterPosition(*this, *GetCoreCallback(), (int)level_);
+         if (ret != DEVICE_OK)
+            return ret;
+      }
+   }
+	return DEVICE_OK;
+}
+
 int TransmittedLight::SetOpen(bool open)
 {
    int position;
    if (open)
-      position = 1;
+      position = (int)level_;
    else
       position = 0;
 
@@ -2560,18 +2587,24 @@ int TransmittedLight::SetOpen(bool open)
 
 int TransmittedLight::GetOpen(bool &open)
 {
-
    int position;
    int ret = g_ScopeModel.TransmittedLight_.GetPosition(position);
    if (ret != DEVICE_OK)
       return ret;
 
-   if (position == 0)
+   if (position == 0 && state_ == false)
       open = false;
-   else if (position == 1)
+   else if (position > 0 && state_ == true)
       open = true;
+   else if (position > 0 && state_ == false)
+   {
+      open = true;
+      SetOpen(true);
+   }
    else
-      return ERR_UNEXPECTED_ANSWER;
+   {
+      open = false;
+   }
 
    return DEVICE_OK;
 }
