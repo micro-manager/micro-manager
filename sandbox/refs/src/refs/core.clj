@@ -3,6 +3,9 @@
 
 (def url-stub "http://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?")
 
+(defn read-paras [file]
+  (.split (slurp file) "\n\n"))
+
 (defn get-xml [doi]
   (clojure.xml/parse (str url-stub "term=" doi)))
 
@@ -62,5 +65,8 @@
             "}}"))))
     para)) 
 
+(defn write-paras [paras file]
+  (spit file (apply str (interpose "\n\n" paras))))
+    
 (defn doi-to-pmcid [doi]
   (-> doi doi-to-pmid pmid-to-pmcid))
