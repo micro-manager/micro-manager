@@ -2686,6 +2686,14 @@ int DemoShutter::OnState(MM::PropertyBase* pProp, MM::ActionType eAct)
 ///////////////////////////////////////////////////////////////////////////////
 // CDemoMagnifier implementation
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+DemoMagnifier::DemoMagnifier () :
+      position_ (0),
+      highMag_ (1.6) 
+{
+   CPropertyAction* pAct = new CPropertyAction (this, &DemoMagnifier::OnHighMag);
+   CreateProperty("High Position Magnification", "1.6", MM::Float, false, pAct, true);
+};
+
 int DemoMagnifier::Initialize()
 {
    if (g_hub && g_hub->GenerateRandomError())
@@ -2696,10 +2704,10 @@ int DemoMagnifier::Initialize()
    if (ret != DEVICE_OK) 
       return ret; 
 
-   position = 0;
+   position_ = 0;
 
    AddAllowedValue("Position", "1x"); 
-   AddAllowedValue("Position", "1.6x"); 
+   AddAllowedValue("Position", highMagString().c_str()); 
 
    ret = UpdateStatus();
    if (ret != DEVICE_OK)
@@ -2708,10 +2716,16 @@ int DemoMagnifier::Initialize()
    return DEVICE_OK;
 }
 
+std::string DemoMagnifier::highMagString() {
+   std::ostringstream os;
+   os << highMag_ << "x";
+   return os.str();
+}
+
 double DemoMagnifier::GetMagnification() {
-   if (position == 0)
+   if (position_ == 0)
       return 1.0;
-   return 1.6;
+   return highMag_;
 }
 
 int DemoMagnifier::OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct) 
@@ -2728,14 +2742,30 @@ int DemoMagnifier::OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct)
       std::string pos;
       pProp->Get(pos);
       if (pos == "1x")
-         position = 0;
+         position_ = 0;
       else
-         position = 1;
+         position_ = 1;
    }
 
    return DEVICE_OK;
 }
 
+int DemoMagnifier::OnHighMag(MM::PropertyBase* pProp, MM::ActionType eAct) 
+{
+   if (eAct == MM::BeforeGet)
+   {
+      pProp->Set(highMag_);
+   }
+   else if (eAct == MM::AfterSet)
+   {
+      pProp->Get(highMag_);
+      ClearAllowedValues("Position");
+      AddAllowedValue("Position", "1x"); 
+      AddAllowedValue("Position", highMagString().c_str()); 
+   }
+
+   return DEVICE_OK;
+}
 
 /****
 * Demo DA device

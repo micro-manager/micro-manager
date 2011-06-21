@@ -755,8 +755,9 @@ private:
 class DemoMagnifier : public CMagnifierBase<DemoMagnifier>
 {
 public:
-   DemoMagnifier () : position (0) {}
-   ~DemoMagnifier () {}
+   DemoMagnifier();
+
+   ~DemoMagnifier () {};
 
    int Shutdown()
    {
@@ -765,6 +766,7 @@ public:
 
       return DEVICE_OK;
    }
+
    void GetName(char* name) const {strcpy(name,"Demo Optovar");}
 
    bool Busy() {return false;}
@@ -775,9 +777,13 @@ public:
    // action interface
    // ----------------
    int OnPosition(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnHighMag(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
-   int position;
+   std::string highMagString();
+
+   int position_;
+   double highMag_;
 };
 
 //////////////////////////////////////////////////////////////////////////////
