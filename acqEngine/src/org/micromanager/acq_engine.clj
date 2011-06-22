@@ -366,7 +366,7 @@
   (doseq [event-fn event-fns :while (not (:stop @state))]
     (try (event-fn)
          (catch java.lang.OutOfMemoryError e
-           (do (ReportingUtils/showError e)
+           (do (ReportingUtils/showError e "Acquisition interrupted.")
                (state-assoc! :stop true)))
          (catch Throwable e (ReportingUtils/logError e)))
     (await-resume)))
