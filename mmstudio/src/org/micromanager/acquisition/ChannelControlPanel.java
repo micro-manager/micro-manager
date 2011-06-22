@@ -272,7 +272,12 @@ public class ChannelControlPanel extends javax.swing.JPanel {
 
    public void setAutostretch(boolean state) {
       autostretch_ = state;
+      if (state) {
+         setAutoRange();
+      }
    }
+
+
 
    public void setRejectOutliers(boolean v){
       rejectOutliers_ = v;
@@ -389,7 +394,7 @@ public class ChannelControlPanel extends javax.swing.JPanel {
    }
 
    public final void drawDisplaySettings() {
-      if (autostretch_) {
+       if (autostretch_) {
          if( rejectOutliers_){
             // calculations here are correct but aren't used to update display image
             // until user 'cycles' the autostretch check box.
@@ -408,6 +413,7 @@ public class ChannelControlPanel extends javax.swing.JPanel {
             acq_.setChannelDisplayRange(channelIndex_, getMin(), getMax(), false);
          }
       }
+
       hp_.setCursors(acq_.getChannelMin(channelIndex_)/binSize_,
               acq_.getChannelMax(channelIndex_)/binSize_,
               acq_.getChannelGamma(channelIndex_));
@@ -445,6 +451,7 @@ public class ChannelControlPanel extends javax.swing.JPanel {
 
    private void setFullRange() {
       int maxValue = getMaxValue();
+      turnOffAutostretch();
       setDisplayRange(0, maxValue);
    }
 
@@ -509,7 +516,6 @@ public class ChannelControlPanel extends javax.swing.JPanel {
 
    public void setFractionToReject(double v){
       fractionToReject_ = v;
-
    }
 
 }
