@@ -31,6 +31,7 @@
 #ifdef WIN32
 #pragma warning( push )
 #pragma warning( disable : 4244 )
+#pragma warning( disable : 4127 )
 #endif
 
 #include "boost/date_time/posix_time/posix_time.hpp"
