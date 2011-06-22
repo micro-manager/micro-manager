@@ -19,7 +19,7 @@ public class GentleLinkedBlockingQueue<E> extends LinkedBlockingQueue<E> {
 
    @Override
    public void put(E e) throws InterruptedException {
-      final int n = 1000 / 5; // Timeout after 1 second.
+     /* final int n = 1000 / 5; // Timeout after 1 second.
       final long minimumBytes = 5000000;
       for (int i=0; i<n; ++i) {
          long m = JavaUtils.getAvailableUnusedMemory();
@@ -31,7 +31,7 @@ public class GentleLinkedBlockingQueue<E> extends LinkedBlockingQueue<E> {
          else
             ReportingUtils.logError(err);
          JavaUtils.sleep(5);
-      }
+      }*/
       super.put(e);
    }
 

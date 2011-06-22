@@ -364,7 +364,11 @@
 
 (defn execute [event-fns]
   (doseq [event-fn event-fns :while (not (:stop @state))]
-    (try (event-fn) (catch Throwable e (ReportingUtils/logError e)))
+    (try (event-fn)
+         (catch java.lang.OutOfMemoryError e
+           (do (ReportingUtils/showError e)
+               (state-assoc! :stop true)))
+         (catch Throwable e (ReportingUtils/logError e)))
     (await-resume)))
 
 (defn run-acquisition [this settings out-queue]
