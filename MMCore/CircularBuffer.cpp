@@ -96,7 +96,7 @@ bool CircularBuffer::Initialize(unsigned channels, unsigned slices, unsigned int
       }
    }
 
-   catch( std::bad_alloc& ex)
+   catch( ... /* std::bad_alloc& ex */)
    {
       ret = false;
    }
