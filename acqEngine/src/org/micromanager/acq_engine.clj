@@ -62,6 +62,10 @@
 (defn add-to-pending [dev]
   (swap! pending-devices conj dev))
 
+(defn store-last-z-position [z]
+  (let [stage-dev (core getFocusDevice)]
+    (swap! state assoc-in [:last-positions stage-dev] z)))
+
 ;; time
 
 (defn clock-ms []
@@ -118,7 +122,7 @@
     (log (@state :last-positions) "," stage-dev)
     (when (not= z (get-in @state [:last-positions stage-dev]))
       (device-best-effort stage-dev (set-z-stage-position stage-dev z))
-      (swap! state assoc-in [:last-positions stage-dev] z)
+      (store-last-z-position z)
       (add-to-pending stage-dev)))
   ([stage-dev x y]
     (log (@state :last-positions) "," stage-dev)
@@ -136,7 +140,9 @@
 (defn run-autofocus []
   (.. gui getAutofocusManager getDevice fullFocus)
   (log "running autofocus " (.. gui getAutofocusManager getDevice getDeviceName))
-  (state-assoc! :reference-z-position (core getPosition (core getFocusDevice))))
+  (let [z (core getPosition (core getFocusDevice))]
+    (state-assoc! :reference-z-position z)
+    (store-last-z-position z)))
 
 (defn snap-image [open-before close-after]
   (with-core-setting [getAutoShutter setAutoShutter false]
@@ -200,9 +206,12 @@
       (interruptible-sleep delta))
     (await-resume)
     (let [now (clock-ms)
-          wake-time (if (> now (+ target-time 10)) now target-time)]
+          wake-time (if (> now (+ target-time 10)) now target-time)
+          stage-dev (core getFocusDevice)
+          z (get-z-stage-position stage-dev)]
       (state-assoc! :last-wake-time wake-time
-                    :reference-z-position (get-z-stage-position (core getFocusDevice))))))
+                    :reference-z-position z)
+      (store-last-z-position z))))
 
 ;; image metadata
 
