@@ -256,8 +256,8 @@ int COpenCVgrabber::Initialize()
       printf("Cannot retrieve frame from camera!");
       return DEVICE_NOT_CONNECTED;
    }
-   long w = cvGetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH);
-   long h = cvGetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT);
+   long w = (long) cvGetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH);
+   long h = (long) cvGetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT);
 
    if(w > 0 && h > 0){
 		cameraCCDXSize_ = w;
@@ -449,13 +449,10 @@ int COpenCVgrabber::Shutdown()
 */
 int COpenCVgrabber::SnapImage()
 {
-	static int callCounter = 0;
-	++callCounter;
-
    MM::MMTime startTime = GetCurrentMMTime();
    double exp = GetExposure();
    double expUs = exp * 1000.0;
-   
+
    cvGrabFrame(capture);
    
    MM::MMTime s0(0,0);
@@ -497,7 +494,10 @@ const unsigned char* COpenCVgrabber::GetImageBuffer()
 
    MMThreadGuard g(imgPixelsLock_);
    MM::MMTime readoutTime(readoutUs_);
-   while (readoutTime > (GetCurrentMMTime() - readoutStartTime_)) {}
+   while (readoutTime > (GetCurrentMMTime() - readoutStartTime_))
+   {
+      CDeviceUtils::SleepMs(1);
+   }
 
    temp = cvRetrieveFrame(capture);
    if(!temp) return 0;
@@ -774,7 +774,7 @@ int COpenCVgrabber::InsertImage()
    md.put(MM::g_Keyword_Metadata_ROI_X, CDeviceUtils::ConvertToString( (long) roiX_)); 
    md.put(MM::g_Keyword_Metadata_ROI_Y, CDeviceUtils::ConvertToString( (long) roiY_)); 
 
-   imageCounter_++;
+   ++imageCounter_;
 
    char buf[MM::MaxStrLength];
    GetProperty(MM::g_Keyword_Binning, buf);
@@ -1380,10 +1380,9 @@ int COpenCVgrabber::OnResolution(MM::PropertyBase* pProp, MM::ActionType eAct)
 			 ret = DEVICE_ERR;
 			 pProp->Set("Error");
 		 }
-		 
 
-		 cameraCCDXSize_ = cvGetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH);
-		 cameraCCDYSize_ = cvGetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT);
+		 cameraCCDXSize_ = (long) cvGetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH);
+		 cameraCCDYSize_ = (long) cvGetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT);
 
 		 ret = ResizeImageBuffer();
 		 if (ret != DEVICE_OK) return ret;
