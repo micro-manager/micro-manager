@@ -77,7 +77,7 @@
    
    if (receivedLength != expectedLength && receivedLength != expectedLength*4)
    {
-      jclass excep = jenv->FindClass("java/lang/OutOfMemoryError");
+      jclass excep = jenv->FindClass("java/lang/Exception");
       if (excep)
          jenv->ThrowNew(excep, "Image dimensions are wrong for this SLM.");
       return;
@@ -264,7 +264,7 @@
    
    if  ((arg1)->getSLMBytesPerPixel(arg2) != 4)
    {
-      jclass excep = jenv->FindClass("java/lang/OutOfMemoryError");
+      jclass excep = jenv->FindClass("java/lang/Exception");
       if (excep)
          jenv->ThrowNew(excep, "32-bit array received but not expected for this SLM.");
       return;
@@ -275,7 +275,7 @@
    
    if (receivedLength != expectedLength)
    {
-      jclass excep = jenv->FindClass("java/lang/OutOfMemoryError");
+      jclass excep = jenv->FindClass("java/lang/Exception");
       if (excep)
          jenv->ThrowNew(excep, "Image dimensions are wrong for this SLM.");
       return;
@@ -298,7 +298,7 @@
 
 // CMMError used by MMCore
 %typemap(throws, throws="java.lang.Exception") CMMError {
-   jclass excep = jenv->FindClass("java/lang/OutOfMemoryError");
+   jclass excep = jenv->FindClass("java/lang/Exception");
    if (excep)
      jenv->ThrowNew(excep, $1.getMsg().c_str());
    return $null;
@@ -306,7 +306,7 @@
 
 // MetadataKeyError used by Metadata class
 %typemap(throws, throws="java.lang.Exception") MetadataKeyError {
-   jclass excep = jenv->FindClass("java/lang/OutOfMemoryError");
+   jclass excep = jenv->FindClass("java/lang/Exception");
    if (excep)
      jenv->ThrowNew(excep, $1.getMsg().c_str());
    return $null;
@@ -314,7 +314,7 @@
 
 // MetadataIndexError used by Metadata class
 %typemap(throws, throws="java.lang.Exception") MetadataIndexError {
-   jclass excep = jenv->FindClass("java/lang/OutOfMemoryError");
+   jclass excep = jenv->FindClass("java/lang/Exception");
    if (excep)
      jenv->ThrowNew(excep, $1.getMsg().c_str());
    return $null;
