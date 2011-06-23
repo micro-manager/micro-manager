@@ -368,7 +368,7 @@ public class AcquisitionWrapperEngine implements AcquisitionEngine {
             core_.setChannelGroup(group);
          } catch (Exception e) {
             try {
-               core_.setChannelGroup("");
+               core_.setChannelGroup(this.getFirstConfigGroup());
             } catch (Exception ex) {
                ReportingUtils.showError(e);
             }
