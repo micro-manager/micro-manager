@@ -455,8 +455,7 @@ int COpenCVgrabber::SnapImage()
    MM::MMTime startTime = GetCurrentMMTime();
    double exp = GetExposure();
    double expUs = exp * 1000.0;
-
-
+   
    cvGrabFrame(capture);
    
    MM::MMTime s0(0,0);
@@ -476,7 +475,7 @@ int COpenCVgrabber::SnapImage()
       // called without the core callback probably in off line test program
       // need way to build the core in the test program
 
-   }
+   }   
    readoutStartTime_ = GetCurrentMMTime();
 
    return DEVICE_OK;
@@ -739,7 +738,7 @@ int COpenCVgrabber::StopSequenceAcquisition()
 /**
 * Simple implementation of Sequence Acquisition
 * A sequence acquisition should run on its own thread and transport new images
-* coming of the camera into the MMCore circular buffer.
+* coming from the camera into the MMCore circular buffer.
 */
 int COpenCVgrabber::StartSequenceAcquisition(long numImages, double interval_ms, bool stopOnOverflow)
 {
@@ -920,7 +919,7 @@ int MySequenceThread::svc(void) throw()
       do
       {  
          ret=camera_->ThreadRun();
-      } while (DEVICE_OK == ret && !IsStopped() && !IsSuspended()  && imageCounter_++ < numImages_-1);
+      } while (DEVICE_OK == ret && !IsStopped() && imageCounter_++ < numImages_-1);
       if(IsSuspended())
 		  camera_->LogMessage("SeqAcquisition suspended by the user\n");
 	  if (IsStopped())
@@ -1381,9 +1380,7 @@ int COpenCVgrabber::OnResolution(MM::PropertyBase* pProp, MM::ActionType eAct)
 			 ret = DEVICE_ERR;
 			 pProp->Set("Error");
 		 }
-		 if(ret != DEVICE_OK){
-			 return ret;
-		 }
+		 
 
 		 cameraCCDXSize_ = cvGetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH);
 		 cameraCCDYSize_ = cvGetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT);
