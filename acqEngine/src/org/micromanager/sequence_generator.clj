@@ -15,7 +15,7 @@
 ;               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
 (ns org.micromanager.sequence-generator
-  (:use [org.micromanager.mm :only [select-values-match?]]))
+  (:use [org.micromanager.mm :only [select-values-match? core str-vector]]))
 
 (defstruct channel :name :exposure :z-offset :use-z-stack :skip-frames)
 
@@ -192,6 +192,12 @@
                        :position (nth positions pos-index))
              simple)))))
 
+(defn channels-sequenceable [channels]
+  (let [props (apply concat (map :properties channels))]
+    (not (some false?
+           (for [[d p _] props]
+             (core isPropertySequenceable d p))))))
+
 (defn generate-acq-sequence [settings runnables]
   (let [{:keys [numFrames time-first positions slices channels
                 use-autofocus default-exposure interval-ms
@@ -201,7 +207,8 @@
       (and (or time-first
                (> 2 num-positions))
            (> 2 (count slices))
-           (> 2 (count channels))
+           (or (> 2 (count channels))
+               (channels-sequenceable channels))
            (or (not use-autofocus)
                (>= autofocus-skip (dec numFrames)))
            (zero? (count runnables))
@@ -211,6 +218,21 @@
                (generate-simple-burst-sequence numFrames use-autofocus))
       :else
         (generate-default-acq-sequence settings runnables))))
+
+; Triggerable devices
+;
+; Methods are:
+; getPropertySequenceMaxLength
+; isPropertySequenceable
+; loadPropertySequence
+; startPropertySequence
+; stopPropertySequence
+;
+; Triggerable property is "Objective" "State"
+; E.G.
+; (core isPropertySequenceable "Objective" "State")
+; (core getPropertyMaxLength "Objective" "State")
+; 
 
 
 ; Testing:

@@ -16,7 +16,7 @@
 (ns org.micromanager.mm
   (:import [org.micromanager MMStudioMainFrame]
            [org.micromanager.navigation MultiStagePosition]
-           [mmcorej Configuration Metadata]
+           [mmcorej Configuration Metadata StrVector]
            [org.json JSONArray JSONObject]
            [java.text SimpleDateFormat]
            [org.micromanager.navigation MultiStagePosition StagePosition]
@@ -241,3 +241,9 @@
   (if-let [msp (get-msp idx)]
     (if-let [stage-pos (. msp (get z-stage))]
       (set! (. stage-pos x) z))))
+
+(defn str-vector [str-seq]
+  (let [v (StrVector.)]
+    (doseq [item str-seq]
+      (.add v item))
+    v))

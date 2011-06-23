@@ -62,10 +62,6 @@
 (defn add-to-pending [dev]
   (swap! pending-devices conj dev))
 
-(defn store-last-z-position [z]
-  (let [stage-dev (core getFocusDevice)]
-    (swap! state assoc-in [:last-positions stage-dev] z)))
-
 ;; time
 
 (defn clock-ms []
@@ -113,16 +109,17 @@
   (if-not (empty? stage) (core getPosition stage) 0))
   
 (defn set-z-stage-position [stage pos]
-  (when (core isContinuousFocusEnabled)
-    (core enableContinuousFocus false))
-  (when-not (empty? stage) (core setPosition stage pos)))
+  (when-not (empty? stage)
+    (when (core isContinuousFocusEnabled)
+      (core enableContinuousFocus false))
+      (core setPosition stage pos)))
 
 (defn set-stage-position
   ([stage-dev z]
     (log (@state :last-positions) "," stage-dev)
     (when (not= z (get-in @state [:last-positions stage-dev]))
       (device-best-effort stage-dev (set-z-stage-position stage-dev z))
-      (store-last-z-position z)
+      (swap! state assoc-in [:last-positions stage-dev] z)
       (add-to-pending stage-dev)))
   ([stage-dev x y]
     (log (@state :last-positions) "," stage-dev)
@@ -140,9 +137,7 @@
 (defn run-autofocus []
   (.. gui getAutofocusManager getDevice fullFocus)
   (log "running autofocus " (.. gui getAutofocusManager getDevice getDeviceName))
-  (let [z (core getPosition (core getFocusDevice))]
-    (state-assoc! :reference-z-position z)
-    (store-last-z-position z)))
+  (state-assoc! :reference-z-position (core getPosition (core getFocusDevice))))
 
 (defn snap-image [open-before close-after]
   (with-core-setting [getAutoShutter setAutoShutter false]
@@ -206,12 +201,9 @@
       (interruptible-sleep delta))
     (await-resume)
     (let [now (clock-ms)
-          wake-time (if (> now (+ target-time 10)) now target-time)
-          stage-dev (core getFocusDevice)
-          z (get-z-stage-position stage-dev)]
+          wake-time (if (> now (+ target-time 10)) now target-time)]
       (state-assoc! :last-wake-time wake-time
-                    :reference-z-position z)
-      (store-last-z-position z))))
+                    :reference-z-position (get-z-stage-position (core getFocusDevice))))))
 
 ;; image metadata
 
@@ -364,11 +356,7 @@
 
 (defn execute [event-fns]
   (doseq [event-fn event-fns :while (not (:stop @state))]
-    (try (event-fn)
-         (catch java.lang.OutOfMemoryError e
-           (do (ReportingUtils/showError e "Acquisition interrupted.")
-               (state-assoc! :stop true)))
-         (catch Throwable e (ReportingUtils/logError e)))
+    (try (event-fn) (catch Throwable e (ReportingUtils/logError e)))
     (await-resume)))
 
 (defn run-acquisition [this settings out-queue]
