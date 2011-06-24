@@ -23,7 +23,7 @@
            json-to-data get-pixel-type get-msp-z-position set-msp-z-position
            get-msp MultiStagePosition-to-map ChannelSpec-to-map
            get-pixel-type get-current-time-str rekey
-           data-object-to-map]]
+           data-object-to-map str-vector]]
         [org.micromanager.sequence-generator :only [generate-acq-sequence]])
   (:import [org.micromanager AcqControlDlg]
            [org.micromanager.api AcquisitionEngine TaggedImageAnalyzer]
@@ -154,7 +154,24 @@
           (core setShutterOpen false))
           (wait-for-device (core getShutterDevice))))))
 
-(defn init-burst [length]
+(defn arm-property-sequences [prop-sequence]
+  (let [ms (for [item prop-sequence]
+             (into {} (map #(let [[d p v] %]
+                              [[d p] v])
+                           item)))
+        ks (apply sorted-set
+                  (apply concat (map keys ms)))]
+    (println ms)
+    (doseq [[d p] ks]
+      (println (map #(get % [d p]) ms))
+      (core loadPropertySequence d p (str-vector (map #(get % [d p]) ms)))
+      (core startPropertySequence d p))))
+
+(defn init-burst [length trigger-sequence]
+  (when trigger-sequence
+    (println trigger-sequence)
+    (let [prop-sequence (map #(-> % :channel :properties) trigger-sequence)]  
+      (arm-property-sequences prop-sequence)))
   (core setAutoShutter (@state :init-auto-shutter))
   (swap! state assoc :burst-init-time (elapsed-time @state))
   (core startSequenceAcquisition length 0 true))
@@ -210,6 +227,7 @@
 (defn generate-metadata [event state]
   (merge
     (map-config (core getSystemStateCache))
+    (:metadata event)
     {
      "AxisPositions" (when-let [axes (get-in event [:position :axes])] (JSONObject. axes))
      "Binning" (state :binning)
@@ -248,7 +266,7 @@
 (defn expose [event]
   (do (condp = (:task event)
     :snap (snap-image true (:close-shutter event))
-    :init-burst (init-burst (:burst-length event))
+    :init-burst (init-burst (:burst-length event) (:trigger-sequence event))
     nil)))
 
 (defn collect-image [event out-queue]

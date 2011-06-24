@@ -15,7 +15,7 @@
 ;               INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES.
 
 (ns org.micromanager.sequence-generator
-  (:use [org.micromanager.mm :only [select-values-match? core str-vector]]))
+  (:use [org.micromanager.mm :only [select-values-match? core]]))
 
 (defstruct channel :name :exposure :z-offset :use-z-stack :skip-frames)
 
@@ -169,23 +169,43 @@
        (add-next-task-tags)   
     )))
 
-(defn generate-simple-burst-sequence [numFrames use-autofocus]
-  (let [x
-        (->> (range numFrames)
-             (map
-               #(hash-map
-                  :frame-index %
-                  :next-frame-index (inc %)
-                  :task (if (zero? %) :init-burst :collect-burst)
-                  :wait-time-ms 0.0
-                  :position-index 0
-                  :autofocus (if (zero? %) use-autofocus false)
-                  :channel-index 0
-                  :slice-index 0)))]
-    (cons (assoc (first x) :burst-length numFrames) (rest x))))
+(defn make-channel-metadata [channel]
+  (when-let [props (:properties channel)]
+    (into {}
+      (for [[d p v] props]
+        [(str d "-" p) v]))))
 
-(defn generate-multiposition-bursts [positions num-frames use-autofocus]
-  (let [simple (generate-simple-burst-sequence num-frames use-autofocus)]
+(defn generate-simple-burst-sequence [numFrames use-autofocus channels]
+  (let [numChannels (max 1 (count channels))
+        trigger-sequence (when (< 1 (count channels))
+                                (vec (map #(hash-map :channel %) channels)))
+        x
+        (->> (for [f (range numFrames)
+                   c (range numChannels)]
+               {:frame-index f
+                :channel-index c})
+             (map
+               #(let [f (:frame-index %)
+                      c (:channel-index %)
+                      first-plane (and (zero? f) (zero? c))]
+                 (assoc %
+                    :next-frame-index (inc f)
+                    :task (if first-plane :init-burst :collect-burst)
+                    :wait-time-ms 0.0
+                    :position-index 0
+                    :autofocus (if first-plane use-autofocus false)
+                    :channel-index c
+                    :channel (get channels c)
+                    :slice-index 0
+                    :metadata (make-channel-metadata (get channels c))))))]
+    (cons (assoc (first x)
+            :burst-length (* numFrames numChannels)
+            :trigger-sequence trigger-sequence)
+          (rest x))))
+
+
+(defn generate-multiposition-bursts [positions num-frames use-autofocus channels]
+  (let [simple (generate-simple-burst-sequence num-frames use-autofocus channels)]
     (flatten
       (for [pos-index (range (count positions))]
         (map #(assoc % :position-index pos-index
@@ -214,8 +234,9 @@
            (zero? (count runnables))
            (> default-exposure interval-ms))
              (if (< 1 num-positions)
-               (generate-multiposition-bursts positions numFrames use-autofocus)
-               (generate-simple-burst-sequence numFrames use-autofocus))
+               (generate-multiposition-bursts positions numFrames
+                                              use-autofocus channels)
+               (generate-simple-burst-sequence numFrames use-autofocus channels))
       :else
         (generate-default-acq-sequence settings runnables))))
 
