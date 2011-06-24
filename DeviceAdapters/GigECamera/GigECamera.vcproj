@@ -45,7 +45,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../../3rdparty/boost;../../../3rdparty;$(JAI_SDK_INCLUDE)"
+				AdditionalIncludeDirectories="../../../3rdpartypublic/boost;../../../3rdpartypublic;$(JAI_SDK_INCLUDE)"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS;TESTRESOURCELOCKING"
 				MinimalRebuild="true"
 				ExceptionHandling="2"
@@ -215,7 +215,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="../../../3rdparty/boost;../../../3rdparty;$(JAI_SDK_INCLUDE)"
+				AdditionalIncludeDirectories="../../../3rdpartypublic/boost;../../../3rdpartypublic;$(JAI_SDK_INCLUDE)"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS;TESTRESOURCELOCKING"
 				ExceptionHandling="2"
 				RuntimeLibrary="0"

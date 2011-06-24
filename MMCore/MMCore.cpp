@@ -1861,7 +1861,7 @@ void CMMCore::startContinuousSequenceAcquisition(double intervalMs) throw (CMMEr
    }
    else
    {
-      logError(getDeviceName(camera_).c_str(), getCoreErrorText(MMERR_CameraNotAvailable).c_str());
+      logError("no camera available", getCoreErrorText(MMERR_CameraNotAvailable).c_str());
       throw CMMError(getCoreErrorText(MMERR_CameraNotAvailable).c_str(), MMERR_CameraNotAvailable);
    }
    CORE_DEBUG("Sequence acquisition started.");
@@ -1883,7 +1883,7 @@ void CMMCore::stopSequenceAcquisition() throw (CMMError)
    }
    else
    {
-      logError(getDeviceName(camera_).c_str(), getCoreErrorText(MMERR_CameraNotAvailable).c_str());
+      logError("no camera available", getCoreErrorText(MMERR_CameraNotAvailable).c_str());
       throw CMMError(getCoreErrorText(MMERR_CameraNotAvailable).c_str(), MMERR_CameraNotAvailable);
    }
 
