@@ -64,9 +64,6 @@ public:
    virtual bool SetLimits(double lowerLimit, double upperLimit) = 0;
 
    // Sequence
-   // virtual bool IsSequenceable() const = 0;
-   // virtual long GetSequenceMaxNrEvents() const = 0;
-   // virtual void LoadSequence(std::vector<std::string> events) = 0;
    virtual void SetSequenceable(long sequenceSize) = 0;
    virtual std::vector<std::string> GetSequence() = 0;
 
@@ -168,15 +165,32 @@ public:
 
    // discrete set of allowed values
    std::vector<std::string> GetAllowedValues() const;
-   void ClearAllowedValues() {values_.clear();}
+
+   void ClearAllowedValues() 
+   {
+      values_.clear();
+   }
+
    void AddAllowedValue(const char* value);
    void AddAllowedValue(const char* value, long data);
    bool IsAllowed(const char* value) const;
    bool GetData(const char* value, long& data) const;
 
-   bool HasLimits() const {return limits_;}
-   double GetLowerLimit() const {return limits_ ? lowerLimit_ : 0.0;}
-   double GetUpperLimit() const {return limits_ ? upperLimit_ : 0.0;}
+   bool HasLimits() const 
+   {
+      return limits_;
+   }
+
+   double GetLowerLimit() const 
+   {
+      return limits_ ? lowerLimit_ : 0.0;
+   }
+
+   double GetUpperLimit() const 
+   {
+      return limits_ ? upperLimit_ : 0.0;
+   }
+
    bool SetLimits(double lowerLimit, double upperLimit)
    {
       limits_ = true;
@@ -192,27 +206,43 @@ public:
 
       return limits_;
    }
+
    bool IsSequenceable() 
    {
       if (fpAction_)
          fpAction_->Execute(this, MM::IsSequenceable);
       return sequenceable_;
    }
+
    void SetSequenceable(long sequenceMaxSize);
-   long GetSequenceMaxSize() const {return sequenceMaxSize_;}
-   int LoadSequence(std::vector<std::string> events) {
+
+   long GetSequenceMaxSize() const 
+   {
+      return sequenceMaxSize_;
+   }
+
+   int LoadSequence(std::vector<std::string> events) 
+   {
       sequenceEvents_ = events;
       if (fpAction_)
          return fpAction_->Execute(this, AfterLoadSequence);
       return DEVICE_OK; // Return an error instead???
    }
-   std::vector<std::string> GetSequence() {return sequenceEvents_;}
-   int StartSequence() {
+
+   std::vector<std::string> GetSequence() 
+   {
+      return sequenceEvents_;
+   }
+
+   int StartSequence() 
+   {
       if (fpAction_)
          return fpAction_->Execute(this, MM::StartSequence);
       return DEVICE_OK;  // Return an error instead???
    }
-   int StopSequence() {
+ 
+   int StopSequence() 
+   {
       if (fpAction_)
          return fpAction_->Execute(this, MM::StopSequence);
       return DEVICE_OK;  // Return an error instead???
