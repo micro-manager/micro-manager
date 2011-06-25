@@ -10,7 +10,7 @@
 //                
 // AUTHOR:        Terry L. Sprout, Terry.Sprout@Agile-Automation.com
 //
-// COPYRIGHT:     (c) 2009, AgileAutomation, Inc, All rights reserved
+// COPYRIGHT:     (c) 2011, AgileAutomation, Inc, All rights reserved
 //
 // LICENSE:       This file is distributed under the BSD license.
 //                License text is included with the source distribution.
@@ -108,6 +108,20 @@ public:
    // action interface
    // ----------------
    int OnShowControlPanel(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnShowLogSelections(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnShowLogFile(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnClearLogFile(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnEnableLogGroup(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnEnableLogConstruct(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnEnableLogDestruct(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnEnableLogSetProps(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnEnableLogGetProps(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnEnableLogMethodCalls(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnEnableLogMethodFrame(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnEnableLogMethodCallTrace(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnEnableLogCallbacks(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnEnableLogCallbackFrame(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnEnableLogCallbackTrace(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnGrabber(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnCamera(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnCameraId(MM::PropertyBase* pProp, MM::ActionType eAct);
@@ -163,6 +177,7 @@ private:
    double m_fStreamAvgTime;
    UINT m_unTimeout;
    BOOL m_bShowControlPanel;
+   BOOL m_bShowLog;
    BOOL m_bStopOnOverflow;
 
    // operator settings
@@ -226,15 +241,25 @@ private:
    double m_fIntensifierGain;
    CString m_sPixel;
 
-   INT16 m_nImgLeft;
-   INT16 m_nImgWidth;
-   INT16 m_nImgTop;
-   INT16 m_nImgHeight;
-   INT16 m_nImgStride;
-   INT16 m_nImgPixelBytes;
-   UINT m_nImgImageBytes;
-   UINT m_unImgSaturation;
-   double m_fImgFrameRate;
+   INT16 m_nImageLeft;
+   INT16 m_nImageWidth;
+   INT16 m_nImageTop;
+   INT16 m_nImageHeight;
+   INT16 m_nImageStride;
+   INT16 m_nImagePixelBytes;
+   UINT m_nImageImageBytes;
+   UINT m_unImageSaturation;
+   double m_fImageFrameRate;
+
+   INT16 m_nStreamLeft;
+   INT16 m_nStreamWidth;
+   INT16 m_nStreamTop;
+   INT16 m_nStreamHeight;
+   INT16 m_nStreamStride;
+   INT16 m_nStreamPixelBytes;
+   UINT m_nStreamImageBytes;
+   UINT m_unStreamSaturation;
+   double m_fStreamFrameRate;
 
    INT16 m_nRoiLeft;
    INT16 m_nRoiWidth;
