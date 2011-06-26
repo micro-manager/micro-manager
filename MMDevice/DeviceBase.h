@@ -396,7 +396,6 @@ public:
       MM::Property* pProp = properties_.Find(name);
       if (!pProp)
       {
-         // additional information for reporting invalid properties.
          SetMorePropertyErrorInfo(name);
          return DEVICE_INVALID_PROPERTY;
       }
@@ -412,37 +411,47 @@ public:
       return pProp->StopSequence();
    }
 
-
    /**
-    * Loads a sequence of property values into the device
-    * This function will result in the "OnProperty" function in the device to be 
-    * called with the ActionType "AfterLoadSequence"
-    * @param name - property name
-    * @param events - sequence of property values
+    * This function is used by the Core to communicate a sequence to the device
+    * @param name - name of the sequenceable property
     */
-   int LoadPropertySequence(const char* name, std::vector<std::string> events) const
+   int ClearPropertySequence(const char* name) const
    {
-      MM::Property* pProp = properties_.Find(name);
-      if (!pProp)
-      {
-         // additional information for reporting invalid properties.
-         SetMorePropertyErrorInfo(name);
-         return DEVICE_INVALID_PROPERTY;
-      }
-
-      bool sequenceable;
-      int ret = IsPropertySequenceable(name, sequenceable);
+      MM::Property* pProp;
+      int ret = GetSequenceableProperty(&pProp, name);
       if (ret != DEVICE_OK)
          return ret;
-      if (!sequenceable) {
-         SetMorePropertyErrorInfo(name);
-         return DEVICE_PROPERTY_NOT_SEQUENCEABLE;
-      }
 
-      if (events.size() >= (unsigned) pProp->GetSequenceMaxSize())
-         return DEVICE_SEQUENCE_TOO_LARGE;
+      return pProp->ClearSequence();
+   }
 
-      return pProp->LoadSequence(events);
+   /**
+    * This function is used by the Core to communicate a sequence to the device
+    * @param name - name of the sequenceable property
+    */
+   int AddToPropertySequence(const char* name, const char* value) const
+   {
+      MM::Property* pProp;
+      int ret = GetSequenceableProperty(&pProp, name);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      return pProp->AddToSequence(value);
+   }
+
+   /**
+    * This function is used by the Core to communicate a sequence to the device
+    * Sends the sequence to the device by calling the properties functor 
+    * @param name - name of the sequenceable property
+    */
+   int SendPropertySequence(const char* name) const
+   {
+      MM::Property* pProp;
+      int ret = GetSequenceableProperty(&pProp, name);
+      if (ret != DEVICE_OK)
+         return ret;
+
+      return pProp->SendSequence();
    }
 
    /**
@@ -742,6 +751,7 @@ protected:
    {
       morePropertyErrorInfo_ = ptext;
    }
+
    /**
    * Output the specified text message to the log stream.
    * @param msg - message text
@@ -1064,7 +1074,34 @@ protected:
 
 private:
    bool PropertyDefined(const char* propName) const
-   {return properties_.Find(propName) != 0;}
+   {
+      return properties_.Find(propName) != 0;
+   }
+
+   /**
+    * Finds a property by name and determines whether it is a sequenceable property
+    * @param pProp - pointer to pointer used to return the property if found
+    * @param name - name of the property we are looking for
+    * @return - DEVICE_OK, DEVICE_INVALID_PROPERTY (if not found), 
+    *             or DEVICE_PROPERTY_NOT_SEQUENCEABLE
+    */
+   int GetSequenceableProperty(MM::Property** pProp, const char* name) const
+   {
+      *pProp = properties_.Find(name);
+      if (!*pProp)
+      {
+         SetMorePropertyErrorInfo(name);
+         return DEVICE_INVALID_PROPERTY;
+      }
+
+      bool sequenceable = (*pProp)->IsSequenceable();
+      if (!sequenceable) {
+         SetMorePropertyErrorInfo(name);
+         return DEVICE_PROPERTY_NOT_SEQUENCEABLE;
+      }
+      return DEVICE_OK;
+   }
+
 
    MM::PropertyCollection properties_;
    HDEVMODULE module_;
@@ -1859,7 +1896,24 @@ public:
             s << pos;
             s >> *it;
          }
-         this->LoadPropertySequence(MM::g_Keyword_State, sequence);
+
+         int ret = this->ClearPropertySequence(MM::g_Keyword_State);
+         if (ret != DEVICE_OK)
+            return ret;
+
+         std::vector<std::string>::iterator it;
+         for ( it=sequence.begin() ; it < sequence.end(); it++ )
+         {
+            ret = this->AddToPropertySequence(MM::g_Keyword_State, (*it).c_str());
+            if (ret != DEVICE_OK)                                               
+               return ret;
+         }
+                                                                             
+         ret = this->SendPropertySequence(MM::g_Keyword_State);
+         if (ret != DEVICE_OK)                                                  
+            return ret;
+          
+         //this->LoadPropertySequence(MM::g_Keyword_State, sequence);
       }
       else if (eAct == MM::StartSequence) {
          assert(this->HasProperty(MM::g_Keyword_State));

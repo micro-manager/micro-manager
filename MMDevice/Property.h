@@ -65,7 +65,11 @@ public:
 
    // Sequence
    virtual void SetSequenceable(long sequenceSize) = 0;
-   virtual std::vector<std::string> GetSequence() = 0;
+   virtual  long GetSequenceMaxSize() const = 0;
+   virtual std::vector<std::string> GetSequence() const = 0;
+   virtual int ClearSequence() = 0;
+   virtual int AddToSequence(const char* value) = 0;
+   virtual int SendSequence() = 0;
 
 };
 
@@ -133,10 +137,15 @@ public:
       initStatus_(true),
       limits_(false),
       sequenceable_(false),
+      sequenceMaxSize_(0),
+      sequenceEvents_(),
       lowerLimit_(0.0),
       upperLimit_(0.0)
       {}      
-   virtual ~Property(){delete fpAction_;}
+   virtual ~Property()
+   {
+      delete fpAction_;
+   }
             
    bool GetCached()const {return cached_;}
    void SetCached(bool bState=true) {cached_ = bState;}
@@ -221,15 +230,45 @@ public:
       return sequenceMaxSize_;
    }
 
-   int LoadSequence(std::vector<std::string> events) 
+   int ClearSequence() 
    {
-      sequenceEvents_ = events;
+      try
+      {
+         if (sequenceEvents_.size() > 0){
+            sequenceEvents_.clear();
+         }
+      } catch (...)
+      {
+         return MM_CODE_ERR;
+      }
+
+      return DEVICE_OK;
+   }
+
+   int AddToSequence(const char* value) 
+   {
+      try
+      {
+         sequenceEvents_.push_back(value);
+         if (sequenceEvents_.size() >= (unsigned) GetSequenceMaxSize())           
+            return DEVICE_SEQUENCE_TOO_LARGE;
+      } catch (...)
+      {
+         return MM_CODE_ERR;
+      }
+
+      return DEVICE_OK;
+   }
+
+   int SendSequence() 
+   {
       if (fpAction_)
          return fpAction_->Execute(this, AfterLoadSequence);
+
       return DEVICE_OK; // Return an error instead???
    }
 
-   std::vector<std::string> GetSequence() 
+   std::vector<std::string> GetSequence() const
    {
       return sequenceEvents_;
    }

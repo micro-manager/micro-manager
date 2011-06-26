@@ -2939,9 +2939,22 @@ void CMMCore::loadPropertySequence(const char* label, const char* propName, std:
          throw;
       }
 
-      int ret = pDevice->LoadPropertySequence(propName, eventSequence);
+      int ret = pDevice->ClearPropertySequence(propName);
       if (ret != DEVICE_OK)
          throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
+
+      std::vector<std::string>::iterator it;
+      for ( it=eventSequence.begin() ; it < eventSequence.end(); it++ )
+      {
+         ret = pDevice->AddToPropertySequence(propName, (*it).c_str());
+         if (ret != DEVICE_OK)
+            throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
+      }
+
+      ret = pDevice->SendPropertySequence(propName);
+      if (ret != DEVICE_OK)
+         throw CMMError(label, getDeviceErrorText(ret, pDevice).c_str(), MMERR_DEVICE_GENERIC);
+
    }
 }
 

@@ -34,7 +34,7 @@
 // Header version
 // If any of the class declarations changes, the interface version
 // must be incremented
-#define DEVICE_INTERFACE_VERSION 40
+#define DEVICE_INTERFACE_VERSION 41
 ///////////////////////////////////////////////////////////////////////////////
 
 #pragma once
@@ -261,7 +261,13 @@ namespace MM {
       // Stops execution of the device
       virtual int StopPropertySequence(const char* propertyName) const = 0;
       // Loads the given sequence of states into the device
-      virtual int LoadPropertySequence(const char* propertyName, std::vector<std::string> events) const = 0;
+      //virtual int LoadPropertySequence(const char* propertyName, std::vector<std::string> events) const = 0;
+      // remove previously added sequence
+      virtual int ClearPropertySequence(const char* propertyName) const = 0;
+      // Add one value to the sequence
+      virtual int AddToPropertySequence(const char* propertyName, const char* value) const = 0;
+      // Signal that we are done sending sequence values so that the adapter can send the whole sequence to the device
+      virtual int SendPropertySequence(const char* propertyName) const = 0; 
 
       virtual bool GetErrorText(int errorCode, char* errMessage) const = 0;
       virtual bool Busy() = 0;
