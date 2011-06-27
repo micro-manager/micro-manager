@@ -260,8 +260,6 @@ namespace MM {
       virtual int StartPropertySequence(const char* propertyName) const = 0;
       // Stops execution of the device
       virtual int StopPropertySequence(const char* propertyName) const = 0;
-      // Loads the given sequence of states into the device
-      //virtual int LoadPropertySequence(const char* propertyName, std::vector<std::string> events) const = 0;
       // remove previously added sequence
       virtual int ClearPropertySequence(const char* propertyName) const = 0;
       // Add one value to the sequence
