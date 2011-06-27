@@ -187,10 +187,14 @@
              (map
                #(let [f (:frame-index %)
                       c (:channel-index %)
-                      first-plane (and (zero? f) (zero? c))]
+                      first-plane (and (zero? f) (zero? c))
+                      last-plane (and (= numFrames (inc f))
+                                      (= numChannels (inc c)))]
                  (assoc %
                     :next-frame-index (inc f)
-                    :task (if first-plane :init-burst :collect-burst)
+                    :task (cond first-plane :init-burst
+                                last-plane :finish-burst
+                                :else :collect-burst)
                     :wait-time-ms 0.0
                     :position-index 0
                     :autofocus (if first-plane use-autofocus false)

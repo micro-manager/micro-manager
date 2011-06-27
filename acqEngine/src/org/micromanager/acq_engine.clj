@@ -62,6 +62,8 @@
 (defn add-to-pending [dev]
   (swap! pending-devices conj dev))
 
+(def active-property-sequences (atom (set nil)))
+
 ;; time
 
 (defn clock-ms []
@@ -165,7 +167,8 @@
     (doseq [[d p] ks]
       (println (map #(get % [d p]) ms))
       (core loadPropertySequence d p (str-vector (map #(get % [d p]) ms)))
-      (core startPropertySequence d p))))
+      (core startPropertySequence d p)
+      (swap! active-property-sequences conj [d p]))))
 
 (defn init-burst [length trigger-sequence]
   (when trigger-sequence
@@ -196,6 +199,11 @@
     (clojure.set/difference
       (set (@state :init-system-state))
       (set (get-system-config-cached))))))
+
+(defn stop-trigger []
+  (doseq [[d p] @active-property-sequences]
+    (core stopPropertySequence d p)
+    (swap! active-property-sequences disj [d p])))
 
 ;; sleeping
 
@@ -273,7 +281,10 @@
   (let [image (condp = (:task event)
                 :snap (collect-snap-image)
                 :init-burst (collect-burst-image)
-                :collect-burst (collect-burst-image))]
+                :collect-burst (collect-burst-image)
+                :finish-burst (let [img (collect-burst-image)]
+                                (stop-trigger)
+                                img))]
     (if (core isBufferOverflowed)
       (do (swap! state assoc :stop true)
           (ReportingUtils/showError "Circular buffer overflowed."))
@@ -326,6 +337,7 @@
   (state-assoc! :finished true, :running false, :display nil)
   (when (core isSequenceRunning)
     (core stopSequenceAcquisition))
+  (stop-trigger)
   (core setAutoShutter (@state :init-auto-shutter))
   (core setExposure (@state :init-exposure))
   (when (not= (get-in @state [:last-positions (core getFocusDevice)]) (@state :init-z-position))
@@ -354,7 +366,7 @@
 (defn make-event-fns [event out-queue]
   (let [task (:task event)]
     (cond
-      (= task :collect-burst)
+      (or (= task :collect-burst) (= task :finish-burst))
         (list #(collect-image event out-queue))
       (or (= task :snap) (= task :init-burst))
         (list
