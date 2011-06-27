@@ -5,10 +5,10 @@
 //-----------------------------------------------------------------------------
 // DESCRIPTION:  This is the Micro-Manager device adapter for the X-Cite Exacte
 //            
-// AUTHOR:       Mark Allen Neil, markallenneil@yahoo.com, Dec-2010
+// AUTHOR:       Mark Allen Neil, markallenneil@yahoo.com
 //               This code reuses work done by Jannis Uhlendorf, 2010
 //
-// COPYRIGHT:    Mission Bay Imaging, 2010
+// COPYRIGHT:    Mission Bay Imaging, 2010-2011
 //
 // LICENSE:      This file is distributed under the BSD license.
 //               License text is included with the source distribution.
@@ -84,8 +84,8 @@ XCiteExacte::XCiteExacte(const char* name) :
    irisControl_("Increment"),
    powerMode_("Intensity"),
    clfMode_("Off"),
-   outputPower_(0),
-   powerFactor_("00000")
+   outputPower_(0.0),
+   powerFactor_("100")
 {
   InitializeDefaultErrorMessages();
 
@@ -207,108 +207,112 @@ int XCiteExacte::Initialize()
    allowedValues.push_back("Clear");
    SetAllowedValues("Clear-Calibration", allowedValues);
 
-   // Update calibration time ("button")
-   pAct = new CPropertyAction(this, &XCiteExacte::OnGetCalibTime);
-   CreateProperty("Get-Calib-Time", "Update", MM::String, false, pAct);
-   allowedValues.clear();
-   allowedValues.push_back("Update");
-   SetAllowedValues("Get-Calib-Time", allowedValues);
-
    // Calibration time ("field")
-   status = ExecuteCommand(cmdGetCalibTime, NULL, 0, &response);
-   if (status != DEVICE_OK)
-      return status;
-   CreateProperty("Calibration-Time", response.c_str(), MM::String, false);
-
-   // Output power
-   pAct = new CPropertyAction(this, &XCiteExacte::OnOutputPower);
-   CreateProperty("Output-Power", "0", MM::Integer, false, pAct);
-   SetPropertyLimits("Output-Power", 0, 10000);
-
-   // Initialize output power from existing state
-   /*status = ExecuteCommand(cmdGetOutputPower, NULL, 0, &response);
-   if (status != DEVICE_OK)
-      return status;
-   outputPower_ = (long) atoi(response.c_str());
-   sprintf(cBuff, "%05d", (int) outputPower_);
-   SetProperty("Output-Power", cBuff);*/
-
-   // Get power factor ("button")
-   pAct = new CPropertyAction(this, &XCiteExacte::OnGetPowerFactor);
-   CreateProperty("Get-Power-Factor", "Update", MM::String, false, pAct);
-   allowedValues.clear();
-   allowedValues.push_back("Update");
-   SetAllowedValues("Get-Power-Factor", allowedValues);
+   pAct = new CPropertyAction(this, &XCiteExacte::OnGetCalibTime);
+   CreateProperty("Calibration-Time", "Unknown", MM::Integer, true, pAct);
 
    // Power factor ("field")
-   status = ExecuteCommand(cmdGetPowerFactor, NULL, 0, &powerFactor_);
-   if (status != DEVICE_OK)
-      return status;
-   CreateProperty("Power-Factor", powerFactor_.c_str(), MM::String, false);
+   pAct = new CPropertyAction(this, &XCiteExacte::OnGetPowerFactor);
+   CreateProperty("Power-Factor", "Unknown", MM::String, true, pAct);
+
+   // Power factor ("field")
+   ExecuteCommand(cmdGetPowerFactor, NULL, 0, &response);
+
+   // Output power ("slider")
+   pAct = new CPropertyAction(this, &XCiteExacte::OnOutputPower);
+   CreateProperty("Output-Power", "0", MM::Float, false, pAct);
+   //----------------------------------------------------------------------------------
+   // The limits on the output power slider depend on the power factor per the formula
+   //   xxxxx = desired_power_in_watts * power_factor * 100 (maximum = 99999)
+   // Power factor can be 100, 1000 or 10000
+   // Therefore, when power factor =
+   //    100      desired_power_in_watts range is [0 .. 9.9999]
+   //    1000     desired_power_in_watts range is [0 .. 0.99999]
+   //    10000    desired_power_in_watts range is [0 .. 0.099999]
+   // Given these ranges...
+   //    When PF = 100, the slider will display W
+   //    When PF > 100, the slider will display mW
+   //----------------------------------------------------------------------------------
+   if ("100" == powerFactor_)
+      SetPropertyLimits("Output-Power", 0, 9.9999);
+   else if ("1000" == powerFactor_)
+      SetPropertyLimits("Output-Power", 0, 999.99);
+   else
+      SetPropertyLimits("Output-Power", 0, 99.999);
     
    // Unlock front panel
    SetProperty("Front-Panel-Lock", frontPanelLocked_.c_str());
-   status = ExecuteCommand(cmdUnlockFrontPanel);
-   if (status != DEVICE_OK)
-      return status;
 
    // Enable PC control of shutter
    status = ExecuteCommand(cmdEnableShutterControl);
    if (status != DEVICE_OK)
       return status;
 
-   // Software version
+   // Software version ("field")
    status = ExecuteCommand(cmdGetSoftwareVersion, NULL, 0, &response);
    if (status != DEVICE_OK)
       return status;
    CreateProperty("Software-Version", response.c_str(), MM::String, true);
 
-   // Lamp hours
-   status = ExecuteCommand(cmdGetLampHours, NULL, 0, &response);
-   if (status != DEVICE_OK)
-      return status;
-   CreateProperty("Lamp-Hours", response.c_str(), MM::String, true);
-
-   // Unit status ("fields")
-   CreateProperty("Unit-Status-Alarm-State", "Unknown", MM::String, false);
-   CreateProperty("Unit-Status-Lamp-State", "Unknown", MM::String, false);
-   CreateProperty("Unit-Status-Shutter-State", "Unknown", MM::String, false);
-   CreateProperty("Unit-Status-Home", "Unknown", MM::String, false);
-   CreateProperty("Unit-Status-Lamp-Ready", "Unknown", MM::String, false);
-   CreateProperty("Unit-Status-Front-Panel", "Unknown", MM::String, false);
-   CreateProperty("Unit-Status-Power-Mode", "Unknown", MM::String, false);
-   CreateProperty("Unit-Status-Exacte-Mode", "Unknown", MM::String, false);
-   CreateProperty("Unit-Status-Light-Guide-Inserted", "Unknown", MM::String, false);
-   CreateProperty("Unit-Status-CLF-Mode", "Unknown", MM::String, false);
-   CreateProperty("Unit-Status-Iris-Moving", "Unknown", MM::String, false);
-
-   // Unit status ("button")
-   pAct = new CPropertyAction(this, &XCiteExacte::OnUnitStatus);
-   CreateProperty("Unit-Status", "Update", MM::String, false, pAct);
-   allowedValues.clear();
-   allowedValues.push_back("Update");
-   SetAllowedValues("Unit-Status", allowedValues);
-
-   // Serial number
+   // Serial number ("field")
    status = ExecuteCommand(cmdGetSerialNumber, NULL, 0, &response);
    if (status != DEVICE_OK)
       return status;
    CreateProperty("Serial-Number", response.c_str(), MM::String, true);
 
-   // Serial number
-   status = ExecuteCommand(cmdGetSerialNumber, NULL, 0, &response);
-   if (status != DEVICE_OK)
-      return status;
-   CreateProperty("Serial-Number", response.c_str(), MM::String, true);
+   // Lamp hours ("field")
+   pAct = new CPropertyAction(this, &XCiteExacte::OnGetLampHours);
+   CreateProperty("Lamp-Hours", "Unknown", MM::String, true, pAct);
 
-   // Update and decode status
+   // Unit status: Alarm State ("field")
+   pAct = new CPropertyAction(this, &XCiteExacte::OnUnitStatusAlarmState);
+   CreateProperty("Unit-Status-Alarm-State", "Unknown", MM::String, true, pAct);
+   
+   // Unit status: Lamp State ("field")
+   pAct = new CPropertyAction(this, &XCiteExacte::OnUnitStatusLampState);
+   CreateProperty("Unit-Status-Lamp-State", "Unknown", MM::String, true, pAct);
+   
+   // Unit status: Shutter State ("field")
+   pAct = new CPropertyAction(this, &XCiteExacte::OnUnitStatusShutterState);
+   CreateProperty("Unit-Status-Shutter-State", "Unknown", MM::String, true, pAct);
+
+   // Unit status: Home State ("field")
+   pAct = new CPropertyAction(this, &XCiteExacte::OnUnitStatusHome);
+   CreateProperty("Unit-Status-Home", "Unknown", MM::String, true, pAct);
+
+   // Unit status: Lamp Ready ("field")
+   pAct = new CPropertyAction(this, &XCiteExacte::OnUnitStatusLampReady);
+   CreateProperty("Unit-Status-Lamp-Ready", "Unknown", MM::String, true, pAct);
+   
+   // Unit status: Front Panel ("field")
+   pAct = new CPropertyAction(this, &XCiteExacte::OnUnitStatusFrontPanel);
+   CreateProperty("Unit-Status-Front-Panel", "Unknown", MM::String, true, pAct);
+
+   // Unit status: Power Mode ("field")
+   pAct = new CPropertyAction(this, &XCiteExacte::OnUnitStatusPowerMode);
+   CreateProperty("Unit-Status-Power-Mode", "Unknown", MM::String, true, pAct);
+   
+   // Unit status: Exacte Mode ("field")
+   pAct = new CPropertyAction(this, &XCiteExacte::OnUnitStatusExacteMode);
+   CreateProperty("Unit-Status-Exacte-Mode", "Unknown", MM::String, true, pAct);
+   
+   // Unit status: Light Guide Inserted ("field")
+   pAct = new CPropertyAction(this, &XCiteExacte::OnUnitStatusLightGuideInserted);
+   CreateProperty("Unit-Status-Light-Guide-Inserted", "Unknown", MM::String, true, pAct);
+
+   // Unit status: Closed Loop Feedback (CLF) Mode ("field")
+   pAct = new CPropertyAction(this, &XCiteExacte::OnUnitStatusCLFMode);
+   CreateProperty("Unit-Status-CLF-Mode", "Unknown", MM::String, true, pAct);
+   
+   // Unit status: Iris Moving ("field")
+   pAct = new CPropertyAction(this, &XCiteExacte::OnUnitStatusIrisMoving);
+   CreateProperty("Unit-Status-Iris-Moving", "Unknown", MM::String, true, pAct);
+
+   // Update state based on existing status
    status = ExecuteCommand(cmdGetUnitStatus, NULL, 0, &response);
    if (status != DEVICE_OK)
       return status;
    status = atoi(response.c_str());
-   DecodeAndUpdateStatus(status);
-
-   // Update existing state based on existing status
    shutterOpen_ = 0 != (status & 4);
    SetProperty("Shutter-State", shutterOpen_ ? "Open" : "Closed");
    lampState_ = 0 != (status & 2) ? "On" : "Off";
@@ -326,6 +330,18 @@ int XCiteExacte::Initialize()
 
 int XCiteExacte::Shutdown()
 {
+   int status;
+
+   // Unlock front panel
+   status = ExecuteCommand(cmdUnlockFrontPanel);
+   if (status != DEVICE_OK)
+      return status;
+
+   // Disable PC control of shutter
+   status = ExecuteCommand(cmdDisableShutterControl);
+   if (status != DEVICE_OK)
+      return status;
+
    initialized_ = false;
    return DEVICE_OK;
 }
@@ -346,12 +362,12 @@ int XCiteExacte::SetOpen(bool open)
    shutterOpen_ = open;
    if (open)
    {
-      LogMessage("XCite120PC: Open Shutter");
+      LogMessage("XCiteExacte: Open Shutter");
       return ExecuteCommand(cmdOpenShutter);
    }
    else
    {
-      LogMessage("XCite120PC: Close Shutter");
+      LogMessage("XCiteExacte: Close Shutter");
       return ExecuteCommand(cmdCloseShutter);
    }
 }
@@ -396,7 +412,7 @@ int XCiteExacte::OnIntensity(MM::PropertyBase* pProp, MM::ActionType eAct)
       char cBuff[4];
       sprintf(cBuff, "%03d", (int) lampIntensity_);
       LogMessage("XCiteExacte: Set Intensity: " + string(cBuff));
-      return ExecuteCommand(cmdSetIntensityLevel, cBuff, 3);
+      ExecuteCommand(cmdSetIntensityLevel, cBuff, 3);
    }
    return DEVICE_OK;
 }
@@ -539,17 +555,12 @@ int XCiteExacte::OnClearCalib(MM::PropertyBase* pProp, MM::ActionType eAct)
 
 int XCiteExacte::OnGetCalibTime(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   if (eAct == MM::BeforeGet)
-      pProp->Set("Update");
-   else if (eAct==MM::AfterSet)
+   if (eAct==MM::BeforeGet)
    {
       string buff;
-      pProp->Get(buff);
-      if (0 == buff.compare("Update")) {
-         ExecuteCommand(cmdGetCalibTime, NULL, 0, &buff);
-         SetProperty("Calibration-Time", buff.c_str());
-         LogMessage("XCiteExacte: Get Calib Time: " + buff);
-      }
+      ExecuteCommand(cmdGetCalibTime, NULL, 0, &buff);
+      pProp->Set((long) atoi(buff.c_str()));
+      LogMessage("XCiteExacte: Get Calib Time: " + buff);
    }
    return DEVICE_OK;
 }
@@ -561,10 +572,20 @@ int XCiteExacte::OnOutputPower(MM::PropertyBase* pProp, MM::ActionType eAct)
    else if (eAct==MM::AfterSet)
    {
       pProp->Get(outputPower_);
-      char cBuff[6];
-      sprintf(cBuff, "%05d", (int) outputPower_);
+      char cBuff[7];
+      // Convert output power to correct units and format as a 5-digit integer
+      //   per the formula xxxxx = desired_power_in_watts * power_factor * 100
+      // Also recall the decision that when ...
+      //    power factor = 100, output power unit is W
+      //    power factor > 100, output power unit is mW
+      if ("100" == powerFactor_)
+         sprintf(cBuff, "%05d", (int) (outputPower_ * 100 * 100));
+      else if ("1000" == powerFactor_)
+         sprintf(cBuff, "%05d", (int) ((outputPower_ / 1000) * 1000 * 100));
+      else
+         sprintf(cBuff, "%05d", (int) ((outputPower_ / 1000) * 10000 * 100));
       LogMessage("XCiteExacte: Set Output Power: " + string(cBuff));
-      return ExecuteCommand(cmdSetOutputPower, cBuff, 5);
+      ExecuteCommand(cmdSetOutputPower, cBuff, 5);
    }
    return DEVICE_OK;
 }
@@ -572,62 +593,271 @@ int XCiteExacte::OnOutputPower(MM::PropertyBase* pProp, MM::ActionType eAct)
 int XCiteExacte::OnGetPowerFactor(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
-      pProp->Set("Update");
-   else if (eAct==MM::AfterSet)
    {
       string buff;
-      pProp->Get(buff);
-      if (0 == buff.compare("Update")) {
-         ExecuteCommand(cmdGetPowerFactor, NULL, 0, &powerFactor_);
-         SetProperty("Power-Factor", powerFactor_.c_str());
-         LogMessage("XCiteExacte: Get Power Factor: " + powerFactor_);
+      ExecuteCommand(cmdGetPowerFactor, NULL, 0, &buff);
+      // Verify the returned power factor is a valid number (older units fail)
+      if (0 != atoi(buff.c_str()))
+         powerFactor_ = buff;
+      pProp->Set(powerFactor_.c_str());
+      SetProperty("Power-Factor", powerFactor_.c_str());
+      LogMessage("XCiteExacte: Get Power Factor: " + powerFactor_);
+   }
+   return DEVICE_OK;
+}
+
+int XCiteExacte::OnGetLampHours(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      string buff;
+      ExecuteCommand(cmdGetLampHours, NULL, 0, &buff);
+      pProp->Set(buff.c_str());
+      SetProperty("Lamp-Hours", buff.c_str());
+      LogMessage("XCiteExacte: Get Lamp Hours: " + buff);
+   }
+   return DEVICE_OK;
+}
+
+int XCiteExacte::OnUnitStatusAlarmState(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      string buff;
+      int status = ExecuteCommand(cmdGetUnitStatus, NULL, 0, &buff);
+      if (status != DEVICE_OK)
+         return status;
+      status = GetDeviceStatus(1,  &buff);
+      if (status == DEVICE_OK)
+      {
+         pProp->Set(buff.c_str());
+         LogMessage("XCiteExacte: Unit Status: Alarm State: " + buff);
       }
    }
    return DEVICE_OK;
 }
 
-int XCiteExacte::OnUnitStatus(MM::PropertyBase* pProp, MM::ActionType eAct)
+int XCiteExacte::OnUnitStatusLampState(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
-      pProp->Set("Update");
-   else if (eAct == MM::AfterSet)
    {
-      string response;
-      int status = ExecuteCommand(cmdGetUnitStatus, NULL, 0, &response);
+      string buff;
+      int status = ExecuteCommand(cmdGetUnitStatus, NULL, 0, &buff);
       if (status != DEVICE_OK)
          return status;
-      DecodeAndUpdateStatus(atoi(response.c_str()));
-      LogMessage("XCite120PC: Unit Status: " + response);
+      status = GetDeviceStatus(2,  &buff);
+      if (status == DEVICE_OK)
+      {
+         pProp->Set(buff.c_str());
+         LogMessage("XCiteExacte: Unit Status: Lamp State: " + buff);
+      }
    }
    return DEVICE_OK;
 }
 
-void XCiteExacte::DecodeAndUpdateStatus(int status)
+int XCiteExacte::OnUnitStatusShutterState(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   if (HasProperty("Unit-Status-Alarm-State"))
-      SetProperty("Unit-Status-Alarm-State", 0 != (status & 1) ? "ON" : "OFF");
-   if (HasProperty("Unit-Status-Lamp-State"))
-      SetProperty("Unit-Status-Lamp-State", 0 != (status & 2) ? "ON" : "OFF");
-   if (HasProperty("Unit-Status-Shutter-State"))
-      SetProperty("Unit-Status-Shutter-State", 0 != (status & 4) ? "OPEN" : "CLOSED");
-   if (HasProperty("Unit-Status-Home"))
-      SetProperty("Unit-Status-Home", 0 != (status & 8) ? "FAULT" : "PASS");
-   if (HasProperty("Unit-Status-Lamp-Ready"))
-      SetProperty("Unit-Status-Lamp-Ready", 0 != (status & 16) ? "READY" : "NOT READY");
-   if (HasProperty("Unit-Status-Front-Panel"))
-      SetProperty("Unit-Status-Front-Panel", 0 != (status & 32) ? "LOCKED" : "NOT LOCKED");
-   if (HasProperty("Unit-Status-Power-Mode"))
-      SetProperty("Unit-Status-Power-Mode", 0 != (status & 128) ? "POWER" : "INTENSITY");
-   if (HasProperty("Unit-Status-Exacte-Mode"))
-      SetProperty("Unit-Status-Exacte-Mode", 0 != (status & 256) ? "ON" : "OFF");
-   if (HasProperty("Unit-Status-Light-Guide-Inserted"))
-      SetProperty("Unit-Status-Light-Guide-Inserted", 0 != (status & 1024) ? "TRUE" : "FALSE");
-   if (HasProperty("Unit-Status-CLF-Mode"))
-      SetProperty("Unit-Status-CLF-Mode", 0 != (status & 16384) ? "ON" : "OFF");
-   // The following is the opposite of what the manual says... determined by observation
-   if (HasProperty("Unit-Status-Iris-Moving"))
-      SetProperty("Unit-Status-Iris-Moving", 0 != (status & 32768) ? "FALSE" : "TRUE");
-   OnPropertiesChanged();
+   if (eAct == MM::BeforeGet)
+   {
+      string buff;
+      int status = ExecuteCommand(cmdGetUnitStatus, NULL, 0, &buff);
+      if (status != DEVICE_OK)
+         return status;
+      status = GetDeviceStatus(4,  &buff);
+      if (status == DEVICE_OK)
+      {
+         pProp->Set(buff.c_str());
+         LogMessage("XCiteExacte: Unit Status: Shutter State: " + buff);
+      }
+   }
+   return DEVICE_OK;
+}
+
+int XCiteExacte::OnUnitStatusHome(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      string buff;
+      int status = ExecuteCommand(cmdGetUnitStatus, NULL, 0, &buff);
+      if (status != DEVICE_OK)
+         return status;
+      status = GetDeviceStatus(8,  &buff);
+      if (status == DEVICE_OK)
+      {
+         pProp->Set(buff.c_str());
+         LogMessage("XCiteExacte: Unit Status: Home State: " + buff);
+      }
+   }
+   return DEVICE_OK;
+}
+
+int XCiteExacte::OnUnitStatusLampReady(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      string buff;
+      int status = ExecuteCommand(cmdGetUnitStatus, NULL, 0, &buff);
+      if (status != DEVICE_OK)
+         return status;
+      status = GetDeviceStatus(16,  &buff);
+      if (status == DEVICE_OK)
+      {
+         pProp->Set(buff.c_str());
+         LogMessage("XCiteExacte: Unit Status: Lamp Ready State: " + buff);
+      }
+   }
+   return DEVICE_OK;
+}
+
+int XCiteExacte::OnUnitStatusFrontPanel(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      string buff;
+      int status = ExecuteCommand(cmdGetUnitStatus, NULL, 0, &buff);
+      if (status != DEVICE_OK)
+         return status;
+      status = GetDeviceStatus(32,  &buff);
+      if (status == DEVICE_OK)
+      {
+         pProp->Set(buff.c_str());
+         LogMessage("XCiteExacte: Unit Status: Front Panel State: " + buff);
+      }
+   }
+   return DEVICE_OK;
+}
+
+int XCiteExacte::OnUnitStatusPowerMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      string buff;
+      int status = ExecuteCommand(cmdGetUnitStatus, NULL, 0, &buff);
+      if (status != DEVICE_OK)
+         return status;
+      status = GetDeviceStatus(128,  &buff);
+      if (status == DEVICE_OK)
+      {
+         pProp->Set(buff.c_str());
+         LogMessage("XCiteExacte: Unit Status: Power Mode State: " + buff);
+      }
+   }
+   return DEVICE_OK;
+}
+
+int XCiteExacte::OnUnitStatusExacteMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      string buff;
+      int status = ExecuteCommand(cmdGetUnitStatus, NULL, 0, &buff);
+      if (status != DEVICE_OK)
+         return status;
+      status = GetDeviceStatus(256,  &buff);
+      if (status == DEVICE_OK)
+      {
+         pProp->Set(buff.c_str());
+         LogMessage("XCiteExacte: Unit Status: Exacte Mode State: " + buff);
+      }
+   }
+   return DEVICE_OK;
+}
+
+int XCiteExacte::OnUnitStatusLightGuideInserted(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      string buff;
+      int status = ExecuteCommand(cmdGetUnitStatus, NULL, 0, &buff);
+      if (status != DEVICE_OK)
+         return status;
+      status = GetDeviceStatus(1024,  &buff);
+      if (status == DEVICE_OK)
+      {
+         pProp->Set(buff.c_str());
+         LogMessage("XCiteExacte: Unit Status: Light Guide Inserted State: " + buff);
+      }
+   }
+   return DEVICE_OK;
+}
+
+int XCiteExacte::OnUnitStatusCLFMode(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      string buff;
+      int status = ExecuteCommand(cmdGetUnitStatus, NULL, 0, &buff);
+      if (status != DEVICE_OK)
+         return status;
+      status = GetDeviceStatus(16384,  &buff);
+      if (status == DEVICE_OK)
+      {
+         pProp->Set(buff.c_str());
+         LogMessage("XCiteExacte: Unit Status: CLF Mode State: " + buff);
+      }
+   }
+   return DEVICE_OK;
+}
+
+int XCiteExacte::OnUnitStatusIrisMoving(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      string buff;
+      int status = ExecuteCommand(cmdGetUnitStatus, NULL, 0, &buff);
+      if (status != DEVICE_OK)
+         return status;
+      status = GetDeviceStatus(32768,  &buff);
+      if (status == DEVICE_OK)
+      {
+         pProp->Set(buff.c_str());
+         LogMessage("XCiteExacte: Unit Status: Iris Moving State: " + buff);
+      }
+   }
+   return DEVICE_OK;
+}
+
+int XCiteExacte::GetDeviceStatus(int statusBit,  string* retStatus)
+{
+      string buff;
+      int status = ExecuteCommand(cmdGetUnitStatus, NULL, 0, &buff);
+      if (status != DEVICE_OK)
+         return status;
+      int statusReg = atoi(buff.c_str());
+      switch (statusBit) {
+         case 1:        // Alarm State
+         case 2:        // Lamp State
+         case 256:      // Exacte Mode
+         case 16384:    // CLF Mode
+            *retStatus = (0 != (statusReg & statusBit) ? "ON" : "OFF");
+            break;
+         case 4:        // Shutter State
+            *retStatus = (0 != (statusReg & statusBit) ? "OPEN" : "CLOSED");
+            break;
+         case 8:        // Status Home
+            *retStatus = (0 != (statusReg & statusBit) ? "FAULT" : "PASS");
+            break;
+         case 16:       // Lamp Ready
+            *retStatus = (0 != (statusReg & statusBit) ? "READY" : "NOT READY");
+            break;
+         case 32:       // Front Panel
+            *retStatus = (0 != (statusReg & statusBit) ? "LOCKED" : "NOT LOCKED");
+            break;
+         case 128:      // Power Mode
+            *retStatus = (0 != (statusReg & statusBit) ? "POWER" : "INTENSITY");
+            break;
+         case 1024:     // Light Guide Inserted
+            *retStatus = (0 != (statusReg & statusBit) ? "TRUE" : "FALSE");
+            break;
+         case 32768:    // Iris Moving
+            // The following is the opposite of what the manual says... determined by observation
+            *retStatus = (0 != (statusReg & statusBit) ? "TRUE" : "FALSE");
+            break;
+         default:
+            *retStatus = "Unknown";
+            break;
+      }
+      return DEVICE_OK;
 }
 
 // Exedute a command, input, inputlen and ret are 0 by default

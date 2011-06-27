@@ -5,10 +5,10 @@
 //-----------------------------------------------------------------------------
 // DESCRIPTION:  This is the Micro-Manager device adapter for the X-Cite 120PC
 //
-// AUTHOR:       Mark Allen Neil, markallenneil@yahoo.com, Dec-2010
+// AUTHOR:       Mark Allen Neil, markallenneil@yahoo.com
 //               This code reuses work done by Jannis Uhlendorf, 2010
 //
-// COPYRIGHT:    Mission Bay Imaging, 2010
+// COPYRIGHT:    Mission Bay Imaging, 2010-2011
 //
 // LICENSE:      This file is distributed under the BSD license.
 //               License text is included with the source distribution.
@@ -145,35 +145,39 @@ int XCite120PC::Initialize()
       return status;
    CreateProperty("Software-Version", response.c_str(), MM::String, true);
    
-   // Lamp hours
-   status = ExecuteCommand(cmdGetLampHours, NULL, 0, &response);
-   if (status != DEVICE_OK)
-      return status;
-   CreateProperty("Lamp-Hours", response.c_str(), MM::String, true);
+   // Lamp hours ("field")
+   pAct = new CPropertyAction(this, &XCite120PC::OnGetLampHours);
+   CreateProperty("Lamp-Hours", "Unknown", MM::String, true, pAct);
 
-   // Unit status ("fields")
-   CreateProperty("Unit-Status-Alarm-State", "Unknown", MM::String, false);
-   CreateProperty("Unit-Status-Lamp-State", "Unknown", MM::String, false);
-   CreateProperty("Unit-Status-Shutter-State", "Unknown", MM::String, false);
-   CreateProperty("Unit-Status-Home", "Unknown", MM::String, false);
-   CreateProperty("Unit-Status-Lamp-Ready", "Unknown", MM::String, false);
-   CreateProperty("Unit-Status-Front-Panel", "Unknown", MM::String, false);
+   // Unit status: Alarm State ("field")
+   pAct = new CPropertyAction(this, &XCite120PC::OnUnitStatusAlarmState);
+   CreateProperty("Unit-Status-Alarm-State", "Unknown", MM::String, true, pAct);
+   
+   // Unit status: Lamp State ("field")
+   pAct = new CPropertyAction(this, &XCite120PC::OnUnitStatusLampState);
+   CreateProperty("Unit-Status-Lamp-State", "Unknown", MM::String, true, pAct);
+   
+   // Unit status: Shutter State ("field")
+   pAct = new CPropertyAction(this, &XCite120PC::OnUnitStatusShutterState);
+   CreateProperty("Unit-Status-Shutter-State", "Unknown", MM::String, true, pAct);
 
-   // Unit status ("button")
-   pAct = new CPropertyAction(this, &XCite120PC::OnUnitStatus);
-   CreateProperty("Unit-Status", "Update", MM::String, false, pAct);
-   allowedValues.clear();
-   allowedValues.push_back("Update");
-   SetAllowedValues("Unit-Status", allowedValues);
+   // Unit status: Home State ("field")
+   pAct = new CPropertyAction(this, &XCite120PC::OnUnitStatusHome);
+   CreateProperty("Unit-Status-Home", "Unknown", MM::String, true, pAct);
 
-   // Update and decode status
+   // Unit status: Lamp Ready ("field")
+   pAct = new CPropertyAction(this, &XCite120PC::OnUnitStatusLampReady);
+   CreateProperty("Unit-Status-Lamp-Ready", "Unknown", MM::String, true, pAct);
+   
+   // Unit status: Front Panel ("field")
+   pAct = new CPropertyAction(this, &XCite120PC::OnUnitStatusFrontPanel);
+   CreateProperty("Unit-Status-Front-Panel", "Unknown", MM::String, true, pAct);
+
+   // Update state based on existing status
    status = ExecuteCommand(cmdGetUnitStatus, NULL, 0, &response);
    if (status != DEVICE_OK)
       return status;
    status = atoi(response.c_str());
-   DecodeAndUpdateStatus(status);
-
-   // Update existing state based on existing status
    shutterOpen_ = 0 != (status & 4);
    SetProperty("Shutter-State", shutterOpen_ ? "Open" : "Closed");
    lampState_ = 0 != (status & 2) ? "On" : "Off";
@@ -343,37 +347,156 @@ int XCite120PC::OnClearAlarm(MM::PropertyBase* pProp, MM::ActionType eAct)
    return DEVICE_OK;
 }
 
-int XCite120PC::OnUnitStatus(MM::PropertyBase* pProp, MM::ActionType eAct)
+int XCite120PC::OnGetLampHours(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
-      pProp->Set("Update");
-   else if (eAct == MM::AfterSet)
    {
-      string response;
-      int status = ExecuteCommand(cmdGetUnitStatus, NULL, 0, &response);
-      if (status != DEVICE_OK)
-         return status;
-      DecodeAndUpdateStatus(atoi(response.c_str()));
-      LogMessage("XCite120PC: Unit Status: " + response);
+      string buff;
+      ExecuteCommand(cmdGetLampHours, NULL, 0, &buff);
+      pProp->Set(buff.c_str());
+      SetProperty("Lamp-Hours", buff.c_str());
+      LogMessage("XCiteExacte: Get Lamp Hours: " + buff);
    }
    return DEVICE_OK;
 }
 
-void XCite120PC::DecodeAndUpdateStatus(int status)
+int XCite120PC::OnUnitStatusAlarmState(MM::PropertyBase* pProp, MM::ActionType eAct)
 {
-   if (HasProperty("Unit-Status-Alarm-State"))
-      SetProperty("Unit-Status-Alarm-State", 0 != (status & 1) ? "ON" : "OFF");
-   if (HasProperty("Unit-Status-Lamp-State"))
-      SetProperty("Unit-Status-Lamp-State", 0 != (status & 2) ? "ON" : "OFF");
-   if (HasProperty("Unit-Status-Shutter-State"))
-      SetProperty("Unit-Status-Shutter-State", 0 != (status & 4) ? "OPEN" : "CLOSED");
-   if (HasProperty("Unit-Status-Home"))
-      SetProperty("Unit-Status-Home", 0 != (status & 8) ? "FAULT" : "PASS");
-   if (HasProperty("Unit-Status-Lamp-Ready"))
-      SetProperty("Unit-Status-Lamp-Ready", 0 != (status & 16) ? "READY" : "NOT READY");
-   if (HasProperty("Unit-Status-Front-Panel"))
-      SetProperty("Unit-Status-Front-Panel", 0 != (status & 32) ? "LOCKED" : "NOT LOCKED");
-   OnPropertiesChanged();
+   if (eAct == MM::BeforeGet)
+   {
+      string buff;
+      int status = ExecuteCommand(cmdGetUnitStatus, NULL, 0, &buff);
+      if (status != DEVICE_OK)
+         return status;
+      status = GetDeviceStatus(1,  &buff);
+      if (status == DEVICE_OK)
+      {
+         pProp->Set(buff.c_str());
+         LogMessage("XCite120PC: Unit Status: Alarm State: " + buff);
+      }
+   }
+   return DEVICE_OK;
+}
+
+int XCite120PC::OnUnitStatusLampState(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      string buff;
+      int status = ExecuteCommand(cmdGetUnitStatus, NULL, 0, &buff);
+      if (status != DEVICE_OK)
+         return status;
+      status = GetDeviceStatus(2,  &buff);
+      if (status == DEVICE_OK)
+      {
+         pProp->Set(buff.c_str());
+         LogMessage("XCite120PC: Unit Status: Lamp State: " + buff);
+      }
+   }
+   return DEVICE_OK;
+}
+
+int XCite120PC::OnUnitStatusShutterState(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      string buff;
+      int status = ExecuteCommand(cmdGetUnitStatus, NULL, 0, &buff);
+      if (status != DEVICE_OK)
+         return status;
+      status = GetDeviceStatus(4,  &buff);
+      if (status == DEVICE_OK)
+      {
+         pProp->Set(buff.c_str());
+         LogMessage("XCite120PC: Unit Status: Shutter State: " + buff);
+      }
+   }
+   return DEVICE_OK;
+}
+
+int XCite120PC::OnUnitStatusHome(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      string buff;
+      int status = ExecuteCommand(cmdGetUnitStatus, NULL, 0, &buff);
+      if (status != DEVICE_OK)
+         return status;
+      status = GetDeviceStatus(8,  &buff);
+      if (status == DEVICE_OK)
+      {
+         pProp->Set(buff.c_str());
+         LogMessage("XCite120PC: Unit Status: Home State: " + buff);
+      }
+   }
+   return DEVICE_OK;
+}
+
+int XCite120PC::OnUnitStatusLampReady(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      string buff;
+      int status = ExecuteCommand(cmdGetUnitStatus, NULL, 0, &buff);
+      if (status != DEVICE_OK)
+         return status;
+      status = GetDeviceStatus(16,  &buff);
+      if (status == DEVICE_OK)
+      {
+         pProp->Set(buff.c_str());
+         LogMessage("XCite120PC: Unit Status: Lamp Ready State: " + buff);
+      }
+   }
+   return DEVICE_OK;
+}
+
+int XCite120PC::OnUnitStatusFrontPanel(MM::PropertyBase* pProp, MM::ActionType eAct)
+{
+   if (eAct == MM::BeforeGet)
+   {
+      string buff;
+      int status = ExecuteCommand(cmdGetUnitStatus, NULL, 0, &buff);
+      if (status != DEVICE_OK)
+         return status;
+      status = GetDeviceStatus(32,  &buff);
+      if (status == DEVICE_OK)
+      {
+         pProp->Set(buff.c_str());
+         LogMessage("XCite120PC: Unit Status: Front Panel State: " + buff);
+      }
+   }
+   return DEVICE_OK;
+}
+
+int XCite120PC::GetDeviceStatus(int statusBit,  string* retStatus)
+{
+      string buff;
+      int status = ExecuteCommand(cmdGetUnitStatus, NULL, 0, &buff);
+      if (status != DEVICE_OK)
+         return status;
+      int statusReg = atoi(buff.c_str());
+      switch (statusBit) {
+         case 1:        // Alarm State
+         case 2:        // Lamp State
+            *retStatus = (0 != (statusReg & statusBit) ? "ON" : "OFF");
+            break;
+         case 4:        // Shutter State
+            *retStatus = (0 != (statusReg & statusBit) ? "OPEN" : "CLOSED");
+            break;
+         case 8:        // Status Home
+            *retStatus = (0 != (statusReg & statusBit) ? "FAULT" : "PASS");
+            break;
+         case 16:       // Lamp Ready
+            *retStatus = (0 != (statusReg & statusBit) ? "READY" : "NOT READY");
+            break;
+         case 32:       // Front Panel
+            *retStatus = (0 != (statusReg & statusBit) ? "LOCKED" : "NOT LOCKED");
+            break;
+         default:
+            *retStatus = "Unknown";
+            break;
+      }
+      return DEVICE_OK;
 }
 
 // Exedute a command, input, inputlen and ret are 0 by default

@@ -3,12 +3,12 @@
 // PROJECT:      Micro-Manager
 // SUBSYSTEM:    DeviceAdapters
 //-----------------------------------------------------------------------------
-// DESCRIPTION:  This is the Micro-Manager device adapter for the EXFO X-Cite Exacte
+// DESCRIPTION:  This is the Micro-Manager device adapter for the X-Cite Exacte
 //            
-// AUTHOR:       Mark Allen Neil, markallenneil@yahoo.com, Dec-2010
+// AUTHOR:       Mark Allen Neil, markallenneil@yahoo.com
 //               This code reuses work done by Jannis Uhlendorf, 2010
 //
-// COPYRIGHT:    Mission Bay Imaging, 2010
+// COPYRIGHT:    Mission Bay Imaging, 2010-2011
 //
 // LICENSE:      This file is distributed under the BSD license.
 //               License text is included with the source distribution.
@@ -68,10 +68,21 @@ public:
    int OnGetCalibTime(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnOutputPower(MM::PropertyBase* pProp, MM::ActionType eAct);
    int OnGetPowerFactor(MM::PropertyBase* pProp, MM::ActionType eAct);
-   int OnUnitStatus(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnGetLampHours(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnUnitStatusAlarmState(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnUnitStatusLampState(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnUnitStatusShutterState(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnUnitStatusHome(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnUnitStatusLampReady(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnUnitStatusFrontPanel(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnUnitStatusPowerMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnUnitStatusExacteMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnUnitStatusLightGuideInserted(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnUnitStatusCLFMode(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnUnitStatusIrisMoving(MM::PropertyBase* pProp, MM::ActionType eAct);
 
 private:
-   void DecodeAndUpdateStatus(int status);
+   int GetDeviceStatus(int statusBit,  std::string* retStatus);
    int ExecuteCommand(const std::string& cmd, const char* input=NULL, int input_len=0, std::string* ret=NULL); 
 
    bool initialized_;
@@ -85,7 +96,7 @@ private:
    string irisControl_;
    string powerMode_;
    string clfMode_;
-   long outputPower_;
+   double outputPower_;
    string powerFactor_;
 
    static const char* cmdConnect;
