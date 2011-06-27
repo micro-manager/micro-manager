@@ -175,10 +175,14 @@
       (for [[d p v] props]
         [(str d "-" p) v]))))
 
-(defn generate-simple-burst-sequence [numFrames use-autofocus channels]
+(defn generate-simple-burst-sequence [numFrames use-autofocus
+                                      channels default-exposure]
   (let [numChannels (max 1 (count channels))
         trigger-sequence (when (< 1 (count channels))
                                 (vec (map #(hash-map :channel %) channels)))
+        exposure (if (pos? numChannels)
+                   (:exposure (first channels))
+                   default-exposure)
         x
         (->> (for [f (range numFrames)
                    c (range numChannels)]
@@ -208,7 +212,8 @@
           (rest x))))
 
 
-(defn generate-multiposition-bursts [positions num-frames use-autofocus channels]
+(defn generate-multiposition-bursts [positions num-frames use-autofocus
+                                     channels default-exposure]
   (let [simple (generate-simple-burst-sequence num-frames use-autofocus channels)]
     (flatten
       (for [pos-index (range (count positions))]
@@ -217,10 +222,12 @@
              simple)))))
 
 (defn channels-sequenceable [channels]
-  (let [props (apply concat (map :properties channels))]
-    (not (some false?
-           (for [[d p _] props]
-             (core isPropertySequenceable d p))))))
+  (and
+    (let [props (distinct (apply concat (map :properties channels)))]
+      (not (some false?
+             (for [[d p _] props]
+               (core isPropertySequenceable d p)))))
+    (apply == (map :exposure channels))))
 
 (defn generate-acq-sequence [settings runnables]
   (let [{:keys [numFrames time-first positions slices channels
@@ -239,8 +246,10 @@
            (> default-exposure interval-ms))
              (if (< 1 num-positions)
                (generate-multiposition-bursts positions numFrames
-                                              use-autofocus channels)
-               (generate-simple-burst-sequence numFrames use-autofocus channels))
+                                              use-autofocus channels
+                                              default-exposure)
+               (generate-simple-burst-sequence numFrames use-autofocus
+                                               channels default-exposure))
       :else
         (generate-default-acq-sequence settings runnables))))
 

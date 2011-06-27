@@ -156,25 +156,28 @@
           (core setShutterOpen false))
           (wait-for-device (core getShutterDevice))))))
 
-(defn arm-property-sequences [prop-sequence]
-  (let [ms (for [item prop-sequence]
+(defn make-property-sequences [channel-sequence]
+  (let [ms (for [item channel-sequence]
              (into {} (map #(let [[d p v] %]
                               [[d p] v])
                            item)))
         ks (apply sorted-set
                   (apply concat (map keys ms)))]
-    (println ms)
-    (doseq [[d p] ks]
-      (println (map #(get % [d p]) ms))
-      (core loadPropertySequence d p (str-vector (map #(get % [d p]) ms)))
-      (core startPropertySequence d p)
-      (swap! active-property-sequences conj [d p]))))
+    (into (sorted-map)
+      (for [[d p] ks]
+        [[d p] (map #(get % [d p]) ms)]))))
+
+(defn arm-property-sequences [prop-sequences]
+  (doseq [[[d p] s] prop-sequences]
+    (core loadPropertySequence d p (str-vector s))
+    (core startPropertySequence d p)
+    (swap! active-property-sequences conj [d p])))
 
 (defn init-burst [length trigger-sequence]
   (when trigger-sequence
     (println trigger-sequence)
     (let [prop-sequence (map #(-> % :channel :properties) trigger-sequence)]  
-      (arm-property-sequences prop-sequence)))
+      (arm-property-sequences (make-property-sequences prop-sequence))))
   (core setAutoShutter (@state :init-auto-shutter))
   (swap! state assoc :burst-init-time (elapsed-time @state))
   (core startSequenceAcquisition length 0 true))
@@ -679,5 +682,7 @@
 
 (defn run-test []
   (test-dialog (create-acq-eng)))
+
+
 
 
