@@ -2465,11 +2465,6 @@ int TransmittedLight::Initialize()
    if (DEVICE_OK != ret)
       return ret;
 
-   // Check current state of shutter:
-   ret = GetOpen(state_);
-   if (DEVICE_OK != ret)
-      return ret;
-
    // State
    CPropertyAction* pAct = new CPropertyAction (this, &TransmittedLight::OnState);
    ret = CreateProperty(MM::g_Keyword_State, state_ ? "1" : "0", MM::Integer, false, pAct); 
@@ -2490,7 +2485,10 @@ int TransmittedLight::Initialize()
    if (ret != DEVICE_OK) 
       return ret; 
 
-   SetProperty(g_LevelProp, "1");
+   // set TL to known initial state: shutter=closed, level = 0
+   level_ = 0;
+   state_ = false;
+   SetProperty(g_LevelProp, "0");
    SetProperty(MM::g_Keyword_State, "0");
 
    initialized_ = true;
@@ -2521,8 +2519,6 @@ int TransmittedLight::OnState(MM::PropertyBase *pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
-      // return pos as we know it
-      GetOpen(state_);
       if (state_)
          pProp->Set(1L);
       else
@@ -2534,14 +2530,11 @@ int TransmittedLight::OnState(MM::PropertyBase *pProp, MM::ActionType eAct)
       pProp->Get(pos);
       if (pos==1)
       {
-		 state_ = true;
-         return this->SetOpen(true);
-	
+         return SetOpen(true);	
       }
       else
       {
-		  state_ = false;
-         return this->SetOpen(false);
+         return SetOpen(false);
       }
    }
 	return DEVICE_OK;
@@ -2551,6 +2544,12 @@ int TransmittedLight::OnLevel(MM::PropertyBase *pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
+      if (state_)
+      {
+         int ret = g_ScopeInterface.SetTransmittedLightShutterPosition(*this, *GetCoreCallback(), (int)level_);
+         if (ret != DEVICE_OK)
+            return ret;
+      }
       pProp->Set(level_);
    }
    else if (eAct == MM::AfterSet)
@@ -2570,16 +2569,22 @@ int TransmittedLight::OnLevel(MM::PropertyBase *pProp, MM::ActionType eAct)
 
 int TransmittedLight::SetOpen(bool open)
 {
-   int position;
-   if (open)
-      position = (int)level_;
-   else
-      position = 0;
+   if (open && !state_)
+   {
+      // shutter opening
+	   int ret = g_ScopeInterface.SetTransmittedLightShutterPosition(*this, *GetCoreCallback(), (int)level_);
+	   if (ret != DEVICE_OK)
+		   return ret;
+   }
+   else if (!open && state_)
+   {
+      // shutter closing
+	   int ret = g_ScopeInterface.SetTransmittedLightShutterPosition(*this, *GetCoreCallback(), 0);
+	   if (ret != DEVICE_OK)
+		   return ret;
+   }
 
-   int ret = g_ScopeInterface.SetTransmittedLightShutterPosition(*this, *GetCoreCallback(), position);
-   if (ret != DEVICE_OK)
-      return ret;
-
+   // apply current state
    state_ = open;
 
    return DEVICE_OK;
@@ -2587,25 +2592,7 @@ int TransmittedLight::SetOpen(bool open)
 
 int TransmittedLight::GetOpen(bool &open)
 {
-   int position;
-   int ret = g_ScopeModel.TransmittedLight_.GetPosition(position);
-   if (ret != DEVICE_OK)
-      return ret;
-
-   if (position == 0 && state_ == false)
-      open = false;
-   else if (position > 0 && state_ == true)
-      open = true;
-   else if (position > 0 && state_ == false)
-   {
-      open = true;
-      SetOpen(true);
-   }
-   else
-   {
-      open = false;
-   }
-
+   open = state_;
    return DEVICE_OK;
 }
 
