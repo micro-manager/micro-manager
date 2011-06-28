@@ -193,7 +193,7 @@ public class AutofocusPropertyEditor extends MMDialog {
                changeAFMethod((String)methodCombo_.getSelectedItem());
             }
          });
-         springLayout.putConstraint(SpringLayout.WEST, methodCombo_, 143, SpringLayout.EAST, refreshButton);
+         springLayout.putConstraint(SpringLayout.WEST, methodCombo_, 80, SpringLayout.EAST, refreshButton);
          springLayout.putConstraint(SpringLayout.SOUTH, methodCombo_, 0, SpringLayout.SOUTH, refreshButton);
          springLayout.putConstraint(SpringLayout.EAST, methodCombo_, -6, SpringLayout.WEST, btnClose);
          getContentPane().add(methodCombo_);
