@@ -78,5 +78,52 @@ private:
    double position_;
 };
 
+class MaestroShutter : public CShutterBase<MaestroShutter>
+{
+public:
+   MaestroShutter();
+   ~MaestroShutter();
+  
+   // Device API
+   // ----------
+   int Initialize();
+   int Shutdown();
+  
+   void GetName(char* pszName) const;
+   bool Busy();
+
+   // Shutter API
+   int SetOpen(bool open = true);
+   int GetOpen(bool& open);
+   int Fire(double deltaT);
+
+   // action interface
+   // ---------------- 
+   int OnOpenPosition(MM::PropertyBase* pProp, MM::ActionType eAct);  
+   int OnClosedPosition(MM::PropertyBase* pProp, MM::ActionType eAct); 
+   int OnPort(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnServoNr(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnSpeed(MM::PropertyBase* pProp, MM::ActionType eAct);
+   int OnAcceleration(MM::PropertyBase* pProp, MM::ActionType eAct);
+
+private:
+   int SetPosition(long position);
+
+   bool initialized_;
+   bool moving_;
+   long openPos_;
+   long closedPos_;
+   bool open_;
+   long servoNr_;
+   long speed_;
+   long acceleration_;
+   // MMCore name of serial port
+   std::string port_;
+   // Command exchange with MMCore
+   std::string command_;
+   // Time that last command was sent to device
+   MM::MMTime changedTime_;
+   double position_;
+};
 
 #endif //_MaestroServo_H_
