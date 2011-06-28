@@ -34,6 +34,33 @@
 (defn if-assoc [pred m k v]
   (if pred (assoc m k v) m))
 
+(defn make-property-sequences [channel-properties]
+  (let [ms (for [item channel-properties]
+             (into {} (map #(let [[d p v] %]
+                              [[d p] v])
+                           item)))
+        ks (apply sorted-set
+                  (apply concat (map keys ms)))]
+    (into (sorted-map)
+      (for [[d p] ks]
+        [[d p] (map #(get % [d p]) ms)]))))
+
+(defn channels-sequenceable [property-sequences channels]
+  (and
+    (not (some false?
+           (for [[[d p] s] property-sequences]
+             (or (core isPropertySequenceable d p)
+                 (apply = s))))))
+    (apply == (map :exposure channels))
+    (apply = (map :z-offset channels)))
+
+
+(defn select-triggerable-sequences [property-sequences]
+  (into (sorted-map)
+    (filter #(let [[[d p] _] %]
+               (core isPropertySequenceable d p))
+            property-sequences)))
+
 (defn make-dimensions [settings]
   (let [{:keys [slices channels frames positions
                 slices-first time-first]} settings
@@ -113,23 +140,37 @@
       (if-assoc (not= (:frame-index e1) (:frame-index e2))
         e2 :wait-time-ms interval-ms))))
         
+(defn event-triggerable [e1 e2]
+  (channels-sequenceable
+    (make-property-sequences
+      [(:properties e1) (:properties e2)])
+      [(:channel e1) (:channel e2)]))
+
 (defn burst-valid [e1 e2]
   (and
     (let [wait-time (:wait-time-ms e2)]
       (or (nil? wait-time) (>= (:exposure e2) wait-time)))
-    (select-values-match? e1 e2 [:exposure :position :slice :channel])
+    (select-values-match? e1 e2 [:exposure :position :slice])
+    (event-triggerable e1 e2)
     (not (:autofocus e2))))
         
+(defn make-triggers [events]
+  (let [props (map #(-> % :channel :properties) events)]
+    (-> props make-property-sequences select-triggerable-sequences)))
+
 (defn make-bursts [events]
   (let [e1 (first events)
         ne (next events)
         [run later] (split-with #(burst-valid e1 %) ne)]
     (when e1
       (if (not (empty? run))
-        (lazy-cat (list (assoc e1 :task :init-burst
-                                  :burst-length (inc (count run))))
-                (map #(assoc % :task :collect-burst) run)
-                (make-bursts later))
+        (lazy-cat
+          (list (assoc e1 :task :init-burst
+                          :burst-length (inc (count run))
+                          :trigger-sequence (make-triggers (cons e1 run))))
+          (map #(assoc % :task :collect-burst) (drop-last run))
+          (list (assoc (last run) :task :finish-burst))
+          (make-bursts later))
         (lazy-cat (list e1) (make-bursts later))))))
       
 (defn add-next-task-tags [events]
@@ -222,31 +263,6 @@
                        :position (nth positions pos-index))
              simple)))))
 
-(defn make-property-sequences [channel-properties]
-  (let [ms (for [item channel-properties]
-             (into {} (map #(let [[d p v] %]
-                              [[d p] v])
-                           item)))
-        ks (apply sorted-set
-                  (apply concat (map keys ms)))]
-    (into (sorted-map)
-      (for [[d p] ks]
-        [[d p] (map #(get % [d p]) ms)]))))
-
-(defn channels-sequenceable [property-sequences channels]
-  (and
-    (not (some false?
-           (for [[[d p] s] property-sequences]
-             (or (core isPropertySequenceable d p)
-                 (apply = s))))))
-    (apply == (map :exposure channels)))
-
-(defn select-triggerable-sequences [property-sequences]
-  (into (sorted-map)
-    (filter #(let [[[d p] _] %]
-               (core isPropertySequenceable d p))
-            property-sequences)))
-
 (defn generate-acq-sequence [settings runnables]
   (let [{:keys [numFrames time-first positions slices channels
                 use-autofocus default-exposure interval-ms
@@ -258,7 +274,10 @@
                (> 2 num-positions))
            (> 2 (count slices))
            (or (> 2 (count channels))
-               (channels-sequenceable property-sequences channels))
+               (and
+                 (channels-sequenceable property-sequences channels)
+                 (apply == 0 (map :skip-frames channels))
+                 (apply = true (map :use-z-stack channels))))
            (or (not use-autofocus)
                (>= autofocus-skip (dec numFrames)))
            (zero? (count runnables))
