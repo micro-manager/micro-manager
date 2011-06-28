@@ -176,10 +176,9 @@
         [(str d "-" p) v]))))
 
 (defn generate-simple-burst-sequence [numFrames use-autofocus
-                                      channels default-exposure]
+                                      channels default-exposure
+                                      triggers]
   (let [numChannels (max 1 (count channels))
-        trigger-sequence (when (< 1 (count channels))
-                                (vec (map #(hash-map :channel %) channels)))
         exposure (if (pos? numChannels)
                    (:exposure (first channels))
                    default-exposure)
@@ -200,6 +199,7 @@
                                 last-plane :finish-burst
                                 :else :collect-burst)
                     :wait-time-ms 0.0
+                    :exposure exposure
                     :position-index 0
                     :autofocus (if first-plane use-autofocus false)
                     :channel-index c
@@ -208,48 +208,69 @@
                     :metadata (make-channel-metadata (get channels c))))))]
     (cons (assoc (first x)
             :burst-length (* numFrames numChannels)
-            :trigger-sequence trigger-sequence)
+            :trigger-sequence triggers)
           (rest x))))
 
 
 (defn generate-multiposition-bursts [positions num-frames use-autofocus
-                                     channels default-exposure]
-  (let [simple (generate-simple-burst-sequence num-frames use-autofocus channels)]
+                                     channels default-exposure triggers]
+  (let [simple (generate-simple-burst-sequence
+                 num-frames use-autofocus channels triggers)]
     (flatten
       (for [pos-index (range (count positions))]
         (map #(assoc % :position-index pos-index
                        :position (nth positions pos-index))
              simple)))))
 
-(defn channels-sequenceable [channels]
+(defn make-property-sequences [channel-properties]
+  (let [ms (for [item channel-properties]
+             (into {} (map #(let [[d p v] %]
+                              [[d p] v])
+                           item)))
+        ks (apply sorted-set
+                  (apply concat (map keys ms)))]
+    (into (sorted-map)
+      (for [[d p] ks]
+        [[d p] (map #(get % [d p]) ms)]))))
+
+(defn channels-sequenceable [property-sequences channels]
   (and
-    (let [props (distinct (apply concat (map :properties channels)))]
-      (not (some false?
-             (for [[d p _] props]
-               (core isPropertySequenceable d p)))))
-    (apply == (map :exposure channels))))
+    (not (some false?
+           (for [[[d p] s] property-sequences]
+             (or (core isPropertySequenceable d p)
+                 (apply = s))))))
+    (apply == (map :exposure channels)))
+
+(defn select-triggerable-sequences [property-sequences]
+  (into (sorted-map)
+    (filter #(let [[[d p] _] %]
+               (core isPropertySequenceable d p))
+            property-sequences)))
 
 (defn generate-acq-sequence [settings runnables]
   (let [{:keys [numFrames time-first positions slices channels
                 use-autofocus default-exposure interval-ms
                 autofocus-skip]} settings
-        num-positions (count positions)]
+        num-positions (count positions)
+        property-sequences (make-property-sequences (map :properties channels))]
     (cond
       (and (or time-first
                (> 2 num-positions))
            (> 2 (count slices))
            (or (> 2 (count channels))
-               (channels-sequenceable channels))
+               (channels-sequenceable property-sequences channels))
            (or (not use-autofocus)
                (>= autofocus-skip (dec numFrames)))
            (zero? (count runnables))
            (> default-exposure interval-ms))
-             (if (< 1 num-positions)
-               (generate-multiposition-bursts positions numFrames
-                                              use-autofocus channels
-                                              default-exposure)
-               (generate-simple-burst-sequence numFrames use-autofocus
-                                               channels default-exposure))
+             (let [triggers (select-triggerable-sequences property-sequences)]
+               (if (< 1 num-positions)
+                 (generate-multiposition-bursts
+                   positions numFrames use-autofocus channels
+                   default-exposure triggers)
+               (generate-simple-burst-sequence
+                 numFrames use-autofocus channels
+                 default-exposure triggers)))
       :else
         (generate-default-acq-sequence settings runnables))))
 

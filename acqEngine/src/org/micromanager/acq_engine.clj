@@ -24,7 +24,8 @@
            get-msp MultiStagePosition-to-map ChannelSpec-to-map
            get-pixel-type get-current-time-str rekey
            data-object-to-map str-vector]]
-        [org.micromanager.sequence-generator :only [generate-acq-sequence]])
+        [org.micromanager.sequence-generator :only [generate-acq-sequence
+                                                    make-property-sequences]])
   (:import [org.micromanager AcqControlDlg]
            [org.micromanager.api AcquisitionEngine TaggedImageAnalyzer]
            [org.micromanager.acquisition AcquisitionWrapperEngine LiveAcqDisplay TaggedImageQueue
@@ -156,19 +157,8 @@
           (core setShutterOpen false))
           (wait-for-device (core getShutterDevice))))))
 
-(defn make-property-sequences [channel-sequence]
-  (let [ms (for [item channel-sequence]
-             (into {} (map #(let [[d p v] %]
-                              [[d p] v])
-                           item)))
-        ks (apply sorted-set
-                  (apply concat (map keys ms)))]
-    (into (sorted-map)
-      (for [[d p] ks]
-        [[d p] (map #(get % [d p]) ms)]))))
-
-(defn arm-property-sequences [prop-sequences]
-  (doseq [[[d p] s] prop-sequences]
+(defn arm-property-sequences [trigger-sequence]
+  (doseq [[[d p] s] trigger-sequence]
     (core loadPropertySequence d p (str-vector s))
     (core startPropertySequence d p)
     (swap! active-property-sequences conj [d p])))
@@ -176,8 +166,7 @@
 (defn init-burst [length trigger-sequence]
   (when trigger-sequence
     (println trigger-sequence)
-    (let [prop-sequence (map #(-> % :channel :properties) trigger-sequence)]  
-      (arm-property-sequences (make-property-sequences prop-sequence))))
+    (arm-property-sequences trigger-sequence))
   (core setAutoShutter (@state :init-auto-shutter))
   (swap! state assoc :burst-init-time (elapsed-time @state))
   (core startSequenceAcquisition length 0 true))
