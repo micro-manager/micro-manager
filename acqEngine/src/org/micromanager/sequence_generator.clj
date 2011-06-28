@@ -50,9 +50,9 @@
     (not (some false?
            (for [[[d p] s] property-sequences]
              (or (core isPropertySequenceable d p)
-                 (apply = s))))))
+                 (apply = s)))))
     (apply == (map :exposure channels))
-    (apply = (map :z-offset channels)))
+    (apply = (map :z-offset channels))))
 
 
 (defn select-triggerable-sequences [property-sequences]
@@ -141,10 +141,13 @@
         e2 :wait-time-ms interval-ms))))
         
 (defn event-triggerable [e1 e2]
-  (channels-sequenceable
-    (make-property-sequences
-      [(:properties e1) (:properties e2)])
-      [(:channel e1) (:channel e2)]))
+  (let [c1 (:channel e1)
+        c2 (:channel e2)
+        p1 (:properties c1)
+        p2 (:properties c2)]
+    (channels-sequenceable
+      (make-property-sequences [p1 p2])
+      [c1 c2])))
 
 (defn burst-valid [e1 e2]
   (and
