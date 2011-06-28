@@ -2490,6 +2490,9 @@ int TransmittedLight::Initialize()
    state_ = false;
    SetProperty(g_LevelProp, "0");
    SetProperty(MM::g_Keyword_State, "0");
+	ret = g_ScopeInterface.SetTransmittedLightShutterPosition(*this, *GetCoreCallback(), 0);
+	if (ret != DEVICE_OK)
+      return ret;
 
    initialized_ = true;
 
@@ -2544,12 +2547,17 @@ int TransmittedLight::OnLevel(MM::PropertyBase *pProp, MM::ActionType eAct)
 {
    if (eAct == MM::BeforeGet)
    {
-      if (state_)
-      {
-         int ret = g_ScopeInterface.SetTransmittedLightShutterPosition(*this, *GetCoreCallback(), (int)level_);
-         if (ret != DEVICE_OK)
-            return ret;
-      }
+      // checking the actual level of the lamp does not work properly, i.e.
+      // it always returns "1" regardless
+      // so we are just returning state that we assume is set
+     // if (state_)
+     //{
+     //    int val;
+     //    int ret = g_ScopeInterface.GetTransmittedLightShutterPosition(*this, *GetCoreCallback(), val);
+     //    level_ = val;
+     //    if (ret != DEVICE_OK)
+     //       return ret;
+     // }
       pProp->Set(level_);
    }
    else if (eAct == MM::AfterSet)
