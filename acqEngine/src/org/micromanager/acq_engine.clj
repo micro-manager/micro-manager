@@ -209,6 +209,7 @@
 
 (defn acq-sleep [interval-ms]
   (set-stage-position (core getFocusDevice) (@state :reference-z-position))
+  (wait-for-device (core getFocusDevice))
   (when (and (@state :init-continuous-focus)
     (not (core isContinuousFocusEnabled)))
       (core enableContinuousFocus true))
