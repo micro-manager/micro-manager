@@ -45,7 +45,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../../3rdpartypublic/boost;../../../3rdpartypublic;$(JAI_SDK_INCLUDE)"
+				AdditionalIncludeDirectories="../../../3rdpartypublic/boost;../../../3rdpartypublic;..\..\..\3rdparty\JAI\SDK\library\CPP\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS;TESTRESOURCELOCKING"
 				MinimalRebuild="true"
 				ExceptionHandling="2"
@@ -72,7 +72,7 @@
 				AdditionalDependencies="Jai_Factory.lib"
 				OutputFile="$(OutDir)/mmgr_dal_GigECamera.dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="$(JAI_SDK_LIB)"
+				AdditionalLibraryDirectories="..\..\..\3rdparty\JAI\SDK\library\CPP\lib\Win32_i86"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/GigECamera.pdb"
 				SubSystem="2"
@@ -131,7 +131,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../../../3rdpartypublic/boost;../../../3rdparty;$(JAI_SDK_INCLUDE)"
+				AdditionalIncludeDirectories="../../../3rdpartypublic/boost;../../../3rdparty;..\..\..\3rdparty\JAI\SDK\library\CPP\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS;TESTRESOURCELOCKING"
 				MinimalRebuild="true"
 				ExceptionHandling="2"
@@ -158,7 +158,7 @@
 				AdditionalDependencies="Jai_Factory.lib"
 				OutputFile="$(OutDir)/mmgr_dal_GigECamera.dll"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="$(JAI_SDK_LIB_64)"
+				AdditionalLibraryDirectories="..\..\..\3rdparty\JAI\SDK\library\CPP\lib\Win64_x64"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile="$(OutDir)/GigECamera.pdb"
 				SubSystem="2"
@@ -215,7 +215,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="../../../3rdpartypublic/boost;../../../3rdpartypublic;$(JAI_SDK_INCLUDE)"
+				AdditionalIncludeDirectories="../../../3rdpartypublic/boost;../../../3rdpartypublic;..\..\..\3rdparty\JAI\SDK\library\CPP\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS;TESTRESOURCELOCKING"
 				ExceptionHandling="2"
 				RuntimeLibrary="0"
@@ -240,7 +240,7 @@
 				AdditionalDependencies="Jai_Factory.lib"
 				OutputFile="$(OutDir)/mmgr_dal_GigECamera.dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="$(JAI_SDK_LIB)"
+				AdditionalLibraryDirectories="..\..\..\3rdparty\JAI\SDK\library\CPP\lib\Win32_i86"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -299,7 +299,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalIncludeDirectories="../../../3rdpartypublic/boost;../../../3rdparty;$(JAI_SDK_INCLUDE)"
+				AdditionalIncludeDirectories="../../../3rdpartypublic/boost;../../../3rdparty;..\..\..\3rdparty\JAI\SDK\library\CPP\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;MODULE_EXPORTS;TESTRESOURCELOCKING"
 				ExceptionHandling="2"
 				RuntimeLibrary="0"
@@ -324,7 +324,7 @@
 				AdditionalDependencies="Jai_Factory.lib"
 				OutputFile="$(OutDir)/mmgr_dal_GigECamera.dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="$(JAI_SDK_LIB_64)"
+				AdditionalLibraryDirectories="..\..\..\3rdparty\JAI\SDK\library\CPP\lib\Win64_x64"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
