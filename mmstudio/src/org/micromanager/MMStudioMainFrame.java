@@ -1752,7 +1752,6 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
             paint(MMStudioMainFrame.this.getGraphics());
 
-            afMgr_ = new AutofocusManager(core_);
             engine_.setCore(core_, afMgr_);
             posList_ = new PositionList();
             engine_.setPositionList(posList_);
@@ -4393,6 +4392,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             setCursor(waitc);
             StringBuffer resultFile = new StringBuffer();
             MicroscopeModel.generateDeviceListFile(options_.enableDeviceDiscovery_, resultFile, core_);
+            //MicroscopeModel.generateDeviceListFile();
             setCursor(oldc);
             return resultFile.toString();
    }
@@ -4401,6 +4401,7 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
 
 
    private void loadPlugins() {
+      afMgr_ = new AutofocusManager(core_);
 
       ArrayList<Class<?>> pluginClasses = new ArrayList<Class<?>>();
       ArrayList<Class<?>> autofocusClasses = new ArrayList<Class<?>>();
@@ -4440,15 +4441,16 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
             ReportingUtils.logMessage("Attempting to install plugin " + plugin.getName());
             installPlugin(plugin);
          } catch (Exception e) {
-            ReportingUtils.logError(e, "Attempted to install the \"" + plugin.getName() + "\" plugin .");
+            ReportingUtils.logError(e, "Failed to install the \"" + plugin.getName() + "\" plugin .");
          }
       }
 
       for (Class<?> autofocus : autofocusClasses) {
          try {
+            ReportingUtils.logMessage("Attempting to install autofocus plugin " + autofocus.getName());
             installAutofocusPlugin(autofocus.getName());
          } catch (Exception e) {
-            ReportingUtils.logError("Attempted to install the \"" + autofocus.getName() + "\" autofocus plugin.");
+            ReportingUtils.logError("Failed to install the \"" + autofocus.getName() + "\" autofocus plugin.");
          }
       }
 
