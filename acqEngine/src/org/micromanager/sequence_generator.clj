@@ -215,7 +215,7 @@
 (defn generate-multiposition-bursts [positions num-frames use-autofocus
                                      channels default-exposure triggers]
   (let [simple (generate-simple-burst-sequence
-                 num-frames use-autofocus channels triggers)]
+                 num-frames use-autofocus channels default-exposure triggers)]
     (flatten
       (for [pos-index (range (count positions))]
         (map #(assoc % :position-index pos-index
