@@ -774,6 +774,24 @@ public class ContrastPanel extends JPanel implements ImageController,
 		return stretchCheckBox_.isSelected();
 	}
 
+   public void setRejectOutliers(boolean reject) {
+      rejectOutliersCheckBox_.setSelected(reject);
+   }
+
+   public boolean isRejectOutliers() {
+      return rejectOutliersCheckBox_.isSelected();
+   }
+   
+   public double getFractionToReject() {
+      return fractionToReject_;
+   }
+   
+   public void setFractionToReject(double frac) {
+      fractionToReject_ = frac;
+      // TODO: this does not work
+      // rejectOutliersPercentSpinner_.setValue(frac * 100.0);
+   }
+	
    public ContrastSettings getContrastSettings() {
       ContrastSettings ret = cs8bit_;
       if( null != image_) {

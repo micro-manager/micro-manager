@@ -160,6 +160,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
    private static final String MAIN_EXPOSURE = "exposure";
    private static final String SYSTEM_CONFIG_FILE = "sysconfig_file";
    private static final String MAIN_STRETCH_CONTRAST = "stretch_contrast";
+   private static final String MAIN_REJECT_OUTLIERS = "reject_outliers";
+   private static final String MAIN_REJECT_FRACTION = "reject_fraction";
    private static final String CONTRAST_SETTINGS_8_MIN = "contrast8_MIN";
    private static final String CONTRAST_SETTINGS_8_MAX = "contrast8_MAX";
    private static final String CONTRAST_SETTINGS_16_MIN = "contrast16_MIN";
@@ -780,6 +782,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       int width = mainPrefs_.getInt(MAIN_FRAME_WIDTH, 580);
       int height = mainPrefs_.getInt(MAIN_FRAME_HEIGHT, 482);
       boolean stretch = mainPrefs_.getBoolean(MAIN_STRETCH_CONTRAST, true);
+      boolean reject = mainPrefs_.getBoolean(MAIN_REJECT_OUTLIERS, false);
+      double rejectFract = mainPrefs_.getDouble(MAIN_REJECT_FRACTION, 0.027);
       int dividerPos = mainPrefs_.getInt(MAIN_FRAME_DIVIDER_POS, 178);
       openAcqDirectory_ = mainPrefs_.get(OPEN_ACQ_DIR, "");
 
@@ -1878,6 +1882,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       contrastPanel_ = new ContrastPanel();
       contrastPanel_.setFont(new Font("", Font.PLAIN, 10));
       contrastPanel_.setContrastStretch(stretch);
+      contrastPanel_.setRejectOutliers(reject);
+      contrastPanel_.setFractionToReject(rejectFract);
       contrastPanel_.setBorder(BorderFactory.createEmptyBorder());
       bottomPanel.add(contrastPanel_);
       topLayout.putConstraint(SpringLayout.SOUTH, contrastPanel_, -20,
@@ -3324,6 +3330,8 @@ public class MMStudioMainFrame extends JFrame implements DeviceControlGUI, Scrip
       mainPrefs_.putInt(MAIN_FRAME_DIVIDER_POS, this.splitPane_.getDividerLocation());
 
       mainPrefs_.putBoolean(MAIN_STRETCH_CONTRAST, contrastPanel_.isContrastStretch());
+      mainPrefs_.putBoolean(MAIN_REJECT_OUTLIERS, contrastPanel_.isRejectOutliers());
+      mainPrefs_.putDouble(MAIN_REJECT_FRACTION, contrastPanel_.getFractionToReject());
 
       mainPrefs_.put(OPEN_ACQ_DIR, openAcqDirectory_);
 
