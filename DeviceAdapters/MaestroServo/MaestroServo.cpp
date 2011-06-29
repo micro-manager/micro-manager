@@ -76,7 +76,7 @@ MaestroServo::MaestroServo() :
    initialized_(false),
    moving_(false),
    servoNr_(0),
-   minPos_(900),
+   minPos_(990),
    maxPos_(2000),
    port_("Undefined"),
    changedTime_(0.0)
@@ -103,7 +103,7 @@ MaestroServo::MaestroServo() :
 
    // Minimum Position
    pAct = new CPropertyAction(this, &MaestroServo::OnMinPosition);
-   CreateProperty("Minimum Position", "900", MM::Integer, false, pAct, true);
+   CreateProperty("Minimum Position", "990", MM::Integer, false, pAct, true);
 
    // Maximum Position
    pAct = new CPropertyAction(this, &MaestroServo::OnMaxPosition);
