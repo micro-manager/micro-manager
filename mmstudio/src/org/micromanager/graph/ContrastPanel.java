@@ -789,7 +789,7 @@ public class ContrastPanel extends JPanel implements ImageController,
    public void setFractionToReject(double frac) {
       fractionToReject_ = frac;
       // TODO: this does not work
-      // rejectOutliersPercentSpinner_.setValue(frac * 100.0);
+      rejectOutliersPercentSpinner_.setValue(fractionToReject_ / 0.01);
    }
 	
    public ContrastSettings getContrastSettings() {
