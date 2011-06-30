@@ -701,3 +701,10 @@ inside an existing location in your collection."
     (let [collection-name (get-last-collection-name)]
       (apply-data-and-settings collection-name (load-data-and-settings collection-name))))
   browser)
+
+(defn show-browser []
+  (if-not @browser
+    (start-browser)
+    (.show (@browser :frame))))
+
+

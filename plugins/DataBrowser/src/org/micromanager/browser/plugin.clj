@@ -14,14 +14,14 @@
 
 
 (ns org.micromanager.browser.plugin
-  (:use [org.micromanager.browser.core :only (start-browser handle-exit)])
+  (:use [org.micromanager.browser.core :only (show-browser handle-exit)])
   (:gen-class
    :name org.micromanager.browser.Data_Browser
    :implements [org.micromanager.api.MMPlugin]))
 
 (defn -dispose [this] (handle-exit))
 (defn -setApp [this app] )
-(defn -show [this] (start-browser))
+(defn -show [this] (show-browser))
 
 
 ;; Do nothing:
